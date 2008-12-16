@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.58 2007/09/07 15:00:20 art Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.59 2008/12/16 07:57:28 guenther Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -337,7 +337,7 @@ dofilewrite(struct proc *p, int fd, struct file *fp, const void *buf,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 		if (error == EPIPE)
-			psignal(p, SIGPIPE);
+			ptsignal(p, SIGPIPE, STHREAD);
 	}
 	cnt -= auio.uio_resid;
 
@@ -448,7 +448,7 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 		if (error == EPIPE)
-			psignal(p, SIGPIPE);
+			ptsignal(p, SIGPIPE, STHREAD);
 	}
 	cnt -= auio.uio_resid;
 

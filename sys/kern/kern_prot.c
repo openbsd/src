@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.37 2008/11/01 05:59:21 deraadt Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.38 2008/12/16 07:57:28 guenther Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ sys_getthrid(p, v, retval)
 	register_t *retval;
 {
 
-	*retval = p->p_pid;
+	*retval = p->p_pid + (p->p_flag & P_THREAD ? 0 : THREAD_PID_OFFSET);
 	return (0);
 }
 #endif

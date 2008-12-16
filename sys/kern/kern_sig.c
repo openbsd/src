@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.100 2008/10/03 04:22:37 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.101 2008/12/16 07:57:28 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -577,13 +577,32 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 	if ((u_int)SCARG(uap, signum) >= NSIG)
 		return (EINVAL);
 	if (SCARG(uap, pid) > 0) {
+		enum signal_type type = SPROCESS;
+
+#ifdef RTHREADS
+		if (SCARG(uap, pid) > THREAD_PID_OFFSET) {
+			if ((p = pfind(SCARG(uap, pid)
+					- THREAD_PID_OFFSET)) == NULL)
+				return (ESRCH);
+			if (p->p_flag & P_THREAD)
+				return (ESRCH);
+			type = STHREAD;
+		} else
+#endif
+		{
+			if ((p = pfind(SCARG(uap, pid))) == NULL)
+				return (ESRCH);
+#ifdef RTHREADS
+			if (p->p_flag & P_THREAD)
+				type = STHREAD;
+#endif
+		}
+
 		/* kill single process */
-		if ((p = pfind(SCARG(uap, pid))) == NULL)
-			return (ESRCH);
 		if (!cansignal(cp, pc, p, SCARG(uap, signum)))
 			return (EPERM);
 		if (SCARG(uap, signum))
-			psignal(p, SCARG(uap, signum));
+			ptsignal(p, SCARG(uap, signum), type);
 		return (0);
 	}
 	switch (SCARG(uap, pid)) {
@@ -614,7 +633,7 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 		 * broadcast
 		 */
 		LIST_FOREACH(p, &allproc, p_list) {
-			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || 
+			if (p->p_pid <= 1 || p->p_flag & (P_SYSTEM|P_THREAD) ||
 			    p == cp || !cansignal(cp, pc, p, signum))
 				continue;
 			nfound++;
@@ -633,7 +652,7 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 				return (ESRCH);
 		}
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
-			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
+			if (p->p_pid <= 1 || p->p_flag & (P_SYSTEM|P_THREAD) ||
 			    !cansignal(cp, pc, p, signum))
 				continue;
 			nfound++;
@@ -747,7 +766,7 @@ trapsignal(struct proc *p, int signum, u_long code, int type,
 		ps->ps_code = code;	/* XXX for core dump/debugger */
 		ps->ps_type = type;
 		ps->ps_sigval = sigval;
-		psignal(p, signum);
+		ptsignal(p, signum, STHREAD);
 	}
 }
 
@@ -766,6 +785,18 @@ trapsignal(struct proc *p, int signum, u_long code, int type,
  */
 void
 psignal(struct proc *p, int signum)
+{
+	ptsignal(p, signum, SPROCESS);
+}
+
+/*
+ * type = SPROCESS	process signal, can be diverted (sigwait())
+ *	XXX if blocked in all threads, mark as pending in struct process
+ * type = STHREAD	thread signal, but should be propagated if unhandled
+ * type = SPROPAGATED	propagated to this thread, so don't propagate again
+ */
+void
+ptsignal(struct proc *p, int signum, enum signal_type type)
 {
 	int s, prop;
 	sig_t action;
@@ -787,17 +818,23 @@ psignal(struct proc *p, int signum)
 	mask = sigmask(signum);
 
 #ifdef RTHREADS
-	TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
-		if (q == p)
-			continue;
-		if (q->p_sigdivert & mask) {
-			psignal(q, signum);
-			return;
+	if (type == SPROCESS) {
+		TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
+			/* ignore exiting threads */
+			if (q->p_flag & P_WEXIT)
+				continue;
+			if (q->p_sigdivert & mask) {
+				/* sigwait: convert to thread-specific */
+				type = STHREAD;
+				p = q;
+				break;
+			}
 		}
 	}
 #endif
 
-	KNOTE(&p->p_klist, NOTE_SIGNAL | signum);
+	if (type != SPROPAGATED)
+		KNOTE(&p->p_klist, NOTE_SIGNAL | signum);
 
 	prop = sigprop[signum];
 
@@ -846,28 +883,27 @@ psignal(struct proc *p, int signum)
 	}
 
 	if (prop & SA_CONT) {
-#ifdef RTHREADS
-		TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
-			if (q != p)
-				psignal(q, signum);
-		 }
-#endif
 		atomic_clearbits_int(&p->p_siglist, stopsigmask);
 	}
 
 	if (prop & SA_STOP) {
-#ifdef RTHREADS
-		
-		TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
-			if (q != p)
-				psignal(q, signum);
-		 }
-#endif
 		atomic_clearbits_int(&p->p_siglist, contsigmask);
 		atomic_clearbits_int(&p->p_flag, P_CONTINUED);
 	}
 
 	atomic_setbits_int(&p->p_siglist, mask);
+
+#ifdef RTHREADS
+	/*
+	 * XXX delay processing of SA_STOP signals unless action == SIG_DFL?
+	 */
+	if (prop & (SA_CONT | SA_STOP) && type != SPROPAGATED) {
+		TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
+			if (q != p)
+				ptsignal(q, signum, SPROPAGATED);
+		}
+	}
+#endif
 
 	/*
 	 * Defer further processing for signals which are held,
@@ -1459,7 +1495,7 @@ int
 sys_nosys(struct proc *p, void *v, register_t *retval)
 {
 
-	psignal(p, SIGSYS);
+	ptsignal(p, SIGSYS, STHREAD);
 	return (ENOSYS);
 }
 

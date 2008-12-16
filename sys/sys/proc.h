@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.110 2008/11/07 02:22:33 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.111 2008/12/16 07:57:28 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -350,6 +350,7 @@ struct uidinfo *uid_find(uid_t);
  */
 #define	PID_MAX		32766
 #define	NO_PID		(PID_MAX+1)
+#define	THREAD_PID_OFFSET	1000000
 
 #define SESS_LEADER(p)	((p)->p_session->s_leader == (p))
 #define	SESSHOLD(s)	((s)->s_count++)

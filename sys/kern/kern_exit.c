@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.81 2008/12/11 16:31:47 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.82 2008/12/16 07:57:28 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -97,7 +97,9 @@ sys_exit(struct proc *p, void *v, register_t *retval)
 int
 sys_threxit(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_threxit_args *uap = v;
+	struct sys_threxit_args /* {
+		syscallarg(int) rval;
+	} */ *uap = v;
 
 	exit1(p, W_EXITCODE(SCARG(uap, rval), 0), EXIT_THREAD);
 
@@ -129,7 +131,7 @@ exit1(struct proc *p, int rv, int flags)
 	 * we have to be careful not to get recursively caught.
 	 * this is kinda sick.
 	 */
-	if (flags == EXIT_NORMAL && p->p_p->ps_mainproc != p &&
+	if (flags == EXIT_NORMAL && (p->p_flag & P_THREAD) &&
 	    (p->p_p->ps_mainproc->p_flag & P_WEXIT) == 0) {
 		/*
 		 * we are one of the threads.  we SIGKILL the parent,
@@ -137,9 +139,9 @@ exit1(struct proc *p, int rv, int flags)
 		 */
 		atomic_setbits_int(&p->p_p->ps_mainproc->p_flag, P_IGNEXITRV);
 		p->p_p->ps_mainproc->p_xstat = rv;
-		psignal(p->p_p->ps_mainproc, SIGKILL);
+		ptsignal(p->p_p->ps_mainproc, SIGKILL, SPROPAGATED);
 		tsleep(p->p_p, PUSER, "thrdying", 0);
-	} else if (p == p->p_p->ps_mainproc) {
+	} else if ((p->p_flag & P_THREAD) == 0) {
 		atomic_setbits_int(&p->p_flag, P_WEXIT);
 		if (flags == EXIT_NORMAL) {
 			q = TAILQ_FIRST(&p->p_p->ps_threads);
@@ -147,7 +149,7 @@ exit1(struct proc *p, int rv, int flags)
 				nq = TAILQ_NEXT(q, p_thr_link);
 				atomic_setbits_int(&q->p_flag, P_IGNEXITRV);
 				q->p_xstat = rv;
-				psignal(q, SIGKILL);
+				ptsignal(q, SIGKILL, SPROPAGATED);
 			}
 		}
 		wakeup(p->p_p);
