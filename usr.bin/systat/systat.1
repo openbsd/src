@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.77 2008/12/11 13:33:41 jmc Exp $
+.\"	$OpenBSD: systat.1,v 1.78 2008/12/17 08:21:43 canacar Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: December 11 2008 $
+.Dd $Mdocdate: December 17 2008 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -270,9 +270,8 @@ Available orderings are:
 and
 .Ic requests .
 .It Ic mbufs
-Display the number of mbufs allocated
-for particular uses,
-such as data and socket structures.
+Display mbuf usage information from kernel pools
+and mbuf cluster pool statistics of each network interface.
 .It Ic netstat
 Display network connections.
 By default, network servers awaiting requests are not displayed.
