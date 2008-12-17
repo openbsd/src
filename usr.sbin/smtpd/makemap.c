@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.3 2008/12/17 22:59:36 jacekm Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.4 2008/12/17 23:09:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -47,6 +47,7 @@ int		parse_entry(char *, size_t, size_t);
 
 DB *db;
 char *source;
+int dbputs;
 
 enum program {
 	P_MAKEMAP,
@@ -111,6 +112,9 @@ main(int argc, char *argv[])
 		warn("rename");
 		goto bad;
 	}
+
+	if (dbputs == 0)
+		warnx("warning: empty map created: %s", dest);
 
 	return 0;
 bad:
@@ -239,6 +243,7 @@ parse_entry(char *line, size_t len, size_t lineno)
 			return 0;
 		}
 
+		dbputs++;
 		free(p);
 	}
 
