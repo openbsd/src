@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.5 2008/09/15 16:13:35 kjell Exp $ */
+/* $OpenBSD: cmode.c,v 1.6 2008/12/17 10:28:27 sobrado Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -92,7 +92,7 @@ cmode_init(void)
 	funmap_add(cc_tab, "c-tab-or-indent");
 	funmap_add(cc_indent, "c-indent");
 	funmap_add(cc_lfindent, "c-indent-and-newline");
-	maps_add((KEYMAP *)&cmodemap, "c-mode");
+	maps_add((KEYMAP *)&cmodemap, "c");
 }
 
 /*
@@ -101,7 +101,7 @@ cmode_init(void)
 int
 cmode(int f, int n)
 {
-	return(changemode(f, n, "c-mode"));
+	return(changemode(f, n, "c"));
 }
 
 /*
