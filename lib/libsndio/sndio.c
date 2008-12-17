@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.7 2008/11/20 16:31:26 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.8 2008/12/17 07:19:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -266,8 +266,12 @@ sio_setpar(struct sio_hdl *hdl, struct sio_par *par)
 		hdl->eof = 1;
 		return 0;
 	}
-	if (par->rate != (unsigned)~0 && par->bufsz == (unsigned)~0)
-		par->bufsz = par->rate * 200 / 1000;
+	if (par->bufsz != (unsigned)~0) {
+		fprintf(stderr, "sio_setpar: setting bufsz is deprecated\n");
+		par->appbufsz = par->bufsz;
+	}
+	if (par->rate != (unsigned)~0 && par->appbufsz == (unsigned)~0)
+		par->appbufsz = par->rate * 200 / 1000;
 	return hdl->ops->setpar(hdl, par);
 }
 

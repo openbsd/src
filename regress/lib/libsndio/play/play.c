@@ -69,7 +69,7 @@ main(int argc, char **argv) {
 			}
 			break;
 		case 'b':
-			if (sscanf(optarg, "%u", &par.bufsz) != 1) {
+			if (sscanf(optarg, "%u", &par.appbufsz) != 1) {
 				fprintf(stderr, "%s: bad buf size\n", optarg);
 				exit(1);
 			}

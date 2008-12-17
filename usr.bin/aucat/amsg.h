@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.2 2008/11/11 19:21:20 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.3 2008/12/17 07:19:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -55,13 +55,14 @@ struct amsg {
 			uint16_t pchan;		/* play channels */
 			uint16_t rchan;		/* record channels */
 			uint32_t rate;		/* frames per second */
-			uint32_t bufsz;		/* buffered frames */
+			uint32_t bufsz;		/* total buffered frames */
 			uint32_t round;
-			uint32_t _reserved[2];	/* for future use */
+			uint32_t appbufsz;	/* client side bufsz */
+			uint32_t _reserved[1];	/* for future use */
 		} par;
 		struct amsg_cap {
 			uint32_t rate;		/* native rate */
-			uint32_t rate_div;	/* divisor of emul. rates */
+			uint32_t _reserved2[1];	/* for future use */
 			uint16_t rchan;		/* native rec channels */
 			uint16_t pchan;		/* native play channels */
 			uint8_t bits;		/* native bits per sample */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.3 2008/11/11 19:39:35 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.4 2008/12/17 07:19:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -28,29 +28,30 @@ struct sio_hdl;
  * parameters of a full-duplex stream
  */
 struct sio_par {
-	unsigned bits;	/* bits per sample */
-	unsigned bps;	/* bytes per sample */
-	unsigned sig;	/* 1 = signed, 0 = unsigned */
-	unsigned le;	/* 1 = LE, 0 = BE byte order */
-	unsigned msb;	/* 1 = MSB, 0 = LSB aligned */
-	unsigned rchan;	/* number channels for recording direction */
-	unsigned pchan;	/* number channels for playback direction */
-	unsigned rate;	/* frames per second */
-	unsigned bufsz;	/* minimum buffer size */
+	unsigned bits;		/* bits per sample */
+	unsigned bps;		/* bytes per sample */
+	unsigned sig;		/* 1 = signed, 0 = unsigned */
+	unsigned le;		/* 1 = LE, 0 = BE byte order */
+	unsigned msb;		/* 1 = MSB, 0 = LSB aligned */
+	unsigned rchan;		/* number channels for recording direction */
+	unsigned pchan;		/* number channels for playback direction */
+	unsigned rate;		/* frames per second */
+	unsigned bufsz;		/* end-to-end buffer size */
 #define SIO_IGNORE	0	/* pause during xrun */
-#define SIO_SYNC		1	/* resync after xrun */
+#define SIO_SYNC	1	/* resync after xrun */
 #define SIO_ERROR	2	/* terminate on xrun */
-	unsigned xrun;	/* what to do on overruns/underruns */
-	unsigned round;	/* optimal bufsz divisor */
-	int __pad[4];	/* for future use */
-	int __magic;	/* for internal/debug purposes only */
+	unsigned xrun;		/* what to do on overruns/underruns */
+	unsigned round;		/* optimal bufsz divisor */
+	unsigned appbufsz;	/* minimum buffer size */
+	int __pad[3];		/* for future use */
+	int __magic;		/* for internal/debug purposes only */
 };
 
 /*
  * capabilities of a stream
  */
 struct sio_cap {
-#define SIO_NENC		8
+#define SIO_NENC	8
 #define SIO_NCHAN	8
 #define SIO_NRATE	16
 #define SIO_NCONF	4
@@ -79,8 +80,8 @@ struct sio_cap {
 /*
  * mode bitmap
  */
-#define SIO_PLAY 1
-#define SIO_REC	2
+#define SIO_PLAY	1
+#define SIO_REC		2
 
 /*
  * maximum size of the encording string (the longest possible

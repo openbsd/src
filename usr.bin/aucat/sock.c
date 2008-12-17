@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.9 2008/12/07 17:10:41 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.10 2008/12/17 07:19:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -280,7 +280,7 @@ sock_new(struct fileops *ops, int fd, char *name,
 		f->mode |= AMSG_PLAY;
 	}
 	f->xrun = AMSG_IGNORE;
-	f->bufsz = 2 * dev_bufsz;
+	f->bufsz = dev_bufsz;
 	f->round = dev_round;
 	f->odelta = f->idelta = 0;
 	f->maxweight = maxweight;
@@ -325,23 +325,19 @@ void
 sock_allocbuf(struct sock *f)
 {
 	struct abuf *rbuf = NULL, *wbuf = NULL;
-	unsigned nfr = 0;
 
 	if (f->mode & AMSG_PLAY) {
-		nfr = f->bufsz - dev_bufsz * f->rpar.rate / dev_rate;
-		rbuf = abuf_new(nfr, &f->rpar);
+		rbuf = abuf_new(f->bufsz, &f->rpar);
 		aproc_setout(f->pipe.file.rproc, rbuf);
 		f->odelta = 0;
 	}
 	if (f->mode & AMSG_REC) {
-		nfr = f->bufsz - dev_bufsz * f->wpar.rate / dev_rate;
-		wbuf = abuf_new(nfr, &f->wpar);
+		wbuf = abuf_new(f->bufsz, &f->wpar);
 		aproc_setin(f->pipe.file.wproc, wbuf);
 		f->idelta = 0;
 	}
 
-	DPRINTF("sock_allocbuf: %p, using %u/%u frames buffer\n",
-	    f, nfr, f->bufsz);
+	DPRINTF("sock_allocbuf: %p, using %u frames buffer\n", f, f->bufsz);
 
 	f->pstate = SOCK_START;
 	if (!(f->mode & AMSG_PLAY))
@@ -634,8 +630,10 @@ sock_setpar(struct sock *f)
 			p->rate = RATE_MAX;
 		f->round = dev_roundof(p->rate);
 		f->rpar.rate = f->wpar.rate = p->rate;
-		if (!AMSG_ISSET(p->bufsz))
-			p->bufsz = 2 * dev_bufsz / dev_round * f->round;
+		if (!AMSG_ISSET(p->appbufsz)) {
+			p->appbufsz = dev_bufsz / dev_round * f->round;
+			DPRINTF("sock_setpar: appbufsz -> %u\n", p->appbufsz);
+		}
 		DPRINTF("sock_setpar: rate -> %u, round -> %u\n",
 		    p->rate, f->round);
 	}
@@ -650,18 +648,29 @@ sock_setpar(struct sock *f)
 		DPRINTF("sock_setpar: xrun -> %u\n", f->xrun);
 	}
 	if (AMSG_ISSET(p->bufsz)) {
-		rate = (f->mode & AMSG_PLAY) ? f->rpar.rate : f->wpar.rate;
-		min = (3 * (dev_bufsz / dev_round) + 1) / 2;
-		max = (dev_bufsz + rate + dev_round - 1) / dev_round;
-		min *= f->round;
-		max *= f->round;
-		p->bufsz += f->round - 1;
-		p->bufsz -= p->bufsz % f->round;
+		/*
+		 * XXX: bufsz will become read-only, but for now
+		 *      allow old library to properly work
+		 */
+		DPRINTF("sock_setpar: bufsz: %u\n", p->bufsz);
+		min = (dev_bufsz / dev_round) * f->round;
 		if (p->bufsz < min)
 			p->bufsz = min;
-		if (p->bufsz > max)
-			p->bufsz = max;
-		f->bufsz = p->bufsz;
+		p->appbufsz = p->bufsz - min;
+	}
+	if (AMSG_ISSET(p->appbufsz)) {
+		rate = (f->mode & AMSG_PLAY) ? f->rpar.rate : f->wpar.rate;
+		min = 1;
+		max = 1 + rate / dev_round;
+		min *= f->round;
+		max *= f->round;
+		p->appbufsz += f->round - 1;
+		p->appbufsz -= p->appbufsz % f->round;
+		if (p->appbufsz < min)
+			p->appbufsz = min;
+		if (p->appbufsz > max)
+			p->appbufsz = max;
+		f->bufsz = p->appbufsz;
 		DPRINTF("sock_setpar: bufsz -> %u\n", f->bufsz);
 	}
 #ifdef DEBUG
@@ -764,7 +773,9 @@ sock_execmsg(struct sock *f)
 		m->u.par.rate = f->rpar.rate;
 		m->u.par.rchan = f->wpar.cmax - f->wpar.cmin + 1;
 		m->u.par.pchan = f->rpar.cmax - f->rpar.cmin + 1;
-		m->u.par.bufsz = f->bufsz;
+		m->u.par.appbufsz = f->bufsz;
+		m->u.par.bufsz = 
+		    f->bufsz + (dev_bufsz / dev_round) * f->round;
 		m->u.par.round = f->round;
 		f->rstate = SOCK_RRET;
 		f->rtodo = sizeof(struct amsg);
@@ -779,7 +790,6 @@ sock_execmsg(struct sock *f)
 		AMSG_INIT(m);
 		m->cmd = AMSG_GETCAP;
 		m->u.cap.rate = dev_rate;
-		m->u.cap.rate_div = dev_rate;
 		m->u.cap.pchan = dev_mix ?
 		    (f->templ_rpar.cmax - f->templ_rpar.cmin + 1) : 0;
 		m->u.cap.rchan = dev_sub ?

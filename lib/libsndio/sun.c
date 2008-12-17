@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.7 2008/11/20 16:31:26 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.8 2008/12/17 07:19:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -494,7 +494,7 @@ sio_open_sun(char *path, unsigned mode, int nbio)
 	par.rate = 48000;
 	par.sig = 1;
 	par.bits = 16;
-	par.bufsz = 1200;
+	par.appbufsz = 1200;
 	if (!sio_setpar(&hdl->sa, &par))
 		goto bad_close;
 	return (struct sio_hdl *)hdl;
@@ -639,7 +639,7 @@ sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 	 * if block size and buffer size are not both set then
 	 * set the blocksize to half the buffer size
 	 */ 
-	bufsz = par->bufsz;
+	bufsz = par->appbufsz;
 	round = par->round;
 	if (bufsz != (unsigned)~0) {
 		if (round == (unsigned)~0)
@@ -751,7 +751,8 @@ sun_getpar(struct sio_hdl *sh, struct sio_par *par)
 	par->round = (hdl->sa.mode & SIO_REC) ?
 	    aui.record.block_size / (par->bps * par->rchan) :
 	    aui.play.block_size / (par->bps * par->pchan);
-	par->bufsz = aui.hiwat * par->round;
+	par->appbufsz = aui.hiwat * par->round;
+	par->bufsz = par->appbufsz;
 	return 1;
 }
 

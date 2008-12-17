@@ -44,7 +44,6 @@ main(int argc, char **argv) {
 	par.bits = 16;
 	par.rchan = 2;
 	par.rate = 44100;
-	par.bufsz = 0x10000;
 
 	while ((ch = getopt(argc, argv, "r:c:e:b:x:")) != -1) {
 		switch(ch) {

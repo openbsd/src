@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.8 2008/11/17 07:49:48 jmc Exp $
+.\" $OpenBSD: sio_open.3,v 1.9 2008/12/17 07:19:27 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 17 2008 $
+.Dd $Mdocdate: December 17 2008 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -149,27 +149,28 @@ handle.
 Audio streams always use linear interleaved encoding.
 The set of parameters of the stream that can be controlled
 is given by the following structure:
-.Bd -literal -offset -indent
+.Bd -literal
 struct sio_par {
-	unsigned bits;	/* bits per sample */
-	unsigned bps;	/* bytes per sample */
-	unsigned sig;	/* 1 = signed, 0 = unsigned */
-	unsigned le;	/* 1 = LE, 0 = BE byte order */
-	unsigned msb;	/* 1 = MSB, 0 = LSB aligned */
-	unsigned rchan;	/* number channels for recording */
-	unsigned pchan;	/* number channels for playback */
-	unsigned rate;	/* frames per second */
-	unsigned bufsz;	/* frames in the stream buffer */
-	unsigned round;	/* optimal buffer size divisor */
+	unsigned bits;		/* bits per sample */
+	unsigned bps;		/* bytes per sample */
+	unsigned sig;		/* 1 = signed, 0 = unsigned */
+	unsigned le;		/* 1 = LE, 0 = BE byte order */
+	unsigned msb;		/* 1 = MSB, 0 = LSB aligned */
+	unsigned rchan;		/* number channels for recording */
+	unsigned pchan;		/* number channels for playback */
+	unsigned rate;		/* frames per second */
+	unsigned appbufsz;	/* minimum buffer size without xruns */
+	unsigned bufsz;		/* end-to-end buffer size (read-only) */
+	unsigned round;		/* optimal buffer size divisor */
 #define SIO_IGNORE	0	/* pause during xrun */
-#define SIO_SYNC		1	/* resync after xrun */
+#define SIO_SYNC	1	/* resync after xrun */
 #define SIO_ERROR	2	/* terminate on xrun */
-	unsigned xrun;	/* what to do on overrun/underrun */
+	unsigned xrun;		/* what to do on overrun/underrun */
 };
 .Ed
 .Pp
 The parameters are as follows:
-.Bl -tag -width "round"
+.Bl -tag -width "appbufsz"
 .It Va bits
 Number of bits per sample: must be between 1 and 32.
 .It Va bps
@@ -202,8 +203,19 @@ mode was selected.
 .It Va rate
 The sampling frequency in Hz.
 .It Va bufsz
-The number of frames that will be buffered for both
-play and record directions.
+The maximum number of frames that may be buffered.
+This parameter takes into accout any buffers, and
+can be used for latency calculations.
+This parameter is read-only.
+.It Va appbufsz
+Size of the buffer in frames the application must maintain non empty
+(on the play end) or non full (on the record end) by calling
+.Fn sio_write
+or
+.Fn sio_read
+fast enough to avoid overrun or underrun conditions.
+The audio subsystem may use additionnal buffering, thus this
+parameter cannot be used for latency calculations
 .It Va round
 Optimal number of frames that the application buffers
 should be a multiple of, to get best performance.
@@ -578,7 +590,7 @@ for this.
 .Ss Handling buffer overruns and underruns
 When the application cannot accept recorded data fast enough,
 the record buffer (of size
-.Va bufsz )
+.Va appbufsz )
 might overrun; in this case recorded data is lost.
 Similarly if the application cannot provide data to play
 fast enough, the play buffer underruns and silence is played

@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.5 2008/12/07 17:10:41 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.6 2008/12/17 07:19:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -125,7 +125,7 @@ safile_new(struct fileops *ops, char *path,
 	}
 	if (opar)
 		par.pchan = opar->cmax - opar->cmin + 1;
-	par.bufsz = *bufsz;
+	par.appbufsz = *bufsz;
 	par.round = *round;
 	if (!sio_setpar(hdl, &par))
 		return 0;
