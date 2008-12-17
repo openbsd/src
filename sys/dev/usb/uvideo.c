@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.109 2008/12/17 08:39:01 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.110 2008/12/17 18:14:46 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -240,19 +240,31 @@ struct video_hw_if uvideo_hw_if = {
  * Devices which either fail to declare themselves as UICLASS_VIDEO,
  * or which need firmware uploads or other quirk handling later on.
  */
+#define UVIDEO_FLAG_ISIGHT_STREAM_HEADER	0x1
 struct uvideo_devs {
-	struct usb_devno uv_dev;
-	char		*ucode_name;
-	usbd_status	(*ucode_loader)(struct uvideo_softc *);
+	struct usb_devno	 uv_dev;
+	char			*ucode_name;
+	usbd_status		 (*ucode_loader)(struct uvideo_softc *);
+	int			 flags;
 } uvideo_devs[] = {
 	{
 	    { USB_VENDOR_RICOH, USB_PRODUCT_RICOH_VGPVCC7 },
 	    "r5u87x-05ca-183a.fw",
-	    uvideo_ucode_loader_ricoh
+	    uvideo_ucode_loader_ricoh,
+	    0
 	},
-	{	/* Incorrectly reports as UICLASS_VENDOR */
+	{   /* Incorrectly reports as UICLASS_VENDOR */
 	    { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMOEM_1 },
-	    NULL, NULL
+	    NULL,
+	    NULL,
+	    0
+	},
+	{
+	    /* Has a own streaming header format */
+	    { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_ISIGHT_1 },
+	    NULL,
+	    NULL,
+	    UVIDEO_FLAG_ISIGHT_STREAM_HEADER
 	}
 };
 #define uvideo_lookup(v, p) \
@@ -355,9 +367,7 @@ uvideo_match(struct device *parent, void *match, void *aux)
 	    id->bInterfaceSubClass == UISUBCLASS_VIDEOCONTROL)
 		return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
 
-	if (uvideo_lookup(uaa->vendor, uaa->product) != NULL &&
-	    id->bInterfaceClass == UICLASS_VENDOR &&
-	    id->bInterfaceSubClass == UISUBCLASS_VIDEOCONTROL)
+	if (uvideo_lookup(uaa->vendor, uaa->product) != NULL)
 		return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
 
 	return (UMATCH_NONE);
@@ -393,10 +403,11 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 	if (error != USBD_NORMAL_COMPLETION)
 		return;
 
-	/* if the device needs ucode do mountroothook */
-	sc->sc_ucode = uvideo_lookup(uaa->vendor, uaa->product);
+	/* maybe the device has quirks */
+	sc->sc_quirk = uvideo_lookup(uaa->vendor, uaa->product);
 
-	if ((sc->sc_ucode && sc->sc_ucode->ucode_name) && rootvp == NULL)
+	/* if the device needs ucode do mountroothook */
+	if ((sc->sc_quirk && sc->sc_quirk->ucode_name) && rootvp == NULL)
 		mountroothook_establish(uvideo_attach_hook, sc);
 	else
 		uvideo_attach_hook(sc);
@@ -408,8 +419,8 @@ uvideo_attach_hook(void *arg)
 	struct uvideo_softc *sc = arg;
 	usbd_status error;
 
-	if (sc->sc_ucode && sc->sc_ucode->ucode_name) {
-		error = (sc->sc_ucode->ucode_loader)(sc);
+	if (sc->sc_quirk && sc->sc_quirk->ucode_name) {
+		error = (sc->sc_quirk->ucode_loader)(sc);
 		if (error != USBD_NORMAL_COMPLETION)
 			return;
 	}
@@ -3055,7 +3066,7 @@ uvideo_ucode_loader_ricoh(struct uvideo_softc *sc)
 	}
 
 	/* open microcode file */
-	error = loadfirmware(sc->sc_ucode->ucode_name, &ucode, &ucode_size);
+	error = loadfirmware(sc->sc_quirk->ucode_name, &ucode, &ucode_size);
 	if (error != 0) {
 		printf("%s: loadfirmware error=%d!\n", DEVNAME(sc), error);
 		return (USBD_INVAL);

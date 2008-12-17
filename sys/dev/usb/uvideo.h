@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.41 2008/12/08 22:02:39 deraadt Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.42 2008/12/17 18:14:46 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -600,5 +600,5 @@ struct uvideo_softc {
 	uint8_t					*sc_uplayer_fbuffer;
 	void					 (*sc_uplayer_intr)(void *);
 
-	struct uvideo_devs			*sc_ucode;
+	struct uvideo_devs			*sc_quirk;
 };
