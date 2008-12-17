@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.12 2008/12/16 22:23:55 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.13 2008/12/17 09:17:47 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 16 2008 $
+.Dd $Mdocdate: December 17 2008 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -109,9 +109,9 @@ mode.
 .Pp
 .Nm
 will work through the fileset,
-offering the chance to merge any differences
-using ${MERGE_CMD} as well as edit the merged file with your favorite
-editor defined by the ${VISUAL} or ${EDITOR} environment variables.
+offering the chance to merge any differences using ${MERGE_CMD}.
+Merged files may be edited using a default editor,
+or one defined by the ${VISUAL} or ${EDITOR} environment variables.
 Files may also be left to deal with at a later date.
 Should any problems occur,
 such as a failure to upgrade a file,
@@ -178,6 +178,22 @@ to ${FETCH_CMD}.
 Directory in which to merge and install files.
 If unset, this defaults to
 .Pa / .
+.It Ev EDITOR , VISUAL
+Specifies an editor to use.
+If both
+.Ev EDITOR
+and
+.Ev VISUAL
+are set,
+.Ev VISUAL
+takes precedence.
+If neither
+.Ev EDITOR
+nor
+.Ev VISUAL
+are set,
+the default is
+.Xr vi 1 .
 .It Ev FETCH_CMD
 Command used to fetch remote files.
 Defaults to
