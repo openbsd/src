@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.8 2008/12/17 07:19:27 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.9 2008/12/17 07:31:38 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -68,7 +68,7 @@ sio_enctostr(struct sio_par *par, char *ostr)
 
 /*
  * Parse an encoding string, examples: s8, u8, s16, s16le, s24be ...
- * Retrun the number of bytes consumed
+ * Return the number of bytes consumed
  */
 int
 sio_strtoenc(struct sio_par *par, char *istr)
@@ -109,7 +109,7 @@ sio_strtoenc(struct sio_par *par, char *istr)
 	msb = 1;
 
 	/*
-	 * get (optionnal) endianness
+	 * get (optional) endianness
 	 */
 	if (p[0] == 'l' && p[1] == 'e') {
 		le = 1;
@@ -123,7 +123,7 @@ sio_strtoenc(struct sio_par *par, char *istr)
 		return 0;
 
 	/*
-	 * get (optionnal) number of bytes
+	 * get (optional) number of bytes
 	 */
 	if (*p >= '1' && *p <= '4') {
 		bps = *p - '0';
@@ -132,7 +132,7 @@ sio_strtoenc(struct sio_par *par, char *istr)
 		p++;
 
 		/*
-		 * get (optionnal) alignement
+		 * get (optional) alignment
 		 */
 		if (p[0] == 'm' && p[1] == 's' && p[2] == 'b') {
 			msb = 1;
@@ -348,7 +348,7 @@ sio_read(struct sio_hdl *hdl, void *buf, size_t len)
 		return 0;
 	}
 	if (!hdl->started || !(hdl->mode & SIO_REC)) {
-		fprintf(stderr, "sio_read: recording not stared\n");
+		fprintf(stderr, "sio_read: recording not started\n");
 		hdl->eof = 1;
 		return 0;
 	}
@@ -432,7 +432,7 @@ int
 sio_nfds(struct sio_hdl *hdl)
 {
 	/*
-	 * in the futur we might use larger values
+	 * In the future we might use larger values
 	 */
 	return 1;
 }
@@ -541,7 +541,7 @@ void
 sio_onvol(struct sio_hdl *hdl, void (*cb)(void *, unsigned), void *addr)
 {
 	if (hdl->started) {
-		fprintf(stderr, "sio_onmove: already started\n");
+		fprintf(stderr, "sio_onvol: already started\n");
 		hdl->eof = 1;
 		return;
 	}

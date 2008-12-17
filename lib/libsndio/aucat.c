@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.5 2008/12/17 07:19:27 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.6 2008/12/17 07:31:38 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -497,7 +497,7 @@ aucat_write(struct sio_hdl *sh, void *buf, size_t len)
 				hdl->wstate = STATE_IDLE;
 			break;
 		default:
-			fprintf(stderr, "aucat_read: bad state\n");
+			fprintf(stderr, "aucat_write: bad state\n");
 			abort();
 		}
 	}
@@ -516,7 +516,7 @@ aucat_write(struct sio_hdl *sh, void *buf, size_t len)
 			continue;
 		if (errno != EAGAIN) {
 			hdl->sa.eof = 1;
-			perror("aucat_read: read");
+			perror("aucat_write: write");
 		}
 		return 0;
 	}
