@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makemap.8,v 1.2 2008/12/04 06:22:05 jmc Exp $
+.\"	$OpenBSD: makemap.8,v 1.3 2008/12/17 22:59:36 jacekm Exp $
 .\" Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
 .\" Copyright (c) 1988, 1991, 1993
@@ -11,46 +11,58 @@
 .\"
 .\"     $Sendmail: makemap.8,v 8.30 2002/06/27 23:41:04 gshapiro Exp $
 .\"
-.Dd $Mdocdate: December 4 2008 $
+.Dd $Mdocdate: December 17 2008 $
 .Dt MAKEMAP 8
 .Os
 .Sh NAME
-.Nm makemap
+.Nm makemap ,
+.Nm newaliases
 .Nd create database maps for smtpd
 .Sh SYNOPSIS
 .Nm makemap
-.Ar mapdesc
+.Ar file
+.Nm newaliases
 .Sh DESCRIPTION
 .Nm
 creates the database maps used by the keyed map lookups in
 .Xr smtpd 8 .
-It reads input from the
-.Ar mapdesc
-file and outputs them to
-.Ar mapdesc.db .
+It reads input from
+.Ar file
+and outputs them to
+.Ar file.db .
 .Pp
 In all cases,
 .Nm
-reads lines from the standard input consisting of two
-words separated by whitespace.
+reads lines from 
+.Ar file
+consisting of words separated by whitespace.
 The first is the database key,
-the second is the value.
+the remaining specify mapped value.
 .Pp
-Note:
-use
-.Xr newaliases 8
-to create the aliases database, not
-.Nm ,
-as the input formats differ for historical reasons.
+.Ex -std makemap
+.Pp
+.Nm newaliases 
+rebuilds the random access database for the mail aliases file
+.Pa /etc/mail/aliases .
+It must be run each time this file is changed
+in order for the change to take effect.
+.Pp
+.Ex -std newaliases
+.Sh FILES
+.Bl -tag -width "/etc/mail/aliasesXXX" -compact
+.It Pa /etc/mail/aliases
+The mail aliases file.
+.El
 .Sh SEE ALSO
 .Xr editmap 8 ,
-.Xr newaliases 8 ,
-.Xr smtpd 8
+.Xr smtpd 8 ,
+.Xr aliases 5 ,
+.Xr mailer.conf 5
 .Sh HISTORY
-This
+These
 .Nm
-command first appeared in
+and
+.Nm newaliases
+commands first appeared in
 .Ox 4.5
-as a replacement for the
-.Nm
-command that was shipped with sendmail.
+as the replacement for equivalent commands shipped with sendmail.

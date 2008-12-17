@@ -1,3 +1,5 @@
+/*	$OpenBSD: makemap.c,v 1.3 2008/12/17 22:59:36 jacekm Exp $	*/
+
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  *
@@ -32,7 +34,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -40,85 +41,85 @@
 
 extern char *__progname;
 
-static int usage(void);
-int parse_map(const char *);
-int parse_entry(char *, size_t, size_t);
+__dead void	usage(void);
+int		parse_map(char *);
+int		parse_entry(char *, size_t, size_t);
 
 DB *db;
+char *source;
+
+enum program {
+	P_MAKEMAP,
+	P_NEWALIASES
+} mode;
 
 int
 main(int argc, char *argv[])
 {
-	int ch;
-	char pathname[MAXPATHLEN];
 	char dbname[MAXPATHLEN];
-	char output[MAXPATHLEN];
+	char dest[MAXPATHLEN];
 
-	while ((ch = getopt(argc, argv, "")) != -1) {
-		switch (ch) {
-		default:
-			return usage();
-		}
+	mode = strcmp(__progname, "newaliases") ? P_MAKEMAP : P_NEWALIASES;
+
+	switch (mode) {
+	case P_MAKEMAP:
+		if (argc != 2)
+			usage();
+		source = argv[1];
+		break;
+	case P_NEWALIASES:
+		if (argc != 1)
+			usage();
+		if (geteuid())
+			errx(1, "need root privileges");
+		source = PATH_ALIASES;
+		break;
+	default:
+		abort();
 	}
-	argc -= optind;
-	argv += optind;
 
-	if (argc != 1)
-		return usage();
+	if (! bsnprintf(dbname, MAXPATHLEN, "%s.db.XXXXXXXXXXX", source))
+		errx(1, "path too long");
+	if (mkstemp(dbname) == -1)
+		err(1, "mkstemp");
 
-	bzero(pathname, MAXPATHLEN);
-	snprintf(pathname, MAXPATHLEN, "%s.XXXXX", argv[0]);
-	if (mkdtemp(pathname) == NULL)
-		errx(1, "failed to create temporary directory");
-
-	bzero(dbname, MAXPATHLEN);
-	snprintf(dbname, MAXPATHLEN, "%s/map", pathname);
-	db = dbopen(dbname, O_CREAT|O_EXLOCK|O_RDWR|O_SYNC, 0644, DB_HASH,
-		NULL);
+	db = dbopen(dbname, O_EXLOCK|O_RDWR|O_SYNC, 0644, DB_HASH, NULL);
 	if (db == NULL) {
-		warn("dbopen");
+		warn("dbopen: %s", dbname);
 		goto bad;
 	}
 
-	if (! parse_map(argv[0])) {
-		warnx("syntax error in aliases file");
+	if (! parse_map(source))
+		goto bad;
+
+	if (db->close(db) == -1) {
+		warn("dbclose: %s", dbname);
 		goto bad;
 	}
 
-	db->close(db);
+	if (chmod(dbname, 0644) == -1) {
+		warn("chmod: %s", dbname);
+		goto bad;
+	}
 
-	snprintf(output, MAXPATHLEN, "%s.db", argv[0]);
+	if (! bsnprintf(dest, MAXPATHLEN, "%s.db", source)) {
+		warnx("path too long");
+		goto bad;
+	}
 
-	if (rename(dbname, output) == -1) {
+	if (rename(dbname, dest) == -1) {
 		warn("rename");
 		goto bad;
 	}
 
-	if (chmod(output, 0644) == -1)
-		err(1, "chmod");
-
-	if (rmdir(pathname) == -1)
-		err(1, "rmdir");
-
-	return EX_OK;
+	return 0;
 bad:
-	if (dbname[0] != '\0')
-		if (unlink(dbname) == -1)
-			err(1, "unlink: %s", dbname);
-	if (rmdir(pathname) == -1)
-		err(1, "rmdir: %s", pathname);
+	unlink(dbname);
 	return 1;
 }
 
-static int
-usage(void)
-{
-	fprintf(stderr, "usage: %s filename\n", __progname);
-	return EX_USAGE;
-}
-
 int
-parse_map(const char *filename)
+parse_map(char *filename)
 {
 	FILE *fp;
 	char *line;
@@ -127,14 +128,19 @@ parse_map(const char *filename)
 	char delim[] = { '\\', '\\', '#' };
 
 	fp = fopen(filename, "r");
-	if (fp == NULL)
-		errx(1, "failed to open aliases file");
-
+	if (fp == NULL) {
+		warn("%s", filename);
+		return 0;
+	}
 
 	while ((line = fparseln(fp, &len, &lineno, delim, 0)) != NULL) {
 		if (len == 0)
 			continue;
-		parse_entry(line, len, lineno);
+		if (! parse_entry(line, len, lineno)) {
+			free(line);
+			fclose(fp);
+			return 0;
+		}
 		free(line);
 	}
 
@@ -146,90 +152,116 @@ int
 parse_entry(char *line, size_t len, size_t lineno)
 {
 	char *name;
-	char *delim;
 	char *rcpt;
+	char *endp;
 	char *subrcpt;
-	struct alias alias;
-	int ret;
 	DBT key;
 	DBT val;
 
 	name = line;
-	while (*name && isspace(*name))
-		++name;
-
-	rcpt = delim = strchr(name, ' ');
+	switch (mode) {
+	case P_MAKEMAP:
+		rcpt = strchr(line, ' ');
+		if (rcpt == NULL)
+			rcpt = strchr(line, '\t');
+		break;
+	case P_NEWALIASES:
+		rcpt = strchr(line, ':');
+		break;
+	default:
+		abort();
+	}
 	if (rcpt == NULL)
-		rcpt = delim = strchr(name, '\t');
-	if (rcpt == NULL || name == rcpt)
+		goto bad;
+	*rcpt++ = '\0';
+
+	/* name: strip initial whitespace. */
+	while (isspace(*name))
+		++name;
+	if (*name == '\0')
 		goto bad;
 
+	/* name: strip trailing whitespace. */
+	endp = name + strlen(name) - 1;
+	while (name < endp && isspace(*endp))
+		*endp-- = '\0';
 
-	*delim-- = 0;
-	while (isspace(*delim))
-		*delim-- = '\0';
-	rcpt++;
-	while (*rcpt && isspace(*rcpt))
-		++rcpt;
-	if (*rcpt == '\0')
-		goto bad;
+	/* Check for dups. */
+	key.data = name;
+	key.size = strlen(name) + 1;
+	if (db->get(db, &key, &val, 0) == 0) {
+		warnx("%s:%zd: duplicate entry for %s", source, lineno,
+		    key.data);
+		return 0;
+	}
 
-	/* At this point, name points to nul-terminate name */
-	for (; (subrcpt = strsep(&rcpt, ",")) != NULL;) {
-		while (*subrcpt && isspace(*subrcpt))
+	/* At this point name and rcpt are non-zero nul-terminated strings. */
+	while ((subrcpt = strsep(&rcpt, ",")) != NULL) {
+		struct alias	 alias;
+		void		*p;
+
+		/* subrcpt: strip initial whitespace. */
+		while (isspace(*subrcpt))
 			++subrcpt;
 		if (*subrcpt == '\0')
-			continue;
+			goto bad;
 
-		delim = subrcpt + strlen(subrcpt);
-		delim--;
-		while (isspace(*delim))
-			*delim-- = '\0';
-
-		key.data = name;
-		key.size = strlen(name) + 1;
-
-		if ((ret = db->get(db, &key, &val, 0)) == -1)
-			errx(1, "db->get()");
-
-		if (ret == 1) {
-			val.data = NULL;
-			val.size = 0;
-		}
+		/* subrcpt: strip trailing whitespace. */
+		endp = subrcpt + strlen(subrcpt) - 1;
+		while (subrcpt < endp && isspace(*endp))
+			*endp-- = '\0';
 
 		if (! alias_parse(&alias, subrcpt))
 			goto bad;
 
-		if (val.size == 0) {
-			val.size = sizeof(struct alias);
-			val.data = &alias;
-
-			if ((ret = db->put(db, &key, &val, 0)) == -1)
-				errx(1, "db->get()");
+		key.data = name;
+		key.size = strlen(name) + 1;
+		val.data = NULL;
+		val.size = 0;
+		if (db->get(db, &key, &val, 0) == -1) {
+			warn("dbget");
+			return 0;
 		}
-		else {
-			void *p;
 
-			p = calloc(val.size + sizeof(alias), 1);
-			if (p == NULL)
-				errx(1, "calloc: memory exhausted");
-			memcpy(p, val.data, val.size);
-			memcpy((u_int8_t *)p + val.size, &alias, sizeof(alias));
+		p = calloc(1, val.size + sizeof(struct alias));
+		if (p == NULL) {
+			warn("calloc");
+			return 0;
+		}
+		memcpy(p, val.data, val.size);
+		memcpy((u_int8_t *)p + val.size, &alias, sizeof(struct alias));
 
-			val.data = p;
-			val.size += sizeof(alias);
-
-			if ((ret = db->put(db, &key, &val, 0)) == -1)
-				errx(1, "db->get()");
-
+		val.data = p;
+		val.size += sizeof(struct alias);
+		if (db->put(db, &key, &val, 0) == -1) {
+			warn("dbput");
 			free(p);
+			return 0;
 		}
-		db->sync(db, 0);
+
+		free(p);
 	}
 
 	return 1;
 
 bad:
-	warnx("line %zd: invalid entry: %s", lineno, line);
+	/* The actual line is not printed; it may be mangled by above code. */
+	warnx("%s:%zd: invalid entry", source, lineno);
 	return 0;
+}
+
+void
+usage(void)
+{
+	switch (mode) {
+	case P_MAKEMAP:
+		fprintf(stderr, "usage: %s file\n", __progname);
+		break;
+	case P_NEWALIASES:
+		fprintf(stderr, "usage: %s\n", __progname);
+		break;
+	default:
+		abort();
+	}
+	exit(1);
 }
