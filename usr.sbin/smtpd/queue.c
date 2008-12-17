@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.29 2008/12/14 19:27:47 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.30 2008/12/17 18:47:37 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -54,6 +54,7 @@ void		queue_dispatch_runner(int, short, void *);
 void		queue_setup_events(struct smtpd *);
 void		queue_disable_events(struct smtpd *);
 void		queue_timeout(int, short, void *);
+void		queue_purge_incoming(void);
 int		queue_create_incoming_layout(char *);
 int		queue_record_envelope(struct message *);
 int		queue_remove_envelope(struct message *);
@@ -676,6 +677,7 @@ queue(struct smtpd *env)
 	config_peers(env, peers, 6);
 
 	queue_setup_events(env);
+	queue_purge_incoming();
 	event_dispatch();
 	queue_shutdown();
 
@@ -748,6 +750,27 @@ message_by_id(struct smtpd *env, struct batch *batchp, u_int64_t id)
 	return NULL;
 }
 
+void
+queue_purge_incoming(void)
+{
+	DIR		*dirp;
+	struct dirent	*dp;
+
+	dirp = opendir(PATH_INCOMING);
+	if (dirp == NULL)
+		fatal("queue_purge_incoming: opendir");
+
+	while ((dp = readdir(dirp)) != NULL) {
+		if (strcmp(dp->d_name, ".") == 0 ||
+		    strcmp(dp->d_name, "..") == 0) {
+			continue;
+		}
+		queue_delete_incoming_message(dp->d_name);
+	}
+
+	closedir(dirp);
+}
+
 int
 queue_create_incoming_layout(char *message_id)
 {
@@ -782,61 +805,22 @@ badroot:
 }
 
 void
-queue_delete_incoming_message(char *message_id)
+queue_delete_incoming_message(char *msgid)
 {
 	char rootdir[MAXPATHLEN];
-	char evpdir[MAXPATHLEN];
-	char evppath[MAXPATHLEN];
-	char msgpath[MAXPATHLEN];
-	DIR *dirp;
-	struct dirent *dp;
-	
-	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%s", PATH_INCOMING,
-		message_id))
-		fatal("queue_delete_incoming_message: snprintf");
+	char purgedir[MAXPATHLEN];
 
-	if (! bsnprintf(evpdir, MAXPATHLEN, "%s%s",
-		rootdir, PATH_ENVELOPES))
-		fatal("queue_delete_incoming_message: snprintf");
-	
-	if (! bsnprintf(msgpath, MAXPATHLEN, "%s/message", rootdir))
-		fatal("queue_delete_incoming_message: snprintf");
+	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%s", PATH_INCOMING, msgid))
+		fatalx("snprintf");
 
-	if (unlink(msgpath) == -1) {
-		if (errno != ENOENT)
-			fatal("queue_delete_incoming_message: unlink");
-	}
+	if (! bsnprintf(purgedir, MAXPATHLEN, "%s/%s", PATH_PURGE, msgid))
+		fatalx("snprintf");
 
-	dirp = opendir(evpdir);
-	if (dirp == NULL) {
+	if (rename(rootdir, purgedir) == -1) {
 		if (errno == ENOENT)
-			goto delroot;
-		fatal("queue_delete_incoming_message: opendir");
+			return;
+		fatal("queue_delete_incoming_message: rename");
 	}
-	while ((dp = readdir(dirp)) != NULL) {
-		if (strcmp(dp->d_name, ".") == 0 ||
-		    strcmp(dp->d_name, "..") == 0)
-			continue;
-		if (! bsnprintf(evppath, MAXPATHLEN, "%s/%s", evpdir, dp->d_name))
-			fatal("queue_delete_incoming_message: snprintf");
-
-		if (unlink(evppath) == -1) {
-			if (errno != ENOENT)
-				fatal("queue_delete_incoming_message: unlink");
-		}
-	}
-	closedir(dirp);
-
-	if (rmdir(evpdir) == -1)
-		if (errno != ENOENT)
-			fatal("queue_delete_incoming_message: rmdir");
-
-delroot:
-	if (rmdir(rootdir) == -1)
-		if (errno != ENOENT)
-			fatal("queue_delete_incoming_message: rmdir");
-
-	return;
 }
 
 int

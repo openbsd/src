@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.7 2008/12/13 23:19:34 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.8 2008/12/17 18:47:37 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -65,6 +65,9 @@ int		runner_batch_resolved(struct smtpd *, struct batch *);
 void		runner_batch_dispatch(struct smtpd *, struct batch *, time_t);
 
 int		runner_message_schedule(struct message *, time_t);
+
+void		runner_purge_run(void);
+void		runner_purge_message(char *);
 
 struct batch	*batch_record(struct smtpd *, struct message *);
 struct batch	*batch_lookup(struct smtpd *, struct message *);
@@ -423,6 +426,7 @@ runner_timeout(int fd, short event, void *p)
 	struct smtpd		*env = p;
 	struct timeval		 tv;
 
+	runner_purge_run();
 	runner_process_queue(env);
 	runner_process_runqueue(env);
 	runner_process_batchqueue(env);
@@ -782,6 +786,80 @@ runner_message_schedule(struct message *messagep, time_t tm)
 		return 1;
 
 	return 0;
+}
+
+void
+runner_purge_run(void)
+{
+	DIR		*dirp;
+	struct dirent	*dp;
+
+	dirp = opendir(PATH_PURGE);
+	if (dirp == NULL)
+		fatal("runner_purge_run: opendir");
+
+	while ((dp = readdir(dirp)) != NULL) {
+		if (strcmp(dp->d_name, ".") == 0 ||
+		    strcmp(dp->d_name, "..") == 0) {
+			continue;
+		}
+		runner_purge_message(dp->d_name);
+	}
+
+	closedir(dirp);
+}
+
+void
+runner_purge_message(char *msgid)
+{
+	char rootdir[MAXPATHLEN];
+	char evpdir[MAXPATHLEN];
+	char evppath[MAXPATHLEN];
+	char msgpath[MAXPATHLEN];
+	DIR *dirp;
+	struct dirent *dp;
+	
+	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%s", PATH_PURGE, msgid))
+		fatal("queue_delete_incoming_message: snprintf");
+
+	if (! bsnprintf(evpdir, MAXPATHLEN, "%s%s", rootdir, PATH_ENVELOPES))
+		fatal("queue_delete_incoming_message: snprintf");
+	
+	if (! bsnprintf(msgpath, MAXPATHLEN, "%s/message", rootdir))
+		fatal("queue_delete_incoming_message: snprintf");
+
+	if (unlink(msgpath) == -1)
+		if (errno != ENOENT)
+			fatal("queue_delete_incoming_message: unlink");
+
+	dirp = opendir(evpdir);
+	if (dirp == NULL) {
+		if (errno == ENOENT)
+			goto delroot;
+		fatal("queue_delete_incoming_message: opendir");
+	}
+	while ((dp = readdir(dirp)) != NULL) {
+		if (strcmp(dp->d_name, ".") == 0 ||
+		    strcmp(dp->d_name, "..") == 0)
+			continue;
+		if (! bsnprintf(evppath, MAXPATHLEN, "%s/%s", evpdir,
+			dp->d_name))
+			fatal("queue_delete_incoming_message: snprintf");
+
+		if (unlink(evppath) == -1)
+			if (errno != ENOENT)
+				fatal("queue_delete_incoming_message: unlink");
+	}
+	closedir(dirp);
+
+	if (rmdir(evpdir) == -1)
+		if (errno != ENOENT)
+			fatal("queue_delete_incoming_message: rmdir");
+
+delroot:
+	if (rmdir(rootdir) == -1)
+		if (errno != ENOENT)
+			fatal("queue_delete_incoming_message: rmdir");
 }
 
 struct batch *
