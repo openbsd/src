@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.7 2008/11/23 13:09:31 michele Exp $ */
+/*	$OpenBSD: ripe.c,v 1.8 2008/12/17 14:19:39 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -524,4 +524,24 @@ ripe_nbr_ctl(struct ctl_conn *c)
 		}
 
 	imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, NULL, 0);
+}
+
+void
+ripe_demote_iface(struct iface *iface, int active)
+{
+	struct demote_msg	dmsg;
+
+	if (ripd_process != PROC_RIP_ENGINE ||
+	    iface->demote_group[0] == '\0')
+		return;
+
+	bzero(&dmsg, sizeof(dmsg));
+	strlcpy(dmsg.demote_group, iface->demote_group,
+	    sizeof(dmsg.demote_group));
+	if (active)
+		dmsg.level = -1;
+	else
+		dmsg.level = 1;
+
+	ripe_imsg_compose_parent(IMSG_DEMOTE, 0, &dmsg, sizeof(dmsg));
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ripd.conf.5,v 1.7 2008/01/31 20:00:08 jmc Exp $
+.\"	$OpenBSD: ripd.conf.5,v 1.8 2008/12/17 14:19:39 michele Exp $
 .\"
 .\" Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2008 $
+.Dd $Mdocdate: December 17 2008 $
 .Dt RIPD.CONF 5
 .Os
 .Sh NAME
@@ -194,6 +194,14 @@ The default is
 .Ic none .
 Simple authentication uses a plaintext password, up to 16 characters.
 Crypt authentication uses an MD5 hash.
+.It Ic demote Ar group
+Increase the
+.Xr carp 4
+demotion counter by 1 on the given interface group, usually
+.Ar carp ,
+when the interface state is going down.
+The demotion counter will be decreased when the interface
+state is active again.
 .It Ic cost Ar number
 Cost of the network connected through this interface.
 Values must be between 1 and 16, inclusive.

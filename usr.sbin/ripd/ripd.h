@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.10 2007/10/24 20:16:49 claudio Exp $ */
+/*	$OpenBSD: ripd.h,v 1.11 2008/12/17 14:19:39 michele Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -128,7 +128,8 @@ enum imsg_type {
 	IMSG_FULL_REQUEST,
 	IMSG_REQUEST_ADD,
 	IMSG_SEND_REQUEST,
-	IMSG_SEND_TRIGGERED_UPDATE
+	IMSG_SEND_TRIGGERED_UPDATE,
+	IMSG_DEMOTE
 };
 
 struct imsg_hdr {
@@ -205,6 +206,7 @@ struct iface {
 	LIST_HEAD(, nbr)	 nbr_list;
 	LIST_HEAD(, nbr_failed)	 failed_nbr_list;
 	char			 name[IF_NAMESIZE];
+	char			 demote_group[IFNAMSIZ];
 	u_int8_t		 auth_key[MAX_SIMPLE_AUTH_LEN];
 	struct in_addr		 addr;
 	struct in_addr		 dst;
@@ -275,6 +277,7 @@ struct ripd_conf {
 #define RIPD_OPT_VERBOSE	0x00000001
 #define	RIPD_OPT_VERBOSE2	0x00000002
 #define	RIPD_OPT_NOACTION	0x00000004
+#define	RIPD_OPT_FORCE_DEMOTE	0x00000008
 	int			 flags;
 	int			 options;
 	int			 rip_socket;
@@ -345,6 +348,11 @@ struct ctl_nbr {
 	int			 iface_state;
 };
 
+struct demote_msg {
+	char			 demote_group[IF_NAMESIZE];
+	int			 level;
+};
+
 int		 kif_init(void);
 int		 kr_init(int);
 int		 kr_change(struct kroute *);
@@ -380,6 +388,12 @@ void		 buf_free(struct buf *);
 void		 msgbuf_init(struct msgbuf *);
 void		 msgbuf_clear(struct msgbuf *);
 int		 msgbuf_write(struct msgbuf *);
+
+/* carp.c */
+int		 carp_demote_init(char *, int);
+void		 carp_demote_shutdown(void);
+int		 carp_demote_get(char *);
+int		 carp_demote_set(char *, int);
 
 /* imsg.c */
 void		 imsg_init(struct imsgbuf *, int, void (*)(int, short, void *));

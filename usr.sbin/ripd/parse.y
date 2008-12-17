@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.20 2008/10/17 13:02:55 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.21 2008/12/17 14:19:39 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -106,6 +106,7 @@ typedef struct {
 %token	INTERFACE RTLABEL
 %token	COST PASSIVE
 %token	YES NO
+%token	DEMOTE
 %token	ERROR
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -343,12 +344,28 @@ interface_block	: '{' optnl interfaceopts_l '}'
 		| '{' optnl '}'
 		;
 
-interfaceopts_l	: interfaceopts_l interfaceoptsl
-		| interfaceoptsl
+interfaceopts_l	: interfaceopts_l interfaceoptsl nl
+		| interfaceoptsl optnl
 		;
 
-interfaceoptsl	: PASSIVE nl		{ iface->passive = 1; }
-		| defaults nl
+interfaceoptsl	: PASSIVE  		{ iface->passive = 1; }
+		| DEMOTE STRING		{
+			if (strlcpy(iface->demote_group, $2,
+			    sizeof(iface->demote_group)) >=
+			    sizeof(iface->demote_group)) {
+				yyerror("demote group name \"%s\" too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (carp_demote_init(iface->demote_group,
+			    conf->opts & RIPD_OPT_FORCE_DEMOTE) == -1) {
+				yyerror("error initializing group \"%s\"",
+				    iface->demote_group);
+				YYERROR;
+			}
+		}
+		| defaults
 		;
 %%
 
@@ -387,6 +404,7 @@ lookup(char *s)
 	    {"auth-md-keyid",		AUTHMDKEYID},
 	    {"auth-type",		AUTHTYPE},
 	    {"cost",			COST},
+	    {"demote",			DEMOTE},
 	    {"fib-update",		FIBUPDATE},
 	    {"interface",		INTERFACE},
 	    {"no",			NO},

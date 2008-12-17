@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.5 2007/10/24 19:50:33 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.6 2008/12/17 14:19:39 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -74,6 +74,8 @@ if_init(struct ripd_conf *xconf, struct iface *iface)
 {
 	/* XXX as in ospfd I would like to kill that. This is a design error */
 	iface->fd = xconf->rip_socket;
+
+	ripe_demote_iface(iface, 0);
 }
 
 int
@@ -121,6 +123,11 @@ if_fsm(struct iface *iface, enum iface_event event)
 
 	if (new_state != 0)
 		iface->state = new_state;
+
+	if (old_state == IF_STA_ACTIVE && iface->state == IF_STA_DOWN)
+		ripe_demote_iface(iface, 0);
+	if (old_state & IF_STA_DOWN && iface->state == IF_STA_ACTIVE)
+		ripe_demote_iface(iface, 1);
 
 	log_debug("if_fsm: event '%s' resulted in action '%s' and changing "
 	    "state for interface %s from '%s' to '%s'",
@@ -439,6 +446,10 @@ if_del(struct iface *iface)
 	struct nbr	*nbr;
 
 	log_debug("if_del: interface %s", iface->name);
+
+	/* revert the demotion when the interface is deleted */
+	if (iface->state == IF_STA_DOWN)
+                ripe_demote_iface(iface, 1);
 
 	/* clear lists etc */
 	while ((nbr = LIST_FIRST(&iface->nbr_list)) != NULL)

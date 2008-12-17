@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.h,v 1.8 2007/10/24 20:52:50 claudio Exp $ */
+/*	$OpenBSD: ripe.h,v 1.9 2008/12/17 14:19:39 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -115,6 +115,7 @@ void	 ripe_dispatch_main(int, short, void *);
 void	 ripe_dispatch_rde(int, short, void *);
 void	 ripe_iface_ctl(struct ctl_conn *, unsigned int);
 void	 ripe_nbr_ctl(struct ctl_conn *);
+void	 ripe_demote_iface(struct iface *, int);
 
 /* auth.c */
 int	 auth_validate(u_int8_t **, u_int16_t *, struct iface *, struct nbr *,

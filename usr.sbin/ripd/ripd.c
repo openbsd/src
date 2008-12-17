@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.10 2008/08/05 06:51:12 claudio Exp $ */
+/*	$OpenBSD: ripd.c,v 1.11 2008/12/17 14:19:39 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -131,8 +131,11 @@ main(int argc, char *argv[])
 
 	log_init(1);	/* log to stderr until daemonized */
 
-	while ((ch = getopt(argc, argv, "dD:f:nv")) != -1) {
+	while ((ch = getopt(argc, argv, "cdD:f:nv")) != -1) {
 		switch (ch) {
+		case 'c':
+			opts |= RIPD_OPT_FORCE_DEMOTE;
+			break;
 		case 'd':
 			debug = 1;
 			break;
@@ -335,10 +338,11 @@ check_child(pid_t pid, const char *pname)
 void
 main_dispatch_ripe(int fd, short event, void *bula)
 {
-	struct imsgbuf	*ibuf = bula;
-	struct imsg	 imsg;
-	ssize_t		 n;
-	int		 shut = 0;
+	struct imsgbuf		*ibuf = bula;
+	struct imsg	 	 imsg;
+	struct demote_msg	 dmsg;
+	ssize_t		 	 n;
+	int		 	 shut = 0;
 
 	switch (event) {
 	case EV_READ:
@@ -384,6 +388,12 @@ main_dispatch_ripe(int fd, short event, void *bula)
 				kr_ifinfo(imsg.data, imsg.hdr.pid);
 			else
 				log_warnx("IFINFO request with wrong len");
+			break;
+		case IMSG_DEMOTE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(dmsg))
+				fatalx("invalid size of OE request");
+			memcpy(&dmsg, imsg.data, sizeof(dmsg));
+			carp_demote_set(dmsg.demote_group, dmsg.level);
 			break;
 		default:
 			log_debug("main_dispatch_ripe: error handling imsg %d",
