@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio_priv.h,v 1.2 2008/11/11 19:39:35 ratchov Exp $	*/
+/*	$OpenBSD: sndio_priv.h,v 1.3 2008/12/17 10:00:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -66,5 +66,21 @@ void sio_create(struct sio_hdl *, struct sio_ops *, unsigned, int);
 void sio_destroy(struct sio_hdl *);
 void sio_onmove_cb(struct sio_hdl *, int);
 void sio_onvol_cb(struct sio_hdl *, unsigned);
+
+#ifdef DEBUG
+#define DPRINTF(hdl,...)					\
+	do {							\
+		if ((hdl)->debug)				\
+			fprintf(stderr, __VA_ARGS__);		\
+	} while(0)
+#define DPERROR(hdl,s)						\
+	do {							\
+		if ((hdl)->debug)				\
+			perror(s);				\
+	} while(0)
+#else
+#define DPRINTF(hdl,...) do {} while(0)
+#define DPERROR(hdl,s) do {} while(0)
+#endif
 
 #endif /* !defined(LIBSIO_PRIV_H) */
