@@ -1,4 +1,4 @@
-/*	$OpenBSD: net80211.c,v 1.5 2007/08/14 20:33:47 bluhm Exp $	*/
+/*	$OpenBSD: net80211.c,v 1.6 2008/12/17 19:27:40 jcs Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -68,9 +68,9 @@ net80211_ifstats(char *ifname)
 	p(is_rx_wrongdir, "\t%lu input packet%s with wrong direction\n");
 	p(is_rx_mcastecho, "\t%lu input multicast echo packet%s discarded\n");
 	p(is_rx_notassoc, "\t%lu input packet%s from unassociated station discarded\n");
-	p(is_rx_nowep, "\t%lu input encrypted packet%s without wep config discarded\n");
-	p(is_rx_unencrypted, "\t%lu input unencrypted packet%s with wep config discarded\n");
-	p(is_rx_wepfail, "\t%lu input wep packet%s processing failed\n");
+	p(is_rx_nowep, "\t%lu input encrypted packet%s without wep/wpa config discarded\n");
+	p(is_rx_unencrypted, "\t%lu input unencrypted packet%s with wep/wpa config discarded\n");
+	p(is_rx_wepfail, "\t%lu input wep/wpa packet%s processing failed\n");
 	p(is_rx_decap, "\t%lu input packet decapsulation%s failed\n");
 	p(is_rx_mgtdiscard, "\t%lu input management packet%s discarded\n");
 	p(is_rx_ctl, "\t%lu input control packet%s discarded\n");
@@ -89,6 +89,7 @@ net80211_ifstats(char *ifname)
 	p(is_rx_assoc_notauth, "\t%lu input association%s without authentication\n");
 	p(is_rx_assoc_capmismatch, "\t%lu input association%s with mismatched capabilities\n");
 	p(is_rx_assoc_norate, "\t%lu input association%s without matching rates\n");
+	p(is_rx_assoc_badrsnie, "\t%lu input association%s with bad rsn ie\n");
 	p(is_rx_deauth, "\t%lu input deauthentication packet%s\n");
 	p(is_rx_disassoc, "\t%lu input disassociation packet%s\n");
 	p(is_rx_badsubtype, "\t%lu input packet%s with unknown subtype\n");
@@ -96,13 +97,26 @@ net80211_ifstats(char *ifname)
 	p(is_rx_decryptcrc, "\t%lu input decryption%s failed on crc\n");
 	p(is_rx_ahdemo_mgt, "\t%lu input ahdemo management packet%s discarded\n");
 	p(is_rx_bad_auth, "\t%lu input packet%s with bad auth request\n");
+	p(is_rx_eapol_key, "\t%lu input eapol-key packet%s\n");
+	p(is_rx_eapol_badmic, "\t%lu input eapol-key packet%s with bad mic\n");
+	p(is_rx_eapol_replay, "\t%lu input eapol-key packet%s replayed\n");
+	p(is_rx_locmicfail, "\t%lu input packet%s with bad tkip mic\n");
+	p(is_rx_remmicfail, "\t%lu input tkip mic failure notification%s\n");
+	p(is_rx_unauth, "\t%lu input packet%s on unauthenticated port\n");
 	p(is_tx_nombuf, "\t%lu output packet%s failed for lack of mbufs\n");
 	p(is_tx_nonode, "\t%lu output packet%s failed for no nodes\n");
 	p(is_tx_unknownmgt, "\t%lu output packet%s of unknown management type\n");
+	p(is_tx_noauth, "\t%lu output packet%s on unauthenticated port\n");
 	p(is_scan_active, "\t%lu active scan%s started\n");
 	p(is_scan_passive, "\t%lu passive scan%s started\n");
 	p(is_node_timeout, "\t%lu node%s timed out\n");
 	p(is_crypto_nomem, "\t%lu failure%s with no memory for crypto ctx\n");
+	p(is_ccmp_dec_errs, "\t%lu ccmp decryption error%s\n");
+	p(is_ccmp_replays, "\t%lu ccmp replayed frame%s \n");
+	p(is_cmac_icv_errs, "\t%lu cmac icv error%s\n");
+	p(is_cmac_replays, "\t%lu cmac replayed frame%s\n");
+	p(is_tkip_icv_errs, "\t%lu tkip icv error%s\n");
+	p(is_tkip_replays, "\t%lu tkip replay%s\n");
 
 	close(s);
 
