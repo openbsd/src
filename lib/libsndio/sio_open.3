@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.9 2008/12/17 07:19:27 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.10 2008/12/17 09:04:06 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -204,9 +204,9 @@ mode was selected.
 The sampling frequency in Hz.
 .It Va bufsz
 The maximum number of frames that may be buffered.
-This parameter takes into accout any buffers, and
+This parameter takes into account any buffers, and
 can be used for latency calculations.
-This parameter is read-only.
+It is read-only.
 .It Va appbufsz
 Size of the buffer in frames the application must maintain non empty
 (on the play end) or non full (on the record end) by calling
@@ -214,7 +214,7 @@ Size of the buffer in frames the application must maintain non empty
 or
 .Fn sio_read
 fast enough to avoid overrun or underrun conditions.
-The audio subsystem may use additionnal buffering, thus this
+The audio subsystem may use additional buffering, thus this
 parameter cannot be used for latency calculations
 .It Va round
 Optimal number of frames that the application buffers
