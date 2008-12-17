@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.28 2008/12/07 14:33:26 kettenis Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.29 2008/12/17 19:35:39 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -58,6 +58,7 @@ void	acpiprt_attach(struct device *, struct device *, void *);
 int	acpiprt_getirq(union acpi_resource *crs, void *arg);
 int	acpiprt_getminbus(union acpi_resource *, void *);
 int	acpiprt_checkprs(union acpi_resource *, void *);
+int	acpiprt_chooseirq(union acpi_resource *, void *);
 
 struct acpiprt_softc {
 	struct device		sc_dev;
@@ -181,6 +182,65 @@ acpiprt_getirq(union acpi_resource *crs, void *arg)
 	return (0);
 }
 
+int
+acpiprt_pri[16] = {
+	0,			/* 8254 Counter 0 */
+	1,			/* Keyboard */
+	0,			/* 8259 Slave */
+	2,			/* Serial Port A */
+	2,			/* Serial Port B */
+	5,			/* Parallel Port / Generic */
+	2,			/* Floppy Disk */
+	4, 			/* Parallel Port / Generic */
+	1,			/* RTC */
+	6,			/* Generic */
+	7,			/* Generic */
+	7,			/* Generic */
+	1,			/* Mouse */
+	0,			/* FPU */
+	2,			/* Primary IDE */
+	3			/* Secondary IDE */
+};
+
+int
+acpiprt_chooseirq(union acpi_resource *crs, void *arg)
+{
+	int *irq = (int *)arg;
+	int typ, i, pri = -1;
+
+	typ = AML_CRSTYPE(crs);
+	switch (typ) {
+	case SR_IRQ:
+		for (i = 0; i < sizeof(crs->sr_irq.irq_mask) * 8; i++) {
+			if (crs->sr_irq.irq_mask & (1 << i) &&
+			    acpiprt_pri[i] > pri) {
+				*irq = i;
+				pri = acpiprt_pri[*irq];
+			}
+		}
+		break;
+	case LR_EXTIRQ:
+		/* First try non-8259 interrupts. */
+		for (i = 0; i < crs->lr_extirq.irq_count; i++) {
+			if (crs->lr_extirq.irq[i] > 15) {
+				*irq = crs->lr_extirq.irq[i];
+				return (0);
+			}
+		}
+
+		for (i = 0; i < crs->lr_extirq.irq_count; i++) {
+			if (acpiprt_pri[crs->lr_extirq.irq[i]] > pri) {
+				*irq = crs->lr_extirq.irq[i];
+				pri = acpiprt_pri[*irq];
+			}
+		}
+		break;
+	default:
+		printf("unknown interrupt: %x\n", typ);
+	}
+	return (0);
+}
+
 void
 acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 {
@@ -262,7 +322,7 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 				aml_parse_resource(res.length, res.v_buffer,
 				    acpiprt_checkprs, &irq);
 				aml_parse_resource(res.length, res.v_buffer,
-				    acpiprt_getirq, &newirq);
+				    acpiprt_chooseirq, &newirq);
 			}
 			aml_freevalue(&res);
 		}
