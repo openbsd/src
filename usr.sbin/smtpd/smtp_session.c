@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.28 2008/12/18 15:11:21 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.29 2008/12/18 23:38:12 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -669,55 +669,28 @@ session_read(struct bufferevent *bev, void *p)
 	char		*line;
 	char		*ep;
 	char		*args;
+	size_t		 nr;
 
 read:
 	s->s_tm = time(NULL);
+	nr = EVBUFFER_LENGTH(bev->input);
 	line = evbuffer_readline(bev->input);
-	if (line == NULL) {
-		if (s->s_state != S_DATACONTENT)
-			bufferevent_disable(s->s_bev, EV_READ);
+	if (line == NULL)
 		return;
-	}
+	nr -= EVBUFFER_LENGTH(bev->input);
 
 	if (s->s_state == S_DATACONTENT) {
-		/*log_debug("content: %s", line);*/
-		if (strcmp(line, ".") == 0) {
-			s->s_state = S_DONE;
-			fclose(s->s_msg.datafp);
-			s->s_msg.datafp = NULL;
-
-			bufferevent_disable(s->s_bev, EV_READ);
-
-			if (s->s_msg.status & S_MESSAGE_PERMFAILURE) {
-				session_respond(s, "554 Transaction failed");
-				free(line);
-				return;
-			}
-			session_msg_submit(s);
+		if (session_read_data(s, line, nr)) {
 			free(line);
 			return;
-		} else {
-			size_t i;
-			size_t len;
-
-			len = strlen(line);
-			fwrite(line, 1, len, s->s_msg.datafp);
-			fwrite("\n", 1, 1, s->s_msg.datafp);
-			fflush(s->s_msg.datafp);
-
-			if (! (s->s_flags & F_8BITMIME)) {
-				for (i = 0; i < len; ++i) {
-					if (line[i] & 0x80) {
-						s->s_msg.status |= S_MESSAGE_PERMFAILURE;
-						strlcpy(s->s_msg.session_errorline,
-						    "8BIT data transfered over 7BIT limited channel",
-							sizeof s->s_msg.session_errorline);
-					}
-				}
-			}
-			free(line);
 		}
+		free(line);
 		goto read;
+	}
+
+	if (nr > SMTP_CMDLINE_MAX) {
+		session_respond(s, "500 Line too long");
+		return;
 	}
 
 	if ((ep = strchr(line, ':')) == NULL)
@@ -733,6 +706,59 @@ read:
 	session_command(s, line, args);
 	free(line);
 	return;
+}
+
+int
+session_read_data(struct session *s, char *line, size_t nread)
+{
+	size_t len = strlen(line);
+	size_t i;
+
+	if (strcmp(line, ".") == 0) {
+		if (fclose(s->s_msg.datafp))
+			s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
+		s->s_msg.datafp = NULL;
+
+		if (s->s_msg.status & S_MESSAGE_PERMFAILURE) {
+			session_respond(s, "554 Transaction failed");
+			s->s_state = S_HELO;
+		} else if (s->s_msg.status & S_MESSAGE_TEMPFAILURE) {
+			session_respond(s, "421 Temporary failure");
+			s->s_state = S_HELO;
+		} else {
+			session_msg_submit(s);
+			s->s_state = S_DONE;
+		}
+
+		return 1;
+	}
+
+	/* Don't waste resources on message if it's going to bin anyway. */
+	if (s->s_msg.status & (S_MESSAGE_PERMFAILURE|S_MESSAGE_TEMPFAILURE))
+		return 0;
+
+	if (nread > SMTP_TEXTLINE_MAX) {
+		s->s_msg.status |= S_MESSAGE_PERMFAILURE;
+		return 0;
+	}
+
+	if (fwrite(line, len, 1, s->s_msg.datafp) != 1 ||
+	    fwrite("\n", 1, 1, s->s_msg.datafp) != 1) {
+		s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
+		return 0;
+	}
+
+	if (! (s->s_flags & F_8BITMIME)) {
+		for (i = 0; i < len; ++i)
+			if (line[i] & 0x80)
+				break;
+		if (i != len) {
+			s->s_msg.status |= S_MESSAGE_PERMFAILURE;
+			return 0;
+		}
+	}
+
+	return 0;
 }
 
 void
@@ -800,6 +826,7 @@ session_msg_submit(struct session *s)
 	imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
 	    IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1, &s->s_msg,
 	    sizeof(s->s_msg));
+	bufferevent_disable(s->s_bev, EV_READ);
 	s->s_state = S_DONE;
 }
 

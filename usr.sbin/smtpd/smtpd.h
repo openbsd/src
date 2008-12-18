@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.28 2008/12/17 18:47:37 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.29 2008/12/18 23:38:12 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -65,6 +65,9 @@
 /* number of MX records to lookup */
 #define MXARRAYSIZE	5
 
+/* rfc5321 limits */
+#define	SMTP_TEXTLINE_MAX	1000
+#define	SMTP_CMDLINE_MAX	512
 
 #define F_STARTTLS		 0x01
 #define F_SSMTP			 0x02
