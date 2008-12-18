@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.30 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.31 2008/12/18 16:18:49 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Id: print-ike.c,v 1.30 2007/10/07 16:41:05 deraadt Exp $ (XXX)";
+    "@(#) $Id: print-ike.c,v 1.31 2008/12/18 16:18:49 hshoexer Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -266,17 +266,17 @@ void
 ike_pl_sa_print (u_int8_t *buf, int len)
 {
 	struct sa_payload *sp = (struct sa_payload *)buf;
-	u_int32_t sit_ipsec;
+	u_int32_t sit_ipsec, doi;
 
 	if (len < sizeof(struct sa_payload)) {
 		printf(" [|payload]");
 		return;
 	}
 
-	sp->doi = ntohl(sp->doi);
-	printf(" DOI: %d", sp->doi);
+	doi = ntohl(sp->doi);
+	printf(" DOI: %d", doi);
 
-	if (sp->doi == IPSEC_DOI) {
+	if (doi == IPSEC_DOI) {
 		if ((sp->situation + sizeof(u_int32_t)) > (buf + len)) {
 			printf(" [|payload]");
 			return;
@@ -575,7 +575,8 @@ void
 ike_pl_delete_print (u_int8_t *buf, int len)
 {
   	struct delete_payload *dp = (struct delete_payload *)buf;
-	u_int16_t s;
+	u_int32_t doi;
+	u_int16_t s, nspis;
 	u_int8_t *data;
 
 	if (len < sizeof (struct delete_payload)) {
@@ -583,25 +584,25 @@ ike_pl_delete_print (u_int8_t *buf, int len)
 		return;
 	}
 
-	dp->doi   = ntohl(dp->doi);
-	dp->nspis = ntohs(dp->nspis);
+	doi   = ntohl(dp->doi);
+	nspis = ntohs(dp->nspis);
 
-	if (dp->doi != ISAKMP_DOI && dp->doi != IPSEC_DOI) {
+	if (doi != ISAKMP_DOI && doi != IPSEC_DOI) {
 		printf(" (unknown DOI)");
 		return;
 	}
 
-	printf(" DOI: %u(%s) proto: %s nspis: %u", dp->doi,
-	    dp->doi == ISAKMP_DOI ? "ISAKMP" : "IPSEC",
+	printf(" DOI: %u(%s) proto: %s nspis: %u", doi,
+	    doi == ISAKMP_DOI ? "ISAKMP" : "IPSEC",
 	    dp->proto < (sizeof ike / sizeof ike[0]) ? ike[dp->proto] :
-	    "(unknown)", dp->nspis);
+	    "(unknown)", nspis);
 
-	if ((dp->spi + dp->nspis * dp->spi_size) > (buf + len)) {
+	if ((dp->spi + nspis * dp->spi_size) > (buf + len)) {
 		printf(" [|payload]");
 		return;
 	}
 
-	for (s = 0; s < dp->nspis; s++) {
+	for (s = 0; s < nspis; s++) {
 		data = dp->spi + s * dp->spi_size;
 		if (dp->spi_size == 16)
 			printf("\n\t%scookie: %s", ike_tab_offset(),
@@ -618,6 +619,8 @@ ike_pl_notification_print (u_int8_t *buf, int len)
   	static const char *nftypes[] = IKE_NOTIFY_TYPES_INITIALIZER;
   	struct notification_payload *np = (struct notification_payload *)buf;
 	u_int32_t *replay, *seq;
+	u_int32_t doi;
+	u_int16_t type;
 	u_int8_t *attr;
 
 	if (len < sizeof (struct notification_payload)) {
@@ -625,21 +628,21 @@ ike_pl_notification_print (u_int8_t *buf, int len)
 		return;
 	}
 
-	np->doi  = ntohl (np->doi);
-	np->type = ntohs (np->type);
+	doi  = ntohl (np->doi);
+	type = ntohs (np->type);
 
-	if (np->doi != ISAKMP_DOI && np->doi != IPSEC_DOI) {
+	if (doi != ISAKMP_DOI && doi != IPSEC_DOI) {
 		printf(" (unknown DOI)");
 		return;
 	}
 
 	printf("\n\t%snotification: ", ike_tab_offset());
 
-	if (np->type > 0 && np->type < (sizeof nftypes / sizeof nftypes[0])) {
-		printf("%s", nftypes[np->type]);
+	if (type > 0 && type < (sizeof nftypes / sizeof nftypes[0])) {
+		printf("%s", nftypes[type]);
 		return;
 	}
-	switch (np->type) {
+	switch (type) {
 
 	case NOTIFY_IPSEC_RESPONDER_LIFETIME:
 		printf("RESPONDER LIFETIME ");
@@ -676,7 +679,7 @@ ike_pl_notification_print (u_int8_t *buf, int len)
 	case NOTIFY_STATUS_DPD_R_U_THERE:
 	case NOTIFY_STATUS_DPD_R_U_THERE_ACK:
 		printf("STATUS_DPD_R_U_THERE%s ",
-		    np->type == NOTIFY_STATUS_DPD_R_U_THERE ? "" : "_ACK");
+		    type == NOTIFY_STATUS_DPD_R_U_THERE ? "" : "_ACK");
 		if (np->spi_size != 16 ||
 		    len < sizeof(struct notification_payload) +
 		    sizeof(u_int32_t))
@@ -689,7 +692,7 @@ ike_pl_notification_print (u_int8_t *buf, int len)
 		
 
 	default:
-	  	printf("%d (unknown)", np->type);
+	  	printf("%d (unknown)", type);
 		break;
 	}
 }
