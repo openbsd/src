@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.27 2008/12/13 23:19:34 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.28 2008/12/18 15:11:21 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -64,6 +64,7 @@ int		session_set_path(struct path *, char *);
 void		session_timeout(int, short, void *);
 void		session_respond(struct session *, char *, ...)
 		    __attribute__ ((format (printf, 2, 3)));
+void		session_cleanup(struct session *);
 
 struct session_timeout {
 	enum session_state	state;
@@ -338,9 +339,9 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	s->s_msg.rcptcount = 0;
-
+	session_cleanup(s);
 	s->s_state = S_MAILREQUEST;
+	s->s_msg.rcptcount = 0;
 	s->s_msg.id = s->s_id;
 	s->s_msg.session_id = s->s_id;
 	s->s_msg.session_ss = s->s_ss;
@@ -689,10 +690,6 @@ read:
 
 			if (s->s_msg.status & S_MESSAGE_PERMFAILURE) {
 				session_respond(s, "554 Transaction failed");
-
-				/* Remove message file */
-				imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_REMOVE_MESSAGE,
-				    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
 				free(line);
 				return;
 			}
@@ -757,21 +754,10 @@ session_write(struct bufferevent *bev, void *p)
 void
 session_destroy(struct session *s)
 {
-	/*
-	 * cleanup
-	 */
+	session_cleanup(s);
+
 	log_debug("session_destroy: killing client: %p", s);
 	close(s->s_fd);
-
-	if (s->s_msg.datafp != NULL) {
-		fclose(s->s_msg.datafp);
-		s->s_msg.datafp = NULL;
-	}
-
-	if (s->s_state >= S_MAIL) {
-		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_REMOVE_MESSAGE,
-		    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
-	}
 
 	if (s->s_bev != NULL) {
 		bufferevent_free(s->s_bev);
@@ -781,6 +767,23 @@ session_destroy(struct session *s)
 	SPLAY_REMOVE(sessiontree, &s->s_env->sc_sessions, s);
 	bzero(s, sizeof(*s));
 	free(s);
+}
+
+void
+session_cleanup(struct session *s)
+{
+	if (s->s_msg.datafp != NULL) {
+		fclose(s->s_msg.datafp);
+		s->s_msg.datafp = NULL;
+	}
+
+	if (s->s_msg.message_id[0] != '\0') {
+		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
+		    IMSG_QUEUE_REMOVE_MESSAGE, 0, 0, -1, &s->s_msg,
+		    sizeof(s->s_msg));
+		s->s_msg.message_id[0] = '\0';
+		s->s_msg.message_uid[0] = '\0';
+	}
 }
 
 void

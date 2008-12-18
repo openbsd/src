@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.30 2008/12/17 18:47:37 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.31 2008/12/18 15:11:21 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -199,8 +199,7 @@ queue_dispatch_smtp(int sig, short event, void *p)
 			struct message		*messagep;
 
 			messagep = imsg.data;
-			if (messagep->message_id[0] != '\0')
-				queue_delete_incoming_message(messagep->message_id);
+			queue_delete_incoming_message(messagep->message_id);
 			break;
 		}
 		case IMSG_QUEUE_SUBMIT_ENVELOPE: {
