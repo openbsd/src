@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.49 2008/11/22 18:13:03 mikeb Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.50 2008/12/18 14:17:28 kurt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -391,6 +391,8 @@ void	pmap_tlb_shootwait(void);
 #else
 #define pmap_tlb_shootwait()
 #endif
+
+void	pmap_prealloc_lowmem_ptp(paddr_t);
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 

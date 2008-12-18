@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.133 2008/12/18 13:43:24 kurt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.134 2008/12/18 14:17:28 kurt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -700,7 +700,12 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	pte = vtopte(va);
 	npte = pa | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) | PG_V |
-	    pmap_pg_g | PG_U | PG_M;
+	    PG_U | PG_M;
+
+	/* special 1:1 mappings in the first 4MB must not be global */
+	if (va >= (vaddr_t)NBPD)
+		npte |= pmap_pg_g;
+
 	opte = i386_atomic_testset_ul(pte, npte); /* zap! */
 	if (pmap_valid_entry(opte)) {
 		/* NB. - this should not happen. */
@@ -923,6 +928,26 @@ pmap_bootstrap(vaddr_t kva_start)
 	 */
 
 	tlbflush();
+}
+
+/*
+ * Pre-allocate PTP 0 for low memory, so that 1:1 mappings for various
+ * trampoline code can be entered.
+ */
+void
+pmap_prealloc_lowmem_ptp(paddr_t ptppa)
+{
+	pt_entry_t *pte, npte;
+	vaddr_t ptpva = (vaddr_t)vtopte(0);
+
+	/* enter pa for pte 0 into recursive map */
+	pte = vtopte(ptpva);
+	npte = ptppa | PG_RW | PG_V | PG_U | PG_M;
+
+	i386_atomic_testset_ul(pte, npte); /* zap! */
+
+	/* make sure it is clean before using */
+	memset((void *)ptpva, 0, NBPG);
 }
 
 /*
