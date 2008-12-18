@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.29 2008/12/18 23:38:12 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.30 2008/12/18 23:49:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -59,6 +59,11 @@ int		session_rfc3207_stls_handler(struct session *, char *);
 
 int		session_rfc4954_auth_handler(struct session *, char *);
 
+void		session_read(struct bufferevent *, void *);
+int		session_read_data(struct session *, char *, size_t);
+void		session_write(struct bufferevent *, void *);
+void		session_error(struct bufferevent *, short, void *);
+void		session_msg_submit(struct session *);
 void		session_command(struct session *, char *, char *);
 int		session_set_path(struct path *, char *);
 void		session_timeout(int, short, void *);

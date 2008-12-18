@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.29 2008/12/18 23:38:12 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.30 2008/12/18 23:49:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -716,11 +716,7 @@ void		 smtp_listener_setup(struct smtpd *, struct listener *);
 
 /* smtp_session.c */
 void		 session_init(struct listener *, struct session *);
-void		 session_read(struct bufferevent *, void *);
-void		 session_write(struct bufferevent *, void *);
-void		 session_error(struct bufferevent *, short, void *);
 int		 session_cmp(struct session *, struct session *);
-void		 session_msg_submit(struct session *);
 void		 session_pickup(struct session *, struct submit_status *);
 void		 session_destroy(struct session *);
 SPLAY_PROTOTYPE(sessiontree, session, s_nodes, session_cmp);
