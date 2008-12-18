@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2008/12/11 22:17:12 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.2 2008/12/18 23:57:17 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -55,6 +55,26 @@ bsnprintf(char *str, size_t size, const char *format, ...)
 	va_end(ap);
 	if (ret == -1 || ret >= (int)size)
 		return 0;
+
+	return 1;
+}
+
+/* Close file, signifying temporary error condition (if any) to the caller. */
+int
+safe_fclose(FILE *fp)
+{
+
+	if (fflush(fp)) {
+		if (errno == ENOSPC)
+		return 0;
+		fatal("safe_fclose: fflush");
+	}
+
+	if (fsync(fileno(fp)))
+		fatal("safe_fclose: fsync");
+
+	if (fclose(fp))
+		fatal("safe_fclose: fclose");
 
 	return 1;
 }

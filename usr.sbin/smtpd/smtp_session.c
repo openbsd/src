@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.30 2008/12/18 23:49:56 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.31 2008/12/18 23:57:17 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -720,7 +720,7 @@ session_read_data(struct session *s, char *line, size_t nread)
 	size_t i;
 
 	if (strcmp(line, ".") == 0) {
-		if (fclose(s->s_msg.datafp))
+		if (! safe_fclose(s->s_msg.datafp))
 			s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
 		s->s_msg.datafp = NULL;
 
