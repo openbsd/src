@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.18 2008/12/11 23:19:00 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.19 2008/12/18 22:13:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -627,6 +627,9 @@ condition	: NETWORK mapref		{
 		;
 
 condition_list	: condition comma condition_list	{
+			TAILQ_INSERT_TAIL(&rule->r_conditions, $1, c_entry);
+		}
+		| condition	{
 			TAILQ_INSERT_TAIL(&rule->r_conditions, $1, c_entry);
 		}
 		;
