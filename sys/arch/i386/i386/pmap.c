@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.132 2008/11/24 16:32:45 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.133 2008/12/18 13:43:24 kurt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2352,7 +2352,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 			panic("pmap_unwire: invalid (unmapped) va 0x%lx", va);
 #endif
 		if ((ptes[atop(va)] & PG_W) != 0) {
-			ptes[atop(va)] &= ~PG_W;
+			i386_atomic_clearbits_l(&ptes[atop(va)], PG_W);
 			pmap->pm_stats.wired_count--;
 		}
 #ifdef DIAGNOSTIC
