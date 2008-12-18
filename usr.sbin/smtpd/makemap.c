@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.4 2008/12/17 23:09:23 jacekm Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.5 2008/12/18 15:19:33 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -161,6 +161,12 @@ parse_entry(char *line, size_t len, size_t lineno)
 	char *subrcpt;
 	DBT key;
 	DBT val;
+
+	/* Blank lines are OK. */
+	while (isspace(*line))
+		line++;
+	if (*line == '\0')
+		return 1;
 
 	name = line;
 	switch (mode) {
