@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.34 2008/12/18 13:43:24 kurt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.35 2008/12/18 14:18:29 kurt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -447,8 +447,12 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	pte = kvtopte(va);
 
-	npte = pa | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
-	     PG_V | pmap_pg_g;
+	npte = pa | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) | PG_V;
+
+	/* special 1:1 mappings in the first 2MB must not be global */
+	if (va >= (vaddr_t)NBPD_L2)
+		npte |= pmap_pg_g;
+
 	if ((cpu_feature & CPUID_NXE) && !(prot & VM_PROT_EXECUTE))
 		npte |= PG_NX;
 	opte = pmap_pte_set(pte, npte);
