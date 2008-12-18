@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_attr_init.3,v 1.9 2008/07/05 10:43:07 jmc Exp $
+.\" $OpenBSD: pthread_attr_init.3,v 1.10 2008/12/18 09:30:32 guenther Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .\"
 .\"  David Leonard, 2000. Public Domain.
 .\"
-.Dd $Mdocdate: July 5 2008 $
+.Dd $Mdocdate: December 18 2008 $
 .Dt PTHREAD_ATTR_INIT 3
 .Os
 .Sh NAME
@@ -65,6 +65,7 @@ These functions will not return an error code of
 .Bq Er EINTR .
 .Sh SEE ALSO
 .Xr pthread_attr_setdetachstate 3 ,
+.Xr pthread_attr_setguardsize 3 ,
 .Xr pthread_attr_setstack 3 ,
 .Xr pthread_attr_setstackaddr 3 ,
 .Xr pthread_attr_setstacksize 3 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_stack.c,v 1.10 2007/05/18 19:28:50 kurt Exp $	*/
+/*	$OpenBSD: uthread_stack.c,v 1.11 2008/12/18 09:30:32 guenther Exp $	*/
 /*
  * Copyright 1999, David Leonard. All rights reserved.
  * <insert BSD-style license&disclaimer>
@@ -25,15 +25,14 @@
 #include "pthread_private.h"
 
 struct stack *
-_thread_stack_alloc(base, size)
-	void *base;
-	size_t size;
+_thread_stack_alloc(void *base, size_t size, size_t guardsize)
 {
 	struct stack *stack;
 	size_t nbpg = (size_t)getpagesize();
 
 	/* Maintain a stack of default-sized stacks that we can re-use. */
-	if (base == NULL && size == PTHREAD_STACK_DEFAULT) {
+	if (base == NULL && size == PTHREAD_STACK_DEFAULT
+	  && guardsize == pthread_attr_default.guardsize_attr) {
 		if (pthread_mutex_lock(&_gc_mutex) != 0)
 			PANIC("Cannot lock gc mutex");
 
@@ -56,16 +55,24 @@ _thread_stack_alloc(base, size)
 		/* Use the user's storage */
 		stack->base = base;
 		stack->size = size;
+		stack->guardsize = 0;
 		stack->redzone = NULL;
 		stack->storage = NULL;
 		return stack;
 	}
 
-	/* Round size up to closest page boundry */
+	/* Round sizes up to closest page boundry */
 	size = ((size + (nbpg - 1)) / nbpg) * nbpg;
+	guardsize = ((guardsize + (nbpg - 1)) / nbpg) * nbpg;
 
-	/* mmap storage for the stack, with one extra page for redzone */
-	stack->storage = mmap(NULL, size + nbpg, PROT_READ|PROT_WRITE,
+	/* overflow? */
+	if (SIZE_MAX - size < guardsize) {
+		free(stack);
+		return NULL;
+	}
+
+	/* mmap storage for the stack, possibly with page(s) for redzone */
+	stack->storage = mmap(NULL, size + guardsize, PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_PRIVATE, -1, 0);
 	if (stack->storage == MAP_FAILED) {
 		free(stack);
@@ -77,16 +84,20 @@ _thread_stack_alloc(base, size)
 	 */
 #if defined(MACHINE_STACK_GROWS_UP)
 	/* Red zone is the last page of the storage: */
-	stack->redzone = (void *)((caddr_t)stack->storage + (ptrdiff_t)size);
+	stack->redzone = (caddr_t)stack->storage + (ptrdiff_t)size;
 	stack->base = stack->storage;
 	stack->size = size;
+	stack->guardsize = guardsize;
 #else
 	/* Red zone is the first page of the storage: */
 	stack->redzone = stack->storage; 
-	stack->base = (caddr_t)stack->redzone + (ptrdiff_t)nbpg;
+	stack->base = (caddr_t)stack->redzone + (ptrdiff_t)guardsize;
 	stack->size = size;
+	stack->guardsize = guardsize;
 #endif
-	if (mprotect(stack->redzone, nbpg, PROT_NONE) == -1)
+	if (!guardsize)
+		stack->redzone = NULL;
+	else if (mprotect(stack->redzone, guardsize, PROT_NONE) == -1)
 		PANIC("Cannot protect stack red zone");
 
 	return stack;
@@ -96,15 +107,14 @@ void
 _thread_stack_free(stack)
 	struct stack *stack;
 {
-	size_t nbpg = (size_t)getpagesize();
-
 	/* Cache allocated stacks of default size: */
-	if (stack->storage != NULL && stack->size == PTHREAD_STACK_DEFAULT)
+	if (stack->storage != NULL && stack->size == PTHREAD_STACK_DEFAULT
+	  && stack->guardsize == pthread_attr_default.guardsize_attr)
 		SLIST_INSERT_HEAD(&_stackq, stack, qe);
 	else {
 		/* unmap storage: */
 		if (stack->storage)
-			munmap(stack->storage, stack->size + nbpg);
+			munmap(stack->storage, stack->size + stack->guardsize);
 
 		/* Free stack information storage: */
 		free(stack);

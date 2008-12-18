@@ -1,6 +1,6 @@
-.\" $OpenBSD: pthreads.3,v 1.28 2008/07/05 08:03:57 guenther Exp $
+.\" $OpenBSD: pthreads.3,v 1.29 2008/12/18 09:30:32 guenther Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
-.Dd $Mdocdate: July 5 2008 $
+.Dd $Mdocdate: December 18 2008 $
 .Dt PTHREADS 3
 .Os
 .Sh NAME
@@ -84,6 +84,10 @@ Set stackaddr attribute.
 Get stacksize attribute.
 .It Fn pthread_attr_setstacksize
 Set stacksize attribute.
+.It Fn pthread_attr_getguardsize
+Get guardsize attribute.
+.It Fn pthread_attr_setguardsize
+Set guardsize attribute.
 .El
 .Ss Cleanup Routines
 The functions available are as follows:
@@ -491,6 +495,7 @@ environment variable.
 .Xr pthread_atfork 3 ,
 .Xr pthread_attr_init 3 ,
 .Xr pthread_attr_setdetachstate 3 ,
+.Xr pthread_attr_setguardsize 3 ,
 .Xr pthread_attr_setstack 3 ,
 .Xr pthread_attr_setstackaddr 3 ,
 .Xr pthread_attr_setstacksize 3 ,

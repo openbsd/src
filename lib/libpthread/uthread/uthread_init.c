@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.42 2008/06/14 15:40:16 fgsch Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.43 2008/12/18 09:30:32 guenther Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -357,6 +357,9 @@ _thread_init(void)
 	_thread_init_fdtsize = (int)rl.rlim_cur;
 	_thread_max_fdtsize = (int)rl.rlim_max;
 	_thread_max_pfdtsize = (nfds_t)rl.rlim_max;
+
+	/* Get the default guardsize */
+	pthread_attr_default.guardsize_attr = (size_t)sysconf(_SC_PAGESIZE);
 
 	/* Allocate memory for the file descriptor table: */
 	_thread_fd_table = calloc((size_t)_thread_max_fdtsize,

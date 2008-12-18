@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.69 2007/11/20 19:35:36 deraadt Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.70 2008/12/18 09:30:32 guenther Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -581,6 +581,7 @@ struct stack {
 	SLIST_ENTRY(stack)	qe; /* Queue entry for this stack. */
 	void 			*base;		/* Bottom of useful stack */
 	size_t			size;		/* Size of useful stack */
+	size_t			guardsize;	/* Size of red zone */
 	void			*redzone;	/* Red zone location */
 	void 			*storage;	/* allocated storage */
 };
@@ -957,7 +958,7 @@ SCLASS struct pthread_attr pthread_attr_default
 #ifdef GLOBAL_PTHREAD_PRIVATE
 = { SCHED_RR, 0, TIMESLICE_USEC, PTHREAD_DEFAULT_PRIORITY,
 	PTHREAD_CREATE_RUNNING, PTHREAD_CREATE_JOINABLE, NULL, NULL, NULL,
-	PTHREAD_STACK_DEFAULT };
+	PTHREAD_STACK_DEFAULT, 0 /* set in _thread_init() */ };
 #else
 ;
 #endif
@@ -1184,7 +1185,7 @@ void	_thread_leave_cancellation_point(void);
 void	_thread_cancellation_point(void);
 int	_thread_slow_atomic_lock(volatile _spinlock_lock_t *);
 int	_thread_slow_atomic_is_locked(volatile _spinlock_lock_t *);
-struct stack * _thread_stack_alloc(void *, size_t);
+struct stack * _thread_stack_alloc(void *, size_t, size_t);
 void	_thread_stack_free(struct stack *);
 
 

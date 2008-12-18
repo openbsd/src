@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_create.3,v 1.12 2008/07/05 10:43:07 jmc Exp $
+.\" $OpenBSD: pthread_create.3,v 1.13 2008/12/18 09:30:32 guenther Exp $
 .\"
 .\" Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: pthread_create.3,v 1.8 1999/08/28 00:03:04 peter Exp $
 .\"
-.Dd $Mdocdate: July 5 2008 $
+.Dd $Mdocdate: December 18 2008 $
 .Dt PTHREAD_CREATE 3
 .Os
 .Sh NAME
@@ -111,6 +111,7 @@ is invalid.
 .Xr fork 2 ,
 .Xr pthread_attr_init 3 ,
 .Xr pthread_attr_setdetachstate 3 ,
+.Xr pthread_attr_setguardsize 3 ,
 .Xr pthread_attr_setstack 3 ,
 .Xr pthread_attr_setstackaddr 3 ,
 .Xr pthread_attr_setstacksize 3 ,
