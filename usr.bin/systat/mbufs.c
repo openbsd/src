@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.19 2008/12/17 08:21:43 canacar Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.20 2008/12/18 19:46:39 canacar Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -340,8 +340,6 @@ showmbuf(struct if_info *ifi, int p)
 {
 	int i;
 
-
-
 	if (p == -1 || (p == 0 && ifi != interfaces)) {
 		print_fld_str(FLD_MB_IFACE, ifi->name);
 	}
@@ -357,8 +355,9 @@ showmbuf(struct if_info *ifi, int p)
 #if NOTYET
 	print_fld_uint(FLD_MB_RXDELAY, ifi->data.ifi_rxdelay);
 	print_fld_uint(FLD_MB_TXDELAY, ifi->data.ifi_txdelay);
-	print_fld_size(FLD_MB_LLOCKS, ifi->data.ifi_txdelay);
 #endif
+	if (ifi->data.ifi_livelocks)
+		print_fld_size(FLD_MB_LLOCKS, ifi->data.ifi_livelocks);
 
 	if (p >= 0 && p < mclpool_count) {
 		struct mclpool *mp = &ifi->data.ifi_mclpool[p];
