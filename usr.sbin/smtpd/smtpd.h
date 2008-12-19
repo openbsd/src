@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.31 2008/12/18 23:57:17 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.32 2008/12/19 00:39:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -393,13 +393,14 @@ enum message_type {
 };
 
 enum message_status {
-	S_MESSAGE_PERMFAILURE	= 0x1,
-	S_MESSAGE_TEMPFAILURE	= 0x2,
-	S_MESSAGE_REJECTED	= 0x4,
-	S_MESSAGE_ACCEPTED	= 0x8,
-	S_MESSAGE_RETRY		= 0x10,
-	S_MESSAGE_EDNS		= 0x20,
-	S_MESSAGE_ECONNECT	= 0x40
+	S_MESSAGE_LOCKFAILURE	= 0x1,
+	S_MESSAGE_PERMFAILURE	= 0x2,
+	S_MESSAGE_TEMPFAILURE	= 0x4,
+	S_MESSAGE_REJECTED	= 0x8,
+	S_MESSAGE_ACCEPTED	= 0x10,
+	S_MESSAGE_RETRY		= 0x20,
+	S_MESSAGE_EDNS		= 0x40,
+	S_MESSAGE_ECONNECT	= 0x80
 };
 
 enum message_flags {

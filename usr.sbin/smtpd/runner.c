@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.8 2008/12/17 18:47:37 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.9 2008/12/19 00:39:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -765,11 +765,18 @@ runner_message_schedule(struct message *messagep, time_t tm)
 	delay = SMTPD_QUEUE_MAXINTERVAL;
 
 	if (messagep->type & T_MDA_MESSAGE) {
-		if (messagep->retry < 5)
-			return 1;
-
-		if (messagep->retry < 15)
+		if (messagep->status & S_MESSAGE_LOCKFAILURE) {
+			if (messagep->retry < 128)
+				return 1;
 			delay = (messagep->retry * 60) + arc4random() % 60;
+		}
+		else {
+			if (messagep->retry < 5)
+				return 1;
+			
+			if (messagep->retry < 15)
+				delay = (messagep->retry * 60) + arc4random() % 60;
+		}
 	}
 
 	if (messagep->type & T_MTA_MESSAGE) {

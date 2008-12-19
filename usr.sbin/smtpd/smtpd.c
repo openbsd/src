@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.15 2008/12/17 18:47:37 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.16 2008/12/19 00:39:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -801,25 +801,29 @@ parent_open_mailbox(struct batch *batchp, struct path *path)
 		case EMFILE:
 		case ENFILE:
 		case ENOSPC:
-		case EWOULDBLOCK:
 			batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 			break;
+		case EWOULDBLOCK:
+			goto lockfail;
 		default:
 			batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		}
-
 		return -1;
 	}
 
-	if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
-		close(fd);
-		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
-		return -1;
-	}
+	if (flock(fd, LOCK_EX|LOCK_NB) == -1)
+		goto lockfail;
 
 	fchown(fd, pw->pw_uid, 0);
 
 	return fd;
+
+lockfail:
+	if (fd != -1)
+		close(fd);
+
+	batchp->message.status |= S_MESSAGE_TEMPFAILURE|S_MESSAGE_LOCKFAILURE;
+	return -1;
 }
 
 
@@ -1008,22 +1012,27 @@ parent_open_filename(struct batch *batchp, struct path *path)
 		case EMFILE:
 		case ENFILE:
 		case ENOSPC:
-		case EWOULDBLOCK:
 			batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 			break;
+		case EWOULDBLOCK:
+			goto lockfail;
 		default:
 			batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		}
 		return -1;
 	}
 
-	if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
-		close(fd);
-		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
-		return -1;
-	}
+	if (flock(fd, LOCK_EX|LOCK_NB) == -1)
+		goto lockfail;
 
 	return fd;
+
+lockfail:
+	if (fd != -1)
+		close(fd);
+
+	batchp->message.status |= S_MESSAGE_TEMPFAILURE|S_MESSAGE_LOCKFAILURE;
+	return -1;
 }
 
 int
