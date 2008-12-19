@@ -1,3 +1,83 @@
+2008-12-14 17:40  millert
+
+	* TODO: sync
+
+2008-12-09 18:48  millert
+
+	* auth/pam.c: Return PAM_AUTH_ERR instead of PAM_CONV_ERR if user
+	  enters ^C at the password prompt.
+
+2008-12-09 16:13  millert
+
+	* configure.in, configure: Don't try to build sudo_noexec.so on
+	  HP-UX with the bundled compiler as it cannot generate shared
+	  objects.
+
+2008-12-09 15:55  millert
+
+	* glob.c, lbuf.c, tgetpass.c, emul/charclass.h: K&R compilation
+	  fixes
+
+2008-12-09 08:49  millert
+
+	* parse.c: Use tq_foreach_fwd when checking pseudo-commands to make
+	  it clear that we are not short-circuiting on last match.  When
+	  pwcheck is 'all', initialize nopass to TRUE and override it with
+	  the first non-TRUE entry.
+
+2008-12-08 10:02  millert
+
+	* parse.c: Do not short circuit pseudo commands when we get a match
+	  since, depending on the settings, we may need to examine all
+	  commands for tags.
+
+2008-12-03 15:58  millert
+
+	* sudoers.cat, sudoers.man.in: regen
+
+2008-12-03 15:57  millert
+
+	* sudoers.pod: hostnames may also contain wildcards
+
+2008-12-03 15:40  millert
+
+	* Makefile.in: remove stamp-* files and linux core files in clean
+	  target
+
+2008-12-02 12:30  millert
+
+	* config.h.in, configure, configure.in, auth/sudo_auth.h: Use
+	  HAVE_SIA_SES_INIT instead of HAVE_SIA for Digital UNIX
+
+2008-11-26 15:10  millert
+
+	* configure, configure.in: correctly enable SIA on Digital UNIX
+
+2008-11-25 20:06  millert
+
+	* TODO: checkpoint
+
+2008-11-25 20:05  millert
+
+	* ChangeLog: sync
+
+2008-11-25 12:01  millert
+
+	* check.c, sudo.h, tgetpass.c: Even if neither stdin nor stdout are
+	  ttys we may still have /dev/tty available to us.
+
+2008-11-24 10:09  millert
+
+	* sudoers.cat, sudoers.man.in: regen
+
+2008-11-24 10:08  millert
+
+	* sudoers.pod: fix typos; Markus Lude
+
+2008-11-24 07:08  millert
+
+	* ChangeLog: sync
+
 2008-11-23 19:42  millert
 
 	* toke.c: regen
@@ -4426,7 +4506,7 @@
 2004-10-01 10:58  millert
 
 	* sample.pam, sample.sudoers, sample.syslog.conf, sudoers: Add
-	  $Sudo: ChangeLog,v 1.17 2008/11/24 12:08:55 millert Exp $ tags.
+	  $Sudo: ChangeLog,v 1.19 2008/12/19 17:40:39 millert Exp $ tags.
 
 2004-10-01 10:47  millert
 

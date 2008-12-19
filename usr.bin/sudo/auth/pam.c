@@ -73,7 +73,7 @@
 #endif
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: pam.c,v 1.65 2008/11/22 18:17:44 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: pam.c,v 1.66 2008/12/09 23:48:19 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
@@ -259,7 +259,7 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
     int n, flags, std_prompt;
 
     if ((*response = malloc(num_msg * sizeof(struct pam_response))) == NULL)
-	return(PAM_CONV_ERR);
+	return(PAM_SYSTEM_ERR);
     zero_bytes(*response, num_msg * sizeof(struct pam_response));
 
     for (pr = *response, pm = *msg, n = num_msg; n--; pr++, pm++) {
@@ -331,5 +331,5 @@ err:
     zero_bytes(*response, num_msg * sizeof(struct pam_response));
     free(*response);
     *response = NULL;
-    return(PAM_CONV_ERR);
+    return(gotintr ? PAM_AUTH_ERR : PAM_CONV_ERR);
 }
