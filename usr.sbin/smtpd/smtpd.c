@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.16 2008/12/19 00:39:05 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.17 2008/12/19 00:44:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -811,8 +811,11 @@ parent_open_mailbox(struct batch *batchp, struct path *path)
 		return -1;
 	}
 
-	if (flock(fd, LOCK_EX|LOCK_NB) == -1)
-		goto lockfail;
+	if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
+		if (errno == EWOULDBLOCK)
+			goto lockfail;
+		fatal("flock");
+	}
 
 	fchown(fd, pw->pw_uid, 0);
 
@@ -857,12 +860,6 @@ parent_open_maildir(struct batch *batchp, struct path *path)
 
 	fd = open(pathname, mode, 0600);
 	if (fd == -1) {
-		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
-		return -1;
-	}
-
-	if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
-		close(fd);
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
@@ -1022,8 +1019,11 @@ parent_open_filename(struct batch *batchp, struct path *path)
 		return -1;
 	}
 
-	if (flock(fd, LOCK_EX|LOCK_NB) == -1)
-		goto lockfail;
+	if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
+		if (errno == EWOULDBLOCK)
+			goto lockfail;
+		fatal("flock");
+	}
 
 	return fd;
 
