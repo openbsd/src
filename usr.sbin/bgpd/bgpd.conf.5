@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.89 2008/10/02 12:39:25 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.90 2008/12/19 18:58:12 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 2 2008 $
+.Dd $Mdocdate: December 19 2008 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1048,6 +1048,7 @@ will be adjusted by adding or subtracting
 .Ar number ;
 otherwise it will be set to
 .Ar number .
+The default is 100.
 .Pp
 .It Ic med Ar number
 .It Ic metric Ar number
