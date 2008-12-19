@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.28 2008/12/08 11:34:55 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.29 2008/12/19 14:02:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -845,7 +845,7 @@ static struct oid if_mib[] = {
 	{ MIB(ifInNUcastPkts),		OID_TRD, mib_iftable },
 	{ MIB(ifInDiscards),		OID_TRD, mib_iftable },
 	{ MIB(ifInErrors),		OID_TRD, mib_iftable },
-	{ MIB(ifInUnknownErrors),	OID_TRD, mib_iftable },
+	{ MIB(ifInUnknownProtos),	OID_TRD, mib_iftable },
 	{ MIB(ifOutOctets),		OID_TRD, mib_iftable },
 	{ MIB(ifOutUcastPkts),		OID_TRD, mib_iftable },
 	{ MIB(ifOutNUcastPkts),		OID_TRD, mib_iftable },
@@ -992,7 +992,7 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 		break;
 	case 15:
-		ber = ber_add_integer(ber, 0);	/* unknown errors? */
+		ber = ber_add_integer(ber, (u_int32_t)kif->if_noproto);
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 		break;
 	case 16:
@@ -1016,7 +1016,7 @@ mib_iftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 			    kif->if_name, strerror(errno));
 			return (-1);
 		}
-		ber = ber_add_integer(ber, kif->if_noproto + ifq);
+		ber = ber_add_integer(ber, ifq);
 		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 		break;
 	case 20:

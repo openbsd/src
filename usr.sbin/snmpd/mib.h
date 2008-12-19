@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.17 2008/12/05 16:06:20 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.18 2008/12/19 14:02:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -257,7 +257,7 @@
 #define MIB_ifInNUcastPkts		MIB_ifEntry, 12
 #define MIB_ifInDiscards		MIB_ifEntry, 13
 #define MIB_ifInErrors			MIB_ifEntry, 14
-#define MIB_ifInUnknownErrors		MIB_ifEntry, 15
+#define MIB_ifInUnknownProtos		MIB_ifEntry, 15
 #define MIB_ifOutOctets			MIB_ifEntry, 16
 #define MIB_ifOutUcastPkts		MIB_ifEntry, 17
 #define MIB_ifOutNUcastPkts		MIB_ifEntry, 18
@@ -587,7 +587,7 @@
 	{ MIBDECL(ifInNUcastPkts) },			\
 	{ MIBDECL(ifInDiscards) },			\
 	{ MIBDECL(ifInErrors) },			\
-	{ MIBDECL(ifInUnknownErrors) },			\
+	{ MIBDECL(ifInUnknownProtos) },			\
 	{ MIBDECL(ifOutOctets) },			\
 	{ MIBDECL(ifOutUcastPkts) },			\
 	{ MIBDECL(ifOutNUcastPkts) },			\
