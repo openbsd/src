@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.2 2008/12/18 23:57:17 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.3 2008/12/19 12:09:00 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -66,7 +66,7 @@ safe_fclose(FILE *fp)
 
 	if (fflush(fp)) {
 		if (errno == ENOSPC)
-		return 0;
+			return 0;
 		fatal("safe_fclose: fflush");
 	}
 
