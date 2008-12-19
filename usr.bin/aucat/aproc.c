@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.26 2008/12/07 17:10:41 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.27 2008/12/19 08:01:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -831,14 +831,16 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 {
 	unsigned inch;
 	short *idata;
-	unsigned ipos, oblksz;
+	unsigned oblksz;
 	unsigned ifr;
 	unsigned onch;
+	int s1, s2, diff;
 	short *odata;
-	unsigned opos, iblksz;
+	unsigned iblksz;
 	unsigned ofr;
 	unsigned c;
-	short *ctxbuf, *ctx;
+	short *ctxbuf, *ctx;	
+	unsigned ctx_start;
 	unsigned icount, ocount;
 
 	/*
@@ -857,45 +859,47 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 	 * unnecessary indirections; this also allows the compiler to
 	 * order local variables more "cache-friendly".
 	 */
+	diff = p->u.resamp.diff;
 	inch = ibuf->cmax - ibuf->cmin + 1;
-	ipos = p->u.resamp.ipos;
 	iblksz = p->u.resamp.iblksz;
 	onch = obuf->cmax - obuf->cmin + 1;
-	opos = p->u.resamp.opos;
 	oblksz = p->u.resamp.oblksz;
 	ctxbuf = p->u.resamp.ctx;
+	ctx_start = p->u.resamp.ctx_start;
 
 	/*
 	 * Start conversion.
 	 */
 	DPRINTFN(4, "resamp_bcopy: ifr=%d ofr=%d\n", ifr, ofr);
 	for (;;) {
-		if ((int)(ipos - opos) > 0) {
+		if (diff < 0) {
+			if (ifr == 0)
+				break;
+			ctx_start ^= 1;
+			ctx = ctxbuf + ctx_start;
+			for (c = inch; c > 0; c--) {
+				*ctx = *idata;
+				idata++;
+				ctx += RESAMP_NCTX;
+			}
+			diff += oblksz;
+			ifr--;
+		} else {
 			if (ofr == 0)
 				break;
 			ctx = ctxbuf;
 			for (c = onch; c > 0; c--) {
-				*odata = *ctx;
-				odata++;
-				ctx++;
+				s1 = ctxbuf[ctx_start];
+				s2 = ctxbuf[ctx_start ^ 1];
+				ctx += RESAMP_NCTX;
+				*odata++ = s1 + (s2 - s1) * diff / (int)oblksz;
 			}
-			opos += iblksz;
+			diff -= iblksz;
 			ofr--;
-		} else {
-			if (ifr == 0)
-				break;
-			ctx = ctxbuf;
-			for (c = inch; c > 0; c--) {
-				*ctx = *idata;
-				idata++;
-				ctx++;
-			}
-			ipos += oblksz;
-			ifr--;
 		}
 	}
-	p->u.resamp.ipos = ipos;
-	p->u.resamp.opos = opos;
+	p->u.resamp.diff = diff;
+	p->u.resamp.ctx_start = ctx_start;
 	DPRINTFN(4, "resamp_bcopy: done, ifr=%d ofr=%d\n", ifr, ofr);
 
 	/*
@@ -1009,11 +1013,11 @@ resamp_new(char *name, unsigned iblksz, unsigned oblksz)
 	p = aproc_new(&resamp_ops, name);
 	p->u.resamp.iblksz = iblksz;
 	p->u.resamp.oblksz = oblksz;
-	p->u.resamp.ipos = 0;
-	p->u.resamp.opos = 0;
+	p->u.resamp.diff = 0;
 	p->u.resamp.idelta = 0;
 	p->u.resamp.odelta = 0;
-	for (i = 0; i < NCHAN_MAX; i++)
+	p->u.resamp.ctx_start = 0;
+	for (i = 0; i < NCHAN_MAX * RESAMP_NCTX; i++)
 		p->u.resamp.ctx[i] = 0;
 #ifdef DEBUG
 	if (debug_level > 0)

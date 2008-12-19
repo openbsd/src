@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.13 2008/12/07 17:10:41 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.14 2008/12/19 08:01:06 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -142,9 +142,11 @@ struct aproc {
 			int maxlat;		/* max latency allowed*/
 		} sub;
 		struct {
-			short ctx[NCHAN_MAX];
+#define RESAMP_NCTX	2
+			unsigned ctx_start;
+			short ctx[NCHAN_MAX * RESAMP_NCTX];
 			unsigned iblksz, oblksz;
-			int ipos, opos;
+			int diff;
 			int idelta, odelta;	/* reminder of conv_[io]pos */
 		} resamp;
 		struct {
