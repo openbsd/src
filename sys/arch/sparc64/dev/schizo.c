@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.56 2008/12/16 22:27:34 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.57 2008/12/19 21:03:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -105,7 +105,9 @@ void *schizo_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
 int schizo_dmamap_create(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, int,
     bus_size_t, bus_size_t, int, bus_dmamap_t *);
 
+#ifdef DDB
 void schizo_xir(void *, int);
+#endif
 
 int
 schizo_match(struct device *parent, void *match, void *aux)
