@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.111 2008/12/14 22:31:46 kettenis Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.112 2008/12/20 22:27:38 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -170,8 +170,8 @@ m_reclaim(void *arg, int flags)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_drain)
 				(*pr->pr_drain)();
-	splx(s);
 	mbstat.m_drain++;
+	splx(s);
 }
 
 /*
@@ -185,10 +185,11 @@ m_get(int nowait, int type)
 
 	s = splvm();
 	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK : 0);
+	if (m)
+		mbstat.m_mtypes[type]++;
 	splx(s);
 	if (m) {
 		m->m_type = type;
-		mbstat.m_mtypes[type]++;
 		m->m_next = (struct mbuf *)NULL;
 		m->m_nextpkt = (struct mbuf *)NULL;
 		m->m_data = m->m_dat;
@@ -209,10 +210,11 @@ m_gethdr(int nowait, int type)
 
 	s = splvm();
 	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK : 0);
+	if (m)
+		mbstat.m_mtypes[type]++;
 	splx(s);
 	if (m) {
 		m->m_type = type;
-		mbstat.m_mtypes[type]++;
 
 		/* keep in sync with m_inithdr */
 		m->m_next = (struct mbuf *)NULL;
