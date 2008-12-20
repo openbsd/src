@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.74 2008/12/16 05:25:55 guenther Exp $ */
+/* $OpenBSD: user.c,v 1.75 2008/12/20 09:40:47 jmc Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1618,7 +1618,7 @@ usermgmt_usage(const char *prog)
 		(void) fprintf(stderr, "usage: %s [-prv] user\n", prog);
 #ifdef EXTENSIONS
 	} else if (strcmp(prog, "userinfo") == 0) {
-		(void) fprintf(stderr, "usage: %s [-ev] user\n", prog);
+		(void) fprintf(stderr, "usage: %s [-e] user\n", prog);
 #endif
 	} else if (strcmp(prog, "groupadd") == 0) {
 		(void) fprintf(stderr, "usage: %s [-ov] [-g gid] group\n",
@@ -1637,7 +1637,7 @@ usermgmt_usage(const char *prog)
 		    prog);
 #ifdef EXTENSIONS
 	} else if (strcmp(prog, "groupinfo") == 0) {
-		(void) fprintf(stderr, "usage: %s [-ev] group\n", prog);
+		(void) fprintf(stderr, "usage: %s [-e] group\n", prog);
 #endif
 	} else {
 		(void) fprintf(stderr, "This program must be called as {user,group}{add,del,mod,info},\n%s is not an understood name.\n", prog);
