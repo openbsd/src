@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.3 2008/12/13 23:19:34 jacekm Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.4 2008/12/20 00:18:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -162,6 +162,8 @@ mfa_dispatch_smtp(int sig, short event, void *p)
 			ss.code = 250;
 			ss.u.path = mr->path;
 			ss.ss = mr->ss;
+
+			ss.flags = mr->flags;
 
 			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_RCPT, 0,
 			    0, -1, &ss, sizeof(ss));

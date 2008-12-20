@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.32 2008/12/19 00:39:05 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.33 2008/12/20 00:18:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -71,6 +71,7 @@
 
 #define F_STARTTLS		 0x01
 #define F_SSMTP			 0x02
+#define F_AUTH			 0x04
 #define F_SSL			(F_SSMTP|F_STARTTLS)
 
 
@@ -369,23 +370,6 @@ struct alias {
 };
 TAILQ_HEAD(aliaseslist, alias);
 
-struct submit_status {
-	u_int64_t			 id;
-	int				 code;
-	union submit_path {
-		struct path		 path;
-		char			 msgid[MAXPATHLEN];
-		char			 errormsg[MAX_LINE_SIZE];
-	}				 u;
-	struct sockaddr_storage		 ss;
-};
-
-struct message_recipient {
-	u_int64_t			 id;
-	struct sockaddr_storage		 ss;
-	struct path			 path;
-};
-
 enum message_type {
 	T_MDA_MESSAGE		= 0x1,
 	T_MTA_MESSAGE		= 0x2,
@@ -407,7 +391,8 @@ enum message_flags {
 	F_MESSAGE_RESOLVED	= 0x1,
 	F_MESSAGE_EXPIRED	= 0x2,
 	F_MESSAGE_SCHEDULED	= 0x4,
-	F_MESSAGE_PROCESSING	= 0x8
+	F_MESSAGE_PROCESSING	= 0x8,
+	F_MESSAGE_AUTHENTICATED	= 0x10
 };
 
 struct message {
@@ -614,6 +599,26 @@ struct smtpd {
 	SPLAY_HEAD(batchtree, batch)		batch_queue;
 	SPLAY_HEAD(mdaproctree, mdaproc)	mdaproc_queue;
 };
+
+struct submit_status {
+	u_int64_t			 id;
+	int				 code;
+	union submit_path {
+		struct path		 path;
+		char			 msgid[MAXPATHLEN];
+		char			 errormsg[MAX_LINE_SIZE];
+	}				 u;
+	enum message_flags		 flags;
+	struct sockaddr_storage		 ss;
+};
+
+struct message_recipient {
+	u_int64_t			 id;
+	struct sockaddr_storage		 ss;
+	enum message_flags		 flags;
+	struct path			 path;
+};
+
 
 /* aliases.c */
 int aliases_exist(struct smtpd *, char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2008/12/18 22:13:57 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.20 2008/12/20 00:18:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -117,11 +117,11 @@ typedef struct {
 %token	DNS DB TFILE EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
-%token	ARROW
+%token	ARROW ENABLE AUTH
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
-%type	<v.number>	quantifier decision port ssmtp from
+%type	<v.number>	quantifier decision port ssmtp from auth
 %type	<v.cond>	condition
 %type	<v.tv>		interval
 %type	<v.object>	mapref
@@ -225,10 +225,14 @@ ssmtp		: SSMTP				{ $$ = 1; }
 		| /* empty */			{ $$ = 0; }
 		;
 
+auth		: ENABLE AUTH  			{ $$ = 1; }
+		| /* empty */			{ $$ = 0; }
+		;
+
 main		: QUEUE INTERVAL interval	{
 			conf->sc_qintval = $3;
 		}
-		| ssmtp LISTEN ON STRING port certname {
+		| ssmtp LISTEN ON STRING port certname auth {
 			char		*cert;
 			u_int8_t	 flags;
 
@@ -241,9 +245,13 @@ main		: QUEUE INTERVAL interval	{
 			cert = ($6 != NULL) ? $6 : $4;
 
 			flags = 0;
+
+			if ($7)
+				flags |= F_AUTH;
+
 			if (ssl_load_certfile(conf, cert) < 0) {
 				log_warnx("warning: could not load cert: %s, "
-				    "no SSL/TLS support", cert);
+				    "no SSL/TLS/AUTH support", cert);
 				if ($1 || $6 != NULL) {
 					yyerror("cannot load certificate: %s",
 					    cert);
@@ -254,9 +262,9 @@ main		: QUEUE INTERVAL interval	{
 			}
 			else {
 				if ($1)
-					flags = F_SSMTP;
+					flags |= F_SSMTP;
 				else
-					flags = F_STARTTLS;
+					flags |= F_STARTTLS;
 			}
 
 			if (! interface($4, &conf->sc_listeners,
@@ -784,12 +792,14 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "accept",		ACCEPT },
 		{ "all",		ALL },
+		{ "auth",		AUTH },
 		{ "certificate",	CERTIFICATE },
 		{ "config",		CONFIG },
 		{ "db",			DB },
 		{ "deliver",		DELIVER },
 		{ "dns",		DNS },
 		{ "domain",		DOMAIN },
+		{ "enable",		ENABLE },
 		{ "external",		EXTERNAL },
 		{ "file",		TFILE },
 		{ "for",		FOR },

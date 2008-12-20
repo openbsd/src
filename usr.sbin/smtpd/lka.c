@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.7 2008/12/13 23:19:33 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.8 2008/12/20 00:18:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -188,6 +188,10 @@ lka_dispatch_mfa(int sig, short event, void *p)
 
 			if (lka_verify_rcpt(env, &ss->u.path, &ss->ss))
 				ss->code = 250;
+			else if (ss->flags & F_MESSAGE_AUTHENTICATED) {
+				log_debug("accepting for authenticated user");
+				ss->code = 250;
+			}
 
 			imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0, -1,
 			    ss, sizeof(*ss));

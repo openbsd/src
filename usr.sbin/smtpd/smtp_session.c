@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.31 2008/12/18 23:57:17 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.32 2008/12/20 00:18:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -296,10 +296,9 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 		session_respond(s, "250-STARTTLS");
 
 	/* only advertise auth if session is secure */
-	/*
-	if (s->s_flags & F_SECURE)
+	if ((s->s_l->flags & F_AUTH) && (s->s_flags & F_SECURE))
 		session_respond(s, "250-AUTH %s", "PLAIN");
-	 */
+
 	session_respond(s, "250 HELP");
 
 	return 1;
@@ -391,6 +390,12 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 	mr.id = s->s_msg.id;
 	s->s_state = S_RCPTREQUEST;
 	mr.ss = s->s_ss;
+
+
+	if (s->s_flags & F_AUTHENTICATED) {
+		s->s_msg.flags |= F_MESSAGE_AUTHENTICATED;
+		mr.flags |= F_MESSAGE_AUTHENTICATED;
+	}
 
 	imsg_compose(s->s_env->sc_ibufs[PROC_MFA], IMSG_MFA_RCPT,
 	    0, 0, -1, &mr, sizeof(mr));
@@ -494,15 +499,15 @@ session_command(struct session *s, char *cmd, char *args)
 	}
 
 	/* RFC 4954 - AUTH */
-	/*
-	for (i = 0; i < (int)(sizeof(rfc4954_cmdtab) / sizeof(struct session_cmd)); ++i)
-		if (strcasecmp(rfc4954_cmdtab[i].name, cmd) == 0)
-			break;
-	if (i < (int)(sizeof(rfc4954_cmdtab) / sizeof(struct session_cmd))) {
-		if (rfc4954_cmdtab[i].func(s, args))
-			return;
+	if ((s->s_l->flags & F_AUTH) && (s->s_flags & F_SECURE)) {
+		for (i = 0; i < (int)(sizeof(rfc4954_cmdtab) / sizeof(struct session_cmd)); ++i)
+			if (strcasecmp(rfc4954_cmdtab[i].name, cmd) == 0)
+				break;
+		if (i < (int)(sizeof(rfc4954_cmdtab) / sizeof(struct session_cmd))) {
+			if (rfc4954_cmdtab[i].func(s, args))
+				return;
+		}
 	}
-	*/
 
 rfc5321:
 	/* RFC 5321 - SMTP */
