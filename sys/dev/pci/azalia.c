@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.83 2008/12/21 20:47:55 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.84 2008/12/21 21:25:01 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1293,6 +1293,8 @@ azalia_codec_init(codec_t *this)
 		if (err)
 			return err;
 #endif
+		if (this->init_widget != NULL)
+			this->init_widget(this, &this->w[i], this->w[i].nid);
 	}
 	/* Find widgets without any enabled inputs and disable them.
 	 * Must be done after all widgets are initialized and
@@ -1890,8 +1892,6 @@ azalia_widget_label_widgets(codec_t *codec)
 				    wtypes[w->type]);
 			break;
 		}
-		if (codec->init_widget != NULL)
-			codec->init_widget(codec, w, w->nid);
 	}
 
 	/* Rename mixers and selectors that connect to only one other
