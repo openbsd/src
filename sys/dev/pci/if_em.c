@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.204 2008/12/21 23:30:26 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.205 2008/12/21 23:32:51 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1321,13 +1321,14 @@ em_set_multi(struct em_softc *sc)
 {
 	u_int32_t reg_rctl = 0;
 	u_int8_t  mta[MAX_NUM_MULTICAST_ADDRESSES * ETH_LENGTH_OF_ADDRESS];
-	int mcnt = 0;
 	struct ifnet *ifp = &sc->interface_data.ac_if;
 	struct arpcom *ac = &sc->interface_data;
 	struct ether_multi *enm;
 	struct ether_multistep step;
+	int i = 0;
 
 	IOCTL_DEBUGOUT("em_set_multi: begin");
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (sc->hw.mac_type == em_82542_rev2_0) {
 		reg_rctl = E1000_READ_REG(&sc->hw, RCTL);
@@ -1337,26 +1338,26 @@ em_set_multi(struct em_softc *sc)
 		E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 		msec_delay(5);
 	}
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			mcnt = MAX_NUM_MULTICAST_ADDRESSES;
-		}
-		if (mcnt == MAX_NUM_MULTICAST_ADDRESSES)
-			break;
-		bcopy(enm->enm_addrlo, &mta[mcnt*ETH_LENGTH_OF_ADDRESS],
-		      ETH_LENGTH_OF_ADDRESS);
-		mcnt++;
-		ETHER_NEXT_MULTI(step, enm);
-	}
 
-	if (mcnt >= MAX_NUM_MULTICAST_ADDRESSES) {
-		reg_rctl = E1000_READ_REG(&sc->hw, RCTL);
+	reg_rctl = E1000_READ_REG(&sc->hw, RCTL);
+	if (ac->ac_multirangecnt > 0 ||
+	    ac->ac_multicnt > MAX_NUM_MULTICAST_ADDRESSES) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		reg_rctl |= E1000_RCTL_MPE;
-		E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
-	} else
-		em_mc_addr_list_update(&sc->hw, mta, mcnt, 0, 1);
+	} else {
+		ETHER_FIRST_MULTI(step, ac, enm);
+
+		while (enm != NULL) {
+			bcopy(enm->enm_addrlo, mta + i, ETH_LENGTH_OF_ADDRESS);
+			i += ETH_LENGTH_OF_ADDRESS;
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+
+		em_mc_addr_list_update(&sc->hw, mta, ac->ac_multicnt, 0, 1);
+		reg_rctl &= ~E1000_RCTL_MPE;
+	}
+	E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);
 
 	if (sc->hw.mac_type == em_82542_rev2_0) {
 		reg_rctl = E1000_READ_REG(&sc->hw, RCTL);
