@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.10 2008/12/21 02:18:46 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.11 2008/12/21 18:51:08 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -46,6 +46,7 @@ void		smtp_setup_events(struct smtpd *);
 void		smtp_disable_events(struct smtpd *);
 void		smtp_accept(int, short, void *);
 void		session_timeout(int, short, void *);
+void		session_auth_pickup(struct session *, char *, size_t);
 
 void
 smtp_sig_handler(int sig, short event, void *p)
@@ -178,7 +179,7 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			if (reply->value)
 				s->s_flags |= F_AUTHENTICATED;
 
-			session_auth_pickup(s, NULL);
+			session_auth_pickup(s, NULL, 0);
 
 			break;
 		}
