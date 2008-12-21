@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.50 2008/08/20 19:00:01 miod Exp $
+#	$OpenBSD: GENERIC,v 1.51 2008/12/21 21:38:16 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -37,7 +37,8 @@ option		VXT		# VXT2000 and VXT2000+
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
 # 4.3BSD Reno programs and get Ultrix compatibility instead.
 # (They cannot coexist).
-option		COMPAT_VAX1K	# Must be present to run old binaries.
+option		COMPAT_VAX1K	# Must be present to run old (< 3.1) binaries.
+option		COMPAT_35	# needed for COMPAT_VAX1K
 #option		COMPAT_ULTRIX
 
 option		INSN_EMULATE	# CPU lacks some hardware instructions.
