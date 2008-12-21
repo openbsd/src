@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.7 2008/12/17 10:00:50 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.8 2008/12/21 10:03:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -35,7 +35,7 @@ struct aucat_hdl {
 	size_t wtodo, rtodo;		/* bytes to complete the packet */
 #define STATE_IDLE	0		/* nothing to do */
 #define STATE_MSG	1		/* message being transferred */
-#define STATE_DATA	2		/* data being transfered */
+#define STATE_DATA	2		/* data being transferred */
 	unsigned rstate, wstate;	/* one of above */
 	unsigned rbpf, wbpf;		/* read and write bytes-per-frame */
 	int maxwrite;			/* latency constraint */
@@ -187,7 +187,7 @@ aucat_runmsg(struct aucat_hdl *hdl)
 	case AMSG_DATA:
 		if (hdl->rmsg.u.data.size == 0 ||
 		    hdl->rmsg.u.data.size % hdl->rbpf) {
-			DPRINTF(&hdl->sa, "aucat_read: bad data message\n");
+			DPRINTF(&hdl->sa, "aucat_runmsg: bad data message\n");
 			hdl->sa.eof = 1;
 			return 0;
 		}
@@ -206,7 +206,7 @@ aucat_runmsg(struct aucat_hdl *hdl)
 		hdl->rtodo = 0xdeadbeef;
 		break;
 	default:
-		DPRINTF(&hdl->sa, "aucat_read: unknown mesg\n");
+		DPRINTF(&hdl->sa, "aucat_runmsg: unknown message\n");
 		hdl->sa.eof = 1;
 		return 0;
 	}

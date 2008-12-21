@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.10 2008/12/17 10:00:50 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.11 2008/12/21 10:03:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -242,7 +242,7 @@ sio_stop(struct sio_hdl *hdl)
 		return 0;
 #ifdef DEBUG
 	DPRINTF(hdl,
-	    "libsio: polls: %llu, written = %llu, read: %llu\n",
+	    "libsndio: polls: %llu, written = %llu, read: %llu\n",
 	    hdl->pollcnt, hdl->wcnt, hdl->rcnt);
 #endif
 	hdl->started = 0;

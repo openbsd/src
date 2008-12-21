@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.9 2008/12/17 10:00:50 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.10 2008/12/21 10:03:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -156,7 +156,7 @@ sun_enctoinfo(struct sun_hdl *hdl, struct audio_prinfo *ai, struct sio_par *par)
 
 /*
  * try to set the device to the given parameters and check that the
- * device can use them; retrun 1 on success, 0 on failure or error
+ * device can use them; return 1 on success, 0 on failure or error
  */
 int
 sun_tryinfo(struct sun_hdl *hdl, struct sio_enc *enc, 
@@ -312,7 +312,7 @@ sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 	 *
 	 * rates are not independent from other parameters (eg. on
 	 * uaudio devices), so certain rates may not be allowed with
-	 * certain encordings. We have to check rates for all encodings
+	 * certain encodings. We have to check rates for all encodings
 	 */
 	memcpy(&cap->rate, rates, NRATES * sizeof(unsigned));
 	for (j = 0; j < nenc; j++) {
@@ -360,7 +360,8 @@ sun_initvol(struct sun_hdl *hdl)
 	snprintf(path, PATH_MAX, "/dev/mixer%d", sb.st_rdev & 0xf);
 	fd = open(path, O_RDWR);	
 	if (fd < 0) {
-		DPRINTF(&hdl->sa, "%s: couldn't open mixer\n", path);
+		DPRINTF(&hdl->sa, "sun_initvol: %s: couldn't open mixer\n",
+			path);
 		return;
 	}
 
@@ -373,7 +374,7 @@ sun_initvol(struct sun_hdl *hdl)
 		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &cl) < 0)
 			continue;
 		/*
-		 * find prefered input gain and output gain
+		 * find preferred input gain and output gain
 		 */
 		for (i = 0, p = sun_vols; p->cls != NULL; i++, p++) {
 			if (strcmp(p->cls, cl.label.name) != 0 ||
@@ -393,7 +394,8 @@ sun_initvol(struct sun_hdl *hdl)
 		m.type = AUDIO_MIXER_VALUE;
 		m.un.value.num_channels = 1;
 		if (ioctl(hdl->mix_fd, AUDIO_MIXER_READ, &m) < 0) {
-			DPRINTF(&hdl->sa, "sun_getvol: %d: failed to get volume\n", m.dev);
+			DPRINTF(&hdl->sa,
+			    "sun_initvol: %d: failed to get volume\n", m.dev);
 			hdl->sa.eof = 1;
 			return;
 		}
@@ -476,7 +478,8 @@ sio_open_sun(char *path, unsigned mode, int nbio)
 	if (mode == (SIO_PLAY | SIO_REC)) {
 		fullduplex = 1;
 		if (ioctl(fd, AUDIO_SETFD, &fullduplex) < 0) {
-			DPRINTF(&hdl->sa, "%s: can't set full-duplex\n", path);
+			DPRINTF(&hdl->sa,
+			    "sio_open_sun: %s: can't set full-duplex\n", path);
 			goto bad_close;
 		}
 	}
@@ -579,7 +582,7 @@ sun_stop(struct sio_hdl *sh)
 	int mode;
 
 	if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
-		DPERROR(&hdl->sa, "sun_start: setinfo1");
+		DPERROR(&hdl->sa, "sun_stop: getinfo");
 		hdl->sa.eof = 1;
 		return 0;
 	}
@@ -732,7 +735,7 @@ sun_getpar(struct sio_hdl *sh, struct sio_par *par)
 	struct audio_info aui;	
 
 	if (ioctl(hdl->fd, AUDIO_GETINFO, &aui) < 0) {
-		DPERROR(&hdl->sa, "sun_getpar: setinfo");
+		DPERROR(&hdl->sa, "sun_getpar: getinfo");
 		hdl->sa.eof = 1;
 		return 0;
 	}
@@ -818,7 +821,7 @@ sun_autostart(struct sun_hdl *hdl)
 	while (poll(&pfd, 1, 0) < 0) {
 		if (errno == EINTR)
 			continue;
-		DPERROR(&hdl->sa, "sun_fill: poll");
+		DPERROR(&hdl->sa, "sun_autostart: poll");
 		hdl->sa.eof = 1;
 		return 0;
 	}
@@ -830,7 +833,7 @@ sun_autostart(struct sun_hdl *hdl)
 		if (hdl->sa.mode & SIO_REC)
 			aui.record.pause = 0;
 		if (ioctl(hdl->fd, AUDIO_SETINFO, &aui) < 0) {
-			DPERROR(&hdl->sa, "sun_start: setinfo");
+			DPERROR(&hdl->sa, "sun_autostart: setinfo");
 			hdl->sa.eof = 1;
 			return 0;
 		}
@@ -959,4 +962,3 @@ sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 		revents |= POLLOUT;
 	return revents;
 }
-

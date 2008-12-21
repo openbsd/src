@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio_priv.h,v 1.3 2008/12/17 10:00:50 ratchov Exp $	*/
+/*	$OpenBSD: sndio_priv.h,v 1.4 2008/12/21 10:03:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -14,8 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef LIBSIO_PRIV_H
-#define LIBSIO_PRIV_H
+#ifndef SNDIO_PRIV_H
+#define SNDIO_PRIV_H
 
 #include <sys/param.h>
 #include "sndio.h"
@@ -83,4 +83,4 @@ void sio_onvol_cb(struct sio_hdl *, unsigned);
 #define DPERROR(hdl,s) do {} while(0)
 #endif
 
-#endif /* !defined(LIBSIO_PRIV_H) */
+#endif /* !defined(SNDIO_PRIV_H) */
