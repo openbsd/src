@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.79 2008/11/30 20:06:41 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.80 2008/12/21 20:17:16 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -243,6 +243,7 @@ int	azalia_widget_init_audio(widget_t *, const codec_t *);
 int	azalia_widget_init_pin(widget_t *, const codec_t *);
 int	azalia_widget_init_connection(widget_t *, const codec_t *);
 int	azalia_widget_check_conn(codec_t *, int, int);
+int	azalia_widget_sole_conn(codec_t *, nid_t);
 #ifdef AZALIA_DEBUG
 int	azalia_widget_print_audio(const widget_t *, const char *);
 int	azalia_widget_print_pin(const widget_t *);
@@ -1703,6 +1704,42 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 			this->outamp_cap = codec->w[codec->audiofunc].outamp_cap;
 	}
 	return 0;
+}
+
+int
+azalia_widget_sole_conn(codec_t *this, nid_t nid)
+{
+	int i, j, target;
+
+	/* connected to ADC */
+	for (i = 0; i < this->adcs.ngroups; i++) {
+		for (j = 0; j < this->adcs.groups[i].nconv; j++) {
+			target = this->adcs.groups[i].conv[j];
+			if (this->w[target].nconnections == 1 &&
+			    this->w[target].connections[0] == nid) {
+				return target;
+			}
+		}
+	}
+	/* connected to DAC */
+	for (i = 0; i < this->dacs.ngroups; i++) {
+		for (j = 0; j < this->dacs.groups[i].nconv; j++) {
+			target = this->dacs.groups[i].conv[j];
+			if (this->w[target].nconnections == 1 &&
+			    this->w[target].connections[0] == nid) {
+				return target;
+			}
+		}
+	}
+	/* connected to pin complex */
+	FOR_EACH_WIDGET(this, i) {
+		if (this->w[i].type == COP_AWTYPE_PIN_COMPLEX &&
+		    this->w[i].nconnections == 1 &&
+		    this->w[i].connections[0] == nid) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 int
