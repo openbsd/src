@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.80 2008/12/21 20:21:24 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.81 2008/12/21 20:44:04 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -460,9 +460,6 @@ azalia_generic_mixer_init(codec_t *this)
 	mixer_item_t *m;
 	int err, i, j, k, l;
 
-	nid_t aconns[32];
-	int naconns;
-
 	this->maxmixers = 10;
 	this->nmixers = 0;
 	this->mixers = malloc(sizeof(mixer_item_t) * this->maxmixers,
@@ -514,7 +511,6 @@ azalia_generic_mixer_init(codec_t *this)
 	d = &m->devinfo; \
 	m->nid = i
 
-	naconns = 0;
 	FOR_EACH_WIDGET(this, i) {
 		const widget_t *w;
 
@@ -522,56 +518,19 @@ azalia_generic_mixer_init(codec_t *this)
 		if (!w->enable)
 			continue;
 
-		/* Widgets that are the sole input to an ADC should be in
-		 * AZ_CLASS_RECORD.
-		 */
-		if (w->type == COP_AWTYPE_AUDIO_INPUT &&
-		    this->adcs.ngroups > 0) {
-			const convgroupset_t *group;
-
-			group = &this->adcs;
-			k = 0;
-			for (j = 0; j < group->groups[group->cur].nconv; j++)
-				if (group->groups[group->cur].conv[j] == w->nid)
-					break;
-			if (j < group->groups[group->cur].nconv)
-				k = w->nconnections;
-			if (k == 1) {
-				k = azalia_nid_to_index(this,
-				    w->connections[0]);
-				if (k != -1) {
-					for (l = 0; l < naconns; l++)
-						if (aconns[l] == this->w[k].nid)
-							break;
-					if (l == naconns)
-						aconns[naconns++] =
-						    this->w[k].nid;
-				}
-			}
-		}
-
 		/* selector */
 		if (w->type != COP_AWTYPE_AUDIO_MIXER && w->nconnections >= 2) {
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s_source", w->name);
 			d->type = AUDIO_MIXER_ENUM;
-			switch (w->type) {
-			case COP_AWTYPE_AUDIO_INPUT:
-				d->mixer_class = AZ_CLASS_RECORD;
-				break;
-			case COP_AWTYPE_AUDIO_SELECTOR:
-				d->mixer_class = AZ_CLASS_INPUT;
-				break;
-			default:
-				d->mixer_class = AZ_CLASS_OUTPUT;
-				break;
-			}
-			for (j = 0; j < naconns; j++) {
-				if (aconns[j] == w->nid) {
-					d->mixer_class = AZ_CLASS_RECORD;
-					break;
-				}
+			if (w->mixer_class >= 0)
+				d->mixer_class = w->mixer_class;
+			else {
+				if (w->type == COP_AWTYPE_AUDIO_SELECTOR)
+					d->mixer_class = AZ_CLASS_INPUT;
+				else
+					d->mixer_class = AZ_CLASS_OUTPUT;
 			}
 			m->target = MI_TARGET_CONNLIST;
 			for (j = 0, k = 0; j < w->nconnections && k < 32; j++) {
@@ -595,12 +554,16 @@ azalia_generic_mixer_init(codec_t *this)
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s_mute", w->name);
 			d->type = AUDIO_MIXER_ENUM;
-			if (w->type == COP_AWTYPE_AUDIO_MIXER ||
-			    w->type == COP_AWTYPE_AUDIO_SELECTOR ||
-			    w->type == COP_AWTYPE_PIN_COMPLEX)
-				d->mixer_class = AZ_CLASS_OUTPUT;
-			else
-				d->mixer_class = AZ_CLASS_INPUT;
+			if (w->mixer_class >= 0)
+				d->mixer_class = w->mixer_class;
+			else {
+				if (w->type == COP_AWTYPE_AUDIO_MIXER ||
+				    w->type == COP_AWTYPE_AUDIO_SELECTOR ||
+				    w->type == COP_AWTYPE_PIN_COMPLEX)
+					d->mixer_class = AZ_CLASS_OUTPUT;
+				else
+					d->mixer_class = AZ_CLASS_INPUT;
+			}
 			m->target = MI_TARGET_OUTAMP;
 			d->un.e.num_mem = 2;
 			d->un.e.member[0].ord = 0;
@@ -619,12 +582,16 @@ azalia_generic_mixer_init(codec_t *this)
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s", w->name);
 			d->type = AUDIO_MIXER_VALUE;
-			if (w->type == COP_AWTYPE_AUDIO_MIXER ||
-			    w->type == COP_AWTYPE_AUDIO_SELECTOR ||
-			    w->type == COP_AWTYPE_PIN_COMPLEX)
-				d->mixer_class = AZ_CLASS_OUTPUT;
-			else
-				d->mixer_class = AZ_CLASS_INPUT;
+			if (w->mixer_class >= 0)
+				d->mixer_class = w->mixer_class;
+			else {
+				if (w->type == COP_AWTYPE_AUDIO_MIXER ||
+				    w->type == COP_AWTYPE_AUDIO_SELECTOR ||
+				    w->type == COP_AWTYPE_PIN_COMPLEX)
+					d->mixer_class = AZ_CLASS_OUTPUT;
+				else
+					d->mixer_class = AZ_CLASS_INPUT;
+			}
 			m->target = MI_TARGET_OUTAMP;
 			d->un.v.num_channels = WIDGET_CHANNELS(w);
 			d->un.v.units.name[0] = 0;
@@ -642,8 +609,8 @@ azalia_generic_mixer_init(codec_t *this)
 				snprintf(d->label.name, sizeof(d->label.name),
 				    "%s_mute", w->name);
 				d->type = AUDIO_MIXER_ENUM;
-				if (w->type == COP_AWTYPE_AUDIO_INPUT)
-					d->mixer_class = AZ_CLASS_RECORD;
+				if (w->mixer_class >= 0)
+					d->mixer_class = w->mixer_class;
 				else
 					d->mixer_class = AZ_CLASS_INPUT;
 				m->target = 0;
@@ -661,17 +628,10 @@ azalia_generic_mixer_init(codec_t *this)
 				    "%s_source", w->name);
 				m->target = MI_TARGET_MUTESET;
 				d->type = AUDIO_MIXER_SET;
-				if (w->type == COP_AWTYPE_AUDIO_INPUT)
-					d->mixer_class = AZ_CLASS_RECORD;
+				if (w->mixer_class >= 0)
+					d->mixer_class = w->mixer_class;
 				else
 					d->mixer_class = AZ_CLASS_INPUT;
-				for (j = 0; j < naconns; j++) {
-					if (aconns[j] == w->nid) {
-						d->mixer_class =
-						    AZ_CLASS_RECORD;
-						break;
-					}
-				}
 				for (j = 0, l = 0;
 				    j < w->nconnections && l < 32; j++) {
 					k = azalia_nid_to_index(this,
@@ -698,8 +658,8 @@ azalia_generic_mixer_init(codec_t *this)
 				snprintf(d->label.name, sizeof(d->label.name),
 				    "%s", w->name);
 				d->type = AUDIO_MIXER_VALUE;
-				if (w->type == COP_AWTYPE_AUDIO_INPUT)
-					d->mixer_class = AZ_CLASS_RECORD;
+				if (w->mixer_class >= 0)
+					d->mixer_class = w->mixer_class;
 				else
 					d->mixer_class = AZ_CLASS_INPUT;
 				m->target = 0;
@@ -719,17 +679,10 @@ azalia_generic_mixer_init(codec_t *this)
 					    sizeof(d->label.name), "%s_%s",
 					    w->name, this->w[k].name);
 					d->type = AUDIO_MIXER_VALUE;
-					if (w->type == COP_AWTYPE_AUDIO_INPUT)
-						d->mixer_class = AZ_CLASS_RECORD;
+					if (w->mixer_class >= 0)
+						d->mixer_class = w->mixer_class;
 					else
 						d->mixer_class = AZ_CLASS_INPUT;
-					for (k = 0; k < naconns; k++) {
-						if (aconns[k] == w->nid) {
-							d->mixer_class =
-							    AZ_CLASS_RECORD;
-							break;
-						}
-					}
 					m->target = j;
 					d->un.v.num_channels = WIDGET_CHANNELS(w);
 					d->un.v.units.name[0] = 0;

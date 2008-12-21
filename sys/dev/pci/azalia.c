@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.81 2008/12/21 20:32:46 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.82 2008/12/21 20:44:04 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1753,7 +1753,7 @@ azalia_widget_sole_conn(codec_t *this, nid_t nid)
 int
 azalia_widget_label_widgets(codec_t *codec)
 {
-	int i;
+	int i, j, found;
 	widget_t *w;
 
 	int types[16];
@@ -1764,7 +1764,9 @@ azalia_widget_label_widgets(codec_t *codec)
 
 	FOR_EACH_WIDGET(codec, i) {
 		w = &codec->w[i];
-		if (w->type == COP_AWTYPE_PIN_COMPLEX) {
+		w->mixer_class = -1;
+		switch (w->type) {
+		case COP_AWTYPE_PIN_COMPLEX:
 			pins[w->d.pin.device]++;
 			if (w->d.pin.device == CORB_CD_LINEIN) {
 				pins[CORB_CD_LINEOUT]++;
@@ -1784,7 +1786,101 @@ azalia_widget_label_widgets(codec_t *codec)
 					snprintf(w->name, sizeof(w->name), "%s",
 					    pin_devices[w->d.pin.device]);
 			}
-		} else {
+			break;
+		case COP_AWTYPE_AUDIO_OUTPUT:
+			found = 0;
+			if (codec->dacs.ngroups < 1) {
+				found = 1;
+				/* should not happen */
+				snprintf(w->name, sizeof(w->name), "u-dac%2.2x",
+				    w->nid);
+			}
+			for (j = 0; found == 0 &&
+			    j < codec->dacs.groups[0].nconv; j++) {
+				if (w->nid == codec->dacs.groups[0].conv[j]) {
+					found = 1;
+					if (j > 0)
+						snprintf(w->name, sizeof(w->name),
+						    "%s%d", wtypes[w->type],
+						    j + 1);
+					else
+						snprintf(w->name, sizeof(w->name),
+						    "%s", wtypes[w->type]);
+				}
+			}
+			if (found == 0 && codec->dacs.ngroups < 2) {
+				found = 1;
+				/* should not happen */
+				snprintf(w->name, sizeof(w->name), "u-dac%2.2x",
+				    w->nid);
+			}
+			for (j = 0; found == 0 &&
+			    j < codec->dacs.groups[1].nconv; j++) {
+				if (w->nid == codec->dacs.groups[1].conv[j]) {
+					found = 1;
+					if (j > 0)
+						snprintf(w->name, sizeof(w->name),
+						    "dig-%s%d", wtypes[w->type],
+						    j + 1);
+					else
+						snprintf(w->name, sizeof(w->name),
+						    "dig-%s", wtypes[w->type]);
+				}
+			}
+			if (found == 0) {
+				/* should not happen */
+				snprintf(w->name, sizeof(w->name), "u-dac%2.2x",
+				    w->nid);
+			}
+			break;
+		case COP_AWTYPE_AUDIO_INPUT:
+			w->mixer_class = AZ_CLASS_RECORD;
+			found = 0;
+			if (codec->adcs.ngroups < 1) {
+				found = 1;
+				/* should not happen */
+				snprintf(w->name, sizeof(w->name), "u-adc%2.2x",
+				    w->nid);
+			}
+			for (j = 0; found == 0 &&
+			    j < codec->adcs.groups[0].nconv; j++) {
+				if (w->nid == codec->adcs.groups[0].conv[j]) {
+					found = 1;
+					if (j > 0)
+						snprintf(w->name, sizeof(w->name),
+						    "%s%d", wtypes[w->type],
+						    j + 1);
+					else
+						snprintf(w->name, sizeof(w->name),
+						    "%s", wtypes[w->type]);
+				}
+			}
+			if (found == 0 && codec->adcs.ngroups < 2) {
+				found = 1;
+				/* should not happen */
+				snprintf(w->name, sizeof(w->name), "u-adc%2.2x",
+				    w->nid);
+			}
+			for (j = 0; found == 0 &&
+			    j < codec->adcs.groups[1].nconv; j++) {
+				if (w->nid == codec->adcs.groups[1].conv[j]) {
+					found = 1;
+					if (j > 0)
+						snprintf(w->name, sizeof(w->name),
+						    "dig-%s%d", wtypes[w->type],
+						    j + 1);
+					else
+						snprintf(w->name, sizeof(w->name),
+						    "dig-%s", wtypes[w->type]);
+				}
+			}
+			if (found == 0) {
+				/* should not happen */
+				snprintf(w->name, sizeof(w->name), "u-adc%2.2x",
+				    w->nid);
+			}
+			break;
+		default:
 			types[w->type]++;
 			if (types[w->type] > 1)
 				snprintf(w->name, sizeof(w->name), "%s%d",
@@ -1792,7 +1888,7 @@ azalia_widget_label_widgets(codec_t *codec)
 			else
 				snprintf(w->name, sizeof(w->name), "%s",
 				    wtypes[w->type]);
-
+			break;
 		}
 		if (codec->init_widget != NULL)
 			codec->init_widget(codec, w, w->nid);
