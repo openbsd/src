@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.5 2008/10/23 21:25:08 kettenis Exp $ */
+/*	$OpenBSD: stdarg.h,v 1.6 2008/12/21 09:59:24 ragge Exp $ */
 /*
  * Copyright (c) 2003, 2004  Marc espie <espie@openbsd.org>
  *
@@ -20,7 +20,7 @@
 
 #include <sys/cdefs.h>
 
-#if defined(__GNUC__) && __GNUC__ >= 3
+#if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__PCC__)
 
 /* Define __gnuc_va_list.  */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.26 2007/09/18 19:55:16 otto Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.27 2008/12/21 09:59:24 ragge Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -116,7 +116,7 @@
  * the distribution version of 2.5.5).
  */
 
-#if !__GNUC_PREREQ__(2, 5)
+#if !__GNUC_PREREQ__(2, 5) && !defined(__PCC__)
 #define	__attribute__(x)	/* delete __attribute__ if non-gcc or gcc1 */
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 #define	__dead		__volatile
@@ -171,7 +171,7 @@
 #define	__pure
 #endif
 
-#if __GNUC_PREREQ__(2, 7)
+#if __GNUC_PREREQ__(2, 7) || defined(__PCC__)
 #define	__packed	__attribute__((__packed__))
 #elif defined(lint)
 #define	__packed
@@ -181,7 +181,7 @@
 #define	__extension__
 #endif
 
-#if __GNUC_PREREQ__(2, 8)
+#if __GNUC_PREREQ__(2, 8) || defined(__PCC__)
 #define __statement(x)	__extension__(x)
 #elif defined(lint)
 #define __statement(x)	(0)
