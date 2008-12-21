@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.33 2008/12/20 00:18:03 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.34 2008/12/21 02:18:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -499,7 +499,10 @@ enum session_state {
 	S_INIT = 0,
 	S_GREETED,
 	S_TLS,
-	S_AUTH,
+	S_AUTH_INIT,
+	S_AUTH_USERNAME,
+	S_AUTH_PASSWORD,
+	S_AUTH_FINALIZE,
 	S_HELO,
 	S_MAILREQUEST,
 	S_MAIL,
@@ -511,6 +514,7 @@ enum session_state {
 	S_DONE,
 	S_QUIT
 };
+#define	IS_AUTH(x)	((x) == S_AUTH_INIT || (x) == S_AUTH_USERNAME || (x) == S_AUTH_PASSWORD || (x) == S_AUTH_FINALIZE)
 
 struct ssl {
 	SPLAY_ENTRY(ssl)	 ssl_nodes;
@@ -573,6 +577,8 @@ struct session {
 	int				 s_buflen;
 	struct timeval			 s_tv;
 	struct message			 s_msg;
+
+	struct session_auth_req		 s_auth;
 };
 
 struct smtpd {

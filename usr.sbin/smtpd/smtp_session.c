@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.32 2008/12/20 00:18:03 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.33 2008/12/21 02:18:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -30,12 +30,15 @@
 #include <errno.h>
 #include <event.h>
 #include <pwd.h>
+#include <regex.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+#include <keynote.h>
 
 #include "smtpd.h"
 
@@ -58,6 +61,9 @@ int		session_rfc1652_mail_handler(struct session *, char *);
 int		session_rfc3207_stls_handler(struct session *, char *);
 
 int		session_rfc4954_auth_handler(struct session *, char *);
+int		session_rfc4954_auth_plain(struct session *, char *, size_t);
+int		session_rfc4954_auth_login(struct session *, char *, size_t);
+void		session_auth_pickup(struct session *, char *, size_t);
 
 void		session_read(struct bufferevent *, void *);
 int		session_read_data(struct session *, char *, size_t);
@@ -144,7 +150,6 @@ session_rfc4954_auth_handler(struct session *s, char *args)
 {
 	char	*method;
 	char	*eom;
-	struct session_auth_req req;
 
 	if (s->s_state == S_GREETED) {
 		session_respond(s, "503 Polite people say HELO first");
@@ -163,25 +168,92 @@ session_rfc4954_auth_handler(struct session *s, char *args)
 	if (eom != NULL)
 		*eom++ = '\0';
 
-	if (eom == NULL) {
-		/* NEEDS_FIX - unsupported yet */
+	if (strcasecmp(method, "PLAIN") == 0)
+		return session_rfc4954_auth_plain(s, eom, eom ? strlen(eom) : 0);
+	else if (strcasecmp(method, "LOGIN") == 0)
+		return session_rfc4954_auth_login(s, eom, eom ? strlen(eom) : 0);
+
+	session_respond(s, "501 Syntax error");
+	return 1;
+
+}
+
+int
+session_rfc4954_auth_plain(struct session *s, char *arg, size_t nr)
+{
+	if (arg == NULL) {
+		session_respond(s, "334");
+		s->s_state = S_AUTH_INIT;
+		return 1;
+	}
+
+	s->s_auth.session_id = s->s_id;
+	if (strlcpy(s->s_auth.buffer, arg, sizeof(s->s_auth.buffer)) >=
+	    sizeof(s->s_auth.buffer)) {
 		session_respond(s, "501 Syntax error");
 		return 1;
 	}
 
-	req.session_id = s->s_id;
-	if (strlcpy(req.buffer, eom, sizeof(req.buffer)) >=
-	    sizeof(req.buffer)) {
-		session_respond(s, "501 Syntax error");
-		return 1;
-	}
-
-	s->s_state = S_AUTH;
+	s->s_state = S_AUTH_FINALIZE;
 
 	imsg_compose(s->s_env->sc_ibufs[PROC_PARENT], IMSG_PARENT_AUTHENTICATE,
-	    0, 0, -1, &req, sizeof(req));
+	    0, 0, -1, &s->s_auth, sizeof(s->s_auth));
 	bufferevent_disable(s->s_bev, EV_READ);
 
+	return 1;
+}
+
+int
+session_rfc4954_auth_login(struct session *s, char *arg, size_t nr)
+{
+	struct session_auth_req req;
+	size_t len = 0;
+
+	switch (s->s_state) {
+	case S_HELO:
+		session_respond(s, "334 VXNlcm5hbWU6");
+		s->s_auth.session_id = s->s_id;
+		s->s_state = S_AUTH_USERNAME;
+		return 1;
+
+	case S_AUTH_USERNAME:
+		bzero(s->s_auth.buffer, sizeof(s->s_auth.buffer));
+		if (kn_decode_base64(arg, req.buffer, 1024) == -1 ||
+		    ! bsnprintf(s->s_auth.buffer + 1, sizeof(s->s_auth.buffer) - 1, "%s", req.buffer))
+			goto err;
+
+		session_respond(s, "334 UGFzc3dvcmQ6");
+		s->s_state = S_AUTH_PASSWORD;
+
+		return 1;
+
+	case S_AUTH_PASSWORD: {
+		len = strlen(s->s_auth.buffer + 1);
+		if (kn_decode_base64(arg, req.buffer, 1024) == -1 ||
+		    ! bsnprintf(s->s_auth.buffer + len + 2, sizeof(s->s_auth.buffer) - len - 2, "%s", req.buffer))
+			goto err;
+
+		break;
+	}
+	default:
+		fatal("session_rfc4954_auth_login: unknown state");
+	}
+
+	s->s_state = S_AUTH_FINALIZE;
+
+	req = s->s_auth;
+	len = strlen(s->s_auth.buffer + 1) + strlen(arg) + 2;
+	if (kn_encode_base64(req.buffer, len, s->s_auth.buffer, sizeof(s->s_auth.buffer)) == -1)
+		goto err;
+
+	imsg_compose(s->s_env->sc_ibufs[PROC_PARENT], IMSG_PARENT_AUTHENTICATE,
+	    0, 0, -1, &s->s_auth, sizeof(s->s_auth));
+	bufferevent_disable(s->s_bev, EV_READ);
+
+	return 1;
+err:
+	s->s_state = S_HELO;
+	session_respond(s, "535 Authentication failed");
 	return 1;
 }
 
@@ -297,7 +369,7 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 
 	/* only advertise auth if session is secure */
 	if ((s->s_l->flags & F_AUTH) && (s->s_flags & F_SECURE))
-		session_respond(s, "250-AUTH %s", "PLAIN");
+		session_respond(s, "250-AUTH PLAIN LOGIN");
 
 	session_respond(s, "250 HELP");
 
@@ -523,6 +595,37 @@ rfc5321:
 }
 
 void
+session_auth_pickup(struct session *s, char *arg, size_t nr)
+{
+	if (s == NULL)
+		fatal("session_pickup: desynchronized");
+
+	bufferevent_enable(s->s_bev, EV_READ);
+
+	switch (s->s_state) {
+	case S_AUTH_INIT:
+		session_rfc4954_auth_plain(s, arg, nr);
+		break;
+	case S_AUTH_USERNAME:
+		session_rfc4954_auth_login(s, arg, nr);
+		break;
+	case S_AUTH_PASSWORD:
+		session_rfc4954_auth_login(s, arg, nr);
+		break;
+	case S_AUTH_FINALIZE:
+		if (s->s_flags & F_AUTHENTICATED)
+			session_respond(s, "235 Authentication succeeded");
+		else
+			session_respond(s, "535 Authentication failed");
+		s->s_state = S_HELO;
+		break;
+	default:
+		fatal("session_auth_pickup: unknown state");
+	}
+	return;
+}
+
+void
 session_pickup(struct session *s, struct submit_status *ss)
 {
 	if (s == NULL)
@@ -548,13 +651,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		bufferevent_disable(s->s_bev, EV_READ|EV_WRITE);
 		s->s_state = S_GREETED;
 		ssl_session_init(s);
-		break;
-
-	case S_AUTH:
-		if (s->s_flags & F_AUTHENTICATED)
-			session_respond(s, "235 Authentication succeeded");
-		else
-			session_respond(s, "535 Authentication failed");
 		break;
 
 	case S_MAILREQUEST:
@@ -696,6 +792,12 @@ read:
 		}
 		free(line);
 		goto read;
+	}
+
+	if (IS_AUTH(s->s_state)) {
+		session_auth_pickup(s, line, nr);
+		free(line);
+		return;
 	}
 
 	if (nr > SMTP_CMDLINE_MAX) {

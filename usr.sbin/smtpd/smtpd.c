@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.17 2008/12/19 00:44:40 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.18 2008/12/21 02:18:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>
+#include <regex.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -39,6 +40,8 @@
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
+
+#include <keynote.h>
 
 #include "smtpd.h"
 
@@ -388,7 +391,7 @@ parent_dispatch_smtp(int fd, short event, void *p)
 			reply.session_id = req->session_id;
 			reply.value = 0;
 
-			if (__b64_pton(req->buffer, buffer, 1024) >= 0) {
+			if (kn_decode_base64(req->buffer, buffer, sizeof(buffer)) != -1) {
 				pw_name = buffer+1;
 				pw_passwd = pw_name+strlen(pw_name)+1;
 				pw = getpwnam(pw_name);
