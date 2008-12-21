@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.10 2008/12/21 10:03:25 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.11 2008/12/21 16:15:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -51,8 +51,6 @@ struct sun_hdl {
 	int offset;			/* frames play is ahead of record */
 	int idelta, odelta;		/* position reported to client */
 	int mix_fd, mix_index;		/* /dev/mixerN stuff */
-	int voltodo;			/* 1 if vol initialization pending */
-	unsigned curvol;
 };
 
 void sun_close(struct sio_hdl *);
@@ -81,19 +79,6 @@ struct sio_ops sun_ops = {
 	sun_revents,
 	sun_setvol,
 	sun_getvol
-};
-
-/*
- * prefered controls for the volume knob, in reverse order of preference
- */
-struct sun_pref {
-	char *cls, *dev;
-} sun_vols[] = {
-	{ AudioCoutputs, AudioNmaster },
-	{ AudioCoutputs, AudioNoutput },
-	{ AudioCoutputs, AudioNdac },
-	{ AudioCinputs, AudioNdac },
-	{ NULL, NULL}
 };
 
 /*
@@ -340,105 +325,17 @@ sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 #undef NRATES
 }
 
-/*
- * initialize volume knob
- */
-void
-sun_initvol(struct sun_hdl *hdl)
-{
-	int i, fd, index = -1, last_pref = -1;
-	struct sun_pref *p;
-	struct stat sb;
-	struct mixer_devinfo mi, cl;
-	struct mixer_ctrl m;
-	char path[PATH_MAX];
-
-	if (fstat(hdl->fd, &sb) < 0)
-		return;
-	if (!S_ISCHR(sb.st_mode))
-		return;
-	snprintf(path, PATH_MAX, "/dev/mixer%d", sb.st_rdev & 0xf);
-	fd = open(path, O_RDWR);	
-	if (fd < 0) {
-		DPRINTF(&hdl->sa, "sun_initvol: %s: couldn't open mixer\n",
-			path);
-		return;
-	}
-
-	for (mi.index = 0; ; mi.index++) {
-		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &mi) < 0)
-			break;
-		if (mi.type == AUDIO_MIXER_CLASS || mi.prev != -1)
-			continue;
-		cl.index = mi.mixer_class;
-		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &cl) < 0)
-			continue;
-		/*
-		 * find preferred input gain and output gain
-		 */
-		for (i = 0, p = sun_vols; p->cls != NULL; i++, p++) {
-			if (strcmp(p->cls, cl.label.name) != 0 ||
-			    strcmp(p->dev, mi.label.name) != 0)
-				continue;
-			if (last_pref < i) {
-				index = mi.index;
-				last_pref = i;
-			}
-			break;
-		}
-	}
-	hdl->mix_fd = fd;
-	hdl->mix_index = index;
-	if (index >= 0) {
-		m.dev = index;
-		m.type = AUDIO_MIXER_VALUE;
-		m.un.value.num_channels = 1;
-		if (ioctl(hdl->mix_fd, AUDIO_MIXER_READ, &m) < 0) {
-			DPRINTF(&hdl->sa,
-			    "sun_initvol: %d: failed to get volume\n", m.dev);
-			hdl->sa.eof = 1;
-			return;
-		}
-		hdl->curvol = m.un.value.level[0] / 2;
-	} else 
-		hdl->curvol = SIO_MAXVOL;
-	return;
-}
-
 void
 sun_getvol(struct sio_hdl *sh)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
 
-	if (hdl->voltodo) {
-		sun_initvol(hdl);
-		hdl->voltodo = 0;
-	}
-	sio_onvol_cb(&hdl->sa, hdl->curvol);
+	sio_onvol_cb(&hdl->sa, SIO_MAXVOL);
 }
 
 int
 sun_setvol(struct sio_hdl *sh, unsigned vol)
 {
-	struct sun_hdl *hdl = (struct sun_hdl *)sh;
-	struct mixer_ctrl m;
-	
-	if (hdl->voltodo) {
-		sun_initvol(hdl);
-		hdl->voltodo = 0;
-	}
-	if (hdl->mix_fd == -1 || hdl->mix_index == -1)
-		return 0;
-	m.dev = hdl->mix_index;
-	m.type = AUDIO_MIXER_VALUE;
-	m.un.value.num_channels = 1;
-	m.un.value.level[0] = 2 * vol;
-	if (ioctl(hdl->mix_fd, AUDIO_MIXER_WRITE, &m) < 0) {
-		DPRINTF(&hdl->sa, "sun_setvol: failed to set volume\n");
-		hdl->sa.eof = 1;
-		return 0;
-	}
-	hdl->curvol = vol;
 	return 1;
 }
 
@@ -469,7 +366,6 @@ sio_open_sun(char *path, unsigned mode, int nbio)
 		goto bad_free;
 	}
 	hdl->fd = fd;
-	hdl->voltodo = 1;
 
 	/*
 	 * If both play and record are requested then
