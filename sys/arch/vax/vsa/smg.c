@@ -1,4 +1,4 @@
-/*	$OpenBSD: smg.c,v 1.21 2007/12/28 20:44:39 miod Exp $	*/
+/*	$OpenBSD: smg.c,v 1.22 2008/12/21 21:39:50 miod Exp $	*/
 /*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -844,22 +844,29 @@ smgcninit()
 {
 	struct smg_screen *ss = &smg_consscr;
 	extern vaddr_t virtual_avail;
+	vaddr_t ova;
 	long defattr;
 	struct rasops_info *ri;
 
+	ova = virtual_avail;
+
 	ss->ss_addr = (caddr_t)virtual_avail;
+	ioaccess(virtual_avail, SMADDR, SMSIZE / VAX_NBPG);
 	virtual_avail += SMSIZE;
-	ioaccess((vaddr_t)ss->ss_addr, SMADDR, SMSIZE / VAX_NBPG);
 
 	ss->ss_cursor = (struct dc503reg *)virtual_avail;
+	ioaccess(virtual_avail, KA420_CUR_BASE, 1);
 	virtual_avail += VAX_NBPG;
-	ioaccess((vaddr_t)ss->ss_cursor, KA420_CUR_BASE, 1);
 
 	virtual_avail = round_page(virtual_avail);
 
 	/* this had better not fail */
-	if (smg_setup_screen(ss) != 0)
+	if (smg_setup_screen(ss) != 0) {
+		iounaccess((vaddr_t)ss->ss_addr, SMSIZE / VAX_NBPG);
+		iounaccess((vaddr_t)ss->ss_cursor, 1);
+		virtual_avail = ova;
 		return (1);
+	}
 
 	ri = &ss->ss_ri;
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);

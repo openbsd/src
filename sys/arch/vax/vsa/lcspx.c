@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcspx.c,v 1.14 2007/12/28 20:44:39 miod Exp $	*/
+/*	$OpenBSD: lcspx.c,v 1.15 2008/12/21 21:39:50 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -627,6 +627,8 @@ lcspxcnprobe()
 	extern vaddr_t virtual_avail;
 	volatile struct adder *adder;
 	volatile u_int8_t *ch;
+	u_short status;
+	int rc;
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
@@ -652,7 +654,9 @@ lcspxcnprobe()
 		ioaccess(virtual_avail, GPXADDR + GPX_ADDER_OFFSET, 1);
 		adder = (volatile struct adder *)virtual_avail;
 		adder->status = 0;
-		if (adder->status != offsetof(struct adder, status))
+		status = adder->status;
+		iounaccess(virtual_avail, 1);
+		if (status != offsetof(struct adder, status))
 			break;
 
 		return (1);
@@ -673,13 +677,18 @@ lcspxcnprobe()
 		/*
 		 * Check for video memory at SPX address.
 		 */
+		rc = 0;
 		ioaccess(virtual_avail, LCSPX_FB_ADDR, 1);
 		ch = (volatile u_int8_t *)virtual_avail;
 		*ch = 0x01;
-		if ((*ch & 0x01) == 0)
-			break;
-		*ch = 0x00;
-		if ((*ch & 0x01) != 0)
+		if ((*ch & 0x01) != 0) {
+			*ch = 0x00;
+			if ((*ch & 0x01) == 0)
+				rc = 1;
+		}
+		iounaccess(virtual_avail, 1);
+
+		if (rc == 0)
 			break;
 
 		return (1);
@@ -703,10 +712,12 @@ lcspxcninit()
 	extern vaddr_t virtual_avail;
 	int i;
 	u_int width, height;
-	vaddr_t reg1;
+	vaddr_t ova, reg1;
 	u_int32_t magic;
 	long defattr;
 	struct rasops_info *ri;
+
+	ova = virtual_avail;
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
@@ -727,8 +738,9 @@ lcspxcninit()
 		 * if things go wrong.
 		 */
 		reg1 = virtual_avail;
-		ioaccess(reg1, LCSPX_REG1_ADDR, 1);
+		ioaccess(virtual_avail, LCSPX_REG1_ADDR, 1);
 		magic = *(u_int32_t *)(reg1 + 0x11c);
+		iounaccess(virtual_avail, 1);
 
 		if (magic & 0x80) {
 			width = 1280;
@@ -746,25 +758,31 @@ lcspxcninit()
 
 	ss->ss_fbsize = width * height;
 	ss->ss_addr = (caddr_t)virtual_avail;
+	ioaccess(virtual_avail, LCSPX_FB_ADDR, ss->ss_fbsize / VAX_NBPG);
 	virtual_avail += ss->ss_fbsize;
-	ioaccess((vaddr_t)ss->ss_addr, LCSPX_FB_ADDR, ss->ss_fbsize / VAX_NBPG);
 
 	ss->ss_reg = virtual_avail;
+	ioaccess(virtual_avail, LCSPX_REG_ADDR, LCSPX_REG_SIZE / VAX_NBPG);
 	virtual_avail += LCSPX_REG_SIZE;
-	ioaccess(ss->ss_reg, LCSPX_REG_ADDR, LCSPX_REG_SIZE / VAX_NBPG);
 
 	for (i = 0; i < 4; i++) {
 		ss->ss_ramdac[i] = (volatile u_int8_t *)virtual_avail;
-		virtual_avail += VAX_NBPG;
-		ioaccess((vaddr_t)ss->ss_ramdac[i],
+		ioaccess(virtual_avail,
 		    LCSPX_RAMDAC_ADDR + i * LCSPX_RAMDAC_INTERLEAVE, 1);
+		virtual_avail += VAX_NBPG;
 	}
 
 	virtual_avail = round_page(virtual_avail);
 
 	/* this had better not fail */
-	if (lcspx_setup_screen(ss, width, height) != 0)
+	if (lcspx_setup_screen(ss, width, height) != 0) {
+		for (i = 3; i >= 0; i--)
+			iounaccess((vaddr_t)ss->ss_ramdac[i], 1);
+		iounaccess(ss->ss_reg, LCSPX_REG_SIZE / VAX_NBPG);
+		iounaccess((vaddr_t)ss->ss_addr, ss->ss_fbsize / VAX_NBPG);
+		virtual_avail = ova;
 		return (1);
+	}
 
 	ri = &ss->ss_ri;
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);

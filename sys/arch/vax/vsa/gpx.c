@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpx.c,v 1.19 2008/08/24 14:49:59 miod Exp $	*/
+/*	$OpenBSD: gpx.c,v 1.20 2008/12/21 21:39:50 miod Exp $	*/
 /*
  * Copyright (c) 2006 Miodrag Vallat.
  *
@@ -1238,6 +1238,7 @@ gpxcnprobe()
 	volatile struct adder *adder;
 	vaddr_t tmp;
 	int depth;
+	u_short status;
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
@@ -1254,7 +1255,9 @@ gpxcnprobe()
 		ioaccess(tmp, vax_trunc_page(GPXADDR + GPX_ADDER_OFFSET), 1);
 		adder = (struct adder *)tmp;
 		adder->status = 0;
-		if (adder->status == offsetof(struct adder, status))
+		status = adder->status;
+		iounaccess(tmp, 1);
+		if (status == offsetof(struct adder, status))
 			return (0);
 
 		/* Check for a recognized color depth */
@@ -1262,6 +1265,7 @@ gpxcnprobe()
 		ioaccess(tmp, vax_trunc_page(GPXADDR + GPX_READBACK_OFFSET), 1);
 		depth = *(u_int16_t *)
 		    (tmp + (GPX_READBACK_OFFSET & VAX_PGOFSET)) & 0x00f0;
+		iounaccess(tmp, 1);
 		if (depth == 0x00f0 || depth == 0x0080)
 			return (1);
 
@@ -1284,14 +1288,16 @@ gpxcninit()
 {
 	struct gpx_screen *ss = &gpx_consscr;
 	extern vaddr_t virtual_avail;
-	vaddr_t tmp;
+	vaddr_t ova;
 	long defattr;
 	struct rasops_info *ri;
 
-	tmp = virtual_avail;
-	ioaccess(tmp, vax_trunc_page(GPXADDR + GPX_READBACK_OFFSET), 1);
-	ss->ss_depth = (0x00f0 & *(u_int16_t *)
-	    (tmp + (GPX_READBACK_OFFSET & VAX_PGOFSET))) == 0x00f0 ? 4 : 8;
+	ova = virtual_avail;
+
+	ioaccess(virtual_avail,
+	    vax_trunc_page(GPXADDR + GPX_READBACK_OFFSET), 1);
+	ss->ss_depth = (0x00f0 & *(u_int16_t *)(virtual_avail +
+	    (GPX_READBACK_OFFSET & VAX_PGOFSET))) == 0x00f0 ? 4 : 8;
 
 	ioaccess(virtual_avail, GPXADDR + GPX_ADDER_OFFSET, 1);
 	ss->ss_adder = (struct adder *)virtual_avail;
@@ -1310,8 +1316,15 @@ gpxcninit()
 	virtual_avail = round_page(virtual_avail);
 
 	/* this had better not fail */
-	if (gpx_setup_screen(ss) != 0)
+	if (gpx_setup_screen(ss) != 0) {
+#if 0
+		iounaccess((vaddr_t)ss->ss_cursor, 1);
+#endif
+		iounaccess((vaddr_t)ss->ss_vdac, 1);
+		iounaccess((vaddr_t)ss->ss_adder, 1);
+		virtual_avail = ova;
 		return (1);
+	}
 
 	ri = &ss->ss_ri;
 	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
