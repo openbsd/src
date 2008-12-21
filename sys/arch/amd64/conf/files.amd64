@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.41 2008/11/09 15:11:19 oga Exp $
+#	$OpenBSD: files.amd64,v 1.42 2008/12/21 18:49:46 kettenis Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -36,7 +36,9 @@ file	arch/amd64/amd64/mp_setperf.c		multiprocessor
 
 file	arch/amd64/amd64/apic.c			ioapic | lapic
 
-file	arch/amd64/amd64/mpbios.c		mpbios
+#Intel SMP specification 1.4
+define	mpbios
+file	arch/amd64/amd64/mpbios.c		mpbios needs-flag
 file	arch/amd64/amd64/mpbios_intr_fixup.c	mpbios & pci
 
 
@@ -89,7 +91,7 @@ file	arch/amd64/amd64/cpu.c	cpu
 define	lapic
 file	arch/amd64/amd64/lapic.c		lapic needs-flag
 
-device	ioapic: lapic
+device	ioapic: mpbios, lapic
 attach	ioapic at mainbus
 file	arch/amd64/amd64/ioapic.c		ioapic needs-flag
 

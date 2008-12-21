@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.16 2008/10/21 21:52:07 brad Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.17 2008/12/21 18:49:45 kettenis Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -83,10 +83,6 @@
 #include <machine/pmap.h>
 
 #include <machine/mpbiosvar.h>
-
-#if !defined(MPBIOS) && !defined(MPACPI)
-#error "ioapic needs at least one of the MPBIOS or MPACPI options"
-#endif
 
 /*
  * XXX locking
