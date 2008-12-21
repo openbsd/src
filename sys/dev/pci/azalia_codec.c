@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.79 2008/11/30 22:01:34 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.80 2008/12/21 20:21:24 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -40,9 +40,6 @@
 #define XNAME(co)	(((struct device *)co->az)->dv_xname)
 #define MIXER_DELTA(n)	(AUDIO_MAX_GAIN / (n))
 
-#define AZ_CLASS_INPUT	0
-#define AZ_CLASS_OUTPUT	1
-#define AZ_CLASS_RECORD	2
 #define ENUM_OFFON	.un.e={2, {{{AudioNoff}, 0}, {{AudioNon}, 1}}}
 #define ENUM_IO		.un.e={2, {{{"input"}, 0}, {{"output"}, 1}}}
 #define AzaliaNfront	"front"

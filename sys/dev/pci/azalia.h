@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.26 2008/11/30 08:36:57 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.27 2008/12/21 20:21:24 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -478,6 +478,10 @@
 #define HDA_MAX_CHANNELS	16
 #define HDA_MAX_SENSE_PINS	16
 
+#define AZ_CLASS_INPUT	0
+#define AZ_CLASS_OUTPUT	1
+#define AZ_CLASS_RECORD	2
+
 /* memory-mapped types */
 typedef struct {
 	uint32_t low;
@@ -518,6 +522,7 @@ typedef struct {
 	int enable;
 	uint32_t widgetcap;
 	int type;		/* = bit20-24 of widgetcap */
+	int mixer_class;
 	int nconnections;
 	nid_t *connections;
 	int selected;
