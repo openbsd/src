@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.5 2008/12/18 15:19:33 jacekm Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.6 2008/12/21 12:59:05 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -200,8 +200,7 @@ parse_entry(char *line, size_t len, size_t lineno)
 	key.data = name;
 	key.size = strlen(name) + 1;
 	if (db->get(db, &key, &val, 0) == 0) {
-		warnx("%s:%zd: duplicate entry for %s", source, lineno,
-		    key.data);
+		warnx("%s:%zd: duplicate entry for %s", source, lineno, name);
 		return 0;
 	}
 
