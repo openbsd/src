@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.203 2008/12/15 02:33:04 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.204 2008/12/21 23:30:26 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -783,6 +783,7 @@ em_intr(void *arg)
 	struct ifnet	*ifp;
 	u_int32_t	reg_icr, test_icr;
 	int claimed = 0;
+	int refill;
 
 	ifp = &sc->interface_data.ac_if;
 
@@ -794,15 +795,12 @@ em_intr(void *arg)
 			break;
 
 		claimed = 1;
+		refill = 0;
 
 		if (ifp->if_flags & IFF_RUNNING) {
 			em_rxeof(sc, -1);
-			if (em_rxfill(sc)) {
-				/* Advance the Rx Queue #0 "Tail Pointer". */
-				E1000_WRITE_REG(&sc->hw, RDT,
-				    sc->last_rx_desc_filled);
-			}
 			em_txeof(sc);
+			refill = 1;
 		}
 
 		/* Link status change */
@@ -814,8 +812,16 @@ em_intr(void *arg)
 			timeout_add_sec(&sc->timer_handle, 1); 
 		}
 
-		if (reg_icr & E1000_ICR_RXO)
+		if (reg_icr & E1000_ICR_RXO) {
 			sc->rx_overruns++;
+			ifp->if_ierrors++;
+			refill = 1;
+		}
+
+		if (refill && em_rxfill(sc)) {
+			/* Advance the Rx Queue #0 "Tail Pointer". */
+			E1000_WRITE_REG(&sc->hw, RDT, sc->last_rx_desc_filled);
+		}
 	}
 
 	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
