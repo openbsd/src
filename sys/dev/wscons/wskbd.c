@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.58 2007/09/11 13:39:34 gilles Exp $ */
+/* $OpenBSD: wskbd.c,v 1.59 2008/12/21 20:16:35 dlg Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -1465,9 +1465,21 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 		return (1);
 #if defined(__i386__) || defined(__amd64__)
 	case KS_Cmd_KbdReset:
-		if (kbd_reset == 1) {
+		switch (kbd_reset) {
+#ifdef DDB
+		case 2:
+			if (sc->sc_isconsole && db_console)
+				Debugger();
+			/* discard this key (ddb discarded command modifiers) */
+			*type = WSCONS_EVENT_KEY_UP;
+			break;
+#endif
+		case 1:
 			kbd_reset = 0;
 			psignal(initproc, SIGUSR1);
+			break;
+		default:
+			break;
 		}
 		return (1);
 #endif
