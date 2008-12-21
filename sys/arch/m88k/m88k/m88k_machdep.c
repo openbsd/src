@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.42 2008/11/27 20:46:48 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.43 2008/12/21 21:43:52 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -319,10 +319,33 @@ void
 signotify(struct proc *p)
 {
 	aston(p);
+	cpu_unidle(p->p_cpu);
+}
+
 #ifdef MULTIPROCESSOR
-	if (p->p_cpu != curcpu() && p->p_cpu != NULL)
-		m88k_send_ipi(CI_IPI_NOTIFY, p->p_cpu->ci_cpuid);
+void
+cpu_unidle(struct cpu_info *ci)
+{
+	if (ci != curcpu())
+		m88k_send_ipi(CI_IPI_NOTIFY, ci->ci_cpuid);
+}
 #endif
+
+/*
+ * Preempt the current process if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
+void
+need_resched(struct cpu_info *ci)
+{
+	ci->ci_want_resched = 1;
+
+	/* There's a risk we'll be called before the idle threads start */
+	if (ci->ci_curproc != NULL) {
+		aston(ci->ci_curproc);
+		if (ci != curcpu())
+			cpu_unidle(ci);
+	}
 }
 
 /*

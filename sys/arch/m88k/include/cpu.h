@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.38 2008/10/15 23:23:48 deraadt Exp $ */
+/*	$OpenBSD: cpu.h,v 1.39 2008/12/21 21:43:51 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -138,7 +138,6 @@ extern struct cpu_info m88k_cpus[MAX_CPUS];
 		if (((ci) = &m88k_cpus[cii])->ci_flags & CIF_ALIVE)
 #define	CPU_INFO_UNIT(ci)	((ci)->ci_cpuid)
 #define MAXCPUS	MAX_CPUS
-#define cpu_unidle(ci)
 
 #if defined(MULTIPROCESSOR)
 
@@ -155,12 +154,14 @@ curcpu(void)
 
 void	cpu_boot_secondary_processors(void);
 __dead void cpu_emergency_disable(void);
+void	cpu_unidle(struct cpu_info *);
 void	m88k_send_ipi(int, cpuid_t);
 void	m88k_broadcast_ipi(int);
 
 #else	/* MULTIPROCESSOR */
 
 #define	curcpu()	(&m88k_cpus[0])
+#define	cpu_unidle(ci)	do { /* nothing */ } while (0)
 #define	CPU_IS_PRIMARY(ci)	1
 
 #endif	/* MULTIPROCESSOR */
@@ -234,16 +235,6 @@ struct clockframe {
 				   (regs)->sfip & FIP_ADDR)))
 #define	PROC_PC(p)	PC_REGS((struct reg *)((p)->p_md.md_tf))
 
-/*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-#define	need_resched(ci) \
-do {									\
-	ci->ci_want_resched = 1;					\
-	if (ci->ci_curproc != NULL)					\
-		aston(ci->ci_curproc);					\
-} while (0)
 #define clear_resched(ci) 	(ci)->ci_want_resched = 0
 
 /*
@@ -253,6 +244,7 @@ do {									\
  */
 #define	need_proftick(p)	aston(p)
 
+void	need_resched(struct cpu_info *);
 void	signotify(struct proc *);
 
 int	badaddr(vaddr_t addr, int size);
