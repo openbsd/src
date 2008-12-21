@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.27 2008/12/15 18:35:59 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.28 2008/12/21 18:19:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1356,6 +1356,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct rt2860_txd *txd;
 	struct rt2860_txwi *txwi;
 	struct ieee80211_frame *wh;
+	struct mbuf *m1;
 	bus_dma_segment_t *seg;
 	u_int hdrlen;
 	uint16_t qos, dur;
@@ -1500,10 +1501,24 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	}
 	if (__predict_false(error != 0)) {
 		/* too many fragments, linearize */
-		if (m_defrag(m, M_DONTWAIT) != 0) {
+		MGETHDR(m1, MT_DATA, M_DONTWAIT);
+		if (m1 == NULL) {
 			m_freem(m);
 			return ENOBUFS;
 		}
+		if (m->m_pkthdr.len > MHLEN) {
+			MCLGET(m1, M_DONTWAIT);
+			if (!(m1->m_flags & M_EXT)) {
+				m_freem(m);
+				m_freem(m1);
+				return ENOBUFS;
+			}
+		}
+		m_copydata(m, 0, m->m_pkthdr.len, mtod(m1, caddr_t));
+		m1->m_pkthdr.len = m1->m_len = m->m_pkthdr.len;
+		m_freem(m);
+		m = m1;
+
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT);
 		if (__predict_false(error != 0)) {

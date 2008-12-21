@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.40 2008/11/25 21:43:57 damien Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.41 2008/12/21 18:19:58 damien Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1699,6 +1699,7 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 	struct rt2560_tx_data *data;
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k;
+	struct mbuf *m1;
 	uint16_t dur;
 	uint32_t flags = 0;
 	int pktlen, rate, needcts = 0, needrts = 0, error;
@@ -1827,10 +1828,24 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 	}
 	if (error != 0) {
 		/* too many fragments, linearize */
-		if (m_defrag(m0, M_DONTWAIT) != 0) {
+		MGETHDR(m1, MT_DATA, M_DONTWAIT);
+		if (m1 == NULL) {
 			m_freem(m0);
-			return ENOMEM;
+			return ENOBUFS;
 		}
+		if (m0->m_pkthdr.len > MHLEN) {
+			MCLGET(m1, M_DONTWAIT);
+			if (!(m1->m_flags & M_EXT)) {
+				m_freem(m0);
+				m_freem(m1);
+				return ENOBUFS;
+			}
+		}
+		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m1, caddr_t));
+		m1->m_pkthdr.len = m1->m_len = m0->m_pkthdr.len;
+		m_freem(m0);
+		m0 = m1;
+
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {

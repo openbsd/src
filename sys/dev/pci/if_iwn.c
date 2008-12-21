@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.43 2008/12/12 17:15:40 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.44 2008/12/21 18:19:58 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -2363,6 +2363,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	const struct iwn_rate *rinfo;
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
+	struct mbuf *m1;
 	enum ieee80211_edca_ac ac;
 	uint32_t flags;
 	uint16_t qos;
@@ -2582,10 +2583,24 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	}
 	if (error != 0) {
 		/* Too many DMA segments, linearize mbuf. */
-		if (m_defrag(m, M_DONTWAIT) != 0) {
+		MGETHDR(m1, MT_DATA, M_DONTWAIT);
+		if (m1 == NULL) {
 			m_freem(m);
-			return ENOMEM;
+			return ENOBUFS;
 		}
+		if (m->m_pkthdr.len > MHLEN) {
+			MCLGET(m1, M_DONTWAIT);
+			if (!(m1->m_flags & M_EXT)) {
+				m_freem(m);
+				m_freem(m1);
+				return ENOBUFS;
+			}
+		}
+		m_copydata(m, 0, m->m_pkthdr.len, mtod(m1, caddr_t));
+		m1->m_pkthdr.len = m1->m_len = m->m_pkthdr.len;
+		m_freem(m);
+		m = m1;
+
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT);
 		if (error != 0) {
