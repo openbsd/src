@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.81 2008/12/21 20:44:04 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.82 2008/12/22 00:54:04 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -90,6 +90,7 @@ int	azalia_generic_get_port(codec_t *, mixer_ctrl_t *);
 int	azalia_gpio_unmute(codec_t *, int);
 
 int	azalia_nid_to_index(const codec_t *, nid_t);
+void	azalia_pin_config_ov(widget_t *, int, int);
 
 int	azalia_alc260_mixer_init(codec_t *);
 int	azalia_alc88x_mixer_init(codec_t *);
@@ -1721,6 +1722,31 @@ azalia_gpio_unmute(codec_t *this, int pin)
 
 	return 0;
 }
+
+void
+azalia_pin_config_ov(widget_t *w, int mask, int val)
+{
+	int bits, offset;
+
+	switch (mask) {
+	case CORB_CD_DEVICE_MASK:
+		bits = CORB_CD_DEVICE_BITS;
+		offset = CORB_CD_DEVICE_OFFSET;
+		break;
+	case CORB_CD_PORT_MASK:
+		bits = CORB_CD_PORT_BITS;
+		offset = CORB_CD_PORT_OFFSET;
+		break;
+	default:
+		return;
+	}
+	val &= bits;
+	w->d.pin.config &= ~(mask);
+	w->d.pin.config |= val << offset;
+	if (mask == CORB_CD_DEVICE_MASK)
+		w->d.pin.device = val;
+}
+
 
 /* ----------------------------------------------------------------
  * Realtek ALC260
