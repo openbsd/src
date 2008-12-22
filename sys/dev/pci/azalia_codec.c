@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.82 2008/12/22 00:54:04 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.83 2008/12/22 02:20:22 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -409,6 +409,14 @@ done:
 	if (nconvs > 0) {
 		group->groups[group->ngroups].nconv = i;
 		group->ngroups++;
+	}
+
+	for (i = 0; i < nall_convs; i++) {
+		for (j = 0; j < nconvs; j++)
+			if (convs[j] == all_convs[i])
+				break;
+		if (j == nconvs)
+			this->w[all_convs[i]].enable = 0;
 	}
 
 	return 0;
