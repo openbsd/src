@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.19 2008/06/26 05:42:05 ray Exp $
+.\"	$OpenBSD: ypclnt.3,v 1.20 2008/12/22 19:09:29 jmc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: December 22 2008 $
 .Dt YPCLNT 3
 .Os
 .Sh NAME
@@ -35,6 +35,7 @@
 .Nm yp_bind ,
 .Nm yp_first ,
 .Nm yp_get_default_domain ,
+.Nm yp_maplist ,
 .Nm yp_master ,
 .Nm yp_match ,
 .Nm yp_next ,
@@ -56,6 +57,8 @@
 .Fn yp_first "char *indomain" "char *inmap" "char **outkey" "int *outkeylen" "char **outval" "int *outvallen"
 .Ft int
 .Fn yp_get_default_domain "char **domp"
+.Ft int
+.Fn yp_maplist "char *indomain" "struct ypmaplist **outmaplist"
 .Ft int
 .Fn yp_master "char *indomain" "char *inmap" "char **outname"
 .Ft int
@@ -236,7 +239,7 @@ key-value pairs, at which time
 returns a value of 0, and is called with the following arguments:
 .Bd -literal -offset indent
 int foreach (
-	int instatus,
+	unsigned long instatus,
 	char *inkey,
 	int inkeylen,
 	char *inval,
@@ -291,6 +294,18 @@ Returns the order number for a map.
 .It Fn yp_master
 Returns the hostname for the machine on which the master YP server process for
 a map is running.
+.It Fn yp_maplist
+Returns a singly-linked list of the names of all the maps available in the
+named domain.
+The second argument to
+.Fn yp_maplist
+is:
+.Bd -literal -offset indent
+struct ypmaplist {
+	char *map;
+	struct ypmaplist *next;
+};
+.Ed
 .It Fn yperr_string
 Returns a pointer to a NUL-terminated error string that does not contain a
 .Ql \&.
