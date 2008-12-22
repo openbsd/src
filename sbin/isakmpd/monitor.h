@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.h,v 1.18 2006/03/20 16:43:22 hshoexer Exp $	 */
+/* $OpenBSD: monitor.h,v 1.19 2008/12/22 14:30:04 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -61,6 +61,6 @@ int		monitor_readdir(char *, size_t);
 void            monitor_init_done(void);
 
 int		monitor_pf_key_v2_open(void);
-void		monitor_exit(int);
+void		monitor_exit(int) __dead;
 
 #endif				/* _MONITOR_H_ */
