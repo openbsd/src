@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.28 2008/12/21 18:19:58 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.29 2008/12/22 18:20:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1501,7 +1501,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	}
 	if (__predict_false(error != 0)) {
 		/* too many fragments, linearize */
-		MGETHDR(m1, MT_DATA, M_DONTWAIT);
+		MGETHDR(m1, M_DONTWAIT, MT_DATA);
 		if (m1 == NULL) {
 			m_freem(m);
 			return ENOBUFS;
