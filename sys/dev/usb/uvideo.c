@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.111 2008/12/22 09:34:46 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.112 2008/12/22 09:45:46 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -251,29 +251,31 @@ struct uvideo_devs {
 	int			 flags;
 } uvideo_devs[] = {
 	{
+	    /* Needs firmware */
 	    { USB_VENDOR_RICOH, USB_PRODUCT_RICOH_VGPVCC7 },
 	    "r5u87x-05ca-183a.fw",
 	    uvideo_ucode_loader_ricoh,
 	    0
 	},
-	{   /* Incorrectly reports as UICLASS_VENDOR */
-	    { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMOEM_1 },
-	    NULL,
-	    NULL,
-	    0
-	},
 	{
-	    /* Has a own streaming header format */
+	    /* Needs firmware */
 	    { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_BLUETOOTH },
 	    "isight.fw",
 	    uvideo_ucode_loader_apple_isight,
 	    0
 	},
 	{
+	    /* Has a non-standard streaming header protocol */
 	    { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_ISIGHT_1},
 	    NULL,
 	    NULL,
 	    UVIDEO_FLAG_ISIGHT_STREAM_HEADER
+	},
+	{   /* Incorrectly reports as bInterfaceClass=UICLASS_VENDOR */
+	    { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMOEM_1 },
+	    NULL,
+	    NULL,
+	    0
 	}
 };
 #define uvideo_lookup(v, p) \
