@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.36 2008/12/22 00:44:32 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.37 2008/12/22 13:21:39 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -747,17 +747,17 @@ session_init(struct listener *l, struct session *s)
 	s->s_env = l->env;
 	s->s_l = l;
 	s->s_id = queue_generate_id();
+
 	strlcpy(s->s_hostname, "<unknown>", MAXHOSTNAMELEN);
 	strlcpy(s->s_msg.session_hostname, s->s_hostname, MAXHOSTNAMELEN);
-
-	SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
-
-	imsg_compose(s->s_env->sc_ibufs[PROC_LKA], IMSG_LKA_HOST,
-	    0, 0, -1, s, sizeof(struct session));
+	imsg_compose(s->s_env->sc_ibufs[PROC_LKA], IMSG_LKA_HOST, 0, 0, -1, s,
+	    sizeof(struct session));
 
 	if ((s->s_bev = bufferevent_new(s->s_fd, session_read, session_write,
 	    session_error, s)) == NULL)
-		fatal(NULL);
+		fatalx("session_init: bufferevent_new failed");
+
+	SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
 
 	if (l->flags & F_SSMTP) {
 		log_debug("session_init: initializing ssl");
