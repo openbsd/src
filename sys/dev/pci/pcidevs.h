@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1443 2008/12/10 20:54:09 oga Exp 
+ *	OpenBSD: pcidevs,v 1.1444 2008/12/22 09:48:30 sthen Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1133,7 +1133,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_X600_RV370	0x5b62		/* Radeon X600 (RV370) */
 #define	PCI_PRODUCT_ATI_RADEON_X550	0x5b63		/* Radeon X550 */
 #define	PCI_PRODUCT_ATI_FIREGL_RV370	0x5b64		/* FireGL V3100 */
-#define	PCI_PRODUCT_ATI_FIREMV_2200_5B65	0x5b64		/* FireMV 2200 5B65 */
+#define	PCI_PRODUCT_ATI_FIREMV_2200_5B65	0x5b65		/* FireMV 2200 5B65 */
 #define	PCI_PRODUCT_ATI_RADEON_X300_S	0x5b70		/* Radeon X300 Sec */
 #define	PCI_PRODUCT_ATI_RADEON_X600_RV370_S	0x5b72		/* Radeon X600 Sec */
 #define	PCI_PRODUCT_ATI_RADEON_X550_S	0x5b73		/* Radeon X550 Sec */
