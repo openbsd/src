@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.85 2008/12/22 00:03:08 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.86 2008/12/22 01:32:39 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1901,23 +1901,24 @@ azalia_widget_label_widgets(codec_t *codec)
 		if (codec->w[i].type != COP_AWTYPE_AUDIO_MIXER &&
 		    codec->w[i].type != COP_AWTYPE_AUDIO_SELECTOR)
 			continue;
-		/* Special case.  A selector with outamp capabilities
-		 * and is connected to a single widget that has no
-		 * inamp capabilities.  This widget serves only to act
-		 * as the input amp for the widget it is connected to.
-		 */
-		j = -1;
-		if (codec->w[i].type == COP_AWTYPE_AUDIO_SELECTOR &&
-		    (codec->w[i].widgetcap & COP_AWCAP_OUTAMP) &&
-		    codec->w[i].nconnections == 1) {
-			j = codec->w[i].connections[0];
-			if (!(codec->w[j].widgetcap & COP_AWCAP_INAMP))
-				codec->w[i].mixer_class = AZ_CLASS_INPUT;
-			else
-				j = -1;
+		j = azalia_widget_sole_conn(codec, i);
+		if (j == -1) {
+			/* Special case.  A selector with outamp capabilities
+			 * and is connected to a single widget that has no
+			 * inamp capabilities.  This widget serves only to act
+			 * as the input amp for the widget it is connected to.
+			 */
+			if (codec->w[i].type == COP_AWTYPE_AUDIO_SELECTOR &&
+			    (codec->w[i].widgetcap & COP_AWCAP_OUTAMP) &&
+			    codec->w[i].nconnections == 1) {
+				j = codec->w[i].connections[0];
+				if (!(codec->w[j].widgetcap & COP_AWCAP_INAMP))
+					codec->w[i].mixer_class =
+					    AZ_CLASS_INPUT;
+				else
+					j = -1;
+			}
 		}
-		if (j == -1)
-			j = azalia_widget_sole_conn(codec, i);
 		if (j >= 0) {
 			snprintf(codec->w[i].name, sizeof(codec->w[i].name),
 			    "%s", codec->w[j].name);
