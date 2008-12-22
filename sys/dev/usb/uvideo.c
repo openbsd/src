@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.113 2008/12/22 13:33:43 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.114 2008/12/22 20:51:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -253,14 +253,14 @@ struct uvideo_devs {
 	{
 	    /* Needs firmware */
 	    { USB_VENDOR_RICOH, USB_PRODUCT_RICOH_VGPVCC7 },
-	    "r5u87x-05ca-183a.fw",
+	    "uvideo_r5u87x_05ca-183a",
 	    uvideo_ucode_loader_ricoh,
 	    0
 	},
 	{
 	    /* Needs firmware */
 	    { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_BLUETOOTH },
-	    "isight.fw",
+	    "uvideo_isight_05ac-8300",
 	    uvideo_ucode_loader_apple_isight,
 	    0
 	},
