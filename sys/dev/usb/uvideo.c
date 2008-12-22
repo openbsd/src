@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.110 2008/12/17 18:14:46 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.111 2008/12/22 09:34:46 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -122,6 +122,8 @@ void		uvideo_vs_cb(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
 usbd_status	uvideo_vs_decode_stream_header(struct uvideo_softc *,
 		    uint8_t *, int); 
+usbd_status	uvideo_vs_decode_stream_header_isight(struct uvideo_softc *,
+		    uint8_t *, int);
 void		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int);
 void		uvideo_read(struct uvideo_softc *, uint8_t *, int);
 usbd_status	uvideo_usb_control(struct uvideo_softc *sc, uint8_t rt, uint8_t r,
@@ -197,6 +199,7 @@ int		uvideo_start_read(void *);
  * Firmware
  */
 usbd_status	uvideo_ucode_loader_ricoh(struct uvideo_softc *);
+usbd_status	uvideo_ucode_loader_apple_isight(struct uvideo_softc *);
 
 struct cfdriver uvideo_cd = {
 	NULL, "uvideo", DV_DULL
@@ -261,7 +264,13 @@ struct uvideo_devs {
 	},
 	{
 	    /* Has a own streaming header format */
-	    { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_ISIGHT_1 },
+	    { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_BLUETOOTH },
+	    "isight.fw",
+	    uvideo_ucode_loader_apple_isight,
+	    0
+	},
+	{
+	    { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_ISIGHT_1},
 	    NULL,
 	    NULL,
 	    UVIDEO_FLAG_ISIGHT_STREAM_HEADER
@@ -364,6 +373,10 @@ uvideo_match(struct device *parent, void *match, void *aux)
 		return (UMATCH_NONE);
 
 	if (id->bInterfaceClass == UICLASS_VIDEO &&
+	    id->bInterfaceSubClass == UISUBCLASS_VIDEOSTREAM)
+		return (UMATCH_NONE);
+
+	if (id->bInterfaceClass == UICLASS_VIDEO &&
 	    id->bInterfaceSubClass == UISUBCLASS_VIDEOCONTROL)
 		return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
 
@@ -376,12 +389,45 @@ uvideo_match(struct device *parent, void *match, void *aux)
 void
 uvideo_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct uvideo_softc *sc = (struct uvideo_softc *) self;
+	struct uvideo_softc *sc = (struct uvideo_softc *)self;
 	struct usb_attach_arg *uaa = aux;
+
+	sc->sc_uaa = uaa;
+	sc->sc_udev = uaa->device;
+
+	/* maybe the device has quirks */
+	sc->sc_quirk = uvideo_lookup(uaa->vendor, uaa->product);
+
+	/* if the device needs ucode do mountroothook */
+	if ((sc->sc_quirk && sc->sc_quirk->ucode_name) && rootvp == NULL)
+		mountroothook_establish(uvideo_attach_hook, sc);
+	else
+		uvideo_attach_hook(sc);
+}
+
+void
+uvideo_attach_hook(void *arg)
+{
+	struct uvideo_softc *sc = arg;
 	usb_config_descriptor_t *cdesc;
 	usbd_status error;
 
-	sc->sc_udev = uaa->device;
+	/* maybe the device needs a firmware */
+	if (sc->sc_quirk && sc->sc_quirk->ucode_name) {
+		error = (sc->sc_quirk->ucode_loader)(sc);
+		if (error != USBD_NORMAL_COMPLETION)
+			return;
+	}
+
+	/* map stream header decode function */
+	if (sc->sc_quirk &&
+	    sc->sc_quirk->flags & UVIDEO_FLAG_ISIGHT_STREAM_HEADER) {
+		sc->sc_decode_stream_header =
+		    uvideo_vs_decode_stream_header_isight;
+	} else {
+		sc->sc_decode_stream_header =
+		    uvideo_vs_decode_stream_header;
+	}
 
 	/* get the config descriptor */
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
@@ -399,31 +445,9 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	/* parse video stream descriptors */
-	error = uvideo_vs_parse_desc(sc, uaa, cdesc);
+	error = uvideo_vs_parse_desc(sc, sc->sc_uaa, cdesc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return;
-
-	/* maybe the device has quirks */
-	sc->sc_quirk = uvideo_lookup(uaa->vendor, uaa->product);
-
-	/* if the device needs ucode do mountroothook */
-	if ((sc->sc_quirk && sc->sc_quirk->ucode_name) && rootvp == NULL)
-		mountroothook_establish(uvideo_attach_hook, sc);
-	else
-		uvideo_attach_hook(sc);
-}
-
-void
-uvideo_attach_hook(void *arg)
-{
-	struct uvideo_softc *sc = arg;
-	usbd_status error;
-
-	if (sc->sc_quirk && sc->sc_quirk->ucode_name) {
-		error = (sc->sc_quirk->ucode_loader)(sc);
-		if (error != USBD_NORMAL_COMPLETION)
-			return;
-	}
 
 	/* set default video stream interface */
 	error = usbd_set_interface(sc->sc_vs_cur->ifaceh, 0);
@@ -1685,7 +1709,7 @@ uvideo_vs_start_bulk_thread(void *arg)
 
 		DPRINTF(2, "%s: *** buffer len = %d\n", DEVNAME(sc), size);
 
-		(void)uvideo_vs_decode_stream_header(sc,
+		(void)sc->sc_decode_stream_header(sc,
 		    sc->sc_vs_cur->bxfer.buf, size);
 	}
 
@@ -1763,7 +1787,7 @@ uvideo_vs_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 			/* frame is empty */
 			continue;
 
-		error = uvideo_vs_decode_stream_header(sc, frame, frame_size);
+		error = sc->sc_decode_stream_header(sc, frame, frame_size);
 		if (error == USBD_CANCELLED)
 			break;
 	}
@@ -1861,6 +1885,64 @@ uvideo_vs_decode_stream_header(struct uvideo_softc *sc, uint8_t *frame,
 
 		fb->sample = 0;
 		fb->fid = 0;
+	}
+
+	return (USBD_NORMAL_COMPLETION);
+}
+
+/*
+ * XXX Doesn't work yet.  Fix it!
+ *
+ * The iSight first generation device uses a own, non-standard streaming
+ * protocol.  The stream header is just sent once per image and looks
+ * like following:
+ *
+ *	uByte 	header length
+ *	uByte	flags
+ *	uByte	magic1[4]	always "11223344"
+ *	uByte	magic2[8]	always "deadbeefdeadface"
+ *	uByte	unknown[16]
+ *
+ * Sometimes the stream header is prefixed by a unknown byte.  Therefore
+ * we check for the magic value on two offsets.
+ */
+usbd_status
+uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
+    int frame_size)
+{
+	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
+	int sample_len, header = 0;
+	uint8_t magic[] = {
+	    0x11, 0x22, 0x33, 0x44,
+	    0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xfa, 0xce };
+
+	if (frame_size < 30)
+		return (USBD_INVAL);
+
+	if (!memcmp(&frame[2], magic, 12) || !memcmp(&frame[3], magic, 12))
+		header = 1;
+
+	if (header && fb->fid == 0) {
+		fb->fid = 1;
+		return (USBD_NORMAL_COMPLETION);
+	}
+
+	if (header) {
+		if (sc->sc_mmap_flag) {
+			/* mmap */
+			uvideo_mmap_queue(sc, fb->buf, fb->offset);
+		} else {
+			/* read */
+			uvideo_read(sc, fb->buf, fb->offset);
+		}
+		fb->offset = 0;
+	} else {
+		/* save sample */
+		sample_len = frame_size;
+		if ((fb->offset + sample_len) <= fb->buf_size) {
+			bcopy(frame, fb->buf + fb->offset, sample_len);
+			fb->offset += sample_len;
+		}
 	}
 
 	return (USBD_NORMAL_COMPLETION);
@@ -3114,4 +3196,88 @@ uvideo_ucode_loader_ricoh(struct uvideo_softc *sc)
 	DPRINTF(1, "%s: ucode activated\n", DEVNAME(sc));
 
 	return (USBD_NORMAL_COMPLETION);
+}
+
+/*
+ * The iSight first generation device will first attach as
+ * 0x8300 non-UVC.  After the firmware gots uploaded, the device
+ * will reset and come back as 0x8501 UVC compatible.
+ */
+usbd_status
+uvideo_ucode_loader_apple_isight(struct uvideo_softc *sc)
+{
+	usbd_status error;
+	uint8_t *ucode, *code, cbuf;
+	size_t ucode_size;
+	uint16_t len, req, off, llen;
+
+	/* open microcode file */
+	error = loadfirmware(sc->sc_quirk->ucode_name, &ucode, &ucode_size);
+	if (error != 0) {
+		printf("%s: loadfirmware error=%d!\n", DEVNAME(sc), error);
+		return (USBD_INVAL);
+	}
+
+	/* send init request */
+	cbuf = 1;
+	error = uvideo_usb_control(sc, UT_WRITE_VENDOR_DEVICE, 0xa0, 0xe600,
+	    &cbuf, sizeof(cbuf));
+	if (error) {
+		printf("%s: failed to init firmware loading state: %s\n",
+		    DEVNAME(sc), usbd_errstr(error));
+		return (error);
+	}
+
+	code = ucode;
+	while (code < ucode + ucode_size) {
+		/* get header information */
+		len = (code[0] << 8) | code[1];
+		req = (code[2] << 8) | code[3];
+		DPRINTF(1, "%s: ucode data len=%d, request=0x%x\n",
+		    DEVNAME(sc), len, req);
+		if (len < 1 || len > 1023) {
+			printf("%s: ucode header contains wrong value!\n",
+			    DEVNAME(sc));
+			free(ucode, M_DEVBUF);
+			return (USBD_INVAL);
+		}
+		code += 4;
+
+		/* send data to device */
+		for (off = 0; len > 0; req += 50, off += 50) {
+			llen = len > 50 ? 50 : len;
+			len -= llen;
+
+			DPRINTF(1, "%s: send %d bytes data to offset 0x%x\n",
+			    DEVNAME(sc), llen, req);
+			error = uvideo_usb_control(sc, UT_WRITE_VENDOR_DEVICE,
+			    0xa0, req, code, llen);
+			if (error) {
+				printf("%s: ucode load failed: %s\n",
+				    DEVNAME(sc), usbd_errstr(error));
+				free(ucode, M_DEVBUF);
+				return (USBD_INVAL);
+			}
+
+			code += llen;
+		}
+	}
+	free(ucode, M_DEVBUF);
+
+	/* send finished request */
+	cbuf = 0;
+	error = uvideo_usb_control(sc, UT_WRITE_VENDOR_DEVICE, 0xa0, 0xe600,
+	    &cbuf, sizeof(cbuf));
+	if (error != USBD_NORMAL_COMPLETION) {
+		printf("%s: ucode activate error=%s!\n",
+		    DEVNAME(sc), usbd_errstr(error));
+		return (USBD_INVAL);
+	}
+	DPRINTF(1, "%s: ucode activated\n", DEVNAME(sc));
+
+	/*
+	 * We will always return from the attach routine since the device
+	 * will reset and re-attach at this point.
+	 */
+	return (USBD_INVAL);
 }

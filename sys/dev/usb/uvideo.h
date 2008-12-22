@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.42 2008/12/17 18:14:46 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.43 2008/12/22 09:34:46 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -554,6 +554,7 @@ struct uvideo_controls {
 
 struct uvideo_softc {
 	struct device				 sc_dev;
+	struct usb_attach_arg			*sc_uaa;
 	usbd_device_handle			 sc_udev;
 
 	struct device				*sc_videodev;
@@ -601,4 +602,7 @@ struct uvideo_softc {
 	void					 (*sc_uplayer_intr)(void *);
 
 	struct uvideo_devs			*sc_quirk;
+	usbd_status				(*sc_decode_stream_header)
+						    (struct uvideo_softc *,
+						    uint8_t *, int);
 };
