@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.40 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.41 2008/12/22 12:18:56 jacekm Exp $
 .\"	$KAME: getnameinfo.3,v 1.37 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: December 22 2008 $
 .Dt GETNAMEINFO 3
 .Os
 .Sh NAME
@@ -229,12 +229,11 @@ is used
 for access control purposes:
 .Bd -literal -offset indent
 struct sockaddr *sa;
-socklen_t salen;
 char addr[NI_MAXHOST];
 struct addrinfo hints, *res;
 int error;
 
-error = getnameinfo(sa, salen, addr, sizeof(addr),
+error = getnameinfo(sa, sa->sa_len, addr, sizeof(addr),
     NULL, 0, NI_NAMEREQD);
 if (error == 0) {
 	memset(&hints, 0, sizeof(hints));
@@ -249,7 +248,7 @@ if (error == 0) {
 	/* addr is FQDN as a result of PTR lookup */
 } else {
 	/* addr is numeric string */
-	error = getnameinfo(sa, salen, addr, sizeof(addr),
+	error = getnameinfo(sa, sa->sa_len, addr, sizeof(addr),
 	    NULL, 0, NI_NUMERICHOST);
 }
 .Ed
