@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.48 2007/03/16 20:51:01 markus Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.49 2008/12/22 17:00:37 hshoexer Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -780,8 +780,10 @@ pfkey_reply(int sd, u_int8_t **datap, ssize_t *lenp)
 	}
 	if (datap == NULL && hdr.sadb_msg_errno != 0) {
 		errno = hdr.sadb_msg_errno;
-		warn("PF_KEY failed");
-		return -1;
+		if (errno != EEXIST) {
+			warn("PF_KEY failed");
+			return -1;
+		}
 	}
 	return 0;
 }
