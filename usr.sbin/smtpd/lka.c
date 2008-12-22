@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.8 2008/12/20 00:18:03 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.9 2008/12/22 12:59:15 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -247,7 +247,6 @@ lka_dispatch_smtp(int sig, short event, void *p)
 		case IMSG_LKA_HOST: {
 
 			struct sockaddr *sa = NULL;
-			socklen_t salen;
 			char addr[NI_MAXHOST];
 			struct addrinfo hints, *res;
 			int error;
@@ -277,7 +276,7 @@ lka_dispatch_smtp(int sig, short event, void *p)
 					break;
 				}
 			} else {
-				error = getnameinfo(sa, salen, addr, sizeof(addr),
+				error = getnameinfo(sa, sa->sa_len, addr, sizeof(addr),
 				    NULL, 0, NI_NUMERICHOST);
 			}
 			strlcpy(s->s_hostname, addr, MAXHOSTNAMELEN);
