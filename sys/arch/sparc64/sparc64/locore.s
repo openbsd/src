@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.154 2008/12/13 23:39:30 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.155 2008/12/22 18:08:25 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1578,10 +1578,7 @@ intr_setup_msg:
 	 stx	%i7, [%sp + CC64FSZ + BIAS + TF_O + (7*8)]
 
 	! came from user mode -- switch to kernel mode stack
-	rdpr	%otherwin, %g5			! Has this already been done?
-	brnz,pn	%g5, 1f				! Don't set this twice
-
-	 rdpr	%canrestore, %g5		! Fixup register window state registers
+	rdpr	%canrestore, %g5		! Fixup register window state registers
 	wrpr	%g0, 0, %canrestore
 	wrpr	%g0, %g5, %otherwin
 	wrpr	%g0, WSTATE_KERN, %wstate	! Enable kernel mode window traps -- now we can trap again
