@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.4 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: reg.h,v 1.5 2008/12/22 23:01:31 kettenis Exp $	*/
 /*	$NetBSD: reg.h,v 1.8 2001/06/19 12:59:16 wiz Exp $ */
 
 /*
@@ -67,8 +67,6 @@ struct trapframe32 {
  * memory faults and tf_kstack to thread trapframes on the kernel
  * stack(s).  If tf_kstack == 0 then this is the lowest level trap;
  * we came from user mode.
- * (The slot tf_global[0] is used to store the %fp when this is used
- * as a clockframe.  This is known as `cheating'.)
  */
 struct trapframe64 {
 	int64_t		tf_tstate;	/* tstate register */
@@ -81,7 +79,6 @@ struct trapframe64 {
 	char		tf_pil;		/* What IRQ we're handling */
 	char		tf_oldpil;	/* What our old SPL was */
 	int64_t		tf_global[8];	/* global registers in trap's caller */
-	/* n.b. tf_global[0] is used for fp when this is a clockframe */
 	int64_t		tf_out[8];	/* output registers in trap's caller */
 	int64_t		tf_local[8];	/* local registers in trap's caller */
 	int64_t		tf_in[8];	/* in registers in trap's caller (for debug) */

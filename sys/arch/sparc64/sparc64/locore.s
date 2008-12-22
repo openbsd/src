@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.155 2008/12/22 18:08:25 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.156 2008/12/22 23:01:31 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1573,7 +1573,6 @@ intr_setup_msg:
 
 	stx	%i5, [%sp + CC64FSZ + BIAS + TF_O + (5*8)]
 	stx	%i6, [%sp + CC64FSZ + BIAS + TF_O + (6*8)]
-	stx	%i6, [%sp + CC64FSZ + BIAS + TF_G + (0*8)]	! Save fp in clockframe->cf_fp
 	brz,pt	%g3, 1f				! If we were in kernel mode start saving globals
 	 stx	%i7, [%sp + CC64FSZ + BIAS + TF_O + (7*8)]
 
