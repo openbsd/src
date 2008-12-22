@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.10 2008/12/22 13:14:30 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.11 2008/12/22 13:35:58 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -253,7 +253,7 @@ lka_dispatch_smtp(int sig, short event, void *p)
 			s = imsg.data;
 			sa = (struct sockaddr *)&s->s_ss;
 			if (getnameinfo(sa, sa->sa_len, addr, sizeof(addr),
-			    NULL, 0, NI_NAMEREQD));
+			    NULL, 0, NI_NAMEREQD))
 				break;
 
 			memset(&hints, 0, sizeof(hints));
