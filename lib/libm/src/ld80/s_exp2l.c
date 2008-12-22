@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_exp2l.c,v 1.1 2008/12/09 20:00:35 martynas Exp $	*/
+/*	$OpenBSD: s_exp2l.c,v 1.2 2008/12/22 05:22:27 miod Exp $	*/
 /*-
  * Copyright (c) 2005-2008 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -213,7 +213,7 @@ exp2l(long double x)
 		long double e;
 		struct ieee_ext bits;
 	} u, v;
-	long double r, twopk, twopkp10000, z;
+	long double r, twopk, twopkp10000, z, t_hi, t_lo;
 	uint32_t es, hx, ix, i0;
 	int k;
 
@@ -274,8 +274,8 @@ exp2l(long double x)
 	}
 
 	/* Compute r = exp2l(y) = exp2lt[i0] * p(z). */
-	long double t_hi = tbl[i0];
-	long double t_lo = tbl[i0 + 1];
+	t_hi = tbl[i0];
+	t_lo = tbl[i0 + 1];
 	/* XXX This gives > 1 ulp errors outside of FE_TONEAREST mode */
 	r = t_lo + (t_hi + t_lo) * z * (P1 + z * (P2 + z * (P3 + z * (P4
 	    + z * (P5 + z * P6))))) + t_hi;
