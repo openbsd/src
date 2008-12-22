@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.27 2008/12/21 20:21:24 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.28 2008/12/22 00:03:08 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -416,8 +416,10 @@
 #define			CORB_CD_PINK	0x9
 #define			CORB_CD_WHITE	0xe
 #define			CORB_CD_COLOR_OTHER	0xf
-#define		CORB_CD_CONNECTION_MASK	0x000f0000
-#define		CORB_CD_CONNECTION(x)	((x >> 16) & 0xf)
+#define		CORB_CD_CONNECTION_OFFSET	16
+#define		CORB_CD_CONNECTION_BITS		0xf
+#define		CORB_CD_CONNECTION_MASK	(CORB_CD_CONNECTION_BITS << CORB_CD_CONNECTION_OFFSET)
+#define		CORB_CD_CONNECTION(x) ((x >> CORB_CD_CONNECTION_OFFSET) & CORB_CD_CONNECTION_BITS)
 #define			CORB_CD_CONN_UNKNOWN	0x0
 #define			CORB_CD_18		0x1
 #define			CORB_CD_14		0x2
@@ -431,7 +433,10 @@
 #define			CORB_CD_RJ11		0xa
 #define			CORB_CD_CONN_COMB	0xb
 #define			CORB_CD_CONN_OTHER	0xf
-#define		CORB_CD_DEVICE(x)	((x >> 20) & 0xf)
+#define		CORB_CD_DEVICE_OFFSET		20
+#define		CORB_CD_DEVICE_BITS		0xf
+#define		CORB_CD_DEVICE_MASK (CORB_CD_DEVICE_BITS << CORB_CD_DEVICE_OFFSET)
+#define		CORB_CD_DEVICE(x) ((x >> CORB_CD_DEVICE_OFFSET) & CORB_CD_DEVICE_BITS)
 #define			CORB_CD_LINEOUT		0x0
 #define			CORB_CD_SPEAKER		0x1
 #define			CORB_CD_HEADPHONE	0x2
@@ -446,6 +451,7 @@
 #define			CORB_CD_TELEPHONY	0xb
 #define			CORB_CD_SPDIFIN		0xc
 #define			CORB_CD_DIGITALIN	0xd
+#define			CORB_CD_BEEP		0xe
 #define			CORB_CD_DEVICE_OTHER	0xf
 #define		CORB_CD_LOCATION_MASK	0x3f000000
 #define		CORB_CD_LOC_GEO(x)	((x >> 24) & 0xf)
@@ -464,8 +470,10 @@
 #define			CORB_CD_INTERNAL	0x1
 #define			CORB_CD_SEPARATE	0x2
 #define			CORB_CD_LOC_OTHER	0x3
-#define		CORB_CD_PORT_MASK	0xc0000000
-#define		CORB_CD_PORT(x)		((x >> 30) & 0x3)
+#define		CORB_CD_PORT_OFFSET		30
+#define		CORB_CD_PORT_BITS		0x3
+#define		CORB_CD_PORT_MASK (CORB_CD_PORT_BITS << CORB_CD_PORT_OFFSET)
+#define		CORB_CD_PORT(x)	((x >> CORB_CD_PORT_OFFSET) & CORB_CD_PORT_BITS)
 #define			CORB_CD_JACK		0x0
 #define			CORB_CD_NONE		0x1
 #define			CORB_CD_FIXED		0x2

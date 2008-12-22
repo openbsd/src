@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.84 2008/12/21 21:25:01 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.85 2008/12/22 00:03:08 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -331,7 +331,7 @@ static const char *pin_devices[16] = {
 	AudioNline, AudioNspeaker, AudioNheadphone, AudioNcd,
 	"SPDIF-out", "digital-out", "modem-line", "modem-handset",
 	AudioNline, AudioNaux, AudioNmicrophone, "telephony",
-	"SPDIF-in", "digital-in", "dev0e", "other"};
+	"SPDIF-in", "digital-in", "beep", "other"};
 static const char *wtypes[16] = {
 	"dac", "adc", "mix", "sel", "pin", "pow", "volume",
 	"beep", "wid08", "wid09", "wid0a", "wid0b", "wid0c",
