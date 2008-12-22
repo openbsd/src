@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2008/12/02 03:20:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2008/12/22 23:54:27 deraadt Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -30,7 +30,7 @@ MTREE=		${UTILS}/mtree.conf
 
 LIF?=		lif${REV}.fs
 CDROM?=		cd${REV}.iso
-MKBOOT?=	${DESTDIR}/usr/mdec/mkboot
+MKBOOT?=	/usr/mdec/mkboot
 BOOT?=		${DESTDIR}/usr/mdec/boot
 CDBOOT?=	${DESTDIR}/usr/mdec/cdboot
 
