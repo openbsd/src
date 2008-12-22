@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.48 2008/11/22 16:03:31 gwk Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.49 2008/12/22 06:37:36 gwk Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -41,6 +41,7 @@ int	acpicpu_match(struct device *, void *, void *);
 void	acpicpu_attach(struct device *, struct device *, void *);
 int	acpicpu_notify(struct aml_node *, int, void *);
 void	acpicpu_setperf(int);
+void	acpicpu_setperf_ppc_change(struct acpicpu_pss *, int);
 
 #define ACPI_STATE_C0		0x00
 #define ACPI_STATE_C1		0x01
@@ -390,6 +391,7 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 			    DEVNAME(sc), status, sc->sc_level);
 			if (setperf_prio < 30) {
 				cpu_setperf = acpicpu_setperf;
+				acpicpu_set_notify(acpicpu_setperf_ppc_change);
 				setperf_prio = 30;
 				acpi_hasprocfvs = 1;
 			}
@@ -583,8 +585,6 @@ acpicpu_fetch_pss(struct acpicpu_pss **pss)
 	 * XXX: According to the ACPI spec in an SMP system all processors
 	 * are supposed to support the same states. For now we pray
 	 * the bios ensures this...
-	 * XXX part deux: this needs to account for _PPC as well
-	 * when AC is removed the nr of _PSS entries can go down
 	 */
 
 	sc = acpicpu_sc[0];
@@ -610,9 +610,6 @@ acpicpu_notify(struct aml_node *node, int notify_type, void *arg)
 		if (sc->sc_notify)
 			sc->sc_notify(sc->sc_pss, sc->sc_pss_len);
 
-		/* reset performance to current percentage */
-		/* XXX will fail for amd64 for now */
-		cpu_setperf(sc->sc_level);
 		break;
 	default:
 		printf("%s: unhandled cpu event %x\n", DEVNAME(sc),
@@ -630,6 +627,16 @@ acpicpu_set_notify(void (*func)(struct acpicpu_pss *, int)) {
 	sc = acpicpu_sc[0];
 	if (sc != NULL)
 		sc->sc_notify = func;
+}
+
+void
+acpicpu_setperf_ppc_change(struct acpicpu_pss *pss, int npss) {
+	struct acpicpu_softc    *sc;
+
+	sc = acpicpu_sc[0];
+
+	if (sc != NULL)
+		acpicpu_setperf(sc->sc_level);
 }
 
 void
