@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.112 2008/12/20 22:27:38 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.113 2008/12/22 18:35:52 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -513,7 +513,7 @@ m_defrag(struct mbuf *m, int how)
 		m->m_data = m->m_ext.ext_buf;
 	} else {
 		m->m_data = m->m_pktdat;
-		bcopy(&m0->m_data, &m->m_data, m0->m_len);
+		bcopy(m0->m_data, m->m_data, m0->m_len);
 	}
 	m->m_pkthdr.len = m->m_len = m0->m_len;
 	m->m_pkthdr.pf.hdr = NULL;	/* altq will cope */
