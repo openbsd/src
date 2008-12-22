@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.9 2008/12/22 12:59:15 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.10 2008/12/22 13:14:30 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -245,43 +245,29 @@ lka_dispatch_smtp(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_LKA_HOST: {
-
-			struct sockaddr *sa = NULL;
+			struct sockaddr *sa;
 			char addr[NI_MAXHOST];
 			struct addrinfo hints, *res;
-			int error;
-			struct session *s = imsg.data;
+			struct session *s;
 
-			if (s->s_ss.ss_family == PF_INET) {
-				struct sockaddr_in *ssin = (struct sockaddr_in *)&s->s_ss;
-				sa = (struct sockaddr *)ssin;
-			}
-			if (s->s_ss.ss_family == PF_INET6) {
-				struct sockaddr_in6 *ssin6 = (struct sockaddr_in6 *)&s->s_ss;
-				sa = (struct sockaddr *)ssin6;
+			s = imsg.data;
+			sa = (struct sockaddr *)&s->s_ss;
+			if (getnameinfo(sa, sa->sa_len, addr, sizeof(addr),
+			    NULL, 0, NI_NAMEREQD));
+				break;
+
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_socktype = SOCK_DGRAM;
+			hints.ai_flags = AI_NUMERICHOST;
+			if (getaddrinfo(addr, NULL, &hints, &res) == 0) {
+				/* Malicious PTR record. */
+				freeaddrinfo(res);
+				break;
 			}
 
-			error = getnameinfo(sa, sa->sa_len, addr, sizeof(addr),
-			    NULL, 0, NI_NAMEREQD);
-			if (error == 0) {
-				memset(&hints, 0, sizeof(hints));
-				hints.ai_socktype = SOCK_DGRAM;
-				hints.ai_flags = AI_NUMERICHOST;
-				if (getaddrinfo(addr, "0", &hints, &res) == 0) {
-					freeaddrinfo(res);
-					strlcpy(s->s_hostname, "<bogus>",
-					    MAXHOSTNAMELEN);
-					imsg_compose(ibuf, IMSG_LKA_HOST, 0, 0,
-					    -1, s, sizeof(struct session));
-					break;
-				}
-			} else {
-				error = getnameinfo(sa, sa->sa_len, addr, sizeof(addr),
-				    NULL, 0, NI_NUMERICHOST);
-			}
 			strlcpy(s->s_hostname, addr, MAXHOSTNAMELEN);
-			imsg_compose(ibuf, IMSG_LKA_HOST, 0, 0, -1,
-			    s, sizeof(struct session));
+			imsg_compose(ibuf, IMSG_LKA_HOST, 0, 0, -1, s,
+			    sizeof(struct session));
 			break;
 		}
 		default:
