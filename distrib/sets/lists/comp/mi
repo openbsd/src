@@ -5649,8 +5649,14 @@
 ./usr/share/man/cat3/wcsrtombs.0
 ./usr/share/man/cat3/wcsspn.0
 ./usr/share/man/cat3/wcsstr.0
+./usr/share/man/cat3/wcstoimax.0
 ./usr/share/man/cat3/wcstok.0
+./usr/share/man/cat3/wcstol.0
+./usr/share/man/cat3/wcstoll.0
 ./usr/share/man/cat3/wcstombs.0
+./usr/share/man/cat3/wcstoul.0
+./usr/share/man/cat3/wcstoull.0
+./usr/share/man/cat3/wcstoumax.0
 ./usr/share/man/cat3/wctob.0
 ./usr/share/man/cat3/wctomb.0
 ./usr/share/man/cat3/wctrans.0
