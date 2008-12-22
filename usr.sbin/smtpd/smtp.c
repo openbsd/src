@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.11 2008/12/21 18:51:08 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.12 2008/12/22 13:18:58 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -305,12 +305,14 @@ smtp_dispatch_lka(int sig, short event, void *p)
 
 			ss = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
 			if (ss == NULL) {
-				/* Session was removed while we were waiting for the message */
+				/* Session was removed while we were waiting
+				 * for the message */
 				break;
 			}
 
 			strlcpy(ss->s_hostname, s->s_hostname, MAXHOSTNAMELEN);
-
+			strlcpy(ss->s_msg.session_hostname, s->s_hostname,
+			    MAXHOSTNAMELEN);
 			break;
 		}
 		default:
