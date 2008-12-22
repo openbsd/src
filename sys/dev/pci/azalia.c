@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.87 2008/12/22 03:00:17 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.88 2008/12/22 03:18:02 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1767,7 +1767,7 @@ azalia_widget_label_widgets(codec_t *codec)
 		w = &codec->w[i];
 		w->mixer_class = -1;
 		/* default for disabled/unused widgets */
-		snprintf(w->name, sizeof(w->name), "u-wid%d", w->nid);
+		snprintf(w->name, sizeof(w->name), "u-wid%2.2x", w->nid);
 		if (w->enable == 0)
 			continue;
 		switch (w->type) {
