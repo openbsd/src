@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.83 2008/12/22 02:20:22 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.84 2008/12/22 03:47:16 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -528,7 +528,9 @@ azalia_generic_mixer_init(codec_t *this)
 			continue;
 
 		/* selector */
-		if (w->type != COP_AWTYPE_AUDIO_MIXER && w->nconnections >= 2) {
+		if (w->type != COP_AWTYPE_AUDIO_MIXER && w->nconnections > 0 &&
+		    !(w->nconnections == 1 &&
+		    strcmp(w->name, this->w[w->connections[0]].name) == 0)) {
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s_source", w->name);
