@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.92 2008/11/21 18:28:21 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.93 2008/12/22 16:35:28 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -45,9 +45,11 @@ acpi0		at bios?
 #acpicpu*	at acpi?
 #acpiec*	at acpi?
 acpiprt*	at acpi?
+acpimadt0	at acpi?
 #acpitz*	at acpi?
 
-cpu*	at mainbus0
+cpu0	at mainbus0
+ioapic*	at mainbus?
 isa0	at mainbus0
 #isa0	at pcib?
 pci*	at mainbus0
@@ -55,6 +57,7 @@ pci*	at mainbus0
 option		PCIVERBOSE
 
 pchb*	at pci?			# PCI-Host bridges
+aapic*	at pci?			# AMD 8131 IO apic
 ppb*	at pci?			# PCI-PCI bridges
 pci*	at ppb?
 pci*	at pchb?

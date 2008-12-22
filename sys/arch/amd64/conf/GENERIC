@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.250 2008/12/01 23:48:46 todd Exp $
+#	$OpenBSD: GENERIC,v 1.251 2008/12/22 16:35:28 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -32,6 +32,7 @@ mainbus0 at root
 
 bios0	at mainbus?
 cpu0	at mainbus?
+ioapic*	at mainbus?
 isa0	at mainbus0
 isa0	at pcib?
 isa0	at amdpcib?
@@ -48,6 +49,7 @@ acpicpu*	at acpi?
 acpiec*		at acpi?
 acpiprt*	at acpi? 
 acpitz*		at acpi?
+acpimadt0	at acpi?
 acpithinkpad*	at acpi?
 
 ipmi0	at mainbus? disable	# IPMI
@@ -56,6 +58,7 @@ option		PCIVERBOSE
 option		USBVERBOSE
 
 pchb*	at pci?			# PCI-Host bridges
+aapic*	at pci?			# AMD 8131 IO apic
 ppb*	at pci?			# PCI-PCI bridges
 pci*	at ppb?
 pci*	at pchb?

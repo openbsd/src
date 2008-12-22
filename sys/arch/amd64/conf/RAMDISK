@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.47 2008/11/22 10:32:20 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.48 2008/12/22 16:35:28 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -42,9 +42,11 @@ acpi0		at bios?
 #acpicpu*	at acpi?
 #acpiec*	at acpi?
 acpiprt*	at acpi?
+acpimadt0	at acpi?
 #acpitz*	at acpi?
 
-cpu*	at mainbus0
+cpu0	at mainbus0
+ioapic*	at mainbus?
 isa0	at mainbus0
 #isa0	at pcib?
 pci*	at mainbus0
@@ -52,6 +54,7 @@ pci*	at mainbus0
 option		PCIVERBOSE
 
 pchb*	at pci?			# PCI-Host bridges
+aapic*	at pci?			# AMD 8131 IO apic
 ppb*	at pci?			# PCI-PCI bridges
 pci*	at ppb?
 pci*	at pchb?
@@ -140,8 +143,8 @@ scsibus* at mpi?
 #scsibus* at gdt?
 #aac*	at pci?			# Adaptec FSA RAID controllers
 #scsibus* at aac?
-ami*	at pci?			# AMI MegaRAID controllers
-scsibus* at ami?
+#ami*	at pci?			# AMI MegaRAID controllers
+#scsibus* at ami?
 mfi*	at pci?			# LSI MegaRAID SAS controllers
 scsibus* at mfi?
 #cac*	at pci?			# Compaq Smart ARRAY [234]* RAID controllers
@@ -215,7 +218,7 @@ re*	at pci?			# Realtek 8169/8169S/8110S
 #epic*	at pci?			# SMC EPIC/100 ethernet
 #tl*	at pci?			# Compaq Thunderlan ethernet
 #vr*	at pci?			# VIA Rhine ethernet
-dc*	at pci?			# 21143, "tulip" clone ethernet
+#dc*	at pci?			# 21143, "tulip" clone ethernet
 #sis*	at pci?			# SiS 900/7016 ethernet
 #wb*	at pci?			# Winbond W89C840F ethernet
 #ti*	at pci?			# Alteon Tigon 1Gb ethernet
@@ -250,7 +253,7 @@ nsphyter* at mii?		# NS and compatible PHYs
 #sqphy*	at mii?			# Seeq 8x220 PHYs
 rlphy* at mii?			# RealTek 8139 internal PHYs
 #mtdphy* at mii?		# Myson MTD972 PHYs
-dcphy*	at mii?			# Digital Clone PHYs
+#dcphy*	at mii?			# Digital Clone PHYs
 #acphy*	at mii?			# Altima AC101 PHYs
 #amphy*	at mii?			# AMD 79C873 PHYs
 #tqphy*	at mii?			# TDK 78Q212x PHYs
