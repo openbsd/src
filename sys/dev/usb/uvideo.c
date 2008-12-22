@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.112 2008/12/22 09:45:46 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.113 2008/12/22 13:33:43 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1918,10 +1918,9 @@ uvideo_vs_decode_stream_header_isight(struct uvideo_softc *sc, uint8_t *frame,
 	    0x11, 0x22, 0x33, 0x44,
 	    0xde, 0xad, 0xbe, 0xef, 0xde, 0xad, 0xfa, 0xce };
 
-	if (frame_size < 30)
-		return (USBD_INVAL);
-
-	if (!memcmp(&frame[2], magic, 12) || !memcmp(&frame[3], magic, 12))
+	if (frame_size > 13 && !memcmp(&frame[2], magic, 12))
+		header = 1;
+	if (frame_size > 14 && !memcmp(&frame[3], magic, 12))
 		header = 1;
 
 	if (header && fb->fid == 0) {
