@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.18 2008/12/21 02:18:46 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.19 2008/12/22 12:56:21 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -476,6 +476,8 @@ parent_sig_handler(int sig, short event, void *p)
 					log_debug("DEBUG: external mda process has terminated in a baaaad way");
 				}
 
+				SPLAY_REMOVE(mdaproctree, &env->mdaproc_queue,
+				    mdaproc);
 				free(mdaproc);
 			}
 		} while (pid > 0 || (pid == -1 && errno == EINTR));
