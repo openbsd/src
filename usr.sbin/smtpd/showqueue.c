@@ -1,4 +1,4 @@
-/*	$OpenBSD: showqueue.c,v 1.2 2008/12/21 13:06:41 jacekm Exp $	*/
+/*	$OpenBSD: showqueue.c,v 1.3 2008/12/22 13:28:10 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -90,8 +90,11 @@ list_bucket(char *bucket, int flags)
 	snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_SPOOL PATH_QUEUE, bucket);
 
 	dirp = opendir(pathname);
-	if (dirp == NULL)
+	if (dirp == NULL) {
+		if (errno == ENOENT)
+			return;
 		err(1, "%s", pathname);
+	}
 
 	while ((dp = readdir(dirp)) != NULL) {
 		if (strcmp(dp->d_name, ".") == 0 ||
@@ -117,8 +120,11 @@ list_message(char *bucket, char *message, int flags)
 	    bucket, message, PATH_ENVELOPES);
 
 	dirp = opendir(pathname);
-	if (dirp == NULL)
+	if (dirp == NULL) {
+		if (errno == ENOENT)
+			return;
 		err(1, "%s", pathname);
+	}
 
 	while ((dp = readdir(dirp)) != NULL) {
 		if (strcmp(dp->d_name, ".") == 0 ||
@@ -130,15 +136,13 @@ list_message(char *bucket, char *message, int flags)
 
 		fp = fopen(pathname, "r");
 		if (fp == NULL) {
-			warn("%s", pathname);
-			continue;
+			if (errno == ENOENT)
+				continue;
+			err(1, "%s", pathname);
 		}
 
-		if (fread(&envelope, sizeof(struct message), 1, fp) != 1) {
-			warn("%s", pathname);
-			fclose(fp);
-			continue;
-		}
+		if (fread(&envelope, sizeof(struct message), 1, fp) != 1)
+			err(1, "%s", pathname);
 
 		fclose(fp);
 
@@ -171,15 +175,13 @@ show_runqueue(int flags)
 
 		fp = fopen(pathname, "r");
 		if (fp == NULL) {
-			warn("%s", pathname);
-			continue;
+			if (errno == ENOENT)
+				continue;
+			err(1, "%s", pathname);
 		}
 
-		if (fread(&envelope, sizeof(struct message), 1, fp) != 1) {
-			warn("%s", pathname);
-			fclose(fp);
-			continue;
-		}
+		if (fread(&envelope, sizeof(struct message), 1, fp) != 1)
+			err(1, "%s", pathname);
 
 		fclose(fp);
 
