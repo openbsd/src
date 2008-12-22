@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.35 2008/12/21 19:27:57 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.36 2008/12/22 00:44:32 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -380,7 +380,6 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 int
 session_rfc5321_rset_handler(struct session *s, char *args)
 {
-	s->s_msg.rcptcount = 0;
 	s->s_state = S_HELO;
 	session_respond(s, "250 Reset state");
 
