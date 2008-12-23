@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.90 2008/12/23 10:33:10 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.91 2008/12/23 10:43:26 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -77,7 +77,6 @@ int	azalia_generic_mixer_autoinit(codec_t *);
 
 int	azalia_generic_mixer_fix_indexes(codec_t *);
 int	azalia_generic_mixer_default(codec_t *);
-int	azalia_generic_mixer_pin_sense(codec_t *);
 int	azalia_generic_mixer_create_virtual(codec_t *, int, int);
 int	azalia_generic_mixer_delete(codec_t *);
 int	azalia_generic_mixer_ensure_capacity(codec_t *, size_t);
@@ -92,6 +91,7 @@ int	azalia_generic_get_port(codec_t *, mixer_ctrl_t *);
 int	azalia_gpio_unmute(codec_t *, int);
 
 void	azalia_pin_config_ov(widget_t *, int, int);
+int	azalia_codec_gpio_quirks(codec_t *);
 
 int	azalia_ad1984_mixer_init(codec_t *);
 int	azalia_alc260_mixer_init(codec_t *);
@@ -277,7 +277,6 @@ azalia_widget_enabled(const codec_t *this, nid_t nid)
 		return 0;
 	return 1;
 }
-
 
 int
 azalia_generic_codec_init_dacgroup(codec_t *this)
@@ -949,43 +948,6 @@ azalia_generic_mixer_default(codec_t *this)
 }
 
 int
-azalia_generic_mixer_pin_sense(codec_t *this)
-{
-	/* GPIO quirks */
-
-	if (this->vid == SIGMATEL_STAC9221 && this->subid == STAC9221_APPLE_ID) {
-		this->comresp(this, this->audiofunc, 0x7e7, 0, NULL);
-		azalia_gpio_unmute(this, 0);
-		azalia_gpio_unmute(this, 1);
-	}
-	if (this->vid == REALTEK_ALC883 && this->subid == ALC883_ACER_ID) {
-		azalia_gpio_unmute(this, 0);
-		azalia_gpio_unmute(this, 1);
-	}
-	if ((this->vid == REALTEK_ALC660 && this->subid == ALC660_ASUS_G2K) ||
-	    (this->vid == REALTEK_ALC880 && this->subid == ALC880_ASUS_M5200) ||
-	    (this->vid == REALTEK_ALC880 && this->subid == ALC880_ASUS_A7M) ||
-	    (this->vid == REALTEK_ALC882 && this->subid == ALC882_ASUS_A7T) ||
-	    (this->vid == REALTEK_ALC882 && this->subid == ALC882_ASUS_W2J) ||
-	    (this->vid == REALTEK_ALC885 && this->subid == ALC885_APPLE_MB3) ||
-	    (this->vid == REALTEK_ALC885 && this->subid == ALC885_APPLE_MB4) ||
-	    (this->vid == SIGMATEL_STAC9205 && this->subid == STAC9205_DELL_D630) ||
-	    (this->vid == SIGMATEL_STAC9205 && this->subid == STAC9205_DELL_V1500)) {
-		azalia_gpio_unmute(this, 0);
-	}
-
-	if (this->vid == REALTEK_ALC880 && this->subid == ALC880_MEDION_MD95257) {
-		azalia_gpio_unmute(this, 1);
-	}
-
-	if (this->vid == IDT_92HD71B7 && this->subid == IDT92HD71B7_DELL_E6400) {
-		azalia_gpio_unmute(this, 0);
- 	}
-
-	return 0;
-}
-
-int
 azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
 {
 	mixer_item_t *m;
@@ -1057,7 +1019,7 @@ azalia_generic_mixer_autoinit(codec_t *this)
 {
 	azalia_generic_mixer_init(this);
 	azalia_generic_mixer_create_virtual(this, -1, -1);
-	azalia_generic_mixer_pin_sense(this);
+	azalia_codec_gpio_quirks(this);
 
 	return 0;
 }
@@ -1737,6 +1699,38 @@ azalia_pin_config_ov(widget_t *w, int mask, int val)
 		w->d.pin.device = val;
 }
 
+int
+azalia_codec_gpio_quirks(codec_t *this)
+{
+	if (this->vid == SIGMATEL_STAC9221 && this->subid == STAC9221_APPLE_ID) {
+		this->comresp(this, this->audiofunc, 0x7e7, 0, NULL);
+		azalia_gpio_unmute(this, 0);
+		azalia_gpio_unmute(this, 1);
+	}
+	if (this->vid == REALTEK_ALC883 && this->subid == ALC883_ACER_ID) {
+		azalia_gpio_unmute(this, 0);
+		azalia_gpio_unmute(this, 1);
+	}
+	if ((this->vid == REALTEK_ALC660 && this->subid == ALC660_ASUS_G2K) ||
+	    (this->vid == REALTEK_ALC880 && this->subid == ALC880_ASUS_M5200) ||
+	    (this->vid == REALTEK_ALC880 && this->subid == ALC880_ASUS_A7M) ||
+	    (this->vid == REALTEK_ALC882 && this->subid == ALC882_ASUS_A7T) ||
+	    (this->vid == REALTEK_ALC882 && this->subid == ALC882_ASUS_W2J) ||
+	    (this->vid == REALTEK_ALC885 && this->subid == ALC885_APPLE_MB3) ||
+	    (this->vid == REALTEK_ALC885 && this->subid == ALC885_APPLE_MB4) ||
+	    (this->vid == SIGMATEL_STAC9205 && this->subid == STAC9205_DELL_D630) ||
+	    (this->vid == SIGMATEL_STAC9205 && this->subid == STAC9205_DELL_V1500)) {
+		azalia_gpio_unmute(this, 0);
+	}
+	if (this->vid == REALTEK_ALC880 && this->subid == ALC880_MEDION_MD95257) {
+		azalia_gpio_unmute(this, 1);
+	}
+	if (this->vid == IDT_92HD71B7 && this->subid == IDT92HD71B7_DELL_E6400) {
+		azalia_gpio_unmute(this, 0);
+ 	}
+	return 0;
+}
+
 /* ----------------------------------------------------------------
  * codec specific functions
  * ---------------------------------------------------------------- */
@@ -1763,7 +1757,7 @@ azalia_alc260_mixer_init(codec_t *this)
 {
 	azalia_generic_mixer_init(this);
 	azalia_generic_mixer_create_virtual(this, 0x08, -1);
-	azalia_generic_mixer_pin_sense(this);
+	azalia_codec_gpio_quirks(this);
 	return 0;
 }
 
@@ -1773,7 +1767,7 @@ azalia_alc88x_mixer_init(codec_t *this)
 {
 	azalia_generic_mixer_init(this);
 	azalia_generic_mixer_create_virtual(this, 0x0c, -1);
-	azalia_generic_mixer_pin_sense(this);
+	azalia_codec_gpio_quirks(this);
 	return 0;
 }
 
@@ -1800,7 +1794,7 @@ azalia_stac9200_mixer_init(codec_t *this)
 {
 	azalia_generic_mixer_init(this);
 	azalia_generic_mixer_create_virtual(this, 0x0b, 0x0a);
-	azalia_generic_mixer_pin_sense(this);
+	azalia_codec_gpio_quirks(this);
 	return 0;
 }
 
@@ -1810,7 +1804,7 @@ azalia_stac9202_mixer_init(codec_t *this)
 {
 	azalia_generic_mixer_init(this);
 	azalia_generic_mixer_create_virtual(this, 0x0e, 0x09);
-	azalia_generic_mixer_pin_sense(this);
+	azalia_codec_gpio_quirks(this);
 	return 0;
 }
 
