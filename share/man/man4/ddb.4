@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.55 2008/09/01 05:45:54 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.56 2008/12/23 10:05:24 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: September 1 2008 $
+.Dd $Mdocdate: December 23 2008 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -40,23 +40,31 @@ and analysing the kernel after a system crash ("panic"), with a
 syntax.
 .Pp
 .Nm
-is only available if the kernel was configured with the DDB option.
-.Nm
-will be invoked upon a kernel panic when the
+is invoked upon a kernel panic when the
 .Xr sysctl 8
-name
 .Va ddb.panic
 is set to 1.
-.Nm
-may be invoked from the console by the key sequence
-.Li Ctrl-Alt-Esc
-or by sending a
-.Dv BREAK
-if using a serial console, when the
+It may be invoked from the console when the
 .Xr sysctl 8
-name
 .Va ddb.console
-is set to 1.
+is set to 1 using any of the following methods:
+.Pp
+.Bl -dash -offset 3n
+.It
+Using the key sequence
+.Li Ctrl-Alt-Esc .
+.It
+Sending a
+.Dv BREAK
+when using a serial console.
+.It
+For i386 and amd64 architectures,
+using the key sequence
+.Li Ctrl-Alt-Delete
+when the sysctl
+.Va machdep.kbdreset
+is set to 2.
+.El
 .Pp
 .Nm
 prompts for commands on the console with:
