@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.72 2008/12/04 12:40:35 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.73 2008/12/23 06:50:48 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -72,6 +72,7 @@ struct pool_item_header {
 				ph_node;	/* Off-page page headers */
 	int			ph_nmissing;	/* # of chunks in use */
 	caddr_t			ph_page;	/* this page's address */
+	caddr_t			ph_colored;	/* page's colored address */
 	int			ph_pagesize;
 };
 
@@ -845,6 +846,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	 */
 	if (ioff != 0)
 		cp = (caddr_t)(cp + (align - ioff));
+	ph->ph_colored = cp;
 
 	/*
 	 * Insert remaining chunks on the bucket list.
