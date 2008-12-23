@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.10 2008/03/23 08:36:41 damien Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.11 2008/12/23 22:01:38 oga Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -220,7 +220,7 @@
 #define AGP_I855_GCC1_DEV2		0x08
 #define AGP_I855_GCC1_DEV2_ENABLED	0x00
 #define AGP_I855_GCC1_DEV2_DISABLED	0x08
-#define AGP_I855_GCC1_GMS		0x70
+#define AGP_I855_GCC1_GMS		0xf0
 #define AGP_I855_GCC1_GMS_STOLEN_0M	0x00
 #define AGP_I855_GCC1_GMS_STOLEN_1M	0x10
 #define AGP_I855_GCC1_GMS_STOLEN_4M	0x20
@@ -265,5 +265,14 @@
 #define AGP_G33_PGTBL_SIZE_MASK		(3U << 8)
 #define AGP_G33_PGTBL_SIZE_1M		(1U << 8)
 #define AGP_G33_PGTBL_SIZE_2M		(2U << 8)
+
+/*
+ * Intel 4-series registers and values
+ */
+#define AGP_INTEL_GMCH_GMS_STOLEN_96M	0xa0
+#define AGP_INTEL_GMCH_GMS_STOLEN_160M	0xb0
+#define AGP_INTEL_GMCH_GMS_STOLEN_224M	0xc0
+#define AGP_INTEL_GMCH_GMS_STOLEN_352M	0xd0
+#define	AGP_G4X_GTT			0x200000
 
 #endif /* !_PCI_AGPREG_H_ */

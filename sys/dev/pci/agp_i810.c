@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.42 2008/11/09 15:11:19 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.43 2008/12/23 22:01:38 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -61,7 +61,8 @@ enum {
 	CHIP_I855	= 3,	/* i852GM/i855GM/i865G */
 	CHIP_I915	= 4,	/* i915G/i915GM */
 	CHIP_I965	= 5,	/* i965/i965GM */
-	CHIP_G33	= 6	/* G33/Q33/Q35 */
+	CHIP_G33	= 6,	/* G33/Q33/Q35 */
+	CHIP_G4X	= 7	/* G4X */
 };
 
 struct agp_i810_softc {
@@ -158,6 +159,11 @@ agp_i810_get_chiptype(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82Q35_IGD_2:
 		return (CHIP_G33);
 		break;
+	case PCI_PRODUCT_INTEL_82GM45_IGD_1:
+	case PCI_PRODUCT_INTEL_82Q45_IGD_1:
+	case PCI_PRODUCT_INTEL_82G45_IGD_1:
+		return (CHIP_G4X);
+		break;
 	}
 	return (CHIP_NONE);
 }
@@ -194,6 +200,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		memtype = PCI_MAPREG_TYPE_MEM;
 		break;
 	case CHIP_I965:
+	case CHIP_G4X:
 		gmaddr = AGP_I965_GMADR;
 		mmaddr = AGP_I965_MMADR;
 		memtype = PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT;
@@ -283,7 +290,8 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		if (isc->stolen > 0) {
 			printf(": detected %dk stolen memory",
 			    isc->stolen * 4);
-		}
+		} else
+			printf(": no preallocated video memory\n");
 #endif
 
 		/* GATT address is already in there, make sure it's enabled */
@@ -293,7 +301,8 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 		gatt->ag_physical = pgtblctl & ~1;
 	} else if (isc->chiptype == CHIP_I855 || isc->chiptype == CHIP_I915 ||
-		   isc->chiptype == CHIP_I965 || isc->chiptype == CHIP_G33) {
+		   isc->chiptype == CHIP_I965 || isc->chiptype == CHIP_G33 ||
+		   isc->chiptype == CHIP_G4X) {
 		pcireg_t reg;
 		u_int32_t pgtblctl, stolen;
 		u_int16_t gcc1;
@@ -340,6 +349,15 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 				break;
 			}
 			break;
+		case CHIP_G4X:
+			/*
+			 * GTT stolen is separate from graphics stolen on
+			 * 4 series hardware. so ignore it in stolen gtt entries
+			 * counting. However, 4Kb of stolen memory isn't mapped
+			 * to the GTT.
+			 */
+			stolen = 4;
+			break;
 		default:
 			printf("bad chiptype\n");
 			goto out;
@@ -373,17 +391,32 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		case AGP_G33_GCC1_GMS_STOLEN_256M:
 			isc->stolen = (262144 - stolen) * 1024 / 4096;
 			break;
+		case AGP_INTEL_GMCH_GMS_STOLEN_96M:
+			isc->stolen = (98304 - stolen) * 1024 / 4096;
+			break;
+		case AGP_INTEL_GMCH_GMS_STOLEN_160M:
+			isc->stolen = (163840 - stolen) * 1024 / 4096;
+			break;
+		case AGP_INTEL_GMCH_GMS_STOLEN_224M:
+			isc->stolen = (229376 - stolen) * 1024 / 4096;
+			break;
+		case AGP_INTEL_GMCH_GMS_STOLEN_352M:
+			isc->stolen = (360448 - stolen) * 1024 / 4096;
+			break;
 		default:
 			isc->stolen = 0;
 			printf("unknown memory configuration, disabling\n");
 			goto out;
 		}
+
 #ifdef DEBUG
 		if (isc->stolen > 0) {
 			printf(": detected %dk stolen memory",
 			    isc->stolen * 4);
-		}
+		} else
+			printf(": no preallocated video memory\n");
 #endif
+
 
 		/* GATT address is already in there, make sure it's enabled */
 		pgtblctl = READ4(AGP_I810_PGTBL_CTL);
@@ -679,9 +712,10 @@ agp_i810_write_gatt(struct agp_i810_softc *isc, bus_size_t off, u_int32_t v)
 
 	if (isc->chiptype == CHIP_I915 || isc->chiptype == CHIP_G33)
 		WRITEGTT((u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4, v ? d : 0);
-	else if (isc->chiptype == CHIP_I965) {
+	else if (isc->chiptype == CHIP_I965 || isc->chiptype == CHIP_G4X) {
 		d |= (v & 0x0000000f00000000ULL) >> 28;
-		WRITE4(AGP_I965_GTT + (u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4,
+		WRITE4((isc->chiptype == CHIP_I965 ? AGP_I965_GTT : AGP_G4X_GTT)
+		    + (u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4,
 		    v ? d : 0);
 	} else
 		WRITE4(AGP_I810_GTT + (u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4,
