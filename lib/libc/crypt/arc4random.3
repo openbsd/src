@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.26 2008/06/09 06:04:02 jmc Exp $
+.\" $OpenBSD: arc4random.3,v 1.27 2008/12/23 18:31:02 deraadt Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: June 9 2008 $
+.Dd $Mdocdate: December 23 2008 $
 .Dt ARC4RANDOM 3
 .Os
 .Sh NAME
@@ -125,11 +125,13 @@ It was considered a trade secret.
 Because it was a trade secret, it obviously could not be patented.
 A clone of this was posted anonymously to USENET and confirmed to
 be equivalent by several sources who had access to the original cipher.
-Because of the trade secret situation, RSA Data Security, Inc. can do
-nothing about the release of the ARC4 algorithm.
+Because of the trade secret situation, RSA Data Security, Inc. could
+do nothing about the release of the
+.Ql Alleged RC4
+algorithm.
 Since
 .Pa RC4
-used to be a trade secret, the cipher is now referred to as
+was trademarked, the cipher is now referred to as
 .Pa ARC4 .
 .Pp
 These functions first appeared in
