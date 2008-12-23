@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.88 2008/12/23 10:06:50 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.89 2008/12/23 10:19:39 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -94,6 +94,7 @@ void	azalia_pin_config_ov(widget_t *, int, int);
 int	azalia_ad1984_mixer_init(codec_t *);
 int	azalia_alc260_mixer_init(codec_t *);
 int	azalia_alc88x_mixer_init(codec_t *);
+int	azalia_alc88x_init_widget(const codec_t *, widget_t *, nid_t);
 int	azalia_stac9200_mixer_init(codec_t *);
 int	azalia_stac9202_mixer_init(codec_t *);
 int	azalia_stac9221_init_widget(const codec_t *, widget_t *, nid_t);
@@ -132,22 +133,27 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10ec0880:
 		this->name = "Realtek ALC880";
 		this->mixer_init = azalia_alc88x_mixer_init;
+		this->init_widget = azalia_alc88x_init_widget;
 		break;
 	case 0x10ec0882:
 		this->name = "Realtek ALC882";
 		this->mixer_init = azalia_alc88x_mixer_init;
+		this->init_widget = azalia_alc88x_init_widget;
 		break;
 	case 0x10ec0883:
 		this->name = "Realtek ALC883";
 		this->mixer_init = azalia_alc88x_mixer_init;
+		this->init_widget = azalia_alc88x_init_widget;
 		break;
 	case 0x10ec0885:
 		this->name = "Realtek ALC885";
 		this->mixer_init = azalia_alc88x_mixer_init;
+		this->init_widget = azalia_alc88x_init_widget;
 		break;
 	case 0x10ec0888:
 		this->name = "Realtek ALC888";
 		this->mixer_init = azalia_alc88x_mixer_init;
+		this->init_widget = azalia_alc88x_init_widget;
 		break;
 	case 0x111d76b2:
 		this->name = "IDT 92HD71B7";
@@ -1763,6 +1769,23 @@ azalia_alc88x_mixer_init(codec_t *this)
 	azalia_generic_mixer_create_virtual(this, 0x0c, -1);
 	azalia_generic_mixer_pin_sense(this);
 	return 0;
+}
+
+int
+azalia_alc88x_init_widget(const codec_t *this, widget_t *w, nid_t nid)
+{
+	if (nid == 0x1c &&w->enable == 0 && w->d.pin.device == CORB_CD_CD) {
+		azalia_pin_config_ov(w, CORB_CD_PORT_MASK, CORB_CD_FIXED);
+		w->widgetcap |= COP_AWCAP_STEREO;
+		w->enable = 1;
+	}
+	if (nid == 0x1d && w->enable == 0) {
+		azalia_pin_config_ov(w, CORB_CD_DEVICE_MASK, CORB_CD_BEEP);
+		azalia_pin_config_ov(w, CORB_CD_PORT_MASK, CORB_CD_FIXED);
+		w->widgetcap |= COP_AWCAP_STEREO;
+		w->enable = 1;
+	}
+ 	return 0;
 }
 
 /* Sigmatel STAC9200 */
