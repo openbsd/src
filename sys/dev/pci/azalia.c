@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.88 2008/12/22 03:18:02 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.89 2008/12/23 00:03:16 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2166,6 +2166,8 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 	int err;
 	boolean_t longform;
 	int length, i;
+	nid_t *connections;
+	int nconnections, nconn;
 
 	this->selected = -1;
 	if ((this->widgetcap & COP_AWCAP_CONNLIST) == 0)
@@ -2179,10 +2181,9 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 	length = COP_CLL_LENGTH(result);
 	if (length == 0)
 		return 0;
-	this->nconnections = length;
-	this->connections = malloc(sizeof(nid_t) * (length + 3),
-	    M_DEVBUF, M_NOWAIT);
-	if (this->connections == NULL) {
+	nconnections = length;
+	connections = malloc(sizeof(nid_t) * (length + 3), M_DEVBUF, M_NOWAIT);
+	if (connections == NULL) {
 		printf("%s: out of memory\n", XNAME(codec->az));
 		return ENOMEM;
 	}
@@ -2192,8 +2193,8 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 			    CORB_GET_CONNECTION_LIST_ENTRY, i, &result);
 			if (err)
 				return err;
-			this->connections[i++] = CORB_CLE_LONG_0(result);
-			this->connections[i++] = CORB_CLE_LONG_1(result);
+			connections[i++] = CORB_CLE_LONG_0(result);
+			connections[i++] = CORB_CLE_LONG_1(result);
 		}
 	} else {
 		for (i = 0; i < length;) {
@@ -2201,12 +2202,36 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 			    CORB_GET_CONNECTION_LIST_ENTRY, i, &result);
 			if (err)
 				return err;
-			this->connections[i++] = CORB_CLE_SHORT_0(result);
-			this->connections[i++] = CORB_CLE_SHORT_1(result);
-			this->connections[i++] = CORB_CLE_SHORT_2(result);
-			this->connections[i++] = CORB_CLE_SHORT_3(result);
+			connections[i++] = CORB_CLE_SHORT_0(result);
+			connections[i++] = CORB_CLE_SHORT_1(result);
+			connections[i++] = CORB_CLE_SHORT_2(result);
+			connections[i++] = CORB_CLE_SHORT_3(result);
 		}
 	}
+
+	/* don't add invalid widgets to the connection list */
+	nconn = 0;
+	for (i = 0; i < nconnections; i++) {
+		if (VALID_WIDGET_NID(connections[i], codec))
+			nconn++;
+		else
+			DPRINTF(("%s: nid %2.2x invalid connection: %2.2x\n",
+			    XNAME(codec->az), this->nid, connections[i]));
+	}
+	this->nconnections = nconn;
+	this->connections = malloc(sizeof(nid_t) * this->nconnections,
+	    M_DEVBUF, M_NOWAIT);
+	if (this->connections == NULL) {
+		printf("%s: out of memory\n", XNAME(codec->az));
+		return ENOMEM;
+	}
+	nconn = 0;
+	for (i = 0; i < nconnections && nconn < this->nconnections; i++) {
+		if (VALID_WIDGET_NID(connections[i], codec))
+			this->connections[nconn++] = connections[i];
+	}
+	free(connections, M_DEVBUF);
+
 	if (length > 0) {
 		err = codec->comresp(codec, this->nid,
 		    CORB_GET_CONNECTION_SELECT_CONTROL, 0, &result);
