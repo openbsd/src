@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.89 2008/12/23 10:19:39 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.90 2008/12/23 10:33:10 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -65,6 +65,8 @@
 #define SIGMATEL_STAC9205	0x838476a0
 #define STAC9205_DELL_D630	0x01f91028
 #define STAC9205_DELL_V1500	0x02281028
+#define IDT_92HD71B7		0x111d76b2
+#define IDT92HD71B7_DELL_E6400	0x02331028
 
 int	azalia_generic_codec_init_dacgroup(codec_t *);
 int	azalia_generic_codec_fnode(codec_t *, nid_t, int, int);
@@ -975,6 +977,10 @@ azalia_generic_mixer_pin_sense(codec_t *this)
 	if (this->vid == REALTEK_ALC880 && this->subid == ALC880_MEDION_MD95257) {
 		azalia_gpio_unmute(this, 1);
 	}
+
+	if (this->vid == IDT_92HD71B7 && this->subid == IDT92HD71B7_DELL_E6400) {
+		azalia_gpio_unmute(this, 0);
+ 	}
 
 	return 0;
 }
