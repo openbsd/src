@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.205 2008/12/21 23:32:51 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.206 2008/12/23 07:40:31 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2644,7 +2644,7 @@ em_rxeof(struct em_softc *sc, int count)
 
 	i = sc->next_rx_desc_to_check;
 
-	while (count != 0 && sc->rx_ndescs > 1) {
+	while (count != 0 && sc->rx_ndescs > 0) {
 		m = NULL;
 
 		desc = &sc->rx_desc_base[i];
