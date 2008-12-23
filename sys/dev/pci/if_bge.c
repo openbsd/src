@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.259 2008/12/23 00:12:22 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.260 2008/12/23 00:14:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1829,8 +1829,7 @@ bge_lookup_rev(u_int32_t chipid)
 int
 bge_probe(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid((struct pci_attach_args *)aux, bge_devices,
-	    sizeof(bge_devices)/sizeof(bge_devices[0])));
+	return (pci_matchbyid(aux, bge_devices, nitems(bge_devices)));
 }
 
 void
