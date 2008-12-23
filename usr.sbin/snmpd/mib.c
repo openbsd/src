@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.29 2008/12/19 14:02:20 reyk Exp $	*/
+/*	$OpenBSD: mib.c,v 1.30 2008/12/23 08:06:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -1217,6 +1217,7 @@ int	 mib_sensornum(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_sensors(struct oid *, struct ber_oid *, struct ber_element **);
 const char *mib_sensorunit(struct sensor *);
 char	*mib_sensorvalue(struct sensor *);
+int	 mib_memiftable(struct oid *, struct ber_oid *, struct ber_element **);
 
 static struct oid openbsd_mib[] = {
 	{ MIB(sensorMIBObjects),	OID_MIB },
@@ -1228,6 +1229,11 @@ static struct oid openbsd_mib[] = {
 	{ MIB(sensorValue),		OID_TRD, mib_sensors },
 	{ MIB(sensorUnits),		OID_TRD, mib_sensors },
 	{ MIB(sensorStatus),		OID_TRD, mib_sensors },
+	{ MIB(memMIBObjects),		OID_MIB },
+	{ MIB(memMIBVersion),		OID_RD, mps_getint, NULL, NULL,
+	    OIDVER_OPENBSD_MEM },
+	{ MIB(memIfName), 		OID_TRD, mib_memiftable },
+	{ MIB(memIfLiveLocks),		OID_TRD, mib_memiftable },
 	{ MIBEND }
 };
 
@@ -1392,6 +1398,39 @@ mib_sensorvalue(struct sensor *s)
 		return (NULL);
 	return (v);
 }
+
+int
+mib_memiftable(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
+{
+	struct ber_element	*ber = *elm;
+	u_int32_t		 idx = 0;
+	struct kif		*kif;
+
+	idx = o->bo_id[OIDIDX_memIfEntry];
+	if ((kif = mib_ifget(idx)) == NULL)
+		return (1);
+
+	o->bo_id[OIDIDX_memIfEntry] = kif->if_index;
+	ber = ber_add_oid(ber, o);
+
+	switch (o->bo_id[OIDIDX_memIf]) {
+	case 1:
+		ber = ber_add_string(ber, kif->if_name);
+		break;
+	case 2:
+		ber = ber_add_integer(ber, kif->if_data.ifi_livelocks);
+		ber_set_header(ber, BER_CLASS_APPLICATION, SNMP_T_COUNTER64);
+		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+/*
+ * Defined in IP-MIB.txt
+ */
 
 int mib_getipstat(struct ipstat *);
 int mib_ipstat(struct oid *, struct ber_oid *, struct ber_element **);

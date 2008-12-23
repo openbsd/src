@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.18 2008/12/19 14:02:20 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.19 2008/12/23 08:06:10 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -389,6 +389,15 @@
 #define MIB_sensorStatus		MIB_sensorEntry, 7
 #define MIB_carpMIBObjects		MIB_openBSD, 3
 #define MIB_ipsecMIBObjects		MIB_openBSD, 4
+#define MIB_memMIBObjects		MIB_openBSD, 5
+#define MIB_memMIBVersion		MIB_memMIBObjects, 1
+#define OIDVER_OPENBSD_MEM		1
+#define MIB_memIfTable			MIB_memMIBObjects, 2
+#define MIB_memIfEntry			MIB_memIfTable, 1
+#define OIDIDX_memIf			10
+#define OIDIDX_memIfEntry		11
+#define MIB_memIfName			MIB_memIfEntry, 1
+#define MIB_memIfLiveLocks		MIB_memIfEntry, 2
 #define MIB_localSystem			MIB_openBSD, 23
 #define MIB_SYSOID_DEFAULT		MIB_openBSD, 23, 1
 #define MIB_localTest			MIB_openBSD, 42
@@ -661,6 +670,12 @@
 	{ MIBDECL(sensorValue) },			\
 	{ MIBDECL(sensorUnits) },			\
 	{ MIBDECL(sensorStatus) },			\
+	{ MIBDECL(memMIBObjects) },			\
+	{ MIBDECL(memMIBVersion) },			\
+	{ MIBDECL(memIfTable) },			\
+	{ MIBDECL(memIfEntry) },			\
+	{ MIBDECL(memIfName) },				\
+	{ MIBDECL(memIfLiveLocks) },			\
 	{ MIBDECL(localSystem) },			\
 	{ MIBDECL(localTest) },				\
 							\
