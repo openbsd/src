@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.96 2008/11/01 20:33:34 deraadt Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.97 2008/12/23 21:43:15 thib Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ struct vattr {
 };
 
 /*
- * Flags for va_cflags.
+ * Flags for va_vaflags.
  */
 #define	VA_UTIMES_NULL	0x01		/* utimes argument was NULL */
 #define VA_EXCLUSIVE    0x02		/* exclusive create request */
