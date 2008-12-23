@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.74 2008/12/23 06:53:12 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.75 2008/12/23 08:15:06 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1279,7 +1279,7 @@ pool_walk(struct pool *pp, void (*func)(void *))
 	caddr_t cp;
 	int n;
 
-	LIST_FOREACH(ph, &pp->pr_emptypages, ph_pagelist) {
+	LIST_FOREACH(ph, &pp->pr_fullpages, ph_pagelist) {
 		cp = ph->ph_colored;
 		n = ph->ph_nmissing;
 
