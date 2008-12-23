@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.113 2008/12/22 18:35:52 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.114 2008/12/23 01:06:35 deraadt Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ m_reclaim(void *arg, int flags)
 {
 	struct domain *dp;
 	struct protosw *pr;
-	int s = splvm();
+	int s = splnet();
 
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
@@ -183,7 +183,7 @@ m_get(int nowait, int type)
 	struct mbuf *m;
 	int s;
 
-	s = splvm();
+	s = splnet();
 	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK : 0);
 	if (m)
 		mbstat.m_mtypes[type]++;
@@ -208,7 +208,7 @@ m_gethdr(int nowait, int type)
 	struct mbuf *m;
 	int s;
 
-	s = splvm();
+	s = splnet();
 	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK : 0);
 	if (m)
 		mbstat.m_mtypes[type]++;
@@ -389,7 +389,7 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 	if (ifp != NULL && m_cldrop(ifp, pi))
 		return;
 
-	s = splvm();
+	s = splnet();
 	m->m_ext.ext_buf = pool_get(mclp, how == M_WAIT ? PR_WAITOK : 0);
 	splx(s);
 	if (m->m_ext.ext_buf != NULL) {
@@ -414,7 +414,7 @@ m_free(struct mbuf *m)
 	struct mbuf *n;
 	int s;
 
-	s = splvm();
+	s = splnet();
 	mbstat.m_mtypes[m->m_type]--;
 	if (m->m_flags & M_PKTHDR)
 		m_tag_delete_chain(m);
@@ -496,7 +496,7 @@ m_defrag(struct mbuf *m, int how)
 	m->m_next = NULL;
 
 	if (m->m_flags & M_EXT) {
-		int s = splvm();
+		int s = splnet();
 		m_extfree(m);
 		splx(s);
 	}

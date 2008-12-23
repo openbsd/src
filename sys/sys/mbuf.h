@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.119 2008/12/11 16:45:44 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.120 2008/12/23 01:06:33 deraadt Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ struct mbuf {
 /*
  * Macros for tracking external storage associated with an mbuf.
  *
- * Note: add and delete reference must be called at splvm().
+ * Note: add and delete reference must be called at splnet().
  */
 #ifdef DEBUG
 #define MCLREFDEBUGN(m, file, line) do {				\
@@ -230,7 +230,7 @@ struct mbuf {
 #define	MCLISREFERENCED(m)	((m)->m_ext.ext_nextref != (m))
 
 #define	MCLADDREFERENCE(o, n)	do {					\
-		int ms =  splvm();					\
+		int ms = splnet();					\
 		(n)->m_flags |= ((o)->m_flags & (M_EXT|M_CLUSTER));	\
 		(n)->m_ext.ext_nextref = (o)->m_ext.ext_nextref;	\
 		(n)->m_ext.ext_prevref = (o);				\
