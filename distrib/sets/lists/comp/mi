@@ -5760,6 +5760,7 @@
 ./usr/share/man/cat3/yp_bind.0
 ./usr/share/man/cat3/yp_first.0
 ./usr/share/man/cat3/yp_get_default_domain.0
+./usr/share/man/cat3/yp_maplist.0
 ./usr/share/man/cat3/yp_master.0
 ./usr/share/man/cat3/yp_match.0
 ./usr/share/man/cat3/yp_next.0
