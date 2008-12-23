@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.258 2008/12/03 23:51:52 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.259 2008/12/23 00:12:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -171,6 +171,7 @@ void bge_free_rx_ring_jumbo(struct bge_softc *);
 
 int bge_newbuf(struct bge_softc *, int);
 int bge_init_rx_ring_std(struct bge_softc *);
+void bge_rxtick(void *);
 void bge_fill_rx_ring_std(struct bge_softc *);
 void bge_free_rx_ring_std(struct bge_softc *);
 
@@ -1014,6 +1015,17 @@ uncreate:
 }
 
 void
+bge_rxtick(void *arg)
+{
+	struct bge_softc *sc = arg;
+	int s;
+
+	s = splnet();
+	bge_fill_rx_ring_std(sc);
+	splx(s);
+}
+
+void
 bge_fill_rx_ring_std(struct bge_softc *sc)
 {
 	int i;
@@ -1032,6 +1044,13 @@ bge_fill_rx_ring_std(struct bge_softc *sc)
 
 	if (post)
 		bge_writembx(sc, BGE_MBX_RX_STD_PROD_LO, sc->bge_std);
+
+	/*
+	 * bge always needs more than 8 packets on the ring. if we cant do
+	 * that now, then try again later.
+	 */
+	if (sc->bge_std_cnt <= 8)
+		timeout_add(&sc->bge_rxtimeout, 1);
 }
 
 void
@@ -2230,6 +2249,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_powerhook = powerhook_establish(bge_power, sc);	
 	
 	timeout_set(&sc->bge_timeout, bge_tick, sc);
+	timeout_set(&sc->bge_rxtimeout, bge_rxtick, sc);
 	return;
 
 fail_5:
@@ -3430,6 +3450,7 @@ bge_stop(struct bge_softc *sc)
 	int mtmp, itmp;
 
 	timeout_del(&sc->bge_timeout);
+	timeout_del(&sc->bge_rxtimeout);
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 

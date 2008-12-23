@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.89 2008/12/03 23:51:52 dlg Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.90 2008/12/23 00:12:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2477,6 +2477,7 @@ struct bge_softc {
 	int			bge_if_flags;
 	int			bge_txcnt;
 	struct timeout		bge_timeout;
+	struct timeout		bge_rxtimeout;
 	void			*sc_powerhook;
 	void			*sc_shutdownhook;
 	u_int32_t		bge_rx_discards;
