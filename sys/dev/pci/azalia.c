@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.91 2008/12/23 04:12:19 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.92 2008/12/23 08:57:28 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -329,8 +329,8 @@ struct audio_hw_if azalia_hw_if = {
 
 static const char *pin_devices[16] = {
 	AudioNline, AudioNspeaker, AudioNheadphone, AudioNcd,
-	"SPDIF-out", "digital-out", "modem-line", "modem-handset",
-	AudioNline, AudioNaux, AudioNmicrophone, "telephony",
+	"SPDIF", "digital-out", "modem-line", "modem-handset",
+	"line-in", AudioNaux, AudioNmicrophone, "telephony",
 	"SPDIF-in", "digital-in", "beep", "other"};
 static const char *wtypes[16] = {
 	"dac", "adc", "mix", "sel", "pin", "pow", "volume",
@@ -1774,24 +1774,13 @@ azalia_widget_label_widgets(codec_t *codec)
 		switch (w->type) {
 		case COP_AWTYPE_PIN_COMPLEX:
 			pins[w->d.pin.device]++;
-			if (w->d.pin.device == CORB_CD_LINEIN) {
-				pins[CORB_CD_LINEOUT]++;
-				if (pins[CORB_CD_LINEOUT] > 1)
-					snprintf(w->name, sizeof(w->name), "%s%d",
-					    pin_devices[CORB_CD_LINEOUT],
-					    pins[CORB_CD_LINEOUT]);
-				else
-					snprintf(w->name, sizeof(w->name), "%s",
-					    pin_devices[CORB_CD_LINEOUT]);
-			} else {
-				if (pins[w->d.pin.device] > 1)
-					snprintf(w->name, sizeof(w->name), "%s%d",
-					    pin_devices[w->d.pin.device],
-					    pins[w->d.pin.device]);
-				else
-					snprintf(w->name, sizeof(w->name), "%s",
-					    pin_devices[w->d.pin.device]);
-			}
+			if (pins[w->d.pin.device] > 1)
+				snprintf(w->name, sizeof(w->name), "%s%d",
+				    pin_devices[w->d.pin.device],
+				    pins[w->d.pin.device]);
+			else
+				snprintf(w->name, sizeof(w->name), "%s",
+				    pin_devices[w->d.pin.device]);
 			break;
 		case COP_AWTYPE_AUDIO_OUTPUT:
 			if (codec->dacs.ngroups < 1)
