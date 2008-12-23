@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.87 2008/12/23 10:01:14 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.88 2008/12/23 10:06:50 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -91,8 +91,13 @@ int	azalia_gpio_unmute(codec_t *, int);
 
 void	azalia_pin_config_ov(widget_t *, int, int);
 
+int	azalia_ad1984_mixer_init(codec_t *);
 int	azalia_alc260_mixer_init(codec_t *);
 int	azalia_alc88x_mixer_init(codec_t *);
+int	azalia_stac9200_mixer_init(codec_t *);
+int	azalia_stac9202_mixer_init(codec_t *);
+int	azalia_stac9221_init_widget(const codec_t *, widget_t *, nid_t);
+int	azalia_stac7661_mixer_init(codec_t *);
 
 int
 azalia_codec_init_vtbl(codec_t *this)
@@ -164,6 +169,7 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x11d41984:
 		this->name = "Analog Devices AD1984";
+		this->mixer_init = azalia_ad1984_mixer_init;
 		break;
 	case 0x11d41988:
 		this->name = "Analog Devices AD1988A";
@@ -206,32 +212,32 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x83847632:
 		this->name = "Sigmatel STAC9202";
-		/* master volume at nid 0e */
-		/* record volume at nid 09 */
+		this->mixer_init = azalia_stac9202_mixer_init;
 		break;
 	case 0x83847634:
 		this->name = "Sigmatel STAC9250";
-		/* master volume at nid 0e */
-		/* record volume at nid 09 */
+		this->mixer_init = azalia_stac9202_mixer_init;
 		break;
 	case 0x83847636:
 		this->name = "Sigmatel STAC9251";
-		/* master volume at nid 0e */
-		/* record volume at nid 09 */
+		this->mixer_init = azalia_stac9202_mixer_init;
 		break;
 	case 0x83847661:
-		/* FALLTHRU */
+		/* FALLTHROUGH */
 	case 0x83847662:
 		this->name = "Sigmatel STAC9225";
+		this->mixer_init = azalia_stac7661_mixer_init;
 		break;
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
+		this->init_widget = azalia_stac9221_init_widget;
 		break;
 	case 0x83847683:
 		this->name = "Sigmatel STAC9221D";
 		break;
 	case 0x83847690:
 		this->name = "Sigmatel STAC9200";
+		this->mixer_init = azalia_stac9200_mixer_init;
 		break;
 	case 0x83847691:
 		this->name = "Sigmatel STAC9200D";
@@ -1719,38 +1725,99 @@ azalia_pin_config_ov(widget_t *w, int mask, int val)
 		w->d.pin.device = val;
 }
 
-
 /* ----------------------------------------------------------------
- * Realtek ALC260
- *
- * Fujitsu LOOX T70M/T
- *	Internal Speaker: 0x10
- *	Front Headphone: 0x14
- *	Front mic: 0x12
+ * codec specific functions
  * ---------------------------------------------------------------- */
 
+/* Analog Devices AD1984 */
+int
+azalia_ad1984_mixer_init(codec_t *this)
+{
+	mixer_ctrl_t mc;
+
+	azalia_generic_mixer_autoinit(this);
+
+	mc.dev = -1;
+	mc.type = AUDIO_MIXER_ENUM;
+	mc.un.ord = 1;
+	/* connect headphones to output of first DAC */
+	azalia_generic_mixer_set(this, 0x22, MI_TARGET_CONNLIST, &mc);
+	return 0;
+}
+
+/* Realtek ALC260 */
 int
 azalia_alc260_mixer_init(codec_t *this)
 {
 	azalia_generic_mixer_init(this);
 	azalia_generic_mixer_create_virtual(this, 0x08, -1);
 	azalia_generic_mixer_pin_sense(this);
-
 	return 0;
 }
 
-/* ----------------------------------------------------------------
- * Realtek ALC88x mixer init - volume control is on the mixer
- * instead of the DAC.
- * ---------------------------------------------------------------- */
-
+/* Realtek ALC88x */
 int
 azalia_alc88x_mixer_init(codec_t *this)
 {
 	azalia_generic_mixer_init(this);
 	azalia_generic_mixer_create_virtual(this, 0x0c, -1);
 	azalia_generic_mixer_pin_sense(this);
-
 	return 0;
 }
 
+/* Sigmatel STAC9200 */
+int
+azalia_stac9200_mixer_init(codec_t *this)
+{
+	azalia_generic_mixer_init(this);
+	azalia_generic_mixer_create_virtual(this, 0x0b, 0x0a);
+	azalia_generic_mixer_pin_sense(this);
+	return 0;
+}
+
+/* Sigmatel STAC9202 */
+int
+azalia_stac9202_mixer_init(codec_t *this)
+{
+	azalia_generic_mixer_init(this);
+	azalia_generic_mixer_create_virtual(this, 0x0e, 0x09);
+	azalia_generic_mixer_pin_sense(this);
+	return 0;
+}
+
+/* Sigmatel STAC9221 */
+int
+azalia_stac9221_init_widget(const codec_t *codec, widget_t *w, nid_t nid)
+{
+	/* put hp and spkr dacs first in the dacgroup for MacBookPro1,2 */
+	if (codec->subid == STAC9221_APPLE_ID) {
+		if (nid == 0xa && w->d.pin.color == CORB_CD_WHITE) {
+			w->d.pin.association = 1;
+			w->d.pin.sequence = 0;
+		}
+		if (nid == 0xc && w->d.pin.color == CORB_CD_WHITE) {
+			w->d.pin.association = 1;
+			w->d.pin.sequence = 1;
+		}
+	}
+	return 0;
+}
+
+/* Sigmatel STAC9225 */
+int
+azalia_stac7661_mixer_init(codec_t *this)
+{
+	mixer_ctrl_t mc;
+
+	azalia_generic_mixer_autoinit(this);
+
+	mc.dev = -1;
+	mc.type = AUDIO_MIXER_ENUM;
+	mc.un.ord = 1;
+	/* mute ADC input (why?) */
+	azalia_generic_mixer_set(this, 0x09, MI_TARGET_INAMP(0), &mc);
+	/* select internal mic for recording */
+	mc.un.ord = 2;
+	azalia_generic_mixer_set(this, 0x15, MI_TARGET_CONNLIST, &mc);
+	return 0;
+}
