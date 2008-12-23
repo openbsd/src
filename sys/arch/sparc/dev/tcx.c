@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.31 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.32 2008/12/23 20:35:46 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -55,17 +55,12 @@
  */
 
 /*
- * color display (TCX) driver.
+ * Color display (TCX) driver.
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/ioctl.h>
-#include <sys/malloc.h>
-#include <sys/mman.h>
-#include <sys/tty.h>
 #include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
@@ -89,14 +84,13 @@
 
 /* per-display variables */
 struct tcx_softc {
-	struct	sunfb sc_sunfb;			/* common base part */
-	struct	rom_reg sc_phys[TCX_NREG];	/* phys addr of h/w */
-	volatile struct bt_regs *sc_bt;		/* Brooktree registers */
-	volatile struct tcx_thc *sc_thc;	/* THC registers */
-	volatile u_int8_t *sc_dfb8;		/* 8 bit plane */
-	volatile u_int32_t *sc_dfb24;		/* S24 24 bit plane */
-	volatile u_int32_t *sc_cplane;		/* S24 control plane */
-	union	bt_cmap sc_cmap;		/* Brooktree color map */
+	struct	sunfb sc_sunfb;		/* common base part */
+	struct	rom_reg sc_phys[2];	/* copy of prom ranges for mmap */
+	volatile struct bt_regs *sc_bt;	/* Brooktree registers */
+	volatile struct tcx_thc *sc_thc;/* THC registers */
+	volatile u_int8_t *sc_dfb8;	/* 8 bit plane */
+	volatile u_int32_t *sc_cplane;	/* S24 control plane */
+	union	bt_cmap sc_cmap;	/* Brooktree color map */
 	struct	intrhand sc_ih;
 };
 
@@ -126,7 +120,7 @@ struct wsdisplay_accessops tcx_accessops = {
 int	tcxmatch(struct device *, void *, void *);
 void	tcxattach(struct device *, struct device *, void *);
 
-struct cfattach tcx_ca = {
+const struct cfattach tcx_ca = {
 	sizeof(struct tcx_softc), tcxmatch, tcxattach
 };
 
@@ -139,13 +133,20 @@ struct cfdriver tcx_cd = {
  * - 26 bits per pixel, in 32-bit words; the low-order 24 bits are blue,
  *   green and red values, and the other two bits select the display modes,
  *   per pixel.
+ *   This is the view we'll use to initialize the frame buffer.
  * - 24 bits per pixel, in 32-bit words; the high-order byte reads as zero,
  *   and is ignored on writes (so the mode bits can not be altered).
+ *   This is the view available via mmap, for the X server.
  * - 8 bits per pixel, unpadded; writes to this space do not modify the
  *   other 18 bits, which are hidden.
+ *   This is the view used for the console emulation mode, as well as for
+ *   the X server on 8-bit only devices.
  *
  * The entry-level tcx found on the SPARCstation 4 can only provide the 8-bit
  * mode.
+ *
+ * Both flavours can be told out by the `tcx-8-bit' property; also, on
+ * 8-bit tcx, the 24 bit color regions have a size of zero.
  */
 #define	TCX_CTL_8_MAPPED	0x00000000	/* 8 bits, uses colormap */
 #define	TCX_CTL_24_MAPPED	0x01000000	/* 24 bits, uses colormap */
@@ -169,14 +170,16 @@ tcxattach(struct device *parent, struct device *self, void *args)
 {
 	struct tcx_softc *sc = (struct tcx_softc *)self;
 	struct confargs *ca = args;
-	int node, pri, i;
+	int node, pri;
 	int isconsole = 0;
 	char *nam = NULL;
+	vaddr_t thc_offset;
 
 	pri = ca->ca_ra.ra_intr[0].int_pri;
 	printf(" pri %d", pri);
 
 	node = ca->ca_ra.ra_node;
+	isconsole = node == fbnode;
 
 	if (ca->ca_ra.ra_nreg < TCX_NREG) {
 		printf(": expected %d registers, got %d\n",
@@ -184,38 +187,64 @@ tcxattach(struct device *parent, struct device *self, void *args)
 		return;
 	}
 
-	/* Copy register address spaces */
-	for (i = 0; i < TCX_NREG; i++)
-		sc->sc_phys[i] = ca->ca_ra.ra_reg[i];
+	/*
+	 * Copy the register address spaces needed for mmap operation.
+	 */
+	sc->sc_phys[0] = ca->ca_ra.ra_reg[TCX_REG_DFB8];
+	sc->sc_phys[1] = ca->ca_ra.ra_reg[TCX_REG_DFB24];
 
+	/*
+	 * Can't trust the PROM range len here, it is only 4 bytes on the
+	 * 8-bit model. Not that it matters much anyway since we map in
+	 * pages.
+	 */
 	sc->sc_bt = (volatile struct bt_regs *)
 	    mapiodev(&ca->ca_ra.ra_reg[TCX_REG_CMAP], 0, sizeof *sc->sc_bt);
+
+	/*
+	 * For some reason S24 PROM sets up TEC and THC ranges at the
+	 * right addresses (701000 and 301000), while 8 bit TCX doesn't
+	 * (and uses 70000 and 30000) - be sure to only compensate on 8 bit
+	 * models.
+	 */
+	if (((vaddr_t)ca->ca_ra.ra_reg[TCX_REG_THC].rr_paddr & 0x1000) != 0)
+		thc_offset = 0;
+	else
+		thc_offset = 0x1000;
 	sc->sc_thc = (volatile struct tcx_thc *)
 	    mapiodev(&ca->ca_ra.ra_reg[TCX_REG_THC],
-	        0x1000, sizeof *sc->sc_thc);
+	        thc_offset, sizeof *sc->sc_thc);
 
-	isconsole = node == fbnode;
-
+	/*
+	 * Find out frame buffer geometry, so that we know how much
+	 * memory to map.
+	 */
 	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, node, ca->ca_bustype);
-	if (node_has_property(node, "tcx-8-bit")) {
-		sc->sc_dfb8 = mapiodev(&ca->ca_ra.ra_reg[TCX_REG_DFB8], 0,
-		    round_page(sc->sc_sunfb.sf_fbsize));
-		sc->sc_dfb24 = NULL;
+
+	sc->sc_dfb8 = mapiodev(&ca->ca_ra.ra_reg[TCX_REG_DFB8], 0,
+	    round_page(sc->sc_sunfb.sf_fbsize));
+
+	/*
+	 * If the frame buffer advertizes itself as the 8 bit model, or
+	 * if the PROM ranges are too small, limit ourselves to 8 bit
+	 * operations.
+	 *
+	 * Further code needing to know which capabilities the frame buffer
+	 * has will rely on sc_cplane being non NULL if 24 bit operation
+	 * is possible.
+	 */
+	if (node_has_property(node, "tcx-8-bit") ||
+	    ca->ca_ra.ra_reg[TCX_REG_RDFB32].rr_len <
+	      sc->sc_sunfb.sf_fbsize * 4) {
 		sc->sc_cplane = NULL;
 	} else {
-		sc->sc_dfb8 = mapiodev(&ca->ca_ra.ra_reg[TCX_REG_DFB8], 0,
-		    round_page(sc->sc_sunfb.sf_fbsize));
-
-		/* map the 24 bit and control planes for S24 framebuffers */
-		sc->sc_dfb24 = mapiodev(&ca->ca_ra.ra_reg[TCX_REG_DFB24], 0,
-		    round_page(sc->sc_sunfb.sf_fbsize * 4));
 		sc->sc_cplane = mapiodev(&ca->ca_ra.ra_reg[TCX_REG_RDFB32], 0,
 		    round_page(sc->sc_sunfb.sf_fbsize * 4));
 	}
 
 	/* reset cursor & frame buffer controls */
-	sc->sc_sunfb.sf_depth = 0;	/* force action */
 	tcx_reset(sc, 8);
+	fbwscons_setcolormap(&sc->sc_sunfb, tcx_setcolor);
 
 	/* enable video */
 	tcx_burner(sc, 1, 0);
@@ -413,19 +442,21 @@ paddr_t
 tcx_mmap(void *v, off_t offset, int prot)
 {
 	struct tcx_softc *sc = v;
+	int regno;
 
 	if (offset & PGOFSET || offset < 0)
 		return (-1);
 
 	/* Allow mapping as a dumb framebuffer from offset 0 */
 	if (sc->sc_sunfb.sf_depth == 8 && offset < sc->sc_sunfb.sf_fbsize)
-		return (REG2PHYS(&sc->sc_phys[TCX_REG_DFB8], offset) | PMAP_NC);
+		regno = 0;	/* copy of TCX_REG_DFB8 */
 	else if (sc->sc_sunfb.sf_depth != 8 &&
 	    offset < sc->sc_sunfb.sf_fbsize * 4)
-		return (REG2PHYS(&sc->sc_phys[TCX_REG_DFB24], offset) |
-		    PMAP_NC);
+		regno = 1;	/* copy of TCX_REG_RDFB32 */
+	else
+		return (-1);
 
-	return (-1);
+	return (REG2PHYS(&sc->sc_phys[regno], offset) | PMAP_NC);
 }
 
 void
