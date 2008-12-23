@@ -2851,6 +2851,12 @@
 ./usr/share/sendmail/siteconfig/uucp.old.arpa.m4
 ./usr/share/sendmail/siteconfig/uucp.ucbarpa.m4
 ./usr/share/sendmail/siteconfig/uucp.ucbvax.m4
+./usr/share/snmp
+./usr/share/snmp/mibs
+./usr/share/snmp/mibs/OPENBSD-BASE-MIB.txt
+./usr/share/snmp/mibs/OPENBSD-MEM-MIB.txt
+./usr/share/snmp/mibs/OPENBSD-SENSORS-MIB.txt
+./usr/share/snmp/mibs/OPENBSD-SNMPD-CONF.txt
 ./usr/share/tabset
 ./usr/share/tabset/3101
 ./usr/share/tabset/9837
