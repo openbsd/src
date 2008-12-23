@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.73 2008/12/12 08:05:54 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.74 2008/12/23 18:33:36 reyk Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: December 12 2008 $
+.Dd $Mdocdate: December 23 2008 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -495,6 +495,15 @@ National Language Support (NLS) catalogs.
 .It sendmail/
 Example files for
 .Xr sendmail 8 .
+.It snmp/
+Data files for
+.Xr snmpd 8 .
+.Pp
+.Bl -tag -width mibs/ -compact
+.It mibs/
+Management Information Base (MIB) definitions.
+.El
+.Pp
 .It tabset/
 Tab description files for a variety of terminals; used in
 the termcap file (see
