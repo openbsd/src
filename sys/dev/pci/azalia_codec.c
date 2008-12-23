@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.85 2008/12/23 04:12:19 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.86 2008/12/23 09:46:38 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -148,7 +148,6 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->mixer_init = azalia_alc88x_mixer_init;
 		break;
 	case 0x10ec0883:
-		/* ftp://209.216.61.149/pc/audio/ALC883_DataSheet_1.3.pdf */
 		this->name = "Realtek ALC883";
 		this->mixer_init = azalia_alc88x_mixer_init;
 		break;
@@ -160,12 +159,25 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->name = "Realtek ALC888";
 		this->mixer_init = azalia_alc88x_mixer_init;
 		break;
+	case 0x111d76b2:
+		this->name = "IDT 92HD71B7";
+		break;
+	case 0x111d76b6:
+		this->name = "IDT 92HD71B5";
+		break;
+	case 0x11d41884:
+		this->name = "Analog Devices AD1884";
+		break;
+	case 0x11d4194a:
+		this->name = "Analog Devices AD1984A";
+		break;
+	case 0x11d41981:
+		this->name = "Analog Devices AD1981HD";
+		break;
 	case 0x11d41983:
-		/* http://www.analog.com/en/prod/0,2877,AD1983,00.html */
 		this->name = "Analog Devices AD1983";
 		break;
 	case 0x11d41984:
-		/* http://www.analog.com/en/prod/0,2877,AD1984,00.html */
 		this->name = "Analog Devices AD1984";
 		this->init_dacgroup = azalia_ad1984_init_dacgroup;
 		this->mixer_init = azalia_ad1984_mixer_init;
@@ -173,11 +185,9 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->set_port = azalia_ad1984_set_port;
 		break;
 	case 0x11d41988:
-		/* http://www.analog.com/en/prod/0,2877,AD1988A,00.html */
 		this->name = "Analog Devices AD1988A";
 		break;
 	case 0x11d4198b:
-		/* http://www.analog.com/en/prod/0,2877,AD1988B,00.html */
 		this->name = "Analog Devices AD1988B";
 		break;
 	case 0x14f15045:
@@ -250,7 +260,6 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->name = "Sigmatel STAC9221D";
 		break;
 	case 0x83847690:
-		/* http://www.idt.com/products/getDoc.cfm?docID=17812077 */
 		this->name = "Sigmatel STAC9200";
 		this->mixer_init = azalia_stac9200_mixer_init;
 		break;
