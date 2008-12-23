@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.90 2008/12/23 00:20:03 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.91 2008/12/23 04:12:19 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1745,7 +1745,8 @@ azalia_widget_sole_conn(codec_t *this, nid_t nid)
 	FOR_EACH_WIDGET(this, i) {
 		if (this->w[i].type == COP_AWTYPE_PIN_COMPLEX &&
 		    this->w[i].nconnections == 1 &&
-		    this->w[i].connections[0] == nid) {
+		    this->w[i].connections[0] == nid &&
+		    azalia_widget_enabled(this, this->w[i].connections[0])) {
 			return i;
 		}
 	}
@@ -1886,11 +1887,13 @@ azalia_widget_label_widgets(codec_t *codec)
 			    (codec->w[i].widgetcap & COP_AWCAP_OUTAMP) &&
 			    codec->w[i].nconnections == 1) {
 				j = codec->w[i].connections[0];
+				if (!azalia_widget_enabled(codec, j))
+					continue;
 				if (!(codec->w[j].widgetcap & COP_AWCAP_INAMP))
 					codec->w[i].mixer_class =
 					    AZ_CLASS_INPUT;
 				else
-					j = -1;
+					continue;
 			}
 		}
 		if (j >= 0) {
@@ -2237,8 +2240,7 @@ azalia_widget_check_conn(codec_t *codec, int index, int depth)
 	if (++depth >= 10)
 		return 0;
 	for (i = 0; i < w->nconnections; i++) {
-		if (!VALID_WIDGET_NID(w->connections[i], codec) ||
-		    !codec->w[w->connections[i]].enable)
+		if (!azalia_widget_enabled(codec, w->connections[i]))
 			continue;
 		if (azalia_widget_check_conn(codec, w->connections[i], depth))
 			return 1;
