@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.73 2008/12/23 06:50:48 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.74 2008/12/23 06:53:12 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1269,6 +1269,43 @@ pool_chk(struct pool *pp, const char *label)
 		r += pool_chk_page(pp, label, ph);
 
 	return (r);
+}
+
+void
+pool_walk(struct pool *pp, void (*func)(void *))
+{
+	struct pool_item_header *ph;
+	struct pool_item *pi;
+	caddr_t cp;
+	int n;
+
+	LIST_FOREACH(ph, &pp->pr_emptypages, ph_pagelist) {
+		cp = ph->ph_colored;
+		n = ph->ph_nmissing;
+
+		while (n--) {
+			func(cp);
+			cp += pp->pr_size;
+		}
+	}
+
+	LIST_FOREACH(ph, &pp->pr_partpages, ph_pagelist) {
+		cp = ph->ph_colored;
+		n = ph->ph_nmissing;
+
+		do {
+			TAILQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
+				if (cp == (caddr_t)pi)
+					break;
+			}
+			if (cp != (caddr_t)pi) {
+				func(cp);
+				n--;
+			}
+
+			cp += pp->pr_size;
+		} while (n > 0);
+	}
 }
 #endif
 
