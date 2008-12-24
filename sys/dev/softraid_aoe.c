@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.2 2008/11/25 23:05:17 marco Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.3 2008/12/24 19:32:02 marco Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/kthread.h>
 #include <sys/disk.h>
 #include <sys/rwlock.h>
 #include <sys/queue.h>
@@ -57,7 +58,7 @@ void			sr_aoe_input(struct aoe_handler *, struct mbuf *);
 void			sr_aoe_setup(struct aoe_handler *, struct mbuf *);
 void			sr_aoe_timeout(void *);
 
-/* AOE disk functions */
+/* AOE initiator */
 void
 sr_aoe_setup(struct aoe_handler *ah, struct mbuf *m)
 {
@@ -110,7 +111,7 @@ sr_aoe_alloc_resources(struct sr_discipline *sd)
 
 	ifp = ifunit(nic);
 	if (!ifp) {
-		return EINVAL;
+		return (EINVAL);
 	}
 	shelf = htons(shelf);
 
@@ -222,15 +223,16 @@ sr_aoe_rw(struct sr_workunit *wu)
 	const int		aoe_frags = 2;
 
 	
+	printf("%s: sr_aoe_rw 0x%02x\n", DEVNAME(sd->sd_sc),
+	    xs->cmd->opcode);
+	return (1);
+
 	DNPRINTF(SR_D_DIS, "%s: sr_aoe_rw 0x%02x\n", DEVNAME(sd->sd_sc),
 	    xs->cmd->opcode);
 
 	/* blk and scsi error will be handled by sr_validate_io */
 	if (sr_validate_io(wu, &blk, "sr_aoe_rw"))
 		goto bad;
-
-	wu->swu_blk_start = blk;
-	wu->swu_blk_end = blk + (xs->datalen >> 9) - 1;
 
 	/* add 1 to get the inclusive amount, then some more for rounding */
 	ios = (wu->swu_blk_end - wu->swu_blk_start + 1 + (aoe_frags - 1)) /
@@ -379,9 +381,7 @@ ragain:
 		}
 	}
 
-
 	return (0);
-
 bad:
 	/* wu is unwound by sr_wu_put */
 	return (1);
@@ -504,49 +504,42 @@ sr_aoe_timeout(void *v)
 	sr_aoe_rw(wu);
 }
 
-#if 0
-int			sr_aoe_start_server(struct sr_discipline *);
-void			sr_aoe_server(struct aoe_handler *, struct mbuf *);
+/* AOE target */
+void		sr_aoe_server(struct aoe_handler *, struct mbuf *);
+void		sr_aoe_server_create_thread(void *);
+void		sr_aoe_server_thread(void *);
 
 int
-sr_aoe_start_server(struct sr_discipline *sd)
+sr_aoe_server_alloc_resources(struct sr_discipline *sd)
 {
-	struct ifnet *ifp;
-	struct aoe_handler *ah;
-	unsigned char slot;
-	unsigned short shelf;
-	const char *nic;
-	struct mbuf *m, *m2;
-	struct ether_header *eh;
-	struct aoe_packet *rp, *ap;
-	struct aoe_req *ar;
-	int rv, s;
-	int len;
-	struct buf buf;
-	daddr64_t blk;
+	int			s, rv = EINVAL;
+	unsigned char		slot;
+	unsigned short		shelf;
+	const char		*nic;
+	struct aoe_handler	*ah;
+	struct ifnet		*ifp;
 
 	if (!sd)
-		return (EINVAL);
+		return (rv);
 
-	DNPRINTF(SR_D_DIS, "%s: sr_aoe_alloc_resources\n",
+	DNPRINTF(SR_D_DIS, "%s: sr_aoe_server_alloc_resources\n",
 	    DEVNAME(sd->sd_sc));
 
-	sr_alloc_wu(sd);
-	sr_alloc_ccb(sd);
-
-	/* where do these come from */
+	/* setup runtime values */
+	/* XXX where do these come from */
 	slot = 3;
 	shelf = 4;
-	nic = "ne0";
+	nic = "re0";
 
 	ifp = ifunit(nic);
 	if (!ifp) {
-		return EINVAL;
+		printf("%s: sr_aoe_server_alloc_resources: illegal interface "
+		    "%s\n", DEVNAME(sd->sd_sc), nic);
+		return (EINVAL);
 	}
 	shelf = htons(shelf);
 
-	ah = malloc(sizeof(*ah), M_DEVBUF, M_WAITOK);
-	memset(ah, 0, sizeof(*ah));
+	ah = malloc(sizeof(*ah), M_DEVBUF, M_WAITOK | M_ZERO);
 	ah->ifp = ifp;
 	ah->major = shelf;
 	ah->minor = slot;
@@ -564,11 +557,97 @@ sr_aoe_start_server(struct sr_discipline *sd)
 	sd->mds.mdd_aoe.sra_eaddr[3] = 0xff;
 	sd->mds.mdd_aoe.sra_eaddr[4] = 0xff;
 	sd->mds.mdd_aoe.sra_eaddr[5] = 0xff;
+	sd->mds.mdd_aoe.sra_ifp = ifp;
+
+	if (sr_wu_alloc(sd))
+		goto bad;
+	if (sr_ccb_alloc(sd))
+		goto bad;
+
+	rv = 0;
+bad:
+	return (rv);
+}
+
+int
+sr_aoe_server_free_resources(struct sr_discipline *sd)
+{
+	int			s;
+
+	if (!sd)
+		return (EINVAL);
+
+	DNPRINTF(SR_D_DIS, "%s: sr_aoe_server_free_resources\n",
+	    DEVNAME(sd->sd_sc));
+
+	sr_wu_free(sd);
+	sr_ccb_free(sd);
+
+	s = splnet();
+	if (sd->mds.mdd_aoe.sra_ah) {
+		TAILQ_REMOVE(&aoe_handlers, sd->mds.mdd_aoe.sra_ah, next);
+		free(sd->mds.mdd_aoe.sra_ah, M_DEVBUF);
+	}
+	splx(s);
+
+	return (0);
+}
+
+int
+sr_aoe_server_start(struct sr_discipline *sd)
+{
+	kthread_create_deferred(sr_aoe_server_create_thread, sd);
+
+	return (0);
+}
+
+void
+sr_aoe_server_create_thread(void *arg)
+{
+	struct sr_discipline	*sd = arg;
+
+	if (kthread_create(sr_aoe_server_thread, arg, NULL, DEVNAME(sd->sd_sc))
+	    != 0) {
+		printf("%s: unable to create AOE thread\n",
+		    DEVNAME(sd->sd_sc));
+		/* XXX unwind */
+		return;
+	}
+}
+
+void
+sr_aoe_server_thread(void *arg)
+{
+	struct mbuf *m, *m2;
+	struct ether_header *eh;
+	struct aoe_packet *rp, *ap;
+	struct aoe_req *ar;
+	int len;
+	struct buf buf;
+	daddr64_t blk;
+
+	struct ifnet		*ifp;
+	struct aoe_handler	*ah;
+	int			rv, s;
+	struct sr_discipline	*sd = arg;
+
+	/* sanity */
+	if (!sd)
+		return;
+	ah = sd->mds.mdd_aoe.sra_ah;
+	if (ah == NULL)
+		return;
+	ifp = sd->mds.mdd_aoe.sra_ifp;
+	if (ifp == NULL)
+		return;
+
+	printf("%s: AOE target: %s exported via: %s\n",
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, ifp->if_xname);
 
 	while (1) {
 		s = splnet();
 resleep:
-		rv = tsleep(ah, PCATCH|PRIBIO, "wait", 0);
+		rv = tsleep(ah, PCATCH | PRIBIO, "aoe targ", 0);
 		if (rv) {
 			splx(s);
 			break;
@@ -592,7 +671,8 @@ resleep:
 
 			eh = mtod(m, struct ether_header *);
 			memcpy(eh->ether_dhost, sd->mds.mdd_aoe.sra_eaddr, 6);
-			memcpy(eh->ether_shost, ((struct arpcom *)ifp)->ac_enaddr, 6);
+			memcpy(eh->ether_shost,
+			    ((struct arpcom *)ifp)->ac_enaddr, 6);
 			eh->ether_type = htons(ETHERTYPE_AOE);
 			ap = (struct aoe_packet *)&eh[1];
 			AOE_HDR2BLK(ap, blk);
@@ -654,7 +734,8 @@ resleep:
 
 			eh = mtod(m, struct ether_header *);
 			memcpy(eh->ether_dhost, sd->mds.mdd_aoe.sra_eaddr, 6);
-			memcpy(eh->ether_shost, ((struct arpcom *)ifp)->ac_enaddr, 6);
+			memcpy(eh->ether_shost,
+			    ((struct arpcom *)ifp)->ac_enaddr, 6);
 			eh->ether_type = htons(ETHERTYPE_AOE);
 			ap = (struct aoe_packet *)&eh[1];
 			AOE_HDR2BLK(ap, blk);
@@ -701,25 +782,18 @@ resleep:
 				(*ifp->if_start)(ifp);
 			splx(s);
 		}
-
 	}
-
-	s = splnet();
-	TAILQ_REMOVE(&aoe_handlers, ah, next);
-	splx(s);
-	free(ah, M_DEVBUF);
-
-	return rv;
 }
 
 void
 sr_aoe_server(struct aoe_handler *ah, struct mbuf *m)
 {
-	struct aoe_req *ar;
-	int s;
+	struct aoe_req		*ar;
+	int			s;
 
 	ar = malloc(sizeof *ar, M_DEVBUF, M_NOWAIT);
 	if (!ar) {
+		/* XXX warning? */
 		m_freem(m);
 		return;
 	}
@@ -729,4 +803,3 @@ sr_aoe_server(struct aoe_handler *ah, struct mbuf *m)
 	wakeup(ah);
 	splx(s);
 }
-#endif /* server */

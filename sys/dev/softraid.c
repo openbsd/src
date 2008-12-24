@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.125 2008/11/25 23:05:17 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.126 2008/12/24 19:32:02 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -607,11 +607,13 @@ restart:
 		}
 	}
 
-	bzero(&wu, sizeof(wu));
-	wu.swu_fake = 1;
-	wu.swu_dis = sd;
-	sd->sd_scsi_sync(&wu);
-
+	/* not al disciplines have sync */
+	if (sd->sd_scsi_sync) {
+		bzero(&wu, sizeof(wu));
+		wu.swu_fake = 1;
+		wu.swu_dis = sd;
+		sd->sd_scsi_sync(&wu);
+	}
 	free(m, M_DEVBUF);
 	return (0);
 bad:
@@ -1755,7 +1757,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 {
 	dev_t			*dt;
 	int			i, s, no_chunk, rv = EINVAL, vol;
-	int			no_meta, updatemeta = 0;
+	int			no_meta, updatemeta = 0, disk = 1;
 	u_int64_t		vol_size;
 	int32_t			strip_size = 0;
 	struct sr_chunk_head	*cl;
@@ -1845,20 +1847,21 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			vol_size = ch_entry->src_meta.scmi.scm_coerced_size;
 			break;
 #ifdef AOE
-#ifdef notyet
+#ifdef not_yet
 		case 'A':
 			/* target */
 			if (no_chunk != 1)
 				goto unwind;
-			strlcpy(sd->sd_name, "AOE TARGET", sizeof(sd->sd_name));
+			strlcpy(sd->sd_name, "AOE TARG", sizeof(sd->sd_name));
+			vol_size = ch_entry->src_meta.scmi.scm_coerced_size;
 			break;
-#endif /* notyet */
 		case 'a':
 			/* initiator */
 			if (no_chunk != 1)
 				goto unwind;
-			strlcpy(sd->sd_name, "AOE INITIATOR", sizeof(sd->sd_name));
+			strlcpy(sd->sd_name, "AOE INIT", sizeof(sd->sd_name));
 			break;
+#endif /* not_yet */
 #endif /* AOE */
 #ifdef CRYPTO
 		case 'C':
@@ -1986,6 +1989,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		/* setup discipline pointers */
 		sd->sd_alloc_resources = sr_raid0_alloc_resources;
 		sd->sd_free_resources = sr_raid0_free_resources;
+		sd->sd_start_discipline = NULL;
 		sd->sd_scsi_inquiry = sr_raid_inquiry;
 		sd->sd_scsi_read_cap = sr_raid_read_cap;
 		sd->sd_scsi_tur = sr_raid_tur;
@@ -2005,6 +2009,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		/* setup discipline pointers */
 		sd->sd_alloc_resources = sr_raid1_alloc_resources;
 		sd->sd_free_resources = sr_raid1_free_resources;
+		sd->sd_start_discipline = NULL;
 		sd->sd_scsi_inquiry = sr_raid_inquiry;
 		sd->sd_scsi_read_cap = sr_raid_read_cap;
 		sd->sd_scsi_tur = sr_raid_tur;
@@ -2016,36 +2021,39 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		sd->sd_set_vol_state = sr_raid1_set_vol_state;
 		break;
 #ifdef AOE
-#ifdef notyet
+	/* target */
 	case 'A':
 		/* fill out discipline members */
-		sd->sd_type = SR_MD_AOE;
+		sd->sd_type = SR_MD_AOE_TARG;
 		sd->sd_max_ccb_per_wu = no_chunk;
 		sd->sd_max_wu = SR_RAIDAOE_NOWU;
 
 		/* setup discipline pointers */
-		sd->sd_alloc_resources = sr_aoe_start_server;
-		sd->sd_free_resources = sr_aoe_free_resources;
-		sd->sd_scsi_inquiry = sr_raid_inquiry;
-		sd->sd_scsi_read_cap = sr_raid_read_cap;
-		sd->sd_scsi_tur = sr_raid_tur;
-		sd->sd_scsi_req_sense = sr_raid_request_sense;
-		sd->sd_scsi_start_stop = sr_raid_start_stop;
-		sd->sd_scsi_sync = sr_raid_sync;
-		sd->sd_scsi_rw = sr_aoe_rw;
-		sd->sd_set_chunk_state = sr_raid_set_chunk_state;
-		sd->sd_set_vol_state = sr_raid_set_vol_state;
+		sd->sd_alloc_resources = sr_aoe_server_alloc_resources;
+		sd->sd_free_resources = sr_aoe_server_free_resources;
+		sd->sd_start_discipline = sr_aoe_server_start;
+		sd->sd_scsi_inquiry = NULL;
+		sd->sd_scsi_read_cap = NULL;
+		sd->sd_scsi_tur = NULL;
+		sd->sd_scsi_req_sense = NULL;
+		sd->sd_scsi_start_stop = NULL;
+		sd->sd_scsi_sync = NULL;
+		sd->sd_scsi_rw = NULL;
+		sd->sd_set_chunk_state = NULL;
+		sd->sd_set_vol_state = NULL;
+		disk = 0; /* we are not a disk */
 		break;
-#endif /* notyet */
 	case 'a':
+		/* initiator */
 		/* fill out discipline members */
-		sd->sd_type = SR_MD_AOE;
+		sd->sd_type = SR_MD_AOE_INIT;
 		sd->sd_max_ccb_per_wu = no_chunk;
 		sd->sd_max_wu = SR_RAIDAOE_NOWU;
 
 		/* setup discipline pointers */
 		sd->sd_alloc_resources = sr_aoe_alloc_resources;
 		sd->sd_free_resources = sr_aoe_free_resources;
+		sd->sd_start_discipline = NULL;
 		sd->sd_scsi_inquiry = sr_raid_inquiry;
 		sd->sd_scsi_read_cap = sr_raid_read_cap;
 		sd->sd_scsi_tur = sr_raid_tur;
@@ -2068,6 +2076,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		/* setup discipline pointers */
 		sd->sd_alloc_resources = sr_crypto_alloc_resources;
 		sd->sd_free_resources = sr_crypto_free_resources;
+		sd->sd_start_discipline = NULL;
 		sd->sd_scsi_inquiry = sr_raid_inquiry;
 		sd->sd_scsi_read_cap = sr_raid_read_cap;
 		sd->sd_scsi_tur = sr_raid_tur;
@@ -2088,82 +2097,94 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	if ((rv = sd->sd_alloc_resources(sd)))
 		goto unwind;
 
-	/* setup scsi midlayer */
-	sd->sd_link.openings = sd->sd_max_wu;
-	sd->sd_link.device = &sr_dev;
-	sd->sd_link.device_softc = sc;
-	sd->sd_link.adapter_softc = sc;
-	sd->sd_link.adapter = &sr_switch;
-	sd->sd_link.adapter_target = SR_MAX_LD;
-	sd->sd_link.adapter_buswidth = 1;
-	bzero(&saa, sizeof(saa));
-	saa.saa_sc_link = &sd->sd_link;
+	if (disk) {
+		/* setup scsi midlayer */
+		sd->sd_link.openings = sd->sd_max_wu;
+		sd->sd_link.device = &sr_dev;
+		sd->sd_link.device_softc = sc;
+		sd->sd_link.adapter_softc = sc;
+		sd->sd_link.adapter = &sr_switch;
+		sd->sd_link.adapter_target = SR_MAX_LD;
+		sd->sd_link.adapter_buswidth = 1;
+		bzero(&saa, sizeof(saa));
+		saa.saa_sc_link = &sd->sd_link;
 
-	/* we passed all checks return ENXIO if volume can't be created */
-	rv = ENXIO;
+		/*
+		 * we passed all checks return ENXIO if volume can't be created
+		 */
+		rv = ENXIO;
 
-	/* clear sense data */
-	bzero(&sd->sd_scsi_sense, sizeof(sd->sd_scsi_sense));
+		/* clear sense data */
+		bzero(&sd->sd_scsi_sense, sizeof(sd->sd_scsi_sense));
 
-	/* use temporary discipline pointer */
-	s = splhigh();
-	sc->sc_attach_dis = sd;
-	splx(s);
-	dev2 = config_found(&sc->sc_dev, &saa, scsiprint);
-	s = splhigh();
-	sc->sc_attach_dis = NULL;
-	splx(s);
-	TAILQ_FOREACH(dev, &alldevs, dv_list)
-		if (dev->dv_parent == dev2)
-			break;
-	if (dev == NULL)
-		goto unwind;
+		/* use temporary discipline pointer */
+		s = splhigh();
+		sc->sc_attach_dis = sd;
+		splx(s);
+		dev2 = config_found(&sc->sc_dev, &saa, scsiprint);
+		s = splhigh();
+		sc->sc_attach_dis = NULL;
+		splx(s);
+		TAILQ_FOREACH(dev, &alldevs, dv_list)
+			if (dev->dv_parent == dev2)
+				break;
+		if (dev == NULL)
+			goto unwind;
 
-	DNPRINTF(SR_D_IOCTL, "%s: sr device added: %s on scsibus%d\n",
-	    DEVNAME(sc), dev->dv_xname, sd->sd_link.scsibus);
+		DNPRINTF(SR_D_IOCTL, "%s: sr device added: %s on scsibus%d\n",
+		    DEVNAME(sc), dev->dv_xname, sd->sd_link.scsibus);
 
-	sc->sc_dis[sd->sd_link.scsibus] = sd;
-	for (i = 0, vol = -1; i <= sd->sd_link.scsibus; i++)
-		if (sc->sc_dis[i])
-			vol++;
+		sc->sc_dis[sd->sd_link.scsibus] = sd;
+		for (i = 0, vol = -1; i <= sd->sd_link.scsibus; i++)
+			if (sc->sc_dis[i])
+				vol++;
+		sd->sd_scsibus_dev = dev2;
 
-	rv = 0;
-	if (updatemeta) {
-		/* fill out remaining volume metadata */
-		sd->sd_meta->ssdi.ssd_volid = vol;
-		strlcpy(sd->sd_meta->ssd_devname, dev->dv_xname,
-		    sizeof(sd->sd_meta->ssd_devname));
-		sr_meta_init(sd, cl);
-	} else {
-		if (strncmp(sd->sd_meta->ssd_devname, dev->dv_xname,
-		    sizeof(dev->dv_xname))) {
-			printf("%s: volume %s is roaming, it used to be %s, "
-			    "updating metadata\n",
-			    DEVNAME(sc), dev->dv_xname,
-			    sd->sd_meta->ssd_devname);
-
+		rv = 0;
+		if (updatemeta) {
+			/* fill out remaining volume metadata */
 			sd->sd_meta->ssdi.ssd_volid = vol;
 			strlcpy(sd->sd_meta->ssd_devname, dev->dv_xname,
 			    sizeof(sd->sd_meta->ssd_devname));
+			sr_meta_init(sd, cl);
+		} else {
+			if (strncmp(sd->sd_meta->ssd_devname, dev->dv_xname,
+			    sizeof(dev->dv_xname))) {
+				printf("%s: volume %s is roaming, it used to "
+				    "be %s, updating metadata\n",
+				    DEVNAME(sc), dev->dv_xname,
+				    sd->sd_meta->ssd_devname);
+
+				sd->sd_meta->ssdi.ssd_volid = vol;
+				strlcpy(sd->sd_meta->ssd_devname, dev->dv_xname,
+				    sizeof(sd->sd_meta->ssd_devname));
+			}
 		}
+#ifndef SMALL_KERNEL
+		if (sr_sensors_create(sd))
+			printf("%s: unable to create sensor for %s\n",
+			    DEVNAME(sc), dev->dv_xname);
+		else
+			sd->sd_vol.sv_sensor_valid = 1;
+#endif /* SMALL_KERNEL */
+	} else {
+		/* we are not an os disk */
+		if (updatemeta) {
+			/* fill out remaining volume metadata */
+			sd->sd_meta->ssdi.ssd_volid = 0;
+			strlcpy(sd->sd_meta->ssd_devname, ch_entry->src_devname,
+			    sizeof(sd->sd_meta->ssd_devname));
+			sr_meta_init(sd, cl);
+		}
+		if (sd->sd_start_discipline(sd))
+			goto unwind;
 	}
 
 	/* save metadata to disk */
 	rv = sr_meta_save(sd, SR_META_DIRTY);
-
-#ifndef SMALL_KERNEL
-	if (sr_sensors_create(sd))
-		printf("%s: unable to create sensor for %s\n", DEVNAME(sc),
-		    dev->dv_xname);
-	else
-		sd->sd_vol.sv_sensor_valid = 1;
-#endif /* SMALL_KERNEL */
-
-	sd->sd_scsibus_dev = dev2;
 	sd->sd_shutdownhook = shutdownhook_establish(sr_shutdown, sd);
 
 	return (rv);
-
 unwind:
 	sr_discipline_shutdown(sd);
 
@@ -2182,7 +2203,8 @@ sr_ioctl_deleteraid(struct sr_softc *sc, struct bioc_deleteraid *dr)
 
 	for (i = 0; i < SR_MAXSCSIBUS; i++)
 		if (sc->sc_dis[i]) {
-			if (!strncmp(sc->sc_dis[i]->sd_meta->ssd_devname, dr->bd_dev,
+			if (!strncmp(sc->sc_dis[i]->sd_meta->ssd_devname,
+			    dr->bd_dev,
 			    sizeof(sc->sc_dis[i]->sd_meta->ssd_devname))) {
 				sd = sc->sc_dis[i];
 				break;
@@ -2714,11 +2736,7 @@ bad:
 void
 sr_sensors_delete(struct sr_discipline *sd)
 {
-#ifdef SR_DEBUG
-	struct sr_softc		*sc = sd->sd_sc;
-#endif
-	DNPRINTF(SR_D_STATE, "%s: %s: sr_sensors_delete\n",
-	    DEVNAME(sc), sd->sd_meta->ssd_devname);
+	DNPRINTF(SR_D_STATE, "%s: sr_sensors_delete\n", DEVNAME(sd->sd_sc));
 
 	if (sd->sd_vol.sv_sensor_valid)
 		sensordev_deinstall(&sd->sd_vol.sv_sensordev);
@@ -2824,7 +2842,7 @@ sr_meta_print(struct sr_metadata *m)
 	printf("\tssd_opt_no %d\n", m->ssdi.ssd_opt_no);
 	printf("\tssd_volid %d\n", m->ssdi.ssd_volid);
 	printf("\tssd_level %d\n", m->ssdi.ssd_level);
-	printf("\tssd_level %lld\n", m->ssdi.ssd_size);
+	printf("\tssd_size %lld\n", m->ssdi.ssd_size);
 	printf("\tssd_devname %s\n", m->ssd_devname);
 	printf("\tssd_vendor %s\n", m->ssdi.ssd_vendor);
 	printf("\tssd_product %s\n", m->ssdi.ssd_product);

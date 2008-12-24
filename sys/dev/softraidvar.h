@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.65 2008/11/25 23:05:17 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.66 2008/12/24 19:32:02 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -309,6 +309,7 @@ struct sr_crypto {
 struct sr_aoe {
 	struct aoe_handler	*sra_ah;
 	int			sra_tag;
+	struct ifnet		*sra_ifp;
 	char			sra_eaddr[6];
 };
 
@@ -358,7 +359,8 @@ struct sr_discipline {
 #define	SR_MD_RAID5		2
 #define	SR_MD_CACHE		3
 #define	SR_MD_CRYPTO		4
-#define	SR_MD_AOE		5
+#define	SR_MD_AOE_INIT		5
+#define	SR_MD_AOE_TARG		6
 	char			sd_name[10];	/* human readable dis name */
 	u_int8_t		sd_scsibus;	/* scsibus discipline uses */
 	struct scsi_link	sd_link;	/* link to midlayer */
@@ -408,11 +410,8 @@ struct sr_discipline {
 
 	/* discipline functions */
 	int			(*sd_alloc_resources)(struct sr_discipline *);
-	int			(*sd_assemble_volume)(void *);
-	int			(*sd_bringup_volume)(void *);
-	int			(*sd_shutdown_volume)(void *);
 	int			(*sd_free_resources)(struct sr_discipline *);
-	int			(*sd_quiesce_io)(struct sr_discipline *);
+	int			(*sd_start_discipline)(struct sr_discipline *);
 	void			(*sd_set_chunk_state)(struct sr_discipline *,
 				    int, int);
 	void			(*sd_set_vol_state)(struct sr_discipline *);
@@ -509,6 +508,10 @@ int			sr_crypto_create_keys(struct sr_discipline *);
 int			sr_aoe_alloc_resources(struct sr_discipline *);
 int			sr_aoe_free_resources(struct sr_discipline *);
 int			sr_aoe_rw(struct sr_workunit *);
+/* aoe target */
+int			sr_aoe_server_alloc_resources(struct sr_discipline *);
+int			sr_aoe_server_free_resources(struct sr_discipline *);
+int			sr_aoe_server_start(struct sr_discipline *);
 
 #ifdef SR_DEBUG
 void			sr_dump_mem(u_int8_t *, int);
