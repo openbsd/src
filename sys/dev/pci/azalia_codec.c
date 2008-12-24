@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.91 2008/12/23 10:43:26 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.92 2008/12/24 10:58:52 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1774,7 +1774,7 @@ azalia_alc88x_mixer_init(codec_t *this)
 int
 azalia_alc88x_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
-	if (nid == 0x1c &&w->enable == 0 && w->d.pin.device == CORB_CD_CD) {
+	if (nid == 0x1c && w->enable == 0 && w->d.pin.device == CORB_CD_CD) {
 		azalia_pin_config_ov(w, CORB_CD_PORT_MASK, CORB_CD_FIXED);
 		w->widgetcap |= COP_AWCAP_STEREO;
 		w->enable = 1;
