@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.78 2008/10/31 21:08:33 claudio Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.79 2008/12/24 08:26:27 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -418,8 +418,10 @@ arpresolve(ac, rt, m, dst, desten)
 		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
 		return 1;
 	}
-	if (((struct ifnet *)ac)->if_flags & IFF_NOARP)
+	if (((struct ifnet *)ac)->if_flags & IFF_NOARP) {
+		m_freem(m);
 		return 0;
+	}
 
 	/*
 	 * There is an arptab entry, but no ethernet address
@@ -452,6 +454,7 @@ arpresolve(ac, rt, m, dst, desten)
 		}
 		la->la_hold_tail = NULL;
 		la->la_hold_count = 0;
+		m_freem(m);
 	}
 
 	/*
