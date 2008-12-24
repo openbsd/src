@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.79 2008/07/28 13:35:14 thib Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.80 2008/12/24 02:43:52 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -96,9 +96,6 @@ const struct vfsops nfs_vfsops = {
 	nfs_sysctl,
 	nfs_checkexp
 };
-
-#define TRUE	1
-#define	FALSE	0
 
 /*
  * nfs statfs call
@@ -611,7 +608,7 @@ nfs_mount(mp, path, data, ndp, p)
 
 	if (nfs_niothreads < 0) {
 		nfs_niothreads = 4;
-		nfs_getset_niothreads(TRUE);
+		nfs_getset_niothreads(1);
 	}
 
 	if (mp->mnt_flag & MNT_UPDATE) {

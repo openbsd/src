@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.72 2008/09/12 15:41:40 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.73 2008/12/24 02:43:52 thib Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -120,9 +120,6 @@ struct nfsdhead nfsd_head;
 
 int nfssvc_sockhead_flag;
 int nfsd_head_flag;
-
-#define	TRUE	1
-#define	FALSE	0
 
 #ifdef NFSCLIENT
 struct proc *nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
@@ -440,13 +437,13 @@ nfssvc_nfsd(nsd, argp, p)
 			}
 			if (error) {
 				nfsstats.srv_errs++;
-				nfsrv_updatecache(nd, FALSE, mreq);
+				nfsrv_updatecache(nd, 0, mreq);
 				if (nd->nd_nam2)
 					m_freem(nd->nd_nam2);
 				break;
 			}
 			nfsstats.srvrpccnt[nd->nd_procnum]++;
-			nfsrv_updatecache(nd, TRUE, mreq);
+			nfsrv_updatecache(nd, 1, mreq);
 			nd->nd_mrep = (struct mbuf *)0;
 
 			/* FALLTHROUGH */
@@ -538,7 +535,7 @@ done:
 	free((caddr_t)nfsd, M_NFSD);
 	nsd->nsd_nfsd = (struct nfsd *)0;
 	if (--nfs_numnfsd == 0)
-		nfsrv_init(TRUE);	/* Reinitialize everything */
+		nfsrv_init(1);	/* Reinitialize everything */
 	return (error);
 }
 

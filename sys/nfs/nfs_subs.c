@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.87 2008/11/24 20:14:52 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.88 2008/12/24 02:43:52 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -925,8 +925,8 @@ nfs_init()
 	rpc_autherr = txdr_unsigned(RPC_AUTHERR);
 	rpc_auth_unix = txdr_unsigned(RPCAUTH_UNIX);
 	nfs_prog = txdr_unsigned(NFS_PROG);
-	nfs_true = txdr_unsigned(TRUE);
-	nfs_false = txdr_unsigned(FALSE);
+	nfs_true = txdr_unsigned(1);
+	nfs_false = txdr_unsigned(0);
 	nfs_xdrneg1 = txdr_unsigned(-1);
 	nfs_ticks = (hz * NFS_TICKINTVL + 500) / 1000;
 	if (nfs_ticks < 1)
@@ -1287,7 +1287,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p)
 	/*
 	 * Extract and set starting directory.
 	 */
-	error = nfsrv_fhtovp(fhp, FALSE, &dp, ndp->ni_cnd.cn_cred, slp,
+	error = nfsrv_fhtovp(fhp, 0, &dp, ndp->ni_cnd.cn_cred, slp,
 	    nam, &rdonly);
 	if (error)
 		goto out;
@@ -1557,9 +1557,8 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp)
 }
 
 /*
- * This function compares two net addresses by family and returns TRUE
- * if they are the same host.
- * If there is any doubt, return FALSE.
+ * This function compares two net addresses by family and returns non zero
+ * if they are the same host, of there is any doubt it returns 0.
  * The AF_INET family is handled as a special case so that address mbufs
  * don't need to be saved to store "struct in_addr", which is only 4 bytes.
  */

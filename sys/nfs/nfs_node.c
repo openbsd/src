@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.43 2008/12/23 21:56:12 thib Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.44 2008/12/24 02:43:52 thib Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -63,9 +63,6 @@ struct rwlock nfs_hashlock = RWLOCK_INITIALIZER("nfshshlk");
 struct pool nfs_node_pool;
 
 extern int prtactive;
-
-#define TRUE	1
-#define	FALSE	0
 
 #define	nfs_hash(x,y)	hash32_buf((x), (y), HASHINIT)
 

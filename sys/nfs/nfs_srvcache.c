@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.20 2008/10/20 13:40:19 blambert Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.21 2008/12/24 02:43:52 thib Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -69,62 +69,22 @@ LIST_HEAD(nfsrvhash, nfsrvcache) *nfsrvhashtbl;
 TAILQ_HEAD(nfsrvlru, nfsrvcache) nfsrvlruhead;
 u_long nfsrvhash;
 
-#define	TRUE	1
-#define	FALSE	0
-
 #define	NETFAMILY(rp)	\
 	(((rp)->rc_flag & RC_INETADDR) ? AF_INET : AF_UNSPEC)
 
 /* Array that defines which nfs rpc's are nonidempotent */
 int nonidempotent[NFS_NPROCS] = {
-	FALSE,
-	FALSE,
-	TRUE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
+	0, 0, 1, 0, 0, 0, 0, 1,
+	1, 1, 1, 1, 1, 1, 1, 1,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0
 };
 
 /* True iff the rpc reply is an nfs status ONLY! */
 int nfsv2_repstat[NFS_NPROCS] = {
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	FALSE,
-	TRUE,
-	TRUE,
-	TRUE,
-	TRUE,
-	FALSE,
-	TRUE,
-	FALSE,
-	FALSE,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 1, 1, 1, 1, 0, 1,
+	0, 0
 };
 
 /* Initialize the server request cache list */

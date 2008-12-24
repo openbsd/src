@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.58 2008/07/06 16:54:48 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.59 2008/12/24 02:43:52 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1885,7 +1885,7 @@ nfsrv_link(nfsd, slp, procp, mrq)
 	nfsm_srvmtofh(fhp);
 	nfsm_srvmtofh(dfhp);
 	nfsm_srvnamesiz(len);
-	error = nfsrv_fhtovp(fhp, FALSE, &vp, cred, slp, nam, &rdonly);
+	error = nfsrv_fhtovp(fhp, 0, &vp, cred, slp, nam, &rdonly);
 	if (error) {
 		nfsm_reply(NFSX_POSTOPATTR(v3) + NFSX_WCCDATA(v3));
 		nfsm_srvpostop_attr(nfsd, getret, &at, &mb);

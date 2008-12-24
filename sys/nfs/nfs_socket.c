@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.70 2008/10/31 17:28:47 blambert Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.71 2008/12/24 02:43:52 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -68,9 +68,6 @@
 #include <nfs/nfsnode.h>
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
-
-#define	TRUE	1
-#define	FALSE	0
 
 /*
  * Estimate rto for an nfs rpc sent via. an unreliable datagram.
@@ -1858,7 +1855,7 @@ nfsrv_dorec(slp, nfsd, ndp)
 	nd->nd_md = nd->nd_mrep = m;
 	nd->nd_nam2 = nam;
 	nd->nd_dpos = mtod(m, caddr_t);
-	error = nfs_getreq(nd, nfsd, TRUE);
+	error = nfs_getreq(nd, nfsd, 1);
 	if (error) {
 		m_freem(nam);
 		free(nd, M_NFSRVDESC);

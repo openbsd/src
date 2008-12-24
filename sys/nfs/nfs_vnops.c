@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.104 2008/10/16 07:57:06 blambert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.105 2008/12/24 02:43:52 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -78,10 +78,6 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-
-/* Defs */
-#define	TRUE	1
-#define	FALSE	0
 
 void nfs_cache_enter(struct vnode *, struct vnode *, struct componentname *);
 
@@ -623,7 +619,7 @@ nfs_setattrrpc(vp, vap, cred, procp)
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3) + NFSX_SATTR(v3));
 	nfsm_fhtom(vp, v3);
 	if (v3) {
-		nfsm_v3attrbuild(&mb, vap, TRUE);
+		nfsm_v3attrbuild(&mb, vap, 1);
 		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		*tl = nfs_false;
 	} else {
@@ -1182,7 +1178,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 	if (v3) {
 		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		*tl++ = vtonfsv3_type(vap->va_type);
-		nfsm_v3attrbuild(&mb, vap, FALSE);
+		nfsm_v3attrbuild(&mb, vap, 0);
 		if (vap->va_type == VCHR || vap->va_type == VBLK) {
 			tl = nfsm_build(&mb, 2 * NFSX_UNSIGNED);
 			*tl++ = txdr_unsigned(major(vap->va_rdev));
@@ -1302,7 +1298,7 @@ again:
 			*tl = ++create_verf;
 		} else {
 			*tl = txdr_unsigned(NFSV3CREATE_UNCHECKED);
-			nfsm_v3attrbuild(&mb, vap, FALSE);
+			nfsm_v3attrbuild(&mb, vap, 0);
 		}
 	} else {
 		sp = nfsm_build(&mb, NFSX_V2SATTR);
@@ -1685,7 +1681,7 @@ nfs_symlink(v)
 	nfsm_fhtom(dvp, v3);
 	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
 	if (v3)
-		nfsm_v3attrbuild(&mb, vap, FALSE);
+		nfsm_v3attrbuild(&mb, vap, 0);
 	nfsm_strtom(ap->a_target, slen, NFS_MAXPATHLEN);
 	if (!v3) {
 		sp = nfsm_build(&mb, NFSX_V2SATTR);
@@ -1745,7 +1741,7 @@ nfs_mkdir(v)
 	nfsm_fhtom(dvp, v3);
 	nfsm_strtom(cnp->cn_nameptr, len, NFS_MAXNAMLEN);
 	if (v3) {
-		nfsm_v3attrbuild(&mb, vap, FALSE);
+		nfsm_v3attrbuild(&mb, vap, 0);
 	} else {
 		sp = nfsm_build(&mb, NFSX_V2SATTR);
 		sp->sa_mode = vtonfsv2_mode(VDIR, vap->va_mode);
