@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.38 2008/12/24 21:29:23 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.39 2008/12/24 22:10:40 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -253,7 +253,7 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	 * operations.
 	 *
 	 * Further code needing to know which capabilities the frame buffer
-	 * has will rely on sc_cplane being non NULL if 24 bit operation
+	 * has will rely on sc_cplane being non-zero if 24 bit operation
 	 * is possible.
 	 */
 	if (!node_has_property(node, "tcx-8-bit") &&
@@ -783,6 +783,8 @@ tcx_blit(struct tcx_softc *sc, uint32_t dst, uint32_t src, int len)
 #define	GXcopy		0x03
 #define	GXinvert	0x0a
 
+#define	STIPPLE_ROP_SHIFT	28
+
 /*
  * Perform a stipple operation rop from (x, y) to (x + cnt - 1, y).
  *
@@ -802,7 +804,7 @@ tcx_stipple(struct tcx_softc *sc, int x, int y, int cnt, int rop, int bg)
 	uint32_t soffs;	/* stipple offset */
 	uint64_t scmd;
 
-	scmd = rop << 28;
+	scmd = rop << STIPPLE_ROP_SHIFT;
 	scmd |= TCX_CTL_8_MAPPED | bg;	/* pixel bits, here in 8-bit mode */
 	scmd <<= 32;
 
@@ -811,7 +813,7 @@ tcx_stipple(struct tcx_softc *sc, int x, int y, int cnt, int rop, int bg)
 	 * boundary, which explains why the loop is a bit unnatural
 	 * at first glance.
 	 */
-	rx = x & ~31;
+	rx = x & ~(32 - 1);
 	soffs = sc->sc_stipple + ((y * sc->sc_sunfb.sf_width + rx) << 3);
 	lbcnt = x - rx;
 	wmask = 0xffffffff >> lbcnt;
@@ -918,12 +920,12 @@ tcx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		uint32_t soffs;
 		uint64_t stmpl, scmd;
 
-		stmpl = (GXcopy << 28) | TCX_CTL_8_MAPPED;
+		stmpl = (GXcopy << STIPPLE_ROP_SHIFT) | TCX_CTL_8_MAPPED;
 
 		fontbits = (uint8_t *)font->data +
 		    (uc - font->firstchar) * ri->ri_fontscale;
 
-		rx = x & ~31;
+		rx = x & ~(32 - 1);
 		lbcnt = x - rx;
 		rbcnt = (32 - lbcnt) - font->fontwidth; /* may be negative */
 		soffs = sc->sc_stipple +
