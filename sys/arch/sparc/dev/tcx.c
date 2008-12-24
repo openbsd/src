@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.33 2008/12/24 00:47:33 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.34 2008/12/24 13:40:39 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -91,7 +91,7 @@ struct tcx_softc {
 	volatile struct bt_regs *sc_bt;	/* Brooktree registers */
 	volatile struct tcx_thc *sc_thc;/* THC registers */
 	volatile u_int8_t *sc_dfb8;	/* 8 bit plane */
-	volatile u_int32_t *sc_cplane;	/* S24 control plane */
+	paddr_t	sc_cplane;		/* S24 control plane PA */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 	struct	intrhand sc_ih;
 
@@ -116,6 +116,7 @@ void	tcx_loadcmap_deferred(struct tcx_softc *, u_int, u_int);
 paddr_t	tcx_mmap(void *, off_t, int);
 void	tcx_prom(void *);
 void	tcx_reset(struct tcx_softc *, int);
+void	tcx_s24_reset(struct tcx_softc *, int);
 void	tcx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 void	tcx_stipple(struct tcx_softc *, int, int, int, int);
 
@@ -248,13 +249,11 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	 * has will rely on sc_cplane being non NULL if 24 bit operation
 	 * is possible.
 	 */
-	if (node_has_property(node, "tcx-8-bit") ||
-	    ca->ca_ra.ra_reg[TCX_REG_RDFB32].rr_len <
+	if (node_has_property(node, "tcx-8-bit") &&
+	    ca->ca_ra.ra_reg[TCX_REG_RDFB32].rr_len >=
 	      sc->sc_sunfb.sf_fbsize * 4) {
-		sc->sc_cplane = NULL;
-	} else {
-		sc->sc_cplane = mapiodev(&ca->ca_ra.ra_reg[TCX_REG_RDFB32], 0,
-		    round_page(sc->sc_sunfb.sf_fbsize * 4));
+		sc->sc_cplane =
+		    (paddr_t)ca->ca_ra.ra_reg[TCX_REG_RDFB32].rr_paddr;
 	}
 
 	/*
@@ -331,23 +330,23 @@ tcx_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		wdf->height = sc->sc_sunfb.sf_height;
 		wdf->width = sc->sc_sunfb.sf_width;
 		wdf->depth = sc->sc_sunfb.sf_depth;
-		wdf->cmsize = sc->sc_cplane == NULL ? 256 : 0;
+		wdf->cmsize = sc->sc_cplane == 0 ? 256 : 0;
 		break;
 	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
-		if (sc->sc_cplane != NULL)
+		if (sc->sc_cplane != 0)
 			*(u_int *)data = WSDISPLAYIO_DEPTH_24_32;
 		else
 			return (-1);
 		break;
 	case WSDISPLAYIO_LINEBYTES:
-		if (sc->sc_cplane == NULL)
+		if (sc->sc_cplane == 0)
 			*(u_int *)data = sc->sc_sunfb.sf_linebytes;
 		else
 			*(u_int *)data = sc->sc_sunfb.sf_linebytes * 4;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
-		if (sc->sc_cplane == NULL) {
+		if (sc->sc_cplane == 0) {
 			cm = (struct wsdisplay_cmap *)data;
 			error = bt_getcmap(&sc->sc_cmap, cm);
 			if (error)
@@ -355,7 +354,7 @@ tcx_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		}
 		break;
 	case WSDISPLAYIO_PUTCMAP:
-		if (sc->sc_cplane == NULL) {
+		if (sc->sc_cplane == 0) {
 			cm = (struct wsdisplay_cmap *)data;
 			error = bt_putcmap(&sc->sc_cmap, cm);
 			if (error)
@@ -370,7 +369,7 @@ tcx_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			tcx_reset(sc, 8);
 		} else {
 			/* Starting X11, try to switch to 24 bit mode */
-			if (sc->sc_cplane != NULL)
+			if (sc->sc_cplane != 0)
 				tcx_reset(sc, 32);
 		}
 		break;
@@ -403,24 +402,8 @@ tcx_reset(struct tcx_softc *sc, int depth)
 	 * Change mode if appropriate
 	 */
 	if (sc->sc_sunfb.sf_depth != depth) {
-		if (sc->sc_cplane != NULL) {
-			volatile u_int32_t *cptr;
-			u_int32_t pixel;
-			int ramsize;
-
-			cptr = sc->sc_cplane;
-			ramsize = sc->sc_sunfb.sf_fbsize;
-
-			if (depth == 8) {
-				while (ramsize-- != 0) {
-					pixel = (*cptr & TCX_CTL_PIXELMASK);
-					*cptr++ = pixel | TCX_CTL_8_MAPPED;
-				}
-			} else {
-				while (ramsize-- != 0) {
-					*cptr++ = TCX_CTL_24_LEVEL;
-				}
-			}
+		if (sc->sc_cplane != 0) {
+			tcx_s24_reset(sc, depth);
 		}
 
 		if (depth == 8)
@@ -535,6 +518,53 @@ tcx_intr(void *v)
 }
 
 /*
+ * Switch video mode and clear screen
+ */
+void
+tcx_s24_reset(struct tcx_softc *sc, int depth)
+{
+	struct rasops_info *ri = &sc->sc_sunfb.sf_ro;
+	uint32_t pixel;
+	paddr_t dst;
+	int n;
+
+	if (depth == 8)
+		pixel = TCX_CTL_8_MAPPED | (ri->ri_devcmap[WSCOL_WHITE] & 0xff);
+	else
+		pixel = TCX_CTL_24_LEVEL | 0x000000;
+
+	/*
+	 * Set the first 32 pixels as white in the intended mode, using the
+	 * control plane.
+	 */
+	dst = sc->sc_cplane;
+	for (n = 32; n != 0; n--) {
+		sta(dst, ASI_BYPASS, pixel);
+		dst += 4;
+	}
+
+	/*
+	 * Do the remaining pixels: either with the blitter if we can use it,
+	 * or continuing manual writes if we can't.
+	 */
+	if (sc->sc_blit != 0) {
+		dst = sc->sc_blit + (32 << 3);
+		pixel = ((sc->sc_blit_width - 1) << 24) | 0;
+		for (n = sc->sc_sunfb.sf_fbsize - 32; n != 0;
+		    n -= sc->sc_blit_width) {
+			stda(dst, ASI_BYPASS, pixel);
+			dst += sc->sc_blit_width << 3;
+		}
+	} else {
+		/* this relies on video memory being contiguous */
+		for (n = sc->sc_sunfb.sf_fbsize - 32; n != 0; n--) {
+			sta(dst, ASI_BYPASS, pixel);
+			dst += 4;
+		}
+	}
+}
+
+/*
  * Accelerated console operations
  *
  * Most of the TCX and S24 frame buffers can not perform simple ROPs
@@ -582,13 +612,13 @@ tcx_accel_init(struct tcx_softc *sc, struct confargs *ca)
 	else {
 		sc->sc_blit_width = 1 << sc->sc_blit_width;
 
-		regno = sc->sc_cplane == NULL ? TCX_REG_BLIT : TCX_REG_RBLIT;
+		regno = sc->sc_cplane == 0 ? TCX_REG_BLIT : TCX_REG_RBLIT;
 		if (ca->ca_ra.ra_reg[regno].rr_len >=
 		    sc->sc_sunfb.sf_fbsize * 8)
 			sc->sc_blit = (paddr_t)ca->ca_ra.ra_reg[regno].rr_paddr;
 	}
 
-	regno = sc->sc_cplane == NULL ? TCX_REG_STIP : TCX_REG_RSTIP;
+	regno = sc->sc_cplane == 0 ? TCX_REG_STIP : TCX_REG_RSTIP;
 	if (ca->ca_ra.ra_reg[regno].rr_len >= sc->sc_sunfb.sf_fbsize * 8)
 		sc->sc_stipple = (paddr_t)ca->ca_ra.ra_reg[regno].rr_paddr;
 }
