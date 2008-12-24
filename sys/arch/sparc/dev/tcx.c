@@ -1,8 +1,8 @@
-/*	$OpenBSD: tcx.c,v 1.32 2008/12/23 20:35:46 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.33 2008/12/24 00:47:33 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
- * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
+ * Copyright (c) 2002, 2003, 2008 Miodrag Vallat.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,6 +69,8 @@
 #include <machine/pmap.h>
 #include <machine/cpu.h>
 #include <machine/conf.h>
+#include <sparc/sparc/asm.h>
+#include <machine/ctlreg.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -92,17 +94,30 @@ struct tcx_softc {
 	volatile u_int32_t *sc_cplane;	/* S24 control plane */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 	struct	intrhand sc_ih;
+
+	/* acceleration parts */
+	paddr_t	sc_stipple;		/* Stipple space PA */
+	paddr_t	sc_blit;		/* Blitter space PA */
+	int	sc_blit_width;		/* maximal blith width */
+	void	(*sc_plain_copycols)(void *, int, int, int, int);
 };
 
+void	tcx_accel_init(struct tcx_softc *, struct confargs *);
+void	tcx_blit(struct tcx_softc *, uint32_t, uint32_t, int);
 void	tcx_burner(void *, u_int, u_int);
+void	tcx_copyrows(void *, int, int, int);
+void	tcx_copycols(void *, int, int, int, int);
+void	tcx_erasecols(void *, int, int, int, long);
+void	tcx_eraserows(void *, int, int, long);
 int	tcx_intr(void *);
 int	tcx_ioctl(void *, u_long, caddr_t, int, struct proc *);
 static __inline__
 void	tcx_loadcmap_deferred(struct tcx_softc *, u_int, u_int);
 paddr_t	tcx_mmap(void *, off_t, int);
+void	tcx_prom(void *);
 void	tcx_reset(struct tcx_softc *, int);
 void	tcx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-void	tcx_prom(void *);
+void	tcx_stipple(struct tcx_softc *, int, int, int, int);
 
 struct wsdisplay_accessops tcx_accessops = {
 	tcx_ioctl,
@@ -150,7 +165,7 @@ struct cfdriver tcx_cd = {
  */
 #define	TCX_CTL_8_MAPPED	0x00000000	/* 8 bits, uses colormap */
 #define	TCX_CTL_24_MAPPED	0x01000000	/* 24 bits, uses colormap */
-#define	TCX_CTL_24_LEVEL	0x03000000	/* 24 bits, true color */
+#define	TCX_CTL_24_LEVEL	0x03000000	/* 24 bits, direct color */
 #define	TCX_CTL_PIXELMASK	0x00ffffff	/* mask for index/level */
 
 int
@@ -242,6 +257,11 @@ tcxattach(struct device *parent, struct device *self, void *args)
 		    round_page(sc->sc_sunfb.sf_fbsize * 4));
 	}
 
+	/*
+	 * Set up mappings for the acceleration code. This may fail.
+	 */
+	tcx_accel_init(sc, ca);
+
 	/* reset cursor & frame buffer controls */
 	tcx_reset(sc, 8);
 	fbwscons_setcolormap(&sc->sc_sunfb, tcx_setcolor);
@@ -253,6 +273,19 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_dfb8;
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 	fbwscons_setcolormap(&sc->sc_sunfb, tcx_setcolor);
+
+	/*
+	 * Now plug accelerated console routines, if possible.
+	 */
+	if (sc->sc_stipple != 0) {
+		sc->sc_sunfb.sf_ro.ri_ops.eraserows = tcx_eraserows;
+		sc->sc_sunfb.sf_ro.ri_ops.erasecols = tcx_erasecols;
+	}
+	if (sc->sc_blit != 0) {
+		sc->sc_sunfb.sf_ro.ri_ops.copyrows = tcx_copyrows;
+		sc->sc_plain_copycols = sc->sc_sunfb.sf_ro.ri_ops.copycols;
+		sc->sc_sunfb.sf_ro.ri_ops.copycols = tcx_copycols;
+	}
 
 	sc->sc_ih.ih_fun = tcx_intr;
 	sc->sc_ih.ih_arg = sc;
@@ -499,4 +532,270 @@ tcx_intr(void *v)
 	}
 
 	return (0);
+}
+
+/*
+ * Accelerated console operations
+ *
+ * Most of the TCX and S24 frame buffers can not perform simple ROPs
+ * besides GXcopy. Those which can, have a ``stip-rop'' property,
+ * but I have no idea which ROPs are supported anyway.
+ *
+ * We use the blitter for block moves: copycols, copyrows; and the
+ * stipple for solid fills: erasecols, eraserows.
+ *
+ * Eventually putchar could be done as two stipple operations, one for the
+ * foreground color, and one for the background color; however, due to
+ * stipple alignment restrictions, this will likely need four operation
+ * per character cell (and let's not talk about fonts larger than 32
+ * pixels).
+ *
+ * This work has been made possible thanks to the information collected in
+ *   http://ftp.rodents-montreal.org/mouse/docs/Sun/S24/memory-map
+ */
+
+void
+tcx_accel_init(struct tcx_softc *sc, struct confargs *ca)
+{
+	int regno;
+
+	/*
+	 * On S24, try and map raw blit and raw stipple spaces.
+	 * We prefer the raw spaces so that we can eventually switch
+	 * between 8 bit and 24 bit modes with blitter operations.
+	 *
+	 * However, on 8-bit TCX, these spaces are missing (and empty!),
+	 * so we should fallback to non-raw spaces in this case.
+	 *
+	 * Since this frame buffer can only exist on SS4 and SS5,
+	 * we can rely upon the fact this code will only run on sun4m,
+	 * and use stda() bypassing the MMU to access these spaces,
+	 * instead of mapping them (8MB KVA each, after all, even more
+	 * on an SS4 with the resolution extender VSIMM).
+	 */
+
+	sc->sc_blit_width = getpropint(ca->ca_ra.ra_node, "blit-width", 5);
+	if (sc->sc_blit_width > 5)
+		sc->sc_blit_width = 5;	/* paranoia */
+	if (sc->sc_blit_width <= 3)	/* not worth until more than 8 pixels */
+		sc->sc_blit_width = 0;
+	else {
+		sc->sc_blit_width = 1 << sc->sc_blit_width;
+
+		regno = sc->sc_cplane == NULL ? TCX_REG_BLIT : TCX_REG_RBLIT;
+		if (ca->ca_ra.ra_reg[regno].rr_len >=
+		    sc->sc_sunfb.sf_fbsize * 8)
+			sc->sc_blit = (paddr_t)ca->ca_ra.ra_reg[regno].rr_paddr;
+	}
+
+	regno = sc->sc_cplane == NULL ? TCX_REG_STIP : TCX_REG_RSTIP;
+	if (ca->ca_ra.ra_reg[regno].rr_len >= sc->sc_sunfb.sf_fbsize * 8)
+		sc->sc_stipple = (paddr_t)ca->ca_ra.ra_reg[regno].rr_paddr;
+}
+
+/*
+ * Blitter operations
+ *
+ * Since the blitter only operates on 1 pixel height areas, we need
+ * to invoke it many times, and handle overlaps ourselves.
+ */
+
+void
+tcx_copycols(void *cookie, int row, int src, int dst, int n)
+{
+	struct rasops_info *ri = cookie;
+	struct tcx_softc *sc = ri->ri_hw;
+	int h;
+	uint32_t dstaddr, srcaddr;
+
+	if (dst > src && dst < src + n) {
+		/* Areas overlap, do it the slow but safe way */
+		(*sc->sc_plain_copycols)(cookie, row, src, dst, n);
+		return;
+	}
+
+	/* Areas do not overlap dangerously, copy forwards */
+
+	/* actual columns */
+	n *= ri->ri_font->fontwidth;
+	src *= ri->ri_font->fontwidth;
+	dst *= ri->ri_font->fontwidth;
+
+	row *= ri->ri_font->fontheight;
+	srcaddr = dstaddr = ri->ri_xorigin +
+	    (ri->ri_yorigin + row) * sc->sc_sunfb.sf_width;
+	srcaddr += src;
+	dstaddr += dst;
+
+	for (h = ri->ri_font->fontheight; h != 0; h--) {
+		tcx_blit(sc, dstaddr, srcaddr, n);
+		srcaddr += sc->sc_sunfb.sf_width;
+		dstaddr += sc->sc_sunfb.sf_width;
+	}
+}
+
+void
+tcx_copyrows(void *cookie, int src, int dst, int n)
+{
+	struct rasops_info *ri = cookie;
+	struct tcx_softc *sc = ri->ri_hw;
+	int reverse;
+	uint32_t dstaddr, srcaddr;
+
+	/* actual lines */
+	src *= ri->ri_font->fontheight;
+	dst *= ri->ri_font->fontheight;
+	n *= ri->ri_font->fontheight;
+
+	if (dst > src && dst < src + n) {
+		/* Areas overlap, copy backwards */
+		dst += n - 1;
+		src += n - 1;
+		reverse = 1;
+	} else {
+		/* Areas do not overlap dangerously, copy forwards */
+		reverse = 0;
+	}
+
+	dstaddr = (ri->ri_yorigin + dst) * sc->sc_sunfb.sf_width;
+	srcaddr = (ri->ri_yorigin + src) * sc->sc_sunfb.sf_width;
+
+	dstaddr += ri->ri_xorigin;
+	srcaddr += ri->ri_xorigin;
+
+	for (; n != 0; n--) {
+		tcx_blit(sc, dstaddr, srcaddr, ri->ri_emuwidth);
+		if (reverse) {
+			dstaddr -= sc->sc_sunfb.sf_width;
+			srcaddr -= sc->sc_sunfb.sf_width;
+		} else {
+			dstaddr += sc->sc_sunfb.sf_width;
+			srcaddr += sc->sc_sunfb.sf_width;
+		}
+	}
+}
+
+/*
+ * Perform a blit operation, copying the line starting at computed
+ * position src to computed position dst, for a length of len pixels.
+ */
+void
+tcx_blit(struct tcx_softc *sc, uint32_t dst, uint32_t src, int len)
+{
+	int cx;
+	uint32_t addr;
+
+	addr = sc->sc_blit + (dst << 3);
+
+	/* do the incomplete chunk first if needed */
+	cx = len & (sc->sc_blit_width - 1);
+	if (cx == 0)
+		cx = sc->sc_blit_width;
+
+	while (len != 0) {
+		stda(addr, ASI_BYPASS, ((cx - 1) << 24) | src);
+		src += cx;
+		addr += cx << 3;
+		len -= cx;
+		/* and then full steam ahead for the others */
+		cx = sc->sc_blit_width;
+	}	
+}
+
+/*
+ * Stipple operations
+ */
+
+void
+tcx_erasecols(void *cookie, int row, int col, int n, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct tcx_softc *sc = ri->ri_hw;
+	int fg, bg, h, cury, sx;
+
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
+	bg = ri->ri_devcmap[bg] & 0xff;	/* 8 bit palette index */
+
+	n *= ri->ri_font->fontwidth;
+	sx = ri->ri_xorigin + col * ri->ri_font->fontwidth;
+
+	cury = ri->ri_yorigin + row * ri->ri_font->fontheight;
+	for (h = ri->ri_font->fontheight; h != 0; cury++, h--)
+		tcx_stipple(sc, sx, cury, n, bg);
+}
+
+void
+tcx_eraserows(void *cookie, int row, int n, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct tcx_softc *sc = ri->ri_hw;
+	int fg, bg, x, y, w;
+
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
+	bg = ri->ri_devcmap[bg] & 0xff;	/* 8 bit palette index */
+
+	if ((n == ri->ri_rows) && ISSET(ri->ri_flg, RI_FULLCLEAR)) {
+		n = ri->ri_height;
+		x = y = 0;
+		w = ri->ri_width;
+	} else {
+		n *= ri->ri_font->fontheight;
+		x = ri->ri_xorigin;
+		y = ri->ri_yorigin + row * ri->ri_font->fontheight;
+		w = ri->ri_emuwidth;
+	}
+
+	for (; n != 0; y++, n--)
+		tcx_stipple(sc, x, y, w, bg);
+}
+
+/*
+ * Perform a stipple operation from srop from (x, y) to (x + cnt - 1, y).
+ *
+ * We probably should honour the stipple alignment property (stipple-align),
+ * in case it is different than 32 (1 << 5). However, due to the way
+ * the stipple space is accessed, it is not possible to have a stricter
+ * alignment requirement, so let's settle for 32. There probably haven't
+ * been TCX boards with relaxed alignment rules anyway.
+ */
+void
+tcx_stipple(struct tcx_softc *sc, int x, int y, int cnt, int bg)
+{
+	int rx;		/* aligned x */
+	int lbcnt;	/* count of untouched pixels on the left */
+	int rbcnt;	/* count of untouched pixels on the right */
+	uint32_t wmask;	/* write mask */
+	uint32_t soffs;	/* stipple offset */
+	uint64_t rop;
+
+	rop = 0x3 /* GXcopy */ << 28;
+	rop |= TCX_CTL_8_MAPPED | bg;	/* pixel bits, here in 8-bit mode */
+	rop <<= 32;
+
+	/*
+	 * The first pass needs to align the position to a 32 pixel
+	 * boundary, which explains why the loop is a bit unnatural
+	 * at first glance.
+	 */
+	rx = x & ~31;
+	soffs = sc->sc_stipple + ((y * sc->sc_sunfb.sf_width + rx) << 3);
+	lbcnt = x - rx;
+	wmask = 0xffffffff >> lbcnt;
+
+	while (cnt != 0) {
+		rbcnt = (32 - lbcnt) - cnt;
+		if (rbcnt < 0)
+			rbcnt = 0;
+		if (rbcnt != 0)
+			wmask &= ~((1 << rbcnt) - 1);
+
+		stda(soffs, ASI_BYPASS, rop | wmask);
+
+		cnt -= (32 - lbcnt) - rbcnt;
+		soffs += 32 << 3;
+
+		/* further loops are aligned */
+		lbcnt = 0;
+		wmask = 0xffffffff;
+	}
 }
