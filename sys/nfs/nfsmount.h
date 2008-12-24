@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsmount.h,v 1.16 2008/07/05 12:51:04 thib Exp $	*/
+/*	$OpenBSD: nfsmount.h,v 1.17 2008/12/24 14:34:03 thib Exp $	*/
 /*	$NetBSD: nfsmount.h,v 1.10 1996/02/18 11:54:03 fvdl Exp $	*/
 
 /*
@@ -84,25 +84,24 @@ struct	nfsmount {
 /*
  * Prototypes for NFS mount operations
  */
-int	nfs_mount(struct mount *mp, const char *path, void *data,
-		struct nameidata *ndp, struct proc *p);
-int	mountnfs(struct nfs_args *argp, struct mount *mp,
-		struct mbuf *nam, char *pth, char *hst);
+int	nfs_mount(struct mount *, const char *, void *, struct nameidata *,
+	    struct proc *);
+int	mountnfs(struct nfs_args *, struct mount *, struct mbuf *, char *,
+	    char *);
 int	nfs_mountroot(void);
-void	nfs_decode_args(struct nfsmount *, struct nfs_args *, struct nfs_args *);
-int	nfs_start(struct mount *mp, int flags, struct proc *p);
-int	nfs_unmount(struct mount *mp, int mntflags, struct proc *p);
-int	nfs_root(struct mount *mp, struct vnode **vpp);
-int	nfs_quotactl(struct mount *mp, int cmds, uid_t uid, caddr_t arg,
-		struct proc *p);
-int	nfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p);
-int	nfs_sync(struct mount *mp, int waitfor, struct ucred *cred,
-		struct proc *p);
+void	nfs_decode_args(struct nfsmount *, struct nfs_args *,
+	    struct nfs_args *);
+int	nfs_start(struct mount *, int, struct proc *);
+int	nfs_unmount(struct mount *, int, struct proc *);
+int	nfs_root(struct mount *, struct vnode **);
+int	nfs_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
+int	nfs_statfs(struct mount *, struct statfs *, struct proc *);
+int	nfs_sync(struct mount *, int, struct ucred *, struct proc *);
 int	nfs_vget(struct mount *, ino_t, struct vnode **);
-int	nfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp);
-int	nfs_vptofh(struct vnode *vp, struct fid *fhp);
+int	nfs_fhtovp(struct mount *, struct fid *, struct vnode **);
+int	nfs_vptofh(struct vnode *, struct fid *);
 int	nfs_fsinfo(struct nfsmount *, struct vnode *, struct ucred *,
-			struct proc *);
+	    struct proc *);
 void	nfs_init(void);
 
 #endif
