@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom_s3c2410.c,v 1.2 2008/12/08 20:50:20 drahn Exp $ */
+/*	$OpenBSD: sscom_s3c2410.c,v 1.3 2008/12/24 07:46:15 drahn Exp $ */
 /*	$NetBSD: sscom_s3c2410.c,v 1.2 2005/12/11 12:16:51 christos Exp $ */
 
 /*
@@ -79,7 +79,7 @@ CFATTACH_DECL(sscom, sizeof(struct sscom_softc), sscom_match,
 #endif
 
 struct cfdriver sscom_cd = {
-        NULL, "com", DV_TTY
+        NULL, "sscom", DV_TTY
 };
 struct cfattach sscom_ca = {
         sizeof(struct sscom_softc), sscom_match, sscom_attach
@@ -129,7 +129,7 @@ sscom_attach(struct device *parent, struct device *self, void *aux)
 	int unit = sa->sa_index;
 	bus_addr_t iobase = s3c2410_uart_config[unit].iobase;
 
-	printf( ": UART%d addr=%lx", sa->sa_index, iobase );
+	printf( ": addr=%lx", iobase );
 
 	sc->sc_iot = s3c2xx0_softc->sc_iot;
 	sc->sc_unit = unit;
@@ -144,19 +144,24 @@ sscom_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 
+	sscom_disable_txrxint(sc);
+
+	printf(" irqs(%d:%d:%d)",
+	    s3c2410_uart_config[unit].tx_int,
+	    s3c2410_uart_config[unit].rx_int,
+	    s3c2410_uart_config[unit].err_int);
+
+	sscom_attach_subr(sc);
+
+
 	s3c24x0_intr_establish(s3c2410_uart_config[unit].tx_int,
 	    IPL_SERIAL, IST_LEVEL, sscomtxintr, sc);
 	s3c24x0_intr_establish(s3c2410_uart_config[unit].rx_int,
 	    IPL_SERIAL, IST_LEVEL, sscomrxintr, sc);
 	s3c24x0_intr_establish(s3c2410_uart_config[unit].err_int,
 	    IPL_SERIAL, IST_LEVEL, sscomrxintr, sc);
-	sscom_disable_txrxint(sc);
-	printf(" txirq %d rxirq %d mirq %d\n",
-	    s3c2410_uart_config[unit].tx_int,
-	    s3c2410_uart_config[unit].rx_int,
-	    s3c2410_uart_config[unit].err_int);
 
-	sscom_attach_subr(sc);
+	printf("\n");
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom.c,v 1.5 2008/12/15 22:30:17 drahn Exp $ */
+/*	$OpenBSD: sscom.c,v 1.6 2008/12/24 07:46:15 drahn Exp $ */
 /*	$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $ */
 
 /*
@@ -190,10 +190,8 @@ static int	sscom_to_tiocm(struct sscom_softc *);
 static void	sscom_iflush(struct sscom_softc *);
 
 static int	sscomhwiflow(struct tty *tp, int block);
-#if 0
-static int	sscom_init(bus_space_tag_t, const struct sscom_uart_info *,
+int	sscom_init(bus_space_tag_t, const struct sscom_uart_info *,
 		    int, int, tcflag_t, bus_space_handle_t *);
-#endif
 
 extern struct cfdriver sscom_cd;
 
@@ -380,6 +378,7 @@ sscomstatus(struct sscom_softc *sc, const char *str)
 #define sscom_debug  0
 #endif
 
+#if 0
 static void
 sscom_enable_debugport(struct sscom_softc *sc)
 {
@@ -397,6 +396,7 @@ sscom_enable_debugport(struct sscom_softc *sc)
 	SSCOM_UNLOCK(sc);
 	splx(s);
 }
+#endif
 
 static void
 sscom_set_modem_control(struct sscom_softc *sc)
@@ -426,13 +426,6 @@ sscom_attach_subr(struct sscom_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
 
-	timeout_set(&sc->sc_diag_timeout, sscomdiag, sc);
-#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(SSCOM_MPLOCK)
-	simple_lock_init(&sc->sc_lock);
-#endif
-
-	sc->sc_ucon = UCON_RXINT_ENABLE|UCON_TXINT_ENABLE;
-
 	/*
 	 * set default for modem control hook
 	 */
@@ -440,6 +433,14 @@ sscom_attach_subr(struct sscom_softc *sc)
 		sc->set_modem_control = sscom_set_modem_control;
 	if (sc->read_modem_status == NULL)
 		sc->read_modem_status = sscom_read_modem_status;
+
+	timeout_set(&sc->sc_diag_timeout, sscomdiag, sc);
+#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(SSCOM_MPLOCK)
+	simple_lock_init(&sc->sc_lock);
+#endif
+
+	sc->sc_ucon = UCON_RXINT_ENABLE|UCON_TXINT_ENABLE;
+
 
 	/* Disable interrupts before configuring the device. */
 	sscom_disable_txrxint(sc);
@@ -517,18 +518,9 @@ sscom_attach_subr(struct sscom_softc *sc)
 
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
-		printf("%s: console (major=%d)\n", sc->sc_dev.dv_xname, maj);
+		printf(": console", sc->sc_dev.dv_xname, maj);
 	}
 
-
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	sc->sc_si = softintr_establish(IPL_TTY, sscomsoft, sc);
-	if (sc->sc_si == NULL)
-		panic("%s: can't establish soft interrupt",
-		    sc->sc_dev.dv_xname);
-#else           
-	timeout_set(&sc->sc_comsoft_tmo, comsoft, sc);
-#endif
 
 
 #if NRND > 0 && defined(RND_COM)
@@ -539,12 +531,23 @@ sscom_attach_subr(struct sscom_softc *sc)
 	/* if there are no enable/disable functions, assume the device
 	   is always enabled */
 
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	sc->sc_si = softintr_establish(IPL_TTY, sscomsoft, sc);
+	if (sc->sc_si == NULL)
+		panic("%s: can't establish soft interrupt",
+		    sc->sc_dev.dv_xname);
+#else           
+	timeout_set(&sc->sc_comsoft_tmo, comsoft, sc);
+#endif
+
+	SET(sc->sc_hwflags, SSCOM_HW_DEV_OK);
+
+#if 0
 	if (ISSET(sc->sc_hwflags, SSCOM_HW_CONSOLE))
 		sscom_enable_debugport(sc);
 	else 
 		sscom_disable_txrxint(sc);
-
-	SET(sc->sc_hwflags, SSCOM_HW_DEV_OK);
+#endif
 }
 
 int
@@ -1300,13 +1303,6 @@ sscom_loadchannelregs(struct sscom_softc *sc)
 
 	bus_space_write_2(iot, ioh, SSCOM_UCON, 0);
 
-#if 0
-	if (ISSET(sc->sc_hwflags, COM_HW_FLOW)) {
-		bus_space_write_1(iot, ioh, com_lcr, LCR_EERS);
-		bus_space_write_1(iot, ioh, com_efr, sc->sc_efr);
-	}
-#endif
-
 	bus_space_write_2(iot, ioh, SSCOM_UBRDIV, sc->sc_ubrdiv);
 	bus_space_write_1(iot, ioh, SSCOM_ULCON, sc->sc_ulcon);
 	sc->set_modem_control(sc);
@@ -1999,7 +1995,7 @@ sscomtxintr(void *arg)
 /*
  * Initialize UART for use as console or KGDB line.
  */
-static int
+int
 sscom_init(bus_space_tag_t iot, const struct sscom_uart_info *config,
     int rate, int frequency, tcflag_t cflag, bus_space_handle_t *iohp)
 {
