@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.160 2008/06/08 13:58:09 thib Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.161 2008/12/24 07:41:59 dlg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -127,6 +127,7 @@ extern int ipport_lastauto;
 extern int ipport_hifirstauto;
 extern int ipport_hilastauto;
 extern struct baddynamicports baddynamicports;
+extern int la_hold_total;
 
 int *ipctl_vars[IPCTL_MAXID] = IPCTL_VARS;
 
