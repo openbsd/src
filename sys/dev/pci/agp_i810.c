@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.43 2008/12/23 22:01:38 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.44 2008/12/24 05:42:58 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -91,6 +91,7 @@ int	agp_i810_free_memory(void *, struct agp_memory *);
 int	agp_i810_bind_memory(void *, struct agp_memory *, off_t);
 int	agp_i810_unbind_memory(void *, struct agp_memory *);
 void	agp_i810_write_gatt(struct agp_i810_softc *, bus_size_t, u_int32_t);
+int	intagp_gmch_match(struct pci_attach_args *);
 
 struct cfattach intagp_ca = {
 	sizeof(struct agp_i810_softc), agp_i810_probe, agp_i810_attach
@@ -168,6 +169,21 @@ agp_i810_get_chiptype(struct pci_attach_args *pa)
 	return (CHIP_NONE);
 }
 
+/*
+ * We're intel IGD, bus 0 function 0 dev 0 should be the GMCH, so it should
+ * be Intel
+ */
+int
+intagp_gmch_match(struct pci_attach_args *pa)
+{
+	if (pa->pa_bus == 0 && pa->pa_device == 0 && pa->pa_function == 0 &&
+	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST)
+		return (1);
+	return (0);
+}
+
 int
 agp_i810_probe(struct device *parent, void *match, void *aux)
 {
@@ -185,7 +201,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct agp_i810_softc		*isc = (struct agp_i810_softc *)self;
 	struct agp_gatt 		*gatt;
-	struct pci_attach_args		*pa = aux;
+	struct pci_attach_args		*pa = aux, bpa;
 	struct vga_pci_softc		*vga = (struct vga_pci_softc *)parent;
 	bus_addr_t			 mmaddr, gmaddr;
 	pcireg_t			 memtype;
@@ -242,6 +258,16 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 	gatt->ag_entries = isc->aperture >> AGP_PAGE_SHIFT;
 
+	/*
+	 * Find the GMCH, some of the registers we need to read for
+	 * configuration purposes are on there. it's always at
+	 * 0/0/0 (bus/dev/func).
+	 */
+	if (pci_find_device(&bpa, intagp_gmch_match) == 0) {
+		printf("can't find GMCH\n");
+		goto out;
+	}
+
 	if (isc->chiptype == CHIP_I810) {
 		int dummyseg;
 		/* Some i810s have on-chip memory called dcache */
@@ -269,7 +295,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		u_int32_t pgtblctl;
 		u_int16_t gcc1;
 
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_I830_GCC1);
+		reg = pci_conf_read(bpa.pa_pc, bpa.pa_tag, AGP_I830_GCC0);
 		gcc1 = (u_int16_t)(reg >> 16);
 		switch (gcc1 & AGP_I830_GCC1_GMS) {
 		case AGP_I830_GCC1_GMS_STOLEN_512:
@@ -312,7 +338,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		 * BIOS display.
 		 */
 
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_I855_GCC1);
+		reg = pci_conf_read(bpa.pa_pc, bpa.pa_tag, AGP_I855_GCC1);
 		gcc1 = (u_int16_t)(reg >> 16);
                 switch (isc->chiptype) {
 		case CHIP_I855:
@@ -408,7 +434,6 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 			printf("unknown memory configuration, disabling\n");
 			goto out;
 		}
-
 #ifdef DEBUG
 		if (isc->stolen > 0) {
 			printf(": detected %dk stolen memory",
@@ -416,7 +441,6 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		} else
 			printf(": no preallocated video memory\n");
 #endif
-
 
 		/* GATT address is already in there, make sure it's enabled */
 		pgtblctl = READ4(AGP_I810_PGTBL_CTL);

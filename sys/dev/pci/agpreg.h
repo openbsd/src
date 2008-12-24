@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpreg.h,v 1.11 2008/12/23 22:01:38 oga Exp $	*/
+/*	$OpenBSD: agpreg.h,v 1.12 2008/12/24 05:42:58 oga Exp $	*/
 /*	$NetBSD: agpreg.h,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
 
 /*-
@@ -216,7 +216,7 @@
 /*
  * Config registers for 852GM/855GM/865G device 0
  */
-#define AGP_I855_GCC1			0x52
+#define AGP_I855_GCC1			0x50
 #define AGP_I855_GCC1_DEV2		0x08
 #define AGP_I855_GCC1_DEV2_ENABLED	0x00
 #define AGP_I855_GCC1_DEV2_DISABLED	0x08
