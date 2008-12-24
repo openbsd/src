@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.57 2008/03/18 20:03:37 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.58 2008/12/24 16:53:22 dhill Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -172,6 +172,7 @@ intpr(int interval)
 			break;
 		}
 	}
+	free(buf);
 }
 
 static void
@@ -566,4 +567,5 @@ fetchifs(void)
 		ip_cur.ift_dr = 0;
 		    /* XXX ifnet.if_snd.ifq_drops */
 	}
+	free(buf);
 }
