@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.78 2008/11/11 15:33:02 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.79 2008/12/24 11:20:31 kettenis Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1147,9 +1147,13 @@ filt_ttywrite(struct knote *kn, long hint)
 {
 	dev_t dev = (dev_t)((u_long)kn->kn_hook);
 	struct tty *tp = (*cdevsw[major(dev)].d_tty)(dev);
+	int canwrite, s;
 
-	kn->kn_data = tp->t_outq.c_cc;
-	return (kn->kn_data <= tp->t_lowat);
+	s = spltty();
+	kn->kn_data = tp->t_outq.c_cn - tp->t_outq.c_cc;
+	canwrite = (tp->t_outq.c_cc <= tp->t_lowat);
+	splx(s);
+	return (canwrite);
 }
 
 static int
