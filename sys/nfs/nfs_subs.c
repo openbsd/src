@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.88 2008/12/24 02:43:52 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.89 2008/12/24 02:48:36 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1558,7 +1558,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp)
 
 /*
  * This function compares two net addresses by family and returns non zero
- * if they are the same host, of there is any doubt it returns 0.
+ * if they are the same host, or if there is any doubt it returns 0.
  * The AF_INET family is handled as a special case so that address mbufs
  * don't need to be saved to store "struct in_addr", which is only 4 bytes.
  */
@@ -1851,7 +1851,7 @@ nfsrv_setcred(incred, outcred)
 }
 
 /*
- * If full is true, set all fields, otherwise just set mode and time fields
+ * If full is non zero, set all fields, otherwise just set mode and time fields
  */
 void
 nfsm_v3attrbuild(struct mbuf **mp, struct vattr *a, int full)
