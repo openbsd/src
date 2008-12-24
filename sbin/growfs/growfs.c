@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.25 2008/11/28 00:15:54 ckuethe Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.26 2008/12/24 20:48:33 otto Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -252,7 +252,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
 		initcg(cylno, utime, fso, Nflag);
 		if (quiet)
 			continue;
-		j = snprintf(tmpbuf, sizeof(tmpbuf), " %d%s",
+		j = snprintf(tmpbuf, sizeof(tmpbuf), " %lld%s",
 		    fsbtodb(&sblock, cgsblock(&sblock, cylno)),
 		    cylno < (sblock.fs_ncg - 1) ? "," : "");
 		if (j >= sizeof(tmpbuf))
