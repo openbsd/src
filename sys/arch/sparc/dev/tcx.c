@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.34 2008/12/24 13:40:39 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.35 2008/12/24 14:39:57 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -192,16 +192,20 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	vaddr_t thc_offset;
 
 	pri = ca->ca_ra.ra_intr[0].int_pri;
-	printf(" pri %d", pri);
+	printf(" pri %d: ", pri);
 
 	node = ca->ca_ra.ra_node;
 	isconsole = node == fbnode;
 
 	if (ca->ca_ra.ra_nreg < TCX_NREG) {
-		printf(": expected %d registers, got %d\n",
+		printf("expected %d registers, got %d\n",
 		    TCX_NREG, ca->ca_ra.ra_nreg);
 		return;
 	}
+
+	nam = getpropstring(node, "model");
+	if (*nam != '\0')
+		printf("%s, ", nam);
 
 	/*
 	 * Copy the register address spaces needed for mmap operation.
@@ -256,6 +260,10 @@ tcxattach(struct device *parent, struct device *self, void *args)
 		    (paddr_t)ca->ca_ra.ra_reg[TCX_REG_RDFB32].rr_paddr;
 	}
 
+	printf("%dx%dx%d\n",
+	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height,
+	    sc->sc_cplane == 0 ? 8 : 24);
+
 	/*
 	 * Set up mappings for the acceleration code. This may fail.
 	 */
@@ -270,7 +278,20 @@ tcxattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_dfb8;
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
+
+	/*
+	 * If the framebuffer width is under 960 pixels, we will switch
+	 * from the PROM font to the more adequate 8x16 font here.
+	 * However, we need to adjust two things in this case:
+	 * - the display row should be overrided from the current PROM metrics,
+	 *   to prevent us from overwriting the last few lines of text.
+	 * - if the 80x34 screen would make a large margin appear around it,
+	 *   choose to clear the screen rather than keeping old prom output in
+	 *   the margins.
+	 */
+	fbwscons_init(&sc->sc_sunfb,
+	    isconsole && sc->sc_sunfb.sf_width >= 12 * 80 ? 0 : RI_CLEAR);
+
 	fbwscons_setcolormap(&sc->sc_sunfb, tcx_setcolor);
 
 	/*
@@ -291,19 +312,10 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	intr_establish(pri, &sc->sc_ih, IPL_FB, self->dv_xname);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, -1);
+		fbwscons_console_init(&sc->sc_sunfb,
+		    sc->sc_sunfb.sf_width >= 12 * 80 ? -1 : 0);
 		shutdownhook_establish(tcx_prom, sc);
 	}
-
-	nam = getpropstring(node, "model");
-	if (*nam != '\0')
-		printf(": %s\n%s", nam, self->dv_xname);
-	printf(": %dx%d, id %d, rev %d, sense %d\n",
-	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height,
-	    (sc->sc_thc->thc_config & THC_CFG_FBID) >> THC_CFG_FBID_SHIFT,
-	    (sc->sc_thc->thc_config & THC_CFG_REV) >> THC_CFG_REV_SHIFT,
-	    (sc->sc_thc->thc_config & THC_CFG_SENSE) >> THC_CFG_SENSE_SHIFT
-	);
 
 	fbwscons_attach(&sc->sc_sunfb, &tcx_accessops, isconsole);
 }
