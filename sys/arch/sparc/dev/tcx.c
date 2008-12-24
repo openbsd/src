@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.36 2008/12/24 14:57:22 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.37 2008/12/24 15:21:16 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -254,7 +254,7 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	 * has will rely on sc_cplane being non NULL if 24 bit operation
 	 * is possible.
 	 */
-	if (node_has_property(node, "tcx-8-bit") &&
+	if (!node_has_property(node, "tcx-8-bit") &&
 	    ca->ca_ra.ra_reg[TCX_REG_RDFB32].rr_len >=
 	      sc->sc_sunfb.sf_fbsize * 4) {
 		sc->sc_cplane =
