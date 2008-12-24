@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.35 2008/12/24 14:39:57 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.36 2008/12/24 14:57:22 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -107,6 +107,7 @@ void	tcx_blit(struct tcx_softc *, uint32_t, uint32_t, int);
 void	tcx_burner(void *, u_int, u_int);
 void	tcx_copyrows(void *, int, int, int);
 void	tcx_copycols(void *, int, int, int, int);
+void	tcx_do_cursor(struct rasops_info *);
 void	tcx_erasecols(void *, int, int, int, long);
 void	tcx_eraserows(void *, int, int, long);
 int	tcx_intr(void *);
@@ -118,7 +119,7 @@ void	tcx_prom(void *);
 void	tcx_reset(struct tcx_softc *, int);
 void	tcx_s24_reset(struct tcx_softc *, int);
 void	tcx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
-void	tcx_stipple(struct tcx_softc *, int, int, int, int);
+void	tcx_stipple(struct tcx_softc *, int, int, int, int, int);
 
 struct wsdisplay_accessops tcx_accessops = {
 	tcx_ioctl,
@@ -300,6 +301,8 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	if (sc->sc_stipple != 0) {
 		sc->sc_sunfb.sf_ro.ri_ops.eraserows = tcx_eraserows;
 		sc->sc_sunfb.sf_ro.ri_ops.erasecols = tcx_erasecols;
+		if (node_has_property(node, "stip-rop"))
+			sc->sc_sunfb.sf_ro.ri_do_cursor = tcx_do_cursor;
 	}
 	if (sc->sc_blit != 0) {
 		sc->sc_sunfb.sf_ro.ri_ops.copyrows = tcx_copyrows;
@@ -588,9 +591,9 @@ tcx_s24_reset(struct tcx_softc *sc, int depth)
  *
  * Eventually putchar could be done as two stipple operations, one for the
  * foreground color, and one for the background color; however, due to
- * stipple alignment restrictions, this will likely need four operation
+ * stipple alignment restrictions, this will likely need four operations
  * per character cell (and let's not talk about fonts larger than 32
- * pixels).
+ * pixels please).
  *
  * This work has been made possible thanks to the information collected in
  *   http://ftp.rodents-montreal.org/mouse/docs/Sun/S24/memory-map
@@ -748,6 +751,61 @@ tcx_blit(struct tcx_softc *sc, uint32_t dst, uint32_t src, int len)
  * Stipple operations
  */
 
+/* canonical rop values */
+#define	GXcopy		0x03
+#define	GXinvert	0x0a
+
+/*
+ * Perform a stipple operation rop from (x, y) to (x + cnt - 1, y).
+ *
+ * We probably should honour the stipple alignment property (stipple-align),
+ * in case it is different than 32 (1 << 5). However, due to the way
+ * the stipple space is accessed, it is not possible to have a stricter
+ * alignment requirement, so let's settle for 32. There probably haven't
+ * been TCX boards with relaxed alignment rules anyway.
+ */
+void
+tcx_stipple(struct tcx_softc *sc, int x, int y, int cnt, int rop, int bg)
+{
+	int rx;		/* aligned x */
+	int lbcnt;	/* count of untouched pixels on the left */
+	int rbcnt;	/* count of untouched pixels on the right */
+	uint32_t wmask;	/* write mask */
+	uint32_t soffs;	/* stipple offset */
+	uint64_t scmd;
+
+	scmd = rop << 28;
+	scmd |= TCX_CTL_8_MAPPED | bg;	/* pixel bits, here in 8-bit mode */
+	scmd <<= 32;
+
+	/*
+	 * The first pass needs to align the position to a 32 pixel
+	 * boundary, which explains why the loop is a bit unnatural
+	 * at first glance.
+	 */
+	rx = x & ~31;
+	soffs = sc->sc_stipple + ((y * sc->sc_sunfb.sf_width + rx) << 3);
+	lbcnt = x - rx;
+	wmask = 0xffffffff >> lbcnt;
+
+	while (cnt != 0) {
+		rbcnt = (32 - lbcnt) - cnt;
+		if (rbcnt < 0)
+			rbcnt = 0;
+		if (rbcnt != 0)
+			wmask &= ~((1 << rbcnt) - 1);
+
+		stda(soffs, ASI_BYPASS, scmd | wmask);
+
+		cnt -= (32 - lbcnt) - rbcnt;
+		soffs += 32 << 3;
+
+		/* further loops are aligned */
+		lbcnt = 0;
+		wmask = 0xffffffff;
+	}
+}
+
 void
 tcx_erasecols(void *cookie, int row, int col, int n, long attr)
 {
@@ -763,7 +821,7 @@ tcx_erasecols(void *cookie, int row, int col, int n, long attr)
 
 	cury = ri->ri_yorigin + row * ri->ri_font->fontheight;
 	for (h = ri->ri_font->fontheight; h != 0; cury++, h--)
-		tcx_stipple(sc, sx, cury, n, bg);
+		tcx_stipple(sc, sx, cury, n, GXcopy, bg);
 }
 
 void
@@ -788,56 +846,18 @@ tcx_eraserows(void *cookie, int row, int n, long attr)
 	}
 
 	for (; n != 0; y++, n--)
-		tcx_stipple(sc, x, y, w, bg);
+		tcx_stipple(sc, x, y, w, GXcopy, bg);
 }
 
-/*
- * Perform a stipple operation from srop from (x, y) to (x + cnt - 1, y).
- *
- * We probably should honour the stipple alignment property (stipple-align),
- * in case it is different than 32 (1 << 5). However, due to the way
- * the stipple space is accessed, it is not possible to have a stricter
- * alignment requirement, so let's settle for 32. There probably haven't
- * been TCX boards with relaxed alignment rules anyway.
- */
 void
-tcx_stipple(struct tcx_softc *sc, int x, int y, int cnt, int bg)
+tcx_do_cursor(struct rasops_info *ri)
 {
-	int rx;		/* aligned x */
-	int lbcnt;	/* count of untouched pixels on the left */
-	int rbcnt;	/* count of untouched pixels on the right */
-	uint32_t wmask;	/* write mask */
-	uint32_t soffs;	/* stipple offset */
-	uint64_t rop;
+	struct tcx_softc *sc = ri->ri_hw;
+	int x, y, n;
 
-	rop = 0x3 /* GXcopy */ << 28;
-	rop |= TCX_CTL_8_MAPPED | bg;	/* pixel bits, here in 8-bit mode */
-	rop <<= 32;
+	x = ri->ri_ccol * ri->ri_font->fontwidth + ri->ri_xorigin;
+	y = ri->ri_crow * ri->ri_font->fontheight + ri->ri_yorigin;
 
-	/*
-	 * The first pass needs to align the position to a 32 pixel
-	 * boundary, which explains why the loop is a bit unnatural
-	 * at first glance.
-	 */
-	rx = x & ~31;
-	soffs = sc->sc_stipple + ((y * sc->sc_sunfb.sf_width + rx) << 3);
-	lbcnt = x - rx;
-	wmask = 0xffffffff >> lbcnt;
-
-	while (cnt != 0) {
-		rbcnt = (32 - lbcnt) - cnt;
-		if (rbcnt < 0)
-			rbcnt = 0;
-		if (rbcnt != 0)
-			wmask &= ~((1 << rbcnt) - 1);
-
-		stda(soffs, ASI_BYPASS, rop | wmask);
-
-		cnt -= (32 - lbcnt) - rbcnt;
-		soffs += 32 << 3;
-
-		/* further loops are aligned */
-		lbcnt = 0;
-		wmask = 0xffffffff;
-	}
+	for (n = ri->ri_font->fontheight; n != 0; y++, n--)
+		tcx_stipple(sc, x, y, ri->ri_font->fontwidth, GXinvert, 0xff);
 }
