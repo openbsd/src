@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.37 2008/12/24 15:21:16 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.38 2008/12/24 21:29:23 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -103,6 +103,7 @@ struct tcx_softc {
 };
 
 void	tcx_accel_init(struct tcx_softc *, struct confargs *);
+void	tcx_accel_plug(struct tcx_softc *, struct confargs *);
 void	tcx_blit(struct tcx_softc *, uint32_t, uint32_t, int);
 void	tcx_burner(void *, u_int, u_int);
 void	tcx_copyrows(void *, int, int, int);
@@ -116,6 +117,7 @@ static __inline__
 void	tcx_loadcmap_deferred(struct tcx_softc *, u_int, u_int);
 paddr_t	tcx_mmap(void *, off_t, int);
 void	tcx_prom(void *);
+void	tcx_putchar(void *, int, int, u_int, long);
 void	tcx_reset(struct tcx_softc *, int);
 void	tcx_s24_reset(struct tcx_softc *, int);
 void	tcx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
@@ -298,17 +300,7 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	/*
 	 * Now plug accelerated console routines, if possible.
 	 */
-	if (sc->sc_stipple != 0) {
-		sc->sc_sunfb.sf_ro.ri_ops.eraserows = tcx_eraserows;
-		sc->sc_sunfb.sf_ro.ri_ops.erasecols = tcx_erasecols;
-		if (node_has_property(node, "stip-rop"))
-			sc->sc_sunfb.sf_ro.ri_do_cursor = tcx_do_cursor;
-	}
-	if (sc->sc_blit != 0) {
-		sc->sc_sunfb.sf_ro.ri_ops.copyrows = tcx_copyrows;
-		sc->sc_plain_copycols = sc->sc_sunfb.sf_ro.ri_ops.copycols;
-		sc->sc_sunfb.sf_ro.ri_ops.copycols = tcx_copycols;
-	}
+	tcx_accel_plug(sc, ca);
 
 	sc->sc_ih.ih_fun = tcx_intr;
 	sc->sc_ih.ih_arg = sc;
@@ -546,7 +538,7 @@ tcx_s24_reset(struct tcx_softc *sc, int depth)
 	if (depth == 8)
 		pixel = TCX_CTL_8_MAPPED | (ri->ri_devcmap[WSCOL_WHITE] & 0xff);
 	else
-		pixel = TCX_CTL_24_LEVEL | 0x000000;
+		pixel = TCX_CTL_24_LEVEL | 0xffffff;
 
 	/*
 	 * Set the first 32 pixels as white in the intended mode, using the
@@ -584,19 +576,18 @@ tcx_s24_reset(struct tcx_softc *sc, int depth)
  *
  * Most of the TCX and S24 frame buffers can not perform simple ROPs
  * besides GXcopy. Those which can, have a ``stip-rop'' property,
- * but I have no idea which ROPs are supported anyway.
+ * and appear to support at least copy and invert rops.
  *
  * We use the blitter for block moves: copycols, copyrows; and the
- * stipple for solid fills: erasecols, eraserows.
- *
- * Eventually putchar could be done as two stipple operations, one for the
- * foreground color, and one for the background color; however, due to
- * stipple alignment restrictions, this will likely need four operations
- * per character cell (and let's not talk about fonts larger than 32
- * pixels please).
+ * stipple for solid fills: erasecols, eraserows, putchar.
  *
  * This work has been made possible thanks to the information collected in
  *   http://ftp.rodents-montreal.org/mouse/docs/Sun/S24/memory-map
+ * and experiments.
+ *
+ * It turns out that frame buffer memory is contiguous, so addressing
+ * of a given (x,y) pixel is always (y * width + x), regardless of the
+ * actual frame buffer resolution.
  */
 
 void
@@ -639,10 +630,47 @@ tcx_accel_init(struct tcx_softc *sc, struct confargs *ca)
 }
 
 /*
+ * After rasops has initialized, override its basic operations with
+ * accelerated routines whenever possible (this will depend on the
+ * frame buffer capabilities and our success at using blit and
+ * stipple spaces).
+ */
+void
+tcx_accel_plug(struct tcx_softc *sc, struct confargs *ca)
+{
+	struct rasops_info *ri = &sc->sc_sunfb.sf_ro;
+
+	if (sc->sc_stipple != 0) {
+		sc->sc_sunfb.sf_ro.ri_ops.eraserows = tcx_eraserows;
+		sc->sc_sunfb.sf_ro.ri_ops.erasecols = tcx_erasecols;
+		if (node_has_property(ca->ca_ra.ra_node, "stip-rop")) {
+			/* needs GXinvert support */
+			sc->sc_sunfb.sf_ro.ri_do_cursor = tcx_do_cursor;
+		}
+		if (ri->ri_font->fontwidth <= 16) {
+			/*
+			 * The code in tcx_putchar really can handle up
+			 * to 32 bit font width if one extends the font
+			 * bits loading part to support more than 16 bits,
+			 * but then there is no such font in wsfont at the
+			 * moment, so why bother.
+			 */
+			sc->sc_sunfb.sf_ro.ri_ops.putchar = tcx_putchar;
+		}
+	}
+
+	if (sc->sc_blit != 0) {
+		sc->sc_sunfb.sf_ro.ri_ops.copyrows = tcx_copyrows;
+		sc->sc_plain_copycols = sc->sc_sunfb.sf_ro.ri_ops.copycols;
+		sc->sc_sunfb.sf_ro.ri_ops.copycols = tcx_copycols;
+	}
+}
+
+/*
  * Blitter operations
  *
  * Since the blitter only operates on 1 pixel height areas, we need
- * to invoke it many times, and handle overlaps ourselves.
+ * to invoke it many times, and handle overlapping regions ourselves.
  */
 
 void
@@ -860,4 +888,120 @@ tcx_do_cursor(struct rasops_info *ri)
 
 	for (n = ri->ri_font->fontheight; n != 0; y++, n--)
 		tcx_stipple(sc, x, y, ri->ri_font->fontwidth, GXinvert, 0xff);
+}
+
+void
+tcx_putchar(void *cookie, int row, int col, u_int uc, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct tcx_softc *sc = ri->ri_hw;
+	struct wsdisplay_font *font = ri->ri_font;
+	int fg, bg, ul;
+	int h, x, y;
+	uint8_t *fontbits;
+	uint32_t fgpattern, bgpattern;
+
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, &ul);
+	fg = ri->ri_devcmap[fg] & 0xff;	/* 8 bit palette index */
+	bg = ri->ri_devcmap[bg] & 0xff;	/* 8 bit palette index */
+
+	x = ri->ri_xorigin + col * font->fontwidth;
+	y = ri->ri_yorigin + row * font->fontheight;
+
+	if (uc == ' ') {
+		/* inline tcx_erasecols(cookie, row, col, 1, attr) */
+		for (h = font->fontheight; h != 0; y++, h--)
+			tcx_stipple(sc, x, y, font->fontwidth, GXcopy, bg);
+	} else {
+		int rx;
+		int lbcnt, rbcnt;
+		uint32_t soffs;
+		uint64_t stmpl, scmd;
+
+		stmpl = (GXcopy << 28) | TCX_CTL_8_MAPPED;
+
+		fontbits = (uint8_t *)font->data +
+		    (uc - font->firstchar) * ri->ri_fontscale;
+
+		rx = x & ~31;
+		lbcnt = x - rx;
+		rbcnt = (32 - lbcnt) - font->fontwidth; /* may be negative */
+		soffs = sc->sc_stipple +
+		    ((y * sc->sc_sunfb.sf_width + rx) << 3);
+
+		for (h = font->fontheight; h != 0; y++, h--) {
+			if (font->fontwidth <= 8)
+				fgpattern = *(uint8_t *)fontbits >>
+				    (8 - font->fontwidth);
+			else /* if (font->fontwidth <= 16) */
+				fgpattern = *(uint16_t *)fontbits >>
+				    (16 - font->fontwidth);
+			/* see tcx_accel_plug() for the reason why
+			   larger font sizes are not supported, yet */
+			fontbits += font->stride;
+
+			/* underline */
+			if (ul && h == 2)
+				fgpattern = 0xffffffff &
+				    ((1 << font->fontwidth) - 1);
+
+			bgpattern = ~fgpattern &
+			    ((1 << font->fontwidth) - 1);
+
+			/*
+			 * We have a pattern of font->fontwidth bits in
+			 * the low bits of `fgpattern' and its one-complement
+			 * in `bgpattern'. The bgpattern bits need to be
+			 * painted with the background colour, while the
+			 * fgpattern bits need to be painted with the
+			 * foreground colour.
+			 *
+			 * The particular character cell position might
+			 * span two stipple cells, so we have to account
+			 * for this unconditionnaly.
+			 */
+
+			if (rbcnt >= 0) {
+				/* everything fits in one stipple cell. */
+
+				/* foreground */
+				scmd = (stmpl | fg) << 32;
+				stda(soffs, ASI_BYPASS,
+				    scmd | (fgpattern << rbcnt));
+
+				/* background */
+				scmd = (stmpl | bg) << 32;
+				stda(soffs, ASI_BYPASS,
+				    scmd | (bgpattern << rbcnt));
+			} else {
+				/* needs two stipple cells. */
+
+				/* foreground, first stipple cell */
+				scmd = (stmpl | fg) << 32;
+				stda(soffs, ASI_BYPASS,
+				    scmd | (fgpattern >> -rbcnt));
+
+				/* background, first stipple cell */
+				scmd = (stmpl | bg) << 32;
+				stda(soffs, ASI_BYPASS,
+				    scmd | (bgpattern >> -rbcnt));
+
+				/* rotate patterns, relying on 32 bit size */
+				fgpattern <<= (32 + rbcnt);
+				bgpattern <<= (32 + rbcnt);
+
+				/* foreground, second stipple cell */
+				scmd = (stmpl | fg) << 32;
+				stda(soffs + (32 << 3), ASI_BYPASS,
+				    scmd | fgpattern);
+
+				/* background, second stipple cell */
+				scmd = (stmpl | bg) << 32;
+				stda(soffs + (32 << 3), ASI_BYPASS,
+				    scmd | bgpattern);
+			}
+
+			soffs += sc->sc_sunfb.sf_width << 3;
+		}
+	}
 }
