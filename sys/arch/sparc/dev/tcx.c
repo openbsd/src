@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.39 2008/12/24 22:10:40 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.40 2008/12/24 22:12:35 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -274,7 +274,6 @@ tcxattach(struct device *parent, struct device *self, void *args)
 
 	/* reset cursor & frame buffer controls */
 	tcx_reset(sc, 8);
-	fbwscons_setcolormap(&sc->sc_sunfb, tcx_setcolor);
 
 	/* enable video */
 	tcx_burner(sc, 1, 0);
