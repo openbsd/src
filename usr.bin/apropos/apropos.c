@@ -1,4 +1,4 @@
-/*      $OpenBSD: apropos.c,v 1.13 2007/08/06 19:16:06 sobrado Exp $      */
+/*      $OpenBSD: apropos.c,v 1.14 2008/12/24 09:05:17 jmc Exp $      */
 /*      $NetBSD: apropos.c,v 1.5 1995/09/04 20:46:20 tls Exp $      */
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: apropos.c,v 1.13 2007/08/06 19:16:06 sobrado Exp $";
+static char rcsid[] = "$OpenBSD: apropos.c,v 1.14 2008/12/24 09:05:17 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ static int *found, foundman;
 
 #define	MAXLINELEN	8192		/* max line handled */
 
-void apropos(char **, char *, int);
+void apropos(char **, char *, int, char *, char *);
 void lowstr(char *, char *);
 int match(char *, char *);
 void usage(void);
@@ -73,11 +73,12 @@ main(int argc, char *argv[])
 	ENTRY *ep;
 	TAG *tp;
 	int ch, rv;
-	char *conffile, **p, *p_augment, *p_path;
+	char *conffile, *machine, **p, *p_augment, *p_path, *sflag;
 
 	conffile = NULL;
 	p_augment = p_path = NULL;
-	while ((ch = getopt(argc, argv, "C:M:m:P:")) != -1)
+	machine = sflag = NULL;
+	while ((ch = getopt(argc, argv, "C:M:m:P:S:s:")) != -1)
 		switch (ch) {
 		case 'C':
 			conffile = optarg;
@@ -88,6 +89,14 @@ main(int argc, char *argv[])
 			break;
 		case 'm':
 			p_augment = optarg;
+			break;
+		case 'S':
+			machine = optarg;
+			lowstr(machine, machine);
+			break;
+		case 's':
+			sflag = optarg;
+			lowstr(sflag, sflag);
 			break;
 		case '?':
 		default:
@@ -106,15 +115,15 @@ main(int argc, char *argv[])
 		lowstr(*p, *p);
 
 	if (p_augment)
-		apropos(argv, p_augment, 1);
+		apropos(argv, p_augment, 1, sflag, machine);
 	if (p_path || (p_path = getenv("MANPATH")))
-		apropos(argv, p_path, 1);
+		apropos(argv, p_path, 1, sflag, machine);
 	else {
 		config(conffile);
 		ep = (tp = getlist("_whatdb")) == NULL ?
 		    NULL : TAILQ_FIRST(&tp->list);
 		for (; ep != NULL; ep = TAILQ_NEXT(ep, q))
-			apropos(argv, ep->s, 0);
+			apropos(argv, ep->s, 0, sflag, machine);
 	}
 
 	if (!foundman)
@@ -130,11 +139,17 @@ main(int argc, char *argv[])
 }
 
 void
-apropos(char **argv, char *path, int buildpath)
+apropos(char **argv, char *path, int buildpath, char *sflag, char *machine)
 {
 	char *end, *name, **p;
 	char buf[MAXLINELEN + 1], wbuf[MAXLINELEN + 1];
 	char hold[MAXPATHLEN];
+	size_t slen = 0, mlen = 0;
+
+	if (sflag)
+		slen = strlen(sflag);
+	if (machine)
+		mlen = strlen(machine);
 
 	for (name = path; name; name = end) {	/* through name list */
 		if ((end = strchr(name, ':')))
@@ -158,6 +173,21 @@ apropos(char **argv, char *path, int buildpath)
 				continue;
 			}
 			lowstr(buf, wbuf);
+			if (sflag || machine) {
+				char *s = strstr(wbuf, ") - ");
+				if (!s)
+					continue;
+				while (s > wbuf && *s != '/' && *s != '(')
+					s--;
+				if (machine && *s == '/' &&
+				    strncmp(s+1, machine, mlen))
+					continue;
+				while (s > wbuf && *s != '(')
+					s--;
+				if (sflag && *s == '(' &&
+				    strncmp(s+1, sflag, slen))
+					continue;
+			}
 			for (p = argv; *p; ++p)
 				if (match(wbuf, *p)) {
 					(void)printf("%s", buf);
@@ -217,6 +247,8 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: apropos [-C file] [-M path] [-m path] keyword ...\n");
+	    "usage: apropos [-C file] [-M path] [-m path] "
+	    "[-S subsection] [-s section]\n"
+	    "       keyword ...\n");
 	exit(1);
 }

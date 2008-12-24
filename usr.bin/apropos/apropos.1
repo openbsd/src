@@ -1,4 +1,4 @@
-.\"     $OpenBSD: apropos.1,v 1.12 2007/08/06 19:16:06 sobrado Exp $
+.\"     $OpenBSD: apropos.1,v 1.13 2008/12/24 09:05:17 jmc Exp $
 .\"     $NetBSD: apropos.1,v 1.4 1995/09/04 20:46:17 tls Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)apropos.1	8.1 (Berkeley) 6/29/93
 .\"
-.Dd $Mdocdate: August 6 2007 $
+.Dd $Mdocdate: December 24 2008 $
 .Dt APROPOS 1
 .Os
 .Sh NAME
@@ -41,6 +41,8 @@
 .Op Fl C Ar file
 .Op Fl M Ar path
 .Op Fl m Ar path
+.Op Fl S Ar subsection
+.Op Fl s Ar section
 .Ar keyword ...
 .Sh DESCRIPTION
 .Nm
@@ -98,6 +100,12 @@ or the directories supplied with the
 option or the
 .Ev MANPATH
 environment variable.
+.It Fl S Ar subsection
+Restrict the search to pages for the specified machine architecture.
+By default, pages for all architectures are shown.
+.It Fl s Ar section
+Restrict the search to the specified section of the manual.
+By default, pages from all sections are shown.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width MANPATH
