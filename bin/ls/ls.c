@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.30 2008/09/04 15:44:41 jmc Exp $	*/
+/*	$OpenBSD: ls.c,v 1.31 2008/12/24 20:57:21 otto Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.30 2008/09/04 15:44:41 jmc Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.31 2008/12/24 20:57:21 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -384,7 +384,7 @@ traverse(int argc, char *argv[], int options)
 			chp = fts_children(ftsp, ch_options);
 			display(p, chp);
 
-			if (!f_recursive && chp != NULL)
+			if (!f_recursive)
 				(void)fts_set(ftsp, p, FTS_SKIP);
 			break;
 		case FTS_DC:
