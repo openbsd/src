@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.11 2007/12/15 21:28:07 miod Exp $
+dnl	$OpenBSD: hardware,v 1.12 2008/12/24 17:20:54 miod Exp $
 OpenBSD/MACHINE OSREV runs on the systems built around the following
 MVME boards:
 
@@ -7,8 +7,8 @@ MVME boards:
 	- MVME197LE (Single board computer with 88110 processor)
 	- MVME197SP/DP (Single board computer with up to two 88110 processors)
 
-Besides various Motorola complete systems (M8120, MVME187-based series
-900, etc), OpenBSD/MACHINE also runs on the MVME187-based Triton Dolphin
+Besides various Motorola complete systems (M8120, Series 900, etc),
+OpenBSD/MACHINE also runs on the MVME187-based Triton Dolphin
 System 100.
 
 OpenBSD/MACHINE OSREV supports MVME188 SMP (Symmetrical MultiProcessor)
