@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.31 2008/06/15 04:03:40 thib Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.32 2008/12/24 16:53:20 thib Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -192,13 +192,6 @@
 			m_freem(mrep); \
 			error = EBADRPC; \
 			goto nfsmout; \
-		} }
-
-#define	nfsm_srvstrsiz(s,m) \
-		{ nfsm_dissect(tl,u_int32_t *,NFSX_UNSIGNED); \
-		if (((s) = fxdr_unsigned(int32_t,*tl)) > (m) || (s) <= 0) { \
-			error = EBADRPC; \
-			nfsm_reply(0); \
 		} }
 
 #define	nfsm_srvnamesiz(s) \
