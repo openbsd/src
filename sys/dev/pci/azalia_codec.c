@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.92 2008/12/24 10:58:52 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.93 2008/12/25 22:09:51 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -952,9 +952,11 @@ azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
 {
 	mixer_item_t *m;
 	mixer_devinfo_t *d;
+	widget_t *w;
 	convgroup_t *cgdac;
 	convgroup_t *cgadc;
-	int i, err, madc, mmaster;
+	int i, err, madc, mdac, target;
+	uint32_t ampcap;
 
 	if (this->dacs.ngroups > 0)
 		cgdac = &this->dacs.groups[0];
@@ -967,15 +969,15 @@ azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
 		d->index = d->prev = d->next = 0;
 	}
 
-	madc = mmaster = -1;
-	for (i = 0; i < this->nmixers && (mmaster < 0 || madc < 0); i++) {
+	madc = mdac = -1;
+	for (i = 0; i < this->nmixers && (mdac < 0 || madc < 0); i++) {
 		if (this->mixers[i].devinfo.type != AUDIO_MIXER_VALUE)
 			continue;
 		if (pdac >= 0 && this->mixers[i].nid == pdac)
-			mmaster = i;
-		if (mmaster < 0 && this->dacs.ngroups > 0 && cgdac->nconv > 0) {
+			mdac = i;
+		if (mdac < 0 && this->dacs.ngroups > 0 && cgdac->nconv > 0) {
 			if (this->mixers[i].nid == cgdac->conv[0])
-				mmaster = i;
+				mdac = i;
 		}
 		if (padc >= 0 && this->mixers[i].nid == padc)
 			madc = i;
@@ -985,20 +987,49 @@ azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
 		}
 	}
 
-	if (mmaster >= 0) {
-		err = azalia_generic_mixer_ensure_capacity(this, this->nmixers + 1);
+	if (mdac >= 0) {
+		err = azalia_generic_mixer_ensure_capacity(this,
+		    this->nmixers + 2);
 		if (err)
 			return err;
 		m = &this->mixers[this->nmixers];
 		d = &m->devinfo;
-		memcpy(m, &this->mixers[mmaster], sizeof(*m));
+		memcpy(m, &this->mixers[mdac], sizeof(*m));
 		d->mixer_class = AZ_CLASS_OUTPUT;
 		snprintf(d->label.name, sizeof(d->label.name), AudioNmaster);
 		this->nmixers++;
+
+		w = &this->w[this->mixers[mdac].nid];
+		if (IS_MI_TARGET_INAMP(m->target))
+			ampcap = w->inamp_cap;
+		else
+			ampcap = w->outamp_cap;
+		target = m->target;
+		if (ampcap & COP_AMPCAP_MUTE) {
+			d->next = this->nmixers;
+			m = &this->mixers[this->nmixers];
+			m->target = target;
+			m->nid = this->mixers[mdac].nid;
+			d = &m->devinfo;
+			d->prev = this->nmixers - 1;
+			snprintf(d->label.name, sizeof(d->label.name),
+			    AudioNmute);
+			d->mixer_class = AZ_CLASS_OUTPUT;
+			d->type = AUDIO_MIXER_ENUM;
+			d->un.e.num_mem = 2;
+			d->un.e.member[0].ord = 0;
+			strlcpy(d->un.e.member[0].label.name, AudioNoff,
+			    MAX_AUDIO_DEV_LEN);
+			d->un.e.member[1].ord = 1;
+			strlcpy(d->un.e.member[1].label.name, AudioNon,
+			    MAX_AUDIO_DEV_LEN);
+			this->nmixers++;
+		}
 	}
 
 	if (madc >= 0) {
-		err = azalia_generic_mixer_ensure_capacity(this, this->nmixers + 1);
+		err = azalia_generic_mixer_ensure_capacity(this,
+		    this->nmixers + 2);
 		if (err)
 			return err;
 		m = &this->mixers[this->nmixers];
@@ -1007,6 +1038,33 @@ azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
 		d->mixer_class = AZ_CLASS_RECORD;
 		snprintf(d->label.name, sizeof(d->label.name), AudioNvolume);
 		this->nmixers++;
+
+		w = &this->w[this->mixers[madc].nid];
+		if (IS_MI_TARGET_INAMP(m->target))
+			ampcap = w->inamp_cap;
+		else
+			ampcap = w->outamp_cap;
+		target = m->target;
+		if (ampcap & COP_AMPCAP_MUTE) {
+			d->next = this->nmixers;
+			m = &this->mixers[this->nmixers];
+			m->target = target;
+			m->nid = this->mixers[madc].nid;
+			d = &m->devinfo;
+			d->prev = this->nmixers - 1;
+			snprintf(d->label.name, sizeof(d->label.name),
+			    AudioNmute);
+			d->mixer_class = AZ_CLASS_RECORD;
+			d->type = AUDIO_MIXER_ENUM;
+			d->un.e.num_mem = 2;
+			d->un.e.member[0].ord = 0;
+			strlcpy(d->un.e.member[0].label.name, AudioNoff,
+			    MAX_AUDIO_DEV_LEN);
+			d->un.e.member[1].ord = 1;
+			strlcpy(d->un.e.member[1].label.name, AudioNon,
+			    MAX_AUDIO_DEV_LEN);
+			this->nmixers++;
+		}
 	}
 
 	azalia_generic_mixer_fix_indexes(this);
