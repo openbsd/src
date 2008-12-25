@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.32 2008/12/25 21:04:36 stevesk Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.33 2008/12/25 21:25:55 stevesk Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -20,7 +20,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/sensors.h>

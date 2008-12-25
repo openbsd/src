@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.7 2008/12/25 21:14:07 stevesk Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.8 2008/12/25 21:25:55 stevesk Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -23,7 +23,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/sensors.h>
