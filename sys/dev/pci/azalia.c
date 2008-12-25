@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.93 2008/12/23 09:33:49 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.94 2008/12/25 00:20:36 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1911,11 +1911,6 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 		return err;
 	this->d.pin.cap = result;
 
-	if (!(this->d.pin.cap & COP_PINCAP_INPUT))
-		pintype = PIN_DIR_OUT;
-	if (!(this->d.pin.cap & COP_PINCAP_OUTPUT))
-		pintype = PIN_DIR_IN;
-
 	switch (this->d.pin.device) {
 	case CORB_CD_LINEOUT:
 	case CORB_CD_SPEAKER:
@@ -1935,15 +1930,14 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 		break;
 	}
 
+	if (pintype == PIN_DIR_IN && !(this->d.pin.cap & COP_PINCAP_INPUT))
+		pintype = PIN_DIR_OUT;
+	if (pintype == PIN_DIR_OUT && !(this->d.pin.cap & COP_PINCAP_OUTPUT))
+		pintype = PIN_DIR_IN;
+
 	/* Disable unconnected pins */
 	if (CORB_CD_PORT(this->d.pin.config) == CORB_CD_NONE)
 		this->enable = 0;
-
-	/* Workaround broken machines which have their actual
-	   output on ports marked conn=none (e.g. MacBookPro1,2).
-	   Should not harm correct codec configurations. */
-	if (!this->enable)
-		pintype = PIN_DIR_OUT;
 
 	switch (pintype) {
 	case PIN_DIR_IN:
