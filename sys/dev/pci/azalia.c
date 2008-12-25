@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.95 2008/12/25 00:58:15 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.96 2008/12/25 22:15:05 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -665,7 +665,8 @@ void
 azalia_attach_intr(struct device *self)
 {
 	azalia_t *az;
-	int err, i, c;
+	codec_t *codec;
+	int err, i, j, c;
 
 	az = (azalia_t*)self;
 
@@ -685,18 +686,43 @@ azalia_attach_intr(struct device *self)
 	AZ_WRITE_4(az, INTCTL,
 	    AZ_READ_4(az, INTCTL) | HDA_INTCTL_CIE | HDA_INTCTL_GIE);
 
-	c = -1;
+	c = 0;
 	for (i = 0; i < az->ncodecs; i++) {
 		err = azalia_codec_init(&az->codecs[i]);
-		if (!err && c < 0)
-			c = i;
+		if (!err)
+			c++;
 	}
-	if (c < 0) {
+	if (c == 0) {
 		printf("%s: No codecs found\n", XNAME(az));
 		goto err_exit;
 	}
-	/* Use the first audio codec */
+
+	/* Use the first codec capable of analog I/O.  If there are none,
+	 * use the first codec capable of digital I/O.
+	 */
+	c = -1;
+	for (i = 0; i < az->ncodecs; i++) {
+		if (az->codecs[i].audiofunc < 0)
+			continue;
+		codec = &az->codecs[i];
+		FOR_EACH_WIDGET(codec, j) {
+			if (codec->w[j].type == COP_AWTYPE_AUDIO_OUTPUT ||
+			    codec->w[j].type == COP_AWTYPE_AUDIO_INPUT) {
+				if (codec->w[j].widgetcap & COP_AWCAP_DIGITAL) {
+					if (c < 0)
+						c = i;
+				} else {
+					c = i;
+					break;
+				}
+			}
+		}
+	}
 	az->codecno = c;
+	if (az->codecno < 0) {
+		DPRINTF(("%s: chosen codec has no converters.\n", XNAME(az)));
+		goto err_exit;
+	}
 
 	printf("%s: codecs: ", XNAME(az));
 	for (i = 0; i < az->ncodecs; i++) {
@@ -709,6 +735,19 @@ azalia_attach_intr(struct device *self)
 		azalia_print_codec(&az->codecs[az->codecno]);
 	}
 	printf("\n");
+
+	/* All codecs with audio are enabled, but only one will be used. */
+	for (i = 0; i < az->ncodecs; i++) {
+		codec = &az->codecs[i];
+		if (i != az->codecno) {
+			if (codec->audiofunc < 0)
+				continue;
+			codec->comresp(codec, codec->audiofunc,
+			    CORB_SET_POWER_STATE, CORB_PS_D3, NULL);
+			DELAY(100);
+			azalia_codec_delete(codec);
+		}
+	}
 
 	/* Use stream#1 and #2.  Don't use stream#0. */
 	if (azalia_stream_init(&az->pstream, az, az->nistreams + 0,
@@ -1298,11 +1337,17 @@ azalia_codec_delete(codec_t *this)
 		this->formats = NULL;
 	}
 	this->nformats = 0;
+
 	if (this->encs != NULL) {
 		free(this->encs, M_DEVBUF);
 		this->encs = NULL;
 	}
 	this->nencs = 0;
+
+	if (this->w != NULL) {
+		free(this->w, M_DEVBUF);
+		this->w = NULL;
+	}
 
 	return 0;
 }
