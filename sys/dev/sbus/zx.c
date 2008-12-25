@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.14 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: zx.c,v 1.15 2008/12/25 23:56:31 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -333,7 +333,7 @@ zx_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	 */
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_SUN24;
+		*(u_int *)data = WSDISPLAY_TYPE_SUNLEO;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;

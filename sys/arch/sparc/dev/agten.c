@@ -1,4 +1,4 @@
-/*	$OpenBSD: agten.c,v 1.10 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: agten.c,v 1.11 2008/12/25 23:56:29 miod Exp $	*/
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
  * All rights reserved.
@@ -224,7 +224,7 @@ agten_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_SUN24;
+		*(u_int *)data = WSDISPLAY_TYPE_AGTEN;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;

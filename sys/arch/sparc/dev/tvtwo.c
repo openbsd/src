@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvtwo.c,v 1.15 2008/03/15 21:10:34 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.16 2008/12/25 23:56:29 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2006, 2008, Miodrag Vallat.
@@ -296,7 +296,7 @@ tvtwo_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	 */
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_SUN24;
+		*(u_int *)data = WSDISPLAY_TYPE_XVIDEO;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (struct wsdisplay_fbinfo *)data;
