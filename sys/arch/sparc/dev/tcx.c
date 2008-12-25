@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.40 2008/12/24 22:12:35 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.41 2008/12/25 16:42:44 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -912,7 +912,8 @@ tcx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	if (uc == ' ') {
 		/* inline tcx_erasecols(cookie, row, col, 1, attr) */
 		for (h = font->fontheight; h != 0; y++, h--)
-			tcx_stipple(sc, x, y, font->fontwidth, GXcopy, bg);
+			tcx_stipple(sc, x, y, font->fontwidth, GXcopy,
+			    h == 2 && ul != 0 ? fg : bg);
 	} else {
 		int rx;
 		int lbcnt, rbcnt;
