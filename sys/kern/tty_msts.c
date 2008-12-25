@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.5 2008/09/10 14:01:23 blambert Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.6 2008/12/25 21:04:36 stevesk Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -65,7 +65,7 @@ struct msts {
 	int64_t			gap;		/* gap between two sentences */
 	int64_t			last;		/* last time rcvd */
 	int			sync;		/* if 1, waiting for <STX> */
-	int			pos;		/* positon in rcv buffer */
+	int			pos;		/* position in rcv buffer */
 	int			no_pps;		/* no PPS although requested */
 	char			mode;		/* GPS mode */
 };
@@ -303,7 +303,7 @@ msts_decode(struct msts *np, struct tty *tp, char *fld[], int fldcnt)
 		np->signal.status = SENSOR_S_WARN;
 
 	/*
-	 * If tty timestamping is requested, but not PPS signal is present, set
+	 * If tty timestamping is requested, but no PPS signal is present, set
 	 * the sensor state to CRITICAL.
 	 */
 	if (np->no_pps)
