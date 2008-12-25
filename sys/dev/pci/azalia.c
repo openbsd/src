@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.94 2008/12/25 00:20:36 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.95 2008/12/25 00:58:15 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1688,14 +1688,20 @@ azalia_widget_sole_conn(codec_t *this, nid_t nid)
 		}
 	}
 	/* connected to pin complex */
+	j = -1;
 	FOR_EACH_WIDGET(this, i) {
 		if (this->w[i].type == COP_AWTYPE_PIN_COMPLEX &&
 		    this->w[i].nconnections == 1 &&
 		    this->w[i].connections[0] == nid &&
 		    azalia_widget_enabled(this, this->w[i].connections[0])) {
-			return i;
+			if (j != -1)
+				return -1;
+			j = i;
 		}
 	}
+	if (j != -1)
+		return j;
+
 	return -1;
 }
 
