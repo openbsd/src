@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.30 2008/06/12 19:14:15 thib Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.31 2008/12/26 15:09:40 sobrado Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.30 2008/06/12 19:14:15 thib Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.31 2008/12/26 15:09:40 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -448,8 +448,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr,
-	    "usage: %s [-cs] [-M core] [-N system] [-w interval]\n",
+	fprintf(stderr, "usage: %s [-cs] [-M core] [-N system] [-w wait]\n",
 	    __progname);
 	exit(1);
 }
