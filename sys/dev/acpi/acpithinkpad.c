@@ -1,4 +1,4 @@
-/* $OpenBSD: acpithinkpad.c,v 1.14 2008/12/23 16:56:14 jcs Exp $ */
+/* $OpenBSD: acpithinkpad.c,v 1.15 2008/12/26 06:35:34 jsg Exp $ */
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -31,9 +31,6 @@
 #define	THINKPAD_CMOS_VOLUME_MUTE	0x02
 #define	THINKPAD_CMOS_BRIGHTNESS_UP	0x04
 #define	THINKPAD_CMOS_BRIGHTNESS_DOWN	0x05
-
-#define	THINKPAD_EC_BRIGHTNESS_OFFSET	0x31
-#define	THINKPAD_EC_BRIGHTNESS_LEVEL_MASK 0x1f
 
 #define	THINKPAD_BLUETOOTH_PRESENT	0x01
 #define	THINKPAD_BLUETOOTH_ENABLED	0x02
@@ -85,17 +82,6 @@ struct acpithinkpad_softc {
 	struct aml_node		*sc_devnode;
 };
 
-/* from bios.c */
-extern char *hw_ver;
-
-/* models (according to smbios info version) that need a brightness helper */
-const char *acpithinkpad_models_to_help[] = {
-	"ThinkPad X61s",
-	"ThinkPad T61",
-};
-
-int	thinkpad_need_helper = 0;
-
 int	thinkpad_match(struct device *, void *, void *);
 void	thinkpad_attach(struct device *, struct device *, void *);
 int	thinkpad_hotkey(struct aml_node *, int, void *);
@@ -106,9 +92,8 @@ int	thinkpad_cmos(struct acpithinkpad_softc *sc, uint8_t);
 int	thinkpad_volume_down(struct acpithinkpad_softc *);
 int	thinkpad_volume_up(struct acpithinkpad_softc *);
 int	thinkpad_volume_mute(struct acpithinkpad_softc *);
-int	thinkpad_brightness_get(struct acpithinkpad_softc *);
-int	thinkpad_brightness_down(struct acpithinkpad_softc *);
 int	thinkpad_brightness_up(struct acpithinkpad_softc *);
+int	thinkpad_brightness_down(struct acpithinkpad_softc *);
 
 struct cfattach acpithinkpad_ca = {
 	sizeof(struct acpithinkpad_softc), thinkpad_match, thinkpad_attach
@@ -147,22 +132,11 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpithinkpad_softc *sc = (struct acpithinkpad_softc *)self;
 	struct acpi_attach_args	*aa = aux;
-	int i;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
 
-	for (i = 0; i < nitems(acpithinkpad_models_to_help); i++)
-		if (strcmp(hw_ver, acpithinkpad_models_to_help[i]) == 0) {
-			printf(": activating brightness helper");
-			thinkpad_need_helper = 1;
-			break;
-		}
-
-	/* for models that don't need a brightness helper, tell the bios to
-	 * adjust brightness it self */
-	if (!thinkpad_need_helper)
-		thinkpad_brightness_get(sc);
+	printf("\n");
 
 	/* set event mask to receive everything */
 	thinkpad_enable_events(sc);
@@ -170,8 +144,6 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 	/* run thinkpad_hotkey on button presses */
 	aml_register_notify(sc->sc_devnode, aa->aaa_dev,
 	    thinkpad_hotkey, sc, ACPIDEV_NOPOLL);
-
-	printf("\n");
 }
 
 int
@@ -231,7 +203,6 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "MHKP", 0, NULL,
 		    &res))
 			goto done;
-
 		val = aml_val2int(&res);
 		aml_freevalue(&res);
 		if (val == 0)
@@ -244,26 +215,24 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		switch (type) {
 		case 1:
 			switch (event) {
+			case THINKPAD_BUTTON_BRIGHTNESS_UP:
+				thinkpad_brightness_up(sc);
+				handled = 1;
+				break;
+			case THINKPAD_BUTTON_BRIGHTNESS_DOWN:
+				thinkpad_brightness_down(sc);
+				handled = 1;
+				break;
 			case THINKPAD_BUTTON_WIRELESS:
 				thinkpad_toggle_bluetooth(sc);
 				handled = 1;
 				break;
 			case THINKPAD_BUTTON_SUSPEND:
 				handled = 1;
-				/*
+				/* 
 				acpi_enter_sleep_state(sc->sc_acpi,
 				    ACPI_STATE_S3);
 				*/
-				break;
-			case THINKPAD_BUTTON_BRIGHTNESS_UP:
-				if (thinkpad_need_helper)
-					thinkpad_brightness_up(sc);
-				handled = 1;
-				break;
-			case THINKPAD_BUTTON_BRIGHTNESS_DOWN:
-				if (thinkpad_need_helper)
-					thinkpad_brightness_down(sc);
-				handled = 1;
 				break;
 			case THINKPAD_BUTTON_HIBERNATE:
 			case THINKPAD_BUTTON_FN_F1:
@@ -369,7 +338,7 @@ int
 thinkpad_toggle_wan(struct acpithinkpad_softc *sc)
 {
 	struct aml_value	res, arg;
-	int			wan, rv = 1;
+	int			wan, rv = 1;;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "GWAN", 0, NULL, &res))
 		goto fail;
@@ -426,18 +395,6 @@ int
 thinkpad_volume_mute(struct acpithinkpad_softc *sc)
 {
 	return (thinkpad_cmos(sc, THINKPAD_CMOS_VOLUME_MUTE));
-}
-
-int
-thinkpad_brightness_get(struct acpithinkpad_softc *sc)
-{
-	uint8_t val;
-	int level;
-
-	acpiec_read(sc->sc_acpi->sc_ec, THINKPAD_EC_BRIGHTNESS_OFFSET, 1, &val);
-	level = val & THINKPAD_EC_BRIGHTNESS_LEVEL_MASK;
-
-	return level;
 }
 
 int
