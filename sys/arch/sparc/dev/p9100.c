@@ -1,7 +1,7 @@
-/*	$OpenBSD: p9100.c,v 1.45 2007/07/13 19:18:18 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.46 2008/12/26 00:42:19 miod Exp $	*/
 
 /*
- * Copyright (c) 2003, 2005, 2006, Miodrag Vallat.
+ * Copyright (c) 2003, 2005, 2006, 2008, Miodrag Vallat.
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
  * All rights reserved.
  *
@@ -247,6 +247,19 @@ p9100match(struct device *parent, void *vcf, void *aux)
 	if (strcmp("p9100", ra->ra_name))
 		return (0);
 
+#if NTCTRL == 0
+	/*
+	 * If this is not the console device, the frame buffer is
+	 * not completely initialized, and access to some of its
+	 * control registers will hang. We'll need to reprogram
+	 * the RAMDAC, and currently this requires assistance
+	 * from the tctrl code. Do not attach if it is not available
+	 * and console is on serial.
+	 */
+	if (ra->ra_node != fbnode)
+		return (0);
+#endif
+
 	return (1);
 }
 
@@ -260,8 +273,8 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	struct rasops_info *ri = &sc->sc_sunfb.sf_ro;
 	struct confargs *ca = args;
 	struct romaux *ra = &ca->ca_ra;
-	int node, pri, scr, force_reset;
-	int isconsole, fontswitch, clear = 0;
+	int node, pri, scr;
+	int isconsole, fontswitch = 0, clear = 0;
 
 	pri = ca->ca_ra.ra_intr[0].int_pri;
 	printf(" pri %d", pri);
@@ -294,22 +307,6 @@ p9100attach(struct device *parent, struct device *self, void *args)
 
 	P9100_SELECT_SCR(sc);
 	scr = P9100_READ_CTL(sc, P9000_SYSTEM_CONFIG);
-	switch (scr & SCR_PIXEL_MASK) {
-	default:
-#ifdef DIAGNOSTIC
-		printf(": unknown color depth code 0x%x",
-		    scr & SCR_PIXEL_MASK);
-#endif
-		/* FALLTHROUGH */
-	case SCR_PIXEL_32BPP:
-	case SCR_PIXEL_24BPP:
-	case SCR_PIXEL_16BPP:
-		force_reset = 1;
-		break;
-	case SCR_PIXEL_8BPP:
-		force_reset = 0;
-		break;
-	}
 
 	fb_setsize(&sc->sc_sunfb, 8, 800, 600, node, ca->ca_bustype);
 
@@ -319,6 +316,15 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	 */
 	sc->sc_lcdwidth = sc->sc_sunfb.sf_width;
 	sc->sc_lcdheight = sc->sc_sunfb.sf_height;
+
+#if NTCTRL > 0
+	/*
+	 * ... but it didn't if we are running on serial console.
+	 * In this case, do it ourselves.
+	 */
+	if (!isconsole)
+		p9100_initialize_ramdac(sc, sc->sc_lcdwidth, 8);
+#endif
 
 #if NTCTRL > 0
 	/*
@@ -366,7 +372,8 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	 *   the margins.
 	 * XXX there should be a rasops "clear margins" feature
 	 */
-	fontswitch = p9100_pick_romfont(sc);
+	if (isconsole)
+		fontswitch = p9100_pick_romfont(sc);
 
 	/*
 	 * Register the external video control callback with tctrl; tctrl
@@ -1119,7 +1126,6 @@ static const u_int32_t p9100_val_800_24[] = {
 static const u_int32_t p9100_val_800_8[] = {
 	0x07c, 0x008, 0x011, 0x075, 0x000, 0x271, 0x002, 0x016, 0x26e, 0x000
 };
-#if NTCTRL > 0
 static const u_int32_t p9100_val_640_32[] = {
 	0x18f, 0x02f, 0x043, 0x183, 0x000, 0x205, 0x003, 0x022, 0x202, 0x000
 };
@@ -1129,7 +1135,6 @@ static const u_int32_t p9100_val_640_8[] = {
 static const u_int32_t p9100_val_1024_8[] = {
 	0x0a7, 0x019, 0x022, 0x0a2, 0x000, 0x325, 0x003, 0x023, 0x323, 0x000
 };
-#endif
 
 void
 p9100_initialize_ramdac(struct p9100_softc *sc, u_int width, u_int depth)
@@ -1141,9 +1146,11 @@ p9100_initialize_ramdac(struct p9100_softc *sc, u_int width, u_int depth)
 	u_int32_t scr;
 
 	/*
-	 * XXX Switching to a low-res 8bpp mode causes kernel faults
+	 * XXX Switching to a low-res 8bpp mode does not work correctly
 	 * XXX unless coming from an high-res 8bpp mode, and I have
 	 * XXX no idea why.
+	 * XXX Of course, this mean that we can't reasonably use this
+	 * XXX routine unless NTCTRL > 0.
 	 */
 	if (depth == 8 && width != 1024)
 		p9100_initialize_ramdac(sc, 1024, 8);
@@ -1290,6 +1297,8 @@ p9100_initialize_ramdac(struct p9100_softc *sc, u_int width, u_int depth)
 	P9100_WRITE_CTL(sc, P9000_SRTC1,
 	    SRTC1_VSYNC_INTERNAL | SRTC1_HSYNC_INTERNAL | SRTC1_VIDEN | 0x03);
 	P9100_WRITE_CTL(sc, P9000_SRTC2, 0x05);
+	/* need to wait a bit before VRAM control registers are accessible */
+	delay(3000);
 	P9100_SELECT_VRAM(sc);
 	P9100_WRITE_CTL(sc, P9000_MCR, 0xc808007d);
 	delay(3000);
