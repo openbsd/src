@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.34 2008/12/21 02:18:46 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.35 2008/12/26 10:28:31 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -40,8 +40,7 @@
 #define SMTPD_SOCKET		 "/var/run/smtpd.sock"
 #define SMTPD_BANNER		 "220 %s OpenSMTPD"
 #define SMTPD_SESSION_TIMEOUT	 300
-
-#define RCPTBUFSZ		 256
+#define SMTPD_BACKLOG		 5
 
 #define	DIRHASH_BUCKETS		 4096
 
@@ -530,7 +529,6 @@ struct listener {
 	int			 fd;
 	struct sockaddr_storage	 ss;
 	in_port_t		 port;
-	int			 backlog;
 	struct timeval		 timeout;
 	struct event		 ev;
 	struct smtpd		*env;

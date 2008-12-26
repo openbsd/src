@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.12 2008/12/22 13:18:58 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.13 2008/12/26 10:28:31 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -529,7 +529,7 @@ smtp_setup_events(struct smtpd *env)
 		    l, (l->flags & F_SSL)?" (with ssl)":"");
 
 		session_socket_blockmode(l->fd, BM_NONBLOCK);
-		if (listen(l->fd, l->backlog) == -1)
+		if (listen(l->fd, SMTPD_BACKLOG) == -1)
 			fatal("listen");
 		l->env = env;
 		event_set(&l->ev, l->fd, EV_READ, smtp_accept, l);
