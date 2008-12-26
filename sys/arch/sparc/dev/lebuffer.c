@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.6 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.7 2008/12/26 15:13:07 miod Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.3 1997/05/24 20:16:28 pk Exp $ */
 
 /*
@@ -69,7 +69,7 @@ lebufprint(aux, name)
 	register struct confargs *ca = aux;
 
 	if (name)
-		printf("[%s at %s]", ca->ca_ra.ra_name, name);
+		printf("%s at %s", ca->ca_ra.ra_name, name);
 	printf(" offset 0x%x", ca->ca_offset);
 	return (UNCONF);
 }
