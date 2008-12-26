@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.13 2008/06/01 17:59:55 marco Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.14 2008/12/26 17:09:52 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -39,12 +39,12 @@
 #include <machine/biosvar.h>
 #endif
 
+#if NAPM > 0
+int haveacpibutusingapm;	
+#endif
+
 #define ACPI_BIOS_RSDP_WINDOW_BASE        0xe0000
 #define ACPI_BIOS_RSDP_WINDOW_SIZE        0x20000
-
-#if NAPM > 0 && NBIOS > 0
-extern bios_apminfo_t *apm;
-#endif
 
 u_int8_t	*acpi_scan(struct acpi_mem_map *, paddr_t, size_t);
 
@@ -117,10 +117,8 @@ acpi_probe(struct device *parent, struct cfdata *match, struct bios_attach_args 
 	paddr_t ebda;
 #if NAPM > 0
 	extern int apm_attached;
-
-	if (apm_attached)
-		return (0);
 #endif
+
 #if NBIOS > 0
 	{
 		bios_memmap_t *im;
@@ -165,7 +163,12 @@ acpi_probe(struct device *parent, struct cfdata *match, struct bios_attach_args 
 havebase:
 	ba->ba_acpipbase = ptr - handle.va + handle.pa;
 	acpi_unmap(&handle);
-
+#if NAPM > 0
+	if (apm_attached) {
+		haveacpibutusingapm = 1;
+		return (0);
+	}
+#endif
 	return (1);
 }
 

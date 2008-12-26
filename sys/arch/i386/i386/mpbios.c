@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.27 2008/12/22 18:01:46 kettenis Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.28 2008/12/26 17:09:52 deraadt Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -123,6 +123,11 @@
 
 #include "pci.h"
 
+#include "apm.h"
+#include "acpi.h"
+#if NAPM > 0 && NACPI > 0
+extern int haveacpibutusingapm;
+#endif
 
 static struct mpbios_ioapic default_ioapic = {
     2, 0, 1, IOAPICENTRY_FLAG_EN, (caddr_t)IOAPIC_BASE_DEFAULT
@@ -262,6 +267,14 @@ mpbios_probe(struct device *self)
 	int 		scan_loc;
 
 	struct		mp_map t;
+
+	/*
+	 * If we have acpi but chose to use apm, then we really should
+	 * not go use mpbios.  Systems with usable acpi typically have
+	 * unuseable mpbios
+	 */
+	if (haveacpibutusingapm)
+		return (0);
 
 	/*
 	 * Skip probe if someone else (e.g. acpi) already provided the
