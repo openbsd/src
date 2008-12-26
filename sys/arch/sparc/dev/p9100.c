@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.47 2008/12/26 22:30:21 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.48 2008/12/26 23:46:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005, 2006, 2008, Miodrag Vallat.
@@ -943,8 +943,8 @@ void
 p9100_pick_romfont(struct p9100_softc *sc)
 {
 	struct rasops_info *ri = &sc->sc_sunfb.sf_ro;
-	int *romwidth, *romheight;
-	u_int8_t **romaddr;
+	int *fontwidth, *fontheight, *fontstride;
+	u_int8_t **fontaddr;
 	char buf[200];
 
 	/*
@@ -958,25 +958,30 @@ p9100_pick_romfont(struct p9100_softc *sc)
 	 * Get the PROM font metrics and address
 	 */
 	if (snprintf(buf, sizeof buf, "stdout @ is my-self "
-	    "addr char-height %lx ! addr char-width %lx ! addr font-base %lx !",
-	    (vaddr_t)&romheight, (vaddr_t)&romwidth, (vaddr_t)&romaddr) >=
-	    sizeof buf)
+	    "addr char-height %lx ! addr char-width %lx ! "
+	    "addr font-base %lx ! addr fontbytes %lx !",
+	    (vaddr_t)&fontheight, (vaddr_t)&fontwidth,
+	    (vaddr_t)&fontaddr, (vaddr_t)&fontstride) >= sizeof buf)
 		return;
-	romheight = romwidth = NULL;
+	fontheight = fontwidth = fontstride = NULL;
+	fontaddr = NULL;
 	rominterpret(buf);
 
-	if (romheight == NULL || romwidth == NULL || romaddr == NULL ||
-	    *romheight == 0 || *romwidth == 0 || *romaddr == NULL)
+	if (fontheight == NULL || fontwidth == NULL || fontstride == NULL ||
+	    fontaddr == NULL || *fontheight == 0 || *fontwidth == 0 ||
+	    *fontstride < howmany(*fontwidth, NBBY) ||
+	    *fontstride > 4 /* paranoia */)
 		return;
 
-	p9100_romfont.fontwidth = *romwidth;
-	p9100_romfont.fontheight = *romheight;
-	p9100_romfont.stride = howmany(*romwidth, NBBY);
-	p9100_romfont.data = *romaddr;
+	p9100_romfont.fontwidth = *fontwidth;
+	p9100_romfont.fontheight = *fontheight;
+	p9100_romfont.stride = *fontstride;
+	p9100_romfont.data = *fontaddr;
 	
 #ifdef DEBUG
-	printf("%s: PROM font %dx%d @%p",
-	    sc->sc_sunfb.sf_dev.dv_xname, *romwidth, *romheight, *romaddr);
+	printf("%s: PROM font %dx%d-%d @%p",
+	    sc->sc_sunfb.sf_dev.dv_xname, *fontwidth, *fontheight,
+	    *fontstride, *fontaddr);
 #endif
 
 	/*
