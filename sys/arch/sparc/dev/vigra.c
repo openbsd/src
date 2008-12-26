@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.17 2007/02/18 18:40:35 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.18 2008/12/26 22:30:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -241,7 +241,7 @@ vigraattach(struct device *parent, struct device *self, void *args)
 {
 	struct vigra_softc *sc = (struct vigra_softc *)self;
 	struct confargs *ca = args;
-	int node, pri, row, isconsole = 0;
+	int node, pri, isconsole = 0;
 	char *nam;
 
 	pri = ca->ca_ra.ra_intr[0].int_pri;
@@ -287,41 +287,11 @@ vigraattach(struct device *parent, struct device *self, void *args)
 
 	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
-	/*
-	 * If the framebuffer width is under 1024x768, we will switch from the
-	 * PROM font to the more adequate 8x16 font here.
-	 * However, we need to adjust two things in this case:
-	 * - the display row should be overrided from the current PROM metrics,
-	 *   to prevent us from overwriting the last few lines of text.
-	 * - if the 80x34 screen would make a large margin appear around it,
-	 *   choose to clear the screen rather than keeping old prom output in
-	 *   the margins.
-	 * XXX there should be a rasops "clear margins" feature
-	 *
-	 * Also, in 1280x1024 resolution, the PROM display is not centered
-	 * vertically (why? no other frame buffer does this in such a mode!),
-	 * so be lazy and clear the screen here too anyways...
-	 */
-	fbwscons_init(&sc->sc_sunfb, isconsole && (sc->sc_sunfb.sf_width != 800
-	    && sc->sc_sunfb.sf_width != 1280) ? 0 : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, isconsole);
 	fbwscons_setcolormap(&sc->sc_sunfb, vigra_setcolor);
 
-	if (isconsole) {
-		switch (sc->sc_sunfb.sf_width) {
-		case 640:
-			row = sc->sc_sunfb.sf_ro.ri_rows - 1;
-			break;
-		case 800:
-		case 1280:
-			row = 0;	/* screen has been cleared above */
-			break;
-		default:
-			row = -1;
-			break;
-		}
-
-		fbwscons_console_init(&sc->sc_sunfb, row);
-	}
+	if (isconsole)
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 
 	fbwscons_attach(&sc->sc_sunfb, &vigra_accessops, isconsole);
 }

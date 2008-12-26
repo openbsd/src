@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvtwo.c,v 1.16 2008/12/25 23:56:29 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.17 2008/12/26 22:30:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2006, 2008, Miodrag Vallat.
@@ -268,18 +268,11 @@ tvtwoattach(struct device *parent, struct device *self, void *args)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	sc->sc_sunfb.sf_ro.ri_bits = (u_char *)sc->sc_m8;
 
-	/*
-	 * If the framebuffer width is under 1024, we will switch from
-	 * the PROM font to the more adequate 8x16 font here.
-	 */
-	fbwscons_init(&sc->sc_sunfb,
-	    isconsole && (width >= 1024) ? RI_CLEARMARGINS : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, isconsole);
 	fbwscons_setcolormap(&sc->sc_sunfb, tvtwo_setcolor);
 
-	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb,
-		    width >= 1024 ? -1 : 0);
-	}
+	if (isconsole)
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 
 	fbwscons_attach(&sc->sc_sunfb, &tvtwo_accessops, isconsole);
 }

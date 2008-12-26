@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.35 2007/03/13 19:40:48 miod Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.36 2008/12/26 22:30:21 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -322,7 +322,7 @@ cgfourteenattach(struct device *parent, struct device *self, void *args)
 	cgfourteen_burner(sc, 1, 0);
 
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, isconsole);
 	fbwscons_setcolormap(&sc->sc_sunfb, cgfourteen_setcolor);
 
 	if (isconsole) {

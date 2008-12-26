@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.34 2006/12/03 16:38:12 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.35 2008/12/26 22:30:21 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -275,11 +275,10 @@ obp_name:
 	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(ca->ca_ra.ra_reg,
 	    sc->sc_pixeloffset, round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, isconsole);
 
-	if (isconsole) {
+	if (isconsole)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
-	}
 
 	fbwscons_attach(&sc->sc_sunfb, &bwtwo_accessops, isconsole);
 }

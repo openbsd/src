@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.46 2008/12/26 00:42:19 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.47 2008/12/26 22:30:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005, 2006, 2008, Miodrag Vallat.
@@ -128,7 +128,7 @@ static __inline__
 void	p9100_loadcmap_deferred(struct p9100_softc *, u_int, u_int);
 void	p9100_loadcmap_immediate(struct p9100_softc *, u_int, u_int);
 paddr_t	p9100_mmap(void *, off_t, int);
-int	p9100_pick_romfont(struct p9100_softc *);
+void	p9100_pick_romfont(struct p9100_softc *);
 void	p9100_prom(void *);
 void	p9100_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 u_int	p9100_read_ramdac(struct p9100_softc *, u_int);
@@ -274,7 +274,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	struct confargs *ca = args;
 	struct romaux *ra = &ca->ca_ra;
 	int node, pri, scr;
-	int isconsole, fontswitch = 0, clear = 0;
+	int isconsole;
 
 	pri = ca->ca_ra.ra_intr[0].int_pri;
 	printf(" pri %d", pri);
@@ -360,20 +360,10 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	/*
 	 * Try to get a copy of the PROM font.
 	 *
-	 * If we can, we still need to adjust the visible portion of the
-	 * display, as the PROM output is offset two chars to the left.
-	 *
-	 * If we can't, we'll switch to the 8x16 font, and we'll need to adjust
-	 * two things:
-	 * - the display row should be overrided from the current PROM metrics,
-	 *   to prevent us from overwriting the last few lines of text.
-	 * - if the 80x34 screen would make a large margin appear around it,
-	 *   choose to clear the screen rather than keeping old prom output in
-	 *   the margins.
-	 * XXX there should be a rasops "clear margins" feature
+	 * If we can't, we'll clear the display and switch to the 8x16 font.
 	 */
 	if (isconsole)
-		fontswitch = p9100_pick_romfont(sc);
+		p9100_pick_romfont(sc);
 
 	/*
 	 * Register the external video control callback with tctrl; tctrl
@@ -386,13 +376,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	p9100_external_video(sc, 1);
 #endif
 
-	if (isconsole == 0 || fontswitch)
-		clear = 1;
-	fbwscons_init(&sc->sc_sunfb, clear ? RI_CLEAR : 0);
-	if (clear == 0) {
-		ri->ri_bits -= 2 * ri->ri_xscale;
-		ri->ri_xorigin -= 2 * ri->ri_xscale;
-	}
+	fbwscons_init(&sc->sc_sunfb, isconsole);
 	fbwscons_setcolormap(&sc->sc_sunfb, p9100_setcolor);
 
 	/*
@@ -406,7 +390,7 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	p9100_burner(sc, 1, 0);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, clear ? 0 : -1);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 #if NTCTRL > 0
 		shutdownhook_establish(p9100_prom, sc);
 #endif
@@ -955,7 +939,7 @@ struct wsdisplay_font p9100_romfont = {
 	NULL
 };
 
-int
+void
 p9100_pick_romfont(struct p9100_softc *sc)
 {
 	struct rasops_info *ri = &sc->sc_sunfb.sf_ro;
@@ -968,7 +952,7 @@ p9100_pick_romfont(struct p9100_softc *sc)
 	 * autoconf.c romgetcursoraddr() for details.
 	 */
 	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
-		return (1);
+		return;
 
 	/*
 	 * Get the PROM font metrics and address
@@ -977,13 +961,13 @@ p9100_pick_romfont(struct p9100_softc *sc)
 	    "addr char-height %lx ! addr char-width %lx ! addr font-base %lx !",
 	    (vaddr_t)&romheight, (vaddr_t)&romwidth, (vaddr_t)&romaddr) >=
 	    sizeof buf)
-		return (1);
+		return;
 	romheight = romwidth = NULL;
 	rominterpret(buf);
 
 	if (romheight == NULL || romwidth == NULL || romaddr == NULL ||
 	    *romheight == 0 || *romwidth == 0 || *romaddr == NULL)
-		return (1);
+		return;
 
 	p9100_romfont.fontwidth = *romwidth;
 	p9100_romfont.fontheight = *romheight;
@@ -1000,19 +984,15 @@ p9100_pick_romfont(struct p9100_softc *sc)
 	 */
 	wsfont_init();	/* if not done before */
 	if (wsfont_add(&p9100_romfont, 0) != 0)
-		return (1);
+		return;
 
 	/*
 	 * Select this very font in our rasops structure
 	 */
 	ri->ri_wsfcookie = wsfont_find(ROMFONTNAME, 0, 0, 0);
 	if (wsfont_lock(ri->ri_wsfcookie, &ri->ri_font,
-	    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0) {
+	    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0)
 		ri->ri_wsfcookie = 0;
-		return (1);
-	}
-	
-	return (0);
 }
 
 /*

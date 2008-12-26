@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.34 2008/12/26 15:35:06 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.35 2008/12/26 22:30:21 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -245,26 +245,11 @@ cgthreeattach(struct device *parent, struct device *self, void *args)
 
 	printf("%dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
-	/*
-	 * If the framebuffer width is under 1024x768, which is the case for
-	 * some clones on laptops, as well as with the VS10-EK, switch from
-	 * the PROM font to the more adequate 8x16 font here.
-	 * However, we need to adjust two things in this case:
-	 * - the display row should be overrided from the current PROM metrics,
-	 *   to prevent us from overwriting the last few lines of text.
-	 * - if the 80x34 screen would make a large margin appear around it,
-	 *   choose to clear the screen rather than keeping old prom output in
-	 *   the margins.
-	 * XXX there should be a rasops "clear margins" feature
-	 */
-	fbwscons_init(&sc->sc_sunfb, isconsole &&
-	    (sc->sc_sunfb.sf_width >= 1024) ? 0 : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, isconsole);
 	fbwscons_setcolormap(&sc->sc_sunfb, cgthree_setcolor);
 
-	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb,
-		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0);
-	}
+	if (isconsole)
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 
 	fbwscons_attach(&sc->sc_sunfb, &cgthree_accessops, isconsole);
 }

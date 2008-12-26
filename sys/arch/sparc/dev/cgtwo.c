@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.36 2006/12/03 16:40:06 miod Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.37 2008/12/26 22:30:21 miod Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -216,10 +216,11 @@ cgtwoattach(struct device *parent, struct device *self, void *args)
 	sc->sc_sunfb.sf_ro.ri_bits = mapiodev(&sc->sc_phys, CG2_PIXMAP_OFF,
 	    round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
-	fbwscons_setcolormap(&sc->sc_sunfb, cgtwo_setcolor);
 
 	printf(": %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
+
+	fbwscons_init(&sc->sc_sunfb, isconsole);
+	fbwscons_setcolormap(&sc->sc_sunfb, cgtwo_setcolor);
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, -1);

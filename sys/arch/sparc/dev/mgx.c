@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.14 2008/04/15 20:23:54 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.15 2008/12/26 22:30:21 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -255,13 +255,13 @@ mgxattach(struct device *parent, struct device *self, void *args)
 	    0, round_page(sc->sc_sunfb.sf_fbsize));
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
+	printf(", %dx%d\n",
+	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
+
+	fbwscons_init(&sc->sc_sunfb, isconsole);
 
 	bzero(sc->sc_cmap, sizeof(sc->sc_cmap));
 	fbwscons_setcolormap(&sc->sc_sunfb, mgx_setcolor);
-
-	printf(", %dx%d\n",
-	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	if (chipid != ID_AT24) {
 		printf("%s: unexpected engine id %04x\n",
@@ -270,9 +270,8 @@ mgxattach(struct device *parent, struct device *self, void *args)
 
 	mgx_ras_init(sc, chipid);
 
-	if (isconsole) {
+	if (isconsole)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
-	}
 
 	fbwscons_attach(&sc->sc_sunfb, &mgx_accessops, isconsole);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.16 2007/03/13 19:40:48 miod Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.17 2008/12/26 22:30:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
@@ -194,7 +194,7 @@ cgtwelveattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_overlay;
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, isconsole);
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, -1);

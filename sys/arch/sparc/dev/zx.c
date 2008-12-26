@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.21 2008/12/25 23:56:29 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.22 2008/12/26 22:30:21 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -247,7 +247,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	    ZX_OFF_SS0, round_page(sc->sc_sunfb.sf_fbsize));
 	ri->ri_hw = sc;
 
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, isconsole);
 
 	/*
 	 * Watch out! rasops_init() invoked via fbwscons_init() did not

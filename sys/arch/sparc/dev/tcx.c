@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.42 2008/12/26 15:34:10 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.43 2008/12/26 22:30:21 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -282,19 +282,7 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_dfb8;
 
-	/*
-	 * If the framebuffer width is under 960 pixels, we will switch
-	 * from the PROM font to the more adequate 8x16 font here.
-	 * However, we need to adjust two things in this case:
-	 * - the display row should be overrided from the current PROM metrics,
-	 *   to prevent us from overwriting the last few lines of text.
-	 * - if the 80x34 screen would make a large margin appear around it,
-	 *   choose to clear the screen rather than keeping old prom output in
-	 *   the margins.
-	 */
-	fbwscons_init(&sc->sc_sunfb,
-	    isconsole && sc->sc_sunfb.sf_width >= 12 * 80 ? 0 : RI_CLEAR);
-
+	fbwscons_init(&sc->sc_sunfb, isconsole);
 	fbwscons_setcolormap(&sc->sc_sunfb, tcx_setcolor);
 
 	/*
@@ -307,8 +295,7 @@ tcxattach(struct device *parent, struct device *self, void *args)
 	intr_establish(pri, &sc->sc_ih, IPL_FB, self->dv_xname);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb,
-		    sc->sc_sunfb.sf_width >= 12 * 80 ? -1 : 0);
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 		shutdownhook_establish(tcx_prom, sc);
 	}
 

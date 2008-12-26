@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.21 2008/12/26 00:43:03 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.22 2008/12/26 22:30:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -194,7 +194,7 @@ p9000attach(struct device *parent, struct device *self, void *args)
 {
 	struct p9000_softc *sc = (struct p9000_softc *)self;
 	struct confargs *ca = args;
-	int node, pri, row, isconsole, scr;
+	int node, pri, isconsole, scr;
 	struct device *btdev;
 	extern struct cfdriver btcham_cd;
 
@@ -255,19 +255,7 @@ p9000attach(struct device *parent, struct device *self, void *args)
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(pri, &sc->sc_ih, IPL_FB, self->dv_xname);
 
-	/*
-	 * If the framebuffer width is under 1024x768, we will switch from the
-	 * PROM font to the more adequate 8x16 font here.
-	 * However, we need to adjust two things in this case:
-	 * - the display row should be overrided from the current PROM metrics,
-	 *   to prevent us from overwriting the last few lines of text.
-	 * - if the 80x34 screen would make a large margin appear around it,
-	 *   choose to clear the screen rather than keeping old prom output in
-	 *   the margins.
-	 * XXX there should be a rasops "clear margins" feature
-	 */
-	fbwscons_init(&sc->sc_sunfb,
-	    isconsole && (sc->sc_sunfb.sf_width >= 1024) ? 0 : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, isconsole);
 	fbwscons_setcolormap(&sc->sc_sunfb, p9000_setcolor);
 
 	/*
@@ -279,14 +267,8 @@ p9000attach(struct device *parent, struct device *self, void *args)
 	/* enable video */
 	p9000_burner(sc, 1, 0);
 
-	if (isconsole) {
-		if (sc->sc_sunfb.sf_width < 1024)
-			row = 0;	/* screen has been cleared above */
-		else
-			row = -1;
-
-		fbwscons_console_init(&sc->sc_sunfb, row);
-	}
+	if (isconsole)
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 
 	fbwscons_attach(&sc->sc_sunfb, &p9000_accessops, isconsole);
 }

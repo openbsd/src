@@ -1,8 +1,8 @@
-/*	$OpenBSD: fb.c,v 1.43 2006/12/03 22:10:30 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.44 2008/12/26 22:30:21 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
- * Copyright (c) 2002, 2004  Miodrag Vallat.
+ * Copyright (c) 2002, 2004, 2008  Miodrag Vallat.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -82,6 +82,9 @@
 #include <machine/eeprom.h>
 #include <sparc/dev/pfourreg.h>
 #endif
+#if defined(SUN4C) || defined(SUN4M)
+#include <machine/bsd_openprom.h>
+#endif
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
@@ -118,8 +121,10 @@ fb_unblank()
 #if defined(SUN4C) || defined(SUN4M)
 static int a2int(char *, int);
 #endif
-static void fb_initwsd(struct sunfb *);
-static void fb_updatecursor(struct rasops_info *);
+int	fb_get_console_metrics(int *, int *, int *, int *);
+void	fb_initwsd(struct sunfb *);
+void	fb_updatecursor(struct rasops_info *);
+
 int	fb_alloc_screen(void *, const struct wsscreen_descr *, void **,
 	    int *, int *, long *);
 void	fb_free_screen(void *, void *);
@@ -274,7 +279,7 @@ a2int(char *cp, int deflt)
 #endif
 
 /* setup the embedded wsscreen_descr structure from rasops settings */
-static void
+void
 fb_initwsd(struct sunfb *sf)
 {
 	strlcpy(sf->sf_wsd.name, "std", sizeof(sf->sf_wsd.name));
@@ -284,7 +289,7 @@ fb_initwsd(struct sunfb *sf)
 	sf->sf_wsd.textops = &sf->sf_ro.ri_ops;
 }
 
-static void
+void
 fb_updatecursor(struct rasops_info *ri)
 {
 	struct sunfb *sf = (struct sunfb *)ri->ri_hw;
@@ -296,13 +301,15 @@ fb_updatecursor(struct rasops_info *ri)
 }
 
 void
-fbwscons_init(struct sunfb *sf, int flags)
+fbwscons_init(struct sunfb *sf, int isconsole)
 {
 	struct rasops_info *ri = &sf->sf_ro;
-	int cols, rows;
+	int cols, rows, fw, fh, wt, wl;
 
 	/* ri_hw and ri_bits must have already been setup by caller */
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | flags;
+	ri->ri_flg = RI_FULLCLEAR;
+	if (!isconsole)
+		ri->ri_flg |= RI_CLEAR;
 	ri->ri_depth = sf->sf_depth;
 	ri->ri_stride = sf->sf_linebytes;
 	ri->ri_width = sf->sf_width;
@@ -333,7 +340,81 @@ fbwscons_init(struct sunfb *sf, int flags)
 	}
 #endif
 
+	/*
+	 * If the framebuffer width is under 960 pixels, rasops will
+	 * switch from the 12x22 font to the more adequate 8x16 font
+	 * here.
+	 * If we are the console device, we need to adjust two things:
+	 * - the display row should be overrided from the current PROM
+	 *   metrics, since it will not match the PROM reality anymore.
+	 * - the screen needs to be cleared.
+	 *
+	 * However, to accomodate laptops with specific small fonts,
+	 * it is necessary to compare the resolution with the actual
+	 * font metrics.
+	 *
+	 * Note that, on sun4 systems, no frame buffer supports display
+	 * resolutions requiring a font switch, so it is safe to bypass
+	 * this chunk.
+	 */
+
+#if defined(SUN4C) || defined(SUN4M)
+	if (CPU_ISSUN4COR4M && isconsole) {
+		if (fb_get_console_metrics(&fw, &fh, &wt, &wl) != 0) {
+			/*
+			 * Assume a 12x22 prom font and a centered
+			 * 80x34 console window.
+			 */
+			fw = 12; fh = 22;
+			ri->ri_flg |= RI_CENTER;
+
+			/*
+			 * Since the console window might not be
+			 * centered (e.g. on a 1280x1024 vigra
+			 * VS-12 frame buffer), have rasops
+			 * clear the margins even if the screen is
+			 * not cleared.
+			 */
+			ri->ri_flg |= RI_CLEARMARGINS;
+		}
+
+		if (ri->ri_wsfcookie != 0) {
+			/* driver handles font issues. do nothing. */
+		} else {
+			/*
+			 * If the PROM uses a different font than the
+			 * one we are expecting it to use, or if the
+			 * display is shorter than 960 pixels wide,
+			 * we'll force a screen clear.
+			 */
+			if (fw != 12 || sf->sf_width < 12 * 80)
+				ri->ri_flg |= RI_CLEAR | RI_CENTER;
+		}
+	} else {
+		ri->ri_flg |= RI_CENTER;
+	}
+#endif
+
 	rasops_init(ri, rows, cols);
+
+#if defined(SUN4C) || defined(SUN4M)
+	/*
+	 * If this is the console display and there is no font change,
+	 * adjust our terminal window to the position of the PROM
+	 * window - in case it is not exactly centered.
+	 */
+	if ((ri->ri_flg & RI_CENTER) == 0) {
+		/* code above made sure wt and wl are initialized */
+		ri->ri_bits += wt * ri->ri_stride;
+		if (ri->ri_depth >= 8)	/* for 15bpp to compute ok */
+			ri->ri_bits += wl * ri->ri_pelbytes;
+		else
+			ri->ri_bits += (wl * ri->ri_depth) >> 3;
+
+		ri->ri_xorigin = wl;
+		ri->ri_yorigin = wt;
+	}
+#endif
 
 	if (sf->sf_depth == 8) {
 		/*
@@ -363,21 +444,26 @@ fbwscons_console_init(struct sunfb *sf, int row)
 	if (sf->sf_ccolp != NULL)
 		ri->ri_ccol = *sf->sf_ccolp;
 
-	if (row < 0) {
+	if (ri->ri_flg & RI_CLEAR) {
+		/*
+		 * If we have cleared the screen, this is because either
+		 * we are not the console display, or the font has been
+		 * changed.
+		 * In this case, choose not to keep pointers to the PROM
+		 * cursor position, as the values are likely to be inaccurate
+		 * upon shutdown...
+		 */
+		sf->sf_crowp = sf->sf_ccolp = NULL;
+		row = 0;
+	}
+
+	if (row < 0) /* no override */ {
 		if (sf->sf_crowp != NULL)
 			ri->ri_crow = *sf->sf_crowp;
 		else
 			/* assume last row */
 			ri->ri_crow = ri->ri_rows - 1;
 	} else {
-		/*
-		 * If we force the display row, this is because the screen
-		 * has been cleared or the font has been changed.
-		 * In this case, choose not to keep pointers to the PROM
-		 * cursor position, as the values are likely to be inaccurate
-		 * upon shutdown...
-		 */
-		sf->sf_crowp = sf->sf_ccolp = NULL;
 		ri->ri_crow = row;
 	}
 
@@ -558,5 +644,44 @@ fb_pfour_burner(void *v, u_int enable, u_int flags)
 }
 
 #endif /* SUN4 */
+
+#if defined(SUN4C) || defined(SUN4M)
+int
+fb_get_console_metrics(int *fontwidth, int *fontheight, int *wtop, int *wleft)
+{
+	int *romwidth, *romheight, *windowtop, *windowleft;
+	char buf[200];
+
+	/*
+	 * This code currently only works for PROM >= 2.9; see
+	 * autoconf.c romgetcursoraddr() for details.
+	 */
+	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
+		return (1);
+
+	/*
+	 * Get the PROM font metrics and address
+	 */
+	if (snprintf(buf, sizeof buf, "stdout @ is my-self "
+	    "addr char-height %lx ! addr char-width %lx ! "
+	    "addr window-top %lx ! addr window-left %lx !",
+	    (vaddr_t)&romheight, (vaddr_t)&romwidth,
+	    (vaddr_t)&windowtop, (vaddr_t)&windowleft) >=
+	    sizeof buf)
+		return (1);
+	romheight = romwidth = windowtop = windowleft = NULL;
+	rominterpret(buf);
+
+	if (romheight == NULL || romwidth == NULL || windowtop == NULL ||
+	    windowleft == NULL || *romheight == 0 || *romwidth == 0)
+		return (1);
+
+	*fontwidth = *romwidth;
+	*fontheight = *romheight;
+	*wtop = *windowtop;
+	*wleft = *windowleft;
+	return (0);
+}
+#endif	/* SUN4C || SUN4M */
 
 #endif	/* NWSDISPLAY */
