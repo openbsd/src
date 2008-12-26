@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.48 2008/12/07 17:10:41 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.49 2008/12/26 13:29:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -461,8 +461,8 @@ main(int argc, char **argv)
 		 * inputs and outputs and find the maximum sample rate
 		 * and channel number.
 		 */
-		aparams_init(&dipar, NCHAN_MAX - 1, 0, RATE_MIN);
-		aparams_init(&dopar, NCHAN_MAX - 1, 0, RATE_MIN);
+		aparams_init(&dipar, dipar.cmin, dipar.cmax, dipar.rate);
+		aparams_init(&dopar, dopar.cmin, dopar.cmax, dopar.rate);
 		SLIST_FOREACH(fa, &ifiles, entry) {
 			aparams_grow(&dopar, &fa->ipar);
 		}

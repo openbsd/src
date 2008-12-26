@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.6 2008/12/17 07:19:27 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.7 2008/12/26 13:29:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -138,8 +138,7 @@ safile_new(struct fileops *ops, char *path,
 		ipar->le = par.le;
 		ipar->msb = par.msb;
 		ipar->rate = par.rate;
-		ipar->cmax = par.rchan - 1;
-		ipar->cmin = 0;
+		ipar->cmax = ipar->cmin + par.rchan - 1;
 	}
 	if (opar) {
 		opar->bits = par.bits;
@@ -148,8 +147,7 @@ safile_new(struct fileops *ops, char *path,
 		opar->le = par.le;
 		opar->msb = par.msb;
 		opar->rate = par.rate;
-		opar->cmax = par.pchan - 1;
-		opar->cmin = 0;
+		opar->cmax = opar->cmin + par.pchan - 1;
 	}
 	*bufsz = par.bufsz;
 	*round = par.round;
