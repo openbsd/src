@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.20 2007/02/25 18:14:48 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.21 2008/12/26 00:43:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -174,6 +174,16 @@ p9000match(struct device *parent, void *vcf, void *aux)
 	struct romaux *ra = &ca->ca_ra;
 
 	if (strcmp("p9000", ra->ra_name))
+		return (0);
+
+	/*
+	 * If this is not the console device, chances are the
+	 * frame buffer is not completely initialized, and access
+	 * to some of its control registers could hang (this is
+	 * the case on p9100). Until this can be verified, do
+	 * not attach if console is on serial.
+	 */
+	if (ra->ra_node != fbnode)
 		return (0);
 
 	return (1);
