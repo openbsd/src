@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.93 2008/12/25 22:09:51 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.94 2008/12/26 06:56:36 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -120,14 +120,26 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->name = "Realtek ALC260";
 		this->mixer_init = azalia_alc260_mixer_init;
 		break;
+	case 0x10ec0262:
+		this->name = "Realtek ALC262";
+		this->init_widget = azalia_alc88x_init_widget;
+		break;
 	case 0x10ec0268:
 		this->name = "Realtek ALC268";
+		this->init_widget = azalia_alc88x_init_widget;
 		break;
 	case 0x10ec0269:
 		this->name = "Realtek ALC269";
 		break;
+	case 0x10ec0272:
+		this->name = "Realtek ALC272";
+		break;
 	case 0x10ec0662:
-		this->name = "Realtek ALC662-GR";
+		this->name = "Realtek ALC662";
+		this->init_widget = azalia_alc88x_init_widget;
+		break;
+	case 0x10ec0663:
+		this->name = "Realtek ALC663";
 		break;
 	case 0x10ec0861:
 		this->name = "Realtek ALC861";
