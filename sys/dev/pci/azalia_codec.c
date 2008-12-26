@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.96 2008/12/26 08:23:18 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.97 2008/12/26 10:07:48 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -597,8 +597,7 @@ azalia_generic_mixer_init(codec_t *this)
 		/* input mute */
 		if (w->widgetcap & COP_AWCAP_INAMP &&
 		    w->inamp_cap & COP_AMPCAP_MUTE) {
-			if (w->type != COP_AWTYPE_AUDIO_SELECTOR &&
-			    w->type != COP_AWTYPE_AUDIO_MIXER) {
+			if (w->type != COP_AWTYPE_AUDIO_MIXER) {
 				MIXER_REG_PROLOG;
 				snprintf(d->label.name, sizeof(d->label.name),
 				    "%s_mute", w->name);
