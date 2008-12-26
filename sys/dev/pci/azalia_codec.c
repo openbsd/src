@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.94 2008/12/26 06:56:36 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.95 2008/12/26 07:24:06 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -39,12 +39,6 @@
 
 #define XNAME(co)	(((struct device *)co->az)->dv_xname)
 #define MIXER_DELTA(n)	(AUDIO_MAX_GAIN / (n))
-
-#define ENUM_OFFON	.un.e={2, {{{AudioNoff}, 0}, {{AudioNon}, 1}}}
-#define ENUM_IO		.un.e={2, {{{"input"}, 0}, {{"output"}, 1}}}
-#define AzaliaNfront	"front"
-#define AzaliaNclfe	"clfe"
-#define AzaliaNside	"side"
 
 #define REALTEK_ALC660		0x10ec0660
 #define ALC660_ASUS_G2K		0x13391043
