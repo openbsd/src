@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt445.c,v 1.1 2003/06/17 21:21:31 miod Exp $	*/
+/*	$OpenBSD: bt445.c,v 1.2 2008/12/26 15:33:40 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -91,8 +91,8 @@ btcham_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_regs[BT445_ADDRESS] = BT445_REGISTER_OFFSET(BT445_ID);
 	id = sc->sc_regs[BT445_REGISTER_INDEX(BT445_ID)];
 
-	sc->sc_regs[BT445_ADDRESS] = BT445_REGISTER_OFFSET(BT445_ID);
-	rev = sc->sc_regs[BT445_REGISTER_INDEX(BT445_ID)];
+	sc->sc_regs[BT445_ADDRESS] = BT445_REGISTER_OFFSET(BT445_REVISION);
+	rev = sc->sc_regs[BT445_REGISTER_INDEX(BT445_REVISION)];
 
 	printf(": id 0x%x, revision 0x%x\n", id, rev);
 }
