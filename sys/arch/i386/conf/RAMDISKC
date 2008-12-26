@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.89 2008/09/08 05:36:29 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.90 2008/12/26 17:10:45 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -41,11 +41,13 @@ acpi0		at bios?
 #acpibtn*	at acpi?
 #acpicpu*	at acpi?
 #acpiec*	at acpi?
+acpimadt0	at acpi?
 acpiprt*	at acpi?
 #acpitz*	at acpi?
 
 cpu0	at mainbus?
 bios0	at mainbus0
+ioapic*	at mainbus?
 apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 #option	APMDEBUG
 pcibios0 at bios0 flags 0x0000
