@@ -1,4 +1,4 @@
-/*	$OpenBSD: btreg.h,v 1.5 2007/05/29 09:54:05 sobrado Exp $	*/
+/*	$OpenBSD: btreg.h,v 1.6 2008/12/26 15:34:33 miod Exp $	*/
 /*	$NetBSD: btreg.h,v 1.4 1996/02/27 22:09:21 thorpej Exp $ */
 
 /*
@@ -81,28 +81,6 @@ struct bt_regs {
 	(bt)->bt_addr = 0x04 << (shift);	/* read mask */ \
 	(bt)->bt_ctrl = 0xff << (shift);	/* color planes */ \
 } while(0)
-#define BT_UNBLANK(bt, x, shift) do { \
-	/* restore color 0 (and R of color 1) */ \
-	(bt)->bt_addr = 0 << (shift); \
-	(bt)->bt_cmap = (x); \
-	if ((shift)) { \
-		(bt)->bt_cmap = (x) << 8; \
-		(bt)->bt_cmap = (x) << 16; \
-	/* restore read mask */ \
-	BT_INIT((bt), (shift)); \
-} while(0)
-#define BT_BLANK(bt, shift) do { \
-	(bt)->bt_addr = 0x06 << (shift);	/* command reg */ \
-	(bt)->bt_ctrl = 0x70 << (shift);	/* overlay plane */ \
-	(bt)->bt_addr = 0x04 << (shift);	/* read mask */ \
-	(bt)->bt_ctrl = 0x00 << (shift);	/* color planes */ \
-	/* Set color 0 to black -- note that this overwrites R of color 1. */\
-	(bt)->bt_addr = 0 << (shift); \
-	(bt)->bt_cmap = 0 << (shift); \
-	/* restore read mask */ \
-	BT_INIT((bt), (shift)); \
-} while(0)
-
 
 /*
  * SBus framebuffer control look like this (usually at offset 0x400000).
