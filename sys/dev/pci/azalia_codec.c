@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.95 2008/12/26 07:24:06 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.96 2008/12/26 08:23:18 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -82,9 +82,10 @@ uint32_t azalia_generic_mixer_to_device_value
 	(const codec_t *, nid_t, int, u_char);
 int	azalia_generic_set_port(codec_t *, mixer_ctrl_t *);
 int	azalia_generic_get_port(codec_t *, mixer_ctrl_t *);
-int	azalia_gpio_unmute(codec_t *, int);
 
+void	azalia_devinfo_offon(mixer_devinfo_t *);
 void	azalia_pin_config_ov(widget_t *, int, int);
+int	azalia_gpio_unmute(codec_t *, int);
 int	azalia_codec_gpio_quirks(codec_t *);
 
 int	azalia_ad1984_mixer_init(codec_t *);
@@ -553,7 +554,6 @@ azalia_generic_mixer_init(codec_t *this)
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s_mute", w->name);
-			d->type = AUDIO_MIXER_ENUM;
 			if (w->mixer_class >= 0)
 				d->mixer_class = w->mixer_class;
 			else {
@@ -565,13 +565,7 @@ azalia_generic_mixer_init(codec_t *this)
 					d->mixer_class = AZ_CLASS_INPUT;
 			}
 			m->target = MI_TARGET_OUTAMP;
-			d->un.e.num_mem = 2;
-			d->un.e.member[0].ord = 0;
-			strlcpy(d->un.e.member[0].label.name, AudioNoff,
-			    MAX_AUDIO_DEV_LEN);
-			d->un.e.member[1].ord = 1;
-			strlcpy(d->un.e.member[1].label.name, AudioNon,
-			    MAX_AUDIO_DEV_LEN);
+			azalia_devinfo_offon(d);
 			this->nmixers++;
 		}
 
@@ -608,19 +602,12 @@ azalia_generic_mixer_init(codec_t *this)
 				MIXER_REG_PROLOG;
 				snprintf(d->label.name, sizeof(d->label.name),
 				    "%s_mute", w->name);
-				d->type = AUDIO_MIXER_ENUM;
 				if (w->mixer_class >= 0)
 					d->mixer_class = w->mixer_class;
 				else
 					d->mixer_class = AZ_CLASS_INPUT;
 				m->target = 0;
-				d->un.e.num_mem = 2;
-				d->un.e.member[0].ord = 0;
-				strlcpy(d->un.e.member[0].label.name,
-				    AudioNoff, MAX_AUDIO_DEV_LEN);
-				d->un.e.member[1].ord = 1;
-				strlcpy(d->un.e.member[1].label.name,
-				    AudioNon, MAX_AUDIO_DEV_LEN);
+				azalia_devinfo_offon(d);
 				this->nmixers++;
 			} else {
 				MIXER_REG_PROLOG;
@@ -719,16 +706,9 @@ azalia_generic_mixer_init(codec_t *this)
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s_boost", w->name);
-			d->type = AUDIO_MIXER_ENUM;
 			d->mixer_class = AZ_CLASS_OUTPUT;
 			m->target = MI_TARGET_PINBOOST;
-			d->un.e.num_mem = 2;
-			d->un.e.member[0].ord = 0;
-			strlcpy(d->un.e.member[0].label.name, AudioNoff,
-			    MAX_AUDIO_DEV_LEN);
-			d->un.e.member[1].ord = 1;
-			strlcpy(d->un.e.member[1].label.name, AudioNon,
-			    MAX_AUDIO_DEV_LEN);
+			azalia_devinfo_offon(d);
 			this->nmixers++;
 		}
 
@@ -737,16 +717,9 @@ azalia_generic_mixer_init(codec_t *this)
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s_eapd", w->name);
-			d->type = AUDIO_MIXER_ENUM;
 			d->mixer_class = AZ_CLASS_OUTPUT;
 			m->target = MI_TARGET_EAPD;
-			d->un.e.num_mem = 2;
-			d->un.e.member[0].ord = 0;
-			strlcpy(d->un.e.member[0].label.name, AudioNoff,
-			    MAX_AUDIO_DEV_LEN);
-			d->un.e.member[1].ord = 1;
-			strlcpy(d->un.e.member[1].label.name, AudioNon,
-			    MAX_AUDIO_DEV_LEN);
+			azalia_devinfo_offon(d);
 			this->nmixers++;
 		}
 
@@ -836,6 +809,17 @@ azalia_generic_mixer_init(codec_t *this)
 	azalia_generic_mixer_fix_indexes(this);
 	azalia_generic_mixer_default(this);
 	return 0;
+}
+
+void
+azalia_devinfo_offon(mixer_devinfo_t *d)
+{
+	d->type = AUDIO_MIXER_ENUM;
+	d->un.e.num_mem = 2;
+	d->un.e.member[0].ord = 0;
+	strlcpy(d->un.e.member[0].label.name, AudioNoff, MAX_AUDIO_DEV_LEN);
+	d->un.e.member[1].ord = 1;
+	strlcpy(d->un.e.member[1].label.name, AudioNon, MAX_AUDIO_DEV_LEN);
 }
 
 int
@@ -1021,14 +1005,7 @@ azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
 			snprintf(d->label.name, sizeof(d->label.name),
 			    AudioNmute);
 			d->mixer_class = AZ_CLASS_OUTPUT;
-			d->type = AUDIO_MIXER_ENUM;
-			d->un.e.num_mem = 2;
-			d->un.e.member[0].ord = 0;
-			strlcpy(d->un.e.member[0].label.name, AudioNoff,
-			    MAX_AUDIO_DEV_LEN);
-			d->un.e.member[1].ord = 1;
-			strlcpy(d->un.e.member[1].label.name, AudioNon,
-			    MAX_AUDIO_DEV_LEN);
+			azalia_devinfo_offon(d);
 			this->nmixers++;
 		}
 	}
@@ -1061,14 +1038,7 @@ azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
 			snprintf(d->label.name, sizeof(d->label.name),
 			    AudioNmute);
 			d->mixer_class = AZ_CLASS_RECORD;
-			d->type = AUDIO_MIXER_ENUM;
-			d->un.e.num_mem = 2;
-			d->un.e.member[0].ord = 0;
-			strlcpy(d->un.e.member[0].label.name, AudioNoff,
-			    MAX_AUDIO_DEV_LEN);
-			d->un.e.member[1].ord = 1;
-			strlcpy(d->un.e.member[1].label.name, AudioNon,
-			    MAX_AUDIO_DEV_LEN);
+			azalia_devinfo_offon(d);
 			this->nmixers++;
 		}
 	}
