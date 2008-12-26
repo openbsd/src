@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.38 2007/02/18 18:40:35 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.39 2008/12/26 15:34:10 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -77,12 +77,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/device.h>
-#include <sys/ioctl.h>
-#include <sys/malloc.h>
-#include <sys/mman.h>
-#include <sys/tty.h>
 #include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
@@ -103,7 +97,8 @@
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/cgsixreg.h>
-#include <sparc/dev/sbusvar.h>
+#include <dev/ic/bt458reg.h>
+
 #if defined(SUN4)
 #include <sparc/dev/pfourreg.h>
 #endif
@@ -409,8 +404,8 @@ cgsix_reset(struct cgsix_softc *sc, u_int fhcrev)
 
 	/* Enable cursor in Brooktree DAC. */
 	bt = sc->sc_bt;
-	bt->bt_addr = 0x06 << 24;
-	bt->bt_ctrl |= 0x03 << 24;
+	bt->bt_addr = BT_CR << 24;
+	bt->bt_ctrl |= (BTCR_DISPENA_OV1 | BTCR_DISPENA_OV0) << 24;
 }
 
 paddr_t

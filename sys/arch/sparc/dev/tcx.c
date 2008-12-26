@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.41 2008/12/25 16:42:44 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.42 2008/12/26 15:34:10 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -80,7 +80,7 @@
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/tcxreg.h>
-#include <sparc/dev/sbusvar.h>
+#include <dev/ic/bt458reg.h>
 
 #include <dev/cons.h>	/* for prom console hook */
 
@@ -165,7 +165,8 @@ struct cfdriver tcx_cd = {
  * mode.
  *
  * Both flavours can be told out by the `tcx-8-bit' property; also, on
- * 8-bit tcx, the 24 bit color regions have a size of zero.
+ * 8-bit tcx, the 24 bit color regions have a size of zero (or one with
+ * the most recent PROM versions).
  */
 #define	TCX_CTL_8_MAPPED	0x00000000	/* 8 bits, uses colormap */
 #define	TCX_CTL_24_MAPPED	0x01000000	/* 24 bits, uses colormap */
@@ -401,8 +402,8 @@ tcx_reset(struct tcx_softc *sc, int depth)
 
 	/* Enable cursor in Brooktree DAC. */
 	bt = sc->sc_bt;
-	bt->bt_addr = 0x06 << 24;
-	bt->bt_ctrl |= 0x03 << 24;
+	bt->bt_addr = BT_CR << 24;
+	bt->bt_ctrl |= (BTCR_DISPENA_OV1 | BTCR_DISPENA_OV0) << 24;
 
 	/*
 	 * Change mode if appropriate
@@ -960,7 +961,7 @@ tcx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			 *
 			 * The particular character cell position might
 			 * span two stipple cells, so we have to account
-			 * for this unconditionnaly.
+			 * for this.
 			 */
 
 			if (rbcnt >= 0) {
