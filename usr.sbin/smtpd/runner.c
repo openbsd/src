@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.9 2008/12/19 00:39:05 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.10 2008/12/27 17:03:29 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -75,8 +75,6 @@ struct batch	*batch_lookup(struct smtpd *, struct message *);
 int		queue_load_envelope(struct message *, char *);
 int		queue_update_envelope(struct message *);
 int		queue_remove_envelope(struct message *);
-
-u_int32_t	hash(u_int8_t *, size_t);
 
 void
 runner_sig_handler(int sig, short event, void *p)
@@ -500,7 +498,7 @@ runner_process_message(struct smtpd *env, char *messageid)
 	char evppath[MAXPATHLEN];
 	u_int16_t hval = 0;
 
-	hval = hash(messageid, strlen(messageid)) % DIRHASH_BUCKETS;
+	hval = queue_hash(messageid);
 
 	if (! bsnprintf(evppath, MAXPATHLEN, "%s/%d/%s%s", PATH_QUEUE, hval,
 		messageid, PATH_ENVELOPES))
@@ -548,7 +546,7 @@ runner_process_envelope(struct smtpd *env, char *msgid, char *evpid)
 	message.flags |= F_MESSAGE_SCHEDULED;
 	queue_update_envelope(&message);
 
-	hval = hash(msgid, strlen(msgid)) % DIRHASH_BUCKETS;
+	hval = queue_hash(msgid);
 	if (! bsnprintf(evppath, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE, hval,
 		msgid, PATH_ENVELOPES, evpid))
 		fatal("queue_process_envelope: snprintf");

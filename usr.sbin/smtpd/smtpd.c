@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.19 2008/12/22 12:56:21 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.20 2008/12/27 17:03:29 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -62,7 +62,6 @@ int		parent_maildir_init(struct passwd *, char *);
 int		parent_external_mda(struct batch *, struct path *);
 int		check_child(pid_t, const char *);
 int		setup_spool(uid_t, gid_t);
-u_int16_t	queue_message_hash(struct message *);
 
 pid_t	lka_pid = 0;
 pid_t	mfa_pid = 0;
@@ -762,7 +761,7 @@ parent_open_message_file(struct batch *batchp)
 	struct message *messagep;
 
 	messagep = &batchp->message;
-	hval = queue_message_hash(messagep);
+	hval = queue_hash(messagep->message_id);
 
 	if (! bsnprintf(pathname, MAXPATHLEN, "%s%s/%d/%s/message",
 		PATH_SPOOL, PATH_QUEUE, hval, batchp->message_id)) {

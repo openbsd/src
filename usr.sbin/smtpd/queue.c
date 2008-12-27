@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.31 2008/12/18 15:11:21 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.32 2008/12/27 17:03:29 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -62,7 +62,6 @@ int		queue_open_message_file(struct batch *);
 int		queue_batch_resolved(struct smtpd *, struct batch *);
 int		queue_message_schedule(struct message *, time_t);
 void		queue_delete_message_file(char *);
-u_int16_t	queue_message_hash(struct message *);
 int		queue_record_incoming_envelope(struct message *);
 int		queue_update_incoming_envelope(struct message *);
 int		queue_remove_incoming_envelope(struct message *);
@@ -78,7 +77,6 @@ int		queue_load_envelope(struct message *, char *);
 void		queue_delete_message(char *);
 
 void		batch_send(struct smtpd *, struct batch *, time_t);
-u_int32_t	hash(u_int8_t *, size_t);
 struct batch	*queue_record_batch(struct smtpd *, struct message *);
 struct batch    *batch_by_id(struct smtpd *, u_int64_t);
 struct message	*message_by_id(struct smtpd *, struct batch *, u_int64_t);
@@ -930,7 +928,7 @@ queue_commit_incoming_message(struct message *messagep)
 		messagep->message_id))
 		fatal("queue_commit_message_incoming: snprintf");
 
-	hval = queue_message_hash(messagep);
+	hval = queue_hash(messagep->message_id);
 
 	if (! bsnprintf(queuedir, MAXPATHLEN, "%s/%d", PATH_QUEUE, hval))
 		fatal("queue_commit_message_incoming: snprintf");
@@ -983,7 +981,7 @@ queue_record_envelope(struct message *messagep)
 		messagep->message_id))
 		fatal("queue_record_envelope: snprintf");
 
-	hval = queue_message_hash(messagep);
+	hval = queue_hash(messagep->message_id);
 
 	if (! bsnprintf(queuedir, MAXPATHLEN, "%s/%d", PATH_QUEUE, hval))
 		fatal("queue_record_envelope: snprintf");
@@ -1041,7 +1039,7 @@ queue_remove_envelope(struct message *messagep)
 	char pathname[MAXPATHLEN];
 	u_int16_t hval;
 
-	hval = queue_message_hash(messagep);
+	hval = queue_hash(messagep->message_id);
 
 	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
 		hval, messagep->message_id, PATH_ENVELOPES,
@@ -1070,7 +1068,7 @@ queue_update_envelope(struct message *messagep)
 	mode_t mode = O_RDWR;
 	u_int16_t hval;
 
-	hval = queue_message_hash(messagep);
+	hval = queue_hash(messagep->message_id);
 
 	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
 		hval, messagep->message_id, PATH_ENVELOPES, messagep->message_uid))
@@ -1106,7 +1104,7 @@ queue_load_envelope(struct message *messagep, char *evpid)
 	strlcpy(msgid, evpid, MAXPATHLEN);
 	*strrchr(msgid, '.') = '\0';
 
-	hval = hash(msgid, strlen(msgid)) % DIRHASH_BUCKETS;
+	hval = queue_hash(msgid);
 	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
 		hval, msgid, PATH_ENVELOPES, evpid))
 		return 0;
@@ -1131,7 +1129,7 @@ queue_open_message_file(struct batch *batchp)
 	mode_t mode = O_RDONLY;
 	u_int16_t hval;
 
-	hval = hash(batchp->message_id, strlen(batchp->message_id)) % DIRHASH_BUCKETS;
+	hval = queue_hash(batchp->message_id);
 
 	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s/message", PATH_QUEUE,
 		hval, batchp->message_id))
@@ -1151,7 +1149,7 @@ queue_delete_message(char *msgid)
 	char msgpath[MAXPATHLEN];
 	u_int16_t hval;
 
-	hval = hash(msgid, strlen(msgid)) % DIRHASH_BUCKETS;
+	hval = queue_hash(msgid);
 	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%d/%s", PATH_QUEUE,
 		hval, msgid))
 		fatal("queue_delete_message: snprintf");
@@ -1185,19 +1183,12 @@ queue_delete_message(char *msgid)
 }
 
 u_int16_t
-queue_message_hash(struct message *messagep)
+queue_hash(char *msgid)
 {
-	return hash(messagep->message_id, strlen(messagep->message_id))
-	    % DIRHASH_BUCKETS;
-}
+	u_int16_t	h;
 
-u_int32_t
-hash(u_int8_t *buf, size_t len)
-{
-	u_int32_t h;
+	for (h = 5381; *msgid; msgid++)
+		h = ((h << 5) + h) + *msgid;
 
-	for (h = 5381; len; len--)
-		h = ((h << 5) + h) + *buf++;
-
-	return h;
+	return (h % DIRHASH_BUCKETS);
 }
