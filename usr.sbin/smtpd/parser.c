@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2008/12/06 02:44:08 gilles Exp $	*/
+/*	$OpenBSD: parser.c,v 1.3 2008/12/27 16:45:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -56,19 +56,18 @@ struct token {
 
 static const struct token t_main[];
 static const struct token t_show[];
-static const struct token t_rdr[];
-static const struct token t_table[];
-static const struct token t_host[];
-static const struct token t_rdr_id[];
-static const struct token t_table_id[];
-static const struct token t_host_id[];
 
 static const struct token t_main[] = {
-	{KEYWORD,	"showqueue",	SHOWQUEUE,	NULL},
-	{KEYWORD,	"showrunqueue",	SHOWRUNQUEUE,	NULL},
+	{KEYWORD,	"show",		NONE,		t_show},
 	{KEYWORD,	"monitor",	MONITOR,	NULL},
 	{KEYWORD,	"reload",	RELOAD,		NULL},
 	{KEYWORD,	"stop",		SHUTDOWN,	NULL},
+	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show[] = {
+	{KEYWORD,	"queue",	SHOW_QUEUE,	NULL},
+	{KEYWORD,	"runqueue",	SHOW_RUNQUEUE,	NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
 

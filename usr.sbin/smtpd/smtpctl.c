@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.2 2008/12/06 02:44:08 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.3 2008/12/27 16:45:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -101,10 +101,10 @@ main(int argc, char *argv[])
 
 	/* handle "disconnected" commands */
 	switch (res->action) {
-	case SHOWQUEUE:
+	case SHOW_QUEUE:
 		show_queue(0);
 		break;
-	case SHOWRUNQUEUE:
+	case SHOW_RUNQUEUE:
 		show_runqueue(0);
 		break;
 	default:
@@ -126,7 +126,6 @@ connected:
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
 	imsg_init(ibuf, ctl_sock, NULL);
-	done = 0;
 
 	/* process user request */
 	switch (res->action) {
@@ -142,6 +141,8 @@ connected:
 	case MONITOR:
 		/* XXX */
 		break;
+	default:
+		err(1, "unknown request (%d)", res->action);
 	}
 
 	while (ibuf->w.queued)
@@ -168,6 +169,8 @@ connected:
 				break;
 			case MONITOR:
 				break;
+			default:
+				err(1, "unexpected reply (%d)", res->action);
 			}
 			/* insert imsg replies switch here */
 
