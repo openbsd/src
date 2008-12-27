@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifb.4,v 1.3 2008/03/31 08:03:31 jmc Exp $
+.\"	$OpenBSD: ifb.4,v 1.4 2008/12/27 23:16:47 kettenis Exp $
 .\"
 .\" Copyright (c) 2008 Miodrag Vallat.
 .\"
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2008 $
+.Dd $Mdocdate: December 27 2008 $
 .Dt IFB 4 sparc64
 .Os
 .Sh NAME
@@ -112,9 +112,3 @@ High res 1600x1280, with a refresh rate of 76Hz.
 .Xr pci 4 ,
 .Xr wscons 4 ,
 .Xr wsdisplay 4
-.Sh BUGS
-Overlay parasitic data appears above the displayed text.
-This is especially visible in the lower left corner of the display.
-This essentially makes this driver currently unusable.
-.Pp
-Vertical scrolling could be done in a much smoother way.
