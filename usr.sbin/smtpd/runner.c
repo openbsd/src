@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.11 2008/12/27 17:36:37 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.12 2008/12/27 17:45:54 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -447,7 +447,7 @@ runner_process_queue(struct smtpd *env)
 			continue;
 		bucket = strtonum(dp->d_name, 0, DIRHASH_BUCKETS - 1, &errstr);
 		if (errstr) {
-			log_warn("runner_process_queue: invalid bucket: %s/%s",
+			log_warnx("runner_process_queue: invalid bucket: %s/%s",
 			    PATH_QUEUE, dp->d_name);
 			continue;
 		}
