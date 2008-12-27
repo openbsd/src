@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.2 2008/03/23 20:20:11 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.3 2008/12/27 14:33:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Miodrag Vallat.
@@ -85,6 +85,14 @@
  * windows and have them provide the complete image. This however leads
  * to parasite overlays appearing sometimes in the screen...
  */
+
+/*
+ * The Expert3D has an extra BAR that is not present on the -Lite
+ * version.  This register contains bits that tell us how many BARs to
+ * skip before we get to the BARs that interest us.
+ */
+#define IFB_PCI_CFG			0x5c
+#define IFB_PCI_CFG_BAR_OFFSET(x)	((x & 0x000000e0) >> 3)
 
 #define	IFB_REG_OFFSET			0x8000
 
@@ -549,13 +557,16 @@ int
 ifb_mapregs(struct ifb_softc *sc, struct pci_attach_args *pa)
 {
 	u_int32_t cf;
-	int rc;
+	int bar, rc;
 
-	cf = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
+	cf = pci_conf_read(pa->pa_pc, pa->pa_tag, IFB_PCI_CFG);
+	bar = PCI_MAPREG_START + IFB_PCI_CFG_BAR_OFFSET(cf);
+
+	cf = pci_conf_read(pa->pa_pc, pa->pa_tag, bar);
 	if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO)
 		rc = EINVAL;
 	else {
-		rc = pci_mapreg_map(pa, PCI_MAPREG_START, cf,
+		rc = pci_mapreg_map(pa, bar, cf,
 		    BUS_SPACE_MAP_LINEAR, NULL, &sc->sc_mem_h,
 		    &sc->sc_membase, &sc->sc_memlen, 0);
 	}
@@ -565,11 +576,11 @@ ifb_mapregs(struct ifb_softc *sc, struct pci_attach_args *pa)
 		return rc;
 	}
 
-	cf = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START + 4);
+	cf = pci_conf_read(pa->pa_pc, pa->pa_tag, bar + 4);
 	if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO)
 		rc = EINVAL;
 	else {
-		rc = pci_mapreg_map(pa, PCI_MAPREG_START + 4, cf,
+		rc = pci_mapreg_map(pa, bar + 4, cf,
 		    0, NULL, &sc->sc_reg_h, NULL, NULL, 0x9000);
 	}
 	if (rc != 0) {
