@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.27 2008/12/19 08:01:06 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.28 2008/12/27 16:10:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -132,6 +132,23 @@ aproc_opos(struct aproc *p, struct abuf *obuf, int delta)
 	LIST_FOREACH(ibuf, &p->ibuflist, ient) {
 		abuf_opos(ibuf, delta);
 	}
+}
+
+int
+aproc_inuse(struct aproc *p)
+{
+	struct abuf *i;
+
+	LIST_FOREACH(i, &p->ibuflist, ient) {
+		if (i->inuse)
+			return 1;
+	}
+	LIST_FOREACH(i, &p->obuflist, oent) {
+		if (i->inuse)
+			return 1;
+	}
+	DPRINTFN(3, "aproc_inuse: %s: not inuse\n", p->name);
+	return 0;
 }
 
 int
@@ -323,24 +340,22 @@ wpipe_new(struct file *f)
 }
 
 /*
- * Fill an output block with silence.
+ * Append the given amount of silence (or less if there's not enough
+ * space), and crank mixitodo accordingly
  */
 void
-mix_bzero(struct aproc *p)
+mix_bzero(struct abuf *obuf, unsigned zcount)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
 	short *odata;
 	unsigned ocount;
 
-	DPRINTFN(4, "mix_bzero: used = %u, todo = %u\n",
-	    obuf->used, obuf->mixitodo);
+	DPRINTFN(4, "mix_bzero: used = %u, zcount = %u\n", obuf->used, zcount);
 	odata = (short *)abuf_wgetblk(obuf, &ocount, obuf->mixitodo);
 	ocount -= ocount % obuf->bpf;
-	if (ocount == 0)
-		return;
+	if (ocount > zcount)
+		ocount = zcount;
 	memset(odata, 0, ocount);
 	obuf->mixitodo += ocount;
-	DPRINTFN(4, "mix_bzero: ocount %u, todo %u\n", ocount, obuf->mixitodo);
 }
 
 /*
@@ -351,17 +366,30 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 {
 	short *idata, *odata;
 	unsigned i, j, icnt, onext, ostart;
-	unsigned scount, icount, ocount;
+	unsigned scount, icount, ocount, zcount;
 	int vol;
 
 	DPRINTFN(4, "mix_badd: todo = %u, done = %u\n",
 	    obuf->mixitodo, ibuf->mixodone);
 
+	/*
+	 * calculate the maximum we can read
+	 */
 	idata = (short *)abuf_rgetblk(ibuf, &icount, 0);
 	icount /= ibuf->bpf;
 	if (icount == 0)
 		return;
 
+	/*
+	 * zero-fill if necessary
+	 */
+	zcount = ibuf->mixodone + icount * obuf->bpf;
+	if (zcount > obuf->mixitodo)
+		mix_bzero(obuf, zcount - obuf->mixitodo);
+
+	/*
+	 * calculate the maximum we can write
+	 */
 	odata = (short *)abuf_wgetblk(obuf, &ocount, ibuf->mixodone);
 	ocount /= obuf->bpf;
 	if (ocount == 0)
@@ -388,43 +416,67 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 	    scount, ibuf->mixodone, obuf->mixitodo);
 }
 
+/*
+ * Handle buffer underrun, return 0 if stream died.
+ */
+int
+mix_xrun(struct abuf *i, struct abuf *obuf)
+{
+	unsigned fdrop;
+	
+	if (i->mixodone > 0)
+		return 1;
+	if (i->xrun == XRUN_ERROR) {
+		abuf_hup(i);
+		return 0;
+	}
+	mix_bzero(obuf, obuf->len);
+	fdrop = obuf->mixitodo / obuf->bpf;
+	i->mixodone += fdrop * obuf->bpf;
+	if (i->xrun == XRUN_SYNC)
+		i->drop += fdrop * i->bpf;
+	else {
+		abuf_opos(i, -(int)fdrop);
+		if (i->duplex) {
+			DPRINTF("mix_xrun: duplex %u\n", fdrop);
+			i->duplex->drop += fdrop * i->duplex->bpf;
+			abuf_ipos(i->duplex, -(int)fdrop);
+		}
+	}
+	DPRINTF("mix_xrun: drop = %u\n", i->drop);
+	return 1;
+}
+
 int
 mix_in(struct aproc *p, struct abuf *ibuf)
 {
 	struct abuf *i, *inext, *obuf = LIST_FIRST(&p->obuflist);
-	unsigned ocount;
+	unsigned odone;
 
-	DPRINTFN(4, "mix_in: used = %u, done = %u, todo = %u\n",
-	    ibuf->used, ibuf->mixodone, obuf->mixitodo);
+	DPRINTFN(4, "mix_in: used/len = %u/%u, done/todo = %u/%u\n",
+	    ibuf->used, ibuf->len, ibuf->mixodone, obuf->mixitodo);
 		
-	if (!ABUF_ROK(ibuf) || ibuf->mixodone == obuf->mixitodo)
+	if (!ABUF_ROK(ibuf))
 		return 0;
-
-	mix_badd(ibuf, obuf);
-	ocount = obuf->mixitodo;
-	LIST_FOREACH(i, &p->ibuflist, ient) {
-		if (ocount > i->mixodone)
-			ocount = i->mixodone;
-	}
-	if (ocount == 0)
-		return 0;
-
-	abuf_wcommit(obuf, ocount);
-	p->u.mix.lat += ocount / obuf->bpf;
-	obuf->mixitodo -= ocount;
-	if (!abuf_flush(obuf))
-		return 0; /* hup */
-	mix_bzero(p);
+	odone = obuf->len;
 	for (i = LIST_FIRST(&p->ibuflist); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, ient);
-		i->mixodone -= ocount;
-		if (i->mixodone < obuf->mixitodo)
-			mix_badd(i, obuf);
 		if (!abuf_fill(i))
-			continue;
+			continue; /* eof */
+		mix_badd(i, obuf);
+		if (odone > i->mixodone)
+			odone = i->mixodone;
 	}
-	if (LIST_EMPTY(&p->ibuflist))
-		p->u.mix.idle += ocount / obuf->bpf;
+	if (LIST_EMPTY(&p->ibuflist) || odone == 0)
+		return 0;
+	p->u.mix.lat += odone / obuf->bpf;
+	LIST_FOREACH(i, &p->ibuflist, ient) {
+		i->mixodone -= odone;
+	}
+	abuf_wcommit(obuf, odone);
+	obuf->mixitodo -= odone;
+	if (!abuf_flush(obuf))
+		return 0; /* hup */
 	return 1;
 }
 
@@ -432,91 +484,85 @@ int
 mix_out(struct aproc *p, struct abuf *obuf)
 {
 	struct abuf *i, *inext;
-	unsigned ocount, fdrop;
+	unsigned odone;
 
-	DPRINTFN(4, "mix_out: used = %u, todo = %u\n",
-	    obuf->used, obuf->mixitodo);
+	DPRINTFN(4, "mix_out: used/len = %u/%u, todo/len = %u/%u\n",
+	    obuf->used, obuf->len, obuf->mixitodo, obuf->len);
 
 	if (!ABUF_WOK(obuf))
-		return 0;
-
-	mix_bzero(p);
-	ocount = obuf->mixitodo;
+		return 0;	
+	odone = obuf->len;
 	for (i = LIST_FIRST(&p->ibuflist); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, ient);
 		if (!abuf_fill(i))
-			continue;
+			continue; /* eof */
 		if (!ABUF_ROK(i)) {
-			if ((p->u.mix.flags & MIX_DROP) && i->mixodone == 0) {
-				if (i->xrun == XRUN_ERROR) {
-					abuf_hup(i);
+			if (p->u.mix.flags & MIX_DROP) {
+				if (!mix_xrun(i, obuf))
 					continue;
-				}
-				fdrop = obuf->mixitodo / obuf->bpf;
-				i->mixodone += fdrop * obuf->bpf;
-				if (i->xrun == XRUN_SYNC)
-					i->drop += fdrop * i->bpf;
-				else {
-					abuf_opos(i, -(int)fdrop);
-					if (i->duplex) {
-						DPRINTF("mix_out: duplex %u\n",
-						    fdrop);
-						i->duplex->drop += fdrop * 
-						    i->duplex->bpf;
-						abuf_ipos(i->duplex,
-						    -(int)fdrop);
-					}
-				}
-				DPRINTF("mix_out: drop = %u\n", i->drop);
 			}
 		} else
 			mix_badd(i, obuf);
-		if (ocount > i->mixodone)
-			ocount = i->mixodone;
+		if (odone > i->mixodone)
+			odone = i->mixodone;
 	}
-	if (ocount == 0)
-		return 0;
-	if (LIST_EMPTY(&p->ibuflist) && (p->u.mix.flags & MIX_AUTOQUIT)) {
-		DPRINTF("mix_out: nothing more to do...\n");
-		aproc_del(p);
-		return 0;
+	if (LIST_EMPTY(&p->ibuflist)) {
+		if (p->u.mix.flags & MIX_AUTOQUIT) {
+			DPRINTF("mix_out: nothing more to do...\n");
+			aproc_del(p);
+			return 0;
+		}
+		if (!(p->u.mix.flags & MIX_DROP))
+			return 0;
+		mix_bzero(obuf, obuf->len);
+		odone = obuf->mixitodo;
+		p->u.mix.idle += odone / obuf->bpf;
 	}
-	abuf_wcommit(obuf, ocount);
-	p->u.mix.lat += ocount / obuf->bpf;
-	obuf->mixitodo -= ocount;
+	if (odone == 0)
+		return 0;
+	p->u.mix.lat += odone / obuf->bpf;
 	LIST_FOREACH(i, &p->ibuflist, ient) {
-		i->mixodone -= ocount;
+		i->mixodone -= odone;
 	}
-	if (LIST_EMPTY(&p->ibuflist))
-		p->u.mix.idle += ocount / obuf->bpf;
+	abuf_wcommit(obuf, odone);
+	obuf->mixitodo -= odone;
 	return 1;
 }
 
 void
 mix_eof(struct aproc *p, struct abuf *ibuf)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
+	struct abuf *i, *obuf = LIST_FIRST(&p->obuflist);
+	unsigned odone;
 
 	DPRINTF("mix_eof: %s: detached\n", p->name);
 	mix_setmaster(p);
 
-	/*
-	 * If there's no more inputs, abuf_run() will trigger the eof
-	 * condition and propagate it, so no need to handle it here.
-	 */
-	abuf_run(obuf);
-	DPRINTF("mix_eof: done\n");
+	if (!aproc_inuse(p)) {
+		DPRINTF("mix_eof: %s: from input\n", p->name);
+		/*
+		 * find a blocked input
+		 */
+		odone = obuf->len;
+		LIST_FOREACH(i, &p->ibuflist, ient) {
+			if (ABUF_ROK(i) && i->mixodone < obuf->mixitodo) {
+				abuf_run(i);
+				return;
+			}
+			if (odone > i->mixodone)
+				odone = i->mixodone;
+		}
+		/*
+		 * no blocked inputs, check if output is blocked
+		 */
+		if (LIST_EMPTY(&p->ibuflist) || odone == obuf->mixitodo)
+			abuf_run(obuf);
+	}
 }
 
 void
 mix_hup(struct aproc *p, struct abuf *obuf)
 {
-	struct abuf *ibuf;
-
-	while (!LIST_EMPTY(&p->ibuflist)) {
-		ibuf = LIST_FIRST(&p->ibuflist);
-		abuf_hup(ibuf);
-	}
 	DPRINTF("mix_hup: %s: done\n", p->name);
 	aproc_del(p);
 }
@@ -543,7 +589,6 @@ mix_newout(struct aproc *p, struct abuf *obuf)
 {
 	DPRINTF("mix_newout: using %u fpb\n", obuf->len / obuf->bpf);
 	obuf->mixitodo = 0;
-	mix_bzero(p);
 }
 
 void
@@ -580,18 +625,6 @@ mix_new(char *name, int maxlat)
 	return p;
 }
 
-void
-mix_pushzero(struct aproc *p)
-{
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);
-
-	abuf_wcommit(obuf, obuf->mixitodo);
-	p->u.mix.lat += obuf->mixitodo / obuf->bpf;
-	obuf->mixitodo = 0;
-	abuf_run(obuf);
-	mix_bzero(p);
-}
-
 /*
  * Normalize input levels
  */
@@ -623,7 +656,6 @@ mix_clear(struct aproc *p)
 
 	p->u.mix.lat = 0;
 	obuf->mixitodo = 0;
-	mix_bzero(p);
 }
 
 /*
@@ -662,54 +694,77 @@ sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 	DPRINTFN(4, "sub_bcopy: %u frames\n", scount);
 }
 
+/*
+ * Handle buffer overruns, return 0 if the stream died
+ */
+int
+sub_xrun(struct abuf *ibuf, struct abuf *i)
+{
+	unsigned fdrop;
+
+	if (i->subidone > 0)
+		return 1;
+	if (i->xrun == XRUN_ERROR) {
+		abuf_eof(i);
+		return 0;
+	}
+	fdrop = ibuf->used / ibuf->bpf;
+	if (i->xrun == XRUN_SYNC)
+		i->silence += fdrop * i->bpf;
+	else {
+		abuf_ipos(i, -(int)fdrop);
+		if (i->duplex) {
+			DPRINTF("sub_xrun: duplex %u\n", fdrop);
+			i->duplex->silence += fdrop * i->duplex->bpf;
+			abuf_opos(i->duplex, -(int)fdrop);
+		}
+	}
+	i->subidone += fdrop * ibuf->bpf;
+	DPRINTF("sub_xrun: silence = %u\n", i->silence);
+	return 1;
+}
+
 int
 sub_in(struct aproc *p, struct abuf *ibuf)
 {
 	struct abuf *i, *inext;
-	unsigned done, fdrop;
+	unsigned idone;
 	
 	if (!ABUF_ROK(ibuf))
 		return 0;
-	done = ibuf->used;
+	idone = ibuf->len;
 	for (i = LIST_FIRST(&p->obuflist); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, oent);
 		if (!ABUF_WOK(i)) {
-			if ((p->u.sub.flags & SUB_DROP) && i->subidone == 0) {
-				if (i->xrun == XRUN_ERROR) {
-					abuf_eof(i);
+			if (p->u.sub.flags & SUB_DROP) {
+				if (!sub_xrun(ibuf, i))
 					continue;
-				}
-				fdrop = ibuf->used / ibuf->bpf;
-				if (i->xrun == XRUN_SYNC)
-					i->silence += fdrop * i->bpf;
-				else {
-					abuf_ipos(i, -(int)fdrop);
-					if (i->duplex) {
-						DPRINTF("sub_in: duplex %u\n",
-						    fdrop);
-						i->duplex->silence += fdrop *
-						    i->duplex->bpf;
-						abuf_opos(i->duplex, 
-						    -(int)fdrop);
-					}
-				}
-				i->subidone += fdrop * ibuf->bpf;
-				DPRINTF("sub_in: silence = %u\n", i->silence);
 			}
 		} else
 			sub_bcopy(ibuf, i);
-		if (done > i->subidone)
-			done = i->subidone;
+		if (idone > i->subidone)
+			idone = i->subidone;
 		if (!abuf_flush(i))
 			continue;
 	}
-	LIST_FOREACH(i, &p->obuflist, oent) {
-		i->subidone -= done;
+	if (LIST_EMPTY(&p->obuflist)) {
+		if (p->u.sub.flags & SUB_AUTOQUIT) {
+			DPRINTF("sub_in: nothing more to do...\n");
+			aproc_del(p);
+			return 0;
+		}
+		if (!(p->u.sub.flags & SUB_DROP))
+			return 0;
+		idone = ibuf->used;
+		p->u.sub.idle += idone / ibuf->bpf;
 	}
-	abuf_rdiscard(ibuf, done);
-	p->u.sub.lat -= done / ibuf->bpf;
-	if (LIST_EMPTY(&p->obuflist))
-		p->u.sub.idle += done / ibuf->bpf;
+	if (idone == 0)
+		return 0;
+	LIST_FOREACH(i, &p->obuflist, oent) {
+		i->subidone -= idone;
+	}
+	abuf_rdiscard(ibuf, idone);
+	p->u.sub.lat -= idone / ibuf->bpf;
 	return 1;
 }
 
@@ -718,55 +773,66 @@ sub_out(struct aproc *p, struct abuf *obuf)
 {
 	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
 	struct abuf *i, *inext;
-	unsigned done;
+	unsigned idone;
 
 	if (!ABUF_WOK(obuf))
 		return 0;
-	if (!abuf_fill(ibuf)) {
-		return 0;
-	}
-	if (obuf->subidone == ibuf->used)
-		return 0;
-
-	done = ibuf->used;
+	if (!abuf_fill(ibuf))
+		return 0; /* eof */
+	idone = ibuf->len;
 	for (i = LIST_FIRST(&p->obuflist); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, oent);
+		sub_bcopy(ibuf, i);
+		if (idone > i->subidone)
+			idone = i->subidone;
 		if (!abuf_flush(i))
 			continue;
-		sub_bcopy(ibuf, i);
-		if (done > i->subidone)
-			done = i->subidone;
 	}
+	if (LIST_EMPTY(&p->obuflist) || idone == 0)
+		return 0;
 	LIST_FOREACH(i, &p->obuflist, oent) {
-		i->subidone -= done;
+		i->subidone -= idone;
 	}
-	abuf_rdiscard(ibuf, done);
-	p->u.sub.lat -= done / ibuf->bpf;
-	if (LIST_EMPTY(&p->obuflist))
-		p->u.sub.idle += done / ibuf->bpf;
+	abuf_rdiscard(ibuf, idone);
+	p->u.sub.lat -= idone / ibuf->bpf;
 	return 1;
 }
 
 void
 sub_eof(struct aproc *p, struct abuf *ibuf)
 {
-	struct abuf *obuf;
-
-	while (!LIST_EMPTY(&p->obuflist)) {
-		obuf = LIST_FIRST(&p->obuflist);
-		abuf_eof(obuf);
-	}
+	DPRINTF("sub_hup: %s: eof\n", p->name);
 	aproc_del(p);
 }
 
 void
 sub_hup(struct aproc *p, struct abuf *obuf)
 {
-	struct abuf *ibuf = LIST_FIRST(&p->ibuflist);
+	struct abuf *i, *ibuf = LIST_FIRST(&p->ibuflist);
+	unsigned idone;
 
 	DPRINTF("sub_hup: %s: detached\n", p->name);
-	abuf_run(ibuf);
-	DPRINTF("sub_hup: done\n");
+
+	if (!aproc_inuse(p)) {
+		DPRINTF("sub_hup: %s: from input\n", p->name);
+		/*
+		 * find a blocked output
+		 */
+		idone = ibuf->len;
+		LIST_FOREACH(i, &p->obuflist, oent) {
+			if (ABUF_WOK(i) && i->subidone < ibuf->used) {
+				abuf_run(i);
+				return;
+			}
+			if (idone > i->subidone)
+				idone = i->subidone;
+		}
+		/*
+		 * no blocked outputs, check if input is blocked
+		 */
+		if (LIST_EMPTY(&p->obuflist) || idone == ibuf->used)
+			abuf_run(ibuf);
+	}
 }
 
 void
