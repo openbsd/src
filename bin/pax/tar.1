@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.50 2008/06/11 00:49:08 pvalchev Exp $
+.\"	$OpenBSD: tar.1,v 1.51 2008/12/27 13:35:34 sobrado Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,9 +23,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.50 2008/06/11 00:49:08 pvalchev Exp $
+.\"	$OpenBSD: tar.1,v 1.51 2008/12/27 13:35:34 sobrado Exp $
 .\"
-.Dd $Mdocdate: June 11 2008 $
+.Dd $Mdocdate: December 27 2008 $
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -40,17 +40,19 @@
 .Op Ar blocking-factor | archive | replstr
 .Op Fl C Ar directory
 .Op Fl I Ar file
-.Op Ar file ...
+.Op Ar
 .Ek
 .Nm tar
 .No { Ns Fl crtux Ns }
+.Bk -words
 .Op Fl 014578eHhjLmOoPpqvwXZz
 .Op Fl b Ar blocking-factor
 .Op Fl C Ar directory
 .Op Fl f Ar archive
 .Op Fl I Ar file
 .Op Fl s Ar replstr
-.Op Ar file ...
+.Op Ar
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
