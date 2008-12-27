@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.4 2008/12/27 17:23:01 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.5 2008/12/27 23:07:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Miodrag Vallat.
@@ -97,6 +97,14 @@
 #define	IFB_REG_OFFSET			0x8000
 
 /*
+ * 0000 magic
+ * This register seems to be used to issue commands to the
+ * acceleration hardware.
+ *
+ */
+#define IFB_REG_MAGIC			0x0000
+
+/*
  * 0040 component configuration
  * This register controls which parts of the board will be addressed by
  * writes to other configuration registers.
@@ -105,6 +113,14 @@
  * The high two bytes are texture related.
  */
 #define	IFB_REG_COMPONENT_SELECT	0x0040
+
+/*
+ * 0044 status
+ * This register has a bit that signals completion of commands issued
+ * to the acceleration hardware.
+ */
+#define IFB_REG_STATUS			0x0044
+#define IFB_REG_STATUS_DONE			0x00000004
 
 /*
  * 0058 magnifying configuration
@@ -185,6 +201,8 @@
 #define	IFB_REG_DPMS_SUSPEND			0x00000001
 #define	IFB_REG_DPMS_STANDBY			0x00000002
 #define	IFB_REG_DPMS_ON				0x00000003
+
+#define IFB_COORDS(x, y)	((x) | (y) << 16)
 
 struct ifb_softc {
 	struct sunfb sc_sunfb;
@@ -327,6 +345,9 @@ ifbattach(struct device *parent, struct device *self, void *aux)
 	fbwscons_init(&sc->sc_sunfb, RI_BSWAP, sc->sc_console);
 	ri->ri_flg &= ~RI_FULLCLEAR;	/* due to the way we handle updates */
 
+	ri->ri_devcmap[WSCOL_WHITE] = 0;
+	ri->ri_devcmap[WSCOL_BLACK] = 0x01010101;
+
 	if (!sc->sc_console) {
 		bzero((void *)sc->sc_fb8bank0_vaddr, sc->sc_sunfb.sf_fbsize);
 		bzero((void *)sc->sc_fb8bank1_vaddr, sc->sc_sunfb.sf_fbsize);
@@ -345,7 +366,9 @@ ifbattach(struct device *parent, struct device *self, void *aux)
 	ri->ri_ops.putchar = ifb_putchar;
 	ri->ri_do_cursor = ifb_do_cursor;
 
+#if 0
 	fbwscons_setcolormap(&sc->sc_sunfb, ifb_setcolor);
+#endif
 	if (sc->sc_console)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
 	fbwscons_attach(&sc->sc_sunfb, &ifb_accessops, sc->sc_console);
@@ -364,8 +387,10 @@ ifb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		break;
 
 	case WSDISPLAYIO_SMODE:
+#if 0
 		if (*(u_int *)data == WSDISPLAYIO_MODE_EMUL)
 			fbwscons_setcolormap(&sc->sc_sunfb, ifb_setcolor);
+#endif
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
@@ -377,7 +402,7 @@ ifb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
 		break;
-		
+
 	case WSDISPLAYIO_GETCMAP:
 		return ifb_getcmap(sc, (struct wsdisplay_cmap *)data);
 	case WSDISPLAYIO_PUTCMAP:
@@ -595,11 +620,62 @@ ifb_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
 	struct ifb_softc *sc = ri->ri_hw;
+	int i;
 
-	ri->ri_bits = (void *)sc->sc_fb8bank0_vaddr;
-	sc->sc_old_ops.copyrows(cookie, src, dst, num);
-	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
-	sc->sc_old_ops.copyrows(cookie, src, dst, num);
+	num *= ri->ri_font->fontheight;
+	src *= ri->ri_font->fontheight;
+	dst *= ri->ri_font->fontheight;
+
+	/* Lots of magic numbers. */
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 2);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 1);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0x540101ff);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0x61000001);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0x6301c080);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0x80000000);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0x00330000);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0xff);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0x64000303);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0x00030000);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0x2200010d);
+
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0x33f01000);
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC,
+	    IFB_COORDS(ri->ri_xorigin, ri->ri_yorigin + dst));
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC,
+	    IFB_COORDS(ri->ri_emuwidth, num));
+	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
+	    IFB_REG_OFFSET + IFB_REG_MAGIC,
+	    IFB_COORDS(ri->ri_xorigin, ri->ri_yorigin + src));
+
+	for (i = 1000000; i > 0; i--) {
+		if (bus_space_read_4(sc->sc_mem_t, sc->sc_reg_h,
+		    IFB_REG_OFFSET + IFB_REG_STATUS) & IFB_REG_STATUS_DONE)
+			break;
+		DELAY(1);
+	}
 }
 
 void
@@ -618,9 +694,73 @@ void
 ifb_do_cursor(struct rasops_info *ri)
 {
 	struct ifb_softc *sc = ri->ri_hw;
+	int full1, height, cnt, slop1, slop2, row, col;
+	int ovl_offset = sc->sc_fb8bank1_vaddr - sc->sc_fb8bank0_vaddr;
+	u_char *dp0, *dp1, *rp;
+
+	row = ri->ri_crow;
+	col = ri->ri_ccol;
 
 	ri->ri_bits = (void *)sc->sc_fb8bank0_vaddr;
-	sc->sc_old_cursor(ri);
-	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
-	sc->sc_old_cursor(ri);
+	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
+	height = ri->ri_font->fontheight;
+	slop1 = (4 - ((long)rp & 3)) & 3;
+
+	if (slop1 > ri->ri_xscale)
+		slop1 = ri->ri_xscale;
+
+	slop2 = (ri->ri_xscale - slop1) & 3;
+	full1 = (ri->ri_xscale - slop1 - slop2) >> 2;
+
+	if ((slop1 | slop2) == 0) {
+		/* A common case */
+		while (height--) {
+			dp0 = rp;
+			dp1 = dp0 + ovl_offset;
+			rp += ri->ri_stride;
+
+			for (cnt = full1; cnt; cnt--) {
+				*(int32_t *)dp0 ^= 0x01010101;
+				*(int32_t *)dp1 ^= 0x01010101;
+				dp0 += 4;
+				dp1 += 4;
+			}
+		}
+	} else {
+		/* XXX this is stupid.. use masks instead */
+		while (height--) {
+			dp0 = rp;
+			dp1 = dp0 + ovl_offset;
+			rp += ri->ri_stride;
+
+			if (slop1 & 1) {
+				*dp0++ ^= 0x01;
+				*dp1++ ^= 0x01;
+			}
+
+			if (slop1 & 2) {
+				*(int16_t *)dp0 ^= 0x0101;
+				*(int16_t *)dp1 ^= 0x0101;
+				dp0 += 2;
+				dp1 += 2;
+			}
+
+			for (cnt = full1; cnt; cnt--) {
+				*(int32_t *)dp0 ^= 0x01010101;
+				*(int32_t *)dp1 ^= 0x01010101;
+				dp0 += 4;
+				dp1 += 4;
+			}
+
+			if (slop2 & 1) {
+				*dp0++ ^= 0x01;
+				*dp1++ ^= 0x01;
+			}
+
+			if (slop2 & 2) {
+				*(int16_t *)dp0 ^= 0x0101;
+				*(int16_t *)dp1 ^= 0x0101;
+			}
+		}
+	}
 }
