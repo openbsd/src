@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.34 2008/12/27 17:36:37 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.35 2008/12/27 18:18:33 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -58,7 +58,6 @@ void		queue_purge_incoming(void);
 int		queue_create_incoming_layout(char *);
 void		queue_delete_incoming_message(char *);
 int		queue_record_incoming_envelope(struct message *);
-int		queue_update_incoming_envelope(struct message *);
 int		queue_remove_incoming_envelope(struct message *);
 int		queue_commit_incoming_message(struct message *);
 int		queue_open_incoming_message_file(struct message *);
@@ -793,34 +792,6 @@ queue_record_incoming_envelope(struct message *message)
 
 		break;
 	}
-	return 1;
-}
-
-int
-queue_update_incoming_envelope(struct message *messagep)
-{
-	int fd;
-	char pathname[MAXPATHLEN];
-	FILE *fp;
-	mode_t mode = O_RDWR;
-
-	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%s%s/%s", PATH_INCOMING,
-		messagep->message_id, PATH_ENVELOPES, messagep->message_uid))
-		fatal("queue_update_incoming_envelope: snprintf");
-
-	if ((fd = open(pathname, mode)) == -1)
-		fatal("queue_update_incoming_envelope: open");
-
-	fp = fdopen(fd, "w");
-	if (fp == NULL)
-		fatal("queue_update_incoming_envelope: fdopen");
-
-	if (fwrite(messagep, sizeof(struct message), 1, fp) != 1)
-		fatal("queue_update_incoming_envelope: fwrite");
-	fflush(fp);
-	fsync(fd);
-	fclose(fp);
-
 	return 1;
 }
 
