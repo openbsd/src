@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsmount.h,v 1.17 2008/12/24 14:34:03 thib Exp $	*/
+/*	$OpenBSD: nfsmount.h,v 1.18 2008/12/27 14:14:30 thib Exp $	*/
 /*	$NetBSD: nfsmount.h,v 1.10 1996/02/18 11:54:03 fvdl Exp $	*/
 
 /*
@@ -75,15 +75,11 @@ struct	nfsmount {
 };
 
 #ifdef _KERNEL
-/*
- * Convert mount ptr to nfsmount ptr.
- */
-#define VFSTONFS(mp)	((struct nfsmount *)((mp)->mnt_data))
-#endif /* _KERNEL */
 
-/*
- * Prototypes for NFS mount operations
- */
+/* Convert mount ptr to nfsmount ptr: */
+#define VFSTONFS(mp)	((struct nfsmount *)((mp)->mnt_data))
+
+/* Prototypes for NFS mount operations: */
 int	nfs_mount(struct mount *, const char *, void *, struct nameidata *,
 	    struct proc *);
 int	mountnfs(struct nfs_args *, struct mount *, struct mbuf *, char *,
@@ -103,5 +99,7 @@ int	nfs_vptofh(struct vnode *, struct fid *);
 int	nfs_fsinfo(struct nfsmount *, struct vnode *, struct ucred *,
 	    struct proc *);
 void	nfs_init(void);
+
+#endif /* _KERNEL */
 
 #endif
