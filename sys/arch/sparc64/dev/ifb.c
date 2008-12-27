@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.3 2008/12/27 14:33:55 kettenis Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.4 2008/12/27 17:23:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Miodrag Vallat.
@@ -210,23 +210,19 @@ struct ifb_softc {
 
 int	ifb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	ifb_mmap(void *, off_t, int);
-int	ifb_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
-void	ifb_free_screen(void *, void *);
-int	ifb_show_screen(void *, void *, int,
-	    void (*cb)(void *, int, int), void *);
 void	ifb_burner(void *, u_int, u_int);
 
 struct wsdisplay_accessops ifb_accessops = {
 	ifb_ioctl,
 	ifb_mmap,
-	ifb_alloc_screen,
-	ifb_free_screen,
-	ifb_show_screen,
-	NULL,
-	NULL,
-	NULL,
-	ifb_burner
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
+	NULL,	/* load_font */
+	NULL,	/* scrollback */
+	NULL,	/* getchar */
+	ifb_burner,
+	NULL	/* pollc */
 };
 
 int	ifbmatch(struct device *, void *, void *);
@@ -328,8 +324,7 @@ ifbattach(struct device *parent, struct device *self, void *aux)
 	ri->ri_bits = NULL;
 	ri->ri_hw = sc;
 
-	/* do NOT pass RI_CLEAR yet */
-	fbwscons_init(&sc->sc_sunfb, RI_BSWAP);
+	fbwscons_init(&sc->sc_sunfb, RI_BSWAP, sc->sc_console);
 	ri->ri_flg &= ~RI_FULLCLEAR;	/* due to the way we handle updates */
 
 	if (!sc->sc_console) {
@@ -481,39 +476,6 @@ ifb_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
 	    IFB_REG_OFFSET + IFB_REG_CMAP_DATA,
 	    (((u_int)b) << 22) | (((u_int)g) << 12) | (((u_int)r) << 2));
-}
-
-int
-ifb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
-{
-	struct ifb_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return ENOMEM;
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return 0;
-}
-
-void
-ifb_free_screen(void *v, void *cookie)
-{
-	struct ifb_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-ifb_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-	return 0;
 }
 
 paddr_t

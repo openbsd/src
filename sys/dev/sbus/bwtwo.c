@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.17 2006/12/17 22:18:16 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.18 2008/12/27 17:23:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -104,11 +104,6 @@ struct bwtwo_softc {
 };
 
 int bwtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int bwtwo_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void bwtwo_free_screen(void *, void *);
-int bwtwo_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
 paddr_t bwtwo_mmap(void *, off_t, int);
 int bwtwo_is_console(int);
 void bwtwo_burner(void *, u_int, u_int);
@@ -116,9 +111,9 @@ void bwtwo_burner(void *, u_int, u_int);
 struct wsdisplay_accessops bwtwo_accessops = {
 	bwtwo_ioctl,
 	bwtwo_mmap,
-	bwtwo_alloc_screen,
-	bwtwo_free_screen,
-	bwtwo_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
@@ -200,11 +195,10 @@ bwtwoattach(parent, self, aux)
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)bus_space_vaddr(sc->sc_bustag,
 	    sc->sc_vid_regs);
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, console ? 0 : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, 0, console);
 	
-	if (console) {
+	if (console)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
-	}
 
 	fbwscons_attach(&sc->sc_sunfb, &bwtwo_accessops, console);
 
@@ -262,52 +256,6 @@ bwtwo_ioctl(v, cmd, data, flags, p)
 
 	return (0);
 }
-
-int
-bwtwo_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
-{
-	struct bwtwo_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    0, 0, 0, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-bwtwo_free_screen(v, cookie)
-	void *v;
-	void *cookie;
-{
-	struct bwtwo_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-bwtwo_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
-{
-	return (0);
-}
-
-#define	START		(128 * 1024 + 128 * 1024)
-#define	NOOVERLAY	(0x04000000)
 
 paddr_t
 bwtwo_mmap(v, offset, prot)

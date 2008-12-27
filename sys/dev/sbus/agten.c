@@ -1,4 +1,4 @@
-/*	$OpenBSD: agten.c,v 1.8 2008/12/25 23:56:31 miod Exp $	*/
+/*	$OpenBSD: agten.c,v 1.9 2008/12/27 17:23:03 miod Exp $	*/
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
  * All rights reserved.
@@ -105,11 +105,6 @@ struct agten_softc {
 };
 
 int agten_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int agten_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void agten_free_screen(void *, void *);
-int agten_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
 paddr_t agten_mmap(void *, off_t, int);
 void agten_reset(struct agten_softc *);
 void agten_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
@@ -122,9 +117,9 @@ void agten_loadcmap(struct agten_softc *, u_int, u_int);
 struct wsdisplay_accessops agten_accessops = {
 	agten_ioctl,
 	agten_mmap,
-	agten_alloc_screen,
-	agten_free_screen,
-	agten_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,   /* load_font */
 	NULL,   /* scrollback */
 	NULL,   /* getchar */
@@ -223,12 +218,11 @@ agtenattach(struct device *parent, struct device *self, void *args)
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_i128_fb;
 	
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, 0, isconsole);
 	fbwscons_setcolormap(&sc->sc_sunfb, agten_setcolor);
 
-	if (isconsole) {
+	if (isconsole)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
-	}
 
 	fbwscons_attach(&sc->sc_sunfb, &agten_accessops, isconsole);
 }
@@ -332,49 +326,6 @@ agten_setcolor(v, index, r, g, b)
 	sc->sc_cmap.cm_blue[index] = b;
 
 	agten_loadcmap(sc, index, 1);
-}
-
-int
-agten_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
-{
-	struct agten_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-agten_free_screen(v, cookie)
-	void *v;
-	void *cookie;
-{
-	struct agten_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-agten_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
-{
-	return (0);
 }
 
 int

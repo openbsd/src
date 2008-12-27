@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.43 2006/12/17 22:18:16 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.44 2008/12/27 17:23:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -128,11 +128,6 @@ struct cgthree_softc {
 };
 
 int cgthree_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int cgthree_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void cgthree_free_screen(void *, void *);
-int cgthree_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
 paddr_t cgthree_mmap(void *, off_t, int);
 int cgthree_is_console(int);
 void cgthree_loadcmap(struct cgthree_softc *, u_int, u_int);
@@ -145,9 +140,9 @@ void cgthree_reset(struct cgthree_softc *);
 struct wsdisplay_accessops cgthree_accessops = {
 	cgthree_ioctl,
 	cgthree_mmap,
-	cgthree_alloc_screen,
-	cgthree_free_screen,
-	cgthree_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
@@ -175,13 +170,13 @@ struct cg3_videoctrl {
 	u_int8_t	ctrl;
 } cg3_videoctrl[] = {
 	{	/* cpd-1790 */
-		0x31,
+		FBC_STAT_RES_1152 | FBC_STAT_ID_COLOR,
 		{ 0xbb, 0x2b, 0x04, 0x14, 0xae, 0x03,
 		  0xa8, 0x24, 0x01, 0x05, 0xff, 0x01 },
 		FBC_CTRL_XTAL_0 | FBC_CTRL_DIV_1
 	},
 	{	/* gdm-20e20 */
-		0x41,
+		FBC_STAT_RES_1152A | FBC_STAT_ID_COLOR,
 		{ 0xb7, 0x27, 0x03, 0x0f, 0xae, 0x03,
 		  0xae, 0x2a, 0x01, 0x09, 0xff, 0x01 },
 		FBC_CTRL_XTAL_1 | FBC_CTRL_DIV_1
@@ -256,27 +251,11 @@ cgthreeattach(struct device *parent, struct device *self, void *aux)
 
 	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
-	/*
-	 * If the framebuffer width is under 1024x768, which is the case for
-	 * some clones on laptops, as well as with the VS10-EK, switch from
-	 * the PROM font to the more adequate 8x16 font here.
-	 * However, we need to adjust two things in this case:
-	 * - the display row should be overrided from the current PROM metrics,
-	 *   to prevent us from overwriting the last few lines of text.
-	 * - if the 80x34 screen would make a large margin appear around it,
-	 *   choose to clear the screen rather than keeping old prom output in
-	 *   the margins.
-	 * XXX there should be a rasops "clear margins" feature
-	 */
-	fbwscons_init(&sc->sc_sunfb, console &&
-	    (sc->sc_sunfb.sf_width >= 1024) ? 0 : RI_CLEAR);
-
+	fbwscons_init(&sc->sc_sunfb, 0, console);
 	fbwscons_setcolormap(&sc->sc_sunfb, cgthree_setcolor);
 
-	if (console) {
-		fbwscons_console_init(&sc->sc_sunfb,
-		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0);
-	}
+	if (console)
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 
 	fbwscons_attach(&sc->sc_sunfb, &cgthree_accessops, console);
 
@@ -343,39 +322,6 @@ cgthree_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		return -1; /* not supported yet */
         }
 
-	return (0);
-}
-
-int
-cgthree_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
-{
-	struct cgthree_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-cgthree_free_screen(void *v, void *cookie)
-{
-	struct cgthree_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-cgthree_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
 	return (0);
 }
 
@@ -505,7 +451,7 @@ cgthree_reset(struct cgthree_softc *sc)
 		return;
 	}
 
-	for (i = 0; i <  sizeof(cg3_videoctrl)/sizeof(cg3_videoctrl[0]); i++) {
+	for (i = 0; i < nitems(cg3_videoctrl); i++) {
 		if (cg3_videoctrl[i].sense == 0xff ||
 		    (cg3_videoctrl[i].sense ==
 		     (sts & (FBC_STAT_RES | FBC_STAT_ID)))) {

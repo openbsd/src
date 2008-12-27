@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.10 2008/04/15 20:23:54 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.11 2008/12/27 17:23:03 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -128,21 +128,16 @@ struct mgx_softc {
 	int		sc_nscreens;
 };
 
-int	mgx_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
 void	mgx_burner(void *, u_int ,u_int);
-void	mgx_free_screen(void *, void *);
 int	mgx_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	mgx_mmap(void *, off_t, int);
-int	mgx_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-	    void *);
 
 struct wsdisplay_accessops mgx_accessops = {
 	mgx_ioctl,
 	mgx_mmap,
-	mgx_alloc_screen,
-	mgx_free_screen,
-	mgx_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
@@ -285,13 +280,13 @@ mgxattach(struct device *parent, struct device *self, void *args)
 	sc->sc_sunfb.sf_ro.ri_bits = bus_space_vaddr(bt, bh);
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
+	printf(", %dx%d\n",
+	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
+
+	fbwscons_init(&sc->sc_sunfb, 0, isconsole);
 
 	bzero(sc->sc_cmap, sizeof(sc->sc_cmap));
 	fbwscons_setcolormap(&sc->sc_sunfb, mgx_setcolor);
-
-	printf(", %dx%d\n",
-	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	if (chipid != ID_AT24) {
 		printf("%s: unexpected engine id %04x\n",
@@ -300,9 +295,8 @@ mgxattach(struct device *parent, struct device *self, void *args)
 
 	mgx_ras_init(sc, chipid);
 
-	if (isconsole) {
+	if (isconsole)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
-	}
 
 	fbwscons_attach(&sc->sc_sunfb, &mgx_accessops, isconsole);
 }
@@ -417,39 +411,6 @@ mgx_mmap(void *v, off_t offset, int prot)
 	}
 
 	return (-1);
-}
-
-int
-mgx_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
-{
-	struct mgx_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	     0, 0, 0, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-mgx_free_screen(void *v, void *cookie)
-{
-	struct mgx_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-mgx_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.10 2006/12/17 22:18:16 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.11 2008/12/27 17:23:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -185,11 +185,6 @@ struct vigra_softc {
 };
 
 int vigra_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int vigra_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void vigra_free_screen(void *, void *);
-int vigra_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
 paddr_t vigra_mmap(void *, off_t, int);
 void vigra_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 int vigra_getcmap(union vigracmap *, struct wsdisplay_cmap *, int);
@@ -203,9 +198,9 @@ int vigra_intr(void *);
 struct wsdisplay_accessops vigra_accessops = {
 	vigra_ioctl,
 	vigra_mmap,
-	vigra_alloc_screen,
-	vigra_free_screen,
-	vigra_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
@@ -249,7 +244,7 @@ vigraattach(struct device *parent, struct device *self, void *args)
 	struct sbus_attach_args *sa = args;
 	bus_space_tag_t bt;
 	bus_space_handle_t bh;
-	int node, row, isconsole = 0;
+	int node, isconsole = 0;
 	char *nam;
 
 	bt = sa->sa_bustag;
@@ -315,41 +310,11 @@ vigraattach(struct device *parent, struct device *self, void *args)
 		    self->dv_xname, INTLEV(sa->sa_pri));
 	}
 
-	/*
-	 * If the framebuffer width is under 1024x768, we will switch from the
-	 * PROM font to the more adequate 8x16 font here.
-	 * However, we need to adjust two things in this case:
-	 * - the display row should be overrided from the current PROM metrics,
-	 *   to prevent us from overwriting the last few lines of text.
-	 * - if the 80x34 screen would make a large margin appear around it,
-	 *   choose to clear the screen rather than keeping old prom output in
-	 *   the margins.
-	 * XXX there should be a rasops "clear margins" feature
-	 *
-	 * Also, in 1280x1024 resolution, the PROM display is not centered
-	 * vertically (why? no other frame buffer does this in such a mode!),
-	 * so be lazy and clear the screen here too anyways...
-	 */
-	fbwscons_init(&sc->sc_sunfb, isconsole && (sc->sc_sunfb.sf_width != 800
-	    && sc->sc_sunfb.sf_width != 1280) ? 0 : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, 0, isconsole);
 	fbwscons_setcolormap(&sc->sc_sunfb, vigra_setcolor);
 
-	if (isconsole) {
-		switch (sc->sc_sunfb.sf_width) {
-		case 640:
-			row = sc->sc_sunfb.sf_ro.ri_rows - 1;
-			break;
-		case 800:
-		case 1280:
-			row = 0;	/* screen has been cleared above */
-			break;
-		default:
-			row = -1;
-			break;
-		}
-
-		fbwscons_console_init(&sc->sc_sunfb, row);
-	}
+	if (isconsole)
+		fbwscons_console_init(&sc->sc_sunfb, -1);
 
 	fbwscons_attach(&sc->sc_sunfb, &vigra_accessops, isconsole);
 }
@@ -408,39 +373,6 @@ vigra_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		return (-1);	/* not supported yet */
         }
 
-	return (0);
-}
-
-int
-vigra_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
-{
-	struct vigra_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-vigra_free_screen(void *v, void *cookie)
-{
-	struct vigra_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-vigra_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.39 2007/03/06 23:10:26 kettenis Exp $	*/
+/*	$OpenBSD: creator.c,v 1.40 2008/12/27 17:23:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -49,11 +49,6 @@
 int	creator_match(struct device *, void *, void *);
 void	creator_attach(struct device *, struct device *, void *);
 int	creator_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int	creator_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
-void	creator_free_screen(void *, void *);
-int	creator_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-	    void *);
 paddr_t creator_mmap(void *, off_t, int);
 void	creator_ras_fifo_wait(struct creator_softc *, int);
 void	creator_ras_wait(struct creator_softc *);
@@ -70,10 +65,10 @@ void	creator_curs_enable(struct creator_softc *, u_int);
 struct wsdisplay_accessops creator_accessops = {
 	creator_ioctl,
 	creator_mmap,
-	creator_alloc_screen,
-	creator_free_screen,
-	creator_show_screen,
-	NULL,	/* load font */
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
+	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
 	NULL,	/* burner */
@@ -187,7 +182,7 @@ creator_attach(parent, self, aux)
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)bus_space_vaddr(sc->sc_bt,
 	    sc->sc_pixel_h);
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, sc->sc_console ? 0 : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, 0, sc->sc_console);
 
 	if ((sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags & CREATOR_CFFLAG_NOACCEL)
 	    == 0) {
@@ -197,9 +192,8 @@ creator_attach(parent, self, aux)
 		creator_ras_init(sc);
 	}
 
-	if (sc->sc_console) {
+	if (sc->sc_console)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
-	}
 
 	fbwscons_attach(&sc->sc_sunfb, &creator_accessops, sc->sc_console);
 	return;
@@ -429,49 +423,6 @@ creator_updatecursor(struct creator_softc *sc, u_int which)
 	if (which & WSDISPLAY_CURSOR_DOCUR)
 		creator_curs_enable(sc, sc->sc_curs_enabled);
 
-	return (0);
-}
-
-int
-creator_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
-{
-	struct creator_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-creator_free_screen(v, cookie)
-	void *v;
-	void *cookie;
-{
-	struct creator_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-creator_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
-{
 	return (0);
 }
 

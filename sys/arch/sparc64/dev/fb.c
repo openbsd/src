@@ -1,8 +1,8 @@
-/*	$OpenBSD: fb.c,v 1.17 2007/11/10 15:17:16 jsing Exp $	*/
+/*	$OpenBSD: fb.c,v 1.18 2008/12/27 17:23:01 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
- * Copyright (c) 2002, 2004  Miodrag Vallat.
+ * Copyright (c) 2002, 2004, 2008  Miodrag Vallat.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,6 +78,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>
+#include <machine/openfirm.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
@@ -112,8 +113,15 @@ fb_unblank()
 #if NWSDISPLAY > 0
 
 static int a2int(char *, int);
-static void fb_initwsd(struct sunfb *);
-static void fb_updatecursor(struct rasops_info *);
+int	fb_get_console_metrics(int *, int *, int *, int *);
+void	fb_initwsd(struct sunfb *);
+void	fb_updatecursor(struct rasops_info *);
+
+int	fb_alloc_screen(void *, const struct wsscreen_descr *, void **,
+	    int *, int *, long *);
+void	fb_free_screen(void *, void *);
+int	fb_show_screen(void *, void *, int, void (*)(void *, int, int),
+	    void *);
 
 void
 fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
@@ -128,15 +136,15 @@ fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
 	def_linebytes =
 	    roundup(sf->sf_width, sf->sf_depth) * sf->sf_depth / 8;
 	sf->sf_linebytes = getpropint(node, "linebytes", def_linebytes);
+
 	/*
 	 * XXX If we are configuring a board in a wider depth level
 	 * than the mode it is currently operating in, the PROM will
 	 * return a linebytes property tied to the current depth value,
 	 * which is NOT what we are relying upon!
 	 */
-	if (sf->sf_linebytes < (sf->sf_width * sf->sf_depth) / 8) {
+	if (sf->sf_linebytes < (sf->sf_width * sf->sf_depth) / 8)
 		sf->sf_linebytes = def_linebytes;
-	}
 
 	sf->sf_fbsize = sf->sf_height * sf->sf_linebytes;
 }
@@ -154,7 +162,7 @@ a2int(char *cp, int deflt)
 }
 
 /* setup the embedded wsscreen_descr structure from rasops settings */
-static void
+void
 fb_initwsd(struct sunfb *sf)
 {
 	strlcpy(sf->sf_wsd.name, "std", sizeof(sf->sf_wsd.name));
@@ -164,7 +172,7 @@ fb_initwsd(struct sunfb *sf)
 	sf->sf_wsd.textops = &sf->sf_ro.ri_ops;
 }
 
-static void
+void
 fb_updatecursor(struct rasops_info *ri)
 {
 	struct sunfb *sf = (struct sunfb *)ri->ri_hw;
@@ -176,13 +184,13 @@ fb_updatecursor(struct rasops_info *ri)
 }
 
 void
-fbwscons_init(struct sunfb *sf, int flags)
+fbwscons_init(struct sunfb *sf, int flags, int isconsole)
 {
 	struct rasops_info *ri = &sf->sf_ro;
-	int cols, rows;
+	int cols, rows, fw, fh, wt, wl;
 
 	/* ri_hw and ri_bits must have already been setup by caller */
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | flags;
+	ri->ri_flg = RI_FULLCLEAR | flags;
 	ri->ri_depth = sf->sf_depth;
 	ri->ri_stride = sf->sf_linebytes;
 	ri->ri_width = sf->sf_width;
@@ -191,7 +199,77 @@ fbwscons_init(struct sunfb *sf, int flags)
 	rows = a2int(getpropstring(optionsnode, "screen-#rows"), 34);
 	cols = a2int(getpropstring(optionsnode, "screen-#columns"), 80);
 
+	/*
+	 * If the framebuffer width is under 960 pixels, rasops will
+	 * switch from the 12x22 font to the more adequate 8x16 font
+	 * here.
+	 * If we are the console device, we need to adjust two things:
+	 * - the display row should be overrided from the current PROM
+	 *   metrics, since it will not match the PROM reality anymore.
+	 * - the screen needs to be cleared.
+	 *
+	 * However, to accomodate laptops with specific small fonts,
+	 * it is necessary to compare the resolution with the actual
+	 * font metrics.
+	 */
+
+	if (isconsole) {
+		if (fb_get_console_metrics(&fw, &fh, &wt, &wl) != 0) {
+			/*
+			 * Assume a 12x22 prom font and a centered
+			 * 80x34 console window.
+			 */
+			fw = 12; fh = 22;
+			ri->ri_flg |= RI_CENTER;
+
+			/*
+			 * Since the console window might not be
+			 * centered (e.g. on a 1280x1024 vigra
+			 * VS-12 frame buffer), have rasops
+			 * clear the margins even if the screen is
+			 * not cleared.
+			 */
+			ri->ri_flg |= RI_CLEARMARGINS;
+		}
+
+		if (ri->ri_wsfcookie != 0) {
+			/* driver handles font issues. do nothing. */
+		} else {
+			/*
+			 * If the PROM uses a different font than the
+			 * one we are expecting it to use, or if the
+			 * display is shorter than 960 pixels wide,
+			 * we'll force a screen clear.
+			 */
+			if (fw != 12 || sf->sf_width < 12 * 80)
+				ri->ri_flg |= RI_CLEAR | RI_CENTER;
+		}
+	} else {
+		ri->ri_flg |= RI_CLEAR | RI_CENTER;
+	}
+
+	/* ifb(4) doesn't set ri_bits at the moment */
+	if (ri->ri_bits == NULL)
+		ri->ri_flg &= ~RI_CLEAR;
+
 	rasops_init(ri, rows, cols);
+
+	/*
+	 * If this is the console display and there is no font change,
+	 * adjust our terminal window to the position of the PROM
+	 * window - in case it is not exactly centered.
+	 */
+	if ((ri->ri_flg & RI_CENTER) == 0) {
+		/* code above made sure wt and wl are initialized */
+		ri->ri_bits += wt * ri->ri_stride;
+		if (ri->ri_depth >= 8)	/* for 15bpp to compute ok */
+			ri->ri_bits += wl * ri->ri_pelbytes;
+		else
+			ri->ri_bits += (wl * ri->ri_depth) >> 3;
+
+		ri->ri_xorigin = wl;
+		ri->ri_yorigin = wt;
+	}
 
 	if (sf->sf_depth == 8) {
 		/*
@@ -221,21 +299,26 @@ fbwscons_console_init(struct sunfb *sf, int row)
 	if (sf->sf_ccolp != NULL)
 		ri->ri_ccol = *sf->sf_ccolp;
 
-	if (row < 0) {
+	if (ri->ri_flg & RI_CLEAR) {
+		/*
+		 * If we have cleared the screen, this is because either
+		 * we are not the console display, or the font has been
+		 * changed.
+		 * In this case, choose not to keep pointers to the PROM
+		 * cursor position, as the values are likely to be inaccurate
+		 * upon shutdown...
+		 */
+		sf->sf_crowp = sf->sf_ccolp = NULL;
+		row = 0;
+	}
+
+	if (row < 0) /* no override */ {
 		if (sf->sf_crowp != NULL)
 			ri->ri_crow = *sf->sf_crowp;
 		else
 			/* assume last row */
 			ri->ri_crow = ri->ri_rows - 1;
 	} else {
-		/*
-		 * If we force the display row, this is because the screen
-		 * has been cleared or the font has been changed.
-		 * In this case, choose not to keep pointers to the PROM
-		 * cursor position, as the values are likely to be inaccurate
-		 * upon shutdown...
-		 */
-		sf->sf_crowp = sf->sf_ccolp = NULL;
 		ri->ri_crow = row;
 	}
 
@@ -308,6 +391,13 @@ fbwscons_attach(struct sunfb *sf, struct wsdisplay_accessops *op, int isconsole)
 		fb_cookie = sf;
 	}
 
+	/* plug common wsdisplay_accessops if necessary */
+	if (op->alloc_screen == NULL) {
+		op->alloc_screen = fb_alloc_screen;
+		op->free_screen = fb_free_screen;
+		op->show_screen = fb_show_screen;
+	}
+
 	sf->sf_scrlist[0] = &sf->sf_wsd;
 	sf->sf_wsl.nscreens = 1;
 	sf->sf_wsl.screens = (const struct wsscreen_descr **)sf->sf_scrlist;
@@ -318,6 +408,71 @@ fbwscons_attach(struct sunfb *sf, struct wsdisplay_accessops *op, int isconsole)
 	waa.accesscookie = sf;
 	waa.defaultscreens = 0;
 	config_found(&sf->sf_dev, &waa, wsemuldisplaydevprint);
+}
+
+/*
+ * Common wsdisplay_accessops routines.
+ */
+int
+fb_alloc_screen(void *v, const struct wsscreen_descr *type,
+    void **cookiep, int *curxp, int *curyp, long *attrp)
+{
+	struct sunfb *sf = v;
+	struct rasops_info *ri = &sf->sf_ro;
+
+	if (sf->sf_nscreens > 0)
+		return (ENOMEM);
+
+	*cookiep = ri;
+	*curyp = 0;
+	*curxp = 0;
+	if (ISSET(ri->ri_caps, WSSCREEN_WSCOLORS))
+		ri->ri_ops.alloc_attr(ri,
+		    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
+	else
+		ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
+	sf->sf_nscreens++;
+	return (0);
+}
+
+void
+fb_free_screen(void *v, void *cookie)
+{
+	struct sunfb *sf = v;
+
+	sf->sf_nscreens--;
+}
+
+int
+fb_show_screen(void *v, void *cookie, int waitok, void (*cb)(void *, int, int),
+    void *cbarg)
+{
+	return (0);
+}
+
+int
+fb_get_console_metrics(int *fontwidth, int *fontheight, int *wtop, int *wleft)
+{
+	cell_t romheight, romwidth, windowtop, windowleft;
+
+	/*
+	 * Get the PROM font metrics and address
+	 */
+	OF_interpret("stdout @ is my-self "
+	    "addr char-height addr char-width "
+	    "addr window-top addr window-left",
+	    4, &windowleft, &windowtop, &romwidth, &romheight);
+
+	if (romheight == NULL || romwidth == NULL ||
+	    windowtop == NULL || windowleft == NULL)
+		return (1);
+
+	*fontwidth = (int)*(uint64_t *)romwidth;
+	*fontheight = (int)*(uint64_t *)romheight;
+	*wtop = (int)*(uint64_t *)windowtop;
+	*wleft = (int)*(uint64_t *)windowleft;
+
+	return (0);
 }
 
 #endif	/* NWSDISPLAY */

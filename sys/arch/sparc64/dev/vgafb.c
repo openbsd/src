@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.54 2008/10/01 21:06:42 kettenis Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.55 2008/12/27 17:23:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -76,11 +76,6 @@ struct vgafb_softc {
 int vgafb_mapregs(struct vgafb_softc *, struct pci_attach_args *);
 int vgafb_rommap(struct vgafb_softc *, struct pci_attach_args *);
 int vgafb_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int vgafb_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void vgafb_free_screen(void *, void *);
-int vgafb_show_screen(void *, void *, int,
-    void (*cb)(void *, int, int), void *);
 paddr_t vgafb_mmap(void *, off_t, int);
 int vgafb_is_console(int);
 int vgafb_getcmap(struct vgafb_softc *, struct wsdisplay_cmap *);
@@ -90,10 +85,14 @@ void vgafb_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 struct wsdisplay_accessops vgafb_accessops = {
 	vgafb_ioctl,
 	vgafb_mmap,
-	vgafb_alloc_screen,
-	vgafb_free_screen,
-	vgafb_show_screen,
-	0 /* load_font */
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
+	NULL,	/* load_font */
+	NULL,	/* scrollback */
+	NULL,	/* getchar */
+	NULL,	/* burner */
+	NULL	/* pollc */
 };
 
 int	vgafbmatch(struct device *, void *, void *);
@@ -197,7 +196,7 @@ vgafbattach(parent, self, aux)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 
 	fbwscons_init(&sc->sc_sunfb,
-	    RI_BSWAP | (sc->sc_console ? 0 : RI_FORCEMONO | RI_CLEAR));
+	    RI_BSWAP | (sc->sc_console ? 0 : RI_FORCEMONO), sc->sc_console);
 
 	if (sc->sc_console) {
 		sc->sc_ofhandle = OF_stdout();
@@ -346,49 +345,6 @@ vgafb_setcolor(v, index, r, g, b)
 	sc->sc_cmap_green[index] = g;
 	sc->sc_cmap_blue[index] = b;
 	OF_call_method("color!", sc->sc_ofhandle, 4, 0, r, g, b, index);
-}
-
-int
-vgafb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *attrp;
-{
-	struct vgafb_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-vgafb_free_screen(v, cookie)
-	void *v;
-	void *cookie;
-{
-	struct vgafb_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-vgafb_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb)(void *, int, int);
-	void *cbarg;
-{
-	return (0);
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fbvar.h,v 1.6 2006/03/12 22:53:02 miod Exp $	*/
+/*	$OpenBSD: fbvar.h,v 1.7 2008/12/27 17:23:03 miod Exp $	*/
 /*	$NetBSD: fbvar.h,v 1.9 1997/07/07 23:31:30 pk Exp $ */
 
 /*
@@ -62,6 +62,7 @@ struct sunfb {
 	struct	wsscreen_descr sf_wsd;
 	struct	wsscreen_list sf_wsl;
 	struct	wsscreen_descr *sf_scrlist[1];
+	int	sf_nscreens;
 };
 
 /*
@@ -70,7 +71,7 @@ struct sunfb {
 extern int fbnode;
 
 void	fb_setsize(struct sunfb*, int, int, int, int, int);
-void	fbwscons_init(struct sunfb *, int);
+void	fbwscons_init(struct sunfb *, int, int);
 void	fbwscons_console_init(struct sunfb *, int);
 void	fbwscons_setcolormap(struct sunfb *,
     void (*)(void *, u_int, u_int8_t, u_int8_t, u_int8_t));

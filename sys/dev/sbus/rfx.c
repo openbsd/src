@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.8 2007/11/26 09:28:33 martynas Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.9 2008/12/27 17:23:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -120,13 +120,8 @@ struct rfx_softc {
 	int			 sc_nscreens;
 };
 
-int	rfx_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
 void	rfx_burner(void *, u_int, u_int);
-void	rfx_free_screen(void *, void *);
 int	rfx_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int	rfx_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-	    void *);
 paddr_t	rfx_mmap(void *, off_t, int);
 
 int	rfx_getcmap(struct rfx_cmap *, struct wsdisplay_cmap *);
@@ -140,9 +135,9 @@ void	rfx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 struct wsdisplay_accessops rfx_accessops = {
 	rfx_ioctl,
 	rfx_mmap,
-	rfx_alloc_screen,
-	rfx_free_screen,
-	rfx_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
@@ -301,14 +296,13 @@ rfxattach(struct device *parent, struct device *self, void *args)
 			return;
 	}
 
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, 0, isconsole);
 
 	bzero(&sc->sc_cmap, sizeof(sc->sc_cmap));
 	fbwscons_setcolormap(&sc->sc_sunfb, rfx_setcolor);
 
-	if (isconsole) {
+	if (isconsole)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
-	}
 
 	/* enable video */
 	rfx_burner(sc, 1, 0);
@@ -382,39 +376,6 @@ rfx_mmap(void *v, off_t offset, int prot)
 	}
 
 	return (-1);
-}
-
-int
-rfx_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
-{
-	struct rfx_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-rfx_free_screen(void *v, void *cookie)
-{
-	struct rfx_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-rfx_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.5 2007/03/13 19:40:49 miod Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.6 2008/12/27 17:23:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
@@ -89,11 +89,6 @@ struct cgtwelve_softc {
 };
 
 int	cgtwelve_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int	cgtwelve_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
-void	cgtwelve_free_screen(void *, void *);
-int	cgtwelve_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-	    void *);
 paddr_t	cgtwelve_mmap(void *, off_t, int);
 void	cgtwelve_reset(struct cgtwelve_softc *, int);
 void	cgtwelve_prom(void *);
@@ -104,9 +99,9 @@ static __inline__ void cgtwelve_ramdac_wraddr(struct cgtwelve_softc *sc,
 struct wsdisplay_accessops cgtwelve_accessops = {
 	cgtwelve_ioctl,
 	cgtwelve_mmap,
-	cgtwelve_alloc_screen,
-	cgtwelve_free_screen,
-	cgtwelve_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
@@ -237,7 +232,7 @@ cgtwelveattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)sc->sc_overlay;
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
+	fbwscons_init(&sc->sc_sunfb, 0, isconsole);
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, -1);
@@ -432,39 +427,6 @@ cgtwelve_mmap(void *v, off_t offset, int prot)
 	}
 
 	return (-1);
-}
-
-int
-cgtwelve_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
-{
-	struct cgtwelve_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	     0, 0, 0, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-cgtwelve_free_screen(void *v, void *cookie)
-{
-	struct cgtwelve_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-cgtwelve_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
-	return (0);
 }
 
 /*

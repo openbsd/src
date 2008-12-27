@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.56 2006/12/17 22:18:16 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.57 2008/12/27 17:23:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -53,11 +53,6 @@
 #include <dev/ic/bt458reg.h>
 
 int cgsix_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int cgsix_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void cgsix_free_screen(void *, void *);
-int cgsix_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
 paddr_t cgsix_mmap(void *, off_t, int);
 int cgsix_is_console(int);
 int cg6_bt_getcmap(union bt_cmap *, struct wsdisplay_cmap *);
@@ -81,9 +76,9 @@ int cgsix_updatecursor(struct cgsix_softc *, u_int);
 struct wsdisplay_accessops cgsix_accessops = {
 	cgsix_ioctl,
 	cgsix_mmap,
-	cgsix_alloc_screen,
-	cgsix_free_screen,
-	cgsix_show_screen,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
 	NULL,	/* load_font */
 	NULL,	/* scrollback */
 	NULL,	/* getchar */
@@ -202,7 +197,12 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sunfb.sf_ro.ri_bits = (void *)bus_space_vaddr(sc->sc_bustag,
 	    sc->sc_vid_regs);
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
-	fbwscons_init(&sc->sc_sunfb, console ? 0 : RI_CLEAR);
+
+	printf(", %dx%d, rev %d\n", sc->sc_sunfb.sf_width,
+	    sc->sc_sunfb.sf_height, rev);
+
+	fbwscons_init(&sc->sc_sunfb, 0, console);
+	fbwscons_setcolormap(&sc->sc_sunfb, cgsix_setcolor);
 
 	/*
 	 * Old rev. cg6 cards do not like the current acceleration code.
@@ -223,14 +223,8 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 		cgsix_ras_init(sc);
 	}
 
-	printf(", %dx%d, rev %d\n", sc->sc_sunfb.sf_width,
-	    sc->sc_sunfb.sf_height, rev);
-
-	fbwscons_setcolormap(&sc->sc_sunfb, cgsix_setcolor);
-
-	if (console) {
+	if (console)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
-	}
 
 	fbwscons_attach(&sc->sc_sunfb, &cgsix_accessops, console);
 
@@ -497,39 +491,6 @@ cgsix_updatecursor(struct cgsix_softc *sc, u_int which)
 		}
 	}
 
-	return (0);
-}
-
-int
-cgsix_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
-{
-	struct cgsix_softc *sc = v;
-
-	if (sc->sc_nscreens > 0)
-		return (ENOMEM);
-
-	*cookiep = &sc->sc_sunfb.sf_ro;
-	*curyp = 0;
-	*curxp = 0;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, attrp);
-	sc->sc_nscreens++;
-	return (0);
-}
-
-void
-cgsix_free_screen(void *v, void *cookie)
-{
-	struct cgsix_softc *sc = v;
-
-	sc->sc_nscreens--;
-}
-
-int
-cgsix_show_screen(void *v, void *cookie, int waitok,
-    void (*cb)(void *, int, int), void *cbarg)
-{
 	return (0);
 }
 
