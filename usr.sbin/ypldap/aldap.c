@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.7 2008/11/28 10:07:56 aschrijver Exp $ */
-/*	$OpenBSD: aldap.c,v 1.7 2008/11/28 10:07:56 aschrijver Exp $ */
+/*	$Id: aldap.c,v 1.8 2008/12/27 19:46:12 aschrijver Exp $ */
+/*	$OpenBSD: aldap.c,v 1.8 2008/12/27 19:46:12 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -75,6 +75,8 @@ aldap_bind(struct aldap *ldap, char *binddn, char *bindcred)
 	if(ber_write_elements(&ldap->ber, root) == -1)
 		return (-1);
 
+	ber_free_elements(root);
+
 	return (ldap->msgid);
 }
 
@@ -91,6 +93,8 @@ aldap_unbind(struct aldap *ldap)
 
 	if(ber_write_elements(&ldap->ber, root) == -1)
 		return (-1);
+
+	ber_free_elements(root);
 
 	return (ldap->msgid);
 }
@@ -118,6 +122,8 @@ aldap_search(struct aldap *ldap, char *basedn, enum scope scope, char *filter,
 
 	if(ber_write_elements(&ldap->ber, root) == -1)
 		return (-1);
+
+	ber_free_elements(root);
 
 	return (ldap->msgid);
 }
