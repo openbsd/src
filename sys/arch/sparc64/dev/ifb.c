@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.5 2008/12/27 23:07:39 kettenis Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.6 2008/12/27 23:16:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Miodrag Vallat.
@@ -80,10 +80,13 @@
  * However the non-visible parts of each stripe can still be addressed
  * (probably for fast screen switching).
  *
- * Unfortunately, since we do not know how to reconfigured the stripes
+ * Unfortunately, since we do not know how to reconfigure the stripes
  * to provide at least a linear frame buffer, we have to write to both
- * windows and have them provide the complete image. This however leads
- * to parasite overlays appearing sometimes in the screen...
+ * windows and have them provide the complete image.
+ *
+ * Moreover, high pixel values in the overlay planes (such as 0xff or 0xfe)
+ * seem to enable other planes with random contents, so we'll limit ourselves
+ * to 7bpp opration.
  */
 
 /*
@@ -254,11 +257,13 @@ struct cfdriver ifb_cd = {
 	NULL, "ifb", DV_DULL
 };
 
-int	ifb_mapregs(struct ifb_softc *, struct pci_attach_args *);
-int	ifb_is_console(int);
 int	ifb_getcmap(struct ifb_softc *, struct wsdisplay_cmap *);
+int	ifb_is_console(int);
+int	ifb_mapregs(struct ifb_softc *, struct pci_attach_args *);
 int	ifb_putcmap(struct ifb_softc *, struct wsdisplay_cmap *);
 void	ifb_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
+void	ifb_setcolormap(struct sunfb *,
+	    void (*)(void *, u_int, u_int8_t, u_int8_t, u_int8_t));
 
 void	ifb_putchar(void *, int, int, u_int, long);
 void	ifb_copycols(void *, int, int, int, int);
@@ -345,9 +350,6 @@ ifbattach(struct device *parent, struct device *self, void *aux)
 	fbwscons_init(&sc->sc_sunfb, RI_BSWAP, sc->sc_console);
 	ri->ri_flg &= ~RI_FULLCLEAR;	/* due to the way we handle updates */
 
-	ri->ri_devcmap[WSCOL_WHITE] = 0;
-	ri->ri_devcmap[WSCOL_BLACK] = 0x01010101;
-
 	if (!sc->sc_console) {
 		bzero((void *)sc->sc_fb8bank0_vaddr, sc->sc_sunfb.sf_fbsize);
 		bzero((void *)sc->sc_fb8bank1_vaddr, sc->sc_sunfb.sf_fbsize);
@@ -366,9 +368,8 @@ ifbattach(struct device *parent, struct device *self, void *aux)
 	ri->ri_ops.putchar = ifb_putchar;
 	ri->ri_do_cursor = ifb_do_cursor;
 
-#if 0
-	fbwscons_setcolormap(&sc->sc_sunfb, ifb_setcolor);
-#endif
+	ifb_setcolormap(&sc->sc_sunfb, ifb_setcolor);
+
 	if (sc->sc_console)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
 	fbwscons_attach(&sc->sc_sunfb, &ifb_accessops, sc->sc_console);
@@ -387,10 +388,8 @@ ifb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		break;
 
 	case WSDISPLAYIO_SMODE:
-#if 0
 		if (*(u_int *)data == WSDISPLAYIO_MODE_EMUL)
-			fbwscons_setcolormap(&sc->sc_sunfb, ifb_setcolor);
-#endif
+			ifb_setcolormap(&sc->sc_sunfb, ifb_setcolor);
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
@@ -501,6 +500,50 @@ ifb_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
 	    IFB_REG_OFFSET + IFB_REG_CMAP_DATA,
 	    (((u_int)b) << 22) | (((u_int)g) << 12) | (((u_int)r) << 2));
+}
+
+/* similar in spirit to fbwscons_setcolormap() */
+void
+ifb_setcolormap(struct sunfb *sf,
+    void (*setcolor)(void *, u_int, u_int8_t, u_int8_t, u_int8_t))
+{
+	struct rasops_info *ri = &sf->sf_ro;
+	int i;
+	const u_char *color;
+
+	/*
+	 * Compensate for overlay plane limitations. Since we'll operate
+	 * in 7bpp mode, our basic colors will use positions 00 to 0f,
+	 * and the inverted colors will use positions 7f to 70.
+	 */
+
+	for (i = 0x00; i < 0x10; i++) {
+		color = &rasops_cmap[i * 3];
+		setcolor(sf, i, color[0], color[1], color[2]);
+	}
+	for (i = 0x70; i < 0x80; i++) {
+		color = &rasops_cmap[(0xf0 | i) * 3];
+		setcolor(sf, i, color[0], color[1], color[2]);
+	}
+
+	/*
+	 * Proper operation apparently needs black to be 01, always.
+	 * Replace black, red and white with white, black and red.
+	 * Kind of ugly, but it works.
+	 */
+	ri->ri_devcmap[WSCOL_WHITE] = 0x00000000;
+	ri->ri_devcmap[WSCOL_BLACK] = 0x01010101;
+	ri->ri_devcmap[WSCOL_RED] = 0x07070707;
+
+	color = &rasops_cmap[(WSCOL_WHITE + 8) * 3];	/* real white */
+	setcolor(sf, 0, color[0], color[1], color[2]);
+	setcolor(sf, 0x7f ^ 0, ~color[0], ~color[1], ~color[2]);
+	color = &rasops_cmap[WSCOL_BLACK * 3];
+	setcolor(sf, 1, color[0], color[1], color[2]);
+	setcolor(sf, 0x7f ^ 1, ~color[0], ~color[1], ~color[2]);
+	color = &rasops_cmap[WSCOL_RED * 3];
+	setcolor(sf, 7, color[0], color[1], color[2]);
+	setcolor(sf, 0x7f ^ 7, ~color[0], ~color[1], ~color[2]);
 }
 
 paddr_t
@@ -690,6 +733,9 @@ ifb_eraserows(void *cookie, int row, int num, long attr)
 	sc->sc_old_ops.eraserows(cookie, row, num, attr);
 }
 
+/*
+ * Similar to rasops_do_cursor(), but using a 7bit pixel mask.
+ */
 void
 ifb_do_cursor(struct rasops_info *ri)
 {
@@ -720,8 +766,8 @@ ifb_do_cursor(struct rasops_info *ri)
 			rp += ri->ri_stride;
 
 			for (cnt = full1; cnt; cnt--) {
-				*(int32_t *)dp0 ^= 0x01010101;
-				*(int32_t *)dp1 ^= 0x01010101;
+				*(int32_t *)dp0 ^= 0x7f7f7f7f;
+				*(int32_t *)dp1 ^= 0x7f7f7f7f;
 				dp0 += 4;
 				dp1 += 4;
 			}
@@ -734,32 +780,32 @@ ifb_do_cursor(struct rasops_info *ri)
 			rp += ri->ri_stride;
 
 			if (slop1 & 1) {
-				*dp0++ ^= 0x01;
-				*dp1++ ^= 0x01;
+				*dp0++ ^= 0x7f;
+				*dp1++ ^= 0x7f;
 			}
 
 			if (slop1 & 2) {
-				*(int16_t *)dp0 ^= 0x0101;
-				*(int16_t *)dp1 ^= 0x0101;
+				*(int16_t *)dp0 ^= 0x7f7f;
+				*(int16_t *)dp1 ^= 0x7f7f;
 				dp0 += 2;
 				dp1 += 2;
 			}
 
 			for (cnt = full1; cnt; cnt--) {
-				*(int32_t *)dp0 ^= 0x01010101;
-				*(int32_t *)dp1 ^= 0x01010101;
+				*(int32_t *)dp0 ^= 0x7f7f7f7f;
+				*(int32_t *)dp1 ^= 0x7f7f7f7f;
 				dp0 += 4;
 				dp1 += 4;
 			}
 
 			if (slop2 & 1) {
-				*dp0++ ^= 0x01;
-				*dp1++ ^= 0x01;
+				*dp0++ ^= 0x7f;
+				*dp1++ ^= 0x7f;
 			}
 
 			if (slop2 & 2) {
-				*(int16_t *)dp0 ^= 0x0101;
-				*(int16_t *)dp1 ^= 0x0101;
+				*(int16_t *)dp0 ^= 0x7f7f;
+				*(int16_t *)dp1 ^= 0x7f7f;
 			}
 		}
 	}
