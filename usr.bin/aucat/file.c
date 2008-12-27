@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.7 2008/11/16 21:16:08 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.8 2008/12/27 14:23:40 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -111,7 +111,7 @@ file_poll(void)
 	struct file *f, *fnext;
 	struct aproc *p;
 #ifdef DEBUG
-	unsigned nused;
+	unsigned nused, nfound;
 #endif
 
 	/*
@@ -122,6 +122,7 @@ file_poll(void)
 	nfds = 0;
 #ifdef DEBUG
 	nused = 0;
+	nfound = 0;
 #endif
 	LIST_FOREACH(f, &file_list, entry) {
 		events = 0;
@@ -132,6 +133,8 @@ file_poll(void)
 #ifdef DEBUG
 		if (events)
 			nused++;
+		if (f->rproc || f->wproc)
+			nfound++;
 #endif
 		DPRINTFN(4, " %s(%x)", f->name, events);
 		n = f->ops->pollfd(f, pfds + nfds, events);
@@ -145,7 +148,7 @@ file_poll(void)
 	DPRINTFN(4, "\n");
 
 #ifdef DEBUG
-	if (nused == 0 && !LIST_EMPTY(&file_list)) {
+	if (nused == 0 && nfound > 0) {
 		fprintf(stderr, "file_poll: deadlock\n");
 		abort();
 	}
