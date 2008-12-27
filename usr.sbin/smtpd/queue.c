@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.32 2008/12/27 17:03:29 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.33 2008/12/27 17:12:39 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -75,6 +75,7 @@ int		queue_process_message(struct smtpd *, char *);
 void		queue_process_envelope(struct smtpd *, char *, char *);
 int		queue_load_envelope(struct message *, char *);
 void		queue_delete_message(char *);
+void		queue_message_update(struct message *);
 
 void		batch_send(struct smtpd *, struct batch *, time_t);
 struct batch	*queue_record_batch(struct smtpd *, struct message *);
@@ -328,39 +329,7 @@ queue_dispatch_mda(int sig, short event, void *p)
 		switch (imsg.hdr.type) {
 
 		case IMSG_QUEUE_MESSAGE_UPDATE: {
-			struct message *messagep;
-
-			messagep = (struct message *)imsg.data;
-			messagep->batch_id = 0;
-			messagep->retry++;
-
-			if (messagep->status & S_MESSAGE_TEMPFAILURE) {
-				messagep->status &= ~S_MESSAGE_TEMPFAILURE;
-				messagep->flags &= ~F_MESSAGE_PROCESSING;
-				queue_update_envelope(messagep);
-				break;
-			}
-
-			if (messagep->status & S_MESSAGE_PERMFAILURE) {
-				struct message msave;
-
-				messagep->status &= ~S_MESSAGE_PERMFAILURE;
-				if ((messagep->type & T_DAEMON_MESSAGE) == 0) {
-					msave = *messagep;
-					messagep->id = queue_generate_id();
-					messagep->batch_id = 0;
-					messagep->type |= T_DAEMON_MESSAGE;
-					messagep->lasttry = 0;
-					messagep->retry = 0;
-					queue_record_envelope(messagep);
-					*messagep = msave;
-				}
-				queue_remove_envelope(messagep);
-				break;
-			}
-
-			/* no error, remove envelope */
-			queue_remove_envelope(messagep);
+			queue_message_update(imsg.data);
 			break;
 		}
 
@@ -423,39 +392,7 @@ queue_dispatch_mta(int sig, short event, void *p)
 		}
 
 		case IMSG_QUEUE_MESSAGE_UPDATE: {
-			struct message *messagep;
-
-			messagep = (struct message *)imsg.data;
-			messagep->batch_id = 0;
-			messagep->retry++;
-
-			if (messagep->status & S_MESSAGE_TEMPFAILURE) {
-				messagep->status &= ~S_MESSAGE_TEMPFAILURE;
-				messagep->flags &= ~F_MESSAGE_PROCESSING;
-				queue_update_envelope(messagep);
-				break;
-			}
-
-			if (messagep->status & S_MESSAGE_PERMFAILURE) {
-				struct message msave;
-
-				messagep->status &= ~S_MESSAGE_PERMFAILURE;
-				if ((messagep->type & T_DAEMON_MESSAGE) == 0) {
-					msave = *messagep;
-					messagep->id = queue_generate_id();
-					messagep->batch_id = 0;
-					messagep->type |= T_DAEMON_MESSAGE;
-					messagep->lasttry = 0;
-					messagep->retry = 0;
-					queue_record_envelope(messagep);
-					*messagep = msave;
-				}
-				queue_remove_envelope(messagep);
-				break;
-			}
-
-			/* no error, remove envelope */
-			queue_remove_envelope(messagep);
+			queue_message_update(imsg.data);
 			break;
 		}
 
@@ -1180,6 +1117,41 @@ queue_delete_message(char *msgid)
 	rmdir(rootdir);
 
 	return;
+}
+
+void
+queue_message_update(struct message *messagep)
+{
+	struct message msave;
+
+	messagep->batch_id = 0;
+	messagep->retry++;
+
+	if (messagep->status & S_MESSAGE_PERMFAILURE) {
+		if ((messagep->type & T_DAEMON_MESSAGE) == 0) {
+			msave = *messagep;
+			messagep->id = queue_generate_id();
+			messagep->batch_id = 0;
+			messagep->type |= T_DAEMON_MESSAGE;
+			messagep->status &= ~S_MESSAGE_PERMFAILURE;
+			messagep->lasttry = 0;
+			messagep->retry = 0;
+			queue_record_envelope(messagep);
+			*messagep = msave;
+		}
+		queue_remove_envelope(messagep);
+		return;
+	}
+
+	if (messagep->status & S_MESSAGE_TEMPFAILURE) {
+		messagep->status &= ~S_MESSAGE_TEMPFAILURE;
+		messagep->flags &= ~F_MESSAGE_PROCESSING;
+		queue_update_envelope(messagep);
+		return;
+	}
+
+	/* no error, remove envelope */
+	queue_remove_envelope(messagep);
 }
 
 u_int16_t
