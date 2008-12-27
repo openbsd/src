@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.7 2008/12/26 13:29:31 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.8 2008/12/27 14:18:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -164,8 +164,8 @@ safile_start(struct file *file)
 	struct safile *f = (struct safile *)file;
 
 	if (!sio_start(f->hdl)) {
-		fprintf(stderr, "safile_start: sio_start() failed\n");
-		exit(1);
+		DPRINTF("safile_start: sio_start() failed\n");
+		return;
 	}
 	DPRINTF("safile_start: play/rec started\n");
 }
@@ -176,8 +176,8 @@ safile_stop(struct file *file)
 	struct safile *f = (struct safile *)file;
 
 	if (!sio_stop(f->hdl)) {
-		fprintf(stderr, "safile_stop: sio_start() filed\n");
-		exit(1);
+		DPRINTF("safile_stop: sio_stop() filed\n");
+		return;
 	}
 	DPRINTF("safile_stop: play/rec stopped\n");
 }
