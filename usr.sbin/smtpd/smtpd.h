@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.36 2008/12/27 17:03:29 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.37 2008/12/27 17:36:37 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -698,10 +698,14 @@ SPLAY_PROTOTYPE(msgtree, message, nodes, msg_cmp);
 /* queue.c */
 pid_t		 queue(struct smtpd *);
 u_int64_t	 queue_generate_id(void);
+int		 queue_remove_batch_message(struct smtpd *, struct batch *,
+ 		     struct message *);
+int		 queue_load_envelope(struct message *, char *);
+int		 queue_update_envelope(struct message *);
+int		 queue_remove_envelope(struct message *);
 int		 batch_cmp(struct batch *, struct batch *);
 struct batch    *batch_by_id(struct smtpd *, u_int64_t);
 struct message	*message_by_id(struct smtpd *, struct batch *, u_int64_t);
-int		 queue_remove_batch_message(struct smtpd *, struct batch *, struct message *);
 u_int16_t	 queue_hash(char *);
 
 /* mda.c */

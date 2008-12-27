@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.33 2008/12/27 17:12:39 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.34 2008/12/27 17:36:37 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -53,34 +53,20 @@ void		queue_dispatch_lka(int, short, void *);
 void		queue_dispatch_runner(int, short, void *);
 void		queue_setup_events(struct smtpd *);
 void		queue_disable_events(struct smtpd *);
-void		queue_timeout(int, short, void *);
 void		queue_purge_incoming(void);
+
 int		queue_create_incoming_layout(char *);
-int		queue_record_envelope(struct message *);
-int		queue_remove_envelope(struct message *);
-int		queue_open_message_file(struct batch *);
-int		queue_batch_resolved(struct smtpd *, struct batch *);
-int		queue_message_schedule(struct message *, time_t);
-void		queue_delete_message_file(char *);
+void		queue_delete_incoming_message(char *);
 int		queue_record_incoming_envelope(struct message *);
 int		queue_update_incoming_envelope(struct message *);
 int		queue_remove_incoming_envelope(struct message *);
 int		queue_commit_incoming_message(struct message *);
-void		queue_delete_incoming_message(char *);
-int		queue_update_envelope(struct message *);
 int		queue_open_incoming_message_file(struct message *);
-void		queue_process(struct smtpd *);
-int		queue_process_bucket(struct smtpd *, u_int16_t);
-int		queue_process_message(struct smtpd *, char *);
-void		queue_process_envelope(struct smtpd *, char *, char *);
-int		queue_load_envelope(struct message *, char *);
-void		queue_delete_message(char *);
 void		queue_message_update(struct message *);
 
-void		batch_send(struct smtpd *, struct batch *, time_t);
-struct batch	*queue_record_batch(struct smtpd *, struct message *);
-struct batch    *batch_by_id(struct smtpd *, u_int64_t);
-struct message	*message_by_id(struct smtpd *, struct batch *, u_int64_t);
+int		queue_record_envelope(struct message *);
+int		queue_open_message_file(struct batch *);
+void		queue_delete_message(char *);
 
 void
 queue_sig_handler(int sig, short event, void *p)
@@ -981,14 +967,14 @@ queue_remove_envelope(struct message *messagep)
 	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
 		hval, messagep->message_id, PATH_ENVELOPES,
 		messagep->message_uid))
-		fatal("queue_remove_incoming_envelope: snprintf");
+		fatal("queue_remove_envelope: snprintf");
 
 	if (unlink(pathname) == -1)
-		fatal("queue_remove_incoming_envelope: unlink");
+		fatal("queue_remove_envelope: unlink");
 
 	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s", PATH_QUEUE,
 		hval, messagep->message_id, PATH_ENVELOPES))
-		fatal("queue_remove_incoming_envelope: snprintf");
+		fatal("queue_remove_envelope: snprintf");
 
 	if (rmdir(pathname) != -1)
 		queue_delete_message(messagep->message_id);

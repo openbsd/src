@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.10 2008/12/27 17:03:29 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.11 2008/12/27 17:36:37 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -71,10 +71,6 @@ void		runner_purge_message(char *);
 
 struct batch	*batch_record(struct smtpd *, struct message *);
 struct batch	*batch_lookup(struct smtpd *, struct message *);
-
-int		queue_load_envelope(struct message *, char *);
-int		queue_update_envelope(struct message *);
-int		queue_remove_envelope(struct message *);
 
 void
 runner_sig_handler(int sig, short event, void *p)
@@ -444,21 +440,17 @@ runner_process_queue(struct smtpd *env)
 
 	dirp = opendir(PATH_QUEUE);
 	if (dirp == NULL)
-		fatal("queue_process: opendir");
-
+		fatal("runner_process_queue: opendir");
 	while ((dp = readdir(dirp)) != NULL) {
-
 		if (strcmp(dp->d_name, ".") == 0 ||
 		    strcmp(dp->d_name, "..") == 0)
 			continue;
-
 		bucket = strtonum(dp->d_name, 0, DIRHASH_BUCKETS - 1, &errstr);
 		if (errstr) {
-			log_warn("queue_process: %s/%s is not a valid bucket",
+			log_warn("runner_process_queue: invalid bucket: %s/%s",
 			    PATH_QUEUE, dp->d_name);
 			continue;
 		}
-
 		runner_process_bucket(env, bucket);
 	}
 	closedir(dirp);
@@ -472,21 +464,16 @@ runner_process_bucket(struct smtpd *env, u_int16_t bucket)
 	char bucketpath[MAXPATHLEN];
 
 	if (! bsnprintf(bucketpath, MAXPATHLEN, "%s/%d", PATH_QUEUE, bucket))
-		fatal("queue_process_bucket: snprintf");
-
+		fatal("runner_process_bucket: snprintf");
 	dirp = opendir(bucketpath);
 	if (dirp == NULL)
 		return;
-
 	while ((dp = readdir(dirp)) != NULL) {
-
 		if (strcmp(dp->d_name, ".") == 0 ||
 		    strcmp(dp->d_name, "..") == 0)
 			continue;
-		
 		runner_process_message(env, dp->d_name);
 	}
-
 	closedir(dirp);
 }
 
@@ -496,27 +483,21 @@ runner_process_message(struct smtpd *env, char *messageid)
 	DIR *dirp = NULL;
 	struct dirent *dp;
 	char evppath[MAXPATHLEN];
-	u_int16_t hval = 0;
+	u_int16_t hval;
 
 	hval = queue_hash(messageid);
-
 	if (! bsnprintf(evppath, MAXPATHLEN, "%s/%d/%s%s", PATH_QUEUE, hval,
 		messageid, PATH_ENVELOPES))
-		fatal("queue_process_message: snprintf");
-
+		fatal("runner_process_message: snprintf");
 	dirp = opendir(evppath);
 	if (dirp == NULL)
 		return;
-
 	while ((dp = readdir(dirp)) != NULL) {
-
 		if (strcmp(dp->d_name, ".") == 0 ||
 		    strcmp(dp->d_name, "..") == 0)
 			continue;
-
 		runner_process_envelope(env, dp->d_name, dp->d_name);
 	}
-
 	closedir(dirp);
 }
 
@@ -549,14 +530,14 @@ runner_process_envelope(struct smtpd *env, char *msgid, char *evpid)
 	hval = queue_hash(msgid);
 	if (! bsnprintf(evppath, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE, hval,
 		msgid, PATH_ENVELOPES, evpid))
-		fatal("queue_process_envelope: snprintf");
+		fatal("runner_process_envelope: snprintf");
 
 	if (! bsnprintf(rqpath, MAXPATHLEN, "%s/%s", PATH_RUNQUEUE, evpid))
-		fatal("queue_process_envelope: snprintf");
+		fatal("runner_process_envelope: snprintf");
 
 	if (stat(rqpath, &sb) == -1) {
 		if (errno != ENOENT)
-			fatal("queue_process_envelope: stat");
+			fatal("runner_process_envelope: stat");
 
 		if (symlink(evppath, rqpath) == -1) {
 			log_info("queue_process_envelope: "
@@ -580,19 +561,19 @@ runner_process_runqueue(struct smtpd *env)
 
 	dirp = opendir(PATH_RUNQUEUE);
 	if (dirp == NULL)
-		fatal("queue_process_runqueue: opendir");
+		fatal("runner_process_runqueue: opendir");
 
 	while ((dp = readdir(dirp)) != NULL) {
 		if (strcmp(dp->d_name, ".") == 0 ||
 		    strcmp(dp->d_name, "..") == 0)
 			continue;
 
-		snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_RUNQUEUE, dp->d_name);
+		snprintf(pathname, MAXPATHLEN, "%s/%s", PATH_RUNQUEUE,
+		    dp->d_name);
 		unlink(pathname);
 
-		if (! queue_load_envelope(&message, dp->d_name)) {
+		if (! queue_load_envelope(&message, dp->d_name))
 			continue;
-		}
 
 		if (message.flags & F_MESSAGE_PROCESSING)
 			continue;
