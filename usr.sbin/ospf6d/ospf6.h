@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.8 2007/11/27 11:29:34 claudio Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.9 2008/12/28 18:30:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -78,7 +78,7 @@
 /* OSPF compatibility flags */
 #define OSPF_OPTION_V6		0x01
 #define OSPF_OPTION_E		0x02
-#define OSPF_OPTION_MC		0x04
+#define OSPF_OPTION_x		0x04	/* ignored, should be 0 */
 #define OSPF_OPTION_N		0x08
 #define OSPF_OPTION_R		0x10
 #define OSPF_OPTION_DC		0x20
@@ -179,6 +179,17 @@ struct ls_upd_hdr {
 #define LINK_TYPE_RESERVED	3
 #define LINK_TYPE_VIRTUAL	4
 
+/* for some reason they thought 24bit types are fun, make them less a hazard */
+#define LSA_24_MASK 0xffffff
+#define LSA_24_GETHI(x)	\
+	((x) >> 24)
+#define LSA_24_GETLO(x)	\
+	((x) & LSA_24_MASK)
+#define LSA_24_SETHI(x, y)	\
+	((x) = ((x) & LSA_24_MASK) | (((y) & 0xff) << 24))
+#define LSA_24_SETLO(x, y)	\
+	((x) = ((y) & LSA_24_MASK) | ((x) & ~LSA_24_MASK))
+
 /* LSA headers */
 #define LSA_METRIC_MASK		0x00ffffff	/* only for sum & as-ext */
 #define LSA_ASEXT_E_FLAG	0x80000000
@@ -186,7 +197,8 @@ struct ls_upd_hdr {
 #define OSPF_RTR_B		0x01
 #define OSPF_RTR_E		0x02
 #define OSPF_RTR_V		0x04
-#define OSPF_RTR_W		0x08
+#define OSPF_RTR_x		0x08	/* ignored, should be 0 */
+#define OSPF_RTR_Nt		0x10
 
 struct lsa_prefix {
 	struct in6_addr		prefix;
