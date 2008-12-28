@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.14 2008/12/28 21:23:51 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.15 2008/12/28 21:32:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -516,7 +516,7 @@ show_database_head(struct in_addr aid, char *ifname, u_int16_t type)
 
 	switch (ntohs(type)) {
 	case LSA_TYPE_LINK:
-		format = "Link Link States";
+		format = "Link (Type-8) Link States";
 		break;
 	case LSA_TYPE_ROUTER:
 		format = "Router Link States";
@@ -641,7 +641,7 @@ show_db_hdr_msg_detail(struct lsa_hdr *lsa)
 		printf("Link State ID: %s\n", log_id(lsa->ls_id));
 		break;
 	case LSA_TYPE_NETWORK:
-		printf("Link State ID: %s (address of Designated Router)\n",
+		printf("Link State ID: %s (interface ID of Designated Router)\n",
 		    log_id(lsa->ls_id));
 		break;
 	case LSA_TYPE_INTER_A_PREFIX:
