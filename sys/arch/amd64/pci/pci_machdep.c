@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.19 2008/12/07 14:33:26 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.20 2008/12/28 18:26:53 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -396,11 +396,9 @@ not2:
 int
 pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	int pin = pa->pa_intrpin;
+	int pin = pa->pa_rawintrpin;
 	int line = pa->pa_intrline;
-	int rawpin = pa->pa_rawintrpin;
 #if NIOAPIC > 0
-	pci_chipset_tag_t pc = pa->pa_pc;
 	int bus, dev, func;
 	int mppin;
 #endif
@@ -417,20 +415,20 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	ihp->tag = pa->pa_tag;
 	ihp->line = line;
-	ihp->pin = rawpin;
+	ihp->pin = pin;
 
 #if NIOAPIC > 0
-	pci_decompose_tag(pc, pa->pa_tag, &bus, &dev, &func);
+	pci_decompose_tag(pa->pa_pc, pa->pa_tag, &bus, &dev, &func);
 	if (mp_busses != NULL) {
-		mppin = (dev << 2)|(rawpin - 1);
+		mppin = (dev << 2)|(pin - 1);
 		if (intr_find_mpmapping(bus, mppin, &ihp->line) == 0) {
 			ihp->line |= line;
 			return 0;
 		}
 		if (pa->pa_bridgetag) {
-			int pin = PPB_INTERRUPT_SWIZZLE(rawpin, dev);
-			if (pa->pa_bridgeih[pin - 1].line != -1) {
-				ihp->line = pa->pa_bridgeih[pin - 1].line;
+			int swizpin = PPB_INTERRUPT_SWIZZLE(pin, dev);
+			if (pa->pa_bridgeih[swizpin - 1].line != -1) {
+				ihp->line = pa->pa_bridgeih[swizpin - 1].line;
 				ihp->line |= line;
 				return 0;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.58 2008/06/13 08:45:50 deraadt Exp $	*/
+/*	$OpenBSD: pci.c,v 1.59 2008/12/28 18:26:53 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -291,16 +291,6 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	   on broken hardware. <csapuntz@stanford.edu> */
 	pa.pa_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
-#ifdef __i386__
-	/*
-	 * on i386 we really need to know the device tag
-	 * and not the pci bridge tag, in intr_map
-	 * to be able to program the device and the
-	 * pci interrupt router.
-	 */
-	pa.pa_intrtag = tag;
-	pa.pa_intrswiz = 0;
-#else
 	if (sc->sc_bridgetag == NULL) {
 		pa.pa_intrswiz = 0;
 		pa.pa_intrtag = tag;
@@ -308,7 +298,6 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		pa.pa_intrswiz = sc->sc_intrswiz + device;
 		pa.pa_intrtag = sc->sc_intrtag;
 	}
-#endif
 
 	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 
