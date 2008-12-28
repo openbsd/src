@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.10 2008/02/11 13:48:39 norby Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.11 2008/12/28 21:20:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -348,9 +348,10 @@ lsa_intra_a_pref_check(struct lsa *lsa, u_int16_t len)
 int
 lsa_self(struct rde_nbr *nbr, struct lsa *new, struct vertex *v)
 {
-#if 0
 	struct lsa	*dummy;
+#if 0
 	struct iface	*iface;
+#endif
 
 	if (nbr->self)
 		return (0);
@@ -358,10 +359,13 @@ lsa_self(struct rde_nbr *nbr, struct lsa *new, struct vertex *v)
 	if (rde_router_id() == new->hdr.adv_rtr)
 		goto self;
 
+#if 0
+	/* TODO: Do we need something like this for *-prefix-LSAs? */
 	if (ntohs(new->hdr.type) == LSA_TYPE_NETWORK)
 		LIST_FOREACH(iface, &nbr->area->iface_list, entry)
-		    if (iface->addr.s_addr == new->hdr.ls_id)
-			    goto self;
+			if (iface->addr.s_addr == new->hdr.ls_id)
+				goto self;
+#endif
 
 	return (0);
 self:
@@ -393,8 +397,6 @@ self:
 	v->lsa->hdr.seq_num = new->hdr.seq_num;
 	lsa_refresh(v);
 	return (1);
-#endif
-	return (0);
 }
 
 int
