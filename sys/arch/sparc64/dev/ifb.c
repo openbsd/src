@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.6 2008/12/27 23:16:52 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.7 2008/12/28 14:25:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Miodrag Vallat.
@@ -106,6 +106,8 @@
  *
  */
 #define IFB_REG_MAGIC			0x0000
+#define IFB_REG_MAGIC_DIR_FORWARDS		0x00
+#define IFB_REG_MAGIC_DIR_BACKWARDS		0x0a
 
 /*
  * 0040 component configuration
@@ -663,11 +665,18 @@ ifb_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
 	struct ifb_softc *sc = ri->ri_hw;
-	int i;
+	int i, dir;
 
 	num *= ri->ri_font->fontheight;
 	src *= ri->ri_font->fontheight;
 	dst *= ri->ri_font->fontheight;
+
+	if (src < dst) {
+		src += (num -1);
+		dst += num;
+		dir = IFB_REG_MAGIC_DIR_BACKWARDS;
+	} else
+		dir = IFB_REG_MAGIC_DIR_FORWARDS;
 
 	/* Lots of magic numbers. */
 	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
@@ -702,7 +711,7 @@ ifb_copyrows(void *cookie, int src, int dst, int num)
 	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0x2200010d);
 
 	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
-	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0x33f01000);
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0x33f01000 | dir);
 	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
 	    IFB_REG_OFFSET + IFB_REG_MAGIC,
 	    IFB_COORDS(ri->ri_xorigin, ri->ri_yorigin + dst));
