@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.8 2008/12/27 19:46:12 aschrijver Exp $ */
-/*	$OpenBSD: aldap.c,v 1.8 2008/12/27 19:46:12 aschrijver Exp $ */
+/*	$Id: aldap.c,v 1.9 2008/12/28 22:03:59 blambert Exp $ */
+/*	$OpenBSD: aldap.c,v 1.9 2008/12/28 22:03:59 blambert Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -141,7 +141,7 @@ aldap_parse(struct aldap *ldap)
 		return NULL;
 
 	if((m->msg = ber_read_elements(&ldap->ber, NULL)) == NULL)
-		return NULL;
+		goto parsefail;
 
 	LDAP_DEBUG("message", m->msg);
 
@@ -168,7 +168,7 @@ aldap_parse(struct aldap *ldap)
 		break;
 	case LDAP_RES_SEARCH_ENTRY:
 		if(ber_scanf_elements(m->protocol_op, "{eS{e", &m->dn,
-			    &m->body.search.entries) != 0)
+		    &m->body.search.entries) != 0)
 			goto parsefail;
 		break;
 	case LDAP_RES_SEARCH_REFERENCE:
@@ -179,13 +179,15 @@ aldap_parse(struct aldap *ldap)
 
 	return m;
 parsefail:
+	aldap_freemsg(m);
 	return NULL;
 }
 
 void
 aldap_freemsg(struct aldap_message *msg)
 {
-	ber_free_elements(msg->msg);
+	if (msg->msg)
+		ber_free_elements(msg->msg);
 	free(msg);
 }
 
