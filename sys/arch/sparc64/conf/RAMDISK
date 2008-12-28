@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.79 2008/10/23 17:26:26 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.80 2008/12/28 00:02:35 kettenis Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -278,6 +278,8 @@ wsdisplay*	at cgtwelve?
 creator*	at mainbus0		# Creator3D/Elite3D framebuffers
 creator*	at upa0
 wsdisplay*	at creator?
+ifb*		at pci?			# Expert3D/XVR-500 framebuffers
+wsdisplay*	at ifb?
 mgx*		at sbus?		# SMS MGX/MGXPlus framebuffer
 wsdisplay*	at mgx?
 rfx*		at sbus?		# RasterFlex framebuffer series
