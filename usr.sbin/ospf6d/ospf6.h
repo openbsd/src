@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.9 2008/12/28 18:30:55 claudio Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.10 2008/12/28 20:08:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -118,10 +118,7 @@ struct ospf_hdr {
 /* Hello header (type 1) */
 struct hello_hdr {
 	u_int32_t		iface_id;
-	u_int8_t		rtr_priority;
-	u_int8_t		opts1;
-	u_int8_t		opts2;
-	u_int8_t		opts3;
+	u_int32_t		opts;	/* 8bit rtr_priority + 24bits options */
 	u_int16_t		hello_interval;
 	u_int16_t		rtr_dead_interval;
 	u_int32_t		d_rtr;

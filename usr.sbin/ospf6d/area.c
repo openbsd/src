@@ -1,4 +1,4 @@
-/*	$OpenBSD: area.c,v 1.3 2007/10/11 19:06:41 claudio Exp $ */
+/*	$OpenBSD: area.c,v 1.4 2008/12/28 20:08:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -124,5 +124,5 @@ area_ospf_options(struct area *area)
 	if (area && !area->stub)
 		opt |= OSPF_OPTION_E;
 
-	return (htonl(opt));
+	return opt;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.10 2008/12/28 17:56:16 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.11 2008/12/28 20:08:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -72,12 +72,10 @@ send_hello(struct iface *iface)
 
 	/* hello header */
 	hello.iface_id = htonl(iface->ifindex);
-	hello.rtr_priority = iface->priority;
-
-	opts = ntohl(area_ospf_options(area_find(oeconf, iface->area_id)));
-	hello.opts1 = (opts >> 16) & 0xff;
-	hello.opts2 = (opts >> 8) & 0xff;
-	hello.opts3 = opts & 0xff;
+	LSA_24_SETHI(hello.opts, iface->priority);
+	opts = area_ospf_options(area_find(oeconf, iface->area_id));
+	LSA_24_SETLO(hello.opts, opts);
+	hello.opts = htonl(hello.opts);
 
 	hello.hello_interval = htons(iface->hello_interval);
 	hello.rtr_dead_interval = htons(iface->dead_interval);
@@ -124,7 +122,7 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 	struct hello_hdr	 hello;
 	struct nbr		*nbr = NULL, *dr;
 	struct area		*area;
-	u_int32_t		 nbr_id;
+	u_int32_t		 nbr_id, opts;
 	int			 nbr_change = 0;
 
 	if (len < sizeof(hello) && (len & 0x03)) {
@@ -154,8 +152,9 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 	if ((area = area_find(oeconf, iface->area_id)) == NULL)
 		fatalx("interface lost area");
 
-	if ((hello.opts3 & OSPF_OPTION_E && area->stub) ||		/* XXX */
-	    ((hello.opts3 & OSPF_OPTION_E) == 0 && !area->stub)) {	/* XXX */
+	opts = LSA_24_GETLO(ntohl(hello.opts));
+	if ((opts & OSPF_OPTION_E && area->stub) ||
+	    ((opts & OSPF_OPTION_E) == 0 && !area->stub)) {
 		log_warnx("recv_hello: ExternalRoutingCapability mismatch, "
 		    "interface %s", iface->name);
 		return;
@@ -192,13 +191,13 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 		/* set neighbor parameters */
 		nbr->dr.s_addr = hello.d_rtr;
 		nbr->bdr.s_addr = hello.bd_rtr;
-		nbr->priority = hello.rtr_priority;
+		nbr->priority = LSA_24_GETHI(ntohl(hello.opts));
 		nbr_change = 1;
 	}
 
 	/* actually the neighbor address shouldn't be stored on virtual links */
 	nbr->addr = *src;
-	nbr->options = (hello.opts1 << 16) | (hello.opts2 << 8) | hello.opts3;
+	nbr->options = opts;
 
 	nbr_fsm(nbr, NBR_EVT_HELLO_RCVD);
 
@@ -219,13 +218,13 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 		/* set neighbor parameters */
 		nbr->dr.s_addr = hello.d_rtr;
 		nbr->bdr.s_addr = hello.bd_rtr;
-		nbr->priority = hello.rtr_priority;
+		nbr->priority = LSA_24_GETHI(ntohl(hello.opts));
 		nbr->iface_id = ntohl(hello.iface_id);
 		return;
 	}
 
-	if (nbr->priority != hello.rtr_priority) {
-		nbr->priority = hello.rtr_priority;
+	if (nbr->priority != LSA_24_GETHI(ntohl(hello.opts))) {
+		nbr->priority = LSA_24_GETHI(ntohl(hello.opts));
 		nbr_change = 1;
 	}
 

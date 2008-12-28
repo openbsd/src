@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.9 2008/12/28 19:36:44 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.10 2008/12/28 20:08:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -887,6 +887,7 @@ orig_rtr_lsa_area(struct area *area)
 
 	LSA_24_SETLO(lsa_rtr.opts, area_ospf_options(area));
 	LSA_24_SETHI(lsa_rtr.opts, flags);
+	lsa_rtr.opts = htonl(lsa_rtr.opts);
 	memcpy(buf_seek(buf, sizeof(lsa_hdr), sizeof(lsa_rtr)),
 	    &lsa_rtr, sizeof(lsa_rtr));
 
