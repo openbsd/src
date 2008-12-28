@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.14 2008/12/26 17:09:52 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.15 2008/12/28 22:27:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -32,12 +32,7 @@
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
-#include "bios.h"
 #include "apm.h"
-
-#if NBIOS > 0
-#include <machine/biosvar.h>
-#endif
 
 #if NAPM > 0
 int haveacpibutusingapm;	
@@ -119,23 +114,8 @@ acpi_probe(struct device *parent, struct cfdata *match, struct bios_attach_args 
 	extern int apm_attached;
 #endif
 
-#if NBIOS > 0
-	{
-		bios_memmap_t *im;
-
-		/*
-	 	 * First look for ACPI entries in the BIOS memory map
-		 */
-		for (im = bios_memmap; im->type != BIOS_MAP_END; im++)
-			if (im->type == BIOS_MAP_ACPI) {
-				if ((ptr = acpi_scan(&handle, im->addr, im->size)))
-					goto havebase;
-			}
-	}
-#endif
-
 	/*
-	 * Next try to find ACPI table entries in the EBDA
+	 * First try to find ACPI table entries in the EBDA
 	 */
 	if (acpi_map(0, NBPG, &handle))
 		printf("acpi: failed to map BIOS data area\n");
@@ -151,7 +131,7 @@ acpi_probe(struct device *parent, struct cfdata *match, struct bios_attach_args 
 	}
 
 	/*
-	 * Finally try to find the ACPI table entries in the
+	 * Next try to find the ACPI table entries in the
 	 * BIOS memory
 	 */
 	if ((ptr = acpi_scan(&handle, ACPI_BIOS_RSDP_WINDOW_BASE,
