@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.11 2008/02/11 13:48:39 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.12 2008/12/28 18:43:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -348,7 +348,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				buf += sizeof(req_hdr);
 
 				if ((v = lsa_find(nbr->iface,
-				    ntohl(req_hdr.type), req_hdr.ls_id,
+				    req_hdr.type, req_hdr.ls_id,
 				    req_hdr.adv_rtr)) == NULL) {
 					imsg_compose(ibuf_ospfe, IMSG_LS_BADREQ,
 					    imsg.hdr.peerid, 0, NULL, 0);
