@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.7 2008/12/28 14:25:57 kettenis Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.8 2008/12/28 17:27:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Miodrag Vallat.
@@ -106,8 +106,8 @@
  *
  */
 #define IFB_REG_MAGIC			0x0000
-#define IFB_REG_MAGIC_DIR_FORWARDS		0x00
-#define IFB_REG_MAGIC_DIR_BACKWARDS		0x0a
+#define IFB_REG_MAGIC_DIR_BACKWARDS_Y		(0x08 | 0x02)
+#define IFB_REG_MAGIC_DIR_BACKWARDS_X		(0x04 | 0x01)
 
 /*
  * 0040 component configuration
@@ -267,6 +267,7 @@ void	ifb_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 void	ifb_setcolormap(struct sunfb *,
 	    void (*)(void *, u_int, u_int8_t, u_int8_t, u_int8_t));
 
+void	ifb_copyrect(struct ifb_softc *, int, int, int, int, int, int);
 void	ifb_putchar(void *, int, int, u_int, long);
 void	ifb_copycols(void *, int, int, int, int);
 void	ifb_erasecols(void *, int, int, int, long);
@@ -642,10 +643,14 @@ ifb_copycols(void *cookie, int row, int src, int dst, int num)
 	struct rasops_info *ri = cookie;
 	struct ifb_softc *sc = ri->ri_hw;
 
-	ri->ri_bits = (void *)sc->sc_fb8bank0_vaddr;
-	sc->sc_old_ops.copycols(cookie, row, src, dst, num);
-	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
-	sc->sc_old_ops.copycols(cookie, row, src, dst, num);
+	num *= ri->ri_font->fontwidth;
+	src *= ri->ri_font->fontwidth;
+	dst *= ri->ri_font->fontwidth;
+	row *= ri->ri_font->fontheight;
+
+	ifb_copyrect(sc, ri->ri_xorigin + src, ri->ri_yorigin + row,
+	    ri->ri_xorigin + dst, ri->ri_yorigin + row,
+	    num, ri->ri_font->fontheight);
 }
 
 void
@@ -665,18 +670,42 @@ ifb_copyrows(void *cookie, int src, int dst, int num)
 {
 	struct rasops_info *ri = cookie;
 	struct ifb_softc *sc = ri->ri_hw;
-	int i, dir;
 
 	num *= ri->ri_font->fontheight;
 	src *= ri->ri_font->fontheight;
 	dst *= ri->ri_font->fontheight;
 
-	if (src < dst) {
-		src += (num -1);
-		dst += num;
-		dir = IFB_REG_MAGIC_DIR_BACKWARDS;
-	} else
-		dir = IFB_REG_MAGIC_DIR_FORWARDS;
+	ifb_copyrect(sc, ri->ri_xorigin, ri->ri_yorigin + src,
+	    ri->ri_xorigin, ri->ri_yorigin + dst, ri->ri_emuwidth, num);
+}
+
+void
+ifb_eraserows(void *cookie, int row, int num, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct ifb_softc *sc = ri->ri_hw;
+
+	ri->ri_bits = (void *)sc->sc_fb8bank0_vaddr;
+	sc->sc_old_ops.eraserows(cookie, row, num, attr);
+	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
+	sc->sc_old_ops.eraserows(cookie, row, num, attr);
+}
+
+void
+ifb_copyrect(struct ifb_softc *sc, int sx, int sy, int dx, int dy, int w, int h)
+{
+	int i, dir = 0;
+
+	if (sy < dy) {
+		sy += h - 1;
+		dy += h;
+		dir |= IFB_REG_MAGIC_DIR_BACKWARDS_Y;
+	}
+	if (sx < dx) {
+		sx += w - 1;
+		dx += w;
+		dir |= IFB_REG_MAGIC_DIR_BACKWARDS_X;
+	}
 
 	/* Lots of magic numbers. */
 	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
@@ -713,14 +742,11 @@ ifb_copyrows(void *cookie, int src, int dst, int num)
 	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
 	    IFB_REG_OFFSET + IFB_REG_MAGIC, 0x33f01000 | dir);
 	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
-	    IFB_REG_OFFSET + IFB_REG_MAGIC,
-	    IFB_COORDS(ri->ri_xorigin, ri->ri_yorigin + dst));
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, IFB_COORDS(dx, dy));
 	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
-	    IFB_REG_OFFSET + IFB_REG_MAGIC,
-	    IFB_COORDS(ri->ri_emuwidth, num));
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, IFB_COORDS(w, h));
 	bus_space_write_4(sc->sc_mem_t, sc->sc_reg_h,
-	    IFB_REG_OFFSET + IFB_REG_MAGIC,
-	    IFB_COORDS(ri->ri_xorigin, ri->ri_yorigin + src));
+	    IFB_REG_OFFSET + IFB_REG_MAGIC, IFB_COORDS(sx, sy));
 
 	for (i = 1000000; i > 0; i--) {
 		if (bus_space_read_4(sc->sc_mem_t, sc->sc_reg_h,
@@ -728,18 +754,6 @@ ifb_copyrows(void *cookie, int src, int dst, int num)
 			break;
 		DELAY(1);
 	}
-}
-
-void
-ifb_eraserows(void *cookie, int row, int num, long attr)
-{
-	struct rasops_info *ri = cookie;
-	struct ifb_softc *sc = ri->ri_hw;
-
-	ri->ri_bits = (void *)sc->sc_fb8bank0_vaddr;
-	sc->sc_old_ops.eraserows(cookie, row, num, attr);
-	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
-	sc->sc_old_ops.eraserows(cookie, row, num, attr);
 }
 
 /*
