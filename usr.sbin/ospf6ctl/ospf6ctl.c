@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.13 2008/12/28 18:31:52 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.14 2008/12/28 21:23:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -562,7 +562,7 @@ int
 show_database_msg(struct imsg *imsg)
 {
 	static struct in_addr	 area_id;
-	static u_int8_t		 lasttype;
+	static u_int16_t	 lasttype;
 	static char		 ifname[IF_NAMESIZE];
 	struct area		*area;
 	struct iface		*iface;
@@ -740,8 +740,8 @@ show_db_msg_detail(struct imsg *imsg)
 		if (lsa->hdr.type != lasttype)
 			show_database_head(area_id, ifname, lsa->hdr.type);
 		show_db_hdr_msg_detail(&lsa->hdr);
-		addr.s_addr = lsa->data.net.mask;
-		printf("Network Mask: %s\n", inet_ntoa(addr));
+		printf("Options: %s\n",
+		    print_ospf_options(LSA_24_GETLO(ntohl(lsa->data.net.opts))));
 
 		nlinks = (ntohs(lsa->hdr.len) - sizeof(struct lsa_hdr)
 		    - sizeof(u_int32_t)) / sizeof(struct lsa_net_link);
