@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.8,v 1.6 2007/10/25 16:10:12 jmc Exp $
+.\"	$OpenBSD: ospf6d.8,v 1.7 2008/12/28 22:05:04 sobrado Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 25 2007 $
+.Dd $Mdocdate: December 28 2008 $
 .Dt OSPF6D 8
 .Os
 .Sh NAME
@@ -43,8 +43,8 @@ consisting of routers and networks.
 .Pp
 Dijkstra's shortest path first algorithm is used to compute the Route
 Information Base using the LSDB as input.
-The Forwarding Information Base a.k.a. the kernel route table is updated
-with information from the RIB.
+The Forwarding Information Base (FIB), a.k.a. the kernel routing table,
+is updated with information from the RIB.
 .Pp
 OSPF routers communicate via two multicast groups: ff02::5 all Shortest
 Path First routers and ff02::6 all Designated Routers.
@@ -87,7 +87,7 @@ election is skipped since only two routers are connected.
 .Pp
 To limit the impact changes in the network have on the LSDB it is possible
 to segment an OSPF network into areas.
-Area 0.0.0.0 a.k.a. the backbone area must always be present.
+Area 0.0.0.0 (a.k.a. the backbone area) must always be present.
 Routers can be configured as Area Border Router
 .Pq ABR ,
 being part of multiple areas.

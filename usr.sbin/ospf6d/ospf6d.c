@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.10 2008/05/13 11:46:57 pyr Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.11 2008/12/28 22:05:04 sobrado Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -118,7 +118,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-cdnv] [-D macro=value] [-f file]\n",
+	fprintf(stderr, "usage: %s [-dnv] [-D macro=value] [-f file]\n",
 	    __progname);
 	exit(1);
 }

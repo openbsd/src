@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6ctl.8,v 1.1 2007/10/12 08:22:53 norby Exp $
+.\"	$OpenBSD: ospf6ctl.8,v 1.2 2008/12/28 22:05:04 sobrado Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 12 2007 $
+.Dd $Mdocdate: December 28 2008 $
 .Dt OSPF6CTL 8
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Ar command
-.Op Ar arguments ...
+.Op Ar argument ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -34,11 +34,10 @@ daemon.
 The following commands are available:
 .Bl -tag -width Ds
 .It Cm fib couple
-Insert the learned routes into the Forwarding Information Base
+Insert the learned routes into the Forwarding Information Base (FIB),
 a.k.a. the kernel routing table.
 .It Cm fib decouple
-Remove the learned routes from the Forwarding Information Base
-a.k.a. the kernel routing table.
+Remove the learned routes from the FIB.
 Decoupling the FIB from an OSPF router may create routing loops and could cause
 major routing issues in the complete OSPF cloud.
 Only routers with just one link to the OSPF cloud can safely decouple the FIB.
