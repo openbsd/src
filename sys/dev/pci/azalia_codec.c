@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.97 2008/12/26 10:07:48 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.98 2008/12/28 23:15:14 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1845,15 +1845,21 @@ azalia_stac9202_mixer_init(codec_t *this)
 int
 azalia_stac9221_init_widget(const codec_t *codec, widget_t *w, nid_t nid)
 {
-	/* put hp and spkr dacs first in the dacgroup for MacBookPro1,2 */
+	/* Apple didn't follow the HDA spec for associations */
 	if (codec->subid == STAC9221_APPLE_ID) {
-		if (nid == 0xa && w->d.pin.color == CORB_CD_WHITE) {
+		if (nid == 0xa &&
+		    (w->d.pin.color == CORB_CD_WHITE ||
+		    w->d.pin.color == CORB_CD_GREEN)) {
 			w->d.pin.association = 1;
 			w->d.pin.sequence = 0;
 		}
-		if (nid == 0xc && w->d.pin.color == CORB_CD_WHITE) {
+		if (nid == 0xc && w->d.pin.device == CORB_CD_SPEAKER) {
 			w->d.pin.association = 1;
 			w->d.pin.sequence = 1;
+		}
+		if (nid == 0xf && w->d.pin.color == CORB_CD_BLUE) {
+			w->d.pin.association = 2;
+			w->d.pin.sequence = 0;
 		}
 	}
 	return 0;
