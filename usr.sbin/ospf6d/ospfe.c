@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.10 2008/12/28 20:08:31 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.11 2008/12/28 21:22:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -919,11 +919,12 @@ orig_rtr_lsa_area(struct area *area)
 void
 orig_net_lsa(struct iface *iface)
 {
-#if 0	/* XXX needs work */
 	struct lsa_hdr		 lsa_hdr;
+	struct area		*area;
 	struct nbr		*nbr;
 	struct buf		*buf;
 	int			 num_rtr = 0;
+	u_int32_t		 opts;
 	u_int16_t		 chksum;
 
 	/* XXX READ_BUF_SIZE */
@@ -934,8 +935,13 @@ orig_net_lsa(struct iface *iface)
 	if (buf_reserve(buf, sizeof(lsa_hdr)) == NULL)
 		fatal("orig_net_lsa: buf_reserve failed");
 
-	/* LSA net mask and then all fully adjacent routers */
-	if (buf_add(buf, &iface->mask, sizeof(iface->mask)))
+	/* LSA options and then a list of all fully adjacent routers */
+	opts = 0;
+	if ((area = area_find(oeconf, iface->area_id)) == NULL)
+		fatalx("interface lost area");
+	LSA_24_SETLO(opts, area_ospf_options(area));
+	opts = htonl(opts);
+	if (buf_add(buf, &opts, sizeof(opts)))
 		fatal("orig_net_lsa: buf_add failed");
 
 	/* fully adjacent neighbors + self */
@@ -958,8 +964,9 @@ orig_net_lsa(struct iface *iface)
 	else
 		lsa_hdr.age = htons(MAX_AGE);
 
-	lsa_hdr.type = LSA_TYPE_NETWORK;
-//XXX	lsa_hdr.ls_id = iface->addr.s_addr;
+	lsa_hdr.type = htons(LSA_TYPE_NETWORK);
+	/* for network LSAs, the link state ID equals the interface ID */
+	lsa_hdr.ls_id = htonl(iface->ifindex);
 	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;
 	lsa_hdr.seq_num = htonl(INIT_SEQ_NUM);
 	lsa_hdr.len = htons(buf->wpos);
@@ -974,7 +981,6 @@ orig_net_lsa(struct iface *iface)
 	    buf->buf, buf->wpos);
 
 	buf_free(buf);
-#endif
 }
 
 u_int32_t

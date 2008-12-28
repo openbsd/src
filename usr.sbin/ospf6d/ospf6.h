@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.10 2008/12/28 20:08:31 claudio Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.11 2008/12/28 21:22:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -218,7 +218,7 @@ struct lsa_rtr_link {
 };
 
 struct lsa_net {
-	u_int32_t		mask;
+	u_int32_t		opts;	/* 24bits options */
 	u_int32_t		att_rtr[1];
 };
 
