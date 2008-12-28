@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.c,v 1.10 2008/12/11 10:59:49 jakemsr Exp $	*/
+/*	$OpenBSD: rip.c,v 1.11 2008/12/28 15:48:32 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
@@ -474,7 +474,7 @@ play_next_track(struct track_info *info)
 	info->par.bits = 16;
 	info->par.sig = 1;
 	info->par.le = 1;
-	info->par.bufsz = info->par.rate * 3 / 4;
+	info->par.appbufsz = info->par.rate * 3 / 4;
 
 	if (sio_setpar(info->hdl, &info->par) == 0) {
 		warnx("could not set audio parameters");
