@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.233 2008/12/12 16:02:49 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.234 2008/12/28 15:19:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -797,8 +797,10 @@ rde_update_dispatch(struct imsg *imsg)
 		/*
 		 * if either ATTR_NEW_AGGREGATOR or ATTR_NEW_ASPATH is present
 		 * try to fixup the attributes.
+		 * XXX do not fixup if F_ATTR_LOOP is set.
 		 */
-		if (asp->flags & F_ATTR_AS4BYTE_NEW)
+		if (asp->flags & F_ATTR_AS4BYTE_NEW &&
+		    !(asp->flags & F_ATTR_LOOP))
 			rde_as4byte_fixup(peer, asp);
 
 		/* enforce remote AS if requested */
@@ -1347,10 +1349,16 @@ bad_flags:
 		    ATTR_PARTIAL))
 			goto bad_flags;
 		if (aspath_verify(p, attr_len, 1) != 0) {
-			/* XXX draft does not specify how to handle errors */
-			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
-			    op, len);
-			return (-1);
+			/*
+			 * XXX RFC does not specify how to handle errors.
+			 * XXX Instead of dropping the session because of a
+			 * XXX bad path just mark the full update as not
+			 * XXX loop-free the update is no longer eligible and
+			 * XXX will not be considered for routing or
+			 * XXX redistribution. Something better is needed.
+			 */
+			a->flags |= F_ATTR_LOOP;
+			goto optattr;
 		}
 		a->flags |= F_ATTR_AS4BYTE_NEW;
 		goto optattr;
