@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.27 2008/09/10 14:01:23 blambert Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.28 2008/12/28 23:08:06 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -201,6 +201,16 @@ ppb_intr(void *arg)
 {
 	struct ppb_softc *sc = arg;
 	pcireg_t reg;
+
+	/*
+	 * XXX ignore hotplug events while in autoconf.  On some
+	 * machines with onboard re(4), we gat a bogus hotplug remove
+	 * event when we reset that device.  Ignoring that event makes
+	 * sure we will not try to forcibly detach re(4) when it isn't
+	 * ready to deal with that.
+	 */
+	if (cold)
+		return (0);
 
 	reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
 	    sc->sc_cap_off + PCI_PCIE_SLCSR);
