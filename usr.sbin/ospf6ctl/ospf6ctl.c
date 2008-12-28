@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.12 2007/12/13 08:57:32 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.13 2008/12/28 18:31:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -56,7 +56,7 @@ char		*print_rtr_link_type(u_int8_t);
 const char	*print_ospf_flags(u_int8_t);
 int		 show_db_msg_detail(struct imsg *imsg);
 int		 show_nbr_msg(struct imsg *);
-const char	*print_ospf_options(u_int8_t);
+const char	*print_ospf_options(u_int32_t);
 int		 show_nbr_detail_msg(struct imsg *);
 int		 show_rib_msg(struct imsg *);
 void		 show_rib_head(struct in_addr, u_int8_t, u_int8_t);
@@ -688,8 +688,7 @@ print_ospf_flags(u_int8_t opts)
 {
 	static char	optbuf[32];
 
-	snprintf(optbuf, sizeof(optbuf), "*|*|*|*|%s|%s|%s|%s",
-	    opts & OSPF_RTR_W ? "W" : "-",
+	snprintf(optbuf, sizeof(optbuf), "*|*|*|*|*|%s|%s|%s",
 	    opts & OSPF_RTR_V ? "V" : "-",
 	    opts & OSPF_RTR_E ? "E" : "-",
 	    opts & OSPF_RTR_B ? "B" : "-");
@@ -762,9 +761,9 @@ show_db_msg_detail(struct imsg *imsg)
 			show_database_head(area_id, ifname, lsa->hdr.type);
 		show_db_hdr_msg_detail(&lsa->hdr);
 		printf("Flags: %s\n",
-		    print_ospf_flags(ntohl(lsa->data.rtr.opts) >> 24));
+		    print_ospf_flags(LSA_24_GETHI(ntohl(lsa->data.rtr.opts))));
 		printf("Options: %s\n",
-		    print_ospf_options(ntohl(lsa->data.rtr.opts)));
+		    print_ospf_options(LSA_24_GETLO(ntohl(lsa->data.rtr.opts))));
 
 		nlinks = (ntohs(lsa->hdr.len) - sizeof(struct lsa_hdr)
 		    - sizeof(u_int32_t)) / sizeof(struct lsa_rtr_link);
@@ -879,15 +878,14 @@ show_nbr_msg(struct imsg *imsg)
 }
 
 const char *
-print_ospf_options(u_int8_t opts)
+print_ospf_options(u_int32_t opts)
 {
 	static char	optbuf[32];
 
-	snprintf(optbuf, sizeof(optbuf), "*|*|%s|%s|%s|%s|%s|%s",
+	snprintf(optbuf, sizeof(optbuf), "*|*|%s|%s|%s|*|%s|%s",
 	    opts & OSPF_OPTION_DC ? "DC" : "-",
 	    opts & OSPF_OPTION_R ? "R" : "-",
 	    opts & OSPF_OPTION_N ? "N" : "-",
-	    opts & OSPF_OPTION_MC ? "MC" : "-",
 	    opts & OSPF_OPTION_E ? "E" : "-",
 	    opts & OSPF_OPTION_V6 ? "V6" : "-");
 	return (optbuf);
