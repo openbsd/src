@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.9 2007/12/13 08:54:05 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.10 2008/12/28 17:56:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -71,7 +71,7 @@ send_hello(struct iface *iface)
 		goto fail;
 
 	/* hello header */
-	hello.iface_id = iface->ifindex;
+	hello.iface_id = htonl(iface->ifindex);
 	hello.rtr_priority = iface->priority;
 
 	opts = ntohl(area_ospf_options(area_find(oeconf, iface->area_id)));
@@ -220,6 +220,7 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 		nbr->dr.s_addr = hello.d_rtr;
 		nbr->bdr.s_addr = hello.bd_rtr;
 		nbr->priority = hello.rtr_priority;
+		nbr->iface_id = ntohl(hello.iface_id);
 		return;
 	}
 

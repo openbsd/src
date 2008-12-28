@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.6 2008/02/11 13:48:39 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.7 2008/12/28 17:56:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -301,9 +301,9 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 
 	if (self) {
 		nbr->state = NBR_STA_FULL;
-//XXX		nbr->addr.s_addr = iface->addr.s_addr;
 		nbr->addr = iface->addr;
 		nbr->priority = iface->priority;
+		nbr->iface_id = iface->ifindex;
 	}
 
 	/* set event structures */
