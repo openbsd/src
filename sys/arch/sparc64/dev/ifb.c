@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.9 2008/12/29 21:54:52 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.10 2008/12/29 22:07:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Miodrag Vallat.
@@ -272,31 +272,10 @@ void	ifb_copyrows(void *, int, int, int);
 void	ifb_eraserows(void *, int, int, long);
 void	ifb_do_cursor(struct rasops_info *);
 
-const struct pci_matchid ifb_devices[] = {
-    { PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_EXPERT3D },
-    { PCI_VENDOR_3DLABS,     PCI_PRODUCT_3DLABS_WILDCAT_6210 },
-    { PCI_VENDOR_3DLABS,     PCI_PRODUCT_3DLABS_WILDCAT_5110 },/* Sun XVR-500 */
-    { PCI_VENDOR_3DLABS,     PCI_PRODUCT_3DLABS_WILDCAT_7210 },
-};
-
 int
 ifbmatch(struct device *parent, void *cf, void *aux)
 {
-	struct pci_attach_args *paa = aux;
-	int node;
-	char *name;
-
-	if (pci_matchbyid(paa, ifb_devices,
-	    sizeof(ifb_devices) / sizeof(ifb_devices[0])) != 0)
-		return 1;
-
-	node = PCITAG_NODE(paa->pa_tag);
-	name = getpropstring(node, "name");
-	if (strcmp(name, "SUNW,Expert3D") == 0 ||
-	    strcmp(name, "SUNW,Expert3D-Lite") == 0)
-		return 1;
-
-	return 0;
+	return ifb_ident(aux);
 }
 
 void    

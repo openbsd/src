@@ -1,4 +1,4 @@
-/*	$OpenBSD: fbvar.h,v 1.7 2008/12/27 17:23:03 miod Exp $	*/
+/*	$OpenBSD: fbvar.h,v 1.8 2008/12/29 22:07:35 miod Exp $	*/
 /*	$NetBSD: fbvar.h,v 1.9 1997/07/07 23:31:30 pk Exp $ */
 
 /*
@@ -76,3 +76,5 @@ void	fbwscons_console_init(struct sunfb *, int);
 void	fbwscons_setcolormap(struct sunfb *,
     void (*)(void *, u_int, u_int8_t, u_int8_t, u_int8_t));
 void	fbwscons_attach(struct sunfb *,	struct wsdisplay_accessops *, int);
+
+int	ifb_ident(void *);

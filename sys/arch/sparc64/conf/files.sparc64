@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.111 2008/08/13 19:30:02 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.112 2008/12/29 22:07:35 miod Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -113,11 +113,14 @@ file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro | vpci
 attach	hme at pci with hme_pci
 file	dev/pci/if_hme_pci.c			hme_pci
 
-device	vgafb: wsemuldisplaydev, rasops_bswap, rasops8, rasops16, rasops32
+define	ifb_ident
+file	arch/sparc64/dev/ifb_ident.c		ifb_ident
+
+device	vgafb: ifb_ident, wsemuldisplaydev, rasops_bswap, rasops8, rasops16, rasops32
 attach	vgafb at pci
 file	arch/sparc64/dev/vgafb.c		vgafb
 
-device	ifb: wsemuldisplaydev, rasops8
+device	ifb: ifb_ident, wsemuldisplaydev, rasops_bswap, rasops8
 attach	ifb at pci
 file	arch/sparc64/dev/ifb.c			ifb
 

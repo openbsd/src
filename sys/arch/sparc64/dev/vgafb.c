@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.55 2008/12/27 17:23:01 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.56 2008/12/29 22:07:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -110,13 +110,6 @@ struct cfdriver vgafb_cd = {
 extern int allowaperture;
 #endif
 
-static const struct pci_matchid ifb_devices[] = {
-    { PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_EXPERT3D },
-    { PCI_VENDOR_3DLABS,     PCI_PRODUCT_3DLABS_WILDCAT_6210 },
-    { PCI_VENDOR_3DLABS,     PCI_PRODUCT_3DLABS_WILDCAT_5110 },/* Sun XVR-500 */
-    { PCI_VENDOR_3DLABS,     PCI_PRODUCT_3DLABS_WILDCAT_7210 }
-};
-
 int
 vgafbmatch(parent, vcf, aux)
 	struct device *parent;
@@ -124,26 +117,18 @@ vgafbmatch(parent, vcf, aux)
 {
 	struct pci_attach_args *pa = aux;
 	int node;
-	char *name;
 
 	/*
-	 * Do not match on Expert3D devices, which need a different
-	 * driver.
+	 * Do not match on Expert3D devices, which are driven by ifb(4).
 	 */
-	if (pci_matchbyid(pa, ifb_devices,
-	    sizeof(ifb_devices) / sizeof(ifb_devices[0])) != 0)
-		return (0);
-
-	node = PCITAG_NODE(pa->pa_tag);
-	name = getpropstring(node, "name");
-	if (strcmp(name, "SUNW,Expert3D") == 0 ||
-	    strcmp(name, "SUNW,Expert3D-Lite") == 0)
+	if (ifb_ident(aux) != 0)
 		return (0);
 
 	/*
 	 * XXX Non-console devices do not get configured by the PROM,
 	 * XXX so do not attach them yet.
 	 */
+	node = PCITAG_NODE(pa->pa_tag);
 	if (!vgafb_is_console(node))
 		return (0);
 
