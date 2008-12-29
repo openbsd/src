@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-null.c,v 1.17 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-null.c,v 1.18 2008/12/29 10:02:55 michele Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Id: print-null.c,v 1.17 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
+    "@(#) $Id: print-null.c,v 1.18 2008/12/29 10:02:55 michele Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -98,6 +98,9 @@ null_print(const u_char *p, const struct ip *ip, u_int length)
 		ether_print(p + NULL_HDRLEN, length);
 		break;
 #endif
+	case AF_MPLS:
+		printf("mpls: ");
+		break;
 
 	default:
 		printf("AF %d: ", family);
@@ -151,6 +154,10 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		ip6_print(p + NULL_HDRLEN, length);
 		break;
 #endif /*INET6*/
+
+	case AF_MPLS:
+		mpls_print(p + NULL_HDRLEN, length);
+		break;
 
 #ifdef __OpenBSD__
 	case AF_LINK:
