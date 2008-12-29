@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.13 2008/11/24 12:53:53 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.14 2008/12/29 20:37:26 claudio Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -395,7 +395,7 @@ rtalloc_mpath(struct route *ro, u_int32_t *srcaddrp, u_int tableid)
 	threshold = 1 + (0xffff / npaths);
 	while (hash > threshold && rn) {
 		/* stay within the multipath routes */
-		if (rn->rn_dupedkey && rn->rn_mask != rn->rn_dupedkey->rn_mask)
+		if (rn_mpath_next(rn, 0) == NULL)
 			break;
 		rn = rn->rn_dupedkey;
 		hash -= threshold;
