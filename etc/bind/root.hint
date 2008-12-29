@@ -1,4 +1,4 @@
-; $OpenBSD: root.hint,v 1.6 2008/02/04 20:39:55 jakob Exp $
+; $OpenBSD: root.hint,v 1.7 2008/12/29 08:14:00 jakob Exp $
 ;
 ;       This file holds the information on root name servers needed to
 ;       initialize cache of Internet domain name servers
@@ -11,8 +11,8 @@
 ;           on server           FTP.INTERNIC.NET
 ;       -OR-                    RS.INTERNIC.NET
 ;
-;       last update:    Feb 04, 2008
-;       related version of root zone:   2008020400
+;       last update:    Dec 12, 2008
+;       related version of root zone:   2008121200
 ;
 ; formerly NS.INTERNIC.NET
 ;
@@ -78,6 +78,7 @@ K.ROOT-SERVERS.NET.      3600000      AAAA  2001:7fd::1
 ;
 .                        3600000      NS    L.ROOT-SERVERS.NET.
 L.ROOT-SERVERS.NET.      3600000      A     199.7.83.42
+L.ROOT-SERVERS.NET.      3600000      AAAA  2001:500:3::42   
 ;
 ; operated by WIDE
 ;
