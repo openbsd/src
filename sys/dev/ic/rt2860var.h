@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.10 2008/12/13 14:35:19 damien Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.11 2008/12/29 13:27:27 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -132,7 +132,7 @@ struct rt2860_softc {
 	struct rt2860_tx_data		data[RT2860_TX_POOL_COUNT];
 	bus_dmamap_t			txwi_map;
 	bus_dma_segment_t		txwi_seg;
-	struct rt2860_txwi		*txwi;
+	caddr_t				txwi_vaddr;
 
 	int				sc_tx_timer;
 	int				mgtqid;
@@ -150,6 +150,8 @@ struct rt2860_softc {
 	int8_t				rssi_2ghz[3];
 	int8_t				rssi_5ghz[3];
 	uint8_t				lna[4];
+	uint8_t				ext_2ghz_lna;
+	uint8_t				ext_5ghz_lna;
 	uint8_t				calib_2ghz;
 	uint8_t				calib_5ghz;
 	uint8_t				tssi_2ghz[9];

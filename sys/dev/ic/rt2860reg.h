@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.13 2008/12/14 18:41:57 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.14 2008/12/29 13:27:27 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -24,6 +24,8 @@
 #define RT2860_PCI_SYSCTRL		0x000c
 #define RT2860_PCIE_JTAG		0x0010
 
+#define RT3070_OPT_14			0x0114
+
 /* SCH/DMA registers */
 #define RT2860_INT_STATUS		0x0200
 #define RT2860_INT_MASK			0x0204
@@ -45,6 +47,7 @@
 #define RT2860_RX_MAX_CNT		0x0294
 #define RT2860_RX_CALC_IDX		0x0298
 #define RT2860_FS_DRX_IDX		0x029c
+#define RT2860_USB_DMA_CFG		0x02a0	/* RT2870 only */
 #define RT2860_US_CYC_CNT		0x02a4
 
 /* PBF registers */
@@ -63,6 +66,16 @@
 #define RT2860_TXRXQ_PCNT		0x0438
 #define RT2860_PBF_DBG			0x043c
 #define RT2860_CAP_CTRL			0x0440
+
+/* RT3070 registers */
+#define RT3070_RF_CSR_CFG		0x0500
+#define RT3070_EFUSE_CTRL		0x0580
+#define RT3070_EFUSE_DATA0		0x0590
+#define RT3070_EFUSE_DATA1		0x0594
+#define RT3070_EFUSE_DATA2		0x0598
+#define RT3070_EFUSE_DATA3		0x059c
+#define RT3070_LDO_CFG0			0x05d4
+#define RT3070_GPIO_SWITCH		0x05dc
 
 /* MAC registers */
 #define RT2860_ASIC_VER_ID		0x1000
@@ -164,6 +177,7 @@
 #define RT2860_WCID_ENTRY(wcid)		(0x1800 + (wcid) * 8)
 
 #define RT2860_FW_BASE			0x2000
+#define RT2870_FW_BASE			0x3000
 
 /* Pair-wise key table */
 #define RT2860_PKEY(wcid)		(0x4000 + (wcid) * 32)
@@ -185,6 +199,8 @@
 
 /* Shared Memory between MCU and host */
 #define RT2860_H2M_MAILBOX		0x7010
+#define RT2860_H2M_MAILBOX_CID		0x7014
+#define RT2860_H2M_MAILBOX_STATUS	0x701c
 #define RT2860_H2M_BBPAGENT		0x7028
 #define RT2860_BCN_BASE(vap)		(0x7800 + (vap) * 512)
 
@@ -242,6 +258,20 @@
 /* possible flags for register GPIO_CTRL */
 #define RT2860_GPIO_D_SHIFT	8
 #define RT2860_GPIO_O_SHIFT	0
+
+/* possible flags for register USB_DMA_CFG */
+#define RT2860_USB_TX_BUSY		(1 << 31)
+#define RT2860_USB_RX_BUSY		(1 << 30)
+#define RT2860_USB_EPOUT_VLD_SHIFT	24
+#define RT2860_USB_TX_EN		(1 << 23)
+#define RT2860_USB_RX_EN		(1 << 22)
+#define RT2860_USB_RX_AGG_EN		(1 << 21)
+#define RT2860_USB_TXOP_HALT		(1 << 20)
+#define RT2860_USB_TX_CLEAR		(1 << 19)
+#define RT2860_USB_PHY_WD_EN		(1 << 16)
+#define RT2860_USB_PHY_MAN_RST		(1 << 15)
+#define RT2860_USB_RX_AGG_LMT_SHIFT	8
+#define RT2860_USB_RX_AGG_TO_SHIFT	0
 
 /* possible flags for register US_CYC_CNT */
 #define RT2860_TEST_EN		(1 << 24)
@@ -328,6 +358,17 @@
 #define RT2860_MAN_TRIG			(1 << 29)
 #define RT2860_TRIG_OFFSET_SHIFT	16
 #define RT2860_START_ADDR_SHIFT		0
+
+/* possible flags for register RF_CSR_CFG */
+#define RT3070_RF_KICK		(1 << 17)
+#define RT3070_RF_WRITE		(1 << 16)
+
+/* possible flags for register EFUSE_CTRL */
+#define RT3070_SEL_EFUSE	(1 << 31)
+#define RT3070_EFSROM_KICK	(1 << 30)
+#define RT3070_EFSROM_AIN_SHIFT	16
+#define RT3070_EFSROM_MODE_MASK	(3 <<  6)
+#define RT3070_EFUSE_AOUT_MASK	0x0000003f
 
 /* possible flags for register MAC_SYS_CTRL */
 #define RT2860_RX_TS_EN		(1 << 7)
@@ -627,7 +668,7 @@
 #define RT2860_LED_LINK_5GHZ	(1 << 15)
 
 
-/* TX descriptor */
+/* RT2860 TX descriptor */
 struct rt2860_txd {
 	uint32_t	sdp0;		/* Segment Data Pointer 0 */
 	uint16_t	sdl1;		/* Segment Data Length 1 */
@@ -646,6 +687,13 @@ struct rt2860_txd {
 #define RT2860_TX_QSEL_HCCA	(1 << 1)
 #define RT2860_TX_QSEL_EDCA	(2 << 1)
 #define RT2860_TX_WIV		(1 << 0)
+} __packed;
+
+/* RT2870 TX descriptor */
+struct rt2870_txd {
+	uint16_t	len;
+	uint8_t		pad;
+	uint8_t		flags;
 } __packed;
 
 /* TX Wireless Information */
@@ -686,12 +734,9 @@ struct rt2860_txwi {
 
 	uint32_t	iv;
 	uint32_t	eiv;
-
-	struct		ieee80211_htframe wh;
-	uint16_t	pad;
 } __packed;
 
-/* RX descriptor */
+/* RT2860 RX descriptor */
 struct rt2860_rxd {
 	uint32_t	sdp0;
 	uint16_t	sdl1;	/* unused */
@@ -720,6 +765,12 @@ struct rt2860_rxd {
 #define RT2860_RX_BA		(1 <<  0)
 } __packed;
 
+/* RT2870 RX descriptor */
+struct rt2870_rxd {
+	/* single 32-bit field */
+	uint32_t	flags;
+} __packed;
+
 /* RX Wireless Information */
 struct rt2860_rxwi {
 	uint8_t		wcid;
@@ -738,15 +789,33 @@ struct rt2860_rxwi {
 	uint16_t	reserved2;
 } __packed;
 
-#define RAL_RF1	0
-#define RAL_RF2	2
-#define RAL_RF3	1
-#define RAL_RF4	3
+
+/* first DMA segment contains TXWI + 802.11 header + 32-bit padding */
+#define RT2860_TXWI_DMASZ			\
+	(sizeof (struct rt2860_txwi) +		\
+	 sizeof (struct ieee80211_htframe) +	\
+	 sizeof (uint16_t))
+
+#define RT2860_RF1	0
+#define RT2860_RF2	2
+#define RT2860_RF3	1
+#define RT2860_RF4	3
 
 #define RT2860_RF_2820	1	/* 2T3R */
 #define RT2860_RF_2850	2	/* dual-band 2T3R */
 #define RT2860_RF_2720	3	/* 1T2R */
 #define RT2860_RF_2750	4	/* dual-band 1T2R */
+#define RT3070_RF_3020	5	/* 1T1R */
+#define RT3070_RF_2020	6	/* b/g */
+#define RT3070_RF_3021	7	/* 1T2R */
+#define RT3070_RF_3022	8	/* 2T2R */
+
+/* USB commands for RT2870 only */
+#define RT2870_RESET		1
+#define RT2870_WRITE_2		2
+#define RT2870_WRITE_REGION_1	6
+#define RT2870_READ_REGION_1	7
+#define RT2870_EEPROM_READ	9
 
 #define RT2860_EEPROM_DELAY	1	/* minimum hold time (microsecond) */
 
@@ -879,6 +948,39 @@ static const struct rt2860_rate {
 	{ RT2860_XIFS_TIME_CFG,		0x33a41010 },	\
 	{ RT2860_PWR_PIN_CFG,		0x00000003 }
 
+/* XXX only a few registers differ from above, try to merge? */
+#define RT2870_DEF_MAC					\
+	{ RT2860_BCN_OFFSET0,		0xf8f0e8e0 },	\
+	{ RT2860_LEGACY_BASIC_RATE,	0x0000013f },	\
+	{ RT2860_HT_BASIC_RATE,		0x00008003 },	\
+	{ RT2860_MAC_SYS_CTRL,		0x00000000 },	\
+	{ RT2860_BKOFF_SLOT_CFG,	0x00000209 },	\
+	{ RT2860_TX_SW_CFG0,		0x00000000 },	\
+	{ RT2860_TX_SW_CFG1,		0x00080606 },	\
+	{ RT2860_TX_LINK_CFG,		0x00001020 },	\
+	{ RT2860_TX_TIMEOUT_CFG,	0x000a2090 },	\
+	{ RT2860_LED_CFG,		0x7f031e46 },	\
+	{ RT2860_WMM_AIFSN_CFG,		0x00002273 },	\
+	{ RT2860_WMM_CWMIN_CFG,		0x00002344 },	\
+	{ RT2860_WMM_CWMAX_CFG,		0x000034aa },	\
+	{ RT2860_MAX_PCNT,		0x1f3fbf9f },	\
+	{ RT2860_TX_RTY_CFG,		0x47d01f0f },	\
+	{ RT2860_AUTO_RSP_CFG,		0x00000013 },	\
+	{ RT2860_CCK_PROT_CFG,		0x05740003 },	\
+	{ RT2860_OFDM_PROT_CFG,		0x05740003 },	\
+	{ RT2860_PBF_CFG,		0x00f40006 },	\
+	{ RT2860_WPDMA_GLO_CFG,		0x00000030 },	\
+	{ RT2860_GF20_PROT_CFG,		0x01744004 },	\
+	{ RT2860_GF40_PROT_CFG,		0x03f44084 },	\
+	{ RT2860_MM20_PROT_CFG,		0x01744004 },	\
+	{ RT2860_MM40_PROT_CFG,		0x03f44084 },	\
+	{ RT2860_TXOP_CTRL_CFG,		0x0000583f },	\
+	{ RT2860_TXOP_HLDR_ET,		0x00000002 },	\
+	{ RT2860_TX_RTS_CFG,		0x00092b20 },	\
+	{ RT2860_EXP_ACK_TIME,		0x002400ca },	\
+	{ RT2860_XIFS_TIME_CFG,		0x33a41010 },	\
+	{ RT2860_PWR_PIN_CFG,		0x00000003 }
+
 /*
  * Default values for BBP registers; values taken from the reference driver.
  */
@@ -929,9 +1031,9 @@ static const struct rt2860_rate {
 	{  62, 0x100bb2, 0x1301a4, 0x056014, 0x001404 },	\
 	{  64, 0x100bb2, 0x1301a4, 0x056014, 0x001408 },	\
 	{ 100, 0x100bb2, 0x1301ac, 0x05e014, 0x001400 },	\
-	{ 102, 0x100bb2, 0x1301ac, 0x05e014, 0x001404 },	\
-	{ 104, 0x100bb2, 0x1301ac, 0x05e014, 0x001408 },	\
-	{ 108, 0x100bb3, 0x13028c, 0x05e014, 0x001404 },	\
+	{ 102, 0x100bb2, 0x1701ac, 0x15e014, 0x001404 },	\
+	{ 104, 0x100bb2, 0x1701ac, 0x15e014, 0x001408 },	\
+	{ 108, 0x100bb3, 0x17028c, 0x15e014, 0x001404 },	\
 	{ 110, 0x100bb3, 0x13028d, 0x05e014, 0x001400 },	\
 	{ 112, 0x100bb3, 0x13028d, 0x05e014, 0x001406 },	\
 	{ 116, 0x100bb3, 0x13028e, 0x05e014, 0x001408 },	\
@@ -951,3 +1053,40 @@ static const struct rt2860_rate {
 	{ 159, 0x100bb1, 0x1300e3, 0x05e014, 0x001409 },	\
 	{ 161, 0x100bb1, 0x1300e4, 0x05e014, 0x001401 },	\
 	{ 165, 0x100bb1, 0x1300e4, 0x05e014, 0x001405 }
+
+#define RT3070_RF3020	\
+	{ 241, 2, 2 },	\
+	{ 241, 2, 7 },	\
+	{ 242, 2, 2 },	\
+	{ 242, 2, 7 },	\
+	{ 243, 2, 2 },	\
+	{ 243, 2, 7 },	\
+	{ 244, 2, 2 },	\
+	{ 244, 2, 7 },	\
+	{ 245, 2, 2 },	\
+	{ 245, 2, 7 },	\
+	{ 246, 2, 2 },	\
+	{ 246, 2, 7 },	\
+	{ 247, 2, 2 },	\
+	{ 248, 2, 4 }
+
+#define RT3070_DEF_RF	\
+	{  4, 0x40 },	\
+	{  5, 0x03 },	\
+	{  6, 0x02 },	\
+	{  7, 0x70 },	\
+	{  9, 0x0f },	\
+	{ 10, 0x41 },	\
+	{ 11, 0x21 },	\
+	{ 12, 0x7b },	\
+	{ 14, 0x90 },	\
+	{ 15, 0x58 },	\
+	{ 16, 0xb3 },	\
+	{ 17, 0x92 },	\
+	{ 18, 0x2c },	\
+	{ 19, 0x02 },	\
+	{ 20, 0xba },	\
+	{ 21, 0xdb },	\
+	{ 24, 0x16 },	\
+	{ 25, 0x01 },	\
+	{ 29, 0x1f }

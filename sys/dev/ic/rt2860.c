@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.29 2008/12/22 18:20:47 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.30 2008/12/29 13:27:27 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -133,7 +133,9 @@ int		rt2860_set_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
 void		rt2860_delete_key(struct ieee80211com *,
 		    struct ieee80211_node *, struct ieee80211_key *);
+#if NBPFILTER > 0
 int8_t		rt2860_rssi2dbm(struct rt2860_softc *, uint8_t, uint8_t);
+#endif
 const char *	rt2860_get_rf(uint8_t);
 int		rt2860_read_eeprom(struct rt2860_softc *);
 int		rt2860_bbp_init(struct rt2860_softc *);
@@ -470,9 +472,11 @@ rt2860_free_tx_ring(struct rt2860_softc *sc, struct rt2860_tx_ring *ring)
 int
 rt2860_alloc_tx_pool(struct rt2860_softc *sc)
 {
+	caddr_t vaddr;
+	bus_addr_t paddr;
 	int i, nsegs, size, error;
 
-	size = RT2860_TX_POOL_COUNT * sizeof (struct rt2860_txwi);
+	size = RT2860_TX_POOL_COUNT * RT2860_TXWI_DMASZ;
 
 	/* init data_pool early in case of failure.. */
 	SLIST_INIT(&sc->data_pool);
@@ -493,23 +497,25 @@ rt2860_alloc_tx_pool(struct rt2860_softc *sc)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->txwi_seg, nsegs, size,
-	    (caddr_t *)&sc->txwi, BUS_DMA_NOWAIT);
+	    &sc->txwi_vaddr, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not map DMA memory\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	error = bus_dmamap_load(sc->sc_dmat, sc->txwi_map, sc->txwi, size,
-	    NULL, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load(sc->sc_dmat, sc->txwi_map, sc->txwi_vaddr,
+	    size, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not load DMA map\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
 
-	memset(sc->txwi, 0, size);
+	memset(sc->txwi_vaddr, 0, size);
 	bus_dmamap_sync(sc->sc_dmat, sc->txwi_map, 0, size,
 	    BUS_DMASYNC_PREWRITE);
 
+	vaddr = sc->txwi_vaddr;
+	paddr = sc->txwi_map->dm_segs[0].ds_addr;
 	for (i = 0; i < RT2860_TX_POOL_COUNT; i++) {
 		struct rt2860_tx_data *data = &sc->data[i];
 
@@ -521,10 +527,10 @@ rt2860_alloc_tx_pool(struct rt2860_softc *sc)
 			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
-
-		data->txwi = &sc->txwi[i];
-		data->paddr = sc->txwi_map->dm_segs[0].ds_addr +
-		    i * sizeof (struct rt2860_txwi);
+		data->txwi = (struct rt2860_txwi *)vaddr;
+		data->paddr = paddr;
+		vaddr += RT2860_TXWI_DMASZ;
+		paddr += RT2860_TXWI_DMASZ;
 
 		SLIST_INSERT_HEAD(&sc->data_pool, data, next);
 	}
@@ -538,12 +544,12 @@ fail:	rt2860_free_tx_pool(sc);
 void
 rt2860_free_tx_pool(struct rt2860_softc *sc)
 {
-	if (sc->txwi != NULL) {
+	if (sc->txwi_vaddr != NULL) {
 		bus_dmamap_sync(sc->sc_dmat, sc->txwi_map, 0,
 		    sc->txwi_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sc->txwi_map);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->txwi,
-		    RT2860_TX_POOL_COUNT * sizeof (struct rt2860_txwi));
+		bus_dmamem_unmap(sc->sc_dmat, sc->txwi_vaddr,
+		    RT2860_TX_POOL_COUNT * RT2860_TXWI_DMASZ);
 		bus_dmamem_free(sc->sc_dmat, &sc->txwi_seg, 1);
 	}
 	if (sc->txwi_map != NULL)
@@ -1478,7 +1484,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 #endif
 
 	/* copy and trim 802.11 header */
-	memcpy(&txwi->wh, wh, hdrlen);
+	memcpy(txwi + 1, wh, hdrlen);
 	m_adj(m, hdrlen);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
@@ -1544,7 +1550,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	/* first segment is TXWI + 802.11 header */
 	txd = &ring->txd[ring->cur];
 	txd->sdp0 = htole32(data->paddr);
-	txd->sdl0 = htole16(16 + hdrlen);
+	txd->sdl0 = htole16(sizeof (struct rt2860_txwi) + hdrlen);
 	txd->flags = qsel;
 
 	/* setup payload segments */
@@ -1577,7 +1583,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	ring->data[ring->cur] = data;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->txwi_map,
-	    (caddr_t)txwi - (caddr_t)sc->txwi, sizeof (struct rt2860_txwi),
+	    (caddr_t)txwi - sc->txwi_vaddr, RT2860_TXWI_DMASZ,
 	    BUS_DMASYNC_PREWRITE);
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
@@ -1921,7 +1927,25 @@ rt2860_select_chan_group(struct rt2860_softc *sc, int group)
 	rt2860_mcu_bbp_write(sc, 62, 0x37 - sc->lna[group]);
 	rt2860_mcu_bbp_write(sc, 63, 0x37 - sc->lna[group]);
 	rt2860_mcu_bbp_write(sc, 64, 0x37 - sc->lna[group]);
-	rt2860_mcu_bbp_write(sc, 82, (group == 0) ? 0x62 : 0xf2);
+	rt2860_mcu_bbp_write(sc, 86, 0x00);
+
+	if (group == 0) {
+		if (sc->ext_2ghz_lna) {
+			rt2860_mcu_bbp_write(sc, 82, 0x62);
+			rt2860_mcu_bbp_write(sc, 75, 0x46);
+		} else {
+			rt2860_mcu_bbp_write(sc, 82, 0x84);
+			rt2860_mcu_bbp_write(sc, 75, 0x50);
+		}
+	} else {
+		if (sc->ext_5ghz_lna) {
+			rt2860_mcu_bbp_write(sc, 82, 0xf2);
+			rt2860_mcu_bbp_write(sc, 75, 0x46);
+		} else {
+			rt2860_mcu_bbp_write(sc, 82, 0xf2);
+			rt2860_mcu_bbp_write(sc, 75, 0x50);
+		}
+	}
 
 	tmp = RAL_READ(sc, RT2860_TX_BAND_CFG);
 	tmp &= ~(RT2860_5G_BAND_SEL_N | RT2860_5G_BAND_SEL_P);
@@ -1945,7 +1969,11 @@ rt2860_select_chan_group(struct rt2860_softc *sc, int group)
 	}
 	RAL_WRITE(sc, RT2860_TX_PIN_CFG, tmp);
 
-	rt2860_mcu_bbp_write(sc, 66, 0x2e + sc->lna[group]);
+	/* set initial AGC value */
+	if (group == 0)
+		rt2860_mcu_bbp_write(sc, 66, 0x2e + sc->lna[0]);
+	else
+		rt2860_mcu_bbp_write(sc, 66, 0x32 + (sc->lna[group] * 5) / 3);
 }
 
 void
@@ -1976,30 +2004,36 @@ rt2860_set_chan(struct rt2860_softc *sc, struct ieee80211_channel *c)
 	txpow1 = sc->txpow1[i];
 	txpow2 = sc->txpow2[i];
 	if (IEEE80211_IS_CHAN_5GHZ(c)) {
-		txpow1 = txpow1 << 1 | 1;
-		txpow2 = txpow2 << 1 | 1;
+		if (txpow1 >= 0)
+			txpow1 = txpow1 << 1;
+		else
+			txpow1 = (7 + txpow1) << 1 | 1;
+		if (txpow2 >= 0)
+			txpow2 = txpow2 << 1;
+		else
+			txpow2 = (7 + txpow2) << 1 | 1;
 	}
 	r3 = rfprog[i].r3 | txpow1 << 7;
 	r4 = rfprog[i].r4 | sc->freq << 13 | txpow2 << 4;
 
-	rt2860_rf_write(sc, RAL_RF1, rfprog[i].r1);
-	rt2860_rf_write(sc, RAL_RF2, r2);
-	rt2860_rf_write(sc, RAL_RF3, r3);
-	rt2860_rf_write(sc, RAL_RF4, r4);
+	rt2860_rf_write(sc, RT2860_RF1, rfprog[i].r1);
+	rt2860_rf_write(sc, RT2860_RF2, r2);
+	rt2860_rf_write(sc, RT2860_RF3, r3);
+	rt2860_rf_write(sc, RT2860_RF4, r4);
 
 	DELAY(200);
 
-	rt2860_rf_write(sc, RAL_RF1, rfprog[i].r1);
-	rt2860_rf_write(sc, RAL_RF2, r2);
-	rt2860_rf_write(sc, RAL_RF3, r3 | 1);
-	rt2860_rf_write(sc, RAL_RF4, r4);
+	rt2860_rf_write(sc, RT2860_RF1, rfprog[i].r1);
+	rt2860_rf_write(sc, RT2860_RF2, r2);
+	rt2860_rf_write(sc, RT2860_RF3, r3 | 1);
+	rt2860_rf_write(sc, RT2860_RF4, r4);
 
 	DELAY(200);
 
-	rt2860_rf_write(sc, RAL_RF1, rfprog[i].r1);
-	rt2860_rf_write(sc, RAL_RF2, r2);
-	rt2860_rf_write(sc, RAL_RF3, r3);
-	rt2860_rf_write(sc, RAL_RF4, r4);
+	rt2860_rf_write(sc, RT2860_RF1, rfprog[i].r1);
+	rt2860_rf_write(sc, RT2860_RF2, r2);
+	rt2860_rf_write(sc, RT2860_RF3, r3);
+	rt2860_rf_write(sc, RT2860_RF4, r4);
 
 	/* 802.11a uses a 16 microseconds short interframe space */
 	sc->sifs = IEEE80211_IS_CHAN_5GHZ(c) ? 16 : 10;
@@ -2267,6 +2301,7 @@ rt2860_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}
 }
 
+#if NBPFILTER > 0
 int8_t
 rt2860_rssi2dbm(struct rt2860_softc *sc, uint8_t rssi, uint8_t rxchain)
 {
@@ -2290,6 +2325,7 @@ rt2860_rssi2dbm(struct rt2860_softc *sc, uint8_t rssi, uint8_t rxchain)
 
 	return -12 - delta - rssi;
 }
+#endif
 
 /*
  * Add `delta' (signed) to each 4-bit sub-word of a 32-bit word.
@@ -2398,8 +2434,11 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 	/* check if RF supports automatic Tx access gain control */
 	val = rt2860_eeprom_read(sc, RT2860_EEPROM_CONFIG);
 	DPRINTF(("EEPROM CFG 0x%04x\n", val));
-	if ((val & 0xff) != 0xff)
+	if ((val & 0xff) != 0xff) {
+		sc->ext_5ghz_lna = (val >> 3) & 1;
+		sc->ext_2ghz_lna = (val >> 2) & 1;
 		sc->calib_2ghz = sc->calib_5ghz = 0; /* XXX (val >> 1) & 1 */;
+	}
 
 	if (sc->sc_flags & RT2860_ADVANCED_PS) {
 		/* read PCIe power save level */
@@ -3055,8 +3094,8 @@ rt2860_setup_beacon(struct rt2860_softc *sc)
 	txwi.flags = RT2860_TX_TS;
 
 	RAL_WRITE_REGION_1(sc, RT2860_BCN_BASE(0),
-	    (uint8_t *)&txwi, 16);
-	RAL_WRITE_REGION_1(sc, RT2860_BCN_BASE(0) + 16,
+	    (uint8_t *)&txwi, sizeof txwi);
+	RAL_WRITE_REGION_1(sc, RT2860_BCN_BASE(0) + sizeof txwi,
 	    mtod(m, uint8_t *), m->m_pkthdr.len);
 
 	m_freem(m);
