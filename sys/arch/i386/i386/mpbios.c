@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.28 2008/12/26 17:09:52 deraadt Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.29 2008/12/29 08:29:35 form Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -268,6 +268,7 @@ mpbios_probe(struct device *self)
 
 	struct		mp_map t;
 
+#if NAPM > 0 && NACPI > 0
 	/*
 	 * If we have acpi but chose to use apm, then we really should
 	 * not go use mpbios.  Systems with usable acpi typically have
@@ -275,6 +276,7 @@ mpbios_probe(struct device *self)
 	 */
 	if (haveacpibutusingapm)
 		return (0);
+#endif
 
 	/*
 	 * Skip probe if someone else (e.g. acpi) already provided the
