@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.10 2008/12/17 07:19:27 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.11 2008/12/29 17:59:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -55,12 +55,15 @@ rsock_done(struct aproc *p)
 	struct sock *f = (struct sock *)p->u.io.file;
 
 	DPRINTFN(1, "rsock_done: %p\n", f);
+	if (f == NULL)
+		return;
 	sock_reset(f);
 	f->pipe.file.rproc = NULL;
 	if (f->pipe.file.wproc) {
 		aproc_del(f->pipe.file.wproc);
 		file_del(&f->pipe.file);
 	}
+	p->u.io.file = NULL;
 }
 
 int
@@ -160,12 +163,15 @@ wsock_done(struct aproc *p)
 	struct sock *f = (struct sock *)p->u.io.file;
 
 	DPRINTFN(1, "wsock_done: %p\n", f);
+	if (f == NULL)
+		return;
 	sock_reset(f);
 	f->pipe.file.wproc = NULL;
 	if (f->pipe.file.rproc) {
 		aproc_del(f->pipe.file.rproc);
 		file_del(&f->pipe.file);
 	}
+	p->u.io.file = NULL;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.29 2008/12/27 17:02:13 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.30 2008/12/29 17:59:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -67,6 +67,7 @@ aproc_new(struct aproc_ops *ops, char *name)
 	LIST_INIT(&p->obuflist);
 	p->name = name;
 	p->ops = ops;
+	p->refs = 0;
 	return p;
 }
 
@@ -87,6 +88,10 @@ aproc_del(struct aproc *p)
 	while (!LIST_EMPTY(&p->obuflist)) {
 		i = LIST_FIRST(&p->obuflist);
 		abuf_eof(i);
+	}
+	if (p->refs > 0) {
+		DPRINTF("aproc_del: %s(%s): has refs\n", p->ops->name, p->name);
+		return;
 	}
 	DPRINTF("aproc_del: %s(%s): freed\n", p->ops->name, p->name);
 	free(p);
@@ -199,9 +204,12 @@ rpipe_done(struct aproc *p)
 {
 	struct file *f = p->u.io.file;
 
+	if (f == NULL)
+		return;
 	f->rproc = NULL;
 	if (f->wproc == NULL)
 		file_del(f);
+	p->u.io.file = NULL;
 }
 
 void
@@ -247,9 +255,12 @@ wpipe_done(struct aproc *p)
 {
 	struct file *f = p->u.io.file;
 
+	if (f == NULL)
+		return;
 	f->wproc = NULL;
 	if (f->rproc == NULL)
 		file_del(f);
+	p->u.io.file = NULL;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.8 2008/12/27 14:23:40 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.9 2008/12/29 17:59:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -157,10 +157,12 @@ file_poll(void)
 		DPRINTF("file_poll: nothing to do...\n");
 		return 0;
 	}
-	if (poll(pfds, nfds, -1) < 0) {
-		if (errno == EINTR)
-			return 1;
-		err(1, "file_poll: poll failed");
+	if (nfds > 0) {
+		if (poll(pfds, nfds, -1) < 0) {
+			if (errno == EINTR)
+				return 1;
+			err(1, "file_poll: poll failed");
+		}
 	}
 	f = LIST_FIRST(&file_list);
 	while (f != LIST_END(&file_list)) {
@@ -318,5 +320,29 @@ file_hup(struct file *f)
 		DPRINTFN(2, "file_hup: %s: delayed\n", f->name);
 		f->state &= ~FILE_WOK;
 		f->state |= FILE_HUP;
+	}
+}
+
+void
+file_close(struct file *f)
+{
+	struct aproc *p;
+
+	if (f->refs == 0) {
+		DPRINTFN(2, "file_close: %s: immediate\n", f->name);
+		f->refs++;
+		p = f->rproc;
+		if (p)
+			p->ops->eof(p, NULL);
+		p = f->wproc;
+		if (p)
+			p->ops->hup(p, NULL);
+		f->refs--;
+		if (f->state & FILE_ZOMB)
+			file_del(f);
+	} else {
+		DPRINTFN(2, "file_close: %s: delayed\n", f->name);
+		f->state &= ~(FILE_ROK | FILE_WOK);
+		f->state |= (FILE_EOF | FILE_HUP);
 	}
 }

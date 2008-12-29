@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.21 2008/12/16 22:11:12 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.22 2008/12/29 17:59:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -103,6 +103,7 @@ dev_init(char *devpath,
 		 * create the read end
 		 */
 		dev_rec = rpipe_new(dev_file);
+		dev_rec->refs++;
 		buf = abuf_new(nfr, dipar);
 		aproc_setout(dev_rec, buf);
 		ibufsz += nfr;
@@ -123,6 +124,7 @@ dev_init(char *devpath,
 		 * append a "sub" to which clients will connect
 		 */
 		dev_sub = sub_new("sub", nfr);
+		dev_sub->refs++;
 		aproc_setin(dev_sub, buf);
 	} else {
 		dev_rec = NULL;
@@ -138,6 +140,7 @@ dev_init(char *devpath,
 		 * create the write end
 		 */
 		dev_play = wpipe_new(dev_file);
+		dev_play->refs++;
 		buf = abuf_new(nfr, dopar);
 		aproc_setin(dev_play, buf);
 		obufsz += nfr;
@@ -158,6 +161,7 @@ dev_init(char *devpath,
 		 * append a "mix" to which clients will connect
 		 */
 		dev_mix = mix_new("mix", nfr);
+		dev_mix->refs++;
 		aproc_setout(dev_mix, buf);
 	} else {
 		dev_play = NULL;
@@ -179,7 +183,9 @@ dev_done(void)
 
 	DPRINTF("dev_done: dev_mix = %p, dev_sub = %p\n", dev_mix, dev_sub);
 	if (dev_mix) {
+		dev_mix->refs--;
 		dev_mix->u.mix.flags |= MIX_AUTOQUIT;
+		dev_mix = NULL;
 		/*
 		 * generate EOF on all inputs (but not the device), and
 		 * put the mixer in ``autoquit'' state, so once buffers
@@ -201,14 +207,18 @@ dev_done(void)
 		/*
 		 * wait play chain to terminate
 		 */
-		while (dev_file->wproc != NULL) {
+		while (!LIST_EMPTY(&dev_play->ibuflist)) {
 			if (!file_poll())
 				break;
 		}
-		dev_mix = 0;
+		dev_play->refs--;
+		aproc_del(dev_play);
+		dev_play = NULL;
 	}
 	if (dev_sub) {
+		dev_sub->refs--;
 		dev_sub->u.sub.flags |= SUB_AUTOQUIT;
+		dev_sub = NULL;
 		/*
 		 * same as above, but for the record chain: generate eof
 		 * on the read-end of the device and wait record buffers
@@ -217,12 +227,15 @@ dev_done(void)
 		 * insert silence on the record-end of the device)
 		 */
 		dev_stop();
-		file_eof(dev_file);
+		if (dev_rec->u.io.file)
+			file_eof(dev_rec->u.io.file);
 		for (;;) {
 			if (!file_poll())
 				break;
 		}
-		dev_sub = NULL;
+		dev_rec->refs--;
+		aproc_del(dev_rec);
+		dev_rec = NULL;
 	}
 }
 
@@ -232,11 +245,19 @@ dev_done(void)
 void
 dev_start(void)
 {
+	struct file *f;
+
 	if (dev_mix)
 		dev_mix->u.mix.flags |= MIX_DROP;
 	if (dev_sub)
 		dev_sub->u.sub.flags |= SUB_DROP;
-	dev_file->ops->start(dev_file);
+	if (dev_play && dev_play->u.io.file) {
+		f = dev_play->u.io.file;
+		f->ops->start(f);
+	} else if (dev_rec && dev_rec->u.io.file) {
+		f = dev_rec->u.io.file;
+		f->ops->start(f);
+	}
 }
 
 /*
@@ -245,7 +266,15 @@ dev_start(void)
 void
 dev_stop(void)
 {
-	dev_file->ops->stop(dev_file);
+	struct file *f;
+
+	if (dev_play && dev_play->u.io.file) {
+		f = dev_play->u.io.file;
+		f->ops->stop(f);
+	} else if (dev_rec && dev_rec->u.io.file) {
+		f = dev_rec->u.io.file;
+		f->ops->stop(f);
+	}
 	if (dev_mix)
 		dev_mix->u.mix.flags &= ~MIX_DROP;
 	if (dev_sub)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.4 2008/10/26 08:49:44 ratchov Exp $	*/
+/*	$OpenBSD: file.h,v 1.5 2008/12/29 17:59:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -71,5 +71,6 @@ unsigned file_write(struct file *, unsigned char *, unsigned);
 int file_poll(void);
 void file_eof(struct file *);
 void file_hup(struct file *);
+void file_close(struct file *);
 
 #endif /* !defined(FILE_H) */

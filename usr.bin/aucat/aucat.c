@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.49 2008/12/26 13:29:31 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.50 2008/12/29 17:59:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -527,14 +527,15 @@ main(int argc, char **argv)
 	 */
 	for (;;) {
 		if (quit_flag) {
-			if (l_flag)
-				filelist_unlisten();
 			break;
 		}
-		if (!file_poll()) {
-			fprintf(stderr, "Terminated, device disappeared?\n");
-			exit(1);
+		if ((!dev_rec || dev_rec->u.io.file == NULL) &&
+		    (!dev_play || dev_play->u.io.file == NULL)) {
+			fprintf(stderr, "device desappeared, terminating\n");
+			break;
 		}
+		if (!file_poll())
+			break;
 		if ((!dev_mix || dev_mix->u.mix.idle > 2 * dev_bufsz) &&
 		    (!dev_sub || dev_sub->u.sub.idle > 2 * dev_bufsz)) {
 			if (!l_flag)
@@ -555,6 +556,8 @@ main(int argc, char **argv)
 			}
 		}
 	}
+	if (l_flag)
+		filelist_unlisten();
 	if (suspend) {
 		DPRINTF("resuming to drain\n");
 		suspend = 0;

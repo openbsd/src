@@ -128,7 +128,7 @@ pipe_pollfd(struct file *file, struct pollfd *pfd, int events)
 
 	pfd->fd = f->fd;
 	pfd->events = events;
-	return (events != 0) ? 1  : 0;
+	return (events != 0) ? 1 : 0;
 }
 
 int
