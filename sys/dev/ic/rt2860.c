@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.30 2008/12/29 13:27:27 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.31 2008/12/29 13:59:00 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -2894,6 +2894,7 @@ rt2860_init(struct ifnet *ifp)
 	tmp = RAL_READ(sc, RT2860_TX_RTS_CFG);
 	tmp &= ~0xffff00;
 	tmp |= ic->ic_rtsthreshold << 8;
+	RAL_WRITE(sc, RT2860_TX_RTS_CFG, tmp);
 
 	/* setup initial protection mode */
 	sc->sc_ic_flags = ic->ic_flags;
