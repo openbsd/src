@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.58 2008/11/26 12:06:54 pedro Exp $
+.\"	$OpenBSD: malloc.3,v 1.59 2008/12/29 22:25:50 djm Exp $
 .\"
-.Dd $Mdocdate: November 26 2008 $
+.Dd $Mdocdate: December 29 2008 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -249,6 +249,13 @@ Currently junk is bytes of 0xd0 when allocating; this is pronounced
 .Dq Duh .
 \&:-)
 Freed chunks are filled with 0xdf.
+.It Cm L
+.Dq Lock .
+Lock critical data structures using
+.Xr mprotect 2
+to protect against modification except by
+.Nm
+and related routines.
 .It Cm P
 .Dq Move allocations within a page.
 Allocations larger than half a page but smaller than a page
