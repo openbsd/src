@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.35 2008/12/27 18:18:33 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.36 2008/12/29 09:03:25 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -956,35 +956,25 @@ queue_remove_envelope(struct message *messagep)
 int
 queue_update_envelope(struct message *messagep)
 {
-	int fd;
 	char pathname[MAXPATHLEN];
 	FILE *fp;
-	mode_t mode = O_RDWR;
-	u_int16_t hval;
-
-	hval = queue_hash(messagep->message_id);
 
 	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
-		hval, messagep->message_id, PATH_ENVELOPES, messagep->message_uid))
+		queue_hash(messagep->message_id), messagep->message_id,
+		PATH_ENVELOPES, messagep->message_uid))
 		fatal("queue_update_envelope: snprintf");
 
-	if ((fd = open(pathname, mode)) == -1)
-		fatal("queue_update_envelope: open");
-
-	if (flock(fd, LOCK_EX) == -1)
-		fatal("queue_update_envelope: flock");
-
-	fp = fdopen(fd, "w");
+	fp = fopen(pathname, "w");
 	if (fp == NULL)
-		fatal("queue_update_envelope: fdopen");
-
-	if (fwrite(messagep, sizeof(struct message), 1, fp) != 1)
+		fatal("queue_update_envelope: open");
+	if (flock(fileno(fp), LOCK_EX) == -1)
+		fatal("queue_update_envelope: flock");
+	if (fwrite(messagep, sizeof(struct message), 1, fp) != 1) {
+		if (errno == ENOSPC)
+			return 0;
 		fatal("queue_update_envelope: fwrite");
-	fflush(fp);
-	fsync(fd);
-	fclose(fp);
-
-	return 1;
+	}
+	return safe_fclose(fp);
 }
 
 int
