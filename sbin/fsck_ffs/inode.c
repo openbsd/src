@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.31 2008/06/10 23:10:29 otto Exp $	*/
+/*	$OpenBSD: inode.c,v 1.32 2008/12/29 18:06:10 otto Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static const char rcsid[] = "$OpenBSD: inode.c,v 1.31 2008/06/10 23:10:29 otto Exp $";
+static const char rcsid[] = "$OpenBSD: inode.c,v 1.32 2008/12/29 18:06:10 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ iblock(struct inodesc *idesc, long ilevel, off_t isize)
 			return (n);
 	} else
 		func = dirscan;
-	if (chkrange(idesc->id_blkno, idesc->id_numfrags))
+	if (isize < 0 || chkrange(idesc->id_blkno, idesc->id_numfrags))
 		return (SKIP);
 	bp = getdatablk(idesc->id_blkno, sblock.fs_bsize);
 	ilevel--;
