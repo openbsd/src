@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.94 2008/10/18 12:11:30 kettenis Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.95 2008/12/29 14:20:19 oga Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -316,7 +316,7 @@
 	"UDF file id",	/* 142 M_UDFFID */ \
 	"Bluetooth HID",	/* 143 M_BTHIDEV */ \
 	"AGP Memory",	/* 144 M_AGP */ \
-	"Direct Rendering Manager",	/* 145 M_DRM */ \
+	"DRM",	/* 145 M_DRM */ \
 }
 
 struct kmemstats {
