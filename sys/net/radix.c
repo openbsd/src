@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.24 2008/11/21 18:01:30 claudio Exp $	*/
+/*	$OpenBSD: radix.c,v 1.25 2008/12/29 21:24:19 claudio Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -597,18 +597,17 @@ rn_addroute(void *v_arg, void *n_arg, struct radix_node_head *head,
 		 * parent pointer.
 		 */
 		if (tt == saved_tt && prioinv) {
-			struct	radix_node *xx = x;
+			struct	radix_node *xx;
 			/* link in at head of list */
 			(tt = treenodes)->rn_dupedkey = t;
 			tt->rn_flags = t->rn_flags;
-			tt->rn_p = x = t->rn_p;
+			tt->rn_p = xx = t->rn_p;
 			t->rn_p = tt;
-			if (x->rn_l == t)
-				x->rn_l = tt;
+			if (xx->rn_l == t)
+				xx->rn_l = tt;
 			else
-				x->rn_r = tt;
+				xx->rn_r = tt;
 			saved_tt = tt;
-			x = xx;
 		} else if (prioinv == 1) {
 			(tt = treenodes)->rn_dupedkey = t;
 			if (t->rn_p == NULL)
