@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.8 2008/12/28 17:27:11 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.9 2008/12/29 21:54:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Miodrag Vallat.
@@ -18,7 +18,7 @@
 
 /*
  * Least-effort driver for the Sun Expert3D cards (based on the
- * ``Wildcat'' chips.
+ * ``Wildcat'' chips).
  *
  * There is no public documentation for these chips available.
  * Since they are no longer supported by 3DLabs (which got bought by
@@ -74,11 +74,8 @@
  * - a 8MB memory mapping, which purpose is unknown, in the third BAR.
  *
  * In the state the PROM leaves us in, the 8MB frame buffer windows map
- * the video memory as interleaved stripes:
- * - frame buffer #0 will map horizontal pixels 00-1f, 60-9f, e0-11f, etc.
- * - frame buffer #1 will map horizontal pixels 20-5f, a0-df, 120-15f, etc.
- * However the non-visible parts of each stripe can still be addressed
- * (probably for fast screen switching).
+ * the video memory as interleaved stripes, of which the non-visible parts
+ * can still be addressed (probably for fast screen switching).
  *
  * Unfortunately, since we do not know how to reconfigure the stripes
  * to provide at least a linear frame buffer, we have to write to both
@@ -684,11 +681,36 @@ ifb_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct ifb_softc *sc = ri->ri_hw;
+	int bg, fg, done, cnt;
 
-	ri->ri_bits = (void *)sc->sc_fb8bank0_vaddr;
-	sc->sc_old_ops.eraserows(cookie, row, num, attr);
-	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
-	sc->sc_old_ops.eraserows(cookie, row, num, attr);
+	/*
+	 * Perform the first line with plain rasops code (adapted below)...
+	 */
+
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
+
+	memset((void *)(sc->sc_fb8bank0_vaddr + row * ri->ri_yscale),
+	    ri->ri_devcmap[bg], ri->ri_emustride);
+	memset((void *)(sc->sc_fb8bank1_vaddr + row * ri->ri_yscale),
+	    ri->ri_devcmap[bg], ri->ri_emustride);
+
+	/*
+	 * ...then copy it over and over until the whole area is done.
+	 */
+
+	row *= ri->ri_font->fontheight;
+	num *= ri->ri_font->fontheight;
+	row += ri->ri_yorigin;
+
+	for (done = 1, num -= done; num != 0;) {
+		cnt = min(done, num);
+
+		ifb_copyrect(sc, ri->ri_xorigin, row,
+		    ri->ri_xorigin, row + done, ri->ri_emuwidth, cnt);
+
+		done += cnt;
+		num -= cnt;
+	}
 }
 
 void
@@ -696,12 +718,12 @@ ifb_copyrect(struct ifb_softc *sc, int sx, int sy, int dx, int dy, int w, int h)
 {
 	int i, dir = 0;
 
-	if (sy < dy) {
+	if (sy < dy /* && sy + h > dy */) {
 		sy += h - 1;
 		dy += h;
 		dir |= IFB_REG_MAGIC_DIR_BACKWARDS_Y;
 	}
-	if (sx < dx) {
+	if (sx < dx /* && sx + w > dx */) {
 		sx += w - 1;
 		dx += w;
 		dir |= IFB_REG_MAGIC_DIR_BACKWARDS_X;
@@ -759,6 +781,9 @@ ifb_copyrect(struct ifb_softc *sc, int sx, int sy, int dx, int dy, int w, int h)
 /*
  * Similar to rasops_do_cursor(), but using a 7bit pixel mask.
  */
+
+#define	CURSOR_MASK	0x7f7f7f7f
+
 void
 ifb_do_cursor(struct rasops_info *ri)
 {
@@ -789,8 +814,8 @@ ifb_do_cursor(struct rasops_info *ri)
 			rp += ri->ri_stride;
 
 			for (cnt = full1; cnt; cnt--) {
-				*(int32_t *)dp0 ^= 0x7f7f7f7f;
-				*(int32_t *)dp1 ^= 0x7f7f7f7f;
+				*(int32_t *)dp0 ^= CURSOR_MASK;
+				*(int32_t *)dp1 ^= CURSOR_MASK;
 				dp0 += 4;
 				dp1 += 4;
 			}
@@ -803,32 +828,32 @@ ifb_do_cursor(struct rasops_info *ri)
 			rp += ri->ri_stride;
 
 			if (slop1 & 1) {
-				*dp0++ ^= 0x7f;
-				*dp1++ ^= 0x7f;
+				*dp0++ ^= (u_char)CURSOR_MASK;
+				*dp1++ ^= (u_char)CURSOR_MASK;
 			}
 
 			if (slop1 & 2) {
-				*(int16_t *)dp0 ^= 0x7f7f;
-				*(int16_t *)dp1 ^= 0x7f7f;
+				*(int16_t *)dp0 ^= (int16_t)CURSOR_MASK;
+				*(int16_t *)dp1 ^= (int16_t)CURSOR_MASK;
 				dp0 += 2;
 				dp1 += 2;
 			}
 
 			for (cnt = full1; cnt; cnt--) {
-				*(int32_t *)dp0 ^= 0x7f7f7f7f;
-				*(int32_t *)dp1 ^= 0x7f7f7f7f;
+				*(int32_t *)dp0 ^= CURSOR_MASK;
+				*(int32_t *)dp1 ^= CURSOR_MASK;
 				dp0 += 4;
 				dp1 += 4;
 			}
 
 			if (slop2 & 1) {
-				*dp0++ ^= 0x7f;
-				*dp1++ ^= 0x7f;
+				*dp0++ ^= (u_char)CURSOR_MASK;
+				*dp1++ ^= (u_char)CURSOR_MASK;
 			}
 
 			if (slop2 & 2) {
-				*(int16_t *)dp0 ^= 0x7f7f;
-				*(int16_t *)dp1 ^= 0x7f7f;
+				*(int16_t *)dp0 ^= (int16_t)CURSOR_MASK;
+				*(int16_t *)dp1 ^= (int16_t)CURSOR_MASK;
 			}
 		}
 	}
