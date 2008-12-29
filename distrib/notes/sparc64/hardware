@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.144 2008/11/23 17:05:09 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.145 2008/12/29 22:10:07 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -900,8 +900,10 @@ Supported devices {:-include-:}:
 			    double-buffered, 3-D acceleration
 		PCI video boards:
 			ATI Rage (vgafb), includes the on-board PGX (8 bit
-			    color, unaccelerated) and PGX24 (24 bit color,
-			    accelerated) framebuffers
+			    color, unaccelerated), PGX24 and PGX32 (24/32 bit
+			    color, accelerated) framebuffers
+			Expert3D and Expert3D-Lite (XVR-500) (ifb), without
+			    X11 support at the moment
 		UPA Creator/Creator3D/Elite3D (24 bit color, accelerated)
 
 	PC Cards (PCMCIA)
