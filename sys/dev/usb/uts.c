@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.22 2007/10/11 18:33:15 deraadt Exp $ */
+/*	$OpenBSD: uts.c,v 1.23 2008/12/29 16:29:42 miod Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -400,7 +400,7 @@ uts_get_pos(usbd_private_handle addr, struct uts_pos *tp)
 		switch (sc->sc_vendor) {
 		case USB_VENDOR_EGALAX:
 			down = (p[0] & 0x01);
-			/* Invert the X coordiate */
+			/* Invert the X coordinate */
 			x = 0x07ff - abs(((p[3] & 0x0f) << 7) | (p[4] & 0x7f));
 			y = ((p[1] & 0x0f) << 7) | (p[2] & 0x7f);
 			z = down;
