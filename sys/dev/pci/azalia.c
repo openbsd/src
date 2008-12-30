@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.96 2008/12/25 22:15:05 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.97 2008/12/30 08:57:26 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1737,8 +1737,7 @@ azalia_widget_sole_conn(codec_t *this, nid_t nid)
 	FOR_EACH_WIDGET(this, i) {
 		if (this->w[i].type == COP_AWTYPE_PIN_COMPLEX &&
 		    this->w[i].nconnections == 1 &&
-		    this->w[i].connections[0] == nid &&
-		    azalia_widget_enabled(this, this->w[i].connections[0])) {
+		    this->w[i].connections[0] == nid) {
 			if (j != -1)
 				return -1;
 			j = i;
@@ -1853,8 +1852,9 @@ azalia_widget_label_widgets(codec_t *codec)
 		}
 	}
 
-	/* Rename mixers and selectors that connect to only one other
-	 * widget as the widget they are connected to.
+	/* Mixers and selectors that connect to only one other widget are
+	 * functionally part of the widget they are connected to.  Show that
+	 * relationship in the name.
 	 */
 	FOR_EACH_WIDGET(codec, i) {
 		if (codec->w[i].type != COP_AWTYPE_AUDIO_MIXER &&
@@ -1883,6 +1883,16 @@ azalia_widget_label_widgets(codec_t *codec)
 			}
 		}
 		if (j >= 0) {
+			/* As part of a disabled widget, this widget
+			 * should be disabled as well.
+			 */
+			if (codec->w[j].enable == 0) {
+				codec->w[i].enable = 0;
+				snprintf(codec->w[i].name,
+				    sizeof(codec->w[i].name), "%s",
+				    "u-wid%2.2x", i);
+				continue;
+			}
 			snprintf(codec->w[i].name, sizeof(codec->w[i].name),
 			    "%s", codec->w[j].name);
 			if (codec->w[j].mixer_class == AZ_CLASS_RECORD)
