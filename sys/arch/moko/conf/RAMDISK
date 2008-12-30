@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.1 2008/11/26 14:47:50 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.2 2008/12/30 07:34:00 drahn Exp $
 
 machine	moko	arm
 
@@ -45,7 +45,8 @@ cpu0		at mainbus?
 ssio0		at mainbus?
 # integrated UART
 sscom0  at ssio? index 0        # irq 70
-#sscom1  at ssio? index 1        # irq 73
+sscom1  at ssio? index 1        # irq 73
+sscom2  at ssio? index 2        # irq ?
 
 
 # Pseudo-Devices
