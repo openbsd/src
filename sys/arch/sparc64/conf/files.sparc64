@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.112 2008/12/29 22:07:35 miod Exp $
+#	$OpenBSD: files.sparc64,v 1.113 2008/12/30 21:34:07 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -45,6 +45,10 @@ file	arch/sparc64/dev/environ.c		environ
 device	vbus {}
 attach	vbus at mainbus
 file	arch/sparc64/dev/vbus.c			vbus
+
+device	cbus {}
+attach	cbus at vbus
+file	arch/sparc64/dev/cbus.c			cbus
 
 # Sun HME Ethernet controllers
 device	hme: ether, ifnet, mii, ifmedia
