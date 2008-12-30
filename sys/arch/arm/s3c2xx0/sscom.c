@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom.c,v 1.7 2008/12/30 07:02:34 drahn Exp $ */
+/*	$OpenBSD: sscom.c,v 1.8 2008/12/30 16:32:29 drahn Exp $ */
 /*	$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $ */
 
 /*
@@ -670,6 +670,7 @@ sscomopen(dev_t dev, int flag, int mode, struct proc *p)
 #endif
 
 	tp = sc->sc_tty;
+	tp->t_dev = dev; /* XXX - could be done before? */
 
 	s = spltty();
 
@@ -744,7 +745,7 @@ sscomopen(dev_t dev, int flag, int mode, struct proc *p)
 			sscomstatus(sc, "sscomopen  ");
 
 		/* Turn on interrupts. */
-		sscom_enable_txrxint(sc);
+		sscom_enable_rxint(sc);
 
 
 		SSCOM_UNLOCK(sc);
@@ -1171,7 +1172,7 @@ sscomparam(struct tty *tp, struct termios *t)
 	 * VMIN and VTIME.
 	 */
 	if (tp->t_ospeed == t->c_ospeed &&
-	    tp->t_cflag == t->c_cflag)
+	    tp->t_cflag == t->c_cflag && sc->sc_ubrdiv == ospeed)
 		return 0;
 
 	lcr = cflag2lcr(t->c_cflag);
