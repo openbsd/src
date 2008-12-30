@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.80 2008/12/30 13:28:21 jmc Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.81 2008/12/30 19:11:29 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1049,6 +1049,13 @@ This macro accepts quoted arguments (double quotes only).
 produced by:
 .Ql ".Cd device le0 at scode?" .
 .El
+.Pp
+It is an error to call
+.Ql \&.Cd
+without arguments.
+The
+.Ql \&.Cd
+macro is neither parsed nor callable.
 .Ss Defined Variables
 A variable which is defined in an include file is specified
 by the macro
