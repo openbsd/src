@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom_s3c2410.c,v 1.4 2008/12/30 07:31:31 drahn Exp $ */
+/*	$OpenBSD: sscom_s3c2410.c,v 1.5 2008/12/30 15:52:15 drahn Exp $ */
 /*	$NetBSD: sscom_s3c2410.c,v 1.2 2005/12/11 12:16:51 christos Exp $ */
 
 /*
@@ -155,11 +155,11 @@ sscom_attach(struct device *parent, struct device *self, void *aux)
 
 
 	s3c24x0_intr_establish(s3c2410_uart_config[unit].tx_int,
-	    IPL_SERIAL, IST_LEVEL, sscomtxintr, sc);
+	    IPL_TTY, IST_LEVEL, sscomtxintr, sc);
 	s3c24x0_intr_establish(s3c2410_uart_config[unit].rx_int,
-	    IPL_SERIAL, IST_LEVEL, sscomrxintr, sc);
+	    IPL_TTY, IST_LEVEL, sscomrxintr, sc);
 	s3c24x0_intr_establish(s3c2410_uart_config[unit].err_int,
-	    IPL_SERIAL, IST_LEVEL, sscomrxintr, sc);
+	    IPL_TTY, IST_LEVEL, sscomrxintr, sc);
 
 	printf("\n");
 }
