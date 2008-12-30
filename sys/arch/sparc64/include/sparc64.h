@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64.h,v 1.12 2008/08/09 21:06:05 kettenis Exp $	*/
+/*	$OpenBSD: sparc64.h,v 1.13 2008/12/30 00:54:24 kettenis Exp $	*/
 /*	$NetBSD: sparc64.h,v 1.3 2000/10/20 05:47:03 mrg Exp $	*/
 
 /*
@@ -57,6 +57,7 @@ void prom_start_cpu_by_cpuid(int cpu, void *func, long arg);
 const char *prom_serengeti_set_console_input(const char *);
 time_t prom_opl_get_tod(void);
 uint64_t prom_set_sun4v_api_version(uint64_t, uint64_t, uint64_t, uint64_t *);
+void prom_sun4v_soft_state_supported(void);
 
 /*
  * Debug
