@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.113 2008/11/22 18:12:32 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.114 2008/12/30 16:05:45 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1486,8 +1486,10 @@ _bus_dmamem_free(t, t0, segs, nsegs)
 	int nsegs;
 {
 
+#ifdef DIAGNOSTIC
 	if (nsegs != 1)
 		panic("bus_dmamem_free: nsegs = %d", nsegs);
+#endif
 
 	/*
 	 * Return the list of pages back to the VM system.
@@ -1509,42 +1511,45 @@ _bus_dmamem_map(t, t0, segs, nsegs, size, kvap, flags)
 	caddr_t *kvap;
 	int flags;
 {
-	vaddr_t va, sva;
-	int r, cbit;
-	size_t oversize;
-	u_long align;
+	struct vm_page *m;
+	vaddr_t va;
+	bus_addr_t addr, cbit;
+	struct pglist *mlist;
 
+#ifdef DIAGNOSTIC
 	if (nsegs != 1)
 		panic("_bus_dmamem_map: nsegs = %d", nsegs);
-
-	cbit = PMAP_NC;
-	align = PAGE_SIZE;
+#endif
 
 	size = round_page(size);
-
-	/*
-	 * Find a region of kernel virtual addresses that can accommodate
-	 * our aligment requirements.
-	 */
-	oversize = size + align - PAGE_SIZE;
-	r = uvm_map(kernel_map, &sva, oversize, NULL, UVM_UNKNOWN_OFFSET, 0,
-	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	    UVM_ADV_NORMAL, 0));
-	if (r != 0)
+	va = uvm_km_valloc(kernel_map, size);
+	if (va == 0)
 		return (ENOMEM);
 
-	/* Compute start of aligned region */
-	va = sva;
-	va += ((segs[0].ds_addr & (align - 1)) + align - va) & (align - 1);
-
-	/* Return excess virtual addresses */
-	if (va != sva)
-		uvm_unmap(kernel_map, sva, va);
-	if (va + size != sva + oversize)
-		uvm_unmap(kernel_map, va + size, sva + oversize);
-
-
 	*kvap = (caddr_t)va;
+
+	cbit = 0;
+#if 0
+	if (flags & BUS_DMA_COHERENT)
+		cbit |= PMAP_NVC;
+#endif
+	if (flags & BUS_DMA_NOCACHE)
+		cbit |= PMAP_NC;
+
+	mlist = segs[0]._ds_mlist;
+	TAILQ_FOREACH(m, mlist, pageq) {
+#ifdef DIAGNOSTIC
+		if (size == 0)
+			panic("_bus_dmamem_map: size botch");
+#endif
+		addr = VM_PAGE_TO_PHYS(m);
+		pmap_enter(pmap_kernel(), va, addr | cbit,
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+		va += PAGE_SIZE;
+		size -= PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
 
 	return (0);
 }
@@ -1566,7 +1571,7 @@ _bus_dmamem_unmap(t, t0, kva, size)
 #endif
 
 	size = round_page(size);
-	uvm_unmap(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
+	uvm_km_free(kernel_map, (vaddr_t)kva, (vaddr_t)kva + size);
 }
 
 /*
