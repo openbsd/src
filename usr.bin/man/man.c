@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.36 2008/01/04 22:37:54 jmc Exp $	*/
+/*	$OpenBSD: man.c,v 1.37 2008/12/30 13:14:41 jmc Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.36 2008/01/04 22:37:54 jmc Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.37 2008/12/30 13:14:41 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,7 +172,10 @@ main(int argc, char *argv[])
 	config(conffile);
 
 	/* Get the machine type unless specified by -S. */
-	if (machine == NULL && (machine = getenv("MACHINE")) == NULL)
+	if (machine || (machine = getenv("MACHINE")))
+		for (p = machine; *p; ++p)
+			*p = tolower(*p);
+	else
 		machine = MACHINE;
 
 	/* If there's no _default list, create an empty one. */
