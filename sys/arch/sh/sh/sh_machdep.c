@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.21 2008/08/24 03:13:12 jsg Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.22 2008/12/30 05:33:17 miod Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ caddr_t allocsys(caddr_t);
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t dumpmag = 0x8fca0101;	/* magic number */
+u_long dumpmag = 0x8fca0101;	/* magic number */
 u_int dumpsize;			/* pages */
 long dumplo;	 		/* blocks */
 cpu_kcore_hdr_t cpu_kcore_hdr;

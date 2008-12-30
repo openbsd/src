@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.85 2008/11/22 18:12:32 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.86 2008/12/30 05:33:15 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -822,7 +822,7 @@ haltsys:
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t	dumpmag = 0x8fca0101;	/* magic number */
+u_long	dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 

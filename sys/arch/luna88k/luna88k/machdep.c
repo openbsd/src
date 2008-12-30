@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.58 2008/06/27 17:22:14 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.59 2008/12/30 05:33:17 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -599,7 +599,7 @@ haltsys:
 	/*NOTREACHED*/
 }
 
-unsigned dumpmag = 0x8fca0101;	 /* magic number for savecore */
+u_long dumpmag = 0x8fca0101;	 /* magic number for savecore */
 int   dumpsize = 0;	/* also for savecore */
 long  dumplo = 0;
 cpu_kcore_hdr_t cpu_kcore_hdr;

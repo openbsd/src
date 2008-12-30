@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 2008/05/18 07:36:10 jsing Exp $ */
+/*	$OpenBSD: machdep.c,v 1.61 2008/12/30 05:33:17 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -852,7 +852,7 @@ haltsys:
 	/*NOTREACHED*/
 }
 
-int	dumpmag = (int)0x8fca0101;	/* Magic number for savecore. */
+u_long	dumpmag = 0x8fca0101;	/* Magic number for savecore. */
 int	dumpsize = 0;			/* Also for savecore. */
 long	dumplo = 0;
 
