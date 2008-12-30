@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.68 2008/12/12 06:12:34 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.69 2008/12/30 12:27:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1350,7 +1350,7 @@ vic_alloc_mbuf(struct vic_softc *sc, bus_dmamap_t map, u_int pktlen)
 	m->m_len = m->m_pkthdr.len = pktlen - ETHER_ALIGN;
 
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT) != 0) {
-		printf("%s: could not load mbuf DMA map", DEVNAME(sc));
+		printf("%s: could not load mbuf DMA map\n", DEVNAME(sc));
 		m_freem(m);
 		return (NULL);
 	}
