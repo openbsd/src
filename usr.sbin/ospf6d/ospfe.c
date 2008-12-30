@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.11 2008/12/28 21:22:14 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.12 2008/12/30 21:31:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -468,7 +468,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 
 			ref = lsa_cache_add(imsg.data, l);
 
-			if (lsa_hdr.type == LSA_TYPE_EXTERNAL) {
+			if (lsa_hdr.type == htons(LSA_TYPE_EXTERNAL)) {
 				/*
 				 * flood on all areas but stub areas and
 				 * virtual links
@@ -482,6 +482,13 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 						&lsa_hdr, imsg.data);
 				    }
 				}
+			} else if (lsa_hdr.type == htons(LSA_TYPE_LINK)) {
+				/*
+				 * flood on interface only
+				 */
+				log_debug("flooding link LSA");
+				noack += lsa_flood(nbr->iface, nbr,
+				    &lsa_hdr, imsg.data);
 			} else {
 				/*
 				 * flood on all area interfaces on
@@ -620,6 +627,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 		case IMSG_CTL_END:
 		case IMSG_CTL_SHOW_DATABASE:
 		case IMSG_CTL_SHOW_DB_EXT:
+		case IMSG_CTL_SHOW_DB_LINK:
 		case IMSG_CTL_SHOW_DB_NET:
 		case IMSG_CTL_SHOW_DB_RTR:
 		case IMSG_CTL_SHOW_DB_SELF:
@@ -966,6 +974,86 @@ orig_net_lsa(struct iface *iface)
 
 	lsa_hdr.type = htons(LSA_TYPE_NETWORK);
 	/* for network LSAs, the link state ID equals the interface ID */
+	lsa_hdr.ls_id = htonl(iface->ifindex);
+	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;
+	lsa_hdr.seq_num = htonl(INIT_SEQ_NUM);
+	lsa_hdr.len = htons(buf->wpos);
+	lsa_hdr.ls_chksum = 0;		/* updated later */
+	memcpy(buf_seek(buf, 0, sizeof(lsa_hdr)), &lsa_hdr, sizeof(lsa_hdr));
+
+	chksum = htons(iso_cksum(buf->buf, buf->wpos, LS_CKSUM_OFFSET));
+	memcpy(buf_seek(buf, LS_CKSUM_OFFSET, sizeof(chksum)),
+	    &chksum, sizeof(chksum));
+
+	imsg_compose(ibuf_rde, IMSG_LS_UPD, iface->self->peerid, 0,
+	    buf->buf, buf->wpos);
+
+	buf_free(buf);
+}
+
+void
+orig_link_lsa(struct iface *iface)
+{
+	struct lsa_hdr		 lsa_hdr;
+	struct lsa_link	 	 lsa_link;
+	struct lsa_prefix	 lsa_prefix;
+	struct buf		*buf;
+	struct iface_addr	*ia;
+	struct in6_addr		 prefix;
+	unsigned int		 num_prefix = 0;
+	u_int16_t		 chksum;
+	u_int32_t		 options;
+
+	log_debug("orig_link_lsa: interface %s", iface->name);
+
+	if (iface->type == IF_TYPE_VIRTUALLINK)
+		return;
+	
+	if ((iface->state & IF_STA_MULTI) == 0)
+		return;
+
+	/* XXX READ_BUF_SIZE */
+	if ((buf = buf_dynamic(sizeof(lsa_hdr) + sizeof(lsa_link),
+	    READ_BUF_SIZE)) == NULL)
+		fatal("orig_link_lsa");
+
+	/* reserve space for LSA header and LSA link header */
+	if (buf_reserve(buf, sizeof(lsa_hdr) + sizeof(lsa_link)) == NULL)
+		fatal("orig_link_lsa: buf_reserve failed");
+	
+	/* link-local address, and all prefixes configured on interface */
+	TAILQ_FOREACH(ia, &iface->ifa_list, entry) {
+		if (IN6_IS_ADDR_LINKLOCAL(&ia->addr)) {
+			log_debug("orig_link_lsa: link local address %s",
+			    log_in6addr(&ia->addr));
+			lsa_link.lladdr = ia->addr;
+			continue;
+		}
+
+		lsa_prefix.prefixlen = ia->prefixlen;
+		lsa_prefix.options = 0;
+		lsa_prefix.metric = 0;
+		inet6applymask(&prefix, &ia->addr, ia->prefixlen);
+		lsa_prefix.prefix = prefix;
+		log_debug("orig_link_lsa: prefix %s", log_in6addr(&prefix));
+		if (buf_add(buf, &lsa_prefix, sizeof(lsa_prefix)))
+			fatal("orig_link_lsa: buf_add failed");
+		num_prefix++;
+	}
+
+	/* LSA link header (lladdr has already been filled in above) */
+	LSA_24_SETHI(lsa_link.opts, iface->priority);
+	options = area_ospf_options(area_find(oeconf, iface->area_id));
+	LSA_24_SETLO(lsa_link.opts, options);
+	lsa_link.opts = htonl(lsa_link.opts);
+	lsa_link.numprefix = htonl(num_prefix);
+	memcpy(buf_seek(buf, sizeof(lsa_hdr), sizeof(lsa_link)),
+	    &lsa_link, sizeof(lsa_link));
+
+	/* LSA header */
+	lsa_hdr.age = htons(DEFAULT_AGE);
+	lsa_hdr.type = htons(LSA_TYPE_LINK);
+	/* for link LSAs, the link state ID equals the interface ID */
 	lsa_hdr.ls_id = htonl(iface->ifindex);
 	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;
 	lsa_hdr.seq_num = htonl(INIT_SEQ_NUM);

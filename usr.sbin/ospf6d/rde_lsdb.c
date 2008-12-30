@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.11 2008/12/28 21:20:34 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.12 2008/12/30 21:31:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -626,6 +626,10 @@ lsa_dump(struct lsa_tree *tree, int imsg_type, pid_t pid)
 			continue;
 		case IMSG_CTL_SHOW_DB_EXT:
 			if (v->type == LSA_TYPE_EXTERNAL)
+				break;
+			continue;
+		case IMSG_CTL_SHOW_DB_LINK:
+			if (v->type == LSA_TYPE_LINK)
 				break;
 			continue;
 		case IMSG_CTL_SHOW_DB_NET:

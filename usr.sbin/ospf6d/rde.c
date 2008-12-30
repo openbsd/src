@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.12 2008/12/28 18:43:53 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.13 2008/12/30 21:31:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -488,6 +488,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_CTL_SHOW_DATABASE:
 		case IMSG_CTL_SHOW_DB_EXT:
+		case IMSG_CTL_SHOW_DB_LINK:
 		case IMSG_CTL_SHOW_DB_NET:
 		case IMSG_CTL_SHOW_DB_RTR:
 		case IMSG_CTL_SHOW_DB_SELF:

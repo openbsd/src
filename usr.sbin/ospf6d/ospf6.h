@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.11 2008/12/28 21:22:14 claudio Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.12 2008/12/30 21:31:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -197,11 +197,17 @@ struct ls_upd_hdr {
 #define OSPF_RTR_x		0x08	/* ignored, should be 0 */
 #define OSPF_RTR_Nt		0x10
 
+#define OSPF_PREFIX_NU		0x01
+#define OSPF_PREFIX_LA		0x02
+#define OSPF_PREFIX_x		0x04	/* ignored, should be 0 */
+#define OSPF_PREFIX_P		0x08
+#define OSPF_PREFIX_DN		0x10
+
 struct lsa_prefix {
-	struct in6_addr		prefix;
-	u_int16_t		metric;
 	u_int8_t		prefixlen;
 	u_int8_t		options;
+	u_int16_t		metric;
+	struct in6_addr		prefix;
 };
 
 struct lsa_rtr {
@@ -232,7 +238,7 @@ struct lsa_prefix_sum {
 };
 
 struct lsa_rtr_sum {
-	u_int32_t		options;	/* lower 24bit options */
+	u_int32_t		opts;		/* lower 24bit options */
 	u_int32_t		metric;		/* only lower 24 bit */
 	u_int32_t		dest_rtr_id;
 };
@@ -245,10 +251,10 @@ struct lsa_asext {
 };
 
 struct lsa_link {
-	u_int32_t		options;	/* rtr pri & 24bit options */
+	u_int32_t		opts;		/* rtr pri & 24bit options */
 	struct in6_addr		lladdr;
 	u_int32_t		numprefix;
-	/* + numprefix prefix */
+	/* + numprefix * lsa_prefix */
 };
 
 struct lsa_intra_prefix {
@@ -256,7 +262,7 @@ struct lsa_intra_prefix {
 	u_int16_t		ref_type;
 	u_int32_t		ref_lsid;
 	u_int32_t		ref_adv_rtr;
-	/* + numprefix prefix */
+	/* + numprefix * lsa_prefix */
 };
 
 struct lsa_hdr {

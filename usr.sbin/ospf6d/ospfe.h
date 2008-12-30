@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.10 2008/12/28 17:56:16 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.11 2008/12/30 21:31:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -122,6 +122,7 @@ void		 ospfe_iface_ctl(struct ctl_conn *, unsigned int);
 void		 ospfe_nbr_ctl(struct ctl_conn *);
 void		 orig_rtr_lsa(struct iface *);
 void		 orig_net_lsa(struct iface *);
+void		 orig_link_lsa(struct iface *);
 void		 ospfe_demote_area(struct area *, int);
 void		 ospfe_demote_iface(struct iface *, int);
 
