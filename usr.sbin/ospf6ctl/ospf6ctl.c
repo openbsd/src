@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.16 2008/12/28 22:05:04 sobrado Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.17 2008/12/30 21:33:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -156,6 +156,9 @@ main(int argc, char *argv[])
 	case SHOW_DBEXT:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_EXT, 0, 0, NULL, 0);
 		break;
+	case SHOW_DBLINK:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_LINK, 0, 0, NULL, 0);
+		break;
 	case SHOW_DBNET:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_NET, 0, 0, NULL, 0);
 		break;
@@ -245,6 +248,7 @@ main(int argc, char *argv[])
 				done = show_database_msg(&imsg);
 				break;
 			case SHOW_DBEXT:
+			case SHOW_DBLINK:
 			case SHOW_DBNET:
 			case SHOW_DBRTR:
 			case SHOW_DBSUM:
@@ -706,6 +710,7 @@ show_db_msg_detail(struct imsg *imsg)
 	struct iface		*iface;
 	struct lsa		*lsa;
 	struct lsa_rtr_link	*rtr_link;
+	struct lsa_prefix	*prefix;
 	struct lsa_asext	*asext;
 	u_int16_t		 i, nlinks, off;
 
@@ -735,6 +740,31 @@ show_db_msg_detail(struct imsg *imsg)
 
 		lasttype = lsa->hdr.type;
 		break;
+	case IMSG_CTL_SHOW_DB_LINK:
+		lsa = imsg->data;
+		if (lsa->hdr.type != lasttype)
+			show_database_head(area_id, ifname, lsa->hdr.type);
+		show_db_hdr_msg_detail(&lsa->hdr);
+		printf("Options: %s\n",
+		    print_ospf_options(LSA_24_GETLO(ntohl(lsa->data.link.opts))));
+		printf("Link Local Address: %s\n", log_in6addr(&lsa->data.link.lladdr));
+
+		nlinks = ntohl(lsa->data.link.numprefix);
+		printf("Number of Prefixes: %d\n", nlinks);
+		off = sizeof(lsa->hdr) + sizeof(struct lsa_link);
+
+		for (i = 0; i < nlinks; i++) {
+			prefix = (struct lsa_prefix *)((char *)lsa + off);
+
+			printf("    Prefix Address: %s\n", log_in6addr(&prefix->prefix));
+			printf("    Prefix Length: %d, Options: %x\n", prefix->prefixlen, prefix->options);
+
+			off += sizeof(struct lsa_prefix);
+		}
+
+		printf("\n");
+		lasttype = lsa->hdr.type;
+		break;
 	case IMSG_CTL_SHOW_DB_NET:
 		lsa = imsg->data;
 		if (lsa->hdr.type != lasttype)
@@ -746,6 +776,7 @@ show_db_msg_detail(struct imsg *imsg)
 		nlinks = (ntohs(lsa->hdr.len) - sizeof(struct lsa_hdr)
 		    - sizeof(u_int32_t)) / sizeof(struct lsa_net_link);
 		off = sizeof(lsa->hdr) + sizeof(u_int32_t);
+		printf("Number of Routers: %d\n", nlinks);
 
 		for (i = 0; i < nlinks; i++) {
 			addr.s_addr = lsa->data.net.att_rtr[i];
@@ -767,7 +798,7 @@ show_db_msg_detail(struct imsg *imsg)
 
 		nlinks = (ntohs(lsa->hdr.len) - sizeof(struct lsa_hdr)
 		    - sizeof(u_int32_t)) / sizeof(struct lsa_rtr_link);
-		printf("Number of Links: %d\n\n", nlinks);
+		printf("Number of Links: %d\n", nlinks);
 
 		off = sizeof(lsa->hdr) + sizeof(struct lsa_rtr);
 
@@ -814,7 +845,7 @@ show_db_msg_detail(struct imsg *imsg)
 			show_database_head(area_id, ifname, lsa->hdr.type);
 		show_db_hdr_msg_detail(&lsa->hdr);
 		printf("Prefix: XXX\n");
-		printf("Metric: %d\n\n", ntohl(lsa->data.pref_sum.metric) &
+		printf("Metric: %d\n", ntohl(lsa->data.pref_sum.metric) &
 		    LSA_METRIC_MASK);
 		lasttype = lsa->hdr.type;
 		break;
@@ -827,7 +858,7 @@ show_db_msg_detail(struct imsg *imsg)
 		addr.s_addr = lsa->data.rtr_sum.dest_rtr_id;
 		printf("Destination Router ID: %s\n", inet_ntoa(addr));
 		printf("Options: %s\n",
-		    print_ospf_options(ntohl(lsa->data.rtr_sum.options)));
+		    print_ospf_options(ntohl(lsa->data.rtr_sum.opts)));
 		printf("Metric: %d\n\n", ntohl(lsa->data.rtr_sum.metric) &
 		    LSA_METRIC_MASK);
 	case IMSG_CTL_AREA:
