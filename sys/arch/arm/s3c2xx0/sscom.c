@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom.c,v 1.6 2008/12/24 07:46:15 drahn Exp $ */
+/*	$OpenBSD: sscom.c,v 1.7 2008/12/30 07:02:34 drahn Exp $ */
 /*	$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $ */
 
 /*
@@ -178,16 +178,15 @@ void sscom_rxsoft	(struct sscom_softc *, struct tty *);
 void sscom_stsoft	(struct sscom_softc *, struct tty *);
 void sscom_schedrx	(struct sscom_softc *);
 
-static void	sscom_modem(struct sscom_softc *, int);
-static void	sscom_break(struct sscom_softc *, int);
-static void	sscom_iflush(struct sscom_softc *);
-static void	sscom_hwiflow(struct sscom_softc *);
-static void	sscom_loadchannelregs(struct sscom_softc *);
+void	sscom_modem(struct sscom_softc *, int);
+void	sscom_break(struct sscom_softc *, int);
+void	sscom_iflush(struct sscom_softc *);
+void	sscom_hwiflow(struct sscom_softc *);
+void	sscom_loadchannelregs(struct sscom_softc *);
 static void	tiocm_to_sscom(struct sscom_softc *, u_long, int);
 static int	sscom_to_tiocm(struct sscom_softc *);
 static void	tiocm_to_sscom(struct sscom_softc *, u_long, int);
 static int	sscom_to_tiocm(struct sscom_softc *);
-static void	sscom_iflush(struct sscom_softc *);
 
 static int	sscomhwiflow(struct tty *tp, int block);
 int	sscom_init(bus_space_tag_t, const struct sscom_uart_info *,
@@ -308,7 +307,7 @@ __sscom_output_chunk(struct sscom_softc *sc, int ufstat)
 	if (cnt != 0) {
 		cnt = q_to_b(&tp->t_outq, buffer, cnt);
 		for (tptr = buffer; tptr < &buffer[cnt]; tptr ++) {
-			bus_space_write_1(iot, ioh, SSCOM_UTXH, *tptr);
+			bus_space_write_4(iot, ioh, SSCOM_UTXH, *tptr);
 		}
 	}
 	
@@ -318,7 +317,7 @@ __sscom_output_chunk(struct sscom_softc *sc, int ufstat)
 void
 sscom_output_chunk(struct sscom_softc *sc)
 {
-	int ufstat = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SSCOM_UFSTAT);
+	int ufstat = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSCOM_UFSTAT);
 
 	if (!(ufstat & UFSTAT_TXFULL))
 		__sscom_output_chunk(sc, ufstat);
@@ -330,6 +329,9 @@ sscomspeed(long speed, long frequency)
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
 	int x, err;
+
+	if (speed == 115200 && frequency == 100000000)
+		return 0x1a;
 
 	if (speed <= 0)
 		return -1;
@@ -355,8 +357,8 @@ void
 sscomstatus(struct sscom_softc *sc, const char *str)
 {
 	struct tty *tp = sc->sc_tty;
-	int umstat = bus_space_read_1(sc->sc_iot, sc->sc_iot, SSCOM_UMSTAT);
-	int umcon = bus_space_read_1(sc->sc_iot, sc->sc_iot, SSCOM_UMCON);
+	int umstat = bus_space_read_4(sc->sc_iot, sc->sc_iot, SSCOM_UMSTAT);
+	int umcon = bus_space_read_4(sc->sc_iot, sc->sc_iot, SSCOM_UMCON);
 
 	printf("%s: %s %sclocal  %sdcd %sts_carr_on %sdtr %stx_stopped\n",
 	    sc->sc_dev.dv_xname, str,
@@ -388,7 +390,7 @@ sscom_enable_debugport(struct sscom_softc *sc)
 	s = splserial();
 	SSCOM_LOCK(sc);
 	sc->sc_ucon = UCON_DEBUGPORT;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SSCOM_UCON, sc->sc_ucon);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSCOM_UCON, sc->sc_ucon);
 	sc->sc_umcon = UMCON_RTS|UMCON_DTR;
 	sc->set_modem_control(sc);
 	sscom_enable_rxint(sc);
@@ -402,7 +404,7 @@ static void
 sscom_set_modem_control(struct sscom_softc *sc)
 {
 	/* flob RTS */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 	    SSCOM_UMCON, sc->sc_umcon & UMCON_HW_MASK);
 	/* ignore DTR */
 }
@@ -412,7 +414,7 @@ sscom_read_modem_status(struct sscom_softc *sc)
 {
 	int msts;
 
-	msts = bus_space_read_1(sc->sc_iot, sc->sc_ioh, SSCOM_UMSTAT);
+	msts = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSCOM_UMSTAT);
 
 	/* DCD and DSR are always on */
 	return (msts & UMSTAT_CTS) | MSTS_DCD | MSTS_DSR;
@@ -470,11 +472,11 @@ sscom_attach_subr(struct sscom_softc *sc)
 		sc->sc_ucon = UCON_DEBUGPORT;
 	}
 
-	bus_space_write_1(iot, ioh, SSCOM_UFCON,
+	bus_space_write_4(iot, ioh, SSCOM_UFCON,
 	    UFCON_TXTRIGGER_8|UFCON_RXTRIGGER_8|UFCON_FIFO_ENABLE|
 	    UFCON_TXFIFO_RESET|UFCON_RXFIFO_RESET);
 
-	bus_space_write_1(iot, ioh, SSCOM_UCON, sc->sc_ucon);
+	bus_space_write_4(iot, ioh, SSCOM_UCON, sc->sc_ucon);
 
 #ifdef KGDB
 	if (ISSET(sc->sc_hwflags, SSCOM_HW_KGDB)) {
@@ -625,7 +627,7 @@ sscom_shutdown(struct sscom_softc *sc)
 		sc->sc_ucon = UCON_DEBUGPORT;
 	else
 		sc->sc_ucon = 0;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SSCOM_UCON, sc->sc_ucon);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSCOM_UCON, sc->sc_ucon);
 
 #ifdef DIAGNOSTIC
 	if (!sc->enabled)
@@ -680,9 +682,6 @@ sscomopen(dev_t dev, int flag, int mode, struct proc *p)
 		s2 = splserial();
 		SSCOM_LOCK(sc);
 
-		/* Turn on interrupts. */
-		sscom_enable_txrxint(sc);
-
 		/* Fetch the current modem control status, needed later. */
 		sc->sc_msts = sc->read_modem_status(sc);
 
@@ -723,6 +722,8 @@ sscomopen(dev_t dev, int flag, int mode, struct proc *p)
 		s2 = splserial();
 		SSCOM_LOCK(sc);
 
+		sscom_loadchannelregs(sc);
+
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
 		 * present, because otherwise we'd have to use TIOCSDTR
@@ -741,6 +742,10 @@ sscomopen(dev_t dev, int flag, int mode, struct proc *p)
 
 		if (sscom_debug)
 			sscomstatus(sc, "sscomopen  ");
+
+		/* Turn on interrupts. */
+		sscom_enable_txrxint(sc);
+
 
 		SSCOM_UNLOCK(sc);
 		splx(s2);
@@ -988,7 +993,7 @@ sscom_schedrx(struct sscom_softc *sc)
 #endif
 }
 
-static void
+void
 sscom_break(struct sscom_softc *sc, int onoff)
 {
 
@@ -1007,7 +1012,7 @@ sscom_break(struct sscom_softc *sc, int onoff)
 	}
 }
 
-static void
+void
 sscom_modem(struct sscom_softc *sc, int onoff)
 {
 	if (onoff)
@@ -1089,6 +1094,12 @@ sscom_to_tiocm(struct sscom_softc *sc)
 	return ttybits;
 }
 
+void pr(char *, ...);
+void
+pr(char *arg, ...)
+{
+}
+
 static int
 cflag2lcr(tcflag_t cflag)
 {
@@ -1118,6 +1129,7 @@ cflag2lcr(tcflag_t cflag)
 	}
 	if (ISSET(cflag, CSTOPB))
 		SET(lcr, ULCON_STOP);
+	pr (" lcr %x %d %d %d \n", lcr, cflag & (PARENB|PARODD), ISSET(cflag, CSIZE), CS8);
 
 	return lcr;
 }
@@ -1274,7 +1286,7 @@ sscomparam(struct tty *tp, struct termios *t)
 	return 0;
 }
 
-static void
+void
 sscom_iflush(struct sscom_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1292,7 +1304,7 @@ sscom_iflush(struct sscom_softc *sc)
 #endif
 }
 
-static void
+void
 sscom_loadchannelregs(struct sscom_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1301,12 +1313,12 @@ sscom_loadchannelregs(struct sscom_softc *sc)
 	/* XXXXX necessary? */
 	sscom_iflush(sc);
 
-	bus_space_write_2(iot, ioh, SSCOM_UCON, 0);
+	bus_space_write_4(iot, ioh, SSCOM_UCON, 0);
 
-	bus_space_write_2(iot, ioh, SSCOM_UBRDIV, sc->sc_ubrdiv);
-	bus_space_write_1(iot, ioh, SSCOM_ULCON, sc->sc_ulcon);
+	bus_space_write_4(iot, ioh, SSCOM_UBRDIV, sc->sc_ubrdiv);
+	bus_space_write_4(iot, ioh, SSCOM_ULCON, sc->sc_ulcon);
 	sc->set_modem_control(sc);
-	bus_space_write_2(iot, ioh, SSCOM_UCON, sc->sc_ucon);
+	bus_space_write_4(iot, ioh, SSCOM_UCON, sc->sc_ucon);
 }
 
 static int
@@ -1350,7 +1362,7 @@ sscomhwiflow(struct tty *tp, int block)
 /*
  * (un)block input via hw flowcontrol
  */
-static void
+void
 sscom_hwiflow(struct sscom_softc *sc)
 {
 	if (sc->sc_mcr_rts == 0)
@@ -1546,7 +1558,7 @@ sscom_rxsoft(struct sscom_softc *sc, struct tty *tp)
 				CLR(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
 				sscom_enable_rxint(sc);
 				sc->sc_ucon |= UCON_ERRINT;
-				bus_space_write_2(sc->sc_iot, sc->sc_ioh, SSCOM_UCON, 
+				bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSCOM_UCON, 
 						  sc->sc_ucon);
 
 			}
@@ -1656,7 +1668,7 @@ sscomrxintr(void *arg)
 		uint16_t ufstat;
 		uint8_t utrstat, uerstat;
 
-		ufstat = bus_space_read_2(iot, ioh, SSCOM_UFSTAT);
+		ufstat = bus_space_read_4(iot, ioh, SSCOM_UFSTAT);
 
 		/* XXX: break interrupt with no character? */
 
@@ -1701,7 +1713,7 @@ sscomrxintr(void *arg)
 					cc--;
 				}
 
-				ufstat = bus_space_read_2(iot, ioh, SSCOM_UFSTAT);
+				ufstat = bus_space_read_4(iot, ioh, SSCOM_UFSTAT);
 				if ( (ufstat & (UFSTAT_RXFULL|UFSTAT_RXCOUNT)) == 0 )
 					break;
 			}
@@ -1735,13 +1747,13 @@ sscomrxintr(void *arg)
 				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
 				sscom_disable_rxint(sc);
 				sc->sc_ucon &= ~UCON_ERRINT;
-				bus_space_write_2(iot, ioh, SSCOM_UCON, sc->sc_ucon);
+				bus_space_write_4(iot, ioh, SSCOM_UCON, sc->sc_ucon);
 			}
 		}
 #else
-		utrstat = bus_space_read_2(iot, ioh, SSCOM_UTRSTAT);
+		utrstat = bus_space_read_4(iot, ioh, SSCOM_UTRSTAT);
 		if (utrstat & UTRSTAT_RXREADY) {
-			uerstat = bus_space_read_1((iot), (ioh), SSCOM_UERSTAT);
+			uerstat = bus_space_read_4((iot), (ioh), SSCOM_UERSTAT);
 			if (uerstat & UERSTAT_BREAK) {
 #if defined(DDB)
 				if (db_console)
@@ -1751,15 +1763,15 @@ sscomrxintr(void *arg)
 
 			}
 			/* xxx overflow */
-			put[0] = bus_space_read_1((iot), (ioh),
-			    SSCOM_URXH);
+			put[0] = bus_space_read_4((iot), (ioh),
+			    SSCOM_URXH) & 0xff;
 			put[1] = uerstat;
 			put += 2;
 			if (put >= end)
 				put = sc->sc_rbuf;
 			cc--;
 next:
-			ufstat = bus_space_read_2(iot, ioh, SSCOM_UFSTAT);
+			ufstat = bus_space_read_4(iot, ioh, SSCOM_UFSTAT);
 		}
 			/*
 			 * Current string of incoming characters ended because
@@ -1790,7 +1802,7 @@ next:
 				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
 				sscom_disable_rxint(sc);
 				sc->sc_ucon &= ~UCON_ERRINT;
-				bus_space_write_2(iot, ioh, SSCOM_UCON, sc->sc_ucon);
+				bus_space_write_4(iot, ioh, SSCOM_UCON, sc->sc_ucon);
 			}
 #endif
 		if (sc->sc_rbput != put) {
@@ -1927,7 +1939,7 @@ sscomtxintr(void *arg)
 
 	SSCOM_LOCK(sc);
 
-	ufstat = bus_space_read_2(iot, ioh, SSCOM_UFSTAT);
+	ufstat = bus_space_read_4(iot, ioh, SSCOM_UFSTAT);
 
 	/*
 	 * If we've delayed a parameter change, do it
@@ -1990,6 +2002,31 @@ sscomtxintr(void *arg)
 	return 1;
 }
 
+int inited0;
+uint32_t init_ulcon;
+uint32_t init_ucon;
+uint32_t init_ufcon;
+uint32_t init_umcon;
+uint32_t init_utrstat;
+uint32_t init_uerstat;
+uint32_t init_ufstat;
+uint32_t init_umstat;
+uint32_t init_ubrdiv;
+
+void sscom_dump_init_state(void);
+void
+sscom_dump_init_state()
+{
+	printf("init_ulcon %x", init_ulcon);
+	printf("init_ucon %x", init_ucon);
+	printf("init_ufcon %x", init_ufcon);
+	printf("init_umcon %x", init_umcon);
+	printf("init_utrstat %x", init_utrstat);
+	printf("init_uerstat %x", init_uerstat);
+	printf("init_ufstat %x", init_ufstat);
+	printf("init_umstat %x", init_umstat);
+	printf("init_ubrdiv %x", init_ubrdiv);
+}
 
 #if defined(KGDB) || defined(SSCOM0CONSOLE) || defined(SSCOM1CONSOLE)
 /*
@@ -2001,25 +2038,45 @@ sscom_init(bus_space_tag_t iot, const struct sscom_uart_info *config,
 {
 	bus_space_handle_t ioh;
 	bus_addr_t iobase = config->iobase;
+	uint32_t ufcon;
 
 	if (bus_space_map(iot, iobase, SSCOM_SIZE, 0, &ioh))
 		return ENOMEM; /* ??? */
 
-	bus_space_write_2(iot, ioh, SSCOM_UCON, 0);
-	bus_space_write_1(iot, ioh, SSCOM_UFCON, 
+	if (inited0 == 0) {
+		init_ulcon = bus_space_read_4(iot, ioh, SSCOM_ULCON);
+		init_ucon = bus_space_read_4(iot, ioh, SSCOM_UCON);
+		init_ufcon = bus_space_read_4(iot, ioh, SSCOM_UFCON);
+		init_umcon = bus_space_read_4(iot, ioh, SSCOM_UMCON);
+		init_utrstat = bus_space_read_4(iot, ioh, SSCOM_UTRSTAT);
+		init_uerstat = bus_space_read_4(iot, ioh, SSCOM_UERSTAT);
+		init_ufstat = bus_space_read_4(iot, ioh, SSCOM_UFSTAT);
+		init_umstat = bus_space_read_4(iot, ioh, SSCOM_UMSTAT);
+		init_ubrdiv = bus_space_read_4(iot, ioh, SSCOM_UBRDIV);
+	}
+
+
+	bus_space_write_4(iot, ioh, SSCOM_UCON, 0);
+	bus_space_write_4(iot, ioh, SSCOM_UFCON, 
 	    UFCON_TXTRIGGER_8 | UFCON_RXTRIGGER_8 |
 	    UFCON_TXFIFO_RESET | UFCON_RXFIFO_RESET |
 	    UFCON_FIFO_ENABLE );
 	/* tx/rx fifo reset are auto-cleared */
 
+	/* wait for fifo reset to complete */
+	do {
+		ufcon = bus_space_read_4(iot, ioh, SSCOM_UFCON);
+	} while (ufcon & (UFCON_TXFIFO_RESET | UFCON_RXFIFO_RESET));
+
+
 	rate = sscomspeed(rate, frequency);
-	bus_space_write_2(iot, ioh, SSCOM_UBRDIV, rate);
-	bus_space_write_2(iot, ioh, SSCOM_ULCON, cflag2lcr(cflag));
+	bus_space_write_4(iot, ioh, SSCOM_UBRDIV, rate);
+	bus_space_write_4(iot, ioh, SSCOM_ULCON, cflag2lcr(cflag));
 
 	/* enable UART */
-	bus_space_write_2(iot, ioh, SSCOM_UCON, 
+	bus_space_write_4(iot, ioh, SSCOM_UCON, 
 	    UCON_TXMODE_INT|UCON_RXMODE_INT);
-	bus_space_write_2(iot, ioh, SSCOM_UMCON, UMCON_RTS);
+	bus_space_write_4(iot, ioh, SSCOM_UMCON, UMCON_RTS);
 
 	*iohp = ioh;
 	return 0;
@@ -2036,12 +2093,12 @@ struct consdev sscomcons = {
 	NODEV, CN_HIGHPRI
 };
 
-
 int
 sscom_cnattach(bus_space_tag_t iot, const struct sscom_uart_info *config,
     int rate, int frequency, tcflag_t cflag)
 {
 	int res;
+
 
 	res = sscom_init(iot, config, rate, frequency, cflag, &sscomconsioh);
 	if (res)
@@ -2143,17 +2200,17 @@ sscomcnputc(dev_t dev, int c)
 
 	/* wait for any pending transmission to finish */
 	timo = 150000;
-	while (ISSET(bus_space_read_2(sscomconstag, sscomconsioh, SSCOM_UFSTAT), 
+	while (ISSET(bus_space_read_4(sscomconstag, sscomconsioh, SSCOM_UFSTAT), 
 		   UFSTAT_TXFULL) && --timo)
 		continue;
 
-	bus_space_write_1(sscomconstag, sscomconsioh, SSCOM_UTXH, c);
+	bus_space_write_4(sscomconstag, sscomconsioh, SSCOM_UTXH, c);
 	SSCOM_BARRIER(sscomconstag, sscomconsioh, BR | BW);
 
 #if 0	
 	/* wait for this transmission to complete */
 	timo = 1500000;
-	while (!ISSET(bus_space_read_1(sscomconstag, sscomconsioh, SSCOM_UTRSTAT), 
+	while (!ISSET(bus_space_read_4(sscomconstag, sscomconsioh, SSCOM_UTRSTAT), 
 		   UTRSTAT_TXEMPTY) && --timo)
 		continue;
 #endif
@@ -2217,17 +2274,17 @@ sscom_kgdb_putc(void *arg, int c)
 
 	/* wait for any pending transmission to finish */
 	timo = 150000;
-	while (ISSET(bus_space_read_2(sscom_kgdb_iot, sscom_kgdb_ioh,
+	while (ISSET(bus_space_read_4(sscom_kgdb_iot, sscom_kgdb_ioh,
 	    SSCOM_UFSTAT), UFSTAT_TXFULL) && --timo)
 		continue;
 
-	bus_space_write_1(sscom_kgdb_iot, sscom_kgdb_ioh, SSCOM_UTXH, c);
+	bus_space_write_4(sscom_kgdb_iot, sscom_kgdb_ioh, SSCOM_UTXH, c);
 	SSCOM_BARRIER(sscom_kgdb_iot, sscom_kgdb_ioh, BR | BW);
 
 #if 0	
 	/* wait for this transmission to complete */
 	timo = 1500000;
-	while (!ISSET(bus_space_read_1(sscom_kgdb_iot, sscom_kgdb_ioh,
+	while (!ISSET(bus_space_read_4(sscom_kgdb_iot, sscom_kgdb_ioh,
 	    SSCOM_UTRSTAT), UTRSTAT_TXEMPTY) && --timo)
 		continue;
 #endif
