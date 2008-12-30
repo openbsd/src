@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.13 2008/12/30 21:44:18 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.14 2008/12/30 22:29:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1030,9 +1030,10 @@ orig_link_lsa(struct iface *iface)
 		lsa_prefix.options = 0;
 		lsa_prefix.metric = 0;
 		inet6applymask(&prefix, &ia->addr, ia->prefixlen);
-		lsa_prefix.prefix = prefix;
 		log_debug("orig_link_lsa: prefix %s", log_in6addr(&prefix));
 		if (buf_add(buf, &lsa_prefix, sizeof(lsa_prefix)))
+			fatal("orig_link_lsa: buf_add failed");
+		if (buf_add(buf, &prefix, LSA_PREFIXSIZE(ia->prefixlen)))
 			fatal("orig_link_lsa: buf_add failed");
 		num_prefix++;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.12 2008/12/30 21:31:54 claudio Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.13 2008/12/30 22:29:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -203,11 +203,14 @@ struct ls_upd_hdr {
 #define OSPF_PREFIX_P		0x08
 #define OSPF_PREFIX_DN		0x10
 
+/* return encoded IPv6 prefix size in bytes depending on the prefixlen */
+#define LSA_PREFIXSIZE(x)	(((x) + 31)/32 * 4)
+
 struct lsa_prefix {
 	u_int8_t		prefixlen;
 	u_int8_t		options;
 	u_int16_t		metric;
-	struct in6_addr		prefix;
+	/* + an IPv6 prefix encoded in (prefixlen + 31)/32 words */
 };
 
 struct lsa_rtr {
