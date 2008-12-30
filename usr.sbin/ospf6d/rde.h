@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.5 2007/11/27 12:23:06 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.6 2008/12/30 22:24:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -72,6 +72,14 @@ struct rde_nbr {
 	unsigned int			 ifindex;
 	int				 state;
 	int				 self;
+};
+
+/* expanded and host-byte-order version of a lsa_prefix */
+struct rt_prefix {
+	struct in6_addr	prefix;
+	u_int16_t	metric;
+	u_int8_t	prefixlen;
+	u_int8_t	options;
 };
 
 struct rt_nexthop {
