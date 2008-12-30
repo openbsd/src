@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvcall.S,v 1.4 2008/12/30 00:51:26 kettenis Exp $	*/
+/*	$OpenBSD: hvcall.S,v 1.5 2008/12/30 21:25:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -107,6 +107,14 @@ ENTRY(hv_api_get_version)
 	stx	%o1, [%o3]
 	retl
 	 stx	%o2, [%o4]
+
+ENTRY(hv_mach_desc)
+	mov	%o1, %o2
+	ldx	[%o2], %o1
+	mov	MACH_DESC, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
 
 ENTRY(hv_cpu_yield)
 	mov	CPU_YIELD, %o5
