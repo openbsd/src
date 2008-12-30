@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.14 2008/12/30 22:29:54 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.15 2008/12/30 22:51:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -486,7 +486,6 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 				/*
 				 * flood on interface only
 				 */
-				log_debug("flooding link LSA");
 				noack += lsa_flood(nbr->iface, nbr,
 				    &lsa_hdr, imsg.data);
 			} else {
