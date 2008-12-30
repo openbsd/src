@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.3 2008/08/10 13:55:19 kettenis Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.4 2008/12/30 00:51:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -30,12 +30,6 @@ int64_t	hv_api_get_version(uint64_t api_group,
 /*
  * Domain services
  */
-
-int64_t	hv_mach_set_soft_state(uint64_t software_state,
-	    paddr_t software_description_ptr);
-
-#define SIS_NORMAL	0x1
-#define SIS_TRANSITION	0x2
 
 /*
  * CPU services
@@ -120,6 +114,16 @@ int64_t	hv_tod_set(uint64_t tod);
 int64_t	hv_cons_getchar(int64_t *ch);
 int64_t	hv_cons_putchar(int64_t ch);
 int64_t	hv_api_putchar(int64_t ch);
+
+/*
+ * Domain state services
+ */
+
+int64_t	hv_soft_state_set(uint64_t software_state,
+	    paddr_t software_description_ptr);
+
+#define SIS_NORMAL	0x1
+#define SIS_TRANSITION	0x2
 
 /*
  * PCI I/O services

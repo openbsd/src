@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvcall.S,v 1.3 2008/08/10 13:55:19 kettenis Exp $	*/
+/*	$OpenBSD: hvcall.S,v 1.4 2008/12/30 00:51:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -27,8 +27,6 @@
 #define MACH_EXIT		0x00
 #define MACH_DESC		0x01
 #define MACH_SIR		0x02
-#define MACH_SET_SOFT_STATE	0x03
-#define MACH_GET_SOFT_STATE	0x04
 #define MACH_SET_WATCHDOG	0x05
 
 #define CPU_START		0x10
@@ -64,6 +62,9 @@
 
 #define CONS_GETCHAR		0x60
 #define CONS_PUTCHAR		0x61
+
+#define SOFT_STATE_SET		0x70
+#define SOFT_STATE_GET		0x71
 
 #define INTR_DEVINO2SYSINO	0xa0
 #define INTR_GETENABLED		0xa1
@@ -106,12 +107,6 @@ ENTRY(hv_api_get_version)
 	stx	%o1, [%o3]
 	retl
 	 stx	%o2, [%o4]
-
-ENTRY(hv_mach_set_soft_state)
-	mov	MACH_SET_SOFT_STATE, %o5
-	ta	FAST_TRAP
-	retl
-	 nop
 
 ENTRY(hv_cpu_yield)
 	mov	CPU_YIELD, %o5
@@ -242,6 +237,12 @@ ENTRY(hv_cons_getchar)
 
 ENTRY(hv_cons_putchar)
 	mov	CONS_PUTCHAR, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_soft_state_set)
+	mov	SOFT_STATE_SET, %o5
 	ta	FAST_TRAP
 	retl
 	 nop
