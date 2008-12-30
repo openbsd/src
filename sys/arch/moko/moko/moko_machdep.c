@@ -1,4 +1,4 @@
-/*	$OpenBSD: moko_machdep.c,v 1.1 2008/11/26 14:47:50 drahn Exp $	*/
+/*	$OpenBSD: moko_machdep.c,v 1.2 2008/12/30 07:03:28 drahn Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -392,7 +392,6 @@ const struct pmap_devmap smdk2410_devmap[] = {
 #undef _S
 
 #define VERBOSE_INIT_ARM
-#if 1
 static void
 map_io_area(paddr_t pagedir)
 {
@@ -419,7 +418,6 @@ map_io_area(paddr_t pagedir)
 		++loop;
 	}
 }
-#endif
 
 /*
  * simple memory mapping function used in early bootstrap stage
@@ -479,6 +477,8 @@ bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
  *   Relocating the kernel to the bottom of physical memory
  */
 u_int ol1pagetable;
+void	sscom_dump_init_state(void);
+
 u_int
 initarm(void *arg)
 {
@@ -625,6 +625,8 @@ initarm(void *arg)
 
 	/* Talk to the user */
 	printf("\nOpenBSD/moko booting ...\n");
+
+	sscom_dump_init_state();
 
 	{
 		/* XXX - all Zaurus have this for now, fix memory sizing */
@@ -1095,6 +1097,7 @@ void
 consinit(void)
 {
 	static int consinit_done = 0;
+	int conunit;
 #if defined(SSCOM0CONSOLE) || defined(SSCOM1CONSOLE)
 	bus_space_tag_t iot = &s3c2xx0_bs_tag;
 #endif
@@ -1111,8 +1114,17 @@ consinit(void)
 
 	s3c24x0_clock_freq2(CLKMAN_VBASE, NULL, NULL, &pclk);
 
+
+	/* HORRID HACK */
+	if (pclk == 66500000)
+		conunit = 0;
+	else if (pclk == 100000000)
+		conunit = 2;
+	else /* XXX */
+		conunit = 0;
+
 #if NSSCOM > 0
-	if (0 == s3c2410_sscom_cnattach(iot, 0, comcnspeed,
+	if (0 == s3c2410_sscom_cnattach(iot, conunit, comcnspeed,
 		pclk, comcnmode))
 		return;
 #if 0
