@@ -1,4 +1,4 @@
-/*	$OpenBSD: vbus.c,v 1.3 2008/11/10 16:50:13 art Exp $	*/
+/*	$OpenBSD: vbus.c,v 1.4 2008/12/30 21:23:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -32,6 +32,7 @@ extern todr_chip_handle_t todr_handle;
 struct vbus_softc {
 	struct device		sc_dv;
 	bus_space_tag_t		sc_bustag;
+	bus_dma_tag_t		sc_dmatag;
 };
 
 int	vbus_cmp_cells(int *, int *, int *, int);
@@ -71,6 +72,7 @@ vbus_attach(struct device *parent, struct device *self, void *aux)
 	int node;
 
 	sc->sc_bustag = vbus_alloc_bus_tag(sc, ma->ma_bustag);
+	sc->sc_dmatag = ma->ma_dmatag;
 	printf("\n");
 
 	for (node = OF_child(ma->ma_node); node; node = OF_peer(node)) {
@@ -83,6 +85,7 @@ vbus_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 		va.va_name = buf;
 		va.va_bustag = sc->sc_bustag;
+		va.va_dmatag = sc->sc_dmatag;
 		getprop(node, "reg", sizeof(*va.va_reg),
 		    &va.va_nreg, (void **)&va.va_reg);
 		getprop(node, "interrupts", sizeof(*va.va_intr),
