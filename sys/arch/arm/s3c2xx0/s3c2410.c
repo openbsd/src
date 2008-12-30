@@ -1,4 +1,4 @@
-/*	$OpenBSD: s3c2410.c,v 1.1 2008/11/26 14:39:14 drahn Exp $ */
+/*	$OpenBSD: s3c2410.c,v 1.2 2008/12/30 07:30:48 drahn Exp $ */
 /*	$NetBSD: s3c2410.c,v 1.10 2005/12/11 12:16:51 christos Exp $ */
 
 /*
@@ -200,9 +200,9 @@ s3c2410_search(struct device * parent, void * c, void *aux)
 	aa.sa_index = cf->cf_loc[SSIOCF_INDEX];
 	aa.sa_intr = cf->cf_loc[SSIOCF_INTR];
 	#else
-	aa.sa_addr = cf->cf_loc[0];
-	aa.sa_size = cf->cf_loc[1];
-	aa.sa_index = cf->cf_loc[2];
+	aa.sa_index = cf->cf_loc[0];
+	aa.sa_addr = cf->cf_loc[1];
+	aa.sa_size = cf->cf_loc[2];
 	aa.sa_intr = cf->cf_loc[3];
 	#endif
 
