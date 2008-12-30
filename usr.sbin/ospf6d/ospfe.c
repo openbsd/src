@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.12 2008/12/30 21:31:54 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.13 2008/12/30 21:44:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -928,7 +928,6 @@ void
 orig_net_lsa(struct iface *iface)
 {
 	struct lsa_hdr		 lsa_hdr;
-	struct area		*area;
 	struct nbr		*nbr;
 	struct buf		*buf;
 	int			 num_rtr = 0;
@@ -939,24 +938,17 @@ orig_net_lsa(struct iface *iface)
 	if ((buf = buf_dynamic(sizeof(lsa_hdr), READ_BUF_SIZE)) == NULL)
 		fatal("orig_net_lsa");
 
-	/* reserve space for LSA header and LSA Router header */
-	if (buf_reserve(buf, sizeof(lsa_hdr)) == NULL)
+	/* reserve space for LSA header and options field */
+	if (buf_reserve(buf, sizeof(lsa_hdr) + sizeof(opts)) == NULL)
 		fatal("orig_net_lsa: buf_reserve failed");
 
-	/* LSA options and then a list of all fully adjacent routers */
 	opts = 0;
-	if ((area = area_find(oeconf, iface->area_id)) == NULL)
-		fatalx("interface lost area");
-	LSA_24_SETLO(opts, area_ospf_options(area));
-	opts = htonl(opts);
-	if (buf_add(buf, &opts, sizeof(opts)))
-		fatal("orig_net_lsa: buf_add failed");
-
 	/* fully adjacent neighbors + self */
 	LIST_FOREACH(nbr, &iface->nbr_list, entry)
 		if (nbr->state & NBR_STA_FULL) {
 			if (buf_add(buf, &nbr->id, sizeof(nbr->id)))
 				fatal("orig_net_lsa: buf_add failed");
+			opts |= nbr->options;
 			num_rtr++;
 		}
 
@@ -980,6 +972,10 @@ orig_net_lsa(struct iface *iface)
 	lsa_hdr.len = htons(buf->wpos);
 	lsa_hdr.ls_chksum = 0;		/* updated later */
 	memcpy(buf_seek(buf, 0, sizeof(lsa_hdr)), &lsa_hdr, sizeof(lsa_hdr));
+
+	opts &= opts & htonl(LSA_24_MASK);
+	memcpy(buf_seek(buf, sizeof(lsa_hdr), sizeof(opts)), &opts,
+	    sizeof(opts));
 
 	chksum = htons(iso_cksum(buf->buf, buf->wpos, LS_CKSUM_OFFSET));
 	memcpy(buf_seek(buf, LS_CKSUM_OFFSET, sizeof(chksum)),
