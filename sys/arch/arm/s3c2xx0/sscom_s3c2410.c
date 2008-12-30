@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom_s3c2410.c,v 1.3 2008/12/24 07:46:15 drahn Exp $ */
+/*	$OpenBSD: sscom_s3c2410.c,v 1.4 2008/12/30 07:31:31 drahn Exp $ */
 /*	$NetBSD: sscom_s3c2410.c,v 1.2 2005/12/11 12:16:51 christos Exp $ */
 
 /*
@@ -118,7 +118,7 @@ sscom_match(struct device *parent, void *c, void *aux)
 	struct s3c2xx0_attach_args *sa = aux;
 	int unit = sa->sa_index;
 
-	return unit == 0 || unit == 1;
+	return unit == 0 || unit == 1 || unit == 2;
 }
 
 void
@@ -135,8 +135,8 @@ sscom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_unit = unit;
 	sc->sc_frequency = s3c2xx0_softc->sc_pclk;
 
-	sc->sc_rx_irqno = s3c2410_uart_config[sa->sa_index].rx_int;
-	sc->sc_tx_irqno = s3c2410_uart_config[sa->sa_index].tx_int;
+	sc->sc_rx_irqno = s3c2410_uart_config[unit].rx_int;
+	sc->sc_tx_irqno = s3c2410_uart_config[unit].tx_int;
 
 	if (bus_space_map(sc->sc_iot, iobase, SSCOM_SIZE, 0, &sc->sc_ioh)) {
 		printf( ": failed to map registers\n" );
