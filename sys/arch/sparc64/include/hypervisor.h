@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.8 2008/12/31 22:01:42 kettenis Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.9 2008/12/31 23:38:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -101,6 +101,23 @@ int64_t	hv_intr_settarget(uint64_t sysino, uint64_t cpuid);
 #define INTR_IDLE	0
 #define INTR_RECEIVED	1
 #define INTR_DELIVERED	2
+
+int64_t	hv_vintr_getcookie(uint64_t devhandle, uint64_t devino,
+	    uint64_t *cookie_value);
+int64_t	hv_vintr_setcookie(uint64_t devhandle, uint64_t devino,
+	    uint64_t cookie_value);
+int64_t	hv_vintr_getenabled(uint64_t devhandle, uint64_t devino,
+	    uint64_t *intr_enabled);
+int64_t	hv_vintr_setenabled(uint64_t devhandle, uint64_t devino,
+	    uint64_t intr_enabled);
+int64_t	hv_vintr_getstate(uint64_t devhandle, uint64_t devino,
+	    uint64_t *intr_state);
+int64_t	hv_vintr_setstate(uint64_t devhandle, uint64_t devino,
+	    uint64_t intr_state);
+int64_t	hv_vintr_gettarget(uint64_t devhandle, uint64_t devino,
+	    uint64_t *cpuid);
+int64_t	hv_vintr_settarget(uint64_t devhandle, uint64_t devino,
+	    uint64_t cpuid);
 
 /*
  * Time of day services

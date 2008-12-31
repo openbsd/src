@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvcall.S,v 1.6 2008/12/31 11:37:08 kettenis Exp $	*/
+/*	$OpenBSD: hvcall.S,v 1.7 2008/12/31 23:38:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -73,6 +73,15 @@
 #define INTR_SETSTATE		0xa4
 #define INTR_GETTARGET		0xa5
 #define INTR_SETTARGET		0xa6
+
+#define VINTR_GETCOOKIE		0xa7
+#define VINTR_SETCOOKIE		0xa8
+#define VINTR_GETENABLED	0xa9
+#define VINTR_SETENABLED	0xaa
+#define VINTR_GETSTATE		0xab
+#define VINTR_SETSTATE		0xac
+#define VINTR_GETTARGET		0xad
+#define VINTR_SETTARGET		0xae
 
 #define PCI_IOMMU_MAP		0xb0
 #define PCI_IOMMU_DEMAP		0xb1
@@ -305,6 +314,54 @@ ENTRY(hv_intr_gettarget)
 
 ENTRY(hv_intr_settarget)
 	mov	INTR_SETTARGET, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_vintr_getcookie)
+	mov	VINTR_GETCOOKIE, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_vintr_setcookie)
+	mov	VINTR_SETCOOKIE, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_vintr_getenabled)
+	mov	VINTR_GETENABLED, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_vintr_setenabled)
+	mov	VINTR_SETENABLED, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_vintr_getstate)
+	mov	VINTR_GETSTATE, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_vintr_setstate)
+	mov	VINTR_SETSTATE, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_vintr_gettarget)
+	mov	VINTR_GETTARGET, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%o2]
+
+ENTRY(hv_vintr_settarget)
+	mov	VINTR_SETTARGET, %o5
 	ta	FAST_TRAP
 	retl
 	 nop
