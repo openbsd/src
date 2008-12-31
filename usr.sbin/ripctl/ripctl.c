@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripctl.c,v 1.5 2007/10/15 02:16:35 deraadt Exp $
+/*	$OpenBSD: ripctl.c,v 1.6 2008/12/31 14:10:20 sobrado Exp $
  *
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -58,7 +58,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s <command> [arg [...]]\n", __progname);
+	fprintf(stderr, "usage: %s command [argument ...]\n", __progname);
 	exit(1);
 }
 
