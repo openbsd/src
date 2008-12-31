@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.102 2008/12/31 12:47:30 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.103 2008/12/31 12:54:43 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1637,60 +1637,74 @@ int
 azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 {
 	const convgroup_t *group;
-	uint32_t v;
-	int i, err, startchan, nchan;
-	nid_t nid;
-	boolean_t flag222;
+	widget_t *w;
+	uint32_t digital, stream_chan;
+	int i, err, curchan, nchan, widchan;
 
-	DPRINTFN(1, ("%s: fmt=0x%4.4x number=%d\n", __func__, fmt, number));
 	err = 0;
+	nchan = (fmt & HDA_SD_FMT_CHAN) + 1;
+
 	if (dir == AUMODE_RECORD)
 		group = &this->adcs.groups[this->adcs.cur];
 	else
 		group = &this->dacs.groups[this->dacs.cur];
-	flag222 = group->nconv >= 3 &&
-	    (WIDGET_CHANNELS(&this->w[group->conv[0]]) == 2) &&
-	    (WIDGET_CHANNELS(&this->w[group->conv[1]]) == 2) &&
-	    (WIDGET_CHANNELS(&this->w[group->conv[2]]) == 2);
-	nchan = (fmt & HDA_SD_FMT_CHAN) + 1;
-	startchan = 0;
+
+	curchan = 0;
 	for (i = 0; i < group->nconv; i++) {
-		uint32_t stream_chan;
-		nid = group->conv[i];
+		w = &this->w[group->conv[i]];
+		widchan = WIDGET_CHANNELS(w);
 
-		/* surround and c/lfe handling */
-		if (nchan >= 6 && flag222 && i == 1) {
-			nid = group->conv[2];
-		} else if (nchan >= 6 && flag222 && i == 2) {
-			nid = group->conv[1];
+		stream_chan = (number << 4);
+		if (curchan < nchan) {
+			stream_chan |= curchan;
+		} else if (w->nid == this->spkr_dac ||
+		    w->nid == this->hp_dac) {
+			stream_chan |= 0;	/* first channel(s) */
+		} else
+			stream_chan = 0;	/* idle stream */
+
+		if (stream_chan == 0) {
+			DPRINTFN(0, ("%s: %2.2x is idle\n", __func__, w->nid));
+		} else {
+			DPRINTFN(0, ("%s: %2.2x on stream chan %d\n", __func__,
+			    w->nid, stream_chan & ~(number << 4)));
 		}
 
-		if (startchan >= nchan)
-			stream_chan = 0; /* stream#0 */
-		else
-			stream_chan = (number << 4) | startchan;
-
-		err = this->comresp(this, nid, CORB_SET_CONVERTER_FORMAT,
-				    fmt, NULL);
-		if (err)
-			goto exit;
-		err = this->comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
-				    stream_chan, NULL);
-		if (err)
-			goto exit;
-		if (this->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
-			/* enable S/PDIF */
-			this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
-			    0, &v);
-			v = (v & 0xff) | CORB_DCC_DIGEN;
-			this->comresp(this, nid, CORB_SET_DIGITAL_CONTROL_L,
-			    v, NULL);
+		err = this->comresp(this, w->nid,
+		    CORB_SET_CONVERTER_FORMAT, fmt, NULL);
+		if (err) {
+			DPRINTF(("%s: nid %2.2x fmt %2.2x: %d\n",
+			    __func__, w->nid, fmt, err));
+			break;
 		}
-		startchan += WIDGET_CHANNELS(&this->w[nid]);
+		err = this->comresp(this, w->nid,
+		    CORB_SET_CONVERTER_STREAM_CHANNEL, stream_chan, NULL);
+		if (err) {
+			DPRINTF(("%s: nid %2.2x chan %d: %d\n",
+			    __func__, w->nid, stream_chan, err));
+			break;
+		}
+
+		if (w->widgetcap & COP_AWCAP_DIGITAL) {
+			err = this->comresp(this, w->nid,
+			    CORB_GET_DIGITAL_CONTROL, 0, &digital);
+			if (err) {
+				DPRINTF(("%s: nid %2.2x get digital: %d\n",
+				    __func__, w->nid, err));
+				break;
+			}
+			digital = (digital & 0xff) | CORB_DCC_DIGEN;
+			err = this->comresp(this, w->nid,
+			    CORB_SET_DIGITAL_CONTROL_L, digital, NULL);
+			if (err) {
+				DPRINTF(("%s: nid %2.2x set digital: %d\n",
+				    __func__, w->nid, err));
+				break;
+			}
+		}
+		curchan += widchan;
 	}
 
-exit:
-	DPRINTFN(1, ("%s: leave with %d\n", __func__, err));
 	return err;
 }
 
