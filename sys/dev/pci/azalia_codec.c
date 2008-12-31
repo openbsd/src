@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.99 2008/12/31 13:13:39 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.100 2008/12/31 13:35:58 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1525,17 +1525,27 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
 		if (err)
 			return err;
+		value = result;
 		if (mc->un.ord == 0) {
-			result &= ~CORB_PWC_OUTPUT;
-			result |= CORB_PWC_INPUT;
+			value &= ~CORB_PWC_OUTPUT;
+			value |= CORB_PWC_INPUT;
 		} else {
-			result &= ~CORB_PWC_INPUT;
-			result |= CORB_PWC_OUTPUT;
+			value &= ~CORB_PWC_INPUT;
+			value |= CORB_PWC_OUTPUT;
 		}
 		err = this->comresp(this, nid,
-		    CORB_SET_PIN_WIDGET_CONTROL, result, &result);
+		    CORB_SET_PIN_WIDGET_CONTROL, value, &result);
 		if (err)
 			return err;
+
+		for (i = 0; i < this->nsense_pins; i++) {
+			if (this->sense_pins[i] == nid)
+				break;
+		}
+		if (i < this->nsense_pins) {
+			if (this->unsol_event != NULL)
+				this->unsol_event(this, AZ_TAG_SPKR);
+		}
 	}
 
 	/* pin headphone-boost */
