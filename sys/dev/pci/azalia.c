@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.100 2008/12/31 11:25:36 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.101 2008/12/31 11:54:55 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -238,6 +238,8 @@ int	azalia_codec_connect_stream(codec_t *, int, uint16_t, int);
 int	azalia_codec_disconnect_stream(codec_t *, int);
 void	azalia_codec_print_audiofunc(const codec_t *);
 void	azalia_codec_print_groups(const codec_t *);
+int	azalia_codec_init_hp_spkr(codec_t *);
+int	azalia_codec_find_defdac(codec_t *, int, int);
 
 int	azalia_widget_init(widget_t *, const codec_t *, int);
 int	azalia_widget_label_widgets(codec_t *);
@@ -1286,6 +1288,8 @@ azalia_codec_init(codec_t *this)
 	    sizeof(this->w[CORB_NID_ROOT].name));
 	strlcpy(this->w[this->audiofunc].name, "hdaudio",
 	    sizeof(this->w[this->audiofunc].name));
+
+	this->speaker = -1;
 	FOR_EACH_WIDGET(this, i) {
 		err = azalia_widget_init(&this->w[i], this, i);
 		if (err)
@@ -1313,17 +1317,89 @@ azalia_codec_init(codec_t *this)
 	err = this->init_dacgroup(this);
 	if (err)
 		return err;
+
+	azalia_codec_print_groups(this);
+
 	err = azalia_widget_label_widgets(this);
 	if (err)
 		return err;
-
-	azalia_codec_print_groups(this);
 
 	err = azalia_codec_construct_format(this, 0, 0);
 	if (err)
 		return err;
 
-	return this->mixer_init(this);
+	err = this->mixer_init(this);
+	if (err)
+		return err;
+
+	err = azalia_codec_init_hp_spkr(this);
+	if (err)
+		return err;
+
+	return 0;
+}
+
+int
+azalia_codec_init_hp_spkr(codec_t *this)
+{
+	int i;
+
+	this->hp_dac = -1;
+	this->spkr_dac = -1;
+
+	if (this->speaker != -1)
+		this->spkr_dac = azalia_codec_find_defdac(this,
+		    this->speaker, 0);
+
+	if (this->headphones == -1) {
+		FOR_EACH_WIDGET(this, i) {
+			if (this->w[i].type != COP_AWTYPE_PIN_COMPLEX)
+				continue;
+			if (this->w[i].d.pin.device == CORB_CD_LINEOUT &&
+			    (this->w[i].d.pin.cap & COP_PINCAP_HEADPHONE)) {
+				this->headphones = i;
+				break;
+			}
+		}
+	}
+
+	if (this->headphones != -1)
+		this->hp_dac = azalia_codec_find_defdac(this,
+		    this->headphones, 0);
+
+	return 0;
+}
+
+int
+azalia_codec_find_defdac(codec_t *this, int index, int depth)
+{
+	const widget_t *w;
+	int ret;
+
+	w = &this->w[index];
+	if (w->enable == 0)
+		return -1;
+
+	if (w->type == COP_AWTYPE_AUDIO_OUTPUT)
+		return index;
+
+	if (depth > 0 &&
+	    (w->type == COP_AWTYPE_PIN_COMPLEX ||
+	    w->type == COP_AWTYPE_AUDIO_INPUT))
+		return -1;
+	if (++depth >= 10)
+		return -1;
+
+	if (w->nconnections > 0) {
+		index = w->connections[w->selected];
+		if (VALID_WIDGET_NID(index, this)) {
+			ret = azalia_codec_find_defdac(this, index, depth);
+			if (ret >= 0)
+				return ret;
+		}
+	}
+
+	return -1;
 }
 
 int

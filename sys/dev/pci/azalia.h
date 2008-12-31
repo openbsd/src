@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.29 2008/12/23 04:12:19 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.30 2008/12/31 11:54:55 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -625,6 +625,12 @@ typedef struct codec_t {
 	int nformats;
 	struct audio_encoding* encs;
 	int nencs;
+
+	int headphones;
+	int speaker;
+	int hp_dac;
+	int spkr_dac;
+	int spkr_muters;
 
 	nid_t sense_pins[HDA_MAX_SENSE_PINS];
 	int nsense_pins;
