@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.99 2008/12/31 11:23:55 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.100 2008/12/31 11:25:36 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1971,6 +1971,14 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 	if (err)
 		return err;
 	this->d.pin.cap = result;
+
+	if (this->d.pin.device == CORB_CD_MICIN &&
+	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_FIXED)
+		this->d.pin.cap &= ~(COP_PINCAP_OUTPUT);
+
+	if (this->d.pin.device == CORB_CD_SPEAKER &&
+	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_FIXED)
+		this->d.pin.cap &= ~(COP_PINCAP_INPUT);
 
 	switch (this->d.pin.device) {
 	case CORB_CD_LINEOUT:
