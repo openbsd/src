@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.103 2008/12/31 12:54:43 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.104 2008/12/31 22:25:42 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -65,33 +65,6 @@ struct audio_format {
 	u_int validbits;
 	u_int precision;
 	u_int channels;
-	u_int channel_mask;
-#define	AUFMT_UNKNOWN_POSITION		0U
-#define	AUFMT_FRONT_LEFT		0x00001U /* USB audio compatible */
-#define	AUFMT_FRONT_RIGHT		0x00002U /* USB audio compatible */
-#define	AUFMT_FRONT_CENTER		0x00004U /* USB audio compatible */
-#define	AUFMT_LOW_FREQUENCY		0x00008U /* USB audio compatible */
-#define	AUFMT_BACK_LEFT			0x00010U /* USB audio compatible */
-#define	AUFMT_BACK_RIGHT		0x00020U /* USB audio compatible */
-#define	AUFMT_FRONT_LEFT_OF_CENTER	0x00040U /* USB audio compatible */
-#define	AUFMT_FRONT_RIGHT_OF_CENTER	0x00080U /* USB audio compatible */
-#define	AUFMT_BACK_CENTER		0x00100U /* USB audio compatible */
-#define	AUFMT_SIDE_LEFT			0x00200U /* USB audio compatible */
-#define	AUFMT_SIDE_RIGHT		0x00400U /* USB audio compatible */
-#define	AUFMT_TOP_CENTER		0x00800U /* USB audio compatible */
-#define	AUFMT_TOP_FRONT_LEFT		0x01000U
-#define	AUFMT_TOP_FRONT_CENTER		0x02000U
-#define	AUFMT_TOP_FRONT_RIGHT		0x04000U
-#define	AUFMT_TOP_BACK_LEFT		0x08000U
-#define	AUFMT_TOP_BACK_CENTER		0x10000U
-#define	AUFMT_TOP_BACK_RIGHT		0x20000U
-
-#define	AUFMT_MONAURAL		AUFMT_FRONT_CENTER
-#define	AUFMT_STEREO		(AUFMT_FRONT_LEFT | AUFMT_FRONT_RIGHT)
-#define	AUFMT_SURROUND4		(AUFMT_STEREO | AUFMT_BACK_LEFT \
-				| AUFMT_BACK_RIGHT)
-#define	AUFMT_DOLBY_5_1		(AUFMT_SURROUND4 | AUFMT_FRONT_CENTER \
-				| AUFMT_LOW_FREQUENCY)
 
 	/**
 	 * 0: frequency[0] is lower limit, and frequency[1] is higher limit.
@@ -1570,26 +1543,6 @@ azalia_codec_add_format(codec_t *this, int chan, int valid, int prec,
 	f->validbits = valid;
 	f->precision = prec;
 	f->channels = chan;
-	switch (chan) {
-	case 1:
-		f->channel_mask = AUFMT_MONAURAL;
-		break;
-	case 2:
-		f->channel_mask = AUFMT_STEREO;
-		break;
-	case 4:
-		f->channel_mask = AUFMT_SURROUND4;
-		break;
-	case 6:
-		f->channel_mask = AUFMT_DOLBY_5_1;
-		break;
-	case 8:
-		f->channel_mask = AUFMT_DOLBY_5_1
-		    | AUFMT_SIDE_LEFT | AUFMT_SIDE_RIGHT;
-		break;
-	default:
-		f->channel_mask = 0;
-	}
 	f->frequency_type = 0;
 	if (rates & COP_PCM_R80)
 		f->frequency[f->frequency_type++] = 8000;
