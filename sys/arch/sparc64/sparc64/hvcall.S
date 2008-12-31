@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvcall.S,v 1.5 2008/12/30 21:25:26 kettenis Exp $	*/
+/*	$OpenBSD: hvcall.S,v 1.6 2008/12/31 11:37:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -80,6 +80,15 @@
 #define PCI_IOMMU_GETBYPASS	0xb3
 #define PCI_CONFIG_GET		0xb4
 #define PCI_CONFIG_PUT		0xb5
+
+#define LDC_TX_QCONF		0xe0
+#define LDC_TX_QINFO		0xe1
+#define LDC_TX_GET_STATE	0xe2
+#define LDC_TX_SET_QTAIL	0xe3
+#define LDC_RX_QCONF		0xe4
+#define LDC_RX_QINFO		0xe5
+#define LDC_RX_GET_STATE	0xe6
+#define LDC_RX_SET_QHEAD	0xe7
 
 #define RNG_GET_DIAG_CONTROL	0x130
 #define RNG_CTL_READ		0x131
@@ -341,6 +350,70 @@ ENTRY(hv_pci_config_put)
 	ta	FAST_TRAP
 	retl
 	 stx	%o1, [%g5]
+
+ENTRY(hv_ldc_tx_qconf)
+	mov	LDC_TX_QCONF, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_ldc_tx_qinfo)
+	mov	%o2, %o4
+	mov	%o1, %o3
+	mov	LDC_TX_QINFO, %o5
+	ta	FAST_TRAP
+	stx	%o1, [%o3]
+	retl
+	 stx	%o2, [%o4]
+
+ENTRY(hv_ldc_tx_get_state)
+	mov	%o3, %g5
+	mov	%o2, %g4
+	mov	%o1, %o4
+	mov	LDC_TX_GET_STATE, %o5
+	ta	FAST_TRAP
+	stx	%o1, [%o4]
+	stx	%o2, [%g4]
+	retl
+	 stx	%o3, [%g5]
+
+ENTRY(hv_ldc_tx_set_qtail)
+	mov	LDC_TX_SET_QTAIL, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_ldc_rx_qconf)
+	mov	LDC_RX_QCONF, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_ldc_rx_qinfo)
+	mov	%o2, %o4
+	mov	%o1, %o3
+	mov	LDC_RX_QINFO, %o5
+	ta	FAST_TRAP
+	stx	%o1, [%o3]
+	retl
+	 stx	%o2, [%o4]
+
+ENTRY(hv_ldc_rx_get_state)
+	mov	%o3, %g5
+	mov	%o2, %g4
+	mov	%o1, %o4
+	mov	LDC_RX_GET_STATE, %o5
+	ta	FAST_TRAP
+	stx	%o1, [%o4]
+	stx	%o2, [%g4]
+	retl
+	 stx	%o3, [%g5]
+
+ENTRY(hv_ldc_rx_set_qhead)
+	mov	LDC_RX_SET_QHEAD, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
 
 ENTRY(hv_rng_get_diag_control)
 	mov	RNG_GET_DIAG_CONTROL, %o5
