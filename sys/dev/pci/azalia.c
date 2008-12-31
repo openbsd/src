@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.97 2008/12/30 08:57:26 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.98 2008/12/31 11:18:47 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2929,20 +2929,17 @@ azalia_params2fmt(const audio_params_t *param, uint16_t *fmt)
 	uint16_t ret;
 
 	ret = 0;
-#ifdef DIAGNOSTIC
 	if (param->channels > HDA_MAX_CHANNELS) {
 		printf("%s: too many channels: %u\n", __func__,
 		    param->channels);
 		return EINVAL;
 	}
-#endif
-	/* allow any number of channels in a native format */
-	if (param->sw_code == NULL)
-		ret |= param->channels - 1;
 
-	/* emulated mono uses 2 channel formats */
-	else
+	/* Only mono is emulated, and it is emulated from stereo. */
+	if (param->sw_code != NULL)
 		ret |= 1;
+	else
+		ret |= param->channels - 1;
 
 	switch (param->precision) {
 	case 8:
