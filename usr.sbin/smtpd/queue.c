@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.36 2008/12/29 09:03:25 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.37 2008/12/31 09:47:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -63,7 +63,6 @@ int		queue_commit_incoming_message(struct message *);
 int		queue_open_incoming_message_file(struct message *);
 void		queue_message_update(struct message *);
 
-int		queue_record_envelope(struct message *);
 int		queue_open_message_file(struct batch *);
 void		queue_delete_message(char *);
 
@@ -859,75 +858,6 @@ queue_open_incoming_message_file(struct message *messagep)
 }
 
 int
-queue_record_envelope(struct message *messagep)
-{
-	char queuedir[MAXPATHLEN];
-	char evpdir[MAXPATHLEN];
-	char evpname[MAXPATHLEN];
-	char message_uid[MAXPATHLEN];
-	int fd;
-	int mode = O_CREAT|O_WRONLY|O_EXCL|O_SYNC;
-	FILE *fp;
-	int ret;
-	u_int16_t hval;
-
-	if (! bsnprintf(queuedir, MAXPATHLEN, "%s/%s", PATH_QUEUE,
-		messagep->message_id))
-		fatal("queue_record_envelope: snprintf");
-
-	hval = queue_hash(messagep->message_id);
-
-	if (! bsnprintf(queuedir, MAXPATHLEN, "%s/%d", PATH_QUEUE, hval))
-		fatal("queue_record_envelope: snprintf");
-
-	if (! bsnprintf(evpdir, MAXPATHLEN, "%s/%s%s", queuedir,
-		messagep->message_id, PATH_ENVELOPES))
-		fatal("queue_record_envelope: snprintf");
-
-	for (;;) {
-		if (! bsnprintf(evpname, MAXPATHLEN, "%s/%s.%qu", evpdir,
-			messagep->message_id, (u_int64_t)arc4random()))
-			fatal("queue_record_envelope: snprintf");
-
-		(void)strlcpy(message_uid, evpname + strlen(evpdir) + 1, MAXPATHLEN);
-
-		fd = open(evpname, mode, 0600);
-		if (fd == -1) {
-			if (errno == EEXIST)
-				continue;
-			log_debug("failed to open %s", evpname);
-			fatal("queue_record_envelope: open");
-		}
-
-		if (flock(fd, LOCK_EX) == -1)
-			fatal("queue_record_envelope: flock");
-
-		fp = fdopen(fd, "w");
-		if (fp == NULL)
-			fatal("fdopen");
-
-		if (strlcpy(messagep->message_uid, message_uid, MAXPATHLEN)
-		    >= MAXPATHLEN)
-			fatal("queue_record_envelope: strlcpy");
-
-		messagep->creation = time(NULL);
-
-		if ((ret = fwrite(messagep, sizeof (struct message), 1, fp)) != 1) {
-			fclose(fp);
-			unlink(evpname);
-			return 0;
-		}
-		fflush(fp);
-		fsync(fd);
-		fclose(fp);
-
-		break;
-	}
-	return 1;
-
-}
-
-int
 queue_remove_envelope(struct message *messagep)
 {
 	char pathname[MAXPATHLEN];
@@ -1069,24 +999,21 @@ queue_delete_message(char *msgid)
 void
 queue_message_update(struct message *messagep)
 {
-	struct message msave;
-
 	messagep->batch_id = 0;
 	messagep->retry++;
 
 	if (messagep->status & S_MESSAGE_PERMFAILURE) {
-		if ((messagep->type & T_DAEMON_MESSAGE) == 0) {
-			msave = *messagep;
+		if (messagep->type & T_DAEMON_MESSAGE)
+			queue_remove_envelope(messagep);
+		else {
 			messagep->id = queue_generate_id();
-			messagep->batch_id = 0;
 			messagep->type |= T_DAEMON_MESSAGE;
 			messagep->status &= ~S_MESSAGE_PERMFAILURE;
 			messagep->lasttry = 0;
 			messagep->retry = 0;
-			queue_record_envelope(messagep);
-			*messagep = msave;
+			messagep->creation = time(NULL);
+			queue_update_envelope(messagep);
 		}
-		queue_remove_envelope(messagep);
 		return;
 	}
 
