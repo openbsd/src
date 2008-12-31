@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.101 2008/12/31 11:54:55 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.102 2008/12/31 12:47:30 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2130,6 +2130,27 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 			wcodec->nsense_pins++;
 		}
 	}
+
+	if (this->d.pin.device == CORB_CD_HEADPHONE &&
+	    (this->d.pin.cap & COP_PINCAP_OUTPUT) &&
+	    (CORB_CD_PORT(this->d.pin.config) == CORB_CD_JACK ||
+	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_BOTH)) {
+		if (codec->headphones == -1 ||
+		    (this->d.pin.association <
+		    codec->w[codec->headphones].d.pin.association))
+			wcodec->headphones = this->nid;
+	}
+
+	if (this->d.pin.device == CORB_CD_SPEAKER &&
+	    (this->d.pin.cap & COP_PINCAP_OUTPUT) &&
+	    (CORB_CD_PORT(this->d.pin.config) == CORB_CD_FIXED ||
+	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_BOTH)) {
+		if (codec->speaker == -1 ||
+		    (this->d.pin.association <
+		    codec->w[codec->speaker].d.pin.association))
+			wcodec->speaker = this->nid;
+	}
+
 	return 0;
 }
 
