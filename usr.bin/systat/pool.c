@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.4 2008/12/07 07:46:05 canacar Exp $	*/
+/*	$OpenBSD: pool.c,v 1.5 2008/12/31 05:37:24 canacar Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -227,6 +227,8 @@ read_pool(void)
 		num_pools = np;
 	}
 
+	num_disp = num_pools;
+
 	for (i = 0; i < num_pools; i++) {
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_POOL;
@@ -234,14 +236,14 @@ read_pool(void)
 		mib[3] = i + 1;
 		size = sizeof(struct pool);
 		if (sysctl(mib, 4, &pools[i].pool, &size, NULL, 0) < 0) {
-			error("sysctl(pool): %s", strerror(errno));
-			break;
+			memset(&pools[i], 0, sizeof(pools[i]));
+			num_disp--;
+			continue;
 		}
 		mib[2] = KERN_POOL_NAME;
 		size = sizeof(pools[i].name);
 		if (sysctl(mib, 4, &pools[i].name, &size, NULL, 0) < 0) {
-			error("sysctl(pool_name): %s", strerror(errno));
-			break;
+			snprintf(pools[i].name, size, "#%d#", mib[3]);
 		}
 	}
 
@@ -257,13 +259,17 @@ read_pool(void)
 void
 print_pool(void)
 {
-	int n, count = 0;
+	int i, n, count = 0;
 
 	if (pools == NULL)
 		return;
 
-	for (n = dispstart; n < num_disp; n++) {
-		showpool(n);
+	for (n = i = 0; i < num_pools; i++) {
+		if (pools[i].name[0] == 0)
+			continue;
+		if (n++ < dispstart)
+			continue;
+		showpool(i);
 		count++;
 		if (maxprint > 0 && count >= maxprint)
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.20 2008/12/18 19:46:39 canacar Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.21 2008/12/31 05:37:24 canacar Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -132,8 +132,7 @@ initmembufs(void)
 		mib[3] = i;
 		size = sizeof(pname);
 		if (sysctl(mib, 4, &pname, &size, NULL, 0) < 0) {
-			err(1, "sysctl(KERN_POOL_POOLNAME, %d)", i);
-			/* NOTREACHED */
+			continue;
 		}
 
 		if (strcmp(pname, "mbpl") == 0) {
