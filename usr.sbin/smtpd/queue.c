@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.37 2008/12/31 09:47:11 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.38 2008/12/31 09:50:40 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -815,15 +815,13 @@ queue_commit_incoming_message(struct message *messagep)
 {
 	char rootdir[MAXPATHLEN];
 	char queuedir[MAXPATHLEN];
-	u_int16_t hval;
 	
 	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%s", PATH_INCOMING,
 		messagep->message_id))
 		fatal("queue_commit_message_incoming: snprintf");
 
-	hval = queue_hash(messagep->message_id);
-
-	if (! bsnprintf(queuedir, MAXPATHLEN, "%s/%d", PATH_QUEUE, hval))
+	if (! bsnprintf(queuedir, MAXPATHLEN, "%s/%d", PATH_QUEUE,
+		queue_hash(messagep->message_id)))
 		fatal("queue_commit_message_incoming: snprintf");
 
 	if (mkdir(queuedir, 0700) == -1) {
@@ -833,13 +831,15 @@ queue_commit_incoming_message(struct message *messagep)
 			fatal("queue_commit_message_incoming: mkdir");
 	}
 
-	if (! bsnprintf(queuedir, MAXPATHLEN, "%s/%d/%s", PATH_QUEUE, hval,
-		messagep->message_id))
-		fatal("queue_commit_message_incoming: snprintf");
-	
+	if (strlcat(queuedir, "/", MAXPATHLEN) >= MAXPATHLEN ||
+	    strlcat(queuedir, messagep->message_id, MAXPATHLEN) >= MAXPATHLEN)
+		fatalx("queue_commit_incoming_message: truncation");
 
-	if (rename(rootdir, queuedir) == -1)
+	if (rename(rootdir, queuedir) == -1) {
+		if (errno == ENOSPC)
+			return 0;
 		fatal("queue_commit_message_incoming: rename");
+	}
 
 	return 1;
 }
