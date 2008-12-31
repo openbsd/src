@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
-# $OpenBSD: mdoclint,v 1.12 2008/12/11 14:49:02 espie Exp $
-# $NetBSD: mdoclint,v 1.18 2008/01/05 09:03:50 wiz Exp $
+# $OpenBSD: mdoclint,v 1.13 2008/12/31 10:55:11 espie Exp $
+# $NetBSD: mdoclint,v 1.26 2008/11/22 14:47:28 wiz Exp $
 #
 # Copyright (c) 2001-2008 Thomas Klausner
 # All rights reserved.
@@ -36,6 +36,11 @@ $| = 1;
 package Parser;
 use Getopt::Std;
 
+use constant {
+	OPENBSD => 1,
+	NETBSD => 0
+};
+
 use vars qw(
 	$opt_a $opt_D $opt_d $opt_e $opt_F $opt_f $opt_H $opt_h $opt_m
 	$opt_n $opt_o $opt_P $opt_p $opt_r $opt_S $opt_s $opt_v
@@ -47,7 +52,10 @@ my $arch=`uname -m`;
 chomp($arch);
 my $options="aDdeFfHhmnoPprSsvXx";
 
-sub usage {
+sub usage
+	{
+	my $default = OPENBSD ? "-aDdfHmnoPprSsXx" : "-aDdefHmnoPprSsXx";
+	
 	print STDERR <<"EOF";
 mdoclint: verify man page correctness
 usage:	mdoclint [-$options] file ...
@@ -70,7 +78,7 @@ usage:	mdoclint [-$options] file ...
 	-v	verbose output
 	-X	warn about explicit mentions of FreeBSD, NetBSD, or OpenBSD
 	-x	warn about cross-references with missing targets
-Default is -aDdfHmnoPprSsXx if no flag is specified.
+Default is $default if no flag is specified.
 EOF
 	exit(0);
 }
@@ -82,62 +90,117 @@ my %short = (
     "Open" => ".Ox"
 );
 
-my %sections = (
-		"NAME" => 1,
-		"SYNOPSIS" => 2,
-		"DESCRIPTION" => 3,
-		"RETURN VALUES" => 4,
-		"ENVIRONMENT" => 5,
-		"FILES" => 6,
-		"EXAMPLES" => 7,
-		"DIAGNOSTICS" => 8,
-		"ERRORS" => 9,
-		"SEE ALSO" => 10,
-		"STANDARDS" => 11,
-		"HISTORY" => 12,
-		"AUTHORS" => 13,
-		"CAVEATS" => 14,
-		"BUGS" => 15
-);
+# constants to build
+my %sections;
+my $arches_re;
+my $sections_re;
+my $esections_re;
+my $valid_date_re;
+# and the code that builds them
+{
+	my @sections = (
+		"NAME",
+		NETBSD ? "LIBRARY" : undef,
+		"SYNOPSIS",
+		"DESCRIPTION",
+		NETBSD ? "EXIT STATUS" : undef,
+		"RETURN VALUES",
+		"ENVIRONMENT",
+		"FILES",
+		"EXAMPLES",
+		"DIAGNOSTICS",
+		"ERRORS",
+		"SEE ALSO",
+		"STANDARDS",
+		"HISTORY",
+		"AUTHORS",
+		"CAVEATS",
+		"BUGS",
+		NETBSD ? "SECURITY CONSIDERATIONS" : undef
+	);
 
-sub debug 
+	my $i = 1;
+	for my $sh (@sections) {
+		if (defined $sh) {
+			$sections{$sh} = $i++;
+		}
+	}
+	my @arches;
+	if (OPENBSD) {
+		@arches =
+		    (qw(alpha amd64 arm armish aviion cats hp300 hppa
+		    hppa64 i386 landisk luna88k mac68k macppc mvme68k
+		    mvme88k sgi socppc sparc sparc64 vax zaurus));
+	}
+	if (NETBSD) {
+		@arches =
+		    (qw(acorn26 acorn32 algor alpha amiga arc atari
+		    bebox cats cesfic cobalt dreamcast evbarm evbmips
+		    evbsh3 evbsh5 hp300 hp700 hpcarm hpcmips hpcsh
+		    i386 ibmnws luna68k mac68k macppc mipsco mmeye
+		    mvme68k mvmeppc netwinder news68k newsmips next68k
+		    pc532 playstation2 pmax pmppc prep sandpoint sbmips
+		    sgimips shark sparc sparc64 sun2 sun3 vax walnut
+		    x68k x86_64));
+	}
+	my $a = join('|', @arches);
+	$arches_re = qr{(?:$a)}o;
+	if (OPENBSD) {
+		$sections_re = qr{(?:3p|[1-9])}o;
+		$esections_re = qr{(?:3p|[0-9])}o;
+	}
+	if (NETBSD) {
+		$sections_re = qr{[1-9]}o;
+		$esections_re = qr{[0-9]}o;
+	}
+	if (OPENBSD) {
+		$valid_date_re = qr{\$Mdocdate\b};
+	}
+	if (NETBSD) {
+		$valid_date_re = qr{(?:January|February|March|April|May|June|July|August|September|October|November|December)\s*[1-9][0-9]*,\s*(?:198[0-9]|199[0-9]|200[012345678])$}o;
+	}
+}
+
+sub debug
 {
 	my $self = shift;
     	print STDOUT "debug: $self->{fn}:$self->{ln}: @_\n" if $opt_v;
 }
 
-sub warning 
+sub warning
 {
 	my $self = shift;
-	print STDOUT "$self->{fn}:$self->{ln}: @_\n";
+	print STDOUT "$self->{fn}:$self->{current_section_header}:$self->{ln}: ", join('', @_), "\n";
 }
 
-sub handle_options 
+sub handle_options
 {
 	getopts($options);
 	$opt_h and usage();
 
 	# default to all warnings if no flag is set
-	unless ($opt_a or $opt_D or $opt_d or $opt_e or $opt_f or $opt_H 
-	    or $opt_m or $opt_n or $opt_o or $opt_P or $opt_p or $opt_r 
+	unless ($opt_a or $opt_D or $opt_d or $opt_e or $opt_f or $opt_H
+	    or $opt_m or $opt_n or $opt_o or $opt_P or $opt_p or $opt_r
 	    or $opt_S or $opt_s or $opt_X or $opt_x) {
-		$opt_a = $opt_D = $opt_d = $opt_f = $opt_H = $opt_m = 
-		    $opt_n = $opt_o = $opt_P = $opt_p = $opt_r = $opt_S = 
+		$opt_a = $opt_D = $opt_d = $opt_f = $opt_H = $opt_m =
+		    $opt_n = $opt_o = $opt_P = $opt_p = $opt_r = $opt_S =
 		    $opt_s = $opt_X = $opt_x = 1;
+		    $opt_e = 1 if NETBSD;
 	}
 }
 
 
-sub verify_xref 
+sub verify_xref
 {
 	my ($self, $page, $section, $pre, $post) = @_;
 	if ("$page.$section" eq $self->{fn}) {
 		$self->warning("Xref to itself (use .Nm instead)");
 	}
 	# try to find corresponding man page
-	for my $dir ("/usr/share/man", "/usr/X11R6/man") {
+	for my $dir ("/usr/share/man",
+	    OPENBSD ? "/usr/X11R6/man" : "/usr/X11R7/man") {
 		for my $a ("", $arch) {
-			for my $page ("cat$section/$a/$page.0", 
+			for my $page ("cat$section/$a/$page.0",
 			    "man$section/$a/$page.$section") {
 				return 1 if -f "$dir/$page";
 			}
@@ -158,7 +221,8 @@ sub new
 		all => '',
 		lastline => '',
 		changes => 0,
-		rcsidseen => 0,
+		oxrcsidseen => 0,
+		nxrcsidseen => 0,
 		lastsh => 0,
 		sasection => 0,
 		saname => '',
@@ -167,7 +231,7 @@ sub new
 		inliteral => 0,
 		shseen => {},
 		last_error_name => '',
-		current_section => '',
+		current_section_header => '',
 		fn => $fn
 	};
 	open my $input, '<', $fn or die "can't open input file $fn";
@@ -194,45 +258,115 @@ sub close
 	close($self->{file});
 }
 
+sub parse_macro_args
+{
+	my ($s, $string) = @_;
+	my $_ = $string;
+	my @params = ();
+	while (!/^$/) {
+		if (s/^\"(.*?)\"\s*//) {
+			push(@params, $1);
+		} elsif (s/^(\S+)\s*//) {
+			push(@params, $1);
+		}
+	}
+	if (@params > 9 and OPENBSD) {
+		$s->warning("$string holds >9 parameters");
+	}
+	return @params;
+}
+
+sub set_section_header
+{
+	my ($s, $section_header) = @_;
+	$section_header = join(' ', $s->parse_macro_args($section_header));
+	if ($section_header eq 'SEE ALSO') {
+		    $s->{insa} = 1;
+	} elsif ($s->{insa} == 1) {
+		    if (not $s->{sarest} eq "") {
+			    $s->warning("unneeded characters at end of ",
+				    "SEE ALSO: ", "`$s->{sarest}'") if $opt_a;
+			    # to avoid a second warning at EOF
+			    $s->{sarest} = "";
+		    }
+		    # finished SEE ALSO section
+		    $s->{insa} = 2;
+	}
+	if ($opt_S) {
+		if (not $sections{$section_header}) {
+			$s->warning("unknown section header: ",
+			    "`$section_header'");
+		} else {
+			if ($s->{lastsh} >= $sections{$section_header}) {
+				$s->warning("section header ",
+				    "`$section_header' in wrong order");
+			}
+			$s->{shseen}->{$section_header} = 1;
+			$s->{lastsh} = $sections{$section_header};
+		}
+	}
+	if ($s->{lastline} =~ /^\.Pp/o) {
+		$s->warning("Paragraph problem: section header after .Pp");
+	}
+
+	$s->{current_section_header} = $section_header;
+}
+
 sub process_line
 {
 	my ($s, $_) = @_;
 	chomp;
+	# always cut trailing spaces
+	if (/\s+$/o) {
+		$s->warning("trailing space: `$_'") if $opt_s;
+		s/\s+$//o;
+		$s->{changes} = 1;
+	}
 	if (/\$OpenBSD\b.*\$/o) {
-	    $s->{rcsidseen} = 1;
+		$s->{oxrcsidseen} = 1;
+		# nothing else to do
+		return;
+	}
+	if (/\$NetBSD\b.*\$/o) {
+		$s->{nxrcsidseen} = 1;
+		# nothing else to do
+		return;
+	}
+	# comments
+	if (/^\.\\\"/) {
+		return;
 	}
 	if (/^\.TH\s+/o) {
-	    $s->warning("not mandoc") if $opt_m;
-	    $s->{mandoc_p} = 0;
-#	    /^.TH\s*[\w-_".]+\s*([1-9])/;
-#	    $section = $1;
+		$s->warning("not mandoc") if $opt_m;
+		$s->{mandoc_p} = 0;
+#	    	/^.TH\s*[\w-_".]+\s*([1-9])/;
+#	    	$section = $1;
+		return;
 	}
 #	if (/^.Dt\s*[\w-_".]+\s*([1-9])/) {
-#	    $section = $1;
+#	    	$section = $1;
 #	}
 	if ($opt_D and /^\.Dt\s+/o) {
-	    if (! /^\.Dt\s+(?:[A-Z\d._-]+)\s+[1-9](?:\s+(?:alpha|amd64|arm|armish|aviion|cats|hp300|hppa|hppa64|i386|landisk|luna88k|mac68k|macppc|mvme68k|mvme88k|sgi|socppc|sparc|sparc64|vax|zaurus))?$/o)  {
+	    if (! /^\.Dt\s+(?:[A-Z\d._-]+)\s+$sections_re(?:\s+$arches_re)?$/o)  {
 		$s->warning("bad .Dt: `$_'");
 	    }
 	}
 
+	if ($s->{mandoc_p}) {
+		if (/^\.Sh\s+(.*)$/o) {
+			$s->set_section_header($1);
+			return;
+		}
+	} else {
+		if (/^\.SH\s+(.*)$/o) {
+			$s->set_section_header($1);
+			return;
+		}
+	}
+
 	if ($opt_a) {
-	    if ($s->{insa} == 0) {
-		if (/^\.Sh\s+SEE ALSO$/o) {
-		    $s->{insa} = 1;
-		}
-	    } elsif ($s->{insa} == 1) {
-		if (/^\.Sh\s+/o) {
-		    if (not $s->{sarest} eq "") {
-			$s->warning("unneeded characters at end of SEE ALSO:".
-				"`$s->{sarest}'");
-			# to avoid a second warning at EOF
-			$s->{sarest} = "";
-		    }
-		    # finished SEE ALSO section
-		    $s->{insa} = 2;
-		}
-		if (/^\.Xr\s+(\S+)\s+(3p|[1-9])\s?(.*)?$/o) {
+	    if ($s->{insa} == 1) {
+		if (/^\.Xr\s+(\S+)\s+($sections_re)\s?(.*)?$/o) {
 		    my ($saname, $sasection, $sarest) = ($1, $2, $3);
 		    $saname =~ s/^\\&//o;
 		    if ($s->{sasection} gt $sasection
@@ -260,84 +394,66 @@ sub process_line
 	}
 
 	if ($opt_f and /^\.Fn.*,.+/o) {
-	    $s->warning("possible .Fn misuse: `$_'");
+		$s->warning("possible .Fn misuse: `$_'");
 	}
-	if ($opt_H and not /^\.\\\"/o and (/^(?:[<>])/o or /[^\\][<>]/o)) {
-	    $s->warning("use \*(Lt \*(Gt (or .Aq) instead of < >: `$_'");
-	}
-	if ($opt_S) {
-	    if (/^\.Sh\s+(.*)\s*$/o) {
-		if (not $sections{$1}) {
-		    $s->warning("unknown section header: `$1'");
-		} else {
-		    if ($s->{lastsh} >= $sections{$1}) {
-			$s->warning("section header `$1' in wrong order");
-		    }
-		    $s->{shseen}->{$1} = 1;
-		    $s->{lastsh} = $sections{$1};
+	if (OPENBSD) {
+		if ($opt_H and (/^(?:[<>])/o or /[^\\][<>]/o)) {
+			$s->warning("use \*(Lt \*(Gt (or .Aq) ",
+			    "instead of < >: `$_'");
 		}
-	    }
+	}
+	if (NETBSD) {
+		if ($opt_H and (/^(?:[<>&])/o or /[^\\][<>&]/o)) {
+			$s->warning("use \*[Lt] \*[Gt] (or .Aq) \*[Am] ",
+			    "instead of < > &: `$_'");
+		}
 	}
 
-	if ($opt_s) {
-	    if (/\s+$/o) {
-		$s->warning("trailing space: `$_'");
-		if ($opt_F) {
-		    s/\s+$//o;
-		    $s->{changes} = 1;
-		}
-	    }
-# this check only bought us something for phantasia.6
-#	    # we don't want to match at BOF
-#	    if (/.\.\t/) {
-#		$s->warning("tab after dot (`.') -- probably malformatting: $_");
-#	    }
-	}
 	if ($opt_X) {
-	    if (not /^\.\\\"/o and /\b(Free|Net|Open)BSD\b/o
-		and not /\b(?:www|ftp)\.(?:Free|Net|Open)BSD\.org\b/o
-		and not /\bOpenBSD\::.*3p\b/o
-		and not /\/pub\/OpenBSD\//o
-		and not /\@(?:Free|Net|Open)BSD\.(?i:org)\b/o) {
-		$s->warning("verbose mention of `$1BSD' instead of "
-			. "`$short{$1}': `$_'");
-	    }
-	    if (/^\./o and (/Bx (Open)/o or /Bx (Free)/o or /Bx (Net)/o)) {
-		$s->warning("`.Bx $1' found -- use $short{$1} instead");
-	    }
+		if (/\b(Free|Net|Open)BSD\b/o
+		    and not /\b(?:www|ftp)\.(?:Free|Net|Open)BSD\.org\b/o
+		    and not /\bOpenBSD\::.*3p\b/o
+		    and not /\/pub\/OpenBSD\//o
+		    and not /\@(?:Free|Net|Open)BSD\.(?i:org)\b/o) {
+			$s->warning("verbose mention of `$1BSD' instead of "
+			    . "`$short{$1}': `$_'");
+		}
+		if (/^\./o and (/Bx (Open)/o or /Bx (Free)/o or /Bx (Net)/o)) {
+			$s->warning("`.Bx $1' found -- use $short{$1} instead");
+		}
 	}
 	if ($opt_o) {
-	    if (/^\.Os/o && !/^\.Os\s*$/o) {
-		/^\.Os(.*)/o;
-		$s->warning(".Os used with argument `$1'");
-	    }
+		if (/^\.Os\s+(.+)/o) {
+			$s->warning(".Os used with argument `$1'");
+		}
 	}
 
 	if ($opt_n) {
-	    if (/^\.Nd/o and /\.\s*$/o) {
-		$s->warning(".Nd ends with a dot: `$_'");
-	    }
+		if (/^\.Nd.*\.$/o) {
+			$s->warning(".Nd ends with a dot: `$_'");
+		}
 	}
 	if ($opt_p) {
-	    if (not /^\.\\\"/o and /\w\w\.\s+[A-Z]/o) {
-		$s->warning("new sentence, new line: `$_'");
-	    }
-	    if (not /^\.\\\"/o and /^\... .*[^\s][\.();,\[\]\{\}:]$/o
-		and not /\s\.\.\.$/o and not /\\&.$/o) {
-		$s->warning("punctuation in format string without space: `$_'");
-	    }
-	    if (not /^\.\\\"/o and /^\./o and /Ns [\.();,\[\]\{\}:]/o) {
-		$s->warning("possible Ns abuse: `$_'");
-	    }
-	    if (/(\w+)\(\)/o) {
-		$s->warning("use .Fn or .Xr for functions: `$1()'");
-	    }
+		if (/\w\w\.\s+[A-Z]/o) {
+			$s->warning("new sentence, new line: `$_'");
+		}
+		if (/^\... .*[^\s][\.();,\[\]\{\}:]$/o
+		    and not /\s\.\.\.$/o and not /\\&.$/o) {
+			$s->warning("punctuation in format string ",
+			    "without space: `$_'");
+		}
+		if (/^\./o and /Ns [\.();,\[\]\{\}:]/o) {
+			$s->warning("possible Ns abuse: `$_'");
+		}
+		if (/(\w+)\(\)/o) {
+			$s->warning("use .Fn or .Xr for functions: `$1()'");
+		}
 	}
 	if ($opt_x) {
 	    if ($s->{mandoc_p}) {
 		my $destruct = $_;
 		$destruct =~ s/\\\&([\w\.])/$1/o;
-		if ($destruct =~ /^\.Xr\s+([\w\:\.\-\+\/]+)\s+(3p|[0-9])(.*)/o) {
+		if ($destruct =~ /^\.Xr\s+([\w\:\.\-\+\/]+)\s+($esections_re)(.*)/o) {
 		    $s->debug("Xref to $1($2) found: `$_'");
 		    $s->verify_xref($1, $2, "", "");
 		    if ($3 =~ /^\S/o) {
@@ -350,54 +466,52 @@ sub process_line
 		my $destruct = $_;
 		$destruct =~ s/\\f.//go;
 		if ($destruct !~ /^\.\\\"/o) {
-		    while ($destruct =~ s/([-\w.]+)\s*\((3p|[0-9])\)//o) {
+		    while ($destruct =~ s/([-\w.]+)\s*\(($esections_re)\)//o) {
 			$s->debug("possible Xref to $1($2) found: `$_'");
 			$s->verify_xref($1, $2, "possible ", ": `$_'");
 			# so that we have a chance to find more than one
 			# per line
-			$destruct =~ s/(\w+)\s*\((3p|[0-9])\)//o;
+			$destruct =~ s/(\w+)\s*\(($sections_re)\)//o;
 		    }
 		}
 	    }
 	}
 	if ($opt_d) {
-	    if (/^\.Dd/o and not /^\.Dd [\$]Mdocdate\b/o) {
-		$s->warning("Invalid date found: `$_'");
-	    }
+		if (/^\.Dd/o and not /^\.Dd\s+$valid_date_re/o) {
+			$s->warning("Invalid date found: `$_'");
+		}
 	}
 
 	if ($opt_P) {
-	    if (/^\.Bd\b.*-literal/o) {
-		$s->{inliteral} = 1;
-	    }
-	    if ($s->{inliteral} == 1) {
-		if (/^\.Ed\b/o) {
-		    $s->{inliteral} = 0;
+		if (/^\.Bd\b.*-literal\b/o) {
+			$s->{inliteral} = 1;
 		}
-	    } elsif (/^$/o) {
-		$s->warning("Paragraph problem: empty line -- use .Pp for".
-			" paragraphs");
-	    }
-	    if ($s->{lastline} =~ /^\.Pp/o and (/^(\.S[sh])/o or /^(\.Pp)/o)) {
-		$s->warning("Paragraph problem: $1 after .Pp");
-	    }
-	    if (/^\.Pp/o and $s->{lastline} =~ /^(\.S[sh])/o) {
-		$s->warning("Paragraph problem: .Pp after $1");
-	    }
+		if ($s->{inliteral} == 1) {
+			if (/^\.Ed\b/o) {
+			    $s->{inliteral} = 0;
+		    }
+		} elsif (/^$/o) {
+			$s->warning("Paragraph problem: empty line -- ",
+			    "use .Pp for paragraphs");
+		}
+		if ($s->{lastline} =~ /^\.Pp/o and /^(\.Ss|\.Pp)/o) {
+			$s->warning("Paragraph problem: $1 after .Pp");
+		}
+		if (/^\.Pp/o and $s->{lastline} =~ /^(\.S[Ssh])/o) {
+			$s->warning("Paragraph problem: .Pp after $1");
+		}
 	}
 
 	# Check whether the list of possible errors for a function is
 	# sorted alphabetically.
 	#
 	if ($opt_e) {
-		/^\.Sh\s+(.*)$/o and $s->{current_section} = $1;
-
 		# Error names should not be sorted across different lists.
 		# (see bind(2) for an example.)
 		#
 		/^\.Bl\s+/o and $s->{last_error_name} = "";
 
-		if ($s->{current_section} eq "ERRORS" and
+		if ($s->{current_section_header} eq "ERRORS" and
 		    /^\.It\s+Bq\s+Er\s+(E[\w_]+)$/o) {
 			my $current_error_name = $1;
 
@@ -421,8 +535,11 @@ sub finish
 {
 	my ($s) = @_;
 
-	if ($opt_r and not $s->{rcsidseen}) {
-	    $s->warning("Missing RCS Id");
+	if (NETBSD and not $s->{nxrcsidseen}) {
+	    $s->warning("Missing RCS Id") if $opt_r;
+	}
+	if (OPENBSD and not $s->{oxrcsidseen}) {
+	    $s->warning("Missing RCS Id") if $opt_r;
 	}
 
 	if ($opt_P and $s->{lastline} =~ /^\.Pp/o) {
@@ -447,7 +564,7 @@ sub finish
 
 package main;
 
-sub handle_file 
+sub handle_file
 {
 	my $parser = Parser->new($_[0]);
 
@@ -458,7 +575,7 @@ sub handle_file
 	$parser->finish;
 	$parser->close;
 	if ($Parser::opt_F and $parser->{changes}) {
-		open OUT, ">$_[0].new" or 
+		open OUT, ">$_[0].new" or
 		    die "can't open output file `$_[0].new'";
 		print OUT $parser->{all};
 		close OUT;
