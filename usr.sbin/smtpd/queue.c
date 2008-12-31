@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.38 2008/12/31 09:50:40 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.39 2008/12/31 09:55:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -699,27 +699,28 @@ queue_create_incoming_layout(char *message_id)
 		PATH_INCOMING, time(NULL)))
 		fatalx("queue_create_incoming_layout: snprintf");
 
-	if (mkdtemp(rootdir) == NULL)
-		return 0;
+	if (mkdtemp(rootdir) == NULL) {
+		if (errno == ENOSPC)
+			return 0;
+		fatal("queue_create_incoming_layout: mkdtemp");
+	}
 
 	if (strlcpy(message_id, rootdir + strlen(PATH_INCOMING) + 1, MAXPATHLEN)
 	    >= MAXPATHLEN)
-		goto badroot;
+		fatalx("queue_create_incoming_layout: truncation");
 	
-	if (! bsnprintf(evpdir, MAXPATHLEN, "%s%s",
-		rootdir, PATH_ENVELOPES))
-		goto badroot;
+	if (! bsnprintf(evpdir, MAXPATHLEN, "%s%s", rootdir, PATH_ENVELOPES))
+		fatalx("queue_create_incoming_layout: snprintf");
 
-	if (mkdir(evpdir, 0700) == -1)
-		goto badroot;
+	if (mkdir(evpdir, 0700) == -1) {
+		if (errno == ENOSPC) {
+			rmdir(rootdir);
+			return 0;
+		}
+		fatal("queue_create_incoming_layout: mkdir");
+	}
 
 	return 1;
-
-badroot:
-	if (rmdir(rootdir) == -1)
-		fatal("queue_create_incoming_layout: rmdir");
-
-	return 0;
 }
 
 void
