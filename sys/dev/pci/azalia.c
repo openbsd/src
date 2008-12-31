@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.98 2008/12/31 11:18:47 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.99 2008/12/31 11:23:55 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1996,10 +1996,6 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 	if (pintype == PIN_DIR_OUT && !(this->d.pin.cap & COP_PINCAP_OUTPUT))
 		pintype = PIN_DIR_IN;
 
-	/* Disable unconnected pins */
-	if (CORB_CD_PORT(this->d.pin.config) == CORB_CD_NONE)
-		this->enable = 0;
-
 	switch (pintype) {
 	case PIN_DIR_IN:
 		codec->comresp(codec, this->nid, CORB_SET_PIN_WIDGET_CONTROL,
@@ -2015,7 +2011,6 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 		break;
 	}
 
-	/* EAPD pin */
 	if (this->d.pin.cap & COP_PINCAP_EAPD) {
 		err = codec->comresp(codec, this->nid, CORB_GET_EAPD_BTL_ENABLE,
 		    0, &result);
@@ -2028,7 +2023,16 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 		if (err)
 			return err;
 	}
-	/* sense pin */
+
+	/* Disable unconnected pins */
+	if (CORB_CD_PORT(this->d.pin.config) == CORB_CD_NONE) {
+		this->enable = 0;
+		return 0;
+	}
+
+	/* need a non const codec pointer */
+	wcodec = &codec->az->codecs[codec->az->codecno];
+
 	if (codec->nsense_pins < HDA_MAX_SENSE_PINS &&
 	    this->d.pin.cap & COP_PINCAP_PRESENCE &&
 	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_JACK) {
@@ -2038,7 +2042,6 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 		if (err)
 			return err;
 		if (!(CORB_CD_MISC(result) & CORB_CD_PRESENCEOV)) {
-			wcodec = &codec->az->codecs[codec->az->codecno];
 			wcodec->sense_pins[codec->nsense_pins] = this->nid;
 			wcodec->nsense_pins++;
 		}
