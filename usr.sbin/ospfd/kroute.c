@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.63 2008/12/17 14:57:00 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.64 2009/01/01 20:40:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -109,6 +109,9 @@ int
 kif_init(void)
 {
 	RB_INIT(&kit);
+	/* init also krt tree so that we can call kr_shutdown() */
+	RB_INIT(&krt);
+	kr_state.fib_sync = 0;	/* decoupled */
 
 	if (fetchifs(0) == -1)
 		return (-1);
@@ -149,8 +152,6 @@ kr_init(int fs)
 
 	kr_state.pid = getpid();
 	kr_state.rtseq = 1;
-
-	RB_INIT(&krt);
 
 	if (fetchtable() == -1)
 		return (-1);
