@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.17 2008/12/30 21:33:52 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.18 2009/01/01 23:41:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -745,19 +745,25 @@ show_db_msg_detail(struct imsg *imsg)
 		if (lsa->hdr.type != lasttype)
 			show_database_head(area_id, ifname, lsa->hdr.type);
 		show_db_hdr_msg_detail(&lsa->hdr);
-		printf("Options: %s\n",
-		    print_ospf_options(LSA_24_GETLO(ntohl(lsa->data.link.opts))));
-		printf("Link Local Address: %s\n", log_in6addr(&lsa->data.link.lladdr));
+		printf("Options: %s\n", print_ospf_options(LSA_24_GETLO(
+		    ntohl(lsa->data.link.opts))));
+		printf("Link Local Address: %s\n",
+		    log_in6addr(&lsa->data.link.lladdr));
 
 		nlinks = ntohl(lsa->data.link.numprefix);
 		printf("Number of Prefixes: %d\n", nlinks);
 		off = sizeof(lsa->hdr) + sizeof(struct lsa_link);
 
 		for (i = 0; i < nlinks; i++) {
+			struct in6_addr	ia6;
 			prefix = (struct lsa_prefix *)((char *)lsa + off);
+			bzero(&ia6, sizeof(ia6));
+			bcopy(prefix + 1, &ia6,
+			    LSA_PREFIXSIZE(prefix->prefixlen));
 
-			printf("    Prefix Address: %s\n", log_in6addr(&prefix->prefix));
-			printf("    Prefix Length: %d, Options: %x\n", prefix->prefixlen, prefix->options);
+			printf("    Prefix Address: %s\n", log_in6addr(&ia6));
+			printf("    Prefix Length: %d, Options: %x\n",
+			    prefix->prefixlen, prefix->options);
 
 			off += sizeof(struct lsa_prefix);
 		}
