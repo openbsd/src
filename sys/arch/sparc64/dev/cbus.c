@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.1 2008/12/30 21:34:07 kettenis Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.2 2009/01/01 23:24:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -70,6 +70,11 @@ struct cfdriver cbus_cd = {
 	NULL, "cbus", DV_DULL
 };
 
+void	*cbus_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
+    int (*)(void *), void *, const char *);
+void	cbus_intr_ack(struct intrhand *);
+bus_space_tag_t cbus_alloc_bus_tag(struct cbus_softc *, bus_space_tag_t);
+
 caddr_t	cbus_get_mach_desc(struct cbus_softc *);
 int	cbus_get_channel_endpoint(struct cbus_softc *,
 	    struct cbus_attach_args *);
@@ -97,7 +102,7 @@ cbus_attach(struct device *parent, struct device *self, void *aux)
 	struct vbus_attach_args *va = aux;
 	int node;
 
-	sc->sc_bustag = va->va_bustag;
+	sc->sc_bustag = cbus_alloc_bus_tag(sc, va->va_bustag);
 	sc->sc_dmatag = va->va_dmatag;
 
 	sc->sc_md = cbus_get_mach_desc(sc);
@@ -146,6 +151,93 @@ cbus_print(void *aux, const char *name)
 	if (ca->ca_rx_ino != -1)
 		printf(" rx-ino 0x%llx", ca->ca_rx_ino);
 	return (UNCONF);
+}
+
+int
+cbus_intr_map(int node, int ino, uint64_t *sysino)
+{
+	int parent;
+	int reg;
+	int err;
+
+	parent = OF_parent(node);
+	if (OF_getprop(parent, "reg", &reg, sizeof(reg)) != sizeof(reg))
+		return (-1);
+
+	*sysino = INTIGN(reg) | INTINO(ino);
+	err = hv_vintr_setcookie(reg, ino, *sysino);
+	if (err != H_EOK)
+		return (-1);
+
+	return (0);
+}
+
+void *
+cbus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
+    int level, int flags, int (*handler)(void *), void *arg, const char *what)
+{
+	uint64_t devhandle = INTIGN(ihandle);
+	uint64_t devino = INTINO(ihandle);
+	struct intrhand *ih;
+	int err;
+
+	ih = bus_intr_allocate(t0, handler, arg, ihandle, level,
+	    NULL, NULL, what);
+	if (ih == NULL)
+		return (NULL);
+
+	intr_establish(ih->ih_pil, ih);
+	ih->ih_ack = cbus_intr_ack;
+
+	err = hv_vintr_settarget(devhandle, devino, cpus->ci_upaid);
+	if (err != H_EOK) {
+		printf("hv_vintr_settarget: %d\n", err);
+		return (NULL);
+	}
+
+	/* Clear pending interrupts. */
+	err = hv_vintr_setstate(devhandle, devino, INTR_IDLE);
+	if (err != H_EOK) {
+		printf("hv_vintr_setstate: %d\n", err);
+		return (NULL);
+	}
+
+	err = hv_vintr_setenabled(devhandle, devino, INTR_ENABLED);
+	if (err != H_EOK) {
+		printf("hv_vintr_setenabled: %d\n", err);
+		return (NULL);
+	}
+
+	return (ih);
+}
+
+void
+cbus_intr_ack(struct intrhand *ih)
+{
+	uint64_t devhandle = INTIGN(ih->ih_number);
+	uint64_t devino = INTINO(ih->ih_number);
+
+	hv_vintr_setstate(devhandle, devino,  INTR_IDLE);
+}
+
+bus_space_tag_t
+cbus_alloc_bus_tag(struct cbus_softc *sc, bus_space_tag_t parent)
+{
+	struct sparc_bus_space_tag *bt;
+
+	bt = malloc(sizeof(*bt), M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (bt == NULL)
+		panic("could not allocate cbus bus tag");
+
+	snprintf(bt->name, sizeof(bt->name), "%s", sc->sc_dv.dv_xname);
+	bt->cookie = sc;
+	bt->parent = parent;
+	bt->asi = parent->asi;
+	bt->sasi = parent->sasi;
+	bt->sparc_bus_map = parent->sparc_bus_map;
+	bt->sparc_intr_establish = cbus_intr_establish;
+
+	return (bt);
 }
 
 caddr_t
