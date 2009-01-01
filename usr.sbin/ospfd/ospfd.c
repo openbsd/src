@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.58 2008/11/24 18:28:02 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.59 2009/01/01 20:44:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -194,14 +194,17 @@ main(int argc, char *argv[])
 	kif_init();
 
 	/* parse config file */
-	if ((ospfd_conf = parse_config(conffile, opts)) == NULL )
+	if ((ospfd_conf = parse_config(conffile, opts)) == NULL) {
+		kr_shutdown();
 		exit(1);
+	}
 
 	if (ospfd_conf->opts & OSPFD_OPT_NOACTION) {
 		if (ospfd_conf->opts & OSPFD_OPT_VERBOSE)
 			print_config(ospfd_conf);
 		else
 			fprintf(stderr, "configuration OK\n");
+		kr_shutdown();
 		exit(0);
 	}
 
