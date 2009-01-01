@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.8 2008/12/25 21:25:55 stevesk Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.9 2009/01/01 02:10:54 stevesk Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -245,7 +245,7 @@ msts_decode(struct msts *np, struct tty *tp, char *fld[], int fldcnt)
 {
 	int64_t date_nano, time_nano, msts_now;
 
-	if (fldcnt != 4) {
+	if (fldcnt != MAXFLDS) {
 		DPRINTF(("msts: field count mismatch, %d\n", fldcnt));
 		return;
 	}
