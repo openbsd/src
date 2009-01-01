@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.6 2008/12/21 12:59:05 jacekm Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.7 2009/01/01 16:15:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/tree.h>
 #include <sys/queue.h>
 #include <sys/param.h>
-
 #include <sys/socket.h>
 
 #include <ctype.h>
@@ -30,7 +29,6 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
-#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.13 2008/12/26 10:28:31 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.14 2009/01/01 16:15:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -25,13 +25,10 @@
 
 #include <ctype.h>
 #include <event.h>
-#include <fcntl.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"

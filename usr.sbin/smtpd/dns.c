@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.6 2008/12/05 19:09:59 gilles Exp $	*/
+/*	$OpenBSD: dns.c,v 1.7 2009/01/01 16:15:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -20,20 +20,16 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/time.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
 #include <event.h>
-#include <netdb.h>
 #include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
-#include <unistd.h>
 
 #include "smtpd.h"
 

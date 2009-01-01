@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2008/12/19 12:09:00 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 2009/01/01 16:15:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -17,29 +17,15 @@
  */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <dirent.h>
 #include <errno.h>
 #include <event.h>
-#include <fcntl.h>
-#include <paths.h>
-#include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
-#include <time.h>
-#include <util.h>
 #include <unistd.h>
 
 #include "smtpd.h"

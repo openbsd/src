@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.4 2008/12/20 00:18:03 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.5 2009/01/01 16:15:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -22,14 +22,11 @@
 #include <sys/tree.h>
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 
 #include <event.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "smtpd.h"

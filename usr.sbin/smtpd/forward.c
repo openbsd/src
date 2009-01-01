@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.6 2008/12/13 13:15:38 jacekm Exp $	*/
+/*	$OpenBSD: forward.c,v 1.7 2009/01/01 16:15:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -24,19 +24,12 @@
 #include <sys/stat.h>
 
 #include <ctype.h>
-#include <db.h>
 #include <errno.h>
 #include <event.h>
-#include <fcntl.h>
-#include <paths.h>
 #include <pwd.h>
-#include <signal.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <util.h>
 
 #include "smtpd.h"
 

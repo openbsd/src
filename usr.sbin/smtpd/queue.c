@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.39 2008/12/31 09:55:24 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.40 2009/01/01 16:15:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -23,22 +23,15 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/time.h>
-
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include <dirent.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
-#include <netdb.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.2 2008/11/05 12:14:45 sobrado Exp $	*/
+/*	$OpenBSD: config.c,v 1.3 2009/01/01 16:15:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -21,10 +21,8 @@
 #include <sys/tree.h>
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 
 #include <event.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

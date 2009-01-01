@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.5 2008/12/13 23:19:34 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.6 2009/01/01 16:15:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -22,15 +22,11 @@
 #include <sys/tree.h>
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
 
-#include <err.h>
 #include <event.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #include "smtpd.h"

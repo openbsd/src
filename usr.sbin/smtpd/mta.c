@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.11 2008/12/13 23:19:34 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.12 2009/01/01 16:15:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -28,11 +28,8 @@
 
 #include <errno.h>
 #include <event.h>
-#include <fcntl.h>
 #include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

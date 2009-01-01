@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.3 2008/12/06 14:30:51 jacekm Exp $	*/
+/*	$OpenBSD: map.c,v 1.4 2009/01/01 16:15:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -21,21 +21,12 @@
 #include <sys/tree.h>
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
 
 #include <errno.h>
 #include <event.h>
-#include <fcntl.h>
-#include <paths.h>
-#include <pwd.h>
-#include <signal.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
-#include <unistd.h>
 
 #include "smtpd.h"
 

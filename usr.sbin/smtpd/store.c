@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.8 2008/12/06 14:30:51 jacekm Exp $	*/
+/*	$OpenBSD: store.c,v 1.9 2009/01/01 16:15:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -21,25 +21,16 @@
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <sys/ioctl.h>
 #include <sys/socket.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <dirent.h>
 #include <errno.h>
 #include <event.h>
-#include <fcntl.h>
-#include <paths.h>
-#include <pwd.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sysexits.h>
-#include <time.h>
-#include <util.h>
 #include <unistd.h>
 
 #include "smtpd.h"

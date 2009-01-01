@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.11 2008/12/22 13:35:58 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.12 2009/01/01 16:15:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -22,23 +22,18 @@
 #include <sys/tree.h>
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <ctype.h>
-#include <db.h>
 #include <event.h>
-#include <fcntl.h>
-#include <pwd.h>
 #include <netdb.h>
-#include <signal.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
 
 #include "smtpd.h"
 
