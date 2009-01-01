@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.23 2008/04/18 14:41:04 pyr Exp $	*/
+/*	$OpenBSD: cal.c,v 1.24 2009/01/01 21:07:17 otto Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: cal.c,v 1.23 2008/04/18 14:41:04 pyr Exp $";
+static const char rcsid[] = "$OpenBSD: cal.c,v 1.24 2009/01/01 21:07:17 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,6 +146,7 @@ void	day_array(int, int, int *);
 int	day_in_week(int, int, int);
 int	day_in_year(int, int, int);
 int	week(int, int, int);
+int	isoweek(int, int, int);
 void	j_yearly(int);
 void	monthly(int, int);
 void	trim_trailing_spaces(char *);
@@ -251,45 +252,57 @@ main(int argc, char *argv[])
 int
 week(int day, int month, int year)
 {
-	int	leap;
-	int	prevleap;
 	int	yearday;
 	int	firstweekday;
 	int	weekday;
 	int	firstday;
 	int	firstsunday;
 	int	shift;
+	
+	if (mflag)
+		return isoweek(day, month, year);
 
 	yearday = day_in_year(day, month, year);
 	firstweekday = day_in_week(1, 1, year) + 1;
 	weekday = day_in_week(day, month, year) + 1;
-	leap = leap_year(year);
-	prevleap = leap_year(year - 1);
-	firstday = firstsunday = day_in_year(1, 1, year);
+	firstday = day_in_year(1, 1, year);
 	firstsunday = firstday + (8 - firstweekday);
 
-	if (!mflag)
-		goto sunbased;
-
-	if (yearday <= (8 - firstweekday) && firstweekday > 4) {
-		if (firstweekday == 5 || (firstweekday == 6 && prevleap))
-			return (53);
-		return (52);
-	}
-
-	if (((leap ? 366 : 365) - yearday) < (4 - weekday))
-		return (1);
-
-	return (((yearday + (7 - weekday) + (firstweekday - 1)) / 7)
-	    - (firstweekday > 4));
-
-sunbased:
 	shift = 1;
 	if (yearday < firstsunday)
 		return (1);
 	if (firstweekday > THURSDAY - 1) 
 		shift = 2;
 	return ((((yearday + 1) - (weekday - 1)) / 7) + shift);
+}
+
+int
+isoweek(int day, int month, int year)
+{
+	/* http://www.tondering.dk/claus/cal/node8.html */
+	int a, b, c, s, e, f, g, d, n;
+
+	a = month <= 2 ? year - 1 : year;
+	b = a/4 - a/100 + a/400;
+	c = (a-1)/4 - (a-1)/100 + (a-1)/400;
+	s = b - c;
+	if (month <= 2) {
+		e = 0;
+		f = day - 1 + 31 * (month-1);
+	} else {
+		e = s + 1;
+		f = day + ((153 * (month-3) + 2) / 5) + 58 + s;
+	}
+	g = (a + b) % 7;
+	d = (f + g - e) % 7;
+	n = f + 3 - d;
+
+	if (n < 0)
+		return 53 - (g - s) / 5;
+	else if (n > 364 + s)
+		return 1;
+	else 
+		return n/7 + 1;
 }
 
 void
@@ -317,7 +330,7 @@ monthly(int month, int year)
 		trim_trailing_spaces(lineout);
 		(void)printf("%-20s", lineout);
 		if (wflag && firstday != SPACE)
-			printf(" [%2d]", week(firstday - mflag, month, year));
+			printf(" [%2d]", week(firstday, month, year));
 		printf("\n");
 	}
 }
@@ -394,7 +407,7 @@ yearly(int year)
 					ascii_day(p, *dp++);
 				}
 				if (wflag && firstday != SPACE) {
-					wn = week(firstday - mflag,
+					wn = week(firstday,
 					    month + which_cal + 1, year);
 					(void)snprintf(p, 5, "[%2d]", wn);
 					p += strlen(p);
