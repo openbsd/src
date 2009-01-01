@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.60 2007/09/11 16:02:55 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.61 2009/01/01 22:50:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -215,8 +215,6 @@ if_del(struct iface *iface)
 {
 	struct nbr	*nbr = NULL;
 
-	log_debug("if_del: interface %s", iface->name);
-
 	/* revert the demotion when the interface is deleted */
 	if ((iface->state & (IF_STA_MULTI | IF_STA_POINTTOPOINT)) == 0)
 		ospfe_demote_iface(iface, 1);
@@ -324,11 +322,8 @@ if_act_start(struct iface *iface)
 	if (!((iface->flags & IFF_UP) &&
 	    (LINK_STATE_IS_UP(iface->linkstate) ||
 	    (iface->linkstate == LINK_STATE_UNKNOWN &&
-	    iface->media_type != IFT_CARP)))) {
-		log_debug("if_act_start: interface %s link down",
-		    iface->name);
+	    iface->media_type != IFT_CARP))))
 		return (0);
-	}
 
 	if (iface->media_type == IFT_CARP && iface->passive == 0) {
 		/* force passive mode on carp interfaces */
