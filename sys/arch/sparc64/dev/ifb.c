@@ -1,7 +1,7 @@
-/*	$OpenBSD: ifb.c,v 1.11 2008/12/29 22:25:16 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.12 2009/01/01 19:25:39 miod Exp $	*/
 
 /*
- * Copyright (c) 2007, 2008 Miodrag Vallat.
+ * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -208,16 +208,20 @@
 
 struct ifb_softc {
 	struct sunfb sc_sunfb;
-	int sc_nscreens;
 
 	bus_space_tag_t sc_mem_t;
 	pcitag_t sc_pcitag;
 
 	bus_space_handle_t sc_mem_h;
-	bus_addr_t sc_membase;
+	bus_addr_t sc_membase, sc_fb8bank0_base, sc_fb8bank1_base;
 	bus_size_t sc_memlen;
 	vaddr_t	sc_memvaddr, sc_fb8bank0_vaddr, sc_fb8bank1_vaddr;
+
 	bus_space_handle_t sc_reg_h;
+	bus_addr_t sc_regbase;
+	bus_size_t sc_reglen;
+
+	u_int	sc_mode;
 
 	struct wsdisplay_emulops sc_old_ops;
 	void (*sc_old_cursor)(struct rasops_info *);
@@ -294,13 +298,16 @@ ifbattach(struct device *parent, struct device *self, void *aux)
 	if (ifb_mapregs(sc, paa))
 		return;
 
+	sc->sc_fb8bank0_base = bus_space_read_4(sc->sc_mem_t, sc->sc_reg_h,
+	      IFB_REG_OFFSET + IFB_REG_FB8_0);
+	sc->sc_fb8bank1_base = bus_space_read_4(sc->sc_mem_t, sc->sc_reg_h,
+	      IFB_REG_OFFSET + IFB_REG_FB8_1);
+
 	sc->sc_memvaddr = (vaddr_t)bus_space_vaddr(sc->sc_mem_t, sc->sc_mem_h);
 	sc->sc_fb8bank0_vaddr = sc->sc_memvaddr +
-	    bus_space_read_4(sc->sc_mem_t, sc->sc_reg_h,
-	      IFB_REG_OFFSET + IFB_REG_FB8_0) - sc->sc_membase;
+	    sc->sc_fb8bank0_base - sc->sc_membase;
 	sc->sc_fb8bank1_vaddr = sc->sc_memvaddr +
-	    bus_space_read_4(sc->sc_mem_t, sc->sc_reg_h,
-	      IFB_REG_OFFSET + IFB_REG_FB8_1) - sc->sc_membase;
+	    sc->sc_fb8bank1_base - sc->sc_membase;
 
 	node = PCITAG_NODE(paa->pa_tag);
 	sc->sc_console = ifb_is_console(node);
@@ -348,6 +355,7 @@ ifbattach(struct device *parent, struct device *self, void *aux)
 	ri->ri_do_cursor = ifb_do_cursor;
 
 	ifb_setcolormap(&sc->sc_sunfb, ifb_setcolor);
+	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
 	if (sc->sc_console)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
@@ -360,6 +368,7 @@ ifb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 	struct ifb_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
 	struct pcisel *sel;
+	int mode;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -367,8 +376,10 @@ ifb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		break;
 
 	case WSDISPLAYIO_SMODE:
-		if (*(u_int *)data == WSDISPLAYIO_MODE_EMUL)
+		mode = *(u_int *)data;
+		if (mode == WSDISPLAYIO_MODE_EMUL)
 			ifb_setcolormap(&sc->sc_sunfb, ifb_setcolor);
+		sc->sc_mode = mode;
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
@@ -528,6 +539,40 @@ ifb_setcolormap(struct sunfb *sf,
 paddr_t
 ifb_mmap(void *v, off_t off, int prot)
 {
+	struct ifb_softc *sc = (struct ifb_softc *)v;
+
+	switch (sc->sc_mode) {
+	case WSDISPLAYIO_MODE_MAPPED:
+		/*
+		 * In mapped mode, provide access to the two overlays,
+		 * followed by the control registers, at the following
+		 * addresses:
+		 * 00000000	overlay 0, size up to 2MB (visible fb size)
+		 * 01000000	overlay 1, size up to 2MB (visible fb size)
+		 * 02000000	control registers
+		 */
+		off -= 0x00000000;
+		if (off >= 0 && off < round_page(sc->sc_sunfb.sf_fbsize)) {
+			return bus_space_mmap(sc->sc_mem_t,
+			    sc->sc_fb8bank0_base,
+			    off, prot, BUS_SPACE_MAP_LINEAR);
+		}
+		off -= 0x01000000;
+		if (off >= 0 && off < round_page(sc->sc_sunfb.sf_fbsize)) {
+			return bus_space_mmap(sc->sc_mem_t,
+			    sc->sc_fb8bank1_base,
+			    off, prot, BUS_SPACE_MAP_LINEAR);
+		}
+#ifdef notyet	/* not needed so far, will require an aperture check */
+		off -= 0x01000000;
+		if (off >= 0 && off < round_page(sc->sc_reglen)) {
+			return bus_space_mmap(sc->sc_mem_t, sc->sc_regbase,
+			    off, prot, BUS_SPACE_MAP_LINEAR);
+		}
+#endif
+		break;
+	}
+
 	return -1;
 }
 
@@ -590,7 +635,8 @@ ifb_mapregs(struct ifb_softc *sc, struct pci_attach_args *pa)
 		rc = EINVAL;
 	else {
 		rc = pci_mapreg_map(pa, bar + 4, cf,
-		    0, NULL, &sc->sc_reg_h, NULL, NULL, 0x9000);
+		    0, NULL, &sc->sc_reg_h,
+		     &sc->sc_regbase, &sc->sc_reglen, 0x9000);
 	}
 	if (rc != 0) {
 		printf("%s: can't map register space\n",
