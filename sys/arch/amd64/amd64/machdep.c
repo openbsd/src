@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.86 2008/12/30 05:33:15 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.87 2009/01/02 05:16:15 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1298,7 +1298,7 @@ init_x86_64(paddr_t first_avail)
 	 */ 
 	avail_end = mem_cluster_cnt = 0;
 	for (bmp = bios_memmap; bmp->type != BIOS_MAP_END; bmp++) {
-		paddr_t s1, s2, e1, e2, s3, e3, s4, e4;
+		paddr_t s1, s2, e1, e2;
 
 		/* Ignore non-free memory */
 		if (bmp->type != BIOS_MAP_FREE)
@@ -1309,7 +1309,7 @@ init_x86_64(paddr_t first_avail)
 		/* Init our segment(s), round/trunc to pages */
 		s1 = round_page(bmp->addr);
 		e1 = trunc_page(bmp->addr + bmp->size);
-		s2 = e2 = 0; s3 = e3 = 0; s4 = e4 = 0;
+		s2 = e2 = 0;
 
 		/*
 		 * XXX Some buggy ACPI BIOSes use memory that they
@@ -1346,32 +1346,10 @@ init_x86_64(paddr_t first_avail)
 		if (s1 < biosbasemem && e1 > biosbasemem)
 			e1 = biosbasemem;
 
-/* XXX - This is sooo GROSS! */
-#define KERNEL_START IOM_END
-		/* Crop stuff into kernel from bottom */
-		if (s1 < KERNEL_START && e1 > KERNEL_START &&
-		    e1 < first_avail) {
-			e1 = KERNEL_START;
-		}
-		/* Crop stuff into kernel from top */
-		if (s1 > KERNEL_START && s1 < first_avail &&
-		    e1 > first_avail) {
-			s1 = first_avail;
-		}
-		/* Split stuff straddling kernel */
-		if (s1 <= KERNEL_START && e1 >= first_avail) {
-			s2 = first_avail; e2 = e1;
-			e1 = KERNEL_START;
-		}
-
 		/* Split any segments straddling the 16MB boundary */
 		if (s1 < 16*1024*1024 && e1 > 16*1024*1024) {
-			e3 = e1;
-			s3 = e1 = 16*1024*1024;
-		}
-		if (s2 < 16*1024*1024 && e2 > 16*1024*1024) {
-			e4 = e2;
-			s4 = e2 = 16*1024*1024;
+			e2 = e1;
+			s2 = e1 = 16*1024*1024;
 		}
 
 		/* Store segment(s) */
@@ -1385,20 +1363,8 @@ init_x86_64(paddr_t first_avail)
 			mem_clusters[mem_cluster_cnt].size = e2 - s2;
 			mem_cluster_cnt++;
 		}
-		if (e3 - s3 >= PAGE_SIZE) {
-			mem_clusters[mem_cluster_cnt].start = s3;
-			mem_clusters[mem_cluster_cnt].size = e3 - s3;
-			mem_cluster_cnt++;
-		}
-		if (e4 - s4 >= PAGE_SIZE) {
-			mem_clusters[mem_cluster_cnt].start = s4;
-			mem_clusters[mem_cluster_cnt].size = e4 - s4;
-			mem_cluster_cnt++;
-		}
 		if (avail_end < e1) avail_end = e1;
 		if (avail_end < e2) avail_end = e2;
-		if (avail_end < e3) avail_end = e3;
-		if (avail_end < e4) avail_end = e4;
 	}
 
 	/*
