@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.41 2009/01/02 19:52:53 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.42 2009/01/02 22:08:02 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -995,6 +995,7 @@ queue_delete_message(char *msgid)
 void
 queue_message_update(struct message *messagep)
 {
+	messagep->flags &= ~F_MESSAGE_PROCESSING;
 	messagep->batch_id = 0;
 	messagep->retry++;
 
@@ -1015,7 +1016,6 @@ queue_message_update(struct message *messagep)
 
 	if (messagep->status & S_MESSAGE_TEMPFAILURE) {
 		messagep->status &= ~S_MESSAGE_TEMPFAILURE;
-		messagep->flags &= ~F_MESSAGE_PROCESSING;
 		queue_update_envelope(messagep);
 		return;
 	}
