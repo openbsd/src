@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.9 2008/04/07 22:50:41 miod Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.10 2009/01/02 05:27:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -57,7 +57,7 @@ struct onewire_softc {
 
 struct onewire_device {
 	TAILQ_ENTRY(onewire_device)	d_list;
-	struct device *			d_dev;
+	struct device *			d_dev;	/* may be NULL */
 	u_int64_t			d_rom;
 	int				d_present;
 };
@@ -472,17 +472,16 @@ onewire_scan(struct onewire_softc *sc)
 			}
 		}
 		if (!present) {
-			bzero(&oa, sizeof(oa));
-			oa.oa_onewire = sc;
-			oa.oa_rom = rom;
-			if ((dev = config_found(&sc->sc_dev, &oa,
-			    onewire_print)) == NULL)
-				continue;
-
 			nd = malloc(sizeof(struct onewire_device),
 			    M_DEVBUF, M_NOWAIT);
 			if (nd == NULL)
 				continue;
+
+			bzero(&oa, sizeof(oa));
+			oa.oa_onewire = sc;
+			oa.oa_rom = rom;
+			dev = config_found(&sc->sc_dev, &oa, onewire_print);
+
 			nd->d_dev = dev;
 			nd->d_rom = rom;
 			nd->d_present = 1;
@@ -496,7 +495,8 @@ out:
 	    d != TAILQ_END(&sc->sc_dev); d = next) {
 		next = TAILQ_NEXT(d, d_list);
 		if (!d->d_present) {
-			config_detach(d->d_dev, DETACH_FORCE);
+			if (d->d_dev != NULL)
+				config_detach(d->d_dev, DETACH_FORCE);
 			TAILQ_REMOVE(&sc->sc_devs, d, d_list);
 			free(d, M_DEVBUF);
 		}
