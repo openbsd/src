@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.104 2008/12/31 22:25:42 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.105 2009/01/02 00:25:33 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -213,6 +213,7 @@ void	azalia_codec_print_audiofunc(const codec_t *);
 void	azalia_codec_print_groups(const codec_t *);
 int	azalia_codec_init_hp_spkr(codec_t *);
 int	azalia_codec_find_defdac(codec_t *, int, int);
+int	azalia_codec_init_volgroups(codec_t *);
 
 int	azalia_widget_init(widget_t *, const codec_t *, int);
 int	azalia_widget_label_widgets(codec_t *);
@@ -1301,11 +1302,15 @@ azalia_codec_init(codec_t *this)
 	if (err)
 		return err;
 
-	err = this->mixer_init(this);
+	err = azalia_codec_init_hp_spkr(this);
 	if (err)
 		return err;
 
-	err = azalia_codec_init_hp_spkr(this);
+	err = azalia_codec_init_volgroups(this);
+	if (err)
+		return err;
+
+	err = this->mixer_init(this);
 	if (err)
 		return err;
 
@@ -1373,6 +1378,158 @@ azalia_codec_find_defdac(codec_t *this, int index, int depth)
 	}
 
 	return -1;
+}
+
+int
+azalia_codec_init_volgroups(codec_t *this)
+{
+	const widget_t *w;
+	uint32_t cap, result;
+	int i, j, dac, err;
+
+	j = 0;
+	this->playvols.mask = 0;
+	FOR_EACH_WIDGET(this, i) {
+		w = &this->w[i];
+		if (w->enable == 0)
+			continue;
+		if (w->mixer_class == AZ_CLASS_RECORD)
+			continue;
+		if (!(w->widgetcap & COP_AWCAP_OUTAMP))
+			continue;
+		if ((COP_AMPCAP_NUMSTEPS(w->outamp_cap) == 0) &&
+		    !(w->outamp_cap & COP_AMPCAP_MUTE))
+			continue;
+		this->playvols.mask |= (1 << j);
+		this->playvols.slaves[j++] = w->nid;
+		if (j >= AZ_MAX_VOL_SLAVES)
+			break;
+	}
+	this->playvols.nslaves = j;
+
+	this->playvols.cur = 0;
+	for (i = 0; i < this->playvols.nslaves; i++) {
+		w = &this->w[this->playvols.slaves[i]];
+		cap = w->outamp_cap;
+		dac = azalia_codec_find_defdac(this, w->nid, 0);
+		if (dac != this->dacs.groups[this->dacs.cur].conv[0] &&
+		    dac != this->hp_dac && dac != this->spkr_dac)
+			continue;
+		if ((cap & COP_AMPCAP_MUTE) && COP_AMPCAP_NUMSTEPS(cap)) {
+			if (w->type == COP_AWTYPE_PIN_COMPLEX) {
+				err = this->comresp(this, w->nid,
+				    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+				if (!err && (result & CORB_PWC_OUTPUT))
+					this->playvols.cur |= (1 << i);
+			} else
+				this->playvols.cur |= (1 << i);
+		}
+	}
+	if (this->playvols.cur == 0) {
+		for (i = 0; i < this->playvols.nslaves; i++) {
+			w = &this->w[this->playvols.slaves[i]];
+			dac = azalia_codec_find_defdac(this, w->nid, 0);
+			if (dac != this->dacs.groups[this->dacs.cur].conv[0] &&
+			    dac != this->hp_dac && dac != this->spkr_dac)
+				continue;
+			if (w->type == COP_AWTYPE_PIN_COMPLEX) {
+				err = this->comresp(this, w->nid,
+				    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+				if (!err && (result & CORB_PWC_OUTPUT))
+					this->playvols.cur |= (1 << i);
+			} else {
+				this->playvols.cur |= (1 << i);
+			}
+		}
+	}
+
+	this->playvols.master = this->audiofunc;
+	FOR_EACH_WIDGET(this, i) {
+		w = &this->w[i];
+		if (w->type != COP_AWTYPE_VOLUME_KNOB)
+			continue;
+		if (!(w->widgetcap & COP_AWCAP_UNSOL))
+			continue;
+		this->playvols.master = w->nid;
+		break;
+	}
+
+	j = 0;
+	this->recvols.mask = 0;
+	FOR_EACH_WIDGET(this, i) {
+		w = &this->w[i];
+		if (w->enable == 0)
+			continue;
+		if (w->type == COP_AWTYPE_AUDIO_INPUT ||
+		    w->type == COP_AWTYPE_PIN_COMPLEX) {
+			if (!(w->widgetcap & COP_AWCAP_INAMP))
+				continue;
+			if ((COP_AMPCAP_NUMSTEPS(w->inamp_cap) == 0) &&
+			    !(w->inamp_cap & COP_AMPCAP_MUTE))
+				continue;
+		} else if (w->type == COP_AWTYPE_AUDIO_MIXER ||
+		    w->type == COP_AWTYPE_AUDIO_SELECTOR) {
+			if (w->mixer_class != AZ_CLASS_RECORD)
+				continue;
+			if (!(w->widgetcap & COP_AWCAP_OUTAMP))
+				continue;
+			if ((COP_AMPCAP_NUMSTEPS(w->outamp_cap) == 0) &&
+			    !(w->outamp_cap & COP_AMPCAP_MUTE))
+				continue;
+		} else {
+			continue;
+		}
+		this->recvols.mask |= (1 << j);
+		this->recvols.slaves[j++] = w->nid;
+		if (j >= AZ_MAX_VOL_SLAVES)
+			break;
+	}
+	this->recvols.nslaves = j;
+
+	this->recvols.cur = 0;
+	for (i = 0; i < this->recvols.nslaves; i++) {
+		w = &this->w[this->recvols.slaves[i]];
+		cap = w->outamp_cap;
+		if (w->type == COP_AWTYPE_AUDIO_INPUT ||
+		    w->type != COP_AWTYPE_PIN_COMPLEX)
+			cap = w->inamp_cap;
+		 else
+			if (w->mixer_class != AZ_CLASS_RECORD)
+				continue;
+		if ((cap & COP_AMPCAP_MUTE) && COP_AMPCAP_NUMSTEPS(cap)) {
+			if (w->type == COP_AWTYPE_PIN_COMPLEX) {
+				err = this->comresp(this, w->nid,
+				    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+				if (!err && !(result & CORB_PWC_OUTPUT))
+					this->recvols.cur |= (1 << i);
+			} else
+				this->recvols.cur |= (1 << i);
+		}
+	}
+	if (this->recvols.cur == 0) {
+		for (i = 0; i < this->recvols.nslaves; i++) {
+			w = &this->w[this->recvols.slaves[i]];
+			cap = w->outamp_cap;
+			if (w->type == COP_AWTYPE_AUDIO_INPUT ||
+			    w->type != COP_AWTYPE_PIN_COMPLEX)
+				cap = w->inamp_cap;
+			 else
+				if (w->mixer_class != AZ_CLASS_RECORD)
+					continue;
+			if (w->type == COP_AWTYPE_PIN_COMPLEX) {
+				err = this->comresp(this, w->nid,
+				    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
+				if (!err && !(result & CORB_PWC_OUTPUT))
+					this->recvols.cur |= (1 << i);
+			} else {
+				this->recvols.cur |= (1 << i);
+			}
+		}
+	}
+
+	this->recvols.master = this->audiofunc;
+
+	return 0;
 }
 
 int

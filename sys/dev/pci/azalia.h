@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.31 2008/12/31 13:13:39 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.32 2009/01/02 00:25:33 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -486,6 +486,7 @@
 #define HDA_MAX_CHANNELS	16
 #define HDA_MAX_SENSE_PINS	16
 
+#define AZ_MAX_VOL_SLAVES	16
 #define AZ_TAG_SPKR		0x01
 
 #define AZ_CLASS_INPUT	0
@@ -594,6 +595,17 @@ typedef struct {
 	convgroup_t groups[32];
 } convgroupset_t;
 
+typedef struct {
+	int master;
+	int vol_l;
+	int vol_r;
+	int mute;
+	nid_t slaves[AZ_MAX_VOL_SLAVES];
+	int nslaves;
+	int mask;
+	int cur;
+} volgroup_t;
+
 typedef struct codec_t {
 	int (*comresp)(const struct codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
 	int (*init_dacgroup)(struct codec_t *);
@@ -634,6 +646,9 @@ typedef struct codec_t {
 	int hp_dac;
 	int spkr_dac;
 	int spkr_muters;
+
+	volgroup_t playvols;
+	volgroup_t recvols;
 
 	nid_t sense_pins[HDA_MAX_SENSE_PINS];
 	int nsense_pins;
