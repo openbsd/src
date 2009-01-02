@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.33 2009/01/02 00:39:25 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.34 2009/01/02 20:18:18 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -644,10 +644,11 @@ typedef struct codec_t {
 	int nencs;
 
 	int headphones;
-	int speaker;
 	int hp_dac;
+	int speaker;
 	int spkr_dac;
 	int spkr_muters;
+	int mic;
 
 	volgroup_t playvols;
 	volgroup_t recvols;

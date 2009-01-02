@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.102 2009/01/02 00:39:25 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.103 2009/01/02 20:18:18 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -339,8 +339,14 @@ azalia_generic_codec_add_convgroup(codec_t *this, convgroupset_t *group,
 				if (type == COP_AWTYPE_AUDIO_OUTPUT) {
 					if (!(w->d.pin.cap & COP_PINCAP_OUTPUT))
 						continue;
+					if (this->mic != -1 &&
+					    w->nid == this->mic)
+						continue;
 				} else {
 					if (!(w->d.pin.cap & COP_PINCAP_INPUT))
+						continue;
+					if (this->speaker != -1 &&
+					    w->nid == this->speaker)
 						continue;
 				}
 				DPRINTF(("\tpin=%2.2x, assoc=%d, seq=%d:",
@@ -441,7 +447,7 @@ azalia_generic_unsol(codec_t *this, int tag)
 		mc.type = AUDIO_MIXER_ENUM;
 		mc.un.ord = 0;
 		for (i = 0; mc.un.ord == 0 && i < this->nsense_pins; i++) {
-			if (!(this->spkr_muters & (1 <<i)))
+			if (!(this->spkr_muters & (1 << i)))
 				continue;
 			err = this->comresp(this, this->sense_pins[i],
 			    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
@@ -543,7 +549,8 @@ azalia_generic_mixer_init(codec_t *this)
 		if (w->type != COP_AWTYPE_AUDIO_MIXER && w->nconnections > 0 &&
 		    !(w->nconnections == 1 &&
 		    azalia_widget_enabled(this, w->connections[0]) &&
-		    strcmp(w->name, this->w[w->connections[0]].name) == 0)) {
+		    strcmp(w->name, this->w[w->connections[0]].name) == 0) &&
+		    w->nid != this->mic) {
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s_source", w->name);
@@ -573,7 +580,8 @@ azalia_generic_mixer_init(codec_t *this)
 
 		/* output mute */
 		if (w->widgetcap & COP_AWCAP_OUTAMP &&
-		    w->outamp_cap & COP_AMPCAP_MUTE) {
+		    w->outamp_cap & COP_AMPCAP_MUTE &&
+		    w->nid != this->mic) {
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s_mute", w->name);
@@ -593,8 +601,9 @@ azalia_generic_mixer_init(codec_t *this)
 		}
 
 		/* output gain */
-		if (w->widgetcap & COP_AWCAP_OUTAMP
-		    && COP_AMPCAP_NUMSTEPS(w->outamp_cap)) {
+		if (w->widgetcap & COP_AWCAP_OUTAMP &&
+		    COP_AMPCAP_NUMSTEPS(w->outamp_cap) &&
+		    w->nid != this->mic) {
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s", w->name);
@@ -619,7 +628,8 @@ azalia_generic_mixer_init(codec_t *this)
 
 		/* input mute */
 		if (w->widgetcap & COP_AWCAP_INAMP &&
-		    w->inamp_cap & COP_AMPCAP_MUTE) {
+		    w->inamp_cap & COP_AMPCAP_MUTE &&
+		    w->nid != this->speaker) {
 			if (w->type != COP_AWTYPE_AUDIO_MIXER) {
 				MIXER_REG_PROLOG;
 				snprintf(d->label.name, sizeof(d->label.name),
@@ -646,6 +656,8 @@ azalia_generic_mixer_init(codec_t *this)
 					if (!azalia_widget_enabled(this,
 					    w->connections[j]))
 						continue;
+					if (w->connections[j] == this->speaker)
+						continue;
 					d->un.s.member[k].mask = 1 << j;
 					strlcpy(d->un.s.member[k].label.name,
 					    this->w[w->connections[j]].name,
@@ -659,8 +671,9 @@ azalia_generic_mixer_init(codec_t *this)
 		}
 
 		/* input gain */
-		if (w->widgetcap & COP_AWCAP_INAMP
-		    && COP_AMPCAP_NUMSTEPS(w->inamp_cap)) {
+		if (w->widgetcap & COP_AWCAP_INAMP &&
+		    COP_AMPCAP_NUMSTEPS(w->inamp_cap) &&
+		    w->nid != this->speaker) {
 			if (w->type != COP_AWTYPE_AUDIO_SELECTOR &&
 			    w->type != COP_AWTYPE_AUDIO_MIXER) {
 				MIXER_REG_PROLOG;
@@ -681,6 +694,8 @@ azalia_generic_mixer_init(codec_t *this)
 				for (j = 0; j < w->nconnections; j++) {
 					if (!azalia_widget_enabled(this,
 					    w->connections[j]))
+						continue;
+					if (w->connections[j] == this->speaker)
 						continue;
 					MIXER_REG_PROLOG;
 					snprintf(d->label.name,
@@ -724,7 +739,8 @@ azalia_generic_mixer_init(codec_t *this)
 
 		/* pin headphone-boost */
 		if (w->type == COP_AWTYPE_PIN_COMPLEX &&
-		    w->d.pin.cap & COP_PINCAP_HEADPHONE) {
+		    w->d.pin.cap & COP_PINCAP_HEADPHONE &&
+		    w->nid != this->mic) {
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s_boost", w->name);

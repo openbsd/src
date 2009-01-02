@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.105 2009/01/02 00:25:33 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.106 2009/01/02 20:18:18 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1264,6 +1264,7 @@ azalia_codec_init(codec_t *this)
 	    sizeof(this->w[this->audiofunc].name));
 
 	this->speaker = -1;
+	this->mic = -1;
 	FOR_EACH_WIDGET(this, i) {
 		err = azalia_widget_init(&this->w[i], this, i);
 		if (err)
@@ -2172,14 +2173,6 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 		return err;
 	this->d.pin.cap = result;
 
-	if (this->d.pin.device == CORB_CD_MICIN &&
-	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_FIXED)
-		this->d.pin.cap &= ~(COP_PINCAP_OUTPUT);
-
-	if (this->d.pin.device == CORB_CD_SPEAKER &&
-	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_FIXED)
-		this->d.pin.cap &= ~(COP_PINCAP_INPUT);
-
 	switch (this->d.pin.device) {
 	case CORB_CD_LINEOUT:
 	case CORB_CD_SPEAKER:
@@ -2273,6 +2266,16 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 		    (this->d.pin.association <
 		    codec->w[codec->speaker].d.pin.association))
 			wcodec->speaker = this->nid;
+	}
+
+	if (this->d.pin.device == CORB_CD_MICIN &&
+	    (this->d.pin.cap & COP_PINCAP_INPUT) &&
+	    (CORB_CD_PORT(this->d.pin.config) == CORB_CD_FIXED ||
+	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_BOTH)) {
+		if (codec->mic == -1 ||
+		    (this->d.pin.association <
+		    codec->w[codec->mic].d.pin.association))
+			wcodec->mic = this->nid;
 	}
 
 	return 0;
