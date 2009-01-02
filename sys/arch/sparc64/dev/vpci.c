@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.2 2008/04/08 22:05:19 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.3 2009/01/02 20:01:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -309,8 +309,6 @@ vpci_alloc_dma_tag(struct vpci_pbm *pbm)
 	dt->_dmamap_sync = viommu_dvmamap_sync;
 	dt->_dmamem_alloc = viommu_dvmamem_alloc;
 	dt->_dmamem_free = viommu_dvmamem_free;
-	dt->_dmamem_map = viommu_dvmamem_map;
-	dt->_dmamem_unmap = viommu_dvmamem_unmap;
 	return (dt);
 }
 

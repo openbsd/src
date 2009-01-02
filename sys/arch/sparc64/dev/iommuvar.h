@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommuvar.h,v 1.13 2008/07/12 13:08:04 kettenis Exp $	*/
+/*	$OpenBSD: iommuvar.h,v 1.14 2009/01/02 20:01:45 kettenis Exp $	*/
 /*	$NetBSD: iommuvar.h,v 1.9 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -142,9 +142,6 @@ int	iommu_dvmamem_alloc(bus_dma_tag_t, bus_dma_tag_t, bus_size_t,
 	    bus_size_t, bus_size_t, bus_dma_segment_t *, int, int *, int);
 void	iommu_dvmamem_free(bus_dma_tag_t, bus_dma_tag_t, bus_dma_segment_t *,
 	    int);
-int	iommu_dvmamem_map(bus_dma_tag_t, bus_dma_tag_t, bus_dma_segment_t *,
-	    int, size_t, caddr_t *, int);
-void	iommu_dvmamem_unmap(bus_dma_tag_t, bus_dma_tag_t, caddr_t, size_t);
 
 #define IOMMUREG_READ(is, reg)				\
 	bus_space_read_8((is)->is_bustag,		\

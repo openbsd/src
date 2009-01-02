@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.63 2008/11/25 16:31:19 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.64 2009/01/02 20:01:45 kettenis Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -983,8 +983,6 @@ psycho_alloc_dma_tag(struct psycho_pbm *pp)
 		dt->_dmamap_sync = psycho_sabre_dvmamap_sync;
 	dt->_dmamem_alloc	= iommu_dvmamem_alloc;
 	dt->_dmamem_free	= iommu_dvmamem_free;
-	dt->_dmamem_map		= iommu_dvmamem_map;
-	dt->_dmamem_unmap	= iommu_dvmamem_unmap;
 
 	return (dt);
 }

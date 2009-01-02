@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.35 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.36 2009/01/02 20:01:45 kettenis Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -814,8 +814,6 @@ sbus_alloc_dma_tag(struct sbus_softc *sc, bus_dma_tag_t psdt)
 	sdt->_dmamap_sync	= iommu_dvmamap_sync;
 	sdt->_dmamem_alloc	= iommu_dvmamem_alloc;
 	sdt->_dmamem_free	= iommu_dvmamem_free;
-	sdt->_dmamem_map	= iommu_dvmamem_map;
-	sdt->_dmamem_unmap	= iommu_dvmamem_unmap;
 	return (sdt);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: viommu.c,v 1.1 2008/03/09 18:56:45 kettenis Exp $	*/
+/*	$OpenBSD: viommu.c,v 1.2 2009/01/02 20:01:45 kettenis Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -898,90 +898,6 @@ viommu_dvmamem_free(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dma_segment_t *segs,
 	    segs, nsegs));
 	BUS_DMA_FIND_PARENT(t, _dmamem_free);
 	(*t->_dmamem_free)(t, t0, segs, nsegs);
-}
-
-/*
- * Map the DVMA mappings into the kernel pmap.
- * Check the flags to see whether we're streaming or coherent.
- */
-int
-viommu_dvmamem_map(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dma_segment_t *segs,
-    int nsegs, size_t size, caddr_t *kvap, int flags)
-{
-	struct vm_page *m;
-	vaddr_t va;
-	bus_addr_t addr;
-	struct pglist *mlist;
-	bus_addr_t cbit = 0;
-
-	DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_map: segp %p nsegs %d size %lx\n",
-	    segs, nsegs, size));
-
-	/*
-	 * Allocate some space in the kernel map, and then map these pages
-	 * into this space.
-	 */
-	size = round_page(size);
-	va = uvm_km_valloc(kernel_map, size);
-	if (va == 0)
-		return (ENOMEM);
-
-	*kvap = (caddr_t)va;
-
-	/* 
-	 * digest flags:
-	 */
-#if 0
-	if (flags & BUS_DMA_COHERENT)	/* Disable vcache */
-		cbit |= PMAP_NVC;
-#endif
-	if (flags & BUS_DMA_NOCACHE)	/* sideffects */
-		cbit |= PMAP_NC;
-
-	/*
-	 * Now take this and map it into the CPU.
-	 */
-	mlist = segs[0]._ds_mlist;
-	TAILQ_FOREACH(m, mlist, pageq) {
-#ifdef DIAGNOSTIC
-		if (size == 0)
-			panic("iommu_dvmamem_map: size botch");
-#endif
-		addr = VM_PAGE_TO_PHYS(m);
-		DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_map: "
-		    "mapping va %lx at %llx\n", va,
-		    (unsigned long long)addr | cbit));
-		pmap_enter(pmap_kernel(), va, addr | cbit,
-		    VM_PROT_READ | VM_PROT_WRITE,
-		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-		va += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
-
-	return (0);
-}
-
-/*
- * Unmap DVMA mappings from kernel
- */
-void
-viommu_dvmamem_unmap(bus_dma_tag_t t, bus_dma_tag_t t0, caddr_t kva,
-    size_t size)
-{
-	
-	DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_unmap: kvm %p size %lx\n",
-	    kva, size));
-	    
-#ifdef DIAGNOSTIC
-	if ((u_long)kva & PAGE_MASK)
-		panic("iommu_dvmamem_unmap");
-#endif
-	
-	size = round_page(size);
-	pmap_remove(pmap_kernel(), (vaddr_t)kva, size);
-	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, (vaddr_t)kva, size);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.57 2008/12/19 21:03:58 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.58 2009/01/02 20:01:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -612,8 +612,6 @@ schizo_alloc_dma_tag(struct schizo_pbm *pbm)
 	dt->_dmamap_sync	= iommu_dvmamap_sync;
 	dt->_dmamem_alloc	= iommu_dvmamem_alloc;
 	dt->_dmamem_free	= iommu_dvmamem_free;
-	dt->_dmamem_map		= iommu_dvmamem_map;
-	dt->_dmamem_unmap	= iommu_dvmamem_unmap;
 	return (dt);
 }
 

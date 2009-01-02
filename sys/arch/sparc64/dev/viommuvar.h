@@ -1,4 +1,4 @@
-/*	$OpenBSD: viommuvar.h,v 1.1 2008/03/09 18:56:45 kettenis Exp $	*/
+/*	$OpenBSD: viommuvar.h,v 1.2 2009/01/02 20:01:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -39,8 +39,5 @@ int	viommu_dvmamem_alloc(bus_dma_tag_t, bus_dma_tag_t, bus_size_t,
 	    bus_size_t, bus_size_t, bus_dma_segment_t *, int, int *, int);
 void	viommu_dvmamem_free(bus_dma_tag_t, bus_dma_tag_t, bus_dma_segment_t *,
 	    int);
-int	viommu_dvmamem_map(bus_dma_tag_t, bus_dma_tag_t, bus_dma_segment_t *,
-	    int, size_t, caddr_t *, int);
-void	viommu_dvmamem_unmap(bus_dma_tag_t, bus_dma_tag_t, caddr_t, size_t);
 
 #endif
