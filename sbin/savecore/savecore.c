@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.44 2007/09/14 14:29:20 chl Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.45 2009/01/02 16:17:53 miod Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.44 2007/09/14 14:29:20 chl Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.45 2009/01/02 16:17:53 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,8 @@ struct nlist dump_nl[] = {	/* Name list for dumped system. */
 /* Types match kernel declarations. */
 long	dumplo;				/* where dump starts on dumpdev */
 u_long	dumpmag;			/* magic number in dump */
-int	dumpsize;			/* amount of memory dumped */
+int	dumppages;			/* amount of memory dumped (in pages) */
+u_long	dumpsize;			/* amount of memory dumped */
 
 char	*kernel;
 char	*dirn;			/* directory to save dumps in */
@@ -351,8 +352,8 @@ dump_exists(void)
 	(void)KREAD(kd_dump, dump_nl[X_DUMPMAG].n_value, &newdumpmag);
 
 	/* Read the dump size. */
-	(void)KREAD(kd_dump, dump_nl[X_DUMPSIZE].n_value, &dumpsize);
-	dumpsize *= getpagesize();
+	(void)KREAD(kd_dump, dump_nl[X_DUMPSIZE].n_value, &dumppages);
+	dumpsize = (u_long)dumppages * getpagesize();
 
 	/*
 	 * Return zero if core dump doesn't seem to be there, and note
@@ -449,8 +450,8 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 	/* Copy the core file. */
 	syslog(LOG_NOTICE, "writing %score to %s",
 	    zcompress ? "compressed " : "", path);
-	for (; dumpsize > 0; dumpsize -= nr) {
-		(void)printf("%8dK\r", dumpsize / 1024);
+	for (; dumpsize != 0; dumpsize -= nr) {
+		(void)printf("%8ldK\r", dumpsize / 1024);
 		(void)fflush(stdout);
 		nr = read(ifd, buf, MIN(dumpsize, sizeof(buf)));
 		if (nr <= 0) {
