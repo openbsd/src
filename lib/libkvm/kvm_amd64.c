@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_amd64.c,v 1.5 2007/01/08 18:54:12 deraadt Exp $	*/
+/*	$OpenBSD: kvm_amd64.c,v 1.6 2009/01/02 05:16:56 miod Exp $	*/
 /*	$NetBSD: kvm_x86_64.c,v 1.3 2002/06/05 22:01:55 fvdl Exp $	*/
 
 /*-
@@ -98,8 +98,19 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 		return (0);
 	}
 
-	cpu_kh = kd->cpu_data;
 	page_off = va & PGOFSET;
+
+	if (va >= PMAP_DIRECT_BASE && va <= PMAP_DIRECT_END) {
+		*pa = va - PMAP_DIRECT_BASE;
+		return (int)(NBPG - page_off);
+	}
+
+	if (va >= PMAP_DIRECT_BASE_NC && va <= PMAP_DIRECT_END_NC) {
+		*pa = va - PMAP_DIRECT_BASE_NC;
+		return (int)(NBPG - page_off);
+	}
+
+	cpu_kh = kd->cpu_data;
 
 	/*
 	 * Find and read all entries to get to the pa.
@@ -147,6 +158,14 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 		goto lose;
 	}
 
+	/*
+	 * Might be a large page.
+	 */
+	if ((pde & PG_PS) != 0) {
+		page_off = va & (NBPD_L2 - 1);
+		*pa = (pde & PG_LGFRAME) | page_off;
+		return (int)(NBPD_L2 - page_off);
+	}
 
 	/*
 	 * Level 1.
@@ -195,6 +214,9 @@ _kvm_pa2off(kvm_t *kd, paddr_t pa)
 		}
 		off += ramsegs[i].size;
 	}
+
+	if (i == cpu_kh->nmemsegs)
+		_kvm_err(kd, 0, "pa %lx not in dump", pa);
 
 	return (kd->dump_off + off);
 }
