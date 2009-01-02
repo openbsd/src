@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.40 2009/01/01 16:15:47 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.41 2009/01/02 19:52:53 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -905,25 +905,27 @@ int
 queue_load_envelope(struct message *messagep, char *evpid)
 {
 	char pathname[MAXPATHLEN];
-	u_int16_t hval;
-	FILE *fp;
 	char msgid[MAXPATHLEN];
+	FILE *fp;
 
-	strlcpy(msgid, evpid, MAXPATHLEN);
+	if (strlcpy(msgid, evpid, MAXPATHLEN) >= MAXPATHLEN)
+		fatalx("queue_load_envelope: truncation");
 	*strrchr(msgid, '.') = '\0';
 
-	hval = queue_hash(msgid);
 	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
-		hval, msgid, PATH_ENVELOPES, evpid))
-		return 0;
+		queue_hash(msgid), msgid, PATH_ENVELOPES, evpid))
+		fatalx("queue_load_envelope: snprintf");
 
 	fp = fopen(pathname, "r");
-	if (fp == NULL)
-		return 0;
-
+	if (fp == NULL) {
+		if (errno == ENOENT)
+			return 0;
+		if (errno == ENOSPC || errno == ENFILE)
+			return 0;
+		fatal("queue_load_envelope: fopen");
+	}
 	if (fread(messagep, sizeof(struct message), 1, fp) != 1)
 		fatal("queue_load_envelope: fread");
-
 	fclose(fp);
 
 	return 1;
