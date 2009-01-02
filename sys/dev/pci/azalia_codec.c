@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.105 2009/01/02 20:37:57 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.106 2009/01/02 22:32:25 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -72,7 +72,6 @@ int	azalia_generic_codec_add_convgroup(codec_t *, convgroupset_t *,
 int	azalia_generic_unsol(codec_t *, int);
 
 int	azalia_generic_mixer_init(codec_t *);
-int	azalia_generic_mixer_autoinit(codec_t *);
 int	azalia_generic_mixer_fix_indexes(codec_t *);
 int	azalia_generic_mixer_default(codec_t *);
 int	azalia_generic_mixer_delete(codec_t *);
@@ -89,7 +88,6 @@ int	azalia_generic_get_port(codec_t *, mixer_ctrl_t *);
 void	azalia_devinfo_offon(mixer_devinfo_t *);
 void	azalia_pin_config_ov(widget_t *, int, int);
 int	azalia_gpio_unmute(codec_t *, int);
-int	azalia_codec_gpio_quirks(codec_t *);
 
 int	azalia_ad1984_mixer_init(codec_t *);
 int	azalia_alc88x_init_widget(const codec_t *, widget_t *, nid_t);
@@ -104,7 +102,7 @@ azalia_codec_init_vtbl(codec_t *this)
 	 */
 	this->name = NULL;
 	this->init_dacgroup = azalia_generic_codec_init_dacgroup;
-	this->mixer_init = azalia_generic_mixer_autoinit;
+	this->mixer_init = azalia_generic_mixer_init;
 	this->mixer_delete = azalia_generic_mixer_delete;
 	this->set_port = azalia_generic_set_port;
 	this->get_port = azalia_generic_get_port;
@@ -1162,21 +1160,12 @@ azalia_generic_mixer_default(codec_t *this)
 }
 
 int
-azalia_generic_mixer_autoinit(codec_t *this)
-{
-	azalia_generic_mixer_init(this);
-	azalia_codec_gpio_quirks(this);
-
-	return 0;
-}
-
-int
 azalia_generic_mixer_delete(codec_t *this)
 {
-	if (this->mixers == NULL)
-		return 0;
-	free(this->mixers, M_DEVBUF);
-	this->mixers = NULL;
+	if (this->mixers != NULL) {
+		free(this->mixers, M_DEVBUF);
+		this->mixers = NULL;
+	}
 	return 0;
 }
 
@@ -2091,7 +2080,7 @@ azalia_ad1984_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
 
-	azalia_generic_mixer_autoinit(this);
+	azalia_generic_mixer_init(this);
 
 	mc.dev = -1;
 	mc.type = AUDIO_MIXER_ENUM;
@@ -2149,7 +2138,7 @@ azalia_stac7661_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
 
-	azalia_generic_mixer_autoinit(this);
+	azalia_generic_mixer_init(this);
 
 	mc.dev = -1;
 	mc.type = AUDIO_MIXER_ENUM;
