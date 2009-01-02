@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.100 2008/12/31 13:35:58 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.101 2009/01/02 00:20:14 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -73,7 +73,6 @@ int	azalia_generic_mixer_init(codec_t *);
 int	azalia_generic_mixer_autoinit(codec_t *);
 int	azalia_generic_mixer_fix_indexes(codec_t *);
 int	azalia_generic_mixer_default(codec_t *);
-int	azalia_generic_mixer_create_virtual(codec_t *, int, int);
 int	azalia_generic_mixer_delete(codec_t *);
 int	azalia_generic_mixer_ensure_capacity(codec_t *, size_t);
 int	azalia_generic_mixer_get(const codec_t *, nid_t, int, mixer_ctrl_t *);
@@ -91,11 +90,7 @@ int	azalia_gpio_unmute(codec_t *, int);
 int	azalia_codec_gpio_quirks(codec_t *);
 
 int	azalia_ad1984_mixer_init(codec_t *);
-int	azalia_alc260_mixer_init(codec_t *);
-int	azalia_alc88x_mixer_init(codec_t *);
 int	azalia_alc88x_init_widget(const codec_t *, widget_t *, nid_t);
-int	azalia_stac9200_mixer_init(codec_t *);
-int	azalia_stac9202_mixer_init(codec_t *);
 int	azalia_stac9221_init_widget(const codec_t *, widget_t *, nid_t);
 int	azalia_stac7661_mixer_init(codec_t *);
 
@@ -115,7 +110,6 @@ azalia_codec_init_vtbl(codec_t *this)
 	switch (this->vid) {
 	case 0x10ec0260:
 		this->name = "Realtek ALC260";
-		this->mixer_init = azalia_alc260_mixer_init;
 		break;
 	case 0x10ec0262:
 		this->name = "Realtek ALC262";
@@ -143,27 +137,22 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x10ec0880:
 		this->name = "Realtek ALC880";
-		this->mixer_init = azalia_alc88x_mixer_init;
 		this->init_widget = azalia_alc88x_init_widget;
 		break;
 	case 0x10ec0882:
 		this->name = "Realtek ALC882";
-		this->mixer_init = azalia_alc88x_mixer_init;
 		this->init_widget = azalia_alc88x_init_widget;
 		break;
 	case 0x10ec0883:
 		this->name = "Realtek ALC883";
-		this->mixer_init = azalia_alc88x_mixer_init;
 		this->init_widget = azalia_alc88x_init_widget;
 		break;
 	case 0x10ec0885:
 		this->name = "Realtek ALC885";
-		this->mixer_init = azalia_alc88x_mixer_init;
 		this->init_widget = azalia_alc88x_init_widget;
 		break;
 	case 0x10ec0888:
 		this->name = "Realtek ALC888";
-		this->mixer_init = azalia_alc88x_mixer_init;
 		this->init_widget = azalia_alc88x_init_widget;
 		break;
 	case 0x111d76b2:
@@ -229,15 +218,12 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x83847632:
 		this->name = "Sigmatel STAC9202";
-		this->mixer_init = azalia_stac9202_mixer_init;
 		break;
 	case 0x83847634:
 		this->name = "Sigmatel STAC9250";
-		this->mixer_init = azalia_stac9202_mixer_init;
 		break;
 	case 0x83847636:
 		this->name = "Sigmatel STAC9251";
-		this->mixer_init = azalia_stac9202_mixer_init;
 		break;
 	case 0x83847661:
 		/* FALLTHROUGH */
@@ -254,7 +240,6 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x83847690:
 		this->name = "Sigmatel STAC9200";
-		this->mixer_init = azalia_stac9200_mixer_init;
 		break;
 	case 0x83847691:
 		this->name = "Sigmatel STAC9200D";
@@ -1015,121 +1000,9 @@ azalia_generic_mixer_default(codec_t *this)
 }
 
 int
-azalia_generic_mixer_create_virtual(codec_t *this, int pdac, int padc)
-{
-	mixer_item_t *m;
-	mixer_devinfo_t *d;
-	widget_t *w;
-	convgroup_t *cgdac;
-	convgroup_t *cgadc;
-	int i, err, madc, mdac, target;
-	uint32_t ampcap;
-
-	if (this->dacs.ngroups > 0)
-		cgdac = &this->dacs.groups[0];
-	if (this->adcs.ngroups > 0)
-		cgadc = &this->adcs.groups[0];
-
-	/* Clear mixer indexes, to make generic_mixer_fix_index happy */
-	for (i = 0; i < this->nmixers; i++) {
-		d = &this->mixers[i].devinfo;
-		d->index = d->prev = d->next = 0;
-	}
-
-	madc = mdac = -1;
-	for (i = 0; i < this->nmixers && (mdac < 0 || madc < 0); i++) {
-		if (this->mixers[i].devinfo.type != AUDIO_MIXER_VALUE)
-			continue;
-		if (pdac >= 0 && this->mixers[i].nid == pdac)
-			mdac = i;
-		if (mdac < 0 && this->dacs.ngroups > 0 && cgdac->nconv > 0) {
-			if (this->mixers[i].nid == cgdac->conv[0])
-				mdac = i;
-		}
-		if (padc >= 0 && this->mixers[i].nid == padc)
-			madc = i;
-		if (madc < 0 && this->adcs.ngroups > 0 && cgadc->nconv > 0) {
-			if (this->mixers[i].nid == cgadc->conv[0])
-				madc = i;
-		}
-	}
-
-	if (mdac >= 0) {
-		err = azalia_generic_mixer_ensure_capacity(this,
-		    this->nmixers + 2);
-		if (err)
-			return err;
-		m = &this->mixers[this->nmixers];
-		d = &m->devinfo;
-		memcpy(m, &this->mixers[mdac], sizeof(*m));
-		d->mixer_class = AZ_CLASS_OUTPUT;
-		snprintf(d->label.name, sizeof(d->label.name), AudioNmaster);
-		this->nmixers++;
-
-		w = &this->w[this->mixers[mdac].nid];
-		if (IS_MI_TARGET_INAMP(m->target))
-			ampcap = w->inamp_cap;
-		else
-			ampcap = w->outamp_cap;
-		target = m->target;
-		if (ampcap & COP_AMPCAP_MUTE) {
-			d->next = this->nmixers;
-			m = &this->mixers[this->nmixers];
-			m->target = target;
-			m->nid = this->mixers[mdac].nid;
-			d = &m->devinfo;
-			d->prev = this->nmixers - 1;
-			snprintf(d->label.name, sizeof(d->label.name),
-			    AudioNmute);
-			d->mixer_class = AZ_CLASS_OUTPUT;
-			azalia_devinfo_offon(d);
-			this->nmixers++;
-		}
-	}
-
-	if (madc >= 0) {
-		err = azalia_generic_mixer_ensure_capacity(this,
-		    this->nmixers + 2);
-		if (err)
-			return err;
-		m = &this->mixers[this->nmixers];
-		d = &m->devinfo;
-		memcpy(m, &this->mixers[madc], sizeof(*m));
-		d->mixer_class = AZ_CLASS_RECORD;
-		snprintf(d->label.name, sizeof(d->label.name), AudioNvolume);
-		this->nmixers++;
-
-		w = &this->w[this->mixers[madc].nid];
-		if (IS_MI_TARGET_INAMP(m->target))
-			ampcap = w->inamp_cap;
-		else
-			ampcap = w->outamp_cap;
-		target = m->target;
-		if (ampcap & COP_AMPCAP_MUTE) {
-			d->next = this->nmixers;
-			m = &this->mixers[this->nmixers];
-			m->target = target;
-			m->nid = this->mixers[madc].nid;
-			d = &m->devinfo;
-			d->prev = this->nmixers - 1;
-			snprintf(d->label.name, sizeof(d->label.name),
-			    AudioNmute);
-			d->mixer_class = AZ_CLASS_RECORD;
-			azalia_devinfo_offon(d);
-			this->nmixers++;
-		}
-	}
-
-	azalia_generic_mixer_fix_indexes(this);
-
-	return 0;
-}
-
-int
 azalia_generic_mixer_autoinit(codec_t *this)
 {
 	azalia_generic_mixer_init(this);
-	azalia_generic_mixer_create_virtual(this, -1, -1);
 	azalia_codec_gpio_quirks(this);
 
 	return 0;
@@ -1894,26 +1767,7 @@ azalia_ad1984_mixer_init(codec_t *this)
 	return 0;
 }
 
-/* Realtek ALC260 */
-int
-azalia_alc260_mixer_init(codec_t *this)
-{
-	azalia_generic_mixer_init(this);
-	azalia_generic_mixer_create_virtual(this, 0x08, -1);
-	azalia_codec_gpio_quirks(this);
-	return 0;
-}
-
 /* Realtek ALC88x */
-int
-azalia_alc88x_mixer_init(codec_t *this)
-{
-	azalia_generic_mixer_init(this);
-	azalia_generic_mixer_create_virtual(this, 0x0c, -1);
-	azalia_codec_gpio_quirks(this);
-	return 0;
-}
-
 int
 azalia_alc88x_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
@@ -1929,26 +1783,6 @@ azalia_alc88x_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 		w->enable = 1;
 	}
  	return 0;
-}
-
-/* Sigmatel STAC9200 */
-int
-azalia_stac9200_mixer_init(codec_t *this)
-{
-	azalia_generic_mixer_init(this);
-	azalia_generic_mixer_create_virtual(this, 0x0b, 0x0a);
-	azalia_codec_gpio_quirks(this);
-	return 0;
-}
-
-/* Sigmatel STAC9202 */
-int
-azalia_stac9202_mixer_init(codec_t *this)
-{
-	azalia_generic_mixer_init(this);
-	azalia_generic_mixer_create_virtual(this, 0x0e, 0x09);
-	azalia_codec_gpio_quirks(this);
-	return 0;
 }
 
 /* Sigmatel STAC9221 */
