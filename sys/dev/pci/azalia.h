@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.32 2009/01/02 00:25:33 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.33 2009/01/02 00:39:25 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -579,6 +579,8 @@ typedef struct {
 #define MI_TARGET_MUTESET	0x10a
 #define MI_TARGET_PINSENSE	0x10b
 #define MI_TARGET_SENSESET	0x10c
+#define MI_TARGET_PLAYVOL	0x10d
+#define MI_TARGET_RECVOL	0x10e
 } mixer_item_t;
 
 #define VALID_WIDGET_NID(nid, codec)	(nid == (codec)->audiofunc || \

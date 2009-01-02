@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.101 2009/01/02 00:20:14 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.102 2009/01/02 00:39:25 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -815,6 +815,112 @@ azalia_generic_mixer_init(codec_t *this)
 			this->nmixers++;
 	}
 
+	/* playback volume group */
+	if (this->playvols.nslaves > 0) {
+		mixer_devinfo_t *d;
+		err = azalia_generic_mixer_ensure_capacity(this,
+		    this->nmixers + 3);
+
+		/* volume */
+		m = &this->mixers[this->nmixers];
+		m->nid = this->playvols.master;
+		m->target = MI_TARGET_PLAYVOL;
+		d = &m->devinfo;
+		d->mixer_class = AZ_CLASS_OUTPUT;
+		snprintf(d->label.name, sizeof(d->label.name),
+		    "%s", AudioNmaster);
+		d->type = AUDIO_MIXER_VALUE;
+		d->un.v.num_channels = 2;
+		d->un.v.delta = 8;
+		this->nmixers++;
+		d->next = this->nmixers;
+
+		/* mute */
+		m = &this->mixers[this->nmixers];
+		m->nid = this->playvols.master;
+		m->target = MI_TARGET_PLAYVOL;
+		d = &m->devinfo;
+		d->prev = this->nmixers - 1;
+		d->mixer_class = AZ_CLASS_OUTPUT;
+		snprintf(d->label.name, sizeof(d->label.name),
+		    "%s", AudioNmute);
+		azalia_devinfo_offon(d);
+		this->nmixers++;
+		d->next = this->nmixers;
+
+		/* slaves */
+		m = &this->mixers[this->nmixers];
+		m->nid = this->playvols.master;
+		m->target = MI_TARGET_PLAYVOL;
+		d = &m->devinfo;
+		d->prev = this->nmixers - 1;
+		d->mixer_class = AZ_CLASS_OUTPUT;
+		snprintf(d->label.name, sizeof(d->label.name),
+		    "%s", "slaves");
+		d->type = AUDIO_MIXER_SET;
+		for (i = 0, j = 0; i < this->playvols.nslaves; i++) {
+			ww = &this->w[this->playvols.slaves[i]];
+			d->un.s.member[j].mask = (1 << i);
+			strlcpy(d->un.s.member[j++].label.name, ww->name,
+			    MAX_AUDIO_DEV_LEN);
+		}
+		d->un.s.num_mem = j;
+		this->nmixers++;
+	}
+
+	/* recording volume group */
+	if (this->recvols.nslaves > 0) {
+		mixer_devinfo_t *d;
+		err = azalia_generic_mixer_ensure_capacity(this,
+		    this->nmixers + 3);
+
+		/* volume */
+		m = &this->mixers[this->nmixers];
+		m->nid = this->recvols.master;
+		m->target = MI_TARGET_RECVOL;
+		d = &m->devinfo;
+		d->mixer_class = AZ_CLASS_RECORD;
+		snprintf(d->label.name, sizeof(d->label.name),
+		    "%s", AudioNvolume);
+		d->type = AUDIO_MIXER_VALUE;
+		d->un.v.num_channels = 2;
+		d->un.v.delta = 8;
+		this->nmixers++;
+		d->next = this->nmixers;
+
+		/* mute */
+		m = &this->mixers[this->nmixers];
+		m->nid = this->recvols.master;
+		m->target = MI_TARGET_RECVOL;
+		d = &m->devinfo;
+		d->prev = this->nmixers - 1;
+		d->mixer_class = AZ_CLASS_RECORD;
+		snprintf(d->label.name, sizeof(d->label.name),
+		    "%s", AudioNmute);
+		azalia_devinfo_offon(d);
+		this->nmixers++;
+		d->next = this->nmixers;
+
+		/* slaves */
+		m = &this->mixers[this->nmixers];
+		m->nid = this->recvols.master;
+		m->target = MI_TARGET_RECVOL;
+		d = &m->devinfo;
+		d->prev = this->nmixers - 1;
+		d->mixer_class = AZ_CLASS_RECORD;
+		snprintf(d->label.name, sizeof(d->label.name),
+		    "%s", "slaves");
+		d->type = AUDIO_MIXER_SET;
+		for (i = 0, j = 0; i < this->recvols.nslaves; i++) {
+			ww = &this->w[this->recvols.slaves[i]];
+			d->un.s.member[j].mask = (1 << i);
+			strlcpy(d->un.s.member[j++].label.name, ww->name,
+			    MAX_AUDIO_DEV_LEN);
+		}
+		d->un.s.num_mem = j;
+		this->nmixers++;
+	}
+
 	/* if the codec has multiple DAC groups, create "inputs.usingdac" */
 	if (this->dacs.ngroups > 1) {
 		MIXER_REG_PROLOG;
@@ -924,7 +1030,7 @@ azalia_generic_mixer_default(codec_t *this)
 	widget_t *w;
 	mixer_item_t *m;
 	mixer_ctrl_t mc;
-	int i, j;
+	int i, j, tgt, cap;
 
 	/* unmute all */
 	for (i = 0; i < this->nmixers; i++) {
@@ -995,6 +1101,44 @@ azalia_generic_mixer_default(codec_t *this)
 	}
 	if (this->spkr_muters != 0 && this->unsol_event != NULL)
 		this->unsol_event(this, AZ_TAG_SPKR);
+
+	/* get default value for play group master */
+	for (i = 0; i < this->playvols.nslaves; i++) {
+		if (!(this->playvols.cur & (1 << i)))
+ 			continue;
+		w = &this->w[this->playvols.slaves[i]];
+		if (!(COP_AMPCAP_NUMSTEPS(w->outamp_cap)))
+			continue;
+		mc.type = AUDIO_MIXER_VALUE;
+		tgt = MI_TARGET_OUTAMP;
+		azalia_generic_mixer_get(this, w->nid, tgt, &mc);
+		this->playvols.vol_l = mc.un.value.level[0];
+		this->playvols.vol_r = mc.un.value.level[0];
+		break;
+ 	}
+	this->playvols.mute = 0;
+ 
+	/* get default value for record group master */
+	for (i = 0; i < this->recvols.nslaves; i++) {
+		if (!(this->recvols.cur & (1 << i)))
+			continue;
+		w = &this->w[this->recvols.slaves[i]];
+		mc.type = AUDIO_MIXER_VALUE;
+		tgt = MI_TARGET_OUTAMP;
+		cap = w->outamp_cap;
+		if (w->type == COP_AWTYPE_PIN_COMPLEX ||
+		    w->type == COP_AWTYPE_AUDIO_INPUT) {
+			tgt = 0;
+			cap = w->inamp_cap;
+ 		}
+		if (!(COP_AMPCAP_NUMSTEPS(cap)))
+			continue;
+		azalia_generic_mixer_get(this, w->nid, tgt, &mc);
+		this->recvols.vol_l = mc.un.value.level[0];
+		this->recvols.vol_r = mc.un.value.level[0];
+		break;
+ 	}
+	this->recvols.mute = 0;
 
 	return 0;
 }
@@ -1216,6 +1360,44 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 			mc->un.mask = this->spkr_muters;
 		} else {
 			DPRINTF(("%s: invalid senseset nid\n"));
+			return EINVAL;
+		}
+	}
+
+	else if (target == MI_TARGET_PLAYVOL) {
+
+		if (mc->type == AUDIO_MIXER_VALUE) {
+			mc->un.value.num_channels = 2;
+			mc->un.value.level[0] = this->playvols.vol_l;
+			mc->un.value.level[1] = this->playvols.vol_r;
+
+		} else if (mc->type == AUDIO_MIXER_ENUM) {
+			mc->un.ord = this->playvols.mute;
+
+		} else if (mc->type == AUDIO_MIXER_SET) {
+			mc->un.mask = this->playvols.cur;
+
+		} else {
+			DPRINTF(("%s: invalid outmaster mixer type\n"));
+			return EINVAL;
+		}
+	}
+
+	else if (target == MI_TARGET_RECVOL) {
+
+		if (mc->type == AUDIO_MIXER_VALUE) {
+			mc->un.value.num_channels = 2;
+			mc->un.value.level[0] = this->recvols.vol_l;
+			mc->un.value.level[1] = this->recvols.vol_r;
+
+		} else if (mc->type == AUDIO_MIXER_ENUM) {
+			mc->un.ord = this->recvols.mute;
+
+		} else if (mc->type == AUDIO_MIXER_SET) {
+			mc->un.mask = this->recvols.cur;
+
+		} else {
+			DPRINTF(("%s: invalid inmaster mixer type\n"));
 			return EINVAL;
 		}
 	}
@@ -1583,6 +1765,139 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 				this->unsol_event(this, AZ_TAG_SPKR);
 		} else {
 			DPRINTF(("%s: invalid senseset nid\n"));
+			return EINVAL;
+		}
+	}
+
+	else if (target == MI_TARGET_PLAYVOL) {
+
+		const widget_t *w;
+		mixer_ctrl_t mc2;
+
+		if (mc->type == AUDIO_MIXER_VALUE) {
+			if (mc->un.value.num_channels != 2)
+				return EINVAL;
+			this->playvols.vol_l = mc->un.value.level[0];
+			this->playvols.vol_r = mc->un.value.level[1];
+			for (i = 0; i < this->playvols.nslaves; i++) {
+				if (!(this->playvols.cur & (1 << i)))
+					continue;
+				w = &this->w[this->playvols.slaves[i]];
+				if (!(COP_AMPCAP_NUMSTEPS(w->outamp_cap)))
+					continue;
+				mc2.type = AUDIO_MIXER_VALUE;
+				mc2.un.value.num_channels = WIDGET_CHANNELS(w);
+				mc2.un.value.level[0] = this->playvols.vol_l;
+				mc2.un.value.level[1] = this->playvols.vol_r;
+				err = azalia_generic_mixer_set(this, w->nid,
+				    MI_TARGET_OUTAMP, &mc2);
+				if (err) {
+					DPRINTF(("%s: out slave %2.2x vol\n",
+					    __func__, w->nid));
+					return err;
+				}
+			}
+		} else if (mc->type == AUDIO_MIXER_ENUM) {
+			if (mc->un.ord != 0 && mc->un.ord != 1)
+				return EINVAL;
+			this->playvols.mute = mc->un.ord;
+			for (i = 0; i < this->playvols.nslaves; i++) {
+				if (!(this->playvols.cur & (1 << i)))
+					continue;
+				w = &this->w[this->playvols.slaves[i]];
+				if (!(w->outamp_cap & COP_AMPCAP_MUTE))
+					continue;
+				mc2.type = AUDIO_MIXER_ENUM;
+				mc2.un.ord = this->playvols.mute;
+				err = azalia_generic_mixer_set(this, w->nid,
+				    MI_TARGET_OUTAMP, &mc2);
+				if (err) {
+					DPRINTF(("%s: out slave %2.2x mute\n",
+					    __func__, w->nid));
+					return err;
+				}
+			}
+
+		} else if (mc->type == AUDIO_MIXER_SET) {
+			this->playvols.cur =
+			    (mc->un.mask & this->playvols.mask);
+
+		} else {
+			DPRINTF(("%s: invalid output master mixer type\n"));
+			return EINVAL;
+		}
+	}
+
+	else if (target == MI_TARGET_RECVOL) {
+
+		const widget_t *w;
+		mixer_ctrl_t mc2;
+		uint32_t cap;
+		int tgt;
+
+		if (mc->type == AUDIO_MIXER_VALUE) {
+			if (mc->un.value.num_channels != 2)
+				return EINVAL;
+			this->recvols.vol_l = mc->un.value.level[0];
+			this->recvols.vol_r = mc->un.value.level[1];
+			for (i = 0; i < this->recvols.nslaves; i++) {
+				if (!(this->recvols.cur & (1 << i)))
+					continue;
+				w = &this->w[this->recvols.slaves[i]];
+				tgt = MI_TARGET_OUTAMP;
+				cap = w->outamp_cap;
+				if (w->type == COP_AWTYPE_AUDIO_INPUT ||
+				    w->type == COP_AWTYPE_PIN_COMPLEX) {
+					tgt = 0;
+					cap = w->inamp_cap;
+				}
+				if (!(COP_AMPCAP_NUMSTEPS(cap)))
+					continue;
+				mc2.type = AUDIO_MIXER_VALUE;
+				mc2.un.value.num_channels = WIDGET_CHANNELS(w);
+				mc2.un.value.level[0] = this->recvols.vol_l;
+				mc2.un.value.level[1] = this->recvols.vol_r;
+				err = azalia_generic_mixer_set(this, w->nid,
+				    tgt, &mc2);
+				if (err) {
+					DPRINTF(("%s: in slave %2.2x vol\n",
+					    __func__, w->nid));
+					return err;
+				}
+			}
+		} else if (mc->type == AUDIO_MIXER_ENUM) {
+			if (mc->un.ord != 0 && mc->un.ord != 1)
+				return EINVAL;
+			this->recvols.mute = mc->un.ord;
+			for (i = 0; i < this->recvols.nslaves; i++) {
+				if (!(this->recvols.cur & (1 << i)))
+					continue;
+				w = &this->w[this->recvols.slaves[i]];
+				tgt = MI_TARGET_OUTAMP;
+				cap = w->outamp_cap;
+				if (w->type == COP_AWTYPE_AUDIO_INPUT ||
+				    w->type == COP_AWTYPE_PIN_COMPLEX) {
+					tgt = 0;
+					cap = w->inamp_cap;
+				}
+				if (!(cap & COP_AMPCAP_MUTE))
+					continue;
+				mc2.type = AUDIO_MIXER_ENUM;
+				mc2.un.ord = this->recvols.mute;
+				err = azalia_generic_mixer_set(this, w->nid,
+				    tgt, &mc2);
+				if (err) {
+					DPRINTF(("%s: out slave %2.2x mute\n",
+					    __func__, w->nid));
+					return err;
+				}
+			}
+
+		} else if (mc->type == AUDIO_MIXER_SET) {
+			this->recvols.cur = (mc->un.mask & this->recvols.mask);
+
+		} else {
+			DPRINTF(("%s: invalid input master mixer type\n"));
 			return EINVAL;
 		}
 	}
