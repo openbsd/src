@@ -1,4 +1,4 @@
-/*	$OpenBSD: moko_machdep.c,v 1.2 2008/12/30 07:03:28 drahn Exp $	*/
+/*	$OpenBSD: moko_machdep.c,v 1.3 2009/01/02 06:38:25 drahn Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -478,6 +478,13 @@ bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
  */
 u_int ol1pagetable;
 void	sscom_dump_init_state(void);
+
+/*
+ * format is 0xff << 8 is major, 0xff is revision
+ * ie gta01 -> 0x0100 (TODO, find revision info)
+ * ie gta02 -> 0x0200 (TODO, find revision info)
+ */
+uint32_t hardware_type; /* better way of doing this? */
 
 u_int
 initarm(void *arg)
@@ -1116,11 +1123,13 @@ consinit(void)
 
 
 	/* HORRID HACK */
-	if (pclk == 66500000)
+	if (pclk == 66500000) {
 		conunit = 0;
-	else if (pclk == 100000000)
+		hardware_type = 0x0100; /* what about revision? */
+	} else if (pclk == 100000000) {
 		conunit = 2;
-	else /* XXX */
+		hardware_type = 0x0200;	 /* what about revision? */
+	} else /* XXX */
 		conunit = 0;
 
 #if NSSCOM > 0
@@ -1175,11 +1184,10 @@ void
 board_startup(void)
 {
 	extern int lcd_cnattach(void (*)(u_int, int));
+
+#ifdef ENABLE_LCD_CONSOLE
 #if NWSDISPLAY > 0
 	extern bus_addr_t comconsaddr;
-#endif
-
-#if NWSDISPLAY > 0
 	/*
 	 * Try to attach the display console now that VM services
 	 * are available.
@@ -1206,6 +1214,7 @@ board_startup(void)
 		}
 	}
 #endif
+#endif /* ENABLE_LCD_CONSOLE */
 
         if (boothowto & RB_CONFIG) {
 #ifdef BOOT_CONFIG

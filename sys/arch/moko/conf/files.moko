@@ -1,4 +1,4 @@
-#	$OpenBSD: files.moko,v 1.1 2008/11/26 14:47:50 drahn Exp $
+#	$OpenBSD: files.moko,v 1.2 2009/01/02 06:38:24 drahn Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -43,6 +43,10 @@ file	arch/arm/fpe-arm/armfpe.s		armfpe
 
 # Machine-independent I2O drivers.
 include "dev/i2o/files.i2o"
+
+# LCD
+attach lcd at ssio with lcd_ssio
+file    arch/moko/dev/moko_lcd.c     lcd_ssio
 
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"
