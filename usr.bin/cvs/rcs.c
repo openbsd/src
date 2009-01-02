@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.282 2008/11/09 08:51:43 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.283 2009/01/02 00:11:01 canacar Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3179,7 +3179,6 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
 	const u_char *c, *start, *fin, *end;
 	char *kwstr;
 	char expbuf[256], buf[256];
-	char *fmt;
 	size_t clen, kwlen, len, tlen;
 
 	kwtype = 0;
@@ -3314,9 +3313,8 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
 			}
 
 			if (kwtype & RCS_KW_DATE) {
-				fmt = "%Y/%m/%d %H:%M:%S ";
-
-				if (strftime(buf, sizeof(buf), fmt,
+				if (strftime(buf, sizeof(buf),
+				    "%Y/%m/%d %H:%M:%S ",
 				    &rdp->rd_date) == 0)
 					fatal("rcs_kwexp_line: strftime "
 					    "failure");
@@ -3332,12 +3330,9 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
 				 * digit, %e would do so and there is
 				 * no better format for strftime().
 				 */
-				if (rdp->rd_date.tm_mday < 10)
-					fmt = "%B%e %Y ";
-				else
-					fmt = "%B %e %Y ";
-
-				if (strftime(buf, sizeof(buf), fmt,
+				if (strftime(buf, sizeof(buf),
+				    (rdp->rd_date.tm_mday < 10) ?
+				        "%B%e %Y " : "%B %e %Y",
 				    &rdp->rd_date) == 0)
 					fatal("rcs_kwexp_line: strftime "
 					    "failure");
@@ -3411,8 +3406,8 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
 				if (strlcat(linebuf, buf, sizeof(linebuf))
 				    >= sizeof(buf))
 					fatal("rcs_kwexp_line: truncated");
-				fmt = "  %Y/%m/%d %H:%M:%S  ";
-				if (strftime(buf, sizeof(buf), fmt,
+				if (strftime(buf, sizeof(buf),
+				    "  %Y/%m/%d %H:%M:%S  ",
 				    &rdp->rd_date) == 0)
 					fatal("rcs_kwexp_line: strftime "
 					    "failure");

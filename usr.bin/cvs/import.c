@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.97 2008/06/15 04:21:26 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.98 2009/01/02 00:11:01 canacar Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -30,7 +30,8 @@ void	cvs_import_local(struct cvs_file *);
 
 static void import_loginfo(char *);
 static void import_new(struct cvs_file *);
-static void import_printf(const char *, ...);
+static void import_printf(const char *, ...)
+	__attribute__((format(printf, 1, 2)));
 static void import_update(struct cvs_file *);
 static void import_tag(struct cvs_file *, RCSNUM *, RCSNUM *);
 static BUF *import_get_rcsdiff(struct cvs_file *, RCSNUM *);

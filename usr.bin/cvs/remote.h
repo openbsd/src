@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.h,v 1.34 2008/07/08 12:54:50 joris Exp $	*/
+/*	$OpenBSD: remote.h,v 1.35 2009/01/02 00:11:01 canacar Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -50,7 +50,8 @@ extern int server_response;
 void	cvs_client_connect_to_server(void);
 void	cvs_client_disconnect(void);
 void	cvs_client_send_logmsg(char *);
-void	cvs_client_send_request(char *, ...);
+void	cvs_client_send_request(char *, ...)
+	__attribute__((format(printf, 1, 2)));
 void	cvs_client_read_response(void);
 void	cvs_client_get_responses(void);
 
@@ -74,7 +75,8 @@ void	cvs_client_sendfile(struct cvs_file *);
 void	cvs_client_send_files(char **, int);
 
 void	cvs_server_root(char *);
-void	cvs_server_send_response(char *, ...);
+void	cvs_server_send_response(char *, ...)
+	__attribute__((format(printf, 1, 2)));
 void	cvs_server_validresp(char *);
 void	cvs_server_validreq(char *);
 void	cvs_server_globalopt(char *);
