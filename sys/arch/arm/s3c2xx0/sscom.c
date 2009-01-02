@@ -1,4 +1,4 @@
-/*	$OpenBSD: sscom.c,v 1.8 2008/12/30 16:32:29 drahn Exp $ */
+/*	$OpenBSD: sscom.c,v 1.9 2009/01/02 19:42:54 drahn Exp $ */
 /*	$NetBSD: sscom.c,v 1.29 2008/06/11 22:37:21 cegger Exp $ */
 
 /*
@@ -278,23 +278,6 @@ void sscom_output_chunk(struct sscom_softc *sc);
 void
 __sscom_output_chunk(struct sscom_softc *sc, int ufstat)
 {
-#if 0
-	int n, space;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-
-	n = sc->sc_tbc;
-	space = 16 - ((ufstat & UFSTAT_TXCOUNT) >> UFSTAT_TXCOUNT_SHIFT);
-
-	if (n > space)
-		n = space;
-
-	if (n > 0) {
-		bus_space_write_multi_1(iot, ioh, SSCOM_UTXH, sc->sc_tba, n);
-		sc->sc_tbc -= n;
-		sc->sc_tba += n;
-	}
-#else
 	int cnt, max;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -311,7 +294,6 @@ __sscom_output_chunk(struct sscom_softc *sc, int ufstat)
 		}
 	}
 	
-#endif
 }
 
 void
@@ -752,13 +734,6 @@ sscomopen(dev_t dev, int flag, int mode, struct proc *p)
 		splx(s2);
 	}
 	
-#if 0
-	splx(s);
-
-	error = ttyopen(tp, SSCOMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
-	if (error)
-		goto bad;
-#else
 	if (SSCOMDIALOUT(dev)) {
 		if (ISSET(tp->t_state, TS_ISOPEN)) {
 			/* Ah, but someone already is dialed in... */
@@ -794,7 +769,6 @@ sscomopen(dev_t dev, int flag, int mode, struct proc *p)
 		}
 	}
 	splx(s);
-#endif
 
         error = (*linesw[tp->t_line].l_open)(dev, tp);
 	if (error)
@@ -1673,85 +1647,6 @@ sscomrxintr(void *arg)
 
 		/* XXX: break interrupt with no character? */
 
-#if 0
-		if ( (ufstat & (UFSTAT_RXCOUNT|UFSTAT_RXFULL)) &&
-		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
-
-			while (cc > 0) {
-				int cn_trapped = 0;
-
-				/* get status and received character.
-				   read status register first */
-				uerstat = sscom_geterr(iot, ioh);
-				put[0] = sscom_getc(iot, ioh);
-
-				if (ISSET(uerstat, UERSTAT_BREAK)) {
-					int con_trapped = 0;
-#if 0
-					cn_check_magic(sc->sc_tty->t_dev,
-					    CNC_BREAK, sscom_cnm_state);
-#endif
-					if (con_trapped)
-						continue;
-#if defined(KGDB)
-					if (ISSET(sc->sc_hwflags,
-					    SSCOM_HW_KGDB)) {
-						kgdb_connect(1);
-						continue;
-					}
-#endif
-				}
-
-				put[1] = uerstat;
-#if 0
-				cn_check_magic(sc->sc_tty->t_dev,
-					       put[0], sscom_cnm_state);
-#endif
-				if (!cn_trapped) {
-					put += 2;
-					if (put >= end)
-						put = sc->sc_rbuf;
-					cc--;
-				}
-
-				ufstat = bus_space_read_4(iot, ioh, SSCOM_UFSTAT);
-				if ( (ufstat & (UFSTAT_RXFULL|UFSTAT_RXCOUNT)) == 0 )
-					break;
-			}
-
-			/*
-			 * Current string of incoming characters ended because
-			 * no more data was available or we ran out of space.
-			 * Schedule a receive event if any data was received.
-			 * If we're out of space, turn off receive interrupts.
-			 */
-			sc->sc_rbput = put;
-			sc->sc_rbavail = cc;
-			if (!ISSET(sc->sc_rx_flags, RX_TTY_OVERFLOWED))
-				sc->sc_rx_ready = 1;
-
-			/*
-			 * See if we are in danger of overflowing a buffer. If
-			 * so, use hardware flow control to ease the pressure.
-			 */
-			if (!ISSET(sc->sc_rx_flags, RX_IBUF_BLOCKED) &&
-			    cc < sc->sc_r_hiwat) {
-				SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
-				sscom_hwiflow(sc);
-			}
-
-			/*
-			 * If we're out of space, disable receive interrupts
-			 * until the queue has drained a bit.
-			 */
-			if (!cc) {
-				SET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED);
-				sscom_disable_rxint(sc);
-				sc->sc_ucon &= ~UCON_ERRINT;
-				bus_space_write_4(iot, ioh, SSCOM_UCON, sc->sc_ucon);
-			}
-		}
-#else
 		utrstat = bus_space_read_4(iot, ioh, SSCOM_UTRSTAT);
 		if (utrstat & UTRSTAT_RXREADY) {
 			uerstat = bus_space_read_4((iot), (ioh), SSCOM_UERSTAT);
@@ -1805,7 +1700,6 @@ next:
 				sc->sc_ucon &= ~UCON_ERRINT;
 				bus_space_write_4(iot, ioh, SSCOM_UCON, sc->sc_ucon);
 			}
-#endif
 		if (sc->sc_rbput != put) {
 			sc->sc_rx_ready = 1;
 			softintr_schedule(sc->sc_si);
@@ -1963,18 +1857,6 @@ sscomtxintr(void *arg)
 		 * Output the next chunk of the contiguous
 		 * buffer, if any.
 		 */
-#if 0
-		if (sc->sc_tbc > 0) {
-			__sscom_output_chunk(sc, ufstat);
-		} else {
-			/*
-			 * Disable transmit sscompletion
-			 * interrupts if necessary.
-			 */
-			if (sc->sc_hwflags & SSCOM_HW_TXINT)
-				sscom_disable_txint(sc);
-		}
-#else
 		if ( sc->sc_tty->t_outq.c_cc > 0) {
 			struct tty *tp = sc->sc_tty;
 			if (ISSET(tp->t_state, TS_BUSY)) {
@@ -1988,7 +1870,6 @@ sscomtxintr(void *arg)
 			}
 			sscom_disable_txint(sc);
 		}
-#endif
 	}
 
 	SSCOM_UNLOCK(sc);
