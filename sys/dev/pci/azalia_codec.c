@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.104 2009/01/02 20:35:05 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.105 2009/01/02 20:37:57 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -2052,7 +2052,7 @@ int
 azalia_codec_gpio_quirks(codec_t *this)
 {
 	if (this->vid == SIGMATEL_STAC9221 && this->subid == STAC9221_APPLE_ID) {
-		this->comresp(this, this->audiofunc, 0x7e7, 0, NULL);
+		this->comresp(this, this->audiofunc, CORB_SET_GPIO_POLARITY, 0, NULL);
 		azalia_gpio_unmute(this, 0);
 		azalia_gpio_unmute(this, 1);
 	}

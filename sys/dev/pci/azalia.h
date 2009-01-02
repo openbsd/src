@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.34 2009/01/02 20:18:18 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.35 2009/01/02 20:37:57 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -380,6 +380,8 @@
 #define CORB_SET_GPIO_UNSOLICITED_ENABLE_MASK	0x719
 #define CORB_GET_GPIO_STICKY_MASK	0xf1a
 #define CORB_SET_GPIO_STICKY_MASK	0x71a
+#define CORB_GET_GPIO_POLARITY		0xfe7
+#define CORB_SET_GPIO_POLARITY		0x7e7
 #define CORB_GET_BEEP_GENERATION	0xf0a
 #define CORB_SET_BEEP_GENERATION	0x70a
 #define CORB_GET_VOLUME_KNOB		0xf0f
