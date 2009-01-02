@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.15 2008/12/30 22:51:52 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.16 2009/01/02 21:05:26 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -735,45 +735,23 @@ orig_rtr_lsa_area(struct area *area)
 		bzero(&rtr_link, sizeof(rtr_link));
 
 		switch (iface->type) {
-#if 0 /* TODO pointtopoint */
 		case IF_TYPE_POINTOPOINT:
 			LIST_FOREACH(nbr, &iface->nbr_list, entry)
 				if (nbr != iface->self &&
 				    nbr->state & NBR_STA_FULL)
 					break;
-			if (nbr) {
+			if (nbr && iface->state & IF_STA_POINTTOPOINT) {
 				log_debug("orig_rtr_lsa: point-to-point, "
 				    "interface %s", iface->name);
-				rtr_link.id = nbr->id.s_addr;
-//XXX				rtr_link.data = iface->addr.s_addr;
 				rtr_link.type = LINK_TYPE_POINTTOPOINT;
-				/* RFC 3137: stub router support */
-				if (oeconf->flags & OSPFD_FLAG_STUB_ROUTER ||
-				    oe_nofib)
-					rtr_link.metric = 0xffff;
-				else
-					rtr_link.metric = htons(iface->metric);
-				if (buf_add(buf, &rtr_link, sizeof(rtr_link)))
-					fatalx("orig_rtr_lsa: buf_add failed");
-			}
-			if (iface->state & IF_STA_POINTTOPOINT) {
-				log_debug("orig_rtr_lsa: stub net, "
-				    "interface %s", iface->name);
-				bzero(&rtr_link, sizeof(rtr_link));
-				if (nbr) {
-//XXX					rtr_link.id = nbr->addr.s_addr;
-					rtr_link.data = 0xffffffff;
-				} else {
-//XXX					rtr_link.id = iface->addr.s_addr;
-//XXX					rtr_link.data = iface->mask.s_addr;
-				}
-				rtr_link.type = LINK_TYPE_STUB_NET;
 				rtr_link.metric = htons(iface->metric);
+				rtr_link.iface_id = htonl(iface->ifindex);
+				rtr_link.nbr_iface_id = htonl(nbr->iface_id);
+				rtr_link.nbr_rtr_id = nbr->id.s_addr;
 				if (buf_add(buf, &rtr_link, sizeof(rtr_link)))
 					fatalx("orig_rtr_lsa: buf_add failed");
 			}
 			continue;
-#endif /* pointtopoint */
 		case IF_TYPE_BROADCAST:
 		case IF_TYPE_NBMA:
 			if ((iface->state & IF_STA_MULTI)) {
