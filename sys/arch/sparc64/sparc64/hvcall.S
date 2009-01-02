@@ -1,4 +1,4 @@
-/*	$OpenBSD: hvcall.S,v 1.7 2008/12/31 23:38:38 kettenis Exp $	*/
+/*	$OpenBSD: hvcall.S,v 1.8 2009/01/02 15:35:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -98,6 +98,10 @@
 #define LDC_RX_QINFO		0xe5
 #define LDC_RX_GET_STATE	0xe6
 #define LDC_RX_SET_QHEAD	0xe7
+
+#define LDC_SET_MAP_TABLE	0xea
+#define LDC_GET_MAP_TABLE	0xeb
+#define LDC_COPY		0xec
 
 #define RNG_GET_DIAG_CONTROL	0x130
 #define RNG_CTL_READ		0x131
@@ -471,6 +475,28 @@ ENTRY(hv_ldc_rx_set_qhead)
 	ta	FAST_TRAP
 	retl
 	 nop
+
+ENTRY(hv_ldc_set_map_table)
+	mov	LDC_SET_MAP_TABLE, %o5
+	ta	FAST_TRAP
+	retl
+	 nop
+
+ENTRY(hv_ldc_get_map_table)
+	mov	%o2, %o4
+	mov	%o1, %o3
+	mov	LDC_GET_MAP_TABLE, %o5
+	ta	FAST_TRAP
+	stx	%o1, [%o3]
+	retl
+	 stx	%o2, [%o4]
+
+ENTRY(hv_ldc_copy)
+	mov	%o5, %g5
+	mov	LDC_COPY, %o5
+	ta	FAST_TRAP
+	retl
+	 stx	%o1, [%g5]
 
 ENTRY(hv_rng_get_diag_control)
 	mov	RNG_GET_DIAG_CONTROL, %o5

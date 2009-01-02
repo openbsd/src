@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.9 2008/12/31 23:38:38 kettenis Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.10 2009/01/02 15:35:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -190,6 +190,16 @@ int64_t hv_ldc_rx_set_qhead(uint64_t ldc_id, uint64_t head_offset);
 #define LDC_CHANNEL_DOWN	0
 #define LDC_CHANNEL_UP		1
 #define LDC_CHANNEL_RESET	2
+
+int64_t	hv_ldc_set_map_table(uint64_t ldc_id, paddr_t base_raddr,
+	    uint64_t nentries);
+int64_t	hv_ldc_get_map_table(uint64_t ldc_id, paddr_t *base_raddr,
+	    uint64_t *nentries);
+int64_t hv_ldc_copy(uint64_t ldc_id, uint64_t flags, uint64_t cookie,
+	    paddr_t raddr, psize_t length, paddr_t *ret_length);
+
+#define LDC_COPY_IN		0
+#define LDC_COPY_OUT		1
 
 /*
  * Cryptographic services
