@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.h,v 1.6 2008/03/18 16:57:58 reyk Exp $ */
+/*	$OpenBSD: ber.h,v 1.7 2009/01/03 18:41:41 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -90,6 +90,8 @@ struct ber_element	*ber_add_sequence(struct ber_element *);
 struct ber_element	*ber_add_set(struct ber_element *);
 struct ber_element	*ber_add_integer(struct ber_element *, long long);
 int			 ber_get_integer(struct ber_element *, long long *);
+struct ber_element	*ber_add_enumerated(struct ber_element *, long long);
+int			 ber_get_enumerated(struct ber_element *, long long *);
 struct ber_element	*ber_add_boolean(struct ber_element *, int);
 int			 ber_get_boolean(struct ber_element *, int *);
 struct ber_element	*ber_add_string(struct ber_element *, const char *);

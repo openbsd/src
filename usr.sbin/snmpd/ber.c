@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.15 2008/06/29 16:00:22 ragge Exp $ */
+/*	$OpenBSD: ber.c,v 1.16 2009/01/03 18:41:41 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -153,6 +153,35 @@ ber_add_set(struct ber_element *prev)
 }
 
 struct ber_element *
+ber_add_enumerated(struct ber_element *prev, long long val)
+{
+	struct ber_element *elm;
+	u_int i, len = 0;
+	u_char cur, last = 0;
+
+	if ((elm = ber_get_element(BER_TYPE_ENUMERATED)) == NULL)
+		return NULL;
+
+	elm->be_numeric = val;
+
+	for (i = 0; i < sizeof(long long); i++) {
+		cur = val & 0xff;
+		if (cur != 0 && cur != 0xff)
+			len = i;
+		if ((cur == 0 && last & 0x80) ||
+		    (cur == 0xff && (last & 0x80) == 0))
+			len = i;
+		val >>= 8;
+		last = cur;
+	}
+	elm->be_len = len + 1;
+
+	ber_link_elements(prev, elm);
+
+	return elm;
+}
+
+struct ber_element *
 ber_add_integer(struct ber_element *prev, long long val)
 {
 	struct ber_element *elm;
@@ -190,6 +219,17 @@ ber_get_integer(struct ber_element *elm, long long *n)
 	*n = elm->be_numeric;
 	return 0;
 }
+
+int
+ber_get_enumerated(struct ber_element *elm, long long *n)
+{
+	if (elm->be_encoding != BER_TYPE_ENUMERATED)
+		return -1;
+
+	*n = elm->be_numeric;
+	return 0;
+}
+
 
 struct ber_element *
 ber_add_boolean(struct ber_element *prev, int bool)
@@ -514,6 +554,10 @@ ber_printf_elements(struct ber_element *ber, char *fmt, ...)
 			e = va_arg(ap, struct ber_element *);
 			ber_link_elements(ber, e);
 			break;
+		case 'E':
+			i = va_arg(ap, long long);
+			ber = ber_add_enumerated(ber, i);
+			break;
 		case 'i':
 			i = va_arg(ap, long long);
 			ber = ber_add_integer(ber, i);
@@ -602,6 +646,12 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 			*e = ber;
 			ret++;
 			continue;
+		case 'E':
+			i = va_arg(ap, long long *);
+			if (ber_get_enumerated(ber, i) == -1)
+				goto fail;
+			ret++;
+			break;
 		case 'i':
 			i = va_arg(ap, long long *);
 			if (ber_get_integer(ber, i) == -1)
@@ -612,6 +662,9 @@ ber_scanf_elements(struct ber_element *ber, char *fmt, ...)
 			o = va_arg(ap, struct ber_oid *);
 			if (ber_get_oid(ber, o) == -1)
 				goto fail;
+			ret++;
+			break;
+		case 'S':
 			ret++;
 			break;
 		case 's':
