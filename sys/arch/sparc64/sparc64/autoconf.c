@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.97 2008/07/21 04:35:54 todd Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.98 2009/01/03 22:09:29 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -75,6 +75,8 @@
 #include <machine/trap.h>
 #include <sparc64/sparc64/cache.h>
 #include <sparc64/sparc64/timerreg.h>
+#include <sparc64/dev/vbusvar.h>
+#include <sparc64/dev/cbusvar.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/pci/pcivar.h>
@@ -1195,6 +1197,8 @@ device_register(struct device *dev, void *aux)
 	struct mainbus_attach_args *ma = aux;
 	struct pci_attach_args *pa = aux;
 	struct sbus_attach_args *sa = aux;
+	struct vbus_attach_args *va = aux;
+	struct cbus_attach_args *ca = aux;
 	struct bootpath *bp = bootpath_store(0, NULL);
 	struct device *busdev = dev->dv_parent;
 	const char *devname = dev->dv_cfdata->cf_driver->cd_name;
@@ -1230,6 +1234,10 @@ device_register(struct device *dev, void *aux)
 	else if (strcmp(busname, "sbus") == 0 ||
 	    strcmp(busname, "dma") == 0 || strcmp(busname, "ledma") == 0)
 		node = sa->sa_node;
+	else if (strcmp(busname, "vbus") == 0)
+		node = va->va_node;
+	else if (strcmp(busname, "cbus") == 0)
+		node = ca->ca_node;
 	else if (strcmp(busname, "pci") == 0)
 		node = PCITAG_NODE(pa->pa_tag);
 
