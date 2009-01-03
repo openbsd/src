@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.107 2009/01/02 22:32:25 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.108 2009/01/03 19:17:45 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1449,14 +1449,16 @@ azalia_codec_init_volgroups(codec_t *this)
 	}
 
 	this->playvols.master = this->audiofunc;
-	FOR_EACH_WIDGET(this, i) {
-		w = &this->w[i];
-		if (w->type != COP_AWTYPE_VOLUME_KNOB)
-			continue;
-		if (!(w->widgetcap & COP_AWCAP_UNSOL))
-			continue;
-		this->playvols.master = w->nid;
-		break;
+	if (this->playvols.nslaves > 0) {
+		FOR_EACH_WIDGET(this, i) {
+			w = &this->w[i];
+			if (w->type != COP_AWTYPE_VOLUME_KNOB)
+				continue;
+			if (!COP_VKCAP_NUMSTEPS(w->d.volume.cap))
+				continue;
+			this->playvols.master = w->nid;
+			break;
+		}
 	}
 
 	j = 0;

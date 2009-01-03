@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.36 2009/01/02 22:32:25 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.37 2009/01/03 19:17:45 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -490,6 +490,7 @@
 
 #define AZ_MAX_VOL_SLAVES	16
 #define AZ_TAG_SPKR		0x01
+#define AZ_TAG_PLAYVOL		0x02
 
 #define AZ_CLASS_INPUT	0
 #define AZ_CLASS_OUTPUT	1
@@ -604,6 +605,8 @@ typedef struct {
 	int vol_l;
 	int vol_r;
 	int mute;
+	int hw_step;
+	int hw_nsteps;
 	nid_t slaves[AZ_MAX_VOL_SLAVES];
 	int nslaves;
 	int mask;
