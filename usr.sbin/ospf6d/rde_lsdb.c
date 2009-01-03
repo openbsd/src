@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.13 2008/12/30 22:24:34 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.14 2009/01/03 00:23:50 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -582,9 +582,9 @@ lsa_num_links(struct vertex *v)
 }
 
 void
-lsa_snap(struct area *area, u_int32_t peerid)
+lsa_snap(struct rde_nbr *nbr, u_int32_t peerid)
 {
-	struct lsa_tree	*tree = &area->lsa_tree;
+	struct lsa_tree	*tree = &nbr->area->lsa_tree;
 	struct vertex	*v;
 
 	do {
@@ -600,9 +600,14 @@ lsa_snap(struct area *area, u_int32_t peerid)
 				    0, &v->lsa->hdr, sizeof(struct lsa_hdr));
 			}
 		}
-		if (tree != &area->lsa_tree)
+		if (tree == &asext_tree)
 			break;
-		tree = &asext_tree;
+		if (tree == &nbr->area->lsa_tree) {
+			tree = &nbr->iface->lsa_tree;
+			continue;
+		} else 
+			tree = &asext_tree;
+
 	} while (1);
 }
 
