@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.472 2008/12/07 08:45:13 jmc Exp $
+#	$OpenBSD: Makefile,v 1.473 2009/01/03 18:39:33 damien Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 \
 	acpi.4 acpiac.4 acpiasus.4 acpibat.4 acpibtn.4 acpicpu.4 acpidock.4 \
@@ -39,7 +39,7 @@ MAN=	aac.4 ac97.4 acphy.4 \
 	pf.4 pflog.4 pflow.4 pfsync.4 pgt.4 piixpm.4 pim.4 \
 	pms.4 ppb.4 ppp.4 pppoe.4 pty.4 puc.4 pwdog.4 qsphy.4 radio.4 raid.4 \
 	ral.4 random.4 ray.4 rd.4 re.4 rgephy.4 ricohrtc.4 \
-	rl.4 rlphy.4 route.4 rt.4 rum.4 \
+	rl.4 rlphy.4 route.4 rt.4 rum.4 run.4 \
 	rtfps.4 rtii.4 rtw.4 safe.4 safte.4 san.4 sbt.4 sbus.4 scsi.4 sd.4 \
 	sdmmc.4 sdhc.4 ses.4 \
 	sequencer.4 sf.4 sf2r.4 sfr.4 sili.4 siop.4 sis.4 sk.4 sl.4 sli.4 \

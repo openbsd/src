@@ -1,0 +1,160 @@
+.\" $OpenBSD: run.4,v 1.1 2009/01/03 18:39:33 damien Exp $
+.\"
+.\" Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: January 3 2009 $
+.Os
+.Dt RUN 4
+.Sh NAME
+.Nm run
+.Nd Ralink Technology USB IEEE 802.11a/b/g wireless network device
+.Sh SYNOPSIS
+.Cd "run* at uhub? port ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports USB 2.0 wireless adapters based on the Ralink RT2700U,
+RT2800U and RT3000U chipsets.
+.Pp
+The RT2700U chipset consists of two integrated chips, an RT2770 MAC/BBP and
+an RT2720 (1T2R) or RT2750 (dual-band 1T2R) radio transceiver.
+.Pp
+The RT2800U chipset consists of two integrated chips, an RT2870 MAC/BBP and
+an RT2820 (2T3R) or RT2850 (dual-band 2T3R) radio transceiver.
+.Pp
+The RT3000U is a single-chip solution based on an RT3070 MAC/BBP and
+an RT3020 (single-band 1T1R) radio transceiver.
+.Pp
+These are the modes the
+.Nm
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This mode is the default.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
+.El
+.Pp
+The
+.Nm
+driver can be configured to use
+Wireless Equivalent Privacy (WEP) or
+Wi-Fi Protected Access (WPA-PSK and WPA2-PSK).
+WPA is the de facto encryption standard for wireless networks.
+It is strongly recommended that WEP
+not be used as the sole mechanism
+to secure wireless communication,
+due to serious weaknesses in it.
+The
+.Nm
+driver offloads both encryption and decryption of unicast data frames to the
+hardware for the WEP40, WEP104, TKIP(+MIC) and CCMP ciphers.
+.Pp
+The
+.Nm
+driver can be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5 .
+.Sh FILES
+The driver needs at least version 1.0 of the following firmware file,
+which is loaded when an interface is brought up:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It /etc/firmware/run-rt2870
+.El
+.Sh EXAMPLES
+The following
+.Xr hostname.if 5
+example configures run0 to join whatever network is available on boot,
+using WEP key
+.Dq 0x1deadbeef1 ,
+channel 11, obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+.Ed
+.Pp
+Configure run0 to join network
+.Dq my_net
+using WPA-PSK with passphrase
+.Dq my_passphrase :
+.Bd -literal -offset indent
+# ifconfig run0 nwid my_net wpa wpapsk \e
+	$(wpa-psk my_net my_passphrase)
+.Ed
+.Pp
+Return run0 to its default settings:
+.Bd -literal -offset indent
+# ifconfig run0 -bssid -chan media autoselect \e
+	nwid "" -nwkey -wpa -wpapsk
+.Ed
+.Pp
+Join an existing BSS network,
+.Dq my_net :
+.Bd -literal -offset indent
+# ifconfig run0 192.168.1.1 netmask 0xffffff00 nwid my_net
+.Ed
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "run%d: error %d, could not read firmware %s"
+For some reason, the driver was unable to read the microcode file from the
+filesystem.
+The file might be missing or corrupted.
+.It "run%d: could not load 8051 microcode"
+An error occurred while attempting to upload the microcode to the onboard 8051
+microcontroller unit.
+.It "run%d: device timeout"
+A frame dispatched to the hardware for transmission did not complete in time.
+The driver will reset the hardware.
+This should not happen.
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr usb 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8 ,
+.Xr wpa-psk 8
+.Pp
+Ralink Technology:
+.Pa http://www.ralinktech.com/
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.5 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Damien Bergamini Aq damien@openbsd.org .
+.Sh CAVEATS
+The
+.Nm
+driver does not support any of the 802.11n capabilities offered by the
+RT2800 and RT3000 chipsets.
+Additional work is required in
+.Xr ieee80211 9
+before those features can be supported.

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.79 2008/12/09 06:31:15 deraadt Exp $
+#	$OpenBSD: files.usb,v 1.80 2009/01/03 18:39:33 damien Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -291,6 +291,11 @@ file	dev/usb/if_ral.c		ural
 device	rum: ether, ifnet, ifmedia, wlan, firmload
 attach	rum at uhub
 file	dev/usb/if_rum.c		rum
+
+# Ralink Technology RT2700U/RT2800U/RT3000U
+device	run: ether, ifnet, ifmedia, wlan, firmload
+attach	run at uhub
+file	dev/usb/if_run.c		run
 
 # Zydas ZD1211
 device	zyd: ether, ifnet, ifmedia, wlan, firmload
