@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.80 2008/12/22 18:20:47 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.81 2009/01/03 10:11:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -3305,6 +3305,7 @@ wpi_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int error;
 
+#ifdef notyet
 	/* Check that the radio is not disabled by hardware switch. */
 	if (!(WPI_READ(sc, WPI_GP_CNTRL) & WPI_GP_CNTRL_RFKILL)) {
 		printf("%s: radio is disabled by hardware switch\n",
@@ -3312,7 +3313,7 @@ wpi_init(struct ifnet *ifp)
 		error = EPERM;	/* :-) */
 		goto fail;
 	}
-
+#endif
 	/* Read firmware images from the filesystem. */
 	if ((error = wpi_read_firmware(sc)) != 0) {
 		printf("%s: could not read firmware\n", sc->sc_dev.dv_xname);
