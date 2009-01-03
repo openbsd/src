@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.8 2008/11/26 18:01:43 dlg Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.9 2009/01/03 21:47:32 gollo Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -212,9 +212,10 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) &&
 		    sc->sc_receiver_ip.s_addr != 0 &&
-		    sc->sc_receiver_port != 0)
+		    sc->sc_receiver_port != 0) {
 			ifp->if_flags |= IFF_RUNNING;
-		else
+			sc->sc_gcounter=pflowstats.pflow_flows;
+		} else
 			ifp->if_flags &= ~IFF_RUNNING;
 		break;
 	case SIOCSIFMTU:
@@ -261,9 +262,10 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		if ((ifp->if_flags & IFF_UP) &&
 		    sc->sc_receiver_ip.s_addr != 0 &&
-		    sc->sc_receiver_port != 0)
+		    sc->sc_receiver_port != 0) {
 			ifp->if_flags |= IFF_RUNNING;
-		else
+			sc->sc_gcounter=pflowstats.pflow_flows;
+		} else
 			ifp->if_flags &= ~IFF_RUNNING;
 
 		break;
@@ -467,7 +469,8 @@ pflow_pack_flow(struct pf_state *st, struct pflow_softc *sc)
 		}
 	}
 
-	pflowstats.pflow_flows++;
+	if (pflowstats.pflow_flows == sc->sc_gcounter)
+		pflowstats.pflow_flows++;
 	sc->sc_gcounter++;
 	sc->sc_count++;
 
@@ -496,7 +499,8 @@ pflow_pack_flow(struct pf_state *st, struct pflow_softc *sc)
 				}
 			}
 
-			pflowstats.pflow_flows++;
+			if (pflowstats.pflow_flows == sc->sc_gcounter)
+				pflowstats.pflow_flows++;
 			sc->sc_gcounter++;
 			sc->sc_count++;
 
