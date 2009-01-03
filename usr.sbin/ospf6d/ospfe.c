@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.16 2009/01/02 21:05:26 stsp Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.17 2009/01/03 00:18:51 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -979,11 +979,22 @@ orig_link_lsa(struct iface *iface)
 
 	log_debug("orig_link_lsa: interface %s", iface->name);
 
-	if (iface->type == IF_TYPE_VIRTUALLINK)
+	switch (iface->type) {
+	case IF_TYPE_VIRTUALLINK:	/* forbidden by rfc5340 */
 		return;
-	
-	if ((iface->state & IF_STA_MULTI) == 0)
-		return;
+	case IF_TYPE_BROADCAST:
+	case IF_TYPE_NBMA:
+		if ((iface->state & IF_STA_MULTI) == 0)
+			return;
+		break;
+	case IF_TYPE_POINTOPOINT:
+	case IF_TYPE_POINTOMULTIPOINT:
+		if ((iface->state & IF_STA_POINTTOPOINT) == 0)
+			return;
+		break;
+	default:
+		fatalx("orig_link_lsa: unknown interface type");
+	}
 
 	/* XXX READ_BUF_SIZE */
 	if ((buf = buf_dynamic(sizeof(lsa_hdr) + sizeof(lsa_link),
