@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.79 2008/12/12 21:52:04 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.80 2009/01/03 15:31:03 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -255,7 +255,7 @@ route_output(struct mbuf *m, ...)
 		}
 	}
 
-	/* make sure that kernel only bits are not set */
+	/* make sure that kernel-only bits are not set */
 	rtm->rtm_priority &= RTP_MASK;
 
 	if (rtm->rtm_priority != 0) {
@@ -270,6 +270,9 @@ route_output(struct mbuf *m, ...)
 		prio = RTP_STATIC;
 	else
 		prio = RTP_DEFAULT;
+
+	/* write back the priority the kernel used */
+	 rtm->rtm_priority = prio;
 
 	bzero(&info, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
