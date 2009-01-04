@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.13 2009/01/02 20:36:19 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.14 2009/01/04 00:05:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -56,6 +56,10 @@
 #include <dev/rasops/rasops.h>
 
 #include <machine/fbvar.h>
+
+#ifdef APERTURE
+extern int allowaperture;
+#endif
 
 /*
  * Parts of the following hardware knowledge come from David S. Miller's
@@ -579,11 +583,14 @@ ifb_mmap(void *v, off_t off, int prot)
 			    sc->sc_fb8bank1_base,
 			    off, prot, BUS_SPACE_MAP_LINEAR);
 		}
-#ifdef notyet	/* not needed so far, will require an aperture check */
+#ifdef APERTURE
 		off -= 0x01000000;
-		if (off >= 0 && off < round_page(sc->sc_reglen)) {
-			return bus_space_mmap(sc->sc_mem_t, sc->sc_regbase,
-			    off, prot, BUS_SPACE_MAP_LINEAR);
+		if (allowaperture != 0) {
+			if (off >= 0 && off < round_page(sc->sc_reglen)) {
+				return bus_space_mmap(sc->sc_mem_t,
+				    sc->sc_regbase,
+				    off, prot, BUS_SPACE_MAP_LINEAR);
+			}
 		}
 #endif
 		break;
