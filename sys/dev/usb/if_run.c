@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.1 2009/01/03 18:39:33 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.2 2009/01/04 18:27:36 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -472,11 +472,11 @@ run_detach(struct device *self, int flags)
 	while (sc->cmdq.queued > 0)
 		tsleep(&sc->cmdq, 0, "cmdq", 0);
 
-	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	timeout_del(&sc->scan_to);
 	timeout_del(&sc->calib_to);
 
 	if (ifp->if_flags != 0) {	/* if_attach() has been called */
+		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		ieee80211_ifdetach(ifp);
 		if_detach(ifp);
 	}
@@ -1554,7 +1554,8 @@ run_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct run_softc *sc = ic->ic_softc;
 	struct run_cmd_key cmd;
 
-	if (ic->ic_state != IEEE80211_S_RUN)
+	if (!(ic->ic_if.if_flags & IFF_RUNNING) ||
+	    ic->ic_state != IEEE80211_S_RUN)
 		return;	/* nothing to do */
 
 	/* do it in a process context */
@@ -2723,7 +2724,7 @@ run_init(struct ifnet *ifp)
 
 	for (ntries = 0; ntries < 100; ntries++) {
 		if ((error = run_read(sc, RT2860_ASIC_VER_ID, &tmp)) != 0)
-			return error;
+			goto fail;
 		if (tmp != 0 && tmp != 0xffffffff)
 			break;
 		DELAY(10);
@@ -2755,7 +2756,8 @@ run_init(struct ifnet *ifp)
 	run_set_macaddr(sc, ic->ic_myaddr);
 
 	for (ntries = 0; ntries < 100; ntries++) {
-		run_read(sc, RT2860_WPDMA_GLO_CFG, &tmp);
+		if ((error = run_read(sc, RT2860_WPDMA_GLO_CFG, &tmp)) != 0)
+			goto fail;
 		if ((tmp & (RT2860_TX_DMA_BUSY | RT2860_RX_DMA_BUSY)) == 0)
 			break;
 		DELAY(1000);
@@ -2808,7 +2810,8 @@ run_init(struct ifnet *ifp)
 
 	/* wait while MAC is busy */
 	for (ntries = 0; ntries < 100; ntries++) {
-		run_read(sc, RT2860_MAC_STATUS_REG, &tmp);
+		if ((error = run_read(sc, RT2860_MAC_STATUS_REG, &tmp)) != 0)
+			goto fail;
 		if (!(tmp & (RT2860_RX_STATUS_BUSY | RT2860_TX_STATUS_BUSY)))
 			break;
 		DELAY(1000);
@@ -2911,7 +2914,7 @@ run_init(struct ifnet *ifp)
 	}
 
 	if ((error = run_txrx_enable(sc)) != 0)
-		return error;
+		goto fail;
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
