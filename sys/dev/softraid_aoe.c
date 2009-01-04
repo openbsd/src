@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.3 2008/12/24 19:32:02 marco Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.4 2009/01/04 20:36:23 thib Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -115,8 +115,7 @@ sr_aoe_alloc_resources(struct sr_discipline *sd)
 	}
 	shelf = htons(shelf);
 
-	ah = malloc(sizeof(*ah), M_DEVBUF, M_WAITOK);
-	memset(ah, 0, sizeof(*ah));
+	ah = malloc(sizeof(*ah), M_DEVBUF, M_WAITOK | M_ZERO);
 	ah->ifp = ifp;
 	ah->major = shelf;
 	ah->minor = slot;
