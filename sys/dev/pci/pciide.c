@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.291 2009/01/04 10:22:01 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.292 2009/01/04 10:37:40 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -671,7 +671,17 @@ const struct pciide_product_desc pciide_sis_products[] =  {
 	}
 };
 
+/*
+ * The National/AMD CS5535 requires MSRs to set DMA/PIO modes so it
+ * has been banished to the MD i386 pciide_machdep
+ */
 const struct pciide_product_desc pciide_natsemi_products[] =  {
+#ifdef __i386__
+	{ PCI_PRODUCT_NS_CS5535_IDE,	/* National/AMD CS5535 IDE */
+	  0,
+	  gcsc_chip_map
+	},
+#endif
 	{ PCI_PRODUCT_NS_PC87415,	/* National Semi PC87415 IDE */
 	  0,
 	  natsemi_chip_map

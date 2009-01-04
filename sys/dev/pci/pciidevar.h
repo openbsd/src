@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidevar.h,v 1.17 2009/01/04 10:22:01 jsg Exp $	*/
+/*	$OpenBSD: pciidevar.h,v 1.18 2009/01/04 10:37:40 jsg Exp $	*/
 /*	$NetBSD: pciidevar.h,v 1.6 2001/01/12 16:04:00 bouyer Exp $	*/
 
 /*
@@ -160,6 +160,10 @@ void	 pciide_print_channels(int, pcireg_t);
 /*
  * Functions defined by machine-dependent code.
  */
+
+#ifdef __i386__
+void gcsc_chip_map(struct pciide_softc *, struct pci_attach_args *);
+#endif
 
 /* Attach compat interrupt handler, returning handle or NULL if failed. */
 #if !defined(pciide_machdep_compat_intr_establish)
