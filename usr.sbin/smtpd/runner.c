@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.17 2009/01/04 20:52:06 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.18 2009/01/04 22:18:23 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -72,9 +72,6 @@ void		runner_purge_message(char *);
 struct batch	*batch_record(struct smtpd *, struct message *);
 struct batch	*batch_lookup(struct smtpd *, struct message *);
 
-#define	RUNNER_MDA	0x1
-#define	RUNNER_MTA	0x2
-u_int8_t runstates = RUNNER_MDA|RUNNER_MTA;
 u_int8_t flagreset = 1;
 
 void
@@ -127,16 +124,16 @@ runner_dispatch_control(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_RUNNER_PAUSE_MDA:
-			runstates &= ~RUNNER_MDA;
+			env->sc_opts |= SMTPD_MDA_PAUSED;
 			break;
 		case IMSG_RUNNER_PAUSE_MTA:
-			runstates &= ~RUNNER_MTA;
+			env->sc_opts |= SMTPD_MTA_PAUSED;
 			break;
 		case IMSG_RUNNER_RESUME_MDA:
-			runstates |= RUNNER_MDA;
+			env->sc_opts &= ~SMTPD_MDA_PAUSED;
 			break;
 		case IMSG_RUNNER_RESUME_MTA:
-			runstates |= RUNNER_MTA;
+			env->sc_opts &= ~SMTPD_MTA_PAUSED;
 			break;
 		default:
 			log_debug("queue_dispatch_control: unexpected imsg %d",
@@ -539,6 +536,12 @@ runner_process_envelope(struct smtpd *env, char *msgid, char *evpid)
 		queue_update_envelope(&message);
 	}
 
+	if ((message.type & T_MDA_MESSAGE) && (env->sc_opts & SMTPD_MDA_PAUSED))
+		return;
+
+	if ((message.type & T_MTA_MESSAGE) && (env->sc_opts & SMTPD_MTA_PAUSED))
+		return;
+
 	if (! runner_message_schedule(&message, tm))
 		return;
 
@@ -740,10 +743,6 @@ runner_message_schedule(struct message *messagep, time_t tm)
 	time_t delay;
 
 	if (messagep->flags & (F_MESSAGE_SCHEDULED|F_MESSAGE_PROCESSING))
-		return 0;
-
-	if (((messagep->type & T_MDA_MESSAGE) && !(runstates & RUNNER_MDA)) ||
-	    ((messagep->type & T_MTA_MESSAGE) && !(runstates & RUNNER_MTA)))
 		return 0;
 
 	/* Batch has been in the queue for too long and expired */
