@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.5 2009/01/01 16:15:47 jacekm Exp $	*/
+/*	$OpenBSD: control.c,v 1.6 2009/01/04 19:37:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -311,6 +311,51 @@ control_dispatch_ext(int fd, short event, void *arg)
 			env->sc_flags |= SMTPD_EXITING;
 			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
+		case IMSG_RUNNER_PAUSE_MDA:
+			if (env->sc_flags & SMTPD_MDA_PAUSED) {
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+					NULL, 0);
+				break;
+			}
+			env->sc_flags |= SMTPD_MDA_PAUSED;
+			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_PAUSE_MDA,
+			    0, 0, -1, NULL, 0);
+			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			break;
+		case IMSG_RUNNER_PAUSE_MTA:
+			if (env->sc_flags & SMTPD_MTA_PAUSED) {
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+					NULL, 0);
+				break;
+			}
+			env->sc_flags |= SMTPD_MTA_PAUSED;
+			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_PAUSE_MTA,
+			    0, 0, -1, NULL, 0);
+			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			break;
+		case IMSG_RUNNER_RESUME_MDA:
+			if (! (env->sc_flags & SMTPD_MDA_PAUSED)) {
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+					NULL, 0);
+				break;
+			}
+			env->sc_flags &= ~SMTPD_MDA_PAUSED;
+			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_RESUME_MDA,
+			    0, 0, -1, NULL, 0);
+			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			break;
+		case IMSG_RUNNER_RESUME_MTA:
+			if (!(env->sc_flags & SMTPD_MTA_PAUSED)) {
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+					NULL, 0);
+				break;
+			}
+			env->sc_flags &= ~SMTPD_MTA_PAUSED;
+			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_RESUME_MTA,
+			    0, 0, -1, NULL, 0);
+			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			break;
+
 		default:
 			log_debug("control_dispatch_ext: "
 			    "error handling imsg %d", imsg.hdr.type);

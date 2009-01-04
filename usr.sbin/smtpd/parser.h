@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.3 2008/12/27 16:45:01 jacekm Exp $	*/
+/*	$OpenBSD: parser.h,v 1.4 2009/01/04 19:37:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -22,7 +22,11 @@ enum actions {
 	RELOAD,
 	MONITOR,
 	SHOW_QUEUE,
-	SHOW_RUNQUEUE
+	SHOW_RUNQUEUE,
+	PAUSE_MDA,
+	PAUSE_MTA,
+	RESUME_MDA,
+	RESUME_MTA,
 };
 
 struct parse_result {

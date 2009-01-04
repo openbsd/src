@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.15 2009/01/04 19:26:30 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.16 2009/01/04 19:37:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -72,6 +72,10 @@ void		runner_purge_message(char *);
 struct batch	*batch_record(struct smtpd *, struct message *);
 struct batch	*batch_lookup(struct smtpd *, struct message *);
 
+#define	RUNNER_MDA	0x1
+#define	RUNNER_MTA	0x2
+u_int8_t runstates = RUNNER_MDA|RUNNER_MTA;
+
 void
 runner_sig_handler(int sig, short event, void *p)
 {
@@ -121,6 +125,18 @@ runner_dispatch_control(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_RUNNER_PAUSE_MDA:
+			runstates &= ~RUNNER_MDA;
+			break;
+		case IMSG_RUNNER_PAUSE_MTA:
+			runstates &= ~RUNNER_MTA;
+			break;
+		case IMSG_RUNNER_RESUME_MDA:
+			runstates |= RUNNER_MDA;
+			break;
+		case IMSG_RUNNER_RESUME_MTA:
+			runstates |= RUNNER_MTA;
+			break;
 		default:
 			log_debug("queue_dispatch_control: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -717,6 +733,10 @@ runner_message_schedule(struct message *messagep, time_t tm)
 	time_t delay;
 	
 	if (messagep->flags & (F_MESSAGE_SCHEDULED|F_MESSAGE_PROCESSING))
+		return 0;
+
+	if (((messagep->type & T_MDA_MESSAGE) && !(runstates & RUNNER_MDA)) ||
+	    ((messagep->type & T_MTA_MESSAGE) && !(runstates & RUNNER_MTA)))
 		return 0;
 
 	/* Batch has been in the queue for too long and expired */
