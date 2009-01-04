@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.8 2009/01/04 16:40:58 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.9 2009/01/04 17:45:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -396,8 +396,7 @@ mfa_check_rcpt(struct smtpd *env, struct path *path, struct sockaddr_storage *ss
 
 				map = cond->c_match;
 				TAILQ_FOREACH(me, &map->m_contents, me_entry) {
-					if (strcasecmp(me->me_key.med_string,
-						path->domain) == 0) {
+					if (hostname_match(path->domain, me->me_key.med_string)) {
 						path->rule = *r;
 						return 1;
 					}

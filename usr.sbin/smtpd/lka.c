@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.14 2009/01/04 14:46:14 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.15 2009/01/04 17:45:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -592,8 +592,7 @@ lka_verify_mail(struct smtpd *env, struct path *path)
 
 				map = cond->c_match;
 				TAILQ_FOREACH(me, &map->m_contents, me_entry) {
-					if (strcasecmp(me->me_key.med_string,
-						path->domain) == 0) {
+					if (hostname_match(path->domain, me->me_key.med_string)) {
 						path->rule = *r;
 						if (r->r_action == A_MBOX ||
 						    r->r_action == A_MAILDIR ||

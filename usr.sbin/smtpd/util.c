@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 2009/01/01 16:15:47 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 2009/01/04 17:45:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/tree.h>
 #include <sys/socket.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <event.h>
 #include <stdio.h>
@@ -63,4 +64,26 @@ safe_fclose(FILE *fp)
 		fatal("safe_fclose: fclose");
 
 	return 1;
+}
+
+int
+hostname_match(char *hostname, char *pattern)
+{
+	while (*pattern != '\0' && *hostname != '\0') {
+		if (*pattern == '*') {
+			while (*pattern == '*')
+				pattern++;
+			while (*hostname != '\0' &&
+			    tolower(*hostname) != tolower(*pattern))
+				hostname++;
+			continue;
+		}
+
+		if (tolower(*pattern) != tolower(*hostname))
+			return 0;
+		pattern++;
+		hostname++;
+	}
+
+	return (*hostname == '\0' && *pattern == '\0');
 }
