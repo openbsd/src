@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_via.c,v 1.10 2008/11/09 22:47:54 oga Exp $	*/
+/*	$OpenBSD: agp_via.c,v 1.11 2009/01/04 20:47:35 grange Exp $	*/
 /*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -124,14 +124,14 @@ agp_via_attach(struct device *parent, struct device *self, void *aux)
 		agpsel = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_VIA_AGPSEL);
 		if ((agpsel & (1 << 1)) == 0) {
 			asc->regs = via_v3_regs;
-			printf("v3, ");
+			printf(": v3");
 		} else {
 			asc->regs = via_v2_regs;
-			printf("v2 compat mode, ");
+			printf(": v2 compat mode");
 		}
 	} else {
 		asc->regs = via_v2_regs;
-		printf("v2, ");
+		printf(": v2");
 	}
 
 
@@ -148,7 +148,7 @@ agp_via_attach(struct device *parent, struct device *self, void *aux)
 		 * aperture so that the gatt size reduces.
 		 */
 		if (agp_via_set_aperture(asc, size / 2)) {
-			printf("can't set aperture size\n");
+			printf(", can't set aperture size\n");
 			return;
 		}
 	}
