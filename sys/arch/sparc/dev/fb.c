@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.44 2008/12/26 22:30:21 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.45 2009/01/04 20:32:55 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -304,7 +304,10 @@ void
 fbwscons_init(struct sunfb *sf, int isconsole)
 {
 	struct rasops_info *ri = &sf->sf_ro;
-	int cols, rows, fw, fh, wt, wl;
+	int cols, rows;
+#if defined(SUN4C) || defined(SUN4M)
+	int fw, fh, wt, wl;
+#endif
 
 	/* ri_hw and ri_bits must have already been setup by caller */
 	ri->ri_flg = RI_FULLCLEAR;
