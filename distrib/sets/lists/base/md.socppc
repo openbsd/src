@@ -1467,6 +1467,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_ralvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_rumreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_rumvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_runvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_uathreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_uathvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/if_udavreg.ph

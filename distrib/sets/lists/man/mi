@@ -1668,6 +1668,7 @@
 ./usr/share/man/cat4/rtii.0
 ./usr/share/man/cat4/rtw.0
 ./usr/share/man/cat4/rum.0
+./usr/share/man/cat4/run.0
 ./usr/share/man/cat4/safe.0
 ./usr/share/man/cat4/safte.0
 ./usr/share/man/cat4/san.0
@@ -1783,6 +1784,7 @@
 ./usr/share/man/cat4/sparc64/beeper.0
 ./usr/share/man/cat4/sparc64/bpp.0
 ./usr/share/man/cat4/sparc64/bwtwo.0
+./usr/share/man/cat4/sparc64/cbus.0
 ./usr/share/man/cat4/sparc64/central.0
 ./usr/share/man/cat4/sparc64/cgsix.0
 ./usr/share/man/cat4/sparc64/cgthree.0
