@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.108 2009/01/03 19:17:45 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.109 2009/01/04 23:42:39 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1416,12 +1416,22 @@ azalia_codec_init_volgroups(codec_t *this)
 	for (i = 0; i < this->playvols.nslaves; i++) {
 		w = &this->w[this->playvols.slaves[i]];
 		cap = w->outamp_cap;
-		dac = azalia_codec_find_defdac(this, w->nid, 0);
+		j = 0;
+		/* azalia_codec_find_defdac only goes 10 connections deep.
+		 * Start the connection depth at 8 so it doesn't go more
+		 * than 2 connections deep.
+		 */
+		if (w->type == COP_AWTYPE_AUDIO_MIXER ||
+		    w->type == COP_AWTYPE_AUDIO_SELECTOR)
+			j = 8;
+		dac = azalia_codec_find_defdac(this, w->nid, j);
 		if (dac != this->dacs.groups[this->dacs.cur].conv[0] &&
 		    dac != this->hp_dac && dac != this->spkr_dac)
 			continue;
 		if ((cap & COP_AMPCAP_MUTE) && COP_AMPCAP_NUMSTEPS(cap)) {
-			if (w->type == COP_AWTYPE_PIN_COMPLEX) {
+			if (w->type == COP_AWTYPE_BEEP_GENERATOR) {
+				continue;
+			} else if (w->type == COP_AWTYPE_PIN_COMPLEX) {
 				err = this->comresp(this, w->nid,
 				    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
 				if (!err && (result & CORB_PWC_OUTPUT))
@@ -1433,9 +1443,15 @@ azalia_codec_init_volgroups(codec_t *this)
 	if (this->playvols.cur == 0) {
 		for (i = 0; i < this->playvols.nslaves; i++) {
 			w = &this->w[this->playvols.slaves[i]];
-			dac = azalia_codec_find_defdac(this, w->nid, 0);
+			j = 0;
+			if (w->type == COP_AWTYPE_AUDIO_MIXER ||
+			    w->type == COP_AWTYPE_AUDIO_SELECTOR)
+				j = 8;
+			dac = azalia_codec_find_defdac(this, w->nid, j);
 			if (dac != this->dacs.groups[this->dacs.cur].conv[0] &&
 			    dac != this->hp_dac && dac != this->spkr_dac)
+				continue;
+			if (w->type == COP_AWTYPE_BEEP_GENERATOR)
 				continue;
 			if (w->type == COP_AWTYPE_PIN_COMPLEX) {
 				err = this->comresp(this, w->nid,
