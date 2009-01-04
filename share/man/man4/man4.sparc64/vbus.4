@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vbus.4,v 1.4 2008/03/09 15:45:06 jmc Exp $
+.\"     $OpenBSD: vbus.4,v 1.5 2009/01/04 15:36:46 kettenis Exp $
 .\"
 .\" Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 9 2008 $
+.Dd $Mdocdate: January 4 2009 $
 .Dt VBUS 4 sparc64
 .Os
 .Sh NAME
@@ -25,8 +25,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides a virtual bus for devices provided by the
-UltraSPARC Hypervisor as found on sun4v systems.
+driver provides a virtual bus for virtual devices provided by the
+UltraSPARC Hypervisor as found on sun4v systems and logical domains.
 .Pp
 .Ox
 provides support for the following devices:
