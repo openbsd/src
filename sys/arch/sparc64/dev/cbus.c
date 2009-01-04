@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.2 2009/01/01 23:24:59 kettenis Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.3 2009/01/04 17:53:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -145,11 +145,7 @@ cbus_print(void *aux, const char *name)
 	if (name)
 		printf("\"%s\" at %s", ca->ca_name, name);
 	if (ca->ca_id != -1)
-		printf(" id 0x%llx", ca->ca_id);
-	if (ca->ca_tx_ino != -1)
-		printf(" tx-ino 0x%llx", ca->ca_tx_ino);
-	if (ca->ca_rx_ino != -1)
-		printf(" rx-ino 0x%llx", ca->ca_rx_ino);
+		printf(" chan 0x%llx", ca->ca_id);
 	return (UNCONF);
 }
 
