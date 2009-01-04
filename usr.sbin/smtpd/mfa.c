@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.7 2009/01/04 14:46:14 jacekm Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.8 2009/01/04 16:40:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -455,11 +455,11 @@ mfa_match_mask(struct sockaddr_storage *ss, struct netaddr *ssmask)
 		int		 i;
 
 		bzero(&mask, sizeof(mask));
-		for (i = 0; i < (128 - ssmask->masked) / 8; i++)
+		for (i = 0; i < (128 - ssmask->bits) / 8; i++)
 			mask.s6_addr[i] = 0xff;
-		i = ssmask->masked % 8;
+		i = ssmask->bits % 8;
 		if (i)
-			mask.s6_addr[ssmask->masked / 8] = 0xff00 >> i;
+			mask.s6_addr[ssmask->bits / 8] = 0xff00 >> i;
 
 		in = &((struct sockaddr_in6 *)ss)->sin6_addr;
 		inmask = &((struct sockaddr_in6 *)&ssmask->ss)->sin6_addr;

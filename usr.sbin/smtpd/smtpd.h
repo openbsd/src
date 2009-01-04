@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.39 2009/01/04 14:46:14 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.40 2009/01/04 16:40:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -76,7 +76,7 @@
 
 struct netaddr {
 	struct sockaddr_storage ss;
-	int masked;
+	int bits;
 };
 
 struct relayhost {

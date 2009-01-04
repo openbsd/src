@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.20 2008/12/20 00:18:03 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.21 2009/01/04 16:40:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -416,7 +416,7 @@ stringel	: STRING			{
 				bits = inet_net_pton(AF_INET, $1, &ssin.sin_addr, sizeof(struct in_addr));
 				if (bits != -1) {
 					ssin.sin_family = AF_INET;
-					me->me_key.med_addr.masked = bits;
+					me->me_key.med_addr.bits = bits;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin;
 				}
 				else {
@@ -425,7 +425,7 @@ stringel	: STRING			{
 					if (bits == -1)
 						err(1, "inet_net_pton");
 					ssin6.sin6_family = AF_INET6;
-					me->me_key.med_addr.masked = bits;
+					me->me_key.med_addr.bits = bits;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin6;
 				}
 			}
@@ -433,12 +433,12 @@ stringel	: STRING			{
 				/* IP address ? */
 				if (inet_pton(AF_INET, $1, &ssin.sin_addr) == 1) {
 					ssin.sin_family = AF_INET;
-					me->me_key.med_addr.masked = 0;
+					me->me_key.med_addr.bits = 0;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin;
 				}
 				else if (inet_pton(AF_INET6, $1, &ssin6.sin6_addr) == 1) {
 					ssin6.sin6_family = AF_INET6;
-					me->me_key.med_addr.masked = 0;
+					me->me_key.med_addr.bits = 0;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin6;
 				}
 				else {
@@ -494,7 +494,7 @@ mapref		: STRING			{
 				bits = inet_net_pton(AF_INET, $1, &ssin.sin_addr, sizeof(struct in_addr));
 				if (bits != -1) {
 					ssin.sin_family = AF_INET;
-					me->me_key.med_addr.masked = bits;
+					me->me_key.med_addr.bits = bits;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin;
 				}
 				else {
@@ -503,7 +503,7 @@ mapref		: STRING			{
 					if (bits == -1)
 						err(1, "inet_net_pton");
 					ssin6.sin6_family = AF_INET6;
-					me->me_key.med_addr.masked = bits;
+					me->me_key.med_addr.bits = bits;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin6;
 				}
 			}
@@ -511,12 +511,12 @@ mapref		: STRING			{
 				/* IP address ? */
 				if (inet_pton(AF_INET, $1, &ssin.sin_addr) == 1) {
 					ssin.sin_family = AF_INET;
-					me->me_key.med_addr.masked = 0;
+					me->me_key.med_addr.bits = 0;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin;
 				}
 				else if (inet_pton(AF_INET6, $1, &ssin6.sin6_addr) == 1) {
 					ssin6.sin6_family = AF_INET6;
-					me->me_key.med_addr.masked = 0;
+					me->me_key.med_addr.bits = 0;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin6;
 				}
 				else {
@@ -694,6 +694,54 @@ action		: DELIVER TO MAILDIR STRING	{
 from		: FROM mapref			{
 			$$ = $2;
 		}
+		| FROM ALL			{
+			struct map	*m;
+			struct mapel	*me;
+			struct sockaddr_in *ssin;
+			struct sockaddr_in6 *ssin6;
+
+			if ((m = calloc(1, sizeof(*m))) == NULL)
+				fatal("out of memory");
+			m->m_id = last_map_id++;
+			if (m->m_id == INT_MAX) {
+				yyerror("too many maps defined");
+				free(m);
+				YYERROR;
+			}
+			if (! bsnprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id))
+				fatal("snprintf");
+			m->m_flags |= F_DYNAMIC|F_USED;
+			m->m_type = T_SINGLE;
+
+			TAILQ_INIT(&m->m_contents);
+
+			if ((me = calloc(1, sizeof(*me))) == NULL)
+				fatal("out of memory");
+			me->me_key.med_addr.bits = 32;
+			ssin = (struct sockaddr_in *)&me->me_key.med_addr.ss;
+			ssin->sin_family = AF_INET;
+			if (inet_pton(AF_INET, "0.0.0.0", &ssin->sin_addr) != 1) {
+				free(me);
+				free(m);
+				YYERROR;
+			}
+			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
+
+			if ((me = calloc(1, sizeof(*me))) == NULL)
+				fatal("out of memory");
+			me->me_key.med_addr.bits = 128;
+			ssin6 = (struct sockaddr_in6 *)&me->me_key.med_addr.ss;
+			ssin6->sin6_family = AF_INET6;
+			if (inet_pton(AF_INET6, "::", &ssin6->sin6_addr) != 1) {
+				free(me);
+				free(m);
+				YYERROR;
+			}
+			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
+
+			TAILQ_INSERT_TAIL(conf->sc_maps, m, m_entry);
+			$$ = m->m_id;
+		}
 		| /* empty */			{
 			struct map	*m;
 			struct mapel	*me;
@@ -717,7 +765,7 @@ from		: FROM mapref			{
 
 			if ((me = calloc(1, sizeof(*me))) == NULL)
 				fatal("out of memory");
-			me->me_key.med_addr.masked = 0;
+			me->me_key.med_addr.bits = 0;
 			ssin = (struct sockaddr_in *)&me->me_key.med_addr.ss;
 			ssin->sin_family = AF_INET;
 			if (inet_pton(AF_INET, "127.0.0.1", &ssin->sin_addr) != 1) {
@@ -729,7 +777,7 @@ from		: FROM mapref			{
 
 			if ((me = calloc(1, sizeof(*me))) == NULL)
 				fatal("out of memory");
-			me->me_key.med_addr.masked = 0;
+			me->me_key.med_addr.bits = 0;
 			ssin6 = (struct sockaddr_in6 *)&me->me_key.med_addr.ss;
 			ssin6->sin6_family = AF_INET6;
 			if (inet_pton(AF_INET6, "::1", &ssin6->sin6_addr) != 1) {
