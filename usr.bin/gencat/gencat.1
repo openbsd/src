@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gencat.1,v 1.13 2009/01/04 11:19:55 sobrado Exp $
+.\"	$OpenBSD: gencat.1,v 1.14 2009/01/04 18:42:32 sobrado Exp $
 .\"
 .\" Copyright (c) 1997 Ken Stailey
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: gencat.1,v 1.13 2009/01/04 11:19:55 sobrado Exp $
+.\"	$Id: gencat.1,v 1.14 2009/01/04 18:42:32 sobrado Exp $
 .\"
 .Dd $Mdocdate: January 4 2009 $
 .Dt GENCAT 1
@@ -34,26 +34,25 @@
 .Nd NLS catalog compiler
 .Sh SYNOPSIS
 .Nm gencat
-.Ar output-file
-.Ar input-file Op Ar ...
+.Ar catfile msgfile ...
 .Sh DESCRIPTION
 The
 .Nm
 utility merges the text NLS (National Language Support) in
-.Ar input-file
+.Ar msgfile
 into a formatted message catalog file
-.Ar output-file .
+.Ar catfile .
 The file
-.Ar output-file
+.Ar catfile
 will be created if it does not already exist.
 If
-.Ar output-file
+.Ar catfile
 does exist, its messages will be included in the new
-.Ar output-file .
+.Ar catfile .
 If set and message numbers collide, the new message text defined in
-.Ar input-file
+.Ar msgfile
 will replace the old message text currently contained in
-.Ar output-file .
+.Ar catfile .
 .Sh INPUT FILES
 The format of a message text source file is defined below.
 Note that the fields of a message text source line are separated by a
