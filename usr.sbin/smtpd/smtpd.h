@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.41 2009/01/04 17:45:58 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.42 2009/01/04 19:25:19 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -390,10 +390,9 @@ enum message_status {
 
 enum message_flags {
 	F_MESSAGE_RESOLVED	= 0x1,
-	F_MESSAGE_EXPIRED	= 0x2,
-	F_MESSAGE_SCHEDULED	= 0x4,
-	F_MESSAGE_PROCESSING	= 0x8,
-	F_MESSAGE_AUTHENTICATED	= 0x10
+	F_MESSAGE_SCHEDULED	= 0x2,
+	F_MESSAGE_PROCESSING	= 0x4,
+	F_MESSAGE_AUTHENTICATED	= 0x8
 };
 
 struct message {

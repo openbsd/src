@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.13 2009/01/04 19:23:06 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.14 2009/01/04 19:25:19 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -516,13 +516,8 @@ runner_process_envelope(struct smtpd *env, char *msgid, char *evpid)
 
 	tm = time(NULL);
 
-	if (! runner_message_schedule(&message, tm)) {
-		if (message.flags & F_MESSAGE_EXPIRED) {
-			log_debug("message has expired, mdaemon");
-			queue_remove_envelope(&message);
-		}
+	if (! runner_message_schedule(&message, tm))
 		return;
-	}
 
 	message.flags |= F_MESSAGE_SCHEDULED;
 	queue_update_envelope(&message);
@@ -726,12 +721,11 @@ runner_message_schedule(struct message *messagep, time_t tm)
 
 	/* Batch has been in the queue for too long and expired */
 	if (tm - messagep->creation >= SMTPD_QUEUE_EXPIRY) {
-		messagep->flags |= F_MESSAGE_EXPIRED;
+		queue_remove_envelope(messagep);
 		return 0;
 	}
 
 	if (messagep->retry == 255) {
-		messagep->flags |= F_MESSAGE_EXPIRED;
 		return 0;
 	}
 
