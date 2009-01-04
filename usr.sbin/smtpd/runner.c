@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.16 2009/01/04 19:37:41 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.17 2009/01/04 20:52:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -75,6 +75,7 @@ struct batch	*batch_lookup(struct smtpd *, struct message *);
 #define	RUNNER_MDA	0x1
 #define	RUNNER_MTA	0x2
 u_int8_t runstates = RUNNER_MDA|RUNNER_MTA;
+u_int8_t flagreset = 1;
 
 void
 runner_sig_handler(int sig, short event, void *p)
@@ -438,6 +439,7 @@ runner_timeout(int fd, short event, void *p)
 
 	runner_purge_run();
 	runner_process_queue(env);
+	flagreset = 0;
 	runner_process_runqueue(env);
 	runner_process_batchqueue(env);
 
@@ -531,6 +533,11 @@ runner_process_envelope(struct smtpd *env, char *msgid, char *evpid)
 		return;
 
 	tm = time(NULL);
+
+	if (flagreset) {
+		message.flags &= ~(F_MESSAGE_SCHEDULED|F_MESSAGE_PROCESSING);
+		queue_update_envelope(&message);
+	}
 
 	if (! runner_message_schedule(&message, tm))
 		return;
@@ -731,7 +738,7 @@ int
 runner_message_schedule(struct message *messagep, time_t tm)
 {
 	time_t delay;
-	
+
 	if (messagep->flags & (F_MESSAGE_SCHEDULED|F_MESSAGE_PROCESSING))
 		return 0;
 
