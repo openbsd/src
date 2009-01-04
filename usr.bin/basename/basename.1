@@ -1,4 +1,4 @@
-.\"	$OpenBSD: basename.1,v 1.14 2007/05/31 19:20:07 jmc Exp $
+.\"	$OpenBSD: basename.1,v 1.15 2009/01/04 11:19:55 sobrado Exp $
 .\"	$NetBSD: basename.1,v 1.9 1995/03/25 18:17:45 glass Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)basename.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 4 2009 $
 .Dt BASENAME 1
 .Os
 .Sh NAME
@@ -55,10 +55,7 @@ if given.
 The resulting filename is written to the standard output.
 A non-existent suffix is ignored.
 .Pp
-The
-.Nm
-utility
-exits 0 on success or >0 if an error occurred.
+.Ex -std basename
 .Sh EXAMPLES
 The following line sets the shell variable
 .Ev FOO

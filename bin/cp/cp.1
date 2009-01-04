@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.29 2007/09/16 18:13:57 sobrado Exp $
+.\"	$OpenBSD: cp.1,v 1.30 2009/01/04 11:19:55 sobrado Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)cp.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: September 16 2007 $
+.Dd $Mdocdate: January 4 2009 $
 .Dt CP 1
 .Os
 .Sh NAME
@@ -193,9 +193,7 @@ option is specified.
 In addition, these options override each other and the
 command's actions are determined by the last one specified.
 .Pp
-The
-.Nm
-utility exits 0 on success or >0 if an error occurred.
+.Ex -std cp
 .Sh EXAMPLES
 Make a copy of file
 .Pa foo

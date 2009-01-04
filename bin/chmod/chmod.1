@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.32 2007/05/31 19:19:13 jmc Exp $
+.\"	$OpenBSD: chmod.1,v 1.33 2009/01/04 11:19:55 sobrado Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)chmod.1	8.4 (Berkeley) 3/31/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 4 2009 $
 .Dt CHMOD 1
 .Os
 .Sh NAME
@@ -98,9 +98,7 @@ command's actions are determined by the last one specified.
 Only the file's owner or the superuser is permitted to change
 the mode of a file.
 .Pp
-The
-.Nm
-utility exits 0 on success or >0 if an error occurred.
+.Ex -std chmod
 .Ss Absolute modes
 Absolute modes are specified according to the following format:
 .Bd -filled -offset indent

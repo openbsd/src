@@ -1,4 +1,4 @@
-.\"	$OpenBSD: paste.1,v 1.11 2007/08/06 19:16:06 sobrado Exp $
+.\"	$OpenBSD: paste.1,v 1.12 2009/01/04 11:19:55 sobrado Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	from: @(#)paste.1	5.6 (Berkeley) 7/27/91
 .\"
-.Dd $Mdocdate: August 6 2007 $
+.Dd $Mdocdate: January 4 2009 $
 .Dt PASTE 1
 .Os
 .Sh NAME
@@ -108,9 +108,7 @@ input is used; standard input is read one line at a time, circularly,
 for each instance of
 .Dq - .
 .Pp
-The
-.Nm paste
-utility exits 0 on success or >0 if an error occurred.
+.Ex -std paste
 .Sh EXAMPLES
 List the files in the current directory in three columns:
 .Pp

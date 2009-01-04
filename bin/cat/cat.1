@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cat.1,v 1.27 2007/05/31 19:19:00 jmc Exp $
+.\"	$OpenBSD: cat.1,v 1.28 2009/01/04 11:19:55 sobrado Exp $
 .\"	$NetBSD: cat.1,v 1.12 1995/09/27 05:38:55 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)cat.1	8.3 (Berkeley) 5/2/95
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 4 2009 $
 .Dt CAT 1
 .Os
 .Sh NAME
@@ -102,9 +102,7 @@ characters (with the high bit set) are printed as
 (for meta) followed by the character for the low 7 bits.
 .El
 .Pp
-The
-.Nm
-utility exits 0 on success or >0 if an error occurred.
+.Ex -std cat
 .Sh EXAMPLES
 Print the contents of
 .Ar file1

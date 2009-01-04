@@ -1,4 +1,4 @@
-.\"	$OpenBSD: touch.1,v 1.14 2007/08/06 19:16:06 sobrado Exp $
+.\"	$OpenBSD: touch.1,v 1.15 2009/01/04 11:19:55 sobrado Exp $
 .\"	$NetBSD: touch.1,v 1.8 1995/08/31 22:10:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)touch.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: August 6 2007 $
+.Dd $Mdocdate: January 4 2009 $
 .Dt TOUCH 1
 .Os
 .Sh NAME
@@ -119,9 +119,7 @@ If the
 letter pair is not specified, the value defaults to 0.
 .El
 .Pp
-The
-.Nm
-utility exits 0 on success or >0 if an error occurred.
+.Ex -std touch
 .Sh SEE ALSO
 .Xr utimes 2
 .Sh STANDARDS
