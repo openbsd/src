@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.40 2007/11/28 16:33:20 martin Exp $	*/
+/*	$OpenBSD: xy.c,v 1.41 2009/01/04 16:51:05 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -227,7 +227,6 @@ xydummystrat(bp)
 		panic("xydummystrat");
 	bcopy(xy_labeldata, bp->b_data, XYFM_BPS);
 	bp->b_flags |= B_DONE;
-	bp->b_flags &= ~B_BUSY;
 }
 
 int

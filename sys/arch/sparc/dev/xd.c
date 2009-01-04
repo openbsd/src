@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.43 2007/11/28 16:33:20 martin Exp $	*/
+/*	$OpenBSD: xd.c,v 1.44 2009/01/04 16:51:05 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -287,7 +287,6 @@ xddummystrat(bp)
 		panic("xddummystrat");
 	bcopy(xd_labeldata, bp->b_data, XDFM_BPS);
 	bp->b_flags |= B_DONE;
-	bp->b_flags &= ~B_BUSY;
 }
 
 int
