@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnet.4,v 1.1 2009/01/04 18:46:09 kettenis Exp $
+.\"     $OpenBSD: vnet.4,v 1.2 2009/01/04 22:07:54 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -30,11 +30,11 @@ UltraSPARC Hypervisor as found on sun4v systems.
 It connects to a virtual switch (vsw) device or virtual network (vnet)
 device in another logical domain using a logical domain channel
 provided by the hypervisor.
-
+.Pp
 The
 .Nm
-driver support version 1.0 of the vNet protocol.
-
+driver supports version 1.0 of the vNet protocol.
+.Pp
 The
 .Nm
 driver supports the following media types:
@@ -49,7 +49,7 @@ For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh SEE ALSO
 .Xr arp 4 ,
-.Xr cbus 4
+.Xr cbus 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
