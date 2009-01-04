@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.30 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: si.c,v 1.31 2009/01/04 16:51:44 miod Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -1003,11 +1003,15 @@ si_vme_dma_stop(ncr_sc)
 		    resid, ntrans);
 	}
 #endif
+
 	if (ntrans < MIN_DMA_LEN) {
+#ifdef DEBUG
 		printf("si: fifo count: 0x%x\n", resid);
+#endif
 		ncr_sc->sc_state |= NCR_ABORTING;
 		goto out;
 	}
+
 	if (ntrans > ncr_sc->sc_datalen)
 		panic("si_dma_stop: excess transfer");
 
