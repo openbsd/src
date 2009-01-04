@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.9 2008/12/28 22:03:59 blambert Exp $ */
-/*	$OpenBSD: aldap.c,v 1.9 2008/12/28 22:03:59 blambert Exp $ */
+/*	$Id: aldap.c,v 1.10 2009/01/04 00:11:05 aschrijver Exp $ */
+/*	$OpenBSD: aldap.c,v 1.10 2009/01/04 00:11:05 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -64,6 +64,7 @@ int
 aldap_bind(struct aldap *ldap, char *binddn, char *bindcred)
 {
 	struct ber_element *root;
+	int error;
 
 	root = ber_add_sequence(NULL);
 	ber_printf_elements(root, "d{tdsst", ++ldap->msgid, BER_CLASS_APP,
@@ -72,10 +73,10 @@ aldap_bind(struct aldap *ldap, char *binddn, char *bindcred)
 
 	LDAP_DEBUG("aldap_bind", root);
 
-	if(ber_write_elements(&ldap->ber, root) == -1)
-		return (-1);
-
+	error = ber_write_elements(&ldap->ber, root);
 	ber_free_elements(root);
+	if (error == -1)
+		return (-1);
 
 	return (ldap->msgid);
 }
@@ -84,6 +85,7 @@ int
 aldap_unbind(struct aldap *ldap)
 {
 	struct ber_element *root;
+	int error;
 
 	root = ber_add_sequence(NULL);
 	ber_printf_elements(root, "d{t", ++ldap->msgid, BER_CLASS_APP,
@@ -91,10 +93,10 @@ aldap_unbind(struct aldap *ldap)
 
 	LDAP_DEBUG("aldap_unbind", root);
 
-	if(ber_write_elements(&ldap->ber, root) == -1)
-		return (-1);
-
+	error = ber_write_elements(&ldap->ber, root);
 	ber_free_elements(root);
+	if (error == -1)
+		return (-1);
 
 	return (ldap->msgid);
 }
@@ -104,7 +106,7 @@ aldap_search(struct aldap *ldap, char *basedn, enum scope scope, char *filter,
     char **attrs, int typesonly, int sizelimit, int timelimit)
 {
 	struct ber_element *root, *ber;
-	int i;
+	int i, error;
 
 	root = ber_add_sequence(NULL);
 	ber = ber_printf_elements(root, "d{tsEEddb", ++ldap->msgid, BER_CLASS_APP,
@@ -120,10 +122,10 @@ aldap_search(struct aldap *ldap, char *basedn, enum scope scope, char *filter,
 
 	LDAP_DEBUG("aldap_search", root);
 
-	if(ber_write_elements(&ldap->ber, root) == -1)
-		return (-1);
-
+	error = ber_write_elements(&ldap->ber, root);
 	ber_free_elements(root);
+	if (error == -1)
+		return (-1);
 
 	return (ldap->msgid);
 }
@@ -299,10 +301,11 @@ aldap_next_entry(struct aldap_message *msg, char **outkey, char ***outvalues)
 	char *key;
 	char **ret;
 
-	LDAP_DEBUG("entry", msg->body.search.iter);
-
 	if(msg->body.search.iter == NULL)
 		goto notfound;
+
+	LDAP_DEBUG("entry", msg->body.search.iter);
+
 	if(ber_get_eoc(msg->body.search.iter) == 0)
 		goto notfound;
 
@@ -333,10 +336,10 @@ aldap_match_entry(struct aldap_message *msg, char *inkey, char ***outvalues)
 	char *descr = NULL;
 	char **ret;
 
-	LDAP_DEBUG("entry", msg->search_entries);
-
 	if(msg->body.search.entries == NULL)
 		return (-1);
+
+	LDAP_DEBUG("entry", msg->body.search.entries);
 
 	for(a = msg->body.search.entries;;) {
 		if(a == NULL)
