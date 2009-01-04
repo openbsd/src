@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.37 2008/12/27 17:36:37 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.38 2009/01/04 00:58:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -174,8 +174,10 @@ enum imsg_type {
 
 	IMSG_QUEUE_CREATE_MESSAGE,
 	IMSG_QUEUE_SUBMIT_ENVELOPE,
+	IMSG_QUEUE_COMMIT_ENVELOPES,
 	IMSG_QUEUE_REMOVE_MESSAGE,
 	IMSG_QUEUE_COMMIT_MESSAGE,
+	IMSG_QUEUE_TEMPFAIL,
 
 	IMSG_QUEUE_REMOVE_SUBMISSION,
 	IMSG_QUEUE_MESSAGE_UPDATE,
@@ -191,6 +193,7 @@ enum imsg_type {
 	IMSG_PARENT_MAILBOX_RENAME,
 
 	IMSG_PARENT_AUTHENTICATE
+
 };
 
 #define IMSG_HEADER_SIZE	 sizeof(struct imsg_hdr)
@@ -332,7 +335,8 @@ enum path_flags {
 	F_VIRTUAL = 0x2,
 	F_EXPANDED = 0x4,
 	F_NOFORWARD = 0x8,
-	F_FORWARDED = 0x10
+	F_FORWARDED = 0x10,
+	F_ACCOUNT = 0x20,
 };
 
 struct path {
@@ -614,6 +618,7 @@ struct submit_status {
 	}				 u;
 	enum message_flags		 flags;
 	struct sockaddr_storage		 ss;
+	struct message			 msg;
 };
 
 struct message_recipient {
@@ -621,6 +626,7 @@ struct message_recipient {
 	struct sockaddr_storage		 ss;
 	enum message_flags		 flags;
 	struct path			 path;
+	struct message			 msg;
 };
 
 

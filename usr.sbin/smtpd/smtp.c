@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.14 2009/01/01 16:15:47 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.15 2009/01/04 00:58:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -410,7 +410,26 @@ smtp_dispatch_queue(int sig, short event, void *p)
 
 			break;
 		}
-		case IMSG_QUEUE_SUBMIT_ENVELOPE:
+		case IMSG_QUEUE_TEMPFAIL: {
+			struct submit_status	*ss;
+			struct session		*s;
+			struct session		 key;
+
+			log_debug("smtp_dispatch_queue: queue acknownedged a temporary failure");
+			ss = imsg.data;
+			key.s_id = ss->id;
+			key.s_msg.id = ss->id;
+
+			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
+			if (s == NULL) {
+				/* Session was removed while we were waiting for the message */
+				break;
+			}
+			s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
+			break;
+		}
+
+		case IMSG_QUEUE_COMMIT_ENVELOPES:
 		case IMSG_QUEUE_COMMIT_MESSAGE: {
 			struct submit_status	*ss;
 			struct session		*s;

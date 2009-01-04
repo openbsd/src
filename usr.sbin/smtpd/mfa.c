@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.5 2009/01/01 16:15:47 jacekm Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.6 2009/01/04 00:58:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -23,10 +23,14 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <event.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 #include <unistd.h>
 
 #include "smtpd.h"
@@ -39,6 +43,10 @@ void		mfa_dispatch_lka(int, short, void *);
 void		mfa_setup_events(struct smtpd *);
 void		mfa_disable_events(struct smtpd *);
 void		mfa_timeout(int, short, void *);
+
+int		mfa_check_rcpt(struct smtpd *, struct path *, struct sockaddr_storage *);
+int		mfa_check_source(struct smtpd *, struct map *, struct sockaddr_storage *);
+int		mfa_match_mask(struct sockaddr_storage *, struct netaddr *);
 
 void
 mfa_sig_handler(int sig, short event, void *p)
@@ -156,14 +164,24 @@ mfa_dispatch_smtp(int sig, short event, void *p)
 			mr = imsg.data;
 			log_debug("mfa_dispatch_smtp: testing forward path");
 			ss.id = mr->id;
-			ss.code = 250;
+			ss.code = 530;
 			ss.u.path = mr->path;
 			ss.ss = mr->ss;
+			ss.msg = mr->msg;
 
 			ss.flags = mr->flags;
 
-			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_RCPT, 0,
-			    0, -1, &ss, sizeof(ss));
+			if (! mfa_check_rcpt(env, &ss.u.path, &ss.ss) &&
+			    ! (ss.flags & F_MESSAGE_AUTHENTICATED)) {
+				imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT, 0,
+				    0, -1, &ss, sizeof(ss));
+			}
+			else {
+				ss.code = 250;
+				imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_RCPT, 0,
+				    0, -1, &ss, sizeof(ss));
+			}
+
 			break;
 		}
 		default:
@@ -350,6 +368,111 @@ msg_cmp(struct message *m1, struct message *m2)
 		return (-1);
 	else
 		return (0);
+}
+
+int
+mfa_check_rcpt(struct smtpd *env, struct path *path, struct sockaddr_storage *ss)
+{
+	struct rule *r;
+	struct cond *cond;
+	struct map *map;
+	struct mapel *me;
+
+	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
+		if (! mfa_check_source(env, r->r_sources, ss))
+			continue;
+
+		log_debug("client authorized");
+		TAILQ_FOREACH(cond, &r->r_conditions, c_entry) {
+			if (cond->c_type == C_ALL) {
+				path->rule = *r;
+				return 1;
+			}
+
+			if (cond->c_type == C_DOM) {
+				cond->c_match = map_find(env, cond->c_map);
+				if (cond->c_match == NULL)
+					fatal("mfa failed to lookup map.");
+
+				map = cond->c_match;
+				TAILQ_FOREACH(me, &map->m_contents, me_entry) {
+					if (strcasecmp(me->me_key.med_string,
+						path->domain) == 0) {
+						path->rule = *r;
+						return 1;
+					}
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+int
+mfa_check_source(struct smtpd *env, struct map *map, struct sockaddr_storage *ss)
+{
+	struct mapel *me;
+
+	if (ss == NULL) {
+		/* This happens when caller is part of an internal
+		 * lookup (ie: alias resolved to a remote address)
+		 */
+		return 1;
+	}
+
+	TAILQ_FOREACH(me, &map->m_contents, me_entry) {
+
+		if (ss->ss_family != me->me_key.med_addr.ss.ss_family)
+			continue;
+
+		if (ss->ss_len == me->me_key.med_addr.ss.ss_len)
+			continue;
+
+		if (mfa_match_mask(ss, &me->me_key.med_addr))
+			return 1;
+
+	}
+	return 0;
+}
+
+int
+mfa_match_mask(struct sockaddr_storage *ss, struct netaddr *ssmask)
+{
+	if (ss->ss_family == AF_INET) {
+		struct sockaddr_in *ssin = (struct sockaddr_in *)ss;
+		struct sockaddr_in *ssinmask = (struct sockaddr_in *)&ssmask->ss;
+
+		if ((ssin->sin_addr.s_addr & ssinmask->sin_addr.s_addr) ==
+		    ssinmask->sin_addr.s_addr)
+			return (1);
+		return (0);
+	}
+
+	if (ss->ss_family == AF_INET6) {
+		struct in6_addr	*in;
+		struct in6_addr	*inmask;
+		struct in6_addr	 mask;
+		int		 i;
+
+		bzero(&mask, sizeof(mask));
+		for (i = 0; i < (128 - ssmask->masked) / 8; i++)
+			mask.s6_addr[i] = 0xff;
+		i = ssmask->masked % 8;
+		if (i)
+			mask.s6_addr[ssmask->masked / 8] = 0xff00 >> i;
+
+		in = &((struct sockaddr_in6 *)ss)->sin6_addr;
+		inmask = &((struct sockaddr_in6 *)&ssmask->ss)->sin6_addr;
+
+		for (i = 0; i < 16; i++) {
+			if ((in->s6_addr[i] & mask.s6_addr[i]) !=
+			    inmask->s6_addr[i])
+				return (0);
+		}
+		return (1);
+	}
+
+	return (0);
 }
 
 SPLAY_GENERATE(msgtree, message, nodes, msg_cmp);

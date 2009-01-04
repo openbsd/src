@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.38 2009/01/01 16:15:47 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.39 2009/01/04 00:58:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -460,6 +460,7 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 	mr.id = s->s_msg.id;
 	s->s_state = S_RCPTREQUEST;
 	mr.ss = s->s_ss;
+	mr.msg = s->s_msg;
 
 
 	if (s->s_flags & F_AUTHENTICATED) {
@@ -631,7 +632,8 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	bufferevent_enable(s->s_bev, EV_READ);
 
-	if (ss != NULL && ss->code == 421)
+	if ((ss != NULL && ss->code == 421) ||
+	    (s->s_msg.status & S_MESSAGE_TEMPFAILURE))
 		goto tempfail;
 
 	switch (s->s_state) {
@@ -689,14 +691,9 @@ session_pickup(struct session *s, struct submit_status *ss)
 		s->s_state = S_RCPT;
 		s->s_msg.rcptcount++;
 		s->s_msg.recipient = ss->u.path;
-		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
-		    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1, &s->s_msg,
-		    sizeof(s->s_msg));
-		bufferevent_disable(s->s_bev, EV_READ);
-		break;
+		session_respond(s, "%d Recipient ok", ss->code);
 
 	case S_RCPT:
-		session_respond(s, "%d Recipient ok", ss->code);
 		break;
 
 	case S_DATAREQUEST:

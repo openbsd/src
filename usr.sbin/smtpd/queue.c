@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.42 2009/01/02 22:08:02 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.43 2009/01/04 00:58:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -176,55 +176,6 @@ queue_dispatch_smtp(int sig, short event, void *p)
 
 			messagep = imsg.data;
 			queue_delete_incoming_message(messagep->message_id);
-			break;
-		}
-		case IMSG_QUEUE_SUBMIT_ENVELOPE: {
-			struct message		*messagep;
-			struct submit_status	 ss;
-
-			messagep = imsg.data;
-			messagep->id = queue_generate_id();
-			ss.id = messagep->session_id;
-			ss.code = 250;
-			ss.u.path = messagep->recipient;
-
-			if (IS_MAILBOX(messagep->recipient.rule.r_action) ||
-			    IS_EXT(messagep->recipient.rule.r_action))
-				messagep->type = T_MDA_MESSAGE;
-			else
-				messagep->type = T_MTA_MESSAGE;
-
-			/* Write to disk */
-			if (! queue_record_incoming_envelope(messagep)) {
-				ss.code = 421;
-				imsg_compose(ibuf, IMSG_QUEUE_SUBMIT_ENVELOPE,
-				    0, 0, -1, &ss, sizeof(ss));
-				break;
-			}
-
-			imsg_compose(ibuf, IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
-			    &ss, sizeof(ss));
-
-			if (messagep->type & T_MTA_MESSAGE) {
-				break;
-			}
-
-			if ((messagep->recipient.flags & (F_ALIAS|F_VIRTUAL)) == 0) {
-				/* not an alias, perform ~/.forward resolution */
-				imsg_compose(env->sc_ibufs[PROC_LKA],
-				    IMSG_LKA_FORWARD, 0, 0, -1, messagep,
-				    sizeof(struct message));
-				break;
-			}
-
-			/* Recipient is an alias, proceed to resolving it.
-			 * ~/.forward will be handled by the IMSG_LKA_ALIAS
-			 * dispatch case.
-			 */
-			imsg_compose(env->sc_ibufs[PROC_LKA],
-			    IMSG_LKA_ALIAS, 0, 0, -1, messagep,
-			    sizeof (struct message));
-
 			break;
 		}
 		case IMSG_QUEUE_COMMIT_MESSAGE: {
@@ -420,36 +371,41 @@ queue_dispatch_lka(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 
-		case IMSG_LKA_ALIAS: {
-			struct message *messagep;
+		case IMSG_QUEUE_SUBMIT_ENVELOPE: {
+			struct message		*messagep;
+			struct submit_status	 ss;
 
 			messagep = imsg.data;
 			messagep->id = queue_generate_id();
-			messagep->batch_id = 0;
-			queue_record_incoming_envelope(messagep);
+			ss.id = messagep->session_id;
 
-			if (messagep->type & T_MDA_MESSAGE) {
-				imsg_compose(ibuf, IMSG_LKA_FORWARD, 0, 0, -1,
-				    messagep, sizeof(struct message));
+			if (IS_MAILBOX(messagep->recipient.rule.r_action) ||
+			    IS_EXT(messagep->recipient.rule.r_action))
+				messagep->type = T_MDA_MESSAGE;
+			else
+				messagep->type = T_MTA_MESSAGE;
+
+			/* Write to disk */
+			if (! queue_record_incoming_envelope(messagep)) {
+				ss.code = 421;
+				imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_QUEUE_TEMPFAIL,
+				    0, 0, -1, &ss, sizeof(ss));
+				break;
 			}
+
 			break;
 		}
 
-		case IMSG_LKA_FORWARD: {
-			struct message *messagep;
+		case IMSG_QUEUE_COMMIT_ENVELOPES: {
+			struct message		*messagep;
+			struct submit_status	 ss;
 
-			messagep = (struct message *)imsg.data;
-			messagep->id = queue_generate_id();
-			messagep->batch_id = 0;
-			queue_record_incoming_envelope(messagep);
-			break;
-		}
+			messagep = imsg.data;
+			ss.id = messagep->session_id;
+			ss.code = 250;
 
-		case IMSG_QUEUE_REMOVE_SUBMISSION: {
-			struct message *messagep;
-
-			messagep = (struct message *)imsg.data;
-			queue_remove_incoming_envelope(messagep);
+			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_QUEUE_COMMIT_ENVELOPES,
+			    0, 0, -1, &ss, sizeof(ss));
 			break;
 		}
 
@@ -893,6 +849,7 @@ queue_update_envelope(struct message *messagep)
 		fatal("queue_update_envelope: open");
 	if (flock(fileno(fp), LOCK_EX) == -1)
 		fatal("queue_update_envelope: flock");
+
 	if (fwrite(messagep, sizeof(struct message), 1, fp) != 1) {
 		if (errno == ENOSPC)
 			return 0;
