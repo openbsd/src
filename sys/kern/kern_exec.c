@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.108 2008/10/31 17:17:00 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.109 2009/01/04 00:28:42 thib Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -329,7 +329,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 			cp = *tmpfap;
 			while (*cp)
 				*dp++ = *cp++;
-			dp++;
+			*dp++ = '\0';
 
 			free(*tmpfap, M_EXEC);
 			tmpfap++; argc++;
