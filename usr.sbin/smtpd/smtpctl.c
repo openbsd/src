@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.4 2009/01/04 19:37:41 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.5 2009/01/04 22:35:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -139,16 +139,22 @@ connected:
 		imsg_compose(ibuf, IMSG_CONF_RELOAD, 0, 0, -1, NULL, 0);
 		break;
 	case PAUSE_MDA:
-		imsg_compose(ibuf, IMSG_RUNNER_PAUSE_MDA, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_MDA_PAUSE, 0, 0, -1, NULL, 0);
 		break;
 	case PAUSE_MTA:
-		imsg_compose(ibuf, IMSG_RUNNER_PAUSE_MTA, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_MTA_PAUSE, 0, 0, -1, NULL, 0);
+		break;
+	case PAUSE_SMTP:
+		imsg_compose(ibuf, IMSG_SMTP_PAUSE, 0, 0, -1, NULL, 0);
 		break;
 	case RESUME_MDA:
-		imsg_compose(ibuf, IMSG_RUNNER_RESUME_MDA, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_MDA_RESUME, 0, 0, -1, NULL, 0);
 		break;
 	case RESUME_MTA:
-		imsg_compose(ibuf, IMSG_RUNNER_RESUME_MTA, 0, 0, -1, NULL, 0);
+		imsg_compose(ibuf, IMSG_MDA_RESUME, 0, 0, -1, NULL, 0);
+		break;
+	case RESUME_SMTP:
+		imsg_compose(ibuf, IMSG_SMTP_RESUME, 0, 0, -1, NULL, 0);
 		break;
 	case MONITOR:
 		/* XXX */
@@ -177,8 +183,10 @@ connected:
 			case SHUTDOWN:
 			case PAUSE_MDA:
 			case PAUSE_MTA:
+			case PAUSE_SMTP:
 			case RESUME_MDA:
 			case RESUME_MTA:
+			case RESUME_SMTP:
 				done = show_command_output(&imsg);
 				break;
 			case NONE:

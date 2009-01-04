@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.43 2009/01/04 19:37:41 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.44 2009/01/04 22:35:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -192,10 +192,13 @@ enum imsg_type {
 
 	IMSG_PARENT_AUTHENTICATE,
 
-	IMSG_RUNNER_PAUSE_MDA,
-	IMSG_RUNNER_PAUSE_MTA,
-	IMSG_RUNNER_RESUME_MDA,
-	IMSG_RUNNER_RESUME_MTA
+	IMSG_MDA_PAUSE,
+	IMSG_MTA_PAUSE,
+	IMSG_SMTP_PAUSE,
+
+	IMSG_MDA_RESUME,
+	IMSG_MTA_RESUME,
+	IMSG_SMTP_RESUME
 };
 
 #define IMSG_HEADER_SIZE	 sizeof(struct imsg_hdr)
@@ -592,6 +595,7 @@ struct smtpd {
 #define SMTPD_EXITING				 0x00000002
 #define SMTPD_MDA_PAUSED		       	 0x00000004
 #define SMTPD_MTA_PAUSED		       	 0x00000008
+#define SMTPD_SMTP_PAUSED		       	 0x00000010
 	u_int32_t				 sc_flags;
 	struct timeval				 sc_qintval;
 	struct event				 sc_ev;

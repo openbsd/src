@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.18 2009/01/04 22:18:23 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.19 2009/01/04 22:35:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -123,16 +123,16 @@ runner_dispatch_control(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_RUNNER_PAUSE_MDA:
+		case IMSG_MDA_PAUSE:
 			env->sc_opts |= SMTPD_MDA_PAUSED;
 			break;
-		case IMSG_RUNNER_PAUSE_MTA:
+		case IMSG_MTA_PAUSE:
 			env->sc_opts |= SMTPD_MTA_PAUSED;
 			break;
-		case IMSG_RUNNER_RESUME_MDA:
+		case IMSG_MDA_RESUME:
 			env->sc_opts &= ~SMTPD_MDA_PAUSED;
 			break;
-		case IMSG_RUNNER_RESUME_MTA:
+		case IMSG_MTA_RESUME:
 			env->sc_opts &= ~SMTPD_MTA_PAUSED;
 			break;
 		default:

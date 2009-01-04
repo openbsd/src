@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.6 2009/01/04 19:37:41 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.7 2009/01/04 22:35:09 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -57,6 +57,7 @@ void		 control_dispatch_lka(int, short, void *);
 void		 control_dispatch_mfa(int, short, void *);
 void		 control_dispatch_queue(int, short, void *);
 void		 control_dispatch_runner(int, short, void *);
+void		 control_dispatch_smtp(int, short, void *);
 
 struct ctl_connlist	ctl_conns;
 
@@ -87,6 +88,7 @@ control(struct smtpd *env)
 	struct peer		 peers [] = {
 		{ PROC_QUEUE,	 control_dispatch_queue },
 		{ PROC_RUNNER,	 control_dispatch_runner },
+		{ PROC_SMTP,	 control_dispatch_smtp },
 	};
 
 	switch (pid = fork()) {
@@ -159,7 +161,7 @@ control(struct smtpd *env)
 
 	TAILQ_INIT(&ctl_conns);
 
-	config_peers(env, peers, 2);
+	config_peers(env, peers, 3);
 	control_listen(env);
 	event_dispatch();
 	control_shutdown();
@@ -311,51 +313,72 @@ control_dispatch_ext(int fd, short event, void *arg)
 			env->sc_flags |= SMTPD_EXITING;
 			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
-		case IMSG_RUNNER_PAUSE_MDA:
+		case IMSG_MDA_PAUSE:
 			if (env->sc_flags & SMTPD_MDA_PAUSED) {
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags |= SMTPD_MDA_PAUSED;
-			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_PAUSE_MDA,
+			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_MDA_PAUSE,
 			    0, 0, -1, NULL, 0);
 			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
-		case IMSG_RUNNER_PAUSE_MTA:
+		case IMSG_MTA_PAUSE:
 			if (env->sc_flags & SMTPD_MTA_PAUSED) {
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags |= SMTPD_MTA_PAUSED;
-			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_PAUSE_MTA,
+			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_MTA_PAUSE,
 			    0, 0, -1, NULL, 0);
 			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
-		case IMSG_RUNNER_RESUME_MDA:
+		case IMSG_SMTP_PAUSE:
+			if (env->sc_flags & SMTPD_SMTP_PAUSED) {
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+					NULL, 0);
+				break;
+			}
+			env->sc_flags |= SMTPD_SMTP_PAUSED;
+			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_SMTP_PAUSE,			
+			    0, 0, -1, NULL, 0);
+			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			break;
+		case IMSG_MDA_RESUME:
 			if (! (env->sc_flags & SMTPD_MDA_PAUSED)) {
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags &= ~SMTPD_MDA_PAUSED;
-			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_RESUME_MDA,
+			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_MTA_RESUME,
 			    0, 0, -1, NULL, 0);
 			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
-		case IMSG_RUNNER_RESUME_MTA:
+		case IMSG_MTA_RESUME:
 			if (!(env->sc_flags & SMTPD_MTA_PAUSED)) {
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags &= ~SMTPD_MTA_PAUSED;
-			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_RESUME_MTA,
+			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_MTA_RESUME,
 			    0, 0, -1, NULL, 0);
 			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
-
+		case IMSG_SMTP_RESUME:
+			if (!(env->sc_flags & SMTPD_SMTP_PAUSED)) {
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+					NULL, 0);
+				break;
+			}
+			env->sc_flags &= ~SMTPD_SMTP_PAUSED;
+			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_SMTP_RESUME,
+			    0, 0, -1, NULL, 0);
+			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			break;
 		default:
 			log_debug("control_dispatch_ext: "
 			    "error handling imsg %d", imsg.hdr.type);
@@ -543,6 +566,52 @@ control_dispatch_runner(int sig, short event, void *p)
 		switch (imsg.hdr.type) {
 		default:
 			log_debug("control_dispatch_runner: unexpected imsg %d",
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(ibuf);
+}
+
+void
+control_dispatch_smtp(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = env->sc_ibufs[PROC_SMTP];
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("control_dispatch_smtp: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		default:
+			log_debug("control_dispatch_smtp: unexpected imsg %d",
 			    imsg.hdr.type);
 			break;
 		}
