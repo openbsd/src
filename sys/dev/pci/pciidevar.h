@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidevar.h,v 1.16 2004/10/17 19:00:46 grange Exp $	*/
+/*	$OpenBSD: pciidevar.h,v 1.17 2009/01/04 10:22:01 jsg Exp $	*/
 /*	$NetBSD: pciidevar.h,v 1.6 2001/01/12 16:04:00 bouyer Exp $	*/
 
 /*
@@ -121,6 +121,41 @@ struct pciide_softc {
 	(sc)->sc_dmactl_write((sc), (chan), (val))
 #define PCIIDE_DMATBL_WRITE(sc, chan, val) \
 	(sc)->sc_dmatbl_write((sc), (chan), (val))
+
+int	pciide_mapregs_compat( struct pci_attach_args *,
+	    struct pciide_channel *, int, bus_size_t *, bus_size_t *);
+int	pciide_mapregs_native(struct pci_attach_args *,
+	    struct pciide_channel *, bus_size_t *, bus_size_t *,
+	    int (*pci_intr)(void *));
+void	pciide_mapreg_dma(struct pciide_softc *,
+	    struct pci_attach_args *);
+int	pciide_chansetup(struct pciide_softc *, int, pcireg_t);
+void	pciide_mapchan(struct pci_attach_args *,
+	    struct pciide_channel *, pcireg_t, bus_size_t *, bus_size_t *,
+	    int (*pci_intr)(void *));
+int	pciide_chan_candisable(struct pciide_channel *);
+void	pciide_map_compat_intr( struct pci_attach_args *,
+	    struct pciide_channel *, int, int);
+void	pciide_unmap_compat_intr( struct pci_attach_args *,
+	    struct pciide_channel *, int, int);
+int	pciide_compat_intr(void *);
+int	pciide_pci_intr(void *);
+int	pciide_intr_flag(struct pciide_channel *);
+
+u_int8_t pciide_dmacmd_read(struct pciide_softc *, int);
+void	 pciide_dmacmd_write(struct pciide_softc *, int, u_int8_t);
+u_int8_t pciide_dmactl_read(struct pciide_softc *, int);
+void	 pciide_dmactl_write(struct pciide_softc *, int, u_int8_t);
+void	 pciide_dmatbl_write(struct pciide_softc *, int, u_int32_t);
+
+void	 pciide_channel_dma_setup(struct pciide_channel *);
+int	 pciide_dma_table_setup(struct pciide_softc *, int, int);
+int	 pciide_dma_init(void *, int, int, void *, size_t, int);
+void	 pciide_dma_start(void *, int, int);
+int	 pciide_dma_finish(void *, int, int, int);
+void	 pciide_irqack(struct channel_softc *);
+void	 pciide_print_modes(struct pciide_channel *);
+void	 pciide_print_channels(int, pcireg_t);
 
 /*
  * Functions defined by machine-dependent code.
