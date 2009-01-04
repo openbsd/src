@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.13 2009/01/04 00:58:59 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.14 2009/01/04 14:46:14 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -54,7 +54,7 @@ size_t		getmxbyname(char *, char ***);
 int		lka_expand(char *, size_t, struct path *);
 int		aliases_exist(struct smtpd *, char *);
 int		aliases_get(struct smtpd *, struct aliaseslist *, char *);
-int		lka_resolve_alias(struct smtpd *, struct path *, struct alias *);
+int		lka_resolve_alias(struct path *, struct alias *);
 int		lka_parse_include(char *);
 int		forwards_get(struct aliaseslist *, char *);
 int		lka_check_source(struct smtpd *, struct map *, struct sockaddr_storage *);
@@ -225,7 +225,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 					message = ss->msg;
 					while ((alias = TAILQ_FIRST(&aliases)) != NULL) {
 						bzero(&message.recipient, sizeof (struct path));
-						lka_resolve_alias(env, &message.recipient, alias);
+						lka_resolve_alias(&message.recipient, alias);
 						imsg_compose(env->sc_ibufs[PROC_QUEUE],
 						    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1, &message,
 						    sizeof (struct message));
@@ -791,7 +791,7 @@ lka_expand(char *buf, size_t len, struct path *path)
 }
 
 int
-lka_resolve_alias(struct smtpd *env, struct path *path, struct alias *alias)
+lka_resolve_alias(struct path *path, struct alias *alias)
 {
 	switch (alias->type) {
 	case ALIAS_USERNAME:
@@ -818,8 +818,8 @@ lka_resolve_alias(struct smtpd *env, struct path *path, struct alias *alias)
 		log_debug("ADDRESS: %s@%s", alias->u.path.user, alias->u.path.domain);
 		*path = alias->u.path;
 		break;
-	default:
-		/* ALIAS_INCLUDE cannot happen here, make gcc shut up */
+	case ALIAS_INCLUDE:
+		fatalx("lka_resolve_alias: unexpected type");
 		break;
 	}
 	return 1;
@@ -844,10 +844,11 @@ lka_expand_aliases(struct smtpd *env, struct aliaseslist *aliases, struct path *
 		ret = aliases_get(env, aliases, path->user);
 	else if (path->flags & F_VIRTUAL)
 		ret = aliases_virtual_get(env, aliases, path);
+	else
+		fatalx("lka_expand_aliases: invalid path type");
 
 	if (! ret)
 		return 0;
-	
 
 	while (!done && iterations--) {
 		done = 1;

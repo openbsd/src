@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.6 2009/01/04 00:58:59 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.7 2009/01/04 14:46:14 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -30,7 +30,7 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "smtpd.h"
@@ -45,7 +45,7 @@ void		mfa_disable_events(struct smtpd *);
 void		mfa_timeout(int, short, void *);
 
 int		mfa_check_rcpt(struct smtpd *, struct path *, struct sockaddr_storage *);
-int		mfa_check_source(struct smtpd *, struct map *, struct sockaddr_storage *);
+int		mfa_check_source(struct map *, struct sockaddr_storage *);
 int		mfa_match_mask(struct sockaddr_storage *, struct netaddr *);
 
 void
@@ -379,7 +379,7 @@ mfa_check_rcpt(struct smtpd *env, struct path *path, struct sockaddr_storage *ss
 	struct mapel *me;
 
 	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
-		if (! mfa_check_source(env, r->r_sources, ss))
+		if (! mfa_check_source(r->r_sources, ss))
 			continue;
 
 		log_debug("client authorized");
@@ -409,7 +409,7 @@ mfa_check_rcpt(struct smtpd *env, struct path *path, struct sockaddr_storage *ss
 }
 
 int
-mfa_check_source(struct smtpd *env, struct map *map, struct sockaddr_storage *ss)
+mfa_check_source(struct map *map, struct sockaddr_storage *ss)
 {
 	struct mapel *me;
 

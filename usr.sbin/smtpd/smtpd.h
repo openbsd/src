@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.38 2009/01/04 00:58:59 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.39 2009/01/04 14:46:14 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -163,9 +163,7 @@ enum imsg_type {
 	IMSG_CONF_RELOAD,
 	IMSG_LKA_MAIL,
 	IMSG_LKA_RCPT,
-	IMSG_LKA_ALIAS,
 	IMSG_LKA_MX,
-	IMSG_LKA_FORWARD,
 	IMSG_LKA_HOST,
 	IMSG_MDA_MAILBOX_FILE,
 	IMSG_MDA_MESSAGE_FILE,
