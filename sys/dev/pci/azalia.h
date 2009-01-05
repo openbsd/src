@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.38 2009/01/05 07:55:34 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.39 2009/01/05 08:19:31 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -283,12 +283,6 @@
 #define		CORB_CSC_INDEX(x)		(x & 0xff)
 #define CORB_SET_CONNECTION_SELECT_CONTROL	0x701
 #define CORB_GET_CONNECTION_LIST_ENTRY	0xf02
-#define		CORB_CLE_LONG_0(x)	(x & 0x0000ffff)
-#define		CORB_CLE_LONG_1(x)	((x & 0xffff0000) >> 16)
-#define		CORB_CLE_SHORT_0(x)	(x & 0xff)
-#define		CORB_CLE_SHORT_1(x)	((x >> 8) & 0xff)
-#define		CORB_CLE_SHORT_2(x)	((x >> 16) & 0xff)
-#define		CORB_CLE_SHORT_3(x)	((x >> 24) & 0xff)
 #define CORB_GET_PROCESSING_STATE	0xf03
 #define CORB_SET_PROCESSING_STATE	0x703
 #define CORB_GET_COEFFICIENT_INDEX	0xd00
