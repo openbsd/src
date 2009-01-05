@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.109 2009/01/04 23:42:39 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.110 2009/01/05 08:03:46 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2308,8 +2308,8 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 {
 	uint32_t result;
 	int err;
-	boolean_t longform;
-	int length, i;
+	int i, j, k;
+	int length, bits, conn, last;
 
 	this->selected = -1;
 	if ((this->widgetcap & COP_AWCAP_CONNLIST) == 0)
@@ -2319,36 +2319,38 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 	    COP_CONNECTION_LIST_LENGTH, &result);
 	if (err)
 		return err;
-	longform = (result & COP_CLL_LONG) != 0;
+
+	bits = 8;
+	if (result & COP_CLL_LONG)
+		bits = 16;
+
 	length = COP_CLL_LENGTH(result);
 	if (length == 0)
 		return 0;
+
 	this->nconnections = length;
-	this->connections = malloc(sizeof(nid_t) * (length + 3),
-	    M_DEVBUF, M_NOWAIT);
+	this->connections = malloc(sizeof(nid_t) * length, M_DEVBUF, M_NOWAIT);
 	if (this->connections == NULL) {
 		printf("%s: out of memory\n", XNAME(codec->az));
 		return ENOMEM;
 	}
-	if (longform) {
-		for (i = 0; i < length;) {
-			err = codec->comresp(codec, this->nid,
-			    CORB_GET_CONNECTION_LIST_ENTRY, i, &result);
-			if (err)
-				return err;
-			this->connections[i++] = CORB_CLE_LONG_0(result);
-			this->connections[i++] = CORB_CLE_LONG_1(result);
-		}
-	} else {
-		for (i = 0; i < length;) {
-			err = codec->comresp(codec, this->nid,
-			    CORB_GET_CONNECTION_LIST_ENTRY, i, &result);
-			if (err)
-				return err;
-			this->connections[i++] = CORB_CLE_SHORT_0(result);
-			this->connections[i++] = CORB_CLE_SHORT_1(result);
-			this->connections[i++] = CORB_CLE_SHORT_2(result);
-			this->connections[i++] = CORB_CLE_SHORT_3(result);
+	for (i = 0; i < length;) {
+		err = codec->comresp(codec, this->nid,
+		    CORB_GET_CONNECTION_LIST_ENTRY, i, &result);
+		if (err)
+			return err;
+		for (k = 0; i < length && (k < 32 / bits); k++) {
+			conn = (result >> (k * bits)) & ((1 << bits) - 1);
+			/* If high bit is set, this is the end of a continuous
+			 * list that started with the last connection.
+			 */
+			if ((i > 0) && (conn & (1 << (bits - 1)))) {
+				last = this->connections[i - 1];
+				for (j = 1; i < length && j <= conn - last; j++)
+					this->connections[i++] = last + j;
+			} else {
+				this->connections[i++] = conn;
+			}
 		}
 	}
 	if (length > 0) {
