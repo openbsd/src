@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.108 2009/01/04 22:45:24 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.109 2009/01/05 07:55:34 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -581,9 +581,7 @@ azalia_generic_mixer_init(codec_t *this)
 			continue;
 
 		/* selector */
-		if (w->nconnections > 0 &&
-		    !(w->type == COP_AWTYPE_AUDIO_MIXER &&
-		    (w->widgetcap & COP_AWCAP_INAMP)) &&
+		if (w->nconnections > 0 && w->type != COP_AWTYPE_AUDIO_MIXER &&
 		    !(w->nconnections == 1 &&
 		    azalia_widget_enabled(this, w->connections[0]) &&
 		    strcmp(w->name, this->w[w->connections[0]].name) == 0) &&
@@ -752,6 +750,36 @@ azalia_generic_mixer_init(codec_t *this)
 					this->nmixers++;
 				}
 			}
+		}
+
+		/* hardcoded mixer inputs */
+		if (w->type == COP_AWTYPE_AUDIO_MIXER &&
+		    !(w->widgetcap & COP_AWCAP_INAMP)) {
+			MIXER_REG_PROLOG;
+			snprintf(d->label.name, sizeof(d->label.name),
+			    "%s_source", w->name);
+			m->target = MI_TARGET_MIXERSET;
+			d->type = AUDIO_MIXER_SET;
+			if (w->mixer_class >= 0)
+				d->mixer_class = w->mixer_class;
+			else
+				d->mixer_class = AZ_CLASS_INPUT;
+			for (j = 0, k = 0;
+			    j < w->nconnections && k < 32; j++) {
+				if (!azalia_widget_enabled(this,
+				    w->connections[j]))
+					continue;
+				if (w->connections[j] == this->speaker)
+					continue;
+				d->un.s.member[k].mask = 1 << j;
+				strlcpy(d->un.s.member[k].label.name,
+				    this->w[w->connections[j]].name,
+				    MAX_AUDIO_DEV_LEN);
+				k++;
+			}
+			d->un.s.num_mem = k;
+			if (k != 0)
+				this->nmixers++;
 		}
 
 		/* pin direction */
@@ -1108,7 +1136,8 @@ azalia_generic_mixer_default(codec_t *this)
 	/* unmute all */
 	for (i = 0; i < this->nmixers; i++) {
 		m = &this->mixers[i];
-		if (m->target != MI_TARGET_MUTESET)
+		if (m->target != MI_TARGET_MUTESET &&
+		    m->target != MI_TARGET_MIXERSET)
 			continue;
 		if (m->devinfo.type != AUDIO_MIXER_SET)
 			continue;
@@ -1116,7 +1145,7 @@ azalia_generic_mixer_default(codec_t *this)
 		mc.dev = i;
 		mc.type = AUDIO_MIXER_SET;
 		if (!azalia_widget_enabled(this, m->nid)) {
-			DPRINTF(("%s: invalid muteset nid\n", __func__));
+			DPRINTF(("%s: invalid set nid\n", __func__));
 			return EINVAL;
 		}
 		w = &this->w[m->nid];
@@ -1396,6 +1425,23 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 			if (err)
 				return err;
 			mc->un.mask |= (result & CORB_GAGM_MUTE) ? 0 : (1 << i);
+		}
+	}
+
+	/* mixer set - show all connections */
+	else if (target == MI_TARGET_MIXERSET && mc->type == AUDIO_MIXER_SET) {
+		const widget_t *w;
+
+		if (!azalia_widget_enabled(this, nid)) {
+			DPRINTF(("%s: invalid mixerset nid\n"));
+			return EINVAL;
+		}
+		w = &this->w[nid];
+		mc->un.mask = 0;
+		for (i = 0; i < w->nconnections; i++) {
+			if (!azalia_widget_enabled(this, w->connections[i]))
+				continue;
+			mc->un.mask |= (1 << i);
 		}
 	}
 
@@ -1788,6 +1834,10 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 					return err;
 			}
 		}
+	}
+
+	else if (target == MI_TARGET_MUTESET && mc->type == AUDIO_MIXER_SET) {
+		/* do nothing, control is read only */
 	}
 
 	else if (target == MI_TARGET_SENSESET && mc->type == AUDIO_MIXER_SET) {
