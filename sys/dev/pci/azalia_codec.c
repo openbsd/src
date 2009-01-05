@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.109 2009/01/05 07:55:34 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.110 2009/01/05 08:06:55 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -89,7 +89,6 @@ void	azalia_devinfo_offon(mixer_devinfo_t *);
 void	azalia_pin_config_ov(widget_t *, int, int);
 int	azalia_gpio_unmute(codec_t *, int);
 
-int	azalia_ad1984_mixer_init(codec_t *);
 int	azalia_alc88x_init_widget(const codec_t *, widget_t *, nid_t);
 int	azalia_stac9221_init_widget(const codec_t *, widget_t *, nid_t);
 int	azalia_stac7661_mixer_init(codec_t *);
@@ -175,7 +174,6 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x11d41984:
 		this->name = "Analog Devices AD1984";
-		this->mixer_init = azalia_ad1984_mixer_init;
 		break;
 	case 0x11d41988:
 		this->name = "Analog Devices AD1988A";
@@ -2145,22 +2143,6 @@ azalia_codec_gpio_quirks(codec_t *this)
 /* ----------------------------------------------------------------
  * codec specific functions
  * ---------------------------------------------------------------- */
-
-/* Analog Devices AD1984 */
-int
-azalia_ad1984_mixer_init(codec_t *this)
-{
-	mixer_ctrl_t mc;
-
-	azalia_generic_mixer_init(this);
-
-	mc.dev = -1;
-	mc.type = AUDIO_MIXER_ENUM;
-	mc.un.ord = 1;
-	/* connect headphones to output of first DAC */
-	azalia_generic_mixer_set(this, 0x22, MI_TARGET_CONNLIST, &mc);
-	return 0;
-}
 
 /* Realtek ALC88x */
 int
