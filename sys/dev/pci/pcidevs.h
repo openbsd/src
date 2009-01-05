@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1446 2008/12/30 23:42:32 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1447 2009/01/05 20:11:19 matthieu Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3859,6 +3859,7 @@
 #define	PCI_PRODUCT_NVIDIA_MCP73_PPB_1	0x056d		/* MCP73 PCIE */
 #define	PCI_PRODUCT_NVIDIA_MCP73_PPB_2	0x056e		/* MCP73 PCIE */
 #define	PCI_PRODUCT_NVIDIA_MCP73_PPB_3	0x056f		/* MCP73 PCIE */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_9600_GT	0x0622		/* GeForce 9600 GT */
 #define	PCI_PRODUCT_NVIDIA_MCP77_MEM2	0x0751		/* MCP77 Memory */
 #define	PCI_PRODUCT_NVIDIA_MCP77_SMB	0x0752		/* MCP77 SMBus */
 #define	PCI_PRODUCT_NVIDIA_MCP77_COPROC	0x0753		/* MCP77 Co-processor */
