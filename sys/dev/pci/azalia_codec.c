@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.111 2009/01/05 09:46:26 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.112 2009/01/05 09:50:37 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -439,12 +439,13 @@ azalia_generic_unsol(codec_t *this, int tag)
 	uint32_t result;
 	int i, err, vol, vol2;
 
+	err = 0;
 	tag = CORB_UNSOL_TAG(tag);
 	switch (tag) {
 	case AZ_TAG_SPKR:
 		mc.type = AUDIO_MIXER_ENUM;
-		mc.un.ord = 0;
-		for (i = 0; mc.un.ord == 0 && i < this->nsense_pins; i++) {
+		vol = 0;
+		for (i = 0; err == 0 && i < this->nsense_pins; i++) {
 			if (!(this->spkr_muters & (1 << i)))
 				continue;
 			err = this->comresp(this, this->sense_pins[i],
@@ -454,10 +455,20 @@ azalia_generic_unsol(codec_t *this, int tag)
 			err = this->comresp(this, this->sense_pins[i],
 			    CORB_GET_PIN_SENSE, 0, &result);
 			if (!err && (result & CORB_PS_PRESENCE))
-				mc.un.ord = 1;
+				vol = 1;
 		}
-		azalia_generic_mixer_set(this, this->speaker,
-		    MI_TARGET_OUTAMP, &mc);
+		if (err)
+			break;
+		if ((this->w[this->speaker].widgetcap & COP_AWCAP_OUTAMP) &&
+		    (this->w[this->speaker].outamp_cap & COP_AMPCAP_MUTE)) {
+			mc.un.ord = vol;
+			err = azalia_generic_mixer_set(this, this->speaker,
+			    MI_TARGET_OUTAMP, &mc);
+		} else {
+			mc.un.ord = vol ? 0 : 1;
+			err = azalia_generic_mixer_set(this, this->speaker,
+			    MI_TARGET_PINDIR, &mc);
+		}
 		break;
 
 	case AZ_TAG_PLAYVOL:
@@ -490,7 +501,7 @@ azalia_generic_unsol(codec_t *this, int tag)
 		mc.un.value.num_channels = 2;
 		mc.un.value.level[0] = this->playvols.vol_l;
 		mc.un.value.level[1] = this->playvols.vol_r;
-		azalia_generic_mixer_set(this, this->playvols.master,
+		err = azalia_generic_mixer_set(this, this->playvols.master,
 		    MI_TARGET_PLAYVOL, &mc);
 		break;
 
@@ -499,7 +510,7 @@ azalia_generic_unsol(codec_t *this, int tag)
 		break;
 	}
 
-	return 0;
+	return err;
 }
 
 
@@ -898,8 +909,10 @@ azalia_generic_mixer_init(codec_t *this)
 	/* spkr mute by jack sense */
 	w = &this->w[this->speaker];
 	if (this->nsense_pins > 0 && this->speaker != -1 &&
-	    (w->widgetcap & COP_AWCAP_OUTAMP) &&
-	    (w->outamp_cap & COP_AMPCAP_MUTE)) {
+	    (((w->widgetcap & COP_AWCAP_OUTAMP) &&
+	    (w->outamp_cap & COP_AMPCAP_MUTE)) ||
+	    ((w->d.pin.cap & COP_PINCAP_OUTPUT) &&
+	    (w->d.pin.cap & COP_PINCAP_INPUT)))) {
 		MIXER_REG_PROLOG;
 		m->nid = w->nid;
 		snprintf(d->label.name, sizeof(d->label.name),
