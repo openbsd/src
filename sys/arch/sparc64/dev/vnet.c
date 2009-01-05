@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.1 2009/01/04 17:20:44 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.2 2009/01/05 22:09:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -47,8 +47,14 @@
 
 #include <sparc64/dev/cbusvar.h>
 
-/* XXX the following declarations should be elsewhere */
+/* XXX the following declaration should be elsewhere */
 extern void myetheraddr(u_char *);
+
+#ifdef VNET_DEBUG
+#define DPRINTF(x)	printf x
+#else
+#define DPRINTF(x)
+#endif
 
 struct ldc_msg {
 	uint8_t type;
@@ -260,6 +266,12 @@ void	vnet_dring_free(bus_dma_tag_t, struct vnet_dring *);
 #define VNET_MAJOR	1
 #define VNET_MINOR	0
 
+/*
+ * The vNet protocol wants the IP header to be 64-bit aligned, so
+ * define out own variant of ETHER_ALIGN.
+ */
+#define VNET_ETHER_ALIGN	6
+
 struct vnet_soft_desc {
 	int		vsd_map_idx;
 	caddr_t		vsd_buf;
@@ -366,8 +378,6 @@ void	vnet_media_status(struct ifnet *, struct ifmediareq *);
 void	vnet_init(struct ifnet *);
 void	vnet_stop(struct ifnet *);
 
-struct pool vnetpl;
-
 int
 vnet_match(struct device *parent, void *match, void *aux)
 {
@@ -471,13 +481,13 @@ vnet_tx_intr(void *arg)
 	if (tx_state != sc->sc_tx_state) {
 		switch (tx_state) {
 		case LDC_CHANNEL_DOWN:
-			printf("Tx link down\n");
+			DPRINTF(("Tx link down\n"));
 			break;
 		case LDC_CHANNEL_UP:
-			printf("Tx link up\n");
+			DPRINTF(("Tx link up\n"));
 			break;
 		case LDC_CHANNEL_RESET:
-			printf("Tx link reset\n");
+			DPRINTF(("Tx link reset\n"));
 			break;
 		}
 		sc->sc_tx_state = tx_state;
@@ -511,20 +521,18 @@ vnet_rx_intr(void *arg)
 		ifp->if_flags &= ~IFF_RUNNING;
 		switch (rx_state) {
 		case LDC_CHANNEL_DOWN:
-			printf("Rx link down\n");
+			DPRINTF(("Rx link down\n"));
 			break;
 		case LDC_CHANNEL_UP:
-			printf("Rx link up\n");
+			DPRINTF(("Rx link up\n"));
 			ldc_send_vers(sc);
 			break;
 		case LDC_CHANNEL_RESET:
-			printf("Rx link reset\n");
-//			ldc_send_vers(sc);
+			DPRINTF(("Rx link reset\n"));
 			break;
 		}
-		printf("rx_head %lld rx_tail %lld\n", rx_head, rx_tail);
 		sc->sc_rx_state = rx_state;
-		hv_ldc_rx_set_qhead(sc->sc_id, rx_head);
+		hv_ldc_rx_set_qhead(sc->sc_id, rx_tail);
 		return (1);
 	}
 
@@ -550,7 +558,8 @@ vnet_rx_intr(void *arg)
 		break;
 
 	default:
-		printf("%0x02/%0x02/%0x02\n", lm->type, lm->stype, lm->ctrl);
+		DPRINTF(("%0x02/%0x02/%0x02\n", lm->type, lm->stype,
+		    lm->ctrl));
 		ldc_reset(sc);
 		break;
 	}
@@ -584,7 +593,7 @@ vnet_rx_ctrl(struct vnet_softc *sc, struct ldc_msg *lm)
 		break;
 
 	default:
-		printf("CTRL/0x%02x/0x%02x\n", lm->stype, lm->ctrl);
+		DPRINTF(("CTRL/0x%02x/0x%02x\n", lm->stype, lm->ctrl));
 		ldc_reset(sc);
 		break;
 	}
@@ -600,22 +609,22 @@ vnet_rx_ctrl_vers(struct vnet_softc *sc, struct ldc_msg *lm)
 
 	case LDC_ACK:
 		if (sc->sc_ldc_state != LDC_SND_VERS) {
-			printf("Spurious CTRL/ACK/VERS: state %d\n",
-			    sc->sc_ldc_state);
+			DPRINTF(("Spurious CTRL/ACK/VERS: state %d\n",
+			    sc->sc_ldc_state));
 			ldc_reset(sc);
 			return;
 		}
-		printf("CTRL/ACK/VERS\n");
+		DPRINTF(("CTRL/ACK/VERS\n"));
 		ldc_send_rts(sc);
 		break;
 
 	case LDC_NACK:
-		printf("CTRL/NACK/VERS\n");
+		DPRINTF(("CTRL/NACK/VERS\n"));
 		ldc_reset(sc);
 		break;
 
 	default:
-		printf("CTRL/0x%02x/VERS\n", lm->stype);
+		DPRINTF(("CTRL/0x%02x/VERS\n", lm->stype));
 		ldc_reset(sc);
 		break;
 	}
@@ -627,27 +636,27 @@ vnet_rx_ctrl_rts(struct vnet_softc *sc, struct ldc_msg *lm)
 	switch (lm->stype) {
 	case LDC_INFO:
 		if (sc->sc_ldc_state != LDC_RCV_VERS) {
-			printf("Suprious CTRL/INFO/RTS: state %d\n",
-			    sc->sc_ldc_state);
+			DPRINTF(("Suprious CTRL/INFO/RTS: state %d\n",
+			    sc->sc_ldc_state));
 			ldc_reset(sc);
 			return;
 		}
-		printf("CTRL/INFO/RTS\n");
+		DPRINTF(("CTRL/INFO/RTS\n"));
 		ldc_send_rtr(sc);
 		break;
 
 	case LDC_ACK:
-		printf("CTRL/ACK/RTS\n");
+		DPRINTF(("CTRL/ACK/RTS\n"));
 		ldc_reset(sc);
 		break;
 
 	case LDC_NACK:
-		printf("CTRL/NACK/RTS\n");
+		DPRINTF(("CTRL/NACK/RTS\n"));
 		ldc_reset(sc);
 		break;
 
 	default:
-		printf("CTRL/0x%02x/RTS\n", lm->stype);
+		DPRINTF(("CTRL/0x%02x/RTS\n", lm->stype));
 		ldc_reset(sc);
 		break;
 	}
@@ -659,27 +668,27 @@ vnet_rx_ctrl_rtr(struct vnet_softc *sc, struct ldc_msg *lm)
 	switch (lm->stype) {
 	case LDC_INFO:
 		if (sc->sc_ldc_state != LDC_SND_RTS) {
-			printf("Spurious CTRL/INFO/RTR: state %d\n",
-			    sc->sc_ldc_state);
+			DPRINTF(("Spurious CTRL/INFO/RTR: state %d\n",
+			    sc->sc_ldc_state));
 			ldc_reset(sc);
 			return;
 		}
-		printf("CTRL/INFO/RTR\n");
+		DPRINTF(("CTRL/INFO/RTR\n"));
 		ldc_send_rdx(sc);
 		break;
 
 	case LDC_ACK:
-		printf("CTRL/ACK/RTR\n");
+		DPRINTF(("CTRL/ACK/RTR\n"));
 		ldc_reset(sc);
 		break;
 
 	case LDC_NACK:
-		printf("CTRL/NACK/RTR\n");
+		DPRINTF(("CTRL/NACK/RTR\n"));
 		ldc_reset(sc);
 		break;
 
 	default:
-		printf("CTRL/0x%02x/RTR\n", lm->stype);
+		DPRINTF(("CTRL/0x%02x/RTR\n", lm->stype));
 		ldc_reset(sc);
 		break;
 	}
@@ -691,14 +700,14 @@ vnet_rx_data(struct vnet_softc *sc, struct ldc_msg *lm)
 	struct vio_msg *vm;
 
 	if (lm->stype != LDC_INFO) {
-		printf("DATA/0x%02x\n", lm->stype);
+		DPRINTF(("DATA/0x%02x\n", lm->stype));
 		ldc_reset(sc);
 		return;
 	}
 
 	if (sc->sc_ldc_state != LDC_SND_RTR &&
 	    sc->sc_ldc_state != LDC_SND_RDX) {
-		printf("Spurious DATA/INFO: state %d\n", sc->sc_ldc_state);
+		DPRINTF(("Spurious DATA/INFO: state %d\n", sc->sc_ldc_state));
 		ldc_reset(sc);
 		return;
 	}
@@ -719,7 +728,7 @@ vnet_rx_data(struct vnet_softc *sc, struct ldc_msg *lm)
 		break;
 
 	default:
-		printf("Unhandled packet type 0x%02x\n", vm->type);
+		DPRINTF(("Unhandled packet type 0x%02x\n", vm->type));
 		ldc_reset(sc);
 		break;
 	}
@@ -744,7 +753,7 @@ vnet_rx_vio_ctrl(struct vnet_softc *sc, struct vio_msg *vm)
 		vnet_rx_vio_rdx(sc, tag);
 		break;
 	default:
-		printf("CTRL/0x%02x/0x%04x\n", tag->stype, tag->stype_env);
+		DPRINTF(("CTRL/0x%02x/0x%04x\n", tag->stype, tag->stype_env));
 		break;
 	}
 }
@@ -756,7 +765,7 @@ vnet_rx_vio_ver_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 	switch (vi->tag.stype) {
 	case VIO_SUBTYPE_INFO:
-		printf("CTRL/INFO/VER_INFO\n");
+		DPRINTF(("CTRL/INFO/VER_INFO\n"));
 
 		/* Make sure we're talking to a virtual network device. */
 		if (vi->dev_class != VDEV_NETWORK &&
@@ -788,11 +797,11 @@ vnet_rx_vio_ver_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		break;
 
 	case VIO_SUBTYPE_ACK:
-		printf("CTRL/ACK/VER_INFO\n");
+		DPRINTF(("CTRL/ACK/VER_INFO\n"));
 		break;
 
 	default:
-		printf("CTRL/0x%02x/VER_INFO\n", vi->tag.stype);
+		DPRINTF(("CTRL/0x%02x/VER_INFO\n", vi->tag.stype));
 		break;
 	}
 }
@@ -804,7 +813,7 @@ vnet_rx_vio_attr_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 	switch (ai->tag.stype) {
 	case VIO_SUBTYPE_INFO:
-		printf("CTRL/INFO/ATTR_INFO\n");
+		DPRINTF(("CTRL/INFO/ATTR_INFO\n"));
 
 		ai->tag.stype = VIO_SUBTYPE_ACK;
 		ai->tag.sid = sc->sc_local_sid;
@@ -814,11 +823,11 @@ vnet_rx_vio_attr_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		break;
 
 	case VIO_SUBTYPE_ACK:
-		printf("CTRL/ACK/ATTR_INFO\n");
+		DPRINTF(("CTRL/ACK/ATTR_INFO\n"));
 		break;
 
 	default:
-		printf("CTRL/0x%02x/VER_INFO\n", ai->tag.stype);
+		DPRINTF(("CTRL/0x%02x/VER_INFO\n", ai->tag.stype));
 		break;
 	}
 }
@@ -830,7 +839,7 @@ vnet_rx_vio_dring_reg(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 	switch (dr->tag.stype) {
 	case VIO_SUBTYPE_INFO:
-		printf("CTRL/INFO/DRING_REG\n");
+		DPRINTF(("CTRL/INFO/DRING_REG\n"));
 
 		sc->sc_peer_dring_nentries = dr->num_descriptors;
 		sc->sc_peer_desc_size = dr->descriptor_size;
@@ -844,7 +853,7 @@ vnet_rx_vio_dring_reg(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		break;
 
 	case VIO_SUBTYPE_ACK:
-		printf("CTRL/ACK/DRING_REG\n");
+		DPRINTF(("CTRL/ACK/DRING_REG\n"));
 
 		sc->sc_dring_ident = dr->dring_ident;
 		sc->sc_seq_no = 1;
@@ -853,7 +862,7 @@ vnet_rx_vio_dring_reg(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		break;
 
 	default:
-		printf("CTRL/0x%02x/DRING_REG\n", dr->tag.stype);
+		DPRINTF(("CTRL/0x%02x/DRING_REG\n", dr->tag.stype));
 		break;
 	}
 }
@@ -865,7 +874,7 @@ vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 	switch(tag->stype) {
 	case VIO_SUBTYPE_INFO:
-		printf("CTRL/INFO/RDX\n");
+		DPRINTF(("CTRL/INFO/RDX\n"));
 
 		tag->stype = VIO_SUBTYPE_ACK;
 		tag->sid = sc->sc_local_sid;
@@ -873,16 +882,15 @@ vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		break;
 
 	case VIO_SUBTYPE_ACK:
-		printf("CTRL/ACK/RDX\n");
+		DPRINTF(("CTRL/ACK/RDX\n"));
 
 		/* Link is up! */
-		printf("succesful handshake\n");
 		sc->sc_vio_state = VIO_ESTABLISHED;
 		ifp->if_flags |= IFF_RUNNING;
 		break;
 
 	default:
-		printf("CTRL/0x%02x/RDX (VIO)\n", tag->stype);
+		DPRINTF(("CTRL/0x%02x/RDX (VIO)\n", tag->stype));
 		break;
 	}
 }
@@ -893,7 +901,8 @@ vnet_rx_vio_data(struct vnet_softc *sc, struct vio_msg *vm)
 	struct vio_msg_tag *tag = (struct vio_msg_tag *)&vm->type;
 
 	if (sc->sc_vio_state != VIO_ESTABLISHED) {
-		printf("Spurious DATA/0x%02x/0x%04x\n", tag->stype, tag->stype_env);
+		DPRINTF(("Spurious DATA/0x%02x/0x%04x\n", tag->stype,
+		    tag->stype_env));
 		return;
 	}
 
@@ -903,7 +912,7 @@ vnet_rx_vio_data(struct vnet_softc *sc, struct vio_msg *vm)
 		break;
 
 	default:
-		printf("DATA/0x%02x/0x%04x\n", tag->stype, tag->stype_env);
+		DPRINTF(("DATA/0x%02x/0x%04x\n", tag->stype, tag->stype_env));
 		break;
 	}
 }
@@ -939,15 +948,6 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 				break;
 			}
 
-#if 0
-			{
-				uint64_t *p = (uint64_t *)&desc;
-				int i;
-				for (i = 0; i < 4; i++)
-					printf(" 0x%016llx\n", p[i]);
-				printf("\n");
-			}
-#endif
 			if (desc.hdr.dstate != VIO_DESC_READY)
 				break;
 
@@ -962,7 +962,7 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			ifp->if_ipackets++;
 			m->m_pkthdr.rcvif = ifp;
 			m->m_len = m->m_pkthdr.len = desc.nbytes;
-			nbytes = roundup(desc.nbytes + 6, 8);
+			nbytes = roundup(desc.nbytes + VNET_ETHER_ALIGN, 8);
 
 			pmap_extract(pmap_kernel(), (vaddr_t)m->m_data, &pa);
 			err = hv_ldc_copy(sc->sc_id, LDC_COPY_IN,
@@ -981,17 +981,7 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 				m_freem(m);
 				goto skip;
 			}
-			m->m_data += 6;
-
-#if 0
-			{
-				uint8_t *p = m->m_data;
-				int i;
-				for (i = 0; i < m->m_len; i++)
-					printf(" 0x%02x", p[i]);
-				printf("\n");
-			}
-#endif
+			m->m_data += VNET_ETHER_ALIGN;
 
 #if NBPFILTER > 0
 			if (ifp->if_bpf)
@@ -1031,12 +1021,6 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		struct ldc_map *map = sc->sc_lm;
 		int cons;
 
-#if 0
-		if (sc->sc_tx_cons != dm->start_idx)
-			printf("ACK out of sequence: cons %d start_idx %d\n",
-			    sc->sc_tx_cons, dm->start_idx);
-#endif
-
 		cons = sc->sc_tx_cons;
 		while (sc->sc_vd->vd_desc[cons].hdr.dstate == VIO_DESC_DONE) {
 			map->lm_slot[sc->sc_vsd[cons].vsd_map_idx].entry = 0;
@@ -1052,11 +1036,11 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 	}
 
 	case VIO_SUBTYPE_NACK:
-		printf("DATA/NACK/DRING_DATA\n");
+		DPRINTF(("DATA/NACK/DRING_DATA\n"));
 		break;
 
 	default:
-		printf("DATA/0x%02x/DRING_DATA\n", tag->stype);
+		DPRINTF(("DATA/0x%02x/DRING_DATA\n", tag->stype));
 		break;
 	}
 }
@@ -1182,7 +1166,7 @@ ldc_reset(struct vnet_softc *sc)
 {
 	int err;
 
-	printf("Resetting connection\n");
+	DPRINTF(("Resetting connection\n"));
 	hv_ldc_tx_qconf(sc->sc_id, 0, 0);
 	hv_ldc_rx_qconf(sc->sc_id, 0, 0);
 	sc->sc_tx_state = sc->sc_rx_state = LDC_CHANNEL_DOWN;
@@ -1343,7 +1327,7 @@ vnet_start(struct ifnet *ifp)
 		buf = pool_get(&sc->sc_pool, PR_NOWAIT|PR_ZERO);
 		if (buf == NULL)
 			break;
-		m_copydata(m, 0, m->m_pkthdr.len, buf + 6);
+		m_copydata(m, 0, m->m_pkthdr.len, buf + VNET_ETHER_ALIGN);
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
@@ -1371,15 +1355,6 @@ vnet_start(struct ifnet *ifp)
 		map->lm_slot[map->lm_next].entry |= LDC_MTE_CPR;
 		map->lm_count++;
 
-#if 0
-		{
-			uint8_t *p = buf;
-			int i;
-			for (i = 0; i < (m->m_pkthdr.len + 6); i++)
-				printf(" 0x%02x", p[i]);
-			printf("\n");
-		}
-#endif
 		sc->sc_vd->vd_desc[desc].nbytes = max(m->m_pkthdr.len, 60);
 		sc->sc_vd->vd_desc[desc].ncookies = 1;
 		sc->sc_vd->vd_desc[desc].cookie[0].addr =
@@ -1498,7 +1473,6 @@ vnet_init(struct ifnet *ifp)
 
 	sc->sc_lm->lm_slot[0].entry = sc->sc_vd->vd_map->dm_segs[0].ds_addr;
 	sc->sc_lm->lm_slot[0].entry &= LDC_MTE_RA_MASK;
-//	sc->sc_lm->lm_slot[0].entry |= LDC_MTE_R | LDC_MTE_W;
 	sc->sc_lm->lm_slot[0].entry |= LDC_MTE_CPR | LDC_MTE_CPW;
 	sc->sc_lm->lm_next = 1;
 	sc->sc_lm->lm_count = 1;
