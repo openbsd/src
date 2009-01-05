@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfsmount.h,v 1.18 2006/12/16 12:44:05 krw Exp $	*/
+/*	$OpenBSD: msdosfsmount.h,v 1.19 2009/01/05 01:14:40 krw Exp $	*/
 /*	$NetBSD: msdosfsmount.h,v 1.16 1997/10/17 11:24:24 ws Exp $	*/
 
 /*-
@@ -78,7 +78,6 @@ struct msdosfsmount {
 	uint32_t pm_fatsize;	/* size of fat in bytes */
 	uint32_t pm_fatmask;	/* mask to use for fat numbers */
 	uint32_t pm_fsinfo;	/* fsinfo block number */
-	uint32_t pm_nxtfree;	/* next free cluster in fsinfo block */
 	u_int pm_fatmult;	/* these 2 values are used in fat */
 	u_int pm_fatdiv;	/*	offset computation */
 	u_int pm_curfat;	/* current fat for FAT32 (0 otherwise) */

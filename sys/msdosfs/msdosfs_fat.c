@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.19 2006/12/16 12:44:05 krw Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.20 2009/01/05 01:14:40 krw Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -348,22 +348,6 @@ updatefats(pmp, bp, fatbn)
 	 * If we have an FSInfo block, update it.
 	 */
 	if (pmp->pm_fsinfo) {
-		uint32_t cn = pmp->pm_nxtfree;
-
-		if (pmp->pm_freeclustercount
-		    && (pmp->pm_inusemap[cn / N_INUSEBITS]
-			& (1 << (cn % N_INUSEBITS)))) {
-			/*
-			 * The cluster indicated in FSInfo isn't free
-			 * any longer.  Got get a new free one.
-			 */
-			for (cn = 0; cn < pmp->pm_maxcluster; cn++)
-				if (pmp->pm_inusemap[cn / N_INUSEBITS] != (u_int)-1)
-					break;
-			pmp->pm_nxtfree = cn
-				+ ffs(pmp->pm_inusemap[cn / N_INUSEBITS]
-				      ^ (u_int)-1) - 1;
-		}
 		if (bread(pmp->pm_devvp, pmp->pm_fsinfo, fsi_size(pmp), NOCRED,
 		    &bpn) != 0) {
 			/*
@@ -375,7 +359,6 @@ updatefats(pmp, bp, fatbn)
 			struct fsinfo *fp = (struct fsinfo *)bpn->b_data;
 
 			putulong(fp->fsinfree, pmp->pm_freeclustercount);
-			putulong(fp->fsinxtfree, pmp->pm_nxtfree);
 			if (pmp->pm_flags & MSDOSFSMNT_WAITONFAT)
 				bwrite(bpn);
 			else
