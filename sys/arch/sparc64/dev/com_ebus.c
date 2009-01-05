@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ebus.c,v 1.18 2008/07/10 12:33:40 kettenis Exp $	*/
+/*	$OpenBSD: com_ebus.c,v 1.19 2009/01/05 22:13:17 kettenis Exp $	*/
 /*	$NetBSD: com_ebus.c,v 1.6 2001/07/24 19:27:10 eeh Exp $	*/
 
 /*
@@ -202,6 +202,17 @@ com_ebus_attach(struct device *parent, struct device *self, void *aux)
 		if (com_is_output)
 			cn_tab->cn_putc = comcnputc;
 	}
+
+	/*
+	 * Apparently shoving too much data down the TX FIFO on the
+	 * Fujitsu SPARC Enterprise M4000/M5000 causes a hardware
+	 * fault.  Avoid this issue by setting the FIFO depth to 1.
+	 * This will effectively disable the TX FIFO, but will still
+	 * enable the RX FIFO, which is what we really care about.
+	 */
+	if (OF_getprop(node, "compatible", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "FJSV,su") == 0)
+		sc->sc_fifolen = 1;
 
         if (OF_getproplen(ea->ea_node, "keyboard") == 0)
 		printf(": keyboard");
