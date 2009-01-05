@@ -1,3 +1,4 @@
+#	$OpenBSD: files.s3c2xx0,v 1.2 2009/01/05 20:37:16 jasper Exp $
 #	$NetBSD: files.s3c2xx0,v 1.8 2007/12/03 15:33:19 ad Exp $
 #
 # Configuration info common to Samsung S3C2800/S3C24[10]0
