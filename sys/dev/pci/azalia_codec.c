@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.110 2009/01/05 08:06:55 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.111 2009/01/05 09:46:26 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -519,7 +519,7 @@ azalia_generic_mixer_init(codec_t *this)
 	 */
 	const widget_t *w, *ww;
 	mixer_item_t *m;
-	int err, i, j, k;
+	int err, i, j, k, bits;
 
 	this->maxmixers = 10;
 	this->nmixers = 0;
@@ -782,21 +782,66 @@ azalia_generic_mixer_init(codec_t *this)
 
 		/* pin direction */
 		if (w->type == COP_AWTYPE_PIN_COMPLEX &&
-		    w->d.pin.cap & COP_PINCAP_OUTPUT &&
-		    w->d.pin.cap & COP_PINCAP_INPUT) {
+		    ((w->d.pin.cap & COP_PINCAP_OUTPUT &&
+		    w->d.pin.cap & COP_PINCAP_INPUT) ||
+		    COP_PINCAP_VREF(w->d.pin.cap) > 1)) {
+
 			MIXER_REG_PROLOG;
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s_dir", w->name);
 			d->type = AUDIO_MIXER_ENUM;
 			d->mixer_class = AZ_CLASS_OUTPUT;
 			m->target = MI_TARGET_PINDIR;
-			d->un.e.num_mem = 2;
-			d->un.e.member[0].ord = 0;
-			strlcpy(d->un.e.member[0].label.name, AudioNinput,
+
+			k = 0;
+			d->un.e.member[k].ord = 0;
+			strlcpy(d->un.e.member[k].label.name, "none",
 			    MAX_AUDIO_DEV_LEN);
-			d->un.e.member[1].ord = 1;
-			strlcpy(d->un.e.member[1].label.name, AudioNoutput,
-			    MAX_AUDIO_DEV_LEN);
+			k++;
+
+			if (w->d.pin.cap & COP_PINCAP_OUTPUT) {
+				d->un.e.member[k].ord = 1;
+				strlcpy(d->un.e.member[k].label.name,
+				    AudioNoutput, MAX_AUDIO_DEV_LEN);
+				k++;
+			}
+
+			if (w->d.pin.cap & COP_PINCAP_INPUT) {
+				d->un.e.member[k].ord = 2;
+				strlcpy(d->un.e.member[k].label.name,
+				    AudioNinput, MAX_AUDIO_DEV_LEN);
+				k++;
+
+				for (j = 0; j < 4; j++) {
+					if (j == 0) {
+						bits = (1 << CORB_PWC_VREF_GND);
+						strlcpy(d->un.e.member[k].label.name,
+						    AudioNinput "-vr0",
+						    MAX_AUDIO_DEV_LEN);
+					} else if (j == 1) {
+						bits = (1 << CORB_PWC_VREF_50);
+						strlcpy(d->un.e.member[k].label.name,
+						    AudioNinput "-vr50",
+						    MAX_AUDIO_DEV_LEN);
+					} else if (j == 2) {
+						bits = (1 << CORB_PWC_VREF_80);
+						strlcpy(d->un.e.member[k].label.name,
+						    AudioNinput "-vr80",
+						    MAX_AUDIO_DEV_LEN);
+					} else if (j == 3) {
+						bits = (1 << CORB_PWC_VREF_100);
+						strlcpy(d->un.e.member[k].label.name,
+						    AudioNinput "-vr100",
+						    MAX_AUDIO_DEV_LEN);
+					}
+					if ((COP_PINCAP_VREF(w->d.pin.cap) &
+					    bits) == bits) {
+						d->un.e.member[k].ord = j + 3;
+						k++;
+					}
+				}
+			}
+			d->un.e.num_mem = k;
 			this->nmixers++;
 		}
 
@@ -1252,7 +1297,7 @@ int
 azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
     mixer_ctrl_t *mc)
 {
-	uint32_t result;
+	uint32_t result, cap, value;
 	nid_t n;
 	int i, err;
 
@@ -1347,7 +1392,26 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
 		if (err)
 			return err;
-		mc->un.ord = result & CORB_PWC_OUTPUT ? 1 : 0;
+
+		value = result;
+		if (!(result & (CORB_PWC_INPUT | CORB_PWC_OUTPUT)))
+			mc->un.ord = 0;
+		else if (result & CORB_PWC_OUTPUT)
+			mc->un.ord = 1;
+		else {
+			cap = COP_PINCAP_VREF(this->w[nid].d.pin.cap);
+			result &= CORB_PWC_VREF_MASK;
+			if (result == CORB_PWC_VREF_GND)
+				mc->un.ord = 3;
+			else if (result == CORB_PWC_VREF_50)
+				mc->un.ord = 4;
+			else if (result == CORB_PWC_VREF_80)
+				mc->un.ord = 5;
+			else if (result == CORB_PWC_VREF_100)
+				mc->un.ord = 6;
+			else
+				mc->un.ord = 2;
+		}
 	}
 
 	/* pin headphone-boost */
@@ -1663,25 +1727,40 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 
 	/* pin I/O */
 	else if (target == MI_TARGET_PINDIR) {
-		if (mc->un.ord >= 2)
-			return EINVAL;
+
 		err = this->comresp(this, nid,
 		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
 		if (err)
 			return err;
+
 		value = result;
+		value &= ~(CORB_PWC_VREF_MASK);
 		if (mc->un.ord == 0) {
-			value &= ~CORB_PWC_OUTPUT;
-			value |= CORB_PWC_INPUT;
-		} else {
+			value &= ~(CORB_PWC_OUTPUT | CORB_PWC_INPUT);
+		} else if (mc->un.ord == 1) {
 			value &= ~CORB_PWC_INPUT;
 			value |= CORB_PWC_OUTPUT;
+		} else {
+			value &= ~CORB_PWC_OUTPUT;
+			value |= CORB_PWC_INPUT;
+
+			if (mc->un.ord == 3)
+				value |= CORB_PWC_VREF_GND;
+			if (mc->un.ord == 4)
+				value |= CORB_PWC_VREF_50;
+			if (mc->un.ord == 5)
+				value |= CORB_PWC_VREF_80;
+			if (mc->un.ord == 6)
+				value |= CORB_PWC_VREF_100;
 		}
 		err = this->comresp(this, nid,
 		    CORB_SET_PIN_WIDGET_CONTROL, value, &result);
 		if (err)
 			return err;
 
+		/* Run the unsolicited response handler for speaker mute
+		 * since it depends on pin direction.
+		 */
 		for (i = 0; i < this->nsense_pins; i++) {
 			if (this->sense_pins[i] == nid)
 				break;

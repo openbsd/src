@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.39 2009/01/05 08:19:31 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.40 2009/01/05 09:46:26 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -333,6 +333,7 @@
 #define		CORB_PWC_HEADPHONE	0x80
 #define		CORB_PWC_OUTPUT		0x40
 #define		CORB_PWC_INPUT		0x20
+#define		CORB_PWC_VREF_MASK	0x07
 #define		CORB_PWC_VREF_HIZ	0x00
 #define		CORB_PWC_VREF_50	0x01
 #define		CORB_PWC_VREF_GND	0x02
