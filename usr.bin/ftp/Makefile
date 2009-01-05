@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2008/07/08 21:07:57 martynas Exp $
+#	$OpenBSD: Makefile,v 1.24 2009/01/05 18:51:49 martynas Exp $
 
 # Define SMALL to disable command line editing and https support
 #CFLAGS+=-DSMALL
@@ -8,7 +8,7 @@
 
 .if (defined(USE_SOCKS) && ${USE_SOCKS:L} == "yes")
 CFLAGS += -DSOCKS -I/usr/local/include
-LDADD += -lsocks5
+LDADD += -L/usr/local/lib -lsocks
 .endif
 
 PROG=	ftp
