@@ -7,6 +7,9 @@
 #ifndef OPENSSL_NO_CAMELLIA
 # define OPENSSL_NO_CAMELLIA
 #endif
+#ifndef OPENSSL_NO_CAPIENG
+# define OPENSSL_NO_CAPIENG
+#endif
 #ifndef OPENSSL_NO_CMS
 # define OPENSSL_NO_CMS
 #endif

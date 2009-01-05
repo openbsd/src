@@ -231,6 +231,9 @@ static void sv_usage(void)
 	{
 	fprintf(stderr,"usage: ssltest [args ...]\n");
 	fprintf(stderr,"\n");
+#ifdef OPENSSL_FIPS
+	fprintf(stderr,"-F             - run test in FIPS mode\n");
+#endif
 	fprintf(stderr," -server_auth  - check server certificate\n");
 	fprintf(stderr," -client_auth  - do client authentication\n");
 	fprintf(stderr," -proxy        - allow proxy certificates\n");
@@ -412,7 +415,7 @@ int main(int argc, char *argv[])
 	long bytes=256L;
 #ifndef OPENSSL_NO_DH
 	DH *dh;
-	int dhe1024 = 0, dhe1024dsa = 0;
+	int dhe1024 = 1, dhe1024dsa = 0;
 #endif
 #ifndef OPENSSL_NO_ECDH
 	EC_KEY *ecdh = NULL;
@@ -427,6 +430,9 @@ int main(int argc, char *argv[])
 #endif
 	STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
 	int test_cipherlist = 0;
+#ifdef OPENSSL_FIPS
+	int fips_mode=0;
+#endif
 
 	verbose = 0;
 	debug = 0;
@@ -458,7 +464,16 @@ int main(int argc, char *argv[])
 
 	while (argc >= 1)
 		{
-		if	(strcmp(*argv,"-server_auth") == 0)
+		if(!strcmp(*argv,"-F"))
+			{
+#ifdef OPENSSL_FIPS
+			fips_mode=1;
+#else
+			fprintf(stderr,"not compiled with FIPS support, so exitting without running.\n");
+			EXIT(0);
+#endif
+			}
+		else if	(strcmp(*argv,"-server_auth") == 0)
 			server_auth=1;
 		else if	(strcmp(*argv,"-client_auth") == 0)
 			client_auth=1;
@@ -639,6 +654,20 @@ bad:
 			"to avoid protocol mismatch.\n");
 		EXIT(1);
 		}
+
+#ifdef OPENSSL_FIPS
+	if(fips_mode)
+		{
+		if(!FIPS_mode_set(1))
+			{
+			ERR_load_crypto_strings();
+			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+			EXIT(1);
+			}
+		else
+			fprintf(stderr,"*** IN FIPS MODE ***\n");
+		}
+#endif
 
 	if (print_time)
 		{
@@ -2061,15 +2090,7 @@ static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 		}
 
 #ifndef OPENSSL_NO_X509_VERIFY
-# ifdef OPENSSL_FIPS
-	if(s->version == TLS1_VERSION)
-		FIPS_allow_md5(1);
-# endif
 	ok = X509_verify_cert(ctx);
-# ifdef OPENSSL_FIPS
-	if(s->version == TLS1_VERSION)
-		FIPS_allow_md5(0);
-# endif
 #endif
 
 	if (cb_arg->proxy_auth)

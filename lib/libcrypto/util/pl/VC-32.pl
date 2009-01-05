@@ -138,7 +138,7 @@ if ($FLAVOR =~ /CE/)
 	}
 else
 	{
-	$ex_libs.=' gdi32.lib advapi32.lib user32.lib';
+	$ex_libs.=' gdi32.lib crypt32.lib advapi32.lib user32.lib';
 	$ex_libs.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
 	}
 
@@ -259,7 +259,6 @@ sub do_lib_rule
 		$name =~ tr/a-z/A-Z/;
 		$name = "/def:ms/${name}.def";
 		}
-
 #	$target="\$(LIB_D)$o$target";
 	$ret.="$target: $objs\n";
 	if (!$shlib)
@@ -274,6 +273,10 @@ sub do_lib_rule
 		if ($name eq "")
 			{
 			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
+			if ($target =~ /capi/)
+				{
+				$ex.=' crypt32.lib advapi32.lib';
+				}
 			}
 		elsif ($FLAVOR =~ /CE/)
 			{
@@ -283,6 +286,7 @@ sub do_lib_rule
 			{
 			$ex.=' unicows.lib' if ($FLAVOR =~ /NT/);
 			$ex.=' wsock32.lib gdi32.lib advapi32.lib user32.lib';
+			$ex.=' crypt32.lib';
 			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
 			}
 		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;

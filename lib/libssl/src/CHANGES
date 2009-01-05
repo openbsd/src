@@ -2,6 +2,60 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8h and 0.9.8i  [15 Sep 2008]
+
+  *) Fix a state transitition in s3_srvr.c and d1_srvr.c
+     (was using SSL3_ST_CW_CLNT_HELLO_B, should be ..._ST_SW_SRVR_...).
+     [Nagendra Modadugu]
+
+  *) The fix in 0.9.8c that supposedly got rid of unsafe
+     double-checked locking was incomplete for RSA blinding,
+     addressing just one layer of what turns out to have been
+     doubly unsafe triple-checked locking.
+
+     So now fix this for real by retiring the MONT_HELPER macro
+     in crypto/rsa/rsa_eay.c.
+
+     [Bodo Moeller; problem pointed out by Marius Schilder]
+
+  *) Various precautionary measures:
+
+     - Avoid size_t integer overflow in HASH_UPDATE (md32_common.h).
+
+     - Avoid a buffer overflow in d2i_SSL_SESSION() (ssl_asn1.c).
+       (NB: This would require knowledge of the secret session ticket key
+       to exploit, in which case you'd be SOL either way.)
+
+     - Change bn_nist.c so that it will properly handle input BIGNUMs
+       outside the expected range.
+
+     - Enforce the 'num' check in BN_div() (bn_div.c) for non-BN_DEBUG
+       builds.
+
+     [Neel Mehta, Bodo Moeller]
+
+  *) Add support for Local Machine Keyset attribute in PKCS#12 files.
+     [Steve Henson]
+
+  *) Fix BN_GF2m_mod_arr() top-bit cleanup code.
+     [Huang Ying]
+
+  *) Expand ENGINE to support engine supplied SSL client certificate functions.
+
+     This work was sponsored by Logica.
+     [Steve Henson]
+
+  *) Add CryptoAPI ENGINE to support use of RSA and DSA keys held in Windows
+     keystores. Support for SSL/TLS client authentication too.
+     Not compiled unless enable-capieng specified to Configure.
+
+     This work was sponsored by Logica.
+     [Steve Henson]
+
+  *) Allow engines to be "soft loaded" - i.e. optionally don't die if
+     the load fails. Useful for distros.
+     [Ben Laurie and the FreeBSD team]
+
  Changes between 0.9.8g and 0.9.8h  [28 May 2008]
 
   *) Fix flaw if 'Server Key exchange message' is omitted from a TLS

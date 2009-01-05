@@ -330,8 +330,9 @@
 #define SSL_LOW			0x00000020L
 #define SSL_MEDIUM		0x00000040L
 #define SSL_HIGH		0x00000080L
+#define SSL_FIPS		0x00000100L
 
-/* we have used 000000ff - 24 bits left to go */
+/* we have used 000001ff - 23 bits left to go */
 
 /*
  * Macros to check the export status and cipher strength for export ciphers.
@@ -874,6 +875,7 @@ int ssl3_get_new_session_ticket(SSL *s);
 int ssl3_get_cert_status(SSL *s);
 int ssl3_get_server_done(SSL *s);
 int ssl3_send_client_verify(SSL *s);
+int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey);
 int ssl3_send_client_certificate(SSL *s);
 int ssl3_send_client_key_exchange(SSL *s);
 int ssl3_get_key_exchange(SSL *s);

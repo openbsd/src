@@ -407,12 +407,12 @@ my %table=(
 
 #### IBM's AIX.
 "aix3-cc",  "cc:-O -DB_ENDIAN -qmaxmem=16384::(unknown):AIX::BN_LLONG RC4_CHAR:::",
-"aix-gcc",  "gcc:-O -DB_ENDIAN::-D_THREAD_SAFE:AIX::BN_LLONG RC4_CHAR::aix_ppc32.o::::::::::dlfcn:aix-shared:::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
-"aix64-gcc","gcc:-maix64 -O -DB_ENDIAN::-D_THREAD_SAFE:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR::aix_ppc64.o::::::::::dlfcn:aix-shared::-maix64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X64",
+"aix-gcc",  "gcc:-O -DB_ENDIAN::-pthread:AIX::BN_LLONG RC4_CHAR::aix_ppc32.o::::::::::dlfcn:aix-shared::-shared -Wl,-G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
+"aix64-gcc","gcc:-maix64 -O -DB_ENDIAN::-pthread:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR::aix_ppc64.o::::::::::dlfcn:aix-shared::-maix64 -shared -Wl,-G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X64",
 # Below targets assume AIX 5. Idea is to effectively disregard $OBJECT_MODE
 # at build time. $OBJECT_MODE is respected at ./config stage!
-"aix-cc",   "cc:-q32 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded:AIX::BN_LLONG RC4_CHAR::aix_ppc32.o::::::::::dlfcn:aix-shared::-q32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
-"aix64-cc", "cc:-q64 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR::aix_ppc64.o::::::::::dlfcn:aix-shared::-q64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
+"aix-cc",   "cc:-q32 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded:AIX::BN_LLONG RC4_CHAR::aix_ppc32.o::::::::::dlfcn:aix-shared::-q32 -G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
+"aix64-cc", "cc:-q64 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR::aix_ppc64.o::::::::::dlfcn:aix-shared::-q64 -G:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
 
 #
 # Cray T90 and similar (SDSC)
@@ -510,8 +510,9 @@ my %table=(
 ##### MacOS X (a.k.a. Rhapsody or Darwin) setup
 "rhapsody-ppc-cc","cc:-O3 -DB_ENDIAN::(unknown):MACOSX_RHAPSODY::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:${no_asm}::",
 "darwin-ppc-cc","cc:-arch ppc -O3 -DB_ENDIAN::-D_REENTRANT:MACOSX:-Wl,-search_paths_first%:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::osx_ppc32.o::::::::::dlfcn:darwin-shared:-fPIC -fno-common:-arch ppc -dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
-"darwin64-ppc-cc","cc:-arch ppc64 -O3 -DB_ENDIAN::-D_REENTRANT:MACOSX:-Wl,-search_paths_first%:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:ppccpuid_osx64.o:osx_ppc64.o osx_ppc64-mont.o:::::sha1-ppc_osx64.o sha256-ppc_osx64.o sha512-ppc_osx64.o:::::dlfcn:darwin-shared:-fPIC -fno-common:-arch ppc64 -dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
-"darwin-i386-cc","cc:-arch i386 -O3 -fomit-frame-pointer -fno-common::-D_REENTRANT:MACOSX:-Wl,-search_paths_first%:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:${no_asm}:dlfcn:darwin-shared:-fPIC -fno-common:-arch i386 -dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
+"darwin64-ppc-cc","cc:-arch ppc64 -O3 -DB_ENDIAN::-D_REENTRANT:MACOSX:-Wl,-search_paths_first%:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::osx_ppc64.o::::::::::dlfcn:darwin-shared:-fPIC -fno-common:-arch ppc64 -dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
+"darwin-i386-cc","cc:-arch i386 -O3 -fomit-frame-pointer -DL_ENDIAN::-D_REENTRANT:MACOSX:-Wl,-search_paths_first%:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:${no_asm}:dlfcn:darwin-shared:-fPIC -fno-common:-arch i386 -dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
+"debug-darwin-i386-cc","cc:-arch i386 -g3 -DL_ENDIAN::-D_REENTRANT:MACOSX:-Wl,-search_paths_first%:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:${no_asm}:dlfcn:darwin-shared:-fPIC -fno-common:-arch i386 -dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 "darwin64-x86_64-cc","cc:-arch x86_64 -O3 -fomit-frame-pointer -DL_ENDIAN -DMD32_REG_T=int -Wall::-D_REENTRANT:MACOSX:-Wl,-search_paths_first%:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL:${no_asm}:dlfcn:darwin-shared:-fPIC -fno-common:-arch x86_64 -dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 "debug-darwin-ppc-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DB_ENDIAN -g -Wall -O::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::osx_ppc32.o::::::::::dlfcn:darwin-shared:-fPIC -fno-common:-dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 
@@ -616,6 +617,7 @@ my $perl;
 
 my %disabled = ( # "what"         => "comment"
                  "camellia"       => "default",
+                 "capieng"        => "default",
                  "cms"            => "default",
                  "gmp"            => "default",
                  "mdc2"           => "default",
@@ -634,7 +636,7 @@ my %disabled = ( # "what"         => "comment"
 # For symmetry, "disable-..." is a synonym for "no-...".
 
 # This is what $depflags will look like with the above default:
-my $default_depflags = "-DOPENSSL_NO_CAMELLIA -DOPENSSL_NO_CMS -DOPENSSL_NO_GMP -DOPENSSL_NO_MDC2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_SEED -DOPENSSL_NO_TLSEXT ";
+my $default_depflags = "-DOPENSSL_NO_CAMELLIA -DOPENSSL_NO_CAPIENG -DOPENSSL_NO_CMS -DOPENSSL_NO_GMP -DOPENSSL_NO_MDC2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_SEED -DOPENSSL_NO_TLSEXT ";
 
 
 my $no_sse2=0;

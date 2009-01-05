@@ -130,10 +130,17 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
 #include <openssl/bn.h>
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 
 static SSL_METHOD *ssl3_get_client_method(int ver);
 static int ca_dn_cmp(const X509_NAME * const *a,const X509_NAME * const *b);
@@ -1415,6 +1422,8 @@ int ssl3_get_key_exchange(SSL *s)
 			q=md_buf;
 			for (num=2; num > 0; num--)
 				{
+				EVP_MD_CTX_set_flags(&md_ctx,
+					EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 				EVP_DigestInit_ex(&md_ctx,(num == 2)
 					?s->ctx->md5:s->ctx->sha1, NULL);
 				EVP_DigestUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
@@ -2061,12 +2070,12 @@ int ssl3_send_client_key_exchange(SSL *s)
 			{
 			DH *dh_srvr,*dh_clnt;
 
-                        if (s->session->sess_cert == NULL) 
-                                {
-                                ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_UNEXPECTED_MESSAGE);
-                                SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,SSL_R_UNEXPECTED_MESSAGE);
-                                goto err;
-                                }
+			if (s->session->sess_cert == NULL) 
+				{
+				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_UNEXPECTED_MESSAGE);
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,SSL_R_UNEXPECTED_MESSAGE);
+				goto err;
+			        }
 
 			if (s->session->sess_cert->peer_dh_tmp != NULL)
 				dh_srvr=s->session->sess_cert->peer_dh_tmp;
@@ -2448,8 +2457,7 @@ int ssl3_send_client_certificate(SSL *s)
 		 * ssl->rwstate=SSL_X509_LOOKUP; return(-1);
 		 * We then get retied later */
 		i=0;
-		if (s->ctx->client_cert_cb != NULL)
-			i=s->ctx->client_cert_cb(s,&(x509),&(pkey));
+		i = ssl_do_client_cert_cb(s, &x509, &pkey);
 		if (i < 0)
 			{
 			s->rwstate=SSL_X509_LOOKUP;
@@ -2716,3 +2724,21 @@ static int ssl3_check_finished(SSL *s)
 	return 1;
 	}
 #endif
+
+int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
+	{
+	int i = 0;
+#ifndef OPENSSL_NO_ENGINE
+	if (s->ctx->client_cert_engine)
+		{
+		i = ENGINE_load_ssl_client_cert(s->ctx->client_cert_engine, s,
+						SSL_get_client_CA_list(s),
+						px509, ppkey, NULL, NULL, NULL);
+		if (i != 0)
+			return i;
+		}
+#endif
+	if (s->ctx->client_cert_cb)
+		i = s->ctx->client_cert_cb(s,px509,ppkey);
+	return i;
+	}

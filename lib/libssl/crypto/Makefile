@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.49 2008/09/08 07:23:38 djm Exp $
+# $OpenBSD: Makefile,v 1.50 2009/01/05 21:36:37 djm Exp $
 
 LIB=	crypto
 WANTLINT=
@@ -36,6 +36,7 @@ CFLAGS+= -DOPENSSL_NO_MDC2
 CFLAGS+= -DOPENSSL_NO_HW_4758_CCA
 CFLAGS+= -DOPENSSL_NO_HW_AEP
 CFLAGS+= -DOPENSSL_NO_HW_ATALLA
+CFLAGS+= -DOPENSSL_NO_CAPIENG
 CFLAGS+= -DOPENSSL_NO_HW_CSWIFT
 CFLAGS+= -DOPENSSL_NO_HW_NCIPHER
 CFLAGS+= -DOPENSSL_NO_HW_NURON
@@ -307,7 +308,7 @@ obj_dat.h: obj_mac.h
 	/usr/bin/perl ${SSL_OBJECTS}/obj_dat.pl obj_mac.h obj_dat.h
 
 .if (${MACHINE_ARCH} == "vax")
-# egcs bombs optimising this file on vax
+# egcs bombs optimising these files
 a_strnid.o:
 	${CC} ${CFLAGS} -O0 ${CPPFLAGS} -c ${.IMPSRC}
 a_strnid.po:           

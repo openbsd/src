@@ -130,6 +130,9 @@
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 
 const char *SSL_version_str=OPENSSL_VERSION_TEXT;
 
@@ -1390,6 +1393,14 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 		return(NULL);
 		}
 
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && (meth->version < TLS1_VERSION))	
+		{
+		SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+		return NULL;
+		}
+#endif
+
 	if (SSL_get_ex_data_X509_STORE_CTX_idx() < 0)
 		{
 		SSLerr(SSL_F_SSL_CTX_NEW,SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
@@ -1510,6 +1521,27 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 
 #endif
 
+#ifndef OPENSSL_NO_ENGINE
+	ret->client_cert_engine = NULL;
+#ifdef OPENSSL_SSL_CLIENT_ENGINE_AUTO
+#define eng_strx(x)	#x
+#define eng_str(x)	eng_strx(x)
+	/* Use specific client engine automatically... ignore errors */
+	{
+	ENGINE *eng;
+	eng = ENGINE_by_id(eng_str(OPENSSL_SSL_CLIENT_ENGINE_AUTO));
+	if (!eng)
+		{
+		ERR_clear_error();
+		ENGINE_load_builtin_engines();
+		eng = ENGINE_by_id(eng_str(OPENSSL_SSL_CLIENT_ENGINE_AUTO));
+		}
+	if (!eng || !SSL_CTX_set_client_cert_engine(ret, eng))
+		ERR_clear_error();
+	}
+#endif
+#endif
+
 	return(ret);
 err:
 	SSLerr(SSL_F_SSL_CTX_NEW,ERR_R_MALLOC_FAILURE);
@@ -1579,6 +1611,10 @@ void SSL_CTX_free(SSL_CTX *a)
 		sk_SSL_COMP_pop_free(a->comp_methods,SSL_COMP_free);
 #else
 	a->comp_methods = NULL;
+#endif
+#ifndef OPENSSL_NO_ENGINE
+	if (a->client_cert_engine)
+		ENGINE_finish(a->client_cert_engine);
 #endif
 	OPENSSL_free(a);
 	}
