@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.14 2008/12/29 13:27:27 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.15 2009/01/05 18:17:01 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -666,6 +666,26 @@
 #define RT2860_LED_RADIO	(1 << 13)
 #define RT2860_LED_LINK_2GHZ	(1 << 14)
 #define RT2860_LED_LINK_5GHZ	(1 << 15)
+
+
+/* possible flags for RT3020 RF register 1 */
+#define RT3070_RF_BLOCK	(1 << 0)
+#define RT3070_RX0_PD	(1 << 2)
+#define RT3070_TX0_PD	(1 << 3)
+#define RT3070_RX1_PD	(1 << 4)
+#define RT3070_TX1_PD	(1 << 5)
+
+/* possible flags for RT3020 RF register 15 */
+#define RT3070_TX_LO2	(1 << 3)
+
+/* possible flags for RT3020 RF register 17 */
+#define RT3070_TX_LO1	(1 << 3)
+
+/* possible flags for RT3020 RF register 20 */
+#define RT3070_RX_LO1	(1 << 3)
+
+/* possible flags for RT3020 RF register 21 */
+#define RT3070_RX_LO2	(1 << 3)
 
 
 /* RT2860 TX descriptor */

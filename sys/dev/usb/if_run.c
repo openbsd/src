@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.2 2009/01/04 18:27:36 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.3 2009/01/05 18:17:01 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1169,7 +1169,6 @@ run_read_eeprom(struct run_softc *sc)
 		    sc->txpow40mhz_2ghz[ridx], sc->txpow40mhz_5ghz[ridx]));
 	}
 
-
 	/* read RSSI offsets and LNA gains from EEPROM */
 	run_srom_read(sc, RT2860_EEPROM_RSSI1_2GHZ, &val);
 	sc->rssi_2ghz[0] = val & 0xff;	/* Ant A */
@@ -1948,29 +1947,6 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	/* get MCS code from rate index */
 	mcs = rt2860_rates[ridx].mcs;
 
-#if NBPFILTER > 0
-	if (__predict_false(sc->sc_drvbpf != NULL)) {
-		struct run_tx_radiotap_header *tap = &sc->sc_txtap;
-		struct mbuf mb;
-
-		tap->wt_flags = 0;
-		tap->wt_rate = rt2860_rates[ridx].rate;
-		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
-		tap->wt_hwqueue = qid;
-		if (mcs & RT2860_PHY_SHPRE)
-			tap->wt_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
-
-		mb.m_data = (caddr_t)tap;
-		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m;
-		mb.m_nextpkt = NULL;
-		mb.m_type = 0;
-		mb.m_flags = 0;
-		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
-	}
-#endif
-
 	xferlen = sizeof (*txwi) + m->m_pkthdr.len;
 	/* roundup to 32-bit alignment */
 	xferlen = (xferlen + 3) & ~3;
@@ -2008,6 +1984,29 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 			dur = rt2860_rates[ctl_ridx].lp_ack_dur;
 		*(uint16_t *)wh->i_dur = htole16(dur + sc->sifs);
 	}
+
+#if NBPFILTER > 0
+	if (__predict_false(sc->sc_drvbpf != NULL)) {
+		struct run_tx_radiotap_header *tap = &sc->sc_txtap;
+		struct mbuf mb;
+
+		tap->wt_flags = 0;
+		tap->wt_rate = rt2860_rates[ridx].rate;
+		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
+		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+		tap->wt_hwqueue = qid;
+		if (mcs & RT2860_PHY_SHPRE)
+			tap->wt_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
+
+		mb.m_data = (caddr_t)tap;
+		mb.m_len = sc->sc_txtap_len;
+		mb.m_next = m;
+		mb.m_nextpkt = NULL;
+		mb.m_type = 0;
+		mb.m_flags = 0;
+		bpf_mtap(sc->sc_drvbpf, &mb, BPF_DIRECTION_OUT);
+	}
+#endif
 
 	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)(txwi + 1));
 	m_freem(m);
@@ -2289,35 +2288,55 @@ run_rt2870_set_chan(struct run_softc *sc, u_int chan)
 void
 run_rt3070_set_chan(struct run_softc *sc, u_int chan)
 {
-	int8_t txpow;
-	uint8_t tmp;
+	int8_t txpow1, txpow2;
+	uint8_t rf;
+
+	KASSERT(chan >= 1 && chan <= 14);	/* RT3070 is 2GHz only */
 
 	/* use Tx power values from EEPROM */
-	txpow = sc->txpow1[chan - 1];
+	txpow1 = sc->txpow1[chan - 1];
+	txpow2 = sc->txpow2[chan - 1];
 
 	run_rt3070_rf_write(sc, 2, run_rf3020_freqs[chan - 1].n);
 	run_rt3070_rf_write(sc, 3, run_rf3020_freqs[chan - 1].k);
-	run_rt3070_rf_read(sc, 6, &tmp);
-	tmp = (tmp & ~0x03) | run_rf3020_freqs[chan - 1].r;
-	run_rt3070_rf_write(sc, 6, tmp);
+	run_rt3070_rf_read(sc, 6, &rf);
+	rf = (rf & ~0x03) | run_rf3020_freqs[chan - 1].r;
+	run_rt3070_rf_write(sc, 6, rf);
 
-	/* set Tx power */
-	run_rt3070_rf_read(sc, 12, &tmp);
-	tmp = (tmp & ~0x1f) | txpow;
-	run_rt3070_rf_write(sc, 12, tmp);
+	/* set Tx0 power */
+	run_rt3070_rf_read(sc, 12, &rf);
+	rf = (rf & ~0x1f) | txpow1;
+	run_rt3070_rf_write(sc, 12, rf);
+
+	/* set Tx1 power */
+	run_rt3070_rf_read(sc, 13, &rf);
+	rf = (rf & ~0x1f) | txpow2;
+	run_rt3070_rf_write(sc, 13, rf);
+
+	run_rt3070_rf_read(sc, 1, &rf);
+	rf &= ~0xfc;
+	if (sc->ntxchains == 1)
+		rf |= 1 << 7 | 1 << 5;	/* 1T: disable Tx chains 2 & 3 */
+	else if (sc->ntxchains == 2)
+		rf |= 1 << 7;		/* 2T: disable Tx chain 3 */
+	if (sc->nrxchains == 1)
+		rf |= 1 << 6 | 1 << 4;	/* 1R: disable Rx chains 2 & 3 */
+	else if (sc->nrxchains == 2)
+		rf |= 1 << 6;		/* 2R: disable Rx chain 3 */
+	run_rt3070_rf_write(sc, 1, rf);
 
 	/* set RF offset */
-	run_rt3070_rf_read(sc, 23, &tmp);
-	tmp = (tmp & ~0x7f) | sc->freq;
-	run_rt3070_rf_write(sc, 23, tmp);
+	run_rt3070_rf_read(sc, 23, &rf);
+	rf = (rf & ~0x7f) | sc->freq;
+	run_rt3070_rf_write(sc, 23, rf);
 
 	/* program RF filter */
 	run_rt3070_rf_write(sc, 24, sc->rf24_20mhz);
+	run_rt3070_rf_write(sc, 31, sc->rf24_20mhz);
 
 	/* enable RF tuning */
-	run_rt3070_rf_read(sc, 7, &tmp);
-	tmp |= 1;
-	run_rt3070_rf_write(sc, 7, tmp);
+	run_rt3070_rf_read(sc, 7, &rf);
+	run_rt3070_rf_write(sc, 7, rf | 0x01);
 }
 
 int
@@ -2330,7 +2349,7 @@ run_set_chan(struct run_softc *sc, struct ieee80211_channel *c)
 	if (chan == 0 || chan == IEEE80211_CHAN_ANY)
 		return EINVAL;
 
-	if ((sc->mac_rev >> 16) == 0x3070)
+	if ((sc->mac_rev >> 16) >= 0x3070)
 		run_rt3070_set_chan(sc, chan);
 	else
 		run_rt2870_set_chan(sc, chan);
@@ -2532,15 +2551,14 @@ int
 run_rt3070_rf_init(struct run_softc *sc)
 {
 	uint32_t tmp;
-	uint8_t rf6, rf30;
-	uint8_t bbp4;
+	uint8_t rf, bbp4;
 	int i;
 
+	run_rt3070_rf_read(sc, 30, &rf);
 	/* toggle RF R30 bit 7 */
-	run_rt3070_rf_read(sc, 30, &rf30);
-	run_rt3070_rf_write(sc, 30, rf30 | 0x80);
+	run_rt3070_rf_write(sc, 30, rf | 0x80);
 	DELAY(1000);
-	run_rt3070_rf_write(sc, 30, rf30 & ~0x80);
+	run_rt3070_rf_write(sc, 30, rf & ~0x80);
 
 	/* initialize RF registers to default value */
 	for (i = 0; i < nitems(rt3070_def_rf); i++) {
@@ -2554,8 +2572,8 @@ run_rt3070_rf_init(struct run_softc *sc)
 		run_write(sc, RT3070_LDO_CFG0, tmp);
 
 	} else if ((sc->mac_rev >> 16) == 0x3071) {
-		run_rt3070_rf_read(sc, 6, &rf6);
-		run_rt3070_rf_write(sc, 6, rf6 | 0x40);
+		run_rt3070_rf_read(sc, 6, &rf);
+		run_rt3070_rf_write(sc, 6, rf | 0x40);
 		run_rt3070_rf_write(sc, 31, 0x14);
 
 		run_read(sc, RT3070_LDO_CFG0, &tmp);
@@ -2593,10 +2611,33 @@ run_rt3070_rf_init(struct run_softc *sc)
 	run_read(sc, RT3070_OPT_14, &tmp);
 	run_write(sc, RT3070_OPT_14, tmp | 1);
 
-#ifdef notyet
-	if ((sc->mac_rev >> 16) == 0x3071)
-		;
-#endif
+	if ((sc->mac_rev >> 16) == 0x3071) {
+		run_rt3070_rf_read(sc, 1, &rf);
+		rf &= ~(RT3070_RX0_PD | RT3070_TX0_PD);
+		rf |= RT3070_RF_BLOCK | RT3070_RX1_PD | RT3070_TX1_PD;
+		run_rt3070_rf_write(sc, 1, rf);
+
+		run_rt3070_rf_read(sc, 15, &rf);
+		run_rt3070_rf_write(sc, 15, rf & ~RT3070_TX_LO2);
+
+		run_rt3070_rf_read(sc, 17, &rf);
+		rf &= ~RT3070_TX_LO1;
+		if ((sc->mac_rev & 0xffff) >= 0x0211 && !sc->ext_2ghz_lna)
+			rf |= 0x20;	/* fix for long range Rx issue */
+		run_rt3070_rf_write(sc, 17, rf);
+
+		run_rt3070_rf_read(sc, 20, &rf);
+		run_rt3070_rf_write(sc, 20, rf & ~RT3070_RX_LO1);
+
+		run_rt3070_rf_read(sc, 21, &rf);
+		run_rt3070_rf_write(sc, 21, rf & ~RT3070_RX_LO2);
+
+		run_rt3070_rf_read(sc, 27, &rf);
+		rf &= ~0x77;
+		if ((sc->mac_rev & 0xffff) < 0x0211)
+			rf |= 0x03;
+		run_rt3070_rf_write(sc, 27, rf);
+	}
 	return 0;
 }
 
@@ -2614,7 +2655,7 @@ run_rt3070_filter_calib(struct run_softc *sc, uint8_t init, uint8_t target,
 
 	/* enable baseband loopback mode */
 	run_rt3070_rf_read(sc, 22, &rf22);
-	run_rt3070_rf_write(sc, 22, rf22 | 1);
+	run_rt3070_rf_write(sc, 22, rf22 | 0x01);
 
 	/* set power and frequency of passband test tone */
 	run_bbp_write(sc, 24, 0x00);
@@ -2660,7 +2701,7 @@ run_rt3070_filter_calib(struct run_softc *sc, uint8_t init, uint8_t target,
 
 	/* disable baseband loopback mode */
 	run_rt3070_rf_read(sc, 22, &rf22);
-	run_rt3070_rf_write(sc, 22, rf22 & ~1);
+	run_rt3070_rf_write(sc, 22, rf22 & ~0x01);
 
 	return 0;
 }
