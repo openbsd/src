@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.110 2009/01/05 08:03:46 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.111 2009/01/05 08:50:06 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1425,6 +1425,8 @@ azalia_codec_init_volgroups(codec_t *this)
 		    w->type == COP_AWTYPE_AUDIO_SELECTOR)
 			j = 8;
 		dac = azalia_codec_find_defdac(this, w->nid, j);
+		if (dac == -1)
+			continue;
 		if (dac != this->dacs.groups[this->dacs.cur].conv[0] &&
 		    dac != this->hp_dac && dac != this->spkr_dac)
 			continue;
@@ -1448,6 +1450,8 @@ azalia_codec_init_volgroups(codec_t *this)
 			    w->type == COP_AWTYPE_AUDIO_SELECTOR)
 				j = 8;
 			dac = azalia_codec_find_defdac(this, w->nid, j);
+			if (dac == -1)
+				continue;
 			if (dac != this->dacs.groups[this->dacs.cur].conv[0] &&
 			    dac != this->hp_dac && dac != this->spkr_dac)
 				continue;
