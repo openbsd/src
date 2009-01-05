@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.111 2009/01/05 08:50:06 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.112 2009/01/05 09:40:26 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2173,14 +2173,8 @@ azalia_widget_init_audio(widget_t *this, const codec_t *codec)
 int
 azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 {
-	typedef enum {
-		PIN_DIR_IN,
-		PIN_DIR_OUT,
-		PIN_DIR_MIC
-	} pintype_t;
-	pintype_t pintype = PIN_DIR_IN;
 	codec_t *wcodec;
-	uint32_t result;
+	uint32_t result, dir;
 	int err;
 
 	err = codec->comresp(codec, this->nid, CORB_GET_CONFIGURATION_DEFAULT,
@@ -2199,44 +2193,32 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 		return err;
 	this->d.pin.cap = result;
 
+	dir = CORB_PWC_INPUT;
 	switch (this->d.pin.device) {
 	case CORB_CD_LINEOUT:
 	case CORB_CD_SPEAKER:
 	case CORB_CD_HEADPHONE:
 	case CORB_CD_SPDIFOUT:
 	case CORB_CD_DIGITALOUT:
-		pintype = PIN_DIR_OUT;
-		break;
-	case CORB_CD_CD:
-	case CORB_CD_LINEIN:
-	case CORB_CD_SPDIFIN:
-	case CORB_CD_DIGITALIN:
-		pintype = PIN_DIR_IN;
-		break;
-	case CORB_CD_MICIN:
-		pintype = PIN_DIR_MIC;
+		dir = CORB_PWC_OUTPUT;
 		break;
 	}
 
-	if (pintype == PIN_DIR_IN && !(this->d.pin.cap & COP_PINCAP_INPUT))
-		pintype = PIN_DIR_OUT;
-	if (pintype == PIN_DIR_OUT && !(this->d.pin.cap & COP_PINCAP_OUTPUT))
-		pintype = PIN_DIR_IN;
+	if (dir == CORB_PWC_INPUT && !(this->d.pin.cap & COP_PINCAP_INPUT))
+		dir = CORB_PWC_OUTPUT;
+	if (dir == CORB_PWC_OUTPUT && !(this->d.pin.cap & COP_PINCAP_OUTPUT))
+		dir = CORB_PWC_INPUT;
 
-	switch (pintype) {
-	case PIN_DIR_IN:
-		codec->comresp(codec, this->nid, CORB_SET_PIN_WIDGET_CONTROL,
-		    CORB_PWC_INPUT, NULL);
-		break;
-	case PIN_DIR_OUT:
-		codec->comresp(codec, this->nid, CORB_SET_PIN_WIDGET_CONTROL,
-		    CORB_PWC_OUTPUT, NULL);
-		break;
-	case PIN_DIR_MIC:
-		codec->comresp(codec, this->nid, CORB_SET_PIN_WIDGET_CONTROL,
-		    CORB_PWC_INPUT|CORB_PWC_VREF_80, NULL);
-		break;
+	if (dir == CORB_PWC_INPUT && this->d.pin.device == CORB_CD_MICIN) {
+		if (COP_PINCAP_VREF(this->d.pin.cap) & (1 << CORB_PWC_VREF_80))
+			dir |= CORB_PWC_VREF_80;
+		else if (COP_PINCAP_VREF(this->d.pin.cap) &
+		    (1 << CORB_PWC_VREF_50))
+			dir |= CORB_PWC_VREF_50;
 	}
+
+	codec->comresp(codec, this->nid, CORB_SET_PIN_WIDGET_CONTROL,
+	    dir, NULL);
 
 	if (this->d.pin.cap & COP_PINCAP_EAPD) {
 		err = codec->comresp(codec, this->nid, CORB_GET_EAPD_BTL_ENABLE,
