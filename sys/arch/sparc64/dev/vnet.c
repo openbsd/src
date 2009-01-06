@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.2 2009/01/05 22:09:51 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.3 2009/01/06 22:49:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -374,6 +374,8 @@ void	vnet_watchdog(struct ifnet *);
 
 int	vnet_media_change(struct ifnet *);
 void	vnet_media_status(struct ifnet *, struct ifmediareq *);
+
+void	vnet_link_state(struct vnet_softc *sc);
 
 void	vnet_init(struct ifnet *);
 void	vnet_stop(struct ifnet *);
@@ -870,8 +872,6 @@ vnet_rx_vio_dring_reg(struct vnet_softc *sc, struct vio_msg_tag *tag)
 void
 vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *tag)
 {
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
-
 	switch(tag->stype) {
 	case VIO_SUBTYPE_INFO:
 		DPRINTF(("CTRL/INFO/RDX\n"));
@@ -886,7 +886,7 @@ vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 		/* Link is up! */
 		sc->sc_vio_state = VIO_ESTABLISHED;
-		ifp->if_flags |= IFF_RUNNING;
+		vnet_link_state(sc);
 		break;
 
 	default:
@@ -1184,6 +1184,8 @@ ldc_reset(struct vnet_softc *sc)
 	sc->sc_vio_state = 0;
 	sc->sc_ldc_state = 0;
 	sc->sc_tx_seqid = 0;
+
+	vnet_link_state(sc);
 }
 
 void
@@ -1299,24 +1301,26 @@ vio_send_rdx(struct vnet_softc *sc)
 void
 vnet_start(struct ifnet *ifp)
 {
+	struct vnet_softc *sc = ifp->if_softc;
 	struct vnet_dring_msg dm;
-	struct vnet_softc *sc;
 	struct ldc_map *map;
 	struct mbuf *m;
 	paddr_t pa;
 	caddr_t buf;
 	int desc;
 
-	if (!(ifp->if_flags & IFF_RUNNING))
-		return;
-
-	if (ifp->if_flags & IFF_OACTIVE)
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
-	sc = ifp->if_softc;
+	/*
+	 * We cannot transmit packets until a VIO connection has been
+	 * established.
+	 */
+	if (sc->sc_vio_state != VIO_ESTABLISHED)
+		return;
 
 	desc = sc->sc_tx_prod;
 	while (sc->sc_vd->vd_desc[desc].hdr.dstate == VIO_DESC_FREE) {
@@ -1445,6 +1449,24 @@ vnet_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	imr->ifm_active = IFM_ETHER | IFM_AUTO;
 	imr->ifm_status = IFM_AVALID;
+
+	if (LINK_STATE_IS_UP(ifp->if_link_state) &&
+	    ifp->if_flags & IFF_UP)
+		imr->ifm_status |= IFM_ACTIVE;
+}
+
+void
+vnet_link_state(struct vnet_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	int link_state = LINK_STATE_DOWN;
+
+	if (sc->sc_vio_state == VIO_ESTABLISHED)
+		link_state = LINK_STATE_FULL_DUPLEX;
+	if (ifp->if_link_state != link_state) {
+		ifp->if_link_state = link_state;
+		if_link_state_change(ifp);
+	}
 }
 
 void
@@ -1489,8 +1511,7 @@ vnet_init(struct ifnet *ifp)
 
 	ldc_send_vers(sc);
 
-//	ifp->if_flags |= IFF_RUNNING;
-//	ifp->if_flags |= IFF_OACTIVE; /* XXX */
+	ifp->if_flags |= IFF_RUNNING;
 }
 
 void
