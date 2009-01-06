@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.80 2008/12/28 00:02:35 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.81 2009/01/06 23:03:16 jasper Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -209,6 +209,7 @@ rgephy*	at mii?			# Realtek 8169S/8110S PHY
 gentbi*	at mii?			# Generic 1000BASE-X ten-bit PHY
 nsgphy*	at mii?			# NS gigabit PHYs
 jmphy*	at mii?			# JMicron JMP202/JMP211 PHYs
+ipgphy*	at mii?			# IC Plus IP1000A PHYs
 ukphy*	at mii?			# Unknown PHYs
 
 # PCI USB Controllers

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.93 2008/12/22 16:35:28 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.94 2009/01/06 23:03:16 jasper Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -337,6 +337,7 @@ rgephy*	at mii?			# Realtek 8169S/8110S PHY
 ciphy*	at mii?			# Cicada CS8201 10/100/1000 copper PHY
 etphy*	at mii?			# Agere/LSI ET1011 TruePHY
 jmphy*	at mii?			# JMicron JMP202/JMP211 PHYs
+ipgphy*	at mii?			# IC Plus IP1000A PHYs
 ukphy*	at mii?			# "unknown" PHYs
 
 pseudo-device	loop	1	# network loopback

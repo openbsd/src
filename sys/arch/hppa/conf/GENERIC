@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.123 2008/12/01 23:48:46 todd Exp $
+#	$OpenBSD: GENERIC,v 1.124 2009/01/06 23:03:16 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -324,6 +324,7 @@ eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
 xmphy*		at mii?		# XaQti XMAC-II PHYs
 rlphy*		at mii?		# Realtek 8139 internal PHYs
 urlphy*		at mii?		# Realtek RTL8150L internal PHY
+ipgphy*		at mii?		# IC Plus IP1000A PHYs
 ukphy*		at mii?		# generic unknown PHYs
 
 # MI devices

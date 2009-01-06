@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.252 2009/01/03 18:39:33 damien Exp $
+#	$OpenBSD: GENERIC,v 1.253 2009/01/06 23:03:16 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -499,6 +499,7 @@ ciphy*	at mii?				# Cicada CS8201 10/100/1000 copper PHY
 gentbi*	at mii?				# Generic 1000BASE-X ten-bit PHY
 etphy*	at mii?				# Agere/LSI ET1011 TruePHY
 jmphy*	at mii?				# JMicron JMP202/JMP211 PHYs
+ipgphy*	at mii?			# IC Plus IP1000A PHYs
 ukphy*	at mii?				# "unknown" PHYs
 
 eap*	at pci?				# Ensoniq AudioPCI S5016

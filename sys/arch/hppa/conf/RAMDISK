@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.86 2008/08/18 21:55:01 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.87 2009/01/06 23:03:16 jasper Exp $
 #
 # Diskless kernel config
 #
@@ -303,6 +303,7 @@ eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
 xmphy*		at mii?		# XaQti XMAC-II PHYs
 rlphy*		at mii?		# Realtek 8139 internal PHYs
 urlphy*		at mii?		# Realtek RTL8150L internal PHY
+ipgphy*		at mii?		# IC Plus IP1000A PHYs
 ukphy*		at mii?		# generic unknown PHYs
 
 # MI devices
