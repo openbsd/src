@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.43 2009/01/04 00:58:59 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.44 2009/01/06 20:17:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -836,26 +836,48 @@ queue_remove_envelope(struct message *messagep)
 int
 queue_update_envelope(struct message *messagep)
 {
-	char pathname[MAXPATHLEN];
+	char temp[MAXPATHLEN];
+	char dest[MAXPATHLEN];
 	FILE *fp;
 
-	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
+	if (! bsnprintf(temp, MAXPATHLEN, "%s/envelope.tmp", PATH_INCOMING))
+		fatalx("queue_update_envelope");
+
+	if (! bsnprintf(dest, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
 		queue_hash(messagep->message_id), messagep->message_id,
 		PATH_ENVELOPES, messagep->message_uid))
 		fatal("queue_update_envelope: snprintf");
 
-	fp = fopen(pathname, "w");
-	if (fp == NULL)
+	fp = fopen(temp, "w");
+	if (fp == NULL) {
+		if (errno == ENOSPC || errno == ENFILE)
+			goto tempfail;
 		fatal("queue_update_envelope: open");
-	if (flock(fileno(fp), LOCK_EX) == -1)
-		fatal("queue_update_envelope: flock");
-
+	}
 	if (fwrite(messagep, sizeof(struct message), 1, fp) != 1) {
 		if (errno == ENOSPC)
-			return 0;
+			goto tempfail;
 		fatal("queue_update_envelope: fwrite");
 	}
-	return safe_fclose(fp);
+	if (! safe_fclose(fp))
+		goto tempfail;
+
+	if (rename(temp, dest) == -1) {
+		if (errno == ENOSPC)
+			goto tempfail;
+		fatal("queue_update_envelope: rename");
+	}
+
+	return 1;
+
+tempfail:
+	if (unlink(temp) == -1)
+		if (errno != ENOENT)
+			fatal("queue_update_envelope: unlink");
+	if (fp)
+		fclose(fp);
+
+	return 0;
 }
 
 int

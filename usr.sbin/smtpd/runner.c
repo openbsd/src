@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.19 2009/01/04 22:35:09 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.20 2009/01/06 20:17:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -802,7 +802,16 @@ runner_purge_run(void)
 		    strcmp(dp->d_name, "..") == 0) {
 			continue;
 		}
-		runner_purge_message(dp->d_name);
+		if (strcmp(dp->d_name, "envelope.tmp") == 0) {
+			char path[MAXPATHLEN];
+
+			if (! bsnprintf(path, MAXPATHLEN, "%s/envelope.tmp",
+				PATH_PURGE))
+				fatalx("runner_purge_run: snprintf");
+			if (unlink(path) == -1)
+				fatal("runner_purge_run: unlink");
+		} else
+			runner_purge_message(dp->d_name);
 	}
 
 	closedir(dirp);
