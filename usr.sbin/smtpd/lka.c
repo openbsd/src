@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.15 2009/01/04 17:45:58 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.16 2009/01/06 23:12:28 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -185,8 +185,19 @@ lka_dispatch_mfa(int sig, short event, void *p)
 
 			ss = imsg.data;
 			ss->code = 530;
-
-			if (! lka_resolve_path(env, &ss->u.path)) {
+			
+			if (IS_RELAY(ss->u.path.rule.r_action)) {
+				ss->code = 250;
+				message = ss->msg;
+				message.recipient = ss->u.path;
+				imsg_compose(env->sc_ibufs[PROC_QUEUE],
+				    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1, &message,
+				    sizeof (struct message));
+				imsg_compose(env->sc_ibufs[PROC_QUEUE],
+				    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1, &message,
+				    sizeof (struct message));
+			}
+			else if (! lka_resolve_path(env, &ss->u.path)) {
 				imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0, -1,
 				    ss, sizeof(*ss));
 			}
