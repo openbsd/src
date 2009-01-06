@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.22 2008/12/29 17:59:08 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.23 2009/01/06 19:27:22 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -28,7 +28,6 @@
 unsigned dev_bufsz, dev_round, dev_rate;
 struct aparams dev_ipar, dev_opar;
 struct aproc *dev_mix, *dev_sub, *dev_rec, *dev_play;
-struct file *dev_file;
 
 unsigned
 dev_roundof(unsigned newrate)
@@ -45,6 +44,7 @@ void
 dev_init(char *devpath,
     struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 {
+	struct file *f;
 	struct aparams ipar, opar;
 	struct aproc *conv;
 	struct abuf *buf;
@@ -56,9 +56,9 @@ dev_init(char *devpath,
 	 */
 	dev_bufsz = (bufsz + 3) / 4;
 	dev_round = (bufsz + 3) / 4;
-	dev_file = (struct file *)safile_new(&safile_ops, devpath,
+	f = (struct file *)safile_new(&safile_ops, devpath,
 	    dipar, dopar, &dev_bufsz, &dev_round);
-	if (!dev_file)
+	if (f == NULL)
 		exit(1);
 	if (dipar) {
 #ifdef DEBUG
@@ -102,7 +102,7 @@ dev_init(char *devpath,
 		/*
 		 * create the read end
 		 */
-		dev_rec = rpipe_new(dev_file);
+		dev_rec = rpipe_new(f);
 		dev_rec->refs++;
 		buf = abuf_new(nfr, dipar);
 		aproc_setout(dev_rec, buf);
@@ -139,7 +139,7 @@ dev_init(char *devpath,
 		/*
 		 * create the write end
 		 */
-		dev_play = wpipe_new(dev_file);
+		dev_play = wpipe_new(f);
 		dev_play->refs++;
 		buf = abuf_new(nfr, dopar);
 		aproc_setin(dev_play, buf);
@@ -198,7 +198,7 @@ dev_done(void)
 		 */
 	restart:
 		LIST_FOREACH(f, &file_list, entry) {
-			if (f != dev_file && f->rproc) {
+			if (f->rproc != NULL && f->rproc != dev_rec) {
 				file_eof(f);
 				goto restart;
 			}
@@ -207,13 +207,15 @@ dev_done(void)
 		/*
 		 * wait play chain to terminate
 		 */
-		while (!LIST_EMPTY(&dev_play->ibuflist)) {
-			if (!file_poll())
-				break;
+		if (dev_play) {
+			while (!LIST_EMPTY(&dev_play->ibuflist)) {
+				if (!file_poll())
+					break;
+			}
+			dev_play->refs--;
+			aproc_del(dev_play);
+			dev_play = NULL;
 		}
-		dev_play->refs--;
-		aproc_del(dev_play);
-		dev_play = NULL;
 	}
 	if (dev_sub) {
 		dev_sub->refs--;
@@ -226,16 +228,18 @@ dev_done(void)
 		 * play-end will underrun (and xrun correction code will
 		 * insert silence on the record-end of the device)
 		 */
-		dev_stop();
-		if (dev_rec->u.io.file)
-			file_eof(dev_rec->u.io.file);
-		for (;;) {
-			if (!file_poll())
-				break;
+		if (dev_rec) {
+			dev_stop();
+			if (dev_rec->u.io.file)
+				file_eof(dev_rec->u.io.file);
+			while (!LIST_EMPTY(&dev_rec->obuflist)) {
+				if (!file_poll())
+					break;
+			}
+			dev_rec->refs--;
+			aproc_del(dev_rec);
+			dev_rec = NULL;
 		}
-		dev_rec->refs--;
-		aproc_del(dev_rec);
-		dev_rec = NULL;
 	}
 }
 
