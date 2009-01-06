@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nice.1,v 1.15 2007/07/27 13:27:46 jmc Exp $
+.\"	$OpenBSD: nice.1,v 1.16 2009/01/06 23:29:03 jmc Exp $
 .\"	$NetBSD: nice.1,v 1.6 1995/08/31 23:30:57 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)nice.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 27 2007 $
+.Dd $Mdocdate: January 6 2009 $
 .Dt NICE 1
 .Os
 .Sh NAME
@@ -63,6 +63,11 @@ A positive or negative decimal integer used to modify the system scheduling
 priority of
 .Ar utility .
 .El
+.Pp
+.Nm
+also exists as a built-in to
+.Xr csh 1 ,
+though with a different syntax.
 .Pp
 The
 .Nm
@@ -104,14 +109,3 @@ A
 .Nm
 utility appeared in
 .At v6 .
-.Sh BUGS
-.Nm
-is built into
-.Xr csh 1
-with a slightly different syntax than described here.
-The form
-.Ql nice +10
-nices to positive nice, and
-.Ql nice \-10
-can be used
-by the superuser to give a process more of the processor.

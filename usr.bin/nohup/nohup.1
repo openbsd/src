@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nohup.1,v 1.12 2007/05/31 19:20:14 jmc Exp $
+.\"	$OpenBSD: nohup.1,v 1.13 2009/01/06 23:29:03 jmc Exp $
 .\"	$NetBSD: nohup.1,v 1.5 1995/08/31 23:35:24 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)nohup.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 6 2009 $
 .Dt NOHUP 1
 .Os
 .Sh NAME
@@ -81,6 +81,11 @@ will exit without invoking
 .Ar utility ,
 with an exit value as described below.
 .Pp
+.Nm
+also exists as a built-in to
+.Xr csh 1 ,
+though with a different syntax.
+.Pp
 The
 .Nm nohup
 command shall exit with one of the following values:
@@ -107,6 +112,7 @@ shall be that of
 User's home directory.
 .El
 .Sh SEE ALSO
+.Xr csh 1 ,
 .Xr signal 3
 .Sh STANDARDS
 The

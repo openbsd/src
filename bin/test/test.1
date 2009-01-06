@@ -1,4 +1,4 @@
-.\"	$OpenBSD: test.1,v 1.22 2007/05/31 19:19:15 jmc Exp $
+.\"	$OpenBSD: test.1,v 1.23 2009/01/06 23:29:03 jmc Exp $
 .\"	$NetBSD: test.1,v 1.6 1995/03/21 07:04:03 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)test.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 6 2009 $
 .Dt TEST 1
 .Os
 .Sh NAME
@@ -293,6 +293,11 @@ Symbolic links are followed for all primaries except
 .Fl h
 and
 .Fl L .
+.Pp
+.Nm
+also exists as a built-in to
+.Xr ksh 1 ,
+though with a different syntax.
 .Sh GRAMMAR AMBIGUITY
 The
 .Nm
@@ -318,6 +323,8 @@ missing.
 .It \*(Gt1
 An error occurred.
 .El
+.Sh SEE ALSO
+.Xr ksh 1
 .Sh STANDARDS
 The
 .Nm

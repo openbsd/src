@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd.1,v 1.15 2009/01/04 11:19:55 sobrado Exp $
+.\"	$OpenBSD: pwd.1,v 1.16 2009/01/06 23:29:03 jmc Exp $
 .\"	$NetBSD: pwd.1,v 1.10 1995/09/07 06:47:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)pwd.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: January 4 2009 $
+.Dd $Mdocdate: January 6 2009 $
 .Dt PWD 1
 .Os
 .Sh NAME
@@ -46,21 +46,18 @@ The
 .Nm
 utility prints the absolute pathname of the current working directory to
 the standard output.
-Both the Bourne shell
-.Pq Xr sh 1
-and Korn shell
-.Pq Xr ksh 1
-have their own built-in version of
-.Nm pwd .
 For an explanation of the directory hierarchy,
 see
 .Xr hier 7 .
 .Pp
+.Nm
+also exists as a built-in to
+.Xr ksh 1 ,
+though with a different syntax.
+.Pp
 .Ex -std pwd
 .Sh SEE ALSO
-.Xr csh 1 ,
 .Xr ksh 1 ,
-.Xr sh 1 ,
 .Xr getcwd 3 ,
 .Xr hier 7
 .Sh STANDARDS
