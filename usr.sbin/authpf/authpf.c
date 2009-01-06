@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.109 2008/10/07 17:27:17 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.110 2009/01/06 03:11:50 mcbride Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <login_cap.h>
 #include <pwd.h>
+#include <grp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +44,7 @@
 
 static int	read_config(FILE *);
 static void	print_message(char *);
-static int	allowed_luser(char *);
+static int	allowed_luser(struct passwd *);
 static int	check_luser(char *, char *);
 static int	remove_stale_rulesets(void);
 static int	recursive_ruleset_purge(char *, char *);
@@ -287,7 +288,7 @@ main(int argc, char *argv[])
 	}
 	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
-	if (!check_luser(PATH_BAN_DIR, luser) || !allowed_luser(luser)) {
+	if (!check_luser(PATH_BAN_DIR, luser) || !allowed_luser(pw)) {
 		syslog(LOG_INFO, "user %s prohibited", luser);
 		do_death(0);
 	}
@@ -439,6 +440,7 @@ print_message(char *filename)
  * allowed_luser checks to see if user "luser" is allowed to
  * use this gateway by virtue of being listed in an allowed
  * users file, namely /etc/authpf/authpf.allow .
+ * Users may be listed by <username>, %<group>, or @<login_class>.
  *
  * If /etc/authpf/authpf.allow does not exist, then we assume that
  * all users who are allowed in by sshd(8) are permitted to
@@ -447,7 +449,7 @@ print_message(char *filename)
  * the session terminates in the same manner as being banned.
  */
 static int
-allowed_luser(char *luser)
+allowed_luser(struct passwd *pw)
 {
 	char	*buf, *lbuf;
 	int	 matched;
@@ -480,7 +482,11 @@ allowed_luser(char *luser)
 		 * everyone use it.
 		 */
 		lbuf = NULL;
+		int gl_init = 0, ngroups = NGROUPS + 1;
+		gid_t groups[NGROUPS + 1];
+
 		while ((buf = fgetln(f, &len))) {
+			
 			if (buf[len - 1] == '\n')
 				buf[len - 1] = '\0';
 			else {
@@ -491,7 +497,40 @@ allowed_luser(char *luser)
 				buf = lbuf;
 			}
 
-			matched = strcmp(luser, buf) == 0 || strcmp("*", buf) == 0;
+			if (buf[0] == '@') {
+				/* check login class */
+				if (strcmp(pw->pw_class, buf + 1) == 0)
+					matched++;
+			} else if (buf[0] == '%') {
+				/* check group membership */
+				int cnt; 
+				struct group *group;
+
+				if ((group = getgrnam(buf + 1)) == NULL) {
+					syslog(LOG_ERR,
+					    "invalid group '%s' in %s (%s)",
+					    buf + 1, PATH_ALLOWFILE,
+				 	    strerror(errno));
+					return (0);
+				}
+
+				if (!gl_init) {
+					(void) getgrouplist(pw->pw_name,
+					    pw->pw_gid, groups, &ngroups);
+					gl_init++;
+				}
+			
+				for ( cnt = 0; cnt < ngroups; cnt++) {
+					if (group->gr_gid == groups[cnt]) {
+						matched++;
+						break;
+					}
+				}
+			} else {
+				/* check username and wildcard */
+				matched = strcmp(pw->pw_name, buf) == 0 ||
+				    strcmp("*", buf) == 0;
+			}
 
 			if (lbuf != NULL) {
 				free(lbuf);
@@ -499,10 +538,10 @@ allowed_luser(char *luser)
 			}
 
 			if (matched)
-				return (1); /* matched an allowed username */
+				return (1); /* matched an allowed user/group */
 		}
 		syslog(LOG_INFO, "denied access to %s: not listed in %s",
-		    luser, PATH_ALLOWFILE);
+		    pw->pw_name, PATH_ALLOWFILE);
 
 		/* reuse buf */
 		buf = "\n\nSorry, you are not allowed to use this facility!\n";
