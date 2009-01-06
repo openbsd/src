@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.64 2009/01/01 20:40:10 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.65 2009/01/06 22:00:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -1016,7 +1016,6 @@ if_announce(void *msg)
 int
 send_rtmsg(int fd, int action, struct kroute *kroute)
 {
-	struct kroute_node	*rn;
 	struct iovec		iov[5];
 	struct rt_msghdr	hdr;
 	struct sockaddr_in	prefix;
@@ -1027,11 +1026,6 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	const char		*label;
 
 	if (kr_state.fib_sync == 0)
-		return (0);
-
-	/* XXX workaround for bug with CLONING routes */
-	rn = kroute_find(kroute->prefix.s_addr, kroute->prefixlen, RTP_ANY);
-	if (rn && rn->r.priority < RTP_STATIC)
 		return (0);
 
 	/* initialize header */
