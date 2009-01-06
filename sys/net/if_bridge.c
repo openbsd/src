@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.173 2008/10/16 19:12:51 naddy Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.174 2009/01/06 21:23:18 claudio Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -121,6 +121,8 @@ int	bridge_ioctl(struct ifnet *, u_long, caddr_t);
 void	bridge_start(struct ifnet *);
 void	bridgeintr_frame(struct bridge_softc *, struct mbuf *);
 void	bridge_broadcast(struct bridge_softc *, struct ifnet *,
+    struct ether_header *, struct mbuf *);
+void	bridge_localbroadcast(struct bridge_softc *, struct ifnet *,
     struct ether_header *, struct mbuf *);
 void	bridge_span(struct bridge_softc *, struct ether_header *,
     struct mbuf *);
@@ -1578,6 +1580,8 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		if (bridge_filterrule(&p->bif_brlout, eh, m) == BRL_ACTION_BLOCK)
 			continue;
 
+		bridge_localbroadcast(sc, dst_if, eh, m);
+
 		/* If last one, reuse the passed-in mbuf */
 		if (LIST_NEXT(p, next) == LIST_END(&sc->sc_iflist)) {
 			mc = m;
@@ -1634,6 +1638,40 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 
 	if (!used)
 		m_freem(m);
+}
+
+void
+bridge_localbroadcast(struct bridge_softc *sc, struct ifnet *ifp,
+    struct ether_header *eh, struct mbuf *m)
+{
+	struct mbuf *m1;
+	u_int16_t etype;
+
+#ifdef INET
+	/*
+	 * quick optimisation, don't send packets up the stack if no
+	 * corresponding address has been specified.
+	 */
+	etype = ntohs(eh->ether_type);
+	if (!(m->m_flags & M_VLANTAG) && etype == ETHERTYPE_IP) {
+		struct in_ifaddr *ia;
+		IFP_TO_IA(ifp, ia);
+		if (!ia)
+			return;
+	}
+#endif
+
+	m1 = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
+	if (m1 == NULL) {
+		sc->sc_if.if_oerrors++;
+		return;
+	}
+	m_adj(m1, ETHER_HDR_LEN);
+
+	/* fixup header a bit */
+	m1->m_flags |= M_PROTO1;
+	m1->m_pkthdr.rcvif = ifp;
+	ether_input(ifp, eh, m1);
 }
 
 void
