@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nice.1,v 1.16 2009/01/06 23:29:03 jmc Exp $
+.\"	$OpenBSD: nice.1,v 1.17 2009/01/06 23:56:18 jmc Exp $
 .\"	$NetBSD: nice.1,v 1.6 1995/08/31 23:30:57 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -64,11 +64,6 @@ priority of
 .Ar utility .
 .El
 .Pp
-.Nm
-also exists as a built-in to
-.Xr csh 1 ,
-though with a different syntax.
-.Pp
 The
 .Nm
 utility shall exit with one of the following values:
@@ -104,6 +99,11 @@ specification.
 The historic
 .Fl Ns Ar increment
 option has been deprecated but is still supported in this implementation.
+.Pp
+.Nm
+also exists as a built-in to
+.Xr csh 1 ,
+though with a different syntax.
 .Sh HISTORY
 A
 .Nm

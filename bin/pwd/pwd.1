@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd.1,v 1.16 2009/01/06 23:29:03 jmc Exp $
+.\"	$OpenBSD: pwd.1,v 1.17 2009/01/06 23:56:18 jmc Exp $
 .\"	$NetBSD: pwd.1,v 1.10 1995/09/07 06:47:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -50,11 +50,6 @@ For an explanation of the directory hierarchy,
 see
 .Xr hier 7 .
 .Pp
-.Nm
-also exists as a built-in to
-.Xr ksh 1 ,
-though with a different syntax.
-.Pp
 .Ex -std pwd
 .Sh SEE ALSO
 .Xr ksh 1 ,
@@ -66,6 +61,11 @@ The
 utility is compliant with the
 .St -p1003.1-2004
 specification.
+.Pp
+.Nm
+also exists as a built-in to
+.Xr ksh 1 ,
+though with a different syntax.
 .Sh BUGS
 In
 .Xr csh 1 ,
