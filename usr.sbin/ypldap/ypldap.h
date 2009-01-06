@@ -1,3 +1,5 @@
+/*	$OpenBSD: ypldap.h,v 1.8 2009/01/06 21:52:55 jasper Exp $ */
+
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
