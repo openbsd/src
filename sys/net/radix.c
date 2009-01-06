@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.25 2008/12/29 21:24:19 claudio Exp $	*/
+/*	$OpenBSD: radix.c,v 1.26 2009/01/06 21:40:47 claudio Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -652,12 +652,20 @@ rn_addroute(void *v_arg, void *n_arg, struct radix_node_head *head,
 		x = t->rn_r;
 	/* Promote general routes from below */
 	if (x->rn_b < 0) {
-	    for (mp = &t->rn_mklist; x; x = x->rn_dupedkey)
+	    struct	radix_node *xx = NULL;
+	    for (mp = &t->rn_mklist; x; xx = x, x = x->rn_dupedkey) {
+		if (xx && xx->rn_mklist && xx->rn_mask == x->rn_mask &&
+		    x->rn_mklist == 0) {
+			/* multipath route, bump refcount on first mklist */
+			x->rn_mklist = xx->rn_mklist;
+			x->rn_mklist->rm_refs++;
+		}
 		if (x->rn_mask && (x->rn_b >= b_leaf) && x->rn_mklist == 0) {
 			*mp = m = rn_new_radix_mask(x, 0);
 			if (m)
 				mp = &m->rm_mklist;
 		}
+	    }
 	} else if (x->rn_mklist) {
 		/*
 		 * Skip over masks whose index is > that of new node
@@ -690,7 +698,28 @@ on2:
 			break;
 		if (m->rm_flags & RNF_NORMAL) {
 			mmask = m->rm_leaf->rn_mask;
-			if (tt->rn_flags & RNF_NORMAL) {
+			if (keyduplicated) {
+				if (m->rm_leaf->rn_p == tt)
+					/* new route is better */
+					m->rm_leaf = tt;
+#ifdef DIAGNOSTIC
+				else {
+					for (t = m->rm_leaf; t;
+						t = t->rn_dupedkey)
+						if (t == tt)
+							break;
+					if (t == NULL) {
+						log(LOG_ERR, "Non-unique "
+						    "normal route on dupedkey, "
+						    "mask not entered\n");
+						return tt;
+					}
+				}
+#endif
+				m->rm_refs++;
+				tt->rn_mklist = m;
+				return tt;
+			} else if (tt->rn_flags & RNF_NORMAL) {
 				log(LOG_ERR, "Non-unique normal route,"
 				    " mask not entered\n");
 				return tt;
@@ -751,10 +780,28 @@ rn_delete(void *v_arg, void *netmask_arg, struct radix_node_head *head,
 	if (tt->rn_mask == 0 || (saved_m = m = tt->rn_mklist) == 0)
 		goto on1;
 	if (tt->rn_flags & RNF_NORMAL) {
-		if (m->rm_leaf != tt || m->rm_refs > 0) {
-			log(LOG_ERR, "rn_delete: inconsistent annotation\n");
-			return 0;  /* dangling ref could cause disaster */
+		if (m->rm_leaf != tt && m->rm_refs == 0) {
+			log(LOG_ERR, "rn_delete: inconsistent normal "
+			    "annotation\n");
+			return (0);
 		}
+		if (m->rm_leaf != tt) {
+			if (--m->rm_refs >= 0)
+				goto on1;
+		}
+		/* tt is currently the head of the possible multipath chain */
+		if (m->rm_refs > 0) {
+			if (tt->rn_dupedkey == NULL ||
+			    tt->rn_dupedkey->rn_mklist != m) {
+				log(LOG_ERR, "rn_delete: inconsistent "
+				    "dupedkey list\n");
+				return (0);
+			}
+			m->rm_leaf = tt->rn_dupedkey;
+			--m->rm_refs;
+			goto on1;
+		}
+		/* else tt is last and only route */
 	} else {
 		if (m->rm_mask != tt->rn_mask) {
 			log(LOG_ERR, "rn_delete: inconsistent annotation\n");
@@ -862,6 +909,13 @@ on1:
 					x->rn_mklist = 0;
 					if (--(m->rm_refs) < 0)
 						MKFree(m);
+					else if (m->rm_flags & RNF_NORMAL)
+						/*
+						 * don't progress because this
+						 * a multipath route. Next
+						 * route will use the same m.
+						 */
+						mm = m;
 					m = mm;
 				}
 			if (m)

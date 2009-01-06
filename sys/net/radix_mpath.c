@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.14 2008/12/29 20:37:26 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.15 2009/01/06 21:40:47 claudio Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 	if (oldprio == newprio)
 		return;
 	if (rn_mpath_next(rn, 1) == NULL) {
-		/* no need to move node route is alone */
+		/* no need to move node, route is alone */
 		if (prev->rn_mask != rn->rn_mask)
 			return;
 		/* ... or route is last and prio gets bigger */
@@ -150,9 +150,8 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 			prev->rn_r = next;
 	}
 
-	/* re-insert rn at the right spot */
-	for (tt = next; tt->rn_p->rn_mask == rn->rn_mask;
-	    tt = tt->rn_p)
+	/* re-insert rn at the right spot, so first rewind to the head */
+	for (tt = next; tt->rn_p->rn_dupedkey == tt; tt = tt->rn_p)
 		;
 	saved_tt = tt;
 
@@ -160,8 +159,17 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 	 * Stolen from radix.c rn_addroute().
 	 * This is nasty code with a certain amount of magic and dragons.
 	 * t is the element where the re-priorized rn is inserted -- before
-	 * or after depending on prioinv. tt and saved_tt are just helpers.
+	 * or after depending on prioinv. saved_tt points to the head of the
+	 * dupedkey chain and tt is a bit of a helper
+	 *
+	 * First we skip with tt to the start of the mpath group then we
+	 * search the right spot to enter our node.
 	 */
+	for (; tt; tt = tt->rn_dupedkey)
+		if (rn->rn_mask == tt->rn_mask)
+			break;
+	next = tt->rn_dupedkey; /* store next entry for rn_mklist check */
+
 	tt = rn_mpath_prio(tt, newprio);
 	if (((struct rtentry *)tt)->rt_priority != newprio) {
 		if (((struct rtentry *)tt)->rt_priority > newprio)
@@ -175,6 +183,7 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 		} while (tt && --mid > 0);
 	}
 
+	/* insert rn before or after t depending on prioinv, tt and saved_tt */
 	if (tt == saved_tt && prioinv) {
 		/* link in at head of list */
 		rn->rn_dupedkey = tt;
@@ -196,15 +205,29 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 		if (rn->rn_dupedkey)
 			rn->rn_dupedkey->rn_p = rn;
 	}
+
 #ifdef RN_DEBUG
 	/* readd at head of creation list */
-	for (t = rn_clist; t && t->rn_ybro != rn; t->rn_ybro)
+	for (t = rn_clist; t && t->rn_ybro != rn; t = t->rn_ybro)
 		;
 	if (t)
 		t->rn_ybro = rn->rn_ybro;
 	rn->rn_ybro = rn_clist;
 	rn_clist = rn;
 #endif
+
+	if (rn->rn_mklist) {
+		/* the rn_mklist needs to be fixed if the best route changed */
+		if (rn->rn_mklist->rm_leaf != rn) {
+			if (rn->rn_mklist->rm_leaf->rn_p == rn)
+				/* changed route is now best */
+				rn->rn_mklist->rm_leaf = rn;
+		} else {
+			if (rn->rn_dupedkey != next)
+				/* rn moved behind next, next is new head */
+				rn->rn_mklist->rm_leaf = next;
+		}
+	}
 }
 
 int
