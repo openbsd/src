@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.3 2009/01/05 18:17:01 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.4 2009/01/06 18:56:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -773,8 +773,15 @@ run_efuse_read_2(struct run_softc *sc, uint16_t addr, uint16_t *val)
 		return error;
 
 	addr *= 2;
+	/*-
+	 * Read one 16-byte block into registers EFUSE_DATA[0-3]:
+	 * DATA0: F E D C
+	 * DATA1: B A 9 8
+	 * DATA2: 7 6 5 4
+	 * DATA3: 3 2 1 0
+	 */
 	tmp &= ~RT3070_EFSROM_MODE_MASK;
-	tmp |= (addr & 0xf) << RT3070_EFSROM_AIN_SHIFT | RT3070_EFSROM_KICK;
+	tmp |= (addr & ~0xf) << RT3070_EFSROM_AIN_SHIFT | RT3070_EFSROM_KICK;
 	run_write(sc, RT3070_EFUSE_CTRL, tmp);
 	for (ntries = 0; ntries < 100; ntries++) {
 		if ((error = run_read(sc, RT3070_EFUSE_CTRL, &tmp)) != 0)
@@ -790,11 +797,12 @@ run_efuse_read_2(struct run_softc *sc, uint16_t addr, uint16_t *val)
 		*val = 0xffff;	/* address not found */
 		return 0;
 	}
+	/* determine to which 32-bit register our 16-bit word belongs */
 	reg = RT3070_EFUSE_DATA3 - (addr & 0xc);
 	if ((error = run_read(sc, reg, &tmp)) != 0)
 		return error;
 
-	*val = tmp >> (8 * (addr & 0x3));
+	*val = (addr & 2) ? tmp >> 16 : tmp & 0xffff;
 	return 0;
 }
 
@@ -1065,7 +1073,7 @@ run_read_eeprom(struct run_softc *sc)
 		sc->leds = 0x01;
 		sc->led[0] = 0x5555;
 		sc->led[1] = 0x2221;
-		sc->led[2] = 0xa9f8;
+		sc->led[2] = 0x5627;	/* differs from RT2860 */
 	}
 	DPRINTF(("EEPROM LED mode=0x%02x, LEDs=0x%04x/0x%04x/0x%04x\n",
 	    sc->leds, sc->led[0], sc->led[1], sc->led[2]));
@@ -1073,11 +1081,18 @@ run_read_eeprom(struct run_softc *sc)
 	/* read RF information */
 	run_srom_read(sc, RT2860_EEPROM_ANTENNA, &val);
 	if (val == 0xffff) {
-		/* broken EEPROM, default to RF2870 1T2R */
 		DPRINTF(("invalid EEPROM antenna info, using default\n"));
-		sc->rf_rev = RT2860_RF_2820;
-		sc->ntxchains = 1;
-		sc->nrxchains = 2;
+		if ((sc->mac_rev >> 16) >= 0x3070) {
+			/* default to RF3020 1T1R */
+			sc->rf_rev = RT3070_RF_3020;
+			sc->ntxchains = 1;
+			sc->nrxchains = 1;
+		} else {
+			/* default to RF2820 1T2R */
+			sc->rf_rev = RT2860_RF_2820;
+			sc->ntxchains = 1;
+			sc->nrxchains = 2;
+		}
 	} else {
 		sc->rf_rev = (val >> 8) & 0xf;
 		sc->ntxchains = (val >> 4) & 0xf;
@@ -2976,7 +2991,7 @@ run_stop(struct ifnet *ifp, int disable)
 	struct run_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint32_t tmp;
-	int s, qid;
+	int s, ntries, qid;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		run_set_leds(sc, 0);	/* turn all LEDs off */
@@ -3000,6 +3015,14 @@ run_stop(struct ifnet *ifp, int disable)
 	tmp &= ~(RT2860_MAC_RX_EN | RT2860_MAC_TX_EN);
 	run_write(sc, RT2860_MAC_SYS_CTRL, tmp);
 
+	/* wait for pending Tx to complete */
+	for (ntries = 0; ntries < 100; ntries++) {
+		if (run_read(sc, RT2860_TXRXQ_PCNT, &tmp) != 0)
+			break;
+		if ((tmp & RT2860_TX2Q_PCNT_MASK) == 0)
+			break;
+	}
+	DELAY(1000);
 	run_write(sc, RT2860_USB_DMA_CFG, 0);
 
 	/* reset adapter */

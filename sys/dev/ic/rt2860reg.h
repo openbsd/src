@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.15 2009/01/05 18:17:01 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.16 2009/01/06 18:56:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -351,6 +351,12 @@
 #define RT2860_MTX1_INT		(1 <<  2)
 #define RT2860_MTX2_INT		(1 <<  1)
 #define RT2860_MRX0_INT		(1 <<  0)
+
+/* possible flags for register TXRXQ_PCNT */
+#define RT2860_RX0Q_PCNT_MASK	0xff000000
+#define RT2860_TX2Q_PCNT_MASK	0x00ff0000
+#define RT2860_TX1Q_PCNT_MASK	0x0000ff00
+#define RT2860_TX0Q_PCNT_MASK	0x000000ff
 
 /* possible flags for register CAP_CTRL */
 #define RT2860_CAP_ADC_FEQ		(1 << 31)
