@@ -1,4 +1,4 @@
-.\"	$OpenBSD: test.1,v 1.23 2009/01/06 23:29:03 jmc Exp $
+.\"	$OpenBSD: test.1,v 1.24 2009/01/06 23:43:08 jmc Exp $
 .\"	$NetBSD: test.1,v 1.6 1995/03/21 07:04:03 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -63,10 +63,14 @@ returns 1 (false).
 All operators and flags are separate arguments to the
 .Nm
 utility.
+Symbolic links are followed for all primaries except
+.Fl h
+and
+.Fl L .
 .Pp
 The following primaries are used to construct
 .Ar expression :
-.Bl -tag -width Ar
+.Bl -tag -width Ds
 .It Fl b Ar file
 True if
 .Ar file
@@ -259,8 +263,13 @@ than or equal to the integer
 .Ar n2 .
 .El
 .Pp
-These primaries can be combined with the following operators:
-.Bl -tag -width Ar
+These primaries can be combined with the following operators.
+The
+.Fl a
+operator has higher precedence than the
+.Fl o
+operator.
+.Bl -tag -width Ds
 .It Cm \&! Ar expression
 True if
 .Ar expression
@@ -282,17 +291,6 @@ True if
 .Ar expression
 is true.
 .El
-.Pp
-The
-.Fl a
-operator has higher precedence than the
-.Fl o
-operator.
-.Pp
-Symbolic links are followed for all primaries except
-.Fl h
-and
-.Fl L .
 .Pp
 .Nm
 also exists as a built-in to
