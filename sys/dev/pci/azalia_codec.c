@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.112 2009/01/05 09:50:37 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.113 2009/01/07 07:19:39 marco Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -61,6 +61,7 @@
 #define STAC9205_DELL_V1500	0x02281028
 #define IDT_92HD71B7		0x111d76b2
 #define IDT92HD71B7_DELL_E6400	0x02331028
+#define IDT92HD71B7_DELL_E6500	0x024f1028
 #define SIGMATEL_STAC9228X	0x83847616
 #define STAC9228X_DELL_V1400	0x02271028
 
@@ -2219,6 +2220,7 @@ azalia_codec_gpio_quirks(codec_t *this)
 	    (this->vid == REALTEK_ALC885 && this->subid == ALC885_APPLE_MB3) ||
 	    (this->vid == REALTEK_ALC885 && this->subid == ALC885_APPLE_MB4) ||
 	    (this->vid == IDT_92HD71B7 && this->subid == IDT92HD71B7_DELL_E6400) ||
+	    (this->vid == IDT_92HD71B7 && this->subid == IDT92HD71B7_DELL_E6500) ||
 	    (this->vid == SIGMATEL_STAC9205 && this->subid == STAC9205_DELL_D630) ||
 	    (this->vid == SIGMATEL_STAC9205 && this->subid == STAC9205_DELL_V1500)) {
 		azalia_gpio_unmute(this, 0);
