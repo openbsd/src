@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.13 2009/01/01 16:15:47 jacekm Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.14 2009/01/07 00:26:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -77,7 +77,7 @@ aliases_get(struct smtpd *env, struct aliaseslist *aliases, char *username)
 	DBT key;
 	DBT val;
 	DB *aliasesdb;
-	size_t nbaliases;
+	size_t nbaliases, nbsave;
 	struct alias alias;
 	struct alias *aliasp;
 	struct alias *nextalias;
@@ -99,7 +99,7 @@ aliases_get(struct smtpd *env, struct aliaseslist *aliases, char *username)
 		return 0;
 	}
 
-	nbaliases = val.size / sizeof(struct alias);
+	nbsave = nbaliases = val.size / sizeof(struct alias);
 	if (nbaliases == 0) {
 		aliasesdb->close(aliasesdb);
 		return 0;
@@ -121,7 +121,7 @@ aliases_get(struct smtpd *env, struct aliaseslist *aliases, char *username)
 		}
 	} while (--nbaliases);
 	aliasesdb->close(aliasesdb);
-	return 1;
+	return nbsave;
 }
 
 int
@@ -179,7 +179,7 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 	DBT key;
 	DBT val;
 	DB *aliasesdb;
-	size_t nbaliases;
+	size_t nbaliases, nbsave;
 	struct alias alias;
 	struct alias *aliasp;
 	struct alias *nextalias;
@@ -219,7 +219,7 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 		}
 	}
 
-	nbaliases = val.size / sizeof(struct alias);
+	nbsave = nbaliases = val.size / sizeof(struct alias);
 	if (nbaliases == 0) {
 		aliasesdb->close(aliasesdb);
 		return 0;
@@ -241,7 +241,7 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 		}
 	} while (--nbaliases);
 	aliasesdb->close(aliasesdb);
-	return 1;
+	return nbsave;
 }
 
 int

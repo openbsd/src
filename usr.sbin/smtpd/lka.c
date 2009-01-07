@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.16 2009/01/06 23:12:28 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.17 2009/01/07 00:26:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -63,6 +63,7 @@ int		aliases_virtual_get(struct smtpd *, struct aliaseslist *, struct path *);
 int		aliases_virtual_exist(struct smtpd *, struct path *);
 int		lka_resolve_path(struct smtpd *, struct path *);
 int		lka_expand_aliases(struct smtpd *, struct aliaseslist *, struct path *);
+void		lka_rcpt_action(struct smtpd *, struct path *);
 
 void
 lka_sig_handler(int sig, short event, void *p)
@@ -236,7 +237,10 @@ lka_dispatch_mfa(int sig, short event, void *p)
 					message = ss->msg;
 					while ((alias = TAILQ_FIRST(&aliases)) != NULL) {
 						bzero(&message.recipient, sizeof (struct path));
+
 						lka_resolve_alias(&message.recipient, alias);
+						lka_rcpt_action(env, &message.recipient);
+
 						imsg_compose(env->sc_ibufs[PROC_QUEUE],
 						    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1, &message,
 						    sizeof (struct message));
@@ -880,8 +884,8 @@ lka_expand_aliases(struct smtpd *env, struct aliaseslist *aliases, struct path *
 			else if (alias->type == ALIAS_USERNAME) {
 				if (aliases_get(env, aliases, alias->u.username) ||
 				    forwards_get(aliases, alias->u.username)) {
-					done = 0;
 					rmalias = alias;
+					done = 0;
 				}
 			}
 		}
@@ -936,4 +940,44 @@ lka_resolve_path(struct smtpd *env, struct path *path)
 	}
 
 	return 1;
+}
+
+void
+lka_rcpt_action(struct smtpd *env, struct path *path)
+{
+	struct rule *r;
+	struct cond *cond;
+	struct map *map;
+	struct mapel *me;
+
+	if (path->domain[0] == '\0')
+		(void)strlcpy(path->domain, "localhost", sizeof (path->domain));
+
+	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
+
+		TAILQ_FOREACH(cond, &r->r_conditions, c_entry) {
+			if (cond->c_type == C_ALL) {
+				path->rule = *r;
+				return;
+			}
+
+			if (cond->c_type == C_DOM) {
+				cond->c_match = map_find(env, cond->c_map);
+				if (cond->c_match == NULL)
+					fatal("mfa failed to lookup map.");
+
+				map = cond->c_match;
+				TAILQ_FOREACH(me, &map->m_contents, me_entry) {
+					log_debug("trying to match [%s] with [%s]",
+					    path->domain, me->me_key.med_string);
+					if (hostname_match(path->domain, me->me_key.med_string)) {
+						path->rule = *r;
+						return;
+					}
+				}
+			}
+		}
+	}
+	path->rule.r_action = A_RELAY;
+	return;
 }

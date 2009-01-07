@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.8 2009/01/04 00:58:59 gilles Exp $	*/
+/*	$OpenBSD: forward.c,v 1.9 2009/01/07 00:26:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -45,6 +45,7 @@ forwards_get(struct aliaseslist *aliases, char *username)
 	size_t len;
 	struct stat sb;
 	struct passwd *pw;
+	size_t nbaliases = 0;
 
 	pw = getpwnam(username);
 	if (pw == NULL)
@@ -99,11 +100,12 @@ forwards_get(struct aliaseslist *aliases, char *username)
 			fatal("calloc");
 		*aliasp = alias;
 		TAILQ_INSERT_HEAD(aliases, aliasp, entry);
+		nbaliases++;
 
 	}
 	free(lbuf);
 	fclose(fp);
-	return 1;
+	return nbaliases;
 
 bad:
 	log_debug("+ forward file error, probably bad perms/mode");
