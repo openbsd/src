@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwivar.h,v 1.24 2008/07/21 04:12:21 kevlo Exp $	*/
+/*	$OpenBSD: bwivar.h,v 1.25 2009/01/07 01:01:41 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -624,8 +624,6 @@ struct bwi_softc {
 
 #define BWI_F_BUS_INITED	0x1
 #define BWI_F_PROMISC		0x2
-
-#define abs(a)	__builtin_abs(a)
 
 #define MOBJ_WRITE_2(mac, objid, ofs, val)			\
 	bwi_memobj_write_2((mac), (objid), (ofs), (val))
