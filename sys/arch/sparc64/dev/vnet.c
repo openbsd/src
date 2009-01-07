@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.3 2009/01/06 22:49:46 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.4 2009/01/07 21:12:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -97,11 +97,6 @@ struct ldc_queue {
 	bus_dma_segment_t lq_seg;
 	caddr_t		lq_va;
 	int		lq_nentries;
-};
-
-struct ldc_chan {
-	struct ldc_queue	lc_txq;
-	struct ldc_queue	lc_rxq;
 };
 
 struct ldc_cookie {
@@ -309,10 +304,9 @@ struct vnet_softc {
 	uint64_t	sc_dring_ident;
 	uint64_t	sc_seq_no;
 
+	int		sc_tx_cnt;
 	int		sc_tx_prod;
 	int		sc_tx_cons;
-
-	int		sc_state;
 
 	struct ldc_map	*sc_lm;
 	struct vnet_dring *sc_vd;
@@ -517,7 +511,7 @@ vnet_rx_intr(void *arg)
 	}
 
 	if (rx_state != sc->sc_rx_state) {
-		sc->sc_tx_prod = sc->sc_tx_cons = 0;
+		sc->sc_tx_cnt = sc->sc_tx_prod = sc->sc_tx_cons = 0;
 		sc->sc_tx_seqid = 0;
 		sc->sc_ldc_state = 0;
 		ifp->if_flags &= ~IFF_RUNNING;
@@ -1030,8 +1024,14 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 			sc->sc_vd->vd_desc[cons++].hdr.dstate = VIO_DESC_FREE;
 			cons &= (sc->sc_vd->vd_nentries - 1);
+			sc->sc_tx_cnt--;
 		}
 		sc->sc_tx_cons = cons;
+
+		if (sc->sc_tx_cnt < sc->sc_vd->vd_nentries)
+			ifp->if_flags &= ~IFF_OACTIVE;
+
+		vnet_start(ifp);
 		break;
 	}
 
@@ -1302,8 +1302,8 @@ void
 vnet_start(struct ifnet *ifp)
 {
 	struct vnet_softc *sc = ifp->if_softc;
+	struct ldc_map *map = sc->sc_lm;
 	struct vnet_dring_msg dm;
-	struct ldc_map *map;
 	struct mbuf *m;
 	paddr_t pa;
 	caddr_t buf;
@@ -1328,9 +1328,17 @@ vnet_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
-		buf = pool_get(&sc->sc_pool, PR_NOWAIT|PR_ZERO);
-		if (buf == NULL)
+		if (sc->sc_tx_cnt >= sc->sc_vd->vd_nentries ||
+		    map->lm_count >= map->lm_nentries) {
+			ifp->if_flags |= IFF_OACTIVE;
 			break;
+		}
+
+		buf = pool_get(&sc->sc_pool, PR_NOWAIT|PR_ZERO);
+		if (buf == NULL) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 		m_copydata(m, 0, m->m_pkthdr.len, buf + VNET_ETHER_ALIGN);
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 
@@ -1343,11 +1351,8 @@ vnet_start(struct ifnet *ifp)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
-		map = sc->sc_lm;
 		pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
 		KASSERT((pa & ~PAGE_MASK) == (pa & LDC_MTE_RA_MASK));
-		if (map->lm_count == map->lm_nentries)
-			panic("out of LDC map entries\n");
 		while (map->lm_slot[map->lm_next].entry != 0) {
 			map->lm_next++;
 			map->lm_next &= (map->lm_nentries - 1);
@@ -1372,6 +1377,7 @@ vnet_start(struct ifnet *ifp)
 
 		desc++;
 		desc &= (sc->sc_vd->vd_nentries - 1);
+		sc->sc_tx_cnt++;
 
 		m_freem(m);
 	}
@@ -1512,6 +1518,7 @@ vnet_init(struct ifnet *ifp)
 	ldc_send_vers(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
 }
 
 void
@@ -1519,7 +1526,7 @@ vnet_stop(struct ifnet *ifp)
 {
 	struct vnet_softc *sc = ifp->if_softc;
 
-	ifp->if_flags &= ~IFF_RUNNING;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
 	hv_ldc_tx_qconf(sc->sc_id, 0, 0);
 	hv_ldc_rx_qconf(sc->sc_id, 0, 0);
