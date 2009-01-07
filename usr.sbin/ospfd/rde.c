@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.75 2008/12/12 22:43:17 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.76 2009/01/07 21:16:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -589,6 +589,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = bula;
 	struct lsa		*lsa;
 	struct vertex		*v;
+	struct redistribute	*nred;
 	ssize_t			 n;
 	int			 shut = 0;
 
@@ -667,8 +668,16 @@ rde_dispatch_parent(int fd, short event, void *bula)
 			LIST_INIT(&narea->iface_list);
 			LIST_INIT(&narea->nbr_list);
 			RB_INIT(&narea->lsa_tree);
+			SIMPLEQ_INIT(&narea->redist_list);
 
 			LIST_INSERT_HEAD(&nconf->area_list, narea, entry);
+			break;
+		case IMSG_RECONF_REDIST:
+			if ((nred= malloc(sizeof(struct redistribute))) == NULL)
+				fatal(NULL);
+			memcpy(nred, imsg.data, sizeof(struct redistribute));
+
+			SIMPLEQ_INSERT_TAIL(&narea->redist_list, nred, entry);
 			break;
 		case IMSG_RECONF_IFACE:
 			if ((niface = malloc(sizeof(struct iface))) == NULL)
@@ -707,6 +716,16 @@ u_int32_t
 rde_router_id(void)
 {
 	return (rdeconf->rtr_id.s_addr);
+}
+
+struct area *
+rde_backbone_area(void)
+{
+	struct in_addr	id;
+
+	id.s_addr = INADDR_ANY;
+
+	return (area_find(rdeconf, id));
 }
 
 void
@@ -1056,6 +1075,8 @@ rde_asext_put(struct rroute *rr)
 void
 rde_summary_update(struct rt_node *rte, struct area *area)
 {
+	struct rt_nexthop	*rn;
+	struct rt_node		*nr;
 	struct vertex		*v = NULL;
 	struct lsa		*lsa;
 	u_int8_t		 type = 0;
@@ -1072,7 +1093,16 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 	/* no need to originate inter-area routes to the backbone */
 	if (rte->p_type == PT_INTER_AREA && area->id.s_addr == INADDR_ANY)
 		return;
-	/* TODO nexthop check, nexthop part of area -> no summary */
+	/* nexthop check, nexthop part of area -> no summary */
+	TAILQ_FOREACH(rn, &rte->nexthop, entry) {
+		nr = rt_lookup(DT_NET, rn->nexthop.s_addr);
+		if (nr && nr->area.s_addr == area->id.s_addr)
+			continue;
+		break;
+	}
+	if (rn == NULL)	/* all nexthops belong to this area */
+		return;
+
 	if (rte->cost >= LS_INFINITY)
 		return;
 	/* TODO AS border router specific checks */

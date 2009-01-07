@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.31 2008/06/10 07:22:45 jsing Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.32 2009/01/07 21:16:36 claudio Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2008 $
+.Dd $Mdocdate: January 7 2009 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -241,6 +241,19 @@ see the
 .Ic group
 keyword in
 .Xr ifconfig 8 .
+.It Xo
+.Ic stub
+.Op Ic no
+.Ic redistribute default Op Ic set ...\&
+.Xc
+Mark the area as
+.Ar stub .
+Stub areas will not be flooded by as-ext LSA which results in smaller routing
+tables.
+Area border router should redistribute a default network LSA this can be
+enabled by specifying the default redistribute option.
+A default summary LSA will only be redistributed if the router has an active
+connection to the backbone area 0.0.0.0.
 .El
 .Sh INTERFACES
 Each interface can have several parameters configured individually, otherwise

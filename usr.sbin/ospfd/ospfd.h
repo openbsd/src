@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.73 2008/12/12 22:43:17 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.74 2009/01/07 21:16:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -56,9 +56,6 @@
 #define	F_STATIC		0x0020
 #define	F_DYNAMIC		0x0040
 #define	F_REDISTRIBUTED		0x0100
-
-#define REDISTRIBUTE_ON		0x01
-#define REDISTRIBUTE_DEFAULT	0x02
 
 /* buffer */
 struct buf {
@@ -143,6 +140,7 @@ enum imsg_type {
 	IMSG_RECONF_AREA,
 	IMSG_RECONF_IFACE,
 	IMSG_RECONF_AUTHMD,
+	IMSG_RECONF_REDIST,
 	IMSG_RECONF_END,
 	IMSG_DEMOTE
 };
@@ -159,7 +157,23 @@ struct imsg {
 	void		*data;
 };
 
-/* area */
+#define	REDIST_CONNECTED	0x01
+#define	REDIST_STATIC		0x02
+#define	REDIST_LABEL		0x04
+#define	REDIST_ADDR		0x08
+#define	REDIST_NO		0x10
+#define	REDIST_DEFAULT		0x20
+
+struct redistribute {
+	SIMPLEQ_ENTRY(redistribute)	entry;
+	struct in_addr			addr;
+	struct in_addr			mask;
+	u_int32_t			metric;
+	u_int16_t			label;
+	u_int16_t			type;
+};
+SIMPLEQ_HEAD(redist_list, redistribute);
+
 struct vertex;
 struct rde_nbr;
 RB_HEAD(lsa_tree, vertex);
@@ -171,6 +185,7 @@ struct area {
 
 	LIST_HEAD(, iface)	 iface_list;
 	LIST_HEAD(, rde_nbr)	 nbr_list;
+	struct redist_list	 redist_list;
 /*	list			 addr_range_list; */
 	char			 demote_group[IFNAMSIZ];
 	u_int32_t		 stub_default_cost;
@@ -371,29 +386,13 @@ enum {
 	PROC_RDE_ENGINE
 } ospfd_process;
 
-#define	REDIST_CONNECTED	0x01
-#define	REDIST_STATIC		0x02
-#define	REDIST_LABEL		0x04
-#define	REDIST_ADDR		0x08
-#define	REDIST_NO		0x10
-
-struct redistribute {
-	SIMPLEQ_ENTRY(redistribute)	entry;
-	struct in_addr			addr;
-	struct in_addr			mask;
-	u_int32_t			metric;
-	u_int16_t			label;
-	u_int16_t			type;
-};
-
 struct ospfd_conf {
 	struct event		ev;
 	struct in_addr		rtr_id;
 	LIST_HEAD(, area)	area_list;
 	LIST_HEAD(, vertex)	cand_list;
-	SIMPLEQ_HEAD(, redistribute) redist_list;
+	struct redist_list	redist_list;
 
-	u_int32_t		defaultmetric;
 	u_int32_t		opts;
 #define OSPFD_OPT_VERBOSE	0x00000001
 #define OSPFD_OPT_VERBOSE2	0x00000002

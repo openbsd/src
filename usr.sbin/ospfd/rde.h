@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.34 2007/06/19 16:45:15 reyk Exp $ */
+/*	$OpenBSD: rde.h,v 1.35 2009/01/07 21:16:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -111,12 +111,14 @@ pid_t		 rde(struct ospfd_conf *, int [2], int [2], int [2]);
 int		 rde_imsg_compose_ospfe(int, u_int32_t, pid_t, void *,
 		     u_int16_t);
 u_int32_t	 rde_router_id(void);
+struct area	*rde_backbone_area(void);
 void		 rde_send_change_kroute(struct rt_node *);
 void		 rde_send_delete_kroute(struct rt_node *);
 void		 rde_nbr_del(struct rde_nbr *);
 int		 rde_nbr_loading(struct area *);
 struct rde_nbr	*rde_nbr_self(struct area *);
 void		 rde_summary_update(struct rt_node *, struct area *);
+struct lsa	*orig_sum_lsa(struct rt_node *, struct area *, u_int8_t, int);
 
 /* rde_lsdb.c */
 void		 lsa_init(struct lsa_tree *);
@@ -135,6 +137,7 @@ void		 lsa_snap(struct area *, u_int32_t);
 void		 lsa_dump(struct lsa_tree *, int, pid_t);
 void		 lsa_merge(struct rde_nbr *, struct lsa *, struct vertex *);
 void		 lsa_remove_invalid_sums(struct area *);
+void		 lsa_generate_stub_sums(struct area *);
 
 /* rde_spf.c */
 void		 spf_calc(struct area *);
@@ -160,6 +163,7 @@ int		 rt_insert(struct rt_node *);
 int		 rt_remove(struct rt_node *);
 void		 rt_clear(void);
 void		 rt_dump(struct in_addr, pid_t, u_int8_t);
+struct rt_node	*rt_lookup(enum dst_type, in_addr_t);
 
 struct lsa_rtr_link	*get_rtr_link(struct vertex *, int);
 struct lsa_net_link	*get_net_link(struct vertex *, int);

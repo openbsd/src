@@ -1,4 +1,4 @@
-/*	$OpenBSD: area.c,v 1.8 2007/10/11 12:19:31 claudio Exp $ */
+/*	$OpenBSD: area.c,v 1.9 2009/01/07 21:16:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -38,6 +38,7 @@ area_new(void)
 	LIST_INIT(&area->iface_list);
 	LIST_INIT(&area->nbr_list);
 	RB_INIT(&area->lsa_tree);
+	SIMPLEQ_INIT(&area->redist_list);
 
 	return (area);
 }
@@ -48,6 +49,7 @@ area_del(struct area *area)
 	struct iface	*iface = NULL;
 	struct vertex	*v, *nv;
 	struct rde_nbr	*n;
+	struct redistribute *r;
 
 	/* area is removed so neutralize the demotion done by the area */
 	if (area->active == 0)
@@ -65,6 +67,11 @@ area_del(struct area *area)
 	for (v = RB_MIN(lsa_tree, &area->lsa_tree); v != NULL; v = nv) {
 		nv = RB_NEXT(lsa_tree, &area->lsa_tree, v);
 		vertex_free(v);
+	}
+
+	while ((r = SIMPLEQ_FIRST(&area->redist_list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&area->redist_list, entry);
+		free(r);
 	}
 
 	free(area);

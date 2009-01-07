@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.61 2008/11/24 18:28:02 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.62 2009/01/07 21:16:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -170,6 +170,12 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 		SIMPLEQ_REMOVE_HEAD(&oeconf->redist_list, entry);
 		free(r);
 	}
+	LIST_FOREACH(area, &oeconf->area_list, entry) {
+		while ((r = SIMPLEQ_FIRST(&area->redist_list)) != NULL) {
+			SIMPLEQ_REMOVE_HEAD(&area->redist_list, entry);
+			free(r);
+		}
+	}
 
 	/* listen on ospfd control socket */
 	TAILQ_INIT(&ctl_conns);
@@ -335,6 +341,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			LIST_INIT(&narea->iface_list);
 			LIST_INIT(&narea->nbr_list);
 			RB_INIT(&narea->lsa_tree);
+			SIMPLEQ_INIT(&narea->redist_list);
 
 			LIST_INSERT_HEAD(&nconf->area_list, narea, entry);
 			break;

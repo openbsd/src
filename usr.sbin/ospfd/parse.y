@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.63 2008/11/24 18:28:02 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.64 2009/01/07 21:16:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -108,6 +108,7 @@ typedef struct {
 	union {
 		int64_t		 number;
 		char		*string;
+		struct redistribute *redist;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -128,6 +129,7 @@ typedef struct {
 %token	<v.number>	NUMBER
 %type	<v.number>	yesno no optlist optlist_l option demotecount
 %type	<v.string>	string
+%type	<v.redist>	redistribute
 
 %%
 
@@ -184,78 +186,9 @@ conf_main	: ROUTERID STRING {
 			else
 				conf->flags &= ~OSPFD_FLAG_NO_FIB_UPDATE;
 		}
-		| no REDISTRIBUTE NUMBER '/' NUMBER optlist {
-			struct redistribute	*r;
-
-			if ((r = calloc(1, sizeof(*r))) == NULL)
-				fatal(NULL);
-			r->type = REDIST_ADDR;
-			if ($3 < 0 || $3 > 255 || $5 < 1 || $5 > 32) {
-				yyerror("bad network: %llu/%llu", $3, $5);
-				free(r);
-				YYERROR;
-			}
-			r->addr.s_addr = htonl($3 << IN_CLASSA_NSHIFT);
-			r->mask.s_addr = prefixlen2mask($5);
-
-			if ($1)
-				r->type |= REDIST_NO;
-			r->metric = $6;
-
-			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
-			conf->redistribute |= REDISTRIBUTE_ON;
-		}
-		| no REDISTRIBUTE STRING optlist {
-			struct redistribute	*r;
-
-			if (!strcmp($3, "default")) {
-				if (!$1)
-					conf->redistribute |=
-					    REDISTRIBUTE_DEFAULT;
-				else
-					conf->redistribute &=
-					    ~REDISTRIBUTE_DEFAULT;
-				conf->defaultmetric = $4;
-			} else {
-				if ((r = calloc(1, sizeof(*r))) == NULL)
-					fatal(NULL);
-				if (!strcmp($3, "static"))
-					r->type = REDIST_STATIC;
-				else if (!strcmp($3, "connected"))
-					r->type = REDIST_CONNECTED;
-				else if (host($3, &r->addr, &r->mask))
-					r->type = REDIST_ADDR;
-				else {
-					yyerror("unknown redistribute type");
-					free($3);
-					free(r);
-					YYERROR;
-				}
-
-				if ($1)
-					r->type |= REDIST_NO;
-				r->metric = $4;
-
-				SIMPLEQ_INSERT_TAIL(&conf->redist_list, r,
-				    entry);
-			}
-			conf->redistribute |= REDISTRIBUTE_ON;
-			free($3);
-		}
-		| no REDISTRIBUTE RTLABEL STRING optlist {
-			struct redistribute	*r;
-
-			if ((r = calloc(1, sizeof(*r))) == NULL)
-				fatal(NULL);
-			r->type = REDIST_LABEL;
-			r->label = rtlabel_name2id($4);
-			if ($1)
-				r->type |= REDIST_NO;
-			r->metric = $5;
-			free($4);
-
-			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
-			conf->redistribute |= REDISTRIBUTE_ON;
+		| redistribute {
+			SIMPLEQ_INSERT_TAIL(&conf->redist_list, $1, entry);
+			conf->redistribute = 1;
 		}
 		| RTLABEL STRING EXTTAG NUMBER {
 			if ($4 < 0 || $4 > UINT_MAX) {
@@ -295,6 +228,68 @@ conf_main	: ROUTERID STRING {
 				conf->flags &= ~OSPFD_FLAG_STUB_ROUTER;
 		}
 		| defaults
+		;
+
+
+redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist {
+			struct redistribute	*r;
+
+			if ((r = calloc(1, sizeof(*r))) == NULL)
+				fatal(NULL);
+			r->type = REDIST_ADDR;
+			if ($3 < 0 || $3 > 255 || $5 < 1 || $5 > 32) {
+				yyerror("bad network: %llu/%llu", $3, $5);
+				free(r);
+				YYERROR;
+			}
+			r->addr.s_addr = htonl($3 << IN_CLASSA_NSHIFT);
+			r->mask.s_addr = prefixlen2mask($5);
+
+			if ($1)
+				r->type |= REDIST_NO;
+			r->metric = $6;
+			$$ = r;
+		}
+		| no REDISTRIBUTE STRING optlist {
+			struct redistribute	*r;
+
+			if ((r = calloc(1, sizeof(*r))) == NULL)
+				fatal(NULL);
+			if (!strcmp($3, "default"))
+				r->type = REDIST_DEFAULT;
+			else if (!strcmp($3, "static"))
+				r->type = REDIST_STATIC;
+			else if (!strcmp($3, "connected"))
+				r->type = REDIST_CONNECTED;
+			else if (host($3, &r->addr, &r->mask))
+				r->type = REDIST_ADDR;
+			else {
+				yyerror("unknown redistribute type");
+				free($3);
+				free(r);
+				YYERROR;
+			}
+
+			if ($1)
+				r->type |= REDIST_NO;
+			r->metric = $4;
+			free($3);
+			$$ = r;
+		}
+		| no REDISTRIBUTE RTLABEL STRING optlist {
+			struct redistribute	*r;
+
+			if ((r = calloc(1, sizeof(*r))) == NULL)
+				fatal(NULL);
+			r->type = REDIST_LABEL;
+			r->label = rtlabel_name2id($4);
+			if ($1)
+				r->type |= REDIST_NO;
+			r->metric = $5;
+			free($4);
+
+			$$ = r;
+		}
 		;
 
 optlist		: /* empty */ 			{ $$ = DEFAULT_REDIST_METRIC; }
@@ -525,7 +520,20 @@ areaoptsl	: interface
 			}
 		}
 		| defaults
-		| STUB			{ area->stub = 1; }
+		| STUB 			{ area->stub = 1; }
+		| STUB redistribute {
+			area->stub = 1;
+			if ($2->type != REDIST_DEFAULT) {
+				yyerror("bad redistribute option");
+				YYERROR;
+			}
+			if (!SIMPLEQ_EMPTY(&area->redist_list)) {
+				yyerror("area redistribute option only "
+				    "allowed once");
+				YYERROR;
+			}
+			SIMPLEQ_INSERT_TAIL(&area->redist_list, $2, entry);
+		}
 		;
 
 interface	: INTERFACE STRING	{

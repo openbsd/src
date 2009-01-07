@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.12 2008/11/24 18:28:02 claudio Exp $ */
+/*	$OpenBSD: printconf.c,v 1.13 2009/01/07 21:16:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -30,7 +30,7 @@
 
 void	print_mainconf(struct ospfd_conf *);
 const char *print_no(u_int16_t);
-void	print_redistribute(struct ospfd_conf *);
+void	print_redistribute(struct redist_list *);
 void	print_rtlabel(struct ospfd_conf *);
 void	print_iface(struct iface *);
 
@@ -52,7 +52,7 @@ print_mainconf(struct ospfd_conf *conf)
 	if (conf->flags & OSPFD_FLAG_STUB_ROUTER)
 		printf("stub router yes\n");
 
-	print_redistribute(conf);
+	print_redistribute(&conf->redist_list);
 	print_rtlabel(conf);
 
 	printf("spf-delay %u\n", conf->spf_delay);
@@ -69,14 +69,11 @@ print_no(u_int16_t type)
 }
 
 void
-print_redistribute(struct ospfd_conf *conf)
+print_redistribute(struct redist_list *rlh)
 {
 	struct redistribute	*r;
 
-	if (conf->redistribute & REDISTRIBUTE_DEFAULT)
-		printf("redistribute default\n");
-
-	SIMPLEQ_FOREACH(r, &conf->redist_list, entry) {
+	SIMPLEQ_FOREACH(r, rlh, entry) {
 		switch (r->type & ~REDIST_NO) {
 		case REDIST_STATIC:
 			printf("%sredistribute static\n", print_no(r->type));
@@ -92,6 +89,9 @@ print_redistribute(struct ospfd_conf *conf)
 			printf("%sredistribute %s/%d\n",
 			    print_no(r->type), inet_ntoa(r->addr),
 			    mask2prefixlen(r->mask.s_addr));
+			break;
+		case REDIST_DEFAULT:
+			printf("%sredistribute default\n", print_no(r->type));
 			break;
 		}
 	}
@@ -160,8 +160,15 @@ print_config(struct ospfd_conf *conf)
 
 	LIST_FOREACH(area, &conf->area_list, entry) {
 		printf("area %s {\n", inet_ntoa(area->id));
-		if (area->stub)
-			printf("\tstub\n");
+		if (area->stub) {
+			printf("\tstub");
+			if (SIMPLEQ_EMPTY(&area->redist_list))
+				printf("\n");
+			else {
+				printf(" ");
+				print_redistribute(&area->redist_list);
+			}
+		}
 		if (*area->demote_group)
 			printf("\tdemote %s %d\n", area->demote_group,
 			area->demote_level);

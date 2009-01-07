@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.41 2008/11/24 18:28:02 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.42 2009/01/07 21:16:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -710,6 +710,52 @@ lsa_remove_invalid_sums(struct area *area)
 			v->lsa->hdr.age = htons(MAX_AGE);
 			lsa_timeout(0, 0, v);
 		}
+	}
+}
+
+void
+lsa_generate_stub_sums(struct area *area)
+{
+	struct rt_node rn;
+	struct redistribute *r;
+	struct vertex *v;
+	struct lsa *lsa;
+	struct area *back;
+
+	if (!area->stub)
+		return;
+
+	back = rde_backbone_area();
+	if (!back || !back->active)
+		return;
+
+	SIMPLEQ_FOREACH(r, &area->redist_list, entry) {
+		bzero(&rn, sizeof(rn));
+		if (r->type == REDIST_DEFAULT) {
+			/* setup fake rt_node */
+			rn.prefixlen = 0;
+			rn.prefix.s_addr = INADDR_ANY;
+			rn.cost = r->metric & LSA_METRIC_MASK;
+
+			/* update lsa but only if it was changed */
+			v = lsa_find(area, LSA_TYPE_SUM_NETWORK,
+			    rn.prefix.s_addr, rde_router_id());
+			lsa = orig_sum_lsa(&rn, area, LSA_TYPE_SUM_NETWORK, 0);
+			lsa_merge(rde_nbr_self(area), lsa, v);
+
+			if (v == NULL)
+				v = lsa_find(area, LSA_TYPE_SUM_NETWORK,
+				    rn.prefix.s_addr, rde_router_id());
+
+			/*
+			 * suppressed/deleted routes are not found in the
+			 * second lsa_find
+			 */
+			if (v)
+				v->cost = rn.cost;
+			return;
+		} else if (r->type == (REDIST_DEFAULT | REDIST_NO))
+			return;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.59 2009/01/01 20:44:06 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.60 2009/01/07 21:16:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -567,6 +567,9 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 				return (r->type & REDIST_NO ? 0 : 1);
 			}
 			break;
+		case REDIST_DEFAULT:
+			/* nothing to be done here */
+			break;
 		}
 	}
 
@@ -576,14 +579,20 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 void
 ospf_redistribute_default(int type)
 {
-	struct rroute	rr;
+	struct rroute		 rr;
+	struct redistribute	*r;
 
-	if (!(ospfd_conf->redistribute & REDISTRIBUTE_DEFAULT))
+	SIMPLEQ_FOREACH(r, &ospfd_conf->redist_list, entry) {
+		if (r->type != REDIST_DEFAULT)
+			continue;
+		if (r->type == (REDIST_DEFAULT | REDIST_NO))
+			return;
+
+		bzero(&rr, sizeof(rr));
+		rr.metric = r->metric;
+		main_imsg_compose_rde(type, 0, &rr, sizeof(struct rroute));
 		return;
-
-	bzero(&rr, sizeof(rr));
-	rr.metric = ospfd_conf->defaultmetric;
-	main_imsg_compose_rde(type, 0, &rr, sizeof(struct rroute));
+	}
 }
 
 int
@@ -592,6 +601,7 @@ ospf_reload(void)
 	struct area		*area;
 	struct iface		*iface;
 	struct ospfd_conf	*xconf;
+	struct redistribute	*r;
 
 	if ((xconf = parse_config(conffile, ospfd_conf->opts)) == NULL)
 		return (-1);
@@ -605,6 +615,10 @@ ospf_reload(void)
 		if (ospf_sendboth(IMSG_RECONF_AREA, area, sizeof(*area)) == -1)
 			return (-1);
 
+		SIMPLEQ_FOREACH(r, &area->redist_list, entry) {
+			main_imsg_compose_rde(IMSG_RECONF_REDIST, 0, r,
+			    sizeof(*r));
+		}
 		LIST_FOREACH(iface, &area->iface_list, entry) {
 			if (ospf_sendboth(IMSG_RECONF_IFACE, iface,
 			    sizeof(*iface)) == -1)
@@ -647,10 +661,9 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 	conf->flags = xconf->flags;
 	conf->spf_delay = xconf->spf_delay;
 	conf->spf_hold_time = xconf->spf_hold_time;
-	if ((conf->redistribute & REDISTRIBUTE_ON) !=
-	    (xconf->redistribute & REDISTRIBUTE_ON))
+	if (SIMPLEQ_EMPTY(&conf->redist_list) !=
+	    SIMPLEQ_EMPTY(&xconf->redist_list))
 		rchange = 1;
-	conf->redistribute = xconf->redistribute;
 	conf->rfc1583compat = xconf->rfc1583compat;
 
 	if (ospfd_process == PROC_MAIN) {
@@ -704,9 +717,19 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 		 * stub is not yet used but switching between stub and normal
 		 * will be another painful job.
 		 */
-		if (a->stub != xa->stub &&
-		    ospfd_process == PROC_OSPF_ENGINE)
+		if (a->stub != xa->stub && ospfd_process == PROC_OSPF_ENGINE)
 			a->dirty = 1; /* force rtr LSA update */
+		if (xa->stub && ospfd_process == PROC_RDE_ENGINE) {
+			while ((r = SIMPLEQ_FIRST(&a->redist_list)) != NULL) {
+				SIMPLEQ_REMOVE_HEAD(&a->redist_list, entry);
+				free(r);
+			}
+			
+			while ((r = SIMPLEQ_FIRST(&xa->redist_list)) != NULL) {
+				SIMPLEQ_REMOVE_HEAD(&xa->redist_list, entry);
+				SIMPLEQ_INSERT_TAIL(&a->redist_list, r, entry);
+			}
+		}
 
 		a->stub = xa->stub;
 		a->stub_default_cost = xa->stub_default_cost;
@@ -735,6 +758,14 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 			if (a->dirty || rchange) {
 				a->dirty = 0;
 				orig_rtr_lsa(a);
+			}
+		}
+	}
+	if (ospfd_process == PROC_RDE_ENGINE) {
+		LIST_FOREACH(a, &conf->area_list, entry) {
+			if (a->dirty) {
+				start_spf_timer();
+				break;
 			}
 		}
 	}
