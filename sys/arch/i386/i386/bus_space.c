@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.2 2008/12/03 15:46:06 oga Exp $ */
+/*	$OpenBSD: bus_space.c,v 1.3 2009/01/07 01:36:43 jsg Exp $ */
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -523,7 +523,7 @@ bus_space_copy_2(bus_space_tag_t t, bus_space_handle_t h1, bus_size_t o1,
 		"	addl $2, %0				;"
 		"	addl $2, %1				;"
 		"	loop 1b"				:
-		    "+D" (_port2), "+ES" (_port1), "+c" (_cnt)	::
+		    "+D" (_port2), "+S" (_port1), "+c" (_cnt)	::
 		    "%edx", "%eax", "cc");
 	} else
 		i386_space_copy(_port1, _port2, 2, _cnt);
@@ -546,7 +546,7 @@ bus_space_copy_4(bus_space_tag_t t, bus_space_handle_t h1, bus_size_t o1,
 		"	addl $4, %0				;"
 		"	addl $4, %1				;"
 		"	loop 1b"				:
-		    "+D" (_port2), "+ES" (_port1), "+c" (_cnt)	::
+		    "+D" (_port2), "+S" (_port1), "+c" (_cnt)	::
 		    "%edx", "%eax", "cc");
 	} else
 		i386_space_copy(_port1, _port2, 4, _cnt);
