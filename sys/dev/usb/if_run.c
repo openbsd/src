@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.4 2009/01/06 18:56:07 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.5 2009/01/07 11:12:27 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -161,9 +161,10 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(LOGITEC,			RT2870_1),
 	USB_ID(LOGITEC,			RT2870_2),
 	USB_ID(LOGITEC,			RT2870_3),
-	USB_ID(AIRTIES,			RT3070)
+	USB_ID(AIRTIES,			RT3070),
 
 	/* Entries not in the Ralink Linux driver. */
+	USB_ID(LINKSYS4,		WUSB600N)
 };
 
 int		run_match(struct device *, void *, void *);
