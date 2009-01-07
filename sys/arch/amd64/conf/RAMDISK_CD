@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.94 2009/01/06 23:03:16 jasper Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.95 2009/01/07 13:23:24 jsg Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -334,6 +334,7 @@ eephy*	at mii?			# Marvell 88E1000 series PHY
 xmphy*	at mii?			# XaQti XMAC-II PHYs
 bmtphy*	at mii?			# Broadcom 10/100 PHYs
 rgephy*	at mii?			# Realtek 8169S/8110S PHY
+urlphy*	at mii?			# Realtek RTL8150L internal PHY
 ciphy*	at mii?			# Cicada CS8201 10/100/1000 copper PHY
 etphy*	at mii?			# Agere/LSI ET1011 TruePHY
 jmphy*	at mii?			# JMicron JMP202/JMP211 PHYs
