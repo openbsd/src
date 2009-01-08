@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.123 2008/12/16 16:21:09 sthen Exp $	*/
+/*	$OpenBSD: route.c,v 1.124 2009/01/08 12:52:35 michele Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ union	sockunion {
 	struct sockaddr_dl	sdl;
 	struct sockaddr_rtlabel	rtlabel;
 	struct sockaddr_mpls	smpls;
-} so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_label;
+} so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_label, so_src;
 
 typedef union sockunion *sup;
 pid_t	pid;
@@ -881,18 +881,21 @@ getmplslabel(char *s, int in)
 	const char *errstr;
 	u_int32_t label;
 
-	rtm_addrs |= RTA_DST;
-	su = &so_dst;
-	su->sa.sa_len = aflen;
-	su->sa.sa_family = af;
-
 	label = strtonum(s, 0, 0x000fffff, &errstr);
 	if (errstr)
 		errx(1, "bad label: %s is %s", s, errstr);
-	if (in)
-		su->smpls.smpls_in_label = htonl(label << MPLS_LABEL_OFFSET);
-	else
-		su->smpls.smpls_out_label = htonl(label << MPLS_LABEL_OFFSET);
+	if (in) {
+		rtm_addrs |= RTA_DST;
+		su = &so_dst;
+		su->smpls.smpls_label = htonl(label << MPLS_LABEL_OFFSET);
+	} else {
+		rtm_addrs |= RTA_SRC;
+		su = &so_src;
+		su->smpls.smpls_label = htonl(label << MPLS_LABEL_OFFSET);
+	}
+
+	su->sa.sa_len = aflen;
+	su->sa.sa_family = af;
 }
 
 int
@@ -1053,6 +1056,7 @@ rtmsg(int cmd, int flags, int fmask, u_short prio)
 	NEXTADDR(RTA_IFP, so_ifp);
 	NEXTADDR(RTA_IFA, so_ifa);
 	NEXTADDR(RTA_LABEL, so_label);
+	NEXTADDR(RTA_SRC, so_src);
 	rtm.rtm_msglen = l = cp - (char *)&m_rtmsg;
 	if (verbose)
 		print_rtmsg(&rtm, l);
