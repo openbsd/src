@@ -2049,7 +2049,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/stdarg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/trap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/varargs.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/wsconsio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/protocols
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/protocols/dumprestore.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/protocols/routed.ph

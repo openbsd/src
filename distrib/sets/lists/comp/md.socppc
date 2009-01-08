@@ -189,7 +189,6 @@
 ./usr/include/powerpc/stdarg.h
 ./usr/include/powerpc/trap.h
 ./usr/include/powerpc/varargs.h
-./usr/include/powerpc/wsconsio.h
 ./usr/include/socppc
 ./usr/include/socppc/_types.h
 ./usr/include/socppc/asm.h
