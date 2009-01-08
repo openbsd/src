@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.16 2008/12/15 16:13:55 michele Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.17 2009/01/08 12:47:45 michele Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -70,7 +70,8 @@ mpls_input(struct mbuf *m)
 {
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct sockaddr_mpls *smpls;
-	struct sockaddr_mpls sa_mpls;
+	struct sockaddr_mpls *newsmpls;
+	struct sockaddr_mpls sa_mpls, sa_outmpls;
 	struct shim_hdr	*shim;
 	struct rtentry *rt = NULL;
 	u_int8_t ttl;
@@ -90,6 +91,11 @@ mpls_input(struct mbuf *m)
 	if (m->m_len < sizeof(*shim))
 		if ((m = m_pullup(m, sizeof(*shim))) == NULL)
 			return;
+
+	bzero(&sa_outmpls, sizeof(sa_outmpls));
+	newsmpls = &sa_outmpls;
+	newsmpls->smpls_family = AF_MPLS;
+	newsmpls->smpls_len = sizeof(*smpls);
 
 	shim = mtod(m, struct shim_hdr *);
 
@@ -118,22 +124,22 @@ mpls_input(struct mbuf *m)
 		smpls = &sa_mpls;
 		smpls->smpls_family = AF_MPLS;
 		smpls->smpls_len = sizeof(*smpls);
-		smpls->smpls_in_label = shim->shim_label & MPLS_LABEL_MASK;
+		smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
 
 #ifdef MPLS_DEBUG
 		printf("smpls af %d len %d in_label %d in_ifindex %d\n",
 		    smpls->smpls_family, smpls->smpls_len,
-		    MPLS_LABEL_GET(smpls->smpls_in_label),
+		    MPLS_LABEL_GET(smpls->smpls_label),
 		    ifp->if_index);
 #endif
 
-		if (ntohl(smpls->smpls_in_label) < MPLS_LABEL_RESERVED_MAX) {
+		if (ntohl(smpls->smpls_label) < MPLS_LABEL_RESERVED_MAX) {
 
 			hasbos = MPLS_BOS_ISSET(shim->shim_label);
 			m = mpls_shim_pop(m);
 			shim = mtod(m, struct shim_hdr *);
 
-			switch (ntohl(smpls->smpls_in_label)) { 
+			switch (ntohl(smpls->smpls_label)) { 
 
 			case MPLS_LABEL_IPV4NULL:
 				if (hasbos) {
@@ -165,13 +171,7 @@ mpls_input(struct mbuf *m)
 
 		rt->rt_use++;
 		smpls = satosmpls(rt_key(rt));
-
-#ifdef MPLS_DEBUG
-		printf("route af %d len %d in_label %d in_ifindex %d\n",
-		    smpls->smpls_family, smpls->smpls_len,
-		    MPLS_LABEL_GET(smpls->smpls_in_label),
-		    ifp->if_index);
-#endif
+		newsmpls->smpls_label = rt->rt_mpls;
 
 		switch (rt->rt_flags & (MPLS_OP_PUSH | MPLS_OP_POP |
 		    MPLS_OP_SWAP)){
@@ -192,10 +192,10 @@ mpls_input(struct mbuf *m)
 			}
 			break;
 		case MPLS_OP_PUSH:
-			m = mpls_shim_push(m, smpls);
+			m = mpls_shim_push(m, newsmpls);
 			break;
 		case MPLS_OP_SWAP:
-			m = mpls_shim_swap(m, smpls);
+			m = mpls_shim_swap(m, newsmpls);
 			break;
 		default:
 			m_freem(m);
@@ -222,8 +222,8 @@ mpls_input(struct mbuf *m)
 #ifdef MPLS_DEBUG
 	printf("MPLS: sending on %s outlabel %x dst af %d in %d out %d\n",
     	    ifp->if_xname, ntohl(shim->shim_label), smpls->smpls_family,
-	    MPLS_LABEL_GET(smpls->smpls_in_label),
-	    MPLS_LABEL_GET(smpls->smpls_out_label));
+	    MPLS_LABEL_GET(smpls->smpls_label),
+	    MPLS_LABEL_GET(newsmpls->smpls_label));
 #endif
 
 	(*ifp->if_output)(ifp, m, smplstosa(smpls), rt);

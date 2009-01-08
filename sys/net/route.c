@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.100 2008/12/12 22:07:33 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.101 2009/01/08 12:47:45 michele Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -120,6 +120,10 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+
+#ifdef MPLS
+#include <netmpls/mpls.h>
+#endif
 
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
@@ -723,6 +727,9 @@ rtrequest1(int req, struct rt_addrinfo *info, u_int8_t prio,
 	struct ifaddr		*ifa;
 	struct sockaddr		*ndst;
 	struct sockaddr_rtlabel	*sa_rl;
+#ifdef MPLS
+	struct sockaddr_mpls	*sa_mpls;
+#endif
 #define senderr(x) { error = x ; goto bad; }
 
 	if ((rnh = rt_gettable(info->rti_info[RTAX_DST]->sa_family, tableid)) ==
@@ -858,6 +865,14 @@ makeroute:
 			    info->rti_info[RTAX_LABEL];
 			rt->rt_labelid = rtlabel_name2id(sa_rl->sr_label);
 		}
+
+#ifdef MPLS
+		if (info->rti_info[RTAX_SRC] != NULL) {
+			sa_mpls = (struct sockaddr_mpls *)
+			    info->rti_info[RTAX_SRC];
+			rt->rt_mpls = sa_mpls->smpls_label;
+		}
+#endif
 
 		ifa->ifa_refcnt++;
 		rt->rt_ifa = ifa;

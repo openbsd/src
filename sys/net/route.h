@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.55 2008/12/12 22:07:33 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.56 2009/01/08 12:47:45 michele Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -121,6 +121,10 @@ struct rtentry {
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
 	u_int16_t rt_labelid;		/* route label ID */
 	u_int8_t rt_priority;		/* routing priority to use */
+#ifdef MPLS
+	/* XXX: temporay hack, will be removed soon */
+	u_int32_t rt_mpls;		/* MPLS outbound label */
+#endif
 };
 #define	rt_use	rt_rmx.rmx_pksent
 

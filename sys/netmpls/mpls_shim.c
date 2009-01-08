@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_shim.c,v 1.4 2008/12/15 16:13:55 michele Exp $	*/
+/*	$OpenBSD: mpls_shim.c,v 1.5 2009/01/08 12:47:45 michele Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -70,7 +70,7 @@ mpls_shim_swap(struct mbuf *m, struct sockaddr_mpls *smplsp)
 
 	/* swap label */
 	shim->shim_label &= ~MPLS_LABEL_MASK;
-	shim->shim_label |= smplsp->smpls_out_label & MPLS_LABEL_MASK;
+	shim->shim_label |= smplsp->smpls_label & MPLS_LABEL_MASK;
 
 	/* swap exp : XXX exp override */
 	{

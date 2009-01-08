@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.15 2008/12/15 16:13:55 michele Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.16 2009/01/08 12:47:45 michele Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -50,6 +50,8 @@ struct shim_hdr {
 	u_int32_t shim_label;	/* 20 bit label, 4 bit exp & BoS, 8 bit TTL */
 };
 
+#define MPLS_HDRLEN	sizeof(struct shim_hdr)
+
 /*
  * By byte-swapping the constants, we avoid ever having to byte-swap IP
  * addresses inside the kernel.  Unfortunately, user-level programs rely
@@ -87,8 +89,9 @@ struct shim_hdr {
 struct sockaddr_mpls {
 	u_int8_t	smpls_len;		/* length */
 	u_int8_t	smpls_family;		/* AF_MPLS */
-	u_int32_t	smpls_out_label;	/* outgoing MPLS label */
-	u_int32_t	smpls_in_label;		/* MPLS label 20 bits*/
+	u_int16_t	smpls_pad0;
+	u_int32_t	smpls_label;		/* MPLS label */
+	u_int32_t	smpls_pad1[2];
 };
 
 #define MPLS_OP_POP		RTF_PROTO1

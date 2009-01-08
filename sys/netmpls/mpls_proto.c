@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_proto.c,v 1.3 2008/12/15 16:13:55 michele Exp $	*/
+/*	$OpenBSD: mpls_proto.c,v 1.4 2009/01/08 12:47:45 michele Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -71,6 +71,6 @@ struct domain mplsdomain = {
 	mplssw,
 	&mplssw[sizeof(mplssw)/sizeof(mplssw[0])], 0,
 	rn_inithead,
-	offsetof(struct sockaddr_mpls, smpls_in_label) << 3,
+	offsetof(struct sockaddr_mpls, smpls_label) << 3,
 	sizeof(struct sockaddr_mpls)
 };
