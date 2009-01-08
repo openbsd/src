@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.21 2009/01/06 23:02:07 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.22 2009/01/08 19:15:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -52,6 +52,9 @@ void		runner_dispatch_mta(int, short, void *);
 void		runner_dispatch_lka(int, short, void *);
 void		runner_setup_events(struct smtpd *);
 void		runner_disable_events(struct smtpd *);
+
+int		runner_reset_flags(void);
+
 void		runner_timeout(int, short, void *);
 
 void		runner_process_envelope(struct message *);
@@ -71,8 +74,6 @@ void		runner_purge_message(char *);
 
 struct batch	*batch_record(struct smtpd *, struct message *);
 struct batch	*batch_lookup(struct smtpd *, struct message *);
-
-u_int8_t flagreset = 1;
 
 static DIR	*curdir, *dir_queue, *dir_bucket, *dir_envelope;
 
@@ -423,11 +424,32 @@ runner(struct smtpd *env)
 
 	config_peers(env, peers, 5);
 
+	while (! runner_reset_flags())
+		sleep(1);
+
 	runner_setup_events(env);
 	event_dispatch();
 	runner_shutdown();
 
 	return (0);
+}
+
+int
+runner_reset_flags(void)
+{
+	struct message message;
+
+	runner_envelope_rewind();
+
+	while (runner_envelope_next(&message)) {
+		message.flags &= ~F_MESSAGE_SCHEDULED;
+		message.flags &= ~F_MESSAGE_PROCESSING;
+
+		if (! queue_update_envelope(&message))
+			return 0;
+	}
+
+	return 1;
 }
 
 void
@@ -452,7 +474,6 @@ runner_timeout(int fd, short event, void *p)
 		runner_process_envelope(&message);
 	}
 
-	flagreset = 0;
 	runner_process_runqueue(env);
 	runner_process_batchqueue(env);
 
@@ -467,11 +488,6 @@ runner_process_envelope(struct message *messagep)
 	char evppath[MAXPATHLEN];
 	char rqpath[MAXPATHLEN];
 	struct stat sb;
-
-	if (flagreset) {
-		messagep->flags &= ~(F_MESSAGE_SCHEDULED|F_MESSAGE_PROCESSING);
-		queue_update_envelope(messagep);
-	}
 
 	if (! runner_message_schedule(messagep, time(NULL)))
 		return;
