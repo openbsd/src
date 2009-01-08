@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.21 2009/01/01 16:15:47 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.22 2009/01/08 19:17:31 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -392,7 +392,7 @@ parent_dispatch_smtp(int fd, short event, void *p)
 			if (kn_decode_base64(req->buffer, buffer, sizeof(buffer)) != -1) {
 				pw_name = buffer+1;
 				pw_passwd = pw_name+strlen(pw_name)+1;
-				pw = getpwnam(pw_name);
+				pw = safe_getpwnam(pw_name);
 				if (pw != NULL)
 					if (strcmp(pw->pw_passwd, crypt(pw_passwd,
 						    pw->pw_passwd)) == 0)
@@ -780,7 +780,7 @@ parent_open_mailbox(struct batch *batchp, struct path *path)
 	char pathname[MAXPATHLEN];
 	mode_t mode = O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK;
 
-	pw = getpwnam(path->pw_name);
+	pw = safe_getpwnam(path->pw_name);
 	if (pw == NULL) {
 		batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		return -1;
@@ -841,7 +841,7 @@ parent_open_maildir(struct batch *batchp, struct path *path)
 	char pathname[MAXPATHLEN];
 	mode_t mode = O_CREAT|O_RDWR|O_TRUNC|O_SYNC;
 
-	pw = getpwnam(path->pw_name);
+	pw = safe_getpwnam(path->pw_name);
 	if (pw == NULL) {
 		batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		return -1;
@@ -906,7 +906,7 @@ parent_rename_mailfile(struct batch *batchp)
 		path = &batchp->message.recipient;
 	}
 
-	pw = getpwnam(path->pw_name);
+	pw = safe_getpwnam(path->pw_name);
 	if (pw == NULL) {
 		batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		return 0;
@@ -940,7 +940,7 @@ parent_external_mda(struct batch *batchp, struct path *path)
 		pw_name = SMTPD_USER;
 
 	log_debug("executing filter as user: %s", pw_name);
-	pw = getpwnam(pw_name);
+	pw = safe_getpwnam(pw_name);
 	if (pw == NULL) {
 		batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		return -1;

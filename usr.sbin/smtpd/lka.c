@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.17 2009/01/07 00:26:30 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.18 2009/01/08 19:17:31 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -642,7 +642,7 @@ lka_resolve_mail(struct smtpd *env, struct rule *rule, struct path *path)
 	else if (aliases_exist(env, username))
 		path->flags |= F_ALIAS;
 	else {
-		pw = getpwnam(username);
+		pw = safe_getpwnam(username);
 		if (pw == NULL)
 			return 0;
 		(void)strlcpy(path->pw_name, pw->pw_name, MAXLOGNAME);
@@ -672,9 +672,9 @@ lka_resolve_rcpt(struct smtpd *env, struct rule *rule, struct path *path)
 	else if ((path->flags & F_EXPANDED) == 0 && aliases_exist(env, username))
 		path->flags |= F_ALIAS;
 	else {
-		pw = getpwnam(path->pw_name);
+		pw = safe_getpwnam(path->pw_name);
 		if (pw == NULL)
-			pw = getpwnam(username);
+			pw = safe_getpwnam(username);
 		if (pw == NULL)
 			return 0;
 		(void)strlcpy(path->pw_name, pw->pw_name, MAXLOGNAME);
@@ -702,7 +702,7 @@ lka_expand(char *buf, size_t len, struct path *path)
 	for (p = path->rule.r_value.path; *p != '\0'; ++p) {
 		if (p == path->rule.r_value.path && *p == '~') {
 			if (*(p + 1) == '/' || *(p + 1) == '\0') {
-				pw = getpwnam(path->pw_name);
+				pw = safe_getpwnam(path->pw_name);
 				if (pw == NULL)
 					continue;
 
@@ -728,7 +728,7 @@ lka_expand(char *buf, size_t len, struct path *path)
 					*delim = '\0';
 				}
 
-				pw = getpwnam(username);
+				pw = safe_getpwnam(username);
 				if (pw == NULL)
 					continue;
 
@@ -930,7 +930,7 @@ lka_resolve_path(struct smtpd *env, struct path *path)
 		path->flags |= F_ALIAS;
 	else {
 		path->flags |= F_ACCOUNT;
-		pw = getpwnam(username);
+		pw = safe_getpwnam(username);
 		if (pw == NULL)
 			return 0;
 		(void)strlcpy(path->pw_name, pw->pw_name, MAXLOGNAME);
