@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.12 2009/01/08 14:01:03 jmc Exp $
+.\" $OpenBSD: sio_open.3,v 1.13 2009/01/08 18:55:40 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -183,7 +183,7 @@ If set (i.e. non-zero) then the samples are signed, else unsigned.
 If set, then the byte order is little endian, else big endian;
 it's meaningful only if
 .Va bps
-\*(Gt 1 .
+\*(Gt 1.
 .It Va msb
 If set, then the
 .Va bits
@@ -195,7 +195,7 @@ it's meaningful only if
 .Va bits
 \*(Lt
 .Va bps
-* 8 .
+* 8.
 .It Va rchan
 The number of recorded channels; meaningful only if
 .Va SIO_REC
