@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cu.1,v 1.5 2007/07/06 07:13:41 jmc Exp $
+.\"	$OpenBSD: cu.1,v 1.6 2009/01/09 00:24:34 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,12 +29,12 @@
 .\"
 .\"	@(#)tip.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: July 6 2007 $
+.Dd $Mdocdate: January 9 2009 $
 .Dt CU 1
 .Os
 .Sh NAME
 .Nm cu
-.Nd call UNIX
+.Nd serial terminal emulator
 .Sh SYNOPSIS
 .Nm
 .Op Fl ehot
@@ -44,10 +44,12 @@
 .Op Ar phone-number
 .Sh DESCRIPTION
 .Nm
-establishes a full-duplex connection to another machine, giving the
-appearance of being logged in directly on the remote CPU.
-It goes without saying that you must have a login on the machine (or
-equivalent) to which you wish to connect.
+is used to connect to another system over a serial link.
+In the era before modern networks, it was typically used to
+connect to a modem in order to dial in to a remote host.
+It is now frequently used for tasks such as attaching to the
+serial console of another machine for administrative or
+debugging purposes.
 .Pp
 The options are as follows:
 .Bl -tag -width 4n
