@@ -2167,6 +2167,7 @@
 ./usr/share/man/cat3/BIO_new_file.0
 ./usr/share/man/cat3/BIO_new_fp.0
 ./usr/share/man/cat3/BIO_new_mem_buf.0
+./usr/share/man/cat3/BIO_new_socket.0
 ./usr/share/man/cat3/BIO_new_ssl.0
 ./usr/share/man/cat3/BIO_new_ssl_connect.0
 ./usr/share/man/cat3/BIO_next.0
