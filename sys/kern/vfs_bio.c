@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.108 2008/11/22 12:40:39 pedro Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.109 2009/01/09 20:28:10 thib Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -362,6 +362,7 @@ bio_doread(struct vnode *vp, daddr64_t blkno, int size, int async)
 		SET(bp->b_flags, B_READ | async);
 		bcstats.pendingreads++;
 		bcstats.numreads++;
+		bp->b_proc = curproc;
 		VOP_STRATEGY(bp);
 		/* Pay for the read. */
 		curproc->p_stats->p_ru.ru_inblock++;		/* XXX */
@@ -536,6 +537,7 @@ bread_cluster(struct vnode *vp, daddr64_t blkno, int size, struct buf **rbpp)
 	bp->b_vp = vp;
 	bcstats.pendingreads++;
 	bcstats.numreads++;
+	bp->b_proc = curproc;
 	VOP_STRATEGY(bp);
 	curproc->p_stats->p_ru.ru_inblock++;
 
@@ -685,6 +687,7 @@ bdwrite(struct buf *bp)
 void
 bawrite(struct buf *bp)
 {
+	bp->b_proc = NULL;
 
 	SET(bp->b_flags, B_ASYNC);
 	VOP_BWRITE(bp);
@@ -1146,6 +1149,7 @@ void
 biodone(struct buf *bp)
 {
 	splassert(IPL_BIO);
+	bp->b_proc = NULL;
 
 	if (ISSET(bp->b_flags, B_DONE))
 		panic("biodone already");
