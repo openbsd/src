@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.19 2008/10/21 21:52:07 brad Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.20 2009/01/09 18:53:16 kettenis Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -442,7 +442,7 @@ apic_vectorset(struct ioapic_softc *sc, int pin, int minlevel, int maxlevel)
 		pp->ip_minlevel = 0xff; /* XXX magic */
 		pp->ip_maxlevel = 0; /* XXX magic */
 		pp->ip_vector = 0;
-	} else if (maxlevel != pp->ip_maxlevel) {
+	} else if (minlevel != pp->ip_minlevel) {
 #ifdef MPVERBOSE
 		if (minlevel != maxlevel)
 			printf("%s: pin %d shares different IPL interrupts "
@@ -458,7 +458,6 @@ apic_vectorset(struct ioapic_softc *sc, int pin, int minlevel, int maxlevel)
 		 * as appropriate.
 		 */
 		nvector = idt_vec_alloc(minlevel, minlevel+15);
-
 		if (nvector == 0) {
 			/*
 			 * XXX XXX we should be able to deal here..
@@ -468,16 +467,14 @@ apic_vectorset(struct ioapic_softc *sc, int pin, int minlevel, int maxlevel)
 			panic("%s: can't alloc vector for pin %d at level %x",
 			    sc->sc_dev.dv_xname, pin, maxlevel);
 		}
-		apic_maxlevel[nvector] = maxlevel;
-		/*
-		 * XXX want special handler for the maxlevel != minlevel
-		 * case here!
-		 */
+
 		idt_vec_set(nvector, apichandler[nvector & 0xf]);
-		pp->ip_vector = nvector;
 		pp->ip_minlevel = minlevel;
-		pp->ip_maxlevel = maxlevel;
+		pp->ip_vector = nvector;
 	}
+
+	pp->ip_maxlevel = maxlevel;
+	apic_maxlevel[pp->ip_vector] = maxlevel;
 	apic_intrhand[pp->ip_vector] = pp->ip_handler;
 
 	if (ovector && ovector != pp->ip_vector) {
@@ -496,7 +493,6 @@ apic_vectorset(struct ioapic_softc *sc, int pin, int minlevel, int maxlevel)
 		 */
 		apic_intrhand[ovector] = NULL;
 		idt_vec_free(ovector);
-		printf("freed vector %x\n", ovector);
 	}
 
 	apic_set_redir(sc, pin);
@@ -726,7 +722,7 @@ apic_intr_disestablish(void *arg)
 		*p = q->ih_next;
 	else
 		panic("intr_disestablish: handler not registered");
-	for (; q != NULL; q = q->ih_next) {
+	for (q = *p; q != NULL; q = q->ih_next) {
 		if (q->ih_level > maxlevel)
 			maxlevel = q->ih_level;
 		if (q->ih_level < minlevel)
