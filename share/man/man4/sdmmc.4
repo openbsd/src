@@ -1,14 +1,17 @@
-.\"	$OpenBSD: sdmmc.4,v 1.5 2008/12/09 08:29:25 xsa Exp $
+.\"	$OpenBSD: sdmmc.4,v 1.6 2009/01/09 01:03:06 jsg Exp $
 .\"
 .\" Theo de Raadt, 2006. Public Domain.
 .\"
-.Dd $Mdocdate: December 9 2008 $
+.Dd $Mdocdate: January 9 2009 $
 .Dt SDMMC 4
 .Os
 .Sh NAME
 .Nm sdmmc
 .Nd SD Host Controller
 .Sh SYNOPSIS
+.Cd "# zaurus specific"
+.Cd "sdmmc* at pxammc?"
+.Cd "# all architectures"
 .Cd "sdmmc* at sdhc?"
 .Cd "scsibus* at sdmmc?"
 .Sh DESCRIPTION
