@@ -1,4 +1,4 @@
-/*	$OpenBSD: verify.c,v 1.17 2008/10/08 12:17:02 kili Exp $	*/
+/*	$OpenBSD: verify.c,v 1.18 2009/01/09 19:55:27 stsp Exp $	*/
 /*	$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: verify.c,v 1.17 2008/10/08 12:17:02 kili Exp $";
+static const char rcsid[] = "$OpenBSD: verify.c,v 1.18 2009/01/09 19:55:27 stsp Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ static const char rcsid[] = "$OpenBSD: verify.c,v 1.17 2008/10/08 12:17:02 kili 
 #include "mtree.h"
 #include "extern.h"
 
-extern int32_t crc_total;
+extern u_int32_t crc_total;
 extern int ftsoptions;
 extern int dflag, eflag, qflag, rflag, sflag, uflag;
 extern char fullpath[MAXPATHLEN];
