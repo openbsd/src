@@ -58,10 +58,9 @@
 
 #include <stdio.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
-
-#ifdef OPENSSL_FIPS
+#include <openssl/err.h>
+#include <openssl/fips.h>
 
 /* Check that p is a safe prime and
  * if g is 2, 3 or 5, check that is is a suitable generator
@@ -71,6 +70,8 @@
  * for 5, p mod 10 == 3 or 7
  * should hold.
  */
+
+#ifdef OPENSSL_FIPS
 
 int DH_check(const DH *dh, int *ret)
 	{
@@ -106,12 +107,12 @@ int DH_check(const DH *dh, int *ret)
 	else
 		*ret|=DH_UNABLE_TO_CHECK_GENERATOR;
 
-	if (!BN_is_prime(dh->p,BN_prime_checks,NULL,ctx,NULL))
+	if (!BN_is_prime_ex(dh->p,BN_prime_checks,ctx,NULL))
 		*ret|=DH_CHECK_P_NOT_PRIME;
 	else
 		{
 		if (!BN_rshift1(q,dh->p)) goto err;
-		if (!BN_is_prime(q,BN_prime_checks,NULL,ctx,NULL))
+		if (!BN_is_prime_ex(q,BN_prime_checks,ctx,NULL))
 			*ret|=DH_CHECK_P_NOT_SAFE_PRIME;
 		}
 	ok=1;
@@ -121,5 +122,26 @@ err:
 	return(ok);
 	}
 
-#endif
+int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
+	{
+	int ok=0;
+	BIGNUM *q=NULL;
+
+	*ret=0;
+	q=BN_new();
+	if (q == NULL) goto err;
+	BN_set_word(q,1);
+	if (BN_cmp(pub_key,q) <= 0)
+		*ret|=DH_CHECK_PUBKEY_TOO_SMALL;
+	BN_copy(q,dh->p);
+	BN_sub_word(q,1);
+	if (BN_cmp(pub_key,q) >= 0)
+		*ret|=DH_CHECK_PUBKEY_TOO_LARGE;
+
+	ok = 1;
+err:
+	if (q != NULL) BN_free(q);
+	return(ok);
+	}
+
 #endif

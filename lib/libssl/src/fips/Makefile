@@ -1,199 +1,219 @@
 #
-# SSLeay/fips/Makefile
+# OpenSSL/crypto/Makefile
 #
 
 DIR=		fips
 TOP=		..
 CC=		cc
 INCLUDE=	-I. -I$(TOP) -I../include
+# INCLUDES targets sudbirs!
 INCLUDES=	-I.. -I../.. -I../../include
 CFLAG=		-g
-INSTALL_PREFIX=
-OPENSSLDIR=     /usr/local/ssl
-INSTALLTOP=	/usr/local/ssl
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=       Makefile
 RM=             rm -f
 AR=		ar r
+ARD=		ar d
+TEST=		fips_test_suite.c
+FIPS_TVDIR=	testvectors
+FIPS_TVOK=	$$HOME/fips/tv.ok
+
+FIPSCANLOC=	$(FIPSLIBDIR)fipscanister.o
+
+RECURSIVE_MAKE=	[ -n "$(FDIRS)" ] && for i in $(FDIRS) ; do \
+		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
+		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES='${INCLUDES}' $$target ) || exit 1; \
+		done;
 
 PEX_LIBS=
 EX_LIBS=
-
-CFLAGS= $(INCLUDE) $(CFLAG)
-
+ 
+CFLAGS= $(INCLUDE) $(CFLAG) -DHMAC_EXT=\"$${HMAC_EXT:-sha1}\"
+ASFLAGS= $(INCLUDE) $(ASFLAG)
+AFLAGS=$(ASFLAGS)
 
 LIBS=
 
-FDIRS=sha1 rand des aes dsa rsa dh
+FDIRS=sha rand des aes dsa rsa dh hmac
 
 GENERAL=Makefile README fips-lib.com install.com
 
 LIB= $(TOP)/libcrypto.a
-SHARED_LIB= libcrypto$(SHLIB_EXT)
-LIBSRC=fips.c fips_err_wrapper.c
-LIBOBJ=fips.o fips_err_wrapper.o
+SHARED_LIB= $(FIPSCANLIB)$(SHLIB_EXT)
+LIBSRC=fips.c 
+LIBOBJ=fips.o
+
+FIPS_OBJ_LISTS=sha/lib hmac/lib rand/lib des/lib aes/lib dsa/lib rsa/lib dh/lib
 
 SRC= $(LIBSRC)
 
 EXHEADER=fips.h
-HEADER=$(EXHEADER) fips_err.h
-EXE=openssl_fips_fingerprint
+HEADER=$(EXHEADER) fips_utl.h fips_locl.h
+EXE=fipsld
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
 top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
 
+testapps:
+	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
+
 all:
-	@if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-		$(MAKE) -e subdirs check lib shared; \
+	@if [ -z "$(FIPSLIBDIR)" ]; then \
+		$(MAKE) -e subdirs lib fips_premain_dso$(EXE_EXT); \
+	else \
+		$(MAKE) -e lib fips_premain_dso$(EXE_EXT) fips_standalone_sha1$(EXE_EXT); \
 	fi
 
-check:
-	TOP=`pwd`/$(TOP) ./fips_check_sha1 fingerprint.sha1 $(SRC) $(HEADER)
+# Idea behind fipscanister.o is to "seize" the sequestered code between
+# known symbols for fingerprinting purposes, which would be commonly
+# done with ld -r start.o ... end.o. The latter however presents a minor
+# challenge on multi-ABI platforms. As just implied, we'd rather use ld,
+# but the trouble is that we don't generally know how ABI-selection
+# compiler flag is translated to corresponding linker flag. All compiler
+# drivers seem to recognize -r flag and pass it down to linker, but some
+# of them, including gcc, erroneously add -lc, as well as run-time
+# components, such as crt1.o and alike. Fortunately among those vendor
+# compilers which were observed to misinterpret -r flag multi-ABI ones
+# are equipped with smart linkers, which don't require any ABI-selection
+# flag and simply assume that all objects are of the same type as first
+# one in command line. So the idea is to identify gcc and deficient
+# vendor compiler drivers...
+
+fipscanister.o: fips_start.o $(LIBOBJ) $(FIPS_OBJ_LISTS) fips_end.o
+	FIPS_ASM=""; \
+	list="$(BN_ASM)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM ../crypto/bn/$$i" ; done; \
+	list="$(AES_ASM_OBJ)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM ../crypto/aes/$$i" ; done; \
+	list="$(DES_ENC)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM ../crypto/des/$$i" ; done; \
+	list="$(SHA1_ASM_OBJ)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM ../crypto/sha/$$i" ; done; \
+	if [ -n "$(CPUID_OBJ)" ]; then \
+		CPUID=../crypto/$(CPUID_OBJ) ; \
+	else \
+		CPUID="" ; \
+	fi ; \
+	objs="fips_start.o $(LIBOBJ) $(FIPS_EX_OBJ) $$CPUID $$FIPS_ASM"; \
+	for i in $(FIPS_OBJ_LISTS); do \
+		dir=`dirname $$i`; script="s|^|$$dir/|;s| | $$dir/|g"; \
+		objs="$$objs `sed "$$script" $$i`"; \
+	done; \
+	objs="$$objs fips_end.o" ; \
+	os="`(uname -s) 2>/dev/null`"; cflags="$(CFLAGS)"; \
+	[ "$$os" = "AIX" ] && cflags="$$cflags -Wl,-bnoobjreorder"; \
+	if [ -n "${FIPS_SITE_LD}" ]; then \
+		set -x; ${FIPS_SITE_LD} -r -o $@ $$objs; \
+	elif $(CC) -dumpversion >/dev/null 2>&1; then \
+		set -x; $(CC) $$cflags -r -nostdlib -o $@ $$objs ; \
+	else case "$$os" in \
+		HP-UX|OSF1|SunOS) set -x; /usr/ccs/bin/ld -r -o $@ $$objs ;; \
+		*) set -x; $(CC) $$cflags -r -o $@ $$objs ;; \
+	esac fi
+	./fips_standalone_sha1 fipscanister.o > fipscanister.o.sha1
+
+# If another exception is immediately required, assign approprite
+# site-specific ld command to FIPS_SITE_LD environment variable.
+
+fips_start.o: fips_canister.c
+	$(CC) $(CFLAGS) -DFIPS_START -c -o $@ fips_canister.c
+fips_end.o: fips_canister.c
+	$(CC) $(CFLAGS) -DFIPS_END -c -o $@ fips_canister.c
+fips_premain_dso$(EXE_EXT): fips_premain.c
+	$(CC) $(CFLAGS) -DFINGERPRINT_PREMAIN_DSO_LOAD -o $@ fips_premain.c \
+		$(FIPSLIBDIR)fipscanister.o ../libcrypto.a $(EX_LIBS)
+# this is executed only when linking with external fipscanister.o
+fips_standalone_sha1$(EXE_EXT):	sha/fips_standalone_sha1.c
+	$(CC) $(CFLAGS) -DFIPSCANISTER_O -o $@ sha/fips_standalone_sha1.c $(FIPSLIBDIR)fipscanister.o
 
 subdirs:
-	@for i in $(FDIRS) ;\
-	do \
-	(cd $$i && echo "making all in fips/$$i..." && \
-	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' FIPS_DES_ENC='${FIPS_DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' FIPS_SHA1_ASM_OBJ='${FIPS_SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' all ) || exit 1; \
-	done;
-
-sub_target:
-	@for i in $(FDIRS) ;\
-	do \
-	(cd $$i && echo "making $(TARGET) in fips/$$i..." && \
-	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' FIPS_DES_ENC='${FIPS_DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' FIPS_SHA1_ASM_OBJ='${FIPS_SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' $(TARGET) ) || exit 1; \
-	done;
+	@target=all; $(RECURSIVE_MAKE)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-	@for i in $(FDIRS) ;\
-	do \
-	(cd $$i && echo "making 'files' in fips/$$i..." && \
-	$(MAKE) PERL='${PERL}' files ); \
-	done;
+	@target=files; $(RECURSIVE_MAKE)
 
 links:
 	@$(PERL) $(TOP)/util/mklink.pl ../include/openssl $(EXHEADER)
-	@for i in $(FDIRS); do \
-	(cd $$i && echo "making links in fips/$$i..." && \
-	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' FIPS_DES_ENC='${FIPS_DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' FIPS_SHA1_ASM_OBJ='${FIPS_SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' PERL='${PERL}' links ); \
-	done;
+	@$(PERL) $(TOP)/util/mklink.pl ../test $(TEST)
+	@target=links; $(RECURSIVE_MAKE)
 
-lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+# lib: and $(LIB): are splitted to avoid end-less loop
+lib:	$(LIB)
+	if [ "$(FIPSCANISTERINTERNAL)" = "n" -a -n "$(FIPSCANLOC)" ]; then $(AR) ../$(FIPSCANLIB).a $(FIPSCANLOC); fi
 	@touch lib
 
-shared:
-	if [ -n "$(SHARED_LIBS)" ]; then \
-		(cd ..; $(MAKE) $(SHARED_LIB)); \
+$(LIB):	$(FIPSLIBDIR)fipscanister.o
+	$(AR) $(LIB) $(FIPSLIBDIR)fipscanister.o
+	$(RANLIB) $(LIB) || echo Never mind.
+
+$(FIPSCANLIB):	$(FIPSCANLOC)
+	$(AR) ../$(FIPSCANLIB).a $(FIPSCANLOC)
+	if [ "$(FIPSCANLIB)" = "libfips" ]; then \
+		$(AR) $(LIB) $(FIPSCANLOC) ; \
+		$(RANLIB) $(LIB) || echo Never Mind. ; \
 	fi
+	$(RANLIB) ../$(FIPSCANLIB).a || echo Never mind.
+	@touch lib
+
+shared:	lib subdirs fips_premain_dso$(EXE_EXT)
 
 libs:
-	@for i in $(FDIRS) ;\
-	do \
-	(cd $$i && echo "making libs in fips/$$i..." && \
-	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' AR='${AR}' lib ); \
-	done;
+	@target=lib; $(RECURSIVE_MAKE)
 
-tests:
-	@for i in $(FDIRS) ;\
-	do \
-	(cd $$i && echo "making tests in fips/$$i..." && \
-	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' AR='${AR}' tests ); \
-	done;
+fips_test: top
+	@target=fips_test; $(RECURSIVE_MAKE)
 
-top_fips_test_suite:
-	(cd $(TOP); $(MAKE) DIRS=fips FDIRS=. TARGET=fips_test_suite sub_target)
+fips_test_diff:
+	@if diff -b -B -I '^\#' -cr -X fips-nodiff.txt $(FIPS_TVDIR) $(FIPS_TVOK) ; then \
+		echo "FIPS diff OK" ; \
+	else \
+		echo "***FIPS DIFF ERROR***" ; exit 1 ; \
+	fi
 
-fips_test_suite: fips_test_suite.o $(TOP)/libcrypto.a
-	$(CC) $(CFLAGS) -o fips_test_suite fips_test_suite.o $(PEX_LIBS) $(TOP)/libcrypto.a $(EX_LIBS)
-	TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a fips_test_suite || { rm fips_test_suite; false; }
-
-fips_test: top top_fips_test_suite
-	cd testvectors && perl -p -i -e 's/COUNT=/COUNT = /' des[23]/req/*.req
-	@for i in dsa sha1 aes des ; \
-	do \
-		(cd $$i && echo "making fips_test in fips/$$i..." && $(MAKE) fips_test) \
-	done;
 
 install:
+	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@headerlist="$(EXHEADER)"; for i in $$headerlist ;\
 	do \
-		(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
-		chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
+	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
-	@for i in $(FDIRS) ;\
-	do \
-		(cd $$i && echo "making install in fips/$$i..." && \
-		$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALL_PREFIX='${INSTALL_PREFIX}'  INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' install ); \
-	done;
-	@for i in $(EXE) ; \
-	do \
-		echo "installing $$i"; \
-		cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
-		chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
-		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
-	done
+	@target=install; $(RECURSIVE_MAKE)
+	@cp -p -f fipscanister.o fipscanister.o.sha1 fips_premain.c \
+		fips_premain.c.sha1 \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/; \
+	chmod 0444 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/fips*
 
 lint:
-	@for i in $(FDIRS) ;\
-	do \
-	(cd $$i && echo "making lint in fips/$$i..." && \
-	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' lint ); \
-	done;
+	@target=lint; $(RECURSIVE_MAKE)
 
 depend:
-	if [ ! -f buildinf.h ]; then touch buildinf.h; fi # fake buildinf.h if it does not exist
-	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(SRC)
-	if [ ! -s buildinf.h ]; then rm buildinf.h; fi
-	@for i in $(FDIRS) ;\
-	do \
-	(cd $$i && echo "making depend in fips/$$i..." && \
-	$(MAKE) MAKEFILE='${MAKEFILE}' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' DEPFLAG='${DEPFLAG}' MAKEDEPPROG='${MAKEDEPPROG}' KRB5_INCLUDES='${KRB5_INCLUDES}' PERL='${PERL}' depend ); \
-	done;
+	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
+	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 clean:
-	rm -f buildinf.h *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-	@for i in $(FDIRS) ;\
-	do \
-	(cd $$i && echo "making clean in fips/$$i..." && \
-	$(MAKE) CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' clean ); \
-	done;
+	rm -f fipscanister.o.sha1 fips_premain_dso$(EXE_EXT) fips_standalone_sha1$(EXE_EXT) \
+		*.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	@target=clean; $(RECURSIVE_MAKE)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
-	@for i in $(FDIRS) ;\
-	do \
-	(cd $$i && echo "making dclean in fips/$$i..." && \
-	$(MAKE) PERL='${PERL}' CC='$(CC)' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' dclean ); \
-	done;
+	@target=dclean; $(RECURSIVE_MAKE)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-fips.o: ../include/openssl/aes.h ../include/openssl/asn1.h
-fips.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
-fips.o: ../include/openssl/bn.h ../include/openssl/cast.h
+fips.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 fips.o: ../include/openssl/crypto.h ../include/openssl/des.h
-fips.o: ../include/openssl/des_old.h ../include/openssl/dh.h
-fips.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+fips.o: ../include/openssl/des_old.h ../include/openssl/e_os2.h
 fips.o: ../include/openssl/err.h ../include/openssl/evp.h
 fips.o: ../include/openssl/fips.h ../include/openssl/fips_rand.h
-fips.o: ../include/openssl/hmac.h ../include/openssl/idea.h
-fips.o: ../include/openssl/lhash.h ../include/openssl/md2.h
-fips.o: ../include/openssl/md4.h ../include/openssl/md5.h
-fips.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
-fips.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-fips.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-fips.o: ../include/openssl/rand.h ../include/openssl/rc2.h
-fips.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
-fips.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
-fips.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+fips.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+fips.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+fips.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+fips.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
+fips.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 fips.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 fips.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h fips.c
 fips.o: fips_locl.h
-fips_err_wrapper.o: ../include/openssl/opensslconf.h fips_err_wrapper.c

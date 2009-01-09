@@ -75,7 +75,7 @@ $ ENDIF
 $!
 $! Define The Different Encryption Types.
 $!
-$ ENCRYPT_TYPES = "Basic,SHA1,RAND,DES,AES,DSA,RSA,DH"
+$ ENCRYPT_TYPES = "Basic,SHA,RAND,DES,AES,DSA,RSA,DH,HMAC"
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
@@ -151,20 +151,26 @@ $!
 $! Define The Different Encryption "library" Strings.
 $!
 $ LIB_ = "fips,fips_err_wrapper"
-$ LIB_SHA1 = "fips_sha1dgst,fips_sha1_selftest"
-$ LIB_RAND = "fips_rand"
+$ LIB_SHA = "fips_sha1dgst,fips_sha1_selftest,fips_sha256,fips_sha512"
+$ LIB_RAND = "fips_rand,fips_rand_selftest"
 $ LIB_DES = "fips_des_enc,fips_des_selftest,fips_set_key"
 $ LIB_AES = "fips_aes_core,fips_aes_selftest"
 $ LIB_DSA = "fips_dsa_ossl,fips_dsa_gen,fips_dsa_selftest"
-$ LIB_RSA = "fips_rsa_eay,fips_rsa_gen,fips_rsa_selftest"
+$ LIB_RSA = "fips_rsa_eay,fips_rsa_gen,fips_rsa_selftest,fips_rsa_x931g"
 $ LIB_DH = "fips_dh_check,fips_dh_gen,fips_dh_key"
+$ LIB_HMAC = "fips_hmac,fips_hmac_selftest"
 $!
 $! Setup exceptional compilations
 $!
+$ ! Add definitions for no threads on OpenVMS 7.1 and higher
 $ COMPILEWITH_CC3 = ",bss_rtcp,"
+$ ! Disable the DOLLARID warning
 $ COMPILEWITH_CC4 = ",a_utctm,bss_log,o_time,"
+$ ! Disable disjoint optimization
 $ COMPILEWITH_CC5 = ",md2_dgst,md4_dgst,md5_dgst,mdc2dgst," + -
                     "sha_dgst,sha1dgst,rmd_dgst,bf_enc,"
+$ ! Disable the MIXLINKAGE warning
+$ COMPILEWITH_CC6 = ",fips_set_key,"
 $!
 $! Figure Out What Other Modules We Are To Build.
 $!
@@ -393,7 +399,12 @@ $       IF COMPILEWITH_CC5 - FILE_NAME0 .NES. COMPILEWITH_CC5
 $       THEN
 $         CC5/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
 $       ELSE
-$         CC/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$         IF COMPILEWITH_CC6 - FILE_NAME0 .NES. COMPILEWITH_CC6
+$         THEN
+$           CC6/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$         ELSE
+$           CC/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$         ENDIF
 $       ENDIF
 $     ENDIF
 $   ENDIF
@@ -856,7 +867,7 @@ $ CCDEFS = "TCPIP_TYPE_''P4',DSO_VMS"
 $ IF F$TYPE(USER_CCDEFS) .NES. "" THEN CCDEFS = CCDEFS + "," + USER_CCDEFS
 $ CCEXTRAFLAGS = ""
 $ IF F$TYPE(USER_CCFLAGS) .NES. "" THEN CCEXTRAFLAGS = USER_CCFLAGS
-$ CCDISABLEWARNINGS = "LONGLONGTYPE,LONGLONGSUFX"
+$ CCDISABLEWARNINGS = "LONGLONGTYPE,LONGLONGSUFX,FOUNDCR"
 $ IF F$TYPE(USER_CCDISABLEWARNINGS) .NES. "" THEN -
 	CCDISABLEWARNINGS = CCDISABLEWARNINGS + "," + USER_CCDISABLEWARNINGS
 $!
@@ -973,14 +984,18 @@ $   THEN
 $     IF CCDISABLEWARNINGS .EQS. ""
 $     THEN
 $       CC4DISABLEWARNINGS = "DOLLARID"
+$       CC6DISABLEWARNINGS = "MIXLINKAGE"
 $     ELSE
 $       CC4DISABLEWARNINGS = CCDISABLEWARNINGS + ",DOLLARID"
+$       CC6DISABLEWARNINGS = CCDISABLEWARNINGS + ",MIXLINKAGE"
 $       CCDISABLEWARNINGS = "/WARNING=(DISABLE=(" + CCDISABLEWARNINGS + "))"
 $     ENDIF
 $     CC4DISABLEWARNINGS = "/WARNING=(DISABLE=(" + CC4DISABLEWARNINGS + "))"
+$     CC6DISABLEWARNINGS = "/WARNING=(DISABLE=(" + CC6DISABLEWARNINGS + "))"
 $   ELSE
 $     CCDISABLEWARNINGS = ""
 $     CC4DISABLEWARNINGS = ""
+$     CC6DISABLEWARNINGS = ""
 $   ENDIF
 $   CC3 = CC + "/DEFINE=(" + CCDEFS + ISSEVEN + ")" + CCDISABLEWARNINGS
 $   CC = CC + "/DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
@@ -991,6 +1006,7 @@ $   ELSE
 $     CC5 = CC + "/NOOPTIMIZE"
 $   ENDIF
 $   CC4 = CC - CCDISABLEWARNINGS + CC4DISABLEWARNINGS
+$   CC6 = CC - CCDISABLEWARNINGS + CC6DISABLEWARNINGS
 $!
 $!  Show user the result
 $!
@@ -1153,7 +1169,7 @@ $! Save directory information
 $!
 $ __HERE = F$PARSE(F$PARSE("A.;",F$ENVIRONMENT("PROCEDURE"))-"A.;","[]A.;") - "A.;"
 $ __HERE = F$EDIT(__HERE,"UPCASE")
-$ __TOP = __HERE - "FIPS]"
+$ __TOP = __HERE - "FIPS-1_0]"
 $ __INCLUDE = __TOP + "INCLUDE.OPENSSL]"
 $!
 $! Set up the logical name OPENSSL to point at the include directory

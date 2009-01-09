@@ -63,6 +63,7 @@
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
 #include <openssl/asn1.h>
+#include <openssl/err.h>
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
@@ -83,7 +84,7 @@ static int dsa_bn_mod_exp(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
 				const BIGNUM *m, BN_CTX *ctx,
 				BN_MONT_CTX *m_ctx);
 
-static DSA_METHOD openssl_dsa_meth = {
+static const DSA_METHOD openssl_dsa_meth = {
 "OpenSSL FIPS DSA method",
 dsa_do_sign,
 dsa_sign_setup,
@@ -92,10 +93,10 @@ dsa_mod_exp,
 dsa_bn_mod_exp,
 dsa_init,
 dsa_finish,
-0,
+DSA_FLAG_FIPS_METHOD,
 NULL
 };
-
+#if 0
 int FIPS_dsa_check(struct dsa_st *dsa)
     {
     if(dsa->meth != &openssl_dsa_meth || dsa->meth->dsa_do_sign != dsa_do_sign
@@ -110,6 +111,7 @@ int FIPS_dsa_check(struct dsa_st *dsa)
 	}
     return 1;
     }
+#endif
 
 const DSA_METHOD *DSA_OpenSSL(void)
 {
@@ -130,6 +132,12 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, FIPS_DSA_SIZE_T dlen, DSA
 	    FIPSerr(FIPS_F_DSA_DO_SIGN,FIPS_R_FIPS_SELFTEST_FAILED);
 	    return NULL;
 	    }
+
+	if (FIPS_mode() && (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
+		{
+		DSAerr(DSA_F_DSA_DO_SIGN, DSA_R_KEY_SIZE_TOO_SMALL);
+		return NULL;
+		}
 
 	BN_init(&m);
 	BN_init(&xr);
@@ -153,17 +161,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, FIPS_DSA_SIZE_T dlen, DSA
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
 
-	if ((dsa->kinv == NULL) || (dsa->r == NULL))
-		{
-		if (!DSA_sign_setup(dsa,ctx,&kinv,&r)) goto err;
-		}
-	else
-		{
-		kinv=dsa->kinv;
-		dsa->kinv=NULL;
-		r=dsa->r;
-		dsa->r=NULL;
-		}
+	if (!dsa->meth->dsa_sign_setup(dsa,ctx,&kinv,&r)) goto err;
 
 	if (BN_bin2bn(dgst,dlen,&m) == NULL) goto err;
 
@@ -174,7 +172,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, FIPS_DSA_SIZE_T dlen, DSA
 		BN_sub(s,s,dsa->q);
 	if (!BN_mod_mul(s,s,kinv,dsa->q,ctx)) goto err;
 
-	ret=DSA_SIG_new();
+	ret= DSA_SIG_new();
 	if (ret == NULL) goto err;
 	ret->r = r;
 	ret->s = s;
@@ -197,7 +195,7 @@ err:
 static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	{
 	BN_CTX *ctx;
-	BIGNUM k,*kinv=NULL,*r=NULL;
+	BIGNUM k,kq,*K,*kinv=NULL,*r=NULL;
 	int ret=0;
 
 	if (!dsa->p || !dsa->q || !dsa->g)
@@ -207,6 +205,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		}
 
 	BN_init(&k);
+	BN_init(&kq);
 
 	if (ctx_in == NULL)
 		{
@@ -216,22 +215,49 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		ctx=ctx_in;
 
 	if ((r=BN_new()) == NULL) goto err;
-	kinv=NULL;
 
 	/* Get random k */
 	do
 		if (!BN_rand_range(&k, dsa->q)) goto err;
 	while (BN_is_zero(&k));
-
-	if ((dsa->method_mont_p == NULL) && (dsa->flags & DSA_FLAG_CACHE_MONT_P))
+	if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0)
 		{
-		if ((dsa->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dsa->method_mont_p,
-				dsa->p,ctx)) goto err;
+		BN_set_flags(&k, BN_FLG_CONSTTIME);
+		}
+
+	if (dsa->flags & DSA_FLAG_CACHE_MONT_P)
+		{
+		if (!BN_MONT_CTX_set_locked((BN_MONT_CTX **)&dsa->method_mont_p,
+						CRYPTO_LOCK_DSA,
+						dsa->p, ctx))
+			goto err;
 		}
 
 	/* Compute r = (g^k mod p) mod q */
-	if (!dsa->meth->bn_mod_exp(dsa, r,dsa->g,&k,dsa->p,ctx,
+
+	if ((dsa->flags & DSA_FLAG_NO_EXP_CONSTTIME) == 0)
+		{
+		if (!BN_copy(&kq, &k)) goto err;
+
+		/* We do not want timing information to leak the length of k,
+		 * so we compute g^k using an equivalent exponent of fixed length.
+		 *
+		 * (This is a kludge that we need because the BN_mod_exp_mont()
+		 * does not let us specify the desired timing behaviour.) */
+
+		if (!BN_add(&kq, &kq, dsa->q)) goto err;
+		if (BN_num_bits(&kq) <= BN_num_bits(dsa->q))
+			{
+			if (!BN_add(&kq, &kq, dsa->q)) goto err;
+			}
+
+		K = &kq;
+		}
+	else
+		{
+		K = &k;
+		}
+	if (!dsa->meth->bn_mod_exp(dsa, r,dsa->g,K,dsa->p,ctx,
 		(BN_MONT_CTX *)dsa->method_mont_p)) goto err;
 	if (!BN_mod(r,r,dsa->q,ctx)) goto err;
 
@@ -254,6 +280,7 @@ err:
 	if (ctx_in == NULL) BN_CTX_free(ctx);
 	if (kinv != NULL) BN_clear_free(kinv);
 	BN_clear_free(&k);
+	BN_clear_free(&kq);
 	return(ret);
 	}
 
@@ -276,6 +303,24 @@ static int dsa_do_verify(const unsigned char *dgst, FIPS_DSA_SIZE_T dgst_len, DS
 	    FIPSerr(FIPS_F_DSA_DO_VERIFY,FIPS_R_FIPS_SELFTEST_FAILED);
 	    return -1;
 	    }
+
+	if (BN_num_bits(dsa->q) != 160)
+		{
+		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_BAD_Q_VALUE);
+		return -1;
+		}
+
+	if (BN_num_bits(dsa->p) > OPENSSL_DSA_MAX_MODULUS_BITS)
+		{
+		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_MODULUS_TOO_LARGE);
+		return -1;
+		}
+
+	if (FIPS_mode() && (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
+		{
+		DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_KEY_SIZE_TOO_SMALL);
+		return -1;
+		}
 
 	BN_init(&u1);
 	BN_init(&u2);
@@ -307,13 +352,15 @@ static int dsa_do_verify(const unsigned char *dgst, FIPS_DSA_SIZE_T dgst_len, DS
 	/* u2 = r * w mod q */
 	if (!BN_mod_mul(&u2,sig->r,&u2,dsa->q,ctx)) goto err;
 
-	if ((dsa->method_mont_p == NULL) && (dsa->flags & DSA_FLAG_CACHE_MONT_P))
+
+	if (dsa->flags & DSA_FLAG_CACHE_MONT_P)
 		{
-		if ((dsa->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dsa->method_mont_p,
-				dsa->p,ctx)) goto err;
+		mont = BN_MONT_CTX_set_locked(
+					(BN_MONT_CTX **)&dsa->method_mont_p,
+					CRYPTO_LOCK_DSA, dsa->p, ctx);
+		if (!mont)
+			goto err;
 		}
-	mont=(BN_MONT_CTX *)dsa->method_mont_p;
 
 #if 0
 	{
@@ -355,6 +402,7 @@ static int dsa_do_verify(const unsigned char *dgst, FIPS_DSA_SIZE_T dgst_len, DS
 
 static int dsa_init(DSA *dsa)
 {
+	FIPS_selftest_check();
 	dsa->flags|=DSA_FLAG_CACHE_MONT_P;
 	return(1);
 }

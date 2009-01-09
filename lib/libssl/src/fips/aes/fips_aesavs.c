@@ -62,16 +62,30 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
-
+#include <ctype.h>
 #include <openssl/aes.h>
 #include <openssl/evp.h>
-#include <openssl/fips.h>
+#include <openssl/bn.h>
+
 #include <openssl/err.h>
 #include "e_os.h"
 
+#ifndef OPENSSL_FIPS
+
+int main(int argc, char *argv[])
+{
+    printf("No FIPS AES support\n");
+    return(0);
+}
+
+#else
+
+#include <openssl/fips.h>
+#include "fips_utl.h"
+
 #define AES_BLOCK_SIZE 16
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 /*-----------------------------------------------*/
 
@@ -82,232 +96,130 @@ int AESTest(EVP_CIPHER_CTX *ctx,
 	    unsigned char *plaintext, unsigned char *ciphertext, int len)
     {
     const EVP_CIPHER *cipher = NULL;
-    int ret = 1;
-    int kt = 0;
-
-    if (ctx)
-	memset(ctx, 0, sizeof(EVP_CIPHER_CTX));
 
     if (strcasecmp(amode, "CBC") == 0)
-	kt = 1000;
+	{
+	switch (akeysz)
+		{
+		case 128:
+		cipher = EVP_aes_128_cbc();
+		break;
+
+		case 192:
+		cipher = EVP_aes_192_cbc();
+		break;
+
+		case 256:
+		cipher = EVP_aes_256_cbc();
+		break;
+		}
+
+	}
     else if (strcasecmp(amode, "ECB") == 0)
-	kt = 2000;
+	{
+	switch (akeysz)
+		{
+		case 128:
+		cipher = EVP_aes_128_ecb();
+		break;
+
+		case 192:
+		cipher = EVP_aes_192_ecb();
+		break;
+
+		case 256:
+		cipher = EVP_aes_256_ecb();
+		break;
+		}
+	}
     else if (strcasecmp(amode, "CFB128") == 0)
-	kt = 3000;
+	{
+	switch (akeysz)
+		{
+		case 128:
+		cipher = EVP_aes_128_cfb128();
+		break;
+
+		case 192:
+		cipher = EVP_aes_192_cfb128();
+		break;
+
+		case 256:
+		cipher = EVP_aes_256_cfb128();
+		break;
+		}
+
+	}
     else if (strncasecmp(amode, "OFB", 3) == 0)
-	kt = 4000;
+	{
+	switch (akeysz)
+		{
+		case 128:
+		cipher = EVP_aes_128_ofb();
+		break;
+
+		case 192:
+		cipher = EVP_aes_192_ofb();
+		break;
+
+		case 256:
+		cipher = EVP_aes_256_ofb();
+		break;
+		}
+	}
     else if(!strcasecmp(amode,"CFB1"))
-	kt=5000;
+	{
+	switch (akeysz)
+		{
+		case 128:
+		cipher = EVP_aes_128_cfb1();
+		break;
+
+		case 192:
+		cipher = EVP_aes_192_cfb1();
+		break;
+
+		case 256:
+		cipher = EVP_aes_256_cfb1();
+		break;
+		}
+	}
     else if(!strcasecmp(amode,"CFB8"))
-	kt=6000;
+	{
+	switch (akeysz)
+		{
+		case 128:
+		cipher = EVP_aes_128_cfb8();
+		break;
+
+		case 192:
+		cipher = EVP_aes_192_cfb8();
+		break;
+
+		case 256:
+		cipher = EVP_aes_256_cfb8();
+		break;
+		}
+	}
     else
 	{
 	printf("Unknown mode: %s\n", amode);
-	EXIT(1);
+	return 0;
 	}
-    if (ret)
+    if (!cipher)
 	{
-	if ((akeysz != 128) && (akeysz != 192) && (akeysz != 256))
-	    {
-	    printf("Invalid key size: %d\n", akeysz);
-	    ret = 0;
-	    }
-	else
-	    {
-	    kt += akeysz;
-	    switch (kt)
-		{
-	    case 1128:  /* CBC 128 */
-		cipher = EVP_aes_128_cbc();
-		break;
-	    case 1192:  /* CBC 192 */
-		cipher = EVP_aes_192_cbc();
-		break;
-	    case 1256:  /* CBC 256 */
-		cipher = EVP_aes_256_cbc();
-		break;
-	    case 2128:  /* ECB 128 */
-		cipher = EVP_aes_128_ecb();
-		break;
-	    case 2192:  /* ECB 192 */
-		cipher = EVP_aes_192_ecb();
-		break;
-	    case 2256:  /* ECB 256 */
-		cipher = EVP_aes_256_ecb();
-		break;
-	    case 3128:  /* CFB 128 */
-		cipher = EVP_aes_128_cfb();
-		break;
-	    case 3192:  /* CFB 192 */
-		cipher = EVP_aes_192_cfb();
-		break;
-	    case 3256:  /* CFB 256 */
-		cipher = EVP_aes_256_cfb();
-		break;
-	    case 4128:  /* OFB 128 */
-		cipher = EVP_aes_128_ofb();
-		break;
-	    case 4192:  /* OFB 192 */
-		cipher = EVP_aes_192_ofb();
-		break;
-	    case 4256:  /* OFB 256 */
-		cipher = EVP_aes_256_ofb();
-		break;
-	    case 5128:
-		cipher=EVP_aes_128_cfb1();
-		break;
-	    case 5192:
-		cipher=EVP_aes_192_cfb1();
-		break;
-	    case 5256:
-		cipher=EVP_aes_256_cfb1();
-		break;
-	    case 6128:
-		cipher=EVP_aes_128_cfb8();
-		break;
-	    case 6192:
-		cipher=EVP_aes_192_cfb8();
-		break;
-	    case 6256:
-		cipher=EVP_aes_256_cfb8();
-		break;
-	    default:
-		printf("Didn't handle mode %d\n",kt);
-		EXIT(1);
-		}
-	    if (dir)
-		{ /* encrypt */
-		if(!EVP_CipherInit(ctx, cipher, aKey, iVec, AES_ENCRYPT))
-		    {
-		    ERR_print_errors_fp(stderr);
-		    EXIT(1);
-		    }
-		  
-		EVP_Cipher(ctx, ciphertext, (unsigned char*)plaintext, len);
-		}
-	    else
-		{ /* decrypt */
-		if(!EVP_CipherInit(ctx, cipher, aKey, iVec, AES_DECRYPT))
-		    {
-		    ERR_print_errors_fp(stderr);
-		    EXIT(1);
-		    }
-		EVP_Cipher(ctx, (unsigned char*)plaintext, ciphertext, len);
-		}
-	    }
+	printf("Invalid key size: %d\n", akeysz);
+	return 0; 
 	}
-    return ret;
-    }
-
-/*-----------------------------------------------*/
-
-int hex2bin(char *in, int len, unsigned char *out)
-{
-  int n1, n2;
-  unsigned char ch;
-
-  for (n1 = 0, n2 = 0; n1 < len; )
-    { /* first byte */
-      if ((in[n1] >= '0') && (in[n1] <= '9'))
-	ch = in[n1++] - '0';
-      else if ((in[n1] >= 'A') && (in[n1] <= 'F'))
-	ch = in[n1++] - 'A' + 10;
-      else if ((in[n1] >= 'a') && (in[n1] <= 'f'))
-	ch = in[n1++] - 'a' + 10;
-      else
-	return -1;
-      if(len == 1)
-	  {
-	  out[n2++]=ch;
-	  break;
-	  }
-      out[n2] = ch << 4;
-      /* second byte */
-      if ((in[n1] >= '0') && (in[n1] <= '9'))
-	ch = in[n1++] - '0';
-      else if ((in[n1] >= 'A') && (in[n1] <= 'F'))
-	ch = in[n1++] - 'A' + 10;
-      else if ((in[n1] >= 'a') && (in[n1] <= 'f'))
-	ch = in[n1++] - 'a' + 10;
-      else
-	return -1;
-      out[n2++] |= ch;
-    }
-  return n2;
-}
-
-/*-----------------------------------------------*/
-
-int bin2hex(unsigned char *in, int len, char *out)
-{
-  int n1, n2;
-  unsigned char ch;
-
-  for (n1 = 0, n2 = 0; n1 < len; ++n1)
-    {
-      /* first nibble */
-      ch = in[n1] >> 4;
-      if (ch <= 0x09)
-	out[n2++] = ch + '0';
-      else
-	out[n2++] = ch - 10 + 'a';
-      /* second nibble */
-      ch = in[n1] & 0x0f;
-      if (ch <= 0x09)
-	out[n2++] = ch + '0';
-      else
-	out[n2++] = ch - 10 + 'a';
-    }
-  return n2;
-}
-
-/* NB: this return the number of _bits_ read */
-int bint2bin(const char *in, int len, unsigned char *out)
-    {
-    int n;
-
-    memset(out,0,len);
-    for(n=0 ; n < len ; ++n)
-	if(in[n] == '1')
-	    out[n/8]|=(0x80 >> (n%8));
-    return len;
-    }
-
-int bin2bint(const unsigned char *in,int len,char *out)
-    {
-    int n;
-
-    for(n=0 ; n < len ; ++n)
-	out[n]=(in[n/8]&(0x80 >> (n%8))) ? '1' : '0';
-    return n;
-    }
-
-/*-----------------------------------------------*/
-
-void PrintValue(char *tag, unsigned char *val, int len)
-{
-#if VERBOSE
-  char obuf[2048];
-  int olen;
-  olen = bin2hex(val, len, obuf);
-  printf("%s = %.*s\n", tag, olen, obuf);
-#endif
-}
-
-void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode)
-    {
-    char obuf[2048];
-    int olen;
-
-    if(bitmode)
-	olen=bin2bint(val,len,obuf);
-    else
-	olen=bin2hex(val,len,obuf);
-
-    fprintf(rfp, "%s = %.*s\n", tag, olen, obuf);
-#if VERBOSE
-    printf("%s = %.*s\n", tag, olen, obuf);
-#endif
+    if (EVP_CipherInit_ex(ctx, cipher, NULL, aKey, iVec, dir) <= 0)
+	return 0;
+    if(!strcasecmp(amode,"CFB1"))
+	M_EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS);
+    if (dir)
+		EVP_Cipher(ctx, ciphertext, plaintext, len);
+	else
+		EVP_Cipher(ctx, plaintext, ciphertext, len);
+    return 1;
     }
 
 /*-----------------------------------------------*/
@@ -340,6 +252,7 @@ int do_mct(char *amode,
     int i, j, n, n1, n2;
     int imode = 0, nkeysz = akeysz/8;
     EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX_init(&ctx);
 
     if (len > 32)
 	{
@@ -467,10 +380,12 @@ int do_mct(char *amode,
 	    case CFB1:
 		if(j == 0)
 		    {
+#if 0
 		    /* compensate for wrong endianness of input file */
 		    if(i == 0)
 			ptext[0][0]<<=7;
-		    ret=AESTest(&ctx,amode,akeysz,key[i],iv[i],dir,
+#endif
+		    ret = AESTest(&ctx,amode,akeysz,key[i],iv[i],dir,
 				ptext[j], ctext[j], len);
 		    }
 		else
@@ -631,11 +546,12 @@ int do_mct(char *amode,
   # Fri Aug 30 04:07:22 PM
   ----------------------------*/
 
-int proc_file(char *rqfile)
+int proc_file(char *rqfile, char *rspfile)
     {
     char afn[256], rfn[256];
     FILE *afp = NULL, *rfp = NULL;
     char ibuf[2048];
+    char tbuf[2048];
     int ilen, len, ret = 0;
     char algo[8] = "";
     char amode[8] = "";
@@ -647,6 +563,7 @@ int proc_file(char *rqfile)
     unsigned char ciphertext[2048];
     char *rp;
     EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX_init(&ctx);
 
     if (!rqfile || !(*rqfile))
 	{
@@ -661,13 +578,21 @@ int proc_file(char *rqfile)
 	       afn, strerror(errno));
 	return -1;
 	}
-    strcpy(rfn,afn);
-    rp=strstr(rfn,"req/");
-    assert(rp);
-    memcpy(rp,"rsp",3);
-    rp = strstr(rfn, ".req");
-    memcpy(rp, ".rsp", 4);
-    if ((rfp = fopen(rfn, "w")) == NULL)
+    if (!rspfile)
+	{
+	strcpy(rfn,afn);
+	rp=strstr(rfn,"req/");
+#ifdef OPENSSL_SYS_WIN32
+	if (!rp)
+	    rp=strstr(rfn,"req\\");
+#endif
+	assert(rp);
+	memcpy(rp,"rsp",3);
+	rp = strstr(rfn, ".req");
+	memcpy(rp, ".rsp", 4);
+	rspfile = rfn;
+	}
+    if ((rfp = fopen(rspfile, "w")) == NULL)
 	{
 	printf("Cannot open file: %s, %s\n", 
 	       rfn, strerror(errno));
@@ -677,6 +602,7 @@ int proc_file(char *rqfile)
 	}
     while (!err && (fgets(ibuf, sizeof(ibuf), afp)) != NULL)
 	{
+	tidy_line(tbuf, ibuf);
 	ilen = strlen(ibuf);
 	/*      printf("step=%d ibuf=%s",step,ibuf); */
 	switch (step)
@@ -730,12 +656,14 @@ int proc_file(char *rqfile)
 			strncpy(amode, xp+1, n);
 			amode[n] = '\0';
 			/* amode[3] = '\0'; */
-			printf("Test = %s, Mode = %s\n", atest, amode);
+			if (VERBOSE)
+				printf("Test = %s, Mode = %s\n", atest, amode);
 			}
 		    else if (strncasecmp(pp, "Key Length : ", 13) == 0)
 			{
 			akeysz = atoi(pp+13);
-			printf("Key size = %d\n", akeysz);
+			if (VERBOSE)
+				printf("Key size = %d\n", akeysz);
 			}
 		    }
 		}
@@ -780,7 +708,7 @@ int proc_file(char *rqfile)
 		}
 	    else
 		{
-		len = hex2bin((char*)ibuf+6, strlen(ibuf+6)-1, aKey);
+		len = hex2bin((char*)ibuf+6, aKey);
 		if (len < 0)
 		    {
 		    printf("Invalid KEY\n");
@@ -807,7 +735,7 @@ int proc_file(char *rqfile)
 		}
 	    else
 		{
-		len = hex2bin((char*)ibuf+5, strlen(ibuf+5)-1, iVec);
+		len = hex2bin((char*)ibuf+5, iVec);
 		if (len < 0)
 		    {
 		    printf("Invalid IV\n");
@@ -832,7 +760,7 @@ int proc_file(char *rqfile)
 		if(!strcmp(amode,"CFB1"))
 		    len=bint2bin(ibuf+12,nn-1,plaintext);
 		else
-		    len=hex2bin(ibuf+12, nn-1,plaintext);
+		    len=hex2bin(ibuf+12, plaintext);
 		if (len < 0)
 		    {
 		    printf("Invalid PLAINTEXT: %s", ibuf+12);
@@ -875,7 +803,7 @@ int proc_file(char *rqfile)
 		if(!strcmp(amode,"CFB1"))
 		    len=bint2bin(ibuf+13,strlen(ibuf+13)-1,ciphertext);
 		else
-		    len = hex2bin(ibuf+13,strlen(ibuf+13)-1,ciphertext);
+		    len = hex2bin(ibuf+13,ciphertext);
 		if (len < 0)
 		    {
 		    printf("Invalid CIPHERTEXT\n");
@@ -933,19 +861,18 @@ int proc_file(char *rqfile)
 --------------------------------------------------*/
 int main(int argc, char **argv)
     {
-    char *rqlist = "req.txt";
+    char *rqlist = "req.txt", *rspfile = NULL;
     FILE *fp = NULL;
     char fn[250] = "", rfn[256] = "";
     int f_opt = 0, d_opt = 1;
 
 #ifdef OPENSSL_FIPS
-    if(!FIPS_mode_set(1,argv[0]))
+    if(!FIPS_mode_set(1))
 	{
-	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+	do_print_errors();
 	EXIT(1);
 	}
 #endif
-    ERR_load_crypto_strings();
     if (argc > 1)
 	{
 	if (strcasecmp(argv[1], "-d") == 0)
@@ -970,7 +897,10 @@ int main(int argc, char **argv)
 	if (d_opt)
 	    rqlist = argv[2];
 	else
+	    {
 	    strcpy(fn, argv[2]);
+	    rspfile = argv[3];
+	    }
 	}
     if (d_opt)
 	{ /* list of files (directory) */
@@ -983,8 +913,9 @@ int main(int argc, char **argv)
 	    {
 	    strtok(fn, "\r\n");
 	    strcpy(rfn, fn);
-	    printf("Processing: %s\n", rfn);
-	    if (proc_file(rfn))
+	    if (VERBOSE)
+		printf("Processing: %s\n", rfn);
+	    if (proc_file(rfn, rspfile))
 		{
 		printf(">>> Processing failed for: %s <<<\n", rfn);
 		EXIT(1);
@@ -994,8 +925,9 @@ int main(int argc, char **argv)
 	}
     else /* single file */
 	{
-	printf("Processing: %s\n", fn);
-	if (proc_file(fn))
+	if (VERBOSE)
+	    printf("Processing: %s\n", fn);
+	if (proc_file(fn, rspfile))
 	    {
 	    printf(">>> Processing failed for: %s <<<\n", fn);
 	    }
@@ -1003,3 +935,5 @@ int main(int argc, char **argv)
     EXIT(0);
     return 0;
     }
+
+#endif

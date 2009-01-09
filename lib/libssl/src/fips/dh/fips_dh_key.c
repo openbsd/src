@@ -64,6 +64,7 @@
 #endif
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#include <openssl/fips.h>
 
 #ifdef OPENSSL_FIPS
 
@@ -86,7 +87,7 @@ int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	return dh->meth->compute_key(key, pub_key, dh);
 	}
 
-static DH_METHOD dh_ossl = {
+static const DH_METHOD dh_ossl = {
 "OpenSSL DH Method",
 generate_key,
 compute_key,
@@ -108,8 +109,14 @@ static int generate_key(DH *dh)
 	int generate_new_key=0;
 	unsigned l;
 	BN_CTX *ctx;
-	BN_MONT_CTX *mont;
+	BN_MONT_CTX *mont=NULL;
 	BIGNUM *pub_key=NULL,*priv_key=NULL;
+
+	if (FIPS_mode() && (BN_num_bits(dh->p) < OPENSSL_DH_FIPS_MIN_MODULUS_BITS))
+		{
+		DHerr(DH_F_GENERATE_KEY, DH_R_KEY_SIZE_TOO_SMALL);
+		return 0;
+		}
 
 	ctx = BN_CTX_new();
 	if (ctx == NULL) goto err;
@@ -131,28 +138,44 @@ static int generate_key(DH *dh)
 	else
 		pub_key=dh->pub_key;
 
-	if ((dh->method_mont_p == NULL) && (dh->flags & DH_FLAG_CACHE_MONT_P))
+	if (dh->flags & DH_FLAG_CACHE_MONT_P)
 		{
-		if ((dh->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dh->method_mont_p,
-				dh->p,ctx)) goto err;
+		mont = BN_MONT_CTX_set_locked(
+				(BN_MONT_CTX **)&dh->method_mont_p,
+				CRYPTO_LOCK_DH, dh->p, ctx);
+		if (!mont)
+			goto err;
 		}
-	mont=(BN_MONT_CTX *)dh->method_mont_p;
 
 	if (generate_new_key)
 		{
 		l = dh->length ? dh->length : BN_num_bits(dh->p)-1; /* secret exponent length */
 		if (!BN_rand(priv_key, l, 0, 0)) goto err;
 		}
-	if (!dh->meth->bn_mod_exp(dh, pub_key, dh->g, priv_key,dh->p,ctx,mont))
-		goto err;
+
+	{
+		BIGNUM local_prk;
+		BIGNUM *prk;
+
+		if ((dh->flags & DH_FLAG_NO_EXP_CONSTTIME) == 0)
+			{
+			BN_init(&local_prk);
+			prk = &local_prk;
+			BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
+			}
+		else
+			prk = priv_key;
+
+		if (!dh->meth->bn_mod_exp(dh, pub_key, dh->g, prk, dh->p, ctx, mont))
+			goto err;
+	}
 		
 	dh->pub_key=pub_key;
 	dh->priv_key=priv_key;
 	ok=1;
 err:
 	if (ok != 1)
-		DHerr(DH_F_DH_GENERATE_KEY,ERR_R_BN_LIB);
+		DHerr(DH_F_GENERATE_KEY,ERR_R_BN_LIB);
 
 	if ((pub_key != NULL)  && (dh->pub_key == NULL))  BN_free(pub_key);
 	if ((priv_key != NULL) && (dh->priv_key == NULL)) BN_free(priv_key);
@@ -163,7 +186,7 @@ err:
 static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	{
 	BN_CTX *ctx;
-	BN_MONT_CTX *mont;
+	BN_MONT_CTX *mont=NULL;
 	BIGNUM *tmp;
 	int ret= -1;
 
@@ -171,23 +194,42 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	if (ctx == NULL) goto err;
 	BN_CTX_start(ctx);
 	tmp = BN_CTX_get(ctx);
-	
-	if (dh->priv_key == NULL)
+
+	if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS)
 		{
-		DHerr(DH_F_DH_COMPUTE_KEY,DH_R_NO_PRIVATE_VALUE);
+		DHerr(DH_F_COMPUTE_KEY,DH_R_MODULUS_TOO_LARGE);
 		goto err;
 		}
-	if ((dh->method_mont_p == NULL) && (dh->flags & DH_FLAG_CACHE_MONT_P))
+
+	if (FIPS_mode() && (BN_num_bits(dh->p) < OPENSSL_DH_FIPS_MIN_MODULUS_BITS))
 		{
-		if ((dh->method_mont_p=(char *)BN_MONT_CTX_new()) != NULL)
-			if (!BN_MONT_CTX_set((BN_MONT_CTX *)dh->method_mont_p,
-				dh->p,ctx)) goto err;
+		DHerr(DH_F_COMPUTE_KEY, DH_R_KEY_SIZE_TOO_SMALL);
+		goto err;
 		}
 
-	mont=(BN_MONT_CTX *)dh->method_mont_p;
+	if (dh->priv_key == NULL)
+		{
+		DHerr(DH_F_COMPUTE_KEY,DH_R_NO_PRIVATE_VALUE);
+		goto err;
+		}
+
+	if (dh->flags & DH_FLAG_CACHE_MONT_P)
+		{
+		mont = BN_MONT_CTX_set_locked(
+				(BN_MONT_CTX **)&dh->method_mont_p,
+				CRYPTO_LOCK_DH, dh->p, ctx);
+		if ((dh->flags & DH_FLAG_NO_EXP_CONSTTIME) == 0)
+			{
+			/* XXX */
+			BN_set_flags(dh->priv_key, BN_FLG_CONSTTIME);
+			}
+		if (!mont)
+			goto err;
+		}
+
 	if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key,dh->p,ctx,mont))
 		{
-		DHerr(DH_F_DH_COMPUTE_KEY,ERR_R_BN_LIB);
+		DHerr(DH_F_COMPUTE_KEY,ERR_R_BN_LIB);
 		goto err;
 		}
 
@@ -203,7 +245,10 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 			const BIGNUM *m, BN_CTX *ctx,
 			BN_MONT_CTX *m_ctx)
 	{
-	if (a->top == 1)
+	/* If a is only one word long and constant time is false, use the faster
+	 * exponenentiation function.
+	 */
+	if (a->top == 1 && ((dh->flags & DH_FLAG_NO_EXP_CONSTTIME) != 0))
 		{
 		BN_ULONG A = a->d[0];
 		return BN_mod_exp_mont_word(r,A,p,m,ctx,m_ctx);
@@ -215,6 +260,7 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 
 static int dh_init(DH *dh)
 	{
+	FIPS_selftest_check();
 	dh->flags |= DH_FLAG_CACHE_MONT_P;
 	return(1);
 	}

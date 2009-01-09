@@ -56,72 +56,126 @@
  * [including the GNU Public Licence.]
  */
 
+
+/* NB: these functions have been "upgraded", the deprecated versions (which are
+ * compatibility wrappers using these functions) are in rsa_depr.c.
+ * - Geoff
+ */
+
 #include <stdio.h>
-#include <string.h>
 #include <time.h>
-#include <openssl/err.h>
+#include <string.h>
+#include <openssl/crypto.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/fips.h>
+#include "fips_locl.h"
 
 #ifdef OPENSSL_FIPS
 
-static int fips_check_rsa(RSA *rsa)
-    {
-    int n;
-    unsigned char ctext[256];
-    unsigned char ptext[256];
-    /* The longest we can have with OAEP padding and a 512 bit key */
-    static unsigned char original_ptext[] =
-	"\x01\x23\x45\x67\x89\xab\xcd\xef\x12\x34\x56\x78\x9a\xbc\xde\xf0"
-	"\x23\x45\x67\x89\xab\xcd";
+static int fips_rsa_pairwise_fail = 0;
 
-    /* this will fail for keys shorter than 512 bits */
-    n=RSA_public_encrypt(sizeof(original_ptext)-1,original_ptext,ctext,rsa,
-			 RSA_PKCS1_OAEP_PADDING);
-    if(n < 0)
+void FIPS_corrupt_rsa_keygen(void)
 	{
-	ERR_print_errors_fp(stderr);
-	exit(1);
-	}
-    if(!memcmp(ctext,original_ptext,n))
-  	{
-  	FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_PAIRWISE_TEST_FAILED);
- 	return 0;
- 	}
-    n=RSA_private_decrypt(n,ctext,ptext,rsa,RSA_PKCS1_OAEP_PADDING);
-    if(n < 0)
-	{
-	ERR_print_errors_fp(stderr);
-	exit(1);
-	}
-    if(n != sizeof(original_ptext)-1 || memcmp(ptext,original_ptext,n))
-	{
-	FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_PAIRWISE_TEST_FAILED);
-	return 0;
+	fips_rsa_pairwise_fail = 1;
 	}
 
-    return 1;
-    }
-
-RSA *RSA_generate_key(FIPS_RSA_SIZE_T bits, unsigned long e_value,
-	     void (*callback)(int,int,void *), void *cb_arg)
+int fips_check_rsa(RSA *rsa)
 	{
-	RSA *rsa=NULL;
+	const unsigned char tbs[] = "RSA Pairwise Check Data";
+	unsigned char *ctbuf = NULL, *ptbuf = NULL;
+	int len, ret = 0;
+	EVP_PKEY pk;
+    	pk.type = EVP_PKEY_RSA;
+    	pk.pkey.rsa = rsa;
+
+	/* Perform pairwise consistency signature test */
+	if (!fips_pkey_signature_test(&pk, tbs, -1,
+			NULL, 0, EVP_sha1(), EVP_MD_CTX_FLAG_PAD_PKCS1, NULL)
+		|| !fips_pkey_signature_test(&pk, tbs, -1,
+			NULL, 0, EVP_sha1(), EVP_MD_CTX_FLAG_PAD_X931, NULL)
+		|| !fips_pkey_signature_test(&pk, tbs, -1,
+			NULL, 0, EVP_sha1(), EVP_MD_CTX_FLAG_PAD_PSS, NULL))
+		goto err;
+	/* Now perform pairwise consistency encrypt/decrypt test */
+	ctbuf = OPENSSL_malloc(RSA_size(rsa));
+	if (!ctbuf)
+		goto err;
+
+	len = RSA_public_encrypt(sizeof(tbs) - 1, tbs, ctbuf, rsa, RSA_PKCS1_PADDING);
+	if (len <= 0)
+		goto err;
+	/* Check ciphertext doesn't match plaintext */
+	if ((len == (sizeof(tbs) - 1)) && !memcmp(tbs, ctbuf, len))
+		goto err;
+	ptbuf = OPENSSL_malloc(RSA_size(rsa));
+
+	if (!ptbuf)
+		goto err;
+	len = RSA_private_decrypt(len, ctbuf, ptbuf, rsa, RSA_PKCS1_PADDING);
+	if (len != (sizeof(tbs) - 1))
+		goto err;
+	if (memcmp(ptbuf, tbs, len))
+		goto err;
+
+	ret = 1;
+
+	if (!ptbuf)
+		goto err;
+	
+	err:
+	if (ret == 0)
+		{
+		fips_set_selftest_fail();
+		FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_PAIRWISE_TEST_FAILED);
+		}
+
+	if (ctbuf)
+		OPENSSL_free(ctbuf);
+	if (ptbuf)
+		OPENSSL_free(ptbuf);
+
+	return ret;
+	}
+
+static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb);
+
+/* NB: this wrapper would normally be placed in rsa_lib.c and the static
+ * implementation would probably be in rsa_eay.c. Nonetheless, is kept here so
+ * that we don't introduce a new linker dependency. Eg. any application that
+ * wasn't previously linking object code related to key-generation won't have to
+ * now just because key-generation is part of RSA_METHOD. */
+int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
+	{
+	if(rsa->meth->rsa_keygen)
+		return rsa->meth->rsa_keygen(rsa, bits, e_value, cb);
+	return rsa_builtin_keygen(rsa, bits, e_value, cb);
+	}
+
+static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
+	{
 	BIGNUM *r0=NULL,*r1=NULL,*r2=NULL,*r3=NULL,*tmp;
-	int bitsp,bitsq,ok= -1,n=0,i;
-	BN_CTX *ctx=NULL,*ctx2=NULL;
+	BIGNUM local_r0,local_d,local_p;
+	BIGNUM *pr0,*d,*p;
+	int bitsp,bitsq,ok= -1,n=0;
+	BN_CTX *ctx=NULL;
 
 	if(FIPS_selftest_failed())
 	    {
-	    FIPSerr(FIPS_F_RSA_GENERATE_KEY,FIPS_R_FIPS_SELFTEST_FAILED);
-	    return NULL;
+	    FIPSerr(FIPS_F_RSA_BUILTIN_KEYGEN,FIPS_R_FIPS_SELFTEST_FAILED);
+	    return 0;
 	    }
-	    
+
+	if (FIPS_mode() && (bits < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
+	    {
+	    FIPSerr(FIPS_F_RSA_BUILTIN_KEYGEN,FIPS_R_KEY_TOO_SHORT);
+	    return 0;
+	    }
+
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
-	ctx2=BN_CTX_new();
-	if (ctx2 == NULL) goto err;
 	BN_CTX_start(ctx);
 	r0 = BN_CTX_get(ctx);
 	r1 = BN_CTX_get(ctx);
@@ -131,49 +185,58 @@ RSA *RSA_generate_key(FIPS_RSA_SIZE_T bits, unsigned long e_value,
 
 	bitsp=(bits+1)/2;
 	bitsq=bits-bitsp;
-	rsa=RSA_new();
-	if (rsa == NULL) goto err;
 
-	/* set e */ 
-	rsa->e=BN_new();
-	if (rsa->e == NULL) goto err;
+	/* We need the RSA components non-NULL */
+	if(!rsa->n && ((rsa->n=BN_new()) == NULL)) goto err;
+	if(!rsa->d && ((rsa->d=BN_new()) == NULL)) goto err;
+	if(!rsa->e && ((rsa->e=BN_new()) == NULL)) goto err;
+	if(!rsa->p && ((rsa->p=BN_new()) == NULL)) goto err;
+	if(!rsa->q && ((rsa->q=BN_new()) == NULL)) goto err;
+	if(!rsa->dmp1 && ((rsa->dmp1=BN_new()) == NULL)) goto err;
+	if(!rsa->dmq1 && ((rsa->dmq1=BN_new()) == NULL)) goto err;
+	if(!rsa->iqmp && ((rsa->iqmp=BN_new()) == NULL)) goto err;
 
-#if 1
-	/* The problem is when building with 8, 16, or 32 BN_ULONG,
-	 * unsigned long can be larger */
-	for (i=0; i<sizeof(unsigned long)*8; i++)
-		{
-		if (e_value & (1UL<<i))
-			BN_set_bit(rsa->e,i);
-		}
-#else
-	if (!BN_set_word(rsa->e,e_value)) goto err;
-#endif
+	BN_copy(rsa->e, e_value);
 
 	/* generate p and q */
 	for (;;)
 		{
-		rsa->p=BN_generate_prime(NULL,bitsp,0,NULL,NULL,callback,cb_arg);
-		if (rsa->p == NULL) goto err;
+		if(!BN_generate_prime_ex(rsa->p, bitsp, 0, NULL, NULL, cb))
+			goto err;
 		if (!BN_sub(r2,rsa->p,BN_value_one())) goto err;
 		if (!BN_gcd(r1,r2,rsa->e,ctx)) goto err;
 		if (BN_is_one(r1)) break;
-		if (callback != NULL) callback(2,n++,cb_arg);
-		BN_free(rsa->p);
+		if(!BN_GENCB_call(cb, 2, n++))
+			goto err;
 		}
-	if (callback != NULL) callback(3,0,cb_arg);
+	if(!BN_GENCB_call(cb, 3, 0))
+		goto err;
 	for (;;)
 		{
-		rsa->q=BN_generate_prime(NULL,bitsq,0,NULL,NULL,callback,cb_arg);
-		if (rsa->q == NULL) goto err;
+		/* When generating ridiculously small keys, we can get stuck
+		 * continually regenerating the same prime values. Check for
+		 * this and bail if it happens 3 times. */
+		unsigned int degenerate = 0;
+		do
+			{
+			if(!BN_generate_prime_ex(rsa->q, bitsq, 0, NULL, NULL, cb))
+				goto err;
+			} while((BN_cmp(rsa->p, rsa->q) == 0) && (++degenerate < 3));
+		if(degenerate == 3)
+			{
+			ok = 0; /* we set our own err */
+			RSAerr(RSA_F_RSA_BUILTIN_KEYGEN,RSA_R_KEY_SIZE_TOO_SMALL);
+			goto err;
+			}
 		if (!BN_sub(r2,rsa->q,BN_value_one())) goto err;
 		if (!BN_gcd(r1,r2,rsa->e,ctx)) goto err;
-		if (BN_is_one(r1) && (BN_cmp(rsa->p,rsa->q) != 0))
+		if (BN_is_one(r1))
 			break;
-		if (callback != NULL) callback(2,n++,cb_arg);
-		BN_free(rsa->q);
+		if(!BN_GENCB_call(cb, 2, n++))
+			goto err;
 		}
-	if (callback != NULL) callback(3,1,cb_arg);
+	if(!BN_GENCB_call(cb, 3, 1))
+		goto err;
 	if (BN_cmp(rsa->p,rsa->q) < 0)
 		{
 		tmp=rsa->p;
@@ -182,46 +245,48 @@ RSA *RSA_generate_key(FIPS_RSA_SIZE_T bits, unsigned long e_value,
 		}
 
 	/* calculate n */
-	rsa->n=BN_new();
-	if (rsa->n == NULL) goto err;
 	if (!BN_mul(rsa->n,rsa->p,rsa->q,ctx)) goto err;
 
 	/* calculate d */
 	if (!BN_sub(r1,rsa->p,BN_value_one())) goto err;	/* p-1 */
 	if (!BN_sub(r2,rsa->q,BN_value_one())) goto err;	/* q-1 */
 	if (!BN_mul(r0,r1,r2,ctx)) goto err;	/* (p-1)(q-1) */
-
-/* should not be needed, since gcd(p-1,e) == 1 and gcd(q-1,e) == 1 */
-/*	for (;;)
+	if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME))
 		{
-		if (!BN_gcd(r3,r0,rsa->e,ctx)) goto err;
-		if (BN_is_one(r3)) break;
-
-		if (1)
-			{
-			if (!BN_add_word(rsa->e,2L)) goto err;
-			continue;
-			}
-		RSAerr(RSA_F_RSA_GENERATE_KEY,RSA_R_BAD_E_VALUE);
-		goto err;
+		  pr0 = &local_r0;
+		  BN_with_flags(pr0, r0, BN_FLG_CONSTTIME);
 		}
-*/
-	rsa->d=BN_mod_inverse(NULL,rsa->e,r0,ctx2);	/* d */
-	if (rsa->d == NULL) goto err;
+	else
+	  pr0 = r0;
+	if (!BN_mod_inverse(rsa->d,rsa->e,pr0,ctx)) goto err;	/* d */
+
+	/* set up d for correct BN_FLG_CONSTTIME flag */
+	if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME))
+		{
+		d = &local_d;
+		BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
+		}
+	else
+		d = rsa->d;
 
 	/* calculate d mod (p-1) */
-	rsa->dmp1=BN_new();
-	if (rsa->dmp1 == NULL) goto err;
-	if (!BN_mod(rsa->dmp1,rsa->d,r1,ctx)) goto err;
+	if (!BN_mod(rsa->dmp1,d,r1,ctx)) goto err;
 
 	/* calculate d mod (q-1) */
-	rsa->dmq1=BN_new();
-	if (rsa->dmq1 == NULL) goto err;
-	if (!BN_mod(rsa->dmq1,rsa->d,r2,ctx)) goto err;
+	if (!BN_mod(rsa->dmq1,d,r2,ctx)) goto err;
 
 	/* calculate inverse of q mod p */
-	rsa->iqmp=BN_mod_inverse(NULL,rsa->q,rsa->p,ctx2);
-	if (rsa->iqmp == NULL) goto err;
+	if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME))
+		{
+		p = &local_p;
+		BN_with_flags(p, rsa->p, BN_FLG_CONSTTIME);
+		}
+	else
+		p = rsa->p;
+	if (!BN_mod_inverse(rsa->iqmp,rsa->q,p,ctx)) goto err;
+
+	if (fips_rsa_pairwise_fail)
+		BN_add_word(rsa->n, 1);
 
 	if(!fips_check_rsa(rsa))
 	    goto err;
@@ -230,20 +295,16 @@ RSA *RSA_generate_key(FIPS_RSA_SIZE_T bits, unsigned long e_value,
 err:
 	if (ok == -1)
 		{
-		RSAerr(RSA_F_RSA_GENERATE_KEY,ERR_LIB_BN);
+		RSAerr(RSA_F_RSA_BUILTIN_KEYGEN,ERR_LIB_BN);
 		ok=0;
 		}
-	BN_CTX_end(ctx);
-	BN_CTX_free(ctx);
-	BN_CTX_free(ctx2);
-	
-	if (!ok)
+	if (ctx != NULL)
 		{
-		if (rsa != NULL) RSA_free(rsa);
-		return(NULL);
+		BN_CTX_end(ctx);
+		BN_CTX_free(ctx);
 		}
-	else
-		return(rsa);
+
+	return ok;
 	}
 
 #endif

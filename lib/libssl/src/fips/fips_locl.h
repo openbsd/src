@@ -53,13 +53,19 @@
 extern "C" {
 #endif
 
-/* These are really defined in crypto/cryptlib.c */
-void fips_set_started(void);
+void fips_w_lock(void);
+void fips_w_unlock(void);
+void fips_r_lock(void);
+void fips_r_unlock(void);
 int fips_is_started(void);
+void fips_set_started(void);
 int fips_is_owning_thread(void);
 int fips_set_owning_thread(void);
+void fips_set_selftest_fail(void);
 int fips_clear_owning_thread(void);
-void fips_set_rand_check(void *rand_check);
+unsigned char *fips_signature_witness(void);
+
+#define FIPS_MAX_CIPHER_TEST_SIZE	16
 
 #ifdef  __cplusplus
 }

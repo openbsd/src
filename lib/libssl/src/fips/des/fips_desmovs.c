@@ -63,18 +63,30 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
-
+#include <ctype.h>
 #include <openssl/des.h>
 #include <openssl/evp.h>
-#include <openssl/fips.h>
+#include <openssl/bn.h>
+
 #include <openssl/err.h>
 #include "e_os.h"
 
-/*#define AES_BLOCK_SIZE 16*/
+#ifndef OPENSSL_FIPS
+
+int main(int argc, char *argv[])
+{
+    printf("No FIPS DES support\n");
+    return(0);
+}
+
+#else
+
+#include <openssl/fips.h>
+#include "fips_utl.h"
+
+#define DES_BLOCK_SIZE 8
 
 #define VERBOSE 0
-
-/*-----------------------------------------------*/
 
 int DESTest(EVP_CIPHER_CTX *ctx,
 	    char *amode, int akeysz, unsigned char *aKey, 
@@ -83,181 +95,41 @@ int DESTest(EVP_CIPHER_CTX *ctx,
 	    unsigned char *out, unsigned char *in, int len)
     {
     const EVP_CIPHER *cipher = NULL;
-    int kt = 0;
 
-    if (ctx)
-	memset(ctx, 0, sizeof(EVP_CIPHER_CTX));
+    if (akeysz != 192)
+	{
+	printf("Invalid key size: %d\n", akeysz);
+	EXIT(1);
+	}
 
     if (strcasecmp(amode, "CBC") == 0)
-	kt = 1000;
+	cipher = EVP_des_ede3_cbc();
     else if (strcasecmp(amode, "ECB") == 0)
-	kt = 2000;
+	cipher = EVP_des_ede3_ecb();
     else if (strcasecmp(amode, "CFB64") == 0)
-	kt = 3000;
+	cipher = EVP_des_ede3_cfb64();
     else if (strncasecmp(amode, "OFB", 3) == 0)
-	kt = 4000;
+	cipher = EVP_des_ede3_ofb();
+#if 0
     else if(!strcasecmp(amode,"CFB1"))
-	kt=5000;
+	{
+	ctx->cbits = 1;
+	ctx->cmode = EVP_CIPH_CFB_MODE;
+	}
+#endif
     else if(!strcasecmp(amode,"CFB8"))
-	kt=6000;
+	cipher = EVP_des_ede3_cfb8();
     else
 	{
 	printf("Unknown mode: %s\n", amode);
 	EXIT(1);
 	}
-    if (akeysz != 64 && akeysz != 192)
-	{
-	printf("Invalid key size: %d\n", akeysz);
-	EXIT(1);
-	}
-    else
-	{
-	kt += akeysz;
-	switch (kt)
-	    {
-	case 1064:
-	    cipher=EVP_des_cbc();
-	    break;
-	case 1192:
-	    cipher=EVP_des_ede3_cbc();
-	    break;
-	case 2064:
-	    cipher=EVP_des_ecb();
-	    break;
-	case 2192:
-	    cipher=EVP_des_ede3_ecb();
-	    break;
-	case 3064:
-	    cipher=EVP_des_cfb64();
-	    break;
-	case 3192:
-	    cipher=EVP_des_ede3_cfb64();
-	    break;
-	case 4064:
-	    cipher=EVP_des_ofb();
-	    break;
-	case 4192:
-	    cipher=EVP_des_ede3_ofb();
-	    break;
-	case 5064:
-	    cipher=EVP_des_cfb1();
-	    break;
-	case 5192:
-	    cipher=EVP_des_ede3_cfb1();
-	    break;
-	case 6064:
-	    cipher=EVP_des_cfb8();
-	    break;
-	case 6192:
-	    cipher=EVP_des_ede3_cfb8();
-	    break;
-	default:
-	    printf("Didn't handle mode %d\n",kt);
-	    EXIT(1);
-	    }
-	if(!EVP_CipherInit(ctx, cipher, aKey, iVec, dir))
-	    {
-	    ERR_print_errors_fp(stderr);
-	    EXIT(1);
-	    }
-	EVP_Cipher(ctx, out, in, len);
-	}
+
+    if (EVP_CipherInit_ex(ctx, cipher, NULL, aKey, iVec, dir) <= 0)
+	return 0;
+    EVP_Cipher(ctx, out, in, len);
+
     return 1;
-    }
-
-/*-----------------------------------------------*/
-
-int hex2bin(char *in, int len, unsigned char *out)
-    {
-    int n1, n2;
-    unsigned char ch;
-
-    for (n1 = 0, n2 = 0; n1 < len; )
-	{ /* first byte */
-	if ((in[n1] >= '0') && (in[n1] <= '9'))
-	    ch = in[n1++] - '0';
-	else if ((in[n1] >= 'A') && (in[n1] <= 'F'))
-	    ch = in[n1++] - 'A' + 10;
-	else if ((in[n1] >= 'a') && (in[n1] <= 'f'))
-	    ch = in[n1++] - 'a' + 10;
-	else
-	    return -1;
-	if(len == 1)
-	    {
-	    out[n2++]=ch;
-	    break;
-	    }
-	out[n2] = ch << 4;
-	/* second byte */
-	if ((in[n1] >= '0') && (in[n1] <= '9'))
-	    ch = in[n1++] - '0';
-	else if ((in[n1] >= 'A') && (in[n1] <= 'F'))
-	    ch = in[n1++] - 'A' + 10;
-	else if ((in[n1] >= 'a') && (in[n1] <= 'f'))
-	    ch = in[n1++] - 'a' + 10;
-	else
-	    return -1;
-	out[n2++] |= ch;
-	}
-    return n2;
-    }
-
-/*-----------------------------------------------*/
-
-int bin2hex(unsigned char *in, int len, char *out)
-    {
-    int n1, n2;
-    unsigned char ch;
-
-    for (n1 = 0, n2 = 0; n1 < len; ++n1)
-	{
-	/* first nibble */
-	ch = in[n1] >> 4;
-	if (ch <= 0x09)
-	    out[n2++] = ch + '0';
-	else
-	    out[n2++] = ch - 10 + 'a';
-	/* second nibble */
-	ch = in[n1] & 0x0f;
-	if (ch <= 0x09)
-	    out[n2++] = ch + '0';
-	else
-	    out[n2++] = ch - 10 + 'a';
-	}
-    return n2;
-    }
-
-/* NB: this return the number of _bits_ read */
-int bint2bin(const char *in, int len, unsigned char *out)
-    {
-    int n;
-
-    memset(out,0,len);
-    for(n=0 ; n < len ; ++n)
-	if(in[n] == '1')
-	    out[n/8]|=(0x80 >> (n%8));
-    return len;
-    }
-
-int bin2bint(const unsigned char *in,int len,char *out)
-    {
-    int n;
-
-    for(n=0 ; n < len ; ++n)
-	out[n]=(in[n/8]&(0x80 >> (n%8))) ? '1' : '0';
-    return n;
-    }
-
-/*-----------------------------------------------*/
-
-void PrintValue(char *tag, unsigned char *val, int len)
-    {
-#if VERBOSE
-    char obuf[2048];
-    int olen;
-    olen = bin2hex(val, len, obuf);
-    printf("%s = %.*s\n", tag, olen, obuf);
-#endif
     }
 
 void DebugValue(char *tag, unsigned char *val, int len)
@@ -266,22 +138,6 @@ void DebugValue(char *tag, unsigned char *val, int len)
     int olen;
     olen = bin2hex(val, len, obuf);
     printf("%s = %.*s\n", tag, olen, obuf);
-    }
-
-void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode)
-    {
-    char obuf[2048];
-    int olen;
-
-    if(bitmode)
-	olen=bin2bint(val,len,obuf);
-    else
-	olen=bin2hex(val,len,obuf);
-
-    fprintf(rfp, "%s = %.*s\n", tag, olen, obuf);
-#if VERBOSE
-    printf("%s = %.*s\n", tag, olen, obuf);
-#endif
     }
 
 void shiftin(unsigned char *dst,unsigned char *src,int nbits)
@@ -326,9 +182,10 @@ void do_mct(char *amode,
 	{
 	int j;
 	int n;
-	EVP_CIPHER_CTX ctx;
 	int kp=akeysz/64;
 	unsigned char old_iv[8];
+	EVP_CIPHER_CTX ctx;
+	EVP_CIPHER_CTX_init(&ctx);
 
 	fprintf(rfp,"\nCOUNT = %d\n",i);
 	if(kp == 1)
@@ -410,11 +267,11 @@ void do_mct(char *amode,
 	}
     }
     
-int proc_file(char *rqfile)
+int proc_file(char *rqfile, char *rspfile)
     {
     char afn[256], rfn[256];
     FILE *afp = NULL, *rfp = NULL;
-    char ibuf[2048];
+    char ibuf[2048], tbuf[2048];
     int ilen, len, ret = 0;
     char amode[8] = "";
     char atest[100] = "";
@@ -426,6 +283,7 @@ int proc_file(char *rqfile)
     char *rp;
     EVP_CIPHER_CTX ctx;
     int numkeys=1;
+    EVP_CIPHER_CTX_init(&ctx);
 
     if (!rqfile || !(*rqfile))
 	{
@@ -440,13 +298,21 @@ int proc_file(char *rqfile)
 	       afn, strerror(errno));
 	return -1;
 	}
-    strcpy(rfn,afn);
-    rp=strstr(rfn,"req/");
-    assert(rp);
-    memcpy(rp,"rsp",3);
-    rp = strstr(rfn, ".req");
-    memcpy(rp, ".rsp", 4);
-    if ((rfp = fopen(rfn, "w")) == NULL)
+    if (!rspfile)
+	{
+	strcpy(rfn,afn);
+	rp=strstr(rfn,"req/");
+#ifdef OPENSSL_SYS_WIN32
+	if (!rp)
+	    rp=strstr(rfn,"req\\");
+#endif
+	assert(rp);
+	memcpy(rp,"rsp",3);
+	rp = strstr(rfn, ".req");
+	memcpy(rp, ".rsp", 4);
+	rspfile = rfn;
+	}
+    if ((rfp = fopen(rspfile, "w")) == NULL)
 	{
 	printf("Cannot open file: %s, %s\n", 
 	       rfn, strerror(errno));
@@ -456,6 +322,7 @@ int proc_file(char *rqfile)
 	}
     while (!err && (fgets(ibuf, sizeof(ibuf), afp)) != NULL)
 	{
+	tidy_line(tbuf, ibuf);
 	ilen = strlen(ibuf);
 	/*	printf("step=%d ibuf=%s",step,ibuf);*/
 	if(step == 3 && !strcmp(amode,"ECB"))
@@ -517,7 +384,8 @@ int proc_file(char *rqfile)
 			strncpy(amode, xp+1, n);
 			amode[n] = '\0';
 			/* amode[3] = '\0'; */
-			printf("Test=%s, Mode=%s\n",atest,amode);
+			if (VERBOSE)
+				printf("Test=%s, Mode=%s\n",atest,amode);
 			}
 		    }
 		}
@@ -576,7 +444,7 @@ int proc_file(char *rqfile)
 	    if(!strncasecmp(ibuf,"KEY = ",6))
 		{
 		akeysz=64;
-		len = hex2bin((char*)ibuf+6, strlen(ibuf+6)-1, aKey);
+		len = hex2bin((char*)ibuf+6, aKey);
 		if (len < 0)
 		    {
 		    printf("Invalid KEY\n");
@@ -589,7 +457,7 @@ int proc_file(char *rqfile)
 	    else if(!strncasecmp(ibuf,"KEYs = ",7))
 		{
 		akeysz=64*3;
-		len=hex2bin(ibuf+7,strlen(ibuf+7)-1,aKey);
+		len=hex2bin(ibuf+7,aKey);
 		if(len != 8)
 		    {
 		    printf("Invalid KEY\n");
@@ -607,7 +475,7 @@ int proc_file(char *rqfile)
 		int n=ibuf[3]-'1';
 
 		akeysz=64*3;
-		len=hex2bin(ibuf+7,strlen(ibuf+7)-1,aKey+n*8);
+		len=hex2bin(ibuf+7,aKey+n*8);
 		if(len != 8)
 		    {
 		    printf("Invalid KEY\n");
@@ -635,7 +503,7 @@ int proc_file(char *rqfile)
 		}
 	    else
 		{
-		len = hex2bin((char*)ibuf+5, strlen(ibuf+5)-1, iVec);
+		len = hex2bin((char*)ibuf+5, iVec);
 		if (len < 0)
 		    {
 		    printf("Invalid IV\n");
@@ -660,7 +528,7 @@ int proc_file(char *rqfile)
 		if(!strcmp(amode,"CFB1"))
 		    len=bint2bin(ibuf+12,nn-1,plaintext);
 		else
-		    len=hex2bin(ibuf+12, nn-1,plaintext);
+		    len=hex2bin(ibuf+12, plaintext);
 		if (len < 0)
 		    {
 		    printf("Invalid PLAINTEXT: %s", ibuf+12);
@@ -701,7 +569,7 @@ int proc_file(char *rqfile)
 		if(!strcmp(amode,"CFB1"))
 		    len=bint2bin(ibuf+13,strlen(ibuf+13)-1,ciphertext);
 		else
-		    len = hex2bin(ibuf+13,strlen(ibuf+13)-1,ciphertext);
+		    len = hex2bin(ibuf+13,ciphertext);
 		if (len < 0)
 		    {
 		    printf("Invalid CIPHERTEXT\n");
@@ -760,20 +628,18 @@ int proc_file(char *rqfile)
 --------------------------------------------------*/
 int main(int argc, char **argv)
     {
-    char *rqlist = "req.txt";
+    char *rqlist = "req.txt", *rspfile = NULL;
     FILE *fp = NULL;
     char fn[250] = "", rfn[256] = "";
     int f_opt = 0, d_opt = 1;
 
 #ifdef OPENSSL_FIPS
-    if(!FIPS_mode_set(1,argv[0]))
+    if(!FIPS_mode_set(1))
 	{
-	ERR_load_crypto_strings();
-	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+	do_print_errors();
 	EXIT(1);
 	}
 #endif
-    ERR_load_crypto_strings();
     if (argc > 1)
 	{
 	if (strcasecmp(argv[1], "-d") == 0)
@@ -798,7 +664,10 @@ int main(int argc, char **argv)
 	if (d_opt)
 	    rqlist = argv[2];
 	else
+	    {
 	    strcpy(fn, argv[2]);
+	    rspfile = argv[3];
+	    }
 	}
     if (d_opt)
 	{ /* list of files (directory) */
@@ -812,7 +681,7 @@ int main(int argc, char **argv)
 	    strtok(fn, "\r\n");
 	    strcpy(rfn, fn);
 	    printf("Processing: %s\n", rfn);
-	    if (proc_file(rfn))
+	    if (proc_file(rfn, rspfile))
 		{
 		printf(">>> Processing failed for: %s <<<\n", rfn);
 		EXIT(1);
@@ -822,8 +691,9 @@ int main(int argc, char **argv)
 	}
     else /* single file */
 	{
-	printf("Processing: %s\n", fn);
-	if (proc_file(fn))
+	if (VERBOSE)
+		printf("Processing: %s\n", fn);
+	if (proc_file(fn, rspfile))
 	    {
 	    printf(">>> Processing failed for: %s <<<\n", fn);
 	    }
@@ -831,3 +701,5 @@ int main(int argc, char **argv)
     EXIT(0);
     return 0;
     }
+
+#endif
