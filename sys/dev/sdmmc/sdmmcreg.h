@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcreg.h,v 1.3 2007/03/18 22:21:21 uwe Exp $	*/
+/*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -38,6 +38,7 @@
 
 /* SD commands */				/* response type */
 #define SD_SEND_RELATIVE_ADDR		3	/* R6 */
+#define SD_SEND_IF_COND			8	/* R7 */
 
 /* SD application commands */			/* response type */
 #define SD_APP_SET_BUS_WIDTH		6	/* R1 */
@@ -65,6 +66,9 @@
 #define MMC_OCR_1_8V_1_9V		(1<<6)
 #define MMC_OCR_1_7V_1_8V		(1<<5)
 #define MMC_OCR_1_6V_1_7V		(1<<4)
+
+#define SD_OCR_SDHC_CAP			(1<<30)
+#define SD_OCR_VOL_MASK			0xFF8000 /* bits 23:15 */
 
 /* R1 response type bits */
 #define MMC_R1_READY_FOR_DATA		(1<<8)	/* ready for next transfer */
@@ -134,6 +138,7 @@
 /* SD R2 response (CSD) */
 #define SD_CSD_CSDVER(resp)		MMC_RSP_BITS((resp), 126, 2)
 #define  SD_CSD_CSDVER_1_0		0
+#define  SD_CSD_CSDVER_2_0		1
 #define SD_CSD_TAAC(resp)		MMC_RSP_BITS((resp), 112, 8)
 #define  SD_CSD_TAAC_1_5_MSEC		0x26
 #define SD_CSD_NSAC(resp)		MMC_RSP_BITS((resp), 104, 8)
@@ -150,6 +155,9 @@
 #define SD_CSD_C_SIZE(resp)		MMC_RSP_BITS((resp), 62, 12)
 #define SD_CSD_CAPACITY(resp)		((SD_CSD_C_SIZE((resp))+1) << \
 					 (SD_CSD_C_SIZE_MULT((resp))+2))
+#define SD_CSD_V2_C_SIZE(resp)		MMC_RSP_BITS((resp), 48, 22)
+#define SD_CSD_V2_CAPACITY(resp)	((SD_CSD_V2_C_SIZE((resp))+1) << 10) 
+#define SD_CSD_V2_BL_LEN		0x9	/* 512 */
 #define SD_CSD_VDD_R_CURR_MIN(resp)	MMC_RSP_BITS((resp), 59, 3)
 #define SD_CSD_VDD_R_CURR_MAX(resp)	MMC_RSP_BITS((resp), 56, 3)
 #define SD_CSD_VDD_W_CURR_MIN(resp)	MMC_RSP_BITS((resp), 53, 3)

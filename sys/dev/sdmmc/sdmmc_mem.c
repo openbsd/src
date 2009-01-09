@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.9 2008/12/02 23:49:54 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -92,6 +92,9 @@ sdmmc_mem_enable(struct sdmmc_softc *sc)
 
 	/* Tell the card(s) to enter the idle state (again). */
 	sdmmc_go_idle_state(sc);
+
+	if (sdmmc_send_if_cond(sc, card_ocr) == 0)
+		host_ocr |= SD_OCR_SDHC_CAP;
 
 	/* Send the new OCR value until all cards are ready. */
 	if (sdmmc_mem_send_op_cond(sc, host_ocr, NULL) != 0) {
@@ -224,14 +227,23 @@ sdmmc_decode_csd(struct sdmmc_softc *sc, sdmmc_response resp,
 		 * specification version 1.0 - 1.10. (SanDisk, 3.5.3)
 		 */
 		csd->csdver = SD_CSD_CSDVER(resp);
-		if (csd->csdver != SD_CSD_CSDVER_1_0) {
+		switch (csd->csdver) {
+		case SD_CSD_CSDVER_2_0:
+			sf->flags |= SFF_SDHC;
+			csd->capacity = SD_CSD_V2_CAPACITY(resp);
+			csd->read_bl_len = SD_CSD_V2_BL_LEN;
+			break;
+		case SD_CSD_CSDVER_1_0:
+			csd->capacity = SD_CSD_CAPACITY(resp);
+			csd->read_bl_len = SD_CSD_READ_BL_LEN(resp);
+			break;
+		default:
 			printf("%s: unknown SD CSD structure version 0x%x\n",
 			    SDMMCDEVNAME(sc), csd->csdver);
 			return 1;
+			break;
 		}
 
-		csd->capacity = SD_CSD_CAPACITY(resp);
-		csd->read_bl_len = SD_CSD_READ_BL_LEN(resp);
 	} else {
 		csd->csdver = MMC_CSD_CSDVER(resp);
 		if (csd->csdver != MMC_CSD_CSDVER_1_0 &&
@@ -403,7 +415,10 @@ sdmmc_mem_read_block(struct sdmmc_function *sf, int blkno, u_char *data,
 	cmd.c_blklen = sf->csd.sector_size;
 	cmd.c_opcode = (datalen / cmd.c_blklen) > 1 ?
 	    MMC_READ_BLOCK_MULTIPLE : MMC_READ_BLOCK_SINGLE;
-	cmd.c_arg = blkno << 9;
+	if (sf->flags & SFF_SDHC)
+		cmd.c_arg = blkno;
+	else
+		cmd.c_arg = blkno << 9;
 	cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1;
 
 	error = sdmmc_mmc_command(sc, &cmd);
@@ -458,7 +473,10 @@ sdmmc_mem_write_block(struct sdmmc_function *sf, int blkno, u_char *data,
 	cmd.c_blklen = sf->csd.sector_size;
 	cmd.c_opcode = (datalen / cmd.c_blklen) > 1 ?
 	    MMC_WRITE_BLOCK_MULTIPLE : MMC_WRITE_BLOCK_SINGLE;
-	cmd.c_arg = blkno << 9;
+	if (sf->flags & SFF_SDHC)
+		cmd.c_arg = blkno;
+	else
+		cmd.c_arg = blkno << 9;
 	cmd.c_flags = SCF_CMD_ADTC | SCF_RSP_R1;
 
 	error = sdmmc_mmc_command(sc, &cmd);

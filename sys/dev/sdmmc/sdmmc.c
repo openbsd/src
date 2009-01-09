@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.16 2008/12/02 23:49:54 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.17 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -566,6 +566,32 @@ sdmmc_go_idle_state(struct sdmmc_softc *sc)
 	cmd.c_flags = SCF_CMD_BC | SCF_RSP_R0;
 
 	(void)sdmmc_mmc_command(sc, &cmd);
+}
+
+/*
+ * Send the "SEND_IF_COND" command, to check operating condition
+ */
+int
+sdmmc_send_if_cond(struct sdmmc_softc *sc, uint32_t card_ocr)
+{
+	struct sdmmc_command cmd;
+	uint8_t pat = 0x23;
+	uint8_t res;
+
+	bzero(&cmd, sizeof cmd);
+
+	cmd.c_opcode = SD_SEND_IF_COND;
+	cmd.c_arg = ((card_ocr & SD_OCR_VOL_MASK) != 0) << 8 | pat;
+	cmd.c_flags = SCF_CMD_BCR | SCF_RSP_R7;
+
+	if (sdmmc_mmc_command(sc, &cmd) != 0)
+		return 1;
+
+	res = cmd.c_resp[0];
+	if (res != pat)
+		return 1;
+	else
+		return 0;
 }
 
 /*

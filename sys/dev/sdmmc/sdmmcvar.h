@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.12 2008/12/02 23:49:54 deraadt Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -98,6 +98,7 @@ struct sdmmc_command {
 #define SCF_RSP_R5	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
 #define SCF_RSP_R5B	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX|SCF_RSP_BSY)
 #define SCF_RSP_R6	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
+#define SCF_RSP_R7	 (SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
 	int		 c_error;	/* errno value on completion */
 
 	/* Host controller owned fields for data xfer in progress */
@@ -135,6 +136,7 @@ struct sdmmc_function {
 	u_int16_t rca;			/* relative card address */
 	int flags;
 #define SFF_ERROR		0x0001	/* function is poo; ignore it */
+#define SFF_SDHC		0x0002	/* SD High Capacity card */
 	SIMPLEQ_ENTRY(sdmmc_function) sf_list;
 	/* SD card I/O function members */
 	int number;			/* I/O function number or -1 */
@@ -200,6 +202,7 @@ void	sdmmc_go_idle_state(struct sdmmc_softc *);
 int	sdmmc_select_card(struct sdmmc_softc *, struct sdmmc_function *);
 int	sdmmc_set_relative_addr(struct sdmmc_softc *,
 	    struct sdmmc_function *);
+int	sdmmc_send_if_cond(struct sdmmc_softc *, uint32_t);
 
 void	sdmmc_intr_enable(struct sdmmc_function *);
 void	sdmmc_intr_disable(struct sdmmc_function *);
