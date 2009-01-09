@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.50 2009/01/05 21:36:37 djm Exp $
+# $OpenBSD: Makefile,v 1.51 2009/01/09 12:16:52 djm Exp $
 
 LIB=	crypto
 WANTLINT=
@@ -46,8 +46,8 @@ CFLAGS+= -DOPENSSL_NO_HW_UBSEC
 
 CFLAGS+= -I${.CURDIR}/../${SSLEAYDIST}
 CFLAGS+= -I${LCRYPTO_SRC}
-SRCS+= o_time.c o_dir.c
-SRCS+=	cryptlib.c ex_data.c cpt_err.c mem.c mem_dbg.c mem_clr.c
+SRCS+= o_time.c o_dir.c o_init.c fips_err.c
+SRCS+=	cryptlib.c dyn_lck.c ex_data.c cpt_err.c mem.c mem_dbg.c mem_clr.c
 SRCS+=	tmdiff.c cversion.c uid.c
 SRCS+=	md2_dgst.c md2_one.c 					
 SRCS+=	md5_dgst.c md5_one.c 					
@@ -62,7 +62,7 @@ SRCS+=	cbc_cksm.c cbc_enc.c cfb64enc.c cfb_enc.c \
 	ecb3_enc.c ecb_enc.c enc_read.c enc_writ.c \
 	ofb64enc.c ofb_enc.c pcbc_enc.c \
 	qud_cksm.c rand_key.c rpc_enc.c set_key.c \
-	des_enc.c des_old2.c fcrypt_b.c \
+	des_lib.c des_enc.c des_old2.c fcrypt_b.c \
 	fcrypt.c xcbc_enc.c ede_cbcm_enc.c \
 	str2key.c cfb64ede.c ofb64ede.c \
 	des_old.c read2pwd.c
@@ -78,7 +78,7 @@ SRCS+=	bn_add.c bn_div.c bn_exp.c bn_lib.c bn_mul.c
 SRCS+=	bn_print.c bn_rand.c bn_shift.c
 SRCS+=	bn_word.c bn_blind.c bn_gcd.c bn_prime.c bn_err.c
 SRCS+=	bn_sqr.c bn_recp.c bn_mont.c bn_mpi.c bn_mod.c
-SRCS+=	bn_exp2.c bn_ctx.c
+SRCS+=	bn_exp2.c bn_ctx.c bn_opt.c
 SRCS+=	bn_sqrt.c bn_kron.c bn_x931p.c bn_const.c bn_depr.c bn_gf2m.c bn_nist.c
 #SRCS+=	camellia.c cmll_cbc.c cmll_cfb.c cmll_ctr.c
 #SRCS+=	cmll_ecb.c cmll_misc.c cmll_ofb.cq
@@ -87,9 +87,9 @@ SRCS+=	bn_sqrt.c bn_kron.c bn_x931p.c bn_const.c bn_depr.c bn_gf2m.c bn_nist.c
 SRCS+=	rsa_eay.c rsa_gen.c rsa_lib.c rsa_sign.c
 SRCS+=	rsa_saos.c rsa_err.c rsa_pk1.c rsa_ssl.c
 SRCS+=	rsa_none.c rsa_chk.c rsa_oaep.c rsa_null.c rsa_asn1.c
-SRCS+=	rsa_pss.c rsa_x931.c rsa_depr.c
+SRCS+=	rsa_pss.c rsa_x931.c rsa_x931g.c rsa_depr.c rsa_eng.c
 SRCS+=	dsa_gen.c dsa_key.c dsa_lib.c dsa_vrf.c 	
-SRCS+=	dsa_sign.c dsa_err.c dsa_asn1.c dsa_ossl.c dsa_depr.c
+SRCS+=	dsa_sign.c dsa_err.c dsa_asn1.c dsa_ossl.c dsa_depr.c dsa_utl.c
 SRCS+=	dh_gen.c dh_key.c dh_lib.c dh_check.c dh_err.c dh_asn1.c dh_depr.c
 SRCS+=	ec_cvt.c ec_lib.c ecp_mont.c ecp_recp.c
 SRCS+=	ec_err.c ec_mult.c ecp_nist.c ecp_smpl.c
@@ -97,7 +97,7 @@ SRCS+=	ec2_mult.c ec2_smpl.c ec_asn1.c ec_check.c ec_curve.c
 SRCS+=	ec_key.c ec_print.c
 SRCS+=	ech_err.c ech_key.c ech_lib.c ech_ossl.c
 SRCS+=	ecs_asn1.c ecs_err.c ecs_lib.c ecs_ossl.c ecs_sign.c ecs_vrf.c
-SRCS+=	buffer.c buf_err.c				
+SRCS+=	buffer.c buf_str.c buf_err.c				
 SRCS+=	bio_lib.c bio_cb.c bio_err.c bss_mem.c
 SRCS+=	bss_null.c bss_fd.c bss_file.c bss_sock.c	
 SRCS+=	bss_conn.c bf_null.c bf_buff.c 
@@ -105,18 +105,19 @@ SRCS+=	b_print.c b_dump.c b_sock.c bss_acpt.c
 SRCS+=	bf_nbio.c bss_bio.c bss_log.c bss_dgram.c
 SRCS+=	stack.c							
 SRCS+=	lhash.c lh_stats.c					
-SRCS+=	md_rand.c randfile.c rand_lib.c	rand_egd.c rand_err.c rand_unix.c
-SRCS+=	err.c err_all.c err_prn.c				
+SRCS+=	md_rand.c randfile.c rand_lib.c	rand_egd.c rand_eng.c
+SRCS+=   rand_err.c rand_unix.c
+SRCS+=	err.c err_def.c err_all.c err_prn.c err_str.c err_bio.c
 SRCS+=	obj_dat.c obj_lib.c obj_err.c o_names.c
 SRCS+= bio_b64.c e_bf.c m_sha.c p_open.c
 SRCS+= bio_enc.c e_cast.c e_xcbc_d.c m_dss.c m_sha1.c p_seal.c
 SRCS+= bio_md.c e_des.c encode.c m_dss1.c names.c p_sign.c
-SRCS+= bio_ok.c e_des3.c evp_enc.c m_md2.c p_verify.c m_ecdsa.c
+SRCS+= bio_ok.c e_des3.c dig_eng.c evp_enc.c m_md2.c p_verify.c m_ecdsa.c
 #SRCS+= e_camellia.c e_seed.c
-SRCS+= c_all.c evp_err.c evp_acnf.c m_md4.c p5_crpt.c e_old.c
+SRCS+= c_all.c evp_err.c evp_acnf.c evp_cnf.c m_md4.c p5_crpt.c e_old.c
 SRCS+= c_allc.c evp_key.c m_md5.c p5_crpt2.c
 SRCS+= c_alld.c e_null.c evp_lib.c p_dec.c
-SRCS+= digest.c e_rc2.c evp_pbe.c m_null.c p_enc.c
+SRCS+= digest.c e_rc2.c enc_min.c evp_pbe.c m_null.c p_enc.c
 SRCS+= e_acss.c e_aes.c e_rc4.c evp_pkey.c m_ripemd.c p_lib.c
 SRCS+= md4_dgst.c md4_one.c
 SRCS+=	pem_sign.c pem_seal.c pem_info.c pem_lib.c pem_pkey.c	
