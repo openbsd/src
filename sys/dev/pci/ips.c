@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.30 2007/09/17 01:33:33 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.31 2009/01/09 21:47:08 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -233,6 +233,7 @@ int	ips_cmd(struct ips_softc *, int, int, u_int32_t, void *, size_t, int,
 int	ips_poll(struct ips_softc *, struct ips_ccb *);
 void	ips_done(struct ips_softc *, struct ips_ccb *);
 int	ips_intr(void *);
+void	ips_timeout(void *);
 
 int	ips_getadapterinfo(struct ips_softc *, struct ips_adapterinfo *);
 int	ips_getdriveinfo(struct ips_softc *, struct ips_driveinfo *);
@@ -696,9 +697,14 @@ ips_cmd(struct ips_softc *sc, int code, int drive, u_int32_t lba, void *data,
 	TAILQ_INSERT_TAIL(&sc->sc_ccbq_run, ccb, c_link);
 	ips_exec(sc, ccb);
 
-	if (flags & IPS_CCB_POLL)
+	if (flags & IPS_CCB_POLL) {
 		/* Wait for command to complete */
 		error = ips_poll(sc, ccb);
+	} else {
+		/* Set watchdog timer */
+		timeout_set(&xs->stimeout, ips_timeout, ccb);
+		timeout_add_msec(&xs->stimeout, xs->timeout);
+	}
 
 	return (error);
 }
@@ -751,6 +757,9 @@ ips_done(struct ips_softc *sc, struct ips_ccb *ccb)
 		}
 		return;
 	}
+
+	if (xs != NULL)
+		timeout_del(&xs->stimeout);
 
 	if (flags & (IPS_CCB_READ | IPS_CCB_WRITE)) {
 		bus_dmamap_sync(sc->sc_dmat, ccb->c_dmam, 0,
@@ -812,6 +821,34 @@ ips_intr(void *arg)
 	}
 
 	return (1);
+}
+
+void
+ips_timeout(void *arg)
+{
+	struct ips_ccb *ccb = arg;
+	struct scsi_xfer *xs = ccb->c_xfer;
+	struct ips_softc *sc = xs->sc_link->adapter_softc;
+	int s;
+
+	/*
+	 * Command never completed. Cleanup and recover.
+	 */
+	s = splbio();
+	sc_print_addr(xs->sc_link);
+	printf("timeout");
+	DPRINTF(IPS_D_ERR, (", command 0x%02x", ccb->c_id));
+	printf("\n");
+
+	TAILQ_REMOVE(&sc->sc_ccbq_run, ccb, c_link);
+	ips_ccb_put(sc, ccb);
+
+	xs->error = XS_TIMEOUT;
+	xs->flags |= ITSDONE;
+	scsi_done(xs);
+
+	ips_reset(sc);
+	splx(s);
 }
 
 int
