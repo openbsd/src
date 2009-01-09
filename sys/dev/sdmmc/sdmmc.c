@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.17 2009/01/09 10:55:22 jsg Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -575,7 +575,7 @@ int
 sdmmc_send_if_cond(struct sdmmc_softc *sc, uint32_t card_ocr)
 {
 	struct sdmmc_command cmd;
-	uint8_t pat = 0x23;
+	uint8_t pat = 0x23;	/* any pattern will do here */
 	uint8_t res;
 
 	bzero(&cmd, sizeof cmd);
