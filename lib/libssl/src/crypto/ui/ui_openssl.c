@@ -678,6 +678,8 @@ static int noecho_fgets(char *buf, int size, FILE *tty)
 		size--;
 #ifdef WIN16TTY
 		i=_inchar();
+#elif defined(_WIN32)
+		i=_getch();
 #else
 		i=getch();
 #endif
