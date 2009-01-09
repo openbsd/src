@@ -102,7 +102,7 @@
 #include "version.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo.c,v 1.500 2008/11/18 15:57:09 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo.c,v 1.501 2009/01/09 00:13:37 millert Exp $";
 #endif /* lint */
 
 /*
@@ -1077,16 +1077,18 @@ open_sudoers(sudoers, keepopen)
 	    (unsigned long) statbuf.st_gid, (unsigned long) SUDOERS_GID);
     else if ((fp = fopen(sudoers, "r")) == NULL)
 	log_error(USE_ERRNO, "can't open %s", sudoers);
-    else if (statbuf.st_size != 0) {
+    else {
 	/*
 	 * Make sure we can actually read sudoers so we can present the
-	 * user with a reasonable error message.
+	 * user with a reasonable error message (unlike the lexer).
 	 */
-	if (fgetc(fp) == EOF)
-	    log_error(USE_ERRNO, "can't read %s", sudoers);
-	rewind(fp);
+	if (statbuf.st_size != 0) {
+	    if (fgetc(fp) == EOF)
+		log_error(USE_ERRNO, "can't read %s", sudoers);
+	    rewind(fp);
+	}
+	(void) fcntl(fileno(fp), F_SETFD, 1);
     }
-    (void) fcntl(fileno(fp), F_SETFD, 1);
 
     set_perms(PERM_ROOT);		/* change back to root */
     return(fp);
