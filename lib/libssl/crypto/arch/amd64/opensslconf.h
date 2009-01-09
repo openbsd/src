@@ -34,9 +34,6 @@
 #ifndef OPENSSL_NO_SEED
 # define OPENSSL_NO_SEED
 #endif
-#ifndef OPENSSL_NO_TLSEXT
-# define OPENSSL_NO_TLSEXT
-#endif
 
 #endif /* OPENSSL_DOING_MAKEDEPEND */
 #ifndef OPENSSL_THREADS
