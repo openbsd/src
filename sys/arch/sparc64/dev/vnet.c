@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.5 2009/01/10 14:23:59 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.6 2009/01/10 17:13:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -46,6 +46,7 @@
 #include <dev/rndvar.h>
 
 #include <sparc64/dev/cbusvar.h>
+#include <sparc64/dev/ldcvar.h>
 
 /* XXX the following declaration should be elsewhere */
 extern void myetheraddr(u_char *);
@@ -55,83 +56,6 @@ extern void myetheraddr(u_char *);
 #else
 #define DPRINTF(x)
 #endif
-
-struct ldc_msg {
-	uint8_t type;
-	uint8_t stype;
-	uint8_t ctrl;
-	uint8_t env;
-	uint32_t seqid;
-
-	uint16_t major;
-	uint16_t minor;
-	uint32_t _reserved[13];
-};
-
-#define LDC_MSGSZ	sizeof(struct ldc_msg)
-
-#define LDC_CTRL	0x01
-#define LDC_DATA	0x02
-#define LDC_ERR		0x10
-
-#define LDC_INFO	0x01
-#define LDC_ACK		0x02
-#define LDC_NACK	0x04
-
-#define LDC_VERS	0x01
-#define LDC_RTS		0x02
-#define LDC_RTR		0x03
-#define LDC_RDX		0x04
-
-#define LDC_MODE_RAW		0x00
-#define LDC_MODE_UNRELIABLE	0x01
-#define LDC_MODE_RELIABLE	0x03
-
-#define LDC_LEN_MASK	0x3f
-#define LDC_FRAG_MASK	0xc0
-#define LDC_FRAG_START	0x40
-#define LDC_FRAG_STOP	0x80
-
-struct ldc_queue {
-	bus_dmamap_t	lq_map;
-	bus_dma_segment_t lq_seg;
-	caddr_t		lq_va;
-	int		lq_nentries;
-};
-
-struct ldc_cookie {
-	uint64_t	addr;
-	uint64_t	size;
-};
-
-struct ldc_queue *ldc_queue_alloc(bus_dma_tag_t, int);
-void	ldc_queue_free(bus_dma_tag_t, struct ldc_queue *);
-
-struct ldc_map_slot {
-	uint64_t	entry;
-	uint64_t	cookie;
-};
-
-#define LDC_MTE_R	0x0000000000000010ULL
-#define LDC_MTE_W	0x0000000000000020ULL
-#define LDC_MTE_X	0x0000000000000040ULL
-#define LDC_MTE_IOR	0x0000000000000080ULL
-#define LDC_MTE_IOW	0x0000000000000100ULL
-#define LDC_MTE_CPR	0x0000000000000200ULL
-#define LDC_MTE_CPW	0x0000000000000400ULL
-#define LDC_MTE_RA_MASK	0x007fffffffffe000ULL
-
-struct ldc_map {
-	bus_dmamap_t		lm_map;
-	bus_dma_segment_t	lm_seg;
-	struct ldc_map_slot	*lm_slot;
-	int			lm_nentries;
-	int			lm_next;
-	int			lm_count;
-};
-
-struct ldc_map *ldc_map_alloc(bus_dma_tag_t, int);
-void	ldc_map_free(bus_dma_tag_t, struct ldc_map *);
 
 #define VNET_TX_ENTRIES		32
 #define VNET_RX_ENTRIES		32
@@ -289,25 +213,10 @@ struct vnet_softc {
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
 
-	uint64_t	sc_id;
-
 	void		*sc_tx_ih;
 	void		*sc_rx_ih;
 
-	struct ldc_queue *sc_txq;
-	struct ldc_queue *sc_rxq;
-
-	uint64_t	sc_tx_state;
-	uint64_t	sc_rx_state;
-
-	uint32_t	sc_tx_seqid;
-
-	uint8_t		sc_ldc_state;
-#define LDC_SND_VERS	1
-#define LDC_RCV_VERS	2
-#define LDC_SND_RTS	3
-#define LDC_SND_RTR	4
-#define LDC_SND_RDX	5
+	struct ldc_conn	sc_lc;
 
 	uint8_t		sc_vio_state;
 #define VIO_ESTABLISHED	8
@@ -348,12 +257,7 @@ struct cfdriver vnet_cd = {
 int	vnet_tx_intr(void *);
 int	vnet_rx_intr(void *);
 
-void	vnet_rx_ctrl(struct vnet_softc *, struct ldc_msg *);
-void	vnet_rx_ctrl_vers(struct vnet_softc *, struct ldc_msg *);
-void	vnet_rx_ctrl_rtr(struct vnet_softc *, struct ldc_msg *);
-void	vnet_rx_ctrl_rts(struct vnet_softc *, struct ldc_msg *);
-
-void	vnet_rx_data(struct vnet_softc *, struct ldc_msg *);
+void	vio_rx_data(struct ldc_conn *, struct ldc_pkt *);
 void	vnet_rx_vio_ctrl(struct vnet_softc *, struct vio_msg *);
 void	vnet_rx_vio_ver_info(struct vnet_softc *, struct vio_msg_tag *);
 void	vnet_rx_vio_attr_info(struct vnet_softc *, struct vio_msg_tag *);
@@ -362,11 +266,7 @@ void	vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *);
 void	vnet_rx_vio_data(struct vnet_softc *sc, struct vio_msg *);
 void	vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *);
 
-void	ldc_send_vers(struct vnet_softc *);
-void	ldc_send_rtr(struct vnet_softc *);
-void	ldc_send_rts(struct vnet_softc *);
-void	ldc_send_rdx(struct vnet_softc *);
-void	ldc_reset(struct vnet_softc *);
+void	vnet_reset(struct ldc_conn *);
 
 void	vio_sendmsg(struct vnet_softc *, void *, size_t);
 void	vio_send_ver_info(struct vnet_softc *, uint16_t, uint16_t);
@@ -404,13 +304,12 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vnet_softc *sc = (struct vnet_softc *)self;
 	struct cbus_attach_args *ca = aux;
+	struct ldc_conn *lc;
 	struct ifnet *ifp;
 	uint64_t sysino[2];
 
 	sc->sc_bustag = ca->ca_bustag;
 	sc->sc_dmatag = ca->ca_dmatag;
-
-	sc->sc_id = ca->ca_id;
 
 	if (OF_getprop(ca->ca_node, "local-mac-address", sc->sc_ac.ac_enaddr,
 	    ETHER_ADDR_LEN) <= 0)
@@ -427,8 +326,8 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	 * Un-configure queues before registering interrupt handlers,
 	 * such that we dont get any stale LDC packets or events.
 	 */
-	hv_ldc_tx_qconf(sc->sc_id, 0, 0);
-	hv_ldc_rx_qconf(sc->sc_id, 0, 0);
+	hv_ldc_tx_qconf(ca->ca_id, 0, 0);
+	hv_ldc_rx_qconf(ca->ca_id, 0, 0);
 
 	sc->sc_tx_ih = bus_intr_establish(ca->ca_bustag, sysino[0], IPL_NET,
 	    0, vnet_tx_intr, sc, sc->sc_dv.dv_xname);
@@ -439,14 +338,20 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_txq = ldc_queue_alloc(sc->sc_dmatag, VNET_TX_ENTRIES);
-	if (sc->sc_txq == NULL) {
+	lc = &sc->sc_lc;
+	lc->lc_id = ca->ca_id;
+	lc->lc_sc = sc;
+	lc->lc_reset = vnet_reset;
+	lc->lc_rx_data = vio_rx_data;
+
+	lc->lc_txq = ldc_queue_alloc(sc->sc_dmatag, VNET_TX_ENTRIES);
+	if (lc->lc_txq == NULL) {
 		printf(", can't allocate tx queue\n");
 		return;
 	}
 
-	sc->sc_rxq = ldc_queue_alloc(sc->sc_dmatag, VNET_RX_ENTRIES);
-	if (sc->sc_rxq == NULL) {
+	lc->lc_rxq = ldc_queue_alloc(sc->sc_dmatag, VNET_RX_ENTRIES);
+	if (lc->lc_rxq == NULL) {
 		printf(", can't allocate rx queue\n");
 		goto free_txqueue;
 	}
@@ -477,7 +382,7 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 free_txqueue:
-	ldc_queue_free(sc->sc_dmatag, sc->sc_txq);
+	ldc_queue_free(sc->sc_dmatag, lc->lc_txq);
 	return;
 }
 
@@ -485,10 +390,11 @@ int
 vnet_tx_intr(void *arg)
 {
 	struct vnet_softc *sc = arg;
+	struct ldc_conn *lc = &sc->sc_lc;
 	uint64_t tx_head, tx_tail, tx_state;
 
-	hv_ldc_tx_get_state(sc->sc_id, &tx_head, &tx_tail, &tx_state);
-	if (tx_state != sc->sc_tx_state) {
+	hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
+	if (tx_state != lc->lc_tx_state) {
 		switch (tx_state) {
 		case LDC_CHANNEL_DOWN:
 			DPRINTF(("Tx link down\n"));
@@ -500,7 +406,7 @@ vnet_tx_intr(void *arg)
 			DPRINTF(("Tx link reset\n"));
 			break;
 		}
-		sc->sc_tx_state = tx_state;
+		lc->lc_tx_state = tx_state;
 	}
 
 	return (1);
@@ -510,12 +416,13 @@ int
 vnet_rx_intr(void *arg)
 {
 	struct vnet_softc *sc = arg;
+	struct ldc_conn *lc = &sc->sc_lc;
 	uint64_t rx_head, rx_tail, rx_state;
-	struct ldc_msg *lm;
+	struct ldc_pkt *lp;
 	uint64_t *msg;
 	int err;
 
-	err = hv_ldc_rx_get_state(sc->sc_id, &rx_head, &rx_tail, &rx_state);
+	err = hv_ldc_rx_get_state(lc->lc_id, &rx_head, &rx_tail, &rx_state);
 	if (err == H_EINVAL)
 		return (0);
 	if (err != H_EOK) {
@@ -523,29 +430,29 @@ vnet_rx_intr(void *arg)
 		return (0);
 	}
 
-	if (rx_state != sc->sc_rx_state) {
+	if (rx_state != lc->lc_rx_state) {
 		sc->sc_tx_cnt = sc->sc_tx_prod = sc->sc_tx_cons = 0;
-		sc->sc_tx_seqid = 0;
-		sc->sc_ldc_state = 0;
 		sc->sc_vio_state = 0;
+		lc->lc_tx_seqid = 0;
+		lc->lc_state = 0;
 		switch (rx_state) {
 		case LDC_CHANNEL_DOWN:
 			DPRINTF(("Rx link down\n"));
 			break;
 		case LDC_CHANNEL_UP:
 			DPRINTF(("Rx link up\n"));
-			ldc_send_vers(sc);
+			ldc_send_vers(lc);
 			break;
 		case LDC_CHANNEL_RESET:
 			DPRINTF(("Rx link reset\n"));
 			break;
 		}
-		sc->sc_rx_state = rx_state;
-		hv_ldc_rx_set_qhead(sc->sc_id, rx_tail);
+		lc->lc_rx_state = rx_state;
+		hv_ldc_rx_set_qhead(lc->lc_id, rx_tail);
 		return (1);
 	}
 
-	msg = (uint64_t *)(sc->sc_rxq->lq_va + rx_head);
+	msg = (uint64_t *)(lc->lc_rxq->lq_va + rx_head);
 #if 0
 {
 	int i;
@@ -556,29 +463,29 @@ vnet_rx_intr(void *arg)
 		printf("word %d: 0x%016lx\n", i, msg[i]);
 }
 #endif
-	lm = (struct ldc_msg *)(sc->sc_rxq->lq_va + rx_head);
-	switch (lm->type) {
+	lp = (struct ldc_pkt *)(lc->lc_rxq->lq_va + rx_head);
+	switch (lp->type) {
 	case LDC_CTRL:
-		vnet_rx_ctrl(sc, lm);
+		ldc_rx_ctrl(lc, lp);
 		break;
 
 	case LDC_DATA:
-		vnet_rx_data(sc, lm);
+		ldc_rx_data(lc, lp);
 		break;
 
 	default:
-		DPRINTF(("%0x02/%0x02/%0x02\n", lm->type, lm->stype,
-		    lm->ctrl));
-		ldc_reset(sc);
+		DPRINTF(("%0x02/%0x02/%0x02\n", lp->type, lp->stype,
+		    lp->ctrl));
+		ldc_reset(lc);
 		break;
 	}
 
-	if (sc->sc_ldc_state == 0)
+	if (lc->lc_state == 0)
 		return (1);
 
-	rx_head += LDC_MSGSZ;
-	rx_head &= ((sc->sc_rxq->lq_nentries * LDC_MSGSZ) - 1);
-	err = hv_ldc_rx_set_qhead(sc->sc_id, rx_head);
+	rx_head += sizeof(*lp);
+	rx_head &= ((lc->lc_rxq->lq_nentries * sizeof(*lp)) - 1);
+	err = hv_ldc_rx_set_qhead(lc->lc_id, rx_head);
 	if (err != H_EOK)
 		printf("%s: hv_ldc_rx_set_qhead %d\n", __func__, err);
 
@@ -586,159 +493,27 @@ vnet_rx_intr(void *arg)
 }
 
 void
-vnet_rx_ctrl(struct vnet_softc *sc, struct ldc_msg *lm)
+vio_rx_data(struct ldc_conn *lc, struct ldc_pkt *lp)
 {
-	switch (lm->ctrl) {
-	case LDC_VERS:
-		vnet_rx_ctrl_vers(sc, lm);
-		break;
+	struct vio_msg *vm = (struct vio_msg *)lp;
 
-	case LDC_RTS:
-		vnet_rx_ctrl_rts(sc, lm);
-		break;
-
-	case LDC_RTR:
-		vnet_rx_ctrl_rtr(sc, lm);
-		break;
-
-	default:
-		DPRINTF(("CTRL/0x%02x/0x%02x\n", lm->stype, lm->ctrl));
-		ldc_reset(sc);
-		break;
-	}
-}
-
-void
-vnet_rx_ctrl_vers(struct vnet_softc *sc, struct ldc_msg *lm)
-{
-	switch (lm->stype) {
-	case LDC_INFO:
-		/* XXX do nothing for now. */
-		break;
-
-	case LDC_ACK:
-		if (sc->sc_ldc_state != LDC_SND_VERS) {
-			DPRINTF(("Spurious CTRL/ACK/VERS: state %d\n",
-			    sc->sc_ldc_state));
-			ldc_reset(sc);
-			return;
-		}
-		DPRINTF(("CTRL/ACK/VERS\n"));
-		ldc_send_rts(sc);
-		break;
-
-	case LDC_NACK:
-		DPRINTF(("CTRL/NACK/VERS\n"));
-		ldc_reset(sc);
-		break;
-
-	default:
-		DPRINTF(("CTRL/0x%02x/VERS\n", lm->stype));
-		ldc_reset(sc);
-		break;
-	}
-}
-
-void
-vnet_rx_ctrl_rts(struct vnet_softc *sc, struct ldc_msg *lm)
-{
-	switch (lm->stype) {
-	case LDC_INFO:
-		if (sc->sc_ldc_state != LDC_RCV_VERS) {
-			DPRINTF(("Suprious CTRL/INFO/RTS: state %d\n",
-			    sc->sc_ldc_state));
-			ldc_reset(sc);
-			return;
-		}
-		DPRINTF(("CTRL/INFO/RTS\n"));
-		ldc_send_rtr(sc);
-		break;
-
-	case LDC_ACK:
-		DPRINTF(("CTRL/ACK/RTS\n"));
-		ldc_reset(sc);
-		break;
-
-	case LDC_NACK:
-		DPRINTF(("CTRL/NACK/RTS\n"));
-		ldc_reset(sc);
-		break;
-
-	default:
-		DPRINTF(("CTRL/0x%02x/RTS\n", lm->stype));
-		ldc_reset(sc);
-		break;
-	}
-}
-
-void
-vnet_rx_ctrl_rtr(struct vnet_softc *sc, struct ldc_msg *lm)
-{
-	switch (lm->stype) {
-	case LDC_INFO:
-		if (sc->sc_ldc_state != LDC_SND_RTS) {
-			DPRINTF(("Spurious CTRL/INFO/RTR: state %d\n",
-			    sc->sc_ldc_state));
-			ldc_reset(sc);
-			return;
-		}
-		DPRINTF(("CTRL/INFO/RTR\n"));
-		ldc_send_rdx(sc);
-		break;
-
-	case LDC_ACK:
-		DPRINTF(("CTRL/ACK/RTR\n"));
-		ldc_reset(sc);
-		break;
-
-	case LDC_NACK:
-		DPRINTF(("CTRL/NACK/RTR\n"));
-		ldc_reset(sc);
-		break;
-
-	default:
-		DPRINTF(("CTRL/0x%02x/RTR\n", lm->stype));
-		ldc_reset(sc);
-		break;
-	}
-}
-
-void
-vnet_rx_data(struct vnet_softc *sc, struct ldc_msg *lm)
-{
-	struct vio_msg *vm;
-
-	if (lm->stype != LDC_INFO) {
-		DPRINTF(("DATA/0x%02x\n", lm->stype));
-		ldc_reset(sc);
-		return;
-	}
-
-	if (sc->sc_ldc_state != LDC_SND_RTR &&
-	    sc->sc_ldc_state != LDC_SND_RDX) {
-		DPRINTF(("Spurious DATA/INFO: state %d\n", sc->sc_ldc_state));
-		ldc_reset(sc);
-		return;
-	}
-
-	vm = (struct vio_msg *)lm;
 	switch (vm->type) {
 	case VIO_TYPE_CTRL:
-		if ((lm->env & LDC_FRAG_START) == 0 &&
-		    (lm->env & LDC_FRAG_STOP) == 0)
+		if ((lp->env & LDC_FRAG_START) == 0 &&
+		    (lp->env & LDC_FRAG_STOP) == 0)
 			return;
-		vnet_rx_vio_ctrl(sc, vm);
+		vnet_rx_vio_ctrl(lc->lc_sc, vm);
 		break;
 
 	case VIO_TYPE_DATA:
-		if((lm->env & LDC_FRAG_START) == 0)
+		if((lp->env & LDC_FRAG_START) == 0)
 			return;
-		vnet_rx_vio_data(sc, vm);
+		vnet_rx_vio_data(lc->lc_sc, vm);
 		break;
 
 	default:
 		DPRINTF(("Unhandled packet type 0x%02x\n", vm->type));
-		ldc_reset(sc);
+		ldc_reset(lc);
 		break;
 	}
 }
@@ -934,6 +709,7 @@ void
 vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 {
 	struct vnet_dring_msg *dm = (struct vnet_dring_msg *)tag;
+	struct ldc_conn *lc = &sc->sc_lc;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mbuf *m;
 	paddr_t pa;
@@ -954,7 +730,7 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			cookie += idx * sc->sc_peer_desc_size;
 			nbytes = sc->sc_peer_desc_size;
 			pmap_extract(pmap_kernel(), (vaddr_t)&desc, &desc_pa);
-			err = hv_ldc_copy(sc->sc_id, LDC_COPY_IN, cookie,
+			err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN, cookie,
 			    desc_pa, nbytes, &nbytes);
 			if (err != H_EOK) {
 				printf("hv_ldc_copy_in %d\n", err);
@@ -978,7 +754,7 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			nbytes = roundup(desc.nbytes + VNET_ETHER_ALIGN, 8);
 
 			pmap_extract(pmap_kernel(), (vaddr_t)m->m_data, &pa);
-			err = hv_ldc_copy(sc->sc_id, LDC_COPY_IN,
+			err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN,
 			    desc.cookie[0].addr, pa, nbytes, &nbytes);
 			if (err != H_EOK) {
 #if 0
@@ -1007,7 +783,7 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		skip:
 			desc.hdr.dstate = VIO_DESC_DONE;
 			nbytes = sc->sc_peer_desc_size;
-			err = hv_ldc_copy(sc->sc_id, LDC_COPY_OUT, cookie,
+			err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT, cookie,
 			    desc_pa, nbytes, &nbytes);
 			if (err != H_EOK)
 				printf("hv_ldc_copy_out %d\n", err);
@@ -1065,169 +841,36 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 }
 
 void
-ldc_send_vers(struct vnet_softc *sc)
+vnet_reset(struct ldc_conn *lc)
 {
-	struct ldc_msg *lm;
-	uint64_t tx_head, tx_tail, tx_state;
-	int err;
-
-	err = hv_ldc_tx_get_state(sc->sc_id, &tx_head, &tx_tail, &tx_state);
-	if (err != H_EOK || tx_state != LDC_CHANNEL_UP)
-		return;
-
-	lm = (struct ldc_msg *)(sc->sc_txq->lq_va + tx_tail);
-	bzero(lm, sizeof(struct ldc_msg));
-	lm->type = LDC_CTRL;
-	lm->stype = LDC_INFO;
-	lm->ctrl = LDC_VERS;
-	lm->major = 1;
-	lm->minor = 0;
-
-	tx_tail += LDC_MSGSZ;
-	tx_tail &= ((sc->sc_txq->lq_nentries * LDC_MSGSZ) - 1);
-	err = hv_ldc_tx_set_qtail(sc->sc_id, tx_tail);
-	if (err != H_EOK) {
-		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
-		return;
-	}
-
-	sc->sc_ldc_state = LDC_SND_VERS;
-}
-
-void
-ldc_send_rts(struct vnet_softc *sc)
-{
-	struct ldc_msg *lm;
-	uint64_t tx_head, tx_tail, tx_state;
-	int err;
-
-	err = hv_ldc_tx_get_state(sc->sc_id, &tx_head, &tx_tail, &tx_state);
-	if (err != H_EOK || tx_state != LDC_CHANNEL_UP)
-		return;
-
-	lm = (struct ldc_msg *)(sc->sc_txq->lq_va + tx_tail);
-	bzero(lm, sizeof(struct ldc_msg));
-	lm->type = LDC_CTRL;
-	lm->stype = LDC_INFO;
-	lm->ctrl = LDC_RTS;
-	lm->env = LDC_MODE_UNRELIABLE;
-	lm->seqid = sc->sc_tx_seqid++;
-
-	tx_tail += LDC_MSGSZ;
-	tx_tail &= ((sc->sc_txq->lq_nentries * LDC_MSGSZ) - 1);
-	err = hv_ldc_tx_set_qtail(sc->sc_id, tx_tail);
-	if (err != H_EOK) {
-		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
-		return;
-	}
-
-	sc->sc_ldc_state = LDC_SND_RTS;
-}
-
-void
-ldc_send_rtr(struct vnet_softc *sc)
-{
-	struct ldc_msg *lm;
-	uint64_t tx_head, tx_tail, tx_state;
-	int err;
-
-	err = hv_ldc_tx_get_state(sc->sc_id, &tx_head, &tx_tail, &tx_state);
-	if (err != H_EOK || tx_state != LDC_CHANNEL_UP)
-		return;
-
-	lm = (struct ldc_msg *)(sc->sc_txq->lq_va + tx_tail);
-	bzero(lm, sizeof(struct ldc_msg));
-	lm->type = LDC_CTRL;
-	lm->stype = LDC_INFO;
-	lm->ctrl = LDC_RTR;
-	lm->env = LDC_MODE_UNRELIABLE;
-	lm->seqid = sc->sc_tx_seqid++;
-
-	tx_tail += LDC_MSGSZ;
-	tx_tail &= ((sc->sc_txq->lq_nentries * LDC_MSGSZ) - 1);
-	err = hv_ldc_tx_set_qtail(sc->sc_id, tx_tail);
-	if (err != H_EOK)
-		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
-
-	sc->sc_ldc_state = LDC_SND_RTR;
-}
-
-void
-ldc_send_rdx(struct vnet_softc *sc)
-{
-	struct ldc_msg *lm;
-	uint64_t tx_head, tx_tail, tx_state;
-	int err;
-
-	err = hv_ldc_tx_get_state(sc->sc_id, &tx_head, &tx_tail, &tx_state);
-	if (err != H_EOK || tx_state != LDC_CHANNEL_UP)
-		return;
-
-	lm = (struct ldc_msg *)(sc->sc_txq->lq_va + tx_tail);
-	bzero(lm, sizeof(struct ldc_msg));
-	lm->type = LDC_CTRL;
-	lm->stype = LDC_INFO;
-	lm->ctrl = LDC_RDX;
-	lm->env = LDC_MODE_UNRELIABLE;
-	lm->seqid = sc->sc_tx_seqid++;
-
-	tx_tail += LDC_MSGSZ;
-	tx_tail &= ((sc->sc_txq->lq_nentries * LDC_MSGSZ) - 1);
-	err = hv_ldc_tx_set_qtail(sc->sc_id, tx_tail);
-	if (err != H_EOK)
-		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
-
-	sc->sc_ldc_state = LDC_SND_RDX;
-}
-
-void
-ldc_reset(struct vnet_softc *sc)
-{
-	int err;
-
-	DPRINTF(("Resetting connection\n"));
-	hv_ldc_tx_qconf(sc->sc_id, 0, 0);
-	hv_ldc_rx_qconf(sc->sc_id, 0, 0);
-	sc->sc_tx_state = sc->sc_rx_state = LDC_CHANNEL_DOWN;
-
-	err = hv_ldc_tx_qconf(sc->sc_id,
-	    sc->sc_txq->lq_map->dm_segs[0].ds_addr, sc->sc_txq->lq_nentries);
-	if (err != H_EOK)
-		printf("%s: hv_ldc_tx_qconf %d\n", __func__, err);
-
-	err = hv_ldc_rx_qconf(sc->sc_id,
-	    sc->sc_rxq->lq_map->dm_segs[0].ds_addr, sc->sc_rxq->lq_nentries);
-	if (err != H_EOK)
-		printf("%s: hv_ldc_rx_qconf %d\n", __func__, err);
+	struct vnet_softc *sc = lc->lc_sc;
 
 	sc->sc_vio_state = 0;
-	sc->sc_ldc_state = 0;
-	sc->sc_tx_seqid = 0;
-
 	vnet_link_state(sc);
 }
 
 void
 vio_sendmsg(struct vnet_softc *sc, void *msg, size_t len)
 {
-	struct ldc_msg *lm;
+	struct ldc_conn *lc = &sc->sc_lc;
+	struct ldc_pkt *lp;
 	uint64_t tx_head, tx_tail, tx_state;
 	int err;
 
 #if 0
 	printf("%s\n", __func__);
 #endif
-	err = hv_ldc_tx_get_state(sc->sc_id, &tx_head, &tx_tail, &tx_state);
+	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
 	if (err != H_EOK)
 		return;
 
-	lm = (struct ldc_msg *)(sc->sc_txq->lq_va + tx_tail);
-	bzero(lm, sizeof(struct ldc_msg));
-	lm->type = LDC_DATA;
-	lm->stype = LDC_INFO;
-	lm->env = 56 | LDC_FRAG_STOP | LDC_FRAG_START;
-	lm->seqid = sc->sc_tx_seqid++;
-	bcopy(msg, &lm->major, len);
+	lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
+	bzero(lp, sizeof(struct ldc_pkt));
+	lp->type = LDC_DATA;
+	lp->stype = LDC_INFO;
+	lp->env = 56 | LDC_FRAG_STOP | LDC_FRAG_START;
+	lp->seqid = lc->lc_tx_seqid++;
+	bcopy(msg, &lp->major, len);
 
 #if 0
 {
@@ -1239,9 +882,9 @@ vio_sendmsg(struct vnet_softc *sc, void *msg, size_t len)
 }
 #endif
 
-	tx_tail += LDC_MSGSZ;
-	tx_tail &= ((sc->sc_txq->lq_nentries * LDC_MSGSZ) - 1);
-	err = hv_ldc_tx_set_qtail(sc->sc_id, tx_tail);
+	tx_tail += sizeof(*lp);
+	tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(*lp)) - 1);
+	err = hv_ldc_tx_set_qtail(lc->lc_id, tx_tail);
 	if (err != H_EOK)
 		printf("hv_ldc_tx_set_qtail: %d\n", err);
 }
@@ -1550,13 +1193,14 @@ void
 vnet_init(struct ifnet *ifp)
 {
 	struct vnet_softc *sc = ifp->if_softc;
+	struct ldc_conn *lc = &sc->sc_lc;
 	int err;
 
 	sc->sc_lm = ldc_map_alloc(sc->sc_dmatag, 2048);
 	if (sc->sc_lm == NULL)
 		return;
 
-	err = hv_ldc_set_map_table(sc->sc_id,
+	err = hv_ldc_set_map_table(lc->lc_id,
 	    sc->sc_lm->lm_map->dm_segs[0].ds_addr, sc->sc_lm->lm_nentries);
 	if (err != H_EOK) {
 		printf("hv_ldc_set_map_table %d\n", err);
@@ -1576,17 +1220,17 @@ vnet_init(struct ifnet *ifp)
 	sc->sc_lm->lm_next = 1;
 	sc->sc_lm->lm_count = 1;
 
-	err = hv_ldc_tx_qconf(sc->sc_id,
-	    sc->sc_txq->lq_map->dm_segs[0].ds_addr, sc->sc_txq->lq_nentries);
+	err = hv_ldc_tx_qconf(lc->lc_id,
+	    lc->lc_txq->lq_map->dm_segs[0].ds_addr, lc->lc_txq->lq_nentries);
 	if (err != H_EOK)
 		printf("hv_ldc_tx_qconf %d\n", err);
 
-	err = hv_ldc_rx_qconf(sc->sc_id,
-	    sc->sc_rxq->lq_map->dm_segs[0].ds_addr, sc->sc_rxq->lq_nentries);
+	err = hv_ldc_rx_qconf(lc->lc_id,
+	    lc->lc_rxq->lq_map->dm_segs[0].ds_addr, lc->lc_rxq->lq_nentries);
 	if (err != H_EOK)
 		printf("hv_ldc_rx_qconf %d\n", err);
 
-	ldc_send_vers(sc);
+	ldc_send_vers(lc);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1596,75 +1240,18 @@ void
 vnet_stop(struct ifnet *ifp)
 {
 	struct vnet_softc *sc = ifp->if_softc;
+	struct ldc_conn *lc = &sc->sc_lc;
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
-	hv_ldc_tx_qconf(sc->sc_id, 0, 0);
-	hv_ldc_rx_qconf(sc->sc_id, 0, 0);
-	sc->sc_tx_state = sc->sc_rx_state = LDC_CHANNEL_DOWN;
+	hv_ldc_tx_qconf(lc->lc_id, 0, 0);
+	hv_ldc_rx_qconf(lc->lc_id, 0, 0);
+	lc->lc_tx_state = lc->lc_rx_state = LDC_CHANNEL_DOWN;
 
 	vnet_dring_free(sc->sc_dmatag, sc->sc_vd);
 
-	hv_ldc_set_map_table(sc->sc_id, 0, 0);
+	hv_ldc_set_map_table(lc->lc_id, 0, 0);
 	ldc_map_free(sc->sc_dmatag, sc->sc_lm);
-}
-
-struct ldc_queue *
-ldc_queue_alloc(bus_dma_tag_t t, int nentries)
-{
-	struct ldc_queue *lq;
-	bus_size_t size;
-	caddr_t va;
-	int nsegs;
-
-	lq = malloc(sizeof(struct ldc_queue), M_DEVBUF, M_NOWAIT);
-	if (lq == NULL)
-		return NULL;
-
-	size = roundup(nentries * LDC_MSGSZ, PAGE_SIZE);
-
-	if (bus_dmamap_create(t, size, 1, size, 0,
-	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &lq->lq_map) != 0)
-		return (NULL);
-
-	if (bus_dmamem_alloc(t, size, PAGE_SIZE, 0, &lq->lq_seg, 1,
-	    &nsegs, BUS_DMA_NOWAIT) != 0)
-		goto destroy;
-
-	if (bus_dmamem_map(t, &lq->lq_seg, 1, size, &va,
-	    BUS_DMA_NOWAIT) != 0)
-		goto free;
-
-	if (bus_dmamap_load(t, lq->lq_map, va, size, NULL,
-	    BUS_DMA_NOWAIT) != 0)
-		goto unmap;
-
-	lq->lq_va = va;
-	lq->lq_nentries = nentries;
-	return (lq);
-
-unmap:
-	bus_dmamem_unmap(t, va, size);
-free:
-	bus_dmamem_free(t, &lq->lq_seg, 1);
-destroy:
-	bus_dmamap_destroy(t, lq->lq_map);
-
-	return (NULL);
-}
-
-void
-ldc_queue_free(bus_dma_tag_t t, struct ldc_queue *lq)
-{
-	bus_size_t size;
-
-	size = roundup(lq->lq_nentries * LDC_MSGSZ, PAGE_SIZE);
-
-	bus_dmamap_unload(t, lq->lq_map);
-	bus_dmamem_unmap(t, lq->lq_va, size);
-	bus_dmamem_free(t, &lq->lq_seg, 1);
-	bus_dmamap_destroy(t, lq->lq_map);
-	free(lq, M_DEVBUF);
 }
 
 struct vnet_dring *
@@ -1728,64 +1315,4 @@ vnet_dring_free(bus_dma_tag_t t, struct vnet_dring *vd)
 	bus_dmamem_free(t, &vd->vd_seg, 1);
 	bus_dmamap_destroy(t, vd->vd_map);
 	free(vd, M_DEVBUF);
-}
-
-struct ldc_map *
-ldc_map_alloc(bus_dma_tag_t t, int nentries)
-{
-	struct ldc_map *lm;
-	bus_size_t size;
-	caddr_t va;
-	int nsegs;
-
-	lm = malloc(sizeof(struct ldc_map), M_DEVBUF, M_NOWAIT);
-	if (lm == NULL)
-		return NULL;
-
-	size = roundup(nentries * sizeof(struct ldc_map_slot), PAGE_SIZE);
-
-	if (bus_dmamap_create(t, size, 1, size, 0,
-	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &lm->lm_map) != 0)
-		return (NULL);
-
-	if (bus_dmamem_alloc(t, size, PAGE_SIZE, 0, &lm->lm_seg, 1,
-	    &nsegs, BUS_DMA_NOWAIT) != 0)
-		goto destroy;
-
-	if (bus_dmamem_map(t, &lm->lm_seg, 1, size, &va,
-	    BUS_DMA_NOWAIT) != 0)
-		goto free;
-
-	if (bus_dmamap_load(t, lm->lm_map, va, size, NULL,
-	    BUS_DMA_NOWAIT) != 0)
-		goto unmap;
-
-	lm->lm_slot = (struct ldc_map_slot *)va;
-	lm->lm_nentries = nentries;
-	bzero(lm->lm_slot, nentries * sizeof(struct ldc_map_slot));
-	return (lm);
-
-unmap:
-	bus_dmamem_unmap(t, va, size);
-free:
-	bus_dmamem_free(t, &lm->lm_seg, 1);
-destroy:
-	bus_dmamap_destroy(t, lm->lm_map);
-
-	return (NULL);
-}
-
-void
-ldc_map_free(bus_dma_tag_t t, struct ldc_map *lm)
-{
-	bus_size_t size;
-
-	size = lm->lm_nentries * sizeof(struct ldc_map_slot);
-	size = roundup(size, PAGE_SIZE);
-
-	bus_dmamap_unload(t, lm->lm_map);
-	bus_dmamem_unmap(t, (caddr_t)lm->lm_slot, size);
-	bus_dmamem_free(t, &lm->lm_seg, 1);
-	bus_dmamap_destroy(t, lm->lm_map);
-	free(lm, M_DEVBUF);
 }
