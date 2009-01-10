@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jmevar.h,v 1.4 2008/12/01 09:12:59 jsg Exp $	*/
+/*	$OpenBSD: if_jmevar.h,v 1.5 2009/01/10 15:33:05 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -112,7 +112,6 @@ struct jme_chain_data{
 	bus_dma_tag_t		jme_buffer_tag;
 	bus_dma_tag_t		jme_ssb_tag;
 	bus_dmamap_t		jme_ssb_map;
-	bus_dma_tag_t		jme_tx_tag;
 	struct jme_txdesc	jme_txdesc[JME_TX_RING_CNT];
 	bus_dma_tag_t		jme_rx_tag;
 	struct jme_rxdesc	jme_rxdesc[JME_RX_RING_CNT];

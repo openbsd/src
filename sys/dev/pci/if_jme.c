@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.14 2008/12/01 09:12:59 jsg Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.15 2009/01/10 15:33:05 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -853,7 +853,6 @@ jme_dma_alloc(struct jme_softc *sc)
 				txd = &sc->jme_cdata.jme_txdesc[j];
 				bus_dmamap_destroy(sc->sc_dmat, txd->tx_dmamap);
 			}
-			sc->jme_cdata.jme_tx_tag = NULL;
 			return error;
 		}
 
@@ -1846,7 +1845,7 @@ jme_init(struct ifnet *ifp)
                 printf("%s: initialization failed: no memory for Rx buffers.\n",
 		    sc->sc_dev.dv_xname);
                 jme_stop(sc);
-		return (1);
+		return (error);
         }
 	jme_init_tx_ring(sc);
 
