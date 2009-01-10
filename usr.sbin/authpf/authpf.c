@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.111 2009/01/10 17:17:32 todd Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.112 2009/01/10 19:08:53 miod Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -483,7 +483,9 @@ allowed_luser(struct passwd *pw)
 		 */
 		int gl_init = 0, ngroups = NGROUPS + 1;
 		gid_t groups[NGROUPS + 1];
+
 		lbuf = NULL;
+		matched = 0;
 
 		while ((buf = fgetln(f, &len))) {
 			
