@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.227 2009/01/06 23:03:16 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.228 2009/01/10 19:04:57 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -59,6 +59,7 @@ ebus*	at mainbus0
 ebus*	at pci?
 vbus0	at mainbus0
 sbbc*	at pci?
+cbus*	at vbus?
 
 # PCI Ethernet
 lmc*	at pci?			# Lan Media Corp SSI/T3/HSSI
@@ -333,6 +334,7 @@ timer*	at mainbus0
 # Virtual devices for sun4v systems.
 vcons0	at vbus?
 vrtc0	at vbus?
+vnet*	at cbus?
 
 ## Lance Ethernet - AMD7990
 le*		at sbus?

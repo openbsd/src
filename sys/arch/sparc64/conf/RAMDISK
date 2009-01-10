@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.81 2009/01/06 23:03:16 jasper Exp $
+#	$OpenBSD: RAMDISK,v 1.82 2009/01/10 19:04:58 kettenis Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -69,6 +69,7 @@ ebus*	at mainbus0
 ebus*	at pci?
 vbus0	at mainbus0
 sbbc*	at pci?
+cbus*	at vbus?
 
 # CardBus bus support
 cardbus* at cardslot?
@@ -124,6 +125,7 @@ timer*	at mainbus0			# Timer chip
 # Virtual devices for sun4v systems.
 vcons0	at vbus?
 vrtc0	at vbus?
+vnet*	at cbus?
 
 ## Lance Ethernet - AMD7990
 le*		at sbus?
