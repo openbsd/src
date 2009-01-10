@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.110 2009/01/06 03:11:50 mcbride Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.111 2009/01/10 17:17:32 todd Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2007 Bob Beck (beck@openbsd.org).
@@ -481,9 +481,9 @@ allowed_luser(struct passwd *pw)
 		 * "public" gateway, such as it is, so let
 		 * everyone use it.
 		 */
-		lbuf = NULL;
 		int gl_init = 0, ngroups = NGROUPS + 1;
 		gid_t groups[NGROUPS + 1];
+		lbuf = NULL;
 
 		while ((buf = fgetln(f, &len))) {
 			
