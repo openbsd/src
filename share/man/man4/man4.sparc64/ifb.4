@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifb.4,v 1.4 2008/12/27 23:16:47 kettenis Exp $
+.\"	$OpenBSD: ifb.4,v 1.5 2009/01/10 17:44:39 miod Exp $
 .\"
 .\" Copyright (c) 2008 Miodrag Vallat.
 .\"
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 27 2008 $
+.Dd $Mdocdate: January 10 2009 $
 .Dt IFB 4 sparc64
 .Os
 .Sh NAME
@@ -57,56 +57,39 @@ to change to a 76Hz 1280x1024 resolution.
 The
 .Nm
 frame buffer accepts the following resolutions:
-.Bl -tag -width 5n -offset indent
-.It screen:r640x480x60
-VGA 640x480, with a refresh rate of 60Hz.
-.It screen:r640x480x60i
-VGA 640x480, with a refresh rate of 60Hz, interleaved.
-.It screen:r768x575x50i
-768x575, with a refresh rate of 50Hz, interleaved.
-.It screen:r1024x768x60
-Super VGA 1024x768, with a refresh rate of 60Hz.
-.It screen:r1024x768x70
-Super VGA 1024x768, with a refresh rate of 70Hz.
-.It screen:r1024x768x75
-Super VGA 1024x768, with a refresh rate of 75Hz.
-.It screen:r1024x768x76
-Super VGA 1024x768, with a refresh rate of 76Hz.
-.It screen:r1024x768x77
-Super VGA 1024x768, with a refresh rate of 77Hz.
-.It screen:r1024x800x84
-1024x800, with a refresh rate of 84Hz.
-.It screen:r1152x900x66
-Standard 1152x900, with a refresh rate of 66Hz.
-.It screen:r1152x900x76
-Standard 1152x900, with a refresh rate of 76Hz.
-.It screen:r1280x800x76
-1280x800, with a refresh rate of 76Hz.
-.It screen:r1280x1024x60
-High res 1280x1024, with a refresh rate of 60Hz.
-.It screen:r1280x1024x67
-High res 1280x1024, with a refresh rate of 67Hz.
-.It screen:r1280x1024x76
-High res 1280x1024, with a refresh rate of 76Hz.
-.It screen:r1280x1024x85
-High res 1280x1024, with a refresh rate of 85Hz.
-.It screen:r1440x900x76
-1440x900, with a refresh rate of 76Hz.
-.It screen:r1600x1000x66
-1600x1000, with a refresh rate of 66Hz.
-.It screen:r1600x1000x76
-1600x1000, with a refresh rate of 76Hz.
-.It screen:r1600x1280x76
-High res 1600x1280, with a refresh rate of 76Hz.
-.It screen:r1792x1344x75
-1792x1344, with a refresh rate of 75Hz.
-.It screen:r1920x1080x72
-1920x1080, with a refresh rate of 72Hz.
-.It screen:r1920x1200x70
-1920x1200, with a refresh rate of 70Hz.
-.It screen:r1920x1200x75
-1920x1200, with a refresh rate of 75Hz.
+.Bl -column "Mode identifier" "Resolution" "Refresh" ""
+.It Li Mode identifier Ta Resolution Ta Refresh
+.It Li "" Ta "" Ta "Rate (Hz)"
+.It Li r640x480x60 Ta 640x480 Ta 60
+.It Li r640x480x60i Ta 640x480 Ta 60 Ta Composite sync
+.It Li r768x575x50i Ta 768x575 Ta 50
+.It Li r1024x768x60 Ta 1024x768 Ta 60 Ta Composite sync
+.It Li r1024x768x70 Ta 1024x768 Ta 70
+.It Li r1024x768x75 Ta 1024x768 Ta 75
+.It Li r1024x768x77 Ta 1024x768 Ta 77
+.It Li r1024x800x84 Ta 1024x800 Ta 84 Ta Composite sync
+.It Li r1152x900x66 Ta 1152x900 Ta 66 Ta Composite sync
+.It Li r1152x900x76 Ta 1152x900 Ta 76 Ta Composite sync
+.\" .It Li r1280x768x56 Ta 1280x768 Ta 56
+.It Li r1280x800x76 Ta 1280x1024 Ta 76
+.It Li r1280x1024x60 Ta 1280x1024 Ta 60
+.It Li r1280x1024x67 Ta 1280x1024 Ta 67 Ta Composite sync
+.It Li r1280x1024x75 Ta 1280x1024 Ta 75
+.It Li r1280x1024x76 Ta 1280x1024 Ta 76 Ta Composite sync
+.It Li r1280x1024x85 Ta 1280x1024 Ta 85
+.It Li r1440x900x76 Ta 1440x900 Ta 76 Ta Composite sync
+.It Li r1600x1000x66 Ta 1600x1000 Ta 66
+.It Li r1600x1000x76 Ta 1600x1000 Ta 76 Ta Composite sync
+.It Li r1600x1280x76 Ta 1600x1280 Ta 76
+.It Li r1792x1344x75 Ta 1792x1344 Ta 75
+.It Li r1920x1080x72 Ta 1920x1080 Ta 72 Ta Composite sync
+.It Li r1920x1200x70 Ta 1920x1200 Ta 70
+.It Li r1920x1200x75 Ta 1920x1200 Ta 75
 .El
+.Pp
+Modes with the suffix letter
+.Sq i
+are interlaced.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
