@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.87 2008/10/06 18:31:02 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.88 2009/01/10 17:46:04 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1154,7 +1154,10 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			    (scr->scr_dconf->wsemulcookie, WSEMUL_CLEARCURSOR);
 
 #ifdef BURNER_SUPPORT
-			/* disable the burner while X is running */
+			/* enable video _immediately_ if it nedes to be... */
+			if (sc->sc_burnman)
+				wsdisplay_burner(sc);
+			/* ...and disable the burner while X is running */
 			if (sc->sc_burnout)
 				timeout_del(&sc->sc_burner);
 #endif
@@ -1205,6 +1208,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			return (EOPNOTSUPP);
 		(*sc->sc_accessops->burn_screen)(sc->sc_accesscookie,
 		     *(u_int *)data, sc->sc_burnflags);
+		sc->sc_burnman = *(u_int *)data == WSDISPLAYIO_VIDEO_OFF;
 		break;
 
 	case WSDISPLAYIO_GBURNER:
@@ -1231,8 +1235,12 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		if (d->on) {
 			error = 0;
 			sc->sc_burninintvl = hz * d->on / 1000;
-			if (sc->sc_burnman)
+			if (sc->sc_burnman) {
 				sc->sc_burnout = sc->sc_burninintvl;
+				/* reinit timeout if changed */
+				if ((scr->scr_flags & SCR_GRAPHICS) == 0)
+					wsdisplay_burn(sc, sc->sc_burnflags);
+			}
 		}
 		if (d->off) {
 			error = 0;
