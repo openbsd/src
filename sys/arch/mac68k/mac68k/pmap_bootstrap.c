@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.40 2008/01/04 19:05:32 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.41 2009/01/10 22:12:20 thib Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -50,8 +50,6 @@
 #include <machine/pmap.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
-
-#include <ufs/mfs/mfs_extern.h>
 
 #include "zsc.h"
 
