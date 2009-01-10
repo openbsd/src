@@ -1,4 +1,4 @@
-/*	$OpenBSD: abtn.c,v 1.11 2006/01/18 23:21:17 miod Exp $	*/
+/*	$OpenBSD: abtn.c,v 1.12 2009/01/10 18:00:59 robert Exp $	*/
 /*	$NetBSD: abtn.c,v 1.1 1999/07/12 17:48:26 tsubai Exp $	*/
 
 /*-
@@ -31,6 +31,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/workq.h>
 
 #include <machine/bus.h>
 
@@ -38,6 +39,10 @@
 #include <macppc/macppc/ofw_machdep.h>
 
 #include <dev/adb/adb.h>
+
+#include "audio.h"
+#include "cd.h"
+#include "wskbd.h"
 
 #define ABTN_HANDLER_ID 31
 
@@ -52,6 +57,13 @@ struct abtn_softc {
 int abtn_match(struct device *, void *, void *);
 void abtn_attach(struct device *, struct device *, void *);
 void abtn_adbcomplete(caddr_t, caddr_t, int);
+
+#if NWSKBD > 0 
+extern int cd_eject(void);
+#if NAUDIO > 0
+extern int wskbd_set_mixervolume(long dir);
+#endif
+#endif
 
 struct cfattach abtn_ca = {
 	sizeof(struct abtn_softc), abtn_match, abtn_attach
@@ -112,32 +124,40 @@ abtn_adbcomplete(caddr_t buffer, caddr_t data, int adb_command)
 		of_setbrightness(brightness);
 		break;
 
-#ifdef DEBUG
+#if NAUDIO > 0 && NWSKBD > 0
 	case 0x08:	/* mute */
 	case 0x01:	/* mute, AV hardware */
+		workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
+		    (void *)(long)0, NULL);
+		break;
 	case 0x07:	/* decrease volume */
 	case 0x02:	/* decrease volume, AV hardware */
+		workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
+		    (void *)(long)-1, NULL);
+		break;
 	case 0x06:	/* increase volume */
 	case 0x03:	/* increase volume, AV hardware */
-		/* Need callback to do something with these */
+		workq_add_task(NULL, 0, (workq_fn)wskbd_set_mixervolume,
+		    (void *)(long)1, NULL);
 		break;
-
+#endif
 	case 0x0c:	/* mirror display key */
 		/* Need callback to do something with this */
 		break;
-
+#if NWSKBD > 0 && NCD > 0
 	case 0x0b:	/* eject tray */
-		/* Need callback to do something with this */
+		workq_add_task(NULL, 0, (workq_fn)cd_eject, NULL, NULL);
 		break;
-
+#endif
 	case 0x7f:	/* numlock */
 		/* Need callback to do something with this */
 		break;
 
 	default:
+#ifdef DEBUG
 		if ((cmd & ~0x7f) == 0)
 			printf("unknown ADB button 0x%x\n", cmd);
-		break;
 #endif
+		break;
 	}
 }
