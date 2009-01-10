@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.42 2009/01/10 20:02:28 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.43 2009/01/10 22:13:07 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -107,7 +107,7 @@ Loopback mode.
 Instead of using an audio device, send input streams
 to the output, processing them on the fly.
 This mode is useful to mix, demultiplex, resample or reencode
-audio files off-line.
+audio files offline.
 .It Fl o Ar file
 Add this file to the list of files in which to store recorded samples.
 If the option argument is
@@ -349,7 +349,7 @@ both:
 $ aucat -r 96000 -C 2:3 -o file1.raw -C 6:7 -o file2.raw
 .Ed
 .Pp
-The following will split a stereo file in two mono files:
+The following will split a stereo file into two mono files:
 .Bd -literal -offset indent
 $ aucat -n -i stereo.wav -C 0:0 -o left.wav -C 1:1 -o right.wav
 .Ed
