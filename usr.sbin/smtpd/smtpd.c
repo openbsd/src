@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.22 2009/01/08 19:17:31 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.23 2009/01/10 23:54:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -26,10 +26,12 @@
 #include <sys/stat.h>
 #include <sys/uio.h>
 
+#include <bsd_auth.h>
 #include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <login_cap.h>
 #include <paths.h>
 #include <pwd.h>
 #include <regex.h>
@@ -375,14 +377,12 @@ parent_dispatch_smtp(int fd, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-			/* XXX - NOT ADVERTISED YET */
 		case IMSG_PARENT_AUTHENTICATE: {
 			struct session_auth_req *req;
 			struct session_auth_reply reply;
 			u_int8_t buffer[1024];
 			char *pw_name;
 			char *pw_passwd;
-			struct passwd *pw;
 
 			req = (struct session_auth_req *)imsg.data;
 
@@ -392,11 +392,9 @@ parent_dispatch_smtp(int fd, short event, void *p)
 			if (kn_decode_base64(req->buffer, buffer, sizeof(buffer)) != -1) {
 				pw_name = buffer+1;
 				pw_passwd = pw_name+strlen(pw_name)+1;
-				pw = safe_getpwnam(pw_name);
-				if (pw != NULL)
-					if (strcmp(pw->pw_passwd, crypt(pw_passwd,
-						    pw->pw_passwd)) == 0)
-						reply.value = 1;
+
+				if (auth_userokay(pw_name, NULL, "auth-smtp", pw_passwd))
+					reply.value = 1;
 			}
 			imsg_compose(ibuf, IMSG_PARENT_AUTHENTICATE, 0, 0,
 			    -1, &reply, sizeof(reply));
