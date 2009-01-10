@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.6 2009/01/10 17:13:28 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.7 2009/01/10 20:32:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -47,6 +47,7 @@
 
 #include <sparc64/dev/cbusvar.h>
 #include <sparc64/dev/ldcvar.h>
+#include <sparc64/dev/viovar.h>
 
 /* XXX the following declaration should be elsewhere */
 extern void myetheraddr(u_char *);
@@ -60,31 +61,6 @@ extern void myetheraddr(u_char *);
 #define VNET_TX_ENTRIES		32
 #define VNET_RX_ENTRIES		32
 
-struct vio_msg_tag {
-	uint8_t		type;
-	uint8_t		stype;
-	uint16_t	stype_env;
-	uint32_t	sid;
-};
-
-struct vio_msg {
-	uint64_t 	ldc;
-	uint8_t		type;
-	uint8_t		stype;
-	uint16_t	stype_env;
-	uint32_t	sid;
-	uint16_t	major;
-	uint16_t	minor;
-	uint8_t		dev_class;
-};
-
-struct vio_ver_info {
-	struct vio_msg_tag	tag;
-	uint16_t		major;
-	uint16_t		minor;
-	uint8_t			dev_class;
-};
-
 struct vnet_attr_info {
 	struct vio_msg_tag	tag;
 	uint8_t			xfer_mode;
@@ -95,84 +71,21 @@ struct vnet_attr_info {
 	uint64_t		mtu;
 };
 
-struct vio_dring_reg {
-	struct vio_msg_tag	tag;
-	uint64_t		dring_ident;
-	uint32_t		num_descriptors;
-	uint32_t		descriptor_size;
-	uint16_t		options;
-	uint16_t		_reserved;
-	uint32_t		ncookies;
-	struct ldc_cookie	cookie[1];
-};
+/* Address types. */
+#define VNET_ADDR_ETHERMAC	0x01
+
+/* Sub-Type envelopes. */
+#define VNET_MCAST_INFO		0x0101
+
+#define VNET_NUM_MCAST		7
 
 struct vnet_mcast_info {
 	struct vio_msg_tag	tag;
 	uint8_t			set;
 	uint8_t			count;
-	uint8_t			mcast_addr[7][ETHER_ADDR_LEN];
+	uint8_t			mcast_addr[VNET_NUM_MCAST][ETHER_ADDR_LEN];
 	uint32_t		_reserved;
 };
-
-#define VNET_NUM_MCAST		7
-
-#define VIO_TYPE_CTRL		0x01
-#define VIO_TYPE_DATA		0x02
-#define VIO_TYPE_ERR		0x04
-
-#define VIO_SUBTYPE_INFO	0x01
-#define VIO_SUBTYPE_ACK		0x02
-#define VIO_SUBTYPE_NACK	0x04
-
-#define VIO_VER_INFO		0x0001
-#define VIO_ATTR_INFO		0x0002
-#define VIO_DRING_REG		0x0003
-#define VIO_DRING_UNREG		0x0004
-#define VIO_RDX			0x0005
-
-#define VIO_PKT_DATA		0x0040
-#define VIO_DESC_DATA		0x0041
-#define VIO_DRING_DATA		0x0042
-
-#define VNET_MCAST_INFO		0x0101
-
-#define VDEV_NETWORK		0x01
-#define VDEV_NETWORK_SWITCH	0x02
-#define VDEV_DISK		0x03
-#define VDEV_DISK_SERVER	0x04
-
-#define VIO_TX_RING		0x0001
-#define VIO_RX_RING		0x0002
-
-#define VIO_PKT_MODE		0x01
-#define VIO_DESC_MODE		0x02
-#define VIO_DRING_MODE		0x03
-
-#define VNET_ADDR_ETHERMAC	0x01
-
-struct vnet_dring_msg {
-	struct vio_msg_tag	tag;
-	uint64_t		seq_no;
-	uint64_t		dring_ident;
-	uint32_t		start_idx;
-	uint32_t		end_idx;
-	uint8_t			proc_state;
-	uint8_t			_reserved[7];
-};
-
-#define VIO_DP_ACTIVE	0x01
-#define VIO_DP_STOPPED	0x02
-
-struct vio_dring_hdr {
-	uint8_t		dstate;
-	uint8_t		ack: 1;
-	uint16_t	_reserved[3];
-};
-
-#define VIO_DESC_FREE		0x01
-#define VIO_DESC_READY		0x02
-#define VIO_DESC_ACCEPTED	0x03
-#define VIO_DESC_DONE		0x04
 
 struct vnet_desc {
 	struct vio_dring_hdr	hdr;
@@ -708,7 +621,7 @@ vnet_rx_vio_data(struct vnet_softc *sc, struct vio_msg *vm)
 void
 vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 {
-	struct vnet_dring_msg *dm = (struct vnet_dring_msg *)tag;
+	struct vio_dring_msg *dm = (struct vio_dring_msg *)tag;
 	struct ldc_conn *lc = &sc->sc_lc;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mbuf *m;
@@ -965,7 +878,7 @@ vnet_start(struct ifnet *ifp)
 {
 	struct vnet_softc *sc = ifp->if_softc;
 	struct ldc_map *map = sc->sc_lm;
-	struct vnet_dring_msg dm;
+	struct vio_dring_msg dm;
 	struct mbuf *m;
 	paddr_t pa;
 	caddr_t buf;
