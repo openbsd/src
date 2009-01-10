@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.11 2008/12/21 16:15:24 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.12 2009/01/10 20:34:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -53,20 +53,20 @@ struct sun_hdl {
 	int mix_fd, mix_index;		/* /dev/mixerN stuff */
 };
 
-void sun_close(struct sio_hdl *);
-int sun_start(struct sio_hdl *);
-int sun_stop(struct sio_hdl *);
-int sun_setpar(struct sio_hdl *, struct sio_par *);
-int sun_getpar(struct sio_hdl *, struct sio_par *);
-int sun_getcap(struct sio_hdl *, struct sio_cap *);
-size_t sun_read(struct sio_hdl *, void *, size_t);
-size_t sun_write(struct sio_hdl *, void *, size_t);
-int sun_pollfd(struct sio_hdl *, struct pollfd *, int);
-int sun_revents(struct sio_hdl *, struct pollfd *);
-int sun_setvol(struct sio_hdl *, unsigned);
-void sun_getvol(struct sio_hdl *);
+static void sun_close(struct sio_hdl *);
+static int sun_start(struct sio_hdl *);
+static int sun_stop(struct sio_hdl *);
+static int sun_setpar(struct sio_hdl *, struct sio_par *);
+static int sun_getpar(struct sio_hdl *, struct sio_par *);
+static int sun_getcap(struct sio_hdl *, struct sio_cap *);
+static size_t sun_read(struct sio_hdl *, void *, size_t);
+static size_t sun_write(struct sio_hdl *, void *, size_t);
+static int sun_pollfd(struct sio_hdl *, struct pollfd *, int);
+static int sun_revents(struct sio_hdl *, struct pollfd *);
+static int sun_setvol(struct sio_hdl *, unsigned);
+static void sun_getvol(struct sio_hdl *);
 
-struct sio_ops sun_ops = {
+static struct sio_ops sun_ops = {
 	sun_close,
 	sun_setpar,
 	sun_getpar,
@@ -84,7 +84,7 @@ struct sio_ops sun_ops = {
 /*
  * convert sun encoding to sio_par encoding
  */
-void
+static void
 sun_infotoenc(struct sun_hdl *hdl, struct audio_prinfo *ai, struct sio_par *par)
 {
 	par->msb = 1;
@@ -124,7 +124,7 @@ sun_infotoenc(struct sun_hdl *hdl, struct audio_prinfo *ai, struct sio_par *par)
 /*
  * convert sio_par encoding to sun encoding
  */
-void
+static void
 sun_enctoinfo(struct sun_hdl *hdl, struct audio_prinfo *ai, struct sio_par *par)
 {
 	if (par->le && par->sig) {
@@ -143,7 +143,7 @@ sun_enctoinfo(struct sun_hdl *hdl, struct audio_prinfo *ai, struct sio_par *par)
  * try to set the device to the given parameters and check that the
  * device can use them; return 1 on success, 0 on failure or error
  */
-int
+static int
 sun_tryinfo(struct sun_hdl *hdl, struct sio_enc *enc, 
     unsigned pchan, unsigned rchan, unsigned rate)
 {
@@ -206,7 +206,7 @@ sun_tryinfo(struct sun_hdl *hdl, struct sio_enc *enc,
 /*
  * guess device capabilities
  */
-int
+static int
 sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 {
 #define NCHANS (sizeof(chans) / sizeof(chans[0]))
@@ -325,7 +325,7 @@ sun_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 #undef NRATES
 }
 
-void
+static void
 sun_getvol(struct sio_hdl *sh)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
@@ -405,7 +405,7 @@ sio_open_sun(char *path, unsigned mode, int nbio)
 	return NULL;
 }
 
-void
+static void
 sun_close(struct sio_hdl *sh)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
@@ -416,7 +416,7 @@ sun_close(struct sio_hdl *sh)
 	free(hdl);
 }
 
-int
+static int
 sun_start(struct sio_hdl *sh)
 {
 	struct sio_par par;
@@ -470,7 +470,7 @@ sun_start(struct sio_hdl *sh)
 	return 1;
 }
 
-int
+static int
 sun_stop(struct sio_hdl *sh)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
@@ -505,7 +505,7 @@ sun_stop(struct sio_hdl *sh)
 	return 1;
 }
 
-int
+static int
 sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 {
 #define NRETRIES 8
@@ -624,7 +624,7 @@ sun_setpar(struct sio_hdl *sh, struct sio_par *par)
 #undef NRETRIES
 }
 
-int
+static int
 sun_getpar(struct sio_hdl *sh, struct sio_par *par)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;
@@ -655,7 +655,7 @@ sun_getpar(struct sio_hdl *sh, struct sio_par *par)
 	return 1;
 }
 
-size_t
+static size_t
 sun_read(struct sio_hdl *sh, void *buf, size_t len)
 {
 #define DROP_NMAX 0x1000
@@ -706,7 +706,7 @@ sun_read(struct sio_hdl *sh, void *buf, size_t len)
 	return n;
 }
 
-size_t
+static size_t
 sun_autostart(struct sun_hdl *hdl)
 {
 	struct audio_info aui;	
@@ -738,7 +738,7 @@ sun_autostart(struct sun_hdl *hdl)
 	return 1;
 }
 
-size_t
+static size_t
 sun_write(struct sio_hdl *sh, void *buf, size_t len)
 {
 #define ZERO_NMAX 0x1000
@@ -787,7 +787,7 @@ sun_write(struct sio_hdl *sh, void *buf, size_t len)
 	return n;
 }
 
-int
+static int
 sun_pollfd(struct sio_hdl *sh, struct pollfd *pfd, int events)
 {
 	struct sun_hdl *hdl = (struct sun_hdl *)sh;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.12 2008/12/27 11:35:50 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.13 2009/01/10 20:34:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -311,7 +311,7 @@ sio_getcap(struct sio_hdl *hdl, struct sio_cap *cap)
 	return hdl->ops->getcap(hdl, cap);
 }
 
-int
+static int
 sio_psleep(struct sio_hdl *hdl, int event)
 {
 	struct pollfd pfd;

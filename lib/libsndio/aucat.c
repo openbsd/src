@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.10 2008/12/27 12:10:42 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.11 2009/01/10 20:34:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -43,20 +43,20 @@ struct aucat_hdl {
 	unsigned curvol, reqvol;	/* current and requested volume */
 };
 
-void aucat_close(struct sio_hdl *);
-int aucat_start(struct sio_hdl *);
-int aucat_stop(struct sio_hdl *);
-int aucat_setpar(struct sio_hdl *, struct sio_par *);
-int aucat_getpar(struct sio_hdl *, struct sio_par *);
-int aucat_getcap(struct sio_hdl *, struct sio_cap *);
-size_t aucat_read(struct sio_hdl *, void *, size_t);
-size_t aucat_write(struct sio_hdl *, void *, size_t);
-int aucat_pollfd(struct sio_hdl *, struct pollfd *, int);
-int aucat_revents(struct sio_hdl *, struct pollfd *);
-int aucat_setvol(struct sio_hdl *, unsigned);
-void aucat_getvol(struct sio_hdl *);
+static void aucat_close(struct sio_hdl *);
+static int aucat_start(struct sio_hdl *);
+static int aucat_stop(struct sio_hdl *);
+static int aucat_setpar(struct sio_hdl *, struct sio_par *);
+static int aucat_getpar(struct sio_hdl *, struct sio_par *);
+static int aucat_getcap(struct sio_hdl *, struct sio_cap *);
+static size_t aucat_read(struct sio_hdl *, void *, size_t);
+static size_t aucat_write(struct sio_hdl *, void *, size_t);
+static int aucat_pollfd(struct sio_hdl *, struct pollfd *, int);
+static int aucat_revents(struct sio_hdl *, struct pollfd *);
+static int aucat_setvol(struct sio_hdl *, unsigned);
+static void aucat_getvol(struct sio_hdl *);
 
-struct sio_ops aucat_ops = {
+static struct sio_ops aucat_ops = {
 	aucat_close,
 	aucat_setpar,
 	aucat_getpar,
@@ -121,7 +121,7 @@ sio_open_aucat(char *path, unsigned mode, int nbio)
 /*
  * read a message, return 0 if blocked
  */
-int
+static int
 aucat_rmsg(struct aucat_hdl *hdl)
 {
 	ssize_t n;
@@ -152,7 +152,7 @@ aucat_rmsg(struct aucat_hdl *hdl)
 /*
  * write a message, return 0 if blocked
  */
-int
+static int
 aucat_wmsg(struct aucat_hdl *hdl)
 {
 	ssize_t n;
@@ -178,7 +178,7 @@ aucat_wmsg(struct aucat_hdl *hdl)
 /*
  * execute the next message, return 0 if blocked
  */
-int
+static int
 aucat_runmsg(struct aucat_hdl *hdl)
 {
 	if (!aucat_rmsg(hdl))
@@ -213,7 +213,7 @@ aucat_runmsg(struct aucat_hdl *hdl)
 	return 1;
 }
 
-void
+static void
 aucat_close(struct sio_hdl *sh)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
@@ -223,7 +223,7 @@ aucat_close(struct sio_hdl *sh)
 	free(hdl);
 }
 
-int
+static int
 aucat_start(struct sio_hdl *sh)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
@@ -253,7 +253,7 @@ aucat_start(struct sio_hdl *sh)
 	return 1;
 }
 
-int
+static int
 aucat_stop(struct sio_hdl *sh)
 {
 #define ZERO_MAX 0x400
@@ -313,7 +313,7 @@ aucat_stop(struct sio_hdl *sh)
 	return 1;
 }
 
-int
+static int
 aucat_setpar(struct sio_hdl *sh, struct sio_par *par)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
@@ -339,7 +339,7 @@ aucat_setpar(struct sio_hdl *sh, struct sio_par *par)
 	return 1;
 }
 
-int
+static int
 aucat_getpar(struct sio_hdl *sh, struct sio_par *par)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
@@ -374,7 +374,7 @@ aucat_getpar(struct sio_hdl *sh, struct sio_par *par)
 	return 1;
 }
 
-int
+static int
 aucat_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
@@ -408,7 +408,7 @@ aucat_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 	return 1;
 }
 
-size_t
+static size_t
 aucat_read(struct sio_hdl *sh, void *buf, size_t len)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
@@ -449,7 +449,7 @@ aucat_read(struct sio_hdl *sh, void *buf, size_t len)
 	return n;
 }
 
-int
+static int
 aucat_buildmsg(struct aucat_hdl *hdl, size_t len)
 {
 	unsigned sz;
@@ -475,7 +475,7 @@ aucat_buildmsg(struct aucat_hdl *hdl, size_t len)
 	return 0;
 }
 
-size_t
+static size_t
 aucat_write(struct sio_hdl *sh, void *buf, size_t len)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
@@ -529,7 +529,7 @@ aucat_write(struct sio_hdl *sh, void *buf, size_t len)
 	return n;
 }
 
-int
+static int
 aucat_pollfd(struct sio_hdl *sh, struct pollfd *pfd, int events)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
@@ -544,7 +544,7 @@ aucat_pollfd(struct sio_hdl *sh, struct pollfd *pfd, int events)
 	return 1;
 }
 
-int
+static int
 aucat_revents(struct sio_hdl *sh, struct pollfd *pfd)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
@@ -567,7 +567,7 @@ aucat_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	return revents & (hdl->events | POLLHUP);
 }
 
-int
+static int
 aucat_setvol(struct sio_hdl *sh, unsigned vol)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
@@ -576,7 +576,7 @@ aucat_setvol(struct sio_hdl *sh, unsigned vol)
 	return 1;
 }
 
-void
+static void
 aucat_getvol(struct sio_hdl *sh)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
