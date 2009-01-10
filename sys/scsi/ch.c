@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.35 2008/06/22 16:32:05 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.36 2009/01/10 00:15:54 jsg Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -614,7 +614,8 @@ ch_usergetelemstatus(sc, cesr)
 	for (i = 0; i < avail; ++i) {
 		struct changer_element_status *ces = &(user_data[i]);
 		copy_element_status(pg_hdr->flags, desc, ces);
-		(u_long)desc += desclen;
+		desc = (struct read_element_status_descriptor *)((u_long)desc +
+		    desclen);
 	}
 
 	/* Copy array out to userspace. */
