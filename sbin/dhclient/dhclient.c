@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.120 2008/06/07 03:22:26 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.121 2009/01/10 16:33:47 claudio Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -180,9 +180,11 @@ routehandler(void)
 		ifam = (struct ifa_msghdr *)rtm;
 		if (ifam->ifam_index != ifi->index)
 			break;
-		if (findproto((char *)(ifam + 1), ifam->ifam_addrs) != AF_INET)
+		if (findproto((char *)ifam + ifam->ifam_hdrlen,
+		    ifam->ifam_addrs) != AF_INET)
 			break;
-		sa = get_ifa((char *)(ifam + 1), ifam->ifam_addrs);
+		sa = get_ifa((char *)ifam + ifam->ifam_hdrlen,
+		    ifam->ifam_addrs);
 		if (sa == NULL)
 			goto die;
 
@@ -206,7 +208,8 @@ routehandler(void)
 		ifam = (struct ifa_msghdr *)rtm;
 		if (ifam->ifam_index != ifi->index)
 			break;
-		if (findproto((char *)(ifam + 1), ifam->ifam_addrs) != AF_INET)
+		if (findproto((char *)ifam + ifam->ifam_hdrlen,
+		    ifam->ifam_addrs) != AF_INET)
 			break;
 		if (scripttime == 0 || t < scripttime + 10)
 			break;
