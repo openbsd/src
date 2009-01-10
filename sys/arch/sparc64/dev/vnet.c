@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.4 2009/01/07 21:12:35 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.5 2009/01/10 14:23:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -182,6 +182,16 @@ struct vio_dring_reg {
 	struct ldc_cookie	cookie[1];
 };
 
+struct vnet_mcast_info {
+	struct vio_msg_tag	tag;
+	uint8_t			set;
+	uint8_t			count;
+	uint8_t			mcast_addr[7][ETHER_ADDR_LEN];
+	uint32_t		_reserved;
+};
+
+#define VNET_NUM_MCAST		7
+
 #define VIO_TYPE_CTRL		0x01
 #define VIO_TYPE_DATA		0x02
 #define VIO_TYPE_ERR		0x04
@@ -199,6 +209,8 @@ struct vio_dring_reg {
 #define VIO_PKT_DATA		0x0040
 #define VIO_DESC_DATA		0x0041
 #define VIO_DRING_DATA		0x0042
+
+#define VNET_MCAST_INFO		0x0101
 
 #define VDEV_NETWORK		0x01
 #define VDEV_NETWORK_SWITCH	0x02
@@ -371,6 +383,8 @@ void	vnet_media_status(struct ifnet *, struct ifmediareq *);
 
 void	vnet_link_state(struct vnet_softc *sc);
 
+void	vnet_setmulti(struct vnet_softc *, int);
+
 void	vnet_init(struct ifnet *);
 void	vnet_stop(struct ifnet *);
 
@@ -496,7 +510,6 @@ int
 vnet_rx_intr(void *arg)
 {
 	struct vnet_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint64_t rx_head, rx_tail, rx_state;
 	struct ldc_msg *lm;
 	uint64_t *msg;
@@ -514,7 +527,7 @@ vnet_rx_intr(void *arg)
 		sc->sc_tx_cnt = sc->sc_tx_prod = sc->sc_tx_cons = 0;
 		sc->sc_tx_seqid = 0;
 		sc->sc_ldc_state = 0;
-		ifp->if_flags &= ~IFF_RUNNING;
+		sc->sc_vio_state = 0;
 		switch (rx_state) {
 		case LDC_CHANNEL_DOWN:
 			DPRINTF(("Rx link down\n"));
@@ -866,6 +879,8 @@ vnet_rx_vio_dring_reg(struct vnet_softc *sc, struct vio_msg_tag *tag)
 void
 vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *tag)
 {
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
 	switch(tag->stype) {
 	case VIO_SUBTYPE_INFO:
 		DPRINTF(("CTRL/INFO/RDX\n"));
@@ -881,6 +896,10 @@ vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		/* Link is up! */
 		sc->sc_vio_state = VIO_ESTABLISHED;
 		vnet_link_state(sc);
+
+		/* Configure multicast now that we can. */
+		vnet_setmulti(sc, 1);
+		vnet_start(ifp);
 		break;
 
 	default:
@@ -1431,6 +1450,19 @@ vnet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		/*
+		 * XXX Removing all multicast addresses and adding
+		 * most of them back, is somewhat retarded.
+		 */
+		vnet_setmulti(sc, 0);
+		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
+		vnet_setmulti(sc, 1);
+		if (error == ENETRESET)
+			error = 0;
+		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
 	}
@@ -1472,6 +1504,45 @@ vnet_link_state(struct vnet_softc *sc)
 	if (ifp->if_link_state != link_state) {
 		ifp->if_link_state = link_state;
 		if_link_state_change(ifp);
+	}
+}
+
+void
+vnet_setmulti(struct vnet_softc *sc, int set)
+{
+	struct arpcom *ac = &sc->sc_ac;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	struct vnet_mcast_info mi;
+	int count = 0;
+
+	if (sc->sc_vio_state != VIO_ESTABLISHED)
+		return;
+
+	bzero(&mi, sizeof(mi));
+	mi.tag.type = VIO_TYPE_CTRL;
+	mi.tag.stype = VIO_SUBTYPE_INFO;
+	mi.tag.stype_env = VNET_MCAST_INFO;
+	mi.tag.sid = sc->sc_local_sid;
+	mi.set = set ? 1 : 0;
+	ETHER_FIRST_MULTI(step, ac, enm);
+	while (enm != NULL) {
+		/* XXX What about multicast ranges? */
+		bcopy(enm->enm_addrlo, mi.mcast_addr[count], ETHER_ADDR_LEN);
+		ETHER_NEXT_MULTI(step, enm);
+
+		count++;
+		if (count < VNET_NUM_MCAST)
+			continue;
+
+		mi.count = VNET_NUM_MCAST;
+		vio_sendmsg(sc, &mi, sizeof(mi));
+		count = 0;
+	}
+
+	if (count > 0) {
+		mi.count = count;
+		vio_sendmsg(sc, &mi, sizeof(mi));
 	}
 }
 
