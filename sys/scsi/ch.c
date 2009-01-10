@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.36 2009/01/10 00:15:54 jsg Exp $	*/
+/*	$OpenBSD: ch.c,v 1.37 2009/01/10 21:36:49 beck Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -496,7 +496,7 @@ ch_position(sc, cp)
 
 /*
  * Copy a volume tag to a volume_tag struct, converting SCSI byte order
- * to host native byte order in the volume serial number.  The volume          
+ * to host native byte order in the volume serial number.  The volume
  * label as returned by the changer is transferred to user mode as
  * nul-terminated string.  Volume labels are truncated at the first
  * space, as suggested by SCSI-2.
@@ -526,7 +526,7 @@ copy_element_status(int flags,	struct read_element_status_descriptor *desc,
     struct changer_element_status *ces)
 {
 	ces->ces_flags = desc->flags1;
-	
+
 	if (flags & READ_ELEMENT_STATUS_PVOLTAG)
 		copy_voltag(&ces->ces_pvoltag, &desc->pvoltag);
 	if (flags & READ_ELEMENT_STATUS_AVOLTAG)
@@ -546,7 +546,7 @@ ch_usergetelemstatus(sc, cesr)
 	struct changer_element_status *user_data = NULL;
 	struct read_element_status_header *st_hdr;
 	struct read_element_status_page_header *pg_hdr;
-	struct read_element_status_descriptor *desc;
+	caddr_t desc;
 	caddr_t data = NULL;
 	size_t size, desclen, udsize;
 	int chet = cesr->cesr_type;
@@ -573,8 +573,7 @@ ch_usergetelemstatus(sc, cesr)
 		goto done;
 
 	st_hdr = (struct read_element_status_header *)data;
-	pg_hdr = (struct read_element_status_page_header *)((u_long)st_hdr +
-	    sizeof(struct read_element_status_header));
+	pg_hdr = (struct read_element_status_page_header *) (st_hdr + 1);
 	desclen = _2btol(pg_hdr->edl);
 
 	size = sizeof(struct read_element_status_header) +
@@ -596,8 +595,7 @@ ch_usergetelemstatus(sc, cesr)
 	 * Fill in the user status array.
 	 */
 	st_hdr = (struct read_element_status_header *)data;
-	pg_hdr = (struct read_element_status_page_header *)((u_long)data +
-	    sizeof(struct read_element_status_header));
+	pg_hdr = (struct read_element_status_page_header *) (st_hdr + 1);
 
 	avail = _2btol(st_hdr->count);
 	if (avail != sc->sc_counts[chet]) {
@@ -608,14 +606,12 @@ ch_usergetelemstatus(sc, cesr)
 
 	user_data = malloc(udsize, M_DEVBUF, M_WAITOK | M_ZERO);
 
-	desc = (struct read_element_status_descriptor *)((u_long)data +
-	    sizeof(struct read_element_status_header) +
-	    sizeof(struct read_element_status_page_header));
+	desc = (caddr_t)(pg_hdr + 1);
 	for (i = 0; i < avail; ++i) {
 		struct changer_element_status *ces = &(user_data[i]);
-		copy_element_status(pg_hdr->flags, desc, ces);
-		desc = (struct read_element_status_descriptor *)((u_long)desc +
-		    desclen);
+		copy_element_status(pg_hdr->flags,
+		    (struct read_element_status_descriptor *)desc, ces);
+		desc += desclen;
 	}
 
 	/* Copy array out to userspace. */
