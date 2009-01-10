@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.50 2008/12/29 17:59:08 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.51 2009/01/10 20:02:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -111,7 +111,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-lu] [-b nsamples] [-C min:max] [-c min:max] [-e enc] "
+	    "usage: %s [-lnu] [-b nsamples] [-C min:max] [-c min:max] [-e enc] "
 	    "[-f device]\n"
 	    "\t[-h fmt] [-i file] [-m mode] [-o file] [-r rate] [-s socket]\n"
 	    "\t[-v volume] [-x policy]\n",
@@ -312,7 +312,7 @@ newoutput(struct farg *fa)
 int
 main(int argc, char **argv)
 {
-	int c, u_flag, l_flag, hdr, xrun, suspend = 0;
+	int c, u_flag, l_flag, n_flag, hdr, xrun, suspend = 0;
 	struct farg *fa;
 	struct farglist  ifiles, ofiles, sfiles;
 	struct aparams ipar, opar, dipar, dopar;
@@ -336,6 +336,7 @@ main(int argc, char **argv)
 	aparams_init(&opar, 0, 1, 44100);
 	u_flag = 0;
 	l_flag = 0;
+	n_flag = 0;
 	devpath = NULL;
 	SLIST_INIT(&ifiles);
 	SLIST_INIT(&ofiles);
@@ -346,8 +347,11 @@ main(int argc, char **argv)
 	bufsz = 44100 * 4 / 15; /* XXX: use milliseconds, not frames */
 	mode = 0;
 
-	while ((c = getopt(argc, argv, "b:c:C:e:r:h:x:v:i:o:f:m:lus:")) != -1) {
+	while ((c = getopt(argc, argv, "nb:c:C:e:r:h:x:v:i:o:f:m:lus:")) != -1) {
 		switch (c) {
+		case 'n':
+			n_flag = 1;
+			break;
 		case 'm':
 			mode = opt_mode();
 			break;
@@ -446,6 +450,12 @@ main(int argc, char **argv)
 		if (l_flag || !SLIST_EMPTY(&ofiles))
 			mode |= MODE_REC;
 	}
+	if (n_flag) {
+		if (devpath != NULL || l_flag)
+			errx(1, "can't use -n with -f or -l");
+		if (SLIST_EMPTY(&ifiles) || SLIST_EMPTY(&ofiles))
+			errx(1, "both -i and -o are required with -n");
+	}
 
 	/*
 	 * if there are no sockets paths provided use the default
@@ -490,15 +500,20 @@ main(int argc, char **argv)
 		DPRINTF("sigaction(usr2) failed1n");
 #endif
 	filelist_init();
+
 	/*
 	 * Open the device. Give half of the buffer to the device,
 	 * the other half is for the socket/files
 	 */
-	dev_init(devpath, 
-	    (mode & MODE_REC) ? &dipar : NULL,
-	    (mode & MODE_PLAY) ? &dopar : NULL,
-	    bufsz);
-
+	if (n_flag) {
+		dev_loopinit(&dipar, &dopar, bufsz);
+	} else {
+		dev_init(devpath, 
+		    (mode & MODE_REC) ? &dipar : NULL,
+		    (mode & MODE_PLAY) ? &dopar : NULL,
+		    bufsz);
+	}
+	
 	/*
 	 * Create buffers for all input and output pipes.
 	 */
@@ -530,7 +545,7 @@ main(int argc, char **argv)
 			break;
 		}
 		if ((!dev_rec || dev_rec->u.io.file == NULL) &&
-		    (!dev_play || dev_play->u.io.file == NULL)) {
+		    (!dev_play || dev_play->u.io.file == NULL) && !n_flag) {
 			fprintf(stderr, "device desappeared, terminating\n");
 			break;
 		}
@@ -563,7 +578,10 @@ main(int argc, char **argv)
 		suspend = 0;
 		dev_start();
 	}
-	dev_done();
+	if (n_flag) {
+		dev_loopdone();
+	} else
+		dev_done();
 	filelist_done();
 
        	sigfillset(&sa.sa_mask);

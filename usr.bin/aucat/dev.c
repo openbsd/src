@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.23 2009/01/06 19:27:22 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.24 2009/01/10 20:02:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -28,6 +28,72 @@
 unsigned dev_bufsz, dev_round, dev_rate;
 struct aparams dev_ipar, dev_opar;
 struct aproc *dev_mix, *dev_sub, *dev_rec, *dev_play;
+
+/*
+ * same as dev_init(), but create a fake device that records what is
+ * played
+ */
+void
+dev_loopinit(struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
+{
+	struct abuf *buf;
+	struct aparams par;
+	unsigned cmin, cmax, rate;
+
+	cmin = (dipar->cmin < dopar->cmin) ? dipar->cmin : dopar->cmin;
+	cmax = (dipar->cmax > dopar->cmax) ? dipar->cmax : dopar->cmax;
+	rate = (dipar->rate > dopar->rate) ? dipar->rate : dopar->rate;
+	aparams_init(&par, cmin, cmax, rate);
+	dev_ipar = par;
+	dev_opar = par;
+	dev_round = (bufsz + 1) / 2;
+	dev_bufsz = dev_round * 2;
+	dev_rate  = rate;       
+	dev_rec = NULL;
+	dev_play = NULL;
+	
+	buf = abuf_new(dev_bufsz, &par);
+	dev_mix = mix_new("mix", dev_bufsz);
+	dev_mix->refs++;
+	dev_sub = sub_new("sub", dev_bufsz);
+	dev_sub->refs++;
+	aproc_setout(dev_mix, buf);
+	aproc_setin(dev_sub, buf);
+
+	dev_mix->u.mix.flags |= MIX_AUTOQUIT;
+	dev_sub->u.sub.flags |= SUB_AUTOQUIT;
+
+	*dipar = dev_ipar;
+	*dopar = dev_opar;
+}
+
+/*
+ * same as dev_done(), but destroy a loopback device
+ */
+void
+dev_loopdone(void)
+{
+	struct file *f;
+
+	DPRINTF("dev_loopdone:\n");
+
+	dev_sub->refs--;
+	dev_sub = NULL;
+	dev_mix->refs--;
+	dev_mix = NULL;
+	/*
+	 * generate EOF on all inputs
+	 */
+ restart:
+	LIST_FOREACH(f, &file_list, entry) {
+		if (f->rproc != NULL) {
+			file_eof(f);
+			goto restart;
+		}
+	}
+	while (file_poll())
+		; /* nothing */
+}
 
 unsigned
 dev_roundof(unsigned newrate)

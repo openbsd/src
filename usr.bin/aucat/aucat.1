@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.41 2008/12/05 07:03:52 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.42 2009/01/10 20:02:28 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 5 2008 $
+.Dd $Mdocdate: January 10 2009 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm aucat
 .Bk -words
-.Op Fl lu
+.Op Fl lnu
 .Op Fl b Ar nsamples
 .Op Fl C Ar min : Ns Ar max
 .Op Fl c Ar min : Ns Ar max
@@ -102,6 +102,12 @@ and
 for play-only, record-only, and full-duplex, respectively.
 The default is
 .Ar duplex .
+.It Fl n
+Loopback mode.
+Instead of using an audio device, send input streams
+to the output, processing them on the fly.
+This mode is useful to mix, demultiplex, resample or reencode
+audio files off-line.
 .It Fl o Ar file
 Add this file to the list of files in which to store recorded samples.
 If the option argument is
@@ -341,6 +347,11 @@ channels 6 and 7 into another stereo file using a 96kHz sampling rate for
 both:
 .Bd -literal -offset indent
 $ aucat -r 96000 -C 2:3 -o file1.raw -C 6:7 -o file2.raw
+.Ed
+.Pp
+The following will split a stereo file in two mono files:
+.Bd -literal -offset indent
+$ aucat -n -i stereo.wav -C 0:0 -o left.wav -C 1:1 -o right.wav
 .Ed
 .Pp
 The following will start
