@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.88 2009/01/10 17:46:04 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.89 2009/01/10 23:02:47 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1548,6 +1548,7 @@ wsdisplay_emulbell(void *v)
 	    FWRITE, NULL);
 }
 
+#if !defined(WSEMUL_NO_VT100)
 void
 wsdisplay_emulinput(void *v, const u_char *data, u_int count)
 {
@@ -1566,6 +1567,7 @@ wsdisplay_emulinput(void *v, const u_char *data, u_int count)
 	while (count-- > 0)
 		(*linesw[tp->t_line].l_rint)(*data++, tp);
 }
+#endif
 
 /*
  * Calls from the keyboard interface.
