@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.115 2009/01/10 17:13:28 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.116 2009/01/10 17:28:48 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -52,7 +52,7 @@ file	arch/sparc64/dev/cbus.c			cbus
 
 # Sun HME Ethernet controllers
 device	hme: ether, ifnet, mii, ifmedia
-file	dev/ic/hme.c			hme
+file	dev/ic/hme.c				hme
 
 device	uperf
 file	arch/sparc64/dev/uperf.c		uperf needs-flag
@@ -83,6 +83,11 @@ include	"dev/pcmcia/files.pcmcia"
 # Sun specific files
 include	"../../../dev/sun/files.sun"
 
+define	iommu
+define	viommu
+file	arch/sparc64/dev/iommu.c		iommu | viommu | sbus
+file	arch/sparc64/dev/viommu.c		viommu
+
 attach	sbus at mainbus with sbus_mb
 attach	sbus at xbox with sbus_xbox
 file	arch/sparc64/dev/sbus.c			sbus
@@ -96,19 +101,19 @@ major	{wd = 12}
 
 include	"dev/puc/files.puc"
 
-device	psycho: pcibus
+device	psycho: pcibus, iommu
 attach	psycho at mainbus
 file	arch/sparc64/dev/psycho.c		psycho
 
-device	schizo: pcibus
+device	schizo: pcibus, iommu
 attach	schizo at mainbus
 file	arch/sparc64/dev/schizo.c		schizo
 
-device	pyro: pcibus
+device	pyro: pcibus, iommu
 attach	pyro at mainbus
 file	arch/sparc64/dev/pyro.c			pyro
 
-device	vpci: pcibus
+device	vpci: pcibus, viommu
 attach	vpci at mainbus
 file	arch/sparc64/dev/vpci.c			vpci
 
@@ -131,10 +136,6 @@ file	arch/sparc64/dev/ifb.c			ifb
 device	sbbc
 attach	sbbc at pci
 file	arch/sparc64/dev/sbbc.c			sbbc needs-flag
-
-# IOMMU is for both sbus and pci
-file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro | vpci
-file	arch/sparc64/dev/viommu.c		vpci
 
 # Starfire PC is needed for sbus and pci
 file	arch/sparc64/dev/starfire.c		sbus | psycho
