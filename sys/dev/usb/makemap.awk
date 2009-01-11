@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.9 2008/08/09 16:31:08 miod Exp $
+#	$OpenBSD: makemap.awk,v 1.10 2009/01/11 16:54:53 miod Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,7 +31,7 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.9 2008/08/09 16:31:08 miod Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.10 2009/01/11 16:54:53 miod Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
@@ -137,7 +137,10 @@ BEGIN {
 	conv[127] = 72
 	conv[156] = 88
 	conv[157] = 228
+	conv[160] = 127
 	conv[170] = 70
+	conv[174] = 129
+	conv[176] = 128
 	conv[181] = 84
 	conv[184] = 230
 	# 198 is #if 0 in the PS/2 map...
@@ -325,9 +328,6 @@ $1 == "#define" || $1 == "#undef" {
 			lines[124] = "    KC(124),\tKS_Copy,"
 			lines[125] = "    KC(125),\tKS_Paste,"
 			lines[126] = "    KC(126),\tKS_Find,"
-			lines[127] = "    KC(127),\tKS_AudioMute,"
-			lines[128] = "    KC(128),\tKS_AudioRaise,"
-			lines[129] = "    KC(129),\tKS_AudioLower,"
 		}
 
 		for (i = 0; i < 256; i++)
