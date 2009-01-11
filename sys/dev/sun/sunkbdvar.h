@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbdvar.h,v 1.10 2005/11/11 16:44:51 miod Exp $	*/
+/*	$OpenBSD: sunkbdvar.h,v 1.11 2009/01/11 15:53:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -50,8 +50,10 @@ struct sunkbd_softc {
 
 extern struct wskbd_accessops sunkbd_accessops;
 
+void	sunkbd_attach(struct sunkbd_softc *, struct wskbddev_attach_args *);
 void	sunkbd_bellstop(void *);
 void	sunkbd_decode(u_int8_t, u_int *, int *);
+void	sunkbd_input(struct sunkbd_softc *, u_int8_t *, u_int);
 void	sunkbd_raw(struct sunkbd_softc *, u_int8_t);
 int	sunkbd_setclick(struct sunkbd_softc *, int);
 

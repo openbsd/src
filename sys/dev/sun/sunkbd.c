@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.21 2005/11/11 16:44:51 miod Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.22 2009/01/11 15:53:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -57,6 +57,7 @@ void	sunkbd_bell(struct sunkbd_softc *, u_int, u_int, u_int);
 int	sunkbd_enable(void *, int);
 int	sunkbd_getleds(struct sunkbd_softc *);
 int	sunkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void	sunkbd_rawrepeat(void *);
 void	sunkbd_setleds(void *, int);
 
 struct wskbd_accessops sunkbd_accessops = {
@@ -64,6 +65,13 @@ struct wskbd_accessops sunkbd_accessops = {
 	sunkbd_setleds,
 	sunkbd_ioctl
 };
+
+void
+sunkbd_attach(struct sunkbd_softc *sc, struct wskbddev_attach_args *waa)
+{
+	sc->sc_wskbddev = config_found((struct device *)sc, waa,
+	    wskbddevprint);
+}
 
 void
 sunkbd_bell(struct sunkbd_softc *sc, u_int period, u_int pitch, u_int volume)
@@ -140,6 +148,18 @@ int
 sunkbd_getleds(struct sunkbd_softc *sc)
 {
 	return (sc->sc_leds);
+}
+
+void
+sunkbd_input(struct sunkbd_softc *sc, u_int8_t *buf, u_int buflen)
+{
+	u_int type;
+	int value;
+
+	while (buflen-- != 0) {
+		sunkbd_decode(*buf++, &type, &value);
+		wskbd_input(sc->sc_wskbddev, type, value);
+	}
 }
 
 int

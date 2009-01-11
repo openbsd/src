@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.18 2005/11/11 16:44:51 miod Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.19 2009/01/11 15:53:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -255,7 +255,7 @@ comkbd_attach(parent, self, aux)
 		COM_WRITE(sc, com_mcr, MCR_IENABLE | MCR_DTR | MCR_RTS);
 	}
 
-	ss->sc_wskbddev = config_found(self, &a, wskbddevprint);
+	sunkbd_attach(ss, &a);
 }
 
 void
@@ -354,17 +354,15 @@ comkbd_soft(vsc)
 {
 	struct comkbd_softc *sc = vsc;
 	struct sunkbd_softc *ss = (void *)sc;
-	u_int type;
-	int value;
+	u_int8_t cbuf[COMK_RX_RING], *cptr = cbuf;
 	u_int8_t c;
 
 	while (sc->sc_rxcnt) {
-		c = *sc->sc_rxget;
+		*cptr++ = *sc->sc_rxget;
 		if (++sc->sc_rxget == sc->sc_rxend)
 			sc->sc_rxget = sc->sc_rxbeg;
 		sc->sc_rxcnt--;
-		sunkbd_decode(c, &type, &value);
-		wskbd_input(ss->sc_wskbddev, type, value);
+		sunkbd_input(ss, cbuf, cptr - cbuf);
 	}
 
 	if (sc->sc_txcnt) {
