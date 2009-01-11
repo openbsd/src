@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.6 2008/05/26 12:37:23 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.7 2009/01/11 21:45:17 maja Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -56,6 +56,9 @@ uhub*	at usb?			# USB Hubs
 uhub*	at uhub?		# USB Hubs
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
+axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
+mos*	at uhub?		# MOSCHIP CS730/7830 10/100 Etherne
+uath*	at uhub?		# Atheros AR5005UR/AR5005UX
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 
@@ -67,5 +70,6 @@ tsec1		at obio? addr 0x25000 ivec 35 phy 5
 
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
 eephy*		at mii?		# Marvell 88E1000 series PHY
+rlphy*		at mii?		# RealTek 8139 internal PHYs
 gentbi*		at mii?		# Generic 1000BASE-X ten-bit PHY
 ukphy*		at mii?		# Generic unknown PHY
