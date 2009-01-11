@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.7 2009/01/10 20:32:37 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.8 2009/01/11 15:06:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -524,7 +524,7 @@ vnet_rx_vio_attr_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		break;
 
 	default:
-		DPRINTF(("CTRL/0x%02x/VER_INFO\n", ai->tag.stype));
+		DPRINTF(("CTRL/0x%02x/ATTR_INFO\n", ai->tag.stype));
 		break;
 	}
 }
