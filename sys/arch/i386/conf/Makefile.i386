@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.50 2007/11/28 18:25:10 tedu Exp $
+#	$OpenBSD: Makefile.i386,v 1.51 2009/01/11 21:02:03 pirofti Exp $
 
 # Makefile for OpenBSD
 #
@@ -160,7 +160,8 @@ depend:: .depend
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	    ${CPPFLAGS} < ${I386}/i386/genassym.cf
-	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
+	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
+	    < assym.dep >> .depend
 	@rm -f assym.dep
 
 

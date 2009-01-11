@@ -135,7 +135,8 @@ depend:: .depend
 .endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	    ${CPPFLAGS} < ${SPARC64}/sparc64/genassym.cf
-	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
+	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
+	    < assym.dep >> .depend
 	@rm -f assym.dep
 
 locore.o: ${SPARC64}/sparc64/locore.s assym.h

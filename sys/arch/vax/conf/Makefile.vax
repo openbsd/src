@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.32 2008/04/12 21:04:17 miod Exp $
+#	$OpenBSD: Makefile.vax,v 1.33 2009/01/11 21:02:03 pirofti Exp $
 #	$NetBSD: Makefile.vax,v 1.49 1999/07/26 05:20:49 cgd Exp $
 
 # Makefile for OpenBSD/vax
@@ -170,7 +170,8 @@ depend:: .depend
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	    ${CPPFLAGS} < ${VAX}/vax/genassym.cf
-	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
+	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
+	    < assym.dep >> .depend
 	@rm -f assym.dep
 
 

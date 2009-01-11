@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.luna88k,v 1.13 2008/04/12 21:04:17 miod Exp $
+#	$OpenBSD: Makefile.luna88k,v 1.14 2009/01/11 21:02:03 pirofti Exp $
 #
 # Makefile for OpenBSD
 #
@@ -153,7 +153,8 @@ depend:: .depend
 .endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	    ${CPPFLAGS} < ${M88K}/m88k/genassym.cf
-	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
+	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
+	    < assym.dep >> .depend
 	@rm -f assym.dep
 
 # depend on root or device configuration

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.gumstix,v 1.1 2008/11/26 14:18:11 drahn Exp $
+#	$OpenBSD: Makefile.gumstix,v 1.2 2009/01/11 21:02:03 pirofti Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -171,7 +171,8 @@ depend:: .depend
 	cat ${ARM}/arm/genassym.cf | \
 	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	    ${CPPFLAGS} 
-	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
+	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
+	    < assym.dep >> .depend
 	@rm -f assym.dep
 
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc,v 1.44 2008/04/15 16:01:34 miod Exp $
+#	$OpenBSD: Makefile.sparc,v 1.45 2009/01/11 21:02:03 pirofti Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
 # Makefile for OpenBSD
@@ -164,7 +164,8 @@ depend:: .depend
 .endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	    ${CPPFLAGS} < ${SPARC}/sparc/genassym.cf
-	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
+	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
+	    < assym.dep >> .depend
 	@rm -f assym.dep
 
 

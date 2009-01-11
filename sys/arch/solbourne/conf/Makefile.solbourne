@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.solbourne,v 1.8 2008/04/12 21:04:17 miod Exp $
+#	$OpenBSD: Makefile.solbourne,v 1.9 2009/01/11 21:02:03 pirofti Exp $
 
 # Makefile for OpenBSD
 #
@@ -158,7 +158,8 @@ depend:: .depend
 .endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	    ${CPPFLAGS} < ${SOLBOURNE}/solbourne/genassym.cf
-	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
+	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
+	    < assym.dep >> .depend
 	@rm -f assym.dep
 
 
