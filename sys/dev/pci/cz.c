@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.10 2007/10/06 23:50:54 krw Exp $ */
+/*	$OpenBSD: cz.c,v 1.11 2009/01/11 16:54:59 blambert Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -785,7 +785,7 @@ cz_intr(void *arg)
 			sc->sc_overflows++;
  error_common:
 			if (sc->sc_errors++ == 0)
-				timeout_add(&sc->sc_diag_to, 60 * hz);
+				timeout_add_sec(&sc->sc_diag_to, 60);
 			break;
 
 		case C_CM_RXBRK:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.107 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.108 2009/01/11 16:54:59 blambert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2398,7 +2398,7 @@ dc_tick(void *xsc)
 	if (sc->dc_flags & DC_21143_NWAY && !sc->dc_link)
 		timeout_add(&sc->dc_tick_tmo, hz / 10);
 	else
-		timeout_add(&sc->dc_tick_tmo, hz);
+		timeout_add_sec(&sc->dc_tick_tmo, 1);
 
 	splx(s);
 }

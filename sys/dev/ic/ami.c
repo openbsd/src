@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.190 2008/10/28 11:53:18 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.191 2009/01/11 16:54:59 blambert Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -978,7 +978,7 @@ ami_start_xs(struct ami_softc *sc, struct ami_ccb *ccb, struct scsi_xfer *xs)
 	}
 
 	/* XXX way wrong, this timeout needs to be set later */
-	timeout_add(&xs->stimeout, 61 * hz);
+	timeout_add_sec(&xs->stimeout, 61);
 	ami_start(sc, ccb);
 
 	return (SUCCESSFULLY_QUEUED);

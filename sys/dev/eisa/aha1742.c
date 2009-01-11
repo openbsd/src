@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.28 2008/11/25 17:52:02 krw Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.29 2009/01/11 16:54:59 blambert Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -1165,7 +1165,7 @@ ahb_timeout(arg)
 		ahb_send_mbox(sc, OP_ABORT_ECB, ecb);
 		/* 2 secs for the abort */
 		if ((xs->flags & SCSI_POLL) == 0)
-			timeout_add(&ecb->xs->stimeout, 2 * hz);
+			timeout_add_sec(&ecb->xs->stimeout, 2);
 	}
 
 	splx(s);

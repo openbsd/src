@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.33 2008/10/15 19:12:18 blambert Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.34 2009/01/11 16:54:59 blambert Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for QLogic adapters.
  *
@@ -374,7 +374,7 @@ ispcmd(XS_T *xs)
 		isp_prt(isp, ISP_LOGDEBUG1, "retrying later for %d.%d",
 		    XS_TGT(xs), XS_LUN(xs));
 		timeout_set(&xs->stimeout, isp_requeue, xs);
-		timeout_add(&xs->stimeout, hz);
+		timeout_add_sec(&xs->stimeout, 1);
 		XS_CMD_S_TIMER(xs);
 		break;
 	case CMD_COMPLETE:
