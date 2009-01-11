@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.19 2009/01/11 15:53:58 miod Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.20 2009/01/11 16:12:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -354,16 +354,22 @@ comkbd_soft(vsc)
 {
 	struct comkbd_softc *sc = vsc;
 	struct sunkbd_softc *ss = (void *)sc;
-	u_int8_t cbuf[COMK_RX_RING], *cptr = cbuf;
+	u_int8_t cbuf[SUNKBD_MAX_INPUT_SIZE], *cptr;
 	u_int8_t c;
 
+	cptr = cbuf;
 	while (sc->sc_rxcnt) {
 		*cptr++ = *sc->sc_rxget;
 		if (++sc->sc_rxget == sc->sc_rxend)
 			sc->sc_rxget = sc->sc_rxbeg;
 		sc->sc_rxcnt--;
-		sunkbd_input(ss, cbuf, cptr - cbuf);
+		if (cptr - cbuf == sizeof cbuf) {
+			sunkbd_input(ss, cbuf, cptr - cbuf);
+			cptr = cbuf;
+		}
 	}
+	if (cptr != cbuf)
+		sunkbd_input(ss, cbuf, cptr - cbuf);
 
 	if (sc->sc_txcnt) {
 		c = sc->sc_ier | IER_ETXRDY;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.11 2009/01/11 15:53:56 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.12 2009/01/11 16:12:14 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -941,7 +941,7 @@ zskbd_rxsoft(zst)
 	u_char rr1;
 	int code;
 	int s;
-	u_int8_t cbuf[64], *c;
+	u_int8_t cbuf[SUNKBD_MAX_INPUT_SIZE], *c;
 
 	end = zst->zst_ebuf;
 	get = zst->zst_rbget;
