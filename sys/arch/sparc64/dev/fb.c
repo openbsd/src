@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.18 2008/12/27 17:23:01 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.19 2009/01/11 15:27:32 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -220,6 +220,9 @@ fbwscons_init(struct sunfb *sf, int flags, int isconsole)
 			 * 80x34 console window.
 			 */
 			fw = 12; fh = 22;
+			wt = 0; wl = 0;
+		}
+		if (wt == 0 || wl == 0) {
 			ri->ri_flg |= RI_CENTER;
 
 			/*
