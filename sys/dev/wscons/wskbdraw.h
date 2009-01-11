@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdraw.h,v 1.1 2005/01/18 18:52:32 miod Exp $	*/
+/*	$OpenBSD: wskbdraw.h,v 1.2 2009/01/11 18:59:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -122,6 +122,8 @@
 #define	RAWKEY_f12			0x58
 #define	RAWKEY_Print_Screen		0x67
 #define	RAWKEY_Pause			0x6a
+#define	RAWKEY_Meta_L			0x73
+#define	RAWKEY_Meta_R			0x74
 #define	RAWKEY_KP_Equal			0x76
 #define	RAWKEY_KP_Enter			0x9c
 #define	RAWKEY_Control_R		0x9d

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbdvar.h,v 1.12 2009/01/11 16:12:15 miod Exp $	*/
+/*	$OpenBSD: sunkbdvar.h,v 1.13 2009/01/11 18:59:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -48,6 +48,15 @@ struct sunkbd_softc {
 	struct timeout	sc_bellto;
 
 	struct device	*sc_wskbddev;
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int		sc_rawkbd;
+	int		sc_nrep;
+	char		sc_rep[SUNKBD_MAX_INPUT_SIZE * 2];
+	struct timeout	sc_rawrepeat_tmo;
+#define	REP_DELAY1	400
+#define	REP_DELAYN	100
+#endif
 };
 
 extern struct wskbd_accessops sunkbd_accessops;
@@ -75,3 +84,4 @@ extern struct wskbd_mapdata sunkbd5_keymapdata;
 
 #define	MAXSUNLAYOUT	0x062
 extern const int sunkbd_layouts[MAXSUNLAYOUT];
+extern const u_int8_t sunkbd_rawmap[0x80];
