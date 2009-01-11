@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.136 2008/08/11 19:03:05 reyk Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.137 2009/01/11 19:44:57 miod Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.136 2008/08/11 19:03:05 reyk Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.137 2009/01/11 19:44:57 miod Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -115,6 +115,12 @@ int	donothing;
 struct dos_partition *dosdp;	/* DOS partition, if found */
 struct dos_partition *findopenbsd(int, off_t, struct dos_partition **, int *);
 struct dos_partition *readmbr(int);
+#endif
+
+#ifdef DPMELABEL
+int	dpme_label = 0;
+uint32_t dpme_obsd_start, dpme_obsd_size;
+int	check_dpme(int, uint32_t *, uint32_t *);
 #endif
 
 void	makedisktab(FILE *, struct disklabel *);
@@ -249,6 +255,14 @@ main(int argc, char *argv[])
 	 * partition.
 	 */
 	dosdp = readmbr(f);
+#endif
+
+#ifdef DPMELABEL
+	/*
+	 * Check for a MacOS DPME partition table, and find out the
+	 * area of the OpenBSD DPME partition, if any.
+	 */
+	dpme_label = check_dpme(f, &dpme_obsd_start, &dpme_obsd_size);
 #endif
 
 	switch (op) {
@@ -624,6 +638,60 @@ readmbr(int f)
 
 	/* Table appears to be empty. */
 	return (NULL);
+}
+#endif
+
+#ifdef DPMELABEL
+int
+check_dpme(int f, uint32_t *start, uint32_t *size)
+{
+	char sector[DEV_BSIZE];
+	unsigned int partno, partcnt;
+	struct part_map_entry part;
+
+	/*
+	 * Read what would be the first DPME partition, and
+	 * check for a valid signature.
+	 */
+
+	if (lseek(f, (off_t)DEV_BSIZE, SEEK_SET) < 0 ||
+	    read(f, sector, sizeof(sector)) != sizeof(sector))
+		return (0);
+	/* no direct derefence due to strict alignment */
+	memcpy(&part, sector, sizeof part);
+
+	if (part.pmSig != PART_ENTRY_MAGIC)
+		return (0);
+
+	/*
+	 * If the signature matches, perform a few more sanity checks,
+	 * and then loop over the remaining partitions.  We can safely
+	 * rely on the first entry being of the partition map type,
+	 * so it's ok to skip it.
+	 */
+
+	partcnt = part.pmMapBlkCnt;
+	if (partcnt <= 1 || partcnt > 32)
+		return (0);
+
+	for (partno = 2; partno <= partcnt; partno++) {
+		if (lseek(f, (off_t)partno * DEV_BSIZE, SEEK_SET) < 0 ||
+		    read(f, sector, sizeof(sector)) != sizeof(sector))
+			return (0);
+		/* no direct derefence due to strict alignment */
+		memcpy(&part, sector, sizeof part);
+
+		if (part.pmSig != PART_ENTRY_MAGIC)
+			return (0);
+
+		if (strcasecmp(part.pmPartType, PART_TYPE_OPENBSD) == 0) {
+			*start = part.pmPyPartStart;
+			*size = part.pmPartBlkCnt;
+			return (1);
+		}
+	}
+
+	return (0);
 }
 #endif
 

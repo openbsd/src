@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 2008/06/25 18:31:07 otto Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 2009/01/11 19:44:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Theo de Raadt <deraadt@openbsd.org>
@@ -33,4 +33,8 @@ extern  int dflag;
 
 #ifdef DOSLABEL
 extern  struct dos_partition *dosdp;    /* DOS partition, if found */
+#endif
+#ifdef DPMELABEL
+extern	int dpme_label;			/* nonzero if DPME table */
+extern	uint32_t dpme_obsd_start, dpme_obsd_size; /* OpenBSD DPME boundaries */
 #endif
