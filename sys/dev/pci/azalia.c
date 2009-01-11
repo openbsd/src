@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.112 2009/01/05 09:40:26 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.113 2009/01/11 11:32:48 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1666,6 +1666,9 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		for (c = 0; c < group->nconv; c++) {
 			chan = 0;
 			bits_rates = ~0;
+			if (this->w[group->conv[0]].widgetcap &
+			    COP_AWCAP_DIGITAL)
+				bits_rates &= ~(COP_PCM_B32);
 			for (i = 0; i <= c; i++) {
 				nid = group->conv[i];
 				chan += WIDGET_CHANNELS(&this->w[nid]);
@@ -1682,6 +1685,9 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		for (c = 0; c < group->nconv; c++) {
 			chan = 0;
 			bits_rates = ~0;
+			if (this->w[group->conv[0]].widgetcap &
+			    COP_AWCAP_DIGITAL)
+				bits_rates &= ~(COP_PCM_B32);
 			for (i = 0; i <= c; i++) {
 				nid = group->conv[i];
 				chan += WIDGET_CHANNELS(&this->w[nid]);
