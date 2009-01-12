@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldcvar.h,v 1.1 2009/01/10 17:13:28 kettenis Exp $	*/
+/*	$OpenBSD: ldcvar.h,v 1.2 2009/01/12 19:34:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -89,6 +89,7 @@ struct ldc_conn {
 
 	void		*lc_sc;
 	void		(*lc_reset)(struct ldc_conn *);
+	void		(*lc_start)(struct ldc_conn *);
 	void		(*lc_rx_data)(struct ldc_conn *, struct ldc_pkt *);
 };
 
