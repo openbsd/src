@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.229 2009/01/12 20:11:13 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.230 2009/01/12 20:45:50 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -24,6 +24,7 @@ option		USBVERBOSE
 option		WSEMUL_SUN	# provide sun terminal emulation; required
 option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation
 option		WSEMUL_DUMB
+option		WSDISPLAY_COMPAT_RAWKBD	# provide raw scancodes; needed for X11
 
 config		bsd	swap generic
 
@@ -478,7 +479,7 @@ rfx*		at sbus?		# RasterFlex framebuffer series
 wsdisplay*	at rfx?
 tvtwo*		at sbus?		# Parallax XVideo/PowerVideo framebuffer
 wsdisplay*	at tvtwo?
-vgafb*		at pci?			# PCI display
+vgafb*		at pci?			# PCI display (except for Expert3D)
 wsdisplay*	at vgafb?
 vigra*		at sbus?		# Viagra framebuffer series
 wsdisplay*	at vigra?
@@ -516,6 +517,4 @@ owsbm*	at onewire?			# Smart Battery Monitor
 owtemp* at onewire?			# Temperature
 
 pseudo-device	hotplug	1		# devices hot plugging
-
-# mouse & keyboard multiplexor pseudo-devices
-#pseudo-device	wsmux	2
+pseudo-device	wsmux	2		# mouse & keyboard multiplexor
