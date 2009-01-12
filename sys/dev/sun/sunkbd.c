@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.24 2009/01/12 17:45:37 miod Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.25 2009/01/12 21:11:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -57,7 +57,6 @@
 #endif
 
 void	sunkbd_bell(struct sunkbd_softc *, u_int, u_int, u_int);
-void	sunkbd_decode(u_int8_t, u_int *, int *);
 void	sunkbd_decode5(u_int8_t, u_int *, int *);
 int	sunkbd_enable(void *, int);
 int	sunkbd_getleds(struct sunkbd_softc *);

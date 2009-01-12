@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.22 2009/01/11 16:12:15 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.23 2009/01/12 21:11:58 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -1093,15 +1093,5 @@ zskbd_cngetc(v, type, data)
 	c = *zst->zst_cs->cs_reg_data;
 	splx(s);
 
-	switch (c) {
-	case SKBD_RSP_IDLE:
-		*type = WSCONS_EVENT_ALL_KEYS_UP;
-		*data = 0;
-		break;
-	default:
-		*type = (c & 0x80) ?
-		    WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
-		*data = c & 0x7f;
-		break;
-	}
+	sunkbd_decode(c, type, data);
 }
