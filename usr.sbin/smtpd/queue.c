@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.44 2009/01/06 20:17:23 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.45 2009/01/12 19:54:37 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -694,54 +694,52 @@ queue_delete_incoming_message(char *msgid)
 int
 queue_record_incoming_envelope(struct message *message)
 {
-	char evpdir[MAXPATHLEN];
 	char evpname[MAXPATHLEN];
-	char message_uid[MAXPATHLEN];
-	int fd;
-	int mode = O_CREAT|O_WRONLY|O_EXCL|O_SYNC;
 	FILE *fp;
-	int ret;
+	int fd;
 
-	if (! bsnprintf(evpdir, MAXPATHLEN, "%s/%s%s", PATH_INCOMING,
-		message->message_id, PATH_ENVELOPES))
-		fatal("queue_record_incoming_envelope: snprintf");
+again:
+	if (! bsnprintf(evpname, MAXPATHLEN, "%s/%s%s/%s.%qu", PATH_INCOMING,
+		message->message_id, PATH_ENVELOPES, message->message_id,
+		(u_int64_t)arc4random()))
+		fatalx("queue_record_incoming_envelope: snprintf");
 
-	for (;;) {
-		if (! bsnprintf(evpname, MAXPATHLEN, "%s/%s.%qu", evpdir,
-			message->message_id, (u_int64_t)arc4random()))
-			fatal("queue_record_incoming_envelope: snprintf");
-
-		(void)strlcpy(message_uid, evpname + strlen(evpdir) + 1, MAXPATHLEN);
-
-		fd = open(evpname, mode, 0600);
-		if (fd == -1) {
-			if (errno == EEXIST)
-				continue;
-			return 0;
-		}
-
-		fp = fdopen(fd, "w");
-		if (fp == NULL)
-			fatal("fdopen");
-
-		if (strlcpy(message->message_uid, message_uid, MAXPATHLEN)
-		    >= MAXPATHLEN)
-			fatal("queue_record_incoming_envelope: strlcpy");
-
-		message->creation = time(NULL);
-
-		if ((ret = fwrite(message, sizeof (struct message), 1, fp)) != 1) {
-			fclose(fp);
-			unlink(evpname);
-			return 0;
-		}
-		fflush(fp);
-		fsync(fd);
-		fclose(fp);
-
-		break;
+	fd = open(evpname, O_WRONLY|O_CREAT|O_EXCL, 0600);
+	if (fd == -1) {
+		if (errno == EEXIST)
+			goto again;
+		if (errno == ENOSPC || errno == ENFILE)
+			goto tempfail;
+		fatal("queue_record_incoming_envelope: open");
 	}
+
+	fp = fdopen(fd, "w");
+	if (fp == NULL)
+		fatal("queue_record_incoming_envelope: fdopen");
+
+	message->creation = time(NULL);
+	if (strlcpy(message->message_uid, strrchr(evpname, '/') + 1, MAXPATHLEN)
+	    >= MAXPATHLEN)
+		fatalx("queue_record_incoming_envelope: truncation");
+
+	if (fwrite(message, sizeof (struct message), 1, fp) != 1) {
+		if (errno == ENOSPC)
+			goto tempfail;
+		fatal("queue_record_incoming_envelope: write");
+	}
+
+	if (! safe_fclose(fp))
+		goto tempfail;
+
 	return 1;
+
+tempfail:
+	unlink(evpname);
+	close(fd);
+	message->creation = 0;
+	message->message_uid[0] = '\0';
+
+	return 0;
 }
 
 int
