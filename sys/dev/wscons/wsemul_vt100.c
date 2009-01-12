@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.22 2007/11/27 16:37:27 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.23 2009/01/12 20:43:53 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -403,6 +403,11 @@ wsemul_vt100_output_c0c1(struct wsemul_vt100_emuldata *edp, u_char c,
 			/* XXX cancel current escape sequence */
 			edp->state = VT100_EMUL_STATE_ESC;
 		}
+		break;
+	case ASCII_CAN:
+	case ASCII_SUB:
+		/* cancel current escape sequence */
+		edp->state = VT100_EMUL_STATE_NORMAL;
 		break;
 #if 0
 	case CSI: /* 8-bit */
@@ -937,7 +942,7 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 			continue;
 		}
 #ifdef DIAGNOSTIC
-		if (edp->state > sizeof(vt100_output) / sizeof(vt100_output[0]))
+		if (edp->state > nitems(vt100_output))
 			panic("wsemul_vt100: invalid state %d", edp->state);
 #endif
 		edp->state = vt100_output[edp->state - 1](edp, *data);
@@ -961,10 +966,9 @@ wsemul_vt100_jump_scroll(struct wsemul_vt100_emuldata *edp, const u_char *data,
 	for (; count != 0; data++, count--) {
 		curchar = *data;
 		/*
-		 * Only char for which
-		 * wsemul_vt100_output_c0c1() will switch
-		 * to escape mode, for now.
-		 * Revisit this when this changes...
+		 * Only char causing a transition from
+		 * VT100_EMUL_STATE_NORMAL to another state, for now.
+		 * Revisit this if this changes...
 		 */
 		if (curchar == ASCII_ESC)
 			break;
