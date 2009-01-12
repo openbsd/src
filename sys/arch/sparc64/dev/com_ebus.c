@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ebus.c,v 1.19 2009/01/05 22:13:17 kettenis Exp $	*/
+/*	$OpenBSD: com_ebus.c,v 1.20 2009/01/12 22:17:36 kettenis Exp $	*/
 /*	$NetBSD: com_ebus.c,v 1.6 2001/07/24 19:27:10 eeh Exp $	*/
 
 /*
@@ -210,7 +210,7 @@ com_ebus_attach(struct device *parent, struct device *self, void *aux)
 	 * This will effectively disable the TX FIFO, but will still
 	 * enable the RX FIFO, which is what we really care about.
 	 */
-	if (OF_getprop(node, "compatible", buf, sizeof(buf)) > 0 &&
+	if (OF_getprop(ea->ea_node, "compatible", buf, sizeof(buf)) > 0 &&
 	    strcmp(buf, "FJSV,su") == 0)
 		sc->sc_fifolen = 1;
 
