@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.10 2009/01/12 15:19:28 stevesk Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.11 2009/01/12 15:54:13 stevesk Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -217,7 +217,7 @@ msts_scan(struct msts *np, struct tty *tp)
 	char *fld[MAXFLDS], *cs;
 
 	/* split into fields */
-	fld[fldcnt++] = &np->cbuf[0];	/* message type */
+	fld[fldcnt++] = &np->cbuf[0];
 	for (cs = NULL, n = 0; n < np->pos && cs == NULL; n++) {
 		switch (np->cbuf[n]) {
 		case 3:		/* ASCII <ETX> */
@@ -229,8 +229,8 @@ msts_scan(struct msts *np, struct tty *tp)
 				np->cbuf[n] = '\0';
 				fld[fldcnt++] = &np->cbuf[n + 1];
 			} else {
-				DPRINTF(("nr of fields in %s sentence exceeds "
-				    "maximum of %d\n", fld[0], MAXFLDS));
+				DPRINTF(("nr of fields in sentence exceeds "
+				    "maximum of %d\n", MAXFLDS));
 				return;
 			}
 			break;
