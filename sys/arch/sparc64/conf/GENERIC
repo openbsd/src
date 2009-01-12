@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.228 2009/01/10 19:04:57 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.229 2009/01/12 20:11:13 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -334,6 +334,8 @@ timer*	at mainbus0
 # Virtual devices for sun4v systems.
 vcons0	at vbus?
 vrtc0	at vbus?
+vdsk*	at cbus?
+scsibus* at vdsk?
 vnet*	at cbus?
 
 ## Lance Ethernet - AMD7990

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.116 2009/01/10 17:28:48 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.117 2009/01/12 20:11:13 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -388,6 +388,11 @@ file	arch/sparc64/dev/vrtc.c			vrtc
 
 define	ldc
 file	arch/sparc64/dev/ldc.c			ldc
+
+# Virtual disk
+device	vdsk: ldc, scsi
+attach	vdsk at cbus
+file	arch/sparc64/dev/vdsk.c			vdsk
 
 # Virtual network
 device	vnet: ldc
