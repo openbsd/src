@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.9 2009/01/01 02:10:54 stevesk Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.10 2009/01/12 15:19:28 stevesk Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -309,7 +309,7 @@ msts_decode(struct msts *np, struct tty *tp, char *fld[], int fldcnt)
 }
 
 /*
- * Convert date field from MSTS to nanoseconds since midnight.
+ * Convert date field from MSTS to nanoseconds since the epoch.
  * The string must be of the form D:DD.MM.YY .
  * Return 0 on success, -1 if illegal characters are encountered.
  */
