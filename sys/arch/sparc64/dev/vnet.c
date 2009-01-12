@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.8 2009/01/11 15:06:52 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.9 2009/01/12 19:10:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -42,8 +42,6 @@
 #endif
 
 #include <uvm/uvm.h>
-
-#include <dev/rndvar.h>
 
 #include <sparc64/dev/cbusvar.h>
 #include <sparc64/dev/ldcvar.h>
@@ -483,7 +481,7 @@ vnet_rx_vio_ver_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		}
 
 		/* Allocate new session ID. */
-		sc->sc_local_sid = arc4random();
+		sc->sc_local_sid = tick();
 
 		vi->tag.stype = VIO_SUBTYPE_ACK;
 		vi->tag.sid = sc->sc_local_sid;
