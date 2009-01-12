@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbdmap.c,v 1.2 2009/01/11 18:59:54 miod Exp $	*/
+/*	$OpenBSD: sunkbdmap.c,v 1.3 2009/01/12 17:45:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.
@@ -99,7 +99,7 @@ const u_int8_t sunkbd_rawmap[0x80] = {
 	RAWKEY_grave,
 	RAWKEY_BackSpace,
 	RAWKEY_Insert,
-	RAWKEY_KP_Equal,
+	RAWKEY_KP_Equal,	/* type 4 only */
 	RAWKEY_KP_Divide,
 	RAWKEY_KP_Multiply,
 	RAWKEY_Null,
@@ -165,7 +165,7 @@ const u_int8_t sunkbd_rawmap[0x80] = {
 	RAWKEY_period,
 	RAWKEY_slash,
 	RAWKEY_Shift_R,
-	RAWKEY_Null,	/* KS_Linefeed on type 3/4 */
+	RAWKEY_Null,		/* KS_Linefeed on type 3/4 */
 	RAWKEY_KP_End,
 	RAWKEY_KP_Down,
 	RAWKEY_KP_Next,
@@ -181,7 +181,7 @@ const u_int8_t sunkbd_rawmap[0x80] = {
 	RAWKEY_Null,
 	RAWKEY_KP_Add,
 	RAWKEY_Null,
-	RAWKEY_Null
+	RAWKEY_AudioMute	/* type 5 remapped 0x2d */
 };
 #endif
 
@@ -232,7 +232,7 @@ const keysym_t sunkbd_keydesc_us[] = {
     KC(0x2a),				KS_grave,	KS_asciitilde,
     KC(0x2b),				KS_Delete,
     KC(0x2c),				KS_Insert,
-    KC(0x2d),				KS_KP_Equal,
+    KC(0x2d),				KS_KP_Equal,	/* type 4 */
     KC(0x2e),				KS_KP_Divide,
     KC(0x2f),				KS_KP_Multiply,
     KC(0x31),				KS_Front,
@@ -307,6 +307,7 @@ const keysym_t sunkbd_keydesc_us[] = {
     KC(0x7a),				KS_Meta_R,
     KC(0x7b),				KS_Next,
     KC(0x7d),				KS_KP_Add,
+    KC(0x7f),				KS_AudioMute,	/* type 5 KC(0x2d) */
 };
 
 /* 002 French/Belgian type 4 keyboard */

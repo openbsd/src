@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.23 2009/01/11 18:59:54 miod Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.24 2009/01/12 17:45:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -57,6 +57,8 @@
 #endif
 
 void	sunkbd_bell(struct sunkbd_softc *, u_int, u_int, u_int);
+void	sunkbd_decode(u_int8_t, u_int *, int *);
+void	sunkbd_decode5(u_int8_t, u_int *, int *);
 int	sunkbd_enable(void *, int);
 int	sunkbd_getleds(struct sunkbd_softc *);
 int	sunkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -75,6 +77,11 @@ sunkbd_attach(struct sunkbd_softc *sc, struct wskbddev_attach_args *waa)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	timeout_set(&sc->sc_rawrepeat_tmo, sunkbd_rawrepeat, sc);
 #endif
+
+	if (ISTYPE5(sc->sc_layout))
+		sc->sc_decode = sunkbd_decode5;
+	else
+		sc->sc_decode = sunkbd_decode;
 
 	sc->sc_wskbddev = config_found((struct device *)sc, waa,
 	    wskbddevprint);
@@ -145,6 +152,19 @@ sunkbd_decode(u_int8_t c, u_int *type, int *value)
 	}
 }
 
+void
+sunkbd_decode5(u_int8_t c, u_int *type, int *value)
+{
+	sunkbd_decode(c, type, value);
+	/*
+	 * Scancode 0x2d is KS_KP_Equal on type 4, and KS_AudioMute on
+	 * type 5. Rather than provide two distinct maps, we remap the
+	 * scancode here.
+	 */
+	if (*value == 0x2d)
+		*value = 0x7f;
+}
+
 int
 sunkbd_enable(void *v, int on)
 {
@@ -176,7 +196,7 @@ sunkbd_input(struct sunkbd_softc *sc, u_int8_t *buf, u_int buflen)
 
 		npress = rlen = 0;
 		while (buflen-- != 0) {
-			sunkbd_decode(*buf++, &type, &value);
+			(*sc->sc_decode)(*buf++, &type, &value);
 			c = sunkbd_rawmap[value];
 			if (c == RAWKEY_Null)
 				continue;
@@ -206,7 +226,7 @@ sunkbd_input(struct sunkbd_softc *sc, u_int8_t *buf, u_int buflen)
 	{
 		s = spltty();
 		while (buflen-- != 0) {
-			sunkbd_decode(*buf++, &type, &value);
+			(*sc->sc_decode)(*buf++, &type, &value);
 			wskbd_input(sc->sc_wskbddev, type, value);
 		}
 		splx(s);
