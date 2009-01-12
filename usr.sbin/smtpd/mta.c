@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.12 2009/01/01 16:15:47 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.13 2009/01/12 19:56:27 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -769,6 +769,14 @@ mta_write_handler(struct bufferevent *bev, void *arg)
 				lbuf[len] = '\0';
 				buf = lbuf;
 			}
+
+			/* "If first character of the line is a period, one
+			 *  additional period is inserted at the beginning."
+			 * [4.5.2]
+			 */
+			if (*buf == '.')
+				evbuffer_add_printf(batchp->bev->output, ".");
+
 			evbuffer_add_printf(batchp->bev->output, "%s\r\n", buf);
 			free(lbuf);
 			lbuf = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.39 2009/01/04 00:58:59 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.40 2009/01/12 19:56:27 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -818,7 +818,7 @@ read:
 int
 session_read_data(struct session *s, char *line, size_t nread)
 {
-	size_t len = strlen(line);
+	size_t len;
 	size_t i;
 
 	if (strcmp(line, ".") == 0) {
@@ -848,6 +848,14 @@ session_read_data(struct session *s, char *line, size_t nread)
 		s->s_msg.status |= S_MESSAGE_PERMFAILURE;
 		return 0;
 	}
+
+	/* "If the first character is a period and there are other characters
+	 *  on the line, the first character is deleted." [4.5.2]
+	 */
+	if (*line == '.')
+		line++;
+
+	len = strlen(line);
 
 	if (fwrite(line, len, 1, s->s_msg.datafp) != 1 ||
 	    fwrite("\n", 1, 1, s->s_msg.datafp) != 1) {
