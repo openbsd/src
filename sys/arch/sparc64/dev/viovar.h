@@ -1,4 +1,4 @@
-/*	$OpenBSD: viovar.h,v 1.1 2009/01/10 20:32:37 kettenis Exp $	*/
+/*	$OpenBSD: viovar.h,v 1.2 2009/01/12 19:52:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -63,6 +63,8 @@ struct vio_ver_info {
 	uint16_t		major;
 	uint16_t		minor;
 	uint8_t			dev_class;
+	uint8_t			_reserved1[3];
+	uint64_t		_reserved2[5];
 };
 
 /* Device types. */
@@ -110,9 +112,16 @@ struct vio_dring_msg {
 	uint32_t		start_idx;
 	uint32_t		end_idx;
 	uint8_t			proc_state;
-	uint8_t			_reserved[7];
+	uint8_t			_reserved1[7];
+	uint64_t		_reserved2[2];
 };
 
 /* Ring states. */
 #define VIO_DP_ACTIVE	0x01
 #define VIO_DP_STOPPED	0x02
+
+struct vio_rdx {
+	struct vio_msg_tag	tag;
+	uint64_t		_reserved[6];
+};
+
