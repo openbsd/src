@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.1 2009/01/12 20:11:13 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.2 2009/01/12 23:05:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -161,7 +161,7 @@ struct cfattach vdsk_ca = {
 };
 
 struct cfdriver vdsk_cd = {
-	NULL, "vdsk", DV_IFNET
+	NULL, "vdsk", DV_DULL
 };
 
 struct scsi_device vdsk_device = {
