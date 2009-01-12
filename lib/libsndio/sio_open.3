@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.13 2009/01/08 18:55:40 jmc Exp $
+.\" $OpenBSD: sio_open.3,v 1.14 2009/01/12 20:47:34 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 8 2009 $
+.Dd $Mdocdate: January 12 2009 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -90,13 +90,13 @@ conversions on the fly.
 .Ss Opening and closing an audio stream
 First the application must call the
 .Fn sio_open
-routine to obtain a handle representing the newly created stream;
+function to obtain a handle representing the newly created stream;
 later it will be passed as the
 .Ar hdl
 argument of most other functions.
 The
 .Fn sio_open
-routine first tries to connect to the
+function first tries to connect to the
 .Xr aucat 1
 audio server.
 If that fails, it then tries to use the
@@ -137,11 +137,11 @@ argument is true (i.e. non-zero), then the
 .Fn sio_read
 and
 .Fn sio_write
-routines (see below) will be non-blocking.
+functions (see below) will be non-blocking.
 .Pp
 The
 .Fn sio_close
-routine closes the stream and frees all allocated resources
+function closes the stream and frees all allocated resources
 associated with the
 .Nm libsndio
 handle.
@@ -257,13 +257,13 @@ The
 .Va sio_par
 structure must be initialized using the
 .Fn sio_initpar
-routine, filled with the desired parameters and
+function, filled with the desired parameters and
 the
 .Fn sio_setpar
-routine must be called.
+function must be called.
 Finally, the
 .Fn sio_getpar
-routine can be used to ensure that parameters were actually
+function can be used to ensure that parameters were actually
 accepted.
 .El
 .Pp
@@ -294,7 +294,7 @@ parameter when native byte order is required.
 .Pp
 Note that (once initialized with the
 .Fn sio_initpar
-routine), not all fields of the
+function), not all fields of the
 .Va sio_par
 structure must be filled; it is recommended to fill only
 the required parameters, as other ones will default to
@@ -312,7 +312,7 @@ The
 .Va sio_cap
 structure, filled by the
 .Fn sio_getcap
-routine, contains the list of parameter configurations.
+function, contains the list of parameter configurations.
 Each configuration contains multiple parameter sets.
 The application must examine all configurations, and
 choose its parameter set from
@@ -396,11 +396,11 @@ structure is valid for this configuration.
 .Ss Starting and stopping the stream
 The
 .Fn sio_start
-routine puts the stream in a waiting state:
+function puts the stream in a waiting state:
 the stream will wait for playback data to be provided
 (using the
 .Fn sio_write
-routine).
+function).
 Once enough data is queued to ensure that play buffers
 will not underrun, actual playback is started automatically.
 If record mode only is selected, then recording starts
@@ -410,7 +410,7 @@ synchronously as soon as enough data to play is available.
 .Pp
 The
 .Fn sio_stop
-routine stops playback and recording and puts the audio subsystem
+function stops playback and recording and puts the audio subsystem
 in the same state as after
 .Fn sio_open
 is called.
@@ -421,7 +421,7 @@ returns.
 .Ss Playing and recording
 When record mode is selected, the
 .Fn sio_read
-routine must be called to retrieve recorded data; it must be called
+function must be called to retrieve recorded data; it must be called
 often enough to ensure that internal buffers will not overrun.
 It will store at most
 .Ar nbytes
@@ -435,7 +435,7 @@ will return zero only on error.
 .Pp
 Similarly, when play mode is selected, the
 .Fn sio_write
-routine must be called to provide data to play.
+function must be called to provide data to play.
 Unless the
 .Ar nbio_flag
 is set,
@@ -450,7 +450,7 @@ then the
 .Fn sio_read
 and
 .Fn sio_write
-routines will never block; if no data is available, they will
+functions will never block; if no data is available, they will
 return zero immediately.
 .Pp
 Note that non-blocking mode must be used on bidirectional streams.
@@ -466,7 +466,7 @@ system call can be used to check if data can be
 read from or written to the stream.
 The
 .Fn sio_pollfd
-routine fills the array
+function fills the array
 .Ar pfd
 of
 .Va pollfd
@@ -487,7 +487,7 @@ returns the number of
 structures filled.
 The
 .Fn sio_revents
-routine returns the bit-mask set by
+function returns the bit-mask set by
 .Xr poll 2
 in the
 .Va pfd
@@ -510,7 +510,7 @@ it is not selected with
 .Pp
 The
 .Fn sio_nfds
-routine returns the number of
+function returns the number of
 .Va pollfd
 structures the caller must preallocate in order to be sure
 that
@@ -524,7 +524,7 @@ position in the stream the hardware is processing.
 .Pp
 The
 .Fn sio_onmove
-routine can be used to register the
+function can be used to register the
 .Va cb
 callback function that will be called by the
 .Nm sndio
@@ -696,7 +696,7 @@ stop working (i.e. always return 0).
 .Pp
 The
 .Fn sio_eof
-routine can be used at any stage;
+function can be used at any stage;
 it returns 0 if there's no pending error, and a non-zero
 value if there's an error.
 .Sh RETURN VALUES
@@ -756,7 +756,7 @@ is used to directly access an
 device,
 the
 .Fn sio_stop
-routine will stop playback immediately.
+function will stop playback immediately.
 .Pp
 The
 .Xr aucat 1
@@ -776,5 +776,5 @@ The
 .Fn sio_start
 and
 .Fn sio_stop
-routines may block for a very short period of time, thus they should
+functions may block for a very short period of time, thus they should
 not be abused during performance.
