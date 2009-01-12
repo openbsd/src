@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.35 2008/07/02 15:21:33 art Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.36 2009/01/12 19:03:12 miod Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -282,6 +282,8 @@ uvm_aiodone_daemon(void *arg)
 	int s, free;
 	struct buf *bp, *nbp;
 	UVMHIST_FUNC("uvm_aiodoned"); UVMHIST_CALLED(pdhist);
+
+	uvm.aiodoned_proc = curproc;
 
 	for (;;) {
 
