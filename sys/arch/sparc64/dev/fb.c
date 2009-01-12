@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.19 2009/01/11 15:27:32 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.20 2009/01/12 17:14:48 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -220,9 +220,17 @@ fbwscons_init(struct sunfb *sf, int flags, int isconsole)
 			 * 80x34 console window.
 			 */
 			fw = 12; fh = 22;
-			wt = 0; wl = 0;
+			wt = wl = 0;
+		} else {
+			/*
+			 * Make sure window-top and window-left
+			 * values are consistent with the font metrics.
+			 */
+			if (wt <= 0 || wt > sf->sf_width - cols * fw ||
+			    wl <= 0 || wl > sf->sf_height - rows * fh)
+				wt = wl = 0;
 		}
-		if (wt == 0 || wl == 0) {
+		if (wt == 0 /* || wl == 0 */) {
 			ri->ri_flg |= RI_CENTER;
 
 			/*
