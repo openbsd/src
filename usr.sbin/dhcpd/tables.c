@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.7 2008/04/04 22:44:21 dlg Exp $	*/
+/*	$OpenBSD: tables.c,v 1.8 2009/01/13 21:11:57 sthen Exp $	*/
 
 /* Tables of information... */
 
@@ -212,7 +212,7 @@ struct option dhcp_options[256] = {
 	{ "option-147", "X",				&dhcp_universe, 147 },
 	{ "option-148", "X",				&dhcp_universe, 148 },
 	{ "option-149", "X",				&dhcp_universe, 149 },
-	{ "option-150", "X",				&dhcp_universe, 150 },
+	{ "voip-configuration-server", "IA",		&dhcp_universe, 150 },
 	{ "option-151", "X",				&dhcp_universe, 151 },
 	{ "option-152", "X",				&dhcp_universe, 152 },
 	{ "option-153", "X",				&dhcp_universe, 153 },

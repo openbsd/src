@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.9 2007/05/31 19:20:23 jmc Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.10 2009/01/13 21:11:57 sthen Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 13 2009 $
 .Dt DHCP-OPTIONS 5
 .Os
 .Sh NAME
@@ -569,6 +569,16 @@ Servers should be listed in order of preference.
 .Xc
 The StreetTalk Directory Assistance (STDA) server option specifies a
 list of STDA servers available to the client.
+Servers should be listed in order of preference.
+.It Xo
+.Ic option voip-configuration-server Ar ip-address
+.Oo , Ar ip-address ... Oc ;
+.Xc
+The
+.Ic voip-configuration-server
+option specifies a list of (normally TFTP) servers that VoIP clients
+may download their configuration information and software images
+from.
 Servers should be listed in order of preference.
 .El
 .Sh SEE ALSO
