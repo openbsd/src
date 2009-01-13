@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.30 2009/01/13 13:53:50 kettenis Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.31 2009/01/13 19:38:44 grange Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -672,7 +672,7 @@ mpbios_scan(struct device *self)
 				return;
 			}
 
-			(u_char*)position += mp_conf[type].length;
+			position += mp_conf[type].length;
 		}
 		if (mp_verbose && mp_cth->ext_len)
 			printf("%s: MP WARNING: %d "

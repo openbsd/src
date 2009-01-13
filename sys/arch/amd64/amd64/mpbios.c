@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.15 2009/01/13 13:53:50 kettenis Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.16 2009/01/13 19:38:44 grange Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -652,7 +652,7 @@ mpbios_scan(struct device *self)
 				return;
 			}
 
-			(u_char*)position += mp_conf[type].length;
+			position += mp_conf[type].length;
 		}
 		mp_nintrs = cur_intr;
 
