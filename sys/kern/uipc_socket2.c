@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.45 2008/11/24 12:57:37 dlg Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.46 2009/01/13 13:36:12 blambert Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -364,9 +364,9 @@ int
 soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 {
 
-	if (sbreserve(&so->so_snd, sndcc) == 0)
+	if (sbreserve(&so->so_snd, sndcc))
 		goto bad;
-	if (sbreserve(&so->so_rcv, rcvcc) == 0)
+	if (sbreserve(&so->so_rcv, rcvcc))
 		goto bad2;
 	if (so->so_rcv.sb_lowat == 0)
 		so->so_rcv.sb_lowat = 1;
@@ -391,12 +391,12 @@ sbreserve(struct sockbuf *sb, u_long cc)
 {
 
 	if (cc == 0 || cc > sb_max)
-		return (0);
+		return (1);
 	sb->sb_hiwat = cc;
 	sb->sb_mbmax = min(cc * 2, sb_max + (sb_max / MCLBYTES) * MSIZE);
 	if (sb->sb_lowat > sb->sb_hiwat)
 		sb->sb_lowat = sb->sb_hiwat;
-	return (1);
+	return (0);
 }
 
 /*

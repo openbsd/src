@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.73 2008/10/09 16:00:05 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.74 2009/01/13 13:36:12 blambert Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1040,7 +1040,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 
 			case SO_SNDBUF:
 				if (sbcheckreserve(cnt, so->so_snd.sb_hiwat) ||
-				    sbreserve(&so->so_snd, cnt) == 0) {
+				    sbreserve(&so->so_snd, cnt)) {
 					error = ENOBUFS;
 					goto bad;
 				}
@@ -1048,7 +1048,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 
 			case SO_RCVBUF:
 				if (sbcheckreserve(cnt, so->so_rcv.sb_hiwat) ||
-				    sbreserve(&so->so_rcv, cnt) == 0) {
+				    sbreserve(&so->so_rcv, cnt)) {
 					error = ENOBUFS;
 					goto bad;
 				}
