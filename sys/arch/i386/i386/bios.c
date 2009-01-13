@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.83 2008/10/28 00:05:32 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.84 2009/01/13 13:53:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -52,6 +52,7 @@
 #include <machine/pcb.h>
 #include <machine/biosvar.h>
 #include <machine/apmvar.h>
+#include <machine/mpbiosvar.h>
 #include <machine/smbiosvar.h>
 
 #include <dev/isa/isareg.h>
@@ -64,6 +65,7 @@
 
 #include "apm.h"
 #include "acpi.h"
+#include "mpbios.h"
 #include "pcibios.h"
 #include "pci.h"
 
@@ -358,6 +360,19 @@ biosattach(struct device *parent, struct device *self, void *aux)
 		ba.ba_memt = I386_BUS_SPACE_MEM;
 		if (config_found(self, &ba, bios_print))
 			flags |= BIOSF_PCIBIOS;
+	}
+#endif
+
+#if NMPBIOS > 0
+	if (mpbios_probe(self)) {
+		struct bios_attach_args ba;
+
+		memset(&ba, 0, sizeof(ba));
+		ba.ba_name = "mpbios";
+		ba.ba_iot = I386_BUS_SPACE_IO;
+		ba.ba_memt = I386_BUS_SPACE_MEM;
+
+		config_found(self, &ba, bios_print);
 	}
 #endif
 

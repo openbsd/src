@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.29 2008/12/29 08:29:35 form Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.30 2009/01/13 13:53:50 kettenis Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -108,6 +108,7 @@
 #include <machine/cputypes.h>
 #include <machine/cpuvar.h>
 #include <machine/bus.h>
+#include <machine/biosvar.h>
 #include <machine/mpbiosreg.h>
 #include <machine/mpbiosvar.h>
 
@@ -196,6 +197,34 @@ int mp_verbose = 1;
 #else
 int mp_verbose = 0;
 #endif
+
+int	mpbios_match(struct device *, void *, void *);
+void	mpbios_attach(struct device *, struct device *, void *);
+
+struct cfattach mpbios_ca = {
+	sizeof(struct device), mpbios_match, mpbios_attach
+};
+
+struct cfdriver mpbios_cd = {
+	NULL, "mpbios", DV_DULL
+};
+
+int
+mpbios_match(struct device *parent, void *match, void *aux)
+{
+	struct cfdata *cf = match;
+	struct bios_attach_args *bia = aux;
+
+	if (strcmp(bia->ba_name, cf->cf_driver->cd_name) == 0)
+		return (1);
+	return (0);
+}
+
+void
+mpbios_attach(struct device *parent, struct device *self, void *aux)
+{
+	mpbios_scan(self);
+}
 
 int
 mp_print(void *aux, const char *pnp)
@@ -504,18 +533,7 @@ mpbios_scan(struct device *self)
 	int		intr_cnt;
 	paddr_t		lapic_base;
 
-	printf("%s: Intel MP Specification ", self->dv_xname);
-
-	switch (mp_fps->spec_rev) {
-	case 1:
-		printf("(Version 1.1)\n");
-		break;
-	case 4:
-		printf("(Version 1.4)\n");
-		break;
-	default:
-		printf("(unrecognized rev %d)\n", mp_fps->spec_rev);
-	}
+	printf(": Intel MP Specification 1.%d\n", mp_fps->spec_rev);
 
 	/*
 	 * looks like we've got a MP system.  start setting up
@@ -533,7 +551,7 @@ mpbios_scan(struct device *self)
 	if (mp_fps->mpfb1 != 0) {
 		struct mpbios_proc pe;
 
-		printf("\n%s: MP default configuration %d\n",
+		printf("%s: MP default configuration %d\n",
 		    self->dv_xname, mp_fps->mpfb1);
 
 		/* use default addresses */
@@ -715,6 +733,7 @@ void
 mpbios_cpu(const u_int8_t *ent, struct device *self)
 {
 	const struct mpbios_proc *entry = (const struct mpbios_proc *)ent;
+	struct device *mainbus = self->dv_parent->dv_parent;
 	struct cpu_attach_args caa;
 
 	/* XXX move this into the CPU attachment goo. */
@@ -753,7 +772,7 @@ mpbios_cpu(const u_int8_t *ent, struct device *self)
 	}
 #endif
 
-	config_found_sm(self, &caa, mp_print, mp_match);
+	config_found_sm(mainbus, &caa, mp_print, mp_match);
 }
 
 /*
@@ -1018,6 +1037,7 @@ void
 mpbios_ioapic(const u_int8_t *ent, struct device *self)
 {
 	const struct mpbios_ioapic *entry = (const struct mpbios_ioapic *)ent;
+	struct device *mainbus = self->dv_parent->dv_parent;
 	struct apic_attach_args aaa;
 
 	/* XXX let flags checking happen in ioapic driver.. */
@@ -1031,7 +1051,7 @@ mpbios_ioapic(const u_int8_t *ent, struct device *self)
 	aaa.apic_vecbase = -1;
 	aaa.flags = (mp_fps->mpfb2 & 0x80) ? IOAPIC_PICMODE : IOAPIC_VWIRE;
 
-	config_found_sm(self, &aaa, mp_print, mp_match);
+	config_found_sm(mainbus, &aaa, mp_print, mp_match);
 }
 
 int

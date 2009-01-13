@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.647 2009/01/06 23:03:16 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.648 2009/01/13 13:53:50 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -43,6 +43,7 @@ bios0	at mainbus0
 ioapic*	at mainbus?
 apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 acpi0	at bios?
+mpbios0	at bios0
 pcibios0 at bios0 flags 0x0000	# use 0x30 for a total verbose
 ipmi0	at mainbus? disable	# IPMI
 #vmt0	at mainbus?		# VMware Tools

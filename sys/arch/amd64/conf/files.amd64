@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.42 2008/12/21 18:49:46 kettenis Exp $
+#	$OpenBSD: files.amd64,v 1.43 2009/01/13 13:53:50 kettenis Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -35,12 +35,6 @@ file	arch/amd64/amd64/ipi.c			multiprocessor
 file	arch/amd64/amd64/mp_setperf.c		multiprocessor
 
 file	arch/amd64/amd64/apic.c			ioapic | lapic
-
-#Intel SMP specification 1.4
-define	mpbios
-file	arch/amd64/amd64/mpbios.c		mpbios needs-flag
-file	arch/amd64/amd64/mpbios_intr_fixup.c	mpbios & pci
-
 
 file	arch/amd64/amd64/consinit.c
 file	dev/cninit.c
@@ -81,6 +75,13 @@ file	arch/amd64/amd64/mainbus.c		mainbus
 device	bios {}
 attach	bios at mainbus
 file	arch/amd64/amd64/bios.c			bios needs-flag
+
+#Intel SMP specification 1.4
+define	mpbios
+device	mpbios
+attach	mpbios at bios
+file	arch/amd64/amd64/mpbios.c		mpbios needs-flag
+file	arch/amd64/amd64/mpbios_intr_fixup.c	mpbios & pci
 
 define	cpu {[apid = -1]}
 device	cpu

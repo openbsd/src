@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.15 2008/12/21 18:49:45 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.16 2009/01/13 13:53:50 kettenis Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
-#include <machine/mpbiosvar.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -169,11 +168,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		if (ipmi_probe(&mba.mba_iaa))
 			config_found(self, &mba.mba_iaa, mainbus_print);
 	}
-#endif
-
-#if NMPBIOS > 0
-	if (mpbios_probe(self))
-		mpbios_scan(self);
 #endif
 
 	if ((cpu_info_primary.ci_flags & CPUF_PRESENT) == 0) {

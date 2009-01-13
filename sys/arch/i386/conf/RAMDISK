@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.166 2009/01/06 23:03:16 jasper Exp $
+#	$OpenBSD: RAMDISK,v 1.167 2009/01/13 13:53:50 kettenis Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -50,6 +50,7 @@ bios0	at mainbus0
 ioapic*	at mainbus?
 apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 #option	APMDEBUG
+mpbios0	at bios0
 pcibios0 at bios0 flags 0x0000
 
 isa0	at mainbus0
