@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.234 2008/12/28 15:19:21 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.235 2009/01/13 21:35:16 sthen Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -795,7 +795,7 @@ rde_update_dispatch(struct imsg *imsg)
 		}
 
 		/*
-		 * if either ATTR_NEW_AGGREGATOR or ATTR_NEW_ASPATH is present
+		 * if either ATTR_AS4_AGGREGATOR or ATTR_AS4_PATH is present
 		 * try to fixup the attributes.
 		 * XXX do not fixup if F_ATTR_LOOP is set.
 		 */
@@ -1336,7 +1336,7 @@ bad_flags:
 		mpa->unreach_len = attr_len;
 		plen += attr_len;
 		break;
-	case ATTR_NEW_AGGREGATOR:
+	case ATTR_AS4_AGGREGATOR:
 		if (attr_len != 8)
 			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
@@ -1344,7 +1344,7 @@ bad_flags:
 			goto bad_flags;
 		a->flags |= F_ATTR_AS4BYTE_NEW;
 		goto optattr;
-	case ATTR_NEW_ASPATH:
+	case ATTR_AS4_PATH:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
@@ -1585,8 +1585,8 @@ rde_as4byte_fixup(struct rde_peer *peer, struct rde_aspath *a)
 	u_int32_t	 as;
 
 	/* first get the attributes */
-	nasp = attr_optget(a, ATTR_NEW_ASPATH);
-	naggr = attr_optget(a, ATTR_NEW_AGGREGATOR);
+	nasp = attr_optget(a, ATTR_AS4_PATH);
+	naggr = attr_optget(a, ATTR_AS4_AGGREGATOR);
 
 	if (rde_as4byte(peer)) {
 		/* NEW session using 4-byte ASNs */
@@ -1601,7 +1601,7 @@ rde_as4byte_fixup(struct rde_peer *peer, struct rde_aspath *a)
 	if ((oaggr = attr_optget(a, ATTR_AGGREGATOR))) {
 		memcpy(&as, oaggr->data, sizeof(as));
 		if (ntohl(as) != AS_TRANS) {
-			/* per RFC draft ignore NEW_ASPATH and NEW_AGGREGATOR */
+			/* per RFC ignore AS4_PATH and AS4_AGGREGATOR */
 			if (nasp)
 				attr_free(a, nasp);
 			if (naggr)
@@ -1616,11 +1616,11 @@ rde_as4byte_fixup(struct rde_peer *peer, struct rde_aspath *a)
 				fatalx("attr_optadd failed but impossible");
 		}
 	}
-	/* there is no need for NEW_AGGREGATOR any more */
+	/* there is no need for AS4_AGGREGATOR any more */
 	if (naggr)
 		attr_free(a, naggr);
 
-	/* merge NEW_ASPATH with ASPATH */
+	/* merge AS4_PATH with ASPATH */
 	if (nasp)
 		aspath_merge(a, nasp);
 }
