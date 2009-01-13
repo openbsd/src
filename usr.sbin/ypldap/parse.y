@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2008/10/28 13:47:22 aschrijver Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2009/01/13 00:16:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -701,7 +701,7 @@ parse_config(struct env *x_conf, const char *filename, int opts)
 
 	errors = 0;
 
-	if ((file = pushfile(filename, 0)) == NULL) {
+	if ((file = pushfile(filename, 1)) == NULL) {
 		return (-1);
 	}
 	topfile = file;
