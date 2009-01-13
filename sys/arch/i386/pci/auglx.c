@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.3 2008/10/25 22:30:43 jakemsr Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.4 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -1144,7 +1144,7 @@ auglx_trigger_output(void *v, void *start, void *end, int blksize,
 	for (i = 0; i < nprd; i++) {
 		sc->bm0.sc_vprd[i].base = addr;
 		sc->bm0.sc_vprd[i].size = blksize | AUGLX_PRD_EOP;
-		(char *)addr += blksize;
+		addr += blksize;
 	}
 	sc->bm0.sc_vprd[i].base = sc->bm0.sc_prd->dm_segs[0].ds_addr;
 	sc->bm0.sc_vprd[i].size = AUGLX_PRD_JMP;
@@ -1203,7 +1203,7 @@ auglx_trigger_input(void *v, void *start, void *end, int blksize,
 	for (i = 0; i < nprd; i++) {
 		sc->bm1.sc_vprd[i].base = addr;
 		sc->bm1.sc_vprd[i].size = blksize | AUGLX_PRD_EOP;
-		(char *)addr += blksize;
+		addr += blksize;
 	}
 	sc->bm1.sc_vprd[i].base = sc->bm1.sc_prd->dm_segs[0].ds_addr;
 	sc->bm1.sc_vprd[i].size = AUGLX_PRD_JMP;

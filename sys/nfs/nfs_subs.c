@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.89 2008/12/24 02:48:36 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.90 2009/01/13 19:44:20 grange Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -705,7 +705,8 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 			uiop->uio_iovcnt--;
 			uiop->uio_iov++;
 		} else {
-			(char *)uiop->uio_iov->iov_base += uiosiz;
+			uiop->uio_iov->iov_base =
+			    (char *)uiop->uio_iov->iov_base + uiosiz;
 			uiop->uio_iov->iov_len -= uiosiz;
 		}
 		siz -= uiosiz;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.46 2008/06/09 23:38:37 millert Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.47 2009/01/13 19:44:20 grange Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -755,7 +755,7 @@ cd9660_readlink(v)
 		return (error);
 	}
 	uio->uio_resid -= symlen;
-	(char *)uio->uio_iov->iov_base += symlen;
+	uio->uio_iov->iov_base = (char *)uio->uio_iov->iov_base + symlen;
 	uio->uio_iov->iov_len -= symlen;
 	return (0);
 }

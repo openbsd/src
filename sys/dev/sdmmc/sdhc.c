@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.24 2007/10/01 15:34:48 krw Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -796,7 +796,8 @@ sdhc_write_data(struct sdhc_host *hp, u_char *datap, int datalen)
 {
 	while (datalen > 3) {
 		DPRINTF(3,("%08x\n", *(u_int32_t *)datap));
-		HWRITE4(hp, SDHC_DATA, *((u_int32_t *)datap)++);
+		HWRITE4(hp, SDHC_DATA, *((u_int32_t *)datap));
+		datap += 4;
 		datalen -= 4;
 	}
 	if (datalen > 0) {
