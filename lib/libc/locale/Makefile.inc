@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.13 2009/01/13 18:18:31 kettenis Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 2009/01/13 18:44:01 kettenis Exp $
 
 # locale sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/locale ${LIBCSRCDIR}/locale
@@ -13,8 +13,9 @@ SRCS+=	_def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
 
 MAN+=	nl_langinfo.3 setlocale.3 iswalnum.3 towlower.3 \
 	btowc.3 mblen.3 mbrlen.3 mbrtowc.3 mbsinit.3 mbsrtowcs.3 \
-	mbstowcs.3 mbtowc.3 wcrtomb.3 wcsrtombs.3 wcstombs.3 wcstol.3 \
-	wctob.3 wctomb.3 wctype.3 iswctype.3 wctrans.3 towctrans.3
+	mbstowcs.3 mbtowc.3 wcrtomb.3 wcsrtombs.3 wcstod.3 wcstol.3 \
+	wcstombs.3 wctob.3 wctomb.3 \
+	wctype.3 iswctype.3 wctrans.3 towctrans.3
 MLINKS+=setlocale.3 localeconv.3 \
 	iswalnum.3 iswalpha.3 \
 	iswalnum.3 iswblank.3 \
@@ -28,6 +29,8 @@ MLINKS+=setlocale.3 localeconv.3 \
 	iswalnum.3 iswupper.3 \
 	iswalnum.3 iswxdigit.3 \
 	towlower.3 towupper.3 \
+	wcstod.3 wcstof.3 \
+	wcstod.3 wcstold.3 \
 	wcstol.3 wcstoul.3 \
 	wcstol.3 wcstoll.3 \
 	wcstol.3 wcstoull.3 \
