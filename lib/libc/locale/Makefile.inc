@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2008/12/20 23:08:08 kettenis Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2009/01/13 18:13:51 kettenis Exp $
 
 # locale sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/locale ${LIBCSRCDIR}/locale
 
 SRCS+=	_def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
 	localeconv.c nl_langinfo.c setlocale.c iswctype.c mbrtowc_sb.c \
-	multibyte_sb.c \
-	__mb_cur_max.c wcstod.c wcstol.c wcstoul.c wcstoll.c wcstoull.c \
+	multibyte_sb.c __mb_cur_max.c wcstod.c \
+	wcstol.c wcstoul.c wcstoll.c wcstoull.c wcstoimax.c wcstoumax.c \
 	setrunelocale.c runeglue.c rune.c runetable.c ___runetype_mb.c \
 	_wctrans.c
 
