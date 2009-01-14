@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.36 2009/01/02 20:01:45 kettenis Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.37 2009/01/14 20:35:42 miod Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -798,8 +798,8 @@ sbus_alloc_dma_tag(struct sbus_softc *sc, bus_dma_tag_t psdt)
 {
 	bus_dma_tag_t sdt;
 
-	sdt = (bus_dma_tag_t)
-		malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_NOWAIT);
+	sdt = (bus_dma_tag_t)malloc(sizeof(struct sparc_bus_dma_tag),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sdt == NULL)
 		/* Panic? */
 		return (psdt);
