@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.3 2003/08/25 17:59:42 drahn Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.4 2009/01/14 19:45:20 kurt Exp $	*/
 /*	$NetBSD: crt0.c,v 1.1 1996/09/12 16:59:02 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -32,6 +32,7 @@
  */
 #include <sys/param.h>
 #include <stdlib.h>
+#include <sys/syscall.h>
 
 char **environ;
 char * __progname = "";
@@ -46,11 +47,74 @@ extern unsigned char _etext, _eprol;
 
 static inline char * _strrchr(const char *p, char ch);
 
-__asm(".globl __start");
-__asm(".type __start@function");
-__asm("__start = _start");
+#define STR(x) __STRING(x) 
+__asm(
+"	.text								\n"
+"	.section	\".text\"					\n"
+"	.align 2							\n"
+"	.globl  _start							\n"
+"	.type   _start, @function					\n"
+"	.globl  __start							\n"
+"	.type   __start, @function					\n"
+"_start:								\n"
+"__start:								\n"
+"	# move argument registers to saved registers for startup flush	\n"
+"	mr %r26, %r3							\n"
+"	mr %r25, %r4							\n"
+"	mr %r24, %r5							\n"
+"	mr %r23, %r6							\n"
+"	mr %r22, %r7							\n"
+"	mflr	%r27	/* save off old link register */		\n"
+"	bl	1f							\n"
+"	# this instruction never gets executed but can be used		\n"
+"	# to find the virtual address where the page is loaded.		\n"
+"	bl _GLOBAL_OFFSET_TABLE_@local-4				\n"
+"1:									\n"
+"	mflr	%r5		# this stores where we are (+4)		\n"
+"	lwz	%r18, 0(%r5)	# load the instruction at offset_sym	\n"
+"				# it contains an offset to the location	\n"
+"				# of the GOT.				\n"
+"									\n"
+"	rlwinm %r18,%r18,0,8,30 # mask off the offset portion of the instr. \n"
+"									\n"
+"	/*								\n"
+"	 * these adds effectively calculate the value the		\n"
+"	 * bl _GLOBAL_OFFSET_TABLE_@local-4				\n"
+"	 * operation that would be below would calulate.		\n"
+"	 */								\n"
+"	add	%r28, %r18, %r5						\n"
+"	mr	%r6, %r5		# save offset for later use	\n"
+"									\n"
+"	/* mprotect GOT-4 for correct execution of blrl instruction */	\n"
+"	li	%r0, " STR(SYS_mprotect) "				\n"
+"	mr	%r3, %r28						\n"
+"	li	%r4, 4							\n"
+"	li	%r5, 5	/* (PROT_READ|PROT_EXEC) */			\n"
+"	sc								\n"
+"									\n"
+"	mr	%r5, %r6						\n"
+"									\n"
+"	li	%r0, 0							\n"
+"	# flush the blrl instruction out of the data cache		\n"
+"	dcbf	%r5, %r18						\n"
+"	sync								\n"
+"	isync								\n"
+"	# make certain that the got table addr is not in the icache	\n"
+"	icbi	%r5, %r18						\n"
+"	sync								\n"
+"	isync								\n"
+"	mtlr %r27							\n"
+"	# move argument registers back from saved registers		\n"
+"	mr %r3, %r26							\n"
+"	mr %r4, %r25							\n"
+"	mr %r5, %r24							\n"
+"	mr %r6, %r23							\n"
+"	mr %r7, %r22							\n"
+"	b ___start							\n"
+);
+
 void
-_start(int argc, char **argv, char **envp, void *aux, void (*cleanup)(void))
+___start(int argc, char **argv, char **envp, void *aux, void (*cleanup)(void))
 {
 	char *s;
 
