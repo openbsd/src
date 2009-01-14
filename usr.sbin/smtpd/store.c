@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.9 2009/01/01 16:15:47 jacekm Exp $	*/
+/*	$OpenBSD: store.c,v 1.10 2009/01/14 22:41:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -26,6 +26,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <stdio.h>
@@ -35,28 +36,43 @@
 
 #include "smtpd.h"
 
-int file_copy(FILE *, FILE *, size_t);
+int file_copy(FILE *, FILE *);
 int file_append(FILE *, FILE *);
 
 int
-file_copy(FILE *dest, FILE *src, size_t len)
+file_copy(FILE *dest, FILE *src)
 {
-	char buffer[8192];
-	size_t rlen;
+	char *buf, *lbuf;
+	size_t len;
+	char *escape;
+	
+	lbuf = NULL;
+	while ((buf = fgetln(src, &len))) {
+		if (buf[len - 1] == '\n') {
+			buf[len - 1] = '\0';
+			len--;
+		}
+		else {
+			/* EOF without EOL, copy and add the NUL */
+			if ((lbuf = malloc(len + 1)) == NULL)
+				err(1, NULL);
+			memcpy(lbuf, buf, len);
+			lbuf[len] = '\0';
+			buf = lbuf;
+		}
 
-	for (; len;) {
+		escape = buf;
+		while (*escape != '\0' && *escape == '>')
+			++escape;
+		if (strncmp("From ", escape, 5) == 0) {
+			if (fprintf(dest, ">") != 1)
+				return 0;
+		}
 
-		rlen = len < sizeof(buffer) ? len : sizeof(buffer);
-
-		if (fread(buffer, 1, rlen, src) != rlen)
+		if (fprintf(dest, "%s\n", buf) != (int)len + 1)
 			return 0;
-
-		if (fwrite(buffer, 1, rlen, dest) != rlen)
-			return 0;
-
-		len -= rlen;
 	}
-
+	free(lbuf);
 	return 1;
 }
 
@@ -70,7 +86,7 @@ file_append(FILE *dest, FILE *src)
 		return 0;
 	srcsz = sb.st_size;
 
-	if (! file_copy(dest, src, srcsz))
+	if (! file_copy(dest, src))
 		return 0;
 
 	return 1;
