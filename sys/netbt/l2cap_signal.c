@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2cap_signal.c,v 1.4 2008/02/24 21:42:03 uwe Exp $	*/
+/*	$OpenBSD: l2cap_signal.c,v 1.5 2009/01/14 08:10:05 grange Exp $	*/
 /*	$NetBSD: l2cap_signal.c,v 1.9 2007/11/10 23:12:23 plunky Exp $	*/
 
 /*-
@@ -56,7 +56,7 @@ static void l2cap_recv_disconnect_req(struct mbuf *, struct hci_link *);
 static void l2cap_recv_disconnect_rsp(struct mbuf *, struct hci_link *);
 static void l2cap_recv_info_req(struct mbuf *, struct hci_link *);
 static int l2cap_send_signal(struct hci_link *, uint8_t, uint8_t, uint16_t, void *);
-static int l2cap_send_command_rej(struct hci_link *, uint8_t, uint16_t, ...);
+static int l2cap_send_command_rej(struct hci_link *, uint8_t, uint32_t, ...);
 
 /*
  * process incoming signal packets (CID 0x0001). Can contain multiple
@@ -991,7 +991,7 @@ l2cap_send_signal(struct hci_link *link, uint8_t code, uint8_t ident,
  */
 static int
 l2cap_send_command_rej(struct hci_link *link, uint8_t ident,
-			uint16_t reason, ...)
+			uint32_t reason, ...)
 {
 	l2cap_cmd_rej_cp cp;
 	int len = 0;
