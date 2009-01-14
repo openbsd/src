@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2009/01/04 16:40:58 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.22 2009/01/14 23:36:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -117,11 +117,11 @@ typedef struct {
 %token	DNS DB TFILE EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
-%token	ARROW ENABLE AUTH
+%token	ARROW ENABLE AUTH TLS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
-%type	<v.number>	quantifier decision port ssmtp from auth
+%type	<v.number>	quantifier decision port ssmtp from auth ssl
 %type	<v.cond>	condition
 %type	<v.tv>		interval
 %type	<v.object>	mapref
@@ -224,6 +224,11 @@ certname	: USE CERTIFICATE STRING	{
 ssmtp		: SSMTP				{ $$ = 1; }
 		| /* empty */			{ $$ = 0; }
 		;
+
+ssl		: SSMTP				{ $$ = F_SSMTP; }
+		| TLS				{ $$ = F_STARTTLS; }
+		| SSL				{ $$ = F_SSL; }
+		| /* empty */			{ $$ = 0; }
 
 auth		: ENABLE AUTH  			{ $$ = 1; }
 		| /* empty */			{ $$ = 0; }
@@ -672,11 +677,11 @@ action		: DELIVER TO MAILDIR STRING	{
 		| RELAY				{
 			rule->r_action = A_RELAY;
 		}
-		| RELAY VIA ssmtp STRING port {
+		| RELAY VIA ssl STRING port {
 			rule->r_action = A_RELAYVIA;
 
 			if ($3)
-				rule->r_value.relayhost.flags = F_SSMTP;
+				rule->r_value.relayhost.flags = $3;
 
 			if (strlcpy(rule->r_value.relayhost.hostname, $4, MAXHOSTNAMELEN)
 			    >= MAXHOSTNAMELEN)
@@ -872,6 +877,7 @@ lookup(char *s)
 		{ "source",		SOURCE },
 		{ "ssl",		SSL },
 		{ "ssmtp",		SSMTP },
+		{ "tls",		TLS },
 		{ "to",			TO },
 		{ "type",		TYPE },
 		{ "use",		USE },
