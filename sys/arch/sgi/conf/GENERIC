@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.34 2008/10/10 14:16:37 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.35 2009/01/14 10:51:06 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -88,6 +88,8 @@ uvscom*		at uhub?	# SUNTAC Slipper U VS-10U serial
 ucom*		at uvscom?
 ubsa*		at uhub?	# Belkin serial adapter
 ucom*		at ubsa?
+uaudio*	at uhub?	# USB Audio
+audio*		at uaudio?
 ulpt*		at uhub?	# USB Printers	
 umass*		at uhub?	# USB Mass Storage devices
 scsibus*	at umass?
