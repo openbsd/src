@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.88 2008/06/14 04:34:08 tobias Exp $	*/
+/*	$OpenBSD: status.c,v 1.89 2009/01/14 00:23:30 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -133,6 +133,10 @@ cvs_status_local(struct cvs_file *cf)
 			cvs_log(LP_NOTICE, "Examining %s", cf->file_path);
 		return;
 	}
+
+	if (cf->file_status == FILE_UPTODATE && cf->fd == -1 &&
+	    cf->user_supplied == 0)
+		return;
 
 	if (cf->file_rcs != NULL)
 		head = rcs_head_get(cf->file_rcs);
