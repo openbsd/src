@@ -1037,7 +1037,9 @@ pk_verify_chain_standard(krb5_context context,
    
     X509_STORE_CTX_init(store_ctx, cert_store, cert, chain);
     X509_STORE_CTX_trusted_stack(store_ctx, id->trusted_certs);
-    X509_verify_cert(store_ctx);
+    if (X509_verify_cert(store_ctx) < 0) {
+	store_ctx->error = X509_V_ERR_CERT_REJECTED;	/* XXX better value? */
+    }
     /* the last checked certificate is in store_ctx->current_cert */
     krb5_clear_error_string(context);
     switch(store_ctx->error) {
