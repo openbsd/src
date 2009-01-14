@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.27 2008/12/21 09:59:24 ragge Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.28 2009/01/14 21:26:48 guenther Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -223,11 +223,16 @@
  * _XOPEN_SOURCE == 500				XPG5
  * _XOPEN_SOURCE == 520				XPG5v2
  * _XOPEN_SOURCE == 600				POSIX 1003.1-2001 with XSI
+ * _XOPEN_SOURCE == 700				POSIX 1003.1-2008 with XSI
  *
  * The XPG spec implies a specific value for _POSIX_C_SOURCE.
  */
 #ifdef _XOPEN_SOURCE
-# if (_XOPEN_SOURCE - 0 >= 600)
+# if (_XOPEN_SOURCE - 0 >= 700)
+#  define __XPG_VISIBLE		700
+#  undef _POSIX_C_SOURCE
+#  define _POSIX_C_SOURCE	200809L
+# elif (_XOPEN_SOURCE - 0 >= 600)
 #  define __XPG_VISIBLE		600
 #  undef _POSIX_C_SOURCE
 #  define _POSIX_C_SOURCE	200112L
@@ -258,12 +263,16 @@
  * _POSIX_C_SOURCE == 199506L   1003.1c-1995, 1003.1i-1995,
  *				and the omnibus ISO/IEC 9945-1:1996
  * _POSIX_C_SOURCE == 200112L   1003.1-2001
+ * _POSIX_C_SOURCE == 200809L   1003.1-2008
  *
  * The POSIX spec implies a specific value for __ISO_C_VISIBLE, though
  * this may be overridden by the _ISOC99_SOURCE macro later.
  */
 #ifdef _POSIX_C_SOURCE
-# if (_POSIX_C_SOURCE - 0 >= 200112)
+# if (_POSIX_C_SOURCE - 0 >= 200809)
+#  define __POSIX_VISIBLE	200809
+#  define __ISO_C_VISIBLE	1999
+# elif (_POSIX_C_SOURCE - 0 >= 200112)
 #  define __POSIX_VISIBLE	200112
 #  define __ISO_C_VISIBLE	1999
 # elif (_POSIX_C_SOURCE - 0 >= 199506)
@@ -307,7 +316,7 @@
 
 /*
  * Finally deal with BSD-specific interfaces that are not covered
- * by any standards.  We expose these when one of the POSIX or XPG
+ * by any standards.  We expose these when none of the POSIX or XPG
  * macros is defined or if the user explicitly asks for them.
  */
 #if !defined(_BSD_SOURCE) && \
@@ -319,10 +328,10 @@
  * Default values.
  */
 #ifndef __XPG_VISIBLE
-# define __XPG_VISIBLE		600
+# define __XPG_VISIBLE		700
 #endif
 #ifndef __POSIX_VISIBLE
-# define __POSIX_VISIBLE	200112
+# define __POSIX_VISIBLE	200809
 #endif
 #ifndef __ISO_C_VISIBLE
 # define __ISO_C_VISIBLE	1999
