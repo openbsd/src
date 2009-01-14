@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_init.c,v 1.23 2008/05/16 17:45:37 thib Exp $	*/
+/*	$OpenBSD: vfs_init.c,v 1.24 2009/01/14 21:24:08 fgsch Exp $	*/
 /*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ vfs_opv_init_explicit(struct vnodeopv_desc *vfs_opv_desc)
 		 * list of supported operations.
 		 */
 		if (opve_descp->opve_op->vdesc_offset == 0 &&
-		    opve_descp->opve_op->vdesc_offset != VOFFSET(vop_default)) {
+		    opve_descp->opve_op != VDESC(vop_default)) {                
 			printf("operation %s not listed in %s.\n",
 			    opve_descp->opve_op->vdesc_name, "vfs_op_descs");
 			panic ("vfs_opv_init: bad operation");
