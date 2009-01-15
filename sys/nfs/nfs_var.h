@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.44 2008/10/16 07:57:06 blambert Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.45 2009/01/15 19:41:18 thib Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -110,10 +110,6 @@ int nfs_pathconf(void *);
 int nfs_advlock(void *);
 int nfs_print(void *);
 int nfs_blkatoff(void *);
-int nfs_valloc(void *);
-int nfs_vfree(void *);
-int nfs_truncate(void *);
-int nfs_update(void *);
 int nfs_bwrite(void *);
 int nfs_writebp(struct buf *, int);
 int nfsspec_access(void *);
