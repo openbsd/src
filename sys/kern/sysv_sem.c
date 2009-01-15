@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.36 2008/05/23 20:14:45 djm Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.37 2009/01/15 22:54:21 oga Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -429,6 +429,10 @@ sys_semget(struct proc *p, void *v, register_t *retval)
 					DPRINTF(("not exclusive\n"));
 					error = EEXIST;
 					goto error;
+				}
+				if (semaptr_new != NULL) {
+					free(semaptr_new->sem_base, M_SEM);
+					pool_put(&sema_pool, semaptr_new);
 				}
 				goto found;
 			}
