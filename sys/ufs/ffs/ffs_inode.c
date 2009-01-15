@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.55 2008/06/12 06:58:40 deraadt Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.56 2009/01/15 07:58:36 grange Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -446,8 +446,16 @@ done:
 
 #ifdef FFS2
 #define BAP(ip, i) (((ip)->i_ump->um_fstype == UM_UFS2) ? bap2[i] : bap1[i])
+#define BAP_ASSIGN(ip, i, value)					\
+	do {								\
+		if ((ip)->i_ump->um_fstype == UM_UFS2)			\
+			bap2[i] = (value);				\
+		else							\
+			bap1[i] = (value);				\
+	} while (0)
 #else
 #define BAP(ip, i) bap1[i]
+#define BAP_ASSIGN(ip, i, value) do { bap1[i] = (value); } while (0)
 #endif /* FFS2 */
 
 /*
@@ -528,7 +536,7 @@ ffs_indirtrunc(struct inode *ip, daddr64_t lbn, daddr64_t dbn,
 		bcopy(bp->b_data, copy, (u_int) fs->fs_bsize);
 
 		for (i = last + 1; i < NINDIR(fs); i++)
-			BAP(ip, i) = 0;
+			BAP_ASSIGN(ip, i, 0);
 
 		if (!DOINGASYNC(vp)) {
 			error = bwrite(bp);
