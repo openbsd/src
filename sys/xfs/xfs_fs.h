@@ -61,11 +61,14 @@ struct xfs {
 #ifdef __osf__
 #ifdef HAVE_STRUCT_MOUNT_M_INFO
 #define VFS_TO_NNPFS(v)      ((struct xfs *) ((v)->m_info))
+#define VFS_ASSIGN(v, val)   do { (v)->m_info = (void *) (val); } while (0)
 #else
 #define VFS_TO_NNPFS(v)      ((struct xfs *) ((v)->m_data))
+#define VFS_ASSIGN(v, val)   do { (v)->m_data = (void *) (val); } while (0)
 #endif
 #else
 #define VFS_TO_NNPFS(v)      ((struct xfs *) ((v)->mnt_data))
+#define VFS_ASSIGN(v, val)   do { (v)->mnt_data = (void *) (val); } while (0)
 #endif
 #define NNPFS_TO_VFS(x)      ((x)->mp)
 

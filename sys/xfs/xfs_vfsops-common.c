@@ -140,7 +140,7 @@ xfs_mount_common_sys(struct mount *mp,
 
     nnfs_init_head(&xfs[minor(dev)].nodehead);
 
-    VFS_TO_NNPFS(mp) = &xfs[minor(dev)];
+    VFS_ASSIGN(mp, &xfs[minor(dev)]);
 #if defined(HAVE_KERNEL_VFS_GETNEWFSID)
 #if defined(HAVE_TWO_ARGUMENT_VFS_GETNEWFSID)
     vfs_getnewfsid(mp, MOUNT_AFS);
