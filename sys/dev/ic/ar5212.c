@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.48 2008/09/13 13:35:06 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.49 2009/01/15 07:55:22 grange Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -28,7 +28,7 @@
 HAL_BOOL	 ar5k_ar5212_nic_reset(struct ath_hal *, u_int32_t);
 HAL_BOOL	 ar5k_ar5212_nic_wakeup(struct ath_hal *, u_int16_t);
 u_int16_t	 ar5k_ar5212_radio_revision(struct ath_hal *, HAL_CHIP);
-const void	 ar5k_ar5212_fill(struct ath_hal *);
+void		 ar5k_ar5212_fill(struct ath_hal *);
 HAL_BOOL	 ar5k_ar5212_txpower(struct ath_hal *, HAL_CHANNEL *, u_int);
 
 /*
@@ -47,7 +47,7 @@ static const struct ar5k_ini ar5212_pcie[] = AR5K_AR5212_PCIE;
 
 AR5K_HAL_FUNCTIONS(extern, ar5k_ar5212,);
 
-const void
+void
 ar5k_ar5212_fill(struct ath_hal *hal)
 {
 	hal->ah_magic = AR5K_AR5212_MAGIC;
