@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.31 2007/11/26 15:23:26 art Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.32 2009/01/15 07:48:55 grange Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -105,7 +105,7 @@ do {									\
 	(lkp)->lk_lockholder = (pid)
 
 #define	WEHOLDIT(lkp, pid, cpu_id)					\
-	(lkp)->lk_lockholder == (pid)
+	((lkp)->lk_lockholder == (pid))
 
 #define	WAKEUP_WAITER(lkp)						\
 do {									\
