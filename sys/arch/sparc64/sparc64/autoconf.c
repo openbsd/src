@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.98 2009/01/03 22:09:29 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.99 2009/01/16 23:21:32 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1242,6 +1242,21 @@ device_register(struct device *dev, void *aux)
 		node = PCITAG_NODE(pa->pa_tag);
 
 	if (node == bootnode) {
+		if (strcmp(devname, "vdsk") == 0) {
+			/*
+			 * For virtual disks, don't nail the boot
+			 * device just yet.  Instead, we add fake a
+			 * SCSI target/lun, such that we match it the
+			 * next time around.
+			 */
+			bp->dev = dev;
+			(bp + 1)->val[0] = 0;
+			(bp + 1)->val[1] = 0;
+			nbootpath++;
+			bootpath_store(1, bp + 1);
+			return;
+		}
+
 		nail_bootdev(dev, bp);
 		return;
 	}
