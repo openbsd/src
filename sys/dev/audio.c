@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.100 2008/10/30 03:46:56 jakemsr Exp $	*/
+/*	$OpenBSD: audio.c,v 1.101 2009/01/16 23:07:33 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -99,6 +99,8 @@ int	audiodebug = 0;
 #endif
 
 #define ROUNDSIZE(x) x &= -16	/* round to nice boundary */
+
+#define AUDIO_BPS(bits)	((bits) <= 8 ? 1 : (((bits) <= 16) ? 2 : 4))
 
 int	audio_blk_ms = AUDIO_BLK_MS;
 
@@ -891,7 +893,7 @@ audio_initbufs(struct audio_softc *sc)
 	sc->sc_pnintr = 0;
 	sc->sc_pblktime = (u_long)(
 	    (u_long)sc->sc_pr.blksize * 100000 /
-	    (u_long)(sc->sc_pparams.precision / NBBY *
+	    (u_long)(AUDIO_BPS(sc->sc_pparams.precision) *
 		sc->sc_pparams.channels *
 		sc->sc_pparams.sample_rate)) * 10;
 	DPRINTF(("audio: play blktime = %lu for %d\n",
@@ -899,7 +901,7 @@ audio_initbufs(struct audio_softc *sc)
 	sc->sc_rnintr = 0;
 	sc->sc_rblktime = (u_long)(
 	    (u_long)sc->sc_rr.blksize * 100000 /
-	    (u_long)(sc->sc_rparams.precision / NBBY *
+	    (u_long)(AUDIO_BPS(sc->sc_rparams.precision) *
 		sc->sc_rparams.channels *
 		sc->sc_rparams.sample_rate)) * 10;
 	DPRINTF(("audio: record blktime = %lu for %d\n",
@@ -1363,7 +1365,7 @@ audio_set_blksize(struct audio_softc *sc, int mode, int fpb) {
 		rb = &sc->sc_rr;
 	}
 
-	fs = parm->channels * parm->precision / NBBY;
+	fs = parm->channels * AUDIO_BPS(parm->precision);
 	bs = fpb * fs;
 	maxbs = rb->bufsize / 2;
 	if (bs > maxbs)
@@ -1407,7 +1409,7 @@ audio_fill_silence(struct audio_params *params, u_char *start, u_char *p, int n)
 	 * beginning of the sample, so we overwrite partially written
 	 * ones.
 	 */
-	samplesz = params->precision / 8;
+	samplesz = AUDIO_BPS(params->precision);
 	rounderr = (p - start) % samplesz;
 	p -= rounderr;
 	n += rounderr;
@@ -1690,18 +1692,18 @@ audio_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	 * original formula:
 	 *  sc->sc_rr.drops /
 	 *  sc->sc_rparams.factor /
-	 *  (sc->sc_rparams.channels * (sc->sc_rparams.precision / NBBY))
+	 *  (sc->sc_rparams.channels * AUDIO_BPS(sc->sc_rparams.precision))
 	 */
 	case AUDIO_RERROR:
-		*(int *)addr = (sc->sc_rr.drops * NBBY) /
+		*(int *)addr = sc->sc_rr.drops /
 		    (sc->sc_rparams.factor * sc->sc_rparams.channels *
-		    sc->sc_rparams.precision);
+		    AUDIO_BPS(sc->sc_rparams.precision));
 		break;
 
 	case AUDIO_PERROR:
-		*(int *)addr = (sc->sc_pr.drops * NBBY) /
+		*(int *)addr = sc->sc_pr.drops /
 		    (sc->sc_pparams.factor * sc->sc_pparams.channels *
-		    sc->sc_pparams.precision);
+		    AUDIO_BPS(sc->sc_pparams.precision));
 		break;
 
 	/*
@@ -2299,8 +2301,6 @@ audio_check_params(struct audio_params *p)
 	case AUDIO_ENCODING_SLINEAR_BE:
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
-		p->precision = (p->precision + 7) & ~7;
-		break;
 	case AUDIO_ENCODING_MPEG_L1_STREAM:
 	case AUDIO_ENCODING_MPEG_L1_PACKETS:
 	case AUDIO_ENCODING_MPEG_L1_SYSTEM:
@@ -2793,7 +2793,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		if (r->block_size == ~0 || r->block_size == 0) {
 			fpb = rp.sample_rate * audio_blk_ms / 1000;
 		} else {
-			fs = rp.channels * (rp.precision / 8); 
+			fs = rp.channels * AUDIO_BPS(rp.precision); 
 			fpb = (r->block_size * rp.factor) / fs;
 		}
 		if (sc->sc_rr.blkset == 0)
@@ -2803,7 +2803,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		if (p->block_size == ~0 || p->block_size == 0) {
 			fpb = pp.sample_rate * audio_blk_ms / 1000;
 		} else {
-			fs = pp.channels * (pp.precision / 8);
+			fs = pp.channels * AUDIO_BPS(pp.precision);
 			fpb = (p->block_size * pp.factor) / fs;
 		}
 		if (sc->sc_pr.blkset == 0)
