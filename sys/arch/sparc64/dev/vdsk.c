@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.3 2009/01/16 16:59:58 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.4 2009/01/16 17:50:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -634,6 +634,8 @@ vdsk_rx_vio_data(struct vdsk_softc *sc, struct vio_msg *vm)
 void
 vdsk_rx_vio_dring_data(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 {
+	struct vio_dring_msg *dm = (struct vio_dring_msg *)tag;
+
 	switch(tag->stype) {
 	case VIO_SUBTYPE_INFO:
 		DPRINTF(("DATA/INFO/DRING_DATA\n"));
@@ -677,9 +679,16 @@ vdsk_rx_vio_dring_data(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 
 	case VIO_SUBTYPE_NACK:
 		DPRINTF(("DATA/NACK/DRING_DATA\n"));
-		printf("state 0x%02x\n", sc->sc_vd->vd_desc[0].hdr.dstate);
-		printf("status 0x%04x\n", sc->sc_vd->vd_desc[0].status);
-		printf("size 0x%04x\n", sc->sc_vd->vd_desc[0].size);
+	{
+		uint64_t *msg = (uint64_t *)tag;
+		int i, idx;
+		for (i = 0; i < 7; i++)
+			printf("word %d: %llx\n", i + 1, msg[i]);
+		idx = dm->start_idx;
+		printf("state 0x%02x\n", sc->sc_vd->vd_desc[idx].hdr.dstate);
+		printf("status 0x%04x\n", sc->sc_vd->vd_desc[idx].status);
+		printf("size 0x%04x\n", sc->sc_vd->vd_desc[idx].size);
+	}
 		break;
 
 	default:
@@ -948,6 +957,7 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 		sc->sc_vsd[desc].vsd_map_idx[ncookies] = map->lm_next;
 		va += PAGE_SIZE;
 		len -= PAGE_SIZE;
+		ncookies++;
 	}
 
 	sc->sc_vd->vd_desc[desc].hdr.ack = 1;
@@ -956,7 +966,7 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	sc->sc_vd->vd_desc[desc].status = 0xffffffff;
 	sc->sc_vd->vd_desc[desc].offset = lba;
 	sc->sc_vd->vd_desc[desc].size = xs->datalen;
-	sc->sc_vd->vd_desc[desc].ncookies = 1;
+	sc->sc_vd->vd_desc[desc].ncookies = ncookies;
 	membar(Sync);
 	sc->sc_vd->vd_desc[desc].hdr.dstate = VIO_DESC_READY;
 
