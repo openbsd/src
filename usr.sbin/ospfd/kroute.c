@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.66 2009/01/08 19:27:56 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.67 2009/01/16 20:50:13 gollo Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -187,16 +187,17 @@ kr_change_fib(struct kroute_node *kr, struct kroute *kroute, int krcount,
 					break;
 			}
 			nkn = kn->next;
-			if (i == krcount)
+			if (i == krcount) {
 				/* stale route */
 				if (kr_delete_fib(kn) == -1)
 					log_warnx("kr_delete_fib failed");
-			/*
-			 * if head element was removed we need to adjust
-			 * the head
-			 */
-			if (kr == kn)
-				kr = nkn;
+				/*
+				 * if head element was removed we need to adjust
+				 * the head
+				 */
+				if (kr == kn)
+					kr = nkn;
+			}
 		}
 	}
 
