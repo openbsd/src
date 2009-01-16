@@ -29,6 +29,7 @@
 ./usr/share/man/cat1/alpha
 ./usr/share/man/cat1/amd64
 ./usr/share/man/cat1/amd64/fdformat.0
+./usr/share/man/cat4/amd64/mpbios.0
 ./usr/share/man/cat1/apply.0
 ./usr/share/man/cat1/apropos.0
 ./usr/share/man/cat1/arch.0
@@ -165,6 +166,7 @@
 ./usr/share/man/cat1/htpasswd.0
 ./usr/share/man/cat1/i386
 ./usr/share/man/cat1/i386/fdformat.0
+./usr/share/man/cat4/i386/mpbios.0
 ./usr/share/man/cat1/id.0
 ./usr/share/man/cat1/ident.0
 ./usr/share/man/cat1/indent.0
@@ -483,6 +485,7 @@
 ./usr/share/man/cat1/sparc64
 ./usr/share/man/cat1/sparc64/fdformat.0
 ./usr/share/man/cat1/sparc64/mksuncd.0
+./usr/share/man/cat4/sparc64/vdsk.0
 ./usr/share/man/cat4/sparc64/vnet.0
 ./usr/share/man/cat1/spell.0
 ./usr/share/man/cat1/split.0

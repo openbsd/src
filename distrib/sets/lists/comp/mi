@@ -5640,6 +5640,9 @@
 ./usr/share/man/cat3/wcscmp.0
 ./usr/share/man/cat3/wcscpy.0
 ./usr/share/man/cat3/wcscspn.0
+./usr/share/man/cat3/wcstod.0
+./usr/share/man/cat3/wcstof.0
+./usr/share/man/cat3/wcstold.0
 ./usr/share/man/cat3/wcslcat.0
 ./usr/share/man/cat3/wcslcpy.0
 ./usr/share/man/cat3/wcslen.0
@@ -6223,12 +6226,6 @@
 ./usr/share/man/cat9/pmap_virtual_space.0
 ./usr/share/man/cat9/pmap_zero_page.0
 ./usr/share/man/cat9/pool.0
-./usr/share/man/cat9/pool_cache_destroy.0
-./usr/share/man/cat9/pool_cache_destruct_object.0
-./usr/share/man/cat9/pool_cache_get.0
-./usr/share/man/cat9/pool_cache_init.0
-./usr/share/man/cat9/pool_cache_invalidate.0
-./usr/share/man/cat9/pool_cache_put.0
 ./usr/share/man/cat9/pool_destroy.0
 ./usr/share/man/cat9/pool_get.0
 ./usr/share/man/cat9/pool_init.0
