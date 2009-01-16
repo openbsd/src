@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.4 2009/01/16 17:50:55 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.5 2009/01/16 23:57:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -340,7 +340,7 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.adapter_buswidth = 2;
 	sc->sc_link.luns = 1; /* XXX slices should be presented as luns? */
 	sc->sc_link.adapter_target = 2;
-	sc->sc_link.openings = 32;
+	sc->sc_link.openings = sc->sc_vd->vd_nentries - 1;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
@@ -634,8 +634,6 @@ vdsk_rx_vio_data(struct vdsk_softc *sc, struct vio_msg *vm)
 void
 vdsk_rx_vio_dring_data(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 {
-	struct vio_dring_msg *dm = (struct vio_dring_msg *)tag;
-
 	switch(tag->stype) {
 	case VIO_SUBTYPE_INFO:
 		DPRINTF(("DATA/INFO/DRING_DATA\n"));
@@ -679,16 +677,6 @@ vdsk_rx_vio_dring_data(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 
 	case VIO_SUBTYPE_NACK:
 		DPRINTF(("DATA/NACK/DRING_DATA\n"));
-	{
-		uint64_t *msg = (uint64_t *)tag;
-		int i, idx;
-		for (i = 0; i < 7; i++)
-			printf("word %d: %llx\n", i + 1, msg[i]);
-		idx = dm->start_idx;
-		printf("state 0x%02x\n", sc->sc_vd->vd_desc[idx].hdr.dstate);
-		printf("status 0x%04x\n", sc->sc_vd->vd_desc[idx].status);
-		printf("size 0x%04x\n", sc->sc_vd->vd_desc[idx].size);
-	}
 		break;
 
 	default:
@@ -928,6 +916,8 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	paddr_t pa;
 	int len, ncookies;
 	int desc;
+
+	KASSERT(sc->sc_tx_cnt < sc->sc_vd->vd_nentries);
 
 	desc = sc->sc_tx_prod;
 
