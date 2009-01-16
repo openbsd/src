@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.114 2009/01/11 11:47:00 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.115 2009/01/16 23:12:28 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -62,7 +62,6 @@ struct audio_format {
 	void *driver_data;
 	int32_t mode;
 	u_int encoding;
-	u_int validbits;
 	u_int precision;
 	u_int channels;
 
@@ -203,8 +202,7 @@ int	azalia_free_dmamem(const azalia_t *, azalia_dma_t*);
 int	azalia_codec_init(codec_t *);
 int	azalia_codec_delete(codec_t *);
 void	azalia_codec_add_bits(codec_t *, int, uint32_t, int);
-void	azalia_codec_add_format(codec_t *, int, int, int, uint32_t,
-	int32_t);
+void	azalia_codec_add_format(codec_t *, int, int, uint32_t, int32_t);
 int	azalia_codec_comresp(const codec_t *, nid_t, uint32_t,
 	uint32_t, uint32_t *);
 int	azalia_codec_connect_stream(codec_t *, int, uint16_t, int);
@@ -1610,7 +1608,8 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 			nbits++;
 		if (bits_rates & COP_PCM_B24)
 			nbits++;
-		if (bits_rates & COP_PCM_B32)
+		if ((bits_rates & COP_PCM_B32) &&
+		    !(this->w[group->conv[0]].widgetcap & COP_AWCAP_DIGITAL))
 			nbits++;
 		if (nbits == 0) {
 			printf("%s: invalid DAC PCM format: 0x%8.8x\n",
@@ -1634,7 +1633,8 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 			nbits++;
 		if (bits_rates & COP_PCM_B24)
 			nbits++;
-		if (bits_rates & COP_PCM_B32)
+		if ((bits_rates & COP_PCM_B32) &&
+		    !(this->w[group->conv[0]].widgetcap & COP_AWCAP_DIGITAL))
 			nbits++;
 		if (nbits == 0) {
 			printf("%s: invalid ADC PCM format: 0x%8.8x\n",
@@ -1708,29 +1708,28 @@ void
 azalia_codec_add_bits(codec_t *this, int chan, uint32_t bits_rates, int mode)
 {
 	if (bits_rates & COP_PCM_B8)
-		azalia_codec_add_format(this, chan, 8, 16, bits_rates, mode);
+		azalia_codec_add_format(this, chan, 8, bits_rates, mode);
 	if (bits_rates & COP_PCM_B16)
-		azalia_codec_add_format(this, chan, 16, 16, bits_rates, mode);
+		azalia_codec_add_format(this, chan, 16, bits_rates, mode);
 	if (bits_rates & COP_PCM_B20)
-		azalia_codec_add_format(this, chan, 20, 32, bits_rates, mode);
+		azalia_codec_add_format(this, chan, 20, bits_rates, mode);
 	if (bits_rates & COP_PCM_B24)
-		azalia_codec_add_format(this, chan, 24, 32, bits_rates, mode);
+		azalia_codec_add_format(this, chan, 24, bits_rates, mode);
 	if (bits_rates & COP_PCM_B32)
-		azalia_codec_add_format(this, chan, 32, 32, bits_rates, mode);
+		azalia_codec_add_format(this, chan, 32, bits_rates, mode);
 }
 
 void
-azalia_codec_add_format(codec_t *this, int chan, int valid, int prec,
-    uint32_t rates, int32_t mode)
+azalia_codec_add_format(codec_t *this, int chan, int prec, uint32_t rates,
+    int32_t mode)
 {
 	struct audio_format *f;
 
 	f = &this->formats[this->nformats++];
 	f->mode = mode;
 	f->encoding = AUDIO_ENCODING_SLINEAR_LE;
-	if (valid == 8 && prec == 8)
+	if (prec == 8)
 		f->encoding = AUDIO_ENCODING_ULINEAR_LE;
-	f->validbits = valid;
 	f->precision = prec;
 	f->channels = chan;
 	f->frequency_type = 0;
@@ -2818,6 +2817,9 @@ azalia_match_format(codec_t *codec, int mode, audio_params_t *par)
 {
 	int i;
 
+	DPRINTFN(1, ("%s: mode=%d, want: enc=%d, prec=%d, chans=%d\n", __func__,
+	    mode, par->encoding, par->precision, par->channels));
+
 	for (i = 0; i < codec->nformats; i++) {
 		if (mode != codec->formats[i].mode)
 			continue;
@@ -2829,6 +2831,10 @@ azalia_match_format(codec_t *codec, int mode, audio_params_t *par)
 			continue;
 		break;
 	}
+
+	DPRINTFN(1, ("%s: return: enc=%d, prec=%d, chans=%d\n", __func__,
+	    codec->formats[i].encoding, codec->formats[i].precision,
+	    codec->formats[i].channels));
 
 	return (i);
 }
@@ -3186,6 +3192,9 @@ azalia_params2fmt(const audio_params_t *param, uint16_t *fmt)
 		return EINVAL;
 	}
 
+	DPRINTFN(1, ("%s: prec=%d, chan=%d, rate=%d\n", __func__,
+	    param->precision, param->channels, param->sample_rate));
+
 	/* Only mono is emulated, and it is emulated from stereo. */
 	if (param->sw_code != NULL)
 		ret |= 1;
@@ -3193,19 +3202,6 @@ azalia_params2fmt(const audio_params_t *param, uint16_t *fmt)
 		ret |= param->channels - 1;
 
 	switch (param->precision) {
-	case 8:
-		ret |= HDA_SD_FMT_BITS_8_16;
-		break;
-	case 16:
-		ret |= HDA_SD_FMT_BITS_16_16;
-		break;
-	case 32:
-		ret |= HDA_SD_FMT_BITS_32_32;
-		break;
-	}
-
-#if 0
-	switch (param->validbits) {
 	case 8:
 		ret |= HDA_SD_FMT_BITS_8_16;
 		break;
@@ -3221,11 +3217,7 @@ azalia_params2fmt(const audio_params_t *param, uint16_t *fmt)
 	case 32:
 		ret |= HDA_SD_FMT_BITS_32_32;
 		break;
-	default:
-		printf("%s: invalid validbits: %u\n", __func__,
-		    param->validbits);
 	}
-#endif
 
 	if (param->sample_rate == 384000) {
 		printf("%s: invalid sample_rate: %u\n", __func__,
@@ -3273,8 +3265,6 @@ azalia_create_encodings(codec_t *this)
 	nencs = 0;
 	for (i = 0; i < this->nformats && nencs < 16; i++) {
 		f = this->formats[i];
-		if (f.validbits != f.precision)
-			continue;
 		enc = f.precision << 8 | f.encoding;
 		for (j = 0; j < nencs; j++) {
 			if (encs[j] == enc)
