@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.45 2009/01/15 19:41:18 thib Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.46 2009/01/16 17:11:28 thib Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ void nfs_sndunlock(int *);
 int nfs_rcvlock(struct nfsreq *);
 void nfs_rcvunlock(int *);
 int nfs_getreq(struct nfsrv_descript *, struct nfsd *, int);
-int nfs_msg(struct proc *, char *, char *);
+void nfs_msg(struct nfsreq *, char *);
 void nfsrv_rcv(struct socket *, caddr_t, int);
 int nfsrv_getstream(struct nfssvc_sock *, int);
 int nfsrv_dorec(struct nfssvc_sock *, struct nfsd *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.71 2008/12/24 02:43:52 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.72 2009/01/16 17:11:28 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -932,8 +932,7 @@ tryagain:
 	 * tprintf a response.
 	 */
 	if (!error && (rep->r_flags & R_TPRINTFMSG))
-		nfs_msg(rep->r_procp, nmp->nm_mountp->mnt_stat.f_mntfromname,
-		    "is alive again");
+		nfs_msg(rep, "is alive again");
 	mrep = rep->r_mrep;
 	md = rep->r_md;
 	dpos = rep->r_dpos;
@@ -1161,9 +1160,7 @@ nfs_timer(arg)
 		 */
 		if ((rep->r_flags & R_TPRINTFMSG) == 0 &&
 		     rep->r_rexmit > nmp->nm_deadthresh) {
-			nfs_msg(rep->r_procp,
-			    nmp->nm_mountp->mnt_stat.f_mntfromname,
-			    "not responding");
+			nfs_msg(rep, "not responding");
 			rep->r_flags |= R_TPRINTFMSG;
 		}
 		if (rep->r_rexmit >= rep->r_retry) {	/* too many */
@@ -1569,20 +1566,19 @@ nfsmout:
 	return (error);
 }
 
-int
-nfs_msg(p, server, msg)
-	struct proc *p;
-	char *server, *msg;
+void
+nfs_msg(struct nfsreq *rep, char *msg)
 {
 	tpr_t tpr;
 
-	if (p)
-		tpr = tprintf_open(p);
+	if (rep->r_procp)
+		tpr = tprintf_open(rep->r_procp);
 	else
 		tpr = NULL;
-	tprintf(tpr, "nfs server %s: %s\n", server, msg);
+
+	tprintf(tpr, "nfs server %s: %s\n",
+	    rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname, msg);
 	tprintf_close(tpr);
-	return (0);
 }
 
 #ifdef NFSSERVER
