@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.9 2009/01/12 19:10:52 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.10 2009/01/16 16:51:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -130,7 +130,15 @@ struct vnet_softc {
 	struct ldc_conn	sc_lc;
 
 	uint8_t		sc_vio_state;
-#define VIO_ESTABLISHED	8
+#define VIO_ACK_VER_INFO	0x01
+#define VIO_RCV_VER_INFO	0x02
+#define VIO_ACK_ATTR_INFO	0x04
+#define VIO_RCV_ATTR_INFO	0x08
+#define VIO_ACK_DRING_REG	0x10
+#define VIO_RCV_DRING_REG	0x20
+#define VIO_ACK_RDX		0x40
+#define VIO_RCV_RDX		0x80
+#define VIO_ESTABLISHED		0xff
 
 	uint32_t	sc_local_sid;
 	uint64_t	sc_dring_ident;
@@ -177,10 +185,11 @@ void	vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *);
 void	vnet_rx_vio_data(struct vnet_softc *sc, struct vio_msg *);
 void	vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *);
 
-void	vnet_reset(struct ldc_conn *);
+void	vnet_ldc_reset(struct ldc_conn *);
+void	vnet_ldc_start(struct ldc_conn *);
 
 void	vio_sendmsg(struct vnet_softc *, void *, size_t);
-void	vio_send_ver_info(struct vnet_softc *, uint16_t, uint16_t);
+void	vnet_send_ver_info(struct vnet_softc *, uint16_t, uint16_t);
 void	vnet_send_attr_info(struct vnet_softc *);
 void	vnet_send_dring_reg(struct vnet_softc *);
 void	vio_send_rdx(struct vnet_softc *);
@@ -252,7 +261,8 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	lc = &sc->sc_lc;
 	lc->lc_id = ca->ca_id;
 	lc->lc_sc = sc;
-	lc->lc_reset = vnet_reset;
+	lc->lc_reset = vnet_ldc_reset;
+	lc->lc_start = vnet_ldc_start;
 	lc->lc_rx_data = vio_rx_data;
 
 	lc->lc_txq = ldc_queue_alloc(sc->sc_dmatag, VNET_TX_ENTRIES);
@@ -480,25 +490,26 @@ vnet_rx_vio_ver_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			return;
 		}
 
-		/* Allocate new session ID. */
-		sc->sc_local_sid = tick();
-
 		vi->tag.stype = VIO_SUBTYPE_ACK;
 		vi->tag.sid = sc->sc_local_sid;
 		vi->minor = VNET_MINOR;
 		vio_sendmsg(sc, vi, sizeof(*vi));
-
-		vio_send_ver_info(sc, VNET_MAJOR, VNET_MINOR);
+		sc->sc_vio_state |= VIO_RCV_VER_INFO;
 		break;
 
 	case VIO_SUBTYPE_ACK:
 		DPRINTF(("CTRL/ACK/VER_INFO\n"));
+		sc->sc_vio_state |= VIO_ACK_VER_INFO;
 		break;
 
 	default:
 		DPRINTF(("CTRL/0x%02x/VER_INFO\n", vi->tag.stype));
 		break;
 	}
+
+	if (ISSET(sc->sc_vio_state, VIO_RCV_VER_INFO) &&
+	    ISSET(sc->sc_vio_state, VIO_ACK_VER_INFO))
+		vnet_send_attr_info(sc);
 }
 
 void
@@ -513,18 +524,22 @@ vnet_rx_vio_attr_info(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		ai->tag.stype = VIO_SUBTYPE_ACK;
 		ai->tag.sid = sc->sc_local_sid;
 		vio_sendmsg(sc, ai, sizeof(*ai));
-
-		vnet_send_attr_info(sc);
+		sc->sc_vio_state |= VIO_RCV_ATTR_INFO;
 		break;
 
 	case VIO_SUBTYPE_ACK:
 		DPRINTF(("CTRL/ACK/ATTR_INFO\n"));
+		sc->sc_vio_state |= VIO_ACK_ATTR_INFO;
 		break;
 
 	default:
 		DPRINTF(("CTRL/0x%02x/ATTR_INFO\n", ai->tag.stype));
 		break;
 	}
+
+	if (ISSET(sc->sc_vio_state, VIO_RCV_ATTR_INFO) &&
+	    ISSET(sc->sc_vio_state, VIO_ACK_ATTR_INFO))
+		vnet_send_dring_reg(sc);
 }
 
 void
@@ -543,8 +558,7 @@ vnet_rx_vio_dring_reg(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		dr->tag.stype = VIO_SUBTYPE_ACK;
 		dr->tag.sid = sc->sc_local_sid;
 		vio_sendmsg(sc, dr, sizeof(*dr));
-
-		vnet_send_dring_reg(sc);
+		sc->sc_vio_state |= VIO_RCV_DRING_REG;
 		break;
 
 	case VIO_SUBTYPE_ACK:
@@ -553,13 +567,17 @@ vnet_rx_vio_dring_reg(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		sc->sc_dring_ident = dr->dring_ident;
 		sc->sc_seq_no = 1;
 
-		vio_send_rdx(sc);
+		sc->sc_vio_state |= VIO_ACK_DRING_REG;
 		break;
 
 	default:
 		DPRINTF(("CTRL/0x%02x/DRING_REG\n", dr->tag.stype));
 		break;
 	}
+
+	if (ISSET(sc->sc_vio_state, VIO_RCV_DRING_REG) &&
+	    ISSET(sc->sc_vio_state, VIO_ACK_DRING_REG))
+		vio_send_rdx(sc);
 }
 
 void
@@ -574,23 +592,26 @@ vnet_rx_vio_rdx(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		tag->stype = VIO_SUBTYPE_ACK;
 		tag->sid = sc->sc_local_sid;
 		vio_sendmsg(sc, tag, sizeof(*tag));
+		sc->sc_vio_state |= VIO_RCV_RDX;
 		break;
 
 	case VIO_SUBTYPE_ACK:
 		DPRINTF(("CTRL/ACK/RDX\n"));
-
-		/* Link is up! */
-		sc->sc_vio_state = VIO_ESTABLISHED;
-		vnet_link_state(sc);
-
-		/* Configure multicast now that we can. */
-		vnet_setmulti(sc, 1);
-		vnet_start(ifp);
+		sc->sc_vio_state |= VIO_ACK_RDX;
 		break;
 
 	default:
 		DPRINTF(("CTRL/0x%02x/RDX (VIO)\n", tag->stype));
 		break;
+	}
+
+	if (sc->sc_vio_state == VIO_ESTABLISHED) {
+		/* Link is up! */
+		vnet_link_state(sc);
+
+		/* Configure multicast now that we can. */
+		vnet_setmulti(sc, 1);
+		vnet_start(ifp);
 	}
 }
 
@@ -752,12 +773,20 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 }
 
 void
-vnet_reset(struct ldc_conn *lc)
+vnet_ldc_reset(struct ldc_conn *lc)
 {
 	struct vnet_softc *sc = lc->lc_sc;
 
 	sc->sc_vio_state = 0;
 	vnet_link_state(sc);
+}
+
+void
+vnet_ldc_start(struct ldc_conn *lc)
+{
+	struct vnet_softc *sc = lc->lc_sc;
+
+	vnet_send_ver_info(sc, VNET_MAJOR, VNET_MINOR);
 }
 
 void
@@ -801,7 +830,7 @@ vio_sendmsg(struct vnet_softc *sc, void *msg, size_t len)
 }
 
 void
-vio_send_ver_info(struct vnet_softc *sc, uint16_t major, uint16_t minor)
+vnet_send_ver_info(struct vnet_softc *sc, uint16_t major, uint16_t minor)
 {
 	struct vio_ver_info vi;
 
