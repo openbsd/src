@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.10 2009/01/16 16:51:30 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.11 2009/01/17 20:18:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -797,9 +797,6 @@ vio_sendmsg(struct vnet_softc *sc, void *msg, size_t len)
 	uint64_t tx_head, tx_tail, tx_state;
 	int err;
 
-#if 0
-	printf("%s\n", __func__);
-#endif
 	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
 	if (err != H_EOK)
 		return;
@@ -808,19 +805,10 @@ vio_sendmsg(struct vnet_softc *sc, void *msg, size_t len)
 	bzero(lp, sizeof(struct ldc_pkt));
 	lp->type = LDC_DATA;
 	lp->stype = LDC_INFO;
-	lp->env = 56 | LDC_FRAG_STOP | LDC_FRAG_START;
+	KASSERT((len & ~LDC_LEN_MASK) == 0);
+	lp->env = len | LDC_FRAG_STOP | LDC_FRAG_START;
 	lp->seqid = lc->lc_tx_seqid++;
 	bcopy(msg, &lp->major, len);
-
-#if 0
-{
-	uint64_t *p = (uint64_t *)(sc->sc_txq->lq_va + tx_tail);
-	int i;
-
-	for (i = 0; i < 8; i++)
-		printf("word %d: 0x%016lx\n", i, p[i]);
-}
-#endif
 
 	tx_tail += sizeof(*lp);
 	tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(*lp)) - 1);
