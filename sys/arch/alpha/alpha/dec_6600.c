@@ -1,6 +1,21 @@
-/* $OpenBSD: dec_6600.c,v 1.10 2008/07/16 20:03:20 miod Exp $ */
+/* $OpenBSD: dec_6600.c,v 1.11 2009/01/17 18:30:05 miod Exp $ */
 /* $NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $ */
 
+/*
+ * Copyright (c) 2009 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,6 +53,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpuconf.h>
 #include <machine/bus.h>
+#include <machine/logout.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -69,6 +85,15 @@ static int comcnrate __attribute__((unused)) = CONSPEED;
 void dec_6600_init(void);
 static void dec_6600_cons_init(void);
 static void dec_6600_device_register(struct device *, void *);
+static void dec_6600_mcheck_handler(unsigned long, struct trapframe *,
+	    unsigned long, unsigned long);
+#ifndef SMALL_KERNEL
+static void dec_6600_environmental_mcheck(unsigned long, struct trapframe *,
+	    unsigned long, unsigned long);
+static void dec_6600_mcheck(unsigned long, struct trapframe *, unsigned long,
+	    unsigned long);
+static void dec_6600_print_syndrome(int, unsigned long);
+#endif
 
 void
 dec_6600_init()
@@ -84,6 +109,7 @@ dec_6600_init()
 	platform.iobus = "tsc";
 	platform.cons_init = dec_6600_cons_init;
 	platform.device_register = dec_6600_device_register;
+	platform.mcheck_handler = dec_6600_mcheck_handler;
 	STQP(TS_C_DIM0) = 0UL;
 	STQP(TS_C_DIM1) = 0UL;
 }
@@ -294,4 +320,255 @@ dec_6600_device_register(dev, aux)
 		DR_VERBOSE(printf("booted_device = %s\n", dev->dv_xname));
 		found = 1;
 	}
+}
+
+#ifndef SMALL_KERNEL
+static void
+dec_6600_environmental_mcheck(unsigned long mces, struct trapframe *framep,
+    unsigned long vector, unsigned long logout)
+{
+	mc_hdr_ev6 *hdr = (mc_hdr_ev6 *)logout;
+	mc_env_ev6 *env = (mc_env_ev6 *)(logout + hdr->la_system_offset);
+	int silent = 0;
+	int itemno;
+
+	/*
+	 * Note that we do not check for an expected machine check,
+	 * since software is not supposed to trigger an environmental
+	 * machine check, and there might be an environmental change
+	 * just before our expected machine check occurs.
+	 */
+
+	/*
+	 * Most environmental changes are handled at the RMC level,
+	 * and we are either not notified (e.g. PCI door open) or
+	 * drastic action is taken (e.g. the RMC will power down the
+	 * system immediately if the CPU door is open).
+	 *
+	 * The only events we seem to be notified of are power supply
+	 * failures.
+	 */
+
+	/* display CPU failures */
+	for (itemno = 0; itemno < 4; itemno++) {
+		if ((env->cpuir & EV6_ENV_CPUIR_CPU_ENABLE(itemno)) != 0 &&
+		    (env->cpuir & EV6_ENV_CPUIR_CPU_FAIL(itemno)) != 0) {
+			printf("CPU%d FAILURE\n", itemno);
+			silent = 1;
+		}
+	}
+
+	/* display PSU failures */
+	if (env->smir & EV6_ENV_SMIR_PSU_FAILURE) {
+		for (itemno = 0; itemno < 3; itemno++) {
+			if ((env->psir & EV6_ENV_PSIR_PSU_FAIL(itemno)) != 0) {
+				if ((env->psir &
+				    EV6_ENV_PSIR_PSU_ENABLE(itemno)) != 0)
+					printf("PSU%d FAILURE\n", itemno);
+				else
+					printf("PSU%d DISABLED\n", itemno);
+			} else {
+				if ((env->psir &
+				    EV6_ENV_PSIR_PSU_ENABLE(itemno)) != 0)
+					printf("PSU%d ENABLED\n", itemno);
+			}
+		}
+		silent = 1;
+	}
+
+	/* if we could not print a summary, display everything */
+	if (silent == 0) {
+		printf("      Processor Environmental Machine Check, "
+		    "Code 0x%x\n", hdr->mcheck_code);
+
+		printf("Flags\t%016x\n", env->flags);
+		printf("DIR\t%016x\n", env->c_dir);
+		printf("SMIR\t%016x\n", env->smir);
+		printf("CPUIR\t%016x\n", env->cpuir);
+		printf("PSIR\t%016x\n", env->psir);
+		printf("LM78_ISR\t%016x\n", env->lm78_isr);
+		printf("Doors\t%016x\n", env->doors);
+		printf("Temp Warning\t%016x\n", env->temp_warning);
+		printf("Fan Control\t%016x\n", env->fan_control);
+		printf("Fatal Power Down\t%016x\n", env->fatal_power_down);
+	}
+
+	/*
+	 * Apparently, these checks occur with MCES == 0, which
+	 * is supposed to be an uncorrectable machine check.
+	 *
+	 * Until I know of a better way to tell recoverable and
+	 * unrecoverable environmental checks apart, I'll use
+	 * the fatal power down code to discriminate.
+	 */
+	if (mces == 0 && env->fatal_power_down == 0)
+		return;
+	else
+		machine_check(mces, framep, vector, logout);
+}
+
+/*
+ * Expected syndrome values per faulting bit
+ */
+static const uint8_t ev6_syndrome[64 + 8] = {
+	0xce, 0xcb, 0xd3, 0xd5, 0xd6, 0xd9, 0xda, 0xdc,
+	0x23, 0x25, 0x26, 0x29, 0x2a, 0x2c, 0x31, 0x34,
+	0x0e, 0x0b, 0x13, 0x15, 0x16, 0x19, 0x1a, 0x1c,
+	0xe3, 0xe5, 0xe6, 0xe9, 0xea, 0xec, 0xf1, 0xf4,
+	0x4f, 0x4a, 0x52, 0x54, 0x57, 0x58, 0x5b, 0x5d,
+	0xa2, 0xa4, 0xa7, 0xa8, 0xab, 0xad, 0xb0, 0xb5,
+	0x8f, 0x8a, 0x92, 0x94, 0x97, 0x98, 0x9b, 0x9d,
+	0x62, 0x64, 0x67, 0x68, 0x6b, 0x6d, 0x70, 0x75,
+	0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80
+};
+
+static void
+dec_6600_print_syndrome(int sno, unsigned long syndrome)
+{
+	unsigned int bitno;
+
+	syndrome &= 0xff;
+	printf("Syndrome bits %d\t%02x ", sno, syndrome);
+	for (bitno = 0; bitno < nitems(ev6_syndrome); bitno++)
+		if (syndrome == ev6_syndrome[bitno])
+			break;
+
+	if (bitno < 64)
+		printf("(%d)\n", bitno);
+	else if (bitno < nitems(ev6_syndrome))
+		printf("(CB%d)\n", bitno - 64);
+	else
+		printf("(unknown)\n");
+}
+
+static void
+dec_6600_mcheck(unsigned long mces, struct trapframe *framep,
+    unsigned long vector, unsigned long logout)
+{
+	mc_hdr_ev6 *hdr = (mc_hdr_ev6 *)logout;
+	struct mchkinfo *mcp;
+
+	/*
+	 * If we expected a machine check, don't decode it.
+	 */
+	mcp = &curcpu()->ci_mcinfo;
+	if (mcp->mc_expected) {
+		machine_check(mces, framep, vector, logout);
+		return;
+	}
+
+	printf("      Processor Machine Check (%lx), Code 0x%x\n",
+	    vector, hdr->mcheck_code);
+
+	if (vector == ALPHA_SYS_MCHECK) {
+#ifdef notyet
+		mc_sys_ev6 *sys = (mc_sys_ev6 *)(logout + hdr->la_system_offset);
+#endif
+		/* XXX Decode and report P-Chip errors */
+	} else /* ALPHA_PROC_MCHECK */ {
+		mc_cpu_ev6 *cpu = (mc_cpu_ev6 *)(logout + hdr->la_cpu_offset);
+		size_t cpu_size = hdr->la_system_offset - hdr->la_cpu_offset;
+
+		printf("Dcache status\t0x%05x\n",
+		    cpu->dc_stat & EV6_DC_STAT_MASK);
+		dec_6600_print_syndrome(0, cpu->c_syndrome_0);
+		dec_6600_print_syndrome(1, cpu->c_syndrome_1);
+		/* C_STAT */
+		printf("C_STAT\t");
+		switch (cpu->c_stat & EV6_C_STAT_MASK) {
+		case EV6_C_STAT_DBL_ISTREAM_BC_ECC_ERR:
+			printf("Bcache instruction stream double ECC error\n");
+			break;
+		case EV6_C_STAT_DBL_ISTREAM_MEM_ECC_ERR:
+			printf("Memory instruction stream double ECC error\n");
+			break;
+		case EV6_C_STAT_DBL_DSTREAM_BC_ECC_ERR:
+			printf("Bcache data stream double ECC error\n");
+			break;
+		case EV6_C_STAT_DBL_DSTREAM_MEM_ECC_ERR:
+			printf("Memory data stream double ECC error\n");
+			break;
+		case EV6_C_STAT_SNGL_ISTREAM_BC_ECC_ERR:
+			printf("Bcache instruction stream single ECC error\n");
+			break;
+		case EV6_C_STAT_SNGL_ISTREAM_MEM_ECC_ERR:
+			printf("Memory instruction stream single ECC error\n");
+			break;
+		case EV6_C_STAT_SNGL_BC_PROBE_HIT_ERR:
+		case EV6_C_STAT_SNGL_BC_PROBE_HIT_ERR2:
+			printf("Bcache probe hit error\n");
+			break;
+		case EV6_C_STAT_SNGL_DSTREAM_DC_ECC_ERR:
+			printf("Dcache data stream single ECC error\n");
+			break;
+		case EV6_C_STAT_SNGL_DSTREAM_BC_ECC_ERR:
+			printf("Bcache data stream single ECC error\n");
+			break;
+		case EV6_C_STAT_SNGL_DSTREAM_MEM_ECC_ERR:
+			printf("Memory data stream single ECC error\n");
+			break;
+		case EV6_C_STAT_SNGL_DC_DUPLICATE_TAG_PERR:
+			printf("Dcache duplicate tag error\n");
+			break;
+		case EV6_C_STAT_SNGL_BC_TAG_PERR:
+			printf("Bcache tag error\n");
+			break;
+		case EV6_C_STAT_NO_ERROR:
+			if (cpu->dc_stat & EV6_DC_STAT_STORE_DATA_ECC_ERROR) {
+				printf("Bcache/Dcache victim read ECC error\n");
+				break;
+			}
+			/* FALLTHROUGH */
+		default:
+			printf("%02x\n", cpu->c_stat);
+			break;
+		}
+		/* C_ADDR */
+		printf("Error address\t");
+		if ((cpu->c_stat & EV6_C_STAT_MASK) ==
+		    EV6_C_STAT_SNGL_DSTREAM_DC_ECC_ERR)
+			printf("0xXXXXXXXXXXX%05x\n", cpu->c_addr & 0xfffc0);
+		else
+			printf("0x%016x\n", cpu->c_addr & 0xffffffffffffffc0);
+
+		if (cpu_size > offsetof(mc_cpu_ev6, exc_addr)) {
+			printf("Exception address\t0x%016x%s\n",
+			    cpu->exc_addr & 0xfffffffffffffffc,
+			    cpu->exc_addr & 1 ? " in PAL mode" : "");
+			/* other fields are not really informative */
+		}
+	}
+
+	machine_check(mces, framep, vector, logout);
+}
+#endif
+
+static void
+dec_6600_mcheck_handler(unsigned long mces, struct trapframe *framep,
+    unsigned long vector, unsigned long param)
+{
+#ifdef SMALL_KERNEL
+	/*
+	 * Even though we can not afford the machine check
+	 * analysis code, we need to ignore environmental
+	 * changes.
+	 */
+	if (vector == ALPHA_ENV_MCHECK)
+		return;
+
+	machine_check(mces, framep, vector, param);
+#else
+	switch (vector) {
+	case ALPHA_ENV_MCHECK:
+		dec_6600_environmental_mcheck(mces, framep, vector, param);
+		break;
+	case ALPHA_PROC_MCHECK:
+	case ALPHA_SYS_MCHECK:
+		dec_6600_mcheck(mces, framep, vector, param);
+		break;
+	default:
+		machine_check(mces, framep, vector, param);
+		break;
+	}
+#endif
 }
