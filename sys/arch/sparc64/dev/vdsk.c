@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.5 2009/01/16 23:57:45 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.6 2009/01/17 17:11:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -880,6 +880,10 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 		operation = VD_OP_BWRITE;
 		break;
 
+	case SYNCHRONIZE_CACHE:
+		operation = VD_OP_FLUSH;
+		break;
+
 	case INQUIRY:
 		return (vdsk_scsi_inq(xs));
 	case READ_CAPACITY:
@@ -915,7 +919,8 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	vaddr_t va;
 	paddr_t pa;
 	int len, ncookies;
-	int desc;
+	int desc, s;
+	int timeout;
 
 	KASSERT(sc->sc_tx_cnt < sc->sc_vd->vd_nentries);
 
@@ -962,8 +967,8 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 
 	sc->sc_vsd[desc].vsd_xs = xs;
 
-	desc++;
-	desc &= (sc->sc_vd->vd_nentries - 1);
+	sc->sc_tx_prod++;
+	sc->sc_tx_prod &= (sc->sc_vd->vd_nentries - 1);
 	sc->sc_tx_cnt++;
 
 	bzero(&dm, sizeof(dm));
@@ -973,14 +978,25 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	dm.tag.sid = sc->sc_local_sid;
 	dm.seq_no = sc->sc_seq_no++;
 	dm.dring_ident = sc->sc_dring_ident;
-	dm.start_idx = sc->sc_tx_prod;
-	dm.end_idx = sc->sc_tx_prod;
+	dm.start_idx = dm.end_idx = desc;
 	vdsk_sendmsg(sc, &dm, sizeof(dm));
 
-	sc->sc_tx_prod = desc;
-}
+	if (!ISSET(xs->flags, SCSI_POLL))
+		return (SUCCESSFULLY_QUEUED);
 
-	return (SUCCESSFULLY_QUEUED);
+	s = splbio();
+	timeout = 1000;
+	do {
+		if (vdsk_rx_intr(sc) &&
+		    sc->sc_vd->vd_desc[desc].status == VIO_DESC_FREE)
+			break;
+
+		delay(1000);
+	} while(--timeout > 0);
+	splx(s);
+
+	return (COMPLETE);
+}
 }
 
 int
