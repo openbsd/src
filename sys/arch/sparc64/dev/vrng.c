@@ -1,4 +1,4 @@
-/*	$OpenBSD: vrng.c,v 1.2 2009/01/17 19:24:51 kettenis Exp $	*/
+/*	$OpenBSD: vrng.c,v 1.3 2009/01/17 22:38:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -152,7 +152,7 @@ vrng_rnd(void *v)
 		add_true_randomness(rnd);
 		add_true_randomness(rnd >> 32);
 	}
-	if (err != H_EOK)
+	if (err != H_EOK && err != H_EWOULDBLOCK)
 		printf("vrng_rnd: err = %d\n", err);
 	else
 		timeout_add(&sc->sc_to, 1);
