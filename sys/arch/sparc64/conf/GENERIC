@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.230 2009/01/12 20:45:50 miod Exp $
+#	$OpenBSD: GENERIC,v 1.231 2009/01/17 19:25:56 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -335,6 +335,7 @@ timer*	at mainbus0
 # Virtual devices for sun4v systems.
 vcons0	at vbus?
 vrtc0	at vbus?
+vrng0	at vbus?
 vdsk*	at cbus?
 scsibus* at vdsk?
 vnet*	at cbus?
