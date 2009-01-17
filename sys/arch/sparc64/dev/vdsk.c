@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.7 2009/01/17 20:36:42 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.8 2009/01/17 22:18:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -131,8 +131,16 @@ struct vdsk_softc {
 
 	struct ldc_conn	sc_lc;
 
-	uint8_t		sc_vio_state;
-#define VIO_ESTABLISHED	8
+	uint16_t	sc_vio_state;
+#define VIO_SND_VER_INFO	0x0001
+#define VIO_ACK_VER_INFO	0x0002
+#define VIO_SND_ATTR_INFO	0x0004
+#define VIO_ACK_ATTR_INFO	0x0008
+#define VIO_SND_DRING_REG	0x0010
+#define VIO_ACK_DRING_REG	0x0020
+#define VIO_SND_RDX		0x0040
+#define VIO_ACK_RDX		0x0080
+#define VIO_ESTABLISHED		0x00ff
 
 	uint32_t	sc_local_sid;
 	uint64_t	sc_dring_ident;
@@ -180,8 +188,8 @@ void	vdsk_rx_vio_rdx(struct vdsk_softc *sc, struct vio_msg_tag *);
 void	vdsk_rx_vio_data(struct vdsk_softc *sc, struct vio_msg *);
 void	vdsk_rx_vio_dring_data(struct vdsk_softc *sc, struct vio_msg_tag *);
 
-void	vdsk_reset(struct ldc_conn *);
-void	vdsk_start(struct ldc_conn *);
+void	vdsk_ldc_reset(struct ldc_conn *);
+void	vdsk_ldc_start(struct ldc_conn *);
 
 void	vdsk_sendmsg(struct vdsk_softc *, void *, size_t);
 void	vdsk_send_ver_info(struct vdsk_softc *, uint16_t, uint16_t);
@@ -250,8 +258,8 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 	lc = &sc->sc_lc;
 	lc->lc_id = ca->ca_id;
 	lc->lc_sc = sc;
-	lc->lc_reset = vdsk_reset;
-	lc->lc_start = vdsk_start;
+	lc->lc_reset = vdsk_ldc_reset;
+	lc->lc_start = vdsk_ldc_start;
 	lc->lc_rx_data = vdsk_rx_data;
 
 	lc->lc_txq = ldc_queue_alloc(sc->sc_dmatag, VDSK_TX_ENTRIES);
@@ -430,16 +438,6 @@ vdsk_rx_intr(void *arg)
 		return (0);
 
 	msg = (uint64_t *)(lc->lc_rxq->lq_va + rx_head);
-#if 0
-{
-	int i;
-
-	printf("%s: rx intr, head %lx, tail %lx\n", sc->sc_dv.dv_xname,
-	    rx_head, rx_tail);
-	for (i = 0; i < 8; i++)
-		printf("word %d: 0x%016lx\n", i, msg[i]);
-}
-#endif
 	lp = (struct ldc_pkt *)(lc->lc_rxq->lq_va + rx_head);
 	switch (lp->type) {
 	case LDC_CTRL:
@@ -531,13 +529,20 @@ vdsk_rx_vio_ver_info(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 
 	case VIO_SUBTYPE_ACK:
 		DPRINTF(("CTRL/ACK/VER_INFO\n"));
-		vdsk_send_attr_info(sc);
+		if (!ISSET(sc->sc_vio_state, VIO_SND_VER_INFO)) {
+			ldc_reset(&sc->sc_lc);
+			break;
+		}
+		sc->sc_vio_state |= VIO_ACK_VER_INFO;
 		break;
 
 	default:
 		DPRINTF(("CTRL/0x%02x/VER_INFO\n", vi->tag.stype));
 		break;
 	}
+
+	if (ISSET(sc->sc_vio_state, VIO_ACK_VER_INFO))
+		vdsk_send_attr_info(sc);
 }
 
 void
@@ -552,15 +557,25 @@ vdsk_rx_vio_attr_info(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 
 	case VIO_SUBTYPE_ACK:
 		DPRINTF(("CTRL/ACK/ATTR_INFO\n"));
+		if (!ISSET(sc->sc_vio_state, VIO_SND_ATTR_INFO)) {
+			ldc_reset(&sc->sc_lc);
+			break;
+		}
+
 		sc->sc_vdisk_block_size = ai->vdisk_block_size;
 		sc->sc_vdisk_size = ai->vdisk_size;
-		vdsk_send_dring_reg(sc);
+
+		sc->sc_vio_state |= VIO_ACK_ATTR_INFO;
 		break;
 
 	default:
 		DPRINTF(("CTRL/0x%02x/ATTR_INFO\n", ai->tag.stype));
 		break;
 	}
+
+	if (ISSET(sc->sc_vio_state, VIO_ACK_ATTR_INFO))
+		vdsk_send_dring_reg(sc);
+
 }
 
 void
@@ -575,17 +590,24 @@ vdsk_rx_vio_dring_reg(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 
 	case VIO_SUBTYPE_ACK:
 		DPRINTF(("CTRL/ACK/DRING_REG\n"));
+		if (!ISSET(sc->sc_vio_state, VIO_SND_DRING_REG)) {
+			ldc_reset(&sc->sc_lc);
+			break;
+		}
 
 		sc->sc_dring_ident = dr->dring_ident;
 		sc->sc_seq_no = 1;
 
-		vdsk_send_rdx(sc);
+		sc->sc_vio_state |= VIO_ACK_DRING_REG;
 		break;
 
 	default:
 		DPRINTF(("CTRL/0x%02x/DRING_REG\n", dr->tag.stype));
 		break;
 	}
+
+	if (ISSET(sc->sc_vio_state, VIO_ACK_DRING_REG))
+		vdsk_send_rdx(sc);
 }
 
 void
@@ -598,9 +620,11 @@ vdsk_rx_vio_rdx(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 
 	case VIO_SUBTYPE_ACK:
 		DPRINTF(("CTRL/ACK/RDX\n"));
-
-		/* Link is up! */
-		sc->sc_vio_state = VIO_ESTABLISHED;
+		if (!ISSET(sc->sc_vio_state, VIO_SND_RDX)) {
+			ldc_reset(&sc->sc_lc);
+			break;
+		}
+		sc->sc_vio_state |= VIO_ACK_RDX;
 		break;
 
 	default:
@@ -686,7 +710,7 @@ vdsk_rx_vio_dring_data(struct vdsk_softc *sc, struct vio_msg_tag *tag)
 }
 
 void
-vdsk_reset(struct ldc_conn *lc)
+vdsk_ldc_reset(struct ldc_conn *lc)
 {
 	struct vdsk_softc *sc = lc->lc_sc;
 
@@ -695,7 +719,7 @@ vdsk_reset(struct ldc_conn *lc)
 }
 
 void
-vdsk_start(struct ldc_conn *lc)
+vdsk_ldc_start(struct ldc_conn *lc)
 {
 	struct vdsk_softc *sc = lc->lc_sc;
 
@@ -747,6 +771,8 @@ vdsk_send_ver_info(struct vdsk_softc *sc, uint16_t major, uint16_t minor)
 	vi.minor = minor;
 	vi.dev_class = VDEV_DISK;
 	vdsk_sendmsg(sc, &vi, sizeof(vi));
+
+	sc->sc_vio_state |= VIO_SND_VER_INFO;
 }
 
 void
@@ -763,6 +789,8 @@ vdsk_send_attr_info(struct vdsk_softc *sc)
 	ai.vdisk_block_size = DEV_BSIZE;
 	ai.max_xfer_sz = MAXPHYS / DEV_BSIZE;
 	vdsk_sendmsg(sc, &ai, sizeof(ai));
+
+	sc->sc_vio_state |= VIO_SND_ATTR_INFO;
 }
 
 void
@@ -783,6 +811,8 @@ vdsk_send_dring_reg(struct vdsk_softc *sc)
 	dr.cookie[0].addr = 0;
 	dr.cookie[0].size = PAGE_SIZE;
 	vdsk_sendmsg(sc, &dr, sizeof(dr));
+
+	sc->sc_vio_state |= VIO_SND_DRING_REG;
 };
 
 void
@@ -796,6 +826,8 @@ vdsk_send_rdx(struct vdsk_softc *sc)
 	rdx.tag.stype_env = VIO_RDX;
 	rdx.tag.sid = sc->sc_local_sid;
 	vdsk_sendmsg(sc, &rdx, sizeof(rdx));
+
+	sc->sc_vio_state |= VIO_SND_RDX;
 }
 
 struct vdsk_dring *
@@ -936,9 +968,6 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 			map->lm_next++;
 			map->lm_next &= (map->lm_nentries - 1);
 		}
-		/* Don't take slot 0; it's used by our descriptor ring. */
-		if (map->lm_next == 0)
-			map->lm_next++;
 		map->lm_slot[map->lm_next].entry = (pa & LDC_MTE_RA_MASK);
 		map->lm_slot[map->lm_next].entry |= LDC_MTE_CPR | LDC_MTE_CPW;
 		map->lm_slot[map->lm_next].entry |= LDC_MTE_IOR | LDC_MTE_IOW;
