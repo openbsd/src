@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.4 2008/12/17 07:19:27 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.5 2009/01/17 10:39:53 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -122,12 +122,7 @@ int sio_strtoenc(struct sio_par *, char *);
 int sio_enctostr(struct sio_par *, char *);
 void sio_initpar(struct sio_par *);
 
-struct sio_hdl *sio_open_aucat(char *, unsigned, int);
-struct sio_hdl *sio_open_sun(char *, unsigned, int);
-struct sio_hdl *sio_open_wav(char *, unsigned, int);
-struct sio_hdl *sio_open_raw(char *, unsigned, int);
 struct sio_hdl *sio_open(char *, unsigned, int);
-
 void sio_close(struct sio_hdl *);
 int sio_setpar(struct sio_hdl *, struct sio_par *);
 int sio_getpar(struct sio_hdl *, struct sio_par *);
