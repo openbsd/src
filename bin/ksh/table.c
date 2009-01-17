@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.12 2005/12/11 20:31:21 otto Exp $	*/
+/*	$OpenBSD: table.c,v 1.13 2009/01/17 22:06:44 millert Exp $	*/
 
 /*
  * dynamic hashed associative table for commands and variables
@@ -9,7 +9,7 @@
 #define	INIT_TBLS	8	/* initial table size (power of 2) */
 
 static void	texpand(struct table *, int);
-static int	tnamecmp(void *, void *);
+static int	tnamecmp(const void *, const void *);
 
 
 unsigned int
@@ -154,9 +154,11 @@ ktnext(struct tstate *ts)
 }
 
 static int
-tnamecmp(void *p1, void *p2)
+tnamecmp(const void *p1, const void *p2)
 {
-	return strcmp(((struct tbl *)p1)->name, ((struct tbl *)p2)->name);
+	char *name1 = (*(struct tbl **)p1)->name;
+	char *name2 = (*(struct tbl **)p2)->name;
+	return strcmp(name1, name2);
 }
 
 struct tbl **
