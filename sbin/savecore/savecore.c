@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.45 2009/01/02 16:17:53 miod Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.46 2009/01/17 13:48:50 miod Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.45 2009/01/02 16:17:53 miod Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.46 2009/01/17 13:48:50 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,10 +104,11 @@ struct nlist dump_nl[] = {	/* Name list for dumped system. */
 };
 
 /* Types match kernel declarations. */
-long	dumplo;				/* where dump starts on dumpdev */
-u_long	dumpmag;			/* magic number in dump */
-int	dumppages;			/* amount of memory dumped (in pages) */
-u_long	dumpsize;			/* amount of memory dumped */
+long	dumplo;			/* where dump starts on dumpdev (in blocks) */
+off_t	dumpoff;		/* where dump starts on dumpdev (in bytes) */
+u_long	dumpmag;		/* magic number in dump */
+int	dumppages;		/* amount of memory dumped (in pages) */
+u_long	dumpsize;		/* amount of memory dumped */
 
 char	*kernel;
 char	*dirn;			/* directory to save dumps in */
@@ -250,10 +251,10 @@ kmem_setup(void)
 		exit(1);
 	}
 	(void)KREAD(kd_kern, current_nl[X_DUMPLO].n_value, &dumplo);
-	dumplo *= DEV_BSIZE;
+	dumpoff = (off_t)dumplo * DEV_BSIZE;
 	if (verbose)
-		(void)printf("dumplo = %ld (%ld * %d)\n",
-		    dumplo, dumplo / DEV_BSIZE, DEV_BSIZE);
+		(void)printf("dumpoff = %lld (%ld * %d)\n",
+		    (long long)dumpoff, dumplo, DEV_BSIZE);
 	(void) KREAD(kd_kern, current_nl[X_DUMPMAG].n_value, &dumpmag);
 
 	if (kernel == NULL) {
@@ -286,7 +287,7 @@ kmem_setup(void)
 			    dump_sys, dump_nl[dumpsyms[i]].n_name);
 			exit(1);
 		}
-	hdrsz = kvm_dump_mkheader(kd_dump, (off_t)dumplo);
+	hdrsz = kvm_dump_mkheader(kd_dump, dumpoff);
 	if (hdrsz == -1) {
 		if(verbose)
 			syslog(LOG_ERR, "%s: kvm_dump_mkheader: %s", dump_sys,
@@ -294,7 +295,7 @@ kmem_setup(void)
 		syslog(LOG_WARNING, "no core dump");
 		exit(1);
 	}
-	dumplo += hdrsz;
+	dumpoff += hdrsz;
 	kvm_close(kd_kern);
 }
 
@@ -439,7 +440,7 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 	}
 
 	/* Seek to the start of the core. */
-	Lseek(ifd, (off_t)dumplo, SEEK_SET);
+	Lseek(ifd, dumpoff, SEEK_SET);
 
 	if (kvm_dump_wrtheader(kd_dump, fp, dumpsize) == -1) {
 		syslog(LOG_ERR, "kvm_dump_wrtheader: %s : %s", path,
@@ -451,7 +452,7 @@ err1:			syslog(LOG_WARNING, "%s: %s", path, strerror(errno));
 	syslog(LOG_NOTICE, "writing %score to %s",
 	    zcompress ? "compressed " : "", path);
 	for (; dumpsize != 0; dumpsize -= nr) {
-		(void)printf("%8ldK\r", dumpsize / 1024);
+		(void)printf("%8luK\r", dumpsize / 1024);
 		(void)fflush(stdout);
 		nr = read(ifd, buf, MIN(dumpsize, sizeof(buf)));
 		if (nr <= 0) {
