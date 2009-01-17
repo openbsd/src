@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.126 2008/11/06 23:41:28 marco Exp $ */
+/* $OpenBSD: acpi.c,v 1.127 2009/01/17 17:17:11 krw Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1434,19 +1434,17 @@ acpi_foundprw(struct aml_node *node, void *arg)
 	struct acpi_softc *sc = arg;
 	struct acpi_wakeq *wq;
 
-	wq = (struct acpi_wakeq *)malloc(sizeof(struct acpi_wakeq), M_DEVBUF, M_NOWAIT);
+	wq = malloc(sizeof(struct acpi_wakeq), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (wq == NULL) {
 		return 0;
 	}
-	memset(wq, 0, sizeof(struct acpi_wakeq));
 
-	wq->q_wakepkg = (struct aml_value *)malloc(sizeof(struct aml_value),
-	    M_DEVBUF, M_NOWAIT);
+	wq->q_wakepkg = malloc(sizeof(struct aml_value), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
 	if (wq->q_wakepkg == NULL) {
 		free(wq, M_DEVBUF);
 		return 0;
 	}
-	memset(wq->q_wakepkg, 0, sizeof(struct aml_value));
 	dnprintf(10, "Found _PRW (%s)\n", node->parent->name);
 	aml_evalnode(sc, node, 0, NULL, wq->q_wakepkg);
 	wq->q_node = node->parent;
