@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.36 2008/01/05 19:49:26 otto Exp $	*/
+/*	$OpenBSD: inode.h,v 1.37 2009/01/17 18:50:25 grange Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -279,6 +279,22 @@ struct inode_vtbl {
 			(ip)->i_ffs1_##field += (value);		\
 		else							\
 			(ip)->i_ffs2_##field += (value);		\
+	} while (0)
+
+#define DIP_AND(ip, field, value)					\
+	do {								\
+		if ((ip)->i_ump->um_fstype == UM_UFS1)			\
+			(ip)->i_ffs1_##field &= (value);		\
+		else							\
+			(ip)->i_ffs2_##field &= (value);		\
+	} while (0)
+
+#define DIP_OR(ip, field, value)					\
+	do {								\
+		if ((ip)->i_ump->um_fstype == UM_UFS1)			\
+			(ip)->i_ffs1_##field |= (value);		\
+		else							\
+			(ip)->i_ffs2_##field |= (value);		\
 	} while (0)
 
 #define SHORTLINK(ip) \

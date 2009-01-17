@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.86 2008/08/08 16:17:38 thib Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.87 2009/01/17 18:50:25 grange Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -894,7 +894,9 @@ ffs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
 	 * XXX - just increment for now, this is wrong! (millert)
 	 *       Need a way to preserve randomization.
 	 */
-	if (DIP(ip, gen) == 0 || ++(DIP(ip, gen)) == 0)
+	if (DIP(ip, gen) != 0)
+		DIP_ADD(ip, gen, 1);
+	if (DIP(ip, gen) == 0)
 		DIP_ASSIGN(ip, gen, arc4random() & INT_MAX);
 
 	if (DIP(ip, gen) == 0 || DIP(ip, gen) == -1)
