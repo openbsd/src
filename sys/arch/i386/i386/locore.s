@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.124 2008/07/28 19:08:46 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.125 2009/01/17 23:44:46 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1359,10 +1359,9 @@ switch_exited:
 	movl	PCB_EBP(%esi),%ebp
 
 	/*
-	 * Activate the address space.  We're curproc, so %cr3 will
-	 * be reloaded, but we're not yet curpcb, so the LDT won't
-	 * be reloaded, although the PCB copy of the selector will
-	 * be refreshed from the pmap.
+	 * Activate the address space.  The pcb copy of %cr3 and the
+	 * LDT will be refreshed from the pmap, and because we're
+	 * curproc they'll both be reloaded into the CPU.
 	 */
 	pushl	%edi
 	call	_C_LABEL(pmap_activate)
@@ -1375,18 +1374,6 @@ switch_exited:
 	/* Switch TSS. */
 	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
 	ltr	%dx
-
-#ifdef USER_LDT
-	/*
-	 * Switch LDT.
-	 *
-	 * XXX
-	 * Always do this, because the LDT could have been swapped into a
-	 * different selector after a process exited.  (See gdt_compact().)
-	 */
-	movl	PCB_LDT_SEL(%esi),%edx
-	lldt	%dx
-#endif /* USER_LDT */
 
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx

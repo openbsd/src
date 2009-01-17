@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.12 2008/07/25 15:01:33 art Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.13 2009/01/17 23:44:46 guenther Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -65,11 +65,6 @@ void gdt_put_slot(int);
 /*
  * Lock and unlock the GDT, to avoid races in case gdt_{ge,pu}t_slot() sleep
  * waiting for memory.
- *
- * Note that the locking done here is not sufficient for multiprocessor
- * systems.  A freshly allocated slot will still be of type SDT_SYSNULL for
- * some time after the GDT is unlocked, so gdt_compact() could attempt to
- * reclaim it.
  */
 static __inline void
 gdt_lock(void)

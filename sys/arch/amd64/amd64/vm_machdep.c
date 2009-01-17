@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.12 2007/10/13 07:18:32 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.13 2009/01/17 23:44:46 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -105,15 +105,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 		panic("cpu_fork: curproc");
 #endif
 	*pcb = p1->p_addr->u_pcb;
-
-	/*
-	 * Preset these so that gdt_compact() doesn't get confused if called
-	 * during the allocations below.
-	 *
-	 * Note: pcb_ldt_sel is handled in the pmap_activate() call when
-	 * we run the new process.
-	 */
-	p2->p_md.md_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
 
 	/*
 	 * Activate the address space.  Note this will refresh pcb_ldt_sel.
