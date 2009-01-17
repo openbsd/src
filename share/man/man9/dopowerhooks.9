@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dopowerhooks.9,v 1.5 2007/05/31 19:20:00 jmc Exp $
+.\"	$OpenBSD: dopowerhooks.9,v 1.6 2009/01/17 18:02:29 krw Exp $
 .\"
 .\" Copyright (c) 2000 Aaron Campbell
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 17 2009 $
 .Dt DOPOWERHOOKS 9
 .Os
 .Sh NAME
@@ -37,11 +37,9 @@
 .Ft void
 .Fn dopowerhooks "int why"
 .Sh DESCRIPTION
-The
 .Fn dopowerhooks
-function invokes all power hooks established using the
-.Xr powerhook_establish 9
-function.
+calls all power hooks that have been established using
+.Xr powerhook_establish 9 .
 At
 .Dq suspend
 and
@@ -53,9 +51,12 @@ At
 time, power hooks are called in order, i.e., the power hook
 established first will be called first.
 .Pp
-This routine is called from the
+.Fn dopowerhooks
+is invoked by
+.Xr acpi 4
+or
 .Xr apm 4
-driver when a power change is detected.
+when a power state change is detected.
 The
 .Fa why
 argument is one of
@@ -67,5 +68,6 @@ describing the reason for the change in power state.
 Each established power hook is passed this information so the appropriate
 actions can be taken.
 .Sh SEE ALSO
+.Xr acpi 4 ,
 .Xr apm 4 ,
 .Xr powerhook_establish 9
