@@ -1,4 +1,4 @@
-/*	$OpenBSD: vrng.c,v 1.1 2008/08/13 19:30:02 kettenis Exp $	*/
+/*	$OpenBSD: vrng.c,v 1.2 2009/01/17 19:24:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -89,35 +89,42 @@ vrng_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unsupported hypervisor\n");
 
 	err = hv_rng_get_diag_control();
-	if (err != H_EOK)
+	if (err != H_EOK && err != H_ENOACCESS)
 		printf(": hv_rng_get_diag_control %d\n", err);
 
-	bzero(ctl, sizeof(ctl));
+	/*
+	 * If we're not the Trusted Domain, the hypervisor call above
+	 * will fails with H_ENOACCESS.  In that case we hope that the
+	 * RNG has been properly initialized.
+	 */
+	if (err == H_EOK) {
+		bzero(ctl, sizeof(ctl));
 
-	ctl[0].rng_ctl1 = 1;
-	ctl[0].rng_vcoctl_sel = 0;
-	ctl[0].rng_wait_cnt = 0x3e;
+		ctl[0].rng_ctl1 = 1;
+		ctl[0].rng_vcoctl_sel = 0;
+		ctl[0].rng_wait_cnt = 0x3e;
 
-	ctl[1].rng_ctl2 = 1;
-	ctl[1].rng_vcoctl_sel = 1;
-	ctl[1].rng_wait_cnt = 0x3e;
+		ctl[1].rng_ctl2 = 1;
+		ctl[1].rng_vcoctl_sel = 1;
+		ctl[1].rng_wait_cnt = 0x3e;
 
-	ctl[2].rng_ctl3 = 1;
-	ctl[2].rng_vcoctl_sel = 2;
-	ctl[2].rng_wait_cnt = 0x3e;
+		ctl[2].rng_ctl3 = 1;
+		ctl[2].rng_vcoctl_sel = 2;
+		ctl[2].rng_wait_cnt = 0x3e;
 
-	ctl[3].rng_ctl1 = 1;
-	ctl[3].rng_ctl2 = 1;
-	ctl[3].rng_ctl3 = 1;
-	ctl[3].rng_ctl4 = 1;
-	ctl[3].rng_wait_cnt = 0x3e;
+		ctl[3].rng_ctl1 = 1;
+		ctl[3].rng_ctl2 = 1;
+		ctl[3].rng_ctl3 = 1;
+		ctl[3].rng_ctl4 = 1;
+		ctl[3].rng_wait_cnt = 0x3e;
 
-	if (!pmap_extract(pmap_kernel(), (vaddr_t)&ctl, &addr))
-		panic("vrng_attach: pmap_extract failed\n");
+		if (!pmap_extract(pmap_kernel(), (vaddr_t)&ctl, &addr))
+			panic("vrng_attach: pmap_extract failed\n");
 
-	err = hv_rng_ctl_write(addr, RNG_STATE_CONFIGURED, 0, &delta);
-	if (err != H_EOK)
-		printf(": hv_rng_ctl_write %d\n", err);
+		err = hv_rng_ctl_write(addr, RNG_STATE_CONFIGURED, 0, &delta);
+		if (err != H_EOK)
+			printf(": hv_rng_ctl_write %d\n", err);
+	}
 
 	printf("\n");
 
