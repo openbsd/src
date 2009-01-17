@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.6 2009/01/17 17:11:10 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.7 2009/01/17 20:36:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -922,7 +922,8 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	int desc, s;
 	int timeout;
 
-	KASSERT(sc->sc_tx_cnt < sc->sc_vd->vd_nentries);
+	if (sc->sc_tx_cnt >= sc->sc_vd->vd_nentries)
+		return (NO_CCB);
 
 	desc = sc->sc_tx_prod;
 
