@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vrng.4,v 1.1 2009/01/17 19:16:36 kettenis Exp $
+.\"     $OpenBSD: vrng.4,v 1.2 2009/01/18 09:13:07 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 17 2009 $
+.Dd $Mdocdate: January 18 2009 $
 .Dt VRNG 4 sparc64
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@ The
 driver provides support for the random number generation service
 provided by the UltraSPARC Hypervisor as found on sun4v systems.
 .Pp
-Driven by period checks for available data from the generator,
+Driven by periodic checks for available data from the generator,
 .Nm
 supplies entropy to the
 .Xr random 4
