@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.52 2009/01/18 04:47:54 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.53 2009/01/18 05:09:43 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1458,6 +1458,8 @@ siop_scsicmd(xs)
 		if (error) {
 			printf("%s: unable to load data DMA map: %d\n",
 			    sc->sc_c.sc_dev.dv_xname, error);
+			siop_cmd->cmd_c.status = CMDST_FREE;
+			TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
 			splx(s);
 			return(TRY_AGAIN_LATER);
 		}
