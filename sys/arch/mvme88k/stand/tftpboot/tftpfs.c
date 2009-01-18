@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpfs.c,v 1.3 2006/08/13 23:08:43 miod Exp $	*/
+/*	$OpenBSD: tftpfs.c,v 1.4 2009/01/18 21:47:56 miod Exp $	*/
 
 /*-
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -118,6 +118,8 @@ tftp_read_file(f, buf_p, size_p)
 		strlcpy(filename, fp->filename, sizeof filename);
                 tftpfs_close(f);
                 tftpfs_open(filename, f);
+		/* restore f_seekp reset by tftpfs_open() */
+		fp->f_seekp = (file_block - 1) * TFTP_BLOCK_SIZE + off;
 		for (i = 1; i <= file_block; i++) {
 			rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
 				i, block_size, fp->f_buf, &fp->f_buf_size);
