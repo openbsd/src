@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.73 2008/12/24 02:43:52 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.74 2009/01/18 21:04:41 blambert Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -681,10 +681,10 @@ nfsd_rt(sotype, nd, cacherep)
  * They do read-ahead and write-behind operations on the block I/O cache.
  * Never returns unless it fails or gets killed.
  */
-int
-nfssvc_iod(p)
-	struct proc *p;
+void
+nfssvc_iod(void *arg)
 {
+	struct proc *p = (struct proc *)arg;
 	struct buf *bp, *nbp;
 	int i, myiod;
 	struct vnode *vp;
@@ -701,7 +701,7 @@ nfssvc_iod(p)
 		}
 	}
 	if (myiod == -1)
-		return (EBUSY);
+		kthread_exit(EBUSY);
 
 	nfs_asyncdaemon[myiod] = p;
 	nfs_numasync++;
@@ -762,24 +762,16 @@ nfssvc_iod(p)
 		nfs_asyncdaemon[myiod] = NULL;
 		nfs_numasync--;
 		nfs_bufqmax -= bufcount;
-		return (error);
+		kthread_exit(error);
 	    }
 	}
-}
-
-void
-start_nfsio(arg)
-	void *arg;
-{
-	nfssvc_iod(curproc);
-	
-	kthread_exit(0);
 }
 
 void
 nfs_getset_niothreads(set)
 	int set;
 {
+	struct proc *p;
 	int i, have, start;
 	
 	for (have = 0, i = 0; i < NFS_MAXASYNCDAEMON; i++)
@@ -793,7 +785,7 @@ nfs_getset_niothreads(set)
 		start = nfs_niothreads - have;
 
 		while (start > 0) {
-			kthread_create(start_nfsio, NULL, NULL, "nfsio");
+			kthread_create(nfssvc_iod, p, &p, "nfsio");
 			start--;
 		}
 

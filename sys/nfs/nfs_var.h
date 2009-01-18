@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.46 2009/01/16 17:11:28 thib Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.47 2009/01/18 21:04:41 blambert Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -260,7 +260,7 @@ int nfssvc_nfsd(struct nfsd_srvargs *, caddr_t, struct proc *);
 void nfsrv_zapsock(struct nfssvc_sock *);
 void nfsrv_slpderef(struct nfssvc_sock *);
 void nfsrv_init(int);
-int nfssvc_iod(struct proc *);
+void nfssvc_iod(void *);
 void start_nfsio(void *);
 void nfs_getset_niothreads(int);
 
