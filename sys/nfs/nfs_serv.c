@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.60 2008/12/24 16:53:20 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.61 2009/01/18 13:54:27 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -305,7 +305,7 @@ nfsrv_setattr(nfsd, slp, procp, mrq)
 			error = EISDIR;
 			goto out;
 		} else if ((error = nfsrv_access(vp, VWRITE, cred, rdonly,
-			procp, 0)) != 0)
+			procp, 1)) != 0)
 			goto out;
 	}
 	error = VOP_SETATTR(vp, &va, cred, procp);
