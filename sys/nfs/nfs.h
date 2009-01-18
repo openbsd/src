@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.35 2008/09/12 16:55:37 thib Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.36 2009/01/18 21:15:53 blambert Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -325,10 +325,6 @@ struct nfsd {
 	TAILQ_ENTRY(nfsd) nfsd_chain;	/* List of all nfsd's */
 	int		nfsd_flag;	/* NFSD_ flags */
 	struct nfssvc_sock *nfsd_slp;	/* Current socket */
-	int		nfsd_authlen;	/* Authenticator len */
-	u_char		nfsd_authstr[RPCAUTH_MAXSIZ]; /* Authenticator data */
-	int		nfsd_verflen;	/* and the Verifier */
-	u_char		nfsd_verfstr[RPCVERF_MAXSIZ];
 	struct proc	*nfsd_procp;	/* Proc ptr */
 	struct nfsrv_descript *nfsd_nd;	/* Associated nfsrv_descript */
 };
