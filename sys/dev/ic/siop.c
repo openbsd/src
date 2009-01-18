@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.51 2008/11/24 00:31:35 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.52 2009/01/18 04:47:54 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1370,21 +1370,7 @@ siop_scsicmd(xs)
 
 	s = splbio();
 #ifdef SIOP_DEBUG_SCHED
-		printf("starting cmd for %d:%d\n", target, lun);
-#endif
-	siop_cmd = TAILQ_FIRST(&sc->free_list);
-	if (siop_cmd == NULL) {
-		splx(s);
-		return(NO_CCB);
-	}
-	TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
-
-	/* Always reset xs->stimeout, lest we timeout_del() with trash */
-	timeout_set(&xs->stimeout, siop_timeout, siop_cmd);
-
-#ifdef DIAGNOSTIC
-	if (siop_cmd->cmd_c.status != CMDST_FREE)
-		panic("siop_scsicmd: new cmd not free");
+	printf("starting cmd for %d:%d\n", target, lun);
 #endif
 	siop_target = (struct siop_target*)sc->sc_c.targets[target];
 	if (siop_target == NULL) {
@@ -1435,6 +1421,22 @@ siop_scsicmd(xs)
 			return(TRY_AGAIN_LATER);
 		}
 	}
+
+	/* Looks like we could issue a command, if a ccb is available. */
+	siop_cmd = TAILQ_FIRST(&sc->free_list);
+	if (siop_cmd == NULL) {
+		splx(s);
+		return(NO_CCB);
+	}
+	TAILQ_REMOVE(&sc->free_list, siop_cmd, next);
+#ifdef DIAGNOSTIC
+	if (siop_cmd->cmd_c.status != CMDST_FREE)
+		panic("siop_scsicmd: new cmd not free");
+#endif
+
+	/* Always reset xs->stimeout, lest we timeout_del() with trash */
+	timeout_set(&xs->stimeout, siop_timeout, siop_cmd);
+
 	siop_cmd->cmd_c.siop_target = sc->sc_c.targets[target];
 	siop_cmd->cmd_c.xs = xs;
 	siop_cmd->cmd_c.flags = 0;
