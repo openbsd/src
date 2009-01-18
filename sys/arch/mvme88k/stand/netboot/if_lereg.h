@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lereg.h,v 1.4 2003/06/02 23:27:52 millert Exp $ */
+/*	$OpenBSD: if_lereg.h,v 1.5 2009/01/18 21:49:11 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -39,6 +39,8 @@
 #define	LETBUF		1
 #define	LETBUFLOG2	0
 #define	LE_TLEN		(LETBUFLOG2 << 13)
+
+#define	LEMEMSIZE	16384	/* memory needed to fulfill above settings */
 
 /* Local Area Network Controller for Ethernet (LANCE) registers */
 struct lereg1 {

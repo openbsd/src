@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.8 2006/05/16 22:52:09 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.9 2009/01/18 21:49:11 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -297,7 +297,6 @@ ie_poll(desc, pkt, len)
 	int     length = 0;
 	u_short status;
 
-	asm(".word	0xf518\n");
 	status = iem->im_rfd[slot].ie_fd_status;
 	if (status & IE_FD_BUSY)
 		return (0);
@@ -439,7 +438,8 @@ ie_init(desc, machdep_hint)
 	bzero(&ie_softc, sizeof(ie_softc));
 	ie_softc.sc_reg =
 	    (struct iereg *) ie_config[desc->io_netif->nif_unit].phys_addr;
-	ie_softc.sc_mem = (struct iemem *) 0xae0000;
+	/* use 64KB below HEAP as buffers */
+	ie_softc.sc_mem = (struct iemem *)(HEAP_START - 0x10000);
 	ie_reset(desc->io_netif, desc->myea);
 	printf("device: %s%d attached to %s\n", nif->nif_driver->netif_bname,
 	    nif->nif_unit, ether_sprintf(desc->myea));

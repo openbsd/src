@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.6 2006/05/16 22:52:26 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.7 2009/01/18 21:49:11 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -423,7 +423,6 @@ le_init(desc, machdep_hint)
 	struct iodesc *desc;
 	void   *machdep_hint;
 {
-	u_long eram = 4*1024*1024;
 	struct netif *nif = desc->io_netif;
 
 	if (le_debug)
@@ -432,7 +431,7 @@ le_init(desc, machdep_hint)
 	bzero(&le_softc, sizeof(le_softc));
 	le_softc.sc_r1 =
 	    (struct lereg1 *) le_config[desc->io_netif->nif_unit].phys_addr;
-	le_softc.sc_r2 = (struct lereg2 *) (eram - (1024 * 1024));
+	le_softc.sc_r2 = (struct lereg2 *)(HEAP_START - LEMEMSIZE);
 	le_reset(desc->io_netif, desc->myea);
 	printf("device: %s%d attached to %s\n", nif->nif_driver->netif_bname,
 	    nif->nif_unit, ether_sprintf(desc->myea));
