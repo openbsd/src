@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.106 2009/01/13 19:44:20 grange Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.107 2009/01/18 15:42:31 bluhm Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1046,7 +1046,7 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 	int error = 0, len, tsiz, wccflag = NFSV3_WCCRATTR, rlen, commit;
 	int v3 = NFS_ISV3(vp), committed = NFSV3WRITE_FILESYNC;
 
-#ifndef DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (uiop->uio_iovcnt != 1)
 		panic("nfs: writerpc iovcnt > 1");
 #endif
@@ -1375,7 +1375,7 @@ nfs_remove(v)
 	int error = 0;
 	struct vattr vattr;
 
-#ifndef DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if ((cnp->cn_flags & HASBUF) == 0)
 		panic("nfs_remove: no name");
 	if (vp->v_usecount < 1)
@@ -1486,7 +1486,7 @@ nfs_rename(v)
 	struct componentname *fcnp = ap->a_fcnp;
 	int error;
 
-#ifndef DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if ((tcnp->cn_flags & HASBUF) == 0 ||
 	    (fcnp->cn_flags & HASBUF) == 0)
 		panic("nfs_rename: no name");
@@ -2034,7 +2034,7 @@ nfs_readdirrpc(struct vnode *vp,
 	int attrflag;
 	int v3 = NFS_ISV3(vp);
 
-#ifndef DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (uiop->uio_iovcnt != 1 || 
 		(uiop->uio_resid & (NFS_DIRBLKSIZ - 1)))
 		panic("nfs readdirrpc bad uio");
@@ -2223,7 +2223,7 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 	int error = 0, tlen, more_dirs = 1, blksiz = 0, doit, bigenough = 1, i;
 	int attrflag, fhsize;
 
-#ifndef DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (uiop->uio_iovcnt != 1 || 
 		(uiop->uio_resid & (NFS_DIRBLKSIZ - 1)))
 		panic("nfs readdirplusrpc bad uio");
