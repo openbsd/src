@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.h,v 1.21 2008/03/23 12:31:58 miod Exp $	*/
+/*	$OpenBSD: db_command.h,v 1.22 2009/01/18 13:36:56 thib Exp $	*/
 /*	$NetBSD: db_command.h,v 1.8 1996/02/05 01:56:55 christos Exp $	*/
 
 /* 
@@ -50,6 +50,7 @@ void db_pool_print_cmd(db_expr_t, int, db_expr_t, char *);
 void db_proc_print_cmd(db_expr_t, int, db_expr_t, char *);
 void db_uvmexp_print_cmd(db_expr_t, int, db_expr_t, char *);
 void db_vnode_print_cmd(db_expr_t, int, db_expr_t, char *);
+void db_nfsreq_print_cmd(db_expr_t, int, db_expr_t, char *);
 void db_machine_commands_install(struct db_command *);
 void db_help_cmd(db_expr_t, int, db_expr_t, char *);
 void db_command_loop(void);

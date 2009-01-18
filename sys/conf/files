@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.452 2008/12/21 21:37:43 miod Exp $
+#	$OpenBSD: files,v 1.453 2009/01/18 13:36:56 thib Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -897,6 +897,7 @@ file netnatm/natm.c			natm
 file nfs/krpc_subr.c			nfsclient
 file nfs/nfs_bio.c			nfsclient
 file nfs/nfs_boot.c			nfsclient
+file nfs/nfs_debug.c			nfsclient & ddb
 file nfs/nfs_node.c			nfsclient
 file nfs/nfs_kq.c			nfsclient
 file nfs/nfs_serv.c			nfsserver

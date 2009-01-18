@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.h,v 1.9 2006/07/12 05:55:22 deraadt Exp $	*/
+/*	$OpenBSD: db_interface.h,v 1.10 2009/01/18 13:36:56 thib Exp $	*/
 /*	$NetBSD: db_interface.h,v 1.1 1996/02/05 01:57:03 christos Exp $	*/
 
 /*
@@ -55,6 +55,11 @@ void vfs_mount_print(struct mount *, int, int (*)(const char *, ...));
 
 /* kern/subr_pool.c */
 void db_show_all_pools(db_expr_t, int, db_expr_t, char *);
+
+/* nfs/nfs_debug.c */
+struct nfsreq;
+void db_show_all_nfsreqs(db_expr_t, int, db_expr_t, char *);
+void db_nfsreq_print(struct nfsreq *, int, int (*)(const char *, ...));
 
 /* ufs/ffs/ffs_softdep.c */
 struct worklist;

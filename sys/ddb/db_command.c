@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.49 2008/03/23 12:31:57 miod Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.50 2009/01/18 13:36:56 thib Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -384,6 +384,19 @@ db_vnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 /*ARGSUSED*/
+void     
+db_nfsreq_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	boolean_t full = FALSE;
+
+	if (modif[0] == 'f')
+		full = TRUE;
+
+	db_nfsreq_print((struct nfsreq *) addr, full, db_printf);
+}
+
+
+/*ARGSUSED*/
 void
 db_show_panic_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
@@ -433,6 +446,7 @@ struct db_command db_show_all_cmds[] = {
 	{ "callout",	db_show_callout,	0, NULL },
 	{ "pools",	db_show_all_pools,	0, NULL },
 	{ "mounts",	db_show_all_mounts,	0, NULL },
+	{ "nfsreq",	db_show_all_nfsreqs,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
 };
 
@@ -452,6 +466,7 @@ struct db_command db_show_cmds[] = {
 	{ "registers",	db_show_regs,		0,	NULL },
 	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
 	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
+	{ "nfsreq",	db_nfsreq_print_cmd,	0,	NULL },
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
 	{ NULL,		NULL,			0,	NULL }
 };
