@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.20 2009/01/12 17:14:48 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.21 2009/01/19 20:21:33 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -261,7 +261,7 @@ fbwscons_init(struct sunfb *sf, int flags, int isconsole)
 
 	/* ifb(4) doesn't set ri_bits at the moment */
 	if (ri->ri_bits == NULL)
-		ri->ri_flg &= ~RI_CLEAR;
+		ri->ri_flg &= ~(RI_CLEAR | RI_CLEARMARGINS);
 
 	rasops_init(ri, rows, cols);
 
