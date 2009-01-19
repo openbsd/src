@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.13 2009/01/19 20:40:31 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.14 2009/01/19 20:52:09 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -436,28 +436,24 @@ void
 srt_current_forwarder(struct rt_node *rn, struct iface *iface,
     u_int32_t metric, u_int32_t nbr_report)
 {
-	/* If it is our designated forwarder */ 
-	if (nbr_report == rn->adv_rtr[iface->ifindex].addr.s_addr) {
+	struct adv_rtr *adv = &rn->adv_rtr[iface->ifindex];
+
+	if (nbr_report == adv->addr.s_addr) {
 		if (metric > rn->cost || (metric == rn->cost &&
-		    iface->addr.s_addr < nbr_report)) {
-			rn->adv_rtr[iface->ifindex].addr.s_addr =
-			    iface->addr.s_addr;
-			rn->adv_rtr[iface->ifindex].metric = rn->cost;
+		    iface->addr.s_addr < nbr_report))
+			srt_set_forwarder_self(rn, iface);
 
-			/* XXX: check if there are groups with this source */
-			if (group_list_empty(iface))
-				rn->ttls[iface->ifindex] = 1;
-		}
-	} else if (metric < rn->adv_rtr[iface->ifindex].metric ||
-	    (metric == rn->adv_rtr[iface->ifindex].metric &&
-	    nbr_report < rn->adv_rtr[iface->ifindex].addr.s_addr)) {
-		if (rn->adv_rtr[iface->ifindex].addr.s_addr ==
-		    iface->addr.s_addr && !rn->ds_cnt[iface->ifindex])
-			rn->ttls[iface->ifindex] = 0;
+	} else {
+		if (metric < adv->metric ||
+		    (metric == adv->metric && nbr_report < adv->addr.s_addr))
+			if (adv->addr.s_addr == iface->addr.s_addr)
+				rn->ttls[iface->ifindex] = 0;
 
-		rn->adv_rtr[iface->ifindex].addr.s_addr = nbr_report;
-		rn->adv_rtr[iface->ifindex].metric = metric;
+		adv->addr.s_addr = nbr_report;
+		adv->metric = metric;
 	}
+
+	/* XXX: update the kernel */
 }
 
 void
@@ -476,6 +472,8 @@ srt_update_ds_forwarders(struct rt_node *rn, struct iface *iface,
 			srt_set_forwarder_self(rn, ifa);
 		}
 	}
+
+	/* XXX: update the kernel */
 }
 
 void
@@ -483,10 +481,9 @@ srt_set_forwarder_self(struct rt_node *rn, struct iface *iface)
 {
 	rn->adv_rtr[iface->ifindex].addr.s_addr = iface->addr.s_addr;
 	rn->adv_rtr[iface->ifindex].metric = rn->cost;
+	rn->ttls[iface->ifindex] = 1;
 
-	/* XXX: check if there are groups with this source */
-	if (group_list_empty(iface))
-		rn->ttls[iface->ifindex] = 1;
+	/* XXX: update the kernel */
 }
 
 void
