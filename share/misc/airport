@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.15 2008/03/25 15:07:10 kettenis Exp $
+#	$OpenBSD: airport,v 1.16 2009/01/19 22:15:54 jmc Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -190,7 +190,7 @@ BJI:Bemidji Municipal, MN, USA
 BJL:Yundum International, Banjul, Gambia
 BJX:Del Bajio, Leon/Guanajuato, Guanajuato, Mexico
 BKI:Kota Kinabalu, Kota Kinabalu, Sabah, Malaysia
-BKK:Bangkok, Thailand
+BKK:Suvarnabhumi Airport, Bangkok, Thailand
 BKL:Cleveland Lakefront, Ohio, USA
 BKO:Senou, Bamako, Mali
 BKW:Beckley, WV, USA
@@ -425,6 +425,7 @@ DLC:Dalian, China
 DLH:Duluth, MN, USA
 DLM:Dalaman, Mugla, Turkey
 DME:Domodedovo, Moscow, Russia
+DMK:Don Mueang International Airport, Bangkok, Thailand
 DMR:Dhamar, Yemen
 DND:Dundee, Scotland, United Kingdom
 DNK:Dnepropetrovsk, Ukraine
