@@ -1,4 +1,4 @@
-.\" $OpenBSD: useradd.8,v 1.25 2007/05/31 19:20:30 jmc Exp $
+.\" $OpenBSD: useradd.8,v 1.26 2009/01/19 09:46:59 sobrado Exp $
 .\" $NetBSD: useradd.8,v 1.26 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 19 2009 $
 .Dt USERADD 8
 .Os
 .Sh NAME
@@ -251,9 +251,7 @@ at very large sites could take several minutes.
 Until this update is completed, the password file is unavailable for other
 updates and the new information is not available to programs.
 .Pp
-The
-.Nm
-utility exits 0 on success, and \*(Gt0 if an error occurs.
+.Ex -std useradd
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf

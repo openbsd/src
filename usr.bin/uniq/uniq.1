@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uniq.1,v 1.14 2007/11/11 17:50:29 kili Exp $
+.\"	$OpenBSD: uniq.1,v 1.15 2009/01/19 09:46:59 sobrado Exp $
 .\"	$NetBSD: uniq.1,v 1.5 1994/12/06 07:51:15 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)uniq.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: November 11 2007 $
+.Dd $Mdocdate: January 19 2009 $
 .Dt UNIQ 1
 .Os
 .Sh NAME
@@ -115,9 +115,7 @@ A file name of
 denotes the standard input or the standard output
 .Pq depending on its position on the command line .
 .Pp
-The
-.Nm
-utility exits 0 on success or \*(Gt0 if an error occurred.
+.Ex -std uniq
 .Sh SEE ALSO
 .Xr sort 1
 .Sh STANDARDS
