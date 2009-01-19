@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_kq.c,v 1.14 2008/09/11 16:06:01 thib Exp $ */
+/*	$OpenBSD: nfs_kq.c,v 1.15 2009/01/19 23:40:36 thib Exp $ */
 /*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
@@ -126,7 +126,7 @@ nfs_kqpoll(void *arg)
 
 			error = VOP_GETATTR(ke->vp, &attr, p->p_ucred, p);
 			if (error == ESTALE) {
-				np->n_attrstamp = 0;
+				NFS_INVALIDATE_ATTRCACHE(np);
 				VN_KNOTE(ke->vp, NOTE_DELETE);
 				goto next;
 			}

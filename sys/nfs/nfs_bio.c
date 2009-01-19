@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.55 2008/08/09 10:14:02 thib Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.56 2009/01/19 23:40:36 thib Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -106,13 +106,9 @@ nfs_bioread(vp, uio, ioflag, cred)
 	 * server, so flush all of the file's data out of the cache.
 	 * Then force a getattr rpc to ensure that you have up to date
 	 * attributes.
-	 * NB: This implies that cache data can be read when up to
-	 * NFS_ATTRTIMEO seconds out of date. If you find that you need current
-	 * attributes this could be forced by setting n_attrstamp to 0 before
-	 * the VOP_GETATTR() call.
 	 */
 	if (np->n_flag & NMODIFIED) {
-		np->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(np);
 		error = VOP_GETATTR(vp, &vattr, cred, p);
 		if (error)
 			return (error);
@@ -305,13 +301,13 @@ nfs_write(v)
 		(void)nfs_fsinfo(nmp, vp, cred, p);
 	if (ioflag & (IO_APPEND | IO_SYNC)) {
 		if (np->n_flag & NMODIFIED) {
-			np->n_attrstamp = 0;
+			NFS_INVALIDATE_ATTRCACHE(np);
 			error = nfs_vinvalbuf(vp, V_SAVE, cred, p);
 			if (error)
 				return (error);
 		}
 		if (ioflag & IO_APPEND) {
-			np->n_attrstamp = 0;
+			NFS_INVALIDATE_ATTRCACHE(np);
 			error = VOP_GETATTR(vp, &vattr, cred, p);
 			if (error)
 				return (error);

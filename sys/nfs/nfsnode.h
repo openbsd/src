@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.31 2008/06/14 19:33:58 beck Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.32 2009/01/19 23:40:36 thib Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -128,6 +128,8 @@ struct nfsnode {
 #define	NACC		0x0100	/* Special file accessed */
 #define	NUPD		0x0200	/* Special file updated */
 #define	NCHG		0x0400	/* Special file times changed */
+
+#define NFS_INVALIDATE_ATTRCACHE(np)	((np)->n_attrstamp = 0)
 
 /*
  * Convert between nfsnode pointers and vnode pointers

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.107 2009/01/18 15:42:31 bluhm Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.108 2009/01/19 23:40:36 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -398,7 +398,7 @@ nfs_open(v)
 		if (error == EINTR)
 			return (error);
 		uvm_vnp_uncache(vp);
-		np->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(np);
 		if (vp->v_type == VDIR)
 			np->n_direofoffset = 0;
 		error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p);
@@ -419,7 +419,8 @@ nfs_open(v)
 			np->n_mtime = vattr.va_mtime.tv_sec;
 		}
 	}
-	np->n_attrstamp = 0; /* For Open/Close consistency */
+	/* For open/close consistency. */
+	NFS_INVALIDATE_ATTRCACHE(np);
 	return (0);
 }
 
@@ -466,7 +467,7 @@ nfs_close(v)
 		    np->n_flag &= ~NMODIFIED;
 		} else
 		    error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p);
-		np->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(np);
 	    }
 	    if (np->n_flag & NWRITEERR) {
 		np->n_flag &= ~NWRITEERR;
@@ -1224,7 +1225,7 @@ nfsmout:
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	vrele(dvp);
 	return (error);
 }
@@ -1346,7 +1347,7 @@ nfsmout:
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	vrele(dvp);
 	return (error);
@@ -1414,7 +1415,7 @@ nfs_remove(v)
 	} else if (!np->n_sillyrename)
 		error = nfs_sillyrename(dvp, vp, cnp);
 	pool_put(&namei_pool, cnp->cn_pnbuf);
-	np->n_attrstamp = 0;
+	NFS_INVALIDATE_ATTRCACHE(np);
 	vrele(dvp);
 	vrele(vp);
 
@@ -1466,7 +1467,7 @@ nfs_removerpc(dvp, name, namelen, cred, proc)
 nfsmout: 
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	return (error);
 }
 
@@ -1589,9 +1590,9 @@ nfsmout:
 	VTONFS(fdvp)->n_flag |= NMODIFIED;
 	VTONFS(tdvp)->n_flag |= NMODIFIED;
 	if (!fwccflag)
-		VTONFS(fdvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(fdvp));
 	if (!twccflag)
-		VTONFS(tdvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(tdvp));
 	return (error);
 }
 
@@ -1646,9 +1647,9 @@ nfsmout:
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!attrflag)
-		VTONFS(vp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(vp));
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
@@ -1707,7 +1708,7 @@ nfsmout:
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vrele(dvp);
 	return (error);
@@ -1762,7 +1763,7 @@ nfs_mkdir(v)
 nfsmout: 
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 
 	if (error == 0 && newvp == NULL) {
 		error = nfs_lookitup(dvp, cnp->cn_nameptr, len, cnp->cn_cred,
@@ -1824,7 +1825,7 @@ nfsmout:
 	pool_put(&namei_pool, cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
-		VTONFS(dvp)->n_attrstamp = 0;
+		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 
 	VN_KNOTE(dvp, NOTE_WRITE|NOTE_LINK);
 	VN_KNOTE(vp, NOTE_DELETE);
