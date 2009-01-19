@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.6 2008/12/02 13:42:44 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.7 2009/01/19 20:40:31 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -38,6 +38,8 @@
 #include "dvmrpe.h"
 #include "log.h"
 #include "rde.h"
+
+void		 rde_ds_iface(struct mfc *, struct iface *, struct rt_node *);
 
 void		 rde_nbr_init(u_int32_t);
 void		 rde_nbr_free(void);
@@ -198,6 +200,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct route_report	 rr;
 	struct rde_nbr		 rn;
+	struct rt_node		*r;
 	int			 i, n, connected = 0;
 	struct iface		*iface;
 
@@ -260,10 +263,15 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			for (i = 0; i < MAXVIFS; i++)
 				mfc.ttls[i] = 0;
 
-			LIST_FOREACH(iface, &rdeconf->iface_list, entry) {
-				if (mfc.ifindex != iface->ifindex)
-					mfc.ttls[iface->ifindex] = 1;
+			r = rt_matchorigin(mfc.origin.s_addr);
+			if (r == NULL) {
+				log_debug("rde_dispatch_imsg: "
+				    "packet from unknown origin");
+				break;
 			}
+
+			LIST_FOREACH(iface, &rdeconf->iface_list, entry)
+				rde_ds_iface(&mfc, iface, r);
 
 			mfc_update(&mfc);
 #endif
@@ -297,6 +305,30 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	imsg_event_add(ibuf);
+}
+
+/* 1) Add interfaces with downstream routers for this
+      source.
+   2) Add interfaces with member for this group if i am
+      the designated forwarder.
+*/
+void
+rde_ds_iface(struct mfc *mfc, struct iface *iface, struct rt_node *r)
+{
+	if (mfc->ifindex == iface->ifindex) {
+		return;
+	}
+
+	if (r->ds_cnt[iface->ifindex] != 0) {
+		mfc->ttls[iface->ifindex] = 1;
+		return;
+	}
+
+	if (group_list_find(iface, mfc->group.s_addr) &&
+	    r->adv_rtr[iface->ifindex].addr.s_addr == iface->addr.s_addr) {
+		mfc->ttls[iface->ifindex] = 1;
+		return;
+	}
 }
 
 LIST_HEAD(rde_nbr_head, rde_nbr);

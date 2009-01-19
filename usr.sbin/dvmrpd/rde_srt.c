@@ -1,6 +1,7 @@
-/*	$OpenBSD: rde_srt.c,v 1.12 2008/12/07 16:37:04 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.13 2009/01/19 20:40:31 michele Exp $ */
 
 /*
+ * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -159,6 +160,18 @@ rt_find(in_addr_t prefix, u_int8_t prefixlen)
 	s.prefixlen = prefixlen;
 
 	return (RB_FIND(rt_tree, &rt, &s));
+}
+
+struct rt_node *
+rt_matchorigin(in_addr_t src)
+{
+	struct rt_node	*r;
+
+	RB_FOREACH(r, rt_tree, &rt)
+		if (r->prefix.s_addr == (src & prefixlen2mask(r->prefixlen)))
+			return (r);
+
+	return (NULL);
 }
 
 struct rt_node *

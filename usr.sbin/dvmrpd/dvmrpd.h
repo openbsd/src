@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.h,v 1.11 2008/12/07 16:37:04 michele Exp $ */
+/*	$OpenBSD: dvmrpd.h,v 1.12 2009/01/19 20:40:31 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -234,7 +234,6 @@ struct iface {
 	int			 fd;
 	int			 state;
 	int			 mtu;
-	int			 nbr_cnt;
 	int			 adj_cnt;
 
 	u_int16_t		 flags;
@@ -323,7 +322,6 @@ struct ctl_iface {
 	unsigned int		 ifindex;
 	int			 state;
 	int			 mtu;
-	int			 nbr_cnt;
 	int			 adj_cnt;
 
 	u_int16_t		 flags;
