@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.14 2009/01/04 00:05:52 miod Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.15 2009/01/19 22:12:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -237,8 +237,10 @@ struct ifb_softc {
 	bus_size_t sc_reglen;
 
 	u_int	sc_mode;
+	u_int	sc_accel;
 
-	void (*sc_old_putchar)(void *, int, int, u_int, long);
+	struct wsdisplay_emulops sc_old_ops;
+	void (*sc_old_cursor)(struct rasops_info *);
 
 	int sc_console;
 	u_int8_t sc_cmap_red[256];
@@ -286,7 +288,14 @@ void	ifb_copyrect(struct ifb_softc *, int, int, int, int, int, int);
 void	ifb_fillrect(struct ifb_softc *, int, int, int, int, int);
 void	ifb_rop(struct ifb_softc *, int, int, int, int, int, int, uint32_t,
 	    int32_t);
-void	ifb_rop_wait(struct ifb_softc *);
+int	ifb_rop_wait(struct ifb_softc *);
+
+void	ifb_putchar_dumb(void *, int, int, u_int, long);
+void	ifb_copycols_dumb(void *, int, int, int, int);
+void	ifb_erasecols_dumb(void *, int, int, int, long);
+void	ifb_copyrows_dumb(void *, int, int, int);
+void	ifb_eraserows_dumb(void *, int, int, long);
+void	ifb_do_cursor_dumb(struct rasops_info *);
 
 void	ifb_putchar(void *, int, int, u_int, long);
 void	ifb_copycols(void *, int, int, int, int);
@@ -298,7 +307,22 @@ void	ifb_do_cursor(struct rasops_info *);
 int
 ifbmatch(struct device *parent, void *cf, void *aux)
 {
-	return ifb_ident(aux);
+	struct pci_attach_args *paa = aux;
+	int rc;
+
+	if ((rc = ifb_ident(aux)) == 0)
+		return 0;
+
+	/*
+	 * Multiple heads appear as PCI subfunctions.
+	 * However, the ofw node for it lacks most properties,
+	 * and its BAR only give access to registers, not
+	 * frame buffer memory.
+	 */
+	if (node_has_property(PCITAG_NODE(paa->pa_tag), "device_type"))
+		return rc;
+
+	return 0;
 }
 
 void    
@@ -357,22 +381,47 @@ ifbattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Clear the unwanted pixel planes: all if non console (thus
 	 * white background), and all planes above 7bpp otherwise.
+	 * This also allows to check whether the accelerated code works,
+	 * or not.
 	 */
 	ifb_rop(sc, 0, 0, 0, 0, sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height,
 	    IFB_ROP_CLEAR, sc->sc_console ? ~IFB_PIXELMASK : ~0);
-	ifb_rop_wait(sc);
+	if (ifb_rop_wait(sc) != 0) {
+		sc->sc_accel = 1;
+	} else {
+		/* due to the way we will handle updates */
+		ri->ri_flg &= ~RI_FULLCLEAR;
+
+		if (!sc->sc_console) {
+			bzero((void *)sc->sc_fb8bank0_vaddr,
+			    sc->sc_sunfb.sf_fbsize);
+			bzero((void *)sc->sc_fb8bank1_vaddr,
+			    sc->sc_sunfb.sf_fbsize);
+		}
+	}
 
 	/* pick centering delta */
 	sc->sc_fb8bank0_vaddr += ri->ri_bits - ri->ri_origbits;
 	sc->sc_fb8bank1_vaddr += ri->ri_bits - ri->ri_origbits;
 
-	sc->sc_old_putchar = ri->ri_ops.putchar;
-	ri->ri_ops.copyrows = ifb_copyrows;
-	ri->ri_ops.copycols = ifb_copycols;
-	ri->ri_ops.eraserows = ifb_eraserows;
-	ri->ri_ops.erasecols = ifb_erasecols;
-	ri->ri_ops.putchar = ifb_putchar;
-	ri->ri_do_cursor = ifb_do_cursor;
+	sc->sc_old_ops = ri->ri_ops;	/* structure copy */
+	sc->sc_old_cursor = ri->ri_do_cursor;
+
+	if (sc->sc_accel) {
+		ri->ri_ops.copyrows = ifb_copyrows;
+		ri->ri_ops.copycols = ifb_copycols;
+		ri->ri_ops.eraserows = ifb_eraserows;
+		ri->ri_ops.erasecols = ifb_erasecols;
+		ri->ri_ops.putchar = ifb_putchar_dumb;
+		ri->ri_do_cursor = ifb_do_cursor;
+	} else {
+		ri->ri_ops.copyrows = ifb_copyrows_dumb;
+		ri->ri_ops.copycols = ifb_copycols_dumb;
+		ri->ri_ops.eraserows = ifb_eraserows_dumb;
+		ri->ri_ops.erasecols = ifb_erasecols_dumb;
+		ri->ri_ops.putchar = ifb_putchar_dumb;
+		ri->ri_do_cursor = ifb_do_cursor_dumb;
+	}
 
 	ifb_setcolormap(&sc->sc_sunfb, ifb_setcolor);
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
@@ -585,7 +634,7 @@ ifb_mmap(void *v, off_t off, int prot)
 		}
 #ifdef APERTURE
 		off -= 0x01000000;
-		if (allowaperture != 0) {
+		if (allowaperture != 0 && sc->sc_accel) {
 			if (off >= 0 && off < round_page(sc->sc_reglen)) {
 				return bus_space_mmap(sc->sc_mem_t,
 				    sc->sc_regbase,
@@ -670,17 +719,152 @@ ifb_mapregs(struct ifb_softc *sc, struct pci_attach_args *pa)
 	return 0;
 }
 
+/*
+ * Non accelerated routines.
+ */
+
 void
-ifb_putchar(void *cookie, int row, int col, u_int uc, long attr)
+ifb_putchar_dumb(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct ifb_softc *sc = ri->ri_hw;
 
 	ri->ri_bits = (void *)sc->sc_fb8bank0_vaddr;
-	sc->sc_old_putchar(cookie, row, col, uc, attr);
+	sc->sc_old_ops.putchar(cookie, row, col, uc, attr);
 	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
-	sc->sc_old_putchar(cookie, row, col, uc, attr);
+	sc->sc_old_ops.putchar(cookie, row, col, uc, attr);
 }
+
+void
+ifb_copycols_dumb(void *cookie, int row, int src, int dst, int num)
+{
+	struct rasops_info *ri = cookie;
+	struct ifb_softc *sc = ri->ri_hw;
+
+	ri->ri_bits = (void *)sc->sc_fb8bank0_vaddr;
+	sc->sc_old_ops.copycols(cookie, row, src, dst, num);
+	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
+	sc->sc_old_ops.copycols(cookie, row, src, dst, num);
+}
+
+void
+ifb_erasecols_dumb(void *cookie, int row, int col, int num, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct ifb_softc *sc = ri->ri_hw;
+
+	ri->ri_bits = (void *)sc->sc_fb8bank0_vaddr;
+	sc->sc_old_ops.erasecols(cookie, row, col, num, attr);
+	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
+	sc->sc_old_ops.erasecols(cookie, row, col, num, attr);
+}
+
+void
+ifb_copyrows_dumb(void *cookie, int src, int dst, int num)
+{
+	struct rasops_info *ri = cookie;
+	struct ifb_softc *sc = ri->ri_hw;
+
+	ri->ri_bits = (void *)sc->sc_fb8bank0_vaddr;
+	sc->sc_old_ops.copyrows(cookie, src, dst, num);
+	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
+	sc->sc_old_ops.copyrows(cookie, src, dst, num);
+}
+
+void
+ifb_eraserows_dumb(void *cookie, int row, int num, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct ifb_softc *sc = ri->ri_hw;
+
+	ri->ri_bits = (void *)sc->sc_fb8bank0_vaddr;
+	sc->sc_old_ops.eraserows(cookie, row, num, attr);
+	ri->ri_bits = (void *)sc->sc_fb8bank1_vaddr;
+	sc->sc_old_ops.eraserows(cookie, row, num, attr);
+}
+
+/* Similar to rasops_do_cursor(), but using a 7bit pixel mask. */
+
+#define	CURSOR_MASK	0x7f7f7f7f
+
+void
+ifb_do_cursor_dumb(struct rasops_info *ri)
+{
+	struct ifb_softc *sc = ri->ri_hw;
+	int full1, height, cnt, slop1, slop2, row, col;
+	int ovl_offset = sc->sc_fb8bank1_vaddr - sc->sc_fb8bank0_vaddr;
+	u_char *dp0, *dp1, *rp;
+
+	row = ri->ri_crow;
+	col = ri->ri_ccol;
+
+	ri->ri_bits = (void *)sc->sc_fb8bank0_vaddr;
+	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
+	height = ri->ri_font->fontheight;
+	slop1 = (4 - ((long)rp & 3)) & 3;
+
+	if (slop1 > ri->ri_xscale)
+		slop1 = ri->ri_xscale;
+
+	slop2 = (ri->ri_xscale - slop1) & 3;
+	full1 = (ri->ri_xscale - slop1 - slop2) >> 2;
+
+	if ((slop1 | slop2) == 0) {
+		/* A common case */
+		while (height--) {
+			dp0 = rp;
+			dp1 = dp0 + ovl_offset;
+			rp += ri->ri_stride;
+
+			for (cnt = full1; cnt; cnt--) {
+				*(int32_t *)dp0 ^= CURSOR_MASK;
+				*(int32_t *)dp1 ^= CURSOR_MASK;
+				dp0 += 4;
+				dp1 += 4;
+			}
+		}
+	} else {
+		/* XXX this is stupid.. use masks instead */
+		while (height--) {
+			dp0 = rp;
+			dp1 = dp0 + ovl_offset;
+			rp += ri->ri_stride;
+
+			if (slop1 & 1) {
+				*dp0++ ^= (u_char)CURSOR_MASK;
+				*dp1++ ^= (u_char)CURSOR_MASK;
+			}
+
+			if (slop1 & 2) {
+				*(int16_t *)dp0 ^= (int16_t)CURSOR_MASK;
+				*(int16_t *)dp1 ^= (int16_t)CURSOR_MASK;
+				dp0 += 2;
+				dp1 += 2;
+			}
+
+			for (cnt = full1; cnt; cnt--) {
+				*(int32_t *)dp0 ^= CURSOR_MASK;
+				*(int32_t *)dp1 ^= CURSOR_MASK;
+				dp0 += 4;
+				dp1 += 4;
+			}
+
+			if (slop2 & 1) {
+				*dp0++ ^= (u_char)CURSOR_MASK;
+				*dp1++ ^= (u_char)CURSOR_MASK;
+			}
+
+			if (slop2 & 2) {
+				*(int16_t *)dp0 ^= (int16_t)CURSOR_MASK;
+				*(int16_t *)dp1 ^= (int16_t)CURSOR_MASK;
+			}
+		}
+	}
+}
+
+/*
+ * Accelerated routines.
+ */
 
 void
 ifb_copycols(void *cookie, int row, int src, int dst, int num)
@@ -853,17 +1037,19 @@ ifb_rop(struct ifb_softc *sc, int sx, int sy, int dx, int dy, int w, int h,
 	    IFB_REG_OFFSET + IFB_REG_MAGIC, IFB_COORDS(sx, sy));
 }
 
-void
+int
 ifb_rop_wait(struct ifb_softc *sc)
 {
 	int i;
 
-	for (i = 1000000; i > 0; i--) {
+	for (i = 1000000; i != 0; i--) {
 		if (bus_space_read_4(sc->sc_mem_t, sc->sc_reg_h,
 		    IFB_REG_OFFSET + IFB_REG_STATUS) & IFB_REG_STATUS_DONE)
 			break;
 		DELAY(1);
 	}
+
+	return i;
 }
 
 void
