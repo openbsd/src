@@ -1117,6 +1117,7 @@
 ./usr/share/man/cat3p/writemain.0
 ./usr/share/man/cat4
 ./usr/share/man/cat4/aac.0
+./usr/share/man/cat4/age.0
 ./usr/share/man/cat4/ac97.0
 ./usr/share/man/cat4/acphy.0
 ./usr/share/man/cat4/acpi.0
@@ -1842,6 +1843,7 @@
 ./usr/share/man/cat4/sparc64/vigra.0
 ./usr/share/man/cat4/sparc64/vpci.0
 ./usr/share/man/cat4/sparc64/vrtc.0
+./usr/share/man/cat4/sparc64/vrng.0
 ./usr/share/man/cat4/sparc64/xbox.0
 ./usr/share/man/cat4/sparc64/zs.0
 ./usr/share/man/cat4/sparc64/zskbd.0
