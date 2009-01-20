@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.64 2008/07/01 15:00:53 bluhm Exp $	*/
+/*	$OpenBSD: ike.c,v 1.65 2009/01/20 14:36:19 mpf Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -136,6 +136,8 @@ ike_section_ipsec(struct ipsec_rule *r, FILE *fd)
 	fprintf(fd, SET "[%s]:Configuration=phase2-%s force\n", r->p2name,
 	    r->p2name);
 	fprintf(fd, SET "[%s]:Local-ID=%s force\n", r->p2name, r->p2lid);
+	if (r->p2nid)
+		fprintf(fd, SET "[%s]:NAT-ID=%s force\n", r->p2name, r->p2nid);
 	fprintf(fd, SET "[%s]:Remote-ID=%s force\n", r->p2name, r->p2rid);
 
 	if (r->tag)
@@ -418,48 +420,57 @@ ike_section_p1(struct ipsec_rule *r, FILE *fd)
 }
 
 static void
-ike_section_p2ids(struct ipsec_rule *r, FILE *fd)
+ike_section_p2ids_net(struct ipsec_addr *iamask, sa_family_t af, char *name,
+    char *p2xid, FILE *fd)
 {
 	char mask[NI_MAXHOST], *network, *p;
 	struct sockaddr_storage sas;
 	struct sockaddr *sa = (struct sockaddr *)&sas;
+
+	bzero(&sas, sizeof(struct sockaddr_storage));
+	bzero(mask, sizeof(mask));
+	sa->sa_family = af;
+	switch (af) {
+	case AF_INET:
+		sa->sa_len = sizeof(struct sockaddr_in);
+		bcopy(&iamask->ipa,
+		    &((struct sockaddr_in *)(sa))->sin_addr,
+		    sizeof(struct in6_addr));
+		break;
+	case AF_INET6:
+		sa->sa_len = sizeof(struct sockaddr_in6);
+		bcopy(&iamask->ipa,
+		    &((struct sockaddr_in6 *)(sa))->sin6_addr,
+		    sizeof(struct in6_addr));
+		break;
+	}
+	if (getnameinfo(sa, sa->sa_len, mask, sizeof(mask), NULL, 0,
+	    NI_NUMERICHOST))
+		errx(1, "could not get a numeric mask");
+
+	if ((network = strdup(name)) == NULL)
+		err(1, "ike_section_p2ids: strdup");
+	if ((p = strrchr(network, '/')) != NULL)
+		*p = '\0';
+
+	fprintf(fd, SET "[%s]:ID-type=IPV%d_ADDR_SUBNET force\n",
+	    p2xid, ((af == AF_INET) ? 4 : 6));
+	fprintf(fd, SET "[%s]:Network=%s force\n", p2xid, network);
+	fprintf(fd, SET "[%s]:Netmask=%s force\n", p2xid, mask);
+
+	free(network);
+}
+
+static void
+ike_section_p2ids(struct ipsec_rule *r, FILE *fd)
+{
+	char *p;
 	struct ipsec_addr_wrap *src = r->src;
 	struct ipsec_addr_wrap *dst = r->dst;
 
 	if (src->netaddress) {
-		bzero(&sas, sizeof(struct sockaddr_storage));
-		bzero(mask, sizeof(mask));
-		sa->sa_family = src->af;
-		switch (src->af) {
-		case AF_INET:
-			sa->sa_len = sizeof(struct sockaddr_in);
-			bcopy(&src->mask.ipa,
-			    &((struct sockaddr_in *)(sa))->sin_addr,
-			    sizeof(struct in6_addr));
-			break;
-		case AF_INET6:
-			sa->sa_len = sizeof(struct sockaddr_in6);
-			bcopy(&src->mask.ipa,
-			    &((struct sockaddr_in6 *)sa)->sin6_addr,
-			    sizeof(struct in6_addr));
-			break;
-		}
-		if (getnameinfo(sa, sa->sa_len, mask, sizeof(mask), NULL, 0,
-		    NI_NUMERICHOST))
-			errx(1, "could not get a numeric mask");
-
-		if ((network = strdup(src->name)) == NULL)
-			err(1, "ike_section_p2ids: strdup");
-		if ((p = strrchr(network, '/')) != NULL)
-			*p = '\0';
-
-		fprintf(fd, SET "[%s]:ID-type=IPV%d_ADDR_SUBNET force\n",
-		    r->p2lid, ((src->af == AF_INET) ? 4 : 6));
-		fprintf(fd, SET "[%s]:Network=%s force\n", r->p2lid,
-		    network);
-		fprintf(fd, SET "[%s]:Netmask=%s force\n", r->p2lid, mask);
-
-		free(network);
+		ike_section_p2ids_net(&src->mask, src->af, src->name,
+		    r->p2lid, fd);
 	} else {
 		fprintf(fd, SET "[%s]:ID-type=IPV%d_ADDR force\n",
 		    r->p2lid, ((src->af == AF_INET) ? 4 : 6));
@@ -468,40 +479,22 @@ ike_section_p2ids(struct ipsec_rule *r, FILE *fd)
 		fprintf(fd, SET "[%s]:Address=%s force\n", r->p2lid,
 		    src->name);
 	}
-	if (dst->netaddress) {
-		bzero(&sas, sizeof(struct sockaddr_storage));
-		bzero(mask, sizeof(mask));
-		sa->sa_family = dst->af;
-		switch (dst->af) {
-		case AF_INET:
-			sa->sa_len = sizeof(struct sockaddr_in);
-			bcopy(&dst->mask.ipa,
-			    &((struct sockaddr_in *)(sa))->sin_addr,
-			    sizeof(struct in6_addr));
-			break;
-		case AF_INET6:
-			sa->sa_len = sizeof(struct sockaddr_in6);
-			bcopy(&dst->mask.ipa,
-			    &((struct sockaddr_in6 *)(sa))->sin6_addr,
-			    sizeof(struct in6_addr));
-			break;
-		}
-		if (getnameinfo(sa, sa->sa_len, mask, sizeof(mask), NULL, 0,
-		    NI_NUMERICHOST))
-			errx(1, "could not get a numeric mask");
 
-		if ((network = strdup(dst->name)) == NULL)
-			err(1, "ike_section_p2ids: strdup");
-		if ((p = strrchr(network, '/')) != NULL)
+	if (src->srcnat && src->srcnat->netaddress) {
+		ike_section_p2ids_net(&src->srcnat->mask, src->af, src->srcnat->name,
+		    r->p2nid, fd);
+	} else if (src->srcnat) {
+		fprintf(fd, SET "[%s]:ID-type=IPV%d_ADDR force\n",
+		    r->p2nid, ((src->af == AF_INET) ? 4 : 6));
+		if ((p = strrchr(src->srcnat->name, '/')) != NULL)
 			*p = '\0';
+		fprintf(fd, SET "[%s]:Address=%s force\n", r->p2nid,
+		    src->srcnat->name);
+	}
 
-		fprintf(fd, SET "[%s]:ID-type=IPV%d_ADDR_SUBNET force\n",
-		    r->p2rid, ((dst->af == AF_INET) ? 4 : 6));
-		fprintf(fd, SET "[%s]:Network=%s force\n", r->p2rid,
-		    network);
-		fprintf(fd, SET "[%s]:Netmask=%s force\n", r->p2rid, mask);
-
-		free(network);
+	if (dst->netaddress) {
+		ike_section_p2ids_net(&dst->mask, dst->af, dst->name,
+		    r->p2rid, fd);
 	} else {
 		fprintf(fd, SET "[%s]:ID-type=IPV%d_ADDR force\n",
 		    r->p2rid, ((dst->af == AF_INET) ? 4 : 6));
@@ -656,6 +649,12 @@ ike_setup_ids(struct ipsec_rule *r)
 	/* from-network/masklen=proto:port-to-network/masklen=proto:port */
 	if (asprintf(&r->p2name, "%s-%s", r->p2lid , r->p2rid) == -1)
 		err(1, "ike_setup_ids");
+	/* nat-network/masklen=proto:port */
+	if (r->src->srcnat && r->src->srcnat->name) {
+		if (asprintf(&r->p2nid, "nat-%s%s%s", r->src->srcnat->name, sproto,
+		    ssport) == -1)
+			err(1, "ike_setup_ids");
+	}
 }
 
 int

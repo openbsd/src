@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.140 2008/11/14 23:16:37 hshoexer Exp $	*/
+/*	$OpenBSD: parse.y,v 1.141 2009/01/20 14:36:19 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -262,7 +262,7 @@ typedef struct {
 %type	<v.number>		portval
 %type	<v.peers>		peers
 %type	<v.singlehost>		singlehost
-%type	<v.host>		host host_list
+%type	<v.host>		host host_list host_spec
 %type	<v.ids>			ids
 %type	<v.id>			id
 %type	<v.spis>		spispec
@@ -407,12 +407,28 @@ dir		: /* empty */			{ $$ = IPSEC_INOUT; }
 		;
 
 hosts		: FROM host port TO host port		{
+			struct ipsec_addr_wrap *ipa;
+			for (ipa = $5; ipa; ipa = ipa->next) {
+				if (ipa->srcnat) {
+					yyerror("no flow NAT support for"
+					    " destination network: %s", ipa->name);
+					YYERROR;
+				}
+			}
 			$$.src = $2;
 			$$.sport = $3;
 			$$.dst = $5;
 			$$.dport = $6;
 		}
 		| TO host port FROM host port		{
+			struct ipsec_addr_wrap *ipa;
+			for (ipa = $2; ipa; ipa = ipa->next) {
+				if (ipa->srcnat) {
+					yyerror("no flow NAT support for"
+					    " destination network: %s", ipa->name);
+					YYERROR;
+				}
+			}
 			$$.src = $5;
 			$$.sport = $6;
 			$$.dst = $2;
@@ -491,7 +507,7 @@ host_list	: host				{ $$ = $1; }
 		}
 		;
 
-host		: STRING			{
+host_spec	: STRING			{
 			if (($$ = host($1)) == NULL) {
 				free($1);
 				yyerror("could not parse host specification");
@@ -511,6 +527,17 @@ host		: STRING			{
 				YYERROR;
 			}
 			free(buf);
+		}
+		;
+
+host		: host_spec			{ $$ = $1; }
+		| host_spec '(' host_spec ')'   {
+			if ($3->af != $1->af) {
+				yyerror("Flow NAT address family mismatch");
+				YYERROR;
+			}
+			$$ = $1;
+			$$->srcnat = $3;
 		}
 		| ANY				{
 			struct ipsec_addr_wrap	*ipa;

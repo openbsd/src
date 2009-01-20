@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.130 2007/09/02 15:19:24 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.131 2009/01/20 14:36:19 mpf Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -46,6 +46,7 @@
 
 #include "attribute.h"
 #include "conf.h"
+#include "connection.h"
 #include "constants.h"
 #include "crypto.h"
 #include "dh.h"
@@ -522,6 +523,22 @@ static int
 ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 {
 	int	id;
+	char *name, *nat = NULL;
+	u_int8_t *nat_id = NULL;
+	size_t nat_sz;
+
+	if ((name = connection_passive_lookup_by_ids(src_id, dst_id)))
+		nat = conf_get_str(name, "NAT-ID");
+
+	if (nat) {
+		if ((nat_id = ipsec_build_id(nat, &nat_sz))) {
+			LOG_DBG((LOG_EXCHANGE, 50, "ipsec_set_network: SRC-NAT:"
+			    " src: %s -> %s", name, nat));
+			src_id = nat_id;
+		} else
+			log_print("ipsec_set_network: ipsec_build_id"
+			    " failed for NAT-ID: %s", nat);
+	}
 
 	/* Set source address/mask.  */
 	id = GET_ISAKMP_ID_TYPE(src_id);
@@ -593,6 +610,9 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 	memcpy(&isa->sport,
 	    src_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
 	    IPSEC_ID_PORT_LEN);
+
+	if (nat_id)
+		free(nat_id);
 
 	/* Set destination address.  */
 	id = GET_ISAKMP_ID_TYPE(dst_id);

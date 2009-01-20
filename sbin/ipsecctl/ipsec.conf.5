@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.119 2008/11/29 11:32:59 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.120 2009/01/20 14:36:19 mpf Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 29 2008 $
+.Dd $Mdocdate: January 20 2009 $
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
@@ -242,6 +242,7 @@ see the file
 .It Xo
 .Ic from Ar src
 .Op Ic port Ar sport
+.Oo ( Ar srcnat ) Oc
 .Ic to Ar dst
 .Op Ic port Ar dport
 .Xc
@@ -252,11 +253,19 @@ and destination address
 The keyword
 .Ar any
 will match any address (i.e. 0.0.0.0/0).
-Host addresses will be parsed as type
+If the
+.Ar src
+argument specifies a fictional source ID,
+the
+.Ar srcnat
+parameter can be used to specify the actual source address.
+This can be used in outgoing NAT/BINAT scenarios as described below.
+Host addresses are parsed as type
 .Dq IPV4_ADDR ;
 adding the suffix /32 will change the type to
 .Dq IPV4_ADDR_SUBNET ,
 which can improve interoperability with some IKE implementations.
+.Pp
 The optional
 .Ic port
 modifiers restrict the flows to the specified ports.
@@ -525,6 +534,39 @@ example:
 ike esp from 10.1.1.0/24 to 10.1.2.0/24 peer 192.168.3.2 \e
 	tag ipsec-$domain
 .Ed
+.Sh OUTGOING NETWORK ADDRESS TRANSLATION
+In some network topologies it is desirable to perform NAT on traffic leaving
+through the VPN tunnel.
+In order to achieve that,
+the
+.Ar src
+argument is used to negotiate the desired network ID with the peer
+and the
+.Ar srcnat
+parameter defines the true local subnet,
+so that a correct SA can be installed on the local side.
+.Pp
+For example,
+if the local subnet is 192.168.1.0/24 and all the traffic
+for a specific VPN peer should appear as coming from 10.10.10.1,
+the following configuration is used:
+.Bd -literal -offset indent
+ike esp from 10.10.10.1 (192.168.1.0/24) to 192.168.2.0/24 \e
+	peer 10.10.20.1
+.Ed
+.Pp
+Naturally,
+a relevant NAT rule is required in
+.Xr pf.conf 5 .
+For the example above,
+this would be:
+.Bd -literal -offset indent
+nat on enc0 from 192.168.1.0/24 to 192.168.2.0/24 -> 10.10.10.1
+.Ed
+.Pp
+From the peer's point of view,
+the local end of the VPN tunnel is declared to be 10.10.10.1
+and all the traffic arrives with that source address.
 .Sh CRYPTO TRANSFORMS
 It is very important that keys are not guessable.
 One practical way of generating keys is to use

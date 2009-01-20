@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.57 2008/07/01 15:00:53 bluhm Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.58 2009/01/20 14:36:19 mpf Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -107,6 +107,7 @@ struct ipsec_addr_wrap {
 	char			*name;
 	struct ipsec_addr_wrap	*next;
 	struct ipsec_addr_wrap	*tail;
+	struct ipsec_addr_wrap	*srcnat;
 };
 
 struct ipsec_hosts {
@@ -189,6 +190,7 @@ struct ipsec_rule {
 	char		*p2name;	/* Phase 2 Name (IPsec-XX) */
 	char		*p2lid;		/* Phase 2 source ID */
 	char		*p2rid;		/* Phase 2 destination ID */
+	char		*p2nid;		/* Phase 2 source NAT-ID */
 	u_int8_t	 satype;	/* encapsulating prococol */
 	u_int8_t	 proto;		/* encapsulated protocol */
 	u_int8_t	 proto2;
