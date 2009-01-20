@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.63 2008/07/12 08:08:54 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.64 2009/01/20 21:22:31 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -511,6 +511,15 @@ badtrap:
 		break;
 
 	case T_RWRET:
+		/*
+		 * XXX Flushing the user windows here should not be
+		 * necessary, but not doing so here causes corruption
+		 * of user windows on sun4v.  Flushing them shouldn't
+		 * be much of a prefermance penalty since we're
+		 * probably going to spill any remaining user windows
+		 * anyhow.
+		 */
+		write_user_windows();
 		if (rwindow_save(p) == -1) {
 			KERNEL_PROC_LOCK(p);
 			trapsignal(p, SIGILL, 0, ILL_BADSTK, sv);
