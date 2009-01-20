@@ -549,7 +549,6 @@
 ./usr/include/dev/pci/hifn7751var.h
 ./usr/include/dev/pci/i82365_pcivar.h
 ./usr/include/dev/pci/ichreg.h
-./usr/include/dev/pci/if_agereg.h
 ./usr/include/dev/pci/if_art.h
 ./usr/include/dev/pci/if_agereg.h
 ./usr/include/dev/pci/if_bcereg.h
