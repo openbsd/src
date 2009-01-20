@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.39 2007/09/16 01:30:24 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.40 2009/01/20 21:46:42 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -77,7 +77,7 @@ struct safte_softc {
 	int			sc_celsius;
 	int			sc_ntemps;
 	struct safte_sensor	*sc_temps;
-	u_int16_t		*sc_temperrs;
+	u_int8_t		*sc_temperrs;
 
 #if NBIO > 0
 	int			sc_nslots;
@@ -371,7 +371,7 @@ safte_read_config(struct safte_softc *sc)
 	}
 	j += config.ntemps;
 
-	sc->sc_temperrs = (u_int16_t *)(sc->sc_encbuf + j);
+	sc->sc_temperrs = (u_int8_t *)(sc->sc_encbuf + j);
 
 	return (0);
 }
@@ -501,7 +501,7 @@ safte_read_encstat(void *arg)
 		}
 	}
 
-	oot = betoh16(*sc->sc_temperrs);
+	oot = _2btol(sc->sc_temperrs);
 	for (i = 0; i < sc->sc_ntemps; i++)
 		sc->sc_temps[i].se_sensor.status = 
 		    (oot & (1 << i)) ? SENSOR_S_CRIT : SENSOR_S_OK;
