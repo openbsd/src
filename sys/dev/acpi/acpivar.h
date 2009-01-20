@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.44 2008/11/06 23:41:28 marco Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.45 2009/01/20 20:21:03 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -18,6 +18,10 @@
 #ifndef _DEV_ACPI_ACPIVAR_H_
 #define _DEV_ACPI_ACPIVAR_H_
 
+#define ACPI_TRAMPOLINE		(NBPG*4)
+
+#ifndef _ACPI_WAKECODE
+
 #include <sys/timeout.h>
 #include <sys/rwlock.h>
 #include <machine/biosvar.h>
@@ -31,6 +35,8 @@ extern int acpi_debug;
 #define dprintf(x...)
 #define dnprintf(n,x...)
 #endif
+
+/* #define ACPI_SLEEP_ENABLED */
 
 extern int acpi_hasprocfvs;
 
@@ -272,4 +278,5 @@ int acpi_matchhids(struct acpi_attach_args *, const char *[], const char *);
 
 #endif
 
+#endif /* !_ACPI_WAKECODE */
 #endif	/* !_DEV_ACPI_ACPIVAR_H_ */

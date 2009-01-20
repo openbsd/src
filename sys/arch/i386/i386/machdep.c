@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.443 2009/01/11 07:12:07 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.444 2009/01/20 20:21:03 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -118,6 +118,9 @@
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 #include <machine/biosvar.h>
+#ifdef MULTIPROCESSOR
+#include <machine/mpbiosvar.h>
+#endif /* MULTIPROCESSOR */
 
 #include <dev/rndvar.h>
 #include <dev/isa/isareg.h>
@@ -3117,6 +3120,25 @@ init386(paddr_t first_avail)
 #ifdef DEBUG
 	printf("\n");
 #endif
+
+#if defined(MULTIPROCESSOR) || \
+    (NACPI > 0 && defined(ACPI_SLEEP_ENABLED) && !defined(SMALL_KERNEL))
+	/* install the lowmem ptp after boot args for 1:1 mappings */
+	pmap_prealloc_lowmem_ptp(PTP0_PA);
+#endif
+
+#ifdef MULTIPROCESSOR
+	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,  /* virtual */
+	    (paddr_t)MP_TRAMPOLINE,             /* physical */
+	    VM_PROT_ALL);                       /* protection */
+#endif
+
+#if NACPI > 0 && defined(ACPI_SLEEP_ENABLED) && !defined(SMALL_KERNEL)
+	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE,/* virtual */
+	    (paddr_t)ACPI_TRAMPOLINE,           /* physical */
+	    VM_PROT_ALL);                       /* protection */
+#endif
+
 	tlbflush();
 #if 0
 #if NISADMA > 0

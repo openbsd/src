@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.33 2008/10/19 20:48:10 brad Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.34 2009/01/20 20:21:03 mlarkin Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -464,9 +464,6 @@ cpu_copy_trampoline()
 	extern u_char cpu_spinup_trampoline[];
 	extern u_char cpu_spinup_trampoline_end[];
 
-	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,	/* virtual */
-	    (paddr_t)MP_TRAMPOLINE,		/* physical */
-	    VM_PROT_ALL);			/* protection */
 	bcopy(cpu_spinup_trampoline, (caddr_t)MP_TRAMPOLINE,
 	    cpu_spinup_trampoline_end - cpu_spinup_trampoline);
 }

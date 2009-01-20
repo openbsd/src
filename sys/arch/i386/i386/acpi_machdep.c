@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.15 2008/12/28 22:27:10 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.16 2009/01/20 20:21:03 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -28,6 +28,9 @@
 #include <machine/acpiapm.h>
 #include <i386/isa/isa_machdep.h>
 
+#include <machine/cpufunc.h>
+#include <machine/npx.h>
+
 #include <dev/isa/isareg.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -37,6 +40,10 @@
 #if NAPM > 0
 int haveacpibutusingapm;	
 #endif
+
+extern u_char acpi_real_mode_resume[], acpi_resume_end[];
+
+int acpi_savecpu(void);
 
 #define ACPI_BIOS_RSDP_WINDOW_BASE        0xe0000
 #define ACPI_BIOS_RSDP_WINDOW_SIZE        0x20000
@@ -165,5 +172,17 @@ acpi_attach_machdep(struct acpi_softc *sc)
 	acpiapm_ioctl = acpiioctl;
 	acpiapm_kqfilter = acpikqfilter;
 	cpuresetfn = acpi_reset;
+
+#ifdef ACPI_SLEEP_ENABLED  
+
+	/*
+	 * Sanity check before setting up trampoline.
+	 * Ensure the trampoline size is < PAGE_SIZE
+	 */
+	KASSERT(acpi_resume_end - acpi_real_mode_resume < PAGE_SIZE);
+
+	bcopy(acpi_real_mode_resume, (caddr_t)ACPI_TRAMPOLINE, acpi_resume_end - acpi_real_mode_resume);
+#endif /* ACPI_SLEEP_ENABLED */
+
 }
-#endif /* SMALL_KERNEL */
+#endif /* ! SMALL_KERNEL */
