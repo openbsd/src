@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.32 2008/10/25 22:30:43 jakemsr Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.33 2009/01/20 20:00:06 grange Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -755,23 +755,30 @@ cs4280_intr(p)
 			break;
 		case CF_16BIT_MONO:
 			for (i = 0; i < 512; i++) {
-				rdata  = *((int16_t *)empty_dma)++>>1;
-				rdata += *((int16_t *)empty_dma)++>>1;
-				*((int16_t *)sc->sc_rn)++ = rdata;
+				rdata  = *((int16_t *)empty_dma)>>1;
+				empty_dma += 2;
+				rdata += *((int16_t *)empty_dma)>>1;
+				empty_dma += 2;
+				*((int16_t *)sc->sc_rn) = rdata;
+				sc->sc_rn += 2;
 			}
 			break;
 		case CF_8BIT_STEREO:
 			for (i = 0; i < 512; i++) {
-				rdata = *((int16_t*)empty_dma)++;
+				rdata = *((int16_t*)empty_dma);
+				empty_dma += 2;
 				*sc->sc_rn++ = rdata >> 8;
-				rdata = *((int16_t*)empty_dma)++;
+				rdata = *((int16_t*)empty_dma);
+				empty_dma += 2;
 				*sc->sc_rn++ = rdata >> 8;
 			}
 			break;
 		case CF_8BIT_MONO:
 			for (i = 0; i < 512; i++) {
-				rdata =	 *((int16_t*)empty_dma)++ >>1;
-				rdata += *((int16_t*)empty_dma)++ >>1;
+				rdata =	 *((int16_t*)empty_dma) >>1;
+				empty_dma += 2;
+				rdata += *((int16_t*)empty_dma) >>1;
+				empty_dma += 2;
 				*sc->sc_rn++ = rdata >>8;
 			}
 			break;
