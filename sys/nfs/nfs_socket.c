@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.72 2009/01/16 17:11:28 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.73 2009/01/20 18:03:33 blambert Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -816,35 +816,50 @@ nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	struct mbuf **mdp;
 	caddr_t *dposp;
 {
-	struct mbuf *m, *mrep;
+	struct mbuf *m;
 	struct nfsreq *rep;
+	int  mrest_len;
+
+	rep = pool_get(&nfsreqpl, PR_WAITOK);
+	rep->r_nmp = VFSTONFS(vp->v_mount);
+	rep->r_vp = vp;
+	rep->r_procp = procp;
+	rep->r_procnum = procnum;
+
+	mrest_len = 0;
+	m = mrest;
+	while (m) {
+		mrest_len += m->m_len;
+		m = m->m_next;
+	}
+
+	/* empty mbuf for AUTH_UNIX header */
+	rep->r_mreq = m_gethdr(M_WAIT, MT_DATA);
+	rep->r_mreq->m_next = mrest;
+	rep->r_mreq->m_pkthdr.len = mrest_len;
+
+	return (nfs_request1(rep, cred, mrp, mdp, dposp));
+}
+
+int
+nfs_request1(struct nfsreq *rep, struct ucred *cred, struct mbuf **mrp,
+    struct mbuf **mdp, caddr_t *dposp)
+{
+	struct mbuf *m, *mrep;
 	u_int32_t *tl;
-	int i;
 	struct nfsmount *nmp;
 	struct mbuf *md;
 	time_t waituntil;
 	caddr_t dpos, cp2;
-	int t1, s, error = 0, mrest_len;
+	int t1, i, s, error = 0;
 	int trylater_delay;
 
 	trylater_delay = NFS_MINTIMEO;
 
-	nmp = VFSTONFS(vp->v_mount);
-	rep = pool_get(&nfsreqpl, PR_WAITOK);
-	rep->r_nmp = nmp;
-	rep->r_vp = vp;
-	rep->r_procp = procp;
-	rep->r_procnum = procnum;
-	i = 0;
-	m = mrest;
-	while (m) {
-		i += m->m_len;
-		m = m->m_next;
-	}
-	mrest_len = i;
+	nmp = rep->r_nmp;
 
 	/* Get the RPC header with authorization. */
-	nfsm_rpchead(rep, cred, RPCAUTH_UNIX, mrest, mrest_len);
+	nfsm_rpchead(rep, cred, RPCAUTH_UNIX);
 	m = rep->r_mreq;
 
 	/*
@@ -862,7 +877,7 @@ tryagain:
 	else
 		rep->r_retry = NFS_MAXREXMIT + 1;	/* past clip limit */
 	rep->r_rtt = rep->r_rexmit = 0;
-	if (proct[procnum] > 0)
+	if (proct[rep->r_procnum] > 0)
 		rep->r_flags = R_TIMING;
 	else
 		rep->r_flags = 0;
@@ -993,7 +1008,7 @@ tryagain:
 			 * lookup cache, just in case.
 			 */
 			if (error == ESTALE)
-				cache_purge(vp);
+				cache_purge(rep->r_vp);
 
 			if (nmp->nm_flag & NFSMNT_NFSV3 || error == ESTALE) {
 				*mrp = mrep;

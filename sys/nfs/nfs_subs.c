@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.90 2009/01/13 19:44:20 grange Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.91 2009/01/20 18:03:33 blambert Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -561,8 +561,7 @@ nfs_get_xid(void)
  * other authorization methods, such as Kerberos.
  */
 void
-nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
-    struct mbuf *mrest, int mrest_len)
+nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type)
 {
 	struct mbuf	*mb;
 	u_int32_t	*tl;
@@ -572,10 +571,10 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
 
 	/*
 	 * RPCAUTH_UNIX fits in an hdr mbuf, in the future other
-	 * authorization methods need to figure out there own sizes
+	 * authorization methods need to figure out their own sizes
 	 * and allocate and chain mbuf's accorindgly.
 	 */
-	MGETHDR(mb, M_WAIT, MT_DATA);
+	mb = req->r_mreq;
 
 	/*
 	 * We need to start out by finding how big the authorization cred
@@ -640,10 +639,8 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type,
 		break;
 	}
 
-	mb->m_next = mrest;
-	mb->m_pkthdr.len = authsiz + 10 * NFSX_UNSIGNED + mrest_len;
+	mb->m_pkthdr.len += authsiz + 10 * NFSX_UNSIGNED;
 	mb->m_pkthdr.rcvif = NULL;
-	req->r_mreq = mb;
 }
 
 /*
