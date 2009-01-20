@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.21 2008/08/10 14:13:05 kettenis Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.22 2009/01/20 14:48:32 kettenis Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -586,11 +586,16 @@ GEN_RD(asi);
 GEN_RD(asr22);
 GEN_RD(sys_tick);
 GEN_RD(sys_tick_cmpr);
-GEN_RDPR(cwp);
 GEN_RDPR(tick);
+GEN_RDPR(tba);
 GEN_RDPR(pstate);
 GEN_RDPR(pil);
-GEN_RDPR(tba);
+GEN_RDPR(cwp);
+GEN_RDPR(cansave);
+GEN_RDPR(canrestore);
+GEN_RDPR(cleanwin);
+GEN_RDPR(otherwin);
+GEN_RDPR(wstate);
 GEN_RDPR(ver);
 /*
  * Before adding GEN_RDPRs for other registers, see Errata 50 (E.g,. in
