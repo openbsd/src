@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sandrv.c,v 1.12 2007/10/01 15:34:48 krw Exp $	*/
+/*	$OpenBSD: if_sandrv.c,v 1.13 2009/01/20 20:03:45 grange Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -166,8 +166,8 @@ static int sdla_pci_read_config_dword(void *, int, u_int32_t *);
 static int sdla_detect	(sdlahw_t *);
 static int sdla_detect_aft(sdlahw_t *);
 static int sdla_exec(sdlahw_t *, unsigned long);
-static void sdla_peek_by_4(sdlahw_t *, unsigned long, void *, unsigned int);
-static void sdla_poke_by_4(sdlahw_t *, unsigned long, void *, unsigned int);
+static void sdla_peek_by_4(sdlahw_t *, unsigned long, u_int8_t *, unsigned int);
+static void sdla_poke_by_4(sdlahw_t *, unsigned long, u_int8_t *, unsigned int);
 
 static sdlahw_card_t* sdla_card_register(u_int16_t, int, int);
 #if 0
@@ -962,27 +962,28 @@ sdla_peek(void *phw, unsigned long addr, void *buf, unsigned len)
  * before we begin moving the data in 4-byte chunks.
 */
 static void
-sdla_peek_by_4(sdlahw_t *hw, unsigned long offset, void *buf, unsigned int len)
+sdla_peek_by_4(sdlahw_t *hw, unsigned long offset, u_int8_t *buf,
+    unsigned int len)
 {
 	/* byte copy data until we get to a 4-byte boundary */
 	while (len && (offset & 0x03)) {
-		sdla_bus_read_1(hw, offset++, (u_int8_t*)buf);
-		((u_int8_t *)buf)++;
+		sdla_bus_read_1(hw, offset++, buf);
+		buf++;
 		len--;
 	}
 
 	/* copy data in 4-byte chunks */
 	while (len >= 4) {
 		sdla_bus_read_4(hw, offset, (u_int32_t*)buf);
-		(u_int8_t*)buf += 4;
+		buf += 4;
 		offset += 4;
 		len -= 4;
 	}
 
 	/* byte copy any remaining data */
 	while (len) {
-		sdla_bus_read_1(hw, offset++, (u_int8_t*)buf);
-		((u_int8_t *)buf)++;
+		sdla_bus_read_1(hw, offset++, buf);
+		buf++;
 		len--;
 	}
 }
@@ -1032,12 +1033,13 @@ sdla_poke(void *phw, unsigned long addr, void *buf, unsigned len)
  * before we begin moving the data in 4-byte chunks.
 */
 static void
-sdla_poke_by_4(sdlahw_t *hw, unsigned long offset, void *buf, unsigned int len)
+sdla_poke_by_4(sdlahw_t *hw, unsigned long offset, u_int8_t *buf,
+    unsigned int len)
 {
 	/* byte copy data until we get to a 4-byte boundary */
 	while (len && (offset & 0x03)) {
-		sdla_bus_write_1(hw, offset++, *(char *)buf);
-		((char *)buf) ++;
+		sdla_bus_write_1(hw, offset++, *buf);
+		buf++;
 		len --;
 	}
 
@@ -1045,14 +1047,14 @@ sdla_poke_by_4(sdlahw_t *hw, unsigned long offset, void *buf, unsigned int len)
 	while (len >= 4) {
 		sdla_bus_write_4(hw, offset, *(unsigned long *)buf);
 		offset += 4;
-		(char*)buf += 4;
+		buf += 4;
 		len -= 4;
 	}
 
 	/* byte copy any remaining data */
 	while (len) {
-		sdla_bus_write_1(hw, offset++, *(char *)buf);
-		((char *)buf) ++;
+		sdla_bus_write_1(hw, offset++, *buf);
+		buf++;
 		len --;
 	}
 }
