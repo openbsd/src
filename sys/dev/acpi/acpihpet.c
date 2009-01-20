@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.6 2008/06/11 04:42:09 marco Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.7 2009/01/20 20:23:57 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -91,10 +91,31 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_hpet *hpet = (struct acpi_hpet *)aaa->aaa_table;
 	u_int64_t period, freq;	/* timer period in femtoseconds (10^-15) */
 	u_int32_t v1, v2;
+	int timeout;
 
 	if (acpi_map_address(psc, &hpet->base_address, 0, HPET_REG_SIZE,
 	    &sc->sc_ioh, &sc->sc_iot))	{
 		printf(": can't map i/o space\n");
+		return;
+	}
+
+	/*
+	 * Revisions 0x30 through 0x3a of the AMD SB700, with spread
+	 * spectrum enabled, have an SMM based HPET emulation that's
+	 * subtly broken.  The hardware is initialized upon first
+	 * access of the configuration register.  Initialization takes
+	 * some time during which the configuration register returns
+	 * 0xffffffff.
+	 */
+	timeout = 1000;
+	do {
+		if (bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    HPET_CONFIGURATION) != 0xffffffff)
+			break;
+	} while(--timeout > 0);
+
+	if (timeout == 0) {
+		printf(": disabled\n");
 		return;
 	}
 
