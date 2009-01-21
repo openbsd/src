@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.16 2009/01/19 22:15:54 jmc Exp $
+#	$OpenBSD: airport,v 1.17 2009/01/21 22:25:51 jmc Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -130,8 +130,8 @@ AZO:Kalamazoo/Battle Creek Intl, Kalamazoo, MI, USA
 BAH:Bahrain International Bahrain, Bahrain, Bahrain
 BAK:Baku, Baku, Azerbaijan
 BAL:Nearest Air Service Through Diyarbakir, Batman, Turkey
-BAR:Baker Island, Baker & Howland Islands
 BAQ:E Cortissoz, Barranquilla, Colombia
+BAR:Baker Island, Baker & Howland Islands
 BAX:Barnaul, Russia
 BBI:Bhubaneswar, Bhubaneswar, India
 BBK:Kasane, Kasane, Botswana
