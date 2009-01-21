@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifb.4,v 1.5 2009/01/10 17:44:39 miod Exp $
+.\"	$OpenBSD: ifb.4,v 1.6 2009/01/21 17:03:13 miod Exp $
 .\"
 .\" Copyright (c) 2008 Miodrag Vallat.
 .\"
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 10 2009 $
+.Dd $Mdocdate: January 21 2009 $
 .Dt IFB 4 sparc64
 .Os
 .Sh NAME
@@ -32,9 +32,12 @@ driver attempts to support various frame buffer cards based on the
 .Sq Wildcat
 chips, such as the
 Sun
-Expert3D
+Expert3D-Lite,
+Expert3D,
+XVR-500,
+XVR-600
 and
-XVR-500
+XVR-1200
 boards.
 It does not provide direct device driver entry points
 but makes its functions available via the internal
@@ -95,3 +98,5 @@ are interlaced.
 .Xr pci 4 ,
 .Xr wscons 4 ,
 .Xr wsdisplay 4
+.Sh BUGS
+The second head of XVR-1200 cards is not supported.
