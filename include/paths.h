@@ -1,4 +1,4 @@
-/*	$OpenBSD: paths.h,v 1.22 2005/04/02 17:04:52 millert Exp $	*/
+/*	$OpenBSD: paths.h,v 1.23 2009/01/21 22:19:42 miod Exp $	*/
 /*	$NetBSD: paths.h,v 1.7 1994/10/26 00:56:12 cgd Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #define	_PATH_DEFTAPE	"/dev/rst0"
 #define	_PATH_DEVDB	"/var/run/dev.db"
 #define	_PATH_DEVNULL	"/dev/null"
-#define	_PATH_DRUM	"/dev/drum"
 #define	_PATH_FSIRAND	"/sbin/fsirand"
 #define _PATH_KLOG      "/dev/klog"
 #define	_PATH_KMEM	"/dev/kmem"
