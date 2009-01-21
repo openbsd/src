@@ -1,4 +1,4 @@
-.\" $OpenBSD: groupmod.8,v 1.15 2009/01/19 09:46:59 sobrado Exp $
+.\" $OpenBSD: groupmod.8,v 1.16 2009/01/21 16:56:02 sobrado Exp $
 .\" $NetBSD: groupmod.8,v 1.10 2003/02/14 16:11:37 grant Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: January 19 2009 $
+.Dd $Mdocdate: January 21 2009 $
 .Dt GROUPMOD 8
 .Os
 .Sh NAME
@@ -50,13 +50,13 @@ utility modifies an existing group.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl g Ar gid
-gives the numeric group identifier to be used for the new group.
+Gives the numeric group identifier to be used for the new group.
 .It Fl n Ar newname
-gives the new name which the group shall have.
+Gives the new name which the group shall have.
 .It Fl o
-allow the new group to have a GID which is already in use for another group.
+Allows the new group to have a GID which is already in use for another group.
 .It Fl v
-enables verbose mode - explain the commands as they are executed.
+Enables verbose mode - explain the commands as they are executed.
 .El
 .Pp
 .Ex -std groupmod

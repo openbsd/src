@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermgmt.conf.5,v 1.9 2007/05/31 19:20:30 jmc Exp $
+.\" $OpenBSD: usermgmt.conf.5,v 1.10 2009/01/21 16:56:03 sobrado Exp $
 .\" $NetBSD: usermgmt.conf.5,v 1.3 2002/10/02 13:49:11 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 21 2009 $
 .Dt USERMGMT.CONF 5
 .Os
 .\" turn off hyphenation
@@ -54,18 +54,18 @@ option to
 .Xr useradd 8 .
 .Bl -tag -width preserveX
 .It Ic base_dir
-sets the base directory name, in which new users' home directories
+Sets the base directory name, in which new users' home directories
 are created when using the
 .Fl m
 option to
 .Xr useradd 8 .
 .It Ic class
-sets the default login class for new users.
+Sets the default login class for new users.
 See
 .Xr login.conf 5
 for more information on user login classes.
 .It Ic expire
-sets the default time at which the new accounts expire.
+Sets the default time at which the new accounts expire.
 Both the
 .Ar expire
 and
@@ -77,7 +77,7 @@ sufficient), day is the day of the month, and year is the year.
 Time in seconds since the Epoch (UTC) is also valid.
 A value of 0 can be used to disable this feature.
 .It Ic group
-sets the default primary group for new users.
+Sets the default primary group for new users.
 If this is
 .Ql =uid ,
 then a UID and GID will be picked which are both unique
@@ -90,13 +90,13 @@ It has the format:
 .Ar gid | name | Li =uid
 .Ed
 .It Ic inactive
-sets the default time at which the passwords of new accounts expire.
+Sets the default time at which the passwords of new accounts expire.
 A value of 0 can be used to disable this feature.
 Also see the
 .Ar expire
 field.
 .It Ic password
-specifies an already-encrypted default password.
+Specifies an already-encrypted default password.
 .It Ic preserve
 If this value is one of
 .Ql true ,
@@ -105,7 +105,7 @@ or a non-zero number, then the user login information will be
 preserved when removing a user with
 .Xr userdel 8 .
 .It Ic range
-specifies the UID boundaries for new users.
+Specifies the UID boundaries for new users.
 If unspecified, the default is
 .Dq 1000..60000 .
 It has the format:
@@ -113,9 +113,9 @@ It has the format:
 .Ic range Ar starting-uid Ns Li .. Ns Ar ending-uid
 .Ed
 .It Ic shell
-sets the default login shell for new users.
+Sets the default login shell for new users.
 .It Ic skel_dir
-sets the default skeleton directory in which to find files
+Sets the default skeleton directory in which to find files
 with which to populate the new user's home directory.
 .El
 .Sh FILES

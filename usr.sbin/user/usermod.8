@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermod.8,v 1.22 2009/01/19 09:46:59 sobrado Exp $
+.\" $OpenBSD: usermod.8,v 1.23 2009/01/21 16:56:03 sobrado Exp $
 .\" $NetBSD: usermod.8,v 1.17 2003/02/14 16:11:37 grant Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: January 19 2009 $
+.Dd $Mdocdate: January 21 2009 $
 .Dt USERMOD 8
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Op Fl mov
 .Op Fl G Ar secondary-group[,group,...]
 .Op Fl c Ar comment
-.Op Fl d Ar home-dir
+.Op Fl d Ar home-directory
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-time
 .Oo
@@ -70,23 +70,19 @@ After setting any defaults, and then reading values from
 .Pa /etc/usermgmt.conf ,
 the following command line options are processed:
 .Bl -tag -width Ds
-.It Fl G Ar secondary-group[,group,...]
-are the secondary groups the user will be a member of in the
-.Pa /etc/group
-file.
 .It Fl c Ar comment
-is the comment field (also, for historical reasons known as the
+Sets the comment field (also, for historical reasons known as the
 GECOS field) which will be added for the user, and typically will include
 the user's full name, and, perhaps, contact information for the user.
 .It Fl d Ar home-directory
-sets the home directory to
+Sets the home directory to
 .Ar home-directory
 without populating it; if the
 .Fl m
 option is specified, tries to move the old home directory to
 .Ar home-directory .
 .It Fl e Ar expiry-time
-sets the time at which the account expires.
+Sets the time at which the account expires.
 It should be entered in the form
 .Dq month day year ,
 where month is the month name (the first three characters are
@@ -102,14 +98,18 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl f Ar inactive-time
-sets the time at which the password expires.
+Sets the time at which the password expires.
 See the
 .Fl e
 option.
+.It Fl G Ar secondary-group[,group,...]
+Sets the secondary groups the user will be a member of in the
+.Pa /etc/group
+file.
 .It Xo
 .Fl g Ar gid | name | Li =uid
 .Xc
-gives the group name or identifier to be used for the user's primary group.
+Gives the group name or identifier to be used for the user's primary group.
 If this is
 .Ql =uid ,
 then a UID and GID will be picked which are both unique
@@ -126,7 +126,7 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl L Ar login-class
-this option sets the login class for the user being created.
+This option sets the login class for the user being created.
 See
 .Xr login.conf 5
 for more information on user login classes.
@@ -137,15 +137,15 @@ field in the
 file.
 .Xr usermgmt.conf 5
 for more details.
-.It Fl l Ar new-user
-gives the new user name.
+.It Fl l Ar new-login
+Gives the new user name.
 It must consist of alphanumeric characters, or the characters
 .Ql \&. ,
 .Ql \&-
 or
 .Ql \&_ .
 .It Fl m
-moves the home directory from its old position to the new one.
+Moves the home directory from its old position to the new one.
 If
 .Fl d
 is not specified, the
@@ -158,9 +158,9 @@ and
 .Fl l
 is needed.
 .It Fl o
-allows duplicate UIDs to be given.
+Allows duplicate UIDs to be given.
 .It Fl p Ar password
-specifies an already-encrypted password for the user.
+Specifies an already-encrypted password for the user.
 This password can then be changed by using the
 .Xr chpass 1
 utility.
@@ -174,7 +174,7 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl s Ar shell
-specifies the login shell for the user.
+Specifies the login shell for the user.
 This value can be preset for all users
 by using the
 .Ar shell
@@ -185,7 +185,7 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl u Ar uid
-specifies a new UID for the user.
+Specifies a new UID for the user.
 Boundaries for this value can be preset for all users
 by using the
 .Ar range
@@ -196,7 +196,7 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl v
-enables verbose mode - explain the commands as they are executed.
+Enables verbose mode - explain the commands as they are executed.
 .El
 .Pp
 Once the information has been verified,
