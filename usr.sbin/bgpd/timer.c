@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.12 2008/06/11 05:30:35 henning Exp $ */
+/*	$OpenBSD: timer.c,v 1.13 2009/01/21 20:32:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Henning Brauer <henning@openbsd.org>
@@ -65,7 +65,7 @@ timer_nextduein(struct peer *p)
 	struct peer_timer *pt;
 
 	if ((pt = TAILQ_FIRST(&p->timers)) != NULL && pt->val > 0)
-		return (pt->val);
+		return (MAX(pt->val - getmonotime(), 0));
 	return (-1);
 }
 
