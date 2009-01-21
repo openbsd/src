@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.43 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.44 2009/01/21 18:18:33 miod Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -129,7 +129,7 @@ const u_int8_t ukbd_trtab[256] = {
 };
 #endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
 
-const kbd_t ukbd_countrylayout[HCC_MAX] = {
+const kbd_t ukbd_countrylayout[1 + HCC_MAX] = {
 	(kbd_t)-1,
 	(kbd_t)-1,	/* arabic */
 	KB_BE,		/* belgian */
@@ -156,6 +156,7 @@ const kbd_t ukbd_countrylayout[HCC_MAX] = {
 	KB_RU,		/* russian */
 	(kbd_t)-1,	/* slovakia */
 	KB_ES,		/* spanish */
+	KB_SV,		/* swedish */
 	KB_SF,		/* swiss french */
 	KB_SG,		/* swiss german */
 	(kbd_t)-1,	/* switzerland */
@@ -165,42 +166,6 @@ const kbd_t ukbd_countrylayout[HCC_MAX] = {
 	KB_US,		/* us */
 	(kbd_t)-1,	/* yugoslavia */
 	(kbd_t)-1	/* turkish F */
-};
-
-#define	SUN_HCC_MIN	0x21
-#define	SUN_HCC_MAX	0x3f
-const kbd_t ukbd_sunlayout[1 + SUN_HCC_MAX - SUN_HCC_MIN] = {
-	KB_US,	/* 021 USA */
-	KB_US,	/* 022 UNIX */
-	KB_FR,	/* 023 France */
-	KB_DK,	/* 024 Denmark */
-	KB_DE,	/* 025 Germany */
-	KB_IT,	/* 026 Italy */
-	KB_NL,	/* 027 The Netherlands */
-	KB_NO,	/* 028 Norway */
-	KB_PT,	/* 029 Portugal */
-	KB_ES,	/* 02a Spain */
-	KB_SV,	/* 02b Sweden */
-	KB_SF,	/* 02c Switzerland/French */
-	KB_SG,	/* 02d Switzerland/German */
-	KB_UK,	/* 02e Great Britain */
-	-1,	/* 02f Korea */
-	-1,	/* 030 Taiwan */
-	KB_JP,	/* 031 Japan */
-	-1,	/* 032 Canada/French */
-	-1,	/* 033 Hungary */
-	-1,	/* 034 Poland */
-	-1,	/* 035 Czech */
-	-1,	/* 036 Russia */
-	-1,	/* 037 Latvia */
-	-1,	/* 038 Turkey-Q5 */
-	-1,	/* 039 Greece */
-	-1,	/* 03a Arabic */
-	-1,	/* 03b Lithuania */
-	-1,	/* 03c Belgium */
-	-1,	/* 03d unaffected */
-	-1,	/* 03e Turkey-F5 */
-	-1,	/* 03f Canada/French */
 };
 
 #define KEY_ERROR 0x01
@@ -405,29 +370,16 @@ ukbd_attach(struct device *parent, struct device *self, void *aux)
 		ukbd_is_console = 0;
 	}
 
-	if (uha->uaa->vendor == USB_VENDOR_SUN &&
-	    (uha->uaa->product == USB_PRODUCT_SUN_KEYBOARD6 ||
-	     uha->uaa->product == USB_PRODUCT_SUN_KEYBOARD7)) {
-		/* Sun keyboard use Sun-style layout codes */
-		if (hid->bCountryCode >= SUN_HCC_MIN &&
-		    hid->bCountryCode <= SUN_HCC_MAX)
-			layout = ukbd_sunlayout[hid->bCountryCode - SUN_HCC_MIN];
+	if (uha->uaa->vendor == USB_VENDOR_TOPRE &&
+	    uha->uaa->product == USB_PRODUCT_TOPRE_HHKB) {
+		/* ignore country code on purpose */
+	} else {
+		if (hid->bCountryCode <= HCC_MAX)
+			layout = ukbd_countrylayout[hid->bCountryCode];
 #ifdef DIAGNOSTIC
 		if (hid->bCountryCode != 0)
-			printf(", layout %d", hid->bCountryCode);
+			printf(", country code %d", hid->bCountryCode);
 #endif
-	} else {
-		if (uha->uaa->vendor == USB_VENDOR_TOPRE &&
-		    uha->uaa->product == USB_PRODUCT_TOPRE_HHKB) {
-			/* ignore country code on purpose */
-		} else {
-			if (hid->bCountryCode <= HCC_MAX)
-				layout = ukbd_countrylayout[hid->bCountryCode];
-#ifdef DIAGNOSTIC
-			if (hid->bCountryCode != 0)
-				printf(", country code %d", hid->bCountryCode);
-#endif
-		}
 	}
 	if (layout == (kbd_t)-1) {
 #ifdef UKBD_LAYOUT
