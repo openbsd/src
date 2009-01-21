@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.23 2009/01/10 23:54:15 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.24 2009/01/21 00:00:30 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -896,6 +896,7 @@ parent_rename_mailfile(struct batch *batchp)
 	char srcpath[MAXPATHLEN];
 	char dstpath[MAXPATHLEN];
 	struct path *path;
+	int ret;
 
 	if (batchp->type & T_DAEMON_BATCH) {
 		path = &batchp->message.sender;
@@ -916,12 +917,17 @@ parent_rename_mailfile(struct batch *batchp)
 		path->rule.r_value.path, batchp->message.message_uid))
 		return 0;
 
+	ret = 1;
+	if (setegid(pw->pw_gid) || seteuid(pw->pw_uid))
+		fatal("privdrop failed");
 	if (rename(srcpath, dstpath) == -1) {
+		ret = 0;
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
-		return 0;
 	}
+	if (setegid(0) || seteuid(0))
+		fatal("privdrop failed");
 
-	return 1;
+	return ret;
 }
 
 int
