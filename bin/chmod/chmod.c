@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.23 2006/04/25 15:41:07 deraadt Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.24 2009/01/21 16:05:39 sobrado Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static const char rcsid[] = "$OpenBSD: chmod.c,v 1.23 2006/04/25 15:41:07 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: chmod.c,v 1.24 2009/01/21 16:05:39 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -351,6 +351,10 @@ usage(void)
 	else
 		fprintf(stderr,
 		    "usage: %s [-fh] [-R [-H | -L | -P]] %s file ...\n",
-		    __progname, ischown ? "[owner][:group]" : "group");
+		    __progname, ischown ? "owner[:group]" : "group");
+	if (ischown)
+		fprintf(stderr,
+		    "       %s [-fh] [-R [-H | -L | -P]] :group file ...\n",
+		    __progname);
 	exit(1);
 }
