@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.15 2009/01/21 22:18:31 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.16 2009/01/21 22:36:50 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -781,4 +781,4 @@ The
 and
 .Fn sio_stop
 functions may block for a very short period of time, thus they should
-not be abused during performance.
+be avoided in code sections where blocking is not desirable.
