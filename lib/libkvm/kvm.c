@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.45 2006/03/31 03:59:40 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.46 2009/01/21 22:18:00 miod Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.45 2006/03/31 03:59:40 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.46 2009/01/21 22:18:00 miod Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -213,8 +213,6 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 	}
 	if (mf == 0)
 		mf = _PATH_MEM;
-	if (sf == 0)
-		sf = _PATH_DRUM;
 
 	if ((kd->pmfd = open(mf, flag, 0)) < 0) {
 		_kvm_syserr(kd, kd->program, "%s", mf);
@@ -241,7 +239,7 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 			goto failed;
 		}
 		kd->alive = 1;
-		if ((kd->swfd = open(sf, flag, 0)) < 0) {
+		if (sf != NULL && (kd->swfd = open(sf, flag, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", sf);
 			goto failed;
 		}

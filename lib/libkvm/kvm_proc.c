@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.36 2008/06/26 05:42:05 ray Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.37 2009/01/21 22:18:00 miod Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.36 2008/06/26 05:42:05 ray Exp $";
+static char *rcsid = "$OpenBSD: kvm_proc.c,v 1.37 2009/01/21 22:18:00 miod Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -231,7 +231,8 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 		    (size_t)kd->nbpg, (off_t)pg.phys_addr) != kd->nbpg)
 			return (NULL);
 	} else {
-		if (_kvm_pread(kd, kd->swfd, (void *)kd->swapspc,
+		if (kd->swfd == -1 ||
+		    _kvm_pread(kd, kd->swfd, (void *)kd->swapspc,
 		    (size_t)kd->nbpg,
 		    (off_t)(anon.an_swslot * kd->nbpg)) != kd->nbpg)
 			return (NULL);
