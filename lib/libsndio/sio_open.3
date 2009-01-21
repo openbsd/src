@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.14 2009/01/12 20:47:34 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.15 2009/01/21 22:18:31 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 12 2009 $
+.Dd $Mdocdate: January 21 2009 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -109,7 +109,7 @@ parameter gives the path of the
 socket or the
 .Xr audio 4
 device.
-In most cases it should be left to NULL to allow
+In most cases it should be set to NULL to allow
 the user to select it using the
 .Ev AUDIODEVICE
 environment variable.
@@ -147,6 +147,10 @@ associated with the
 handle.
 .Ss Negotiating audio parameters
 Audio streams always use linear interleaved encoding.
+A frame consists of one sample for each channel in the stream.
+For example, a 16-bit stereo stream has two samples per frame
+and, typically, two bytes per sample (thus 4 bytes per frame).
+.Pp
 The set of parameters of the stream that can be controlled
 is given by the following structure:
 .Bd -literal
