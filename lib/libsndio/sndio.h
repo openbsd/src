@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.5 2009/01/17 10:39:53 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.6 2009/01/21 21:29:01 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -118,6 +118,10 @@ struct sio_cap {
  */
 #define SIO_MAXVOL 127
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int sio_strtoenc(struct sio_par *, char *);
 int sio_enctostr(struct sio_par *, char *);
 void sio_initpar(struct sio_par *);
@@ -138,5 +142,9 @@ int sio_revents(struct sio_hdl *, struct pollfd *);
 int sio_eof(struct sio_hdl *);
 int sio_setvol(struct sio_hdl *, unsigned);
 void sio_onvol(struct sio_hdl *, void (*)(void *, unsigned), void *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !defined(SNDIO_H) */
