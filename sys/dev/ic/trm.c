@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.10 2008/11/24 00:31:35 krw Exp $
+/*	$OpenBSD: trm.c,v 1.11 2009/01/21 21:54:00 grange Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -461,7 +461,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 	trm_StartWaitingSRB(sc);
 
 	if ((xferflags & SCSI_POLL) == 0) {
-		timeout_add(&xs->stimeout, (xs->timeout * hz) / 1000);
+		timeout_add_msec(&xs->stimeout, xs->timeout);
 		splx(intflag);
 		return SUCCESSFULLY_QUEUED;
 	}
@@ -2282,7 +2282,7 @@ trm_RequestSense(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 	pSRB->ScsiCmdLen = 6;
 
 	if ((pSRB->xs != NULL) && ((pSRB->xs->flags & SCSI_POLL) == 0))
-		timeout_add(&pSRB->xs->stimeout, (pSRB->xs->timeout/1000) * hz);
+		timeout_add_msec(&pSRB->xs->stimeout, pSRB->xs->timeout);
 
 	if (trm_StartSRB(sc, pSRB) != 0)
 		trm_RewaitSRB(sc, pSRB);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.145 2008/12/13 11:49:54 mikeb Exp $ */
+/*	$OpenBSD: ahci.c,v 1.146 2009/01/21 21:54:00 grange Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2328,7 +2328,7 @@ ahci_ata_cmd(struct ata_xfer *xa)
 		return (ATA_COMPLETE);
 	}
 
-	timeout_add(&xa->stimeout, (xa->timeout * hz) / 1000);
+	timeout_add_msec(&xa->stimeout, xa->timeout);
 
 	s = splbio();
 	ahci_start(ccb);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha1742.c,v 1.29 2009/01/11 16:54:59 blambert Exp $	*/
+/*	$OpenBSD: aha1742.c,v 1.30 2009/01/21 21:53:59 grange Exp $	*/
 /*	$NetBSD: aha1742.c,v 1.61 1996/05/12 23:40:01 mycroft Exp $	*/
 
 /*
@@ -990,7 +990,7 @@ ahb_scsi_cmd(xs)
 
 		if ((flags & SCSI_POLL) == 0) {
 			splx(s);
-			timeout_add(&ecb->xs->stimeout, (xs->timeout * hz) / 1000);
+			timeout_add_msec(&ecb->xs->stimeout, xs->timeout);
 			return SUCCESSFULLY_QUEUED;
 		}
 
@@ -1106,7 +1106,7 @@ ahb_scsi_cmd(xs)
 	 */
 	if ((flags & SCSI_POLL) == 0) {
 		splx(s);
-		timeout_add(&ecb->xs->stimeout, (xs->timeout * hz) / 1000);
+		timeout_add_msec(&ecb->xs->stimeout, xs->timeout);
 		return SUCCESSFULLY_QUEUED;
 	}
 

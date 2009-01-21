@@ -1,4 +1,4 @@
-/*	$OpenBSD: btkbd.c,v 1.4 2008/11/22 04:42:58 uwe Exp $	*/
+/*	$OpenBSD: btkbd.c,v 1.5 2009/01/21 21:53:59 grange Exp $	*/
 /*	$NetBSD: btkbd.c,v 1.10 2008/09/09 03:54:56 cube Exp $	*/
 
 /*
@@ -551,7 +551,7 @@ btkbd_input(struct bthidev *self, uint8_t *data, int len)
 		timeout_del(&sc->sc_repeat);
 		if (npress != 0) {
 			sc->sc_nrep = npress;
-			timeout_add(&sc->sc_repeat, hz * REP_DELAY1 / 1000);
+			timeout_add_msec(&sc->sc_repeat, REP_DELAY1);
 		}
 #endif
 		return;
@@ -579,7 +579,7 @@ btkbd_repeat(void *arg)
 	s = spltty();
 	wskbd_rawinput(sc->sc_wskbd, sc->sc_rep, sc->sc_nrep);
 	splx(s);
-	timeout_add(&sc->sc_repeat, hz * REP_DELAYN / 1000);
+	timeout_add_msec(&sc->sc_repeat, REP_DELAYN);
 }
 #endif
 #endif

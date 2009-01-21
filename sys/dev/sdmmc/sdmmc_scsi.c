@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.11 2008/12/02 23:49:54 deraadt Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.12 2009/01/21 21:54:00 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -417,7 +417,7 @@ sdmmc_start_xs(struct sdmmc_softc *sc, struct sdmmc_ccb *ccb)
 		return COMPLETE;
 	}
 
-	timeout_add(&xs->stimeout, (xs->timeout * hz) / 1000);
+	timeout_add_msec(&xs->stimeout, xs->timeout);
 	sdmmc_add_task(sc, &ccb->ccb_task);
 	return SUCCESSFULLY_QUEUED;
 }

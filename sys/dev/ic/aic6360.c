@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.17 2008/11/24 00:31:35 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.18 2009/01/21 21:53:59 grange Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -1769,8 +1769,7 @@ loop:
 
 			/* On our first connection, schedule a timeout. */
 			if ((acb->xs->flags & SCSI_POLL) == 0)
-				timeout_add(&acb->xs->stimeout,
-				    (acb->timeout * hz) / 1000);
+				timeout_add_msec(&acb->xs->stimeout, acb->timeout);
 
 			sc->sc_state = AIC_CONNECTED;
 		} else if ((sstat1 & SELTO) != 0) {

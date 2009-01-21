@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.71 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.72 2009/01/21 21:54:00 grange Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -3454,7 +3454,7 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			rtw_set_nettype(sc, IEEE80211_M_MONITOR);
 		}
 
-		timeout_add(&sc->sc_scan_to, rtw_dwelltime * hz / 1000);
+		timeout_add_msec(&sc->sc_scan_to, rtw_dwelltime);
 
 		break;
 	case IEEE80211_S_RUN:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbd.c,v 1.13 2006/08/10 23:43:45 miod Exp $	*/
+/*	$OpenBSD: hilkbd.c,v 1.14 2009/01/21 21:53:59 grange Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -436,8 +436,7 @@ hilkbd_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 		timeout_del(&sc->sc_rawrepeat_ch);
 		sc->sc_nrep = npress;
 		if (npress != 0) {
-			timeout_add(&sc->sc_rawrepeat_ch,
-			    (hz * REP_DELAY1) / 1000);
+			timeout_add_msec(&sc->sc_rawrepeat_ch, REP_DELAY1);
 		}
 	} else
 #endif
@@ -492,6 +491,6 @@ hilkbd_rawrepeat(void *v)
 	s = spltty();
 	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
 	splx(s);
-	timeout_add(&sc->sc_rawrepeat_ch, (hz * REP_DELAYN) / 1000);
+	timeout_add_msec(&sc->sc_rawrepeat_ch, REP_DELAYN);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.100 2008/07/02 03:00:55 fgsch Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.101 2009/01/21 21:54:00 grange Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -1781,7 +1781,7 @@ __wdccommand_start(chp, xfer)
 
 	if ((wdc_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
-		timeout_add(&chp->ch_timo, wdc_c->timeout / 1000 * hz);
+		timeout_add_msec(&chp->ch_timo, wdc_c->timeout);
 		return;
 	}
 

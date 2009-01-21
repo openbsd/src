@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.40 2008/11/23 12:46:51 dlg Exp $ */
+/*	$OpenBSD: sili.c,v 1.41 2009/01/21 21:54:00 grange Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -863,7 +863,7 @@ sili_ata_cmd(struct ata_xfer *xa)
 		return (ATA_COMPLETE);
 	}
 
-	timeout_add(&xa->stimeout, (xa->timeout * hz) / 1000);
+	timeout_add_msec(&xa->stimeout, xa->timeout);
 
 	s = splbio();
 	sili_start(sp, ccb);

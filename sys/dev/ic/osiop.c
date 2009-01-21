@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.35 2008/11/24 00:31:35 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.36 2009/01/21 21:54:00 grange Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -449,7 +449,7 @@ osiop_scsicmd(xs)
 		osiop_poll(sc, acb);
 	else
 		/* start expire timer */
-		timeout_add(&xs->stimeout, (xs->timeout/1000) * hz);
+		timeout_add_msec(&xs->stimeout, xs->timeout);
 
 	if (xs->flags & (SCSI_POLL | ITSDONE))
 		return (COMPLETE);
@@ -748,7 +748,7 @@ FREE:
 		TAILQ_INSERT_HEAD(&sc->ready_list, acb, chain);
 		if (((acb->xsflags & SCSI_POLL) == 0) && ((sc->sc_flags & OSIOP_NODMA) == 0))
 			/* start expire timer */
-			timeout_add(&xs->stimeout, (xs->timeout/1000) * hz);
+			timeout_add_msec(&xs->stimeout, xs->timeout);
 	}
 
 	osiop_sched(sc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.44 2009/01/21 18:18:33 miod Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.45 2009/01/21 21:54:00 grange Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -682,8 +682,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 		splx(s);
 		if (npress != 0) {
 			sc->sc_nrep = npress;
-			timeout_add(&sc->sc_rawrepeat_ch,
-			    hz * REP_DELAY1 / 1000);
+			timeout_add_msec(&sc->sc_rawrepeat_ch, REP_DELAY1);
 		} else
 			timeout_del(&sc->sc_rawrepeat_ch);
 		return;
@@ -736,7 +735,7 @@ ukbd_rawrepeat(void *v)
 	s = spltty();
 	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
 	splx(s);
-	timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000);
+	timeout_add_msec(&sc->sc_rawrepeat_ch, REP_DELAYN);
 }
 #endif
 

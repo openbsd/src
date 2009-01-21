@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.22 2008/11/26 16:38:00 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.23 2009/01/21 21:53:59 grange Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -320,15 +320,14 @@ adv_start_ccbs(sc)
 		if (AscExeScsiQueue(sc, &ccb->scsiq) == ASC_BUSY) {
 			ccb->flags |= CCB_WATCHDOG;
 			timeout_set(&xs->stimeout, adv_watchdog, ccb);
-			timeout_add(&xs->stimeout,
-				(ADV_WATCH_TIMEOUT * hz) / 1000);
+			timeout_add_msec(&xs->stimeout, ADV_WATCH_TIMEOUT);
 			break;
 		}
 		TAILQ_REMOVE(&sc->sc_waiting_ccb, ccb, chain);
 
 		if ((ccb->xs->flags & SCSI_POLL) == 0) {
 			timeout_set(&xs->stimeout, adv_timeout, ccb);
-			timeout_add(&xs->stimeout, (ccb->timeout * hz) / 1000);
+			timeout_add_msec(&xs->stimeout, ccb->timeout);
 		}
 	}
 }

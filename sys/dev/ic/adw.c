@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.36 2008/11/26 16:38:00 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.37 2009/01/21 21:53:59 grange Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -407,7 +407,7 @@ adw_queue_ccb(sc, ccb, retry)
 		/* ALWAYS initialize stimeout, lest it contain garbage! */
 		timeout_set(&ccb->xs->stimeout, adw_timeout, ccb);
 		if ((ccb->xs->flags & SCSI_POLL) == 0)
-			timeout_add(&ccb->xs->stimeout, (ccb->timeout * hz) / 1000);
+			timeout_add_msec(&ccb->xs->stimeout, ccb->timeout);
 	}
 
 	return(errcode);
@@ -915,7 +915,7 @@ adw_timeout(arg)
 		 * by hand so the next time a timeout event will occur
 		 * we will reset the bus.
 		 */
-		timeout_add(&xs->stimeout, (ccb->timeout * hz) / 1000);
+		timeout_add_msec(&xs->stimeout, ccb->timeout);
 	} else {
 	/*
 	 * Abort the operation that has timed out.
@@ -947,7 +947,7 @@ adw_timeout(arg)
 		 * by hand so to give a second opportunity to the command
 		 * which timed-out.
 		 */
-		timeout_add(&xs->stimeout, (ccb->timeout * hz) / 1000);
+		timeout_add_msec(&xs->stimeout, ccb->timeout);
 	}
 
 	splx(s);

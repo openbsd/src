@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.14 2008/11/25 17:52:02 krw Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.15 2009/01/21 21:53:59 grange Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -859,8 +859,7 @@ ioprbs_start_ccbs(sc)
 			ccb->ic_flags |= IOPRBS_ICF_WATCHDOG;
 			timeout_set(&ccb->ic_xs->stimeout, ioprbs_watchdog,
 			    ccb);
-			timeout_add(&xs->stimeout,
-			    (IOPRBS_WATCH_TIMEOUT * hz) / 1000);
+			timeout_add_msec(&xs->stimeout, IOPRBS_WATCH_TIMEOUT);
 			break;
 		}
 		TAILQ_REMOVE(&sc->sc_ccbq, ccb, ic_chain);
@@ -868,8 +867,7 @@ ioprbs_start_ccbs(sc)
 		if ((xs->flags & SCSI_POLL) == 0) {
 			timeout_set(&ccb->ic_xs->stimeout, ioprbs_timeout,
 			    ccb);
-			timeout_add(&xs->stimeout,
-			    (ccb->ic_timeout * hz) / 1000);
+			timeout_add_msec(&xs->stimeout, ccb->ic_timeout);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.9 2008/05/27 21:08:48 kettenis Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.10 2009/01/21 21:54:00 grange Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -799,7 +799,7 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 		oosiop_poll(sc, cb);
 	else {
 		/* start expire timer */
-		timeout_add(&xs->stimeout, (xs->timeout / 1000) * hz);
+		timeout_add_msec(&xs->stimeout, xs->timeout);
 	}
 
 	if (xs->flags & (SCSI_POLL | ITSDONE))
@@ -1000,7 +1000,7 @@ FREE:
 		TAILQ_INSERT_HEAD(&sc->sc_cbq, cb, chain);
 		if ((cb->xs->flags & SCSI_POLL) == 0) {
 			/* start expire timer */
-			timeout_add(&xs->stimeout, (xs->timeout / 1000) * hz);
+			timeout_add_msec(&xs->stimeout, xs->timeout);
 		}
 	}
 }
@@ -1243,8 +1243,7 @@ oosiop_processintr(struct oosiop_softc *sc, u_int8_t istat)
 		/* Schedule timeout */
 		if ((cb->xs->flags & SCSI_POLL) == 0) {
 			/* start expire timer */
-			timeout_add(&cb->xs->stimeout,
-			    (cb->xs->timeout / 1000) * hz);
+			timeout_add_msec(&cb->xs->stimeout, cb->xs->timeout);
 		}
 	}
 

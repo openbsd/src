@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.25 2009/01/11 16:54:59 blambert Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.26 2009/01/21 21:54:00 grange Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -583,7 +583,7 @@ sea_scsi_cmd(struct scsi_xfer *xs)
 	 */
 	if ((flags & SCSI_POLL) == 0) {
 		timeout_set(&scb->xs->stimeout, sea_timeout, scb);
-		timeout_add(&scb->xs->stimeout, (xs->timeout * hz) / 1000);
+		timeout_add_msec(&scb->xs->stimeout, xs->timeout);
 		splx(s);
 		return SUCCESSFULLY_QUEUED;
 	}

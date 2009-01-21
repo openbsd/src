@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.60 2008/11/25 17:52:02 krw Exp $	*/
+/*	$OpenBSD: aha.c,v 1.61 2009/01/21 21:54:00 grange Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -816,7 +816,7 @@ aha_start_ccbs(sc)
 
 		if ((ccb->xs->flags & SCSI_POLL) == 0) {
 			timeout_set(&ccb->xs->stimeout, aha_timeout, ccb);
-			timeout_add(&ccb->xs->stimeout, (ccb->timeout * hz) / 1000);
+			timeout_add_msec(&ccb->xs->stimeout, ccb->timeout);
 		}
 
 		++sc->sc_mbofull;

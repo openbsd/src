@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_eisa.c,v 1.7 2007/11/05 17:54:27 krw Exp $	*/
+/*	$OpenBSD: uha_eisa.c,v 1.8 2009/01/21 21:53:59 grange Exp $	*/
 /*	$NetBSD: uha_eisa.c,v 1.5 1996/10/21 22:31:07 thorpej Exp $	*/
 
 /*
@@ -247,7 +247,7 @@ u24_start_mbox(sc, mscp)
 	bus_space_write_1(iot, ioh, U24_LINT, U24_OGMFULL);
 
 	if ((mscp->xs->flags & SCSI_POLL) == 0)
-		timeout_add(&mscp->xs->stimeout, (mscp->timeout * hz) / 1000);
+		timeout_add_msec(&mscp->xs->stimeout, mscp->timeout);
 }
 
 int

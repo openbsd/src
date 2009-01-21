@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.15 2008/11/26 16:38:00 krw Exp $	*/
+/*	$OpenBSD: bha.c,v 1.16 2009/01/21 21:53:59 grange Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -711,7 +711,7 @@ bha_start_ccbs(sc)
 		bus_space_write_1(iot, ioh, BHA_CMD_PORT, BHA_START_SCSI);
 
 		if ((xs->flags & SCSI_POLL) == 0)
-			timeout_add(&xs->stimeout, (ccb->timeout * hz) / 1000);
+			timeout_add_msec(&xs->stimeout, ccb->timeout);
 
 		++sc->sc_mbofull;
 		bha_nextmbx(wmbo, wmbx, mbo);

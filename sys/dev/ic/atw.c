@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.64 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: atw.c,v 1.65 2009/01/21 21:53:59 grange Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -2519,7 +2519,7 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		panic("%s: unexpected state IEEE80211_S_INIT", __func__);
 		break;
 	case IEEE80211_S_SCAN:
-		timeout_add(&sc->sc_scan_to, atw_dwelltime * hz / 1000);
+		timeout_add_msec(&sc->sc_scan_to, atw_dwelltime);
 		break;
 	case IEEE80211_S_RUN:
 		if (ic->ic_opmode == IEEE80211_M_STA)

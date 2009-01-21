@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.30 2008/11/25 18:10:00 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.31 2009/01/21 21:53:59 grange Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -459,7 +459,7 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	LIST_INSERT_HEAD(&ahd->pending_scbs, scb, pending_links);
 
 	if (!(xs->flags & SCSI_POLL))
-		timeout_add(&xs->stimeout, (xs->timeout * hz) / 1000);
+		timeout_add_msec(&xs->stimeout, xs->timeout);
 
 	scb->flags |= SCB_ACTIVE;
 

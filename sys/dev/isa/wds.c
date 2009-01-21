@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.26 2008/11/25 17:52:02 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.27 2009/01/21 21:54:00 grange Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -741,7 +741,7 @@ wds_start_scbs(sc)
 
 		if ((scb->flags & SCB_POLLED) == 0) {
 			timeout_set(&scb->xs->stimeout, wds_timeout, scb);
-			timeout_add(&scb->xs->stimeout, (scb->timeout * hz) / 1000);
+			timeout_add_msec(&scb->xs->stimeout, scb->timeout);
 		}
 
 		++sc->sc_mbofull;

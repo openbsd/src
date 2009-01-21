@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.32 2008/06/27 06:03:08 ray Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.33 2009/01/21 21:53:59 grange Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ wdc_ata_bio_start(struct channel_softc *chp, struct wdc_xfer *xfer)
 
 	/* start timeout machinery */
 	if ((ata_bio->flags & ATA_POLL) == 0)
-		timeout_add(&chp->ch_timo, ATA_DELAY / 1000 * hz);
+		timeout_add_msec(&chp->ch_timo, ATA_DELAY);
 	_wdc_ata_bio_start(chp, xfer);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.59 2008/12/21 20:16:35 dlg Exp $ */
+/* $OpenBSD: wskbd.c,v 1.60 2009/01/21 21:54:00 grange Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -522,8 +522,7 @@ wskbd_repeat(void *v)
 		    sc->sc_repeat_value);
 	}
 	if (sc->sc_keyrepeat_data.delN != 0)
-		timeout_add(&sc->sc_repeat_ch,
-		    (hz * sc->sc_keyrepeat_data.delN) / 1000);
+		timeout_add_msec(&sc->sc_repeat_ch, sc->sc_keyrepeat_data.delN);
 	splx(s);
 }
 #endif
@@ -641,8 +640,8 @@ wskbd_input(struct device *dev, u_int type, int value)
 
 			if (sc->sc_keyrepeat_data.del1 != 0) {
 				sc->sc_repeating = num;
-				timeout_add(&sc->sc_repeat_ch,
-				    (hz * sc->sc_keyrepeat_data.del1) / 1000);
+				timeout_add_msec(&sc->sc_repeat_ch,
+				    sc->sc_keyrepeat_data.del1);
 			}
 		}
 		return;
@@ -657,8 +656,7 @@ wskbd_input(struct device *dev, u_int type, int value)
 		sc->sc_repeat_type = type;
 		sc->sc_repeat_value = value;
 		sc->sc_repeating = 1;
-		timeout_add(&sc->sc_repeat_ch,
-		    (hz * sc->sc_keyrepeat_data.del1) / 1000);
+		timeout_add_msec(&sc->sc_repeat_ch, sc->sc_keyrepeat_data.del1);
 	}
 #endif
 }
