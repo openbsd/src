@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.23 2008/10/12 00:54:49 brad Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.24 2009/01/22 19:26:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -61,6 +61,8 @@ struct re_pci_softc {
 	void *sc_ih;
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
+
+	bus_size_t sc_iosize;
 };
 
 const struct pci_matchid re_pci_devices[] = {
@@ -78,6 +80,7 @@ const struct pci_matchid re_pci_devices[] = {
 
 int	re_pci_probe(struct device *, void *, void *);
 void	re_pci_attach(struct device *, struct device *, void *);
+int	re_pci_detach(struct device *, int);
 
 /*
  * PCI autoconfig definitions
@@ -85,7 +88,8 @@ void	re_pci_attach(struct device *, struct device *, void *);
 struct cfattach re_pci_ca = {
 	sizeof(struct re_pci_softc),
 	re_pci_probe,
-	re_pci_attach
+	re_pci_attach,
+	re_pci_detach
 };
 
 /*
@@ -128,7 +132,6 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
-	bus_size_t		iosize;
 	pcireg_t		command;
 
 	/*
@@ -162,9 +165,9 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Map control/status registers.
 	 */
 	if (pci_mapreg_map(pa, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->rl_btag, &sc->rl_bhandle, NULL, &iosize, 0)) {
+	    &sc->rl_btag, &sc->rl_bhandle, NULL, &psc->sc_iosize, 0)) {
 		if (pci_mapreg_map(pa, RL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-		    &sc->rl_btag, &sc->rl_bhandle, NULL, &iosize, 0)) {
+		    &sc->rl_btag, &sc->rl_bhandle, NULL, &psc->sc_iosize, 0)) {
 			printf(": can't map mem or i/o space\n");
 			return;
 		}
@@ -186,6 +189,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
+	psc->sc_pc = pc;
 
 	/*
 	 * PCI Express check.
@@ -197,6 +201,41 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Call bus-independent attach routine */
 	if (re_attach(sc, intrstr)) {
 		pci_intr_disestablish(pc, psc->sc_ih);
-		bus_space_unmap(sc->rl_btag, sc->rl_bhandle, iosize);
+		bus_space_unmap(sc->rl_btag, sc->rl_bhandle, psc->sc_iosize);
 	}
+}
+
+int
+re_pci_detach(struct device *self, int flags)
+{
+	struct re_pci_softc	*psc = (struct re_pci_softc *)self;
+	struct rl_softc		*sc = &psc->sc_rl;
+	struct ifnet		*ifp = &sc->sc_arpcom.ac_if;
+
+	/* Remove timeout handler */
+	timeout_del(&sc->timer_handle);
+
+	/* Detach PHY */
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete media stuff */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	/* No more hooks */
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
+	if (sc->sc_pwrhook != NULL)
+		powerhook_disestablish(sc->sc_pwrhook);
+
+	/* Disable interrupts */
+	if (psc->sc_ih != NULL)
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+
+	/* Free pci resources */
+	bus_space_unmap(sc->rl_btag, sc->rl_bhandle, psc->sc_iosize);
+
+	return (0);
 }
