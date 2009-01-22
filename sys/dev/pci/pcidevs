@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1449 2009/01/15 17:10:16 damien Exp $
+$OpenBSD: pcidevs,v 1.1450 2009/01/22 13:12:51 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3216,7 +3216,8 @@ product MOT RAVEN		0x4801	Raven PCI
 /* Moxa */
 product MOXA CP114		0x1141	CP-114
 product MOXA C104H		0x1040	C104H
-product MOXA CP104		0x1041	CP-104UL
+product MOXA CP104UL		0x1041	CP-104UL
+product MOXA CP104JU		0x1042	CP-104JU
 product MOXA C168H		0x1680	C168H
 
 /* Mesa Ridge Technologies (MAGMA) */
