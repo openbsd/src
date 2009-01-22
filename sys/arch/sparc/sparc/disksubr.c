@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.76 2008/06/29 20:05:22 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.77 2009/01/22 01:06:28 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -384,7 +384,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
-	return (NULL);
+	return (checkdisklabel(lp, lp));
 }
 
 /*
