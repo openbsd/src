@@ -1,5 +1,6 @@
-#	$OpenBSD: shells,v 1.6 2009/01/22 16:22:31 sobrado Exp $
-# List of acceptable shells for chpass(1).
+#	$OpenBSD: shells,v 1.7 2009/01/22 16:39:45 sobrado Exp $
+#
+# list of acceptable shells for chpass(1).
 # ftpd(8) will not allow users to connect who are not using
 # one of these shells.
 /bin/sh
