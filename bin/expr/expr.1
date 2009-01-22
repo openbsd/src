@@ -1,10 +1,10 @@
-.\"	$OpenBSD: expr.1,v 1.16 2007/05/31 19:19:14 jmc Exp $
+.\"	$OpenBSD: expr.1,v 1.17 2009/01/22 17:52:19 espie Exp $
 .\"	$NetBSD: expr.1,v 1.9 1995/04/28 23:27:13 jtc Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 22 2009 $
 .Dt EXPR 1
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@ operator matches
 .Ar expr1
 against
 .Ar expr2 ,
-which must be a regular expression.
+which must be a basic regular expression.
 The regular expression is anchored
 to the beginning of the string with an implicit
 .Ql ^ .
@@ -125,7 +125,8 @@ The expression is invalid.
 An error occurred (such as memory allocation failure).
 .El
 .Sh SEE ALSO
-.Xr test 1
+.Xr test 1 ,
+.Xr re_format 7
 .Sh STANDARDS
 The
 .Nm
