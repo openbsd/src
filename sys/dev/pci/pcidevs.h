@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1449 2009/01/15 17:10:16 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1450 2009/01/22 13:12:51 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3221,7 +3221,8 @@
 /* Moxa */
 #define	PCI_PRODUCT_MOXA_CP114	0x1141		/* CP-114 */
 #define	PCI_PRODUCT_MOXA_C104H	0x1040		/* C104H */
-#define	PCI_PRODUCT_MOXA_CP104	0x1041		/* CP-104UL */
+#define	PCI_PRODUCT_MOXA_CP104UL	0x1041		/* CP-104UL */
+#define	PCI_PRODUCT_MOXA_CP104JU	0x1042		/* CP-104JU */
 #define	PCI_PRODUCT_MOXA_C168H	0x1680		/* C168H */
 
 /* Mesa Ridge Technologies (MAGMA) */
