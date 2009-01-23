@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.156 2008/12/22 23:01:31 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.157 2009/01/23 19:16:39 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8889,6 +8889,26 @@ ENTRY(send_softint)
 1:
 	retl
 	 wrpr	%g1, 0, %pstate		! restore interrupts
+
+/*
+ * Flush user windows to memory.
+ */
+ENTRY(write_user_windows)
+	rdpr	%otherwin, %g1
+	brz	%g1, 3f
+	clr	%g2
+1:
+	save	%sp, -CC64FSZ, %sp
+	rdpr	%otherwin, %g1
+	brnz	%g1, 1b
+	 inc	%g2
+2:
+	dec	%g2
+	brnz	%g2, 2b
+	 restore
+3:
+	retl
+	 nop
 
 /*
  * On Blackbird (UltraSPARC-II) CPUs, writes to %tick_cmpr may fail.
