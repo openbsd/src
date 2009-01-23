@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.104 2008/04/23 13:28:59 jsg Exp $
+#	$OpenBSD: files.isa,v 1.105 2009/01/23 20:32:22 mk Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -336,6 +336,11 @@ file	dev/isa/lpt_isa.c		lpt_isa needs-flag
 device	wbsio {}
 attach	wbsio at isa
 file	dev/isa/wbsio.c			wbsio
+
+# SMSC SCH311x Super I/O
+device	schsio {}
+attach	schsio at isa
+file	dev/isa/sch311x.c		schsio
 
 # National Semiconductor LM78/79/81 and compatible hardware monitors
 attach	lm at isa with lm_isa
