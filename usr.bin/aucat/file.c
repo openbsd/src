@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.9 2008/12/29 17:59:08 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.10 2009/01/23 17:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -261,7 +261,7 @@ void
 filelist_unlisten(void)
 {
 	struct file *f, *fnext;
-	
+
 	for (f = LIST_FIRST(&file_list); f != NULL; f = fnext) {
 		fnext = LIST_NEXT(f, entry);
 		if (f->ops == &listen_ops)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.h,v 1.15 2008/12/29 17:59:08 ratchov Exp $	*/
+/*	$OpenBSD: aproc.h,v 1.16 2009/01/23 17:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -148,7 +148,7 @@ struct aproc {
 			short ctx[NCHAN_MAX * RESAMP_NCTX];
 			unsigned iblksz, oblksz;
 			int diff;
-			int idelta, odelta;	/* reminder of conv_[io]pos */
+			int idelta, odelta;	/* remainder of resamp_[io]pos */
 		} resamp;
 		struct {
 			short ctx[NCHAN_MAX];

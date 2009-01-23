@@ -12,7 +12,7 @@
  * max data of a .wav file. The total file size must be smaller than
  * 2^31, and we also have to leave some space for the headers (around 40
  * bytes)
- */ 
+ */
 #define WAV_DATAMAX	(0x7fff0000)
 
 struct fileops wav_ops = {
@@ -54,7 +54,7 @@ wav_new_out(struct fileops *ops, int fd, char *name,
 	f = (struct wav *)pipe_new(ops, fd, name);
 	if (hdr == HDR_WAV) {
 		par->le = 1;
-		par->sig = (par->bits <= 8) ? 0 : 1; 
+		par->sig = (par->bits <= 8) ? 0 : 1;
 		par->bps = (par->bits + 7) / 8;
 		if (!wav_writehdr(f->pipe.fd, par))
 			exit(1);
@@ -92,7 +92,7 @@ wav_write(struct file *file, unsigned char *data, unsigned count)
 {
 	struct wav *f = (struct wav *)file;
 	unsigned n;
-	
+
 	if (f->wbytes >= 0 && count > f->wbytes) {
 		count = f->wbytes; /* wbytes fits in count */
 		if (count == 0) {

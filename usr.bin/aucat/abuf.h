@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.14 2008/11/16 16:30:22 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.15 2009/01/23 17:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -27,9 +27,9 @@ struct abuf {
 	/*
 	 * Misc aproc-specific per-buffer parameters.
 	 * since the buffer can connect any pair of aproc structure,
-	 * each aproc must have it's own specific data. Thus we cannot 
+	 * each aproc must have it's own specific data. Thus we cannot
 	 * use an union. The only exception is the xrun field, because
-	 * there can be only one aproc that absorbs xruns in any 
+	 * there can be only one aproc that absorbs xruns in any
 	 * intput->output path.
 	 */
 	int mixweight;		/* dynamic range for the source stream */
@@ -44,7 +44,7 @@ struct abuf {
 	unsigned xrun;		/* common to mix and sub */
 	LIST_ENTRY(abuf) ient;	/* for mix inputs list */
 	LIST_ENTRY(abuf) oent;	/* for sub outputs list */
-	
+
 	/*
 	 * fifo parameters
 	 */

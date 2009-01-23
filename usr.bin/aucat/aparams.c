@@ -1,4 +1,4 @@
-/*	$OpenBSD: aparams.c,v 1.5 2008/11/20 10:10:01 ratchov Exp $	*/
+/*	$OpenBSD: aparams.c,v 1.6 2009/01/23 17:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -81,7 +81,7 @@ aparams_strtoenc(struct aparams *par, char *istr)
 {
 	char *p = istr;
 	int i, sig, bits, le, bps, msb;
-	
+
 #define IS_SEP(c)			\
 	(((c) < 'a' || (c) > 'z') &&	\
 	 ((c) < 'A' || (c) > 'Z') &&	\
@@ -97,7 +97,7 @@ aparams_strtoenc(struct aparams *par, char *istr)
 	} else
 		return 0;
 	p++;
-	
+
 	/*
 	 * get number of bits per sample
 	 */
@@ -185,7 +185,7 @@ aparams_init(struct aparams *par, unsigned cmin, unsigned cmax, unsigned rate)
  */
 void
 aparams_print(struct aparams *par)
-{	
+{
 	char enc[ENCMAX];
 
 	aparams_enctostr(par, enc);

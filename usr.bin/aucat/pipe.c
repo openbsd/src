@@ -69,9 +69,9 @@ pipe_read(struct file *file, unsigned char *data, unsigned count)
 #ifdef DEBUG
 	gettimeofday(&tv1, NULL);
 	timersub(&tv1, &tv0, &dtv);
-	us = dtv.tv_sec * 1000000 + dtv.tv_usec; 
-	DPRINTFN(us < 5000 ? 4 : 1, 
-	    "pipe_read: %s: got %d bytes in %uus\n", 
+	us = dtv.tv_sec * 1000000 + dtv.tv_usec;
+	DPRINTFN(us < 5000 ? 4 : 1,
+	    "pipe_read: %s: got %d bytes in %uus\n",
 	    f->file.name, n, us);
 #endif
 	return n;
@@ -86,7 +86,7 @@ pipe_write(struct file *file, unsigned char *data, unsigned count)
 #ifdef DEBUG
 	struct timeval tv0, tv1, dtv;
 	unsigned us;
-	
+
 	if (!(f->file.state & FILE_WOK)) {
 		DPRINTF("pipe_write: %s: bad state\n", f->file.name);
 		abort();
@@ -108,7 +108,7 @@ pipe_write(struct file *file, unsigned char *data, unsigned count)
 #ifdef DEBUG
 	gettimeofday(&tv1, NULL);
 	timersub(&tv1, &tv0, &dtv);
-	us = dtv.tv_sec * 1000000 + dtv.tv_usec; 
+	us = dtv.tv_sec * 1000000 + dtv.tv_usec;
 	DPRINTFN(us < 5000 ? 4 : 1,
 	    "pipe_write: %s: wrote %d bytes in %uus\n",
 	    f->file.name, n, us);

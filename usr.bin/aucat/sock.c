@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.11 2008/12/29 17:59:08 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.12 2009/01/23 17:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -94,7 +94,7 @@ rsock_out(struct aproc *p, struct abuf *obuf)
 
 	DPRINTFN(4, "rsock_out: %p\n", f);
 
-	/* 
+	/*
 	 * when calling sock_read(), we may receive a ``STOP'' command,
 	 * and detach ``obuf''. In this case, there's no more caller and
 	 * we'll stop processing further messages, resulting in a dead lock.
@@ -103,7 +103,7 @@ rsock_out(struct aproc *p, struct abuf *obuf)
 	 */
 	for (;;) {
 		if (!sock_read(f))
-			return 0;		
+			return 0;
 	}
 	return 1;
 }
@@ -313,7 +313,7 @@ void
 sock_freebuf(struct sock *f)
 {
 	struct abuf *rbuf, *wbuf;
-	
+
 	f->pstate = SOCK_INIT;
 	DPRINTF("sock_freebuf:\n");
 	rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
@@ -357,9 +357,9 @@ void
 sock_setvol(struct sock *f, int vol)
 {
 	struct abuf *rbuf;
-	
+
 	f->vol = vol;
-	rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);	
+	rbuf = LIST_FIRST(&f->pipe.file.rproc->obuflist);
 	if (!rbuf) {
 		DPRINTF("sock_setvol: no read buffer yet\n");
 		return;
@@ -384,7 +384,7 @@ sock_attach(struct sock *f, int force)
 	 */
 	if (!force && rbuf && ABUF_WOK(rbuf))
 		return 0;
-	
+
 	DPRINTF("sock_attach: %p\n", f);
 	f->pstate = SOCK_RUN;
 
@@ -561,7 +561,7 @@ sock_wdata(struct sock *f)
 		if (n == 0)
 			return 0;
 		f->wtodo -= n;
-	}		
+	}
 	return 1;
 }
 
@@ -570,7 +570,7 @@ sock_setpar(struct sock *f)
 {
 	struct amsg_par *p = &f->rmsg.u.par;
 	unsigned min, max, rate;
-	
+
 	if (AMSG_ISSET(p->mode)) {
 		if ((p->mode & ~(AMSG_PLAY | AMSG_REC)) || p->mode == 0) {
 			DPRINTF("sock_setpar: bad mode %x\n", p->mode);
@@ -780,7 +780,7 @@ sock_execmsg(struct sock *f)
 		m->u.par.rchan = f->wpar.cmax - f->wpar.cmin + 1;
 		m->u.par.pchan = f->rpar.cmax - f->rpar.cmin + 1;
 		m->u.par.appbufsz = f->bufsz;
-		m->u.par.bufsz = 
+		m->u.par.bufsz =
 		    f->bufsz + (dev_bufsz / dev_round) * f->round;
 		m->u.par.round = f->round;
 		f->rstate = SOCK_RRET;
@@ -848,7 +848,7 @@ sock_buildmsg(struct sock *f)
 	struct aproc *p;
 	struct abuf *ibuf;
 	int *pdelta;
-	
+
 	/*
 	 * if pos changed, build a MOVE message
 	 */

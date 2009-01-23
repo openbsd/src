@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.3 2008/12/17 07:19:27 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.4 2009/01/23 17:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -30,7 +30,7 @@ struct amsg {
 #define AMSG_GETPAR	1	/* get the current parameters */
 #define AMSG_SETPAR	2	/* set the current parameters */
 #define AMSG_START	3	/* request the server to start the stream */
-#define AMSG_STOP	4	/* request the server to stop the stream */ 
+#define AMSG_STOP	4	/* request the server to stop the stream */
 #define AMSG_DATA	5	/* data block */
 #define AMSG_MOVE	6	/* position changed */
 #define AMSG_GETCAP	7	/* get capabilities */

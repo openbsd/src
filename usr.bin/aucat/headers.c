@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.3 2008/11/16 17:08:32 ratchov Exp $	*/
+/*	$OpenBSD: headers.c,v 1.4 2009/01/23 17:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -43,7 +43,7 @@ struct wavfmt {
 	uint32_t rate;
 	uint32_t byterate;
 	uint16_t blkalign;
-	uint16_t bits;	
+	uint16_t bits;
 } __packed;
 
 char wav_id_riff[4] = { 'R', 'I', 'F', 'F' };
@@ -219,7 +219,7 @@ wav_writehdr(int fd, struct aparams *par)
 
 	memcpy(hdr.data_hdr.id, wav_id_data, 4);
 	hdr.data_hdr.size = htole32(datasz);
-	    
+
 	if (lseek(fd, 0, SEEK_SET) < 0) {
 		warn("wav_writehdr: lseek");
 		return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aproc.c,v 1.30 2008/12/29 17:59:08 ratchov Exp $	*/
+/*	$OpenBSD: aproc.c,v 1.31 2009/01/23 17:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -188,7 +188,7 @@ rpipe_out(struct aproc *p, struct abuf *obuf)
 	if (f->refs > 0)
 		return 0;
 	DPRINTFN(3, "rpipe_out: %s\n", p->name);
-	
+
 	if (ABUF_FULL(obuf) || !(f->state & FILE_ROK))
 		return 0;
 	data = abuf_wgetblk(obuf, &count, 0);
@@ -246,7 +246,7 @@ rpipe_new(struct file *f)
 
 	p = aproc_new(&rpipe_ops, f->name);
 	p->u.io.file = f;
-	f->rproc = p;	
+	f->rproc = p;
 	return p;
 }
 
@@ -295,7 +295,7 @@ wpipe_out(struct aproc *p, struct abuf *obuf_dummy)
 	DPRINTFN(3, "wpipe_out: %s\n", p->name);
 
 	if (!abuf_fill(ibuf)) {
-		DPRINTFN(3, "wpipe_out: fill failed\n");       
+		DPRINTFN(3, "wpipe_out: fill failed\n");
 		return 0;
 	}
 	if (ABUF_EMPTY(ibuf) || !(f->state & FILE_WOK))
@@ -407,7 +407,7 @@ mix_badd(struct abuf *ibuf, struct abuf *obuf)
 		return;
 
 	vol = (ibuf->mixweight * ibuf->mixvol) >> ADATA_SHIFT;
-	ostart = ibuf->cmin - obuf->cmin; 
+	ostart = ibuf->cmin - obuf->cmin;
 	onext = obuf->cmax - ibuf->cmax + ostart;
 	icnt = ibuf->cmax - ibuf->cmin + 1;
 	odata += ostart;
@@ -434,7 +434,7 @@ int
 mix_xrun(struct abuf *i, struct abuf *obuf)
 {
 	unsigned fdrop;
-	
+
 	if (i->mixodone > 0)
 		return 1;
 	if (i->xrun == XRUN_ERROR) {
@@ -466,7 +466,7 @@ mix_in(struct aproc *p, struct abuf *ibuf)
 
 	DPRINTFN(4, "mix_in: used/len = %u/%u, done/todo = %u/%u\n",
 	    ibuf->used, ibuf->len, ibuf->mixodone, obuf->mixitodo);
-		
+
 	if (!ABUF_ROK(ibuf))
 		return 0;
 	odone = obuf->len;
@@ -501,7 +501,7 @@ mix_out(struct aproc *p, struct abuf *obuf)
 	    obuf->used, obuf->len, obuf->mixitodo, obuf->len);
 
 	if (!ABUF_WOK(obuf))
-		return 0;	
+		return 0;
 	odone = obuf->len;
 	for (i = LIST_FIRST(&p->ibuflist); i != NULL; i = inext) {
 		inext = LIST_NEXT(i, ient);
@@ -700,7 +700,7 @@ sub_bcopy(struct abuf *ibuf, struct abuf *obuf)
 		}
 		idata += inext;
 	}
-	abuf_wcommit(obuf, scount * obuf->bpf);	
+	abuf_wcommit(obuf, scount * obuf->bpf);
 	obuf->subidone += scount * ibuf->bpf;
 	DPRINTFN(4, "sub_bcopy: %u frames\n", scount);
 }
@@ -740,7 +740,7 @@ sub_in(struct aproc *p, struct abuf *ibuf)
 {
 	struct abuf *i, *inext;
 	unsigned idone;
-	
+
 	if (!ABUF_ROK(ibuf))
 		return 0;
 	idone = ibuf->len;
@@ -916,7 +916,7 @@ resamp_bcopy(struct aproc *p, struct abuf *ibuf, struct abuf *obuf)
 	unsigned iblksz;
 	unsigned ofr;
 	unsigned c;
-	short *ctxbuf, *ctx;	
+	short *ctxbuf, *ctx;
 	unsigned ctx_start;
 	unsigned icount, ocount;
 
@@ -1036,7 +1036,7 @@ resamp_hup(struct aproc *p, struct abuf *obuf)
 void
 resamp_ipos(struct aproc *p, struct abuf *ibuf, int delta)
 {
-	struct abuf *obuf = LIST_FIRST(&p->obuflist);	
+	struct abuf *obuf = LIST_FIRST(&p->obuflist);
 	long long ipos;
 	int ifac, ofac;
 
@@ -1539,7 +1539,7 @@ dec_new(char *name, struct aparams *par)
 	}
 #ifdef DEBUG
 	if (debug_level > 0) {
-		fprintf(stderr, "dec_new: %s: ", p->name);		
+		fprintf(stderr, "dec_new: %s: ", p->name);
 		aparams_print(par);
 		fprintf(stderr, "\n");
 	}

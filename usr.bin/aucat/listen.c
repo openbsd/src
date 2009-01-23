@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.5 2008/11/16 20:44:03 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.6 2009/01/23 17:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -64,8 +64,8 @@ listen_new(struct fileops *ops, char *path,
 	}
 	sockname.sun_family = AF_UNIX;
 	strlcpy(sockname.sun_path, path, sizeof(sockname.sun_path));
-	if (bind(sock, (struct sockaddr *)&sockname, 
-	        sizeof(struct sockaddr_un)) < 0) {
+	if (bind(sock, (struct sockaddr *)&sockname,
+		sizeof(struct sockaddr_un)) < 0) {
 		perror("bind");
 		exit(1);
 	}

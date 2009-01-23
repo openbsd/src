@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.9 2008/12/29 17:59:08 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.10 2009/01/23 17:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -34,7 +34,7 @@
 struct safile {
 	struct file file;
 	struct sio_hdl *hdl;
-#ifdef DEBUG	
+#ifdef DEBUG
 	struct timeval itv, otv;
 #endif
 };
@@ -160,7 +160,7 @@ safile_new(struct fileops *ops, char *path,
 
 void
 safile_start(struct file *file)
-{	
+{
 	struct safile *f = (struct safile *)file;
 
 	if (!sio_start(f->hdl)) {
@@ -214,9 +214,9 @@ safile_read(struct file *file, unsigned char *data, unsigned count)
 #ifdef DEBUG
 	gettimeofday(&tv1, NULL);
 	timersub(&tv1, &tv0, &dtv);
-	us = dtv.tv_sec * 1000000 + dtv.tv_usec; 
+	us = dtv.tv_sec * 1000000 + dtv.tv_usec;
 	DPRINTFN(us < 5000 ? 4 : 1,
-	    "safile_read: %s: got %d bytes in %uus\n", 
+	    "safile_read: %s: got %d bytes in %uus\n",
 	    f->file.name, n, us);
 #endif
 	return n;
@@ -231,7 +231,7 @@ safile_write(struct file *file, unsigned char *data, unsigned count)
 #ifdef DEBUG
 	struct timeval tv0, tv1, dtv;
 	unsigned us;
-	
+
 	if (!(f->file.state & FILE_WOK)) {
 		DPRINTF("safile_write: %s: bad state\n", f->file.name);
 		abort();
@@ -253,7 +253,7 @@ safile_write(struct file *file, unsigned char *data, unsigned count)
 #ifdef DEBUG
 	gettimeofday(&tv1, NULL);
 	timersub(&tv1, &tv0, &dtv);
-	us = dtv.tv_sec * 1000000 + dtv.tv_usec; 
+	us = dtv.tv_sec * 1000000 + dtv.tv_usec;
 	DPRINTFN(us < 5000 ? 4 : 1,
 	    "safile_write: %s: wrote %d bytes in %uus\n",
 	    f->file.name, n, us);

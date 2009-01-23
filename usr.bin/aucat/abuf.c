@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.9 2008/11/09 16:26:07 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.10 2009/01/23 17:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -50,7 +50,7 @@ abuf_dprn(int n, struct abuf *buf, char *fmt, ...)
 
 	if (debug_level < n)
 		return;
-	fprintf(stderr, "%s->%s: ", 
+	fprintf(stderr, "%s->%s: ",
 	    buf->wproc ? buf->wproc->name : "none",
 	    buf->rproc ? buf->rproc->name : "none");
 	va_start(ap, fmt);
@@ -334,7 +334,7 @@ abuf_hup_do(struct abuf *buf)
  */
 int
 abuf_flush(struct abuf *buf)
-{	
+{
 	if (buf->inuse) {
 		ABUF_DPRN(4, buf, "abuf_flush: blocked\n");
 	} else {
@@ -443,7 +443,7 @@ abuf_eof(struct abuf *buf)
 	buf->wproc = NULL;
 	if (buf->rproc != NULL) {
 		if (!abuf_flush(buf))
-			return;			
+			return;
 		if (ABUF_ROK(buf)) {
 			/*
 			 * Could not flush everything, the reader will
@@ -496,7 +496,7 @@ abuf_ipos(struct abuf *buf, int delta)
 
 	if (p && p->ops->ipos) {
 		buf->inuse++;
-		p->ops->ipos(p, buf, delta);		
+		p->ops->ipos(p, buf, delta);
 		buf->inuse--;
 	}
 	if (ABUF_HUP(buf))
@@ -511,7 +511,7 @@ abuf_opos(struct abuf *buf, int delta)
 {
 	struct aproc *p = buf->wproc;
 
-	
+
 	if (p && p->ops->opos) {
 		buf->inuse++;
 		p->ops->opos(p, buf, delta);

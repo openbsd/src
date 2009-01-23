@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.51 2009/01/10 20:02:28 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.52 2009/01/23 17:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -208,20 +208,20 @@ SLIST_HEAD(farglist, farg);
  * to the given file name.
  */
 void
-farg_add(struct farglist *list, 
+farg_add(struct farglist *list,
     struct aparams *ipar, struct aparams *opar, unsigned vol,
     int hdr, int xrun, char *optarg)
 {
 	struct farg *fa;
 	size_t namelen;
-	
+
 	fa = malloc(sizeof(struct farg));
 	if (fa == NULL)
 		err(1, "%s", optarg);
 
 	if (hdr == HDR_AUTO) {
 		namelen = strlen(optarg);
-		if (namelen >= 4 && 
+		if (namelen >= 4 &&
 		    strcasecmp(optarg + namelen - 4, ".wav") == 0) {
 			fa->hdr = HDR_WAV;
 			DPRINTF("%s: assuming wav file format\n", optarg);
@@ -229,7 +229,7 @@ farg_add(struct farglist *list,
 			fa->hdr = HDR_RAW;
 			DPRINTF("%s: assuming headerless file\n", optarg);
 		}
-	} else 
+	} else
 		fa->hdr = hdr;
 	fa->xrun = xrun;
 	fa->ipar = *ipar;
@@ -508,12 +508,12 @@ main(int argc, char **argv)
 	if (n_flag) {
 		dev_loopinit(&dipar, &dopar, bufsz);
 	} else {
-		dev_init(devpath, 
+		dev_init(devpath,
 		    (mode & MODE_REC) ? &dipar : NULL,
 		    (mode & MODE_PLAY) ? &dopar : NULL,
 		    bufsz);
 	}
-	
+
 	/*
 	 * Create buffers for all input and output pipes.
 	 */

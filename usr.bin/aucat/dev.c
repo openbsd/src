@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.24 2009/01/10 20:02:28 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.25 2009/01/23 17:38:15 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -48,10 +48,10 @@ dev_loopinit(struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 	dev_opar = par;
 	dev_round = (bufsz + 1) / 2;
 	dev_bufsz = dev_round * 2;
-	dev_rate  = rate;       
+	dev_rate  = rate;
 	dev_rec = NULL;
 	dev_play = NULL;
-	
+
 	buf = abuf_new(dev_bufsz, &par);
 	dev_mix = mix_new("mix", dev_bufsz);
 	dev_mix->refs++;
@@ -115,7 +115,7 @@ dev_init(char *devpath,
 	struct aproc *conv;
 	struct abuf *buf;
 	unsigned nfr, ibufsz, obufsz;
-	
+
 	/*
 	 * ask for 1/4 of the buffer for the kernel ring and
 	 * limit the block size to 1/4 of the requested buffer
@@ -210,7 +210,7 @@ dev_init(char *devpath,
 		buf = abuf_new(nfr, dopar);
 		aproc_setin(dev_play, buf);
 		obufsz += nfr;
-		
+
 		/*
 		 * append a converter, if needed
 		 */
@@ -414,8 +414,8 @@ dev_sync(struct abuf *ibuf, struct abuf *obuf)
 	 * of the record chain. It's necessary to schedule silences (or
 	 * drops) in order to start playback and record in sync.
 	 */
-	delta = 
-	    rbuf->bpf * (pbuf->abspos + pbuf->used) - 
+	delta =
+	    rbuf->bpf * (pbuf->abspos + pbuf->used) -
 	    pbuf->bpf *  rbuf->abspos;
 	delta /= pbuf->bpf * rbuf->bpf;
 	DPRINTF("dev_sync: delta = %d, ppos = %u, pused = %u, rpos = %u\n",
@@ -446,8 +446,8 @@ dev_sync(struct abuf *ibuf, struct abuf *obuf)
  * and rec
  */
 void
-dev_attach(char *name, 
-    struct abuf *ibuf, struct aparams *sipar, unsigned underrun, 
+dev_attach(char *name,
+    struct abuf *ibuf, struct aparams *sipar, unsigned underrun,
     struct abuf *obuf, struct aparams *sopar, unsigned overrun, int vol)
 {
 	struct abuf *pbuf = NULL, *rbuf = NULL;
@@ -467,7 +467,7 @@ dev_attach(char *name,
 			ipar.sig = dev_opar.sig;
 			ipar.le = dev_opar.le;
 			ipar.msb = dev_opar.msb;
-			aproc_setin(conv, ibuf);			
+			aproc_setin(conv, ibuf);
 			ibuf = abuf_new(nblk * round, &ipar);
 			aproc_setout(conv, ibuf);
 		}
@@ -565,7 +565,7 @@ dev_clear(void)
 	struct abuf *buf;
 
 	if (dev_mix) {
-		if (!LIST_EMPTY(&dev_mix->ibuflist)) { 
+		if (!LIST_EMPTY(&dev_mix->ibuflist)) {
 			fprintf(stderr, "dev_clear: mixer not idle\n");
 			abort();
 		}
@@ -577,7 +577,7 @@ dev_clear(void)
 		mix_clear(dev_mix);
 	}
 	if (dev_sub) {
-		if (!LIST_EMPTY(&dev_sub->obuflist)) { 
+		if (!LIST_EMPTY(&dev_sub->obuflist)) {
 			fprintf(stderr, "dev_suspend: demux not idle\n");
 			abort();
 		}
