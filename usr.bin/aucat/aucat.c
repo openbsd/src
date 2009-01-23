@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.52 2009/01/23 17:38:15 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.53 2009/01/23 17:52:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -491,6 +491,10 @@ main(int argc, char **argv)
 	sa.sa_handler = sigint;
 	if (sigaction(SIGINT, &sa, NULL) < 0)
 		DPRINTF("sigaction(int) failed\n");
+	if (sigaction(SIGTERM, &sa, NULL) < 0)
+		DPRINTF("sigaction(term) failed\n");
+	if (sigaction(SIGHUP, &sa, NULL) < 0)
+		DPRINTF("sigaction(hup) failed\n");
 #ifdef DEBUG
 	sa.sa_handler = sigusr1;
 	if (sigaction(SIGUSR1, &sa, NULL) < 0)
