@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.91 2009/01/20 18:03:33 blambert Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.92 2009/01/24 23:30:42 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1063,7 +1063,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 				*vpp = vp = nvp;
 			}
 		}
-		np->n_mtime = mtime.tv_sec;
+		np->n_mtime = mtime;
 	}
 	vap = &np->n_vattr;
 	vap->va_type = vtyp;
@@ -1155,7 +1155,7 @@ nfs_attrtimeo (np)
 {
 	struct vnode *vp = np->n_vnode;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	int tenthage = (time_second - np->n_mtime) / 10;
+	int tenthage = (time_second - np->n_mtime.tv_sec) / 10;
 	int minto, maxto;
 
 	if (vp->v_type == VDIR) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.32 2009/01/19 23:40:36 thib Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.33 2009/01/24 23:30:42 thib Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ struct nfsnode {
 	u_quad_t		n_size;		/* Current size of file */
 	struct vattr		n_vattr;	/* Vnode attribute cache */
 	time_t			n_attrstamp;	/* Attr. cache timestamp */
-	time_t			n_mtime;	/* Prev modify time. */
+	struct timespec 	n_mtime;	/* Prev modify time. */
 	time_t			n_ctime;	/* Prev create time. */
 	nfsfh_t			*n_fhp;		/* NFS File Handle */
 	struct vnode		*n_vnode;	/* associated vnode */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.32 2008/12/24 16:53:20 thib Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.33 2009/01/24 23:30:42 thib Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -170,21 +170,26 @@
 #define NFSV3_WCCRATTR	0
 #define NFSV3_WCCCHK	1
 
-#define	nfsm_wcc_data(v, f) \
-		{ int ttattrf, ttretf = 0; \
-		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
-		if (*tl == nfs_true) { \
-			nfsm_dissect(tl, u_int32_t *, 6 * NFSX_UNSIGNED); \
-			if (f) \
-				ttretf = (VTONFS(v)->n_mtime == \
-					fxdr_unsigned(u_int32_t, *(tl + 2))); \
-		} \
-		nfsm_postop_attr((v), ttattrf); \
-		if (f) { \
-			(f) = ttretf; \
-		} else { \
-			(f) = ttattrf; \
-		} }
+#define	nfsm_wcc_data(v, f) do {					\
+	struct timespec	 _mtime;					\
+	int		 ttattrf, ttretf = 0;				\
+									\
+	nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);			\
+	if (*tl == nfs_true) {						\
+		nfsm_dissect(tl, u_int32_t *, 6 * NFSX_UNSIGNED);	\
+		fxdr_nfsv3time(tl + 2, &_mtime);			\
+		if (f) {						\
+			ttretf = timespeccmp(&VTONFS(v)->n_mtime,	\
+			    &_mtime, !=);				\
+		}							\
+	}								\
+	nfsm_postop_attr((v), ttattrf);					\
+	if (f) {							\
+		(f) = ttretf;						\
+	} else {							\
+		(f) = ttattrf;						\
+	}								\
+} while (0)
 
 #define	nfsm_strsiz(s,m) \
 		{ nfsm_dissect(tl,u_int32_t *,NFSX_UNSIGNED); \

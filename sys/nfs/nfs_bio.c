@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.56 2009/01/19 23:40:36 thib Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.57 2009/01/24 23:30:42 thib Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/kernel.h>
 #include <sys/namei.h>
 #include <sys/queue.h>
+#include <sys/time.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -112,16 +113,16 @@ nfs_bioread(vp, uio, ioflag, cred)
 		error = VOP_GETATTR(vp, &vattr, cred, p);
 		if (error)
 			return (error);
-		np->n_mtime = vattr.va_mtime.tv_sec;
+		np->n_mtime = vattr.va_mtime;
 	} else {
 		error = VOP_GETATTR(vp, &vattr, cred, p);
 		if (error)
 			return (error);
-		if (np->n_mtime != vattr.va_mtime.tv_sec) {
+		if (timespeccmp(&np->n_mtime, &vattr.va_mtime, !=)) {
 			error = nfs_vinvalbuf(vp, V_SAVE, cred, p);
 			if (error)
 				return (error);
-			np->n_mtime = vattr.va_mtime.tv_sec;
+			np->n_mtime = vattr.va_mtime;
 		}
 	}
 
@@ -638,7 +639,7 @@ nfs_doio(bp, p)
 			bp->b_validend = bp->b_bcount;
 		}
 		if (p && (vp->v_flag & VTEXT) &&
-		    (np->n_mtime != np->n_vattr.va_mtime.tv_sec)) {
+		    (timespeccmp(&np->n_mtime, &np->n_vattr.va_mtime, !=))) {
 			uprintf("Process killed due to text file modification\n");
 			psignal(p, SIGKILL);
 		}

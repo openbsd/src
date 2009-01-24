@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.109 2009/01/24 23:25:17 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.110 2009/01/24 23:30:42 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -406,19 +406,19 @@ nfs_open(v)
 		error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p);
 		if (error)
 			return (error);
-		np->n_mtime = vattr.va_mtime.tv_sec;
+		np->n_mtime = vattr.va_mtime;
 	} else {
 		error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p);
 		if (error)
 			return (error);
-		if (np->n_mtime != vattr.va_mtime.tv_sec) {
+		if (timespeccmp(&np->n_mtime, &vattr.va_mtime, !=)) {
 			if (vp->v_type == VDIR)
 				np->n_direofoffset = 0;
 			error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p);
 			if (error == EINTR)
 				return (error);
 			uvm_vnp_uncache(vp);
-			np->n_mtime = vattr.va_mtime.tv_sec;
+			np->n_mtime = vattr.va_mtime;
 		}
 	}
 	/* For open/close consistency. */
@@ -1131,7 +1131,7 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 		} else
 		    nfsm_loadattr(vp, (struct vattr *)0);
 		if (wccflag)
-		    VTONFS(vp)->n_mtime = VTONFS(vp)->n_vattr.va_mtime.tv_sec;
+		    VTONFS(vp)->n_mtime = VTONFS(vp)->n_vattr.va_mtime;
 		m_freem(mrep);
 		tsiz -= len;
 	}
@@ -1889,7 +1889,7 @@ nfs_readdir(v)
 	if (np->n_direofoffset != 0 && 
 	    uio->uio_offset == np->n_direofoffset) {
 		if (VOP_GETATTR(vp, &vattr, ap->a_cred, uio->uio_procp) == 0 &&
-		    np->n_mtime == vattr.va_mtime.tv_sec) {
+		    timespeccmp(&np->n_mtime, &vattr.va_mtime, ==)) {
 			nfsstats.direofcache_hits++;
 			*ap->a_eofflag = 1;
 			return (0);
