@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.12 2007/08/11 17:58:55 krw Exp $
+# $OpenBSD: dhclient-script,v 1.13 2009/01/24 13:59:43 krw Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -94,11 +94,9 @@ add_new_routes() {
 }
 
 add_new_resolv_conf() {
-	# XXX Old code did not create/update resolv.conf unless both
-	# $new_domain_name and $new_domain_name_servers were provided.  PR
-	# #3135 reported some ISPs only provide $new_domain_name_servers and
-	# thus broke the script. This code creates the resolv.conf if either
-	# are provided.
+	# Create resolv.conf when either $new_domain_name_servers or
+	# $new_domain_name are provided. As reported in PR#3135, some ISPs
+	# provide only $new_domain_name_servers.
 
 	rm -f /etc/resolv.conf.std
 
