@@ -3204,6 +3204,7 @@
 ./usr/share/zoneinfo/Asia/Kamchatka
 ./usr/share/zoneinfo/Asia/Karachi
 ./usr/share/zoneinfo/Asia/Kashgar
+./usr/share/zoneinfo/Asia/Kathmandu
 ./usr/share/zoneinfo/Asia/Katmandu
 ./usr/share/zoneinfo/Asia/Kolkata
 ./usr/share/zoneinfo/Asia/Krasnoyarsk
@@ -3791,6 +3792,7 @@
 ./usr/share/zoneinfo/posix/Asia/Kamchatka
 ./usr/share/zoneinfo/posix/Asia/Karachi
 ./usr/share/zoneinfo/posix/Asia/Kashgar
+./usr/share/zoneinfo/posix/Asia/Kathmandu
 ./usr/share/zoneinfo/posix/Asia/Katmandu
 ./usr/share/zoneinfo/posix/Asia/Kolkata
 ./usr/share/zoneinfo/posix/Asia/Krasnoyarsk
@@ -4379,6 +4381,7 @@
 ./usr/share/zoneinfo/right/Asia/Kamchatka
 ./usr/share/zoneinfo/right/Asia/Karachi
 ./usr/share/zoneinfo/right/Asia/Kashgar
+./usr/share/zoneinfo/right/Asia/Kathmandu
 ./usr/share/zoneinfo/right/Asia/Katmandu
 ./usr/share/zoneinfo/right/Asia/Kolkata
 ./usr/share/zoneinfo/right/Asia/Krasnoyarsk
