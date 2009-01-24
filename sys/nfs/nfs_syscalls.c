@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.74 2009/01/18 21:04:41 blambert Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.75 2009/01/24 23:35:47 thib Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -78,6 +78,7 @@ extern int nfs_numasync;
 extern int nfsrtton;
 extern struct nfsstats nfsstats;
 extern int nfsrvw_procrastinate;
+extern struct timeval nfsrvw_procrastinate_tv;
 struct nfssvc_sock *nfs_udpsock;
 int nfsd_waiting = 0;
 
@@ -356,8 +357,6 @@ nfssvc_nfsd(nsd, argp, p)
 			if ((slp = nfsd->nfsd_slp) == (struct nfssvc_sock *)0)
 				continue;
 			if (slp->ns_flag & SLP_VALID) {
-				struct timeval tv;
-
 				if (slp->ns_flag & SLP_DISCONN)
 					nfsrv_zapsock(slp);
 				else if (slp->ns_flag & SLP_NEEDQ) {
@@ -373,8 +372,8 @@ nfssvc_nfsd(nsd, argp, p)
 				cur_usec = (u_quad_t)tv.tv_sec * 1000000 +
 					(u_quad_t)tv.tv_usec;
 				if (error && LIST_FIRST(&slp->ns_tq) &&
-				    LIST_FIRST(&slp->ns_tq)->nd_time
-				    <= cur_usec) {
+				    timercmp(&LIST_FIRST(&slp->ns_tq)->nd_time,
+				    &tv, <=)) {
 					error = 0;
 					cacherep = RC_DOIT;
 					writes_todo = 1;
@@ -515,7 +514,7 @@ nfssvc_nfsd(nsd, argp, p)
 			(u_quad_t)tv.tv_usec;
 		    s = splsoftclock();
 		    if (LIST_FIRST(&slp->ns_tq) &&
-			LIST_FIRST(&slp->ns_tq)->nd_time <= cur_usec) {
+			timercmp(&LIST_FIRST(&slp->ns_tq)->nd_time, &tv, <=)) {
 			cacherep = RC_DOIT;
 			writes_todo = 1;
 		    } else

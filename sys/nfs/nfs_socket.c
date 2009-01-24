@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.76 2009/01/24 11:40:06 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.77 2009/01/24 23:35:47 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1149,7 +1149,6 @@ nfs_timer(arg)
 #ifdef NFSSERVER
 	struct nfssvc_sock *slp;
 	struct timeval tv;
-	u_quad_t cur_usec;
 #endif
 
 	s = splsoftnet();
@@ -1244,10 +1243,9 @@ nfs_timer(arg)
 	 * completed now.
 	 */
 	getmicrotime(&tv);
-	cur_usec = (u_quad_t)tv.tv_sec * 1000000 + (u_quad_t)tv.tv_usec;
 	TAILQ_FOREACH(slp, &nfssvc_sockhead, ns_chain) {
 		if (LIST_FIRST(&slp->ns_tq) &&
-		    LIST_FIRST(&slp->ns_tq)->nd_time <= cur_usec)
+		    timercmp(&LIST_FIRST(&slp->ns_tq)->nd_time, &tv, <=))
 			nfsrv_wakenfsd(slp);
 	}
 #endif /* NFSSERVER */

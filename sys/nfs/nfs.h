@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.37 2009/01/24 23:25:17 thib Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.38 2009/01/24 23:35:47 thib Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -335,7 +335,7 @@ struct nfsd {
  * Some fields are used only when write request gathering is performed.
  */
 struct nfsrv_descript {
-	u_quad_t		nd_time;	/* Write deadline (usec) */
+	struct timeval		nd_time;	/* Write deadline */
 	off_t			nd_off;		/* Start byte offset */
 	off_t			nd_eoff;	/* and end byte offset */
 	LIST_ENTRY(nfsrv_descript) nd_hash;	/* Hash list */

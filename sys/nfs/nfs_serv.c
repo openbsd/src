@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.61 2009/01/18 13:54:27 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.62 2009/01/24 23:35:47 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -89,6 +89,10 @@ extern struct nfsstats nfsstats;
 extern nfstype nfsv2_type[9];
 extern nfstype nfsv3_type[9];
 int nfsrvw_procrastinate = NFS_GATHERDELAY * 1000;
+struct timeval nfsrvw_procrastinate_tv = {
+	(NFS_GATHERDELAY * 1000) / 1000000,	/* tv_sec */
+	(NFS_GATHERDELAY * 1000) % 1000000	/* tv_usec */
+};
 
 /*
  * nfs v3 access service
@@ -877,7 +881,6 @@ nfsrv_writegather(ndp, slp, procp, mrq)
 	struct mbuf *mb, *mreq, *mrep, *md;
 	struct vnode *vp;
 	struct uio io, *uiop = &io;
-	u_quad_t cur_usec;
 	struct timeval tv;
 
 	*mrq = NULL;
@@ -893,8 +896,7 @@ nfsrv_writegather(ndp, slp, procp, mrq)
 	    nfsd->nd_mreq = NULL;
 	    nfsd->nd_stable = NFSV3WRITE_FILESYNC;
 	    getmicrotime(&tv);
-	    cur_usec = (u_quad_t)tv.tv_sec * 1000000 + (u_quad_t)tv.tv_usec;
-	    nfsd->nd_time = cur_usec + nfsrvw_procrastinate;
+	    timeradd(&nfsd->nd_time, &nfsrvw_procrastinate_tv, &nfsd->nd_time);
     
 	    /*
 	     * Now, get the write header..
@@ -949,7 +951,7 @@ nfsmout:
 		    nfsm_srvwcc(nfsd, forat_ret, &forat, aftat_ret, &va, &mb);
 		nfsd->nd_mreq = mreq;
 		nfsd->nd_mrep = NULL;
-		nfsd->nd_time = 0;
+		timerclear(&nfsd->nd_time);
 	    }
     
 	    /*
@@ -958,7 +960,7 @@ nfsmout:
 	    s = splsoftclock();
 	    owp = NULL;
 	    wp = LIST_FIRST(&slp->ns_tq);
-	    while (wp && wp->nd_time < nfsd->nd_time) {
+	    while (wp && timercmp(&wp->nd_time, &nfsd->nd_time, <)) {
 		owp = wp;
 		wp = LIST_NEXT(wp, nd_tq);
 	    }
@@ -1006,11 +1008,10 @@ nfsmout:
 	 */
 loop1:
 	getmicrotime(&tv);
-	cur_usec = (u_quad_t)tv.tv_sec * 1000000 + (u_quad_t)tv.tv_usec;
 	s = splsoftclock();
 	for (nfsd = LIST_FIRST(&slp->ns_tq); nfsd != NULL; nfsd = owp) {
 		owp = LIST_NEXT(nfsd, nd_tq);
-		if (nfsd->nd_time > cur_usec)
+		if (timercmp(&nfsd->nd_time, &tv, >))
 		    break;
 		if (nfsd->nd_mreq)
 		    continue;
@@ -1126,7 +1127,7 @@ loop1:
 		     */
 		    s = splsoftclock();
 		    if (nfsd != swp) {
-			nfsd->nd_time = 0;
+			timerclear(&nfsd->nd_time);
 			LIST_INSERT_HEAD(&slp->ns_tq, nfsd, nd_tq);
 		    }
 		    nfsd = LIST_FIRST(&swp->nd_coalesce);
@@ -1136,7 +1137,7 @@ loop1:
 		    splx(s);
 		} while (nfsd);
 		s = splsoftclock();
-		swp->nd_time = 0;
+		timerclear(&swp->nd_time);
 		LIST_INSERT_HEAD(&slp->ns_tq, swp, nd_tq);
 		splx(s);
 		goto loop1;
