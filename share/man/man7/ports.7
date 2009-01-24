@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.72 2008/01/12 14:17:33 espie Exp $
+.\" $OpenBSD: ports.7,v 1.73 2009/01/24 11:34:36 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: January 12 2008 $
+.Dd $Mdocdate: January 24 2009 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -151,6 +151,9 @@ and can contain a flavor or subpackage part
 see
 .Xr packages-specs 7
 .Pc .
+.Ev SKIPDIR
+is handled by a case statement, and so can contain simple wildcards, e.g.,
+SKIPDIR='editors/openoffice*' .
 .Pp
 The variable
 .Ev STARTDIR
