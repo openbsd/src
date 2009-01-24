@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.75 2009/01/22 18:14:21 bluhm Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.76 2009/01/24 11:40:06 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1171,7 +1171,7 @@ nfs_timer(arg)
 				timeo *= nfs_backoff[nmp->nm_timeouts - 1];
 			if (rep->r_rtt <= timeo)
 				continue;
-			if (nmp->nm_timeouts < 8)
+			if (nmp->nm_timeouts < nitems(nfs_backoff))
 				nmp->nm_timeouts++;
 		}
 		/*
