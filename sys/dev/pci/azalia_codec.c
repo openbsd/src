@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.113 2009/01/07 07:19:39 marco Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.114 2009/01/24 09:44:02 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1193,8 +1193,7 @@ azalia_generic_mixer_default(codec_t *this)
 	/* unmute all */
 	for (i = 0; i < this->nmixers; i++) {
 		m = &this->mixers[i];
-		if (m->target != MI_TARGET_MUTESET &&
-		    m->target != MI_TARGET_MIXERSET)
+		if (m->target != MI_TARGET_MUTESET)
 			continue;
 		if (m->devinfo.type != AUDIO_MIXER_SET)
 			continue;
@@ -1927,7 +1926,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 		}
 	}
 
-	else if (target == MI_TARGET_MUTESET && mc->type == AUDIO_MIXER_SET) {
+	else if (target == MI_TARGET_MIXERSET && mc->type == AUDIO_MIXER_SET) {
 		/* do nothing, control is read only */
 	}
 
