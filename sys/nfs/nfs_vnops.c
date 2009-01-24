@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.108 2009/01/19 23:40:36 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.109 2009/01/24 23:25:17 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -78,6 +78,8 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+
+#include <dev/rndvar.h>
 
 void nfs_cache_enter(struct vnode *, struct vnode *, struct componentname *);
 
@@ -1251,10 +1253,6 @@ nfs_mknod(v)
 	return (error);
 }
 
-static u_long create_verf;
-/*
- * nfs file create call
- */
 int
 nfs_create(v)
 	void *v;
@@ -1279,10 +1277,9 @@ nfs_create(v)
 	if (vap->va_type == VSOCK)
 		return (nfs_mknodrpc(dvp, ap->a_vpp, cnp, vap));
 
-#ifdef VA_EXCLUSIVE
 	if (vap->va_vaflags & VA_EXCLUSIVE)
 		fmode |= O_EXCL;
-#endif
+
 again:
 	nfsstats.rpccnt[NFSPROC_CREATE]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3) + 2 * NFSX_UNSIGNED +
@@ -1292,13 +1289,11 @@ again:
 	if (v3) {
 		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		if (fmode & O_EXCL) {
+			printf("%s: O_EXCL!\n", __func__);
 			*tl = txdr_unsigned(NFSV3CREATE_EXCLUSIVE);
 			tl = nfsm_build(&mb, NFSX_V3CREATEVERF);
-			if (TAILQ_FIRST(&in_ifaddr))
-				*tl++ = TAILQ_FIRST(&in_ifaddr)->ia_addr.sin_addr.s_addr;
-			else
-				*tl++ = create_verf;
-			*tl = ++create_verf;
+			*tl++ = arc4random();
+			*tl = arc4random();
 		} else {
 			*tl = txdr_unsigned(NFSV3CREATE_UNCHECKED);
 			nfsm_v3attrbuild(&mb, vap, 0);

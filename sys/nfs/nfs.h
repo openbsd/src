@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.36 2009/01/18 21:15:53 blambert Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.37 2009/01/24 23:25:17 thib Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -89,8 +89,6 @@
 
 /*
  * sys/malloc.h needs M_NFSDIROFF, M_NFSRVDESC and M_NFSBIGFH added.
- * The VA_EXCLUSIVE flag should be added for va_vaflags and set for an
- * exclusive create.
  */
 #ifndef M_NFSRVDESC
 #define M_NFSRVDESC	M_TEMP
@@ -100,9 +98,6 @@
 #endif
 #ifndef M_NFSBIGFH
 #define M_NFSBIGFH	M_TEMP
-#endif
-#ifndef VA_EXCLUSIVE
-#define VA_EXCLUSIVE	0
 #endif
 
 /*
