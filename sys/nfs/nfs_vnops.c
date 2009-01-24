@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.110 2009/01/24 23:30:42 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.111 2009/01/24 23:37:56 thib Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1289,7 +1289,6 @@ again:
 	if (v3) {
 		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		if (fmode & O_EXCL) {
-			printf("%s: O_EXCL!\n", __func__);
 			*tl = txdr_unsigned(NFSV3CREATE_EXCLUSIVE);
 			tl = nfsm_build(&mb, NFSX_V3CREATEVERF);
 			*tl++ = arc4random();
