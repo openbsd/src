@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.1 2009/01/23 20:32:22 mk Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.2 2009/01/24 22:04:50 cnst Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -308,18 +308,8 @@ schsio_hwm_init(struct schsio_softc *sc)
 	}
 
 	/* Set up sensors */
-	strlcpy(sc->sc_sensor[SCHSIO_SENSOR_FAN1].desc, "",
-	    sizeof(sc->sc_sensor[SCHSIO_SENSOR_FAN1].desc));
-	strlcpy(sc->sc_sensor[SCHSIO_SENSOR_FAN2].desc, "",
-	    sizeof(sc->sc_sensor[SCHSIO_SENSOR_FAN2].desc));
-	strlcpy(sc->sc_sensor[SCHSIO_SENSOR_FAN3].desc, "",
-	    sizeof(sc->sc_sensor[SCHSIO_SENSOR_FAN3].desc));
-	for (i = SCHSIO_SENSOR_FAN1; i < SCHSIO_SENSOR_FAN3 + 1; i++) {
+	for (i = SCHSIO_SENSOR_FAN1; i < SCHSIO_SENSOR_FAN3 + 1; i++)
 		sc->sc_sensor[i].type = SENSOR_FANRPM;
-		sc->sc_sensor[i].flags = SENSOR_FINVALID;
-		sc->sc_sensor[i].status = SENSOR_S_OK;
-		sc->sc_sensor[i].value = 0;
-	}
 
 	strlcpy(sc->sc_sensor[SCHSIO_SENSOR_VOLT1].desc, "+2.5V",
 	    sizeof(sc->sc_sensor[SCHSIO_SENSOR_VOLT1].desc));
@@ -335,12 +325,8 @@ schsio_hwm_init(struct schsio_softc *sc)
 	    sizeof(sc->sc_sensor[SCHSIO_SENSOR_VOLT6].desc));
 	strlcpy(sc->sc_sensor[SCHSIO_SENSOR_VOLT7].desc, "+3V (Vbat)",
 	    sizeof(sc->sc_sensor[SCHSIO_SENSOR_VOLT7].desc));
-	for (i = SCHSIO_SENSOR_VOLT1; i < SCHSIO_SENSOR_VOLT7 + 1; i++) {
+	for (i = SCHSIO_SENSOR_VOLT1; i < SCHSIO_SENSOR_VOLT7 + 1; i++)
 		sc->sc_sensor[i].type = SENSOR_VOLTS_DC;
-		sc->sc_sensor[i].flags = SENSOR_FINVALID;
-		sc->sc_sensor[i].status = SENSOR_S_OK;
-		sc->sc_sensor[i].value = 0;
-	}
 
 	strlcpy(sc->sc_sensor[SCHSIO_SENSOR_TEMP1].desc, "Internal",
 	    sizeof(sc->sc_sensor[SCHSIO_SENSOR_TEMP1].desc));
@@ -348,12 +334,8 @@ schsio_hwm_init(struct schsio_softc *sc)
 	    sizeof(sc->sc_sensor[SCHSIO_SENSOR_TEMP2].desc));
 	strlcpy(sc->sc_sensor[SCHSIO_SENSOR_TEMP3].desc, "Remote",
 	    sizeof(sc->sc_sensor[SCHSIO_SENSOR_TEMP3].desc));
-	for (i = SCHSIO_SENSOR_TEMP1; i < SCHSIO_SENSOR_TEMP3 + 1; i++) {
+	for (i = SCHSIO_SENSOR_TEMP1; i < SCHSIO_SENSOR_TEMP3 + 1; i++)
 		sc->sc_sensor[i].type = SENSOR_TEMP;
-		sc->sc_sensor[i].flags = SENSOR_FINVALID;
-		sc->sc_sensor[i].status = SENSOR_S_OK;
-		sc->sc_sensor[i].value = 0;
-	}
 
 	strlcpy(sc->sc_sensordev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensordev.xname));
@@ -407,37 +389,30 @@ schsio_hwm_update(void *arg)
 	volt = schsio_hwm_read(sc, SCHSIO_HWM_VOLT1);
 	sc->sc_sensor[SCHSIO_SENSOR_VOLT1].value =
 	    SCHSIO_VOLT_MUV(volt, SCHSIO_CONV_VOLT1);
-	sc->sc_sensor[SCHSIO_SENSOR_VOLT1].flags = 0;
 
 	volt = schsio_hwm_read(sc, SCHSIO_HWM_VOLT2);
 	sc->sc_sensor[SCHSIO_SENSOR_VOLT2].value =
 	    SCHSIO_VOLT_MUV(volt, SCHSIO_CONV_VOLT2);
-	sc->sc_sensor[SCHSIO_SENSOR_VOLT2].flags = 0;
 
 	volt = schsio_hwm_read(sc, SCHSIO_HWM_VOLT3);
 	sc->sc_sensor[SCHSIO_SENSOR_VOLT3].value =
 	    SCHSIO_VOLT_MUV(volt, SCHSIO_CONV_VOLT3);
-	sc->sc_sensor[SCHSIO_SENSOR_VOLT3].flags = 0;
 
 	volt = schsio_hwm_read(sc, SCHSIO_HWM_VOLT4);
 	sc->sc_sensor[SCHSIO_SENSOR_VOLT4].value =
 	    SCHSIO_VOLT_MUV(volt, SCHSIO_CONV_VOLT4);
-	sc->sc_sensor[SCHSIO_SENSOR_VOLT4].flags = 0;
 
 	volt = schsio_hwm_read(sc, SCHSIO_HWM_VOLT5);
 	sc->sc_sensor[SCHSIO_SENSOR_VOLT5].value =
 	    SCHSIO_VOLT_MUV(volt, SCHSIO_CONV_VOLT5);
-	sc->sc_sensor[SCHSIO_SENSOR_VOLT5].flags = 0;
 
 	volt = schsio_hwm_read(sc, SCHSIO_HWM_VOLT6);
 	sc->sc_sensor[SCHSIO_SENSOR_VOLT6].value =
 	    SCHSIO_VOLT_MUV(volt, SCHSIO_CONV_VOLT6);
-	sc->sc_sensor[SCHSIO_SENSOR_VOLT6].flags = 0;
 
 	volt = schsio_hwm_read(sc, SCHSIO_HWM_VOLT7);
 	sc->sc_sensor[SCHSIO_SENSOR_VOLT7].value =
 	    SCHSIO_VOLT_MUV(volt, SCHSIO_CONV_VOLT7);
-	sc->sc_sensor[SCHSIO_SENSOR_VOLT7].flags = 0;
 
 	temp = schsio_hwm_read(sc, SCHSIO_HWM_TEMP1);
 	sc->sc_sensor[SCHSIO_SENSOR_TEMP1].value = SCHSIO_TEMP_MUK(temp);
@@ -464,4 +439,3 @@ schsio_hwm_read(struct schsio_softc *sc, int reg)
 	bus_space_write_1(sc->sc_iot, sc->sc_hwm_ioh, SCHSIO_HWM_INDEX, reg);
 	return (bus_space_read_1(sc->sc_iot, sc->sc_hwm_ioh, SCHSIO_HWM_DATA));
 }
-
