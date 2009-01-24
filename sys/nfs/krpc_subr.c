@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.17 2008/06/10 23:15:32 blambert Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.18 2009/01/24 11:33:34 thib Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -449,7 +449,7 @@ krpc_call(sa, prog, vers, func, data, from_p, retries)
 
 	/* result */
 	*data = m;
-	if (from_p) {
+	if (from_p && error == 0) {
 		*from_p = from;
 		from = NULL;
 	}
