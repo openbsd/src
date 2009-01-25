@@ -3,9 +3,9 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa64/MAKEDEV.md,v 1.12 2008/06/28 21:46:05 mglocker Exp 
-#	OpenBSD: MAKEDEV.common,v 1.40 2008/10/10 20:15:23 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp 
+#	OpenBSD: etc.hppa64/MAKEDEV.md,v 1.13 2009/01/25 17:30:48 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.41 2008/11/30 03:33:09 jakemsr Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
@@ -214,7 +214,6 @@ std)
 	M stdout	c 16 1
 	M stderr	c 16 2
 	M ksyms		c 25 0 640 kmem
-	M drum		c 3 0 640 kmem
 	M klog		c 6 0 600
 	M pdc		c 22 0 640 operator
 	;;
