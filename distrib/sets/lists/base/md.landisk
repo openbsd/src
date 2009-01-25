@@ -1,5 +1,5 @@
 ./etc/firmware/atu-at76c503-i3863-ext
-50.1c/firmware/atu-at76c503-i3863-int
+./etc/firmware/atu-at76c503-i3863-int
 ./etc/firmware/atu-at76c503-rfmd-acc-ext
 ./etc/firmware/atu-at76c503-rfmd-acc-int
 ./etc/firmware/atu-at76c505-rfmd-ext

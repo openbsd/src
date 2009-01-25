@@ -549,8 +549,8 @@
 ./usr/include/dev/pci/hifn7751var.h
 ./usr/include/dev/pci/i82365_pcivar.h
 ./usr/include/dev/pci/ichreg.h
-./usr/include/dev/pci/if_art.h
 ./usr/include/dev/pci/if_agereg.h
+./usr/include/dev/pci/if_art.h
 ./usr/include/dev/pci/if_bcereg.h
 ./usr/include/dev/pci/if_bgereg.h
 ./usr/include/dev/pci/if_bnxreg.h
@@ -5641,9 +5641,6 @@
 ./usr/share/man/cat3/wcscmp.0
 ./usr/share/man/cat3/wcscpy.0
 ./usr/share/man/cat3/wcscspn.0
-./usr/share/man/cat3/wcstod.0
-./usr/share/man/cat3/wcstof.0
-./usr/share/man/cat3/wcstold.0
 ./usr/share/man/cat3/wcslcat.0
 ./usr/share/man/cat3/wcslcpy.0
 ./usr/share/man/cat3/wcslen.0
@@ -5655,9 +5652,12 @@
 ./usr/share/man/cat3/wcsrtombs.0
 ./usr/share/man/cat3/wcsspn.0
 ./usr/share/man/cat3/wcsstr.0
+./usr/share/man/cat3/wcstod.0
+./usr/share/man/cat3/wcstof.0
 ./usr/share/man/cat3/wcstoimax.0
 ./usr/share/man/cat3/wcstok.0
 ./usr/share/man/cat3/wcstol.0
+./usr/share/man/cat3/wcstold.0
 ./usr/share/man/cat3/wcstoll.0
 ./usr/share/man/cat3/wcstombs.0
 ./usr/share/man/cat3/wcstoul.0

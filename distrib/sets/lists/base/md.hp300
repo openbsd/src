@@ -363,13 +363,13 @@
 ./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/List
 ./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/List/Util
 ./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/List/Util/Util.so
+./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/MIME
+./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/MIME/Base64
+./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/MIME/Base64/Base64.so
 ./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/Math
 ./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/Math/BigInt
 ./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/Math/BigInt/FastCalc
 ./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/Math/BigInt/FastCalc/FastCalc.so
-./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/MIME
-./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/MIME/Base64
-./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/MIME/Base64/Base64.so
 ./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/NDBM_File
 ./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/NDBM_File/NDBM_File.so
 ./usr/libdata/perl5/m68k-openbsd/5.10.0/auto/ODBM_File
