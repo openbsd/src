@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.441 2008/11/23 01:57:06 krw Exp $
+#	$OpenBSD: install.sub,v 1.442 2009/01/25 21:27:27 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -776,12 +776,12 @@ v6_defroute() {
 
 # Much of this is gratuitously stolen from /etc/netstart.
 enable_network() {
-	local _netfile _gw
+	local _f _gw
 
-	# Copy any required or optional files found
-	for _netfile in hosts dhclient.conf resolv.conf resolv.conf.tail protocols services; do
-		if [ -f /mnt/etc/${_netfile} ]; then
-			cp /mnt/etc/${_netfile} /etc/${_netfile}
+	# Copy any network configuration files. N.B.: hosts already copied.
+	for _f in dhclient.conf resolv.conf resolv.conf.tail protocols services; do
+		if [ -f /mnt/etc/$_f ]; then
+			cp /mnt/etc/$_f /etc/$_f
 		fi
 	done
 
