@@ -1,4 +1,4 @@
-.\" $OpenBSD: udfu.4,v 1.1 2009/01/25 03:11:44 ian Exp $
+.\" $OpenBSD: udfu.4,v 1.2 2009/01/25 08:36:06 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Ian Darwin <ian@openbsd.org>
 .\"
@@ -34,7 +34,7 @@ device to re-flash the memory.
 Note that this interferes with using the
 .Xr umodem 4
 interface to this device, which is sometimes neeeded for manual re-configuration.
-To enable the use of 
+To enable the use of
 .Xr umodem 4 ,
 it is necessary to disable
 .Nm ,
@@ -45,10 +45,10 @@ either permanently in the kernel configuration file or using
 .Xr uhub 4 ,
 .Xr usb 4 ,
 .Xr boot_config 8 ,
-.Xr config 8 
+.Xr config 8
 .\" .Pp
 .\" The
-.\" .Xr dfu-util 
+.\" .Xr dfu-util
 .\" program is available in the OpenBSD ports tree.
 .Sh HISTORY
 The
