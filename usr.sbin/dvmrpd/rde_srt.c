@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.15 2009/01/20 01:35:34 todd Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.16 2009/01/25 15:24:21 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -193,6 +193,7 @@ rr_new_rt(struct route_report *rr, u_int32_t adj_metric, int connected)
 	rn->uptime = now.tv_sec;
 
 	evtimer_set(&rn->expiration_timer, rt_expire_timer, rn);
+	evtimer_set(&rn->holddown_timer, rt_holddown_timer, rn);
 
 	return (rn);
 }
@@ -529,7 +530,7 @@ srt_expire_nbr(struct in_addr addr, struct iface *iface)
 
 	RB_FOREACH(rn, rt_tree, &rt) {
 		ds = srt_find_ds(rn, addr.s_addr);
-		if (ds)	
+		if (ds)
 			srt_delete_ds(rn, ds, iface);
 	}
 }
