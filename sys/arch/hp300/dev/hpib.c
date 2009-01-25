@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpib.c,v 1.13 2005/11/16 21:23:55 miod Exp $	*/
+/*	$OpenBSD: hpib.c,v 1.14 2009/01/25 14:57:44 miod Exp $	*/
 /*	$NetBSD: hpib.c,v 1.16 1997/04/27 20:58:57 thorpej Exp $	*/
 
 /*
@@ -277,7 +277,10 @@ hpibid(unit, slave)
 	 * take forever on slow CPUs.
 	 */
 	ohpibtimeout = hpibtimeout;
-	hpibtimeout = hpibidtimeout * (cpuspeed / 8);
+	if (cputype == CPU_68040)
+		hpibtimeout = hpibidtimeout * (cpuspeed / 3);
+	else
+		hpibtimeout = hpibidtimeout * (cpuspeed / 8);
 	if (hpibrecv(unit, 31, slave, &id, 2) != 2)
 		id = 0;
 	hpibtimeout = ohpibtimeout;
