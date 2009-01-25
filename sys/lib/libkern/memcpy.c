@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcpy.c,v 1.1 2007/11/25 18:25:34 deraadt Exp $	*/
+/*	$OpenBSD: memcpy.c,v 1.2 2009/01/25 22:06:44 grange Exp $	*/
 /*	$NetBSD: bcopy.c,v 1.5 1995/04/22 13:46:50 cgd Exp $	*/
 
 /*-
@@ -33,6 +33,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/systm.h>
 
 /*
  * This is designed to be small, not fast.
