@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.84 2008/09/16 18:52:52 chl Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.85 2009/01/25 17:30:49 miod Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -212,10 +212,6 @@ struct pool vndbuf_pool;
 #define putvndbuf(vbp) {						\
 	pool_put(&vndbuf_pool, (void *)(vbp));				\
 }
-
-/* /dev/drum */
-bdev_decl(sw);
-cdev_decl(sw);
 
 /*
  * local variables
@@ -1175,40 +1171,6 @@ swap_off(p, sdp)
 /*
  * /dev/drum interface and i/o functions
  */
-
-/*
- * swread: the read function for the drum (just a call to physio)
- */
-/*ARGSUSED*/
-int
-swread(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
-{
-	UVMHIST_FUNC("swread"); UVMHIST_CALLED(pdhist);
-
-	UVMHIST_LOG(pdhist, "  dev=%lx offset=%lx",
-	    dev, (u_long)uio->uio_offset, 0, 0);
-	return (physio(swstrategy, NULL, dev, B_READ, minphys, uio));
-}
-
-/*
- * swwrite: the write function for the drum (just a call to physio)
- */
-/*ARGSUSED*/
-int
-swwrite(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
-{
-	UVMHIST_FUNC("swwrite"); UVMHIST_CALLED(pdhist);
-
-	UVMHIST_LOG(pdhist, "  dev=%lx offset=%lx",
-	    dev, (u_long)uio->uio_offset, 0, 0);
-	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
-}
 
 /*
  * swstrategy: perform I/O on the drum

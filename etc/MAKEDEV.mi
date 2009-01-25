@@ -1,7 +1,7 @@
 define(COMM,`#')dnl
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.78 2008/06/14 23:09:05 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -33,8 +33,7 @@ dnl
 dnl $1: tty
 dnl $2: memstuff
 dnl $3: ksyms
-dnl $4: drum
-dnl $5: klog
+dnl $4: klog
 dnl
 define({-_std-},{-dnl
 std)
@@ -48,8 +47,7 @@ std)
 	M stdout	c major_fdesc_c 1
 	M stderr	c major_fdesc_c 2
 	M ksyms		c $3 0 640 kmem
-	M drum		c $4 0 640 kmem
-	M klog		c $5 0 600-})dnl
+	M klog		c $4 0 600-})dnl
 dnl
 divert(1)dnl
 define(__mddivert,7)dnl

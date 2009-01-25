@@ -1,6 +1,6 @@
 define(MACHINE,armish)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.10 2008/06/28 21:46:05 mglocker Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.11 2009/01/25 17:30:48 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -96,7 +96,7 @@ ramdisk)
 	_recurse st0 ttyC0 wskbd0 apm bio
 	;;
 
-_std(1, 2, 8, 3, 6)
+_std(1, 2, 8, 6)
 	;;
 dnl
 dnl *** armish specific targets

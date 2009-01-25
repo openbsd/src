@@ -1,7 +1,7 @@
 define(COMM,`.\"')dnl
 include(MAKEDEV.mansub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.man,v 1.4 2008/06/16 08:18:39 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.man,v 1.5 2009/01/25 17:30:48 miod Exp $-})dnl
 dnl
 define(quote,{-.Dq $1
 -})dnl
@@ -13,7 +13,7 @@ __devitem({-all-},{-all-},dnl
 __devitem(std,{-std-},dnl
 {-Creates the
 .Sq standard
-devices (console, drum, klog, kmem, ksyms, mem, null,
+devices (console, klog, kmem, ksyms, mem, null,
 stderr, stdin, stdout, tty, zero)
 which are absolutely necessary for the system to function properly-},nothing)dnl
 __devitem(local,local,dnl

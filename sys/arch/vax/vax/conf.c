@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.55 2008/08/18 23:19:29 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.56 2009/01/25 17:30:49 miod Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -364,7 +364,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NHP,hp),		/* 4: Massbuss disk */
 	cdev_notdef(),			/* 5 */
 	cdev_plotter_init(NVP,vp),	/* 6: Versatec plotter */
-	cdev_swap_init(1,sw),		/* 7 */
+	cdev_notdef(),			/* 7 was /dev/drum */
 	cdev_cnstore_init(NCFL,cfl),	/* 8: 11/780 console floppy */
 	cdev_disk_init(NRA,ra),		/* 9: MSCP disk interface */
 	cdev_plotter_init(NVA,va),	/* 10: Benson-Varian plotter */

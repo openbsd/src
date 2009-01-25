@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.129 2008/11/23 18:19:02 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.130 2009/01/25 17:30:48 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
 	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
 	cdev_disk_init(NWD,wd),		/* 3: ST506/ESDI/IDE disk */
-	cdev_swap_init(1,sw),		/* 4: /dev/drum (swap pseudo-device) */
+	cdev_notdef(),			/* 4 was /dev/drum */
 	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
 	cdev_log_init(1,log),		/* 7: /dev/klog */

@@ -1,6 +1,6 @@
 define(MACHINE,sparc64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.49 2008/06/28 21:46:05 mglocker Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.50 2009/01/25 17:30:48 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -120,7 +120,7 @@ ramdisk)
 	_recurse st0 cd0 bpf0 bio
 	;;
 
-_std(2, 3, 76, 7, 16)
+_std(2, 3, 76, 16)
 	M openprom	c 70 0 640 kmem
 	;;
 dnl

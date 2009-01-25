@@ -1,6 +1,6 @@
 define(MACHINE,aviion)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.6 2008/06/14 23:09:05 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.7 2009/01/25 17:30:48 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -102,6 +102,6 @@ _DEV(xfs, 51)
 dnl
 divert(__mddivert)dnl
 dnl
-_std(1, 2, 43, 3, 6)
+_std(1, 2, 43, 6)
 	;;
 

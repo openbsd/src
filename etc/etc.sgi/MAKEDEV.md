@@ -1,6 +1,6 @@
 define(MACHINE,sgi)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.21 2008/08/25 14:00:33 jsing Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.22 2009/01/25 17:30:48 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -81,7 +81,7 @@ _DEV(xfs, 51)
 dnl
 divert(__mddivert)dnl
 dnl
-_std(2, 3, 35, 1, 6)
+_std(2, 3, 35, 6)
 	;;
 dnl
 dnl *** sgi specific targets

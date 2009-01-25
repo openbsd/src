@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.48 2008/07/07 14:46:18 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.49 2009/01/25 17:30:49 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -158,7 +158,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 4 */
 	cdev_notdef(),			/* 5: tapemaster tape */
 	cdev_notdef(),			/* 6: systech/versatec */
-	cdev_swap_init(1,sw),		/* 7: /dev/drum (swap pseudo-device) */
+	cdev_notdef(),			/* 7 was /dev/drum */
 	cdev_notdef(),			/* 8: Archive QIC-11 tape */
 	cdev_notdef(),			/* 9: SMD disk on Xylogics 450/451 */
 	cdev_notdef(),			/* 10: systech multi-terminal board */

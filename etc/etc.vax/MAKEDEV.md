@@ -1,6 +1,6 @@
 define(MACHINE,vax)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.35 2008/09/24 17:38:04 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.36 2009/01/25 17:30:48 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -148,7 +148,7 @@ ramdisk)
 	_recurse fd0 sd0 sd1 rd0
 	;;
 
-_std(2, 3, 50, 7, 33)
+_std(2, 3, 50, 33)
 	M ttyg0		c 25 0 600
 	M ttyg1		c 25 1 600
 	M ttyg2		c 25 2 600

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2008/08/25 13:51:12 jsing Exp $ */
+/*	$OpenBSD: conf.c,v 1.18 2009/01/25 17:30:49 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -138,7 +138,7 @@ cdev_decl(pci);
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_swap_init(1,sw),		/* 1: /dev/drum (swap pseudo-device) */
+	cdev_notdef(),			/* 1 was /dev/drum */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */

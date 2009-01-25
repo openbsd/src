@@ -1,6 +1,6 @@
 define(MACHINE,hppa64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.12 2008/06/28 21:46:05 mglocker Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.13 2009/01/25 17:30:48 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -76,7 +76,7 @@ ramdisk)
 	_recurse pty0 bpf0 bpf1 tun0 tun1 lkm bio
 	;;
 
-_std(1, 2, 25, 3, 6)
+_std(1, 2, 25, 6)
 	M pdc		c 22 0 640 operator
 	;;
 dnl

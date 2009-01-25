@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.79 2008/01/31 14:18:03 reyk Exp $
+#	$OpenBSD: special,v 1.80 2009/01/25 17:30:48 miod Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -8,7 +8,6 @@
 .		type=dir mode=0755 uname=root gname=wheel
 
 dev		type=dir mode=0755 uname=root gname=wheel
-drum		type=char mode=0640 uname=root gname=kmem
 fd		type=dir mode=0555 uname=root gname=wheel ignore
 ..	#dev/fd
 kmem		type=char mode=0640 uname=root gname=kmem

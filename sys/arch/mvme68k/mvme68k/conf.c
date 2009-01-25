@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.43 2008/05/14 20:49:48 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.44 2009/01/25 17:30:49 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -157,7 +157,7 @@ struct cdevsw	cdevsw[] =
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
 	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
-	cdev_swap_init(1,sw),		/* 3: /dev/drum (swap pseudo-device) */
+	cdev_notdef(),			/* 3 was /dev/drum */
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
