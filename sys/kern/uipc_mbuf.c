@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.114 2008/12/23 01:06:35 deraadt Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.115 2009/01/26 15:16:39 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1264,11 +1264,11 @@ m_apply(struct mbuf *m, int off, int len,
 int
 m_leadingspace(struct mbuf *m)
 {
-	if (M_READONLY((m)))
+	if (M_READONLY(m))
 		return 0;
-	return ((m)->m_flags & M_EXT ? (m)->m_data - (m)->m_ext.ext_buf :
-	    (m)->m_flags & M_PKTHDR ? (m)->m_data - (m)->m_pktdat :
-	    (m)->m_data - (m)->m_dat);
+	return (m->m_flags & M_EXT ? m->m_data - m->m_ext.ext_buf :
+	    m->m_flags & M_PKTHDR ? m->m_data - m->m_pktdat :
+	    m->m_data - m->m_dat);
 }
 
 int
@@ -1276,7 +1276,7 @@ m_trailingspace(struct mbuf *m)
 {
 	if (M_READONLY(m))
 		return 0;
-	return ((m)->m_flags & M_EXT ? (m)->m_ext.ext_buf +
-	    (m)->m_ext.ext_size - ((m)->m_data + (m)->m_len) :
-	    &(m)->m_dat[MLEN] - ((m)->m_data + (m)->m_len));
+	return (m->m_flags & M_EXT ? m->m_ext.ext_buf +
+	    m->m_ext.ext_size - (m->m_data + m->m_len) :
+	    &m->m_dat[MLEN] - (m->m_data + m->m_len));
 }
