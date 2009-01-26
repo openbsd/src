@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.31 2008/12/29 13:59:00 damien Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.32 2009/01/26 19:18:52 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1440,8 +1440,7 @@ rt2860_tx(struct rt2860_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		txwi->txop = RT2860_TX_TXOP_BACKOFF;
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-	    (!hasqos || (qos & IEEE80211_QOS_ACK_POLICY_MASK) >>
-	     IEEE80211_QOS_ACK_POLICY_SHIFT !=
+	    (!hasqos || (qos & IEEE80211_QOS_ACK_POLICY_MASK) !=
 	     IEEE80211_QOS_ACK_POLICY_NOACK)) {
 		txwi->xflags |= RT2860_TX_ACK;
 

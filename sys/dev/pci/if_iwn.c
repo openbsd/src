@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.45 2008/12/22 18:20:47 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.46 2009/01/26 19:18:52 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -2457,8 +2457,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	flags = 0;
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		/* Unicast frame, check if an ACK is expected. */
-		if (!hasqos || (qos & IEEE80211_QOS_ACK_POLICY_MASK) >>
-		    IEEE80211_QOS_ACK_POLICY_SHIFT !=
+		if (!hasqos || (qos & IEEE80211_QOS_ACK_POLICY_MASK) !=
 		    IEEE80211_QOS_ACK_POLICY_NOACK)
 			flags |= IWN_TX_NEED_ACK;
 	}

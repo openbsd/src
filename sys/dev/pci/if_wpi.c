@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.81 2009/01/03 10:11:55 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.82 2009/01/26 19:18:52 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1779,8 +1779,7 @@ wpi_tx(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	flags = 0;
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		/* Unicast frame, check if an ACK is expected. */
-		if (!hasqos || (qos & IEEE80211_QOS_ACK_POLICY_MASK) >>
-		    IEEE80211_QOS_ACK_POLICY_SHIFT !=
+		if (!hasqos || (qos & IEEE80211_QOS_ACK_POLICY_MASK) !=
 		    IEEE80211_QOS_ACK_POLICY_NOACK)
 			flags |= WPI_TX_NEED_ACK;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.5 2009/01/07 11:12:27 jsg Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.6 2009/01/26 19:18:52 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1990,8 +1990,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	txwi->txop = RT2860_TX_TXOP_BACKOFF;
 
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-	    (!hasqos || (qos & IEEE80211_QOS_ACK_POLICY_MASK) >>
-	     IEEE80211_QOS_ACK_POLICY_SHIFT !=
+	    (!hasqos || (qos & IEEE80211_QOS_ACK_POLICY_MASK) !=
 	     IEEE80211_QOS_ACK_POLICY_NOACK)) {
 		txwi->xflags |= RT2860_TX_ACK;
 		if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
