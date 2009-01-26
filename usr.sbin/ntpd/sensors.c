@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.40 2008/06/10 03:46:09 naddy Exp $ */
+/*	$OpenBSD: sensors.c,v 1.41 2009/01/26 21:45:11 naddy Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -138,7 +138,6 @@ sensor_add(int sensordev, char *dxname)
 
 	log_debug("sensor %s added (weight %d, correction %.6f, refstr %-4s)",
 	    s->device, s->weight, s->correction / 1e6, &s->refid);
-	s->refid = htonl(s->refid);
 }
 
 void
@@ -190,7 +189,7 @@ sensor_query(struct ntp_sensor *s)
 	s->offsets[s->shift].rcvd = sensor.tv.tv_sec;
 	s->offsets[s->shift].good = 1;
 
-	s->offsets[s->shift].status.refid = s->refid;
+	s->offsets[s->shift].status.send_refid = s->refid;
 	s->offsets[s->shift].status.stratum = 0;	/* increased when sent out */
 	s->offsets[s->shift].status.rootdelay = 0;
 	s->offsets[s->shift].status.rootdispersion = 0;
