@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.53 2008/05/09 09:08:47 jmc Exp $
+.\"	$OpenBSD: netstat.1,v 1.54 2009/01/26 17:28:09 claudio Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: May 9 2008 $
+.Dd $Mdocdate: January 26 2009 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -336,6 +336,7 @@ G	RTF_GATEWAY	Destination requires forwarding by intermediary.
 H	RTF_HOST	Host entry (net otherwise).
 L	RTF_LLINFO	Valid protocol to link address translation.
 M	RTF_MODIFIED	Modified dynamically (by redirect).
+P	RTF_MPATH	Multipath route.
 R	RTF_REJECT	Host or net unreachable.
 S	RTF_STATIC	Manually added.
 U	RTF_UP	Route usable.
