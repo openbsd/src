@@ -1,4 +1,4 @@
-/*	$OpenBSD: owsbm.c,v 1.5 2008/10/25 00:27:09 deraadt Exp $	*/
+/*	$OpenBSD: owsbm.c,v 1.6 2009/01/26 15:07:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Aaron Linville <aaron@linville.org>
@@ -138,7 +138,7 @@ owsbm_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sensortask = sensor_task_register(sc, owsbm_update, 10);
 	if (sc->sc_sensortask == NULL) {
-		printf(": unable to register owsbm update task\n");
+		printf(": unable to register update task\n");
 		return;
 	}
 

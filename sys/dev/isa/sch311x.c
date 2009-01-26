@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.3 2009/01/24 22:30:18 cnst Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.4 2009/01/26 15:07:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -345,7 +345,7 @@ schsio_hwm_init(struct schsio_softc *sc)
 
 	if (sensor_task_register(sc, schsio_hwm_update,
 	    SCHSIO_HWM_INTERVAL) == NULL) {
-		printf(": unable to register the update task");
+		printf(": unable to register update task");
 		return;
 	}
 	sensordev_install(&sc->sc_sensordev);
