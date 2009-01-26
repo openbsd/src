@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.58 2008/12/24 16:53:22 dhill Exp $	*/
+/*	$OpenBSD: if.c,v 1.59 2009/01/26 20:30:26 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -529,7 +529,7 @@ fetchifs(void)
 			else if (sdl->sdl_nlen > 0) 
 				memcpy(name, sdl->sdl_data, sdl->sdl_nlen);
 
-			if (interface != 0 && !strcmp(name, interface)) {
+			if (interface != NULL && !strcmp(name, interface)) {
 				strlcpy(ip_cur.ift_name, name,
 				    sizeof(ip_cur.ift_name));
 				ip_cur.ift_ip = ifd->ifi_ipackets;
