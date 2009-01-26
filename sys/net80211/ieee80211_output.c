@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.81 2009/01/26 19:09:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.82 2009/01/26 21:28:55 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -599,9 +599,10 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 
 		if (ic->ic_tid_noack & (1 << tid))
 			qos |= IEEE80211_QOS_ACK_POLICY_NOACK;
+#ifndef IEEE80211_NO_HT
 		else if (ni->ni_ba[tid].ba_state == IEEE80211_BA_AGREED)
 			qos |= IEEE80211_QOS_ACK_POLICY_BA;
-
+#endif
 		qwh->i_fc[0] |= IEEE80211_FC0_SUBTYPE_QOS;
 		*(u_int16_t *)qwh->i_qos = htole16(qos);
 		*(u_int16_t *)qwh->i_seq =
