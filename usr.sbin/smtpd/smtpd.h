@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.46 2009/01/14 23:48:35 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.47 2009/01/26 22:20:31 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -46,6 +46,7 @@
 
 #define PATH_SPOOL		"/var/spool/smtpd"
 
+#define PATH_ENQUEUE		"/enqueue"
 #define PATH_INCOMING		"/incoming"
 #define PATH_QUEUE		"/queue"
 #define PATH_PURGE		"/purge"
@@ -720,6 +721,15 @@ int		 batch_cmp(struct batch *, struct batch *);
 struct batch    *batch_by_id(struct smtpd *, u_int64_t);
 struct message	*message_by_id(struct smtpd *, struct batch *, u_int64_t);
 u_int16_t	 queue_hash(char *);
+
+/* sharedqueue.c */
+int		queue_create_layout_message(char *, char *);
+void		queue_delete_layout_message(char *, char *);
+int		queue_record_layout_envelope(char *, struct message *);
+int		queue_remove_layout_envelope(char *, struct message *);
+int		queue_commit_layout_message(char *, struct message *);
+int		queue_open_layout_messagefile(char *, struct message *);
+u_int16_t	queue_hash(char *);
 
 /* mda.c */
 pid_t		 mda(struct smtpd *);
