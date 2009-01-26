@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.45 2009/01/12 19:54:37 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.46 2009/01/26 21:26:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -55,6 +55,14 @@ int		queue_remove_incoming_envelope(struct message *);
 int		queue_commit_incoming_message(struct message *);
 int		queue_open_incoming_message_file(struct message *);
 void		queue_message_update(struct message *);
+
+
+int		queue_create_layout_message(char *, char *);
+void		queue_delete_layout_message(char *, char *);
+int		queue_record_layout_envelope(char *, struct message *);
+int		queue_remove_layout_envelope(char *, struct message *);
+int		queue_commit_layout_message(char *, struct message *);
+int		queue_open_layout_messagefile(char *, struct message *);
 
 int		queue_open_message_file(struct batch *);
 void		queue_delete_message(char *);
@@ -638,47 +646,48 @@ queue_purge_incoming(void)
 	closedir(dirp);
 }
 
+
 int
-queue_create_incoming_layout(char *message_id)
+queue_create_layout_message(char *queuepath, char *message_id)
 {
 	char rootdir[MAXPATHLEN];
 	char evpdir[MAXPATHLEN];
 
 	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%d.XXXXXXXXXXXXXXXX",
-		PATH_INCOMING, time(NULL)))
-		fatalx("queue_create_incoming_layout: snprintf");
+		queuepath, time(NULL)))
+		fatalx("queue_create_message_layout: snprintf");
 
 	if (mkdtemp(rootdir) == NULL) {
 		if (errno == ENOSPC)
 			return 0;
-		fatal("queue_create_incoming_layout: mkdtemp");
+		fatal("queue_create_message_layout: mkdtemp");
 	}
 
-	if (strlcpy(message_id, rootdir + strlen(PATH_INCOMING) + 1, MAXPATHLEN)
+	if (strlcpy(message_id, rootdir + strlen(queuepath) + 1, MAXPATHLEN)
 	    >= MAXPATHLEN)
-		fatalx("queue_create_incoming_layout: truncation");
+		fatalx("queue_create_message_layout: truncation");
 	
 	if (! bsnprintf(evpdir, MAXPATHLEN, "%s%s", rootdir, PATH_ENVELOPES))
-		fatalx("queue_create_incoming_layout: snprintf");
+		fatalx("queue_create_message_layout: snprintf");
 
 	if (mkdir(evpdir, 0700) == -1) {
 		if (errno == ENOSPC) {
 			rmdir(rootdir);
 			return 0;
 		}
-		fatal("queue_create_incoming_layout: mkdir");
+		fatal("queue_create_message_layout: mkdir");
 	}
 
 	return 1;
 }
 
 void
-queue_delete_incoming_message(char *msgid)
+queue_delete_layout_message(char *queuepath, char *msgid)
 {
 	char rootdir[MAXPATHLEN];
 	char purgedir[MAXPATHLEN];
 
-	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%s", PATH_INCOMING, msgid))
+	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%s", queuepath, msgid))
 		fatalx("snprintf");
 
 	if (! bsnprintf(purgedir, MAXPATHLEN, "%s/%s", PATH_PURGE, msgid))
@@ -692,14 +701,14 @@ queue_delete_incoming_message(char *msgid)
 }
 
 int
-queue_record_incoming_envelope(struct message *message)
+queue_record_layout_envelope(char *queuepath, struct message *message)
 {
 	char evpname[MAXPATHLEN];
 	FILE *fp;
 	int fd;
 
 again:
-	if (! bsnprintf(evpname, MAXPATHLEN, "%s/%s%s/%s.%qu", PATH_INCOMING,
+	if (! bsnprintf(evpname, MAXPATHLEN, "%s/%s%s/%s.%qu", queuepath,
 		message->message_id, PATH_ENVELOPES, message->message_id,
 		(u_int64_t)arc4random()))
 		fatalx("queue_record_incoming_envelope: snprintf");
@@ -743,11 +752,11 @@ tempfail:
 }
 
 int
-queue_remove_incoming_envelope(struct message *message)
+queue_remove_layout_envelope(char *queuepath, struct message *message)
 {
 	char pathname[MAXPATHLEN];
 
-	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%s%s/%s", PATH_INCOMING,
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%s%s/%s", queuepath,
 		message->message_id, PATH_ENVELOPES, message->message_uid))
 		fatal("queue_remove_incoming_envelope: snprintf");
 
@@ -759,12 +768,12 @@ queue_remove_incoming_envelope(struct message *message)
 }
 
 int
-queue_commit_incoming_message(struct message *messagep)
+queue_commit_layout_message(char *queuepath, struct message *messagep)
 {
 	char rootdir[MAXPATHLEN];
 	char queuedir[MAXPATHLEN];
 	
-	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%s", PATH_INCOMING,
+	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%s", queuepath,
 		messagep->message_id))
 		fatal("queue_commit_message_incoming: snprintf");
 
@@ -793,16 +802,52 @@ queue_commit_incoming_message(struct message *messagep)
 }
 
 int
-queue_open_incoming_message_file(struct message *messagep)
+queue_open_layout_messagefile(char *queuepath, struct message *messagep)
 {
 	char pathname[MAXPATHLEN];
 	mode_t mode = O_CREAT|O_EXCL|O_RDWR;
 	
-	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%s/message", PATH_INCOMING,
+	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%s/message", queuepath,
 		messagep->message_id))
 		fatal("queue_open_incoming_message_file: snprintf");
 
 	return open(pathname, mode, 0600);
+}
+
+int
+queue_create_incoming_layout(char *msgid)
+{
+	return queue_create_layout_message(PATH_INCOMING, msgid);
+}
+
+void
+queue_delete_incoming_message(char *msgid)
+{
+	queue_delete_layout_message(PATH_INCOMING, msgid);
+}
+
+int
+queue_record_incoming_envelope(struct message *message)
+{
+	return queue_record_layout_envelope(PATH_INCOMING, message);
+}
+
+int
+queue_remove_incoming_envelope(struct message *message)
+{
+	return queue_remove_layout_envelope(PATH_INCOMING, message);
+}
+
+int
+queue_commit_incoming_message(struct message *message)
+{
+	return queue_commit_layout_message(PATH_INCOMING, message);
+}
+
+int
+queue_open_incoming_message_file(struct message *message)
+{
+	return queue_open_layout_messagefile(PATH_INCOMING, message);
 }
 
 int
