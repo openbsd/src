@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.83 2008/12/22 18:20:47 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.84 2009/01/26 19:09:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -84,7 +84,7 @@ void		ipw_tx_intr(struct ipw_softc *);
 int		ipw_intr(void *);
 int		ipw_cmd(struct ipw_softc *, uint32_t, void *, uint32_t);
 int		ipw_send_mgmt(struct ieee80211com *, struct ieee80211_node *,
-		    int, int);
+		    int, int, int);
 int		ipw_tx_start(struct ifnet *, struct mbuf *,
 		    struct ieee80211_node *);
 void		ipw_start(struct ifnet *);
@@ -1115,7 +1115,7 @@ ipw_cmd(struct ipw_softc *sc, uint32_t type, void *data, uint32_t len)
 /* ARGSUSED */
 int
 ipw_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni, int type,
-    int arg)
+    int arg1, int arg2)
 {
 	return EOPNOTSUPP;
 }

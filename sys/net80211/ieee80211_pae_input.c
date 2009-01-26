@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.14 2008/12/06 09:02:47 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.15 2009/01/26 19:09:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -78,7 +78,7 @@ void	ieee80211_recv_eapol_key_req(struct ieee80211com *,
  * EAPOL-Key frames with an IEEE 802.11 or WPA descriptor type.
  */
 void
-ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
+ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m,
     struct ieee80211_node *ni)
 {
 	struct ifnet *ifp = &ic->ic_if;
@@ -87,23 +87,23 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
 	u_int16_t info, desc;
 	int totlen;
 
-	ifp->if_ibytes += m0->m_pkthdr.len;
+	ifp->if_ibytes += m->m_pkthdr.len;
 
-	eh = mtod(m0, struct ether_header *);
+	eh = mtod(m, struct ether_header *);
 	if (IEEE80211_IS_MULTICAST(eh->ether_dhost)) {
 		ifp->if_imcasts++;
 		goto done;
 	}
-	m_adj(m0, sizeof(*eh));
+	m_adj(m, sizeof(*eh));
 
-	if (m0->m_pkthdr.len < sizeof(*key))
+	if (m->m_pkthdr.len < sizeof(*key))
 		goto done;
-	if (m0->m_len < sizeof(*key) &&
-	    (m0 = m_pullup(m0, sizeof(*key))) == NULL) {
+	if (m->m_len < sizeof(*key) &&
+	    (m = m_pullup(m, sizeof(*key))) == NULL) {
 		ic->ic_stats.is_rx_nombuf++;
 		goto done;
 	}
-	key = mtod(m0, struct ieee80211_eapol_key *);
+	key = mtod(m, struct ieee80211_eapol_key *);
 
 	if (key->type != EAPOL_KEY)
 		goto done;
@@ -116,12 +116,12 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
 		goto done;
 
 	/* check packet body length */
-	if (m0->m_pkthdr.len < 4 + BE_READ_2(key->len))
+	if (m->m_pkthdr.len < 4 + BE_READ_2(key->len))
 		goto done;
 
 	/* check key data length */
 	totlen = sizeof(*key) + BE_READ_2(key->paylen);
-	if (m0->m_pkthdr.len < totlen || totlen > MCLBYTES)
+	if (m->m_pkthdr.len < totlen || totlen > MCLBYTES)
 		goto done;
 
 	info = BE_READ_2(key->info);
@@ -141,11 +141,11 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
 	}
 
 	/* make sure the key data field is contiguous */
-	if (m0->m_len < totlen && (m0 = m_pullup2(m0, totlen)) == NULL) {
+	if (m->m_len < totlen && (m = m_pullup2(m, totlen)) == NULL) {
 		ic->ic_stats.is_rx_nombuf++;
 		goto done;
 	}
-	key = mtod(m0, struct ieee80211_eapol_key *);
+	key = mtod(m, struct ieee80211_eapol_key *);
 
 	/* determine message type (see 8.5.3.7) */
 	if (info & EAPOL_KEY_REQUEST) {
@@ -180,8 +180,8 @@ ieee80211_eapol_key_input(struct ieee80211com *ic, struct mbuf *m0,
 #endif
 	}
  done:
-	if (m0 != NULL)
-		m_freem(m0);
+	if (m != NULL)
+		m_freem(m);
 }
 
 /*
@@ -303,7 +303,7 @@ ieee80211_recv_4way_msg2(struct ieee80211com *ic,
 		return;	/* will timeout.. */
 	}
 
-	timeout_del(&ni->ni_rsn_timeout);
+	timeout_del(&ni->ni_eapol_to);
 	ni->ni_rsn_state = RSNA_PTKCALCNEGOTIATING_2;
 	ni->ni_rsn_retries = 0;
 
@@ -637,7 +637,7 @@ ieee80211_recv_4way_msg4(struct ieee80211com *ic,
 		return;	/* will timeout.. */
 	}
 
-	timeout_del(&ni->ni_rsn_timeout);
+	timeout_del(&ni->ni_eapol_to);
 	ni->ni_rsn_state = RSNA_PTKINITDONE;
 	ni->ni_rsn_retries = 0;
 
@@ -989,7 +989,7 @@ ieee80211_recv_group_msg2(struct ieee80211com *ic,
 		return;
 	}
 
-	timeout_del(&ni->ni_rsn_timeout);
+	timeout_del(&ni->ni_eapol_to);
 	ni->ni_rsn_gstate = RSNA_REKEYESTABLISHED;
 
 	if ((ni->ni_flags & IEEE80211_NODE_REKEY) &&

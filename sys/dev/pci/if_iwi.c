@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.98 2008/12/22 18:20:47 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.99 2009/01/26 19:09:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -100,7 +100,7 @@ void		iwi_tx_intr(struct iwi_softc *, struct iwi_tx_ring *);
 int		iwi_intr(void *);
 int		iwi_cmd(struct iwi_softc *, uint8_t, void *, uint8_t, int);
 int		iwi_send_mgmt(struct ieee80211com *, struct ieee80211_node *,
-		    int, int);
+		    int, int, int);
 int		iwi_tx_start(struct ifnet *, struct mbuf *,
 		    struct ieee80211_node *);
 void		iwi_start(struct ifnet *);
@@ -1221,7 +1221,7 @@ iwi_cmd(struct iwi_softc *sc, uint8_t type, void *data, uint8_t len, int async)
 /* ARGSUSED */
 int
 iwi_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni, int type,
-    int arg)
+    int arg1, int arg2)
 {
 	return EOPNOTSUPP;
 }

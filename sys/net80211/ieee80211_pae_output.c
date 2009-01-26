@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.14 2008/09/27 15:16:09 damien Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.15 2009/01/26 19:09:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -129,7 +129,7 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 #ifndef IEEE80211_STA_ONLY
 	/* start a 100ms timeout if an answer is expected from supplicant */
 	if (info & EAPOL_KEY_KEYACK)
-		timeout_add(&ni->ni_rsn_timeout, hz / 10);
+		timeout_add_msec(&ni->ni_eapol_to, 100);
 #endif
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 	if (error == 0) {

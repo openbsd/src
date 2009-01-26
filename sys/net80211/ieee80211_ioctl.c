@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.28 2008/12/14 11:59:41 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.29 2009/01/26 19:09:41 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -164,10 +164,9 @@ ieee80211_ioctl_setnwkeys(struct ieee80211com *ic,
 			k->k_cipher = IEEE80211_CIPHER_WEP40;
 		else
 			k->k_cipher = IEEE80211_CIPHER_WEP104;
-		k->k_len = nwkey->i_key[i].i_keylen;
+		k->k_len = ieee80211_cipher_keylen(k->k_cipher);
 		k->k_flags = IEEE80211_KEY_GROUP | IEEE80211_KEY_TX;
-		error = copyin(nwkey->i_key[i].i_keydat, k->k_key,
-		    nwkey->i_key[i].i_keylen);
+		error = copyin(nwkey->i_key[i].i_keydat, k->k_key, k->k_len);
 		if (error != 0)
 			return error;
 		if ((error = (*ic->ic_set_key)(ic, NULL, k)) != 0)
@@ -245,8 +244,8 @@ ieee80211_ioctl_setwpaparms(struct ieee80211com *ic,
 		    IEEE80211_AKM_8021X | IEEE80211_AKM_SHA256_8021X;
 	if (ic->ic_rsnakms == 0)	/* set to default (PSK+802.1X) */
 		ic->ic_rsnakms =
-		    IEEE80211_AKM_PSK | IEEE80211_AKM_8021X |
-		    IEEE80211_AKM_SHA256_PSK | IEEE80211_AKM_SHA256_8021X;
+		    IEEE80211_AKM_PSK | IEEE80211_AKM_8021X /*|
+		    IEEE80211_AKM_SHA256_PSK | IEEE80211_AKM_SHA256_8021X*/;
 
 	if (wpa->i_groupcipher == IEEE80211_WPA_CIPHER_WEP40)
 		ic->ic_rsngroupcipher = IEEE80211_CIPHER_WEP40;
@@ -445,8 +444,6 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		ka = (struct ieee80211_keyavail *)data;
 		(void)ieee80211_pmksa_add(ic, IEEE80211_AKM_8021X,
-		    ka->i_macaddr, ka->i_key, ka->i_lifetime);
-		(void)ieee80211_pmksa_add(ic, IEEE80211_AKM_SHA256_8021X,
 		    ka->i_macaddr, ka->i_key, ka->i_lifetime);
 		break;
 	case SIOCS80211KEYRUN:

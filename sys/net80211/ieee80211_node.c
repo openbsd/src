@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.49 2008/12/14 10:17:24 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.50 2009/01/26 19:09:41 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -84,8 +84,14 @@ struct ieee80211_node *ieee80211_alloc_node_helper(struct ieee80211com *);
 void ieee80211_node_cleanup(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_needs_auth(struct ieee80211com *, struct ieee80211_node *);
 #ifndef IEEE80211_STA_ONLY
+#ifndef IEEE80211_NO_HT
+void ieee80211_node_join_ht(struct ieee80211com *, struct ieee80211_node *);
+#endif
 void ieee80211_node_join_rsn(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_join_11g(struct ieee80211com *, struct ieee80211_node *);
+#ifndef IEEE80211_NO_HT
+void ieee80211_node_leave_ht(struct ieee80211com *, struct ieee80211_node *);
+#endif
 void ieee80211_node_leave_rsn(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_11g(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_set_tim(struct ieee80211com *, int, int);
@@ -435,9 +441,9 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 		if ((ni->ni_rsnciphers & ic->ic_rsnciphers) == 0)
 			fail |= 0x40;
 
-		/* we only support AES-128-CMAC as the IGTK cipher */
+		/* we only support BIP as the IGTK cipher */
 		if ((ni->ni_rsncaps & IEEE80211_RSNCAP_MFPC) &&
-		    ni->ni_rsngroupmgmtcipher != IEEE80211_CIPHER_AES128_CMAC)
+		    ni->ni_rsngroupmgmtcipher != IEEE80211_CIPHER_BIP)
 			fail |= 0x40;
 
 		/* we do not support MFP but AP requires it */
@@ -753,8 +759,11 @@ ieee80211_setup_node(struct ieee80211com *ic,
 	ieee80211_node_newstate(ni, IEEE80211_STA_CACHE);
 
 	ni->ni_ic = ic;	/* back-pointer */
+	IFQ_SET_MAXLEN(&ni->ni_savedq, IEEE80211_PS_MAX_QUEUE);
+	timeout_set(&ni->ni_eapol_to, ieee80211_eapol_timeout, ni);
+	timeout_set(&ni->ni_sa_query_to, ieee80211_sa_query_timeout, ni);
 
-	/* 
+	/*
 	 * Note we don't enable the inactive timer when acting
 	 * as a station.  Nodes created in this mode represent
 	 * AP's identified while scanning.  If we time them out
@@ -1025,6 +1034,8 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 		panic("freeing bss node");
 
 	DPRINTF(("%s\n", ether_sprintf(ni->ni_macaddr)));
+	timeout_del(&ni->ni_eapol_to);
+	timeout_del(&ni->ni_sa_query_to);
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 	RB_REMOVE(ieee80211_tree, &ic->ic_tree, ni);
 	ic->ic_nnodes--;
@@ -1200,6 +1211,17 @@ ieee80211_needs_auth(struct ieee80211com *ic, struct ieee80211_node *ni)
 	 */
 }
 
+#ifndef IEEE80211_NO_HT
+/*
+ * Handle an HT STA joining an HT network.
+ */
+void
+ieee80211_node_join_ht(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	/* TBD */
+}
+#endif	/* !IEEE80211_NO_HT */
+
 /*
  * Handle a station joining an RSN network.
  */
@@ -1220,7 +1242,6 @@ ieee80211_node_join_rsn(struct ieee80211com *ic, struct ieee80211_node *ni)
 	ni->ni_replaycnt = -1;	/* XXX */
 	ni->ni_rsn_retries = 0;
 	ni->ni_rsncipher = ni->ni_rsnciphers;
-	timeout_set(&ni->ni_rsn_timeout, ieee80211_eapol_timeout, ni);
 
 	ni->ni_rsn_state = RSNA_AUTHENTICATION_2;
 
@@ -1331,6 +1352,11 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 	} else
 		ieee80211_node_join_rsn(ic, ni);
 
+#ifndef IEEE80211_NO_HT
+	if (ni->ni_flags & IEEE80211_NODE_HT)
+		ieee80211_node_join_ht(ic, ni);
+#endif
+
 #if NBRIDGE > 0
 	/*
 	 * If the parent interface belongs to a bridge, learn
@@ -1341,6 +1367,31 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 		    (struct ether_addr *)ni->ni_macaddr, 0);
 #endif
 }
+
+#ifndef IEEE80211_NO_HT
+/*
+ * Handle an HT STA leaving an HT network.
+ */
+void
+ieee80211_node_leave_ht(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	struct ieee80211_ba *ba;
+	u_int8_t tid;
+	int i;
+
+	/* free all Block Ack records */
+	for (tid = 0; tid < IEEE80211_NUM_TID; tid++) {
+		ba = &ni->ni_ba[tid];
+		if (ba->ba_buf != NULL) {
+			for (i = 0; i < IEEE80211_BA_MAX_WINSZ; i++)
+				if (ba->ba_buf[i].m != NULL)
+					m_freem(ba->ba_buf[i].m);
+			free(ba->ba_buf, M_DEVBUF);
+			ba->ba_buf = NULL;
+		}
+	}
+}
+#endif	/* !IEEE80211_NO_HT */
 
 /*
  * Handle a station leaving an RSN network.
@@ -1360,7 +1411,8 @@ ieee80211_node_leave_rsn(struct ieee80211com *ic, struct ieee80211_node *ni)
 	ni->ni_flags &= ~IEEE80211_NODE_PMK;
 	ni->ni_rsn_gstate = RSNA_IDLE;
 
-	timeout_del(&ni->ni_rsn_timeout);
+	timeout_del(&ni->ni_sa_query_to);
+	timeout_del(&ni->ni_eapol_to);
 	ni->ni_rsn_retries = 0;
 	ni->ni_flags &= ~IEEE80211_NODE_TXRXPROT;
 	ni->ni_port_valid = 0;
@@ -1444,6 +1496,11 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	if (ic->ic_curmode == IEEE80211_MODE_11G)
 		ieee80211_node_leave_11g(ic, ni);
+
+#ifndef IEEE80211_NO_HT
+	if (ni->ni_flags & IEEE80211_NODE_HT)
+		ieee80211_node_leave_ht(ic, ni);
+#endif
 
 	ieee80211_node_newstate(ni, IEEE80211_STA_COLLECT);
 

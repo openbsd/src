@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_bip.c,v 1.1 2008/08/12 16:51:39 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_bip.c,v 1.2 2009/01/26 19:09:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -18,7 +18,7 @@
 
 /*
  * This code implements the Broadcast/Multicast Integrity Protocol (BIP)
- * defined in IEEE P802.11w/D6.0 section 8.3.4.
+ * defined in IEEE P802.11w/D7.0 section 8.3.4.
  */
 
 #include <sys/param.h>
@@ -199,11 +199,9 @@ ieee80211_bip_decap(struct ieee80211com *ic, struct mbuf *m0,
 	AES_CMAC_Update(&ctx->cmac, (u_int8_t *)&wh[1],
 	    m0->m_len - sizeof(*wh));
 	AES_CMAC_Final(mic, &ctx->cmac);
-	/* truncate AES-128-CMAC to 64-bit */
-	memcpy(&mmie[10], mic, 8);
 
 	/* check that MIC matches the one in MMIE */
-	if (memcmp(&mmie[10], mic0, 8) != 0) {
+	if (memcmp(mic, mic0, 8) != 0) {
 		ic->ic_stats.is_cmac_icv_errs++;
 		m_freem(m0);
 		return NULL;
@@ -211,8 +209,8 @@ ieee80211_bip_decap(struct ieee80211com *ic, struct mbuf *m0,
 	/*
 	 * There is no need to trim the MMIE from the mbuf since it is
 	 * an information element and will be ignored by upper layers.
-	 * We do it anyway as it is cheap to do it here and because we
-	 * did not check for the presence of fixed fields yet.
+	 * We do it anyway as it is cheap to do it here and because it
+	 * may be confused with fixed fields by upper layers.
 	 */
 	m_adj(m0, -IEEE80211_MMIE_LEN);
 

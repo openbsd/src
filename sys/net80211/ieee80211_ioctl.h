@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.14 2008/09/27 15:16:09 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.15 2009/01/26 19:09:41 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -95,6 +95,7 @@ struct ieee80211_stats {
 	u_int32_t	is_ccmp_dec_errs;
 	u_int32_t	is_cmac_replays;
 	u_int32_t	is_cmac_icv_errs;
+	u_int32_t	is_pbac_errs;
 };
 
 #define	SIOCG80211STATS		_IOWR('i', 242, struct ifreq)

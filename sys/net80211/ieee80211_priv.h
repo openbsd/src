@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_priv.h,v 1.4 2008/09/27 15:16:09 damien Exp $	*/
+/*	$OpenBSD: ieee80211_priv.h,v 1.5 2009/01/26 19:09:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -30,6 +30,9 @@ extern int ieee80211_debug;
 #else
 #define DPRINTF(X)
 #endif
+
+#define SEQ_LT(a,b)	\
+	((((u_int16_t)(a) - (u_int16_t)(b)) & 0xfff) > 2048)
 
 #define IEEE80211_AID_SET(b, w) \
 	((w)[IEEE80211_AID(b) / 32] |= (1 << (IEEE80211_AID(b) % 32)))

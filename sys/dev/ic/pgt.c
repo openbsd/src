@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.52 2008/08/29 12:14:53 damien Exp $  */
+/*	$OpenBSD: pgt.c,v 1.53 2009/01/26 19:09:41 damien Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -171,7 +171,7 @@ void	 pgt_ieee80211_node_copy(struct ieee80211com *,
 	     struct ieee80211_node *,
 	     const struct ieee80211_node *);
 int	 pgt_ieee80211_send_mgmt(struct ieee80211com *,
-	     struct ieee80211_node *, int, int);
+	     struct ieee80211_node *, int, int, int);
 int	 pgt_net_attach(struct pgt_softc *);
 void	 pgt_start(struct ifnet *);
 int	 pgt_ioctl(struct ifnet *, u_long, caddr_t);
@@ -1858,7 +1858,7 @@ pgt_ieee80211_node_copy(struct ieee80211com *ic, struct ieee80211_node *dst,
 
 int
 pgt_ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
-    int type, int arg)
+    int type, int arg1, int arg2)
 {
 	return (EOPNOTSUPP);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.56 2008/09/27 15:16:09 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.57 2009/01/26 19:09:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -72,7 +72,7 @@ ieee80211_crypto_attach(struct ifnet *ifp)
 		ic->ic_rsnciphers = IEEE80211_CIPHER_TKIP |
 		    IEEE80211_CIPHER_CCMP;
 		ic->ic_rsngroupcipher = IEEE80211_CIPHER_TKIP;
-		ic->ic_rsngroupmgmtcipher = IEEE80211_CIPHER_AES128_CMAC;
+		ic->ic_rsngroupmgmtcipher = IEEE80211_CIPHER_BIP;
 	}
 	ic->ic_set_key = ieee80211_set_key;
 	ic->ic_delete_key = ieee80211_delete_key;
@@ -119,7 +119,7 @@ ieee80211_cipher_keylen(enum ieee80211_cipher cipher)
 		return 16;
 	case IEEE80211_CIPHER_WEP104:
 		return 13;
-	case IEEE80211_CIPHER_AES128_CMAC:
+	case IEEE80211_CIPHER_BIP:
 		return 16;
 	default:	/* unknown cipher */
 		return 0;
@@ -143,7 +143,7 @@ ieee80211_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	case IEEE80211_CIPHER_CCMP:
 		error = ieee80211_ccmp_set_key(ic, k);
 		break;
-	case IEEE80211_CIPHER_AES128_CMAC:
+	case IEEE80211_CIPHER_BIP:
 		error = ieee80211_bip_set_key(ic, k);
 		break;
 	default:
@@ -168,7 +168,7 @@ ieee80211_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	case IEEE80211_CIPHER_CCMP:
 		ieee80211_ccmp_delete_key(ic, k);
 		break;
-	case IEEE80211_CIPHER_AES128_CMAC:
+	case IEEE80211_CIPHER_BIP:
 		ieee80211_bip_delete_key(ic, k);
 		break;
 	default:
@@ -213,7 +213,7 @@ ieee80211_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	case IEEE80211_CIPHER_CCMP:
 		m0 = ieee80211_ccmp_encrypt(ic, m0, k);
 		break;
-	case IEEE80211_CIPHER_AES128_CMAC:
+	case IEEE80211_CIPHER_BIP:
 		m0 = ieee80211_bip_encap(ic, m0, k);
 		break;
 	default:
@@ -285,7 +285,7 @@ ieee80211_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	case IEEE80211_CIPHER_CCMP:
 		m0 = ieee80211_ccmp_decrypt(ic, m0, k);
 		break;
-	case IEEE80211_CIPHER_AES128_CMAC:
+	case IEEE80211_CIPHER_BIP:
 		m0 = ieee80211_bip_decap(ic, m0, k);
 		break;
 	default:

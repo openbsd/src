@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.h,v 1.21 2008/09/27 15:16:09 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.h,v 1.22 2009/01/26 19:09:41 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -33,7 +33,7 @@ enum ieee80211_cipher {
 	IEEE80211_CIPHER_TKIP		= 0x00000004,
 	IEEE80211_CIPHER_CCMP		= 0x00000008,
 	IEEE80211_CIPHER_WEP104		= 0x00000010,
-	IEEE80211_CIPHER_AES128_CMAC	= 0x00000020	/* 11w */
+	IEEE80211_CIPHER_BIP		= 0x00000020	/* 11w */
 };
 
 /*
