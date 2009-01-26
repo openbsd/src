@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.109 2008/12/10 09:03:30 claudio Exp $ */
+/*	$OpenBSD: ntp.c,v 1.110 2009/01/26 11:51:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -188,7 +188,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf, struct passwd *pw)
 		peer_cnt++;
 
 	/* wait 5 min before reporting first status to let things settle down */
-	lastreport = time(NULL) + (5 * 60) - REPORT_INTERVAL;
+	lastreport = getmonotime() + (5 * 60) - REPORT_INTERVAL;
 
 	while (ntp_quit == 0) {
 		if (peer_cnt > idx2peer_elms) {
@@ -741,7 +741,7 @@ report_peers(int always)
 			badsensors++;
 	}
 
-	now = time(NULL);
+	now = getmonotime();
 	if (!always) {
 		if ((peer_cnt == 0 || badpeers == 0 || badpeers < peer_cnt / 2)
 		    && (sensors_cnt == 0 || badsensors == 0 ||
