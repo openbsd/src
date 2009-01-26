@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.50 2009/01/26 19:09:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.51 2009/01/26 21:55:58 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -810,10 +810,9 @@ ieee80211_dup_bss(struct ieee80211com *ic, const u_int8_t *macaddr)
 struct ieee80211_node *
 ieee80211_find_node(struct ieee80211com *ic, const u_int8_t *macaddr)
 {
-	struct ieee80211_node ni;
-
-	IEEE80211_ADDR_COPY(ni.ni_macaddr, macaddr);
-	return (RB_FIND(ieee80211_tree, &ic->ic_tree, &ni));
+	/* XXX ugly, but avoids a full node structure in the stack */
+	return (RB_FIND(ieee80211_tree, &ic->ic_tree,
+	    (struct ieee80211_node *)macaddr));
 }
 
 /*

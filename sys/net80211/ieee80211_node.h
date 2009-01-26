@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.36 2009/01/26 21:28:55 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.37 2009/01/26 21:55:58 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -137,7 +137,9 @@ struct ieee80211_ba {
  * the ieee80211com structure.
  */
 struct ieee80211_node {
-	RB_ENTRY(ieee80211_node)	ni_node;
+	/* ni_macaddr must be the first field for RB_FIND() */
+	u_int8_t		ni_macaddr[IEEE80211_ADDR_LEN];
+	u_int8_t		ni_bssid[IEEE80211_ADDR_LEN];
 
 	struct ieee80211com	*ni_ic;		/* back-pointer */
 
@@ -147,10 +149,6 @@ struct ieee80211_node {
 	/* hardware */
 	u_int32_t		ni_rstamp;	/* recv timestamp */
 	u_int8_t		ni_rssi;	/* recv ssi */
-
-	/* header */
-	u_int8_t		ni_macaddr[IEEE80211_ADDR_LEN];
-	u_int8_t		ni_bssid[IEEE80211_ADDR_LEN];
 
 	/* beacon, probe response */
 	u_int8_t		ni_tstamp[8];	/* from last rcv'd beacon */
@@ -239,6 +237,8 @@ struct ieee80211_node {
 #define IEEE80211_NODE_HT		0x0400	/* HT negotiated */
 #define IEEE80211_NODE_SA_QUERY		0x0800	/* SA Query in progress */
 #define IEEE80211_NODE_SA_QUERY_FAILED	0x1000	/* last SA Query failed */
+
+	RB_ENTRY(ieee80211_node)	ni_node;
 };
 
 RB_HEAD(ieee80211_tree, ieee80211_node);
