@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.9 2008/10/28 13:47:22 aschrijver Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.10 2009/01/26 21:56:15 pyr Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -54,18 +54,6 @@ int	client_addr_init(struct idm *);
 int	client_addr_free(struct idm *);
 
 struct aldap	*aldap_open(struct ypldap_addr *);
-int		 aldap_close(struct aldap *);
-
-int
-aldap_close(struct aldap *al)
-{
-	if(close(al->ber.fd) == -1)
-		return (-1);
-
-	free(al);
-
-	return (0);
-}
 
 struct aldap *
 aldap_open(struct ypldap_addr *addr)

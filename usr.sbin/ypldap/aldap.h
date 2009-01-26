@@ -1,5 +1,5 @@
-/*	$Id: aldap.h,v 1.4 2008/10/14 21:41:03 aschrijver Exp $ */
-/*	$OpenBSD: aldap.h,v 1.4 2008/10/14 21:41:03 aschrijver Exp $ */
+/*	$Id: aldap.h,v 1.5 2009/01/26 21:56:15 pyr Exp $ */
+/*	$OpenBSD: aldap.h,v 1.5 2009/01/26 21:56:15 pyr Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -176,6 +176,7 @@ enum subfilter {
 };
 
 struct aldap		*aldap_init(int fd);
+int			 aldap_close(struct aldap *);
 struct aldap_message	*aldap_parse(struct aldap *);
 void			 aldap_freemsg(struct aldap_message *);
 

@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.11 2009/01/16 13:11:15 aschrijver Exp $ */
-/*	$OpenBSD: aldap.c,v 1.11 2009/01/16 13:11:15 aschrijver Exp $ */
+/*	$Id: aldap.c,v 1.12 2009/01/26 21:56:15 pyr Exp $ */
+/*	$OpenBSD: aldap.c,v 1.12 2009/01/26 21:56:15 pyr Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -22,6 +22,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "aldap.h"
 
@@ -47,6 +48,18 @@ void			 ldap_debug_elements(struct ber_element *);
 #define DPRINTF(x...)	do { } while (0)
 #define LDAP_DEBUG(x, y)	do { } while (0)
 #endif
+
+int
+aldap_close(struct aldap *al)
+{
+	if(close(al->ber.fd) == -1)
+		return (-1);
+
+	free(al);
+
+	return (0);
+}
+
 
 struct aldap *
 aldap_init(int fd)
@@ -431,11 +444,11 @@ aldap_free_url(struct aldap_url *lu)
 int
 aldap_parse_url(char *url, struct aldap_url *lu)
 {
-	char		*dup, *p, *forward, *forward2;
+	char		*dupstr, *p, *forward, *forward2;
 	const char	*errstr = NULL;
 	int		 i;
 
-	p = dup = strdup(url);
+	p = dupstr = strdup(url);
 
 	/* protocol */
 	if(strncasecmp(LDAP_URL, p, strlen(LDAP_URL)) != 0)
@@ -521,7 +534,7 @@ aldap_parse_url(char *url, struct aldap_url *lu)
 	lu->filter = strdup(p);
 
 done:
-	free(dup);
+	free(dupstr);
 	return (1);
 fail:
 	free(dup);
