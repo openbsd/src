@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.4 2008/12/02 13:42:44 michele Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.5 2009/01/27 08:53:47 michele Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -63,7 +63,6 @@ struct {
     {NBR_STA_1_WAY,	NBR_EVT_2_WAY_RCVD,	NBR_ACT_STRT_ITIMER,	NBR_STA_2_WAY},
     {NBR_STA_ACTIVE,	NBR_EVT_1_WAY_RCVD,	NBR_ACT_RESET,		NBR_STA_1_WAY},
     {NBR_STA_ANY,	NBR_EVT_KILL_NBR,	NBR_ACT_DEL,		NBR_STA_DOWN},
-    {NBR_STA_ANY,	NBR_EVT_LL_DOWN,	NBR_ACT_DEL,		NBR_STA_DOWN},
     {NBR_STA_ANY,	NBR_EVT_ITIMER,		NBR_ACT_DEL,		NBR_STA_DOWN},
     {-1,		NBR_EVT_NOTHING,	NBR_ACT_NOTHING,	0},
 };
@@ -227,9 +226,6 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 int
 nbr_del(struct nbr *nbr)
 {
-	log_debug("nbr_del: neighbor ID %s, peerid %lu", inet_ntoa(nbr->id),
-	    nbr->peerid);
-
 	dvmrpe_imsg_compose_rde(IMSG_NEIGHBOR_DOWN, nbr->peerid, 0, NULL, 0);
 
 	/* clear lists */
@@ -281,10 +277,7 @@ nbr_itimer(int fd, short event, void *arg)
 
 	log_debug("nbr_itimer: %s", inet_ntoa(nbr->id));
 
-	if (nbr->state == NBR_STA_DOWN) {
-		nbr_del(nbr);
-	} else
-		nbr_fsm(nbr, NBR_EVT_ITIMER);
+	nbr_fsm(nbr, NBR_EVT_ITIMER);
 }
 
 int
@@ -363,8 +356,6 @@ nbr_act_start_itimer(struct nbr *nbr)
 int
 nbr_act_delete(struct nbr *nbr)
 {
-	struct timeval	tv;
-
 	log_debug("nbr_act_delete: neighbor ID %s", inet_ntoa(nbr->id));
 
 	/* stop timers */
@@ -374,16 +365,7 @@ nbr_act_delete(struct nbr *nbr)
 		return (-1);
 	}
 
-	/* schedule kill timer */
-	timerclear(&tv);
-	tv.tv_sec = DEFAULT_NBR_TMOUT;
-
-	if (evtimer_add(&nbr->inactivity_timer, &tv)) {
-		log_warnx("nbr_act_delete: error scheduling neighbor ID %s "
-		    "for removal", inet_ntoa(nbr->id));
-	}
-
-	return (nbr_act_clear_lists(nbr));
+	return (nbr_del(nbr));
 }
 
 int
@@ -423,10 +405,7 @@ nbr_to_ctl(struct nbr *nbr)
 	gettimeofday(&now, NULL);
 	if (evtimer_pending(&nbr->inactivity_timer, &tv)) {
 		timersub(&tv, &now, &res);
-		if (nbr->state & NBR_STA_DOWN)
-			nctl.dead_timer = DEFAULT_NBR_TMOUT - res.tv_sec;
-		else
-			nctl.dead_timer = res.tv_sec;
+		nctl.dead_timer = res.tv_sec;
 	} else
 		nctl.dead_timer = 0;
 

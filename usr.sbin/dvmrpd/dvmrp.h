@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrp.h,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: dvmrp.h,v 1.2 2009/01/27 08:53:47 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -34,9 +34,6 @@
 #define MAX_PRUNE_LIFETIME		2 * 3600	/* 2 hours */
 #define PRUNE_RETRANS_TIME		3		/* with exp. back off */
 #define GRAFT_RETRANS_TIME		5		/* with exp. back off */
-
-#define DEFAULT_NBR_TMOUT		86400	/* 24 hours */
-						/* remove neighbor completely */
 
 #define DEFAULT_CACHE_LIFETIME		300
 
