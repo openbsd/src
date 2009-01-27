@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.55 2008/08/22 08:52:35 sobrado Exp $	*/
+/*	$OpenBSD: util.c,v 1.56 2009/01/27 22:04:36 martynas Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: util.c,v 1.55 2008/08/22 08:52:35 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.56 2009/01/27 22:04:36 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -458,7 +458,10 @@ again:
 #ifndef SMALL
 	if (type) {
 		parse_list(&bufp, type);
-		if (!bufp)
+		if (!bufp ||
+		    (bufp[0] == '.' &&	/* LIST defaults to -a on some ftp */
+		    (bufp[1] == '\0' ||	/* servers.  Ignore '.' and '..'. */
+		    (bufp[1] == '.' && bufp[2] == '\0'))))
 			goto again;
 	}
 #endif /* !SMALL */
