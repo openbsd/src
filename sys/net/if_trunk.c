@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.63 2008/12/14 23:08:52 brad Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.64 2009/01/27 12:58:27 naddy Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1006,7 +1006,8 @@ trunk_hashmbuf(struct mbuf *m, u_int32_t key)
 		if ((vlan = (u_int16_t *)
 		    trunk_gethdr(m, off, EVL_ENCAPLEN, &vlanbuf)) == NULL)
 			return (p);
-		p = hash32_buf(vlan, sizeof(*vlan), p);
+		ether_vtag = EVL_VLANOFTAG(*vlan);
+		p = hash32_buf(&ether_vtag, sizeof(ether_vtag), p);
 		etype = ntohs(vlan[1]);
 		off += EVL_ENCAPLEN;
 	}
