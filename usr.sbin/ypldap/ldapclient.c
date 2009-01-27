@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.12 2009/01/27 16:17:49 aschrijver Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.13 2009/01/27 23:29:42 pyr Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -53,10 +53,13 @@ void	client_try_server_wrapper(int, short, void *);
 int	client_addr_init(struct idm *);
 int	client_addr_free(struct idm *);
 
-struct aldap	*aldap_open(struct ypldap_addr *);
+struct aldap	*client_aldap_open(struct ypldap_addr *);
 
+/*
+ * dummy wrapper to provide aldap_init with its fd's.
+ */
 struct aldap *
-aldap_open(struct ypldap_addr *addr)
+client_aldap_open(struct ypldap_addr *addr)
 {
 	int			 fd = -1;
 	struct ypldap_addr	 *p;
@@ -434,7 +437,7 @@ client_try_idm(struct env *env, struct idm *idm)
 	struct aldap		*al;
 
 	where = "connect";
-	if ((al = aldap_open(idm->idm_addr)) == NULL)
+	if ((al = client_aldap_open(idm->idm_addr)) == NULL)
 		return (-1);
 
 	if (idm->idm_flags & F_NEEDAUTH) {
