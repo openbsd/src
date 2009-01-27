@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.7 2008/12/28 17:56:16 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.8 2009/01/27 21:58:28 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -268,7 +268,7 @@ nbr_init(u_int32_t hashsize)
 }
 
 struct nbr *
-nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
+nbr_new(u_int32_t nbr_id, struct iface *iface, u_int32_t iface_id, int self)
 {
 	struct nbr_head	*head;
 	struct nbr	*nbr;
@@ -291,6 +291,7 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 
 	/* add to peer list */
 	nbr->iface = iface;
+	nbr->iface_id = iface_id;
 	LIST_INSERT_HEAD(&iface->nbr_list, nbr, entry);
 
 	TAILQ_INIT(&nbr->ls_retrans_list);
@@ -303,7 +304,6 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 		nbr->state = NBR_STA_FULL;
 		nbr->addr = iface->addr;
 		nbr->priority = iface->priority;
-		nbr->iface_id = iface->ifindex;
 	}
 
 	/* set event structures */
@@ -317,6 +317,7 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 	rn.id.s_addr = nbr->id.s_addr;
 	rn.area_id.s_addr = nbr->iface->area_id.s_addr;
 	rn.ifindex = nbr->iface->ifindex;
+	rn.iface_id = nbr->iface_id;
 	rn.state = nbr->state;
 	rn.self = self;
 	ospfe_imsg_compose_rde(IMSG_NEIGHBOR_UP, nbr->peerid, 0, &rn,
