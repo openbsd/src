@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1450 2009/01/22 13:12:51 jsg Exp $
+$OpenBSD: pcidevs,v 1.1451 2009/01/27 19:17:37 oga Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3929,6 +3929,7 @@ product NVIDIA MCP73_HDA_1	0x07fc	MCP73 HD Audio
 product NVIDIA MCP73_HDA_2	0x07fd	MCP73 HD Audio
 product NVIDIA MCP73_OHCI	0x07fe	MCP73 USB
 product NVIDIA GEFORCE_9300_GE_2	0x084b	GeForce 9300 GE
+product NVIDIA GEFORCE_9300	0x086c	GeForce 9300
 product NVIDIA MCP79_HB_1	0x0a80	MCP79 Host
 product NVIDIA MCP79_HB_2	0x0a81	MCP79 Host
 product NVIDIA MCP79_HB_3	0x0a82	MCP79 Host
