@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.47 2009/01/26 22:20:31 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.48 2009/01/27 22:48:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -400,7 +400,8 @@ enum message_flags {
 	F_MESSAGE_RESOLVED	= 0x1,
 	F_MESSAGE_SCHEDULED	= 0x2,
 	F_MESSAGE_PROCESSING	= 0x4,
-	F_MESSAGE_AUTHENTICATED	= 0x8
+	F_MESSAGE_AUTHENTICATED	= 0x8,
+	F_MESSAGE_ENQUEUED	= 0x10
 };
 
 struct message {
@@ -729,6 +730,18 @@ int		queue_record_layout_envelope(char *, struct message *);
 int		queue_remove_layout_envelope(char *, struct message *);
 int		queue_commit_layout_message(char *, struct message *);
 int		queue_open_layout_messagefile(char *, struct message *);
+int		enqueue_create_layout(char *);
+void		enqueue_delete_message(char *);
+int		enqueue_record_envelope(struct message *);
+int		enqueue_remove_envelope(struct message *);
+int		enqueue_commit_message(struct message *);
+int		enqueue_open_messagefile(struct message *);
+int		queue_create_incoming_layout(char *);
+void		queue_delete_incoming_message(char *);
+int		queue_record_incoming_envelope(struct message *);
+int		queue_remove_incoming_envelope(struct message *);
+int		queue_commit_incoming_message(struct message *);
+int		queue_open_incoming_message_file(struct message *);
 u_int16_t	queue_hash(char *);
 
 /* mda.c */
@@ -806,4 +819,6 @@ int		 bsnprintf(char *, size_t, const char *, ...)
     __attribute__ ((format (printf, 3, 4)));
 int		 safe_fclose(FILE *);
 struct passwd 	*safe_getpwnam(const char *);
+struct passwd 	*safe_getpwuid(uid_t);
 int		 hostname_match(char *, char *);
+int		 recipient_to_path(struct path *, char *);

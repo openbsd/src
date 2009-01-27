@@ -1,4 +1,4 @@
-/*	$OpenBSD: sharedqueue.c,v 1.1 2009/01/26 22:20:31 gilles Exp $	*/
+/*	$OpenBSD: sharedqueue.c,v 1.2 2009/01/27 22:48:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -55,7 +55,7 @@ queue_create_layout_message(char *queuepath, char *message_id)
 	if (strlcpy(message_id, rootdir + strlen(queuepath) + 1, MAXPATHLEN)
 	    >= MAXPATHLEN)
 		fatalx("queue_create_layout_message: truncation");
-	
+
 	if (! bsnprintf(evpdir, MAXPATHLEN, "%s%s", rootdir, PATH_ENVELOPES))
 		fatalx("queue_create_layout_message: snprintf");
 
@@ -66,7 +66,6 @@ queue_create_layout_message(char *queuepath, char *message_id)
 		}
 		fatal("queue_create_layout_message: mkdir");
 	}
-
 	return 1;
 }
 
@@ -201,6 +200,79 @@ queue_open_layout_messagefile(char *queuepath, struct message *messagep)
 		fatal("queue_open_incoming_message_file: snprintf");
 
 	return open(pathname, mode, 0600);
+}
+
+int
+enqueue_create_layout(char *msgid)
+{
+	return queue_create_layout_message(PATH_ENQUEUE, msgid);
+}
+
+void
+enqueue_delete_message(char *msgid)
+{
+	queue_delete_layout_message(PATH_ENQUEUE, msgid);
+}
+
+int
+enqueue_record_envelope(struct message *message)
+{
+	return queue_record_layout_envelope(PATH_ENQUEUE, message);
+}
+
+int
+enqueue_remove_envelope(struct message *message)
+{
+	return queue_remove_layout_envelope(PATH_ENQUEUE, message);
+}
+
+int
+enqueue_commit_message(struct message *message)
+{
+	return queue_commit_layout_message(PATH_ENQUEUE, message);
+}
+
+int
+enqueue_open_messagefile(struct message *message)
+{
+	return queue_open_layout_messagefile(PATH_ENQUEUE, message);
+}
+
+
+int
+queue_create_incoming_layout(char *msgid)
+{
+	return queue_create_layout_message(PATH_INCOMING, msgid);
+}
+
+void
+queue_delete_incoming_message(char *msgid)
+{
+	queue_delete_layout_message(PATH_INCOMING, msgid);
+}
+
+int
+queue_record_incoming_envelope(struct message *message)
+{
+	return queue_record_layout_envelope(PATH_INCOMING, message);
+}
+
+int
+queue_remove_incoming_envelope(struct message *message)
+{
+	return queue_remove_layout_envelope(PATH_INCOMING, message);
+}
+
+int
+queue_commit_incoming_message(struct message *message)
+{
+	return queue_commit_layout_message(PATH_INCOMING, message);
+}
+
+int
+queue_open_incoming_message_file(struct message *message)
+{
+	return queue_open_layout_messagefile(PATH_INCOMING, message);
 }
 
 u_int16_t

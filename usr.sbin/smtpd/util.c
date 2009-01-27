@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.8 2009/01/27 15:57:01 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.9 2009/01/27 22:48:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -114,7 +114,6 @@ hostname_match(char *hostname, char *pattern)
 int
 recipient_to_path(struct path *path, char *recipient)
 {
-	size_t len;
 	char *username;
 	char *hostname;
 

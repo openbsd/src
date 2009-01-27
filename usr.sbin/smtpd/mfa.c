@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.9 2009/01/04 17:45:58 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.10 2009/01/27 22:48:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -40,6 +40,7 @@ void		mfa_sig_handler(int, short, void *);
 void		mfa_dispatch_parent(int, short, void *);
 void		mfa_dispatch_smtp(int, short, void *);
 void		mfa_dispatch_lka(int, short, void *);
+void		mfa_dispatch_control(int, short, void *);
 void		mfa_setup_events(struct smtpd *);
 void		mfa_disable_events(struct smtpd *);
 void		mfa_timeout(int, short, void *);
@@ -242,12 +243,92 @@ mfa_dispatch_lka(int sig, short event, void *p)
 			struct submit_status	 *ss;
 
 			ss = imsg.data;
-			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT,
-			    0, 0, -1, ss, sizeof(*ss));
+			if (ss->msg.flags & F_MESSAGE_ENQUEUED) {
+				log_debug("FOOO");
+				imsg_compose(env->sc_ibufs[PROC_CONTROL], IMSG_MFA_RCPT,
+				    0, 0, -1, ss, sizeof(*ss));
+			}
+			else {
+				log_debug("BAAR");
+				imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT,
+				    0, 0, -1, ss, sizeof(*ss));
+			}
 			break;
 		}
 		default:
 			log_debug("mfa_dispatch_lka: unexpected imsg %d",
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(ibuf);
+}
+
+void
+mfa_dispatch_control(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = env->sc_ibufs[PROC_CONTROL];
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("mfa_dispatch_smtp: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_MFA_RCPT: {
+			struct message_recipient *mr;
+			struct submit_status	 ss;
+
+			mr = imsg.data;
+			log_debug("mfa_dispatch_control: testing forward path");
+			ss.id = mr->id;
+			ss.code = 530;
+			ss.u.path = mr->path;
+			ss.ss = mr->ss;
+			ss.msg = mr->msg;
+
+			ss.flags = mr->flags;
+
+			if (! mfa_check_rcpt(env, &ss.u.path, &ss.ss)) {
+				imsg_compose(ibuf, IMSG_MFA_RCPT, 0,
+				    0, -1, &ss, sizeof(ss));
+			}
+			else {
+				ss.code = 250;
+				imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_RCPT, 0,
+				    0, -1, &ss, sizeof(ss));
+			}
+
+			break;
+		}
+		default:
+			log_debug("mfa_dispatch_smtp: unexpected imsg %d",
 			    imsg.hdr.type);
 			break;
 		}
@@ -304,6 +385,7 @@ mfa(struct smtpd *env)
 		{ PROC_PARENT,	mfa_dispatch_parent },
 		{ PROC_SMTP,	mfa_dispatch_smtp },
 		{ PROC_LKA,	mfa_dispatch_lka },
+		{ PROC_CONTROL,	mfa_dispatch_control},
 	};
 
 	switch (pid = fork()) {
@@ -347,7 +429,7 @@ mfa(struct smtpd *env)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	config_peers(env, peers, 3);
+	config_peers(env, peers, 4);
 
 	mfa_setup_events(env);
 	event_dispatch();
@@ -382,7 +464,6 @@ mfa_check_rcpt(struct smtpd *env, struct path *path, struct sockaddr_storage *ss
 		if (! mfa_check_source(r->r_sources, ss))
 			continue;
 
-		log_debug("client authorized");
 		TAILQ_FOREACH(cond, &r->r_conditions, c_entry) {
 			if (cond->c_type == C_ALL) {
 				path->rule = *r;
@@ -396,6 +477,8 @@ mfa_check_rcpt(struct smtpd *env, struct path *path, struct sockaddr_storage *ss
 
 				map = cond->c_match;
 				TAILQ_FOREACH(me, &map->m_contents, me_entry) {
+					log_debug("matching: %s to %s",
+					    path->domain, me->me_key.med_string);
 					if (hostname_match(path->domain, me->me_key.med_string)) {
 						path->rule = *r;
 						return 1;
@@ -429,8 +512,8 @@ mfa_check_source(struct map *map, struct sockaddr_storage *ss)
 
 		if (mfa_match_mask(ss, &me->me_key.med_addr))
 			return 1;
-
 	}
+
 	return 0;
 }
 

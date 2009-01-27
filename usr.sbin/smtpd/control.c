@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.8 2009/01/27 14:32:19 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.9 2009/01/27 22:48:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -89,6 +89,7 @@ control(struct smtpd *env)
 		{ PROC_QUEUE,	 control_dispatch_queue },
 		{ PROC_RUNNER,	 control_dispatch_runner },
 		{ PROC_SMTP,	 control_dispatch_smtp },
+		{ PROC_MFA,	 control_dispatch_mfa },
 	};
 
 	switch (pid = fork()) {
@@ -161,7 +162,7 @@ control(struct smtpd *env)
 
 	TAILQ_INIT(&ctl_conns);
 
-	config_peers(env, peers, 3);
+	config_peers(env, peers, 4);
 	control_listen(env);
 	event_dispatch();
 	control_shutdown();
@@ -303,6 +304,43 @@ control_dispatch_ext(int fd, short event, void *arg)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_MFA_RCPT: {
+			struct message_recipient *mr;
+
+			mr = imsg.data;
+			imsg_compose(env->sc_ibufs[PROC_MFA], IMSG_MFA_RCPT, 0, 0, -1,
+			    mr, sizeof(*mr));
+
+			break;
+		}
+		case IMSG_QUEUE_CREATE_MESSAGE: {
+			struct message *messagep;
+
+			messagep = imsg.data;
+			messagep->session_id = fd;
+			imsg_compose(env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1,
+			    messagep, sizeof(*messagep));
+
+			break;
+		}
+		case IMSG_QUEUE_MESSAGE_FILE: {
+			struct message *messagep;
+
+			messagep = imsg.data;
+			messagep->session_id = fd;
+			imsg_compose(env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_FILE, 0, 0, -1,
+			    messagep, sizeof(*messagep));
+			break;
+		}
+		case IMSG_QUEUE_COMMIT_MESSAGE: {
+			struct message *messagep;
+
+			messagep = imsg.data;
+			messagep->session_id = fd;
+			imsg_compose(env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1,
+			    messagep, sizeof(*messagep));
+			break;
+		}
 		case IMSG_CTL_SHUTDOWN:
 			/* NEEDS_FIX */
 			log_debug("received shutdown request");
@@ -427,6 +465,16 @@ control_dispatch_lka(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_QUEUE_TEMPFAIL: {
+			struct submit_status	 *ss;
+
+			log_debug("GOT LFA REPLY");
+			ss = imsg.data;
+			if (ss->code != 250)
+				log_debug("LKA FAILED WITH TEMPORARY ERROR");
+
+			break;
+		}
 		default:
 			log_debug("control_dispatch_lka: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -473,6 +521,24 @@ control_dispatch_mfa(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_MFA_RCPT: {
+			struct submit_status	 *ss;
+			struct ctl_conn		*c;
+
+			ss = imsg.data;
+
+			if (ss->code == 250)
+				break;
+
+			if ((c = control_connbyfd(ss->id)) == NULL) {
+				log_warn("control_dispatch_queue: fd %lld: not found", ss->id);
+				return;
+			}
+			
+			imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
+
+			break;
+		}
 		default:
 			log_debug("control_dispatch_mfa: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -519,6 +585,84 @@ control_dispatch_queue(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_QUEUE_CREATE_MESSAGE: {
+			struct submit_status	 *ss;
+			struct ctl_conn		*c;
+			
+			ss = imsg.data;
+			if ((c = control_connbyfd(ss->id)) == NULL) {
+				log_warn("control_dispatch_queue: fd %lld: not found", ss->id);
+				return;
+			}
+
+			if (ss->code != 250) {
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				    NULL, 0);
+			}
+			else {
+				ss->msg.session_id = ss->id;
+				strlcpy(ss->msg.message_id, ss->u.msgid, MAXPATHLEN);
+				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
+				    &ss->msg, sizeof(struct message));
+			}
+
+			break;
+		}
+		case IMSG_QUEUE_COMMIT_ENVELOPES: {
+			struct submit_status	 *ss;
+			struct ctl_conn		*c;
+			
+			ss = imsg.data;
+			if ((c = control_connbyfd(ss->id)) == NULL) {
+				log_warn("control_dispatch_queue: fd %lld: not found", ss->id);
+				return;
+			}
+
+			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
+			    NULL, 0);
+
+			break;
+		}
+		case IMSG_QUEUE_MESSAGE_FILE: {
+			struct submit_status	 *ss;
+			struct ctl_conn *c;
+			int fd;
+
+			ss = imsg.data;
+			if ((c = control_connbyfd(ss->id)) == NULL) {
+				log_warn("control_dispatch_queue: fd %lld: not found",
+				    ss->id);
+				return;
+			}
+
+			fd = imsg_get_fd(ibuf, &imsg);
+			if (ss->code == 250)
+				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, fd,
+				    &ss->msg, sizeof(struct message));
+			else
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				    &ss->msg, sizeof(struct message));
+			break;
+		}
+		case IMSG_QUEUE_COMMIT_MESSAGE: {
+			struct submit_status	 *ss;
+			struct ctl_conn *c;
+
+			ss = imsg.data;
+			if ((c = control_connbyfd(ss->id)) == NULL) {
+				log_warn("control_dispatch_queue: fd %lld: not found",
+				    ss->id);
+				return;
+			}
+
+			if (ss->code == 250)
+				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
+				    &ss->msg, sizeof(struct message));
+			else
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				    &ss->msg, sizeof(struct message));
+			break;
+		}
 		default:
 			log_debug("control_dispatch_queue: unexpected imsg %d",
 			    imsg.hdr.type);

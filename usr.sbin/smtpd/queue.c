@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.47 2009/01/26 22:20:31 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.48 2009/01/27 22:48:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -48,12 +48,6 @@ void		queue_setup_events(struct smtpd *);
 void		queue_disable_events(struct smtpd *);
 void		queue_purge_incoming(void);
 
-int		queue_create_incoming_layout(char *);
-void		queue_delete_incoming_message(char *);
-int		queue_record_incoming_envelope(struct message *);
-int		queue_remove_incoming_envelope(struct message *);
-int		queue_commit_incoming_message(struct message *);
-int		queue_open_incoming_message_file(struct message *);
 void		queue_message_update(struct message *);
 
 
@@ -116,6 +110,59 @@ queue_dispatch_control(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_QUEUE_CREATE_MESSAGE: {
+			struct message		*messagep;
+			struct submit_status	 ss;
+
+			log_debug("mfa_dispatch_control: creating message file");
+			messagep = imsg.data;
+
+			ss.id = messagep->session_id;
+			ss.code = 250;
+			bzero(ss.u.msgid, MAXPATHLEN);
+
+			if (! enqueue_create_layout(ss.u.msgid))
+				ss.code = 421;
+
+			imsg_compose(ibuf, IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1,
+			    &ss, sizeof(ss));
+
+			break;
+		}
+		case IMSG_QUEUE_MESSAGE_FILE: {
+			int fd;
+			struct submit_status ss;
+			struct message *messagep;
+
+			messagep = imsg.data;
+			ss.msg = *messagep;
+			ss.id = messagep->session_id;
+			ss.code = 250;
+			fd = enqueue_open_messagefile(messagep);
+			if (fd == -1) 
+				ss.code = 421;
+
+			imsg_compose(ibuf, IMSG_QUEUE_MESSAGE_FILE, 0, 0, fd, &ss,
+			    sizeof(ss));
+
+			break;
+		}
+		case IMSG_QUEUE_COMMIT_MESSAGE: {
+			struct message		*messagep;
+			struct submit_status	 ss;
+
+			messagep = imsg.data;
+			ss.id = messagep->session_id;
+
+			ss.code = 250;
+			if (! enqueue_commit_message(messagep))
+				ss.code = 421;
+
+			imsg_compose(ibuf, IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1,
+			    &ss, sizeof(ss));
+
+			break;
+		}
 		default:
 			log_debug("queue_dispatch_control: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -367,7 +414,7 @@ queue_dispatch_lka(int sig, short event, void *p)
 			fatal("msgbuf_write");
 		imsg_event_add(ibuf);
 		return;
-	default:
+ 	default:
 		fatalx("unknown event");
 	}
 
@@ -382,6 +429,8 @@ queue_dispatch_lka(int sig, short event, void *p)
 		case IMSG_QUEUE_SUBMIT_ENVELOPE: {
 			struct message		*messagep;
 			struct submit_status	 ss;
+			int (*f)(struct message *);
+			enum smtp_proc_type peer;
 
 			messagep = imsg.data;
 			messagep->id = queue_generate_id();
@@ -394,11 +443,19 @@ queue_dispatch_lka(int sig, short event, void *p)
 				messagep->type = T_MTA_MESSAGE;
 
 			/* Write to disk */
-			if (! queue_record_incoming_envelope(messagep)) {
+			if (messagep->flags & F_MESSAGE_ENQUEUED) {
+				f = enqueue_record_envelope;
+				peer = PROC_CONTROL;
+			}
+			else {
+				f = queue_record_incoming_envelope;
+				peer = PROC_SMTP;
+			}
+
+			if (! f(messagep)) {
 				ss.code = 421;
-				imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_QUEUE_TEMPFAIL,
+				imsg_compose(env->sc_ibufs[peer], IMSG_QUEUE_TEMPFAIL,
 				    0, 0, -1, &ss, sizeof(ss));
-				break;
 			}
 
 			break;
@@ -407,13 +464,20 @@ queue_dispatch_lka(int sig, short event, void *p)
 		case IMSG_QUEUE_COMMIT_ENVELOPES: {
 			struct message		*messagep;
 			struct submit_status	 ss;
+			enum smtp_proc_type	 peer;
 
 			messagep = imsg.data;
 			ss.id = messagep->session_id;
 			ss.code = 250;
 
-			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_QUEUE_COMMIT_ENVELOPES,
+			if (messagep->flags & F_MESSAGE_ENQUEUED)
+				peer = PROC_CONTROL;
+			else
+				peer = PROC_SMTP;
+
+			imsg_compose(env->sc_ibufs[peer], IMSG_QUEUE_COMMIT_ENVELOPES,
 			    0, 0, -1, &ss, sizeof(ss));
+
 			break;
 		}
 
@@ -589,7 +653,6 @@ queue_remove_batch_message(struct smtpd *env, struct batch *batchp, struct messa
 		free(batchp);
 		return 1;
 	}
-
 	return 0;
 }
 
@@ -644,42 +707,6 @@ queue_purge_incoming(void)
 	}
 
 	closedir(dirp);
-}
-
-int
-queue_create_incoming_layout(char *msgid)
-{
-	return queue_create_layout_message(PATH_INCOMING, msgid);
-}
-
-void
-queue_delete_incoming_message(char *msgid)
-{
-	queue_delete_layout_message(PATH_INCOMING, msgid);
-}
-
-int
-queue_record_incoming_envelope(struct message *message)
-{
-	return queue_record_layout_envelope(PATH_INCOMING, message);
-}
-
-int
-queue_remove_incoming_envelope(struct message *message)
-{
-	return queue_remove_layout_envelope(PATH_INCOMING, message);
-}
-
-int
-queue_commit_incoming_message(struct message *message)
-{
-	return queue_commit_layout_message(PATH_INCOMING, message);
-}
-
-int
-queue_open_incoming_message_file(struct message *message)
-{
-	return queue_open_layout_messagefile(PATH_INCOMING, message);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.5 2009/01/04 22:35:09 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.6 2009/01/27 22:48:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -46,6 +46,7 @@ __dead void	usage(void);
 int		show_command_output(struct imsg*);
 void		show_queue(int);
 void		show_runqueue(int);
+int		enqueue(int, char **);
 
 struct imsgname {
 	int type;
@@ -65,12 +66,18 @@ struct imsgname imsgunknown = {
 int proctype;
 struct imsgbuf	*ibuf;
 
+int sendmail = 0;
+extern char *__progname;
+
 __dead void
 usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s <command> [arg [...]]\n", __progname);
+	if (sendmail)
+		fprintf(stderr, "usage: %s [-i] rcpt [...]]\n", __progname);
+	else
+		fprintf(stderr, "usage: %s <command> [arg [...]]\n", __progname);
 	exit(1);
 }
 
@@ -85,32 +92,36 @@ int
 main(int argc, char *argv[])
 {
 	struct sockaddr_un	sun;
-	struct parse_result	*res;
+	struct parse_result	*res = NULL;
 	struct imsg		imsg;
 	int			ctl_sock;
 	int			done = 0;
 	int			n;
 
-	/* check for root privileges */
-	if (geteuid())
-		errx(1, "need root privileges");
-
 	/* parse options */
-	if ((res = parse(argc - 1, argv + 1)) == NULL)
-		exit(1);
+	if (strcmp(__progname, "sendmail") == 0 || strcmp(__progname, "send-mail") == 0)
+		sendmail = 1;
+	else {
+		/* check for root privileges */
+		if (geteuid())
+			errx(1, "need root privileges");
 
-	/* handle "disconnected" commands */
-	switch (res->action) {
-	case SHOW_QUEUE:
-		show_queue(0);
-		break;
-	case SHOW_RUNQUEUE:
-		show_runqueue(0);
-		break;
-	default:
-		goto connected;
+		if ((res = parse(argc - 1, argv + 1)) == NULL)
+			exit(1);
+
+		/* handle "disconnected" commands */
+		switch (res->action) {
+		case SHOW_QUEUE:
+			show_queue(0);
+			break;
+		case SHOW_RUNQUEUE:
+			show_runqueue(0);
+			break;
+		default:
+			goto connected;
+		}
+		return 0;
 	}
-	return 0;
 
 connected:
 	/* connect to relayd control socket */
@@ -126,6 +137,9 @@ connected:
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
 	imsg_init(ibuf, ctl_sock, NULL);
+
+	if (sendmail)
+		return enqueue(argc, argv);
 
 	/* process user request */
 	switch (res->action) {
@@ -222,4 +236,3 @@ show_command_output(struct imsg *imsg)
 	}
 	return (1);
 }
-
