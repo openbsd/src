@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.3 2008/12/10 01:31:31 kevlo Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.4 2009/01/27 21:14:35 martynas Exp $	*/
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
  *
@@ -61,8 +61,8 @@
 #endif
 
 #ifdef URTW_DEBUG
-#define	DPRINTF(x)	do { if (rum_debug) printf x; } while (0)
-#define	DPRINTFN(n, x)	do { if (rum_debug >= (n)) printf x; } while (0)
+#define	DPRINTF(x)	do { if (urtw_debug) printf x; } while (0)
+#define	DPRINTFN(n, x)	do { if (urtw_debug >= (n)) printf x; } while (0)
 int urtw_debug = 0;
 #else
 #define	DPRINTF(x)
