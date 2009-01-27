@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.14 2009/01/27 11:38:32 aschrijver Exp $ */
-/*	$OpenBSD: aldap.c,v 1.14 2009/01/27 11:38:32 aschrijver Exp $ */
+/*	$Id: aldap.c,v 1.15 2009/01/27 13:24:25 aschrijver Exp $ */
+/*	$OpenBSD: aldap.c,v 1.15 2009/01/27 13:24:25 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -609,6 +609,7 @@ ldap_parse_search_filter(struct ber_element *ber, char *filter)
 
 	if (*cp != '\0') {
 		ber_free_elements(elm);
+		ber_link_elements(ber, NULL);
 		errno = EINVAL;
 		return (NULL);
 	}
