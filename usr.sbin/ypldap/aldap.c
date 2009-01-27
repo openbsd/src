@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.15 2009/01/27 13:24:25 aschrijver Exp $ */
-/*	$OpenBSD: aldap.c,v 1.15 2009/01/27 13:24:25 aschrijver Exp $ */
+/*	$Id: aldap.c,v 1.16 2009/01/27 15:37:03 aschrijver Exp $ */
+/*	$OpenBSD: aldap.c,v 1.16 2009/01/27 15:37:03 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -149,11 +149,15 @@ aldap_search(struct aldap *ldap, char *basedn, enum scope scope, char *filter,
 	ber = ber_printf_elements(root, "d{tsEEddb", ++ldap->msgid, BER_CLASS_APP,
 	    (unsigned long)LDAP_REQ_SEARCH, basedn, (long long)scope,
 	    (long long)LDAP_DEREF_NEVER, sizelimit, timelimit, typesonly);
-	if(ber == NULL)
+	if(ber == NULL) {
+		ldap->err = ALDAP_ERR_OPERATION_FAILED;
 		goto fail;
+	}
 
-	if((ber = ldap_parse_search_filter(ber, filter)) == NULL)
-		goto parsefail;
+	if((ber = ldap_parse_search_filter(ber, filter)) == NULL) {
+		ldap->err = ALDAP_ERR_PARSER_ERROR;
+		goto fail;
+	}
 
 	if((ber = ber_add_sequence(ber)) == NULL)
 		goto fail;
@@ -168,16 +172,14 @@ aldap_search(struct aldap *ldap, char *basedn, enum scope scope, char *filter,
 	error = ber_write_elements(&ldap->ber, root);
 	ber_free_elements(root);
 	root = NULL;
-	if (error == -1)
+	if (error == -1) {
+		ldap->err = ALDAP_ERR_OPERATION_FAILED;
 		goto fail;
+	}
 
 	return (ldap->msgid);
 
-parsefail:
-	ldap->err = ALDAP_ERR_PARSER_ERROR;
 fail:
-	ldap->err = ALDAP_ERR_OPERATION_FAILED;
-
 	if(root != NULL)
 		ber_free_elements(root);
 
