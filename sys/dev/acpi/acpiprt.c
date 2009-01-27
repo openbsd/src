@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.30 2008/12/19 18:55:47 kettenis Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.31 2009/01/27 21:32:00 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -275,7 +275,7 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 			return;
 		}
 
-		if (res.type != AML_OBJTYPE_BUFFER || res.length < 6) {
+		if (res.type != AML_OBJTYPE_BUFFER || res.length < 5) {
 			printf("invalid _CRS object\n");
 			aml_freevalue(&res);
 			return;
@@ -288,7 +288,7 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 		if ((irq == 0 || irq == 2 || irq == 13) &&
 		    !aml_evalname(sc->sc_acpi, node, "_PRS", 0, NULL, &res)){
 			if (res.type == AML_OBJTYPE_BUFFER &&
-			    res.length >= 6) {
+			    res.length >= 5) {
 				aml_parse_resource(res.length, res.v_buffer,
 				    acpiprt_chooseirq, &irq);
 			}
@@ -483,7 +483,7 @@ acpiprt_route_interrupt(int bus, int dev, int pin)
 		printf("no _CRS method\n");
 		return;
 	}
-	if (res.type != AML_OBJTYPE_BUFFER || res.length < 6) {
+	if (res.type != AML_OBJTYPE_BUFFER || res.length < 5) {
 		printf("invalid _CRS object\n");
 		aml_freevalue(&res);
 		return;
