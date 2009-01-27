@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.24 2008/06/09 20:30:23 miod Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.25 2009/01/27 22:14:13 miod Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -108,10 +108,6 @@ struct uvm {
 
 	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
 	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */
-
-	/* pager VM area bounds */
-	vaddr_t pager_sva;		/* start of pager VA area */
-	vaddr_t pager_eva;		/* end of pager VA area */
 
 	/* swap-related items */
 	simple_lock_data_t swap_data_lock;

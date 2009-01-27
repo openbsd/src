@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.58 2008/10/23 23:54:02 tedu Exp $ */
+/* $OpenBSD: pmap.c,v 1.59 2009/01/27 22:14:12 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -2710,15 +2710,6 @@ pmap_changebit(paddr_t pa, u_long set, u_long mask, cpuid_t cpu_id)
 	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL;
 	     pv = LIST_NEXT(pv, pv_list)) {
 		va = pv->pv_va;
-
-		/*
-		 * XXX don't write protect pager mappings
-		 */
-		if (pv->pv_pmap == pmap_kernel() &&
-/* XXX */	    mask == ~(PG_KWE | PG_UWE)) {
-			if (va >= uvm.pager_sva && va < uvm.pager_eva)
-				continue;
-		}
 
 		PMAP_LOCK(pv->pv_pmap);
 

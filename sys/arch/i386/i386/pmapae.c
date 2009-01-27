@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.14 2007/11/16 16:16:06 deraadt Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.15 2009/01/27 22:14:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -1601,8 +1601,6 @@ pmap_page_remove_pae(struct vm_page *pg)
 		ptes = pmap_map_ptes_pae(pve->pv_pmap);	/* locks pmap */
 
 #ifdef DIAGNOSTIC
-		if (pve->pv_va >= uvm.pager_sva && pve->pv_va < uvm.pager_eva)
-			printf("pmap_page_remove: found pager VA on pv_list\n");
 		if (pve->pv_ptp && (PDE(pve->pv_pmap,
 		    pdei(pve->pv_va)) & PG_FRAME) !=
 		    VM_PAGE_TO_PHYS(pve->pv_ptp)) {
