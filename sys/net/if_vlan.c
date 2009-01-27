@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.77 2008/10/16 19:18:03 naddy Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.78 2009/01/27 15:56:58 naddy Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -209,7 +209,8 @@ vlan_start(struct ifnet *ifp)
 		 * the packet along.
 		 */
 		if (p->if_capabilities & IFCAP_VLAN_HWTAGGING) {
-			m->m_pkthdr.ether_vtag = ifv->ifv_tag;
+			m->m_pkthdr.ether_vtag = ifv->ifv_tag +
+			    (ifv->ifv_prio << EVL_PRIO_BITS);
 			m->m_flags |= M_VLANTAG;
 		} else {
 			struct ether_vlan_header evh;
