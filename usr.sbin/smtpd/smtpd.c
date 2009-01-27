@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.24 2009/01/21 00:00:30 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.25 2009/01/27 11:42:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -55,12 +55,13 @@ void		parent_dispatch_mfa(int, short, void *);
 void		parent_dispatch_smtp(int, short, void *);
 void		parent_sig_handler(int, short, void *);
 int		parent_open_message_file(struct batch *);
-int		parent_open_mailbox(struct batch *, struct path *);
-int		parent_open_filename(struct batch *, struct path *);
-int		parent_rename_mailfile(struct batch *);
-int		parent_open_maildir(struct batch *, struct path *);
+int		parent_mailbox_init(struct passwd *, char *);
+int		parent_mailbox_open(struct passwd *, struct batch *, struct path *);
+int		parent_filename_open(struct passwd *, struct batch *, struct path *);
+int		parent_mailfile_rename(struct batch *, struct path *);
+int		parent_maildir_open(struct passwd *, struct batch *, struct path *);
 int		parent_maildir_init(struct passwd *, char *);
-int		parent_external_mda(struct batch *, struct path *);
+int		parent_external_mda(struct passwd *, struct batch *, struct path *);
 int		check_child(pid_t, const char *);
 int		setup_spool(uid_t, gid_t);
 
@@ -280,16 +281,18 @@ parent_dispatch_mda(int fd, short event, void *p)
 		case IMSG_PARENT_MAILBOX_OPEN: {
 			struct batch *batchp;
 			struct path *path;
+			struct passwd *pw;
+			char *pw_name;
 			u_int8_t i;
 			int desc;
 			struct action_handler {
 				enum action_type action;
-				int (*handler)(struct batch *, struct path *);
+				int (*handler)(struct passwd *, struct batch *, struct path *);
 			} action_hdl_table[] = {
-				{ A_MBOX,	parent_open_mailbox },
-				{ A_MAILDIR,	parent_open_maildir },
+				{ A_MBOX,	parent_mailbox_open },
+				{ A_MAILDIR,	parent_maildir_open },
 				{ A_EXT,	parent_external_mda },
-				{ A_FILENAME,	parent_open_filename }
+				{ A_FILENAME,	parent_filename_open }
 			};
 
 			batchp = imsg.data;
@@ -297,17 +300,30 @@ parent_dispatch_mda(int fd, short event, void *p)
 			if (batchp->type & T_DAEMON_BATCH) {
 				path = &batchp->message.sender;
 			}
-
-			for (i = 0; i < sizeof(action_hdl_table) / sizeof(struct action_handler); ++i) {
-				if (action_hdl_table[i].action == path->rule.r_action) {
-					desc = action_hdl_table[i].handler(batchp, path);
-					imsg_compose(ibuf, IMSG_MDA_MAILBOX_FILE, 0, 0,
-					    desc, batchp, sizeof(struct batch));
+			
+			for (i = 0; i < sizeof(action_hdl_table) / sizeof(struct action_handler); ++i)
+				if (action_hdl_table[i].action == path->rule.r_action)
 					break;
-				}
-			}
 			if (i == sizeof(action_hdl_table) / sizeof(struct action_handler))
 				errx(1, "%s: unknown action.", __func__);
+
+			pw_name = path->pw_name;
+			if (*pw_name == '\0')
+				pw_name = SMTPD_USER;
+
+			pw = safe_getpwnam(pw_name);
+			if (pw == NULL)
+				batchp->message.status |= S_MESSAGE_PERMFAILURE;
+
+			if (setegid(pw->pw_gid) || seteuid(pw->pw_uid))
+				fatal("privdrop failed");
+
+			desc = action_hdl_table[i].handler(pw, batchp, path);
+			imsg_compose(ibuf, IMSG_MDA_MAILBOX_FILE, 0, 0,
+			    desc, batchp, sizeof(struct batch));
+
+			if (setegid(0) || seteuid(0))
+				fatal("privdrop failed");
 
 			break;
 		}
@@ -325,9 +341,26 @@ parent_dispatch_mda(int fd, short event, void *p)
 		}
 		case IMSG_PARENT_MAILBOX_RENAME: {
 			struct batch *batchp;
+			struct path *path;
+			struct passwd *pw;
 
 			batchp = imsg.data;
-			parent_rename_mailfile(batchp);
+			path = &batchp->message.recipient;
+			if (batchp->type & T_DAEMON_BATCH) {
+				path = &batchp->message.sender;
+			}
+
+			pw = safe_getpwnam(path->pw_name);
+			if (pw == NULL)
+				break;			
+
+			if (seteuid(pw->pw_uid) == -1)
+				fatal("privdrop failed");
+
+			parent_mailfile_rename(batchp, path);
+
+			if (seteuid(0) == -1)
+				fatal("privraise failed");
 
 			break;
 		}
@@ -628,9 +661,9 @@ int
 setup_spool(uid_t uid, gid_t gid)
 {
 	unsigned int	 n;
-	char		*paths[] = { PATH_INCOMING, PATH_QUEUE, PATH_PURGE,
+	char		*paths[] = { PATH_INCOMING, PATH_ENQUEUE, PATH_QUEUE,
 				     PATH_RUNQUEUE, PATH_RUNQUEUELOW,
-				     PATH_RUNQUEUEHIGH };
+				     PATH_RUNQUEUEHIGH, PATH_PURGE };
 	char		 pathname[MAXPATHLEN];
 	struct stat	 sb;
 	int		 ret;
@@ -771,21 +804,50 @@ parent_open_message_file(struct batch *batchp)
 }
 
 int
-parent_open_mailbox(struct batch *batchp, struct path *path)
+parent_mailbox_init(struct passwd *pw, char *pathname)
 {
 	int fd;
-	struct passwd *pw;
-	char pathname[MAXPATHLEN];
-	mode_t mode = O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK;
+	int ret = 1;
+	int mode = O_CREAT|O_EXCL;
 
-	pw = safe_getpwnam(path->pw_name);
-	if (pw == NULL) {
-		batchp->message.status |= S_MESSAGE_PERMFAILURE;
-		return -1;
+	/* user cannot create mailbox */
+	if (seteuid(0) == -1)
+		fatal("privraise failed");
+
+	errno = 0;
+	fd = open(pathname, mode, 0600);
+
+	if (fd == -1) {
+		if (errno != EEXIST)
+			ret = 0;
 	}
+
+	if (fd != -1) {
+		if (fchown(fd, pw->pw_uid, 0) == -1)
+			fatal("fchown");
+		close(fd);
+	}
+
+	if (seteuid(pw->pw_uid) == -1)
+		fatal("privdropfailed");
+		
+	return ret;
+}
+
+int
+parent_mailbox_open(struct passwd *pw, struct batch *batchp, struct path *path)
+{
+	int fd;
+	char pathname[MAXPATHLEN];
+	int mode = O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK;
 
 	if (! bsnprintf(pathname, MAXPATHLEN, "%s", path->rule.r_value.path))
 		return -1;
+
+	if (! parent_mailbox_init(pw, pathname)) {
+		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
+		return -1;
+	}
 
 	fd = open(pathname, mode, 0600);
 	if (fd == -1) {
@@ -818,8 +880,6 @@ parent_open_mailbox(struct batch *batchp, struct path *path)
 		fatal("flock");
 	}
 
-	fchown(fd, pw->pw_uid, 0);
-
 	return fd;
 
 lockfail:
@@ -830,20 +890,31 @@ lockfail:
 	return -1;
 }
 
+int
+parent_maildir_init(struct passwd *pw, char *root)
+{
+	u_int8_t i;
+	char pathname[MAXPATHLEN];
+	char *subdir[] = { "/", "/tmp", "/cur", "/new" };
+
+	for (i = 0; i < sizeof (subdir) / sizeof (char *); ++i) {
+		if (! bsnprintf(pathname, MAXPATHLEN, "%s%s", root, subdir[i]))
+			return 0;
+		if (mkdir(pathname, 0700) == -1)
+			if (errno != EEXIST)
+				return 0;
+		chown(pathname, pw->pw_uid, pw->pw_gid);
+	}
+
+	return 1;
+}
 
 int
-parent_open_maildir(struct batch *batchp, struct path *path)
+parent_maildir_open(struct passwd *pw, struct batch *batchp, struct path *path)
 {
 	int fd;
-	struct passwd *pw;
 	char pathname[MAXPATHLEN];
-	mode_t mode = O_CREAT|O_RDWR|O_TRUNC|O_SYNC;
-
-	pw = safe_getpwnam(path->pw_name);
-	if (pw == NULL) {
-		batchp->message.status |= S_MESSAGE_PERMFAILURE;
-		return -1;
-	}
+	int mode = O_CREAT|O_RDWR|O_TRUNC|O_SYNC;
 
 	if (! bsnprintf(pathname, MAXPATHLEN, "%s", path->rule.r_value.path))
 		return -1;
@@ -871,45 +942,10 @@ parent_open_maildir(struct batch *batchp, struct path *path)
 }
 
 int
-parent_maildir_init(struct passwd *pw, char *root)
+parent_mailfile_rename(struct batch *batchp, struct path *path)
 {
-	u_int8_t i;
-	char pathname[MAXPATHLEN];
-	char *subdir[] = { "/", "/tmp", "/cur", "/new" };
-
-	for (i = 0; i < sizeof (subdir) / sizeof (char *); ++i) {
-		if (! bsnprintf(pathname, MAXPATHLEN, "%s%s", root, subdir[i]))
-			return 0;
-		if (mkdir(pathname, 0700) == -1)
-			if (errno != EEXIST)
-				return 0;
-		chown(pathname, pw->pw_uid, pw->pw_gid);
-	}
-
-	return 1;
-}
-
-int
-parent_rename_mailfile(struct batch *batchp)
-{
-	struct passwd *pw;
 	char srcpath[MAXPATHLEN];
 	char dstpath[MAXPATHLEN];
-	struct path *path;
-	int ret;
-
-	if (batchp->type & T_DAEMON_BATCH) {
-		path = &batchp->message.sender;
-	}
-	else {
-		path = &batchp->message.recipient;
-	}
-
-	pw = safe_getpwnam(path->pw_name);
-	if (pw == NULL) {
-		batchp->message.status |= S_MESSAGE_PERMFAILURE;
-		return 0;
-	}
 
 	if (! bsnprintf(srcpath, MAXPATHLEN, "%s/tmp/%s",
 		path->rule.r_value.path, batchp->message.message_uid) ||
@@ -917,43 +953,37 @@ parent_rename_mailfile(struct batch *batchp)
 		path->rule.r_value.path, batchp->message.message_uid))
 		return 0;
 
-	ret = 1;
-	if (setegid(pw->pw_gid) || seteuid(pw->pw_uid))
-		fatal("privdrop failed");
 	if (rename(srcpath, dstpath) == -1) {
-		ret = 0;
+		if (unlink(srcpath) == -1)
+			fatal("unlink");
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
+		return 0;
 	}
-	if (setegid(0) || seteuid(0))
-		fatal("privdrop failed");
 
-	return ret;
+	return 1;
 }
 
 int
-parent_external_mda(struct batch *batchp, struct path *path)
+parent_external_mda(struct passwd *pw, struct batch *batchp, struct path *path)
 {
-	struct passwd *pw;
 	pid_t pid;
 	int pipefd[2];
 	struct mdaproc *mdaproc;
 	char *pw_name;
 
-	pw_name = path->pw_name;
-	if (pw_name[0] == '\0')
-		pw_name = SMTPD_USER;
-
 	log_debug("executing filter as user: %s", pw_name);
-	pw = safe_getpwnam(pw_name);
-	if (pw == NULL) {
-		batchp->message.status |= S_MESSAGE_PERMFAILURE;
-		return -1;
-	}
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pipefd) == -1) {
 		batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		return -1;
 	}
+
+	/* raise privileges before fork so that the child can
+	 * revoke them permanently instead of inheriting the
+	 * saved uid.
+	 */
+	if (seteuid(0) == -1)
+		fatal("privraise failed");
 
 	pid = fork();
 	if (pid == -1) {
@@ -980,6 +1010,9 @@ parent_external_mda(struct batch *batchp, struct path *path)
 		_exit(1);
 	}
 
+	if (seteuid(pw->pw_uid) == -1)
+		fatal("privdrop failed");
+
 	mdaproc = calloc(1, sizeof (struct mdaproc));
 	if (mdaproc == NULL)
 		fatal("calloc");
@@ -992,11 +1025,11 @@ parent_external_mda(struct batch *batchp, struct path *path)
 }
 
 int
-parent_open_filename(struct batch *batchp, struct path *path)
+parent_filename_open(struct passwd *pw, struct batch *batchp, struct path *path)
 {
 	int fd;
 	char pathname[MAXPATHLEN];
-	mode_t mode = O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK;
+	int mode = O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK;
 
 	if (! bsnprintf(pathname, MAXPATHLEN, "%s", path->u.filename))
 		return -1;
