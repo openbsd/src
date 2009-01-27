@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 2009/01/08 19:17:31 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 2009/01/27 15:50:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -78,6 +78,17 @@ safe_getpwnam(const char *name)
 	return ret;
 }
 
+struct passwd *
+safe_getpwuid(uid_t uid)
+{
+	struct passwd *ret;
+
+	ret = getpwuid(uid);
+	endpwent();
+
+	return ret;
+}
+
 int
 hostname_match(char *hostname, char *pattern)
 {
@@ -98,4 +109,54 @@ hostname_match(char *hostname, char *pattern)
 	}
 
 	return (*hostname == '\0' && *pattern == '\0');
+}
+
+int
+recipient_to_path(struct path *path, char *recipient)
+{
+	size_t len;
+	char *username;
+	char *hostname;
+
+	username = recipient;
+	hostname = strchr(username, '@');
+
+	if (username[0] == '\0') {
+		*path->user = '\0';
+		*path->domain = '\0';
+		return 1;
+	}
+
+	if (hostname == NULL) {
+		if (strcasecmp(username, "postmaster") != 0)
+			return 0;
+		hostname = "localhost";
+	} else {
+		*hostname++ = '\0';
+	}
+
+	if (strlcpy(path->user, username, sizeof(path->user))
+	    >= MAX_LOCALPART_SIZE)
+		return 0;
+
+	if (strlcpy(path->domain, hostname, sizeof(path->domain))
+	    >= MAX_DOMAINPART_SIZE)
+		return 0;
+
+	return 1;
+}
+
+int
+session_set_path(struct path *path, char *line)
+{
+	size_t len;
+	char *username;
+	char *hostname;
+
+	len = strlen(line);
+	if (*line != '<' || line[len - 1] != '>')
+		return 0;
+	line[len - 1] = '\0';
+
+	return recipient_to_path(path, line+1);
 }
