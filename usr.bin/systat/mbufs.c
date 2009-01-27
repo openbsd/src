@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.21 2008/12/31 05:37:24 canacar Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.22 2009/01/27 09:18:37 dlg Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -65,6 +65,7 @@ field_def fields_mbuf[] = {
 	{"ALIVE", 3, 5, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"LWM", 3, 5, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"HWM", 3, 5, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{"CWM", 3, 5, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 };
 
 
@@ -78,6 +79,7 @@ field_def fields_mbuf[] = {
 #define FLD_MB_MALIVE	FIELD_ADDR(5)
 #define FLD_MB_MLWM	FIELD_ADDR(6)
 #define FLD_MB_MHWM	FIELD_ADDR(7)
+#define FLD_MB_MCWM	FIELD_ADDR(8)
 
 
 /* Define views */
@@ -87,7 +89,7 @@ field_def *view_mbuf[] = {
 	FLD_MB_RXDELAY, FLD_MB_TXDELAY,
 #endif
 	FLD_MB_LLOCKS, FLD_MB_MSIZE, FLD_MB_MALIVE, FLD_MB_MLWM, FLD_MB_MHWM,
-	NULL
+	FLD_MB_MCWM, NULL
 };
 
 /* Define view managers */
@@ -268,7 +270,6 @@ read_mb(void)
 			continue;
 		}
 
-		mp->mcl_size = pool.pr_size;
 		mp->mcl_alive = pool.pr_nget - pool.pr_nput;
 		mp->mcl_hwm = pool.pr_hiwat;
 	}
@@ -281,8 +282,6 @@ read_mb(void)
 		int pnd = num_disp;
 		for (p = 0; p < mclpool_count; p++) {
 			struct mclpool *mp = &ifi->data.ifi_mclpool[p];
-			if (mp->mcl_size != (ushort)mclpools[p].size)
-				break;
 			if (mp->mcl_alive == 0)
 				continue;
 			num_disp++;
@@ -311,8 +310,6 @@ print_mb(void)
 
 		for (p = 0; p < mclpool_count; p++) {
 			struct mclpool *mp = &ifi->data.ifi_mclpool[p];
-			if (mp->mcl_size != (ushort)mclpools[p].size)
-				break;
 			if (mp->mcl_alive == 0)
 				continue;
 			if (n++ >= dispstart) {
@@ -367,6 +364,8 @@ showmbuf(struct if_info *ifi, int p)
 			print_fld_size(FLD_MB_MLWM, mp->mcl_lwm);
 		if (mp->mcl_hwm)
 			print_fld_size(FLD_MB_MHWM, mp->mcl_hwm);
+		if (mp->mcl_cwm)
+			print_fld_size(FLD_MB_MCWM, mp->mcl_cwm);
 	}
 
 	end_line();
