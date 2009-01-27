@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.115 2009/01/26 15:16:39 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.116 2009/01/27 09:17:51 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -107,6 +107,8 @@ u_int	mclsizes[] = {
 };
 static	char mclnames[MCLPOOLS][8];
 struct	pool mclpools[MCLPOOLS];
+
+int	m_clpool(u_int);
 
 int max_linkhdr;		/* largest link-level header */
 int max_protohdr;		/* largest protocol header */
@@ -271,36 +273,49 @@ m_getclr(int nowait, int type)
 	return (m);
 }
 
+int
+m_clpool(u_int pktlen)
+{
+	int pi;
+
+	for (pi = 0; pi < MCLPOOLS; pi++) {
+                if (pktlen <= mclsizes[pi])
+			return (pi);
+	}
+
+	return (-1);
+}
+
 void
 m_clinitifp(struct ifnet *ifp)
 {
 	struct mclpool *mclp = ifp->if_data.ifi_mclpool;
-	extern u_int mclsizes[];
 	int i;
 
 	/* Initialize high water marks for use of cluster pools */
 	for (i = 0; i < MCLPOOLS; i++) {
-		if (mclp[i].mcl_lwm == 0)
-			mclp[i].mcl_lwm = 2;
-		mclp[i].mcl_hwm = MAX(4, mclp[i].mcl_lwm);
-		mclp[i].mcl_size = mclsizes[i];
+		mclp = &ifp->if_data.ifi_mclpool[i];
+
+		if (mclp->mcl_lwm == 0)
+			mclp->mcl_lwm = 2;
+		if (mclp->mcl_hwm == 0)
+			mclp->mcl_hwm = 32768;
+
+		mclp->mcl_cwm = MAX(4, mclp->mcl_lwm);
 	}
 }
 
 void
-m_clsetlwm(struct ifnet *ifp, u_int pktlen, u_int lwm)
+m_clsetwms(struct ifnet *ifp, u_int pktlen, u_int lwm, u_int hwm)
 {
-	extern u_int mclsizes[];
-	int i;
+	int pi;
 
-	for (i = 0; i < MCLPOOLS; i++) {
-                if (pktlen <= mclsizes[i])
-			break;
-        }
-	if (i >= MCLPOOLS)
+	pi = m_clpool(pktlen);
+	if (pi == -1)
 		return;
 
-	ifp->if_data.ifi_mclpool[i].mcl_lwm = lwm;
+	ifp->if_data.ifi_mclpool[pi].mcl_lwm = lwm;
+	ifp->if_data.ifi_mclpool[pi].mcl_hwm = hwm;
 }
 
 extern int m_clticks;
@@ -328,19 +343,20 @@ m_cldrop(struct ifnet *ifp, int pi)
 		liveticks = ticks;
 		TAILQ_FOREACH(aifp, &ifnet, if_list) {
 			mclp = aifp->if_data.ifi_mclpool;
-			for (i = 0; i < nitems(aifp->if_data.ifi_mclpool); i++)
-				mclp[i].mcl_hwm =
-				    max(mclp[i].mcl_hwm / 2, mclp[i].mcl_lwm);
+			for (i = 0; i < MCLPOOLS; i++) {
+				mclp[i].mcl_cwm =
+				    max(mclp[i].mcl_cwm / 2, mclp[i].mcl_lwm);
+			}
 		}
 	} else if (m_livelock && ticks - liveticks > 5)
 		m_livelock = 0;	/* Let the high water marks grow again */
 
-	mclp = ifp->if_data.ifi_mclpool;
-	if (mclp[pi].mcl_alive <= 2 && mclp[pi].mcl_hwm < 32768 &&
-	    ISSET(ifp->if_flags, IFF_RUNNING) && m_livelock == 0) {
-		/* About to run out, so increase the watermark */
-		mclp[pi].mcl_hwm++;
-	} else if (mclp[pi].mcl_alive >= mclp[pi].mcl_hwm)
+	mclp = &ifp->if_data.ifi_mclpool[pi];
+	if (m_livelock == 0 && ISSET(ifp->if_flags, IFF_RUNNING) &&
+	    mclp->mcl_alive <= 2 && mclp->mcl_cwm < mclp->mcl_hwm) {
+		/* About to run out, so increase the current watermark */
+		mclp->mcl_cwm++;
+	} else if (mclp->mcl_alive >= mclp->mcl_cwm)
 		return (1);		/* No more packets given */
 
 	return (0);
@@ -371,18 +387,12 @@ m_cluncount(struct mbuf *m, int all)
 void
 m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 {
-	struct pool *mclp;
 	int pi;
 	int s;
 
-	for (pi = 0; pi < nitems(mclpools); pi++) {
-		mclp = &mclpools[pi];
-		if (pktlen <= mclp->pr_size)
-			break;
-	}
-
+	pi = m_clpool(pktlen);
 #ifdef DIAGNOSTIC
-	if (mclp == NULL)
+	if (pi == -1)
 		panic("m_clget: request for %d sized cluster", pktlen);
 #endif
 
@@ -390,12 +400,13 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 		return;
 
 	s = splnet();
-	m->m_ext.ext_buf = pool_get(mclp, how == M_WAIT ? PR_WAITOK : 0);
+	m->m_ext.ext_buf = pool_get(&mclpools[pi],
+	    how == M_WAIT ? PR_WAITOK : 0);
 	splx(s);
 	if (m->m_ext.ext_buf != NULL) {
 		m->m_data = m->m_ext.ext_buf;
 		m->m_flags |= M_EXT|M_CLUSTER;
-		m->m_ext.ext_size = mclp->pr_size;
+		m->m_ext.ext_size = mclpools[pi].pr_size;
 		m->m_ext.ext_free = NULL;
 		m->m_ext.ext_arg = NULL;
 
