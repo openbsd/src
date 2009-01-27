@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.9 2009/01/27 22:48:29 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.10 2009/01/27 23:39:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -124,7 +124,7 @@ control(struct smtpd *env)
 	}
 	(void)umask(old_umask);
 
-	if (chmod(SMTPD_SOCKET, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
+	if (chmod(SMTPD_SOCKET, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH) == -1) {
 		(void)unlink(SMTPD_SOCKET);
 		fatal("control: chmod");
 	}
@@ -270,6 +270,11 @@ control_dispatch_ext(int fd, short event, void *arg)
 	struct smtpd		*env = arg;
 	struct imsg		 imsg;
 	int			 n;
+	uid_t			 euid;
+	gid_t			 egid;
+
+	if (getpeereid(fd, &euid, &egid) == -1)
+		fatal("getpeereid");
 
 	if ((c = control_connbyfd(fd)) == NULL) {
 		log_warn("control_dispatch_ext: fd %d: not found", fd);
@@ -344,6 +349,10 @@ control_dispatch_ext(int fd, short event, void *arg)
 		case IMSG_CTL_SHUTDOWN:
 			/* NEEDS_FIX */
 			log_debug("received shutdown request");
+
+			if (euid)
+				goto badcred;
+
 			if (env->sc_flags & SMTPD_EXITING) {
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
@@ -353,6 +362,9 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_MDA_PAUSE:
+			if (euid)
+				goto badcred;
+
 			if (env->sc_flags & SMTPD_MDA_PAUSED) {
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
@@ -364,6 +376,9 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_MTA_PAUSE:
+			if (euid)
+				goto badcred;
+
 			if (env->sc_flags & SMTPD_MTA_PAUSED) {
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
@@ -375,6 +390,9 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_SMTP_PAUSE:
+			if (euid)
+				goto badcred;
+
 			if (env->sc_flags & SMTPD_SMTP_PAUSED) {
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
@@ -386,6 +404,9 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_MDA_RESUME:
+			if (euid)
+				goto badcred;
+
 			if (! (env->sc_flags & SMTPD_MDA_PAUSED)) {
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
@@ -397,6 +418,9 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_MTA_RESUME:
+			if (euid)
+				goto badcred;
+
 			if (!(env->sc_flags & SMTPD_MTA_PAUSED)) {
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
@@ -408,6 +432,9 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_SMTP_RESUME:
+			if (euid)
+				goto badcred;
+
 			if (!(env->sc_flags & SMTPD_SMTP_PAUSED)) {
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
@@ -424,6 +451,10 @@ control_dispatch_ext(int fd, short event, void *arg)
 			break;
 		}
 		imsg_free(&imsg);
+		continue;
+badcred:
+		imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+		    NULL, 0);
 	}
 
 	imsg_event_add(&c->ibuf);
