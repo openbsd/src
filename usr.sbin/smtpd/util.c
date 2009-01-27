@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.7 2009/01/27 15:50:15 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.8 2009/01/27 15:57:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -144,19 +144,4 @@ recipient_to_path(struct path *path, char *recipient)
 		return 0;
 
 	return 1;
-}
-
-int
-session_set_path(struct path *path, char *line)
-{
-	size_t len;
-	char *username;
-	char *hostname;
-
-	len = strlen(line);
-	if (*line != '<' || line[len - 1] != '>')
-		return 0;
-	line[len - 1] = '\0';
-
-	return recipient_to_path(path, line+1);
 }
