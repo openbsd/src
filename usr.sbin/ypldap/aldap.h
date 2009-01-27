@@ -1,5 +1,5 @@
-/*	$Id: aldap.h,v 1.5 2009/01/26 21:56:15 pyr Exp $ */
-/*	$OpenBSD: aldap.h,v 1.5 2009/01/26 21:56:15 pyr Exp $ */
+/*	$Id: aldap.h,v 1.6 2009/01/27 11:33:22 aschrijver Exp $ */
+/*	$OpenBSD: aldap.h,v 1.6 2009/01/27 11:33:22 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -25,6 +25,11 @@
 #define LDAP_PORT 389
 
 struct aldap {
+#define ALDAP_ERR_SUCCESS		0
+#define ALDAP_ERR_PARSER_ERROR		1
+#define ALDAP_ERR_INVALID_FILTER	2
+#define ALDAP_ERR_OPERATION_FAILED	3
+	u_int8_t	err;
 	int		msgid;
 	struct ber	ber;
 };
@@ -183,6 +188,7 @@ void			 aldap_freemsg(struct aldap_message *);
 int	 aldap_bind(struct aldap *, char *, char *);
 int	 aldap_unbind(struct aldap *);
 int	 aldap_search(struct aldap *, char *, enum scope, char *, char **, int, int, int);
+int	 aldap_get_errno(struct aldap *, const char **);
 
 int	 aldap_get_resultcode(struct aldap_message *);
 char	*aldap_get_dn(struct aldap_message *);

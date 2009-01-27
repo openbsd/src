@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.10 2009/01/26 21:56:15 pyr Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.11 2009/01/27 11:33:22 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -425,7 +425,7 @@ ldapclient(int pipe_main2client[2])
 int
 client_try_idm(struct env *env, struct idm *idm)
 {
-	const char		*where;
+	const char		*where, *errstr;
 	char			*attrs[ATTR_MAX+1];
 	char			**ldap_attrs;
 	int			 i, j, k;
@@ -463,8 +463,11 @@ client_try_idm(struct env *env, struct idm *idm)
 
 	where = "search";
 	if(aldap_search(al, idm->idm_basedn, LDAP_SCOPE_SUBTREE,
-		    idm->idm_filters[FILTER_USER], attrs, 0, 0, 0) == -1)
+		    idm->idm_filters[FILTER_USER], attrs, 0, 0, 0) == -1) {
+		aldap_get_errno(al, &errstr);
+		log_debug("%s\n", errstr);
 		goto bad;
+	}
 
 	/*
 	 * build password line.
@@ -556,8 +559,12 @@ next_pwdentry:
 
 	where = "search";
 	if(aldap_search(al, idm->idm_basedn, LDAP_SCOPE_SUBTREE,
-		    idm->idm_filters[FILTER_GROUP], attrs, 0, 0, 0) == -1)
+		    idm->idm_filters[FILTER_GROUP], attrs, 0, 0, 0) == -1) {
+		aldap_get_errno(al, &errstr);
+		log_debug("%s\n", errstr);
+		
 		goto bad;
+	}
 
 	/*
 	 * build group line.

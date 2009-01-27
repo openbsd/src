@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.12 2009/01/26 21:56:15 pyr Exp $ */
-/*	$OpenBSD: aldap.c,v 1.12 2009/01/26 21:56:15 pyr Exp $ */
+/*	$Id: aldap.c,v 1.13 2009/01/27 11:33:22 aschrijver Exp $ */
+/*	$OpenBSD: aldap.c,v 1.13 2009/01/27 11:33:22 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -100,6 +100,8 @@ aldap_bind(struct aldap *ldap, char *binddn, char *bindcred)
 fail:
 	if(root != NULL)
 		ber_free_elements(root);
+
+	ldap->err = ALDAP_ERR_OPERATION_FAILED;
 	return (-1);
 }
 
@@ -128,6 +130,8 @@ aldap_unbind(struct aldap *ldap)
 fail:
 	if(root != NULL)
 		ber_free_elements(root);
+
+	ldap->err = ALDAP_ERR_OPERATION_FAILED;
 
 	return (-1);
 }
@@ -170,7 +174,10 @@ aldap_search(struct aldap *ldap, char *basedn, enum scope scope, char *filter,
 	return (ldap->msgid);
 
 parsefail: /* XXX -- error reporting */
+	ldap->err = ALDAP_ERR_PARSER_ERROR;
 fail:
+	ldap->err = ALDAP_ERR_OPERATION_FAILED;
+
 	if(root != NULL)
 		ber_free_elements(root);
 
@@ -228,6 +235,7 @@ aldap_parse(struct aldap *ldap)
 
 	return m;
 parsefail:
+	ldap->err = ALDAP_ERR_PARSER_ERROR;
 	aldap_freemsg(m);
 	return NULL;
 }
@@ -1097,4 +1105,26 @@ parseval(char *p, size_t len)
 	}
 
 	return buffer;
+}
+int
+aldap_get_errno(struct aldap *a, const char **estr)
+{
+	switch (a->err) {
+	case ALDAP_ERR_SUCCESS:
+		*estr = "success";
+		break;
+	case ALDAP_ERR_PARSER_ERROR:
+		*estr = "parser failed";
+		break;
+	case ALDAP_ERR_INVALID_FILTER:
+		*estr = "invalid filter";
+		break;
+	case ALDAP_ERR_OPERATION_FAILED:
+		*estr = "operation failed";
+		break;
+	default:
+		*estr = "unknown";
+		break;
+	}
+	return (a->err);
 }
