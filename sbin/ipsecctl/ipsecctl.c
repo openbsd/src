@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.72 2009/01/20 14:36:19 mpf Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.73 2009/01/27 15:32:08 bluhm Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -163,7 +163,7 @@ ipsecctl_commit(int action, struct ipsecctl *ipsec)
 	TAILQ_FOREACH(rp, &ipsec->rule_queue, rule_entry) {
 		if (rp->type & RULE_IKE) {
 			if (ike_ipsec_establish(action, rp) == -1) {
-				warnx("failed to %s rule %d",
+				warnx("failed to %s ike rule %d",
 				    action == ACTION_DELETE ? "delete" : "add",
 				    rp->nr);
 				ret = 2;
