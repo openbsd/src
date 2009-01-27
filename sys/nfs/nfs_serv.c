@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.62 2009/01/24 23:35:47 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.63 2009/01/27 23:40:14 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -896,7 +896,7 @@ nfsrv_writegather(ndp, slp, procp, mrq)
 	    nfsd->nd_mreq = NULL;
 	    nfsd->nd_stable = NFSV3WRITE_FILESYNC;
 	    getmicrotime(&tv);
-	    timeradd(&nfsd->nd_time, &nfsrvw_procrastinate_tv, &nfsd->nd_time);
+	    timeradd(&tv, &nfsrvw_procrastinate_tv, &nfsd->nd_time);
     
 	    /*
 	     * Now, get the write header..
