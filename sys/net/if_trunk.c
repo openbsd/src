@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.64 2009/01/27 12:58:27 naddy Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.65 2009/01/27 16:40:54 naddy Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -936,7 +936,7 @@ trunk_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
 		if (tr->tr_proto != TRUNK_PROTO_NONE && tr->tr_count) {
