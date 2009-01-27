@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.41 2009/01/26 21:45:11 naddy Exp $ */
+/*	$OpenBSD: sensors.c,v 1.42 2009/01/27 15:21:20 stevesk Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -136,7 +136,7 @@ sensor_add(int sensordev, char *dxname)
 
 	TAILQ_INSERT_TAIL(&conf->ntp_sensors, s, entry);
 
-	log_debug("sensor %s added (weight %d, correction %.6f, refstr %-4s)",
+	log_debug("sensor %s added (weight %d, correction %.6f, refstr %.4s)",
 	    s->device, s->weight, s->correction / 1e6, &s->refid);
 }
 
