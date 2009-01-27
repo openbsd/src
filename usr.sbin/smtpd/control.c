@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.7 2009/01/04 22:35:09 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.8 2009/01/27 14:32:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -225,6 +225,7 @@ control_accept(int listenfd, short event, void *arg)
 
 	imsg_init(&c->ibuf, connfd, control_dispatch_ext);
 	c->ibuf.events = EV_READ;
+	c->ibuf.data = env;
 	event_set(&c->ibuf.ev, c->ibuf.fd, c->ibuf.events,
 	    c->ibuf.handler, env);
 	event_add(&c->ibuf.ev, NULL);
