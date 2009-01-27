@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.45 2008/11/24 19:55:33 thib Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.46 2009/01/27 19:21:03 ariane Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -60,13 +60,38 @@ struct uvm_pagerops *uvmpagerops[] = {
 
 /*
  * the pager map: provides KVA for I/O
+ *
+ * Each uvm_pseg has room for MAX_PAGERMAP_SEGS pager io space of
+ * MAXBSIZE bytes.
+ *
+ * The number of uvm_pseg instances is dynamic using an array segs.
+ * At most UVM_PSEG_COUNT instances can exist.
+ *
+ * psegs[0] always exists (so that the pager can always map in pages).
+ * psegs[0] element 0 is always reserved for the pagedaemon.
+ *
+ * Any other pseg is automatically created when no space is available
+ * and automatically destroyed when it is no longer in use.
  */
+#define MAX_PAGER_SEGS	16
+#define PSEG_NUMSEGS	(PAGER_MAP_SIZE / MAX_PAGER_SEGS / MAXBSIZE)
+struct uvm_pseg {
+	/* Start of virtual space; 0 if not inited. */
+	vaddr_t	start;
+	/* Bitmap of the segments in use in this pseg. */
+	int	use;
+};
+struct	mutex uvm_pseg_lck;
+struct	uvm_pseg psegs[PSEG_NUMSEGS];
 
-vm_map_t pager_map;		/* XXX */
-simple_lock_data_t pager_map_wanted_lock;
-boolean_t pager_map_wanted;	/* locked by pager map */
-static vaddr_t emergva;
-static boolean_t emerginuse;
+#define UVM_PSEG_FULL(pseg)	((pseg)->use == (1 << MAX_PAGER_SEGS) - 1)
+#define UVM_PSEG_EMPTY(pseg)	((pseg)->use == 0)
+#define UVM_PSEG_INUSE(pseg,id)	(((pseg)->use & (1 << (id))) != 0)
+
+void	uvm_pseg_init(struct uvm_pseg *);
+void	uvm_pseg_destroy(struct uvm_pseg *);
+vaddr_t	uvm_pseg_get(int);
+void	uvm_pseg_release(vaddr_t);
 
 /*
  * uvm_pager_init: init pagers (at boot time)
@@ -81,17 +106,13 @@ uvm_pager_init()
 	 * init pager map
 	 */
 
-	pager_map = uvm_km_suballoc(kernel_map, &uvm.pager_sva, &uvm.pager_eva,
-	 			    PAGER_MAP_SIZE, 0, FALSE, NULL);
-	simple_lock_init(&pager_map_wanted_lock);
-	pager_map_wanted = FALSE;
-	emergva = uvm_km_valloc(kernel_map, MAXBSIZE);
-	emerginuse = FALSE;
+	uvm_pseg_init(&psegs[0]);
+	mtx_init(&uvm_pseg_lck, IPL_VM);
 
 	/*
 	 * init ASYNC I/O queue
 	 */
-	
+
 	TAILQ_INIT(&uvm.aio_done);
 
 	/*
@@ -105,129 +126,198 @@ uvm_pager_init()
 }
 
 /*
- * uvm_pagermapin: map pages into KVA (pager_map) for I/O that needs mappings
+ * Initialize a uvm_pseg.
  *
- * we basically just map in a blank map entry to reserve the space in the
- * map and then use pmap_enter() to put the mappings in by hand.
+ * May fail, in which case seg->start == 0.
+ *
+ * Caller locks uvm_pseg_lck.
  */
-
-vaddr_t
-uvm_pagermapin(pps, npages, flags)
-	struct vm_page **pps;
-	int npages;
-	int flags;
+void
+uvm_pseg_init(struct uvm_pseg *pseg)
 {
-	vsize_t size;
-	vaddr_t kva;
-	vaddr_t cva;
-	struct vm_page *pp;
+	KASSERT(pseg->start == 0);
+	KASSERT(pseg->use == 0);
+	pseg->start = uvm_km_valloc(kernel_map, MAX_PAGER_SEGS * MAXBSIZE);
+}
+
+/*
+ * Destroy a uvm_pseg.
+ *
+ * Never fails.
+ *
+ * Requires that seg != &psegs[0]
+ *
+ * Caller locks uvm_pseg_lck.
+ */
+void
+uvm_pseg_destroy(struct uvm_pseg *pseg)
+{
+	KASSERT(pseg != &psegs[0]);
+	KASSERT(pseg->start != 0);
+	KASSERT(pseg->use == 0);
+	uvm_km_free(kernel_map, pseg->start, MAX_PAGER_SEGS * MAXBSIZE);
+	pseg->start = 0;
+}
+
+/*
+ * Acquire a pager map segment.
+ *
+ * Returns a vaddr for paging. 0 on failure.
+ *
+ * Caller does not lock.
+ */
+vaddr_t
+uvm_pseg_get(int flags)
+{
+	int i;
+	struct uvm_pseg *pseg;
+
+	mtx_enter(&uvm_pseg_lck);
+
+pager_seg_restart:
+	/* Find first pseg that has room. */
+	for (pseg = &psegs[0]; pseg != &psegs[PSEG_NUMSEGS]; pseg++) {
+		if (UVM_PSEG_FULL(pseg))
+			continue;
+
+		if (pseg->start == 0) {
+			/* Need initialization. */
+			uvm_pseg_init(pseg);
+			if (pseg->start == 0)
+				goto pager_seg_fail;
+		}
+
+		/* Keep index 0 reserved for pagedaemon. */
+		if (pseg == &psegs[0] && curproc != uvm.pagedaemon_proc)
+			i = 1;
+		else
+			i = 0;
+
+		for (; i < MAX_PAGER_SEGS; i++) {
+			if (!UVM_PSEG_INUSE(pseg, i)) {
+				pseg->use |= 1 << i;
+				mtx_leave(&uvm_pseg_lck);
+				return pseg->start + i * MAXBSIZE;
+			}
+		}
+	}
+
+pager_seg_fail:
+	if ((flags & UVMPAGER_MAPIN_WAITOK) != 0) {
+		msleep(&psegs, &uvm_pseg_lck, PVM, "pagerseg", 0);
+		goto pager_seg_restart;
+	}
+
+	mtx_leave(&uvm_pseg_lck);
+	return 0;
+}
+
+/*
+ * Release a pager map segment.
+ *
+ * Caller does not lock.
+ *
+ * Deallocates pseg if it is no longer in use.
+ */
+void
+uvm_pseg_release(vaddr_t segaddr)
+{
+	int id;
+	struct uvm_pseg *pseg;
+
+	for (pseg = &psegs[0]; pseg != &psegs[PSEG_NUMSEGS]; pseg++) {
+		if (pseg->start <= segaddr &&
+		    segaddr < pseg->start + MAX_PAGER_SEGS * MAXBSIZE)
+			break;
+	}
+	KASSERT(pseg != &psegs[PSEG_NUMSEGS]);
+
+	id = (segaddr - pseg->start) / MAXBSIZE;
+	KASSERT(id >= 0 && id < MAX_PAGER_SEGS);
+
+	/* test for no remainder */
+	KDASSERT(segaddr == pseg->start + id * MAXBSIZE);
+
+	mtx_enter(&uvm_pseg_lck);
+
+	KASSERT(UVM_PSEG_INUSE(pseg, id));
+
+	pseg->use &= ~(1 << id);
+	wakeup(&psegs);
+
+	if (pseg != &psegs[0] && UVM_PSEG_EMPTY(pseg))
+		uvm_pseg_destroy(pseg);
+
+	mtx_leave(&uvm_pseg_lck);
+}
+
+/*
+ * uvm_pagermapin: map pages into KVA for I/O that needs mappings
+ *
+ * We basically just km_valloc a blank map entry to reserve the space in the
+ * kernel map and then use pmap_enter() to put the mappings in by hand.
+ */
+vaddr_t
+uvm_pagermapin(struct vm_page **pps, int npages, int flags)
+{
+	vaddr_t kva, cva;
 	vm_prot_t prot;
+	vsize_t size;
+	struct vm_page *pp;
+
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(pps=%p, npages=%ld)", pps, npages,0,0);
-
-	/*
-	 * compute protection.  outgoing I/O only needs read
-	 * access to the page, whereas incoming needs read/write.
-	 */
+	UVMHIST_LOG(maphist,"(pps=%p, npages=%ld, flags=%d)",
+	    pps, npages, flags,0);
 
 	prot = VM_PROT_READ;
 	if (flags & UVMPAGER_MAPIN_READ)
 		prot |= VM_PROT_WRITE;
+	size = ptoa(npages);
 
-ReStart:
-	size = npages << PAGE_SHIFT;
-	kva = 0;			/* let system choose VA */
+	KASSERT(size <= MAXBSIZE);
 
-	if (uvm_map(pager_map, &kva, size, NULL, 
-	      UVM_UNKNOWN_OFFSET, 0, UVM_FLAG_NOMERGE) != 0) {
-		if (curproc == uvm.pagedaemon_proc) {
-			simple_lock(&pager_map_wanted_lock);
-			if (emerginuse) {
-				UVM_UNLOCK_AND_WAIT(&emergva,
-				    &pager_map_wanted_lock, FALSE,
-				    "emergva", 0);
-				goto ReStart;
-			}
-			emerginuse = TRUE;
-			simple_unlock(&pager_map_wanted_lock);
-			kva = emergva;
-			KASSERT(npages <= MAXBSIZE >> PAGE_SHIFT);
-			goto enter;
-		}
-		if ((flags & UVMPAGER_MAPIN_WAITOK) == 0) {
-			UVMHIST_LOG(maphist,"<- NOWAIT failed", 0,0,0,0);
-			return(0);
-		}
-		simple_lock(&pager_map_wanted_lock);
-		pager_map_wanted = TRUE; 
-		UVMHIST_LOG(maphist, "  SLEEPING on pager_map",0,0,0,0);
-		UVM_UNLOCK_AND_WAIT(pager_map, &pager_map_wanted_lock, FALSE, 
-		    "pager_map", 0);
-		goto ReStart;
+	kva = uvm_pseg_get(flags);
+	if (kva == 0) {
+		UVMHIST_LOG(maphist,"<- NOWAIT failed", 0,0,0,0);
+		return 0;
 	}
 
-enter:
-	/* got it */
 	for (cva = kva ; size != 0 ; size -= PAGE_SIZE, cva += PAGE_SIZE) {
 		pp = *pps++;
 		KASSERT(pp);
 		KASSERT(pp->pg_flags & PG_BUSY);
-		pmap_enter(vm_map_pmap(pager_map), cva, VM_PAGE_TO_PHYS(pp),
-		    prot, PMAP_WIRED | prot);
+		/* Allow pmap_enter to fail. */
+		if (pmap_enter(pmap_kernel(), cva, VM_PAGE_TO_PHYS(pp),
+		    prot, PMAP_WIRED | PMAP_CANFAIL | prot) != 0) {
+			pmap_remove(pmap_kernel(), kva, cva);
+			pmap_update(pmap_kernel());
+			uvm_pseg_release(kva);
+			UVMHIST_LOG(maphist,"<- pmap_enter failed", 0,0,0,0);
+			return 0;
+		}
 	}
-	pmap_update(vm_map_pmap(pager_map));
-
+	pmap_update(pmap_kernel());
 	UVMHIST_LOG(maphist, "<- done (KVA=0x%lx)", kva,0,0,0);
-	return(kva);
+	return kva;
 }
 
 /*
- * uvm_pagermapout: remove pager_map mapping
+ * uvm_pagermapout: remove KVA mapping
  *
- * we remove our mappings by hand and then remove the mapping (waking
- * up anyone wanting space).
+ * We remove our mappings by hand and then remove the mapping.
  */
-
 void
-uvm_pagermapout(kva, npages)
-	vaddr_t kva;
-	int npages;
+uvm_pagermapout(vaddr_t kva, int npages)
 {
-	vsize_t size = npages << PAGE_SHIFT;
-	vm_map_entry_t entries;
 	UVMHIST_FUNC("uvm_pagermapout"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, " (kva=0x%lx, npages=%ld)", kva, npages,0,0);
 
-	/*
-	 * duplicate uvm_unmap, but add in pager_map_wanted handling.
-	 */
-
-	if (kva == emergva) {
-		simple_lock(&pager_map_wanted_lock);
-		emerginuse = FALSE;
-		wakeup(&emergva);
-		simple_unlock(&pager_map_wanted_lock);
-		entries = NULL;
-		goto remove;
-	}
-
-	vm_map_lock(pager_map);
-	uvm_unmap_remove(pager_map, kva, kva + size, &entries, NULL);
-	simple_lock(&pager_map_wanted_lock);
-	if (pager_map_wanted) {
-		pager_map_wanted = FALSE;
-		wakeup(pager_map);
-	}
-	simple_unlock(&pager_map_wanted_lock);
-	vm_map_unlock(pager_map);
-remove:
 	pmap_remove(pmap_kernel(), kva, kva + (npages << PAGE_SHIFT));
-	if (entries)
-		uvm_unmap_detach(entries, 0);
-
 	pmap_update(pmap_kernel());
+	uvm_pseg_release(kva);
+
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
 }
 
