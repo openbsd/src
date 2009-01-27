@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.28 2008/12/04 06:00:47 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.29 2009/01/27 13:49:21 claudio Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -82,7 +82,8 @@ bool seen[256];			/* "have we seen this type yet?" */
 void
 mbpr(void)
 {
-	int totmem, totused, totmbufs, totpct;
+	unsigned long totmem, totused, totmbufs;
+	int totpct;
 	int i, mib[4], npools;
 	struct pool pool;
 	struct mbtypes *mp;
@@ -153,14 +154,14 @@ mbpr(void)
 
 	totmbufs = 0;
 	for (mp = mbtypes; mp->mt_name; mp++)
-		totmbufs += mbstat.m_mtypes[mp->mt_type];
-	printf("%u mbuf%s in use:\n", totmbufs, plural(totmbufs));
+		totmbufs += (unsigned int)mbstat.m_mtypes[mp->mt_type];
+	printf("%lu mbuf%s in use:\n", totmbufs, plural(totmbufs));
 	for (mp = mbtypes; mp->mt_name; mp++)
 		if (mbstat.m_mtypes[mp->mt_type]) {
 			seen[mp->mt_type] = YES;
 			printf("\t%u mbuf%s allocated to %s\n",
 			    mbstat.m_mtypes[mp->mt_type],
-			    plural((int)mbstat.m_mtypes[mp->mt_type]),
+			    plural(mbstat.m_mtypes[mp->mt_type]),
 			    mp->mt_name);
 		}
 	seen[MT_FREE] = YES;
@@ -168,22 +169,22 @@ mbpr(void)
 		if (!seen[i] && mbstat.m_mtypes[i]) {
 			printf("\t%u mbuf%s allocated to <mbuf type %d>\n",
 			    mbstat.m_mtypes[i],
-			    plural((int)mbstat.m_mtypes[i]), i);
+			    plural(mbstat.m_mtypes[i]), i);
 		}
-	totmem = (mbpool.pr_npages * page_size);
+	totmem = (mbpool.pr_npages * (unsigned long)page_size);
 	totused = mbpool.pr_nout * mbpool.pr_size;
 	for (i = 0; i < mclp; i++) {
-		printf("%lu/%lu/%lu mbuf %d byte clusters in use (current/peak/max)\n",
-		    (u_long)(mclpools[i].pr_nout),
-		    (u_long)(mclpools[i].pr_hiwat * mclpools[i].pr_itemsperpage),
-		    (u_long)(mclpools[i].pr_maxpages * mclpools[i].pr_itemsperpage),
+		printf("%u/%lu/%lu mbuf %d byte clusters in use (current/peak/max)\n",
+		    mclpools[i].pr_nout,
+		    (u_long)mclpools[i].pr_hiwat * mclpools[i].pr_itemsperpage,
+		    (u_long)mclpools[i].pr_maxpages * mclpools[i].pr_itemsperpage,
 		    mclpools[i].pr_size);
-		totmem += (mclpools[i].pr_npages * page_size);
+		totmem += (mclpools[i].pr_npages * (unsigned long)page_size);
 		totused += mclpools[i].pr_nout * mclpools[i].pr_size;
 	}
 
-	totpct = (totmem == 0)? 0 : ((totused * 100)/totmem);
-	printf("%u Kbytes allocated to network (%d%% in use)\n",
+	totpct = (totmem == 0)? 0 : (totused/(totmem / 100));
+	printf("%lu Kbytes allocated to network (%d%% in use)\n",
 	    totmem / 1024, totpct);
 	printf("%lu requests for memory denied\n", mbstat.m_drops);
 	printf("%lu requests for memory delayed\n", mbstat.m_wait);
