@@ -248,12 +248,16 @@ DRM_SPINUNLOCK(&dev->irq_lock)
 
 #define DRM_INFO(fmt, arg...)  printf("%s: " fmt, dev_priv->dev.dv_xname, ## arg)
 
+#ifdef DRMDEBUG
 #undef DRM_DEBUG
 #define DRM_DEBUG(fmt, arg...) do {					\
 	if (drm_debug_flag)						\
 		printf("[" DRM_NAME ":pid%d:%s] " fmt, DRM_CURRENTPID,	\
 			__func__ , ## arg);				\
 } while (0)
+#else
+#define DRM_DEBUG(fmt, arg...) do { } while(/* CONSTCOND */ 0)
+#endif
 
 typedef struct drm_pci_id_list
 {
