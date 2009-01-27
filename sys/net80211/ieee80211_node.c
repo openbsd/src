@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.51 2009/01/26 21:55:58 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.52 2009/01/27 17:02:29 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -759,9 +759,11 @@ ieee80211_setup_node(struct ieee80211com *ic,
 	ieee80211_node_newstate(ni, IEEE80211_STA_CACHE);
 
 	ni->ni_ic = ic;	/* back-pointer */
+#ifndef IEEE80211_STA_ONLY
 	IFQ_SET_MAXLEN(&ni->ni_savedq, IEEE80211_PS_MAX_QUEUE);
 	timeout_set(&ni->ni_eapol_to, ieee80211_eapol_timeout, ni);
 	timeout_set(&ni->ni_sa_query_to, ieee80211_sa_query_timeout, ni);
+#endif
 
 	/*
 	 * Note we don't enable the inactive timer when acting
@@ -1033,16 +1035,20 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 		panic("freeing bss node");
 
 	DPRINTF(("%s\n", ether_sprintf(ni->ni_macaddr)));
+#ifndef IEEE80211_STA_ONLY
 	timeout_del(&ni->ni_eapol_to);
 	timeout_del(&ni->ni_sa_query_to);
+#endif
 	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 	RB_REMOVE(ieee80211_tree, &ic->ic_tree, ni);
 	ic->ic_nnodes--;
+#ifndef IEEE80211_STA_ONLY
 	if (!IF_IS_EMPTY(&ni->ni_savedq)) {
 		IF_PURGE(&ni->ni_savedq);
 		if (ic->ic_set_tim != NULL)
 			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
 	}
+#endif
 	if (RB_EMPTY(&ic->ic_tree))
 		ic->ic_inact_timer = 0;
 	(*ic->ic_node_free)(ic, ni);
@@ -1410,8 +1416,10 @@ ieee80211_node_leave_rsn(struct ieee80211com *ic, struct ieee80211_node *ni)
 	ni->ni_flags &= ~IEEE80211_NODE_PMK;
 	ni->ni_rsn_gstate = RSNA_IDLE;
 
-	timeout_del(&ni->ni_sa_query_to);
+#ifndef IEEE80211_STA_ONLY
 	timeout_del(&ni->ni_eapol_to);
+	timeout_del(&ni->ni_sa_query_to);
+#endif
 	ni->ni_rsn_retries = 0;
 	ni->ni_flags &= ~IEEE80211_NODE_TXRXPROT;
 	ni->ni_port_valid = 0;
