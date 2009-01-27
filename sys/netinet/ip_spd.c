@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.58 2008/09/10 14:01:23 blambert Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.59 2009/01/27 22:40:10 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -795,9 +795,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		ipa->ipa_info.sen_direction = ipo->ipo_addr.sen_direction;
 		ipa->ipa_mask.sen_direction = ipo->ipo_mask.sen_direction;
 
-		if (ipo->ipo_mask.sen_ip_src.s_addr == INADDR_ANY ||
-		    ipo->ipo_addr.sen_ip_src.s_addr == INADDR_ANY ||
-		    ipsp_is_unspecified(ipo->ipo_dst)) {
+		if (ipsp_is_unspecified(ipo->ipo_dst)) {
 			ipa->ipa_info.sen_ip_src = ddst->sen_ip_src;
 			ipa->ipa_mask.sen_ip_src.s_addr = INADDR_BROADCAST;
 		} else {
@@ -805,9 +803,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 			ipa->ipa_mask.sen_ip_src = ipo->ipo_mask.sen_ip_src;
 		}
 
-		if (ipo->ipo_mask.sen_ip_dst.s_addr == INADDR_ANY ||
-		    ipo->ipo_addr.sen_ip_dst.s_addr == INADDR_ANY ||
-		    ipsp_is_unspecified(ipo->ipo_dst)) {
+		if (ipsp_is_unspecified(ipo->ipo_dst)) {
 			ipa->ipa_info.sen_ip_dst = ddst->sen_ip_dst;
 			ipa->ipa_mask.sen_ip_dst.s_addr = INADDR_BROADCAST;
 		} else {
@@ -836,9 +832,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		ipa->ipa_mask.sen_ip6_direction =
 		    ipo->ipo_mask.sen_ip6_direction;
 
-		if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_mask.sen_ip6_src) ||
-		    IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_src) ||
-		    ipsp_is_unspecified(ipo->ipo_dst)) {
+		if (ipsp_is_unspecified(ipo->ipo_dst)) {
 			ipa->ipa_info.sen_ip6_src = ddst->sen_ip6_src;
 			ipa->ipa_mask.sen_ip6_src = in6mask128;
 		} else {
@@ -846,9 +840,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 			ipa->ipa_mask.sen_ip6_src = ipo->ipo_mask.sen_ip6_src;
 		}
 
-		if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_mask.sen_ip6_dst) ||
-		    IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_dst) ||
-		    ipsp_is_unspecified(ipo->ipo_dst)) {
+		if (ipsp_is_unspecified(ipo->ipo_dst)) {
 			ipa->ipa_info.sen_ip6_dst = ddst->sen_ip6_dst;
 			ipa->ipa_mask.sen_ip6_dst = in6mask128;
 		} else {
