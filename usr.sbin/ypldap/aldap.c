@@ -1,5 +1,5 @@
-/*	$Id: aldap.c,v 1.13 2009/01/27 11:33:22 aschrijver Exp $ */
-/*	$OpenBSD: aldap.c,v 1.13 2009/01/27 11:33:22 aschrijver Exp $ */
+/*	$Id: aldap.c,v 1.14 2009/01/27 11:38:32 aschrijver Exp $ */
+/*	$OpenBSD: aldap.c,v 1.14 2009/01/27 11:38:32 aschrijver Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -173,7 +173,7 @@ aldap_search(struct aldap *ldap, char *basedn, enum scope scope, char *filter,
 
 	return (ldap->msgid);
 
-parsefail: /* XXX -- error reporting */
+parsefail:
 	ldap->err = ALDAP_ERR_PARSER_ERROR;
 fail:
 	ldap->err = ALDAP_ERR_OPERATION_FAILED;
