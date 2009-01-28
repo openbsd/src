@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.1 2009/01/27 22:48:29 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.2 2009/01/28 00:09:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -70,9 +70,6 @@ enqueue(int argc, char *argv[])
 	username = pw->pw_name;
 	gethostname(hostname, sizeof(hostname));
 
-	fprintf(stdout, "username: %s\n", username);
-	fprintf(stdout, "hostname: %s\n", hostname);
-
 	if (! bsnprintf(sender, MAX_PATH_SIZE, "%s@%s",
 		username, hostname))
 		errx(1, "sender address too long.");
@@ -104,8 +101,6 @@ enqueue(int argc, char *argv[])
 		return 1;
 	}
 	
-	fprintf(stdout, "created layout with id: %s\n", message.message_id);
-
 	if (argc == 0) {
 		fprintf(stdout, "no recipient.\n");
 		return 1;
