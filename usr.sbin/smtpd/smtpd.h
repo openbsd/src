@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.49 2009/01/28 11:27:57 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.50 2009/01/28 12:58:17 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -725,7 +725,7 @@ struct batch    *batch_by_id(struct smtpd *, u_int64_t);
 struct message	*message_by_id(struct smtpd *, struct batch *, u_int64_t);
 u_int16_t	 queue_hash(char *);
 
-/* sharedqueue.c */
+/* queue_shared.c */
 int		queue_create_layout_message(char *, char *);
 void		queue_delete_layout_message(char *, char *);
 int		queue_record_layout_envelope(char *, struct message *);
@@ -744,6 +744,10 @@ int		queue_record_incoming_envelope(struct message *);
 int		queue_remove_incoming_envelope(struct message *);
 int		queue_commit_incoming_message(struct message *);
 int		queue_open_incoming_message_file(struct message *);
+int		queue_open_message_file(char *msgid);
+void		queue_message_update(struct message *);
+void		queue_delete_message(char *);
+
 u_int16_t	queue_hash(char *);
 
 /* mda.c */
