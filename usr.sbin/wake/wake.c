@@ -1,4 +1,4 @@
-/*	$OpenBSD: wake.c,v 1.1 2009/01/28 13:40:48 mbalmer Exp $ */
+/*	$OpenBSD: wake.c,v 1.2 2009/01/28 14:06:31 sobrado Exp $ */
 
 /*
  * Copyright (C) 2006-2008 Marc Balmer.
@@ -71,7 +71,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "%s <interface> <lladdr>\n", __progname);
+	fprintf(stderr, "usage: %s interface lladdr\n", __progname);
 	exit(0);
 }
 
