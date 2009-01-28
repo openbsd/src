@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.14 2009/01/07 00:26:30 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.15 2009/01/28 11:27:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -364,8 +364,8 @@ alias_is_address(struct alias *alias, char *line, size_t len)
 
 	/* scan pre @ for disallowed chars */
 	*domain++ = '\0';
-	strlcpy(alias->u.path.user, line, MAXPATHLEN);
-	strlcpy(alias->u.path.domain, domain, MAXPATHLEN);
+	strlcpy(alias->u.path.user, line, MAX_LOCALPART_SIZE);
+	strlcpy(alias->u.path.domain, domain, MAX_DOMAINPART_SIZE);
 
 	while (*line) {
 		char allowedset[] = "!#$%*/?|^{}`~&'+-=_.";

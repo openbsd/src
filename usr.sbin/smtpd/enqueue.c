@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.3 2009/01/28 00:19:27 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.4 2009/01/28 11:27:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -158,6 +158,8 @@ enqueue_add_recipient(struct message *messagep, char *recipient)
 		errx(1, "invalid recipient address.");
 		return 0;
 	}
+
+	message.session_rcpt = message.recipient;
 
 	mr.ss.ss_family = AF_INET6;
 	mr.ss.ss_len = sizeof(ssin6);

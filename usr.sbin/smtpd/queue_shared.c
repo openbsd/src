@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.1 2009/01/27 22:54:01 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.2 2009/01/28 11:27:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -52,8 +52,8 @@ queue_create_layout_message(char *queuepath, char *message_id)
 		fatal("queue_create_layout_message: mkdtemp");
 	}
 
-	if (strlcpy(message_id, rootdir + strlen(queuepath) + 1, MAXPATHLEN)
-	    >= MAXPATHLEN)
+	if (strlcpy(message_id, rootdir + strlen(queuepath) + 1, MAX_ID_SIZE)
+	    >= MAX_ID_SIZE)
 		fatalx("queue_create_layout_message: truncation");
 
 	if (! bsnprintf(evpdir, MAXPATHLEN, "%s%s", rootdir, PATH_ENVELOPES))
@@ -115,8 +115,8 @@ again:
 		fatal("queue_record_incoming_envelope: fdopen");
 
 	message->creation = time(NULL);
-	if (strlcpy(message->message_uid, strrchr(evpname, '/') + 1, MAXPATHLEN)
-	    >= MAXPATHLEN)
+	if (strlcpy(message->message_uid, strrchr(evpname, '/') + 1, MAX_ID_SIZE)
+	    >= MAX_ID_SIZE)
 		fatalx("queue_record_incoming_envelope: truncation");
 
 	if (fwrite(message, sizeof (struct message), 1, fp) != 1) {

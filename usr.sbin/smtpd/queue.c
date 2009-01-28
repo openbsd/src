@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.48 2009/01/27 22:48:29 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.49 2009/01/28 11:27:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -119,7 +119,7 @@ queue_dispatch_control(int sig, short event, void *p)
 
 			ss.id = messagep->session_id;
 			ss.code = 250;
-			bzero(ss.u.msgid, MAXPATHLEN);
+			bzero(ss.u.msgid, MAX_ID_SIZE);
 
 			if (! enqueue_create_layout(ss.u.msgid))
 				ss.code = 421;
@@ -217,7 +217,7 @@ queue_dispatch_smtp(int sig, short event, void *p)
 			messagep = imsg.data;
 			ss.id = messagep->session_id;
 			ss.code = 250;
-			bzero(ss.u.msgid, MAXPATHLEN);
+			bzero(ss.u.msgid, MAX_ID_SIZE);
 
 			if (! queue_create_incoming_layout(ss.u.msgid))
 				ss.code = 421;
@@ -786,10 +786,10 @@ int
 queue_load_envelope(struct message *messagep, char *evpid)
 {
 	char pathname[MAXPATHLEN];
-	char msgid[MAXPATHLEN];
+	char msgid[MAX_ID_SIZE];
 	FILE *fp;
 
-	if (strlcpy(msgid, evpid, MAXPATHLEN) >= MAXPATHLEN)
+	if (strlcpy(msgid, evpid, MAX_ID_SIZE) >= MAX_ID_SIZE)
 		fatalx("queue_load_envelope: truncation");
 	*strrchr(msgid, '.') = '\0';
 

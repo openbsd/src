@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.48 2009/01/27 22:48:29 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.49 2009/01/28 11:27:57 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -27,6 +27,7 @@
 #define MAX_LINE_SIZE		 1024
 #define MAX_LOCALPART_SIZE	 65
 #define MAX_DOMAINPART_SIZE	 MAXHOSTNAMELEN
+#define MAX_ID_SIZE		 64
 
 /* return and forward path size */
 #define MAX_PATH_SIZE		 256
@@ -414,13 +415,14 @@ struct message {
 	u_int64_t			 session_id;
 	u_int64_t			 batch_id;
 
-	char				 message_id[MAXPATHLEN];
-	char				 message_uid[MAXPATHLEN];
+	char				 message_id[MAX_ID_SIZE];
+	char				 message_uid[MAX_ID_SIZE];
 
 	char				 session_helo[MAXHOSTNAMELEN];
 	char				 session_hostname[MAXHOSTNAMELEN];
 	char				 session_errorline[MAX_LINE_SIZE];
 	struct sockaddr_storage		 session_ss;
+	struct path			 session_rcpt;
 
 	struct path			 sender;
 	struct path			 recipient;
@@ -483,7 +485,7 @@ struct batch {
 	u_int8_t			 state;
 	struct smtpd			*env;
 
-	char				 message_id[MAXPATHLEN];
+	char				 message_id[MAX_ID_SIZE];
 	char				 hostname[MAXHOSTNAMELEN];
 	char				 errorline[MAX_LINE_SIZE];
 
@@ -622,7 +624,7 @@ struct submit_status {
 	int				 code;
 	union submit_path {
 		struct path		 path;
-		char			 msgid[MAXPATHLEN];
+		char			 msgid[MAX_ID_SIZE];
 		char			 errormsg[MAX_LINE_SIZE];
 	}				 u;
 	enum message_flags		 flags;
