@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2009/01/27 22:48:29 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 2009/01/28 12:56:46 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -51,16 +51,18 @@ bsnprintf(char *str, size_t size, const char *format, ...)
 int
 safe_fclose(FILE *fp)
 {
-
+	if (ferror(fp)) {
+		fclose(fp);
+		return 0;
+	}
 	if (fflush(fp)) {
+		fclose(fp);
 		if (errno == ENOSPC)
 			return 0;
 		fatal("safe_fclose: fflush");
 	}
-
 	if (fsync(fileno(fp)))
 		fatal("safe_fclose: fsync");
-
 	if (fclose(fp))
 		fatal("safe_fclose: fclose");
 
