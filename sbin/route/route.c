@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.124 2009/01/08 12:52:35 michele Exp $	*/
+/*	$OpenBSD: route.c,v 1.125 2009/01/28 22:19:53 michele Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -393,8 +393,6 @@ newroute(int argc, char **argv)
 			case K_OUT:
 				if (!--argc)
 					usage(1+*argv);
-				if (af != AF_MPLS)
-					errx(1, "-out requires -mpls");
 				getmplslabel(*++argv, 0);
 				break;
 			case K_POP:
@@ -894,8 +892,8 @@ getmplslabel(char *s, int in)
 		su->smpls.smpls_label = htonl(label << MPLS_LABEL_OFFSET);
 	}
 
-	su->sa.sa_len = aflen;
-	su->sa.sa_family = af;
+	su->sa.sa_len = sizeof(struct sockaddr_mpls);
+	su->sa.sa_family = AF_MPLS;
 }
 
 int
