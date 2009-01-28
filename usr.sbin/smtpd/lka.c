@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.18 2009/01/08 19:17:31 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.19 2009/01/28 17:43:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -463,6 +463,10 @@ lka_dispatch_runner(int sig, short event, void *p)
 				log_debug("resolving MX: %s", mx[i]);
 
 				for (resp = res; resp != NULL; resp = resp->ai_next) {
+
+					if (batchp->rule.r_action == A_RELAYVIA)
+						batchp->mxarray[j].flags = batchp->rule.r_value.relayhost.flags;
+
 					if (resp->ai_family == PF_INET) {
 						struct sockaddr_in *ssin;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.25 2009/01/28 17:29:11 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.26 2009/01/28 17:43:45 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -560,6 +560,7 @@ runner_process_runqueue(struct smtpd *env)
 		message.lasttry = tm;
 		message.flags &= ~F_MESSAGE_SCHEDULED;
 		message.flags |= F_MESSAGE_PROCESSING;
+
 		if (! queue_update_envelope(&message))
 			continue;
 
@@ -702,8 +703,10 @@ runner_batch_resolved(struct smtpd *env, struct batch *lookup)
 	switch (batchp->getaddrinfo_error) {
 	case 0:
 		batchp->flags |= F_BATCH_RESOLVED;
-		for (i = 0; i < batchp->mx_cnt; ++i)
+		for (i = 0; i < batchp->mx_cnt; ++i) {
+			batchp->mxarray[i].flags = lookup->mxarray[i].flags;
 			batchp->mxarray[i].ss = lookup->mxarray[i].ss;
+		}
 		break;
 	case EAI_ADDRFAMILY:
 	case EAI_BADFLAGS:
