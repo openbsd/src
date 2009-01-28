@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.59 2008/12/14 07:46:24 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.60 2009/01/28 20:43:24 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -39,9 +39,12 @@ int	send_file(const char *, int);
 int	sendmail(const char *);
 void	template(FILE *);
 
+const char *categories = "system user library documentation kernel "
+    "alpha amd64 arm hppa i386 m68k m88k mips64 powerpc sh sparc sparc64 vax";
 char *version = "4.2";
 const char *comment[] = {
 	"<synopsis of the problem (one line)>",
+	"<PR category (one line)>",
 	"<precise description of the problem (multiple lines)>",
 	"<code/input/activities to reproduce the problem (multiple lines)>",
 	"<how to correct or work around the problem, if known (multiple lines)>"
@@ -525,7 +528,7 @@ checkfile(const char *pathname)
 {
 	FILE *fp;
 	size_t len;
-	int rval = 0;
+	int category = 0, synopsis = 0;
 	char *buf;
 
 	if ((fp = fopen(pathname, "r")) == NULL) {
@@ -533,13 +536,13 @@ checkfile(const char *pathname)
 		return (0);
 	}
 	while ((buf = fgetln(fp, &len))) {
-		if (matchline(">Synopsis:", buf, len)) {
-			rval = 1;
-			break;
-		}
+		if (matchline(">Category:", buf, len))
+			category = 1;
+		else if (matchline(">Synopsis:", buf, len))
+			synopsis = 1;
 	}
 	fclose(fp);
-	return (rval);
+	return (category && synopsis);
 }
 
 void
@@ -549,6 +552,11 @@ template(FILE *fp)
 	fprintf(fp, "SENDBUG: Lines starting with `SENDBUG' will"
 	    " be removed automatically.\n");
 	fprintf(fp, "SENDBUG:\n");
+	fprintf(fp, "SENDBUG: Choose from the following categories:\n");
+	fprintf(fp, "SENDBUG:\n");
+	fprintf(fp, "SENDBUG: %s\n", categories);
+	fprintf(fp, "SENDBUG:\n");
+	fprintf(fp, "SENDBUG:\n");
 	fprintf(fp, "To: %s\n", "gnats@openbsd.org");
 	fprintf(fp, "Subject: \n");
 	fprintf(fp, "From: %s\n", pw->pw_name);
@@ -556,17 +564,18 @@ template(FILE *fp)
 	fprintf(fp, "Reply-To: %s\n", pw->pw_name);
 	fprintf(fp, "\n");
 	fprintf(fp, ">Synopsis:\t%s\n", comment[0]);
+	fprintf(fp, ">Category:\t%s\n", comment[1]);
 	fprintf(fp, ">Environment:\n");
 	fprintf(fp, "\tSystem      : %s %s\n", os, rel);
 	fprintf(fp, "\tDetails     : %s\n", details);
 	fprintf(fp, "\tArchitecture: %s.%s\n", os, mach);
 	fprintf(fp, "\tMachine     : %s\n", mach);
 	fprintf(fp, ">Description:\n");
-	fprintf(fp, "\t%s\n", comment[1]);
-	fprintf(fp, ">How-To-Repeat:\n");
 	fprintf(fp, "\t%s\n", comment[2]);
-	fprintf(fp, ">Fix:\n");
+	fprintf(fp, ">How-To-Repeat:\n");
 	fprintf(fp, "\t%s\n", comment[3]);
+	fprintf(fp, ">Fix:\n");
+	fprintf(fp, "\t%s\n", comment[4]);
 
 	if (!Dflag)
 		dmesg(fp);
