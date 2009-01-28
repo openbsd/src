@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.156 2008/07/08 12:29:58 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.157 2009/01/28 17:40:13 pyr Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -181,6 +181,15 @@ cvs_export(int argc, char **argv)
 
 	while ((ch = getopt(argc, argv, cvs_cmd_export.cmd_opts)) != -1) {
 		switch (ch) {
+		case 'd':
+			if (dflag != NULL)
+				fatal("-d specified two or more times");
+			dflag = optarg;
+			checkout_target_dir = dflag;
+
+			if (cvs_server_active == 1)
+				disable_fast_checkout = 1;
+			break;
 		case 'k':
 			koptstr = optarg;
 			kflag = rcs_kflag_get(koptstr);
