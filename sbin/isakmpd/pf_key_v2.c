@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.184 2008/07/01 15:00:53 bluhm Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.185 2009/01/28 17:57:15 hshoexer Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -577,8 +577,7 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 		goto cleanup;
 	addr = 0;
 
-	len =
-	    sizeof(struct sadb_address) + PF_KEY_V2_ROUND(SA_LEN(dst));
+	len = sizeof(struct sadb_address) + PF_KEY_V2_ROUND(SA_LEN(dst));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
