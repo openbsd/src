@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.16 2009/01/28 21:44:15 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.17 2009/01/28 22:27:56 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -943,7 +943,9 @@ mta_expand_mxarray(struct session *sessionp)
 		}
 
 		switch (mxhost.flags & F_SSL) {
-		case F_SSL:
+		case F_SSL: {
+			u_int8_t flags = mxhost.flags;
+
 			if (mxhost.ss.ss_family == AF_INET) {
 				ssin->sin_port = htons(465);
 				mxhost.ss = *(struct sockaddr_storage *)ssin;
@@ -952,6 +954,7 @@ mta_expand_mxarray(struct session *sessionp)
 				ssin6->sin6_port = htons(465);
 				mxhost.ss = *(struct sockaddr_storage *)ssin6;
 			}
+			mxhost.flags = flags & ~F_STARTTLS;
 			sessionp->mxarray[j++] = mxhost;
 
 			if (mxhost.ss.ss_family == AF_INET) {
@@ -962,8 +965,10 @@ mta_expand_mxarray(struct session *sessionp)
 				ssin6->sin6_port = htons(25);
 				mxhost.ss = *(struct sockaddr_storage *)ssin6;
 			}
+			mxhost.flags = flags & ~F_SSMTP;
 			sessionp->mxarray[j++] = mxhost;
 			break;
+		}
 		case F_SSMTP:
 			if (mxhost.ss.ss_family == AF_INET) {
 				ssin->sin_port = htons(465);
