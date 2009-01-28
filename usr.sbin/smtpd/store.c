@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.10 2009/01/14 22:41:41 gilles Exp $	*/
+/*	$OpenBSD: store.c,v 1.11 2009/01/28 12:28:25 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -36,11 +36,10 @@
 
 #include "smtpd.h"
 
-int file_copy(FILE *, FILE *);
-int file_append(FILE *, FILE *);
+int file_copy(FILE *, FILE *, enum action_type);
 
 int
-file_copy(FILE *dest, FILE *src)
+file_copy(FILE *dest, FILE *src, enum action_type type)
 {
 	char *buf, *lbuf;
 	size_t len;
@@ -61,33 +60,25 @@ file_copy(FILE *dest, FILE *src)
 			buf = lbuf;
 		}
 
-		escape = buf;
-		while (*escape != '\0' && *escape == '>')
-			++escape;
-		if (strncmp("From ", escape, 5) == 0) {
-			if (fprintf(dest, ">") != 1)
-				return 0;
+		if (type == A_MBOX) {
+			escape = buf;
+			while (*escape == '>')
+				++escape;
+			if (strncmp("From ", escape, 5) == 0) {
+				if (fprintf(dest, ">") != 1)
+					return 0;
+			}
 		}
 
 		if (fprintf(dest, "%s\n", buf) != (int)len + 1)
 			return 0;
 	}
 	free(lbuf);
-	return 1;
-}
 
-int
-file_append(FILE *dest, FILE *src)
-{
-	struct stat sb;
-	size_t srcsz;
-
-	if (fstat(fileno(src), &sb) == -1)
-		return 0;
-	srcsz = sb.st_size;
-
-	if (! file_copy(dest, src))
-		return 0;
+	if (type == A_MBOX) {
+		if (fprintf(dest, "\n") != 1)
+			return 0;
+	}
 
 	return 1;
 }
@@ -233,10 +224,7 @@ store_write_daemon(struct batch *batchp, struct message *messagep)
 	if (fprintf(mboxfp, "Below is a copy of the original message:\n\n") == -1)
 		goto bad;
 
-	if (! file_append(mboxfp, messagefp))
-		goto bad;
-
-	if (fprintf(mboxfp, "\n") == -1)
+	if (! file_copy(mboxfp, messagefp, messagep->recipient.rule.r_action))
 		goto bad;
 
 	fflush(mboxfp);
@@ -272,12 +260,8 @@ store_write_message(struct batch *batchp, struct message *messagep)
 	if (! store_write_header(batchp, messagep, mboxfp))
 		goto bad;
 
-	if (! file_append(mboxfp, messagefp))
+	if (! file_copy(mboxfp, messagefp, messagep->recipient.rule.r_action))
 		goto bad;
-
-	if (fprintf(mboxfp, "\n") == -1)
-		goto bad;
-
 
 	fflush(mboxfp);
 	fsync(fileno(mboxfp));
