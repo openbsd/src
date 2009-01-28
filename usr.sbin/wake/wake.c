@@ -1,4 +1,4 @@
-/*	$OpenBSD: wake.c,v 1.2 2009/01/28 14:06:31 sobrado Exp $ */
+/*	$OpenBSD: wake.c,v 1.3 2009/01/28 22:28:38 michele Exp $ */
 
 /*
  * Copyright (C) 2006-2008 Marc Balmer.
@@ -83,18 +83,18 @@ wake(const char *iface, const char *host)
 
 	bpf = get_bpf();
 	if (bpf == -1)
-		return -1;
+		return (-1);
 	if (bind_if_to_bpf(iface, bpf) == -1) {
 		close(bpf);
-		return -1;
+		return (-1);
 	}
 	if (get_ether(host, &macaddr) == -1) {
 		close(bpf);
-		return -1;
+		return (-1);
 	}
 	send_wakeup(bpf, &macaddr);
 	close(bpf);
-	return 0;
+	return (0);
 }
 
 int
@@ -106,11 +106,11 @@ get_bpf(void)
 	for (i = 0;; i++) {
 		asprintf(&path, BPF_PATH_FORMAT, i);
 		if (path == NULL)
-			return -1;
+			return (-1);
 		fd = open(path, O_RDWR);
 		if (fd != -1) {
 			free(path);
-			return fd;
+			return (fd);
 		}
 		switch (errno) {
 		case EBUSY:
@@ -118,12 +118,12 @@ get_bpf(void)
 			continue;
 		case ENOENT:
 			free(path);
-			return -1;
+			return (-1);
 		}
 		free(path);
-		return -1;
+		return (-1);
 	}
-	return -1;
+	return (-1);
 }
 
 int
@@ -133,15 +133,15 @@ bind_if_to_bpf(char const *ifname, int bpf)
 	u_int dlt;
 
 	if (strlen(ifname) >= sizeof(ifr.ifr_name))
-		return -1;
+		return (-1);
 	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(bpf, BIOCSETIF, &ifr) == -1)
-		return -1;
+		return (-1);
 	if (ioctl(bpf, BIOCGDLT, &dlt) == -1)
-		return -1;
+		return (-1);
 	if (dlt != DLT_EN10MB)
-		return -1;
-	return 0;
+		return (-1);
+	return (0);
 }
 
 int
@@ -151,11 +151,11 @@ get_ether(char const *text, struct ether_addr *addr)
 	paddr = ether_aton(text);
 	if (paddr != NULL) {
 		*addr = *paddr;
-		return 0;
+		return (0);
 	}
 	if (ether_hostton(text, addr))
-		return -1;
-	return 0;
+		return (-1);
+	return (0);
 }
 
 void
@@ -186,5 +186,5 @@ main(int argc, char *argv[])
 	if (wake(argv[1], argv[2]))
 		err(1, "error sending Wake on LAN frame over %s to %s",
 		    argv[1], argv[2]);
-	return 0;
+	return (0);
 }
