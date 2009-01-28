@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.141 2009/01/20 14:36:19 mpf Exp $	*/
+/*	$OpenBSD: parse.y,v 1.142 2009/01/28 18:07:19 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -152,6 +152,7 @@ struct ipsec_addr_wrap	*host_v6(const char *, int);
 struct ipsec_addr_wrap	*host_v4(const char *, int);
 struct ipsec_addr_wrap	*host_dns(const char *, int);
 struct ipsec_addr_wrap	*host_if(const char *, int);
+struct ipsec_addr_wrap	*host_any(void);
 void			 ifa_load(void);
 int			 ifa_exists(const char *);
 struct ipsec_addr_wrap	*ifa_lookup(const char *ifa_name);
@@ -210,6 +211,7 @@ typedef struct {
 		u_int16_t	 port;
 		struct ipsec_hosts hosts;
 		struct ipsec_hosts peers;
+		struct ipsec_addr_wrap *anyhost;
 		struct ipsec_addr_wrap *singlehost;
 		struct ipsec_addr_wrap *host;
 		struct {
@@ -261,6 +263,7 @@ typedef struct {
 %type	<v.port>		port
 %type	<v.number>		portval
 %type	<v.peers>		peers
+%type	<v.anyhost>		anyhost
 %type	<v.singlehost>		singlehost
 %type	<v.host>		host host_list host_spec
 %type	<v.ids>			ids
@@ -464,15 +467,15 @@ peers		: /* empty */				{
 			$$.dst = NULL;
 			$$.src = NULL;
 		}
-		| PEER singlehost LOCAL singlehost	{
+		| PEER anyhost LOCAL singlehost		{
 			$$.dst = $2;
 			$$.src = $4;
 		}
-		| LOCAL singlehost PEER singlehost	{
+		| LOCAL singlehost PEER anyhost		{
 			$$.dst = $4;
 			$$.src = $2;
 		}
-		| PEER singlehost			{
+		| PEER anyhost				{
 			$$.dst = $2;
 			$$.src = NULL;
 		}
@@ -481,6 +484,11 @@ peers		: /* empty */				{
 			$$.src = $2;
 		}
 		;
+
+anyhost		: singlehost			{ $$ = $1; }
+		| ANY				{
+			$$ = host_any();
+		}
 
 singlehost	: /* empty */			{ $$ = NULL; }
 		| STRING			{
@@ -540,15 +548,7 @@ host		: host_spec			{ $$ = $1; }
 			$$->srcnat = $3;
 		}
 		| ANY				{
-			struct ipsec_addr_wrap	*ipa;
-
-			ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
-			if (ipa == NULL)
-				err(1, "host: calloc");
-			ipa->af = AF_UNSPEC;
-			ipa->netaddress = 1;
-			ipa->tail = ipa;
-			$$ = ipa;
+			$$ = host_any();
 		}
 		| '{' host_list '}'		{ $$ = $2; }
 		;
@@ -1694,6 +1694,20 @@ host_if(const char *s, int mask)
 	return (ipa);
 }
 
+struct ipsec_addr_wrap *
+host_any(void)
+{
+	struct ipsec_addr_wrap	*ipa;
+
+	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
+	if (ipa == NULL)
+		err(1, "host_any: calloc");
+	ipa->af = AF_UNSPEC;
+	ipa->netaddress = 1;
+	ipa->tail = ipa;
+	return (ipa);
+}
+
 /* interface lookup routintes */
 
 struct ipsec_addr_wrap	*iftab;
@@ -2449,6 +2463,11 @@ set_rule_peers(struct ipsec_rule *r, struct ipsec_hosts *peers)
 			else
 				r->peer = copyhost(r->dst);
 		}
+	} else if (r->peer->af == AF_UNSPEC) {
+		/* If peer has been specified as any, use the default peer. */
+		free(r->peer);
+		r->peer = NULL;
+		return (0);
 	}
 
 	if (r->type == RULE_FLOW && r->peer == NULL) {
