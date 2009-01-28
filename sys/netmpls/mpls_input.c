@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.17 2009/01/08 12:47:45 michele Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.18 2009/01/28 22:18:44 michele Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -70,10 +70,10 @@ mpls_input(struct mbuf *m)
 {
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct sockaddr_mpls *smpls;
-	struct sockaddr_mpls *newsmpls;
-	struct sockaddr_mpls sa_mpls, sa_outmpls;
+	struct sockaddr_mpls sa_mpls;
 	struct shim_hdr	*shim;
 	struct rtentry *rt = NULL;
+	struct rt_mpls *rt_mpls;
 	u_int8_t ttl;
 	int i, hasbos;
 
@@ -91,11 +91,6 @@ mpls_input(struct mbuf *m)
 	if (m->m_len < sizeof(*shim))
 		if ((m = m_pullup(m, sizeof(*shim))) == NULL)
 			return;
-
-	bzero(&sa_outmpls, sizeof(sa_outmpls));
-	newsmpls = &sa_outmpls;
-	newsmpls->smpls_family = AF_MPLS;
-	newsmpls->smpls_len = sizeof(*smpls);
 
 	shim = mtod(m, struct shim_hdr *);
 
@@ -171,9 +166,18 @@ mpls_input(struct mbuf *m)
 
 		rt->rt_use++;
 		smpls = satosmpls(rt_key(rt));
-		newsmpls->smpls_label = rt->rt_mpls;
+		rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
 
-		switch (rt->rt_flags & (MPLS_OP_PUSH | MPLS_OP_POP |
+		if (rt_mpls == NULL || (rt->rt_flags & RTF_MPLS) == 0) {
+			/* no MPLS information for this entry */
+#ifdef MPLS_DEBUG
+			printf("MPLS_DEBUG: no MPLS information attached\n");
+#endif
+			m_freem(m);
+			goto done;
+		}
+
+		switch (rt_mpls->mpls_operation & (MPLS_OP_PUSH | MPLS_OP_POP |
 		    MPLS_OP_SWAP)){
 
 		case MPLS_OP_POP:
@@ -192,10 +196,10 @@ mpls_input(struct mbuf *m)
 			}
 			break;
 		case MPLS_OP_PUSH:
-			m = mpls_shim_push(m, newsmpls);
+			m = mpls_shim_push(m, rt_mpls);
 			break;
 		case MPLS_OP_SWAP:
-			m = mpls_shim_swap(m, newsmpls);
+			m = mpls_shim_swap(m, rt_mpls);
 			break;
 		default:
 			m_freem(m);
@@ -216,6 +220,11 @@ mpls_input(struct mbuf *m)
 		rt = NULL;
 	}
 
+	if (rt == NULL) {
+		m_freem(m);
+		goto done;
+	}
+
 	/* write back TTL */
 	shim->shim_label = (shim->shim_label & ~MPLS_TTL_MASK) | htonl(ttl);
 
@@ -223,7 +232,7 @@ mpls_input(struct mbuf *m)
 	printf("MPLS: sending on %s outlabel %x dst af %d in %d out %d\n",
     	    ifp->if_xname, ntohl(shim->shim_label), smpls->smpls_family,
 	    MPLS_LABEL_GET(smpls->smpls_label),
-	    MPLS_LABEL_GET(newsmpls->smpls_label));
+	    MPLS_LABEL_GET(rt_mpls->mpls_label));
 #endif
 
 	(*ifp->if_output)(ifp, m, smplstosa(smpls), rt);

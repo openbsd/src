@@ -1,4 +1,4 @@
-/* $OpenBSD: mpls_output.c,v 1.4 2009/01/08 12:47:45 michele Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.5 2009/01/28 22:18:44 michele Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -33,101 +33,75 @@ extern int	mpls_inkloop;
 #define MPLS_LABEL_GET(l)	((ntohl((l) & MPLS_LABEL_MASK)) >> MPLS_LABEL_OFFSET)
 #endif
 
-void
-mpls_output(struct mbuf *m)
+struct mbuf *
+mpls_output(struct mbuf *m, struct rtentry *rt0)
 {
 	struct ifnet		*ifp = m->m_pkthdr.rcvif;
 	struct sockaddr_mpls	*smpls;
-	struct sockaddr_mpls	*newsmpls;
-	struct sockaddr_mpls	 sa_mpls, sa_outmpls;
+	struct sockaddr_mpls	 sa_mpls;
 	struct shim_hdr		*shim;
-	struct rtentry		*rt = NULL;
-	u_int32_t		 ttl;
+	struct rtentry		*rt = rt0;
+	struct rt_mpls		*rt_mpls;
+	//u_int32_t		 ttl;
 	int			 i;
 
 	if (!mpls_enable) {
 		m_freem(m);
-		return;
+		goto bad;
 	}
 
 	/* reset broadcast and multicast flags, this is a P2P tunnel */
 	m->m_flags &= ~(M_BCAST | M_MCAST);
 
-	if (m->m_len < sizeof(*shim))
-		if ((m = m_pullup(m, sizeof(*shim))) == NULL)
-			return;
-
-	bzero(&sa_outmpls, sizeof(sa_outmpls));
-	newsmpls = &sa_outmpls;
-	newsmpls->smpls_family = AF_MPLS;
-	newsmpls->smpls_len = sizeof(*smpls);
-
-	shim = mtod(m, struct shim_hdr *);
-
-	/* extract TTL */
-	ttl = shim->shim_label & MPLS_TTL_MASK;
-
 	for (i = 0; i < mpls_inkloop; i++) {
-		bzero(&sa_mpls, sizeof(sa_mpls));
-		smpls = &sa_mpls;
-		smpls->smpls_family = AF_MPLS;
-		smpls->smpls_len = sizeof(*smpls);
-		smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
-
-#ifdef MPLS_DEBUG
-		printf("smpls af %d len %d in_label %d in_ifindex %d\n",
-		    smpls->smpls_family, smpls->smpls_len,
-		    MPLS_LABEL_GET(smpls->smpls_label),
-		    ifp->if_index);
-#endif
-
-		rt = rtalloc1(smplstosa(smpls), 1, 0);
-
 		if (rt == NULL) {
-			/* no entry for this label */
+			shim = mtod(m, struct shim_hdr *);
+
+			bzero(&sa_mpls, sizeof(sa_mpls));
+			smpls = &sa_mpls;
+			smpls->smpls_family = AF_MPLS;
+			smpls->smpls_len = sizeof(*smpls);
+			smpls->smpls_label = shim->shim_label & MPLS_LABEL_MASK;
+
+			rt = rtalloc1(smplstosa(smpls), 1, 0);
+			if (rt == NULL) {
+				/* no entry for this label */
 #ifdef MPLS_DEBUG
-			printf("MPLS_DEBUG: label not found\n");
+				printf("MPLS_DEBUG: label not found\n");
 #endif
-			m_freem(m);
-			goto done;
+				m_freem(m);
+				goto bad;
+			}
+			rt->rt_use++;
 		}
 
-		rt->rt_use++;
-		smpls = satosmpls(rt_key(rt));
-		newsmpls->smpls_label = rt->rt_mpls;
-
+		rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
+		if (rt_mpls == NULL || (rt->rt_flags & RTF_MPLS) == 0) {
+			/* no MPLS information for this entry */
 #ifdef MPLS_DEBUG
-		printf("route af %d len %d in_label %d in_ifindex %d\n",
-		    smpls->smpls_family, smpls->smpls_len,
-		    MPLS_LABEL_GET(smpls->smpls_label),
-		    ifp->if_index);
+			printf("MPLS_DEBUG: no MPLS information attached\n");
 #endif
+			m_freem(m);
+			goto bad;
+		}
 
-		switch (rt->rt_flags & (MPLS_OP_PUSH | MPLS_OP_POP |
+		switch (rt_mpls->mpls_operation & (MPLS_OP_PUSH | MPLS_OP_POP |
 		    MPLS_OP_SWAP)) {
 
-		case MPLS_OP_POP:
-			if (MPLS_BOS_ISSET(shim->shim_label)) {
-				/* drop to avoid loops */
-				m_freem(m);
-				goto done;
-			}
-
-			m = mpls_shim_pop(m);
-			break;
 		case MPLS_OP_PUSH:
-			m = mpls_shim_push(m, newsmpls);
+			m = mpls_shim_push(m, rt_mpls);
 			break;
+		case MPLS_OP_POP:
 		case MPLS_OP_SWAP:
-			m = mpls_shim_swap(m, newsmpls);
-			break;
+			/* We are entring a LSP. There isn't anything to pop
+			   or swap yet. */
 		default:
 			m_freem(m);
-			goto done;
+			goto bad;
 		}
 
 		if (m == NULL)
-			goto done;
+			goto bad;
 
 		/* refetch label */
 		shim = mtod(m, struct shim_hdr *);
@@ -136,22 +110,29 @@ mpls_output(struct mbuf *m)
 		if (ifp != NULL)
 			break;
 
-		RTFREE(rt);
+		if (rt0 != rt)
+			RTFREE(rt);
+
 		rt = NULL;
 	}
 
 	/* write back TTL */
-	shim->shim_label = (shim->shim_label & ~MPLS_TTL_MASK) | ttl;
+	shim->shim_label &= ~MPLS_TTL_MASK;
+	shim->shim_label |= MPLS_BOS_MASK | htonl(mpls_defttl);
 
 #ifdef MPLS_DEBUG
-	printf("MPLS: sending on %s outlabel %x dst af %d in %d out %d\n",
-	    ifp->if_xname, ntohl(shim->shim_label), smpls->smpls_family,
-	    MPLS_LABEL_GET(smpls->smpls_label),
-	    MPLS_LABEL_GET(smpls->smpls_label));
+	printf("MPLS: sending on %s outshim %x outlabel %d\n",
+	    ifp->if_xname, ntohl(shim->shim_label),
+	    MPLS_LABEL_GET(rt_mpls->mpls_label));
 #endif
 
-	(*ifp->if_output)(ifp, m, smplstosa(smpls), rt);
-done:
-	if (rt)
+	if (rt != rt0)
 		RTFREE(rt);
+
+	return (m);
+bad:
+	if (rt != rt0)
+		RTFREE(rt);
+
+	return (NULL);
 }

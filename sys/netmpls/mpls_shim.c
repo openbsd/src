@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_shim.c,v 1.5 2009/01/08 12:47:45 michele Exp $	*/
+/*	$OpenBSD: mpls_shim.c,v 1.6 2009/01/28 22:18:44 michele Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -50,7 +50,7 @@ mpls_shim_pop(struct mbuf *m)
 
 	/* catch-up next shim_hdr */
 	if (m->m_len < sizeof(struct shim_hdr))
-		if ((m = m_pullup(m, sizeof(struct shim_hdr))) == 0)
+		if ((m = m_pullup(m, sizeof(struct shim_hdr))) == NULL)
 			return (NULL);
 
 	/* return mbuf */
@@ -58,26 +58,26 @@ mpls_shim_pop(struct mbuf *m)
 }
 
 struct mbuf *
-mpls_shim_swap(struct mbuf *m, struct sockaddr_mpls *smplsp)
+mpls_shim_swap(struct mbuf *m, struct rt_mpls *rt_mpls)
 {
 	struct shim_hdr *shim;
 
 	/* pullup shim_hdr */
 	if (m->m_len < sizeof(struct shim_hdr))
-		if ((m = m_pullup(m, sizeof(struct shim_hdr))) == 0)
+		if ((m = m_pullup(m, sizeof(struct shim_hdr))) == NULL)
 			return (NULL);
 	shim = mtod(m, struct shim_hdr *);
 
 	/* swap label */
 	shim->shim_label &= ~MPLS_LABEL_MASK;
-	shim->shim_label |= smplsp->smpls_label & MPLS_LABEL_MASK;
+	shim->shim_label |= rt_mpls->mpls_label & MPLS_LABEL_MASK;
 
 	/* swap exp : XXX exp override */
 	{
 		u_int32_t	t;
 
 		shim->shim_label &= ~MPLS_EXP_MASK;
-		t = 0;
+		t = rt_mpls->mpls_exp << MPLS_EXP_OFFSET;
 		shim->shim_label |= htonl(t) & MPLS_EXP_MASK;
 	}
 
@@ -85,16 +85,16 @@ mpls_shim_swap(struct mbuf *m, struct sockaddr_mpls *smplsp)
 }
 
 struct mbuf *
-mpls_shim_push(struct mbuf *m, struct sockaddr_mpls *smplsp)
+mpls_shim_push(struct mbuf *m, struct rt_mpls *rt_mpls)
 {
 	struct shim_hdr *shim;
 
 	M_PREPEND(m, sizeof(struct shim_hdr), M_DONTWAIT);
-	if (m == 0)
+	if (m == NULL)
 		return (NULL);
 
 	shim = mtod(m, struct shim_hdr *);
 	bzero((caddr_t)shim, sizeof(*shim));
 
-	return (mpls_shim_swap(m, smplsp));
+	return (mpls_shim_swap(m, rt_mpls));
 }

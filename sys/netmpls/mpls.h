@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.16 2009/01/08 12:47:45 michele Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.17 2009/01/28 22:18:44 michele Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -94,9 +94,15 @@ struct sockaddr_mpls {
 	u_int32_t	smpls_pad1[2];
 };
 
-#define MPLS_OP_POP		RTF_PROTO1
+struct rt_mpls {
+	u_int32_t	mpls_label;
+	u_int8_t	mpls_operation;
+	u_int8_t	mpls_exp;
+};
+
+#define MPLS_OP_POP		RTF_PROTO3
 #define MPLS_OP_PUSH		RTF_PROTO2
-#define MPLS_OP_SWAP		RTF_PROTO3
+#define MPLS_OP_SWAP		RTF_PROTO1
 
 #define MPLS_INKERNEL_LOOP_MAX	16
 
@@ -167,11 +173,11 @@ void	mpls_init(void);
 void	mplsintr(void);
 
 struct mbuf	*mpls_shim_pop(struct mbuf *);
-struct mbuf	*mpls_shim_swap(struct mbuf *, struct sockaddr_mpls *);
-struct mbuf	*mpls_shim_push(struct mbuf *, struct sockaddr_mpls *);
+struct mbuf	*mpls_shim_swap(struct mbuf *, struct rt_mpls *);
+struct mbuf	*mpls_shim_push(struct mbuf *, struct rt_mpls *);
 
-int	mpls_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-void	mpls_input(struct mbuf *);
-void	mpls_output(struct mbuf *);
+int		 mpls_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+void		 mpls_input(struct mbuf *);
+struct mbuf	*mpls_output(struct mbuf *, struct rtentry *);
 
 #endif /* _KERNEL */

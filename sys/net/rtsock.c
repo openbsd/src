@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.82 2009/01/28 12:34:09 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.83 2009/01/28 22:18:44 michele Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -324,7 +324,6 @@ route_output(struct mbuf *m, ...)
 	struct sockaddr_rtlabel	 sa_rt;
 #ifdef MPLS
 	struct sockaddr_mpls	 sa_mpls;
-	struct sockaddr_mpls	*psa_mpls;
 #endif
 	const char		*label;
 	va_list			 ap;
@@ -565,11 +564,12 @@ report:
 				    (struct sockaddr *)&sa_rt;
 			}
 #ifdef MPLS
-			if (rt->rt_mpls) {
+			if (rt->rt_flags & RTF_MPLS) {
 				bzero(&sa_mpls, sizeof(sa_mpls));
 				sa_mpls.smpls_family = AF_MPLS;
 				sa_mpls.smpls_len = sizeof(sa_mpls);
-				sa_mpls.smpls_label = rt->rt_mpls;
+				sa_mpls.smpls_label = ((struct rt_mpls *)
+				    rt->rt_llinfo)->mpls_label;
 				info.rti_info[RTAX_SRC] =
 				    (struct sockaddr *)&sa_mpls;
 			}
@@ -661,13 +661,7 @@ report:
 				rt->rt_labelid =
 				    rtlabel_name2id(rtlabel);
 			}
-#ifdef MPLS
-			if (info.rti_info[RTAX_SRC] != NULL) {
-				psa_mpls = (struct sockaddr_mpls *)
-				    info.rti_info[RTAX_SRC];
-				rt->rt_mpls = psa_mpls->smpls_label;
-			}
-#endif
+
 			if_group_routechange(dst, netmask);
 			/* FALLTHROUGH */
 		case RTM_LOCK:
@@ -1112,11 +1106,12 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		}
 	}
 #ifdef MPLS
-	if (rt->rt_mpls) {
+	if (rt->rt_flags & RTF_MPLS) {
 		bzero(&sa_mpls, sizeof(sa_mpls));
 		sa_mpls.smpls_family = AF_MPLS;
 		sa_mpls.smpls_len = sizeof(sa_mpls);
-		sa_mpls.smpls_label = rt->rt_mpls;
+		sa_mpls.smpls_label = ((struct rt_mpls *)
+		    rt->rt_llinfo)->mpls_label;
 		info.rti_info[RTAX_SRC] = (struct sockaddr *)&sa_mpls;
 	}
 #endif
@@ -1126,6 +1121,12 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
 
 		rtm->rtm_flags = rt->rt_flags;
+#ifdef MPLS
+		if (dst->sa_family == AF_MPLS) {
+			rtm->rtm_flags |=
+			    ((struct rt_mpls *)rt->rt_llinfo)->mpls_operation;
+		}
+#endif
 		rtm->rtm_priority = rt->rt_priority;
 		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 		rtm->rtm_rmx.rmx_refcnt = rt->rt_refcnt;
@@ -1142,6 +1143,12 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		struct rt_omsghdr *rtm = (struct rt_omsghdr *)w->w_tmem;
 
 		rtm->rtm_flags = rt->rt_flags;
+#ifdef MPLS
+		if (dst->sa_family == AF_MPLS) {
+			rtm->rtm_flags |=
+			    ((struct rt_mpls *)rt->rt_llinfo)->mpls_operation;
+		}
+#endif
 		rtm->rtm_rmx.rmx_locks = rt->rt_rmx.rmx_locks;
 		rtm->rtm_rmx.rmx_mtu = rt->rt_rmx.rmx_mtu;
 		rtm->rtm_index = rt->rt_ifp->if_index;

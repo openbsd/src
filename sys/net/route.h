@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.57 2009/01/28 12:34:09 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.58 2009/01/28 22:18:44 michele Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -114,17 +114,14 @@ struct rtentry {
 	struct	ifnet *rt_ifp;		/* the answer: interface to use */
 	struct	ifaddr *rt_ifa;		/* the answer: interface addr to use */
 	struct	sockaddr *rt_genmask;	/* for generation of cloned routes */
-	caddr_t	rt_llinfo;		/* pointer to link level info cache */
+	caddr_t	rt_llinfo;		/* pointer to link level info cache or
+					   to an MPLS structure */ 
 	struct	rt_kmetrics rt_rmx;	/* metrics used by rx'ing protocols */
 	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
 	struct	rtentry *rt_parent;	/* If cloned, parent of this route. */
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
 	u_int16_t rt_labelid;		/* route label ID */
 	u_int8_t rt_priority;		/* routing priority to use */
-#ifdef MPLS
-	/* XXX: temporay hack, will be removed soon */
-	u_int32_t rt_mpls;		/* MPLS outbound label */
-#endif
 };
 #define	rt_use	rt_rmx.rmx_pksent
 
@@ -147,6 +144,7 @@ struct rtentry {
 #define RTF_CLONED	0x10000		/* this is a cloned route */
 #define RTF_MPATH	0x40000		/* multipath route or operation */
 #define RTF_JUMBO	0x80000		/* try to use jumbo frames */
+#define RTF_MPLS	0x100000	/* MPLS additional infos */
 
 /* mask of RTF flags that are allowed to be modified by RTM_CHANGE */
 #define RTF_FMASK	\
