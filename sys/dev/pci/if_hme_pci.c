@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.12 2006/12/21 22:13:36 jason Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.13 2009/01/28 11:32:37 kettenis Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -98,6 +98,7 @@ hmematch_pci(parent, vcf, aux)
 }
 
 #define	PCI_EBUS2_BOOTROM	0x10
+#define	PCI_EBUS2_BOOTROM_SIZE	0x20000
 #define	PROMHDR_PTR_DATA	0x18
 #define	PROMDATA_PTR_VPD	0x08
 #define	PROMDATA_DATA2		0x0a
@@ -147,7 +148,7 @@ hme_pci_enaddr(struct hme_softc *sc, struct pci_attach_args *hpa)
 		goto fail;
 
 	if (pci_mapreg_map(&epa, PCI_EBUS2_BOOTROM, PCI_MAPREG_TYPE_MEM, 0,
-	    &romt, &romh, 0, &romsize, 0))
+	    &romt, &romh, 0, &romsize, PCI_EBUS2_BOOTROM_SIZE))
 		goto fail;
 
 	bus_space_read_region_1(romt, romh, 0, buf, sizeof(buf));
