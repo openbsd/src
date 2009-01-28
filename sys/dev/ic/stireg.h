@@ -1,4 +1,4 @@
-/*	$OpenBSD: stireg.h,v 1.12 2008/09/01 17:30:56 deraadt Exp $	*/
+/*	$OpenBSD: stireg.h,v 1.13 2009/01/28 17:37:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -127,8 +127,7 @@ struct	sti_dd {
 	u_int32_t	dd_reglst;	/* 0x1c device region list */
 	u_int16_t	dd_maxreent;	/* 0x20 max reent storage */
 	u_int16_t	dd_maxtimo;	/* 0x22 max execution timeout .1 sec */
-	u_int32_t	dd_montbl;	/* 0x24 mon table address, array of
-						names num of dd_nmon */
+	u_int32_t	dd_montbl;	/* 0x24 monitor table address */
 	u_int32_t	dd_udaddr;	/* 0x28 user data address */
 	u_int32_t	dd_stimemreq;	/* 0x2c sti memory request */
 	u_int32_t	dd_udsize;	/* 0x30 user data size */
@@ -193,6 +192,22 @@ struct sti_fontcfg {
 	u_int8_t	uheight;
 	u_int8_t	uoffset;
 }  __packed;
+
+typedef struct sti_mon {
+	u_int32_t	width: 12;
+	u_int32_t	height: 12;
+	u_int32_t	hz: 7;		/* low 7 bits of refresh rate */
+	u_int32_t	flat: 1;	/* flatpanel */
+	u_int32_t	vesa: 1;	/* vesa mode */
+	u_int32_t	grey: 1;	/* greyscale */
+	u_int32_t	dblbuf: 1;	/* double buffered */
+	u_int32_t	user: 1;	/* user-defined mode */
+	u_int32_t	stereo: 1;	/* stereo display */
+	u_int32_t	sam: 1;		/* ? */
+	u_int32_t	: 15;
+	u_int32_t	hz_upper: 3;	/* upper 3 bits of refresh rate */
+	u_int32_t	font: 8;	/* rom font index */
+} __packed *sti_mon_t;
 
 typedef struct sti_ecfg {
 	u_int8_t	current_monitor;

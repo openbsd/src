@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.56 2007/10/01 04:03:51 krw Exp $	*/
+/*	$OpenBSD: sti.c,v 1.57 2009/01/28 17:37:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -103,7 +103,7 @@ void sti_bmove(struct sti_screen *scr, int, int, int, int, int, int,
     enum sti_bmove_funcs);
 int sti_setcment(struct sti_screen *scr, u_int i, u_char r, u_char g, u_char b);
 int sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *cfg,
-    u_int32_t addr);
+    u_int32_t baseaddr, u_int fontindex);
 int sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
     bus_space_tag_t memt, bus_space_handle_t romh, bus_addr_t *bases,
     u_int codebase);
@@ -164,6 +164,7 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 	struct sti_cfg *cc;
 	int error, size, i;
 	int geometry_kluge = 0;
+	u_int fontindex = 0;
 
 	STI_ENABLE_ROM(scr->scr_main);
 
@@ -256,7 +257,7 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 	    dd->dd_pacode[0xc], dd->dd_pacode[0xd], dd->dd_pacode[0xe],
 	    dd->dd_pacode[0xf]);
 #endif
-	/* divise code size, could be less than STI_END entries */
+	/* devise code size, could be less than STI_END entries */
 	for (i = STI_END; !dd->dd_pacode[i]; i--);
 	size = dd->dd_pacode[i] - dd->dd_pacode[STI_BEGIN];
 	if (scr->scr_devtype == STI_DEVTYPE1)
@@ -354,9 +355,10 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 		for (p = cc->regions; !r.last &&
 		     p < &cc->regions[STI_REGION_MAX]; p++) {
 
-			if (scr->scr_devtype == STI_DEVTYPE1)
-				*(u_int *)&r = parseword(i), i+= 16;
-			else {
+			if (scr->scr_devtype == STI_DEVTYPE1) {
+				*(u_int *)&r = parseword(i);
+				i += 16;
+			} else {
 				bus_space_read_raw_region_4(memt, romh, i,
 				    (u_int8_t *)&r, 4);
 				i += 4;
@@ -450,7 +452,43 @@ sti_screen_setup(struct sti_screen *scr, bus_space_tag_t iot,
 #endif
 	scr->scr_bpp = cfg.bppu;
 
-	if ((error = sti_fetchfonts(scr, &cfg, dd->dd_fntaddr))) {
+	/*
+	 * Although scr->scr_ecfg.current_monitor is not filled by
+	 * sti_init() as expected, we can nevertheless walk the monitor
+	 * list, if there is any, and if we find a mode matching our
+	 * resolution, pick its font index.
+	 */
+	if (dd->dd_montbl != 0) {
+		STI_ENABLE_ROM(scr->scr_main);
+
+		for (i = 0; i < dd->dd_nmon; i++) {
+			u_int offs = dd->dd_montbl + 8 * i;
+			u_int32_t m[2];
+			sti_mon_t mon = (void *)m;
+			if (scr->scr_devtype == STI_DEVTYPE1) {
+				m[0] = parseword(4 * offs);
+				m[1] = parseword(4 * (offs + 4));
+			} else {
+				bus_space_read_raw_region_4(memt, romh, offs,
+				    (u_int8_t *)mon, sizeof(*mon));
+			}
+
+			if (mon->width == scr->scr_cfg.scr_width &&
+			    mon->height == scr->scr_cfg.scr_height) {
+				fontindex = mon->font;
+#ifdef STIDEBUG
+				STI_DISABLE_ROM(scr->scr_main);
+				printf("font index: %d\n", fontindex);
+				STI_ENABLE_ROM(scr->scr_main);
+#endif
+				break;
+			}
+		}
+
+		STI_DISABLE_ROM(scr->scr_main);
+	}
+
+	if ((error = sti_fetchfonts(scr, &cfg, dd->dd_fntaddr, fontindex))) {
 		printf(": cannot fetch fonts (%d)\n", error);
 		/* XXX free resources */
 		return (ENXIO);
@@ -552,9 +590,10 @@ sti_rom_size(bus_space_tag_t iot, bus_space_handle_t ioh)
 
 int
 sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *cfg,
-    u_int32_t addr)
+    u_int32_t baseaddr, u_int fontindex)
 {
 	struct sti_font *fp = &scr->scr_curfont;
+	u_int32_t addr;
 	int size;
 	bus_space_tag_t memt;
 	bus_space_handle_t romh;
@@ -576,6 +615,8 @@ sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *cfg,
 
 	STI_ENABLE_ROM(scr->scr_main);
 
+rescan:
+	addr = baseaddr;
 	do {
 		if (scr->scr_devtype == STI_DEVTYPE1) {
 			fp->first  = parseshort(addr + 0x00);
@@ -588,28 +629,51 @@ sti_fetchfonts(struct sti_screen *scr, struct sti_inqconfout *cfg,
 			    addr + 0x1b);
 			fp->bpc    = bus_space_read_1(memt, romh,
 			    addr + 0x1f);
-			fp->next   = parseword(addr + 0x23);
+			fp->next   = parseword(addr + 0x20);
 			fp->uheight= bus_space_read_1(memt, romh,
 			    addr + 0x33);
 			fp->uoffset= bus_space_read_1(memt, romh,
 			    addr + 0x37);
-		} else	/* STI_DEVTYPE4 */
+		} else { /* STI_DEVTYPE4 */
 			bus_space_read_raw_region_4(memt, romh, addr,
 			    (u_int8_t *)fp, sizeof(struct sti_font));
+		}
 
-		size = sizeof(struct sti_font) +
-		    (fp->last - fp->first + 1) * fp->bpc;
-		if (scr->scr_devtype == STI_DEVTYPE1)
-			size *= 4;
-		scr->scr_romfont = malloc(size, M_DEVBUF, M_NOWAIT);
-		if (scr->scr_romfont == NULL)
-			return (ENOMEM);
+#ifdef STIDEBUG
+		STI_DISABLE_ROM(scr->scr_main);
+		printf("font@%p: %d-%d, %dx%d, type %d, next %x\n",
+		    addr, fp->first, fp->last, fp->width, fp->height, fp->type,
+		    fp->next);
+		STI_ENABLE_ROM(scr->scr_main);
+#endif
 
-		bus_space_read_raw_region_4(memt, romh, addr,
-		    (u_int8_t *)scr->scr_romfont, size);
+		if (fontindex == 0) {
+			size = sizeof(struct sti_font) +
+			    (fp->last - fp->first + 1) * fp->bpc;
+			if (scr->scr_devtype == STI_DEVTYPE1)
+				size *= 4;
+			scr->scr_romfont = malloc(size, M_DEVBUF, M_NOWAIT);
+			if (scr->scr_romfont == NULL)
+				return (ENOMEM);
 
-		addr = NULL; /* fp->next */
-	} while (addr);
+			bus_space_read_raw_region_4(memt, romh, addr,
+			    (u_int8_t *)scr->scr_romfont, size);
+
+			break;
+		}
+
+		addr = baseaddr + fp->next;
+		fontindex--;
+	} while (fp->next != 0);
+
+	/*
+	 * If our font index was bogus, we did not find the expected font.
+	 * In this case, pick the first one and be done with it.
+	 */
+	if (addr == 0) {
+		fontindex = 0;
+		goto rescan;
+	}
 
 	STI_DISABLE_ROM(scr->scr_main);
 
@@ -781,10 +845,6 @@ sti_ioctl(v, cmd, data, flag, p)
 
 	ret = 0;
 	switch (cmd) {
-	case WSDISPLAYIO_GMODE:
-		*(u_int *)data = sc->sc_wsmode;
-		break;
-
 	case WSDISPLAYIO_SMODE:
 		mode = *(u_int *)data;
 		if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL &&
