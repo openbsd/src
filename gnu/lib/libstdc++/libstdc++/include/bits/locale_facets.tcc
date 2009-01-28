@@ -38,7 +38,6 @@
 #include <cerrno>
 #include <clocale>   		// For localeconv
 #include <cstdlib>   		// For strof, strtold
-#include <cmath>     		// For ceil
 #include <cctype>    		// For isspace
 #include <limits>    		// For numeric_limits
 #include <typeinfo>  		// For bad_cast.
