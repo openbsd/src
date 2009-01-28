@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.50 2009/01/28 12:58:17 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.51 2009/01/28 13:29:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -22,6 +22,8 @@
 #define PROC_COUNT		 9
 #define READ_BUF_SIZE		 32768
 #define MAX_NAME_SIZE		 64
+
+#define MAX_HOPS_COUNT		 100
 
 /* sizes include the tailing '\0' */
 #define MAX_LINE_SIZE		 1024

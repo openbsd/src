@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.23 2009/01/27 22:48:29 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.24 2009/01/28 13:29:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -28,7 +28,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <ctype.h>
 #include <dirent.h>
+#include <err.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
@@ -71,6 +73,8 @@ int		runner_message_schedule(struct message *, time_t);
 
 void		runner_purge_run(void);
 void		runner_purge_message(char *);
+
+int		runner_check_loop(struct message *);
 
 struct batch	*batch_record(struct smtpd *, struct message *);
 struct batch	*batch_lookup(struct smtpd *, struct message *);
@@ -490,6 +494,8 @@ runner_process_envelope(struct message *messagep)
 
 	if (! runner_message_schedule(messagep, time(NULL)))
 		return;
+
+	runner_check_loop(messagep);
 
 	messagep->flags |= F_MESSAGE_SCHEDULED;
 	queue_update_envelope(messagep);
@@ -993,6 +999,66 @@ batch_cmp(struct batch *s1, struct batch *s2)
 		return (1);
 
 	return (0);
+}
+
+int
+runner_check_loop(struct message *messagep)
+{
+	int fd;
+	FILE *fp;
+	char *buf, *lbuf;
+	size_t len;
+	struct path chkpath;
+	int ret = 0;
+	int rcvcount = 0;
+
+	fd = queue_open_message_file(messagep->message_id);
+	if ((fp = fdopen(fd, "r")) == NULL)
+		fatal("fdopen");
+
+	lbuf = NULL;
+	while ((buf = fgetln(fp, &len))) {
+		if (buf[len - 1] == '\n')
+			buf[len - 1] = '\0';
+		else {
+			/* EOF without EOL, copy and add the NUL */
+			if ((lbuf = malloc(len + 1)) == NULL)
+				err(1, NULL);
+			memcpy(lbuf, buf, len);
+			lbuf[len] = '\0';
+			buf = lbuf;
+		}
+
+		if (strchr(buf, ':') == NULL && !isspace(*buf))
+			break;
+
+		if (strncasecmp("Received: ", buf, 10) == 0) {
+			rcvcount++;
+			if (rcvcount == MAX_HOPS_COUNT) {
+				log_debug("LOOP DETECTED THROUGH RECEIVED LINES COUNT");
+				ret = 1;
+				break;
+			}
+		}
+
+		else if (strncasecmp("X-OpenSMTPD-Loop: ", buf, 18) == 0) {
+			bzero(&chkpath, sizeof (struct path));
+			if (! recipient_to_path(&chkpath, buf + 18))
+				continue;
+
+			if (strcasecmp(chkpath.user, messagep->recipient.user) == 0 &&
+			    strcasecmp(chkpath.domain, messagep->recipient.domain) == 0) {
+				log_debug("LOOP DETECTED THROUGH X-OPENSMTPD-LOOP HEADER: %s@%s",
+				    chkpath.user, chkpath.domain);
+				ret = 1;
+				break;
+			}
+		}
+	}
+	free(lbuf);
+
+	fclose(fp);
+	return ret;
 }
 
 SPLAY_GENERATE(batchtree, batch, b_nodes, batch_cmp);

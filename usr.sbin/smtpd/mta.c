@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.14 2009/01/28 11:27:57 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.15 2009/01/28 13:29:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -668,7 +668,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		    "", batchp->message_id);
 
 		TAILQ_FOREACH(messagep, &batchp->messages, entry) {
-			evbuffer_add_printf(batchp->bev->output, "X-Delivered-To: %s@%s\r\n",
+			evbuffer_add_printf(batchp->bev->output, "X-OpenSMTPD-Loop: %s@%s\r\n",
 			    messagep->session_rcpt.user, messagep->session_rcpt.domain);
 		}
 
