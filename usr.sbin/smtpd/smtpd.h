@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.54 2009/01/28 21:44:15 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.55 2009/01/28 22:54:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -484,10 +484,6 @@ struct batch {
 
 	struct rule			 rule;
 
-	struct event			 ev;
-	struct timeval			 tv;
-	int				 peerfd;
-	struct bufferevent		*bev;
 	u_int8_t			 state;
 	struct smtpd			*env;
 
@@ -503,6 +499,8 @@ struct batch {
 	time_t				 creation;
 	time_t				 lasttry;
 	u_int8_t			 retry;
+
+	struct session			*sessionp;
 
 	struct message			message;
 	struct message			*messagep;
@@ -596,6 +594,7 @@ struct session {
 
 	struct session_auth_req		 s_auth;
 
+	int				 peerfd;
 	struct mxhost			*mxarray;
 	u_int8_t			 mx_cnt;
 	u_int8_t			 mx_off;
