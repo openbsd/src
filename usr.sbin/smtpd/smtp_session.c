@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.42 2009/01/28 17:29:11 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.43 2009/01/28 18:10:19 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -966,40 +966,13 @@ int
 session_set_path(struct path *path, char *line)
 {
 	size_t len;
-	char *username;
-	char *hostname;
 
 	len = strlen(line);
 	if (*line != '<' || line[len - 1] != '>')
 		return 0;
 	line[len - 1] = '\0';
 
-	username = line + 1;
-	hostname = strchr(username, '@');
-
-	if (username[0] == '\0') {
-		*path->user = '\0';
-		*path->domain = '\0';
-		return 1;
-	}
-
-	if (hostname == NULL) {
-		if (strcasecmp(username, "postmaster") != 0)
-			return 0;
-		hostname = "localhost";
-	} else {
-		*hostname++ = '\0';
-	}
-
-	if (strlcpy(path->user, username, sizeof(path->user))
-	    >= MAX_LOCALPART_SIZE)
-		return 0;
-
-	if (strlcpy(path->domain, hostname, sizeof(path->domain))
-	    >= MAX_DOMAINPART_SIZE)
-		return 0;
-
-	return 1;
+	return recipient_to_path(path, line + 1);
 }
 
 void
