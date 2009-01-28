@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.52 2009/01/28 17:29:11 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.53 2009/01/28 19:38:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -197,6 +197,7 @@ enum imsg_type {
 	IMSG_PARENT_MAILBOX_RENAME,
 
 	IMSG_PARENT_AUTHENTICATE,
+	IMSG_PARENT_SEND_CONFIG,
 
 	IMSG_MDA_PAUSE,
 	IMSG_MTA_PAUSE,

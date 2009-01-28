@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.16 2009/01/04 22:35:09 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.17 2009/01/28 19:38:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -633,24 +633,17 @@ smtp_disable_events(struct smtpd *env)
 void
 smtp_pause(struct smtpd *env)
 {
-	struct listener	*l;
-
 	log_debug("smtp_pause_listeners: pausing listening sockets");
-	TAILQ_FOREACH(l, &env->sc_listeners, entry) {
-		event_del(&l->ev);
-	}
+	smtp_disable_events(env);
 	env->sc_opts |= SMTPD_SMTP_PAUSED;
 }
 
 void
 smtp_resume(struct smtpd *env)
 {
-	struct listener	*l;
-
 	log_debug("smtp_pause_listeners: resuming listening sockets");
-	TAILQ_FOREACH(l, &env->sc_listeners, entry) {
-		event_add(&l->ev, NULL);
-	}
+	imsg_compose(env->sc_ibufs[PROC_PARENT], IMSG_PARENT_SEND_CONFIG,
+	    0, 0, -1, NULL, 0);
 	env->sc_opts &= ~SMTPD_SMTP_PAUSED;
 }
 

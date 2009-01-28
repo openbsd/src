@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.25 2009/01/27 11:42:30 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.26 2009/01/28 19:38:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -410,6 +410,10 @@ parent_dispatch_smtp(int fd, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_PARENT_SEND_CONFIG: {
+			parent_send_config(-1, -1, env);
+			break;
+		}
 		case IMSG_PARENT_AUTHENTICATE: {
 			struct session_auth_req *req;
 			struct session_auth_reply reply;
