@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.18 2009/01/28 22:54:10 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.19 2009/01/28 23:13:42 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -547,7 +547,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 
 	switch (code) {
 	case 250:
-		if (batchp->state == S_DONE) {
+		if (sessionp->s_state == S_DONE) {
 			mta_batch_update_queue(batchp);
 			return 0;
 		}
@@ -555,7 +555,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 
 	case 220:
 		evbuffer_add_printf(sessionp->s_bev->output, "EHLO %s\r\n", env->sc_hostname);
-		batchp->state = S_GREETED;
+		sessionp->s_state = S_GREETED;
 		return 1;
 
 	case 421:
@@ -571,19 +571,19 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		 */
 	case 530:
 	case 550:
-		if (batchp->state == S_RCPT) {
+		if (sessionp->s_state == S_RCPT) {
 			batchp->messagep->status = (S_MESSAGE_REJECTED|S_MESSAGE_PERMFAILURE);
 			strlcpy(batchp->messagep->session_errorline, line, MAX_LINE_SIZE);
 			break;
 		}
 	case 354:
-		if (batchp->state == S_RCPT && batchp->messagep == NULL) {
-			batchp->state = S_DATA;
+		if (sessionp->s_state == S_RCPT && batchp->messagep == NULL) {
+			sessionp->s_state = S_DATA;
 			break;
 		}
 
 	case 221:
-		if (batchp->state == S_DONE) {
+		if (sessionp->s_state == S_DONE) {
 			mta_batch_update_queue(batchp);
 			return 0;
 		}
@@ -603,7 +603,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	}
 
 
-	switch (batchp->state) {
+	switch (sessionp->s_state) {
 	case S_GREETED: {
 		char *user;
 		char *domain;
@@ -622,13 +622,13 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 			evbuffer_add_printf(sessionp->s_bev->output, "MAIL FROM:<>\r\n");
 		else
 			evbuffer_add_printf(sessionp->s_bev->output, "MAIL FROM:<%s@%s>\r\n", user, domain);
-		batchp->state = S_MAIL;
+		sessionp->s_state = S_MAIL;
 
 		break;
 	}
 
 	case S_MAIL:
-		batchp->state = S_RCPT;
+		sessionp->s_state = S_RCPT;
 
 	case S_RCPT: {
 		char *user;
@@ -761,11 +761,11 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	}
 	case S_DONE:
 		evbuffer_add_printf(sessionp->s_bev->output, "QUIT\r\n");
-		batchp->state = S_QUIT;
+		sessionp->s_state = S_QUIT;
 		break;
 
 	default:
-		log_info("unknown command: %d", batchp->state);
+		log_info("unknown command: %d", sessionp->s_state);
 	}
 
 	return 1;
@@ -779,7 +779,7 @@ mta_write_handler(struct bufferevent *bev, void *arg)
 	char *buf, *lbuf;
 	size_t len;
 	
-	if (batchp->state == S_QUIT) {
+	if (sessionp->s_state == S_QUIT) {
 		bufferevent_disable(bev, EV_READ|EV_WRITE);
 		log_debug("closing connection because of QUIT");
 		close(sessionp->peerfd);
@@ -787,7 +787,7 @@ mta_write_handler(struct bufferevent *bev, void *arg)
 	}
 
 	/* Progressively fill the output buffer with data */
-	if (batchp->state == S_DATA) {
+	if (sessionp->s_state == S_DATA) {
 
 		lbuf = NULL;
 		if ((buf = fgetln(batchp->messagefp, &len))) {
@@ -814,7 +814,7 @@ mta_write_handler(struct bufferevent *bev, void *arg)
 		}
 		else {
 			evbuffer_add_printf(sessionp->s_bev->output, ".\r\n");
-			batchp->state = S_DONE;
+			sessionp->s_state = S_DONE;
 			fclose(batchp->messagefp);
 			batchp->messagefp = NULL;
 		}

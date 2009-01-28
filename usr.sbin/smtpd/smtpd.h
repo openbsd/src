@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.55 2009/01/28 22:54:10 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.56 2009/01/28 23:13:42 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -484,7 +484,6 @@ struct batch {
 
 	struct rule			 rule;
 
-	u_int8_t			 state;
 	struct smtpd			*env;
 
 	char				 message_id[MAX_ID_SIZE];
