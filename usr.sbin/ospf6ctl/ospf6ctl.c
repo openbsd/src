@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.19 2009/01/28 17:34:15 stsp Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.20 2009/01/28 22:51:26 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -165,6 +165,9 @@ main(int argc, char *argv[])
 	case SHOW_DBRTR:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_RTR, 0, 0, NULL, 0);
 		break;
+	case SHOW_DBINTRA:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_INTRA, 0, 0, NULL, 0);
+		break;
 	case SHOW_DBSELF:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_SELF, 0, 0, NULL, 0);
 		break;
@@ -251,6 +254,7 @@ main(int argc, char *argv[])
 			case SHOW_DBLINK:
 			case SHOW_DBNET:
 			case SHOW_DBRTR:
+			case SHOW_DBINTRA:
 			case SHOW_DBSUM:
 			case SHOW_DBASBR:
 				done = show_db_msg_detail(&imsg);
@@ -844,6 +848,36 @@ show_db_msg_detail(struct imsg *imsg)
 		}
 
 		lasttype = lsa->hdr.type;
+		break;
+	case IMSG_CTL_SHOW_DB_INTRA:
+		lsa = imsg->data;
+		if (lsa->hdr.type != lasttype)
+			show_database_head(area_id, ifname, lsa->hdr.type);
+		show_db_hdr_msg_detail(&lsa->hdr);
+		printf("Referenced LS Type: %s\n",
+		    print_ls_type(lsa->data.pref_intra.ref_type));
+		addr.s_addr = lsa->data.pref_intra.ref_lsid;
+		printf("Referenced Link State ID: %s\n", inet_ntoa(addr));
+		addr.s_addr = lsa->data.pref_intra.ref_adv_rtr;
+		printf("Referenced Advertising Router: %s\n", inet_ntoa(addr));
+		nlinks = ntohs(lsa->data.pref_intra.numprefix);
+		printf("Number of Prefixes: %d\n", nlinks);
+
+		off = sizeof(lsa->hdr) + sizeof(struct lsa_intra_prefix);
+
+		for (i = 0; i < nlinks; i++) {
+			struct in6_addr	ia6;
+			prefix = (struct lsa_prefix *)((char *)lsa + off);
+			bzero(&ia6, sizeof(ia6));
+			bcopy(prefix + 1, &ia6,
+			    LSA_PREFIXSIZE(prefix->prefixlen));
+
+			printf("    Prefix Address: %s\n", log_in6addr(&ia6));
+			printf("    Prefix Length: %d, Options: %x\n",
+			    prefix->prefixlen, prefix->options);
+
+			off += sizeof(struct lsa_prefix);
+		}
 		break;
 	case IMSG_CTL_SHOW_DB_SUM:
 		lsa = imsg->data;
