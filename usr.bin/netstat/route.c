@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.83 2008/11/09 23:00:56 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.84 2009/01/28 17:19:47 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -240,7 +240,7 @@ p_rtnode(void)
 	while (rm) {
 		kread((u_long)rm, &rmask, sizeof(rmask));
 		snprintf(nbuf, sizeof nbuf, " %d refs, ", rmask.rm_refs);
-		printf(" mk = %16p {(%d),%s",
+		printf("\n\tmk = %p {(%d),%s",
 		    rm, -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
 		p_rtflags(rmask.rm_flags);
 		printf(", ");
