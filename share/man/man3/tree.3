@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tree.3,v 1.18 2008/12/21 16:54:12 tedu Exp $
+.\"	$OpenBSD: tree.3,v 1.19 2009/01/28 10:26:48 stsp Exp $
 .\"/*
 .\" * Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" * All rights reserved.
@@ -23,7 +23,7 @@
 .\" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\" */
-.Dd $Mdocdate: December 21 2008 $
+.Dd $Mdocdate: January 28 2009 $
 .Dt TREE 3
 .Os
 .Sh NAME
@@ -406,6 +406,11 @@ The
 and
 .Fn RB_NFIND
 macros can be used to find a particular element in the tree.
+.Fn RB_FIND
+finds the node with the same key as
+.Fa elm .
+.Fn RB_NFIND
+finds the first node greater than or equal to the search key.
 .Bd -literal -offset indent
 struct TYPE find, *res;
 find.key = 30;
