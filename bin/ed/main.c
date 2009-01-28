@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2008/04/21 11:22:14 tobias Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2009/01/28 22:17:30 sobrado Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.31 2008/04/21 11:22:14 tobias Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.32 2009/01/28 22:17:30 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ int lineno;			/* script line number */
 char *prompt;			/* command-line prompt */
 char *dps = "*";		/* default command-line prompt */
 
-char *usage = "usage: %s [-] [-sx] [-p string] [name]\n";
+char *usage = "usage: %s [-] [-sx] [-p string] [file]\n";
 
 char *home;		/* home directory */
 
