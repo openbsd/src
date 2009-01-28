@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.2 2009/01/28 00:09:54 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.3 2009/01/28 00:19:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -92,12 +92,13 @@ enqueue(int argc, char *argv[])
 	argv += optind;
 
 	bzero(&message, sizeof(struct message));
-
+	
 	/* build sender */
 	if (! recipient_to_path(&message.sender, sender))
 		errx(1, "invalid sender address.");
-
+	
 	if (! enqueue_init(&message)) {
+		errx(1, "failed to initialize enqueue message.");
 		return 1;
 	}
 	
@@ -137,6 +138,7 @@ enqueue_add_recipient(struct message *messagep, char *recipient)
 {
 	char buffer[MAX_PATH_SIZE];
 	struct message_recipient mr;
+	struct sockaddr_in6 *ssin6;
 	struct sockaddr_in *ssin;
 	struct message message;
 	int done = 0;
@@ -157,12 +159,16 @@ enqueue_add_recipient(struct message *messagep, char *recipient)
 		return 0;
 	}
 
-	/* NEEDS_FIX */
-	mr.ss.ss_family = AF_INET;
-	mr.ss.ss_len = sizeof(ssin);
-	ssin = (struct sockaddr_in *)&mr.ss;
-	if (inet_pton(AF_INET, "127.0.0.1", &ssin->sin_addr) != 1)
-		return 0;
+	mr.ss.ss_family = AF_INET6;
+	mr.ss.ss_len = sizeof(ssin6);
+	ssin6 = (struct sockaddr_in6 *)&mr.ss;
+	if (inet_pton(AF_INET6, "::1", &ssin6->sin6_addr) != 1) {
+		mr.ss.ss_family = AF_INET;
+		mr.ss.ss_len = sizeof(ssin);
+		ssin = (struct sockaddr_in *)&mr.ss;
+		if (inet_pton(AF_INET, "127.0.0.1", &ssin->sin_addr) != 1)
+			return 0;
+	}
 
 	mr.path = message.recipient;
 	mr.id = message.session_id;
