@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.53 2009/01/28 19:38:46 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.54 2009/01/28 21:44:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -478,6 +478,7 @@ struct batch {
 	SPLAY_ENTRY(batch)	 b_nodes;
 
 	u_int64_t		 id;
+	u_int64_t		 session_id;
 	enum batch_type		 type;
 	enum batch_flags	 flags;
 
@@ -594,6 +595,13 @@ struct session {
 	struct message			 s_msg;
 
 	struct session_auth_req		 s_auth;
+
+	struct mxhost			*mxarray;
+	u_int8_t			 mx_cnt;
+	u_int8_t			 mx_off;
+
+	struct batch			*batch;
+
 };
 
 struct smtpd {
