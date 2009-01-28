@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.75 2009/01/24 23:35:47 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.76 2009/01/28 12:02:00 bluhm Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -311,7 +311,6 @@ nfssvc_nfsd(nsd, argp, p)
 	struct nfsrv_descript *nd = NULL;
 	struct mbuf *mreq;
 	int error = 0, cacherep, s, sotype, writes_todo;
-	u_quad_t cur_usec;
 	struct timeval tv;
 
 	cacherep = RC_DOIT;
@@ -369,8 +368,6 @@ nfssvc_nfsd(nsd, argp, p)
 				}
 				error = nfsrv_dorec(slp, nfsd, &nd);
 				getmicrotime(&tv);
-				cur_usec = (u_quad_t)tv.tv_sec * 1000000 +
-					(u_quad_t)tv.tv_usec;
 				if (error && LIST_FIRST(&slp->ns_tq) &&
 				    timercmp(&LIST_FIRST(&slp->ns_tq)->nd_time,
 				    &tv, <=)) {
@@ -510,8 +507,6 @@ nfssvc_nfsd(nsd, argp, p)
 		     * need to be serviced.
 		     */
 		    getmicrotime(&tv);
-		    cur_usec = (u_quad_t)tv.tv_sec * 1000000 +
-			(u_quad_t)tv.tv_usec;
 		    s = splsoftclock();
 		    if (LIST_FIRST(&slp->ns_tq) &&
 			timercmp(&LIST_FIRST(&slp->ns_tq)->nd_time, &tv, <=)) {
