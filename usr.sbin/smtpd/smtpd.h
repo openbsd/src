@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.51 2009/01/28 13:29:40 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.52 2009/01/28 17:29:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -185,6 +185,8 @@ enum imsg_type {
 	IMSG_QUEUE_MESSAGE_UPDATE,
 	IMSG_QUEUE_MESSAGE_FD,
 	IMSG_QUEUE_MESSAGE_FILE,
+
+	IMSG_RUNNER_UPDATE_ENVELOPE,
 
 	IMSG_BATCH_CREATE,
 	IMSG_BATCH_APPEND,

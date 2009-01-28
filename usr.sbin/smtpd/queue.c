@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.50 2009/01/28 12:58:17 gilles Exp $	*/
+/*	$OpenBSD: queue.c,v 1.51 2009/01/28 17:29:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -306,7 +306,8 @@ queue_dispatch_mda(int sig, short event, void *p)
 		switch (imsg.hdr.type) {
 
 		case IMSG_QUEUE_MESSAGE_UPDATE: {
-			queue_message_update(imsg.data);
+			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_UPDATE_ENVELOPE,
+			    0, 0, -1, imsg.data, sizeof(struct message));
 			break;
 		}
 
@@ -369,7 +370,8 @@ queue_dispatch_mta(int sig, short event, void *p)
 		}
 
 		case IMSG_QUEUE_MESSAGE_UPDATE: {
-			queue_message_update(imsg.data);
+			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_UPDATE_ENVELOPE,
+			    0, 0, -1, imsg.data, sizeof(struct message));
 			break;
 		}
 

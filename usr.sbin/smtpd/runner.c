@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.24 2009/01/28 13:29:40 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.25 2009/01/28 17:29:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -188,6 +188,10 @@ runner_dispatch_queue(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_RUNNER_UPDATE_ENVELOPE: {
+			queue_message_update(imsg.data);
+			break;
+		}
 		default:
 			log_debug("runner_dispatch_queue: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -498,7 +502,8 @@ runner_process_envelope(struct message *messagep)
 	runner_check_loop(messagep);
 
 	messagep->flags |= F_MESSAGE_SCHEDULED;
-	queue_update_envelope(messagep);
+	if (! queue_update_envelope(messagep))
+		return;
 
 	if (! bsnprintf(evppath, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
 		queue_hash(messagep->message_id), messagep->message_id,
@@ -555,7 +560,8 @@ runner_process_runqueue(struct smtpd *env)
 		message.lasttry = tm;
 		message.flags &= ~F_MESSAGE_SCHEDULED;
 		message.flags |= F_MESSAGE_PROCESSING;
-		queue_update_envelope(&message);
+		if (! queue_update_envelope(&message))
+			continue;
 
 		messagep = calloc(1, sizeof (struct message));
 		if (messagep == NULL)
@@ -667,11 +673,8 @@ again:
 	}
 
 recurse:
-	if (curdir == NULL) {
-		if (errno == ENOENT)
-			goto again;
+	if (curdir == NULL)
 		fatal("runner_envelope_next: opendir failed");
-	}
 	goto again;
 }
 

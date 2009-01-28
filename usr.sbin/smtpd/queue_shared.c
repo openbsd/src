@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.3 2009/01/28 12:58:17 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.4 2009/01/28 17:29:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -82,9 +82,7 @@ queue_delete_layout_message(char *queuepath, char *msgid)
 		fatalx("snprintf");
 
 	if (rename(rootdir, purgedir) == -1) {
-		if (errno == ENOENT)
-			return;
-		fatal("queue_delete_incoming_message: rename");
+		fatal("queue_delete_layout_message: rename");
 	}
 }
 
@@ -149,8 +147,7 @@ queue_remove_layout_envelope(char *queuepath, struct message *message)
 		fatal("queue_remove_incoming_envelope: snprintf");
 
 	if (unlink(pathname) == -1)
-		if (errno != ENOENT)
-			fatal("queue_remove_incoming_envelope: unlink");
+		fatal("queue_remove_incoming_envelope: unlink");
 
 	return 1;
 }
@@ -316,16 +313,19 @@ queue_delete_message(char *msgid)
 		fatal("queue_delete_message: snprintf");
 
 	if (unlink(msgpath) == -1)
-		if (errno != ENOENT)
-			fatal("queue_delete_message: unlink");
+		fatal("queue_delete_message: unlink");
 
-	if (rmdir(evpdir) == -1)
+	if (rmdir(evpdir) == -1) {
+		/* It is ok to fail rmdir with ENOENT here
+		 * because upon successful delivery of the
+		 * last envelope, we remove the directory.
+		 */
 		if (errno != ENOENT)
 			fatal("queue_delete_message: rmdir");
+	}
 
 	if (rmdir(rootdir) == -1)
-		if (errno != ENOENT)
-			fatal("queue_delete_message: rmdir");
+		fatal("#2 queue_delete_message: rmdir");
 
 	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%d", PATH_QUEUE,
 		hval))
@@ -433,8 +433,7 @@ queue_update_envelope(struct message *messagep)
 
 tempfail:
 	if (unlink(temp) == -1)
-		if (errno != ENOENT)
-			fatal("queue_update_envelope: unlink");
+		fatal("queue_update_envelope: unlink");
 	if (fp)
 		fclose(fp);
 
@@ -458,8 +457,6 @@ queue_load_envelope(struct message *messagep, char *evpid)
 
 	fp = fopen(pathname, "r");
 	if (fp == NULL) {
-		if (errno == ENOENT)
-			return 0;
 		if (errno == ENOSPC || errno == ENFILE)
 			return 0;
 		fatal("queue_load_envelope: fopen");
