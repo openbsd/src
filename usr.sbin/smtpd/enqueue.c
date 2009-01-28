@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.5 2009/01/28 14:15:51 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.6 2009/01/28 19:49:57 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -97,15 +97,11 @@ enqueue(int argc, char *argv[])
 	if (! recipient_to_path(&message.sender, sender))
 		errx(1, "invalid sender address.");
 	
-	if (! enqueue_init(&message)) {
+	if (! enqueue_init(&message))
 		errx(1, "failed to initialize enqueue message.");
-		return 1;
-	}
 	
-	if (argc == 0) {
-		fprintf(stdout, "no recipient.\n");
-		return 1;
-	}
+	if (argc == 0)
+		errx(1, "no recipient.");
 
 	while (argc--) {
 		if (! enqueue_add_recipient(&message, *argv))
@@ -114,21 +110,17 @@ enqueue(int argc, char *argv[])
 	}
 
 	fd = enqueue_messagefd(&message);
-	if (fd == -1 || (fpout = fdopen(fd, "w")) == NULL) {
+	if (fd == -1 || (fpout = fdopen(fd, "w")) == NULL)
 		errx(1, "failed to open message file for writing.");
-		return 1;
-	}
 
-	if (! enqueue_write_message(stdin, fpout)) {
+	if (! enqueue_write_message(stdin, fpout))
 		errx(1, "failed to write message to message file.");
-		return 1;
-	}
-	safe_fclose(fpout);
 
-	if (! enqueue_commit(&message)) {
+	if (! safe_fclose(fpout))
+		errx(1, "error while writing to message file.");
+
+	if (! enqueue_commit(&message))
 		errx(1, "failed to commit message to queue.");
-		return 1;
-	}
 
 	return 0;
 }
@@ -149,10 +141,8 @@ enqueue_add_recipient(struct message *messagep, char *recipient)
 
 	message = *messagep;
 
-	if (strlcpy(buffer, recipient, sizeof(buffer)) >= sizeof(buffer)) {
+	if (strlcpy(buffer, recipient, sizeof(buffer)) >= sizeof(buffer))
 		errx(1, "recipient address too long.");
-		return 0;
-	}
 
 	if (strchr(buffer, '@') == NULL) {
 		if (! bsnprintf(buffer, sizeof(buffer), "%s@%s",
@@ -162,10 +152,8 @@ enqueue_add_recipient(struct message *messagep, char *recipient)
 
 	printf("recipient: %s", buffer);
 	
-	if (! recipient_to_path(&message.recipient, buffer)) {
+	if (! recipient_to_path(&message.recipient, buffer))
 		errx(1, "invalid recipient address.");
-		return 0;
-	}
 
 	message.session_rcpt = message.recipient;
 
@@ -210,11 +198,10 @@ enqueue_add_recipient(struct message *messagep, char *recipient)
 		case IMSG_CTL_FAIL:
 			return 0;
 		default:
-			err(1, "unexpected reply (%d)", imsg.hdr.type);
+			errx(1, "unexpected reply (%d)", imsg.hdr.type);
 		}
 		imsg_free(&imsg);
 	}
-
 
 	return 1;
 }
