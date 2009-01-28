@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.19 2009/01/28 23:13:42 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.20 2009/01/28 23:38:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -165,7 +165,7 @@ mta_dispatch_queue(int sig, short event, void *p)
 			if ((batchp->messagefp = fdopen(fd, "r")) == NULL)
 				fatal("mta_dispatch_queue: fdopen");
 
-			evbuffer_add_printf(sessionp->s_bev->output, "DATA\r\n");
+			session_respond(sessionp, "DATA");
 
 			bufferevent_enable(sessionp->s_bev, EV_WRITE|EV_READ);
 			break;
@@ -554,7 +554,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		break;
 
 	case 220:
-		evbuffer_add_printf(sessionp->s_bev->output, "EHLO %s\r\n", env->sc_hostname);
+		session_respond(sessionp, "EHLO %s", env->sc_hostname);
 		sessionp->s_state = S_GREETED;
 		return 1;
 
@@ -619,9 +619,10 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		}
 
 		if (user[0] == '\0' && domain[0] == '\0')
-			evbuffer_add_printf(sessionp->s_bev->output, "MAIL FROM:<>\r\n");
+			session_respond(sessionp, "MAIL FROM:<>");
 		else
-			evbuffer_add_printf(sessionp->s_bev->output, "MAIL FROM:<%s@%s>\r\n", user, domain);
+			session_respond(sessionp,  "MAIL FROM:<%s@%s>", user, domain);
+
 		sessionp->s_state = S_MAIL;
 
 		break;
@@ -662,7 +663,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 				user = messagep->recipient.user;
 				domain = messagep->recipient.domain;
 			}
-			evbuffer_add_printf(sessionp->s_bev->output, "RCPT TO:<%s@%s>\r\n", user, domain);
+			session_respond(sessionp, "RCPT TO:<%s@%s>", user, domain);
 		}
 		else {
 			/* Do we have at least one accepted recipient ? */
@@ -687,54 +688,58 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 
 	case S_DATA: {
 		bufferevent_enable(sessionp->s_bev, EV_READ|EV_WRITE);
-
-		evbuffer_add_printf(sessionp->s_bev->output,
-		    "Received: from %s (%s [%s])\r\n"
-		    "\tby %s with ESMTP id %s\r\n",
-		    "localhost", "localhost", "127.0.0.1",
+		
+		session_respond(sessionp, "Received: from %s (%s [%s])",
+		    "localhost", "localhost", "127.0.0.1");
+		session_respond(sessionp, "\tby %s with ESMTP id %s",
 		    "", batchp->message_id);
 
 		TAILQ_FOREACH(messagep, &batchp->messages, entry) {
-			evbuffer_add_printf(sessionp->s_bev->output, "X-OpenSMTPD-Loop: %s@%s\r\n",
-			    messagep->session_rcpt.user, messagep->session_rcpt.domain);
+			session_respond(sessionp, "X-OpenSMTPD-Loop: %s@%s",
+			    messagep->session_rcpt.user,
+			    messagep->session_rcpt.domain);
 		}
 
 		if (batchp->type & T_DAEMON_BATCH) {
-			evbuffer_add_printf(sessionp->s_bev->output,
-			    "Hi !\r\n\r\n"
-			    "This is the MAILER-DAEMON, please DO NOT REPLY to this e-mail it is\r\n"
-			    "just a notification to let you know that an error has occured.\r\n\r\n");
+			session_respond(sessionp, "Hi !");
+			session_respond(sessionp, "");
+			session_respond(sessionp, "This is the MAILER-DAEMON, please DO NOT REPLY to this e-mail it is");
+			session_respond(sessionp, "just a notification to let you know that an error has occured.");
+			session_respond(sessionp, "");
 
 			if (batchp->status & S_BATCH_PERMFAILURE) {
-				evbuffer_add_printf(sessionp->s_bev->output,
-				    "You ran into a PERMANENT FAILURE, which means that the e-mail can't\r\n"
-				    "be delivered to the remote host no matter how much I'll try.\r\n\r\n"
-				    "Diagnostic:\r\n"
-				    "%s\r\n\r\n", batchp->errorline);
+				session_respond(sessionp, "You ran into a PERMANENT FAILURE, which means that the e-mail can't");
+				session_respond(sessionp, "be delivered to the remote host no matter how much I'll try.");
+				session_respond(sessionp, "");
+				session_respond(sessionp, "Diagnostic:");
+				session_respond(sessionp, "%s", batchp->errorline);
+				session_respond(sessionp, "");
 			}
 
 			if (batchp->status & S_BATCH_TEMPFAILURE) {
-				evbuffer_add_printf(sessionp->s_bev->output,
-				    "You ran into a TEMPORARY FAILURE, which means that the e-mail can't\r\n"
-				    "be delivered right now, but could be deliberable at a later time. I\r\n"
-				    "will attempt until it succeeds for the next four days, then let you\r\n"
-				    "know if it didn't work out.\r\n"
-				    "Diagnostic:\r\n"
-				    "%s\r\n\r\n", batchp->errorline);
+				session_respond(sessionp, "You ran into a TEMPORARY FAILURE, which means that the e-mail can't");
+				session_respond(sessionp, "be delivered right now, but could be deliberable at a later time. I");
+				session_respond(sessionp, "will attempt until it succeeds for the next four days, then let you");
+				session_respond(sessionp, "know if it didn't work out.");
+				session_respond(sessionp, "");
+				session_respond(sessionp, "Diagnostic:");
+				session_respond(sessionp, "%s", batchp->errorline);
+				session_respond(sessionp, "");
 			}
 
 			i = 0;
 			TAILQ_FOREACH(messagep, &batchp->messages, entry) {
 				if (messagep->status & S_MESSAGE_TEMPFAILURE) {
 					if (i == 0) {
-						evbuffer_add_printf(sessionp->s_bev->output,
-						    "The following recipients caused a temporary failure:\r\n");
+						session_respond(sessionp, "The following recipients caused a temporary failure:");
 						++i;
 					}
 
-					evbuffer_add_printf(sessionp->s_bev->output,
-					    "\t<%s@%s>:\r\n%s\r\n\r\n",
-					    messagep->recipient.user, messagep->recipient.domain, messagep->session_errorline);
+					session_respond(sessionp,
+					    "\t<%s@%s>:", messagep->recipient.user, messagep->recipient.domain);
+					session_respond(sessionp,
+					    "%s", messagep->session_errorline);
+					session_respond(sessionp, "");
 				}
 			}
 
@@ -742,25 +747,27 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 			TAILQ_FOREACH(messagep, &batchp->messages, entry) {
 				if (messagep->status & S_MESSAGE_PERMFAILURE) {
 					if (i == 0) {
-						evbuffer_add_printf(sessionp->s_bev->output,
-						    "The following recipients caused a permanent failure:\r\n");
+						session_respond(sessionp,
+						    "The following recipients caused a permanent failure:");
 						++i;
 					}
 
-					evbuffer_add_printf(sessionp->s_bev->output,
-					    "\t<%s@%s>:\r\n%s\r\n\r\n",
-					    messagep->recipient.user, messagep->recipient.domain, messagep->session_errorline);
+					session_respond(sessionp,
+					    "\t<%s@%s>:", messagep->recipient.user, messagep->recipient.domain);
+					session_respond(sessionp,
+					    "%s", messagep->session_errorline);
+					session_respond(sessionp, "");
 				}
 			}
 
-			evbuffer_add_printf(sessionp->s_bev->output,
-			    "Below is a copy of the original message:\r\n\r\n");
+			session_respond(sessionp, "Below is a copy of the original message:");
+			session_respond(sessionp, "");
 		}
 
 		break;
 	}
 	case S_DONE:
-		evbuffer_add_printf(sessionp->s_bev->output, "QUIT\r\n");
+		session_respond(sessionp, "QUIT");
 		sessionp->s_state = S_QUIT;
 		break;
 
@@ -808,12 +815,12 @@ mta_write_handler(struct bufferevent *bev, void *arg)
 			if (*buf == '.')
 				evbuffer_add_printf(sessionp->s_bev->output, ".");
 
-			evbuffer_add_printf(sessionp->s_bev->output, "%s\r\n", buf);
+			session_respond(sessionp, "%s", buf);
 			free(lbuf);
 			lbuf = NULL;
 		}
 		else {
-			evbuffer_add_printf(sessionp->s_bev->output, ".\r\n");
+			session_respond(sessionp, ".");
 			sessionp->s_state = S_DONE;
 			fclose(batchp->messagefp);
 			batchp->messagefp = NULL;
