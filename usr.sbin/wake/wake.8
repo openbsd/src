@@ -1,0 +1,46 @@
+.\" $OpenBSD: wake.8,v 1.1 2009/01/28 13:40:48 mbalmer Exp $
+.\"
+.\" Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: January 28 2009 $
+.Dt WAKE 8
+.Os
+.Sh NAME
+.Nm wake
+.Nd send a Wake on LAN frame to a host on a local Ethernet network
+.Sh SYNOPSIS
+.Nm
+.Ar interface
+.Ar lladdr
+.Sh DESCRIPTION
+The
+.Nm
+program is used to send a Wake on LAN frame over a local Ethernet network to
+a host using either it's link layer (hardware) address or an entry in
+.Pa /etc/ethers .
+This can be used to power on Wake on LAN capable machines from a remote system
+without having physical access to them.
+.Sh FILES
+.Bl -tag -width "/etc/ethers" -compact
+.It /etc/ethers
+Ethernet host name database
+.El
+.Sh SEE ALSO
+.Xr ethers 5
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 4.5 .
