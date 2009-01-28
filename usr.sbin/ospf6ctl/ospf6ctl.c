@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.18 2009/01/01 23:41:42 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.19 2009/01/28 17:34:15 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -535,7 +535,7 @@ show_database_head(struct in_addr aid, char *ifname, u_int16_t type)
 		format = "Inter Area Router Link States";
 		break;
 	case LSA_TYPE_INTRA_A_PREFIX:
-		format = "Router Link States";
+		format = "Intra Area Prefix Link States";
 		break;
 	case LSA_TYPE_EXTERNAL:
 		printf("\n%-15s %s\n\n", "", "Type-5 AS External Link States");
