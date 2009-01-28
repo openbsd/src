@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.14 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.15 2009/01/28 21:08:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -942,17 +942,50 @@ tsec_down(struct tsec_softc *sc)
 void
 tsec_iff(struct tsec_softc *sc)
 {
+	struct arpcom *ac = &sc->sc_ac;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint32_t crc, hash[8];
 	uint32_t rctrl;
+	int i;
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	bzero(hash, sizeof(hash));
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		goto domulti;
+	if (ifp->if_flags & IFF_PROMISC)
+		goto allmulti;
+
+	ETHER_FIRST_MULTI(step, ac, enm);
+	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN))
+			goto allmulti;
+
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+		crc >>= 24;
+		hash[crc / 32] |= 1 << (crc % 32);
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
+	goto domulti;
+
+allmulti:
+	ifp->if_flags |= IFF_ALLMULTI;
+	bzero(hash, sizeof(hash));
+	
+domulti:
+	for (i = 0; i < nitems(hash); i++)
+		tsec_write(sc, TSEC_IADDR0 + i * 4, hash[i]);
 
 	rctrl = tsec_read(sc, TSEC_RCTRL);
-	if (ifp->if_flags & IFF_PROMISC)
+	if (ifp->if_flags & IFF_ALLMULTI)
 		rctrl |= TSEC_RCTRL_PROM;
 	else
 		rctrl &= ~TSEC_RCTRL_PROM;
-	tsec_write(sc, TSEC_RCTRL, rctrl | TSEC_RCTRL_PROM);
-
-	/* XXX multicast */
+	tsec_write(sc, TSEC_RCTRL, rctrl);
 }
 
 int
