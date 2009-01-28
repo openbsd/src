@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.18 2008/11/23 12:50:23 dlg Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.19 2009/01/28 23:45:13 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -72,6 +72,10 @@ static const struct mfi_pci_subtype mfi_perc5_subtypes[] = {
 	{ 0x0,		"" }
 };
 
+static const struct mfi_pci_subtype mfi_gen2_subtypes[] = {
+	{ 0x0,		"" } /* XXX add entries when known */
+};
+
 static const
 struct	mfi_pci_device {
 	pcireg_t			mpd_vendor;
@@ -88,7 +92,11 @@ struct	mfi_pci_device {
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC5,
 	  MFI_IOP_XSCALE,	mfi_perc5_subtypes },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_DELL_PERC6,
-	  MFI_IOP_PPC,		mfi_1078_subtypes }
+	  MFI_IOP_PPC,		mfi_1078_subtypes },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2108_1,
+	  MFI_IOP_GEN2,		mfi_gen2_subtypes },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2108_2,
+	  MFI_IOP_GEN2,		mfi_gen2_subtypes },
 };
 
 const struct mfi_pci_device *mfi_pci_find_device(struct pci_attach_args *);

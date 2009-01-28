@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.34 2008/10/31 21:39:04 marco Exp $ */
+/* $OpenBSD: mfivar.h,v 1.35 2009/01/28 23:45:12 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -94,7 +94,8 @@ TAILQ_HEAD(mfi_ccb_list, mfi_ccb);
 
 enum mfi_iop {
 	MFI_IOP_XSCALE,
-	MFI_IOP_PPC
+	MFI_IOP_PPC,
+	MFI_IOP_GEN2
 };
 
 struct mfi_iop_ops {

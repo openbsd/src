@@ -1,4 +1,4 @@
-/* $OpenBSD: mfireg.h,v 1.27 2008/10/31 21:37:20 marco Exp $ */
+/* $OpenBSD: mfireg.h,v 1.28 2009/01/28 23:45:12 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -24,6 +24,7 @@
 #define MFI_SENSE_SIZE				128
 #define MFI_OSTS_INTR_VALID			0x00000002 /* valid interrupt */
 #define MFI_OSTS_PPC_INTR_VALID			0x80000000
+#define MFI_OSTS_GEN2_INTR_VALID		(0x00000001 | 0x00000004)
 #define MFI_INVALID_CTX				0xffffffff
 #define MFI_ENABLE_INTR				0x01
 #define MFI_MAXFER				MAXPHYS	/* XXX bogus */
