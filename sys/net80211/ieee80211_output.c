@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.82 2009/01/26 21:28:55 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.83 2009/01/28 18:55:18 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -97,9 +97,9 @@ struct	mbuf *ieee80211_get_disassoc(struct ieee80211com *,
 struct	mbuf *ieee80211_get_addba_req(struct ieee80211com *,
 	    struct ieee80211_node *, u_int8_t);
 struct	mbuf *ieee80211_get_addba_resp(struct ieee80211com *,
-	    struct ieee80211_node *, u_int8_t, u_int16_t);
+	    struct ieee80211_node *, u_int8_t, u_int8_t, u_int16_t);
 struct	mbuf *ieee80211_get_delba(struct ieee80211com *,
-	    struct ieee80211_node *, u_int8_t, u_int16_t);
+	    struct ieee80211_node *, u_int8_t, u_int8_t, u_int16_t);
 #endif
 struct	mbuf *ieee80211_get_sa_query(struct ieee80211com *,
 	    struct ieee80211_node *, u_int8_t);
@@ -600,7 +600,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		if (ic->ic_tid_noack & (1 << tid))
 			qos |= IEEE80211_QOS_ACK_POLICY_NOACK;
 #ifndef IEEE80211_NO_HT
-		else if (ni->ni_ba[tid].ba_state == IEEE80211_BA_AGREED)
+		else if (ni->ni_tx_ba[tid].ba_state == IEEE80211_BA_AGREED)
 			qos |= IEEE80211_QOS_ACK_POLICY_BA;
 #endif
 		qwh->i_fc[0] |= IEEE80211_FC0_SUBTYPE_QOS;
@@ -1046,6 +1046,7 @@ ieee80211_add_htcaps(u_int8_t *frm, struct ieee80211com *ic)
 	return frm;
 }
 
+#ifndef IEEE80211_STA_ONLY
 /*
  * Add an HT Operation element to a frame (see 7.3.2.58).
  */
@@ -1060,6 +1061,7 @@ ieee80211_add_htop(u_int8_t *frm, struct ieee80211com *ic)
 	memset(frm, 0, 16); frm += 16;
 	return frm;
 }
+#endif	/* !IEEE80211_STA_ONLY */
 #endif	/* !IEEE80211_NO_HT */
 
 #ifndef IEEE80211_STA_ONLY
@@ -1440,7 +1442,7 @@ struct mbuf *
 ieee80211_get_addba_req(struct ieee80211com *ic, struct ieee80211_node *ni,
     u_int8_t tid)
 {
-	struct ieee80211_ba *ba = &ni->ni_ba[tid];
+	struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
 	struct mbuf *m;
 	u_int8_t *frm;
 	u_int16_t params;
@@ -1474,9 +1476,9 @@ ieee80211_get_addba_req(struct ieee80211com *ic, struct ieee80211_node *ni,
  */
 struct mbuf *
 ieee80211_get_addba_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
-    u_int8_t tid, u_int16_t status)
+    u_int8_t tid, u_int8_t token, u_int16_t status)
 {
-	struct ieee80211_ba *ba = &ni->ni_ba[tid];
+	struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
 	struct mbuf *m;
 	u_int8_t *frm;
 	u_int16_t params;
@@ -1488,11 +1490,17 @@ ieee80211_get_addba_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
 	frm = mtod(m, u_int8_t *);
 	*frm++ = IEEE80211_CATEG_BA;
 	*frm++ = IEEE80211_ACTION_ADDBA_RESP;
-	*frm++ = ba->ba_token;
+	*frm++ = token;
 	LE_WRITE_2(frm, status); frm += 2;
-	params = ba->ba_winsize << 6 | tid << 2 | IEEE80211_BA_ACK_POLICY;
+	params = tid << 2 | IEEE80211_BA_ACK_POLICY;
+	if (status == 0)
+		params |= ba->ba_winsize << 6;
 	LE_WRITE_2(frm, params); frm += 2;
-	LE_WRITE_2(frm, ba->ba_timeout_val); frm += 2;
+	if (status == 0)
+		LE_WRITE_2(frm, ba->ba_timeout_val);
+	else
+		LE_WRITE_2(frm, 0);
+	frm += 2;
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
@@ -1508,7 +1516,7 @@ ieee80211_get_addba_resp(struct ieee80211com *ic, struct ieee80211_node *ni,
  */
 struct mbuf *
 ieee80211_get_delba(struct ieee80211com *ic, struct ieee80211_node *ni,
-    u_int8_t tid, u_int16_t reason)
+    u_int8_t tid, u_int8_t dir, u_int16_t reason)
 {
 	struct mbuf *m;
 	u_int8_t *frm;
@@ -1521,7 +1529,9 @@ ieee80211_get_delba(struct ieee80211com *ic, struct ieee80211_node *ni,
 	frm = mtod(m, u_int8_t *);
 	*frm++ = IEEE80211_CATEG_BA;
 	*frm++ = IEEE80211_ACTION_DELBA;
-	params = tid << 12;	/* XXX initiator */
+	params = tid << 12;
+	if (dir)
+		params |= IEEE80211_DELBA_INITIATOR;
 	LE_WRITE_2(frm, params); frm += 2;
 	LE_WRITE_2(frm, reason); frm += 2;
 
@@ -1570,11 +1580,11 @@ ieee80211_get_action(struct ieee80211com *ic, struct ieee80211_node *ni,
 			m = ieee80211_get_addba_req(ic, ni, arg & 0xffff);
 			break;
 		case IEEE80211_ACTION_ADDBA_RESP:
-			m = ieee80211_get_addba_resp(ic, ni, arg & 0xffff,
-			    arg >> 16);
+			m = ieee80211_get_addba_resp(ic, ni, arg & 0xff,
+			    arg >> 8, arg >> 16);
 			break;
 		case IEEE80211_ACTION_DELBA:
-			m = ieee80211_get_delba(ic, ni, arg & 0xffff,
+			m = ieee80211_get_delba(ic, ni, arg & 0xff, arg >> 8,
 			    arg >> 16);
 			break;
 		}

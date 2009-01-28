@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.48 2009/01/26 19:09:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.49 2009/01/28 18:55:18 damien Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -373,13 +373,18 @@ enum {
 #define	IEEE80211_RATE_MAXSIZE			15	/* max rates we'll handle */
 
 /*
- * BA/BAR Control field (see Figure 7-13).
+ * BlockAck/BlockAckReq Control field (see Figure 7-13).
  */
 #define IEEE80211_BA_ACK_POLICY		0x0001
 #define IEEE80211_BA_MULTI_TID		0x0002
 #define IEEE80211_BA_COMPRESSED		0x0004
 #define IEEE80211_BA_TID_INFO_MASK	0xf000
 #define IEEE80211_BA_TID_INFO_SHIFT	12
+
+/*
+ * DELBA Parameter Set field (see Figure 7-34).
+ */
+#define IEEE80211_DELBA_INITIATOR	0x0800
 
 /*
  * ERP information element (see 7.3.2.13).

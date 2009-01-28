@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.56 2009/01/26 19:09:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.57 2009/01/28 18:55:18 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -200,9 +200,13 @@ struct ieee80211com {
 	void			(*ic_delete_key)(struct ieee80211com *,
 				    struct ieee80211_node *,
 				    struct ieee80211_key *);
-	int			(*ic_htimmba_start)(struct ieee80211com *,
+	int			(*ic_ampdu_tx_start)(struct ieee80211com *,
 				    struct ieee80211_node *, u_int8_t);
-	void			(*ic_htimmba_stop)(struct ieee80211com *,
+	void			(*ic_ampdu_tx_stop)(struct ieee80211com *,
+				    struct ieee80211_node *, u_int8_t);
+	int			(*ic_ampdu_rx_start)(struct ieee80211com *,
+				    struct ieee80211_node *, u_int8_t);
+	void			(*ic_ampdu_rx_stop)(struct ieee80211com *,
 				    struct ieee80211_node *, u_int8_t);
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];
 	struct ieee80211_rateset ic_sup_rates[IEEE80211_MODE_MAX];

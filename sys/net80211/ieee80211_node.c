@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.53 2009/01/28 17:15:21 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.54 2009/01/28 18:55:18 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1392,13 +1392,13 @@ ieee80211_node_join(struct ieee80211com *ic, struct ieee80211_node *ni,
 void
 ieee80211_node_leave_ht(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-	struct ieee80211_ba *ba;
+	struct ieee80211_rx_ba *ba;
 	u_int8_t tid;
 	int i;
 
 	/* free all Block Ack records */
 	for (tid = 0; tid < IEEE80211_NUM_TID; tid++) {
-		ba = &ni->ni_ba[tid];
+		ba = &ni->ni_rx_ba[tid];
 		if (ba->ba_buf != NULL) {
 			for (i = 0; i < IEEE80211_BA_MAX_WINSZ; i++)
 				if (ba->ba_buf[i].m != NULL)

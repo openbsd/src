@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.38 2009/01/26 19:09:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.39 2009/01/28 18:55:18 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -554,9 +554,9 @@ ieee80211_sa_query_request(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 #ifndef IEEE80211_NO_HT
 void
-ieee80211_ba_timeout(void *arg)
+ieee80211_tx_ba_timeout(void *arg)
 {
-	struct ieee80211_ba *ba = arg;
+	struct ieee80211_tx_ba *ba = arg;
 	struct ieee80211_node *ni = ba->ba_ni;
 	struct ieee80211com *ic = ni->ni_ic;
 	u_int8_t tid;
@@ -566,14 +566,31 @@ ieee80211_ba_timeout(void *arg)
 	if (ba->ba_state == IEEE80211_BA_REQUESTED) {
 		/* MLME-ADDBA.confirm(TIMEOUT) */
 		ba->ba_state = IEEE80211_BA_INIT;
-		free(ba->ba_buf, M_DEVBUF);
-		ba->ba_buf = NULL;
 
 	} else if (ba->ba_state == IEEE80211_BA_AGREED) {
 		/* Block Ack inactivity timeout */
-		tid = ((caddr_t)ba - (caddr_t)ni->ni_ba) / sizeof(*ba);
-		ieee80211_delba_request(ic, ni, IEEE80211_REASON_TIMEOUT, tid);
+		tid = ((caddr_t)ba - (caddr_t)ni->ni_tx_ba) / sizeof(*ba);
+		ieee80211_delba_request(ic, ni, IEEE80211_REASON_TIMEOUT,
+		    1, tid);
 	}
+	splx(s);
+}
+
+void
+ieee80211_rx_ba_timeout(void *arg)
+{
+	struct ieee80211_rx_ba *ba = arg;
+	struct ieee80211_node *ni = ba->ba_ni;
+	struct ieee80211com *ic = ni->ni_ic;
+	u_int8_t tid;
+	int s;
+
+	s = splnet();
+
+	/* Block Ack inactivity timeout */
+	tid = ((caddr_t)ba - (caddr_t)ni->ni_rx_ba) / sizeof(*ba);
+	ieee80211_delba_request(ic, ni, IEEE80211_REASON_TIMEOUT, 0, tid);
+
 	splx(s);
 }
 
@@ -584,7 +601,7 @@ int
 ieee80211_addba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
     u_int16_t ssn, u_int8_t tid)
 {
-	struct ieee80211_ba *ba = &ni->ni_ba[tid];
+	struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
 
 	/* MLME-ADDBA.request */
 
@@ -592,16 +609,10 @@ ieee80211_addba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 	ba->ba_state = IEEE80211_BA_REQUESTED;
 	ba->ba_token = ic->ic_dialog_token++;
 	ba->ba_timeout_val = IEEE80211_BA_MAX_TIMEOUT;
-	timeout_set(&ba->ba_to, ieee80211_ba_timeout, ba);
+	timeout_set(&ba->ba_to, ieee80211_tx_ba_timeout, ba);
 	ba->ba_winsize = IEEE80211_BA_MAX_WINSZ;
 	ba->ba_winstart = ssn;
 	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
-	/* allocate and setup our reordering buffer */
-	ba->ba_buf = malloc(IEEE80211_BA_MAX_WINSZ * sizeof(*ba->ba_buf),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (ba->ba_buf == NULL)
-		return ENOMEM;
-	ba->ba_head = 0;
 
 	timeout_add_sec(&ba->ba_to, 1);	/* dot11ADDBAResponseTimeout */
 	IEEE80211_SEND_ACTION(ic, ni, IEEE80211_CATEG_BA,
@@ -614,36 +625,44 @@ ieee80211_addba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
  */
 void
 ieee80211_delba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
-    u_int16_t reason, u_int8_t tid)
+    u_int16_t reason, u_int8_t dir, u_int8_t tid)
 {
-	struct ieee80211_ba *ba = &ni->ni_ba[tid];
-	int i;
-
 	/* MLME-DELBA.request */
 
 	/* transmit a DELBA frame */
 	IEEE80211_SEND_ACTION(ic, ni, IEEE80211_CATEG_BA,
-	    IEEE80211_ACTION_DELBA, reason << 16 | tid);
-	/*
-	 * XXX We should wait for an acknowledgment of the DELBA frame but
-	 * drivers are not necessarily notified when a frame is ACK'ed by
-	 * hardware.
-	 */
-	/* MLME-DELBA.confirm */
-	if (ic->ic_htimmba_stop != NULL)
-		ic->ic_htimmba_stop(ic, ni, tid);
+	    IEEE80211_ACTION_DELBA, reason << 16 | dir << 8 | tid);
+	if (dir) {
+		/* MLME-DELBA.confirm(Originator) */
+		struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
 
-	ba->ba_state = IEEE80211_BA_INIT;
-	/* stop Block Ack inactivity timer */
-	timeout_del(&ba->ba_to);
-	if (ba->ba_buf != NULL) {
-		/* free all MSDUs stored in reordering buffer */
-		for (i = 0; i < IEEE80211_BA_MAX_WINSZ; i++)
-			if (ba->ba_buf[i].m != NULL)
-				m_freem(ba->ba_buf[i].m);
-		/* free reordering buffer */
-		free(ba->ba_buf, M_DEVBUF);
-		ba->ba_buf = NULL;
+		if (ic->ic_ampdu_tx_stop != NULL)
+			ic->ic_ampdu_tx_stop(ic, ni, tid);
+
+		ba->ba_state = IEEE80211_BA_INIT;
+		/* stop Block Ack inactivity timer */
+		timeout_del(&ba->ba_to);
+	} else {
+		/* MLME-DELBA.confirm(Recipient) */
+		struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
+		int i;
+
+		if (ic->ic_ampdu_rx_stop != NULL)
+			ic->ic_ampdu_rx_stop(ic, ni, tid);
+
+		ba->ba_state = IEEE80211_BA_INIT;
+		/* stop Block Ack inactivity timer */
+		timeout_del(&ba->ba_to);
+
+		if (ba->ba_buf != NULL) {
+			/* free all MSDUs stored in reordering buffer */
+			for (i = 0; i < IEEE80211_BA_MAX_WINSZ; i++)
+				if (ba->ba_buf[i].m != NULL)
+					m_freem(ba->ba_buf[i].m);
+			/* free reordering buffer */
+			free(ba->ba_buf, M_DEVBUF);
+			ba->ba_buf = NULL;
+		}
 	}
 }
 #endif	/* !IEEE80211_NO_HT */
