@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.13 2009/01/28 11:32:37 kettenis Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.14 2009/01/28 16:50:02 kettenis Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -101,20 +101,16 @@ hmematch_pci(parent, vcf, aux)
 #define	PCI_EBUS2_BOOTROM_SIZE	0x20000
 #define	PROMHDR_PTR_DATA	0x18
 #define	PROMDATA_PTR_VPD	0x08
-#define	PROMDATA_DATA2		0x0a
+#define	PROMDATA_LENGTH		0x0a
+#define	PROMDATA_REVISION	0x0c
+#define	PROMDATA_SUBCLASS	0x0e
+#define	PROMDATA_CLASS		0x0f
 
 static const u_int8_t hme_promhdr[] = { 0x55, 0xaa };
 static const u_int8_t hme_promdat[] = {
 	'P', 'C', 'I', 'R',
 	PCI_VENDOR_SUN & 0xff, PCI_VENDOR_SUN >> 8,
 	PCI_PRODUCT_SUN_HME & 0xff, PCI_PRODUCT_SUN_HME >> 8
-};
-static const u_int8_t hme_promdat2[] = {
-	0x18, 0x00,			/* structure length */
-	0x00,				/* structure revision */
-	0x00,				/* interface revision */
-	PCI_SUBCLASS_NETWORK_ETHERNET,	/* subclass code */
-	PCI_CLASS_NETWORK		/* class code */
 };
 
 int
@@ -127,7 +123,7 @@ hme_pci_enaddr(struct hme_softc *sc, struct pci_attach_args *hpa)
 	bus_space_tag_t romt;
 	bus_size_t romsize = 0;
 	u_int8_t buf[32];
-	int dataoff, vpdoff;
+	int dataoff, vpdoff, length;
 
 	/*
 	 * Dig out VPD (vital product data) and acquire Ethernet address.
@@ -160,8 +156,17 @@ hme_pci_enaddr(struct hme_softc *sc, struct pci_attach_args *hpa)
 		goto fail;
 
 	bus_space_read_region_1(romt, romh, dataoff, buf, sizeof(buf));
-	if (bcmp(buf, hme_promdat, sizeof(hme_promdat)) ||
-	    bcmp(buf + PROMDATA_DATA2, hme_promdat2, sizeof(hme_promdat2)))
+	if (bcmp(buf, hme_promdat, sizeof(hme_promdat)))
+		goto fail;
+
+	/*
+	 * Don't check the interface part of the class code, since
+	 * some cards have a bogus value there.
+	 */
+	length = buf[PROMDATA_LENGTH] | (buf[PROMDATA_LENGTH + 1] << 8);
+	if (length != 0x18 || buf[PROMDATA_REVISION] != 0x00 ||
+	    buf[PROMDATA_SUBCLASS] != PCI_SUBCLASS_NETWORK_ETHERNET ||
+	    buf[PROMDATA_CLASS] != PCI_CLASS_NETWORK)
 		goto fail;
 
 	vpdoff = buf[PROMDATA_PTR_VPD] | (buf[PROMDATA_PTR_VPD + 1] << 8);
