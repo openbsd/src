@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.20 2009/01/28 23:38:49 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.21 2009/01/28 23:46:03 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -52,6 +52,8 @@ void		mta_error_handler(struct bufferevent *, short, void *);
 int		mta_reply_handler(struct bufferevent *, void *);
 void		mta_batch_update_queue(struct batch *);
 void		mta_expand_mxarray(struct session *);
+void		session_respond(struct session *, char *, ...)
+		    __attribute__ ((format (printf, 2, 3)));
 
 void
 mta_sig_handler(int sig, short event, void *p)
@@ -702,18 +704,18 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 
 		if (batchp->type & T_DAEMON_BATCH) {
 			session_respond(sessionp, "Hi !");
-			session_respond(sessionp, "");
+			session_respond(sessionp, "%s", "");
 			session_respond(sessionp, "This is the MAILER-DAEMON, please DO NOT REPLY to this e-mail it is");
 			session_respond(sessionp, "just a notification to let you know that an error has occured.");
-			session_respond(sessionp, "");
+			session_respond(sessionp, "%s", "");
 
 			if (batchp->status & S_BATCH_PERMFAILURE) {
 				session_respond(sessionp, "You ran into a PERMANENT FAILURE, which means that the e-mail can't");
 				session_respond(sessionp, "be delivered to the remote host no matter how much I'll try.");
-				session_respond(sessionp, "");
+				session_respond(sessionp, "%s", "");
 				session_respond(sessionp, "Diagnostic:");
 				session_respond(sessionp, "%s", batchp->errorline);
-				session_respond(sessionp, "");
+				session_respond(sessionp, "%s", "");
 			}
 
 			if (batchp->status & S_BATCH_TEMPFAILURE) {
@@ -721,10 +723,10 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 				session_respond(sessionp, "be delivered right now, but could be deliberable at a later time. I");
 				session_respond(sessionp, "will attempt until it succeeds for the next four days, then let you");
 				session_respond(sessionp, "know if it didn't work out.");
-				session_respond(sessionp, "");
+				session_respond(sessionp, "%s", "");
 				session_respond(sessionp, "Diagnostic:");
 				session_respond(sessionp, "%s", batchp->errorline);
-				session_respond(sessionp, "");
+				session_respond(sessionp, "%s", "");
 			}
 
 			i = 0;
@@ -739,7 +741,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 					    "\t<%s@%s>:", messagep->recipient.user, messagep->recipient.domain);
 					session_respond(sessionp,
 					    "%s", messagep->session_errorline);
-					session_respond(sessionp, "");
+					session_respond(sessionp, "%s", "");
 				}
 			}
 
@@ -756,12 +758,12 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 					    "\t<%s@%s>:", messagep->recipient.user, messagep->recipient.domain);
 					session_respond(sessionp,
 					    "%s", messagep->session_errorline);
-					session_respond(sessionp, "");
+					session_respond(sessionp, "%s", "");
 				}
 			}
 
 			session_respond(sessionp, "Below is a copy of the original message:");
-			session_respond(sessionp, "");
+			session_respond(sessionp, "%s", "");
 		}
 
 		break;
