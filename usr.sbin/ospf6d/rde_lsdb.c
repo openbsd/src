@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.14 2009/01/03 00:23:50 stsp Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.15 2009/01/28 22:47:36 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -645,6 +645,9 @@ lsa_dump(struct lsa_tree *tree, int imsg_type, pid_t pid)
 			if (v->type == LSA_TYPE_ROUTER)
 				break;
 			continue;
+		case IMSG_CTL_SHOW_DB_INTRA:
+			if (v->type == LSA_TYPE_INTRA_A_PREFIX)
+				break;
 		case IMSG_CTL_SHOW_DB_SUM:
 			if (v->type == LSA_TYPE_INTER_A_PREFIX)
 				break;

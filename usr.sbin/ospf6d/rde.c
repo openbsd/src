@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.15 2009/01/27 12:52:08 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.16 2009/01/28 22:47:36 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
+#include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <err.h>
@@ -62,6 +63,20 @@ struct lsa	*rde_asext_put(struct rroute *);
 
 struct lsa	*orig_asext_lsa(struct rroute *, u_int16_t);
 struct lsa	*orig_sum_lsa(struct rt_node *, struct area *, u_int8_t, int);
+struct lsa	*orig_intra_lsa_net(struct area *, struct iface *);
+
+/* Tree of prefixes with global scope on given a link,
+ * see orig_intra_lsa_*() */
+struct prefix_node {
+	RB_ENTRY(prefix_node)	 entry;
+	struct lsa_prefix	*prefix;
+};
+RB_HEAD(prefix_tree, prefix_node);
+RB_PROTOTYPE(prefix_tree, prefix_node, entry, prefix_compare);
+int		 prefix_compare(struct prefix_node *, struct prefix_node *);
+void		 prefix_tree_add_net(struct prefix_tree *, struct lsa_link *);
+void		 append_prefix_lsas(struct lsa **, u_int16_t *, u_int16_t *,
+		    struct prefix_tree *);
 
 struct ospfd_conf	*rdeconf = NULL, *nconf = NULL;
 struct imsgbuf		*ibuf_ospfe;
@@ -388,6 +403,15 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (nbr->self) {
 				lsa_merge(nbr, lsa, v);
 				/* lsa_merge frees the right lsa */
+
+				if (lsa->hdr.type == htons(LSA_TYPE_NETWORK)) {
+					struct lsa *intra;
+					intra = orig_intra_lsa_net(nbr->area,
+					    nbr->iface);
+					if (intra)
+						lsa_merge(nbr, intra, NULL);
+				}
+
 				break;
 			}
 
@@ -490,6 +514,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_CTL_SHOW_DB_LINK:
 		case IMSG_CTL_SHOW_DB_NET:
 		case IMSG_CTL_SHOW_DB_RTR:
+		case IMSG_CTL_SHOW_DB_INTRA:
 		case IMSG_CTL_SHOW_DB_SELF:
 		case IMSG_CTL_SHOW_DB_SUM:
 		case IMSG_CTL_SHOW_DB_ASBR:
@@ -1128,10 +1153,187 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 		v->cost = rte->cost;
 }
 
-
 /*
- * functions for self-originated LSA
+ * Functions for self-originated LSAs
  */
+
+struct lsa *
+orig_intra_lsa_net(struct area *area, struct iface *iface)
+{
+	struct lsa		*lsa;
+	struct vertex		*v;
+	struct rde_nbr		*nbr;
+	struct prefix_tree	 tree;
+	u_int16_t		 len;
+	u_int16_t		 numprefix;
+
+	log_debug("orig_intra_lsa_net: area %s", inet_ntoa(area->id));
+
+	len = sizeof(struct lsa_hdr) + sizeof(struct lsa_intra_prefix);
+	if ((lsa = calloc(1, len)) == NULL)
+		fatal("orig_intra_lsa_net");
+
+	lsa->data.pref_intra.ref_type = htons(LSA_TYPE_NETWORK);
+	lsa->data.pref_intra.ref_lsid = htonl(iface->ifindex);
+	lsa->data.pref_intra.ref_adv_rtr = rdeconf->rtr_id.s_addr;
+
+	/* Build an RB tree of all global prefixes contained
+	 * in this interface's link LSAs. This makes it easy
+	 * to eliminate duplicates. */
+	RB_INIT(&tree);
+	RB_FOREACH(v, lsa_tree, &iface->lsa_tree) {
+		if (v->lsa->hdr.type != htons(LSA_TYPE_LINK))
+			continue;
+
+		/* Make sure advertising router is adjacent... */
+		LIST_FOREACH(nbr, &area->nbr_list, entry) {
+			if (v->lsa->hdr.adv_rtr == nbr->id.s_addr)
+				break;
+		}
+		if (!nbr) {
+			fatalx("orig_intra_lsa_net: cannot find neighbor");
+			free(lsa);
+			return (NULL);
+		}
+		if (nbr->state < NBR_STA_2_WAY)
+			continue;
+		
+		/* ... and that the LSA's link state ID matches
+		 * the neighbour's interface ID. */
+		if (ntohl(v->lsa->hdr.ls_id) != nbr->iface_id)
+			continue;
+
+		prefix_tree_add_net(&tree, &v->lsa->data.link);
+	}
+
+	if (RB_EMPTY(&tree)) {
+		free(lsa);
+		return NULL;
+	}
+
+	append_prefix_lsas(&lsa, &len, &numprefix, &tree);
+	if (lsa == NULL)
+		fatalx("orig_intra_lsa_net: failed to append LSAs");
+
+	lsa->data.pref_intra.numprefix = htons(numprefix);
+
+	while (!RB_EMPTY(&tree))
+		free(RB_REMOVE(prefix_tree, &tree, RB_ROOT(&tree)));
+
+	/* LSA header */
+	lsa->hdr.age = htons(DEFAULT_AGE);
+	lsa->hdr.type = htons(LSA_TYPE_INTRA_A_PREFIX);
+	lsa->hdr.ls_id = htonl(iface->ifindex);
+	lsa->hdr.adv_rtr = rdeconf->rtr_id.s_addr;
+	lsa->hdr.seq_num = htonl(INIT_SEQ_NUM);
+	lsa->hdr.len = htons(len);
+	lsa->hdr.ls_chksum = htons(iso_cksum(lsa, len, LS_CKSUM_OFFSET));
+
+	return lsa;
+}
+
+/* Prefix LSAs have variable size. We have to be careful to copy the right
+ * amount of bytes, and to realloc() the right amount of memory. */
+void
+append_prefix_lsas(struct lsa **lsa, u_int16_t *len, u_int16_t *numprefix,
+    struct prefix_tree *tree)
+{
+	struct prefix_node	*node;
+	struct lsa_prefix	*copy;
+	unsigned int		 lsa_prefix_len;
+	unsigned int		 new_len;
+	char  			*new_lsa;
+
+	*numprefix = 0;
+
+	RB_FOREACH(node, prefix_tree, tree) {
+		lsa_prefix_len = sizeof(struct lsa_prefix)
+		    + LSA_PREFIXSIZE(node->prefix->prefixlen);
+
+		new_len = *len + lsa_prefix_len;
+
+		/* Make sure we have enough space for this prefix. */
+		if ((new_lsa = realloc(*lsa, new_len)) == NULL) {
+			fatalx("append_prefix_lsas");
+			free(*lsa);
+			*lsa = NULL;
+			*len = 0;
+			return;
+		}
+
+		/* Append prefix to LSA. */
+		copy = (struct lsa_prefix *)(new_lsa + *len);
+		memcpy(copy, node->prefix, lsa_prefix_len);
+		copy->metric = 0;
+
+		*lsa = (struct lsa *)new_lsa;
+		*len = new_len;
+		(*numprefix)++;
+	}
+}
+
+int
+prefix_compare(struct prefix_node *a, struct prefix_node *b)
+{
+	struct lsa_prefix	*p;
+	struct lsa_prefix	*q;
+	int		 	 i;
+	int			 len;
+
+	p = a->prefix;
+	q = b->prefix;
+
+	len = MIN(LSA_PREFIXSIZE(p->prefixlen), LSA_PREFIXSIZE(q->prefixlen));
+
+	i = memcmp(p + 1, q + 1, len);
+	if (i)
+		return (i);
+	if (p->prefixlen < q->prefixlen)
+		return (-1);
+	if (p->prefixlen > q->prefixlen)
+		return (1);
+	return (0);
+}
+
+void
+prefix_tree_add_net(struct prefix_tree *tree, struct lsa_link *lsa)
+{
+	struct prefix_node	*old;
+	struct prefix_node	*new;
+	struct in6_addr		 addr;
+	unsigned int		 len;
+	unsigned int		 i;
+	char			*cur_prefix;
+
+	cur_prefix = (char *)(lsa + 1);
+
+	for (i = 0; i < ntohl(lsa->numprefix); i++) {
+		new = calloc(sizeof(*new), 1);
+		new->prefix = (struct lsa_prefix *)cur_prefix;
+
+		len = sizeof(*new->prefix) 
+		    + LSA_PREFIXSIZE(new->prefix->prefixlen);
+
+		bzero(&addr, sizeof(addr));
+		memcpy(&addr, new->prefix + 1,
+		    LSA_PREFIXSIZE(new->prefix->prefixlen));
+
+		if (!(IN6_IS_ADDR_LINKLOCAL(&addr))
+		    && (new->prefix->options & OSPF_PREFIX_NU) == 0
+		    && (new->prefix->options & OSPF_PREFIX_LA) == 0) {
+			old = RB_INSERT(prefix_tree, tree, new);
+			if (old != NULL) {
+				old->prefix->options |= new->prefix->options;
+				free(new);
+			}
+		}
+
+		cur_prefix = cur_prefix + len;
+	}
+}
+
+RB_GENERATE(prefix_tree, prefix_node, entry, prefix_compare)
+
 struct lsa *
 orig_asext_lsa(struct rroute *rr, u_int16_t age)
 {

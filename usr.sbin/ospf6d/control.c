@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.5 2008/12/30 21:31:54 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.6 2009/01/28 22:47:36 stsp Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -251,6 +251,7 @@ control_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_CTL_SHOW_DB_LINK:
 		case IMSG_CTL_SHOW_DB_NET:
 		case IMSG_CTL_SHOW_DB_RTR:
+		case IMSG_CTL_SHOW_DB_INTRA:
 		case IMSG_CTL_SHOW_DB_SELF:
 		case IMSG_CTL_SHOW_DB_SUM:
 		case IMSG_CTL_SHOW_DB_ASBR:
