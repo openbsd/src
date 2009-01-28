@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.56 2009/01/08 12:47:45 michele Exp $	*/
+/*	$OpenBSD: route.h,v 1.57 2009/01/28 12:34:09 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -296,6 +296,14 @@ struct rt_omsghdr {
 #define RTAX_SRCMASK	9	/* source netmask present */
 #define RTAX_LABEL	10	/* route label present */
 #define RTAX_MAX	11	/* size of array to allocate */
+
+/*
+ * setsockopt defines used for the filtering.
+ */
+#define ROUTE_MSGFILTER	1	/* bitmask to specifiy which types should be
+				   sent to the client. */
+
+#define ROUTE_SETFILTER(x, m)	(x) |= (1 << (m))
 
 struct rt_addrinfo {
 	int	rti_addrs;
