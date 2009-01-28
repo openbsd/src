@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.52 2009/01/27 17:02:29 damien Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.53 2009/01/28 17:15:21 damien Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -812,9 +812,21 @@ ieee80211_dup_bss(struct ieee80211com *ic, const u_int8_t *macaddr)
 struct ieee80211_node *
 ieee80211_find_node(struct ieee80211com *ic, const u_int8_t *macaddr)
 {
-	/* XXX ugly, but avoids a full node structure in the stack */
-	return (RB_FIND(ieee80211_tree, &ic->ic_tree,
-	    (struct ieee80211_node *)macaddr));
+	struct ieee80211_node *ni;
+	int cmp;
+
+	/* similar to RB_FIND except we compare keys, not nodes */
+	ni = RB_ROOT(&ic->ic_tree);
+	while (ni != NULL) {
+		cmp = memcmp(macaddr, ni->ni_macaddr, IEEE80211_ADDR_LEN);
+		if (cmp < 0)
+			ni = RB_LEFT(ni, ni_node);
+		else if (cmp > 0)
+			ni = RB_RIGHT(ni, ni_node);
+		else
+			break;
+	}
+	return ni;
 }
 
 /*
