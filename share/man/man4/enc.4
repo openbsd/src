@@ -1,4 +1,4 @@
-.\"	$OpenBSD: enc.4,v 1.26 2007/05/31 19:19:50 jmc Exp $
+.\"	$OpenBSD: enc.4,v 1.27 2009/01/28 21:00:32 grunk Exp $
 .\"
 .\" Copyright (c) 2006 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: January 28 2009 $
 .Dt ENC 4
 .Os
 .Sh NAME
@@ -81,7 +81,7 @@ Finally,
 the use of translation rules to map and redirect network traffic
 requires some care.
 Packets destined to be IPsec processed are seen by the
-filer/translation engine twice,
+filter/translation engine twice,
 both before and after being IPsec processed.
 If a packet's translated address
 on the way back fails to match an existing IPsec flow,
