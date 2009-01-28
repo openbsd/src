@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_funcs.c,v 1.12 2006/04/22 03:09:15 ray Exp $	*/
+/*	$OpenBSD: cl_funcs.c,v 1.13 2009/01/28 13:02:22 sobrado Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -688,11 +688,20 @@ cl_suspend(sp, allowedp)
 void
 cl_usage()
 {
-#define	USAGE "\
-usage: ex [-eFRrSsv] [-c command] [-t tag] [-w size] [file ...]\n\
-usage: vi [-eFlRrSv] [-c command] [-t tag] [-w size] [file ...]\n"
-	(void)fprintf(stderr, "%s", USAGE);
-#undef	USAGE
+	switch (pmode) {
+	case MODE_EX:
+		(void)fprintf(stderr, "usage: "
+		    "ex [-FRrSsv] [-c cmd] [-t tag] [-w size] [file ...]\n");
+		break;
+	case MODE_VI:
+		(void)fprintf(stderr, "usage: "
+		    "vi [-eFRrS] [-c cmd] [-t tag] [-w size] [file ...]\n");
+		break;
+	case MODE_VIEW:
+		(void)fprintf(stderr, "usage: "
+		    "view [-eFrS] [-c cmd] [-t tag] [-w size] [file ...]\n");
+		break;
+	}
 }
 
 #ifdef DEBUG

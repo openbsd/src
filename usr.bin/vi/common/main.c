@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2008/06/12 21:22:48 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2009/01/28 13:02:22 sobrado Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -117,11 +117,27 @@ editor(gp, argc, argv)
 	/* Set the file snapshot flag. */
 	F_SET(gp, G_SNAPSHOT);
 
+	pmode = MODE_EX;
+	if (!strcmp(gp->progname, "ex"))
+		pmode = MODE_EX;
+	else if (!strcmp(gp->progname, "vi"))
+		pmode = MODE_VI;
+	else if (!strcmp(gp->progname, "view"))
+		pmode = MODE_VIEW;
+
+	static const char *optstr[3] = {
 #ifdef DEBUG
-	while ((ch = getopt(argc, argv, "c:D:eFlRrSsT:t:vw:")) != -1)
+		"c:D:eFlRrSsT:t:vw:",
+		"c:D:eFlRrST:t:w:",
+		"c:D:eFlrST:t:w:"
 #else
-	while ((ch = getopt(argc, argv, "c:eFlRrSst:vw:")) != -1)
+		"c:eFlRrSst:vw:",
+		"c:eFlRrSt:w:",
+		"c:eFlrSt:w:"
 #endif
+	};
+
+	while ((ch = getopt(argc, argv, optstr[pmode])) != -1)
 		switch (ch) {
 		case 'c':		/* Run the command. */
 			/*
