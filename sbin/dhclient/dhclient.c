@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.121 2009/01/10 16:33:47 claudio Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.122 2009/01/28 17:05:53 dlg Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -263,6 +263,7 @@ main(int argc, char *argv[])
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_PID | LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
+	int rtfilter;
 
 	while ((ch = getopt(argc, argv, "c:dl:qu")) != -1)
 		switch (ch) {
@@ -377,6 +378,15 @@ main(int argc, char *argv[])
 
 	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) == -1)
 		error("socket(PF_ROUTE, SOCK_RAW): %m");
+
+	ROUTE_SETFILTER(rtfilter, RTM_NEWADDR);
+	ROUTE_SETFILTER(rtfilter, RTM_DELADDR);
+	ROUTE_SETFILTER(rtfilter, RTM_IFINFO);
+	ROUTE_SETFILTER(rtfilter, RTM_IFANNOUNCE);
+
+	if (setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
+	    &rtfilter, sizeof(rtfilter)) == -1)
+		error("setsockopt(ROUTE_MSGFILTER): %m");
 
 	/* set up the interface */
 	discover_interface();
