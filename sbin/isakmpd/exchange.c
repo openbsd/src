@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.132 2007/09/02 23:50:04 deraadt Exp $	 */
+/* $OpenBSD: exchange.c,v 1.133 2009/01/28 13:24:07 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -75,9 +75,6 @@
 
 static void     exchange_dump(char *, struct exchange *);
 static void     exchange_free_aux(void *);
-#if 0
-static void     exchange_resize(void);
-#endif
 static struct exchange *exchange_lookup_active(char *, int);
 
 static
@@ -417,26 +414,6 @@ exchange_init(void)
 	for (i = 0; i <= bucket_mask; i++)
 		LIST_INIT(&exchange_tab[i]);
 }
-
-#if 0
-/* XXX Currently unused.  */
-static void
-exchange_resize(void)
-{
-	struct exchange_list *new_tab;
-	int	new_mask = (bucket_mask + 1) * 2 - 1;
-	int	i;
-
-	new_tab = realloc(exchange_tab,
-	    (new_mask + 1) * sizeof(struct exchange_list));
-	if (!new_tab)
-		return;
-	for (i = bucket_mask + 1; i <= new_mask; i++)
-		LIST_INIT(&new_tab[i]);
-	bucket_mask = new_mask;
-	/* XXX Rehash existing entries.  */
-}
-#endif
 
 /* Lookup a phase 1 exchange out of just the initiator cookie.  */
 struct exchange *
