@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.31 2009/01/17 22:06:44 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.32 2009/01/29 23:27:26 jaredy Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -44,7 +44,7 @@ int	c_set(char **);
 int	c_unset(char **);
 int	c_ulimit(char **);
 int	c_times(char **);
-int	timex(struct op *, int);
+int	timex(struct op *, int, volatile int *);
 void	timex_hook(struct op *, char ** volatile *);
 int	c_exec(char **);
 int	c_builtin(char **);
@@ -65,7 +65,7 @@ char	*debunk(char *, const char *, size_t);
 void	expand(char *, XPtrV *, int);
 int	glob_str(char *, XPtrV *, int);
 /* exec.c */
-int	execute(struct op * volatile, volatile int);
+int	execute(struct op * volatile, volatile int, volatile int *);
 int	shcomexec(char **);
 struct tbl * findfunc(const char *, unsigned int, int);
 int	define(const char *, struct op *);
@@ -134,7 +134,7 @@ struct temp *maketemp(Area *, Temp_type, struct temp **);
 void	j_init(int);
 void	j_exit(void);
 void	j_change(void);
-int	exchild(struct op *, int, int);
+int	exchild(struct op *, int, volatile int *, int);
 void	startlast(void);
 int	waitlast(void);
 int	waitfor(const char *, int *);
