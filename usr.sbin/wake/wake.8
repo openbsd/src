@@ -1,4 +1,4 @@
-.\" $OpenBSD: wake.8,v 1.3 2009/01/29 13:47:17 mbalmer Exp $
+.\" $OpenBSD: wake.8,v 1.4 2009/01/29 16:52:50 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -27,18 +27,30 @@
 .Sh DESCRIPTION
 The
 .Nm
-program is used to send a Wake on LAN frame over a local Ethernet network to
-a host using either its link layer (hardware) address or an entry in
-.Pa /etc/ethers .
-This can be used to power on Wake on LAN capable machines from a remote system
-without having physical access to them.
+program is used to send a Wake on LAN (WoL) frame over a local
+Ethernet network to a host using its link layer (hardware) address.
+WoL functionality is generally enabled in a machine's BIOS
+and can be used to power on machines from a remote system without
+having physical access to them.
+.Pp
+.Ar interface
+is the network interface of the local machine.
+.Ar lladdr
+is the link layer address of the remote machine
+and can be specified as the actual hardware address
+(six hexadecimal numbers separated by colons)
+or a hostname entry in
+.Xr ethers 5 .
+Link layer addresses can be determined and set using
+.Xr ifconfig 8 .
 .Sh FILES
 .Bl -tag -width "/etc/ethers" -compact
 .It /etc/ethers
-Ethernet host name database
+Ethernet host name database.
 .El
 .Sh SEE ALSO
-.Xr ethers 5
+.Xr ethers 5 ,
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
