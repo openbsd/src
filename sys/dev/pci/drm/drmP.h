@@ -71,7 +71,6 @@
 #include "drm.h"
 #include "drm_linux_list.h"
 #include "drm_atomic.h"
-#include "drm_internal.h"
 
 #define DRM_KERNEL_CONTEXT    0	 /* Change drm_resctx if changed	  */
 #define DRM_RESERVED_CONTEXTS 1	 /* Change drm_resctx if changed	  */
@@ -500,7 +499,6 @@ struct drm_device {
 	DRM_SPINTYPE	  dma_lock;	/* protects dev->dma */
 	DRM_SPINTYPE	  irq_lock;	/* protects irq condition checks */
 	struct rwlock	  dev_lock;	/* protects everything else */
-	DRM_SPINTYPE	  drw_lock;
 
 				/* Usage Counters */
 	int		  open_count;	/* Outstanding files open	   */
@@ -539,10 +537,6 @@ struct drm_device {
 	atomic_t		*ctx_bitmap;
 	void			*dev_private;
 	drm_local_map_t		*agp_buffer_map;
-
-	u_int		  drw_no;
-	/* RB tree of drawable infos */
-	RB_HEAD(drawable_tree, bsd_drm_drawable_info) drw_head;
 };
 
 struct drm_attach_args {
@@ -678,14 +672,6 @@ int	drm_resctx(struct drm_device *, void *, struct drm_file *);
 int	drm_addctx(struct drm_device *, void *, struct drm_file *);
 int	drm_getctx(struct drm_device *, void *, struct drm_file *);
 int	drm_rmctx(struct drm_device *, void *, struct drm_file *);
-
-/* Drawable IOCTL support (drm_drawable.c) */
-int	drm_adddraw(struct drm_device *, void *, struct drm_file *);
-int	drm_rmdraw(struct drm_device *, void *, struct drm_file *);
-int	drm_update_draw(struct drm_device *, void *, struct drm_file *);
-void	drm_drawable_free_all(struct drm_device *);
-struct drm_drawable_info	*drm_get_drawable_info(struct drm_device *,
-				    unsigned int);
 
 /* Authentication IOCTL support (drm_auth.c) */
 int	drm_getmagic(struct drm_device *, void *, struct drm_file *);

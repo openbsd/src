@@ -130,7 +130,6 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	dev->unique_len = da->busid_len;
 
 	rw_init(&dev->dev_lock, "drmdevlk");
-	mtx_init(&dev->drw_lock, IPL_NONE);
 	mtx_init(&dev->lock.spinlock, IPL_NONE);
 
 	TAILQ_INIT(&dev->maplist);
@@ -308,7 +307,6 @@ drm_lastclose(struct drm_device *dev)
 		drm_irq_uninstall(dev);
 
 	drm_agp_takedown(dev);
-	drm_drawable_free_all(dev);
 	drm_dma_takedown(dev);
 
 	DRM_LOCK();
@@ -639,10 +637,6 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 			return (drm_addctx(dev, data, file_priv));
 		case DRM_IOCTL_RM_CTX:
 			return (drm_rmctx(dev, data, file_priv));
-		case DRM_IOCTL_ADD_DRAW:
-			return (drm_adddraw(dev, data, file_priv));
-		case DRM_IOCTL_RM_DRAW:
-			return (drm_rmdraw(dev, data, file_priv));
 		case DRM_IOCTL_ADD_BUFS:
 			return (drm_addbufs_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_CONTROL:
@@ -665,8 +659,15 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 			return (drm_sg_alloc_ioctl(dev, data, file_priv));
 		case DRM_IOCTL_SG_FREE:
 			return (drm_sg_free(dev, data, file_priv));
+		case DRM_IOCTL_ADD_DRAW:
+		case DRM_IOCTL_RM_DRAW:
 		case DRM_IOCTL_UPDATE_DRAW:
-			return (drm_update_draw(dev, data, file_priv));
+			/*
+			 * Support removed from kernel since it's not used.
+			 * just return zero until userland stops calling this
+			 * ioctl.
+			 */
+			return (0);
 		case DRM_IOCTL_SET_UNIQUE:
 		/*
 		 * Deprecated in DRM version 1.1, and will return EBUSY
