@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_35.c,v 1.3 2004/07/14 18:57:57 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls_35.c,v 1.4 2009/01/29 22:08:45 guenther Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -68,9 +68,9 @@ cvtstat(struct stat *st, struct stat35 *ost)
 	ost->st_uid = st->st_uid;
 	ost->st_gid = st->st_gid;
 	ost->st_rdev = st->st_rdev;
-	ost->st_atimespec = st->st_atimespec;
-	ost->st_mtimespec = st->st_mtimespec;
-	ost->st_ctimespec = st->st_ctimespec;
+	ost->st_atim = st->st_atim;
+	ost->st_mtim = st->st_mtim;
+	ost->st_ctim = st->st_ctim;
 	ost->st_size = st->st_size;
 	ost->st_blocks = st->st_blocks;
 	ost->st_blksize = st->st_blksize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.27 2005/08/07 00:18:33 deraadt Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.28 2009/01/29 22:08:45 guenther Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -97,9 +97,9 @@ bsd_to_svr4_stat(st, st4)
 	st4->st_gid = st->st_gid;
 	st4->st_rdev = bsd_to_svr4_odev_t(st->st_rdev);
 	st4->st_size = st->st_size;
-	st4->st_atim = st->st_atimespec.tv_sec;
-	st4->st_mtim = st->st_mtimespec.tv_sec;
-	st4->st_ctim = st->st_ctimespec.tv_sec;
+	st4->st_atim = st->st_atime;
+	st4->st_mtim = st->st_mtime;
+	st4->st_ctim = st->st_ctime;
 }
 #endif
 
@@ -118,9 +118,9 @@ bsd_to_svr4_xstat(st, st4)
 	st4->st_gid = st->st_gid;
 	st4->st_rdev = bsd_to_svr4_dev_t(st->st_rdev);
 	st4->st_size = st->st_size;
-	st4->st_atim = st->st_atimespec;
-	st4->st_mtim = st->st_mtimespec;
-	st4->st_ctim = st->st_ctimespec;
+	st4->st_atim = st->st_atim;
+	st4->st_mtim = st->st_mtim;
+	st4->st_ctim = st->st_ctim;
 	st4->st_blksize = st->st_blksize;
 	st4->st_blocks = st->st_blocks;
 	strlcpy(st4->st_fstype, "unknown", sizeof st4->st_fstype);
@@ -140,9 +140,9 @@ bsd_to_svr4_stat64(st, st4)
 	st4->st_gid = st->st_gid;
 	st4->st_rdev = bsd_to_svr4_dev_t(st->st_rdev);
 	st4->st_size = st->st_size;
-	st4->st_atim = st->st_atimespec;
-	st4->st_mtim = st->st_mtimespec;  
-	st4->st_ctim = st->st_ctimespec;
+	st4->st_atim = st->st_atim;
+	st4->st_mtim = st->st_mtim;  
+	st4->st_ctim = st->st_ctim;
 	st4->st_blksize = st->st_blksize;
 	st4->st_blocks = st->st_blocks;
 	strlcpy(st4->st_fstype, "unknown", sizeof st4->st_fstype);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.16 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: stat.h,v 1.17 2009/01/29 22:08:45 guenther Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -53,9 +53,9 @@ struct stat43 {
 	u_int16_t st_gid;		/* group ID of the file's group */
 	u_int16_t st_rdev;		/* device type */
 	int32_t	  st_size;		/* file size, in bytes */
-	struct	timespec st_atimespec;	/* time of last access */
-	struct	timespec st_mtimespec;	/* time of last data modification */
-	struct	timespec st_ctimespec;	/* time of last file status change */
+	struct	timespec st_atim;	/* time of last access */
+	struct	timespec st_mtim;	/* time of last data modification */
+	struct	timespec st_ctim;	/* time of last file status change */
 	int32_t	  st_blksize;		/* optimal blocksize for I/O */
 	int32_t	  st_blocks;		/* blocks allocated for file */
 	u_int32_t st_flags;		/* user defined flags for file */
@@ -70,9 +70,9 @@ struct stat35 {
 	uid_t	  st_uid;		/* user ID of the file's owner */
 	gid_t	  st_gid;		/* group ID of the file's group */
 	dev_t	  st_rdev;		/* device type */
-	struct	timespec st_atimespec;	/* time of last access */
-	struct	timespec st_mtimespec;	/* time of last data modification */
-	struct	timespec st_ctimespec;	/* time of last file status change */
+	struct	timespec st_atim;	/* time of last access */
+	struct	timespec st_mtim;	/* time of last data modification */
+	struct	timespec st_ctim;	/* time of last file status change */
 	off_t	  st_size;		/* file size, in bytes */
 	int64_t	  st_blocks;		/* blocks allocated for file */
 	u_int32_t st_blksize;		/* optimal blocksize for I/O */
@@ -92,10 +92,10 @@ struct stat {
 	gid_t	  st_gid;		/* group ID of the file's group */
 	dev_t	  st_rdev;		/* device type */
 	int32_t	  st_lspare0;
-#if __BSD_VISIBLE
-	struct	timespec st_atimespec;	/* time of last access */
-	struct	timespec st_mtimespec;	/* time of last data modification */
-	struct	timespec st_ctimespec;	/* time of last file status change */
+#if __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE
+	struct	timespec st_atim;	/* time of last access */
+	struct	timespec st_mtim;	/* time of last data modification */
+	struct	timespec st_ctim;	/* time of last file status change */
 #else
 	time_t	  st_atime;		/* time of last access */
 	long	  st_atimensec;		/* nsec of last access */
@@ -103,28 +103,36 @@ struct stat {
 	long	  st_mtimensec;		/* nsec of last data modification */
 	time_t	  st_ctime;		/* time of last file status change */
 	long	  st_ctimensec;		/* nsec of last file status change */
-#endif /* __BSD_VISIBLE */
+#endif /* __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE */
 	off_t	  st_size;		/* file size, in bytes */
 	int64_t	  st_blocks;		/* blocks allocated for file */
 	u_int32_t st_blksize;		/* optimal blocksize for I/O */
 	u_int32_t st_flags;		/* user defined flags for file */
 	u_int32_t st_gen;		/* file generation number */
 	int32_t	  st_lspare1;
-#if __BSD_VISIBLE
-	struct	timespec __st_birthtimespec; /* time of file creation */
+#if __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE
+	struct	timespec __st_birthtim;	/* time of file creation */
 #else
 	time_t	  __st_birthtime;	/* time of file creation */
 	long	  __st_birthtimensec;	/* nsec of file creation */
-#endif
+#endif /* __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE */
 	int64_t	  st_qspare[2];
 };
+#if __POSIX_VISIBLE >= 200809 || __BSD_VISIBLE
+#define	st_atime		st_atim.tv_sec
+#define	st_mtime		st_mtim.tv_sec
+#define	st_ctime		st_ctim.tv_sec
+#define	__st_birthtime		__st_birthtim.tv_sec
+#endif
 #if __BSD_VISIBLE
-#define	st_atime	st_atimespec.tv_sec
-#define	st_atimensec	st_atimespec.tv_nsec
-#define	st_mtime	st_mtimespec.tv_sec
-#define	st_mtimensec	st_mtimespec.tv_nsec
-#define	st_ctime	st_ctimespec.tv_sec
-#define	st_ctimensec	st_ctimespec.tv_nsec
+#define	st_atimespec		st_atim
+#define	st_atimensec		st_atim.tv_nsec
+#define	st_mtimespec		st_mtim
+#define	st_mtimensec		st_mtim.tv_nsec
+#define	st_ctimespec		st_ctim
+#define	st_ctimensec		st_ctim.tv_nsec
+#define	__st_birthtimespec	__st_birthtim
+#define	__st_birthtimensec	__st_birthtim.tv_nsec
 #endif
 
 #define	S_ISUID	0004000			/* set user id on execution */
