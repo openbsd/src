@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.16 2009/01/29 16:39:24 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.17 2009/01/29 18:52:17 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -329,7 +329,7 @@ lsa_intra_a_pref_check(struct lsa *lsa, u_int16_t len)
 	}
 
 	len -= off;
-	npref = ntohl(iap->numprefix);
+	npref = ntohs(iap->numprefix);
 
 	for (i = 0; i < npref; i++) {
 		rv = lsa_get_prefix(buf + off, len, NULL);
