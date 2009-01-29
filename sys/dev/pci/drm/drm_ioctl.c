@@ -55,42 +55,6 @@ drm_getunique(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	return 0;
 }
 
-int
-drm_getmap(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	struct drm_map	*map = data;
-	drm_local_map_t	*mapinlist;
-	int		 idx, i = 0;
-
-	idx = map->offset;
-
-	DRM_LOCK();
-	if (idx < 0) {
-		DRM_UNLOCK();
-		return EINVAL;
-	}
-
-	TAILQ_FOREACH(mapinlist, &dev->maplist, link) {
-		if (i == idx) {
-			map->offset = mapinlist->offset;
-			map->size = mapinlist->size;
-			map->type = mapinlist->type;
-			map->flags = mapinlist->flags;
-			map->handle = mapinlist->handle;
-			map->mtrr = mapinlist->mtrr;
-			break;
-		}
-		i++;
-	}
-
-	DRM_UNLOCK();
-
- 	if (mapinlist == NULL)
-		return EINVAL;
-
-	return 0;
-}
-
 #define DRM_IF_MAJOR	1
 #define DRM_IF_MINOR	2
 

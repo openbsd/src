@@ -665,7 +665,6 @@ int	drm_setversion(struct drm_device *, void *, struct drm_file *);
 /* Misc. IOCTL support (drm_ioctl.c) */
 int	drm_irq_by_busid(struct drm_device *, void *, struct drm_file *);
 int	drm_getunique(struct drm_device *, void *, struct drm_file *);
-int	drm_getmap(struct drm_device *, void *, struct drm_file *);
 
 /* Context IOCTL support (drm_context.c) */
 int	drm_resctx(struct drm_device *, void *, struct drm_file *);
