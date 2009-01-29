@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.15 2009/01/28 21:08:22 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.16 2009/01/29 10:15:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -252,7 +252,9 @@ struct tsec_softc {
 	struct tsec_dmamem	*sc_rxring;
 	struct tsec_buf		*sc_rxbuf;
 	struct tsec_desc	*sc_rxdesc;
-	int			sc_rx_nextidx;
+	int			sc_rx_prod;
+	int			sc_rx_cnt;
+	int			sc_rx_cons;
 
 	struct timeout		sc_tick;
 };
@@ -307,6 +309,7 @@ struct tsec_dmamem *
 	tsec_dmamem_alloc(struct tsec_softc *, bus_size_t, bus_size_t);
 void	tsec_dmamem_free(struct tsec_softc *, struct tsec_dmamem *);
 struct mbuf *tsec_alloc_mbuf(struct tsec_softc *, bus_dmamap_t);
+void	tsec_fill_rx_ring(struct tsec_softc *);
 
 int
 tsec_match(struct device *parent, void *cfdata, void *aux)
@@ -724,8 +727,8 @@ tsec_rx_proc(struct tsec_softc *sc)
 	    TSEC_DMA_LEN(sc->sc_rxring),
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	for (;;) {
-		idx = sc->sc_rx_nextidx;
+	while (sc->sc_rx_cnt > 0) {
+		idx = sc->sc_rx_cons;
 		KASSERT(idx < TSEC_NRXDESC);
 
 		rxd = &sc->sc_rxdesc[idx];
@@ -749,19 +752,6 @@ tsec_rx_proc(struct tsec_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
-		rxb->tb_m = tsec_alloc_mbuf(sc, rxb->tb_map);
-		if (rxb->tb_m == NULL) {
-			printf("%s: mbuf alloc failed\n", DEVNAME(sc));
-			break;
-		}
-		bus_dmamap_sync(sc->sc_dmat, rxb->tb_map, 0,
-		    rxb->tb_m->m_pkthdr.len, BUS_DMASYNC_PREREAD);
-
-		rxd->td_len = 0;
-		rxd->td_addr = rxb->tb_map->dm_segs[0].ds_addr;
-		__asm volatile("eieio" ::: "memory");
-		rxd->td_status |= TSEC_RX_E | TSEC_RX_I;
-
 		ifp->if_ipackets++;
 
 #if NBPFILTER > 0
@@ -771,11 +761,14 @@ tsec_rx_proc(struct tsec_softc *sc)
 
 		ether_input_mbuf(ifp, m);
 
+		sc->sc_rx_cnt--;
 		if (rxd->td_status & TSEC_RX_W)
-			sc->sc_rx_nextidx = 0;
+			sc->sc_rx_cons = 0;
 		else
-			sc->sc_rx_nextidx++;
+			sc->sc_rx_cons++;
 	}
+
+	tsec_fill_rx_ring(sc);
 
 	bus_dmamap_sync(sc->sc_dmat, TSEC_DMA_MAP(sc->sc_rxring), 0,
 	    TSEC_DMA_LEN(sc->sc_rxring),
@@ -829,12 +822,7 @@ tsec_up(struct tsec_softc *sc)
 		rxb = &sc->sc_rxbuf[i];
 		bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, BUS_DMA_WAITOK, &rxb->tb_map);
-		rxb->tb_m = tsec_alloc_mbuf(sc, rxb->tb_map);
-
-		rxd= &sc->sc_rxdesc[i];
-		rxd->td_addr = rxb->tb_map->dm_segs[0].ds_addr;
-		__asm volatile("eieio" ::: "memory");
-		rxd->td_status = TSEC_RX_E | TSEC_RX_I;
+		rxb->tb_m = NULL;
 	}
 
 	/* Set wrap bit on last descriptor. */
@@ -843,7 +831,10 @@ tsec_up(struct tsec_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, TSEC_DMA_MAP(sc->sc_rxring),
 	    0, TSEC_DMA_LEN(sc->sc_rxring), BUS_DMASYNC_PREWRITE);
 
-	sc->sc_rx_nextidx = 0;
+	sc->sc_rx_prod = sc->sc_rx_cons = 0;
+	sc->sc_rx_cnt = 0;
+
+	tsec_fill_rx_ring(sc);
 
 	tsec_write(sc, TSEC_MRBLR, MCLBYTES);
 
@@ -1151,7 +1142,7 @@ tsec_alloc_mbuf(struct tsec_softc *sc, bus_dmamap_t map)
 	if (m == NULL)
 		return (NULL);
 
-	MCLGET(m, M_DONTWAIT);
+	MCLGETI(m, M_DONTWAIT, &sc->sc_ac.ac_if, MCLBYTES);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
 		return (NULL);
@@ -1164,5 +1155,34 @@ tsec_alloc_mbuf(struct tsec_softc *sc, bus_dmamap_t map)
 		return (NULL);
 	}
 
+	bus_dmamap_sync(sc->sc_dmat, map, 0,
+	    m->m_pkthdr.len, BUS_DMASYNC_PREREAD);
+
 	return (m);
+}
+
+void
+tsec_fill_rx_ring(struct tsec_softc *sc)
+{
+	struct tsec_desc *rxd;
+	struct tsec_buf *rxb;
+
+	while (sc->sc_rx_cnt < TSEC_NRXDESC) {
+		rxb = &sc->sc_rxbuf[sc->sc_rx_prod];
+		rxb->tb_m = tsec_alloc_mbuf(sc, rxb->tb_map);
+		if (rxb->tb_m == NULL)
+			break;
+
+		rxd = &sc->sc_rxdesc[sc->sc_rx_prod];
+		rxd->td_len = 0;
+		rxd->td_addr = rxb->tb_map->dm_segs[0].ds_addr;
+		__asm volatile("eieio" ::: "memory");
+		rxd->td_status |= TSEC_RX_E | TSEC_RX_I;
+
+		sc->sc_rx_cnt++;
+		if (rxd->td_status & TSEC_RX_W)
+			sc->sc_rx_prod = 0;
+		else
+			sc->sc_rx_prod++;
+	}
 }
