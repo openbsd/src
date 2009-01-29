@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.191 2008/05/09 02:56:36 markus Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.192 2009/01/29 12:33:15 naddy Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -721,14 +721,13 @@ sendit:
 	 * If small enough for interface, can just send directly.
 	 */
 	if (ntohs(ip->ip_len) <= mtu) {
+		ip->ip_sum = 0;
 		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
 		    ifp->if_bridge == NULL) {
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 			ipstat.ips_outhwcsum++;
-		} else {
-			ip->ip_sum = 0;
+		} else
 			ip->ip_sum = in_cksum(m, hlen);
-		}
 		/* Update relevant hardware checksum stats for TCP/UDP */
 		if (m->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
 			tcpstat.tcps_outhwcsum++;
@@ -871,15 +870,14 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		m->m_pkthdr.len = mhlen + len;
 		m->m_pkthdr.rcvif = (struct ifnet *)0;
 		mhip->ip_off = htons((u_int16_t)mhip->ip_off);
+		mhip->ip_sum = 0;
 		if ((ifp != NULL) &&
 		    (ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
 		    ifp->if_bridge == NULL) {
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 			ipstat.ips_outhwcsum++;
-		} else {
-			mhip->ip_sum = 0;
+		} else
 			mhip->ip_sum = in_cksum(m, mhlen);
-		}
 		ipstat.ips_ofragments++;
 		fragments++;
 	}
@@ -892,15 +890,14 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	m->m_pkthdr.len = hlen + firstlen;
 	ip->ip_len = htons((u_int16_t)m->m_pkthdr.len);
 	ip->ip_off |= htons(IP_MF);
+	ip->ip_sum = 0;
 	if ((ifp != NULL) &&
 	    (ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
 	    ifp->if_bridge == NULL) {
 		m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 		ipstat.ips_outhwcsum++;
-	} else {
-		ip->ip_sum = 0;
+	} else
 		ip->ip_sum = in_cksum(m, hlen);
-	}
 sendorfree:
 	/*
 	 * If there is no room for all the fragments, don't queue
