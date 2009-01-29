@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.22 2009/01/29 13:00:12 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.23 2009/01/29 14:25:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -546,10 +546,13 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		batchp->status |= S_BATCH_PERMFAILURE;
 		strlcpy(batchp->errorline, line, MAX_LINE_SIZE);
 		mta_batch_update_queue(batchp);
+		session_destroy(sessionp);
 		return 0;
 	}
 
 	if (line[3] == '-') {
+		if (strcasecmp(&line[4], "STARTTLS") == 0)
+			sessionp->s_flags |= F_PEERHASTLS;
 		return 1;
 	}
 
@@ -557,11 +560,38 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	case 250:
 		if (sessionp->s_state == S_DONE) {
 			mta_batch_update_queue(batchp);
+			session_destroy(sessionp);
 			return 0;
 		}
+
+		if (sessionp->s_state == S_GREETED &&
+		    (sessionp->s_flags & F_PEERHASTLS) &&
+		    !(sessionp->s_flags & F_SECURE)) {
+			session_respond(sessionp, "STARTTLS");
+			sessionp->s_state = S_TLS;
+			return 0;
+		}
+
+		if (sessionp->s_state == S_GREETED &&
+		    !(sessionp->s_flags & F_PEERHASTLS) &&
+		    sessionp->mxarray[sessionp->mx_off].flags & F_STARTTLS) {
+			/* PERM - we want TLS but it is not advertised */
+			batchp->status |= S_BATCH_PERMFAILURE;
+			mta_batch_update_queue(batchp);
+			session_destroy(sessionp);
+			return 0;
+		}
+
 		break;
 
 	case 220:
+		if (sessionp->s_state == S_TLS) {
+			ssl_client_init(sessionp);
+			bufferevent_disable(bev, EV_READ|EV_WRITE);
+			sessionp->s_state = S_GREETED;
+			return 0;
+		}
+
 		session_respond(sessionp, "EHLO %s", env->sc_hostname);
 		sessionp->s_state = S_GREETED;
 		return 1;
@@ -572,6 +602,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		batchp->status |= S_BATCH_TEMPFAILURE;
 		strlcpy(batchp->errorline, line, MAX_LINE_SIZE);
 		mta_batch_update_queue(batchp);
+		session_destroy(sessionp);
 		return 0;
 
 		/* The following codes are state dependant and will cause
@@ -593,6 +624,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	case 221:
 		if (sessionp->s_state == S_DONE) {
 			mta_batch_update_queue(batchp);
+			session_destroy(sessionp);
 			return 0;
 		}
 
@@ -607,6 +639,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		batchp->status |= S_BATCH_PERMFAILURE;
 		strlcpy(batchp->errorline, line, MAX_LINE_SIZE);
 		mta_batch_update_queue(batchp);
+		session_destroy(sessionp);
 		return 0;
 	}
 
@@ -683,6 +716,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 				if (messagep == NULL) {
 					batchp->status |= S_BATCH_PERMFAILURE;
 					mta_batch_update_queue(batchp);
+					session_destroy(sessionp);
 					return 0;
 				}
 			}

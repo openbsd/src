@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.6 2009/01/29 13:00:12 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.7 2009/01/29 14:25:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -99,8 +99,13 @@ ssl_connect(int fd, short event, void *p)
 	event_set(&s->s_bev->ev_write, s->s_fd, EV_WRITE, ssl_write, s->s_bev);
 
 	log_info("ssl_connect: connected to remote ssl server");
-	bufferevent_enable(s->s_bev, EV_READ);
+	bufferevent_enable(s->s_bev, EV_READ|EV_WRITE);
 	s->s_flags |= F_SECURE;
+
+	if (s->s_flags & F_PEERHASTLS) {
+		session_respond(s, "EHLO %s", s->s_env->sc_hostname);
+	}
+
 	return;
 retry:
 	event_add(&s->s_ev, &s->s_tv);
