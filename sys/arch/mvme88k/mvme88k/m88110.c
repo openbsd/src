@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.58 2008/01/02 19:59:31 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.59 2009/01/29 22:15:27 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -352,7 +352,35 @@ m88410_initialize_cpu(cpuid_t cpu)
 	dctl |= CMMU_DCTL_SEN;
 	set_dctl(dctl);
 	CMMU_LOCK;
+#if 0
 	mc88410_inval();	/* clear external data cache */
+#else
+	/*
+	 * We can't invalidate the 88410 cache without flushing it first;
+	 * this is probably due to either an error in the cpu-to-88410
+	 * communication protocol, or to a bug in the '410 (but since I
+	 * do not know how to get its revision, I can't tell whether this
+	 * is the obscure v1 bug or not).
+	 *
+	 * Since we can't flush random data either, fill the secondary
+	 * cache first, before flushing it.
+	 *
+	 * The smallest 88410 cache line is 32 bytes, and the largest size
+	 * is 1MB.
+	 */
+	{
+		vaddr_t va;
+		uint32_t junk = 0;
+
+		for (va = 0; va < 1024 * 1024; va += 32)
+			junk += *(uint32_t *)va;
+
+		/* to make sure the above loop isn't optimized away */
+		mc88110_sync_data_page(junk & PAGE_SIZE);
+	}
+	mc88410_flush();
+	mc88410_inval();
+#endif
 	CMMU_UNLOCK;
 
 #ifdef MULTIPROCESSOR
