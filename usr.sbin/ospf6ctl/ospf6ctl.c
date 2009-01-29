@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.22 2009/01/29 19:39:41 stsp Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.23 2009/01/29 20:09:02 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -638,33 +638,23 @@ void
 show_db_hdr_msg_detail(struct lsa_hdr *lsa)
 {
 	printf("LS age: %d\n", ntohs(lsa->age));
-//XXX	printf("Options: %s\n", print_ospf_options(lsa->opts));
 	printf("LS Type: %s\n", print_ls_type(lsa->type));
 
 	switch (ntohs(lsa->type)) {
-	case LSA_TYPE_LINK:
+	case LSA_TYPE_ROUTER:
+	case LSA_TYPE_INTER_A_PREFIX:
+	case LSA_TYPE_INTER_A_ROUTER:
+	case LSA_TYPE_INTRA_A_PREFIX:
+	case LSA_TYPE_EXTERNAL:
 		printf("Link State ID: %s\n", log_id(lsa->ls_id));
 		break;
-	case LSA_TYPE_ROUTER:
-		printf("Link State ID: %s\n", log_id(lsa->ls_id));
+	case LSA_TYPE_LINK:
+		printf("Link State ID: %s (Interface ID of Advertising "
+		    "Router)\n", log_id(lsa->ls_id));
 		break;
 	case LSA_TYPE_NETWORK:
-		printf("Link State ID: %s (interface ID of Designated Router)\n",
-		    log_id(lsa->ls_id));
-		break;
-	case LSA_TYPE_INTER_A_PREFIX:
-		printf("Link State ID: %s (Network ID)\n", log_id(lsa->ls_id));
-		break;
-	case LSA_TYPE_INTER_A_ROUTER:
-		printf("Link State ID: %s (ASBR Router ID)\n",
-		    log_id(lsa->ls_id));
-		break;
-	case LSA_TYPE_INTRA_A_PREFIX:
-		printf("Link State ID: %s (Network ID)\n", log_id(lsa->ls_id));
-		break;
-	case LSA_TYPE_EXTERNAL:
-		printf("Link State ID: %s (External Network Number)\n",
-		     log_id(lsa->ls_id));
+		printf("Link State ID: %s (Interface ID of Designated "
+		    "Router)\n", log_id(lsa->ls_id));
 		break;
 	}
 
