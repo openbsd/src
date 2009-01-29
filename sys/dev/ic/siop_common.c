@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.31 2008/08/31 17:21:57 miod Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.32 2009/01/29 22:50:23 miod Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -811,7 +811,7 @@ siop_sdp(siop_cmd, offset)
 #endif
 	/*
 	 * Save data pointer. We do this by adjusting the tables to point
-	 * at the begginning of the data not yet transfered. 
+	 * at the beginning of the data not yet transfered. 
 	 * offset points to the first table with untransfered data.
 	 */
 
@@ -837,7 +837,7 @@ siop_sdp(siop_cmd, offset)
 
 	/*
 	 * now we can remove entries which have been transfered.
-	 * We just move the entries with data left at the beggining of the
+	 * We just move the entries with data left at the beginning of the
 	 * tables
 	 */
 	bcopy(&siop_cmd->siop_tables->data[offset],
