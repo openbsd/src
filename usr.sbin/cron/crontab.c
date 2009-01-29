@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.56 2008/05/10 15:11:08 okan Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.57 2009/01/29 22:50:16 sobrado Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -21,7 +21,7 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.56 2008/05/10 15:11:08 okan Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.57 2009/01/29 22:50:16 sobrado Exp $";
 
 /* crontab - install and manage per-user crontab files
  * vix 02may87 [RCS has the rest of the log]
@@ -65,12 +65,13 @@ static	int		ignore_comments(FILE *);
 static void
 usage(const char *msg) {
 	fprintf(stderr, "%s: usage error: %s\n", ProgramName, msg);
-	fprintf(stderr, "usage:\t%s [-u user] file\n", ProgramName);
-	fprintf(stderr, "\t%s [ -e | -l | -r ] [-u user]\n", ProgramName);
-	fprintf(stderr, "\t\t(default operation is replace, per 1003.2)\n");
-	fprintf(stderr, "\t-e\t(edit user's crontab)\n");
-	fprintf(stderr, "\t-l\t(list user's crontab)\n");
-	fprintf(stderr, "\t-r\t(delete user's crontab)\n");
+	fprintf(stderr, "usage: %s [-u user] file\n", ProgramName);
+	fprintf(stderr, "       %s [-e | -l | -r] [-u user]\n", ProgramName);
+	fprintf(stderr,
+	    "\t\t(default operation is replace, per 1003.2)\n"
+	    "\t-e\t(edit user's crontab)\n"
+	    "\t-l\t(list user's crontab)\n"
+	    "\t-r\t(delete user's crontab)\n");
 	exit(ERROR_EXIT);
 }
 
