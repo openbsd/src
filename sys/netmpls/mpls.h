@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.17 2009/01/28 22:18:44 michele Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.18 2009/01/29 11:11:33 michele Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -96,7 +96,7 @@ struct sockaddr_mpls {
 
 struct rt_mpls {
 	u_int32_t	mpls_label;
-	u_int8_t	mpls_operation;
+	u_int16_t	mpls_operation;
 	u_int8_t	mpls_exp;
 };
 
