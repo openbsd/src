@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.7 2009/01/29 12:43:25 jacekm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.8 2009/01/29 21:59:15 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -44,6 +44,7 @@
 
 __dead void	usage(void);
 int		show_command_output(struct imsg*);
+int		show_stats_output(struct imsg *);
 int		enqueue(int, char **);
 
 struct imsgname {
@@ -168,6 +169,9 @@ connected:
 	case RESUME_SMTP:
 		imsg_compose(ibuf, IMSG_SMTP_RESUME, 0, 0, -1, NULL, 0);
 		break;
+	case SHOW_STATS:
+		imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, NULL, 0);
+		break;
 	case MONITOR:
 		/* XXX */
 		break;
@@ -201,6 +205,9 @@ connected:
 			case RESUME_SMTP:
 				done = show_command_output(&imsg);
 				break;
+			case SHOW_STATS:
+				done = show_stats_output(&imsg);
+				break;
 			case NONE:
 				break;
 			case MONITOR:
@@ -232,5 +239,43 @@ show_command_output(struct imsg *imsg)
 	default:
 		errx(1, "wrong message in summary: %u", imsg->hdr.type);
 	}
+	return (1);
+}
+
+int
+show_stats_output(struct imsg *imsg)
+{
+	static int	 	left = 4;
+	static struct s_parent	s_parent;
+	static struct s_queue	s_queue;
+	static struct s_runner	s_runner;
+	static struct s_smtp	s_smtp;
+
+	switch (imsg->hdr.type) {
+	case IMSG_PARENT_STATS:
+		s_parent = *(struct s_parent *)imsg->data;
+		break;
+	case IMSG_QUEUE_STATS:
+		s_queue = *(struct s_queue *)imsg->data;
+		break;
+	case IMSG_RUNNER_STATS:
+		s_runner = *(struct s_runner *)imsg->data;
+		break;
+	case IMSG_SMTP_STATS:
+		s_smtp = *(struct s_smtp *)imsg->data;
+		break;
+	default:
+		errx(1, "show_stats_output: bad hdr type (%d)", imsg->hdr.type);
+	}
+
+	left--;
+	if (left > 0)
+		return (0);
+
+	printf("parent.uptime = %zd\n", time(NULL) - s_parent.start);
+	printf("queue.inserts = %zd\n", s_queue.inserts);
+	printf("runner.active = %zd\n", s_runner.active);
+	printf("smtp.clients = %zd\n", s_smtp.clients);
+
 	return (1);
 }

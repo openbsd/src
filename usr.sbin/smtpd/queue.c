@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.52 2009/01/29 12:43:25 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.53 2009/01/29 21:59:15 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -54,6 +54,8 @@ int		queue_record_layout_envelope(char *, struct message *);
 int		queue_remove_layout_envelope(char *, struct message *);
 int		queue_commit_layout_message(char *, struct message *);
 int		queue_open_layout_messagefile(char *, struct message *);
+
+struct s_queue	s_queue;
 
 void
 queue_sig_handler(int sig, short event, void *p)
@@ -157,6 +159,14 @@ queue_dispatch_control(int sig, short event, void *p)
 
 			break;
 		}
+		case IMSG_STATS: {
+			struct stats *s;
+
+			s = imsg.data;
+			s->u.queue = s_queue;
+			imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, s, sizeof(*s));
+			break;
+		}
 		default:
 			log_debug("queue_dispatch_control: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -233,6 +243,8 @@ queue_dispatch_smtp(int sig, short event, void *p)
 
 			messagep = imsg.data;
 			ss.id = messagep->session_id;
+
+			s_queue.inserts++;
 
 			if (! queue_commit_incoming_message(messagep))
 				ss.code = 421;

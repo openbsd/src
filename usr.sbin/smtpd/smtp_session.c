@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.46 2009/01/29 15:40:35 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.47 2009/01/29 21:59:15 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -72,6 +72,8 @@ void		session_command(struct session *, char *, char *);
 int		session_set_path(struct path *, char *);
 void		session_timeout(int, short, void *);
 void		session_cleanup(struct session *);
+
+extern struct s_smtp	s_smtp;
 
 struct session_timeout {
 	enum session_state	state;
@@ -743,6 +745,8 @@ session_init(struct listener *l, struct session *s)
 	s->s_l = l;
 	s->s_id = queue_generate_id();
 
+	s_smtp.clients++;
+
 	strlcpy(s->s_hostname, "<unknown>", MAXHOSTNAMELEN);
 	strlcpy(s->s_msg.session_hostname, s->s_hostname, MAXHOSTNAMELEN);
 	imsg_compose(s->s_env->sc_ibufs[PROC_LKA], IMSG_LKA_HOST, 0, 0, -1, s,
@@ -899,6 +903,8 @@ session_destroy(struct session *s)
 
 	log_debug("session_destroy: killing client: %p", s);
 	close(s->s_fd);
+
+	s_smtp.clients--;
 
 	if (s->s_bev != NULL) {
 		bufferevent_free(s->s_bev);

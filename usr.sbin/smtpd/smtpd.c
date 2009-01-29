@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.26 2009/01/28 19:38:46 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.27 2009/01/29 21:59:15 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -53,6 +53,7 @@ void		parent_dispatch_lka(int, short, void *);
 void		parent_dispatch_mda(int, short, void *);
 void		parent_dispatch_mfa(int, short, void *);
 void		parent_dispatch_smtp(int, short, void *);
+void		parent_dispatch_control(int, short, void *);
 void		parent_sig_handler(int, short, void *);
 int		parent_open_message_file(struct batch *);
 int		parent_mailbox_init(struct passwd *, char *);
@@ -74,6 +75,7 @@ pid_t	control_pid = 0;
 pid_t	smtp_pid = 0;
 pid_t	runner_pid = 0;
 
+struct s_parent	s_parent;
 
 int __b64_pton(char const *, unsigned char *, size_t);
 
@@ -449,6 +451,60 @@ parent_dispatch_smtp(int fd, short event, void *p)
 }
 
 void
+parent_dispatch_control(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = env->sc_ibufs[PROC_CONTROL];
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("parent_dispatch_control: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_STATS: {
+			struct stats *s;
+
+			s = imsg.data;
+			s->u.parent = s_parent;
+			imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, s, sizeof(*s));
+			break;
+		}
+		default:
+			log_debug("parent_dispatch_control: unexpected imsg %d",
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(ibuf);
+}
+
+void
 parent_sig_handler(int sig, short event, void *p)
 {
 	int					 i;
@@ -536,6 +592,7 @@ main(int argc, char *argv[])
 	struct event	 ev_sighup;
 	struct timeval	 tv;
 	struct peer	 peers[] = {
+		{ PROC_CONTROL,	parent_dispatch_control },
 		{ PROC_LKA,	parent_dispatch_lka },
 		{ PROC_MDA,	parent_dispatch_mda },
 		{ PROC_MFA,	parent_dispatch_mfa },
@@ -617,6 +674,8 @@ main(int argc, char *argv[])
 	setproctitle("parent");
 	SPLAY_INIT(&env.mdaproc_queue);
 
+	s_parent.start = time(NULL);
+
 	event_init();
 
 	signal_set(&ev_sigint, SIGINT, parent_sig_handler, &env);
@@ -629,7 +688,7 @@ main(int argc, char *argv[])
 	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
 
-	config_peers(&env, peers, 4);
+	config_peers(&env, peers, 5);
 
 	evtimer_set(&env.sc_ev, parent_send_config, &env);
 	bzero(&tv, sizeof(tv));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.61 2009/01/29 15:40:35 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.62 2009/01/29 21:59:15 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -180,6 +180,7 @@ enum imsg_type {
 	IMSG_QUEUE_REMOVE_MESSAGE,
 	IMSG_QUEUE_COMMIT_MESSAGE,
 	IMSG_QUEUE_TEMPFAIL,
+	IMSG_QUEUE_STATS,
 
 	IMSG_QUEUE_REMOVE_SUBMISSION,
 	IMSG_QUEUE_MESSAGE_UPDATE,
@@ -187,6 +188,7 @@ enum imsg_type {
 	IMSG_QUEUE_MESSAGE_FILE,
 
 	IMSG_RUNNER_UPDATE_ENVELOPE,
+	IMSG_RUNNER_STATS,
 
 	IMSG_BATCH_CREATE,
 	IMSG_BATCH_APPEND,
@@ -195,6 +197,7 @@ enum imsg_type {
 	IMSG_PARENT_MAILBOX_OPEN,
 	IMSG_PARENT_MESSAGE_OPEN,
 	IMSG_PARENT_MAILBOX_RENAME,
+	IMSG_PARENT_STATS,
 
 	IMSG_PARENT_AUTHENTICATE,
 	IMSG_PARENT_SEND_CONFIG,
@@ -202,10 +205,13 @@ enum imsg_type {
 	IMSG_MDA_PAUSE,
 	IMSG_MTA_PAUSE,
 	IMSG_SMTP_PAUSE,
+	IMSG_SMTP_STATS,
 
 	IMSG_MDA_RESUME,
 	IMSG_MTA_RESUME,
-	IMSG_SMTP_RESUME
+	IMSG_SMTP_RESUME,
+
+	IMSG_STATS
 };
 
 #define IMSG_HEADER_SIZE	 sizeof(struct imsg_hdr)
@@ -632,6 +638,32 @@ struct smtpd {
 
 	SPLAY_HEAD(batchtree, batch)		batch_queue;
 	SPLAY_HEAD(mdaproctree, mdaproc)	mdaproc_queue;
+};
+
+struct s_parent {
+	time_t		start;
+};
+
+struct s_queue {
+	size_t		inserts;
+};
+
+struct s_runner {
+	size_t		active;
+};
+
+struct s_smtp {
+	size_t		clients;
+};
+
+struct stats {
+	int			fd;
+	union u_stats {
+		struct s_parent	parent;
+		struct s_queue	queue;
+		struct s_runner	runner;
+		struct s_smtp	smtp;
+	}			u;
 };
 
 struct submit_status {

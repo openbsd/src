@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.17 2009/01/28 19:38:46 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.18 2009/01/29 21:59:15 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -47,6 +47,8 @@ void		smtp_resume(struct smtpd *);
 void		smtp_accept(int, short, void *);
 void		session_timeout(int, short, void *);
 void		session_auth_pickup(struct session *, char *, size_t);
+
+struct s_smtp	s_smtp;
 
 void
 smtp_sig_handler(int sig, short event, void *p)
@@ -505,6 +507,14 @@ smtp_dispatch_control(int sig, short event, void *p)
 		case IMSG_SMTP_RESUME:
 			smtp_resume(env);
 			break;
+		case IMSG_STATS: {
+			struct stats *s;
+
+			s = imsg.data;
+			s->u.smtp = s_smtp;
+			imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, s, sizeof(*s));
+			break;
+		}
 		default:
 			log_debug("smtp_dispatch_control: unexpected imsg %d",
 			    imsg.hdr.type);

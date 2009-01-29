@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.10 2009/01/27 23:39:41 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.11 2009/01/29 21:59:15 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -58,6 +58,7 @@ void		 control_dispatch_mfa(int, short, void *);
 void		 control_dispatch_queue(int, short, void *);
 void		 control_dispatch_runner(int, short, void *);
 void		 control_dispatch_smtp(int, short, void *);
+void		 control_dispatch_parent(int, short, void *);
 
 struct ctl_connlist	ctl_conns;
 
@@ -90,6 +91,7 @@ control(struct smtpd *env)
 		{ PROC_RUNNER,	 control_dispatch_runner },
 		{ PROC_SMTP,	 control_dispatch_smtp },
 		{ PROC_MFA,	 control_dispatch_mfa },
+		{ PROC_PARENT,	 control_dispatch_parent },
 	};
 
 	switch (pid = fork()) {
@@ -162,7 +164,7 @@ control(struct smtpd *env)
 
 	TAILQ_INIT(&ctl_conns);
 
-	config_peers(env, peers, 4);
+	config_peers(env, peers, 5);
 	control_listen(env);
 	event_dispatch();
 	control_shutdown();
@@ -346,6 +348,17 @@ control_dispatch_ext(int fd, short event, void *arg)
 			    messagep, sizeof(*messagep));
 			break;
 		}
+		case IMSG_STATS: {
+			struct stats	s;
+
+			s.fd = fd;
+			imsg_compose(env->sc_ibufs[PROC_PARENT], IMSG_STATS, 0, 0, -1, &s, sizeof(s));
+			imsg_compose(env->sc_ibufs[PROC_QUEUE], IMSG_STATS, 0, 0, -1, &s, sizeof(s));
+			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_STATS, 0, 0, -1, &s, sizeof(s));
+			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_STATS, 0, 0, -1, &s, sizeof(s));
+
+			break;
+		}
 		case IMSG_CTL_SHUTDOWN:
 			/* NEEDS_FIX */
 			log_debug("received shutdown request");
@@ -458,6 +471,67 @@ badcred:
 	}
 
 	imsg_event_add(&c->ibuf);
+}
+
+void
+control_dispatch_parent(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = env->sc_ibufs[PROC_PARENT];
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("control_dispatch_parent: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_STATS: {
+			struct stats	*s;
+			struct ctl_conn	*c;
+
+			s = imsg.data;
+			if ((c = control_connbyfd(s->fd)) == NULL) {
+				log_warn("control_dispatch_parent: fd %d not found", s->fd);
+				return;
+			}
+
+			imsg_compose(&c->ibuf, IMSG_PARENT_STATS, 0, 0, -1,
+			    &s->u.parent, sizeof(s->u.parent));
+
+			break;
+		}
+		default:
+			log_debug("control_dispatch_parent: unexpected imsg %d",
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(ibuf);
 }
 
 void
@@ -694,6 +768,21 @@ control_dispatch_queue(int sig, short event, void *p)
 				    &ss->msg, sizeof(struct message));
 			break;
 		}
+		case IMSG_STATS: {
+			struct stats	*s;
+			struct ctl_conn	*c;
+
+			s = imsg.data;
+			if ((c = control_connbyfd(s->fd)) == NULL) {
+				log_warn("control_dispatch_queue: fd %d not found", s->fd);
+				return;
+			}
+
+			imsg_compose(&c->ibuf, IMSG_QUEUE_STATS, 0, 0, -1,
+			    &s->u.queue, sizeof(s->u.queue));
+
+			break;
+		}
 		default:
 			log_debug("control_dispatch_queue: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -740,6 +829,21 @@ control_dispatch_runner(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_STATS: {
+			struct stats	*s;
+			struct ctl_conn	*c;
+
+			s = imsg.data;
+			if ((c = control_connbyfd(s->fd)) == NULL) {
+				log_warn("control_dispatch_runner: fd %d not found", s->fd);
+				return;
+			}
+
+			imsg_compose(&c->ibuf, IMSG_RUNNER_STATS, 0, 0, -1,
+			    &s->u.runner, sizeof(s->u.runner));
+
+			break;
+		}
 		default:
 			log_debug("control_dispatch_runner: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -786,6 +890,21 @@ control_dispatch_smtp(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_STATS: {
+			struct stats	*s;
+			struct ctl_conn	*c;
+
+			s = imsg.data;
+			if ((c = control_connbyfd(s->fd)) == NULL) {
+				log_warn("control_dispatch_queue: fd %d not found", s->fd);
+				return;
+			}
+
+			imsg_compose(&c->ibuf, IMSG_SMTP_STATS, 0, 0, -1,
+			    &s->u.smtp, sizeof(s->u.smtp));
+
+			break;
+		}
 		default:
 			log_debug("control_dispatch_smtp: unexpected imsg %d",
 			    imsg.hdr.type);
