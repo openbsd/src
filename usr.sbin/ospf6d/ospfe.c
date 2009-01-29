@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.19 2009/01/29 19:07:53 stsp Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.20 2009/01/29 20:15:50 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1141,7 +1141,7 @@ orig_intra_lsa_rtr(struct iface *iface_arg)
 	/* LSA header */
 	lsa_hdr.age = htons(DEFAULT_AGE);
 	lsa_hdr.type = htons(LSA_TYPE_INTRA_A_PREFIX);
-	lsa_hdr.ls_id = 1; /* TODO: fragmentation */
+	lsa_hdr.ls_id = htonl(1); /* TODO: fragmentation */
 	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;
 	lsa_hdr.seq_num = htonl(INIT_SEQ_NUM);
 	lsa_hdr.len = htons(buf->wpos);
