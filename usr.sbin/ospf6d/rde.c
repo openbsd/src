@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.17 2009/01/29 11:57:42 stsp Exp $ */
+/*	$OpenBSD: rde.c,v 1.18 2009/01/29 12:16:09 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1224,7 +1224,7 @@ orig_intra_lsa_net(struct area *area, struct iface *iface)
 	/* LSA header */
 	lsa->hdr.age = htons(DEFAULT_AGE);
 	lsa->hdr.type = htons(LSA_TYPE_INTRA_A_PREFIX);
-	lsa->hdr.ls_id = htonl(iface->ifindex);
+	lsa->hdr.ls_id = 0; /* TODO: fragmentation */
 	lsa->hdr.adv_rtr = rdeconf->rtr_id.s_addr;
 	lsa->hdr.seq_num = htonl(INIT_SEQ_NUM);
 	lsa->hdr.len = htons(len);
