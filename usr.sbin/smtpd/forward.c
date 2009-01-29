@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.10 2009/01/08 19:17:31 jacekm Exp $	*/
+/*	$OpenBSD: forward.c,v 1.11 2009/01/29 21:50:10 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -40,12 +40,13 @@ forwards_get(struct aliaseslist *aliases, char *username)
 	FILE *fp;
 	struct alias alias;
 	struct alias *aliasp;
-	char	pathname[MAXPATHLEN];
-	char *buf, *lbuf;
+	char pathname[MAXPATHLEN];
+	char *buf, *lbuf, *p, *cp;
 	size_t len;
 	struct stat sb;
 	struct passwd *pw;
 	size_t nbaliases = 0;
+	int quoted;
 
 	pw = safe_getpwnam(username);
 	if (pw == NULL)
@@ -85,31 +86,55 @@ forwards_get(struct aliaseslist *aliases, char *username)
 			buf = lbuf;
 		}
 
-		log_debug("\tforward: %s", buf);
-		if (! alias_parse(&alias, buf)) {
-			log_debug("bad entry in ~/.forward");
+		/* ignore empty lines and comments */
+		if (buf[0] == '#' || buf[0] == '\0')
 			continue;
-		}
 
-		if (alias.type == ALIAS_INCLUDE) {
-			log_debug("includes are forbidden in ~/.forward");
-			continue;
-		}
-		aliasp = calloc(1, sizeof(struct alias));
-		if (aliasp == NULL)
-			fatal("calloc");
-		*aliasp = alias;
-		TAILQ_INSERT_HEAD(aliases, aliasp, entry);
-		nbaliases++;
+		quoted = 0;
+		cp = buf;
+		do {
+			/* skip whitespace */
+			while (isspace(*cp))
+				cp++;
 
+			/* parse line */
+			for (p = cp; *p != '\0'; p++) {
+				if (*p == ',' && !quoted) {
+					*p++ = '\0';
+					break;
+				} else if (*p == '"')
+					quoted = !quoted;
+			}
+			buf = cp;
+			cp = p;
+
+			log_debug("\tforward: %s", buf);
+			if (! alias_parse(&alias, buf)) {
+				log_debug("bad entry in ~/.forward");
+				continue;
+			}
+
+			if (alias.type == ALIAS_INCLUDE) {
+				log_debug(
+				    "includes are forbidden in ~/.forward");
+				continue;
+			}
+
+			aliasp = calloc(1, sizeof(struct alias));
+			if (aliasp == NULL)
+				fatal("calloc");
+			*aliasp = alias;
+			TAILQ_INSERT_HEAD(aliases, aliasp, entry);
+			nbaliases++;
+		} while (*cp != '\0');
 	}
 	free(lbuf);
 	fclose(fp);
-	return nbaliases;
+	return (nbaliases);
 
 bad:
 	log_debug("+ forward file error, probably bad perms/mode");
 	if (fp != NULL)
 		fclose(fp);
-	return 0;
+	return (0);
 }
