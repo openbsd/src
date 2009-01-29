@@ -1,4 +1,4 @@
-/*	$OpenBSD: wake.c,v 1.5 2009/01/29 13:07:09 pyr Exp $ */
+/*	$OpenBSD: wake.c,v 1.6 2009/01/29 13:10:39 pyr Exp $ */
 
 /*
  * Copyright (C) 2006-2008 Marc Balmer.
@@ -160,6 +160,8 @@ send_wakeup(int bpf, struct ether_addr const *addr)
 	} pkt;
 	u_char *p;
 	int i;
+	ssize_t bw;
+	ssize_t len;
 
 	memset(pkt.hdr.ether_dhost, 0xff, sizeof(pkt.hdr.ether_dhost));
 	pkt.hdr.ether_type = htons(0);
@@ -167,7 +169,15 @@ send_wakeup(int bpf, struct ether_addr const *addr)
 	for (p = pkt.data + SYNC_LEN, i = 0; i < DESTADDR_COUNT;
 	    p += ETHER_ADDR_LEN, i++)
 		bcopy(addr->ether_addr_octet, p, ETHER_ADDR_LEN);
-	(void)write(bpf, &pkt, sizeof(pkt));
+	p = (u_char *)&pkt;
+	len = sizeof(pkt);
+	bw = 0;
+	while (len) {
+		if ((bw = write(bpf, &pkt, sizeof(pkt))) == -1)
+			err(1, "cannot send wake on lan frame");
+		len -= bw;
+		p += bw;
+	}
 }
 
 int
