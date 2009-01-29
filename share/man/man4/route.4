@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.25 2009/01/29 12:48:01 claudio Exp $
+.\"	$OpenBSD: route.4,v 1.26 2009/01/29 14:38:56 jmc Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -186,15 +186,15 @@ by doing a
 .Xr shutdown 2
 system call for further input.
 .Pp
-A process can specify which route message types he's interested in.
-By using
+A process can specify which route message types it's interested in
+by using
 .Dv ROUTE_SETFILTER(unsigned int flags, int type)
 and issuing a setsockopt call with the
 .Dv ROUTE_MSGFILTER
 option at the
 .Dv AF_ROUTE
 level.
-For example to only get interface specific messages:
+For example, to only get interface specific messages:
 .Bd -literal -offset indent
 unsigned int rtfilter;
 
