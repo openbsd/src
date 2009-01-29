@@ -1,4 +1,5 @@
 /*-
+ * Copyright 2003 Eric Anholt
  * Copyright 1999, 2000 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All Rights Reserved.
@@ -695,4 +696,92 @@ drm_getsarea(struct drm_device *dev)
 	}
 	DRM_UNLOCK();
 	return (map);
+}
+
+paddr_t
+drmmmap(dev_t kdev, off_t offset, int prot)
+{
+	struct drm_device	*dev = drm_get_device_from_kdev(kdev);
+	drm_local_map_t		*map;
+	struct drm_file		*priv;
+	enum drm_map_type	 type;
+
+	DRM_LOCK();
+	priv = drm_find_file_by_minor(dev, minor(kdev));
+	DRM_UNLOCK();
+	if (priv == NULL) {
+		DRM_ERROR("can't find authenticator\n");
+		return (-1);
+	}
+
+	if (!priv->authenticated)
+		return (-1);
+
+	if (dev->dma && offset >= 0 && offset < ptoa(dev->dma->page_count)) {
+		drm_device_dma_t *dma = dev->dma;
+
+		DRM_SPINLOCK(&dev->dma_lock);
+
+		if (dma->pagelist != NULL) {
+			paddr_t phys = dma->pagelist[offset >> PAGE_SHIFT];
+
+			DRM_SPINUNLOCK(&dev->dma_lock);
+			return (atop(phys));
+		} else {
+			DRM_SPINUNLOCK(&dev->dma_lock);
+			return (-1);
+		}
+	}
+
+	/*
+	 * A sequential search of a linked list is
+ 	 * fine here because: 1) there will only be
+	 * about 5-10 entries in the list and, 2) a
+	 * DRI client only has to do this mapping
+	 * once, so it doesn't have to be optimized
+	 * for performance, even if the list was a
+	 * bit longer.
+	 */
+	DRM_LOCK();
+	TAILQ_FOREACH(map, &dev->maplist, link) {
+		if (offset >= map->ext &&
+		    offset < map->ext + map->size) {
+			offset -= map->ext;
+			break;
+		}
+	}
+
+	if (map == NULL) {
+		DRM_UNLOCK();
+		DRM_DEBUG("can't find map\n");
+		return (-1);
+	}
+	if (((map->flags & _DRM_RESTRICTED) && priv->master == 0)) {
+		DRM_UNLOCK();
+		DRM_DEBUG("restricted map\n");
+		return (-1);
+	}
+	type = map->type;
+	DRM_UNLOCK();
+
+	switch (type) {
+	case _DRM_FRAME_BUFFER:
+	case _DRM_REGISTERS:
+	case _DRM_AGP:
+		return (atop(offset + map->offset));
+		break;
+	/* XXX unify all the bus_dmamem_mmap bits */
+	case _DRM_SCATTER_GATHER:
+		return (bus_dmamem_mmap(dev->dmat, dev->sg->mem->sg_segs,
+		    dev->sg->mem->sg_nsegs, map->offset - dev->sg->handle +
+		    offset, prot, BUS_DMA_NOWAIT));
+	case _DRM_SHM:
+	case _DRM_CONSISTENT:
+		return (bus_dmamem_mmap(dev->dmat, &map->dmah->seg, 1,
+		    offset, prot, BUS_DMA_NOWAIT));
+	default:
+		DRM_ERROR("bad map type %d\n", type);
+		return (-1);	/* This should never happen. */
+	}
+	/* NOTREACHED */
 }

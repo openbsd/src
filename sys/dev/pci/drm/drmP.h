@@ -558,8 +558,6 @@ struct device	*drm_attach_pci(const struct drm_driver_info *,
 dev_type_ioctl(drmioctl);
 dev_type_open(drmopen);
 dev_type_close(drmclose);
-dev_type_read(drmread);
-dev_type_poll(drmpoll);
 dev_type_mmap(drmmmap);
 extern drm_local_map_t	*drm_getsarea(struct drm_device *);
 

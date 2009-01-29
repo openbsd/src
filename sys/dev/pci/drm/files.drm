@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.8 2009/01/29 11:18:16 oga Exp $
+# $OpenBSD: files.drm,v 1.9 2009/01/29 11:44:05 oga Exp $
 
 # direct rendering modules
 define drmbase {}
@@ -17,7 +17,6 @@ file   dev/pci/drm/drm_lock.c          drm
 file   dev/pci/drm/drm_memory.c        drm
 file   dev/pci/drm/drm_pci.c           drm
 file   dev/pci/drm/drm_scatter.c       drm
-file   dev/pci/drm/drm_vm.c            drm
 
 device	inteldrm: drmbase
 attach	inteldrm at drmdev 
