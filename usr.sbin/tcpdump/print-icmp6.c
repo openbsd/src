@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.4 2002/11/28 11:05:06 dhartmei Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.5 2009/01/29 09:46:32 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -153,7 +153,7 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 		break;
 	case ICMP6_PACKET_TOO_BIG:
 		TCHECK(dp->icmp6_mtu);
-		printf("icmp6: too big %u\n", (u_int32_t)ntohl(dp->icmp6_mtu));
+		printf("icmp6: too big %u", (u_int32_t)ntohl(dp->icmp6_mtu));
 		break;
 	case ICMP6_TIME_EXCEEDED:
 		TCHECK(oip->ip6_dst);
@@ -175,15 +175,15 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 		TCHECK(oip->ip6_dst);
 		switch (dp->icmp6_code) {
 		case ICMP6_PARAMPROB_HEADER:
-			printf("icmp6: parameter problem errorneous - octet %u\n",
+			printf("icmp6: parameter problem errorneous - octet %u",
 				(u_int32_t)ntohl(dp->icmp6_pptr));
 			break;
 		case ICMP6_PARAMPROB_NEXTHEADER:
-			printf("icmp6: parameter problem next header - octet %u\n",
+			printf("icmp6: parameter problem next header - octet %u",
 				(u_int32_t)ntohl(dp->icmp6_pptr));
 			break;
 		case ICMP6_PARAMPROB_OPTION:
-			printf("icmp6: parameter problem option - octet %u\n",
+			printf("icmp6: parameter problem option - octet %u",
 				(u_int32_t)ntohl(dp->icmp6_pptr));
 			break;
 		default:
