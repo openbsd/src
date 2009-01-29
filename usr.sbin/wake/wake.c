@@ -1,4 +1,4 @@
-/*	$OpenBSD: wake.c,v 1.7 2009/01/29 13:12:21 pyr Exp $ */
+/*	$OpenBSD: wake.c,v 1.8 2009/01/29 13:20:27 pyr Exp $ */
 
 /*
  * Copyright (C) 2006-2008 Marc Balmer.
@@ -60,18 +60,20 @@
 #define DESTADDR_COUNT 16
 #endif
 
+__dead void	usage(void);
+
+int	wake(const char *iface, const char *host);
 int	get_bpf(void);
 int	bind_if_to_bpf(char const *ifname, int bpf);
 int	get_ether(char const *text, struct ether_addr *addr);
 void	send_wakeup(int bpf, struct ether_addr const *addr);
-void	usage(void);
 
 void
 usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s interface lladdr\n", __progname);
+	(void)fprintf(stderr, "usage: %s interface lladdr\n", __progname);
 	exit(0);
 }
 
@@ -84,16 +86,13 @@ wake(const char *iface, const char *host)
 	bpf = get_bpf();
 	if (bpf == -1)
 		return -1;
-	if (bind_if_to_bpf(iface, bpf) == -1) {
-		close(bpf);
-		return -1;
-	}
-	if (get_ether(host, &macaddr) == -1) {
-		close(bpf);
+	if (bind_if_to_bpf(iface, bpf) == -1 ||
+	    get_ether(host, &macaddr) == -1) {
+		(void)close(bpf);
 		return -1;
 	}
 	send_wakeup(bpf, &macaddr);
-	close(bpf);
+	(void)close(bpf);
 	return 0;
 }
 
@@ -104,8 +103,7 @@ get_bpf(void)
 	char *path;
 
 	for (i = 0;; i++) {
-		asprintf(&path, BPF_PATH_FORMAT, i);
-		if (path == NULL)
+		if (asprintf(&path, BPF_PATH_FORMAT, i) == -1)
 			return -1;
 
 		fd = open(path, O_RDWR);
@@ -163,9 +161,9 @@ send_wakeup(int bpf, struct ether_addr const *addr)
 	ssize_t bw;
 	ssize_t len;
 
-	memset(pkt.hdr.ether_dhost, 0xff, sizeof(pkt.hdr.ether_dhost));
+	(void)memset(pkt.hdr.ether_dhost, 0xff, sizeof(pkt.hdr.ether_dhost));
 	pkt.hdr.ether_type = htons(0);
-	memset(pkt.data, 0xff, SYNC_LEN);
+	(void)memset(pkt.data, 0xff, SYNC_LEN);
 	for (p = pkt.data + SYNC_LEN, i = 0; i < DESTADDR_COUNT;
 	    p += ETHER_ADDR_LEN, i++)
 		bcopy(addr->ether_addr_octet, p, ETHER_ADDR_LEN);
