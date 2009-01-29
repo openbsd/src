@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.43 2008/11/07 17:31:24 deraadt Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.44 2009/01/29 23:59:09 bluhm Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -172,8 +172,8 @@ struct socket {
 /* can we write something to so? */
 #define	sowriteable(so) \
     ((sbspace(&(so)->so_snd) >= (so)->so_snd.sb_lowat && \
-	(((so)->so_state&SS_ISCONNECTED) || \
-	  ((so)->so_proto->pr_flags&PR_CONNREQUIRED)==0)) || \
+	(((so)->so_state & SS_ISCONNECTED) || \
+	  ((so)->so_proto->pr_flags & PR_CONNREQUIRED)==0)) || \
     ((so)->so_state & SS_CANTSENDMORE) || (so)->so_error)
 
 /* adjust counters in sb reflecting allocation of m */
