@@ -1,4 +1,4 @@
-/*	$OpenBSD: wake.c,v 1.9 2009/01/29 13:47:17 mbalmer Exp $ */
+/*	$OpenBSD: wake.c,v 1.10 2009/01/29 14:18:20 pyr Exp $ */
 
 /*
  * Copyright (C) 2006,2007,2008,2009 Marc Balmer <mbalmer@openbsd.org>
@@ -172,7 +172,7 @@ send_wakeup(int bpf, struct ether_addr const *addr)
 	bw = 0;
 	while (len) {
 		if ((bw = write(bpf, &pkt, sizeof(pkt))) == -1)
-			err(1, "cannot send wake on lan frame");
+			err(1, "cannot send Wake on LAN frame");
 		len -= bw;
 		p += bw;
 	}
