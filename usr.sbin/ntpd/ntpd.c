@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.61 2008/07/19 21:31:39 claudio Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.62 2009/01/29 00:06:04 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -450,6 +450,8 @@ readfreq(void)
 	else if (current == 0) {
 		if (fscanf(fp, "%le", &d) == 1)
 			ntpd_adjfreq(d, 0);
+		else
+			log_warnx("can't read %s", DRIFTFILE);
 	}
 	fclose(fp);
 }
