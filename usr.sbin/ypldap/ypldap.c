@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.6 2008/09/30 16:24:16 aschrijver Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.7 2009/01/29 11:21:42 form Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -176,14 +176,12 @@ main_dispatch_client(int fd, short event, void *p)
 			ue->ue_uid = ir.ir_key.ik_uid;
 			len = strlen(ue->ue_line) + 1;
 			ue->ue_line[strcspn(ue->ue_line, ":")] = '\0';
-			if (RB_FIND(user_name_tree, env->sc_user_names_t,
+			if (RB_INSERT(user_name_tree, env->sc_user_names_t,
 			    ue) != NULL) { /* dup */
 				free(ue->ue_line);
 				free(ue);
-				break;
-			}
-			RB_INSERT(user_name_tree, env->sc_user_names_t, ue);
-			env->sc_user_line_len += len;
+			} else
+				env->sc_user_line_len += len;
 			break;
 		}
 		case IMSG_GRP_ENTRY: {
@@ -201,14 +199,12 @@ main_dispatch_client(int fd, short event, void *p)
 			ge->ge_gid = ir.ir_key.ik_gid;
 			len = strlen(ge->ge_line) + 1;
 			ge->ge_line[strcspn(ge->ge_line, ":")] = '\0';
-			if (RB_FIND(group_name_tree, env->sc_group_names_t,
+			if (RB_INSERT(group_name_tree, env->sc_group_names_t,
 			    ge) != NULL) { /* dup */
 				free(ge->ge_line);
 				free(ge);
-				break;
-			}
-			RB_INSERT(group_name_tree, env->sc_group_names_t, ge);
-			env->sc_group_line_len += len;
+			} else
+				env->sc_group_line_len += len;
 			break;
 		}
 		case IMSG_TRASH_UPDATE: {
