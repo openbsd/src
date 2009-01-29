@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.8 2009/01/29 21:59:15 jacekm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.9 2009/01/29 22:34:21 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -272,7 +272,7 @@ show_stats_output(struct imsg *imsg)
 	if (left > 0)
 		return (0);
 
-	printf("parent.uptime = %zd\n", time(NULL) - s_parent.start);
+	printf("parent.uptime = %d\n", time(NULL) - s_parent.start);
 	printf("queue.inserts = %zd\n", s_queue.inserts);
 	printf("runner.active = %zd\n", s_runner.active);
 	printf("smtp.clients = %zd\n", s_smtp.clients);
