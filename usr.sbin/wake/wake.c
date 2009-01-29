@@ -1,7 +1,7 @@
-/*	$OpenBSD: wake.c,v 1.8 2009/01/29 13:20:27 pyr Exp $ */
+/*	$OpenBSD: wake.c,v 1.9 2009/01/29 13:47:17 mbalmer Exp $ */
 
 /*
- * Copyright (C) 2006-2008 Marc Balmer.
+ * Copyright (C) 2006,2007,2008,2009 Marc Balmer <mbalmer@openbsd.org>
  * Copyright (C) 2000 Eugene M. Kim.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
