@@ -1,4 +1,4 @@
-/*	$OpenBSD: wake.c,v 1.10 2009/01/29 14:18:20 pyr Exp $ */
+/*	$OpenBSD: wake.c,v 1.11 2009/01/29 15:50:03 mbalmer Exp $ */
 
 /*
  * Copyright (C) 2006,2007,2008,2009 Marc Balmer <mbalmer@openbsd.org>
@@ -66,7 +66,7 @@ int	wake(const char *iface, const char *host);
 int	get_bpf(void);
 int	bind_if_to_bpf(char const *ifname, int bpf);
 int	get_ether(char const *text, struct ether_addr *addr);
-void	send_wakeup(int bpf, struct ether_addr const *addr);
+int	send_wakeup(int bpf, struct ether_addr const *addr);
 
 void
 usage(void)
@@ -80,7 +80,7 @@ usage(void)
 int
 wake(const char *iface, const char *host)
 {
-	int bpf;
+	int res, bpf;
 	struct ether_addr macaddr;
 
 	bpf = get_bpf();
@@ -91,9 +91,9 @@ wake(const char *iface, const char *host)
 		(void)close(bpf);
 		return -1;
 	}
-	send_wakeup(bpf, &macaddr);
+	res = send_wakeup(bpf, &macaddr);
 	(void)close(bpf);
-	return 0;
+	return res;
 }
 
 int
@@ -149,7 +149,7 @@ get_ether(char const *text, struct ether_addr *addr)
 	return 0;
 }
 
-void
+int
 send_wakeup(int bpf, struct ether_addr const *addr)
 {
 	struct {
@@ -172,10 +172,11 @@ send_wakeup(int bpf, struct ether_addr const *addr)
 	bw = 0;
 	while (len) {
 		if ((bw = write(bpf, &pkt, sizeof(pkt))) == -1)
-			err(1, "cannot send Wake on LAN frame");
+			return -1;
 		len -= bw;
 		p += bw;
 	}
+	return 0;
 }
 
 int
