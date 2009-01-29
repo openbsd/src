@@ -1,4 +1,4 @@
-/*	$OpenBSD: wake.c,v 1.6 2009/01/29 13:10:39 pyr Exp $ */
+/*	$OpenBSD: wake.c,v 1.7 2009/01/29 13:12:21 pyr Exp $ */
 
 /*
  * Copyright (C) 2006-2008 Marc Balmer.
@@ -125,9 +125,9 @@ bind_if_to_bpf(char const *ifname, int bpf)
 	struct ifreq ifr;
 	u_int dlt;
 
-	if (strlen(ifname) >= sizeof(ifr.ifr_name))
+	if (strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name)) >=
+	    sizeof(ifr.ifr_name))
 		return -1;
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(bpf, BIOCSETIF, &ifr) == -1)
 		return -1;
 	if (ioctl(bpf, BIOCGDLT, &dlt) == -1)
