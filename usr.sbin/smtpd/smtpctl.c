@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.6 2009/01/27 22:48:29 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.7 2009/01/29 12:43:25 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -44,8 +44,6 @@
 
 __dead void	usage(void);
 int		show_command_output(struct imsg*);
-void		show_queue(int);
-void		show_runqueue(int);
 int		enqueue(int, char **);
 
 struct imsgname {
@@ -112,10 +110,10 @@ main(int argc, char *argv[])
 		/* handle "disconnected" commands */
 		switch (res->action) {
 		case SHOW_QUEUE:
-			show_queue(0);
+			show_queue(PATH_QUEUE, 0);
 			break;
 		case SHOW_RUNQUEUE:
-			show_runqueue(0);
+			show_queue(PATH_RUNQUEUE, 0);
 			break;
 		default:
 			goto connected;

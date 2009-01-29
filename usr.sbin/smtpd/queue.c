@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.51 2009/01/28 17:29:11 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.52 2009/01/29 12:43:25 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -24,10 +24,10 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 
-#include <dirent.h>
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -670,21 +670,13 @@ message_by_id(struct smtpd *env, struct batch *batchp, u_int64_t id)
 void
 queue_purge_incoming(void)
 {
-	DIR		*dirp;
-	struct dirent	*dp;
+	char		 path[MAXPATHLEN];
+	struct qwalk	*q;
 
-	dirp = opendir(PATH_INCOMING);
-	if (dirp == NULL)
-		fatal("queue_purge_incoming: opendir");
+	q = qwalk_new(PATH_INCOMING);
 
-	while ((dp = readdir(dirp)) != NULL) {
-		if (strcmp(dp->d_name, ".") == 0 ||
-		    strcmp(dp->d_name, "..") == 0) {
-			continue;
-		}
-		queue_delete_incoming_message(dp->d_name);
-	}
+	while (qwalk(q, path))
+		queue_delete_incoming_message(basename(path));
 
-	closedir(dirp);
+	qwalk_close(q);
 }
-
