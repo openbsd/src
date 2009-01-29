@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.18 2009/01/28 22:47:36 stsp Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.19 2009/01/29 19:07:53 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -296,6 +296,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 				if_fsm(iface, IF_EVT_DOWN);
 				log_warnx("interface %s down", iface->name);
 			}
+			orig_intra_lsa_rtr(iface);
 			break;
 		case IMSG_IFADD:
 			if ((niface = malloc(sizeof(struct iface))) == NULL)
@@ -308,6 +309,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 
 			narea = area_find(oeconf, niface->area_id);
 			LIST_INSERT_HEAD(&narea->iface_list, niface, entry);
+			orig_intra_lsa_rtr(niface);
 			break;
 		case IMSG_IFDELETE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
@@ -320,6 +322,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 				fatalx("interface lost in ospfe");
 
 			LIST_REMOVE(iface, entry);
+			orig_intra_lsa_rtr(iface);
 			if_del(iface);
 			break;
 		case IMSG_RECONF_CONF:
@@ -1022,7 +1025,8 @@ orig_link_lsa(struct iface *iface)
 		log_debug("orig_link_lsa: prefix %s", log_in6addr(&prefix));
 		if (buf_add(buf, &lsa_prefix, sizeof(lsa_prefix)))
 			fatal("orig_link_lsa: buf_add failed");
-		if (buf_add(buf, &prefix, LSA_PREFIXSIZE(ia->prefixlen)))
+		if (buf_add(buf, &prefix.s6_addr[0],
+		    LSA_PREFIXSIZE(ia->prefixlen)))
 			fatal("orig_link_lsa: buf_add failed");
 		num_prefix++;
 	}
@@ -1053,6 +1057,104 @@ orig_link_lsa(struct iface *iface)
 
 	imsg_compose(ibuf_rde, IMSG_LS_UPD, iface->self->peerid, 0,
 	    buf->buf, buf->wpos);
+
+	buf_free(buf);
+}
+
+void
+orig_intra_lsa_rtr(struct iface *iface_arg)
+{
+	struct lsa_hdr		 lsa_hdr;
+	struct lsa_intra_prefix	 lsa_intra;
+	struct lsa_prefix	 lsa_prefix;
+	struct in6_addr		 prefix;
+	struct buf		*buf;
+	struct area		*area;
+	struct iface		*iface;
+	struct iface_addr	*ia;
+	struct nbr		*self;
+	u_int16_t		 numprefix;
+	u_int16_t		 chksum;
+
+	/* XXX READ_BUF_SIZE */
+	if ((buf = buf_dynamic(sizeof(lsa_hdr) + sizeof(lsa_intra),
+	    READ_BUF_SIZE)) == NULL)
+		fatal("orig_intra_lsa_rtr");
+
+	/* reserve space for LSA header and Intra-Area-Prefix LSA header */
+	if (buf_reserve(buf, sizeof(lsa_hdr) + sizeof(lsa_intra)) == NULL)
+		fatal("orig_intra_lsa_rtr: buf_reserve failed");
+
+	lsa_intra.ref_type = htons(LSA_TYPE_ROUTER);
+	lsa_intra.ref_lsid = 0;
+	lsa_intra.ref_adv_rtr = oeconf->rtr_id.s_addr;
+
+	numprefix = 0;
+	self = NULL;
+
+	if ((area = area_find(oeconf, iface_arg->area_id)) == NULL)
+		fatalx("interface lost area");
+
+	log_debug("orig_intra_lsa_rtr: area %s", inet_ntoa(area->id));
+
+	LIST_FOREACH(iface, &area->iface_list, entry) {
+		if (self == NULL && iface->self != NULL)
+			self = iface->self;
+
+		if (iface->state & IF_STA_DOWN)
+			continue;
+
+		TAILQ_FOREACH(ia, &iface->ifa_list, entry) {
+			if (IN6_IS_ADDR_LINKLOCAL(&ia->addr))
+				continue;
+
+			bzero(&lsa_prefix, sizeof(lsa_prefix));
+
+			if (iface->type == IF_TYPE_POINTOMULTIPOINT
+			    || iface->state == IF_STA_LOOPBACK) {
+				lsa_prefix.prefixlen = 128;
+				lsa_prefix.options = OSPF_PREFIX_LA;
+			} else {
+				lsa_prefix.prefixlen = ia->prefixlen;
+				lsa_prefix.metric = htons(iface->metric);
+			}
+
+			inet6applymask(&prefix, &ia->addr, lsa_prefix.prefixlen);
+			log_debug("orig_intra_lsa_rtr: prefix %s, interface %s",
+			    log_in6addr(&prefix), iface->name);
+			if (buf_add(buf, &lsa_prefix, sizeof(lsa_prefix)))
+				fatal("orig_intra_lsa_rtr: buf_add failed");
+			if (buf_add(buf, &prefix.s6_addr[0],
+			    LSA_PREFIXSIZE(lsa_prefix.prefixlen)))
+				fatal("orig_intra_lsa_rtr: buf_add failed");
+			numprefix++;
+		}
+
+		/* TOD: Add prefixes of directly attached hosts, too */
+		/* TOD: Add prefixes for virtual links */
+	}
+
+	lsa_intra.numprefix = htons(numprefix);
+	memcpy(buf_seek(buf, sizeof(lsa_hdr), sizeof(lsa_intra)),
+	    &lsa_intra, sizeof(lsa_intra));
+
+	/* LSA header */
+	lsa_hdr.age = htons(DEFAULT_AGE);
+	lsa_hdr.type = htons(LSA_TYPE_INTRA_A_PREFIX);
+	lsa_hdr.ls_id = 1; /* TODO: fragmentation */
+	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;
+	lsa_hdr.seq_num = htonl(INIT_SEQ_NUM);
+	lsa_hdr.len = htons(buf->wpos);
+	lsa_hdr.ls_chksum = 0;		/* updated later */
+	memcpy(buf_seek(buf, 0, sizeof(lsa_hdr)), &lsa_hdr, sizeof(lsa_hdr));
+
+	chksum = htons(iso_cksum(buf->buf, buf->wpos, LS_CKSUM_OFFSET));
+	memcpy(buf_seek(buf, LS_CKSUM_OFFSET, sizeof(chksum)),
+	    &chksum, sizeof(chksum));
+
+	if (self)
+		imsg_compose(ibuf_rde, IMSG_LS_UPD, self->peerid, 0,
+		    buf->buf, buf->wpos);
 
 	buf_free(buf);
 }
