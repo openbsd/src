@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.23 2009/01/29 14:25:55 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.24 2009/01/29 14:50:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -172,8 +172,7 @@ mta_dispatch_queue(int sig, short event, void *p)
 				fatal("mta_dispatch_queue: fdopen");
 
 			session_respond(sessionp, "DATA");
-
-			bufferevent_enable(sessionp->s_bev, EV_WRITE|EV_READ);
+			bufferevent_enable(sessionp->s_bev, EV_READ);
 			break;
 		}
 		default:
@@ -503,7 +502,7 @@ mta_write(int s, short event, void *arg)
 		ssl_client_init(sessionp);
 		return;
 	}
-	bufferevent_enable(sessionp->s_bev, EV_READ|EV_WRITE);
+	bufferevent_enable(sessionp->s_bev, EV_READ);
 }
 
 void
@@ -530,12 +529,8 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	int flags = 0;
 
 	line = evbuffer_readline(bev->input);
-	if (line == NULL) {
-		bufferevent_enable(bev, EV_READ|EV_WRITE);
+	if (line == NULL)
 		return 0;
-	}
-
-	bufferevent_enable(bev, EV_READ|EV_WRITE);
 
 	log_debug("remote server sent: [%s]", line);
 
@@ -721,16 +716,14 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 				}
 			}
 
-			bufferevent_disable(sessionp->s_bev, EV_WRITE|EV_READ);
 			imsg_compose(env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_FD,
 			    0, 0, -1, batchp, sizeof(*batchp));
+			bufferevent_disable(sessionp->s_bev, EV_READ);
 		}
 		break;
 	}
 
 	case S_DATA: {
-		bufferevent_enable(sessionp->s_bev, EV_READ|EV_WRITE);
-		
 		session_respond(sessionp, "Received: from %s (%s [%s])",
 		    "localhost", "localhost", "127.0.0.1");
 		session_respond(sessionp, "\tby %s with ESMTP id %s",
@@ -873,7 +866,6 @@ mta_write_handler(struct bufferevent *bev, void *arg)
 			batchp->messagefp = NULL;
 		}
 	}
-	bufferevent_enable(sessionp->s_bev, EV_READ|EV_WRITE);
 }
 
 void
