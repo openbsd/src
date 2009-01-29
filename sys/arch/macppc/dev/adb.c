@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.27 2007/04/23 16:27:20 deraadt Exp $	*/
+/*	$OpenBSD: adb.c,v 1.28 2009/01/29 21:17:49 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -1665,7 +1665,8 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	adb_polling = 1;
-	adb_reinit();
+	if (!adbempty)
+		adb_reinit();
 
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_HIGH,
 	    adb_intr, sc, sc->sc_dev.dv_xname);
@@ -1678,7 +1679,10 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	if (adb_debug)
 		printf("adb: done with adb_reinit\n");
 #endif
-	totaladbs = count_adbs();
+	if (adbempty)
+		totaladbs = 0;
+	else
+		totaladbs = count_adbs();
 
 	printf(" irq %d: %s, %d target%s\n", ca->ca_intr[0], ca->ca_name,
 	    totaladbs, (totaladbs == 1) ? "" : "s");
@@ -1715,12 +1719,14 @@ adbattach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	if (adbHardware == ADB_HW_CUDA)
-		adb_cuda_fileserver_mode();
-	if (adbHardware == ADB_HW_PMU)
-		pmu_fileserver_mode(1);
+	if (!adbempty) {
+		if (adbHardware == ADB_HW_CUDA)
+			adb_cuda_fileserver_mode();
+		if (adbHardware == ADB_HW_PMU)
+			pmu_fileserver_mode(1);
 
-	if (adbHardware == ADB_HW_CUDA)
-		adb_cuda_autopoll();
-	adb_polling = 0;
+		if (adbHardware == ADB_HW_CUDA)
+			adb_cuda_autopoll();
+		adb_polling = 0;
+	}
 }
