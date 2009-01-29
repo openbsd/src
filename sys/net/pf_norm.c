@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.113 2008/05/07 07:07:29 markus Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.114 2009/01/29 14:11:45 henning Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -116,7 +116,9 @@ struct mbuf		*pf_fragcache(struct mbuf **, struct ip*,
 			    struct pf_fragment **, int, int, int *);
 int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
 			    struct tcphdr *, int, sa_family_t);
-
+void			 pf_scrub_ip(struct mbuf **, u_int32_t, u_int8_t,
+			    u_int8_t);
+void			 pf_scrub_ip6(struct mbuf **, u_int8_t);
 #define	DPFPRINTF(x) do {				\
 	if (pf_status.debug >= PF_DEBUG_MISC) {		\
 		printf("%s: ", __func__);		\
@@ -984,54 +986,11 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_off, h->ip_off, 0);
 	}
 
-	/* Enforce a minimum ttl, may cause endless packet loops */
-	if (r->min_ttl && h->ip_ttl < r->min_ttl) {
-		u_int16_t ip_ttl = h->ip_ttl;
-
-		h->ip_ttl = r->min_ttl;
-		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_ttl, h->ip_ttl, 0);
-	}
-
-	/* Enforce tos */
-	if (r->rule_flag & PFRULE_SET_TOS) {
-		u_int16_t	ov, nv;
-
-		ov = *(u_int16_t *)h;
-		h->ip_tos = r->set_tos;
-		nv = *(u_int16_t *)h;
-
-		h->ip_sum = pf_cksum_fixup(h->ip_sum, ov, nv, 0);
-	}
-
-	if (r->rule_flag & PFRULE_RANDOMID) {
-		u_int16_t ip_id = h->ip_id;
-
-		h->ip_id = ip_randomid();
-		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_id, h->ip_id, 0);
-	}
-	if ((r->rule_flag & (PFRULE_FRAGCROP|PFRULE_FRAGDROP)) == 0)
-		pd->flags |= PFDESC_IP_REAS;
-
-	return (PF_PASS);
+	/* not missing a return here */
 
  fragment_pass:
-	/* Enforce a minimum ttl, may cause endless packet loops */
-	if (r->min_ttl && h->ip_ttl < r->min_ttl) {
-		u_int16_t ip_ttl = h->ip_ttl;
+	pf_scrub_ip(&m, r->rule_flag, r->min_ttl, r->set_tos);
 
-		h->ip_ttl = r->min_ttl;
-		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_ttl, h->ip_ttl, 0);
-	}
-	/* Enforce tos */
-	if (r->rule_flag & PFRULE_SET_TOS) {
-		u_int16_t	ov, nv;
-
-		ov = *(u_int16_t *)h;
-		h->ip_tos = r->set_tos;
-		nv = *(u_int16_t *)h;
-
-		h->ip_sum = pf_cksum_fixup(h->ip_sum, ov, nv, 0);
-	}
 	if ((r->rule_flag & (PFRULE_FRAGCROP|PFRULE_FRAGDROP)) == 0)
 		pd->flags |= PFDESC_IP_REAS;
 	return (PF_PASS);
@@ -1200,9 +1159,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 	if (sizeof(struct ip6_hdr) + plen > m->m_pkthdr.len)
 		goto shortpkt;
 
-	/* Enforce a minimum ttl, may cause endless packet loops */
-	if (r->min_ttl && h->ip6_hlim < r->min_ttl)
-		h->ip6_hlim = r->min_ttl;
+	pf_scrub_ip6(&m, r->min_ttl);
 
 	return (PF_PASS);
 
@@ -1891,4 +1848,57 @@ pf_normalize_tcpopt(struct pf_rule *r, struct mbuf *m, struct tcphdr *th,
 		m_copyback(m, off + sizeof(*th), thoff - sizeof(*th), opts);
 
 	return (rewrite);
+}
+
+void
+pf_scrub_ip(struct mbuf **m0, u_int32_t flags, u_int8_t min_ttl, u_int8_t tos)
+{
+	struct mbuf		*m = *m0;
+	struct ip		*h = mtod(m, struct ip *);
+
+	/* Clear IP_DF if no-df was requested */
+	if (flags & PFRULE_NODF && h->ip_off & htons(IP_DF)) {
+		u_int16_t ip_off = h->ip_off;
+
+		h->ip_off &= htons(~IP_DF);
+		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_off, h->ip_off, 0);
+	}
+
+	/* Enforce a minimum ttl, may cause endless packet loops */
+	if (min_ttl && h->ip_ttl < min_ttl) {
+		u_int16_t ip_ttl = h->ip_ttl;
+
+		h->ip_ttl = min_ttl;
+		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_ttl, h->ip_ttl, 0);
+	}
+
+	/* Enforce tos */
+	if (flags & PFRULE_SET_TOS) {
+		u_int16_t	ov, nv;
+
+		ov = *(u_int16_t *)h;
+		h->ip_tos = tos;
+		nv = *(u_int16_t *)h;
+
+		h->ip_sum = pf_cksum_fixup(h->ip_sum, ov, nv, 0);
+	}
+
+	/* random-id, but not for fragments */
+	if (flags & PFRULE_RANDOMID && !(h->ip_off & ~htons(IP_DF))) {
+		u_int16_t ip_id = h->ip_id;
+
+		h->ip_id = ip_randomid();
+		h->ip_sum = pf_cksum_fixup(h->ip_sum, ip_id, h->ip_id, 0);
+	}
+}
+
+void
+pf_scrub_ip6(struct mbuf **m0, u_int8_t min_ttl)
+{
+	struct mbuf		*m = *m0;
+	struct ip6_hdr		*h = mtod(m, struct ip6_hdr *);
+
+	/* Enforce a minimum ttl, may cause endless packet loops */
+	if (min_ttl && h->ip6_hlim < min_ttl)
+		h->ip6_hlim = min_ttl;
 }
