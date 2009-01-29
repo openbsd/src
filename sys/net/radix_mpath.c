@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.15 2009/01/06 21:40:47 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.16 2009/01/29 13:14:08 claudio Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 {
 	struct radix_node	*prev = rn->rn_p;
 	struct radix_node	*next = rn->rn_dupedkey;
-	struct radix_node	*t, *tt, *saved_tt;
+	struct radix_node	*t, *tt, *saved_tt, *head;
 	struct rtentry		*rt = (struct rtentry *)rn;
 	int			 mid, oldprio, prioinv = 0;
 
@@ -168,7 +168,7 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 	for (; tt; tt = tt->rn_dupedkey)
 		if (rn->rn_mask == tt->rn_mask)
 			break;
-	next = tt->rn_dupedkey; /* store next entry for rn_mklist check */
+	head = tt; /* store current head entry for rn_mklist check */
 
 	tt = rn_mpath_prio(tt, newprio);
 	if (((struct rtentry *)tt)->rt_priority != newprio) {
@@ -216,16 +216,16 @@ rn_mpath_reprio(struct radix_node *rn, int newprio)
 	rn_clist = rn;
 #endif
 
-	if (rn->rn_mklist) {
+	if (rn->rn_mklist && rn->rn_flags & RNF_NORMAL) {
 		/* the rn_mklist needs to be fixed if the best route changed */
 		if (rn->rn_mklist->rm_leaf != rn) {
 			if (rn->rn_mklist->rm_leaf->rn_p == rn)
 				/* changed route is now best */
 				rn->rn_mklist->rm_leaf = rn;
 		} else {
-			if (rn->rn_dupedkey != next)
-				/* rn moved behind next, next is new head */
-				rn->rn_mklist->rm_leaf = next;
+			if (rn->rn_dupedkey != head)
+				/* rn moved behind head, so head is new head */
+				rn->rn_mklist->rm_leaf = head;
 		}
 	}
 }
