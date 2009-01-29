@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.16 2009/01/28 22:47:36 stsp Exp $ */
+/*	$OpenBSD: rde.c,v 1.17 2009/01/29 11:57:42 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1167,7 +1167,8 @@ orig_intra_lsa_net(struct area *area, struct iface *iface)
 	u_int16_t		 len;
 	u_int16_t		 numprefix;
 
-	log_debug("orig_intra_lsa_net: area %s", inet_ntoa(area->id));
+	log_debug("orig_intra_lsa_net: area %s, interface %s",
+	    inet_ntoa(area->id), iface->name);
 
 	len = sizeof(struct lsa_hdr) + sizeof(struct lsa_intra_prefix);
 	if ((lsa = calloc(1, len)) == NULL)
