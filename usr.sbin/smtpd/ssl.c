@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.5 2009/01/01 16:15:47 jacekm Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.6 2009/01/29 13:00:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -49,9 +49,62 @@ void	 ssl_session_accept(int, short, void *);
 void	 ssl_read(int, short, void *);
 void	 ssl_write(int, short, void *);
 int	 ssl_bufferevent_add(struct event *, int);
+void	 ssl_connect(int, short, void *);
+void	 ssl_client_init(struct session *);
 
 extern void	bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 		    size_t, void *);
+
+void
+ssl_connect(int fd, short event, void *p)
+{
+	struct session	*s = p;
+	int		 ret;
+	int		 retry_flag;
+	int		 ssl_err;
+
+	if (event == EV_TIMEOUT) {
+		log_debug("ssl_session_accept: session timed out");
+		session_destroy(s);
+		return;
+	}
+
+	ret = SSL_connect(s->s_ssl);
+	if (ret <= 0) {
+		ssl_err = SSL_get_error(s->s_ssl, ret);
+
+		switch (ssl_err) {
+		case SSL_ERROR_WANT_READ:
+			retry_flag = EV_READ;
+			goto retry;
+		case SSL_ERROR_WANT_WRITE:
+			retry_flag = EV_WRITE;
+			goto retry;
+		case SSL_ERROR_ZERO_RETURN:
+		case SSL_ERROR_SYSCALL:
+			if (ret == 0) {
+				log_debug("session destroy in MTA #1");
+				session_destroy(s);
+				return;
+			}
+			/* FALLTHROUGH */
+		default:
+			ssl_error("ssl_session_connect");
+			session_destroy(s);
+			return;
+		}
+	}
+
+	event_set(&s->s_bev->ev_read, s->s_fd, EV_READ, ssl_read, s->s_bev);
+	event_set(&s->s_bev->ev_write, s->s_fd, EV_WRITE, ssl_write, s->s_bev);
+
+	log_info("ssl_connect: connected to remote ssl server");
+	bufferevent_enable(s->s_bev, EV_READ);
+	s->s_flags |= F_SECURE;
+	return;
+retry:
+	event_add(&s->s_ev, &s->s_tv);
+}
 
 void
 ssl_read(int fd, short event, void *p)
@@ -488,6 +541,37 @@ ssl_session_init(struct session *s)
 	if (ssl != NULL)
 		SSL_free(ssl);
 	ssl_error("ssl_session_init");
+}
+
+void
+ssl_client_init(struct session *s)
+{
+	SSL_CTX		*ctx;
+
+	log_debug("ssl_client_init: preparing SSL");
+	ctx = ssl_ctx_create();
+
+	s->s_ssl = SSL_new(ctx);
+	if (s->s_ssl == NULL)
+		goto err;
+
+	if (!SSL_set_ssl_method(s->s_ssl, SSLv23_client_method()))
+		goto err;
+	if (!SSL_set_fd(s->s_ssl, s->s_fd))
+		goto err;
+	SSL_set_connect_state(s->s_ssl);
+
+	s->s_tv.tv_sec = SMTPD_SESSION_TIMEOUT;
+	s->s_tv.tv_usec = 0;
+
+	event_set(&s->s_ev, s->s_fd, EV_WRITE|EV_TIMEOUT, ssl_connect, s);
+	event_add(&s->s_ev, &s->s_tv);
+	return;
+
+ err:
+	if (s->s_ssl != NULL)
+		SSL_free(s->s_ssl);
+	ssl_error("ssl_client_init");
 }
 
 void

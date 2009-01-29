@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.57 2009/01/29 12:43:25 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.58 2009/01/29 13:00:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -593,7 +593,6 @@ struct session {
 
 	struct session_auth_req		 s_auth;
 
-	int				 peerfd;
 	struct mxhost			*mxarray;
 	u_int8_t			 mx_cnt;
 	u_int8_t			 mx_off;

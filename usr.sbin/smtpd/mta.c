@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.21 2009/01/28 23:46:03 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.22 2009/01/29 13:00:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -25,6 +25,8 @@
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <ssl/ssl.h>
 
 #include <errno.h>
 #include <event.h>
@@ -54,6 +56,8 @@ void		mta_batch_update_queue(struct batch *);
 void		mta_expand_mxarray(struct session *);
 void		session_respond(struct session *, char *, ...)
 		    __attribute__ ((format (printf, 2, 3)));
+
+void		ssl_client_init(struct session *);
 
 void
 mta_sig_handler(int sig, short event, void *p)
@@ -356,6 +360,7 @@ mta(struct smtpd *env)
 		return (pid);
 	}
 
+	ssl_init();
 	purge_config(env, PURGE_EVERYTHING);
 
 	pw = env->sc_pw;
@@ -444,7 +449,7 @@ mta_connect(struct session* sessionp)
 
 	sessionp->s_tv.tv_sec = SMTPD_CONNECT_TIMEOUT;
 	sessionp->s_tv.tv_usec = 0;
-	sessionp->peerfd = s;
+	sessionp->s_fd = s;
 	event_set(&sessionp->s_ev, s, EV_TIMEOUT|EV_WRITE, mta_write, sessionp);
 	event_add(&sessionp->s_ev, &sessionp->s_tv);
 
@@ -481,22 +486,23 @@ mta_write(int s, short event, void *arg)
 			return;
 
 		mta_batch_update_queue(batchp);
+		session_destroy(sessionp);
 		return;
 	}
 
-	sessionp->s_l = calloc(1, sizeof(struct listener));
-	if (sessionp->s_l == NULL)
-		fatal("calloc");
-	sessionp->s_l->fd = s;
 	sessionp->s_bev = bufferevent_new(s, mta_read_handler, mta_write_handler,
 	    mta_error_handler, sessionp);
 
 	if (sessionp->s_bev == NULL) {
 		mta_batch_update_queue(batchp);
-		close(s);
+		session_destroy(sessionp);
 		return;
 	}
 
+	if (sessionp->mxarray[sessionp->mx_off].flags & F_SSMTP) {
+		ssl_client_init(sessionp);
+		return;
+	}
 	bufferevent_enable(sessionp->s_bev, EV_READ|EV_WRITE);
 }
 
@@ -696,6 +702,11 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		session_respond(sessionp, "\tby %s with ESMTP id %s",
 		    "", batchp->message_id);
 
+		if (sessionp->s_flags & F_SECURE) {
+			session_respond(sessionp, "X-OpenSMTPD-Cipher: %s",
+			    SSL_get_cipher(sessionp->s_ssl));
+		}
+
 		TAILQ_FOREACH(messagep, &batchp->messages, entry) {
 			session_respond(sessionp, "X-OpenSMTPD-Loop: %s@%s",
 			    messagep->session_rcpt.user,
@@ -791,7 +802,7 @@ mta_write_handler(struct bufferevent *bev, void *arg)
 	if (sessionp->s_state == S_QUIT) {
 		bufferevent_disable(bev, EV_READ|EV_WRITE);
 		log_debug("closing connection because of QUIT");
-		close(sessionp->peerfd);
+		close(sessionp->s_fd);
 		return;
 	}
 
@@ -839,7 +850,7 @@ mta_error_handler(struct bufferevent *bev, short error, void *arg)
 	if (error & (EVBUFFER_TIMEOUT|EVBUFFER_EOF)) {
 		bufferevent_disable(bev, EV_READ|EV_WRITE);
 		log_debug("closing connection because of an error");
-		close(sessionp->peerfd);
+		close(sessionp->s_fd);
 		return;
 	}
 }
@@ -849,8 +860,6 @@ mta_batch_update_queue(struct batch *batchp)
 {
 	struct smtpd *env = batchp->env;
 	struct message *messagep;
-	struct session *sessionp;
-	struct session  key;
 
 	while ((messagep = TAILQ_FIRST(&batchp->messages)) != NULL) {
 
@@ -870,24 +879,12 @@ mta_batch_update_queue(struct batch *batchp)
 		free(messagep);
 	}
 
-	sessionp = batchp->sessionp;
-
 	SPLAY_REMOVE(batchtree, &env->batch_queue, batchp);
 
 	if (batchp->messagefp)
 		fclose(batchp->messagefp);
 
-	if (sessionp->s_bev)
-		bufferevent_free(sessionp->s_bev);
-
-	if (sessionp->peerfd != -1)
-		close(sessionp->peerfd);
-
 	free(batchp);
-
-	SPLAY_REMOVE(sessiontree, &env->sc_sessions, &key);
-	free(sessionp->mxarray);
-	free(sessionp);
 }
 
 void
