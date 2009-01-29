@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.142 2009/01/28 18:07:19 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.143 2009/01/29 15:37:09 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2453,14 +2453,10 @@ set_rule_peers(struct ipsec_rule *r, struct ipsec_hosts *peers)
 	if (r->peer == NULL) {
 		/* Set peer to remote host.  Must be a host address. */
 		if (r->direction == IPSEC_IN) {
-			if (r->src->netaddress)
-				r->peer = NULL;
-			else
+			if (!r->src->netaddress)
 				r->peer = copyhost(r->src);
 		} else {
-			if (r->dst->netaddress)
-				r->peer = NULL;
-			else
+			if (!r->dst->netaddress)
 				r->peer = copyhost(r->dst);
 		}
 	} else if (r->peer->af == AF_UNSPEC) {
