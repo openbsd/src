@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.131 2009/01/20 14:36:19 mpf Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.132 2009/01/29 10:05:50 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1028,8 +1028,10 @@ static void
 ipsec_delete_spi_list(struct sockaddr *addr, u_int8_t proto, u_int8_t *spis,
     int nspis, char *type)
 {
-	struct sa      *sa;
-	int             i;
+	struct sa	*sa;
+	char		*peer;
+	char		 ids[1024];
+	int		 i;
 
 	for (i = 0; i < nspis; i++) {
 		if (proto == ISAKMP_PROTO_ISAKMP) {
@@ -1053,11 +1055,26 @@ ipsec_delete_spi_list(struct sockaddr *addr, u_int8_t proto, u_int8_t *spis,
 			    ((u_int32_t *)spis)[i], proto));
 			continue;
 		}
-		/* Delete the SA and search for the next */
-		LOG_DBG((LOG_SA, 30, "ipsec_delete_spi_list: "
-		    "%s made us delete SA %p (%d references) for proto %d",
-		    type, sa, sa->refcnt, proto));
 
+		strlcpy(ids,
+		    sa->doi->decode_ids("initiator id: %s, responder id: %s",
+		    sa->id_i, sa->id_i_len, sa->id_r, sa->id_r_len, 0),
+		    sizeof ids);
+		if (sockaddr2text(addr, &peer, 0))
+			peer = NULL;
+
+		/* only log deletion of SAs which are not soft expired yet */
+		if (sa->soft_death != NULL)
+			log_verbose("isakmpd: Peer %s made us delete live SA "
+			    "%s for proto %d, %s", peer ? peer : "<unknown>",
+			    sa->name ? sa->name : "<unnamed>", proto, ids);
+
+		LOG_DBG((LOG_SA, 30, "ipsec_delete_spi_list: "
+		    "%s made us delete SA %p (%d references) for proto %d (%s)",
+		    type, sa, sa->refcnt, proto, ids));
+		free(peer);
+
+		/* Delete the SA and search for the next */
 		sa_free(sa);
 	}
 }
@@ -2020,32 +2037,25 @@ ipsec_decode_id(char *buf, size_t size, u_int8_t *id, size_t id_len,
 		switch (id_type) {
 		case IPSEC_ID_IPV4_ADDR:
 			util_ntoa(&addr, AF_INET, id + ISAKMP_ID_DATA_OFF);
-			snprintf(buf, size, "%08x: %s",
-			    decode_32(id + ISAKMP_ID_DATA_OFF), addr);
+			snprintf(buf, size, "%s", addr);
 			break;
 
 		case IPSEC_ID_IPV4_ADDR_SUBNET:
 			util_ntoa(&addr, AF_INET, id + ISAKMP_ID_DATA_OFF);
 			util_ntoa(&mask, AF_INET, id + ISAKMP_ID_DATA_OFF + 4);
-			snprintf(buf, size, "%08x/%08x: %s/%s",
-			    decode_32(id + ISAKMP_ID_DATA_OFF),
-			decode_32(id + ISAKMP_ID_DATA_OFF + 4), addr, mask);
+			snprintf(buf, size, "%s/%s", addr, mask);
 			break;
 
 		case IPSEC_ID_IPV6_ADDR:
 			util_ntoa(&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
-			snprintf(buf, size, "%08x%08x%08x%08x: %s", *idp,
-			    *(idp + 1), *(idp + 2), *(idp + 3), addr);
+			snprintf(buf, size, "%s", addr);
 			break;
 
 		case IPSEC_ID_IPV6_ADDR_SUBNET:
 			util_ntoa(&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
 			util_ntoa(&mask, AF_INET6, id + ISAKMP_ID_DATA_OFF +
 			    sizeof(struct in6_addr));
-			snprintf(buf, size,
-			    "%08x%08x%08x%08x/%08x%08x%08x%08x: %s/%s", *idp,
-			    *(idp + 1), *(idp + 2), *(idp + 3), *(idp + 4),
-			    *(idp + 5), *(idp + 6), *(idp + 7), addr, mask);
+			snprintf(buf, size, "%s/%s", addr, mask);
 			break;
 
 		case IPSEC_ID_FQDN:
@@ -2481,9 +2491,8 @@ ipsec_id_string(u_int8_t *id, size_t id_len)
 
 	case IPSEC_ID_FQDN:
 	case IPSEC_ID_USER_FQDN:
-		strlcpy(buf,
-		GET_ISAKMP_ID_TYPE(id) == IPSEC_ID_FQDN ? "fqdn/" : "ufqdn/",
-		    size);
+		strlcpy(buf, GET_ISAKMP_ID_TYPE(id) == IPSEC_ID_FQDN ?
+		    "fqdn/" : "ufqdn/", size);
 		len = strlen(buf);
 
 		memcpy(buf + len, id + ISAKMP_ID_DATA_OFF, id_len);
