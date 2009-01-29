@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.101 2008/12/16 07:57:28 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.102 2009/01/29 22:18:06 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1532,12 +1532,11 @@ sys_thrsigdivert(struct proc *p, void *v, register_t *retval)
 		/* interrupted */
 		KASSERT(error != 0);
 		atomic_clearbits_int(&p->p_sigdivert, ~0);
-		if (error == ERESTART)
-			error = EINTR;
+		if (error == EINTR)
+			error = ERESTART;
 		return (error);
 
 	}
-	KASSERT(error == 0);
 	KASSERT(p->p_sigwait != 0);
 	*retval = p->p_sigwait;
 	return (0);
