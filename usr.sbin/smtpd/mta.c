@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.25 2009/01/29 15:20:34 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.26 2009/01/29 15:40:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -54,9 +54,6 @@ void		mta_error_handler(struct bufferevent *, short, void *);
 int		mta_reply_handler(struct bufferevent *, void *);
 void		mta_batch_update_queue(struct batch *);
 void		mta_expand_mxarray(struct session *);
-void		session_respond(struct session *, char *, ...)
-		    __attribute__ ((format (printf, 2, 3)));
-
 void		ssl_client_init(struct session *);
 
 void

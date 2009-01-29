@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.45 2009/01/29 15:27:34 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.46 2009/01/29 15:40:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -71,8 +71,6 @@ void		session_msg_submit(struct session *);
 void		session_command(struct session *, char *, char *);
 int		session_set_path(struct path *, char *);
 void		session_timeout(int, short, void *);
-void		session_respond(struct session *, char *, ...)
-		    __attribute__ ((format (printf, 2, 3)));
 void		session_cleanup(struct session *);
 
 struct session_timeout {

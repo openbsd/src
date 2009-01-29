@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.60 2009/01/29 15:20:34 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.61 2009/01/29 15:40:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -795,6 +795,9 @@ void		 session_init(struct listener *, struct session *);
 int		 session_cmp(struct session *, struct session *);
 void		 session_pickup(struct session *, struct submit_status *);
 void		 session_destroy(struct session *);
+void		 session_respond(struct session *, char *, ...)
+		    __attribute__ ((format (printf, 2, 3)));
+
 SPLAY_PROTOTYPE(sessiontree, session, s_nodes, session_cmp);
 
 /* store.c */
