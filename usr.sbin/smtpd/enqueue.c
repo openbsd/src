@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.6 2009/01/28 19:49:57 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.7 2009/01/29 10:18:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -149,8 +149,6 @@ enqueue_add_recipient(struct message *messagep, char *recipient)
 			buffer, messagep->sender.domain))
 			errx(1, "recipient address too long.");
 	}
-
-	printf("recipient: %s", buffer);
 	
 	if (! recipient_to_path(&message.recipient, buffer))
 		errx(1, "invalid recipient address.");
