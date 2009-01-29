@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.281 2008/11/24 13:22:09 mikeb Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.282 2009/01/29 15:12:28 pyr Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1810,6 +1810,32 @@ void	pf_osfp_initialize(void);
 int	pf_osfp_match(struct pf_osfp_enlist *, pf_osfp_t);
 struct pf_os_fingerprint *
 	pf_osfp_validate(void);
+
+#ifdef _KERNEL
+void			 pf_print_host(struct pf_addr *, u_int16_t, u_int8_t);
+
+void			 pf_step_into_anchor(int *, struct pf_ruleset **, int,
+			    struct pf_rule **, struct pf_rule **, int *);
+int			 pf_step_out_of_anchor(int *, struct pf_ruleset **,
+			     int, struct pf_rule **, struct pf_rule **,
+			     int *);
+
+int			 pf_map_addr(u_int8_t, struct pf_rule *,
+			    struct pf_addr *, struct pf_addr *,
+			    struct pf_addr *, struct pf_src_node **);
+struct pf_rule		*pf_get_translation(struct pf_pdesc *, struct mbuf *,
+			    int, int, struct pfi_kif *, struct pf_src_node **,
+			    struct pf_state_key **, struct pf_state_key **,
+			    struct pf_state_key **, struct pf_state_key **,
+			    struct pf_addr *, struct pf_addr *,
+			    u_int16_t, u_int16_t);
+
+int			 pf_state_key_setup(struct pf_pdesc *, struct pf_rule *,
+			    struct pf_state_key **, struct pf_state_key **,
+			    struct pf_state_key **, struct pf_state_key **,
+			    struct pf_addr *, struct pf_addr *,
+			    u_int16_t, u_int16_t);
+#endif /* _KERNEL */
 
 
 #endif /* _NET_PFVAR_H_ */
