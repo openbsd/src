@@ -56,6 +56,9 @@ int	 drm_detach(struct device *, int);
 int	 drm_activate(struct device *, enum devact);
 int	 drmprint(void *, const char *);
 
+int	 drm_getunique(struct drm_device *, void *, struct drm_file *);
+int	 drm_setversion(struct drm_device *, void *, struct drm_file *);
+
 /*
  * attach drm to a pci-based driver.
  *
@@ -784,4 +787,66 @@ drmmmap(dev_t kdev, off_t offset, int prot)
 		return (-1);	/* This should never happen. */
 	}
 	/* NOTREACHED */
+}
+
+/*
+ * Beginning in revision 1.1 of the DRM interface, getunique will return
+ * a unique in the form pci:oooo:bb:dd.f (o=domain, b=bus, d=device, f=function)
+ * before setunique has been called.  The format for the bus-specific part of
+ * the unique is not defined for any other bus.
+ */
+int
+drm_getunique(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	struct drm_unique	 *u = data;
+
+	if (u->unique_len >= dev->unique_len) {
+		if (DRM_COPY_TO_USER(u->unique, dev->unique, dev->unique_len))
+			return EFAULT;
+	}
+	u->unique_len = dev->unique_len;
+
+	return 0;
+}
+
+#define DRM_IF_MAJOR	1
+#define DRM_IF_MINOR	2
+
+int
+drm_setversion(struct drm_device *dev, void *data, struct drm_file *file_priv)
+{
+	struct drm_set_version	ver, *sv = data;
+	int			if_version;
+
+	/* Save the incoming data, and set the response before continuing
+	 * any further.
+	 */
+	ver = *sv;
+	sv->drm_di_major = DRM_IF_MAJOR;
+	sv->drm_di_minor = DRM_IF_MINOR;
+	sv->drm_dd_major = dev->driver->major;
+	sv->drm_dd_minor = dev->driver->minor;
+
+	/*
+	 * We no longer support interface versions less than 1.1, so error
+	 * out if the xserver is too old. 1.1 always ties the drm to a
+	 * certain busid, this was done on attach
+	 */
+	if (ver.drm_di_major != -1) {
+		if (ver.drm_di_major != DRM_IF_MAJOR || ver.drm_di_minor < 1 ||
+		    ver.drm_di_minor > DRM_IF_MINOR) {
+			return EINVAL;
+		}
+		if_version = DRM_IF_VERSION(ver.drm_di_major, ver.drm_dd_minor);
+		dev->if_version = DRM_MAX(if_version, dev->if_version);
+	}
+
+	if (ver.drm_dd_major != -1) {
+		if (ver.drm_dd_major != dev->driver->major ||
+		    ver.drm_dd_minor < 0 ||
+		    ver.drm_dd_minor > dev->driver->minor)
+			return EINVAL;
+	}
+
+	return 0;
 }

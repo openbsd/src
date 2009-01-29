@@ -658,11 +658,6 @@ int	drm_ati_pcigart_cleanup(struct drm_device *,
 int	drm_lock(struct drm_device *, void *, struct drm_file *);
 int	drm_unlock(struct drm_device *, void *, struct drm_file *);
 int	drm_version(struct drm_device *, void *, struct drm_file *);
-int	drm_setversion(struct drm_device *, void *, struct drm_file *);
-
-/* Misc. IOCTL support (drm_ioctl.c) */
-int	drm_irq_by_busid(struct drm_device *, void *, struct drm_file *);
-int	drm_getunique(struct drm_device *, void *, struct drm_file *);
 
 /* Context IOCTL support (drm_context.c) */
 int	drm_resctx(struct drm_device *, void *, struct drm_file *);
@@ -689,6 +684,7 @@ int	drm_dma(struct drm_device *, void *, struct drm_file *);
 /* IRQ support (drm_irq.c) */
 int	drm_control(struct drm_device *, void *, struct drm_file *);
 int	drm_wait_vblank(struct drm_device *, void *, struct drm_file *);
+int	drm_irq_by_busid(struct drm_device *, void *, struct drm_file *);
 
 /* AGP/GART support (drm_agpsupport.c) */
 int	drm_agp_acquire_ioctl(struct drm_device *, void *, struct drm_file *);
