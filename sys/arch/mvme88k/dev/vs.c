@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.71 2008/07/30 18:08:03 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.72 2009/01/29 22:16:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -377,8 +377,13 @@ vs_scsidone(struct vs_softc *sc, struct vs_cb *cb)
 	if ((error & 0xff) == SCSI_SELECTION_TO) {
 		xs->error = XS_SELTIMEOUT;
 		xs->status = -1;
-	} else
+	} else {
+		if (xs->flags & SCSI_DATA_IN)
+			dma_cachectl(pmap_kernel(), (vaddr_t)xs->data,
+			    xs->datalen, DMA_CACHE_INV);
+
 		xs->status = error >> 8;
+	}
 
 	while (xs->status == SCSI_CHECK) {
 		vs_chksense(xs);
@@ -577,6 +582,9 @@ vs_chksense(struct scsi_xfer *xs)
 	mce_iopb_write(2, IOPB_UNIT,
 	  vs_unit_value(slp->flags & SDEV_2NDBUS, slp->target, slp->lun));
 
+	dma_cachectl(pmap_kernel(), (vaddr_t)&xs->sense,
+	    sizeof(struct scsi_sense_data), DMA_CACHE_SYNC_INVAL);
+
 	vs_bzero(sh_MCE, CQE_SIZE);
 	mce_write(2, CQE_IOPB_ADDR, sh_MCE_IOPB);
 	mce_write(1, CQE_IOPB_LENGTH, 0);
@@ -684,7 +692,7 @@ vs_initialize(struct vs_softc *sc)
 	switch (sc->sc_bid) {
 	default:
 	case JAGUAR:
-		printf("Jaguar, ");
+		printf("Jaguar");
 		break;
 	case COUGAR:
 		id = csb_read(1, CSB_EXTID);
@@ -711,12 +719,12 @@ vs_initialize(struct vs_softc *sc)
 		sc->sc_channel[1].vc_id = csb_read(1, CSB_SID);
 		break;
 	case DBID_PRINTER:
-		printf("with printer port");
+		printf(", printer port");
 		break;
 	case DBID_NONE:
 		break;
 	default:
-		printf("with unknown daughterboard id %x", id);
+		printf(", unknown daughterboard id %x", id);
 		break;
 	}
 
