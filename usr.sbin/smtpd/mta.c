@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.24 2009/01/29 14:50:27 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.25 2009/01/29 15:20:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -265,6 +265,10 @@ mta_dispatch_runner(int sig, short event, void *p)
 			batchp = batch_by_id(env, messagep->batch_id);
 			if (batchp == NULL)
 				fatalx("mta_dispatch_runner: internal inconsistency.");
+
+			batchp->session_ss = messagep->session_ss;
+			strlcpy(batchp->session_hostname, messagep->session_hostname, MAXHOSTNAMELEN);
+			strlcpy(batchp->session_helo, messagep->session_helo, MAXHOSTNAMELEN);
 
  			TAILQ_INSERT_TAIL(&batchp->messages, messagep, entry);
 
@@ -724,10 +728,20 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	}
 
 	case S_DATA: {
+/*
+		if (fprintf(fp, "Received: from %s (%s [%s%s])\n"
+			"\tby %s with ESMTP id %s\n"
+			"\tfor <%s@%s>; %s\n\n",
+			messagep->session_helo, messagep->session_hostname,
+			messagep->session_ss.ss_family == PF_INET ? "" : "IPv6:", addrbuf,
+			batchp->env->sc_hostname, messagep->message_id,
+			messagep->sender.user, messagep->sender.domain, ctimebuf) == -1) {
+*/
 		session_respond(sessionp, "Received: from %s (%s [%s])",
-		    "localhost", "localhost", "127.0.0.1");
+		    batchp->session_helo, batchp->session_hostname, "127.0.0.1");
+
 		session_respond(sessionp, "\tby %s with ESMTP id %s",
-		    "", batchp->message_id);
+		    batchp->env->sc_hostname, batchp->message_id);
 
 		if (sessionp->s_flags & F_SECURE) {
 			session_respond(sessionp, "X-OpenSMTPD-Cipher: %s",

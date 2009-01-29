@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.7 2009/01/29 10:18:27 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.8 2009/01/29 15:20:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -92,6 +92,9 @@ enqueue(int argc, char *argv[])
 	argv += optind;
 
 	bzero(&message, sizeof(struct message));
+
+	strlcpy(message.session_helo, "localhost", MAXHOSTNAMELEN);
+	strlcpy(message.session_hostname, hostname, MAXHOSTNAMELEN);
 	
 	/* build sender */
 	if (! recipient_to_path(&message.sender, sender))
@@ -165,6 +168,7 @@ enqueue_add_recipient(struct message *messagep, char *recipient)
 		if (inet_pton(AF_INET, "127.0.0.1", &ssin->sin_addr) != 1)
 			return 0;
 	}
+	message.session_ss = mr.ss;
 
 	mr.path = message.recipient;
 	mr.id = message.session_id;

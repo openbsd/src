@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.11 2009/01/28 12:28:25 jacekm Exp $	*/
+/*	$OpenBSD: store.c,v 1.12 2009/01/29 15:20:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -113,33 +113,24 @@ store_write_header(struct batch *batchp, struct message *messagep, FILE *fp)
 	inet_ntop(messagep->session_ss.ss_family, p, addrbuf, sizeof (addrbuf));
 
 	if (batchp->type & T_DAEMON_BATCH) {
-
 		if (fprintf(fp, "From %s@%s %s\n", "MAILER-DAEMON",
 			batchp->env->sc_hostname, timebuf) == -1) {
 			return 0;
 		}
-
-		if (fprintf(fp, "Received: from %s (%s [%s%s])\n"
-			"\tby %s with ESMTP id %s\n"
-			"\tfor <%s@%s>; %s\n\n",
-			messagep->session_helo, messagep->session_hostname,
-			messagep->session_ss.ss_family == PF_INET ? "" : "IPv6:", addrbuf,
-			batchp->env->sc_hostname, messagep->message_id,
-			messagep->sender.user, messagep->sender.domain, ctimebuf) == -1) {
-			return 0;
-		}
-		return 1;
 	}
-
-	if (fprintf(fp, "From %s@%s %s\n"
-		"Received: from %s (%s [%s%s])\n"
+	else {
+		if (fprintf(fp, "From %s@%s %s\n",
+			messagep->sender.user, messagep->sender.domain, timebuf) == -1)
+			return 0;
+	}
+	
+	if (fprintf(fp, "Received: from %s (%s [%s%s])\n"
 		"\tby %s with ESMTP id %s\n"
-		"\tfor <%s@%s>; %s\n",
-		messagep->sender.user, messagep->sender.domain, timebuf,
+		"\tfor <%s@%s>; %s\n\n",
 		messagep->session_helo, messagep->session_hostname,
 		messagep->session_ss.ss_family == PF_INET ? "" : "IPv6:", addrbuf,
-		batchp->env->sc_hostname, batchp->message_id,
-		messagep->recipient.user, messagep->recipient.domain, ctimebuf) == -1) {
+		batchp->env->sc_hostname, messagep->message_id,
+		messagep->sender.user, messagep->sender.domain, ctimebuf) == -1) {
 		return 0;
 	}
 	return 1;
