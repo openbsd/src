@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.44 2009/01/29 15:20:34 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.45 2009/01/29 15:27:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -371,9 +371,6 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 		session_respond(s, "250-AUTH PLAIN LOGIN");
 
 	session_respond(s, "250 HELP");
-
-
-	log_debug("messagep->helo: %s / args", s->s_msg.session_helo, args);
 
 	return 1;
 }
