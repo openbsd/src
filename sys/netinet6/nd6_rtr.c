@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.49 2009/01/30 10:47:46 mcbride Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.50 2009/01/30 11:56:59 rainer Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -757,6 +757,9 @@ defrtrlist_update(struct nd_defrouter *new)
 			dr->flags = new->flags; /* xxx flag check */
 			dr->rtlifetime = new->rtlifetime;
 			dr->expire = new->expire;
+
+			if (!dr->installed)
+				defrouter_select();
 
 			/*
 			 * If the preference does not change, there's no need

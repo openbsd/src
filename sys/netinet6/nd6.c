@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.81 2008/10/15 19:12:18 blambert Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.82 2009/01/30 11:56:59 rainer Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -995,7 +995,18 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 	static struct sockaddr_dl null_sdl = {sizeof(null_sdl), AF_LINK};
 	struct ifnet *ifp = rt->rt_ifp;
 	struct ifaddr *ifa;
+	struct nd_defrouter *dr;
 
+	if (req == RTM_DELETE && (rt->rt_flags & RTF_GATEWAY) &&
+	    (IN6_ARE_ADDR_EQUAL(&(satosin6(rt_key(rt)))->sin6_addr,
+	    &in6addr_any) && rt_mask(rt) && (rt_mask(rt)->sa_len == 0 ||
+	    IN6_ARE_ADDR_EQUAL(&(satosin6(rt_mask(rt)))->sin6_addr,
+	    &in6addr_any)))) {
+		dr = defrouter_lookup(&SIN6(gate)->sin6_addr, ifp);
+		if (dr)
+			dr->installed = 0;
+	}
+	
 	if ((rt->rt_flags & RTF_GATEWAY) != 0)
 		return;
 
