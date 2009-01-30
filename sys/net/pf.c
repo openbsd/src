@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.631 2009/01/30 10:32:26 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.632 2009/01/30 17:27:20 naddy Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4743,14 +4743,13 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 
 	if (ntohs(ip->ip_len) <= ifp->if_mtu) {
+		ip->ip_sum = 0;
 		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
 		    ifp->if_bridge == NULL) {
 			m0->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 			ipstat.ips_outhwcsum++;
-		} else {
-			ip->ip_sum = 0;
+		} else
 			ip->ip_sum = in_cksum(m0, ip->ip_hl << 2);
-		}
 		/* Update relevant hardware checksum stats for TCP/UDP */
 		if (m0->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
 			tcpstat.tcps_outhwcsum++;
