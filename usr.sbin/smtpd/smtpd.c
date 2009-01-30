@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.27 2009/01/29 21:59:15 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.28 2009/01/30 10:03:29 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1032,9 +1032,8 @@ parent_external_mda(struct passwd *pw, struct batch *batchp, struct path *path)
 	pid_t pid;
 	int pipefd[2];
 	struct mdaproc *mdaproc;
-	char *pw_name;
 
-	log_debug("executing filter as user: %s", pw_name);
+	log_debug("executing filter as user: %s", pw->pw_name);
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pipefd) == -1) {
 		batchp->message.status |= S_MESSAGE_PERMFAILURE;
