@@ -231,14 +231,21 @@ int init_client(int *sock, char *host, char *port, int type, int af)
 	struct addrinfo hints, *ai_top, *ai;
 	int i, s;
 
+	if (!ssl_sock_init()) return(0);
+
 	memset(&hints, '\0', sizeof(hints));
 	hints.ai_family = af;
 	hints.ai_socktype = type;
 
-	if ((i = getaddrinfo(host, port, &hints, &ai_top)) != 0 ||
-	    ai_top == NULL || ai_top->ai_addr == NULL)
+	if ((i = getaddrinfo(host, port, &hints, &ai_top)) != 0)
 		{
 		BIO_printf(bio_err,"getaddrinfo: %s\n", gai_strerror(i));
+		return (0);
+		}
+	if (ai_top == NULL || ai_top->ai_addr == NULL)
+		{
+		BIO_printf(bio_err,"getaddrinfo returned no addresses\n");
+		if (ai_top != NULL) { freeaddrinfo(ai_top); }
 		return (0);
 		}
 
@@ -255,7 +262,7 @@ int init_client(int *sock, char *host, char *port, int type, int af)
 		}
 #endif
 		if ((i = connect(s, ai->ai_addr, ai->ai_addrlen)) == 0)
-			{ *sock=s; freeaddrinfo(ai_top); return (1);}
+			{ *sock=s; freeaddrinfo(ai_top); return (1); }
 
 		close(s);
 		}
