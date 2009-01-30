@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.44 2009/01/02 00:09:53 claudio Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.45 2009/01/30 12:43:18 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1079,6 +1079,7 @@ show_rib_detail_msg(struct imsg *imsg)
 			printf("%-15s %-12s %-7d %-7d\n",
 			    inet_ntoa(rt->adv_rtr), path_type_name(rt->p_type),
 			    rt->cost, rt->cost2);
+			free(dstnet);
 
 			lasttype = RIB_EXT;
 			break;
