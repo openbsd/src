@@ -1,4 +1,4 @@
-/*	$OpenBSD: wake.c,v 1.11 2009/01/29 15:50:03 mbalmer Exp $ */
+/*	$OpenBSD: wake.c,v 1.12 2009/01/30 21:00:42 pyr Exp $ */
 
 /*
  * Copyright (C) 2006,2007,2008,2009 Marc Balmer <mbalmer@openbsd.org>
@@ -27,6 +27,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -100,14 +101,13 @@ int
 get_bpf(void)
 {
 	int i, fd;
-	char *path;
+	char path[MAXPATHLEN];
 
 	for (i = 0;; i++) {
-		if (asprintf(&path, BPF_PATH_FORMAT, i) == -1)
+		if (snprintf(path, sizeof(path), BPF_PATH_FORMAT, i) == -1)
 			return -1;
 
 		fd = open(path, O_RDWR);
-		free(path);
 		if (fd != -1)
 			return fd;
 		if (errno == EBUSY)
