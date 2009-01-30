@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.18 2009/01/30 10:44:56 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.19 2009/01/30 12:47:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -60,12 +60,23 @@ extern void myetheraddr(u_char *);
 
 #define TSEC_IEVENT		0x010
 #define  TSEC_IEVENT_BABR	0x80000000
+#define  TSEC_IEVENT_RXC	0x40000000
+#define  TSEC_IEVENT_BSY	0x20000000
+#define  TSEC_IEVENT_EBERR	0x10000000
+#define  TSEC_IEVENT_MSRO	0x04000000
 #define  TSEC_IEVENT_GTSC	0x02000000
+#define  TSEC_IEVENT_BABT	0x01000000
 #define  TSEC_IEVENT_TXC	0x00800000
 #define  TSEC_IEVENT_TXE	0x00400000
 #define  TSEC_IEVENT_TXB	0x00200000
 #define  TSEC_IEVENT_TXF	0x00100000
+#define  TSEC_IEVENT_LC		0x00040000
+#define  TSEC_IEVENT_CRL	0x00020000
+#define  TSEC_IEVENT_DXA	TSEC_IEVENT_CRL
+#define  TSEC_IEVENT_XFUN	0x00010000
 #define  TSEC_IEVENT_RXB	0x00008000
+#define  TSEC_IEVENT_MMRD	0x00000400
+#define  TSEC_IEVENT_MMWR	0x00000200
 #define  TSEC_IEVENT_GRSC	0x00000100
 #define  TSEC_IEVENT_RXF	0x00000080
 #define  TSEC_IEVENT_FMT	"\020" "\040BABR" "\037RXC" "\036BSY" \
@@ -626,6 +637,9 @@ tsec_txintr(void *arg)
 	uint32_t ievent;
 
 	ievent = tsec_read(sc, TSEC_IEVENT);
+	if ((ievent & (TSEC_IEVENT_TXC | TSEC_IEVENT_TXE |
+	    TSEC_IEVENT_TXB | TSEC_IEVENT_TXF)) == 0)
+		printf("%s: tx %b\n", DEVNAME(sc), ievent, TSEC_IEVENT_FMT);
 	ievent &= (TSEC_IEVENT_TXC | TSEC_IEVENT_TXE |
 	    TSEC_IEVENT_TXB | TSEC_IEVENT_TXF);
 	tsec_write(sc, TSEC_IEVENT, ievent);
@@ -642,6 +656,8 @@ tsec_rxintr(void *arg)
 	uint32_t ievent;
 
 	ievent = tsec_read(sc, TSEC_IEVENT);
+	if ((ievent & (TSEC_IEVENT_RXB | TSEC_IEVENT_RXF)) == 0)
+		printf("%s: rx %b\n", DEVNAME(sc), ievent, TSEC_IEVENT_FMT);
 	ievent &= (TSEC_IEVENT_RXB | TSEC_IEVENT_RXF);
 	tsec_write(sc, TSEC_IEVENT, ievent);
 
@@ -654,11 +670,25 @@ int
 tsec_errintr(void *arg)
 {
 	struct tsec_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint32_t ievent;
 
 	ievent = tsec_read(sc, TSEC_IEVENT);
+	if ((ievent & TSEC_IEVENT_BSY) == 0)
+		printf("%s: err %b\n", DEVNAME(sc), ievent, TSEC_IEVENT_FMT);
+	ievent &= TSEC_IEVENT_BSY;
 	tsec_write(sc, TSEC_IEVENT, ievent);
-	printf("%s: %b\n", __func__, ievent, TSEC_IEVENT_FMT);
+
+	if (ievent & TSEC_IEVENT_BSY) {
+		/*
+		 * We ran out of buffers and dropped one (or more)
+		 * packets.  We must clear RSTAT[QHLT] after
+		 * processing the ring to get things started again.
+		 */
+		tsec_rx_proc(sc);
+		tsec_write(sc, TSEC_RSTAT, TSEC_RSTAT_QHLT);
+		ifp->if_ierrors++;
+	}
 
 	return (1);
 }
@@ -903,7 +933,7 @@ tsec_up(struct tsec_softc *sc)
 
 	tsec_write(sc, TSEC_IMASK, TSEC_IMASK_TXEEN |
 	    TSEC_IMASK_TXBEN | TSEC_IMASK_TXFEN |
-	    TSEC_IMASK_RXBEN | TSEC_IMASK_RXFEN);
+	    TSEC_IMASK_RXBEN | TSEC_IMASK_RXFEN | TSEC_IMASK_BSYEN);
 
 	timeout_add_sec(&sc->sc_tick, 1);
 }
