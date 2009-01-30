@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.630 2009/01/29 15:12:28 pyr Exp $ */
+/*	$OpenBSD: pf.c,v 1.631 2009/01/30 10:32:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -773,6 +773,8 @@ int
 pf_state_insert(struct pfi_kif *kif, struct pf_state_key *skw,
     struct pf_state_key *sks, struct pf_state *s)
 {
+	splassert(IPL_SOFTNET);
+
 	s->kif = kif;
 
 	if (skw == sks) {
@@ -1050,6 +1052,8 @@ pf_src_tree_remove_state(struct pf_state *s)
 void
 pf_unlink_state(struct pf_state *cur)
 {
+	splassert(IPL_SOFTNET);
+
 	if (cur->src.state == PF_TCPS_PROXY_DST) {
 		/* XXX wire key the right one? */
 		pf_send_tcp(cur->rule.ptr, cur->key[PF_SK_WIRE]->af,
@@ -1079,6 +1083,8 @@ pf_unlink_state(struct pf_state *cur)
 void
 pf_free_state(struct pf_state *cur)
 {
+	splassert(IPL_SOFTNET);
+
 #if NPFSYNC > 0
 	if (pfsyncif != NULL &&
 	    (pfsyncif->sc_bulk_send_next == cur ||
