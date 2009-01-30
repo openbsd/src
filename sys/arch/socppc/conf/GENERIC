@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2009/01/11 21:45:17 maja Exp $
+#	$OpenBSD: GENERIC,v 1.8 2009/01/30 00:01:20 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -57,7 +57,7 @@ uhub*	at uhub?		# USB Hubs
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
-mos*	at uhub?		# MOSCHIP CS730/7830 10/100 Etherne
+mos*	at uhub?		# MOSCHIP CS730/7830 10/100 Ethernet
 uath*	at uhub?		# Atheros AR5005UR/AR5005UX
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
