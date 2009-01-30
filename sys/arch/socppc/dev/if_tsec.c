@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.17 2009/01/29 12:37:49 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.18 2009/01/30 10:44:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -912,7 +912,9 @@ void
 tsec_down(struct tsec_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct tsec_buf *txb, *rxb;
 	uint32_t maccfg1;
+	int i;
 
 	timeout_del(&sc->sc_tick);
 
@@ -926,8 +928,33 @@ tsec_down(struct tsec_softc *sc)
 	maccfg1 &= ~TSEC_MACCFG1_RXEN;
 	tsec_write(sc, TSEC_MACCFG1, maccfg1);
 
+	for (i = 0; i < TSEC_NTXDESC; i++) {
+		txb = &sc->sc_txbuf[i];
+		if (txb->tb_m) {
+			bus_dmamap_sync(sc->sc_dmat, txb->tb_map, 0,
+			    txb->tb_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, txb->tb_map);
+			m_freem(txb->tb_m);
+		}
+		bus_dmamap_destroy(sc->sc_dmat, txb->tb_map);
+	}
+
 	tsec_dmamem_free(sc, sc->sc_txring);
 	free (sc->sc_txbuf, M_DEVBUF);
+
+	for (i = 0; i < TSEC_NRXDESC; i++) {
+		rxb = &sc->sc_rxbuf[i];
+		if (rxb->tb_m) {
+			bus_dmamap_sync(sc->sc_dmat, rxb->tb_map, 0,
+			    rxb->tb_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->sc_dmat, rxb->tb_map);
+			m_freem(rxb->tb_m);
+		}
+		bus_dmamap_destroy(sc->sc_dmat, rxb->tb_map);
+	}
+
+	tsec_dmamem_free(sc, sc->sc_rxring);
+	free(sc->sc_rxbuf, M_DEVBUF);
 }
 
 void
