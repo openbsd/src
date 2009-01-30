@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.143 2009/01/29 15:37:09 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.144 2009/01/30 14:24:52 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -61,6 +61,7 @@ int		 check_file_secrecy(int, const char *);
 int		 yyparse(void);
 int		 yylex(void);
 int		 yyerror(const char *, ...);
+int		 yywarn(const char *, ...);
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 lgetc(int);
@@ -884,6 +885,19 @@ yyerror(const char *fmt, ...)
 	va_list		 ap;
 
 	file->errors++;
+	va_start(ap, fmt);
+	fprintf(stderr, "%s: %d: ", file->name, yylval.lineno);
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
+	return (0);
+}
+
+int
+yywarn(const char *fmt, ...)
+{
+	va_list		 ap;
+
 	va_start(ap, fmt);
 	fprintf(stderr, "%s: %d: ", file->name, yylval.lineno);
 	vfprintf(stderr, fmt, ap);
@@ -2459,17 +2473,63 @@ set_rule_peers(struct ipsec_rule *r, struct ipsec_hosts *peers)
 			if (!r->dst->netaddress)
 				r->peer = copyhost(r->dst);
 		}
-	} else if (r->peer->af == AF_UNSPEC) {
-		/* If peer has been specified as any, use the default peer. */
-		free(r->peer);
-		r->peer = NULL;
-		return (0);
 	}
-
 	if (r->type == RULE_FLOW && r->peer == NULL) {
 		yyerror("no peer specified for destination %s",
 		    r->dst->name);
 		return (1);
+	}
+	if (r->peer != NULL && r->peer->af == AF_UNSPEC) {
+		/* If peer has been specified as any, use the default peer. */
+		free(r->peer);
+		r->peer = NULL;
+	}
+	if (r->type == RULE_IKE && r->peer == NULL) {
+		/*
+                 * Check if the default peer is consistent for all
+                 * rules.  Only warn to avoid breaking existing configs.
+		 */
+		static struct ipsec_rule *pdr = NULL;
+
+		if (pdr == NULL) {
+			/* Remember first default peer rule for comparison. */
+			pdr = r;
+		} else {
+			/* The new default peer must create the same config. */
+			if ((pdr->local == NULL && r->local != NULL) ||
+			    (pdr->local != NULL && r->local == NULL) ||
+			    (pdr->local != NULL && r->local != NULL &&
+			    strcmp(pdr->local->name, r->local->name)))
+				yywarn("default peer local mismatch");
+			if (pdr->ikeauth->type != r->ikeauth->type)
+				yywarn("default peer phase 1 auth mismatch");
+			if (pdr->ikeauth->type == IKE_AUTH_PSK &&
+			    r->ikeauth->type == IKE_AUTH_PSK &&
+			    strcmp(pdr->ikeauth->string, r->ikeauth->string))
+				yywarn("default peer psk mismatch");
+			if (pdr->p1ie != r->p1ie)
+				yywarn("default peer phase 1 mode mismatch");
+			/*
+			 * Transforms have ADD insted of SET so they may be
+			 * different and are not checked here.
+			 */
+			if ((pdr->auth->srcid == NULL &&
+			    r->auth->srcid != NULL) ||
+			    (pdr->auth->srcid != NULL &&
+			    r->auth->srcid == NULL) ||
+			    (pdr->auth->srcid != NULL &&
+			    r->auth->srcid != NULL &&
+			    strcmp(pdr->auth->srcid, r->auth->srcid)))
+				yywarn("default peer srcid mismatch");
+			if ((pdr->auth->dstid == NULL &&
+			    r->auth->dstid != NULL) ||
+			    (pdr->auth->dstid != NULL &&
+			    r->auth->dstid == NULL) ||
+			    (pdr->auth->dstid != NULL &&
+			    r->auth->dstid != NULL &&
+			    strcmp(pdr->auth->dstid, r->auth->dstid)))
+				yywarn("default peer dstid mismatch");
+		}
 	}
 	return (0);
 }
