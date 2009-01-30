@@ -1,4 +1,4 @@
-.\"	$OpenBSD: renice.8,v 1.18 2008/12/08 21:23:10 millert Exp $
+.\"	$OpenBSD: renice.8,v 1.19 2009/01/30 08:42:38 sobrado Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)renice.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: December 8 2008 $
+.Dd $Mdocdate: January 30 2009 $
 .Dt RENICE 8
 .Os
 .Sh NAME
@@ -91,16 +91,16 @@ anything negative (to make things go very fast).
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl g Ar pgrp
+.It Fl g Ar pgrp ...
 Alter the scheduling priority of all processes in process group
 .Ar pgrp .
 .It Fl n Ar increment
 A positive or negative decimal integer used to modify the
 scheduling priority.
-.It Fl p Ar pid
+.It Fl p Ar pid ...
 Alter the scheduling priority of process
 .Ar pid .
-.It Fl u Ar user
+.It Fl u Ar user ...
 Alter the scheduling priority of all processes belonging to
 .Ar user ,
 which may be a user name or ID.
