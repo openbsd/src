@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.23 2009/01/28 21:44:15 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.24 2009/01/30 10:09:58 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -306,8 +306,8 @@ mapsource	: DNS				{ map->m_src = S_DNS; }
 		| TFILE				{ map->m_src = S_FILE; }
 		| DB STRING			{
 			map->m_src = S_DB;
-			if (strlcpy(map->m_config, $2, MAXPATHLEN)
-			    >= MAXPATHLEN)
+			if (strlcpy(map->m_config, $2, sizeof(map->m_config))
+			    >= sizeof(map->m_config))
 				err(1, "pathname too long");
 		}
 		| EXTERNAL			{ map->m_src = S_EXT; }
@@ -655,22 +655,25 @@ conditions	: condition				{
 
 action		: DELIVER TO MAILDIR STRING	{
 			rule->r_action = A_MAILDIR;
-			if (strlcpy(rule->r_value.path, $4, MAXPATHLEN)
-			    >= MAXPATHLEN)
+			if (strlcpy(rule->r_value.path, $4,
+			    sizeof(rule->r_value.path)) >=
+			    sizeof(rule->r_value.path))
 				fatal("pathname too long");
 			free($4);
 		}
 		| DELIVER TO MBOX STRING		{
 			rule->r_action = A_MBOX;
-			if (strlcpy(rule->r_value.path, $4, MAXPATHLEN)
-			    >= MAXPATHLEN)
+			if (strlcpy(rule->r_value.path, $4,
+			    sizeof(rule->r_value.path))
+			    >= sizeof(rule->r_value.path))
 				fatal("pathname too long");
 			free($4);
 		}
 		| DELIVER TO MDA STRING		{
 			rule->r_action = A_EXT;
-			if (strlcpy(rule->r_value.command, $4, MAXPATHLEN)
-			    >= MAXPATHLEN)
+			if (strlcpy(rule->r_value.command, $4,
+			    sizeof(rule->r_value.command))
+			    >= sizeof(rule->r_value.command))
 				fatal("command too long");
 			free($4);
 		}
@@ -683,8 +686,9 @@ action		: DELIVER TO MAILDIR STRING	{
 			if ($3)
 				rule->r_value.relayhost.flags = $3;
 
-			if (strlcpy(rule->r_value.relayhost.hostname, $4, MAXHOSTNAMELEN)
-			    >= MAXHOSTNAMELEN)
+			if (strlcpy(rule->r_value.relayhost.hostname, $4,
+			    sizeof(rule->r_value.relayhost.hostname))
+			    >= sizeof(rule->r_value.relayhost.hostname))
 				fatal("hostname too long");
 
 			if ($5 == 0)
