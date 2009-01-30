@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.47 2008/06/11 19:00:50 mcbride Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.48 2009/01/30 10:47:46 mcbride Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 	struct in6_ifaddr *ia;
 	struct in6_aliasreq ifra;
 	struct nd_prefix pr0;
-	int i, error;
+	int i, s, error;
 
 	/*
 	 * configure link-local address.
@@ -357,8 +357,11 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 	 * one has already been configured, so check if it's already there
 	 * with in6ifa_ifpforlinklocal() and clobber it if it exists.
 	 */
-	if ((error = in6_update_ifa(ifp, &ifra,
-	     in6ifa_ifpforlinklocal(ifp, 0))) != 0) {
+	s = splsoftnet();
+	error = in6_update_ifa(ifp, &ifra, in6ifa_ifpforlinklocal(ifp, 0));
+	splx(s);
+
+	if (error != 0) {
 		/*
 		 * XXX: When the interface does not support IPv6, this call
 		 * would fail in the SIOCSIFADDR ioctl.  I believe the

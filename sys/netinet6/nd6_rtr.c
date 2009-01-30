@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.48 2008/09/17 05:43:15 chl Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.49 2009/01/30 10:47:46 mcbride Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -1683,7 +1683,7 @@ in6_ifadd(struct nd_prefix *pr)
 	struct ifaddr *ifa;
 	struct in6_aliasreq ifra;
 	struct in6_ifaddr *ia, *ib;
-	int error, plen0;
+	int error, s, plen0;
 	struct in6_addr mask;
 	int prefixlen = pr->ndpr_plen;
 
@@ -1779,7 +1779,11 @@ in6_ifadd(struct nd_prefix *pr)
 	ifra.ifra_flags |= IN6_IFF_AUTOCONF; /* obey autoconf */
 
 	/* allocate ifaddr structure, link into chain, etc. */
-	if ((error = in6_update_ifa(ifp, &ifra, NULL)) != 0) {
+	s = splsoftnet();
+	error = in6_update_ifa(ifp, &ifra, NULL);
+	splx(s);
+
+	if (error != 0) {
 		nd6log((LOG_ERR,
 		    "in6_ifadd: failed to make ifaddr %s on %s (errno=%d)\n",
 		    ip6_sprintf(&ifra.ifra_addr.sin6_addr), ifp->if_xname,

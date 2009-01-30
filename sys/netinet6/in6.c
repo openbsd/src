@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.79 2008/10/01 21:17:06 claudio Exp $	*/
+/*	$OpenBSD: in6.c,v 1.80 2009/01/30 10:47:46 mcbride Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -619,6 +619,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data,
 	{
 		int i, error = 0;
 		struct nd_prefix pr0, *pr;
+		int s;
 
 		/* reject read-only flags */
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
@@ -631,7 +632,10 @@ in6_control(struct socket *so, u_long cmd, caddr_t data,
 		 * first, make or update the interface address structure,
 		 * and link it to the list.
 		 */
-		if ((error = in6_update_ifa(ifp, ifra, ia)) != 0)
+ 		s = splsoftnet();
+		error = in6_update_ifa(ifp, ifra, ia);
+		splx(s);
+		if (error != 0)
 			return (error);
 		if ((ia = in6ifa_ifpwithaddr(ifp, &ifra->ifra_addr.sin6_addr))
 		    == NULL) {
@@ -765,7 +769,6 @@ in6_control(struct socket *so, u_long cmd, caddr_t data,
  * Update parameters of an IPv6 interface address.
  * If necessary, a new entry is created and linked into address chains.
  * This function is separated from in6_control().
- * XXX: should this be performed under splnet()?
  */
 int
 in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra, 
@@ -777,6 +780,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	struct in6_addrlifetime *lt;
 	struct in6_multi_mship *imm;
 	struct rtentry *rt;
+
+	splassert(IPL_SOFTNET);
 
 	/* Validate parameters */
 	if (ifp == NULL || ifra == NULL) /* this maybe redundant */
