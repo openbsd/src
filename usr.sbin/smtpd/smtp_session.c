@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.49 2009/01/30 17:34:58 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.50 2009/01/30 21:22:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -605,7 +605,6 @@ session_auth_pickup(struct session *s, char *arg, size_t nr)
 	if (s == NULL)
 		fatal("session_pickup: desynchronized");
 
-	s->s_flags &= ~F_EVLOCKED;
 	bufferevent_enable(s->s_bev, EV_READ);
 
 	switch (s->s_state) {
@@ -637,7 +636,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 	if (s == NULL)
 		fatal("session_pickup: desynchronized");
 
-	s->s_flags &= ~F_EVLOCKED;
 	bufferevent_enable(s->s_bev, EV_READ);
 
 	if ((ss != NULL && ss->code == 421) ||
@@ -907,8 +905,8 @@ session_destroy(struct session *s)
 	log_debug("session_destroy: killing client: %p", s);
 	close(s->s_fd);
 
-	s_smtp.clients--;
-	if (s_smtp.clients < s->s_env->sc_maxconn)
+	s_smtp.sessions--;
+	if (s_smtp.sessions < s->s_env->sc_maxconn)
 		event_add(&s->s_l->ev, NULL);
 
 	if (s->s_bev != NULL) {

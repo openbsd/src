@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.20 2009/01/30 17:34:58 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.21 2009/01/30 21:22:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -180,6 +180,7 @@ smtp_dispatch_parent(int sig, short event, void *p)
 				session_destroy(s);
 				break;
 			}
+			s->s_flags &= ~F_EVLOCKED;
 
 			if (reply->value)
 				s->s_flags |= F_AUTHENTICATED;
@@ -253,6 +254,7 @@ smtp_dispatch_mfa(int sig, short event, void *p)
 				session_destroy(s);
 				break;
 			}
+			s->s_flags &= ~F_EVLOCKED;
 
 			session_pickup(s, ss);
 			break;
@@ -319,6 +321,7 @@ smtp_dispatch_lka(int sig, short event, void *p)
 				session_destroy(s);
 				break;
 			}
+			ss->s_flags &= ~F_EVLOCKED;
 
 			strlcpy(ss->s_hostname, s->s_hostname, MAXHOSTNAMELEN);
 			strlcpy(ss->s_msg.session_hostname, s->s_hostname,
@@ -392,6 +395,7 @@ smtp_dispatch_queue(int sig, short event, void *p)
 				session_destroy(s);
 				break;
 			}
+			s->s_flags &= ~F_EVLOCKED;
 
 			(void)strlcpy(s->s_msg.message_id, ss->u.msgid,
 			    sizeof(s->s_msg.message_id));
@@ -419,6 +423,7 @@ smtp_dispatch_queue(int sig, short event, void *p)
 				session_destroy(s);
 				break;
 			}
+			s->s_flags &= ~F_EVLOCKED;
 
 			if (fd != -1) {
 				s->s_msg.datafp = fdopen(fd, "w");
@@ -451,7 +456,7 @@ smtp_dispatch_queue(int sig, short event, void *p)
 				session_destroy(s);
 				break;
 			}
-
+			s->s_flags &= ~F_EVLOCKED;
 			s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
 			break;
 		}
@@ -480,6 +485,7 @@ smtp_dispatch_queue(int sig, short event, void *p)
 				session_destroy(s);
 				break;
 			}
+			s->s_flags &= ~F_EVLOCKED;
 
 			session_pickup(s, ss);
 			break;
@@ -717,9 +723,9 @@ smtp_accept(int fd, short event, void *p)
 	session_init(l, s);
 	event_add(&l->ev, NULL);
 
-	s_smtp.clients++;
+	s_smtp.sessions++;
 
-	if (s_smtp.clients == s->s_env->sc_maxconn)
+	if (s_smtp.sessions == s->s_env->sc_maxconn)
 		event_del(&l->ev);
 }
 
