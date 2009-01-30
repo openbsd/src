@@ -169,16 +169,18 @@ ppcobsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
     return 0;
 
   read_memory (pcb->pcb_sp, (char *)&sf, sizeof sf);
-  regcache_raw_supply (regcache, SP_REGNUM, &sf.sp);
   regcache_raw_supply (regcache, tdep->ppc_cr_regnum, &sf.cr);
   regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 2, &sf.fixreg2);
   for (i = 0, regnum = tdep->ppc_gp0_regnum + 13; i < 19; i++, regnum++)
     regcache_raw_supply (regcache, regnum, &sf.fixreg[i]);
 
   read_memory (sf.sp, (char *)&cf, sizeof cf);
-  regcache_raw_supply (regcache, PC_REGNUM, &cf.lr);
+  regcache_raw_supply (regcache, SP_REGNUM, &cf.sp);
   regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 30, &cf.r30);
   regcache_raw_supply (regcache, tdep->ppc_gp0_regnum + 31, &cf.r31);
+
+  read_memory (cf.sp, (char *)&cf, sizeof cf);
+  regcache_raw_supply (regcache, PC_REGNUM, &cf.lr);
 
   return 1;
 }
