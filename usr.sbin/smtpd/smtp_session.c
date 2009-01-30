@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.51 2009/01/30 21:40:21 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.52 2009/01/30 21:52:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -947,6 +947,7 @@ session_error(struct bufferevent *bev, short event, void *p)
 	 * but set F_QUIT flag so that we destroy it as
 	 * soon as the event lock is removed.
 	 */
+	s_smtp.aborted++;
 	if (s->s_flags & F_EVLOCKED)
 		s->s_flags |= F_QUIT;
 	else

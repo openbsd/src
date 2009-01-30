@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.67 2009/01/30 21:40:21 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.68 2009/01/30 21:52:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -663,6 +663,8 @@ struct s_smtp {
 
 	size_t		starttls;
 	size_t		starttls_active;
+
+	size_t		aborted;
 };
 
 struct stats {
