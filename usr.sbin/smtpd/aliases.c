@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.15 2009/01/28 11:27:57 gilles Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.16 2009/01/30 06:19:13 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -142,7 +142,7 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 	if (aliasesdb == NULL)
 		return 0;
 
-	if (! bsnprintf(strkey, MAX_LINE_SIZE, "%s@%s", path->user,
+	if (! bsnprintf(strkey, sizeof(strkey), "%s@%s", path->user,
 		path->domain)) {
 		aliasesdb->close(aliasesdb);
 		return 0;
@@ -153,7 +153,7 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 
 	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
 
-		if (! bsnprintf(strkey, MAX_LINE_SIZE, "@%s", path->domain)) {
+		if (! bsnprintf(strkey, sizeof(strkey), "@%s", path->domain)) {
 			aliasesdb->close(aliasesdb);
 			return 0;
 		}
@@ -194,7 +194,7 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 	if (aliasesdb == NULL)
 		return 0;
 
-	if (! bsnprintf(strkey, MAX_LINE_SIZE, "%s@%s", path->user,
+	if (! bsnprintf(strkey, sizeof(strkey), "%s@%s", path->user,
 		path->domain)) {
 		aliasesdb->close(aliasesdb);
 		return 0;
@@ -205,7 +205,7 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 
 	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
 
-		if (! bsnprintf(strkey, MAX_LINE_SIZE, "@%s", path->domain)) {
+		if (! bsnprintf(strkey, sizeof(strkey), "@%s", path->domain)) {
 			aliasesdb->close(aliasesdb);
 			return 0;
 		}
@@ -317,8 +317,8 @@ alias_is_filter(struct alias *alias, char *line, size_t len)
 {
 	if (strncmp(line, "\"|", 2) == 0 &&
 	    line[len - 1] == '"') {
-		if (strlcpy(alias->u.filter, line, MAXPATHLEN) >=
-		    MAXPATHLEN)
+		if (strlcpy(alias->u.filter, line, sizeof(alias->u.filter)) >=
+		    sizeof(alias->u.filter))
 			return 0;
 		alias->type = ALIAS_FILTER;
 		return 1;
@@ -329,10 +329,8 @@ alias_is_filter(struct alias *alias, char *line, size_t len)
 int
 alias_is_username(struct alias *alias, char *line, size_t len)
 {
-	if (len >= MAXLOGNAME)
-		return 0;
-
-	if (strlcpy(alias->u.username, line, MAXLOGNAME) >= MAXLOGNAME)
+	if (strlcpy(alias->u.username, line,
+	    sizeof(alias->u.username)) >= sizeof(alias->u.username))
 		return 0;
 
 	while (*line) {
@@ -364,8 +362,8 @@ alias_is_address(struct alias *alias, char *line, size_t len)
 
 	/* scan pre @ for disallowed chars */
 	*domain++ = '\0';
-	strlcpy(alias->u.path.user, line, MAX_LOCALPART_SIZE);
-	strlcpy(alias->u.path.domain, domain, MAX_DOMAINPART_SIZE);
+	strlcpy(alias->u.path.user, line, sizeof(alias->u.path.user));
+	strlcpy(alias->u.path.domain, domain, sizeof(alias->u.path.domain));
 
 	while (*line) {
 		char allowedset[] = "!#$%*/?|^{}`~&'+-=_.";
@@ -390,13 +388,12 @@ alias_is_address(struct alias *alias, char *line, size_t len)
 int
 alias_is_filename(struct alias *alias, char *line, size_t len)
 {
-	if (len >= MAXPATHLEN)
-		return 0;
-
 	if (*line != '/')
 		return 0;
 
-	strlcpy(alias->u.filename, line, MAXPATHLEN);
+	if (strlcpy(alias->u.filename, line,
+	    sizeof(alias->u.filename)) >= sizeof(alias->u.filename))
+		return 0;
 	alias->type = ALIAS_FILENAME;
 	return 1;
 }
