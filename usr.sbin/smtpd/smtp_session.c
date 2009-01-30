@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.50 2009/01/30 21:22:33 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.51 2009/01/30 21:40:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -905,8 +905,8 @@ session_destroy(struct session *s)
 	log_debug("session_destroy: killing client: %p", s);
 	close(s->s_fd);
 
-	s_smtp.sessions--;
-	if (s_smtp.sessions < s->s_env->sc_maxconn)
+	s_smtp.sessions_active--;
+	if (s_smtp.sessions_active < s->s_env->sc_maxconn)
 		event_add(&s->s_l->ev, NULL);
 
 	if (s->s_bev != NULL) {

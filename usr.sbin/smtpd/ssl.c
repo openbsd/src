@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.7 2009/01/29 14:25:55 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.8 2009/01/30 21:40:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -54,6 +54,8 @@ void	 ssl_client_init(struct session *);
 
 extern void	bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 		    size_t, void *);
+
+extern struct s_smtp	s_smtp;
 
 void
 ssl_connect(int fd, short event, void *p)
@@ -506,6 +508,16 @@ ssl_session_accept(int fd, short event, void *p)
 
 	log_info("ssl_session_accept: accepted ssl client");
 	s->s_flags |= F_SECURE;
+
+	if (s->s_l->flags & F_SSMTP) {
+		s_smtp.ssmtp++;
+		s_smtp.ssmtp_active++;
+	}
+	if (s->s_l->flags & F_STARTTLS) {
+		s_smtp.starttls++;
+		s_smtp.starttls_active++;
+	}
+
 	session_pickup(s, NULL);
 	return;
 retry:
@@ -582,5 +594,11 @@ ssl_client_init(struct session *s)
 void
 ssl_session_destroy(struct session *s)
 {
+	if (s->s_l->flags & F_SSMTP) {
+		s_smtp.ssmtp_active--;
+	}
+	if (s->s_l->flags & F_STARTTLS) {
+		s_smtp.starttls_active--;
+	}
 	SSL_free(s->s_ssl);
 }

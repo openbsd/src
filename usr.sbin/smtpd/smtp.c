@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.21 2009/01/30 21:22:33 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.22 2009/01/30 21:40:21 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -724,8 +724,9 @@ smtp_accept(int fd, short event, void *p)
 	event_add(&l->ev, NULL);
 
 	s_smtp.sessions++;
+	s_smtp.sessions_active++;
 
-	if (s_smtp.sessions == s->s_env->sc_maxconn)
+	if (s_smtp.sessions_active == s->s_env->sc_maxconn)
 		event_del(&l->ev);
 }
 
