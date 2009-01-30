@@ -297,7 +297,6 @@ int MAIN(int argc, char **argv)
 	char *cbuf=NULL,*sbuf=NULL,*mbuf=NULL;
 	int cbuf_len,cbuf_off;
 	int sbuf_len,sbuf_off;
-	int mbuf_len;
 	fd_set readfds,writefds;
 	char *port=PORT_STR;
 	int full_log=1;
@@ -322,6 +321,7 @@ int MAIN(int argc, char **argv)
 	int sock_type=SOCK_STREAM;
 	BIO *sbio;
 	char *inrand=NULL;
+	int mbuf_len=0;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine_id=NULL;
 	char *ssl_client_engine_id=NULL;
@@ -925,7 +925,6 @@ SSL_set_tlsext_status_ids(con, ids);
 	cbuf_off=0;
 	sbuf_len=0;
 	sbuf_off=0;
-	mbuf_len=0;
 
 	/* This is an ugly hack that does a lot of assumptions */
 	/* We do have to handle multi-line responses which may come
