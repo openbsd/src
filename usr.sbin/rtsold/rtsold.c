@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.44 2008/08/13 17:24:54 sobrado Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.45 2009/01/30 17:25:51 rainer Exp $	*/
 /*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
@@ -106,9 +106,6 @@ main(int argc, char *argv[])
 	struct timeval *timeout;
 	char *argv0, *opts;
 	struct pollfd set[2];
-#ifdef USE_RTSOCK
-	int rtsock;
-#endif
 
 	/*
 	 * Initialization
@@ -222,16 +219,6 @@ main(int argc, char *argv[])
 
 	set[1].fd = -1;
 
-#ifdef USE_RTSOCK
-	if ((rtsock = rtsock_open()) < 0) {
-		warnmsg(LOG_ERR, __func__, "failed to open a socket");
-		exit(1);
-		/*NOTREACHED*/
-	}
-	set[1].fd = rtsock;
-	set[1].events = POLLIN;
-#endif
-
 	/* configuration per interface */
 	if (ifinit()) {
 		warnmsg(LOG_ERR, __func__,
@@ -297,10 +284,6 @@ main(int argc, char *argv[])
 		}
 
 		/* packet reception */
-#ifdef USE_RTSOCK
-		if (set[1].revents & POLLIN)
-			rtsock_input(rtsock);
-#endif
 		if (set[0].revents & POLLIN)
 			rtsol_input(s);
 	}

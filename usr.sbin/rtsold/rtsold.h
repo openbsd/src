@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.h,v 1.12 2008/06/10 04:49:11 reyk Exp $	*/
+/*	$OpenBSD: rtsold.h,v 1.13 2009/01/30 17:25:51 rainer Exp $	*/
 /*	$KAME: rtsold.h,v 1.14 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -93,9 +93,3 @@ extern void defrouter_probe(struct ifinfo *);
 
 /* dump.c */
 extern void rtsold_dump_file(char *);
-
-#if 0
-/* rtsock.c */
-extern int rtsock_open(void);
-extern int rtsock_input(int);
-#endif
