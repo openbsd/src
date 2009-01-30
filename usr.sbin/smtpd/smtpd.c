@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.28 2009/01/30 10:03:29 form Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.29 2009/01/30 17:34:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
+#include <sys/resource.h>
 
 #include <bsd_auth.h>
 #include <err.h>
@@ -591,6 +592,7 @@ main(int argc, char *argv[])
 	struct event	 ev_sigchld;
 	struct event	 ev_sighup;
 	struct timeval	 tv;
+	struct rlimit	 rl;
 	struct peer	 peers[] = {
 		{ PROC_CONTROL,	parent_dispatch_control },
 		{ PROC_LKA,	parent_dispatch_lka },
@@ -658,6 +660,22 @@ main(int argc, char *argv[])
 			err(1, "failed to daemonize");
 
 	log_info("startup%s", (debug > 1)?" [debug mode]":"");
+
+	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
+		fatal("smtpd: failed to get resource limit");
+
+	log_debug("smtpd: max open files %lld", rl.rlim_max);
+
+	/*
+	 * Allow the maximum number of open file descriptors for this
+	 * login class (which should be the class "daemon" by default).
+	 */
+	rl.rlim_cur = rl.rlim_max;
+	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
+		fatal("smtpd: failed to set resource limit");
+
+	env.sc_maxconn = (rl.rlim_cur / 4) * 3;
+	log_debug("smtpd: will accept at most %d clients", env.sc_maxconn);
 
 	init_peers(&env);
 

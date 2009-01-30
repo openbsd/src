@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.48 2009/01/30 16:37:52 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.49 2009/01/30 17:34:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -748,11 +748,7 @@ void
 session_init(struct listener *l, struct session *s)
 {
 	s->s_state = S_INIT;
-	s->s_env = l->env;
-	s->s_l = l;
 	s->s_id = queue_generate_id();
-
-	s_smtp.clients++;
 
 	if ((s->s_bev = bufferevent_new(s->s_fd, session_read, session_write,
 	    session_error, s)) == NULL)
@@ -912,6 +908,8 @@ session_destroy(struct session *s)
 	close(s->s_fd);
 
 	s_smtp.clients--;
+	if (s_smtp.clients < s->s_env->sc_maxconn)
+		event_add(&s->s_l->ev, NULL);
 
 	if (s->s_bev != NULL) {
 		bufferevent_free(s->s_bev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.19 2009/01/30 16:37:52 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.20 2009/01/30 17:34:58 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -698,7 +698,7 @@ smtp_accept(int fd, short event, void *p)
 	log_debug("smtp_accept: incoming client on listener: %p", l);
 	len = sizeof(struct sockaddr_storage);
 	if ((s_fd = accept(l->fd, (struct sockaddr *)&ss, &len)) == -1) {
-		event_add(&l->ev, NULL);
+		event_del(&l->ev);
 		return;
 	}
 
@@ -709,10 +709,18 @@ smtp_accept(int fd, short event, void *p)
 
 	s->s_fd = s_fd;
 	s->s_tm = time(NULL);
+	s->s_env = l->env;
+	s->s_l = l;
+
 	(void)memcpy(&s->s_ss, &ss, sizeof(s->s_ss));
 
 	session_init(l, s);
 	event_add(&l->ev, NULL);
+
+	s_smtp.clients++;
+
+	if (s_smtp.clients == s->s_env->sc_maxconn)
+		event_del(&l->ev);
 }
 
 void
