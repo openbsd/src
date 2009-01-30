@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.62 2009/01/29 21:59:15 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.63 2009/01/30 16:37:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -579,7 +579,8 @@ enum session_flags {
 	F_8BITMIME	= 0x4,
 	F_SECURE	= 0x8,
 	F_AUTHENTICATED	= 0x10,
-	F_PEERHASTLS	= 0x20
+	F_PEERHASTLS	= 0x20,
+	F_EVLOCKED	= 0x40
 };
 
 struct session {

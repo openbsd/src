@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.47 2009/01/29 21:59:15 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.48 2009/01/30 16:37:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -196,6 +196,7 @@ session_rfc4954_auth_plain(struct session *s, char *arg, size_t nr)
 
 	imsg_compose(s->s_env->sc_ibufs[PROC_PARENT], IMSG_PARENT_AUTHENTICATE,
 	    0, 0, -1, &s->s_auth, sizeof(s->s_auth));
+	s->s_flags |= F_EVLOCKED;
 	bufferevent_disable(s->s_bev, EV_READ);
 
 	return 1;
@@ -246,6 +247,7 @@ session_rfc4954_auth_login(struct session *s, char *arg, size_t nr)
 
 	imsg_compose(s->s_env->sc_ibufs[PROC_PARENT], IMSG_PARENT_AUTHENTICATE,
 	    0, 0, -1, &s->s_auth, sizeof(s->s_auth));
+	s->s_flags |= F_EVLOCKED;
 	bufferevent_disable(s->s_bev, EV_READ);
 
 	return 1;
@@ -424,6 +426,7 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 
 	imsg_compose(s->s_env->sc_ibufs[PROC_MFA], IMSG_MFA_MAIL,
 	    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
+	s->s_flags |= F_EVLOCKED;
 	bufferevent_disable(s->s_bev, EV_READ);
 	return 1;
 }
@@ -472,6 +475,7 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 
 	imsg_compose(s->s_env->sc_ibufs[PROC_MFA], IMSG_MFA_RCPT,
 	    0, 0, -1, &mr, sizeof(mr));
+	s->s_flags |= F_EVLOCKED;
 	bufferevent_disable(s->s_bev, EV_READ);
 	return 1;
 }
@@ -601,6 +605,7 @@ session_auth_pickup(struct session *s, char *arg, size_t nr)
 	if (s == NULL)
 		fatal("session_pickup: desynchronized");
 
+	s->s_flags &= ~F_EVLOCKED;
 	bufferevent_enable(s->s_bev, EV_READ);
 
 	switch (s->s_state) {
@@ -632,6 +637,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 	if (s == NULL)
 		fatal("session_pickup: desynchronized");
 
+	s->s_flags &= ~F_EVLOCKED;
 	bufferevent_enable(s->s_bev, EV_READ);
 
 	if ((ss != NULL && ss->code == 421) ||
@@ -650,6 +656,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_TLS:
+		s->s_flags |= F_EVLOCKED;
 		bufferevent_disable(s->s_bev, EV_READ|EV_WRITE);
 		s->s_state = S_GREETED;
 		ssl_session_init(s);
@@ -669,13 +676,13 @@ session_pickup(struct session *s, struct submit_status *ss)
 		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
 		    IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1, &s->s_msg,
 		    sizeof(s->s_msg));
+		s->s_flags |= F_EVLOCKED;
 		bufferevent_disable(s->s_bev, EV_READ);
 		break;
 
 	case S_MAIL:
 
 		session_respond(s, "%d Sender ok", ss->code);
-
 		break;
 
 	case S_RCPTREQUEST:
@@ -693,9 +700,9 @@ session_pickup(struct session *s, struct submit_status *ss)
 		s->s_state = S_RCPT;
 		s->s_msg.rcptcount++;
 		s->s_msg.recipient = ss->u.path;
-		session_respond(s, "%d Recipient ok", ss->code);
 
 	case S_RCPT:
+		session_respond(s, "%d Recipient ok", ss->code);
 		break;
 
 	case S_DATAREQUEST:
@@ -703,6 +710,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
 		    IMSG_QUEUE_MESSAGE_FILE, 0, 0, -1, &s->s_msg,
 		    sizeof(s->s_msg));
+		s->s_flags |= F_EVLOCKED;
 		bufferevent_disable(s->s_bev, EV_READ);
 		break;
 
@@ -724,7 +732,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	default:
-		log_debug("session_pickup: state value: %d", s->s_state);
 		fatal("session_pickup: unknown state");
 		break;
 	}
@@ -747,14 +754,16 @@ session_init(struct listener *l, struct session *s)
 
 	s_smtp.clients++;
 
+	if ((s->s_bev = bufferevent_new(s->s_fd, session_read, session_write,
+	    session_error, s)) == NULL)
+		fatalx("session_init: bufferevent_new failed");
+
 	strlcpy(s->s_hostname, "<unknown>", MAXHOSTNAMELEN);
 	strlcpy(s->s_msg.session_hostname, s->s_hostname, MAXHOSTNAMELEN);
 	imsg_compose(s->s_env->sc_ibufs[PROC_LKA], IMSG_LKA_HOST, 0, 0, -1, s,
 	    sizeof(struct session));
-
-	if ((s->s_bev = bufferevent_new(s->s_fd, session_read, session_write,
-	    session_error, s)) == NULL)
-		fatalx("session_init: bufferevent_new failed");
+	s->s_flags |= F_EVLOCKED;
+	bufferevent_disable(s->s_bev, EV_READ);
 
 	SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
 
@@ -763,8 +772,6 @@ session_init(struct listener *l, struct session *s)
 		ssl_session_init(s);
 		return;
 	}
-
-	session_pickup(s, NULL);
 }
 
 void
@@ -930,6 +937,8 @@ session_cleanup(struct session *s)
 		    sizeof(s->s_msg));
 		s->s_msg.message_id[0] = '\0';
 		s->s_msg.message_uid[0] = '\0';
+		s->s_flags |= F_EVLOCKED;
+		bufferevent_disable(s->s_bev, EV_READ);
 	}
 }
 
@@ -938,7 +947,14 @@ session_error(struct bufferevent *bev, short event, void *p)
 {
 	struct session	*s = p;
 
-	session_destroy(s);
+	/* If events are locked, do not destroy session
+	 * but set F_QUIT flag so that we destroy it as
+	 * soon as the event lock is removed.
+	 */
+	if (s->s_flags & F_EVLOCKED)
+		s->s_flags |= F_QUIT;
+	else
+		session_destroy(s);
 }
 
 void
@@ -947,6 +963,7 @@ session_msg_submit(struct session *s)
 	imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
 	    IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1, &s->s_msg,
 	    sizeof(s->s_msg));
+	s->s_flags |= F_EVLOCKED;
 	bufferevent_disable(s->s_bev, EV_READ);
 	s->s_state = S_DONE;
 }

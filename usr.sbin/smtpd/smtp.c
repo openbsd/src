@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.18 2009/01/29 21:59:15 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.19 2009/01/30 16:37:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -173,8 +173,11 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			key.s_msg.id = reply->session_id;
 
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL) {
-				/* Session was removed while we were waiting for the message */
+			if (s == NULL)
+				fatal("smtp_dispatch_parent: session is gone");
+
+			if (s->s_flags & F_QUIT) {
+				session_destroy(s);
 				break;
 			}
 
@@ -243,8 +246,11 @@ smtp_dispatch_mfa(int sig, short event, void *p)
 			key.s_msg.id = ss->id;
 
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL) {
-				/* Session was removed while we were waiting for the message */
+			if (s == NULL)
+				fatal("smtp_dispatch_mfa: session is gone");
+
+			if (s->s_flags & F_QUIT) {
+				session_destroy(s);
 				break;
 			}
 
@@ -306,15 +312,20 @@ smtp_dispatch_lka(int sig, short event, void *p)
 			key.s_id = s->s_id;
 
 			ss = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (ss == NULL) {
-				/* Session was removed while we were waiting
-				 * for the message */
+			if (ss == NULL)
+				fatal("smtp_dispatch_lka: session is gone");
+
+			if (ss->s_flags & F_QUIT) {
+				session_destroy(s);
 				break;
 			}
 
 			strlcpy(ss->s_hostname, s->s_hostname, MAXHOSTNAMELEN);
 			strlcpy(ss->s_msg.session_hostname, s->s_hostname,
 			    MAXHOSTNAMELEN);
+
+			session_pickup(s, NULL);
+
 			break;
 		}
 		default:
@@ -374,8 +385,11 @@ smtp_dispatch_queue(int sig, short event, void *p)
 			key.s_id = ss->id;
 
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL) {
-				/* Session was removed while we were waiting for the message */
+			if (s == NULL)
+				fatal("smtp_dispatch_queue: session is gone");
+
+			if (s->s_flags & F_QUIT) {
+				session_destroy(s);
 				break;
 			}
 
@@ -396,12 +410,16 @@ smtp_dispatch_queue(int sig, short event, void *p)
 			key.s_id = ss->id;
 
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL) {
-				/* Session was removed while we were waiting for the message */
+			if (s == NULL)
+				fatal("smtp_dispatch_queue: session is gone");
+
+			fd = imsg_get_fd(ibuf, &imsg);
+
+			if (s->s_flags & F_QUIT) {
+				session_destroy(s);
 				break;
 			}
 
-			fd = imsg_get_fd(ibuf, &imsg);
 			if (fd != -1) {
 				s->s_msg.datafp = fdopen(fd, "w");
 				if (s->s_msg.datafp == NULL) {
@@ -426,10 +444,14 @@ smtp_dispatch_queue(int sig, short event, void *p)
 			key.s_msg.id = ss->id;
 
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL) {
-				/* Session was removed while we were waiting for the message */
+			if (s == NULL)
+				fatal("smtp_dispatch_queue: session is gone");
+
+			if (s->s_flags & F_QUIT) {
+				session_destroy(s);
 				break;
 			}
+
 			s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
 			break;
 		}
@@ -446,13 +468,20 @@ smtp_dispatch_queue(int sig, short event, void *p)
 			key.s_msg.id = ss->id;
 
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL) {
-				/* Session was removed while we were waiting for the message */
+			if (s == NULL)
+				fatal("smtp_dispatch_queue: session is gone");
+
+			if (imsg.hdr.type == IMSG_QUEUE_COMMIT_MESSAGE) {
+				s->s_msg.message_id[0] = '\0';
+				s->s_msg.message_uid[0] = '\0';
+			}
+
+			if (s->s_flags & F_QUIT) {
+				session_destroy(s);
 				break;
 			}
 
 			session_pickup(s, ss);
-
 			break;
 		}
 		default:
