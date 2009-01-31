@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.24 2009/01/08 19:18:17 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.25 2009/01/31 08:55:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -150,7 +150,7 @@ send_db_description(struct nbr *nbr)
 		goto fail;
 
 	/* transmit packet */
-	ret = send_packet(nbr->iface, buf->buf, buf->wpos, &dst);
+	ret = send_packet(nbr->iface, buf, &dst);
 done:
 	buf_free(buf);
 	return (ret);

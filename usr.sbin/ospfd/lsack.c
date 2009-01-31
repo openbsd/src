@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.17 2006/04/25 08:33:00 claudio Exp $ */
+/*	$OpenBSD: lsack.c,v 1.18 2009/01/31 08:55:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -61,7 +61,7 @@ send_ls_ack(struct iface *iface, struct in_addr addr, void *data, size_t len)
 	if (auth_gen(buf, iface))
 		goto fail;
 
-	ret = send_packet(iface, buf->buf, buf->wpos, &dst);
+	ret = send_packet(iface, buf, &dst);
 
 	buf_free(buf);
 	return (ret);

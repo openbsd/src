@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.26 2008/09/12 09:54:47 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.27 2009/01/31 08:55:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -59,7 +59,7 @@ gen_ospf_hdr(struct buf *buf, struct iface *iface, u_int8_t type)
 
 /* send and receive packets */
 int
-send_packet(struct iface *iface, void *pkt, size_t len, struct sockaddr_in *dst)
+send_packet(struct iface *iface, struct buf *buf, struct sockaddr_in *dst)
 {
 	struct msghdr		 msg;
 	struct iovec		 iov[2];
@@ -70,7 +70,7 @@ send_packet(struct iface *iface, void *pkt, size_t len, struct sockaddr_in *dst)
 	ip_hdr.ip_v = IPVERSION;
 	ip_hdr.ip_hl = sizeof(ip_hdr) >> 2;
 	ip_hdr.ip_tos = IPTOS_PREC_INTERNETCONTROL;
-	ip_hdr.ip_len = htons(len + sizeof(ip_hdr));
+	ip_hdr.ip_len = htons(buf->wpos + sizeof(ip_hdr));
 	ip_hdr.ip_id = 0;  /* 0 means kernel set appropriate value */
 	ip_hdr.ip_off = 0;
 	ip_hdr.ip_ttl = iface->type != IF_TYPE_VIRTUALLINK ?
@@ -84,8 +84,8 @@ send_packet(struct iface *iface, void *pkt, size_t len, struct sockaddr_in *dst)
 	bzero(&msg, sizeof(msg));
 	iov[0].iov_base = &ip_hdr;
 	iov[0].iov_len = sizeof(ip_hdr);
-	iov[1].iov_base = pkt;
-	iov[1].iov_len = len;
+	iov[1].iov_base = buf->buf;
+	iov[1].iov_len = buf->wpos;
 	msg.msg_name = dst;
 	msg.msg_namelen = sizeof(*dst);
 	msg.msg_iov = iov;

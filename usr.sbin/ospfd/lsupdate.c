@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.33 2008/02/11 12:37:37 norby Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.34 2009/01/31 08:55:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -217,7 +217,7 @@ send_ls_update(struct buf *buf, struct iface *iface, struct in_addr addr,
 	dst.sin_len = sizeof(struct sockaddr_in);
 	dst.sin_addr.s_addr = addr.s_addr;
 
-	ret = send_packet(iface, buf->buf, buf->wpos, &dst);
+	ret = send_packet(iface, buf, &dst);
 
 	buf_free(buf);
 	return (ret);

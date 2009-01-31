@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.14 2007/10/11 12:19:31 claudio Exp $ */
+/*	$OpenBSD: hello.c,v 1.15 2009/01/31 08:55:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -104,7 +104,7 @@ send_hello(struct iface *iface)
 	if (auth_gen(buf, iface))
 		goto fail;
 
-	ret = send_packet(iface, buf->buf, buf->wpos, &dst);
+	ret = send_packet(iface, buf, &dst);
 	buf_free(buf);
 	return (ret);
 fail:
