@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.186 2009/01/09 04:41:02 david Exp $	*/
+/*	$OpenBSD: if.c,v 1.187 2009/01/31 21:23:34 grange Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -321,8 +321,7 @@ if_alloc_sadl(struct ifnet *ifp)
 		if_free_sadl(ifp);
 
 	namelen = strlen(ifp->if_xname);
-#define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
-	masklen = _offsetof(struct sockaddr_dl, sdl_data[0]) + namelen;
+	masklen = offsetof(struct sockaddr_dl, sdl_data[0]) + namelen;
 	socksize = masklen + ifp->if_addrlen;
 #define ROUNDUP(a) (1 + (((a) - 1) | (sizeof(long) - 1)))
 	if (socksize < sizeof(*sdl))
