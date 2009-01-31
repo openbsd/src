@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.114 2009/01/29 14:11:45 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.115 2009/01/31 20:06:55 henning Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -118,7 +118,9 @@ int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
 			    struct tcphdr *, int, sa_family_t);
 void			 pf_scrub_ip(struct mbuf **, u_int32_t, u_int8_t,
 			    u_int8_t);
+#ifdef INET6
 void			 pf_scrub_ip6(struct mbuf **, u_int8_t);
+#endif
 #define	DPFPRINTF(x) do {				\
 	if (pf_status.debug >= PF_DEBUG_MISC) {		\
 		printf("%s: ", __func__);		\
@@ -1892,6 +1894,7 @@ pf_scrub_ip(struct mbuf **m0, u_int32_t flags, u_int8_t min_ttl, u_int8_t tos)
 	}
 }
 
+#ifdef INET6
 void
 pf_scrub_ip6(struct mbuf **m0, u_int8_t min_ttl)
 {
@@ -1902,3 +1905,4 @@ pf_scrub_ip6(struct mbuf **m0, u_int8_t min_ttl)
 	if (min_ttl && h->ip6_hlim < min_ttl)
 		h->ip6_hlim = min_ttl;
 }
+#endif
