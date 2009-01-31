@@ -2728,6 +2728,7 @@
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
 ./usr/share/man/cat8/vos.0
+./usr/share/man/cat8/wake.0
 ./usr/share/man/cat8/watchdogd.0
 ./usr/share/man/cat8/weekly.0
 ./usr/share/man/cat8/wpa-psk.0

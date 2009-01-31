@@ -1160,7 +1160,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/drm/drm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/drm/drmP.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/drm/drm_atomic.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/drm/drm_internal.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/drm/drm_linux_list.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/drm/drm_sarea.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/drm/i915_drm.ph

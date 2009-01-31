@@ -2118,6 +2118,7 @@
 ./usr/sbin/vipw
 ./usr/sbin/visudo
 ./usr/sbin/vos
+./usr/sbin/wake
 ./usr/sbin/watchdogd
 ./usr/sbin/ypbind
 ./usr/sbin/ypinit

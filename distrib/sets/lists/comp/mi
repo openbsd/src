@@ -512,7 +512,6 @@
 ./usr/include/dev/pci/drm/drm.h
 ./usr/include/dev/pci/drm/drmP.h
 ./usr/include/dev/pci/drm/drm_atomic.h
-./usr/include/dev/pci/drm/drm_internal.h
 ./usr/include/dev/pci/drm/drm_linux_list.h
 ./usr/include/dev/pci/drm/drm_sarea.h
 ./usr/include/dev/pci/drm/i915_drm.h
@@ -6279,6 +6278,15 @@
 ./usr/share/man/cat9/simple_unlock.0
 ./usr/share/man/cat9/skpc.0
 ./usr/share/man/cat9/snprintf.0
+./usr/share/man/cat9/sobind.0
+./usr/share/man/cat9/soclose.0
+./usr/share/man/cat9/soconnect.0
+./usr/share/man/cat9/socreate.0
+./usr/share/man/cat9/sogetopt.0
+./usr/share/man/cat9/soreceive.0
+./usr/share/man/cat9/sosend.0
+./usr/share/man/cat9/sosetopt.0
+./usr/share/man/cat9/soshutdown.0
 ./usr/share/man/cat9/spl.0
 ./usr/share/man/cat9/spl0.0
 ./usr/share/man/cat9/splassert.0
