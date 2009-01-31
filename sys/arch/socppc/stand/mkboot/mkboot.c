@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.1 2008/05/15 21:32:20 kettenis Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.2 2009/01/31 21:10:09 grange Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -140,6 +140,6 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s infile outfile\n", __progname);
+	    "usage: %s [-e entry] [-l loadaddr] infile outfile\n", __progname);
 	exit(1);
 }
