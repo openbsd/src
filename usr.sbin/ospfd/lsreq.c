@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.15 2009/01/31 08:55:00 claudio Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.16 2009/01/31 11:44:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -66,8 +66,8 @@ send_ls_req(struct nbr *nbr)
 
 	/* LSA header(s), keep space for a possible md5 sum */
 	for (le = TAILQ_FIRST(&nbr->ls_req_list); le != NULL &&
-	    buf->wpos + sizeof(struct ls_req_hdr) < buf->max -
-	    MD5_DIGEST_LENGTH; le = nle) {
+	    buf_left(buf) >= sizeof(struct ls_req_hdr) + MD5_DIGEST_LENGTH;
+	    le = nle) {
 		nbr->ls_req = nle = TAILQ_NEXT(le, entry);
 		ls_req_hdr.type = htonl(le->le_lsa->type);
 		ls_req_hdr.ls_id = le->le_lsa->ls_id;

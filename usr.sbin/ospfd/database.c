@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.25 2009/01/31 08:55:00 claudio Exp $ */
+/*	$OpenBSD: database.c,v 1.26 2009/01/31 11:44:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -91,8 +91,8 @@ send_db_description(struct nbr *nbr)
 
 		/* build LSA list, keep space for a possible md5 sum */
 		for (le = TAILQ_FIRST(&nbr->db_sum_list); le != NULL &&
-		    buf->wpos + sizeof(struct lsa_hdr) < buf->max -
-		    MD5_DIGEST_LENGTH; le = nle) {
+		    buf_left(buf) >= MD5_DIGEST_LENGTH + sizeof(struct lsa_hdr);
+		    le = nle) {
 			nbr->dd_end = nle = TAILQ_NEXT(le, entry);
 			if (buf_add(buf, le->le_lsa, sizeof(struct lsa_hdr)))
 				goto fail;

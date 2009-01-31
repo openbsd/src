@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.34 2009/01/31 08:55:00 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.35 2009/01/31 11:44:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -173,13 +173,13 @@ int
 add_ls_update(struct buf *buf, struct iface *iface, void *data, int len,
     u_int16_t older)
 {
-	size_t		pos;
-	u_int16_t	age;
+	void		*lsage;
+	u_int16_t	 age;
 
-	if (buf->wpos + len >= buf->max - MD5_DIGEST_LENGTH)
+	if (buf_left(buf) < MD5_DIGEST_LENGTH)
 		return (0);
 
-	pos = buf->wpos;
+	lsage = buf_reserve(buf, 0);
 	if (buf_add(buf, data, len)) {
 		log_warn("add_ls_update");
 		return (0);
@@ -191,7 +191,7 @@ add_ls_update(struct buf *buf, struct iface *iface, void *data, int len,
 	if ((age += older + iface->transmit_delay) >= MAX_AGE)
 		age = MAX_AGE;
 	age = htons(age);
-	memcpy(buf_seek(buf, pos, sizeof(age)), &age, sizeof(age));
+	memcpy(lsage, &age, sizeof(age));
 
 	return (1);
 }
