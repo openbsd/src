@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.8,v 1.7 2008/12/28 22:05:04 sobrado Exp $
+.\"	$OpenBSD: ospf6d.8,v 1.8 2009/01/31 19:37:12 sobrado Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2008 $
+.Dd $Mdocdate: January 31 2009 $
 .Dt OSPF6D 8
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ Routers that form 2-WAY adjacency recognize that they know each other.
 In case a DR or BDR should fail another router is elected and all routers
 change state on the newly elected router and synchronize to it.
 .Pp
-When routers are connected via point to point links, the DR and BDR
+When routers are connected via point-to-point links, the DR and BDR
 election is skipped since only two routers are connected.
 .Pp
 To limit the impact changes in the network have on the LSDB it is possible
