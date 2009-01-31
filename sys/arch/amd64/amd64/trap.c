@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 2009/01/31 21:18:35 grange Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -448,9 +448,9 @@ faultcommon:
 
 	case T_TRCTRAP:
 		/* Check whether they single-stepped into a lcall. */
-		if (frame.tf_rip == (int)IDTVEC(oosyscall))
+		if (frame.tf_rip == (register_t)IDTVEC(oosyscall))
 			return;
-		if (frame.tf_rip == (int)IDTVEC(oosyscall) + 1) {
+		if (frame.tf_rip == (register_t)IDTVEC(oosyscall) + 1) {
 			frame.tf_rflags &= ~PSL_T;
 			return;
 		}
