@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.69 2008/12/30 12:27:57 reyk Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.70 2009/02/01 14:05:52 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -486,6 +486,9 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_ntxbuf - 1);
 	IFQ_SET_READY(&ifp->if_snd);
+
+	m_clsetwms(ifp, MCLBYTES, 2, sc->sc_nrxbuf - 1);
+	m_clsetwms(ifp, 4096, 2, sc->sc_nrxbuf - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
