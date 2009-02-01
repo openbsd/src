@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.69 2007/12/28 19:48:50 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.70 2009/02/01 14:53:02 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -79,8 +79,9 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
 	static u_int32_t bmm[0x4000/32];
-	int bank, off, flex = HPPA_FLEX(bpa);
-	u_int64_t spa, epa;
+	int bank, off, flex;
+	vaddr_t pa, spa, epa;
+	vsize_t len;
 
 #ifdef BTLBDEBUG
 	printf("bus_mem_add_mapping(%x,%x,%scachable,%p)\n",
@@ -90,14 +91,6 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 	if ((bank = vm_physseg_find(atop(bpa), &off)) >= 0)
 		panic("mbus_add_mapping: mapping real memory @0x%lx", bpa);
 
-	/*
-	 * determine if we are mapping IO space, or beyond the physmem
-	 * region. use block mapping then
-	 *
-	 * we map the whole bus module (there are 1024 of those max)
-	 * so, check here if it's mapped already, map if needed.
-	 * all mappings are equal mappings.
-	 */
 #ifdef DEBUG
 	if (flags & BUS_SPACE_MAP_CACHEABLE) {
 		printf("WARNING: mapping I/O space cachable\n");
@@ -105,60 +98,86 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 	}
 #endif
 
-	/* need a new mapping */
-	if (!(bmm[flex / 32] & (1 << (flex % 32)))) {
-		spa = bpa & HPPA_FLEX_MASK;
-		epa = ((u_long)((u_int64_t)bpa + size +
-			~HPPA_FLEX_MASK - 1) & HPPA_FLEX_MASK) - 1;
+	/*
+	 * Mappings are established in HPPA_FLEX_SIZE units,
+	 * either with BTLB, or regular mappings of the whole area.
+	 */
+	pa = bpa;
+	while (size != 0) {
+		flex = HPPA_FLEX(pa);
+		spa = pa & HPPA_FLEX_MASK;
+		epa = spa + HPPA_FLEX_SIZE; /* may wrap to 0... */
+
+		size -= min(size, HPPA_FLEX_SIZE - (pa - spa));
+
+		/* do need a new mapping? */
+		if (!(bmm[flex / 32] & (1 << (flex % 32)))) {
 #ifdef BTLBDEBUG
-		printf("bus_mem_add_mapping: adding flex=%x "
-			"%qx-%qx, ", flex, spa, epa);
+			printf("bus_mem_add_mapping: adding flex=%x "
+			    "%x-%x, ", flex, spa, epa - 1);
 #endif
-		while (spa < epa) {
-			vsize_t len = epa - spa;
-			u_int64_t pa;
-			if (len > pdc_btlb.max_size << PGSHIFT)
-				len = pdc_btlb.max_size << PGSHIFT;
-			if (btlb_insert(HPPA_SID_KERNEL, spa, spa, &len,
-			    pmap_sid2pid(HPPA_SID_KERNEL) |
-			    pmap_prot(pmap_kernel(), UVM_PROT_RW)) >= 0) {
-				pa = spa + len - 1;
+			while (spa != epa) {
+				len = epa - spa;
+
+				/*
+				 * Try to map with a BTLB first (might map
+				 * much more than what we are requesting
+				 * for, and cross HPPA_FLEX boundaries).
+				 *
+				 * Note that this code assumes that
+				 * BTLB size are a power of two, so if
+				 * the size is larger than HPPA_FLEX_SIZE
+				 * it will span an integral number of
+				 * HPPA_FLEX_SIZE slots.
+				 */
+				if (len > pdc_btlb.max_size << PGSHIFT)
+					len = pdc_btlb.max_size << PGSHIFT;
+
+				if (btlb_insert(HPPA_SID_KERNEL, spa, spa, &len,
+				    pmap_sid2pid(HPPA_SID_KERNEL) |
+				    pmap_prot(pmap_kernel(), UVM_PROT_RW))
+				    >= 0) {
+					pa = spa + len;	/* may wrap to 0... */
 #ifdef BTLBDEBUG
-				printf("--- %x/%x, %qx, %qx-%qx",
-				    flex, HPPA_FLEX(pa), pa, spa, epa);
+					printf("--- %x/%x, %x-%x ",
+					    flex, HPPA_FLEX(pa - 1),
+					    spa, pa - 1);
 #endif
-				/* do the mask */
-				for (; flex <= HPPA_FLEX(pa); flex++) {
+					/* register all ranges */
+					for (; flex <= HPPA_FLEX(pa - 1);
+					    flex++) {
 #ifdef BTLBDEBUG
-					printf("mask %x ", flex);
+						printf("mask %x ", flex);
 #endif
-					bmm[flex / 32] |= (1 << (flex % 32));
+						bmm[flex / 32] |=
+						    (1 << (flex % 32));
+					}
+					if (len > epa - spa)
+						spa = epa;
+					else
+						spa = pa;
+				} else {
+#ifdef BTLBDEBUG
+					printf("kenter 0x%x-0x%x", spa, epa);
+#endif
+					for (; spa != epa; spa += PAGE_SIZE)
+						pmap_kenter_pa(spa, spa,
+						    UVM_PROT_RW);
 				}
-				spa = pa;
-			} else {
-				spa = trunc_page(bpa);
-				epa = round_page(bpa + size);
-
-				if (epa - 1 > ~0U)
-					epa = (u_int64_t)~0U + 1;
-
 #ifdef BTLBDEBUG
-				printf("kenter 0x%qx-0x%qx", spa, epa);
+				printf("\n");
 #endif
-				for (; spa < epa; spa += PAGE_SIZE)
-					pmap_kenter_pa(spa, spa, UVM_PROT_RW);
 			}
-#ifdef BTLBDEBUG
-			printf("\n");
-#endif
 		}
-	}
 #ifdef BTLBDEBUG
-	else {
-		printf("+++ already b-mapped flex=%x, mask=%x",
-		    flex, bmm[flex / 8]);
-	}
+		else {
+			printf("+++ already b-mapped flex=%x, mask=%x\n",
+			    flex, bmm[flex / 32]);
+		}
 #endif
+
+		pa = epa;
+	}
 
 	*bshp = bpa;
 	return (0);

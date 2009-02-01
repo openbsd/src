@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.59 2008/10/15 23:23:47 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.60 2009/02/01 14:53:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -142,6 +142,7 @@ extern register_t kpsw;
 #define	HPPA_FLEX_DATA	0xfff80001
 #define	HPPA_DMA_ENABLE	0x00000001
 #define	HPPA_FLEX_MASK	0xfffc0000
+#define	HPPA_FLEX_SIZE	(1 + ~HPPA_FLEX_MASK)
 #define	HPPA_FLEX(a)	(((a) & HPPA_FLEX_MASK) >> 18)
 #define	HPPA_SPA_ENABLE	0x00000020
 #define	HPPA_NMODSPBUS	64
