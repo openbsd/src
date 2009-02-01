@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.16 2007/11/17 05:32:05 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.17 2009/02/01 00:51:33 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -60,6 +60,7 @@
 #include <machine/mvme187.h>
 
 #include <mvme88k/dev/memcreg.h>
+#include <mvme88k/dev/pcctworeg.h>
 #include <mvme88k/mvme88k/clockvar.h>
 
 void	m187_bootstrap(void);
@@ -240,7 +241,14 @@ m187_raiseipl(u_int level)
 void
 m187_bootstrap()
 {
+	extern int cpuspeed;
 	extern struct cmmu_p cmmu8820x;
+
+	/*
+	 * Find out the processor speed, from the PCC2 prescaler
+	 * adjust register.
+	 */
+	cpuspeed = 256 - *(volatile u_int8_t *)(PCC2_BASE + PCCTWO_PSCALEADJ);
 
 	cmmu = &cmmu8820x;
 	md_interrupt_func_ptr = m187_ext_int;

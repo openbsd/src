@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.214 2008/10/30 22:07:18 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.215 2009/02/01 00:51:32 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -214,26 +214,12 @@ getcpuspeed(struct mvmeprom_brdid *brdid)
 	int speed = 0;
 	u_int i, c;
 
-	for (i = 0; i < 4; i++) {
-		c = (u_int)brdid->speed[i];
-		if (c == ' ')
-			c = '0';
-		else if (c > '9' || c < '0') {
-			speed = 0;
-			break;
-		}
-		speed = speed * 10 + (c - '0');
-	}
-	speed = speed / 100;
-
 	switch (brdtyp) {
 #ifdef MVME187
 	case BRD_187:
 	case BRD_8120:
-		if (speed == 25 || speed == 33)
-			return speed;
-		speed = 25;
-		break;
+		/* we already computed the speed in m187_bootstrap() */
+		return cpuspeed;
 #endif
 #ifdef MVME188
 	case BRD_188:
@@ -246,6 +232,18 @@ getcpuspeed(struct mvmeprom_brdid *brdid)
 		if ((u_int)brdid->rev < 0x50) {
 			speed = 20;
 		} else {
+			for (i = 0; i < 4; i++) {
+				c = (u_int)brdid->speed[i];
+				if (c == ' ')
+					c = '0';
+				else if (c > '9' || c < '0') {
+					speed = 0;
+					break;
+				}
+				speed = speed * 10 + (c - '0');
+			}
+			speed = speed / 100;
+
 			if (speed == 20 || speed == 25)
 				return speed;
 			speed = 25;
