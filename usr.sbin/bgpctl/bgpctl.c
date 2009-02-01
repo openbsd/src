@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.137 2008/12/12 23:15:39 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.138 2009/02/01 17:21:21 sobrado Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -410,7 +410,7 @@ fmt_peer(const char *descr, const struct bgpd_addr *remote_addr,
 void
 show_summary_head(void)
 {
-	printf("%-20s %-8s %-10s %-10s %-5s %-8s %s\n", "Neighbor", "AS",
+	printf("%-20s %8s %10s %10s %5s %-8s %s\n", "Neighbor", "AS",
 	    "MsgRcvd", "MsgSent", "OutQ", "Up/Down", "State/PrfRcvd");
 }
 
