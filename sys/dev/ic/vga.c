@@ -1,6 +1,35 @@
-/* $OpenBSD: vga.c,v 1.47 2008/03/16 19:00:28 oga Exp $ */
+/* $OpenBSD: vga.c,v 1.48 2009/02/01 14:37:22 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
+/*-
+  * Copyright (c) 1999 Kazutaka YOKOTA <yokota@zodiac.mech.utsunomiya-u.ac.jp>
+  * Copyright (c) 1992-1998 Søren Schmidt
+  * All rights reserved.
+  *
+  * Redistribution and use in source and binary forms, with or without
+  * modification, are permitted provided that the following conditions
+  * are met:
+  * 1. Redistributions of source code must retain the above copyright
+  *    notice, this list of conditions and the following disclaimer as
+  *    the first lines of this file unmodified.
+  * 2. Redistributions in binary form must reproduce the above copyright
+  *    notice, this list of conditions and the following disclaimer in the
+  *    documentation and/or other materials provided with the distribution.
+  * 3. The name of the author may not be used to endorse or promote products
+  *    derived from this software without specific prior written permission.
+  *
+  * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+  * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  *
+  */
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
@@ -77,7 +106,6 @@ struct vgascreen {
 	/* videostate */
 	struct vgafont *fontset1, *fontset2;
 	/* font data */
-	/* palette */
 
 	int mindispoffset, maxdispoffset;
 	int vga_rollover;
@@ -503,6 +531,8 @@ vga_init(vc, iot, memt)
 		vc->vc_fonts[i] = 0;
 
 	vc->currentfontset1 = vc->currentfontset2 = 0;
+
+	vga_save_palette(vc);
 }
 
 void
@@ -613,6 +643,7 @@ vga_ioctl(v, cmd, data, flag, p)
 	struct proc *p;
 {
 	struct vga_config *vc = v;
+	int mode;
 #if NVGA_PCI > 0
 	int error;
 
@@ -625,6 +656,12 @@ vga_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_GTYPE:
 		*(int *)data = vc->vc_type;
 		/* XXX should get detailed hardware information here */
+		break;
+
+	case WSDISPLAYIO_SMODE:
+		mode = *(u_int *)data;
+		if (mode == WSDISPLAYIO_MODE_EMUL)
+			vga_restore_palette(vc);
 		break;
 
 	case WSDISPLAYIO_GVIDEO:
@@ -828,7 +865,7 @@ vga_doswitch(vc)
 	}
 
 	vga_setfont(vc, scr);
-	/* XXX switch colours! */
+	vga_restore_palette(vc);
 
 	scr->pcs.visibleoffset = scr->pcs.dispoffset = scr->mindispoffset;
 	if (!oldscr || (scr->pcs.dispoffset != oldscr->pcs.dispoffset)) {
@@ -1338,6 +1375,44 @@ vga_getchar(c, row, col, cell)
 	
 	return (pcdisplay_getchar(vc->active, row, col, cell));
 }	
+
+void
+vga_save_palette(struct vga_config *vc)
+{
+	struct vga_handle *vh = &vc->hdl;
+	uint i;
+	uint8_t *palette = vc->vc_palette;
+
+	if (vh->vh_mono)
+		return;
+
+	vga_raw_write(vh, VGA_DAC_MASK, 0xff);
+	vga_raw_write(vh, VGA_DAC_READ, 0x00);
+	for (i = 0; i < 3 * 256; i++)
+		*palette++ = vga_raw_read(vh, VGA_DAC_DATA);
+
+	vga_raw_read(vh, 0x0a);			/* reset flip/flop */
+}
+
+void
+vga_restore_palette(struct vga_config *vc)
+{
+	struct vga_handle *vh = &vc->hdl;
+	uint i;
+	uint8_t *palette = vc->vc_palette;
+
+	if (vh->vh_mono)
+		return;
+
+	vga_raw_write(vh, VGA_DAC_MASK, 0xff);
+	vga_raw_write(vh, VGA_DAC_WRITE, 0x00);
+	for (i = 0; i < 3 * 256; i++)
+		vga_raw_write(vh, VGA_DAC_DATA, *palette++);
+
+	vga_raw_read(vh, 0x0a);			/* reset flip/flop */
+
+	vga_enable(vh);
+}
 
 struct cfdriver vga_cd = {
 	NULL, "vga", DV_DULL

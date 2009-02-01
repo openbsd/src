@@ -1,4 +1,4 @@
-/* $OpenBSD: vgareg.h,v 1.4 2008/09/01 17:30:56 deraadt Exp $ */
+/* $OpenBSD: vgareg.h,v 1.5 2009/02/01 14:37:22 miod Exp $ */
 /* $NetBSD: vgareg.h,v 1.2 1998/05/28 16:48:41 drochner Exp $ */
 
 /*
@@ -49,3 +49,8 @@ struct reg_vgagdc { /* indexed via port 0x3ce */
 } __packed;
 #define VGA_GDC_INDEX 0xe
 #define VGA_GDC_DATA 0xf
+
+#define	VGA_DAC_MASK	0x06	/* pixel write mask */
+#define	VGA_DAC_READ	0x07	/* palette read address */
+#define	VGA_DAC_WRITE	0x08	/* palette write address */
+#define	VGA_DAC_DATA	0x09	/* palette data register */
