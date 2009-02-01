@@ -1,6 +1,6 @@
-/*	$OpenBSD: vsvar.h,v 1.20 2008/01/05 00:34:07 miod Exp $	*/
+/*	$OpenBSD: vsvar.h,v 1.21 2009/02/01 00:44:36 miod Exp $	*/
 /*
- * Copyright (c) 2004, Miodrag Vallat.
+ * Copyright (c) 2004, 2009, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,60 +36,51 @@
 #define	_VSVAR_H_
 
 /*
- * The largest single request will be MAXPHYS bytes which will require
- * at most MAXPHYS/NBPG+1 chain elements to describe, i.e. if none of
- * the buffer pages are physically contiguous (MAXPHYS/NBPG) and the
- * buffer is not page aligned (+1).
+ * Scatter/gather structures
+ *
+ * Each s/g element is 8 bytes long; a s/g list is limited to 64
+ * entries. To afford larger lists, it is possible to use ``link''
+ * entries, which can add up to 64 new entries (and contain link
+ * entries themselves, too), by setting the M_ADR_SG_LINK bit in
+ * the address modifier field.
+ *
+ * To keep things simple, this driver will use only use a flat list
+ * of up to 64 entries, thereby limiting the maximum transfer to
+ * 64 pages (worst case situation).
  */
-#define	DMAMAXIO	(MAXPHYS/NBPG+1)
-#define	OFF(x)	(u_int16_t)(x)
-
-/*
- * scatter/gather structures
- */
-
-typedef struct {
-	union {
-		unsigned short bytes :16;
-#define	MAX_SG_BLOCK_SIZE	(1<<16)
-		struct {
-			unsigned short :8;
-			unsigned short gather:8;
-		} scatter;
-	} count;
-	u_int16_t addrhi, addrlo;	/* split due to alignment */
-	unsigned short link:1;
-	unsigned short :3;
-	unsigned short transfer_type:2;
-#define	SHORT_TRANSFER			0x1
-#define	LONG_TRANSFER			0x2
-#define	SCATTER_GATTER_LIST_IN_SHORT_IO	0x3
-	unsigned short memory_type:2;
-#define	NORMAL_TYPE	0x0
-#define	BLOCK_MODE	0x1
-	unsigned short address_modifier:8;
-} sg_list_element_t;
-
-typedef sg_list_element_t * scatter_gather_list_t;
 
 #define	MAX_SG_ELEMENTS	64
 
-struct m328_sg {
-	struct m328_sg *up;
-	int elements;
-	int level;
-	struct m328_sg *down[MAX_SG_ELEMENTS];
-	sg_list_element_t list[MAX_SG_ELEMENTS];
+struct vs_sg_entry {
+	union {
+		uint16_t	bytes;	/* entry byte count */
+		struct {
+			uint8_t gather;	/* count of linked entries */
+			uint8_t reserved;
+		} link;
+	} count;
+	uint16_t	pa_high;	/* 32-bit address field split... */
+	uint16_t	pa_low;		/* ... due to alignment */
+	uint16_t	addr;		/* address type and modifier */
 };
 
-typedef struct m328_sg *M328_SG;
+/* largest power of two for the bytes field */
+#define	MAX_SG_ELEMENT_SIZE	(1U << 15)
 
+/*
+ * Command control block
+ */
 struct vs_cb {
-	struct scsi_xfer *cb_xs;
-	u_int	cb_q;
-	M328_SG cb_sg;
+	struct scsi_xfer	*cb_xs;	/* current command */
+	u_int			 cb_q;	/* controller queue it's in */
+
+	bus_dmamap_t		 cb_dmamap;
+	bus_size_t		 cb_dmalen;
 };
 
+/*
+ * Per-channel information
+ */
 struct vs_channel {
 	int			vc_id;		/* host id */
 	int			vc_width;	/* number of targets */
@@ -101,18 +92,28 @@ struct vs_channel {
 };
 
 struct vs_softc {
-	struct device		sc_dev;
-	int			sc_bid;		/* board id */
-	paddr_t			sc_paddr;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	struct intrhand		sc_ih_e, sc_ih_n;
-	char			sc_intrname_e[16 + 4];
-	int			sc_ipl;
-	int			sc_evec, sc_nvec;
-	u_int			sc_nwq;		/* number of work queues */
-	struct vs_channel	sc_channel[2];
-	struct vs_cb		sc_cb[1 + NUM_WQ];
+	struct device		 sc_dev;
+
+	bus_space_tag_t		 sc_iot;
+	bus_space_handle_t	 sc_ioh;
+	bus_dma_tag_t		 sc_dmat;
+
+	int			 sc_bid;	/* board id */
+	struct vs_channel	 sc_channel[2];
+
+	struct intrhand		 sc_ih_n;	/* normal interrupt handler */
+	int			 sc_nvec;
+	struct intrhand		 sc_ih_e;	/* error interrupt handler */
+	int			 sc_evec;
+	char			 sc_intrname_e[16 + 4];
+	int			 sc_ipl;
+
+	u_int			 sc_nwq;	/* number of work queues */
+	struct vs_cb		*sc_cb;
+
+	bus_dmamap_t		 sc_sgmap;
+	bus_dma_segment_t	 sc_sgseg;
+	struct vs_sg_entry	*sc_sgva;
 };
 
 /* Access macros */

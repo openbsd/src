@@ -1,7 +1,7 @@
-/*	$OpenBSD: vs.c,v 1.72 2009/01/29 22:16:34 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.73 2009/02/01 00:44:36 miod Exp $	*/
 
 /*
- * Copyright (c) 2004, Miodrag Vallat.
+ * Copyright (c) 2004, 2009, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -64,11 +64,12 @@
 
 int	vsmatch(struct device *, void *, void *);
 void	vsattach(struct device *, struct device *, void *);
+void	vs_minphys(struct buf *);
 int	vs_scsicmd(struct scsi_xfer *);
 
 struct scsi_adapter vs_scsiswitch = {
 	vs_scsicmd,
-	minphys,
+	vs_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };
@@ -91,18 +92,18 @@ struct cfdriver vs_cd = {
 int	do_vspoll(struct vs_softc *, struct scsi_xfer *, int);
 void	thaw_queue(struct vs_softc *, int);
 void	thaw_all_queues(struct vs_softc *);
-M328_SG	vs_alloc_scatter_gather(void);
-M328_SG	vs_build_memory_structure(struct vs_softc *, struct scsi_xfer *,
-	    bus_addr_t);
-void	vs_chksense(struct scsi_xfer *);
-void	vs_dealloc_scatter_gather(M328_SG);
+int	vs_alloc_sg(struct vs_softc *);
+int	vs_alloc_wq(struct vs_softc *);
+void	vs_build_sg_list(struct vs_softc *, struct vs_cb *, bus_addr_t);
+void	vs_chksense(struct vs_cb *, struct scsi_xfer *);
 int	vs_eintr(void *);
 int	vs_getcqe(struct vs_softc *, bus_addr_t *, bus_addr_t *);
 int	vs_identify(struct vs_channel *, int);
 int	vs_initialize(struct vs_softc *);
 int	vs_intr(struct vs_softc *);
-void	vs_link_sg_element(sg_list_element_t *, vaddr_t, int);
-void	vs_link_sg_list(sg_list_element_t *, vaddr_t, int);
+int	vs_load_command(struct vs_softc *, struct vs_cb *, bus_addr_t,
+	    bus_addr_t, struct scsi_link *, int, struct scsi_generic *, int,
+	    uint8_t *, int);
 int	vs_nintr(void *);
 int	vs_poll(struct vs_softc *, struct vs_cb *);
 void	vs_print_addr(struct vs_softc *, struct scsi_xfer *);
@@ -114,7 +115,6 @@ int	vs_unit_value(int, int, int);
 
 static __inline__ void vs_free(struct vs_softc *, struct vs_cb *);
 static __inline__ void vs_clear_return_info(struct vs_softc *);
-static __inline__ paddr_t kvtop(vaddr_t);
 
 int
 vsmatch(struct device *device, void *cf, void *args)
@@ -168,9 +168,9 @@ vsattach(struct device *parent, struct device *self, void *args)
 
 	printf(" vec 0x%x: ", evec);
 
-	sc->sc_paddr = ca->ca_paddr;
+	sc->sc_dmat = ca->ca_dmat;
 	sc->sc_iot = ca->ca_iot;
-	if (bus_space_map(sc->sc_iot, sc->sc_paddr, S_SHORTIO, 0,
+	if (bus_space_map(sc->sc_iot, ca->ca_paddr, S_SHORTIO, 0,
 	    &sc->sc_ioh) != 0) {
 		printf("can't map registers!\n");
 		return;
@@ -204,7 +204,7 @@ vsattach(struct device *parent, struct device *self, void *args)
 	 * (see device_register).
 	 */
 	tmp = bootpart;
-	if (sc->sc_paddr != bootaddr)
+	if (ca->ca_paddr != bootaddr)
 		bootpart = -1;		/* invalid flag to device_register */
 
 	for (bus = 0; bus < 2; bus++) {
@@ -251,6 +251,14 @@ vsattach(struct device *parent, struct device *self, void *args)
 
 	bootpart = tmp;		    /* restore old values */
 	bootbus = 0;
+}
+
+void
+vs_minphys(struct buf *bp)
+{
+	if (bp->b_bcount > ptoa(MAX_SG_ELEMENTS))
+		bp->b_bcount = ptoa(MAX_SG_ELEMENTS);
+	minphys(bp);
 }
 
 void
@@ -378,15 +386,18 @@ vs_scsidone(struct vs_softc *sc, struct vs_cb *cb)
 		xs->error = XS_SELTIMEOUT;
 		xs->status = -1;
 	} else {
-		if (xs->flags & SCSI_DATA_IN)
-			dma_cachectl(pmap_kernel(), (vaddr_t)xs->data,
-			    xs->datalen, DMA_CACHE_INV);
+		if (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
+			bus_dmamap_sync(sc->sc_dmat, cb->cb_dmamap, 0,
+			    cb->cb_dmalen, (xs->flags & SCSI_DATA_IN) ?
+			      BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, cb->cb_dmamap);
+		}
 
 		xs->status = error >> 8;
 	}
 
 	while (xs->status == SCSI_CHECK) {
-		vs_chksense(xs);
+		vs_chksense(cb, xs);
 	}
 
 	xs->flags |= ITSDONE;
@@ -399,16 +410,15 @@ vs_scsicmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *slp = xs->sc_link;
 	struct vs_softc *sc = slp->adapter_softc;
-	int flags, option;
-	unsigned int iopb_len;
+	int flags;
 	bus_addr_t cqep, iopb;
 	struct vs_cb *cb;
-	u_int queue;
 	int s;
+	int rc;
 
 	flags = xs->flags;
 	if (flags & SCSI_POLL) {
-		cb = &sc->sc_cb[0];
+		cb = sc->sc_cb;
 		cqep = sh_MCE;
 		iopb = sh_MCE_IOPB;
 
@@ -449,83 +459,25 @@ vs_scsicmd(struct scsi_xfer *xs)
 		}
 	}
 
-	queue = cb->cb_q;
-
-	vs_bzero(iopb, IOPB_LONG_SIZE);
-
-	/*
-	 * We should only provide the iopb len if the controller is not
-	 * able to compute it from the SCSI command group.
-	 * Note that Jaguar has no knowledge of group 2.
-	 */
-	switch ((xs->cmd->opcode) >> 5) {
-	case 0:
-	case 1:
-	case 5:
-		iopb_len = 0;
-		break;
-	case 2:
-		if (sc->sc_bid == COUGAR)
-			iopb_len = 0;
-		else
-		/* FALLTHROUGH */
-	default:
-		iopb_len = IOPB_SHORT_SIZE + ((xs->cmdlen + 1) >> 1);
-		break;
+#ifdef VS_DEBUG
+	printf("%s: sending SCSI command %02x (length %d) on queue %d\n",
+	    __func__, xs->cmd->opcode, xs->cmdlen, cb->cb_q);
+#endif
+	rc = vs_load_command(sc, cb, cqep, iopb, slp, xs->flags,
+	    xs->cmd, xs->cmdlen, xs->data, xs->datalen);
+	if (rc != 0) {
+		printf("%s: unable to load DMA map: error %d\n",
+		    sc->sc_dev.dv_xname, rc);
+		xs->error = XS_DRIVER_STUFFUP;
+		scsi_done(xs);
+		splx(s);
+		return (COMPLETE);
 	}
 
-#ifdef VS_DEBUG
-	printf("%s: sending SCSI command %02x (length %d, iopb length %d) on queue %d\n",
-	    __func__, xs->cmd->opcode, xs->cmdlen, iopb_len, queue);
-#endif
-	bus_space_write_region_1(sc->sc_iot, sc->sc_ioh, iopb + IOPB_SCSI_DATA,
-	    (u_int8_t *)xs->cmd, xs->cmdlen);
-
-	vs_write(2, iopb + IOPB_CMD, IOPB_PASSTHROUGH);
-	vs_write(2, iopb + IOPB_UNIT,
-	  vs_unit_value(slp->flags & SDEV_2NDBUS, slp->target, slp->lun));
-#ifdef VS_DEBUG
-	printf("%s: target %d lun %d encoded as %04x\n",
-	    __func__, slp->target, slp->lun, (u_int)
-	    vs_unit_value(slp->flags & SDEV_2NDBUS, slp->target, slp->lun));
-#endif
-	vs_write(1, iopb + IOPB_NVCT, sc->sc_nvec);
-	vs_write(1, iopb + IOPB_EVCT, sc->sc_evec);
-
-	/*
-	 * Since the 88k doesn't support cache snooping, we have
-	 * to flush the cache for a write and flush with inval for
-	 * a read, prior to starting the IO.
-	 */
-	dma_cachectl(pmap_kernel(), (vaddr_t)xs->data, xs->datalen,
-	    flags & SCSI_DATA_IN ? DMA_CACHE_SYNC_INVAL : DMA_CACHE_SYNC);
-	
-	option = 0;
-	if (flags & SCSI_DATA_OUT)
-		option |= M_OPT_DIR;
-	if (slp->adapter_buswidth > 8)
-		option |= M_OPT_GO_WIDE;
-
-	if (flags & SCSI_POLL) {
-		vs_write(2, iopb + IOPB_OPTION, option);
-		vs_write(2, iopb + IOPB_LEVEL, 0);
-	} else {
-		vs_write(2, iopb + IOPB_OPTION, option | M_OPT_IE);
-		vs_write(2, iopb + IOPB_LEVEL, sc->sc_ipl);
-	}
-	vs_write(2, iopb + IOPB_ADDR, ADDR_MOD);
-
-	vs_write(2, cqep + CQE_IOPB_ADDR, iopb);
-	vs_write(1, cqep + CQE_IOPB_LENGTH, iopb_len);
-	vs_write(1, cqep + CQE_WORK_QUEUE, queue);
+	vs_write(1, cqep + CQE_WORK_QUEUE, cb->cb_q);
 
 	cb->cb_xs = xs;
 	splx(s);
-
-	if (xs->datalen != 0)
-		cb->cb_sg = vs_build_memory_structure(sc, xs, iopb);
-	else
-		cb->cb_sg = NULL;
 
 	vs_write(4, cqep + CQE_CTAG, (u_int32_t)cb);
 
@@ -542,13 +494,101 @@ vs_scsicmd(struct scsi_xfer *xs)
 	return (SUCCESSFULLY_QUEUED);
 }
 
-void
-vs_chksense(struct scsi_xfer *xs)
+int
+vs_load_command(struct vs_softc *sc, struct vs_cb *cb, bus_addr_t cqep,
+    bus_addr_t iopb, struct scsi_link *slp, int flags,
+    struct scsi_generic *cmd, int cmdlen, uint8_t *data, int datalen)
 {
-	int s;
+	unsigned int iopb_len;
+	int option;
+	int rc;
+
+	/*
+	 * We should only provide the iopb len if the controller is not
+	 * able to compute it from the SCSI command group.
+	 * Note that Jaguar has no knowledge of group 2.
+	 */
+	switch ((cmd->opcode) >> 5) {
+	case 0:
+	case 1:
+	case 5:
+		iopb_len = 0;
+		break;
+	case 2:
+		if (sc->sc_bid == COUGAR)
+			iopb_len = 0;
+		else
+		/* FALLTHROUGH */
+	default:
+		iopb_len = IOPB_SHORT_SIZE + ((cmdlen + 1) >> 1);
+		break;
+	}
+
+	vs_bzero(iopb, IOPB_LONG_SIZE);
+	bus_space_write_region_1(sc->sc_iot, sc->sc_ioh, iopb + IOPB_SCSI_DATA,
+	    (u_int8_t *)cmd, cmdlen);
+	vs_write(2, iopb + IOPB_CMD, IOPB_PASSTHROUGH);
+	vs_write(2, iopb + IOPB_UNIT,
+	  vs_unit_value(slp->flags & SDEV_2NDBUS, slp->target, slp->lun));
+#ifdef VS_DEBUG
+	printf("%s: target %d lun %d encoded as %04x\n",
+	    __func__, slp->target, slp->lun, (u_int)
+	    vs_unit_value(slp->flags & SDEV_2NDBUS, slp->target, slp->lun));
+#endif
+	vs_write(1, iopb + IOPB_NVCT, sc->sc_nvec);
+	vs_write(1, iopb + IOPB_EVCT, sc->sc_evec);
+
+	/*
+	 * Setup DMA map for data transfer
+	 */
+	if (flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
+		cb->cb_dmalen = (bus_size_t)datalen;
+		rc = bus_dmamap_load(sc->sc_dmat, cb->cb_dmamap,
+		    data, cb->cb_dmalen, NULL,
+		    BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+		    ((flags & SCSI_DATA_IN) ? BUS_DMA_READ : BUS_DMA_WRITE));
+		if (rc != 0)
+			return rc;
+
+		bus_dmamap_sync(sc->sc_dmat, cb->cb_dmamap, 0,
+		    cb->cb_dmalen, (flags & SCSI_DATA_IN) ?
+		      BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+	}
+			
+	option = 0;
+	if (flags & SCSI_DATA_OUT)
+		option |= M_OPT_DIR;
+	if (slp->adapter_buswidth > 8)
+		option |= M_OPT_GO_WIDE;
+
+	if (flags & SCSI_POLL) {
+		vs_write(2, iopb + IOPB_OPTION, option);
+		vs_write(2, iopb + IOPB_LEVEL, 0);
+	} else {
+		vs_write(2, iopb + IOPB_OPTION, option | M_OPT_IE);
+		vs_write(2, iopb + IOPB_LEVEL, sc->sc_ipl);
+	}
+	vs_write(2, iopb + IOPB_ADDR, ADDR_MOD);
+
+	if (flags & (SCSI_DATA_IN | SCSI_DATA_OUT))
+		vs_build_sg_list(sc, cb, iopb);
+
+	vs_bzero(cqep, CQE_SIZE);
+	vs_write(2, cqep + CQE_IOPB_ADDR, iopb);
+	vs_write(1, cqep + CQE_IOPB_LENGTH, iopb_len);
+	/* CQE_WORK_QUEUE to be filled by the caller */
+
+	return 0;
+}
+
+void
+vs_chksense(struct vs_cb *cb, struct scsi_xfer *xs)
+{
 	struct scsi_link *slp = xs->sc_link;
 	struct vs_softc *sc = slp->adapter_softc;
-	struct scsi_sense *ss;
+	struct scsi_sense ss;
+	int rc;
+	int s;
 
 #ifdef VS_DEBUG
 	printf("%s: target %d\n", slp->target);
@@ -563,31 +603,27 @@ vs_chksense(struct scsi_xfer *xs)
 	while (mce_read(2, CQE_QECR) & M_QECR_GO)
 		;
 
-	vs_bzero(sh_MCE_IOPB, IOPB_LONG_SIZE);
-	/* This is a command, so point to it */
-	ss = (void *)(bus_space_vaddr(sc->sc_iot, sc->sc_ioh) +
-	    sh_MCE_IOPB + IOPB_SCSI_DATA);
-	ss->opcode = REQUEST_SENSE;
-	ss->byte2 = slp->lun << 5;
-	ss->length = sizeof(struct scsi_sense_data);
+	bzero(&ss, sizeof ss);
+	ss.opcode = REQUEST_SENSE;
+	ss.byte2 = slp->lun << 5;
+	ss.length = sizeof(xs->sense);
 
-	mce_iopb_write(2, IOPB_CMD, IOPB_PASSTHROUGH);
-	mce_iopb_write(2, IOPB_OPTION, 0);
-	mce_iopb_write(1, IOPB_NVCT, sc->sc_nvec);
-	mce_iopb_write(1, IOPB_EVCT, sc->sc_evec);
-	mce_iopb_write(2, IOPB_LEVEL, 0 /* sc->sc_ipl */);
-	mce_iopb_write(2, IOPB_ADDR, ADDR_MOD);
-	mce_iopb_write(4, IOPB_BUFF, kvtop((vaddr_t)&xs->sense));
-	mce_iopb_write(4, IOPB_LENGTH, sizeof(struct scsi_sense_data));
-	mce_iopb_write(2, IOPB_UNIT,
-	  vs_unit_value(slp->flags & SDEV_2NDBUS, slp->target, slp->lun));
+#ifdef VS_DEBUG
+	printf("%s: sending SCSI command %02x (length %d) on queue %d\n",
+	    __func__, ss.opcode, sizeof ss, 0);
+#endif
+	rc = vs_load_command(sc, cb, sh_MCE, sh_MCE_IOPB, slp,
+	    SCSI_DATA_IN | SCSI_POLL,
+	    (struct scsi_generic *)&ss, sizeof ss, (uint8_t *)&xs->sense,
+	    sizeof(xs->sense));
+	if (rc != 0) {
+		printf("%s: unable to load DMA map: error %d\n",
+		    sc->sc_dev.dv_xname, rc);
+		xs->error = XS_DRIVER_STUFFUP;
+		xs->status = 0;
+		return;
+	}
 
-	dma_cachectl(pmap_kernel(), (vaddr_t)&xs->sense,
-	    sizeof(struct scsi_sense_data), DMA_CACHE_SYNC_INVAL);
-
-	vs_bzero(sh_MCE, CQE_SIZE);
-	mce_write(2, CQE_IOPB_ADDR, sh_MCE_IOPB);
-	mce_write(1, CQE_IOPB_LENGTH, 0);
 	mce_write(1, CQE_WORK_QUEUE, 0);
 	mce_write(2, CQE_QECR, M_QECR_GO);
 
@@ -661,7 +697,7 @@ vs_identify(struct vs_channel *vc, int cid)
 int
 vs_initialize(struct vs_softc *sc)
 {
-	int i, msr, id;
+	int i, msr, id, rc;
 	u_int targets;
 
 	/*
@@ -824,13 +860,17 @@ vs_initialize(struct vs_softc *sc)
 	/* poll for the command to complete */
 	do_vspoll(sc, NULL, 1);
 
+	if ((rc = vs_alloc_sg(sc)) != 0)
+		return rc;
+
+	if ((rc = vs_alloc_wq(sc)) != 0)
+		return rc;
+
 	/* initialize work queues */
 #ifdef VS_DEBUG
 	printf("%s: initializing %d work queues\n",
 	    __func__, sc->sc_nwq);
 #endif
-	for (i = 0; i <= sc->sc_nwq; i++)
-		sc->sc_cb[i].cb_q = i;
 
 	for (i = 1; i <= sc->sc_nwq; i++) {
 		/* Wait until we can use the command queue entry. */
@@ -862,9 +902,10 @@ vs_initialize(struct vs_softc *sc)
 		/* poll for the command to complete */
 		do_vspoll(sc, NULL, 1);
 		if (CRSW & M_CRSW_ER) {
-			printf("work queue %d initialization error 0x%x\n",
-			    i, vs_read(2, sh_RET_IOPB + IOPB_STATUS));
-			return 1;
+			printf("%s: work queue %d initialization error 0x%x\n",
+			    sc->sc_dev.dv_xname, i,
+			    vs_read(2, sh_RET_IOPB + IOPB_STATUS));
+			return ENXIO;
 		}
 		CRB_CLR_DONE;
 	}
@@ -878,6 +919,109 @@ vs_initialize(struct vs_softc *sc)
 	vs_resync(sc);
 
 	return 0;
+}
+
+/*
+ * Allocate memory for the scatter/gather lists.
+ *
+ * Since vs_minphys() makes sure we won't need more than flat lists of
+ * up to MAX_SG_ELEMENTS entries, we need to allocate storage for one
+ * such list per work queue.
+ */
+int
+vs_alloc_sg(struct vs_softc *sc)
+{
+	size_t sglen;
+	int nseg;
+	int rc;
+
+	sglen = sc->sc_nwq * MAX_SG_ELEMENTS * sizeof(struct vs_sg_entry);
+	sglen = round_page(sglen);
+
+	rc = bus_dmamem_alloc(sc->sc_dmat, sglen, 0, 0,
+	    &sc->sc_sgseg, 1, &nseg, BUS_DMA_NOWAIT);
+	if (rc != 0) {
+		printf("%s: unable to allocate s/g memory: error %d\n",
+		    sc->sc_dev.dv_xname, rc);
+		goto fail1;
+	}
+	rc = bus_dmamem_map(sc->sc_dmat, &sc->sc_sgseg, nseg, sglen,
+	    (caddr_t *)&sc->sc_sgva, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	if (rc != 0) {
+		printf("%s: unable to map s/g memory: error %d\n",
+		    sc->sc_dev.dv_xname, rc);
+		goto fail2;
+	}
+	rc = bus_dmamap_create(sc->sc_dmat, sglen, 1, sglen, 0,
+	    BUS_DMA_NOWAIT /* | BUS_DMA_ALLOCNOW */, &sc->sc_sgmap);
+	if (rc != 0) {
+		printf("%s: unable to create s/g dma map: error %d\n",
+		    sc->sc_dev.dv_xname, rc);
+		goto fail3;
+	}
+	rc = bus_dmamap_load(sc->sc_dmat, sc->sc_sgmap, sc->sc_sgva,
+	    sglen, NULL, BUS_DMA_NOWAIT);
+	if (rc != 0) {
+		printf("%s: unable to load s/g dma map: error %d\n",
+		    sc->sc_dev.dv_xname, rc);
+		goto fail4;
+	}
+		    
+	return 0;
+
+fail4:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_sgmap);
+fail3:
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_sgva, PAGE_SIZE);
+fail2:
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_sgseg, 1);
+fail1:
+	return rc;
+}
+
+/*
+ * Allocate one command block per work qeue.
+ */
+int
+vs_alloc_wq(struct vs_softc *sc)
+{
+	struct vs_cb *cb;
+	u_int i;
+	int rc;
+
+	sc->sc_cb = malloc(sc->sc_nwq * sizeof(struct vs_cb), M_DEVBUF,
+	    M_ZERO | M_NOWAIT);
+	if (sc->sc_cb == NULL) {
+		printf("%s: unable to allocate %d work queues\n",
+		    sc->sc_dev.dv_xname, sc->sc_nwq);
+		return ENOMEM;
+	}
+
+	for (i = 0, cb = sc->sc_cb; i <= sc->sc_nwq; i++, cb++) {
+		cb->cb_q = i;
+
+		rc = bus_dmamap_create(sc->sc_dmat, ptoa(MAX_SG_ELEMENTS),
+		    MAX_SG_ELEMENTS, MAX_SG_ELEMENT_SIZE, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &cb->cb_dmamap);
+		if (rc != 0) {
+			printf("%s: unable to create dma map for queue %d"
+			    ": error %d\n",
+			    sc->sc_dev.dv_xname, i, rc);
+			goto fail;
+		}
+	}
+
+	return 0;
+
+fail:
+	while (i != 0) {
+		i--; cb--;
+		bus_dmamap_destroy(sc->sc_dmat, cb->cb_dmamap);
+	}
+	free(sc->sc_cb, M_DEVBUF);
+	sc->sc_cb = NULL;
+
+	return rc;
 }
 
 void
@@ -976,10 +1120,14 @@ vs_free(struct vs_softc *sc, struct vs_cb *cb)
 {
 	if (cb->cb_q != 0)
 		thaw_queue(sc, cb->cb_q);
+#if 0
 	if (cb->cb_sg != NULL) {
 		vs_dealloc_scatter_gather(cb->cb_sg);
 		cb->cb_sg = NULL;
 	}
+#else
+	/* nothing to do, really */
+#endif
 	cb->cb_xs = NULL;
 }
 
@@ -1130,7 +1278,7 @@ vs_find_queue(struct scsi_link *sl, struct vs_softc *sc)
 	if (sl->flags & SDEV_2NDBUS)
 		q += sc->sc_channel[0].vc_width - 1; /* map to 8-14 or 16-30 */
 
-	if ((cb = &sc->sc_cb[q])->cb_xs == NULL)
+	if ((cb = sc->sc_cb + q)->cb_xs == NULL)
 		return (cb);
 
 	return (NULL);
@@ -1161,198 +1309,60 @@ vs_unit_value(int bus, int tgt, int lun)
 }
 
 /*
- * Useful functions for scatter/gather list
+ * Build the scatter/gather list for the given control block and update
+ * its IOPB.
  */
-
-M328_SG
-vs_alloc_scatter_gather(void)
-{
-	M328_SG sg;
-
-	sg = malloc(sizeof(struct m328_sg), M_DEVBUF, M_WAITOK | M_ZERO);
-
-	return (sg);
-}
-
 void
-vs_dealloc_scatter_gather(M328_SG sg)
+vs_build_sg_list(struct vs_softc *sc, struct vs_cb *cb, bus_addr_t iopb)
 {
-	int i;
-
-	if (sg->level > 0) {
-		for (i = 0; sg->down[i] && i < MAX_SG_ELEMENTS; i++) {
-			vs_dealloc_scatter_gather(sg->down[i]);
-		}
-	}
-	free(sg, M_DEVBUF);
-}
-
-void
-vs_link_sg_element(sg_list_element_t *element, vaddr_t phys_add, int len)
-{
-	element->count.bytes = len;
-	element->addrlo = phys_add;
-	element->addrhi = phys_add >> 16;
-	element->link = 0; /* FALSE */
-	element->transfer_type = NORMAL_TYPE;
-	element->memory_type = LONG_TRANSFER;
-	element->address_modifier = ADRM_EXT_S_D;
-}
-
-void
-vs_link_sg_list(sg_list_element_t *list, vaddr_t phys_add, int elements)
-{
-	list->count.scatter.gather = elements;
-	list->addrlo = phys_add;
-	list->addrhi = phys_add >> 16;
-	list->link = 1;	   /* TRUE */
-	list->transfer_type = NORMAL_TYPE;
-	list->memory_type = LONG_TRANSFER;
-	list->address_modifier = ADRM_EXT_S_D;
-}
-
-M328_SG
-vs_build_memory_structure(struct vs_softc *sc, struct scsi_xfer *xs,
-     bus_addr_t iopb)
-{
-	M328_SG sg;
-	vaddr_t starting_point_virt, starting_point_phys, point_virt,
-	point1_phys, point2_phys, virt;
-	unsigned int len;
-	int level;
-
-	sg = NULL;	/* Hopefully we need no scatter/gather list */
+	struct vs_sg_entry *sgentry;
+	int segno;
+	bus_dma_segment_t *seg = cb->cb_dmamap->dm_segs;
+	bus_size_t sgoffs;
+	bus_size_t len;
 
 	/*
-	 * We have the following things:
-	 *	virt			va of the virtual memory block
-	 *	len			length of the virtual memory block
-	 *	starting_point_virt	va of the physical memory block
-	 *	starting_point_phys	pa of the physical memory block
-	 *	point_virt		va of the virtual memory
-	 *				    we are checking at the moment
-	 *	point1_phys		pa of the physical memory
-	 *				    we are checking at the moment
-	 *	point2_phys		pa of another physical memory
-	 *				    we are checking at the moment
+	 * No need to build a scatter/gather chain if there is only
+	 * one contiguous physical area.
 	 */
-
-	level = 0;
-	virt = starting_point_virt = (vaddr_t)xs->data;
-	point1_phys = starting_point_phys = kvtop((vaddr_t)xs->data);
-	len = xs->datalen;
-
-	/*
-	 * Check if we need scatter/gather
-	 */
-	if (trunc_page(virt + len - 1) != trunc_page(virt)) {
-		for (point_virt = round_page(starting_point_virt + 1);
-		    /* if we do already scatter/gather we have to stay in the loop and jump */
-		    point_virt < virt + len || sg != NULL;
-		    point_virt += PAGE_SIZE) {		   /* out later */
-
-			point2_phys = kvtop(point_virt);
-
-			if ((point2_phys != trunc_page(point1_phys) + PAGE_SIZE) ||		   /* physical memory is not contiguous */
-			    (point_virt - starting_point_virt >= MAX_SG_BLOCK_SIZE && sg)) {   /* we only can access (1<<16)-1 bytes in scatter/gather_mode */
-				if (point_virt - starting_point_virt >= MAX_SG_BLOCK_SIZE) {	       /* We were walking too far for one scatter/gather block ... */
-					point_virt = trunc_page(starting_point_virt+MAX_SG_BLOCK_SIZE-1);    /* So go back to the beginning of the last matching page */
-					/* and generate the physical address of
-					 * this location for the next time. */
-					point2_phys = kvtop(point_virt);
-				}
-
-				if (sg == NULL)
-					sg = vs_alloc_scatter_gather();
-
-#if 1 /* broken firmware */
-				if (sg->elements >= MAX_SG_ELEMENTS) {
-					vs_dealloc_scatter_gather(sg);
-					printf("%s: scatter/gather list too large\n",
-					    sc->sc_dev.dv_xname);
-					return (NULL);
-				}
-#else /* if the firmware will ever get fixed */
-				while (sg->elements >= MAX_SG_ELEMENTS) {
-					if (!sg->up) { /* If the list full in this layer ? */
-						sg->up = vs_alloc_scatter_gather();
-						sg->up->level = sg->level+1;
-						sg->up->down[0] = sg;
-						sg->up->elements = 1;
-					}
-					/* link this full list also in physical memory */
-					vs_link_sg_list(&(sg->up->list[sg->up->elements-1]),
-							kvtop((vaddr_t)sg->list),
-							sg->elements);
-					sg = sg->up;	  /* Climb up */
-				}
-				while (sg->level) {  /* As long as we are not a the base level */
-					int i;
-
-					i = sg->elements;
-					/* We need a new element */
-					sg->down[i] = vs_alloc_scatter_gather();
-					sg->down[i]->level = sg->level - 1;
-					sg->down[i]->up = sg;
-					sg->elements++;
-					sg = sg->down[i]; /* Climb down */
-				}
-#endif /* 1 */
-				if (point_virt < virt + len) {
-					/* linking element */
-					vs_link_sg_element(&(sg->list[sg->elements]),
-							   starting_point_phys,
-							   point_virt - starting_point_virt);
-					sg->elements++;
-				} else {
-					/* linking last element */
-					vs_link_sg_element(&(sg->list[sg->elements]),
-							   starting_point_phys,
-							   virt + len - starting_point_virt);
-					sg->elements++;
-					break;			       /* We have now collected all blocks */
-				}
-				starting_point_virt = point_virt;
-				starting_point_phys = point2_phys;
-			}
-			point1_phys = point2_phys;
-		}
+	if (cb->cb_dmamap->dm_nsegs == 1) {
+		vs_write(4, iopb + IOPB_BUFF, seg->ds_addr);
+		vs_write(4, iopb + IOPB_LENGTH, cb->cb_dmalen);
+		return;
 	}
 
 	/*
-	 * Climb up along the right side of the tree until we reach the top.
+	 * Otherwise, we need to build the flat s/g list.
 	 */
 
-	if (sg != NULL) {
-		while (sg->up) {
-			/* link this list also in physical memory */
-			vs_link_sg_list(&(sg->up->list[sg->up->elements-1]),
-					kvtop((vaddr_t)sg->list),
-					sg->elements);
-			sg = sg->up;		       /* Climb up */
+	sgentry = sc->sc_sgva + cb->cb_q * MAX_SG_ELEMENTS;
+	sgoffs = (vaddr_t)sgentry - (vaddr_t)sc->sc_sgva;
+
+	len = cb->cb_dmalen;
+	for (segno = 0; segno < cb->cb_dmamap->dm_nsegs; seg++, segno++) {
+		if (seg->ds_len > len) {
+			sgentry->count.bytes = len;
+			len = 0;
+		} else {
+			sgentry->count.bytes = seg->ds_len;
+			len -= seg->ds_len;
 		}
-
-		vs_write(2, iopb + IOPB_OPTION,
-		    vs_read(2, iopb + IOPB_OPTION) | M_OPT_SG);
-		vs_write(2, iopb + IOPB_ADDR,
-		    vs_read(2, iopb + IOPB_ADDR) | M_ADR_SG_LINK);
-		vs_write(4, iopb + IOPB_BUFF, kvtop((vaddr_t)sg->list));
-		vs_write(4, iopb + IOPB_LENGTH, sg->elements);
-		vs_write(4, iopb + IOPB_SGTTL, len);
-	} else {
-		/* no scatter/gather necessary */
-		vs_write(4, iopb + IOPB_BUFF, starting_point_phys);
-		vs_write(4, iopb + IOPB_LENGTH, len);
+		sgentry->pa_high = seg->ds_addr >> 16;
+		sgentry->pa_low = seg->ds_addr & 0xffff;
+		sgentry->addr = ADDR_MOD;
+		sgentry++;
 	}
-	return sg;
-}
 
-static paddr_t
-kvtop(vaddr_t va)
-{
-	paddr_t pa;
-
-	pmap_extract(pmap_kernel(), va, &pa);
-	/* XXX check for failure */
-	return pa;
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_sgmap, sgoffs,
+	    cb->cb_dmamap->dm_nsegs * sizeof(struct vs_sg_entry),
+	    BUS_DMASYNC_PREREAD);
+	
+	vs_write(2, iopb + IOPB_OPTION,
+	    vs_read(2, iopb + IOPB_OPTION) | M_OPT_SG);
+	vs_write(2, iopb + IOPB_ADDR,
+	    vs_read(2, iopb + IOPB_ADDR) | M_ADR_SG_LINK);
+	vs_write(4, iopb + IOPB_BUFF,
+	    sc->sc_sgmap->dm_segs[0].ds_addr + sgoffs);
+	vs_write(4, iopb + IOPB_LENGTH, cb->cb_dmamap->dm_nsegs);
+	vs_write(4, iopb + IOPB_SGTTL, cb->cb_dmalen);
 }
