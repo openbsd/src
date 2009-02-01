@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.73 2009/02/01 00:44:36 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.74 2009/02/01 20:42:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, 2009, Miodrag Vallat.
@@ -554,7 +554,7 @@ vs_load_command(struct vs_softc *sc, struct vs_cb *cb, bus_addr_t cqep,
 		    cb->cb_dmalen, (flags & SCSI_DATA_IN) ?
 		      BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	}
-			
+
 	option = 0;
 	if (flags & SCSI_DATA_OUT)
 		option |= M_OPT_DIR;
@@ -966,7 +966,7 @@ vs_alloc_sg(struct vs_softc *sc)
 		    sc->sc_dev.dv_xname, rc);
 		goto fail4;
 	}
-		    
+
 	return 0;
 
 fail4:
@@ -1356,7 +1356,7 @@ vs_build_sg_list(struct vs_softc *sc, struct vs_cb *cb, bus_addr_t iopb)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_sgmap, sgoffs,
 	    cb->cb_dmamap->dm_nsegs * sizeof(struct vs_sg_entry),
 	    BUS_DMASYNC_PREREAD);
-	
+
 	vs_write(2, iopb + IOPB_OPTION,
 	    vs_read(2, iopb + IOPB_OPTION) | M_OPT_SG);
 	vs_write(2, iopb + IOPB_ADDR,
