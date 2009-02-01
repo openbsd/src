@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.122 2009/01/28 17:05:53 dlg Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.123 2009/02/01 12:10:14 miod Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -259,11 +259,11 @@ main(int argc, char *argv[])
 	int	 ch, fd, quiet = 0, i = 0, pipe_fd[2];
 	extern char *__progname;
 	struct passwd *pw;
+	int rtfilter;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_PID | LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
-	int rtfilter;
 
 	while ((ch = getopt(argc, argv, "c:dl:qu")) != -1)
 		switch (ch) {
