@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2009/01/28 21:30:43 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2009/02/01 21:57:21 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -70,6 +70,18 @@ editor(gp, argc, argv)
 	int ch, flagchk, lflag, secure, startup, readonly, rval, silent;
 	char *tag_f, *wsizearg, path[256];
 
+	static const char *optstr[3] = {
+#ifdef DEBUG
+		"c:D:FlRrSsT:t:vw:",
+		"c:D:eFlRrST:t:w:",
+		"c:D:eFlrST:t:w:"
+#else
+		"c:FlRrSst:vw:",
+		"c:eFlRrSt:w:",
+		"c:eFlrSt:w:"
+#endif
+	};
+
 	/* Initialize the busy routine, if not defined by the screen. */
 	if (gp->scr_busy == NULL)
 		gp->scr_busy = vs_busy;
@@ -124,18 +136,6 @@ editor(gp, argc, argv)
 		pmode = MODE_VI;
 	else if (!strcmp(gp->progname, "view"))
 		pmode = MODE_VIEW;
-
-	static const char *optstr[3] = {
-#ifdef DEBUG
-		"c:D:FlRrSsT:t:vw:",
-		"c:D:eFlRrST:t:w:",
-		"c:D:eFlrST:t:w:"
-#else
-		"c:FlRrSst:vw:",
-		"c:eFlRrSt:w:",
-		"c:eFlrSt:w:"
-#endif
-	};
 
 	while ((ch = getopt(argc, argv, optstr[pmode])) != -1)
 		switch (ch) {
