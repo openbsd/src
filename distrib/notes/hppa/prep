@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.4 2008/08/20 20:35:52 pvalchev Exp $
+dnl	$OpenBSD: prep,v 1.5 2009/02/01 15:36:16 simon Exp $
 
 The MACHINE computers do not generally need any specific preparation.
 
@@ -53,7 +53,7 @@ to display the list of all bootable devices before choosing one with:
 	BOOT_ADMIN> path primary SCSI.TARGET.LUN
 
 Substitute FWSCSI or SESCSI for SCSI if it is displayed as such in the
-path list obtained from ``seacch'', and use the TARGET and LUN values
+path list obtained from ``search'', and use the TARGET and LUN values
 matching the device intended as the boot device.
 
 To set up autoboot, use the configure option:
