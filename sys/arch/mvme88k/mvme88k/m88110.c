@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.59 2009/01/29 22:15:27 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.60 2009/02/01 00:52:19 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -91,10 +91,8 @@ void	m88110_flush_cache(cpuid_t, paddr_t, psize_t);
 void	m88410_flush_cache(cpuid_t, paddr_t, psize_t);
 void	m88110_flush_inst_cache(cpuid_t, paddr_t, psize_t);
 void	m88410_flush_inst_cache(cpuid_t, paddr_t, psize_t);
-void	m88110_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
-void	m88410_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
-void	m88110_dma_cachectl_pa(paddr_t, psize_t, int);
-void	m88410_dma_cachectl_pa(paddr_t, psize_t, int);
+void	m88110_dma_cachectl(paddr_t, psize_t, int);
+void	m88410_dma_cachectl(paddr_t, psize_t, int);
 void	m88110_initialize_cpu(cpuid_t);
 void	m88410_initialize_cpu(cpuid_t);
 
@@ -114,7 +112,6 @@ struct cmmu_p cmmu88110 = {
 	m88110_flush_cache,
 	m88110_flush_inst_cache,
 	m88110_dma_cachectl,
-	m88110_dma_cachectl_pa,
 #ifdef MULTIPROCESSOR
 	m88110_initialize_cpu,
 #endif
@@ -136,7 +133,6 @@ struct cmmu_p cmmu88410 = {
 	m88410_flush_cache,
 	m88410_flush_inst_cache,
 	m88410_dma_cachectl,
-	m88410_dma_cachectl_pa,
 #ifdef MULTIPROCESSOR
 	m88410_initialize_cpu,
 #endif
@@ -620,130 +616,7 @@ m88110_cmmu_inval_cache(paddr_t pa, psize_t size)
  */
 
 void
-m88110_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
-{
-	u_int32_t psr;
-	vaddr_t va;
-	paddr_t pa;
-	psize_t size, count;
-	void (*flusher)(paddr_t, psize_t);
-
-	va = trunc_cache_line(_va);
-	size = round_cache_line(_va + _size) - va;
-
-	switch (op) {
-	case DMA_CACHE_SYNC:
-		flusher = m88110_cmmu_sync_cache;
-		break;
-	case DMA_CACHE_SYNC_INVAL:
-		flusher = m88110_cmmu_sync_inval_cache;
-		break;
-	default:
-		if (va != _va || size != _size || size >= PAGE_SIZE)
-			flusher = m88110_cmmu_sync_inval_cache;
-		else
-			flusher = m88110_cmmu_inval_cache;
-		break;
-	}
-
-	psr = get_psr();
-	set_psr(psr | PSR_IND);
-
-	if (op != DMA_CACHE_SYNC)
-		mc88110_inval_inst();
-	while (size != 0) {
-		count = (va & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
-		    PAGE_SIZE : MC88110_CACHE_LINE;
-
-		if (pmap_extract(pmap, va, &pa) != FALSE) {
-			(*flusher)(pa, count);
-		}
-
-		va += count;
-		size -= count;
-	}
-
-	set_psr(psr);
-}
-
-void
-m88410_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
-{
-	u_int32_t psr;
-	vaddr_t va;
-	paddr_t pa;
-	psize_t size, count;
-	void (*flusher)(paddr_t, psize_t);
-	void (*ext_flusher)(void);
-
-	va = trunc_cache_line(_va);
-	size = round_cache_line(_va + _size) - va;
-
-	switch (op) {
-	case DMA_CACHE_SYNC:
-#if 0
-		flusher = m88110_cmmu_sync_cache;
-		ext_flusher = mc88410_flush;
-#endif
-		break;
-	case DMA_CACHE_SYNC_INVAL:
-		flusher = m88110_cmmu_sync_inval_cache;
-		ext_flusher = mc88410_sync;
-		break;
-	default:
-		if (va != _va || size != _size || size >= PAGE_SIZE) {
-			flusher = m88110_cmmu_sync_inval_cache;
-			ext_flusher = mc88410_sync;
-		} else {
-			flusher = m88110_cmmu_inval_cache;
-#ifdef notyet
-			ext_flusher = mc88410_inval;
-#else
-			ext_flusher = mc88410_sync;
-#endif
-		}
-		break;
-	}
-
-	psr = get_psr();
-	set_psr(psr | PSR_IND);
-
-	if (op == DMA_CACHE_SYNC) {
-		va = trunc_page(_va);
-		size = round_page(_va + _size) - va;
-		CMMU_LOCK;
-		while (size != 0) {
-			if (pmap_extract(pmap, va, &pa) != FALSE) {
-				m88110_cmmu_sync_cache(pa, PAGE_SIZE);
-				mc88410_flush_page(pa);
-			}
-			va += PAGE_SIZE;
-			size -= PAGE_SIZE;
-		}
-		CMMU_UNLOCK;
-	} else {
-		mc88110_inval_inst();
-		while (size != 0) {
-			count = (va & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
-			    PAGE_SIZE : MC88110_CACHE_LINE;
-
-			if (pmap_extract(pmap, va, &pa) != FALSE) {
-				(*flusher)(pa, count);
-			}
-
-			va += count;
-			size -= count;
-		}
-		CMMU_LOCK;
-		(*ext_flusher)();
-		CMMU_UNLOCK;
-	}
-
-	set_psr(psr);
-}
-
-void
-m88110_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
+m88110_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 {
 	u_int32_t psr;
 	paddr_t pa;
@@ -787,7 +660,7 @@ m88110_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
 }
 
 void
-m88410_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
+m88410_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 {
 	u_int32_t psr;
 	paddr_t pa;

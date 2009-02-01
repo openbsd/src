@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.35 2007/12/15 19:33:34 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.36 2009/02/01 00:52:19 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, Miodrag Vallat.
  *
@@ -101,8 +101,7 @@ void	m8820x_set_uapr(apr_t);
 void	m8820x_flush_tlb(cpuid_t, u_int, vaddr_t, u_int);
 void	m8820x_flush_cache(cpuid_t, paddr_t, psize_t);
 void	m8820x_flush_inst_cache(cpuid_t, paddr_t, psize_t);
-void	m8820x_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
-void	m8820x_dma_cachectl_pa(paddr_t, psize_t, int);
+void	m8820x_dma_cachectl(paddr_t, psize_t, int);
 void	m8820x_initialize_cpu(cpuid_t);
 
 /* This is the function table for the MC8820x CMMUs */
@@ -118,7 +117,6 @@ struct cmmu_p cmmu8820x = {
 	m8820x_flush_cache,
 	m8820x_flush_inst_cache,
 	m8820x_dma_cachectl,
-	m8820x_dma_cachectl_pa,
 #ifdef MULTIPROCESSOR
 	m8820x_initialize_cpu,
 #endif
@@ -688,83 +686,7 @@ m8820x_cmmu_inval_cache(int cpu, paddr_t pa, psize_t size)
  */
 
 void
-m8820x_dma_cachectl(pmap_t pmap, vaddr_t _va, vsize_t _size, int op)
-{
-	u_int32_t psr;
-	int cpu;
-#ifdef MULTIPROCESSOR
-	struct cpu_info *ci = curcpu();
-#endif
-	vaddr_t va;
-	paddr_t pa;
-	psize_t size, count;
-	void (*flusher)(int, paddr_t, psize_t);
-
-	va = trunc_cache_line(_va);
-	size = round_cache_line(_va + _size) - va;
-
-	switch (op) {
-	case DMA_CACHE_SYNC:
-		flusher = m8820x_cmmu_sync_cache;
-		break;
-	case DMA_CACHE_SYNC_INVAL:
-		flusher = m8820x_cmmu_sync_inval_cache;
-		break;
-	default:
-		if (va != _va || size != _size)
-			flusher = m8820x_cmmu_sync_inval_cache;
-		else
-			flusher = m8820x_cmmu_inval_cache;
-		break;
-	}
-
-#ifndef MULTIPROCESSOR
-	cpu = cpu_number();
-#endif
-
-	psr = get_psr();
-	set_psr(psr | PSR_IND);
-	CMMU_LOCK;
-
-	pa = 0;
-	while (size != 0) {
-		count = (va & PAGE_MASK) == 0 && size >= PAGE_SIZE ?
-		    PAGE_SIZE : MC88200_CACHE_LINE;
-
-		if ((va & PAGE_MASK) == 0 || pa == 0) {
-			if (pmap_extract(pmap, va, &pa) == FALSE)
-				panic("pmap_extract(%p, %p) failed", pmap, va);
-		}
-
-#ifdef MULTIPROCESSOR
-		/* writeback on a single cpu... */
-		(*flusher)(ci->ci_cpuid, pa, count);
-
-		/* invalidate on all... */
-		if (flusher != m8820x_cmmu_sync_cache) {
-			for (cpu = 0; cpu < MAX_CPUS; cpu++) {
-				if (!ISSET(m88k_cpus[cpu].ci_flags, CIF_ALIVE))
-					continue;
-				if (cpu == ci->ci_cpuid)
-					continue;
-				m8820x_cmmu_inval_cache(cpu, pa, count);
-			}
-		}
-#else	/* MULTIPROCESSOR */
-		(*flusher)(cpu, pa, count);
-#endif	/* MULTIPROCESSOR */
-
-		va += count;
-		pa += count;
-		size -= count;
-	}
-
-	CMMU_UNLOCK;
-	set_psr(psr);
-}
-
-void
-m8820x_dma_cachectl_pa(paddr_t _pa, psize_t _size, int op)
+m8820x_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 {
 	u_int32_t psr;
 	int cpu;

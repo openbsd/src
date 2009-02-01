@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.8 2008/06/26 05:42:12 ray Exp $	*/
+/*      $OpenBSD: bus_dma.c,v 1.9 2009/02/01 00:52:19 miod Exp $	*/
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -448,7 +448,7 @@ bus_dmamap_sync(t, map, offset, len, op)
 			if (sublen > len)
 				sublen = len;
 
-			dma_cachectl_pa(addr, sublen, op);
+			dma_cachectl(addr, sublen, op);
 
 			offset = 0;
 			len -= sublen;

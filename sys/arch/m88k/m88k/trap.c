@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.64 2008/11/27 20:46:48 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.65 2009/02/01 00:52:19 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1814,7 +1814,7 @@ cache_flush(struct trapframe *tf)
 	while (len != 0) {
 		count = min(len, PAGE_SIZE - (va & PAGE_MASK));
 		if (pmap_extract(pmap, va, &pa) != FALSE)	
-			dma_cachectl_pa(pa, count, DMA_CACHE_SYNC);
+			dma_cachectl(pa, count, DMA_CACHE_SYNC);
 		va += count;
 		len -= count;
 	}
