@@ -1,4 +1,4 @@
-/* $OpenBSD: cia_dma.c,v 1.9 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: cia_dma.c,v 1.10 2009/02/01 14:34:00 miod Exp $ */
 /* $NetBSD: cia_dma.c,v 1.16 2000/06/29 08:58:46 mrg Exp $ */
 
 /*-
@@ -83,9 +83,6 @@ void	cia_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 #define	CIA_SGMAP_MAPPED_BASE	(8*1024*1024)
 #define	CIA_SGMAP_MAPPED_SIZE	(8*1024*1024)
 
-/* ALCOR/ALGOR2/PYXIS have a 256-byte out-bound DMA prefetch threshold. */
-#define	CIA_SGMAP_PFTHRESH	256
-
 void	cia_tlb_invalidate(void);
 void	cia_broken_pyxis_tlb_invalidate(void);
 
@@ -140,7 +137,6 @@ cia_dma_init(ccp)
 	t->_next_window = NULL;
 	t->_boundary = 0;
 	t->_sgmap = &ccp->cc_sgmap;
-	t->_pfthresh = CIA_SGMAP_PFTHRESH;
 	t->_get_tag = cia_dma_get_tag;
 	t->_dmamap_create = alpha_sgmap_dmamap_create;
 	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;

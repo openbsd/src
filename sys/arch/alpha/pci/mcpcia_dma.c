@@ -1,4 +1,4 @@
-/* $OpenBSD: mcpcia_dma.c,v 1.2 2008/06/26 05:42:09 ray Exp $ */
+/* $OpenBSD: mcpcia_dma.c,v 1.3 2009/02/01 14:34:00 miod Exp $ */
 /* $NetBSD: mcpcia_dma.c,v 1.15 2001/07/19 18:55:40 thorpej Exp $ */
 
 /*-
@@ -85,9 +85,6 @@ void	mcpcia_bus_dmamap_unload_sgmap (bus_dma_tag_t, bus_dmamap_t);
 #define	MCPCIA_ISA_SG_MAPPED_BASE	(8*1024*1024)
 #define	MCPCIA_ISA_SG_MAPPED_SIZE	(8*1024*1024)
 
-/* MCPCIA has a 256-byte out-bound DMA prefetch threshold. */
-#define	MCPCIA_SG_MAPPED_PFTHRESH	256
-
 #define	MCPCIA_SGTLB_INVALIDATE(ccp)					\
 do {									\
 	alpha_mb();							\
@@ -137,7 +134,6 @@ mcpcia_dma_init(ccp)
 	t->_next_window = NULL;
 	t->_boundary = 0;
 	t->_sgmap = &ccp->cc_pci_sgmap;
-	t->_pfthresh = MCPCIA_SG_MAPPED_PFTHRESH;
 	t->_get_tag = mcpcia_dma_get_tag;
 	t->_dmamap_create = alpha_sgmap_dmamap_create;
 	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
@@ -164,7 +160,6 @@ mcpcia_dma_init(ccp)
 	t->_next_window = NULL;
 	t->_boundary = 0;
 	t->_sgmap = &ccp->cc_isa_sgmap;
-	t->_pfthresh = MCPCIA_SG_MAPPED_PFTHRESH;
 	t->_get_tag = mcpcia_dma_get_tag;
 	t->_dmamap_create = alpha_sgmap_dmamap_create;
 	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;

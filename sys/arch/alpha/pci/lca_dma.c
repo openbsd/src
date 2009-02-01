@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca_dma.c,v 1.8 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: lca_dma.c,v 1.9 2009/02/01 14:34:00 miod Exp $	*/
 /* $NetBSD: lca_dma.c,v 1.13 2000/06/29 08:58:47 mrg Exp $ */
 
 /*-
@@ -81,12 +81,6 @@ void	lca_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 #define	LCA_SGMAP_MAPPED_SIZE	(8*1024*1024)
 
 /*
- * The LCA doesn't have a DMA prefetch threshold.  However, it is known
- * to lose if we don't allocate a spill page.  So initialize it to 256.
- */
-#define	LCA_SGMAP_PFTHRESH	256
-
-/*
  * Macro to flush LCA scatter/gather TLB.
  */
 #define	LCA_TLB_INVALIDATE() \
@@ -138,7 +132,6 @@ lca_dma_init(lcp)
 	t->_next_window = NULL;
 	t->_boundary = 0;
 	t->_sgmap = &lcp->lc_sgmap;
-	t->_pfthresh = LCA_SGMAP_PFTHRESH;
 	t->_get_tag = lca_dma_get_tag;
 	t->_dmamap_create = alpha_sgmap_dmamap_create;
 

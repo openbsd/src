@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_dma_3000_500.c,v 1.4 2008/06/26 05:42:09 ray Exp $ */
+/* $OpenBSD: tc_dma_3000_500.c,v 1.5 2009/02/01 14:34:02 miod Exp $ */
 /* $NetBSD: tc_dma_3000_500.c,v 1.13 2001/07/19 06:40:03 thorpej Exp $ */
 
 /*-
@@ -54,7 +54,6 @@ struct alpha_bus_dma_tag tc_dmat_sgmap = {
 	NULL,				/* _next_window */
 	0,				/* _boundary */
 	NULL,				/* _sgmap */
-	0,				/* _pfthresh */
 	NULL,				/* _get_tag */
 	tc_bus_dmamap_create_sgmap,
 	tc_bus_dmamap_destroy_sgmap,
