@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setnetbootinfo.8,v 1.7 2007/05/31 19:20:02 jmc Exp $
+.\"	$OpenBSD: setnetbootinfo.8,v 1.8 2009/02/01 10:48:57 sobrado Exp $
 .\"	$NetBSD: setnetbootinfo.8,v 1.2 1997/04/06 08:41:36 cgd Exp $
 .\"
 .\" Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 1 2009 $
 .Dt SETNETBOOTINFO 8 alpha
 .Os
 .Sh NAME
@@ -52,18 +52,18 @@ The
 utility configures the OpenBSD/alpha network bootstrap program so
 that it can be used to bootstrap systems with old firmware revisions.
 .Pp
-The OpenBSD/alpha network bootstrap program needs to have the ethernet
+The OpenBSD/alpha network bootstrap program needs to have the Ethernet
 address of the interface being used to boot the system available when
 querying other hosts on the network for bootstrapping information.
 Alpha systems with old firmware revisions provide no way for
-network bootstrap programs to determine the ethernet address of
+network bootstrap programs to determine the Ethernet address of
 the interface that they are booting from, and so the OpenBSD/alpha
 network bootstrap program must find that information in another way.
-(Newer firmware revisions include the ethernet address in the name of
+(Newer firmware revisions include the Ethernet address in the name of
 the device that is being booted from.)
 The
 .Nm
-utility encodes an ethernet address (and other information) directly
+utility encodes an Ethernet address (and other information) directly
 into the network bootstrap program.
 .Pp
 The options recognized by
@@ -71,7 +71,7 @@ The options recognized by
 are as follows:
 .Bl -tag -width flag
 .It Fl a Ar ether-address
-Encode the given ethernet address into the network bootstrap program.
+Encode the given Ethernet address into the network bootstrap program.
 (This option and the
 .Fl h
 option are mutually exclusive.)
@@ -81,9 +81,9 @@ program to be used regardless of whether or not the bootstrap
 program can get address information from the booting system's
 firmware.
 .It Fl h Ar ether-host
-Encode the ethernet address of the specified host into the network
+Encode the Ethernet address of the specified host into the network
 bootstrap program.
-The host's name is translated to an ethernet address using the
+The host's name is translated to an Ethernet address using the
 .Xr ether_hostton 3
 function.
 (This option and the
@@ -97,10 +97,10 @@ If the
 .Fl o
 flag is not specified, the output file name will be
 the name of the input bootstrap program concatenated with a
-period and the digits of the ethernet address being encoded.
+period and the digits of the Ethernet address being encoded.
 For instance, if the input file is named
 .Pa /usr/mdec/netboot
-and is being configured to encode the ethernet address
+and is being configured to encode the Ethernet address
 .Li 08:00:2b:bd:5d:fd ,
 then the default output file name would be
 .Pa /usr/mdec/netboot.08002bbd5dfd .

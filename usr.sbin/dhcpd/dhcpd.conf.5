@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.7 2007/12/23 21:54:35 jmc Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.8 2009/02/01 10:48:57 sobrado Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: December 23 2007 $
+.Dd $Mdocdate: February 1 2009 $
 .Dt DHCPD.CONF 5
 .Os
 .Sh NAME
@@ -110,9 +110,9 @@ dynamically allocated on that subnet.
 Some installations have physical networks on which more than one IP
 subnet operates.
 For example, if there is a site-wide requirement that 8-bit subnet masks
-be used, but a department with a single physical ethernet network expands
+be used, but a department with a single physical Ethernet network expands
 to the point where it has more than 254 nodes, it may be necessary to run
-two 8-bit subnets on the same ethernet until such time as a new physical
+two 8-bit subnets on the same Ethernet until such time as a new physical
 network can be added.
 In this case, the
 .Ic subnet
@@ -221,7 +221,7 @@ option domain-name-servers ns1.isc.org, ns2.isc.org;
 As you can see in Example 2, it's legal to specify host addresses in
 parameters as domain names rather than as numeric IP addresses.
 If a given hostname resolves to more than one IP address (for example, if
-that host has two ethernet interfaces), both addresses are supplied to
+that host has two Ethernet interfaces), both addresses are supplied to
 the client.
 .Pp
 In Example 1, you can see that both the shared-network statement and

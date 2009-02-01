@@ -1,11 +1,11 @@
-.\"	$OpenBSD: mrouted.8,v 1.18 2007/05/31 19:20:26 jmc Exp $
+.\"	$OpenBSD: mrouted.8,v 1.19 2009/02/01 10:48:57 sobrado Exp $
 .\" The mrouted program is covered by the license in the accompanying file
 .\" named "LICENSE".  Use of the mrouted program represents acceptance of
 .\" the terms and conditions listed in that file.
 .\"
 .\" The mrouted program is COPYRIGHT 1989 by The Board of Trustees of
 .\" Leland Stanford Junior University.
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 1 2009 $
 .Dt MROUTED 8
 .Os
 .Sh NAME
@@ -295,7 +295,7 @@ phyint atm0 disable
 #
 # This is an internal tunnel to another EE subnet.
 # Remove the default tunnel rate limit, since this
-# tunnel is over ethernets.
+# tunnel is over Ethernets.
 tunnel 192.168.5.4 192.168.55.101 metric 1 threshold 1
 	rate_limit 0
 #
