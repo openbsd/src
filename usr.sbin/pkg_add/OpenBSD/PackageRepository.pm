@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.61 2008/12/11 15:43:19 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.62 2009/02/02 20:41:47 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -757,7 +757,7 @@ sub _list
 	while(<$fh>) {
 		chomp;
 		next if m/^\d\d\d\s+\S/;
-		next unless m/(\S+)\.tgz\s*$/;
+		next unless m/^(?:\.\/)?(\S+)\.tgz\s*$/;
 		push(@$l, $1);
 	}
 	close($fh);
