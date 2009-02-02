@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.108 2008/10/14 21:36:27 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.109 2009/02/02 17:19:13 mbalmer Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -411,7 +411,7 @@ ip_stats(char *name)
 {
 	struct ipstat ipstat;
 	int mib[] = { CTL_NET, AF_INET, IPPROTO_IP, IPCTL_STATS };
-	size_t len = sizeof(ipstat);;
+	size_t len = sizeof(ipstat);
 
 	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]),
 	    &ipstat, &len, NULL, 0) == -1) {
