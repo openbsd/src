@@ -1,4 +1,4 @@
-/*	$OpenBSD: wake.c,v 1.12 2009/01/30 21:00:42 pyr Exp $ */
+/*	$OpenBSD: wake.c,v 1.13 2009/02/02 21:29:27 mbalmer Exp $ */
 
 /*
  * Copyright (C) 2006,2007,2008,2009 Marc Balmer <mbalmer@openbsd.org>
@@ -182,11 +182,14 @@ send_wakeup(int bpf, struct ether_addr const *addr)
 int
 main(int argc, char *argv[])
 {
-	if (argc != 3)
+	int n;
+
+	if (argc < 3)
 		usage();
 
-	if (wake(argv[1], argv[2]))
-		err(1, "error sending Wake on LAN frame over %s to %s",
-		    argv[1], argv[2]);
+	for (n = 2; n < argc; n++)
+		if (wake(argv[1], argv[n]))
+			warn("error sending Wake on LAN frame over %s to %s",
+			    argv[1], argv[n]);
 	return 0;
 }
