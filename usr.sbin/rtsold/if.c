@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.21 2009/01/30 16:21:58 rainer Exp $	*/
+/*	$OpenBSD: if.c,v 1.22 2009/02/02 22:06:00 chl Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ extern int rssock;
 static int ifsock;
 
 static int get_llflag(const char *);
-static void get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 
 int
 ifinit(void)
@@ -186,12 +185,6 @@ interface_status(struct ifinfo *ifinfo)
 	return(1);
 }
 
-#define ROUNDUP(a, size) \
-	(((a) & ((size)-1)) ? (1 + ((a) | ((size)-1))) : (a))
-
-#define NEXT_SA(ap) (ap) = (struct sockaddr *) \
-	((caddr_t)(ap) + ((ap)->sa_len ? ROUNDUP((ap)->sa_len,\
-	sizeof(u_long)) : sizeof(u_long)))
 #define ROUNDUP8(a) (1 + (((a) - 1) | 7))
 
 int
@@ -292,8 +285,6 @@ setinet6sysctl(int code, int newval)
 		return value;
 }
 
-/*------------------------------------------------------------*/
-
 /* get ia6_flags for link-local addr on if.  returns -1 on error. */
 static int
 get_llflag(const char *name)
@@ -341,19 +332,4 @@ get_llflag(const char *name)
 	freeifaddrs(ifap);
 	close(s);
 	return -1;
-}
-
-
-static void
-get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
-{
-	int i;
-
-	for (i = 0; i < RTAX_MAX; i++) {
-		if (addrs & (1 << i)) {
-			rti_info[i] = sa;
-			NEXT_SA(sa);
-		} else
-			rti_info[i] = NULL;
-	}
 }
