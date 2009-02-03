@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.s,v 1.10 2008/06/26 05:42:10 ray Exp $	*/
+/*	$OpenBSD: mptramp.s,v 1.11 2009/02/03 11:24:19 mikeb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ _TRMP_LABEL(mp_startup)
 
 # %ecx points at our cpu_info structure..
 
-	movw	$((MAXGDTSIZ*8) - 1), 6(%esp)	# prepare segment descriptor
+	movw	$(MAXGDTSIZ-1), 6(%esp)		# prepare segment descriptor
 	movl	CPU_INFO_GDT(%ecx), %eax	# for real gdt
 	movl	%eax, 8(%esp)
 	HALTT(0x8, %eax)

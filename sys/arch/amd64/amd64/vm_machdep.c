@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.14 2009/01/28 08:02:02 grange Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.15 2009/02/03 11:24:19 mikeb Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -160,6 +160,7 @@ cpu_exit(struct proc *p)
 		mtrr_clean(p);
 
 	pmap_deactivate(p);
+	tss_free(p->p_md.md_tss_sel);
 	sched_exit(p);
 }
 
@@ -171,8 +172,6 @@ cpu_exit(struct proc *p)
 void
 cpu_wait(struct proc *p)
 {
-	/* Nuke the TSS. */
-	tss_free(p->p_md.md_tss_sel);
 }
 
 /*

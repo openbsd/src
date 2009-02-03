@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.13 2009/01/17 23:44:46 guenther Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.14 2009/02/03 11:24:19 mikeb Exp $	*/
 /*	$NetBSD: gdt.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -40,45 +40,27 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/rwlock.h>
 #include <sys/user.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm.h>
 
 #include <machine/gdt.h>
 
-int gdt_size;		/* size of GDT in bytes */
-int gdt_dyncount;	/* number of dyn. allocated GDT entries in use */
-int gdt_dynavail;
 int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
-struct rwlock gdt_lock_store = RWLOCK_INITIALIZER("gdtlk");
+struct mutex gdt_lock_store = MUTEX_INITIALIZER(IPL_HIGH);
 
-static __inline void gdt_lock(void);
-static __inline void gdt_unlock(void);
 void gdt_init(void);
-void gdt_grow(void);
 int gdt_get_slot(void);
 void gdt_put_slot(int);
 
 /*
- * Lock and unlock the GDT, to avoid races in case gdt_{ge,pu}t_slot() sleep
- * waiting for memory.
+ * Lock and unlock the GDT.
  */
-static __inline void
-gdt_lock(void)
-{
-	if (curproc != NULL)		/* XXX - ugh. needed for startup */
-		rw_enter_write(&gdt_lock_store);
-}
-
-static __inline void
-gdt_unlock(void)
-{
-	if (curproc != NULL)
-		rw_exit_write(&gdt_lock_store);
-}
+#define gdt_lock()	(mtx_enter(&gdt_lock_store))
+#define gdt_unlock()	(mtx_leave(&gdt_lock_store))
 
 void
 set_mem_gdt(struct mem_segment_descriptor *sd, void *base, size_t limit,
@@ -126,16 +108,12 @@ gdt_init(void)
 	vaddr_t va;
 	struct cpu_info *ci = &cpu_info_primary;
 
-	gdt_size = MINGDTSIZ;
-	gdt_dyncount = 0;
 	gdt_next = 0;
 	gdt_free = GNULL_SEL;
-	gdt_dynavail =
-	    (gdt_size - DYNSEL_START) / sizeof (struct sys_segment_descriptor);
 
 	old_gdt = gdtstore;
 	gdtstore = (char *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
-	for (va = (vaddr_t)gdtstore; va < (vaddr_t)gdtstore + gdt_size;
+	for (va = (vaddr_t)gdtstore; va < (vaddr_t)gdtstore + MAXGDTSIZ;
 	    va += PAGE_SIZE) {
 		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
 		if (pg == NULL) {
@@ -144,7 +122,7 @@ gdt_init(void)
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
 		    VM_PROT_READ | VM_PROT_WRITE);
 	}
-	memcpy(gdtstore, old_gdt, DYNSEL_START);
+	bcopy(old_gdt, gdtstore, DYNSEL_START);
 	ci->ci_gdt = gdtstore;
 	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore,
 	    LDT_SIZE - 1, SDT_SYSLDT, SEL_KPL, 0);
@@ -159,12 +137,22 @@ gdt_init(void)
 void
 gdt_alloc_cpu(struct cpu_info *ci)
 {
-        ci->ci_gdt = (char *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
-        uvm_map_pageable(kernel_map, (vaddr_t)ci->ci_gdt,
-            (vaddr_t)ci->ci_gdt + MINGDTSIZ, FALSE, FALSE);
-        memset(ci->ci_gdt, 0, MINGDTSIZ);
-        memcpy(ci->ci_gdt, gdtstore,
-	   DYNSEL_START + gdt_dyncount * sizeof(struct sys_segment_descriptor));
+	struct vm_page *pg;
+	vaddr_t va;
+
+	ci->ci_gdt = (char *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
+	uvm_map_pageable(kernel_map, (vaddr_t)ci->ci_gdt,
+            (vaddr_t)ci->ci_gdt + MAXGDTSIZ, FALSE, FALSE);
+	for (va = (vaddr_t)ci->ci_gdt; va < (vaddr_t)ci->ci_gdt + MAXGDTSIZ;
+	    va += PAGE_SIZE) {
+		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
+		if (pg == NULL)
+			panic("gdt_init: no pages");
+		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+		    VM_PROT_READ | VM_PROT_WRITE);
+	}
+	bzero(ci->ci_gdt, MAXGDTSIZ);
+	bcopy(gdtstore, ci->ci_gdt, MAXGDTSIZ);
 }
 #endif	/* MULTIPROCESSOR */
 
@@ -194,46 +182,11 @@ gdt_reload_cpu(struct cpu_info *ci)
 }
 #endif
 
-
-/*
- * Grow or shrink the GDT.
- */
-void
-gdt_grow(void)
-{
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	struct vm_page *pg;
-	size_t old_len;
-	vaddr_t va;
-
-	old_len = gdt_size;
-	gdt_size = 2 * gdt_size;
-	gdt_dynavail =
-	    (gdt_size - DYNSEL_START) / sizeof (struct sys_segment_descriptor);
-
-	CPU_INFO_FOREACH(cii, ci) {
-		for (va = (vaddr_t)(ci->ci_gdt) + old_len;
-		    va < (vaddr_t)(ci->ci_gdt) + gdt_size;
-		    va += PAGE_SIZE) {
-			while ((pg =
-			    uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO)) ==
-			    NULL) {
-				uvm_wait("gdt_grow");
-			}
-			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ | VM_PROT_WRITE);
-		}
-	}
-}
-
 /*
  * Allocate a GDT slot as follows:
  * 1) If there are entries on the free list, use those.
- * 2) If there are fewer than gdt_dynavail entries in use, there are free slots
+ * 2) If there are fewer than MAXGDTSIZ entries in use, there are free slots
  *    near the end that we can sweep through.
- * 3) As a last resort, we increase the size of the GDT, and sweep through
- *    the new slots.
  */
 int
 gdt_get_slot(void)
@@ -249,21 +202,11 @@ gdt_get_slot(void)
 		slot = gdt_free;
 		gdt_free = gdt[slot].sd_xx3;	/* XXXfvdl res. field abuse */
 	} else {
-#ifdef DIAGNOSTIC
-		if (gdt_next != gdt_dyncount)
-			panic("gdt_get_slot botch 1");
-#endif
-		if (gdt_next >= gdt_dynavail) {
-#ifdef DIAGNOSTIC
-			if (gdt_size >= MAXGDTSIZ)
-				panic("gdt_get_slot botch 2");
-#endif
-			gdt_grow();
-		}
+		if (gdt_next >= MAXGDTSIZ)
+			panic("gdt_get_slot: out of GDT descriptors");
 		slot = gdt_next++;
 	}
 
-	gdt_dyncount++;
 	gdt_unlock();
 	return (slot);
 }
@@ -279,7 +222,6 @@ gdt_put_slot(int slot)
 	gdt = (struct sys_segment_descriptor *)&gdtstore[DYNSEL_START];
 
 	gdt_lock();
-	gdt_dyncount--;
 
 	gdt[slot].sd_type = SDT_SYSNULL;
 	gdt[slot].sd_xx3 = gdt_free;

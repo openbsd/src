@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.55 2009/01/17 23:44:46 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.56 2009/02/03 11:24:19 mikeb Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -136,13 +136,13 @@ cpu_exit(struct proc *p)
 #endif
 
 	pmap_deactivate(p);
+	tss_free(p->p_md.md_tss_sel);
 	sched_exit(p);
 }
 
 void
 cpu_wait(struct proc *p)
 {
-	tss_free(p->p_md.md_tss_sel);
 }
 
 /*
