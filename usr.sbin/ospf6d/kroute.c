@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.9 2009/01/04 18:20:22 stsp Exp $ */
+/*	$OpenBSD: kroute.c,v 1.10 2009/02/03 14:06:18 stsp Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -838,9 +838,18 @@ if_newaddr(u_short ifindex, struct sockaddr_in6 *ifa, struct sockaddr_in6 *mask,
 		log_warnx("if_newaddr: corresponding if %i not found", ifindex);
 		return;
 	}
+
+	/* We only care about link-local and global-scope. */
+	if (IN6_IS_ADDR_UNSPECIFIED(&ifa->sin6_addr) ||
+	    IN6_IS_ADDR_LOOPBACK(&ifa->sin6_addr) ||
+	    IN6_IS_ADDR_MULTICAST(&ifa->sin6_addr) ||
+	    IN6_IS_ADDR_SITELOCAL(&ifa->sin6_addr) ||
+	    IN6_IS_ADDR_V4MAPPED(&ifa->sin6_addr) ||
+	    IN6_IS_ADDR_V4COMPAT(&ifa->sin6_addr))
+	    	return;
+
 	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
-	if (IN6_IS_ADDR_LINKLOCAL(&ifa->sin6_addr) ||
-	    IN6_IS_ADDR_MC_LINKLOCAL(&ifa->sin6_addr)) {
+	if (IN6_IS_ADDR_LINKLOCAL(&ifa->sin6_addr)) {
 		ifa->sin6_addr.s6_addr[2] = 0;
 		ifa->sin6_addr.s6_addr[3] = 0;
 	}
