@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.58 2009/01/28 22:18:44 michele Exp $	*/
+/*	$OpenBSD: route.h,v 1.59 2009/02/03 16:42:54 michele Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -193,7 +193,7 @@ struct rt_msghdr {
 	u_short	rtm_index;	/* index for associated ifp */
 	u_short rtm_tableid;	/* routing table id */
 	u_char	rtm_priority;	/* routing priority */
-	u_char	rtm_pad;
+	u_char	rtm_mpls;	/* MPLS additional infos */
 	int	rtm_addrs;	/* bitmask identifying sockaddrs in msg */
 	int	rtm_flags;	/* flags, incl. kern & message, e.g. DONE */
 	int	rtm_fmask;	/* bitmask used in RTM_CHANGE message */
@@ -310,6 +310,7 @@ struct rt_addrinfo {
 	struct	ifaddr *rti_ifa;
 	struct	ifnet *rti_ifp;
 	struct	rt_msghdr *rti_rtm;
+	u_char	rti_mpls;
 };
 
 struct route_cb {

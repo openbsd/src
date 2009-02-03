@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.83 2009/01/28 22:18:44 michele Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.84 2009/02/03 16:42:54 michele Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -438,6 +438,9 @@ route_output(struct mbuf *m, ...)
 			goto flush;
 		}
 	}
+#ifdef MPLS
+	info.rti_mpls = rtm->rtm_mpls;
+#endif
 
 	/*
 	 * Verify that the caller has the appropriate privilege; RTM_GET
@@ -572,6 +575,8 @@ report:
 				    rt->rt_llinfo)->mpls_label;
 				info.rti_info[RTAX_SRC] =
 				    (struct sockaddr *)&sa_mpls;
+				info.rti_mpls = ((struct rt_mpls *)
+				    rt->rt_llinfo)->mpls_operation;
 			}
 #endif
 			ifpaddr = 0;
@@ -1113,6 +1118,8 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		sa_mpls.smpls_label = ((struct rt_mpls *)
 		    rt->rt_llinfo)->mpls_label;
 		info.rti_info[RTAX_SRC] = (struct sockaddr *)&sa_mpls;
+		info.rti_mpls = ((struct rt_mpls *)
+		    rt->rt_llinfo)->mpls_operation;
 	}
 #endif
 
@@ -1121,17 +1128,14 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
 
 		rtm->rtm_flags = rt->rt_flags;
-#ifdef MPLS
-		if (dst->sa_family == AF_MPLS) {
-			rtm->rtm_flags |=
-			    ((struct rt_mpls *)rt->rt_llinfo)->mpls_operation;
-		}
-#endif
 		rtm->rtm_priority = rt->rt_priority;
 		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 		rtm->rtm_rmx.rmx_refcnt = rt->rt_refcnt;
 		rtm->rtm_index = rt->rt_ifp->if_index;
 		rtm->rtm_addrs = info.rti_addrs;
+#ifdef MPLS
+		rtm->rtm_mpls = info.rti_mpls;
+#endif
 		if ((error = copyout(rtm, w->w_where, size)) != 0)
 			w->w_where = NULL;
 		else
@@ -1143,12 +1147,6 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		struct rt_omsghdr *rtm = (struct rt_omsghdr *)w->w_tmem;
 
 		rtm->rtm_flags = rt->rt_flags;
-#ifdef MPLS
-		if (dst->sa_family == AF_MPLS) {
-			rtm->rtm_flags |=
-			    ((struct rt_mpls *)rt->rt_llinfo)->mpls_operation;
-		}
-#endif
 		rtm->rtm_rmx.rmx_locks = rt->rt_rmx.rmx_locks;
 		rtm->rtm_rmx.rmx_mtu = rt->rt_rmx.rmx_mtu;
 		rtm->rtm_index = rt->rt_ifp->if_index;

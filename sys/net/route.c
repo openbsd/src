@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.102 2009/01/28 22:18:44 michele Exp $	*/
+/*	$OpenBSD: route.c,v 1.103 2009/02/03 16:42:54 michele Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -897,8 +897,7 @@ makeroute:
 			if (sa_mpls != NULL)
 				rt_mpls->mpls_label = sa_mpls->smpls_label;
 
-			rt_mpls->mpls_operation = rt->rt_flags &
-			    (MPLS_OP_PUSH | MPLS_OP_POP | MPLS_OP_SWAP);
+			rt_mpls->mpls_operation = info->rti_mpls;
 
 			/* XXX: set experimental bits */
 
