@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.44 2009/01/23 17:52:13 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.45 2009/02/03 19:44:58 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 23 2009 $
+.Dd $Mdocdate: February 3 2009 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -87,9 +87,9 @@ instead of the regular
 .Xr audio 4
 device for audio input and output
 in order to share the physical device with other clients.
-The default socket path is
-.Pa /tmp/aucat.sock
-but other paths can be used with the
+The default socket name is
+.Pa default
+but other names can be used with the
 .Fl s
 option.
 .It Fl m Ar mode
@@ -117,9 +117,11 @@ then standard output will be used.
 Sample rate in Hertz of the playback or record stream.
 The default is 44100Hz.
 .It Fl s Ar socket
-Add the path
+Add the name
 .Ar socket
 to the list of sockets to listen on.
+.Ar socket
+cannot contain '/'.
 Meaningful in server mode only.
 .It Fl u
 Normally
@@ -363,7 +365,7 @@ in server mode using default parameters, but will create an
 additional socket for output to channels 2:3 only (rear speakers
 on most cards):
 .Bd -literal -offset indent
-$ aucat -l -s /tmp/aucat.sock -c 2:3 -s /tmp/aucat.sock.rear
+$ aucat -l -s default -c 2:3 -s rear
 .Ed
 .Pp
 The following will start
@@ -371,7 +373,7 @@ The following will start
 in server mode creating the default socket with low volume and
 an additional socket for high volume output:
 .Bd -literal -offset indent
-$ aucat -l -v 65 -s /tmp/aucat.sock -v 127 -s /tmp/aucat.sock.max
+$ aucat -l -v 65 -s default -v 127 -s max
 .Ed
 .Sh SEE ALSO
 .Xr audioctl 1 ,

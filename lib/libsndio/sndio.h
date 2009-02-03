@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.6 2009/01/21 21:29:01 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.7 2009/02/03 19:44:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -109,9 +109,9 @@ struct sio_cap {
 #define SIO_SUN_PATH	"/dev/audio"
 
 /*
- * default socket for the aucat(1) back-end
+ * default socket name for the aucat(1) back-end
  */
-#define SIO_AUCAT_PATH	"/tmp/aucat.sock"
+#define SIO_AUCAT_PATH	"default"
 
 /*
  * maximum value of volume, eg. for sio_setvol()

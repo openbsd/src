@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.5 2008/11/10 23:25:37 ratchov Exp $	*/
+/*	$OpenBSD: conf.h,v 1.6 2009/02/03 19:44:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -56,7 +56,7 @@ extern int debug_level;
  */
 #define WAV_NBLK 6
 
-#define DEFAULT_DEVICE	"/dev/audio"	/* defaul device */
-#define DEFAULT_SOCKET	"/tmp/aucat.sock"
+#define DEFAULT_DEVICE	"/dev/audio"
+#define DEFAULT_SOCKET	"default"
 
 #endif /* !defined(CONF_H) */

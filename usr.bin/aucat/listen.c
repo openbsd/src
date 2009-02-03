@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.6 2009/01/23 17:38:15 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.7 2009/02/03 19:44:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -49,7 +49,7 @@ struct listen *
 listen_new(struct fileops *ops, char *path,
     struct aparams *wpar, struct aparams *rpar, int maxweight)
 {
-	int sock;
+	int sock, oldumask;
 	struct sockaddr_un sockname;
 	struct listen *f;
 
@@ -64,15 +64,13 @@ listen_new(struct fileops *ops, char *path,
 	}
 	sockname.sun_family = AF_UNIX;
 	strlcpy(sockname.sun_path, path, sizeof(sockname.sun_path));
+	oldumask = umask(0111);
 	if (bind(sock, (struct sockaddr *)&sockname,
 		sizeof(struct sockaddr_un)) < 0) {
 		perror("bind");
 		exit(1);
 	}
-	if (chmod(sockname.sun_path, 0777) < 0) {
-		/* not fatal, just print error */
-		perror(sockname.sun_path);
-	}
+	umask(oldumask);
 	if (listen(sock, 1) < 0) {
 		perror("listen");
 		exit(1);

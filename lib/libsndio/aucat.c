@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.11 2009/01/10 20:34:44 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.12 2009/02/03 19:44:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -79,9 +79,17 @@ sio_open_aucat(char *path, unsigned mode, int nbio)
 	struct aucat_hdl *hdl;
 	struct sockaddr_un ca;	
 	socklen_t len = sizeof(struct sockaddr_un);
+	uid_t uid;
 
 	if (path == NULL)
 		path = SIO_AUCAT_PATH;
+	uid = geteuid();
+	if (strchr(path, '/') != NULL)
+		return NULL;
+	snprintf(ca.sun_path, sizeof(ca.sun_path),
+	    "/tmp/aucat-%u/%s", uid, path);
+	ca.sun_family = AF_UNIX;
+
 	hdl = malloc(sizeof(struct aucat_hdl));
 	if (hdl == NULL)
 		return NULL;
@@ -90,8 +98,6 @@ sio_open_aucat(char *path, unsigned mode, int nbio)
 	s = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (s < 0)
 		goto bad_free;
-	ca.sun_family = AF_UNIX;
-	memcpy(ca.sun_path, path, strlen(path) + 1);
 	while (connect(s, (struct sockaddr *)&ca, len) < 0) {
 		if (errno == EINTR)
 			continue;

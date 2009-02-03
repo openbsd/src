@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.54 2009/01/25 17:07:39 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.55 2009/02/03 19:44:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -47,10 +47,12 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 
-#include <signal.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -317,10 +319,13 @@ main(int argc, char **argv)
 	struct farglist  ifiles, ofiles, sfiles;
 	struct aparams ipar, opar, dipar, dopar;
 	struct sigaction sa;
+	struct stat sb;
+	char base[PATH_MAX], path[PATH_MAX];
 	unsigned bufsz, mode;
 	char *devpath, *dbgenv;
 	const char *errstr;
 	unsigned volctl;
+	uid_t uid;
 
 	dbgenv = getenv("AUCAT_DEBUG");
 	if (dbgenv) {
@@ -482,6 +487,18 @@ main(int argc, char **argv)
 		}
 	}
 
+	if (l_flag) {
+		uid = geteuid();
+		snprintf(base, PATH_MAX, "/tmp/aucat-%u", uid);
+		if (mkdir(base, 0700) < 0) {
+			if (errno != EEXIST)
+				err(1, "mkdir(\"%s\")", base);
+		}
+		if (stat(base, &sb) < 0)
+			err(1, "stat(\"%s\")", base);
+		if (sb.st_uid != uid || (sb.st_mode & 077) != 0)
+			errx(1, "%s has wrong permissions", base);
+	}
 	quit_flag = 0;
 	sigfillset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
@@ -533,8 +550,11 @@ main(int argc, char **argv)
 	while (!SLIST_EMPTY(&sfiles)) {
 		fa = SLIST_FIRST(&sfiles);
 		SLIST_REMOVE_HEAD(&sfiles, entry);
-		(void)listen_new(&listen_ops, fa->name,
-		    &fa->opar, &fa->ipar, MIDI_TO_ADATA(fa->vol));
+		if (strchr(fa->name, '/') != NULL)
+			errx(1, "socket names must not contain '/'");
+		snprintf(path, PATH_MAX, "%s/%s", base, fa->name);
+		listen_new(&listen_ops, path, &fa->opar, &fa->ipar,
+		    MIDI_TO_ADATA(fa->vol));
 		free(fa);
 	}
 
@@ -572,8 +592,11 @@ main(int argc, char **argv)
 			}
 		}
 	}
-	if (l_flag)
+	if (l_flag) {
 		filelist_unlisten();
+		if (rmdir(base) < 0)
+			warn("rmdir(\"%s\")", base);
+	}
 	if (suspend) {
 		DPRINTF("resuming to drain\n");
 		suspend = 0;
