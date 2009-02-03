@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.126 2009/01/29 11:21:34 michele Exp $	*/
+/*	$OpenBSD: route.c,v 1.127 2009/02/03 16:44:15 michele Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ int	rtm_addrs, s;
 int	forcehost, forcenet, Fflag, nflag, af, qflag, tflag;
 int	iflag, verbose, aflen = sizeof(struct sockaddr_in);
 int	locking, lockrest, debugonly;
+u_long	mpls_flags = 0;
 u_long	rtm_inits;
 uid_t	uid;
 u_int	tableid = 0;
@@ -390,7 +391,7 @@ newroute(int argc, char **argv)
 					errx(1, "-mplslabel requires " 
 					    "-inet or -inet6");
 				getmplslabel(*++argv, 0);
-				flags |= MPLS_OP_PUSH;
+				mpls_flags = MPLS_OP_PUSH;
 				break;
 			case K_IN:
 				if (!--argc)
@@ -409,17 +410,17 @@ newroute(int argc, char **argv)
 			case K_POP:
 				if (af != AF_MPLS)
 					errx(1, "-pop requires -mpls");
-				flags |= MPLS_OP_POP;
+				mpls_flags = MPLS_OP_POP;
 				break;
 			case K_PUSH:
 				if (af != AF_MPLS)
 					errx(1, "-push requires -mpls");
-				flags |= MPLS_OP_PUSH;
+				mpls_flags = MPLS_OP_PUSH;
 				break;
 			case K_SWAP:
 				if (af != AF_MPLS)
 					errx(1, "-swap requires -mpls");
-				flags |= MPLS_OP_SWAP;
+				mpls_flags = MPLS_OP_SWAP;
 				break;
 			case K_IFACE:
 			case K_INTERFACE:
@@ -1054,6 +1055,7 @@ rtmsg(int cmd, int flags, int fmask, u_short prio)
 	rtm.rtm_inits = rtm_inits;
 	rtm.rtm_tableid = tableid;
 	rtm.rtm_priority = prio;
+	rtm.rtm_mpls = mpls_flags;
 	rtm.rtm_hdrlen = sizeof(rtm);
 
 	if (rtm_addrs & RTA_NETMASK)
