@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsol.c,v 1.15 2008/06/10 04:49:11 reyk Exp $	*/
+/*	$OpenBSD: rtsol.c,v 1.16 2009/02/03 19:00:48 chl Exp $	*/
 /*	$KAME: rtsol.c,v 1.15 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -36,6 +36,8 @@
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include <net/if.h>
 #include <net/route.h>
