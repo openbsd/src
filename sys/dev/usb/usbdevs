@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.405 2009/01/19 10:20:05 jsg Exp $
+$OpenBSD: usbdevs,v 1.406 2009/02/03 10:53:28 kevlo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1954,6 +1954,7 @@ product MELCO PCOPRS1		0x00b3	PC-OP-RS1 RemoteStation
 product MELCO SG54HP		0x00d8	WLI-U2-SG54HP
 product MELCO G54HP		0x00d9	WLI-U2-G54HP
 product MELCO KG54L		0x00da	WLI-U2-KG54L
+product MELCO SG54HG		0x00f4	WLI-U2-SG54HG
 
 /* MetaGeek products */
 product METAGEEK WISPY		0x083e	Wi-Spy
