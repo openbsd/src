@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.20 2009/01/29 20:15:50 stsp Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.21 2009/02/03 14:02:01 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1110,8 +1110,8 @@ orig_intra_lsa_rtr(struct iface *iface_arg)
 
 			bzero(&lsa_prefix, sizeof(lsa_prefix));
 
-			if (iface->type == IF_TYPE_POINTOMULTIPOINT
-			    || iface->state == IF_STA_LOOPBACK) {
+			if (iface->type == IF_TYPE_POINTOMULTIPOINT ||
+			    iface->state == IF_STA_LOOPBACK) {
 				lsa_prefix.prefixlen = 128;
 				lsa_prefix.options = OSPF_PREFIX_LA;
 			} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.18 2009/01/29 12:16:09 stsp Exp $ */
+/*	$OpenBSD: rde.c,v 1.19 2009/02/03 14:02:01 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1319,9 +1319,9 @@ prefix_tree_add_net(struct prefix_tree *tree, struct lsa_link *lsa)
 		memcpy(&addr, new->prefix + 1,
 		    LSA_PREFIXSIZE(new->prefix->prefixlen));
 
-		if (!(IN6_IS_ADDR_LINKLOCAL(&addr))
-		    && (new->prefix->options & OSPF_PREFIX_NU) == 0
-		    && (new->prefix->options & OSPF_PREFIX_LA) == 0) {
+		if (!(IN6_IS_ADDR_LINKLOCAL(&addr)) &&
+		    (new->prefix->options & OSPF_PREFIX_NU) == 0 &&
+		    (new->prefix->options & OSPF_PREFIX_LA) == 0) {
 			old = RB_INSERT(prefix_tree, tree, new);
 			if (old != NULL) {
 				old->prefix->options |= new->prefix->options;
