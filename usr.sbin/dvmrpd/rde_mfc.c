@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_mfc.c,v 1.2 2006/12/03 20:14:37 michele Exp $ */
+/*	$OpenBSD: rde_mfc.c,v 1.3 2009/02/03 16:21:19 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Esben Norby <norby@openbsd.org>
@@ -36,6 +36,7 @@
 void	 mfc_invalidate(void);
 void	 mfc_expire_timer(int, short, void *);
 int	 mfc_start_expire_timer(struct mfc_node *);
+int	 mfc_reset_expire_timer(struct mfc_node *);
 int	 mfc_compare(struct mfc_node *, struct mfc_node *);
 
 RB_HEAD(mfc_tree, mfc_node)	 mfc;
@@ -63,9 +64,21 @@ mfc_expire_timer(int fd, short event, void *arg)
 }
 
 int
+mfc_reset_expire_timer(struct mfc_node *mn)
+{
+	struct timeval	tv;
+
+	timerclear(&tv);
+	tv.tv_sec = ROUTE_EXPIRATION_TIME;
+	return (evtimer_add(&mn->expiration_timer, &tv));
+}
+
+int
 mfc_start_expire_timer(struct mfc_node *mn)
 {
 	struct timeval	tv;
+
+	log_debug("mfc_start_expire_timer: group %s", inet_ntoa(mn->group));
 
 	timerclear(&tv);
 	tv.tv_sec = ROUTE_EXPIRATION_TIME;
@@ -169,6 +182,36 @@ mfc_dump(pid_t pid)
 
 		rde_imsg_compose_dvmrpe(IMSG_CTL_SHOW_MFC, 0, pid, &mfcctl,
 		    sizeof(mfcctl));
+	}
+}
+
+void
+mfc_update_source(struct rt_node *rn)
+{
+	struct mfc_node		*mn;
+	struct mfc		 m;
+	int			 i;
+
+	RB_FOREACH(mn, mfc_tree, &mfc) {
+		if (rn->prefix.s_addr == mn->origin.s_addr) {
+			mn->ifindex = rn->ifindex;
+
+			for (i = 0; i < MAXVIFS; i++)
+				mn->ttls[i] = rn->ttls[i];
+
+			m.origin.s_addr = mn->origin.s_addr;
+			m.group.s_addr = mn->group.s_addr;
+			m.ifindex = mn->ifindex;
+
+			for (i = 0; i < MAXVIFS; i++)
+				m.ttls[i] = mn->ttls[i];
+
+			if (mn->origin.s_addr != 0)
+				rde_imsg_compose_parent(IMSG_MFC_ADD, 0, &m,
+				    sizeof(m));
+
+			mfc_reset_expire_timer(mn);
+		}
 	}
 }
 

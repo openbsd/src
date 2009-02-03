@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.16 2009/01/25 15:24:21 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.17 2009/02/03 16:21:19 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -439,9 +439,10 @@ srt_current_forwarder(struct rt_node *rn, struct iface *iface,
 
 		adv->addr.s_addr = nbr_report;
 		adv->metric = metric;
+
+		mfc_update_source(rn);
 	}
 
-	/* XXX: update the kernel */
 }
 
 void
@@ -460,8 +461,6 @@ srt_update_ds_forwarders(struct rt_node *rn, struct iface *iface,
 			srt_set_forwarder_self(rn, ifa);
 		}
 	}
-
-	/* XXX: update the kernel */
 }
 
 void
@@ -471,7 +470,7 @@ srt_set_forwarder_self(struct rt_node *rn, struct iface *iface)
 	rn->adv_rtr[iface->ifindex].metric = rn->cost;
 	rn->ttls[iface->ifindex] = 1;
 
-	/* XXX: update the kernel */
+	mfc_update_source(rn);
 }
 
 void
@@ -481,6 +480,8 @@ srt_set_upstream(struct rt_node *rn, u_int32_t ifindex)
 		rn->ttls[rn->ifindex] = 1;
 		rn->ifindex = ifindex;
 	}
+
+	mfc_update_source(rn);
 }
 
 void
@@ -517,8 +518,8 @@ srt_delete_ds(struct rt_node *rn, struct ds_nbr *ds_nbr, struct iface *iface)
 	free(ds_nbr);
 	rn->ds_cnt[iface->ifindex]--;
 
-	/* XXX: check if there are group with this source */
-	if (!rn->ds_cnt[iface->ifindex] && group_list_empty(iface))
+	/* XXX */
+	if (!rn->ds_cnt[iface->ifindex])
 		rn->ttls[iface->ifindex] = 0;
 }
 

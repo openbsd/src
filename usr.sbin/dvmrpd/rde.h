@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.9 2009/01/20 01:35:34 todd Exp $ */
+/*	$OpenBSD: rde.h,v 1.10 2009/02/03 16:21:19 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -91,6 +91,7 @@ void		 mfc_clear(void);
 void		 mfc_dump(pid_t);
 void		 mfc_update(struct mfc *);
 void		 mfc_delete(struct mfc *);
+void		 mfc_update_source(struct rt_node *);
 
 /* rde_srt.c */
 void		 rt_init(void);
