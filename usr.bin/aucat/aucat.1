@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.45 2009/02/03 19:44:58 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.46 2009/02/04 18:44:05 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 3 2009 $
+.Dd $Mdocdate: February 4 2009 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -303,6 +303,46 @@ signed 18-bit, packed in 3 bytes, little endian
 .It u18be3
 unsigned 18-bit, packed in 3 bytes, big endian
 .El
+.Sh SERVER MODE
+.Nm
+can be used in server mode
+.Pq Fl l
+to overcome hardware limitations and allow applications
+to run on fixed sample rate devices or on devices
+supporting only unusual encodings.
+It is generally not desirable to have multiple
+instances of
+.Nm
+running in server mode,
+so it is good practice to start it thus:
+.Bd -literal -offset indent
+$ pgrep -x aucat || aucat -l
+.Ed
+.Pp
+This also ensures privacy by preventing
+other users from accessing the audio system.
+On multi-user machines
+.Nm
+should be killed when no longer in use to make audio resources
+available again to others:
+.Bd -literal -offset indent
+$ pkill -x aucat
+.Ed
+.Pp
+Certain applications, such as synthesis software,
+require a low latency audio setup.
+To reduce the probability of buffer underruns or overruns,
+the
+.Xr renice 8
+command can be used to give higher priority to
+.Nm
+process to.
+Superuser privileges are required.
+For example:
+.Bd -literal -offset indent
+$ aucat -b 3500 -l
+$ sudo renice -n -20 -p `pgrep -x aucat`
+.Ed
 .Sh LEGACY MODE
 If neither
 .Fl i
