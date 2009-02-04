@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
+/*	$OpenBSD: mem.c,v 1.31 2009/02/04 17:21:23 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -189,12 +189,16 @@ memattach(parent, self, aux)
 		sc->sc_vp = (struct vi_trs *)
 		    &((struct iomod *)ca->ca_hpa)->priv_trs;
 
+		printf(" viper rev %x,", sc->sc_vp->vi_status.hw_rev);
+
 		/* XXX other values seem to blow it up */
 		if (sc->sc_vp->vi_status.hw_rev == 0) {
 			u_int32_t vic;
 			int s, settimeout;
 
 			switch (cpu_hvers) {
+			case HPPA_BOARD_HP705:
+			case HPPA_BOARD_HP710:
 			case HPPA_BOARD_HP715_33:
 			case HPPA_BOARD_HP715S_33:
 			case HPPA_BOARD_HP715T_33:
@@ -202,8 +206,11 @@ memattach(parent, self, aux)
 			case HPPA_BOARD_HP715S_50:
 			case HPPA_BOARD_HP715T_50:
 			case HPPA_BOARD_HP715_75:
+			case HPPA_BOARD_HP720:
 			case HPPA_BOARD_HP725_50:
 			case HPPA_BOARD_HP725_75:
+			case HPPA_BOARD_HP730_66:
+			case HPPA_BOARD_HP750_66:
 				settimeout = 1;
 				break;
 			default:
@@ -213,7 +220,6 @@ memattach(parent, self, aux)
 			if (sc->sc_dev.dv_cfdata->cf_flags & 1)
 				settimeout = !settimeout;
 
-			printf(" viper rev %x,", sc->sc_vp->vi_status.hw_rev);
 #ifdef DEBUG
 			printf(" ctrl %b", VI_CTRL, VI_CTRL_BITS);
 #endif
@@ -236,8 +242,9 @@ memattach(parent, self, aux)
 #ifdef DEBUG
 			printf (" >> %b,", vic, VI_CTRL_BITS);
 #endif
-		} else
-			sc->sc_vp = NULL;
+		} else {
+			/* set at least VI_CTRL_EISA_DEN ? */
+		}
 	} else
 		sc->sc_vp = NULL;
 
