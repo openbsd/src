@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.55 2009/02/03 19:44:58 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.56 2009/02/04 08:00:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -556,6 +556,10 @@ main(int argc, char **argv)
 		listen_new(&listen_ops, path, &fa->opar, &fa->ipar,
 		    MIDI_TO_ADATA(fa->vol));
 		free(fa);
+	}
+	if (l_flag && debug_level == 0) {
+		if (daemon(0, 0) < 0)
+			err(1, "daemon");
 	}
 
 	/*
