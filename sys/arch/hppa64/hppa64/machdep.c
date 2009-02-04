@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.12 2008/06/27 17:22:14 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.13 2009/02/04 17:19:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -395,8 +395,9 @@ cpu_startup(void)
 	 * join me in this one love dream
 	 */
 	printf("%s%s\n", version, cpu_model);
-	printf("real mem = %u (%u reserved for PROM, %u used by OpenBSD)\n",
-	    ptoa(physmem), ptoa(resvmem), ptoa(resvphysmem - resvmem));
+	printf("real mem = %lu (%luMB)\n", ptoa((psize_t)physmem),
+	    ptoa((psize_t)phsymem) / 1024 / 1024);
+	printf("rsvd mem = %u (%uKB)\n", ptoa(resvmem), ptoa(resvmem) / 1024);
 
 	/*
 	 * Determine how many buffers to allocate.
@@ -428,7 +429,8 @@ printf("here4\n");
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 printf("here5\n");
-	printf("avail mem = %lu\n", ptoa(uvmexp.free));
+	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free) / 1024 / 1024);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

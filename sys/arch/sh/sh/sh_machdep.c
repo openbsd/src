@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.22 2008/12/30 05:33:17 miod Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.23 2009/02/04 17:19:17 miod Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -279,7 +279,8 @@ sh_startup()
 	    sh_vector_interrupt_end - sh_vector_interrupt);
 #endif /* DEBUG */
 
-	printf("real mem = %u (%uK)\n", ptoa(physmem), ptoa(physmem) / 1024);
+	printf("real mem = %u (%uMB)\n", ptoa(physmem),
+	    ptoa(physmem) / 1024 / 1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -325,8 +326,8 @@ sh_startup()
 	 */
 	bufinit();
 
-	printf("avail mem = %u (%uK)\n", ptoa(uvmexp.free),
-	    ptoa(uvmexp.free) / 1024);
+	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free) / 1024 / 1024);
 
 	if (boothowto & RB_CONFIG) {
 #ifdef BOOT_CONFIG

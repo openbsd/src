@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.59 2008/12/30 05:33:17 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.60 2009/02/04 17:19:17 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -385,7 +385,8 @@ cpu_startup()
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem  = %d\n", ptoa(physmem));
+	printf("real mem = %u (%uMB)\n", ptoa(physmem),
+	    ptoa(physmem) / 1024 / 1024);
 
 	/*
 	 * Check front DIP switch setting
@@ -489,7 +490,8 @@ cpu_startup()
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
-	printf("avail mem = %ld (%d pages)\n", ptoa(uvmexp.free), uvmexp.free);
+	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free) / 1024 / 1024);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

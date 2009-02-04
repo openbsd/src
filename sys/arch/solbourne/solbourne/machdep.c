@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.7 2008/05/03 20:18:24 martin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.8 2009/02/04 17:19:17 miod Exp $	*/
 /*	OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp 	*/
 
 /*
@@ -168,7 +168,8 @@ cpu_startup()
 	 */
 	printf(version);
 	/*identifycpu();*/
-	printf("real mem = %d\n", ptoa(physmem));
+	printf("real mem = %d (%dMB)\n", ptoa(physmem),
+	    ptoa(physmem) / 1024 / 1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -230,7 +231,8 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
+	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free) / 1024 / 1024);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
