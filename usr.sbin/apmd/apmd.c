@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.50 2009/02/03 01:52:49 tedu Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.51 2009/02/04 05:22:58 tedu Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -68,8 +68,8 @@ int doperf = PERF_NONE;
 #define PERFINCTHRES 10
 #define PERFDECTHRES 30
 #define PERFTIMEOUTERR 999999999
-#define PERFTIMEOUTFAST 10000
-#define PERFTIMEOUTSLOW 25000
+#define PERFTIMEOUTFAST 10000000
+#define PERFTIMEOUTSLOW 25000000
 
 extern char *__progname;
 
