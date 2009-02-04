@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.12 2009/01/10 20:34:44 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.13 2009/02/04 07:54:00 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -364,6 +364,10 @@ sio_open_sun(char *path, unsigned mode, int nbio)
 			continue;
 		DPERROR(&hdl->sa, path);
 		goto bad_free;
+	}
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
+		DPERROR(&hdl->sa, "FD_CLOEXEC");
+		goto bad_close;
 	}
 	hdl->fd = fd;
 

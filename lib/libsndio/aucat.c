@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.12 2009/02/03 19:44:58 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.13 2009/02/04 07:54:00 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -101,6 +101,10 @@ sio_open_aucat(char *path, unsigned mode, int nbio)
 	while (connect(s, (struct sockaddr *)&ca, len) < 0) {
 		if (errno == EINTR)
 			continue;
+		goto bad_connect;
+	}
+	if (fcntl(s, F_SETFD, FD_CLOEXEC) < 0) {
+		DPERROR(&hdl->sa, "FD_CLOEXEC");
 		goto bad_connect;
 	}
 	hdl->fd = s;
