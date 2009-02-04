@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.116 2008/10/02 20:12:08 kurt Exp $ */
+/*	$OpenBSD: loader.c,v 1.117 2009/02/04 19:44:51 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -44,6 +44,8 @@
 #include "sod.h"
 #include "stdlib.h"
 #include "dl_prebind.h"
+
+#include "../../lib/csu/common_elf/os-note-elf.h"
 
 /*
  * Local decls.
