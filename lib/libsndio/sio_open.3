@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.17 2009/02/04 18:47:42 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.18 2009/02/04 21:39:09 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -104,9 +104,9 @@ If that fails, it then tries to use the
 hardware device.
 The
 .Ar name
-parameter gives the path of the
+parameter gives the name of the
 .Xr aucat 1
-socket or the
+socket or the path of the
 .Xr audio 4
 device.
 In most cases it should be set to NULL to allow
@@ -725,9 +725,9 @@ functions return the number of bytes transferred.
 .Sh ENVIRONMENT
 .Bl -tag -width "AUDIODEVICEXXX" -compact
 .It Ev AUDIODEVICE
-Path to the
+Name of the
 .Xr aucat 1
-socket to connect to, or the
+socket to connect to, or path to the
 .Xr audio 4
 device to use.
 .It Ev SIO_DEBUG
@@ -735,8 +735,8 @@ The debug level:
 may be a value between 0 and 2.
 .El
 .Sh FILES
-.Bl -tag -width "/tmp/aucat.sockXXX" -compact
-.It Pa /tmp/aucat.sock
+.Bl -tag -width "/tmp/aucat-<uid>/default" -compact
+.It Pa /tmp/aucat-<uid>/default
 Default path to
 .Xr aucat 1
 socket to connect to.
