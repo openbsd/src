@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbeginS.c,v 1.8 2007/09/03 14:40:16 millert Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.9 2009/02/04 19:43:48 kettenis Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -41,7 +41,9 @@
 
  */
 #include <stdlib.h>
+
 #include "md_init.h"
+#include "os-note-elf.h"
 #include "extern.h"
 
 /*
