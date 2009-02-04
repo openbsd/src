@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.100 2007/09/15 14:55:30 krw Exp $	*/
+/*	$OpenBSD: trap.c,v 1.101 2009/02/04 17:23:18 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -52,8 +52,9 @@
 #endif
 #endif
 
+int	pcxs_unaligned(u_int opcode, vaddr_t va);
 #ifdef PTRACE
-void ss_clear_breakpoints(struct proc *p);
+void	ss_clear_breakpoints(struct proc *p);
 #endif
 
 /* single-step breakpoint */
@@ -259,7 +260,7 @@ trap(type, frame)
 			return;
 		}
 #else
-		if (type == T_DATALIGN)
+		if (type == T_DATALIGN || type == T_DPROT)
 			panic ("trap: %s at 0x%x", tts, va);
 		else
 			panic ("trap: no debugger for \"%s\" (%d)", tts, type);
@@ -362,8 +363,21 @@ trap(type, frame)
 		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
 		break;
 
-	case T_IPROT | T_USER:
+	/*
+	 * On PCXS processors, traps T_DATACC, T_DATAPID and T_DATALIGN
+	 * are shared.  We need to sort out the unaligned access situation
+	 * first, before handling this trap as T_DATACC.
+	 */
 	case T_DPROT | T_USER:
+		if (cpu_type == hpcxs) {
+			if (pcxs_unaligned(opcode, va))
+				goto datalign_user;
+			else
+				goto datacc;
+		}
+		/* FALLTHROUGH */
+
+	case T_IPROT | T_USER:
 		sv.sival_int = va;
 		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
 		break;
@@ -414,6 +428,7 @@ trap(type, frame)
 	case T_TLB_DIRTY | T_USER:
 	case T_DATACC:
 	case T_DATACC | T_USER:
+datacc:
 		fault = VM_FAULT_PROTECT;
 	case T_ITLBMISS:
 	case T_ITLBMISS | T_USER:
@@ -485,6 +500,7 @@ trap(type, frame)
 		break;
 
 	case T_DATALIGN | T_USER:
+datalign_user:
 		sv.sival_int = va;
 		trapsignal(p, SIGBUS, vftype, BUS_ADRALN, sv);
 		break;
@@ -513,8 +529,21 @@ trap(type, frame)
 		}
 		/* FALLTHROUGH */
 
-	case T_LOWERPL:
+	/*
+	 * On PCXS processors, traps T_DATACC, T_DATAPID and T_DATALIGN
+	 * are shared.  We need to sort out the unaligned access situation
+	 * first, before handling this trap as T_DATACC.
+	 */
 	case T_DPROT:
+		if (cpu_type == hpcxs) {
+			if (pcxs_unaligned(opcode, va))
+				goto dead_end;
+			else
+				goto datacc;
+		}
+		/* FALLTHROUGH to unimplemented */
+
+	case T_LOWERPL:
 	case T_IPROT:
 	case T_OVERFLOW:
 	case T_HIGHERPL:
@@ -524,9 +553,6 @@ trap(type, frame)
 	case T_PAGEREF:
 	case T_DATAPID:
 	case T_DATAPID | T_USER:
-		if (0 /* T-chip */) {
-			break;
-		}
 		/* FALLTHROUGH to unimplemented */
 	default:
 #if 0
@@ -831,4 +857,80 @@ syscall(struct trapframe *frame)
 	}
 #endif
 	splx(cpl);	/* process softints */
+}
+
+/*
+ * Decide if opcode `opcode' accessing virtual address `va' caused an
+ * unaligned trap. Returns zero if the access is correctly aligned.
+ * Used on PCXS processors to sort out exception causes.
+ */
+int
+pcxs_unaligned(u_int opcode, vaddr_t va)
+{
+	u_int mbz_bits;
+
+	/*
+	 * Exit early if the va is obviously aligned enough.
+	 */
+	if ((va & 0x0f) == 0)
+		return 0;
+
+	mbz_bits = 0;
+
+	/*
+	 * Only load and store instructions can cause unaligned access.
+	 * There are three opcode patterns to look for:
+	 * - canonical load/store
+	 * - load/store short or indexed
+	 * - coprocessor load/store
+	 */
+
+	if ((opcode & 0xd0000000) == 0x40000000) {
+		switch ((opcode >> 26) & 0x03) {
+		case 0x00:	/* ldb, stb */
+			mbz_bits = 0x00;
+			break;
+		case 0x01:	/* ldh, sth */
+			mbz_bits = 0x01;
+			break;
+		case 0x02:	/* ldw, stw */
+		case 0x03:	/* ldwm, stwm */
+			mbz_bits = 0x03;
+			break;
+		}
+	} else
+
+	if ((opcode & 0xfc000000) == 0x0c000000) {
+		switch ((opcode >> 6) & 0x0f) {
+		case 0x01:	/* ldhx, ldhs */
+			mbz_bits = 0x01;
+			break;
+		case 0x02:	/* ldwx, ldws */
+			mbz_bits = 0x03;
+			break;
+		case 0x07:	/* ldcwx, ldcws */
+			mbz_bits = 0x0f;
+			break;
+		case 0x09:
+			if ((opcode & (1 << 12)) != 0)	/* sths */
+				mbz_bits = 0x01;
+			break;
+		case 0x0a:
+			if ((opcode & (1 << 12)) != 0)	/* stws */
+				mbz_bits = 0x03;
+			break;
+		}
+	} else
+
+	if ((opcode & 0xf4000000) == 0x24000000) {
+		if ((opcode & (1 << 27)) != 0) {
+			/* cldwx, cstwx, cldws, cstws */
+			mbz_bits = 0x03;
+		} else {
+			/* clddx, cstdx, cldds, cstds */
+			mbz_bits = 0x07;
+		}
+	}
+
+	return (va & mbz_bits);
 }
