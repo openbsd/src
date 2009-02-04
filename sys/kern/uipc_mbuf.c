@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.116 2009/01/27 09:17:51 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.117 2009/02/04 20:02:11 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -712,9 +712,8 @@ m_copydata(struct mbuf *m, int off, int len, caddr_t cp)
 void
 m_copyback(struct mbuf *m0, int off, int len, const void *_cp)
 {
-	int mlen;
+	int mlen, totlen = 0;
 	struct mbuf *m = m0, *n;
-	int totlen = 0;
 	caddr_t cp = (caddr_t)_cp;
 
 	if (m0 == NULL)
@@ -723,34 +722,56 @@ m_copyback(struct mbuf *m0, int off, int len, const void *_cp)
 		off -= mlen;
 		totlen += mlen;
 		if (m->m_next == NULL) {
-			n = m_getclr(M_DONTWAIT, m->m_type);
-			if (n == NULL)
+			if ((n = m_get(M_DONTWAIT, m->m_type)) == NULL)
 				goto out;
-			n->m_len = min(MLEN, len + off);
+
+			if (off + len > MLEN) {
+				MCLGETI(n, M_DONTWAIT, NULL, off + len);
+				if (!(n->m_flags & M_EXT)) {
+					m_free(n);
+					goto out;
+				}
+			}
+			bzero(mtod(n, caddr_t), off);
+			n->m_len = len + off;
 			m->m_next = n;
 		}
 		m = m->m_next;
 	}
 	while (len > 0) {
-		mlen = min (m->m_len - off, len);
-		bcopy(cp, off + mtod(m, caddr_t), (unsigned)mlen);
+		if (M_READONLY(m))
+			panic("m_copyback called on a readonly cluster");
+		/* extend last packet to be filled fully */
+		if (m->m_next == NULL && (len > m->m_len - off))
+			m->m_len += min(len - (m->m_len - off),
+			    M_TRAILINGSPACE(m));
+		mlen = min(m->m_len - off, len);
+		bcopy(cp, mtod(m, caddr_t) + off, (size_t)mlen);
 		cp += mlen;
 		len -= mlen;
-		mlen += off;
-		off = 0;
-		totlen += mlen;
+		totlen += mlen + off;
 		if (len == 0)
 			break;
+		off = 0;
+
 		if (m->m_next == NULL) {
-			n = m_get(M_DONTWAIT, m->m_type);
-			if (n == NULL)
-				break;
-			n->m_len = min(MLEN, len);
+			if ((n = m_get(M_DONTWAIT, m->m_type)) == NULL)
+				goto out;
+
+			if (len > MLEN) {
+				MCLGETI(n, M_DONTWAIT, NULL, len);
+				if (!(n->m_flags & M_EXT)) {
+					m_free(n);
+					goto out;
+				}
+			}
+			n->m_len = len;
 			m->m_next = n;
 		}
 		m = m->m_next;
 	}
-out:	if (((m = m0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
+out:
+	if (((m = m0)->m_flags & M_PKTHDR) && (m->m_pkthdr.len < totlen))
 		m->m_pkthdr.len = totlen;
 }
 
