@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.62 2008/11/28 02:44:17 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.63 2009/02/04 19:54:44 claudio Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -677,21 +677,18 @@ rl_rxeof(sc)
 
 		if (total_len > wrap) {
 			m = m_devget(rxbufpos, wrap, ETHER_ALIGN, ifp, NULL);
-			if (m == NULL)
-				ifp->if_ierrors++;
-			else {
+			if (m != NULL) {
 				m_copyback(m, wrap, total_len - wrap,
 				    sc->rl_cdata.rl_rx_buf);
-				m = m_pullup(m, sizeof(struct ip));
-				if (m == NULL)
-					ifp->if_ierrors++;
+				if (m->m_pkthdr.len < total_len) {
+					m_freem(m);
+					m = NULL;
+				}
 			}
 			cur_rx = (total_len - wrap + ETHER_CRC_LEN);
 		} else {
 			m = m_devget(rxbufpos, total_len, ETHER_ALIGN, ifp,
 			    NULL);
-			if (m == NULL)
-				ifp->if_ierrors++;
 			cur_rx += total_len + 4 + ETHER_CRC_LEN;
 		}
 
@@ -705,6 +702,7 @@ rl_rxeof(sc)
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_rx_dmamap,
 			    0, sc->sc_rx_dmamap->dm_mapsize,
 			    BUS_DMASYNC_PREREAD);
+			ifp->if_ierrors++;
 			continue;
 		}
 
