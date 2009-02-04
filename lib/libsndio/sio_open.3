@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.16 2009/01/21 22:36:50 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.17 2009/02/04 18:47:42 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2009 $
+.Dd $Mdocdate: February 4 2009 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -267,8 +267,10 @@ the
 function must be called.
 Finally, the
 .Fn sio_getpar
-function can be used to ensure that parameters were actually
+function should be used to ensure that parameters were actually
 accepted.
+Sometimes the rate set can be slightly different to what was requested.
+A difference of about 0.5% is not audible and should be ignored.
 .El
 .Pp
 If
