@@ -1,7 +1,7 @@
-dnl	$OpenBSD: hardware,v 1.37 2008/08/06 18:23:56 miod Exp $
+dnl	$OpenBSD: hardware,v 1.38 2009/02/04 17:24:23 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
-dnl - PA7000-based
-dnl	705, 710, 720, 730, 750
+- PA7000-based
+	705, 710, 720, 730, 750
 - PA7100-based
 	715/33, 715/50, 715/75
 	725/50, 725/75
