@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.10 2009/01/23 17:38:15 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.11 2009/02/04 20:35:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -68,9 +68,10 @@ file_new(struct fileops *ops, char *name, unsigned nfds)
 
 	LIST_FOREACH(f, &file_list, entry)
 		nfds += f->ops->nfds(f);
-	if (nfds > MAXFDS)
-		err(1, "%s: too many polled files", name);
-
+	if (nfds > MAXFDS) {
+		DPRINTF("file_new: %s: too many polled files\n", name);
+		return NULL;
+	}
 	f = malloc(ops->size);
 	if (f == NULL)
 		err(1, "file_new: %s", ops->name);

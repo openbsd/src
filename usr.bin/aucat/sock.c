@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.12 2009/01/23 17:38:15 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.13 2009/02/04 20:35:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -273,6 +273,8 @@ sock_new(struct fileops *ops, int fd, char *name,
 	struct sock *f;
 
 	f = (struct sock *)pipe_new(ops, fd, name);
+	if (f == NULL)
+		return NULL;
 	f->pstate = SOCK_INIT;
 	f->mode = 0;
 	if (dev_rec) {

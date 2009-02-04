@@ -1,4 +1,4 @@
-/*	$OpenBSD: listen.c,v 1.7 2009/02/03 19:44:58 ratchov Exp $	*/
+/*	$OpenBSD: listen.c,v 1.8 2009/02/04 20:35:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -56,11 +56,11 @@ listen_new(struct fileops *ops, char *path,
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0) {
 		perror("socket");
-		exit(1);
+		return NULL;
 	}
 	if (unlink(path) < 0 && errno != ENOENT) {
 		perror("unlink");
-		exit(1);
+		goto bad_close;
 	}
 	sockname.sun_family = AF_UNIX;
 	strlcpy(sockname.sun_path, path, sizeof(sockname.sun_path));
@@ -68,14 +68,16 @@ listen_new(struct fileops *ops, char *path,
 	if (bind(sock, (struct sockaddr *)&sockname,
 		sizeof(struct sockaddr_un)) < 0) {
 		perror("bind");
-		exit(1);
+		goto bad_close;
 	}
 	umask(oldumask);
 	if (listen(sock, 1) < 0) {
 		perror("listen");
-		exit(1);
+		goto bad_close;
 	}
 	f = (struct listen *)file_new(ops, path, 1);
+	if (f == NULL)
+		goto bad_close;
 	f->path = strdup(path);
 	if (f->path == NULL) {
 		perror("strdup");
@@ -95,6 +97,9 @@ listen_new(struct fileops *ops, char *path,
 	}
 #endif
 	return f;
+ bad_close:
+	close(sock);
+	return NULL;
 }
 
 int
@@ -133,8 +138,11 @@ listen_revents(struct file *file, struct pollfd *pfd)
 			close(sock);
 			return 0;
 		}
-		(void)sock_new(&sock_ops, sock, "socket",
-		    &f->wpar, &f->rpar, f->maxweight);
+		if (sock_new(&sock_ops, sock, "socket",
+			&f->wpar, &f->rpar, f->maxweight) == NULL) {
+			close(sock);
+			return 0;
+		}
 	}
 	return 0;
 }

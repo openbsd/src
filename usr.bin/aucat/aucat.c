@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.56 2009/02/04 08:00:33 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.57 2009/02/04 20:35:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -267,6 +267,11 @@ newinput(struct farg *fa)
 	 * XXX : we should round rate, right ?
 	 */
 	f = wav_new_in(&wav_ops, fd, fa->name, &fa->ipar, fa->hdr);
+	if (f == NULL) {
+		if (fd != STDIN_FILENO)
+			close(fd);
+		return;
+	}
 	nfr = dev_bufsz * fa->ipar.rate / dev_rate;
 	buf = abuf_new(nfr, &fa->ipar);
 	proc = rpipe_new((struct file *)f);
@@ -304,6 +309,11 @@ newoutput(struct farg *fa)
 	 * XXX : we should round rate, right ?
 	 */
 	f = wav_new_out(&wav_ops, fd, fa->name, &fa->opar, fa->hdr);
+	if (f == NULL) {
+		if (fd != STDOUT_FILENO)
+			close(fd);
+		return;
+	}
 	nfr = dev_bufsz * fa->opar.rate / dev_rate;
 	proc = wpipe_new((struct file *)f);
 	buf = abuf_new(nfr, &fa->opar);

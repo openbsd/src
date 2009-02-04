@@ -35,6 +35,8 @@ wav_new_in(struct fileops *ops, int fd, char *name,
 	struct wav *f;
 
 	f = (struct wav *)pipe_new(ops, fd, name);
+	if (f == NULL)
+		return NULL;
 	if (hdr == HDR_WAV) {
 		if (!wav_readhdr(f->pipe.fd, par, &f->rbytes))
 			exit(1);
@@ -52,6 +54,8 @@ wav_new_out(struct fileops *ops, int fd, char *name,
 	struct wav *f;
 
 	f = (struct wav *)pipe_new(ops, fd, name);
+	if (f == NULL)
+		return NULL;
 	if (hdr == HDR_WAV) {
 		par->le = 1;
 		par->sig = (par->bits <= 8) ? 0 : 1;

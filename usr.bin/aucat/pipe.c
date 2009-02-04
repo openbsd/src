@@ -30,6 +30,8 @@ pipe_new(struct fileops *ops, int fd, char *name)
 	struct pipe *f;
 
 	f = (struct pipe *)file_new(ops, name, 1);
+	if (f == NULL)
+		return NULL;
 	f->fd = fd;
 	return f;
 }

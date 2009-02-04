@@ -1,4 +1,4 @@
-/*	$OpenBSD: safile.c,v 1.10 2009/01/23 17:38:15 ratchov Exp $	*/
+/*	$OpenBSD: safile.c,v 1.11 2009/02/04 20:35:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -128,9 +128,9 @@ safile_new(struct fileops *ops, char *path,
 	par.appbufsz = *bufsz;
 	par.round = *round;
 	if (!sio_setpar(hdl, &par))
-		return 0;
+		goto bad_close;
 	if (!sio_getpar(hdl, &par))
-		return 0;
+		goto bad_close;
 	if (ipar) {
 		ipar->bits = par.bits;
 		ipar->bps = par.bps;
@@ -153,9 +153,14 @@ safile_new(struct fileops *ops, char *path,
 	*round = par.round;
 	DPRINTF("safile_new: using %u(%u) fpb\n", *bufsz, *round);
 	f = (struct safile *)file_new(ops, "hdl", sio_nfds(hdl));
+	if (f == NULL)
+		goto bad_close;
 	f->hdl = hdl;
 	sio_onmove(f->hdl, safile_cb, f);
 	return f;
+ bad_close:
+	sio_close(hdl);
+	return NULL;
 }
 
 void
