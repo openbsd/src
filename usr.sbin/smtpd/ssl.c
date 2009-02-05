@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.9 2009/01/30 21:52:55 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.10 2009/02/05 21:25:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -594,6 +594,13 @@ ssl_client_init(struct session *s)
 void
 ssl_session_destroy(struct session *s)
 {
+	SSL_free(s->s_ssl);
+
+	if (s->s_l == NULL) {
+		/* called from mta */
+		return;
+	}
+
 	if (s->s_l->flags & F_SSMTP) {
 		if (s->s_flags & F_SECURE)
 			s_smtp.ssmtp_active--;
@@ -602,5 +609,4 @@ ssl_session_destroy(struct session *s)
 		if (s->s_flags & F_SECURE)
 			s_smtp.starttls_active--;
 	}
-	SSL_free(s->s_ssl);
 }
