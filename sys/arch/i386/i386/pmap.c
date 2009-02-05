@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.135 2009/01/27 22:14:13 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.136 2009/02/05 01:13:21 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2591,6 +2591,8 @@ enter_now:
 	pmap_exec_account(pmap, va, opte, npte);
 	if (wired)
 		npte |= PG_W;
+	if (flags & PMAP_NOCACHE)
+		npte |= PG_N;
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PG_u;
 	else if (va < VM_MAX_ADDRESS)

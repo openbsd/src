@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.2 2008/12/04 19:25:38 oga Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.3 2009/02/05 01:13:21 oga Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -368,7 +368,10 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 {
 	vaddr_t va;
 	bus_addr_t addr;
-	int curseg;
+	int curseg, pmapflags;
+
+	if (flags & BUS_DMA_NOCACHE)
+		pmapflags |= PMAP_NOCACHE;
 
 	size = round_page(size);
 	va = uvm_km_valloc(kernel_map, size);
@@ -385,7 +388,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED |
+			    pmapflags);
 		}
 	}
 	pmap_update(pmap_kernel());
