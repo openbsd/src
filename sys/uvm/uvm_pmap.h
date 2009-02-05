@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmap.h,v 1.19 2007/09/10 18:49:45 miod Exp $	*/
+/*	$OpenBSD: uvm_pmap.h,v 1.20 2009/02/05 01:10:44 oga Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
@@ -92,6 +92,10 @@ typedef struct pmap_statistics	*pmap_statistics_t;
  */
 #define	PMAP_WIRED	0x00000010	/* wired mapping */
 #define	PMAP_CANFAIL	0x00000020	/* can fail if resource shortage */
+#define	PMAP_MD0	0x00000040	/* Machine dependant */
+#define	PMAP_MD1	0x00000080	/* Machine dependant */
+#define	PMAP_MD2	0x00000100	/* Machine dependant */
+#define	PMAP_MD3	0x00000200	/* Machine dependant */
 
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL
