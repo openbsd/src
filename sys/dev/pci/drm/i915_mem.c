@@ -105,7 +105,6 @@ i915_mem_release(struct drm_device * dev, struct drm_file *file_priv,
 
 	/* Coalesce the entries.  ugh... */
 	for (p = TAILQ_FIRST(heap); p != TAILQ_END(heap); p = q) {
-		q = p;
 		while (p->file_priv == NULL &&
 		    (q = TAILQ_NEXT(p, link)) != TAILQ_END(heap) &&
 		    q->file_priv == NULL) {
@@ -113,6 +112,7 @@ i915_mem_release(struct drm_device * dev, struct drm_file *file_priv,
 			TAILQ_REMOVE(heap, q, link);
 			drm_free(q, sizeof(*q), DRM_MEM_DRIVER);
 		}
+		q = TAILQ_NEXT(p, link);
 	}
 }
 
