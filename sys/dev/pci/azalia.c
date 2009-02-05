@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.115 2009/01/16 23:12:28 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.116 2009/02/05 01:25:21 oga Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -54,9 +54,6 @@
 #include <dev/pci/azalia.h>
 
 typedef struct audio_params audio_params_t;
-#ifndef BUS_DMA_NOCACHE
-#define	BUS_DMA_NOCACHE 0
-#endif
 
 struct audio_format {
 	void *driver_data;
@@ -1109,7 +1106,7 @@ azalia_alloc_dmamem(azalia_t *az, size_t size, size_t align, azalia_dma_t *d)
 	if (nsegs != 1)
 		goto free;
 	err = bus_dmamem_map(az->dmat, d->segments, 1, size,
-	    &d->addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
+	    &d->addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (err)
 		goto free;
 	err = bus_dmamap_create(az->dmat, size, 1, size, 0,
