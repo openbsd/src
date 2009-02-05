@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.82 2009/01/26 19:18:52 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.83 2009/02/05 17:10:49 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -2447,6 +2447,7 @@ wpi_set_pslevel(struct wpi_softc *sc, int dtim, int level, int async)
 		skip_dtim = pmgt->skip_dtim;
 	if (skip_dtim != 0) {
 		cmd.flags |= htole16(WPI_PS_SLEEP_OVER_DTIM);
+		max = pmgt->intval[4];
 		if (max == (uint32_t)-1)
 			max = dtim * (skip_dtim + 1);
 		else if (max > dtim)
