@@ -40,7 +40,7 @@ struct drm_heap *radeon_get_heap(drm_radeon_private_t *, int);
 void
 radeon_mem_release(struct drm_file *file_priv, struct drm_heap *heap)
 {
-	struct drm_mem *p, *q;
+	struct drm_mem	*p, *q;
 
 	if (heap == NULL || TAILQ_EMPTY(heap))
 		return;
@@ -68,7 +68,7 @@ radeon_mem_release(struct drm_file *file_priv, struct drm_heap *heap)
 void
 radeon_mem_takedown(struct drm_heap *heap)
 {
-	struct drm_mem *p;
+	struct drm_mem	*p;
 
 	if (heap == NULL)
 		return;
@@ -86,11 +86,11 @@ radeon_get_heap(drm_radeon_private_t * dev_priv, int region)
 {
 	switch (region) {
 	case RADEON_MEM_REGION_GART:
-		return &dev_priv->gart_heap;
+		return (&dev_priv->gart_heap);
 	case RADEON_MEM_REGION_FB:
-		return &dev_priv->fb_heap;
+		return (&dev_priv->fb_heap);
 	default:
-		return NULL;
+		return (NULL);
 	}
 }
 
@@ -99,19 +99,20 @@ radeon_mem_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_radeon_private_t	*dev_priv = dev->dev_private;
 	drm_radeon_mem_alloc_t	*alloc = data;
-	struct drm_heap	*heap;
-	struct drm_mem	*block; 
+	struct drm_heap		*heap;
+	struct drm_mem		*block; 
 
-	if (!dev_priv) {
+	if (dev_priv == NULL) {
 		DRM_ERROR("called with no initialization\n");
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	heap = radeon_get_heap(dev_priv, alloc->region);
 	if (heap == NULL)
-		return EFAULT;
+		return (EFAULT);
 
-	/* Make things easier on ourselves: all allocations at least
+	/*
+	 * Make things easier on ourselves: all allocations at least
 	 * 4k aligned.
 	 */
 	if (alloc->alignment < 12)
@@ -120,10 +121,10 @@ radeon_mem_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	block = drm_alloc_block(heap, alloc->size, alloc->alignment, file_priv);
 
 	if (block == NULL)
-		return ENOMEM;
+		return (ENOMEM);
 
 	if (DRM_COPY_TO_USER(alloc->region_offset, &block->start, sizeof(int)))
-		return EFAULT;
+		return (EFAULT);
 
 	return 0;
 }
@@ -131,51 +132,48 @@ radeon_mem_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
 int
 radeon_mem_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_radeon_private_t *dev_priv = dev->dev_private;
-	drm_radeon_mem_free_t *memfree = data;
-	struct drm_heap	*heap;
-	struct drm_mem *block;
+	drm_radeon_private_t	*dev_priv = dev->dev_private;
+	drm_radeon_mem_free_t	*memfree = data;
+	struct drm_heap		*heap;
+	struct drm_mem		*block;
 
-	if (!dev_priv) {
+	if (dev_priv == NULL) {
 		DRM_ERROR("called with no initialization\n");
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	heap = radeon_get_heap(dev_priv, memfree->region);
 	if (heap == NULL)
-		return EFAULT;
+		return (EFAULT);
 
 	block = drm_find_block(heap, memfree->region_offset);
 	if (block == NULL)
-		return EFAULT;
+		return (EFAULT);
 
 	if (block->file_priv != file_priv)
-		return EPERM;
+		return (EPERM);
 
 	drm_free_block(heap, block);
-	return 0;
+	return (0);
 }
 
 int
 radeon_mem_init_heap(struct drm_device *dev, void *data,
     struct drm_file *file_priv)
 {
-	drm_radeon_private_t *dev_priv = dev->dev_private;
-	drm_radeon_mem_init_heap_t *initheap = data;
-	struct drm_heap *heap;
+	drm_radeon_private_t		*dev_priv = dev->dev_private;
+	drm_radeon_mem_init_heap_t	*initheap = data;
+	struct drm_heap			*heap;
 
-	if (!dev_priv) {
+	if (dev_priv == NULL) {
 		DRM_ERROR("called with no initialization\n");
-		return EINVAL;
+		return (EINVAL);
 	}
-
-	DRM_ERROR("region: %d start: %d size: %d\n", initheap->region,
-	    initheap->start, initheap->size);
 
 	/* Make sure it's valid and initialised */
 	heap = radeon_get_heap(dev_priv, initheap->region);
 	if (heap == NULL || !TAILQ_EMPTY(heap))
-		return EFAULT;
+                return (EFAULT);
 
-	return drm_init_heap(heap, initheap->start, initheap->size);
+	return (drm_init_heap(heap, initheap->start, initheap->size));
 }
