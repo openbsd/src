@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 2008/12/18 14:18:29 kurt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.36 2009/02/05 01:15:20 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2170,6 +2170,8 @@ enter_now:
 		npte |= PG_PVLIST;
 	if (wired)
 		npte |= PG_W;
+	if (flags & PMAP_NOCACHE)
+		npte |= PG_N;
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PG_u;
 	else if (va < VM_MAX_ADDRESS)

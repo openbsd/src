@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.19 2008/06/10 02:55:39 weingart Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.20 2009/02/05 01:15:20 oga Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -331,6 +331,11 @@ struct pmap {
 	int pm_ldt_sel;			/* LDT selector */
 	u_int32_t pm_cpus;		/* mask of CPUs using pmap */
 };
+
+/*
+ * MD flags that we use for pmap_enter:
+ */
+#define	PMAP_NOCACHE	PMAP_MD0 /* set the non-cacheable bit. */
 
 /*
  * We keep mod/ref flags in struct vm_page->pg_flags.

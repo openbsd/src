@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.13 2008/12/03 15:46:06 oga Exp $	*/
+/*	$OpenBSD: bus.h,v 1.14 2009/02/05 01:15:20 oga Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -445,6 +445,7 @@ void	bus_space_barrier(bus_space_tag_t, bus_space_handle_t,
 #define	BUS_DMA_STREAMING	0x100	/* hint: sequential, unidirectional */
 #define	BUS_DMA_READ		0x200	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x400	/* mapping is memory -> device only */
+#define	BUS_DMA_NOCACHE		0x800	/* map memory uncached */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

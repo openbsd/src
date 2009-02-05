@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.13 2008/12/03 15:46:06 oga Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.14 2009/02/05 01:15:20 oga Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -413,7 +413,10 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 {
 	vaddr_t va;
 	bus_addr_t addr;
-	int curseg;
+	int curseg, pmapflags = 0;
+
+	if (flags & BUS_DMA_NOCACHE)
+		pmapflags |= PMAP_NOCACHE;
 
 	size = round_page(size);
 	va = uvm_km_valloc(kernel_map, size);
@@ -430,7 +433,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED |
+			    pmapflags);
 		}
 	}
 	pmap_update(pmap_kernel());
