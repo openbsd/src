@@ -164,6 +164,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", pci_intr_string(pa->pa_pc, dev_priv->ih));
 
 	mtx_init(&dev_priv->user_irq_lock, IPL_BIO);
+	TAILQ_INIT(&dev_priv->agp_heap);
 
 	/* All intel chipsets need to be treated as agp, so just pass one */
 	dev_priv->drmdev = drm_attach_pci(&inteldrm_driver, pa, 1, self);

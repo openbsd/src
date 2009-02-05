@@ -68,14 +68,6 @@ typedef struct _drm_i915_ring_buffer {
 	drm_local_map_t map;
 } drm_i915_ring_buffer_t;
 
-struct mem_block {
-	struct mem_block *next;
-	struct mem_block *prev;
-	int start;
-	int size;
-	struct drm_file *file_priv; /* NULL: free, -1: heap, other: real files */
-};
-
 typedef struct drm_i915_private {
 	struct device		 dev;
 	struct device		*drmdev;
@@ -117,7 +109,7 @@ typedef struct drm_i915_private {
 
 	int tex_lru_log_granularity;
 	int allow_batchbuffer;
-	struct mem_block *agp_heap;
+	struct drm_heap agp_heap;
 	unsigned int sr01, adpa, ppcr, dvob, dvoc, lvds;
 
 	/* Register state */
@@ -274,10 +266,10 @@ extern int i915_mem_init_heap(struct drm_device *dev, void *data,
 			      struct drm_file *file_priv);
 extern int i915_mem_destroy_heap(struct drm_device *dev, void *data,
 				 struct drm_file *file_priv);
-extern void i915_mem_takedown(struct mem_block **heap);
+extern void i915_mem_takedown(struct drm_heap *heap);
 extern void i915_mem_release(struct drm_device * dev,
 			     struct drm_file *file_priv,
-			     struct mem_block *heap);
+			     struct drm_heap *heap);
 
 /* i915_suspend.c */
 extern int i915_save_state(struct drm_device *dev);

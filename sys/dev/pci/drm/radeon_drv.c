@@ -587,6 +587,9 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 	is_agp = pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
 	    NULL, NULL);
 
+	TAILQ_INIT(&dev_priv->gart_heap);
+	TAILQ_INIT(&dev_priv->fb_heap);
+
 	dev_priv->drmdev = drm_attach_pci(&radeondrm_driver, pa, is_agp, self);
 }
 

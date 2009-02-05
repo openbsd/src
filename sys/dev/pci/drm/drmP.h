@@ -417,6 +417,16 @@ struct drm_vblank {
 	int		vbl_inmodeset;	/* is the DDX currently modesetting */
 };
 
+/* Heap implementation for radeon and i915 legacy */
+TAILQ_HEAD(drm_heap, drm_mem);
+
+struct drm_mem {
+	TAILQ_ENTRY(drm_mem)	 link;
+	struct drm_file		*file_priv; /* NULL: free, other: real files */
+	int			 start;
+	int			 size;
+};
+
 /* location of GART table */
 #define DRM_ATI_GART_MAIN 1
 #define DRM_ATI_GART_FB   2
@@ -580,6 +590,15 @@ void	*drm_ioremap(struct drm_device *, drm_local_map_t *);
 void	drm_ioremapfree(drm_local_map_t *);
 int	drm_mtrr_add(unsigned long, size_t, int);
 int	drm_mtrr_del(int, unsigned long, size_t, int);
+
+/* Heap interface (DEPRECATED) */
+int	drm_init_heap(struct drm_heap *, int, int);
+struct drm_mem *
+	drm_alloc_block(struct drm_heap *, int, int, struct drm_file *);
+struct drm_mem *
+	drm_find_block(struct drm_heap *, int);
+void	drm_free_block(struct drm_heap *, struct drm_mem *);
+
 
 int	drm_ctxbitmap_init(struct drm_device *);
 void	drm_ctxbitmap_cleanup(struct drm_device *);

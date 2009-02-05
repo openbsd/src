@@ -195,14 +195,6 @@ struct drm_radeon_file {
 	int64_t		radeon_fb_delta;
 };
 
-struct mem_block {
-	struct mem_block *next;
-	struct mem_block *prev;
-	int start;
-	int size;
-	struct drm_file *file_priv; /* NULL: free, -1: heap, other: real files */
-};
-
 struct radeon_surface {
 	int refcount;
 	u32 lower;
@@ -292,8 +284,8 @@ typedef struct drm_radeon_private {
 	drm_local_map_t *ring_rptr;
 	drm_local_map_t *gart_textures;
 
-	struct mem_block *gart_heap;
-	struct mem_block *fb_heap;
+	struct drm_heap gart_heap;
+	struct drm_heap fb_heap;
 
 	/* SW interrupt */
 	atomic_t swi_emitted;
@@ -389,9 +381,8 @@ extern int radeon_do_cp_idle(drm_radeon_private_t * dev_priv);
 extern int radeon_mem_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_mem_free(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_mem_init_heap(struct drm_device *dev, void *data, struct drm_file *file_priv);
-extern void radeon_mem_takedown(struct mem_block **heap);
-extern void radeon_mem_release(struct drm_file *file_priv,
-			       struct mem_block *heap);
+extern void radeon_mem_takedown(struct drm_heap *heap);
+extern void radeon_mem_release(struct drm_file *, struct drm_heap *);
 
 				/* radeon_irq.c */
 extern void radeon_irq_set_state(struct drm_device *dev, u32 mask, int state);

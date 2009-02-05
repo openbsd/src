@@ -808,8 +808,7 @@ void i915_driver_lastclose(struct drm_device * dev)
 
 	dev_priv->sarea_priv = NULL;
 
-	if (dev_priv->agp_heap)
-		i915_mem_takedown(&(dev_priv->agp_heap));
+	i915_mem_takedown(&dev_priv->agp_heap);
 
 	i915_dma_cleanup(dev);
 }
@@ -817,5 +816,5 @@ void i915_driver_lastclose(struct drm_device * dev)
 void i915_driver_close(struct drm_device * dev, struct drm_file *file_priv)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
-	i915_mem_release(dev, file_priv, dev_priv->agp_heap);
+	i915_mem_release(dev, file_priv, &dev_priv->agp_heap);
 }
