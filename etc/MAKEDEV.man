@@ -1,7 +1,7 @@
 define(COMM,`.\"')dnl
 include(MAKEDEV.mansub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.man,v 1.5 2009/01/25 17:30:48 miod Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.man,v 1.6 2009/02/06 17:02:14 grange Exp $-})dnl
 dnl
 define(quote,{-.Dq $1
 -})dnl
@@ -49,7 +49,7 @@ show_vers()dnl <-- now that all files are included, show versions
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd esyscmd({-date +"%B %e, %Y"-})dnl
+.Dd $Mdocdate: February 6 2009 $
 .Dt MAKEDEV 8 MACHINE
 .Os
 .Sh NAME
