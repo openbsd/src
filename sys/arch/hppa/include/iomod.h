@@ -1,4 +1,4 @@
-/*	$OpenBSD: iomod.h,v 1.18 2007/10/20 16:41:45 miod Exp $	*/
+/*	$OpenBSD: iomod.h,v 1.19 2009/02/06 17:26:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -168,7 +168,7 @@ struct pagezero {
 	u_int	resv1[0x41];
 
 	/* [0x31C] Capability Flags */
-	u_int	cap_flags;		/* system capabitlities */
+	u_int	cap_flags;		/* system capabilities */
 #define	HPPA_CAP_WIDESCSI	0x00000001
 
 	/* [0x320] Keyboard Extensions */
