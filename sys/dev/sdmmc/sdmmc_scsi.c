@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.12 2009/01/21 21:54:00 grange Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.13 2009/02/06 20:16:41 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -95,7 +95,7 @@ void	sdmmc_scsi_minphys(struct buf *);
 void
 sdmmc_scsi_attach(struct sdmmc_softc *sc)
 {
-	struct scsibus_attach_args saa;
+	struct sdmmc_attach_args saa;
 	struct sdmmc_scsi_softc *scbus;
 	struct sdmmc_function *sf;
 
@@ -136,7 +136,7 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	scbus->sc_link.adapter = &scbus->sc_adapter;
 
 	bzero(&saa, sizeof(saa));
-	saa.saa_sc_link = &scbus->sc_link;
+	saa.scsi_link = &scbus->sc_link;
 
 	scbus->sc_child = config_found(&sc->sc_dev, &saa, scsiprint);
 	if (scbus->sc_child == NULL) {

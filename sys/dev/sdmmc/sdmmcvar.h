@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.14 2009/02/06 20:16:41 grange Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -180,7 +180,7 @@ struct sdmmc_softc {
  * Attach devices at the sdmmc bus.
  */
 struct sdmmc_attach_args {
-	struct scsi_link scsi_link;	/* XXX */
+	struct scsi_link *scsi_link;	/* XXX */
 	struct sdmmc_function *sf;
 };
 
