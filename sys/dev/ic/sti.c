@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.58 2009/01/29 21:00:05 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.59 2009/02/06 20:27:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -670,7 +670,7 @@ rescan:
 	 * If our font index was bogus, we did not find the expected font.
 	 * In this case, pick the first one and be done with it.
 	 */
-	if (fp->next == 0) {
+	if (fp->next == 0 && scr->scr_romfont == NULL) {
 		fontindex = 0;
 		goto rescan;
 	}
