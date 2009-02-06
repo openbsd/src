@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.114 2008/12/22 20:51:18 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.115 2009/02/06 14:24:44 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1000,7 +1000,7 @@ uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *sc,
 
 	sc->sc_fmtgrp[fmtidx].frame_num++;
 
-	if (d->bFrameIndex ==
+	if (sc->sc_fmtgrp[fmtidx].frame_num ==
 	    sc->sc_fmtgrp[fmtidx].format->bNumFrameDescriptors)
 		sc->sc_fmtgrp_idx++;
 
@@ -1037,7 +1037,7 @@ uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
 
 	sc->sc_fmtgrp[fmtidx].frame_num++;
 
-	if (d->bFrameIndex ==
+	if (sc->sc_fmtgrp[fmtidx].frame_num ==
 	    sc->sc_fmtgrp[fmtidx].format->bNumFrameDescriptors)
 		sc->sc_fmtgrp_idx++;
 
