@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.62 2009/01/29 00:06:04 stevesk Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.63 2009/02/06 21:48:00 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -362,8 +362,8 @@ ntpd_adjtime(double d)
 	static int	firstadj = 1;
 
 	d += getoffset();
-	if (d >= (double)LOG_NEGLIGEE / 1000 ||
-	    d <= -1 * (double)LOG_NEGLIGEE / 1000)
+	if (d >= (double)LOG_NEGLIGIBLE_ADJTIME / 1000 ||
+	    d <= -1 * (double)LOG_NEGLIGIBLE_ADJTIME / 1000)
 		log_info("adjusting local clock by %fs", d);
 	else
 		log_debug("adjusting local clock by %fs", d);

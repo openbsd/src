@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.96 2008/09/12 10:46:09 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.97 2009/02/06 21:48:00 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -55,7 +55,7 @@
 #define	OFFSET_ARRAY_SIZE	8
 #define	SENSOR_OFFSETS		7
 #define	SETTIME_TIMEOUT		15	/* max seconds to wait with -s */
-#define	LOG_NEGLIGEE		32	/* negligible drift to not log (ms) */
+#define	LOG_NEGLIGIBLE_ADJTIME	32	/* negligible drift to not log (ms) */
 #define	FREQUENCY_SAMPLES	8	/* samples for est. of permanent drift */
 #define	MAX_FREQUENCY_ADJUST	128e-5	/* max correction per iteration */
 #define REPORT_INTERVAL		(24*60*60) /* interval between status reports */
