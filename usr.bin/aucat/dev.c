@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.25 2009/01/23 17:38:15 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.26 2009/02/06 08:26:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -106,7 +106,7 @@ dev_roundof(unsigned newrate)
  * and a multiplexer connected to it with all necessary conversions
  * setup
  */
-void
+int
 dev_init(char *devpath,
     struct aparams *dipar, struct aparams *dopar, unsigned bufsz)
 {
@@ -125,7 +125,7 @@ dev_init(char *devpath,
 	f = (struct file *)safile_new(&safile_ops, devpath,
 	    dipar, dopar, &dev_bufsz, &dev_round);
 	if (f == NULL)
-		exit(1);
+		return 0;
 	if (dipar) {
 #ifdef DEBUG
 		if (debug_level > 0) {
@@ -236,6 +236,7 @@ dev_init(char *devpath,
 	dev_bufsz = (dopar) ? obufsz : ibufsz;
 	DPRINTF("dev_init: using %u fpb\n", dev_bufsz);
 	dev_start();
+	return 1;
 }
 
 /*

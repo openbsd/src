@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.57 2009/02/04 20:35:14 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.58 2009/02/06 08:26:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -458,9 +458,11 @@ main(int argc, char **argv)
 		errx(1, "can't use -l, -m and -s with -o or -i");
 	if (!mode) {
 		if (l_flag || !SLIST_EMPTY(&ifiles))
-		mode |= MODE_PLAY;
+			mode |= MODE_PLAY;
 		if (l_flag || !SLIST_EMPTY(&ofiles))
 			mode |= MODE_REC;
+		if (!mode)
+			errx(1, "nothing to play or record");
 	}
 	if (n_flag) {
 		if (devpath != NULL || l_flag)
@@ -536,10 +538,13 @@ main(int argc, char **argv)
 	if (n_flag) {
 		dev_loopinit(&dipar, &dopar, bufsz);
 	} else {
-		dev_init(devpath,
-		    (mode & MODE_REC) ? &dipar : NULL,
-		    (mode & MODE_PLAY) ? &dopar : NULL,
-		    bufsz);
+		if (!dev_init(devpath,
+			(mode & MODE_REC) ? &dipar : NULL,
+			(mode & MODE_PLAY) ? &dopar : NULL,
+			bufsz)) {
+			errx(1, "%s: can't open device", 
+			    devpath ? devpath : "<default>");
+		}
 	}
 
 	/*
