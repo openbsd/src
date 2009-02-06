@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.14 2007/05/26 00:36:03 krw Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.15 2009/02/06 22:51:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -55,8 +55,9 @@ struct cfattach sti_sgc_ca = {
 };
 
 /* Console data */
-struct sti_screen stifb_cn;
-bus_addr_t stifb_cn_bases[STI_REGION_MAX];
+struct sti_rom sticn_rom;
+struct sti_screen sticn_scr;
+bus_addr_t sticn_bases[STI_REGION_MAX];
 
 int
 sti_sgc_match(struct device *parent, void *match, void *aux)
@@ -79,7 +80,7 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 	struct sti_softc *sc = (void *)self;
 	struct sgc_attach_args *saa = aux;
 	bus_addr_t base;
-	bus_space_handle_t ioh;
+	bus_space_handle_t romh;
 	u_int romend;
 	int i;
 
@@ -89,14 +90,15 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (SGC_SLOT_TO_CONSCODE(saa->saa_slot) == conscode) {
 		sc->sc_flags |= STI_CONSOLE | STI_ATTACHED;
-		sc->sc_scr = &stifb_cn;
-		bcopy(stifb_cn_bases, sc->bases, sizeof(sc->bases));
+		sc->sc_rom = &sticn_rom;
+		sc->sc_scr = &sticn_scr;
+		bcopy(sticn_bases, sc->bases, sizeof(sc->bases));
 
 		sti_describe(sc);
 	} else {
 		base = (bus_addr_t)sgc_slottopa(saa->saa_slot);
 
-		if (bus_space_map(saa->saa_iot, base, PAGE_SIZE, 0, &ioh)) {
+		if (bus_space_map(saa->saa_iot, base, PAGE_SIZE, 0, &romh)) {
 			printf(": can't map frame buffer");
 			return;
 		}
@@ -104,22 +106,21 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 		/*
 		 * Compute real PROM size
 		 */
-		romend = sti_rom_size(saa->saa_iot, ioh);
+		romend = sti_rom_size(saa->saa_iot, romh);
 
-		bus_space_unmap(saa->saa_iot, ioh, PAGE_SIZE);
+		bus_space_unmap(saa->saa_iot, romh, PAGE_SIZE);
 
-		if (bus_space_map(saa->saa_iot, base, romend, 0, &ioh)) {
+		if (bus_space_map(saa->saa_iot, base, romend, 0, &romh)) {
 			printf(": can't map frame buffer");
 			return;
 		}
 
-		sc->memt = sc->iot = saa->saa_iot;
-		sc->romh = ioh;
-		sc->bases[0] = sc->romh;
+		sc->bases[0] = romh;
 		for (i = 1; i < STI_REGION_MAX; i++)
 			sc->bases[i] = base;
 
-		if (sti_attach_common(sc, STI_CODEBASE_M68K) != 0)
+		if (sti_attach_common(sc, saa->saa_iot, saa->saa_iot, romh,
+		    STI_CODEBASE_M68K) != 0)
 			return;
 	}
 
@@ -186,12 +187,12 @@ sticninit()
 	iot = &hp300_mem_tag;
 	base = (bus_addr_t)sgc_slottopa(CONSCODE_TO_SGC_SLOT(conscode));
 
-	/* stifb_cn_bases[0] will be fixed in sti_cnattach() */
+	/* sticn_bases[0] will be fixed in sti_cnattach() */
 	for (i = 0; i < STI_REGION_MAX; i++)
-		stifb_cn_bases[i] = base;
+		sticn_bases[i] = base;
 
-	sti_cnattach(&stifb_cn, iot, stifb_cn_bases, STI_CODEBASE_M68K);
-	sti_clear(&stifb_cn);
+	sti_cnattach(&sticn_rom, &sticn_scr, iot, sticn_bases,
+	    STI_CODEBASE_M68K);
 
 	/*
 	 * Since the copyright notice could not be displayed before,

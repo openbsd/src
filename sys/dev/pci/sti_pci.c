@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.6 2007/06/17 12:07:10 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Miodrag Vallat.
@@ -38,6 +38,8 @@ struct	sti_pci_softc {
 
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
+
+	bus_space_handle_t	sc_romh;
 };
 
 struct cfattach sti_pci_ca = {
@@ -85,11 +87,11 @@ sti_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	printf("%s", self->dv_xname);
-	if (sti_attach_common(&spc->sc_base, STI_CODEBASE_MAIN) == 0) {
-		if (sti_pci_is_console(paa, spc->sc_base.bases) != 0)
-			spc->sc_base.sc_flags |= STI_CONSOLE;
+	if (sti_pci_is_console(paa, spc->sc_base.bases) != 0)
+		spc->sc_base.sc_flags |= STI_CONSOLE;
+	if (sti_attach_common(&spc->sc_base, paa->pa_iot, paa->pa_memt,
+	    spc->sc_romh, STI_CODEBASE_MAIN) == 0)
 		startuphook_establish(sti_end_attach, spc);
-	}
 }
 
 /*
@@ -278,13 +280,12 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 
 	bus_space_unmap(pa->pa_memt, romh, romsize);
 	rc = bus_space_map(pa->pa_memt, PCI_ROM_ADDR(address) + offs,
-	    stiromsize, 0, &sc->romh);
+	    stiromsize, 0, &spc->sc_romh);
 	if (rc != 0) {
 		printf("%s: can't map STI ROM (%d)\n",
 		    sc->sc_dev.dv_xname, rc);
 		goto fail2;
 	}
-	sc->memt = pa->pa_memt;
 
 	return (0);
 

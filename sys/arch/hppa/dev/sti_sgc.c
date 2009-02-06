@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.37 2007/09/15 14:28:17 krw Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.38 2009/02/06 22:51:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -55,7 +55,7 @@
 #define	STI_ID_FDDI	0x280b31af	/* Medusa FDDI ROM id */
 
 /* gecko optional graphics (these share the onboard's prom) */
-char sti_sgc_opt[] = { 0x17, 0x20, 0x30, 0x40, 0x70, 0xc0, 0xd0 };
+const char sti_sgc_opt[] = { 0x17, 0x20, 0x30, 0x40, 0x70, 0xc0, 0xd0 };
 
 extern struct cfdriver sti_cd;
 
@@ -98,9 +98,7 @@ sti_sgc_getrom(int unit, struct confargs *ca)
 }
 
 int
-sti_sgc_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+sti_sgc_probe(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
@@ -187,32 +185,29 @@ sti_sgc_probe(parent, match, aux)
 }
 
 void
-sti_sgc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sti_softc *sc = (void *)self;
 	struct confargs *ca = aux;
+	bus_space_handle_t romh;
 	paddr_t rom;
 	u_int32_t romlen;
 	int rv;
 	int i;
 
-	sc->memt = sc->iot = ca->ca_iot;
-
 	/* we stashed rom addr/len into the last slot during probe */
 	rom = ca->ca_addrs[ca->ca_naddrs - 1].addr;
 	romlen = ca->ca_addrs[ca->ca_naddrs - 1].size;
-	if ((rv = bus_space_map(ca->ca_iot, rom, romlen, 0, &sc->romh))) {
+	if ((rv = bus_space_map(ca->ca_iot, rom, romlen, 0, &romh))) {
 		if ((rom & HPPA_IOBEGIN) == HPPA_IOBEGIN)
-			sc->romh = rom;
+			romh = rom;
 		else {
 			printf (": cannot map rom space (%d)\n", rv);
 			return;
 		}
 	}
 
-	sc->bases[0] = sc->romh;
+	sc->bases[0] = romh;
 	for (i = 1; i < STI_REGION_MAX; i++)
 		sc->bases[i] = ca->ca_hpa;
 
@@ -224,6 +219,7 @@ sti_sgc_attach(parent, self, aux)
 
 	if (ca->ca_hpa == (hppa_hpa_t)PAGE0->mem_cons.pz_hpa)
 		sc->sc_flags |= STI_CONSOLE;
-	if (sti_attach_common(sc, STI_CODEBASE_PA) == 0)
+	if (sti_attach_common(sc, ca->ca_iot, ca->ca_iot, romh,
+	    STI_CODEBASE_PA) == 0)
 		startuphook_establish(sti_end_attach, sc);
 }
