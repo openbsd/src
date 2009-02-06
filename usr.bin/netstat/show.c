@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.19 2009/02/03 16:44:15 michele Exp $	*/
+/*	$OpenBSD: show.c,v 1.20 2009/02/06 19:58:31 chl Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -909,8 +909,6 @@ label_print(struct sockaddr *in, struct sockaddr *out)
 {
 	struct sockaddr_mpls	*insmpls = (struct sockaddr_mpls *)in;
 	struct sockaddr_mpls	*outsmpls = (struct sockaddr_mpls *)out;
-	char			 ifname_in[IF_NAMESIZE];
-	char			 ifname_out[IF_NAMESIZE];
 	char			*in_label;
 	char			*out_label;
 
