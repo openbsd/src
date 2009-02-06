@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.13 2009/02/04 20:35:14 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.14 2009/02/06 08:29:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -127,17 +127,21 @@ rsock_opos(struct aproc *p, struct abuf *obuf, int delta)
 {
 	struct sock *f = (struct sock *)p->u.io.file;
 
-	f->odelta += delta;
-	DPRINTFN(3, "rsock_opos: %p: delta = %d, odelta = %d\n",
-	    f, delta, f->odelta);
+	if (!(f->mode & AMSG_PLAY))
+		return;
+
+	f->delta += delta;
+	DPRINTFN(3, "rsock_opos: %p: delta = %d, f->delta = %d\n",
+	    f, delta, f->delta);
 
 	/*
 	 * negative deltas are xrun notifications for internal uses
 	 * only. Dont generate a packet for this, the client will be
 	 * notified later.
 	 */
-	if (delta <= 0)
+	if (delta < 0)
 		return;
+	f->tickpending++;
 	for (;;) {
 		if (!sock_write(f))
 			break;
@@ -231,17 +235,20 @@ wsock_ipos(struct aproc *p, struct abuf *obuf, int delta)
 {
 	struct sock *f = (struct sock *)p->u.io.file;
 
-	f->idelta += delta;
-	DPRINTFN(3, "wsock_ipos: %p, delta = %d, odelta = %d\n",
-	    f, delta, f->idelta);
+	if (!(f->mode & AMSG_REC))
+		return;
 
+	f->delta += delta;
+	DPRINTFN(3, "wsock_ipos: %p, delta = %d, f->delta = %d\n",
+	    f, delta, f->delta);
 	/*
 	 * negative deltas are xrun notifications for internal uses
 	 * only. Dont generate a packet for this, the client will be
 	 * notified later.
 	 */
-	if (delta <= 0)
+	if (delta < 0)
 		return;
+	f->tickpending++;	
 	for (;;) {
 		if (!sock_write(f))
 			break;
@@ -290,7 +297,8 @@ sock_new(struct fileops *ops, int fd, char *name,
 	f->xrun = AMSG_IGNORE;
 	f->bufsz = dev_bufsz;
 	f->round = dev_round;
-	f->odelta = f->idelta = 0;
+	f->delta = 0;
+	f->tickpending = 0;
 	f->maxweight = maxweight;
 	f->vol = ADATA_UNIT;
 
@@ -337,13 +345,13 @@ sock_allocbuf(struct sock *f)
 	if (f->mode & AMSG_PLAY) {
 		rbuf = abuf_new(f->bufsz, &f->rpar);
 		aproc_setout(f->pipe.file.rproc, rbuf);
-		f->odelta = 0;
 	}
 	if (f->mode & AMSG_REC) {
 		wbuf = abuf_new(f->bufsz, &f->wpar);
 		aproc_setin(f->pipe.file.wproc, wbuf);
-		f->idelta = 0;
 	}
+	f->delta = 0;
+	f->tickpending = 0;
 
 	DPRINTF("sock_allocbuf: %p, using %u frames buffer\n", f, f->bufsz);
 
@@ -849,21 +857,19 @@ sock_buildmsg(struct sock *f)
 {
 	struct aproc *p;
 	struct abuf *ibuf;
-	int *pdelta;
 
 	/*
 	 * if pos changed, build a MOVE message
 	 */
-	pdelta = (f->mode & AMSG_REC) ? &f->idelta : &f->odelta;
-	if ((f->pstate == SOCK_RUN && *pdelta > 0) ||
-	    (f->pstate == SOCK_START && *pdelta < 0)) {
-		DPRINTFN(4, "sock_buildmsg: %p: POS: %d\n", f, *pdelta);
+	if (f->tickpending && f->delta >= 0) {
+		DPRINTFN(4, "sock_buildmsg: %p: POS: %d\n", f, f->delta);
 		AMSG_INIT(&f->wmsg);
 		f->wmsg.cmd = AMSG_MOVE;
-		f->wmsg.u.ts.delta = *pdelta;
-		*pdelta = 0;
+		f->wmsg.u.ts.delta = f->delta;
 		f->wtodo = sizeof(struct amsg);
 		f->wstate = SOCK_WMSG;
+		f->delta = 0;
+		f->tickpending = 0;
 		return 1;
 	}
 

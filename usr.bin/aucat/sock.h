@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.4 2008/11/16 18:34:56 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.5 2009/02/06 08:29:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -45,8 +45,8 @@ struct sock {
 	unsigned mode;			/* a set of AMSG_PLAY, AMSG_REC */
 	struct aparams rpar;		/* read (ie play) parameters */
 	struct aparams wpar;		/* write (ie rec) parameters */
-	int idelta;			/* input (rec) pos. change to send */
-	int odelta;			/* output (play) pos. change to send */
+	int delta;			/* pos. change to send */
+	int tickpending;		/* delta waiting to be transmitted */
 	unsigned bufsz;			/* total buffer size */
 	unsigned round;			/* block size */
 	unsigned xrun;			/* one of AMSG_IGNORE, ... */
