@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.6 2009/01/26 19:18:52 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.7 2009/02/06 18:43:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -64,8 +64,6 @@
 
 #include <dev/ic/rt2860reg.h>		/* shared with ral(4) */
 #include <dev/usb/if_runvar.h>
-
-#include <dev/rndvar.h>
 
 #ifdef USB_DEBUG
 #define RUN_DEBUG
@@ -223,6 +221,7 @@ void		run_start(struct ifnet *);
 void		run_watchdog(struct ifnet *);
 int		run_ioctl(struct ifnet *, u_long, caddr_t);
 void		run_select_chan_group(struct run_softc *, int);
+void		run_set_rx_antenna(struct run_softc *, int);
 void		run_rt2870_set_chan(struct run_softc *, u_int);
 void		run_rt3070_set_chan(struct run_softc *, u_int);
 int		run_set_chan(struct run_softc *, struct ieee80211_channel *);
@@ -903,7 +902,7 @@ run_rt3070_rf_write(struct run_softc *sc, uint8_t reg, uint8_t val)
 	if (ntries == 10)
 		return ETIMEDOUT;
 
-	tmp |= RT3070_RF_WRITE | RT3070_RF_KICK | reg << 8 | val;
+	tmp = RT3070_RF_WRITE | RT3070_RF_KICK | reg << 8 | val;
 	return run_write(sc, RT3070_RF_CSR_CFG, tmp);
 }
 
@@ -976,7 +975,7 @@ run_mcu_cmd(struct run_softc *sc, uint8_t cmd, uint16_t arg)
 	if (ntries == 100)
 		return ETIMEDOUT;
 
-	tmp |= RT2860_H2M_BUSY | RT2860_TOKEN_NO_INTR << 16 | arg;
+	tmp = RT2860_H2M_BUSY | RT2860_TOKEN_NO_INTR << 16 | arg;
 	if ((error = run_write(sc, RT2860_H2M_MAILBOX, tmp)) == 0)
 		error = run_write(sc, RT2860_HOST_CMD, cmd);
 	return error;
@@ -1284,8 +1283,8 @@ run_task(void *arg)
 	s = splusb();
 	while (ring->next != ring->cur) {
 		cmd = &ring->cmd[ring->next];
-		/* callback */
 		splx(s);
+		/* callback */
 		cmd->cb(sc, cmd->data);
 		s = splusb();
 		ring->queued--;
@@ -1468,7 +1467,7 @@ run_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	/* do it in a process context */
 	cmd.key = *k;
-	cmd.associd = ni->ni_associd;
+	cmd.associd = (ni != NULL) ? ni->ni_associd : 0;
 	run_do_async(sc, run_set_key_cb, &cmd, sizeof cmd);
 	return 0;
 }
@@ -1512,23 +1511,18 @@ run_set_key_cb(struct run_softc *sc, void *arg)
 		run_write_region_1(sc, base, k->k_key, 16);
 		run_write_region_1(sc, base + 16, &k->k_key[24], 8);
 		run_write_region_1(sc, base + 24, &k->k_key[16], 8);
-	} else
-		run_write_region_1(sc, base, k->k_key, k->k_len);
+	} else {
+		/* roundup len to 16-bit: XXX fix write_region_1() instead */
+		run_write_region_1(sc, base, k->k_key, (k->k_len + 1) & ~1);
+	}
 
 	if (!(k->k_flags & IEEE80211_KEY_GROUP) ||
 	    (k->k_flags & IEEE80211_KEY_TX)) {
 		/* set initial packet number in IV+EIV */
-		if (k->k_cipher == IEEE80211_CIPHER_WEP40 ||
-		    k->k_cipher == IEEE80211_CIPHER_WEP104) {
-			uint32_t val = arc4random();
-			/* skip weak IVs from Fluhrer/Mantin/Shamir */
-			if (val >= 0x03ff00 && (val & 0xf8ff00) == 0x00ff00)
-				val += 0x000100;
-			iv[0] = val;
-			iv[1] = val >> 8;
-			iv[2] = val >> 16;
-			iv[3] = k->k_id << 6;
-			iv[4] = iv[5] = iv[6] = iv[7] = 0;
+		if ((k->k_cipher == IEEE80211_CIPHER_WEP40 ||
+		     k->k_cipher == IEEE80211_CIPHER_WEP104)) {
+			memset(iv, 0, sizeof iv);
+			iv[3] = sc->sc_ic.ic_def_txkey << 6;
 		} else {
 			if (k->k_cipher == IEEE80211_CIPHER_TKIP) {
 				iv[0] = k->k_tsc >> 8;
@@ -1575,7 +1569,7 @@ run_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	/* do it in a process context */
 	cmd.key = *k;
-	cmd.associd = ni->ni_associd;
+	cmd.associd = (ni != NULL) ? ni->ni_associd : 0;
 	run_do_async(sc, run_delete_key_cb, &cmd, sizeof cmd);
 }
 
@@ -2354,6 +2348,24 @@ run_rt3070_set_chan(struct run_softc *sc, u_int chan)
 	run_rt3070_rf_write(sc, 7, rf | 0x01);
 }
 
+void
+run_set_rx_antenna(struct run_softc *sc, int aux)
+{
+	uint32_t tmp;
+
+	if (aux) {
+		run_read(sc, RT2860_PCI_EECTRL, &tmp);
+		run_write(sc, RT2860_PCI_EECTRL, tmp & ~RT2860_C);
+		run_read(sc, RT2860_GPIO_CTRL, &tmp);
+		run_write(sc, RT2860_GPIO_CTRL, (tmp & ~0x0808) | 0x08);
+	} else {
+		run_read(sc, RT2860_PCI_EECTRL, &tmp);
+		run_write(sc, RT2860_PCI_EECTRL, tmp | RT2860_C);
+		run_read(sc, RT2860_GPIO_CTRL, &tmp);
+		run_write(sc, RT2860_GPIO_CTRL, tmp & ~0x0808);
+	}
+}
+
 int
 run_set_chan(struct run_softc *sc, struct ieee80211_channel *c)
 {
@@ -2548,16 +2560,17 @@ run_bbp_init(struct run_softc *sc)
 	}
 
 	/* fix BBP84 for RT2860E */
-	if ((sc->mac_rev & 0xffff) != 0x0101)
+	if ((sc->mac_rev >> 16) == 0x2860 && (sc->mac_rev & 0xffff) != 0x0101)
 		run_bbp_write(sc,  84, 0x19);
 
 	if ((sc->mac_rev >> 16) >= 0x3070) {
-		run_bbp_write(sc,  70, 0x0a);
-		run_bbp_write(sc,  84, 0x99);
-		run_bbp_write(sc, 105, 0x05);
+		run_bbp_write(sc, 79, 0x13);
+		run_bbp_write(sc, 80, 0x05);
+		run_bbp_write(sc, 81, 0x33);
+		/* XXX RT3090 needs more */
 	} else if (sc->mac_rev == 0x28600100) {
-		run_bbp_write(sc,  69, 0x16);
-		run_bbp_write(sc,  73, 0x12);
+		run_bbp_write(sc, 69, 0x16);
+		run_bbp_write(sc, 73, 0x12);
 	}
 	return 0;
 }
@@ -2603,6 +2616,10 @@ run_rt3070_rf_init(struct run_softc *sc)
 		run_read(sc, RT3070_GPIO_SWITCH, &tmp);
 		run_write(sc, RT3070_GPIO_SWITCH, tmp & ~0x20);
 	}
+
+	/* select 20MHz bandwidth */
+	run_rt3070_rf_read(sc, 31, &rf);
+	run_rt3070_rf_write(sc, 31, rf & ~0x20);
 
 	/* calibrate filter for 20MHz bandwidth */
 	sc->rf24_20mhz = 0x1f;	/* default value */
@@ -2696,17 +2713,16 @@ run_rt3070_filter_calib(struct run_softc *sc, uint8_t init, uint8_t target,
 		run_bbp_read(sc, 55, &bbp55_sb);
 
 		delta = bbp55_pb - bbp55_sb;
-		if (delta < target)
-			rf24++;
-		else if (delta == target)
-			rf24++;
-		else
+		if (delta > target)
 			break;
 
 		/* reprogram filter */
+		rf24++;
 		run_rt3070_rf_write(sc, 24, rf24);
 	}
 	if (ntries < 100) {
+		if (rf24 != init)
+			rf24--;	/* backtrack */
 		*val = rf24;
 		run_rt3070_rf_write(sc, 24, rf24);
 	}
@@ -2776,7 +2792,7 @@ run_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint32_t tmp;
 	uint8_t bbp1, bbp3;
-	int i, error, qid, wcid, ridx, ntries;
+	int i, error, qid, ridx, ntries;
 
 	for (ntries = 0; ntries < 100; ntries++) {
 		if ((error = run_read(sc, RT2860_ASIC_VER_ID, &tmp)) != 0)
@@ -2861,7 +2877,7 @@ run_init(struct ifnet *ifp)
 		run_write(sc, RT2860_TX_SW_CFG0,
 		    4 << RT2860_DLY_PAPE_EN_SHIFT);
 		run_write(sc, RT2860_TX_SW_CFG1, 0);
-		run_write(sc, RT2860_TX_SW_CFG2, 0);
+		run_write(sc, RT2860_TX_SW_CFG2, 0x1f);
 	}
 
 	/* wait while MAC is busy */
@@ -2893,15 +2909,11 @@ run_init(struct ifnet *ifp)
 	run_write(sc, RT2860_BCN_TIME_CFG, tmp);
 
 	/* clear RX WCID search table */
-	for (wcid = 0; wcid <= RT2870_WCID_MAX; wcid++) {
-		/* etherbroadcast followed by BA session mask */
-		static const uint8_t entry[] =
-		    { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00 };
-		run_write_region_1(sc, RT2860_WCID_ENTRY(wcid),
-		    entry, sizeof entry);
-	}
+	run_set_region_4(sc, RT2860_WCID_ENTRY(0), 0, 512);
 	/* clear WCID attribute table */
-	run_set_region_4(sc, RT2860_WCID_ATTR(0), 1, 8 * 32);
+	run_set_region_4(sc, RT2860_WCID_ATTR(0), 0, 8 * 32);
+	/* clear shared key table */
+	run_set_region_4(sc, RT2860_SKEY(0, 0), 0, 8 * 32);
 	/* clear shared key mode */
 	run_set_region_4(sc, RT2860_SKEY_MODE_0_7, 0, 4);
 
@@ -2909,7 +2921,7 @@ run_init(struct ifnet *ifp)
 	tmp = (tmp & ~0xff) | 0x1e;
 	run_write(sc, RT2860_US_CYC_CNT, tmp);
 
-	if ((sc->mac_rev & 0xffff) != 0x0101)
+	if ((sc->mac_rev >> 16) == 0x2860 && (sc->mac_rev & 0xffff) != 0x0101)
 		run_write(sc, RT2860_TXOP_CTRL_CFG, 0x0000583f);
 
 	run_write(sc, RT2860_WMM_TXOP0_CFG, 0);
@@ -2921,6 +2933,10 @@ run_init(struct ifnet *ifp)
 			continue;
 		run_bbp_write(sc, sc->bbp[i].reg, sc->bbp[i].val);
 	}
+
+	/* select Main antenna for 1T1R devices */
+	if (sc->rf_rev == RT3070_RF_3020)
+		run_set_rx_antenna(sc, 0);
 
 	/* send LEDs operating mode to microcontroller */
 	(void)run_mcu_cmd(sc, RT2860_MCU_CMD_LED1, sc->led[0]);
