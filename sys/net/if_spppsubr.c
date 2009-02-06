@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.71 2009/01/31 21:28:40 grange Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.72 2009/02/06 22:07:04 grange Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4866,7 +4866,7 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		return EFAULT;
 
 	switch (spr.cmd) {
-	case (int)SPPPIOGDEFS:
+	case SPPPIOGDEFS:
 		if (cmd != SIOCGIFGENERIC)
 			return EINVAL;
 		/*
@@ -4887,7 +4887,7 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		bzero(spr.defs.hisauth.challenge, AUTHKEYLEN);
 		return copyout(&spr, (caddr_t)ifr->ifr_data, sizeof spr);
 
-	case (int)SPPPIOSDEFS:
+	case SPPPIOSDEFS:
 		if (cmd != SIOCSIFGENERIC)
 			return EINVAL;
 		/*

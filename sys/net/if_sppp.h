@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.13 2007/12/04 19:49:52 claudio Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.14 2009/02/06 22:07:04 grange Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -180,13 +180,13 @@ struct sppp {
  * In order to use this, create a struct spppreq, fill in the cmd
  * field with SPPPIOGDEFS, and put the address of this structure into
  * the ifr_data portion of a struct ifreq.  Pass this struct to a
- * SIOCGIFGENERIC ioctl.  Then replace the cmd field by SPPPIOCDEFS,
+ * SIOCGIFGENERIC ioctl.  Then replace the cmd field by SPPPIOSDEFS,
  * modify the defs field as desired, and pass the struct ifreq now
  * to a SIOCSIFGENERIC ioctl.
  */
 
-#define SPPPIOGDEFS  ((caddr_t)(('S' << 24) + (1 << 16) + sizeof(struct sppp)))
-#define SPPPIOSDEFS  ((caddr_t)(('S' << 24) + (2 << 16) + sizeof(struct sppp)))
+#define SPPPIOGDEFS  ((int)(('S' << 24) + (1 << 16) + sizeof(struct sppp)))
+#define SPPPIOSDEFS  ((int)(('S' << 24) + (2 << 16) + sizeof(struct sppp)))
 
 struct spppreq {
 	int	cmd;

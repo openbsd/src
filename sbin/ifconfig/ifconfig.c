@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.210 2008/12/15 15:50:30 fgsch Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.211 2009/02/06 22:07:04 grange Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3922,7 +3922,7 @@ spppinfo(struct spppreq *spr)
 	bzero(spr, sizeof(struct spppreq));
 
 	ifr.ifr_data = (caddr_t)spr;
-	spr->cmd = (int)SPPPIOGDEFS;
+	spr->cmd = SPPPIOGDEFS;
 	if (ioctl(s, SIOCGIFGENERIC, &ifr) == -1)
 		err(1, "SIOCGIFGENERIC(SPPPIOGDEFS)");
 }
@@ -3944,7 +3944,7 @@ setspppproto(const char *val, int d)
 	else
 		errx(1, "setpppproto");
 
-	spr.cmd = (int)SPPPIOSDEFS;
+	spr.cmd = SPPPIOSDEFS;
 	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
 		err(1, "SIOCSIFGENERIC(SPPPIOSDEFS)");
 }
@@ -3968,7 +3968,7 @@ setspppname(const char *val, int d)
 	if (strlcpy((char *)auth->name, val, AUTHNAMELEN) >= AUTHNAMELEN)
 		errx(1, "setspppname");
 
-	spr.cmd = (int)SPPPIOSDEFS;
+	spr.cmd = SPPPIOSDEFS;
 	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
 		err(1, "SIOCSIFGENERIC(SPPPIOSDEFS)");
 }
@@ -3992,7 +3992,7 @@ setspppkey(const char *val, int d)
 	if (strlcpy((char *)auth->secret, val, AUTHKEYLEN) >= AUTHKEYLEN)
 		errx(1, "setspppkey");
 
-	spr.cmd = (int)SPPPIOSDEFS;
+	spr.cmd = SPPPIOSDEFS;
 	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
 		err(1, "SIOCSIFGENERIC(SPPPIOSDEFS)");
 }
@@ -4026,7 +4026,7 @@ setsppppeerflag(const char *val, int d)
 	else
 		auth->flags |= flag;
 
-	spr.cmd = (int)SPPPIOSDEFS;
+	spr.cmd = SPPPIOSDEFS;
 	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
 		err(1, "SIOCSIFGENERIC(SPPPIOSDEFS)");
 }
@@ -4066,7 +4066,7 @@ sppp_status(void)
 	bzero(&spr, sizeof(spr));
 
 	ifr.ifr_data = (caddr_t)&spr;
-	spr.cmd = (int)SPPPIOGDEFS;
+	spr.cmd = SPPPIOGDEFS;
 	if (ioctl(s, SIOCGIFGENERIC, &ifr) == -1)
 		return;
 	if (spr.defs.pp_phase == PHASE_DEAD)
