@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.26 2008/04/18 20:18:21 tobias Exp $	*/
+/*	$OpenBSD: pr.c,v 1.27 2009/02/07 17:51:22 chl Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.26 2008/04/18 20:18:21 tobias Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.27 2009/02/07 17:51:22 chl Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -376,7 +376,7 @@ vertcol(int argc, char *argv[])
     /*
      * allocate page buffer
      */
-    if ((buf = malloc((unsigned)lines*mxlen)) == NULL) {
+    if ((buf = calloc((unsigned)lines, mxlen)) == NULL) {
 	mfail();
 	return(1);
     }
