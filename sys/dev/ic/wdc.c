@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.101 2009/01/21 21:54:00 grange Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.102 2009/02/07 08:07:28 grange Exp $	*/
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $	*/
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -754,9 +754,6 @@ wdcattach(chp)
 	struct channel_softc *chp;
 {
 	int channel_flags, ctrl_flags, i;
-#ifndef __OpenBSD__
-	int error;
-#endif
 	struct ata_atapi_attach aa_link;
 	static int inited = 0;
 #ifdef WDCDEBUG
@@ -771,26 +768,15 @@ wdcattach(chp)
 
 	timeout_set(&chp->ch_timo, wdctimeout, chp);
 
-#ifndef __OpenBSD__
-	if ((error = wdc_addref(chp)) != 0) {
-		printf("%s: unable to enable controller\n",
-		    chp->wdc->sc_dev.dv_xname);
-		return;
-	}
-#endif /* __OpenBSD__ */
 	if (!chp->_vtbl)
 		chp->_vtbl = &wdc_default_vtbl;
 
 	if (chp->wdc->drv_probe != NULL) {
 		chp->wdc->drv_probe(chp);
 	} else {
-		if (wdcprobe(chp) == 0) {
+		if (wdcprobe(chp) == 0)
 			/* If no drives, abort attach here. */
-#ifndef __OpenBSD__
-			wdc_delref(chp);
-#endif
 			return;
-		}
 	}
 
 	/* ATAPI drives need settling time. Give them 250ms */
@@ -891,10 +877,6 @@ wdcattach(chp)
 		if (chp->ch_drive[i].drive_name[0] == 0)
 			chp->ch_drive[i].drive_flags = 0;
 	}
-
-#ifndef __OpenBSD__
-	wdc_delref(chp);
-#endif
 
 exit:
 #ifdef WDCDEBUG
