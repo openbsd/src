@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.31 2008/05/17 23:31:52 sobrado Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.32 2009/02/07 07:24:37 guenther Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -228,23 +228,30 @@ c_print(char **wp)
 		 * by default.
 		 */
 		wp += 1;
-		while ((s = *wp) && *s == '-' && s[1]) {
-			while (*++s)
-				if (*s == 'n')
-					nflags &= ~PO_NL;
-				else if (*s == 'e')
-					nflags |= PO_EXPAND;
-				else if (*s == 'E')
-					nflags &= ~PO_EXPAND;
-				else
-					/* bad option: don't use nflags, print
-					 * argument
-					 */
+		if (Flag(FPOSIX)) {
+			if (strcmp(*wp, "-n") == 0) {
+				flags &= ~PO_NL;
+				wp++;
+			}
+		} else {
+			while ((s = *wp) && *s == '-' && s[1]) {
+				while (*++s)
+					if (*s == 'n')
+						nflags &= ~PO_NL;
+					else if (*s == 'e')
+						nflags |= PO_EXPAND;
+					else if (*s == 'E')
+						nflags &= ~PO_EXPAND;
+					else
+						/* bad option: don't use
+						 * nflags, print argument
+						 */
+						break;
+				if (*s)
 					break;
-			if (*s)
-				break;
-			wp++;
-			flags = nflags;
+				wp++;
+				flags = nflags;
+			}
 		}
 	} else {
 		int optc;
