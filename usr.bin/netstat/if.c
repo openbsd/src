@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.59 2009/01/26 20:30:26 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.60 2009/02/07 15:06:04 chl Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
 
+#include <err.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>

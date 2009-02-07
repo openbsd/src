@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.17 2007/12/14 18:35:46 deraadt Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.18 2009/02/07 15:06:04 chl Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -56,10 +56,11 @@
 #include <netinet/ip_mroute.h>
 #undef _KERNEL
 
+#include <err.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include "netstat.h"
 
 static void print_bw_meter(struct bw_meter *bw_meter, int *banner_printed);

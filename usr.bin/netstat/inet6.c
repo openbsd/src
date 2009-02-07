@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.36 2007/12/19 01:47:00 deraadt Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.37 2009/02/07 15:06:04 chl Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -58,10 +58,11 @@
 #endif
 #include <netdb.h>
 
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
 #include "netstat.h"
 
 struct	socket sockb;

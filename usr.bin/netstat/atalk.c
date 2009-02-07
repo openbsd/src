@@ -1,4 +1,4 @@
-/*	$OpenBSD: atalk.c,v 1.16 2007/12/19 01:47:00 deraadt Exp $	*/
+/*	$OpenBSD: atalk.c,v 1.17 2009/02/07 15:06:04 chl Exp $	*/
 /*	$NetBSD: atalk.c,v 1.2 1997/05/22 17:21:26 christos Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <netatalk/at.h>
 #include <netatalk/ddp_var.h>
 
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>

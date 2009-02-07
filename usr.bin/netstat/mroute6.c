@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.10 2007/12/14 18:35:46 deraadt Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.11 2009/02/07 15:06:04 chl Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -79,8 +79,9 @@
 #include <netinet6/ip6_mroute.h>
 #undef _KERNEL
 
-#include <stdio.h>
+#include <err.h>
 #include <errno.h>
+#include <stdio.h>
 #include "netstat.h"
 
 #define	WID_ORG	(lflag ? 39 : (nflag ? 29 : 18)) /* width of origin column */
