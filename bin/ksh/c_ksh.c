@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.32 2009/02/07 07:24:37 guenther Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.33 2009/02/07 14:03:24 kili Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -229,7 +229,7 @@ c_print(char **wp)
 		 */
 		wp += 1;
 		if (Flag(FPOSIX)) {
-			if (strcmp(*wp, "-n") == 0) {
+			if (*wp && strcmp(*wp, "-n") == 0) {
 				flags &= ~PO_NL;
 				wp++;
 			}
