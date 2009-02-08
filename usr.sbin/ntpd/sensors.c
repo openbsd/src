@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.42 2009/01/27 15:21:20 stevesk Exp $ */
+/*	$OpenBSD: sensors.c,v 1.43 2009/02/08 23:57:08 stevesk Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -104,7 +104,7 @@ sensor_add(int sensordev, char *dxname)
 	struct ntp_sensor	*s;
 	struct ntp_conf_sensor	*cs;
 
-	/* check wether it is already there */
+	/* check whether it is already there */
 	TAILQ_FOREACH(s, &conf->ntp_sensors, entry)
 		if (!strcmp(s->device, dxname))
 			return;
