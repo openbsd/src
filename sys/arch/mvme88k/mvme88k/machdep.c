@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.216 2009/02/08 21:40:58 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.217 2009/02/08 21:59:21 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1006,8 +1006,8 @@ mvme_bootstrap()
 
 #ifdef M88110
 	if (CPU_IS88110) {
-		extern vaddr_t nmi_stack;
-		curcpu()->ci_nmi_stack = nmi_stack;
+		extern caddr_t nmi_stack;
+		curcpu()->ci_nmi_stack = (vaddr_t)&nmi_stack;
 	}
 #endif
 
