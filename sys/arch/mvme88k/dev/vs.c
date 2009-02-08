@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.74 2009/02/01 20:42:24 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.75 2009/02/08 13:28:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, 2009, Miodrag Vallat.
@@ -1120,14 +1120,6 @@ vs_free(struct vs_softc *sc, struct vs_cb *cb)
 {
 	if (cb->cb_q != 0)
 		thaw_queue(sc, cb->cb_q);
-#if 0
-	if (cb->cb_sg != NULL) {
-		vs_dealloc_scatter_gather(cb->cb_sg);
-		cb->cb_sg = NULL;
-	}
-#else
-	/* nothing to do, really */
-#endif
 	cb->cb_xs = NULL;
 }
 
@@ -1341,21 +1333,21 @@ vs_build_sg_list(struct vs_softc *sc, struct vs_cb *cb, bus_addr_t iopb)
 	len = cb->cb_dmalen;
 	for (segno = 0; segno < cb->cb_dmamap->dm_nsegs; seg++, segno++) {
 		if (seg->ds_len > len) {
-			sgentry->count.bytes = len;
+			sgentry->count.bytes = htobe16(len);
 			len = 0;
 		} else {
-			sgentry->count.bytes = seg->ds_len;
+			sgentry->count.bytes = htobe16(seg->ds_len);
 			len -= seg->ds_len;
 		}
-		sgentry->pa_high = seg->ds_addr >> 16;
-		sgentry->pa_low = seg->ds_addr & 0xffff;
-		sgentry->addr = ADDR_MOD;
+		sgentry->pa_high = htobe16(seg->ds_addr >> 16);
+		sgentry->pa_low = htobe16(seg->ds_addr & 0xffff);
+		sgentry->addr = htobe16(ADDR_MOD);
 		sgentry++;
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_sgmap, sgoffs,
 	    cb->cb_dmamap->dm_nsegs * sizeof(struct vs_sg_entry),
-	    BUS_DMASYNC_PREREAD);
+	    BUS_DMASYNC_PREWRITE);
 
 	vs_write(2, iopb + IOPB_OPTION,
 	    vs_read(2, iopb + IOPB_OPTION) | M_OPT_SG);
