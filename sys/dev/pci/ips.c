@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.35 2009/02/08 10:47:31 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.36 2009/02/08 11:42:43 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -655,6 +655,7 @@ ips_cmd(struct ips_softc *sc, int code, int drive, u_int32_t lba, void *data,
 
 	/* Fill in command frame */
 	cmd = ccb->c_cmdva;
+	bzero(cmd, sizeof(*cmd));
 	cmd->code = code;
 	cmd->id = ccb->c_id;
 	cmd->drive = drive;
