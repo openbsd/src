@@ -49,8 +49,8 @@ drm_pci_alloc(bus_dma_tag_t dmat, size_t size, size_t align,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &dmah->dmamap) != 0)
 		goto dmahfree;
 		
-	if (bus_dmamem_alloc(dmat, size, align, 0,
-	    &dmah->seg, 1, &nsegs, BUS_DMA_NOWAIT) != 0) {
+	if ((ret = bus_dmamem_alloc(dmat, size, align, 0,
+	    &dmah->seg, 1, &nsegs, BUS_DMA_NOWAIT)) != 0) {
 		DRM_ERROR("bus_dmamem_alloc(%zd, %zd) returned %d\n",
 		    size, align, ret);
 		goto destroy;
@@ -61,8 +61,8 @@ drm_pci_alloc(bus_dma_tag_t dmat, size_t size, size_t align,
 		goto free;
 	}
 
-	if (bus_dmamem_map(dmat, &dmah->seg, 1, size,
-	    (caddr_t*)&dmah->addr, BUS_DMA_NOWAIT) != 0) {
+	if ((ret = bus_dmamem_map(dmat, &dmah->seg, 1, size,
+	    (caddr_t*)&dmah->addr, BUS_DMA_NOWAIT)) != 0) {
 		DRM_ERROR("bus_dmamem_map() failed %d\n", ret);
 		goto free;
 	}
