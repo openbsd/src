@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.31 2009/01/09 21:47:08 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.32 2009/02/08 08:54:10 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -165,6 +165,13 @@ struct ips_driveinfo {
 		u_int8_t	__reserved;
 		u_int8_t	raid;
 		u_int8_t	state;
+#define IPS_DS_FREE	0x00
+#define IPS_DS_OFFLINE	0x02
+#define IPS_DS_ONLINE	0x03
+#define IPS_DS_DEGRADED	0x04
+#define IPS_DS_SYS	0x06
+#define IPS_DS_CRS	0x24
+
 		u_int32_t	seccnt;
 	}		drive[IPS_MAXDRIVES];
 };
