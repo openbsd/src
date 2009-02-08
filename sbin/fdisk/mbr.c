@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.23 2006/12/10 19:19:32 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.24 2009/02/08 18:03:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -226,12 +226,11 @@ MBR_pcopy(disk_t *disk, mbr_t *mbr)
 
 	fd = DISK_open(disk->name, O_RDONLY);
 	MBR_read(fd, offset, mbr_disk);
-	DISK_close(fd);
+	close(fd);
 	MBR_parse(disk, mbr_disk, offset, reloff, &mbrd);
 	for (i = 0; i < NDOSPART; i++) {
 		PRT_parse(disk, &mbr_disk[MBR_PART_OFF +
 		    MBR_PART_SIZE * i],
 		    offset, reloff, &mbr->part[i]);
-		PRT_print(i, &mbr->part[i], NULL);
 	}
 }

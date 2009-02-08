@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.23 2006/07/27 04:06:13 ray Exp $	*/
+/*	$OpenBSD: user.c,v 1.24 2009/02/08 18:03:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -67,38 +67,18 @@ static cmd_table_t cmd_table[] = {
 int
 USER_init(disk_t *disk, mbr_t *tt, int preserve)
 {
-	int fd, yn;
-	char mbr_buf[DEV_BSIZE];
-	char *msgp = "\nDo you wish to write new MBR?";
-	char *msgk = "\nDo you wish to write new MBR and partition table?";
+	char *query;
 
-	if (preserve)
+	if (preserve) {
 		MBR_pcopy(disk, tt);
-	else
+		query = "Do you wish to write new MBR?";
+	} else {
 		MBR_init(disk, tt);
+		query = "Do you wish to write new MBR and partition table?";
+	}
 
-	/* Write sector 0 */
-	printf("\a\n"
-	   "\t-----------------------------------------------------\n"
-	   "\t------ ATTENTION - UPDATING MASTER BOOT RECORD ------\n"
-	   "\t-----------------------------------------------------\n");
-	if (preserve)
-		yn = ask_yn(msgp);
-	else
-		yn = ask_yn(msgk);
-
-	if (yn) {
-		fd = DISK_open(disk->name, O_RDWR);
-		MBR_make(tt, mbr_buf);
-		if (MBR_write(fd, 0, mbr_buf) == -1) {
-			int saved_errno = errno;
-			DISK_close(fd);
-			errno = saved_errno;
-			return (-1);
-		}
-		DISK_close(fd);
-	} else
-		printf("MBR is unchanged\n");
+	if (ask_yn(query))
+		Xwrite(NULL, disk, tt, NULL, 0); 
 
 	return (0);
 }
@@ -123,7 +103,7 @@ USER_modify(disk_t *disk, mbr_t *tt, off_t offset, off_t reloff)
 	/* Read MBR & partition */
 	fd = DISK_open(disk->name, O_RDONLY);
 	MBR_read(fd, offset, mbr_buf);
-	DISK_close(fd);
+	close(fd);
 
 	/* Parse the sucker */
 	MBR_parse(disk, mbr_buf, offset, reloff, &mbr);
@@ -171,14 +151,8 @@ again:
 	/* Write out MBR */
 	if (modified) {
 		if (st == CMD_SAVE) {
-			printf("Writing current MBR to disk.\n");
-			fd = DISK_open(disk->name, O_RDWR);
-			MBR_make(&mbr, mbr_buf);
-			if (MBR_write(fd, offset, mbr_buf) == -1) {
-				warn("error writing MBR");
-				close(fd);
+			if (Xwrite(NULL, disk, &mbr, NULL, offset) == CMD_CONT) 
 				goto again;
-			}
 			close(fd);
 		} else
 			printf("Aborting changes to current MBR.\n");
@@ -219,6 +193,6 @@ USER_print_disk(disk_t *disk)
 			}
 	} while (offset);
 
-	return (DISK_close(fd));
+	return (close(fd));
 }
 

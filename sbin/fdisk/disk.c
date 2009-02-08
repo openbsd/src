@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.28 2007/04/27 11:42:44 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.29 2009/02/08 18:03:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -57,13 +57,6 @@ DISK_open(char *disk, int mode)
 	return (fd);
 }
 
-int
-DISK_close(int fd)
-{
-
-	return (close(fd));
-}
-
 /* Routine to go after the disklabel for geometry
  * information.  This should work everywhere, but
  * in the land of PC, things are not always what
@@ -94,7 +87,7 @@ DISK_getlabelmetrics(char *name)
 			lm->size = dl.d_secperunit;
 			unit_types[SECTORS].conversion = dl.d_secsize;
 		}
-		DISK_close(fd);
+		close(fd);
 	}
 
 	return (lm);
