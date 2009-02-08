@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.33 2009/02/08 09:07:36 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.34 2009/02/08 10:46:09 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -65,6 +65,8 @@ int ips_debug = IPS_D_ERR;
 #define IPS_CMDSZ		sizeof(struct ips_cmd)
 #define IPS_SGSZ		sizeof(struct ips_sg)
 #define IPS_SECSZ		512
+
+#define	IPS_TIMEOUT		5	/* seconds */
 
 /* Command codes */
 #define IPS_CMD_READ		0x02
@@ -710,7 +712,7 @@ ips_cmd(struct ips_softc *sc, int code, int drive, u_int32_t lba, void *data,
 	} else {
 		/* Set watchdog timer */
 		timeout_set(&xs->stimeout, ips_timeout, ccb);
-		timeout_add_msec(&xs->stimeout, xs->timeout);
+		timeout_add_sec(&xs->stimeout, IPS_TIMEOUT);
 	}
 
 	return (error);
