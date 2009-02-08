@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.65 2009/02/01 00:52:19 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.66 2009/02/08 21:40:13 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -783,42 +783,6 @@ lose:
 			if (result == 0) {
 				KERNEL_UNLOCK();
 				return;
-			}
-		} else
-		if (frame->tf_dsr & CMMU_DSR_WE) {	/* write fault  */
-			/*
-			 * This could be a write protection fault or an
-			 * exception to set the used and modified bits
-			 * in the pte. Basically, if we got a write error,
-			 * then we already have a pte entry that faulted
-			 * in from a previous seg fault or page fault.
-			 * Get the pte and check the status of the
-			 * modified and valid bits to determine if this
-			 * indeed a real write fault.  XXX smurph
-			 */
-			if (pmap_set_modify(map->pmap, va)) {
-#ifdef TRAPDEBUG
-				printf("Corrected kernel write fault, pmap %p va %p\n",
-				    map->pmap, va);
-#endif
-				KERNEL_UNLOCK();
-				return;
-#if 0	/* shouldn't happen */
-			} else {
-				/* must be a real wp fault */
-#ifdef TRAPDEBUG
-				printf("Uncorrected kernel write fault, pmap %p va %p\n",
-				    map->pmap, va);
-#endif
-				if ((pcb_onfault = p->p_addr->u_pcb.pcb_onfault) != 0)
-					p->p_addr->u_pcb.pcb_onfault = 0;
-				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
-				p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
-				if (result == 0) {
-					KERNEL_UNLOCK();
-					return;
-				}
-#endif
 			}
 		}
 		KERNEL_UNLOCK();
