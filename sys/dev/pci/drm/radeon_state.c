@@ -2358,7 +2358,6 @@ int radeon_cp_indices(struct drm_device *dev, void *data, struct drm_file *file_
 	struct drm_buf *buf;
 	drm_radeon_indices_t *elts = data;
 	drm_radeon_tcl_prim_t prim;
-	int count;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -2397,7 +2396,6 @@ int radeon_cp_indices(struct drm_device *dev, void *data, struct drm_file *file_
 		return EINVAL;
 	}
 
-	count = (elts->end - elts->start) / sizeof(u16);
 	elts->start -= RADEON_INDEX_PRIM_OFFSET;
 
 	if (elts->start & 0x7) {
