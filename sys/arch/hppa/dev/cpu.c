@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.28 2004/12/28 05:18:25 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.29 2009/02/08 18:33:28 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -76,13 +76,6 @@ cpumatch(parent, cfdata, aux)
 	return 1;
 }
 
-int
-cpu_hardclock(void *v)
-{
-	hardclock(v);
-	return (1);
-}
-
 void
 cpuattach(parent, self, aux)
 	struct device *parent;
@@ -95,6 +88,8 @@ cpuattach(parent, self, aux)
 	extern struct pdc_btlb pdc_btlb;
 	extern u_int cpu_ticksnum, cpu_ticksdenom;
 	extern u_int fpu_enable;
+	/* clock.c */
+	extern int cpu_hardclock(void *);
 
 	struct cpu_softc *sc = (struct cpu_softc *)self;
 	struct confargs *ca = aux;

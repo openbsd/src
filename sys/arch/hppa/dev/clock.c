@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.22 2007/07/22 19:24:45 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.23 2009/02/08 18:33:28 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -48,7 +48,10 @@
 #include <ddb/db_extern.h>
 #endif
 
-u_int itmr_get_timecount(struct timecounter *);
+u_long	cpu_itmr, cpu_hzticks;
+
+int	cpu_hardclock(void *);
+u_int	itmr_get_timecount(struct timecounter *);
 
 struct timecounter itmr_timecounter = {
 	itmr_get_timecount, NULL, 0xffffffff, 0, "itmr", 0, NULL
@@ -57,8 +60,6 @@ struct timecounter itmr_timecounter = {
 void
 cpu_initclocks()
 {
-	extern volatile u_long cpu_itmr;
-	extern u_long cpu_hzticks;
 	u_long __itmr;
 
 	itmr_timecounter.tc_frequency = PAGE0->mem_10msec * 100;
@@ -68,6 +69,65 @@ cpu_initclocks()
 	cpu_itmr = __itmr;
 	__itmr += cpu_hzticks;
 	mtctl(__itmr, CR_ITMR);
+}
+
+int
+cpu_hardclock(void *v)
+{
+	u_long __itmr, delta, eta;
+	int wrap;
+	register_t eiem;
+
+	/*
+	 * Invoke hardclock as many times as there has been cpu_hzticks
+	 * ticks since the last interrupt.
+	 */
+	for (;;) {
+		mfctl(CR_ITMR, __itmr);
+		delta = __itmr - cpu_itmr;
+		if (delta >= cpu_hzticks) {
+			hardclock(v);
+			cpu_itmr += cpu_hzticks;
+		} else
+			break;
+	}
+
+	/*
+	 * Program the next clock interrupt, making sure it will
+	 * indeed happen in the future. This is done with interrupts
+	 * disabled to avoid a possible race.
+	 */
+	eta = cpu_itmr + cpu_hzticks;
+	wrap = eta < cpu_itmr;	/* watch out for a wraparound */
+	__asm __volatile("mfctl	%%cr15, %0": "=r" (eiem));
+	__asm __volatile("mtctl	%r0, %cr15");
+	mtctl(eta, CR_ITMR);
+	mfctl(CR_ITMR, __itmr);
+	/*
+	 * If we were close enough to the next tick interrupt
+	 * value, by the time we have programmed itmr, it might
+	 * have passed the value, which would cause a complete
+	 * cycle until the next interrupt occurs. On slow
+	 * models, this would be a disaster (a complete cycle
+	 * taking over two minutes on a 715/33).
+	 *
+	 * We expect that it will only be necessary to postpone
+	 * the interrupt once. Thus, there are two cases:
+	 * - We are expecting a wraparound: eta < cpu_itmr.
+	 *   itmr is in tracks if either >= cpu_itmr or < eta.
+	 * - We are not wrapping: eta > cpu_itmr.
+	 *   itmr is in tracks if >= cpu_itmr and < eta (we need
+	 *   to keep the >= cpu_itmr test because itmr might wrap
+	 *   before eta does).
+	 */
+	if ((wrap && !(eta > __itmr || __itmr >= cpu_itmr)) ||
+	    (!wrap && !(eta > __itmr && __itmr >= cpu_itmr))) {
+		eta += cpu_hzticks;
+		mtctl(eta, CR_ITMR);
+	}
+	__asm __volatile("mtctl	%0, %%cr15":: "r" (eiem));
+
+	return (1);
 }
 
 /*
