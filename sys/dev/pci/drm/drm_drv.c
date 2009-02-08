@@ -452,6 +452,9 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 	struct drm_file *file_priv;
 	int retcode = 0;
 
+	if (dev == NULL)
+		return (ENXIO);
+
 	DRM_DEBUG("open_count = %d\n", dev->open_count);
 
 	DRM_LOCK();
@@ -708,6 +711,9 @@ drmmmap(dev_t kdev, off_t offset, int prot)
 	drm_local_map_t		*map;
 	struct drm_file		*priv;
 	enum drm_map_type	 type;
+
+	if (dev == NULL)
+		return (-1);
 
 	DRM_LOCK();
 	priv = drm_find_file_by_minor(dev, minor(kdev));
