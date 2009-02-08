@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.34 2009/02/08 10:46:09 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.35 2009/02/08 10:47:31 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -48,7 +48,7 @@
 
 #ifdef IPS_DEBUG
 #define DPRINTF(a, b)	do { if (ips_debug & (a)) printf b; } while (0)
-int ips_debug = IPS_D_ERR;
+int ips_debug = 0xff;
 #else
 #define DPRINTF(a, b)
 #endif
