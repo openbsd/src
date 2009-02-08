@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.76 2009/01/21 16:56:02 sobrado Exp $ */
+/* $OpenBSD: user.c,v 1.77 2009/02/08 11:37:43 chl Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -426,7 +426,7 @@ modify_gid(char *group, char *newent)
 	groupc = strlen(group);
 	while (fgets(buf, sizeof(buf), from) != NULL) {
 		cc = strlen(buf);
-		if (buf[cc - 1] != '\n' && !feof(from)) {
+		if (cc > 0 && buf[cc - 1] != '\n' && !feof(from)) {
 			while (fgetc(from) != '\n' && !feof(from))
 				cc++;
 			warn("%s: line `%s' too long (%d bytes), skipping",
@@ -530,7 +530,7 @@ append_group(char *user, int ngroups, const char **groups)
 	}
 	while (fgets(buf, sizeof(buf), from) != NULL) {
 		cc = strlen(buf);
-		if (buf[cc - 1] != '\n' && !feof(from)) {
+		if (cc > 0 && buf[cc - 1] != '\n' && !feof(from)) {
 			while (fgetc(from) != '\n' && !feof(from))
 				cc++;
 			warn("%s: line `%s' too long (%d bytes), skipping",
@@ -1242,7 +1242,7 @@ rm_user_from_groups(char *login_name)
 	}
 	while (fgets(buf, sizeof(buf), from) > 0) {
 		cc = strlen(buf);
-		if (buf[cc - 1] != '\n' && !feof(from)) {
+		if (cc > 0 && buf[cc - 1] != '\n' && !feof(from)) {
 			while (fgetc(from) != '\n' && !feof(from))
 				cc++;
 			warn("%s: line `%s' too long (%d bytes), skipping",
@@ -1256,8 +1256,8 @@ rm_user_from_groups(char *login_name)
 				cc++;
 		}
 		if (cc != 3) {
-			warnx("Malformed entry `%.*s'. Skipping",
-			    (int)strlen(buf) - 1, buf);
+			buf[strcspn(buf, "\n")] = '\0';
+			warnx("Malformed entry `%s'. Skipping", buf);
 			continue;
 		}
 		while ((cp = strstr(cp, login_name)) != NULL) {
@@ -1317,7 +1317,7 @@ is_local(char *name, const char *file)
 	len = strlen(name);
 	for (ret = 0 ; fgets(buf, sizeof(buf), fp) != NULL ; ) {
 		cc = strlen(buf);
-		if (buf[cc - 1] != '\n' && !feof(fp)) {
+		if (cc > 0 && buf[cc - 1] != '\n' && !feof(fp)) {
 			while (fgetc(fp) != '\n' && !feof(fp))
 				cc++;
 			warn("%s: line `%s' too long (%d bytes), skipping",
