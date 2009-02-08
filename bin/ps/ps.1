@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.69 2009/02/08 17:15:09 jmc Exp $
+.\"	$OpenBSD: ps.1,v 1.70 2009/02/08 17:33:02 jmc Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -542,6 +542,11 @@ specification.
 The flags
 .Op Fl CchjkLMmNOrST
 are extensions to that specification.
+.Pp
+Behaviour for the
+.Fl e
+flag differs between this implementation and
+.St -p1003.1-2008 .
 .Sh HISTORY
 A
 .Nm
