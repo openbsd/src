@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.96 2009/02/08 19:15:02 grange Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.97 2009/02/08 19:15:56 grange Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -178,7 +178,7 @@ scsibus* at gdt?
 #scsibus* at aac?
 ami*	at pci?			# AMI MegaRAID controllers
 scsibus* at ami?
-mfi*	at pci?				# LSI MegaRAID SAS controllers
+mfi*	at pci?			# LSI MegaRAID SAS controllers
 scsibus* at mfi?
 #cac*	at pci?			# Compaq Smart ARRAY [234]* RAID controllers
 #scsibus* at cac?
