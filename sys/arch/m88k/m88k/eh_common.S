@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.46 2008/07/28 17:49:38 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.47 2009/02/08 21:40:58 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -222,10 +222,13 @@
  *	cause other exceptions to happen, and the whole system is
  *	in a rather precarious state and so special cautions must
  * 	be taken.
+ * The bit FLAG_NMI_STACK, on 88110, indicates that this exception
+ *	should be handled on the NMI stack.
  */
 #define FLAG_IGNORE_DATA_EXCEPTION	0
 #define FLAG_ENABLING_FPU		1
 #define FLAG_FROM_KERNEL		2
+#define	FLAG_NMI_STACK			3
 
 /* GENeral REGister OFFset into the E.F. (exception frame) */
 #define GENREG_OFF(num)		(EF_R0 + (num) * 4)
@@ -356,6 +359,8 @@
 #define	M88110_Data_Precheck \
 	bb1.n	FLAG_IGNORE_DATA_EXCEPTION, FLAGS, \
 	    _ASM_LABEL(m88110_ignore_data_exception);
+#define	M88110_NMI_Precheck \
+	set	FLAGS, FLAGS, 1<FLAG_NMI_STACK>
 
 #ifdef M88100
 /*
@@ -1598,9 +1603,9 @@ GLOBAL(m88110_fpu_handler)
 	or	r3, r0, r30
 	XCALL(_C_LABEL(m88110_trap), _ASM_LABEL(check_ast))
 
-/* MVME197 non-maskable interrupt handler (ABORT button) */
+/* non-maskable interrupt handler (IPIs, ABORT button) */
 GLOBAL(m88110_nonmaskable)
-	PREP88110("NMI", 11,)
+	PREP88110("NMI", 11, M88110_NMI_Precheck)
 	or	r2, r0, T_NON_MASK
 	or	r3, r0, r30
 	XCALL(_C_LABEL(interrupt), _ASM_LABEL(check_ast))
@@ -1813,7 +1818,7 @@ ASLOCAL(m88110_setup_phase_one)
 	/*
 	 * SR1: saved copy of exception-time register now holding FLAGS
 	 * SR2: saved copy of exception-time r1
-	 * SR3: must be preserved .. may be the exception-time stack
+	 * SR3: free
 	 * r1: return address to calling exception handler
 	 * FLAGS: CPU status flags
 	 *
@@ -1828,33 +1833,17 @@ ASLOCAL(m88110_setup_phase_one)
 	NOP
 	NOP
 
-	/* are we coming in from user mode? If so, pick up process pcb */
-	bb0	FLAG_FROM_KERNEL, FLAGS, _ASM_LABEL(m88110_pickup_stack)
-
-	/* Interrupt in kernel mode */
 	/*
-	 * SR1: saved copy of exception-time register now holding FLAGS
-	 * SR2: return address to the calling exception handler
-	 * SR3: must be preserved; may be important for other exceptions
-	 * FLAGS: CPU status flags
-	 *
-	 * immediate goal:
-	 *   We're already on the kernel stack, but not having
-	 *   needed to use SR3. We can just make room on the
-	 *   stack (r31) for our exception frame.
+	 * If we were in the kernel when the exception occured, we have
+	 * a valid stack. Keep using it.
 	 */
-	subu	r31,  r31,  TRAPFRAME_SIZEOF	/* r31 now our E.F. */
-	st	FLAGS,r31,  EF_FLAGS		/* save flags */
-	st	r1,   r31,  GENREG_OFF(1)	/* save prev. r1 (now free) */
+	bb1	FLAG_FROM_KERNEL, FLAGS, _ASM_LABEL(m88110_kernel_stack)
 
-	ldcr	r1,   SR3			/* save previous SR3 */
-	st	r1,   r31,  EF_SR3
-
-	addu	r1,   r31,  TRAPFRAME_SIZEOF	/* save previous r31 */
-	st	r1,   r31,  GENREG_OFF(31)
-	br	_ASM_LABEL(m88110_have_pcb)
+	/* is this an NMI? If so, pick the NMI stack */
+	bb1	FLAG_NMI_STACK, FLAGS, _ASM_LABEL(m88110_nmi_stack)
 
 ASLOCAL(m88110_pickup_stack)
+	/* Non-NMI exception in user mode */
 	/*
 	 * SR1: saved copy of exception-time register now holding FLAGS
 	 * SR2: return address to the calling exception handler
@@ -1862,9 +1851,7 @@ ASLOCAL(m88110_pickup_stack)
 	 * FLAGS: CPU status flags
 	 *
 	 * immediate goal:
-	 *   Since we're servicing an exception from user mode, we
-	 *   know that SR3 is free.  We use it to free up a temporary
-	 *   register to be used in getting the process pcb.
+	 *   Pick the process PCB and point our stack to it.
 	 */
 	stcr	r31,  SR3	/* save previous r31 */
 
@@ -1883,6 +1870,50 @@ ASLOCAL(m88110_pickup_stack)
 	st	r1,   r31,  GENREG_OFF(1)	/* save prev. r1 (now free)*/
 	ldcr	r1,   SR3			/* save previous r31 */
 	st	r1,   r31,  GENREG_OFF(31)
+	br	_ASM_LABEL(m88110_have_pcb)
+
+ASLOCAL(m88110_nmi_stack)
+	/* NMI exception in user mode */
+	/*
+	 * SR1: saved copy of exception-time register now holding FLAGS
+	 * SR2: return address to the calling exception handler
+	 * SR3: free
+	 * FLAGS: CPU status flags
+	 *
+	 * immediate goal:
+	 *   Pick the cpu NMI stack.
+	 */
+	stcr	r31,  SR3	/* save previous r31 */
+
+	/* switch to the NMI stack */
+	ldcr	r31,  CPU
+	ld	r31,  r31,  CI_NMI_STACK
+	addu	r31,  r31,  USPACE
+
+	subu	r31,  r31,  TRAPFRAME_SIZEOF	/* r31 now our E.F. */
+	st	FLAGS,r31,  EF_FLAGS		/* save flags */
+	st	r1,   r31,  GENREG_OFF(1)	/* save prev. r1 (now free) */
+	ldcr	r1,   SR3			/* save previous r31 */
+	st	r1,   r31,  GENREG_OFF(31)
+	br	_ASM_LABEL(m88110_have_pcb)
+
+ASLOCAL(m88110_kernel_stack)
+	/* Exception in kernel mode */
+	/*
+	 * SR1: saved copy of exception-time register now holding FLAGS
+	 * SR2: return address to the calling exception handler
+	 * SR3: free
+	 * FLAGS: CPU status flags
+	 *
+	 * immediate goal:
+	 *   We're already on the kernel stack.  We can just make room on the
+	 *   stack (r31) for our exception frame.
+	 */
+	subu	r31,  r31,  TRAPFRAME_SIZEOF	/* r31 now our E.F. */
+	st	FLAGS,r31,  EF_FLAGS		/* save flags */
+	st	r1,   r31,  GENREG_OFF(1)	/* save prev. r1 (now free) */
+	addu	r1,   r31,  TRAPFRAME_SIZEOF	/* save previous r31 */
+	st	r1,   r31,  GENREG_OFF(31)
 	/* FALLTHROUGH */
 
 ASLOCAL(m88110_have_pcb)
@@ -1897,6 +1928,10 @@ ASLOCAL(m88110_have_pcb)
 	 *   Exception-time r1, r31, FLAGS.
 	 *   Exception SR3, if appropriate.
 	 */
+
+	/* make sure that the FLAG_NMI_STACK bit is off */
+	clr	FLAGS, FLAGS, 1<FLAG_NMI_STACK>
+
 	stcr	TMP, SR3	/* free up TMP, TMP2, TMP3 */
 	SAVE_TMP2
 	SAVE_TMP3
@@ -1960,7 +1995,6 @@ ASLOCAL(m88110_setup_phase_two)
 	 *   Exception-time TMP2, TMP3.
 	 *   Exception-time espr, enip, exip.
 	 *   Exception number (EF_VECTOR).
-	 *   Exception SR3, if appropriate.
 	 *
 	 * immediate goal:
 	 *   restore the system to the exception-time state (except SR3 will
@@ -2016,7 +2050,6 @@ ASLOCAL(m88110_shadow_enable)
 	st	r30,  TMP,  GENREG_OFF(30)	/* save previous r30, r31 */
 	st	r31,  TMP,  GENREG_OFF(31)	/* save previous r30, r31 */
 	or	r31,  TMP,  r0			/* transfer E.F. pointer */
-	ld	TMP,  r31,  EF_SR3		/* get previous SR3 */
 	xcr	TMP,  TMP,  SR3			/* replace TMP, SR3 */
 
 	/* now save all regs to the exception frame. */
@@ -2054,7 +2087,7 @@ ASLOCAL(m88110_shadow_enable)
 	/*
 	 * SR1: free
 	 * SR2: free
-	 * SR3: previous exception-time SR3
+	 * SR3: free
 	 * r1: return address to the calling exception handler
 	 * r2 through r30: free
 	 * r31: our exception frame
@@ -2065,7 +2098,6 @@ ASLOCAL(m88110_shadow_enable)
 	 *   Exception-time espr, enip, exip.
 	 *   Exception number (EF_VECTOR).
 	 *   DSR/ISR
-	 *   Exception SR3, if appropriate.
 	 *
 	 * immediate goal:
 	 *   Put a copy of the exception frame pointer into r30

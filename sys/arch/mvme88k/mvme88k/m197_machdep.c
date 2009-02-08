@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.27 2008/09/19 20:18:03 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.28 2009/02/08 21:40:58 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -201,8 +201,9 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 		abort = *(u_int8_t *)(BS_BASE + BS_ABORT);
 		if (abort & BS_ABORT_INT) {
 			*(u_int8_t *)(BS_BASE + BS_ABORT) =
-			    abort | BS_ABORT_ICLR;
+			    (abort & ~BS_ABORT_IEN) | BS_ABORT_ICLR;
 			nmihand(eframe);
+			*(u_int8_t *)(BS_BASE + BS_ABORT) |= BS_ABORT_IEN;
 		}
 
 #ifdef MULTIPROCESSOR

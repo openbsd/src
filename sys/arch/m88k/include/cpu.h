@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.39 2008/12/21 21:43:51 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.40 2009/02/08 21:40:56 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -110,7 +110,9 @@ struct cpu_info {
 #define	CI_DDB_PAUSE	3
 
 	int	ci_softintr;			/* pending soft interrupts */
-	u_int32_t ci_randseed;
+	u_int32_t ci_randseed;			/* per-cpu random seed */
+
+	vaddr_t	ci_nmi_stack;			/* NMI stack (88110) */
 
 #ifdef MULTIPROCESSOR
 

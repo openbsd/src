@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.215 2009/02/01 00:51:32 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.216 2009/02/08 21:40:58 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -710,6 +710,20 @@ secondary_pre_main()
 		for (;;) ;
 	}
 
+	/*
+	 * On 88110 processors, allocate UPAGES contiguous pages for
+	 * the NMI handling stack.
+	 */
+	if (CPU_IS88110) {
+		ci->ci_nmi_stack = uvm_km_zalloc(kernel_map, USPACE);
+		if (ci->ci_nmi_stack == (vaddr_t)NULL) {
+			printf("cpu%d: unable to allocate NMI stack\n",
+			    ci->ci_cpuid);
+			__cpu_simple_unlock(&cpu_boot_mutex);
+			for (;;) ;
+		}
+	}
+
 	return (init_stack);
 }
 
@@ -989,6 +1003,13 @@ mvme_bootstrap()
 	master_cpu = cmmu_init();
 	set_cpu_number(master_cpu);
 	SET(curcpu()->ci_flags, CIF_ALIVE | CIF_PRIMARY);
+
+#ifdef M88110
+	if (CPU_IS88110) {
+		extern vaddr_t nmi_stack;
+		curcpu()->ci_nmi_stack = nmi_stack;
+	}
+#endif
 
 #ifdef M88100
 	if (CPU_IS88100) {
