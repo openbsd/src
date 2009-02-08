@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.108 2009/01/28 18:55:18 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.109 2009/02/08 15:34:39 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -62,6 +62,8 @@
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_priv.h>
 
+struct	mbuf *ieee80211_defrag(struct ieee80211com *, struct mbuf *, int);
+void	ieee80211_defrag_timeout(void *);
 #ifndef IEEE80211_NO_HT
 void	ieee80211_input_ba(struct ifnet *, struct mbuf *,
 	    struct ieee80211_node *, int, struct ieee80211_rxinfo *);
@@ -548,6 +550,97 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 #endif
 		m_freem(m);
 	}
+}
+
+/*
+ * Handle defragmentation (see 9.5 and Annex C).  We support the concurrent
+ * reception of fragments of three fragmented MSDUs or MMPDUs.
+ */
+struct mbuf *
+ieee80211_defrag(struct ieee80211com *ic, struct mbuf *m, int hdrlen)
+{
+	const struct ieee80211_frame *owh, *wh;
+	struct ieee80211_defrag *df;
+	u_int16_t rxseq, seq;
+	u_int8_t frag;
+	int i;
+
+	wh = mtod(m, struct ieee80211_frame *);
+	rxseq = letoh16(*(const u_int16_t *)wh->i_seq);
+	seq = rxseq >> IEEE80211_SEQ_SEQ_SHIFT;
+	frag = rxseq & IEEE80211_SEQ_FRAG_MASK;
+
+	if (frag == 0 && !(wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG))
+		return m;	/* not fragmented */
+
+	if (frag == 0) {
+		/* first fragment, setup entry in the fragment cache */
+		if (++ic->ic_defrag_cur == IEEE80211_DEFRAG_SIZE)
+			ic->ic_defrag_cur = 0;
+		df = &ic->ic_defrag[ic->ic_defrag_cur];
+		if (df->df_m != NULL)
+			m_freem(df->df_m);	/* discard old entry */
+		df->df_seq = seq;
+		df->df_frag = 0;
+		df->df_m = m;
+		/* start receive MSDU timer of aMaxReceiveLifetime */
+		timeout_add_sec(&df->df_to, 1);
+		return NULL;	/* MSDU or MMPDU not yet complete */
+	}
+
+	/* find matching entry in the fragment cache */
+	for (i = 0; i < IEEE80211_DEFRAG_SIZE; i++) {
+		df = &ic->ic_defrag[i];
+		if (df->df_m == NULL)
+			continue;
+		if (df->df_seq != seq || df->df_frag + 1 != frag)
+			continue;
+		owh = mtod(df->df_m, struct ieee80211_frame *);
+		/* frame type, source and destination must match */
+		if (((wh->i_fc[0] ^ owh->i_fc[0]) & IEEE80211_FC0_TYPE_MASK) ||
+		    !IEEE80211_ADDR_EQ(wh->i_addr1, owh->i_addr1) ||
+		    !IEEE80211_ADDR_EQ(wh->i_addr2, owh->i_addr2))
+			continue;
+		/* matching entry found */
+		break;
+	}
+	if (i == IEEE80211_DEFRAG_SIZE) {
+		/* no matching entry found, discard fragment */
+		ic->ic_if.if_ierrors++;
+		m_freem(m);
+		return NULL;
+	}
+
+	df->df_frag = frag;
+	/* strip 802.11 header and concatenate fragment */
+	m_adj(m, hdrlen);
+	m_cat(df->df_m, m);
+	df->df_m->m_pkthdr.len += m->m_pkthdr.len;
+
+	if (wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG)
+		return NULL;	/* MSDU or MMPDU not yet complete */
+
+	/* MSDU or MMPDU complete */
+	timeout_del(&df->df_to);
+	m = df->df_m;
+	df->df_m = NULL;
+	return m;
+}
+
+/*
+ * Receive MSDU defragmentation timer exceeds aMaxReceiveLifetime.
+ */
+void
+ieee80211_defrag_timeout(void *arg)
+{
+	struct ieee80211_defrag *df = arg;
+	int s = splnet();
+
+	/* discard all received fragments */
+	m_freem(df->df_m);
+	df->df_m = NULL;
+
+	splx(s);
 }
 
 #ifndef IEEE80211_NO_HT

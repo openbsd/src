@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.57 2009/01/28 18:55:18 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.58 2009/02/08 15:34:39 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -168,6 +168,17 @@ struct ieee80211_edca_ac_params {
 	u_int8_t	ac_acm;
 };
 
+#define IEEE80211_DEFRAG_SIZE	3	/* must be >= 3 according to spec */
+/*
+ * Entry in the fragment cache.
+ */
+struct ieee80211_defrag {
+	struct timeout	df_to;
+	struct mbuf	*df_m;
+	u_int16_t	df_seq;
+	u_int8_t	df_frag;
+};
+
 #define IEEE80211_PROTO_NONE	0
 #define IEEE80211_PROTO_RSN	(1 << 0)
 #define IEEE80211_PROTO_WPA	(1 << 1)
@@ -287,6 +298,9 @@ struct ieee80211com {
 	u_int			ic_rsnciphers;
 	enum ieee80211_cipher	ic_rsngroupcipher;
 	enum ieee80211_cipher	ic_rsngroupmgmtcipher;
+
+	struct ieee80211_defrag	ic_defrag[IEEE80211_DEFRAG_SIZE];
+	int			ic_defrag_cur;
 
 	u_int8_t		*ic_tim_bitmap;
 	u_int			ic_tim_len;
