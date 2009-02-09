@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.38 2009/02/09 20:17:43 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.39 2009/02/09 20:20:15 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -20,10 +20,13 @@
  * IBM (Adaptec) ServeRAID controller driver.
  */
 
+#include "bio.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/timeout.h>
@@ -34,6 +37,8 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
+
+#include <dev/biovar.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
@@ -214,6 +219,7 @@ struct ips_softc {
 	struct device		sc_dev;
 
 	struct scsi_link	sc_scsi_link;
+	struct scsibus_softc *	sc_scsibus;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -236,6 +242,10 @@ int	ips_match(struct device *, void *, void *);
 void	ips_attach(struct device *, struct device *, void *);
 
 int	ips_scsi_cmd(struct scsi_xfer *);
+
+int	ips_ioctl(struct device *, u_long, caddr_t);
+int	ips_ioctl_inq(struct ips_softc *, struct bioc_inq *);
+int	ips_ioctl_vol(struct ips_softc *, struct bioc_vol *);
 
 int	ips_cmd(struct ips_softc *, int, int, u_int32_t, void *, size_t, int,
 	    struct scsi_xfer *);
@@ -487,10 +497,17 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 
 	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_scsi_link;
-	config_found(self, &saa, scsiprint);
+	sc->sc_scsibus = (struct scsibus_softc *)config_found(self, &saa,
+	    scsiprint);
 
 	/* Enable interrupts */
 	ips_intren(sc);
+
+#if NBIO > 0
+	/* Install ioctl handler */
+	if (bio_register(&sc->sc_dev, ips_ioctl))
+		printf("%s: no ioctl support\n", sc->sc_dev.dv_xname);
+#endif
 
 	return;
 fail3:
@@ -630,6 +647,98 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 
 	return (COMPLETE);
 }
+
+#if NBIO > 0
+int
+ips_ioctl(struct device *dev, u_long cmd, caddr_t addr)
+{
+	struct ips_softc *sc = (struct ips_softc *)dev;
+
+	DPRINTF(IPS_D_INFO, ("%s: ioctl %lu\n", sc->sc_dev.dv_xname, cmd));
+
+	switch (cmd) {
+	case BIOCINQ:
+		return (ips_ioctl_inq(sc, (struct bioc_inq *)addr));
+	case BIOCVOL:
+		return (ips_ioctl_vol(sc, (struct bioc_vol *)addr));
+	default:
+		return (ENOTTY);
+	}
+}
+
+int
+ips_ioctl_inq(struct ips_softc *sc, struct bioc_inq *bi)
+{
+	struct ips_adapterinfo ai;
+
+	if (ips_getadapterinfo(sc, &ai))
+		return (EIO);
+
+	strlcpy(bi->bi_dev, sc->sc_dev.dv_xname, sizeof(bi->bi_dev));
+	bi->bi_novol = sc->sc_nunits;
+	bi->bi_nodisk = ai.drivecnt;
+
+	return (0);
+}
+
+int
+ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
+{
+	struct ips_driveinfo di;
+	struct ips_drive *drive;
+	struct device *dev;
+	struct scsi_link *link;
+	int id = bv->bv_volid, vol, i;
+
+	if (id >= sc->sc_nunits)
+		return (EINVAL);
+
+	if (ips_getdriveinfo(sc, &di))
+		return (EIO);
+	drive = &di.drive[id];
+
+	switch (drive->state) {
+	case IPS_DS_ONLINE:
+		bv->bv_status = BIOC_SVONLINE;
+		break;
+	case IPS_DS_DEGRADED:
+		bv->bv_status = BIOC_SVDEGRADED;
+		break;
+	case IPS_DS_OFFLINE:
+		bv->bv_status = BIOC_SVOFFLINE;
+		break;
+	default:
+		bv->bv_status = BIOC_SVINVALID;
+	}
+
+	bv->bv_size = (u_quad_t)drive->seccnt * IPS_SECSZ;
+	bv->bv_level = drive->raid;
+	bv->bv_nodisk = 0; /* XXX */
+
+	for (i = 0, vol = -1; i < sc->sc_nunits; i++) {
+		link = sc->sc_scsibus->sc_link[i][0];
+		if (link == NULL)
+			continue;
+
+		/* skip if not a virtual disk */
+		if (!(link->flags & SDEV_VIRTUAL))
+			continue;
+
+		vol++;
+		/* are we it? */
+		if (vol == id) {
+			dev = link->device_softc;
+			memcpy(bv->bv_vendor, link->inqdata.vendor,
+			    sizeof bv->bv_vendor);
+			bv->bv_vendor[sizeof(bv->bv_vendor) - 1] = '\0';
+			strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
+			break;
+		}
+	}
+
+	return (0);
+}
+#endif	/* NBIO > 0 */
 
 int
 ips_cmd(struct ips_softc *sc, int code, int drive, u_int32_t lba, void *data,
