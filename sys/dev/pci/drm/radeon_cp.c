@@ -772,7 +772,7 @@ radeon_test_writeback(drm_radeon_private_t *dev_priv)
 
 	if (tmp < dev_priv->usec_timeout) {
 		dev_priv->writeback_works = 1;
-		DRM_INFO("writeback test succeeded in %d usecs\n", tmp);
+		DRM_DEBUG("writeback test succeeded in %d usecs\n", tmp);
 	} else {
 		dev_priv->writeback_works = 0;
 		DRM_INFO("writeback test failed\n");
