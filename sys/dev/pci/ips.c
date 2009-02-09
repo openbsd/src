@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.37 2009/02/08 12:00:19 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.38 2009/02/09 20:17:43 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -638,7 +638,7 @@ ips_cmd(struct ips_softc *sc, int code, int drive, u_int32_t lba, void *data,
 	struct ips_cmd *cmd;
 	struct ips_sg *sg;
 	struct ips_ccb *ccb;
-	int nsegs, i, error = 0;
+	int nsegs, i, s, error = 0;
 
 	DPRINTF(IPS_D_XFER, ("%s: cmd code 0x%02x, drive %d, lba %u, "
 	    "size %lu, flags 0x%02x\n", sc->sc_dev.dv_xname, code, drive, lba,
@@ -709,7 +709,9 @@ ips_cmd(struct ips_softc *sc, int code, int drive, u_int32_t lba, void *data,
 
 	if (flags & IPS_CCB_POLL) {
 		/* Wait for command to complete */
+		s = splbio();
 		error = ips_poll(sc, ccb);
+		splx(s);
 	} else {
 		/* Set watchdog timer */
 		timeout_set(&xs->stimeout, ips_timeout, ccb);
