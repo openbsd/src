@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.13 2009/01/10 20:34:44 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.14 2009/02/09 07:00:27 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -166,7 +166,7 @@ sio_open(char *str, unsigned mode, int nbio)
 
 	if ((mode & (SIO_PLAY | SIO_REC)) == 0)
 		return NULL;
-	if (str == NULL)
+	if (str == NULL && !issetugid())
 		str = getenv("AUDIODEVICE");
 	hdl = sio_open_aucat(str, mode, nbio);
 	if (hdl != NULL)
@@ -183,7 +183,7 @@ sio_create(struct sio_hdl *hdl, struct sio_ops *ops, unsigned mode, int nbio)
 #ifdef DEBUG
 	char *dbg;
 
-	dbg = getenv("SIO_DEBUG");
+	dbg = issetugid() ? NULL : getenv("SIO_DEBUG");
 	if (!dbg || sscanf(dbg, "%u", &hdl->debug) != 1)
 		hdl->debug = 0;
 #endif	
