@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.36 2008/10/03 01:31:24 brad Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.37 2009/02/09 19:14:31 chl Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -222,7 +222,7 @@ xe_pcmcia_attach(parent, self, aux)
 	struct xe_softc *sc = &psc->sc_xe;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_function *pf = pa->pf;
-	struct pcmcia_config_entry *cfe;
+	struct pcmcia_config_entry *cfe = NULL;
 	struct ifnet *ifp;
 	u_int8_t myla[ETHER_ADDR_LEN], *enaddr = NULL;
 	int state = 0;
