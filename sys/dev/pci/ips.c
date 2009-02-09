@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.39 2009/02/09 20:20:15 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.40 2009/02/09 22:05:15 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
@@ -70,6 +70,7 @@ int ips_debug = IPS_D_ERR;
 #define IPS_CMDSZ		sizeof(struct ips_cmd)
 #define IPS_SGSZ		sizeof(struct ips_sg)
 #define IPS_SECSZ		512
+#define IPS_NVRAMPGSZ		128
 
 #define	IPS_TIMEOUT		5	/* seconds */
 
@@ -96,6 +97,7 @@ int ips_debug = IPS_D_ERR;
 #define IPS_CMD_GETVERINFO	0xc6
 #define IPS_CMD_FFDC		0xd7
 #define IPS_CMD_SG		0x80
+#define IPS_CMD_RWNVRAM		0xbc
 
 /* Register definitions */
 #define IPS_REG_HIS		0x08	/* host interrupt status */
@@ -148,8 +150,8 @@ struct ips_adapterinfo {
 	u_int8_t	wrongaddrcnt;
 	u_int8_t	unidentcnt;
 	u_int8_t	nvramdevchgcnt;
-	u_int8_t	codeblkver[8];
-	u_int8_t	bootblkver[8];
+	u_int8_t	firmware[8];
+	u_int8_t	bios[8];
 	u_int32_t	drivesize[IPS_MAXDRIVES];
 	u_int8_t	cmdcnt;
 	u_int8_t	maxphysdevs;
@@ -181,6 +183,21 @@ struct ips_driveinfo {
 
 		u_int32_t	seccnt;
 	}		drive[IPS_MAXDRIVES];
+};
+
+struct ips_pg5 {
+	u_int32_t	signature;
+	u_int8_t	__reserved1;
+	u_int8_t	slot;
+	u_int16_t	type;
+	u_int8_t	bioshi[4];
+	u_int8_t	bioslo[4];
+	u_int16_t	__reserved2;
+	u_int8_t	__reserved3;
+	u_int8_t	os;
+	u_int8_t	driverhi[4];
+	u_int8_t	driverlo[4];
+	u_int8_t	__reserved4[100];
 };
 
 /* Command control block */
@@ -257,6 +274,7 @@ void	ips_timeout(void *);
 int	ips_getadapterinfo(struct ips_softc *, struct ips_adapterinfo *);
 int	ips_getdriveinfo(struct ips_softc *, struct ips_driveinfo *);
 int	ips_flush(struct ips_softc *);
+int	ips_readnvram(struct ips_softc *, void *, int);
 
 void	ips_copperhead_exec(struct ips_softc *, struct ips_ccb *);
 void	ips_copperhead_init(struct ips_softc *);
@@ -312,7 +330,6 @@ static const struct pci_matchid ips_ids[] = {
 };
 
 static const struct ips_chipset {
-	const char *	ic_name;
 	int		ic_bar;
 
 	void		(*ic_exec)(struct ips_softc *, struct ips_ccb *);
@@ -323,7 +340,6 @@ static const struct ips_chipset {
 	u_int32_t	(*ic_status)(struct ips_softc *);
 } ips_chips[] = {
 	{
-		"Copperhead",
 		0x14,
 		ips_copperhead_exec,
 		ips_copperhead_init,
@@ -333,7 +349,6 @@ static const struct ips_chipset {
 		ips_copperhead_status
 	},
 	{
-		"Morpheus",
 		0x10,
 		ips_morpheus_exec,
 		ips_morpheus_init,
@@ -356,6 +371,26 @@ enum {
 #define ips_reset(s)	(s)->sc_chip->ic_reset((s))
 #define ips_status(s)	(s)->sc_chip->ic_status((s))
 
+static const char *ips_names[] = {
+	"II",
+	"onboard",
+	"onboard",
+	"3H",
+	"3L",
+	"4H",
+	"4M",
+	"4L",
+	"4Mx",
+	"4Lx",
+	"5i",
+	"5i",
+	"6M",
+	"6i",
+	"7t",
+	"7k",
+	"7M"
+};
+
 int
 ips_match(struct device *parent, void *match, void *aux)
 {
@@ -371,6 +406,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	struct ips_ccb ccb0;
 	struct scsibus_attach_args saa;
 	struct ips_adapterinfo ai;
+	struct ips_pg5 pg5;
 	pcireg_t maptype;
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
@@ -442,6 +478,10 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_nunits = sc->sc_di.drivecnt;
 
+	/* Read NVRAM page 5 for additional info */
+	bzero(&pg5, sizeof(pg5));
+	ips_readnvram(sc, &pg5, 5);
+
 	bus_dmamap_destroy(sc->sc_dmat, ccb0.c_dmam);
 
 	/* Initialize CCB queue */
@@ -473,16 +513,17 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", intrstr);
 
 	/* Display adapter info */
-	printf("%s", sc->sc_dev.dv_xname);
-	printf(": %s", sc->sc_chip->ic_name);
+	printf("%s: ServeRAID", sc->sc_dev.dv_xname);
+	if (pg5.type > 1 && pg5.type - 2 < sizeof(ips_names) /
+	    sizeof(ips_names[0]))
+		printf(" %s", ips_names[pg5.type - 2]);
 	printf(", firmware %c%c%c%c%c%c%c",
-	    ai.codeblkver[0], ai.codeblkver[1], ai.codeblkver[2],
-	    ai.codeblkver[3], ai.codeblkver[4], ai.codeblkver[5],
-	    ai.codeblkver[6]);
-	printf(", bootblock %c%c%c%c%c%c%c",
-	    ai.bootblkver[0], ai.bootblkver[1], ai.bootblkver[2],
-	    ai.bootblkver[3], ai.bootblkver[4], ai.bootblkver[5],
-	    ai.bootblkver[6]);
+	    ai.firmware[0], ai.firmware[1], ai.firmware[2],
+	    ai.firmware[3], ai.firmware[4], ai.firmware[5],
+	    ai.firmware[6]);
+	printf(", bios %c%c%c%c%c%c%c",
+	    ai.bios[0], ai.bios[1], ai.bios[2], ai.bios[3], ai.bios[4],
+	    ai.bios[5], ai.bios[6]);
 	printf(", %d CCBs, %d units", sc->sc_nccbs, sc->sc_nunits);
 	printf("\n");
 
@@ -990,6 +1031,13 @@ int
 ips_flush(struct ips_softc *sc)
 {
 	return (ips_cmd(sc, IPS_CMD_FLUSH, 0, 0, NULL, 0, IPS_CCB_POLL, NULL));
+}
+
+int
+ips_readnvram(struct ips_softc *sc, void *buf, int page)
+{
+	return (ips_cmd(sc, IPS_CMD_RWNVRAM, page, 0, buf, IPS_NVRAMPGSZ,
+	    IPS_CCB_READ | IPS_CCB_POLL, NULL));
 }
 
 void
