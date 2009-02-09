@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.83 2008/11/21 23:51:30 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.84 2009/02/09 20:00:48 otto Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -229,9 +229,13 @@ checkdisklabel(void *rlp, struct disklabel *lp)
 	if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC)
 		msg = "no disk label";
 	else if (dlp->d_npartitions > MAXPARTITIONS)
-		msg = "unreasonable partition count";
+		msg = "invalid label, partition count > MAXPARTITIONS";
+	else if (dlp->d_secpercyl == 0)
+		msg = "invalid label, d_secpercyl == 0";
+	else if (dlp->d_secsize == 0)
+		msg = "invalid label, d_secsize == 0";
 	else if (dkcksum(dlp) != 0)
-		msg = "disk label corrupted";
+		msg = "invalid label, incorrect checksum";
 
 	if (msg) {
 		u_int16_t *start, *end, sum = 0;
