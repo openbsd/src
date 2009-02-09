@@ -207,8 +207,6 @@ inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 		switch (cmd) {
 		case DRM_IOCTL_I915_FLUSH:
 			return (i915_flush_ioctl(dev, data, file_priv));
-		case DRM_IOCTL_I915_FLIP:
-			return (i915_flip_bufs(dev, data, file_priv));
 		case DRM_IOCTL_I915_BATCHBUFFER:
 			return (i915_batchbuffer(dev, data, file_priv));
 		case DRM_IOCTL_I915_IRQ_EMIT:
@@ -225,12 +223,6 @@ inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 			return (i915_cmdbuffer(dev, data, file_priv));
 		case DRM_IOCTL_I915_GET_VBLANK_PIPE:
 			return (i915_vblank_pipe_get(dev, data, file_priv));
-		case DRM_IOCTL_I915_VBLANK_SWAP:
-			/*
-			 * removed due to being racy. Userland falls back
-			 * correctly when it errors out
-			 */
-			return (EINVAL);
 		}
 	}
 

@@ -92,12 +92,6 @@ typedef struct drm_i915_private {
 	unsigned int status_gfx_addr;
 	drm_local_map_t hws_map;
 
-	unsigned int cpp;
-	int back_offset;
-	int front_offset;
-	int current_page;
-	int page_flipping;
-
 	atomic_t irq_received;
 	/* Protects user_irq_refcount and irq_mask reg */
 	DRM_SPINTYPE user_irq_lock;
@@ -110,7 +104,6 @@ typedef struct drm_i915_private {
 	int tex_lru_log_granularity;
 	int allow_batchbuffer;
 	struct drm_heap agp_heap;
-	unsigned int sr01, adpa, ppcr, dvob, dvoc, lvds;
 
 	/* Register state */
 	u8 saveLBB;
@@ -229,8 +222,6 @@ extern int i915_driver_device_is_agp(struct drm_device * dev);
 extern long i915_compat_ioctl(struct file *filp, unsigned int cmd,
 			      unsigned long arg);
 extern void i915_emit_breadcrumb(struct drm_device *dev);
-extern int i915_dispatch_flip(struct drm_device *);
-extern int i915_emit_mi_flush(struct drm_device *dev, uint32_t flush);
 extern int i915_driver_firstopen(struct drm_device *dev);
 extern int i915_dispatch_batchbuffer(struct drm_device * dev,
 				     drm_i915_batchbuffer_t * batch);
@@ -279,7 +270,6 @@ extern int i915_restore_state(struct drm_device *dev);
 extern int i915_dma_init(struct drm_device *, void *, struct drm_file *);
 extern int i915_flush_ioctl(struct drm_device *, void *, struct drm_file *);
 extern int i915_batchbuffer(struct drm_device *, void *, struct drm_file *);
-extern int i915_flip_bufs(struct drm_device *, void *, struct drm_file *);
 extern int i915_getparam(struct drm_device *, void *, struct drm_file *);
 extern int i915_setparam(struct drm_device *, void *, struct drm_file *);
 extern int i915_cmdbuffer(struct drm_device *, void *, struct drm_file *);

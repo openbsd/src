@@ -189,13 +189,6 @@ static int i915_initialize(struct drm_device * dev, drm_i915_init_t * init)
 
 	dev_priv->ring.virtual_start = dev_priv->ring.map.handle;
 
-	dev_priv->cpp = init->cpp;
-	dev_priv->back_offset = init->back_offset;
-	dev_priv->front_offset = init->front_offset;
-	dev_priv->current_page = 0;
-	if (dev_priv->sarea_priv)
-		dev_priv->sarea_priv->pf_current_page = 0;
-
 	/* Allow hardware batchbuffers unless told otherwise.
 	 */
 	dev_priv->allow_batchbuffer = 1;
@@ -440,28 +433,6 @@ void i915_emit_breadcrumb(struct drm_device *dev)
 	ADVANCE_LP_RING();
 }
 
-
-int i915_emit_mi_flush(struct drm_device *dev, uint32_t flush)
-{
-	drm_i915_private_t *dev_priv = dev->dev_private;
-	uint32_t flush_cmd = MI_FLUSH;
-	RING_LOCALS;
-
-	flush_cmd |= flush;
-
-	i915_kernel_lost_context(dev);
-
-	BEGIN_LP_RING(4);
-	OUT_RING(flush_cmd);
-	OUT_RING(0);
-	OUT_RING(0);
-	OUT_RING(0);
-	ADVANCE_LP_RING();
-
-	return 0;
-}
-
-
 static int i915_dispatch_cmdbuffer(struct drm_device * dev,
 				   drm_i915_cmdbuffer_t * cmd)
 {
@@ -543,43 +514,6 @@ int i915_dispatch_batchbuffer(struct drm_device * dev,
 	i915_emit_breadcrumb(dev);
 
 	return 0;
-}
-
-int i915_dispatch_flip(struct drm_device * dev)
-{
-	drm_i915_private_t *dev_priv = dev->dev_private;
-	RING_LOCALS;
-
-	if (dev_priv->sarea_priv == NULL)
-		return EINVAL;
-
-	DRM_DEBUG("page=%d pfCurrentPage=%d\n", dev_priv->current_page,
-	    dev_priv->sarea_priv->pf_current_page);
-
-	i915_emit_mi_flush(dev, MI_READ_FLUSH | MI_EXE_FLUSH);
-
-	BEGIN_LP_RING(6);
-	OUT_RING(CMD_OP_DISPLAYBUFFER_INFO | ASYNC_FLIP);
-	OUT_RING(0);
-	if (dev_priv->current_page == 0) {
-		OUT_RING(dev_priv->back_offset);
-		dev_priv->current_page = 1;
-	} else {
-		OUT_RING(dev_priv->front_offset);
-		dev_priv->current_page = 0;
-	}
-	OUT_RING(0);
-	ADVANCE_LP_RING();
-
-	BEGIN_LP_RING(2);
-	OUT_RING(MI_WAIT_FOR_EVENT | MI_WAIT_FOR_PLANE_A_FLIP);
-	OUT_RING(0);
-	ADVANCE_LP_RING();
-
-	i915_emit_breadcrumb(dev);
-
-	dev_priv->sarea_priv->pf_current_page = dev_priv->current_page;
-	return (0);
 }
 
 int i915_quiescent(struct drm_device *dev)
@@ -672,22 +606,6 @@ int i915_cmdbuffer(struct drm_device *dev, void *data,
 		dev_priv->sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
 	return 0;
 }
-
-int i915_flip_bufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
-{
-	int ret;
-
-	DRM_DEBUG("\n");
-
-	LOCK_TEST_WITH_RETURN(dev, file_priv);
-
-	DRM_LOCK();
-	ret = i915_dispatch_flip(dev);
-	DRM_UNLOCK();
-
-	return (ret);
-}
-
 
 int i915_getparam(struct drm_device *dev, void *data,
 			 struct drm_file *file_priv)
