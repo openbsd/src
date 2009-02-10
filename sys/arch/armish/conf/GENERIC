@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.24 2008/12/01 23:48:46 todd Exp $ 
+# $OpenBSD: GENERIC,v 1.25 2009/02/10 18:35:44 damien Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -150,6 +150,7 @@ radio*	at udsbr?		# USB radio
 ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
+run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 #udcf*	at uhub?		# Gude Expert mouseCLOCK
 uow*	at uhub?		# Maxim/Dallas DS2490 1-Wire adapter
 onewire* at uow?

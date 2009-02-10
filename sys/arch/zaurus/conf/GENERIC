@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.71 2008/12/01 23:48:47 todd Exp $
+#	$OpenBSD: GENERIC,v 1.72 2009/02/10 18:35:44 damien Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -122,6 +122,7 @@ upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 ural*		at uhub?		# Ralink RT2500USB
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
+run*		at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 urio*		at uhub?		# Diamond Multimedia Rio 500

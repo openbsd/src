@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.35 2009/01/14 10:51:06 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.36 2009/02/10 18:35:44 damien Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -102,6 +102,7 @@ uhid*		at uhidev?	# USB generic HID support
 aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet  
 ugen*		at uhub?	# USB Generic driver
 rum*		at uhub?	# Ralink RT2501USB/RT2601USB
+run*		at uhub?	# Ralink RT2700U/RT2800U/RT3000U
 
 # USB Video
 uvideo*		at uhub?

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.164 2009/02/08 19:15:02 grange Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.165 2009/02/10 18:35:44 damien Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -146,6 +146,7 @@ wi*	at uhub?		# WaveLAN IEEE 802.11DS
 #ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
+run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 zyd*	at uhub?		# Zydas ZD1211/ZD1211B
 upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
 

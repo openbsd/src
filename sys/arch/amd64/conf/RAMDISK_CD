@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.97 2009/02/08 19:15:56 grange Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.98 2009/02/10 18:35:44 damien Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -124,6 +124,7 @@ upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 #ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
+run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 zyd*	at uhub?		# Zydas ZD1211/ZD1211B
 upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
 
