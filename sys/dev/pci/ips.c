@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.41 2009/02/10 09:09:56 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.42 2009/02/10 12:43:03 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -71,6 +71,7 @@ int ips_debug = IPS_D_ERR;
 #define IPS_SGSZ		sizeof(struct ips_sg)
 #define IPS_SECSZ		512
 #define IPS_NVRAMPGSZ		128
+#define IPS_SQSZ		(IPS_MAXCMDS * sizeof(u_int32_t))
 
 #define	IPS_TIMEOUT		5	/* seconds */
 
@@ -107,6 +108,11 @@ int ips_debug = IPS_D_ERR;
 #define IPS_REG_CCC		0x14	/* command channel control */
 #define IPS_REG_CCC_SEM			0x0008	/* semaphore */
 #define IPS_REG_CCC_START		0x101a	/* start command */
+#define IPS_REG_SQH		0x20	/* status queue head */
+#define IPS_REG_SQT		0x24	/* status queue tail */
+#define IPS_REG_SQE		0x28	/* status queue end */
+#define IPS_REG_SQS		0x2c	/* status queue start */
+
 #define IPS_REG_OIS		0x30	/* outbound interrupt status */
 #define IPS_REG_OIS_PEND		0x0008	/* interrupt is pending */
 #define IPS_REG_OIM		0x34	/* outbound interrupt mask */
@@ -253,6 +259,11 @@ struct ips_softc {
 	int			sc_nccbs;
 	struct ips_ccbq		sc_ccbq_free;
 	struct ips_ccbq		sc_ccbq_run;
+
+	struct dmamem		sc_sqm;
+	paddr_t			sc_sqtail;
+	u_int32_t *		sc_sqbuf;
+	int			sc_sqidx;
 };
 
 int	ips_match(struct device *, void *, void *);
@@ -330,6 +341,11 @@ static const struct pci_matchid ips_ids[] = {
 };
 
 static const struct ips_chipset {
+	enum {
+		IPS_CHIP_COPPERHEAD = 0,
+		IPS_CHIP_MORPHEUS
+	}		ic_id;
+
 	int		ic_bar;
 
 	void		(*ic_exec)(struct ips_softc *, struct ips_ccb *);
@@ -340,6 +356,7 @@ static const struct ips_chipset {
 	u_int32_t	(*ic_status)(struct ips_softc *);
 } ips_chips[] = {
 	{
+		IPS_CHIP_COPPERHEAD,
 		0x14,
 		ips_copperhead_exec,
 		ips_copperhead_init,
@@ -349,6 +366,7 @@ static const struct ips_chipset {
 		ips_copperhead_status
 	},
 	{
+		IPS_CHIP_MORPHEUS,
 		0x10,
 		ips_morpheus_exec,
 		ips_morpheus_init,
@@ -357,11 +375,6 @@ static const struct ips_chipset {
 		ips_morpheus_reset,
 		ips_morpheus_status
 	}
-};
-
-enum {
-	IPS_CHIP_COPPERHEAD = 0,
-	IPS_CHIP_MORPHEUS
 };
 
 #define ips_exec(s, c)	(s)->sc_chip->ic_exec((s), (c))
@@ -447,6 +460,25 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		goto fail1;
 	}
 
+	/* Allocate status queue for the Copperhead chipset */
+	if (sc->sc_chip->ic_id == IPS_CHIP_COPPERHEAD) {
+		if (ips_dmamem_alloc(&sc->sc_sqm, sc->sc_dmat, IPS_SQSZ)) {
+			printf(": can't allocate status queue\n");
+			goto fail2;
+		}
+		sc->sc_sqtail = sc->sc_sqm.dm_paddr;
+		sc->sc_sqbuf = sc->sc_sqm.dm_vaddr;
+		sc->sc_sqidx = 0;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IPS_REG_SQS,
+		    sc->sc_sqm.dm_paddr);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IPS_REG_SQE,
+		    sc->sc_sqm.dm_paddr + IPS_SQSZ);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IPS_REG_SQH,
+		    sc->sc_sqm.dm_paddr + sizeof(u_int32_t));
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, IPS_REG_SQT,
+		    sc->sc_sqm.dm_paddr);
+	}
+
 	/* Bootstrap CCB queue */
 	sc->sc_nccbs = 1;
 	sc->sc_ccb = &ccb0;
@@ -457,7 +489,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	    IPS_MAXFER, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &ccb0.c_dmam)) {
 		printf(": can't bootstrap CCB queue\n");
-		goto fail2;
+		goto fail3;
 	}
 	TAILQ_INIT(&sc->sc_ccbq_free);
 	TAILQ_INIT(&sc->sc_ccbq_run);
@@ -467,14 +499,14 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	if (ips_getadapterinfo(sc, &ai)) {
 		printf(": can't get adapter info\n");
 		bus_dmamap_destroy(sc->sc_dmat, ccb0.c_dmam);
-		goto fail2;
+		goto fail3;
 	}
 
 	/* Get logical drives info */
 	if (ips_getdriveinfo(sc, &sc->sc_di)) {
 		printf(": can't get logical drives info\n");
 		bus_dmamap_destroy(sc->sc_dmat, ccb0.c_dmam);
-		goto fail2;
+		goto fail3;
 	}
 	sc->sc_nunits = sc->sc_di.drivecnt;
 
@@ -488,7 +520,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_nccbs = ai.cmdcnt;
 	if ((sc->sc_ccb = ips_ccb_alloc(sc, sc->sc_nccbs)) == NULL) {
 		printf(": can't allocate CCB queue\n");
-		goto fail2;
+		goto fail3;
 	}
 	TAILQ_INIT(&sc->sc_ccbq_free);
 	TAILQ_INIT(&sc->sc_ccbq_run);
@@ -499,7 +531,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	/* Install interrupt handler */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
-		goto fail3;
+		goto fail4;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	if (pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ips_intr, sc,
@@ -508,7 +540,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		goto fail3;
+		goto fail4;
 	}
 	printf(": %s\n", intrstr);
 
@@ -551,8 +583,11 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	return;
-fail3:
+fail4:
 	ips_ccb_free(sc, sc->sc_ccb, sc->sc_nccbs);
+fail3:
+	if (sc->sc_chip->ic_id == IPS_CHIP_COPPERHEAD)
+		ips_dmamem_free(&sc->sc_sqm);
 fail2:
 	ips_dmamem_free(&sc->sc_cmdm);
 fail1:
@@ -1096,8 +1131,25 @@ ips_copperhead_reset(struct ips_softc *sc)
 u_int32_t
 ips_copperhead_status(struct ips_softc *sc)
 {
-	/* XXX: not implemented */
-	return (0);
+	u_int32_t sqhead, sqtail, status;
+
+	sqhead = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IPS_REG_SQH);
+	DPRINTF(IPS_D_XFER, ("%s: sqhead 0x%08x, sqtail 0x%08x\n",
+	    sc->sc_dev.dv_xname, sqhead, sc->sc_sqtail));
+
+	sqtail = sc->sc_sqtail + sizeof(u_int32_t);
+	if (sqtail == sc->sc_sqm.dm_paddr + IPS_SQSZ)
+		sqtail = sc->sc_sqm.dm_paddr;
+	if (sqtail == sqhead)
+		return (0xffffffff);
+
+	sc->sc_sqtail = sqtail;
+	if (++sc->sc_sqidx == IPS_MAXCMDS)
+		sc->sc_sqidx = 0;
+	status = sc->sc_sqbuf[sc->sc_sqidx];
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IPS_REG_SQT, sqtail);
+
+	return (status);
 }
 
 void
