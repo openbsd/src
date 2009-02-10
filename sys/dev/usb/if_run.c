@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.7 2009/02/06 18:43:22 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.8 2009/02/10 17:10:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -68,8 +68,6 @@
 #ifdef USB_DEBUG
 #define RUN_DEBUG
 #endif
-
-#define RUN_DEBUG
 
 #ifdef RUN_DEBUG
 #define DPRINTF(x)	do { if (run_debug) printf x; } while (0)
@@ -1519,8 +1517,8 @@ run_set_key_cb(struct run_softc *sc, void *arg)
 	if (!(k->k_flags & IEEE80211_KEY_GROUP) ||
 	    (k->k_flags & IEEE80211_KEY_TX)) {
 		/* set initial packet number in IV+EIV */
-		if ((k->k_cipher == IEEE80211_CIPHER_WEP40 ||
-		     k->k_cipher == IEEE80211_CIPHER_WEP104)) {
+		if (k->k_cipher == IEEE80211_CIPHER_WEP40 ||
+		    k->k_cipher == IEEE80211_CIPHER_WEP104) {
 			memset(iv, 0, sizeof iv);
 			iv[3] = sc->sc_ic.ic_def_txkey << 6;
 		} else {
