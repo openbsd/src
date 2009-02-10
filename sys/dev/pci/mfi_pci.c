@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.19 2009/01/28 23:45:13 marco Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.20 2009/02/10 23:21:44 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -37,6 +37,7 @@
 #include <dev/ic/mfivar.h>
 
 #define	MFI_BAR		0x10
+#define	MFI_BAR_GEN2	0x14
 #define	MFI_PCI_MEMSIZE	0x2000 /* 8k */
 
 int	mfi_pci_match(struct device *, void *, void *);
@@ -135,13 +136,23 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t	ih;
 	bus_size_t		size;
 	pcireg_t		reg;
+	int			regbar;
 	const char		*subtype = NULL;
 	char			subid[32];
 
 	mpd = mfi_pci_find_device(pa);
+	if (mpd == NULL) {
+		printf(": can't find matching pci device\n");
+		return;
+	}
 
-	reg = pci_mapreg_type(pa->pa_pc, pa->pa_tag, MFI_BAR);
-	if (pci_mapreg_map(pa, MFI_BAR, reg, 0,
+	if (mpd->mpd_iop == MFI_IOP_GEN2)
+		regbar = MFI_BAR_GEN2;
+	else
+		regbar = MFI_BAR;
+
+	reg = pci_mapreg_type(pa->pa_pc, pa->pa_tag, regbar);
+	if (pci_mapreg_map(pa, regbar, reg, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &size, MFI_PCI_MEMSIZE)) {
 		printf(": can't map controller pci space\n");
 		return;
