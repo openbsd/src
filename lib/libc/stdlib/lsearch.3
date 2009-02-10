@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lsearch.3,v 1.8 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: lsearch.3,v 1.9 2009/02/10 21:47:56 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)lsearch.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: February 10 2009 $
 .Dt LSEARCH 3
 .Os
 .Sh NAME
@@ -40,10 +40,10 @@
 .Fd #include <search.h>
 .Ft char *
 .Fn lsearch "const void *key" "const void *base" "size_t *nelp" \
-    "size_t width" "int (*compar)(void *, void *)"
+    "size_t width" "int (*compar)(const void *, const void *)"
 .Ft char *
 .Fn lfind "const void *key" "const void *base" "size_t *nelp" \
-    "size_t width" "int (*compar)(void *, void *)"
+    "size_t width" "int (*compar)(const void *, const void *)"
 .Sh DESCRIPTION
 The functions
 .Fn lsearch
