@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.84 2009/02/10 18:35:44 damien Exp $
+#	$OpenBSD: RAMDISK,v 1.85 2009/02/10 19:06:40 damien Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -246,7 +246,6 @@ udav*	at uhub?		# Davicom DM9601 based Ethernet
 mos*	at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
-run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 url*	at uhub?		# Realtek RTL8150L based adapters
 
 # SAB82532 based serial ports

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.4 2009/02/10 18:35:44 damien Exp $
+#	$OpenBSD: RAMDISK,v 1.5 2009/02/10 19:06:40 damien Exp $
 
 machine		socppc powerpc
 
@@ -56,7 +56,6 @@ umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
-run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 
 sd*		at scsibus?
 
