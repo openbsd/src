@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.63 2009/02/06 21:48:00 stevesk Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.64 2009/02/10 16:52:09 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -380,6 +380,7 @@ void
 ntpd_adjfreq(double relfreq, int wrlog)
 {
 	int64_t curfreq;
+	double ppmfreq;
 	int r;
 
 	if (adjfreq(NULL, &curfreq) == -1) {
@@ -393,10 +394,18 @@ ntpd_adjfreq(double relfreq, int wrlog)
 	 */
 	curfreq += relfreq * 1e9 * (1LL << 32);
 	r = writefreq(curfreq / 1e9 / (1LL << 32));
-	if (wrlog)
-		log_info("adjusting clock frequency by %f to %fppm%s",
-		    relfreq * 1e6, curfreq / 1e3 / (1LL << 32),
-		    r ? "" : " (no drift file)");
+	ppmfreq = relfreq * 1e6;
+	if (wrlog) {
+		if (ppmfreq >= LOG_NEGLIGIBLE_ADJFREQ ||
+		    ppmfreq <= -LOG_NEGLIGIBLE_ADJFREQ)
+			log_info("adjusting clock frequency by %f to %fppm%s",
+			    ppmfreq, curfreq / 1e3 / (1LL << 32),
+			    r ? "" : " (no drift file)");
+		else
+			log_debug("adjusting clock frequency by %f to %fppm%s",
+			    ppmfreq, curfreq / 1e3 / (1LL << 32),
+			    r ? "" : " (no drift file)");
+	}
 
 	if (adjfreq(&curfreq, NULL) == -1)
 		log_warn("adjfreq failed");
