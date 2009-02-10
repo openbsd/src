@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ips.4,v 1.6 2009/02/10 08:56:33 grange Exp $
+.\"	$OpenBSD: ips.4,v 1.7 2009/02/10 09:05:41 grange Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -43,7 +43,9 @@ ServeRAID 7k/7M/7t
 .Pp
 Although the controllers are actual RAID controllers,
 the driver makes them look just like SCSI controllers.
-All RAID configuration is done through the controllers' BIOSes.
+All RAID configuration is done through the bootable IBM ServeRAID
+Support CD.
+CD image is freely available at the IBM website.
 .Sh SEE ALSO
 .Xr bio 4 ,
 .Xr intro 4 ,
@@ -51,6 +53,8 @@ All RAID configuration is done through the controllers' BIOSes.
 .Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr bioctl 8
+.Pp
+.Pa http://www.ibm.com
 .Sh HISTORY
 The
 .Nm
