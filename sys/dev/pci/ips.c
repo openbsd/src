@@ -1,7 +1,7 @@
-/*	$OpenBSD: ips.c,v 1.40 2009/02/09 22:05:15 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.41 2009/02/10 09:09:56 grange Exp $	*/
 
 /*
- * Copyright (c) 2006, 2007 Alexander Yurchenko <grange@openbsd.org>
+ * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
