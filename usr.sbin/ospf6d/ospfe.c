@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.22 2009/02/03 14:12:22 stsp Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.23 2009/02/10 17:32:58 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -314,7 +314,7 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 		case IMSG_IFDELETE:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(ifindex))
-				fatalx("IFINFO imsg with wrong len");
+				fatalx("IFDELETE imsg with wrong len");
 
 			memcpy(&ifindex, imsg.data, sizeof(ifindex));
 			iface = if_find(ifindex);
