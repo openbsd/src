@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.128 2009/02/04 20:09:03 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.129 2009/02/10 02:13:19 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1658,7 +1658,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	u_int16_t rega, regb;
 	int retries;
 
-	if (state == ACPI_STATE_S0)
+	if (sc == NULL || state == ACPI_STATE_S0)
 		return;
 	if (sc->sc_sleeptype[state].slp_typa == -1 ||
 	    sc->sc_sleeptype[state].slp_typb == -1) {
