@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.164 2009/02/09 08:20:11 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.165 2009/02/11 20:07:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1813,8 +1813,8 @@ inet6applymask(struct in6_addr *dest, const struct in6_addr *src, int prefixlen)
 		dest->s6_addr[i] = src->s6_addr[i] & mask.s6_addr[i];
 }
 
-#define	ROUNDUP(a, size)	\
-    (((a) & ((size) - 1)) ? (1 + ((a) | ((size) - 1))) : (a))
+#define	ROUNDUP(a)	\
+    (((a) & ((sizeof(long)) - 1)) ? (1 + ((a) | ((sizeof(long)) - 1))) : (a))
 
 void
 get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
@@ -1825,7 +1825,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 		if (addrs & (1 << i)) {
 			rti_info[i] = sa;
 			sa = (struct sockaddr *)((char *)(sa) +
-			    ROUNDUP(sa->sa_len, sizeof(long)));
+			    ROUNDUP(sa->sa_len));
 		} else
 			rti_info[i] = NULL;
 	}
@@ -2059,9 +2059,10 @@ send_rt6msg(int fd, int action, struct kroute6 *kroute)
 {
 	struct iovec		iov[5];
 	struct rt_msghdr	hdr;
-	struct sockaddr_in6	prefix;
-	struct sockaddr_in6	nexthop;
-	struct sockaddr_in6	mask;
+	struct pad {
+		struct sockaddr_in6	addr;
+		char			pad[sizeof(long)];
+	} prefix, nexthop, mask;
 	struct sockaddr_rtlabel	label;
 	int			iovcnt = 0;
 
@@ -2086,43 +2087,44 @@ send_rt6msg(int fd, int action, struct kroute6 *kroute)
 	iov[iovcnt++].iov_len = sizeof(hdr);
 
 	bzero(&prefix, sizeof(prefix));
-	prefix.sin6_len = sizeof(prefix);
-	prefix.sin6_family = AF_INET6;
-	memcpy(&prefix.sin6_addr, &kroute->prefix, sizeof(struct in6_addr));
+	prefix.addr.sin6_len = sizeof(struct sockaddr_in6);
+	prefix.addr.sin6_family = AF_INET6;
+	memcpy(&prefix.addr.sin6_addr, &kroute->prefix,
+	    sizeof(struct in6_addr));
 	/* XXX scope does not matter or? */
 	/* adjust header */
 	hdr.rtm_addrs |= RTA_DST;
-	hdr.rtm_msglen += sizeof(prefix);
+	hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_in6));
 	/* adjust iovec */
 	iov[iovcnt].iov_base = &prefix;
-	iov[iovcnt++].iov_len = sizeof(prefix);
+	iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_in6));
 
 	if (memcmp(&kroute->nexthop, &in6addr_any, sizeof(struct in6_addr))) {
 		bzero(&nexthop, sizeof(nexthop));
-		nexthop.sin6_len = sizeof(nexthop);
-		nexthop.sin6_family = AF_INET6;
-		memcpy(&nexthop.sin6_addr, &kroute->nexthop,
+		nexthop.addr.sin6_len = sizeof(struct sockaddr_in6);
+		nexthop.addr.sin6_family = AF_INET6;
+		memcpy(&nexthop.addr.sin6_addr, &kroute->nexthop,
 		    sizeof(struct in6_addr));
 		/* adjust header */
 		hdr.rtm_flags |= RTF_GATEWAY;
 		hdr.rtm_addrs |= RTA_GATEWAY;
-		hdr.rtm_msglen += sizeof(nexthop);
+		hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_in6));
 		/* adjust iovec */
 		iov[iovcnt].iov_base = &nexthop;
-		iov[iovcnt++].iov_len = sizeof(nexthop);
+		iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_in6));
 	}
 
 	bzero(&mask, sizeof(mask));
-	mask.sin6_len = sizeof(mask);
-	mask.sin6_family = AF_INET6;
-	memcpy(&mask.sin6_addr, prefixlen2mask6(kroute->prefixlen),
+	mask.addr.sin6_len = sizeof(struct sockaddr_in6);
+	mask.addr.sin6_family = AF_INET6;
+	memcpy(&mask.addr.sin6_addr, prefixlen2mask6(kroute->prefixlen),
 	    sizeof(struct in6_addr));
 	/* adjust header */
 	hdr.rtm_addrs |= RTA_NETMASK;
-	hdr.rtm_msglen += sizeof(mask);
+	hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_in6));
 	/* adjust iovec */
 	iov[iovcnt].iov_base = &mask;
-	iov[iovcnt++].iov_len = sizeof(mask);
+	iov[iovcnt++].iov_len = ROUNDUP(sizeof(struct sockaddr_in6));
 
 	if (kroute->labelid) {
 		bzero(&label, sizeof(label));
