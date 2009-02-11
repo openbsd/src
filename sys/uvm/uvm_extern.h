@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.72 2008/11/04 21:37:06 deraadt Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.73 2009/02/11 11:09:36 mikeb Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -501,10 +501,6 @@ vaddr_t			uvm_km_valloc_align(vm_map_t, vsize_t, vsize_t);
 vaddr_t			uvm_km_valloc_wait(vm_map_t, vsize_t);
 vaddr_t			uvm_km_valloc_prefer_wait(vm_map_t, vsize_t,
 					voff_t);
-vaddr_t			uvm_km_alloc_poolpage1(vm_map_t,
-				struct uvm_object *, boolean_t);
-void			uvm_km_free_poolpage1(vm_map_t, vaddr_t);
-
 void			*uvm_km_getpage(boolean_t, int *);
 void			uvm_km_putpage(void *);
 

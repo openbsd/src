@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.68 2008/10/23 23:54:02 tedu Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.69 2009/02/11 11:09:36 mikeb Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -664,86 +664,6 @@ uvm_km_valloc_wait(struct vm_map *map, vsize_t size)
 	return uvm_km_valloc_prefer_wait(map, size, UVM_UNKNOWN_OFFSET);
 }
 
-/*
- * uvm_km_alloc_poolpage: allocate a page for the pool allocator
- *
- * => if the pmap specifies an alternate mapping method, we use it.
- */
-
-/* ARGSUSED */
-vaddr_t
-uvm_km_alloc_poolpage1(struct vm_map *map, struct uvm_object *obj,
-    boolean_t waitok)
-{
-#if defined(__HAVE_PMAP_DIRECT)
-	struct vm_page *pg;
-	vaddr_t va;
-
- again:
-	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
-	if (__predict_false(pg == NULL)) {
-		if (waitok) {
-			uvm_wait("plpg");
-			goto again;
-		} else
-			return (0);
-	}
-	va = pmap_map_direct(pg);
-	if (__predict_false(va == 0))
-		uvm_pagefree(pg);
-	return (va);
-#else
-	vaddr_t va;
-	int s;
-
-	/*
-	 * NOTE: We may be called with a map that doesn't require splvm
-	 * protection (e.g. kernel_map).  However, it does not hurt to
-	 * go to splvm in this case (since unprotected maps will never be
-	 * accessed in interrupt context).
-	 *
-	 * XXX We may want to consider changing the interface to this
-	 * XXX function.
-	 */
-
-	s = splvm();
-	va = uvm_km_kmemalloc(map, obj, PAGE_SIZE, waitok ? 0 : UVM_KMF_NOWAIT);
-	splx(s);
-	return (va);
-#endif /* __HAVE_PMAP_DIRECT */
-}
-
-/*
- * uvm_km_free_poolpage: free a previously allocated pool page
- *
- * => if the pmap specifies an alternate unmapping method, we use it.
- */
-
-/* ARGSUSED */
-void
-uvm_km_free_poolpage1(struct vm_map *map, vaddr_t addr)
-{
-#if defined(__HAVE_PMAP_DIRECT)
-	uvm_pagefree(pmap_unmap_direct(addr));
-#else
-	int s;
-
-	/*
-	 * NOTE: We may be called with a map that doesn't require splvm
-	 * protection (e.g. kernel_map).  However, it does not hurt to
-	 * go to splvm in this case (since unprocted maps will never be
-	 * accessed in interrupt context).
-	 *
-	 * XXX We may want to consider changing the interface to this
-	 * XXX function.
-	 */
-
-	s = splvm();
-	uvm_km_free(map, addr, PAGE_SIZE);
-	splx(s);
-#endif /* __HAVE_PMAP_DIRECT */
-}
-
 int uvm_km_pages_free; /* number of pages currently on free list */
 
 #if defined(__HAVE_PMAP_DIRECT)
@@ -762,16 +682,29 @@ uvm_km_page_init(void)
 void *
 uvm_km_getpage(boolean_t waitok, int *slowdown)
 {
+	struct vm_page *pg;
+	vaddr_t va;
 
 	*slowdown = 0;
-	return ((void *)uvm_km_alloc_poolpage1(NULL, NULL, waitok));
+ again:
+	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+	if (__predict_false(pg == NULL)) {
+		if (waitok) {
+			uvm_wait("plpg");
+			goto again;
+		} else
+			return (NULL);
+	}
+	va = pmap_map_direct(pg);
+	if (__predict_false(va == 0))
+		uvm_pagefree(pg);
+	return ((void *)va);
 }
 
 void
 uvm_km_putpage(void *v)
 {
-
-	uvm_km_free_poolpage1(NULL, (vaddr_t)v);
+	uvm_pagefree(pmap_unmap_direct((vaddr_t)v));
 }
 
 #else
