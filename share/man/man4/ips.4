@@ -1,6 +1,6 @@
-.\"	$OpenBSD: ips.4,v 1.8 2009/02/10 14:37:01 jmc Exp $
+.\"	$OpenBSD: ips.4,v 1.9 2009/02/11 07:55:33 grange Exp $
 .\"
-.\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
+.\" Copyright (c) 2006, 2009 Alexander Yurchenko <grange@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" TORTIOUS ACTION, ARISING OUT OF
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2009 $
+.Dd $Mdocdate: February 11 2009 $
 .Dt IPS 4
 .Os
 .Sh NAME
@@ -43,9 +43,13 @@ ServeRAID 7k/7M/7t
 .Pp
 Although the controllers are actual RAID controllers,
 the driver makes them look just like SCSI controllers.
-All RAID configuration is done through the bootable IBM ServeRAID
-Support CD;
+All RAID configuration and management is done through the bootable
+IBM ServeRAID Support CD;
 a CD image is freely available at the IBM website.
+.Pp
+The driver has a limited
+.Xr bio 4
+support, only volume information querying is available.
 .Sh SEE ALSO
 .Xr bio 4 ,
 .Xr intro 4 ,
