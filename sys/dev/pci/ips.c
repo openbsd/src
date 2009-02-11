@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.42 2009/02/10 12:43:03 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.43 2009/02/11 08:41:36 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -424,7 +424,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	int i;
+	int type, i;
 
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -546,9 +546,9 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Display adapter info */
 	printf("%s: ServeRAID", sc->sc_dev.dv_xname);
-	if (pg5.type > 1 && pg5.type - 2 < sizeof(ips_names) /
-	    sizeof(ips_names[0]))
-		printf(" %s", ips_names[pg5.type - 2]);
+	type = letoh16(pg5.type);
+	if (type > 1 && type - 2 < sizeof(ips_names) / sizeof(ips_names[0]))
+		printf(" %s", ips_names[type - 2]);
 	printf(", firmware %c%c%c%c%c%c%c",
 	    ai.firmware[0], ai.firmware[1], ai.firmware[2],
 	    ai.firmware[3], ai.firmware[4], ai.firmware[5],
@@ -787,7 +787,7 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 		bv->bv_status = BIOC_SVINVALID;
 	}
 
-	bv->bv_size = (u_quad_t)drive->seccnt * IPS_SECSZ;
+	bv->bv_size = (u_quad_t)letoh32(drive->seccnt) * IPS_SECSZ;
 	bv->bv_level = drive->raid;
 	bv->bv_nodisk = 0; /* XXX */
 
