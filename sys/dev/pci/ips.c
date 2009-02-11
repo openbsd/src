@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.43 2009/02/11 08:41:36 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.44 2009/02/11 11:42:17 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -688,10 +688,10 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		id->version = 2;
 		id->response_format = 2;
 		id->additional_length = 32;
-		strlcpy(id->vendor, "IBM     ", sizeof(id->vendor));
+		strlcpy(id->vendor, "IBM", sizeof(id->vendor));
 		snprintf(id->product, sizeof(id->product),
-		    "ServeRAID RAID%d #%02d", drive->raid, target);
-		strlcpy(id->revision, "   ", sizeof(id->revision));
+		    "RAID%d #%02d", drive->raid, target);
+		strlcpy(id->revision, "1.0", sizeof(id->revision));
 		break;
 	case READ_CAPACITY:
 		rcd = (void *)xs->data;
