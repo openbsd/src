@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.103 2008/11/30 06:01:45 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.104 2009/02/12 11:55:29 martynas Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -588,7 +588,8 @@ re_reset(struct rl_softc *sc)
 	if (i == RL_TIMEOUT)
 		printf("%s: reset never completed!\n", sc->sc_dev.dv_xname);
 
-	CSR_WRITE_1(sc, RL_LDPS, 1);
+	if (sc->rl_flags & RL_FLAG_MACLDPS)
+		CSR_WRITE_1(sc, RL_LDPS, 1);
 }
 
 #ifdef RE_DIAG
@@ -802,44 +803,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 	const struct re_revision *rr;
 	const char	*re_name = NULL;
 
-	/* Reset the adapter. */
-	re_reset(sc);
-
 	sc->sc_hwrev = CSR_READ_4(sc, RL_TXCFG) & RL_TXCFG_HWREV;
-
-	sc->rl_tx_time = 5;		/* 125us */
-	sc->rl_rx_time = 2;		/* 50us */
-	if (sc->rl_flags & RL_FLAG_PCIE)
-		sc->rl_sim_time = 75;	/* 75us */
-	else
-		sc->rl_sim_time = 125;	/* 125us */
-	sc->rl_imtype = RL_IMTYPE_SIM;	/* simulated interrupt moderation */
-
-	if (sc->sc_hwrev == RL_HWREV_8139CPLUS)
-		sc->rl_bus_speed = 33; /* XXX */
-	else if (sc->rl_flags & RL_FLAG_PCIE)
-		sc->rl_bus_speed = 125;
-	else {
-		u_int8_t cfg2;
-
-		cfg2 = CSR_READ_1(sc, RL_CFG2);
-		switch (cfg2 & RL_CFG2_PCI_MASK) {
-		case RL_CFG2_PCI_33MHZ:
- 			sc->rl_bus_speed = 33;
-			break;
-		case RL_CFG2_PCI_66MHZ:
-			sc->rl_bus_speed = 66;
-			break;
-		default:
-			printf("%s: unknown bus speed, assume 33MHz\n",
-			    sc->sc_dev.dv_xname);
-			sc->rl_bus_speed = 33;
-			break;
-		}
-
-		if (cfg2 & RL_CFG2_PCI_64BIT)
-			sc->rl_flags |= RL_FLAG_PCI64;
-	}
 
 	switch (sc->sc_hwrev) {
 	case RL_HWREV_8139CPLUS:
@@ -882,14 +846,56 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		 */
 		sc->rl_flags |= RL_FLAG_NOJUMBO;
 		break;
+	case RL_HWREV_8169:
+	case RL_HWREV_8169S:
+	case RL_HWREV_8110S:
+		sc->rl_flags |= RL_FLAG_MACLDPS;
+		break;
 	case RL_HWREV_8169_8110SB:
 	case RL_HWREV_8169_8110SBL:
 	case RL_HWREV_8169_8110SCd:
 	case RL_HWREV_8169_8110SCe:
-		sc->rl_flags |= RL_FLAG_PHYWAKE;
+		sc->rl_flags |= RL_FLAG_PHYWAKE | RL_FLAG_MACLDPS;
 		break;
 	default:
 		break;
+	}
+
+	/* Reset the adapter. */
+	re_reset(sc);
+
+	sc->rl_tx_time = 5;		/* 125us */
+	sc->rl_rx_time = 2;		/* 50us */
+	if (sc->rl_flags & RL_FLAG_PCIE)
+		sc->rl_sim_time = 75;	/* 75us */
+	else
+		sc->rl_sim_time = 125;	/* 125us */
+	sc->rl_imtype = RL_IMTYPE_SIM;	/* simulated interrupt moderation */
+
+	if (sc->sc_hwrev == RL_HWREV_8139CPLUS)
+		sc->rl_bus_speed = 33; /* XXX */
+	else if (sc->rl_flags & RL_FLAG_PCIE)
+		sc->rl_bus_speed = 125;
+	else {
+		u_int8_t cfg2;
+
+		cfg2 = CSR_READ_1(sc, RL_CFG2);
+		switch (cfg2 & RL_CFG2_PCI_MASK) {
+		case RL_CFG2_PCI_33MHZ:
+ 			sc->rl_bus_speed = 33;
+			break;
+		case RL_CFG2_PCI_66MHZ:
+			sc->rl_bus_speed = 66;
+			break;
+		default:
+			printf("%s: unknown bus speed, assume 33MHz\n",
+			    sc->sc_dev.dv_xname);
+			sc->rl_bus_speed = 33;
+			break;
+		}
+
+		if (cfg2 & RL_CFG2_PCI_64BIT)
+			sc->rl_flags |= RL_FLAG_PCI64;
 	}
 
 	re_config_imtype(sc, sc->rl_imtype);
