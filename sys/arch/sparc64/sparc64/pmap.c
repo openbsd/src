@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.67 2008/07/27 20:33:23 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.68 2009/02/12 18:53:14 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -474,6 +474,7 @@ pmap_enter_kpage(vaddr_t va, int64_t data)
 			prom_printf("pmap_enter_kpage: out of pages\n");
 			panic("pmap_enter_kpage");
 		}
+		pmap_kernel()->pm_stats.resident_count++;
 
 		BDPRINTF(PDB_BOOT1, 
 			 ("pseg_set: pm=%p va=%p data=%lx newp %lx\r\n",
@@ -1986,6 +1987,8 @@ pmap_kenter_pa(va, pa, prot)
 	if (pseg_set(pmap_kernel(), va, tte.data, 0) != 0)
 		panic("pmap_kenter_pa: no pseg");
 
+	pmap_kernel()->pm_stats.resident_count++;
+
 	splx(s);
 	/* this is correct */
 	dcache_flush_page(pa);
@@ -2043,6 +2046,7 @@ pmap_kremove(va, size)
 			remove_stats.removes ++;
 #endif
 			
+			pmap_kernel()->pm_stats.resident_count--;
 			tsb_invalidate(pm->pm_ctx, va);
 #ifdef DEBUG
 			remove_stats.tflushes ++;
@@ -2176,6 +2180,7 @@ pmap_enter(pm, va, pa, prot, flags)
 
 	if (pv)
 		pmap_enter_pv(pm, va, pa);
+	pm->pm_stats.resident_count++;
 	simple_unlock(&pm->pm_lock);
 	splx(s);
 	if (pm->pm_ctx || pm == pmap_kernel()) {
@@ -2232,7 +2237,7 @@ pmap_remove(pm, va, endva)
 			panic("pmap_remove: va=%08x in locked TLB", (u_int)va);
 #endif
 		/* We don't really need to do this if the valid bit is not set... */
-		if ((data = pseg_get(pm, va))) {
+		if ((data = pseg_get(pm, va)) && (data & TLB_V) != 0) {
 			paddr_t entry;
 			pv_entry_t pv;
 			
@@ -2251,10 +2256,11 @@ pmap_remove(pm, va, endva)
 				Debugger();
 				/* panic? */
 			}
+			pm->pm_stats.resident_count--;
 #ifdef DEBUG
 			if (pmapdebug & PDB_REMOVE)
 				printf(" clearing seg %x pte %x\n", (int)va_to_seg(va), (int)va_to_pte(va));
-			remove_stats.removes ++;
+			remove_stats.removes++;
 #endif
 			if (!pm->pm_ctx && pm != pmap_kernel())
 				continue;
@@ -3124,6 +3130,7 @@ pmap_page_protect(pg, prot)
 				    (npv->pv_va & PV_VAMASK));
 				tlb_flush_pte(npv->pv_va&PV_VAMASK, npv->pv_pmap->pm_ctx);
 			}
+			npv->pv_pmap->pm_stats.resident_count--;
 			simple_unlock(&npv->pv_pmap->pm_lock);
 
 			/* free the pv */
@@ -3162,6 +3169,7 @@ pmap_page_protect(pg, prot)
 				tlb_flush_pte(pv->pv_va & PV_VAMASK,
 				    pv->pv_pmap->pm_ctx);
 			}
+			pv->pv_pmap->pm_stats.resident_count--;
 			simple_unlock(&pv->pv_pmap->pm_lock);
 			npv = pv->pv_next;
 			/* dump the first pv */
@@ -3181,48 +3189,6 @@ pmap_page_protect(pg, prot)
 	}
 	/* We should really only flush the pages we demapped. */
 	pv_check();
-}
-
-/*
- * count pages in pmap -- this can be slow.
- */
-int
-pmap_count_res(pm)
-	pmap_t pm;
-{
-	int i, j, k, n, s;
-	paddr_t *pdir, *ptbl;
-	/* Almost the same as pmap_collect() */
-
-	/*
-	 * XXX On the SPARC Enterprise T5120, counting the number of
-	 * pages in the kernel pmap is ridiculously slow.  Since ps(1)
-	 * doesn't use the information for P_SYSTEM processes, we may
-	 * as well skip the counting and return zero immediately.
-	 */
-	if (pm == pmap_kernel())
-		return 0;
-
-	/* Don't want one of these pages reused while we're reading it. */
-	s = splvm();
-	simple_lock(&pm->pm_lock);
-	n = 0;
-	for (i=0; i<STSZ; i++) {
-		if((pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED))) {
-			for (k=0; k<PDSZ; k++) {
-				if ((ptbl = (paddr_t *)(u_long)ldxa((vaddr_t)&pdir[k], ASI_PHYS_CACHED))) {
-					for (j=0; j<PTSZ; j++) {
-						int64_t data = (int64_t)ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
-						if (data&TLB_V)
-							n++;
-					}
-				}
-			}
-		}
-	}
-	simple_unlock(&pm->pm_lock);
-	splx(s);
-	return n;
 }
 
 /*
