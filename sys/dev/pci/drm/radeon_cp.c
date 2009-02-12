@@ -374,7 +374,7 @@ radeon_cp_load_microcode(drm_radeon_private_t *dev_priv)
 	    ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV200) ||
 	    ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS100) ||
 	    ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS200)) {
-		DRM_INFO("Loading R100 Microcode\n");
+		DRM_DEBUG("Loading R100 Microcode\n");
 		for (i = 0; i < 256; i++) {
 			RADEON_WRITE(RADEON_CP_ME_RAM_DATAH,
 				     R100_cp_microcode[i][1]);
@@ -385,7 +385,7 @@ radeon_cp_load_microcode(drm_radeon_private_t *dev_priv)
 		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV250) ||
 		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV280) ||
 		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS300)) {
-		DRM_INFO("Loading R200 Microcode\n");
+		DRM_DEBUG("Loading R200 Microcode\n");
 		for (i = 0; i < 256; i++) {
 			RADEON_WRITE(RADEON_CP_ME_RAM_DATAH,
 				     R200_cp_microcode[i][1]);
@@ -398,7 +398,7 @@ radeon_cp_load_microcode(drm_radeon_private_t *dev_priv)
 		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV380) ||
 		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS400) ||
 		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS480)) {
-		DRM_INFO("Loading R300 Microcode\n");
+		DRM_DEBUG("Loading R300 Microcode\n");
 		for (i = 0; i < 256; i++) {
 			RADEON_WRITE(RADEON_CP_ME_RAM_DATAH,
 				     R300_cp_microcode[i][1]);
@@ -408,7 +408,7 @@ radeon_cp_load_microcode(drm_radeon_private_t *dev_priv)
 	} else if (((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_R420) ||
 		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_R423) ||	
 		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV410)) {
-		DRM_INFO("Loading R400 Microcode\n");
+		DRM_DEBUG("Loading R400 Microcode\n");
 		for (i = 0; i < 256; i++) {
 			RADEON_WRITE(RADEON_CP_ME_RAM_DATAH,
 				     R420_cp_microcode[i][1]);
@@ -416,7 +416,7 @@ radeon_cp_load_microcode(drm_radeon_private_t *dev_priv)
 				     R420_cp_microcode[i][0]);
 		}
 	} else if ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RS690) {
-		DRM_INFO("Loading RS690 Microcode\n");
+		DRM_DEBUG("Loading RS690 Microcode\n");
 		for (i = 0; i < 256; i++) {
 			RADEON_WRITE(RADEON_CP_ME_RAM_DATAH,
 				     RS690_cp_microcode[i][1]);
@@ -429,7 +429,7 @@ radeon_cp_load_microcode(drm_radeon_private_t *dev_priv)
 		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_R580) ||
 		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV560) ||
 		   ((dev_priv->flags & RADEON_FAMILY_MASK) == CHIP_RV570)) {
-		DRM_INFO("Loading R500 Microcode\n");
+		DRM_DEBUG("Loading R500 Microcode\n");
 		for (i = 0; i < 256; i++) {
 			RADEON_WRITE(RADEON_CP_ME_RAM_DATAH,
 				     R520_cp_microcode[i][1]);
