@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.h,v 1.43 2008/12/22 09:34:46 mglocker Exp $ */
+/*	$OpenBSD: uvideo.h,v 1.44 2009/02/12 14:48:00 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -285,7 +285,7 @@ struct usb_video_probe_commit {
 	uWord	wDelay;
 	uDWord	dwMaxVideoFrameSize;
 	uDWord	dwMaxPayloadTransferSize;
-	uDWord	wClockFrequency;
+	uDWord	dwClockFrequency;
 	uByte	bmFramingInfo;
 	uByte	bPreferedVersion;
 	uByte	bMinVersion;
