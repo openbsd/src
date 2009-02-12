@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.41 2006/05/02 21:43:07 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.42 2009/02/12 22:03:46 miod Exp $
 #
 maxpartitions 16
 
@@ -83,20 +83,32 @@ file	arch/mvme88k/dev/bugio.c
 file	arch/mvme88k/dev/mainbus.c
 file	arch/mvme88k/dev/memdevs.c			nvram | sram
 
+define	bpp
+file	arch/mvme88k/dev/bpp.c				bpp
+
 attach	ie at pcctwo: ifnet, ether
 file	arch/mvme88k/dev/if_ie.c			ie
 
+# MVME376
 attach	le at vmes
 file	arch/mvme88k/dev/if_le.c			le
 
+# MVME374
 #device	vp: ether, ifnet, ifmedia
 #attach	vp at vmes
 #file	arch/mvme88k/dev/if_vp.c			vp
 
+# MVME332
 device	vx: tty
 attach	vx at vmes
 file	arch/mvme88k/dev/vx.c				vx needs-count
 
+# MVME328
 device	vs: scsi
 attach	vs at vmes
 file	arch/mvme88k/dev/vs.c				vs
+
+# MVME327
+device	vsbic: bpp, scsi
+attach	vsbic at vmes
+file	arch/mvme88k/dev/vsbic.c			vsbic
