@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.8 2009/01/27 21:58:28 stsp Exp $ */
+/*	$OpenBSD: rde.h,v 1.9 2009/02/12 16:54:30 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -41,6 +41,7 @@ struct vertex {
 	struct event		 ev;
 	struct area		*area;
 	struct lsa		*lsa;
+	struct lsa_tree		*lsa_tree;
 	time_t			 changed;
 	time_t			 stamp;
 	u_int32_t		 cost;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.17 2009/01/29 18:52:17 stsp Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.18 2009/02/12 16:54:31 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -27,7 +27,7 @@
 #include "rde.h"
 #include "log.h"
 
-struct vertex	*vertex_get(struct lsa *, struct rde_nbr *);
+struct vertex	*vertex_get(struct lsa *, struct rde_nbr *, struct lsa_tree *);
 
 int		 lsa_link_check(struct lsa *, u_int16_t);
 int		 lsa_intra_a_pref_check(struct lsa *, u_int16_t);
@@ -66,7 +66,7 @@ lsa_compare(struct vertex *a, struct vertex *b)
 
 
 struct vertex *
-vertex_get(struct lsa *lsa, struct rde_nbr *nbr)
+vertex_get(struct lsa *lsa, struct rde_nbr *nbr, struct lsa_tree *tree)
 {
 	struct vertex	*v;
 	struct timespec	 tp;
@@ -83,6 +83,7 @@ vertex_get(struct lsa *lsa, struct rde_nbr *nbr)
 	v->ls_id = ntohl(lsa->hdr.ls_id);
 	v->adv_rtr = ntohl(lsa->hdr.adv_rtr);
 	v->type = ntohs(lsa->hdr.type);
+	v->lsa_tree = tree;
 
 	if (!nbr->self)
 		v->flooded = 1; /* XXX fix me */
@@ -96,11 +97,7 @@ vertex_get(struct lsa *lsa, struct rde_nbr *nbr)
 void
 vertex_free(struct vertex *v)
 {
-	if (v->type == LSA_TYPE_EXTERNAL)
-		RB_REMOVE(lsa_tree, &asext_tree, v);
-	else
-		RB_REMOVE(lsa_tree, &v->area->lsa_tree, v);
-
+	RB_REMOVE(lsa_tree, v->lsa_tree, v);
 	(void)evtimer_del(&v->ev);
 	free(v->lsa);
 	free(v);
@@ -415,7 +412,7 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 	else
 		fatalx("unknown scope type");
 
-	new = vertex_get(lsa, nbr);
+	new = vertex_get(lsa, nbr, tree);
 	old = RB_INSERT(lsa_tree, tree, new);
 
 	if (old != NULL) {
