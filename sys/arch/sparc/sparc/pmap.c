@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.151 2009/01/27 22:14:13 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.152 2009/02/12 18:52:17 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -1148,6 +1148,7 @@ mmu_setup4m_L3(pagtblptd, sp)
 		case SRMMU_TEPTE:
 			sp->sg_npte++;
 			setpgt4m(&sp->sg_pte[i], te | PPROT_U2S_OMASK);
+			pmap_kernel()->pm_stats.resident_count++;
 			break;
 		case SRMMU_TEPTD:
 			panic("mmu_setup4m_L3: PTD found in L3 page table");
@@ -2868,6 +2869,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		rp->rg_segmap[vs % NSEGRG].sg_pmeg = scookie;
 		npte = ++scookie < zseg ? NPTESG : lastpage;
 		rp->rg_segmap[vs % NSEGRG].sg_npte = npte;
+		pmap_kernel()->pm_stats.resident_count += npte;
 		rp->rg_nsegmap += 1;
 		mmuseg++;
 		vs++;
@@ -3220,6 +3222,7 @@ pmap_bootstrap4m(void)
 			pte |= PPROT_WRITE;
 
 		setpgt4m(&sp->sg_pte[VA_VPG(q)], pte);
+		pmap_kernel()->pm_stats.resident_count++;
 	}
 
 #if 0
@@ -3781,6 +3784,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 		}
 		nleft--;
 		setpte4(va, 0);
+		pm->pm_stats.resident_count--;
 		va += NBPG;
 	}
 
@@ -3889,6 +3893,7 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 		nleft--;
 		tlb_flush_page(va);
 		setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
+		pm->pm_stats.resident_count--;
 		va += NBPG;
 	}
 
@@ -3962,6 +3967,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 			}
 			nleft--;
 			*pte = 0;
+			pm->pm_stats.resident_count--;
 		}
 		if ((sp->sg_npte = nleft) == 0) {
 			free(pte0, M_VMPMAP);
@@ -4027,6 +4033,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 		nleft--;
 		setpte4(pteva, 0);
 		pte0[VA_VPG(pteva)] = 0;
+		pm->pm_stats.resident_count--;
 	}
 
 	/*
@@ -4148,6 +4155,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 		if (pm->pm_ctx)
 			tlb_flush_page(va);
 		setpgt4m(&pte0[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
+		pm->pm_stats.resident_count--;
 	}
 
 	/*
@@ -4355,6 +4363,7 @@ pmap_page_protect4_4c(struct vm_page *pg, vm_prot_t prot)
 		}
 
 	nextpv:
+		pm->pm_stats.resident_count--;
 		npv = pv->pv_next;
 		if (pv != pv0)
 			pool_put(&pvpool, pv);
@@ -4661,6 +4670,7 @@ pmap_page_protect4m(struct vm_page *pg, vm_prot_t prot)
 		flags |= MR4M(tpte);
 
 		setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
+		pm->pm_stats.resident_count--;
 
 		/* Entire segment is gone */
 		if (sp->sg_npte == 0 && pm != pmap_kernel()) {
@@ -4982,6 +4992,7 @@ pmap_enk4_4c(pm, va, prot, flags, pv, pteproto)
 				cache_flush_page((int)va);
 			}
 		}
+		pm->pm_stats.resident_count--;
 	} else {
 		/* adding new entry */
 		sp->sg_npte++;
@@ -5035,6 +5046,7 @@ pmap_enk4_4c(pm, va, prot, flags, pv, pteproto)
 
 	/* ptes kept in hardware only */
 	setpte4(va, pteproto);
+	pm->pm_stats.resident_count++;
 	splx(s);
 
 	return (0);
@@ -5164,6 +5176,7 @@ pmap_enu4_4c(pm, va, prot, flags, pv, pteproto)
 				if (doflush && (tpte & PG_NC) == 0)
 					cache_flush_page((int)va);
 			}
+			pm->pm_stats.resident_count--;
 		} else {
 			/* adding new entry */
 			sp->sg_npte++;
@@ -5199,6 +5212,7 @@ pmap_enu4_4c(pm, va, prot, flags, pv, pteproto)
 	/* update software copy */
 	pte += VA_VPG(va);
 	*pte = pteproto;
+	pm->pm_stats.resident_count++;
 
 	splx(s);
 
@@ -5373,6 +5387,7 @@ pmap_enk4m(pm, va, prot, flags, pv, pteproto)
 				cache_flush_page((int)va);
 			}
 		}
+		pm->pm_stats.resident_count--;
 	} else {
 		/* adding new entry */
 		sp->sg_npte++;
@@ -5388,6 +5403,7 @@ pmap_enk4m(pm, va, prot, flags, pv, pteproto)
 
 	tlb_flush_page(va);
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+	pm->pm_stats.resident_count++;
 
 	splx(s);
 
@@ -5506,6 +5522,7 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 				if (pm->pm_ctx && (tpte & SRMMU_PG_C))
 					cache_flush_page((int)va);
 			}
+			pm->pm_stats.resident_count--;
 		} else {
 			/* adding new entry */
 			sp->sg_npte++;
@@ -5528,6 +5545,7 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 		tlb_flush_page(va);
 	}
 	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+	pm->pm_stats.resident_count++;
 
 	splx(s);
 
@@ -6093,28 +6111,6 @@ kvm_setcache(va, npages, cached)
 		setcontext4(ctx);
 #endif
 	}
-}
-
-int
-pmap_count_ptes(pm)
-	struct pmap *pm;
-{
-	int idx, total;
-	struct regmap *rp;
-	struct segmap *sp;
-
-	if (pm == pmap_kernel()) {
-		rp = &pm->pm_regmap[NUREG];
-		idx = NKREG;
-	} else {
-		rp = pm->pm_regmap;
-		idx = NUREG;
-	}
-	for (total = 0; idx;)
-		if ((sp = rp[--idx].rg_segmap) != NULL)
-			total += sp->sg_npte;
-	pm->pm_stats.resident_count = total;
-	return (total);
 }
 
 /*

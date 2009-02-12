@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.44 2008/03/22 20:52:32 jasper Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.45 2009/02/12 18:52:15 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -259,7 +259,7 @@ int             pmap_dumpsize(void);
 int             pmap_dumpmmu(int (*)(dev_t, daddr64_t, caddr_t, size_t), daddr64_t);
 
 #define	pmap_kernel()	(&kernel_pmap_store)
-#define	pmap_resident_count(pmap)	pmap_count_ptes(pmap)
+#define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 #define PMAP_PREFER(fo, ap)		pmap_prefer((fo), (ap))
 
@@ -270,7 +270,6 @@ int             pmap_dumpmmu(int (*)(dev_t, daddr64_t, caddr_t, size_t), daddr64
 struct proc;
 void		pmap_activate(struct proc *);
 void		pmap_bootstrap(int nmmu, int nctx, int nregion);
-int		pmap_count_ptes(struct pmap *);
 void		pmap_prefer(vaddr_t, vaddr_t *);
 int		pmap_pa_exists(paddr_t);
 void		pmap_unwire(pmap_t, vaddr_t);
