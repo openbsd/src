@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.26 2009/01/31 15:34:25 stevesk Exp $
+.\" $OpenBSD: ntpd.8,v 1.27 2009/02/12 01:33:37 stevesk Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2009 $
+.Dd $Mdocdate: February 12 2009 $
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -82,6 +82,8 @@ Should
 .Nm
 be started with the
 .Fl d
+or
+.Fl v
 option, all calls to
 .Xr adjtime 2
 will be logged.
