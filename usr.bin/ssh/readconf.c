@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.c,v 1.175 2009/01/22 10:02:34 djm Exp $ */
+/* $OpenBSD: readconf.c,v 1.176 2009/02/12 03:00:56 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -730,7 +730,8 @@ parse_int:
 		}
 
 		if (parse_forward(&fwd, fwdarg,
-		    opcode == oDynamicForward ? 1 : 0) == 0)
+		    opcode == oDynamicForward ? 1 : 0,
+		    opcode == oRemoteForward ? 1 : 0) == 0)
 			fatal("%.200s line %d: Bad forwarding specification.",
 			    filename, linenum);
 
@@ -1215,7 +1216,7 @@ fill_default_options(Options * options)
  * returns number of arguments parsed or zero on error
  */
 int
-parse_forward(Forward *fwd, const char *fwdspec, int dynamicfwd)
+parse_forward(Forward *fwd, const char *fwdspec, int dynamicfwd, int remotefwd)
 {
 	int i;
 	char *p, *cp, *fwdarg[4];
@@ -1278,12 +1279,16 @@ parse_forward(Forward *fwd, const char *fwdspec, int dynamicfwd)
 			goto fail_free;
 	}
 
-	if (fwd->listen_port <= 0)
+	if (fwd->listen_port < 0 || (!remotefwd && fwd->listen_port == 0))
 		goto fail_free;
 
 	if (fwd->connect_host != NULL &&
 	    strlen(fwd->connect_host) >= NI_MAXHOST)
 		goto fail_free;
+	if (fwd->listen_host != NULL &&
+	    strlen(fwd->listen_host) >= NI_MAXHOST)
+		goto fail_free;
+
 
 	return (i);
 
