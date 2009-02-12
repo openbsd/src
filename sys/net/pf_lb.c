@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.1 2009/01/29 15:12:28 pyr Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.2 2009/02/12 02:13:15 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -676,15 +676,6 @@ pf_get_translation(struct pf_pdesc *pd, struct mbuf *m, int off, int direction,
 			break;
 		}
 		default:
-			return (NULL);
-		}
-		/* 
-		 * Translation was a NOP.
-		 * Undo separate NAT key and pretend there was no match.
-		 */
-		if (!bcmp(*skp, *nkp, sizeof(struct pf_state_key_cmp))) {
-			pool_put(&pf_state_key_pl, *nkp);
-			*skw = *sks = *nkp = *skp;
 			return (NULL);
 		}
 	}
