@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.218 2009/02/13 23:26:51 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.219 2009/02/13 23:31:29 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -759,12 +759,12 @@ secondary_main()
 	cpu_configuration_print(0);
 	ncpus++;
 
-	__cpu_simple_unlock(&cpu_boot_mutex);
-
 	microuptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
 	ci->ci_randseed = random();
 	SET(ci->ci_flags, CIF_ALIVE);
+
+	__cpu_simple_unlock(&cpu_boot_mutex);
 
 	set_psr(get_psr() & ~PSR_IND);
 	spl0();
