@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.h,v 1.15 2009/01/23 17:38:15 ratchov Exp $	*/
+/*	$OpenBSD: abuf.h,v 1.16 2009/02/13 20:48:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,16 +19,15 @@
 
 #include <sys/queue.h>
 
-struct abuf;
 struct aproc;
-struct aparam;
+struct aparams;
 
 struct abuf {
 	/*
 	 * Misc aproc-specific per-buffer parameters.
 	 * since the buffer can connect any pair of aproc structure,
 	 * each aproc must have it's own specific data. Thus we cannot
-	 * use an union. The only exception is the xrun field, because
+	 * use a union. The only exception is the xrun field, because
 	 * there can be only one aproc that absorbs xruns in any
 	 * intput->output path.
 	 */

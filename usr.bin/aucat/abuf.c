@@ -1,4 +1,4 @@
-/*	$OpenBSD: abuf.c,v 1.10 2009/01/23 17:38:15 ratchov Exp $	*/
+/*	$OpenBSD: abuf.c,v 1.11 2009/02/13 20:48:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,10 +32,10 @@
  *	ease pipe/socket implementation
  */
 #include <err.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
 #include "conf.h"
 #include "aparams.h"
