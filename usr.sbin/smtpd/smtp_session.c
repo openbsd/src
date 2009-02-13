@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.52 2009/01/30 21:52:55 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.53 2009/02/13 19:59:49 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -661,6 +661,8 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_MAILREQUEST:
+		if (ss == NULL)
+			fatalx("bad ss at S_MAILREQUEST");
 		/* sender was not accepted, downgrade state */
 		if (ss->code != 250) {
 			s->s_state = S_HELO;
@@ -679,11 +681,14 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_MAIL:
-
+		if (ss == NULL)
+			fatalx("bad ss at S_MAIL");
 		session_respond(s, "%d Sender ok", ss->code);
 		break;
 
 	case S_RCPTREQUEST:
+		if (ss == NULL)
+			fatalx("bad ss at S_RCPTREQUEST");
 		/* recipient was not accepted */
 		if (ss->code != 250) {
 			/* We do not have a valid recipient, downgrade state */
@@ -700,6 +705,8 @@ session_pickup(struct session *s, struct submit_status *ss)
 		s->s_msg.recipient = ss->u.path;
 
 	case S_RCPT:
+		if (ss == NULL)
+			fatalx("bad ss at S_RCPT");
 		session_respond(s, "%d Recipient ok", ss->code);
 		break;
 
@@ -713,6 +720,8 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_DATA:
+		if (ss == NULL)
+			fatalx("bad ss at S_DATA");
 		if (s->s_msg.datafp == NULL)
 			goto tempfail;
 
