@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.19 2009/01/28 17:43:45 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.20 2009/02/13 23:54:37 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -455,14 +455,14 @@ lka_dispatch_runner(int sig, short event, void *p)
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_family = PF_UNSPEC;
 			hints.ai_protocol = IPPROTO_TCP;
-			for (i = j = 0; i < len; ++i) {
+			for (i = j = 0; i < len && (j < MXARRAYSIZE * 2); ++i) {
 				error = getaddrinfo(mx[i], NULL, &hints, &res);
 				if (error)
 					continue;
 
 				log_debug("resolving MX: %s", mx[i]);
 
-				for (resp = res; resp != NULL; resp = resp->ai_next) {
+				for (resp = res; resp != NULL && (j < MXARRAYSIZE * 2); resp = resp->ai_next) {
 
 					if (batchp->rule.r_action == A_RELAYVIA)
 						batchp->mxarray[j].flags = batchp->rule.r_value.relayhost.flags;
@@ -477,13 +477,13 @@ lka_dispatch_runner(int sig, short event, void *p)
 					}
 					if (resp->ai_family == PF_INET6) {
 						struct sockaddr_in6 *ssin6;
+
 						batchp->mxarray[j].ss = *(struct sockaddr_storage *)resp->ai_addr;
 						ssin6 = (struct sockaddr_in6 *)&batchp->mxarray[j].ss;
 						ssin6->sin6_port = port;
 						++j;
 					}
 				}
-
 				freeaddrinfo(res);
 			}
 
