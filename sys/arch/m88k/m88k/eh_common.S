@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.47 2009/02/08 21:40:58 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.48 2009/02/13 23:33:51 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1606,9 +1606,8 @@ GLOBAL(m88110_fpu_handler)
 /* non-maskable interrupt handler (IPIs, ABORT button) */
 GLOBAL(m88110_nonmaskable)
 	PREP88110("NMI", 11, M88110_NMI_Precheck)
-	or	r2, r0, T_NON_MASK
-	or	r3, r0, r30
-	XCALL(_C_LABEL(interrupt), _ASM_LABEL(check_ast))
+	or	r2, r0, r30
+	XCALL(_C_LABEL(nmi), _ASM_LABEL(check_ast))
 
 /* software walk data MMU read miss handler */
 GLOBAL(m88110_data_read_miss)

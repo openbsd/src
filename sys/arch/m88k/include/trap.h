@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.6 2007/12/25 00:29:49 miod Exp $ */
+/*	$OpenBSD: trap.h,v 1.7 2009/02/13 23:33:49 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -65,6 +65,7 @@
 
 void	cache_flush(struct trapframe *);
 void	ast(struct trapframe *);
+void	nmi(struct trapframe *);
 void	interrupt(u_int, struct trapframe *);
 
 void	m88100_syscall(register_t, struct trapframe *);
