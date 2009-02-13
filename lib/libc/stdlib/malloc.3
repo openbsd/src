@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.61 2009/02/13 18:49:14 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.62 2009/02/13 23:36:17 jmc Exp $
 .\"
 .Dd $Mdocdate: February 13 2009 $
 .Dt MALLOC 3
@@ -303,7 +303,7 @@ So to set a systemwide reduction of cache size and use guard pages:
 .Dl # ln -s 'G\*(Lt' /etc/malloc.conf
 .Pp
 The flags are mostly for testing and debugging.
-If a program changes behavior if any of these options (except 
+If a program changes behavior if any of these options (except
 .Cm X )
 are used,
 it is buggy.
