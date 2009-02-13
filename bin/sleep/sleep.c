@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.17 2004/09/16 08:35:49 deraadt Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.18 2009/02/13 20:39:58 deraadt Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: sleep.c,v 1.17 2004/09/16 08:35:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sleep.c,v 1.18 2009/02/13 20:39:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ main(int argc, char *argv[])
 
 	/* Handle fractions of a second */
 	if (*cp == '.') {
-		*cp++ = '\0';
+		cp++;
 		for (i = 100000000; i > 0; i /= 10) {
 			if (*cp == '\0')
 				break;
