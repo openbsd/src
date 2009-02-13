@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.211 2009/02/06 22:07:04 grange Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.212 2009/02/13 17:24:54 damien Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1517,7 +1517,7 @@ setifwpaakms(const char *val, int d)
 		if (strcasecmp(str, "psk") == 0)
 			rval |= IEEE80211_WPA_AKM_PSK;
 		else if (strcasecmp(str, "802.1x") == 0)
-			rval |= IEEE80211_WPA_AKM_IEEE8021X;
+			rval |= IEEE80211_WPA_AKM_8021X;
 		else
 			errx(1, "wpaakms: unknown akm: %s", str);
 		str = strtok(NULL, ",");
@@ -1928,7 +1928,7 @@ ieee80211_status(void)
 			fputs("psk", stdout);
 			sep = ",";
 		}
-		if (wpa.i_akms & IEEE80211_WPA_AKM_IEEE8021X)
+		if (wpa.i_akms & IEEE80211_WPA_AKM_8021X)
 			printf("%s802.1x", sep);
 
 		fputs(" wpaciphers ", stdout);

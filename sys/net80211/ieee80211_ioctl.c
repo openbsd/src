@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.29 2009/01/26 19:09:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.30 2009/02/13 17:24:54 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -237,15 +237,15 @@ ieee80211_ioctl_setwpaparms(struct ieee80211com *ic,
 
 	ic->ic_rsnakms = 0;
 	if (wpa->i_akms & IEEE80211_WPA_AKM_PSK)
-		ic->ic_rsnakms |=
-		    IEEE80211_AKM_PSK | IEEE80211_AKM_SHA256_PSK;
-	if (wpa->i_akms & IEEE80211_WPA_AKM_IEEE8021X)
-		ic->ic_rsnakms |=
-		    IEEE80211_AKM_8021X | IEEE80211_AKM_SHA256_8021X;
-	if (ic->ic_rsnakms == 0)	/* set to default (PSK+802.1X) */
-		ic->ic_rsnakms =
-		    IEEE80211_AKM_PSK | IEEE80211_AKM_8021X /*|
-		    IEEE80211_AKM_SHA256_PSK | IEEE80211_AKM_SHA256_8021X*/;
+		ic->ic_rsnakms |= IEEE80211_AKM_PSK;
+	if (wpa->i_akms & IEEE80211_WPA_AKM_SHA256_PSK)
+		ic->ic_rsnakms |= IEEE80211_AKM_SHA256_PSK;
+	if (wpa->i_akms & IEEE80211_WPA_AKM_8021X)
+		ic->ic_rsnakms |= IEEE80211_AKM_8021X;
+	if (wpa->i_akms & IEEE80211_WPA_AKM_SHA256_8021X)
+		ic->ic_rsnakms |= IEEE80211_AKM_SHA256_8021X;
+	if (ic->ic_rsnakms == 0)	/* set to default (PSK) */
+		ic->ic_rsnakms = IEEE80211_AKM_PSK;
 
 	if (wpa->i_groupcipher == IEEE80211_WPA_CIPHER_WEP40)
 		ic->ic_rsngroupcipher = IEEE80211_CIPHER_WEP40;
@@ -291,12 +291,14 @@ ieee80211_ioctl_getwpaparms(struct ieee80211com *ic,
 		wpa->i_protos |= IEEE80211_WPA_PROTO_WPA2;
 
 	wpa->i_akms = 0;
-	if (ic->ic_rsnakms &
-	    (IEEE80211_AKM_PSK | IEEE80211_AKM_SHA256_PSK))
+	if (ic->ic_rsnakms & IEEE80211_AKM_PSK)
 		wpa->i_akms |= IEEE80211_WPA_AKM_PSK;
-	if (ic->ic_rsnakms &
-	    (IEEE80211_AKM_8021X | IEEE80211_AKM_SHA256_8021X))
-		wpa->i_akms |= IEEE80211_WPA_AKM_IEEE8021X;
+	if (ic->ic_rsnakms & IEEE80211_AKM_SHA256_PSK)
+		wpa->i_akms |= IEEE80211_WPA_AKM_SHA256_PSK;
+	if (ic->ic_rsnakms & IEEE80211_AKM_8021X)
+		wpa->i_akms |= IEEE80211_WPA_AKM_8021X;
+	if (ic->ic_rsnakms & IEEE80211_AKM_SHA256_8021X)
+		wpa->i_akms |= IEEE80211_WPA_AKM_SHA256_8021X;
 
 	if (ic->ic_rsngroupcipher == IEEE80211_CIPHER_WEP40)
 		wpa->i_groupcipher = IEEE80211_WPA_CIPHER_WEP40;
