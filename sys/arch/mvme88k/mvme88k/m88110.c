@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.60 2009/02/01 00:52:19 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.61 2009/02/13 23:29:38 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -221,6 +221,13 @@ m88410_cpu_configuration_print(int master)
 	m88110_cpu_configuration_print(master);
 	/* XXX how to get its size? */
 	printf("cpu%d: external M88410 cache controller\n", cpu_number());
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Mark us as allowing IPIs now.
+	 */
+	*(volatile u_int8_t *)(BS_BASE + BS_CPINT) = BS_CPI_ICLR | BS_CPI_IEN;
+#endif
 }
 
 /*
@@ -378,13 +385,6 @@ m88410_initialize_cpu(cpuid_t cpu)
 	mc88410_inval();
 #endif
 	CMMU_UNLOCK;
-
-#ifdef MULTIPROCESSOR
-	/*
-	 * Mark us as allowing IPIs now.
-	 */
-	*(volatile u_int8_t *)(BS_BASE + BS_CPINT) = BS_CPI_ICLR | BS_CPI_IEN;
-#endif
 }
 
 /*
