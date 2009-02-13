@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.39 2008/11/22 18:12:32 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.40 2009/02/13 20:47:05 andreas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -155,7 +155,7 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = cpu_info_list; \
 					    ci != NULL; ci = ci->ci_next)
 
-#define CPU_INFO_UNIT(ci)	((ci)->ci_dev->dv_unit)
+#define CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
 
 /*      
  * Preempt the current process if in interrupt from user mode,
