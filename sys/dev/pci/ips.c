@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.44 2009/02/11 11:42:17 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.45 2009/02/13 19:26:41 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -600,9 +600,9 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 	struct scsi_link *link = xs->sc_link;
 	struct ips_softc *sc = link->adapter_softc;
 	struct ips_drive *drive;
-	struct scsi_inquiry_data *id;
-	struct scsi_read_cap_data *rcd;
-	struct scsi_sense_data *sd;
+	struct scsi_inquiry_data inq;
+	struct scsi_read_cap_data rcd;
+	struct scsi_sense_data sd;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
 	int target = link->target;
@@ -682,28 +682,28 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		else
 			return (SUCCESSFULLY_QUEUED);
 	case INQUIRY:
-		id = (void *)xs->data;
-		bzero(id, sizeof(*id));
-		id->device = T_DIRECT;
-		id->version = 2;
-		id->response_format = 2;
-		id->additional_length = 32;
-		strlcpy(id->vendor, "IBM", sizeof(id->vendor));
-		snprintf(id->product, sizeof(id->product),
+		bzero(&inq, sizeof(inq));
+		inq.device = T_DIRECT;
+		inq.version = 2;
+		inq.response_format = 2;
+		inq.additional_length = 32;
+		strlcpy(inq.vendor, "IBM", sizeof(inq.vendor));
+		snprintf(inq.product, sizeof(inq.product),
 		    "RAID%d #%02d", drive->raid, target);
-		strlcpy(id->revision, "1.0", sizeof(id->revision));
+		strlcpy(inq.revision, "1.0", sizeof(inq.revision));
+		memcpy(xs->data, &inq, MIN(xs->datalen, sizeof(inq)));
 		break;
 	case READ_CAPACITY:
-		rcd = (void *)xs->data;
-		bzero(rcd, sizeof(*rcd));
-		_lto4b(letoh32(drive->seccnt) - 1, rcd->addr);
-		_lto4b(IPS_SECSZ, rcd->length);
+		bzero(&rcd, sizeof(rcd));
+		_lto4b(letoh32(drive->seccnt) - 1, rcd.addr);
+		_lto4b(IPS_SECSZ, rcd.length);
+		memcpy(xs->data, &rcd, MIN(xs->datalen, sizeof(rcd)));
 		break;
 	case REQUEST_SENSE:
-		sd = (void *)xs->data;
-		bzero(sd, sizeof(*sd));
-		sd->error_code = SSD_ERRCODE_CURRENT;
-		sd->flags = SKEY_NO_SENSE;
+		bzero(&sd, sizeof(sd));
+		sd.error_code = SSD_ERRCODE_CURRENT;
+		sd.flags = SKEY_NO_SENSE;
+		memcpy(xs->data, &sd, MIN(xs->datalen, sizeof(sd)));
 		break;
 	case SYNCHRONIZE_CACHE:
 		if (ips_flush(sc))
