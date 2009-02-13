@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.116 2008/06/14 03:19:15 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.117 2009/02/13 20:50:15 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -686,7 +686,7 @@ cvs_client_updated(char *data)
 	struct timeval tv[2];
 	char repo[MAXPATHLEN], *entry;
 	char timebuf[CVS_TIME_BUFSZ], revbuf[CVS_REV_BUFSZ];
-	char *en, *mode, *len, *rpath;
+	char *en, *mode, *len, *rpath, *p;
 	char sticky[CVS_ENT_MAXLINELEN], fpath[MAXPATHLEN];
 
 	if (data == NULL)
@@ -705,8 +705,11 @@ cvs_client_updated(char *data)
 	if (strlen(repo) + 1 > strlen(rpath))
 		fatal("received a repository path that is too short");
 
-	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s", data,
-	    strrchr(rpath, '/'));
+	p = strrchr(rpath, '/');
+	if (p == NULL)
+		fatal("malicious repository path from server");
+
+	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s", data, p);
 
 	flen = strtonum(len, 0, INT_MAX, &errstr);
 	if (errstr != NULL)
