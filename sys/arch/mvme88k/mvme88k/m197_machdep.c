@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.29 2009/02/13 23:26:51 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.30 2009/02/13 23:28:07 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -69,6 +69,7 @@
 
 void	m197_bootstrap(void);
 void	m197_clock_ipi_handler(struct trapframe *);
+void	m197_delay(int);
 void	m197_ext_int(u_int, struct trapframe *);
 u_int	m197_getipl(void);
 void	m197_ipi_handler(struct trapframe *);
@@ -392,8 +393,10 @@ m197_bootstrap()
 	md_init_clocks = m1x7_init_clocks;
 #ifdef MULTIPROCESSOR
 	md_send_ipi = m197_send_ipi;
-#endif
+	md_delay = m197_delay;
+#else
 	md_delay = m1x7_delay;
+#endif
 }
 
 #ifdef MULTIPROCESSOR
@@ -546,4 +549,33 @@ m197_clock_ipi_handler(struct trapframe *eframe)
 	splx(s);
 }
 
-#endif
+/*
+ * Special version of delay() for MP kernels.
+ * Processors need to use different timers, so we'll use the two
+ * BusSwitch timers for this purpose.
+ */
+void
+m197_delay(int us)
+{
+	if (CPU_IS_PRIMARY(curcpu())) {
+		*(volatile u_int32_t *)(BS_BASE + BS_TCOMP1) = 0xffffffff;
+		*(volatile u_int32_t *)(BS_BASE + BS_TCOUNT1) = 0;
+		*(volatile u_int8_t *)(BS_BASE + BS_TCTRL1) |= BS_TCTRL_CEN;
+
+		while ((*(volatile u_int32_t *)(BS_BASE + BS_TCOUNT1)) <
+		    (u_int32_t)us)
+			;
+		*(volatile u_int8_t *)(BS_BASE + BS_TCTRL1) &= ~BS_TCTRL_CEN;
+	} else {
+		*(volatile u_int32_t *)(BS_BASE + BS_TCOMP2) = 0xffffffff;
+		*(volatile u_int32_t *)(BS_BASE + BS_TCOUNT2) = 0;
+		*(volatile u_int8_t *)(BS_BASE + BS_TCTRL2) |= BS_TCTRL_CEN;
+
+		while ((*(volatile u_int32_t *)(BS_BASE + BS_TCOUNT2)) <
+		    (u_int32_t)us)
+			;
+		*(volatile u_int8_t *)(BS_BASE + BS_TCTRL2) &= ~BS_TCTRL_CEN;
+	}
+}
+
+#endif	/* MULTIPROCESSOR */

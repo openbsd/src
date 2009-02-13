@@ -1,4 +1,4 @@
-/*	$OpenBSD: busswreg.h,v 1.11 2007/12/25 20:23:02 miod Exp $ */
+/*	$OpenBSD: busswreg.h,v 1.12 2009/02/13 23:28:05 miod Exp $ */
 
 /*
  * Memory map for BusSwitch chip found in mvme197 boards.
@@ -145,19 +145,18 @@
 #define BS_CPI_STAT	0x40	/* cpi interrupt status */
 #define BS_CPI_SCPI	0x80	/* send cross proc interrupt */
 
-/* Timer Interrupt 1 Register */
-#define BS_TINT1_ICLR	0x08	/* timer 1 interrupt clear */
-#define BS_TINT1_IEN	0x10	/* timer 1 interrupt enable */
-#define BS_TINT1_INT	0x20	/* timer 1 interrupt received */
-#define BS_TINT1_LM	0x07	/* timer 1 level mask */
-#define BS_TINT1_LEVEL(x)	(x & BS_TINT1_LM)
+/* Timer Control Register */
+#define BS_TCTRL_CEN	0x01	/* counter enable */
+#define BS_TCTRL_COC	0x02	/* clear on compare */
+#define BS_TCTRL_COVF	0x04	/* clear overflow counter */
+#define BS_TCTRL_OVF(x)		((x) >> 4)	/* overflow counter */
 
-/* Timer Interrupt 2 Register */
-#define BS_TINT2_ICLR	0x08	/* timer 1 interrupt clear */
-#define BS_TINT2_IEN	0x10	/* timer 1 interrupt enable */
-#define BS_TINT2_INT	0x20	/* timer 1 interrupt received */
-#define BS_TINT2_LM	0x07	/* timer 1 level mask */
-#define BS_TINT2_LEVEL(x)	(x & BS_TINT2_LM)
+/* Timer Interrupt Register */
+#define BS_TINT_ICLR	0x08	/* timer interrupt clear */
+#define BS_TINT_IEN	0x10	/* timer interrupt enable */
+#define BS_TINT_INT	0x20	/* timer interrupt received */
+#define BS_TINT_LM	0x07	/* timer level mask */
+#define BS_TINT_LEVEL(x)	(x & BS_TINT_LM)
 
 /* Write Post Control Register */
 #define BS_WPINT_ICLR	0x08	/* WPINT interrupt clear */
