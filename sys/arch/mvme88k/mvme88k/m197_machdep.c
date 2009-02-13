@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.28 2009/02/08 21:40:58 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.29 2009/02/13 23:26:51 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -393,6 +393,7 @@ m197_bootstrap()
 #ifdef MULTIPROCESSOR
 	md_send_ipi = m197_send_ipi;
 #endif
+	md_delay = m1x7_delay;
 }
 
 #ifdef MULTIPROCESSOR

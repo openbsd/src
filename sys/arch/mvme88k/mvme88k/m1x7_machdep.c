@@ -1,4 +1,4 @@
-/*	$OpenBSD: m1x7_machdep.c,v 1.6 2007/12/04 23:45:53 miod Exp $ */
+/*	$OpenBSD: m1x7_machdep.c,v 1.7 2009/02/13 23:26:51 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -79,6 +79,7 @@
 
 #include <mvme88k/dev/pcctwovar.h>
 #include <mvme88k/dev/pcctworeg.h>
+#include <mvme88k/dev/vme.h>
 
 #include <mvme88k/mvme88k/clockvar.h>
 
@@ -206,4 +207,20 @@ m1x7_statintr(void *eframe)
 #endif
 
 	return (1);
+}
+
+void
+m1x7_delay(int us)
+{
+	/*
+	 * On MVME187 and MVME197, use the VMEchip for the delay clock.
+	 */
+	*(volatile u_int32_t *)(VME2_BASE + VME2_T1CMP) = 0xffffffff;
+	*(volatile u_int32_t *)(VME2_BASE + VME2_T1COUNT) = 0;
+	*(volatile u_int32_t *)(VME2_BASE + VME2_TCTL) |= VME2_TCTL1_CEN;
+
+	while ((*(volatile u_int32_t *)(VME2_BASE + VME2_T1COUNT)) <
+	    (u_int32_t)us)
+		;
+	*(volatile u_int32_t *)(VME2_BASE + VME2_TCTL) &= ~VME2_TCTL1_CEN;
 }

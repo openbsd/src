@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.37 2007/05/14 17:00:40 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.38 2009/02/13 23:26:51 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@ extern u_int	(*md_setipl)(u_int);
 extern u_int	(*md_raiseipl)(u_int);
 extern void	(*md_init_clocks)(void);
 extern void	(*md_send_ipi)(int, cpuid_t);
+extern void	(*md_delay)(int);
 
 struct intrhand {
 	SLIST_ENTRY(intrhand) ih_link;

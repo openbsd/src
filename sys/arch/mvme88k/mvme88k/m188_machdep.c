@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.45 2008/11/27 21:43:03 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.46 2009/02/13 23:26:51 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -221,6 +221,7 @@ m188_bootstrap()
 #ifdef MULTIPROCESSOR
 	md_send_ipi = m188_send_ipi;
 #endif
+	md_delay = m188_delay;
 
 	/* clear and disable all interrupts */
 	*(volatile u_int32_t *)MVME188_IENALL = 0;

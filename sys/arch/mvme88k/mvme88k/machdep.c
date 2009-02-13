@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.217 2009/02/08 21:59:21 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.218 2009/02/13 23:26:51 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -80,6 +80,7 @@
 #ifdef MVME188
 #include <mvme88k/dev/sysconvar.h>
 #endif
+#include <mvme88k/mvme88k/clockvar.h>
 
 #include <dev/cons.h>
 
@@ -96,6 +97,7 @@
 
 caddr_t	allocsys(caddr_t);
 void	consinit(void);
+void	dumb_delay(int);
 void	dumpconf(void);
 void	dumpsys(void);
 int	getcpuspeed(struct mvmeprom_brdid *);
@@ -129,6 +131,7 @@ u_int (*md_raiseipl)(u_int);
 #ifdef MULTIPROCESSOR
 void (*md_send_ipi)(int, cpuid_t);
 #endif
+void (*md_delay)(int) = dumb_delay;
 
 int physmem;	  /* available physical memory, in pages */
 
@@ -172,6 +175,20 @@ vaddr_t avail_start, avail_end;
 vaddr_t virtual_avail, virtual_end;
 
 extern struct user *proc0paddr;
+
+struct intrhand	clock_ih;
+struct intrhand	statclock_ih;
+
+/*
+ * Statistics clock interval and variance, in usec.  Variance must be a
+ * power of two.  Since this gives us an even number, not an odd number,
+ * we discard one case and compensate.  That is, a variance of 4096 would
+ * give us offsets in [0..4095].  Instead, we take offsets in [1..4095].
+ * This is symmetric about the point 2048, or statvar/2, and thus averages
+ * to that value (assuming uniform random numbers).
+ */
+int statvar = 8192;
+int statmin;			/* statclock interval - 1/2*variance */
 
 /*
  * This is to fake out the console routines, while booting.
@@ -1185,3 +1202,15 @@ m88k_broadcast_ipi(int ipi)
 }
 
 #endif
+
+void
+delay(int us)
+{
+	(*md_delay)(us);
+}
+
+/* delay() routine used until a proper routine is set up */
+void
+dumb_delay(int us)
+{
+}
