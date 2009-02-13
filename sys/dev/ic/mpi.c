@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.107 2008/11/23 16:20:06 marco Exp $ */
+/*	$OpenBSD: mpi.c,v 1.108 2009/02/13 23:16:22 sthen Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -2990,9 +2990,10 @@ mpi_refresh_sensors(void *arg)
 		}
 
 		/* override status if scrubbing or something */
-		if (rpg0->volume_status & MPI_CFG_RAID_VOL_0_STATUS_RESYNCING)
+		if (rpg0->volume_status & MPI_CFG_RAID_VOL_0_STATUS_RESYNCING) {
 			sc->sc_sensors[vol].value = SENSOR_DRIVE_REBUILD;
 			sc->sc_sensors[vol].status = SENSOR_S_WARN;
+		}
 
 		vol++;
 	}
