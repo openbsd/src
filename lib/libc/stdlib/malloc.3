@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.60 2008/12/30 07:44:51 djm Exp $
+.\"	$OpenBSD: malloc.3,v 1.61 2009/02/13 18:49:14 otto Exp $
 .\"
-.Dd $Mdocdate: December 30 2008 $
+.Dd $Mdocdate: February 13 2009 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -233,6 +233,10 @@ order to have any effect.
 Enable use after free protection.
 Unused pages on the freelist are read and write protected to
 cause a segmentation fault upon access.
+This will also switch off the delayed freeing of chunks,
+reducing random behaviour but detecting double
+.Fn free
+calls as early as possible.
 .It Cm G
 .Dq Guard .
 Enable guard pages.
@@ -298,12 +302,10 @@ Increase the size of the free page cache by a factor of two.
 So to set a systemwide reduction of cache size and use guard pages:
 .Dl # ln -s 'G\*(Lt' /etc/malloc.conf
 .Pp
-The
-.Cm J
-and
-.Cm Z
-flags are mostly for testing and debugging.
-If a program changes behavior if either of these options are used,
+The flags are mostly for testing and debugging.
+If a program changes behavior if any of these options (except 
+.Cm X )
+are used,
 it is buggy.
 .Pp
 The default number of free pages cached is 64.
