@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.12 2009/01/30 21:52:55 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.13 2009/02/13 20:44:46 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -272,19 +272,19 @@ show_stats_output(struct imsg *imsg)
 	if (left > 0)
 		return (0);
 
-	printf("parent.uptime = %d\n", time(NULL) - s_parent.start);
+	printf("parent.uptime=%d\n", time(NULL) - s_parent.start);
 
-	printf("queue.inserts = %zd\n", s_queue.inserts);
+	printf("queue.inserts=%zd\n", s_queue.inserts);
 
-	printf("runner.active = %zd\n", s_runner.active);
+	printf("runner.active=%zd\n", s_runner.active);
 
-	printf("smtp.sessions = %zd\n", s_smtp.sessions);
-	printf("smtp.sessions.aborted = %zd\n", s_smtp.aborted);
-	printf("smtp.sessions.active = %zd\n", s_smtp.sessions_active);
-	printf("smtp.sessions.ssmtp = %zd\n", s_smtp.ssmtp);
-	printf("smtp.sessions.ssmtp.active = %zd\n", s_smtp.ssmtp_active);
-	printf("smtp.sessions.starttls = %zd\n", s_smtp.starttls);
-	printf("smtp.sessions.starttls.active = %zd\n", s_smtp.starttls_active);
+	printf("smtp.sessions=%zd\n", s_smtp.sessions);
+	printf("smtp.sessions.aborted=%zd\n", s_smtp.aborted);
+	printf("smtp.sessions.active=%zd\n", s_smtp.sessions_active);
+	printf("smtp.sessions.ssmtp=%zd\n", s_smtp.ssmtp);
+	printf("smtp.sessions.ssmtp.active=%zd\n", s_smtp.ssmtp_active);
+	printf("smtp.sessions.starttls=%zd\n", s_smtp.starttls);
+	printf("smtp.sessions.starttls.active=%zd\n", s_smtp.starttls_active);
 
 	return (1);
 }
