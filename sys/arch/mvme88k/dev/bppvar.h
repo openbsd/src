@@ -1,4 +1,4 @@
-/*	$OpenBSD: bppvar.h,v 1.1 2009/02/12 22:03:47 miod Exp $	*/
+/*	$OpenBSD: bppvar.h,v 1.2 2009/02/14 17:41:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -106,10 +106,8 @@ struct bpp_envelope {
 	 * The following is not part of the envelope as defined by the
 	 * firmware, but is used to page the envelope to a 68040/88200
 	 * cache line boundary.
-	 * Plus this allows us to associate extra information to the
-	 * envelope.
 	 */
-	uint32_t	env_extra;
+	uint32_t	pad;
 	/* total size 0x10 bytes */
 };
 
@@ -162,9 +160,6 @@ struct bpp_softc {
 	bus_space_tag_t		 sc_iot;	/* CSR registers access */
 	bus_space_handle_t	 sc_ioh;
 
-	int			 sc_vec;	/* interrupt vector */
-	int			 sc_ipl;	/* interrupt level */
-
 	struct bpp_envelope	*sc_env_free;	/* head of free envelope list */
 
 	/* channel function pointers */
@@ -177,17 +172,16 @@ struct bpp_softc {
 	void	(*bpp_env_sync)(struct bpp_softc *, struct bpp_envelope *, int);
 };
 
-void	bpp_attach(struct bpp_softc *, bus_space_tag_t, bus_space_handle_t,
-	    int, int);
+void	bpp_attach(struct bpp_softc *, bus_space_tag_t, bus_space_handle_t);
 void	bpp_attention(struct bpp_softc *);
-int	bpp_create_channel(struct bpp_softc *, struct bpp_chan *, int);
-int	bpp_dequeue_envelope(struct bpp_softc *, struct bpp_chan *, paddr_t *,
-	    uint32_t *);
+int	bpp_create_channel(struct bpp_softc *, struct bpp_chan *,
+	    int, int, int);
+int	bpp_dequeue_envelope(struct bpp_softc *, struct bpp_chan *, paddr_t *);
 struct bpp_envelope *
 	bpp_get_envelope(struct bpp_softc *);
 void	bpp_initialize_envelopes(struct bpp_softc *, struct bpp_envelope *,
 	    uint);
 void	bpp_put_envelope(struct bpp_softc *, struct bpp_envelope *);
 void	bpp_queue_envelope(struct bpp_softc *, struct bpp_chan *,
-	    struct bpp_envelope *, paddr_t, uint32_t);
+	    struct bpp_envelope *, paddr_t);
 int	bpp_reset(struct bpp_softc *);

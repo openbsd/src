@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpp.c,v 1.1 2009/02/12 22:03:47 miod Exp $	*/
+/*	$OpenBSD: bpp.c,v 1.2 2009/02/14 17:41:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -31,12 +31,8 @@
 int	bpp_csr_command(struct bpp_softc *, uint, bus_addr_t);
 
 void
-bpp_attach(struct bpp_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh,
-    int ipl, int vec)
+bpp_attach(struct bpp_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 {
-	sc->sc_ipl = ipl;
-	sc->sc_vec = vec;
-
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 }
@@ -147,6 +143,18 @@ bpp_csr_command(struct bpp_softc *sc, uint command, bus_addr_t addr)
 	    bus_space_read_2(sc->sc_iot, sc->sc_ioh, CSR_TAS));
 	bpp_attention(sc);
 
+	/* wait for the TAS bit to clear */
+	for (tmo = 1000; tmo != 0; tmo--) {
+		tas = bus_space_read_2(sc->sc_iot, sc->sc_ioh, CSR_TAS);
+		if (!ISSET(tas, TAS_TAS))
+			break;
+		delay(100);
+	}
+#ifdef BPP_DEBUG
+	if (tmo == 0)
+		printf("warning: TAS failed to clear\n");
+#endif
+
 	return (stat);
 }
 
@@ -193,7 +201,8 @@ bpp_reset(struct bpp_softc *sc)
  */
 
 int
-bpp_create_channel(struct bpp_softc *sc, struct bpp_chan *chan, int pri)
+bpp_create_channel(struct bpp_softc *sc, struct bpp_chan *chan, int pri,
+    int ipl, int vec)
 {
 	struct bpp_channel *channel = chan->ch;
 	struct bpp_envelope *envcmd, *envsts;
@@ -221,8 +230,8 @@ bpp_create_channel(struct bpp_softc *sc, struct bpp_chan *chan, int pri)
 	    htobe32((*sc->bpp_env_pa)(sc, envcmd));
 	channel->ch_status_head = channel->ch_status_tail =
 	    htobe32((*sc->bpp_env_pa)(sc, envsts));
-	channel->ch_ipl = sc->sc_ipl;
-	channel->ch_ivec = sc->sc_vec;
+	channel->ch_ipl = ipl;
+	channel->ch_ivec = vec;
 	channel->ch_priority = pri;
 	channel->ch_addrmod = ADRM_EXT_S_D;
 	channel->ch_buswidth = MEMT_D32;
@@ -286,7 +295,7 @@ bpp_put_envelope(struct bpp_softc *sc, struct bpp_envelope *env)
  */
 void
 bpp_queue_envelope(struct bpp_softc *sc, struct bpp_chan *chan,
-    struct bpp_envelope *tail, paddr_t cmdpa, uint32_t cmdextra)
+    struct bpp_envelope *tail, paddr_t cmdpa)
 {
 	struct bpp_envelope *env;
 	struct bpp_channel *channel;
@@ -304,7 +313,6 @@ bpp_queue_envelope(struct bpp_softc *sc, struct bpp_chan *chan,
 	env = chan->envcmd;
 	env->env_link = htobe32(tailpa);
 	env->env_pkt = htobe32(cmdpa);
-	env->env_extra = cmdextra;
 	(*sc->bpp_env_sync)(sc, env, BUS_DMASYNC_PREWRITE);	/* paranoia */
 	env->env_valid = ENVELOPE_VALID;
 	(*sc->bpp_env_sync)(sc, env, BUS_DMASYNC_PREWRITE);
@@ -330,7 +338,7 @@ bpp_queue_envelope(struct bpp_softc *sc, struct bpp_chan *chan,
  */
 int
 bpp_dequeue_envelope(struct bpp_softc *sc, struct bpp_chan *chan,
-    paddr_t *cmdpa, uint32_t *cmdextra)
+    paddr_t *cmdpa)
 {
 	struct bpp_envelope *env;
 	struct bpp_channel *channel;
@@ -354,8 +362,6 @@ bpp_dequeue_envelope(struct bpp_softc *sc, struct bpp_chan *chan,
 	headpa = betoh32(env->env_link);
 	if (cmdpa != NULL)
 		*cmdpa = betoh32(env->env_pkt);
-	if (cmdextra != NULL)
-		*cmdextra = env->env_extra;
 	chan->envsts = (*sc->bpp_env_va)(sc, headpa);
 
 	channel = chan->ch;
