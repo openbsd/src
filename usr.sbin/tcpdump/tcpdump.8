@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.67 2008/04/21 08:17:23 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.68 2009/02/14 14:45:31 sthen Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: April 21 2008 $
+.Dd $Mdocdate: February 14 2009 $
 .Dt TCPDUMP 8
 .Os
 .Sh NAME
@@ -184,8 +184,8 @@ Print absolute, rather than relative, TCP sequence numbers.
 .It Fl s Ar snaplen
 Analyze at most the first
 .Ar snaplen
-bytes of data from each packet rather than the default of 96.
-96 bytes is adequate for IP, ICMP, TCP, and UDP,
+bytes of data from each packet rather than the default of 116.
+116 bytes is adequate for IPv6, ICMP, TCP, and UDP,
 but may truncate protocol information from name server and NFS packets
 .Pq see below .
 Packets truncated because of a limited
