@@ -1,4 +1,4 @@
-/*	$OpenBSD: busswreg.h,v 1.12 2009/02/13 23:28:05 miod Exp $ */
+/*	$OpenBSD: busswreg.h,v 1.13 2009/02/14 17:39:51 miod Exp $ */
 
 /*
  * Memory map for BusSwitch chip found in mvme197 boards.
@@ -166,7 +166,7 @@
 #define BS_WPINT_LEVEL(x)	(x & BS_WPINT_LM)
 
 /* Processor Address Log Interrupt Register */
-#define BS_PALINT_ICLR	0x00	/* PALINT interrupt clear */
+#define BS_PALINT_ICLR	0x08	/* PALINT interrupt clear */
 #define BS_PALINT_IEN	0x10	/* PALINT interrupt enable */
 #define BS_PALINT_INT	0x20	/* PALINT interrupt received */
 #define BS_PALINT_PLTY	0x80	/* PALINT polarity */
@@ -174,7 +174,7 @@
 #define BS_PALINT_LEVEL(x)	(x & BS_PALINT_LM)
 
 /* External Interrupt Register */
-#define BS_XINT_ICLR	0x00	/* XINT interrupt clear */
+#define BS_XINT_ICLR	0x08	/* XINT interrupt clear */
 #define BS_XINT_IEN	0x10	/* XINT interrupt enable */
 #define BS_XINT_INT	0x20	/* XINT interrupt received */
 #define BS_XINT_EL	0x40	/* XINT edge/level */
