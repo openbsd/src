@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.8 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.9 2009/02/14 18:38:19 miod Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*
@@ -560,7 +560,7 @@ ENTRY(copyout)
 	cmp/hi	r1,	r2		/* bomb if uaddr isn't in user space */
 	bt	2f
 
-	mov.l	.L_copyout_curpcb, r1	/* set fault hander */
+	mov.l	.L_copyout_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
 	mov.l	.L_copyout_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -616,7 +616,7 @@ ENTRY(copyin)
 	cmp/hi	r1,	r2		/* bomb if uaddr isn't in user space */
 	bt	2f
 
-	mov.l	.L_copyin_curpcb, r1	/* set fault hander */
+	mov.l	.L_copyin_curpcb, r1	/* set fault handler */
 	mov.l	@r1,	r2
 	mov.l	.L_copyin_onfault, r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -626,7 +626,7 @@ ENTRY(copyin)
 
 	mov	#0,	r0
 1:
-	mov.l	.L_copyin_curpcb, r1	/* clear fault hander */
+	mov.l	.L_copyin_curpcb, r1	/* clear fault handler */
 	mov.l	@r1,	r2
 	mov	#0,	r1
 	mov.l	r1,	@(PCB_ONFAULT,r2)
@@ -770,7 +770,7 @@ ENTRY(copyinstr)
 	cmp/eq	#-1,	r0
 	bf	1b
 	mov.l	.L_copyinstr_VM_MAXUSER_ADDRESS, r1
-	cmp/hs	r1,	r5
+	cmp/hs	r1,	r4
 	bt	3f
 	mov	#ENAMETOOLONG, r3
 
