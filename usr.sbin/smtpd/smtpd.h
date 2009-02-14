@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.68 2009/01/30 21:52:55 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.69 2009/02/14 18:37:12 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -33,6 +33,9 @@
 
 /* return and forward path size */
 #define MAX_PATH_SIZE		 256
+
+/* makemap mapped value text length */
+#define MAX_MAKEMAP_SIZE	 256
 
 /*#define SMTPD_CONNECT_TIMEOUT	 (60)*/
 #define SMTPD_CONNECT_TIMEOUT	 (10)
@@ -376,7 +379,8 @@ enum alias_type {
 	ALIAS_FILENAME,
 	ALIAS_FILTER,
 	ALIAS_INCLUDE,
-	ALIAS_ADDRESS
+	ALIAS_ADDRESS,
+	ALIAS_TEXT
 };
 
 struct alias {
@@ -386,6 +390,7 @@ struct alias {
 		char username[MAXLOGNAME];
 		char filename[MAXPATHLEN];
 		char filter[MAXPATHLEN];
+		char text[MAX_MAKEMAP_SIZE];
 		struct path path;
 	}                                   u;
 };

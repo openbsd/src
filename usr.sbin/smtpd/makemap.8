@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makemap.8,v 1.3 2008/12/17 22:59:36 jacekm Exp $
+.\"	$OpenBSD: makemap.8,v 1.4 2009/02/14 18:37:12 jacekm Exp $
 .\" Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
 .\" Copyright (c) 1988, 1991, 1993
@@ -11,7 +11,7 @@
 .\"
 .\"     $Sendmail: makemap.8,v 8.30 2002/06/27 23:41:04 gshapiro Exp $
 .\"
-.Dd $Mdocdate: December 17 2008 $
+.Dd $Mdocdate: February 14 2009 $
 .Dt MAKEMAP 8
 .Os
 .Sh NAME
@@ -20,6 +20,8 @@
 .Nd create database maps for smtpd
 .Sh SYNOPSIS
 .Nm makemap
+.Op Fl t Ar type
+.Op Fl o Ar dbfile
 .Ar file
 .Nm newaliases
 .Sh DESCRIPTION
@@ -29,7 +31,12 @@ creates the database maps used by the keyed map lookups in
 It reads input from
 .Ar file
 and outputs them to
-.Ar file.db .
+.Ar dbfile .
+If
+.Ar dbfile
+is not specified, output file name is made by appending .db
+to
+.Ar file .
 .Pp
 In all cases,
 .Nm
@@ -38,6 +45,26 @@ reads lines from
 consisting of words separated by whitespace.
 The first is the database key,
 the remaining specify mapped value.
+Database key and value may optionally be separated
+using colon character.
+.Pp
+The 
+.Ar type
+argument specifies format of resulting map file.
+Default map format is suitable for storing simple, unstructured
+key-to-value string associations.
+However, if mapped value has special meaning,
+as in case of virtual domains definition file,
+suitable
+.Ar type
+argument must be provided.
+Available output types are:
+.Bl -tag -width "aliases"
+.It Cm aliases
+Mapped value is comma-separated list of mail destinations.
+This format can be used for building user aliases and
+virtual domains database files.
+.El
 .Pp
 .Ex -std makemap
 .Pp
@@ -51,7 +78,9 @@ in order for the change to take effect.
 .Sh FILES
 .Bl -tag -width "/etc/mail/aliasesXXX" -compact
 .It Pa /etc/mail/aliases
-The mail aliases file.
+List of user mail aliases.
+.It Pa /etc/mail/virtual
+List of hosted virtual domains.
 .El
 .Sh SEE ALSO
 .Xr editmap 8 ,
