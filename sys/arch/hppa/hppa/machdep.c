@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.170 2009/02/04 17:22:23 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.171 2009/02/14 18:51:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -364,8 +364,18 @@ hppa_init(start)
 	fdcacheall();
 
 	avail_end = trunc_page(PAGE0->imm_max_mem);
+	/*
+	 * XXX For some reason, using any physical memory above the
+	 * 2GB marker causes memory corruption on PA-RISC 2.0
+	 * machines.  Cap physical memory at 2GB for now.
+	 */
+#if 0
 	if (avail_end > SYSCALLGATE)
 		avail_end = SYSCALLGATE;
+#else
+	if (avail_end > 0x80000000)
+		avail_end = 0x80000000;
+#endif
 	physmem = atop(avail_end);
 	resvmem = atop(((vaddr_t)&kernel_text));
 
