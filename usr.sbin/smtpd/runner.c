@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.28 2009/01/29 21:59:15 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.29 2009/02/14 17:49:09 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -496,6 +496,7 @@ runner_process_queue(struct smtpd *env)
 	time_t		 now;
 	struct qwalk	*q;
 
+	now = time(NULL);
 	q = qwalk_new(PATH_QUEUE);
 
 	while (qwalk(q, path)) {
