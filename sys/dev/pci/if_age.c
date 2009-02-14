@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.2 2009/02/14 22:40:20 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1373,7 +1373,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 	struct age_rxdesc *rxd;
 	struct rx_desc *desc;
 	struct mbuf *mp, *m;
-	uint32_t status, index, vtag;
+	uint32_t status, index;
 	int count, nsegs, pktlen;
 	int rx_cons;
 
@@ -1493,7 +1493,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 #if NVLAN > 0
 			/* Check for VLAN tagged frames. */
 			if (status & AGE_RRD_VLAN) {
-				vtag = AGE_RX_VLAN(letoh32(rxrd->vtags));
+				u_int32_t vtag = AGE_RX_VLAN(letoh32(rxrd->vtags));
 				m->m_pkthdr.ether_vtag =
 				    AGE_RX_VLAN_TAG(vtag);
 				m->m_flags |= M_VLANTAG;
