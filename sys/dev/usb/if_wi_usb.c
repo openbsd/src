@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.44 2007/10/11 18:33:14 deraadt Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.45 2009/02/14 20:05:09 chl Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -517,7 +517,6 @@ wi_send_packet(struct wi_usb_softc *sc, int id)
 		   (rnd_len > WI_USB_BUFSZ )){
 			printf("invalid packet len: %x memsz %x max %x\n",
 			    total_len, sc->wi_usb_txmemsize[id], WI_USB_BUFSZ);
-			total_len = sc->wi_usb_txmemsize[id];
 
 			err = EIO;
 			goto err_ret;
@@ -627,8 +626,6 @@ wi_cmd_usb(struct wi_softc *wsc, int cmd, int val0, int val1, int val2)
 	pcmd->param2  = htole16(val2);
 
 	bzero(((char*)pcmd)+total_len, rnd_len - total_len);
-
-	total_len = rnd_len;
 
 	usbd_setup_xfer(c->wi_usb_xfer, sc->wi_usb_ep[WI_USB_ENDPT_TX],
 	    c, c->wi_usb_buf, rnd_len, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.41 2008/11/27 14:05:18 kevlo Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.42 2009/02/14 20:05:09 chl Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1338,10 +1338,7 @@ upgt_newstate_task(void *arg)
 	struct upgt_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni;
-	enum ieee80211_state ostate;
 	unsigned channel;
-
-	ostate = ic->ic_state;
 
 	switch (sc->sc_state) {
 	case IEEE80211_S_INIT:

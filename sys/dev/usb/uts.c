@@ -1,4 +1,4 @@
-/*	$OpenBSD: uts.c,v 1.23 2008/12/29 16:29:42 miod Exp $ */
+/*	$OpenBSD: uts.c,v 1.24 2009/02/14 20:05:09 chl Exp $ */
 
 /*
  * Copyright (c) 2007 Robert Nagy <robert@openbsd.org>
@@ -151,7 +151,7 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	struct wsmousedev_attach_args a;
-	int i, found;
+	int i;
 
 	sc->sc_udev = uaa->device;
 	sc->sc_product = uaa->product;
@@ -191,7 +191,6 @@ uts_attach(struct device *parent, struct device *self, void *aux)
 	/* Find the interrupt endpoint */
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 	sc->sc_iface_number = id->bInterfaceNumber;
-	found = 0;
 
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);

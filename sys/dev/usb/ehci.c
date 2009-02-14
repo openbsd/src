@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.97 2008/11/29 08:52:03 mglocker Exp $ */
+/*	$OpenBSD: ehci.c,v 1.98 2009/02/14 20:05:09 chl Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -621,7 +621,6 @@ ehci_intr1(ehci_softc_t *sc)
 void
 ehci_pcd(ehci_softc_t *sc, usbd_xfer_handle xfer)
 {
-	usbd_pipe_handle pipe;
 	u_char *p;
 	int i, m;
 
@@ -629,8 +628,6 @@ ehci_pcd(ehci_softc_t *sc, usbd_xfer_handle xfer)
 		/* Just ignore the change. */
 		return;
 	}
-
-	pipe = xfer->pipe;
 
 	p = KERNADDR(&xfer->dmabuf, 0);
 	m = min(sc->sc_noport, xfer->length * 8 - 1);
@@ -2863,7 +2860,6 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 			if (sqtd == exfer->sqtdend)
 				break;
 		}
-		sqtd = sqtd->nextqtd;
 		/*
 		 * Only need to alter the QH if it was pointing at a qTD
 		 * that we are removing.
@@ -3654,7 +3650,6 @@ usbd_status
 ehci_device_isoc_start(usbd_xfer_handle xfer)
 {
 	struct ehci_pipe *epipe;
-	usbd_device_handle dev;
 	ehci_softc_t *sc;
 	struct ehci_xfer *exfer;
 	ehci_soft_itd_t *itd, *prev, *start, *stop;
@@ -3670,7 +3665,6 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	total_length = 0;
 	exfer = (struct ehci_xfer *) xfer;
 	sc = (ehci_softc_t *)xfer->pipe->device->bus;
-	dev = xfer->pipe->device;
 	epipe = (struct ehci_pipe *)xfer->pipe;
 
 	/*

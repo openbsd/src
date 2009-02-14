@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.89 2008/11/21 17:08:42 deraadt Exp $ */
+/*	$OpenBSD: ohci.c,v 1.90 2009/02/14 20:05:09 chl Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1545,7 +1545,6 @@ ohci_device_bulk_done(usbd_xfer_handle xfer)
 void
 ohci_rhsc(ohci_softc_t *sc, usbd_xfer_handle xfer)
 {
-	usbd_pipe_handle pipe;
 	u_char *p;
 	int i, m;
 	int hstatus;
@@ -1558,8 +1557,6 @@ ohci_rhsc(ohci_softc_t *sc, usbd_xfer_handle xfer)
 		/* Just ignore the change. */
 		return;
 	}
-
-	pipe = xfer->pipe;
 
 	p = KERNADDR(&xfer->dmabuf, 0);
 	m = min(sc->sc_noport, xfer->length * 8 - 1);
