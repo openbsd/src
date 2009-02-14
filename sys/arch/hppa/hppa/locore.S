@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.159 2009/02/08 18:33:29 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.160 2009/02/14 19:03:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2727,13 +2727,15 @@ LEAF_ENTRY(spstrcpy)
 	mtsp	arg0, sr1
 	mtsp	arg2, sr2
 	copy	arg1, arg0
+	copy	r0, ret0
 
 $spstrcpy_loop
 	ldbs,ma	1(sr1, arg1), t1
-	comb,=	t2, arg1, $spstrcpy_exit
+	comb,=	r0, t1, $spstrcpy_exit
 	stbs,ma	t1, 1(sr2, arg3)
-	comb,<>,n r0, t1, $spstrcpy_loop
+	comb,<>,n t2, arg1, $spstrcpy_loop
 	nop
+	ldi	ENAMETOOLONG, ret0
 
 $spstrcpy_exit
 	mtsp	r0, sr1
@@ -2746,7 +2748,7 @@ $spstrcpy_exit
 	sub,=	r0, arg0, r0
 	stw	arg1, 0(arg0)
 	bv	0(rp)
-	copy	r0, ret0
+	nop
 EXIT(spstrcpy)
 
 /*

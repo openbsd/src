@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.31 2007/10/10 15:53:51 art Exp $
+#	$OpenBSD: genassym.cf,v 1.32 2009/02/14 19:03:50 kettenis Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -168,3 +168,4 @@ export	SYS_sigreturn
 
 # errno
 export	EFAULT
+export	ENAMETOOLONG
