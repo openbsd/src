@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.443 2009/02/08 21:02:20 miod Exp $
+#	$OpenBSD: install.sub,v 1.444 2009/02/14 04:00:07 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -779,7 +779,7 @@ enable_network() {
 	local _f _gw
 
 	# Copy any network configuration files. N.B.: hosts already copied.
-	for _f in dhclient.conf resolv.conf resolv.conf.tail protocols services; do
+	for _f in dhclient.conf resolv.conf resolv.conf.tail; do
 		if [ -f /mnt/etc/$_f ]; then
 			cp /mnt/etc/$_f /etc/$_f
 		fi
