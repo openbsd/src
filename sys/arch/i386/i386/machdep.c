@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.444 2009/01/20 20:21:03 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.445 2009/02/14 11:22:25 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1813,12 +1813,6 @@ identifycpu(struct cpu_info *ci)
 			printf("\n");
 		}
 	}
-
-#ifndef MULTIPROCESSOR
-	/* configure the CPU if needed */
-	if (ci->cpu_setup != NULL)
-		(ci->cpu_setup)(ci);
-#endif
 
 #ifndef SMALL_KERNEL
 	if (cpuspeed != 0 && cpu_cpuspeed == NULL)
