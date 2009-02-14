@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.57 2008/10/16 12:57:01 mpf Exp $	*/
+/*	$OpenBSD: interface.h,v 1.58 2009/02/14 11:18:56 sthen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.57 2008/10/16 12:57:01 mpf Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.58 2009/02/14 11:18:56 sthen Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -69,18 +69,13 @@ extern char *device;		/* as specified by -i  */
 #define max(a,b) ((b)>(a)?(b):(a))
 #endif
 
-#ifndef INET6
 /*
  * The default snapshot length.  This value allows most printers to print
  * useful information while keeping the amount of unwanted data down.
- * In particular, it allows for an ethernet header, tcp/ip header, and
- * 14 bytes of data (assuming no ip options).
+ * In particular, it allows ethernet, tcp/ip headers, and a small amount
+ * of data, or to capture IPv6 and TCP headers after pflog encapsulation.
  */
-#define DEFAULT_SNAPLEN 68
-#else
-#define DEFAULT_SNAPLEN 96
-#endif /* INET6 */
-#define SACK_SNAPLEN 94
+#define DEFAULT_SNAPLEN 116
 #define IEEE802_11_SNAPLEN (DEFAULT_SNAPLEN + 30)
 #define IEEE802_11_RADIO_SNAPLEN (IEEE802_11_SNAPLEN + 64)
 
