@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.98 2009/02/10 18:35:44 damien Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.99 2009/02/14 14:21:59 kevlo Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -284,6 +284,7 @@ nfe*	at pci?			# NVIDIA nForce Ethernet
 xge*	at pci?			# Neterion Xframe-I/II 10Gb ethernet
 bce*	at pci?			# Broadcom BCM4401
 et*	at pci?			# Agere/LSI ET1310
+age*	at pci?			# Attansic L1 Ethernet
 lii*	at pci?			# Attansic L2 Ethernet
 jme*	at pci?			# JMicron JMC250/JMC260 Ethernet
 
@@ -342,6 +343,7 @@ ciphy*	at mii?			# Cicada CS8201 10/100/1000 copper PHY
 etphy*	at mii?			# Agere/LSI ET1011 TruePHY
 jmphy*	at mii?			# JMicron JMP202/JMP211 PHYs
 ipgphy*	at mii?			# IC Plus IP1000A PHYs
+atphy*	at mii?			# Attansic F1 PHYs
 ukphy*	at mii?			# "unknown" PHYs
 
 pseudo-device	loop	1	# network loopback
