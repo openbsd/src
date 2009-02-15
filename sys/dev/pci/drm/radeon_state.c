@@ -97,7 +97,8 @@ int	radeon_emit_packet3_cliprect(struct drm_device *, struct drm_file *,
  * Helper functions for client state checking and fixup
  */
 
-int radeon_check_and_fixup_offset(drm_radeon_private_t *dev_priv,
+int
+radeon_check_and_fixup_offset(drm_radeon_private_t *dev_priv,
     struct drm_file *file_priv, u32 *offset)
 {
 	u64 off = *offset;
@@ -2141,7 +2142,9 @@ radeon_surfaces_release(struct drm_file *file_priv,
 /* ================================================================
  * IOCTL functions
  */
-int radeon_surface_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int
+radeon_surface_alloc(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	drm_radeon_surface_alloc_t *alloc = data;
@@ -2157,7 +2160,9 @@ int radeon_surface_alloc(struct drm_device *dev, void *data, struct drm_file *fi
 		return 0;
 }
 
-int radeon_surface_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int
+radeon_surface_free(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	drm_radeon_surface_free_t *memfree = data;
@@ -2173,7 +2178,8 @@ int radeon_surface_free(struct drm_device *dev, void *data, struct drm_file *fil
 		return 0;
 }
 
-int radeon_cp_clear(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int
+radeon_cp_clear(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	drm_radeon_sarea_t *sarea_priv = dev_priv->sarea_priv;
@@ -2229,7 +2235,8 @@ radeon_do_init_pageflip(struct drm_device *dev)
 /* Swapping and flipping are different operations, need different ioctls.
  * They can & should be intermixed to support multiple 3d windows.
  */
-int radeon_cp_flip(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int
+radeon_cp_flip(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	DRM_DEBUG("\n");
@@ -2247,7 +2254,8 @@ int radeon_cp_flip(struct drm_device *dev, void *data, struct drm_file *file_pri
 	return 0;
 }
 
-int radeon_cp_swap(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int
+radeon_cp_swap(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	drm_radeon_sarea_t *sarea_priv = dev_priv->sarea_priv;
@@ -2442,7 +2450,9 @@ int radeon_cp_indices(struct drm_device *dev, void *data, struct drm_file *file_
 	return 0;
 }
 
-int radeon_cp_texture(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int
+radeon_cp_texture(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	drm_radeon_texture_t *tex = data;
@@ -2469,7 +2479,9 @@ int radeon_cp_texture(struct drm_device *dev, void *data, struct drm_file *file_
 	return ret;
 }
 
-int radeon_cp_stipple(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int
+radeon_cp_stipple(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	drm_radeon_stipple_t *stipple = data;
@@ -2488,7 +2500,9 @@ int radeon_cp_stipple(struct drm_device *dev, void *data, struct drm_file *file_
 	return 0;
 }
 
-int radeon_cp_indirect(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int
+radeon_cp_indirect(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	struct drm_device_dma *dma = dev->dma;
@@ -2898,7 +2912,9 @@ radeon_emit_wait(struct drm_device *dev, int flags)
 	return 0;
 }
 
-int radeon_cp_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int
+radeon_cp_cmdbuf(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	struct drm_device_dma *dma = dev->dma;
@@ -3066,7 +3082,9 @@ int radeon_cp_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_p
 	return EINVAL;
 }
 
-int radeon_cp_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int
+radeon_cp_getparam(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	drm_radeon_getparam_t *param = data;
@@ -3160,7 +3178,9 @@ int radeon_cp_getparam(struct drm_device *dev, void *data, struct drm_file *file
 	return 0;
 }
 
-int radeon_cp_setparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int
+radeon_cp_setparam(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	drm_radeon_setparam_t *sp = data;
