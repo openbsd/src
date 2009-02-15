@@ -447,13 +447,14 @@ struct drm_mem {
 #define upper_32_bits(_val) ((u_int32_t)(((_val) >> 16) >> 16))
 
 struct drm_ati_pcigart_info {
-	int gart_table_location;
-	int gart_reg_if;
-	void *addr;
-	dma_addr_t bus_addr;
-	dma_addr_t table_mask;
-	drm_local_map_t mapping;
-	int table_size;
+	drm_local_map_t		 mapping;
+	struct drm_dmamem	*mem;
+	void			*addr;
+	bus_addr_t		 bus_addr;
+	bus_addr_t		 table_mask;
+	int			 gart_table_location;
+	int			 gart_reg_if;
+	int			 table_size;
 };
 
 struct drm_driver_info {
