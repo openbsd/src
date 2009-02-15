@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.39 2008/10/17 13:02:55 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.40 2009/02/15 22:27:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -96,7 +96,7 @@ typedef struct {
 			u_int8_t		lladdr[IEEE80211_ADDR_LEN];
 			struct hostapd_table	*table;
 			u_int32_t		flags;
-		} reflladdr __packed;
+		} reflladdr;
 		struct {
 			u_int16_t		alg;
 			u_int16_t		transaction;
