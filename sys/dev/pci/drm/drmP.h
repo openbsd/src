@@ -166,7 +166,6 @@ extern int ticks;		/* really should be in a header */
 
 extern struct cfdriver drm_cd;
 
-typedef unsigned long dma_addr_t;
 typedef u_int64_t u64;
 typedef u_int32_t u32;
 typedef u_int16_t u16;
@@ -267,15 +266,6 @@ typedef struct drm_pci_id_list
 
 struct drm_file;
 struct drm_device;
-
-#define DRM_AUTH	0x1
-#define DRM_MASTER	0x2
-#define DRM_ROOT_ONLY	0x4
-typedef struct drm_ioctl_desc {
-	unsigned long cmd;
-	int (*func)(struct drm_device *, void *, struct drm_file *);
-	int flags;
-} drm_ioctl_desc_t;
 
 struct drm_magic_entry {
 	drm_magic_t	       magic;
@@ -609,8 +599,6 @@ int	drm_lock_free(struct drm_lock_data *, unsigned int);
 void	drm_rmmap(struct drm_device *, drm_local_map_t *);
 void	drm_rmmap_locked(struct drm_device *, drm_local_map_t *);
 int	drm_order(unsigned long);
-drm_local_map_t
-	*drm_find_matching_map(struct drm_device *, drm_local_map_t *);
 int	drm_addmap(struct drm_device *, unsigned long, unsigned long,
 	    enum drm_map_type, enum drm_map_flags, drm_local_map_t **);
 int	drm_addbufs_pci(struct drm_device *, struct drm_buf_desc *);
