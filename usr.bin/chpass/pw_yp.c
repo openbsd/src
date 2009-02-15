@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_yp.c,v 1.21 2006/03/31 00:29:13 deraadt Exp $	*/
+/*	$OpenBSD: pw_yp.c,v 1.22 2009/02/15 21:43:40 deraadt Exp $	*/
 /*	$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.21 2006/03/31 00:29:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.22 2009/02/15 21:43:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -181,7 +181,7 @@ pwskip(char *p)
 }
 
 static struct passwd *
-interpret(struct passwd *pwent, char *line)
+interpret(struct passwd *pwent, char *line, const int secure)
 {
 	char	*p = line;
 
@@ -196,7 +196,7 @@ interpret(struct passwd *pwent, char *line)
 	pwent->pw_class = "";
 
 	/* line without colon separators is no good, so ignore it */
-	if(!strchr(p,':'))
+	if (!strchr(p,':'))
 		return(NULL);
 
 	pwent->pw_name = p;
@@ -207,6 +207,14 @@ interpret(struct passwd *pwent, char *line)
 	p = pwskip(p);
 	pwent->pw_gid = (gid_t)strtoul(p, NULL, 10);
 	p = pwskip(p);
+	if (secure == 1) {
+		pwent->pw_class = p;
+		p = pwskip(p);
+		pwent->pw_change = (time_t)strtoul(p, NULL, 10);
+		p = pwskip(p);
+		pwent->pw_expire = (time_t)strtoul(p, NULL, 10);
+		p = pwskip(p);
+	}
 	pwent->pw_gecos = p;
 	p = pwskip(p);
 	pwent->pw_dir = p;
@@ -224,7 +232,7 @@ struct passwd *
 ypgetpwnam(char *nam)
 {
 	static struct passwd pwent;
-	int reason, vallen;
+	int reason, vallen, secure = 0;
 	char *val;
 
 	/*
@@ -236,14 +244,13 @@ ypgetpwnam(char *nam)
 		exit(1);
 	}
 
-	reason = yp_match(domain, "passwd.byname", nam, strlen(nam),
-	    &val, &vallen);
-	switch(reason) {
-	case 0:
-		break;
-	default:
+	if (!yp_match(domain, "master.passwd.byname", nam, strlen(nam),
+	    &val, &vallen))
+		secure = 1;
+	else if (yp_match(domain, "passwd.byname", nam, strlen(nam),
+	    &val, &vallen))
 		return (NULL);
-	}
+
 	val[vallen] = '\0';
 	if (__yplin)
 		free(__yplin);
@@ -252,14 +259,14 @@ ypgetpwnam(char *nam)
 	strlcpy(__yplin, val, vallen + 1);
 	free(val);
 
-	return(interpret(&pwent, __yplin));
+	return(interpret(&pwent, __yplin, secure));
 }
 
 struct passwd *
 ypgetpwuid(uid_t uid)
 {
 	static struct passwd pwent;
-	int reason, vallen;
+	int reason, vallen, secure = 0;
 	char namebuf[16], *val;
 
 	if (!domain && (reason = yp_get_default_domain(&domain))) {
@@ -269,14 +276,13 @@ ypgetpwuid(uid_t uid)
 	}
 
 	snprintf(namebuf, sizeof namebuf, "%u", (u_int)uid);
-	reason = yp_match(domain, "passwd.byuid", namebuf, strlen(namebuf),
-	    &val, &vallen);
-	switch(reason) {
-	case 0:
-		break;
-	default:
+	if (!yp_match(domain, "master.passwd.byuid", namebuf, strlen(namebuf),
+	    &val, &vallen))
+		secure = 1;
+	else if (yp_match(domain, "passwd.byuid", namebuf, strlen(namebuf),
+	    &val, &vallen))
 		return (NULL);
-	}
+
 	val[vallen] = '\0';
 	if (__yplin)
 		free(__yplin);
@@ -285,7 +291,7 @@ ypgetpwuid(uid_t uid)
 	strlcpy(__yplin, val, vallen + 1);
 	free(val);
 
-	return(interpret(&pwent, __yplin));
+	return(interpret(&pwent, __yplin, secure));
 }
 
 #endif	/* YP */
