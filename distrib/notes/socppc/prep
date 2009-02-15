@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.4 2008/08/05 23:03:35 miod Exp $
+dnl	$OpenBSD: prep,v 1.5 2009/02/15 21:03:56 jasper Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to learn a bit about Das U-Boot, the low-level process that controls
 the microprocessor after hardware initialization.
@@ -52,6 +52,7 @@ using the setenv command.
 
     => setenv ipaddr 10.0.0.21
     => setenv serverip 10.0.0.7
+    => setenv gatewayip 10.0.0.7
 
 Once you have done this, and have set up your TFTP server on
 the gateway machine (10.0.0.7 in the above example), you can
