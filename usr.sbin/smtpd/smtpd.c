@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.29 2009/01/30 17:34:58 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.30 2009/02/15 10:32:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -677,6 +677,16 @@ main(int argc, char *argv[])
 	env.sc_maxconn = (rl.rlim_cur / 4) * 3;
 	log_debug("smtpd: will accept at most %d clients", env.sc_maxconn);
 
+	env.sc_instances[PROC_PARENT] = 1;
+	env.sc_instances[PROC_LKA] = 1;
+	env.sc_instances[PROC_MFA] = 1;
+	env.sc_instances[PROC_QUEUE] = 1;
+	env.sc_instances[PROC_MDA] = 1;
+	env.sc_instances[PROC_MTA] = 1;
+	env.sc_instances[PROC_SMTP] = 1;
+	env.sc_instances[PROC_CONTROL] = 1;
+	env.sc_instances[PROC_RUNNER] = 1;
+
 	init_peers(&env);
 
 	/* start subprocesses */
@@ -706,6 +716,7 @@ main(int argc, char *argv[])
 	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
 
+	config_pipes(&env, peers, 5);
 	config_peers(&env, peers, 5);
 
 	evtimer_set(&env.sc_ev, parent_send_config, &env);

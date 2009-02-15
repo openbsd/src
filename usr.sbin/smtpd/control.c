@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.11 2009/01/29 21:59:15 jacekm Exp $	*/
+/*	$OpenBSD: control.c,v 1.12 2009/02/15 10:32:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -164,6 +164,7 @@ control(struct smtpd *env)
 
 	TAILQ_INIT(&ctl_conns);
 
+	config_pipes(env, peers, 5);
 	config_peers(env, peers, 5);
 	control_listen(env);
 	event_dispatch();

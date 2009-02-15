@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.20 2009/02/13 23:54:37 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.21 2009/02/15 10:32:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -576,6 +576,7 @@ lka(struct smtpd *env)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
+	config_pipes(env, peers, 5);
 	config_peers(env, peers, 5);
 
 	lka_setup_events(env);

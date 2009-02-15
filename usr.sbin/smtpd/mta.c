@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.26 2009/01/29 15:40:34 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.27 2009/02/15 10:32:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -392,6 +392,7 @@ mta(struct smtpd *env)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
+	config_pipes(env, peers, 2);
 	config_peers(env, peers, 2);
 
 	SPLAY_INIT(&env->batch_queue);

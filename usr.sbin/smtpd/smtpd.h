@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.69 2009/02/14 18:37:12 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.70 2009/02/15 10:32:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -631,9 +631,11 @@ struct smtpd {
 	struct timeval				 sc_qintval;
 	u_int32_t				 sc_maxconn;
 	struct event				 sc_ev;
-	int					 sc_pipes[PROC_COUNT]
-						    [PROC_COUNT][2];
+	int					 *sc_pipes[PROC_COUNT]
+						     [PROC_COUNT];
 	struct imsgbuf				*sc_ibufs[PROC_COUNT];
+	int					 sc_instances[PROC_COUNT];
+	int					 sc_instance;
 	struct passwd				*sc_pw;
 	char					 sc_hostname[MAXHOSTNAMELEN];
 	TAILQ_HEAD(listenerlist, listener)	 sc_listeners;
@@ -865,6 +867,7 @@ void		 purge_config(struct smtpd *, u_int8_t);
 void		 unconfigure(struct smtpd *);
 void		 configure(struct smtpd *);
 void		 init_peers(struct smtpd *);
+void		 config_pipes(struct smtpd *, struct peer *, u_int);
 void		 config_peers(struct smtpd *, struct peer *, u_int);
 
 /* parse.y */

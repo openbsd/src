@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.3 2009/01/01 16:15:47 jacekm Exp $	*/
+/*	$OpenBSD: config.c,v 1.4 2009/02/15 10:32:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -106,76 +106,114 @@ purge_config(struct smtpd *env, u_int8_t what)
 void
 init_peers(struct smtpd *env)
 {
-	int	i;
-	int	j;
+	int	 i;
+	int	 j;
+	int	 count;
+	int	 sockpair[2];
 
 	for (i = 0; i < PROC_COUNT; i++)
 		for (j = 0; j < PROC_COUNT; j++) {
-			if (i >= j)
+			/*
+			 * find out how many instances of this peer there are.
+			 */
+			if (i >= j || env->sc_instances[i] == 0||
+			   env->sc_instances[j] == 0)
 				continue;
-			if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
-			    env->sc_pipes[i][j]) == -1)
-				fatal("socketpair");
-			session_socket_blockmode(env->sc_pipes[i][j][0],
-			    BM_NONBLOCK);
-			session_socket_blockmode(env->sc_pipes[i][j][1],
-			    BM_NONBLOCK);
+
+			if (env->sc_instances[i] > 1 &&
+			    env->sc_instances[j] > 1)
+				fatalx("N:N peering not supported");
+
+			count = env->sc_instances[i] * env->sc_instances[j];
+
+			if ((env->sc_pipes[i][j] =
+			    calloc(count, sizeof(int))) == NULL ||
+			    (env->sc_pipes[j][i] =
+			    calloc(count, sizeof(int))) == NULL)
+				fatal(NULL);
+
+			while (--count >= 0) {
+				if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC,
+				    sockpair) == -1)
+					fatal("socketpair");
+				env->sc_pipes[i][j][count] = sockpair[0];
+				env->sc_pipes[j][i][count] = sockpair[1];
+				session_socket_blockmode(
+				    env->sc_pipes[i][j][count],
+				    BM_NONBLOCK);
+				session_socket_blockmode(
+				    env->sc_pipes[j][i][count],
+				    BM_NONBLOCK);
+			}
 		}
 }
 
 void
-config_peers(struct smtpd *env, struct peer *p, u_int peercount)
+config_pipes(struct smtpd *env, struct peer *p, u_int peercount)
 {
 	u_int	i;
 	u_int	j;
-	u_int	src;
-	u_int	dst;
-	u_int	idx;
+	int	count;
 
 	/*
 	 * close pipes
 	 */
 	for (i = 0; i < PROC_COUNT; i++) {
 		for (j = 0; j < PROC_COUNT; j++) {
-			if (i >= j)
+			if (i == j ||
+			    env->sc_instances[i] == 0 ||
+			    env->sc_instances[j] == 0)
 				continue;
 
-			if ((i == smtpd_process && is_peer(p, j, peercount)) ||
-			    (j == smtpd_process && is_peer(p, i, peercount))) {
-				idx = (i == smtpd_process)?1:0;
-				close(env->sc_pipes[i][j][idx]);
-			} else {
-				close(env->sc_pipes[i][j][0]);
-				close(env->sc_pipes[i][j][1]);
+			for (count = 0;
+			    count < env->sc_instances[i]*env->sc_instances[j];
+			    count++) {
+				if (i == smtpd_process &&
+				    is_peer(p, j, peercount) &&
+				    count == env->sc_instance)
+					continue;
+				close(env->sc_pipes[i][j][count]);
+				env->sc_pipes[i][j][count] = -1;
 			}
 		}
 	}
+}
 
+void
+config_peers(struct smtpd *env, struct peer *p, u_int peercount)
+{
+	int	count;
+	u_int	src;
+	u_int	dst;
+	u_int	i;
 	/*
 	 * listen on appropriate pipes
 	 */
 	for (i = 0; i < peercount; i++) {
 
-		if (p[i].id == smtpd_process)
+		src = smtpd_process;
+		dst = p[i].id;
+
+		if (dst == smtpd_process)
 			fatal("config_peers: cannot peer with oneself");
-
-		src = (smtpd_process < p[i].id)?smtpd_process:p[i].id;
-		dst = (src == p[i].id)?smtpd_process:p[i].id;
-
-		if ((env->sc_ibufs[p[i].id] =
-		     calloc(1, sizeof(struct imsgbuf))) == NULL)
+		
+		if ((env->sc_ibufs[dst] = calloc(env->sc_instances[dst],
+		    sizeof(struct imsgbuf))) == NULL)
 			fatal("config_peers");
 
-		idx = (src == smtpd_process)?0:1;
-		imsg_init(env->sc_ibufs[p[i].id],
-		    env->sc_pipes[src][dst][idx], p[i].cb);
-		env->sc_ibufs[p[i].id]->events = EV_READ;
-		env->sc_ibufs[p[i].id]->data = env;
-		event_set(&env->sc_ibufs[p[i].id]->ev,
-		    env->sc_ibufs[p[i].id]->fd,
-		    env->sc_ibufs[p[i].id]->events,
-		    env->sc_ibufs[p[i].id]->handler,
-		    env->sc_ibufs[p[i].id]->data);
-		event_add(&env->sc_ibufs[p[i].id]->ev, NULL);
+		for (count = 0; count < env->sc_instances[dst]; count++) {
+			imsg_init(&(env->sc_ibufs[dst][count]),
+			    env->sc_pipes[src][dst][count], p[i].cb);
+
+			env->sc_ibufs[dst][count].events = EV_READ;
+			env->sc_ibufs[dst][count].data = env;
+
+			event_set(&(env->sc_ibufs[dst][count].ev),
+			    env->sc_ibufs[dst][count].fd,
+			    env->sc_ibufs[dst][count].events,
+			    env->sc_ibufs[dst][count].handler,
+			    env->sc_ibufs[dst][count].data);
+			event_add(&(env->sc_ibufs[dst][count].ev), NULL);
+		}
 	}
 }
