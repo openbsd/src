@@ -107,11 +107,16 @@ drm_ati_pcigart_init(struct drm_device *dev,
 	}
 
 	if (gart_info->gart_table_location == DRM_ATI_GART_MAIN) {
+		int flags = 0;
+
 		DRM_DEBUG("PCI: no table in VRAM: using normal RAM\n");
+
+		if (gart_info->gart_reg_if == DRM_ATI_GART_IGP)
+			flags |= BUS_DMA_NOCACHE;
 
 		gart_info->mem = drm_dmamem_alloc(dev->dmat,
 		    gart_info->table_size, PAGE_SIZE, 1,
-		    gart_info->table_size, 0, 0);
+		    gart_info->table_size, flags, 0);
 		if (gart_info->mem == NULL) {
 			DRM_ERROR("cannot allocate PCI GART page!\n");
 			ret = ENOMEM;
