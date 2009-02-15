@@ -821,7 +821,7 @@ int mach64_add_hostdata_buf_to_ring(drm_mach64_private_t *dev_priv,
 static int mach64_bm_dma_test(struct drm_device * dev)
 {
 	drm_mach64_private_t *dev_priv = dev->dev_private;
-	drm_dma_handle_t *cpu_addr_dmah;
+	struct drm_dmamem	*cpu_addr_dmah;
 	u32 data_addr;
 	u32 *table, *data;
 	u32 expected[2];
@@ -834,14 +834,14 @@ static int mach64_bm_dma_test(struct drm_device * dev)
 
 	/* FIXME: get a dma buffer from the freelist here */
 	DRM_DEBUG("Allocating data memory ...\n");
-	cpu_addr_dmah =
-	    drm_pci_alloc(dev->dmat, 0x1000, 0x1000, 0xfffffffful);
-	if (!cpu_addr_dmah) {
+	cpu_addr_dmah = drm_dmamem_alloc(dev->dmat, 0x1000, 0x1000, 1,
+	    0x1000, 0, 0);
+	if (cpu_addr_dmah == NULL) {
 		DRM_INFO("data-memory allocation failed!\n");
 		return ENOMEM;
 	} else {
-		data = (u32 *) cpu_addr_dmah->vaddr;
-		data_addr = (u32) cpu_addr_dmah->busaddr;
+		data = (u_int32_t *)cpu_addr_dmah->kva;
+		data_addr = (u_int32_t)cpu_addr_dmah->map->dm_segs[0].ds_addr;
 	}
 
 	/* Save the X server's value for SRC_CNTL and restore it
@@ -869,7 +869,7 @@ static int mach64_bm_dma_test(struct drm_device * dev)
 			DRM_INFO("resetting engine ...\n");
 			mach64_do_engine_reset(dev_priv);
 			DRM_INFO("freeing data buffer memory.\n");
-			drm_pci_free(dev->dmat, cpu_addr_dmah);
+			drm_dmamem_free(dev->dmat, cpu_addr_dmah);
 			return EIO;
 		}
 	}
@@ -924,7 +924,7 @@ static int mach64_bm_dma_test(struct drm_device * dev)
 		MACH64_WRITE(MACH64_PAT_REG0, pat_reg0);
 		MACH64_WRITE(MACH64_PAT_REG1, pat_reg1);
 		DRM_INFO("freeing data buffer memory.\n");
-		drm_pci_free(dev->dmat, cpu_addr_dmah);
+		drm_dmamem_free(dev->dmat, cpu_addr_dmah);
 		return i;
 	}
 	DRM_DEBUG("waiting for idle...done\n");
@@ -960,7 +960,7 @@ static int mach64_bm_dma_test(struct drm_device * dev)
 		MACH64_WRITE(MACH64_PAT_REG0, pat_reg0);
 		MACH64_WRITE(MACH64_PAT_REG1, pat_reg1);
 		DRM_INFO("freeing data buffer memory.\n");
-		drm_pci_free(dev->dmat, cpu_addr_dmah);
+		drm_dmamem_free(dev->dmat, cpu_addr_dmah);
 		return i;
 	}
 
@@ -988,7 +988,7 @@ static int mach64_bm_dma_test(struct drm_device * dev)
 	MACH64_WRITE(MACH64_PAT_REG1, pat_reg1);
 
 	DRM_DEBUG("freeing data buffer memory.\n");
-	drm_pci_free(dev->dmat, cpu_addr_dmah);
+	drm_dmamem_free(dev->dmat, cpu_addr_dmah);
 	DRM_DEBUG("returning ...\n");
 
 	return failed;
