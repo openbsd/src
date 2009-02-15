@@ -304,6 +304,14 @@ typedef struct drm_dma_handle {
 	size_t size;
 } drm_dma_handle_t;
 
+struct drm_dmamem {
+	bus_dmamap_t		map;
+	caddr_t			kva;
+	bus_size_t		size;
+	int			nsegs;
+	bus_dma_segment_t	segs[1];
+};
+
 typedef struct drm_buf_entry {
 	int		  buf_size;
 	int		  buf_count;
@@ -570,6 +578,9 @@ dev_type_open(drmopen);
 dev_type_close(drmclose);
 dev_type_mmap(drmmmap);
 extern drm_local_map_t	*drm_getsarea(struct drm_device *);
+struct drm_dmamem	*drm_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
+			     int, bus_size_t, int, int);
+void	drm_dmamem_free(bus_dma_tag_t, struct drm_dmamem *);
 
 drm_pci_id_list_t *drm_find_description(int , int , drm_pci_id_list_t *);
 

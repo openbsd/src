@@ -856,3 +856,64 @@ drm_setversion(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
 	return 0;
 }
+
+struct drm_dmamem *
+drm_dmamem_alloc(bus_dma_tag_t dmat, bus_size_t size, bus_size_t alignment,
+    int nsegments, bus_size_t maxsegsz, int mapflags, int loadflags)
+{
+	struct drm_dmamem	*mem;
+	size_t			 strsize;
+	/*
+	 * segs is the last member of the struct since we modify the size 
+	 * to allow extra segments if more than one are allowed.
+	 */
+	strsize = sizeof(*mem) + (sizeof(bus_dma_segment_t) * (nsegments - 1));
+	mem = malloc(strsize, M_DRM, M_NOWAIT | M_ZERO);
+	if (mem == NULL)
+		return (NULL);
+
+	mem->size = size;
+
+	if (bus_dmamap_create(dmat, size, nsegments, maxsegsz, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mem->map) != 0)
+		goto strfree;
+
+	if (bus_dmamem_alloc(dmat, size, alignment, 0,
+	    mem->segs, nsegments, &mem->nsegs, BUS_DMA_NOWAIT) != 0)
+		goto destroy;
+
+	if (bus_dmamem_map(dmat, mem->segs, mem->nsegs, size, 
+	    &mem->kva, BUS_DMA_NOWAIT | mapflags) != 0)
+		goto free;
+
+	if (bus_dmamap_load(dmat, mem->map, mem->kva, size,
+	    NULL, BUS_DMA_NOWAIT | loadflags) != 0)
+		goto unmap;
+	bzero(mem->kva, size);
+
+	return (mem);
+
+unmap:
+	bus_dmamem_unmap(dmat, mem->kva, size);
+free:
+	bus_dmamem_free(dmat, mem->segs, mem->nsegs);
+destroy:
+	bus_dmamap_destroy(dmat, mem->map);
+strfree:
+	free(mem, M_DRM);
+
+	return (NULL);
+}
+
+void
+drm_dmamem_free(bus_dma_tag_t dmat, struct drm_dmamem *mem)
+{
+	if (mem == NULL)
+		return;
+
+	bus_dmamap_unload(dmat, mem->map);
+	bus_dmamem_unmap(dmat, mem->kva, mem->size);
+	bus_dmamem_free(dmat, mem->segs, mem->nsegs);
+	bus_dmamap_destroy(dmat, mem->map);
+	free(mem, M_DRM);
+}
