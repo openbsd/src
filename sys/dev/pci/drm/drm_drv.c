@@ -786,8 +786,8 @@ drmmmap(dev_t kdev, off_t offset, int prot)
 		    offset, prot, BUS_DMA_NOWAIT));
 	case _DRM_SHM:
 	case _DRM_CONSISTENT:
-		return (bus_dmamem_mmap(dev->dmat, &map->dmah->seg, 1,
-		    offset, prot, BUS_DMA_NOWAIT));
+		return (bus_dmamem_mmap(dev->dmat, map->dmamem->segs,
+		    map->dmamem->nsegs, offset, prot, BUS_DMA_NOWAIT));
 	default:
 		DRM_ERROR("bad map type %d\n", type);
 		return (-1);	/* This should never happen. */

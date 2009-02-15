@@ -405,15 +405,15 @@ typedef TAILQ_HEAD(drm_map_list, drm_local_map) drm_map_list_t;
 
 typedef struct drm_local_map {
 	TAILQ_ENTRY(drm_local_map)	 link;	/* Link for map list */
-	drm_dma_handle_t		*dmah;	/* Handle to DMA mem */
+	struct drm_dmamem		*dmamem;/* Handle to DMA mem */
 	void				*handle;/* KVA, if mapped */
 	bus_space_tag_t			 bst;	/* Tag for mapped pci mem */
 	bus_space_handle_t		 bsh;	/* Handle to mapped pci mem */
 	u_long				 ext;	/* extent for mmap */
-	enum drm_map_flags		 flags;	/* Flags */
+	u_long				 offset;/* Physical address */
+	u_long				 size;	/* Physical size (bytes) */
 	int				 mtrr;	/* Boolean: MTRR used */
-	unsigned long			 offset;/* Physical address */
-	unsigned long			 size;	/* Physical size (bytes) */
+	enum drm_map_flags		 flags;	/* Flags */
 	enum drm_map_type		 type;	/* Type of memory mapped */
 } drm_local_map_t;
 

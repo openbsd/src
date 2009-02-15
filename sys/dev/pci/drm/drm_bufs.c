@@ -194,29 +194,29 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 		break;
 	case _DRM_SHM:
 	case _DRM_CONSISTENT:
-		/* Unfortunately, we don't get any alignment specification from
-		 * the caller, so we have to guess.  drm_pci_alloc requires
-		 * a power-of-two alignment, so try to align the bus address of
-		 * the map to it size if possible, otherwise just assume
-		 * PAGE_SIZE alignment.
+		/*
+		 * Unfortunately, we don't get any alignment specification from
+		 * the caller, so we have to guess. So try to align the bus
+		 * address of the map to its size if possible, otherwise just
+		 * assume PAGE_SIZE alignment.
 		 */
 		align = map->size;
 		if ((align & (align - 1)) != 0)
 			align = PAGE_SIZE;
-		map->dmah = drm_pci_alloc(dev->dmat, map->size, align,
-		    0xfffffffful);
-		if (map->dmah == NULL) {
+		map->dmamem = drm_dmamem_alloc(dev->dmat, map->size, align,
+		    1, map->size, 0, 0);
+		if (map->dmamem == NULL) {
 			drm_free(map, sizeof(*map), DRM_MEM_MAPS);
 			return (ENOMEM);
 		}
-		map->handle = map->dmah->vaddr;
-		map->offset = map->dmah->busaddr;
+		map->handle = map->dmamem->kva;
+		map->offset = map->dmamem->map->dm_segs[0].ds_addr;
 		if (map->type == _DRM_SHM && map->flags & _DRM_CONTAINS_LOCK) {
 			DRM_LOCK();
 			/* Prevent a 2nd X Server from creating a 2nd lock */
 			if (dev->lock.hw_lock != NULL) {
 				DRM_UNLOCK();
-				drm_pci_free(dev->dmat, map->dmah);
+				drm_dmamem_free(dev->dmat, map->dmamem);
 				drm_free(map, sizeof(*map), DRM_MEM_MAPS);
 				return (EBUSY);
 			}
@@ -303,7 +303,7 @@ drm_rmmap_locked(struct drm_device *dev, drm_local_map_t *map)
 	case _DRM_SHM:
 		/* FALLTHROUGH */
 	case _DRM_CONSISTENT:
-		drm_pci_free(dev->dmat, map->dmah);
+		drm_dmamem_free(dev->dmat, map->dmamem);
 		break;
 	default:
 		DRM_ERROR("Bad map type %d\n", map->type);
