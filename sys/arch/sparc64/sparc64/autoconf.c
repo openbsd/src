@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.99 2009/01/16 23:21:32 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.100 2009/02/15 15:03:58 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -103,7 +103,6 @@ int	fbnode;		/* node ID of ROM's console output device */
 int	optionsnode;	/* node ID of ROM's options */
 
 static	int rootnode;
-char platform_type[64];
 
 /* for hw.product/vendor see sys/kern/kern_sysctl.c */
 extern char *hw_prod, *hw_vendor;
@@ -748,7 +747,7 @@ extern struct sparc_bus_dma_tag mainbus_dma_tag;
 extern bus_space_tag_t mainbus_space_tag;
 
 	struct mainbus_attach_args ma;
-	char buf[32], *p;
+	char buf[64];
 	const char *const *ssp, *sp = NULL;
 	int node0, node, rv, len;
 
@@ -768,27 +767,44 @@ extern bus_space_tag_t mainbus_space_tag;
 		NULL
 	};
 
-	if ((len = OF_getprop(findroot(), "banner-name", platform_type,
-	    sizeof(platform_type))) <= 0)
-		OF_getprop(findroot(), "name", platform_type,
-		    sizeof(platform_type));
-	printf(": %s\n", platform_type);
+	/*
+	 * Print the "banner-name" property in dmesg.  It provides a
+	 * description of the machine that is generally more
+	 * informative than the "name" property.  However, if the
+	 * "banner-name" property is missing, fall back on the "name"
+	 * propery.
+	 */
+	if (OF_getprop(findroot(), "banner-name", buf, sizeof(buf)) > 0 ||
+	    OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0)
+		printf(": %s\n", buf);
+	else
+		printf("\n");
 
-	hw_vendor = malloc(sizeof(platform_type), M_DEVBUF, M_NOWAIT);
-	if (len > 0 && hw_vendor != NULL) {
-		strlcpy(hw_vendor, platform_type, sizeof(platform_type));
-		if ((strncmp(hw_vendor, "SUNW,", 5)) == 0) {
-			p = hw_prod = hw_vendor + 5;
+	/*
+	 * Base the hw.product and hw.vendor strings on the "name"
+	 * property.  They describe the hardware in a much more
+	 * consistent way than the "banner-property".
+	 */
+	if ((len = OF_getprop(findroot(), "name", buf, sizeof(buf))) > 0) {
+		hw_prod = malloc(len, M_DEVBUF, M_NOWAIT);
+		if (hw_prod)
+			strlcpy(hw_prod, buf, len);
+
+		if (strncmp(buf, "SUNW,", 5) == 0)
 			hw_vendor = "Sun";
-		} else if ((strncmp(hw_vendor, "Sun (TM) ", 9)) == 0) {
-			p = hw_prod = hw_vendor + 9;
-			hw_vendor = "Sun";
-		} else if ((p = memchr(hw_vendor, ' ', len)) != NULL) {
-			*p = '\0';
-			hw_prod = ++p;
-		}
-		if ((p = memchr(hw_prod, '(', len - (p - hw_prod))) != NULL)
-			*p = '\0';
+		if (strncmp(buf, "FJSV,", 5) == 0)
+			hw_vendor = "Fujitsu";
+		if (strncmp(buf, "TAD,", 4) == 0)
+			hw_vendor = "Tadpole";
+
+		/*
+		 * The Momentum Leopard-V advertises itself as
+		 * SUNW,UltraSPARC-IIi-Engine, but can be
+		 * distinguished by looking at the "model" property.
+		 */
+		if (OF_getprop(findroot(), "model", buf, sizeof(buf)) > 0 &&
+		    strncmp(buf, "MOMENTUM,", 9) == 0)
+			hw_vendor = "Momentum";
 	}
 
 	/* Establish the first component of the boot path */
