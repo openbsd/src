@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.137 2009/01/11 19:44:57 miod Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.138 2009/02/15 21:07:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.137 2009/01/11 19:44:57 miod Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.138 2009/02/15 21:07:00 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -986,23 +986,18 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 			fprintf(f, "%7.7s", fstypenames[pp->p_fstype]);
 		else
 			fprintf(f, "%7d", pp->p_fstype);
+
 		switch (pp->p_fstype) {
-
-		case FS_UNUSED:				/* XXX */
-			fprintf(f, "  %5u %5u %4.4s ",
-			   fsize, fsize * frag, "");
-			break;
-
 		case FS_BSDFFS:
 			fprintf(f, "  %5u %5u %4hu ",
 			    fsize, fsize * frag,
 			    pp->p_cpg);
 			break;
-
 		default:
 			fprintf(f, "%19.19s", "");
 			break;
 		}
+
 		if (mp != NULL) {
 			if (mp[i] != NULL)
 				fprintf(f, "# %s", mp[i]);
