@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.43 2009/01/13 13:53:50 kettenis Exp $
+#	$OpenBSD: files.amd64,v 1.44 2009/02/15 02:03:40 marco Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -206,6 +206,7 @@ include "dev/i2c/files.i2c"
 #
 include "../../../dev/acpi/files.acpi"
 file	arch/amd64/amd64/acpi_machdep.c		acpi
+file	arch/amd64/amd64/acpi_wakecode.S	acpi
 
 #
 # Machine-independent SD/MMC drivers

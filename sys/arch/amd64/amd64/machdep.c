@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.87 2009/01/02 05:16:15 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.88 2009/02/15 02:03:40 marco Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -173,6 +173,7 @@ paddr_t	idt_paddr;
 
 vaddr_t lo32_vaddr;
 paddr_t lo32_paddr;
+paddr_t tramp_pdirpa;
 
 int kbd_reset;
 
@@ -253,6 +254,7 @@ int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 void	dumpsys(void);
 void	cpu_init_extents(void);
+void	map_tramps(void);
 void	init_x86_64(paddr_t);
 void	(*cpuresetfn)(void);
 
@@ -1194,6 +1196,39 @@ cpu_init_extents(void)
 	already_done = 1;
 }
 
+#if defined(MULTIPROCESSOR) || \
+    (NACPI > 0 && defined(ACPI_SLEEP_ENABLED) && !defined(SMALL_KERNEL))
+void
+map_tramps(void) {
+	struct pmap *kmp = pmap_kernel();
+
+	pmap_kenter_pa(lo32_vaddr, lo32_paddr, VM_PROT_ALL);
+
+	/*
+	 * The initial PML4 pointer must be below 4G, so if the
+	 * current one isn't, use a "bounce buffer" and save it
+	 * for tramps to use.
+	 */
+	if (kmp->pm_pdirpa > 0xffffffff) {
+		memcpy((void *)lo32_vaddr, kmp->pm_pdir, PAGE_SIZE);
+		tramp_pdirpa = lo32_paddr;
+	} else
+		tramp_pdirpa = kmp->pm_pdirpa;
+
+#ifdef MULTIPROCESSOR
+	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,	/* virtual */
+	    (paddr_t)MP_TRAMPOLINE,	/* physical */
+	    VM_PROT_ALL);		/* protection */
+#endif /* MULTIPROCESSOR */
+
+
+#ifdef ACPI_SLEEP_ENABLED
+	pmap_kenter_pa((vaddr_t)ACPI_TRAMPOLINE, /* virtual */
+	    (paddr_t)ACPI_TRAMPOLINE,	/* physical */
+	    VM_PROT_ALL);		/* protection */
+#endif /* ACPI_SLEEP_ENABLED */
+}
+#endif
 
 #define	IDTVEC(name)	__CONCAT(X, name)
 typedef void (vector)(void);
@@ -1286,6 +1321,11 @@ init_x86_64(paddr_t first_avail)
 	if (avail_start < MP_TRAMPOLINE + PAGE_SIZE)
 		avail_start = MP_TRAMPOLINE + PAGE_SIZE;
 #endif
+
+#ifdef ACPI_SLEEP_ENABLED
+	if (avail_start < ACPI_TRAMPOLINE + PAGE_SIZE)
+		avail_start = ACPI_TRAMPOLINE + PAGE_SIZE;
+#endif /* ACPI_SLEEP_ENABLED */
 
 	/* Let us know if we're supporting > 4GB ram load */
 	if (bigmem)
@@ -1476,7 +1516,10 @@ init_x86_64(paddr_t first_avail)
 	pmap_kenter_pa(idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
 
-	pmap_kenter_pa(lo32_vaddr, lo32_paddr, VM_PROT_READ|VM_PROT_WRITE);
+#if defined(MULTIPROCESSOR) || \
+    (NACPI > 0 && defined(ACPI_SLEEP_ENABLED) && !defined(SMALL_KERNEL))
+	map_tramps();
+#endif
 
 	idt = (struct gate_descriptor *)idt_vaddr;
 	gdtstore = (char *)(idt + NIDT);
