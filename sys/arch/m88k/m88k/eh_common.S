@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.48 2009/02/13 23:33:51 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.49 2009/02/15 22:25:49 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -332,6 +332,7 @@
 #ifdef M88110
 #define PREP88110(NAME, NUM, FLAG_PRECHECK) \
 	xcr	FLAGS, FLAGS, SR1			; \
+	clr	FLAGS, FLAGS, 1<FLAG_NMI_STACK>		; \
 	FLAG_PRECHECK					  \
 	/* the bsr later clobbers r1, so save now */	; \
 	stcr	r1, SR2	/* r1 now free */		; \
@@ -1841,7 +1842,6 @@ ASLOCAL(m88110_setup_phase_one)
 	/* is this an NMI? If so, pick the NMI stack */
 	bb1	FLAG_NMI_STACK, FLAGS, _ASM_LABEL(m88110_nmi_stack)
 
-ASLOCAL(m88110_pickup_stack)
 	/* Non-NMI exception in user mode */
 	/*
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -1887,9 +1887,8 @@ ASLOCAL(m88110_nmi_stack)
 	/* switch to the NMI stack */
 	ldcr	r31,  CPU
 	ld	r31,  r31,  CI_NMI_STACK
-	addu	r31,  r31,  USPACE
 
-	subu	r31,  r31,  TRAPFRAME_SIZEOF	/* r31 now our E.F. */
+	addu	r31,  r31,  (USPACE - TRAPFRAME_SIZEOF)	/* r31 now our E.F. */
 	st	FLAGS,r31,  EF_FLAGS		/* save flags */
 	st	r1,   r31,  GENREG_OFF(1)	/* save prev. r1 (now free) */
 	ldcr	r1,   SR3			/* save previous r31 */
@@ -1928,9 +1927,6 @@ ASLOCAL(m88110_have_pcb)
 	 *   Exception SR3, if appropriate.
 	 */
 
-	/* make sure that the FLAG_NMI_STACK bit is off */
-	clr	FLAGS, FLAGS, 1<FLAG_NMI_STACK>
-
 	stcr	TMP, SR3	/* free up TMP, TMP2, TMP3 */
 	SAVE_TMP2
 	SAVE_TMP3
@@ -1961,7 +1957,7 @@ ASLOCAL(m88110_have_pcb)
 	ldcr	TMP2, IUAP
 	st	TMP,  r31,  EF_ISAP
 	st	TMP2, r31,  EF_IUAP
-	stcr	r0, ISR
+	stcr	r0,   ISR
 1:
 	ldcr	TMP,  DSR
 	st	TMP,  r31,  EF_DSR
@@ -1974,7 +1970,7 @@ ASLOCAL(m88110_have_pcb)
 	ldcr	TMP2, DUAP
 	st	TMP,  r31,  EF_DSAP
 	st	TMP2, r31,  EF_DUAP
-	stcr	r0, DSR
+	stcr	r0,   DSR
 1:
 	ldcr	r1,   SR2
 	jmp	r1
@@ -2113,9 +2109,12 @@ ASLOCAL(m88110_shadow_enable)
 	or	r30,  r0,   r31		/* get a copy of the e.f. pointer */
 	ld	r6,   r31,  EF_EPSR
 	bb1	PSR_SUPERVISOR_MODE_BIT, r6, 1f	/* if in kernel mode */
+	ld	r5,   r31,  EF_VECTOR
+	cmp	r4,   r5,   11		/* NMI */
+	bb1	eq,   r4,   1f
 
-	ldcr	r31,  CPU
-	ld	r31,  r31,  CI_CURPCB
+	ldcr	r2,   CPU
+	ld	r31,  r2,   CI_CURPCB
 	addu	r31,  r31,  USPACE		/* point at proper end */
 1:
 
