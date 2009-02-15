@@ -367,8 +367,6 @@ radeon_driver_irq_uninstall(struct drm_device * dev)
 	if (!dev_priv)
 		return;
 
-	dev_priv->irq_enabled = 0;
-
 	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS690)
 		RADEON_WRITE(R500_DxMODE_INT_MASK, 0);
 	/* Disable *all* interrupts */
