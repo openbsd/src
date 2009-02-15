@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbic.c,v 1.1 2009/02/14 17:41:42 miod Exp $	*/
+/*	$OpenBSD: vsbic.c,v 1.2 2009/02/15 15:44:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -328,7 +328,12 @@ struct vsbic_cmd {
 struct vsbic_ccb {
 	struct vsbic_ccb	*ccb_next;
 	struct vsbic_cmd	*ccb_cmd;	/* associated command */
+
 	struct scsi_xfer	*ccb_xs;	/* associated request */
+
+	int			 ccb_xsflags;	/* copy of ccb_xs->flags */
+	int			 ccb_flags;
+#define	CCBF_SENSE			0x01	/* request sense sent */
 
 	bus_dmamap_t		 ccb_dmamap;	/* DMA map for data transfer */
 	bus_size_t		 ccb_dmalen;
@@ -370,7 +375,8 @@ struct vsbic_softc {
 
 #define	DEVNAME(sc)	((sc)->sc_bpp.sc_dev.dv_xname)
 
-void	vsbic_activate_ccb(struct vsbic_softc *, struct vsbic_ccb *);
+void	vsbic_activate_ccb(struct vsbic_softc *, struct vsbic_ccb *,
+	    struct vsbic_cmd *);
 int	vsbic_alloc_physical(struct vsbic_softc *, bus_dmamap_t *,
 	    bus_dma_segment_t *, vaddr_t *, bus_size_t, const char *);
 void	vsbic_attach(struct device *, struct device *, void *);
@@ -395,13 +401,14 @@ struct vsbic_cmd *
 	vsbic_get_cmd(struct vsbic_softc *);
 int	vsbic_intr(void *);
 int	vsbic_load_command(struct vsbic_softc *, struct vsbic_ccb *,
-	    struct vsbic_cmd *, struct scsi_link *, int, struct scsi_generic *,
-	    int, uint8_t *, int);
+	    struct vsbic_cmd *, struct scsi_link *, struct scsi_generic *, int,
+	    uint8_t *, int);
 int	vsbic_match(struct device *, void *, void *);
 void	vsbic_poll(struct vsbic_softc *, struct vsbic_ccb *);
 void	vsbic_put_cmd(struct vsbic_softc *, struct vsbic_cmd *);
 void	vsbic_queue_cmd(struct vsbic_softc *, struct bpp_chan *,
 	    struct bpp_envelope *, struct vsbic_cmd *);
+int	vsbic_request_sense(struct vsbic_softc *, struct vsbic_ccb *);
 void	vsbic_reset_command(struct vsbic_softc *, struct vsbic_cmd *,
 	    struct scsi_link *);
 int	vsbic_scsicmd(struct scsi_xfer *);
@@ -801,8 +808,6 @@ vsbic_dequeue_cmd(struct vsbic_softc *sc, struct bpp_chan *chan)
 	struct vsbic_cmd *cmd;
 	paddr_t cmdpa;
 
-	splassert(IPL_BIO);
-
 	if (bpp_dequeue_envelope(bsc, chan, &cmdpa) != 0)
 		return NULL;
 
@@ -889,6 +894,8 @@ vsbic_get_ccb(struct vsbic_softc *sc)
 		sc->sc_ccb_free = ccb->ccb_next;
 		ccb->ccb_next = NULL;
 		ccb->ccb_cmd = NULL;
+		ccb->ccb_xs = NULL;
+		ccb->ccb_flags = 0;
 	}
 
 	return ccb;
@@ -915,8 +922,6 @@ vsbic_cmd_ccb(struct vsbic_softc *sc, struct vsbic_cmd *cmd)
 {
 	struct vsbic_ccb *ccb, *prev;
 
-	splassert(IPL_BIO);
-
 	for (prev = NULL, ccb = sc->sc_ccb_active; ccb != NULL; prev = ccb++) {
 		if (ccb->ccb_cmd == cmd) {
 			if (prev == NULL)
@@ -934,11 +939,12 @@ vsbic_cmd_ccb(struct vsbic_softc *sc, struct vsbic_cmd *cmd)
  * Put a ccb into the active list.
  */
 void
-vsbic_activate_ccb(struct vsbic_softc *sc, struct vsbic_ccb *ccb)
+vsbic_activate_ccb(struct vsbic_softc *sc, struct vsbic_ccb *ccb,
+    struct vsbic_cmd *cmd)
 {
 	struct vsbic_ccb *tmp;
 
-	splassert(IPL_BIO);
+	ccb->ccb_cmd = cmd;
 
 	/* insert at end of list */
 	if (sc->sc_ccb_active == NULL)
@@ -960,8 +966,8 @@ vsbic_activate_ccb(struct vsbic_softc *sc, struct vsbic_ccb *ccb)
  */
 int
 vsbic_load_command(struct vsbic_softc *sc, struct vsbic_ccb *ccb,
-    struct vsbic_cmd *c, struct scsi_link *sl, int flags,
-    struct scsi_generic *cmd, int cmdlen, uint8_t *data, int datalen)
+    struct vsbic_cmd *c, struct scsi_link *sl, struct scsi_generic *cmd,
+    int cmdlen, uint8_t *data, int datalen)
 {
 	bus_dma_segment_t *seg;
 	struct vsbic_sg *sgelem;
@@ -981,19 +987,19 @@ vsbic_load_command(struct vsbic_softc *sc, struct vsbic_ccb *ccb,
 	 * Setup DMA map for data transfer.
 	 */
 
-	if (ISSET(flags, SCSI_DATA_IN | SCSI_DATA_OUT)) {
+	if (ISSET(ccb->ccb_xsflags, SCSI_DATA_IN | SCSI_DATA_OUT)) {
 		ccb->ccb_dmalen = (bus_size_t)datalen;
 		rc = bus_dmamap_load(sc->sc_dmat, ccb->ccb_dmamap, data,
 		    ccb->ccb_dmalen, NULL, BUS_DMA_STREAMING |
-		    (ISSET(flags,SCSI_NOSLEEP) ?
+		    (ISSET(ccb->ccb_xsflags,SCSI_NOSLEEP) ?
 		      BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
-		    (ISSET(flags, SCSI_DATA_IN) ?
+		    (ISSET(ccb->ccb_xsflags, SCSI_DATA_IN) ?
 		      BUS_DMA_READ : BUS_DMA_WRITE));
 		if (rc != 0)
 			return rc;
 
 		bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
-		    ccb->ccb_dmalen, ISSET(flags, SCSI_DATA_IN) ?
+		    ccb->ccb_dmalen, ISSET(ccb->ccb_xsflags, SCSI_DATA_IN) ?
 		      BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 		nsegs = ccb->ccb_dmamap->dm_nsegs;
@@ -1086,9 +1092,9 @@ vsbic_load_command(struct vsbic_softc *sc, struct vsbic_ccb *ccb,
 			*msgout++ = MSG_IDENTIFY(sl->lun, 1);
 		}
 		*script++ = SCRIPT_COMMAND;
-		if (ISSET(flags, SCSI_DATA_IN))
+		if (ISSET(ccb->ccb_xsflags, SCSI_DATA_IN))
 			*script++ = SCRIPT_DATA_IN;
-		else if (ISSET(flags, SCSI_DATA_OUT))
+		else if (ISSET(ccb->ccb_xsflags, SCSI_DATA_OUT))
 			*script++ = SCRIPT_DATA_OUT;
 		*script++ = SCRIPT_STATUS;
 		*script++ = SCRIPT_MSG_IN;
@@ -1206,14 +1212,15 @@ vsbic_scsicmd(struct scsi_xfer *xs)
 	}
 
 	ccb->ccb_xs = xs;
+	ccb->ccb_xsflags = xs->flags;
 	timeout_set(&xs->stimeout, vsbic_timeout, ccb);
 
 	/*
 	 * Build command script.
 	 */
 
-	rc = vsbic_load_command(sc, ccb, cmd, sl, xs->flags, xs->cmd,
-	    xs->cmdlen, xs->data, xs->datalen);
+	rc = vsbic_load_command(sc, ccb, cmd, sl, xs->cmd, xs->cmdlen,
+	    xs->data, xs->datalen);
 	if (rc != 0) {
 		printf("%s: unable to load DMA map: error %d\n",
 		    DEVNAME(sc), rc);
@@ -1230,8 +1237,7 @@ vsbic_scsicmd(struct scsi_xfer *xs)
 	 * Send the command to the hardware.
 	 */
 
-	ccb->ccb_cmd = cmd;
-	vsbic_activate_ccb(sc, ccb);
+	vsbic_activate_ccb(sc, ccb, cmd);
 	if (ISSET(xs->flags, SCSI_POLL))
 		ch = VSBIC_POLLING_CHANNEL(sc);
 	else
@@ -1250,7 +1256,62 @@ vsbic_scsicmd(struct scsi_xfer *xs)
 }
 
 /*
- * Reset a target
+ * Send a request sense command. Invoked at splbio().
+ */
+int
+vsbic_request_sense(struct vsbic_softc *sc, struct vsbic_ccb *ccb)
+{
+	struct bpp_softc *bsc = &sc->sc_bpp;
+	struct scsi_xfer *xs = ccb->ccb_xs;
+	struct scsi_link *sl = xs->sc_link;
+	struct bpp_envelope *env;
+	struct vsbic_cmd *cmd;
+	struct scsi_sense ss;
+	int rc;
+
+	env = bpp_get_envelope(bsc);
+	if (env == NULL) {
+#ifdef VSBIC_DEBUG
+		printf("%s: no free envelope\n", DEVNAME(sc));
+#endif
+		return EAGAIN;
+	}
+	cmd = vsbic_get_cmd(sc);
+	if (cmd == NULL) {
+#ifdef VSBIC_DEBUG
+		printf("%s: no free command\n", DEVNAME(sc));
+#endif
+		bpp_put_envelope(bsc, env);
+		return EAGAIN;
+	}
+
+	memset(&ss, 0, sizeof ss);
+	ss.opcode = REQUEST_SENSE;
+	ss.byte2 = sl->lun << 5;
+	ss.length = sizeof(xs->sense);
+
+	ccb->ccb_xsflags = (ccb->ccb_xsflags & SCSI_NOSLEEP) |
+	    SCSI_DATA_IN | SCSI_POLL;
+	rc = vsbic_load_command(sc, ccb, cmd, sl,
+	    (struct scsi_generic *)&ss, sizeof ss,
+	    (uint8_t *)&xs->sense, sizeof(xs->sense));
+	if (rc != 0) {
+		vsbic_put_cmd(sc, cmd);
+		bpp_put_envelope(bsc, env);
+		return rc;
+	}
+
+	vsbic_activate_ccb(sc, ccb, cmd);
+	vsbic_queue_cmd(sc, &sc->sc_chan[VSBIC_POLLING_CHANNEL(sc)], env, cmd);
+	if (xs->timeout > 1000)
+		xs->timeout = 1000;
+	vsbic_poll(sc, ccb);
+
+	return 0;
+}
+
+/*
+ * Reset a target. Invoked at splbio().
  */
 int
 vsbic_scsireset(struct vsbic_softc *sc, struct scsi_xfer *xs)
@@ -1260,8 +1321,6 @@ vsbic_scsireset(struct vsbic_softc *sc, struct scsi_xfer *xs)
 	struct scsi_link *sl;
 	struct bpp_envelope *env;
 	struct vsbic_cmd *cmd;
-
-	splassert(IPL_BIO);
 
 	/*
 	 * Get an envelope and a command packet.
@@ -1304,7 +1363,7 @@ vsbic_wrapup(struct vsbic_softc *sc, struct vsbic_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_xs;
 
-	splassert(IPL_BIO);
+	timeout_del(&xs->stimeout);
 
 	if (xs->error == XS_NOERROR) {
 		switch (xs->status) {
@@ -1312,8 +1371,17 @@ vsbic_wrapup(struct vsbic_softc *sc, struct vsbic_ccb *ccb)
 			xs->error = XS_NOERROR;
 			break;
 		case SCSI_CHECK:
-			/* TBD send a request sense command */
-			xs->error = XS_SENSE;
+			/*
+			 * Send a request sense command. If we can't, or
+			 * it fails, don't insist and fail the command.
+			 */
+			if (!ISSET(ccb->ccb_flags, CCBF_SENSE)) {
+				SET(ccb->ccb_flags, CCBF_SENSE);
+				xs->error = XS_SENSE;
+				if (vsbic_request_sense(sc, ccb) == 0)
+					return;
+			}
+			xs->error = XS_DRIVER_STUFFUP;
 			break;
 		default:
 			xs->error = XS_DRIVER_STUFFUP;
@@ -1322,7 +1390,6 @@ vsbic_wrapup(struct vsbic_softc *sc, struct vsbic_ccb *ccb)
 	}
 
 	vsbic_free_ccb(sc, ccb);
-	timeout_del(&xs->stimeout);
 	SET(xs->flags, ITSDONE);
 	scsi_done(xs);
 }
@@ -1341,19 +1408,23 @@ vsbic_poll(struct vsbic_softc *sc, struct vsbic_ccb *ccb)
 	int tmo;
 
 	tmo = ccb->ccb_xs->timeout;
+	s = splbio();
 	for (;;) {
-		s = splbio();
 		if (vsbic_channel_intr(sc, chan) != 0)
 			if (ISSET(xs->flags, ITSDONE))
 				break;
 
+		/*
+		 * It is safe to lower spl while waiting, since the polling
+		 * channel never interrupts, and thus we do not risk
+		 * vsbic_intr() processing this request behind our back.
+		 */
 		splx(s);
 		delay(1000);
 		tmo--;
-		if (tmo == 0) {
-			s = splbio();
+		s = splbio();
+		if (tmo == 0)
 			break;
-		}
 	}
 
 	if (tmo == 0) {
@@ -1404,7 +1475,7 @@ vsbic_timeout(void *v)
 
 		xs->error = XS_TIMEOUT;
 		xs->status = SCSI_TERMINATED;
-		if (ISSET(xs->flags, SCSI_POLL)) {
+		if (ISSET(ccb->ccb_xsflags, SCSI_POLL)) {
 			SET(xs->flags, ITSDONE);
 			/* caller will invoke vsbic_wrapup() later */
 		} else
@@ -1443,6 +1514,8 @@ vsbic_intr(void *arg)
 	struct vsbic_softc *sc = arg;
 	struct bpp_chan *chan;
 	uint ch;
+
+	splassert(IPL_BIO);
 
 	/*
 	 * There is no easy way to know which channel caused the interrupt
@@ -1493,56 +1566,61 @@ vsbic_channel_intr(struct vsbic_softc *sc, struct bpp_chan *chan)
 	status = betoh16(cmd->pkt.sts_status);
 
 #ifdef VSBIC_DEBUG
-	printf("%p: ccb %p xfer %x error %02x status %04x sts %02x parm3 %x\n",
-	    cmd, ccb, xferlen, error, status, cmd->scsi.status,
-	    cmd->pkt.sts_parm3);
+	printf("channel %d: cmd %p ccb %p xfer %x error %02x\n",
+	    chan->ch->ch_num, cmd, ccb, xferlen, error);
+	printf("  status %04x sts %02x parm3 %x",
+	    status, cmd->scsi.status, cmd->pkt.sts_parm3);
 	if (error == ERR_OK && cmd->pkt.sts_recovered != ERR_OK)
-		printf("%recovered error %02x tries %d\n",
+		printf(" recovered error %02x tries %d",
 		    cmd->pkt.sts_recovered, cmd->pkt.sts_retries);
+	printf("\n");
 #endif
 
 	if (ccb != NULL) {
 		xs = ccb->ccb_xs;
-		xs->resid = xs->datalen - xferlen;
 
-		if (ISSET(xs->flags, SCSI_DATA_IN | SCSI_DATA_OUT)) {
+		if (ISSET(ccb->ccb_xsflags, SCSI_DATA_IN | SCSI_DATA_OUT)) {
+			if (!ISSET(ccb->ccb_flags, CCBF_SENSE))
+				xs->resid = xs->datalen - xferlen;
 			bus_dmamap_sync(sc->sc_dmat, ccb->ccb_dmamap, 0,
-			    ccb->ccb_dmalen, ISSET(xs->flags, SCSI_DATA_IN) ?
-			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+			    ccb->ccb_dmalen,
+			    ISSET(ccb->ccb_xsflags, SCSI_DATA_IN) ?
+			      BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap);
 		}
 
-		if (xs->error == XS_NOERROR)
-		switch (error) {
-		case ERR_SELECT_TIMEOUT:
-			xs->error = XS_SELTIMEOUT;
-			break;
-		case ERR_BUS_RESET:
-			xs->error = XS_RESET;
-			break;
-		case ERR_REQUEST_SENSE_FAILED:
-			xs->error = XS_SHORTSENSE;
-			break;
-		case ERR_INVALID_XFER_COUNT:
-			if (status == ERR_INCOMPLETE_DATA_TRANSFER)
+		if (xs->error == XS_NOERROR) {
+			switch (error) {
+			case ERR_SELECT_TIMEOUT:
+				xs->error = XS_SELTIMEOUT;
+				break;
+			case ERR_BUS_RESET:
+				xs->error = XS_RESET;
+				break;
+			case ERR_REQUEST_SENSE_FAILED:
+				xs->error = XS_SHORTSENSE;
+				break;
+			case ERR_INVALID_XFER_COUNT:
+				if (status == ERR_INCOMPLETE_DATA_TRANSFER)
+					xs->error = XS_NOERROR;
+				else
+					xs->error = XS_DRIVER_STUFFUP;
+				break;
+			case ERR_OK:
 				xs->error = XS_NOERROR;
-			else
-				xs->error = XS_DRIVER_STUFFUP;	/* XXX */
-			break;
-		case ERR_OK:
-			xs->error = XS_NOERROR;
-			xs->status = cmd->scsi.status;
-			break;
-		default:
-			xs->error = XS_DRIVER_STUFFUP;	/* XXX */
-			break;
+				xs->status = cmd->scsi.status;
+				break;
+			default:
+				xs->error = XS_DRIVER_STUFFUP;
+				break;
+			}
 		}
 	}
 
 	vsbic_put_cmd(sc, cmd);
 
 	if (ccb != NULL) {
-		if (ISSET(xs->flags, SCSI_POLL)) {
+		if (ISSET(ccb->ccb_xsflags, SCSI_POLL)) {
 			SET(xs->flags, ITSDONE);
 			/* caller will invoke vsbic_wrapup() later */
 		} else
