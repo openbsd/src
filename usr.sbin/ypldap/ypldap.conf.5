@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.11 2008/11/17 13:22:10 mbalmer Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.12 2009/02/15 21:57:27 aschrijver Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 17 2008 $
+.Dd $Mdocdate: February 15 2009 $
 .Dt YPLDAP.CONF 5
 .Os
 .Sh NAME
@@ -145,25 +145,20 @@ Valid attributes are:
 .It Ic passwd filter Ar string
 Use the supplied LDAP filter to retrieve password entries.
 .El
-.Sh EXAMPLE CONFIGURATION
+.Sh DIRECTORY EXAMPLE
+This configuration searches the LDAP directory 127.0.0.1 for users and groups.
+On the LDAP side the RFC 2307 object classes posixAccount and posixGroup are used.
+In this example the attributes are either mapped to their corresponding LDAP attributes or a fixed value.
+A list directive is used for the groupmembers attribute because the ldap memberUid returns multiple group members.
+
 .Bd -literal -offset indent
-interval 300          # how many seconds between retries
-domain "openbsd.org"  # only one domain for now
-
-# what do we provide
-provide map "passwd.byname"
-provide map "passwd.byuid"
-provide map "group.byname"
-provide map "group.bygid"
-
 directory "127.0.0.1" {
         # directory options
-
         binddn "cn=Manager,dc=openbsd,dc=org"
         bindcred "secret"
         basedn "ou=Users,dc=openbsd,dc=org"
 
-        # passwd maps configuration
+	# passwd maps configuration
         passwd filter "(objectClass=posixAccount)"
 
         attribute name maps to "uid"
