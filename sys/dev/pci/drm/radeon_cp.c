@@ -45,7 +45,6 @@ void	radeon_do_cp_stop(drm_radeon_private_t *);
 int	radeon_do_engine_reset(struct drm_device *);
 void	radeon_cp_init_ring_buffer(struct drm_device *, drm_radeon_private_t *);
 int	radeon_do_init_cp(struct drm_device *, drm_radeon_init_t *);
-int	radeon_do_resume_cp(struct drm_device *);
 void	radeon_cp_load_microcode(drm_radeon_private_t *);
 int	radeon_cp_get_buffers(struct drm_device *dev, struct drm_file *,
 	    struct drm_dma *);
@@ -1312,47 +1311,6 @@ radeon_do_cleanup_cp(struct drm_device *dev)
 	return 0;
 }
 
-/* This code will reinit the Radeon CP hardware after a resume from disc.
- * AFAIK, it would be very difficult to pickle the state at suspend time, so
- * here we make sure that all Radeon hardware initialisation is re-done without
- * affecting running applications.
- *
- * Charl P. Botha <http://cpbotha.net>
- */
-int
-radeon_do_resume_cp(struct drm_device *dev)
-{
-	drm_radeon_private_t *dev_priv = dev->dev_private;
-
-	if (!dev_priv) {
-		DRM_ERROR("Called with no initialization\n");
-		return EINVAL;
-	}
-
-	DRM_DEBUG("Starting radeon_do_resume_cp()\n");
-
-#if __OS_HAS_AGP
-	if (dev_priv->flags & RADEON_IS_AGP) {
-		/* Turn off PCI GART */
-		radeon_set_pcigart(dev_priv, 0);
-	} else
-#endif
-	{
-		/* Turn on PCI GART */
-		radeon_set_pcigart(dev_priv, 1);
-	}
-
-	radeon_cp_load_microcode(dev_priv);
-	radeon_cp_init_ring_buffer(dev, dev_priv);
-
-	radeon_do_engine_reset(dev);
-	radeon_irq_set_state(dev, RADEON_SW_INT_ENABLE, 1);
-
-	DRM_DEBUG("radeon_do_resume_cp() complete\n");
-
-	return 0;
-}
-
 int
 radeon_cp_init(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
@@ -1504,13 +1462,46 @@ radeon_cp_idle(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	return radeon_do_cp_idle(dev_priv);
 }
 
-/* Added by Charl P. Botha to call radeon_do_resume_cp().
+/*
+ * This code will reinit the Radeon CP hardware after a resume from disc.
+ * AFAIK, it would be very difficult to pickle the state at suspend time, so
+ * here we make sure that all Radeon hardware initialisation is re-done without
+ * affecting running applications.
+ *
+ * Charl P. Botha <http://cpbotha.net>
  */
 int
-radeon_cp_resume(struct drm_device *dev, void *data, struct drm_file *file_priv)
+radeon_cp_resume(struct drm_device *dev)
 {
+	drm_radeon_private_t *dev_priv = dev->dev_private;
 
-	return radeon_do_resume_cp(dev);
+	if (!dev_priv) {
+		DRM_ERROR("Called with no initialization\n");
+		return EINVAL;
+	}
+
+	DRM_DEBUG("Starting radeon_cp_resume()\n");
+
+#if __OS_HAS_AGP
+	if (dev_priv->flags & RADEON_IS_AGP) {
+		/* Turn off PCI GART */
+		radeon_set_pcigart(dev_priv, 0);
+	} else
+#endif
+	{
+		/* Turn on PCI GART */
+		radeon_set_pcigart(dev_priv, 1);
+	}
+
+	radeon_cp_load_microcode(dev_priv);
+	radeon_cp_init_ring_buffer(dev, dev_priv);
+
+	radeon_do_engine_reset(dev);
+	radeon_irq_set_state(dev, RADEON_SW_INT_ENABLE, 1);
+
+	DRM_DEBUG("radeon_cp_resume() complete\n");
+
+	return 0;
 }
 
 int

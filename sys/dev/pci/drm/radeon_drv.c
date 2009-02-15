@@ -629,7 +629,7 @@ radeondrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 		case DRM_IOCTL_RADEON_CP_IDLE:
 			return (radeon_cp_idle(dev, data, file_priv));
 		case DRM_IOCTL_RADEON_CP_RESUME:
-			return (radeon_cp_resume(dev, data, file_priv));
+			return (radeon_cp_resume(dev));
 		case DRM_IOCTL_RADEON_RESET:
 			return (radeon_engine_reset(dev, data, file_priv));
 		case DRM_IOCTL_RADEON_FULLSCREEN:

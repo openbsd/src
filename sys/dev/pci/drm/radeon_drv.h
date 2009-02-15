@@ -350,7 +350,7 @@ extern int radeon_cp_start(struct drm_device *dev, void *data, struct drm_file *
 extern int radeon_cp_stop(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_cp_reset(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_cp_idle(struct drm_device *dev, void *data, struct drm_file *file_priv);
-extern int radeon_cp_resume(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int radeon_cp_resume(struct drm_device *dev);
 extern int radeon_engine_reset(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_fullscreen(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_cp_buffers(struct drm_device *dev, void *data, struct drm_file *file_priv);
