@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.7 2009/01/01 16:15:47 jacekm Exp $	*/
+/*	$OpenBSD: dns.c,v 1.8 2009/02/15 09:58:31 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -73,7 +73,7 @@ getmxbyname(char *name, char ***result)
 	u_int8_t expbuf[PACKETSZ];
 	u_int16_t type;
 	u_int16_t n;
-	u_int16_t priority, tprio;
+	u_int16_t priority;
 	size_t mxnb;
 	struct mxrecord mxarray[MXARRAYSIZE];
 	size_t chunklen;
@@ -128,10 +128,10 @@ getmxbyname(char *name, char ***result)
 				MAXHOSTNAMELEN) >= MAXHOSTNAMELEN)
 				return 0;
 			mxarray[mxnb].priority = priority;
-			if (tprio < priority)
-				tprio = priority;
 		}
 		else {
+			int tprio = 0;
+
 			for (i = j = 0;
 				i < sizeof(mxarray) / sizeof(struct mxrecord);
 				++i) {
