@@ -1,4 +1,7 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.1 2004/08/11 17:41:34 pefo Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.2 2009/02/15 17:48:58 deraadt Exp $	*/
+
+/* Public domain.  Written by David Leonard */
+
 /*
  * Atomic lock for mips
  */

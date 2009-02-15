@@ -1,4 +1,7 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.2 2006/01/05 22:33:24 marc Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.3 2009/02/15 17:48:58 deraadt Exp $	*/
+
+/* Public domain.  Written by David Loenard */
+
 /*
  * Atomic lock for mips
  */
