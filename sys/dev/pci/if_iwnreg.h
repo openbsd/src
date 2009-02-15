@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.20 2008/12/12 17:15:40 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.21 2009/02/15 08:58:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -180,6 +180,9 @@
 #define IWN_HW_REV_TYPE_5350	3
 #define IWN_HW_REV_TYPE_5150	4
 #define IWN_HW_REV_TYPE_5100	5
+#define IWN_HW_REV_TYPE_100	6
+#define IWN_HW_REV_TYPE_6000	7
+#define IWN_HW_REV_TYPE_6050	8
 
 /* Possible flags for register IWN_GIO_CHICKEN. */
 #define IWN_GIO_CHICKEN_L1A_NO_L0S_RX	(1 << 23)
@@ -1175,8 +1178,8 @@ struct iwn_firmware_hdr {
 
 #define IWN4965_FW_TEXT_MAXSZ	( 96 * 1024)
 #define IWN4965_FW_DATA_MAXSZ	( 40 * 1024)
-#define IWN5000_FW_TEXT_MAXSZ	(128 * 1024)
-#define IWN5000_FW_DATA_MAXSZ	( 48 * 1024)
+#define IWN5000_FW_TEXT_MAXSZ	(256 * 1024)
+#define IWN5000_FW_DATA_MAXSZ	( 80 * 1024)
 #define IWN_FW_BOOT_TEXT_MAXSZ	1024
 #define IWN4965_FWSZ		(IWN4965_FW_TEXT_MAXSZ + IWN4965_FW_DATA_MAXSZ)
 #define IWN5000_FWSZ		IWN5000_FW_TEXT_MAXSZ

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.8 2008/12/03 17:17:08 damien Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.9 2009/02/15 08:58:22 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -182,10 +182,12 @@ struct iwn_hal {
 	int		(*add_node)(struct iwn_softc *, struct iwn_node_info *,
 			    int);
 	void		(*tx_done)(struct iwn_softc *, struct iwn_rx_desc *);
+#ifndef IEEE80211_NO_HT
 	void		(*ampdu_tx_start)(struct iwn_softc *,
 			    struct ieee80211_node *, uint8_t, uint16_t);
 	void		(*ampdu_tx_stop)(struct iwn_softc *, uint8_t,
 			    uint16_t);
+#endif
 	const struct	iwn_sensitivity_limits *limits;
 	int		ntxqs;
 	uint8_t		broadcast_id;
