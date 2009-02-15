@@ -295,15 +295,6 @@ typedef struct drm_buf {
 	void		  *dev_private;  /* Per-buffer private storage       */
 } drm_buf_t;
 
-typedef struct drm_dma_handle {
-	void *vaddr;
-	bus_addr_t busaddr;
-	bus_dmamap_t	dmamap;
-	bus_dma_segment_t seg;
-	void *addr;
-	size_t size;
-} drm_dma_handle_t;
-
 struct drm_dmamem {
 	bus_dmamap_t		map;
 	caddr_t			kva;
@@ -717,11 +708,6 @@ int	drm_agp_bind_ioctl(struct drm_device *, void *, struct drm_file *);
 /* Scatter Gather Support (drm_scatter.c) */
 int	drm_sg_alloc_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_sg_free(struct drm_device *, void *, struct drm_file *);
-
-/* consistent PCI memory functions (drm_pci.c) */
-drm_dma_handle_t *drm_pci_alloc(bus_dma_tag_t, size_t, size_t,
-		      dma_addr_t);
-void	drm_pci_free(bus_dma_tag_t, drm_dma_handle_t *);
 
 /* Inline replacements for DRM_IOREMAP macros */
 #define drm_core_ioremap_wc drm_core_ioremap
