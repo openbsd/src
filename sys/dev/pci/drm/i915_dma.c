@@ -73,24 +73,22 @@ int i915_wait_ring(struct drm_device * dev, int n, const char *caller)
  * Sets up the hardware status page for devices that need a physical address
  * in the register.
  */
-int i915_init_phys_hws(drm_i915_private_t *dev_priv, bus_dma_tag_t dmat)
+int
+i915_init_phys_hws(drm_i915_private_t *dev_priv, bus_dma_tag_t dmat)
 {
 	/* Program Hardware Status Page */
-	dev_priv->status_page_dmah =
-	    drm_pci_alloc(dmat, PAGE_SIZE, PAGE_SIZE, 0xffffffff);
-
-	if (!dev_priv->status_page_dmah) {
-		DRM_ERROR("Can not allocate hardware status page\n");
-		return ENOMEM;
+	if ((dev_priv->hws_dmamem = drm_dmamem_alloc(dmat, PAGE_SIZE,
+	    PAGE_SIZE, 1, PAGE_SIZE, 0, BUS_DMA_READ)) == NULL) {
+		return (ENOMEM);
 	}
-	dev_priv->hw_status_page = dev_priv->status_page_dmah->vaddr;
-	dev_priv->dma_status_page = dev_priv->status_page_dmah->busaddr;
+
+	dev_priv->hw_status_page = dev_priv->hws_dmamem->kva;
 
 	memset(dev_priv->hw_status_page, 0, PAGE_SIZE);
 
-	I915_WRITE(HWS_PGA, dev_priv->dma_status_page);
+	I915_WRITE(HWS_PGA, dev_priv->hws_dmamem->map->dm_segs[0].ds_addr);
 	DRM_DEBUG("Enabled hardware status page\n");
-	return 0;
+	return (0);
 }
 
 /**
@@ -99,9 +97,9 @@ int i915_init_phys_hws(drm_i915_private_t *dev_priv, bus_dma_tag_t dmat)
  */
 void i915_free_hws(drm_i915_private_t *dev_priv, bus_dma_tag_t dmat)
 {
-	if (dev_priv->status_page_dmah) {
-		drm_pci_free(dmat, dev_priv->status_page_dmah);
-		dev_priv->status_page_dmah = NULL;
+	if (dev_priv->hws_dmamem) {
+		drm_dmamem_free(dmat, dev_priv->hws_dmamem);
+		dev_priv->hws_dmamem = NULL;
 	}
 
 	if (dev_priv->status_gfx_addr) {
@@ -111,6 +109,7 @@ void i915_free_hws(drm_i915_private_t *dev_priv, bus_dma_tag_t dmat)
 
 	/* Need to rewrite hardware status page */
 	I915_WRITE(HWS_PGA, 0x1ffff000);
+	dev_priv->hw_status_page = NULL;
 }
 
 void i915_kernel_lost_context(struct drm_device * dev)
@@ -223,7 +222,8 @@ static int i915_dma_resume(struct drm_device * dev)
 	if (dev_priv->status_gfx_addr != 0)
 		I915_WRITE(HWS_PGA, dev_priv->status_gfx_addr);
 	else
-		I915_WRITE(HWS_PGA, dev_priv->dma_status_page);
+		I915_WRITE(HWS_PGA,
+		    dev_priv->hws_dmamem->map->dm_segs[0].ds_addr);
 	DRM_DEBUG("Enabled hardware status page\n");
 
 	return 0;

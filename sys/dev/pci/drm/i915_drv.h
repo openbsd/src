@@ -81,16 +81,16 @@ typedef struct drm_i915_private {
 	void			*irqh;
 
 	struct vga_pci_bar	*regs;
-	drm_local_map_t *sarea;
 
-	drm_i915_sarea_t *sarea_priv;
-	drm_i915_ring_buffer_t ring;
-	drm_dma_handle_t *status_page_dmah;
-	void *hw_status_page;
-	dma_addr_t dma_status_page;
-	uint32_t counter;
-	unsigned int status_gfx_addr;
-	drm_local_map_t hws_map;
+	drm_local_map_t		*sarea;
+	drm_i915_sarea_t	*sarea_priv;
+
+	drm_i915_ring_buffer_t	 ring;
+	drm_local_map_t		 hws_map;
+	struct drm_dmamem	*hws_dmamem;
+	void			*hw_status_page;
+	unsigned int		 status_gfx_addr;
+	u_int32_t		 counter;
 
 	atomic_t irq_received;
 	/* Protects user_irq_refcount and irq_mask reg */
