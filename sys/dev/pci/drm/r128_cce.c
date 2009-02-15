@@ -566,12 +566,6 @@ int r128_do_cleanup_cce(struct drm_device * dev)
 {
 	drm_r128_private_t *dev_priv = dev->dev_private;
 
-	/* Make sure interrupts are disabled here because the uninstall ioctl
-	 * may not have been called from userspace
-	 */
-	if (dev->irq_enabled)
-		drm_irq_uninstall(dev);
-
 #if __OS_HAS_AGP
 	if (!dev_priv->is_pci) {
 		if (dev_priv->cce_ring != NULL)

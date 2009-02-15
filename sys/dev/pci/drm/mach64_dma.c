@@ -1344,13 +1344,6 @@ int mach64_do_cleanup_dma(struct drm_device * dev)
 
 	DRM_DEBUG("\n");
 
-	/* Make sure interrupts are disabled here because the uninstall ioctl
-	 * may not have been called from userspace and after dev_private
-	 * is freed, it's too late.
-	 */
-	if (dev->irq_enabled)
-		drm_irq_uninstall(dev);
-
 	if (!dev_priv->is_pci) {
 		if (dev_priv->ring_map)
 			drm_core_ioremapfree(dev_priv->ring_map);
