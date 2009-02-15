@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.20 2004/10/04 05:21:27 jsg Exp $	*/
+/*	$OpenBSD: client.c,v 1.21 2009/02/15 22:20:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -38,7 +38,7 @@ static char RCSid[] __attribute__((__unused__)) =
 "$From: client.c,v 1.13 1999/11/01 00:22:14 christos Exp $";
 #else
 static char RCSid[] __attribute__((__unused__)) = 
-"$OpenBSD: client.c,v 1.20 2004/10/04 05:21:27 jsg Exp $";
+"$OpenBSD: client.c,v 1.21 2009/02/15 22:20:54 deraadt Exp $";
 #endif
 
 static char sccsid[] __attribute__((__unused__)) =
@@ -791,6 +791,22 @@ update(char *rname, opt_t opts, struct stat *statp)
 
 	debugmsg(DM_CALL, "update(%s, 0x%x, 0x%x)\n", rname, opts, statp);
 
+	switch (statp->st_mode & S_IFMT) {
+	case S_IFBLK:
+		debugmsg(DM_MISC, "%s is a block special; skipping\n", target);
+		return(US_NOTHING);
+	case S_IFCHR:
+		debugmsg(DM_MISC, "%s is a character special; skipping\n",
+		    target);
+		return(US_NOTHING);
+	case S_IFIFO:
+		debugmsg(DM_MISC, "%s is a fifo; skipping\n", target);
+		return(US_NOTHING);
+	case S_IFSOCK:
+		debugmsg(DM_MISC, "%s is a socket; skipping\n", target);
+		return(US_NOTHING);
+	}
+
 	if (IS_ON(opts, DO_NOEXEC))
 		if (isexec(target, statp)) {
 			debugmsg(DM_MISC, "%s is an executable\n", target);
@@ -1093,7 +1109,7 @@ fullupdate(int u, char *target, opt_t opts, char *rname, int destdir,
 		/*
 		 * Since we always send link info to the server
 		 * so the server can determine if the remote link
-		 * is correct, we never get any acknowledge meant
+		 * is correct, we never get any acknowledgement
 		 * from the server whether the link was really
 		 * updated or not.
 		 */
