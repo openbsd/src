@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.7 2009/02/14 00:00:47 jacekm Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.8 2009/02/15 13:44:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -217,13 +217,12 @@ int
 queue_open_layout_messagefile(char *queuepath, struct message *messagep)
 {
 	char pathname[MAXPATHLEN];
-	mode_t mode = O_CREAT|O_EXCL|O_RDWR;
 	
 	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%s/message", queuepath,
 		messagep->message_id))
 		fatal("queue_open_incoming_message_file: snprintf");
 
-	return open(pathname, mode, 0600);
+	return open(pathname, O_CREAT|O_EXCL|O_RDWR, 0600);
 }
 
 int
@@ -304,7 +303,6 @@ queue_open_message_file(char *msgid)
 {
 	int fd;
 	char pathname[MAXPATHLEN];
-	mode_t mode = O_RDONLY;
 	u_int16_t hval;
 
 	hval = queue_hash(msgid);
@@ -313,7 +311,7 @@ queue_open_message_file(char *msgid)
 		hval, msgid))
 		fatal("queue_open_message_file: snprintf");
 
-	if ((fd = open(pathname, mode)) == -1)
+	if ((fd = open(pathname, O_RDONLY)) == -1)
 		fatal("queue_open_message_file: open");
 
 	return fd;
