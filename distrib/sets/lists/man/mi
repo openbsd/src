@@ -1592,6 +1592,7 @@
 ./usr/share/man/cat4/mvme88k/syscon.0
 ./usr/share/man/cat4/mvme88k/vme.0
 ./usr/share/man/cat4/mvme88k/vs.0
+./usr/share/man/cat4/mvme88k/vsbic.0
 ./usr/share/man/cat4/mvmeppc
 ./usr/share/man/cat4/myx.0
 ./usr/share/man/cat4/ne.0
