@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.15 2008/06/09 20:43:43 miod Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.16 2009/02/15 14:13:33 jsing Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -102,21 +102,24 @@ esigcode_o32:
  */
 LEAF(copystr, 0)
 	move	t2, a2			# Save the number of bytes
+	move	v0, zero
 1:
 	lbu	t0, 0(a0)
 	PTR_SUBU a2, a2, 1
-	beq	t0, zero, 2f
 	sb	t0, 0(a1)
 	PTR_ADDU a0, a0, 1
-	bne	a2, zero, 1b
+	beq	t0, zero, 2f
 	PTR_ADDU a1, a1, 1
+	bne	a2, zero, 1b
+	nop
+	LI	v0, ENAMETOOLONG	# String is longer than maxlength
 2:
 	beq	a3, zero, 3f
-	PTR_SUBU a2, t2, a2		# compute length copied
+	PTR_SUBU a2, t2, a2		# Compute length copied
 	REG_S	a2, 0(a3)
 3:
 	j	ra
-	move	v0, zero
+	nop
 END(copystr)
 
 #ifndef __LP64__
@@ -187,7 +190,7 @@ NON_LEAF(copyinstr, FRAMESZ(CF_SZ), ra)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 	PTR_S	ra, CF_RA_OFFS(sp)
 	blt	a0, zero, _copyerr	# make sure address is in user space
-	li	v0, KT_COPYERR
+	LI	v0, KT_COPYERR
 	PTR_L	t3, curprocpaddr
 	jal	copystr
 	sw	v0, PCB_ONFAULT(t3)
@@ -197,7 +200,7 @@ NON_LEAF(copyinstr, FRAMESZ(CF_SZ), ra)
 	sw	zero, PCB_ONFAULT(t3)
 	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
 	j	ra
-	move	v0, zero
+	nop
 END(copyinstr)
 
 /*
@@ -215,7 +218,7 @@ NON_LEAF(copyoutstr, FRAMESZ(CF_SZ), ra)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 	PTR_S	ra, CF_RA_OFFS(sp)
 	blt	a1, zero, _copyerr	# make sure address is in user space
-	li	v0, KT_COPYERR
+	LI	v0, KT_COPYERR
 	PTR_L	t3, curprocpaddr
 	jal	copystr
 	sw	v0, PCB_ONFAULT(t3)
@@ -225,7 +228,7 @@ NON_LEAF(copyoutstr, FRAMESZ(CF_SZ), ra)
 	sw	zero, PCB_ONFAULT(t3)
 	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
 	j	ra
-	move	v0, zero
+	nop
 END(copyoutstr)
 
 /*
