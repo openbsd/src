@@ -313,12 +313,12 @@ struct drm_dmamem {
 };
 
 typedef struct drm_buf_entry {
-	int		  buf_size;
-	int		  buf_count;
-	drm_buf_t	  *buflist;
-	int		  seg_count;
-	drm_dma_handle_t  **seglist;
-	int		  page_order;
+	struct drm_dmamem	**seglist;
+	drm_buf_t		*buflist;
+	int			 buf_size;
+	int			 buf_count;
+	int			 page_order;
+	int			 seg_count;
 } drm_buf_entry_t;
 
 typedef TAILQ_HEAD(drm_file_list, drm_file) drm_file_list_t;

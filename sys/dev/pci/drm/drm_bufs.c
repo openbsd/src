@@ -549,9 +549,9 @@ drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 	page_count = 0;
 
 	while (entry->buf_count < count) {
-		drm_dma_handle_t *dmah = drm_pci_alloc(dev->dmat, size,
-		    alignment, 0xfffffffful);
-		if (dmah == NULL) {
+		struct drm_dmamem *mem = drm_dmamem_alloc(dev->dmat, size,
+		    alignment, 1, size, 0, 0);
+		if (mem == NULL) {
 			/* Set count correctly so we free the proper amount. */
 			entry->buf_count = count;
 			entry->seg_count = count;
@@ -562,13 +562,12 @@ drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 			return ENOMEM;
 		}
 
-		entry->seglist[entry->seg_count++] = dmah;
+		entry->seglist[entry->seg_count++] = mem;
 		for (i = 0; i < (1 << page_order); i++) {
-			DRM_DEBUG("page %d @ %p\n",
-			    dma->page_count + page_count,
-			    (char *)dmah->vaddr + PAGE_SIZE * i);
+			DRM_DEBUG("page %d @ %p\n", dma->page_count +
+			    page_count, mem->kva + PAGE_SIZE * i);
 			temp_pagelist[dma->page_count + page_count++] = 
-			    (long)dmah->vaddr + PAGE_SIZE * i;
+			    (long)mem->kva + PAGE_SIZE * i;
 		}
 		for (offset = 0;
 		    offset + size <= total && entry->buf_count < count;
@@ -578,8 +577,9 @@ drm_do_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 			buf->total = alignment;
 			buf->used = 0;
 			buf->offset = (dma->byte_count + byte_count + offset);
-			buf->address = dmah->vaddr + offset;
-			buf->bus_address = dmah->busaddr + offset;
+			buf->address = mem->kva + offset;
+			buf->bus_address = mem->map->dm_segs[0].ds_addr +
+			    offset;
 			buf->pending = 0;
 			buf->file_priv = NULL;
 
