@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.24 2008/08/05 22:58:01 miod Exp $
+dnl	$OpenBSD: install,v 1.25 2009/02/15 13:32:47 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -18,7 +18,7 @@ Boot device restrictions:
 The BUG firmware will not necessarily be able to boot from any device in
 the system.
 
-The following limitations apply:
+Depending on the BUG firmware version, the following limitations may apply:
 - bootable SCSI tapes must have device ID 4 or 5.
 - bootable SCSI disks must have device ID 0, 1, 2 or 3.
 - only the first two MVME328 cards in a system (CLUN 6 and 7) can be
@@ -65,7 +65,7 @@ In this example, the built-in controller, as well as an external MVME328
 controller, are available.
 
 The encoding for the drive ID is as follows:
-- MVME187 and MVME197 built-in controller and MVME327 SCSI controller:
+- MVME187 and MVME197 built-in controller and MVME327A SCSI controller:
     'yy' is ten times the device ID.
 - MVME328 SCSI controller:
     'yy' is eight times the device ID, written in hexadecimal
@@ -78,8 +78,8 @@ using the MVME187 built-in controller, but with:
     187-Bug> BO 06 28
 using an MVME328 board.
 
-Note that OpenBSD/MACHINE can boot off any tape drive supported by the BUG,
-even if its controller is not supported by OpenBSD.
+Note that OpenBSD/MACHINE can boot off any controller supported by the BUG,
+even if it is not supported by OpenBSD.
 
 
 Booting from Network:
