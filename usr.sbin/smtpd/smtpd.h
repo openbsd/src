@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.70 2009/02/15 10:32:23 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.71 2009/02/15 13:12:19 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -741,7 +741,7 @@ int		 msgbuf_write(struct msgbuf *);
 
 
 /* dns.c */
-size_t getmxbyname(char *, char ***);
+int		 getmxbyname(char *, char ***);
 
 
 /* forward.c */

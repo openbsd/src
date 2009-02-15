@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.8 2009/02/15 09:58:31 jacekm Exp $	*/
+/*	$OpenBSD: dns.c,v 1.9 2009/02/15 13:12:19 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -26,6 +26,7 @@
 #include <arpa/nameser.h>
 
 #include <event.h>
+#include <netdb.h>
 #include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,7 +58,7 @@ mxsort(struct mxrecord *array, size_t len)
 	}
 }
 
-size_t
+int
 getmxbyname(char *name, char ***result)
 {
 	union {
@@ -80,8 +81,19 @@ getmxbyname(char *name, char ***result)
 
 	ret = res_query(name, C_IN, T_MX, (u_int8_t *)&answer.bytes,
 		sizeof answer);
-	if (ret == -1)
-		return 0;
+	if (ret == -1) {
+		switch (h_errno) {
+		case TRY_AGAIN:
+			return (EAI_AGAIN);
+		case NO_RECOVERY:
+			return (EAI_FAIL);
+		case HOST_NOT_FOUND:
+			return (EAI_NONAME);
+		case NO_DATA:
+			return (0);
+		}
+		fatal("getmxbyname: res_query");
+	}
 
 	/* sp stores start of dns packet,
 	 * endp stores end of dns packet,

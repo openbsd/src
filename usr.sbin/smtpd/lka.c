@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.21 2009/02/15 10:32:23 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.22 2009/02/15 13:12:19 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -50,7 +50,6 @@ int		lka_verify_mail(struct smtpd *, struct path *);
 int		lka_resolve_mail(struct smtpd *, struct rule *, struct path *);
 int		lka_resolve_rcpt(struct smtpd *, struct rule *, struct path *);
 int		lka_forward_file(struct passwd *);
-size_t		getmxbyname(char *, char ***);
 int		lka_expand(char *, size_t, struct path *);
 int		aliases_exist(struct smtpd *, char *);
 int		aliases_get(struct smtpd *, struct aliaseslist *, char *);
@@ -424,7 +423,7 @@ lka_dispatch_runner(int sig, short event, void *p)
 			struct addrinfo hints, *res, *resp;
 			char **mx = NULL;
 			char *lmx[1];
-			size_t len, i, j;
+			int len, i, j;
 			int error;
 			u_int16_t port = htons(25);
 
@@ -436,6 +435,12 @@ lka_dispatch_runner(int sig, short event, void *p)
 			if (batchp->rule.r_action == A_RELAY) {
 				log_debug("attempting to resolve %s", batchp->hostname);
 				len = getmxbyname(batchp->hostname, &mx);
+				if (len < 0) {
+					batchp->getaddrinfo_error = len;
+					imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1,
+					    batchp, sizeof(*batchp));
+					break;
+				}
 				if (len == 0) {
 					lmx[0] = batchp->hostname;
 					mx = lmx;
