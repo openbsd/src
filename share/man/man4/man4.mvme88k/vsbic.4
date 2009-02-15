@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vsbic.4,v 1.1 2009/02/14 18:03:12 miod Exp $
+.\"	$OpenBSD: vsbic.4,v 1.2 2009/02/15 16:13:08 miod Exp $
 .\"
 .\" Copyright (c) 2009 Miodrag Vallat.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 14 2009 $
+.Dd $Mdocdate: February 15 2009 $
 .Dt VSBIC 4 mvme88k
 .Os
 .Sh NAME
@@ -33,6 +33,24 @@ The WD33C93 SCSI controller found on this board is not directly accessible;
 instead, the
 .Nm
 driver runs SCSI commands through the MVME327A firmware interface.
+.Sh HARDWARE CONFIGURATION
+The card's base address
+.Po
+matching the
+.Em addr
+locator on the configuration line
+.Pc
+is defined through a block of eight jumpers, labeled
+.Dq J5
+on the board, near its center.
+.Pp
+With the card oriented with its faceplate at the bottom and the VME connectors
+at the top, the supported configurations are:
+.Bl -column "xxxxxxxx" "0xffffffff" -offset indent
+.It Li J5 Ta Address Ta Configuration
+.It Li "_X_XX__X" Ta "0xffffa600" Ta "1st board"
+.It Li "_X_XX___" Ta "0xffffa700" Ta "2nd board"
+.El
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,
