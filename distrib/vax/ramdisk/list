@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.18 2003/01/30 22:09:56 deraadt Exp $
+#	$OpenBSD: list,v 1.19 2009/02/15 15:56:45 krw Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # extras
@@ -20,7 +20,7 @@ LINK	usr/mdec/xxboot				usr/mdec/rdboot
 LINK	usr/mdec/xxboot				usr/mdec/sdboot
 
 # various files that we need in /etc for the install
-SCRIPT	${DESTDIR}/etc/disktab			etc/disktab.shadow
+SCRIPT	${DESTDIR}/etc/disktab			tmp/disktab.shadow
 SYMLINK	/tmp/disktab.shadow			etc/disktab
 SYMLINK	/tmp/fstab.shadow			etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf

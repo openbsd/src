@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.21 2007/07/11 01:50:40 deraadt Exp $
+#	$OpenBSD: list,v 1.22 2009/02/15 15:56:45 krw Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -63,7 +63,7 @@ SYMLINK /tmp/resolv.conf.shadow			etc/resolv.conf
 
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
-SCRIPT	${CURDIR}/../common/disktab.shadow	etc/disktab.shadow
+SCRIPT	${CURDIR}/../common/disktab.shadow	tmp/disktab.shadow
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
 SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade

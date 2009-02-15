@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.159 2008/06/26 05:42:03 ray Exp $
+#	$OpenBSD: install.sh,v 1.160 2009/02/15 15:56:45 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -71,10 +71,6 @@ MODE=install
 
 # If /etc/fstab already exists, skip disk initialization.
 if [ ! -f /etc/fstab ]; then
-	# Install the shadowed disktab file; lets us write to it for temporary
-	# purposes without mounting the miniroot read-write.
-	[ -f /etc/disktab.shadow ] && cp /etc/disktab.shadow /tmp/disktab.shadow
-
 	DISK=
 	_DKDEVS=$DKDEVS
 

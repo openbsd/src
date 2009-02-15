@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.31 2007/03/07 21:18:06 miod Exp $
+#	$OpenBSD: list,v 1.32 2009/02/15 15:56:45 krw Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -24,7 +24,7 @@ SPECIAL	rm -f usr/mdec/binstall			usr/mdec/installboot
 COPY	bsd	bsd
 
 # various files that we need in /etc for the install
-SCRIPT	${DESTDIR}/etc/disktab			etc/disktab.shadow
+SCRIPT	${DESTDIR}/etc/disktab			tmp/disktab.shadow
 SYMLINK	/tmp/disktab.shadow			etc/disktab
 SYMLINK	/tmp/fstab.shadow			etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
