@@ -321,11 +321,11 @@ drm_lastclose(struct drm_device *dev)
 	}
 
 	if (dev->sg != NULL) {
-		drm_sg_mem_t *sg = dev->sg; 
+		struct drm_sg_mem *sg = dev->sg; 
 		dev->sg = NULL;
 
 		DRM_UNLOCK();
-		drm_sg_cleanup(sg);
+		drm_sg_cleanup(dev, sg);
 		DRM_LOCK();
 	}
 
@@ -781,8 +781,8 @@ drmmmap(dev_t kdev, off_t offset, int prot)
 		break;
 	/* XXX unify all the bus_dmamem_mmap bits */
 	case _DRM_SCATTER_GATHER:
-		return (bus_dmamem_mmap(dev->dmat, dev->sg->mem->sg_segs,
-		    dev->sg->mem->sg_nsegs, map->offset - dev->sg->handle +
+		return (bus_dmamem_mmap(dev->dmat, dev->sg->mem->segs,
+		    dev->sg->mem->nsegs, map->offset - dev->sg->handle +
 		    offset, prot, BUS_DMA_NOWAIT));
 	case _DRM_SHM:
 	case _DRM_CONSISTENT:

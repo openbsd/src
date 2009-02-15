@@ -383,23 +383,10 @@ struct drm_agp_head {
    	int					 mtrr;
 };
 
-struct drm_sg_dmamem {
-	bus_dma_tag_t		sg_tag;
-	bus_dmamap_t		sg_map;
-	bus_dma_segment_t	*sg_segs;
-	int			sg_nsegs;
-	size_t			sg_size;
-	caddr_t			sg_kva;
+struct drm_sg_mem {
+	struct drm_dmamem	*mem;
+	unsigned long		 handle;
 };
-
-typedef struct drm_sg_mem {
-	unsigned long   handle;
-	void            *virtual;
-	int             pages;
-	dma_addr_t	*busaddr;
-	drm_dma_handle_t *dmah;	/* Handle to PCI memory for ATI PCIGART table */
-	struct drm_sg_dmamem *mem;
-} drm_sg_mem_t;
 
 typedef TAILQ_HEAD(drm_map_list, drm_local_map) drm_map_list_t;
 
@@ -552,7 +539,7 @@ struct drm_device {
 	pid_t		  buf_pgid;
 
 	struct drm_agp_head	*agp;
-	drm_sg_mem_t		*sg;  /* Scatter gather memory */
+	struct drm_sg_mem	*sg;  /* Scatter gather memory */
 	atomic_t		*ctx_bitmap;
 	void			*dev_private;
 	drm_local_map_t		*agp_buffer_map;
@@ -676,7 +663,7 @@ int	drm_agp_bind(struct drm_device *, struct drm_agp_binding *);
 int	drm_agp_unbind(struct drm_device *, struct drm_agp_binding *);
 
 /* Scatter Gather Support (drm_scatter.c) */
-void	drm_sg_cleanup(drm_sg_mem_t *);
+void	drm_sg_cleanup(struct drm_device *, struct drm_sg_mem *);
 int	drm_sg_alloc(struct drm_device *, struct drm_scatter_gather *);
 
 /* ATI PCIGART support (ati_pcigart.c) */

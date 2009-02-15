@@ -99,14 +99,15 @@ drm_ati_pcigart_init(struct drm_device *dev,
 	pci_gart = (u_int32_t *) gart_info->addr;
 
 	max_pages = (gart_info->table_size / sizeof(u_int32_t));
-	pages = (dev->sg->pages <= max_pages) ? dev->sg->pages : max_pages;
+	pages = (dev->sg->mem->map->dm_nsegs <= max_pages) ?
+	    dev->sg->mem->map->dm_nsegs : max_pages;
 
 	memset(pci_gart, 0, max_pages * sizeof(u32));
 
 	KASSERT(PAGE_SIZE >= ATI_PCIGART_PAGE_SIZE);
 
 	for (i = 0; i < pages; i++) {
-		entry_addr = dev->sg->busaddr[i];
+		entry_addr = dev->sg->mem->map->dm_segs[i].ds_addr;
 		for (j = 0; j < (PAGE_SIZE / ATI_PCIGART_PAGE_SIZE); j++) {
 			page_base = (u_int32_t)entry_addr &
 			    ATI_PCIGART_PAGE_MASK;
