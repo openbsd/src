@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.c,v 1.2 2005/04/17 07:37:10 tedu Exp $	*/
+/*	$OpenBSD: copy.c,v 1.3 2009/02/15 13:33:22 jsing Exp $	*/
 
 /* Written by Ted Unangst 2004 Public Domain */
 
@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/syslimits.h>
 #include <net/if.h>
 #include <strings.h>
 #include <errno.h>
@@ -29,12 +30,13 @@ int
 main(int argc, char **argv)
 {
  	char buf[4096];
+	char path[PATH_MAX + 1];
  	void *goodbuf;
  	void *badbuf;
  	int mib[6];
  	struct kinfo_proc2 kinfo;
  	size_t kinfosize = sizeof(kinfo);
- 	int s;
+ 	int s, i;
  	struct ifreq ifrdesc;
 
 
@@ -52,6 +54,9 @@ main(int argc, char **argv)
  	if (sysctl(mib, 6, &kinfo, &kinfosize, 0, 0))
  		err(1, "sysctl");
 
+	for (i = 0; i < PATH_MAX; i++)
+		path[i] = (i % NAME_MAX) ? 'a' : '/';
+	path[PATH_MAX] = '\0';
 
  	goodbuf = buf;
  	badbuf = (void*)(long)kinfo.p_paddr;
@@ -96,6 +101,8 @@ main(int argc, char **argv)
  		fail("copyinstr didn't fail on 0 buf\n");
  	if (!statfs(badbuf, goodbuf) || errno != EFAULT)
  		fail("copyinstr didn't fail on bad buf\n");
+	if (!statfs(path, goodbuf) || errno != ENAMETOOLONG)
+		fail("copyinstr didn't fail on long string\n");
 
 	if (failure)
 		errx(1, "%d failures", failure);
