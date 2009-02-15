@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.23 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.24 2009/02/15 17:13:05 chl Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -297,8 +297,6 @@ wsfont_rotate_internal(struct wsdisplay_font *font)
 
 	/* Duplicate the existing font... */
 	newfont = malloc(sizeof *font, M_DEVBUF, M_WAITOK);
-	if (newfont == NULL)
-		return (NULL);
 
 	bcopy(font, newfont, sizeof *font);
 	newfont->cookie = NULL;
@@ -307,10 +305,6 @@ wsfont_rotate_internal(struct wsdisplay_font *font)
 	newstride = (font->fontheight + 7) / 8;
 	newbits = malloc(newstride * font->fontwidth * font->numchars,
 	    M_DEVBUF, M_WAITOK | M_ZERO);
-	if (newbits == NULL) {
-		free(newfont, M_DEVBUF);
-		return (NULL);
-	}
 
 	/* Rotate the font a bit at a time. */
 	for (n = 0; n < font->numchars; n++) {
