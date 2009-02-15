@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.212 2009/02/15 20:42:33 mbalmer Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.213 2009/02/15 21:46:12 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1588,9 +1588,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			break;
 		}
-#if NPFSYNC > 0
 		error = pfsync_state_import(sp, PFSYNC_SI_IOCTL);
-#endif
 		break;
 	}
 
@@ -1607,9 +1605,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENOENT;
 			break;
 		}
-#if NPFSYNC > 0
+
 		pfsync_state_export(&ps->state, s);
-#endif
 		break;
 	}
 
@@ -1634,9 +1631,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (state->timeout != PFTM_UNLINKED) {
 				if ((nr+1) * sizeof(*p) > (unsigned)ps->ps_len)
 					break;
-#if NPFSYNC > 0
 				pfsync_state_export(pstore, state);
-#endif
 				error = copyout(pstore, p, sizeof(*p));
 				if (error) {
 					free(pstore, M_TEMP);
