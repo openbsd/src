@@ -39,6 +39,33 @@
 #define ATI_PCIE_WRITE 0x4
 #define ATI_PCIE_READ 0x8
 
+void	pcigart_add_entry(struct drm_ati_pcigart_info *, u_int32_t *,
+	    bus_addr_t);
+
+void
+pcigart_add_entry(struct drm_ati_pcigart_info *gart_info, u_int32_t *pci_gart,
+    bus_addr_t entry_addr)
+{
+	u_int32_t	page_base = (u_int32_t)entry_addr &
+	    		    ATI_PCIGART_PAGE_MASK;
+
+	switch(gart_info->gart_reg_if) {
+	case DRM_ATI_GART_IGP:
+		page_base |= (upper_32_bits(entry_addr) & 0xff) << 4;
+		page_base |= 0xc;
+		break;
+	case DRM_ATI_GART_PCIE:
+		page_base >>= 8;
+		page_base |= (upper_32_bits(entry_addr) & 0xff) << 24;
+		page_base |= ATI_PCIE_READ | ATI_PCIE_WRITE;
+		break;
+	default:
+	case DRM_ATI_GART_PCI:
+		break;
+	}
+	*pci_gart = htole32(page_base);
+}
+
 int
 drm_ati_pcigart_cleanup(struct drm_device *dev,
     struct drm_ati_pcigart_info *gart_info)
@@ -67,7 +94,7 @@ drm_ati_pcigart_init(struct drm_device *dev,
     struct drm_ati_pcigart_info *gart_info)
 {
 
-	u_int32_t	*pci_gart, page_base;
+	u_int32_t	*pci_gart;
 	bus_addr_t	 entry_addr;
 	u_long		 pages, max_pages;
 	int		 i, j, ret = 0;
@@ -108,27 +135,9 @@ drm_ati_pcigart_init(struct drm_device *dev,
 
 	for (i = 0; i < pages; i++) {
 		entry_addr = dev->sg->mem->map->dm_segs[i].ds_addr;
-		for (j = 0; j < (PAGE_SIZE / ATI_PCIGART_PAGE_SIZE); j++) {
-			page_base = (u_int32_t)entry_addr &
-			    ATI_PCIGART_PAGE_MASK;
-			switch(gart_info->gart_reg_if) {
-			case DRM_ATI_GART_IGP:
-				page_base |= (upper_32_bits(entry_addr) & 0xff) << 4;
-				page_base |= 0xc;
-				break;
-			case DRM_ATI_GART_PCIE:
-				page_base >>= 8;
-				page_base |= (upper_32_bits(entry_addr) & 0xff) << 24;
-				page_base |= ATI_PCIE_READ | ATI_PCIE_WRITE;
-				break;
-			default:
-			case DRM_ATI_GART_PCI:
-				break;
-			}
-			*pci_gart = htole32(page_base);
-			pci_gart++;
-			entry_addr += ATI_PCIGART_PAGE_SIZE;
-		}
+		for (j = 0; j < (PAGE_SIZE / ATI_PCIGART_PAGE_SIZE);
+		    j++, entry_addr += ATI_PCIGART_PAGE_SIZE)
+			pcigart_add_entry(gart_info, pci_gart++, entry_addr);
 	}
 
 	DRM_MEMORYBARRIER();
