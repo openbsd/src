@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.30 2008/11/12 21:42:43 weingart Exp $	*/
+/*	$OpenBSD: locore.S,v 1.31 2009/02/15 17:06:30 mikeb Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -209,7 +209,7 @@ _C_LABEL(biosextmem):	.long	REALEXTMEM
 	.globl	gdt64
 
 gdt64:
-	.word	gdt64_end-gdt64_start
+	.word	gdt64_end-gdt64_start-1
 	.quad	_RELOC(gdt64_start)
 .align 64
 
