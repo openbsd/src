@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.174 2009/02/13 17:24:54 damien Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.175 2009/02/15 08:34:36 damien Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: February 13 2009 $
+.Dd $Mdocdate: February 15 2009 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -571,8 +571,8 @@ will begin advertising as master.
 .Op Oo Fl Oc Cm nwid Ar id
 .Op Oo Fl Oc Cm nwkey Ar key
 .Op Oo Fl Oc Cm powersave Op Ar duration
+.Op Cm scan
 .Op Oo Fl Oc Cm txpower Ar dBm
-.Op Oo Fl Oc Cm wmm
 .Op Oo Fl Oc Cm wpa
 .Op Cm wpaakms Ar akm,akm,...
 .Op Cm wpaciphers Ar cipher,cipher,...
@@ -595,8 +595,7 @@ wireless network interfaces to
 .Ar n .
 .Pp
 With no channel specified,
-show the results of an access point scan.
-In Host AP mode, this will dump the list of known nodes without scanning.
+show the list of channels supported by the device.
 .It Fl chan
 Unset the desired channel to be used for IEEE 802.11-based wireless
 network interfaces.
@@ -687,6 +686,9 @@ Enable 802.11 power saving mode.
 Optionally set the receiver sleep duration (in milliseconds).
 .It Fl powersave
 Disable 802.11 power saving mode.
+.It Cm scan
+Show the results of an access point scan.
+In Host AP mode, this will dump the list of known nodes without scanning.
 .It Cm txpower Ar dBm
 Set the transmit power for IEEE 802.11-based wireless network interfaces.
 The driver will disable any auto level and transmit power controls in this
@@ -694,24 +696,6 @@ mode.
 .It Fl txpower
 Disable manual transmit power mode and enable any auto level and transmit
 power controls.
-.It Cm wmm
-Enable Wi-Fi Multimedia (WMM).
-WMM is a Wi-Fi Alliance protocol based on the IEEE 802.11e standard and
-provides basic Quality of Service (QoS) features to Wi-Fi networks.
-For a station, this option enables the use of QoS if the access point
-supports it but it does not prevent the association to an access point
-not supporting QoS.
-In Host AP mode, this option allows QoS stations to negotiate QoS during
-association.
-Notice that not all drivers support QoS.
-Check the driver's manual page to know if this option is supported.
-QoS priorities can be defined using VLANs (see the
-.Cm vlanprio
-option).
-Otherwise, the IEEE 802.11 layer will automatically assign priorities to
-frames based on the Differentiated Services Codepoint field of IP packets.
-.It Fl wmm
-Disable Wi-Fi Multimedia.
 .It Cm wpa
 Enable Wi-Fi Protected Access.
 WPA is a Wi-Fi Alliance protocol based on the IEEE 802.11i standard.
@@ -1223,7 +1207,7 @@ Create the gif1 network interface:
 .Pp
 Scan for wireless networks using bwi0:
 .Pp
-.Dl # ifconfig bwi0 chan
+.Dl # ifconfig bwi0 scan
 .Sh DIAGNOSTICS
 Messages indicating the specified interface does not exist, the
 requested address is unknown, or the user is not privileged and

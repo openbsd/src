@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.16 2009/02/13 17:24:54 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.17 2009/02/15 08:34:36 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -156,12 +156,40 @@ struct ieee80211chanreq {
 	u_int16_t	i_channel;
 };
 
+#ifndef _KERNEL
+/*
+ * Channels are specified by frequency and attributes.
+ */
+struct ieee80211_channel {
+	u_int16_t	ic_freq;	/* setting in MHz */
+	u_int16_t	ic_flags;	/* see below */
+};
+
+/*
+ * Channel attributes (XXX must keep in sync with radiotap flags).
+ */
+#define IEEE80211_CHAN_TURBO	0x0010	/* Turbo channel */
+#define IEEE80211_CHAN_CCK	0x0020	/* CCK channel */
+#define IEEE80211_CHAN_OFDM	0x0040	/* OFDM channel */
+#define IEEE80211_CHAN_2GHZ	0x0080	/* 2 GHz spectrum channel */
+#define IEEE80211_CHAN_5GHZ	0x0100	/* 5 GHz spectrum channel */
+#define IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
+#define IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
+#define IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
+#endif	/* !_KERNEL */
+
+struct ieee80211_chanreq_all {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	struct ieee80211_channel *i_chans;
+};
+
 #ifndef IEEE80211_CHAN_ANY
 #define	IEEE80211_CHAN_ANY	0xffff
 #endif
 
 #define	SIOCS80211CHANNEL	 _IOW('i', 238, struct ieee80211chanreq)
 #define	SIOCG80211CHANNEL	_IOWR('i', 239, struct ieee80211chanreq)
+#define	SIOCG80211ALLCHANS	_IOWR('i', 215, struct ieee80211_chanreq_all)
 
 /* BSS identifier */
 struct ieee80211_bssid {

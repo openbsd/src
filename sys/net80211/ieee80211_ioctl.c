@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.30 2009/02/13 17:24:54 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.31 2009/02/15 08:34:36 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -573,6 +573,11 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		chanreq->i_channel = ieee80211_chan2ieee(ic, chan);
+		break;
+	case SIOCG80211ALLCHANS:
+		error = copyout(ic->ic_channels,
+		    ((struct ieee80211_chanreq_all *)data)->i_chans,
+		    sizeof(ic->ic_channels));
 		break;
 #if 0
 	case SIOCG80211ZSTATS:

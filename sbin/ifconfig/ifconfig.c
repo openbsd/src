@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.212 2009/02/13 17:24:54 damien Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.213 2009/02/15 08:34:36 damien Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -130,7 +130,8 @@ int	Lflag = 1;
 #endif /* INET6 */
 
 int	showmediaflag;
-int	shownet80211flag;
+int	shownet80211chans;
+int	shownet80211nodes;
 
 void	notealias(const char *, int);
 void	notrailers(const char *, int);
@@ -150,7 +151,6 @@ void	setifmtu(const char *, int);
 void	setifnwid(const char *, int);
 void	setifbssid(const char *, int);
 void	setifnwkey(const char *, int);
-void	setifwmm(const char *, int);
 void	setifwpa(const char *, int);
 void	setifwpaprotos(const char *, int);
 void	setifwpaakms(const char *, int);
@@ -158,6 +158,7 @@ void	setifwpaciphers(const char *, int);
 void	setifwpagroupcipher(const char *, int);
 void	setifwpapsk(const char *, int);
 void	setifchan(const char *, int);
+void	setifscan(const char *, int);
 void	setiftxpower(const char *, int);
 void	setifpowersave(const char *, int);
 void	setifnwflag(const char *, int);
@@ -301,8 +302,6 @@ const struct	cmd {
 	{ "-bssid",	-1,		0,		setifbssid },
 	{ "nwkey",	NEXTARG,	0,		setifnwkey },
 	{ "-nwkey",	-1,		0,		setifnwkey },
-	{ "wmm",	1,		0,		setifwmm },
-	{ "-wmm",	0,		0,		setifwmm },
 	{ "wpa",	1,		0,		setifwpa },
 	{ "-wpa",	0,		0,		setifwpa },
 	{ "wpaakms",	NEXTARG,	0,		setifwpaakms },
@@ -313,8 +312,9 @@ const struct	cmd {
 	{ "-wpapsk",	-1,		0,		setifwpapsk },
 	{ "chan",	NEXTARG0,	0,		setifchan },
 	{ "-chan",	-1,		0,		setifchan },
+	{ "scan",	NEXTARG0,	0,		setifscan },
 	{ "powersave",	NEXTARG0,	0,		setifpowersave },
-	{ "-powersave",	0,		0,		setifpowersave },
+	{ "-powersave",	-1,		0,		setifpowersave },
 	{ "broadcast",	NEXTARG,	0,		setifbroadaddr },
 	{ "ipdst",	NEXTARG,	0,		setifipdst },
 	{ "prefixlen",  NEXTARG,	0,		setifprefixlen},
@@ -456,6 +456,7 @@ void	in6_getprefix(const char *, int);
 void    at_status(int);
 void    at_getaddr(const char *, int);
 void	ieee80211_status(void);
+void	ieee80211_listchans(void);
 void	ieee80211_listnodes(void);
 void	ieee80211_printnode(struct ieee80211_nodereq *);
 
@@ -1448,18 +1449,6 @@ setifnwkey(const char *val, int d)
 
 /* ARGSUSED */
 void
-setifwmm(const char *val, int d)
-{
-	struct ieee80211_wmmparams wmm;
-
-	(void)strlcpy(wmm.i_name, name, sizeof(wmm.i_name));
-	wmm.i_enabled = d;
-	if (ioctl(s, SIOCS80211WMMPARMS, (caddr_t)&wmm) < 0)
-		err(1, "SIOCS80211WMMPARMS");
-}
-
-/* ARGSUSED */
-void
 setifwpa(const char *val, int d)
 {
 	struct ieee80211_wpaparams wpa;
@@ -1631,16 +1620,16 @@ setifchan(const char *val, int d)
 	int chan;
 
 	if (val == NULL) {
-		if (shownet80211flag)
+		if (shownet80211chans || shownet80211nodes)
 			usage(1);
-		shownet80211flag = 1;
+		shownet80211chans = 1;
 		return;
 	}
 	if (d != 0)
 		chan = IEEE80211_CHAN_ANY;
 	else {
 		chan = atoi(val);
-		if (chan < 0 || chan > 0xffff) {
+		if (chan < 1 || chan > 256) {
 			warnx("invalid channel: %s", val);
 			return;
 		}
@@ -1650,6 +1639,15 @@ setifchan(const char *val, int d)
 	channel.i_channel = (u_int16_t)chan;
 	if (ioctl(s, SIOCS80211CHANNEL, (caddr_t)&channel) == -1)
 		warn("SIOCS80211CHANNEL");
+}
+
+/* ARGSUSED */
+void
+setifscan(const char *val, int d)
+{
+	if (shownet80211chans || shownet80211nodes)
+		usage(1);
+	shownet80211nodes = 1;
 }
 
 #ifndef SMALL
@@ -1723,13 +1721,13 @@ setifpowersave(const char *val, int d)
 		return;
 	}
 
-	if (val) {
+	if (d != -1 && val != NULL) {
 		power.i_maxsleep = strtonum(val, 0, INT_MAX, &errmsg);
 		if (errmsg)
 			errx(1, "powersave %s: %s", val, errmsg);
 	}
 
-	power.i_enabled = d;
+	power.i_enabled = d == -1 ? 0 : 1;
 	if (ioctl(s, SIOCS80211POWER, (caddr_t)&power) == -1)
 		warn("SIOCS80211POWER");
 }
@@ -1756,7 +1754,7 @@ void
 ieee80211_status(void)
 {
 	int len, i, nwkey_verbose, inwid, inwkey, ipsk, ichan, ipwr;
-	int ibssid, itxpower, iwmm, iwpa;
+	int ibssid, itxpower, iwpa;
 	struct ieee80211_nwid nwid;
 	struct ieee80211_nwkey nwkey;
 	struct ieee80211_wpapsk psk;
@@ -1764,7 +1762,6 @@ ieee80211_status(void)
 	struct ieee80211chanreq channel;
 	struct ieee80211_bssid bssid;
 	struct ieee80211_txpower txpower;
-	struct ieee80211_wmmparams wmm;
 	struct ieee80211_wpaparams wpa;
 	struct ieee80211_nodereq nr;
 	u_int8_t zero_bssid[IEEE80211_ADDR_LEN];
@@ -1801,18 +1798,13 @@ ieee80211_status(void)
 	strlcpy(txpower.i_name, name, sizeof(txpower.i_name));
 	itxpower = ioctl(s, SIOCG80211TXPOWER, &txpower);
 
-	memset(&wmm, 0, sizeof(wmm));
-	strlcpy(wmm.i_name, name, sizeof(wmm.i_name));
-	iwmm = ioctl(s, SIOCG80211WMMPARMS, &wmm);
-
 	memset(&wpa, 0, sizeof(wpa));
 	strlcpy(wpa.i_name, name, sizeof(wpa.i_name));
 	iwpa = ioctl(s, SIOCG80211WPAPARMS, &wpa);
 
 	/* check if any ieee80211 option is active */
 	if (inwid == 0 || inwkey == 0 || ipsk == 0 || ipwr == 0 ||
-	    ichan == 0 || ibssid == 0 || iwmm == 0 || iwpa == 0 ||
-	    itxpower == 0)
+	    ichan == 0 || ibssid == 0 || iwpa == 0 || itxpower == 0)
 		fputs("\tieee80211:", stdout);
 	else
 		return;
@@ -1827,7 +1819,7 @@ ieee80211_status(void)
 	}
 
 	if (ichan == 0 && channel.i_channel != 0 &&
-	    channel.i_channel != (u_int16_t)-1)
+	    channel.i_channel != IEEE80211_CHAN_ANY)
 		printf(" chan %u", channel.i_channel);
 
 	memset(&zero_bssid, 0, sizeof(zero_bssid));
@@ -1937,8 +1929,6 @@ ieee80211_status(void)
 		fputs(" wpagroupcipher ", stdout);
 		print_cipherset(wpa.i_groupcipher);
 	}
-	if (iwmm == 0 && wmm.i_enabled)
-		fputs(" wmm", stdout);
 
 	if (ipwr == 0 && power.i_enabled)
 		printf(" powersave on (%dms sleep)", power.i_maxsleep);
@@ -1955,8 +1945,39 @@ ieee80211_status(void)
 	}
 
 	putchar('\n');
-	if (shownet80211flag)
+	if (shownet80211chans)
+		ieee80211_listchans();
+	else if (shownet80211nodes)
 		ieee80211_listnodes();
+}
+
+void
+ieee80211_listchans(void)
+{
+	static struct ieee80211_channel chans[256+1];
+	struct ieee80211_chanreq_all ca;
+	int i;
+
+	bzero(&ca, sizeof(ca));
+	bzero(chans, sizeof(chans));
+	ca.i_chans = chans;
+	strlcpy(ca.i_name, name, sizeof(ca.i_name));
+
+	if (ioctl(s, SIOCG80211ALLCHANS, &ca) != 0) {
+		warn("SIOCG80211ALLCHANS");
+		return;
+	}
+	printf("\t\t%4s  %-8s  %s\n", "chan", "freq", "properties");
+	for (i = 1; i <= 256; i++) {
+		if (chans[i].ic_flags == 0)
+			continue;
+		printf("\t\t%4d  %4d MHz  ", i, chans[i].ic_freq);
+		if (chans[i].ic_flags & IEEE80211_CHAN_PASSIVE)
+			printf("passive scan");
+		else
+			putchar('-');
+		putchar('\n');
+	}
 }
 
 void
