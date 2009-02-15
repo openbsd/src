@@ -42,7 +42,6 @@ int	radeon_do_cleanup_cp(struct drm_device *);
 void	radeon_do_cp_start(drm_radeon_private_t *);
 void	radeon_do_cp_reset(drm_radeon_private_t *);
 void	radeon_do_cp_stop(drm_radeon_private_t *);
-void	radeon_do_cp_flush(drm_radeon_private_t * dev_priv);
 int	radeon_do_engine_reset(struct drm_device *);
 void	radeon_cp_init_ring_buffer(struct drm_device *, drm_radeon_private_t *);
 int	radeon_do_init_cp(struct drm_device *, drm_radeon_init_t *);
@@ -437,22 +436,6 @@ radeon_cp_load_microcode(drm_radeon_private_t *dev_priv)
 				     R520_cp_microcode[i][0]);
 		}
 	}
-}
-
-/* Flush any pending commands to the CP.  This should only be used just
- * prior to a wait for idle, as it informs the engine that the command
- * stream is ending.
- */
-void
-radeon_do_cp_flush(drm_radeon_private_t *dev_priv)
-{
-	DRM_DEBUG("\n");
-#if 0
-	u32 tmp;
-
-	tmp = RADEON_READ(RADEON_CP_RB_WPTR) | (1 << 31);
-	RADEON_WRITE(RADEON_CP_RB_WPTR, tmp);
-#endif
 }
 
 /* Wait for the CP to go idle.
@@ -1430,13 +1413,6 @@ radeon_cp_stop(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
 	if (!dev_priv->cp_running)
 		return 0;
-
-	/* Flush any pending CP commands.  This ensures any outstanding
-	 * commands are exectuted by the engine before we turn it off.
-	 */
-	if (stop->flush) {
-		radeon_do_cp_flush(dev_priv);
-	}
 
 	/* If we fail to make the engine go idle, we return an error
 	 * code so that the DRM ioctl wrapper can try again.
