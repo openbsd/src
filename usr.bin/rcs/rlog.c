@@ -1,6 +1,6 @@
-/*	$OpenBSD: rlog.c,v 1.61 2008/02/02 19:26:24 xsa Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.62 2009/02/15 12:55:18 joris Exp $	*/
 /*
- * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
+ * Copyright (c) 2005, 2009 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
  *
@@ -25,6 +25,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <ctype.h>
 #include <err.h>
 #include <libgen.h>
 #include <stdio.h>
@@ -35,19 +36,27 @@
 #include "rcsprog.h"
 #include "diff.h"
 
+#define RLOG_DATE_LATER		0x01
+#define RLOG_DATE_EARLIER	0x02
+#define RLOG_DATE_SINGLE	0x04
+#define RLOG_DATE_RANGE		0x08
+#define RLOG_DATE_INCLUSIVE	0x10
+
+static int	rlog_select_daterev(RCSFILE *, char *);
 static void	rlog_file(const char *, RCSFILE *);
 static void	rlog_rev_print(struct rcs_delta *);
 
-#define RLOG_OPTSTRING	"hLl::NqRr::s:TtVw::x::z::"
+#define RLOG_OPTSTRING	"d:hLl::NqRr::s:TtVw::x::z::"
 #define REVSEP		"----------------------------"
 #define REVEND \
  "============================================================================="
 
-static int hflag, Lflag, lflag, rflag, tflag, Nflag, wflag;
+static int dflag, hflag, Lflag, lflag, rflag, tflag, Nflag, wflag;
 static char *llist = NULL;
 static char *slist = NULL;
 static char *wlist = NULL;
 static char *revisions = NULL;
+static char *rlog_dates = NULL;
 
 void
 rlog_usage(void)
@@ -70,6 +79,10 @@ rlog_main(int argc, char **argv)
 	hflag = Rflag = rflag = status = 0;
 	while ((ch = rcs_getopt(argc, argv, RLOG_OPTSTRING)) != -1) {
 		switch (ch) {
+		case 'd':
+			dflag = 1;
+			rlog_dates = rcs_optarg;
+			break;
 		case 'h':
 			hflag = 1;
 			break;
@@ -173,6 +186,150 @@ rlog_main(int argc, char **argv)
 	return (status);
 }
 
+static int
+rlog_select_daterev(RCSFILE *rcsfile, char *date)
+{
+	int i, nrev, flags;
+	struct rcs_delta *rdp;
+	struct rcs_argvector *args;
+	char *first, *last, delim;
+	time_t firstdate, lastdate, rcsdate;
+
+	nrev = 0;
+	args = rcs_strsplit(date, ";");
+
+	for (i = 0; args->argv[i] != NULL; i++) {
+		flags = 0;
+		firstdate = lastdate = -1;
+
+		first = args->argv[i];
+		last = strchr(args->argv[i], '<');
+		if (last != NULL) {
+			delim = *last;
+			*last++ = '\0';
+
+			if (*last == '=') {
+				last++;
+				flags |= RLOG_DATE_INCLUSIVE;
+			}
+		} else {
+			last = strchr(args->argv[i], '>');
+			if (last != NULL) {
+				delim = *last;
+				*last++ = '\0';
+
+				if (*last == '=') {
+					last++;
+					flags |= RLOG_DATE_INCLUSIVE;
+				}
+			}
+		}
+
+		if (last == NULL) {
+			flags |= RLOG_DATE_SINGLE;
+			firstdate = rcs_date_parse(first);
+			delim = '\0';
+			last = "\0";
+		} else {
+			while (*last && isspace(*last))
+				last++;
+		}
+
+		if (delim == '>' && *last == '\0') {
+			flags |= RLOG_DATE_EARLIER;
+			firstdate = rcs_date_parse(first);
+		}
+
+		if (delim == '>' && *first == '\0' && *last != '\0') {
+			flags |= RLOG_DATE_LATER;
+			firstdate = rcs_date_parse(last);
+		}
+
+		if (delim == '<' && *last == '\0') {
+			flags |= RLOG_DATE_LATER;
+			firstdate = rcs_date_parse(first);
+		}
+
+		if (delim == '<' && *first == '\0' && *last != '\0') {
+			flags |= RLOG_DATE_EARLIER;
+			firstdate = rcs_date_parse(last);
+		}
+
+		if (*first != '\0' && *last != '\0') {
+			flags |= RLOG_DATE_RANGE;
+
+			if (delim == '<') {
+				firstdate = rcs_date_parse(first);
+				lastdate = rcs_date_parse(last);
+			} else {
+				firstdate = rcs_date_parse(last);
+				lastdate = rcs_date_parse(first);
+			}
+		}
+
+		TAILQ_FOREACH(rdp, &(rcsfile->rf_delta), rd_list) {
+			rcsdate = mktime(&(rdp->rd_date));
+
+			if (flags & RLOG_DATE_SINGLE) {
+				if (rcsdate <= firstdate) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					break;
+				}
+			}
+
+			if (flags & RLOG_DATE_EARLIER) {
+				if (rcsdate < firstdate) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					continue;
+				}
+
+				if (flags & RLOG_DATE_INCLUSIVE &&
+				    (rcsdate <= firstdate)) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					continue;
+				}
+			}
+
+			if (flags & RLOG_DATE_LATER) {
+				if (rcsdate > firstdate) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					continue;
+				}
+
+				if (flags & RLOG_DATE_INCLUSIVE &&
+				    (rcsdate >= firstdate)) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					continue;
+				}
+			}
+
+			if (flags & RLOG_DATE_RANGE) {
+				if ((rcsdate > firstdate) &&
+				    (rcsdate < lastdate)) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					continue;
+				}
+
+				if (flags & RLOG_DATE_INCLUSIVE &&
+				    ((rcsdate >= firstdate) &&
+				    (rcsdate <= lastdate))) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					continue;
+				}
+			}
+		}
+	}
+
+	return (nrev);
+}
+
 static void
 rlog_file(const char *fname, RCSFILE *file)
 {
@@ -186,6 +343,8 @@ rlog_file(const char *fname, RCSFILE *file)
 
 	if (rflag == 1)
 		nrev = rcs_rev_select(file, revisions);
+	else if (dflag == 1)
+		nrev = rlog_select_daterev(file, rlog_dates);
 	else
 		nrev = file->rf_ndelta;
 
@@ -247,7 +406,8 @@ rlog_file(const char *fname, RCSFILE *file)
 			 * if selections are enabled verify that entry is
 			 * selected.
 			 */
-			if (rflag == 0 || (rdp->rd_flags & RCS_RD_SELECT))
+			if ((rflag == 0 && dflag == 0)
+			    || (rdp->rd_flags & RCS_RD_SELECT))
 				rlog_rev_print(rdp);
 		}
 	}
