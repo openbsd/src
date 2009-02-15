@@ -73,7 +73,7 @@ drm_ati_pcigart_cleanup(struct drm_device *dev,
 	/* we need to support large memory configurations */
 	if (dev->sg == NULL) {
 		DRM_ERROR("no scatter/gather memory!\n");
-		return 0;
+		return (EINVAL);
 	}
 
 	if (gart_info->bus_addr) {
@@ -86,7 +86,7 @@ drm_ati_pcigart_cleanup(struct drm_device *dev,
 		}
 	}
 
-	return 1;
+	return (0);
 }
 
 int
@@ -97,11 +97,12 @@ drm_ati_pcigart_init(struct drm_device *dev,
 	u_int32_t	*pci_gart;
 	bus_addr_t	 entry_addr;
 	u_long		 pages, max_pages;
-	int		 i, j, ret = 0;
+	int		 i, j, ret;
 
 	/* we need to support large memory configurations */
 	if (dev->sg == NULL) {
 		DRM_ERROR("no scatter/gather memory!\n");
+		ret = EINVAL;
 		goto error;
 	}
 
@@ -113,6 +114,7 @@ drm_ati_pcigart_init(struct drm_device *dev,
 		    gart_info->table_size, 0, 0);
 		if (gart_info->mem == NULL) {
 			DRM_ERROR("cannot allocate PCI GART page!\n");
+			ret = ENOMEM;
 			goto error;
 		}
 
@@ -142,7 +144,7 @@ drm_ati_pcigart_init(struct drm_device *dev,
 
 	DRM_MEMORYBARRIER();
 
-	return (1);
+	return (0);
 
     error:
 	gart_info->addr = NULL;
