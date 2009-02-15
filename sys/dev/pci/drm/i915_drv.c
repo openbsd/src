@@ -244,3 +244,25 @@ inteldrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 	}
 	return (EINVAL);
 }
+
+u_int32_t
+inteldrm_read_hws(struct drm_i915_private *dev_priv, int reg)
+{
+	struct drm_device	*dev = (struct drm_device *)dev_priv->drmdev;
+	u_int32_t		 val;
+
+	/*
+	 * When we eventually go GEM only we'll always have a dmamap, so this
+	 * madness won't be for long.
+	 */
+	if (dev_priv->hws_dmamem)
+		bus_dmamap_sync(dev->dmat, dev_priv->hws_dmamem->map, 0,
+		    PAGE_SIZE, BUS_DMASYNC_POSTREAD);
+	
+	val = ((volatile u_int32_t *)(dev_priv->hw_status_page))[reg];
+
+	if (dev_priv->hws_dmamem)
+		bus_dmamap_sync(dev->dmat, dev_priv->hws_dmamem->map, 0,
+		    PAGE_SIZE, BUS_DMASYNC_PREREAD);
+	return (val);
+}

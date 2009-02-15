@@ -214,6 +214,7 @@ typedef struct drm_i915_private {
 #define CHIP_HWS	0x8000
 
 				/* i915_dma.c */
+u_int32_t	inteldrm_read_hws(struct drm_i915_private *, int);
 extern void i915_kernel_lost_context(struct drm_device * dev);
 extern void i915_driver_lastclose(struct drm_device * dev);
 extern void i915_driver_close(struct drm_device *dev,
@@ -446,7 +447,7 @@ extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
  *
  * The area from dword 0x20 to 0x3ff is available for driver usage.
  */
-#define READ_HWSP(dev_priv, reg)  (((volatile u32*)(dev_priv->hw_status_page))[reg])
+#define READ_HWSP(dev_priv, reg)  inteldrm_read_hws(dev_priv, reg)
 #define READ_BREADCRUMB(dev_priv) READ_HWSP(dev_priv, I915_BREADCRUMB_INDEX)
 #define I915_GEM_HWS_INDEX		0x20
 #define	I915_BREADCRUMB_INDEX		0x21

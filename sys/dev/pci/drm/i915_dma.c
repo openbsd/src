@@ -86,6 +86,8 @@ i915_init_phys_hws(drm_i915_private_t *dev_priv, bus_dma_tag_t dmat)
 
 	memset(dev_priv->hw_status_page, 0, PAGE_SIZE);
 
+	bus_dmamap_sync(dmat, dev_priv->hws_dmamem->map, 0, PAGE_SIZE,
+	    BUS_DMASYNC_PREREAD);
 	I915_WRITE(HWS_PGA, dev_priv->hws_dmamem->map->dm_segs[0].ds_addr);
 	DRM_DEBUG("Enabled hardware status page\n");
 	return (0);
@@ -221,9 +223,12 @@ static int i915_dma_resume(struct drm_device * dev)
 
 	if (dev_priv->status_gfx_addr != 0)
 		I915_WRITE(HWS_PGA, dev_priv->status_gfx_addr);
-	else
+	else {
+		bus_dmamap_sync(dev->dmat, dev_priv->hws_dmamem->map, 0,
+		    PAGE_SIZE, BUS_DMASYNC_PREREAD);
 		I915_WRITE(HWS_PGA,
 		    dev_priv->hws_dmamem->map->dm_segs[0].ds_addr);
+	}
 	DRM_DEBUG("Enabled hardware status page\n");
 
 	return 0;
