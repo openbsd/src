@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.21 2008/09/15 19:25:36 kettenis Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.22 2009/02/16 20:11:06 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -53,6 +53,7 @@ struct cfdriver acpimadt_cd = {
 	NULL, "acpimadt", DV_DULL
 };
 
+int acpimadt_validate(struct acpi_madt *);
 void acpimadt_cfg_intr(int, u_int32_t *);
 int acpimadt_print(void *, const char *);
 
@@ -74,6 +75,66 @@ acpimadt_match(struct device *parent, void *match, void *aux)
 	hdr = (struct acpi_table_header *)aaa->aaa_table;
 	if (memcmp(hdr->signature, MADT_SIG, sizeof(MADT_SIG) - 1) != 0)
 		return (0);
+
+	return (1);
+}
+
+int
+acpimadt_validate(struct acpi_madt *madt)
+{
+	caddr_t addr = (caddr_t)(madt + 1);
+
+	while (addr < (caddr_t)madt + madt->hdr.length) {
+		union acpi_madt_entry *entry = (union acpi_madt_entry *)addr;
+		u_int8_t length = entry->madt_lapic.length;
+
+		if (length < 2)
+			return (0);
+
+		if (addr + length > (caddr_t)madt + madt->hdr.length)
+			return (0);
+
+		switch (entry->madt_lapic.apic_type) {
+		case ACPI_MADT_LAPIC:
+			if (length != sizeof(entry->madt_lapic))
+				return (0);
+			break;
+		case ACPI_MADT_IOAPIC:
+			if (length != sizeof(entry->madt_ioapic))
+				return (0);
+			break;
+		case ACPI_MADT_OVERRIDE:
+			if (length != sizeof(entry->madt_override))
+				return (0);
+			break;
+		case ACPI_MADT_NMI:
+			if (length != sizeof(entry->madt_nmi))
+				return (0);
+			break;
+		case ACPI_MADT_LAPIC_NMI:
+			if (length != sizeof(entry->madt_lapic_nmi))
+				return (0);
+			break;
+		case ACPI_MADT_LAPIC_OVERRIDE:
+			if (length != sizeof(entry->madt_lapic_override))
+				return (0);
+			break;
+		case ACPI_MADT_IO_SAPIC:
+			if (length != sizeof(entry->madt_io_sapic))
+				return (0);
+			break;
+		case ACPI_MADT_LOCAL_SAPIC:
+			if (length != sizeof(entry->madt_local_sapic))
+				return (0);
+			break;
+		case ACPI_MADT_PLATFORM_INT:
+			if (length != sizeof(entry->madt_platform_int))
+				return (0);
+			break;
+		}
+
+		addr += length;
+	}
 
 	return (1);
 }
@@ -130,6 +191,12 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 	struct ioapic_softc *apic;
 	int nlapic_nmis = 0;
 	int pin;
+
+	/* Do some sanity checks before committing to run in APIC mode. */
+	if (!acpimadt_validate(madt)) {
+		printf(": invalid, skipping\n");
+		return;
+	}
 
 	printf(" addr 0x%x", madt->local_apic_address);
 	if (madt->flags & ACPI_APIC_PCAT_COMPAT)
