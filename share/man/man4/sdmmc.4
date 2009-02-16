@@ -1,8 +1,8 @@
-.\"	$OpenBSD: sdmmc.4,v 1.6 2009/01/09 01:03:06 jsg Exp $
+.\"	$OpenBSD: sdmmc.4,v 1.7 2009/02/16 00:29:03 djm Exp $
 .\"
 .\" Theo de Raadt, 2006. Public Domain.
 .\"
-.Dd $Mdocdate: January 9 2009 $
+.Dd $Mdocdate: February 16 2009 $
 .Dt SDMMC 4
 .Os
 .Sh NAME
@@ -20,7 +20,7 @@ The
 subsystem provides machine-independent bus support and drivers for
 SD/MMC devices.
 .Pp
-Standard SD memory devices will show up as a fake SCSI disk, using
+Standard SD/SDHC memory devices will show up as a fake SCSI disk, using
 .Xr scsibus 4
 and
 .Xr sd 4 .
