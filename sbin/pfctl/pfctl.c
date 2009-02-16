@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.278 2008/08/31 20:18:17 jmc Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.279 2009/02/16 23:53:59 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1352,8 +1352,7 @@ pfctl_load_rule(struct pfctl *pf, char *path, struct pf_rule *r, int depth)
 
 	if (pf->opts & PF_OPT_VERBOSE) {
 		INDENT(depth, !(pf->opts & PF_OPT_VERBOSE2));
-		print_rule(r, r->anchor ? r->anchor->name : "",
-		    pf->opts & PF_OPT_VERBOSE2);
+		print_rule(r, name, pf->opts & PF_OPT_VERBOSE2);
 	}
 	path[len] = '\0';
 	pfctl_clear_pool(&r->rpool);
