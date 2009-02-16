@@ -1191,8 +1191,6 @@ radeon_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init)
 
 	dev_priv->ring.tail_mask = (dev_priv->ring.size / sizeof(u32)) - 1;
 
-	dev_priv->ring.high_mark = RADEON_RING_HIGH_MARK;
-
 #if __OS_HAS_AGP
 	if (dev_priv->flags & RADEON_IS_AGP) {
 		/* Turn off PCI GART */

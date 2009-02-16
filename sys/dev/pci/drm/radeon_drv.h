@@ -180,8 +180,6 @@ typedef struct drm_radeon_ring_buffer {
 	u32 tail;
 	u32 tail_mask;
 	int space;
-
-	int high_mark;
 } drm_radeon_ring_buffer_t;
 
 typedef struct drm_radeon_depth_clear_t {
@@ -1213,8 +1211,6 @@ extern int r300_do_cp_cmdbuf(struct drm_device *dev,
 
 #define RADEON_MAX_VB_AGE		0x7fffffff
 #define RADEON_MAX_VB_VERTS		(0xffff)
-
-#define RADEON_RING_HIGH_MARK		128
 
 #define RADEON_PCIGART_TABLE_SIZE      (32*1024)
 
