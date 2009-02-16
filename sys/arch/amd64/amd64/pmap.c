@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.36 2009/02/05 01:15:20 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.37 2009/02/16 20:26:58 kurt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -574,7 +574,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	}
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
 	kpm->pm_pdir = (pd_entry_t *)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);
-	kpm->pm_pdirpa = (u_int32_t) proc0.p_addr->u_pcb.pcb_cr3;
+	kpm->pm_pdirpa = proc0.p_addr->u_pcb.pcb_cr3;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		atop(kva_start - VM_MIN_KERNEL_ADDRESS);
 
