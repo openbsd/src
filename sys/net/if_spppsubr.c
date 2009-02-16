@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.72 2009/02/06 22:07:04 grange Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.73 2009/02/16 20:03:36 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -399,8 +399,8 @@ HIDE const char *sppp_lcp_opt_name(u_char opt);
 HIDE const char *sppp_phase_name(enum ppp_phase phase);
 HIDE const char *sppp_proto_name(u_short proto);
 HIDE const char *sppp_state_name(int state);
-HIDE int sppp_params(struct sppp *sp, u_long cmd, void *data);
-HIDE int sppp_strnlen(u_char *p, int max);
+HIDE int sppp_get_params(struct sppp *sp, struct ifreq *data);
+HIDE int sppp_set_params(struct sppp *sp, struct ifreq *data);
 HIDE void sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst,
 			      u_int32_t *srcmask);
 HIDE void sppp_keepalive(void *dummy);
@@ -1124,8 +1124,11 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCGIFGENERIC:
+		rv = sppp_get_params(sp, ifr);
+		break;
+
 	case SIOCSIFGENERIC:
-		rv = sppp_params(sp, cmd, data);
+		rv = sppp_set_params(sp, ifr);
 		break;
 
 	default:
@@ -3697,7 +3700,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	STDDCL;
 	struct lcp_header *h;
 	int len, x;
-	u_char *value, *name, digest[AUTHKEYLEN], dsize;
+	u_char *value, *name, digest[AUTHCHALEN], dsize;
 	int value_len, name_len;
 	MD5_CTX ctx;
 
@@ -3751,7 +3754,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		MD5Init(&ctx);
 		MD5Update(&ctx, &h->ident, 1);
 		MD5Update(&ctx, sp->myauth.secret,
-			  sppp_strnlen(sp->myauth.secret, AUTHKEYLEN));
+			  strlen(sp->myauth.secret));
 		MD5Update(&ctx, value, value_len);
 		MD5Final(digest, &ctx);
 		dsize = sizeof digest;
@@ -3759,7 +3762,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		sppp_auth_send(&chap, sp, CHAP_RESPONSE, h->ident,
 			       sizeof dsize, (const char *)&dsize,
 			       sizeof digest, digest,
-			       (size_t)sppp_strnlen(sp->myauth.name, AUTHNAMELEN),
+			       strlen(sp->myauth.name),
 			       sp->myauth.name,
 			       0);
 		break;
@@ -3835,14 +3838,14 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 				    h->ident, sp->confid[IDX_CHAP]);
 			break;
 		}
-		if (name_len != sppp_strnlen(sp->hisauth.name, AUTHNAMELEN)
+		if (name_len != strlen(sp->hisauth.name)
 		    || bcmp(name, sp->hisauth.name, name_len) != 0) {
 			log(LOG_INFO, SPP_FMT "chap response, his name ",
 			    SPP_ARGS(ifp));
 			sppp_print_string(name, name_len);
 			addlog(" != expected ");
 			sppp_print_string(sp->hisauth.name,
-					  sppp_strnlen(sp->hisauth.name, AUTHNAMELEN));
+			    strlen(sp->hisauth.name));
 			addlog("\n");
 		}
 		if (debug) {
@@ -3857,21 +3860,21 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			sppp_print_bytes(value, value_len);
 			addlog(">\n");
 		}
-		if (value_len != AUTHKEYLEN) {
+		if (value_len != AUTHCHALEN) {
 			if (debug)
 				log(LOG_DEBUG,
 				    SPP_FMT "chap bad hash value length: "
 				    "%d bytes, should be %d\n",
 				    SPP_ARGS(ifp), value_len,
-				    AUTHKEYLEN);
+				    AUTHCHALEN);
 			break;
 		}
 
 		MD5Init(&ctx);
 		MD5Update(&ctx, &h->ident, 1);
 		MD5Update(&ctx, sp->hisauth.secret,
-			  sppp_strnlen(sp->hisauth.secret, AUTHKEYLEN));
-		MD5Update(&ctx, sp->myauth.challenge, AUTHKEYLEN);
+			  strlen(sp->hisauth.secret));
+		MD5Update(&ctx, sp->chap_challenge, AUTHCHALEN);
 		MD5Final(digest, &ctx);
 
 #define FAILMSG "Failed..."
@@ -4067,15 +4070,15 @@ sppp_chap_scr(struct sppp *sp)
 	u_char clen;
 
 	/* Compute random challenge. */
-	arc4random_buf(sp->myauth.challenge, sizeof(sp->myauth.challenge));
-	clen = AUTHKEYLEN;
+	arc4random_buf(sp->chap_challenge, sizeof(sp->chap_challenge));
+	clen = AUTHCHALEN;
 
 	sp->confid[IDX_CHAP] = ++sp->pp_seq;
 
 	sppp_auth_send(&chap, sp, CHAP_CHALLENGE, sp->confid[IDX_CHAP],
 		       sizeof clen, (const char *)&clen,
-		       (size_t)AUTHKEYLEN, sp->myauth.challenge,
-		       (size_t)sppp_strnlen(sp->myauth.name, AUTHNAMELEN),
+		       (size_t)AUTHCHALEN, sp->chap_challenge,
+		       strlen(sp->myauth.name),
 		       sp->myauth.name,
 		       0);
 }
@@ -4147,8 +4150,8 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			sppp_print_string((char*)passwd, passwd_len);
 			addlog(">\n");
 		}
-		if (name_len > AUTHNAMELEN ||
-		    passwd_len > AUTHKEYLEN ||
+		if (name_len > AUTHMAXLEN ||
+		    passwd_len > AUTHMAXLEN ||
 		    bcmp(name, sp->hisauth.name, name_len) != 0 ||
 		    bcmp(passwd, sp->hisauth.secret, passwd_len) != 0) {
 			/* action scn, tld */
@@ -4383,8 +4386,8 @@ sppp_pap_scr(struct sppp *sp)
 	u_char idlen, pwdlen;
 
 	sp->confid[IDX_PAP] = ++sp->pp_seq;
-	pwdlen = sppp_strnlen(sp->myauth.secret, AUTHKEYLEN);
-	idlen = sppp_strnlen(sp->myauth.name, AUTHNAMELEN);
+	pwdlen = strlen(sp->myauth.secret);
+	idlen = strlen(sp->myauth.name);
 
 	sppp_auth_send(&pap, sp, PAP_REQ, sp->confid[IDX_PAP],
 		       sizeof idlen, (const char *)&idlen,
@@ -4857,18 +4860,17 @@ sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
 #endif /*INET6*/
 
 HIDE int
-sppp_params(struct sppp *sp, u_long cmd, void *data)
+sppp_get_params(struct sppp *sp, struct ifreq *ifr)
 {
-	struct ifreq *ifr = (struct ifreq *)data;
-	struct spppreq spr;
+	int cmd;
 
-	if (copyin((caddr_t)ifr->ifr_data, &spr, sizeof spr) != 0)
+	if (copyin((caddr_t)ifr->ifr_data, &cmd, sizeof cmd) != 0)
 		return EFAULT;
 
-	switch (spr.cmd) {
+	switch (cmd) {
 	case SPPPIOGDEFS:
-		if (cmd != SIOCGIFGENERIC)
-			return EINVAL;
+	{
+		struct spppreq spr;
 		/*
 		 * We copy over the entire current state, but clean
 		 * out some of the stuff we don't wanna pass up.
@@ -4876,78 +4878,145 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		 * called by any user.  No need to ever get PAP or
 		 * CHAP secrets back to userland anyway.
 		 */
+		spr.cmd = cmd;
 		bcopy(sp, &spr.defs, sizeof(struct sppp));
-		if (suser(curproc, 0) != 0) {
-			bzero(spr.defs.myauth.name, AUTHNAMELEN);
-			bzero(spr.defs.hisauth.name, AUTHNAMELEN);
-		}
-		bzero(spr.defs.myauth.secret, AUTHKEYLEN);
-		bzero(spr.defs.myauth.challenge, AUTHKEYLEN);
-		bzero(spr.defs.hisauth.secret, AUTHKEYLEN);
-		bzero(spr.defs.hisauth.challenge, AUTHKEYLEN);
-		return copyout(&spr, (caddr_t)ifr->ifr_data, sizeof spr);
+		
+		bzero(&spr.defs.myauth, sizeof spr.defs.myauth);
+		bzero(&spr.defs.hisauth, sizeof spr.defs.hisauth);
+		bzero(spr.defs.chap_challenge, sizeof spr.defs.chap_challenge);
 
+		if (copyout(&spr, (caddr_t)ifr->ifr_data, sizeof spr) != 0)
+			return EFAULT;
+		break;
+	}
+	case SPPPIOGMAUTH:
+	case SPPPIOGHAUTH:
+	{
+		struct sauthreq spa;
+		struct sauth *auth;
+
+		auth = (cmd == SPPPIOGMAUTH) ? &sp->myauth : &sp->hisauth;
+
+		bzero(&spa, sizeof(spa));
+		spa.proto = auth->proto;
+		spa.flags = auth->flags;
+
+		/* do not copy the secret, and only let root know the name */
+		if (auth->name != NULL && suser(curproc, 0) == 0)
+			strlcpy(spa.name, auth->name, sizeof(spa.name));
+
+		if (copyout(&spa, (caddr_t)ifr->ifr_data, sizeof spa) != 0)
+			return EFAULT;
+		break;
+	}
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
+
+HIDE int
+sppp_set_params(struct sppp *sp, struct ifreq *ifr)
+{
+	int cmd;
+
+	if (copyin((caddr_t)ifr->ifr_data, &cmd, sizeof cmd) != 0)
+		return EFAULT;
+
+	/*
+	 * We have a very specific idea of which fields we allow
+	 * being passed back from userland, so to not clobber our
+	 * current state.  For one, we only allow setting
+	 * anything if LCP is in dead phase.  Once the LCP
+	 * negotiations started, the authentication settings must
+	 * not be changed again.  (The administrator can force an
+	 * ifconfig down in order to get LCP back into dead
+	 * phase.)
+	 */
+	if (sp->pp_phase != PHASE_DEAD)
+		return EBUSY;
+
+	switch (cmd) {
 	case SPPPIOSDEFS:
-		if (cmd != SIOCSIFGENERIC)
-			return EINVAL;
+	{
+		struct spppreq spr;
+		if (copyin((caddr_t)ifr->ifr_data, &spr, sizeof spr) != 0)
+			return EFAULT;
 		/*
-		 * We have a very specific idea of which fields we allow
-		 * being passed back from userland, so to not clobber our
-		 * current state.  For one, we only allow setting
-		 * anything if LCP is in dead phase.  Once the LCP
-		 * negotiations started, the authentication settings must
-		 * not be changed again.  (The administrator can force an
-		 * ifconfig down in order to get LCP back into dead
-		 * phase.)
-		 *
 		 * Also, we only allow for authentication parameters to be
 		 * specified.
 		 *
 		 * XXX Should allow to set or clear pp_flags.
-		 *
+		 */
+		break;
+	}
+	case SPPPIOSMAUTH:
+	case SPPPIOSHAUTH:
+	{
+		/*
 		 * Finally, if the respective authentication protocol to
 		 * be used is set differently than 0, but the secret is
 		 * passed as all zeros, we don't trash the existing secret.
 		 * This allows an administrator to change the system name
 		 * only without clobbering the secret (which he didn't get
-		 * back in a previous SPPPIOGDEFS call).  However, the
+		 * back in a previous SPPPIOGXAUTH call).  However, the
 		 * secrets are cleared if the authentication protocol is
 		 * reset to 0.
 		 */
-		if (sp->pp_phase != PHASE_DEAD)
-			return EBUSY;
 
-		if ((spr.defs.myauth.proto != 0 && spr.defs.myauth.proto != PPP_PAP &&
-		     spr.defs.myauth.proto != PPP_CHAP) ||
-		    (spr.defs.hisauth.proto != 0 && spr.defs.hisauth.proto != PPP_PAP &&
-		     spr.defs.hisauth.proto != PPP_CHAP))
+		struct sauthreq spa;
+		struct sauth *auth;
+		char *p;
+		int len;
+
+		auth = (cmd == SPPPIOSMAUTH) ? &sp->myauth : &sp->hisauth;
+
+		if (copyin((caddr_t)ifr->ifr_data, &spa, sizeof spa) != 0)
+			return EFAULT;
+
+		if (spa.proto != 0 && spa.proto != PPP_PAP &&
+		    spa.proto != PPP_CHAP)
 			return EINVAL;
 
-		if (spr.defs.myauth.proto == 0)
-			/* resetting myauth */
-			bzero(&sp->myauth, sizeof sp->myauth);
-		else {
-			/* setting/changing myauth */
-			sp->myauth.proto = spr.defs.myauth.proto;
-			bcopy(spr.defs.myauth.name, sp->myauth.name, AUTHNAMELEN);
-			if (spr.defs.myauth.secret[0] != '\0')
-				bcopy(spr.defs.myauth.secret, sp->myauth.secret,
-				      AUTHKEYLEN);
-		}
-		if (spr.defs.hisauth.proto == 0)
-			/* resetting hisauth */
-			bzero(&sp->hisauth, sizeof sp->hisauth);
-		else {
-			/* setting/changing hisauth */
-			sp->hisauth.proto = spr.defs.hisauth.proto;
-			sp->hisauth.flags = spr.defs.hisauth.flags;
-			bcopy(spr.defs.hisauth.name, sp->hisauth.name, AUTHNAMELEN);
-			if (spr.defs.hisauth.secret[0] != '\0')
-				bcopy(spr.defs.hisauth.secret, sp->hisauth.secret,
-				      AUTHKEYLEN);
+		if (spa.proto == 0) {
+			/* resetting auth */
+			if (auth->name != NULL)
+				free(auth->name, M_DEVBUF);
+			if (auth->secret != NULL)
+				free(auth->secret, M_DEVBUF);
+			bzero(auth, sizeof *auth);
+			bzero(sp->chap_challenge, sizeof sp->chap_challenge);
+		} else {
+			/* setting/changing auth */
+			auth->proto = spa.proto;
+			auth->flags = spa.flags;
+
+			spa.name[AUTHMAXLEN - 1] = '\0';
+			len = strlen(spa.name) + 1;
+			p = malloc(len, M_DEVBUF, M_WAITOK|M_CANFAIL);
+			if (p == NULL)
+				return (ENOMEM);
+			strlcpy(p, spa.name, len);
+			if (auth->name != NULL)
+				free(auth->name, M_DEVBUF);
+			auth->name = p;
+
+			if (spa.secret[0] != '\0') {
+				spa.secret[AUTHMAXLEN - 1] = '\0';
+				len = strlen(spa.secret) + 1;
+				p = malloc(len, M_DEVBUF, M_WAITOK|M_CANFAIL);
+				if (p == NULL)
+					return (ENOMEM);
+				strlcpy(p, spa.secret, len);
+				if (auth->secret != NULL)
+					free(auth->secret, M_DEVBUF);
+				auth->secret = p;
+			}
 		}
 		break;
-
+	}
 	default:
 		return EINVAL;
 	}
@@ -5148,16 +5217,6 @@ sppp_dotted_quad(u_int32_t addr)
 		(int)((addr >> 8) & 0xff),
 		(int)(addr & 0xff));
 	return s;
-}
-
-HIDE int
-sppp_strnlen(u_char *p, int max)
-{
-	int len;
-
-	for (len = 0; len < max && *p; ++p)
-		++len;
-	return len;
 }
 
 /* a dummy, used to drop uninteresting events */

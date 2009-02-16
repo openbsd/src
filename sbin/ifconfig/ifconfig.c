@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.213 2009/02/15 08:34:36 damien Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.214 2009/02/16 20:04:12 canacar Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -226,7 +226,7 @@ void	setsppppeerflag(const char *, int);
 void	unsetsppppeerflag(const char *, int);
 void	spppinfo(struct spppreq *);
 void	sppp_status(void);
-void	sppp_printproto(const char *, struct sauth *);
+void	sppp_printproto(const char *, struct sauthreq *);
 void	settrunkport(const char *, int);
 void	unsettrunkport(const char *, int);
 void	settrunkproto(const char *, int);
@@ -3949,25 +3949,35 @@ spppinfo(struct spppreq *spr)
 }
 
 void
+spppauthinfo(struct sauthreq *spa, int d)
+{
+	bzero(spa, sizeof(struct sauthreq));
+
+	ifr.ifr_data = (caddr_t)spa;
+	spa->cmd = d == 0 ? SPPPIOGMAUTH : SPPPIOGHAUTH;
+	if (ioctl(s, SIOCGIFGENERIC, &ifr) == -1)
+		err(1, "SIOCGIFGENERIC(SPPPIOGXAUTH)");
+}
+
+void
 setspppproto(const char *val, int d)
 {
-	struct spppreq spr;
-	struct sauth *auth;
+	struct sauthreq spa;
 
-	spppinfo(&spr);
-	auth = d == 0 ? &spr.defs.myauth : &spr.defs.hisauth;
+	spppauthinfo(&spa, d);
+
 	if (strcmp(val, "pap") == 0)
-		auth->proto = PPP_PAP;
+		spa.proto = PPP_PAP;
 	else if (strcmp(val, "chap") == 0)
-		auth->proto = PPP_CHAP;
+		spa.proto = PPP_CHAP;
 	else if (strcmp(val, "none") == 0)
-		auth->proto = 0;
+		spa.proto = 0;
 	else
 		errx(1, "setpppproto");
 
-	spr.cmd = SPPPIOSDEFS;
+	spa.cmd = d == 0 ? SPPPIOSMAUTH : SPPPIOSHAUTH;
 	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
-		err(1, "SIOCSIFGENERIC(SPPPIOSDEFS)");
+		err(1, "SIOCSIFGENERIC(SPPPIOSXAUTH)");
 }
 
 void
@@ -3979,19 +3989,18 @@ setsppppeerproto(const char *val, int d)
 void
 setspppname(const char *val, int d)
 {
-	struct spppreq spr;
-	struct sauth *auth;
+	struct sauthreq spa;
 
-	spppinfo(&spr);
-	auth = d == 0 ? &spr.defs.myauth : &spr.defs.hisauth;
-	if (auth->proto == 0)
+	spppauthinfo(&spa, d);
+
+	if (spa.proto == 0)
 		errx(1, "unspecified protocol");
-	if (strlcpy((char *)auth->name, val, AUTHNAMELEN) >= AUTHNAMELEN)
+	if (strlcpy(spa.name, val, sizeof(spa.name)) >= sizeof(spa.name))
 		errx(1, "setspppname");
 
-	spr.cmd = SPPPIOSDEFS;
+	spa.cmd = d == 0 ? SPPPIOSMAUTH : SPPPIOSHAUTH;
 	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
-		err(1, "SIOCSIFGENERIC(SPPPIOSDEFS)");
+		err(1, "SIOCSIFGENERIC(SPPPIOSXAUTH)");
 }
 
 void
@@ -4003,19 +4012,18 @@ setsppppeername(const char *val, int d)
 void
 setspppkey(const char *val, int d)
 {
-	struct spppreq spr;
-	struct sauth *auth;
+	struct sauthreq spa;
 
-	spppinfo(&spr);
-	auth = d == 0 ? &spr.defs.myauth : &spr.defs.hisauth;
-	if (auth->proto == 0)
+	spppauthinfo(&spa, d);
+
+	if (spa.proto == 0)
 		errx(1, "unspecified protocol");
-	if (strlcpy((char *)auth->secret, val, AUTHKEYLEN) >= AUTHKEYLEN)
+	if (strlcpy(spa.secret, val, sizeof(spa.secret)) >= sizeof(spa.secret))
 		errx(1, "setspppkey");
 
-	spr.cmd = SPPPIOSDEFS;
+	spa.cmd = d == 0 ? SPPPIOSMAUTH : SPPPIOSHAUTH;
 	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
-		err(1, "SIOCSIFGENERIC(SPPPIOSDEFS)");
+		err(1, "SIOCSIFGENERIC(SPPPIOSXAUTH)");
 }
 
 void
@@ -4027,13 +4035,12 @@ setsppppeerkey(const char *val, int d)
 void
 setsppppeerflag(const char *val, int d)
 {
-	struct spppreq spr;
-	struct sauth *auth;
+	struct sauthreq spa;
 	int flag;
 
-	spppinfo(&spr);
-	auth = &spr.defs.hisauth;
-	if (auth->proto == 0)
+	spppauthinfo(&spa, 1);
+
+	if (spa.proto == 0)
 		errx(1, "unspecified protocol");
 	if (strcmp(val, "callin") == 0)
 		flag = AUTHFLAG_NOCALLOUT;
@@ -4043,13 +4050,13 @@ setsppppeerflag(const char *val, int d)
 		errx(1, "setppppeerflags");
 
 	if (d)
-		auth->flags &= ~flag;
+		spa.flags &= ~flag;
 	else
-		auth->flags |= flag;
+		spa.flags |= flag;
 
-	spr.cmd = SPPPIOSDEFS;
+	spa.cmd = SPPPIOSHAUTH;
 	if (ioctl(s, SIOCSIFGENERIC, &ifr) == -1)
-		err(1, "SIOCSIFGENERIC(SPPPIOSDEFS)");
+		err(1, "SIOCSIFGENERIC(SPPPIOSXAUTH)");
 }
 
 void
@@ -4059,7 +4066,7 @@ unsetsppppeerflag(const char *val, int d)
 }
 
 void
-sppp_printproto(const char *name, struct sauth *auth)
+sppp_printproto(const char *name, struct sauthreq *auth)
 {
 	if (auth->proto == 0)
 		return;
@@ -4076,20 +4083,25 @@ sppp_printproto(const char *name, struct sauth *auth)
 		break;
 	}
 	if (auth->name[0])
-		printf("%sname \"%.*s\" ", name, AUTHNAMELEN, auth->name);
+		printf("%sname \"%s\" ", name, auth->name);
+	if (auth->secret[0])
+		printf("%skey \"%s\" ", name, auth->secret);
 }
 
 void
 sppp_status(void)
 {
 	struct spppreq spr;
+	struct sauthreq spa;
 
 	bzero(&spr, sizeof(spr));
 
 	ifr.ifr_data = (caddr_t)&spr;
 	spr.cmd = SPPPIOGDEFS;
-	if (ioctl(s, SIOCGIFGENERIC, &ifr) == -1)
+	if (ioctl(s, SIOCGIFGENERIC, &ifr) == -1) {
 		return;
+	}
+
 	if (spr.defs.pp_phase == PHASE_DEAD)
 		return;
 	printf("\tsppp: phase ");
@@ -4111,11 +4123,13 @@ sppp_status(void)
 		break;
 	}
 
-	sppp_printproto("auth", &spr.defs.myauth);
-	sppp_printproto("peer", &spr.defs.hisauth);
-	if (spr.defs.hisauth.flags & AUTHFLAG_NOCALLOUT)
+	spppauthinfo(&spa, 0);
+	sppp_printproto("auth", &spa);
+	spppauthinfo(&spa, 1);
+	sppp_printproto("peer", &spa);
+	if (spa.flags & AUTHFLAG_NOCALLOUT)
 		printf("callin ");
-	if (spr.defs.hisauth.flags & AUTHFLAG_NORECHALLENGE)
+	if (spa.flags & AUTHFLAG_NORECHALLENGE)
 		printf("norechallenge ");
 	putchar('\n');
 }

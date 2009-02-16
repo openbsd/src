@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.14 2009/02/06 22:07:04 grange Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.15 2009/02/16 20:03:36 canacar Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -76,8 +76,8 @@ struct sipcp {
 	u_int32_t req_myaddr;	/* local address requested */
 };
 
-#define AUTHNAMELEN	64
-#define AUTHKEYLEN	16
+#define AUTHMAXLEN	256	/* including terminating '\0' */
+#define AUTHCHALEN	16	/* length of the challenge we send */
 
 struct sauth {
 	u_short	proto;			/* authentication protocol to use */
@@ -85,9 +85,8 @@ struct sauth {
 #define AUTHFLAG_NOCALLOUT	1	/* do not require authentication on */
 					/* callouts */
 #define AUTHFLAG_NORECHALLENGE	2	/* do not re-challenge CHAP */
-	u_char	name[AUTHNAMELEN];	/* system identification name */
-	u_char	secret[AUTHKEYLEN];	/* secret password */
-	u_char	challenge[AUTHKEYLEN];	/* random challenge */
+	u_char	*name;	/* system identification name */
+	u_char	*secret;	/* secret password */
 };
 
 #define IDX_PAP		3
@@ -131,6 +130,8 @@ struct sppp {
 	struct sipcp ipv6cp;		/* IPV6CP params */
 	struct sauth myauth;		/* auth params, i'm peer */
 	struct sauth hisauth;		/* auth params, i'm authenticator */
+	u_char chap_challenge[AUTHCHALEN]; /* random challenge used by CHAP */
+
 	/*
 	 * These functions are filled in by sppp_attach(), and are
 	 * expected to be used by the lower layer (hardware) drivers
@@ -185,13 +186,26 @@ struct sppp {
  * to a SIOCSIFGENERIC ioctl.
  */
 
-#define SPPPIOGDEFS  ((int)(('S' << 24) + (1 << 16) + sizeof(struct sppp)))
-#define SPPPIOSDEFS  ((int)(('S' << 24) + (2 << 16) + sizeof(struct sppp)))
+struct sauthreq {
+	int cmd;
+	u_short	proto;			/* authentication protocol to use */
+	u_short	flags;
+	u_char	name[AUTHMAXLEN];	/* system identification name */
+	u_char	secret[AUTHMAXLEN];	/* secret password */
+};
 
 struct spppreq {
 	int	cmd;
 	struct sppp defs;
 };
+
+#define SPPPIOGDEFS  ((int)(('S' << 24) + (1 << 16) + sizeof(struct spppreq)))
+#define SPPPIOSDEFS  ((int)(('S' << 24) + (2 << 16) + sizeof(struct spppreq)))
+#define SPPPIOGMAUTH ((int)(('S' << 24) + (3 << 16) + sizeof(struct sauthreq)))
+#define SPPPIOSMAUTH ((int)(('S' << 24) + (4 << 16) + sizeof(struct sauthreq)))
+#define SPPPIOGHAUTH ((int)(('S' << 24) + (5 << 16) + sizeof(struct sauthreq)))
+#define SPPPIOSHAUTH ((int)(('S' << 24) + (6 << 16) + sizeof(struct sauthreq)))
+
 
 #if defined(_KERNEL)
 void sppp_attach (struct ifnet *ifp);
