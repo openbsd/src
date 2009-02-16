@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.8 2009/02/15 13:44:06 jacekm Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.9 2009/02/16 10:15:10 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -694,9 +694,11 @@ display_envelope(struct message *envelope, int flags)
 		errx(1, "%s: unexpected status 0x%04x", envelope->message_uid,
 		    envelope->status);
 
-	getflag(&envelope->flags, F_MESSAGE_SCHEDULED, "SCHEDULED",
+	getflag(&envelope->flags, F_MESSAGE_AUTHENTICATED, "AUTH",
 	    status, sizeof(status));
 	getflag(&envelope->flags, F_MESSAGE_PROCESSING, "PROCESSING",
+	    status, sizeof(status));
+	getflag(&envelope->flags, F_MESSAGE_SCHEDULED, "SCHEDULED",
 	    status, sizeof(status));
 
 	if (envelope->flags)
