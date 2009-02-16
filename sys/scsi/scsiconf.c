@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.136 2009/02/16 00:05:03 dlg Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.137 2009/02/16 21:13:31 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -748,8 +748,8 @@ scsi_probedev(struct scsibus_softc *scsi, int target, int lun)
 	 */
 #ifdef SCSIDEBUG
 	if (((1 << sc_link->scsibus) & scsidebug_buses) &&
-	    ((1 << target) & scsidebug_targets) &&
-	    ((1 << lun) & scsidebug_luns))
+	    ((target < 32) && ((1 << target) & scsidebug_targets)) &&
+	    ((lun < 32) && ((1 << lun) & scsidebug_luns)))
 		sc_link->flags |= scsidebug_level;
 #endif /* SCSIDEBUG */
 
