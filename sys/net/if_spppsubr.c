@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.73 2009/02/16 20:03:36 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.74 2009/02/16 23:24:01 deraadt Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -4870,7 +4870,10 @@ sppp_get_params(struct sppp *sp, struct ifreq *ifr)
 	switch (cmd) {
 	case SPPPIOGDEFS:
 	{
-		struct spppreq spr;
+		struct spppreq *spr;
+
+		spr = malloc(sizeof(*spr), M_DEVBUF, M_WAITOK);
+
 		/*
 		 * We copy over the entire current state, but clean
 		 * out some of the stuff we don't wanna pass up.
@@ -4878,35 +4881,42 @@ sppp_get_params(struct sppp *sp, struct ifreq *ifr)
 		 * called by any user.  No need to ever get PAP or
 		 * CHAP secrets back to userland anyway.
 		 */
-		spr.cmd = cmd;
-		bcopy(sp, &spr.defs, sizeof(struct sppp));
-		
-		bzero(&spr.defs.myauth, sizeof spr.defs.myauth);
-		bzero(&spr.defs.hisauth, sizeof spr.defs.hisauth);
-		bzero(spr.defs.chap_challenge, sizeof spr.defs.chap_challenge);
 
-		if (copyout(&spr, (caddr_t)ifr->ifr_data, sizeof spr) != 0)
+		spr->cmd = cmd;
+		bcopy(sp, &spr->defs, sizeof(struct sppp));
+		
+		bzero(&spr->defs.myauth, sizeof(spr->defs.myauth));
+		bzero(&spr->defs.hisauth, sizeof(spr->defs.hisauth));
+		bzero(&spr->defs.chap_challenge, sizeof(spr->defs.chap_challenge));
+
+		if (copyout(spr, (caddr_t)ifr->ifr_data, sizeof(*spr)) != 0) {
+			free(spr, M_DEVBUF);
 			return EFAULT;
+		}
+		free(spr, M_DEVBUF);
 		break;
 	}
 	case SPPPIOGMAUTH:
 	case SPPPIOGHAUTH:
 	{
-		struct sauthreq spa;
+		struct sauthreq *spa;
 		struct sauth *auth;
 
+		spa = malloc(sizeof(*spa), M_DEVBUF, M_WAITOK);
 		auth = (cmd == SPPPIOGMAUTH) ? &sp->myauth : &sp->hisauth;
-
-		bzero(&spa, sizeof(spa));
-		spa.proto = auth->proto;
-		spa.flags = auth->flags;
+		bzero(spa, sizeof(*spa));
+		spa->proto = auth->proto;
+		spa->flags = auth->flags;
 
 		/* do not copy the secret, and only let root know the name */
 		if (auth->name != NULL && suser(curproc, 0) == 0)
-			strlcpy(spa.name, auth->name, sizeof(spa.name));
+			strlcpy(spa->name, auth->name, sizeof(spa->name));
 
-		if (copyout(&spa, (caddr_t)ifr->ifr_data, sizeof spa) != 0)
+		if (copyout(spa, (caddr_t)ifr->ifr_data, sizeof(*spa)) != 0) {
+			free(spa, M_DEVBUF);
 			return EFAULT;
+		}
+		free(spa, M_DEVBUF);
 		break;
 	}
 	default:
@@ -4941,15 +4951,21 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 	switch (cmd) {
 	case SPPPIOSDEFS:
 	{
-		struct spppreq spr;
-		if (copyin((caddr_t)ifr->ifr_data, &spr, sizeof spr) != 0)
+		struct spppreq *spr;
+
+		spr = malloc(sizeof(*spr), M_DEVBUF, M_WAITOK);
+		
+		if (copyin((caddr_t)ifr->ifr_data, spr, sizeof(*spr)) != 0) {
+			free(spr, M_DEVBUF);
 			return EFAULT;
+		}
 		/*
 		 * Also, we only allow for authentication parameters to be
 		 * specified.
 		 *
 		 * XXX Should allow to set or clear pp_flags.
 		 */
+		free(spr, M_DEVBUF);
 		break;
 	}
 	case SPPPIOSMAUTH:
@@ -4966,21 +4982,27 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 		 * reset to 0.
 		 */
 
-		struct sauthreq spa;
+		struct sauthreq *spa;
 		struct sauth *auth;
 		char *p;
 		int len;
 
+		spa = malloc(sizeof(*spa), M_DEVBUF, M_WAITOK);
+
 		auth = (cmd == SPPPIOSMAUTH) ? &sp->myauth : &sp->hisauth;
 
-		if (copyin((caddr_t)ifr->ifr_data, &spa, sizeof spa) != 0)
+		if (copyin((caddr_t)ifr->ifr_data, spa, sizeof(*spa)) != 0) {
+			free(spa, M_DEVBUF);
 			return EFAULT;
+		}
 
-		if (spa.proto != 0 && spa.proto != PPP_PAP &&
-		    spa.proto != PPP_CHAP)
+		if (spa->proto != 0 && spa->proto != PPP_PAP &&
+		    spa->proto != PPP_CHAP) {
+			free(spa, M_DEVBUF);
 			return EINVAL;
+		}
 
-		if (spa.proto == 0) {
+		if (spa->proto == 0) {
 			/* resetting auth */
 			if (auth->name != NULL)
 				free(auth->name, M_DEVBUF);
@@ -4990,31 +5012,28 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 			bzero(sp->chap_challenge, sizeof sp->chap_challenge);
 		} else {
 			/* setting/changing auth */
-			auth->proto = spa.proto;
-			auth->flags = spa.flags;
+			auth->proto = spa->proto;
+			auth->flags = spa->flags;
 
-			spa.name[AUTHMAXLEN - 1] = '\0';
-			len = strlen(spa.name) + 1;
-			p = malloc(len, M_DEVBUF, M_WAITOK|M_CANFAIL);
-			if (p == NULL)
-				return (ENOMEM);
-			strlcpy(p, spa.name, len);
+			spa->name[AUTHMAXLEN - 1] = '\0';
+			len = strlen(spa->name) + 1;
+			p = malloc(len, M_DEVBUF, M_WAITOK);
+			strlcpy(p, spa->name, len);
 			if (auth->name != NULL)
 				free(auth->name, M_DEVBUF);
 			auth->name = p;
 
-			if (spa.secret[0] != '\0') {
-				spa.secret[AUTHMAXLEN - 1] = '\0';
-				len = strlen(spa.secret) + 1;
-				p = malloc(len, M_DEVBUF, M_WAITOK|M_CANFAIL);
-				if (p == NULL)
-					return (ENOMEM);
-				strlcpy(p, spa.secret, len);
+			if (spa->secret[0] != '\0') {
+				spa->secret[AUTHMAXLEN - 1] = '\0';
+				len = strlen(spa->secret) + 1;
+				p = malloc(len, M_DEVBUF, M_WAITOK);
+				strlcpy(p, spa->secret, len);
 				if (auth->secret != NULL)
 					free(auth->secret, M_DEVBUF);
 				auth->secret = p;
 			}
 		}
+		free(spa, M_DEVBUF);
 		break;
 	}
 	default:
