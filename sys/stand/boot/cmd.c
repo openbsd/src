@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.59 2007/04/27 10:08:34 tom Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.60 2009/02/16 23:58:05 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -108,6 +108,7 @@ read_conf(void)
 #ifdef CHECK_SKIP_CONF
 	if (CHECK_SKIP_CONF()) {
 		printf("boot.conf processing skipped at operator request\n");
+		cmd.timeout = 0;
 		return -1;		/* Pretend file wasn't found */
 	}
 #endif
