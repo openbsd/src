@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.21 2009/02/01 00:52:17 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.22 2009/02/16 23:03:31 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -47,6 +47,7 @@ struct cmmu_p {
 	void (*flush_inst_cache)(cpuid_t, paddr_t, psize_t);
 	void (*dma_cachectl)(paddr_t, psize_t, int);
 #ifdef MULTIPROCESSOR
+	void (*dma_cachectl_local)(paddr_t, psize_t, int);
 	void (*initialize_cpu)(cpuid_t);
 #endif
 };
@@ -79,14 +80,17 @@ extern __cpu_simple_lock_t cmmu_cpu_lock;
 #define	cmmu_flush_cache(a, b, c)	(cmmu->flush_cache)(a, b, c)
 #define	cmmu_flush_inst_cache(a, b, c)	(cmmu->flush_inst_cache)(a, b, c)
 #define	dma_cachectl(a, b, c)		(cmmu->dma_cachectl)(a, b, c)
+#define	dma_cachectl_local(a, b, c)	(cmmu->dma_cachectl_local)(a, b, c)
 #define	cmmu_initialize_cpu(a)		(cmmu->initialize_cpu)(a)
 
 /*
- * dma_cachectl() modes
+ * dma_cachectl{,_local}() modes
  */
-#define DMA_CACHE_SYNC		0
-#define DMA_CACHE_SYNC_INVAL	1
-#define DMA_CACHE_INV		2
+#define DMA_CACHE_SYNC		0x00
+#define DMA_CACHE_SYNC_INVAL	0x01
+#define DMA_CACHE_INV		0x02
+
+#define	DMA_CACHE_MASK		0x03
 
 #endif	/* _KERNEL && !_LOCORE */
 

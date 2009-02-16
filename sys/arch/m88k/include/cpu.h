@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.40 2009/02/08 21:40:56 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.41 2009/02/16 23:03:31 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -84,51 +84,73 @@ extern u_int max_cpus;
  */
 
 struct cpu_info {
-	u_int	ci_flags;
+	u_int		 ci_flags;
 #define	CIF_ALIVE		0x01		/* cpu initialized */
 #define	CIF_PRIMARY		0x02		/* primary cpu */
 
-	struct proc *ci_curproc;		/* current process... */
-	struct pcb *ci_curpcb;			/* ...and its pcb */
+	struct proc	*ci_curproc;		/* current process... */
+	struct pcb	*ci_curpcb;		/* ...and its pcb */
 
-	u_int	ci_cpuid;			/* cpu number */
+	u_int		 ci_cpuid;		/* cpu number */
 
-	u_int	ci_pfsr_i0, ci_pfsr_i1;		/* instruction... */
-	u_int	ci_pfsr_d0, ci_pfsr_d1;		/* ... and data CMMU PFSRs */
+	/*
+	 * The following fields are used differently depending on
+	 * the processor type.  Think of them as an anonymous union
+	 * of two anonymous structs.
+	 */
+	u_int		 ci_cpudep0;
+	u_int		 ci_cpudep1;
+	u_int		 ci_cpudep2;
+	u_int		 ci_cpudep3;
+	u_int		 ci_cpudep4;
+	u_int		 ci_cpudep5;
+	u_int		 ci_cpudep6;
+	u_int		 ci_cpudep7;
 
-	struct schedstate_percpu ci_schedstate;	/* scheduling state */
-	int	ci_want_resched;		/* need_resched() invoked */
+	/* 88100 fields */
+#define	ci_pfsr_i0	 ci_cpudep0		/* instruction... */
+#define	ci_pfsr_i1	 ci_cpudep1
+#define	ci_pfsr_d0	 ci_cpudep2		/* ...and data CMMU PFSRs */
+#define	ci_pfsr_d1	 ci_cpudep3
 
-	u_int	ci_intrdepth;			/* interrupt depth */
+	/* 88110 fields */
+#define	ci_nmi_stack	 ci_cpudep0		/* NMI stack */
+#define	ci_ipi_arg1	 ci_cpudep1		/* Complex IPI arguments */
+#define	ci_ipi_arg2	 ci_cpudep2
+#define	ci_h_sxip	 ci_cpudep3		/* trapframe values */
+#define	ci_h_epsr	 ci_cpudep4		/* for hardclock */
+#define	ci_s_sxip	 ci_cpudep5		/* and softclock */
+#define	ci_s_epsr	 ci_cpudep6
 
-	u_long	ci_spin_locks;			/* spin locks counter */
+	struct schedstate_percpu
+			 ci_schedstate;		/* scheduling state */
+	int		 ci_want_resched;	/* need_resched() invoked */
 
-	int	ci_ddb_state;			/* ddb status */
+	u_int		 ci_intrdepth;		/* interrupt depth */
+
+	u_long		 ci_spin_locks;		/* spin locks counter */
+
+	int		 ci_ddb_state;		/* ddb status */
 #define	CI_DDB_RUNNING	0
 #define	CI_DDB_ENTERDDB	1
 #define	CI_DDB_INDDB	2
 #define	CI_DDB_PAUSE	3
 
-	int	ci_softintr;			/* pending soft interrupts */
-	u_int32_t ci_randseed;			/* per-cpu random seed */
+	int		 ci_softintr;		/* pending soft interrupts */
+	u_int32_t	 ci_randseed;		/* per-cpu random seed */
 
-	vaddr_t	ci_nmi_stack;			/* NMI stack (88110) */
-
-#ifdef MULTIPROCESSOR
-
-	int	ci_ipi;				/* pending ipis */
+	int		 ci_ipi;		/* pending ipis */
 #define	CI_IPI_NOTIFY		0x00000001
 #define	CI_IPI_HARDCLOCK	0x00000002
 #define	CI_IPI_STATCLOCK	0x00000004
 #define	CI_IPI_DDB		0x00000008
+/* 88110 simple ipi */
 #define	CI_IPI_TLB_FLUSH_KERNEL	0x00000010
 #define	CI_IPI_TLB_FLUSH_USER	0x00000020
-
+/* 88110 complex ipi */
 #define	CI_IPI_CACHE_FLUSH	0x00000040
 #define	CI_IPI_ICACHE_FLUSH	0x00000080
-	u_int32_t	ci_ipi_arg1;
-	u_int32_t	ci_ipi_arg2;
-#endif
+#define	CI_IPI_DMA_CACHECTL	0x00000100
 };
 
 extern cpuid_t master_cpu;
@@ -220,10 +242,12 @@ struct clockframe {
 
 #define SIR_NET		0x01
 #define SIR_CLOCK	0x02
+#define	SIR_IPI		0x04
 
 #define setsoftint(x)	atomic_setbits_int(&curcpu()->ci_softintr, x)
 #define setsoftnet()	setsoftint(SIR_NET)
 #define setsoftclock()	setsoftint(SIR_CLOCK)
+#define	setsoftipi()	setsoftint(SIR_IPI)
 
 #define	aston(p)	((p)->p_md.md_astpending = 1)
 
@@ -248,6 +272,7 @@ struct clockframe {
 
 void	need_resched(struct cpu_info *);
 void	signotify(struct proc *);
+void	softipi(void);
 
 int	badaddr(vaddr_t addr, int size);
 

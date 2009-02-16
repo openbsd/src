@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.32 2009/02/16 22:55:03 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.33 2009/02/16 23:03:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -84,7 +84,6 @@
 #endif
 
 void	m197_bootstrap(void);
-void	m197_clock_ipi_handler(struct trapframe *);
 void	m197_delay(int);
 void	m197_ext_int(struct trapframe *);
 u_int	m197_getipl(void);
@@ -93,10 +92,16 @@ vaddr_t	m197_memsize(void);
 void	m197_nmi(struct trapframe *);
 u_int	m197_raiseipl(u_int);
 u_int	m197_setipl(u_int);
+void	m197_soft_ipi(void);
 void	m197_startup(void);
 
 vaddr_t obiova;
 vaddr_t flashva;
+
+#define	CI_IPI_MASKABLE \
+	(CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK)
+#define	CI_IPI_COMPLEX \
+	(CI_IPI_CACHE_FLUSH | CI_IPI_ICACHE_FLUSH | CI_IPI_DMA_CACHECTL)
 
 /*
  * Figure out how much real memory is available.
@@ -187,9 +192,6 @@ m197_startup()
 void
 m197_ext_int(struct trapframe *eframe)
 {
-#ifdef MULTIPROCESSOR
-	struct cpu_info *ci = curcpu();
-#endif
 	u_int32_t psr;
 	int level;
 	struct intrhand *intr;
@@ -214,16 +216,6 @@ m197_ext_int(struct trapframe *eframe)
 	m197_setipl(level);
 	psr = get_psr();
 	set_psr(psr & ~PSR_IND);
-
-#ifdef MULTIPROCESSOR
-	/*
-	 * If we have pending hardware IPIs and the current
-	 * level allows them to be processed, do them now.
-	 */
-	if (eframe->tf_mask < IPL_SCHED &&
-	    ISSET(ci->ci_ipi, CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK))
-		m197_clock_ipi_handler(eframe);
-#endif
 
 	list = &intr_handlers[vec];
 	if (SLIST_EMPTY(list))
@@ -267,16 +259,21 @@ m197_ext_int(struct trapframe *eframe)
 #endif
 }
 
+/*
+ * NMI handler. Invoked with interrupts disabled.
+ */
 void
 m197_nmi(struct trapframe *eframe)
 {
-	u_int32_t psr;
 	u_int8_t abort;
+#if 0
+	u_int32_t psr;
 
 	/* block all hardware interrupts */
 	m197_setipl(IPL_HIGH);	/* IPL_IPI? */
 	psr = get_psr();
 	set_psr(psr & ~PSR_IND);
+#endif
 
 	/*
 	 * Non-maskable interrupts are either the abort switch (on
@@ -424,6 +421,7 @@ m197_bootstrap()
 	md_init_clocks = m1x7_init_clocks;
 #ifdef MULTIPROCESSOR
 	md_send_ipi = m197_send_ipi;
+	md_soft_ipi = m197_soft_ipi;
 	md_delay = m197_delay;
 #else
 	md_delay = m1x7_delay;
@@ -488,6 +486,16 @@ m197_send_complex_ipi(int ipi, cpuid_t cpu, u_int32_t arg1, u_int32_t arg2)
 }
 
 void
+m197_broadcast_complex_ipi(int ipi, u_int32_t arg1, u_int32_t arg2)
+{
+	/*
+	 * This relies upon the fact that we only have two processors,
+	 * and their cpuid are 0 and 1.
+	 */
+	m197_send_complex_ipi(ipi, 1 - curcpu()->ci_cpuid, arg1, arg2);
+}
+
+void
 m197_ipi_handler(struct trapframe *eframe)
 {
 	struct cpu_info *ci = curcpu();
@@ -497,9 +505,33 @@ m197_ipi_handler(struct trapframe *eframe)
 	int need_ddb = 0;
 #endif
 
-	if (ipi != 0) {
-		atomic_clearbits_int(&ci->ci_ipi,
-		    ipi & ~(CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK));
+	if (ipi == 0)
+		return;
+
+	atomic_clearbits_int(&ci->ci_ipi, ipi);
+
+	if (ipi & CI_IPI_MASKABLE) {
+		/*
+		 * Even if the current spl level would allow it, we can
+		 * not run the clock handlers from there because we would
+		 * need to grab the kernel lock, which might already
+		 * held by the other processor.
+		 *
+		 * Instead, schedule a soft interrupt. But remember the
+		 * important fields from the exception frame first, so
+		 * that a valid clockframe can be reconstructed from the
+		 * soft interrupt handler (which can not get an exception
+		 * frame).
+		 */
+		if (ipi & CI_IPI_HARDCLOCK) {
+			ci->ci_h_sxip = eframe->tf_sxip;
+			ci->ci_h_epsr = eframe->tf_epsr;
+		}
+		if (ipi & CI_IPI_STATCLOCK) {
+			ci->ci_s_sxip = eframe->tf_sxip;
+			ci->ci_s_epsr = eframe->tf_epsr;
+		}
+		setsoftipi();
 	}
 
 	/*
@@ -507,8 +539,7 @@ m197_ipi_handler(struct trapframe *eframe)
 	 * pending at the same time, sending processor will wait for us
 	 * to have processed the current one before sending a new one.
 	 */
-	if (ipi &
-	    (CI_IPI_CACHE_FLUSH | CI_IPI_ICACHE_FLUSH)) {
+	if (ipi & CI_IPI_COMPLEX) {
 		arg1 = ci->ci_ipi_arg1;
 		arg2 = ci->ci_ipi_arg2;
 
@@ -517,6 +548,10 @@ m197_ipi_handler(struct trapframe *eframe)
 		}
 		else if (ipi & CI_IPI_ICACHE_FLUSH) {
 			cmmu_flush_inst_cache(ci->ci_cpuid, arg1, arg2);
+		}
+		else if (ipi & CI_IPI_DMA_CACHECTL) {
+			dma_cachectl_local(arg1, arg2 & ~DMA_CACHE_MASK,
+			    arg2 & DMA_CACHE_MASK);
 		}
 	}
 
@@ -551,9 +586,8 @@ m197_ipi_handler(struct trapframe *eframe)
 			need_ddb = 1;
 #endif
 	}
-	if (ipi & (CI_IPI_NOTIFY | CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK)) {
-		/* force an AST */
-		aston(ci->ci_curproc);
+	if (ipi & CI_IPI_NOTIFY) {
+		/* nothing to do! */
 	}
 
 #ifdef DDB
@@ -566,27 +600,39 @@ m197_ipi_handler(struct trapframe *eframe)
  * Maskable IPIs.
  *
  * These IPIs are received as non maskable, but are not processed in
- * the NMI handler; instead, they are checked again when changing
- * spl level on return from regular interrupts to process them as soon
- * as possible.
+ * the NMI handler; instead, they are processed from the soft interrupt
+ * handler.
  *
  * XXX This is grossly suboptimal.
  */
 void
-m197_clock_ipi_handler(struct trapframe *eframe)
+m197_soft_ipi()
 {
 	struct cpu_info *ci = curcpu();
-	int ipi = ci->ci_ipi & (CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK);
+	struct trapframe faketf;
 	int s;
 
-	atomic_clearbits_int(&ci->ci_ipi, ipi);
-
+	__mp_lock(&kernel_lock);
 	s = splclock();
-	if (ipi & CI_IPI_HARDCLOCK)
-		hardclock((struct clockframe *)eframe);
-	if (ipi & CI_IPI_STATCLOCK)
-		statclock((struct clockframe *)eframe);
+
+	if (ci->ci_h_sxip != 0) {
+		faketf.tf_cpu = ci;
+		faketf.tf_sxip = ci->ci_h_sxip;
+		faketf.tf_epsr = ci->ci_h_epsr;
+		ci->ci_h_sxip = 0;
+		hardclock((struct clockframe *)&faketf);
+	}
+
+	if (ci->ci_s_sxip != 0) {
+		faketf.tf_cpu = ci;
+		faketf.tf_sxip = ci->ci_s_sxip;
+		faketf.tf_epsr = ci->ci_s_epsr;
+		ci->ci_s_sxip = 0;
+		statclock((struct clockframe *)&faketf);
+	}
+
 	splx(s);
+	__mp_unlock(&kernel_lock);
 }
 
 /*

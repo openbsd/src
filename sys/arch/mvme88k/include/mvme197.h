@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme197.h,v 1.9 2007/12/15 19:34:35 miod Exp $ */
+/*	$OpenBSD: mvme197.h,v 1.10 2009/02/16 23:03:33 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -59,6 +59,7 @@
 #define M197_IACK	0xfff00100	/* interrupt ACK base */
 
 #ifdef _KERNEL
+void	m197_broadcast_complex_ipi(int, u_int32_t, u_int32_t);
 void	m197_send_complex_ipi(int, cpuid_t, u_int32_t, u_int32_t);
 void	m197_send_ipi(int, cpuid_t);
 #endif

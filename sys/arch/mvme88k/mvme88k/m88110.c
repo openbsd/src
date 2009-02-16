@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.61 2009/02/13 23:29:38 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.62 2009/02/16 23:03:33 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -92,7 +92,9 @@ void	m88410_flush_cache(cpuid_t, paddr_t, psize_t);
 void	m88110_flush_inst_cache(cpuid_t, paddr_t, psize_t);
 void	m88410_flush_inst_cache(cpuid_t, paddr_t, psize_t);
 void	m88110_dma_cachectl(paddr_t, psize_t, int);
+void	m88110_dma_cachectl_local(paddr_t, psize_t, int);
 void	m88410_dma_cachectl(paddr_t, psize_t, int);
+void	m88410_dma_cachectl_local(paddr_t, psize_t, int);
 void	m88110_initialize_cpu(cpuid_t);
 void	m88410_initialize_cpu(cpuid_t);
 
@@ -113,6 +115,7 @@ struct cmmu_p cmmu88110 = {
 	m88110_flush_inst_cache,
 	m88110_dma_cachectl,
 #ifdef MULTIPROCESSOR
+	m88110_dma_cachectl_local,
 	m88110_initialize_cpu,
 #endif
 };
@@ -134,6 +137,7 @@ struct cmmu_p cmmu88410 = {
 	m88410_flush_inst_cache,
 	m88410_dma_cachectl,
 #ifdef MULTIPROCESSOR
+	m88410_dma_cachectl_local,
 	m88410_initialize_cpu,
 #endif
 };
@@ -660,16 +664,12 @@ m88110_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 }
 
 void
-m88410_dma_cachectl(paddr_t _pa, psize_t _size, int op)
+m88410_dma_cachectl_local(paddr_t pa, psize_t size, int op)
 {
 	u_int32_t psr;
-	paddr_t pa;
-	psize_t size, count;
+	psize_t count;
 	void (*flusher)(paddr_t, psize_t);
 	void (*ext_flusher)(void);
-
-	pa = trunc_cache_line(_pa);
-	size = round_cache_line(_pa + _size) - pa;
 
 	switch (op) {
 	case DMA_CACHE_SYNC:
@@ -683,17 +683,12 @@ m88410_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 		ext_flusher = mc88410_sync;
 		break;
 	default:
-		if (pa != _pa || size != _size || size >= PAGE_SIZE) {
-			flusher = m88110_cmmu_sync_inval_cache;
-			ext_flusher = mc88410_sync;
-		} else {
-			flusher = m88110_cmmu_inval_cache;
+		flusher = m88110_cmmu_inval_cache;
 #ifdef notyet
-			ext_flusher = mc88410_inval;
+		ext_flusher = mc88410_inval;
 #else
-			ext_flusher = mc88410_sync;
+		ext_flusher = mc88410_sync;
 #endif
-		}
 		break;
 	}
 
@@ -701,8 +696,6 @@ m88410_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 	set_psr(psr | PSR_IND);
 
 	if (op == DMA_CACHE_SYNC) {
-		pa = trunc_page(_pa);
-		size = round_page(_pa + _size) - pa;
 		CMMU_LOCK;
 		while (size != 0) {
 			m88110_cmmu_sync_cache(pa, PAGE_SIZE);
@@ -729,3 +722,36 @@ m88410_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 
 	set_psr(psr);
 }
+
+void
+m88410_dma_cachectl(paddr_t _pa, psize_t _size, int op)
+{
+	paddr_t pa;
+	psize_t size;
+
+	if (op == DMA_CACHE_SYNC) {
+		pa = trunc_page(_pa);
+		size = round_page(_pa + _size) - pa;
+	} else {
+		pa = trunc_cache_line(_pa);
+		size = round_cache_line(_pa + _size) - pa;
+
+		if (op == DMA_CACHE_INV) {
+			if (pa != _pa || size != _size || size >= PAGE_SIZE)
+				op = DMA_CACHE_SYNC_INVAL;
+		}
+	}
+
+	m88410_dma_cachectl_local(pa, size, op);
+#ifdef MULTIPROCESSOR
+	m197_broadcast_complex_ipi(CI_IPI_DMA_CACHECTL, pa, size | op);
+#endif
+}
+
+#ifdef MULTIPROCESSOR
+void
+m88110_dma_cachectl_local(paddr_t _pa, psize_t _size, int op)
+{
+	/* Obviously nothing to do. */
+}
+#endif

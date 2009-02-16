@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.43 2008/12/21 21:43:52 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.44 2009/02/16 23:03:33 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -390,6 +390,9 @@ dosoftint()
 		softclock();
 
 #ifdef MULTIPROCESSOR
+	if (ISSET(sir, SIR_IPI))
+		softipi();
+
 	__mp_unlock(&kernel_lock);
 #endif
 }

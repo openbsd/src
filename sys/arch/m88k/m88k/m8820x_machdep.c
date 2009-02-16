@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.36 2009/02/01 00:52:19 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.37 2009/02/16 23:03:33 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, Miodrag Vallat.
  *
@@ -102,6 +102,7 @@ void	m8820x_flush_tlb(cpuid_t, u_int, vaddr_t, u_int);
 void	m8820x_flush_cache(cpuid_t, paddr_t, psize_t);
 void	m8820x_flush_inst_cache(cpuid_t, paddr_t, psize_t);
 void	m8820x_dma_cachectl(paddr_t, psize_t, int);
+void	m8820x_dma_cachectl_local(paddr_t, psize_t, int);
 void	m8820x_initialize_cpu(cpuid_t);
 
 /* This is the function table for the MC8820x CMMUs */
@@ -118,6 +119,7 @@ struct cmmu_p cmmu8820x = {
 	m8820x_flush_inst_cache,
 	m8820x_dma_cachectl,
 #ifdef MULTIPROCESSOR
+	m8820x_dma_cachectl_local,
 	m8820x_initialize_cpu,
 #endif
 };
@@ -753,3 +755,11 @@ m8820x_dma_cachectl(paddr_t _pa, psize_t _size, int op)
 	CMMU_UNLOCK;
 	set_psr(psr);
 }
+
+#ifdef MULTIPROCESSOR
+void
+m8820x_dma_cachectl_local(paddr_t pa, psize_t size, int op)
+{
+	/* This function is not used on 88100 systems */
+}
+#endif
