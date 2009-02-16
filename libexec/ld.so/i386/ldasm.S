@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.10 2006/05/03 16:10:52 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.11 2009/02/16 14:17:51 kurt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -68,13 +68,13 @@ _dl_start:
 
 	call	_dl_boot@PLT		# _dl_boot(argv,envp,loff,dl_data)
 
-	addl	$5*4,%esp		# pop args
+	addl	$7*4,%esp		# pop args
 
 	addl	$DL_DATA_SIZE,%esp	# return dl_data
 
-	popl	%ebx			# %ebx = ps_strings - XXXDSR
-	popl	%edx			# %edx = cleanup - XXXDSR
-	popl	%ecx			# %ecx = obj_main - XXXDSR
+	popl	%ebx			# %ebx = ps_strings
+	movl	$0,%edx			# %edx = cleanup - XXXDSR
+	movl	$0,%ecx			# %ecx = obj_main - XXXDSR
 	jmp	*%eax
 
 
