@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheinfo.c,v 1.4 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: cacheinfo.c,v 1.5 2009/02/16 15:50:05 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -156,22 +156,14 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	u_int descs[4];
 	u_int lfunc;
 
-	family = (ci->ci_signature >> 8) & 15;
-	model = CPUID2MODEL(ci->ci_signature);
+	family = ci->ci_family;
+	model = ci->ci_model;
 
 	/*
 	 * K5 model 0 has none of this info.
 	 */
 	if (family == 5 && model == 0)
 		return;
-
-	/*
-	 * Get extended values for K8 and up.
-	 */
-	if (family == 0xf) {
-		family += (ci->ci_signature >> 20) & 0xff;
-		model += (ci->ci_signature >> 16) & 0xf;
-	}
 
 	/*
 	 * Determine the largest extended function value.
