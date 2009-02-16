@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.6 2008/05/29 01:00:53 mcbride Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.7 2009/02/16 00:31:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -256,18 +256,18 @@ print_state(struct pfsync_state *s, int opts)
 		u_int64_t packets[2];
 		u_int64_t bytes[2];
 		u_int32_t creation = ntohl(s->creation);
+		u_int32_t expire = ntohl(s->expire);
 
 		sec = creation % 60;
 		creation /= 60;
 		min = creation % 60;
 		creation /= 60;
 		printf("\n   age %.2u:%.2u:%.2u", creation, min, sec);
-		sec = s->expire % 60;
-		s->expire /= 60;
-		min = s->expire % 60;
-		s->expire /= 60;
-		printf(", expires in %.2u:%.2u:%.2u",
-		    ntohl(s->expire), min, sec);
+		sec = expire % 60;
+		expire /= 60;
+		min = expire % 60;
+		expire /= 60;
+		printf(", expires in %.2u:%.2u:%.2u", expire, min, sec);
 
 		bcopy(s->packets[0], &packets[0], sizeof(u_int64_t));
 		bcopy(s->packets[1], &packets[1], sizeof(u_int64_t));

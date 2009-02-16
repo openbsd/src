@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.632 2009/01/30 17:27:20 naddy Exp $ */
+/*	$OpenBSD: pf.c,v 1.633 2009/02/16 00:31:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -801,8 +801,6 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key *skw,
 			printf("pf: state insert failed: "
 			    "id: %016llx creatorid: %08x",
 			    betoh64(s->id), ntohl(s->creatorid));
-			if (s->sync_flags & PFSTATE_FROMSYNC)
-				printf(" (from sync)");
 			printf("\n");
 		}
 		pf_detach_state(s);
@@ -1070,8 +1068,7 @@ pf_unlink_state(struct pf_state *cur)
 		export_pflow(cur);
 #endif
 #if NPFSYNC > 0
-	if (cur->creatorid == pf_status.hostid)
-		pfsync_delete_state(cur);
+	pfsync_delete_state(cur);
 #endif
 	cur->timeout = PFTM_UNLINKED;
 	pf_src_tree_remove_state(cur);
@@ -1086,9 +1083,7 @@ pf_free_state(struct pf_state *cur)
 	splassert(IPL_SOFTNET);
 
 #if NPFSYNC > 0
-	if (pfsyncif != NULL &&
-	    (pfsyncif->sc_bulk_send_next == cur ||
-	    pfsyncif->sc_bulk_terminator == cur))
+	if (pfsync_state_in_use(cur))
 		return;
 #endif
 	KASSERT(cur->timeout == PFTM_UNLINKED);
@@ -2813,6 +2808,20 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 	if (rewrite)
 		m_copyback(m, off, hdrlen, pd->hdr.any);
 
+#if NPFSYNC > 0
+	if (*sm != NULL && !ISSET((*sm)->state_flags, PFSTATE_NOSYNC) &&
+	    direction == PF_OUT && pfsync_up()) {
+		/*
+		 * We want the state created, but we dont
+		 * want to send this in case a partner
+		 * firewall has to know about it to allow
+		 * replies through it.
+		 */
+		if (pfsync_defer(*sm, m))
+			return (PF_DEFER);
+	}
+#endif
+
 	return (PF_PASS);
 
 cleanup:
@@ -2872,6 +2881,7 @@ pf_create_state(struct pf_rule *r, struct pf_rule *nr, struct pf_rule *a,
 	if (r->rule_flag & PFRULE_PFLOW)
 		s->state_flags |= PFSTATE_PFLOW;
 	s->log = r->log & PF_LOG_ALL;
+	s->sync_state = PFSYNC_S_NONE;
 	if (nr != NULL)
 		s->log |= nr->log & PF_LOG_ALL;
 	switch (pd->proto) {
@@ -5335,14 +5345,19 @@ done:
 			    r->action == PF_PASS, tr->dst.neg);
 	}
 
-
-	if (action == PF_SYNPROXY_DROP) {
+	switch (action) {
+	case PF_SYNPROXY_DROP:
 		m_freem(*m0);
+	case PF_DEFER:
 		*m0 = NULL;
 		action = PF_PASS;
-	} else if (r->rt)
+		break;
+	default:
 		/* pf_route can free the mbuf causing *m0 to become NULL */
-		pf_route(m0, r, dir, kif->pfik_ifp, s, &pd);
+		if (r->rt)
+			pf_route(m0, r, dir, kif->pfik_ifp, s, &pd);
+		break;
+	}
 
 	return (action);
 }
@@ -5707,14 +5722,19 @@ done:
 			    r->action == PF_PASS, tr->dst.neg);
 	}
 
-
-	if (action == PF_SYNPROXY_DROP) {
+	switch (action) {
+	case PF_SYNPROXY_DROP:
 		m_freem(*m0);
+	case PF_DEFER:
 		*m0 = NULL;
 		action = PF_PASS;
-	} else if (r->rt)
+		break;
+	default:
 		/* pf_route6 can free the mbuf causing *m0 to become NULL */
-		pf_route6(m0, r, dir, kif->pfik_ifp, s, &pd);
+		if (r->rt)
+			pf_route6(m0, r, dir, kif->pfik_ifp, s, &pd);
+		break;
+	}
 
 	return (action);
 }

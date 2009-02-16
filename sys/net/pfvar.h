@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.282 2009/01/29 15:12:28 pyr Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.283 2009/02/16 00:31:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -59,7 +59,7 @@ struct ip6_hdr;
 
 enum	{ PF_INOUT, PF_IN, PF_OUT };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NOSCRUB, PF_NAT, PF_NONAT,
-	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP };
+	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP, PF_DEFER };
 enum	{ PF_RULESET_SCRUB, PF_RULESET_FILTER, PF_RULESET_NAT,
 	  PF_RULESET_BINAT, PF_RULESET_RDR, PF_RULESET_MAX };
 enum	{ PF_OP_NONE, PF_OP_IRG, PF_OP_EQ, PF_OP_NE, PF_OP_LT,
@@ -742,6 +742,7 @@ struct pf_state {
 	u_int8_t		 direction;
 	u_int8_t		 pad[3];
 
+	TAILQ_ENTRY(pf_state)	 sync_list;
 	TAILQ_ENTRY(pf_state)	 entry_list;
 	RB_ENTRY(pf_state)	 entry_id;
 	struct pf_state_peer	 src;
@@ -766,11 +767,14 @@ struct pf_state {
 #define	PFSTATE_ALLOWOPTS	0x01
 #define	PFSTATE_SLOPPY		0x02
 #define	PFSTATE_PFLOW		0x04
+#define	PFSTATE_NOSYNC		0x08
+#define	PFSTATE_ACK		0x10
 	u_int8_t		 timeout;
-	u_int8_t		 sync_flags;
-#define	PFSTATE_NOSYNC		0x01
-#define	PFSTATE_FROMSYNC	0x02
-#define	PFSTATE_STALE		0x04
+	u_int8_t		 sync_state; /* PFSYNC_S_x */
+
+	/* XXX */
+	u_int8_t		 sync_updates;
+	u_int8_t		_tail[3];
 };
 
 /*
@@ -827,8 +831,6 @@ struct pfsync_state {
 	u_int8_t	 updates;
 } __packed;
 
-#define PFSYNC_FLAG_COMPRESS	0x01
-#define PFSYNC_FLAG_STALE	0x02
 #define PFSYNC_FLAG_SRCNODE	0x04
 #define PFSYNC_FLAG_NATSRCNODE	0x08
 
@@ -1657,6 +1659,7 @@ void	pf_change_a(void *, u_int16_t *, u_int32_t, u_int8_t);
 int	pflog_packet(struct pfi_kif *, struct mbuf *, sa_family_t, u_int8_t,
 	    u_int8_t, struct pf_rule *, struct pf_rule *, struct pf_ruleset *,
 	    struct pf_pdesc *);
+void	pf_send_deferred_syn(struct pf_state *);
 int	pf_match_addr(u_int8_t, struct pf_addr *, struct pf_addr *,
 	    struct pf_addr *, sa_family_t);
 int	pf_match_addr_range(struct pf_addr *, struct pf_addr *,
