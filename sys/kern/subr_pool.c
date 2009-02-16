@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.75 2008/12/23 08:15:06 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.76 2009/02/16 22:11:41 deraadt Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -80,14 +80,17 @@ struct pool_item {
 #ifdef DIAGNOSTIC
 	u_int32_t pi_magic;
 #endif
+	/* Other entries use only this list entry */
+	TAILQ_ENTRY(pool_item)	pi_list;
+};
+
+#if 0		/* Enable to debug pool corruption */
 #ifdef DEADBEEF1
 #define	PI_MAGIC DEADBEEF1
 #else
 #define	PI_MAGIC 0xdeafbeef
 #endif
-	/* Other entries use only this list entry */
-	TAILQ_ENTRY(pool_item)	pi_list;
-};
+#endif
 
 #define	POOL_NEEDS_CATCHUP(pp)						\
 	((pp)->pr_nitems < (pp)->pr_minitems)
@@ -467,7 +470,7 @@ pool_do_get(struct pool *pp, int flags)
 	struct pool_item_header *ph;
 	void *v;
 	int slowdown = 0;
-#ifdef DIAGNOSTIC
+#ifdef PI_MAGIC
 	int i, *ip;
 #endif
 
@@ -588,7 +591,7 @@ startover:
 	}
 #endif
 
-#ifdef DIAGNOSTIC
+#ifdef PI_MAGIC
 	if (__predict_false(pi->pi_magic != PI_MAGIC))
 		panic("pool_do_get(%s): free list modified: "
 		    "page %p; item addr %p; offset 0x%x=0x%x",
@@ -677,7 +680,7 @@ pool_do_put(struct pool *pp, void *v)
 {
 	struct pool_item *pi = v;
 	struct pool_item_header *ph;
-#ifdef DIAGNOSTIC
+#ifdef PI_MAGIC
 	int i, *ip;
 #endif
 
@@ -709,7 +712,7 @@ pool_do_put(struct pool *pp, void *v)
 	/*
 	 * Return to item list.
 	 */
-#ifdef DIAGNOSTIC
+#ifdef PI_MAGIC
 	pi->pi_magic = PI_MAGIC;
 	for (ip = (int *)pi, i = sizeof(*pi)/sizeof(int);
 	    i < pp->pr_size / sizeof(int); i++)
@@ -817,7 +820,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	unsigned int align = pp->pr_align;
 	unsigned int ioff = pp->pr_itemoffset;
 	int n;
-#ifdef DIAGNOSTIC
+#ifdef PI_MAGIC
 	int i, *ip;
 #endif
 
@@ -861,7 +864,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 
 		/* Insert on page list */
 		TAILQ_INSERT_TAIL(&ph->ph_itemlist, pi, pi_list);
-#ifdef DIAGNOSTIC
+#ifdef PI_MAGIC
 		pi->pi_magic = PI_MAGIC;
 		for (ip = (int *)pi, i = sizeof(*pi)/sizeof(int);
 		    i < pp->pr_size / sizeof(int); i++)
@@ -1055,14 +1058,14 @@ void
 pool_print_pagelist(struct pool_pagelist *pl, int (*pr)(const char *, ...))
 {
 	struct pool_item_header *ph;
-#ifdef DIAGNOSTIC
+#ifdef PI_MAGIC
 	struct pool_item *pi;
 #endif
 
 	LIST_FOREACH(ph, pl, ph_pagelist) {
 		(*pr)("\t\tpage %p, nmissing %d\n",
 		    ph->ph_page, ph->ph_nmissing);
-#ifdef DIAGNOSTIC
+#ifdef PI_MAGIC
 		TAILQ_FOREACH(pi, &ph->ph_itemlist, pi_list) {
 			if (pi->pi_magic != PI_MAGIC) {
 				(*pr)("\t\t\titem %p, magic 0x%x\n",
@@ -1199,7 +1202,7 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 	struct pool_item *pi;
 	caddr_t page;
 	int n;
-#ifdef DIAGNOSTIC
+#ifdef PI_MAGIC
 	int i, *ip;
 #endif
 
@@ -1218,7 +1221,7 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 	     pi != NULL;
 	     pi = TAILQ_NEXT(pi,pi_list), n++) {
 
-#ifdef DIAGNOSTIC
+#ifdef PI_MAGIC
 		if (pi->pi_magic != PI_MAGIC) {
 			if (label != NULL)
 				printf("%s: ", label);
