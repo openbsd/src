@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.50 2009/02/16 20:18:48 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.51 2009/02/16 22:55:03 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -378,8 +378,7 @@ GLOBAL(unknown_handler)
 /* interrupt exception handler */
 GLOBAL(interrupt_handler)
 	PREP88100("interrupt", 1,,)
-	or	r2, r0, T_INT
-	or	r3, r0, r30
+	or	r2, r0, r30
 	XCALL(_C_LABEL(interrupt), _ASM_LABEL(check_ast))
 
 /* instruction access exception handler */
@@ -1536,8 +1535,7 @@ GLOBAL(m88110_unknown_handler)
 /* interrupt exception handler */
 GLOBAL(m88110_interrupt_handler)
 	PREP88110("interrupt", 1,)
-	or	r2, r0, T_INT
-	or	r3, r0, r30
+	or	r2, r0, r30
 	XCALL(_C_LABEL(interrupt), _ASM_LABEL(check_ast))
 
 /* instruction access exception handler */

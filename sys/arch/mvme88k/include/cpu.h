@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.39 2009/02/13 23:33:51 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.40 2009/02/16 22:55:03 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 #ifdef _KERNEL
 
 /* board dependent pointers */
-extern void	(*md_interrupt_func_ptr)(u_int, struct trapframe *);
+extern void	(*md_interrupt_func_ptr)(struct trapframe *);
 #define	md_interrupt_func	(*md_interrupt_func_ptr)
 extern void	(*md_nmi_func_ptr)(struct trapframe *);
 #define	md_nmi_func		(*md_nmi_func_ptr)

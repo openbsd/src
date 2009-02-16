@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.3 2007/12/19 22:05:06 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.4 2009/02/16 22:55:03 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat
  *
@@ -37,7 +37,7 @@ struct board {
 	vaddr_t (*memsize)(void);
 	void (*startup)(void);
 
-	void (*intr)(u_int, struct trapframe *);
+	void (*intr)(struct trapframe *);
 	void (*init_clocks)(void);
 	u_int (*getipl)(void);
 	u_int (*setipl)(u_int);
@@ -48,14 +48,14 @@ struct board {
 	pmap_table_t ptable;
 };
 
-#define	md_interrupt_func(t, f)	platform->intr(t, f)
+#define	md_interrupt_func(f)	platform->intr(f)
 
 #define	DECLARE_BOARD(b) \
 extern const struct board board_av##b; \
 void	av##b##_bootstrap(void); \
 vaddr_t	av##b##_memsize(void); \
 void	av##b##_startup(void); \
-void	av##b##_intr(u_int, struct trapframe *); \
+void	av##b##_intr(struct trapframe *); \
 void	av##b##_init_clocks(void); \
 u_int	av##b##_getipl(void); \
 u_int	av##b##_setipl(u_int); \

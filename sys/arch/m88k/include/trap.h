@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.7 2009/02/13 23:33:49 miod Exp $ */
+/*	$OpenBSD: trap.h,v 1.8 2009/02/16 22:55:03 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -55,18 +55,12 @@
 
 #define	T_USER		19	/* user mode fault */
 
-/*
- * Interrupt type values
- */
-#define	T_INT		0	/* regular interrupts */
-#define	T_NON_MASK	1	/* non-maskable interrupts */
-
 #ifndef _LOCORE
 
 void	cache_flush(struct trapframe *);
 void	ast(struct trapframe *);
 void	nmi(struct trapframe *);
-void	interrupt(u_int, struct trapframe *);
+void	interrupt(struct trapframe *);
 
 void	m88100_syscall(register_t, struct trapframe *);
 void	m88100_trap(u_int, struct trapframe *);

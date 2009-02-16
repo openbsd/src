@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.31 2009/02/13 23:33:51 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.32 2009/02/16 22:55:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -86,7 +86,7 @@
 void	m197_bootstrap(void);
 void	m197_clock_ipi_handler(struct trapframe *);
 void	m197_delay(int);
-void	m197_ext_int(u_int, struct trapframe *);
+void	m197_ext_int(struct trapframe *);
 u_int	m197_getipl(void);
 void	m197_ipi_handler(struct trapframe *);
 vaddr_t	m197_memsize(void);
@@ -185,7 +185,7 @@ m197_startup()
  */
 
 void
-m197_ext_int(u_int v, struct trapframe *eframe)
+m197_ext_int(struct trapframe *eframe)
 {
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci = curcpu();

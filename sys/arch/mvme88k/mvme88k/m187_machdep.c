@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.18 2009/02/13 23:26:51 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.19 2009/02/16 22:55:03 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -64,7 +64,7 @@
 #include <mvme88k/mvme88k/clockvar.h>
 
 void	m187_bootstrap(void);
-void	m187_ext_int(u_int, struct trapframe *);
+void	m187_ext_int(struct trapframe *);
 u_int	m187_getipl(void);
 vaddr_t	m187_memsize(void);
 u_int	m187_raiseipl(u_int);
@@ -112,7 +112,7 @@ m187_startup()
  */
 
 void
-m187_ext_int(u_int v, struct trapframe *eframe)
+m187_ext_int(struct trapframe *eframe)
 {
 	int level;
 	struct intrhand *intr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: av400_machdep.c,v 1.13 2007/12/27 23:19:12 miod Exp $	*/
+/*	$OpenBSD: av400_machdep.c,v 1.14 2009/02/16 22:54:59 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2007, Miodrag Vallat.
  *
@@ -423,7 +423,7 @@ const u_int obio_vec[32] = {
 #define VME_BERR_MASK		0x100 	/* timeout during VME IACK cycle */
 
 void
-av400_intr(u_int v, struct trapframe *eframe)
+av400_intr(struct trapframe *eframe)
 {
 	int cpu = cpu_number();
 	u_int32_t cur_mask, ign_mask;

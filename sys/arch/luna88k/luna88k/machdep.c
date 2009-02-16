@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 2009/02/04 17:19:17 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.61 2009/02/16 22:55:03 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -841,7 +841,7 @@ secondary_main()
  */
 
 void 
-luna88k_ext_int(u_int v, struct trapframe *eframe)
+luna88k_ext_int(struct trapframe *eframe)
 {
 	int cpu = cpu_number();
 	u_int32_t cur_mask, cur_int;
