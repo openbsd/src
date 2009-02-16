@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.446 2009/02/16 15:44:25 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.447 2009/02/16 17:24:21 krw Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1381,7 +1381,9 @@ intelcore_update_sensor(void *args)
 	u_int64_t msr;
 	int max = 100;
 
-	if (rdmsr(MSR_TEMPERATURE_TARGET) & MSR_TEMPERATURE_TARGET_LOW_BIT)
+	/* Only some Core family chips have MSR_TEMPERATURE_TARGET. */
+	if (ci->ci_model == 0xe &&
+	    (rdmsr(MSR_TEMPERATURE_TARGET) & MSR_TEMPERATURE_TARGET_LOW_BIT))
 		max = 85;
 
 	msr = rdmsr(MSR_THERM_STATUS);
