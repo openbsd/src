@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.176 2009/02/15 17:33:13 blambert Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.177 2009/02/16 08:14:24 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: February 15 2009 $
+.Dd $Mdocdate: February 16 2009 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -798,10 +798,14 @@ authentication is allowed using the
 option.
 Pre-shared keys can be generated from passphrases using
 .Xr wpa-psk 8 ,
-as in the following example, which sets interface wpi0 to use WPA with SSID 
-\&"wlan\&" and passphrase \&"supersecret\&":
-.Pp
-.Dl # ifconfig wpi0 wpa wpapsk `wpa-psk wlan supersecret`
+as in the following example, which configures wpi0 to join network
+.Dq my_net
+using WPA-PSK with passphrase
+.Dq my_passphrase :
+.Bd -literal -offset indent
+# ifconfig wpi0 nwid my_net wpa wpapsk \e
+        `wpa-psk my_net my_passphrase`
+.Ed
 .It Fl wpapsk
 Delete the pre-shared key.
 This will prevent
