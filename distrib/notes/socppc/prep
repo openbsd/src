@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.5 2009/02/15 21:03:56 jasper Exp $
+dnl	$OpenBSD: prep,v 1.6 2009/02/16 13:53:09 jasper Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to learn a bit about Das U-Boot, the low-level process that controls
 the microprocessor after hardware initialization.
@@ -132,7 +132,7 @@ back, just change the boot script with fconfig back to what it was,
 for example:
 
     => setenv bootcmd flashboot
-    => savenv
+    => saveenv
 
 The bootloader is command driven with timeout like many other OpenBSD
 architectures.
