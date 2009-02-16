@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.27 2009/01/21 21:54:00 grange Exp $	*/
+/*	$OpenBSD: wds.c,v 1.28 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -163,7 +163,7 @@ void    wds_done(struct wds_softc *, struct wds_scb *, u_char);
 int	wds_find(struct isa_attach_args *, struct wds_softc *);
 void	wds_init(struct wds_softc *);
 void	wds_inquire_setup_information(struct wds_softc *);
-void    wdsminphys(struct buf *);
+void    wdsminphys(struct buf *, struct scsi_link *);
 int     wds_scsi_cmd(struct scsi_xfer *);
 void	wds_sense(struct wds_softc *, struct wds_scb *);
 int	wds_poll(struct wds_softc *, struct scsi_xfer *, int);
@@ -1032,8 +1032,7 @@ out:
 }
 
 void
-wdsminphys(bp)
-	struct buf *bp;
+wdsminphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > ((WDS_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((WDS_NSEG - 1) << PGSHIFT);

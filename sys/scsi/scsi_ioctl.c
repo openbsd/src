@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.30 2007/09/16 01:30:24 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.31 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ struct scsi_ioctl	*si_get(void);
 void			si_free(struct scsi_ioctl *);
 struct scsi_ioctl	*si_find(struct buf *);
 void			scsistrategy(struct buf *);
+void			scsiminphys(struct buf *);
 
 const unsigned char scsi_readsafe_cmd[256] = {
 	[0x00] = 1,	/* TEST UNIT READY */
@@ -324,6 +325,24 @@ bad:
 	splx(s);
 }
 
+void
+scsiminphys(struct buf *bp)
+{
+	struct scsi_ioctl			*si;
+	struct scsi_link			*sc_link;
+
+	si = si_find(bp);
+	if (si == NULL) {
+		/* should not happen */
+		bp->b_flags |= B_ERROR;
+		bp->b_error = EINVAL;
+		return;
+	}
+
+	sc_link = si->si_sc_link;
+	(*sc_link->adapter->scsi_minphys)(bp, sc_link);
+}
+
 /*
  * Something (e.g. another driver) has called us
  * with an sc_link for a target/lun/adapter, and a scsi
@@ -392,7 +411,7 @@ scsi_do_ioctl(struct scsi_link *sc_link, dev_t dev, u_long cmd, caddr_t addr,
 			si->si_uio.uio_procp = p;
 			error = physio(scsistrategy, &si->si_bp, dev,
 			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
-			    sc_link->adapter->scsi_minphys, &si->si_uio);
+			    scsiminphys, &si->si_uio);
 		} else {
 			/* if no data, no need to translate it.. */
 			si->si_bp.b_flags = 0;

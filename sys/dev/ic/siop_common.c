@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.32 2009/01/29 22:50:23 miod Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.33 2009/02/16 21:19:07 miod Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -707,8 +707,7 @@ siop_ppr_msg(siop_cmd, offset, ssync, soff)
 }
 
 void
-siop_minphys(bp)
-	struct buf *bp;
+siop_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > SIOP_MAXFER)
 		bp->b_bcount = SIOP_MAXFER;

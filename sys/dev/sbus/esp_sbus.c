@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.21 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.22 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -56,7 +56,7 @@
 
 struct scsi_adapter esp_switch = {
 	ncr53c9x_scsi_cmd,
-	minphys,		/* no max at this level; handled by DMA code */
+	scsi_minphys,		/* no max at this level; handled by DMA code */
 	NULL,
 	NULL,
 };

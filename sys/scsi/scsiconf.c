@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.137 2009/02/16 21:13:31 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.138 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/buf.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -1057,4 +1058,14 @@ scsi_devid_pg83(struct scsi_link *link)
 err:
 	free(pg, M_TEMP);
 	return (rv);
+}
+
+/*
+ * scsi_minphys member of struct scsi_adapter for drivers which don't
+ * need any specific routine.
+ */
+void
+scsi_minphys(struct buf *bp, struct scsi_link *sl)
+{
+	minphys(bp);
 }

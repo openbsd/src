@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.12 2006/11/28 23:59:45 dlg Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.13 2009/02/16 21:19:06 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -62,7 +62,7 @@ int	vs_eintr(void *);
 
 struct scsi_adapter vs_scsiswitch = {
 	vs_scsicmd,
-	vs_minphys,
+	scsi_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
 };

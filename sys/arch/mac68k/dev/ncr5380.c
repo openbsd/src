@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.34 2008/11/25 17:52:02 krw Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.35 2009/02/16 21:19:05 miod Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static volatile int	main_running = 0;
  */
 static u_char	busy;
 
-static void	ncr5380_minphys(struct buf *bp);
+static void	ncr5380_minphys(struct buf *bp, struct scsi_link *sl);
 static int	mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs);
 static void	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
 
@@ -397,11 +397,11 @@ mac68k_ncr5380_scsi_cmd(struct scsi_xfer *xs)
 }
 
 static void
-ncr5380_minphys(struct buf *bp)
+ncr5380_minphys(struct buf *bp, struct scsi_link *sl)
 {
-    if (bp->b_bcount > MIN_PHYS)
-	bp->b_bcount = MIN_PHYS;
-    minphys(bp);
+	if (bp->b_bcount > MIN_PHYS)
+		bp->b_bcount = MIN_PHYS;
+	minphys(bp);
 }
 #undef MIN_PHYS
 

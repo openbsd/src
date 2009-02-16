@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.145 2009/01/10 18:00:59 robert Exp $	*/
+/*	$OpenBSD: cd.c,v 1.146 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -716,7 +716,7 @@ cdminphys(struct buf *bp)
 			bp->b_bcount = max;
 	}
 
-	(*cd->sc_link->adapter->scsi_minphys)(bp);
+	(*cd->sc_link->adapter->scsi_minphys)(bp, cd->sc_link);
 
 	device_unref(&cd->sc_dev);
 }

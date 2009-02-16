@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.32 2008/11/10 15:55:06 cnst Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.33 2009/02/16 21:19:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -72,7 +72,7 @@ struct cfdriver ciss_cd = {
 int	ciss_scsi_cmd(struct scsi_xfer *xs);
 int	ciss_scsi_ioctl(struct scsi_link *link, u_long cmd,
     caddr_t addr, int flag, struct proc *p);
-void	cissminphys(struct buf *bp);
+void	cissminphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter ciss_switch = {
 	ciss_scsi_cmd, cissminphys, NULL, NULL, ciss_scsi_ioctl
@@ -458,7 +458,7 @@ ciss_shutdown(void *v)
 }
 
 void
-cissminphys(struct buf *bp)
+cissminphys(struct buf *bp, struct scsi_link *sl)
 {
 #if 0	/* TODO */
 #define	CISS_MAXFER	(PAGE_SIZE * (sc->maxsg + 1))

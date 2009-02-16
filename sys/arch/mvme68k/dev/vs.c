@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.26 2008/11/25 17:52:02 krw Exp $ */
+/*	$OpenBSD: vs.c,v 1.27 2009/02/16 21:19:06 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -123,19 +123,6 @@ szero(src, cnt)
 	while (z--) {
 		*source++ = zero;
 	}
-}
-
-/*
- * default minphys routine for MVME328 based controllers
- */
-void
-vs_minphys(bp)
-	struct buf *bp;
-{
-	/*
-	 * No max transfer at this level.
-	 */
-	minphys(bp);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.61 2009/01/21 21:54:00 grange Exp $	*/
+/*	$OpenBSD: aha.c,v 1.62 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -154,7 +154,7 @@ void aha_done(struct aha_softc *, struct aha_ccb *);
 int aha_find(struct isa_attach_args *, struct aha_softc *, int);
 void aha_init(struct aha_softc *);
 void aha_inquire_setup_information(struct aha_softc *);
-void ahaminphys(struct buf *);
+void ahaminphys(struct buf *, struct scsi_link *);
 int aha_scsi_cmd(struct scsi_xfer *);
 int aha_poll(struct aha_softc *, struct scsi_xfer *, int);
 void aha_timeout(void *arg);
@@ -1239,10 +1239,8 @@ noinquire:
 }
 
 void
-ahaminphys(bp)
-	struct buf *bp;
+ahaminphys(struct buf *bp, struct scsi_link *sl)
 {
-
 	if (bp->b_bcount > ((AHA_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((AHA_NSEG - 1) << PGSHIFT);
 	minphys(bp);

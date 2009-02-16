@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.23 2009/01/21 21:53:59 grange Exp $	*/
+/*	$OpenBSD: adv.c,v 1.24 2009/02/16 21:19:06 miod Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ static void adv_start_ccbs(ASC_SOFTC *);
 static u_int8_t *adv_alloc_overrunbuf(char *dvname, bus_dma_tag_t);
 
 static int adv_scsi_cmd(struct scsi_xfer *);
-static void advminphys(struct buf *);
+static void advminphys(struct buf *, struct scsi_link *);
 static void adv_narrow_isr_callback(ASC_SOFTC *, ASC_QDONE_INFO *);
 
 static int adv_poll(ASC_SOFTC *, struct scsi_xfer *, int);
@@ -564,10 +564,8 @@ adv_attach(sc)
 
 
 static void
-advminphys(bp)
-	struct buf     *bp;
+advminphys(struct buf *bp, struct scsi_link *sl)
 {
-
 	if (bp->b_bcount > ((ASC_MAX_SG_LIST - 1) * PAGE_SIZE))
 		bp->b_bcount = ((ASC_MAX_SG_LIST - 1) * PAGE_SIZE);
 	minphys(bp);

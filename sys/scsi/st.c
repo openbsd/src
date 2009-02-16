@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.85 2008/09/22 19:44:41 miod Exp $	*/
+/*	$OpenBSD: st.c,v 1.86 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -226,6 +226,7 @@ void	stattach(struct device *, struct device *, void *);
 int	stactivate(struct device *, enum devact);
 int	stdetach(struct device *, int);
 
+void	stminphys(struct buf *);
 void	st_kill_buffers(struct st_softc *);
 void	st_identify_drive(struct st_softc *, struct scsi_inquiry_data *);
 void	st_loadquirks(struct st_softc *);
@@ -1088,6 +1089,20 @@ strestart(void *v)
 	splx(s);
 }
 
+void
+stminphys(struct buf *bp)
+{
+	struct st_softc *st;
+
+	st = stlookup(STUNIT(bp->b_dev));
+	if (st == NULL)
+		return;  /* can't happen */
+
+	(*st->sc_link->adapter->scsi_minphys)(bp, st->sc_link);
+
+	device_unref(&st->sc_dev);
+}
+
 int
 stread(dev_t dev, struct uio *uio, int iomode)
 {
@@ -1102,8 +1117,7 @@ stread(dev_t dev, struct uio *uio, int iomode)
 		return (ENXIO);
 	}
 
-	return (physio(ststrategy, NULL, dev, B_READ,
-	    st->sc_link->adapter->scsi_minphys, uio));
+	return (physio(ststrategy, NULL, dev, B_READ, stminphys, uio));
 }
 
 int
@@ -1120,8 +1134,7 @@ stwrite(dev_t dev, struct uio *uio, int iomode)
 		return (ENXIO);
 	}
 
-	return (physio(ststrategy, NULL, dev, B_WRITE,
-	    st->sc_link->adapter->scsi_minphys, uio));
+	return (physio(ststrategy, NULL, dev, B_WRITE, stminphys, uio));
 }
 
 /*

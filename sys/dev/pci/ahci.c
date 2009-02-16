@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.146 2009/01/21 21:54:00 grange Exp $ */
+/*	$OpenBSD: ahci.c,v 1.147 2009/02/16 21:19:07 miod Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -749,7 +749,7 @@ noccc:
 	bzero(&aaa, sizeof(aaa));
 	aaa.aaa_cookie = sc;
 	aaa.aaa_methods = &ahci_atascsi_methods;
-	aaa.aaa_minphys = minphys;
+	aaa.aaa_minphys = NULL;
 	aaa.aaa_nports = AHCI_MAX_PORTS;
 	aaa.aaa_ncmds = sc->sc_ncmds;
 	aaa.aaa_capability = ASAA_CAP_NEEDS_RESERVED;

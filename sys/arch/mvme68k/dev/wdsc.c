@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.15 2008/07/30 18:08:03 miod Exp $ */
+/*	$OpenBSD: wdsc.c,v 1.16 2009/02/16 21:19:06 miod Exp $ */
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -59,7 +59,7 @@ extern int sbicintr(struct sbic_softc *);
 
 struct scsi_adapter wdsc_scsiswitch = {
 	sbic_scsicmd,
-	sbic_minphys,
+	scsi_minphys,
 	0,          /* no lun support */
 	0,          /* no lun support */
 };

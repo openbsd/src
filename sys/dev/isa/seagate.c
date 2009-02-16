@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.26 2009/01/21 21:54:00 grange Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.27 2009/02/16 21:19:07 miod Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -291,7 +291,7 @@ void		sea_reselect(struct sea_softc *sea);
 
 struct scsi_adapter sea_switch = {
 	sea_scsi_cmd,
-	minphys,	/* no special minphys(), since driver uses PIO */
+	scsi_minphys,	/* no special minphys(), since driver uses PIO */
 	0,
 	0,
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.75 2009/02/08 13:28:01 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.76 2009/02/16 21:19:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, 2009, Miodrag Vallat.
@@ -64,7 +64,7 @@
 
 int	vsmatch(struct device *, void *, void *);
 void	vsattach(struct device *, struct device *, void *);
-void	vs_minphys(struct buf *);
+void	vs_minphys(struct buf *, struct scsi_link *);
 int	vs_scsicmd(struct scsi_xfer *);
 
 struct scsi_adapter vs_scsiswitch = {
@@ -254,7 +254,7 @@ vsattach(struct device *parent, struct device *self, void *args)
 }
 
 void
-vs_minphys(struct buf *bp)
+vs_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > ptoa(MAX_SG_ELEMENTS))
 		bp->b_bcount = ptoa(MAX_SG_ELEMENTS);

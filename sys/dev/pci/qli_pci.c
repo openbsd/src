@@ -1,4 +1,4 @@
-/* $OpenBSD: qli_pci.c,v 1.12 2007/11/05 01:25:43 krw Exp $ */
+/* $OpenBSD: qli_pci.c,v 1.13 2009/02/16 21:19:07 miod Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2007 David Collins <dave@davec.name>
@@ -137,7 +137,7 @@ void		qli_freemem(struct qli_softc *, struct qli_mem *);
 int		qli_scsi_cmd(struct scsi_xfer *);
 int		qli_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
 		    struct proc *);
-void		qliminphys(struct buf *bp);
+void		qliminphys(struct buf *bp, struct scsi_link *sl);
 void		qli_disable_interrupts(struct qli_softc *);
 void		qli_enable_interrupts(struct qli_softc *);
 int		qli_pci_find_device(void *);
@@ -355,7 +355,7 @@ qli_freemem(struct qli_softc *sc, struct qli_mem *mm)
 }
 
 void
-qliminphys(struct buf *bp)
+qliminphys(struct buf *bp, struct scsi_link *sl)
 {
 	DNPRINTF(QLI_D_MISC, "qliminphys: %d\n", bp->b_bcount);
 

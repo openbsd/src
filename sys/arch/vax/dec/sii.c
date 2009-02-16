@@ -1,4 +1,4 @@
-/*	$OpenBSD: sii.c,v 1.4 2008/11/25 17:52:02 krw Exp $	*/
+/*	$OpenBSD: sii.c,v 1.5 2009/02/16 21:19:06 miod Exp $	*/
 /*	$NetBSD: sii.c,v 1.42 2000/06/02 20:20:29 mhitch Exp $	*/
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -164,7 +164,7 @@ void	sii_DumpLog(void);
 
 struct scsi_adapter sii_scsiswitch = {
 	sii_scsi_cmd,
-	minphys,
+	scsi_minphys,
 	NULL,
 	NULL,
 	NULL

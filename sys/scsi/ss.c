@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.62 2008/06/22 16:32:05 krw Exp $	*/
+/*	$OpenBSD: ss.c,v 1.63 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -501,7 +501,7 @@ ssminphys(bp)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
 
-	(ss->sc_link->adapter->scsi_minphys)(bp);
+	(ss->sc_link->adapter->scsi_minphys)(bp, ss->sc_link);
 
 	/*
 	 * trim the transfer further for special devices this is

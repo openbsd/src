@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.20 2008/11/25 17:52:02 krw Exp $ */
+/*	$OpenBSD: ssh.c,v 1.21 2009/02/16 21:19:06 miod Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -125,21 +125,6 @@ int   ssh_trix;
 #else
 #define SSH_TRACE(a,b,c,d)
 #endif
-
-
-/*
- * default minphys routine for ssh based controllers
- */
-void
-ssh_minphys(bp)
-struct buf *bp;
-{
-
-	/*
-	 * No max transfer at this level.
-	 */
-	minphys(bp);
-}
 
 /*
  * used by specific ssh controller

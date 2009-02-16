@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbc.c,v 1.17 2007/12/29 03:04:18 dlg Exp $	*/
+/*	$OpenBSD: sbc.c,v 1.18 2009/02/16 21:19:05 miod Exp $	*/
 /*	$NetBSD: sbc.c,v 1.24 1997/04/18 17:38:08 scottr Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ int	sbc_debug = 0 /* | SBC_DB_INTR | SBC_DB_DMA */;
 int	sbc_link_flags = 0 /* | SDEV_DB2 */;
 int	sbc_options = 0 /* | SBC_PDMA */;
 
-static	void	sbc_minphys(struct buf *bp);
+static	void	sbc_minphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter	sbc_ops = {
 	ncr5380_scsi_cmd,		/* scsi_cmd() */
@@ -102,11 +102,11 @@ static	int	sbc_ready(struct ncr5380_softc *);
 static	void	sbc_wait_not_req(struct ncr5380_softc *);
 
 static void
-sbc_minphys(struct buf *bp)
+sbc_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > MAX_DMA_LEN)
 		bp->b_bcount = MAX_DMA_LEN;
-	return (minphys(bp));
+	minphys(bp);
 }
 
 

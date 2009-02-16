@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.25 2007/10/01 16:11:19 krw Exp $	*/
+/*	$OpenBSD: esp.c,v 1.26 2009/02/16 21:19:06 miod Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ struct cfattach esp_ca = {
 
 struct scsi_adapter esp_switch = {
 	ncr53c9x_scsi_cmd,
-	minphys,		/* no max at this level; handled by DMA code */
+	scsi_minphys,		/* no max at this level; handled by DMA code */
 	NULL,
 	NULL,
 };

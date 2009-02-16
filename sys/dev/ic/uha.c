@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.11 2008/11/24 00:31:35 krw Exp $	*/
+/*	$OpenBSD: uha.c,v 1.12 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -90,7 +90,7 @@ integrate void uha_reset_mscp(struct uha_softc *, struct uha_mscp *);
 void uha_free_mscp(struct uha_softc *, struct uha_mscp *);
 integrate void uha_init_mscp(struct uha_softc *, struct uha_mscp *);
 struct uha_mscp *uha_get_mscp(struct uha_softc *, int);
-void uhaminphys(struct buf *);
+void uhaminphys(struct buf *, struct scsi_link *);
 int uha_scsi_cmd(struct scsi_xfer *);
 
 struct scsi_adapter uha_switch = {
@@ -339,10 +339,8 @@ uha_done(sc, mscp)
 }
 
 void
-uhaminphys(bp)
-	struct buf *bp;
+uhaminphys(struct buf *bp, struct scsi_link *sl)
 {
-
 	if (bp->b_bcount > ((UHA_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((UHA_NSEG - 1) << PGSHIFT);
 	minphys(bp);

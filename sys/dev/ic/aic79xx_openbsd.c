@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.31 2009/01/21 21:53:59 grange Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.32 2009/02/16 21:19:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -81,7 +81,7 @@ int	ahd_setup_data(struct ahd_softc *, struct scsi_xfer *,
 		    struct scb *);
 
 void	ahd_adapter_req_set_xfer_mode(struct ahd_softc *, struct scb *);
-void    ahd_minphys(struct buf *);
+void    ahd_minphys(struct buf *, struct scsi_link *);
 
 struct cfdriver ahd_cd = {
 	NULL, "ahd", DV_DULL
@@ -284,7 +284,7 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 }
 
 void
-ahd_minphys(struct buf *bp)
+ahd_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	/*
 	 * Even though the card can transfer up to 16megs per command

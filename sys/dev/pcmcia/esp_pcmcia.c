@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_pcmcia.c,v 1.7 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: esp_pcmcia.c,v 1.8 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: esp_pcmcia.c,v 1.8 2000/06/05 15:36:45 tsutsui Exp $	*/
 
 /*-
@@ -80,7 +80,7 @@ int	esp_pcmcia_enable(void *, int);
 
 struct scsi_adapter esp_pcmcia_adapter = {
 	ncr53c9x_scsi_cmd,	/* cmd */
-	minphys,		/* minphys */
+	scsi_minphys,		/* scsi_minphys */
 	0,			/* open */
 	0,			/* close */
 };

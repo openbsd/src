@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.97 2008/11/10 18:04:41 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.98 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -293,7 +293,7 @@ extern int scsi_autoconf;
  */
 struct scsi_adapter {
 	int		(*scsi_cmd)(struct scsi_xfer *);
-	void		(*scsi_minphys)(struct buf *);
+	void		(*scsi_minphys)(struct buf *, struct scsi_link *);
 	int		(*dev_probe)(struct scsi_link *);
 	void		(*dev_free)(struct scsi_link *);
 	int		(*ioctl)(struct scsi_link *, u_long, caddr_t, int,
@@ -538,6 +538,7 @@ int	scsi_do_ioctl(struct scsi_link *, dev_t, u_long, caddr_t,
 void	sc_print_addr(struct scsi_link *);
 int	scsi_report_luns(struct scsi_link *, int,
 	    struct scsi_report_luns_data *, u_int32_t, int, int);
+void	scsi_minphys(struct buf *, struct scsi_link *);
 
 void	show_scsi_xs(struct scsi_xfer *);
 void	scsi_print_sense(struct scsi_xfer *);

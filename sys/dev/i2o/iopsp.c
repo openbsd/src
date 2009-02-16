@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopsp.c,v 1.13 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: iopsp.c,v 1.14 2009/02/16 21:19:06 miod Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -72,7 +72,7 @@ struct cfattach iopsp_ca = {
 };
 
 int	iopsp_scsi_cmd(struct scsi_xfer *);
-void	iopspminphys(struct buf *bp);
+void	iopspminphys(struct buf *bp, struct scsi_link *sl);
 
 struct scsi_adapter iopsp_switch = {
 	iopsp_scsi_cmd, iopspminphys, 0, 0,
@@ -400,8 +400,7 @@ iopsp_rescan(struct iopsp_softc *sc)
 }
 
 void
-iopspminphys(bp)
-	struct buf *bp;
+iopspminphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > IOP_MAX_XFER)
 		bp->b_bcount = IOP_MAX_XFER;

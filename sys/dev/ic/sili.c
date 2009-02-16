@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.41 2009/01/21 21:54:00 grange Exp $ */
+/*	$OpenBSD: sili.c,v 1.42 2009/02/16 21:19:07 miod Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -196,7 +196,7 @@ sili_attach(struct sili_softc *sc)
 	bzero(&aaa, sizeof(aaa));
 	aaa.aaa_cookie = sc;
 	aaa.aaa_methods = &sili_atascsi_methods;
-	aaa.aaa_minphys = minphys;
+	aaa.aaa_minphys = NULL;
 	aaa.aaa_nports = sc->sc_nports;
 	aaa.aaa_ncmds = SILI_MAX_CMDS;
 	aaa.aaa_capability = ASAA_CAP_NCQ;

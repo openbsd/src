@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.41 2009/01/21 21:53:59 grange Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.42 2009/02/16 21:19:06 miod Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ int	ahc_execute_scb(void *, bus_dma_segment_t *, int);
 int	ahc_poll(struct ahc_softc *, int);
 int	ahc_setup_data(struct ahc_softc *, struct scsi_xfer *, struct scb *);
 
-void	ahc_minphys(struct buf *);
+void	ahc_minphys(struct buf *, struct scsi_link *);
 void	ahc_adapter_req_set_xfer_mode(struct ahc_softc *, struct scb *);
 
 
@@ -284,8 +284,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 }
 
 void
-ahc_minphys(bp)
-	struct buf *bp;
+ahc_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	/*
 	 * Even though the card can transfer up to 16megs per command

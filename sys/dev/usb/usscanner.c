@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.27 2008/06/26 05:42:19 ray Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.28 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ struct usscanner_softc {
 
 void usscanner_cleanup(struct usscanner_softc *sc);
 int usscanner_scsipi_cmd(struct scsipi_xfer *xs);
-void usscanner_scsipi_minphys(struct buf *bp);
+void usscanner_scsipi_minphys(struct buf *bp, struct scsi_link *sl);
 void usscanner_done(struct usscanner_softc *sc);
 void usscanner_sense(struct usscanner_softc *sc);
 typedef void callback(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -433,7 +433,7 @@ usscanner_activate(struct device *self, enum devact act)
 }
 
 void
-usscanner_scsipi_minphys(struct buf *bp)
+usscanner_scsipi_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > USSCANNER_MAX_TRANSFER_SIZE)
 		bp->b_bcount = USSCANNER_MAX_TRANSFER_SIZE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.36 2009/01/21 21:54:00 grange Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.37 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -90,7 +90,7 @@
 #include <dev/microcode/siop/osiop.out>
 
 void osiop_attach(struct osiop_softc *);
-void osiop_minphys(struct buf *);
+void osiop_minphys(struct buf *, struct scsi_link *);
 int osiop_scsicmd(struct scsi_xfer *xs);
 void osiop_poll(struct osiop_softc *, struct osiop_acb *);
 void osiop_sched(struct osiop_softc *);
@@ -355,10 +355,8 @@ osiop_attach(sc)
  * default minphys routine for osiop based controllers
  */
 void
-osiop_minphys(bp)
-	struct buf *bp;
+osiop_minphys(struct buf *bp, struct scsi_link *sl)
 {
-
 	if (bp->b_bcount > OSIOP_MAX_XFER)
 		bp->b_bcount = OSIOP_MAX_XFER;
 	minphys(bp);

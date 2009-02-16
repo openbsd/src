@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.34 2009/01/11 16:54:59 blambert Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.35 2009/02/16 21:19:06 miod Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for QLogic adapters.
  *
@@ -62,7 +62,7 @@
  */
 #define	_XT(xs)	((((xs)->timeout/1000) * hz) + (3 * hz))
 
-static void ispminphys(struct buf *);
+static void ispminphys(struct buf *, struct scsi_link *);
 static int32_t ispcmd_slow(XS_T *);
 static int32_t ispcmd(XS_T *);
 
@@ -184,7 +184,7 @@ isp_attach(struct ispsoftc *isp)
  */
 
 static void
-ispminphys(struct buf *bp)
+ispminphys(struct buf *bp, struct scsi_link *sl)
 {
 	/*
 	 * XX: Only the 1020 has a 24 bit limit.

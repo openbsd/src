@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.15 2009/01/21 21:53:59 grange Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.16 2009/02/16 21:19:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -91,7 +91,6 @@
 #define	DPRINTF(x)
 #endif
 
-void	ioprbsminphys(struct buf *);
 void	ioprbs_adjqparam(struct device *, int);
 void	ioprbs_attach(struct device *, struct device *, void *);
 void	ioprbs_copy_internal_data(struct scsi_xfer *, u_int8_t *,
@@ -122,7 +121,7 @@ struct cfattach ioprbs_ca = {
 };
 
 struct scsi_adapter ioprbs_switch = {
-	ioprbs_scsi_cmd, ioprbsminphys, 0, 0,
+	ioprbs_scsi_cmd, scsi_minphys, 0, 0,
 };
 
 struct scsi_device ioprbs_dev = {
@@ -542,13 +541,6 @@ ioprbs_scsi_cmd(xs)
 
 	splx(s);
 	return (retval);
-}
-
-void
-ioprbsminphys(bp)
-	struct buf *bp;
-{
-	minphys(bp);
 }
 
 void

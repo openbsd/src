@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.126 2008/12/24 19:32:02 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.127 2009/02/16 21:19:06 miod Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -86,7 +86,7 @@ struct cfdriver softraid_cd = {
 
 /* scsi & discipline */
 int			sr_scsi_cmd(struct scsi_xfer *);
-void			sr_minphys(struct buf *bp);
+void			sr_minphys(struct buf *bp, struct scsi_link *sl);
 void			sr_copy_internal_data(struct scsi_xfer *,
 			    void *, size_t);
 int			sr_scsi_ioctl(struct scsi_link *, u_long,
@@ -1182,7 +1182,7 @@ sr_activate(struct device *self, enum devact act)
 }
 
 void
-sr_minphys(struct buf *bp)
+sr_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	DNPRINTF(SR_D_MISC, "sr_minphys: %d\n", bp->b_bcount);
 

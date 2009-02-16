@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.31 2009/01/04 16:51:44 miod Exp $	*/
+/*	$OpenBSD: si.c,v 1.32 2009/02/16 21:19:06 miod Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -183,7 +183,7 @@ static int	si_match(struct device *, void *, void *);
 static void	si_attach(struct device *, struct device *, void *);
 static int	si_intr(void *);
 static void	si_reset_adapter(struct ncr5380_softc *);
-static void	si_minphys(struct buf *);
+static void	si_minphys(struct buf *, struct scsi_link *);
 
 void si_dma_alloc(struct ncr5380_softc *);
 void si_dma_free(struct ncr5380_softc *);
@@ -484,7 +484,7 @@ si_attach(parent, self, args)
 }
 
 static void
-si_minphys(struct buf *bp)
+si_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > MAX_DMA_LEN) {
 #ifdef DEBUG
@@ -497,7 +497,7 @@ si_minphys(struct buf *bp)
 #endif
 		bp->b_bcount = MAX_DMA_LEN;
 	}
-	return (minphys(bp));
+	minphys(bp);
 }
 
 #define CSR_WANT (SI_CSR_SBC_IP | SI_CSR_DMA_IP | \

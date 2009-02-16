@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.24 2008/07/30 18:08:04 miod Exp $ */
+/* $OpenBSD: ncr.c,v 1.25 2009/02/16 21:19:06 miod Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -104,7 +104,7 @@ static int ncr_dmasize;
 
 static	int si_match(struct device *, void *, void *);
 static	void si_attach(struct device *, struct device *, void *);
-static	void si_minphys(struct buf *);
+static	void si_minphys(struct buf *, struct scsi_link *);
 
 static	void si_dma_alloc(struct ncr5380_softc *);
 static	void si_dma_free(struct ncr5380_softc *);
@@ -271,11 +271,11 @@ si_attach(parent, self, aux)
  * Adjust the max transfer size. The DMA buffer is only 16k on VS2000.
  */
 static void
-si_minphys(bp)
-	struct buf *bp;
+si_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > ncr_dmasize)
 		bp->b_bcount = ncr_dmasize;
+	minphys(bp);
 }
 
 void

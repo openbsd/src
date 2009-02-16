@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.23 2008/06/26 05:42:19 ray Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.24 2009/02/16 21:19:07 miod Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct umass_scsi_softc {
 #define UMASS_ATAPI_DRIVE	0
 
 int umass_scsi_cmd(struct scsi_xfer *);
-void umass_scsi_minphys(struct buf *);
+void umass_scsi_minphys(struct buf *, struct scsi_link *);
 
 void umass_scsi_cb(struct umass_softc *sc, void *priv, int residue,
 		   int status);
@@ -270,7 +270,7 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 }
 
 void
-umass_scsi_minphys(struct buf *bp)
+umass_scsi_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > UMASS_MAX_TRANSFER_SIZE)
 		bp->b_bcount = UMASS_MAX_TRANSFER_SIZE;

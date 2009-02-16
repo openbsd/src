@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.10 2009/01/21 21:54:00 grange Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.11 2009/02/16 21:19:07 miod Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ void	oosiop_clear_fifo(struct oosiop_softc *);
 void	oosiop_phasemismatch(struct oosiop_softc *);
 void	oosiop_setup_syncxfer(struct oosiop_softc *);
 void	oosiop_set_syncparam(struct oosiop_softc *, int, int, int);
-void	oosiop_minphys(struct buf *);
+void	oosiop_minphys(struct buf *, struct scsi_link *);
 int	oosiop_scsicmd(struct scsi_xfer *);
 void	oosiop_done(struct oosiop_softc *, struct oosiop_cb *);
 void	oosiop_timeout(void *);
@@ -704,7 +704,7 @@ oosiop_set_syncparam(struct oosiop_softc *sc, int id, int period, int offset)
 }
 
 void
-oosiop_minphys(struct buf *bp)
+oosiop_minphys(struct buf *bp, struct scsi_link *sl)
 {
 
 	if (bp->b_bcount > OOSIOP_MAX_XFER)

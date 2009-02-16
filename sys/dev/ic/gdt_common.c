@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.44 2009/01/21 21:53:59 grange Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.45 2009/02/16 21:19:06 miod Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -1189,7 +1189,7 @@ gdt_intr(void *arg)
 }
 
 void
-gdtminphys(struct buf *bp)
+gdtminphys(struct buf *bp, struct scsi_link *sl)
 {
 	GDT_DPRINTF(GDT_D_MISC, ("gdtminphys(0x%x) ", bp));
 

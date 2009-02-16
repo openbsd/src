@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.16 2009/01/21 21:53:59 grange Exp $	*/
+/*	$OpenBSD: bha.c,v 1.17 2009/02/16 21:19:06 miod Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -96,7 +96,7 @@ void bha_collect_mbo(struct bha_softc *);
 void bha_start_ccbs(struct bha_softc *);
 void bha_done(struct bha_softc *, struct bha_ccb *);
 int bha_init(struct bha_softc *);
-void bhaminphys(struct buf *);
+void bhaminphys(struct buf *, struct scsi_link *);
 int bha_scsi_cmd(struct scsi_xfer *);
 int bha_poll(struct bha_softc *, struct scsi_xfer *, int);
 void bha_timeout(void *arg);
@@ -1265,10 +1265,8 @@ bha_inquire_setup_information(sc)
 }
 
 void
-bhaminphys(bp)
-	struct buf *bp;
+bhaminphys(struct buf *bp, struct scsi_link *sl)
 {
-
 	if (bp->b_bcount > BHA_MAXXFER)
 		bp->b_bcount = BHA_MAXXFER;
 	minphys(bp);

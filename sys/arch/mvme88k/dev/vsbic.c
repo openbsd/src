@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbic.c,v 1.2 2009/02/15 15:44:32 miod Exp $	*/
+/*	$OpenBSD: vsbic.c,v 1.3 2009/02/16 21:19:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -30,7 +30,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/buf.h>			/* minphys */
+#include <sys/buf.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
@@ -426,7 +426,7 @@ struct cfdriver vsbic_cd = {
 
 struct scsi_adapter vsbic_swtch = {
 	vsbic_scsicmd,
-	minphys
+	scsi_minphys
 };
 
 struct scsi_device vsbic_scsidev = {

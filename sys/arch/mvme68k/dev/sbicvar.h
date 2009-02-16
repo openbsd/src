@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicvar.h,v 1.7 2004/07/02 17:57:29 miod Exp $ */
+/*	$OpenBSD: sbicvar.h,v 1.8 2009/02/16 21:19:06 miod Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -196,7 +196,6 @@ struct  sbic_softc {
 struct buf;
 struct scsi_xfer;
 
-void sbic_minphys(struct buf *bp);
 int sbic_scsicmd(struct scsi_xfer *);
 
 #endif /* _SBICVAR_H_ */

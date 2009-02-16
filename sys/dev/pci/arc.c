@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.77 2008/07/17 13:16:29 jsg Exp $ */
+/*	$OpenBSD: arc.c,v 1.78 2009/02/16 21:19:07 miod Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -400,7 +400,7 @@ struct cfdriver arc_cd = {
 
 /* interface for scsi midlayer to talk to */
 int			arc_scsi_cmd(struct scsi_xfer *);
-void			arc_minphys(struct buf *);
+void			arc_minphys(struct buf *, struct scsi_link *);
 
 struct scsi_adapter arc_switch = {
 	arc_scsi_cmd, arc_minphys, NULL, NULL, NULL
@@ -919,7 +919,7 @@ arc_complete(struct arc_softc *sc, struct arc_ccb *nccb, int timeout)
 }
 
 void
-arc_minphys(struct buf *bp)
+arc_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	if (bp->b_bcount > MAXPHYS)
 		bp->b_bcount = MAXPHYS;

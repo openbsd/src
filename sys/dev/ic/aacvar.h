@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.7 2006/05/07 20:12:41 tedu Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.8 2009/02/16 21:19:06 miod Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -437,7 +437,7 @@ extern void	aac_release_sync_fib(struct aac_softc *);
 extern int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t, 
 			     struct aac_fib *, u_int16_t);
 
-void	aacminphys(struct buf *);
+void	aacminphys(struct buf *, struct scsi_link *);
 int	aac_attach(struct aac_softc *);
 int	aac_intr(void *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.13 2009/02/06 20:16:41 grange Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.14 2009/02/16 21:19:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -82,7 +82,7 @@ int	sdmmc_start_xs(struct sdmmc_softc *, struct sdmmc_ccb *);
 void	sdmmc_complete_xs(void *);
 void	sdmmc_done_xs(struct sdmmc_ccb *);
 void	sdmmc_stimeout(void *);
-void	sdmmc_scsi_minphys(struct buf *);
+void	sdmmc_scsi_minphys(struct buf *, struct scsi_link *);
 
 #define DEVNAME(sc)	SDMMCDEVNAME(sc)
 
@@ -495,7 +495,7 @@ sdmmc_stimeout(void *arg)
 }
 
 void
-sdmmc_scsi_minphys(struct buf *bp)
+sdmmc_scsi_minphys(struct buf *bp, struct scsi_link *sl)
 {
 	/* XXX limit to max. transfer size supported by card/host? */
 	if (bp->b_bcount > DEV_BSIZE)
