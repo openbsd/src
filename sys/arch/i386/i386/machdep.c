@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.445 2009/02/14 11:22:25 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.446 2009/02/16 15:44:25 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1628,7 +1628,9 @@ identifycpu(struct cpu_info *ci)
 		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
 		modif = (ci->ci_signature >> 12) & 3;
 		family = (ci->ci_signature >> 8) & 15;
+		ci->ci_family = family;
 		model = (ci->ci_signature >> 4) & 15;
+		ci->ci_model = model;
 		step = ci->ci_signature & 15;
 #ifdef CPUDEBUG
 		printf("%s: family %x model %x step %x\n", cpu_device, family,
@@ -1684,6 +1686,16 @@ identifycpu(struct cpu_info *ci)
 			} else if (model > CPU_MAXMODEL)
 				model = CPU_DEFMODEL;
 			i = family - CPU_MINFAMILY;
+
+			/* store extended family/model values for later use */
+			if ((vendor == CPUVENDOR_INTEL &&
+			    (family == 0x6 || family == 0xf)) ||
+			    (vendor == CPUVENDOR_AMD && family == 0xf)) {
+				ci->ci_family += (ci->ci_signature >> 20) &
+				    0xff;
+				ci->ci_model += ((ci->ci_signature >> 16) &
+				    0x0f) << 4;
+			}
 
 			/* Special hack for the PentiumII/III series. */
 			if (vendor == CPUVENDOR_INTEL && family == 6 &&
@@ -1964,10 +1976,9 @@ void
 p3_get_bus_clock(struct cpu_info *ci)
 {
 	u_int64_t msr;
-	int model, bus;
+	int bus;
 
-	model = (ci->ci_signature >> 4) & 15;
-	switch (model) {
+	switch (ci->ci_model) {
 	case 0x9: /* Pentium M (130 nm, Banias) */
 		bus_clock = BUS100;
 		break;
@@ -1989,6 +2000,8 @@ p3_get_bus_clock(struct cpu_info *ci)
 		break;
 	case 0xe: /* Core Duo/Solo */
 	case 0xf: /* Core Xeon */
+	case 0x16: /* 65nm Celeron */
+	case 0x17: /* Core 2 Extreme/45nm Xeon */
 		msr = rdmsr(MSR_FSB_FREQ);
 		bus = (msr >> 0) & 0x7;
 		switch (bus) {
@@ -2016,7 +2029,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 			goto print_msr;
 		}
 		break;
-	case 0xc: /* Atom */
+	case 0x1c: /* Atom */
 		msr = rdmsr(MSR_FSB_FREQ);
 		bus = (msr >> 0) & 0x7;
 		switch (bus) {
@@ -2062,8 +2075,8 @@ p3_get_bus_clock(struct cpu_info *ci)
 		}
 		break;
 	default: 
-		printf("%s: unknown i686 model %d, can't get bus clock",
-		    ci->ci_dev.dv_xname, model);
+		printf("%s: unknown i686 model 0x%x, can't get bus clock",
+		    ci->ci_dev.dv_xname, ci->ci_model);
 print_msr:
 		/*
 		 * Show the EBL_CR_POWERON MSR, so we'll at least have
