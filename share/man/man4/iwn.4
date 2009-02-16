@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.16 2009/01/05 13:33:26 jmc Exp $
+.\" $OpenBSD: iwn.4,v 1.17 2009/02/16 08:15:22 jmc Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 5 2009 $
+.Dd $Mdocdate: February 16 2009 $
 .Os
 .Dt IWN 4
 .Sh NAME
@@ -126,7 +126,7 @@ using WPA-PSK with passphrase
 .Dq my_passphrase :
 .Bd -literal -offset indent
 # ifconfig iwn0 nwid my_net wpa wpapsk \e
-	$(wpa-psk my_net my_passphrase)
+	`wpa-psk my_net my_passphrase`
 .Ed
 .Pp
 Return iwn0 to its default settings:
