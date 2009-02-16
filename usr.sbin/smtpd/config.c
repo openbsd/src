@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.4 2009/02/15 10:32:23 jacekm Exp $	*/
+/*	$OpenBSD: config.c,v 1.5 2009/02/16 12:10:25 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -171,6 +171,10 @@ config_pipes(struct smtpd *env, struct peer *p, u_int peercount)
 				if (i == smtpd_process &&
 				    is_peer(p, j, peercount) &&
 				    count == env->sc_instance)
+					continue;
+				if (i == smtpd_process &&
+				    is_peer(p, j, peercount) &&
+				    env->sc_instances[i] == 1)
 					continue;
 				close(env->sc_pipes[i][j][count]);
 				env->sc_pipes[i][j][count] = -1;
