@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.218 2008/10/17 13:02:55 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.219 2009/02/16 18:08:32 sthen Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1396,7 +1396,7 @@ prefixlenop	: unaryop NUMBER		{
 				YYERROR;
 			}
 			if ($1 >= $3) {
-				yyerror("start prefixlen is bigger that end");
+				yyerror("start prefixlen is bigger than end");
 				YYERROR;
 			}
 			$$.op = $2;
