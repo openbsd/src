@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.45 2009/01/03 13:07:15 kevlo Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.46 2009/02/17 18:41:32 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -653,6 +653,8 @@ agp_i810_free_memory(void *softc, struct agp_memory *mem)
 		agp_free_dmamem(sc->sc_dmat, mem->am_size, mem->am_dmamap,
 		    mem->am_virtual, mem->am_dmaseg, mem->am_nseg);
 		free(mem->am_dmaseg, M_AGP);
+	} else if (mem->am_type != 1) {
+		bus_dmamap_destroy(sc->sc_dmat, mem->am_dmamap);
 	}
 
 	sc->sc_allocated -= mem->am_size;
