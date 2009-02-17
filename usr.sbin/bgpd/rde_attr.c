@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.77 2009/01/13 21:35:16 sthen Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.78 2009/02/17 14:10:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -832,6 +832,8 @@ aspath_prepend(struct aspath *asp, u_int32_t as, int quantum, u_int16_t *len)
 		size = 0;
 	}
 
+	if (quantum > 255)
+		fatalx("aspath_prepend: preposterous prepend");
 	if (quantum == 0) {
 		/* no change needed but return a copy */
 		p = malloc(asp->len);
@@ -843,7 +845,10 @@ aspath_prepend(struct aspath *asp, u_int32_t as, int quantum, u_int16_t *len)
 	} else if (type == AS_SET || size + quantum > 255) {
 		/* need to attach a new AS_SEQUENCE */
 		l = 2 + quantum * sizeof(u_int32_t) + asp->len;
-		overflow = type == AS_SET ? quantum : (size + quantum) & 0xff;
+		if (type == AS_SET)
+			overflow = quantum;
+		else
+			overflow = size + quantum - 255;
 	} else
 		l = quantum * sizeof(u_int32_t) + asp->len;
 
