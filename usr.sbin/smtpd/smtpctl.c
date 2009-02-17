@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.13 2009/02/13 20:44:46 jacekm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.14 2009/02/17 22:49:22 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -133,7 +133,7 @@ connected:
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "connect: %s", SMTPD_SOCKET);
 
-	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
+	if ((ibuf = calloc(1, sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
 	imsg_init(ibuf, ctl_sock, NULL);
 
