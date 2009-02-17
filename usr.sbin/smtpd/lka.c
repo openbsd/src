@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.22 2009/02/15 13:12:19 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.23 2009/02/17 22:15:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -48,7 +48,6 @@ void		lka_setup_events(struct smtpd *);
 void		lka_disable_events(struct smtpd *);
 int		lka_verify_mail(struct smtpd *, struct path *);
 int		lka_resolve_mail(struct smtpd *, struct rule *, struct path *);
-int		lka_resolve_rcpt(struct smtpd *, struct rule *, struct path *);
 int		lka_forward_file(struct passwd *);
 int		lka_expand(char *, size_t, struct path *);
 int		aliases_exist(struct smtpd *, char *);
@@ -659,39 +658,6 @@ lka_resolve_mail(struct smtpd *env, struct rule *rule, struct path *path)
 		if (lka_expand(path->rule.r_value.path, MAXPATHLEN, path) >=
 		    MAXPATHLEN)
 			return 0;
-	}
-
-	return 1;
-}
-
-int
-lka_resolve_rcpt(struct smtpd *env, struct rule *rule, struct path *path)
-{
-	char username[MAXLOGNAME];
-	struct passwd *pw;
-	char *p;
-
-	(void)strlcpy(username, path->user, MAXLOGNAME);
-
-	for (p = &username[0]; *p != '\0' && *p != '+'; ++p)
-		*p = tolower((int)*p);
-	*p = '\0';
-
-	if ((path->flags & F_EXPANDED) == 0 && aliases_virtual_exist(env, path))
-		path->flags |= F_VIRTUAL;
-	else if ((path->flags & F_EXPANDED) == 0 && aliases_exist(env, username))
-		path->flags |= F_ALIAS;
-	else {
-		pw = safe_getpwnam(path->pw_name);
-		if (pw == NULL)
-			pw = safe_getpwnam(username);
-		if (pw == NULL)
-			return 0;
-		(void)strlcpy(path->pw_name, pw->pw_name, MAXLOGNAME);
-		if (lka_expand(path->rule.r_value.path, MAXPATHLEN, path) >=
-		    MAXPATHLEN) {
-			return 0;
-		}
 	}
 
 	return 1;
