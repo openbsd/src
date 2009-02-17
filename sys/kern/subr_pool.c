@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.77 2009/02/16 23:48:17 deraadt Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.78 2009/02/17 07:53:55 deraadt Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1226,6 +1226,7 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 	     pi != NULL;
 	     pi = TAILQ_NEXT(pi,pi_list), n++) {
 
+#ifdef DIAGNOSTIC
 		if (pi->pi_magic != PI_MAGIC) {
 			if (label != NULL)
 				printf("%s: ", label);
@@ -1247,7 +1248,8 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 			}
 		}
 
-#endif
+#endif /* POOL_DEBUG */
+#endif /* DIAGNOSTIC */
 		page =
 		    (caddr_t)((u_long)pi & pp->pr_alloc->pa_pagemask);
 		if (page == ph->ph_page)
