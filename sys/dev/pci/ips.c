@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.46 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: ips.c,v 1.47 2009/02/17 20:22:07 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -61,6 +61,7 @@ int ips_debug = IPS_D_ERR;
 #define IPS_MAXDRIVES		8
 #define IPS_MAXCHANS		4
 #define IPS_MAXTARGETS		15
+#define IPS_MAXCHUNKS		16
 #define IPS_MAXCMDS		128
 
 #define IPS_MAXFER		(64 * 1024)
@@ -81,6 +82,7 @@ int ips_debug = IPS_D_ERR;
 #define IPS_CMD_DCDB		0x04
 #define IPS_CMD_GETADAPTERINFO	0x05
 #define IPS_CMD_FLUSH		0x0a
+#define IPS_CMD_REBUILDSTATUS	0x0c
 #define IPS_CMD_ERRORTABLE	0x17
 #define IPS_CMD_GETDRIVEINFO	0x19
 #define IPS_CMD_RESETCHAN	0x1a
@@ -206,6 +208,65 @@ struct ips_pg5 {
 	u_int8_t	__reserved4[100];
 };
 
+struct ips_conf {
+	u_int8_t	ldcnt;
+	u_int8_t	day;
+	u_int8_t	month;
+	u_int8_t	year;
+	u_int8_t	initid[4];
+	u_int8_t	hostid[12];
+	u_int8_t	time[8];
+	u_int32_t	useropt;
+	u_int16_t	userfield;
+	u_int8_t	rebuildrate;
+	u_int8_t	__reserved1;
+
+	struct ips_hw {
+		u_int8_t	board[8];
+		u_int8_t	cpu[8];
+		u_int8_t	nchantype;
+		u_int8_t	nhostinttype;
+		u_int8_t	compression;
+		u_int8_t	nvramtype;
+		u_int32_t	nvramsize;
+	}		hw;
+
+	struct ips_ld {
+		u_int16_t	userfield;
+		u_int8_t	state;
+		u_int8_t	raidcacheparam;
+		u_int8_t	chunkcnt;
+		u_int8_t	stripesize;
+		u_int8_t	params;
+		u_int8_t	__reserved;
+		u_int32_t	size;
+
+		struct ips_chunk {
+			u_int8_t	channel;
+			u_int8_t	target;
+			u_int16_t	__reserved;
+			u_int32_t	startsec;
+			u_int32_t	seccnt;
+		}		chunk[IPS_MAXCHUNKS];
+	}		ld[IPS_MAXDRIVES];
+
+	struct ips_dev {
+		u_int8_t	initiator;
+		u_int8_t	params;
+		u_int8_t	miscflag;
+		u_int8_t	state;
+#define IPS_DVS_PRESENT	0x81
+#define IPS_DVS_REBUILD	0x02
+#define IPS_DVS_SPARE	0x04
+#define IPS_DVS_MEMBER	0x08
+
+		u_int32_t	seccnt;
+		u_int8_t	devid[28];
+	}		dev[IPS_MAXCHANS][IPS_MAXTARGETS + 1];
+
+	u_int8_t	reserved[512];
+};
+
 /* Command control block */
 struct ips_ccb {
 	int			c_id;		/* command id */
@@ -250,6 +311,7 @@ struct ips_softc {
 
 	const struct ips_chipset *sc_chip;
 
+	struct ips_conf		sc_conf;
 	struct ips_driveinfo	sc_di;
 	int			sc_nunits;
 
@@ -270,10 +332,13 @@ int	ips_match(struct device *, void *, void *);
 void	ips_attach(struct device *, struct device *, void *);
 
 int	ips_scsi_cmd(struct scsi_xfer *);
+int	ips_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
+	    struct proc *);
 
 int	ips_ioctl(struct device *, u_long, caddr_t);
 int	ips_ioctl_inq(struct ips_softc *, struct bioc_inq *);
 int	ips_ioctl_vol(struct ips_softc *, struct bioc_vol *);
+int	ips_ioctl_disk(struct ips_softc *, struct bioc_disk *);
 
 int	ips_cmd(struct ips_softc *, int, int, u_int32_t, void *, size_t, int,
 	    struct scsi_xfer *);
@@ -283,6 +348,7 @@ int	ips_intr(void *);
 void	ips_timeout(void *);
 
 int	ips_getadapterinfo(struct ips_softc *, struct ips_adapterinfo *);
+int	ips_getconf(struct ips_softc *, struct ips_conf *);
 int	ips_getdriveinfo(struct ips_softc *, struct ips_driveinfo *);
 int	ips_flush(struct ips_softc *);
 int	ips_readnvram(struct ips_softc *, void *, int);
@@ -324,7 +390,7 @@ static struct scsi_adapter ips_scsi_adapter = {
 	scsi_minphys,
 	NULL,
 	NULL,
-	NULL
+	ips_scsi_ioctl
 };
 
 static struct scsi_device ips_scsi_device = {
@@ -385,6 +451,8 @@ static const struct ips_chipset {
 #define ips_status(s)	(s)->sc_chip->ic_status((s))
 
 static const char *ips_names[] = {
+	NULL,
+	NULL,
 	"II",
 	"onboard",
 	"onboard",
@@ -429,24 +497,16 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	/* Identify chipset */
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_IBM_SERVERAID:
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_IBM_SERVERAID)
 		sc->sc_chip = &ips_chips[IPS_CHIP_COPPERHEAD];
-		break;
-	case PCI_PRODUCT_IBM_SERVERAID2:
-	case PCI_PRODUCT_ADP2_SERVERAID:
+	else
 		sc->sc_chip = &ips_chips[IPS_CHIP_MORPHEUS];
-		break;
-	default:
-		printf(": unsupported chipset\n");
-		return;
-	}
 
 	/* Map registers */
 	maptype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, sc->sc_chip->ic_bar);
 	if (pci_mapreg_map(pa, sc->sc_chip->ic_bar, maptype, 0, &sc->sc_iot,
 	    &sc->sc_ioh, NULL, &iosize, 0)) {
-		printf(": can't map registers\n");
+		printf(": can't map regs\n");
 		return;
 	}
 
@@ -456,14 +516,14 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	/* Allocate command buffer */
 	if (ips_dmamem_alloc(&sc->sc_cmdm, sc->sc_dmat,
 	    IPS_MAXCMDS * IPS_MAXCMDSZ)) {
-		printf(": can't allocate command buffer\n");
+		printf(": can't alloc cmd buffer\n");
 		goto fail1;
 	}
 
 	/* Allocate status queue for the Copperhead chipset */
 	if (sc->sc_chip->ic_id == IPS_CHIP_COPPERHEAD) {
 		if (ips_dmamem_alloc(&sc->sc_sqm, sc->sc_dmat, IPS_SQSZ)) {
-			printf(": can't allocate status queue\n");
+			printf(": can't alloc status queue\n");
 			goto fail2;
 		}
 		sc->sc_sqtail = sc->sc_sqm.dm_paddr;
@@ -488,7 +548,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_dmamap_create(sc->sc_dmat, IPS_MAXFER, IPS_MAXSGS,
 	    IPS_MAXFER, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &ccb0.c_dmam)) {
-		printf(": can't bootstrap CCB queue\n");
+		printf(": can't bootstrap ccb queue\n");
 		goto fail3;
 	}
 	TAILQ_INIT(&sc->sc_ccbq_free);
@@ -502,9 +562,16 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		goto fail3;
 	}
 
+	/* Get configuration */
+	if (ips_getconf(sc, &sc->sc_conf)) {
+		printf(": can't get config\n");
+		bus_dmamap_destroy(sc->sc_dmat, ccb0.c_dmam);
+		goto fail3;
+	}
+
 	/* Get logical drives info */
 	if (ips_getdriveinfo(sc, &sc->sc_di)) {
-		printf(": can't get logical drives info\n");
+		printf(": can't get ld info\n");
 		bus_dmamap_destroy(sc->sc_dmat, ccb0.c_dmam);
 		goto fail3;
 	}
@@ -519,7 +586,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize CCB queue */
 	sc->sc_nccbs = ai.cmdcnt;
 	if ((sc->sc_ccb = ips_ccb_alloc(sc, sc->sc_nccbs)) == NULL) {
-		printf(": can't allocate CCB queue\n");
+		printf(": can't alloc ccb queue\n");
 		goto fail3;
 	}
 	TAILQ_INIT(&sc->sc_ccbq_free);
@@ -547,16 +614,15 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	/* Display adapter info */
 	printf("%s: ServeRAID", sc->sc_dev.dv_xname);
 	type = letoh16(pg5.type);
-	if (type > 1 && type - 2 < sizeof(ips_names) / sizeof(ips_names[0]))
-		printf(" %s", ips_names[type - 2]);
-	printf(", firmware %c%c%c%c%c%c%c",
-	    ai.firmware[0], ai.firmware[1], ai.firmware[2],
-	    ai.firmware[3], ai.firmware[4], ai.firmware[5],
+	if (type < sizeof(ips_names) / sizeof(ips_names[0]) && ips_names[type])
+		printf(" %s", ips_names[type]);
+	printf(", FW %c%c%c%c%c%c%c", ai.firmware[0], ai.firmware[1],
+	    ai.firmware[2], ai.firmware[3], ai.firmware[4], ai.firmware[5],
 	    ai.firmware[6]);
-	printf(", bios %c%c%c%c%c%c%c",
-	    ai.bios[0], ai.bios[1], ai.bios[2], ai.bios[3], ai.bios[4],
-	    ai.bios[5], ai.bios[6]);
-	printf(", %d CCBs, %d units", sc->sc_nccbs, sc->sc_nunits);
+	printf(", BIOS %c%c%c%c%c%c%c", ai.bios[0], ai.bios[1], ai.bios[2],
+	    ai.bios[3], ai.bios[4], ai.bios[5], ai.bios[6]);
+	printf(", %d cmds, %d LD%s", sc->sc_nccbs, sc->sc_nunits,
+	    (sc->sc_nunits == 1 ? "" : "s"));
 	printf("\n");
 
 	/* Attach SCSI bus */
@@ -724,6 +790,13 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 	return (COMPLETE);
 }
 
+int
+ips_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
+    struct proc *p)
+{
+	return (ips_ioctl(link->adapter_softc, cmd, addr));
+}
+
 #if NBIO > 0
 int
 ips_ioctl(struct device *dev, u_long cmd, caddr_t addr)
@@ -737,6 +810,8 @@ ips_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		return (ips_ioctl_inq(sc, (struct bioc_inq *)addr));
 	case BIOCVOL:
 		return (ips_ioctl_vol(sc, (struct bioc_vol *)addr));
+	case BIOCDISK:
+		return (ips_ioctl_disk(sc, (struct bioc_disk *)addr));
 	default:
 		return (ENOTTY);
 	}
@@ -748,7 +823,7 @@ ips_ioctl_inq(struct ips_softc *sc, struct bioc_inq *bi)
 	struct ips_adapterinfo ai;
 
 	if (ips_getadapterinfo(sc, &ai))
-		return (EIO);
+		return (ENOTTY);
 
 	strlcpy(bi->bi_dev, sc->sc_dev.dv_xname, sizeof(bi->bi_dev));
 	bi->bi_novol = sc->sc_nunits;
@@ -762,16 +837,15 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 {
 	struct ips_driveinfo di;
 	struct ips_drive *drive;
+	int vid = bv->bv_volid;
 	struct device *dev;
-	struct scsi_link *link;
-	int id = bv->bv_volid, vol, i;
 
-	if (id >= sc->sc_nunits)
+	if (vid >= sc->sc_nunits)
 		return (EINVAL);
 
 	if (ips_getdriveinfo(sc, &di))
-		return (EIO);
-	drive = &di.drive[id];
+		return (ENOTTY);
+	drive = &di.drive[vid];
 
 	switch (drive->state) {
 	case IPS_DS_ONLINE:
@@ -789,27 +863,56 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 
 	bv->bv_size = (u_quad_t)letoh32(drive->seccnt) * IPS_SECSZ;
 	bv->bv_level = drive->raid;
-	bv->bv_nodisk = 0; /* XXX */
+	bv->bv_nodisk = sc->sc_conf.ld[vid].chunkcnt;
 
-	for (i = 0, vol = -1; i < sc->sc_nunits; i++) {
-		link = sc->sc_scsibus->sc_link[i][0];
-		if (link == NULL)
-			continue;
+	dev = sc->sc_scsibus->sc_link[vid][0]->device_softc;
+	strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
+	strlcpy(bv->bv_vendor, "IBM", sizeof(bv->bv_vendor));
 
-		/* skip if not a virtual disk */
-		if (!(link->flags & SDEV_VIRTUAL))
-			continue;
+	return (0);
+}
 
-		vol++;
-		/* are we it? */
-		if (vol == id) {
-			dev = link->device_softc;
-			memcpy(bv->bv_vendor, link->inqdata.vendor,
-			    sizeof bv->bv_vendor);
-			bv->bv_vendor[sizeof(bv->bv_vendor) - 1] = '\0';
-			strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
-			break;
-		}
+int
+ips_ioctl_disk(struct ips_softc *sc, struct bioc_disk *bd)
+{
+	int vid = bd->bd_volid, did = bd->bd_diskid;
+	struct ips_ld *ld;
+	struct ips_chunk *chunk;
+	struct ips_dev *dev;
+
+	if (vid >= sc->sc_nunits)
+		return (EINVAL);
+	ld = &sc->sc_conf.ld[vid];
+
+	if (did >= ld->chunkcnt)
+		return (EINVAL);
+	chunk = &ld->chunk[did];
+
+	if (chunk->channel >= IPS_MAXCHANS || chunk->target >= IPS_MAXTARGETS)
+		return (ENOTTY);
+	dev = &sc->sc_conf.dev[chunk->channel][chunk->target];
+
+	if (ips_getconf(sc, &sc->sc_conf))
+		return (ENOTTY);
+
+	bd->bd_channel = chunk->channel;
+	bd->bd_target = chunk->target;
+	bd->bd_lun = 0;
+	bd->bd_size = (u_quad_t)letoh32(chunk->seccnt) * IPS_SECSZ;
+
+	bzero(bd->bd_vendor, sizeof(bd->bd_vendor));
+	memcpy(bd->bd_vendor, dev->devid, MIN(sizeof(bd->bd_vendor),
+	    sizeof(dev->devid)));
+
+	if (dev->state & IPS_DVS_PRESENT) {
+		if (dev->state & IPS_DVS_REBUILD)
+			bd->bd_status = BIOC_SDREBUILD;
+		if (dev->state & IPS_DVS_SPARE)
+			bd->bd_status = BIOC_SDHOTSPARE;
+		if (dev->state & IPS_DVS_MEMBER)
+			bd->bd_status = BIOC_SDONLINE;
+	} else {
+		bd->bd_status = BIOC_SDOFFLINE;
 	}
 
 	return (0);
@@ -851,7 +954,7 @@ ips_cmd(struct ips_softc *sc, int code, int drive, u_int32_t lba, void *data,
 		/* Map data buffer into DMA segments */
 		if (bus_dmamap_load(sc->sc_dmat, ccb->c_dmam, data, size,
 		    NULL, BUS_DMA_NOWAIT)) {
-			printf("%s: can't load DMA map\n",
+			printf("%s: can't load dma map\n",
 			    sc->sc_dev.dv_xname);
 			return (1);	/* XXX: return code */
 		}
@@ -861,7 +964,7 @@ ips_cmd(struct ips_softc *sc, int code, int drive, u_int32_t lba, void *data,
 		    BUS_DMASYNC_PREWRITE);
 
 		if ((nsegs = ccb->c_dmam->dm_nsegs) > IPS_MAXSGS) {
-			printf("%s: too many DMA segments\n",
+			printf("%s: too many dma segs\n",
 			    sc->sc_dev.dv_xname);
 			return (1);	/* XXX: return code */
 		}
@@ -946,7 +1049,7 @@ ips_done(struct ips_softc *sc, struct ips_ccb *ccb)
 	int error = 0;
 
 	if ((flags & IPS_CCB_RUN) == 0) {
-		printf("%s: command 0x%02x not run\n", sc->sc_dev.dv_xname,
+		printf("%s: cmd 0x%02x not run\n", sc->sc_dev.dv_xname,
 		    ccb->c_id);
 		if (xs != NULL) {
 			xs->error = XS_DRIVER_STUFFUP;
@@ -1052,6 +1155,13 @@ int
 ips_getadapterinfo(struct ips_softc *sc, struct ips_adapterinfo *ai)
 {
 	return (ips_cmd(sc, IPS_CMD_GETADAPTERINFO, 0, 0, ai, sizeof(*ai),
+	    IPS_CCB_READ | IPS_CCB_POLL, NULL));
+}
+
+int
+ips_getconf(struct ips_softc *sc, struct ips_conf *conf)
+{
+	return (ips_cmd(sc, IPS_CMD_READCONF, 0, 0, conf, sizeof(*conf),
 	    IPS_CCB_READ | IPS_CCB_POLL, NULL));
 }
 
