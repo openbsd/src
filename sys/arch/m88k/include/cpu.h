@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.41 2009/02/16 23:03:31 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.42 2009/02/17 21:03:59 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -244,12 +244,12 @@ struct clockframe {
 #define SIR_CLOCK	0x02
 #define	SIR_IPI		0x04
 
-#define setsoftint(x)	atomic_setbits_int(&curcpu()->ci_softintr, x)
-#define setsoftnet()	setsoftint(SIR_NET)
-#define setsoftclock()	setsoftint(SIR_CLOCK)
-#define	setsoftipi()	setsoftint(SIR_IPI)
+#define setsoftint(ci,x)	atomic_setbits_int(&ci->ci_softintr, x)
+#define setsoftnet()		setsoftint(curcpu(), SIR_NET)
+#define setsoftclock()		setsoftint(curcpu(), SIR_CLOCK)
+#define	setsoftipi(ci)		setsoftint(ci, SIR_IPI)
 
-#define	aston(p)	((p)->p_md.md_astpending = 1)
+#define	aston(p)		((p)->p_md.md_astpending = 1)
 
 /*
  * This is used during profiling to integrate system time.

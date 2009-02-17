@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.33 2009/02/16 23:03:33 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.34 2009/02/17 21:04:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -531,7 +531,7 @@ m197_ipi_handler(struct trapframe *eframe)
 			ci->ci_s_sxip = eframe->tf_sxip;
 			ci->ci_s_epsr = eframe->tf_epsr;
 		}
-		setsoftipi();
+		setsoftipi(ci);
 	}
 
 	/*
