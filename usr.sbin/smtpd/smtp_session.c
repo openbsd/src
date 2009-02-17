@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.53 2009/02/13 19:59:49 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.54 2009/02/17 21:53:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -732,10 +732,10 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	case S_DONE:
 		s->s_state = S_HELO;
-		s->s_msg.message_id[0] = '\0';
 		session_respond(s, "250 %s Message accepted for delivery",
 		    s->s_msg.message_id);
-
+		s->s_msg.message_id[0] = '\0';
+		s->s_msg.message_uid[0] = '\0';
 		break;
 
 	default:

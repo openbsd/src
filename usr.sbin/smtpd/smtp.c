@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.23 2009/02/15 10:32:23 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.24 2009/02/17 21:53:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -476,12 +476,11 @@ smtp_dispatch_queue(int sig, short event, void *p)
 			if (s == NULL)
 				fatal("smtp_dispatch_queue: session is gone");
 
-			if (imsg.hdr.type == IMSG_QUEUE_COMMIT_MESSAGE) {
-				s->s_msg.message_id[0] = '\0';
-				s->s_msg.message_uid[0] = '\0';
-			}
-
 			if (s->s_flags & F_QUIT) {
+				if (imsg.hdr.type == IMSG_QUEUE_COMMIT_MESSAGE) {
+					s->s_msg.message_id[0] = '\0';
+					s->s_msg.message_uid[0] = '\0';
+				}
 				session_destroy(s);
 				break;
 			}
