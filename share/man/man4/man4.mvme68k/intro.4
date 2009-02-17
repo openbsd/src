@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.24 2007/06/21 19:56:54 jmc Exp $
+.\"	$OpenBSD: intro.4,v 1.25 2009/02/17 22:32:36 miod Exp $
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)intro.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: June 21 2007 $
+.Dd $Mdocdate: February 17 2009 $
 .Dt INTRO 4 mvme68k
 .Os
 .Sh NAME
@@ -113,18 +113,20 @@ MVME147 printer interface
 MVME162 MCchip
 .It Xr memc
 MVME1[67]x memory controller
+.It Xr osiop 4
+Symbios/NCR 53C710 SCSI driver
 .It Xr pcc
 MVME147 PCC chip
 .It Xr pcctwo
 MVME1[67]7 PCC2 chip
 .It Xr sram
 MVME162 static memory
-.It Xr ssh 4
-NCR 53c7xx SCSI driver
 .It Xr vme
 VME bus support
-.It Xr vs
-MVME328 low level SCSI adapter interface
+.It Xr vs 4
+MVME328, MVME328S and MVME328XT high performance SCSI controller
+.It Xr vsbic 4
+MVME327A SCSI and floppy controller
 .It Xr wdsc
 WD33C93 SCSI adapter interface
 .It Xr zs
