@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.11 2009/02/15 10:32:23 jacekm Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.12 2009/02/17 21:38:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -244,12 +244,10 @@ mfa_dispatch_lka(int sig, short event, void *p)
 
 			ss = imsg.data;
 			if (ss->msg.flags & F_MESSAGE_ENQUEUED) {
-				log_debug("FOOO");
 				imsg_compose(env->sc_ibufs[PROC_CONTROL], IMSG_MFA_RCPT,
 				    0, 0, -1, ss, sizeof(*ss));
 			}
 			else {
-				log_debug("BAAR");
 				imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT,
 				    0, 0, -1, ss, sizeof(*ss));
 			}
