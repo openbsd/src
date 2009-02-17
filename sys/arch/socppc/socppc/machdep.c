@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.8 2009/01/28 20:15:14 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.9 2009/02/17 20:35:47 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -396,11 +396,6 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
-
-	printf("%02x:%02x:%02x:%02x:%02x:%02x\n", bootinfo.bi_enetaddr[0],
-	    bootinfo.bi_enetaddr[1], bootinfo.bi_enetaddr[2],
-	    bootinfo.bi_enetaddr[3],  bootinfo.bi_enetaddr[4],
-	    bootinfo.bi_enetaddr[5]);
 }
 
 void
