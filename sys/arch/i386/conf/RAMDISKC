@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.91 2009/01/06 23:03:16 jasper Exp $
+#	$OpenBSD: RAMDISKC,v 1.92 2009/02/17 19:17:33 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -288,7 +288,7 @@ re*	at cardbus?			# Realtek 8169/8169S/8110S
 #hme*	at pci?				# Sun Happy Meal
 #bce*	at pci?				# Broadcom BCM4401
 #vge*	at pci?				# VIA VT612x
-nfe*	at pci?				# NVIDIA nForce Ethernet
+#nfe*	at pci?				# NVIDIA nForce Ethernet
 #pcn*	at pci?				# AMD PCnet-PCI Ethernet
 
 # Wireless network cards
