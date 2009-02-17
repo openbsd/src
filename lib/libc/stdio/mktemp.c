@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.24 2008/09/15 20:28:44 chl Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.25 2009/02/17 22:53:43 deraadt Exp $ */
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -100,9 +100,11 @@ _gettemp(char *path, int *doopen, int domkdir, int slen)
 	}
 	ep = path + len - slen;
 
-	for (start = ep; *--start == 'X';)
-		;
-	start++;
+	for (start = ep - 1; start != path; start--)
+		if (*start != 'X') {
+			start++;
+			break;
+		}
 
 	for (;;) {
 		for (cp = start; cp != ep; cp++) {
