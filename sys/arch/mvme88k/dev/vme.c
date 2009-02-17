@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.48 2007/12/27 23:17:53 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.49 2009/02/17 21:03:21 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -286,7 +286,7 @@ vmeattach(parent, self, args)
 #endif
 	}
 
-	while (config_found(self, NULL, NULL))
+	while (config_found(self, args, NULL))
 		;
 }
 
