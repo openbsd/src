@@ -1,5 +1,6 @@
-/*	$OpenBSD: vsvar.h,v 1.7 2009/02/16 21:19:06 miod Exp $ */
+/*	$OpenBSD: vsvar.h,v 1.8 2009/02/17 22:28:41 miod Exp $ */
 /*
+ * Copyright (c) 2004, 2009, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,95 +32,120 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef _VSVAR_H_
-#define _VSVAR_H_
+#ifndef	_VSVAR_H_
+#define	_VSVAR_H_
 
 /*
- * The largest single request will be MAXPHYS bytes which will require
- * at most MAXPHYS/NBPG+1 chain elements to describe, i.e. if none of
- * the buffer pages are physically contiguous (MAXPHYS/NBPG) and the
- * buffer is not page aligned (+1).
+ * Scatter/gather structures
+ *
+ * Each s/g element is 8 bytes long; a s/g list is limited to 64
+ * entries. To afford larger lists, it is possible to use ``link''
+ * entries, which can add up to 64 new entries (and contain link
+ * entries themselves, too), by setting the M_ADR_SG_LINK bit in
+ * the address modifier field.
+ *
+ * To keep things simple, this driver will use only use a flat list
+ * of up to 64 entries, thereby limiting the maximum transfer to
+ * 64 pages (worst case situation).
  */
-#define	DMAMAXIO	(MAXPHYS/NBPG+1)
-#define  LO(x) (u_short)((unsigned long)x & 0x0000FFFF)
-#define  HI(x) (u_short)((unsigned long)x >> 16)
-#define  OFF(x) (u_short)((long)kvtop((vaddr_t)x) - (long)kvtop((vaddr_t)sc->sc_vsreg))
 
-struct vs_tinfo {
-	int	cmds;		/* #commands processed */
-	int	dconns;		/* #disconnects */
-	int	touts;		/* #timeouts */
-	int	perrs;		/* #parity errors */
-	int	senses;		/* #request sense commands sent */
-	ushort	lubusy;		/* What local units/subr. are busy? */
-	u_char  flags;
-	u_char  period;		/* Period suggestion */
-	u_char  offset;		/* Offset suggestion */
-   int   avail;      /* Is there a device there */
-} tinfo_t;
+#define	MAX_SG_ELEMENTS	64
 
-struct	vs_softc {
-	struct	device sc_dev;
-	struct	intrhand sc_ih_e, sc_ih_n;
-	char	sc_intrname_e[16 + 4];
-	u_short  sc_ipl;
-   u_short  sc_evec;
-   u_short  sc_nvec;
-	struct	scsi_link sc_link;	/* proto for sub devices */
-	u_long	sc_chnl;		         /* channel 0 or 1 for dual bus cards */
-	u_long	sc_qhp;		         /* Command queue head pointer */
-	struct   vsreg	*sc_vsreg;
-#define SIOP_NACB 8
-	struct vs_tinfo sc_tinfo[8];
-	u_char	sc_flags;
-	u_char	sc_sien;
-	u_char	sc_dien;
-	u_char  sc_minsync;
-   struct map *hus_map;
-	/* one for each target */
-	struct syncpar {
-		u_char state;
-		u_char sxfer;
-		u_char sbcl;
-	} sc_sync[8];
+struct vs_sg_entry {
+	union {
+		uint16_t	bytes;	/* entry byte count */
+		struct {
+			uint8_t gather;	/* count of linked entries */
+			uint8_t reserved;
+		} link;
+	} count;
+	uint16_t	pa_high;	/* 32-bit address field split... */
+	uint16_t	pa_low;		/* ... due to alignment */
+	uint16_t	addr;		/* address type and modifier */
 };
 
-/* sync states */
-#define SYNC_START	0	/* no sync handshake started */
-#define SYNC_SENT	1	/* we sent sync request, no answer yet */
-#define SYNC_DONE	2	/* target accepted our (or inferior) settings,
-				   or it rejected the request and we stay async */
+/* largest power of two for the bytes field */
+#define	MAX_SG_ELEMENT_SIZE	(1U << 15)
 
-#define IOPB_SCSI    0x20
-#define IOPB_RESET   0x22
-#define IOPB_INIT    0x41
-#define IOPB_WQINIT  0x42
-#define IOPB_DEV_RESET   0x4D
+/*
+ * Command control block
+ */
+struct vs_cb {
+	struct scsi_xfer	*cb_xs;	/* current command */
+	u_int			 cb_q;	/* controller queue it's in */
 
-#define OPT_INTEN    0x0001
-#define OPT_INTDIS   0x0000
-#define OPT_SG       0x0002
-#define OPT_SST      0x0004
-#define OPT_SIT      0x0040
-#define OPT_READ     0x0000
-#define OPT_WRITE    0x0100
+	bus_dmamap_t		 cb_dmamap;
+	bus_size_t		 cb_dmalen;
+};
 
-#define AM_S32       0x01
-#define AM_S16       0x05
-#define AM_16        0x0100
-#define AM_32        0x0200
-#define AM_SHORT     0x0300
-#define AM_NORMAL    0x0000
-#define AM_BLOCK     0x0400
-#define AM_D64BLOCK  0x0C00
+/*
+ * Per-channel information
+ */
+struct vs_channel {
+	int			vc_id;		/* host id */
+	int			vc_width;	/* number of targets */
+	int			vc_type;	/* channel type */
+#define	VCT_UNKNOWN			0
+#define	VCT_SE				1
+#define	VCT_DIFFERENTIAL		2
+	struct scsi_link	vc_link;
+};
 
-#define WQO_AE             0x0001   /* abort enable bit */
-#define WQO_FOE            0x0004   /* freeze on error */
-#define WQO_PE             0x0008   /* parity enable bit */
-#define WQO_ARE            0x0010   /* autosense recovery enable bit */
-#define WQO_RFWQ           0x0020   /* report frozen work queue bit */
-#define WQO_INIT           0x8000   /* work queue init bit */
+struct vs_softc {
+	struct device		 sc_dev;
 
-int vs_scsicmd(struct scsi_xfer *);
+	bus_space_tag_t		 sc_iot;
+	bus_space_handle_t	 sc_ioh;
+	bus_dma_tag_t		 sc_dmat;
+
+	int			 sc_bid;	/* board id */
+	struct vs_channel	 sc_channel[2];
+
+	struct intrhand		 sc_ih_n;	/* normal interrupt handler */
+	int			 sc_nvec;
+	struct intrhand		 sc_ih_e;	/* error interrupt handler */
+	int			 sc_evec;
+	char			 sc_intrname_e[16 + 4];
+	int			 sc_ipl;
+
+	u_int			 sc_nwq;	/* number of work queues */
+	struct vs_cb		*sc_cb;
+
+	bus_dmamap_t		 sc_sgmap;
+	bus_dma_segment_t	 sc_sgseg;
+	struct vs_sg_entry	*sc_sgva;
+};
+
+/* Access macros */
+
+#define	vs_read(w,o) \
+	bus_space_read_##w (sc->sc_iot, sc->sc_ioh, (o))
+#define	vs_write(w,o,v) \
+	bus_space_write_##w (sc->sc_iot, sc->sc_ioh, (o), (v))
+#define	vs_bzero(o,s) \
+	bus_space_set_region_2(sc->sc_iot, sc->sc_ioh, (o), 0, (s) / 2)
+
+#define	cib_read(w,o)		vs_read(w, sh_CIB + (o))
+#define	cib_write(w,o,v)	vs_write(w, sh_CIB + (o), (v))
+#define	crb_read(w,o)		vs_read(w, sh_CRB + (o))
+#define	crb_write(w,o,v)	vs_write(w, sh_CRB + (o), (v))
+#define	csb_read(w,o)		vs_read(w, sh_CSS + (o))
+#define	mce_read(w,o)		vs_read(w, sh_MCE + (o))
+#define	mce_write(w,o,v)	vs_write(w, sh_MCE + (o), (v))
+#define	mce_iopb_read(w,o)	vs_read(w, sh_MCE_IOPB + (o))
+#define	mce_iopb_write(w,o,v)	vs_write(w, sh_MCE_IOPB + (o), (v))
+#define	mcsb_read(w,o)		vs_read(w, sh_MCSB + (o))
+#define	mcsb_write(w,o,v)	vs_write(w, sh_MCSB + (o), (v))
+
+#define	CRSW		crb_read(2, CRB_CRSW)
+#define	CRB_CLR_DONE	crb_write(2, CRB_CRSW, 0)
+#define	CRB_CLR_ER	crb_write(2, CRB_CRSW, CRSW & ~M_CRSW_ER)
+
+#define	THAW_REG	mcsb_read(2, MCSB_THAW)
+#define	THAW(x) \
+	do { \
+		mcsb_write(1, MCSB_THAW, (x)); \
+		mcsb_write(1, MCSB_THAW + 1, M_THAW_TWQE); \
+	} while (0)
 
 #endif /* _M328VAR_H */

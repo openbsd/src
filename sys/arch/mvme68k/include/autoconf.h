@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.14 2007/05/08 15:33:10 deraadt Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.15 2009/02/17 22:28:41 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -28,9 +28,13 @@
 #ifndef _MVME68K_AUTOCONF_H_
 #define _MVME68K_AUTOCONF_H_
 
+#include <machine/bus.h>
+
 struct confargs {
+	bus_space_tag_t	ca_iot;
+	bus_dma_tag_t	ca_dmat;	
 	int	ca_bustype;
-	vaddr_t	ca_vaddr;
+	vaddr_t	ca_vaddr;	/* on-board (pcc,mc,pcctwo) only */
 	paddr_t	ca_paddr;
 	int	ca_offset;
 	int	ca_ipl;
@@ -51,6 +55,7 @@ extern paddr_t	bootaddr;	/* PA of boot device */
 extern int	bootctrllun;	/* ctrl_lun of boot device */
 extern int	bootdevlun;	/* dev_lun of boot device */
 extern int	bootpart;	/* boot partition (disk) */
+extern int	bootbus;	/* scsi bus (disk) */
 
 vaddr_t	mapiodev(paddr_t, int);
 void	unmapiodev(vaddr_t, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.24 2005/11/27 14:19:09 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.25 2009/02/17 22:28:41 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -78,6 +78,107 @@ struct cfattach vme_ca = {
 struct cfdriver vme_cd = {
 	NULL, "vme", DV_DULL
 };
+
+/*
+ * bus_space routines for VME mappings
+ */
+
+int	vme_map(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+void	vme_unmap(bus_space_handle_t, bus_size_t);
+int	vme_subregion(bus_space_handle_t, bus_size_t, bus_size_t,
+	    bus_space_handle_t *);
+void *	vme_vaddr(bus_space_handle_t);
+
+const struct mvme68k_bus_space_tag vme_bustag = {
+	vme_map,
+	vme_unmap,
+	vme_subregion,
+	vme_vaddr
+};
+
+/*
+ * VME space mapping functions
+ */
+
+int
+vme_map(bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *ret)
+{
+	vaddr_t map;
+
+	map = (vaddr_t)mapiodev((paddr_t)addr, size);
+	if (map == NULL)
+		return ENOMEM;
+
+	*ret = (bus_space_handle_t)map;
+	return 0;
+}
+
+void
+vme_unmap(bus_space_handle_t handle, bus_size_t size)
+{
+	unmapiodev((vaddr_t)handle, size);
+}
+
+int
+vme_subregion(bus_space_handle_t handle, bus_addr_t offset, bus_size_t size,
+    bus_space_handle_t *ret)
+{
+	*ret = handle + offset;
+	return (0);
+}
+
+void *
+vme_vaddr(bus_space_handle_t handle)
+{
+	return (void *)handle;
+}
+
+/*
+ * Extra D16 access functions
+ *
+ * D16 cards will trigger bus errors on attempting to read or write more
+ * than 16 bits on the bus. Given how the m88k processor works, this means
+ * basically that all long (D32) accesses must be carefully taken care of.
+ *
+ * Since the kernels bcopy() and bzero() routines will use 32 bit accesses
+ * for performance, here are specific D16-compatible routines. They will
+ * also revert to D8 operations if neither of the operands is properly
+ * aligned.
+ */
+
+void d16_bcopy(const void *, void *, size_t);
+void d16_bzero(void *, size_t);
+
+void
+d16_bcopy(const void *src, void *dst, size_t len)
+{
+	if ((vaddr_t)src & 1 || (vaddr_t)dst & 1)
+		bus_space_write_region_1(&vme_bustag, 0, (vaddr_t)dst,
+		    (void *)src, len);
+	else {
+		bus_space_write_region_2(&vme_bustag, 0, (vaddr_t)dst,
+		    (void *)src, len / 2);
+		if (len & 1)
+			bus_space_write_1(&vme_bustag, 0,
+			    dst + len - 1, *(u_int8_t *)(src + len - 1));
+	}
+}
+
+void
+d16_bzero(void *dst, size_t len)
+{
+	if ((vaddr_t)dst & 1)
+		bus_space_set_region_1(&vme_bustag, 0, (vaddr_t)dst, 0, len);
+	else {
+		bus_space_set_region_2(&vme_bustag, 0, (vaddr_t)dst, 0, len / 2);
+		if (len & 1)
+			bus_space_write_1(&vme_bustag, 0, dst + len - 1, 0);
+	}
+}
+
+/*
+ * Configuration glue
+ */
 
 int
 vmematch(parent, cf, args)
@@ -284,11 +385,11 @@ vmeprint(args, bus)
 {
 	struct confargs *ca = args;
 
-	printf(" addr 0x%x", ca->ca_offset);
-	if (ca->ca_vec > 0)
-		printf(" vec 0x%x", ca->ca_vec);
+	printf(" addr 0x%x", ca->ca_paddr);
 	if (ca->ca_ipl > 0)
 		printf(" ipl %d", ca->ca_ipl);
+	if (ca->ca_vec > 0)
+		printf(" vec 0x%x", ca->ca_vec);
 	return (UNCONF);
 }
 
@@ -299,10 +400,12 @@ vmescan(parent, child, args, bustype)
 	int bustype;
 {
 	struct cfdata *cf = child;
-	struct vmesoftc *sc = (struct vmesoftc *)parent;
+	struct confargs *ca = args;
 	struct confargs oca;
 
 	bzero(&oca, sizeof oca);
+	oca.ca_iot = &vme_bustag;
+	oca.ca_dmat = ca->ca_dmat;
 	oca.ca_bustype = bustype;
 	oca.ca_paddr = cf->cf_loc[0];
 	oca.ca_vec = cf->cf_loc[1];
@@ -311,19 +414,12 @@ vmescan(parent, child, args, bustype)
 		oca.ca_vec = intr_findvec(255, 0);
 
 	oca.ca_offset = oca.ca_paddr;
-	oca.ca_vaddr = vmemap(sc, oca.ca_paddr, PAGE_SIZE, oca.ca_bustype);
-	if (oca.ca_vaddr == 0)
-		oca.ca_vaddr = (vaddr_t)-1;
+	oca.ca_vaddr = (vaddr_t)-1;	/* nothing mapped during probe */
 	oca.ca_name = cf->cf_driver->cd_name;
-	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0) {
-		if (oca.ca_vaddr != (vaddr_t)-1)
-			vmeunmap(oca.ca_vaddr, PAGE_SIZE);
+
+	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
 		return (0);
-	}
-	/*
-	 * If match works, the driver is responsible for
-	 * vmunmap()ing if it does not need the mapping. 
-	 */
+
 	config_attach(parent, cf, &oca, vmeprint);
 	return (1);
 }
@@ -367,7 +463,7 @@ vmeattach(parent, self, args)
 #endif
 	}
 
-	while (config_found(self, NULL, NULL))
+	while (config_found(self, args, NULL))
 		;
 }
 

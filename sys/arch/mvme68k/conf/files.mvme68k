@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.29 2006/04/21 22:21:53 miod Exp $
+#	$OpenBSD: files.mvme68k,v 1.30 2009/02/17 22:28:38 miod Exp $
 
 # config file for mvme68k
 
@@ -9,6 +9,7 @@ maxusers 2 8 64
 
 device	mainbus {[addr = -1]}
 attach	mainbus at root
+file	arch/mvme68k/dev/mainbus.c
 
 device	pcc {[offset = -1], [ipl = 0]}
 attach	pcc at mainbus
@@ -66,10 +67,9 @@ device	fooip
 attach	fooip at ipic
 file	arch/mvme68k/dev/fooip.c		fooip
 
-device	ssh: scsi
-attach	ssh at mc, pcctwo
-file	arch/mvme68k/dev/sshdma.c		ssh
-file	arch/mvme68k/dev/ssh.c			ssh
+attach	osiop at mc with osiop_mc
+attach	osiop at pcctwo with osiop_pcctwo
+file	arch/mvme68k/dev/osiop_mvme68k.c	osiop_mc | osiop_pcctwo
 
 device	memc
 attach	memc at mc, pcctwo
@@ -108,6 +108,7 @@ major	{rd = 9}
 #major	{xd = 10}
 
 file	arch/mvme68k/mvme68k/autoconf.c
+file	arch/mvme68k/mvme68k/bus_dma.c
 file	arch/mvme68k/mvme68k/conf.c
 file	arch/mvme68k/mvme68k/disksubr.c
 file	arch/mvme68k/mvme68k/machdep.c
@@ -131,7 +132,15 @@ device	wl: tty
 attach	wl at vmes
 file	arch/mvme68k/dev/wl.c			wl needs-count
 
+define	bpp
+file	arch/mvme68k/dev/bpp.c			bpp
+
+# MVME328
 device	vs: scsi
 attach	vs at vmes
 file	arch/mvme68k/dev/vs.c			vs
-file	arch/mvme68k/dev/vsdma.c		vs
+
+# MVME327
+device	vsbic: bpp, scsi
+attach	vsbic at vmes
+file	arch/mvme68k/dev/vsbic.c		vsbic

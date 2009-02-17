@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcc.c,v 1.15 2005/11/24 22:43:16 miod Exp $ */
+/*	$OpenBSD: pcc.c,v 1.16 2009/02/17 22:28:40 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -104,9 +104,12 @@ pcc_scan(parent, child, args)
 {
 	struct cfdata *cf = child;
 	struct pccsoftc *sc = (struct pccsoftc *)parent;
+	struct confargs *ca = args;
 	struct confargs oca;
 
 	bzero(&oca, sizeof oca);
+	oca.ca_iot = ca->ca_iot;
+	oca.ca_dmat = ca->ca_dmat;
 	oca.ca_offset = cf->cf_loc[0];
 	oca.ca_ipl = cf->cf_loc[1];
 	if (oca.ca_offset != -1) {

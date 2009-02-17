@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.31 2006/01/11 07:21:58 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.32 2009/02/17 22:28:40 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -275,11 +275,22 @@ lematch(parent, vcf, args)
 	void *vcf, *args;
 {
 	struct confargs *ca = args;
-	/* check physical addr for bogus MVME162 addr @0xffffd200. weird XXX - smurph */
-	if (cputyp == CPU_162 && ca->ca_paddr == 0xffffd200)
-		return (0);
+	bus_space_tag_t iot = ca->ca_iot;
+	bus_space_handle_t ioh;
+	int rc;
 
-	return (!badvaddr((vaddr_t)ca->ca_vaddr, 2));
+	switch (ca->ca_bustype) {
+	case BUS_PCC:
+		return (!badvaddr((vaddr_t)ca->ca_vaddr, 2));
+	case BUS_VMES:
+		if (bus_space_map(iot, ca->ca_paddr, VLEREGSIZE, 0, &ioh) != 0)
+			return 0;
+		rc = badvaddr((vaddr_t)bus_space_vaddr(iot, ioh), 2);
+		bus_space_unmap(iot, ioh, VLEREGSIZE);
+		return rc == 0;
+	default:
+		return 0;
+	}
 }
 
 /*
@@ -300,6 +311,8 @@ leattach(parent, self, aux)
 	extern void *etherbuf;
 	paddr_t addr;
 	int card;
+	bus_space_tag_t iot = ca->ca_iot;
+	bus_space_handle_t ioh, memh;
 
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr(u_char *);
@@ -339,20 +352,26 @@ leattach(parent, self, aux)
 			return;
 		}
 
-		addr = VLEMEMBASE - (card * VLEMEMSIZE);
-
-		sc->sc_mem = (void *)mapiodev(addr, VLEMEMSIZE);
-		if (sc->sc_mem == NULL) {
-			printf("\n%s: no more memory in external I/O map\n",
-			    sc->sc_dev.dv_xname);
+		if (bus_space_map(iot, ca->ca_paddr, VLEREGSIZE, 0, &ioh) !=
+		    0) {
+			printf(": can't map registers!\n");
 			return;
 		}
-		sc->sc_addr = addr & 0x00ffffff;
 
-		lesc->sc_r1 = (void *)ca->ca_vaddr;
+		addr = VLEMEMBASE - (card * VLEMEMSIZE);
+		if (bus_space_map(iot, addr, VLEMEMSIZE, BUS_SPACE_MAP_LINEAR,
+		    &memh) != 0) {
+			printf(": can't map buffers!\n");
+			bus_space_unmap(iot, ioh, VLEREGSIZE);
+			return;
+		}
+		lesc->sc_r1 = (void *)bus_space_vaddr(iot, ioh);
 		lesc->sc_ipl = ca->ca_ipl;
 		lesc->sc_vec = ca->ca_vec;
+
+		sc->sc_mem = (void *)bus_space_vaddr(iot, memh);
 		sc->sc_memsize = VLEMEMSIZE;
+		sc->sc_addr = addr & 0x00ffffff;
 		sc->sc_conf3 = LE_C3_BSWP;
 		sc->sc_hwreset = vlereset;
 		sc->sc_rdcsr = vlerdcsr;
