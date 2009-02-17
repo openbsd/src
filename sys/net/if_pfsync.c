@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.106 2009/02/17 23:45:43 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.107 2009/02/17 23:46:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -886,7 +886,6 @@ pfsync_upd_tcp(struct pf_state *st, struct pfsync_state_peer *src,
 int
 pfsync_in_upd(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 {
-//	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_state *sa, *sp;
 	struct pf_state_cmp id_key;
 	struct pf_state_key *sk;
@@ -979,7 +978,6 @@ pfsync_in_upd(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 int
 pfsync_in_upd_c(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 {
-//	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_upd_c *ua, *up;
 	struct pf_state_key *sk;
 	struct pf_state_cmp id_key;
