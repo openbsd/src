@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.71 2009/02/15 13:12:19 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.72 2009/02/17 23:43:57 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -63,10 +63,6 @@
 #define PATH_RUNQUEUE		"/runqueue"
 #define PATH_RUNQUEUEHIGH	"/runqueue-high"
 #define PATH_RUNQUEUELOW	"/runqueue-low"
-
-/* used by newaliases */
-#define	PATH_ALIASES		"/etc/mail/aliases"
-#define	PATH_ALIASESDB		"/etc/mail/aliases.db"
 
 /* number of MX records to lookup */
 #define MXARRAYSIZE	5

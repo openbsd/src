@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.8 2009/02/14 18:37:12 jacekm Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.9 2009/02/17 23:43:57 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -37,6 +37,8 @@
 
 #include "smtpd.h"
 
+#define	PATH_ALIASES	"/etc/mail/aliases"
+
 extern char *__progname;
 
 __dead void	usage(void);
@@ -44,6 +46,8 @@ int		parse_map(char *);
 int		parse_entry(char *, size_t, size_t);
 int		make_plain(DBT *, char *);
 int		make_aliases(DBT *, char *);
+
+char		*conf_aliases(char *);
 
 DB	*db;
 char	*source;
@@ -60,21 +64,43 @@ enum output_type {
 	T_ALIASES
 } type;
 
+/*
+ * Stub functions so that makemap compiles using minimum object files.
+ */
+void
+purge_config(struct smtpd *env, u_int8_t what)
+{
+	bzero(env, sizeof(struct smtpd));
+}
+
+int
+ssl_load_certfile(struct smtpd *env, const char *name)
+{
+	return (0);
+}
+
 int
 main(int argc, char *argv[])
 {
 	char	 dbname[MAXPATHLEN];
 	char	*opts;
+	char	*conf;
 	int	 ch;
 
+	log_init(1);
+
 	mode = strcmp(__progname, "newaliases") ? P_MAKEMAP : P_NEWALIASES;
+	conf = CONF_FILE;
 	type = T_PLAIN;
 	opts = "ho:t:";
 	if (mode == P_NEWALIASES)
-		opts = "h";
+		opts = "f:h";
 
 	while ((ch = getopt(argc, argv, opts)) != -1) {
 		switch (ch) {
+		case 'f':
+			conf = optarg;
+			break;
 		case 'o':
 			oflag = optarg;
 			break;
@@ -97,7 +123,7 @@ main(int argc, char *argv[])
 		if (argc != 0)
 			usage();
 		type = T_ALIASES;
-		source = PATH_ALIASES;
+		source = conf_aliases(conf);
 	} else {
 		if (argc != 1)
 			usage();
@@ -287,11 +313,37 @@ error:
 	return 0;
 }
 
+char *
+conf_aliases(char *cfgpath)
+{
+	struct smtpd	 env;
+	struct map	*map;
+	char		*path;
+	char		*p;
+
+	if (parse_config(&env, cfgpath, 0))
+		exit(1);
+
+	map = map_findbyname(&env, "aliases");
+	if (map == NULL)
+		return (PATH_ALIASES);
+
+	path = strdup(map->m_config);
+	if (path == NULL)
+		err(1, NULL);
+	p = strstr(path, ".db");
+	if (p == NULL || p[3] != '\0')
+		errx(1, "%s: %s: no .db suffix present", cfgpath, path);
+	*p = '\0';
+
+	return (path);
+}
+
 void
 usage(void)
 {
 	if (mode == P_NEWALIASES)
-		fprintf(stderr, "usage: %s\n", __progname);
+		fprintf(stderr, "usage: %s [-f file]\n", __progname);
 	else
 		fprintf(stderr, "usage: %s [-t type] [-o dbfile] file\n",
 		    __progname);
