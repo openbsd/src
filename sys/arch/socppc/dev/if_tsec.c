@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.20 2009/01/30 13:04:28 kettenis Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.21 2009/02/17 20:57:23 jasper Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -559,6 +559,7 @@ tsec_mii_readreg(struct device *self, int phy, int reg)
 		v = tsec_read(sc, TSEC_MIIMIND);
 		if ((v & (TSEC_MIIMIND_NOTVALID | TSEC_MIIMIND_BUSY)) == 0)
 			return (tsec_read(sc, TSEC_MIIMSTAT));
+		delay(10);
 	}
 
 	printf("%s: mii_read timeout\n", sc->sc_dev.dv_xname);
@@ -578,6 +579,7 @@ tsec_mii_writereg(struct device *self, int phy, int reg, int val)
 		v = tsec_read(sc, TSEC_MIIMIND);
 		if ((v & TSEC_MIIMIND_BUSY) == 0)
 			return;
+		delay(10);
 	}
 
 	printf("%s: mii_write timeout\n", sc->sc_dev.dv_xname);
