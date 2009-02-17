@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.13 2008/12/17 09:17:47 jmc Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.14 2009/02/17 16:48:11 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 17 2008 $
+.Dd $Mdocdate: February 17 2009 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -81,14 +81,9 @@ when upgrading from binary sets.
 When run in
 .Em automatic
 mode
-.Pq Fl a ,
+.Pq Fl a
 .Nm
-will skip files with identical CVS Id, install missing ones and run commands
-associated with the following special files if they were modified:
-.Xr aliases 5 ,
-.Xr login.conf 5 ,
-.Xr MAKEDEV 8 ,
-.Xr passwd 5 .
+will skip files with identical CVS Id and install missing ones.
 In
 .Em manual
 mode (the default unless
@@ -151,9 +146,8 @@ The options are as follows:
 Automatic mode.
 If this option is specified,
 .Nm
-will automatically install missing files,
-create databases and device nodes,
-and will disable strict file comparison when possible (using CVS Ids).
+will automatically install missing files and disable strict file
+comparison when possible (using CVS Ids).
 .It Fl b
 Batch mode.
 If this option is specified,

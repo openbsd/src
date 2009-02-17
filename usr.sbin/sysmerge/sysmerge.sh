@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.28 2009/02/17 10:57:59 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.29 2009/02/17 16:48:11 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -425,36 +425,21 @@ do_post() {
 	fi
 
 	if [ "${NEED_CAP_MKDB}" ]; then
-		echo -n "===> You installed a new ${DESTDIR}/etc/login.conf file, "
-		if [ "${AUTOMODE}" ]; then
-			echo "running cap_mkdb"
-			cap_mkdb ${DESTDIR}/etc/login.conf
-		else
-			echo "\n    rebuild your login.conf database by running the following command as root:"
-			echo "    'cap_mkdb ${DESTDIR}/etc/login.conf'"
-		fi
+		echo -n "===> A new ${DESTDIR}/etc/login.conf file was installed, "
+		echo "running cap_mkdb..."
+		cap_mkdb ${DESTDIR}/etc/login.conf
 	fi
 
 	if [ "${NEED_PWD_MKDB}" ]; then
 		echo -n "===> A new ${DESTDIR}/etc/master.passwd file was installed, "
-		if [ "${AUTOMODE}" ]; then
-			echo "running pwd_mkdb"
-			pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd
-		else
-			echo "\n    rebuild your password files by running the following command as root:"
-			echo "    'pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd'"
-		fi
+		echo "running pwd_mkdb..."
+		pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd
 	fi
 
 	if [ "${NEED_MAKEDEV}" ]; then
 		echo -n "===> A new ${DESTDIR}/dev/MAKEDEV script was installed, "
-		if [ "${AUTOMODE}" ]; then
-			echo "running MAKEDEV"
-			cd ${DESTDIR}/dev && /bin/sh MAKEDEV all
-		else
-			echo "\n    rebuild your device nodes by running the following command as root:"
-			echo "    'cd ${DESTDIR}/dev && /bin/sh MAKEDEV all'"
-		fi
+		echo "running MAKEDEV..."
+		cd ${DESTDIR}/dev && /bin/sh MAKEDEV all
 	fi
 
 	if [ "${NEED_NEWALIASES}" ]; then
@@ -463,18 +448,15 @@ do_post() {
 			echo "\n     but the newaliases command is limited to the directories configured"
 			echo "     in sendmail.cf.  Make sure to create your aliases database by"
 			echo "     hand when your sendmail configuration is done."
-		elif [ "${AUTOMODE}" ]; then
-			echo "running newaliases"
-			newaliases
 		else
-			echo "\n    rebuild your aliases database by running the following command as root:"
-			echo "    'newaliases'"
+			echo "running newaliases..."
+			newaliases
 		fi
 	fi
 
 	clean_src
 
-	echo "===> Making sure your directory hierarchy has correct perms, running mtree"
+	echo "===> Making sure your directory hierarchy has correct perms, running mtree..."
 	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U 1> /dev/null
 
 	FILES_IN_WRKDIR=`find ${WRKDIR} -type f -size +0 2>/dev/null`
