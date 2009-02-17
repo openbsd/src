@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.104 2009/02/17 20:59:29 chl Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.105 2009/02/17 23:43:47 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -270,6 +270,8 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 	TAILQ_INIT(&sc->sc_upd_req_list);
 	TAILQ_INIT(&sc->sc_deferrals);
 	sc->sc_deferred = 0;
+
+	TAILQ_INIT(&sc->sc_tdb_q);
 
 	sc->sc_len = PFSYNC_MINPKT;
 	sc->sc_maxupdates = 128;
