@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.9 2009/02/17 23:43:57 jacekm Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.10 2009/02/17 23:50:58 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -162,7 +162,9 @@ main(int argc, char *argv[])
 		goto bad;
 	}
 
-	if (dbputs == 0)
+	if (mode == P_NEWALIASES)
+		printf("%s: %d aliases\n", source, dbputs);
+	else if (dbputs == 0)
 		warnx("warning: empty map created: %s", oflag);
 
 	return 0;
@@ -183,6 +185,15 @@ parse_map(char *filename)
 	fp = fopen(filename, "r");
 	if (fp == NULL) {
 		warn("%s", filename);
+		return 0;
+	}
+
+	if (flock(fileno(fp), LOCK_SH|LOCK_NB) == -1) {
+		if (errno == EWOULDBLOCK)
+			warnx("%s is locked", filename);
+		else
+			warn("%s: flock", filename);
+		fclose(fp);
 		return 0;
 	}
 
