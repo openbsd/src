@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.27 2008/12/16 22:23:55 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.28 2009/02/17 10:57:59 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -460,9 +460,9 @@ do_post() {
 	if [ "${NEED_NEWALIASES}" ]; then
 		echo -n "===> A new ${DESTDIR}/etc/mail/aliases file was installed, "
 		if [ "${DESTDIR}" ]; then
-			echo "\n    but the newaliases command is limited to the directories configured"
-			echo "    in sendmail.cf.  Make sure to create your aliases database by"
-			echo "    hand when your sendmail configuration is done."
+			echo "\n     but the newaliases command is limited to the directories configured"
+			echo "     in sendmail.cf.  Make sure to create your aliases database by"
+			echo "     hand when your sendmail configuration is done."
 		elif [ "${AUTOMODE}" ]; then
 			echo "running newaliases"
 			newaliases
