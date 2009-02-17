@@ -1,36 +1,36 @@
-dnl	$OpenBSD: hardware,v 1.15 2008/08/06 18:23:56 miod Exp $
+dnl	$OpenBSD: hardware,v 1.16 2009/02/17 22:37:43 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- MVME147 - Motorola with 68030 and 68881
 	- MVME162 - Motorola with 68040 and IndustryPack slots
 	- MVME167 - Motorola with 68040
-dnl 172 support is not complete
-dnl	- MVME172 - Motorola with 68060 and IndustryPack slots
+dnl 172 support is not tested
+	- MVME172 - Motorola with 68060 and IndustryPack slots
 	- MVME177 - Motorola with 68060
 
-The minimal configuration requires 8MB of RAM and ~160MB of disk space. To
+The minimal configuration requires 12MB of RAM and ~160MB of disk space. To
 install the entire system requires much more disk space, and to compile the
-system, more RAM is recommended.  Note that until you have 16MB of RAM,
+system, more RAM is recommended.  Note that until you have 32MB of RAM,
 getting more RAM is more important than getting a faster CPU board.
 
 Supported devices {:-include-:}:
 
 MVME147:
 	serial ports:
-		on-board ttya-ttyd
+		on-board ttya-ttyd (zs)
 	Ethernet:
 		on-board AMD 7990 Lance Ethernet (le)
 	SCSI:
-		on-board WD33C93 controller
+		on-board WD33C93 controller (wdsc)
 	VMEbus:
 		not supported (some cards have issues)
 
 MVME162, MVME172:
 	serial ports:
-		on-board tty00-03 - Zilog Z85230 SCC
+		on-board tty00-03 - Zilog Z85230 SCC (zs)
 	Ethernet:
 		on-board Intel 82596CA Ethernet (ie)
 	SCSI:
-		on-board NCR53c710 controller
+		on-board NCR53c710 controller (osiop)
 	VMEbus:
 		drivers for short I/O access (untested)
 	Flash:
@@ -45,21 +45,22 @@ MVME162, MVME172:
 
 MVME167, MVME177:
 	serial ports:
-		on-board tty00 - tty03 - Cirrus Logic CD2401
+		on-board tty00 - tty03 - Cirrus Logic CD2401 (cl)
 	Ethernet:
 		on-board Intel 82596CA Ethernet (ie)
 	SCSI:
-		on-board NCR53c710 controller
+		on-board NCR53c710 controller (osiop)
 	SRAM:
 		supported
 	VMEbus:
 		supported
 		
-
 Faithful clones of the above boards should also work.
 
-Additional VMEbus devices supported by the OpenBSD/MACHINE port {:-include-:}:
+Additional VMEbus devices:
 
-	MVME328 SCSI controller (vs)
-
-	MVME376 VME bus Ethernet (le)
+	MVME327A SCSI and floppy Controller (vsbic), currently limited
+	    to the SCSI interface only, and supported on 68060 systems
+	MVME328 High Performance SCSI Controller (vs)
+dnl	MVME332XT High Performance Serial I/O Controller (vx)
+	MVME376 Ethernet Communications Controller (le)

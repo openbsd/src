@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.31 2008/08/05 22:58:01 miod Exp $
+dnl	$OpenBSD: install,v 1.32 2009/02/17 22:37:43 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -203,11 +203,11 @@ and send their contents over the serial link, such as cu(1) and tip(1) - both
 being available on OpenBSD - the MACHINE workstation should be put in
 S-Records receive mode, with the LO command at the BUG prompt:
 
-    147-Bug> LO
+    147-Diag> LO
 
 If this command prints an error message and returns to the BUG prompt
 immediately, it might be necessary to switch directories, using the SD
-command, before retrying.
+command (the prompt will change from 147-Bug to 147-Diag), before retrying.
 
 Then, the contents of the ``sboot'' file should be sent From the terminal
 emulator. Depending on the speed of the serial link, this will take some
