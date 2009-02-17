@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.68 2008/06/09 16:07:00 djm Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.69 2009/02/17 18:38:31 oga Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -321,7 +321,6 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 
 	bzero(&cse->uio, sizeof(cse->uio));
 	cse->uio.uio_iovcnt = 1;
-	cse->uio.uio_resid = 0;
 	cse->uio.uio_segflg = UIO_SYSSPACE;
 	cse->uio.uio_rw = UIO_WRITE;
 	cse->uio.uio_procp = p;
@@ -329,8 +328,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 	bzero(&cse->iovec, sizeof(cse->iovec));
 	cse->uio.uio_iov[0].iov_len = cop->len;
 	cse->uio.uio_iov[0].iov_base = malloc(cop->len, M_XDATA, M_WAITOK);
-	for (i = 0; i < cse->uio.uio_iovcnt; i++)
-		cse->uio.uio_resid += cse->uio.uio_iov[0].iov_len;
+	cse->uio.uio_resid = cse->uio.uio_iov[0].iov_len;
 
 	/* number of requests, not logical and */
 	crp = crypto_getreq((cse->txform != NULL) + (cse->thash != NULL));
