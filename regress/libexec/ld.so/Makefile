@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.9 2007/07/31 20:33:53 kurt Exp $
+#	$OpenBSD: Makefile,v 1.10 2009/02/17 16:40:51 jsing Exp $
 
-SUBDIR+= elf hidden weak dlsym dlopen dlclose
+SUBDIR+= elf hidden weak dlsym dlopen dlclose lazy
 #SUBDIR+= constructor 
 SUBDIR+= link-order edgecases
 
