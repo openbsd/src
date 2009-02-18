@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.56 2009/02/18 20:45:49 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.57 2009/02/18 20:46:37 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -785,6 +785,11 @@ Lisaerr:
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 Lisberr1:
 	clrw	sp@			| re-clear pad word
+	tstl	_C_LABEL(nofault)	| device probe?
+	jeq	Lisberr			| it is a bus error
+	movl	_C_LABEL(nofault),sp@-	| yes,
+	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
+	/* NOTREACHED */
 Lisberr:
 	movl	#T_BUSERR,sp@-		| mark bus error
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
