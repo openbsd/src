@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.9 2009/02/10 18:35:44 damien Exp $
+#	$OpenBSD: GENERIC,v 1.10 2009/02/18 12:29:18 jasper Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -62,6 +62,7 @@ uath*	at uhub?		# Atheros AR5005UR/AR5005UX
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
+zyd*	at uhub?		# Zydas ZD1211
 
 sd*		at scsibus?
 
