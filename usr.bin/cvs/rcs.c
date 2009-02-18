@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.284 2009/02/15 13:40:33 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.285 2009/02/18 20:08:24 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3334,7 +3334,7 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct cvs_lines *lines,
 				 */
 				if (strftime(buf, sizeof(buf),
 				    (rdp->rd_date.tm_mday < 10) ?
-				        "%B%e %Y " : "%B %e %Y",
+				        "%B%e %Y " : "%B %e %Y ",
 				    &rdp->rd_date) == 0)
 					fatal("rcs_kwexp_line: strftime "
 					    "failure");
