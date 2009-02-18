@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.1 2009/02/17 22:28:41 miod Exp $	*/
+/*      $OpenBSD: bus_dma.c,v 1.2 2009/02/18 20:48:55 miod Exp $	*/
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -55,7 +55,7 @@ int     _bus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 int	_bus_dmamem_alloc_range(bus_dma_tag_t, bus_size_t, bus_size_t,
 	    bus_size_t, bus_dma_segment_t *, int, int *, int, paddr_t, paddr_t);
 
-void	cachectl_pa(paddr_t, psize_t, int);
+int	cachectl_pa(paddr_t, psize_t, int);
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -426,11 +426,8 @@ bus_dmamap_sync(t, map, offset, len, op)
 	u_int nsegs;
 	bus_dma_segment_t *seg;
 
-	if (op & BUS_DMASYNC_PREREAD)
-		op = CC_PURGE;
-	else if (op & BUS_DMASYNC_PREWRITE)
-		op = CC_FLUSH;
-	else
+	/* nothing to do for POSTWRITE */
+	if ((op & ~BUS_DMASYNC_POSTWRITE) == 0)
 		return;
 
 	nsegs = map->dm_nsegs;
@@ -447,7 +444,8 @@ bus_dmamap_sync(t, map, offset, len, op)
 			if (sublen > len)
 				sublen = len;
 
-			cachectl_pa(addr, sublen, op);
+			if (cachectl_pa(addr, sublen, op) != 0)
+				break;
 
 			offset = 0;
 			len -= sublen;
@@ -680,49 +678,73 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 }
 
 /*
- * A variant of cachectl(), but which directly takes physical addresses, and
- * only CC_PURGE or CC_FLUSH.
+ * Helper function for bus_dmamap_sync(). Returns nonzero if the whole
+ * cache has been affected.
  */
-void
-cachectl_pa(paddr_t pa, psize_t len, int req)
+int
+cachectl_pa(paddr_t pa, psize_t len, int op)
 {
 #if defined(M68040) || defined(M68060)
 	if (mmutype <= MMU_68040) {
 		int inc;
 		paddr_t end;
 
-		if (len > 2 * PAGE_SIZE) {
+		/*
+		 * 68040 and 68060 only have the ``write back and
+		 * invalidate'' (flush) and ``invalidate'' cache operations.
+		 *
+		 * The logic is thus:
+		 * BUS_DMASYNC_PREREAD: flush D$, purge I$
+		 * BUS_DMASYNC_PREWRITE: flush D$ (only write back necessary)
+		 * BUS_DMASYNC_POSTREAD: purge D$ and I$
+		 */
+
+		/*
+		 * If the size is larger than two pages, don't try
+		 * to be smart and operate on the whole cache.
+		 * Remember the largest L1 cache is 8KB anyway (on 68060).
+		 */
+		if (len >= 2 * PAGE_SIZE) {
 			DCFA();
-			return;
+			if (op & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTREAD))
+				ICPA();
+			return 1;
 		}
 
 		end = pa + len;
 		if (len <= 1024) {
-			if (((pa | len) & 0x0f) != 0)
-				req = CC_FLUSH;
 			pa = pa & ~0x0f;
 			inc = 16;
 		} else {
-			if (((pa | len) & PAGE_MASK) != 0)
-				req = CC_FLUSH;
 			pa = pa & ~PAGE_MASK;
 			inc = PAGE_SIZE;
 		}
 		do {
-			if (req == CC_PURGE) {
-				if (inc == 16)
-					DCPL(pa);
-				else
-					DCPP(pa);
-			} else {
+			if (op & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) {
 				if (inc == 16)
 					DCFL(pa);
 				else
 					DCFP(pa);
+			} else {
+				if (inc == 16)
+					DCPL(pa);
+				else
+					DCPP(pa);
+			}
+			if (op & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTREAD)) {
+				if (inc == 16)
+					ICPL(pa);
+				else
+					ICPP(pa);
 			}
 			pa += inc;
 		} while (pa < end);
-	} else
+
+		return 0;
+	}
 #endif
-		DCIA();
+
+	DCIA();
+	ICIA();
+	return 1;
 }
