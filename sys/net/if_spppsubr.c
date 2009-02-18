@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.74 2009/02/16 23:24:01 deraadt Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.75 2009/02/18 08:36:20 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -963,6 +963,16 @@ sppp_detach(struct ifnet *ifp)
 	for (i = 0; i < IDX_COUNT; i++)
 		UNTIMEOUT((cps[i])->TO, (void *)sp, sp->ch[i]);
 	UNTIMEOUT(sppp_pap_my_TO, (void *)sp, sp->pap_my_to_ch);
+
+	/* release authentication data */
+	if (sp->myauth.name != NULL)
+		free(sp->myauth.name, M_DEVBUF);
+	if (sp->myauth.secret != NULL)
+		free(sp->myauth.secret, M_DEVBUF);
+	if (sp->hisauth.name != NULL)
+		free(sp->hisauth.name, M_DEVBUF);
+	if (sp->hisauth.secret != NULL)
+		free(sp->hisauth.secret, M_DEVBUF);
 }
 
 /*
