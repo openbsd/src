@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.25 2009/02/18 00:17:39 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.26 2009/02/18 00:29:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -322,7 +322,6 @@ smtp_dispatch_lka(int sig, short event, void *p)
 			    MAXHOSTNAMELEN);
 
 			session_init(s->s_l, s);
-			session_pickup(s, NULL);
 
 			break;
 		}

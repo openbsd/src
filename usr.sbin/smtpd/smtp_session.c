@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.55 2009/02/18 00:17:39 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.56 2009/02/18 00:29:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -762,9 +762,13 @@ session_init(struct listener *l, struct session *s)
 
 	if (l->flags & F_SSMTP) {
 		log_debug("session_init: initializing ssl");
+		s->s_flags |= F_EVLOCKED;
+		bufferevent_disable(s->s_bev, EV_READ|EV_WRITE);
 		ssl_session_init(s);
 		return;
 	}
+
+	session_pickup(s, NULL);
 }
 
 void
