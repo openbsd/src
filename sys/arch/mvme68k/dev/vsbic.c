@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbic.c,v 1.2 2009/02/18 20:48:53 miod Exp $	*/
+/*	$OpenBSD: vsbic.c,v 1.3 2009/02/18 20:49:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -922,7 +922,8 @@ vsbic_cmd_ccb(struct vsbic_softc *sc, struct vsbic_cmd *cmd)
 {
 	struct vsbic_ccb *ccb, *prev;
 
-	for (prev = NULL, ccb = sc->sc_ccb_active; ccb != NULL; prev = ccb++) {
+	for (prev = NULL, ccb = sc->sc_ccb_active; ccb != NULL;
+	    prev = ccb, ccb = ccb->ccb_next) {
 		if (ccb->ccb_cmd == cmd) {
 			if (prev == NULL)
 				sc->sc_ccb_active = ccb->ccb_next;
