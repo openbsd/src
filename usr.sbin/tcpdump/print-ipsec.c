@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.12 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.13 2009/02/18 01:53:06 mcbride Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Id: print-ipsec.c,v 1.12 2007/10/07 16:41:05 deraadt Exp $ (XXX)";
+    "@(#) $Id: print-ipsec.c,v 1.13 2009/02/18 01:53:06 mcbride Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -233,7 +233,7 @@ esp_print (register const u_char *bp, register u_int len,
 	}
 	esp = (const struct esp_hdr *)bp;
 
-	printf(" spi 0x%08X seq %d len %d",
+	printf(" spi 0x%08x seq %d len %d",
 	    ntohl(esp->esp_spi), ntohl(esp->esp_seq), len);
 
 	if (espinit)
