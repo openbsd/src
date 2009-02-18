@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 2009/01/28 12:56:46 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 2009/02/18 22:39:12 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -120,7 +120,7 @@ recipient_to_path(struct path *path, char *recipient)
 	char *hostname;
 
 	username = recipient;
-	hostname = strchr(username, '@');
+	hostname = strrchr(username, '@');
 
 	if (username[0] == '\0') {
 		*path->user = '\0';
@@ -145,4 +145,47 @@ recipient_to_path(struct path *path, char *recipient)
 		return 0;
 
 	return 1;
+}
+
+int
+valid_localpart(char *s)
+{
+#define IS_ATEXT(c)     (isalnum(c) || strchr("!#$%&'*+-/=?^_`{|}~", (c)))
+nextatom:
+        if (! IS_ATEXT(*s) || *s == '\0')
+                return 0;
+        while (*(++s) != '\0') {
+                if (*s == '.')
+                        break;
+                if (IS_ATEXT(*s))
+                        continue;
+                return 0;
+        }
+        if (*s == '.') {
+                s++;
+                goto nextatom;
+        }
+        return 1;
+}
+
+int
+valid_domainpart(char *s)
+{
+nextsub:
+        if (!isalnum(*s))
+                return 0;
+        while (*(++s) != '\0') {
+                if (*s == '.')
+                        break;
+                if (isalnum(*s) || *s == '-')
+                        continue;
+                return 0;
+        }
+        if (s[-1] == '-')
+                return 0;
+        if (*s == '.') {
+		s++;
+                goto nextsub;
+	}
+        return 1;
 }

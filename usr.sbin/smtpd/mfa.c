@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.13 2009/02/18 16:42:30 jacekm Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.14 2009/02/18 22:39:12 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -26,6 +26,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <ctype.h>
 #include <event.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -45,10 +46,13 @@ void		mfa_setup_events(struct smtpd *);
 void		mfa_disable_events(struct smtpd *);
 void		mfa_timeout(int, short, void *);
 
+void		mfa_test_mail(struct smtpd *, struct message *, int);
 void		mfa_test_rcpt(struct smtpd *, struct message_recipient *, int);
 int		mfa_ruletest_rcpt(struct smtpd *, struct path *, struct sockaddr_storage *);
 int		mfa_check_source(struct map *, struct sockaddr_storage *);
 int		mfa_match_mask(struct sockaddr_storage *, struct netaddr *);
+
+int		strip_source_route(char *, size_t);
 
 void
 mfa_sig_handler(int sig, short event, void *p)
@@ -145,20 +149,9 @@ mfa_dispatch_smtp(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_MFA_MAIL: {
-			struct message		*m;
-			struct submit_status	 ss;
-
-			m = imsg.data;
-			log_debug("mfa_dispatch_smtp: testing return path");
-			ss.id = m->id;
-			ss.code = 250;
-			ss.u.path = m->sender;
-
-			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_MAIL, 0,
-			    0, -1, &ss, sizeof(ss));
+		case IMSG_MFA_MAIL:
+			mfa_test_mail(env, imsg.data, PROC_SMTP);
 			break;
-		}
 		case IMSG_MFA_RCPT:
 			mfa_test_rcpt(env, imsg.data, PROC_SMTP);
 			break;
@@ -406,6 +399,41 @@ msg_cmp(struct message *m1, struct message *m2)
 }
 
 void
+mfa_test_mail(struct smtpd *env, struct message *m, int sender)
+{
+	struct submit_status	 ss;
+
+	ss.id = m->id;
+	ss.code = 530;
+	ss.u.path = m->sender;
+
+	if (strip_source_route(ss.u.path.user, sizeof(ss.u.path.user)))
+		goto refuse;
+
+	if (! valid_localpart(ss.u.path.user) ||
+	    ! valid_domainpart(ss.u.path.domain)) {
+		/*
+		 * "MAIL FROM:<>" is the exception we allow.
+		 */
+		if (!(ss.u.path.user[0] == '\0' && ss.u.path.domain[0] == '\0'))
+			goto refuse;
+	}
+
+	/* Current policy is to allow all well-formed addresses. */
+	goto accept;
+
+refuse:
+	imsg_compose(env->sc_ibufs[sender], IMSG_MFA_MAIL, 0, 0, -1, &ss,
+	    sizeof(ss));
+	return;
+
+accept:
+	ss.code = 250;
+	imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_MAIL, 0,
+	    0, -1, &ss, sizeof(ss));
+}
+
+void
 mfa_test_rcpt(struct smtpd *env, struct message_recipient *mr, int sender)
 {
 	struct submit_status	 ss;
@@ -418,12 +446,19 @@ mfa_test_rcpt(struct smtpd *env, struct message_recipient *mr, int sender)
 
 	ss.flags = mr->flags;
 
+	strip_source_route(ss.u.path.user, sizeof(ss.u.path.user));
+
+	if (! valid_localpart(ss.u.path.user) ||
+	    ! valid_domainpart(ss.u.path.domain))
+		goto refuse;
+
 	if (sender == PROC_SMTP && (ss.flags & F_MESSAGE_AUTHENTICATED))
 		goto accept;
 
 	if (mfa_ruletest_rcpt(env, &ss.u.path, &ss.ss))
 		goto accept;
 		
+refuse:
 	imsg_compose(env->sc_ibufs[sender], IMSG_MFA_RCPT, 0, 0, -1, &ss,
 	    sizeof(ss));
 	return;
@@ -537,6 +572,21 @@ mfa_match_mask(struct sockaddr_storage *ss, struct netaddr *ssmask)
 	}
 
 	return (0);
+}
+
+int
+strip_source_route(char *buf, size_t len)
+{
+	char *p;
+
+	p = strchr(buf, ':');
+	if (p != NULL) {
+		p++;
+		memmove(buf, p, strlen(p) + 1);
+		return 1;
+	}
+
+	return 0;
 }
 
 SPLAY_GENERATE(msgtree, message, nodes, msg_cmp);
