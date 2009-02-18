@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vsbic.4,v 1.2 2009/02/18 07:12:21 miod Exp $
+.\"	$OpenBSD: vsbic.4,v 1.3 2009/02/18 20:50:01 miod Exp $
 .\"
 .\" Copyright (c) 2009 Miodrag Vallat.
 .\"
@@ -65,8 +65,3 @@ at the top, the supported configurations are:
 Due to firmware limitations, SCSI commands using command blocks larger than
 12 bytes are not supported.
 Therefore, only the first 2TB of SCSI disks are accessible.
-.Pp
-The
-.Nm
-driver refuses to attach on systems with 68060 processors at the moment,
-due to cache memory management bugs.
