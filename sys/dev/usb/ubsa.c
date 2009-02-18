@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.43 2008/12/11 10:46:33 fkr Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.44 2009/02/18 17:15:21 deraadt Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -215,8 +215,6 @@ const struct usb_devno ubsa_devs[] = {
 	{ USB_VENDOR_ETEK, USB_PRODUCT_ETEK_1COM },
 	/* GoHubs GO-COM232 */
 	{ USB_VENDOR_GOHUBS, USB_PRODUCT_GOHUBS_GOCOM232 },
-	/* Novatel Wireless U740 */
-	{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_MERLINU740 },
 	/* Peracom */
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1 },
 	/* Qualcomm Inc. ZTE CMDMA MSM modem */
