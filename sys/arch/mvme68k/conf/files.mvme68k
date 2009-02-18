@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.30 2009/02/17 22:28:38 miod Exp $
+#	$OpenBSD: files.mvme68k,v 1.31 2009/02/18 20:48:00 miod Exp $
 
 # config file for mvme68k
 
@@ -25,7 +25,7 @@ file	arch/mvme68k/dev/mc.c			mc needs-count
 
 device	clock
 attach	clock at pcc, mc, pcctwo
-file	arch/mvme68k/dev/clock.c		clock
+file	arch/mvme68k/dev/clock.c
 
 device	zs: tty
 attach	zs at pcc, mc
