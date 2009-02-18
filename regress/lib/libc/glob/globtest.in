@@ -59,3 +59,6 @@ fake/bin/sha1
 fake/bin/sha256
 fake/bin/sha384
 fake/bin/sha512
+
+[fake/bin/ca[a-z]] <0x0>
+fake/bin/cat
