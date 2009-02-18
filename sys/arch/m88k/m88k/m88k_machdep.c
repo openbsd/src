@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.44 2009/02/16 23:03:33 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.45 2009/02/18 21:07:59 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -153,7 +153,7 @@ setregs(p, pack, stack, retval)
 	 * We want to start executing at pack->ep_entry. The way to
 	 * do this is force the processor to fetch from ep_entry.
 	 *
-	 * However, since we will return throug m{88100,88110}_syscall(),
+	 * However, since we will return through m{88100,88110}_syscall(),
 	 * we need to setup registers so that the success return, when
 	 * ``incrementing'' the instruction pointers, will cause the
 	 * binary to start at the expected address.
@@ -562,8 +562,6 @@ cpu_emergency_disable()
  * Since we are only competing against other processors for rwlocks,
  * it is not necessary in this case to disable interrupts to prevent
  * reentrancy on the same processor.
- *
- * Updates need to be done with xmem to ensure they are atomic.
  */
 
 __cpu_simple_lock_t rw_cas_spinlock = __SIMPLELOCK_UNLOCKED;
