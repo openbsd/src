@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.107 2009/02/17 23:46:25 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.108 2009/02/18 10:07:24 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1067,8 +1067,6 @@ pfsync_in_upd_c(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 	return (len);
 }
 
-int pfsync_req_del;
-
 int
 pfsync_in_ureq(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 {
@@ -1101,9 +1099,8 @@ pfsync_in_ureq(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 				pfsyncstats.pfsyncs_badstate++;
 				continue;
 			}
-
-			if (st->timeout == PFTM_UNLINKED)
-				pfsync_req_del++;
+			if (ISSET(st->state_flags, PFSTATE_NOSYNC))
+				continue;
 
 			pfsync_update_state_req(st);
 		}
