@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.55 2007/10/10 15:53:52 art Exp $ */
+/*	$OpenBSD: locore.s,v 1.56 2009/02/18 20:45:49 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1488,6 +1488,7 @@ ENTRY(DCIU)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040 or 68060?
 	jgt	1f			| no, skip
 	.word	0xf478			| cpusha dc
+1:
 #endif
 	rts
 
