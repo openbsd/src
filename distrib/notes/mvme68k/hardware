@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.16 2009/02/17 22:37:43 miod Exp $
+dnl	$OpenBSD: hardware,v 1.17 2009/02/18 20:50:58 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- MVME147 - Motorola with 68030 and 68881
 	- MVME162 - Motorola with 68040 and IndustryPack slots
@@ -60,7 +60,7 @@ Faithful clones of the above boards should also work.
 Additional VMEbus devices:
 
 	MVME327A SCSI and floppy Controller (vsbic), currently limited
-	    to the SCSI interface only, and supported on 68060 systems
+	    to the SCSI interface only
 	MVME328 High Performance SCSI Controller (vs)
 dnl	MVME332XT High Performance Serial I/O Controller (vx)
 	MVME376 Ethernet Communications Controller (le)
