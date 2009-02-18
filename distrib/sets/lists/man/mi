@@ -1579,7 +1579,8 @@
 ./usr/share/man/cat4/mvme68k/kmem.0
 ./usr/share/man/cat4/mvme68k/le.0
 ./usr/share/man/cat4/mvme68k/mem.0
-./usr/share/man/cat4/mvme68k/ssh.0
+./usr/share/man/cat4/mvme68k/vs.0
+./usr/share/man/cat4/mvme68k/vsbic.0
 ./usr/share/man/cat4/mvme88k
 ./usr/share/man/cat4/mvme88k/autoconf.0
 ./usr/share/man/cat4/mvme88k/bussw.0
