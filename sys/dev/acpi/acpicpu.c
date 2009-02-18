@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.50 2008/12/22 07:19:09 gwk Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.51 2009/02/18 03:13:49 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -41,28 +41,11 @@ int	acpicpu_match(struct device *, void *, void *);
 void	acpicpu_attach(struct device *, struct device *, void *);
 int	acpicpu_notify(struct aml_node *, int, void *);
 void	acpicpu_setperf(int);
-void	acpicpu_setperf_ppc_change(struct acpicpu_pss *, int);
 
 #define ACPI_STATE_C0		0x00
 #define ACPI_STATE_C1		0x01
 #define ACPI_STATE_C2		0x02
 #define ACPI_STATE_C3		0x03
-
-#define ACPI_PDC_REVID		0x1
-#define ACPI_PDC_SMP		0xa
-#define ACPI_PDC_MSR		0x1
-
-/* _PDC Intel capabilities flags from linux */
-#define ACPI_PDC_P_FFH		0x0001
-#define ACPI_PDC_C_C1_HALT	0x0002
-#define ACPI_PDC_T_FFH		0x0004
-#define ACPI_PDC_SMP_C1PT	0x0008
-#define ACPI_PDC_SMP_C2C3	0x0010
-#define ACPI_PDC_SMP_P_SWCOORD	0x0020
-#define ACPI_PDC_SMP_C_SWCOORD	0x0040
-#define ACPI_PDC_SMP_T_SWCOORD	0x0080
-#define ACPI_PDC_C_C1_FFH	0x0100
-#define ACPI_PDC_C_C2C3_FFH	0x0200
 
 #define FLAGS_NO_C2		0x01
 #define FLAGS_NO_C3		0x02
@@ -138,8 +121,6 @@ int	acpicpu_getpct(struct acpicpu_softc *);
 int	acpicpu_getpss(struct acpicpu_softc *);
 struct acpi_cstate *acpicpu_add_cstate(struct acpicpu_softc *, int, int, int,
     int);
-void	acpicpu_set_pdc(struct acpicpu_softc *);
-
 #if 0
 void    acpicpu_set_throttle(struct acpicpu_softc *, int);
 struct acpi_cstate *acpicpu_find_cstate(struct acpicpu_softc *, int);
@@ -188,28 +169,6 @@ acpicpu_find_cstate(struct acpicpu_softc *sc, int type)
 	return (NULL);
 }
 #endif
-
-
-void
-acpicpu_set_pdc(struct acpicpu_softc *sc) {
-	struct aml_value cmd;
-	struct aml_value res;
-	uint32_t buf[3];
-
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.type = AML_OBJTYPE_BUFFER;
-	cmd.v_buffer = (uint8_t *)&buf;
-	cmd.length = sizeof(buf);
-
-	buf[0] = ACPI_PDC_REVID;
-	buf[1] = 1;
-	buf[2] = ACPI_PDC_C_C1_HALT | ACPI_PDC_P_FFH | ACPI_PDC_C_C1_FFH
-	    | ACPI_PDC_C_C2C3_FFH | ACPI_PDC_SMP_P_SWCOORD | ACPI_PDC_SMP_C2C3
-	    | ACPI_PDC_SMP_C1PT;
-
-	aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PDC", 1, &cmd, &res);
-}
-
 
 struct acpi_cstate *
 acpicpu_add_cstate(struct acpicpu_softc *sc, int type, int latency, int power,
@@ -309,13 +268,6 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_duty_off = sc->sc_acpi->sc_fadt->duty_offset;
 	sc->sc_duty_wid = sc->sc_acpi->sc_fadt->duty_width;
-
-#if defined(amd64)
-	if (strcmp(cpu_vendor, "GenuineIntel") == 0)
-		if (cpu_ecxfeature & CPUIDECX_EST)
-			acpicpu_set_pdc(sc);
-#endif
-
 	if (!valid_throttle(sc->sc_duty_off, sc->sc_duty_wid, sc->sc_pblk_addr))
 		sc->sc_flags |= FLAGS_NOTHROTTLE;
 #ifdef ACPI_DEBUG
@@ -346,7 +298,6 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_acpi->sc_fadt->p_lvl3_lat, -1,
 		    sc->sc_pblk_addr + 5);
 	}
-
 	if (acpicpu_getpss(sc)) {
 		sc->sc_flags |= FLAGS_NOPSS;
 	} else {
@@ -391,7 +342,6 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 			    DEVNAME(sc), status, sc->sc_level);
 			if (setperf_prio < 30) {
 				cpu_setperf = acpicpu_setperf;
-				acpicpu_set_notify(acpicpu_setperf_ppc_change);
 				setperf_prio = 30;
 				acpi_hasprocfvs = 1;
 			}
@@ -585,6 +535,8 @@ acpicpu_fetch_pss(struct acpicpu_pss **pss)
 	 * XXX: According to the ACPI spec in an SMP system all processors
 	 * are supposed to support the same states. For now we pray
 	 * the bios ensures this...
+	 * XXX part deux: this needs to account for _PPC as well
+	 * when AC is removed the nr of _PSS entries can go down
 	 */
 
 	sc = acpicpu_sc[0];
@@ -610,6 +562,9 @@ acpicpu_notify(struct aml_node *node, int notify_type, void *arg)
 		if (sc->sc_notify)
 			sc->sc_notify(sc->sc_pss, sc->sc_pss_len);
 
+		/* reset performance to current percentage */
+		/* XXX will fail for amd64 for now */
+		cpu_setperf(sc->sc_level);
 		break;
 	default:
 		printf("%s: unhandled cpu event %x\n", DEVNAME(sc),
@@ -627,16 +582,6 @@ acpicpu_set_notify(void (*func)(struct acpicpu_pss *, int)) {
 	sc = acpicpu_sc[0];
 	if (sc != NULL)
 		sc->sc_notify = func;
-}
-
-void
-acpicpu_setperf_ppc_change(struct acpicpu_pss *pss, int npss) {
-	struct acpicpu_softc    *sc;
-
-	sc = acpicpu_sc[0];
-
-	if (sc != NULL)
-		cpu_setperf(sc->sc_level);
 }
 
 void
