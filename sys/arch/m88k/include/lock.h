@@ -1,6 +1,6 @@
 #ifndef	_M88K_LOCK_H_
 #define	_M88K_LOCK_H_
-/*	$OpenBSD: lock.h,v 1.6 2007/12/02 21:21:29 miod Exp $	*/
+/*	$OpenBSD: lock.h,v 1.7 2009/02/18 21:09:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat.
@@ -41,24 +41,6 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *l)
 	*l = __SIMPLELOCK_UNLOCKED;
 }
 
-static __inline__ void
-__cpu_simple_lock(__cpu_simple_lock_t *l)
-{
-	/*
-	 * The local __cpu_simple_lock_t is not declared volatile, so that
-	 * stores to it can be optimized away, since we will use a register
-	 * and only spin on it. xmem will do the right thing regardless of
-	 * the volatile qualifier.
-	 */
-	u_int old;
-
-	do {
-		old = __SIMPLELOCK_LOCKED;
-		__asm__ __volatile__
-		    ("xmem %0, %2, r0" : "+r"(old), "+m"(*l) : "r"(l));
-	} while (old != __SIMPLELOCK_UNLOCKED);
-}
-
 static __inline__ int
 __cpu_simple_lock_try(__cpu_simple_lock_t *l)
 {
@@ -73,6 +55,17 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *l)
 	    ("xmem %0, %2, r0" : "+r"(old), "+m"(*l) : "r"(l));
 
 	return (old == __SIMPLELOCK_UNLOCKED);
+}
+
+static __inline__ void
+__cpu_simple_lock(__cpu_simple_lock_t *l)
+{
+	for (;;) {
+		if (__cpu_simple_lock_try(l) != 0)
+			break;
+		while (*l != __SIMPLELOCK_UNLOCKED)
+			;	/* spin without exclusive bus access */
+	}
 }
 
 static __inline__ void
