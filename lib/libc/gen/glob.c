@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.27 2008/10/01 23:04:13 millert Exp $ */
+/*	$OpenBSD: glob.c,v 1.28 2009/02/18 15:50:27 millert Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -786,7 +786,7 @@ match(Char *name, Char *pat, Char *patend)
 				return(0);
 			if ((negate_range = ((*pat & M_MASK) == M_NOT)) != EOS)
 				++pat;
-			while (((c = *pat++) & M_MASK) != M_END)
+			while (((c = *pat++) & M_MASK) != M_END) {
 				if ((c & M_MASK) == M_CLASS) {
 					int idx = *pat & M_MASK;
 					if (idx < NCCLASSES &&
@@ -800,6 +800,7 @@ match(Char *name, Char *pat, Char *patend)
 					pat += 2;
 				} else if (c == k)
 					ok = 1;
+			}
 			if (ok == negate_range)
 				return(0);
 			break;
