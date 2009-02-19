@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.47 2009/02/17 20:22:07 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.48 2009/02/19 16:06:56 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1002,8 +1002,10 @@ ips_cmd(struct ips_softc *sc, int code, int drive, u_int32_t lba, void *data,
 		splx(s);
 	} else {
 		/* Set watchdog timer */
-		timeout_set(&xs->stimeout, ips_timeout, ccb);
-		timeout_add_sec(&xs->stimeout, IPS_TIMEOUT);
+		if (xs != NULL) {
+			timeout_set(&xs->stimeout, ips_timeout, ccb);
+			timeout_add_sec(&xs->stimeout, IPS_TIMEOUT);
+		}
 	}
 
 	return (error);
@@ -1069,7 +1071,10 @@ ips_done(struct ips_softc *sc, struct ips_ccb *ccb)
 	}
 
 	if (ccb->c_stat) {
-		sc_print_addr(xs->sc_link);
+		if (xs != NULL)
+			sc_print_addr(xs->sc_link);
+		else
+			printf("%s: ", sc->sc_dev.dv_xname);
 		if (ccb->c_stat == 1) {
 			printf("recovered error\n");
 		} else {
