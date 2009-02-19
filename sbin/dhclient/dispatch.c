@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.42 2008/05/26 03:11:49 deraadt Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.43 2009/02/19 03:29:21 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -182,8 +182,7 @@ another:
 		}
 
 		if ((fds[0].revents & (POLLIN | POLLHUP))) {
-			if (ifi->linkstat &&
-			    ifi && ifi->rfdesc != -1)
+			if (ifi && ifi->linkstat && ifi->rfdesc != -1)
 				got_one();
 		}
 		if ((fds[1].revents & (POLLIN | POLLHUP))) {
