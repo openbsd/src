@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.18 2008/10/03 19:03:06 jmc Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.19 2009/02/19 17:11:20 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 3 2008 $
+.Dd $Mdocdate: February 19 2009 $
 .Dt SPAMD-SETUP 8
 .Os
 .Sh NAME
@@ -43,9 +43,7 @@ blacklist entries.
 When
 .Nm
 is run in blacklist only mode,
-instead of sending blacklist data directly to
-.Xr spamd 8 ,
-it sends it to the
+it also sends blacklist data to the
 .Xr pf 4
 table
 .Aq Ar spamd .
