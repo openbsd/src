@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.100 2009/02/15 15:03:58 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.101 2009/02/19 11:12:42 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -143,6 +143,14 @@ struct intrmap intrmap[] = {
 	{ NULL,		0 }
 };
 
+#ifdef SUN4V
+void	sun4v_soft_state_init(void);
+void	sun4v_set_soft_state(int, const char *);
+
+#define __align32 __attribute__((__aligned__(32)))
+char sun4v_soft_state_booting[] __align32 = "OpenBSD booting";
+char sun4v_soft_state_running[] __align32 = "OpenBSD running";
+#endif
 
 #ifdef DEBUG
 #define ACDB_BOOTDEV	0x1
@@ -385,6 +393,13 @@ bootstrap(nctx)
 
 	ncpus = get_ncpus();
 	pmap_bootstrap(KERNBASE, (u_long)&end, nctx, ncpus);
+
+#ifdef SUN4V
+	if (CPU_ISSUN4V) {
+		sun4v_soft_state_init();
+		sun4v_set_soft_state(SIS_TRANSITION, sun4v_soft_state_booting);
+	}
+#endif
 }
 
 void
@@ -626,7 +641,50 @@ cpu_configure()
 
 	(void)spl0();
 	cold = 0;
+
+#ifdef SUN4V
+	if (CPU_ISSUN4V)
+		sun4v_set_soft_state(SIS_NORMAL, sun4v_soft_state_running);
+#endif
 }
+
+#ifdef SUN4V
+
+#define HSVC_GROUP_SOFT_STATE 0x003
+
+int sun4v_soft_state_initialized = 0;
+
+void
+sun4v_soft_state_init(void)
+{
+	uint64_t minor;
+
+	if (prom_set_sun4v_api_version(HSVC_GROUP_SOFT_STATE, 1, 0, &minor))
+		return;
+
+	prom_printf("minor %lld\r\n", minor);
+
+	prom_sun4v_soft_state_supported();
+	sun4v_soft_state_initialized = 1;
+}
+
+void
+sun4v_set_soft_state(int state, const char *desc)
+{
+	paddr_t pa;
+	int err;
+
+	if (!sun4v_soft_state_initialized)
+		return;
+
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)desc, &pa))
+		panic("sun4v_set_soft_state: pmap_extract failed\n");
+
+	err = hv_soft_state_set(state, pa);
+	if (err != H_EOK)
+		printf("soft_state_set: %d\n", err);
+}
+#endif
 
 void
 diskconf(void)
