@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.28 2008/11/24 05:28:57 cnst Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.29 2009/02/19 23:09:17 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -57,6 +57,19 @@
 
 #include <dev/i2c/i2cvar.h>
 
+/* Encodings of the size used/total byte for certain memory types    */
+#define	SPDMEM_SPDSIZE_MASK		0x0F	/* SPD EEPROM Size   */
+
+#define	SPDMEM_SPDLEN_128		0x00	/* SPD EEPROM Sizes  */
+#define	SPDMEM_SPDLEN_176		0x10
+#define	SPDMEM_SPDLEN_256		0x20
+#define	SPDMEM_SPDLEN_MASK		0x70	/* Bits 4 - 6        */
+
+#define	SPDMEM_SPDCRC_116		0x80	/* CRC Bytes covered */
+#define	SPDMEM_SPDCRC_125		0x00
+#define	SPDMEM_SPDCRC_MASK		0x80	/* Bit 7             */
+
+
 /* possible values for the memory type */
 #define	SPDMEM_MEMTYPE_FPM		0x01
 #define	SPDMEM_MEMTYPE_EDO		0x02
@@ -66,6 +79,9 @@
 #define	SPDMEM_MEMTYPE_DDRSGRAM		0x06
 #define	SPDMEM_MEMTYPE_DDRSDRAM		0x07
 #define	SPDMEM_MEMTYPE_DDR2SDRAM	0x08
+#define	SPDMEM_MEMTYPE_FBDIMM		0x09
+#define	SPDMEM_MEMTYPE_FBDIMM_PROBE	0x0a
+#define	SPDMEM_MEMTYPE_DDR3SDRAM	0x0b
 #define	SPDMEM_MEMTYPE_NONE		0xff
 
 #define SPDMEM_MEMTYPE_DIRECT_RAMBUS	0x01
@@ -169,6 +185,25 @@
 #define SPDMEM_DDR2_MINI_RDIMM		(1 << 4)
 #define SPDMEM_DDR2_MINI_UDIMM		(1 << 5)
 
+/* Dual Data Rate 3 SDRAM */
+#define SPDMEM_DDR3_MODTYPE		0x00
+#define SPDMEM_DDR3_DENSITY		0x01
+#define SPDMEM_DDR3_DATAWIDTH		0x05
+#define SPDMEM_DDR3_MTB_DIVIDEND	0x07
+#define SPDMEM_DDR3_MTB_DIVISOR		0x08
+#define SPDMEM_DDR3_TCKMIN		0x09
+
+#define SPDMEM_DDR3_DENSITY_CAPMASK		0x0f
+#define SPDMEM_DDR3_DATAWIDTH_ECCMASK		(1 << 3)
+#define SPDMEM_DDR3_DATAWIDTH_PRIMASK		0x07
+
+#define SPDMEM_DDR3_RDIMM		0x01
+#define SPDMEM_DDR3_UDIMM		0x02
+#define SPDMEM_DDR3_SODIMM		0x03
+#define SPDMEM_DDR3_MICRO_DIMM		0x04
+#define SPDMEM_DDR3_MINI_RDIMM		0x05
+#define SPDMEM_DDR3_MINI_UDIMM		0x06
+
 static const uint8_t ddr2_cycle_tenths[] = {
 	0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 25, 33, 66, 75, 0, 0
 };
@@ -187,9 +222,9 @@ struct spdmem_softc {
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
 	struct spdmem	sc_spd_data;
-	char		sc_type[SPDMEM_TYPE_MAXLEN];
 };
 
+uint16_t	 spdmem_crc16(struct spdmem_softc *, int);
 int		 spdmem_match(struct device *, void *, void *);
 void		 spdmem_attach(struct device *, struct device *, void *);
 uint8_t		 spdmem_read(struct spdmem_softc *, uint8_t);
@@ -197,6 +232,7 @@ void		 spdmem_sdram_decode(struct spdmem_softc *, struct spdmem *);
 void		 spdmem_rdr_decode(struct spdmem_softc *, struct spdmem *);
 void		 spdmem_ddr_decode(struct spdmem_softc *, struct spdmem *);
 void		 spdmem_ddr2_decode(struct spdmem_softc *, struct spdmem *);
+void		 spdmem_ddr3_decode(struct spdmem_softc *, struct spdmem *);
 
 struct cfattach spdmem_ca = {
 	sizeof(struct spdmem_softc), spdmem_match, spdmem_attach
@@ -218,8 +254,9 @@ static const char *spdmem_basic_types[] = {
 	"DDR SGRAM",
 	"DDR SDRAM",
 	"DDR2 SDRAM",
-	"DDR2 SDRAM FB",
-	"DDR2 SDRAM FB Probe"
+	"DDR2 SDRAM FB-DIMM",
+	"DDR2 SDRAM FB-DIMM Probe",
+	"DDR3 SDRAM"
 };
 
 static const char *spdmem_superset_types[] = {
@@ -241,13 +278,92 @@ static const char *spdmem_parity_types[] = {
 	"cmd/addr/data parity, data ECC"
 };
 
+/* CRC functions used for certain memory types */
+uint16_t
+spdmem_crc16(struct spdmem_softc *sc, int count)
+{
+	uint16_t crc;
+	int i, j;
+	uint8_t val;
+	crc = 0;
+	for (j = 0; j <= count; j++) {
+		val = spdmem_read(sc, j);
+		crc = crc ^ val << 8;
+		for (i = 0; i < 8; ++i)
+			if (crc & 0x8000)
+				crc = crc << 1 ^ 0x1021;
+			else
+				crc = crc << 1;
+	}
+	return (crc & 0xFFFF);
+}
+
 int
 spdmem_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	
+	struct spdmem_softc sc;
+	uint8_t i, val, type;
+	int cksum = 0;
+	int spd_len, spd_crc_cover;
+	uint16_t crc_calc, crc_spd;
+
+	/* clever attachments like openfirmware informed macppc */	
 	if (strcmp(ia->ia_name, "spd") == 0)
 		return (1);
+
+	/* dumb, need sanity checks */
+	if (strcmp(ia->ia_name, "eeprom") != 0)
+		return (0);
+
+	sc.sc_tag = ia->ia_tag;
+	sc.sc_addr = ia->ia_addr;
+
+	type = spdmem_read(&sc, 2);
+	/* For older memory types, validate the checksum over 1st 63 bytes */
+	if (type <= SPDMEM_MEMTYPE_DDR2SDRAM) {
+		for (i = 0; i < 63; i++)
+			cksum += spdmem_read(&sc, i);
+
+		val = spdmem_read(&sc, 63);
+
+		if (cksum == 0 || (cksum & 0xff) != val) {
+			return 0;
+		} else
+			return 1;
+	}
+
+	/* For DDR3 and FBDIMM, verify the CRC */
+	else if (type <= SPDMEM_MEMTYPE_DDR3SDRAM) {
+		spd_len = spdmem_read(&sc, 0);
+		if (spd_len && SPDMEM_SPDCRC_116)
+			spd_crc_cover = 116;
+		else
+			spd_crc_cover = 125;
+		switch (spd_len & SPDMEM_SPDLEN_MASK) {
+		case SPDMEM_SPDLEN_128:
+			spd_len = 128;
+			break;
+		case SPDMEM_SPDLEN_176:
+			spd_len = 176;
+			break;
+		case SPDMEM_SPDLEN_256:
+			spd_len = 256;
+			break;
+		default:
+			return 0;
+		}
+		if (spd_crc_cover > spd_len)
+			return 0;
+		crc_calc = spdmem_crc16(&sc, spd_crc_cover);
+		crc_spd = spdmem_read(&sc, 127) << 8;
+		crc_spd |= spdmem_read(&sc, 126);
+		if (crc_calc != crc_spd) {
+			return 0;
+		}
+		return 1;
+	}
+
 	return (0);
 }
 
@@ -280,7 +396,6 @@ spdmem_sdram_decode(struct spdmem_softc *sc, struct spdmem *s)
 	}
 
 	printf(" %s", type);
-	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
 
 	if (s->sm_data[SPDMEM_DDR_MOD_ATTRIB] & SPDMEM_DDR_ATTRIB_REG)
 		printf(" registered");
@@ -378,7 +493,6 @@ spdmem_ddr_decode(struct spdmem_softc *sc, struct spdmem *s)
 	}
 
 	printf(" %s", type);
-	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
 
 	if (s->sm_data[SPDMEM_DDR_MOD_ATTRIB] & SPDMEM_DDR_ATTRIB_REG)
 		printf(" registered");
@@ -446,7 +560,6 @@ spdmem_ddr2_decode(struct spdmem_softc *sc, struct spdmem *s)
 	}
 
 	printf(" %s", type);
-	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
 
 	if (s->sm_data[SPDMEM_DDR2_DIMMTYPE] & SPDMEM_DDR2_TYPE_REGMASK)
 		printf(" registered");
@@ -501,6 +614,76 @@ spdmem_ddr2_decode(struct spdmem_softc *sc, struct spdmem *s)
 }
 
 void
+spdmem_ddr3_decode(struct spdmem_softc *sc, struct spdmem *s)
+{
+	const char *type;
+	int dimm_size, cycle_time, d_clk, p_clk, bits;
+	uint8_t mtype, capacity, dividend, divisor;
+
+	type = spdmem_basic_types[s->sm_type];
+
+	capacity = s->sm_data[SPDMEM_DDR3_DENSITY] &
+	    SPDMEM_DDR3_DENSITY_CAPMASK;
+	/* capacity in MB is 2^(x+8) which we can get by shifting */
+	dimm_size = 2 << (capacity + 7);
+
+	if (dimm_size < 1024)
+		printf(" %dMB", dimm_size);
+	else
+		printf(" %dGB", dimm_size / 1024);
+
+	printf(" %s", type);
+
+	mtype = s->sm_data[SPDMEM_DDR3_MODTYPE];
+	if (mtype == SPDMEM_DDR3_RDIMM || mtype == SPDMEM_DDR3_MINI_RDIMM)
+		printf(" registered");
+
+	if (s->sm_data[SPDMEM_DDR3_DATAWIDTH] & SPDMEM_DDR3_DATAWIDTH_ECCMASK) 
+		printf(" ECC");
+
+	dividend = s->sm_data[SPDMEM_DDR3_MTB_DIVIDEND];
+	divisor = s->sm_data[SPDMEM_DDR3_MTB_DIVISOR];
+	cycle_time = (1000 * dividend +  (divisor / 2)) / divisor;
+	cycle_time *= s->sm_data[SPDMEM_DDR3_TCKMIN];
+
+	if (cycle_time != 0) {
+		/*
+		 * cycle time is scaled by a factor of 1000 to avoid using
+		 * floating point.  Calculate memory speed as the number
+		 * of cycles per microsecond.
+		 * DDR3 uses a dual-pumped clock
+		 */
+		d_clk = 1000 * 1000;
+		d_clk *= 2;
+		bits = 1 << ((s->sm_data[SPDMEM_DDR3_DATAWIDTH] &
+		    SPDMEM_DDR3_DATAWIDTH_PRIMASK) + 3);
+		/*
+		 * Calculate p_clk first, since for DDR3 we need maximum
+		 * significance.  DDR3 rating is not rounded to a multiple
+		 * of 100.  This results in cycle_time of 1.5ns displayed
+		 * as p_clk PC3-10666 (d_clk DDR3-1333)
+		 */
+		p_clk = (d_clk * bits) / 8 / cycle_time;
+		p_clk -= (p_clk % 100);
+		d_clk = ((d_clk + cycle_time / 2) ) / cycle_time;
+		printf(" PC3-%d", p_clk);
+	}
+
+	switch (s->sm_data[SPDMEM_DDR3_MODTYPE]) {
+	case SPDMEM_DDR3_SODIMM:
+		printf(" SO-DIMM");
+		break;
+	case SPDMEM_DDR3_MICRO_DIMM:
+		printf(" Micro-DIMM");
+		break;
+	case SPDMEM_DDR3_MINI_RDIMM:
+	case SPDMEM_DDR3_MINI_UDIMM:
+		printf(" Mini-DIMM");
+		break;
+	}
+}
+
+void
 spdmem_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct spdmem_softc *sc = (struct spdmem_softc *)self;
@@ -537,6 +720,9 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		case SPDMEM_MEMTYPE_DDR2SDRAM:
 			spdmem_ddr2_decode(sc, s);
+			break;
+		case SPDMEM_MEMTYPE_DDR3SDRAM:
+			spdmem_ddr3_decode(sc, s);
 			break;
 		case SPDMEM_MEMTYPE_NONE:
 			printf(" no EEPROM found");
