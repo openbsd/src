@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.20 2009/02/10 17:32:58 stsp Exp $ */
+/*	$OpenBSD: rde.c,v 1.21 2009/02/19 22:05:32 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -242,6 +242,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct lsa		*lsa;
 	struct area		*area;
 	struct vertex		*v;
+	struct iface		*iface, *ifp;
 	char			*buf;
 	ssize_t			 n;
 	time_t			 now;
@@ -564,6 +565,21 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				rde_send_summary_area(area, imsg.hdr.pid);
 			imsg_compose(ibuf_ospfe, IMSG_CTL_END, 0, imsg.hdr.pid,
 			    NULL, 0);
+			break;
+		case IMSG_IFINFO:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct iface))
+				fatalx("IFINFO imsg with wrong len");
+
+			ifp = imsg.data;
+
+			iface = if_find(ifp->ifindex);
+			if (iface == NULL)
+				fatalx("interface lost in rde");
+			iface->flags = ifp->flags;
+			iface->linkstate = ifp->linkstate;
+			iface->nh_reachable = ifp->nh_reachable;
+			iface->state = ifp->state;
 			break;
 		default:
 			log_debug("rde_dispatch_imsg: unexpected imsg %d",

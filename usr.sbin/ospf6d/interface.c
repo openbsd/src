@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.11 2009/01/29 19:07:53 stsp Exp $ */
+/*	$OpenBSD: interface.c,v 1.12 2009/02/19 22:05:32 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -143,6 +143,10 @@ if_fsm(struct iface *iface, enum iface_event event)
 		orig_rtr_lsa(iface);
 		orig_link_lsa(iface);
 		orig_intra_lsa_rtr(iface);
+
+		/* state change inform RDE */
+		ospfe_imsg_compose_rde(IMSG_IFINFO,
+		    iface->self->peerid, 0, iface, sizeof(struct iface));
 	}
 
 	if (old_state & (IF_STA_MULTI | IF_STA_POINTTOPOINT) &&
