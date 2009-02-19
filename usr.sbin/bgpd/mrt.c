@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.53 2007/04/23 13:04:24 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.54 2009/02/19 21:34:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -358,7 +358,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		len += MRT_BGP4MP_IPv4_ENTRY_SIZE + p_len + attr_len;
 		break;
 	case AF_INET6:
-		len += MRT_BGP4MP_IPv4_ENTRY_SIZE + p_len + attr_len;
+		len += MRT_BGP4MP_IPv6_ENTRY_SIZE + p_len + attr_len;
 		break;
 	default:
 		return (-1);
