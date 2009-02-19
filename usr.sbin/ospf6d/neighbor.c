@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.8 2009/01/27 21:58:28 stsp Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.9 2009/02/19 22:00:31 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -197,7 +197,7 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		nbr->stats.sta_chng++;
 		/* state change inform RDE */
 		ospfe_imsg_compose_rde(IMSG_NEIGHBOR_CHANGE,
-		    nbr->peerid, 0, &new_state, sizeof(new_state));
+		    nbr->peerid, 0, &nbr->state, sizeof(nbr->state));
 
 		if (old_state & NBR_STA_FULL || nbr->state & NBR_STA_FULL) {
 			extern struct ospfd_conf        *oeconf; /* XXX */
