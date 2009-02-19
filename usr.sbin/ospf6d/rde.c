@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.23 2009/02/19 22:19:53 stsp Exp $ */
+/*	$OpenBSD: rde.c,v 1.24 2009/02/19 22:21:17 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1233,7 +1233,7 @@ orig_intra_lsa_net(struct iface *iface, struct vertex *old)
 
 	lsa->data.pref_intra.ref_type = htons(LSA_TYPE_NETWORK);
 	lsa->data.pref_intra.ref_lsid = htonl(iface->ifindex);
-	lsa->data.pref_intra.ref_adv_rtr = rdeconf->rtr_id.s_addr;
+	lsa->data.pref_intra.ref_adv_rtr = rde_router_id();
 
 	numprefix = 0;
 	RB_FOREACH(node, prefix_tree, &tree) {
@@ -1251,7 +1251,7 @@ orig_intra_lsa_net(struct iface *iface, struct vertex *old)
 	lsa->hdr.age = numprefix == 0 ? htons(MAX_AGE) : htons(DEFAULT_AGE);
 	lsa->hdr.type = htons(LSA_TYPE_INTRA_A_PREFIX);
 	lsa->hdr.ls_id = htonl(iface->ifindex);
-	lsa->hdr.adv_rtr = rdeconf->rtr_id.s_addr;
+	lsa->hdr.adv_rtr = rde_router_id();
 	lsa->hdr.seq_num = htonl(INIT_SEQ_NUM);
 	lsa->hdr.len = htons(len);
 	lsa->hdr.ls_chksum = htons(iso_cksum(lsa, len, LS_CKSUM_OFFSET));
