@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.22 2009/02/19 22:17:07 stsp Exp $ */
+/*	$OpenBSD: rde.c,v 1.23 2009/02/19 22:19:53 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -303,9 +303,13 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (nbr == NULL)
 				break;
 
-			if (state != nbr->state && (nbr->state & NBR_STA_FULL ||
-			    state & NBR_STA_FULL))
+			if (state != nbr->state &&
+			    (nbr->state & NBR_STA_FULL ||
+			    state & NBR_STA_FULL)) {
+				nbr->state = state;
 				area_track(nbr->area, state);
+				orig_intra_area_prefix_lsas(nbr->area);
+			}
 
 			nbr->state = state;
 			if (nbr->state & NBR_STA_FULL)
@@ -577,7 +581,13 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			iface->flags = ifp->flags;
 			iface->linkstate = ifp->linkstate;
 			iface->nh_reachable = ifp->nh_reachable;
-			iface->state = ifp->state;
+			if (iface->state != ifp->state) {
+				iface->state = ifp->state;
+				area = area_find(rdeconf, iface->area_id);
+				if (!area)
+					fatalx("interface lost area");
+				orig_intra_area_prefix_lsas(area);
+			}
 			break;
 		default:
 			log_debug("rde_dispatch_imsg: unexpected imsg %d",
