@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.115 2009/02/06 14:24:44 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.116 2009/02/19 21:17:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -80,7 +80,7 @@ usbd_status	uvideo_vc_set_ctrl(struct uvideo_softc *, uint8_t *, uint8_t,
 int		uvideo_find_ctrl(struct uvideo_softc *, int);
 
 usbd_status	uvideo_vs_parse_desc(struct uvideo_softc *,
-		    struct usb_attach_arg *, usb_config_descriptor_t *);
+		    usb_config_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_input_header(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_format(struct uvideo_softc *);
@@ -93,8 +93,7 @@ usbd_status	uvideo_vs_parse_desc_frame_mjpeg(struct uvideo_softc *,
 		    const usb_descriptor_t *);
 usbd_status	uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *,
 		    const usb_descriptor_t *);
-usbd_status	uvideo_vs_parse_desc_alt(struct uvideo_softc *,
-		    struct usb_attach_arg *uaa, int, int, int);
+usbd_status	uvideo_vs_parse_desc_alt(struct uvideo_softc *, int, int, int);
 usbd_status	uvideo_vs_set_alt(struct uvideo_softc *, usbd_interface_handle,
 		    int);
 int		uvideo_desc_len(const usb_descriptor_t *, int, int, int, int);
@@ -394,8 +393,12 @@ uvideo_attach(struct device *parent, struct device *self, void *aux)
 	struct uvideo_softc *sc = (struct uvideo_softc *)self;
 	struct usb_attach_arg *uaa = aux;
 
-	sc->sc_uaa = uaa;
 	sc->sc_udev = uaa->device;
+	sc->sc_nifaces = uaa->nifaces;
+	sc->sc_ifaces = malloc(uaa->nifaces * sizeof(usbd_interface_handle),
+	    M_USB, M_WAITOK);
+	bcopy(uaa->ifaces, sc->sc_ifaces,
+	    uaa->nifaces * sizeof(usbd_interface_handle));
 
 	/* maybe the device has quirks */
 	sc->sc_quirk = uvideo_lookup(uaa->vendor, uaa->product);
@@ -447,7 +450,7 @@ uvideo_attach_hook(void *arg)
 		return;
 
 	/* parse video stream descriptors */
-	error = uvideo_vs_parse_desc(sc, sc->sc_uaa, cdesc);
+	error = uvideo_vs_parse_desc(sc, cdesc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return;
 
@@ -477,6 +480,8 @@ uvideo_detach(struct device *self, int flags)
 {
 	struct uvideo_softc *sc = (struct uvideo_softc *)self;
 	int rv = 0;
+
+	free(sc->sc_ifaces, M_USB);
 
 	/* Wait for outstanding requests to complete */
 	usbd_delay_ms(sc->sc_udev, UVIDEO_NFRAMES_MAX);
@@ -703,8 +708,7 @@ uvideo_find_ctrl(struct uvideo_softc *sc, int id)
 }
 
 usbd_status
-uvideo_vs_parse_desc(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
-    usb_config_descriptor_t *cdesc)
+uvideo_vs_parse_desc(struct uvideo_softc *sc, usb_config_descriptor_t *cdesc)
 {
 	usbd_desc_iter_t iter;
 	const usb_descriptor_t *desc;
@@ -713,7 +717,7 @@ uvideo_vs_parse_desc(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 	usbd_status error;
 
 	DPRINTF(1, "%s: number of total interfaces=%d\n",
-	    DEVNAME(sc), uaa->nifaces);
+	    DEVNAME(sc), sc->sc_nifaces);
 	DPRINTF(1, "%s: number of VS interfaces=%d\n",
 	    DEVNAME(sc), sc->sc_desc_vc_header.fix->bInCollection);
 
@@ -754,7 +758,7 @@ uvideo_vs_parse_desc(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 	for (i = 0; i < sc->sc_desc_vc_header.fix->bInCollection; i++) {
 		iface = sc->sc_desc_vc_header.baInterfaceNr[i];
 
-		id = usbd_get_interface_descriptor(uaa->ifaces[iface]);
+		id = usbd_get_interface_descriptor(sc->sc_ifaces[iface]);
 		if (id == NULL) {
 			printf("%s: can't get VS interface %d!\n",
 			    DEVNAME(sc), iface);
@@ -767,7 +771,7 @@ uvideo_vs_parse_desc(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 		DPRINTF(1, "bInterfaceNumber=0x%02x, numalts=%d\n",
 		    id->bInterfaceNumber, numalts);
 
-		error = uvideo_vs_parse_desc_alt(sc, uaa, i, iface, numalts);
+		error = uvideo_vs_parse_desc_alt(sc, i, iface, numalts);
 		if (error != USBD_NORMAL_COMPLETION)
 			return (error);
 	}
@@ -1049,8 +1053,7 @@ uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
 }
 
 usbd_status
-uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
-    int vs_nr, int iface, int numalts)
+uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, int vs_nr, int iface, int numalts)
 {
 	struct uvideo_vs_iface *vs;
 	usbd_desc_iter_t iter;
@@ -1098,7 +1101,7 @@ uvideo_vs_parse_desc_alt(struct uvideo_softc *sc, struct usb_attach_arg *uaa,
 
 		/* save endpoint with largest bandwidth */
 		if (UGETW(ed->wMaxPacketSize) > vs->psize) {
-			vs->ifaceh = uaa->ifaces[iface];
+			vs->ifaceh = sc->sc_ifaces[iface];
 			vs->endpoint = ed->bEndpointAddress;
 			vs->numalts = numalts;
 			vs->curalt = id->bAlternateSetting;
