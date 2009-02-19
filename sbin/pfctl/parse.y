@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.554 2008/10/17 12:59:53 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.555 2009/02/19 17:08:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1275,7 +1275,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 		}
 		;
 
-antispoof_ifspc	: FOR antispoof_if		{ $$ = $2; }
+antispoof_ifspc	: FOR antispoof_if			{ $$ = $2; }
 		| FOR '{' optnl antispoof_iflst '}'	{ $$ = $4; }
 		;
 
@@ -1287,8 +1287,8 @@ antispoof_iflst	: antispoof_if optnl			{ $$ = $1; }
 		}
 		;
 
-antispoof_if  : if_item				{ $$ = $1; }
-		| '(' if_item ')'		{
+antispoof_if	: if_item				{ $$ = $1; }
+		| '(' if_item ')'			{
 			$2->dynamic = 1;
 			$$ = $2;
 		}
