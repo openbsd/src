@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.29 2009/02/19 23:09:17 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.30 2009/02/19 23:21:09 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -192,10 +192,12 @@
 #define SPDMEM_DDR3_MTB_DIVIDEND	0x07
 #define SPDMEM_DDR3_MTB_DIVISOR		0x08
 #define SPDMEM_DDR3_TCKMIN		0x09
+#define SPDMEM_DDR3_THERMAL		0x1d
 
 #define SPDMEM_DDR3_DENSITY_CAPMASK		0x0f
 #define SPDMEM_DDR3_DATAWIDTH_ECCMASK		(1 << 3)
 #define SPDMEM_DDR3_DATAWIDTH_PRIMASK		0x07
+#define SPDMEM_DDR3_THERMAL_PRESENT		(1 << 7)
 
 #define SPDMEM_DDR3_RDIMM		0x01
 #define SPDMEM_DDR3_UDIMM		0x02
@@ -681,6 +683,9 @@ spdmem_ddr3_decode(struct spdmem_softc *sc, struct spdmem *s)
 		printf(" Mini-DIMM");
 		break;
 	}
+
+	if (s->sm_data[SPDMEM_DDR3_THERMAL] & SPDMEM_DDR3_THERMAL_PRESENT)
+		printf(" with thermal sensor");
 }
 
 void
