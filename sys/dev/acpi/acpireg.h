@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.15 2008/06/24 08:24:57 sobrado Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.16 2009/02/19 21:02:05 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -391,7 +391,7 @@ struct acpi_facs {
 #define	FACS_LOCK_OWNED		0x00000002
 	u_int32_t	flags;
 #define	FACS_S4BIOS_F		0x00000001	/* S4BIOS_REQ supported */
-	struct acpi_gas	x_wakeup_vector;
+	uint64_t	x_wakeup_vector;
 	u_int8_t	version;
 	u_int8_t	reserved[31];
 } __packed;
@@ -441,6 +441,13 @@ struct acpi_facs {
 #define		ACPI_PM1_SLP_TYPX(x)		((x) << 10)
 #define		ACPI_PM1_SLP_TYPX_MASK		0x1c00
 #define		ACPI_PM1_SLP_EN			0x2000
+
+/*
+ * PM2 Control Registers
+ */
+#define ACPI_PM2_CONTROL		0x06
+#define	ACPI_PM2_ARB_DIS		0x0001
+
 
 /*
  * Sleeping States

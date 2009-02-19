@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.45 2009/01/20 20:21:03 mlarkin Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.46 2009/02/19 21:02:05 marco Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -249,10 +249,16 @@ int	 acpi_probe(struct device *, struct cfdata *, struct bios_attach_args *);
 u_int	 acpi_checksum(const void *, size_t);
 void	 acpi_attach_machdep(struct acpi_softc *);
 int	 acpi_interrupt(void *);
-void	 acpi_enter_sleep_state(struct acpi_softc *, int);
 void	 acpi_powerdown(void);
-void	 acpi_resume(struct acpi_softc *);
 void	 acpi_reset(void);
+void	 acpi_cpu_flush(struct acpi_softc *, int);
+int	 acpi_sleep_state(struct acpi_softc *, int);
+void	 acpi_resume(struct acpi_softc *);
+int	 acpi_prepare_sleep_state(struct acpi_softc *, int);
+int	 acpi_enter_sleep_state(struct acpi_softc *, int);
+int	 acpi_sleep_machdep(struct acpi_softc *, int);
+void	 acpi_sleep_walk(struct acpi_softc *, int);
+
 
 #define ACPI_IOREAD 0
 #define ACPI_IOWRITE 1

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.2 2009/02/15 02:06:09 marco Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.3 2009/02/19 21:02:05 marco Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -128,6 +128,7 @@ _C_LABEL(acpi_real_mode_resume):
 	 * laptops), we might not restore the proper VGA mode
 	 * on resume. Caveat emptor.
 	 */
+	jmp	nobiosreset	/* XXX make this a tunable */
 	lcall	$0xc000,$3
 
 	/*
@@ -137,6 +138,7 @@ _C_LABEL(acpi_real_mode_resume):
 	movw	%cs,%ax
 	movw	%ax,%ds
 	movw	%ax,%ss
+nobiosreset:
 
 	/*
 	 * Set up esi to point to start of current routine's CS.
@@ -151,7 +153,6 @@ _C_LABEL(acpi_real_mode_resume):
 	jmp     1f
 1:	jmp     1f
 1:
-
 
 	/*
 	 * We're about to enter protected mode, so we need a GDT for that.
@@ -180,11 +181,10 @@ _C_LABEL(acpi_real_mode_resume):
 	 */
 	ljmpl	$0x8, $acpi_protected_mode_trampoline
 
-_ACPI_TRMP_LABEL(acpi_protected_mode_trampoline)
-_C_LABEL(acpi_protected_mode_resume):
 	.code32
 	.align 16
-
+_ACPI_TRMP_LABEL(acpi_protected_mode_trampoline)
+_C_LABEL(acpi_protected_mode_resume):
 	nop
 
 	/*
@@ -257,13 +257,10 @@ _C_LABEL(acpi_protected_mode_resume):
 	/* Enter long mode by making another intersegment jump */
 	ljmp 	$0x8, $acpi_long_mode_trampoline
 
-_ACPI_TRMP_LABEL(acpi_long_mode_trampoline)
-_C_LABEL(acpi_long_mode_resume):
 	.code64
 	.align 16
-
-
-
+_ACPI_TRMP_LABEL(acpi_long_mode_trampoline)
+_C_LABEL(acpi_long_mode_resume):
 	/* Restore the stashed copy of EFER we set aside earlier */	
 	movl	%ebx, %eax
 	movl	$MSR_EFER, %ecx
@@ -353,8 +350,6 @@ _C_LABEL(acpi_long_mode_resume):
 	xorq	%rax, %rax	
 	jmp   	*acpi_saved_ret
 
-
-
 	.align 8
 _ACPI_TRMP_OFFSET(tmp_gdt)
 	.word	tmp_gdt_end - tmp_gdtable
@@ -398,7 +393,6 @@ _ACPI_TRMP_LABEL(tmp_gdtable)
 	 */ 
 	.word	0xffff, 0
 	.byte	0, 0x93, 0xcf, 0
-
 _ACPI_TRMP_LABEL(tmp_gdt_end)
 
 	.align 8
@@ -411,7 +405,6 @@ _ACPI_TRMP_LABEL(tmp_gdtable64)
 	.quad	0x0000000000000000
 	.quad	0x00af9a000000ffff
 	.quad	0x00cf92000000ffff
-
 _ACPI_TRMP_LABEL(tmp_gdt64_end)
 
 	.align 8
@@ -447,7 +440,6 @@ _ACPI_TRMP_LABEL(acpi_saved_r14)
 	.quad 0
 _ACPI_TRMP_LABEL(acpi_saved_r15)
 	.quad 0
-
 _ACPI_TRMP_LABEL(acpi_saved_fl)
 	.quad 0
 _ACPI_TRMP_LABEL(acpi_saved_cr0)
@@ -460,7 +452,6 @@ _ACPI_TRMP_LABEL(acpi_saved_cr4)
 	.quad 0
 _ACPI_TRMP_LABEL(acpi_saved_cr8)
 	.quad 0
-
 _ACPI_TRMP_LABEL(acpi_saved_ret)
 	.quad 0
 
@@ -563,7 +554,6 @@ NENTRY(acpi_savecpu)
 	popq 	%rdx
 	popq	%rcx
 
-
 	sgdt	acpi_saved_gdt
 	sidt	acpi_saved_idt
 	sldt	acpi_saved_ldt
@@ -571,7 +561,5 @@ NENTRY(acpi_savecpu)
 
 	movl	$1, %eax
 	ret
-
-
 #endif /* SMALL_KERNEL */
 #endif /* NACPI > 0 */

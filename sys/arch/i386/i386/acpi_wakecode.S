@@ -90,7 +90,7 @@ _C_LABEL(acpi_real_mode_resume):
 	/*
 	 * Set up segment registers for real mode. 
 	 * We'll only be in real mode for a moment, and we don't have
-	 * ant real dependencies on data or stack, so we'll just use
+	 * want real dependencies on data or stack, so we'll just use
 	 * the code segment for data and stack (eg, a 64k memory space).
 	 */
 	movw	%cs,%ax
@@ -124,6 +124,7 @@ _C_LABEL(acpi_real_mode_resume):
 	 * laptops), we might not restore the proper VGA mode
 	 * on resume. Caveat emptor.
 	 */
+	jmp	nobiosreset	/* XXX make this a tunable */
 	lcall	$0xc000,$3
 
 	/*
@@ -133,6 +134,7 @@ _C_LABEL(acpi_real_mode_resume):
 	movw	%cs,%ax
 	movw	%ax,%ds
 	movw	%ax,%ss
+nobiosreset:
 
 	/*
 	 * Set up esi to point to start of current routine's CS.
@@ -147,7 +149,6 @@ _C_LABEL(acpi_real_mode_resume):
 	jmp     1f
 1:	jmp     1f
 1:
-
 
 	/*
 	 * We're about to enter protected mode, so we need a GDT for that.
@@ -176,11 +177,10 @@ _C_LABEL(acpi_real_mode_resume):
 	 */
 	ljmpl	$0x8, $acpi_protected_mode_trampoline
 
-_ACPI_TRMP_LABEL(acpi_protected_mode_trampoline)
-_C_LABEL(acpi_protected_mode_resume):
 	.code32
 	.align 16
-
+_ACPI_TRMP_LABEL(acpi_protected_mode_trampoline)
+_C_LABEL(acpi_protected_mode_resume):
 	nop
 
 	/*
@@ -322,9 +322,7 @@ _C_LABEL(acpi_protected_mode_resume):
 	 * before we went to sleep.
 	 */
 	xorl  %eax, %eax
-	jmp   *acpi_saved_ret
-
-
+	jmp	*acpi_saved_ret
 
 	.align 8
 _ACPI_TRMP_OFFSET(tmp_gdt)
@@ -369,7 +367,6 @@ _ACPI_TRMP_LABEL(tmp_gdtable)
 	 */ 
 	.word	0xffff, 0
 	.byte	0, 0x93, 0xcf, 0
-
 _ACPI_TRMP_LABEL(tmp_gdt_end)
 
 	.align 4
@@ -387,7 +384,6 @@ _ACPI_TRMP_LABEL(acpi_saved_edi)
 	.long 0
 _ACPI_TRMP_LABEL(acpi_saved_esp)
 	.long 0
-
 _ACPI_TRMP_LABEL(acpi_saved_fl)
 	.long 0
 _ACPI_TRMP_LABEL(acpi_saved_cr0)
@@ -398,7 +394,6 @@ _ACPI_TRMP_LABEL(acpi_saved_cr3)
 	.long 0
 _ACPI_TRMP_LABEL(acpi_saved_cr4)
 	.long 0
-
 _ACPI_TRMP_LABEL(acpi_saved_ret)
 	.long 0
 
@@ -476,7 +471,5 @@ NENTRY(acpi_savecpu)
 
 	movl	$1, %eax
 	ret
-
-
 #endif /* SMALL_KERNEL */
 #endif /* NACPI > 0 */
