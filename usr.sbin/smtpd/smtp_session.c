@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.56 2009/02/18 00:29:52 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.57 2009/02/19 11:33:25 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -784,8 +784,13 @@ read:
 	s->s_tm = time(NULL);
 	nr = EVBUFFER_LENGTH(bev->input);
 	line = evbuffer_readline(bev->input);
-	if (line == NULL)
+	if (line == NULL) {
+		if (EVBUFFER_LENGTH(bev->input) > SMTP_ANYLINE_MAX) {
+			session_respond(s, "500 Line too long");
+			s->s_flags |= F_QUIT;
+		}
 		return;
+	}
 	nr -= EVBUFFER_LENGTH(bev->input);
 
 	if (s->s_state == S_DATACONTENT) {
