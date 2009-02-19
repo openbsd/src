@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.446 2009/02/19 01:25:22 krw Exp $
+#	$OpenBSD: install.sub,v 1.447 2009/02/19 02:11:32 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -248,7 +248,6 @@ stdsize ()  {
 #    *Don't* allow the '!' options that ask does.
 #    *Don't* echo input.
 #    *Don't* interpret "\" as escape character.
-#    NOTE: leading and trailing space will be trimmed from password.
 askpass() {
 	set -o noglob
 	stty -echo
