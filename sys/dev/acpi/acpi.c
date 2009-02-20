@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.130 2009/02/19 21:02:05 marco Exp $ */
+/* $OpenBSD: acpi.c,v 1.131 2009/02/20 20:08:26 marco Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1719,7 +1719,6 @@ acpi_sleep_state(struct acpi_softc *sc, int state)
 
 #ifndef SMALL_KERNEL
 	acpi_resume(sc);
-	Debugger();
 #endif /* ! SMALL_KERNEL */
 	return (ret);
 }
