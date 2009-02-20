@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.54 2009/02/15 10:32:23 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.55 2009/02/20 18:47:53 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -46,7 +46,7 @@ void		queue_dispatch_lka(int, short, void *);
 void		queue_dispatch_runner(int, short, void *);
 void		queue_setup_events(struct smtpd *);
 void		queue_disable_events(struct smtpd *);
-void		queue_purge_incoming(void);
+void		queue_purge(char *);
 
 int		queue_create_layout_message(char *, char *);
 void		queue_delete_layout_message(char *, char *);
@@ -624,8 +624,10 @@ queue(struct smtpd *env)
 	config_pipes(env, peers, 6);
 	config_peers(env, peers, 6);
 
+	queue_purge(PATH_INCOMING);
+	queue_purge(PATH_ENQUEUE);
+
 	queue_setup_events(env);
-	queue_purge_incoming();
 	event_dispatch();
 	queue_shutdown();
 
@@ -681,15 +683,15 @@ message_by_id(struct smtpd *env, struct batch *batchp, u_int64_t id)
 }
 
 void
-queue_purge_incoming(void)
+queue_purge(char *queuepath)
 {
 	char		 path[MAXPATHLEN];
 	struct qwalk	*q;
 
-	q = qwalk_new(PATH_INCOMING);
+	q = qwalk_new(queuepath);
 
 	while (qwalk(q, path))
-		queue_delete_incoming_message(basename(path));
+		queue_delete_layout_message(queuepath, basename(path));
 
 	qwalk_close(q);
 }
