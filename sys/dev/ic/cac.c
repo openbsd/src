@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.28 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: cac.c,v 1.29 2009/02/20 00:36:12 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -404,7 +404,7 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 		/* Synchronous commands musn't wait. */
 		if ((*sc->sc_cl->cl_fifo_full)(sc)) {
 			cac_ccb_free(sc, ccb);
-			rv = -1;
+			rv = ENOMEM; /* Causes NO_CCB, i/o is retried. */
 		} else {
 			ccb->ccb_flags |= CAC_CCB_ACTIVE;
 			(*sc->sc_cl->cl_submit)(sc, ccb);
@@ -714,7 +714,7 @@ cac_scsi_cmd(xs)
 
 			if (error == ENOMEM) {
 				splx(s);
-				return (TRY_AGAIN_LATER);
+				return (NO_CCB);
 			} else if (poll) {
 				splx(s);
 				return (TRY_AGAIN_LATER);
