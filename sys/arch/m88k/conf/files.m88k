@@ -1,5 +1,6 @@
-#	$OpenBSD: files.m88k,v 1.21 2008/04/25 14:51:35 jmc Exp $
+#	$OpenBSD: files.m88k,v 1.22 2009/02/20 20:40:00 miod Exp $
 
+file	arch/m88k/m88k/atomic.S				multiprocessor
 file	arch/m88k/m88k/db_disasm.c			ddb
 file	arch/m88k/m88k/db_interface.c			ddb
 file	arch/m88k/m88k/db_sstep.c			ddb

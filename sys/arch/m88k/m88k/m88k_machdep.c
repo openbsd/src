@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.45 2009/02/18 21:07:59 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.46 2009/02/20 20:40:01 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -93,7 +93,6 @@ void	vector_init(m88k_exception_vector_area *, u_int32_t *);
 
 #ifdef MULTIPROCESSOR
 cpuid_t	master_cpu;
-__cpu_simple_lock_t __atomic_lock = __SIMPLELOCK_UNLOCKED;
 __cpu_simple_lock_t cmmu_cpu_lock = __SIMPLELOCK_UNLOCKED;
 #endif
 
@@ -438,17 +437,17 @@ spl0()
 /*
  * vector_init(vector, vector_init_list)
  *
- * This routine sets up the m88k vector table for the running processor.
+ * This routine sets up the m88k vector table for the running processor,
+ * as well as the atomic operation routines for multiprocessor kernels.
  * This is the first C code to run, before anything is initialized.
  *
- * It fills the exception vectors page. I would add an extra four bytes
- * to the page pointed to by the vbr, since the 88100 may execute the
- * first instruction of the next trap handler, as documented in its
- * Errata. Processing trap #511 would then fall into the next page,
- * unless the address computation wraps, or software traps can not trigger
- * the issue - the Errata does not provide more detail. And since the
- * MVME BUG does not add an extra NOP after their VBR page, I'll assume this
- * is safe for now -- miod
+ * I would add an extra four bytes to the exception vectors page pointed
+ * to by the vbr, since the 88100 may execute the first instruction of the
+ * next trap handler, as documented in its Errata. Processing trap #511
+ * would then fall into the next page, unless the address computation wraps,
+ * or software traps can not trigger the issue - the Errata does not provide
+ * more detail. And since the MVME BUG does not add an extra NOP after their
+ * VBR page, I'll assume this is safe for now -- miod
  */
 void
 vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list)
@@ -513,6 +512,39 @@ vector_init(m88k_exception_vector_area *vbr, u_int32_t *vector_init_list)
 		break;
 #endif
 	}
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Setting up the proper atomic operation code is not really
+	 * related to vector initialization, but is crucial enough to
+	 * be worth doing right now, rather than too late in the C code.
+	 *
+	 * This is only necessary for SMP kernels with 88100 and 88110
+	 * support compiled-in, which happen to run on 88100.
+	 */
+#if defined(M88100) && defined(M88110)
+	if (cputyp == CPU_88100) {
+		extern uint32_t __atomic_lock[];
+		extern uint32_t __atomic_lock_88100[], __atomic_lock_88100_end[];
+		extern uint32_t __atomic_unlock[];
+		extern uint32_t __atomic_unlock_88100[], __atomic_unlock_88100_end[];
+
+		uint32_t *s, *e, *d;
+
+		d = __atomic_lock;
+		s = __atomic_lock_88100;
+		e = __atomic_lock_88100_end;
+		while (s != e)
+				*d++ = *s++;
+
+		d = __atomic_unlock;
+		s = __atomic_unlock_88100;
+		e = __atomic_unlock_88100_end;
+		while (s != e)
+				*d++ = *s++;
+	}
+#endif	/* M88100 && M88110 */
+#endif	/* MULTIPROCESSOR */
 }
 
 #ifdef MULTIPROCESSOR
