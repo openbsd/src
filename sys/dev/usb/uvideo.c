@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.117 2009/02/20 07:24:11 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.118 2009/02/20 08:24:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -253,8 +253,43 @@ struct uvideo_devs {
 } uvideo_devs[] = {
 	{
 	    /* Needs firmware */
+	    { USB_VENDOR_RICOH, USB_PRODUCT_RICOH_VGPVCC5 },
+	    "uvideo_r5u87x_05ca-1835",
+	    uvideo_ucode_loader_ricoh,
+	    0
+	},
+	{
+	    /* Needs firmware */
+	    { USB_VENDOR_RICOH, USB_PRODUCT_RICOH_VGPVCC4 },
+	    "uvideo_r5u87x_05ca-1836",
+	    uvideo_ucode_loader_ricoh,
+	    0
+	},
+	{
+	    /* Needs firmware */
+	    { USB_VENDOR_RICOH, USB_PRODUCT_RICOH_VGPVCC4_2 },
+	    "uvideo_r5u87x_05ca-1837",
+	    uvideo_ucode_loader_ricoh,
+	    0
+	},
+	{
+	    /* Needs firmware */
+	    { USB_VENDOR_RICOH, USB_PRODUCT_RICOH_VGPVCC6 },
+	    "uvideo_r5u87x_05ca-1839",
+	    uvideo_ucode_loader_ricoh,
+	    0
+	},
+	{
+	    /* Needs firmware */
 	    { USB_VENDOR_RICOH, USB_PRODUCT_RICOH_VGPVCC7 },
 	    "uvideo_r5u87x_05ca-183a",
+	    uvideo_ucode_loader_ricoh,
+	    0
+	},
+	{
+	    /* Needs firmware */
+	    { USB_VENDOR_RICOH, USB_PRODUCT_RICOH_VGPVCC8 },
+	    "uvideo_r5u87x_05ca-183b",
 	    uvideo_ucode_loader_ricoh,
 	    0
 	},
