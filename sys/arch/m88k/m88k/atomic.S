@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.S,v 1.1 2009/02/20 20:40:01 miod Exp $	*/
+/*	$OpenBSD: atomic.S,v 1.2 2009/02/20 23:35:32 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -84,8 +84,8 @@ ASLOCAL(__atomic_lock_88110)
 
 	or.u	r6, r0, hi16(_ASM_LABEL(__atomic_interlock))
 	or	r6, r6, lo16(_ASM_LABEL(__atomic_interlock))
-	or	r5, r0, 1	/* __SIMPLELOCK_LOCKED */
 1:
+	or	r5, r0, 1	/* __SIMPLELOCK_LOCKED */
 	xmem	r5, r6, r0
 	bcnd	eq0, r5, 3f
 2:
@@ -110,8 +110,8 @@ GLOBAL(__atomic_lock_88100)
 
 	or.u	r6, r0, hi16(_ASM_LABEL(__atomic_interlock))
 	or	r6, r6, lo16(_ASM_LABEL(__atomic_interlock))
-	or	r5, r0, 1	/* __SIMPLELOCK_LOCKED */
 1:
+	or	r5, r0, 1	/* __SIMPLELOCK_LOCKED */
 	xmem	r5, r6, r0
 	bcnd	eq0, r5, 3f
 2:
