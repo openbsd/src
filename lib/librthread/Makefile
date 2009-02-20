@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.11 2009/02/20 01:19:06 tedu Exp $
+#	$OpenBSD: Makefile,v 1.12 2009/02/20 01:31:46 tedu Exp $
 
 LIB=rthread
-#WANTLINT=
+WANTLINT=
 LINTFLAGS=-z
 LIBCSRCDIR=	${.CURDIR}/../libc
 
