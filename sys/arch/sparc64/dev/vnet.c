@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.12 2009/01/17 22:18:14 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.13 2009/02/20 17:50:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -814,7 +814,7 @@ vio_sendmsg(struct vnet_softc *sc, void *msg, size_t len)
 	tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(*lp)) - 1);
 	err = hv_ldc_tx_set_qtail(lc->lc_id, tx_tail);
 	if (err != H_EOK)
-		printf("hv_ldc_tx_set_qtail: %d\n", err);
+		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
 }
 
 void
@@ -900,12 +900,14 @@ void
 vnet_start(struct ifnet *ifp)
 {
 	struct vnet_softc *sc = ifp->if_softc;
+	struct ldc_conn *lc = &sc->sc_lc;
 	struct ldc_map *map = sc->sc_lm;
 	struct vio_dring_msg dm;
 	struct mbuf *m;
 	paddr_t pa;
 	caddr_t buf;
-	int desc;
+	uint64_t tx_head, tx_tail, tx_state;
+	int err, desc;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -919,6 +921,20 @@ vnet_start(struct ifnet *ifp)
 	 */
 	if (sc->sc_vio_state != VIO_ESTABLISHED)
 		return;
+
+	/*
+	 * Make sure there is room in the LDC transmit queue to send a
+	 * DRING_DATA message.
+	 */
+	err = hv_ldc_tx_get_state(lc->lc_id, &tx_head, &tx_tail, &tx_state);
+	if (err != H_EOK)
+		return;
+	tx_tail += sizeof(struct ldc_pkt);
+	tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(struct ldc_pkt)) - 1);
+	if (tx_tail == tx_head) {
+		ifp->if_flags |= IFF_OACTIVE;
+		return;
+	}
 
 	desc = sc->sc_tx_prod;
 	while (sc->sc_vd->vd_desc[desc].hdr.dstate == VIO_DESC_FREE) {
