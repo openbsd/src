@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.39 2008/10/13 05:42:46 kevlo Exp $ */
+/*	$OpenBSD: rthread.c,v 1.40 2009/02/20 01:24:05 tedu Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -218,10 +218,11 @@ pthread_exit(void *retval)
 		_sem_post(&thread->donesem);
 	}
 
+	/* reap before adding self, we don't want to disappear too soon */
+	_rthread_reaper();
 	if (tid != _initial_thread.tid)
 		_rthread_add_to_reaper(tid, stack);
 
-	_rthread_reaper();
 	threxit(0);
 	for(;;);
 }
