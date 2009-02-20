@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.9 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.10 2009/02/20 17:55:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -751,7 +751,7 @@ vdsk_sendmsg(struct vdsk_softc *sc, void *msg, size_t len)
 	tx_tail &= ((lc->lc_txq->lq_nentries * sizeof(*lp)) - 1);
 	err = hv_ldc_tx_set_qtail(lc->lc_id, tx_tail);
 	if (err != H_EOK)
-		printf("hv_ldc_tx_set_qtail: %d\n", err);
+		printf("%s: hv_ldc_tx_set_qtail: %d\n", __func__, err);
 }
 
 void
