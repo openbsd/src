@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.118 2009/02/20 08:24:07 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.119 2009/02/20 08:34:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -290,6 +290,13 @@ struct uvideo_devs {
 	    /* Needs firmware */
 	    { USB_VENDOR_RICOH, USB_PRODUCT_RICOH_VGPVCC8 },
 	    "uvideo_r5u87x_05ca-183b",
+	    uvideo_ucode_loader_ricoh,
+	    0
+	},
+	{
+	    /* Needs firmware */
+	    { USB_VENDOR_RICOH, USB_PRODUCT_RICOH_VGPVCC9 },
+	    "uvideo_r5u87x_05ca-183e",
 	    uvideo_ucode_loader_ricoh,
 	    0
 	},
