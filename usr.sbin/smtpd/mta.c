@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.27 2009/02/15 10:32:23 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.28 2009/02/20 15:27:01 pea Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -726,17 +726,24 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	}
 
 	case S_DATA: {
-/*
-		if (fprintf(fp, "Received: from %s (%s [%s%s])\n"
-			"\tby %s with ESMTP id %s\n"
-			"\tfor <%s@%s>; %s\n\n",
-			messagep->session_helo, messagep->session_hostname,
-			messagep->session_ss.ss_family == PF_INET ? "" : "IPv6:", addrbuf,
-			batchp->env->sc_hostname, messagep->message_id,
-			messagep->sender.user, messagep->sender.domain, ctimebuf) == -1) {
-*/
-		session_respond(sessionp, "Received: from %s (%s [%s])",
-		    batchp->session_helo, batchp->session_hostname, "127.0.0.1");
+		char addrbuf[INET6_ADDRSTRLEN];
+		void *p;
+		
+		if (batchp->session_ss.ss_family == PF_INET) {
+                	struct sockaddr_in *ssin = (struct sockaddr_in *)&batchp->session_ss;
+                	p = &ssin->sin_addr.s_addr;
+        	}
+        	if (batchp->session_ss.ss_family == PF_INET6) {
+                	struct sockaddr_in6 *ssin6 = (struct sockaddr_in6 *)&batchp->session_ss;
+                	p = &ssin6->sin6_addr.s6_addr;
+        	}
+
+        	bzero(addrbuf, sizeof (addrbuf));
+        	inet_ntop(batchp->session_ss.ss_family, p, addrbuf, sizeof (addrbuf));
+
+		session_respond(sessionp, "Received: from %s (%s [%s%s])",
+		    batchp->session_helo, batchp->session_hostname, 
+		    batchp->session_ss.ss_family == PF_INET ? "" : "IPv6:", addrbuf);
 
 		session_respond(sessionp, "\tby %s with ESMTP id %s",
 		    batchp->env->sc_hostname, batchp->message_id);
