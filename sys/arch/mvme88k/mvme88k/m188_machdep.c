@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.48 2009/02/16 23:03:33 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.49 2009/02/20 23:35:11 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -652,7 +652,8 @@ m188_ext_int(struct trapframe *eframe)
 				    warn == 1 ? "spurious" : "unclaimed",
 				    level, intbit, cur_mask, IST_STRING);
 		}
-	} while (((cur_mask = ISR_GET_CURRENT_MASK(cpu)) & ~ign_mask) != 0);
+	} while (((cur_mask = ISR_GET_CURRENT_MASK(cpu)) & ~ign_mask &
+	    ~IPI_MASK) != 0);
 
 #ifdef DIAGNOSTIC
 	if (ign_mask != 0) {
