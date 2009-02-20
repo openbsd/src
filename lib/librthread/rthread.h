@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.h,v 1.19 2008/10/03 04:22:37 guenther Exp $ */
+/*	$OpenBSD: rthread.h,v 1.20 2009/02/20 02:38:57 guenther Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -166,4 +166,4 @@ void threxit(int);
 int thrsleep(void *, int, void *);
 int thrwakeup(void *, int n);
 int sched_yield(void);
-int thrsigdivert(const sigset_t *);
+int thrsigdivert(sigset_t);
