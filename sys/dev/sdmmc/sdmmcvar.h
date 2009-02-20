@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.14 2009/02/06 20:16:41 grange Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.15 2009/02/20 19:16:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -162,6 +162,7 @@ struct sdmmc_softc {
 #define SMF_MEM_MODE		0x0004	/* host in memory mode (SD or MMC) */
 #define SMF_CARD_PRESENT	0x0010	/* card presence noticed */
 #define SMF_CARD_ATTACHED	0x0020	/* card driver(s) attached */
+#define	SMF_STOP_AFTER_MULTIPLE	0x0040	/* send a stop after a multiple cmd */
 	int sc_function_count;		/* number of I/O functions (SDIO) */
 	struct sdmmc_function *sc_card;	/* selected card */
 	struct sdmmc_function *sc_fn0;	/* function 0, the card itself */
@@ -174,6 +175,7 @@ struct sdmmc_softc {
 	struct lock sc_lock;		/* lock around host controller */
 	void *sc_scsibus;		/* SCSI bus emulation softc */
 	TAILQ_HEAD(, sdmmc_intr_handler) sc_intrq; /* interrupt handlers */
+	long sc_max_xfer;		/* maximum transfer size */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_mmc.c,v 1.3 2007/08/22 18:47:16 mglocker Exp $	*/
+/*	$OpenBSD: pxa2x0_mmc.c,v 1.4 2009/02/20 19:16:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Uwe Stuehler <uwe@openbsd.org>
@@ -182,6 +182,8 @@ pxammc_attach(struct pxammc_softc *sc, void *aux)
 	saa.saa_busname = "sdmmc";
 	saa.sct = &pxammc_functions;
 	saa.sch = sc;
+	saa.flags = SMF_STOP_AFTER_MULTIPLE;
+	saa.max_xfer = 1;
 
 	sc->sc_sdmmc = config_found(&sc->sc_dev, &saa, NULL);
 	if (sc->sc_sdmmc == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.11 2009/02/20 19:16:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -425,9 +425,8 @@ sdmmc_mem_read_block(struct sdmmc_function *sf, int blkno, u_char *data,
 	if (error != 0)
 		goto err;
 
-	/* XXX sdhc(4) does not need this */
-#ifdef __zaurus__
-	if (cmd.c_opcode == MMC_READ_BLOCK_MULTIPLE) {
+	if (ISSET(sc->sc_flags, SMF_STOP_AFTER_MULTIPLE) &&
+	    cmd.c_opcode == MMC_READ_BLOCK_MULTIPLE) {
 		bzero(&cmd, sizeof cmd);
 		cmd.c_opcode = MMC_STOP_TRANSMISSION;
 		cmd.c_arg = MMC_ARG_RCA(sf->rca);
@@ -436,7 +435,6 @@ sdmmc_mem_read_block(struct sdmmc_function *sf, int blkno, u_char *data,
 		if (error != 0)
 			goto err;
 	}
-#endif
 
 	do {
 		bzero(&cmd, sizeof cmd);
@@ -483,9 +481,8 @@ sdmmc_mem_write_block(struct sdmmc_function *sf, int blkno, u_char *data,
 	if (error != 0)
 		goto err;
 
-	/* XXX sdhc(4) does not need this */
-#ifdef __zaurus__
-	if (cmd.c_opcode == MMC_WRITE_BLOCK_MULTIPLE) {
+	if (ISSET(sc->sc_flags, SMF_STOP_AFTER_MULTIPLE) &&
+	    cmd.c_opcode == MMC_WRITE_BLOCK_MULTIPLE) {
 		bzero(&cmd, sizeof cmd);
 		cmd.c_opcode = MMC_STOP_TRANSMISSION;
 		cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1B;
@@ -493,7 +490,6 @@ sdmmc_mem_write_block(struct sdmmc_function *sf, int blkno, u_char *data,
 		if (error != 0)
 			goto err;
 	}
-#endif
 
 	do {
 		bzero(&cmd, sizeof cmd);
