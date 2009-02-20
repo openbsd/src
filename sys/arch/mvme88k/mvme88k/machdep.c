@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.222 2009/02/16 23:03:33 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.223 2009/02/20 20:36:14 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -233,7 +233,9 @@ int
 getcpuspeed(struct mvmeprom_brdid *brdid)
 {
 	int speed = 0;
+#ifdef MVME188
 	u_int i, c;
+#endif
 
 	switch (brdtyp) {
 #ifdef MVME187
