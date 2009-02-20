@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.116 2009/02/19 21:17:34 deraadt Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.117 2009/02/20 07:24:11 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -243,6 +243,8 @@ struct video_hw_if uvideo_hw_if = {
  * or which need firmware uploads or other quirk handling later on.
  */
 #define UVIDEO_FLAG_ISIGHT_STREAM_HEADER	0x1
+#define UVIDEO_FLAG_REATTACH			0x2
+#define UVIDEO_FLAG_VENDOR_CLASS		0x3
 struct uvideo_devs {
 	struct usb_devno	 uv_dev;
 	char			*ucode_name;
@@ -261,7 +263,7 @@ struct uvideo_devs {
 	    { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_BLUETOOTH },
 	    "uvideo_isight_05ac-8300",
 	    uvideo_ucode_loader_apple_isight,
-	    0
+	    UVIDEO_FLAG_REATTACH
 	},
 	{
 	    /* Has a non-standard streaming header protocol */
@@ -274,7 +276,7 @@ struct uvideo_devs {
 	    { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMOEM_1 },
 	    NULL,
 	    NULL,
-	    0
+	    UVIDEO_FLAG_VENDOR_CLASS
 	}
 };
 #define uvideo_lookup(v, p) \
@@ -365,6 +367,7 @@ uvideo_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
+	struct uvideo_devs *quirk;
 
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
@@ -374,15 +377,20 @@ uvideo_match(struct device *parent, void *match, void *aux)
 		return (UMATCH_NONE);
 
 	if (id->bInterfaceClass == UICLASS_VIDEO &&
-	    id->bInterfaceSubClass == UISUBCLASS_VIDEOSTREAM)
-		return (UMATCH_NONE);
-
-	if (id->bInterfaceClass == UICLASS_VIDEO &&
 	    id->bInterfaceSubClass == UISUBCLASS_VIDEOCONTROL)
 		return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
 
-	if (uvideo_lookup(uaa->vendor, uaa->product) != NULL)
-		return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
+	/* quirk devices which we want to attach */
+	quirk = uvideo_lookup(uaa->vendor, uaa->product);
+	if (quirk != NULL) {
+		if (quirk->flags & UVIDEO_FLAG_REATTACH)
+			return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
+
+		if (quirk->flags & UVIDEO_FLAG_VENDOR_CLASS &&
+		    id->bInterfaceClass == UICLASS_VENDOR &&
+		    id->bInterfaceSubClass == UISUBCLASS_VIDEOCONTROL)
+			return (UMATCH_VENDOR_PRODUCT_CONF_IFACE);
+	}
 
 	return (UMATCH_NONE);
 }
