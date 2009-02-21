@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.49 2008/06/13 17:15:13 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.50 2009/02/21 12:47:19 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -47,7 +47,6 @@ struct cvs_file {
 	int	 file_status;
 	int	 file_flags;
 	int	 in_attic;
-	int	 user_supplied;
 
 	RCSNUM		*file_rcsrev;
 	RCSFILE		*file_rcs;
@@ -72,10 +71,12 @@ struct cvs_file {
 #define FILE_SKIP		100
 
 #define FILE_HAS_TAG		0x01
+#define FILE_USER_SUPPLIED	0x02
+#define FILE_INSIDE_ATTIC	0x04
 
 struct cvs_filelist {
 	char	*file_path;
-	int	user_supplied;
+	int	flags;
 	TAILQ_ENTRY(cvs_filelist) flist;
 };
 

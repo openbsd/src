@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.249 2008/06/15 04:38:52 tobias Exp $	*/
+/*	$OpenBSD: file.c,v 1.250 2009/02/21 12:47:19 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -190,14 +190,14 @@ cvs_file_run(int argc, char **argv, struct cvs_recursion *cr)
 	TAILQ_INIT(&fl);
 
 	for (i = 0; i < argc; i++)
-		cvs_file_get(argv[i], 1, &fl);
+		cvs_file_get(argv[i], FILE_USER_SUPPLIED, &fl);
 
 	cvs_file_walklist(&fl, cr);
 	cvs_file_freelist(&fl);
 }
 
 struct cvs_filelist *
-cvs_file_get(const char *name, int user_supplied, struct cvs_flisthead *fl)
+cvs_file_get(const char *name, int flags, struct cvs_flisthead *fl)
 {
 	const char *p;
 	struct cvs_filelist *l;
@@ -211,7 +211,7 @@ cvs_file_get(const char *name, int user_supplied, struct cvs_flisthead *fl)
 
 	l = (struct cvs_filelist *)xmalloc(sizeof(*l));
 	l->file_path = xstrdup(p);
-	l->user_supplied = user_supplied;
+	l->flags = flags;
 
 	TAILQ_INSERT_TAIL(fl, l, flist);
 	return (l);
@@ -219,7 +219,7 @@ cvs_file_get(const char *name, int user_supplied, struct cvs_flisthead *fl)
 
 struct cvs_file *
 cvs_file_get_cf(const char *d, const char *f, const char *fpath, int fd,
-	int type, int user_supplied)
+	int type, int flags)
 {
 	const char *p;
 	struct cvs_file *cf;
@@ -235,8 +235,8 @@ cvs_file_get_cf(const char *d, const char *f, const char *fpath, int fd,
 	cf->fd = fd;
 	cf->repo_fd = -1;
 	cf->file_type = type;
-	cf->file_status = cf->file_flags = 0;
-	cf->user_supplied = user_supplied;
+	cf->file_status = 0;
+	cf->file_flags = flags;
 	cf->in_attic = 0;
 	cf->file_ent = NULL;
 
@@ -332,11 +332,11 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 		}
 
 		cf = cvs_file_get_cf(d, f, l->file_path,
-		    fd, type, l->user_supplied);
+		    fd, type, l->flags);
 		if (cf->file_type == CVS_DIR) {
 			cvs_file_walkdir(cf, cr);
 		} else {
-			if (l->user_supplied) {
+			if (l->flags & FILE_USER_SUPPLIED) {
 				cvs_parse_tagfile(cf->file_wd,
 				    &cvs_directory_tag, NULL, NULL);
 
@@ -357,7 +357,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 			if (cr->fileproc != NULL)
 				cr->fileproc(cf);
 
-			if (l->user_supplied) {
+			if (l->flags & FILE_USER_SUPPLIED) {
 				if (cmdp->cmd_flags & CVS_LOCK_REPO)
 					cvs_repository_unlock(repo);
 				if (cvs_directory_tag != NULL) {
