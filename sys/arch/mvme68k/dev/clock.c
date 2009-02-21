@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 2004/07/30 22:29:44 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.14 2009/02/21 20:32:34 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -370,7 +370,7 @@ void
 delay(us)
 	int us;
 {
-#if (NPCC > 0) || (NPCCTWO > 0)
+#if NPCC > 0
 	volatile register int c;
 #endif
 
@@ -393,21 +393,29 @@ delay(us)
 		 * Reset and restart a free-running timer 1MHz, watch
 		 * for it to reach the required count.
 		 */
-		sys_mc->mc_t3irq = 0;
-		sys_mc->mc_t3ctl = 0;
-		sys_mc->mc_t3count = 0;
-		sys_mc->mc_t3ctl = MC_TCTL_CEN | MC_TCTL_COVF;
+	{
+		struct mcreg *mc;
 
-		while (sys_mc->mc_t3count < us)
+		if (sys_mc != NULL)
+			mc = sys_mc;
+		else
+			mc = (struct mcreg *)IIOV(0xfff00000);
+
+		mc->mc_t3irq = 0;
+		mc->mc_t3ctl = 0;
+		mc->mc_t3count = 0;
+		mc->mc_t3ctl = MC_TCTL_CEN | MC_TCTL_COVF;
+
+		while (mc->mc_t3count < us)
 			;
+	}
 		break;
 #endif
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
 		/*
 		 * Use the first VMEChip2 timer in polling mode whenever
-		 * possible. However, since clock attaches before vme,
-		 * use a tight loop if necessary.
+		 * possible.
 		 */
 	{
 		struct vme2reg *vme2;
