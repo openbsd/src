@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umsm.4,v 1.44 2009/02/06 15:27:40 sthen Exp $
+.\"	$OpenBSD: umsm.4,v 1.45 2009/02/21 09:22:35 fkr Exp $
 .\"
 .\" Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2009 $
+.Dd $Mdocdate: February 21 2009 $
 .Dt UMSM 4
 .Os
 .Sh NAME
@@ -74,15 +74,36 @@ Devices suspected of being compatible are:
 .Bl -column "Device                " "Bus" -compact -offset 6n
 .It Em "Device		Bus"
 .It Li "Dell W5500" Ta Ta PCI Express Mini Card
+.It Li "Novatel Wireless ExpressCard" Ta ExpressCard
 .It Li "Novatel Wireless Merlin V620" Ta CardBus
+.It Li "Novatel Wireless Merlin V740" Ta CardBus
+.It Li "Novatel Wireless Merlin X950D" Ta ExpressCard
+.It Li "Novatel Wireless MC950D" Ta Ta USB
 .It Li "Novatel Wireless S720" Ta Ta CardBus
 .It Li "Novatel Wireless U720" Ta Ta USB
+.It Li "Novatel Wireless U740" Ta Ta CardBus
+.It Li "Novatel Wireless U760" Ta Ta USB
+.It Li "Novatel Wireless U870" Ta Ta CardBus
+.It Li "Novatel Wireless V720" Ta Ta CardBus
+.It Li "Novatel Wireless X950D" Ta Ta ExpressCard
 .It Li "Novatel Wireless XU870 HSDPA" Ta ExpressCard
 .It Li "Sierra Wireless AirCard 595" Ta CardBus
-.It Li "Sierra Wireless EM5625" Ta Ta USB module
+.It Li "Sierra Wireless AirCard 597E" Ta CardBus
+.It Li "Sierra Wireless AirCard 880" Ta CardBus
+.It Li "Sierra Wireless AirCard 880E" Ta ExpressCard
+.It Li "Sierra Wireless AirCard 880U" Ta Ta USB
+.It Li "Sierra Wireless AirCard 881" Ta CardBus
+.It Li "Sierra Wireless AirCard 881E" Ta ExpressCard
+.It Li "Sierra Wireless AirCard 881U" Ta Ta USB
+.It Li "Sierra Wireless AirCard 885U" Ta Ta USB
+.It Li "Sierra Wireless C597" Ta Ta USB
+.It Li "Sierra Wireless EM5625" Ta Ta USB
 .It Li "Sierra Wireless MC5720" Ta Ta PCI Express Mini Card
 .It Li "Sierra Wireless MC5725" Ta Ta PCI Express Mini Card
+.It Li "Sierra Wireless MC8755" Ta Ta PCI Express Mini Card
 .It Li "Sierra Wireless MC8765" Ta Ta PCI Express Mini Card
+.It Li "Sierra Wireless MC8780" Ta Ta PCI Express Mini Card
+.It Li "Sierra Wireless MC8781" Ta Ta PCI Express Mini Card
 .El
 .Pp
 Some modems have multiple serial ports,
