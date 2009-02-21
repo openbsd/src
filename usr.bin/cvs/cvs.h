@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.172 2008/06/27 21:14:15 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.173 2009/02/21 12:52:47 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -211,20 +211,10 @@ struct cvsroot {
 	u_int   cr_port;
 
 	/* connection data */
-	u_int   cr_flags;
 	FILE   *cr_srvin;
 	FILE   *cr_srvout;
 	FILE   *cr_srverr;
-	char   *cr_version;     /* version of remote server */
-	u_char  cr_vrmask[16];  /* mask of valid requests supported by server */
-
-	TAILQ_ENTRY(cvsroot) root_cache;
 };
-
-#define CVS_SETVR(rt, rq) ((rt)->cr_vrmask[(rq) / 8] |=  (1 << ((rq) % 8)))
-#define CVS_GETVR(rt, rq) ((rt)->cr_vrmask[(rq) / 8] &   (1 << ((rq) % 8)))
-#define CVS_CLRVR(rt, rq) ((rt)->cr_vrmask[(rq) / 8] &= ~(1 << ((rq) % 8)))
-#define CVS_RSTVR(rt)	memset((rt)->cr_vrmask, 0, sizeof((rt)->cr_vrmask))
 
 #define CVS_HIST_ADDED		'A'
 #define CVS_HIST_EXPORT		'E'
