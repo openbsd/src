@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.106 2009/01/02 00:11:01 canacar Exp $	*/
+/*	$OpenBSD: add.c,v 1.107 2009/02/21 14:50:53 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -438,7 +438,7 @@ add_file(struct cvs_file *cf)
 		if (cf->file_rcs == NULL) {
 			cvs_log(LP_NOTICE, "cannot resurrect %s; "
 			    "RCS file removed by second party", cf->file_name);
-		} else if (cf->fd == -1) {
+		} else if (!(cf->file_flags & FILE_ON_DISK)) {
 			add_entry(cf);
 
 			/* Restore the file. */
@@ -469,7 +469,7 @@ add_file(struct cvs_file *cf)
 			    "(instead of dead revision %s)",
 			    cf->file_path, revbuf);
 			added++;
-		} else if (cf->fd != -1) {
+		} else if (cf->file_flags & FILE_ON_DISK) {
 			cvs_log(LP_NOTICE, "scheduling file '%s' for addition",
 			    cf->file_path);
 			added++;

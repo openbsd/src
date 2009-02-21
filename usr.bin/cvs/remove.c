@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.79 2008/06/23 20:51:08 ragge Exp $	*/
+/*	$OpenBSD: remove.c,v 1.80 2009/02/21 14:50:53 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -124,7 +124,7 @@ void
 cvs_remove_force(struct cvs_file *cf)
 {
 	if (cf->file_type != CVS_DIR) {
-		if (cf->fd != -1) {
+		if (cf->file_flags & FILE_ON_DISK) {
 			if (unlink(cf->file_path) == -1)
 				fatal("cvs_remove_force: %s", strerror(errno));
 			(void)close(cf->fd);
@@ -158,7 +158,7 @@ cvs_remove_local(struct cvs_file *cf)
 		return;
 	}
 
-	if (cf->fd != -1) {
+	if (cf->file_flags & FILE_ON_DISK) {
 		if (verbosity > 1)
 			cvs_log(LP_ERR, "file `%s' still in working directory",
 			    cf->file_name);

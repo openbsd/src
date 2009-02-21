@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.251 2009/02/21 13:44:18 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.252 2009/02/21 14:50:53 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -239,6 +239,9 @@ cvs_file_get_cf(const char *d, const char *f, const char *fpath, int fd,
 	cf->file_flags = flags;
 	cf->in_attic = 0;
 	cf->file_ent = NULL;
+
+	if (cf->fd != -1)
+		cf->file_flags |= FILE_ON_DISK;
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL ||
 	    cvs_server_active == 1)
@@ -660,11 +663,13 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		cf->file_ent = NULL;
 
 	if (cf->file_ent != NULL) {
-		if (cf->fd != -1 && cf->file_ent->ce_type == CVS_ENT_DIR &&
+		if (cf->file_flags & FILE_ON_DISK &&
+		    cf->file_ent->ce_type == CVS_ENT_DIR &&
 		    cf->file_type != CVS_DIR)
 			fatal("%s is supposed to be a directory, but it is not",
 			    cf->file_path);
-		if (cf->fd != -1 && cf->file_ent->ce_type == CVS_ENT_FILE &&
+		if (cf->file_flags & FILE_ON_DISK &&
+		    cf->file_ent->ce_type == CVS_ENT_FILE &&
 		    cf->file_type != CVS_FILE)
 			fatal("%s is supposed to be a file, but it is not",
 			    cf->file_path);
@@ -747,7 +752,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	}
 
 	ismodified = rcsdead = 0;
-	if (cf->fd != -1 && cf->file_ent != NULL) {
+	if ((cf->file_flags & FILE_ON_DISK) && cf->file_ent != NULL) {
 		if (fstat(cf->fd, &st) == -1)
 			fatal("cvs_file_classify: %s", strerror(errno));
 
@@ -765,7 +770,8 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	if ((server_has_file == 1) || (cf->fd != -1))
 		cf->file_flags |= FILE_ON_DISK;
 
-	if (ismodified == 1 && cf->fd != -1 && cf->file_rcs != NULL &&
+	if (ismodified == 1 &&
+	    (cf->file_flags & FILE_ON_DISK) && cf->file_rcs != NULL &&
 	    cf->file_ent != NULL && !RCSNUM_ISBRANCH(cf->file_ent->ce_rev) &&
 	    cf->file_ent->ce_status != CVS_ENT_ADDED) {
 		b1 = rcs_rev_getbuf(cf->file_rcs, cf->file_ent->ce_rev, 0);
@@ -803,7 +809,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	 */
 	if (cf->file_ent == NULL) {
 		if (cf->file_rcs == NULL) {
-			if (cf->fd == -1) {
+			if (!(cf->file_flags & FILE_ON_DISK)) {
 				cvs_log(LP_NOTICE,
 				    "nothing known about '%s'",
 				    cf->file_path);
@@ -811,7 +817,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 
 			cf->file_status = FILE_UNKNOWN;
 		} else if (rcsdead == 1 || !(cf->file_flags & FILE_HAS_TAG)) {
-			if (cf->fd == -1) {
+			if (!(cf->file_flags & FILE_ON_DISK)) {
 				cf->file_status = FILE_UPTODATE;
 			} else if (cvs_cmdop != CVS_OP_ADD) {
 				cf->file_status = FILE_UNKNOWN;
@@ -827,7 +833,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 
 	switch (cf->file_ent->ce_status) {
 	case CVS_ENT_ADDED:
-		if (cf->fd == -1) {
+		if (!(cf->file_flags & FILE_ON_DISK)) {
 			if (cvs_cmdop != CVS_OP_REMOVE) {
 				cvs_log(LP_NOTICE,
 				    "warning: new-born %s has disappeared",
@@ -845,7 +851,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		}
 		break;
 	case CVS_ENT_REMOVED:
-		if (cf->fd != -1) {
+		if (cf->file_flags & FILE_ON_DISK) {
 			cvs_log(LP_NOTICE,
 			    "%s should be removed but is still there",
 			    cf->file_path);
@@ -869,7 +875,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		if (cf->file_rcs == NULL || cf->file_rcsrev == NULL ||
 		    rcsdead == 1 || (reset_tag == 1 && cf->in_attic == 1) ||
 		    (notag == 1 && tag != NULL)) {
-			if (cf->fd == -1 && server_has_file == 0) {
+			if (!(cf->file_flags & FILE_ON_DISK)) {
 				cvs_log(LP_NOTICE,
 				    "warning: %s's entry exists but"
 				    " is no longer in the repository,"
@@ -899,7 +905,7 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		} else if (cf->file_rcsrev == NULL) {
 			cf->file_status = FILE_UNLINK;
 		} else {
-			if (cf->fd == -1 && server_has_file == 0) {
+			if (!(cf->file_flags & FILE_ON_DISK)) {
 				if (cvs_cmdop != CVS_OP_REMOVE) {
 					cvs_log(LP_NOTICE,
 					    "warning: %s was lost",

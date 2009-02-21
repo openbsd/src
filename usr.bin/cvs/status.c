@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.90 2009/02/21 12:47:19 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.91 2009/02/21 14:50:53 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -134,7 +134,8 @@ cvs_status_local(struct cvs_file *cf)
 		return;
 	}
 
-	if (cf->file_status == FILE_UPTODATE && cf->fd == -1 &&
+	if (cf->file_status == FILE_UPTODATE &&
+	    !(cf->file_flags & FILE_ON_DISK) &&
 	    !(cf->file_flags & FILE_USER_SUPPLIED))
 		return;
 
@@ -154,7 +155,7 @@ cvs_status_local(struct cvs_file *cf)
 	    cf->file_ent->ce_conflict != NULL)
 		status = "File had conflicts on merge";
 
-	if (cf->fd == -1) {
+	if (!(cf->file_flags & FILE_ON_DISK)) {
 		(void)xsnprintf(buf, sizeof(buf), "no file %s\t",
 		    cf->file_name);
 	} else

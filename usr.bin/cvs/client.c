@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.117 2009/02/13 20:50:15 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.118 2009/02/21 14:50:53 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -519,7 +519,7 @@ cvs_client_sendfile(struct cvs_file *cf)
 
 	switch (cf->file_status) {
 	case FILE_UNKNOWN:
-		if (cf->fd != -1)
+		if (cf->file_flags & FILE_ON_DISK)
 			cvs_client_send_request("Questionable %s",
 			    cf->file_name);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.156 2008/06/28 13:10:02 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.157 2009/02/21 14:50:53 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -525,7 +525,7 @@ update_has_conflict_markers(struct cvs_file *cf)
 
 	cvs_log(LP_TRACE, "update_has_conflict_markers(%s)", cf->file_path);
 
-	if (cf->fd == -1 || cf->file_ent == NULL)
+	if (!(cf->file_flags & FILE_ON_DISK) || cf->file_ent == NULL)
 		return (0);
 
 	bp = cvs_buf_load_fd(cf->fd);
@@ -642,7 +642,7 @@ update_join_file(struct cvs_file *cf)
 	}
 
 	if (rev1 == NULL || !strcmp(state1, RCS_STATE_DEAD)) {
-		if (cf->fd != -1) {
+		if (cf->file_flags & FILE_ON_DISK) {
 			cvs_printf("%s exists but has been added in %s\n",
 			    cf->file_path, jrev2);
 		} else {
@@ -656,7 +656,7 @@ update_join_file(struct cvs_file *cf)
 	if (!rcsnum_cmp(rev1, rev2, 0))
 		goto out;
 
-	if (cf->fd == -1) {
+	if (!(cf->file_flags & FILE_ON_DISK)) {
 		cvs_printf("%s does not exist but is present in %s\n",
 		    cf->file_path, jrev2);
 		goto out;

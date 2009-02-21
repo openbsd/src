@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.144 2008/06/20 14:04:29 tobias Exp $	*/
+/*	$OpenBSD: diff.c,v 1.145 2009/02/21 14:50:53 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -286,10 +286,9 @@ cvs_diff_local(struct cvs_file *cf)
 				    "comparison available", cf->file_path);
 				return;
 			}
-			if (cf->fd == -1) {
-				if (!cvs_server_active)
-					cvs_log(LP_ERR, "cannot find %s",
-					    cf->file_path);
+			if (!(cf->file_flags & FILE_ON_DISK)) {
+				cvs_log(LP_ERR, "cannot find %s",
+				    cf->file_path);
 				return;
 			}
 			break;
@@ -306,7 +305,7 @@ cvs_diff_local(struct cvs_file *cf)
 			}
 			break;
 		default:
-			if (cvs_server_active != 1 && cf->fd == -1) {
+			if (!(cf->file_flags & FILE_ON_DISK)) {
 				cvs_log(LP_ERR, "cannot find %s",
 					    cf->file_path);
 				return;
@@ -457,7 +456,8 @@ cvs_diff_local(struct cvs_file *cf)
 		fd2 = rcs_rev_write_stmp(cf->file_rcs, diff_rev2, p2, 0);
 		if (futimes(fd2, tv2) == -1)
 			fatal("cvs_diff_local: utimes failed");
-	} else if (cvs_cmdop == CVS_OP_DIFF && cf->fd != -1 &&
+	} else if (cvs_cmdop == CVS_OP_DIFF &&
+	    (cf->file_flags & FILE_ON_DISK) &&
 	    cf->file_ent->ce_status != CVS_ENT_REMOVED) {
 		if (fstat(cf->fd, &st) == -1)
 			fatal("fstat failed %s", strerror(errno));
