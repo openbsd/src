@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.77 2009/01/27 13:49:21 claudio Exp $	*/
+/*	$OpenBSD: main.c,v 1.78 2009/02/21 20:07:49 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ main(int argc, char *argv[])
 
 	if ((kvmd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY,
 	    buf)) == NULL) {
-		fprintf(stderr, "%s: kvm_open: %s\n", __progname, buf);
+		fprintf(stderr, "%s: kvm_openfiles: %s\n", __progname, buf);
 		exit(1);
 	}
 
