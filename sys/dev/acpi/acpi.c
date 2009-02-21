@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.131 2009/02/20 20:08:26 marco Exp $ */
+/* $OpenBSD: acpi.c,v 1.132 2009/02/21 13:09:20 marco Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1798,7 +1798,7 @@ acpi_resume(struct acpi_softc *sc)
 	sc->sc_state = ACPI_STATE_S0;
 	if (sc->sc_tts) {
 		env.v_integer = sc->sc_state;
-		if (aml_evalnode(sc, sc->sc_wak, 1, &env, NULL) != 0) {
+		if (aml_evalnode(sc, sc->sc_tts, 1, &env, NULL) != 0) {
 			dnprintf(10, "%s evaluating method _TTS failed.\n",
 			    DEVNAME(sc));
 		}
