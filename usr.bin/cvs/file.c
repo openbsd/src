@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.252 2009/02/21 14:50:53 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.253 2009/02/21 18:26:47 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -416,7 +416,7 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	}
 
 	/*
-	 * If we do not have a admin directory inside here, dont bother,
+	 * If we do not have an admin directory inside here, dont bother,
 	 * unless we are running export or import.
 	 */
 	(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s", cf->file_path,
