@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.32 2009/02/17 22:28:40 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.33 2009/02/21 20:33:08 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -85,8 +85,6 @@ void vleetheraddr(struct am7990_softc *);
 void vleinit(struct am7990_softc *);
 void vlereset(struct am7990_softc *);
 int vle_intr(void *);
-void vle_copytobuf_contig(struct am7990_softc *, void *, int, int);
-void vle_zerobuf_contig(struct am7990_softc *, int, int);
 
 /* send command to the nvram controller */
 void
@@ -235,40 +233,6 @@ vle_intr(sc)
 	return (rc);
 }
 
-void
-vle_copytobuf_contig(sc, from, boff, len)
-	struct am7990_softc *sc;
-	void *from;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	/* 
-	 * Do the cache stuff 
-	 */
-	dma_cachectl(buf + boff, len);
-	/*
-	 * Just call bcopy() to do the work.
-	 */
-	bcopy(from, buf + boff, len);
-}
-
-void
-vle_zerobuf_contig(sc, boff, len)
-	struct am7990_softc *sc;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-	/* 
-	 * Do the cache stuff 
-	 */
-	dma_cachectl(buf + boff, len);
-	/*
-	 * Just let bzero() do the work
-	 */
-	bzero(buf + boff, len);
-}
-
 int
 lematch(parent, vcf, args)
 	struct device *parent;
@@ -377,9 +341,9 @@ leattach(parent, self, aux)
 		sc->sc_rdcsr = vlerdcsr;
 		sc->sc_wrcsr = vlewrcsr;
 		sc->sc_hwinit = vleinit;
-		sc->sc_copytodesc = vle_copytobuf_contig;
+		sc->sc_copytodesc = am7990_copytobuf_contig;
 		sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
-		sc->sc_copytobuf = vle_copytobuf_contig;
+		sc->sc_copytobuf = am7990_copytobuf_contig;
 		sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
 		sc->sc_zerobuf = am7990_zerobuf_contig;
 		/* get ether address */
