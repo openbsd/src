@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.51 2009/02/16 22:55:03 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.52 2009/02/21 18:35:22 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -222,13 +222,10 @@
  *	cause other exceptions to happen, and the whole system is
  *	in a rather precarious state and so special cautions must
  * 	be taken.
- * The bit FLAG_NMI_STACK, on 88110, indicates that this exception
- *	should be handled on the NMI stack.
  */
 #define FLAG_IGNORE_DATA_EXCEPTION	0
 #define FLAG_ENABLING_FPU		1
 #define FLAG_FROM_KERNEL		2
-#define	FLAG_NMI_STACK			3
 
 /* GENeral REGister OFFset into the E.F. (exception frame) */
 #define GENREG_OFF(num)		(EF_R0 + (num) * 4)
@@ -332,7 +329,6 @@
 #ifdef M88110
 #define PREP88110(NAME, NUM, FLAG_PRECHECK) \
 	xcr	FLAGS, FLAGS, SR1			; \
-	clr	FLAGS, FLAGS, 1<FLAG_NMI_STACK>		; \
 	FLAG_PRECHECK					  \
 	/* the bsr later clobbers r1, so save now */	; \
 	stcr	r1, SR2	/* r1 now free */		; \
@@ -360,8 +356,6 @@
 #define	M88110_Data_Precheck \
 	bb1.n	FLAG_IGNORE_DATA_EXCEPTION, FLAGS, \
 	    _ASM_LABEL(m88110_ignore_data_exception);
-#define	M88110_Set_NMI_Flag \
-	set	FLAGS, FLAGS, 1<FLAG_NMI_STACK>
 
 #ifdef M88100
 /*
@@ -1605,7 +1599,7 @@ GLOBAL(m88110_fpu_handler)
 
 /* non-maskable interrupt handler (IPIs, ABORT button) */
 GLOBAL(m88110_nonmaskable)
-	PREP88110("NMI", 11, M88110_Set_NMI_Flag)
+	PREP88110("NMI", 11,)
 	or	r2, r0, r30
 	XCALL(_C_LABEL(nmi), _ASM_LABEL(check_ast))
 
@@ -1852,19 +1846,18 @@ ASLOCAL(m88110_setup_phase_one)
 	/*
 	 * If we were in the kernel when the exception occured, we have
 	 * a valid stack. Keep using it, and build the frame on it.
+	 *
+	 * Note that if this exception is an NMI, we might be currently
+	 * switching processes, and curpcb and curproc won't match. It
+	 * is nevertheless safe to use curpcb, since nmi are processed
+	 * with interrupts disabled, and we won't check for AST or soft
+	 * interrupts before returning to the cpu_switchto kernel code.
 	 */
 	bb1	FLAG_FROM_KERNEL, FLAGS, _ASM_LABEL(m88110_kernel_stack)
 
 	/*
-	 * If this is an NMI, pick the NMI stack, and build the frame
-	 * in it.
-	 */
-	bb1	FLAG_NMI_STACK, FLAGS, _ASM_LABEL(m88110_nmi_stack)
-
-	/*
-	 * Otherwise, this is a normal exception in user mode, we'll
-	 * use the PCB for the exception frame and the top of the PCB
-	 * as the stack.
+	 * Otherwise, this is an exception in user mode, we'll use the PCB
+	 * for the exception frame and the top of the PCB as the stack.
 	 */
 
 	/* compute frame address: in PCB */
@@ -1886,28 +1879,7 @@ ASLOCAL(m88110_setup_phase_one)
 
 	br	_ASM_LABEL(m88110_have_stack)
 
-ASLOCAL(m88110_nmi_stack)
-	/* NMI exception in user mode */
-
-	/* compute frame address: top of NMI stack */
-	stcr	r30,  SR3			/* save r30, now free */
-	ldcr	r30,  CPU
-	ld	r30,  r30,  CI_NMI_STACK
-	addu	r30,  r30,  (USPACE - TRAPFRAME_SIZEOF)
-
-	/* save a few registers before we lose them */
-	st	r1,   r30,  GENREG_OFF(1)	/* save prev. r1 (now free) */
-	ldcr	r1,   SR3			/* save previous r30 */
-	st	r31,  r30,  GENREG_OFF(31)
-	st	r1,   r30,  GENREG_OFF(30)
-
-	/* compute stack address: bottom of exception frame */
-	or	r31,  r30,  r0
-
-	br	_ASM_LABEL(m88110_have_stack)
-
-ASLOCAL(m88110_kernel_stack)
-	/* Exception in kernel mode */
+ASLOCAL(m88110_kernel_stack)		/* Exception in kernel mode */
 
 	/* compute stack and frame address: allocate them on current stack */
 	subu	r31,  r31,  TRAPFRAME_SIZEOF	/* r31 now our E.F. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.63 2009/02/08 21:40:58 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.64 2009/02/21 18:35:22 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -327,11 +327,6 @@ GLOBAL(kernel_sdt)		/* SDT (segment descriptor table */
 ASGLOBAL(initstack)
 	space	USPACE
 ASGLOBAL(initstack_end)
-
-#ifdef M88110
-GLOBAL(nmi_stack)		/* NMI stack for the boot processor */
-	space	USPACE
-#endif
 
 #ifdef MULTIPROCESSOR
 	space	PAGE_SIZE	/* 4K, small, interim stack */

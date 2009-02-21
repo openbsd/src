@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.34 2009/02/17 21:04:01 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.35 2009/02/21 18:35:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -266,14 +266,6 @@ void
 m197_nmi(struct trapframe *eframe)
 {
 	u_int8_t abort;
-#if 0
-	u_int32_t psr;
-
-	/* block all hardware interrupts */
-	m197_setipl(IPL_HIGH);	/* IPL_IPI? */
-	psr = get_psr();
-	set_psr(psr & ~PSR_IND);
-#endif
 
 	/*
 	 * Non-maskable interrupts are either the abort switch (on
@@ -299,15 +291,6 @@ m197_nmi(struct trapframe *eframe)
 			*(u_int8_t *)(BS_BASE + BS_ABORT) |= BS_ABORT_IEN;
 		}
 	}
-
-#if 0
-	/*
-	 * Disable interrupts before returning to assembler,
-	 * the spl will be restored later.
-	 */
-	set_psr(psr | PSR_IND);
-#endif
-
 }
 
 u_int

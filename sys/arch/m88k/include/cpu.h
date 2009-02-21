@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.42 2009/02/17 21:03:59 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.43 2009/02/21 18:35:20 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -114,13 +114,12 @@ struct cpu_info {
 #define	ci_pfsr_d1	 ci_cpudep3
 
 	/* 88110 fields */
-#define	ci_nmi_stack	 ci_cpudep0		/* NMI stack */
-#define	ci_ipi_arg1	 ci_cpudep1		/* Complex IPI arguments */
-#define	ci_ipi_arg2	 ci_cpudep2
-#define	ci_h_sxip	 ci_cpudep3		/* trapframe values */
-#define	ci_h_epsr	 ci_cpudep4		/* for hardclock */
-#define	ci_s_sxip	 ci_cpudep5		/* and softclock */
-#define	ci_s_epsr	 ci_cpudep6
+#define	ci_ipi_arg1	 ci_cpudep0		/* Complex IPI arguments */
+#define	ci_ipi_arg2	 ci_cpudep1
+#define	ci_h_sxip	 ci_cpudep2		/* trapframe values */
+#define	ci_h_epsr	 ci_cpudep3		/* for hardclock */
+#define	ci_s_sxip	 ci_cpudep4		/* and softclock */
+#define	ci_s_epsr	 ci_cpudep5
 
 	struct schedstate_percpu
 			 ci_schedstate;		/* scheduling state */
