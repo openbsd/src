@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.224 2009/02/21 18:35:22 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.225 2009/02/21 18:37:49 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -136,6 +136,9 @@ void (*md_send_ipi)(int, cpuid_t);
 void (*md_soft_ipi)(void);
 #endif
 void (*md_delay)(int) = dumb_delay;
+#ifdef MULTIPROCESSOR
+void (*md_smp_setup)(struct cpu_info *);
+#endif
 
 int physmem;	  /* available physical memory, in pages */
 
@@ -714,6 +717,7 @@ secondary_pre_main()
 	set_cpu_number(cmmu_cpu_number()); /* Determine cpu number by CMMU */
 	ci = curcpu();
 	ci->ci_curproc = &proc0;
+	(*md_smp_setup)(ci);
 
 	splhigh();
 
@@ -1011,8 +1015,10 @@ mvme_bootstrap()
 	setup_board_config();
 	master_cpu = cmmu_init();
 	set_cpu_number(master_cpu);
+#ifdef MULTIPROCESSOR
+	(*md_smp_setup)(curcpu());
+#endif
 	SET(curcpu()->ci_flags, CIF_ALIVE | CIF_PRIMARY);
-
 
 #ifdef M88100
 	if (CPU_IS88100) {

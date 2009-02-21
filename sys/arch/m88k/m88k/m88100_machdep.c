@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100_machdep.c,v 1.6 2007/12/02 21:17:17 miod Exp $	*/
+/*	$OpenBSD: m88100_machdep.c,v 1.7 2009/02/21 18:37:48 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -31,6 +31,11 @@
 
 #include <machine/asm_macro.h>
 #include <m88k/m88100.h>
+
+#ifdef MULTIPROCESSOR
+uint32_t m88100_mp_atomic_begin(__cpu_simple_lock_t *, uint *);
+void	m88100_mp_atomic_end(uint32_t, __cpu_simple_lock_t *, uint);
+#endif
 
 /*
  *  Data Access Emulation for M88100 exceptions
@@ -305,3 +310,35 @@ m88100_apply_patches()
 	}
 #endif
 }
+
+#ifdef MULTIPROCESSOR
+void
+m88100_smp_setup(struct cpu_info *ci)
+{
+	/*
+	 * Setup function pointers for mplock operation.
+	 */
+
+	ci->ci_mp_atomic_begin = m88100_mp_atomic_begin;
+	ci->ci_mp_atomic_end = m88100_mp_atomic_end;
+}
+
+uint32_t
+m88100_mp_atomic_begin(__cpu_simple_lock_t *lock, uint *csr)
+{
+	uint32_t psr;
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+	__cpu_simple_lock(lock);
+
+	return psr;
+}
+
+void
+m88100_mp_atomic_end(uint32_t psr, __cpu_simple_lock_t *lock, uint csr)
+{
+	__cpu_simple_unlock(lock);
+	set_psr(psr);
+}
+#endif

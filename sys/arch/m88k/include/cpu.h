@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.43 2009/02/21 18:35:20 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.44 2009/02/21 18:37:47 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -79,6 +79,8 @@
 
 extern u_int max_cpus;
 
+#include <machine/lock.h>
+
 /*
  * Per-CPU data structure
  */
@@ -94,6 +96,15 @@ struct cpu_info {
 	u_int		 ci_cpuid;		/* cpu number */
 
 	/*
+	 * Function pointers used within mplock to ensure
+	 * non-interruptability.
+	 */
+	uint32_t	(*ci_mp_atomic_begin)
+			    (__cpu_simple_lock_t *lock, uint *csr);
+	void		(*ci_mp_atomic_end)
+			    (uint32_t psr, __cpu_simple_lock_t *lock, uint csr);
+
+	/*
 	 * The following fields are used differently depending on
 	 * the processor type.  Think of them as an anonymous union
 	 * of two anonymous structs.
@@ -104,8 +115,6 @@ struct cpu_info {
 	u_int		 ci_cpudep3;
 	u_int		 ci_cpudep4;
 	u_int		 ci_cpudep5;
-	u_int		 ci_cpudep6;
-	u_int		 ci_cpudep7;
 
 	/* 88100 fields */
 #define	ci_pfsr_i0	 ci_cpudep0		/* instruction... */

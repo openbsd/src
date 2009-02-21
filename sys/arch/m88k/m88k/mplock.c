@@ -1,4 +1,4 @@
-/*	$OpenBSD: mplock.c,v 1.1 2007/12/02 21:20:17 miod Exp $	*/
+/*	$OpenBSD: mplock.c,v 1.2 2009/02/21 18:37:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2004 Niklas Hallqvist.  All rights reserved.
@@ -67,6 +67,8 @@ void
 __mp_lock(struct __mp_lock *mpl)
 {
 	struct cpu_info *ci = curcpu();
+	uint32_t psr;
+	uint gcsr;
 
 	/*
 	 * Please notice that mpl_count gets incremented twice for the
@@ -81,22 +83,18 @@ __mp_lock(struct __mp_lock *mpl)
 	 */
 
 	for (;;) {
-		u_int32_t psr = get_psr();
+		psr = (*ci->ci_mp_atomic_begin)(&mpl->mpl_lock, &gcsr);
 
-		set_psr(psr | PSR_IND);
-		__cpu_simple_lock(&mpl->mpl_lock);
 		if (mpl->mpl_count == 0) {
 			mpl->mpl_count = 1;
 			mpl->mpl_cpu = ci;
 		}
 		if (mpl->mpl_cpu == ci) {
 			mpl->mpl_count++;
-			__cpu_simple_unlock(&mpl->mpl_lock);
-			set_psr(psr);
+			(*ci->ci_mp_atomic_end)(psr, &mpl->mpl_lock, gcsr);
 			break;
 		}
-		__cpu_simple_unlock(&mpl->mpl_lock);
-		set_psr(psr);
+		(*ci->ci_mp_atomic_end)(psr, &mpl->mpl_lock, gcsr);
 
 		__mp_lock_spin(mpl);
 	}
@@ -105,45 +103,45 @@ __mp_lock(struct __mp_lock *mpl)
 void
 __mp_unlock(struct __mp_lock *mpl)
 {
-	u_int32_t psr = get_psr();
+	struct cpu_info *ci = curcpu();
+	u_int32_t psr;
+	uint gcsr;
 
 #ifdef MP_LOCKDEBUG
-	if (mpl->mpl_cpu != curcpu()) {
+	if (mpl->mpl_cpu != ci) {
 		db_printf("__mp_unlock(%p): not held lock\n", mpl);
 		Debugger();
 	}
 #endif
 
-	set_psr(psr | PSR_IND);
-	__cpu_simple_lock(&mpl->mpl_lock);
+	psr = (*ci->ci_mp_atomic_begin)(&mpl->mpl_lock, &gcsr);
 	if (--mpl->mpl_count == 1) {
 		mpl->mpl_cpu = NULL;
 		mpl->mpl_count = 0;
 	}
-	__cpu_simple_unlock(&mpl->mpl_lock);
-	set_psr(psr);
+	(*ci->ci_mp_atomic_end)(psr, &mpl->mpl_lock, gcsr);
 }
 
 int
 __mp_release_all(struct __mp_lock *mpl)
 {
-	u_int32_t psr = get_psr();
+	struct cpu_info *ci = curcpu();
+	u_int32_t psr;
+	uint gcsr;
 	int rv;
 
 #ifdef MP_LOCKDEBUG
-	if (mpl->mpl_cpu != curcpu()) {
+	if (mpl->mpl_cpu != ci) {
 		db_printf("__mp_release_all(%p): not held lock\n", mpl);
 		Debugger();
 	}
 #endif
 
-	set_psr(psr | PSR_IND);
-	__cpu_simple_lock(&mpl->mpl_lock);
+	psr = (*ci->ci_mp_atomic_begin)(&mpl->mpl_lock, &gcsr);
 	rv = mpl->mpl_count - 1;
 	mpl->mpl_cpu = NULL;
 	mpl->mpl_count = 0;
-	__cpu_simple_unlock(&mpl->mpl_lock);
-	set_psr(psr);
+	(*ci->ci_mp_atomic_end)(psr, &mpl->mpl_lock, gcsr);
 
 	return (rv);
 }
@@ -151,22 +149,22 @@ __mp_release_all(struct __mp_lock *mpl)
 int
 __mp_release_all_but_one(struct __mp_lock *mpl)
 {
-	u_int32_t psr = get_psr();
+	struct cpu_info *ci = curcpu();
+	u_int32_t psr;
+	uint gcsr;
 	int rv;
 
 #ifdef MP_LOCKDEBUG
-	if (mpl->mpl_cpu != curcpu()) {
+	if (mpl->mpl_cpu != ci) {
 		db_printf("__mp_release_all_but_one(%p): not held lock\n", mpl);
 		Debugger();
 	}
 #endif
 
-	set_psr(psr | PSR_IND);
-	__cpu_simple_lock(&mpl->mpl_lock);
+	psr = (*ci->ci_mp_atomic_begin)(&mpl->mpl_lock, &gcsr);
 	rv = mpl->mpl_count - 2;
 	mpl->mpl_count = 2;
-	__cpu_simple_unlock(&mpl->mpl_lock);
-	set_psr(psr);
+	(*ci->ci_mp_atomic_end)(psr, &mpl->mpl_lock, gcsr);
 
 	return (rv);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88100.h,v 1.4 2007/11/17 05:36:23 miod Exp $ */
+/*	$OpenBSD: m88100.h,v 1.5 2009/02/21 18:37:47 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -71,6 +71,7 @@ u_int32_t do_xmem_word(vaddr_t, u_int32_t, int);
 u_int8_t  do_xmem_byte(vaddr_t, u_int8_t, int);
 
 void	m88100_apply_patches(void);
+void	m88100_smp_setup(struct cpu_info *);
 
 #endif
 

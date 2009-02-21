@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.35 2009/02/21 18:35:22 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.36 2009/02/21 18:37:49 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -89,9 +89,12 @@ void	m197_ext_int(struct trapframe *);
 u_int	m197_getipl(void);
 void	m197_ipi_handler(struct trapframe *);
 vaddr_t	m197_memsize(void);
+uint32_t m197_mp_atomic_begin(__cpu_simple_lock_t *, uint *);
+void	m197_mp_atomic_end(uint32_t, __cpu_simple_lock_t *, uint);
 void	m197_nmi(struct trapframe *);
 u_int	m197_raiseipl(u_int);
 u_int	m197_setipl(u_int);
+void	m197_smp_setup(struct cpu_info *);
 void	m197_soft_ipi(void);
 void	m197_startup(void);
 
@@ -406,6 +409,7 @@ m197_bootstrap()
 	md_send_ipi = m197_send_ipi;
 	md_soft_ipi = m197_soft_ipi;
 	md_delay = m197_delay;
+	md_smp_setup = m197_smp_setup;
 #else
 	md_delay = m1x7_delay;
 #endif
@@ -647,4 +651,40 @@ m197_delay(int us)
 	}
 }
 
+void
+m197_smp_setup(struct cpu_info *ci)
+{
+	/*
+	 * Setup function pointers for mplock operation.
+	 */
+
+	ci->ci_mp_atomic_begin = m197_mp_atomic_begin;
+	ci->ci_mp_atomic_end = m197_mp_atomic_end;
+}
+
+uint32_t
+m197_mp_atomic_begin(__cpu_simple_lock_t *lock, uint *csr)
+{
+	uint32_t psr;
+
+	psr = get_psr();
+	set_psr(psr | PSR_IND);
+
+	*csr = *(volatile uint8_t *)(BS_BASE + BS_CPINT);
+	*(volatile uint8_t *)(BS_BASE + BS_CPINT) = 0;
+
+	__cpu_simple_lock(lock);
+
+	return psr;
+}
+
+void
+m197_mp_atomic_end(uint32_t psr, __cpu_simple_lock_t *lock, uint csr)
+{
+	__cpu_simple_unlock(lock);
+
+	*(volatile uint8_t *)(BS_BASE + BS_CPINT) = csr & BS_CPI_IEN;
+
+	set_psr(psr);
+}
 #endif	/* MULTIPROCESSOR */
