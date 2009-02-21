@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.28 2008/07/18 23:43:31 art Exp $ */
+/*	$OpenBSD: cpu.h,v 1.29 2009/02/21 20:33:23 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -207,7 +207,6 @@ int badvaddr(vaddr_t, int);
 void nmihand(void *);
 int intr_findvec(int, int);
 
-void dma_cachectl(caddr_t, int);
 paddr_t kvtop(vaddr_t);
 
 #endif	/* _KERNEL */
