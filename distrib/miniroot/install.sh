@@ -1,8 +1,8 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.161 2009/02/19 02:11:32 krw Exp $
+#	$OpenBSD: install.sh,v 1.162 2009/02/21 18:07:14 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
-# Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
+# Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -318,10 +318,10 @@ THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 
 # Always create new hosts file.
 cat >/tmp/hosts <<__EOT
-::1 localhost
-127.0.0.1 localhost
-::1 $(hostname -s)
-127.0.0.1 $(hostname -s)
+::1		localhost
+127.0.0.1	localhost
+::1		$(hostname -s)
+127.0.0.1	$(hostname -s)
 __EOT
 
 ask_yn "Configure the network?" yes
@@ -376,9 +376,9 @@ hostname >myname
 _dn=$(get_fqdn)
 while read _addr _hn _aliases; do
 	if [[ -n $_aliases || $_hn != ${_hn%%.*} || -z $_dn ]]; then
-		echo "$_addr $_hn $_aliases"
+		echo "$_addr\t$_hn $_aliases"
 	else
-		echo "$_addr $_hn.$_dn $_hn"
+		echo "$_addr\t$_hn.$_dn $_hn"
 	fi
 done <hosts >hosts.new
 mv hosts.new hosts
