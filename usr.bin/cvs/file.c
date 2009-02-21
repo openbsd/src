@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.250 2009/02/21 12:47:19 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.251 2009/02/21 13:44:18 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -585,7 +585,8 @@ walkrepo:
 
 		if (stat(fpath, &st) == -1 || build_dirs == 1)
 			cvs_repository_getdir(repo, cf->file_path, &fl, &dl,
-			    (cr->flags & CR_RECURSE_DIRS));
+			    (cr->flags & CR_RECURSE_DIRS) ?
+			    REPOSITORY_DODIRS : 0);
 	}
 
 	cvs_file_walklist(&fl, cr);
@@ -760,6 +761,9 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		server_has_file = 1;
 		ismodified = 0;
 	}
+
+	if ((server_has_file == 1) || (cf->fd != -1))
+		cf->file_flags |= FILE_ON_DISK;
 
 	if (ismodified == 1 && cf->fd != -1 && cf->file_rcs != NULL &&
 	    cf->file_ent != NULL && !RCSNUM_ISBRANCH(cf->file_ent->ce_rev) &&

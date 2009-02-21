@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.20 2008/03/09 03:14:52 joris Exp $	*/
+/*	$OpenBSD: repository.c,v 1.21 2009/02/21 13:44:18 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -96,7 +96,7 @@ cvs_repository_lock(const char *repo, int wantlock)
 
 void
 cvs_repository_getdir(const char *dir, const char *wdir,
-	struct cvs_flisthead *fl, struct cvs_flisthead *dl, int dodirs)
+	struct cvs_flisthead *fl, struct cvs_flisthead *dl, int flags)
 {
 	int type;
 	DIR *dirp;
@@ -157,21 +157,25 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 			}
 		}
 
-		if (dodirs == 0 && type == CVS_DIR)
+		if (!(flags & REPOSITORY_DODIRS) && type == CVS_DIR)
 			continue;
 
 		switch (type) {
 		case CVS_DIR:
-			if (!strcmp(dp->d_name, CVS_PATH_ATTIC))
-				cvs_repository_getdir(rpath, wdir, fl, dl, 0);
-			else
+			if (!strcmp(dp->d_name, CVS_PATH_ATTIC)) {
+				cvs_repository_getdir(rpath, wdir, fl, dl,
+				    REPOSITORY_IS_ATTIC);
+			} else {
 				cvs_file_get(fpath, 0, dl);
+			}
 			break;
 		case CVS_FILE:
 			if ((s = strrchr(fpath, ',')) != NULL &&
 			    s != fpath && !strcmp(s, RCS_FILE_EXT)) {
 				*s = '\0';
-				cvs_file_get(fpath, 0, fl);
+				cvs_file_get(fpath, 
+				    (flags & REPOSITORY_IS_ATTIC) ?
+				    FILE_INSIDE_ATTIC : 0, fl);
 			}
 			break;
 		default:

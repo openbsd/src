@@ -22,6 +22,9 @@
 #define CVS_LOCK_SLEEP		30
 #define CVS_LOCK_TRIES		5
 
+#define REPOSITORY_DODIRS	0x01
+#define REPOSITORY_IS_ATTIC	0x02
+
 extern struct cvs_wklhead repo_locks;
 
 void	cvs_repository_unlock(const char *);
