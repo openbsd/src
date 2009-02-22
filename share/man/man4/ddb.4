@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.57 2009/01/18 13:36:56 thib Exp $
+.\"	$OpenBSD: ddb.4,v 1.58 2009/02/22 15:10:41 jsing Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: January 18 2009 $
+.Dd $Mdocdate: February 22 2009 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -44,10 +44,9 @@ is invoked upon a kernel panic when the
 .Xr sysctl 8
 .Va ddb.panic
 is set to 1.
-It may be invoked from the console when the
-.Xr sysctl 8
+It may be invoked from the console when the sysctl
 .Va ddb.console
-is set to 1 using any of the following methods:
+is set to 1, using any of the following methods:
 .Pp
 .Bl -dash -offset 3n
 .It
@@ -57,6 +56,9 @@ Using the key sequence
 Sending a
 .Dv BREAK
 when using a serial console.
+.It
+Writing to the sysctl
+.Va ddb.trigger .
 .It
 For i386 and amd64 architectures,
 using the key sequence
