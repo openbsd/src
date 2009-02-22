@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.30 2009/02/19 23:21:09 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.31 2009/02/22 13:45:11 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -185,6 +185,22 @@
 #define SPDMEM_DDR2_MINI_RDIMM		(1 << 4)
 #define SPDMEM_DDR2_MINI_UDIMM		(1 << 5)
 
+/* DDR2 FB-DIMM SDRAM */
+#define SPDMEM_FBDIMM_ADDR		0x01
+#define SPDMEM_FBDIMM_RANKS		0x04
+#define SPDMEM_FBDIMM_MTB_DIVIDEND	0x06
+#define SPDMEM_FBDIMM_MTB_DIVISOR	0x07
+#define SPDMEM_FBDIMM_PROTO		0x4e
+
+#define SPDMEM_FBDIMM_RANKS_WIDTH		0x07
+#define SPDMEM_FBDIMM_ADDR_BANKS		0x02
+#define SPDMEM_FBDIMM_ADDR_COL			0x0c
+#define SPDMEM_FBDIMM_ADDR_COL_SHIFT		2
+#define SPDMEM_FBDIMM_ADDR_ROW			0xe0
+#define SPDMEM_FBDIMM_ADDR_ROW_SHIFT		5
+#define SPDMEM_FBDIMM_PROTO_ECC			(1 << 1)
+
+
 /* Dual Data Rate 3 SDRAM */
 #define SPDMEM_DDR3_MODTYPE		0x00
 #define SPDMEM_DDR3_DENSITY		0x01
@@ -234,6 +250,7 @@ void		 spdmem_sdram_decode(struct spdmem_softc *, struct spdmem *);
 void		 spdmem_rdr_decode(struct spdmem_softc *, struct spdmem *);
 void		 spdmem_ddr_decode(struct spdmem_softc *, struct spdmem *);
 void		 spdmem_ddr2_decode(struct spdmem_softc *, struct spdmem *);
+void		 spdmem_fbdimm_decode(struct spdmem_softc *, struct spdmem *);
 void		 spdmem_ddr3_decode(struct spdmem_softc *, struct spdmem *);
 
 struct cfattach spdmem_ca = {
@@ -616,6 +633,56 @@ spdmem_ddr2_decode(struct spdmem_softc *sc, struct spdmem *s)
 }
 
 void
+spdmem_fbdimm_decode(struct spdmem_softc *sc, struct spdmem *s)
+{
+	int dimm_size, num_banks, cycle_time, d_clk, p_clk, bits;
+	uint8_t rows, cols, banks, dividend, divisor;
+	/*
+	 * FB-DIMM is very much like DDR3
+	 */
+
+	banks = s->sm_data[SPDMEM_FBDIMM_ADDR] & SPDMEM_FBDIMM_ADDR_BANKS;
+	cols = (s->sm_data[SPDMEM_FBDIMM_ADDR] & SPDMEM_FBDIMM_ADDR_COL) >>
+	    SPDMEM_FBDIMM_ADDR_COL_SHIFT;
+	rows = (s->sm_data[SPDMEM_FBDIMM_ADDR] & SPDMEM_FBDIMM_ADDR_ROW) >>
+	    SPDMEM_FBDIMM_ADDR_ROW_SHIFT;
+	dimm_size = rows + 12 + cols +  9 - 20 - 3;
+	num_banks = 1 << (banks + 2);
+
+	if (dimm_size < 1024)
+		printf(" %dMB", dimm_size);
+	else
+		printf(" %dGB", dimm_size / 1024);
+
+	if (s->sm_data[SPDMEM_FBDIMM_PROTO] & SPDMEM_FBDIMM_PROTO_ECC)
+		printf(" ECC");
+
+	dividend = s->sm_data[SPDMEM_FBDIMM_MTB_DIVIDEND];
+	divisor = s->sm_data[SPDMEM_FBDIMM_MTB_DIVISOR];
+
+	cycle_time = (1000 * dividend + (divisor / 2)) / divisor;
+
+	if (cycle_time != 0) {
+		/*
+		 * cycle time is scaled by a factor of 1000 to avoid using
+		 * floating point.  Calculate memory speed as the number
+		 * of cycles per microsecond.
+		 */
+		d_clk = 1000 * 1000;
+
+		/* DDR2 FB-DIMM uses a dual-pumped clock */
+		d_clk *= 2;
+		bits = 1 << ((s->sm_data[SPDMEM_FBDIMM_RANKS] &
+		    SPDMEM_FBDIMM_RANKS_WIDTH) + 2);
+
+		p_clk = (d_clk * bits) / 8 / cycle_time;
+		d_clk = ((d_clk + cycle_time / 2) ) / cycle_time;
+		p_clk -= p_clk % 100;
+		printf(" PC2-%d", p_clk);
+	}
+}
+
+void
 spdmem_ddr3_decode(struct spdmem_softc *sc, struct spdmem *s)
 {
 	const char *type;
@@ -725,6 +792,10 @@ spdmem_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		case SPDMEM_MEMTYPE_DDR2SDRAM:
 			spdmem_ddr2_decode(sc, s);
+			break;
+		case SPDMEM_MEMTYPE_FBDIMM:
+		case SPDMEM_MEMTYPE_FBDIMM_PROBE:
+			spdmem_fbdimm_decode(sc, s);
 			break;
 		case SPDMEM_MEMTYPE_DDR3SDRAM:
 			spdmem_ddr3_decode(sc, s);
