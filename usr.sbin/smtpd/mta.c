@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.28 2009/02/20 15:27:01 pea Exp $	*/
+/*	$OpenBSD: mta.c,v 1.29 2009/02/22 11:44:29 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -264,8 +264,11 @@ mta_dispatch_runner(int sig, short event, void *p)
 				fatalx("mta_dispatch_runner: internal inconsistency.");
 
 			batchp->session_ss = messagep->session_ss;
-			strlcpy(batchp->session_hostname, messagep->session_hostname, MAXHOSTNAMELEN);
-			strlcpy(batchp->session_helo, messagep->session_helo, MAXHOSTNAMELEN);
+			strlcpy(batchp->session_hostname,
+			    messagep->session_hostname,
+			    sizeof(batchp->session_hostname));
+			strlcpy(batchp->session_helo, messagep->session_helo,
+			    sizeof(batchp->session_helo));
 
  			TAILQ_INSERT_TAIL(&batchp->messages, messagep, entry);
 
@@ -476,7 +479,8 @@ mta_write(int s, short event, void *arg)
 			bufferevent_free(sessionp->s_bev);
 			sessionp->s_bev = NULL;
 		}
-		strlcpy(batchp->errorline, "connection timed-out.", MAX_LINE_SIZE);
+		strlcpy(batchp->errorline, "connection timed-out.",
+		    sizeof(batchp->errorline));
 
 		ret = 0;
 		while (sessionp->mx_off < sessionp->mx_cnt &&
@@ -536,12 +540,12 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 
 	log_debug("remote server sent: [%s]", line);
 
-	strlcpy(codebuf, line, sizeof codebuf);
+	strlcpy(codebuf, line, sizeof(codebuf));
 	code = strtonum(codebuf, 0, UINT16_MAX, &errstr);
 	if (errstr || code < 100) {
 		/* Server sent invalid line, protocol error */
 		batchp->status |= S_BATCH_PERMFAILURE;
-		strlcpy(batchp->errorline, line, MAX_LINE_SIZE);
+		strlcpy(batchp->errorline, line, sizeof(batchp->errorline));
 		mta_batch_update_queue(batchp);
 		session_destroy(sessionp);
 		return 0;
@@ -597,7 +601,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	case 450:
 	case 451:
 		batchp->status |= S_BATCH_TEMPFAILURE;
-		strlcpy(batchp->errorline, line, MAX_LINE_SIZE);
+		strlcpy(batchp->errorline, line, sizeof(batchp->errorline));
 		mta_batch_update_queue(batchp);
 		session_destroy(sessionp);
 		return 0;
@@ -609,7 +613,8 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	case 550:
 		if (sessionp->s_state == S_RCPT) {
 			batchp->messagep->status = (S_MESSAGE_REJECTED|S_MESSAGE_PERMFAILURE);
-			strlcpy(batchp->messagep->session_errorline, line, MAX_LINE_SIZE);
+			strlcpy(batchp->messagep->session_errorline, line,
+			    sizeof(batchp->messagep->session_errorline));
 			break;
 		}
 	case 354:
@@ -634,7 +639,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 			log_debug("Ouch, SMTP session returned unhandled %d status.", code);
 
 		batchp->status |= S_BATCH_PERMFAILURE;
-		strlcpy(batchp->errorline, line, MAX_LINE_SIZE);
+		strlcpy(batchp->errorline, line, sizeof(batchp->errorline));
 		mta_batch_update_queue(batchp);
 		session_destroy(sessionp);
 		return 0;

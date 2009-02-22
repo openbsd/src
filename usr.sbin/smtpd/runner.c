@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.30 2009/02/15 10:32:23 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.31 2009/02/22 11:44:29 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -781,13 +781,14 @@ runner_purge_message(char *msgid)
 	DIR *dirp;
 	struct dirent *dp;
 	
-	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%s", PATH_PURGE, msgid))
+	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%s", PATH_PURGE, msgid))
 		fatal("queue_delete_incoming_message: snprintf");
 
-	if (! bsnprintf(evpdir, MAXPATHLEN, "%s%s", rootdir, PATH_ENVELOPES))
+	if (! bsnprintf(evpdir, sizeof(evpdir), "%s%s", rootdir,
+		PATH_ENVELOPES))
 		fatal("queue_delete_incoming_message: snprintf");
 	
-	if (! bsnprintf(msgpath, MAXPATHLEN, "%s/message", rootdir))
+	if (! bsnprintf(msgpath, sizeof(msgpath), "%s/message", rootdir))
 		fatal("queue_delete_incoming_message: snprintf");
 
 	if (unlink(msgpath) == -1)
@@ -804,7 +805,7 @@ runner_purge_message(char *msgid)
 		if (strcmp(dp->d_name, ".") == 0 ||
 		    strcmp(dp->d_name, "..") == 0)
 			continue;
-		if (! bsnprintf(evppath, MAXPATHLEN, "%s/%s", evpdir,
+		if (! bsnprintf(evppath, sizeof(evppath), "%s/%s", evpdir,
 			dp->d_name))
 			fatal("queue_delete_incoming_message: snprintf");
 

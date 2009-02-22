@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.11 2009/01/29 21:50:10 form Exp $	*/
+/*	$OpenBSD: forward.c,v 1.12 2009/02/22 11:44:29 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -52,8 +52,7 @@ forwards_get(struct aliaseslist *aliases, char *username)
 	if (pw == NULL)
 		return 0;
 
-	if (snprintf(pathname, MAXPATHLEN, "%s/.forward", pw->pw_dir)
-	    >= MAXPATHLEN)
+	if (! bsnprintf(pathname, sizeof(pathname), "%s/.forward", pw->pw_dir))
 		return 0;
 
 	fp = fopen(pathname, "r");

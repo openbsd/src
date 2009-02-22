@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.9 2009/02/16 10:15:10 jacekm Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.10 2009/02/22 11:44:29 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -61,7 +61,7 @@ queue_create_layout_message(char *queuepath, char *message_id)
 	char rootdir[MAXPATHLEN];
 	char evpdir[MAXPATHLEN];
 
-	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%d.XXXXXXXXXXXXXXXX",
+	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%d.XXXXXXXXXXXXXXXX",
 		queuepath, time(NULL)))
 		fatalx("queue_create_layout_message: snprintf");
 
@@ -78,7 +78,8 @@ queue_create_layout_message(char *queuepath, char *message_id)
 	    >= MAX_ID_SIZE)
 		fatalx("queue_create_layout_message: truncation");
 
-	if (! bsnprintf(evpdir, MAXPATHLEN, "%s%s", rootdir, PATH_ENVELOPES))
+	if (! bsnprintf(evpdir, sizeof(evpdir), "%s%s", rootdir,
+		PATH_ENVELOPES))
 		fatalx("queue_create_layout_message: snprintf");
 
 	if (mkdir(evpdir, 0700) == -1) {
@@ -99,10 +100,10 @@ queue_delete_layout_message(char *queuepath, char *msgid)
 	char rootdir[MAXPATHLEN];
 	char purgedir[MAXPATHLEN];
 
-	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%s", queuepath, msgid))
+	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%s", queuepath, msgid))
 		fatalx("snprintf");
 
-	if (! bsnprintf(purgedir, MAXPATHLEN, "%s/%s", PATH_PURGE, msgid))
+	if (! bsnprintf(purgedir, sizeof(purgedir), "%s/%s", PATH_PURGE, msgid))
 		fatalx("snprintf");
 
 	if (rename(rootdir, purgedir) == -1) {
@@ -121,7 +122,7 @@ queue_record_layout_envelope(char *queuepath, struct message *message)
 	int fd;
 
 again:
-	if (! bsnprintf(evpname, MAXPATHLEN, "%s/%s%s/%s.%qu", queuepath,
+	if (! bsnprintf(evpname, sizeof(evpname), "%s/%s%s/%s.%qu", queuepath,
 		message->message_id, PATH_ENVELOPES, message->message_id,
 		(u_int64_t)arc4random()))
 		fatalx("queue_record_incoming_envelope: snprintf");
@@ -140,8 +141,8 @@ again:
 		fatal("queue_record_incoming_envelope: fdopen");
 
 	message->creation = time(NULL);
-	if (strlcpy(message->message_uid, strrchr(evpname, '/') + 1, MAX_ID_SIZE)
-	    >= MAX_ID_SIZE)
+	if (strlcpy(message->message_uid, strrchr(evpname, '/') + 1,
+	    sizeof(message->message_uid)) >= sizeof(message->message_uid))
 		fatalx("queue_record_incoming_envelope: truncation");
 
 	if (fwrite(message, sizeof (struct message), 1, fp) != 1) {
@@ -169,7 +170,7 @@ queue_remove_layout_envelope(char *queuepath, struct message *message)
 {
 	char pathname[MAXPATHLEN];
 
-	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%s%s/%s", queuepath,
+	if (! bsnprintf(pathname, sizeof(pathname), "%s/%s%s/%s", queuepath,
 		message->message_id, PATH_ENVELOPES, message->message_uid))
 		fatal("queue_remove_incoming_envelope: snprintf");
 
@@ -185,11 +186,11 @@ queue_commit_layout_message(char *queuepath, struct message *messagep)
 	char rootdir[MAXPATHLEN];
 	char queuedir[MAXPATHLEN];
 	
-	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%s", queuepath,
+	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%s", queuepath,
 		messagep->message_id))
 		fatal("queue_commit_message_incoming: snprintf");
 
-	if (! bsnprintf(queuedir, MAXPATHLEN, "%s/%d", PATH_QUEUE,
+	if (! bsnprintf(queuedir, sizeof(queuedir), "%s/%d", PATH_QUEUE,
 		queue_hash(messagep->message_id)))
 		fatal("queue_commit_message_incoming: snprintf");
 
@@ -200,8 +201,9 @@ queue_commit_layout_message(char *queuepath, struct message *messagep)
 			fatal("queue_commit_message_incoming: mkdir");
 	}
 
-	if (strlcat(queuedir, "/", MAXPATHLEN) >= MAXPATHLEN ||
-	    strlcat(queuedir, messagep->message_id, MAXPATHLEN) >= MAXPATHLEN)
+	if (strlcat(queuedir, "/", sizeof(queuedir)) >= sizeof(queuedir) ||
+	    strlcat(queuedir, messagep->message_id, sizeof(queuedir)) >=
+	    sizeof(queuedir))
 		fatalx("queue_commit_incoming_message: truncation");
 
 	if (rename(rootdir, queuedir) == -1) {
@@ -218,7 +220,7 @@ queue_open_layout_messagefile(char *queuepath, struct message *messagep)
 {
 	char pathname[MAXPATHLEN];
 	
-	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%s/message", queuepath,
+	if (! bsnprintf(pathname, sizeof(pathname), "%s/%s/message", queuepath,
 		messagep->message_id))
 		fatal("queue_open_incoming_message_file: snprintf");
 
@@ -307,8 +309,8 @@ queue_open_message_file(char *msgid)
 
 	hval = queue_hash(msgid);
 
-	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s/message", PATH_QUEUE,
-		hval, msgid))
+	if (! bsnprintf(pathname, sizeof(pathname), "%s/%d/%s/message",
+		PATH_QUEUE, hval, msgid))
 		fatal("queue_open_message_file: snprintf");
 
 	if ((fd = open(pathname, O_RDONLY)) == -1)
@@ -326,15 +328,15 @@ queue_delete_message(char *msgid)
 	u_int16_t hval;
 
 	hval = queue_hash(msgid);
-	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%d/%s", PATH_QUEUE,
+	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%d/%s", PATH_QUEUE,
 		hval, msgid))
 		fatal("queue_delete_message: snprintf");
 
-	if (! bsnprintf(evpdir, MAXPATHLEN, "%s%s",
-		rootdir, PATH_ENVELOPES))
+	if (! bsnprintf(evpdir, sizeof(evpdir), "%s%s", rootdir,
+		PATH_ENVELOPES))
 		fatal("queue_delete_message: snprintf");
 	
-	if (! bsnprintf(msgpath, MAXPATHLEN, "%s/message", rootdir))
+	if (! bsnprintf(msgpath, sizeof(msgpath), "%s/message", rootdir))
 		fatal("queue_delete_message: snprintf");
 
 	if (unlink(msgpath) == -1)
@@ -352,8 +354,7 @@ queue_delete_message(char *msgid)
 	if (rmdir(rootdir) == -1)
 		fatal("#2 queue_delete_message: rmdir");
 
-	if (! bsnprintf(rootdir, MAXPATHLEN, "%s/%d", PATH_QUEUE,
-		hval))
+	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%d", PATH_QUEUE, hval))
 		fatal("queue_delete_message: snprintf");
 
 	rmdir(rootdir);
@@ -402,15 +403,15 @@ queue_remove_envelope(struct message *messagep)
 
 	hval = queue_hash(messagep->message_id);
 
-	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
-		hval, messagep->message_id, PATH_ENVELOPES,
+	if (! bsnprintf(pathname, sizeof(pathname), "%s/%d/%s%s/%s",
+		PATH_QUEUE, hval, messagep->message_id, PATH_ENVELOPES,
 		messagep->message_uid))
 		fatal("queue_remove_envelope: snprintf");
 
 	if (unlink(pathname) == -1)
 		fatal("queue_remove_envelope: unlink");
 
-	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s", PATH_QUEUE,
+	if (! bsnprintf(pathname, sizeof(pathname), "%s/%d/%s%s", PATH_QUEUE,
 		hval, messagep->message_id, PATH_ENVELOPES))
 		fatal("queue_remove_envelope: snprintf");
 
@@ -427,10 +428,10 @@ queue_update_envelope(struct message *messagep)
 	char dest[MAXPATHLEN];
 	FILE *fp;
 
-	if (! bsnprintf(temp, MAXPATHLEN, "%s/envelope.tmp", PATH_INCOMING))
+	if (! bsnprintf(temp, sizeof(temp), "%s/envelope.tmp", PATH_INCOMING))
 		fatalx("queue_update_envelope");
 
-	if (! bsnprintf(dest, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
+	if (! bsnprintf(dest, sizeof(dest), "%s/%d/%s%s/%s", PATH_QUEUE,
 		queue_hash(messagep->message_id), messagep->message_id,
 		PATH_ENVELOPES, messagep->message_uid))
 		fatal("queue_update_envelope: snprintf");
@@ -473,11 +474,11 @@ queue_load_envelope(struct message *messagep, char *evpid)
 	char msgid[MAX_ID_SIZE];
 	FILE *fp;
 
-	if (strlcpy(msgid, evpid, MAX_ID_SIZE) >= MAX_ID_SIZE)
+	if (strlcpy(msgid, evpid, sizeof(msgid)) >= sizeof(msgid))
 		fatalx("queue_load_envelope: truncation");
 	*strrchr(msgid, '.') = '\0';
 
-	if (! bsnprintf(pathname, MAXPATHLEN, "%s/%d/%s%s/%s", PATH_QUEUE,
+	if (! bsnprintf(pathname, sizeof(pathname), "%s/%d/%s%s/%s", PATH_QUEUE,
 		queue_hash(msgid), msgid, PATH_ENVELOPES, evpid))
 		fatalx("queue_load_envelope: snprintf");
 
@@ -630,13 +631,13 @@ walk_queue(struct qwalk *q, char *fname)
 			log_warnx("walk_queue: invalid bucket: %s", fname);
 			return (QWALK_AGAIN);
 		}
-		if (! bsnprintf(q->path, MAXPATHLEN, "%s/%d", PATH_QUEUE,
+		if (! bsnprintf(q->path, sizeof(q->path), "%s/%d", PATH_QUEUE,
 			q->bucket))
 			fatalx("walk_queue: snprintf");
 		return (QWALK_RECURSE);
 	case 1:
-		if (! bsnprintf(q->path, MAXPATHLEN, "%s/%d/%s%s", PATH_QUEUE,
-			q->bucket, fname, PATH_ENVELOPES))
+		if (! bsnprintf(q->path, sizeof(q->path), "%s/%d/%s%s",
+			PATH_QUEUE, q->bucket, fname, PATH_ENVELOPES))
 			fatalx("walk_queue: snprintf");
 		return (QWALK_RECURSE);
 	case 2:

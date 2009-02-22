@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.24 2009/02/18 12:06:01 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.25 2009/02/22 11:44:29 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -49,7 +49,7 @@ void		lka_disable_events(struct smtpd *);
 int		lka_verify_mail(struct smtpd *, struct path *);
 int		lka_resolve_mail(struct smtpd *, struct rule *, struct path *);
 int		lka_forward_file(struct passwd *);
-int		lka_expand(char *, size_t, struct path *);
+size_t		lka_expand(char *, size_t, struct path *);
 int		aliases_exist(struct smtpd *, char *);
 int		aliases_get(struct smtpd *, struct aliaseslist *, char *);
 int		lka_resolve_alias(struct path *, struct alias *);
@@ -320,7 +320,7 @@ lka_dispatch_smtp(int sig, short event, void *p)
 				break;
 			}
 
-			strlcpy(s->s_hostname, addr, MAXHOSTNAMELEN);
+			strlcpy(s->s_hostname, addr, sizeof(s->s_hostname));
 			imsg_compose(ibuf, IMSG_LKA_HOST, 0, 0, -1, s,
 			    sizeof(struct session));
 			break;
@@ -640,7 +640,7 @@ lka_resolve_mail(struct smtpd *env, struct rule *rule, struct path *path)
 	struct passwd *pw;
 	char *p;
 
-	(void)strlcpy(username, path->user, MAXLOGNAME);
+	(void)strlcpy(username, path->user, sizeof(username));
 
 	for (p = &username[0]; *p != '\0' && *p != '+'; ++p)
 		*p = tolower((int)*p);
@@ -654,16 +654,18 @@ lka_resolve_mail(struct smtpd *env, struct rule *rule, struct path *path)
 		pw = safe_getpwnam(username);
 		if (pw == NULL)
 			return 0;
-		(void)strlcpy(path->pw_name, pw->pw_name, MAXLOGNAME);
-		if (lka_expand(path->rule.r_value.path, MAXPATHLEN, path) >=
-		    MAXPATHLEN)
+		(void)strlcpy(path->pw_name, pw->pw_name,
+		    sizeof(path->pw_name));
+		if (lka_expand(path->rule.r_value.path,
+		    sizeof(path->rule.r_value.path), path) >=
+		    sizeof(path->rule.r_value.path))
 			return 0;
 	}
 
 	return 1;
 }
 
-int
+size_t
 lka_expand(char *buf, size_t len, struct path *path)
 {
 	char *p, *pbuf;
@@ -694,9 +696,10 @@ lka_expand(char *buf, size_t len, struct path *path)
 				char username[MAXLOGNAME];
 				char *delim;
 
-				ret = strlcpy(username, p + 1, MAXLOGNAME);
+				ret = strlcpy(username, p + 1,
+				    sizeof(username));
 				delim = strchr(username, '/');
-				if (delim == NULL && ret >= MAXLOGNAME) {
+				if (delim == NULL && ret >= sizeof(username)) {
 					continue;
 				}
 
@@ -794,13 +797,15 @@ lka_resolve_alias(struct path *path, struct alias *alias)
 	case ALIAS_FILENAME:
 		log_debug("FILENAME: %s", alias->u.filename);
 		path->rule.r_action = A_FILENAME;
-		strlcpy(path->u.filename, alias->u.filename, MAXPATHLEN);
+		strlcpy(path->u.filename, alias->u.filename,
+		    sizeof(path->u.filename));
 		break;
 
 	case ALIAS_FILTER:
 		log_debug("FILTER: %s", alias->u.filter);
 		path->rule.r_action = A_EXT;
-		strlcpy(path->rule.r_value.command, alias->u.filter + 2, MAXPATHLEN);
+		strlcpy(path->rule.r_value.command, alias->u.filter + 2,
+		    sizeof(path->rule.r_value.command));
 		path->rule.r_value.command[strlen(path->rule.r_value.command) - 1] = '\0';
 		break;
 
@@ -895,7 +900,7 @@ lka_resolve_path(struct smtpd *env, struct path *path)
 	struct passwd *pw;
 	char *p;
 
-	(void)strlcpy(username, path->user, MAXLOGNAME);
+	(void)strlcpy(username, path->user, sizeof(username));
 
 	for (p = &username[0]; *p != '\0' && *p != '+'; ++p)
 		*p = tolower((int)*p);
@@ -910,9 +915,11 @@ lka_resolve_path(struct smtpd *env, struct path *path)
 		pw = safe_getpwnam(username);
 		if (pw == NULL)
 			return 0;
-		(void)strlcpy(path->pw_name, pw->pw_name, MAXLOGNAME);
-		if (lka_expand(path->rule.r_value.path, MAXPATHLEN, path) >=
-		    MAXPATHLEN)
+		(void)strlcpy(path->pw_name, pw->pw_name,
+		    sizeof(path->pw_name));
+		if (lka_expand(path->rule.r_value.path,
+		    sizeof(path->rule.r_value.path), path) >=
+		    sizeof(path->rule.r_value.path))
 			return 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.8 2009/01/29 15:20:34 gilles Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.9 2009/02/22 11:44:29 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -70,15 +70,14 @@ enqueue(int argc, char *argv[])
 	username = pw->pw_name;
 	gethostname(hostname, sizeof(hostname));
 
-	if (! bsnprintf(sender, MAX_PATH_SIZE, "%s@%s",
-		username, hostname))
+	if (! bsnprintf(sender, sizeof(sender), "%s@%s", username, hostname))
 		errx(1, "sender address too long.");
 
 	while ((ch = getopt(argc, argv, "f:i")) != -1) {
 		switch (ch) {
 		case 'f':
-			if (strlcpy(sender, optarg, MAX_PATH_SIZE)
-			    >= MAX_PATH_SIZE)
+			if (strlcpy(sender, optarg, sizeof(sender))
+			    >= sizeof(sender))
 				errx(1, "sender address too long.");
 			break;
 		case 'i':
@@ -93,8 +92,10 @@ enqueue(int argc, char *argv[])
 
 	bzero(&message, sizeof(struct message));
 
-	strlcpy(message.session_helo, "localhost", MAXHOSTNAMELEN);
-	strlcpy(message.session_hostname, hostname, MAXHOSTNAMELEN);
+	strlcpy(message.session_helo, "localhost",
+	    sizeof(message.session_helo));
+	strlcpy(message.session_hostname, hostname,
+	    sizeof(message.session_hostname));
 	
 	/* build sender */
 	if (! recipient_to_path(&message.sender, sender))
@@ -266,7 +267,8 @@ enqueue_init(struct message *messagep)
 			
 			mp = imsg.data;
 			messagep->session_id = mp->session_id;
-			strlcpy(messagep->message_id, mp->message_id, MAXPATHLEN);
+			strlcpy(messagep->message_id, mp->message_id,
+			    sizeof(messagep->message_id));
 
 			return 1;
 		}

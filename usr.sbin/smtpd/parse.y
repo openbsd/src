@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2009/01/30 10:09:58 form Exp $	*/
+/*	$OpenBSD: parse.y,v 1.25 2009/02/22 11:44:29 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -482,7 +482,8 @@ mapref		: STRING			{
 				free(m);
 				YYERROR;
 			}
-			if (! bsnprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id))
+			if (! bsnprintf(m->m_name, sizeof(m->m_name),
+				"<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_SINGLE;
@@ -555,7 +556,8 @@ mapref		: STRING			{
 				free(m);
 				YYERROR;
 			}
-			if (! bsnprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id))
+			if (! bsnprintf(m->m_name, sizeof(m->m_name),
+				"<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_LIST;
@@ -580,7 +582,8 @@ mapref		: STRING			{
 				free(m);
 				YYERROR;
 			}
-			if (! bsnprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id))
+			if (! bsnprintf(m->m_name, sizeof(m->m_name),
+				"<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_HASH;
@@ -717,7 +720,8 @@ from		: FROM mapref			{
 				free(m);
 				YYERROR;
 			}
-			if (! bsnprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id))
+			if (! bsnprintf(m->m_name, sizeof(m->m_name),
+				"<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_SINGLE;
@@ -765,7 +769,8 @@ from		: FROM mapref			{
 				free(m);
 				YYERROR;
 			}
-			if (! bsnprintf(m->m_name, MAX_LINE_SIZE, "<dynamic(%u)>", m->m_id))
+			if (! bsnprintf(m->m_name, sizeof(m->m_name),
+				"<dynamic(%u)>", m->m_id))
 				fatal("snprintf");
 			m->m_flags |= F_DYNAMIC|F_USED;
 			m->m_type = T_SINGLE;

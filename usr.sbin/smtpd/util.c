@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 2009/02/18 22:39:12 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.12 2009/02/22 11:44:29 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -137,11 +137,11 @@ recipient_to_path(struct path *path, char *recipient)
 	}
 
 	if (strlcpy(path->user, username, sizeof(path->user))
-	    >= MAX_LOCALPART_SIZE)
+	    >= sizeof(path->user))
 		return 0;
 
 	if (strlcpy(path->domain, hostname, sizeof(path->domain))
-	    >= MAX_DOMAINPART_SIZE)
+	    >= sizeof(path->domain))
 		return 0;
 
 	return 1;

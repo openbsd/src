@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.13 2009/02/17 22:49:22 jacekm Exp $	*/
+/*	$OpenBSD: control.c,v 1.14 2009/02/22 11:44:29 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -707,7 +707,8 @@ control_dispatch_queue(int sig, short event, void *p)
 			}
 			else {
 				ss->msg.session_id = ss->id;
-				strlcpy(ss->msg.message_id, ss->u.msgid, MAXPATHLEN);
+				strlcpy(ss->msg.message_id, ss->u.msgid,
+				    sizeof(ss->msg.message_id));
 				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
 				    &ss->msg, sizeof(struct message));
 			}

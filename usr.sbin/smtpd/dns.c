@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.9 2009/02/15 13:12:19 jacekm Exp $	*/
+/*	$OpenBSD: dns.c,v 1.10 2009/02/22 11:44:29 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -137,7 +137,8 @@ getmxbyname(char *name, char ***result)
 
 		if (mxnb < sizeof(mxarray) / sizeof(struct mxrecord)) {
 			if (strlcpy(mxarray[mxnb].hostname, expbuf,
-				MAXHOSTNAMELEN) >= MAXHOSTNAMELEN)
+			    sizeof(mxarray[mxnb].hostname)) >=
+			    sizeof(mxarray[mxnb].hostname))
 				return 0;
 			mxarray[mxnb].priority = priority;
 		}
@@ -155,7 +156,8 @@ getmxbyname(char *name, char ***result)
 
 			if (mxarray[j].priority > priority) {
 				if (strlcpy(mxarray[j].hostname, expbuf,
-					MAXHOSTNAMELEN) >= MAXHOSTNAMELEN)
+				    sizeof(mxarray[j].hostname)) >=
+				    sizeof(mxarray[j].hostname))
 					return 0;
 				mxarray[j].priority = priority;
 			}
@@ -183,7 +185,8 @@ getmxbyname(char *name, char ***result)
 
 	ptr = (u_int8_t *)*result + (mxnb + 1) * sizeof(char *);
 	for (i = 0; i < mxnb; ++i) {
-		strlcpy(ptr, mxarray[i].hostname, MAXHOSTNAMELEN);
+		strlcpy(ptr, mxarray[i].hostname,
+		    strlen(mxarray[i].hostname) + 1);
 		(*result)[i] = ptr;
 		ptr += strlen(mxarray[i].hostname) + 1;
 	}

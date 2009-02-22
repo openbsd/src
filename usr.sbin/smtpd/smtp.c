@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.26 2009/02/18 00:29:52 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.27 2009/02/22 11:44:29 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -317,9 +317,10 @@ smtp_dispatch_lka(int sig, short event, void *p)
 			if (s == NULL)
 				fatal("smtp_dispatch_lka: session is gone");
 
-			strlcpy(s->s_hostname, ss->s_hostname, MAXHOSTNAMELEN);
+			strlcpy(s->s_hostname, ss->s_hostname,
+			    sizeof(s->s_hostname));
 			strlcpy(s->s_msg.session_hostname, ss->s_hostname,
-			    MAXHOSTNAMELEN);
+			    sizeof(s->s_msg.session_hostname));
 
 			session_init(s->s_l, s);
 
@@ -723,8 +724,9 @@ smtp_accept(int fd, short event, void *p)
 	if (s_smtp.sessions_active == s->s_env->sc_maxconn)
 		event_del(&l->ev);
 
-	strlcpy(s->s_hostname, "<unknown>", MAXHOSTNAMELEN);
-	strlcpy(s->s_msg.session_hostname, s->s_hostname, MAXHOSTNAMELEN);
+	strlcpy(s->s_hostname, "<unknown>", sizeof(s->s_hostname));
+	strlcpy(s->s_msg.session_hostname, s->s_hostname,
+	    sizeof(s->s_msg.session_hostname));
 	imsg_compose(s->s_env->sc_ibufs[PROC_LKA], IMSG_LKA_HOST, 0, 0, -1, s,
 	    sizeof(struct session));
 

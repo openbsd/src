@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.10 2009/02/17 23:50:58 jacekm Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.11 2009/02/22 11:44:29 form Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 	if (oflag == NULL && asprintf(&oflag, "%s.db", source) == -1)
 		err(1, "asprintf");
 
-	if (! bsnprintf(dbname, MAXPATHLEN, "%s.XXXXXXXXXXX", oflag))
+	if (! bsnprintf(dbname, sizeof(dbname), "%s.XXXXXXXXXXX", oflag))
 		errx(1, "path too long");
 	if (mkstemp(dbname) == -1)
 		err(1, "mkstemp");
