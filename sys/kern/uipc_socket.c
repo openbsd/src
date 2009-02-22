@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.74 2009/01/13 13:36:12 blambert Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.75 2009/02/22 07:47:22 otto Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -544,7 +544,8 @@ out:
  */
 int
 soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
-    struct mbuf **mp0, struct mbuf **controlp, int *flagsp)
+    struct mbuf **mp0, struct mbuf **controlp, int *flagsp,
+    socklen_t controllen)
 {
 	struct mbuf *m, **mp;
 	int flags, len, error, s, offset;
@@ -698,7 +699,8 @@ dontblock:
 				if (pr->pr_domain->dom_externalize &&
 				    mtod(m, struct cmsghdr *)->cmsg_type ==
 				    SCM_RIGHTS)
-				   error = (*pr->pr_domain->dom_externalize)(m);
+				   error = (*pr->pr_domain->dom_externalize)(m,
+				       controllen);
 				*controlp = m;
 				so->so_rcv.sb_mb = m->m_next;
 				m->m_next = 0;

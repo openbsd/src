@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.44 2009/01/29 23:59:09 bluhm Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.45 2009/02/22 07:47:22 otto Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -298,7 +298,8 @@ struct socket *sonewconn(struct socket *head, int connstatus);
 void	soqinsque(struct socket *head, struct socket *so, int q);
 int	soqremque(struct socket *so, int q);
 int	soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
-	    struct mbuf **mp0, struct mbuf **controlp, int *flagsp);
+	    struct mbuf **mp0, struct mbuf **controlp, int *flagsp,
+	    socklen_t controllen);
 int	soreserve(struct socket *so, u_long sndcc, u_long rcvcc);
 void	sorflush(struct socket *so);
 int	sosend(struct socket *so, struct mbuf *addr, struct uio *uio,

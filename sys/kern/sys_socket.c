@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.13 2008/10/02 14:40:22 deraadt Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.14 2009/02/22 07:47:22 otto Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -58,7 +58,8 @@ soo_read(struct file *fp, off_t *poff, struct uio *uio, struct ucred *cred)
 {
 
 	return (soreceive((struct socket *)fp->f_data, (struct mbuf **)0,
-		uio, (struct mbuf **)0, (struct mbuf **)0, (int *)0));
+		uio, (struct mbuf **)0, (struct mbuf **)0, (int *)0,
+		(socklen_t)0));
 }
 
 /* ARGSUSED */

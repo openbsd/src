@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.69 2008/12/16 07:57:28 guenther Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.70 2009/02/22 07:47:22 otto Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -666,7 +666,8 @@ recvit(struct proc *p, int s, struct msghdr *mp, caddr_t namelenp,
 	len = auio.uio_resid;
 	error = soreceive(fp->f_data, &from, &auio, NULL,
 			  mp->msg_control ? &control : NULL,
-			  &mp->msg_flags);
+			  &mp->msg_flags,
+			  mp->msg_control ? mp->msg_controllen : 0);
 	if (error) {
 		if (auio.uio_resid != len && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))

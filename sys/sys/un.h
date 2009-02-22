@@ -1,4 +1,4 @@
-/*	$OpenBSD: un.h,v 1.9 2009/01/23 21:51:13 blambert Exp $	*/
+/*	$OpenBSD: un.h,v 1.10 2009/02/22 07:47:22 otto Exp $	*/
 /*	$NetBSD: un.h,v 1.11 1996/02/04 02:12:47 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ void	unp_gc(void);
 void	unp_mark(struct file *);
 void	unp_scan(struct mbuf *, void (*)(struct file *), int);
 void	unp_shutdown(struct unpcb *);
-int 	unp_externalize(struct mbuf *);
+int 	unp_externalize(struct mbuf *, socklen_t);
 int	unp_internalize(struct mbuf *, struct proc *);
 void 	unp_dispose(struct mbuf *);
 #else /* !_KERNEL */

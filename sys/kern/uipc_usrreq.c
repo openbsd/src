@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.44 2009/01/29 22:08:45 guenther Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.45 2009/02/22 07:47:22 otto Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -606,7 +606,7 @@ unp_drain(void)
 #endif
 
 int
-unp_externalize(struct mbuf *rights)
+unp_externalize(struct mbuf *rights, socklen_t controllen)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
@@ -617,6 +617,13 @@ unp_externalize(struct mbuf *rights)
 
 	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) /
 	    sizeof(struct file *);
+	if (controllen < CMSG_ALIGN(sizeof(struct cmsghdr)))
+		controllen = 0;
+	else
+		controllen -= CMSG_ALIGN(sizeof(struct cmsghdr));
+	if (nfds > controllen / sizeof(int))
+		nfds = controllen / sizeof(int);
+
 	rp = (struct file **)CMSG_DATA(cm);
 
 	fdp = malloc(nfds * sizeof(int), M_TEMP, M_WAITOK);

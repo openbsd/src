@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.77 2009/01/24 23:35:47 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.78 2009/02/22 07:47:22 otto Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -517,7 +517,8 @@ tryagain:
 			do {
 			   rcvflg = MSG_WAITALL;
 			   error = soreceive(so, (struct mbuf **)0, &auio,
-				(struct mbuf **)0, (struct mbuf **)0, &rcvflg);
+				(struct mbuf **)0, (struct mbuf **)0, &rcvflg,
+				0);
 			   if (error == EWOULDBLOCK && rep) {
 				if (rep->r_flags & R_SOFTTERM)
 					return (EINTR);
@@ -561,7 +562,7 @@ tryagain:
 			do {
 			    rcvflg = MSG_WAITALL;
 			    error =  soreceive(so, (struct mbuf **)0,
-				&auio, mp, (struct mbuf **)0, &rcvflg);
+				&auio, mp, (struct mbuf **)0, &rcvflg, 0);
 			} while (error == EWOULDBLOCK || error == EINTR ||
 				 error == ERESTART);
 			if (!error && auio.uio_resid > 0) {
@@ -585,7 +586,7 @@ tryagain:
 			do {
 			    rcvflg = 0;
 			    error =  soreceive(so, (struct mbuf **)0,
-				&auio, mp, &control, &rcvflg);
+				&auio, mp, &control, &rcvflg, 0);
 			    if (control)
 				m_freem(control);
 			    if (error == EWOULDBLOCK && rep) {
@@ -629,7 +630,7 @@ errout:
 		do {
 			rcvflg = 0;
 			error =  soreceive(so, getnam, &auio, mp,
-				(struct mbuf **)0, &rcvflg);
+				(struct mbuf **)0, &rcvflg, 0);
 			if (error == EWOULDBLOCK &&
 			    (rep->r_flags & R_SOFTTERM))
 				return (EINTR);
@@ -1644,7 +1645,8 @@ nfsrv_rcv(so, arg, waitflag)
 		 */
 		auio.uio_resid = 1000000000;
 		flags = MSG_DONTWAIT;
-		error = soreceive(so, &nam, &auio, &mp, (struct mbuf **)0, &flags);
+		error = soreceive(so, &nam, &auio, &mp, (struct mbuf **)0,
+		    &flags, 0);
 		if (error || mp == (struct mbuf *)0) {
 			if (error == EWOULDBLOCK)
 				slp->ns_flag |= SLP_NEEDQ;
@@ -1679,7 +1681,7 @@ nfsrv_rcv(so, arg, waitflag)
 			auio.uio_resid = 1000000000;
 			flags = MSG_DONTWAIT;
 			error = soreceive(so, &nam, &auio, &mp,
-						(struct mbuf **)0, &flags);
+			    (struct mbuf **)0, &flags, 0);
 			if (mp) {
 				if (nam) {
 					m = nam;

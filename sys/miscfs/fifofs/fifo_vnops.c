@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.29 2008/05/08 17:45:45 thib Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.30 2009/02/22 07:47:22 otto Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -231,7 +231,7 @@ fifo_read(void *v)
 	if (ap->a_ioflag & IO_NDELAY)
 		rso->so_state |= SS_NBIO;
 	VOP_UNLOCK(ap->a_vp, 0, p);
-	error = soreceive(rso, NULL, uio, NULL, NULL, NULL);
+	error = soreceive(rso, NULL, uio, NULL, NULL, NULL, 0);
 	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (ap->a_ioflag & IO_NDELAY) {
 		rso->so_state &= ~SS_NBIO;
