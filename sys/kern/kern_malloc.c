@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.78 2008/10/18 12:11:30 kettenis Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.79 2009/02/22 19:57:59 miod Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ u_int	nkmempages = NKMEMPAGES;
  * Can be overridden by kernel config options.
  */
 #ifndef	NKMEMPAGES_MIN
-#define	NKMEMPAGES_MIN	NKMEMPAGES_MIN_DEFAULT
+#define	NKMEMPAGES_MIN	0
 #endif
 u_int	nkmempages_min = 0;
 
