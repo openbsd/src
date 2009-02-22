@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.57 2009/02/19 11:33:25 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.58 2009/02/22 11:59:12 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -289,9 +289,6 @@ session_rfc1652_mail_handler(struct session *s, char *args)
 int
 session_rfc5321_helo_handler(struct session *s, char *args)
 {
-	void	*p;
-	char	 addrbuf[INET6_ADDRSTRLEN];
-
 	if (args == NULL) {
 		session_respond(s, "501 HELO requires domain address");
 		return 1;
@@ -306,21 +303,8 @@ session_rfc5321_helo_handler(struct session *s, char *args)
 	s->s_state = S_HELO;
 	s->s_flags &= F_SECURE;
 
-	if (s->s_ss.ss_family == PF_INET) {
-		struct sockaddr_in *ssin = (struct sockaddr_in *)&s->s_ss;
-		p = &ssin->sin_addr.s_addr;
-	}
-	if (s->s_ss.ss_family == PF_INET6) {
-		struct sockaddr_in6 *ssin6 = (struct sockaddr_in6 *)&s->s_ss;
-		p = &ssin6->sin6_addr.s6_addr;
-	}
-
-	bzero(addrbuf, sizeof (addrbuf));
-	inet_ntop(s->s_ss.ss_family, p, addrbuf, sizeof (addrbuf));
-
-	session_respond(s, "250 %s Hello %s [%s%s], pleased to meet you",
-	    s->s_env->sc_hostname, args,
-	    s->s_ss.ss_family == PF_INET ? "" : "IPv6:", addrbuf);
+	session_respond(s, "250 %s Hello %s [%s], pleased to meet you",
+	    s->s_env->sc_hostname, args, ss_to_text(&s->s_ss));
 
 	return 1;
 }
@@ -328,9 +312,6 @@ session_rfc5321_helo_handler(struct session *s, char *args)
 int
 session_rfc5321_ehlo_handler(struct session *s, char *args)
 {
-	void	*p;
-	char	 addrbuf[INET6_ADDRSTRLEN];
-
 	if (args == NULL) {
 		session_respond(s, "501 EHLO requires domain address");
 		return 1;
@@ -347,21 +328,8 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 	s->s_flags |= F_EHLO;
 	s->s_flags |= F_8BITMIME;
 
-	if (s->s_ss.ss_family == PF_INET) {
-		struct sockaddr_in *ssin = (struct sockaddr_in *)&s->s_ss;
-		p = &ssin->sin_addr.s_addr;
-	}
-	if (s->s_ss.ss_family == PF_INET6) {
-		struct sockaddr_in6 *ssin6 = (struct sockaddr_in6 *)&s->s_ss;
-		p = &ssin6->sin6_addr.s6_addr;
-	}
-
-	bzero(addrbuf, sizeof (addrbuf));
-	inet_ntop(s->s_ss.ss_family, p, addrbuf, sizeof (addrbuf));
-	session_respond(s, "250-%s Hello %s [%s%s], pleased to meet you",
-	    s->s_env->sc_hostname, args,
-	    s->s_ss.ss_family == PF_INET ? "" : "IPv6:", addrbuf);
-
+	session_respond(s, "250-%s Hello %s [%s], pleased to meet you",
+	    s->s_env->sc_hostname, args, ss_to_text(&s->s_ss));
 	session_respond(s, "250-8BITMIME");
 
 	/* only advertise starttls if listener can support it */

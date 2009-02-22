@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.29 2009/02/22 11:44:29 form Exp $	*/
+/*	$OpenBSD: mta.c,v 1.30 2009/02/22 11:59:12 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -731,24 +731,9 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	}
 
 	case S_DATA: {
-		char addrbuf[INET6_ADDRSTRLEN];
-		void *p;
-		
-		if (batchp->session_ss.ss_family == PF_INET) {
-                	struct sockaddr_in *ssin = (struct sockaddr_in *)&batchp->session_ss;
-                	p = &ssin->sin_addr.s_addr;
-        	}
-        	if (batchp->session_ss.ss_family == PF_INET6) {
-                	struct sockaddr_in6 *ssin6 = (struct sockaddr_in6 *)&batchp->session_ss;
-                	p = &ssin6->sin6_addr.s6_addr;
-        	}
-
-        	bzero(addrbuf, sizeof (addrbuf));
-        	inet_ntop(batchp->session_ss.ss_family, p, addrbuf, sizeof (addrbuf));
-
-		session_respond(sessionp, "Received: from %s (%s [%s%s])",
-		    batchp->session_helo, batchp->session_hostname, 
-		    batchp->session_ss.ss_family == PF_INET ? "" : "IPv6:", addrbuf);
+		session_respond(sessionp, "Received: from %s (%s [%s])",
+		    batchp->session_helo, batchp->session_hostname,
+		    ss_to_text(&batchp->session_ss));
 
 		session_respond(sessionp, "\tby %s with ESMTP id %s",
 		    batchp->env->sc_hostname, batchp->message_id);

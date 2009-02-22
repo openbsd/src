@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2009/02/22 11:44:29 form Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 2009/02/22 11:59:12 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -25,6 +25,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <event.h>
+#include <netdb.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <string.h>
@@ -188,4 +189,25 @@ nextsub:
                 goto nextsub;
 	}
         return 1;
+}
+
+char *
+ss_to_text(struct sockaddr_storage *ss)
+{
+	static char	 buf[NI_MAXHOST + 5];
+	char		*p;
+
+	buf[0] = '\0';
+	p = buf;
+
+	if (ss->ss_family == PF_INET6) {
+		strlcpy(buf, "IPv6:", sizeof(buf));
+		p = buf + 5;
+	}
+
+	if (getnameinfo((struct sockaddr *)ss, ss->ss_len, p,
+	    NI_MAXHOST, NULL, 0, NI_NUMERICHOST))
+		fatalx("ss_to_text: getnameinfo");
+
+	return (buf);
 }
