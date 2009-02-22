@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.63 2009/02/09 20:39:56 grange Exp $
+.\"	$OpenBSD: bioctl.8,v 1.64 2009/02/22 07:46:55 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 9 2009 $
+.Dd $Mdocdate: February 22 2009 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -32,16 +32,23 @@
 .Sh SYNOPSIS
 .Nm bioctl
 .Bk -words
-.Op Fl dhiqv
+.Op Fl hiqv
 .Op Fl a Ar alarm-function
 .Op Fl b Ar channel:target[.lun]
+.Op Fl H Ar channel:target[.lun]
+.Op Fl R Ar device \*(Ba channel:target[.lun]
+.Op Fl u Ar channel:target[.lun]
+.Ar device
+.Ek
+.Pp
+.Nm bioctl
+.Bk -words
+.Op Fl dhiqv
 .Op Fl C Ar flag[,flag,...]
 .Op Fl c Ar raidlevel
-.Op Fl H Ar channel:target[.lun]
 .Op Fl l Ar special[,special,...]
-.Op Fl R Ar device\*(Bachannel:target[.lun]
+.Op Fl R Ar device \*(Ba channel:target[.lun]
 .Op Fl r Ar rounds
-.Op Fl u Ar channel:target[.lun]
 .Ar device
 .Ek
 .Sh DESCRIPTION
@@ -52,7 +59,26 @@ driver.
 .Nm bioctl
 then can be used to maintain RAID volumes.
 .Pp
-The options are as follows:
+In the first synopsis,
+RAID controllers are managed.
+.Ar device
+specifies either a drive (e.g. sd0) or a RAID controller (e.g. ami0).
+For operations which will be performed against
+.Xr ses 4
+or
+.Xr safte 4
+enclosures, it is also possible to directly specify the enclosure name
+(e.g. safte0).
+.Pp
+In the second synopsis,
+.Xr softraid 4
+devices are managed.
+.Ar device
+specifies either a drive (e.g. sd0) or a
+.Xr softraid 4
+device (e.g. softraid0).
+.Pp
+The options for RAID controllers are as follows:
 .Bl -tag -width Ds
 .It Fl a Ar alarm-function
 Control the RAID card's alarm functionality, if supported.
@@ -83,15 +109,60 @@ to start blinking, if there is
 or
 .Xr safte 4
 support in the enclosure.
+.It Fl H Ar channel:target[.lun]
+If the device at
+.Ar channel:target[.lun]
+is currently marked
+.Dq Unused ,
+promote it to being a
+.Dq Hot Spare .
+.It Fl h
+Where necessary, produce "human-readable" output.
+Use unit suffixes: Byte, Kilobyte, Megabyte,
+Gigabyte, Terabyte, Petabyte, Exabyte in order to reduce the number of
+digits to four or less.
+.It Fl i
+Enumerate the selected RAID devices.
+This is the default if no other option is given.
+.It Fl q
+Show vendor, product, revision, and serial number for the given disk.
+.It Fl R Ar device \*(Ba channel:target[.lun]
+Manually kick off a rebuild using
+.Ar device
+or
+.Ar channel:target[.lun]
+on the provided drive name.
+This command requires a drive by name (e.g. sd1) instead of a controller
+by name (e.g. softraid0).
+.It Fl u Ar channel:target[.lun]
+Instruct the device at
+.Ar channel:target[.lun]
+to cease blinking, if there is
+.Xr ses 4
+or
+.Xr safte 4
+support in the enclosure.
+.It Fl v
+Be more verbose in output.
+.El
+.Pp
+In addition to the relevant options listed above,
+the options for
+.Xr softraid 4
+devices are as follows:
+.Bl -tag -width Ds
 .It Fl C Ar flag[,flag,...]
-Pass flags when doing operations with
+Pass
+.Ar flag
+to
 .Nm .
 May be one of:
 .Pp
 .Bl -tag -width disable -compact
 .It Ar force
-Force the operation, e.g. to force creation of volumes
-with unclean data in the metatdata areas.
+Force the operation;
+for example, force the creation of volumes
+with unclean data in the metadata areas.
 .It Ar noauto
 Ignore this RAID volume upon reboot.
 .El
@@ -119,20 +190,6 @@ An encrypting discipline.
 .El
 .It Fl d
 Delete volume specified by device.
-.It Fl H Ar channel:target[.lun]
-If the device at
-.Ar channel:target[.lun]
-is currently marked
-.Dq Unused ,
-promote it to being a
-.Dq Hot Spare .
-.It Fl h
-Where necessary, produce "human-readable" output.
-Use unit suffixes: Byte, Kilobyte, Megabyte,
-Gigabyte, Terabyte, Petabyte, Exabyte in order to reduce the number of
-digits to four or less.
-.It Fl i
-Enumerate the selected RAID devices.
 .It Fl l Ar special[,special,...]
 Use
 .Ar special
@@ -141,40 +198,12 @@ device list to create within the
 framework.
 Requires
 .Fl c .
-.It Fl q
-Show vendor, product, revision, and serial number for the given disk.
-.It Fl R Ar device\*(Bachannel:target[.lun]
-Manually kick off a rebuild using
-.Ar device
-or
-.Ar channel:target[.lun]
-on the provided drive name.
-This command requires a drive by name (e.g. sd1) instead of a controller
-by name (e.g. softraid0).
 .It Fl r Ar rounds
 When creating an encrypted volume, specifies the number of iterations of
 the algorithm used to convert a passphrase into a key.
 Higher iteration counts take more time, but offer more resistance to key
 guessing attacks.
 The minimum is 1000 rounds and the default is 8192.
-.It Fl u Ar channel:target[.lun]
-Instruct the device at
-.Ar channel:target[.lun]
-to cease blinking, if there is
-.Xr ses 4
-or
-.Xr safte 4
-support in the enclosure.
-.It Fl v
-Be more verbose in output.
-.It Ar device
-Select a drive by name (e.g. sd0) or a RAID controller by name (e.g. ami0).
-For operations which will be performed against
-.Xr ses 4
-or
-.Xr safte 4
-enclosures, it is also possible to directly specify the enclosure name
-(e.g. safte0).
 .El
 .Sh EXAMPLES
 The following command, executed from the command line, would configure
