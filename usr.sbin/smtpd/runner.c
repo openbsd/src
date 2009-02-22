@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.31 2009/02/22 11:44:29 form Exp $	*/
+/*	$OpenBSD: runner.c,v 1.32 2009/02/22 23:29:54 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -439,6 +439,7 @@ runner(struct smtpd *env)
 	config_pipes(env, peers, 5);
 	config_peers(env, peers, 5);
 
+	unlink(PATH_QUEUE "/envelope.tmp");
 	runner_reset_flags();
 
 	runner_setup_events(env);
@@ -759,14 +760,8 @@ runner_purge_run(void)
 
 	q = qwalk_new(PATH_PURGE);
 
-	while (qwalk(q, path)) {
-		if (strcmp(basename(path), "envelope.tmp") == 0) {
-			if (unlink(path) == -1)
-				fatal("runner_purge_run: unlink");
-			continue;
-		}
+	while (qwalk(q, path))
 		runner_purge_message(basename(path));
-	}
 
 	qwalk_close(q);
 }
