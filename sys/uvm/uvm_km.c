@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.69 2009/02/11 11:09:36 mikeb Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.70 2009/02/22 19:59:01 miod Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -740,6 +740,7 @@ void
 uvm_km_page_init(void)
 {
 	struct km_page *page;
+	int lowat_min;
 	int i;
 
 	mtx_init(&uvm_km_mtx, IPL_VM);
@@ -748,8 +749,9 @@ uvm_km_page_init(void)
 		uvm_km_pages_lowat = physmem / 256;
 		if (uvm_km_pages_lowat > 2048)
 			uvm_km_pages_lowat = 2048;
-		if (uvm_km_pages_lowat < 128)
-			uvm_km_pages_lowat = 128;
+		lowat_min = physmem < atop(16 * 1024 * 1024) ? 32 : 128;
+		if (uvm_km_pages_lowat < lowat_min)
+			uvm_km_pages_lowat = lowat_min;
 	}
 
 	for (i = 0; i < uvm_km_pages_lowat * 4; i++) {
