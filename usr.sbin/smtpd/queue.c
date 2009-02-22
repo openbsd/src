@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.55 2009/02/20 18:47:53 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.56 2009/02/22 19:07:33 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

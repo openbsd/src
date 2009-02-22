@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.8 2009/02/15 10:32:23 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.9 2009/02/22 19:07:33 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -25,6 +25,7 @@
 
 #include <event.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

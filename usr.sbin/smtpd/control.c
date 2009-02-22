@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.14 2009/02/22 11:44:29 form Exp $	*/
+/*	$OpenBSD: control.c,v 1.15 2009/02/22 19:07:33 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -29,6 +29,7 @@
 #include <event.h>
 #include <fcntl.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
