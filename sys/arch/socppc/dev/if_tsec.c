@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tsec.c,v 1.21 2009/02/17 20:57:23 jasper Exp $	*/
+/*	$OpenBSD: if_tsec.c,v 1.22 2009/02/22 20:03:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -1007,14 +1007,11 @@ tsec_iff(struct tsec_softc *sc)
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		goto domulti;
-	if (ifp->if_flags & IFF_PROMISC)
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0)
 		goto allmulti;
 
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN))
-			goto allmulti;
-
 		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 		crc >>= 24;
 		hash[crc / 32] |= 1 << (31 - (crc % 32));
