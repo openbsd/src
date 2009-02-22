@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.103 2009/02/18 20:54:48 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.104 2009/02/22 17:43:20 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -520,6 +520,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	case ICMP6_PACKET_TOO_BIG:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_pkttoobig);
 
+		/* MTU is checked in icmp6_mtudisc_update. */
 		code = PRC_MSGSIZE;
 
 		/*
@@ -1106,6 +1107,13 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	u_int mtu = ntohl(icmp6->icmp6_mtu);
 	struct rtentry *rt = NULL;
 	struct sockaddr_in6 sin6;
+
+	/*
+	 * The MTU may not be less then the minimal IPv6 MTU except for the
+	 * hack in ip6_output/ip6_setpmtu where we always include a frag header.
+	 */
+	if (mtu < IPV6_MMTU - sizeof(struct ip6_frag))
+		return;
 
 	/*
 	 * allow non-validated cases if memory is plenty, to make traffic
