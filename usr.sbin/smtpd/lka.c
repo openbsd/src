@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.26 2009/02/22 19:07:33 chl Exp $	*/
+/*	$OpenBSD: lka.c,v 1.27 2009/02/22 23:21:40 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -191,67 +191,70 @@ lka_dispatch_mfa(int sig, short event, void *p)
 				message = ss->msg;
 				message.recipient = ss->u.path;
 				imsg_compose(env->sc_ibufs[PROC_QUEUE],
-				    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1, &message,
-				    sizeof (struct message));
+				    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
+				    &message, sizeof(struct message));
 				imsg_compose(env->sc_ibufs[PROC_QUEUE],
-				    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1, &message,
-				    sizeof (struct message));
+				    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1,
+				    &message, sizeof(struct message));
+				break;
 			}
-			else if (! lka_resolve_path(env, &ss->u.path)) {
+
+			if (! lka_resolve_path(env, &ss->u.path)) {
 				imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0, -1,
 				    ss, sizeof(*ss));
+				break;
 			}
-			else {
-				ss->code = 250;
 
-				TAILQ_INIT(&aliases);
+			ss->code = 250;
+
+			TAILQ_INIT(&aliases);
 				
-				expret = lka_expand_aliases(env, &aliases, &ss->u.path);
-				if (expret < 0) {
-					log_debug("loop detected, rejecting recipient");
-					ss->code = 530;
-					imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0, -1,
-					    ss, sizeof(*ss));
-				}
-				else if (expret == 0) {
-					log_debug("expansion resulted in empty list");
-					if (! (ss->u.path.flags & F_ACCOUNT)) {
-						ss->code = 530;
-						imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0, -1,
-						    ss, sizeof(*ss));
-					}
-					else {
-						message = ss->msg;
-						message.recipient = ss->u.path;
-						imsg_compose(env->sc_ibufs[PROC_QUEUE],
-						    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1, &message,
-						    sizeof (struct message));
-						imsg_compose(env->sc_ibufs[PROC_QUEUE],
-						    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1, &message,
-						    sizeof (struct message));
-					}
-				}
-				else {
-					log_debug("a list of aliases is available");
-					message = ss->msg;
-					while ((alias = TAILQ_FIRST(&aliases)) != NULL) {
-						bzero(&message.recipient, sizeof (struct path));
-
-						lka_resolve_alias(&message.recipient, alias);
-						lka_rcpt_action(env, &message.recipient);
-
-						imsg_compose(env->sc_ibufs[PROC_QUEUE],
-						    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1, &message,
-						    sizeof (struct message));
-
-						TAILQ_REMOVE(&aliases, alias, entry);
-						free(alias);
-					}
-					imsg_compose(env->sc_ibufs[PROC_QUEUE],
-					    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1, &message,
-					    sizeof (struct message));
-				}
+			expret = lka_expand_aliases(env, &aliases, &ss->u.path);
+			if (expret < 0) {
+				log_debug("loop detected, rejecting recipient");
+				ss->code = 530;
+				imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0, -1,
+				    ss, sizeof(*ss));
+				break;
 			}
+
+			if (expret == 0) {
+				log_debug("expansion resulted in empty list");
+				if (! (ss->u.path.flags & F_ACCOUNT)) {
+					ss->code = 530;
+					imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0,
+					    -1, ss, sizeof(*ss));
+					break;
+				}
+				message = ss->msg;
+				message.recipient = ss->u.path;
+				imsg_compose(env->sc_ibufs[PROC_QUEUE],
+				    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
+				    &message, sizeof(struct message));
+				imsg_compose(env->sc_ibufs[PROC_QUEUE],
+				    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1,
+				    &message, sizeof(struct message));
+				break;
+			}
+
+			log_debug("a list of aliases is available");
+			message = ss->msg;
+			while ((alias = TAILQ_FIRST(&aliases)) != NULL) {
+				bzero(&message.recipient, sizeof(struct path));
+
+				lka_resolve_alias(&message.recipient, alias);
+				lka_rcpt_action(env, &message.recipient);
+
+				imsg_compose(env->sc_ibufs[PROC_QUEUE],
+				    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
+				    &message, sizeof(struct message));
+
+				TAILQ_REMOVE(&aliases, alias, entry);
+				free(alias);
+			}
+			imsg_compose(env->sc_ibufs[PROC_QUEUE],
+			    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1, &message,
+			    sizeof(struct message));
 			break;
 		}
 		default:
