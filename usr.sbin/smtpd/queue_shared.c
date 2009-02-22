@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.10 2009/02/22 11:44:29 form Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.11 2009/02/22 11:55:17 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -47,6 +47,7 @@ struct qwalk {
 	int	(*filefn)(struct qwalk *, char *);
 	int	  bucket;
 	int	  level;
+	int	  strict;
 };
 
 int		walk_simple(struct qwalk *, char *);
@@ -535,7 +536,11 @@ qwalk_new(char *path)
 	strlcpy(q->path, path, sizeof(q->path));
 
 	q->level = 0;
+	q->strict = 0;
 	q->filefn = walk_simple;
+
+	if (smtpd_process == PROC_QUEUE || smtpd_process == PROC_RUNNER)
+		q->strict = 1;
 
 	if (strcmp(path, PATH_QUEUE) == 0)
 		q->filefn = walk_queue;
@@ -584,14 +589,7 @@ recurse:
 	q->level++;
 	q->dirs[q->level] = opendir(q->path);
 	if (q->dirs[q->level] == NULL) {
-		/*
-		 * ENOENT is unacceptable in queue/runner. It's perfectly fine
-		 * for others (eg. smtpctl).
-		 */
-		if (errno == ENOENT) {
-			if (smtpd_process == PROC_QUEUE ||
-			    smtpd_process == PROC_RUNNER)
-				fatal("qwalk: opendir");
+		if (errno == ENOENT && !q->strict) {
 			q->level--;
 			goto again;
 		}
