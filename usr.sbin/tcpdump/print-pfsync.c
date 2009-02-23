@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.33 2009/02/16 00:31:25 dlg Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.34 2009/02/23 10:28:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Id: print-pfsync.c,v 1.33 2009/02/16 00:31:25 dlg Exp $";
+    "@(#) $Id: print-pfsync.c,v 1.34 2009/02/23 10:28:16 dlg Exp $";
 #endif
 
 #include <sys/param.h>
@@ -149,8 +149,10 @@ pfsync_print(struct pfsync_header *hdr, const u_char *bp, int len)
 
 	plen = ntohs(hdr->len);
 
-	if (eflag)
-		printf("PFSYNCv%d len %d", hdr->version, plen);
+	printf("PFSYNCv%d len %d", hdr->version, plen);
+
+	if (hdr->version != PFSYNC_VERSION)
+		return;
 
 	plen -= sizeof(*hdr);
 
@@ -185,8 +187,10 @@ pfsync_print(struct pfsync_header *hdr, const u_char *bp, int len)
 		}
 
 		for (i = 0; i < count; i++) {
-			if (alen > len)
+			if (len < alen) {
+				len = 0;
 				break;
+			}
 
 			if (actions[subh->action].print(flags, bp) != 0)
 				return;
