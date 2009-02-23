@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.159 2009/02/21 14:50:53 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.160 2009/02/23 21:32:08 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -48,6 +48,7 @@ static char *dateflag = NULL;
 
 static int nflag = 0;
 
+static char lastwd[MAXPATHLEN];
 char *checkout_target_dir = NULL;
 
 time_t cvs_specified_date = -1;
@@ -591,6 +592,15 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 			(void)unlink(cf->file_path);
 			cvs_merge_file(cf, (cvs_join_rev1 == NULL));
 			tosend = cf->file_path;
+		}
+
+		/*
+		 * If this file has a tag, push out the Directory with the
+		 * tag to the client. 
+		 */
+		if (tag != NULL && strcmp(cf->file_wd, lastwd)) {
+			strlcpy(lastwd, cf->file_wd, MAXPATHLEN);
+			cvs_server_set_sticky(cf->file_wd, sticky);
 		}
 
 		if (co_flags & CO_COMMIT)

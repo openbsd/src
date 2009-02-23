@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.100 2008/06/14 20:04:14 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.101 2009/02/23 21:32:08 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -534,9 +534,6 @@ cvs_write_tagfile(const char *dir, char *tag, char *date)
 			(void)strftime(sticky, sizeof(sticky),
 			    "D"CVS_DATE_FMT, &datetm);
 		}
-
-		if (cvs_server_active == 1)
-			cvs_server_set_sticky(dir, sticky);
 
 		(void)fprintf(fp, "%s\n", sticky);
 		(void)fclose(fp);
