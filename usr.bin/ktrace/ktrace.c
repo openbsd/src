@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.20 2007/03/03 23:46:55 jmc Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.21 2009/02/23 01:41:14 tedu Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: ktrace.c,v 1.20 2007/03/03 23:46:55 jmc Exp $";
+static char *rcsid = "$OpenBSD: ktrace.c,v 1.21 2009/02/23 01:41:14 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 	struct stat sb;
 
 	clear = NOTSET;
-	append = ops = pidset = inherit = 0;
+	append = ops = pidset = inherit = pid = 0;
 	trpoints = DEF_POINTS;
 	tracefile = DEF_TRACEFILE;
 	while ((ch = getopt(argc,argv,"aCcdf:g:ip:t:")) != -1)
