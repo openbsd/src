@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.13 2009/01/30 20:11:13 form Exp $	*/
+/*	$OpenBSD: store.c,v 1.14 2009/02/23 00:51:32 chl Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"
