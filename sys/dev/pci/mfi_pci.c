@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi_pci.c,v 1.20 2009/02/10 23:21:44 marco Exp $ */
+/* $OpenBSD: mfi_pci.c,v 1.21 2009/02/23 15:21:34 jsg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -90,10 +90,10 @@ struct	mfi_pci_device {
 	  MFI_IOP_XSCALE,	NULL },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1078,
 	  MFI_IOP_PPC,		mfi_1078_subtypes },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1078DE,
+	  MFI_IOP_PPC,		mfi_1078_subtypes },
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC5,
 	  MFI_IOP_XSCALE,	mfi_perc5_subtypes },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_DELL_PERC6,
-	  MFI_IOP_PPC,		mfi_1078_subtypes },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2108_1,
 	  MFI_IOP_GEN2,		mfi_gen2_subtypes },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS2108_2,
