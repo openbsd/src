@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.2 2009/02/14 22:40:20 deraadt Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.3 2009/02/23 01:38:37 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -96,7 +96,7 @@ int	age_intr(void *);
 int	age_read_vpd_word(struct age_softc *, uint32_t, uint32_t, uint32_t *);
 int	age_dma_alloc(struct age_softc *);
 void	age_dma_free(struct age_softc *);
-void	age_get_macaddr(struct age_softc *, uint8_t[]);
+void	age_get_macaddr(struct age_softc *);
 void	age_phy_reset(struct age_softc *);
 
 int	age_encap(struct age_softc *, struct mbuf **);
@@ -167,7 +167,7 @@ age_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_intr_map(pa, &ih) != 0) {
 		printf(": could not map interrupt\n");
-		return;
+		goto fail;
 	}
 
 	/*
@@ -181,7 +181,7 @@ age_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		return;
+		goto fail;
 	}
 	printf(": %s", intrstr);
 
@@ -225,9 +225,7 @@ age_attach(struct device *parent, struct device *self, void *aux)
 		goto fail;
 
 	/* Load station address. */
-	age_get_macaddr(sc, sc->sc_arpcom.ac_enaddr);
-
-	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	age_get_macaddr(sc);
 
 	ifp = &sc->sc_arpcom.ac_if;
 	ifp->if_softc = sc;
@@ -239,7 +237,8 @@ age_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_baudrate = IF_Gbps(1);
 	IFQ_SET_MAXLEN(&ifp->if_snd, AGE_TX_RING_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
-	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	bcopy(sc->age_eaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
@@ -251,6 +250,8 @@ age_attach(struct device *parent, struct device *self, void *aux)
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
+
+	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/* Set up MII bus. */
 	sc->sc_miibus.mii_ifp = ifp;
@@ -278,7 +279,11 @@ age_attach(struct device *parent, struct device *self, void *aux)
 
 	return;
 fail:
-	age_detach(&sc->sc_dev, 0);
+	age_dma_free(sc);
+	if (sc->sc_irq_handle != NULL)
+		pci_intr_disestablish(pc, sc->sc_irq_handle);
+	if (sc->sc_mem_size)
+		bus_space_unmap(sc->sc_mem_bt, sc->sc_mem_bh, sc->sc_mem_size);
 }
 
 int
@@ -526,12 +531,16 @@ age_read_vpd_word(struct age_softc *sc, uint32_t vpdc, uint32_t offset,
     uint32_t *word)
 {
 	int i;
+	pcireg_t rv;
 
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, vpdc + 0x2, offset << 16);
+	pci_conf_write(sc->sc_pct, sc->sc_pcitag, PCI_VPD_ADDRESS(vpdc),
+	    offset << PCI_VPD_ADDRESS_SHIFT);
+
 	for (i = AGE_TIMEOUT; i > 0; i--) {
 		DELAY(10);
-		if ((pci_conf_read(sc->sc_pct, sc->sc_pcitag, 
-		    vpdc + 0x2) >> 16 & 0x8000) == 0x8000)
+		rv = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+		    PCI_VPD_ADDRESS(vpdc));
+		if ((rv & PCI_VPD_OPFLAG) == PCI_VPD_OPFLAG)
 			break;
 	}
 	if (i == 0) {
@@ -540,12 +549,12 @@ age_read_vpd_word(struct age_softc *sc, uint32_t vpdc, uint32_t offset,
 		return (ETIMEDOUT);
 	}
 
-	*word = pci_conf_read(sc->sc_pct, sc->sc_pcitag, vpdc + 0x4);
+	*word = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_VPD_DATAREG(vpdc));
 	return (0);
 }
 
 void
-age_get_macaddr(struct age_softc *sc, uint8_t eaddr[])
+age_get_macaddr(struct age_softc *sc)
 {
 	uint32_t ea[2], off, reg, word;
 	int vpd_error, match, vpdc;
@@ -645,12 +654,12 @@ age_get_macaddr(struct age_softc *sc, uint8_t eaddr[])
 	}
 
 	ea[1] &= 0xFFFF;
-	eaddr[0] = (ea[1] >> 8) & 0xFF;
-	eaddr[1] = (ea[1] >> 0) & 0xFF;
-	eaddr[2] = (ea[0] >> 24) & 0xFF;
-	eaddr[3] = (ea[0] >> 16) & 0xFF;
-	eaddr[4] = (ea[0] >> 8) & 0xFF;
-	eaddr[5] = (ea[0] >> 0) & 0xFF;
+	sc->age_eaddr[0] = (ea[1] >> 8) & 0xFF;
+	sc->age_eaddr[1] = (ea[1] >> 0) & 0xFF;
+	sc->age_eaddr[2] = (ea[0] >> 24) & 0xFF;
+	sc->age_eaddr[3] = (ea[0] >> 16) & 0xFF;
+	sc->age_eaddr[4] = (ea[0] >> 8) & 0xFF;
+	sc->age_eaddr[5] = (ea[0] >> 0) & 0xFF;
 }
 
 void
@@ -988,6 +997,8 @@ age_dma_free(struct age_softc *sc)
 	    sc->age_rdata.age_smb_block != NULL)
 		bus_dmamem_free(sc->sc_dmat, 
 		    (bus_dma_segment_t *)sc->age_rdata.age_smb_block, 1);
+	sc->age_rdata.age_smb_block = NULL;
+	sc->age_cdata.age_smb_block_map = NULL;
 }
 
 void
@@ -1091,26 +1102,12 @@ age_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
-				age_rxfilter(sc);
+				error = ENETRESET;
 			else
 				age_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				age_stop(sc);
-		}
-		sc->age_if_flags = ifp->if_flags;
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
-
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				age_rxfilter(sc);
-			error = 0;
 		}
 		break;
 
@@ -1118,6 +1115,7 @@ age_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
 		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
 		break;
@@ -1476,7 +1474,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 			 * proven to work on L1 I'll enable it.
 			 */
 			if (status & AGE_RRD_IPV4) {
-				if (status & AGE_RRD_IPCSUM_NOK)
+				if ((status & AGE_RRD_IPCSUM_NOK) == 0)
 					m->m_pkthdr.csum_flags |= 
 					    M_IPV4_CSUM_IN_OK;
 				if ((status & (AGE_RRD_TCP | AGE_RRD_UDP)) &&
@@ -2281,30 +2279,33 @@ age_rxfilter(struct age_softc *sc)
 
 	rxcfg = CSR_READ_4(sc, AGE_MAC_CFG);
 	rxcfg &= ~(MAC_CFG_ALLMULTI | MAC_CFG_BCAST | MAC_CFG_PROMISC);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (ifp->if_flags & IFF_BROADCAST)
-		rxcfg |= MAC_CFG_BCAST;
-	if (ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) {
+	/*
+	 * Always accept broadcast frames.
+	 */
+	rxcfg |= MAC_CFG_BCAST;
+
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC)
 			rxcfg |= MAC_CFG_PROMISC;
-		if (ifp->if_flags & IFF_ALLMULTI)
+		else
 			rxcfg |= MAC_CFG_ALLMULTI;
-		CSR_WRITE_4(sc, AGE_MAR0, 0xFFFFFFFF);
-		CSR_WRITE_4(sc, AGE_MAR1, 0xFFFFFFFF);
-		CSR_WRITE_4(sc, AGE_MAC_CFG, rxcfg);
-		return;
-	}
+		mchash[0] = mchash[1] = 0xFFFFFFFF;
+	} else {
+		/* Program new filter. */
+		bzero(mchash, sizeof(mchash));
 
-	/* Program new filter. */
-	bzero(mchash, sizeof(mchash));
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			crc = ether_crc32_le(enm->enm_addrlo, 
+			    ETHER_ADDR_LEN);
 
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		crc = ether_crc32_le(LLADDR((struct sockaddr_dl *)
-		    enm->enm_addrlo), ETHER_ADDR_LEN);
+			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
 
-		mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
-		ETHER_NEXT_MULTI(step, enm);	
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 
 	CSR_WRITE_4(sc, AGE_MAR0, mchash[0]);
