@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.149 2009/02/23 21:32:08 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.150 2009/02/23 21:33:12 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -589,8 +589,7 @@ cvs_mkpath(const char *path, char *tag)
 	FILE *fp;
 	size_t len;
 	struct hash_data *hdata, hd;
-	char *entry, sticky[CVS_REV_BUFSZ];
-	char *sp, *dp, *dir, *p, rpath[MAXPATHLEN], repo[MAXPATHLEN];
+	char *entry, *sp, *dp, *dir, *p, rpath[MAXPATHLEN], repo[MAXPATHLEN];
 
 	hdata = hash_table_find(&created_directories, path, strlen(path));
 	if (hdata != NULL)
