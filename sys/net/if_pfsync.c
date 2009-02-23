@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.108 2009/02/18 10:07:24 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.109 2009/02/23 21:16:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1570,6 +1570,15 @@ pfsync_sendout(void)
 	if (sc == NULL || sc->sc_len == PFSYNC_MINPKT)
 		return;
 
+#if NBPFILTER > 0
+	if (ifp->if_bpf == NULL && sc->sc_sync_if == NULL) {
+#else
+	if (sc->sc_sync_if == NULL) {
+#endif
+		pfsync_drop(sc);
+		return;
+	}
+
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
 		sc->sc_if.if_oerrors++;
@@ -1699,7 +1708,14 @@ pfsync_sendout(void)
 		m->m_data -= sizeof(*ip);
 		m->m_len = m->m_pkthdr.len = sc->sc_len;
 	}
+
+	if (sc->sc_sync_if == NULL) {
+		sc->sc_len = PFSYNC_MINPKT;
+		m_freem(m);
+		return;
+	}
 #endif
+
 	sc->sc_if.if_opackets++;
 	sc->sc_if.if_obytes += m->m_pkthdr.len;
 
