@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.118 2009/02/21 14:50:53 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.119 2009/02/23 21:28:57 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -645,7 +645,8 @@ cvs_client_checkedin(char *data)
 		if (len >= sizeof(timebuf))
 			fatal("cvs_client_sendfile: truncation");
 	} else {
-		ctime_r(&ent->ce_mtime, timebuf);
+		gmtime_r(&ent->ce_mtime, &datetm);
+		asctime_r(&datetm, timebuf);
 		timebuf[strcspn(timebuf, "\n")] = '\0';
 
 		if (newent->ce_tag != NULL) {
