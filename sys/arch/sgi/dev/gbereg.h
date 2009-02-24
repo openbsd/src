@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbereg.h,v 1.3 2007/12/31 12:46:14 jsing Exp $ */
+/*	$OpenBSD: gbereg.h,v 1.4 2009/02/24 14:37:29 jsing Exp $ */
 
 /*
  * Copyright (c) 2007, Joel Sing <jsing@openbsd.org>
@@ -24,14 +24,20 @@
 #define GBE_REG_SIZE		0x100000
 #define GBE_TLB_SIZE		128
 
-#define GBE_TILE_SHIFT	16
+#define GBE_TILE_SHIFT		16
 #define GBE_TILE_SIZE		(1 << GBE_TILE_SHIFT)
 
+#define GBE_TILE_WIDTH		512		/* Width of tile in bytes. */
+#define GBE_TILE_WIDTH_SHIFT	9
+#define GBE_TILE_HEIGHT		128		/* Height of tile in bytes. */
+#define GBE_TILE_HEIGHT_SHIFT	7
+
 /* 
- * Register locations.
+ * GBE Registers.
  */
 
 #define GBE_CTRL_STAT		0x00000000	/* General control/status */
+#define	GBE_CURSOR_ON		0x00000001
 #define GBE_DOTCLOCK		0x00000004	/* Dotclock */
 #define   GBE_DOTCLOCK_RUN	0x00100000	/* Enable dotclock */
 #define GBE_VT_XY		0x00010000	/* Current dot coordinates */
@@ -88,7 +94,7 @@
 #define GBE_CURSOR_CTRL		0x00070004	/* Cursor control */
 
 /* 
- * Constants.
+ * GBE Constants.
  */
 
 #define GBE_FB_DEPTH_8		0
@@ -107,7 +113,96 @@
 #define GBE_BMODE_BOTH		3
 
 /*
+ * Rendering Engine Registers.
+ */
+
+#define RE_BASE			0x15000000
+#define RE_REG_SIZE		0x5000
+#define RE_START		0x00000800	/* Start rendering operation. */
+
+/* TLB Registers. */
+#define RE_TLB_A		0x00001000	/* 256 16-bit tile entries. */
+#define	RE_TLB_B		0x00001200
+#define	RE_TLB_C		0x00001400
+#define	RE_TLB_TEX		0x00001600
+#define	RE_TLB_CLIP_ID		0x000016e0
+#define	RE_TLB_LINEAR_A		0x00001700
+#define	RE_TLB_LINEAR_B		0x00001780
+
+/* Pixel Pipeline Registers. */
+#define RE_PP_BUFMODE_SRC	0x00002000
+#define RE_PP_BUFMODE_DST	0x00002008
+#define RE_PP_CLIPMODE		0x00002010
+#define RE_PP_DRAWMODE		0x00002018
+#define   DRAWMODE_STENCIL	0x1 << 0
+#define   DRAWMODE_DEPTH_MASK	0x1 << 1
+#define   DRAWMODE_DEPTH_TEST   0x1 << 2
+#define   DRAWMODE_BYTEMASK	0xf << 3
+#define   DRAWMODE_BITMASK	0x1 << 7
+#define   DRAWMODE_DITHER	0x1 << 8
+#define   DRAWMODE_LOGIC_OP	0x1 << 9
+#define   DRAWMODE_ALPHA_BLEND  0x1 << 10
+#define   DRAWMODE_PIXEL_XFER	0x1 << 21
+#define RE_PP_WINOFFSET_SRC	0x00002050
+#define RE_PP_WINOFFSET_DST	0x00002058
+#define RE_PP_PRIMITIVE		0x00002060	/* Drawing primitive. */
+#define   PRIMITIVE_POINT	0x0 << 24
+#define   PRIMITIVE_LINE	0x1 << 24
+#define   PRIMITIVE_TRIANGLE	0x2 << 24
+#define   PRIMITIVE_RECTANGLE	0x3 << 24
+#define   PRIMITIVE_LRBT	0x0 << 16
+#define   PRIMITIVE_RLBT	0x1 << 16
+#define   PRIMITIVE_LRTB	0x2 << 16
+#define   PRIMITIVE_RLTB	0x3 << 16
+#define RE_PP_VERTEX_X_0	0x00002070	/* (x0,y0) vertex. */
+#define RE_PP_VERTEX_X_1	0x00002074	/* (x1,y1) vertex. */
+#define RE_PP_VERTEX_X_2	0x00002078	/* (x2,y2) vertex. */
+#define RE_PP_PIXEL_XFER_SRC	0x000020a0	/* Pixel transfer source. */
+#define RE_PP_PIXEL_XFER_X_STEP	0x000020a8
+#define RE_PP_PIXEL_XFER_Y_STEP	0x000020ac
+#define RE_PP_STIPPLE_MODE	0x000020c0
+#define RE_PP_STIPPLE_PATTERN	0x000020c4
+#define RE_PP_SHADE_FG_COLOUR	0x000020d0
+#define RE_PP_SHADE_BG_COLOUR	0x000020d8
+#define RE_PP_LOGIC_OP		0x000021b0	/* Logic operation. */
+#define   LOGIC_OP_NONE		0x00
+#define   LOGIC_OP_XOR		0x0c
+#define RE_PP_COLOUR_MASK	0x000021b8	/* Colour buffer plane mask. */
+#define   COLOUR_MASK_NONE	0xffffffff
+#define RE_PP_NULL		0x000021f0
+#define RE_PP_FLUSH		0x000021f8
+
+#define BUFMODE_PIXDEPTH_SHIFT	2		/* Pixel colour depth. */
+#define BUFMODE_PIXTYPE_SHIFT	4		/* Pixel format. */
+#define BUFMODE_BUFDEPTH_SHIFT	8		/* Buffer colour depth. */
+#define BUFMODE_BUFTYPE_SHIFT	10		/* Source or destination. */
+
+/* Status Registers. */
+#define RE_PP_STATUS		0x00004000
+#define   RE_PP_STATUS_IDLE	0x10000000
+#define   RE_PP_STATUS_READY	0x02000000
+
+/*
+ * Rendering Engine Constants.
+ */ 
+
+#define COLOUR_DEPTH_8		0x0
+#define COLOUR_DEPTH_16		0x1
+#define COLOUR_DEPTH_32		0x2
+
+#define PIXEL_TYPE_CI		0x0
+#define PIXEL_TYPE_RGB		0x1
+#define PIXEL_TYPE_RGBA		0x2
+#define PIXEL_TYPE_ABGR		0x3
+
+#define BUF_TYPE_TLB_A		0x0
+#define BUF_TYPE_TLB_B		0x1
+#define BUF_TYPE_TLB_C		0x2
+#define BUF_TYPE_LINEAR_A	0x4
+#define BUF_TYPE_LINEAR_B	0x5
+
+/*
  * Console functions.
  */
-int gbe_cnprobe(bus_space_tag_t, bus_addr_t addr);
-int gbe_cnattach(bus_space_tag_t, bus_addr_t addr);
+int	gbe_cnprobe(bus_space_tag_t, bus_addr_t addr);
+int	gbe_cnattach(bus_space_tag_t, bus_addr_t addr);
