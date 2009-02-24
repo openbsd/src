@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.27 2009/02/22 23:21:40 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.28 2009/02/24 21:40:51 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -692,7 +692,6 @@ lka_expand(char *buf, size_t len, struct path *path)
 				if (ret >= len)
 					return ret;
 				pbuf += strlen(pw->pw_dir);
-				++p;
 				continue;
 			}
 
