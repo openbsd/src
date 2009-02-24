@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.27 2007/05/28 17:51:26 ckuethe Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.28 2009/02/24 21:10:14 claudio Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -355,6 +355,11 @@ struct sis_desc {
 #define SIS_RXSTAT_DSTCLASS	0x01800000
 #define SIS_RXSTAT_OVERRUN	0x02000000
 #define SIS_RXSTAT_RX_ABORT	0x04000000
+
+#define SIS_RXSTAT_ERROR(x)						\
+	((x) & (SIS_RXSTAT_RX_ABORT | SIS_RXSTAT_OVERRUN |		\
+	SIS_RXSTAT_GIANT | SIS_RXSTAT_SYMBOLERR | SIS_RXSTAT_RUNT |	\
+	SIS_RXSTAT_CRCERR | SIS_RXSTAT_ALIGNERR))
 
 #define SIS_DSTCLASS_REJECT	0x00000000
 #define SIS_DSTCLASS_UNICAST	0x00800000

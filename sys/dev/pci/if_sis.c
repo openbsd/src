@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.86 2008/12/04 23:05:32 oga Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.87 2009/02/24 21:10:14 claudio Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1307,9 +1307,13 @@ sis_rxeof(struct sis_softc *sc)
 		 * If an error occurs, update stats, clear the
 		 * status word and leave the mbuf cluster in place:
 		 * it should simply get re-used next time this descriptor
-	 	 * comes up in the ring.
+	 	 * comes up in the ring. However, don't report long
+		 * frames as errors since they could be VLANs.
 		 */
-		if (!(rxstat & SIS_CMDSTS_PKT_OK)) {
+		if (rxstat & SIS_RXSTAT_GIANT &&
+		    total_len <= (ETHER_MAX_DIX_LEN - ETHER_CRC_LEN))
+			rxstat &= ~SIS_RXSTAT_GIANT;
+		if (SIS_RXSTAT_ERROR(rxstat)) {
 			ifp->if_ierrors++;
 			if (rxstat & SIS_RXSTAT_COLL)
 				ifp->if_collisions++;
@@ -1493,10 +1497,10 @@ sis_intr(void *arg)
 
 		if (status &
 		    (SIS_ISR_RX_DESC_OK | SIS_ISR_RX_OK |
-		     SIS_ISR_RX_IDLE))
+		     SIS_ISR_RX_ERR | SIS_ISR_RX_IDLE))
 			sis_rxeof(sc);
 
-		if (status & (SIS_ISR_RX_ERR | SIS_ISR_RX_OFLOW))
+		if (status & SIS_ISR_RX_OFLOW)
 			sis_rxeoc(sc);
 
 #if 0
