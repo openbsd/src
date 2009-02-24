@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.110 2009/02/24 05:39:19 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.111 2009/02/24 21:47:28 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1248,7 +1248,7 @@ pfsync_in_tdb(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 {
 	int len = count * sizeof(struct pfsync_tdb);
 
-#if 0 && defined(IPSEC)
+#if defined(IPSEC)
 	struct pfsync_tdb *tp;
 	struct mbuf *mp;
 	int offp;
@@ -1264,12 +1264,55 @@ pfsync_in_tdb(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 
 	s = splsoftnet();
 	for (i = 0; i < count; i++)
-		pfsync_update_net_tdb(&tp[i]); /* XXX */
+		pfsync_update_net_tdb(&tp[i]);
 	splx(s);
 #endif
 
 	return (len);
 }
+
+#if defined(IPSEC)
+/* Update an in-kernel tdb. Silently fail if no tdb is found. */
+void
+pfsync_update_net_tdb(struct pfsync_tdb *pt)
+{
+	struct tdb		*tdb;
+	int			 s;
+
+	/* check for invalid values */
+	if (ntohl(pt->spi) <= SPI_RESERVED_MAX ||
+	    (pt->dst.sa.sa_family != AF_INET &&
+	     pt->dst.sa.sa_family != AF_INET6))
+		goto bad;
+
+	s = spltdb();
+	tdb = gettdb(pt->spi, &pt->dst, pt->sproto);
+	if (tdb) {
+		pt->rpl = ntohl(pt->rpl);
+		pt->cur_bytes = betoh64(pt->cur_bytes);
+
+		/* Neither replay nor byte counter should ever decrease. */
+		if (pt->rpl < tdb->tdb_rpl ||
+		    pt->cur_bytes < tdb->tdb_cur_bytes) {
+			splx(s);
+			goto bad;
+		}
+
+		tdb->tdb_rpl = pt->rpl;
+		tdb->tdb_cur_bytes = pt->cur_bytes;
+	}
+	splx(s);
+	return;
+
+ bad:
+	if (pf_status.debug >= PF_DEBUG_MISC)
+		printf("pfsync_insert: PFSYNC_ACT_TDB_UPD: "
+		    "invalid value\n");
+	pfsyncstats.pfsyncs_badstate++;
+	return;
+}
+#endif
+
 
 int
 pfsync_in_eof(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
