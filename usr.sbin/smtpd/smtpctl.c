@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.14 2009/02/17 22:49:22 jacekm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.15 2009/02/24 12:07:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -47,6 +47,7 @@ int		show_command_output(struct imsg*);
 int		show_stats_output(struct imsg *);
 int		enqueue(int, char **);
 
+/*
 struct imsgname {
 	int type;
 	char *name;
@@ -61,6 +62,7 @@ struct imsgname imsgs[] = {
 struct imsgname imsgunknown = {
 	-1,				"<unknown>",		NULL
 };
+*/
 
 int proctype;
 struct imsgbuf	*ibuf;
@@ -172,6 +174,15 @@ connected:
 	case SHOW_STATS:
 		imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, NULL, 0);
 		break;
+	case SCHEDULE: {
+		struct sched s;
+
+		s.fd = -1;
+		bzero(s.mid, sizeof (s.mid));
+		strlcpy(s.mid, res->data, sizeof (s.mid));
+		imsg_compose(ibuf, IMSG_RUNNER_SCHEDULE, 0, 0, -1, &s, sizeof (s));
+		break;
+	}
 	case MONITOR:
 		/* XXX */
 		break;
@@ -197,6 +208,7 @@ connected:
 			switch(res->action) {
 			case RELOAD:
 			case SHUTDOWN:
+			case SCHEDULE:
 			case PAUSE_MDA:
 			case PAUSE_MTA:
 			case PAUSE_SMTP:

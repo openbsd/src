@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.13 2009/02/23 00:51:32 chl Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.14 2009/02/24 12:07:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -701,6 +701,8 @@ display_envelope(struct message *envelope, int flags)
 	getflag(&envelope->flags, F_MESSAGE_PROCESSING, "PROCESSING",
 	    status, sizeof(status));
 	getflag(&envelope->flags, F_MESSAGE_SCHEDULED, "SCHEDULED",
+	    status, sizeof(status));
+	getflag(&envelope->flags, F_MESSAGE_ENQUEUED, "ENQUEUED",
 	    status, sizeof(status));
 
 	if (envelope->flags)

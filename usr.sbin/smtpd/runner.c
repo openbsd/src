@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.32 2009/02/22 23:29:54 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.33 2009/02/24 12:07:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -77,6 +77,9 @@ int		runner_check_loop(struct message *);
 struct batch	*batch_record(struct smtpd *, struct message *);
 struct batch	*batch_lookup(struct smtpd *, struct message *);
 
+int		runner_force_envelope_schedule(char *);
+int		runner_force_message_schedule(char *);
+
 struct s_runner	 s_runner;
 
 void
@@ -146,6 +149,20 @@ runner_dispatch_control(int sig, short event, void *p)
 			s = imsg.data;
 			s->u.runner = s_runner;
 			imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, s, sizeof(*s));
+			break;
+		}
+		case IMSG_RUNNER_SCHEDULE: {
+			struct sched *s;
+
+			s = imsg.data;
+
+			s->ret = 0;
+			if (valid_message_uid(s->mid))
+				s->ret = runner_force_envelope_schedule(s->mid);
+			else if (valid_message_id(s->mid))
+				s->ret = runner_force_message_schedule(s->mid);
+
+			imsg_compose(ibuf, IMSG_RUNNER_SCHEDULE, 0, 0, -1, s, sizeof(*s));
 			break;
 		}
 		default:
@@ -519,6 +536,7 @@ runner_process_queue(struct smtpd *env)
 		runner_check_loop(&message);
 
 		message.flags |= F_MESSAGE_SCHEDULED;
+		message.flags &= ~F_MESSAGE_FORCESCHEDULE;
 		queue_update_envelope(&message);
 
 		if (! bsnprintf(rqpath, sizeof(rqpath), "%s/%s", PATH_RUNQUEUE,
@@ -710,6 +728,9 @@ runner_message_schedule(struct message *messagep, time_t tm)
 	if (messagep->flags & (F_MESSAGE_SCHEDULED|F_MESSAGE_PROCESSING))
 		return 0;
 
+	if (messagep->flags & F_MESSAGE_FORCESCHEDULE)
+		return 1;
+
 	/* Batch has been in the queue for too long and expired */
 	if (tm - messagep->creation >= SMTPD_QUEUE_EXPIRY) {
 		queue_remove_envelope(messagep);
@@ -750,6 +771,49 @@ runner_message_schedule(struct message *messagep, time_t tm)
 		return 1;
 
 	return 0;
+}
+
+int
+runner_force_envelope_schedule(char *mid)
+{
+	struct message message;
+
+	if (! queue_load_envelope(&message, mid))
+		return 0;
+
+	if (! message.flags & (F_MESSAGE_PROCESSING|F_MESSAGE_SCHEDULED))
+		return 1;
+
+	message.flags |= F_MESSAGE_FORCESCHEDULE;
+
+	if (! queue_update_envelope(&message))
+		return 0;
+
+	return 1;
+}
+
+int
+runner_force_message_schedule(char *mid)
+{
+	char path[MAXPATHLEN];
+	DIR *dirp;
+	struct dirent *dp;
+
+	if (! bsnprintf(path, MAXPATHLEN, "%s/%d/%s/envelopes",
+		PATH_QUEUE, queue_hash(mid), mid))
+		return 0;
+
+	dirp = opendir(path);
+	if (dirp == NULL)
+		return 0;
+
+	while ((dp = readdir(dirp)) != NULL) {
+		if (valid_message_uid(dp->d_name))
+			runner_force_envelope_schedule(dp->d_name);
+	}
+	closedir(dirp);
+
+	return 1;
 }
 
 void

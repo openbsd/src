@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.15 2009/02/22 19:07:33 chl Exp $	*/
+/*	$OpenBSD: control.c,v 1.16 2009/02/24 12:07:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -359,6 +359,21 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_STATS, 0, 0, -1, &s, sizeof(s));
 			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_STATS, 0, 0, -1, &s, sizeof(s));
 
+			break;
+		}
+		case IMSG_RUNNER_SCHEDULE: {
+			struct sched s;
+
+			s = *(struct sched *)imsg.data;
+			s.fd = fd;
+
+			if (! valid_message_id(s.mid) && ! valid_message_uid(s.mid)) {
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				    NULL, 0);
+				break;
+			}
+
+			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_SCHEDULE, 0, 0, -1, &s, sizeof(s));
 			break;
 		}
 		case IMSG_CTL_SHUTDOWN:
@@ -845,6 +860,22 @@ control_dispatch_runner(int sig, short event, void *p)
 			imsg_compose(&c->ibuf, IMSG_RUNNER_STATS, 0, 0, -1,
 			    &s->u.runner, sizeof(s->u.runner));
 
+			break;
+		}
+		case IMSG_RUNNER_SCHEDULE: {
+			struct sched	*s;
+			struct ctl_conn	*c;
+
+			s = imsg.data;
+			if ((c = control_connbyfd(s->fd)) == NULL) {
+				log_warn("control_dispatch_runner: fd %d not found", s->fd);
+				return;
+			}
+
+			if (s->ret)
+				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			else
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
 			break;
 		}
 		default:
