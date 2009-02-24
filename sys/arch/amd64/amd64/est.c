@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.9 2009/02/24 13:19:59 deraadt Exp $ */
+/*	$OpenBSD: est.c,v 1.10 2009/02/24 19:32:37 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -153,12 +153,13 @@ void
 p3_get_bus_clock(struct cpu_info *ci)
 {
 	u_int64_t msr;
-	int model, bus;
+	int bus;
 
-	model = (ci->ci_signature >> 4) & 15;
-	switch (model) {
+	switch (ci->ci_model) {
 	case 0xe: /* Core Duo/Solo */
 	case 0xf: /* Core Xeon */
+	case 0x16: /* 65nm Celeron */
+	case 0x17: /* Core 2 Extreme/45nm Xeon */
 		msr = rdmsr(MSR_FSB_FREQ);
 		bus = (msr >> 0) & 0x7;
 		switch (bus) {
@@ -186,9 +187,28 @@ p3_get_bus_clock(struct cpu_info *ci)
 			break;
 		}
 		break;
+	case 0x1c: /* Atom */
+		msr = rdmsr(MSR_FSB_FREQ);
+		bus = (msr >> 0) & 0x7;
+		switch (bus) {
+		case 5:
+			bus_clock = BUS100;
+			break;
+		case 1:
+			bus_clock = BUS133;
+			break;
+		case 3:
+			bus_clock = BUS166;
+			break;
+		default:
+			printf("%s: unknown Atom FSB_FREQ value %d",
+			    ci->ci_dev->dv_xname, bus);
+			break;
+		}
+		break;
 	default: 
-		printf("%s: unknown i686 model %d, can't get bus clock",
-		    ci->ci_dev->dv_xname, model);
+		printf("%s: unknown i686 model 0x%x, can't get bus clock",
+		    ci->ci_dev->dv_xname, ci->ci_model);
 	}
 }
 
