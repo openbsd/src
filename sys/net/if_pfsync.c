@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.109 2009/02/23 21:16:35 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.110 2009/02/24 05:39:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1426,7 +1426,6 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ip->ip_dst.s_addr = sc->sc_sync_peer.s_addr;
 
 		if (sc->sc_sync_if) {
-#if 0
 			/* Request a full state table update. */
 			sc->sc_ureq_sent = time_uptime;
 #if NCARP > 0
@@ -1437,9 +1436,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (pf_status.debug >= PF_DEBUG_MISC)
 				printf("pfsync: requesting bulk update\n");
 			timeout_add_sec(&sc->sc_bulkfail_tmo, 5);
-			/* XXX bulks done this way? */
 			pfsync_request_update(0, 0);
-#endif
 		}
 		splx(s);
 
