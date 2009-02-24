@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.43 2009/02/18 17:15:21 deraadt Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.44 2009/02/24 13:23:03 yuo Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -115,6 +115,7 @@ static const struct umsm_type umsm_devs[] = {
 
 	{{ USB_VENDOR_ANYDATA,	USB_PRODUCT_ANYDATA_A2502 }, 0},
 	{{ USB_VENDOR_ANYDATA,	USB_PRODUCT_ANYDATA_ADU_500A }, 0},
+	{{ USB_VENDOR_ANYDATA,  USB_PRODUCT_ANYDATA_ADU_E100H }, 0},
 
 	{{ USB_VENDOR_DELL,	USB_PRODUCT_DELL_U740 }, 0},
 	{{ USB_VENDOR_DELL,	USB_PRODUCT_DELL_W5500 }, 0},
