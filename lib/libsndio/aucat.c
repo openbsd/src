@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.14 2009/02/18 07:32:27 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.15 2009/02/25 23:31:59 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -304,8 +304,10 @@ aucat_stop(struct sio_hdl *sh)
 	hdl->wtodo = sizeof(struct amsg);
 	if (!aucat_wmsg(hdl))
 		return 0;
-	hdl->rstate = STATE_MSG;
-	hdl->rtodo = sizeof(struct amsg);
+	if (hdl->rstate == STATE_IDLE) {
+		hdl->rstate = STATE_MSG;
+		hdl->rtodo = sizeof(struct amsg);
+	}
 
 	/*
 	 * wait for the STOP ACK
