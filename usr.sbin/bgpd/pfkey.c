@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.34 2006/10/26 14:26:49 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.35 2009/02/25 19:18:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -497,6 +497,8 @@ pfkey_sa_remove(struct bgpd_addr *src, struct bgpd_addr *dst, u_int32_t *spi)
 int
 pfkey_md5sig_establish(struct peer *p)
 {
+	sleep(1);
+
 	if (!p->auth.spi_out)
 		if (pfkey_sa_add(&p->auth.local_addr, &p->conf.remote_addr,
 		    p->conf.auth.md5key_len, p->conf.auth.md5key,
