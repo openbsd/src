@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.45 2008/12/07 21:12:52 cloder Exp $	*/
+/*	$OpenBSD: grey.c,v 1.46 2009/02/25 19:00:36 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -315,8 +315,11 @@ readsuffixlists(void)
 	size_t len;
 	struct mail_addr *m;
 
-	while (!SLIST_EMPTY(&match_suffix))
+	while (!SLIST_EMPTY(&match_suffix)) {
+		m = SLIST_FIRST(&match_suffix);	  
 		SLIST_REMOVE_HEAD(&match_suffix, entry);
+		free(m);
+	}
 	if ((fp = fopen(alloweddomains_file, "r")) != NULL) {
 		while ((buf = fgetln(fp, &len))) {
 			if (buf[len-1] == '\n')
@@ -337,8 +340,11 @@ readsuffixlists(void)
 	}
 	return;
 bad:
-	while (!SLIST_EMPTY(&match_suffix))
+	while (!SLIST_EMPTY(&match_suffix)) {
+	  	m = SLIST_FIRST(&match_suffix);
 		SLIST_REMOVE_HEAD(&match_suffix, entry);
+		free(m);
+	}
 }
 
 void
@@ -512,6 +518,7 @@ do_changes(DB *db)
 		dbc->act = 0;
 		dbc->dsiz = 0;
 		SLIST_REMOVE_HEAD(&db_changes, entry);
+		free(dbc);
 
 	}
 	return(ret);
