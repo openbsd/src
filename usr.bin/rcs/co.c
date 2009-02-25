@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.109 2007/07/03 00:56:23 ray Exp $	*/
+/*	$OpenBSD: co.c,v 1.110 2009/02/25 23:16:20 ray Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -550,7 +550,7 @@ checkout_file_has_diffs(RCSFILE *rfp, RCSNUM *frev, const char *dst)
 	rcs_buf_empty(bp);
 
 	diff_format = D_RCSDIFF;
-	ret = diffreg(dst, tempfile, bp, 0);
+	ret = diffreg(dst, tempfile, bp, D_FORCEASCII);
 
 	rcs_buf_free(bp);
 	unlink(tempfile);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ci.c,v 1.204 2008/03/22 21:15:54 millert Exp $	*/
+/*	$OpenBSD: ci.c,v 1.205 2009/02/25 23:16:20 ray Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Niall O'Higgins <niallo@openbsd.org>
  * All rights reserved.
@@ -378,7 +378,7 @@ checkin_diff_file(struct checkin_params *pb)
 	b2 = NULL;
 
 	diff_format = D_RCSDIFF;
-	if (diffreg(path1, path2, b3, 0) == D_ERROR)
+	if (diffreg(path1, path2, b3, D_FORCEASCII) == D_ERROR)
 		goto out;
 
 	return (b3);
