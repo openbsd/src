@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.32 2009/02/23 00:51:32 chl Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.33 2009/02/25 09:08:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -998,7 +998,6 @@ parent_maildir_init(struct passwd *pw, char *root)
 		if (mkdir(pathname, 0700) == -1)
 			if (errno != EEXIST)
 				return 0;
-		chown(pathname, pw->pw_uid, pw->pw_gid);
 	}
 
 	return 1;
@@ -1031,8 +1030,6 @@ parent_maildir_open(struct passwd *pw, struct batch *batchp, struct path *path)
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
-
-	fchown(fd, pw->pw_uid, pw->pw_gid);
 
 	return fd;
 }
