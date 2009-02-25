@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.99 2009/02/14 14:21:59 kevlo Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.100 2009/02/25 03:08:25 kevlo Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -285,6 +285,7 @@ xge*	at pci?			# Neterion Xframe-I/II 10Gb ethernet
 bce*	at pci?			# Broadcom BCM4401
 et*	at pci?			# Agere/LSI ET1310
 age*	at pci?			# Attansic L1 Ethernet
+ale*	at pci?			# Attansic L1E Ethernet
 lii*	at pci?			# Attansic L2 Ethernet
 jme*	at pci?			# JMicron JMC250/JMC260 Ethernet
 
