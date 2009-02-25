@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.15 2009/01/10 15:33:05 kevlo Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.16 2009/02/25 11:41:58 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1897,19 +1897,27 @@ jme_init(struct ifnet *ifp)
 	 *  Don't receive runt/bad frame.
 	 */
 	sc->jme_rxcsr = RXCSR_FIFO_FTHRESH_128T;
+
 	/*
 	 * Since Rx FIFO size is 4K bytes, receiving frames larger
 	 * than 4K bytes will suffer from Rx FIFO overruns. So
 	 * decrease FIFO threshold to reduce the FIFO overruns for
 	 * frames larger than 4000 bytes.
 	 * For best performance of standard MTU sized frames use
-	 * maximum allowable FIFO threshold, 128QW.
+	 * maximum allowable FIFO threshold, which is 32QW for
+	 * chips with a full mask >= 2 otherwise 128QW. FIFO
+	 * thresholds of 64QW and 128QW are not valid for chips
+	 * with a full mask >= 2.
 	 */
-	if ((ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN) >
-	    JME_RX_FIFO_SIZE)
+	if (sc->jme_revfm >= 2)
 		sc->jme_rxcsr |= RXCSR_FIFO_THRESH_16QW;
-	else
-		sc->jme_rxcsr |= RXCSR_FIFO_THRESH_128QW;
+	else {
+		if ((ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
+		    ETHER_VLAN_ENCAP_LEN) > JME_RX_FIFO_SIZE)
+			sc->jme_rxcsr |= RXCSR_FIFO_THRESH_16QW;
+		else
+			sc->jme_rxcsr |= RXCSR_FIFO_THRESH_128QW;
+	}
 	sc->jme_rxcsr |= sc->jme_rx_dma_size | RXCSR_RXQ_N_SEL(RXCSR_RXQ0);
 	sc->jme_rxcsr |= RXCSR_DESC_RT_CNT(RXCSR_DESC_RT_CNT_DEFAULT);
 	sc->jme_rxcsr |= RXCSR_DESC_RT_GAP_256 & RXCSR_DESC_RT_GAP_MASK;
