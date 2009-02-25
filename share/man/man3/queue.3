@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.47 2008/07/27 07:06:42 stefan Exp $
+.\"	$OpenBSD: queue.3,v 1.48 2009/02/25 16:43:05 beck Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: July 27 2008 $
+.Dd $Mdocdate: February 25 2009 $
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -517,8 +517,12 @@ SLIST_INSERT_AFTER(n1, n2, entries);
 SLIST_FOREACH(np, &head, entries)	/* Forward traversal. */
 	np-> ...
 
-while (!SLIST_EMPTY(&head))		/* Delete. */
+while (!SLIST_EMPTY(&head)) {	 	/* Delete. */
+	n1 = SLIST_FIRST(&head);
 	SLIST_REMOVE_HEAD(&head, entries);
+	free(n1);
+}
+
 .Ed
 .Sh LISTS
 A list is headed by a structure defined by the
@@ -651,7 +655,10 @@ LIST_FOREACH(np, &head, entries)
 	np-> ...
 
 while (!LIST_EMPTY(&head))		/* Delete. */
-	LIST_REMOVE(LIST_FIRST(&head), entries);
+	n1 = LIST_FIRST(&head);
+	LIST_REMOVE(n1, entries);
+	free(n1);
+}
 .Ed
 .Sh SIMPLE QUEUES
 A simple queue is headed by a structure defined by the
@@ -762,8 +769,11 @@ SIMPLEQ_INSERT_TAIL(&head, n2, entries);
 SIMPLEQ_FOREACH(np, &head, entries)
 	np-> ...
 					/* Delete. */
-while (!SIMPLEQ_EMPTY(&head))
+while (!SIMPLEQ_EMPTY(&head)) {
+	n1 = SIMPLEQ_FIRST(&head);
 	SIMPLEQ_REMOVE_HEAD(&head, entries);
+	free(n1);
+}
 .Ed
 .Sh TAIL QUEUES
 A tail queue is headed by a structure defined by the
@@ -907,8 +917,11 @@ TAILQ_FOREACH(np, &head, entries)
 for (np = n2; np != NULL; np = TAILQ_NEXT(np, entries))
 	np-> ...
 					/* Delete. */
-while (np = TAILQ_FIRST(&head))
+while (np = TAILQ_FIRST(&head)) {
 	TAILQ_REMOVE(&head, np, entries);
+	free(np);
+}
+	
 .Ed
 .Sh CIRCULAR QUEUES
 A circular queue is headed by a structure defined by the
@@ -1050,8 +1063,11 @@ CIRCLEQ_FOREACH(np, &head, entries)
 CIRCLEQ_FOREACH_REVERSE(np, &head, entries)
 	np-> ...
 					/* Delete. */
-while (!CIRCLEQ_EMPTY(&head))
-	CIRCLEQ_REMOVE(&head, CIRCLEQ_FIRST(&head), entries);
+while (!CIRCLEQ_EMPTY(&head)) {
+	n1 = CIRCLEQ_FIRST(&head);	
+	CIRCLEQ_REMOVE(&head, n1, entries);
+	free(n1);
+}
 .Ed
 .Sh NOTES
 It is an error to assume the next and previous fields are preserved
