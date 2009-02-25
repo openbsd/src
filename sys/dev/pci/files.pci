@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.258 2009/01/16 05:00:34 kevlo Exp $
+#	$OpenBSD: files.pci,v 1.259 2009/02/25 03:05:32 kevlo Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -636,6 +636,11 @@ file	dev/pci/if_jme.c		jme
 device	age: ether, ifnet, mii, ifmedia, mii_phy
 attach	age at pci
 file	dev/pci/if_age.c		age
+
+# Attansic/Atheros L1E Gigabit Ethernet
+device	ale: ether, ifnet, mii, ifmedia, mii_phy
+attach	ale at pci
+file	dev/pci/if_ale.c		ale
 
 # AMD-76x PM and SMBus controller
 device	amdpm: i2cbus
