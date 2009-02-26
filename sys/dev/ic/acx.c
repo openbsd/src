@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.88 2008/11/23 12:11:27 claudio Exp $ */
+/*	$OpenBSD: acx.c,v 1.89 2009/02/26 23:11:31 stsp Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -230,13 +230,19 @@ acx_attach(struct acx_softc *sc)
 
 	/* Allocate busdma stuffs */
 	error = acx_dma_alloc(sc);
-	if (error)
+	if (error) {
+		printf("%s: attach failed, could not allocate DMA!\n",
+		    sc->sc_dev.dv_xname);
 		return (error);
+	}
 
 	/* Reset Hardware */
 	error = acx_reset(sc);
-	if (error)
+	if (error) {
+		printf("%s: attach failed, could not reset device!\n",
+		    sc->sc_dev.dv_xname);
 		return (error);
+	}
 
 	/* Disable interrupts before firmware is loaded */
 	acx_disable_intr(sc);
@@ -254,8 +260,11 @@ acx_attach(struct acx_softc *sc)
 		}
 		DELAY(10000);
 	}
-	if (i == EEINFO_RETRY_MAX)
+	if (i == EEINFO_RETRY_MAX) {
+		printf("%s: attach failed, could not get radio type!\n",
+		    sc->sc_dev.dv_xname);
 		return (ENXIO);
+	}
 #undef EEINFO_RETRY_MAX
 
 	printf("%s: %s, radio %s (0x%02x)", sc->sc_dev.dv_xname,
@@ -276,8 +285,11 @@ acx_attach(struct acx_softc *sc)
 
 	/* Get EEPROM version */
 	error = acx_read_eeprom(sc, ACX_EE_VERSION_OFS, &sc->sc_eeprom_ver);
-	if (error)
+	if (error) {
+		printf("\n%s: attach failed, could not get EEPROM version!\n",
+		    sc->sc_dev.dv_xname);
 		return (error);
+	}
 
 	printf(", EEPROM ver %u", sc->sc_eeprom_ver);
 
