@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.52 2009/02/26 00:29:39 tedu Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.53 2009/02/26 17:21:56 oga Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -79,6 +79,8 @@ int  get_avg_idle_up(void);
 void perf_status(struct apm_power_info *pinfo, int ncpu);
 void suspend(int ctl_fd);
 void stand_by(int ctl_fd);
+void suspend_req(int ctl_fd);
+void stand_by_req(int ctl_fd);
 void setperf(int new_perf);
 void sigexit(int signo);
 void do_etc_file(const char *file);
@@ -485,6 +487,26 @@ stand_by(int ctl_fd)
 	ioctl(ctl_fd, APM_IOC_STANDBY, 0);
 }
 
+void
+suspend_req(int ctl_fd)
+{
+	/* let the user get their finger off the enter key before we suspend */
+	sleep(1);
+	ioctl(ctl_fd, APM_IOC_SUSPEND_REQ, 0);
+	/* give X a chance to do things */
+	sleep(2);
+}
+
+void
+stand_by_req(int ctl_fd)
+{
+	/* let the user get their finger off the enter key before we suspend */
+	sleep(1);
+	ioctl(ctl_fd, APM_IOC_STANDBY_REQ, 0);
+	/* give X a chance to do things */
+	sleep(2);
+}
+
 #define TIMO (10*60)			/* 10 minutes */
 
 int
@@ -736,10 +758,10 @@ main(int argc, char *argv[])
 			case NORMAL:
 				break;
 			case SUSPENDING:
-				suspend(ctl_fd);
+				suspend_req(ctl_fd);
 				break;
 			case STANDING_BY:
-				stand_by(ctl_fd);
+				stand_by_req(ctl_fd);
 				break;
 			}
 	}
