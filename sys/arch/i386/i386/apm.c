@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.82 2008/08/16 00:26:26 krw Exp $	*/
+/*	$OpenBSD: apm.c,v 1.83 2009/02/26 17:19:47 oga Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -1145,7 +1145,20 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = EIO;
 		}
 		break;
-
+	case APM_IOC_STANDBY_REQ:
+		if ((flag & FWRITE) == 0)
+			error = EBADF;
+		/* only fails if no one cares. apmd at least should */
+		else if (apm_record_event(sc, APM_USER_STANDBY_REQ))
+			error = EINVAL; /* ? */
+		break;
+	case APM_IOC_SUSPEND_REQ:
+		if ((flag & FWRITE) == 0)
+			error = EBADF;
+		/* only fails if no one cares. apmd at least should */
+		else if (apm_record_event(sc, APM_USER_SUSPEND_REQ))
+			error = EINVAL; /* ? */
+		break;
 	default:
 		error = ENOTTY;
 	}

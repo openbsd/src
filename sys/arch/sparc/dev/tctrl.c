@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.19 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.20 2009/02/26 17:19:47 oga Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -1112,7 +1112,18 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		else
 			power->ac_state = APM_AC_OFF;
 		break;
-
+	case APM_IOC_STANDBY_REQ:
+		if ((flag & FWRITE) == 0)
+			error = EBADF;
+		else
+			error = EOPNOTSUPP;	/* XXX */
+		break;
+	case APM_IOC_SUSPEND_REQ:
+		if ((flag & FWRITE) == 0)
+			error = EBADF;
+		else
+			error = EOPNOTSUPP;	/* XXX */
+		break;
 	default:
 		error = ENOTTY;
 	}

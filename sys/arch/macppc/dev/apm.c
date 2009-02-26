@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.13 2007/12/11 15:44:00 tedu Exp $	*/
+/*	$OpenBSD: apm.c,v 1.14 2009/02/26 17:19:47 oga Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -286,7 +286,14 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				power->battery_state = APM_BATT_LOW;
 		}
 		break;
-
+	case APM_IOC_STANDBY_REQ:
+		if ((flag & FWRITE) == 0)
+			error = EBADF;
+		break;
+	case APM_IOC_SUSPEND_REQ:
+		if ((flag & FWRITE) == 0)
+			error = EBADF;
+		break;
 	default:
 		error = ENOTTY;
 	}

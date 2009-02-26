@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.4 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.5 2009/02/26 17:19:47 oga Exp $	*/
 
 /*
  *  Copyright (c) 2001 Alexander Guy
@@ -114,5 +114,7 @@ struct apm_ctl {
 #define		APM_PRINT_OFF	1	/* driver power status not displayed */
 #define		APM_PRINT_PCT	2	/* driver power status only displayed
 					   if the percentage changes */
+#define	APM_IOC_STANDBY_REQ	_IO('A', 7)	/* request standby */
+#define	APM_IOC_SUSPEND_REQ	_IO('A', 8)	/* request suspend */
 
 #endif /* _MACPPC_APMVAR_H_ */
