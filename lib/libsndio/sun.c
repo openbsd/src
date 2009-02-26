@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.13 2009/02/04 07:54:00 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.14 2009/02/26 22:14:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -469,6 +469,7 @@ sun_start(struct sio_hdl *sh)
 			hdl->sa.eof = 1;
 			return 0;
 		}
+		hdl->filling = 0;
 		sio_onmove_cb(&hdl->sa, 0);
 	}
 	return 1;
