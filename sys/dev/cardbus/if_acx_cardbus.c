@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.11 2006/11/10 20:20:04 damien Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.12 2009/02/26 23:03:05 stsp Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -77,6 +77,8 @@ struct acx_cardbus_softc {
 	bus_space_tag_t		sc_io_bt;
 	bus_space_handle_t	sc_io_bh;
 	bus_size_t		sc_iomapsize;
+
+	int			sc_acx_attached;
 };
 
 int	acx_cardbus_match(struct device *, void *, void *);
@@ -171,7 +173,8 @@ acx_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	else
 		acx100_set_param(sc);
 
-	acx_attach(sc);
+	error = acx_attach(sc);
+	csc->sc_acx_attached = error == 0;
 
 	Cardbus_function_disable(ct);
 }
@@ -186,9 +189,11 @@ acx_cardbus_detach(struct device *self, int flags)
 	cardbus_function_tag_t cf = ct->ct_cf;
 	int error, b1 = CARDBUS_BASE0_REG, b2 = CARDBUS_BASE1_REG;
 
-	error = acx_detach(sc);
-	if (error != 0)
-		return (error);
+	if (csc->sc_acx_attached) {
+		error = acx_detach(sc);
+		if (error != 0)
+			return (error);
+	}
 
 	/* unhook the interrupt handler */
 	if (csc->sc_ih != NULL) {
