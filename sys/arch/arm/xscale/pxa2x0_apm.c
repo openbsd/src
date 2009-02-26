@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.29 2009/02/26 17:19:47 oga Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.30 2009/02/26 19:57:10 todd Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -566,13 +566,13 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else if (apm_record_event(sc, APM_USER_STANDBY_REQ))
-			error = EINVAL /* ? */
+			error = EINVAL; /* ? */
 		break;
 	case APM_IOC_SUSPEND_REQ:
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else if (apm_record_event(sc, APM_USER_SUSPEND_REQ))
-			error = EINVAL /* ? */
+			error = EINVAL; /* ? */
 	default:
 		error = ENOTTY;
 	}
