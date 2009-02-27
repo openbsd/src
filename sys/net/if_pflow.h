@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.4 2009/01/03 21:47:32 gollo Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.5 2009/02/27 11:09:36 gollo Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -56,10 +56,6 @@ struct pflow_flow {
 
 extern int pflow_ok;
 
-union sc_flowp {
-	struct	pflow_flow	*s;
-};
-
 struct pflow_softc {
 	struct ifnet		 sc_if;
 	struct ifnet		*sc_pflow_ifp;
@@ -73,7 +69,6 @@ struct pflow_softc {
 	u_int16_t		 sc_sender_port;
 	struct in_addr		 sc_receiver_ip;
 	u_int16_t		 sc_receiver_port;
-	union sc_flowp		 sc_flowp;
 	struct mbuf		*sc_mbuf;	/* current cumulative mbuf */
 	SLIST_ENTRY(pflow_softc) sc_next;
 };

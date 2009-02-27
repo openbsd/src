@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.9 2009/01/03 21:47:32 gollo Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.10 2009/02/27 11:09:36 gollo Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -73,7 +73,7 @@ int	pflowoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 int	pflowioctl(struct ifnet *, u_long, caddr_t);
 void	pflowstart(struct ifnet *);
 
-struct mbuf *pflow_get_mbuf(struct pflow_softc *, void **);
+struct mbuf *pflow_get_mbuf(struct pflow_softc *);
 int	pflow_sendout(struct pflow_softc *);
 int	pflow_sendout_mbuf(struct pflow_softc *, struct mbuf *);
 void	pflow_timeout(void *);
@@ -82,6 +82,7 @@ void	copy_flow_data(struct pflow_flow *, struct pflow_flow *,
 int	pflow_pack_flow(struct pf_state *, struct pflow_softc *);
 int	pflow_get_dynport(void);
 int	export_pflow_if(struct pf_state*, struct pflow_softc *);
+int	copy_flow_to_m(struct pflow_flow *flow, struct pflow_softc *sc);
 
 struct if_clone	pflow_cloner =
     IF_CLONE_INITIALIZER("pflow", pflow_clone_create,
@@ -286,75 +287,50 @@ pflow_setmtu(struct pflow_softc *sc, int mtu_req)
 	else
 		mtu = mtu_req;
 
-	sc->sc_maxcount = (mtu - sizeof(struct pflow_header)) /
-	    sizeof(struct pflow_flow);
+	sc->sc_maxcount = (mtu - sizeof(struct pflow_header) -
+	    sizeof (struct udpiphdr)) / sizeof(struct pflow_flow);
 	if (sc->sc_maxcount > PFLOW_MAXFLOWS)
 	    sc->sc_maxcount = PFLOW_MAXFLOWS;
 	sc->sc_if.if_mtu = sizeof(struct pflow_header) +
+	    sizeof (struct udpiphdr) + 
 	    sc->sc_maxcount * sizeof(struct pflow_flow);
 }
 
 struct mbuf *
-pflow_get_mbuf(struct pflow_softc *sc, void **sp)
+pflow_get_mbuf(struct pflow_softc *sc)
 {
-	struct pflow_header	*h;
-	struct mbuf		*m, *top = NULL, **mp = &top;
-	int			len, totlen;
+	struct pflow_header	 h;
+	struct mbuf		*m;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
-		sc->sc_if.if_oerrors++;
+		pflowstats.pflow_onomem++;
 		return (NULL);
 	}
 
-	len = MHLEN;
-	totlen = (sc->sc_maxcount * sizeof(struct pflow_flow)) +
-	    sizeof(struct pflow_header);
-
-	while (totlen > 0) {
-		if (top) {
-			MGET(m, M_DONTWAIT, MT_DATA);
-			if (m == 0) {
-				m_freem(top);
-				sc->sc_if.if_oerrors++;
-				return (NULL);
-			}
-			len = MLEN;
-		}
-		if (totlen >= MINCLSIZE) {
-			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				len = MCLBYTES;
-			else {
-				m_free(m);
-				m_freem(top);
-				sc->sc_if.if_oerrors++;
-				return (NULL);
-			}
-		}
-		m->m_len = len = min(totlen, len);
-		totlen -= len;
-		*mp = m;
-		mp = &m->m_next;
+	MCLGET(m, M_DONTWAIT);
+	if ((m->m_flags & M_EXT) == 0) {
+		m_free(m);
+		pflowstats.pflow_onomem++;
+		return (NULL);
 	}
 
-	top->m_pkthdr.rcvif = NULL;
-	top->m_len = m->m_pkthdr.len = sizeof(struct pflow_header);
+	m->m_len = m->m_pkthdr.len = 0;
+	m->m_pkthdr.rcvif = NULL;
 
 	/* populate pflow_header */
-	h = mtod(top, struct pflow_header *);
-	h->reserved1 = 0;
-	h->reserved2 = 0;
-	h->count = 0;
-	h->version = htons(PFLOW_VERSION);
-	h->flow_sequence = htonl(sc->sc_gcounter);
-	h->engine_type = PFLOW_ENGINE_TYPE;
-	h->engine_id = PFLOW_ENGINE_ID;
+	h.reserved1 = 0;
+	h.reserved2 = 0;
+	h.count = 0;
+	h.version = htons(PFLOW_VERSION);
+	h.flow_sequence = htonl(sc->sc_gcounter);
+	h.engine_type = PFLOW_ENGINE_TYPE;
+	h.engine_id = PFLOW_ENGINE_ID;
+	m_copyback(m, 0, PFLOW_HDRLEN, &h);
 
 	sc->sc_count = 0;
-	*sp = (void *)((char *)h + PFLOW_HDRLEN);
 	timeout_add_sec(&sc->sc_tmo, PFLOW_TIMEOUT);
-	return (top);
+	return (m);
 }
 
 void
@@ -363,12 +339,10 @@ copy_flow_data(struct pflow_flow *flow1, struct pflow_flow *flow2,
 {
 	struct pf_state_key	*sk = st->key[PF_SK_WIRE];
 
-	flow1->src_ip = flow2->dest_ip =
-	    st->key[PF_SK_WIRE]->addr[src].v4.s_addr;
-	flow1->src_port = flow2->dest_port = st->key[PF_SK_WIRE]->port[src];
-	flow1->dest_ip = flow2->src_ip =
-	    st->key[PF_SK_WIRE]->addr[dst].v4.s_addr;
-	flow1->dest_port = flow2->src_port = st->key[PF_SK_WIRE]->port[dst];
+	flow1->src_ip = flow2->dest_ip = sk->addr[src].v4.s_addr;
+	flow1->src_port = flow2->dest_port = sk->port[src];
+	flow1->dest_ip = flow2->src_ip = sk->addr[dst].v4.s_addr;
+	flow1->dest_port = flow2->src_port = sk->port[dst];
 
 	flow1->dest_as = flow2->src_as =
 	    flow1->src_as = flow2->dest_as = 0;
@@ -393,6 +367,10 @@ int
 export_pflow(struct pf_state *st)
 {
 	struct pflow_softc	*sc = NULL;
+	struct pf_state_key	*sk = st->key[PF_SK_WIRE];
+
+	if (sk->af != AF_INET)
+		return (0);
 
 	SLIST_FOREACH(sc, &pflowif_list, sc_next) {
 		export_pflow_if(st, sc);
@@ -405,11 +383,10 @@ int
 export_pflow_if(struct pf_state *st, struct pflow_softc *sc)
 {
 	struct pf_state		 pfs_copy;
-	struct ifnet		*ifp = NULL;
+	struct ifnet		*ifp = &sc->sc_if;
 	u_int64_t		 bytes[2];
 	int			 ret = 0;
 
-	ifp = &sc->sc_if;
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return (0);
 
@@ -449,75 +426,54 @@ export_pflow_if(struct pf_state *st, struct pflow_softc *sc)
 }
 
 int
-pflow_pack_flow(struct pf_state *st, struct pflow_softc *sc)
+copy_flow_to_m(struct pflow_flow *flow, struct pflow_softc *sc)
 {
-	struct pflow_flow	*flow1 = NULL;
-	struct pflow_flow	 flow2;
-	struct pf_state_key	*sk = st->key[PF_SK_WIRE];
-	int			 s, ret = 0;
-
-	if (sk->af != AF_INET)
-		return (0);
+	int		s, ret = 0;
 
 	s = splnet();
-
 	if (sc->sc_mbuf == NULL) {
-		if ((sc->sc_mbuf = pflow_get_mbuf(sc,
-		    (void **)&sc->sc_flowp.s)) == NULL) {
+		if ((sc->sc_mbuf = pflow_get_mbuf(sc)) == NULL) {
 			splx(s);
-			return (ENOMEM);
+			return (ENOBUFS);
 		}
 	}
+	m_copyback(sc->sc_mbuf, PFLOW_HDRLEN +
+	    (sc->sc_count * sizeof (struct pflow_flow)),
+	    sizeof (struct pflow_flow), flow);
 
 	if (pflowstats.pflow_flows == sc->sc_gcounter)
 		pflowstats.pflow_flows++;
 	sc->sc_gcounter++;
 	sc->sc_count++;
 
-	flow1 = sc->sc_flowp.s++;
-	sc->sc_mbuf->m_pkthdr.len =
-	    sc->sc_mbuf->m_len += sizeof(struct pflow_flow);
-	bzero(flow1, sizeof(*flow1));
+	if (sc->sc_count >= sc->sc_maxcount)
+		ret = pflow_sendout(sc);
+
+	splx(s);
+	return(ret);
+}
+
+int
+pflow_pack_flow(struct pf_state *st, struct pflow_softc *sc)
+{
+	struct pflow_flow	 flow1;
+	struct pflow_flow	 flow2;
+	int			 ret = 0;
+
+	bzero(&flow1, sizeof(flow1));
 	bzero(&flow2, sizeof(flow2));
 
 	if (st->direction == PF_OUT)
-		copy_flow_data(flow1, &flow2, st, 1, 0);
+		copy_flow_data(&flow1, &flow2, st, 1, 0);
 	else
-		copy_flow_data(flow1, &flow2, st, 0, 1);
+		copy_flow_data(&flow1, &flow2, st, 0, 1);
 
-	if (st->bytes[0] != 0) { /* first flow from state */
-		if (sc->sc_count >= sc->sc_maxcount)
-			ret = pflow_sendout(sc);
+	if (st->bytes[0] != 0) /* first flow from state */
+		ret = copy_flow_to_m(&flow1, sc);
 
-		if (st->bytes[1] != 0) {
-			/* one more flow, second part from state */
-			if (sc->sc_mbuf == NULL) {
-				if ((sc->sc_mbuf = pflow_get_mbuf(sc,
-				    (void **)&sc->sc_flowp.s)) == NULL) {
-					splx(s);
-					return (ENOMEM);
-				}
-			}
+	if (st->bytes[1] != 0) /* second flow from state */
+		ret = copy_flow_to_m(&flow2, sc);
 
-			if (pflowstats.pflow_flows == sc->sc_gcounter)
-				pflowstats.pflow_flows++;
-			sc->sc_gcounter++;
-			sc->sc_count++;
-
-			flow1 = sc->sc_flowp.s++;
-			sc->sc_mbuf->m_pkthdr.len =
-			    sc->sc_mbuf->m_len += sizeof(struct pflow_flow);
-			bzero(flow1, sizeof(*flow1));
-		}
-	}
-
-	if (st->bytes[1] != 0) { /* second flow from state */
-		bcopy(&flow2, flow1, sizeof(*flow1));
-		if (sc->sc_count >= sc->sc_maxcount)
-			ret = pflow_sendout(sc);
-	}
-
-	splx(s);
 	return (ret);
 }
 
@@ -546,7 +502,6 @@ pflow_sendout(struct pflow_softc *sc)
 		return (0);
 
 	sc->sc_mbuf = NULL;
-	sc->sc_flowp.s = NULL;
 	if (!(ifp->if_flags & IFF_RUNNING)) {
 		m_freem(m);
 		return (0);
@@ -571,12 +526,13 @@ pflow_sendout_mbuf(struct pflow_softc *sc, struct mbuf *m)
 	u_int16_t	 len = m->m_pkthdr.len;
 	struct ifnet	*ifp = &sc->sc_if;
 	struct ip	*ip;
+	int		 err;
 
 	/* UDP Header*/
 	M_PREPEND(m, sizeof(struct udpiphdr), M_DONTWAIT);
 	if (m == NULL) {
 		pflowstats.pflow_onomem++;
-		return (0);
+		return (ENOBUFS);
 	}
 
 	ui = mtod(m, struct udpiphdr *);
@@ -612,9 +568,14 @@ pflow_sendout_mbuf(struct pflow_softc *sc, struct mbuf *m)
 	}
 #endif
 
-	if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL))
+	sc->sc_if.if_opackets++;
+	sc->sc_if.if_obytes += m->m_pkthdr.len;
+
+	if ((err = ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL))) {
 		pflowstats.pflow_oerrors++;
-	return (0);
+		sc->sc_if.if_oerrors++;
+	}
+	return (err);
 }
 
 int
