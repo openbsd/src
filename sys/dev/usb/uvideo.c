@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.120 2009/02/21 08:18:13 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.121 2009/02/27 06:00:31 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -244,7 +244,7 @@ struct video_hw_if uvideo_hw_if = {
  */
 #define UVIDEO_FLAG_ISIGHT_STREAM_HEADER	0x1
 #define UVIDEO_FLAG_REATTACH			0x2
-#define UVIDEO_FLAG_VENDOR_CLASS		0x3
+#define UVIDEO_FLAG_VENDOR_CLASS		0x4
 struct uvideo_devs {
 	struct usb_devno	 uv_dev;
 	char			*ucode_name;
