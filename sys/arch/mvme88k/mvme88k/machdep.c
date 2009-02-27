@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.225 2009/02/21 18:37:49 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.226 2009/02/27 05:19:36 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -125,7 +125,8 @@ intrhand_t intr_handlers[NVMEINTR];
 /* board dependent pointers */
 void (*md_interrupt_func_ptr)(struct trapframe *);
 #ifdef M88110
-void (*md_nmi_func_ptr)(struct trapframe *);
+int (*md_nmi_func_ptr)(struct trapframe *);
+void (*md_nmi_wrapup_func_ptr)(struct trapframe *);
 #endif
 void (*md_init_clocks)(void);
 u_int (*md_getipl)(void);
