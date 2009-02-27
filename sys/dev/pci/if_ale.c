@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.2 2009/02/26 02:02:01 kevlo Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.3 2009/02/27 03:40:25 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1712,6 +1712,7 @@ ale_init(struct ifnet *ifp)
 
 	/* Configure interrupt moderation timer. */
 	sc->ale_int_rx_mod = ALE_IM_RX_TIMER_DEFAULT;
+	sc->ale_int_tx_mod = ALE_IM_TX_TIMER_DEFAULT;
 	reg = ALE_USECS(sc->ale_int_rx_mod) << IM_TIMER_RX_SHIFT;
 	reg |= ALE_USECS(sc->ale_int_tx_mod) << IM_TIMER_TX_SHIFT;
 	CSR_WRITE_4(sc, ALE_IM_TIMER, reg);
