@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88410.c,v 1.3 2007/12/02 21:25:01 miod Exp $	*/
+/*	$OpenBSD: m88410.c,v 1.4 2009/02/27 05:17:53 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 /*
  * Flush physical page number (specified in the low 20 bits of the
- * address.
+ * address).
  */
 #define XCC_FLUSH_PAGE	0x01
 /*
@@ -163,6 +163,10 @@ mc88410_inval(void)
 	 * access which will spin as long as necessary.
 	 */
 	dummy = *(volatile u_int32_t *)(BS_BASE + BS_XCCR);
+
+	/* just in case it didn't, spin until the operation is complete */
+	while ((*(volatile u_int32_t *)(BS_BASE + BS_XCCR) & BS_XCC_FBSY) != 0)
+		;
 
 	*(volatile u_int16_t *)(BS_BASE + BS_GCSR) = bs_gcsr;
 	*(volatile u_int16_t *)(BS_BASE + BS_ROMCR) = bs_romcr;
