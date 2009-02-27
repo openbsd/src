@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.633 2009/02/16 00:31:25 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.634 2009/02/27 12:37:45 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -634,6 +634,7 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 {
 	struct pf_state_item	*si;
 	struct pf_state_key     *cur;
+	struct pf_state		*olds = NULL;
 
 	KASSERT(s->key[idx] == NULL);	/* XXX handle this? */
 
@@ -642,19 +643,36 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 		TAILQ_FOREACH(si, &cur->states, entry)
 			if (si->s->kif == s->kif &&
 			    si->s->direction == s->direction) {
-				if (pf_status.debug >= PF_DEBUG_MISC) {
-					printf(
-					    "pf: %s key attach failed on %s: ",
-					    (idx == PF_SK_WIRE) ?
-					    "wire" : "stack",
-					    s->kif->pfik_name);
-					pf_print_state_parts(s,
-					    (idx == PF_SK_WIRE) ? sk : NULL,
-					    (idx == PF_SK_STACK) ? sk : NULL);
-					printf("\n");
+				if (sk->proto == IPPROTO_TCP &&
+				    si->s->src.state >= TCPS_FIN_WAIT_2 &&
+				    si->s->dst.state >= TCPS_FIN_WAIT_2) {
+					si->s->src.state = si->s->dst.state =
+					    TCPS_CLOSED;
+					/* unlink late or sks can go away */
+					olds = si->s;
+				} else {
+					if (pf_status.debug >= PF_DEBUG_MISC) {
+						printf("pf: %s key attach "
+						    "failed on %s: ",
+						    (idx == PF_SK_WIRE) ?
+						    "wire" : "stack",
+						    s->kif->pfik_name);
+						pf_print_state_parts(s,
+						    (idx == PF_SK_WIRE) ?
+						    sk : NULL,
+						    (idx == PF_SK_STACK) ?
+						    sk : NULL);
+						printf(", existing: ");
+						pf_print_state_parts(si->s,
+						    (idx == PF_SK_WIRE) ?
+						    sk : NULL,
+						    (idx == PF_SK_STACK) ?
+						    sk : NULL);
+						printf("\n");
+					}
+					pool_put(&pf_state_key_pl, sk);
+					return (-1);	/* collision! */
 				}
-				pool_put(&pf_state_key_pl, sk);
-				return (-1);	/* collision! */
 			}
 		pool_put(&pf_state_key_pl, sk);
 		s->key[idx] = cur;
@@ -672,6 +690,10 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 		TAILQ_INSERT_TAIL(&s->key[idx]->states, si, entry);
 	else
 		TAILQ_INSERT_HEAD(&s->key[idx]->states, si, entry);
+
+	if (olds)
+		pf_unlink_state(olds);
+
 	return (0);
 }
 
