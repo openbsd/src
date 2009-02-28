@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.49 2008/08/06 20:42:56 miod Exp $
+dnl	$OpenBSD: contents,v 1.50 2009/02/28 20:53:00 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -21,27 +21,27 @@ OpenBSDrd
 
 DistributionDescription(eleven)
 
-OpenBSDbase(45518701,145494688,shared)
+OpenBSDbase(49888006,160478255,shared)
 
-OpenBSDcomp(51928697,179553965,shared)
+OpenBSDcomp(59123843,199085530,shared)
 
-OpenBSDetc(645538,2017166)
+OpenBSDetc(511799,1522575)
 
-OpenBSDgame(2650515,6304726)
+OpenBSDgame(2650734,6304930)
 
-OpenBSDman(7133401,25605196)
+OpenBSDman(7716948,28069759)
 
-OpenBSDmisc(2935631,9911961)
+OpenBSDmisc(2935671,9912406)
 
-OpenBSDxbase(6538027,19639118)
+OpenBSDxbase(8764728,26625934)
 
-OpenBSDxetc(77183,311536)
+OpenBSDxetc(75961,302749)
 
-OpenBSDxfont(35587249,43728442)
+OpenBSDxfont(35585999,43728442)
 
-OpenBSDxserv(1877275,4474036)
+OpenBSDxserv(3007361,8684510)
 
-OpenBSDxshare(2746962,14576073)
+OpenBSDxshare(2769658,14738551)
 
 The directory '../OSREV/MACHINE/utils' contains the OpenBSD/MACHINE boot
 program, used to load the OpenBSD kernel. This program is distributed
