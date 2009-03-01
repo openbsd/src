@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.36 2009/03/01 15:06:23 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.37 2009/03/01 21:36:50 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -943,7 +943,7 @@ int
 parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 {
 	int fd;
-	int mode = O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK;
+	int mode = O_CREAT|O_APPEND|O_RDWR|O_EXLOCK|O_NONBLOCK;
 
 	if (! parent_mailbox_init(pw, path)) {
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
@@ -973,12 +973,6 @@ parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 			batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		}
 		return -1;
-	}
-
-	if (flock(fd, LOCK_EX|LOCK_NB) == -1) {
-		if (errno == EWOULDBLOCK)
-			goto lockfail;
-		fatal("flock");
 	}
 
 	return fd;
