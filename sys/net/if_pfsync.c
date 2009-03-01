@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.114 2009/03/01 11:24:36 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.115 2009/03/01 12:02:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -134,16 +134,16 @@ int	(*pfsync_acts[])(struct pfsync_pkt *, struct mbuf *, int, int) = {
 };
 
 struct pfsync_q {
-	int		(*write)(struct pf_state *, struct mbuf *, int);
+	void		(*write)(struct pf_state *, void *);
 	size_t		len;
 	u_int8_t	action;
 };
 
 /* we have one of these for every PFSYNC_S_ */
-int	pfsync_out_state(struct pf_state *, struct mbuf *, int);
-int	pfsync_out_iack(struct pf_state *, struct mbuf *, int);
-int	pfsync_out_upd_c(struct pf_state *, struct mbuf *, int);
-int	pfsync_out_del(struct pf_state *, struct mbuf *, int);
+void	pfsync_out_state(struct pf_state *, void *);
+void	pfsync_out_iack(struct pf_state *, void *);
+void	pfsync_out_upd_c(struct pf_state *, void *);
+void	pfsync_out_del(struct pf_state *, void *);
 
 struct pfsync_q pfsync_qs[] = {
 	{ pfsync_out_state, sizeof(struct pfsync_state),   PFSYNC_ACT_INS },
@@ -173,7 +173,7 @@ TAILQ_HEAD(pfsync_deferrals, pfsync_deferral);
 #define PFSYNC_PLSIZE	MAX(sizeof(struct pfsync_upd_req_item), \
 			    sizeof(struct pfsync_deferral))
 
-int	pfsync_out_tdb(struct tdb *, struct mbuf *, int);
+void	pfsync_out_tdb(struct tdb *, void *);
 
 struct pfsync_softc {
 	struct ifnet		 sc_if;
@@ -1498,32 +1498,27 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (0);
 }
 
-int
-pfsync_out_state(struct pf_state *st, struct mbuf *m, int offset)
+void
+pfsync_out_state(struct pf_state *st, void *buf)
 {
-	struct pfsync_state *sp = (struct pfsync_state *)(m->m_data + offset);
+	struct pfsync_state *sp = buf;
 
 	pfsync_state_export(sp, st);
-
-	return (sizeof(*sp));
 }
 
-int
-pfsync_out_iack(struct pf_state *st, struct mbuf *m, int offset)
+void
+pfsync_out_iack(struct pf_state *st, void *buf)
 {
-	struct pfsync_ins_ack *iack =
-	    (struct pfsync_ins_ack *)(m->m_data + offset);
+	struct pfsync_ins_ack *iack = buf;
 
 	iack->id = st->id;
 	iack->creatorid = st->creatorid;
-
-	return (sizeof(*iack));
 }
 
-int
-pfsync_out_upd_c(struct pf_state *st, struct mbuf *m, int offset)
+void
+pfsync_out_upd_c(struct pf_state *st, void *buf)
 {
-	struct pfsync_upd_c *up = (struct pfsync_upd_c *)(m->m_data + offset);
+	struct pfsync_upd_c *up = buf;
 
 	up->id = st->id;
 	pf_state_peer_hton(&st->src, &up->src);
@@ -1538,21 +1533,17 @@ pfsync_out_upd_c(struct pf_state *st, struct mbuf *m, int offset)
 	up->timeout = st->timeout;
 
 	bzero(up->_pad, sizeof(up->_pad)); /* XXX */
-
-	return (sizeof(*up));
 }
 
-int
-pfsync_out_del(struct pf_state *st, struct mbuf *m, int offset)
+void
+pfsync_out_del(struct pf_state *st, void *buf)
 {
-	struct pfsync_del_c *dp = (struct pfsync_del_c *)(m->m_data + offset);
+	struct pfsync_del_c *dp = buf;
 
 	dp->id = st->id;
 	dp->creatorid = st->creatorid;
 
 	SET(st->state_flags, PFSTATE_NOSYNC);
-
-	return (sizeof(*dp));
 }
 
 void
@@ -1675,8 +1666,9 @@ pfsync_sendout(void)
 #ifdef PFSYNC_DEBUG
 			KASSERT(st->sync_state == q);
 #endif
+			pfsync_qs[q].write(st, m->m_data + offset);
+			offset += pfsync_qs[q].len;
 
-			offset += pfsync_qs[q].write(st, m, offset);
 			st->sync_state = PFSYNC_S_NONE;
 			count++;
 		}
@@ -1723,7 +1715,8 @@ pfsync_sendout(void)
 
 		count = 0;
 		TAILQ_FOREACH(t, &sc->sc_tdb_q, tdb_sync_entry) {
-			offset += pfsync_out_tdb(t, m, offset);
+			pfsync_out_tdb(t, m->m_data + offset);
+			offset += sizeof(struct pfsync_tdb);
 			CLR(t->tdb_flags, TDBF_PFSYNC);
 
 			count++;
@@ -2173,10 +2166,10 @@ pfsync_delete_tdb(struct tdb *t)
 		sc->sc_len -= sizeof(struct pfsync_subheader);
 }
 
-int
-pfsync_out_tdb(struct tdb *t, struct mbuf *m, int offset)
+void
+pfsync_out_tdb(struct tdb *t, void *buf)
 {
-	struct pfsync_tdb *ut = (struct pfsync_tdb *)(m->m_data + offset);
+	struct pfsync_tdb *ut = buf;
 
 	bzero(ut, sizeof(*ut));
 	ut->spi = t->tdb_spi;
@@ -2203,8 +2196,6 @@ pfsync_out_tdb(struct tdb *t, struct mbuf *m, int offset)
 	    RPL_INCR : 0));
 	ut->cur_bytes = htobe64(t->tdb_cur_bytes);
 	ut->sproto = t->tdb_sproto;
-
-	return (sizeof(*ut));
 }
 
 void
