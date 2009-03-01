@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.33 2009/02/25 09:08:34 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.34 2009/03/01 13:07:52 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -59,12 +59,12 @@ void		parent_dispatch_control(int, short, void *);
 void		parent_sig_handler(int, short, void *);
 int		parent_open_message_file(struct batch *);
 int		parent_mailbox_init(struct passwd *, char *);
-int		parent_mailbox_open(struct passwd *, struct batch *, struct path *);
-int		parent_filename_open(struct passwd *, struct batch *, struct path *);
+int		parent_mailbox_open(char *, struct passwd *, struct batch *);
+int		parent_filename_open(char *, struct passwd *, struct batch *);
 int		parent_mailfile_rename(struct batch *, struct path *);
-int		parent_maildir_open(struct passwd *, struct batch *, struct path *);
+int		parent_maildir_open(char *, struct passwd *, struct batch *);
 int		parent_maildir_init(struct passwd *, char *);
-int		parent_external_mda(struct passwd *, struct batch *, struct path *);
+int		parent_external_mda(char *, struct passwd *, struct batch *);
 int		check_child(pid_t, const char *);
 int		setup_spool(uid_t, gid_t);
 
@@ -287,11 +287,12 @@ parent_dispatch_mda(int fd, short event, void *p)
 			struct path *path;
 			struct passwd *pw;
 			char *pw_name;
+			char *file;
 			u_int8_t i;
 			int desc;
 			struct action_handler {
 				enum action_type action;
-				int (*handler)(struct passwd *, struct batch *, struct path *);
+				int (*handler)(char *, struct passwd *, struct batch *);
 			} action_hdl_table[] = {
 				{ A_MBOX,	parent_mailbox_open },
 				{ A_MAILDIR,	parent_maildir_open },
@@ -309,11 +310,14 @@ parent_dispatch_mda(int fd, short event, void *p)
 				if (action_hdl_table[i].action == path->rule.r_action)
 					break;
 			if (i == sizeof(action_hdl_table) / sizeof(struct action_handler))
-				errx(1, "%s: unknown action.", __func__);
+				fatalx("parent_dispatch_mda: unknown action");
 
+			file = path->rule.r_value.path;
 			pw_name = path->pw_name;
-			if (*pw_name == '\0')
+			if (*pw_name == '\0') {
+				file = path->u.filename;
 				pw_name = SMTPD_USER;
+			}
 
 			pw = safe_getpwnam(pw_name);
 			if (pw == NULL)
@@ -322,7 +326,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 			if (setegid(pw->pw_gid) || seteuid(pw->pw_uid))
 				fatal("privdrop failed");
 
-			desc = action_hdl_table[i].handler(pw, batchp, path);
+			desc = action_hdl_table[i].handler(file, pw, batchp);
 			imsg_compose(ibuf, IMSG_MDA_MAILBOX_FILE, 0, 0,
 			    desc, batchp, sizeof(struct batch));
 
@@ -928,22 +932,17 @@ parent_mailbox_init(struct passwd *pw, char *pathname)
 }
 
 int
-parent_mailbox_open(struct passwd *pw, struct batch *batchp, struct path *path)
+parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 {
 	int fd;
-	char pathname[MAXPATHLEN];
 	int mode = O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK;
 
-	if (! bsnprintf(pathname, sizeof(pathname), "%s",
-		path->rule.r_value.path))
-		return -1;
-
-	if (! parent_mailbox_init(pw, pathname)) {
+	if (! parent_mailbox_init(pw, path)) {
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
 
-	fd = open(pathname, mode, 0600);
+	fd = open(path, mode, 0600);
 	if (fd == -1) {
 		/* XXX - this needs to be discussed ... */
 		switch (errno) {
@@ -1004,28 +1003,24 @@ parent_maildir_init(struct passwd *pw, char *root)
 }
 
 int
-parent_maildir_open(struct passwd *pw, struct batch *batchp, struct path *path)
+parent_maildir_open(char *path, struct passwd *pw, struct batch *batchp)
 {
 	int fd;
-	char pathname[MAXPATHLEN];
+	char tmp[MAXPATHLEN];
 	int mode = O_CREAT|O_RDWR|O_TRUNC|O_SYNC;
 
-	if (! bsnprintf(pathname, sizeof(pathname), "%s",
-		path->rule.r_value.path))
-		return -1;
-
-	if (! parent_maildir_init(pw, pathname)) {
+	if (! parent_maildir_init(pw, path)) {
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
 
-	if (! bsnprintf(pathname, sizeof(pathname), "%s/tmp/%s",
-		pathname, batchp->message.message_uid)) {
+	if (! bsnprintf(tmp, sizeof(tmp), "%s/tmp/%s", path,
+		batchp->message.message_uid)) {
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
 
-	fd = open(pathname, mode, 0600);
+	fd = open(tmp, mode, 0600);
 	if (fd == -1) {
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
@@ -1057,7 +1052,7 @@ parent_mailfile_rename(struct batch *batchp, struct path *path)
 }
 
 int
-parent_external_mda(struct passwd *pw, struct batch *batchp, struct path *path)
+parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 {
 	pid_t pid;
 	int pipefd[2];
@@ -1098,7 +1093,7 @@ parent_external_mda(struct passwd *pw, struct batch *batchp, struct path *path)
 		close(STDERR_FILENO);
 		dup2(pipefd[1], 0);
 
-		execlp(_PATH_BSHELL, "sh", "-c", path->rule.r_value.path, (void *)NULL);
+		execlp(_PATH_BSHELL, "sh", "-c", path, (void *)NULL);
 		_exit(1);
 	}
 
@@ -1117,16 +1112,12 @@ parent_external_mda(struct passwd *pw, struct batch *batchp, struct path *path)
 }
 
 int
-parent_filename_open(struct passwd *pw, struct batch *batchp, struct path *path)
+parent_filename_open(char *path, struct passwd *pw, struct batch *batchp)
 {
 	int fd;
-	char pathname[MAXPATHLEN];
 	int mode = O_CREAT|O_APPEND|O_RDWR|O_SYNC|O_NONBLOCK;
 
-	if (! bsnprintf(pathname, sizeof(pathname), "%s", path->u.filename))
-		return -1;
-
-	fd = open(pathname, mode, 0600);
+	fd = open(path, mode, 0600);
 	if (fd == -1) {
 		/* XXX - this needs to be discussed ... */
 		switch (errno) {
