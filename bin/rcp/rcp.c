@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.47 2008/01/01 09:10:25 dtucker Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.48 2009/03/01 13:47:02 sobrado Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: rcp.c,v 1.47 2008/01/01 09:10:25 dtucker Exp $";
+static const char rcsid[] = "$OpenBSD: rcp.c,v 1.48 2009/03/01 13:47:02 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -873,7 +873,7 @@ usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s [-p] file1 file2\n"
-	    "       %s [-pr] file ...  directory\n",
+	    "       %s [-pr] file ... directory\n",
 	    __progname, __progname);
 	exit(1);
 }
