@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop_mvme68k.c,v 1.2 2009/03/01 21:37:41 miod Exp $	*/
+/*	$OpenBSD: osiop_mvme68k.c,v 1.3 2009/03/01 21:39:59 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -95,8 +95,7 @@ osiop_mvme68k_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bst = ca->ca_iot;
 	sc->sc_dmat = ca->ca_dmat;
 
-	/* XXX pass vaddr for now! */
-	if (bus_space_map(sc->sc_bst, (bus_addr_t)ca->ca_vaddr, OSIOP_NREGS, 0,
+	if (bus_space_map(sc->sc_bst, (bus_addr_t)ca->ca_paddr, OSIOP_NREGS, 0,
 	    &sc->sc_reg) != 0) {
 		printf(": couldn't map I/O ports\n");
 		return;

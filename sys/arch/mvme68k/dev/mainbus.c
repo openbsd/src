@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.1 2009/02/17 22:28:40 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.2 2009/03/01 21:39:59 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -69,19 +69,24 @@ extern struct vm_map *iomap_map;
  * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
  * conversion between physical and kernel virtual addresses is easy.
  */
+#if 0	/* in <machine/cpu.h> for now */
 #define	ISIIOVA(va) \
 	((va) >= intiobase && (va) < intiolimit)
 #define	IIOV(pa)	((pa) - iiomapbase + intiobase)
 #define	IIOP(va)	((va) - intiobase + iiomapbase)
 #define	IIOPOFF(pa)	((pa) - iiomapbase)
+#endif
+#define	ISIIOPA(pa)	((uint)IIOPOFF(pa) < ptoa(iiomapsize))
 
 int
 mainbus_map(bus_addr_t addr, bus_size_t size, int flags,
     bus_space_handle_t *ret)
 {
-	/* 1:1 obio mappings (mc, pcctwo) */
-	*ret = (bus_space_handle_t)addr;
-	return (0);
+	if (ISIIOPA(addr)) {
+		*ret = (bus_space_handle_t)IIOV(addr);
+		return (0);
+	} else
+		return (ENOMEM);
 }
 
 void
