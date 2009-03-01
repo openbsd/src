@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.37 2008/11/28 02:44:17 brad Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.38 2009/03/01 21:37:41 miod Exp $ */
 
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr. 
@@ -488,13 +488,9 @@ ieattach(parent, self, aux)
 	case BUS_PCCTWO:
 		pcctwointr_establish(PCC2V_IE, &sc->sc_ih, self->dv_xname);
 		switch (cputyp) {
-#ifdef MVME172
-		case CPU_172:
-#endif 
 #ifdef MVME177
+		case CPU_176:
 		case CPU_177:
-#endif 
-#if defined(MVME172) || defined(MVME177)
 			/* no snooping on 68060 */
 			sys_pcc2->pcc2_ieirq = pri | PCC2_SC_INHIBIT |
 			    PCC2_IRQ_IEN | PCC2_IRQ_ICLR;

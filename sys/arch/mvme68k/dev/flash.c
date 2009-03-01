@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.18 2007/12/20 05:19:38 miod Exp $ */
+/*	$OpenBSD: flash.c,v 1.19 2009/03/01 21:37:41 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -101,35 +101,45 @@ flashmatch(parent, cf, args)
 {
 	struct confargs *ca = args;
 
+	switch (cputyp) {
 #ifdef MVME147
-	if (cputyp == CPU_147)
+	case CPU_147:
+		return (0);
+#endif
+#ifdef MVME165
+	case CPU_165:
 		return (0);
 #endif
 #ifdef MVME167
-	/*
-	 * XXX: 166 has 4 byte-wide flash rams side-by-side, and
-	 * isn't supported (yet).
-	 */
-	if (cputyp == CPU_166)
-		return (0);
-	if (cputyp == CPU_167)
+	case CPU_166:
+	case CPU_167:
+		/*
+		 * XXX: 166 has 4 byte-wide flash rams side-by-side, and
+		 * isn't supported (yet).
+		 */
 		return (0);
 #endif
 #ifdef MVME177
-	/*
-	 * XXX: 177 has no flash.
-	 */
-	if (cputyp == CPU_177)
+	case CPU_176:
+	case CPU_177:
+		/*
+		 * XXX: 177 has no flash.
+		 */
 		return (0);
 #endif
+#if defined(MVME162) || defined(MVME172)
+	case CPU_162:
+	case CPU_172:
+		if (badpaddr(ca->ca_paddr, 1))
+			return (0);
 
-	if (badpaddr(ca->ca_paddr, 1))
+		if (!mc_hasflash())
+			return 0;
+		return (1);
+#endif
+	default:
 		return (0);
-
-	if (!mc_hasflash())
-		return 0;
-   
-	return (1);
+	}
 }
 
 void

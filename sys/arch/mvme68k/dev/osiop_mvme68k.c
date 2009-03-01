@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop_mvme68k.c,v 1.1 2009/02/17 22:28:40 miod Exp $	*/
+/*	$OpenBSD: osiop_mvme68k.c,v 1.2 2009/03/01 21:37:41 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -107,6 +107,7 @@ osiop_mvme68k_attach(struct device *parent, struct device *self, void *aux)
 	case CPU_172:	/* XXX this is a guess! Same as MVME177? */
 #endif
 #ifdef MVME177
+	case CPU_176:
 	case CPU_177:
 #endif
 #if defined(MVME172) || defined(MVME177)
