@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.50 2009/03/01 19:45:36 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.51 2009/03/01 19:54:23 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -44,8 +44,6 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-
-#define IPS_DEBUG	/* XXX: remove when driver becomes stable */
 
 /* Debug levels */
 #define IPS_D_ERR	0x0001	/* errors */
