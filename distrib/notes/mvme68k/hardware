@@ -1,8 +1,9 @@
-dnl	$OpenBSD: hardware,v 1.18 2009/03/01 21:40:48 miod Exp $
+dnl	$OpenBSD: hardware,v 1.19 2009/03/01 22:08:10 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
-	- MVME147 - Motorola with 68030 and 68881
+	- MVM:141 - Motorola with 68030 and 68882, with VSB interface
+	- MVME147 - Motorola with 68030 and 68882
 	- MVME162 - Motorola with 68040 and IndustryPack slots
-	- MVME165 - Motorola with 68040 and VSB interface
+	- MVME165 - Motorola with 68040, with VSB interface
 	- MVME167 - Motorola with 68040
 dnl 172 support is not tested
 	- MVME172 - Motorola with 68060 and IndustryPack slots
@@ -14,6 +15,14 @@ system, more RAM is recommended.  Note that until you have 32MB of RAM,
 getting more RAM is more important than getting a faster CPU board.
 
 Supported devices {:-include-:}:
+
+MVME141:
+	memory:
+		both VME and VSB boards are supported, such as MVME224 boards
+	serial ports:
+		on-board ttyd0-ttyd1 - MC68681 (dart)
+	VMEbus:
+		supported
 
 MVME147:
 	serial ports:

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.31 2009/03/01 21:40:49 miod Exp $
+#	$OpenBSD: GENERIC,v 1.32 2009/03/01 22:08:13 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -19,6 +19,7 @@ option		M68060		# support for 060
 option		FPSP		# MC68040 floating point support
 option		M060SP		# ...and MC68060 support package
 
+option		MVME141		# (requires M68030)
 option		MVME147		# (requires M68030)
 option		MVME162		# (requires M68040, FPSP)
 option		MVME165		# (requires M68040, FPSP)
@@ -33,6 +34,14 @@ option		COMPAT_M68K4K
 config		bsd		swap generic
 
 mainbus0 at root
+
+# MVME141
+ofobio0	at mainbus0 addr 0xfff50000
+clock0	at ofobio0 ipl 5
+nvram0	at ofobio0 offset 0x00000
+#vsb0	at ofobio0 offset 0x50000
+vme0	at ofobio0 offset 0x60000
+dart0	at ofobio0 offset 0x20000 ipl 5
 
 # MVME147
 pcc0	at mainbus0 addr 0xfffe0000

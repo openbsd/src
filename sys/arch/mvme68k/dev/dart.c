@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.1 2009/03/01 21:40:49 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.2 2009/03/01 22:08:13 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -68,14 +68,29 @@ void	dartrint(struct dartsoftc *, int);
 void	dartxint(struct dartsoftc *, int);
 
 /*
- * DUART registers are mapped as the least-significant byte of 32-bit
- * addresses. The following macros hide this.
+ * DUART registers are sometimes mapped as the least-significant byte
+ * of 32-bit addresses. The following macros hide this.
  */
 
-#define	dart_read(sc, reg) \
-	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, 3 + ((reg) << 2))
-#define	dart_write(sc, reg, val) \
-	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, 3 + ((reg) << 2), (val))
+static __inline uint8_t dart_read(struct dartsoftc *, uint);
+static __inline void dart_write(struct dartsoftc *, uint, uint);
+
+static __inline uint8_t
+dart_read(struct dartsoftc *sc, uint reg)
+{
+	if (sc->sc_stride != 0)
+		return bus_space_read_1(sc->sc_iot, sc->sc_ioh, 3 + (reg << 2));
+	else
+		return bus_space_read_1(sc->sc_iot, sc->sc_ioh, reg);
+}
+static __inline void
+dart_write(struct dartsoftc *sc, uint reg, uint val)
+{
+	if (sc->sc_stride != 0)
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 3 + (reg << 2), val);
+	else
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, reg, val);
+}
 
 #define	DART_CHIP(dev)	(minor(dev) >> 1)
 #define DART_PORT(dev)	(minor(dev) & 1)
@@ -122,16 +137,16 @@ dart_common_attach(struct dartsoftc *sc)
 	/* reset port a */
 	if (sc->sc_console == 0 || CONS_PORT != A_PORT) {
 		dart_write(sc, DART_CRA, RXRESET | TXDIS | RXDIS);
-		DELAY_CR;
+		delay(1);
 		dart_write(sc, DART_CRA, TXRESET | TXDIS | RXDIS);
-		DELAY_CR;
+		delay(1);
 		dart_write(sc, DART_CRA, ERRRESET | TXDIS | RXDIS);
-		DELAY_CR;
+		delay(1);
 		dart_write(sc, DART_CRA, BRKINTRESET | TXDIS | RXDIS);
-		DELAY_CR;
+		delay(1);
 		dart_write(sc, DART_CRA, MRRESET | TXDIS | RXDIS);
 #if 0
-		DELAY_CR;
+		delay(1);
 #endif
 
 		dart_write(sc, DART_MR1A, sc->sc_sv_reg->sv_mr1[A_PORT]);
@@ -143,16 +158,16 @@ dart_common_attach(struct dartsoftc *sc)
 	/* reset port b */
 	if (sc->sc_console == 0 || CONS_PORT != B_PORT) {
 		dart_write(sc, DART_CRB, RXRESET | TXDIS | RXDIS);
-		DELAY_CR;
+		delay(1);
 		dart_write(sc, DART_CRB, TXRESET | TXDIS | RXDIS);
-		DELAY_CR;
+		delay(1);
 		dart_write(sc, DART_CRB, ERRRESET | TXDIS | RXDIS);
-		DELAY_CR;
+		delay(1);
 		dart_write(sc, DART_CRB, BRKINTRESET | TXDIS | RXDIS);
-		DELAY_CR;
+		delay(1);
 		dart_write(sc, DART_CRB, MRRESET | TXDIS | RXDIS);
 #if 0
-		DELAY_CR;
+		delay(1);
 #endif
 
 		dart_write(sc, DART_MR1B, sc->sc_sv_reg->sv_mr1[B_PORT]);
@@ -168,6 +183,8 @@ dart_common_attach(struct dartsoftc *sc)
 	dart_write(sc, DART_CTUR, SLCTIM >> 8);
 	dart_write(sc, DART_CTLR, SLCTIM & 0xff);
 	dart_write(sc, DART_ACR, BDSET2 | CCLK16 | IPDCDIB | IPDCDIA);
+#else
+	dart_write(sc, DART_ACR, IPDCDIB | IPDCDIA);
 #endif
 	dart_write(sc, DART_IMR, sc->sc_sv_reg->sv_imr);
 	dart_write(sc, DART_OPCR, OPSET);
@@ -544,7 +561,7 @@ dartparam(struct tty *tp, struct termios *t)
 
 	/* re-enable the receiver */
 #if 0
-	DELAY_CR;
+	delay(1);
 #endif
 	sc->sc_sv_reg->sv_imr |= port == A_PORT ? IRXRDYA : IRXRDYB;
 	dart_write(sc, DART_IMR, sc->sc_sv_reg->sv_imr);
@@ -734,7 +751,7 @@ dartrint(struct dartsoftc *sc, int port)
 		if (sr & RBRK) {
 			/* clear break state */
 			dart_write(sc, ptaddr + DART_CRA, BRKINTRESET);
-			DELAY_CR;
+			delay(1);
 			dart_write(sc, ptaddr + DART_CRA, ERRRESET);
 
 #if defined(DDB)
@@ -854,18 +871,47 @@ dartintr(void *arg)
  * Console interface routines.
  */
 
-#define	dart_cnread(reg) \
-	*(volatile u_int8_t *)(IIOV(CONSOLE_DART_BASE) + 3 + ((reg) << 2))
-#define	dart_cnwrite(reg, val) \
-	*(volatile u_int8_t *)(IIOV(CONSOLE_DART_BASE) + 3 + ((reg) << 2)) = (val)
+static vaddr_t dartcnva;
+static uint dartcnstride;
+
+static __inline uint8_t dart_cnread(uint);
+static __inline void dart_cnwrite(uint, uint);
+
+static __inline uint8_t
+dart_cnread(uint reg)
+{
+	if (dartcnstride != 0)
+		return *(volatile u_int8_t *)(dartcnva + 3 + (reg << 2));
+	else
+		return *(volatile u_int8_t *)(dartcnva + reg);
+}
+static __inline void
+dart_cnwrite(uint reg, uint val)
+{
+	if (dartcnstride != 0)
+		*(volatile u_int8_t *)(dartcnva + 3 + (reg << 2)) = val;
+	else
+		*(volatile u_int8_t *)(dartcnva + reg) = val;
+}
+
 
 void
 dartcnprobe(struct consdev *cp)
 {
 	int maj;
 
-	if (cputyp != CPU_165)
+	switch (cputyp) {
+	case CPU_141:
+		dartcnva = IIOV(MVME141_DART_BASE);
+		dartcnstride = 0;
+		break;
+	case CPU_165:
+		dartcnva = IIOV(MVME165_DART_BASE);
+		dartcnstride = 2;
+		break;
+	default:
 		return;
+	}
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
@@ -891,15 +937,15 @@ dartcninit(cp)
 	dartcn_sv.sv_imr = IIPCHG;
 
 	dart_cnwrite(DART_CRA, RXRESET | TXDIS | RXDIS);
-	DELAY_CR;
+	delay(1);
 	dart_cnwrite(DART_CRA, TXRESET | TXDIS | RXDIS);
-	DELAY_CR;
+	delay(1);
 	dart_cnwrite(DART_CRA, ERRRESET | TXDIS | RXDIS);
-	DELAY_CR;
+	delay(1);
 	dart_cnwrite(DART_CRA, BRKINTRESET | TXDIS | RXDIS);
-	DELAY_CR;
+	delay(1);
 	dart_cnwrite(DART_CRA, MRRESET | TXDIS | RXDIS);
-	DELAY_CR;
+	delay(1);
 
 	dart_cnwrite(DART_MR1A, dartcn_sv.sv_mr1[CONS_PORT]);
 	dart_cnwrite(DART_MR2A, dartcn_sv.sv_mr2[CONS_PORT]);
@@ -928,7 +974,7 @@ dartcnputc(dev_t dev, int c)
 	    (CONS_PORT == A_PORT ? ~ITXRDYA : ~ITXRDYB));
 	/* make sure transmitter is enabled */
 #if 0
-	DELAY_CR;
+	delay(1);
 #endif
 	dart_cnwrite(ptaddr + DART_CRA, TXEN);
 
@@ -943,7 +989,7 @@ dartcnputc(dev_t dev, int c)
 	/* restore the previous state */
 	dart_cnwrite(DART_IMR, dartcn_sv.sv_imr);
 #if 0
-	DELAY_CR;
+	delay(1);
 #endif
 	dart_cnwrite(ptaddr + DART_CRA, dartcn_sv.sv_cr[0]);
 
@@ -980,7 +1026,7 @@ dartcngetc(dev_t dev)
 			if (sr & RBRK) {
 				/* clear break state */
 				dart_cnwrite(ptaddr + DART_CRA, BRKINTRESET);
-				DELAY_CR;
+				delay(2);
 				dart_cnwrite(ptaddr + DART_CRA, ERRRESET);
 				break;
 			}

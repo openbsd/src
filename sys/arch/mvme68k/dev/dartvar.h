@@ -1,4 +1,4 @@
-/*	$OpenBSD: dartvar.h,v 1.1 2009/03/01 21:40:49 miod Exp $	*/
+/*	$OpenBSD: dartvar.h,v 1.2 2009/03/01 22:08:13 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -51,6 +51,7 @@ struct dartsoftc {
 
 	int			sc_console;
 	int			sc_vec;
+	uint			sc_stride;
 
 	struct dart_sv_reg	*sc_sv_reg;
 	struct dart_sv_reg	sc_sv_reg_storage;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.43 2009/02/17 22:28:41 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.44 2009/03/01 22:08:13 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -105,12 +105,6 @@ int	bootctrllun, bootdevlun;
 int	bootpart, bootbus;
 struct	device *bootdv;
 
-/*
- * XXX some storage space must be allocated statically because of
- * early console init
- */
-char	extiospace[EXTENT_FIXED_STORAGE_SIZE(8)];
-
 struct	extent *extio;
 extern	vaddr_t extiobase;
 
@@ -124,7 +118,7 @@ cpu_configure()
 
 	extio = extent_create("extio",
 	    (u_long)extiobase, (u_long)extiobase + ptoa(EIOMAPSIZE),
-	    M_DEVBUF, extiospace, sizeof(extiospace), EX_NOWAIT);
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
@@ -217,12 +211,18 @@ device_register(struct device *dev, void *aux)
 		struct scsi_attach_args *sa = aux;
 		int target, bus, lun;
 
-#ifdef MVME147
+#if defined(MVME141) || defined(MVME147)
 		/*
-		 * The 147 can only boot from the built-in scsi controller,
-		 * and stores the scsi id as the controller number.
+		 * Both 141 and 147 do not use the controller number to
+		 * identify the controller itself, but expect the
+		 * operating system to match it with its physical address
+		 * (bootaddr), which is indeed what we are doing.
+		 * Then the SCSI device id may be found in the controller
+		 * number, and the device number is zero (except on MVME141
+		 * when booting from MVME319/320/321/322, which we
+		 * do not support anyway).
 		 */
-		if (cputyp == CPU_147) {
+		if (cputyp == CPU_141 || cputyp == CPU_147) {
 			target = bootctrllun;
 			bus = lun = 0;
 		} else

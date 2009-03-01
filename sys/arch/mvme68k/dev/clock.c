@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.15 2009/03/01 21:40:49 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.16 2009/03/01 22:08:13 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -74,6 +74,7 @@
 
 #include "lrc.h"
 #include "mc.h"
+#include "ofobio.h"
 #include "pcc.h"
 #include "pcctwo.h"
 
@@ -82,6 +83,9 @@
 #endif
 #if NMC > 0
 #include <mvme68k/dev/mcreg.h>
+#endif
+#if NOFOBIO > 0
+#include <mvme68k/dev/ofobioreg.h>
 #endif
 #if NPCC > 0
 #include <mvme68k/dev/pccreg.h>
@@ -175,6 +179,11 @@ clockattach(parent, self, args)
 		mcintr_establish(MCV_TIMER2, &sc->sc_statih, "stat");
 		break;
 #endif
+#if NOFOBIO > 0
+	case BUS_OFOBIO:
+		intr_establish(OFOBIOVEC_CLOCK, &sc->sc_profih, "clock");
+		break;
+#endif
 #if NPCC > 0
 	case BUS_PCC:
 		prof_reset = ca->ca_ipl | PCC_IRQ_IEN | PCC_TIMERACK;
@@ -209,6 +218,11 @@ clockintr(arg)
 		/* nothing to do */
 		break;
 #endif
+#if NOFOBIO > 0
+	case BUS_OFOBIO:
+		sys_ofobio->csr_c &= ~OFO_CSRC_TIMER_ACK;
+		break;
+#endif
 #if NMC > 0
 	case BUS_MC:
 		sys_mc->mc_t1irq = prof_reset;
@@ -231,8 +245,7 @@ clockintr(arg)
 }
 
 /*
- * Set up real-time clock; we don't have a statistics clock at
- * present.
+ * Set up real-time and, if available, statistics clock.
  */
 void
 cpu_initclocks()
@@ -259,7 +272,7 @@ cpu_initclocks()
 	switch (clockbus) {
 #if NLRC > 0
 	case BUS_LRC:
-		profhz = stathz = 0;
+		profhz = stathz = 0;	/* only one timer available for now */
 
 		sys_lrc->lrc_tcr0 = 0;
 		sys_lrc->lrc_tcr1 = 0;
@@ -267,6 +280,13 @@ cpu_initclocks()
 		sys_lrc->lrc_t2base = tick + 1;
 		sys_lrc->lrc_tcr2 = TCR_TLD2;	/* reset to one */
 		sys_lrc->lrc_tcr2 = TCR_TEN2 | TCR_TCYC2 | TCR_T2IE;
+		break;
+#endif
+#if NOFOBIO > 0
+	case BUS_OFOBIO:
+		profhz = stathz = 0;	/* only one timer available */
+
+		ofobio_clocksetup();
 		break;
 #endif
 #if NMC > 0
@@ -400,7 +420,7 @@ void
 delay(us)
 	int us;
 {
-#if NPCC > 0
+#if NPCC > 0 || NOFOBIO > 0
 	volatile register int c;
 #endif
 
@@ -449,12 +469,15 @@ delay(us)
 	}
 		break;
 #endif
-#if NPCC > 0
+#if NPCC > 0 || NOFOBIO > 0
 	case BUS_PCC:
+	case BUS_OFOBIO:
 		/*
 		 * XXX MVME147 doesn't have a 3rd free-running timer,
 		 * so we use a stupid loop. Fix the code to watch t1:
 		 * the profiling timer.
+		 * MVME141 only has one timer, so there is no hope
+		 * either.
 		 */
 		c = 2 * us;
 		while (--c > 0)

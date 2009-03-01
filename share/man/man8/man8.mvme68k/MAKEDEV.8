@@ -1,4 +1,4 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.31 2009/02/06 17:04:17 grange Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.32 2009/03/01 22:08:12 miod Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2009 $
+.Dd $Mdocdate: March 1 2009 $
 .Dt MAKEDEV 8 mvme68k
 .Os
 .Sh NAME
@@ -115,6 +115,8 @@ On-board serial ports, see
 .It Ar tty0*
 CL-CD2400 serial ports, see
 .Xr cl 4 .
+.It Ar ttyd*
+MC68681 serial ports.
 .It Ar ttyw*
 WG CL-CD2400 serial ports.
 .El

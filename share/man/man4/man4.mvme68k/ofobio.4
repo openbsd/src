@@ -1,0 +1,36 @@
+.\"	$OpenBSD: ofobio.4,v 1.1 2009/03/01 22:08:12 miod Exp $
+.\"
+.\" Copyright (c) 2009 Miodrag Vallat.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: March 1 2009 $
+.Dt OFOBIO 4 mvme68k
+.Os
+.Sh NAME
+.Nm ofobio
+.Nd MVME141 On-Board I/O
+.Sh SYNOPSIS
+.Cd "ofobio0 at mainbus0 addr 0xfff50000"
+.Sh DESCRIPTION
+The
+.Nm
+driver controls local interrupt routing and cache memory on the MVME141 board.
+It is also responsible for handling abort button interrupts.
+.Sh SEE ALSO
+.\" .Xr clock 4 ,
+.\" .Xr dart 4 ,
+.Xr intro 4 ,
+.\" .Xr nvram 4
+.\" .Xr vsb 4
+.\" .Xr vme 4

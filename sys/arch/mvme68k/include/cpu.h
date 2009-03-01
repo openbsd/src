@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.30 2009/03/01 21:40:49 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.31 2009/03/01 22:08:13 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -152,6 +152,11 @@ extern	vaddr_t intiobase, intiolimit;
 extern	vaddr_t iiomapbase;
 extern	int iiomapsize;
 
+/* physical memory sections for mvme141 */
+#define	INTIOBASE_141	(0xfff50000)
+#define	INTIOTOP_141	(0xfffc0000)
+#define	INTIOSIZE_141	((INTIOTOP_141-INTIOBASE_141)/NBPG)
+
 /* physical memory sections for mvme147 */
 #define	INTIOBASE_147	(0xfffe0000)
 #define	INTIOTOP_147	(0xfffe5000)
@@ -181,6 +186,7 @@ extern	int iiomapsize;
 #define	IIOPOFF(pa)	((pa) - iiomapbase)
 
 extern int	cputyp;
+#define CPU_141			0x141
 #define CPU_147			0x147
 #define CPU_162			0x162
 #define CPU_165			0x165

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.26 2009/03/01 21:40:49 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.27 2009/03/01 22:08:13 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -44,6 +44,7 @@
 
 #include "lrc.h"
 #include "mc.h"
+#include "ofobio.h"
 #include "pcc.h"
 #include "pcctwo.h"
 
@@ -236,8 +237,9 @@ vmepmap(sc, vmeaddr, len, bustype)
 
 	len = roundup(len, NBPG);
 	switch (vmebustype) {
-#if NLRC > 0 || NPCC > 0
+#if NLRC > 0 || NOFOBIO > 0 || NPCC > 0
 	case BUS_LRC:
+	case BUS_OFOBIO:
 	case BUS_PCC:
 		switch (bustype) {
 		case BUS_VMES:
@@ -435,7 +437,7 @@ vmeattach(parent, self, args)
 {
 	struct vmesoftc *sc = (struct vmesoftc *)self;
 	struct confargs *ca = args;
-#if NLRC > 0 || NPCC > 0
+#if NLRC > 0 || NOFOBIO > 0 || NPCC > 0
 	struct vme1reg *vme1;
 #endif
 #if NMC > 0 || NPCCTWO > 0
@@ -446,8 +448,9 @@ vmeattach(parent, self, args)
 
 	vmebustype = ca->ca_bustype;
 	switch (ca->ca_bustype) {
-#if NLRC > 0 || NPCC > 0
+#if NLRC > 0 || NOFOBIO > 0 || NPCC > 0
 	case BUS_LRC:
+	case BUS_OFOBIO:
 	case BUS_PCC:
 		vme1 = (struct vme1reg *)sc->sc_vaddr;
 		if (vme1->vme1_scon & VME1_SCON_SWITCH)
@@ -491,7 +494,7 @@ vmeintr_establish(vec, ih, name)
 	const char *name;
 {
 	struct vmesoftc *sc = (struct vmesoftc *) vme_cd.cd_devs[0];
-#if NLRC > 0 || NPCC > 0
+#if NLRC > 0 || NOFOBIO > 0 || NPCC > 0
 	struct vme1reg *vme1;
 #endif
 #if NMC > 0 || NPCCTWO > 0
@@ -502,8 +505,9 @@ vmeintr_establish(vec, ih, name)
 	x = intr_establish(vec, ih, name);
 
 	switch (vmebustype) {
-#if NLRC > 0 || NPCC > 0
+#if NLRC > 0 || NOFOBIO > 0 || NPCC > 0
 	case BUS_LRC:
+	case BUS_OFOBIO:
 	case BUS_PCC:
 		vme1 = (struct vme1reg *)sc->sc_vaddr;
 		vme1->vme1_irqen = vme1->vme1_irqen |
@@ -522,7 +526,7 @@ vmeintr_establish(vec, ih, name)
 	return (x);
 }
 
-#if defined(MVME147) || defined(MVME165)
+#if defined(MVME141) || defined(MVME147) || defined(MVME165)
 void
 vme1chip_init(sc)
 	struct vmesoftc *sc;

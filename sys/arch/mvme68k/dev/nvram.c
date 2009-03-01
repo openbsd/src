@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.19 2009/03/01 21:40:49 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.20 2009/03/01 22:08:13 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -94,11 +94,21 @@ nvramattach(parent, self, args)
 	sc->sc_paddr = ca->ca_paddr;
 	sc->sc_vaddr = (vaddr_t)ca->ca_vaddr;
 
-	sc->sc_len = MK48T08_SIZE;
-#ifdef MVME147
-	if (cputyp == CPU_147)
+	switch (cputyp) {
+	default:
+		sc->sc_len = MK48T08_SIZE;
+		break;
+#ifdef MVME141
+	case CPU_141:
 		sc->sc_len = MK48T02_SIZE;
+		break;
 #endif
+#ifdef MVME147
+	case CPU_147:
+		sc->sc_len = MK48T02_SIZE;
+		break;
+#endif
+	}
 
 	/*
 	 * On the MVME165, the MK48T08 is mapped as one byte per longword,

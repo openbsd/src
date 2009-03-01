@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.16 2009/03/01 21:40:49 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.17 2009/03/01 22:08:13 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -50,6 +50,7 @@ struct confargs {
 #define BUS_VMEL	6	/* 32 bit VME access */
 #define BUS_IP		7	/* VME162/172 IP module bus */
 #define BUS_LRC		8	/* VME165 LRC chip */
+#define BUS_OFOBIO	9	/* VME141 */
 
 /* the following are from the prom/bootblocks */
 extern paddr_t	bootaddr;	/* PA of boot device */

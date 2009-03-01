@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.32 2009/03/01 21:40:49 miod Exp $
+#	$OpenBSD: files.mvme68k,v 1.33 2009/03/01 22:08:13 miod Exp $
 
 # config file for mvme68k
 
@@ -27,8 +27,12 @@ device	lrc {[offset = -1], [ipl = 0]}
 attach	lrc at mainbus
 file	arch/mvme68k/dev/lrc.c			lrc needs-flag
 
+device	ofobio {[offset = -1], [ipl = 0]}
+attach	ofobio at mainbus
+file	arch/mvme68k/dev/ofobio.c		ofobio needs-flag
+
 device	clock
-attach	clock at pcc, mc, pcctwo, lrc
+attach	clock at pcc, mc, pcctwo, lrc, ofobio
 file	arch/mvme68k/dev/clock.c
 
 device	zs: tty
@@ -41,11 +45,13 @@ file	arch/mvme68k/dev/cl.c			cl needs-count
 
 device	dart: tty
 attach	dart at lrc with dartlrc
+attach	dart at ofobio with dartofobio
 file	arch/mvme68k/dev/dart.c			dart needs-flag
 file	arch/mvme68k/dev/dart_lrc.c		dartlrc
+file	arch/mvme68k/dev/dart_ofobio.c		dartofobio
 
 device	vme {}
-attach	vme at pcc, mc, pcctwo, lrc
+attach	vme at pcc, mc, pcctwo, lrc, ofobio
 device	vmes {[addr = -1], [vec = -1], [ipl = 0]}
 attach	vmes at vme
 device	vmel {[addr = -1], [vec = -1], [ipl = 0]}
@@ -55,7 +61,7 @@ file	arch/mvme68k/dev/vmes.c			vmes needs-count
 file	arch/mvme68k/dev/vmel.c			vmel needs-count
 
 #device	vsb {}
-#attach	vsb at lrc
+#attach	vsb at lrc, ofobio
 #file	arch/mvme68k/dev/vsb.c			vsb needs-flag
 
 attach	le at pcc, vmes
@@ -94,7 +100,7 @@ file	arch/mvme68k/dev/flash.c		flash needs-count
 device	sram
 attach	sram at mainbus
 device	nvram
-attach	nvram at pcc, mc, pcctwo, lrc
+attach	nvram at pcc, mc, pcctwo, lrc, ofobio
 file	arch/mvme68k/dev/sram.c			sram needs-count
 file	arch/mvme68k/dev/nvram.c		nvram needs-count
 file	arch/mvme68k/dev/memdevs.c		nvram | sram

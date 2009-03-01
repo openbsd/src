@@ -1,17 +1,49 @@
-/*	$OpenBSD: dartreg.h,v 1.1 2009/03/01 21:40:49 miod Exp $	*/
+/*	$OpenBSD: dartreg.h,v 1.2 2009/03/01 22:08:13 miod Exp $	*/
 
-#define	CONSOLE_DART_BASE	0xfffd0000	/* on MVME165 */
+#define	MVME141_DART_BASE	0xfff70000
+#define	MVME165_DART_BASE	0xfffd0000
 
 #define MAXPORTS	2		/* max count of PORTS/DUART */
 
 #define  A_PORT   0
 #define  B_PORT   1
 
-/* the access to the same command register must be delayed,
-   because the chip has some hardware problems in this case */
-#define DELAY_CR   delay(2)
+/*
+ *	MC68681 hardware registers.
+ */
 
-/*********************** MC68681 DEFINITIONS ************************/
+#define	DART_MR1A	0x00	/* RW: mode register A */
+#define	DART_MR2A	0x00	/* RW: mode register A */
+#define	DART_SRA	0x01	/* R: status register A */
+#define	DART_CSRA	0x01	/* W: clock select register A */
+#define	DART_CRA	0x02	/* W: command register A */
+#define	DART_RBA	0x03	/* R: receiver buffer A */
+#define	DART_TBA	0x03	/* W: transmit buffer A */
+#define	DART_IPCR	0x04	/* R: input port change register */
+#define	DART_ACR	0x04	/* W: auxiliary control register */
+#define	DART_ISR	0x05	/* R: interrupt status register */
+#define	DART_IMR	0x05	/* W: interrupt mask register */
+#define	DART_CUR	0x06	/* R: count upper register */
+#define	DART_CTUR	0x06	/* W: counter/timer upper register */
+#define	DART_CLR	0x07	/* R: count lower register */
+#define	DART_CTLR	0x07	/* W: counter/timer lower register */
+#define	DART_MR1B	0x08	/* RW: mode register B */
+#define	DART_MR2B	0x08	/* RW: mode register B */
+#define	DART_SRB	0x09	/* R: status register B */
+#define	DART_CSRB	0x09	/* W: clock select register B */
+#define	DART_CRB	0x0a	/* W: command register B */
+#define	DART_RBB	0x0b	/* R: receiver buffer B */
+#define	DART_TBB	0x0b	/* W: transmit buffer B */
+#define	DART_IVR	0x0c	/* RW: interrupt vector register */
+#define	DART_IP		0x0d	/* R: input port (unlatched) */
+#define	DART_OPCR	0x0d	/* W: output port configuration register */
+#define	DART_CTSTART	0x0e	/* R: start counter command */
+#define	DART_OPRS	0x0e	/* W: output port bit set */
+#define	DART_CTSTOP	0x0f	/* R: stop counter command */
+#define	DART_OPRR	0x0f	/* W: output port bit reset */
+
+#define	DART_A_BASE	0x00
+#define	DART_B_BASE	0x08
 
 /* mode register 1: MR1x operations */
 #define RXRTS        0x80  /* enable receiver RTS */
@@ -38,7 +70,7 @@
 
 /* clock-select register: CSRx operations */
 #define NOBAUD       -1    /* 50 and 200 baud are not possible */
-/* they are not in Baud register set 2 */
+			   /* they are not in Baud register set 2 */
 #define BD75         0x00  /* 75 baud */
 #define BD110        0x11  /* 110 baud */
 #define BD134        0x22  /* 134.5 baud */
@@ -51,9 +83,6 @@
 #define BD4800       0x99  /* 4800 baud */
 #define BD9600       0xbb  /* 9600 baud */
 #define BD19200      0xcc  /* 19200 baud */
-
-#define DEFBAUD      BD9600   /* default value if baudrate is not possible */
-
 
 /* channel command register: CRx operations */
 #define MRRESET      0x10  /* reset mr pointer to mr1 */
@@ -93,15 +122,14 @@
 #define BDSET2       0x80  /* baudrate generator set 2 */
 #define CCLK1        0x60  /* timer clock: external rate.  TA */
 #define CCLK16       0x30  /* counter clock: x1 clk divided by 16 */
+#define IPDCDIB      0x08  /* IP3 change == DCD input on port B */
+#define IPDCDIA      0x04  /* IP2 change == DCD input on port A */
 
 /* input port change register: IPCR operations */
 #define IPCRDCDB     0x80  /* IP3 change == DCD change on port B */
 #define IPCRDCDA     0x40  /* IP2 change == DCD change on port A */
-
-/* Defines for mvme335 */
 #define IPDCDB       0x20  /* DCD line input b */
 #define IPDCDA       0x10  /* DCD line input a */
-
 #define IPDSRB       0x08  /* DSR line input b */
 #define IPDSRA       0x04  /* DSR line input a */
 #define IPCTSB       0x02  /* CTS line input b */
@@ -116,40 +144,3 @@
 #define IBRKA        0x04  /* delta break a */
 #define IRXRDYA      0x02  /* receiver ready a */
 #define ITXRDYA      0x01  /* transmitter ready a */
-
-/*
- *	MC68681 hardware registers.
- */
-
-#define	DART_MR1A	0x00	/* RW: mode register A */
-#define	DART_MR2A	0x00	/* RW: mode register A */
-#define	DART_SRA	0x01	/* R: status register A */
-#define	DART_CSRA	0x01	/* W: clock select register A */
-#define	DART_CRA	0x02	/* W: command register A */
-#define	DART_RBA	0x03	/* R: receiver buffer A */
-#define	DART_TBA	0x03	/* W: transmit buffer A */
-#define	DART_IPCR	0x04	/* R: input port change register */
-#define	DART_ACR	0x04	/* W: auxiliary control register */
-#define	DART_ISR	0x05	/* R: interrupt status register */
-#define	DART_IMR	0x05	/* W: interrupt mask register */
-#define	DART_CUR	0x06	/* R: count upper register */
-#define	DART_CTUR	0x06	/* W: counter/timer upper register */
-#define	DART_CLR	0x07	/* R: count lower register */
-#define	DART_CTLR	0x07	/* W: counter/timer lower register */
-#define	DART_MR1B	0x08	/* RW: mode register B */
-#define	DART_MR2B	0x08	/* RW: mode register B */
-#define	DART_SRB	0x09	/* R: status register B */
-#define	DART_CSRB	0x09	/* W: clock select register B */
-#define	DART_CRB	0x0a	/* W: command register B */
-#define	DART_RBB	0x0b	/* R: receiver buffer B */
-#define	DART_TBB	0x0b	/* W: transmit buffer B */
-#define	DART_IVR	0x0c	/* RW: interrupt vector register */
-#define	DART_IP		0x0d	/* R: input port (unlatched) */
-#define	DART_OPCR	0x0d	/* W: output port configuration register */
-#define	DART_CTSTART	0x0e	/* R: start counter command */
-#define	DART_OPRS	0x0e	/* W: output port bit set */
-#define	DART_CTSTOP	0x0f	/* R: stop counter command */
-#define	DART_OPRR	0x0f	/* W: output port bit reset */
-
-#define	DART_A_BASE	0x00
-#define	DART_B_BASE	0x08

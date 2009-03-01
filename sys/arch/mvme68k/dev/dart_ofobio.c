@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart_lrc.c,v 1.2 2009/03/01 22:08:13 miod Exp $	*/
+/*	$OpenBSD: dart_ofobio.c,v 1.1 2009/03/01 22:08:13 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2009, Miodrag Vallat
  *
@@ -31,20 +31,20 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
-#include <mvme68k/dev/lrcreg.h>
+#include <mvme68k/dev/ofobioreg.h>
 
 #include <mvme68k/dev/dartreg.h>
 #include <mvme68k/dev/dartvar.h>
 
-int	dart_lrc_match(struct device *, void *, void *);
-void	dart_lrc_attach(struct device *, struct device *, void *);
+int	dart_ofobio_match(struct device *, void *, void *);
+void	dart_ofobio_attach(struct device *, struct device *, void *);
 
-struct cfattach dartlrc_ca = {
-	sizeof(struct dartsoftc), dart_lrc_match, dart_lrc_attach
+struct cfattach dartofobio_ca = {
+	sizeof(struct dartsoftc), dart_ofobio_match, dart_ofobio_attach
 };
 
 int
-dart_lrc_match(struct device *parent, void *cf, void *aux)
+dart_ofobio_match(struct device *parent, void *cf, void *aux)
 {
 	struct confargs *ca = aux;
 #if 0
@@ -52,7 +52,7 @@ dart_lrc_match(struct device *parent, void *cf, void *aux)
 	int rc;
 #endif
 
-	if (cputyp != CPU_165 || ca->ca_paddr != MVME165_DART_BASE)
+	if (cputyp != CPU_141 || ca->ca_paddr != MVME141_DART_BASE)
 		return (0);
 
 #if 0	/* overkill, this is the console so if we've run so far, it exists */
@@ -68,7 +68,7 @@ dart_lrc_match(struct device *parent, void *cf, void *aux)
 }
 
 void
-dart_lrc_attach(struct device *parent, struct device *self, void *aux)
+dart_ofobio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dartsoftc *sc = (struct dartsoftc *)self;
 	struct confargs *ca = aux;
@@ -93,9 +93,8 @@ dart_lrc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih.ih_wantframe = 0;
 	sc->sc_ih.ih_ipl = ca->ca_ipl;
 
-	lrcintr_establish(LRCVEC_DART, &sc->sc_ih, self->dv_xname);
-
-	sc->sc_vec = LRC_VECBASE + LRCVEC_DART;
-	sc->sc_stride = 2;
+	sc->sc_vec = OFOBIOVEC_DART;
+	intr_establish(sc->sc_vec, &sc->sc_ih, self->dv_xname);
+	sc->sc_stride = 0;
 	dart_common_attach(sc);
 }

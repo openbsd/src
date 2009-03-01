@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.112 2009/03/01 21:40:49 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.113 2009/03/01 22:08:13 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -99,6 +99,9 @@
 #include <machine/pte.h>
 #include <machine/reg.h>
 
+#ifdef MVME141
+#include <mvme68k/dev/ofobioreg.h>
+#endif
 #ifdef MVME147
 #include <mvme68k/dev/pccreg.h>
 #endif
@@ -368,6 +371,17 @@ identifycpu()
 	}
 
 	switch (cputyp) {
+#ifdef MVME141
+	case CPU_141:
+		snprintf(suffix, sizeof suffix, "MVME%x", brdid.model);
+#if 0
+		cpuspeed = ofobiospeed((struct ofobioreg *)IIOV(0xfffb0000));
+#else
+		cpuspeed = 50;
+#endif
+		snprintf(speed, sizeof speed, "%02d", cpuspeed);
+		break;
+#endif
 #ifdef MVME147
 	case CPU_147:
 		snprintf(suffix, sizeof suffix, "MVME%x", brdid.model);
@@ -741,9 +755,9 @@ int m68060_pcr_init = 0x20 | PCR_SUPERSCALAR;	/* make this patchable */
 void
 initvectors()
 {
+#if defined(M68060)
 	typedef void trapfun(void);
 	extern trapfun *vectab[256];
-#if defined(M68060)
 #if defined(M060SP)
 	extern trapfun intemu60, fpiemu60, fpdemu60, fpeaemu60;
 	extern u_int8_t FP_CALL_TOP[];
