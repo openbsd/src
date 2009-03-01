@@ -1,4 +1,4 @@
-/*	$OpenBSD: raptor.c,v 1.3 2009/03/01 20:36:04 kettenis Exp $	*/
+/*	$OpenBSD: raptor.c,v 1.4 2009/03/01 21:42:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -44,6 +44,10 @@
  * information used for writing this driver comes mostly from the Xorg
  * i128 driver.
  */
+
+#define I128_PCI_MW0		0x10
+#define I128_PCI_MW1		0x14
+#define I128_PCI_RBASE		0x20
 
 #define I128_WR_ADR		0x0000
 #define I128_PAL_DAT		0x0004
@@ -202,14 +206,14 @@ raptor_attach(struct device *parent, struct device *self, void *aux)
 	model = getpropstring(node, "model");
 	printf("%s: %s", self->dv_xname, model);
 
-	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM,
+	if (pci_mapreg_map(pa, I128_PCI_MW0, PCI_MAPREG_TYPE_MEM,
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_memt, &sc->sc_memh,
 	    &sc->sc_membase, &sc->sc_memsize, 0)) {
 		printf("\n%s: can't map video memory\n", self->dv_xname);
 		return;
 	}
 
-	if (pci_mapreg_map(pa, 0x20, PCI_MAPREG_TYPE_MEM, 0,
+	if (pci_mapreg_map(pa, I128_PCI_RBASE, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_mmiot, &sc->sc_mmioh, &sc->sc_mmiobase,
 	    &sc->sc_mmiosize, 0)) {
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_memsize);
@@ -537,7 +541,7 @@ raptor_init(struct raptor_softc *sc)
 	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, I128_PCTRL, 0);
 	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, I128_CLPTL, 0);
 	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, I128_CLPBR,
-	    (4095 << 16) | 2047);
+	    I128_COORDS(4095, 2047));
 #if 0
 	/* XXX For some reason this makes schizo(4) freak out. */
 	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, I128_ACNTRL, 0);
