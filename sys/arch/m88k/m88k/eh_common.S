@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.52 2009/02/21 18:35:22 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.53 2009/03/01 17:43:25 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -1601,7 +1601,7 @@ GLOBAL(m88110_fpu_handler)
 GLOBAL(m88110_nonmaskable)
 	PREP88110("NMI", 11,)
 	or	r2, r0, r30
-	XCALL(_C_LABEL(nmi), _ASM_LABEL(check_ast))
+	XCALL(_C_LABEL(nmi), _ASM_LABEL(nmi_return))
 
 /* software walk data MMU read miss handler */
 GLOBAL(m88110_data_read_miss)
@@ -2213,6 +2213,82 @@ ASGLOBAL(ast_done)
 	bsr.n	_C_LABEL(setipl)
 	 ld	r2, FPTR, EF_MASK		/* get pre-exception ipl */
 
+#if defined(M88100) && defined(M88110)
+	ldcr	r2, PID
+	extu	r3,  r2, 8<8>
+	bcnd	ne0, r3, _ASM_LABEL(m88110_user_rte)
+	/* FALLTHROUGH */
+#endif
+
+#ifdef M88100
+ASGLOBAL(m88100_user_rte)
+	/*
+	 * Transfer the frame pointer to r31, since we no longer need a stack.
+	 * No page faults here, and interrupts are disabled.
+	 */
+	or	r31, r0,  FPTR
+	/* restore r1 later */
+	ld	r2 , r31, GENREG_OFF(2)
+	ld	r3 , r31, GENREG_OFF(3)
+	ld	r4 , r31, GENREG_OFF(4)
+	ld	r5 , r31, GENREG_OFF(5)
+	ld	r6 , r31, GENREG_OFF(6)
+	ld	r7 , r31, GENREG_OFF(7)
+	ld	r8 , r31, GENREG_OFF(8)
+	ld	r9 , r31, GENREG_OFF(9)
+	ld	r10, r31, GENREG_OFF(10)
+	ld	r11, r31, GENREG_OFF(11)
+	ld	r12, r31, GENREG_OFF(12)
+	ld	r13, r31, GENREG_OFF(13)
+	ld	r14, r31, GENREG_OFF(14)
+	ld	r15, r31, GENREG_OFF(15)
+	ld	r16, r31, GENREG_OFF(16)
+	ld	r17, r31, GENREG_OFF(17)
+	ld	r18, r31, GENREG_OFF(18)
+	ld	r19, r31, GENREG_OFF(19)
+	ld	r20, r31, GENREG_OFF(20)
+	ld	r21, r31, GENREG_OFF(21)
+	ld	r22, r31, GENREG_OFF(22)
+	ld	r23, r31, GENREG_OFF(23)
+	ld	r24, r31, GENREG_OFF(24)
+	ld	r25, r31, GENREG_OFF(25)
+	ld	r26, r31, GENREG_OFF(26)
+	ld	r27, r31, GENREG_OFF(27)
+	ld	r28, r31, GENREG_OFF(28)
+	ld	r29, r31, GENREG_OFF(29)
+	/* restore r1, r30, r31 later */
+
+	/* disable shadowing */
+	ldcr	r1, PSR
+	set	r1, r1, 1<PSR_SHADOW_FREEZE_BIT>
+	stcr	r1, PSR
+	FLUSH_PIPELINE
+
+	/* reload the control regs*/
+	/*
+	 * RTE will cause execution to continue first with the
+	 * instruction pointed to by the NIP and then the FIP;
+	 * it is not necessary to restore XIP.
+	 */
+	stcr	r0,  SSBR
+	ld	r30, r31, EF_SNIP
+	ld	r1,  r31, EF_SFIP
+	stcr	r30, SNIP
+	stcr	r1,  SFIP
+
+	ld	r30, r31, EF_EPSR
+	stcr	r30, EPSR
+
+	/* Now restore r1, r30, and r31 */
+	ld	r1,  r31, GENREG_OFF(1)
+	ld	r30, r31, GENREG_OFF(30)
+	ld	r31, r31, GENREG_OFF(31)
+
+	RTE
+#endif
+
+#ifdef M88110
+ASGLOBAL(m88110_user_rte)
 	/*
 	 * Disable shadowing. This used to be done after all the registers
 	 * from the E.F. have been restored, but on 88110 we may receive
@@ -2224,6 +2300,7 @@ ASGLOBAL(ast_done)
 	stcr	r1, PSR
 	FLUSH_PIPELINE
 
+ASLOCAL(m88110_restore)
 	/*
 	 * Transfer the frame pointer to r31, since we no longer need a stack.
 	 * No page faults here, and interrupts are disabled.
@@ -2261,39 +2338,6 @@ ASGLOBAL(ast_done)
 	/* restore r1, r30, r31 later */
 
 	/* reload the control regs*/
-#if defined(M88100) && defined(M88110)
-	ldcr	r1, PID
-	extu	r30, r1, 8<8>
-	bcnd	ne0, r30, _ASM_LABEL(m88110_user_rte)
-	/* FALLTHROUGH */
-#endif
-
-#ifdef M88100
-ASGLOBAL(m88100_user_rte)
-	/*
-	 * RTE will cause execution to continue first with the
-	 * instruction pointed to by the NIP and then the FIP;
-	 * it is not necessary to restore XIP.
-	 */
-	stcr	r0,  SSBR
-	ld	r30, r31, EF_SNIP
-	ld	r1,  r31, EF_SFIP
-	stcr	r30, SNIP
-	stcr	r1,  SFIP
-
-	ld	r30, r31, EF_EPSR
-	stcr	r30, EPSR
-
-	/* Now restore r1, r30, and r31 */
-	ld	r1,  r31, GENREG_OFF(1)
-	ld	r30, r31, GENREG_OFF(30)
-	ld	r31, r31, GENREG_OFF(31)
-
-	RTE
-#endif
-
-#ifdef M88110
-ASGLOBAL(m88110_user_rte)
 	ld	r30, r31, EF_ENIP
 	ld	r1,  r31, EF_EXIP
 	stcr	r30, ENIP
@@ -2324,4 +2368,40 @@ ASGLOBAL(m88110_user_rte)
 1:
 	NOP
 	RTE
+
+	/*
+	 * NMI return here after processing.
+	 * We then decide whether to check for AST and soft interrupts,
+	 * or not.
+	 */
+ASLOCAL(nmi_return)
+	bcnd	ne0, r2, _ASM_LABEL(check_ast)
+
+	ld	FPTR, r31, 0	/* grab exception frame pointer */
+
+	/*
+	 * Disable interrupts and shadowing. The latter used to be done
+	 * after all the registers from the E.F. have been restored, but
+	 * on 88110 we may receive an NMI anytime, unless shadowing is frozen,
+	 * and we rely on r31 being valid.
+	 */
+	ldcr	r1, PSR
+	set	r1, r1, 1<PSR_INTERRUPT_DISABLE_BIT>
+	set	r1, r1, 1<PSR_SHADOW_FREEZE_BIT>
+	stcr	r1, PSR
+	FLUSH_PIPELINE
+
+	/* now ready to return....*/
+	bsr.n	_C_LABEL(setipl)
+	 ld	r2, FPTR, EF_MASK		/* get pre-exception ipl */
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Reenable NMIs if necessary.
+	 */
+	or	r2,   FPTR,  r0
+	bsr	_C_LABEL(nmi_wrapup)
+#endif
+
+	br	_ASM_LABEL(m88110_restore)
 #endif

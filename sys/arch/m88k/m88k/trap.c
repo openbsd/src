@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.68 2009/02/16 22:55:03 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.69 2009/03/01 17:43:25 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -191,10 +191,19 @@ interrupt(struct trapframe *frame)
 /*
  * Handle non-maskable interrupts.
  */
-void
+int
 nmi(struct trapframe *frame)
 {
-	md_nmi_func(frame);
+	return md_nmi_func(frame);
+}
+
+/*
+ * Reenable non-maskable interrupts.
+ */
+void
+nmi_wrapup(struct trapframe *frame)
+{
+	md_nmi_wrapup_func(frame);
 }
 #endif
 
