@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.34 2009/03/01 13:07:52 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.35 2009/03/01 13:08:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -314,7 +314,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 
 			file = path->rule.r_value.path;
 			pw_name = path->pw_name;
-			if (*pw_name == '\0') {
+			if (path->rule.r_action == A_FILENAME) {
 				file = path->u.filename;
 				pw_name = SMTPD_USER;
 			}
