@@ -1,4 +1,4 @@
-/*	$OpenBSD: raptor.c,v 1.2 2009/03/01 20:01:09 kettenis Exp $	*/
+/*	$OpenBSD: raptor.c,v 1.3 2009/03/01 20:36:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -153,6 +153,8 @@ struct cfdriver raptor_cd = {
 };
 
 int	raptor_is_console(int);
+int	raptor_getcmap(struct raptor_softc *, struct wsdisplay_cmap *);
+int	raptor_putcmap(struct raptor_softc *, struct wsdisplay_cmap *);
 void	raptor_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 void	raptor_copycols(void *, int, int, int, int);
@@ -265,16 +267,10 @@ raptor_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
 		break;
 
-#if 0	
 	case WSDISPLAYIO_GETCMAP:
-		if (sc->sc_console == 0)
-			return (EINVAL);
 		return raptor_getcmap(sc, (struct wsdisplay_cmap *)data);
 	case WSDISPLAYIO_PUTCMAP:
-		if (sc->sc_console == 0)
-			return (EINVAL);
 		return raptor_putcmap(sc, (struct wsdisplay_cmap *)data);
-#endif
 
 	case WSDISPLAYIO_GPCIID:
 		sel = (struct pcisel *)data;
@@ -346,6 +342,66 @@ raptor_is_console(int node)
 	extern int fbnode;
 
 	return (fbnode == node);
+}
+
+int
+raptor_getcmap(struct raptor_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error;
+
+	if (index >= 256 || count > 256 - index)
+		return (EINVAL);
+
+	error = copyout(&sc->sc_cmap_red[index], cm->red, count);
+	if (error)
+		return (error);
+	error = copyout(&sc->sc_cmap_green[index], cm->green, count);
+	if (error)
+		return (error);
+	error = copyout(&sc->sc_cmap_blue[index], cm->blue, count);
+	if (error)
+		return (error);
+	return (0);
+}
+
+int
+raptor_putcmap(struct raptor_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	u_int i;
+	int error;
+	u_char *r, *g, *b;
+
+	if (index >= 256 || count > 256 - index)
+		return (EINVAL);
+
+	if ((error = copyin(cm->red, &sc->sc_cmap_red[index], count)) != 0)
+		return (error);
+	if ((error = copyin(cm->green, &sc->sc_cmap_green[index], count)) != 0)
+		return (error);
+	if ((error = copyin(cm->blue, &sc->sc_cmap_blue[index], count)) != 0)
+		return (error);
+
+	r = &sc->sc_cmap_red[index];
+	g = &sc->sc_cmap_green[index];
+	b = &sc->sc_cmap_blue[index];
+
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, I128_PEL_MASK, 0xff);
+	for (i = 0; i < count; i++) {
+		bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+		    I128_WR_ADR, index);
+		bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+		    I128_PAL_DAT, *r);
+		bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+		    I128_PAL_DAT, *g);
+		bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+		    I128_PAL_DAT, *b);
+		r++, g++, b++, index++;
+	}
+	return (0);
 }
 
 void
