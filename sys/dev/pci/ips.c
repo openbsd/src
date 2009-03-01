@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.49 2009/03/01 15:35:10 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.50 2009/03/01 19:45:36 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -29,6 +29,7 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/sensors.h>
 #include <sys/timeout.h>
 #include <sys/queue.h>
 
@@ -305,6 +306,9 @@ struct ips_softc {
 	struct scsi_link	sc_scsi_link;
 	struct scsibus_softc *	sc_scsibus;
 
+	struct ksensordev	sc_sensordev;
+	struct ksensor *	sc_sensors;
+
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
@@ -339,6 +343,8 @@ int	ips_ioctl(struct device *, u_long, caddr_t);
 int	ips_ioctl_inq(struct ips_softc *, struct bioc_inq *);
 int	ips_ioctl_vol(struct ips_softc *, struct bioc_vol *);
 int	ips_ioctl_disk(struct ips_softc *, struct bioc_disk *);
+
+void	ips_sensors(void *);
 
 int	ips_cmd(struct ips_softc *, int, int, u_int32_t, void *, size_t, int,
 	    struct scsi_xfer *);
@@ -648,6 +654,31 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: no ioctl support\n", sc->sc_dev.dv_xname);
 #endif
 
+#ifndef SMALL_KERNEL
+	/* Add sensors */
+	if ((sc->sc_sensors = malloc(sizeof(struct ksensor) * sc->sc_nunits,
+	    M_DEVBUF, M_NOWAIT | M_ZERO)) == NULL) {
+		printf(": can't alloc sensors\n");
+		return;
+	}
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+	for (i = 0; i < sc->sc_nunits; i++) {
+		sc->sc_sensors[i].type = SENSOR_DRIVE;
+		sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+		strlcpy(sc->sc_sensors[i].desc, ((struct device *)
+		    sc->sc_scsibus->sc_link[i][0]->device_softc)->dv_xname,
+		    sizeof(sc->sc_sensors[i].desc));
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensors[i]);
+	}
+	if (sensor_task_register(sc, ips_sensors, 10) == NULL) {
+		printf(": no sensors support\n");
+		free(sc->sc_sensors, M_DEVBUF);
+		return;
+	}
+	sensordev_install(&sc->sc_sensordev);
+#endif	/* !SMALL_KERNEL */
+
 	return;
 fail4:
 	ips_ccb_free(sc, sc->sc_ccb, sc->sc_nccbs);
@@ -918,6 +949,45 @@ ips_ioctl_disk(struct ips_softc *sc, struct bioc_disk *bd)
 	return (0);
 }
 #endif	/* NBIO > 0 */
+
+#ifndef SMALL_KERNEL
+void
+ips_sensors(void *arg)
+{
+	struct ips_softc *sc = arg;
+	struct ips_drive *drive;
+	int i;
+
+	if (ips_getdriveinfo(sc, &sc->sc_di)) {
+		for (i = 0; i < sc->sc_nunits; i++) {
+			sc->sc_sensors[i].value = 0;
+			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+		}
+		return;
+	}
+
+	for (i = 0; i < sc->sc_nunits; i++) {
+		drive = &sc->sc_di.drive[i];
+		switch (drive->state) {
+		case IPS_DS_ONLINE:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_ONLINE;
+			sc->sc_sensors[i].status = SENSOR_S_OK;
+			break;
+		case IPS_DS_DEGRADED:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_PFAIL;
+			sc->sc_sensors[i].status = SENSOR_S_WARN;
+			break;
+		case IPS_DS_OFFLINE:
+			sc->sc_sensors[i].value = SENSOR_DRIVE_FAIL;
+			sc->sc_sensors[i].status = SENSOR_S_CRIT;
+			break;
+		default:
+			sc->sc_sensors[i].value = 0;
+			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
+		}
+	}
+}
+#endif
 
 int
 ips_cmd(struct ips_softc *sc, int code, int drive, u_int32_t lba, void *data,
