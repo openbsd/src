@@ -1126,7 +1126,7 @@ radeon_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init)
 	if (dev_priv->new_memmap) {
 		u32 base = 0;
 
-		DRM_INFO("Setting GART location based on new memory map\n");
+		DRM_DEBUG("Setting GART location based on new memory map\n");
 
 		/* If using AGP, try to locate the AGP aperture at the same
 		 * location in the card and on the bus, though we have to
@@ -1157,7 +1157,7 @@ radeon_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init)
 			DRM_INFO("GART aligned down from 0x%08x to 0x%08x\n",
 				 base, dev_priv->gart_vm_start);
 	} else {
-		DRM_INFO("Setting GART location based on old memory map\n");
+		DRM_DEBUG("Setting GART location based on old memory map\n");
 		dev_priv->gart_vm_start = dev_priv->fb_location +
 			RADEON_READ(RADEON_CONFIG_APER_SIZE);
 	}
