@@ -1,4 +1,4 @@
-/*	$OpenBSD: raptor.c,v 1.1 2009/03/01 19:17:18 kettenis Exp $	*/
+/*	$OpenBSD: raptor.c,v 1.2 2009/03/01 20:01:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -44,6 +44,10 @@
  * information used for writing this driver comes mostly from the Xorg
  * i128 driver.
  */
+
+#define I128_WR_ADR		0x0000
+#define I128_PAL_DAT		0x0004
+#define I128_PEL_MASK		0x0008
 
 #define I128_INTM		0x4004
 #define I128_FLOW		0x4008
@@ -116,6 +120,9 @@ struct raptor_softc {
 	pcitag_t	sc_pcitag;
 
 	int		sc_mode;
+	u_int8_t	sc_cmap_red[256];
+	u_int8_t	sc_cmap_green[256];
+	u_int8_t	sc_cmap_blue[256];
 };
 
 int	raptor_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -146,6 +153,7 @@ struct cfdriver raptor_cd = {
 };
 
 int	raptor_is_console(int);
+void	raptor_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 void	raptor_copycols(void *, int, int, int, int);
 void	raptor_erasecols(void *, int, int, int, long);
@@ -216,6 +224,7 @@ raptor_attach(struct device *parent, struct device *self, void *aux)
 	ri->ri_hw = sc;
 
 	fbwscons_init(&sc->sc_sunfb, RI_BSWAP, console);
+	fbwscons_setcolormap(&sc->sc_sunfb, raptor_setcolor);
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
 	raptor_init(sc);
@@ -242,13 +251,8 @@ raptor_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
-#if 0
-		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
-			if (sc->sc_console)	/* XXX needs sc_ofhandle */
-				fbwscons_setcolormap(&sc->sc_sunfb,
-				    raptor_setcolor);
-		}
-#endif
+		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
+			fbwscons_setcolormap(&sc->sc_sunfb, raptor_setcolor);
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
@@ -342,6 +346,22 @@ raptor_is_console(int node)
 	extern int fbnode;
 
 	return (fbnode == node);
+}
+
+void
+raptor_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
+{
+	struct raptor_softc *sc = v;
+
+	sc->sc_cmap_red[index] = r;
+	sc->sc_cmap_green[index] = g;
+	sc->sc_cmap_blue[index] = b;
+
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, I128_PEL_MASK, 0xff);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, I128_WR_ADR, index);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, I128_PAL_DAT, r);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, I128_PAL_DAT, g);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, I128_PAL_DAT, b);
 }
 
 /*
