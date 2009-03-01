@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.48 2009/02/19 16:06:56 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.49 2009/03/01 15:35:10 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -755,7 +755,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		inq.additional_length = 32;
 		strlcpy(inq.vendor, "IBM", sizeof(inq.vendor));
 		snprintf(inq.product, sizeof(inq.product),
-		    "RAID%d #%02d", drive->raid, target);
+		    "LD%d RAID%d", target, drive->raid);
 		strlcpy(inq.revision, "1.0", sizeof(inq.revision));
 		memcpy(xs->data, &inq, MIN(xs->datalen, sizeof(inq)));
 		break;
@@ -1261,7 +1261,7 @@ ips_copperhead_status(struct ips_softc *sc)
 	sc->sc_sqtail = sqtail;
 	if (++sc->sc_sqidx == IPS_MAXCMDS)
 		sc->sc_sqidx = 0;
-	status = sc->sc_sqbuf[sc->sc_sqidx];
+	status = letoh32(sc->sc_sqbuf[sc->sc_sqidx]);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IPS_REG_SQT, sqtail);
 
 	return (status);
