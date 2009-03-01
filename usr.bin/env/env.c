@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.12 2006/05/28 05:29:54 ray Exp $	*/
+/*	$OpenBSD: env.c,v 1.13 2009/03/01 17:02:25 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-static char rcsid[] = "$OpenBSD: env.c,v 1.12 2006/05/28 05:29:54 ray Exp $";
+static char rcsid[] = "$OpenBSD: env.c,v 1.13 2009/03/01 17:02:25 millert Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -73,11 +73,13 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	for (; *argv && (p = strchr(*argv, '=')); ++argv)
-		if (setenv(*argv, ++p, 1) == -1) {
+	for (; *argv && (p = strchr(*argv, '=')); ++argv) {
+		*p++ = '\0';
+		if (setenv(*argv, p, 1) == -1) {
 			/* reuse 126, it matches the problem most */
 			exit(126);
 		}
+	}
 
 	if (*argv) {
 		/*
