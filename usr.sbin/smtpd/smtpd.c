@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.35 2009/03/01 13:08:47 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.36 2009/03/01 15:06:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -319,9 +319,17 @@ parent_dispatch_mda(int fd, short event, void *p)
 				pw_name = SMTPD_USER;
 			}
 
+			errno = 0;
 			pw = safe_getpwnam(pw_name);
-			if (pw == NULL)
-				batchp->message.status |= S_MESSAGE_PERMFAILURE;
+			if (pw == NULL) {
+				if (errno)
+					batchp->message.status |= S_MESSAGE_TEMPFAILURE;
+				else
+					batchp->message.status |= S_MESSAGE_PERMFAILURE;
+				imsg_compose(ibuf, IMSG_MDA_MAILBOX_FILE, 0, 0,
+				    -1, batchp, sizeof(struct batch));
+				break;
+			}
 
 			if (setegid(pw->pw_gid) || seteuid(pw->pw_uid))
 				fatal("privdrop failed");
