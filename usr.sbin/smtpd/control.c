@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.17 2009/02/25 09:30:58 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.18 2009/03/01 13:05:41 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -355,6 +355,9 @@ control_dispatch_ext(int fd, short event, void *arg)
 		case IMSG_STATS: {
 			struct stats	s;
 
+			if (euid)
+				goto badcred;
+
 			s.fd = fd;
 			imsg_compose(env->sc_ibufs[PROC_PARENT], IMSG_STATS, 0, 0, -1, &s, sizeof(s));
 			imsg_compose(env->sc_ibufs[PROC_QUEUE], IMSG_STATS, 0, 0, -1, &s, sizeof(s));
@@ -365,6 +368,9 @@ control_dispatch_ext(int fd, short event, void *arg)
 		}
 		case IMSG_RUNNER_SCHEDULE: {
 			struct sched s;
+
+			if (euid)
+				goto badcred;
 
 			s = *(struct sched *)imsg.data;
 			s.fd = fd;
