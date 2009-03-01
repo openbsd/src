@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.25 2009/02/17 22:28:41 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.26 2009/03/01 21:40:49 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -42,15 +42,19 @@
 #include <machine/cpu.h>
 #include <mvme68k/dev/vme.h>
 
-#include "pcc.h"
+#include "lrc.h"
 #include "mc.h"
+#include "pcc.h"
 #include "pcctwo.h"
 
-#if NPCC > 0
-#include <mvme68k/dev/pccreg.h>
+#if NLRC > 0
+#include <mvme68k/dev/lrcreg.h>
 #endif
 #if NMC > 0
 #include <mvme68k/dev/mcreg.h>
+#endif
+#if NPCC > 0
+#include <mvme68k/dev/pccreg.h>
 #endif
 #if NPCCTWO > 0
 #include <mvme68k/dev/pcctworeg.h>
@@ -197,7 +201,7 @@ vmematch(parent, cf, args)
 	return (1);
 }
 
-#if defined(MVME162) || defined(MVME167) || defined(MVME177)
+#if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
 /*
  * make local addresses 1G-2G correspond to VME addresses 3G-4G,
  * as D32
@@ -232,7 +236,8 @@ vmepmap(sc, vmeaddr, len, bustype)
 
 	len = roundup(len, NBPG);
 	switch (vmebustype) {
-#if NPCC > 0
+#if NLRC > 0 || NPCC > 0
+	case BUS_LRC:
 	case BUS_PCC:
 		switch (bustype) {
 		case BUS_VMES:
@@ -412,7 +417,6 @@ vmescan(parent, child, args, bustype)
 	oca.ca_ipl = cf->cf_loc[2];
 	if (oca.ca_ipl > 0 && oca.ca_vec == -1)
 		oca.ca_vec = intr_findvec(255, 0);
-
 	oca.ca_offset = oca.ca_paddr;
 	oca.ca_vaddr = (vaddr_t)-1;	/* nothing mapped during probe */
 	oca.ca_name = cf->cf_driver->cd_name;
@@ -431,7 +435,7 @@ vmeattach(parent, self, args)
 {
 	struct vmesoftc *sc = (struct vmesoftc *)self;
 	struct confargs *ca = args;
-#if NPCC > 0
+#if NLRC > 0 || NPCC > 0
 	struct vme1reg *vme1;
 #endif
 #if NMC > 0 || NPCCTWO > 0
@@ -442,7 +446,8 @@ vmeattach(parent, self, args)
 
 	vmebustype = ca->ca_bustype;
 	switch (ca->ca_bustype) {
-#if NPCC > 0
+#if NLRC > 0 || NPCC > 0
+	case BUS_LRC:
 	case BUS_PCC:
 		vme1 = (struct vme1reg *)sc->sc_vaddr;
 		if (vme1->vme1_scon & VME1_SCON_SWITCH)
@@ -486,7 +491,7 @@ vmeintr_establish(vec, ih, name)
 	const char *name;
 {
 	struct vmesoftc *sc = (struct vmesoftc *) vme_cd.cd_devs[0];
-#if NPCC > 0
+#if NLRC > 0 || NPCC > 0
 	struct vme1reg *vme1;
 #endif
 #if NMC > 0 || NPCCTWO > 0
@@ -497,7 +502,8 @@ vmeintr_establish(vec, ih, name)
 	x = intr_establish(vec, ih, name);
 
 	switch (vmebustype) {
-#if NPCC > 0
+#if NLRC > 0 || NPCC > 0
+	case BUS_LRC:
 	case BUS_PCC:
 		vme1 = (struct vme1reg *)sc->sc_vaddr;
 		vme1->vme1_irqen = vme1->vme1_irqen |
@@ -516,7 +522,7 @@ vmeintr_establish(vec, ih, name)
 	return (x);
 }
 
-#if defined(MVME147)
+#if defined(MVME147) || defined(MVME165)
 void
 vme1chip_init(sc)
 	struct vmesoftc *sc;
@@ -528,7 +534,7 @@ vme1chip_init(sc)
 #endif
 
 
-#if defined(MVME162) || defined(MVME167) || defined(MVME177)
+#if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
 
 /*
  * XXX what AM bits should be used for the D32/D16 mappings?
@@ -585,7 +591,6 @@ vme2chip_init(sc)
 	    (6 << VME2_IRQL4_VME6SHIFT) | (5 << VME2_IRQL4_VME5SHIFT) |
 	    (4 << VME2_IRQL4_VME4SHIFT) | (3 << VME2_IRQL4_VME3SHIFT) |
 	    (2 << VME2_IRQL4_VME2SHIFT) | (1 << VME2_IRQL4_VME1SHIFT);
-	printf("%s: vme to cpu irq level 1:1\n",sc->sc_dev.dv_xname);
 
 #if NPCCTWO > 0
 	if (vmebustype == BUS_PCCTWO) {
@@ -638,14 +643,9 @@ int
 vme2abort(frame)
 	void *frame;
 {
-	struct vmesoftc *sc = (struct vmesoftc *)vme_cd.cd_devs[0];
-	struct vme2reg *vme2 = (struct vme2reg *)sc->sc_vaddr;
+	if ((sys_vme2->vme2_irqstat & VME2_IRQ_AB) != 0)
+		sys_vme2->vme2_irqclr = VME2_IRQ_AB;
 
-	if ((vme2->vme2_irqstat & VME2_IRQ_AB) == 0) {
-		printf("%s: abort irq not set\n", sc->sc_dev.dv_xname);
-		return (0);
-	}
-	vme2->vme2_irqclr = VME2_IRQ_AB;
 	nmihand(frame);
 	return (1);
 }

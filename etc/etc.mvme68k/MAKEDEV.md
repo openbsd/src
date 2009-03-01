@@ -1,6 +1,6 @@
 define(MACHINE,mvme68k)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.22 2009/01/25 17:30:48 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.23 2009/03/01 21:40:49 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -54,6 +54,15 @@ _mkdev(cl, {-tty0*-}, {-u=${i#tty0*}
 	0|1|2|3)
 		M tty0$u c major_cl_c $u 660 dialer uucp
 		M cua0$u c major_cl_c Add($u, 128) 660 dialer uucp
+		;;
+	*) echo unknown tty device $i ;;
+	esac-})dnl
+__devitem(ttyd, ttyd*, MC68681 serial ports,nothing)dnl
+_mkdev(ttyd, {-ttyd[01]-}, {-u=${i#ttyd*}
+	case $u in
+	0|1)
+		M ttyd$u c major_ttyd_c $u 660 dialer uucp
+		M cuad$u c major_ttyd_c Add($u, 128) 660 dialer uucp
 		;;
 	*) echo unknown tty device $i ;;
 	esac-})dnl
@@ -111,6 +120,7 @@ target(all, ccd, 0, 1, 2, 3)dnl
 twrget(all, mvme_tzs, tty, a, b, c, d)dnl
 twrget(all, mvme_czs, cua, a, b, c, d)dnl
 twrget(all, cl, tty0, 0, 1, 2, 3)dnl
+target(all, ttyd, 0, 1)dnl
 target(all, ttyw, 0, 1, 2, 3)dnl
 dnl target(all, lp, 0)dnl
 _DEV(all)
@@ -138,6 +148,7 @@ _TITLE(term)
 _DEV(mvme_czs, 12)
 _DEV(mvme_tzs, 12)
 _DEV(cl, 13)
+_DEV(ttyd, 14)
 _DEV(ttyw, 30)
 _TITLE(pty)
 _DEV(ptm, 52)

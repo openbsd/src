@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.11 2009/02/17 22:28:38 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.12 2009/03/01 21:40:49 miod Exp $
 
 machine		mvme68k m68k
 
@@ -40,35 +40,43 @@ mainbus0 at root
 # MVME147
 pcc0	at mainbus0 addr 0xfffe0000
 clock0	at pcc0 ipl 5
-nvram0	at pcc0 offset 0x0000
+#nvram0	at pcc0 offset 0x0000
 zs0	at pcc0 offset 0x3000 ipl 4
 zs1	at pcc0 offset 0x3800 ipl 4
 le*	at pcc0 offset 0x1800 ipl 3
 wdsc0	at pcc0 offset 0x4000 ipl 2
-lp0	at pcc0 ipl 1
+#lp0	at pcc0 ipl 1
 vme0	at pcc0 offset 0x2000
 
 # MVME162
 mc0	at mainbus0 addr 0xfff00000
 clock0	at mc0 ipl 5
-nvram0	at mc0 offset 0xc0000
+#nvram0	at mc0 offset 0xc0000
 zs0	at mc0 offset 0x45000 ipl 4
 zs1	at mc0 offset 0x45801 ipl 4
 ie0	at mc0 offset 0x46000 ipl 3
 osiop0	at mc0 offset 0x47000 ipl 2
 memc0	at mc0 offset 0x43000
 memc1	at mc0 offset 0x43100
-ipic0	at mc0 offset 0xbc000
+#ipic0	at mc0 offset 0xbc000
 vme0	at mc0 offset 0x40000
-flash0	at mainbus0 addr 0xffa00000
-sram0	at mainbus0 addr 0xffe00000
+#flash0	at mainbus0 addr 0xffa00000
+#sram0	at mainbus0 addr 0xffe00000
 
 #fooip*	at ipic? manu 0x11 prod 0x22 ipl 1
+
+# MVME165
+lrc0	at mainbus0 addr 0xfff90000
+clock0	at lrc0 ipl 5
+#vsb0	at lrc0 offset 0x10000 ipl 4
+vme0	at lrc0 offset 0x20000
+#nvram0	at lrc0 offset 0x30000
+dart0	at lrc0 offset 0x40000 ipl 5
 
 # MVME166/167/177
 pcctwo0 at mainbus0 addr 0xfff00000
 clock0	at pcctwo0 ipl 5
-nvram0	at pcctwo0 offset 0xc0000
+#nvram0	at pcctwo0 offset 0xc0000
 ie0	at pcctwo0 offset 0x46000 ipl 3
 osiop0	at pcctwo0 offset 0x47000 ipl 2
 cl0	at pcctwo0 offset 0x45000 ipl 3
@@ -76,7 +84,7 @@ vme0	at pcctwo0 offset 0x40000
 #lptwo0	at pcctwo0 ipl 1
 memc0	at pcctwo0 offset 0x43000
 memc1	at pcctwo0 offset 0x43100
-sram0	at mainbus0 addr 0xffe00000
+#sram0	at mainbus0 addr 0xffe00000
 
 vmes0	at vme0
 

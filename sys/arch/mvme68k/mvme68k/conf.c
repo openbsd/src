@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.44 2009/01/25 17:30:49 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.45 2009/03/01 21:40:49 miod Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -115,9 +115,10 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "pty.h"
 cdev_decl(fd);
 
-#include "zs.h"
 #include "cl.h"
+#include "dart.h"
 #include "wl.h"
+#include "zs.h"
 
 /* open, close, write, ioctl */
 #define	cdev_lp_init(c,n) { \
@@ -168,7 +169,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mdev_init(NFLASH,flash),	/* 11: /dev/flashX */
 	cdev_tty_init(NZS,zs),		/* 12: SCC serial (tty[a-d]) */
 	cdev_tty_init(NCL,cl),		/* 13: CL-CD2400 serial (tty0[0-3]) */
-	cdev_notdef(),			/* 14 */
+	cdev_tty_init(NDART,dart),	/* 14: MC68681 serial (ttyd[0-1]) */
 	cdev_notdef(),			/* 15 */
 	cdev_notdef(),			/* 16 */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk */
@@ -300,17 +301,22 @@ int nchrtoblktbl = sizeof(chrtoblktbl) / sizeof(chrtoblktbl[0]);
  */
 #include <dev/cons.h>
 
-#define zscnpollc      nullcnpollc
-cons_decl(zs);
-#define clcnpollc      nullcnpollc
+#define clcnpollc	nullcnpollc
 cons_decl(cl);
+#define dartcnpollc	nullcnpollc
+cons_decl(dart);
+#define zscnpollc	nullcnpollc
+cons_decl(zs);
 
 struct	consdev constab[] = {
-#if NZS > 0
-	cons_init(zs),
-#endif
 #if NCL > 0
 	cons_init(cl),
+#endif
+#if NDART > 0
+	cons_init(dart),
+#endif
+#if NZS > 0
+	cons_init(zs),
 #endif
 	{ 0 },
 };

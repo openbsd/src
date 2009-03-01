@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.111 2008/06/27 17:22:14 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.112 2009/03/01 21:40:49 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -101,6 +101,9 @@
 
 #ifdef MVME147
 #include <mvme68k/dev/pccreg.h>
+#endif
+#ifdef MVME165
+#include <mvme68k/dev/lrcreg.h>
 #endif
  
 #include <dev/cons.h>
@@ -374,8 +377,10 @@ identifycpu()
 #endif
 #if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
 	case CPU_162:
+	case CPU_166:
 	case CPU_167:
 	case CPU_172:
+	case CPU_176:
 	case CPU_177:
 		bzero(speed, sizeof speed);
 		speed[0] = brdid.speed[0];
@@ -394,6 +399,13 @@ identifycpu()
 			else
 				break;
 		}
+		break;
+#endif
+#ifdef MVME165
+	case CPU_165:
+		snprintf(suffix, sizeof suffix, "MVME%x", brdid.model);
+		cpuspeed = lrcspeed((struct lrcreg *)IIOV(0xfff90000));
+		snprintf(speed, sizeof speed, "%02d", cpuspeed);
 		break;
 #endif
 	}
@@ -875,12 +887,10 @@ void
 nmihand(frame)
 	void *frame;
 {
+	printf("Abort switch pressed\n");
 #ifdef DDB
-	printf("NMI ... going to debugger\n");
-	Debugger();
-#else
-	/* panic?? */
-	printf("unexpected level 7 interrupt ignored\n");
+	if (db_console)
+		Debugger();
 #endif
 }
 

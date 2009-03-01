@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.29 2009/02/21 20:33:23 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.30 2009/03/01 21:40:49 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -162,6 +162,11 @@ extern	int iiomapsize;
 #define	INTIOTOP_162	(0xfffd0000)		/* was 0xfff50000 */
 #define	INTIOSIZE_162	((INTIOTOP_162-INTIOBASE_162)/NBPG)
 
+/* physical memory sections for mvme165 */
+#define	INTIOBASE_165	(0xfff90000)
+#define	INTIOTOP_165	(0xffff0000)
+#define	INTIOSIZE_165	((INTIOTOP_165-INTIOBASE_165)/NBPG)
+
 /*
  * Internal IO space (iiomapsize).
  *
@@ -182,6 +187,7 @@ extern int	cputyp;
 #define CPU_166			0x166
 #define CPU_167			0x167
 #define CPU_172			0x172
+#define CPU_176			0x176
 #define CPU_177			0x177
 
 #include <sys/evcount.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.58 2009/02/18 20:48:02 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.59 2009/03/01 21:40:49 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -168,6 +168,11 @@ ASENTRY_NOPROFILE(start)
 	beq	is162
 #endif
 
+#ifdef MVME165
+	cmpw	#CPU_165, d0
+	beq	is165
+#endif
+
 #ifdef MVME167
 	cmpw	#CPU_166, d0
 	beq	is167
@@ -176,10 +181,8 @@ ASENTRY_NOPROFILE(start)
 #endif
 
 #ifdef MVME177
-#ifdef notyet	
         cmpw	#CPU_176, d0
 	beq	is177
-#endif        
         cmpw	#CPU_177, d0
 	beq	is177
 #endif
@@ -269,6 +272,39 @@ is162:
 	movl	#_C_LABEL(addrerr4060),a1@(12)
 
 	bra	is16x
+#endif
+
+#ifdef MVME165
+is165:
+	movl	#0xfffe0000, a0		| MVME165 CSR
+	movl	a0@, d0
+	movl	#4*1024*1024, d1
+	btst	#18, d0			| 4MEG*
+	jeq	1f			| not set, this is a 4MB board.
+	movl	#16*1024*1024, d1	| set, this is a 16MB board.
+
+	RELOC(mmutype, a0)
+	movl	#MMU_68040,a0@		| with a 68040 MMU
+
+	RELOC(cputype, a0)		| no, we have 68040
+	movl	#CPU_68040,a0@		| set to reflect 68040 CPU
+
+	RELOC(fputype, a0)
+	movl	#FPU_68040,a0@		| and a 68040 FPU
+
+	RELOC(clockbus, a0)		| timer is on lrc
+	movl	#BUS_LRC, a0@
+
+	RELOC(vectab, a1)
+	movl	#_C_LABEL(buserr40),a1@(8)
+	movl	#_C_LABEL(addrerr4060),a1@(12)
+
+	RELOC(iiomapsize, a1)
+	movl	#INTIOSIZE_165, a1@
+	RELOC(iiomapbase, a1)
+	movl	#INTIOBASE_165, a1@
+
+	bra	Lstart1
 #endif
 
 #ifdef MVME167
@@ -1700,6 +1736,7 @@ Lbootnot040:
 	cmpw	#CPU_147,d0
 	bne	not147
 	movl	#0xfffe2000,a0		| MVME147: "struct vme1reg *"
+vmechipreset:
 	movw	a0@,d0
 	movl	d0,d1
 	andw	#0x0001,d1		| is VME1_SCON_SWITCH set?
@@ -1714,6 +1751,15 @@ Lbootnot040:
 	bra	3f
 
 not147:
+	cmpw	#CPU_165, d0
+	bne	not165
+	movl	#0xfff90020,a0		| disable timer2 (clock)
+	movl	#0, a0@
+	movl	#0xfffb0000,a0		| MVME165 VMEChip base address
+	/* similar to MVME147 sequence above */
+	bra	vmechipreset
+
+not165:
 	movl	#0xfff40000,a0		| MVME16x: "struct vme2reg *"
 	movl	a0@(0x60),d0
 	movl	d0,d1

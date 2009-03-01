@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.3 2004/07/02 17:37:18 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.4 2009/03/01 21:40:49 miod Exp $	*/
 /*
  * Copyright (c) 2002, Miodrag Vallat.
  * All rights reserved.
@@ -46,8 +46,8 @@ cdev_decl(nvram);
 #define	sramwrite sramrw
 cdev_decl(sram);
 
-cdev_decl(bugtty);
 cdev_decl(cl);
+cdev_decl(dart);
 cdev_decl(wl);
 cdev_decl(zs);
 

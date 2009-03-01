@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.18 2007/12/20 05:19:38 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.19 2009/03/01 21:40:49 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -56,7 +56,7 @@ struct nvramsoftc {
 	paddr_t		sc_paddr;
 	vaddr_t		sc_vaddr;
 	int             sc_len;
-	struct clockreg *sc_regs;
+	void		*sc_clockregs;
 };
 
 void    nvramattach(struct device *, struct device *, void *);
@@ -89,22 +89,41 @@ nvramattach(parent, self, args)
 {
 	struct confargs *ca = args;
 	struct nvramsoftc *sc = (struct nvramsoftc *)self;
+	vsize_t maplen;
 
 	sc->sc_paddr = ca->ca_paddr;
 	sc->sc_vaddr = (vaddr_t)ca->ca_vaddr;
 
 	sc->sc_len = MK48T08_SIZE;
+#ifdef MVME147
 	if (cputyp == CPU_147)
 		sc->sc_len = MK48T02_SIZE;
+#endif
 
+	/*
+	 * On the MVME165, the MK48T08 is mapped as one byte per longword,
+	 * thus spans four time as much address space.
+	 */
+#ifdef MVME165
+	if (cputyp == CPU_165)
+		maplen = 4 * sc->sc_len;
+	else
+#endif
+		maplen = sc->sc_len;
 
 /*X*/	if (sc->sc_vaddr == -1)
-/*X*/		sc->sc_vaddr = mapiodev(sc->sc_paddr, MAX(sc->sc_len, NBPG));
+/*X*/		sc->sc_vaddr = mapiodev(sc->sc_paddr, maplen);
 /*X*/	if (sc->sc_vaddr == 0)
 /*X*/		panic("failed to map!");
 
-	sc->sc_regs = (struct clockreg *)(sc->sc_vaddr + sc->sc_len -
-					  sizeof(struct clockreg));
+#ifdef MVME165
+	if (cputyp == CPU_165)
+		sc->sc_clockregs = (void *)(sc->sc_vaddr + maplen -
+		    sizeof(struct clockreg_165));
+	else
+#endif
+		sc->sc_clockregs = (void *)(sc->sc_vaddr + sc->sc_len -
+		    sizeof(struct clockreg));
 
 	printf(": MK48T0%d len %d\n", sc->sc_len / 1024, sc->sc_len);
 }
@@ -264,7 +283,6 @@ inittodr(base)
 	time_t base;
 {
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
-	register struct clockreg *cl = sc->sc_regs;
 	int sec, min, hour, day, mon, year;
 	int badbase = 0, waszero = base == 0;
 
@@ -279,14 +297,34 @@ inittodr(base)
 		base = 21*SECYR + 186*SECDAY + SECDAY/2;
 		badbase = 1;
 	}
-	cl->cl_csr |= CLK_READ;	 /* enable read (stop time) */
-	sec = cl->cl_sec;
-	min = cl->cl_min;
-	hour = cl->cl_hour;
-	day = cl->cl_mday;
-	mon = cl->cl_month;
-	year = cl->cl_year;
-	cl->cl_csr &= ~CLK_READ;	/* time wears on */
+
+#ifdef MVME165
+	if (cputyp == CPU_165) {
+		struct clockreg_165 *cl = sc->sc_clockregs;
+
+		cl->cl_csr |= CLK_READ;	 /* enable read (stop time) */
+		sec = cl->cl_sec;
+		min = cl->cl_min;
+		hour = cl->cl_hour;
+		day = cl->cl_mday;
+		mon = cl->cl_month;
+		year = cl->cl_year;
+		cl->cl_csr &= ~CLK_READ;	/* time wears on */
+	} else
+#endif
+	{
+		struct clockreg *cl = sc->sc_clockregs;
+
+		cl->cl_csr |= CLK_READ;	 /* enable read (stop time) */
+		sec = cl->cl_sec;
+		min = cl->cl_min;
+		hour = cl->cl_hour;
+		day = cl->cl_mday;
+		mon = cl->cl_month;
+		year = cl->cl_year;
+		cl->cl_csr &= ~CLK_READ;	/* time wears on */
+	}
+
 	if ((time.tv_sec = chiptotime(sec, min, hour, day, mon, year)) == 0) {
 		printf("WARNING: bad date in nvram");
 		/*
@@ -319,21 +357,40 @@ void
 resettodr()
 {
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[0];
-	register struct clockreg *cl = sc->sc_regs;
 	struct chiptime c;
 
-	if (!time.tv_sec || cl == NULL)
+	if (!time.tv_sec || sc->sc_clockregs == NULL)
 		return;
 	timetochip(&c);
-	cl->cl_csr |= CLK_WRITE;	/* enable write */
-	cl->cl_sec = c.sec;
-	cl->cl_min = c.min;
-	cl->cl_hour = c.hour;
-	cl->cl_wday = c.wday;
-	cl->cl_mday = c.day;
-	cl->cl_month = c.mon;
-	cl->cl_year = c.year;
-	cl->cl_csr &= ~CLK_WRITE;	/* load them up */
+
+#ifdef MVME165
+	if (cputyp == CPU_165) {
+		struct clockreg_165 *cl = sc->sc_clockregs;
+
+		cl->cl_csr |= CLK_WRITE;	/* enable write */
+		cl->cl_sec = c.sec;
+		cl->cl_min = c.min;
+		cl->cl_hour = c.hour;
+		cl->cl_wday = c.wday;
+		cl->cl_mday = c.day;
+		cl->cl_month = c.mon;
+		cl->cl_year = c.year;
+		cl->cl_csr &= ~CLK_WRITE;	/* load them up */
+	} else
+#endif
+	{
+		struct clockreg *cl = sc->sc_clockregs;
+
+		cl->cl_csr |= CLK_WRITE;	/* enable write */
+		cl->cl_sec = c.sec;
+		cl->cl_min = c.min;
+		cl->cl_hour = c.hour;
+		cl->cl_wday = c.wday;
+		cl->cl_mday = c.day;
+		cl->cl_month = c.mon;
+		cl->cl_year = c.year;
+		cl->cl_csr &= ~CLK_WRITE;	/* load them up */
+	}
 }
 
 /*ARGSUSED*/
@@ -346,6 +403,11 @@ nvramopen(dev, flag, mode, p)
 	if (minor(dev) >= nvram_cd.cd_ndevs ||
 	    nvram_cd.cd_devs[minor(dev)] == NULL)
 		return (ENODEV);
+#ifdef MVME165
+	/* for now, do not allow userland to access the nvram on 165. */
+	if (cputyp == CPU_165)
+		return (ENXIO);
+#endif
 	return (0);
 }
 

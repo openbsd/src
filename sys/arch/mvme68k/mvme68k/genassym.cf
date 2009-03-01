@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.21 2009/02/18 20:48:02 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.22 2009/03/01 21:40:49 miod Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -113,16 +113,21 @@ member	emem
 
 export	INTIOBASE_147
 export	INTIOBASE_162
+export	INTIOBASE_165
 export	INTIOSIZE_147
 export	INTIOSIZE_162
+export	INTIOSIZE_165
 
 export	CPU_147
 export	CPU_162
+export	CPU_165
 export	CPU_166
 export	CPU_167
 export	CPU_172
+export	CPU_176
 export	CPU_177
 
+export	BUS_LRC
 export	BUS_MC
 export	BUS_PCC
 export	BUS_PCCTWO

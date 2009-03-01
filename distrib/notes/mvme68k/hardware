@@ -1,7 +1,8 @@
-dnl	$OpenBSD: hardware,v 1.17 2009/02/18 20:50:58 miod Exp $
+dnl	$OpenBSD: hardware,v 1.18 2009/03/01 21:40:48 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- MVME147 - Motorola with 68030 and 68881
 	- MVME162 - Motorola with 68040 and IndustryPack slots
+	- MVME165 - Motorola with 68040 and VSB interface
 	- MVME167 - Motorola with 68040
 dnl 172 support is not tested
 	- MVME172 - Motorola with 68060 and IndustryPack slots
@@ -22,11 +23,17 @@ MVME147:
 	SCSI:
 		on-board WD33C93 controller (wdsc)
 	VMEbus:
-		not supported (some cards have issues)
+		partially supported (some cards have issues)
+
+MVME165:
+	serial ports:
+		on-board ttyd0 - ttyd1 - MC68681 (dart)
+	VMEbus:
+		supported
 
 MVME162, MVME172:
 	serial ports:
-		on-board tty00-03 - Zilog Z85230 SCC (zs)
+		on-board ttya-ttyd - Zilog Z85230 SCC (zs)
 	Ethernet:
 		on-board Intel 82596CA Ethernet (ie)
 	SCSI:

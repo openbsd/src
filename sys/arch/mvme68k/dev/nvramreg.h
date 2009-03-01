@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvramreg.h,v 1.4 2003/06/02 23:27:50 millert Exp $ */
+/*	$OpenBSD: nvramreg.h,v 1.5 2009/03/01 21:40:49 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,13 +52,34 @@ struct clockreg {
 	volatile u_char	cl_year;	/* year (0..99; BCD) */
 };
 
+/*
+ * MK48T08 clock registers as found on MVME165 (sparse layout)
+ */
+struct clockreg_165 {
+	volatile u_char __cl_pad0[3];
+	volatile u_char	cl_csr;		/* control register */
+	volatile u_char __cl_pad1[3];
+	volatile u_char	cl_sec;		/* seconds (0..59; BCD) */
+	volatile u_char __cl_pad2[3];
+	volatile u_char	cl_min;		/* minutes (0..59; BCD) */
+	volatile u_char __cl_pad3[3];
+	volatile u_char	cl_hour;	/* hour (0..23; BCD) */
+	volatile u_char __cl_pad4[3];
+	volatile u_char	cl_wday;	/* weekday (1..7) */
+	volatile u_char __cl_pad5[3];
+	volatile u_char	cl_mday;	/* day in month (1..31; BCD) */
+	volatile u_char __cl_pad6[3];
+	volatile u_char	cl_month;	/* month (1..12; BCD) */
+	volatile u_char __cl_pad7[3];
+	volatile u_char	cl_year;	/* year (0..99; BCD) */
+};
+
 /* bits in cl_csr */
 #define	CLK_WRITE	0x80		/* want to write */
 #define	CLK_READ	0x40		/* want to read (freeze clock) */
 
 /*
  * Motorola chose the year `1900' as their base count.
- * XXX what happens when it wraps?
  */
 #define	YEAR0	0
 

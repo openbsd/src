@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.30 2009/02/17 22:28:38 miod Exp $
+#	$OpenBSD: GENERIC,v 1.31 2009/03/01 21:40:49 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -21,9 +21,10 @@ option		M060SP		# ...and MC68060 support package
 
 option		MVME147		# (requires M68030)
 option		MVME162		# (requires M68040, FPSP)
+option		MVME165		# (requires M68040, FPSP)
 option		MVME167		# includes 166 (requires M68040, FPSP)
 option		MVME172		# (requires M68060, 060SP, FPSP)
-option		MVME177		# (requires M68060, 060SP, FPSP)
+option		MVME177		# includes 176 (requires M68060, 060SP, FPSP)
 
 option		COMPAT_SUNOS
 option		COMPAT_HPUX
@@ -44,7 +45,7 @@ wdsc0	at pcc0 offset 0x4000 ipl 2
 lp0	at pcc0 ipl 1
 vme0	at pcc0 offset 0x2000
 
-# MVME162
+# MVME162/172
 mc0	at mainbus0 addr 0xfff00000
 clock0	at mc0 ipl 5
 nvram0	at mc0 offset 0xc0000
@@ -62,7 +63,15 @@ sram0	at mainbus0 addr 0xffe00000
 # IndustryPack modules
 #fooip*	at ipic? manu 0x11 prod 0x22 ipl 1
 
-# MVME166/167/177
+# MVME165
+lrc0	at mainbus0 addr 0xfff90000
+clock0	at lrc0 ipl 5
+#vsb0	at lrc0 offset 0x10000 ipl 4
+vme0	at lrc0 offset 0x20000
+nvram0	at lrc0 offset 0x30000
+dart0	at lrc0 offset 0x40000 ipl 5
+
+# MVME166/167/176/177
 pcctwo0 at mainbus0 addr 0xfff00000
 clock0	at pcctwo0 ipl 5
 nvram0	at pcctwo0 offset 0xc0000

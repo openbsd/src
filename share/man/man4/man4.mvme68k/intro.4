@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.25 2009/02/17 22:32:36 miod Exp $
+.\"	$OpenBSD: intro.4,v 1.26 2009/03/01 21:40:49 miod Exp $
 .\" Copyright (c) 1990, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)intro.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: February 17 2009 $
+.Dd $Mdocdate: March 1 2009 $
 .Dt INTRO 4 mvme68k
 .Os
 .Sh NAME
@@ -99,20 +99,25 @@ Not all supported devices are listed.
 .Bl -tag -width pcctwo(4) -compact -offset indent
 .It Xr cl
 Cirrus Logic CL2400 serial controller
+.It Xr dart
+MC68681 serial controller
 .It Xr flash
 MVME162 on-board flash memory
 .It Xr ie 4
-Intel i82586 Ethernet device
+Intel i82596 Ethernet device
 .It Xr ipic
 MVME162 Industry Pack ports
 .It Xr le 4
 AMD LANCE Ethernet device
 .It Xr lp
 MVME147 printer interface
+.It Xr lrc
+MVME165 Local Resource Controller
 .It Xr mc
-MVME162 MCchip
+MVME1[67]2 MCchip
 .It Xr memc
 MVME1[67]x memory controller
+.\" nvram
 .It Xr osiop 4
 Symbios/NCR 53C710 SCSI driver
 .It Xr pcc
@@ -120,7 +125,7 @@ MVME147 PCC chip
 .It Xr pcctwo
 MVME1[67]7 PCC2 chip
 .It Xr sram
-MVME162 static memory
+MVME1[67]2 static memory
 .It Xr vme
 VME bus support
 .It Xr vs 4

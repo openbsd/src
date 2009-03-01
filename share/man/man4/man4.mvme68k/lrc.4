@@ -1,6 +1,6 @@
-.\"     $OpenBSD: ie.4,v 1.9 2009/03/01 21:40:49 miod Exp $
+.\"	$OpenBSD: lrc.4,v 1.1 2009/03/01 21:40:49 miod Exp $
 .\"
-.\" Copyright (c) 1988 John E. Stone <j.stone@acm.org>
+.\" Copyright (c) 2009 Miodrag Vallat.
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,25 +15,23 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: March 1 2009 $
-.Dt IE 4 mvme68k
+.Dt LRC 4 mvme68k
 .Os
 .Sh NAME
-.Nm ie
-.Nd Intel i82596 Ethernet device
+.Nm lrc
+.Nd Local Resource Controller
 .Sh SYNOPSIS
-.Cd "ie0 at mc0 offset 0x46000 ipl 1" Pq "MVME162/172"
-.Cd "ie0 at pcctwo0 offset 0x46000 ipl 1" Pq "MVME167/177"
+.Cd "lrc0 at mainbus0 addr 0xfff90000"
 .Sh DESCRIPTION
 The
 .Nm
-interface provides access to the 10 Mb/s Ethernet network via the
-.Tn Intel
-82596
-Ethernet chip set.
+ASIC provides address decoding for the local peripherals,
+as well as timers and interrupt handling facilities,
+and is found on the MVME165 Single-Board Computers.
 .Sh SEE ALSO
-.Xr arp 4 ,
-.Xr inet 4 ,
+.\" .Xr clock 4 ,
+.\" .Xr dart 4 ,
 .Xr intro 4 ,
-.Xr netintro 4 ,
-.Xr hostname.if 5 ,
-.Xr ifconfig 8
+.\" .Xr nvram 4
+.\" .Xr vsb 4
+.\" .Xr vme 4
