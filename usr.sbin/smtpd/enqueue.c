@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.9 2009/02/22 11:44:29 form Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.10 2009/03/01 12:10:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -160,11 +160,11 @@ enqueue_add_recipient(struct message *messagep, char *recipient)
 	message.session_rcpt = message.recipient;
 
 	mr.ss.ss_family = AF_INET6;
-	mr.ss.ss_len = sizeof(ssin6);
+	mr.ss.ss_len = sizeof(*ssin6);
 	ssin6 = (struct sockaddr_in6 *)&mr.ss;
 	if (inet_pton(AF_INET6, "::1", &ssin6->sin6_addr) != 1) {
 		mr.ss.ss_family = AF_INET;
-		mr.ss.ss_len = sizeof(ssin);
+		mr.ss.ss_len = sizeof(*ssin);
 		ssin = (struct sockaddr_in *)&mr.ss;
 		if (inet_pton(AF_INET, "127.0.0.1", &ssin->sin_addr) != 1)
 			return 0;
