@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.37 2009/03/01 21:36:50 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.38 2009/03/01 21:58:53 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -943,7 +943,7 @@ int
 parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 {
 	int fd;
-	int mode = O_CREAT|O_APPEND|O_RDWR|O_EXLOCK|O_NONBLOCK;
+	int mode = O_CREAT|O_APPEND|O_RDWR|O_EXLOCK|O_NONBLOCK|O_NOFOLLOW;
 
 	if (! parent_mailbox_init(pw, path)) {
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
@@ -965,23 +965,28 @@ parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 		case EMFILE:
 		case ENFILE:
 		case ENOSPC:
-			batchp->message.status |= S_MESSAGE_TEMPFAILURE;
-			break;
+			goto tempfail;
 		case EWOULDBLOCK:
-			goto lockfail;
+			batchp->message.status |= S_MESSAGE_LOCKFAILURE;
+			goto tempfail;
 		default:
 			batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		}
 		return -1;
 	}
 
+	if (! secure_file(fd, path, pw)) {
+		log_warnx("refusing delivery to unsecure path: %s", path);
+		goto tempfail;
+	}
+
 	return fd;
 
-lockfail:
+tempfail:
 	if (fd != -1)
 		close(fd);
 
-	batchp->message.status |= S_MESSAGE_TEMPFAILURE|S_MESSAGE_LOCKFAILURE;
+	batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 	return -1;
 }
 

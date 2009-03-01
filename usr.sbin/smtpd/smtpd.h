@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.78 2009/03/01 12:12:58 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.79 2009/03/01 21:58:53 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -912,3 +912,4 @@ int		 valid_domainpart(char *);
 char		*ss_to_text(struct sockaddr_storage *);
 int		 valid_message_id(char *);
 int		 valid_message_uid(char *);
+int		 secure_file(int, char *, struct passwd *);

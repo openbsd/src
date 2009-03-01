@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2009/02/24 12:07:47 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.16 2009/03/01 21:58:53 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -21,13 +21,16 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #include <ctype.h>
 #include <errno.h>
 #include <event.h>
+#include <libgen.h>
 #include <netdb.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -257,4 +260,54 @@ valid_message_uid(char *muid)
 			return 0;
 
 	return (cnt != 0);
+}
+
+/*
+ * Check file for security. Based on usr.bin/ssh/auth.c.
+ */
+int
+secure_file(int fd, char *path, struct passwd *pw)
+{
+	char		 buf[MAXPATHLEN];
+	char		 homedir[MAXPATHLEN];
+	struct stat	 st;
+	char		*cp;
+
+	if (realpath(path, buf) == NULL)
+		return 0;
+
+	if (realpath(pw->pw_dir, homedir) == NULL)
+		homedir[0] = '\0';
+
+	/* Check the open file to avoid races. */
+	if (fstat(fd, &st) < 0 ||
+	    !S_ISREG(st.st_mode) ||
+	    (st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
+	    (st.st_mode & 066) != 0)
+		return 0;
+
+	/* For each component of the canonical path, walking upwards. */
+	for (;;) {
+		if ((cp = dirname(buf)) == NULL)
+			return 0;
+		strlcpy(buf, cp, sizeof(buf));
+
+		if (stat(buf, &st) < 0 ||
+		    (st.st_uid != 0 && st.st_uid != pw->pw_uid) ||
+		    (st.st_mode & 022) != 0)
+			return 0;
+
+		/* We can stop checking after reaching homedir level. */
+		if (strcmp(homedir, buf) == 0)
+			break;
+
+		/*
+		 * dirname should always complete with a "/" path,
+		 * but we can be paranoid and check for "." too
+		 */
+		if ((strcmp("/", buf) == 0) || (strcmp(".", buf) == 0))
+			break;
+	}
+
+	return 1;
 }
