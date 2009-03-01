@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.29 2007/05/31 19:19:49 jmc Exp $
+.\"	$OpenBSD: bpf.4,v 1.30 2009/03/01 18:59:50 otto Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 1 2009 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -78,16 +78,6 @@ and can be set with
 .Dv BIOCSBLEN .
 Note that an individual packet larger than this size is necessarily truncated.
 .Pp
-The packet filter will support any link level protocol that has fixed length
-headers.
-Currently, only Ethernet, SLIP, and PPP drivers have been modified to
-interact with
-.Nm bpf .
-.Pp
-Since packet data is in network byte order, applications should use the
-.Xr byteorder 3
-macros to extract multi-byte values.
-.Pp
 A packet can be sent out on the network by writing to a
 .Nm
 file descriptor.
@@ -141,7 +131,7 @@ The buffer must be set before the file is attached to an interface with
 If the requested buffer size cannot be accommodated, the closest allowable
 size will be set and returned in the argument.
 A read call will result in
-.Er EIO
+.Er EINVAL
 if it is passed a buffer that is not this size.
 .Pp
 .It Dv BIOCGDLT Fa "u_int *"
@@ -282,7 +272,7 @@ Additionally, performs the actions of
 .Pp
 .It Dv BIOCSRTIMEOUT Fa "struct timeval *"
 .It Dv BIOCGRTIMEOUT Fa "struct timeval *"
-Set or get the read timeout parameter.
+Sets or gets the read timeout parameter.
 The
 .Ar timeval
 specifies the length of time to wait before timing out on a read request.
@@ -311,7 +301,7 @@ with the packet traffic).
 .El
 .Pp
 .It Dv BIOCIMMEDIATE Fa "u_int *"
-Enable or disable
+Enables or disables
 .Dq immediate mode ,
 based on the truth value of the argument.
 When immediate mode is enabled, reads return immediately upon packet reception.
@@ -328,7 +318,7 @@ An array of instructions and its length are passed in using the following
 structure:
 .Bd -literal -offset indent
 struct bpf_program {
-	int bf_len;
+	u_int bf_len;
 	struct bpf_insn *bf_insns;
 };
 .Ed
@@ -392,7 +382,7 @@ or haphazard packet matching).
 .Pp
 .It Dv BIOCSRSIG Fa "u_int *"
 .It Dv BIOCGRSIG Fa "u_int *"
-Set or get the receive signal.
+Sets or gets the receive signal.
 This signal will be sent to the process or process group specified by
 .Dv FIOSETOWN .
 It defaults to
@@ -400,7 +390,7 @@ It defaults to
 .Pp
 .It Dv BIOCSHDRCMPLT Fa "u_int *"
 .It Dv BIOCGHDRCMPLT Fa "u_int *"
-Set or get the status of the
+Sets or gets the status of the
 .Dq header complete
 flag.
 Set to zero if the link level source address should be filled in
@@ -409,17 +399,17 @@ Set to one if the link level source address will be written,
 as provided, to the wire.
 This flag is initialized to zero by default.
 .Pp
-.It Dv BIOCGFILDROP Fa "u_int *"
 .It Dv BIOCSFILDROP Fa "u_int *"
-Get or set the status of the
+.It Dv BIOCGFILDROP Fa "u_int *"
+Sets or gets the status of the
 .Dq filter drop
 flag.
 If non-zero, packets matching any filters will be reported to the
 associated interface so that they can be dropped.
 .Pp
-.It Dv BIOCGDIRFILT Fa "u_int *"
 .It Dv BIOCSDIRFILT Fa "u_int *"
-Get or set the status of the
+.It Dv BIOCGDIRFILT Fa "u_int *"
+Sets or gets the status of the
 .Dq direction filter
 flag.
 If non-zero, packets matching the specified direction (either
@@ -443,7 +433,7 @@ Returns the number of bytes that are immediately available for reading.
 Returns the address associated with the interface.
 .Pp
 .It Dv FIONBIO Fa "int *"
-Set or clear non-blocking I/O.
+Sets or clears non-blocking I/O.
 If the argument is non-zero, enable non-blocking I/O.
 If the argument is zero, disable non-blocking I/O.
 If non-blocking I/O is enabled, the return value of a read while no data
@@ -458,7 +448,7 @@ Note: setting this overrides the timeout set by
 .Dv BIOCSRTIMEOUT .
 .Pp
 .It Dv FIOASYNC Fa "int *"
-Enable or disable asynchronous I/O.
+Enables or disables asynchronous I/O.
 When enabled (argument is non-zero), the process or process group specified
 by
 .Dv FIOSETOWN
@@ -474,7 +464,7 @@ The signal may be changed via
 .Pp
 .It Dv FIOSETOWN Fa "int *"
 .It Dv FIOGETOWN Fa "int *"
-Set or get the process or process group (if negative) that should receive
+Sets or gets the process or process group (if negative) that should receive
 .Dv SIGIO
 when packets are available.
 The signal may be changed using
@@ -1065,5 +1055,3 @@ This could be fixed in the kernel with additional processing overhead.
 However, we favor the model where all files must assume that the interface
 is promiscuous, and if so desired, must utilize a filter to reject foreign
 packets.
-.Pp
-Data link protocols with variable length headers are not currently supported.
