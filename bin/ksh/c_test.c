@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.17 2005/03/30 17:16:37 deraadt Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.18 2009/03/01 20:11:06 otto Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -457,15 +457,23 @@ test_primary(Test_env *te, int do_eval)
 		}
 		return res;
 	}
-	if ((op = (Test_op) (*te->isa)(te, TM_UNOP))) {
-		/* unary expression */
-		opnd1 = (*te->getopnd)(te, op, do_eval);
-		if (!opnd1) {
-			(*te->error)(te, -1, "missing argument");
-			return 0;
-		}
+	/*
+	 * Binary should have precedence over unary in this case
+	 * so that something like test \( -f = -f \) is accepted
+	 */
+	if ((te->flags & TEF_DBRACKET) || (&te->pos.wp[1] < te->wp_end &&
+	    !test_isop(te, TM_BINOP, te->pos.wp[1]))) {
+		if ((op = (Test_op) (*te->isa)(te, TM_UNOP))) {
+			/* unary expression */
+			opnd1 = (*te->getopnd)(te, op, do_eval);
+			if (!opnd1) {
+				(*te->error)(te, -1, "missing argument");
+				return 0;
+			}
 
-		return (*te->eval)(te, op, opnd1, (const char *) 0, do_eval);
+			return (*te->eval)(te, op, opnd1, (const char *) 0,
+			    do_eval);
+		}
 	}
 	opnd1 = (*te->getopnd)(te, TO_NONOP, do_eval);
 	if (!opnd1) {

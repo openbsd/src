@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.9 2006/04/25 04:39:04 deraadt Exp $	*/
+/*	$OpenBSD: test.c,v 1.10 2009/03/01 20:11:06 otto Exp $	*/
 /*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
 
 /*
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: test.c,v 1.9 2006/04/25 04:39:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: test.c,v 1.10 2009/03/01 20:11:06 otto Exp $";
 #endif
 
 #include <sys/types.h>
@@ -143,6 +143,7 @@ char **t_wp;
 struct t_op const *t_wp_op;
 
 static enum token t_lex(char *);
+static enum token t_lex_type(char *);
 static int oexpr(enum token n);
 static int aexpr(enum token n);
 static int nexpr(enum token n);
@@ -260,6 +261,16 @@ primary(enum token n)
 			syntax(NULL, "closing paren expected");
 		return res;
 	}
+	/*
+	 * We need this, if not binary operations with more than 4
+	 * arguments will always fall into unary.
+	 */
+	if(t_lex_type(t_wp[1]) == BINOP) {
+		t_lex(t_wp[1]);
+		if (t_wp_op && t_wp_op->op_type == BINOP)
+			return binop();
+	}
+
 	if (t_wp_op && t_wp_op->op_type == UNOP) {
 		/* unary expression */
 		if (*++t_wp == NULL)
@@ -274,10 +285,6 @@ primary(enum token n)
 		default:
 			return filstat(*t_wp, n);
 		}
-	}
-
-	if (t_lex(t_wp[1]), t_wp_op && t_wp_op->op_type == BINOP) {
-		return binop();
 	}
 
 	return strlen(*t_wp) > 0;
@@ -325,6 +332,22 @@ binop(void)
 		return equalf(opnd1, opnd2);
 	}
 	/* NOTREACHED */
+}
+
+static enum token
+t_lex_type(char *s)
+{
+	struct t_op const *op = ops;
+
+	if (s == NULL)
+		return -1;
+
+	while (op->op_text) {
+		if (strcmp(s, op->op_text) == 0)
+			return op->op_type;
+		op++;
+	}
+	return -1;
 }
 
 static int
