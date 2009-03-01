@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.56 2009/02/22 19:07:33 chl Exp $	*/
+/*	$OpenBSD: queue.c,v 1.57 2009/03/01 12:12:58 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -152,7 +152,9 @@ queue_dispatch_control(int sig, short event, void *p)
 			ss.id = messagep->session_id;
 
 			ss.code = 250;
-			if (! enqueue_commit_message(messagep))
+			if (enqueue_commit_message(messagep))
+				s_queue.inserts_local++;
+			else
 				ss.code = 421;
 
 			imsg_compose(ibuf, IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1,
@@ -245,9 +247,9 @@ queue_dispatch_smtp(int sig, short event, void *p)
 			messagep = imsg.data;
 			ss.id = messagep->session_id;
 
-			s_queue.inserts++;
-
-			if (! queue_commit_incoming_message(messagep))
+			if (queue_commit_incoming_message(messagep))
+				s_queue.inserts_remote++;
+			else
 				ss.code = 421;
 
 			imsg_compose(ibuf, IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1,
