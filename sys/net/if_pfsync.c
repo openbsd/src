@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.113 2009/03/01 10:34:38 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.114 2009/03/01 11:24:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -628,7 +628,8 @@ pfsync_input(struct mbuf *m, ...)
 	pfsyncstats.pfsyncs_ipackets++;
 
 	/* verify that we have a sync interface configured */
-	if (!sc || !sc->sc_sync_if || !pf_status.running)
+	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING) ||
+	    sc->sc_sync_if == NULL || !pf_status.running)
 		goto done;
 
 	/* verify that the packet came in on the right interface */
@@ -1365,8 +1366,18 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP)
 			ifp->if_flags |= IFF_RUNNING;
-		else
+		else {
 			ifp->if_flags &= ~IFF_RUNNING;
+
+			/* drop everything */
+			timeout_del(&sc->sc_tmo);
+			pfsync_drop(sc);
+
+			/* cancel bulk update */
+			timeout_del(&sc->sc_bulk_tmo);
+			sc->sc_bulk_next = NULL;
+			sc->sc_bulk_last = NULL;
+		}
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu <= PFSYNC_MINPKT)
@@ -1603,10 +1614,11 @@ pfsync_sendout(void)
 	if (sc == NULL || sc->sc_len == PFSYNC_MINPKT)
 		return;
 
+	if (!ISSET(sc->sc_if.if_flags, IFF_RUNNING) ||
 #if NBPFILTER > 0
-	if (ifp->if_bpf == NULL && sc->sc_sync_if == NULL) {
+	    (ifp->if_bpf == NULL && sc->sc_sync_if == NULL)) {
 #else
-	if (sc->sc_sync_if == NULL) {
+	    sc->sc_sync_if == NULL) {
 #endif
 		pfsync_drop(sc);
 		return;
@@ -1774,7 +1786,8 @@ pfsync_insert_state(struct pf_state *st)
 		return;
 	}
 
-	if (sc == NULL || ISSET(st->state_flags, PFSTATE_NOSYNC))
+	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING) ||
+	    ISSET(st->state_flags, PFSTATE_NOSYNC))
 		return;
 
 #ifdef PFSYNC_DEBUG
@@ -1884,7 +1897,7 @@ pfsync_update_state(struct pf_state *st)
 
 	splassert(IPL_SOFTNET);
 
-	if (sc == NULL)
+	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING))
 		return;
 
 	if (ISSET(st->state_flags, PFSTATE_ACK))
@@ -2006,7 +2019,7 @@ pfsync_delete_state(struct pf_state *st)
 
 	splassert(IPL_SOFTNET);
 
-	if (sc == NULL)
+	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING))
 		return;
 
 	if (ISSET(st->state_flags, PFSTATE_ACK))
@@ -2045,16 +2058,15 @@ pfsync_delete_state(struct pf_state *st)
 void
 pfsync_clear_states(u_int32_t creatorid, const char *ifname)
 {
+	struct pfsync_softc *sc = pfsyncif;
 	struct {
 		struct pfsync_subheader subh;
 		struct pfsync_clr clr;
 	} __packed r;
 
-	struct pfsync_softc *sc = pfsyncif;
-
 	splassert(IPL_SOFTNET);
 
-	if (sc == NULL)
+	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING))
 		return;
 
 	bzero(&r, sizeof(r));
