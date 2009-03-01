@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.37 2009/02/27 05:19:36 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.38 2009/03/01 17:44:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -101,11 +101,6 @@ void	m197_startup(void);
 
 vaddr_t obiova;
 vaddr_t flashva;
-
-#define	CI_IPI_MASKABLE \
-	(CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK)
-#define	CI_IPI_COMPLEX \
-	(CI_IPI_CACHE_FLUSH | CI_IPI_ICACHE_FLUSH | CI_IPI_DMA_CACHECTL)
 
 /*
  * Figure out how much real memory is available.
@@ -439,6 +434,15 @@ m197_bootstrap()
 
 #ifdef MULTIPROCESSOR
 
+/*
+ * IPIs groups
+ */
+#define	CI_IPI_CLOCK \
+	(CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK)
+#define	CI_IPI_SYNCHRONOUS \
+	(CI_IPI_TLB_FLUSH_KERNEL | CI_IPI_TLB_FLUSH_USER | \
+	 CI_IPI_CACHE_FLUSH | CI_IPI_ICACHE_FLUSH | CI_IPI_DMA_CACHECTL)
+
 void
 m197_send_ipi(int ipi, cpuid_t cpu)
 {
@@ -455,7 +459,10 @@ m197_send_ipi(int ipi, cpuid_t cpu)
 
 	atomic_setbits_int(&ci->ci_ipi, ipi);
 
-	*(volatile u_int8_t *)(BS_BASE + BS_CPINT) |= BS_CPI_SCPI;
+	if (ipi & CI_IPI_SYNCHRONOUS)
+		m197_send_complex_ipi(ipi, cpu, 0, 0);
+	else
+		*(volatile u_int8_t *)(BS_BASE + BS_CPINT) |= BS_CPI_SCPI;
 }
 
 void
@@ -544,20 +551,26 @@ m197_ipi_handler(struct trapframe *eframe)
 		return 1;
 
 	/*
-	 * Complex IPIs (with extra arguments). There can only be one
-	 * pending at the same time, sending processor will wait for us
-	 * to have processed the current one before sending a new one.
-	 * We process them ASAP, ignoring any other ipi - sender will
+	 * Synchronous IPIs. There can only be one pending at the same time,
+	 * sending processor will wait for us to have processed the current
+	 * one before sending a new one.
+	 * We process them ASAP, ignoring any other pending ipi - sender will
 	 * take care of resending an ipi if necessary.
 	 */
-	if (ipi & CI_IPI_COMPLEX) {
+	if (ipi & CI_IPI_SYNCHRONOUS) {
 		/* no need to use atomic ops, the other cpu waits */
-		ci->ci_ipi &= ~ipi;
+		ci->ci_ipi &= ~CI_IPI_SYNCHRONOUS;
 
 		arg1 = ci->ci_ipi_arg1;
 		arg2 = ci->ci_ipi_arg2;
 
-		if (ipi & CI_IPI_CACHE_FLUSH) {
+		if (ipi & CI_IPI_TLB_FLUSH_KERNEL) {
+			cmmu_flush_tlb(ci->ci_cpuid, 1, 0, 0);
+		}
+		else if (ipi & CI_IPI_TLB_FLUSH_USER) {
+			cmmu_flush_tlb(ci->ci_cpuid, 0, 0, 0);
+		}
+		else if (ipi & CI_IPI_CACHE_FLUSH) {
 			cmmu_flush_cache(ci->ci_cpuid, arg1, arg2);
 		}
 		else if (ipi & CI_IPI_ICACHE_FLUSH) {
@@ -571,9 +584,13 @@ m197_ipi_handler(struct trapframe *eframe)
 		return 0;
 	}
 
+	/*
+	 * Asynchronous IPIs. We can have as many bits set as possible.
+	 */
+
 	atomic_clearbits_int(&ci->ci_ipi, ipi);
 
-	if (ipi & CI_IPI_MASKABLE) {
+	if (ipi & CI_IPI_CLOCK) {
 		/*
 		 * Even if the current spl level would allow it, we can
 		 * not run the clock handlers from there because we would
@@ -597,15 +614,6 @@ m197_ipi_handler(struct trapframe *eframe)
 		setsoftipi(ci);
 	}
 
-	/*
-	 * Regular, simple, IPIs. We can have as many bits set as possible.
-	 */
-	if (ipi & CI_IPI_TLB_FLUSH_KERNEL) {
-		cmmu_flush_tlb(ci->ci_cpuid, 1, 0, 0);
-	}
-	if (ipi & CI_IPI_TLB_FLUSH_USER) {
-		cmmu_flush_tlb(ci->ci_cpuid, 0, 0, 0);
-	}
 	if (ipi & CI_IPI_DDB) {
 #ifdef DDB
 		/*
