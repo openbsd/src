@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.48 2009/02/25 16:43:05 beck Exp $
+.\"	$OpenBSD: queue.3,v 1.49 2009/03/01 10:28:55 jmc Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: February 25 2009 $
+.Dd $Mdocdate: March 1 2009 $
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -921,7 +921,7 @@ while (np = TAILQ_FIRST(&head)) {
 	TAILQ_REMOVE(&head, np, entries);
 	free(np);
 }
-	
+
 .Ed
 .Sh CIRCULAR QUEUES
 A circular queue is headed by a structure defined by the
@@ -1064,7 +1064,7 @@ CIRCLEQ_FOREACH_REVERSE(np, &head, entries)
 	np-> ...
 					/* Delete. */
 while (!CIRCLEQ_EMPTY(&head)) {
-	n1 = CIRCLEQ_FIRST(&head);	
+	n1 = CIRCLEQ_FIRST(&head);
 	CIRCLEQ_REMOVE(&head, n1, entries);
 	free(n1);
 }
