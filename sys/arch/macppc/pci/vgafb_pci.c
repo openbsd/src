@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.19 2007/11/05 19:24:31 martin Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.20 2009/03/01 10:48:54 kettenis Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ vgafb_pci_probe(struct pci_attach_args *pa, int id, u_int32_t *ioaddr,
 				 * or mmio, we guess that memory is
 				 * the larger of the two.
 				 */ 
-				 if (*memaddr > size) {
+				 if (*memaddr >= size) {
 					/* this is the mmio */
 					*mmioaddr = addr;
 					/* ATI driver maps 0x80000 mmio, grr */
