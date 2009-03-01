@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.11 2008/06/26 05:42:04 ray Exp $
+#	$OpenBSD: install.md,v 1.12 2009/03/01 06:27:28 jsing Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -124,15 +124,19 @@ __EOT
 
 	cat <<__EOT
 
-You will now create an OpenBSD disklabel. The default disklabel must have
-an 'a' partition which is the space available for OpenBSD.
-The 'i' partition must be retained since it contains the Volume Header and
-the boot loader.
+You will now create an OpenBSD disklabel. The disklabel must have an
+'a' partition, being the space available for OpenBSD's root file system.
+The 'p' partition must be retained since it contains the SGI Volume Header;
+this in turn contains the boot loader. No other partitions should overlap
+with the SGI Volume Header, which by default will use the first 3134 sectors.
+
+Additionally, the 'a' partition must be the first partition on the disk,
+immediately following the SGI Volume Header. If the default SGI Volume Header
+size is used, the 'a' partition should be located at offset 3135. If the
+'a' partition is not located immediately after the SGI Volume Header the
+boot loader will not be able to locate and load the kernel.
 
 Do not change any parameters except the partition layout and the label name.
-Also, don't change the 'i' partition or start any other partition below the
-end of the 'i' partition. This is the Volume Header and destroying it will
-render the disk useless.
 
 __EOT
 	disklabel -W $_disk
