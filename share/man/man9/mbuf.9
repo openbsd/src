@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.42 2009/01/28 23:08:58 claudio Exp $
+.\"     $OpenBSD: mbuf.9,v 1.43 2009/03/02 23:37:08 blambert Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 28 2009 $
+.Dd $Mdocdate: March 2 2009 $
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -83,7 +83,6 @@
 .Ft int
 .Fn m_apply "struct mbuf *m" "int off" "int len" \
 "int (*func)(caddr_t, caddr_t, unsigned int)" "caddr_t fstate"
-.Fn MEXTMALLOC "struct mbuf *m" "int size" "int how"
 .Fn MCLGET "struct mbuf *m" "int how"
 .Fn MCLGETI "struct mbuf *m" "int how" "struct ifnet *ifp" "int len"
 .Fn MEXTADD "struct mbuf *m" "caddr_t buf" "u_int size" "int type" \
@@ -93,7 +92,6 @@
 .Fn M_READONLY "struct mbuf *m"
 .Fn M_LEADINGSPACE "struct mbuf *m"
 .Fn M_TRAILINGSPACE "struct mbuf *m"
-.Fn MCHTYPE "struct mbuf *m" "int type"
 .Pp
 .Bd -literal
 #define MLEN            (MSIZE - sizeof(struct m_hdr))
@@ -637,16 +635,6 @@ See
 .Fn m_get
 for a description of
 .Fa how .
-.It Fn MEXTMALLOC "struct mbuf *m" "int size" "int how"
-Allocate external storage of size
-.Fa size
-and add it to the mbuf pointed to by
-.Fa m .
-On success, the flag M_EXT is set in the mbuf.
-See
-.Fn m_get
-for a description of
-.Fa how .
 .It Fn MEXTADD "struct mbuf *m" "caddr_t buf" "u_int size" "int type" \
 "void (*free)(caddr_t, u_int, void *)" "void *arg"
 Add pre-allocated storage to the mbuf pointed to by
@@ -684,12 +672,6 @@ in the mbuf pointed to by
 .It Fn M_TRAILINGSPACE "struct mbuf *m"
 Compute the amount of space available after the end of data in the
 mbuf pointed to by
-.Fa m .
-.It Fn MCHTYPE "struct mbuf *m" "int type"
-Change the type of the mbuf pointed to by
-.Fa m
-to
-.Fa type .
 .El
 .Sh CODE REFERENCES
 The mbuf management functions are implemented in the files
