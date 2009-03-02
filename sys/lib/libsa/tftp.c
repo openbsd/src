@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.2 2004/04/02 04:39:51 deraadt Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.3 2009/03/02 00:00:56 krw Exp $	*/
 /*	$NetBSD: tftp.c,v 1.15 2003/08/18 15:45:29 dsl Exp $	 */
 
 /*
@@ -239,6 +239,7 @@ tftp_terminate(struct tftp_handle *h)
 	char           *wtail;
 
 	bzero(&wbuf, sizeof(wbuf));
+	wtail = (char *) &wbuf.t.th_data;
 
 	if (h->islastblock) {
 		wbuf.t.th_opcode = htons((u_short) ACK);
@@ -246,8 +247,8 @@ tftp_terminate(struct tftp_handle *h)
 	} else {
 		wbuf.t.th_opcode = htons((u_short) ERROR);
 		wbuf.t.th_code = htons((u_short) ENOSPACE); /* ??? */
+		wtail++; 	/* ERROR data is a string, thus needs NUL. */
 	}
-	wtail = (char *) &wbuf.t.th_data;
 
 	(void) sendudp(h->iodesc, &wbuf.t, wtail - (char *) &wbuf.t);
 }
