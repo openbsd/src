@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.16 2009/01/29 13:14:08 claudio Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.17 2009/03/02 14:39:24 claudio Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -261,7 +261,8 @@ rt_mpath_matchgate(struct rtentry *rt, struct sockaddr *gate, u_int8_t prio)
 			return rt;
 		if (!gate)
 			return NULL;
-
+		if (!rt->rt_gateway)
+			continue;
 		if (rt->rt_gateway->sa_len == gate->sa_len &&
 		    !memcmp(rt->rt_gateway, gate, gate->sa_len))
 			break;
