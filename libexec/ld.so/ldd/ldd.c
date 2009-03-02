@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.13 2008/06/25 02:51:08 kurt Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.14 2009/03/02 09:27:34 sobrado Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -84,7 +84,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s [-x] <filename> ...\n", __progname);
+	fprintf(stderr, "usage: %s [-x] program ...\n", __progname);
 	exit(1);
 }
 
