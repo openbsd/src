@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.118 2009/02/09 21:36:10 claudio Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.119 2009/03/02 23:52:18 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -393,7 +393,7 @@ m_clget(struct mbuf *m, int how, struct ifnet *ifp, u_int pktlen)
 	pi = m_clpool(pktlen);
 #ifdef DIAGNOSTIC
 	if (pi == -1)
-		panic("m_clget: request for %d sized cluster", pktlen);
+		panic("m_clget: request for %u byte cluster", pktlen);
 #endif
 
 	if (ifp != NULL && m_cldrop(ifp, pi))
