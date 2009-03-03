@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1457 2009/02/23 15:21:33 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1458 2009/03/03 07:58:59 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2061,6 +2061,7 @@
 #define	PCI_PRODUCT_IBM_MIAMI	0x0036		/* Miami/PCI */
 #define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Olympic */
 #define	PCI_PRODUCT_IBM_I82557B	0x0057		/* i82557B 10/100 */
+#define	PCI_PRODUCT_IBM_RSA	0x010f		/* RSA */
 #define	PCI_PRODUCT_IBM_FIREGL2	0x0170		/* FireGL2 */
 #define	PCI_PRODUCT_IBM_133PCIX	0x01a7		/* 133 PCIX-PCIX */
 #define	PCI_PRODUCT_IBM_SERVERAID2	0x01bd		/* ServeRAID */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1457 2009/02/23 15:21:33 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1458 2009/03/03 07:58:59 grange Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -6030,6 +6030,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_I82557B,
 	    "i82557B 10/100",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_RSA,
+	    "RSA",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_FIREGL2,
