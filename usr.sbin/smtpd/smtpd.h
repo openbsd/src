@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.81 2009/03/03 23:23:52 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.82 2009/03/03 23:33:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -639,6 +639,7 @@ struct lkasession {
 	u_int32_t			 pending;
 	enum lkasession_flags		 flags;
 	struct message			 message;
+	struct submit_status		 *ss;
 };
 
 struct smtpd {

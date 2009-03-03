@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.29 2009/03/03 23:23:52 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.30 2009/03/03 23:33:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -133,18 +133,23 @@ lka_dispatch_parent(int sig, short event, void *p)
 			if (! lkasession->pending && lkasession->flags & F_ERROR) {
 				log_debug("error in lka session");
 				/* we detected an error and this is last imsg */
-				//XXXXX clear aliaseslist and return temp fail
+				imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0,
+				    -1, lkasession->ss, sizeof(*lkasession->ss));
 				break;
 			}
 
 			if (fd == -1) {
 				if (fwreq->pw_name[0] != '\0') {
-					log_debug("error in forward open");
 					/* error id local, return a temporary fail */
+					log_debug("error in forward open");
+					lkasession->ss->code = 421;
+					imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0,
+					    -1, lkasession->ss, sizeof(*lkasession->ss));
 					break;
 				}
 			}
 			else if (! forwards_get(fd, &lkasession->aliaseslist)) {
+				lkasession->ss->code = 530;
 				lkasession->flags |= F_ERROR;
 			}
 
@@ -153,8 +158,10 @@ lka_dispatch_parent(int sig, short event, void *p)
 				++lkasession->iterations;
 				ret = lka_expand_aliases(env, &lkasession->aliaseslist, lkasession);
 				if (lkasession->pending) {
-					if (ret == -1)
+					if (ret == -1) {
+						lkasession->ss->code = 530;
 						lkasession->flags |= F_ERROR;
+					}
 					break;
 				}
 
@@ -171,6 +178,8 @@ lka_dispatch_parent(int sig, short event, void *p)
 					TAILQ_REMOVE(&lkasession->aliaseslist, alias, entry);
 					free(alias);
 				}
+				imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0,
+				    -1, lkasession->ss, sizeof(*lkasession->ss));
 				break;
 			}
 
@@ -308,6 +317,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			lkasession->id = queue_generate_id();
 			lkasession->path = ss->u.path;
 			lkasession->message = ss->msg;
+			lkasession->ss = ss;
 			TAILQ_INIT(&lkasession->aliaseslist);
 
 			SPLAY_INSERT(lkatree, &env->lka_sessions, lkasession);
@@ -345,8 +355,10 @@ lka_dispatch_mfa(int sig, short event, void *p)
 				++lkasession->iterations;
 				ret = lka_expand_aliases(env, &lkasession->aliaseslist, lkasession);
 				if (lkasession->pending) {
-					if (ret == -1)
+					if (ret == -1) {
+						lkasession->ss->code = 530;
 						lkasession->flags |= F_ERROR;
+					}
 					break;
 				}
 
@@ -363,6 +375,9 @@ lka_dispatch_mfa(int sig, short event, void *p)
 					TAILQ_REMOVE(&lkasession->aliaseslist, alias, entry);
 					free(alias);
 				}
+				ss->code = 530;
+				imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0,
+				    -1, ss, sizeof(*ss));
 				break;
 			}
 
