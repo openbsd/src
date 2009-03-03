@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1457 2009/02/23 15:21:33 jsg Exp $
+$OpenBSD: pcidevs,v 1.1458 2009/03/03 07:58:59 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2056,6 +2056,7 @@ product IBM SERVERAID		0x002e	ServeRAID
 product IBM MIAMI		0x0036	Miami/PCI
 product IBM OLYMPIC		0x003e	Olympic
 product IBM I82557B		0x0057	i82557B 10/100
+product IBM RSA			0x010f	RSA
 product IBM FIREGL2		0x0170	FireGL2
 product IBM 133PCIX		0x01a7	133 PCIX-PCIX
 product IBM SERVERAID2		0x01bd	ServeRAID
