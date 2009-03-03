@@ -1,4 +1,4 @@
-/*	$OpenBSD: displayq.c,v 1.29 2007/04/08 23:11:37 stevesk Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.30 2009/03/03 04:42:48 stevesk Exp $	*/
 /*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.29 2007/04/08 23:11:37 stevesk Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.30 2009/03/03 04:42:48 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ displayq(int format)
 		RP = DEFLP;
 	if (cgetstr(bp, "sd", &SD) < 0)
 		SD = _PATH_DEFSPOOL;
-	if (cgetstr(bp,"lo", &LO) < 0)
+	if (cgetstr(bp, "lo", &LO) < 0)
 		LO = DEFLOCK;
 	if (cgetstr(bp, "st", &ST) < 0)
 		ST = DEFSTAT;
