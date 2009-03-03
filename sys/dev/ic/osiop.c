@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.37 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.38 2009/03/03 19:08:25 miod Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -374,6 +374,7 @@ osiop_scsicmd(xs)
 	struct osiop_acb *acb;
 	struct osiop_softc *sc = periph->adapter_softc;
 	int err, s;
+	int dopoll;
 
 	/* XXXX ?? */
 	if (sc->sc_nexus && (xs->flags & SCSI_POLL))
@@ -439,15 +440,20 @@ osiop_scsicmd(xs)
 
 	TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
 
+	if ((acb->xsflags & SCSI_POLL) || (sc->sc_flags & OSIOP_NODMA))
+		dopoll = 1;
+	else {
+		dopoll = 0;
+		/* start expire timer */
+		timeout_add_msec(&xs->stimeout, xs->timeout);
+	}
+
 	osiop_sched(sc);
 
 	splx(s);
 
-	if ((acb->xsflags & SCSI_POLL) || (sc->sc_flags & OSIOP_NODMA))
+	if (dopoll)
 		osiop_poll(sc, acb);
-	else
-		/* start expire timer */
-		timeout_add_msec(&xs->stimeout, xs->timeout);
 
 	if (xs->flags & (SCSI_POLL | ITSDONE))
 		return (COMPLETE);
