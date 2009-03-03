@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.60 2009/01/22 13:15:20 jsg Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.61 2009/03/03 15:43:27 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -1178,6 +1178,15 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,					0, 0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/* NetMos 1S PCI 16C650 : 1S */
+	{   /* "NetMos NM9835 UART" */
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835,	0x1000, 0x0001	},
+	    {	0xffff,	0xffff,					0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
 	},
 
