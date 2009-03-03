@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.152 2008/10/28 09:51:58 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.153 2009/03/03 11:01:26 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -1159,7 +1159,7 @@ our @ISA=qw(OpenBSD::PackingElement::Exec);
 sub keyword() { "exec-always" }
 __PACKAGE__->register_with_factory;
 
-package OpenBSD::PackingElement::ExecInstall;
+package OpenBSD::PackingElement::ExecAdd;
 our @ISA=qw(OpenBSD::PackingElement::Exec);
 
 sub keyword() { "exec-add" }
