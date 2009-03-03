@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.38 2009/03/01 21:58:53 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.39 2009/03/03 15:47:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -942,52 +942,69 @@ parent_mailbox_init(struct passwd *pw, char *pathname)
 int
 parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 {
-	int fd;
-	int mode = O_CREAT|O_APPEND|O_RDWR|O_EXLOCK|O_NONBLOCK|O_NOFOLLOW;
+	pid_t pid;
+	int pipefd[2];
+	struct mdaproc *mdaproc;
+	char sender[MAX_PATH_SIZE];
+
+	/* This can never happen, but better safe than sorry. */
+	if (! bsnprintf(sender, MAX_PATH_SIZE, "%s@%s",
+		batchp->message.sender.user,
+		batchp->message.sender.domain)) {
+		batchp->message.status |= S_MESSAGE_PERMFAILURE;
+		return -1;
+	}
 
 	if (! parent_mailbox_init(pw, path)) {
 		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
 
-	fd = open(path, mode, 0600);
-	if (fd == -1) {
-		/* XXX - this needs to be discussed ... */
-		switch (errno) {
-		case ENOTDIR:
-		case ENOENT:
-		case EACCES:
-		case ELOOP:
-		case EROFS:
-		case EDQUOT:
-		case EINTR:
-		case EIO:
-		case EMFILE:
-		case ENFILE:
-		case ENOSPC:
-			goto tempfail;
-		case EWOULDBLOCK:
-			batchp->message.status |= S_MESSAGE_LOCKFAILURE;
-			goto tempfail;
-		default:
-			batchp->message.status |= S_MESSAGE_PERMFAILURE;
-		}
+	log_debug("executing mail.local");
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pipefd) == -1) {
+		batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		return -1;
 	}
 
-	if (! secure_file(fd, path, pw)) {
-		log_warnx("refusing delivery to unsecure path: %s", path);
-		goto tempfail;
+	/* raise privileges because mail.local needs root to
+	 * deliver to user mailboxes.
+	 */
+	if (seteuid(0) == -1)
+		fatal("privraise failed");
+
+	pid = fork();
+	if (pid == -1) {
+		close(pipefd[0]);
+		close(pipefd[1]);
+		batchp->message.status |= S_MESSAGE_PERMFAILURE;
+		return -1;
 	}
 
-	return fd;
+	if (pid == 0) {
+		setproctitle("mail.local");
 
-tempfail:
-	if (fd != -1)
-		close(fd);
+		close(pipefd[0]);
+		close(STDOUT_FILENO);
+		close(STDERR_FILENO);
+		dup2(pipefd[1], 0);
 
-	batchp->message.status |= S_MESSAGE_TEMPFAILURE;
-	return -1;
+		execlp(PATH_MAILLOCAL, "mail.local", "-f", sender, pw->pw_name, (void *)NULL);
+		_exit(1);
+	}
+
+	if (seteuid(pw->pw_uid) == -1)
+		fatal("privdrop failed");
+
+	mdaproc = calloc(1, sizeof (struct mdaproc));
+	if (mdaproc == NULL)
+		fatal("calloc");
+	mdaproc->pid = pid;
+
+	SPLAY_INSERT(mdaproctree, &batchp->env->mdaproc_queue, mdaproc);
+
+	close(pipefd[1]);
+	return pipefd[0];
 }
 
 int

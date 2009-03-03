@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.79 2009/03/01 21:58:53 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.80 2009/03/03 15:47:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -47,6 +47,8 @@
 #define SMTPD_BANNER		 "220 %s ESMTP OpenSMTPD"
 #define SMTPD_SESSION_TIMEOUT	 300
 #define SMTPD_BACKLOG		 5
+
+#define	PATH_MAILLOCAL		"/usr/libexec/mail.local"
 
 #define	DIRHASH_BUCKETS		 4096
 

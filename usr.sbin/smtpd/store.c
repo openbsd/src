@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.14 2009/02/23 00:51:32 chl Exp $	*/
+/*	$OpenBSD: store.c,v 1.15 2009/03/03 15:47:28 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -114,16 +114,18 @@ store_write_header(struct batch *batchp, struct message *messagep, FILE *fp,
 	bzero(addrbuf, sizeof (addrbuf));
 	inet_ntop(messagep->session_ss.ss_family, p, addrbuf, sizeof (addrbuf));
 
-	if (batchp->type & T_DAEMON_BATCH) {
-		if (fprintf(fp, "From %s@%s %s\n", "MAILER-DAEMON",
-			batchp->env->sc_hostname, timebuf) == -1) {
-			return 0;
+	if (messagep->recipient.rule.r_action != A_MBOX) {
+		if (batchp->type & T_DAEMON_BATCH) {
+			if (fprintf(fp, "From %s@%s %s\n", "MAILER-DAEMON",
+				batchp->env->sc_hostname, timebuf) == -1) {
+				return 0;
+			}
 		}
-	}
-	else {
-		if (fprintf(fp, "From %s@%s %s\n",
-			messagep->sender.user, messagep->sender.domain, timebuf) == -1)
-			return 0;
+		else {
+			if (fprintf(fp, "From %s@%s %s\n",
+				messagep->sender.user, messagep->sender.domain, timebuf) == -1)
+				return 0;
+		}
 	}
 	
 	if (fprintf(fp, "Received: from %s (%s [%s%s])\n"
