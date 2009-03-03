@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.408 2009/02/20 08:30:03 mglocker Exp $
+$OpenBSD: usbdevs,v 1.409 2009/03/03 07:49:27 kevlo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1143,6 +1143,7 @@ product DICKSMITH WL240U	0x0014	WL-240U
 product DICKSMITH XH1153	0x5743	XH1153 802.11b
 product DICKSMITH RT2573	0x9022	RT2573
 product DICKSMITH CWD854F	0x9032	C-Net CWD-854 rev F
+product DICKSMITH RTL8187	0x9401	RTL8187
 
 /* Digi International products */
 product DIGI ACCELEPORT2	0x0002	AccelePort 2
@@ -1865,6 +1866,7 @@ product LINKSYS USB10TX2	0x400b	USB10TX
 /* Logitec products */
 product LOGITEC LAN_GTJU2	0x0102	LAN-GTJ/U2
 product LOGITEC	LANTX		0x0105	LAN-TX
+product LOGITEC	RTL8187		0x010c	RTL8187
 product LOGITEC RT2870_1	0x0162	RT2870
 product LOGITEC RT2870_2	0x0163	RT2870
 product LOGITEC RT2870_3	0x0164	RT2870
@@ -2765,6 +2767,7 @@ product SPEEDDRAGON MS3303H	0x110b	MS3303H Serial
 
 /* Sphairon Access Systems GmbH products */
 product SPHAIRON UB801R		0x0110	UB801R
+product SPHAIRON RTL8187	0x0150	RTL8187
 
 /* STMicroelectronics products */
 product STMICRO BIOMETRIC_COPR	0x2016	Biometric Coprocessor
@@ -2802,6 +2805,7 @@ product DIAMOND2 PSAPLAY120	0x5003	Nike psa[play 120
 
 /* Surecom Technology products */
 product ACERCM EP1427X2		0x0893	EP-1427X-2 Ethernet
+product SURECOM EP9001G2A	0x11f2	EP-9001-G rev 2A
 product SURECOM RT2570		0x11f3	RT2570
 product SURECOM RT2573		0x31f3	RT2573
 

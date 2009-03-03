@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.5 2009/02/11 10:44:36 kevlo Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.6 2009/03/03 07:49:27 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
  *
@@ -72,7 +72,11 @@ int urtw_debug = 0;
 /* recognized device vendors/products */
 static const struct usb_devno urtw_devs[] = {
 #define	URTW_DEV(v,p) { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }
+	URTW_DEV(DICKSMITH, RTL8187),
+	URTW_DEV(LOGITEC, RTL8187),
 	URTW_DEV(REALTEK, RTL8187),
+	URTW_DEV(SPHAIRON, RTL8187),
+	URTW_DEV(SURECOM, EP9001G2A),
 	URTW_DEV(NETGEAR, WG111V2)
 #undef URTW_DEV
 };
