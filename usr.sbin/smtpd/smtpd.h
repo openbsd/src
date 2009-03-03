@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.80 2009/03/03 15:47:27 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.81 2009/03/03 23:23:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -197,6 +197,7 @@ enum imsg_type {
 	IMSG_BATCH_APPEND,
 	IMSG_BATCH_CLOSE,
 
+	IMSG_PARENT_FORWARD_OPEN,
 	IMSG_PARENT_MAILBOX_OPEN,
 	IMSG_PARENT_MESSAGE_OPEN,
 	IMSG_PARENT_MAILBOX_RENAME,
@@ -619,6 +620,27 @@ struct session {
 
 };
 
+struct forward_req {
+	u_int64_t			 id;
+	char				 pw_name[MAXLOGNAME];
+};
+
+enum lkasession_flags {
+	F_ERROR		= 0x1
+};
+
+struct lkasession {
+	SPLAY_ENTRY(lkasession)		 nodes;
+	u_int64_t			 id;
+
+	struct path			 path;
+	struct aliaseslist		 aliaseslist;
+	u_int8_t			 iterations;
+	u_int32_t			 pending;
+	enum lkasession_flags		 flags;
+	struct message			 message;
+};
+
 struct smtpd {
 #define SMTPD_OPT_VERBOSE			 0x00000001
 #define SMTPD_OPT_NOACTION			 0x00000002
@@ -648,6 +670,7 @@ struct smtpd {
 
 	SPLAY_HEAD(batchtree, batch)		batch_queue;
 	SPLAY_HEAD(mdaproctree, mdaproc)	mdaproc_queue;
+	SPLAY_HEAD(lkatree, lkasession)		lka_sessions;
 };
 
 struct s_parent {
@@ -753,7 +776,7 @@ int		 getmxbyname(char *, char ***);
 
 
 /* forward.c */
-int forwards_get(struct aliaseslist *, char *);
+int forwards_get(int, struct aliaseslist *);
 
 
 /* imsg.c */
@@ -779,6 +802,8 @@ void	 imsg_clear(struct imsgbuf *);
 
 /* lka.c */
 pid_t		 lka(struct smtpd *);
+int		 lkasession_cmp(struct lkasession *, struct lkasession *);
+SPLAY_PROTOTYPE(lkatree, lkasession, nodes, lkasession_cmp);
 
 /* mfa.c */
 pid_t		 mfa(struct smtpd *);

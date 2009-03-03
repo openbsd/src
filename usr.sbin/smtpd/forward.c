@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.12 2009/02/22 11:44:29 form Exp $	*/
+/*	$OpenBSD: forward.c,v 1.13 2009/03/03 23:23:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -35,42 +35,19 @@
 #include "smtpd.h"
 
 int
-forwards_get(struct aliaseslist *aliases, char *username)
+forwards_get(int fd, struct aliaseslist *aliases)
 {
 	FILE *fp;
 	struct alias alias;
 	struct alias *aliasp;
-	char pathname[MAXPATHLEN];
 	char *buf, *lbuf, *p, *cp;
 	size_t len;
-	struct stat sb;
-	struct passwd *pw;
 	size_t nbaliases = 0;
 	int quoted;
 
-	pw = safe_getpwnam(username);
-	if (pw == NULL)
-		return 0;
-
-	if (! bsnprintf(pathname, sizeof(pathname), "%s/.forward", pw->pw_dir))
-		return 0;
-
-	fp = fopen(pathname, "r");
+	fp = fdopen(fd, "r");
 	if (fp == NULL)
 		return 0;
-
-	log_debug("+ opening forward file %s", pathname);
-	/* make sure ~/ is not writable by anyone but owner */
-	if (stat(pw->pw_dir, &sb) == -1)
-		goto bad;
-	if (sb.st_uid != pw->pw_uid || sb.st_mode & (S_IWGRP|S_IWOTH))
-		goto bad;
-
-	/* make sure ~/.forward is not writable by anyone but owner */
-	if (fstat(fileno(fp), &sb) == -1)
-		goto bad;
-	if (sb.st_uid != pw->pw_uid || sb.st_mode & (S_IWGRP|S_IWOTH))
-		goto bad;
 
 	lbuf = NULL;
 	while ((buf = fgetln(fp, &len))) {
@@ -130,10 +107,4 @@ forwards_get(struct aliaseslist *aliases, char *username)
 	free(lbuf);
 	fclose(fp);
 	return (nbaliases);
-
-bad:
-	log_debug("+ forward file error, probably bad perms/mode");
-	if (fp != NULL)
-		fclose(fp);
-	return (0);
 }

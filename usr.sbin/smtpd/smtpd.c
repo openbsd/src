@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.39 2009/03/03 15:47:27 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.40 2009/03/03 23:23:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -65,6 +65,7 @@ int		parent_mailfile_rename(struct batch *, struct path *);
 int		parent_maildir_open(char *, struct passwd *, struct batch *);
 int		parent_maildir_init(struct passwd *, char *);
 int		parent_external_mda(char *, struct passwd *, struct batch *);
+int		parent_forward_open(char *);
 int		check_child(pid_t, const char *);
 int		setup_spool(uid_t, gid_t);
 
@@ -190,6 +191,19 @@ parent_dispatch_lka(int fd, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_PARENT_FORWARD_OPEN: {
+			int ret;
+			struct forward_req *fwreq;
+
+			fwreq = imsg.data;
+			ret = parent_forward_open(fwreq->pw_name);
+			if (ret == -1)
+				if (errno == ENOENT)
+					fwreq->pw_name[0] = '\0';
+			log_debug("parent will return fd %d", fd);
+			imsg_compose(ibuf, IMSG_PARENT_FORWARD_OPEN, 0, 0, ret, fwreq, sizeof(*fwreq));
+			break;
+		}
 		default:
 			log_debug("parent_dispatch_lka: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -1179,6 +1193,52 @@ lockfail:
 		close(fd);
 
 	batchp->message.status |= S_MESSAGE_TEMPFAILURE|S_MESSAGE_LOCKFAILURE;
+	return -1;
+}
+
+int
+parent_forward_open(char *username)
+{
+	struct passwd *pw;
+	struct stat sb;
+	char pathname[MAXPATHLEN];
+	int fd;
+
+	pw = safe_getpwnam(username);
+	if (pw == NULL)
+		return -1;
+
+	if (! bsnprintf(pathname, sizeof (pathname), "%s/.forward", pw->pw_dir))
+		return -1;
+
+	fd = open(pathname, O_RDONLY);
+	if (fd == -1) {
+		if (errno == ENOENT)
+			goto clear;
+		return -1;
+	}
+
+	/* make sure ~/ is not writable by anyone but owner */
+	if (stat(pw->pw_dir, &sb) == -1)
+		goto clearlog;
+
+	if (sb.st_uid != pw->pw_uid || sb.st_mode & (S_IWGRP|S_IWOTH))
+		goto clearlog;
+
+	/* make sure ~/.forward is not writable by anyone but owner */
+	if (fstat(fd, &sb) == -1)
+		goto clearlog;
+
+	if (sb.st_uid != pw->pw_uid || sb.st_mode & (S_IWGRP|S_IWOTH))
+		goto clearlog;
+
+	return fd;
+
+clearlog:
+	log_info("cannot process forward file for user %s due to wrong permissions", username);
+
+clear:
+	username[0] = '\0';
 	return -1;
 }
 
