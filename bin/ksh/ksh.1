@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.125 2009/02/07 23:15:28 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.126 2009/03/03 20:01:01 millert Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: February 7 2009 $
+.Dd $Mdocdate: March 3 2009 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1977,10 +1977,6 @@ If the
 option is set, any directories that result from file name generation are marked
 with a trailing
 .Ql / .
-.Pp
-The POSIX character classes (i.e.\&
-.Pf [: Ns Ar class-name Ns :]
-inside a [..] expression) are not yet implemented.
 .Ss Input/output redirection
 When a command is executed, its standard input, standard output, and standard
 error (file descriptors 0, 1, and 2, respectively) are normally inherited from
@@ -5546,6 +5542,7 @@ Privileged shell profile.
 .Xr vi 1 ,
 .Xr shells 5 ,
 .Xr environ 7 ,
+.Xr re_format 7 ,
 .Xr script 7
 .Rs
 .%A Morris Bolsky

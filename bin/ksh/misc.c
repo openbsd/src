@@ -1,12 +1,13 @@
-/*	$OpenBSD: misc.c,v 1.35 2009/01/17 22:06:44 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.36 2009/03/03 20:01:01 millert Exp $	*/
 
 /*
  * Miscellaneous functions
  */
 
 #include "sh.h"
-#include <ctype.h>	/* ??? Removing this changes generated code! */
+#include <ctype.h>
 #include <sys/param.h>	/* for MAXPATHLEN */
+#include "charclass.h"
 
 short ctypes [UCHAR_MAX+1];	/* type bits for unsigned char */
 
@@ -703,15 +704,61 @@ do_gmatch(const unsigned char *s, const unsigned char *se,
 	return s == se;
 }
 
+static int
+posix_cclass(const unsigned char *pattern, int test, const unsigned char **ep)
+{
+	struct cclass *cc;
+	const unsigned char *colon;
+	size_t len;
+	int rval = 0;
+	 
+	if ((colon = strchr(pattern, ':')) == NULL || colon[1] != MAGIC) {
+		*ep = pattern - 2;
+		return -1;
+	}
+	*ep = colon + 3; /* skip MAGIC */
+	len = (size_t)(colon - pattern);
+
+	for (cc = cclasses; cc->name != NULL; cc++) {
+		if (!strncmp(pattern, cc->name, len) && cc->name[len] == '\0') {
+			if (cc->isctype(test))
+				rval = 1;
+			break;
+		}
+	}
+	if (cc->name == NULL) {
+		rval = -2;	/* invalid character class */
+	}
+	return rval;
+}
+
 static const unsigned char *
 cclass(const unsigned char *p, int sub)
 {
-	int c, d, not, found = 0;
+	int c, d, rv, not, found = 0;
 	const unsigned char *orig_p = p;
 
 	if ((not = (ISMAGIC(*p) && *++p == NOT)))
 		p++;
 	do {
+		/* check for POSIX character class (e.g. [[:alpha:]]) */
+		if ((p[0] == MAGIC && p[1] == '[' && p[2] == ':') ||
+		    (p[0] == '[' && p[1] == ':')) {
+			do {
+				const char *pp = p + (*p == MAGIC) + 2;
+				rv = posix_cclass(pp, sub, &p);
+				switch (rv) {
+				case 1:
+					found = 1;
+					break;
+				case -2:
+					return NULL;
+				}
+			} while (rv != -1 && p[0] == MAGIC && p[1] == '[' && p[2] == ':');
+			if (p[0] == MAGIC && p[1] == ']')
+				break;
+		}
+
 		c = *p++;
 		if (ISMAGIC(c)) {
 			c = *p++;
