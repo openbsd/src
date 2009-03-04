@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.30 2009/03/03 23:33:52 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.31 2009/03/04 00:00:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -62,6 +62,7 @@ int		aliases_virtual_exist(struct smtpd *, struct path *);
 int		lka_resolve_path(struct smtpd *, struct path *);
 int		lka_expand_aliases(struct smtpd *, struct aliaseslist *, struct lkasession *);
 void		lka_rcpt_action(struct smtpd *, struct path *);
+void		lka_clear_aliaseslist(struct aliaseslist *);
 
 void
 lka_sig_handler(int sig, short event, void *p)
@@ -130,60 +131,43 @@ lka_dispatch_parent(int sig, short event, void *p)
 			fd = imsg_get_fd(ibuf, &imsg);
 			--lkasession->pending;
 
-			if (! lkasession->pending && lkasession->flags & F_ERROR) {
-				log_debug("error in lka session");
-				/* we detected an error and this is last imsg */
-				imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0,
-				    -1, lkasession->ss, sizeof(*lkasession->ss));
-				break;
-			}
-
 			if (fd == -1) {
 				if (fwreq->pw_name[0] != '\0') {
-					/* error id local, return a temporary fail */
-					log_debug("error in forward open");
-					lkasession->ss->code = 421;
-					imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0,
-					    -1, lkasession->ss, sizeof(*lkasession->ss));
-					break;
+					lkasession->ss->code = 530;
+					lkasession->flags |= F_ERROR;
 				}
 			}
-			else if (! forwards_get(fd, &lkasession->aliaseslist)) {
-				lkasession->ss->code = 530;
-				lkasession->flags |= F_ERROR;
+			else {
+				if (! forwards_get(fd, &lkasession->aliaseslist)) {
+					lkasession->ss->code = 530;
+					lkasession->flags |= F_ERROR;
+				}
+				close(fd);
 			}
 
 			ret = 0;
-			while (! lkasession->pending && lkasession->iterations < 5) {
+			while (! (lkasession->flags & F_ERROR) &&
+			    ! lkasession->pending && lkasession->iterations < 5) {
 				++lkasession->iterations;
 				ret = lka_expand_aliases(env, &lkasession->aliaseslist, lkasession);
-				if (lkasession->pending) {
-					if (ret == -1) {
-						lkasession->ss->code = 530;
-						lkasession->flags |= F_ERROR;
-					}
-					break;
+				if (ret == -1) {
+					lkasession->ss->code = 530;
+					lkasession->flags |= F_ERROR;
 				}
 
-				if (ret <= 0)
+				if (lkasession->pending || ret <= 0)
 					break;
 			}
 
 			if (lkasession->pending)
 				break;
 
-			if (ret < 0) {
-				log_debug("loop detected");
-				while ((alias = TAILQ_FIRST(&lkasession->aliaseslist)) != NULL) {
-					TAILQ_REMOVE(&lkasession->aliaseslist, alias, entry);
-					free(alias);
-				}
+			if (lkasession->flags & F_ERROR) {
+				lka_clear_aliaseslist(&lkasession->aliaseslist);
 				imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0,
 				    -1, lkasession->ss, sizeof(*lkasession->ss));
-				break;
 			}
-
-			if (ret == 0) {
+			else if (ret == 0) {
 				log_debug("expansion resulted in empty list");
 				message = lkasession->message;
 				message.recipient = lkasession->path;
@@ -214,6 +198,8 @@ lka_dispatch_parent(int sig, short event, void *p)
 				    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1, &message,
 				    sizeof(struct message));
 			}
+			SPLAY_REMOVE(lkatree, &env->lka_sessions, lkasession);
+			free(lkasession);
 			break;
 		}
 		default:
@@ -354,41 +340,25 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			while (! lkasession->pending && lkasession->iterations < 5) {
 				++lkasession->iterations;
 				ret = lka_expand_aliases(env, &lkasession->aliaseslist, lkasession);
-				if (lkasession->pending) {
-					if (ret == -1) {
-						lkasession->ss->code = 530;
-						lkasession->flags |= F_ERROR;
-					}
-					break;
+				if (ret == -1) {
+					lkasession->ss->code = 530;
+					lkasession->flags |= F_ERROR;
 				}
 
-				if (ret <= 0)
+				if (lkasession->pending || ret <= 0)
 					break;
 			}
 
 			if (lkasession->pending)
 				break;
 
-			if (ret < 0) {
-				log_debug("detected a loop");
-				while ((alias = TAILQ_FIRST(&lkasession->aliaseslist)) != NULL) {
-					TAILQ_REMOVE(&lkasession->aliaseslist, alias, entry);
-					free(alias);
-				}
-				ss->code = 530;
+			if (lkasession->flags & F_ERROR) {
+				lka_clear_aliaseslist(&lkasession->aliaseslist);
 				imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0,
-				    -1, ss, sizeof(*ss));
-				break;
+				    -1, lkasession->ss, sizeof(*lkasession->ss));
 			}
-
-			if (ret == 0) {
+			else if (ret == 0) {
 				log_debug("expansion resulted in empty list");
-				if (! (ss->u.path.flags & F_ACCOUNT)) {
-					ss->code = 530;
-					imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0,
-					    -1, ss, sizeof(*ss));
-					break;
-				}
 				message = ss->msg;
 				message.recipient = ss->u.path;
 				imsg_compose(env->sc_ibufs[PROC_QUEUE],
@@ -418,6 +388,8 @@ lka_dispatch_mfa(int sig, short event, void *p)
 				    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1, &message,
 				    sizeof(struct message));
 			}
+			SPLAY_REMOVE(lkatree, &env->lka_sessions, lkasession);
+			free(lkasession);
 			break;
 		}
 		default:
@@ -1128,6 +1100,17 @@ lkasession_cmp(struct lkasession *s1, struct lkasession *s2)
 		return (1);
 
 	return (0);
+}
+
+void
+lka_clear_aliaseslist(struct aliaseslist *aliaseslist)
+{
+	struct alias *alias;
+
+	while ((alias = TAILQ_FIRST(aliaseslist)) != NULL) {
+		TAILQ_REMOVE(aliaseslist, alias, entry);
+		free(alias);
+	}
 }
 
 SPLAY_GENERATE(lkatree, lkasession, nodes, lkasession_cmp);
