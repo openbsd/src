@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.6 2009/02/20 20:40:01 miod Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.7 2009/03/04 19:37:14 miod Exp $	*/
 
 /* Public Domain */
 
@@ -41,6 +41,17 @@ atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
 }
 
 #endif	/* MULTIPROCESSOR */
+
+static __inline__ unsigned int
+atomic_clear_int(__volatile unsigned int *uip)
+{
+	u_int oldval;
+
+	oldval = 0;
+	__asm__ __volatile__
+	    ("xmem %0, %2, r0" : "+r"(oldval), "+m"(*uip) : "r"(uip));
+	return oldval;
+}
 
 #endif /* defined(_KERNEL) */
 #endif /* __M88K_ATOMIC_H__ */
