@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.13 2009/01/17 18:29:55 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.14 2009/03/04 17:54:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -555,7 +555,7 @@ envydetach(struct device *self, int flags)
 		bus_space_unmap(sc->ccs_iot, sc->ccs_ioh, sc->ccs_iosz);
 	}
 	if (sc->mt_iosz) {
-		bus_space_unmap(sc->ccs_iot, sc->mt_ioh, sc->mt_iosz);
+		bus_space_unmap(sc->mt_iot, sc->mt_ioh, sc->mt_iosz);
 	}
 	return 0;
 }
