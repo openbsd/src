@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.46 2009/02/20 20:40:01 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.47 2009/03/04 05:59:08 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -607,7 +607,8 @@ rw_cas_m88k(volatile unsigned long *p, unsigned long o, unsigned long n)
 
 	if (*p != o)
 		rc = 1;
-	*p = n;
+	else
+		*p = n;
 
 	__cpu_simple_unlock(&rw_cas_spinlock);
 
