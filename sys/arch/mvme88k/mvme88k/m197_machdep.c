@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.38 2009/03/01 17:44:46 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.39 2009/03/04 19:39:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -435,8 +435,38 @@ m197_bootstrap()
 #ifdef MULTIPROCESSOR
 
 /*
- * IPIs groups
+ * IPIs groups.
+ *
+ * There are three sorts of IPI on MVME197:
+ *
+ * - synchronous IPIs: TLB and cache operations
+ *
+ *	Those require immediate attention from the other processor, and the
+ *	sender will wait for completion before resuming normal operations.
+ *	This is done for so-called complex IPIs (those which take arguments),
+ *	so that it isn't necessary to maintain a list of pending IPI work.
+ *	However it is better to make tlb shootdowns synchronous as well.
+ *
+ *	Handling of synchronous exceptions makes sure they can not be
+ *	interrupted by another NMI; upon returning from the exception,
+ *	the interrupted processor will not attempt to run soft interrupts
+ *	and will not check for AST.
+ *
+ * - asynchronous fast IPIs: notify, ddb
+ *
+ *	Notify is just a trick to get the other processor to check for
+ *	AST, it is processed almost immediately, but since it may cause
+ *	preemption, the sender can not really wait for completion.
+ *	As for DDB, waiting would interfere with ddb's logic.
+ *
+ * - asynchronous slow IPIs: clock
+ *
+ *	These may take a long time to execute. They cause the processor
+ *	to self-inflict itself a soft interrupt, to make sure we won't
+ *	run clock operations if it was running at splclock or higher when
+ *	the IPI was received.
  */
+
 #define	CI_IPI_CLOCK \
 	(CI_IPI_HARDCLOCK | CI_IPI_STATCLOCK)
 #define	CI_IPI_SYNCHRONOUS \
@@ -448,21 +478,18 @@ m197_send_ipi(int ipi, cpuid_t cpu)
 {
 	struct cpu_info *ci = &m88k_cpus[cpu];
 
-	if (ci->ci_ipi & ipi)
-		return;
-
-	if ((ci->ci_flags & CIF_ALIVE) == 0)
-		return;				/* XXX not ready yet */
-
-	if (ci->ci_ddb_state == CI_DDB_PAUSE)
-		return;				/* XXX skirting deadlock */
-
-	atomic_setbits_int(&ci->ci_ipi, ipi);
-
-	if (ipi & CI_IPI_SYNCHRONOUS)
+	if (ipi & CI_IPI_SYNCHRONOUS) {
 		m197_send_complex_ipi(ipi, cpu, 0, 0);
-	else
+	} else {
+		if ((ci->ci_flags & CIF_ALIVE) == 0)
+			return;			/* XXX not ready yet */
+
+		if (ci->ci_ddb_state == CI_DDB_PAUSE)
+			return;			/* XXX skirting deadlock */
+
+		atomic_setbits_int(&ci->ci_ipi, ipi);
 		*(volatile u_int8_t *)(BS_BASE + BS_CPINT) |= BS_CPI_SCPI;
+	}
 }
 
 void
@@ -493,6 +520,12 @@ m197_send_complex_ipi(int ipi, cpuid_t cpu, u_int32_t arg1, u_int32_t arg2)
 		panic("couldn't send complex ipi %x to cpu %d: busy",
 		    ipi, cpu);
 
+#ifdef DEBUG
+	if (ci->ci_ipi != 0)
+		printf("%s: cpu %d ipi %x did not clear during wait\n",
+		    ci->ci_cpuid, ci->ci_ipi);
+#endif
+
 	/*
 	 * In addition to the ipi bit itself, we need to set up ipi arguments.
 	 * Note that we do not need to protect against another processor
@@ -519,11 +552,19 @@ m197_send_complex_ipi(int ipi, cpuid_t cpu, u_int32_t arg1, u_int32_t arg2)
 		panic("couldn't send complex ipi %x to cpu %d: no ack",
 		    ipi, cpu);
 
+#ifdef DEBUG
 	/*
 	 * If there are any simple IPIs pending, trigger them now.
+	 * There really shouldn't any, since we have waited for all
+	 * asynchronous ipi processing to complete before sending this
+	 * one.
 	 */
-	if (ci->ci_ipi != 0)
+	if (ci->ci_ipi != 0) {
+		printf("%s: cpu %d ipi %x did not clear after completion\n",
+		    ci->ci_cpuid, ci->ci_ipi);
 		*(volatile u_int8_t *)(BS_BASE + BS_CPINT) |= BS_CPI_SCPI;
+	}
+#endif
 
 	set_psr(psr);
 }
@@ -541,13 +582,10 @@ int
 m197_ipi_handler(struct trapframe *eframe)
 {
 	struct cpu_info *ci = curcpu();
-	int ipi = ci->ci_ipi;
+	int ipi;
 	u_int32_t arg1, arg2;
-#ifdef DDB
-	int need_ddb = 0;
-#endif
 
-	if (ipi == 0)
+	if ((ipi = atomic_clear_int(&ci->ci_ipi)) == 0)
 		return 1;
 
 	/*
@@ -559,7 +597,8 @@ m197_ipi_handler(struct trapframe *eframe)
 	 */
 	if (ipi & CI_IPI_SYNCHRONOUS) {
 		/* no need to use atomic ops, the other cpu waits */
-		ci->ci_ipi &= ~CI_IPI_SYNCHRONOUS;
+		/* leave asynchronous ipi pending */
+		ci->ci_ipi = ipi & ~CI_IPI_SYNCHRONOUS;
 
 		arg1 = ci->ci_ipi_arg1;
 		arg2 = ci->ci_ipi_arg2;
@@ -587,8 +626,6 @@ m197_ipi_handler(struct trapframe *eframe)
 	/*
 	 * Asynchronous IPIs. We can have as many bits set as possible.
 	 */
-
-	atomic_clearbits_int(&ci->ci_ipi, ipi);
 
 	if (ipi & CI_IPI_CLOCK) {
 		/*
@@ -633,17 +670,12 @@ m197_ipi_handler(struct trapframe *eframe)
 		 * If ddb is hoping to us, it's our turn to enter ddb now.
 		 */
 		if (ci->ci_cpuid == ddb_mp_nextcpu)
-			need_ddb = 1;
+			Debugger();
 #endif
 	}
 	if (ipi & CI_IPI_NOTIFY) {
 		/* nothing to do! */
 	}
-
-#ifdef DDB
-	if (need_ddb)
-		Debugger();
-#endif
 
 	return 1;
 }
