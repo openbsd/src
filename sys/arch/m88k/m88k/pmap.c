@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.45 2008/06/14 10:55:20 mk Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.46 2009/03/04 19:39:05 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -160,7 +160,7 @@ vaddr_t kmapva = 0;
 /*
  * Internal routines
  */
-static void flush_atc_entry(pmap_t, vaddr_t);
+void	flush_atc_entry(pmap_t, vaddr_t);
 pt_entry_t *pmap_expand_kmap(vaddr_t, vm_prot_t, int);
 void	pmap_remove_pte(pmap_t, vaddr_t, pt_entry_t *, boolean_t);
 void	pmap_remove_range(pmap_t, vaddr_t, vaddr_t);
@@ -195,31 +195,81 @@ boolean_t pmap_testbit(struct vm_page *, int);
  *	pmap	affected pmap
  *	va	virtual address that should be flushed
  */
-static
-#ifndef MULTIPROCESSOR
-__inline__
-#endif
 void
 flush_atc_entry(pmap_t pmap, vaddr_t va)
 {
-#ifdef MULTIPROCESSOR
 	u_int32_t users;
-	int cpu;
 	boolean_t kernel;
 
 	if ((users = pmap->pm_cpus) == 0)
 		return;
 
 	kernel = pmap == kernel_pmap;
-	while ((cpu = ff1(users)) != 32) {
-		cmmu_flush_tlb(cpu, kernel, va, 1);
-		users ^= 1 << cpu;
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * On 88100, we take action immediately.
+	 */
+	if (CPU_IS88100) {
+		int cpu;
+
+		while ((cpu = ff1(users)) != 32) {
+			cmmu_flush_tlb(cpu, kernel, va, 1);
+			users ^= 1 << cpu;
+		}
+	}
+
+	/*
+	 * On 88110, we only remember which tlb need to be invalidated,
+	 * and wait for pmap_update() to do it.
+	 */
+	if (CPU_IS88110) {
+		struct cpu_info *ci;
+		CPU_INFO_ITERATOR cpu;
+
+		CPU_INFO_FOREACH(cpu, ci) {
+			if (ISSET(users, 1 << ci->ci_cpuid))
+				ci->ci_pmap_ipi |= kernel ?
+				    CI_IPI_TLB_FLUSH_KERNEL :
+				    CI_IPI_TLB_FLUSH_USER;
+		}
 	}
 #else	/* MULTIPROCESSOR */
-	if (pmap->pm_cpus != 0)
-		cmmu_flush_tlb(cpu_number(), pmap == kernel_pmap, va, 1);
+	if (CPU_IS88100)
+		cmmu_flush_tlb(cpu_number(), kernel, va, 1);
+	if (CPU_IS88110)
+		curcpu()->ci_pmap_ipi |= kernel ?
+		    CI_IPI_TLB_FLUSH_KERNEL : CI_IPI_TLB_FLUSH_USER;
 #endif	/* MULTIPROCESSOR */
 }
+
+#ifdef M88110
+void
+pmap_update(pmap_t pm)
+{
+	/*
+	 * Time to perform all necessary TLB invalidations.
+	 */
+	if (CPU_IS88110) {
+		u_int ipi;
+#ifdef MULTIPROCESSOR
+		struct cpu_info *ci;
+		CPU_INFO_ITERATOR cpu;
+		
+		CPU_INFO_FOREACH(cpu, ci)
+#else
+		struct cpu_info *ci = curcpu();
+#endif
+		/* CPU_INFO_FOREACH(cpu, ci) */ {
+			ipi = atomic_clear_int(&ci->ci_pmap_ipi);
+			if (ipi & CI_IPI_TLB_FLUSH_KERNEL)
+				cmmu_flush_tlb(ci->ci_cpuid, TRUE, 0 ,0);
+			if (ipi & CI_IPI_TLB_FLUSH_USER)
+				cmmu_flush_tlb(ci->ci_cpuid, FALSE, 0 ,0);
+		}
+	}
+}
+#endif
 
 /*
  * Routine:	PMAP_PTE
