@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2008/12/17 14:19:39 michele Exp $ */
+/*	$OpenBSD: parse.y,v 1.22 2009/03/04 22:59:28 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -164,7 +164,7 @@ conf_main	: SPLIT_HORIZON STRING {
 			else if (!strcmp($2, "poisoned"))
 				conf->options |= OPT_SPLIT_POISONED;
 			else {
-				yyerror("unknon split horizon type");
+				yyerror("unknown split horizon type");
 				free($2);
 				YYERROR;
 			}
