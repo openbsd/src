@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.9 2007/07/24 16:46:09 pyr Exp $ */
+/*	$OpenBSD: imsg.c,v 1.10 2009/03/04 12:51:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -159,19 +159,23 @@ imsg_add(struct buf *msg, void *data, u_int16_t datalen)
 int
 imsg_close(struct imsgbuf *ibuf, struct buf *msg)
 {
-	int		 n;
 	struct imsg_hdr	*hdr;
 
 	hdr = (struct imsg_hdr *)msg->buf;
-	hdr->len = (u_int16_t)msg->wpos;
-	if ((n = buf_close(&ibuf->w, msg)) < 0) {
+	if (msg->size != msg->wpos) {
+			log_warnx("imsg_close: buffer is not correctly filled");
+			buf_free(msg);
+			return (-1);
+	}
+	hdr->len = (u_int16_t)msg->size;
+	if (buf_close(&ibuf->w, msg) < 0) {
 			log_warnx("imsg_close: buf_close error");
 			buf_free(msg);
 			return (-1);
 	}
 	imsg_event_add(ibuf);
 
-	return (n);
+	return (0);
 }
 
 void

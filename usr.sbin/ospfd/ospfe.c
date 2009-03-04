@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.62 2009/01/07 21:16:36 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.63 2009/03/04 12:51:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -955,17 +955,17 @@ orig_rtr_lsa(struct area *area)
 	lsa_hdr.ls_id = oeconf->rtr_id.s_addr;
 	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;
 	lsa_hdr.seq_num = htonl(INIT_SEQ_NUM);
-	lsa_hdr.len = htons(buf->wpos);
+	lsa_hdr.len = htons(buf_size(buf));
 	lsa_hdr.ls_chksum = 0;		/* updated later */
 	memcpy(buf_seek(buf, 0, sizeof(lsa_hdr)), &lsa_hdr, sizeof(lsa_hdr));
 
-	chksum = htons(iso_cksum(buf->buf, buf->wpos, LS_CKSUM_OFFSET));
+	chksum = htons(iso_cksum(buf->buf, buf_size(buf), LS_CKSUM_OFFSET));
 	memcpy(buf_seek(buf, LS_CKSUM_OFFSET, sizeof(chksum)),
 	    &chksum, sizeof(chksum));
 
 	if (self)
 		imsg_compose(ibuf_rde, IMSG_LS_UPD, self->peerid, 0,
-		    buf->buf, buf->wpos);
+		    buf->buf, buf_size(buf));
 	else
 		log_warnx("orig_rtr_lsa: empty area %s",
 		    inet_ntoa(area->id));
@@ -1019,16 +1019,16 @@ orig_net_lsa(struct iface *iface)
 	lsa_hdr.ls_id = iface->addr.s_addr;
 	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;
 	lsa_hdr.seq_num = htonl(INIT_SEQ_NUM);
-	lsa_hdr.len = htons(buf->wpos);
+	lsa_hdr.len = htons(buf_size(buf));
 	lsa_hdr.ls_chksum = 0;		/* updated later */
 	memcpy(buf_seek(buf, 0, sizeof(lsa_hdr)), &lsa_hdr, sizeof(lsa_hdr));
 
-	chksum = htons(iso_cksum(buf->buf, buf->wpos, LS_CKSUM_OFFSET));
+	chksum = htons(iso_cksum(buf->buf, buf_size(buf), LS_CKSUM_OFFSET));
 	memcpy(buf_seek(buf, LS_CKSUM_OFFSET, sizeof(chksum)),
 	    &chksum, sizeof(chksum));
 
 	imsg_compose(ibuf_rde, IMSG_LS_UPD, iface->self->peerid, 0,
-	    buf->buf, buf->wpos);
+	    buf->buf, buf_size(buf));
 
 	buf_free(buf);
 }

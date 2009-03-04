@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.75 2009/01/31 11:44:49 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.76 2009/03/04 12:51:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -558,9 +558,10 @@ u_int8_t	 area_ospf_options(struct area *);
 /* buffer.c */
 struct buf	*buf_open(size_t);
 struct buf	*buf_dynamic(size_t, size_t);
-int		 buf_add(struct buf *, void *, size_t);
+int		 buf_add(struct buf *, const void *, size_t);
 void		*buf_reserve(struct buf *, size_t);
 void		*buf_seek(struct buf *, size_t, size_t);
+size_t		 buf_size(struct buf *);
 size_t		 buf_left(struct buf *);
 int		 buf_close(struct msgbuf *, struct buf *);
 void		 buf_free(struct buf *);
