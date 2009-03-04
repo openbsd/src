@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.83 2009/03/04 18:49:07 stevesk Exp $ */
+/*	$OpenBSD: client.c,v 1.84 2009/03/04 19:17:36 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -225,11 +225,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 			strlcpy(s, "alarm", sizeof(s));
 		} else if (msg.stratum == 0) {
 			/* Kiss-o'-Death (KoD) packet */
-			if (msg.refid != 0)
-				snprintf(s, sizeof(s), "KoD %.4s",
-				    (char *)&msg.refid);
-			else
-				strlcpy(s, "KoD", sizeof(s));
+			strlcpy(s, "KoD", sizeof(s));
 		} else if (msg.stratum > NTP_MAXSTRATUM) {
 			snprintf(s, sizeof(s), "stratum %d", msg.stratum);
 		}
