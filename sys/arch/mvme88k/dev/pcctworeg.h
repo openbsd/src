@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctworeg.h,v 1.8 2006/04/27 20:19:28 miod Exp $ */
+/*	$OpenBSD: pcctworeg.h,v 1.9 2009/03/04 19:35:52 miod Exp $ */
 
 /*
  * Memory map for PCC2 chip found in MVME1x7 boards.
@@ -95,6 +95,7 @@ extern u_int8_t *volatile pcc2intr_ipl;
 #define PCC2_TCTL_COC		0x02
 #define PCC2_TCTL_COVF		0x04
 #define PCC2_TCTL_OVF		0xf0
+#define PCC2_TCTL_OVF_SHIFT	4
 
 #define PCC2_GPIO_PLTY		0x80
 #define PCC2_GPIO_EL		0x40

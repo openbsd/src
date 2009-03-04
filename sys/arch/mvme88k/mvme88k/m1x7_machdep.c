@@ -1,4 +1,4 @@
-/*	$OpenBSD: m1x7_machdep.c,v 1.7 2009/02/13 23:26:51 miod Exp $ */
+/*	$OpenBSD: m1x7_machdep.c,v 1.8 2009/03/04 19:35:54 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -156,17 +156,26 @@ m1x7_init_clocks(void)
 int
 m1x7_clockintr(void *eframe)
 {
+	uint oflow;
+
+	oflow = (*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1CTL) &
+	    PCC2_TCTL_OVF) >> PCC2_TCTL_OVF_SHIFT;
+	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1CTL) =
+	    PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
+
 	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1ICR) = PROF_RESET;
 
-	hardclock(eframe);
+	while (oflow-- != 0) {
+		hardclock(eframe);
 
 #ifdef MULTIPROCESSOR
-	/*
-	 * Send an IPI to all other processors, so they can get their
-	 * own ticks.
-	 */
-	m88k_broadcast_ipi(CI_IPI_HARDCLOCK);
+		/*
+		 * Send an IPI to all other processors, so they can get their
+		 * own ticks.
+		 */
+		m88k_broadcast_ipi(CI_IPI_HARDCLOCK);
 #endif
+	}
 
 	return (1);
 }
