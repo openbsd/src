@@ -1220,7 +1220,7 @@ radeon_cp_dispatch_indirect(struct drm_device *dev, struct drm_buf *buf,
 	RING_LOCALS;
 	DRM_DEBUG("buf=%d s=0x%x e=0x%x\n", buf->idx, start, end);
 
-	if (start != end) {
+	if (start != end && start < end) {
 		int offset = (dev_priv->gart_buffers_offset
 			      + buf->offset + start);
 		int dwords = (end - start + 3) / sizeof(u32);
