@@ -2,6 +2,7 @@
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
  */
 /*-
+ * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All Rights Reserved.
  *
@@ -131,7 +132,10 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_PRODUCT(pa->pa_id), inteldrm_pciidlist);
 	dev_priv->flags = id_entry->driver_private;
 	dev_priv->pci_device = PCI_PRODUCT(pa->pa_id);
+
 	dev_priv->pc = pa->pa_pc;
+	dev_priv->dmat = pa->pa_dmat;
+	dev_priv->bst = pa->pa_memt;
 
 	/* Add register map (needed for suspend/resume) */
 	bar = vga_pci_bar_info((struct vga_pci_softc *)parent,
@@ -266,3 +270,90 @@ inteldrm_read_hws(struct drm_i915_private *dev_priv, int reg)
 		    PAGE_SIZE, BUS_DMASYNC_PREREAD);
 	return (val);
 }
+
+/*
+ * These five ring manipulation functions are protected by dev->dev_lock.
+ */
+int
+inteldrm_wait_ring(struct drm_i915_private *dev_priv, int n)
+{
+	struct inteldrm_ring	*ring = &dev_priv->ring;
+	u_int32_t		 acthd_reg, acthd, last_acthd, last_head;
+	int			 i;
+
+	acthd_reg = IS_I965G(dev_priv) ? ACTHD_I965 : ACTHD;
+	last_head = I915_READ(PRB0_HEAD) & HEAD_ADDR;
+	last_acthd = I915_READ(acthd_reg);
+
+	/* ugh. Could really do with a proper, resettable timer here. */
+	for (i = 0; i < 100000; i++) {
+		ring->head = I915_READ(PRB0_HEAD) & HEAD_ADDR;
+		acthd = I915_READ(acthd_reg);
+		ring->space = ring->head - (ring->tail + 8);
+
+		INTELDRM_VPRINTF("%s: head: %x tail: %x space: %x\n", __func__,
+			ring->head, ring->tail, ring->space);
+		if (ring->space < 0)
+			ring->space += ring->size;
+		if (ring->space >= n)
+			return (0);
+
+		/* Only timeout if the ring isn't chewing away on something */
+		if (ring->head != last_head || acthd != last_acthd)
+			i = 0;
+
+		last_head = ring->head;
+		last_acthd = acthd;
+		tsleep(dev_priv, PZERO | PCATCH, "i915wt",
+		    hz / 100);
+	}
+
+	return (EBUSY);
+}
+
+void
+inteldrm_begin_ring(struct drm_i915_private *dev_priv, int ncmd)
+{
+	INTELDRM_VPRINTF("%s: %d\n", __func__, ncmd);
+	if (dev_priv->ring.space < ncmd * 4)
+		inteldrm_wait_ring(dev_priv, ncmd * 4);
+	dev_priv->ring.wspace = 0;
+	dev_priv->ring.woffset = dev_priv->ring.tail;
+}
+
+void
+inteldrm_out_ring(struct drm_i915_private *dev_priv, u_int32_t cmd)
+{
+	INTELDRM_VPRINTF("%s: %x\n", __func__, cmd);
+	bus_space_write_4(dev_priv->bst, dev_priv->ring.bsh,
+	    dev_priv->ring.woffset, cmd);
+	dev_priv->ring.wspace++;
+	/* deal with ring wrapping */
+	dev_priv->ring.woffset += 4;
+	dev_priv->ring.woffset &= dev_priv->ring.tail_mask;
+}
+
+void
+inteldrm_advance_ring(struct drm_i915_private *dev_priv)
+{
+	INTELDRM_VPRINTF("%s: %x, %x\n", __func__, dev_priv->ring.wspace,
+	    dev_priv->ring.woffset);
+	dev_priv->ring.tail = dev_priv->ring.woffset;
+	dev_priv->ring.space -= dev_priv->ring.wspace * 4;
+	I915_WRITE(PRB0_TAIL, dev_priv->ring.woffset);
+}
+
+void
+inteldrm_update_ring(struct drm_i915_private *dev_priv)
+{
+	struct inteldrm_ring	*ring = &dev_priv->ring;
+
+	ring->head = (I915_READ(PRB0_HEAD) & HEAD_ADDR);
+	ring->tail = (I915_READ(PRB0_TAIL) & TAIL_ADDR);
+	ring->space = ring->head - (ring->tail + 8);
+	if (ring->space < 0)
+		ring->space += ring->size;
+	INTELDRM_VPRINTF("%s: head: %x tail: %x space: %x\n", __func__,
+		ring->head, ring->tail, ring->space);
+}
+

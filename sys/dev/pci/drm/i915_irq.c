@@ -245,9 +245,8 @@ irqreturn_t i915_driver_irq_handler(DRM_IRQ_ARGS)
 int i915_emit_irq(struct drm_device *dev)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
-	RING_LOCALS;
 
-	i915_kernel_lost_context(dev);
+	inteldrm_update_ring(dev_priv);
 
 	DRM_DEBUG("\n");
 

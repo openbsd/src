@@ -58,20 +58,23 @@ enum pipe {
 #define DRIVER_MINOR		6
 #define DRIVER_PATCHLEVEL	0
 
-typedef struct _drm_i915_ring_buffer {
-	int tail_mask;
-	unsigned long Size;
-	u8 *virtual_start;
-	int head;
-	int tail;
-	int space;
-	drm_local_map_t map;
-} drm_i915_ring_buffer_t;
+struct inteldrm_ring {
+	u_int32_t		*kva;
+	bus_space_handle_t	 bsh;
+	bus_size_t		 size;
+	u_int32_t		 head;
+	u_int32_t		 space;
+	u_int32_t		 tail;
+	u_int32_t		 tail_mask;
+	u_int32_t		 woffset;
+	u_int32_t		 wspace;
+};
 
 typedef struct drm_i915_private {
 	struct device		 dev;
 	struct device		*drmdev;
 	bus_dma_tag_t		 dmat;
+	bus_space_tag_t		 bst;
 
 	u_long			 flags;
 	u_int16_t		 pci_device;
@@ -85,7 +88,7 @@ typedef struct drm_i915_private {
 	drm_local_map_t		*sarea;
 	drm_i915_sarea_t	*sarea_priv;
 
-	drm_i915_ring_buffer_t	 ring;
+	struct inteldrm_ring	 ring;
 	drm_local_map_t		 hws_map;
 	struct drm_dmamem	*hws_dmamem;
 	void			*hw_status_page;
@@ -213,9 +216,14 @@ typedef struct drm_i915_private {
 #define CHIP_M		0x4000
 #define CHIP_HWS	0x8000
 
-				/* i915_dma.c */
 u_int32_t	inteldrm_read_hws(struct drm_i915_private *, int);
-extern void i915_kernel_lost_context(struct drm_device * dev);
+int		inteldrm_wait_ring(struct drm_i915_private *dev, int n);
+void		inteldrm_begin_ring(struct drm_i915_private *, int);
+void		inteldrm_out_ring(struct drm_i915_private *, u_int32_t);
+void		inteldrm_advance_ring(struct drm_i915_private *);
+void		inteldrm_update_ring(struct drm_i915_private *);
+
+				/* i915_dma.c */
 extern void i915_driver_lastclose(struct drm_device * dev);
 extern void i915_driver_close(struct drm_device *dev,
 				 struct drm_file *file_priv);
@@ -226,7 +234,6 @@ extern void i915_emit_breadcrumb(struct drm_device *dev);
 extern int i915_driver_firstopen(struct drm_device *dev);
 extern int i915_dispatch_batchbuffer(struct drm_device * dev,
 				     drm_i915_batchbuffer_t * batch);
-extern int i915_quiescent(struct drm_device *dev);
 
 int	i915_init_phys_hws(drm_i915_private_t *, bus_dma_tag_t);
 void	i915_free_hws(drm_i915_private_t *, bus_dma_tag_t);
@@ -289,38 +296,16 @@ extern int i915_set_status_page(struct drm_device *, void *, struct drm_file *);
 #define I915_WRITE8(reg,val)	bus_space_write_1(dev_priv->regs->bst,	\
 				    dev_priv->regs->bsh, (reg), (val))
 
-#define I915_VERBOSE 0
+#define INTELDRM_VERBOSE 0
+#if INTELDRM_VERBOSE > 0
+#define	INTELDRM_VPRINTF(fmt, args...) DRM_INFO(fmt, ##args)
+#else
+#define	INTELDRM_VPRINTF(fmt, args...)
+#endif
 
-#define RING_LOCALS	unsigned int outring, ringmask, outcount; \
-			volatile char *virt;
-
-#define BEGIN_LP_RING(n) do {				\
-	if (I915_VERBOSE)				\
-		DRM_DEBUG("BEGIN_LP_RING(%d)\n", (n));	\
-	if (dev_priv->ring.space < (n)*4)		\
-		i915_wait_ring(dev, (n)*4, __func__);	\
-	outcount = 0;					\
-	outring = dev_priv->ring.tail;			\
-	ringmask = dev_priv->ring.tail_mask;		\
-	virt = dev_priv->ring.virtual_start;		\
-} while (0)
-
-#define OUT_RING(n) do {					\
-	if (I915_VERBOSE) DRM_DEBUG("   OUT_RING %x\n", (int)(n));	\
-	*(volatile unsigned int *)(virt + outring) = (n);	\
-	outcount++;						\
-	outring += 4;						\
-	outring &= ringmask;					\
-} while (0)
-
-#define ADVANCE_LP_RING() do {						\
-	if (I915_VERBOSE) DRM_DEBUG("ADVANCE_LP_RING %x\n", outring);	\
-	dev_priv->ring.tail = outring;					\
-	dev_priv->ring.space -= outcount * 4;				\
-	I915_WRITE(PRB0_TAIL, outring);			\
-} while(0)
-
-extern int i915_wait_ring(struct drm_device * dev, int n, const char *caller);
+#define BEGIN_LP_RING(n) inteldrm_begin_ring(dev_priv, n)
+#define OUT_RING(n) inteldrm_out_ring(dev_priv, n)
+#define ADVANCE_LP_RING() inteldrm_advance_ring(dev_priv)
 
 /*
  * The Bridge device's PCI config space has information about the
