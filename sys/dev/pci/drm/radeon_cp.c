@@ -436,7 +436,6 @@ radeon_cp_load_microcode(drm_radeon_private_t *dev_priv)
 int
 radeon_do_cp_idle(drm_radeon_private_t *dev_priv)
 {
-	RING_LOCALS;
 	DRM_DEBUG("\n");
 
 	BEGIN_RING(6);
@@ -456,9 +455,6 @@ radeon_do_cp_idle(drm_radeon_private_t *dev_priv)
 void
 radeon_do_cp_start(drm_radeon_private_t *dev_priv)
 {
-	RING_LOCALS;
-	DRM_DEBUG("\n");
-
 	radeon_do_wait_for_idle(dev_priv);
 
 	RADEON_WRITE(RADEON_CP_CSQ_CNTL, dev_priv->cp_mode);
@@ -1166,19 +1162,18 @@ radeon_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init)
 	DRM_DEBUG("dev_priv->gart_buffers_offset 0x%lx\n",
 		  dev_priv->gart_buffers_offset);
 
-	dev_priv->ring.start = (u32 *) dev_priv->cp_ring->handle;
-	dev_priv->ring.end = ((u32 *) dev_priv->cp_ring->handle
-			      + init->ring_size / sizeof(u32));
-	dev_priv->ring.size = init->ring_size;
+	dev_priv->ring.start = (u_int32_t *)dev_priv->cp_ring->handle;
+	dev_priv->ring.size = init->ring_size / sizeof(u_int32_t);
+	dev_priv->ring.end = ((u_int32_t *)dev_priv->cp_ring->handle +
+	    dev_priv->ring.size);
+	dev_priv->ring.tail_mask = dev_priv->ring.size - 1;
+
+	/* Parameters for ringbuffer initialisation */
 	dev_priv->ring.size_l2qw = drm_order(init->ring_size / 8);
-
-	dev_priv->ring.rptr_update = /* init->rptr_update */ 4096;
-	dev_priv->ring.rptr_update_l2qw = drm_order( /* init->rptr_update */ 4096 / 8);
-
-	dev_priv->ring.fetch_size = /* init->fetch_size */ 32;
-	dev_priv->ring.fetch_size_l2ow = drm_order( /* init->fetch_size */ 32 / 16);
-
-	dev_priv->ring.tail_mask = (dev_priv->ring.size / sizeof(u32)) - 1;
+	dev_priv->ring.rptr_update_l2qw = drm_order( /* init->rptr_update */
+	    4096 / 8);
+	dev_priv->ring.fetch_size_l2ow = drm_order( /* init->fetch_size */
+	    32 / 16);
 
 #if __OS_HAS_AGP
 	if (dev_priv->flags & RADEON_IS_AGP) {
@@ -1603,9 +1598,9 @@ radeon_wait_ring(drm_radeon_private_t *dev_priv, int n)
 	u32 last_head = GET_RING_HEAD(dev_priv);
 
 	for (i = 0; i < dev_priv->usec_timeout; i++) {
-		u32 head = GET_RING_HEAD(dev_priv);
+		u_int32_t head = GET_RING_HEAD(dev_priv);
 
-		ring->space = (head - ring->tail) * sizeof(u32);
+		ring->space = head - ring->tail;
 		if (ring->space <= 0)
 			ring->space += ring->size;
 		if (ring->space > n)

@@ -166,20 +166,19 @@ typedef struct drm_radeon_freelist {
 } drm_radeon_freelist_t;
 
 typedef struct drm_radeon_ring_buffer {
-	u32 *start;
-	u32 *end;
-	int size; /* Double Words */
-	int size_l2qw; /* log2 Quad Words */
+	u_int32_t	*start;
+	u_int32_t	*end;
+	int		 size; /* in u_int32_ts */
 
-	int rptr_update; /* Double Words */
-	int rptr_update_l2qw; /* log2 Quad Words */
+	int		 size_l2qw; /* log2 Quad Words */
+	int		 rptr_update_l2qw; /* log2 Quad Words */
+	int		 fetch_size_l2ow; /* log2 Oct Words */
 
-	int fetch_size; /* Double Words */
-	int fetch_size_l2ow; /* log2 Oct Words */
-
-	u32 tail;
-	u32 tail_mask;
-	int space;
+	int		 space;
+	int		 wspace;
+	u_int32_t	 tail;
+	u_int32_t	 tail_mask; /* For making write pointer wrap */
+	u_int32_t	 woffset;
 } drm_radeon_ring_buffer_t;
 
 typedef struct drm_radeon_depth_clear_t {
@@ -324,6 +323,12 @@ static __inline__ int radeon_check_offset(drm_radeon_private_t *dev_priv,
 	return ((off >= fb_start && off <= fb_end) ||
 		(off >= gart_start && off <= gart_end));
 }
+
+void	radeondrm_begin_ring(struct drm_radeon_private *, int);
+void	radeondrm_advance_ring(struct drm_radeon_private *);
+void	radeondrm_commit_ring(struct drm_radeon_private *);
+void	radeondrm_out_ring(struct drm_radeon_private *, u_int32_t);
+void	radeondrm_out_ring_table(struct drm_radeon_private *, u_int32_t *, int);
 
 				/* radeon_cp.c */
 extern int radeon_cp_init(struct drm_device *dev, void *data, struct drm_file *file_priv);
@@ -1350,81 +1355,26 @@ do {									\
  */
 
 #define RADEON_VERBOSE	0
+#if RADEON_VERBOSE > 0
+#define	RADEON_VPRINTF(fmt, args...) DRM_INFO(fmt, ##args)
+#else
+#define	RADEON_VPRINTF(fmt, args...)
+#endif
 
-#define RING_LOCALS	int write, _nr; unsigned int mask; u32 *ring;
+#define BEGIN_RING( n ) radeondrm_begin_ring(dev_priv, n)
 
-#define BEGIN_RING( n ) do {						\
-	if ( RADEON_VERBOSE ) {						\
-		DRM_INFO( "BEGIN_RING( %d )\n", (n));			\
-	}								\
-	if ( dev_priv->ring.space <= (n) * sizeof(u32) ) {		\
-		COMMIT_RING();						\
-		radeon_wait_ring( dev_priv, (n) * sizeof(u32) );	\
-	}								\
-	_nr = n; dev_priv->ring.space -= (n) * sizeof(u32);		\
-	ring = dev_priv->ring.start;					\
-	write = dev_priv->ring.tail;					\
-	mask = dev_priv->ring.tail_mask;				\
-} while (0)
+#define ADVANCE_RING() radeondrm_advance_ring(dev_priv)
 
-#define ADVANCE_RING() do {						\
-	if ( RADEON_VERBOSE ) {						\
-		DRM_INFO( "ADVANCE_RING() wr=0x%06x tail=0x%06x\n",	\
-			  write, dev_priv->ring.tail );			\
-	}								\
-	if (((dev_priv->ring.tail + _nr) & mask) != write) {		\
-		DRM_ERROR(						\
-			"ADVANCE_RING(): mismatch: nr: %x write: %x line: %d\n",	\
-			((dev_priv->ring.tail + _nr) & mask),		\
-			write, __LINE__);						\
-	} else								\
-		dev_priv->ring.tail = write;				\
-} while (0)
+#define COMMIT_RING() radeondrm_commit_ring(dev_priv)
 
-#define COMMIT_RING() do {						\
-	/* Flush writes to ring */					\
-	DRM_MEMORYBARRIER();						\
-	GET_RING_HEAD( dev_priv );					\
-	RADEON_WRITE( RADEON_CP_RB_WPTR, dev_priv->ring.tail );		\
-	/* read from PCI bus to ensure correct posting */		\
-	RADEON_READ( RADEON_CP_RB_RPTR );				\
-} while (0)
-
-#define OUT_RING( x ) do {						\
-	if ( RADEON_VERBOSE ) {						\
-		DRM_INFO( "   OUT_RING( 0x%08x ) at 0x%x\n",		\
-			   (unsigned int)(x), write );			\
-	}								\
-	ring[write++] = (x);						\
-	write &= mask;							\
-} while (0)
+#define OUT_RING( x ) radeondrm_out_ring(dev_priv, x)
 
 #define OUT_RING_REG( reg, val ) do {					\
 	OUT_RING( CP_PACKET0( reg, 0 ) );				\
 	OUT_RING( val );						\
 } while (0)
 
-#define OUT_RING_TABLE( tab, sz ) do {				\
-	int _size = (sz);					\
-	int *_tab = (int *)(tab);				\
-								\
-	if (write + _size > mask) {				\
-		int _i = (mask+1) - write;			\
-		_size -= _i;					\
-		while (_i > 0) {				\
-			*(int *)(ring + write) = *_tab++;	\
-			write++;				\
-			_i--;					\
-		}						\
-		write = 0;					\
-		_tab += _i;					\
-	}							\
-	while (_size > 0) {					\
-		*(ring + write) = *_tab++;			\
-		write++;					\
-		_size--;					\
-	}							\
-	write &= mask;						\
-} while (0)
+#define OUT_RING_TABLE( tab, sz )					\
+	radeondrm_out_ring_table(dev_priv, (u_int32_t *)tab, sz)
 
 #endif				/* __RADEON_DRV_H__ */

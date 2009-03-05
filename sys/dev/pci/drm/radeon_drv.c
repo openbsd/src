@@ -685,3 +685,67 @@ radeondrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 	}
 	return (EINVAL);
 }
+
+void
+radeondrm_begin_ring(struct drm_radeon_private *dev_priv, int ncmd)
+{
+	RADEON_VPRINTF("%d\n", ncmd);
+	if (dev_priv->ring.space <= ncmd) {
+		radeondrm_commit_ring(dev_priv);
+		radeon_wait_ring(dev_priv, ncmd);
+	}
+	dev_priv->ring.space -= ncmd;
+	dev_priv->ring.wspace = ncmd;
+	dev_priv->ring.woffset = dev_priv->ring.tail;
+}
+
+void
+radeondrm_advance_ring(struct drm_radeon_private *dev_priv)
+{
+	RADEON_VPRINTF("wr=0x%06x, tail = 0x%06x\n", dev_priv->ring.woffset,
+	    dev_priv->ring.tail);
+	if (((dev_priv->ring.tail + dev_priv->ring.wspace) &
+	    dev_priv->ring.tail_mask) != dev_priv->ring.woffset) {
+		DRM_ERROR("mismatch: nr %x, write %x\n", ((dev_priv->ring.tail +
+		    dev_priv->ring.wspace) & dev_priv->ring.tail_mask),
+		    dev_priv->ring.woffset);
+	} else
+		dev_priv->ring.tail = dev_priv->ring.woffset;
+}
+
+void
+radeondrm_commit_ring(struct drm_radeon_private *dev_priv)
+{
+	/* flush write combining buffer and writes to ring */
+	DRM_MEMORYBARRIER();
+	GET_RING_HEAD(dev_priv);
+	RADEON_WRITE(RADEON_CP_RB_WPTR, dev_priv->ring.tail);
+	/* read from PCI bus to ensure correct posting */
+	RADEON_READ(RADEON_CP_RB_RPTR);
+}
+
+void
+radeondrm_out_ring(struct drm_radeon_private *dev_priv, u_int32_t x)
+{
+	RADEON_VPRINTF("0x%08x at 0x%x\n", x, dev_priv->ring.woffset);
+	dev_priv->ring.start[dev_priv->ring.woffset++] = x;
+	dev_priv->ring.woffset &= dev_priv->ring.tail_mask;
+}
+
+void
+radeondrm_out_ring_table(struct drm_radeon_private *dev_priv, u_int32_t *table,
+    int size)
+{
+	if (dev_priv->ring.woffset + size > dev_priv->ring.tail_mask) {
+		int i = dev_priv->ring.tail_mask + 1 - dev_priv->ring.woffset;
+
+		size -= i;
+		while (i--)
+			dev_priv->ring.start[dev_priv->ring.woffset++] =
+			    *table++;
+		dev_priv->ring.woffset = 0;
+	}
+	while (size--)
+		dev_priv->ring.start[dev_priv->ring.woffset++] = *table++;
+	dev_priv->ring.woffset &= dev_priv->ring.tail_mask;
+}

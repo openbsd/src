@@ -229,7 +229,6 @@ radeon_emit_irq(struct drm_device * dev)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	unsigned int ret;
-	RING_LOCALS;
 
 	atomic_inc(&dev_priv->swi_emitted);
 	ret = atomic_read(&dev_priv->swi_emitted);

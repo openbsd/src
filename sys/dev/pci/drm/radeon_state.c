@@ -206,7 +206,6 @@ radeon_check_and_fixup_packets(drm_radeon_private_t *dev_priv,
 		break;
 
 	case R200_EMIT_VAP_CTL: {
-			RING_LOCALS;
 			BEGIN_RING(2);
 			OUT_RING_REG(RADEON_SE_TCL_STATE_FLUSH, 0);
 			ADVANCE_RING();
@@ -463,8 +462,6 @@ radeon_check_and_fixup_packet3(drm_radeon_private_t *dev_priv,
 void
 radeon_emit_clip_rect(drm_radeon_private_t *dev_priv, struct drm_clip_rect *box)
 {
-	RING_LOCALS;
-
 	DRM_DEBUG("   box:  x1=%d y1=%d  x2=%d y2=%d\n",
 		  box->x1, box->y1, box->x2, box->y2);
 
@@ -601,7 +598,7 @@ radeon_cp_dispatch_clear(struct drm_device * dev, drm_radeon_clear_t * clear,
 	unsigned int flags = clear->flags;
 	u32 rb3d_cntl = 0, rb3d_stencilrefmask = 0;
 	int i;
-	RING_LOCALS;
+
 	DRM_DEBUG("flags = 0x%x\n", flags);
 
 	if (dev_priv->sarea_priv->pfCurrentPage == 1) {
@@ -1089,7 +1086,7 @@ radeon_cp_dispatch_swap(struct drm_device *dev)
 	int nbox = sarea_priv->nbox;
 	struct drm_clip_rect *pbox = sarea_priv->boxes;
 	int i;
-	RING_LOCALS;
+
 	DRM_DEBUG("\n");
 
 	/* Wait for the 3D stream to idle before dispatching the bitblt.
@@ -1161,9 +1158,8 @@ radeon_cp_dispatch_flip(struct drm_device *dev)
 	struct drm_sarea *sarea = (struct drm_sarea *) dev_priv->sarea->handle;
 	int offset = (dev_priv->sarea_priv->pfCurrentPage == 1)
 	    ? dev_priv->front_offset : dev_priv->back_offset;
-	RING_LOCALS;
-	DRM_DEBUG("pfCurrentPage=%d\n",
-		  dev_priv->sarea_priv->pfCurrentPage);
+
+	DRM_DEBUG("pfCurrentPage=%d\n", dev_priv->sarea_priv->pfCurrentPage);
 
 	/* Update the frame offsets for both CRTCs
 	 */
@@ -1199,7 +1195,6 @@ radeon_cp_discard_buffer(struct drm_device * dev, struct drm_buf * buf)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	drm_radeon_buf_priv_t *buf_priv = buf->dev_private;
-	RING_LOCALS;
 
 	buf_priv->age = ++dev_priv->sarea_priv->last_dispatch;
 
@@ -1217,7 +1212,7 @@ radeon_cp_dispatch_indirect(struct drm_device *dev, struct drm_buf *buf,
     int start, int end)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
-	RING_LOCALS;
+
 	DRM_DEBUG("buf=%d s=0x%x e=0x%x\n", buf->idx, start, end);
 
 	if (start != end && start < end) {
@@ -1263,7 +1258,6 @@ radeon_cp_dispatch_texture(struct drm_device *dev, struct drm_file *file_priv,
 	int i;
 	u32 texpitch, microtile;
 	u32 offset, byte_offset;
-	RING_LOCALS;
 
 	if (radeon_check_and_fixup_offset(dev_priv, file_priv, &tex->offset)) {
 		DRM_ERROR("Invalid destination offset\n");
@@ -1494,7 +1488,7 @@ radeon_cp_dispatch_stipple(struct drm_device *dev, u32 *stipple)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	int i;
-	RING_LOCALS;
+
 	DRM_DEBUG("\n");
 
 	BEGIN_RING(35);
@@ -1748,7 +1742,6 @@ int
 radeon_do_init_pageflip(struct drm_device *dev)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
-	RING_LOCALS;
 
 	DRM_DEBUG("\n");
 
@@ -1864,7 +1857,6 @@ radeon_cp_indirect(struct drm_device *dev, void *data,
 	struct drm_device_dma *dma = dev->dma;
 	struct drm_buf *buf;
 	drm_radeon_indirect_t *indirect = data;
-	RING_LOCALS;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -1934,7 +1926,6 @@ radeon_emit_packets(drm_radeon_private_t * dev_priv, struct drm_file *file_priv,
 	int id = (int)header.packet.packet_id;
 	int sz, reg;
 	int *data = (int *)cmdbuf->buf;
-	RING_LOCALS;
 
 	if (id >= RADEON_MAX_STATE_PACKETS)
 		return EINVAL;
@@ -1969,7 +1960,6 @@ radeon_emit_scalars(drm_radeon_private_t *dev_priv,
 	int sz = header.scalars.count;
 	int start = header.scalars.offset;
 	int stride = header.scalars.stride;
-	RING_LOCALS;
 
 	BEGIN_RING(3 + sz);
 	OUT_RING(CP_PACKET0(RADEON_SE_TCL_SCALAR_INDX_REG, 0));
@@ -1990,7 +1980,6 @@ radeon_emit_scalars2(drm_radeon_private_t *dev_priv,
 {
 	int sz = header.scalars.count; int start = ((unsigned int)header.scalars.offset) + 0x100;
 	int stride = header.scalars.stride;
-	RING_LOCALS;
 
 	BEGIN_RING(3 + sz);
 	OUT_RING(CP_PACKET0(RADEON_SE_TCL_SCALAR_INDX_REG, 0));
@@ -2010,7 +1999,6 @@ radeon_emit_vectors(drm_radeon_private_t *dev_priv,
 	int sz = header.vectors.count;
 	int start = header.vectors.offset;
 	int stride = header.vectors.stride;
-	RING_LOCALS;
 
 	BEGIN_RING(5 + sz);
 	OUT_RING_REG(RADEON_SE_TCL_STATE_FLUSH, 0);
@@ -2031,7 +2019,6 @@ radeon_emit_veclinear(drm_radeon_private_t *dev_priv,
 {
 	int sz = header.veclinear.count * 4;
 	int start = header.veclinear.addr_lo | (header.veclinear.addr_hi << 8);
-	RING_LOCALS;
 
 	if (!sz)
 		return 0;
@@ -2058,7 +2045,6 @@ radeon_emit_packet3(struct drm_device * dev, struct drm_file *file_priv,
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	unsigned int cmdsz;
 	int ret;
-	RING_LOCALS;
 
 	DRM_DEBUG("\n");
 
@@ -2087,7 +2073,6 @@ radeon_emit_packet3_cliprect(struct drm_device *dev, struct drm_file *file_priv,
 	int ret;
 	struct drm_clip_rect __user *boxes = cmdbuf->boxes;
 	int i = 0;
-	RING_LOCALS;
 
 	DRM_DEBUG("\n");
 
@@ -2142,7 +2127,6 @@ int
 radeon_emit_wait(struct drm_device *dev, int flags)
 {
 	drm_radeon_private_t *dev_priv = dev->dev_private;
-	RING_LOCALS;
 
 	DRM_DEBUG("%x\n", flags);
 	switch (flags) {
