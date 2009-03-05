@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.85 2008/10/20 10:25:16 espie Exp $
+# $OpenBSD: Add.pm,v 1.86 2009/03/05 10:44:59 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -408,6 +408,8 @@ sub install
 			return;
 		} else {
 			$file->create;
+			$self->may_check_digest($file, $state);
+
 		}
 	}
 	$self->set_modes($destdir.$fullname);
