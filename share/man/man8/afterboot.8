@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.120 2007/11/30 09:49:20 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.121 2009/03/05 08:27:03 ajacoutot Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2007 $
+.Dd $Mdocdate: March 5 2009 $
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .Os
@@ -106,10 +106,11 @@ Type the command
 .Ic /usr/bin/passwd
 to change it.
 .Pp
-It is a good idea to always specify the full path name for both the
-.Xr passwd 1
-and
+It is a good idea to always specify the full path name for the
+.Xr passwd 1 ,
 .Xr su 1
+and
+.Xr sudo 8
 commands as this inhibits the possibility of files placed in your execution
 .Ev PATH
 for most shells.
