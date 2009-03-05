@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.131 2009/01/28 22:18:43 michele Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.132 2009/03/05 19:47:05 michele Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ ether_output(ifp0, m0, dst, rt0)
 		    !m->m_pkthdr.pf.routed)
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 #ifdef MPLS
-		if (rt0->rt_flags & RTF_MPLS)
+		if (rt0 != NULL && rt0->rt_flags & RTF_MPLS)
 			etype = htons(ETHERTYPE_MPLS);
 		else
 #endif
