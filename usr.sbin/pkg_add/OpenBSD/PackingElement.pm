@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.153 2009/03/03 11:01:26 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.154 2009/03/05 10:43:00 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -374,6 +374,30 @@ sub make_hardlink
 {
 	my ($self, $linkname) = @_;
 	$self->{link} = $linkname;
+}
+
+sub may_check_digest
+{
+	my ($self, $file, $state) = @_;
+	if ($state->{check_digest}) {
+		$self->check_digest($file, $state);
+	}
+}
+
+sub check_digest
+{
+	my ($self, $file, $state) = @_;
+	if (!defined $self->{d}) {
+		$state->fatal($self->fullname, " does not have a signature");
+	}
+	my $d = $self->compute_digest($file->{destdir}.$file->{name});
+	if (!$d->equals($self->{d})) {
+		$state->fatal("checksum for ", $self->fullname, 
+		    " does not match");
+	}
+	if ($state->{very_verbose}) {
+		print "Checksum match for ", $self->fullname, "\n";
+	}
 }
 
 sub IsFile() { 1 }
@@ -763,6 +787,11 @@ package OpenBSD::PackingElement::ManualInstallation;
 our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
 
 sub category() { 'manual-installation' }
+
+# XXX don't incorporate this in signatures.
+sub write_no_sig()
+{
+}
 
 package OpenBSD::PackingElement::SystemPackage;
 our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
@@ -1574,6 +1603,7 @@ package OpenBSD::PackingElement::DigitalSignature;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
 sub keyword() { 'digital-signature' }
 __PACKAGE__->register_with_factory;
+sub category() { "digital-signature" }
 
 # parse to and from a subset of iso8601
 #
@@ -1628,7 +1658,7 @@ sub write_no_sig
 {
 	my ($self, $fh) = @_;
 	print $fh "\@", $self->keyword, " ", $self->{key}, ":", 
-	    $self->{timestamp}, "\n";
+	    time_to_iso8601($self->{timestamp}), "\n";
 }
 
 package OpenBSD::PackingElement::Old;
