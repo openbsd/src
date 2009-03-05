@@ -275,7 +275,6 @@ typedef struct drm_radeon_private {
 
 	/* SW interrupt */
 	atomic_t swi_emitted;
-	int vblank_crtc;
 	uint32_t irq_enable_reg;
 	uint32_t r500_disp_irq_reg;
 
@@ -287,9 +286,6 @@ typedef struct drm_radeon_private {
 	struct drm_ati_pcigart_info gart_info;
 
 	u32 scratch_ages[5];
-
-	unsigned int crtc_last_cnt;
-	unsigned int crtc2_last_cnt;
 
 	/* starting from here on, data is preserved accross an open */
 	uint32_t flags;		/* see radeon_chip_flags */
@@ -375,8 +371,6 @@ extern void radeon_disable_vblank(struct drm_device *dev, int crtc);
 extern irqreturn_t radeon_driver_irq_handler(DRM_IRQ_ARGS);
 extern int radeon_driver_irq_install(struct drm_device * dev);
 extern void radeon_driver_irq_uninstall(struct drm_device * dev);
-extern int radeon_vblank_crtc_get(struct drm_device *dev);
-extern int radeon_vblank_crtc_set(struct drm_device *dev, int64_t value);
 
 extern int radeon_driver_firstopen(struct drm_device *dev);
 extern void radeon_driver_close(struct drm_device * dev,

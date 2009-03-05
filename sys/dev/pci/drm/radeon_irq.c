@@ -372,22 +372,3 @@ radeon_driver_irq_uninstall(struct drm_device * dev)
 
 	pci_intr_disestablish(dev_priv->pc, dev_priv->irqh);
 }
-
-
-int radeon_vblank_crtc_get(struct drm_device *dev)
-{
-	drm_radeon_private_t *dev_priv = (drm_radeon_private_t *) dev->dev_private;
-
-	return dev_priv->vblank_crtc;
-}
-
-int radeon_vblank_crtc_set(struct drm_device *dev, int64_t value)
-{
-	drm_radeon_private_t *dev_priv = (drm_radeon_private_t *) dev->dev_private;
-	if (value & ~(DRM_RADEON_VBLANK_CRTC1 | DRM_RADEON_VBLANK_CRTC2)) {
-		DRM_ERROR("called with invalid crtc 0x%x\n", (unsigned int)value);
-		return EINVAL;
-	}
-	dev_priv->vblank_crtc = (unsigned int)value;
-	return 0;
-}

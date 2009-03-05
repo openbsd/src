@@ -2410,7 +2410,7 @@ radeon_cp_getparam(struct drm_device *dev, void *data,
 			value = RADEON_CARD_PCI;
 		break;
 	case RADEON_PARAM_VBLANK_CRTC:
-		value = radeon_vblank_crtc_get(dev);
+		value = DRM_RADEON_VBLANK_CRTC1 | DRM_RADEON_VBLANK_CRTC2;
 		break;
 	case RADEON_PARAM_FB_LOCATION:
 		value = radeon_read_fb_location(dev_priv);
@@ -2480,7 +2480,7 @@ radeon_cp_setparam(struct drm_device *dev, void *data,
 			dev_priv->gart_info.table_size = RADEON_PCIGART_TABLE_SIZE;
 		break;
 	case RADEON_SETPARAM_VBLANK_CRTC:
-		return radeon_vblank_crtc_set(dev, sp->value);
+		return (0);
 		break;
 	default:
 		DRM_DEBUG("Invalid parameter %d\n", sp->param);

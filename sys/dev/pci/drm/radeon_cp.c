@@ -949,10 +949,6 @@ radeon_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init)
 		return EINVAL;
 	}
 
-	/* Enable vblank on CRTC1 for older X servers
-	 */
-	dev_priv->vblank_crtc = DRM_RADEON_VBLANK_CRTC1;
-
 	dev_priv->cp_mode = init->cp_mode;
 
 	/* We don't support anything other than bus-mastering ring mode,
