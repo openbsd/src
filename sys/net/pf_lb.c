@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.3 2009/02/18 20:06:23 henning Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.4 2009/03/05 03:09:37 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -262,9 +262,12 @@ pf_get_sport(sa_family_t af, u_int8_t proto, struct pf_rule *r,
 	if (pf_map_addr(af, r, saddr, naddr, &init_addr, sn))
 		return (1);
 
-	if (proto == IPPROTO_ICMP) {
-		low = 1;
-		high = 65535;
+	if (proto == IPPROTO_ICMP || proto == IPPROTO_ICMPV6) {
+		if (dport == ICMP6_ECHO_REQUEST || dport == ICMP_ECHO) {
+			low = 1;
+			high = 65535;
+		} else
+			return (0);	/* Don't try to modify non-echo ICMP */
 	}
 
 	do {
