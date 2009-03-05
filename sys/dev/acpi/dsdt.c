@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.137 2009/03/05 04:48:11 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.138 2009/03/05 04:59:58 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2361,10 +2361,7 @@ aml_xmid(struct aml_value *src, int index, int length, struct aml_value **res)
  * Field I/O utility functions 
  */
 void  aml_xresolve(struct aml_scope *, struct aml_value *);
-void *aml_xgetptr(struct aml_value *, int);
 void aml_xgasio(int, uint64_t, int, void *, int, int, const char *);
-void aml_xfldio(struct aml_scope *, struct aml_value *, 
-    struct aml_value *, int);
 void aml_xcreatefield(struct aml_value *, int, struct aml_value *, int, int,
     struct aml_value *, int, int);
 void aml_xparsefieldlist(struct aml_scope *, int, int,
@@ -2621,180 +2618,6 @@ aml_xgasio(int type, uint64_t base, int rlen, void *buf, int mode, int sz,
 	}
 	printf("\n");
 #endif
-}
-
-void *
-aml_xgetptr(struct aml_value *tmp, int blen)
-{
-	if (blen > aml_intlen) {
-		_aml_setvalue(tmp, AML_OBJTYPE_BUFFER, aml_bytelen(blen), 0);
-		return tmp->v_buffer;
-	}
-	_aml_setvalue(tmp, AML_OBJTYPE_INTEGER, 0, NULL);
-	return &tmp->v_integer;
-}
-
-/* Read and Write BufferField and FieldUnit objects */
-void
-aml_xfldio(struct aml_scope *scope, struct aml_value *fld, 
-	   struct aml_value *buf, int mode)
-{
-	struct aml_value tmp, *data;
-	int bpos, blen, preserve=1, mask, aligned, rlen, slen;
-	void *sptr, *dptr;
-		
- 	switch (AML_FIELD_ACCESS(fld->v_field.flags)) {
-	case AML_FIELD_WORDACC:
-		mask=15;
-		break;
-	case AML_FIELD_DWORDACC:
-		mask=31;
-		break;
-	case AML_FIELD_QWORDACC:
-		mask=63;
-		break;
-	default:
-		mask=7;
-		break;
-	}
-	data = fld->v_field.ref1;
-	bpos = fld->v_field.bitpos;
-	blen = fld->v_field.bitlen;
-	rlen = aml_bytelen((bpos & 7) + blen);
-	aligned = !((bpos|blen)&mask);
-	preserve = AML_FIELD_UPDATE(fld->v_field.flags);
-
-	dnprintf(30,"\nquick: %s: [%s] %.4x-%.4x msk=%.2x algn=%d prsrv=%d [%s]\n",
-	    mode == ACPI_IOREAD ? "read from" : "write to",
-	    aml_nodename(fld->node),
-	    bpos, blen, mask, aligned, preserve,
-	    aml_mnem(fld->v_field.type, 0));
-
-	memset(&tmp, 0, sizeof(tmp));
-	if (fld->v_field.ref2 != NULL) {
-		/* Write index */
-		dnprintf(30,"writing index fldio: %d\n", fld->v_field.ref3);
-		_aml_setvalue(&tmp, AML_OBJTYPE_INTEGER, 
-		    fld->v_field.ref3, NULL);
-		aml_xfldio(scope, fld->v_field.ref2, &tmp, ACPI_IOWRITE);
-	}
-
-	/* Get pointer to Data Object */
-	switch (data->type) {
-	case AML_OBJTYPE_BUFFER:
-		dptr = data->v_buffer;
-		break;
-	case AML_OBJTYPE_STRING:
-		dptr = data->v_string;
-		break;
-	case AML_OBJTYPE_INTEGER:
-		dptr = &data->v_integer;
-		break;
-	case AML_OBJTYPE_OPREGION:
-		/* Depending on size, allocate buffer or integer */
-		aml_xresolve(scope, data);
-		dptr = aml_xgetptr(&tmp, rlen << 3);
-		break;
-	case AML_OBJTYPE_FIELDUNIT:
-	case AML_OBJTYPE_BUFFERFIELD:
-		/* Set to integer for now.. */
-		_aml_setvalue(&tmp, AML_OBJTYPE_INTEGER, 0x0, NULL);
-		dptr = &tmp.v_integer;
-		break;
-	default:
-		aml_die("jk XREAD/WRITE: unknown type: %x\n", data->type);
-		break;
-	}
-
-	aml_lockfield(scope, fld);
-	if (mode == ACPI_IOREAD) {
-		sptr = aml_xgetptr(buf, blen);
-		switch (data->type) {
-		case AML_OBJTYPE_OPREGION:
-			/* Do GASIO into temp buffer, bitcopy into result */
-			aml_xgasio(data->v_opregion.iospace,
-			    data->v_opregion.iobase+(bpos>>3),
-			    rlen, dptr, ACPI_IOREAD, mask+1,
-			    aml_nodename(fld->node));
-			aml_bufcpy(sptr, 0, dptr, bpos & 7, blen);
-			break;
-		case AML_OBJTYPE_FIELDUNIT:
-		case AML_OBJTYPE_BUFFERFIELD:
-			/* Do FieldIO into temp buffer, bitcopy into result */
-			aml_xfldio(scope, data, &tmp, ACPI_IOREAD);
-			aml_bufcpy(sptr, 0, dptr, bpos & 7, blen);
-			break;
-		default:
-			/* bitcopy into result */
-			aml_bufcpy(sptr, 0, dptr, bpos, blen);
-			break;
-		}
-	}
-	else {
-		switch (buf->type) {
-		case AML_OBJTYPE_INTEGER:
-			slen = aml_intlen;
-			break;
-		default:
-			slen = buf->length<<3;
-			break;
-		}
-		if (slen < blen) {
-#ifndef SMALL_KERNEL
-			aml_showvalue(fld, 0);
-			aml_showvalue(buf, 0);
-#endif
-			aml_die("BIG SOURCE %d %d %s", buf->length, blen>>3, "");
-		}
-		if (buf->type != AML_OBJTYPE_INTEGER)
-			aml_die("writefield: not integer\n");
-		sptr = &buf->v_integer;
-
-		switch (data->type) {
-		case AML_OBJTYPE_OPREGION:
-			if (!aligned && preserve == AML_FIELD_PRESERVE) {
-				/* Preserve contents: read current value */
-				aml_xgasio(data->v_opregion.iospace,
-				    data->v_opregion.iobase+(bpos>>3),
-				    rlen, dptr, ACPI_IOREAD, mask+1,
-				    aml_nodename(fld->node));
-			}
-			/* Bitcopy data into temp buffer, write GAS */
-			if (preserve == AML_FIELD_WRITEASONES)
-				memset(dptr, 0xFF, tmp.length);
-			aml_bufcpy(dptr, bpos & 7, sptr, 0, blen);
-			aml_xgasio(data->v_opregion.iospace,
-			    data->v_opregion.iobase+(bpos>>3),
-			    rlen, dptr, ACPI_IOWRITE, mask+1,
-			    aml_nodename(fld->node));
-			break;
-		case AML_OBJTYPE_FIELDUNIT:
-		case AML_OBJTYPE_BUFFERFIELD:
-			if (!aligned && preserve == AML_FIELD_PRESERVE) {
-				/* Preserve contents: read current value */
-				aml_xfldio(scope, data, &tmp, ACPI_IOREAD);
-				if (tmp.type != AML_OBJTYPE_INTEGER)
-					dptr = tmp.v_buffer;
-			}
-			else {
-				dptr = aml_xgetptr(&tmp, rlen<<3);
-			}
-			/* Bitcopy data into temp buffer, write field */
-			if (preserve == AML_FIELD_WRITEASONES)
-				memset(dptr, 0xFF, tmp.length);
-			aml_bufcpy(dptr, bpos & 7, sptr, 0, blen);
-			aml_xfldio(scope, data, &tmp, ACPI_IOWRITE);
-			break;
-		default:
-			if (blen > aml_intlen) {
-				aml_die("jk Big Buffer other!\n");
-			}
-			aml_bufcpy(dptr, bpos, sptr, 0, blen);
-			break;
-		}
-	}
-	aml_freevalue(&tmp);
-	aml_unlockfield(scope, fld);
 }
 
 /* Create Field Object          data		index
