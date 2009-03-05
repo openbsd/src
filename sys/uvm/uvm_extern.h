@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.73 2009/02/11 11:09:36 mikeb Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.74 2009/03/05 19:52:24 kettenis Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -406,6 +406,20 @@ struct vmspace {
 #ifdef _KERNEL
 
 /*
+ * used to keep state while iterating over the map for a core dump.
+ */
+struct uvm_coredump_state {
+	void *cookie;		/* opaque for the caller */
+	vaddr_t start;		/* start of region */
+	vaddr_t realend;	/* real end of region */
+	vaddr_t end;		/* virtual end of region */
+	vm_prot_t prot;		/* protection of region */
+	int flags;		/* flags; see below */
+};
+
+#define	UVM_COREDUMP_STACK	0x01	/* region is user stack */
+
+/*
  * the various kernel maps, owned by MD code
  */
 extern struct vm_map *exec_map;
@@ -574,6 +588,10 @@ void			uvm_swap_init(void);
 /* uvm_unix.c */
 int			uvm_coredump(struct proc *, struct vnode *, 
 				struct ucred *, struct core *);
+int			uvm_coredump_walkmap(struct proc *,
+			    void *,
+			    int (*)(struct proc *, void *,
+				    struct uvm_coredump_state *), void *);
 void			uvm_grow(struct proc *, vaddr_t);
 
 /* uvm_user.c */

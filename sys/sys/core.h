@@ -1,4 +1,4 @@
-/*	$OpenBSD: core.h,v 1.3 2003/10/30 21:38:09 jmc Exp $	*/
+/*	$OpenBSD: core.h,v 1.4 2009/03/05 19:52:24 kettenis Exp $	*/
 /*	$NetBSD: core.h,v 1.4 1994/10/29 08:20:14 cgd Exp $	*/
 
 /*
@@ -86,3 +86,9 @@ struct coreseg {
 	u_long	c_addr;			/* Virtual address of segment */
 	u_long	c_size;			/* Size of this segment */
 };
+
+#ifdef _KERNEL
+int	coredump_trad(struct proc *, void *);
+
+int	coredump_write(void *, enum uio_seg, const void *, size_t);
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_exec.c,v 1.18 2005/12/30 19:46:55 miod Exp $	*/
+/*	$OpenBSD: sunos_exec.c,v 1.19 2009/03/05 19:52:24 kettenis Exp $	*/
 /*	$NetBSD: sunos_exec.c,v 1.11 1996/05/05 12:01:47 briggs Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
+#include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
 #include <sys/wait.h>
@@ -91,6 +92,7 @@ struct emul emul_sunos = {
 	copyargs,
 	setregs,
 	NULL,
+	coredump_trad,
 	sigcode,
 	esigcode,
 };

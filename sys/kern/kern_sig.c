@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.102 2009/01/29 22:18:06 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.103 2009/03/05 19:52:24 kettenis Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1380,6 +1380,13 @@ sigexit(struct proc *p, int signum)
 
 int nosuidcoredump = 1;
 
+struct coredump_iostate {
+	struct proc *io_proc;
+	struct vnode *io_vp;
+	struct ucred *io_cred;
+	off_t io_offset;
+};
+
 /*
  * Dump core, into a file named "progname.core", unless the process was
  * setuid/setgid.
@@ -1392,10 +1399,10 @@ coredump(struct proc *p)
 	struct vmspace *vm = p->p_vmspace;
 	struct nameidata nd;
 	struct vattr vattr;
+	struct coredump_iostate	io;
 	int error, error1, len;
 	char name[sizeof("/var/crash/") + MAXCOMLEN + sizeof(".core")];
 	char *dir = "";
-	struct core core;
 
 	/*
 	 * Don't dump if not root and the process has used set user or
@@ -1455,6 +1462,31 @@ coredump(struct proc *p)
 	bcopy(p, &p->p_addr->u_kproc.kp_proc, sizeof(struct proc));
 	fill_eproc(p, &p->p_addr->u_kproc.kp_eproc);
 
+	io.io_proc = p;
+	io.io_vp = vp;
+	io.io_cred = cred;
+	io.io_offset = 0;
+
+	error = (*p->p_emul->e_coredump)(p, &io);
+out:
+	VOP_UNLOCK(vp, 0, p);
+	error1 = vn_close(vp, FWRITE, cred, p);
+	crfree(cred);
+	if (error == 0)
+		error = error1;
+	return (error);
+}
+
+int
+coredump_trad(struct proc *p, void *cookie)
+{
+	struct coredump_iostate *io = cookie;
+	struct vmspace *vm = io->io_proc->p_vmspace;
+	struct vnode *vp = io->io_vp;
+	struct ucred *cred = io->io_cred;
+	struct core core;
+	int error;
+
 	core.c_midmag = 0;
 	strlcpy(core.c_name, p->p_comm, sizeof(core.c_name));
 	core.c_nseg = 0;
@@ -1466,24 +1498,39 @@ coredump(struct proc *p)
 	core.c_ssize = (u_long)round_page(ptoa(vm->vm_ssize));
 	error = cpu_coredump(p, vp, cred, &core);
 	if (error)
-		goto out;
+		return (error);
 	/*
 	 * uvm_coredump() spits out all appropriate segments.
 	 * All that's left to do is to write the core header.
 	 */
 	error = uvm_coredump(p, vp, cred, &core);
 	if (error)
-		goto out;
+		return (error);
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
 	    (int)core.c_hdrsize, (off_t)0,
 	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-out:
-	VOP_UNLOCK(vp, 0, p);
-	error1 = vn_close(vp, FWRITE, cred, p);
-	crfree(cred);
-	if (error == 0)
-		error = error1;
 	return (error);
+}
+
+int
+coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
+{
+	struct coredump_iostate *io = cookie;
+	int error;
+
+	error = vn_rdwr(UIO_WRITE, io->io_vp, (void *)data, len,
+	    io->io_offset, segflg,
+	    IO_NODELOCKED|IO_UNIT, io->io_cred, NULL, io->io_proc);
+	if (error) {
+		printf("pid %d (%s): %s write of %zu@%p at %lld failed: %d\n",
+		    io->io_proc->p_pid, io->io_proc->p_comm,
+		    segflg == UIO_USERSPACE ? "user" : "system",
+		    len, data, (long long) io->io_offset, error);
+		return (error);
+	}
+
+	io->io_offset += len;
+	return (0);
 }
 
 /*

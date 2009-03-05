@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.67 2008/11/10 03:56:16 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.68 2009/03/05 19:52:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -31,6 +31,41 @@
  *
  */
 
+/*
+ * Copyright (c) 2001 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Jason R. Thorpe for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed for the NetBSD Project by
+ *	Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -40,10 +75,12 @@
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/exec_olf.h>
 #include <sys/file.h>
+#include <sys/ptrace.h>
 #include <sys/syscall.h>
 #include <sys/signalvar.h>
 #include <sys/stat.h>
@@ -90,6 +127,7 @@ int ELFNAME(check_header)(Elf_Ehdr *);
 int ELFNAME(read_from)(struct proc *, struct vnode *, u_long, caddr_t, int);
 void ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
 	Elf_Phdr *, Elf_Addr *, Elf_Addr *, int *, int);
+int ELFNAMEEND(coredump)(struct proc *, void *);
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
@@ -125,6 +163,7 @@ struct emul ELFNAMEEND(emul) = {
 	ELFNAME(copyargs),
 	setregs,
 	ELFNAME2(exec,fixup),
+	ELFNAMEEND(coredump),
 	sigcode,
 	esigcode,
 	EMUL_ENABLED | EMUL_NATIVE,
@@ -880,4 +919,439 @@ out2:
 out1:
 	free(hph, M_TEMP);
 	return error;
+}
+
+struct countsegs_state {
+	int	npsections;
+};
+
+int	ELFNAMEEND(coredump_countsegs)(struct proc *, void *,
+	    struct uvm_coredump_state *);
+
+struct writesegs_state {
+	Elf_Phdr *psections;
+	off_t	secoff;
+};
+
+int	ELFNAMEEND(coredump_writeseghdrs)(struct proc *, void *,
+	    struct uvm_coredump_state *);
+
+int	ELFNAMEEND(coredump_notes)(struct proc *, void *, size_t *);
+int	ELFNAMEEND(coredump_note)(struct proc *, void *, size_t *);
+int	ELFNAMEEND(coredump_writenote)(struct proc *, void *, Elf_Note *,
+	    const char *, void *);
+
+#define	ELFROUNDSIZE	4	/* XXX Should it be sizeof(Elf_Word)? */
+#define	elfround(x)	roundup((x), ELFROUNDSIZE)
+
+int
+ELFNAMEEND(coredump)(struct proc *p, void *cookie)
+{
+	Elf_Ehdr ehdr;
+	Elf_Phdr phdr, *psections;
+	struct countsegs_state cs;
+	struct writesegs_state ws;
+	off_t notestart, secstart, offset;
+	size_t notesize;
+	int error, i;
+
+	psections = NULL;
+	/*
+	 * We have to make a total of 3 passes across the map:
+	 *
+	 *	1. Count the number of map entries (the number of
+	 *	   PT_LOAD sections).
+	 *
+	 *	2. Write the P-section headers.
+	 *
+	 *	3. Write the P-sections.
+	 */
+
+	/* Pass 1: count the entries. */
+	cs.npsections = 0;
+	error = uvm_coredump_walkmap(p, NULL,
+	    ELFNAMEEND(coredump_countsegs), &cs);
+	if (error)
+		goto out;
+
+	/* Count the PT_NOTE section. */
+	cs.npsections++;
+
+	/* Get the size of the notes. */
+	error = ELFNAMEEND(coredump_notes)(p, NULL, &notesize);
+	if (error)
+		goto out;
+
+	memset(&ehdr, 0, sizeof(ehdr));
+	memcpy(ehdr.e_ident, ELFMAG, SELFMAG);
+	ehdr.e_ident[EI_CLASS] = ELF_TARG_CLASS;
+	ehdr.e_ident[EI_DATA] = ELF_TARG_DATA;
+	ehdr.e_ident[EI_VERSION] = EV_CURRENT;
+	/* XXX Should be the OSABI/ABI version of the executable. */
+	ehdr.e_ident[EI_OSABI] = ELFOSABI_SYSV;
+	ehdr.e_ident[EI_ABIVERSION] = 0;
+	ehdr.e_type = ET_CORE;
+	/* XXX This should be the e_machine of the executable. */
+	ehdr.e_machine = ELF_TARG_MACH;
+	ehdr.e_version = EV_CURRENT;
+	ehdr.e_entry = 0;
+	ehdr.e_phoff = sizeof(ehdr);
+	ehdr.e_shoff = 0;
+	ehdr.e_flags = 0;
+	ehdr.e_ehsize = sizeof(ehdr);
+	ehdr.e_phentsize = sizeof(Elf_Phdr);
+	ehdr.e_phnum = cs.npsections;
+	ehdr.e_shentsize = 0;
+	ehdr.e_shnum = 0;
+	ehdr.e_shstrndx = 0;
+
+	/* Write out the ELF header. */
+	error = coredump_write(cookie, UIO_SYSSPACE, &ehdr, sizeof(ehdr));
+	if (error)
+		goto out;
+
+	offset = sizeof(ehdr);
+
+	notestart = offset + sizeof(phdr) * cs.npsections;
+	secstart = notestart + notesize;
+
+	psections = malloc(cs.npsections * sizeof(Elf_Phdr),
+	    M_TEMP, M_WAITOK|M_ZERO);
+
+	/* Pass 2: now write the P-section headers. */
+	ws.secoff = secstart;
+	ws.psections = psections;
+	error = uvm_coredump_walkmap(p, cookie,
+	    ELFNAMEEND(coredump_writeseghdrs), &ws);
+	if (error)
+		goto out;
+
+	/* Write out the PT_NOTE header. */
+	ws.psections->p_type = PT_NOTE;
+	ws.psections->p_offset = notestart;
+	ws.psections->p_vaddr = 0;
+	ws.psections->p_paddr = 0;
+	ws.psections->p_filesz = notesize;
+	ws.psections->p_memsz = 0;
+	ws.psections->p_flags = PF_R;
+	ws.psections->p_align = ELFROUNDSIZE;
+
+	error = coredump_write(cookie, UIO_SYSSPACE, psections,
+	    cs.npsections * sizeof(Elf_Phdr));
+	if (error)
+		goto out;
+
+#ifdef DIAGNOSTIC
+	offset += cs.npsections * sizeof(Elf_Phdr);
+	if (offset != notestart)
+		panic("coredump: offset %lld != notestart %lld",
+		    (long long) offset, (long long) notestart);
+#endif
+
+	/* Write out the notes. */
+	error = ELFNAMEEND(coredump_notes)(p, cookie, &notesize);
+	if (error)
+		goto out;
+
+#ifdef DIAGNOSTIC
+	offset += notesize;
+	if (offset != secstart)
+		panic("coredump: offset %lld != secstart %lld",
+		    (long long) offset, (long long) secstart);
+#endif
+
+	/* Pass 3: finally, write the sections themselves. */
+	for (i = 0; i < cs.npsections - 1; i++) {
+		if (psections[i].p_filesz == 0)
+			continue;
+
+#ifdef DIAGNOSTIC
+		if (offset != psections[i].p_offset)
+			panic("coredump: offset %lld != p_offset[%d] %lld",
+			    (long long) offset, i,
+			    (long long) psections[i].p_filesz);
+#endif
+
+		error = coredump_write(cookie, UIO_USERSPACE,
+		    (void *)(vaddr_t)psections[i].p_vaddr,
+		    psections[i].p_filesz);
+		if (error)
+			goto out;
+
+#ifdef DIAGNOSTIC
+		offset += psections[i].p_filesz;
+#endif
+	}
+
+out:
+	return (error);
+}
+
+int
+ELFNAMEEND(coredump_countsegs)(struct proc *p, void *iocookie,
+    struct uvm_coredump_state *us)
+{
+	struct countsegs_state *cs = us->cookie;
+
+	cs->npsections++;
+	return (0);
+}
+
+int
+ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie,
+    struct uvm_coredump_state *us)
+{
+	struct writesegs_state *ws = us->cookie;
+	Elf_Phdr phdr;
+	vsize_t size, realsize;
+
+	size = us->end - us->start;
+	realsize = us->realend - us->start;
+
+	phdr.p_type = PT_LOAD;
+	phdr.p_offset = ws->secoff;
+	phdr.p_vaddr = us->start;
+	phdr.p_paddr = 0;
+	phdr.p_filesz = realsize;
+	phdr.p_memsz = size;
+	phdr.p_flags = 0;
+	if (us->prot & VM_PROT_READ)
+		phdr.p_flags |= PF_R;
+	if (us->prot & VM_PROT_WRITE)
+		phdr.p_flags |= PF_W;
+	if (us->prot & VM_PROT_EXECUTE)
+		phdr.p_flags |= PF_X;
+	phdr.p_align = PAGE_SIZE;
+
+	ws->secoff += phdr.p_filesz;
+	*ws->psections++ = phdr;
+
+	return (0);
+}
+
+int
+ELFNAMEEND(coredump_notes)(struct proc *p, void *iocookie, size_t *sizep)
+{
+	struct ps_strings pss;
+	struct iovec iov;
+	struct uio uio;
+	struct elfcore_procinfo cpi;
+	Elf_Note nhdr;
+#ifdef RTHREADS
+	struct proc *q;
+#endif
+	size_t size, notesize;
+	int error;
+
+	size = 0;
+
+	/* First, write an elfcore_procinfo. */
+	notesize = sizeof(nhdr) + elfround(sizeof("OpenBSD")) +
+	    elfround(sizeof(cpi));
+	if (iocookie) {
+		bzero(&cpi, sizeof(cpi));
+
+		cpi.cpi_version = ELFCORE_PROCINFO_VERSION;
+		cpi.cpi_cpisize = sizeof(cpi);
+		cpi.cpi_signo = p->p_sigacts->ps_sig;
+		cpi.cpi_sigcode = p->p_sigacts->ps_code;
+
+		cpi.cpi_sigpend = p->p_siglist;
+		cpi.cpi_sigmask = p->p_sigmask;
+		cpi.cpi_sigignore = p->p_sigignore;
+		cpi.cpi_sigcatch = p->p_sigcatch;
+
+		cpi.cpi_pid = p->p_pid;
+		cpi.cpi_ppid = p->p_pptr->p_pid;
+		cpi.cpi_pgrp = p->p_pgid;
+		cpi.cpi_sid = p->p_session->s_leader->p_pid;
+
+		cpi.cpi_ruid = p->p_cred->p_ruid;
+		cpi.cpi_euid = p->p_ucred->cr_uid;
+		cpi.cpi_svuid = p->p_cred->p_svuid;
+
+		cpi.cpi_rgid = p->p_cred->p_rgid;
+		cpi.cpi_egid = p->p_ucred->cr_gid;
+		cpi.cpi_svgid = p->p_cred->p_svgid;
+
+		(void)strlcpy(cpi.cpi_name, p->p_comm, sizeof(cpi.cpi_name));
+
+		nhdr.namesz = sizeof("OpenBSD");
+		nhdr.descsz = sizeof(cpi);
+		nhdr.type = NT_OPENBSD_PROCINFO;
+
+		error = ELFNAMEEND(coredump_writenote)(p, iocookie, &nhdr,
+		    "OpenBSD", &cpi);
+		if (error)
+			return (error);
+	}
+	size += notesize;
+
+	/* Second, write an NT_OPENBSD_AUXV note. */
+	notesize = sizeof(nhdr) + elfround(sizeof("OpenBSD")) +
+	    elfround(p->p_emul->e_arglen * sizeof(char *));
+	if (iocookie) {
+		iov.iov_base = &pss;
+		iov.iov_len = sizeof(pss);
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_offset = (off_t)PS_STRINGS;
+		uio.uio_resid = sizeof(pss);
+		uio.uio_segflg = UIO_SYSSPACE;
+		uio.uio_rw = UIO_READ;
+		uio.uio_procp = NULL;
+
+		error = uvm_io(&p->p_vmspace->vm_map, &uio, 0);
+		if (error)
+			return (error);
+
+		if (pss.ps_envstr == NULL)
+			return (EIO);
+
+		nhdr.namesz = sizeof("OpenBSD");
+		nhdr.descsz = p->p_emul->e_arglen * sizeof(char *);
+		nhdr.type = NT_OPENBSD_AUXV;
+
+		error = coredump_write(iocookie, UIO_SYSSPACE,
+		    &nhdr, sizeof(nhdr));
+		if (error)
+			return (error);
+
+		error = coredump_write(iocookie, UIO_SYSSPACE,
+		    "OpenBSD", elfround(nhdr.namesz));
+		if (error)
+			return (error);
+
+		error = coredump_write(iocookie, UIO_USERSPACE,
+		    pss.ps_envstr + pss.ps_nenvstr + 1, nhdr.descsz);
+		if (error)
+			return (error);
+	}
+	size += notesize;
+
+#ifdef PT_WCOOKIE
+	notesize = sizeof(nhdr) + elfround(sizeof("OpenBSD")) +
+	    elfround(sizeof(register_t));
+	if (iocookie) {
+		register_t wcookie;
+
+		nhdr.namesz = sizeof("OpenBSD");
+		nhdr.descsz = sizeof(register_t);
+		nhdr.type = NT_OPENBSD_WCOOKIE;
+
+		wcookie = process_get_wcookie(p);
+		error = ELFNAMEEND(coredump_writenote)(p, iocookie, &nhdr,
+		    "OpenBSD", &wcookie);
+		if (error)
+			return (error);
+	}
+	size += notesize;
+#endif
+
+	/*
+	 * Now write the register info for the thread that caused the
+	 * coredump.
+	 */
+	error = ELFNAMEEND(coredump_note)(p, iocookie, &notesize);
+	if (error)
+		return (error);
+	size += notesize;
+
+#ifdef RTHREADS
+	/*
+	 * Now, for each thread, write the register info and any other
+	 * per-thread notes.  Since we're dumping core, we don't bother
+	 * locking.
+	 */
+	TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link) {
+		if (q == p)		/* we've taken care of this thread */
+			continue;
+		error = ELFNAMEEND(coredump_note)(q, iocookie, &notesize);
+		if (error)
+			return (error);
+		size += notesize;
+	}
+#endif
+
+	*sizep = size;
+	return (0);
+}
+
+int
+ELFNAMEEND(coredump_note)(struct proc *p, void *iocookie, size_t *sizep)
+{
+	Elf_Note nhdr;
+	int size, notesize, error;
+	int namesize;
+	char name[64+ELFROUNDSIZE];
+	struct reg intreg;
+#ifdef PT_GETFPREGS
+	struct fpreg freg;
+#endif
+
+	size = 0;
+
+	snprintf(name, sizeof(name)-ELFROUNDSIZE, "%s@%d",
+	    "OpenBSD", p->p_pid);
+	namesize = strlen(name) + 1;
+	memset(name + namesize, 0, elfround(namesize) - namesize);
+
+	notesize = sizeof(nhdr) + elfround(namesize) + elfround(sizeof(intreg));
+	if (iocookie) {
+		error = process_read_regs(p, &intreg);
+		if (error)
+			return (error);
+
+		nhdr.namesz = namesize;
+		nhdr.descsz = sizeof(intreg);
+		nhdr.type = NT_OPENBSD_REGS;
+
+		error = ELFNAMEEND(coredump_writenote)(p, iocookie, &nhdr,
+		    name, &intreg);
+		if (error)
+			return (error);
+
+	}
+	size += notesize;
+
+#ifdef PT_GETFPREGS
+	notesize = sizeof(nhdr) + elfround(namesize) + elfround(sizeof(freg));
+	if (iocookie) {
+		error = process_read_fpregs(p, &freg);
+		if (error)
+			return (error);
+
+		nhdr.namesz = namesize;
+		nhdr.descsz = sizeof(freg);
+		nhdr.type = NT_OPENBSD_FPREGS;
+
+		error = ELFNAMEEND(coredump_writenote)(p, iocookie, &nhdr,
+		    name, &freg);
+		if (error)
+			return (error);
+	}
+	size += notesize;
+#endif
+
+	*sizep = size;
+	/* XXX Add hook for machdep per-LWP notes. */
+	return (0);
+}
+
+int
+ELFNAMEEND(coredump_writenote)(struct proc *p, void *cookie, Elf_Note *nhdr,
+    const char *name, void *data)
+{
+	int error;
+
+	error = coredump_write(cookie, UIO_SYSSPACE, nhdr, sizeof(*nhdr));
+	if (error)
+		return error;
+
+	error = coredump_write(cookie, UIO_SYSSPACE, name,
+	    elfround(nhdr->namesz));
+	if (error)
+		return error;
+
+	return coredump_write(cookie, UIO_SYSSPACE, data, nhdr->descsz);
 }

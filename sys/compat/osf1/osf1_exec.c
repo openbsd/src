@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_exec.c,v 1.5 2004/06/22 23:52:18 jfb Exp $ */
+/* $OpenBSD: osf1_exec.c,v 1.6 2009/03/05 19:52:24 kettenis Exp $ */
 /* $NetBSD$ */
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/exec_ecoff.h>
 #include <sys/signalvar.h>
@@ -90,6 +91,7 @@ struct emul emul_osf1 = {
         osf1_copyargs,
         cpu_exec_ecoff_setregs,
         NULL,
+	coredump_trad,
         osf1_sigcode,
         osf1_esigcode,
 };

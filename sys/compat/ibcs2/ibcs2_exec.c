@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_exec.c,v 1.18 2006/12/29 13:04:37 pedro Exp $	*/
+/*	$OpenBSD: ibcs2_exec.c,v 1.19 2009/03/05 19:52:23 kettenis Exp $	*/
 /*	$NetBSD: ibcs2_exec.c,v 1.12 1996/10/12 02:13:52 thorpej Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
@@ -100,6 +101,7 @@ struct emul emul_ibcs2 = {
 	copyargs,
 	setregs,
 	NULL,
+	coredump_trad,
 	sigcode,
 	esigcode,
 };

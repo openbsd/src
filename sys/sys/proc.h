@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.111 2008/12/16 07:57:28 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.112 2009/03/05 19:52:24 kettenis Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -100,6 +100,7 @@ struct	emul {
 	void	(*e_setregs)(struct proc *, struct exec_package *,
 				  u_long, register_t *);
 	int	(*e_fixup)(struct proc *, struct exec_package *);
+	int	(*e_coredump)(struct proc *, void *cookie);
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
 	int	e_flags;		/* Flags, see below */

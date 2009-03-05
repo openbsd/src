@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsdos_exec.c,v 1.4 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: bsdos_exec.c,v 1.5 2009/03/05 19:52:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -36,6 +36,7 @@
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
 #include <uvm/uvm_extern.h>
@@ -70,6 +71,7 @@ struct emul emul_bsdos = {
 	copyargs,
 	setregs,
 	NULL,
+	coredump_trad,
 	sigcode,
 	esigcode,
 };

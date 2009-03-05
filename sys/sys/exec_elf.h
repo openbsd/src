@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.43 2007/05/14 05:04:58 tedu Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.44 2009/03/05 19:52:24 kettenis Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -479,6 +479,64 @@ typedef struct {
 	Elf64_Half descsz;
 	Elf64_Half type;
 } Elf64_Note;
+
+/*
+ * OpenBSD-specific core file information.
+ *
+ * OpenBSDBSD ELF core files use notes to provide information about
+ * the process's state.  The note name is "OpenBSD" for information
+ * that is global to the process, and "OpenBSD@nn", where "nn" is the
+ * thread ID of the thread that the information belongs to (such as
+ * register state).
+ *
+ * We use the following note identifiers:
+ *
+ *	NT_OPENBSD_PROCINFO
+ *		Note is a "elfcore_procinfo" structure.
+ *	NT_OPENBSD_AUXV
+ *		Note is a a bunch of Auxilliary Vectors, terminted by
+ *		an AT_NULL entry.
+ *	NT_OPENBSD_REGS
+ *		Note is a "reg" structure.
+ *	NT_OPENBSD_FPREGS
+ *		Note is a "fpreg" structure.
+ *
+ * Please try to keep the members of the "elfcore_procinfo" structure
+ * nicely aligned, and if you add elements, add them to the end and
+ * bump the version.
+ */
+
+#define NT_OPENBSD_PROCINFO	10
+#define NT_OPENBSD_AUXV		11
+
+#define NT_OPENBSD_REGS		20
+#define NT_OPENBSD_FPREGS	21
+#define NT_OPENBSD_XFPREGS	22
+#define NT_OPENBSD_WCOOKIE	23
+
+struct elfcore_procinfo {
+	/* Version 1 fields start here. */
+	uint32_t	cpi_version;	/* netbsd_elfcore_procinfo version */
+#define ELFCORE_PROCINFO_VERSION	1
+	uint32_t	cpi_cpisize;	/* sizeof(netbsd_elfcore_procinfo) */
+	uint32_t	cpi_signo;	/* killing signal */
+	uint32_t	cpi_sigcode;	/* signal code */
+	uint32_t	cpi_sigpend;	/* pending signals */
+	uint32_t	cpi_sigmask;	/* blocked signals */
+	uint32_t	cpi_sigignore;	/* ignored signals */
+	uint32_t	cpi_sigcatch;	/* signals being caught by user */
+	int32_t		cpi_pid;	/* process ID */
+	int32_t		cpi_ppid;	/* parent process ID */
+	int32_t		cpi_pgrp;	/* process group ID */
+	int32_t		cpi_sid;	/* session ID */
+	uint32_t	cpi_ruid;	/* real user ID */
+	uint32_t	cpi_euid;	/* effective user ID */
+	uint32_t	cpi_svuid;	/* saved user ID */
+	uint32_t	cpi_rgid;	/* real group ID */
+	uint32_t	cpi_egid;	/* effective group ID */
+	uint32_t	cpi_svgid;	/* saved group ID */
+	int8_t		cpi_name[32];	/* copy of p->p_comm */
+};
 
 /*
  * XXX - these _KERNEL items aren't part of the ABI!

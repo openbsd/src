@@ -1,4 +1,4 @@
-/* 	$OpenBSD: compat_aout.c,v 1.2 2003/08/23 19:28:53 tedu Exp $ */
+/* 	$OpenBSD: compat_aout.c,v 1.3 2009/03/05 19:52:23 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003 Marc Espie
@@ -30,6 +30,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/fcntl.h>
+#include <sys/core.h>
 #include <compat/common/compat_util.h>
 
 void aout_compat_setup(struct exec_package *epp);
@@ -54,6 +55,7 @@ struct emul emul_aout = {
 	copyargs,
 	setregs,
 	NULL,
+	coredump_trad,
 	sigcode,
 	esigcode,
 };
