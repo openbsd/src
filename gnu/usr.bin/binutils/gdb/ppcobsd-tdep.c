@@ -119,6 +119,9 @@ ppcobsd_regset_from_core_section (struct gdbarch *gdbarch,
   if (strcmp (sect_name, ".reg") == 0 && sect_size >= 412)
     return &ppcobsd_gregset;
 
+  if (strcmp (sect_name, ".reg2") == 0 && sect_size >= 260)
+    return &ppcobsd_fpregset;
+
   return NULL;
 }
 

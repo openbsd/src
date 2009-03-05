@@ -453,9 +453,6 @@ amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->gregset_num_regs = ARRAY_SIZE (amd64obsd_r_reg_offset);
   tdep->sizeof_gregset = 24 * 8;
 
-  set_gdbarch_regset_from_core_section (gdbarch,
-					amd64obsd_regset_from_core_section);
-
   tdep->jb_pc_offset = 7 * 8;
 
   tdep->sigtramp_p = amd64obsd_sigtramp_p;
@@ -474,6 +471,17 @@ amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Unwind kernel trap frames correctly.  */
   frame_unwind_prepend_unwinder (gdbarch, &amd64obsd_trapframe_unwind);
 }
+
+/* Traditional (a.out) NetBSD-style core dumps.  */
+
+static void
+amd64obsd_core_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
+{
+  amd64obsd_init_abi (info, gdbarch);
+
+  set_gdbarch_regset_from_core_section
+    (gdbarch, amd64obsd_regset_from_core_section);
+}
 
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */
@@ -490,5 +498,5 @@ _initialize_amd64obsd_tdep (void)
 
   /* OpenBSD uses traditional (a.out) NetBSD-style core dumps.  */
   gdbarch_register_osabi (bfd_arch_i386, bfd_mach_x86_64,
-			  GDB_OSABI_NETBSD_AOUT, amd64obsd_init_abi);
+			  GDB_OSABI_NETBSD_AOUT, amd64obsd_core_init_abi);
 }
