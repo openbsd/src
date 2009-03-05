@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacreg.h,v 1.9 2007/10/04 19:33:11 gilles Exp $	*/
+/*	$OpenBSD: aacreg.h,v 1.10 2009/03/05 21:16:40 grange Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -1310,7 +1310,7 @@ enum {
  * on the SA110 'StrongArm'.
  */
 
-#define AAC_REGSIZE			0x100
+#define AAC_REGSIZE			0x2000
 
 #define AAC_SA_DOORBELL0_CLEAR		0x98	/* doorbell 0 (adapter->host) */
 #define AAC_SA_DOORBELL0_SET		0x9c
