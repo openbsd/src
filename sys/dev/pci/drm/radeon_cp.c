@@ -226,8 +226,6 @@ radeon_do_pixcache_flush(drm_radeon_private_t *dev_priv)
 	u32 tmp;
 	int i;
 
-	dev_priv->stats.boxes |= RADEON_BOX_WAIT_IDLE;
-
 	if ((dev_priv->flags & RADEON_FAMILY_MASK) <= CHIP_RV280) {
 		tmp = RADEON_READ(RADEON_RB3D_DSTCACHE_CTLSTAT);
 		tmp |= RADEON_RB3D_DC_FLUSH_ALL;
@@ -257,8 +255,6 @@ radeon_do_wait_for_fifo(drm_radeon_private_t *dev_priv, int entries)
 {
 	int i;
 
-	dev_priv->stats.boxes |= RADEON_BOX_WAIT_IDLE;
-
 	for (i = 0; i < dev_priv->usec_timeout; i++) {
 		int slots = (RADEON_READ(RADEON_RBBM_STATUS)
 			     & RADEON_RBBM_FIFOCNT_MASK);
@@ -281,8 +277,6 @@ int
 radeon_do_wait_for_idle(drm_radeon_private_t *dev_priv)
 {
 	int i, ret;
-
-	dev_priv->stats.boxes |= RADEON_BOX_WAIT_IDLE;
 
 	ret = radeon_do_wait_for_fifo(dev_priv, 64);
 	if (ret)
@@ -959,7 +953,6 @@ radeon_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init)
 	 */
 	dev_priv->vblank_crtc = DRM_RADEON_VBLANK_CRTC1;
 
-	dev_priv->do_boxes = 0;
 	dev_priv->cp_mode = init->cp_mode;
 
 	/* We don't support anything other than bus-mastering ring mode,
@@ -1550,9 +1543,7 @@ radeon_freelist_get(struct drm_device *dev)
 			buf = dma->buflist[i];
 			buf_priv = buf->dev_private;
 			if (buf->file_priv == NULL || (buf->pending &&
-						       buf_priv->age <=
-						       done_age)) {
-				dev_priv->stats.requested_bufs++;
+			    buf_priv->age <= done_age)) {
 				buf->pending = 0;
 				return buf;
 			}
@@ -1561,7 +1552,6 @@ radeon_freelist_get(struct drm_device *dev)
 
 		if (t) {
 			DRM_UDELAY(1);
-			dev_priv->stats.freelist_loops++;
 		}
 	}
 
@@ -1584,16 +1574,13 @@ struct drm_buf *radeon_freelist_get(struct drm_device * dev)
 		dev_priv->last_buf = 0;
 
 	start = dev_priv->last_buf;
-	dev_priv->stats.freelist_loops++;
 
 	for (t = 0; t < 2; t++) {
 		for (i = start; i < dma->buf_count; i++) {
 			buf = dma->buflist[i];
 			buf_priv = buf->dev_private;
 			if (buf->file_priv == 0 || (buf->pending &&
-						    buf_priv->age <=
-						    done_age)) {
-				dev_priv->stats.requested_bufs++;
+			    buf_priv->age <= done_age)) {
 				buf->pending = 0;
 				return buf;
 			}
@@ -1639,8 +1626,6 @@ radeon_wait_ring(drm_radeon_private_t *dev_priv, int n)
 			ring->space += ring->size;
 		if (ring->space > n)
 			return 0;
-
-		dev_priv->stats.boxes |= RADEON_BOX_WAIT_IDLE;
 
 		if (head != last_head)
 			i = 0;

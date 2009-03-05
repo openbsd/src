@@ -54,9 +54,6 @@ int	radeon_emit_state(drm_radeon_private_t *, struct drm_file *,
 	    unsigned int);
 int	radeon_emit_state2(drm_radeon_private_t *, struct drm_file *,
 	    drm_radeon_state_t *);
-void	radeon_clear_box(drm_radeon_private_t *, int, int, int, int,
-	    int, int, int);
-void	radeon_cp_performance_boxes(drm_radeon_private_t *);
 void	radeon_cp_dispatch_clear(struct drm_device *, drm_radeon_clear_t *,
 	    drm_radeon_clear_rect_t *);
 void	radeon_cp_dispatch_swap(struct drm_device *);
@@ -796,114 +793,6 @@ static struct {
 };
 
 /* ================================================================
- * Performance monitoring functions
- */
-
-void
-radeon_clear_box(drm_radeon_private_t * dev_priv, int x, int y, int w,
-    int h, int r, int g, int b)
-{
-	u32 color;
-	RING_LOCALS;
-
-	x += dev_priv->sarea_priv->boxes[0].x1;
-	y += dev_priv->sarea_priv->boxes[0].y1;
-
-	switch (dev_priv->color_fmt) {
-	case RADEON_COLOR_FORMAT_RGB565:
-		color = (((r & 0xf8) << 8) |
-			 ((g & 0xfc) << 3) | ((b & 0xf8) >> 3));
-		break;
-	case RADEON_COLOR_FORMAT_ARGB8888:
-	default:
-		color = (((0xff) << 24) | (r << 16) | (g << 8) | b);
-		break;
-	}
-
-	BEGIN_RING(4);
-	RADEON_WAIT_UNTIL_3D_IDLE();
-	OUT_RING(CP_PACKET0(RADEON_DP_WRITE_MASK, 0));
-	OUT_RING(0xffffffff);
-	ADVANCE_RING();
-
-	BEGIN_RING(6);
-
-	OUT_RING(CP_PACKET3(RADEON_CNTL_PAINT_MULTI, 4));
-	OUT_RING(RADEON_GMC_DST_PITCH_OFFSET_CNTL |
-		 RADEON_GMC_BRUSH_SOLID_COLOR |
-		 (dev_priv->color_fmt << 8) |
-		 RADEON_GMC_SRC_DATATYPE_COLOR |
-		 RADEON_ROP3_P | RADEON_GMC_CLR_CMP_CNTL_DIS);
-
-	if (dev_priv->sarea_priv->pfCurrentPage == 1) {
-		OUT_RING(dev_priv->front_pitch_offset);
-	} else {
-		OUT_RING(dev_priv->back_pitch_offset);
-	}
-
-	OUT_RING(color);
-
-	OUT_RING((x << 16) | y);
-	OUT_RING((w << 16) | h);
-
-	ADVANCE_RING();
-}
-
-void
-radeon_cp_performance_boxes(drm_radeon_private_t *dev_priv)
-{
-	/* Collapse various things into a wait flag -- trying to
-	 * guess if userspase slept -- better just to have them tell us.
-	 */
-	if (dev_priv->stats.last_frame_reads > 1 ||
-	    dev_priv->stats.last_clear_reads > dev_priv->stats.clears) {
-		dev_priv->stats.boxes |= RADEON_BOX_WAIT_IDLE;
-	}
-
-	if (dev_priv->stats.freelist_loops) {
-		dev_priv->stats.boxes |= RADEON_BOX_WAIT_IDLE;
-	}
-
-	/* Purple box for page flipping
-	 */
-	if (dev_priv->stats.boxes & RADEON_BOX_FLIP)
-		radeon_clear_box(dev_priv, 4, 4, 8, 8, 255, 0, 255);
-
-	/* Red box if we have to wait for idle at any point
-	 */
-	if (dev_priv->stats.boxes & RADEON_BOX_WAIT_IDLE)
-		radeon_clear_box(dev_priv, 16, 4, 8, 8, 255, 0, 0);
-
-	/* Blue box: lost context?
-	 */
-
-	/* Yellow box for texture swaps
-	 */
-	if (dev_priv->stats.boxes & RADEON_BOX_TEXTURE_LOAD)
-		radeon_clear_box(dev_priv, 40, 4, 8, 8, 255, 255, 0);
-
-	/* Green box if hardware never idles (as far as we can tell)
-	 */
-	if (!(dev_priv->stats.boxes & RADEON_BOX_DMA_IDLE))
-		radeon_clear_box(dev_priv, 64, 4, 8, 8, 0, 255, 0);
-
-	/* Draw bars indicating number of buffers allocated
-	 * (not a great measure, easily confused)
-	 */
-	if (dev_priv->stats.requested_bufs) {
-		if (dev_priv->stats.requested_bufs > 100)
-			dev_priv->stats.requested_bufs = 100;
-
-		radeon_clear_box(dev_priv, 4, 16,
-				 dev_priv->stats.requested_bufs, 4,
-				 196, 128, 128);
-	}
-
-	memset(&dev_priv->stats, 0, sizeof(dev_priv->stats));
-
-}
-
-/* ================================================================
  * CP command dispatch functions
  */
 
@@ -921,8 +810,6 @@ radeon_cp_dispatch_clear(struct drm_device * dev, drm_radeon_clear_t * clear,
 	int i;
 	RING_LOCALS;
 	DRM_DEBUG("flags = 0x%x\n", flags);
-
-	dev_priv->stats.clears++;
 
 	if (dev_priv->sarea_priv->pfCurrentPage == 1) {
 		unsigned int tmp = flags;
@@ -1412,11 +1299,6 @@ radeon_cp_dispatch_swap(struct drm_device *dev)
 	RING_LOCALS;
 	DRM_DEBUG("\n");
 
-	/* Do some trivial performance monitoring...
-	 */
-	if (dev_priv->do_boxes)
-		radeon_cp_performance_boxes(dev_priv);
-
 	/* Wait for the 3D stream to idle before dispatching the bitblt.
 	 * This will prevent data corruption between the two streams.
 	 */
@@ -1489,13 +1371,6 @@ radeon_cp_dispatch_flip(struct drm_device *dev)
 	RING_LOCALS;
 	DRM_DEBUG("pfCurrentPage=%d\n",
 		  dev_priv->sarea_priv->pfCurrentPage);
-
-	/* Do some trivial performance monitoring...
-	 */
-	if (dev_priv->do_boxes) {
-		dev_priv->stats.boxes |= RADEON_BOX_FLIP;
-		radeon_cp_performance_boxes(dev_priv);
-	}
 
 	/* Update the frame offsets for both CRTCs
 	 */
@@ -1727,8 +1602,6 @@ radeon_cp_dispatch_texture(struct drm_device *dev, struct drm_file *file_priv,
 		DRM_ERROR("Invalid destination offset\n");
 		return EINVAL;
 	}
-
-	dev_priv->stats.boxes |= RADEON_BOX_TEXTURE_LOAD;
 
 	/* Flush the pixel cache.  This ensures no pixel data gets mixed
 	 * up with the texture data from the host data blit, otherwise
@@ -2189,8 +2062,6 @@ radeon_cp_clear(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	RING_SPACE_TEST_WITH_RETURN(dev_priv);
-
 	if (sarea_priv->nbox > RADEON_NR_SAREA_CLIPRECTS)
 		sarea_priv->nbox = RADEON_NR_SAREA_CLIPRECTS;
 
@@ -2243,8 +2114,6 @@ radeon_cp_flip(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	RING_SPACE_TEST_WITH_RETURN(dev_priv);
-
 	if (!dev_priv->page_flipping)
 		radeon_do_init_pageflip(dev);
 
@@ -2262,8 +2131,6 @@ radeon_cp_swap(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
-
-	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 
 	if (sarea_priv->nbox > RADEON_NR_SAREA_CLIPRECTS)
 		sarea_priv->nbox = RADEON_NR_SAREA_CLIPRECTS;
@@ -2306,7 +2173,6 @@ int radeon_cp_vertex(struct drm_device *dev, void *data, struct drm_file *file_p
 		return EINVAL;
 	}
 
-	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 	VB_AGE_TEST_WITH_RETURN(dev_priv);
 
 	buf = dma->buflist[vertex->idx];
@@ -2389,7 +2255,6 @@ int radeon_cp_indices(struct drm_device *dev, void *data, struct drm_file *file_
 		return EINVAL;
 	}
 
-	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 	VB_AGE_TEST_WITH_RETURN(dev_priv);
 
 	buf = dma->buflist[elts->idx];
@@ -2471,7 +2336,6 @@ radeon_cp_texture(struct drm_device *dev, void *data,
 			       sizeof(image)))
 		return EFAULT;
 
-	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 	VB_AGE_TEST_WITH_RETURN(dev_priv);
 
 	ret = radeon_cp_dispatch_texture(dev, file_priv, tex, &image);
@@ -2491,8 +2355,6 @@ radeon_cp_stipple(struct drm_device *dev, void *data,
 
 	if (DRM_COPY_FROM_USER(&mask, stipple->mask, 32 * sizeof(u32)))
 		return EFAULT;
-
-	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 
 	radeon_cp_dispatch_stipple(dev, mask);
 
@@ -2545,7 +2407,6 @@ radeon_cp_indirect(struct drm_device *dev, void *data,
 		return EINVAL;
 	}
 
-	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 	VB_AGE_TEST_WITH_RETURN(dev_priv);
 
 	buf->used = indirect->end;
@@ -2600,7 +2461,6 @@ int radeon_cp_vertex2(struct drm_device *dev, void *data, struct drm_file *file_
 		return EINVAL;
 	}
 
-	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 	VB_AGE_TEST_WITH_RETURN(dev_priv);
 
 	buf = dma->buflist[vertex->idx];
@@ -2932,7 +2792,6 @@ radeon_cp_cmdbuf(struct drm_device *dev, void *data,
 		return EINVAL;
 	}
 
-	RING_SPACE_TEST_WITH_RETURN(dev_priv);
 	VB_AGE_TEST_WITH_RETURN(dev_priv);
 
 	if (cmdbuf->bufsz > 64 * 1024 || cmdbuf->bufsz < 0) {
@@ -3102,14 +2961,12 @@ radeon_cp_getparam(struct drm_device *dev, void *data,
 		value = dev_priv->gart_buffers_offset;
 		break;
 	case RADEON_PARAM_LAST_FRAME:
-		dev_priv->stats.last_frame_reads++;
 		value = GET_SCRATCH(0);
 		break;
 	case RADEON_PARAM_LAST_DISPATCH:
 		value = GET_SCRATCH(1);
 		break;
 	case RADEON_PARAM_LAST_CLEAR:
-		dev_priv->stats.last_clear_reads++;
 		value = GET_SCRATCH(2);
 		break;
 	case RADEON_PARAM_IRQ_NR:

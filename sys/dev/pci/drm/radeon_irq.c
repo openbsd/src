@@ -253,8 +253,6 @@ radeon_wait_irq(struct drm_device * dev, int swi_nr)
 	if (RADEON_READ(RADEON_LAST_SWI_REG) >= swi_nr)
 		return 0;
 
-	dev_priv->stats.boxes |= RADEON_BOX_WAIT_IDLE;
-
 	DRM_WAIT_ON(ret, dev_priv, 3 * DRM_HZ,
 		    RADEON_READ(RADEON_LAST_SWI_REG) >= swi_nr);
 

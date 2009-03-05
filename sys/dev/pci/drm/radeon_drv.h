@@ -242,18 +242,6 @@ typedef struct drm_radeon_private {
 
 	int usec_timeout;
 
-	struct {
-		u32 boxes;
-		int freelist_timeouts;
-		int freelist_loops;
-		int requested_bufs;
-		int last_frame_reads;
-		int last_clear_reads;
-		int clears;
-		int texture_uploads;
-	} stats;
-
-	int do_boxes;
 	int page_flipping;
 
 	u32 color_fmt;
@@ -410,14 +398,6 @@ extern void r300_init_reg_flags(struct drm_device *dev);
 extern int r300_do_cp_cmdbuf(struct drm_device *dev,
 			     struct drm_file *file_priv,
 			     drm_radeon_kcmd_buffer_t *cmdbuf);
-
-/* Flags for stats.boxes
- */
-#define RADEON_BOX_DMA_IDLE      0x1
-#define RADEON_BOX_RING_FULL     0x2
-#define RADEON_BOX_FLIP          0x4
-#define RADEON_BOX_WAIT_IDLE     0x8
-#define RADEON_BOX_TEXTURE_LOAD  0x10
 
 /* Register definitions, register access macros and drmAddMap constants
  * for Radeon kernel driver.
@@ -1349,17 +1329,6 @@ do {									\
 /* ================================================================
  * Misc helper macros
  */
-
-/* Perfbox functionality only.
- */
-#define RING_SPACE_TEST_WITH_RETURN( dev_priv )				\
-do {									\
-	if (!(dev_priv->stats.boxes & RADEON_BOX_DMA_IDLE)) {		\
-		u32 head = GET_RING_HEAD( dev_priv );			\
-		if (head == dev_priv->ring.tail)			\
-			dev_priv->stats.boxes |= RADEON_BOX_DMA_IDLE;	\
-	}								\
-} while (0)
 
 #define VB_AGE_TEST_WITH_RETURN( dev_priv )				\
 do {									\
