@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.21 2008/06/03 10:32:19 brad Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.22 2009/03/05 21:19:04 grange Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -79,6 +79,9 @@ void	aac_pci_attach(struct device *, struct device *, void *);
 #define PCI_PRODUCT_ADP2_AACCERCSATA6C 0x0291
 #define PCI_PRODUCT_ADP2_AACPERC320DC  0x0287
 
+/* IBM */
+#define PCI_PRODUCT_ADP2_AACSERVERAID8K 0x9580
+
 struct aac_sub_ident {
 	u_int16_t subvendor;
 	u_int16_t subdevice;
@@ -95,6 +98,7 @@ struct aac_sub_ident {
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACASR2200S, "Adaptec 2200S" },
 	{ PCI_VENDOR_DELL, PCI_PRODUCT_ADP2_AACCERCSATA6C, "Dell CERC-SATA" },
 	{ PCI_VENDOR_DELL, PCI_PRODUCT_ADP2_AACPERC320DC, "Dell PERC 320/DC" },
+	{ PCI_VENDOR_IBM, PCI_PRODUCT_ADP2_AACSERVERAID8K, "IBM ServeRAID-8k" },
 	{ 0, 0, "" }
 };
 
@@ -172,6 +176,9 @@ struct aac_ident {
 	    PCI_PRODUCT_ADP2_AACASR2130S, AAC_HWIF_RKT },
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACASR2120S, PCI_VENDOR_ADP2,
 	    PCI_PRODUCT_ADP2_AACASR2230S, AAC_HWIF_RKT },
+	/* IBM ServeRAID */
+	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACASR2120S, PCI_VENDOR_IBM,
+	    PCI_PRODUCT_ADP2_AACSERVERAID8K, AAC_HWIF_RKT },
 	{ 0, 0, 0, 0 }
 };
 
