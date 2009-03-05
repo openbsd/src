@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.23 2007/11/27 16:22:13 martynas Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.24 2009/03/05 21:55:12 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -287,6 +287,7 @@ mainbus_scan(struct device *parent, void *child, void *args)
 void
 mainbus_attach(struct device *parent, struct device *self, void *args)
 {
+	extern void cpu_hatch_secondary_processors(void *);
 	extern char cpu_model[];
 
 	printf(": %s\n", cpu_model);
@@ -315,6 +316,20 @@ mainbus_attach(struct device *parent, struct device *self, void *args)
 	    1 + atop(0U - PAGE_SIZE), M_DEVBUF, NULL, 0, EX_NOWAIT);
 	if (bs_extent == NULL)
 		panic("unable to allocate bus_space extent");
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Spin up the other processors, but do not give them work to
+	 * do yet.
+	 * On MVME188 boards, the system hangs if secondary processors
+	 * try to issue BUG calls (i.e. when printing their information
+	 * on console), so we postpone this to the end of autoconf.
+	 */
+	if (brdtyp == BRD_188)
+		startuphook_establish(cpu_hatch_secondary_processors, NULL);
+	else
+		cpu_hatch_secondary_processors(NULL);
+#endif
 
 	(void)config_search(mainbus_scan, self, args);
 }

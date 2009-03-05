@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.42 2008/07/21 04:35:54 todd Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.43 2009/03/05 21:55:15 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -72,26 +72,6 @@ struct device *bootdv;	/* set by device drivers (if found) */
 void
 cpu_configure()
 {
-#ifdef MULTIPROCESSOR
-	/*
-	 * XXX This is gross. We can not invoke sched_init_cpu after
-	 * XXX init has been forked. But since we start secondary
-	 * XXX processors very late in the boot process, it is not
-	 * XXX possible to do this from the secondary processors
-	 * XXX themselves.
-	 * XXX Instead, do this now, even though this may cause
-	 * XXX idle procs to be allocated for missing or unreliable
-	 * XXX processors.
-	 */
-	cpuid_t cpu;
-	for (cpu = 0; cpu < max_cpus; cpu++) {
-		if (cpu == curcpu()->ci_cpuid)
-			continue;
-
-		sched_init_cpu(&m88k_cpus[cpu]);
-	}
-#endif
-
 	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
 
@@ -107,6 +87,7 @@ cpu_configure()
 	 */
 	cn_tab = NULL;
 	cninit();
+
 	cold = 0;
 }
 
