@@ -636,24 +636,14 @@ radeondrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 			return (radeon_cp_idle(dev, data, file_priv));
 		case DRM_IOCTL_RADEON_CP_RESUME:
 			return (radeon_cp_resume(dev));
-		case DRM_IOCTL_RADEON_RESET:
-			return (radeon_engine_reset(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_FULLSCREEN:
-			return (0); /* oh so deprecated */
 		case DRM_IOCTL_RADEON_SWAP:
 			return (radeon_cp_swap(dev, data, file_priv));
 		case DRM_IOCTL_RADEON_CLEAR:
 			return (radeon_cp_clear(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_VERTEX:
-			return (radeon_cp_vertex(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_INDICES:
-			return (radeon_cp_indices(dev, data, file_priv));
 		case DRM_IOCTL_RADEON_TEXTURE:
 			return (radeon_cp_texture(dev, data, file_priv));
 		case DRM_IOCTL_RADEON_STIPPLE:
 			return (radeon_cp_stipple(dev, data, file_priv));
-		case DRM_IOCTL_RADEON_VERTEX2:
-			return (radeon_cp_vertex2(dev, data, file_priv));
 		case DRM_IOCTL_RADEON_CMDBUF:
 			return (radeon_cp_cmdbuf(dev, data, file_priv));
 		case DRM_IOCTL_RADEON_GETPARAM:

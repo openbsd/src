@@ -1488,18 +1488,6 @@ radeon_cp_resume(struct drm_device *dev)
 	return 0;
 }
 
-int
-radeon_engine_reset(struct drm_device *dev, void *data,
-    struct drm_file *file_priv)
-{
-	DRM_DEBUG("\n");
-
-	LOCK_TEST_WITH_RETURN(dev, file_priv);
-
-	return radeon_do_engine_reset(dev);
-}
-
-
 /* ================================================================
  * Freelist management
  */

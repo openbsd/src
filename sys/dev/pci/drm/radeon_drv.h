@@ -336,8 +336,6 @@ extern int radeon_cp_stop(struct drm_device *dev, void *data, struct drm_file *f
 extern int radeon_cp_reset(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_cp_idle(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_cp_resume(struct drm_device *dev);
-extern int radeon_engine_reset(struct drm_device *dev, void *data, struct drm_file *file_priv);
-extern int radeon_fullscreen(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_cp_buffers(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern u32 radeon_read_fb_location(drm_radeon_private_t *dev_priv);
 
@@ -345,13 +343,10 @@ extern int radeon_surface_alloc(struct drm_device *, void *, struct drm_file *);
 extern int radeon_surface_free(struct drm_device *, void *, struct drm_file *);
 extern int radeon_cp_swap(struct drm_device *, void *, struct drm_file *);
 extern int radeon_cp_clear(struct drm_device *, void *, struct drm_file *);
-extern int radeon_cp_vertex(struct drm_device *, void *, struct drm_file *);
-extern int radeon_cp_indices(struct drm_device *, void *, struct drm_file *);
 extern int radeon_cp_texture(struct drm_device *, void *, struct drm_file *);
 extern int radeon_cp_flip(struct drm_device *, void *, struct drm_file *);
 extern int radeon_cp_stipple(struct drm_device *, void *, struct drm_file *);
 extern int radeon_cp_indirect(struct drm_device *, void *, struct drm_file *);
-extern int radeon_cp_vertex2(struct drm_device *, void *, struct drm_file *);
 extern int radeon_cp_cmdbuf(struct drm_device *, void *, struct drm_file *);
 extern int radeon_cp_getparam(struct drm_device *, void *, struct drm_file *);
 extern int radeon_cp_setparam(struct drm_device *, void *, struct drm_file *);
