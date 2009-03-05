@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 2008/12/16 05:25:55 guenther Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 2009/03/05 20:53:13 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.4 1995/03/26 04:55:35 glass Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: util.c,v 1.10 2008/12/16 05:25:55 guenther Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.11 2009/03/05 20:53:13 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,18 +87,21 @@ atot(char *p, time_t *store)
 	return (0);
 }
 
-char *
-ok_shell(char *name)
+int
+ok_shell(char *name, char **out)
 {
 	char *p, *sh;
 
 	setusershell();
 	while ((sh = getusershell()) != NULL) {
 		if (!strcmp(name, sh))
-			return (name);
+			break;
 		/* allow just shell name, but use "real" path */
 		if ((p = strrchr(sh, '/')) && strcmp(name, p + 1) == 0)
-			return (sh);
+			break;
 	}
-	return (NULL);
+	if (sh && out)
+		*out = strdup(sh);
+	endusershell();
+	return (sh != NULL);
 }

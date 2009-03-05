@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.h,v 1.9 2003/06/25 22:41:35 deraadt Exp $	*/
+/*	$OpenBSD: chpass.h,v 1.10 2009/03/05 20:53:13 millert Exp $	*/
 /*	$NetBSD: chpass.h,v 1.4 1996/05/15 21:50:44 jtc Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ extern uid_t uid;
 int	 atot(char *, time_t *);
 void	 display(char *, int, struct passwd *);
 int	 edit(char *, struct passwd *);
-char    *ok_shell(char *);
+int	 ok_shell(char *, char **);
 int	 p_change(char *, struct passwd *, ENTRY *);
 int	 p_class(char *, struct passwd *, ENTRY *);
 int	 p_expire(char *, struct passwd *, ENTRY *);
