@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.12 2009/03/06 23:29:06 gilles Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.13 2009/03/06 23:32:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -280,6 +280,11 @@ make_plain(DBT *val, char *text)
 		free(a);
 		return 0;
 	}
+
+	/* unlike make_aliases, we deal with a C string, so
+	 * val->size should include the nul-byte.
+	 */
+	val->size++;
 
 	return (val->size);
 }
