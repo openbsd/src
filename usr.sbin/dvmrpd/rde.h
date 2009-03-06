@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.10 2009/02/03 16:21:19 michele Exp $ */
+/*	$OpenBSD: rde.h,v 1.11 2009/03/06 18:39:13 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -81,6 +81,10 @@ pid_t	rde(struct dvmrpd_conf *, int [2], int [2], int [2]);
 int	rde_imsg_compose_parent(int, pid_t, void *, u_int16_t);
 int	rde_imsg_compose_dvmrpe(int, u_int32_t, pid_t, void *, u_int16_t);
 
+void	rde_group_list_add(struct iface *, struct in_addr);
+int	rde_group_list_find(struct iface *, struct in_addr);
+void	rde_group_list_remove(struct iface *, struct in_addr);
+
 /* rde_mfc.c */
 void		 mfc_init(void);
 int		 mfc_compare(struct mfc_node *, struct mfc_node *);
@@ -92,6 +96,7 @@ void		 mfc_dump(pid_t);
 void		 mfc_update(struct mfc *);
 void		 mfc_delete(struct mfc *);
 void		 mfc_update_source(struct rt_node *);
+int		 mfc_check_members(struct rt_node *, struct iface *);
 
 /* rde_srt.c */
 void		 rt_init(void);

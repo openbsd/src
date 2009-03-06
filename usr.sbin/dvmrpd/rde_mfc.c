@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_mfc.c,v 1.3 2009/02/03 16:21:19 michele Exp $ */
+/*	$OpenBSD: rde_mfc.c,v 1.4 2009/03/06 18:39:13 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Esben Norby <norby@openbsd.org>
@@ -258,4 +258,20 @@ mfc_delete(struct mfc *nmfc)
 	mfc_remove(mn);
 
 	/* XXX notify parent */
+}
+
+int
+mfc_check_members(struct rt_node *rn, struct iface *iface)
+{
+	struct mfc_node		*mn;
+
+	RB_FOREACH(mn, mfc_tree, &mfc) {
+		if (mn->origin.s_addr == rn->prefix.s_addr) {
+			if (rde_group_list_find(iface, mn->group)
+			    != NULL)
+				return (1);
+		}
+	}
+
+	return (0);
 }

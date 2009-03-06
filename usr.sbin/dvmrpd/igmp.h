@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.h,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: igmp.h,v 1.2 2009/03/06 18:39:13 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -102,8 +102,8 @@ enum group_action {
 	GRP_ACT_START_RETRANS_TMR,
 	GRP_ACT_START_V1_HOST_TMR,
 	GRP_ACT_SEND_GRP_QUERY,
-	GRP_ACT_ADD_ROUTE,
-	GRP_ACT_DEL_ROUTE,
+	GRP_ACT_ADD_GROUP,
+	GRP_ACT_DEL_GROUP,
 	GRP_ACT_CLR_RETRANS_TMR,
 	GRP_ACT_NOTHING
 };

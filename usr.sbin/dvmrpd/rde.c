@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.10 2009/01/27 08:53:47 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.11 2009/03/06 18:39:13 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -283,12 +283,38 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			memcpy(&rn, imsg.data, sizeof(rn));
 
 			if (rde_nbr_new(imsg.hdr.peerid, &rn) == NULL)
-				fatalx("rde_rispatch_imsg: "
+				fatalx("rde_dispatch_imsg: "
 				    "neighbor already exists");
 			break;
 		case IMSG_NEIGHBOR_DOWN:
 			rde_nbr_del(rde_nbr_find(imsg.hdr.peerid));
 
+			break;
+		case IMSG_GROUP_ADD:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(mfc))
+				fatalx("invalid size of OE request"); 
+			memcpy(&mfc, imsg.data, sizeof(mfc));
+
+			iface = if_find_index(mfc.ifindex);
+			if (iface == NULL) {
+				fatalx("rde_dispatch_imsg: "
+				    "cannot find matching interface");
+			}
+
+			rde_group_list_add(iface, mfc.group);
+			break;
+		case IMSG_GROUP_DEL:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(mfc))
+				fatalx("invalid size of OE request"); 
+			memcpy(&mfc, imsg.data, sizeof(mfc));
+
+			iface = if_find_index(mfc.ifindex);
+			if (iface == NULL) {
+				fatalx("rde_dispatch_imsg: "
+				    "cannot find matching interface");
+			}
+
+			rde_group_list_remove(iface, mfc.group);
 			break;
 		default:
 			log_debug("rde_dispatch_msg: unexpected imsg %d",
@@ -391,4 +417,75 @@ rde_nbr_del(struct rde_nbr *nbr)
 	LIST_REMOVE(nbr, hash);
 
 	free(nbr);
+}
+
+/* rde group functions */
+void
+rde_group_list_add(struct iface *iface, struct in_addr group)
+{
+	struct rde_group	*rdegrp;
+
+	/* validate group id */
+	if (!IN_MULTICAST(htonl(group.s_addr))) {
+		log_debug("rde_group_list_add: interface %s, %s is not a "
+		    "multicast address", iface->name,
+		    inet_ntoa(group));
+		return;
+	}
+
+	if (rde_group_list_find(iface, group))
+		return;
+
+	rdegrp = calloc(1, sizeof(*rdegrp));
+	if (rdegrp == NULL)
+		fatal("rde_group_list_add");
+
+	rdegrp->rde_group.s_addr = group.s_addr;
+
+	TAILQ_INSERT_TAIL(&iface->rde_group_list, rdegrp, entry);
+
+	log_debug("rde_group_list_add: interface %s, group %s", iface->name,
+	    inet_ntoa(rdegrp->rde_group));
+
+	return;
+}
+
+int
+rde_group_list_find(struct iface *iface, struct in_addr group)
+{
+	struct rde_group	*rdegrp = NULL;
+
+	/* validate group id */
+	if (!IN_MULTICAST(htonl(group.s_addr))) {
+		log_debug("rde_group_list_find: interface %s, %s is not a "
+		    "multicast address", iface->name,
+		    inet_ntoa(group));
+		return (0);
+	}
+
+	TAILQ_FOREACH(rdegrp, &iface->rde_group_list, entry) {
+		if (rdegrp->rde_group.s_addr == group.s_addr)
+			return (1);
+	}
+
+	return (0);
+}
+
+void
+rde_group_list_remove(struct iface *iface, struct in_addr group)
+{
+	struct rde_group	*rg;
+
+	if (TAILQ_EMPTY(&iface->rde_group_list))
+		fatalx("rde_group_list_remove: group does not exist");
+
+	for(rg = TAILQ_FIRST(&iface->rde_group_list); rg != NULL;
+	    rg = TAILQ_NEXT(rg, entry)) {
+		if (rg->rde_group.s_addr == group.s_addr) {
+			log_debug("group_list_remove: interface %s, group %s",
+			    iface->name, inet_ntoa(rg->rde_group));
+			TAILQ_REMOVE(&iface->rde_group_list, rg, entry);
+			free(rg);
+		}
+	}
 }

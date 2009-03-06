@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.7 2009/01/20 01:35:34 todd Exp $ */
+/*	$OpenBSD: interface.c,v 1.8 2009/03/06 18:39:13 michele Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -173,6 +173,7 @@ if_new(struct kif *kif)
 
 	LIST_INIT(&iface->nbr_list);
 	TAILQ_INIT(&iface->group_list);
+	TAILQ_INIT(&iface->rde_group_list);
 	strlcpy(iface->name, kif->ifname, sizeof(iface->name));
 
 	if ((ifr = calloc(1, sizeof(*ifr))) == NULL)

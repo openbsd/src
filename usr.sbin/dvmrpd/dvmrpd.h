@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.h,v 1.13 2009/01/20 01:35:34 todd Exp $ */
+/*	$OpenBSD: dvmrpd.h,v 1.14 2009/03/06 18:39:13 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -111,6 +111,8 @@ enum imsg_type {
 	IMSG_MFC_DEL,
 	IMSG_NEIGHBOR_UP,
 	IMSG_NEIGHBOR_DOWN,
+	IMSG_GROUP_ADD,
+	IMSG_GROUP_DEL,
 	IMSG_FLASH_UPDATE,
 	IMSG_FLASH_UPDATE_DS
 };
@@ -184,6 +186,11 @@ struct group {
 	int			 state;
 };
 
+struct rde_group {
+	TAILQ_ENTRY(rde_group)	 entry;
+	struct in_addr		 rde_group;
+};
+
 struct mfc {
 	struct in_addr		 origin;
 	struct in_addr		 group;
@@ -202,6 +209,7 @@ struct iface {
 	time_t			 uptime;
 	LIST_HEAD(, nbr)	 nbr_list;
 	TAILQ_HEAD(, group)	 group_list;
+	TAILQ_HEAD(, rde_group)	 rde_group_list;
 	struct rr_head		 rr_list;
 
 	char			 name[IF_NAMESIZE];

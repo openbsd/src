@@ -1,4 +1,4 @@
-/*	$OpenBSD: group.c,v 1.1 2006/06/01 14:12:20 norby Exp $ */
+/*	$OpenBSD: group.c,v 1.2 2009/03/06 18:39:13 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Esben Norby <norby@openbsd.org>
@@ -58,15 +58,15 @@ struct {
 } grp_fsm[] = {
     /* current state		event that happened	action(s) to take		resulting state */
     /* querier fsm */
-    {GRP_STA_NO_MEMB_PRSNT,	GRP_EVT_V2_REPORT_RCVD,	{GRP_ACT_ADD_ROUTE,
+    {GRP_STA_NO_MEMB_PRSNT,	GRP_EVT_V2_REPORT_RCVD,	{GRP_ACT_ADD_GROUP,
 							 GRP_ACT_START_TMR,
 							 GRP_ACT_END},			GRP_STA_MEMB_PRSNT},
-    {GRP_STA_NO_MEMB_PRSNT,	GRP_EVT_V1_REPORT_RCVD,	{GRP_ACT_ADD_ROUTE,
+    {GRP_STA_NO_MEMB_PRSNT,	GRP_EVT_V1_REPORT_RCVD,	{GRP_ACT_ADD_GROUP,
 							 GRP_ACT_START_TMR,
 							 GRP_ACT_START_V1_HOST_TMR,
 							 GRP_ACT_END},			GRP_STA_MEMB_PRSNT},
 
-    {GRP_STA_MEMB_PRSNT,	GRP_EVT_TMR_EXPIRED,	{GRP_ACT_DEL_ROUTE,
+    {GRP_STA_MEMB_PRSNT,	GRP_EVT_TMR_EXPIRED,	{GRP_ACT_DEL_GROUP,
 							 GRP_ACT_END},			GRP_STA_NO_MEMB_PRSNT},
     {GRP_STA_MEMB_PRSNT,	GRP_EVT_V2_REPORT_RCVD,	{GRP_ACT_START_TMR,
 							 GRP_ACT_END},			0},
@@ -80,7 +80,7 @@ struct {
 
     {GRP_STA_CHECK_MEMB,	GRP_EVT_V2_REPORT_RCVD,	{GRP_ACT_START_TMR,
 							 GRP_ACT_END},			GRP_STA_MEMB_PRSNT},
-    {GRP_STA_CHECK_MEMB,	GRP_EVT_TMR_EXPIRED,	{GRP_ACT_DEL_ROUTE,
+    {GRP_STA_CHECK_MEMB,	GRP_EVT_TMR_EXPIRED,	{GRP_ACT_DEL_GROUP,
 							 GRP_ACT_CLR_RETRANS_TMR,
 							 GRP_ACT_END},			GRP_STA_NO_MEMB_PRSNT},
     {GRP_STA_CHECK_MEMB,	GRP_EVT_RETRANS_TMR_EXP,{GRP_ACT_SEND_GRP_QUERY,
@@ -97,11 +97,11 @@ struct {
 							 GRP_ACT_END},			0},
     {GRP_STA_V1_MEMB_PRSNT,	GRP_EVT_V2_REPORT_RCVD,	{GRP_ACT_START_TMR,
 							 GRP_ACT_END},			0},
-    {GRP_STA_V1_MEMB_PRSNT,	GRP_EVT_TMR_EXPIRED,	{GRP_ACT_DEL_ROUTE,
+    {GRP_STA_V1_MEMB_PRSNT,	GRP_EVT_TMR_EXPIRED,	{GRP_ACT_DEL_GROUP,
 							 GRP_ACT_END},			GRP_STA_NO_MEMB_PRSNT},
 
     /* non querier fsm */
-    {GRP_STA_NO_MEMB_PRSNT,	GRP_EVT_REPORT_RCVD,	{GRP_ACT_ADD_ROUTE,
+    {GRP_STA_NO_MEMB_PRSNT,	GRP_EVT_REPORT_RCVD,	{GRP_ACT_ADD_GROUP,
 							 GRP_ACT_START_TMR,
 							 GRP_ACT_END},			GRP_STA_MEMB_PRSNT},
     {GRP_STA_MEMB_PRSNT,	GRP_EVT_REPORT_RCVD,	{GRP_ACT_START_TMR,
@@ -122,8 +122,8 @@ const char * const group_action_names[] = {
 	"START RETRANSMISSION TIMER",
 	"START V1 HOST TIMER",
 	"SEND GROUP QUERY",
-	"ADD ROUTE",
-	"DEL ROUTE",
+	"ADD GROUP",
+	"DEL GROUP",
 	"CLEAR RETRANSMISSION TIMER",
 	"NOTHING"
 };
@@ -182,18 +182,18 @@ group_fsm(struct group *group, enum group_event event)
 		case GRP_ACT_SEND_GRP_QUERY:
 			ret = send_igmp_query(group->iface, group);
 			break;
-		case GRP_ACT_ADD_ROUTE:
+		case GRP_ACT_ADD_GROUP:
 			mfc.origin.s_addr = 0;
 			mfc.group = group->addr;
-			mfc.ifindex = group->iface->ifindex;	/* XXX fixme */
-			dvmrpe_imsg_compose_rde(IMSG_MFC_ADD, 0, 0, &mfc,
+			mfc.ifindex = group->iface->ifindex;
+			dvmrpe_imsg_compose_rde(IMSG_GROUP_ADD, 0, 0, &mfc,
 			    sizeof(mfc));
 			break;
-		case GRP_ACT_DEL_ROUTE:
+		case GRP_ACT_DEL_GROUP:
 			mfc.origin.s_addr = 0;
 			mfc.group = group->addr;
-			mfc.ifindex = group->iface->ifindex;	/* XXX fixme */
-			dvmrpe_imsg_compose_rde(IMSG_MFC_DEL, 0, 0, &mfc,
+			mfc.ifindex = group->iface->ifindex;
+			dvmrpe_imsg_compose_rde(IMSG_GROUP_DEL, 0, 0, &mfc,
 			    sizeof(mfc));
 			break;
 		case GRP_ACT_CLR_RETRANS_TMR:
