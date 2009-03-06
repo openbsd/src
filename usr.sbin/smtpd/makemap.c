@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.11 2009/02/22 11:44:29 form Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.12 2009/03/06 23:29:06 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -273,7 +273,7 @@ make_plain(DBT *val, char *text)
 		err(1, "calloc");
 
 	a->type = ALIAS_TEXT;
-	val->data = a;
+	val->data = a->u.text;
 	val->size = strlcpy(a->u.text, text, sizeof(a->u.text));
 
 	if (val->size >= sizeof(a->u.text)) {
