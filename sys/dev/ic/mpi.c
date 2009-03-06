@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.109 2009/02/16 21:19:07 miod Exp $ */
+/*	$OpenBSD: mpi.c,v 1.110 2009/03/06 01:28:44 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 David Gwynne <dlg@openbsd.org>
@@ -1124,13 +1124,9 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	s = splbio();
 	ccb = mpi_get_ccb(sc);
 	splx(s);
-	if (ccb == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		s = splbio();
-		scsi_done(xs);
-		splx(s);
-		return (COMPLETE);
-	}
+	if (ccb == NULL)
+		return (NO_CCB);
+
 	DNPRINTF(MPI_D_CMD, "%s: ccb_id: %d xs->flags: 0x%x\n",
 	    DEVNAME(sc), ccb->ccb_id, xs->flags);
 
