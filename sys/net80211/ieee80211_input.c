@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.109 2009/02/08 15:34:39 damien Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.110 2009/03/06 18:35:02 damien Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -2095,7 +2095,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 	status =  LE_READ_2(frm); frm += 2;
 	if (status != IEEE80211_STATUS_SUCCESS) {
 		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: %sassociation failed (reason %d)"
+			printf("%s: %sassociation failed (status %d)"
 			    " for %s\n", ifp->if_xname,
 			    reassoc ?  "re" : "",
 			    status, ether_sprintf((u_int8_t *)wh->i_addr3));
