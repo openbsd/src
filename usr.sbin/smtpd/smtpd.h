@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.82 2009/03/03 23:33:52 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.83 2009/03/06 23:45:00 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -852,6 +852,9 @@ void		 qwalk_close(struct qwalk *);
 void		 show_queue(char *, int);
 
 u_int16_t	queue_hash(char *);
+
+/* map.c */
+char		*map_dblookup(struct smtpd *, char *, char *);
 
 /* mda.c */
 pid_t		 mda(struct smtpd *);
