@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.60 2009/03/05 15:13:30 millert Exp $
+.\"	$OpenBSD: csh.1,v 1.61 2009/03/06 12:28:36 jmc Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)csh.1	8.2 (Berkeley) 1/21/94
 .\"
-.Dd $Mdocdate: March 5 2009 $
+.Dd $Mdocdate: March 6 2009 $
 .Dt CSH 1
 .Os
 .Sh NAME
@@ -1145,6 +1145,7 @@ string.
 The character
 .Ql \&?
 matches any single character.
+.Pp
 The sequence
 .Dq Op ...
 matches any one of the characters enclosed.
@@ -1154,6 +1155,25 @@ a pair of characters separated by
 .Ql \-
 matches any character lexically between
 the two (inclusive).
+Within
+.Dq Op ... ,
+the name of a
+.Em character class
+enclosed in
+.Sq [:
+and
+.Sq :]
+stands for the list of all characters belonging to that class.
+Supported character classes:
+.Bl -column "xdigit" "xdigit" "xdigit" -offset indent
+.It Li "alnum" Ta "cntrl" Ta "lower" Ta "space"
+.It Li "alpha" Ta "digit" Ta "print" Ta "upper"
+.It Li "blank" Ta "graph" Ta "punct" Ta "xdigit"
+.El
+.Pp
+These match characters using the macros specified in
+.Xr ctype 3 .
+A character class may not be used as an endpoint of a range.
 .Pp
 The character
 .Ql ~
@@ -2703,7 +2723,6 @@ source of home directories for
 .Xr tty 4 ,
 .Xr a.out 5 ,
 .Xr environ 7 ,
-.Xr glob 7 ,
 .Xr script 7
 .Pp
 "An Introduction to the C shell",

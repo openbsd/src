@@ -1,8 +1,8 @@
-.\"	$OpenBSD: sh.1,v 1.81 2009/03/05 15:13:30 millert Exp $
+.\"	$OpenBSD: sh.1,v 1.82 2009/03/06 12:28:36 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: March 5 2009 $
+.Dd $Mdocdate: March 6 2009 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -1366,6 +1366,24 @@ Also, a
 .Ql \&!
 appearing at the start of the list has special meaning (see below), so to
 represent itself it must be quoted or appear later in the list.
+.Pp
+Within a bracket expression, the name of a
+.Em character class
+enclosed in
+.Sq [:
+and
+.Sq :]
+stands for the list of all characters belonging to that class.
+Supported character classes:
+.Bl -column "xdigit" "xdigit" "xdigit" -offset indent
+.It Li "alnum" Ta "cntrl" Ta "lower" Ta "space"
+.It Li "alpha" Ta "digit" Ta "print" Ta "upper"
+.It Li "blank" Ta "graph" Ta "punct" Ta "xdigit"
+.El
+.Pp
+These match characters using the macros specified in
+.Xr ctype 3 .
+A character class may not be used as an endpoint of a range.
 .It [!..]
 Like [..],
 except it matches any character not inside the brackets.
@@ -3734,7 +3752,6 @@ Shell database.
 .Xr vi 1 ,
 .Xr shells 5 ,
 .Xr environ 7 ,
-.Xr glob 7 ,
 .Xr script 7
 .Rs
 .%A Morris Bolsky
