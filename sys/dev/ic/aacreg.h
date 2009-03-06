@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacreg.h,v 1.10 2009/03/05 21:16:40 grange Exp $	*/
+/*	$OpenBSD: aacreg.h,v 1.11 2009/03/06 07:28:10 grange Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -420,6 +420,8 @@ typedef enum {
 	CPU_ALPHA,
 	CPU_P7,
 	CPU_I960_RX,
+	CPU_MIPS,
+	CPU_XSCALE,
 	CPU__last
 } AAC_CpuType;  
 
@@ -433,6 +435,9 @@ typedef enum {
 	CPUMPC_824x,
 	CPUPPC_xxx,
 	CPUI960_302,
+	CPU_XSCALE_80321,
+	CPU_MIPS_4KC,
+	CPU_MIPS_5KC,
 	CPUSUBTYPE__last
 } AAC_CpuSubType;
 

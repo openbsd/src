@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_tables.h,v 1.4 2006/07/21 19:11:11 mickey Exp $	*/
+/*	$OpenBSD: aac_tables.h,v 1.5 2009/03/06 07:28:10 grange Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -87,6 +87,9 @@ static struct aac_code_lookup aac_cpu_variant[] = {
 	{ "Unknown StrongARM",		CPUARM_xxx },
 	{ "Unknown PowerPC",		CPUPPC_xxx },
 	{ "Intel GC80302 IOP",		CPUI960_302},
+	{ "XScale 80321",		CPU_XSCALE_80321 },
+	{ "MIPS 4KC",			CPU_MIPS_4KC },
+	{ "MIPS 5KC",			CPU_MIPS_5KC },
 	{ NULL, 			0 },
 	{ "Unknown processor",		0 }
 };
