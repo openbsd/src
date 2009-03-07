@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.11 2009/03/06 18:39:13 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.12 2009/03/07 12:47:17 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -38,12 +38,6 @@
 #include "dvmrpe.h"
 #include "log.h"
 #include "rde.h"
-
-void		 rde_nbr_init(u_int32_t);
-void		 rde_nbr_free(void);
-struct rde_nbr	*rde_nbr_find(u_int32_t);
-struct rde_nbr	*rde_nbr_new(u_int32_t, struct rde_nbr *);
-void		 rde_nbr_del(struct rde_nbr *);
 
 void		 rde_sig_handler(int sig, short, void *);
 void		 rde_shutdown(void);
@@ -111,7 +105,6 @@ rde(struct dvmrpd_conf *xconf, int pipe_parent2rde[2], int pipe_dvmrpe2rde[2],
 	endpwent();
 
 	event_init();
-	rde_nbr_init(NBR_HASHSIZE);
 
 	/* setup signal handler */
 	signal_set(&ev_sigint, SIGINT, rde_sig_handler, NULL);
@@ -165,7 +158,6 @@ rde_shutdown(void)
 	LIST_FOREACH(iface, &rdeconf->iface_list, entry) {
 		if_del(iface);
 	}
-	rde_nbr_free();
 
 	msgbuf_clear(&ibuf_dvmrpe->w);
 	free(ibuf_dvmrpe);
@@ -198,7 +190,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = bula;
 	struct imsg		 imsg;
 	struct route_report	 rr;
-	struct rde_nbr		 rn;
 	int			 i, n, connected = 0;
 	struct iface		*iface;
 
@@ -277,19 +268,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			mfc_delete(&mfc);
 #endif
 			break;
-		case IMSG_NEIGHBOR_UP:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(rn))
-				fatalx("invalid size of OE request"); 
-			memcpy(&rn, imsg.data, sizeof(rn));
-
-			if (rde_nbr_new(imsg.hdr.peerid, &rn) == NULL)
-				fatalx("rde_dispatch_imsg: "
-				    "neighbor already exists");
-			break;
-		case IMSG_NEIGHBOR_DOWN:
-			rde_nbr_del(rde_nbr_find(imsg.hdr.peerid));
-
-			break;
 		case IMSG_GROUP_ADD:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(mfc))
 				fatalx("invalid size of OE request"); 
@@ -324,99 +302,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	imsg_event_add(ibuf);
-}
-
-LIST_HEAD(rde_nbr_head, rde_nbr);
-
-struct nbr_table {
-	struct rde_nbr_head	*hashtbl;
-	u_int32_t		 hashmask;
-} rdenbrtable;
-
-#define RDE_NBR_HASH(x)		\
-	&rdenbrtable.hashtbl[(x) & rdenbrtable.hashmask]
-
-void
-rde_nbr_init(u_int32_t hashsize)
-{
-	struct rde_nbr_head	*head;
-	u_int32_t		 hs, i;
-
-	for (hs = 1; hs < hashsize; hs <<= 1)
-		;
-	rdenbrtable.hashtbl = calloc(hs, sizeof(struct rde_nbr_head));
-	if (rdenbrtable.hashtbl == NULL)
-		fatal("rde_nbr_init");
-
-	for (i = 0; i < hs; i++)
-		LIST_INIT(&rdenbrtable.hashtbl[i]);
-
-	rdenbrtable.hashmask = hs - 1;
-
-	if ((nbrself = calloc(1, sizeof(*nbrself))) == NULL)
-		fatal("rde_nbr_init");
-
-	nbrself->peerid = NBR_IDSELF;
-	head = RDE_NBR_HASH(NBR_IDSELF);
-	LIST_INSERT_HEAD(head, nbrself, hash);
-}
-
-void
-rde_nbr_free(void)
-{
-	free(nbrself);
-	free(rdenbrtable.hashtbl);
-}
-
-struct rde_nbr *
-rde_nbr_find(u_int32_t peerid)
-{
-	struct rde_nbr_head	*head;
-	struct rde_nbr		*nbr;
-
-	head = RDE_NBR_HASH(peerid);
-
-	LIST_FOREACH(nbr, head, hash) {
-		if (nbr->peerid == peerid)
-			return (nbr);
-	}
-
-	return (NULL);
-}
-
-struct rde_nbr *
-rde_nbr_new(u_int32_t peerid, struct rde_nbr *new)
-{
-	struct rde_nbr_head	*head;
-	struct rde_nbr		*nbr;
-
-	if (rde_nbr_find(peerid))
-		return (NULL);
-
-	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
-		fatal("rde_nbr_new");
-
-	memcpy(nbr, new, sizeof(*nbr));
-	nbr->peerid = peerid;
-
-	head = RDE_NBR_HASH(peerid);
-	LIST_INSERT_HEAD(head, nbr, hash);
-
-	return (nbr);
-}
-
-void
-rde_nbr_del(struct rde_nbr *nbr)
-{
-	if (nbr == NULL)
-		return;
-
-	srt_expire_nbr(nbr->addr, nbr->iface);
-
-	LIST_REMOVE(nbr, entry);
-	LIST_REMOVE(nbr, hash);
-
-	free(nbr);
 }
 
 /* rde group functions */

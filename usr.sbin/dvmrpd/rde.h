@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.11 2009/03/06 18:39:13 michele Exp $ */
+/*	$OpenBSD: rde.h,v 1.12 2009/03/07 12:47:17 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -59,15 +59,6 @@ struct mfc_node {
 	struct in_addr		 group;
 	u_short			 ifindex;	/* incoming vif */
 	time_t			 uptime;
-};
-
-/* just the infos rde needs */
-struct rde_nbr {
-	LIST_ENTRY(rde_nbr)	 entry, hash;
-	struct in_addr		 addr;
-	u_int32_t		 peerid;
-
-	struct iface		*iface;
 };
 
 /* downstream neighbor per source */
