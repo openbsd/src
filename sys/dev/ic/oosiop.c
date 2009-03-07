@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.11 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.12 2009/03/07 15:38:43 miod Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -719,6 +719,7 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 	struct oosiop_cb *cb;
 	struct oosiop_xfer *xfer;
 	int s, err;
+	int dopoll;
 
 	sc = (struct oosiop_softc *)xs->sc_link->adapter_softc;
 
@@ -779,15 +780,23 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 
 	xfer->status = SCSI_OOSIOP_NOSTATUS;
 
-	splx(s);
-
-	oosiop_setup(sc, cb);
-
 	/*
 	 * Always initialize timeout so it does not contain trash
 	 * that could confuse timeout_del().
 	 */
 	timeout_set(&xs->stimeout, oosiop_timeout, cb);
+
+	if (xs->flags & SCSI_POLL)
+		dopoll = 1;
+	else {
+		dopoll = 0;
+		/* start expire timer */
+		timeout_add_msec(&xs->stimeout, xs->timeout);
+	}
+
+	splx(s);
+
+	oosiop_setup(sc, cb);
 
 	TAILQ_INSERT_TAIL(&sc->sc_cbq, cb, chain);
 
@@ -795,12 +804,8 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 		/* Abort script to start selection */
 		oosiop_write_1(sc, OOSIOP_ISTAT, OOSIOP_ISTAT_ABRT);
 	}
-	if (xs->flags & SCSI_POLL)
+	if (dopoll)
 		oosiop_poll(sc, cb);
-	else {
-		/* start expire timer */
-		timeout_add_msec(&xs->stimeout, xs->timeout);
-	}
 
 	if (xs->flags & (SCSI_POLL | ITSDONE))
 		return (COMPLETE);
