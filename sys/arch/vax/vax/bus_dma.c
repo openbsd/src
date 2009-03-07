@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.20 2008/08/15 22:40:00 miod Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.21 2009/03/07 15:34:34 miod Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.5 1999/11/13 00:32:20 thorpej Exp $	*/
 
 /*-
@@ -371,9 +371,8 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 {
 	int error;
 
-	error =  (_bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, round_page(avail_start),
-	    trunc_page(avail_end)));
+	error = _bus_dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, 0, -1);
 	return(error);
 }
 

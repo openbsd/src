@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.21 2008/06/26 05:42:12 ray Exp $        */
+/*      $OpenBSD: bus_dma.c,v 1.22 2009/03/07 15:34:34 miod Exp $        */
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -448,7 +448,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
         }
 
         return _bus_dmamem_alloc_range(t, size, alignment, boundary, segs,
-            nsegs, rsegs, flags, avail_start, avail_end - PAGE_SIZE);
+            nsegs, rsegs, flags, 0, -1);
 }
 
 /*
