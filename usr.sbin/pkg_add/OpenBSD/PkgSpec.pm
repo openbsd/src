@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.18 2008/10/20 10:25:16 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.19 2009/03/07 12:07:37 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -20,93 +20,14 @@ use warnings;
 package OpenBSD::PkgSpec;
 use OpenBSD::PackageName;
 
-# all the shit that does handle package specifications
-sub compare_pseudo_numbers
-{
-	my ($n, $m) = @_;
-
-	my ($n1, $m1);
-
-	if ($n =~ m/^(\d+)(.*)$/o) {
-		$n1 = $1;
-		$n = $2;
-	}
-	if ($m =~ m/^(\d+)(.*)$/o) {
-		$m1 = $1;
-		$m = $2;
-	}
-
-	if ($n1 == $m1) {
-		return $n cmp $m;
-	} else {
-		return $n1 <=> $m1;
-	}
-}
-
-
-sub dewey_compare
-{
-	my ($a, $b) = @_;
-	my ($pa, $pb);
-
-	unless ($b =~ m/p\d+$/o) { 		# does the Dewey hold a p<number> ?
-		$a =~ s/p\d+$//o; 	# No -> strip it from version.
-	}
-
-	return 0 if $a =~ /^$b$/; 	# bare equality
-
-	if ($a =~ s/p(\d+)$//o) {	# extract patchlevels
-		$pa = $1;
-	}
-	if ($b =~ s/p(\d+)$//o) {
-		$pb = $1;
-	}
-
-	my @a = split(/\./o, $a);
-	push @a, $pa if defined $pa;	# ... and restore them
-	my @b = split(/\\\./o, $b);
-	push @b, $pb if defined $pb;
-	while (@a > 0 && @b > 0) {
-		my $va = shift @a;
-		my $vb = shift @b;
-		next if $va eq $vb;
-		return compare_pseudo_numbers($va, $vb);
-	}
-	if (@a > 0) {
-		return 1;
-	} else {
-		return -1;
-	}
-}
-
 sub check_version
 {
-	my ($v, $spec) = @_;
+	my ($v, $constraint_list) = @_;
 
-	# any version spec
-	return 1 if $spec eq '.*';
-
-	my @specs = split(/\,/o, $spec);
-	for my $_ (grep /^\d/o, @specs) { 	# exact number: check match
-		return 1 if $v =~ /^$_$/;
-		return 1 if $v =~ /^${_}p\d+$/; # allows for recent patches
+	for my $c (@$constraint_list) {
+		return 0 if $c->match($v) == 0;
 	}
-
-	# Last chance: dewey specs ?
-	my @deweys = grep !/^\d/o, @specs;		
-	for (@deweys) {
-		if (m/^(\<\=|\>\=|\<|\>)(.*)$/o) {
-			my ($op, $dewey) = ($1, $2);
-			my $compare = dewey_compare($v, $dewey);
-			return 0 if $op eq '<' && $compare >= 0;
-			return 0 if $op eq '<=' && $compare > 0;
-			return 0 if $op eq '>' && $compare <= 0;
-			return 0 if $op eq '>=' && $compare < 0;
-		} else {
-			return 0;	# unknown spec type
-		}
-	}
-	return @deweys == 0 ? 0 : 1;
+	return 1;
 }
 
 sub check_1flavor
@@ -127,17 +48,15 @@ sub check_1flavor
 
 sub check_flavor
 {
-	my ($f, $spec) = @_;
+	my ($h, $spec) = @_;
 	# no flavor constraints
 	return 1 if $spec eq '';
 
 	$spec =~ s/^-//o;
-	# retrieve all flavors
-	my %f = map +($_, 1), split /\-/o, $f;
 
 	# check each flavor constraint
 	for my $_ (split /\,/o, $spec) {
-		if (check_1flavor(\%f, $_)) {
+		if (check_1flavor($h, $_)) {
 			return 1;
 		}
 	}
@@ -149,7 +68,7 @@ sub subpattern_match
 	my ($p, $list) = @_;
 
 	# let's try really hard to find the stem and the flavors
-	unless ($p =~ m/^(.*?)\-((?:(?:\>|\>\=|\<|\<\=|\=)?\d|\*)[^-]*)(.*)$/) {
+	unless ($p =~ m/^(.*?)\-((?:(?:\>|\>\=|\<\=|\<|\=)?\d|\*)[^-]*)(.*)$/) {
 		die "Invalid spec $p";
 	}
 
@@ -164,27 +83,26 @@ sub subpattern_match
 	# First trim down the list
 	my @l = grep {/^$stemspec-.*$/} @$list;
 
-	$vspec =~ s/\./\\\./go;
-	$vspec =~ s/\+/\\\+/go;
-	$vspec =~ s/\*/\.\*/go;
-	$vspec =~ s/\?/\./go;
+	# turn the vspec into a list of constraints.
+	my @constraints = ();
+	if ($vspec eq '*') {
+		# non constraint
+	} else {
+		for my $c (split /\,/, $vspec) {
+			push(@constraints, 
+			    OpenBSD::PackageName::versionspec->from_string($c));
+		}
+	}
 
 	my @result = ();
 	# Now, have to extract the version number, and the flavor...
-	for my $_ (@l) {
-		my ($stem, $v, $flavor);
-		if (m/^(.*?)\-(\d[^-]*)(.*)$/o) {
-			($stem, $v, $flavor) = ($1, $2, $3);
-			if ($stem =~ m/^$stemspec$/ &&
-			    check_version($v, $vspec) &&
-			    check_flavor($flavor, $flavorspec)) {
-			    	push(@result, $_);
+	for my $s (@l) {
+		my $name = OpenBSD::PackageName->from_string($s);
+		if ($name->{stem} =~ m/^$stemspec$/ &&
+			check_flavor($name->{flavors}, $flavorspec) &&
+			check_version($name->{version}, \@constraints)) {
+			    	push(@result, $s);
 			}
-	    	} else {
-			if ($vspec eq '') {
-				push(@result, $_);
-			}
-		}
 	}
 		
 	return @result;
