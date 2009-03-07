@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.174 2009/01/11 19:44:57 miod Exp $	*/
+/*	$OpenBSD: editor.c,v 1.175 2009/03/07 02:12:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.174 2009/01/11 19:44:57 miod Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.175 2009/03/07 02:12:00 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1010,7 +1010,7 @@ edit_parms(struct disklabel *lp)
 	/* sectors/track */
 	for (;;) {
 		ui = getuint(lp, "sectors/track",
-		    "The Numer of sectors per track.", lp->d_nsectors,
+		    "The Number of sectors per track.", lp->d_nsectors,
 		    lp->d_nsectors, 0, 0);
 		if (ui == ULLONG_MAX - 1) {
 			fputs("Command aborted\n", stderr);
