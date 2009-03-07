@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.24 2009/02/19 22:21:17 stsp Exp $ */
+/*	$OpenBSD: rde.c,v 1.25 2009/03/07 00:33:13 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1483,7 +1483,6 @@ orig_intra_area_prefix_lsas(struct area *area)
 	struct lsa	*lsa;
 	struct vertex	*old;
 	struct iface	*iface;
-	struct vertex	 key;
 
 	LIST_FOREACH(iface, &area->iface_list, entry) {
 		if (iface->type == IF_TYPE_BROADCAST ||
@@ -1496,16 +1495,8 @@ orig_intra_area_prefix_lsas(struct area *area)
 		}
 	}
 
-	/* XXX: lsa_find() should take an LSA tree as argument,
-	 * if you have no iface at hand you cannot use it... */
-	bzero(&key, sizeof(key));
-	key.type = LSA_TYPE_INTRA_A_PREFIX;
-	key.ls_id = LS_ID_INTRA_RTR;
-	key.adv_rtr = ntohl(rde_router_id());
-	old = RB_FIND(lsa_tree, &area->lsa_tree, &key);
-	if (old && old->deleted)
-		old = NULL;
-
+	old = lsa_find_tree(&area->lsa_tree, htons(LSA_TYPE_INTRA_A_PREFIX),
+		htonl(LS_ID_INTRA_RTR), rde_router_id());
 	lsa = orig_intra_lsa_rtr(area, old);
 	if (lsa)
 		lsa_merge(rde_nbr_self(area), lsa, old);

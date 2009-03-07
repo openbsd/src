@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.18 2009/02/12 16:54:31 stsp Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.19 2009/03/07 00:33:13 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -507,26 +507,35 @@ struct vertex *
 lsa_find(struct iface *iface, u_int16_t type, u_int32_t ls_id,
     u_int32_t adv_rtr)
 {
-	struct vertex	 key;
-	struct vertex	*v;
 	struct lsa_tree	*tree;
 
-	key.ls_id = ntohl(ls_id);
-	key.adv_rtr = ntohl(adv_rtr);
-	key.type = ntohs(type);
-
-	if (LSA_IS_SCOPE_AS(key.type))
+	if (LSA_IS_SCOPE_AS(ntohs(type)))
 		tree = &asext_tree;
-	else if (LSA_IS_SCOPE_AREA(key.type)) {
+	else if (LSA_IS_SCOPE_AREA(ntohs(type))) {
 		struct area	*area;
 
 		if ((area = area_find(rdeconf, iface->area_id)) == NULL)
 			fatalx("interface lost area");
 		tree = &area->lsa_tree;
-	} else if (LSA_IS_SCOPE_LLOCAL(key.type))
+	} else if (LSA_IS_SCOPE_LLOCAL(ntohs(type)))
 		tree = &iface->lsa_tree;
 	else
 		fatalx("unknown scope type");
+
+	return lsa_find_tree(tree, type, ls_id, adv_rtr);
+
+}
+
+struct vertex *
+lsa_find_tree(struct lsa_tree *tree, u_int16_t type, u_int32_t ls_id,
+    u_int32_t adv_rtr)
+{
+	struct vertex	 key;
+	struct vertex	*v;
+
+	key.ls_id = ntohl(ls_id);
+	key.adv_rtr = ntohl(adv_rtr);
+	key.type = ntohs(type);
 
 	v = RB_FIND(lsa_tree, tree, &key);
 
