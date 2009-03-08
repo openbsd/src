@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.84 2009/03/08 17:54:20 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.85 2009/03/08 19:11:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -424,7 +424,6 @@ enum message_flags {
 };
 
 struct message {
-	SPLAY_ENTRY(message)		 nodes;
 	TAILQ_ENTRY(message)		 entry;
 
 	enum message_type		 type;
@@ -444,15 +443,13 @@ struct message {
 
 	struct path			 sender;
 	struct path			 recipient;
-	TAILQ_HEAD(pathlist,path)	 recipients;
-
-	u_int16_t			 rcptcount;
 
 	time_t				 creation;
 	time_t				 lasttry;
 	u_int8_t			 retry;
 	enum message_flags		 flags;
 	enum message_status		 status;
+
 	FILE				*datafp;
 	int				 mboxfd;
 	int				 messagefd;
@@ -609,6 +606,7 @@ struct session {
 	int				 s_buflen;
 	struct timeval			 s_tv;
 	struct message			 s_msg;
+	u_int32_t			 rcptcount;
 
 	struct session_auth_req		 s_auth;
 
@@ -808,7 +806,6 @@ SPLAY_PROTOTYPE(lkatree, lkasession, nodes, lkasession_cmp);
 /* mfa.c */
 pid_t		 mfa(struct smtpd *);
 int		 msg_cmp(struct message *, struct message *);
-SPLAY_PROTOTYPE(msgtree, message, nodes, msg_cmp);
 
 /* queue.c */
 pid_t		 queue(struct smtpd *);

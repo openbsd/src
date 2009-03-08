@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.58 2009/02/22 11:59:12 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.59 2009/03/08 19:11:22 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -384,8 +384,8 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 	}
 
 	session_cleanup(s);
+	s->rcptcount = 0;
 	s->s_state = S_MAILREQUEST;
-	s->s_msg.rcptcount = 0;
 	s->s_msg.id = s->s_id;
 	s->s_msg.session_id = s->s_id;
 	s->s_msg.session_ss = s->s_ss;
@@ -660,7 +660,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		/* recipient was not accepted */
 		if (ss->code != 250) {
 			/* We do not have a valid recipient, downgrade state */
-			if (s->s_msg.rcptcount == 0)
+			if (s->rcptcount == 0)
 				s->s_state = S_MAIL;
 			else
 				s->s_state = S_RCPT;
@@ -669,7 +669,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		}
 
 		s->s_state = S_RCPT;
-		s->s_msg.rcptcount++;
+		s->rcptcount++;
 		s->s_msg.recipient = ss->u.path;
 
 	case S_RCPT:
