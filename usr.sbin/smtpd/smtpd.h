@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.83 2009/03/06 23:45:00 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.84 2009/03/08 17:54:20 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -620,28 +620,6 @@ struct session {
 
 };
 
-struct forward_req {
-	u_int64_t			 id;
-	char				 pw_name[MAXLOGNAME];
-};
-
-enum lkasession_flags {
-	F_ERROR		= 0x1
-};
-
-struct lkasession {
-	SPLAY_ENTRY(lkasession)		 nodes;
-	u_int64_t			 id;
-
-	struct path			 path;
-	struct aliaseslist		 aliaseslist;
-	u_int8_t			 iterations;
-	u_int32_t			 pending;
-	enum lkasession_flags		 flags;
-	struct message			 message;
-	struct submit_status		 *ss;
-};
-
 struct smtpd {
 #define SMTPD_OPT_VERBOSE			 0x00000001
 #define SMTPD_OPT_NOACTION			 0x00000002
@@ -737,6 +715,27 @@ struct message_recipient {
 	struct message			 msg;
 };
 
+struct forward_req {
+	u_int64_t			 id;
+	char				 pw_name[MAXLOGNAME];
+};
+
+enum lkasession_flags {
+	F_ERROR		= 0x1
+};
+
+struct lkasession {
+	SPLAY_ENTRY(lkasession)		 nodes;
+	u_int64_t			 id;
+
+	struct path			 path;
+	struct aliaseslist		 aliaseslist;
+	u_int8_t			 iterations;
+	u_int32_t			 pending;
+	enum lkasession_flags		 flags;
+	struct message			 message;
+	struct submit_status		 ss;
+};
 
 /* aliases.c */
 int aliases_exist(struct smtpd *, char *);

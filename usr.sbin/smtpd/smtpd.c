@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.41 2009/03/04 00:00:40 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.42 2009/03/08 17:54:20 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -200,7 +200,6 @@ parent_dispatch_lka(int fd, short event, void *p)
 			if (ret == -1)
 				if (errno == ENOENT)
 					fwreq->pw_name[0] = '\0';
-			log_debug("parent will return fd %d", ret);
 			imsg_compose(ibuf, IMSG_PARENT_FORWARD_OPEN, 0, 0, ret, fwreq, sizeof(*fwreq));
 			break;
 		}
