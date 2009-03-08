@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.50 2009/02/21 18:37:48 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.51 2009/03/08 16:03:06 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -127,6 +127,7 @@
 #include <machine/mvme188.h>
 
 #include <mvme88k/dev/sysconvar.h>
+#include <dev/ic/z8536reg.h>
 #include <mvme88k/mvme88k/clockvar.h>
 
 #ifdef MULTIPROCESSOR
@@ -854,10 +855,10 @@ int
 m188_calibrateintr(void *eframe)
 {
 	CIO_LOCK();
-	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
-
+	/* ack the interrupt */
+	write_cio(ZCIO_CT1CS, ZCIO_CTCS_GCB | ZCIO_CTCS_C_IP); 
 	/* restart counter */
-	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
+	write_cio(ZCIO_CT1CS, ZCIO_CTCS_GCB | ZCIO_CTCS_TCB | ZCIO_CTCS_S_IE);
 	CIO_UNLOCK();
 
 	m188_calibrate_phase++;
@@ -869,10 +870,10 @@ int
 m188_clockintr(void *eframe)
 {
 	CIO_LOCK();
-	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
-
+	/* ack the interrupt */
+	write_cio(ZCIO_CT1CS, ZCIO_CTCS_GCB | ZCIO_CTCS_C_IP); 
 	/* restart counter */
-	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
+	write_cio(ZCIO_CT1CS, ZCIO_CTCS_GCB | ZCIO_CTCS_TCB | ZCIO_CTCS_S_IE);
 	CIO_UNLOCK();
 
 	hardclock(eframe);
@@ -971,28 +972,28 @@ m188_cio_init(u_int period)
 	volatile int i;
 
 	/* Start by forcing chip into known state */
-	read_cio(CIO_MICR);
-	write_cio(CIO_MICR, CIO_MICR_RESET);	/* Reset the CTC */
+	read_cio(ZCIO_MIC);
+	write_cio(ZCIO_MIC, ZCIO_MIC_RESET);	/* Reset the CTC */
 	for (i = 0; i < 1000; i++)	 	/* Loop to delay */
 		;
 
 	/* Clear reset and start init seq. */
-	write_cio(CIO_MICR, 0x00);
+	write_cio(ZCIO_MIC, 0x00);
 
 	/* Wait for chip to come ready */
-	while ((read_cio(CIO_MICR) & CIO_MICR_RJA) == 0)
+	while ((read_cio(ZCIO_MIC) & ZCIO_MIC_RJA) == 0)
 		;
 
 	/* Initialize the 8536 for real */
-	write_cio(CIO_MICR,
-	    CIO_MICR_MIE /* | CIO_MICR_NV */ | CIO_MICR_RJA | CIO_MICR_DLC);
-	write_cio(CIO_CTMS1, CIO_CTMS_CSC);	/* Continuous count */
-	write_cio(CIO_PDCB, 0xff);		/* set port B to input */
+	write_cio(ZCIO_MIC,
+	    ZCIO_MIC_MIE /* | ZCIO_MIC_NV */ | ZCIO_MIC_RJA | ZCIO_MIC_DLC);
+	write_cio(ZCIO_CT1MD, ZCIO_CTMD_CSC);	/* Continuous count */
+	write_cio(ZCIO_PBDIR, 0xff);		/* set port B to input */
 
 	period <<= 1;	/* CT#1 runs at PCLK/2, hence 2MHz */
-	write_cio(CIO_CT1MSB, period >> 8);
-	write_cio(CIO_CT1LSB, period);
+	write_cio(ZCIO_CT1TCM, period >> 8);
+	write_cio(ZCIO_CT1TCL, period);
 	/* enable counter #1 */
-	write_cio(CIO_MCCR, CIO_MCCR_CT1E | CIO_MCCR_PBE);
-	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
+	write_cio(ZCIO_MCC, ZCIO_MCC_CT1E | ZCIO_MCC_PBE);
+	write_cio(ZCIO_CT1CS, ZCIO_CTCS_GCB | ZCIO_CTCS_TCB | ZCIO_CTCS_S_IE);
 }

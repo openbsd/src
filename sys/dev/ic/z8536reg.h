@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8536reg.h,v 1.2 2003/06/09 16:34:22 deraadt Exp $ */
+/*	$OpenBSD: z8536reg.h,v 1.3 2009/03/08 16:03:06 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -81,3 +81,48 @@
 #define	ZCIO_PBSPP	45	/* Port B Pattern Polarity Specification */
 #define	ZCIO_PBSPT	46	/* Port B Pattern Transition Specification */
 #define	ZCIO_PBSPM	47	/* Port B Pattern MASK Specification */
+
+#define ZCIO_MIC_MIE		0x80	/* Master Interrupt Enable */
+#define ZCIO_MIC_DLC		0x40	/* Disable Lower Chain */
+#define ZCIO_MIC_NV		0x20	/* No Vector */
+#define ZCIO_MIC_PAVIS		0x10	/* Port A Vector Includes Status */
+#define ZCIO_MIC_PBVIS		0x08	/* Port B Vector Includes Status */
+#define ZCIO_MIC_CTVIS		0x04	/* C/T Vector Includes Status */
+#define ZCIO_MIC_RJA		0x02	/* Right Justified Addresses */
+#define ZCIO_MIC_RESET		0x01	/* Reset */
+
+#define ZCIO_MCC_PBE		0x80	/* Port B Enable */
+#define ZCIO_MCC_CT1E		0x40	/* Counter/Timer 1 Enable */
+#define ZCIO_MCC_CT2E		0x20	/* Counter/Timer 2 Enable */
+#define ZCIO_MCC_CT3E		0x10	/* Counter/Timer 3 Enable */
+#define ZCIO_MCC_PLC		0x08	/* Port Link Control */
+#define ZCIO_MCC_PAE		0x04	/* Port A Enable */
+
+#define ZCIO_CTMD_CSC		0x80	/* Continuous Single Cycle */
+#define ZCIO_CTMD_EOE		0x40	/* External Output Enable  */
+#define ZCIO_CTMD_ECE		0x20	/* External Count Enable   */
+#define ZCIO_CTMD_ETE		0x10	/* External Trigger Enable */
+#define ZCIO_CTMD_EGE		0x08	/* External Gate Enable    */
+#define ZCIO_CTMD_REB		0x04	/* Retrigger Enable Bit    */
+#define ZCIO_CTMD_PO		0x00	/* Pulse Output            */
+#define ZCIO_CTMD_OSO		0x01	/* One Shot Output         */
+#define ZCIO_CTMD_SWO		0x02	/* Square Wave Output      */
+
+/* CTCS read values */
+#define	ZCIO_CTCS_IUS		0x80	/* Interrupt Under Service */
+#define	ZCIO_CTCS_IE		0x40	/* Interrupt Enable */
+#define	ZCIO_CTCS_IP		0x20	/* Interrupt Pending */
+#define	ZCIO_CTCS_IERR		0x10	/* Interrupt Error */
+#define	ZCIO_CTCS_CIP		0x01	/* Count In Progress */
+
+/* CTCS write values */
+#define	ZCIO_CTCS_C_IE		0xe0	/* Clear IE */
+#define	ZCIO_CTCS_S_IE		0xc0	/* Set IE */
+#define	ZCIO_CTCS_C_IP		0xa0	/* Clear IP */
+#define	ZCIO_CTCS_S_IP		0x80	/* Set IP */
+#define	ZCIO_CTCS_C_IUS		0x60	/* Clear IUS */
+#define	ZCIO_CTCS_S_IUS		0x40	/* Set IUS */
+#define	ZCIO_CTCS_C_IUS_IP	0x20	/* Clear IUS and IP */
+#define	ZCIO_CTCS_RCC		0x08	/* Read Counter Control */
+#define ZCIO_CTCS_GCB		0x04	/* Gate Command Bit */
+#define ZCIO_CTCS_TCB		0x02	/* Trigger Command Bit */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.32 2007/12/27 23:17:55 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.33 2009/03/08 16:03:05 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -199,58 +199,6 @@
 #define CIO_PORTB		0xfff83004
 #define CIO_PORTA		0xfff83008
 #define CIO_CTRL		0xfff8300c
-
-#define CIO_MICR		0x00	/* Master interrupt control register */
-#define CIO_MICR_MIE		0x80
-#define CIO_MICR_DLC		0x40
-#define CIO_MICR_NV		0x20
-#define CIO_MICR_PAVIS		0x10
-#define CIO_MICR_PBVIS		0x08
-#define CIO_MICR_CTVIS		0x04
-#define CIO_MICR_RJA		0x02
-#define CIO_MICR_RESET		0x01
-
-#define CIO_MCCR		0x01	/* Master config control register */
-#define CIO_MCCR_PBE		0x80
-#define CIO_MCCR_CT1E		0x40
-#define CIO_MCCR_CT2E		0x20
-#define CIO_MCCR_CT3E		0x10
-#define CIO_MCCR_PLC		0x08
-#define CIO_MCCR_PAE		0x04
-
-#define CIO_CTMS1		0x1c	/* Counter/timer mode specification #1 */
-#define CIO_CTMS2		0x1d	/* Counter/timer mode specification #2 */
-#define CIO_CTMS3		0x1e	/* Counter/timer mode specification #3 */
-#define CIO_CTMS_CSC		0x80	/* Continuous Single Cycle */
-#define CIO_CTMS_EOE		0x40	/* External Output Enable  */
-#define CIO_CTMS_ECE		0x20	/* External Count Enable   */
-#define CIO_CTMS_ETE		0x10	/* External Trigger Enable */
-#define CIO_CTMS_EGE		0x08	/* External Gate Enable    */
-#define CIO_CTMS_REB		0x04	/* Retrigger Enable Bit    */
-#define CIO_CTMS_PO		0x00	/* Pulse Output            */
-#define CIO_CTMS_OSO		0x01	/* One Shot Output         */
-#define CIO_CTMS_SWO		0x02	/* Square Wave Output      */
-
-#define CIO_IVR			0x04	/* Interrupt vector register */
-
-#define CIO_CSR1		0x0a	/* Command and status register CTC #1 */
-#define CIO_CSR2		0x0b	/* Command and status register CTC #2 */
-#define CIO_CSR3		0x0c	/* Command and status register CTC #3 */
-
-#define CIO_CT1MSB		0x16	/* CTC #1 Timer constant - MSB */
-#define CIO_CT1LSB		0x17	/* CTC #1 Timer constant - LSB */
-#define CIO_CT2MSB		0x18	/* CTC #2 Timer constant - MSB */
-#define CIO_CT2LSB		0x19	/* CTC #2 Timer constant - LSB */
-#define CIO_CT3MSB		0x1a	/* CTC #3 Timer constant - MSB */
-#define CIO_CT3LSB		0x1b	/* CTC #3 Timer constant - LSB */
-#define CIO_PDCA		0x23	/* Port A data direction control */
-#define CIO_PDCB		0x2b	/* Port B data direction control */
-
-#define CIO_GCB			0x04	/* CTC Gate command bit */
-#define CIO_TCB			0x02	/* CTC Trigger command bit */
-#define CIO_IE			0xc0	/* CTC Interrupt enable (set) */
-#define CIO_CIP			0x20	/* CTC Clear interrupt pending */
-#define CIO_IP			0x20	/* CTC Interrupt pending */
 
 #define DART_BASE		0xfff82000
 
