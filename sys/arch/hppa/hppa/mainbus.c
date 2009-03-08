@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.71 2009/03/07 15:34:34 miod Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.72 2009/03/08 19:26:39 martin Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -935,7 +935,6 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 		  bus_size_t boundary, bus_dma_segment_t *segs, int nsegs,
 		  int *rsegs, int flags)
 {
-	extern paddr_t avail_end;
 	struct pglist pglist;
 	struct vm_page *pg;
 
