@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2009/02/22 11:44:29 form Exp $	*/
+/*	$OpenBSD: parse.y,v 1.26 2009/03/08 21:50:33 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -39,6 +39,7 @@
 #include <event.h>
 #include <ifaddrs.h>
 #include <limits.h>
+#include <paths.h>
 #include <pwd.h>
 #include <netdb.h>
 #include <stdarg.h>
@@ -664,13 +665,12 @@ action		: DELIVER TO MAILDIR STRING	{
 				fatal("pathname too long");
 			free($4);
 		}
-		| DELIVER TO MBOX STRING		{
+		| DELIVER TO MBOX		{
 			rule->r_action = A_MBOX;
-			if (strlcpy(rule->r_value.path, $4,
+			if (strlcpy(rule->r_value.path, _PATH_MAILDIR "/%u",
 			    sizeof(rule->r_value.path))
 			    >= sizeof(rule->r_value.path))
 				fatal("pathname too long");
-			free($4);
 		}
 		| DELIVER TO MDA STRING		{
 			rule->r_action = A_EXT;
