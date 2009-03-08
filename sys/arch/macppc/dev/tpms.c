@@ -1,4 +1,4 @@
-/*	$OpenBSD: tpms.c,v 1.12 2007/06/14 10:11:16 mbalmer Exp $	*/
+/*	$OpenBSD: tpms.c,v 1.13 2009/03/08 14:10:08 robert Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -35,7 +35,7 @@
 
 /*
  * The tpms driver provides support for the trackpad on new (post
- * February 2005) Apple PowerBooks (and iBooks?) that are not standard
+ * February 2005) Apple PowerBooks and iBooks that are not standard
  * USB HID mice.
  */
 
@@ -125,35 +125,6 @@
 #include <dev/wscons/wsmousevar.h>
 
 /*
- * Debugging output.
- */
-
-/* XXX Should be redone, and its use should be added back. */
-
-#ifdef TPMS_DEBUG
-
-/*
- * Print the error message (preceded by the driver and function)
- * specified by the string literal fmt (followed by newline) if
- * tpmsdebug is greater than n. The macro may only be used in the
- * scope of sc, which must be castable to struct device *. There must
- * be at least one vararg. Do not define TPMS_DEBUG on non-C99
- * compilers.
- */
-
-#define DPRINTFN(n, fmt, ...)						      \
-do {									      \
-	if (tpmsdebug > (n))						      \
-		logprintf("%s: %s: " fmt "\n",				      \
-			  ((struct device *) sc)->dv_xname,		      \
-			  __func__, __VA_ARGS__);			      \
-} while ( /* CONSTCOND */ 0)
-
-int tpmsdebug = 0;
-
-#endif /* TPMS_DEBUG */
-
-/*
  * Magic numbers.
  */
 
@@ -170,7 +141,8 @@ int tpmsdebug = 0;
  * can be different for each device.  The meanings of the parameters
  * are as follows.
  *
- * desc:      A printable description used for dmesg output.
+ * type:      Type of the trackpad device, used for dmesg output, and
+ *            to know some of the device parameters.
  *
  * noise:     Amount of noise in the computed position. This controls
  *            how large a change must be to get reported, and how 
@@ -200,7 +172,10 @@ int tpmsdebug = 0;
  */
 
 struct tpms_dev {
-	const char *descr; /* Description of the driver (for dmesg). */
+	int type;	   /* Type of the trackpad. */
+#define FOUNTAIN	0x00
+#define GEYSER1		0x01
+#define GEYSER2		0x02
 	int noise;	   /* Amount of noise in the computed position. */
 	int threshold;	   /* Changes less than this are ignored. */
 	int x_factor;	   /* Factor used in computation with X-coordinates. */
@@ -214,9 +189,9 @@ struct tpms_dev {
 /* Devices supported by this driver. */
 static struct tpms_dev tpms_devices[] =
 {
-#define POWERBOOK_TOUCHPAD(inches, prod, x_fact, x_sens, y_fact)	\
+#define POWERBOOK_TOUCHPAD(ttype, prod, x_fact, x_sens, y_fact)	\
        {								\
-		.descr = #inches " inch PowerBook Trackpad",		\
+		.type = (ttype),						\
 		.vendor = USB_VENDOR_APPLE,				\
 		.product = (prod),					\
 		.noise = 16,						\
@@ -227,14 +202,17 @@ static struct tpms_dev tpms_devices[] =
 		.y_sensors = 16						\
        }
        /* 12 inch PowerBooks */
-       POWERBOOK_TOUCHPAD(12, 0x030a, 69, 16, 52), /* XXX Not tested. */
-       /* 14 inch iBook G4 */
-       POWERBOOK_TOUCHPAD(14, 0x030b, 69, 16, 52),
+       POWERBOOK_TOUCHPAD(FOUNTAIN, 0x030a, 69, 16, 52), /* XXX Not tested. */
+       /* 12 and 14 inch iBook G4 */
+       POWERBOOK_TOUCHPAD(GEYSER1, 0x030b, 69, 16, 52),
        /* 15 inch PowerBooks */
-       POWERBOOK_TOUCHPAD(15, 0x020e, 85, 16, 57), /* XXX Not tested. */
-       POWERBOOK_TOUCHPAD(15, 0x020f, 85, 16, 57),
+       POWERBOOK_TOUCHPAD(FOUNTAIN, 0x020e, 85, 16, 57), /* XXX Not tested. */
+       POWERBOOK_TOUCHPAD(FOUNTAIN, 0x020f, 85, 16, 57),
+       POWERBOOK_TOUCHPAD(GEYSER2, 0x0214, 90, 15, 107),
+       POWERBOOK_TOUCHPAD(GEYSER2, 0x0215, 90, 15, 107),
+       POWERBOOK_TOUCHPAD(GEYSER2, 0x0216, 90, 15, 107),
        /* 17 inch PowerBooks */
-       POWERBOOK_TOUCHPAD(17, 0x020d, 71, 26, 68)  /* XXX Not tested. */
+       POWERBOOK_TOUCHPAD(FOUNTAIN, 0x020d, 71, 26, 68)  /* XXX Not tested. */
 #undef POWERBOOK_TOUCHPAD
 };
 
@@ -248,9 +226,11 @@ static struct tpms_dev tpms_devices[] =
 /* Device data. */
 struct tpms_softc {
 	struct uhidev sc_hdev;	      /* USB parent (got the struct device). */
+	int sc_type;		      /* Type of the trackpad */
+	int sc_datalen;
 	int sc_acc[TPMS_SENSORS];     /* Accumulated sensor values. */
-	signed char sc_prev[TPMS_SENSORS];   /* Previous sample. */
-	signed char sc_sample[TPMS_SENSORS]; /* Current sample. */
+	unsigned char sc_prev[TPMS_SENSORS];   /* Previous sample. */
+	unsigned char sc_sample[TPMS_SENSORS]; /* Current sample. */
 	struct device *sc_wsmousedev; /* WSMouse device. */
 	int sc_noise;		      /* Amount of noise. */
 	int sc_threshold;	      /* Threshold value. */
@@ -275,7 +255,7 @@ void tpms_intr(struct uhidev *, void *, unsigned int);
 int tpms_enable(void *);
 void tpms_disable(void *);
 int tpms_ioctl(void *, unsigned long, caddr_t, int, struct proc *);
-void reorder_sample(signed char *, signed char *);
+void reorder_sample(struct tpms_softc*, unsigned char *, unsigned char *);
 int compute_delta(struct tpms_softc *, int *, int *, int *, uint32_t *);
 int detect_pos(int *, int, int, int, int *, int *);
 int smooth_pos(int, int, int);
@@ -352,6 +332,8 @@ tpms_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 	uint16_t vendor, product;
 
+	sc->sc_datalen = TPMS_DATA_LEN;
+
 	/* Fill in device-specific parameters. */
 	if ((udd = usbd_get_device_descriptor(uha->parent->sc_udev)) != NULL) {
 		product = UGETW(udd->idProduct);
@@ -359,7 +341,21 @@ tpms_attach(struct device *parent, struct device *self, void *aux)
 		for (i = 0; i < TPMS_NUM_DEVICES; i++) {
 			pd = &tpms_devices[i];
 			if (product == pd->product && vendor == pd->vendor) {
-				printf(": %s\n", pd->descr);
+				switch (pd->type) {
+				case FOUNTAIN:
+					printf(": Fountain");
+					break;
+				case GEYSER1:
+					printf(": Geyser");
+					break;
+				case GEYSER2:
+					sc->sc_type = GEYSER2;
+					sc->sc_datalen = 64;
+					sc->sc_y_sensors = 9;
+					printf(": Geyser 2"); 
+					break;
+				}
+				printf(" Trackpad\n");
 				sc->sc_noise = pd->noise;
 				sc->sc_threshold = pd->threshold;
 				sc->sc_x_factor = pd->x_factor;
@@ -480,20 +476,20 @@ void
 tpms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 {
 	struct tpms_softc *sc = (struct tpms_softc *)addr;
-	signed char *data;
+	unsigned char *data;
 	int dx, dy, dz, i, s;
 	uint32_t buttons;
 
 	/* Ignore incomplete data packets. */
-	if (len != TPMS_DATA_LEN)
+	if (len != sc->sc_datalen)
 		return;
 	data = ibuf;
 
 	/* The last byte is 1 if the button is pressed and 0 otherwise. */
-	buttons = !!data[TPMS_DATA_LEN - 1];
+	buttons = !!data[sc->sc_datalen - 1];
 
 	/* Everything below assumes that the sample is reordered. */
-	reorder_sample(sc->sc_sample, data);
+	reorder_sample(sc, sc->sc_sample, data);
 
 	/* Is this the first sample? */
 	if (!(sc->sc_status & TPMS_VALID)) {
@@ -506,7 +502,9 @@ tpms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 	}
 	/* Accumulate the sensor change while keeping it nonnegative. */
 	for (i = 0; i < TPMS_SENSORS; i++) {
-		sc->sc_acc[i] += sc->sc_sample[i] - sc->sc_prev[i];
+		sc->sc_acc[i] +=
+			(signed char)(sc->sc_sample[i] - sc->sc_prev[i]);
+
 		if (sc->sc_acc[i] < 0)
 			sc->sc_acc[i] = 0;
 	}
@@ -535,26 +533,40 @@ tpms_intr(struct uhidev *addr, void *ibuf, unsigned int len)
  */
 
 void 
-reorder_sample(signed char *to, signed char *from)
+reorder_sample(struct tpms_softc *sc, unsigned char *to, unsigned char *from)
 {
 	int i;
 
-	for (i = 0; i < 8; i++) {
-		/* X-sensors. */
-		to[i] = from[5 * i + 2];
-		to[i + 8] = from[5 * i + 4];
-		to[i + 16] = from[5 * i + 42];
+	if (sc->sc_type == GEYSER2) {
+		int j;
+
+		memset(to, 0, TPMS_SENSORS);
+		for (i = 0, j = 19; i < 20; i += 2, j += 3) {
+			to[i] = from[j];
+			to[i + 1] = from[j + 1];
+		}
+		for (i = 0, j = 1; i < 9; i += 2, j += 3) {
+			to[TPMS_X_SENSORS + i] = from[j];
+			to[TPMS_X_SENSORS + i + 1] = from[j + 1];
+		}
+	} else {
+		for (i = 0; i < 8; i++) {
+			/* X-sensors. */
+			to[i] = from[5 * i + 2];
+			to[i + 8] = from[5 * i + 4];
+			to[i + 16] = from[5 * i + 42];
 #if 0
-		/* 
-		 * XXX This seems to introduce random vertical jumps, so
-		 * we ignore these sensors until we figure out their meaning.
-		 */
-		if (i < 2)
-			to[i + 24] = from[5 * i + 44];
+			/* 
+			 * XXX This seems to introduce random ventical jumps, so
+			 * we ignore these sensors until we figure out their meaning.
+			 */
+			if (i < 2)
+				to[i + 24] = from[5 * i + 44];
 #endif /* 0 */
-		/* Y-sensors. */
-		to[i + 26] = from[5 * i + 1];
-		to[i + 34] = from[5 * i + 3];
+			/* Y-sensors. */
+			to[i + 26] = from[5 * i + 1];
+			to[i + 34] = from[5 * i + 3];
+		}
 	}
 }
 
@@ -582,42 +594,49 @@ compute_delta(struct tpms_softc *sc, int *dx, int *dy, int *dz,
 	fingers = max(x_fingers, y_fingers);
 
 	/* Check the number of fingers and if we have detected a position. */
-	if (fingers > 1) {
-		/* More than one finger detected, resetting. */
-		memset(sc->sc_acc, 0, sizeof(sc->sc_acc));
-		sc->sc_x_raw = sc->sc_y_raw = sc->sc_x = sc->sc_y = -1;
-		return 0;
-	} else if (x_det == 0 && y_det == 0) {
+	if (x_det == 0 && y_det == 0) {
 		/* No position detected, resetting. */
 		memset(sc->sc_acc, 0, sizeof(sc->sc_acc));
 		sc->sc_x_raw = sc->sc_y_raw = sc->sc_x = sc->sc_y = -1;
 	} else if (x_det > 0 && y_det > 0) {
-		/* Smooth position. */
-		if (sc->sc_x_raw >= 0) {
-			sc->sc_x_raw = (3 * sc->sc_x_raw + x_raw) / 4;
-			sc->sc_y_raw = (3 * sc->sc_y_raw + y_raw) / 4;
-			/* 
-			 * Compute virtual position and change if we already
-			 * have a decent position. 
-			 */
-			if (sc->sc_x >= 0) {
-				x = smooth_pos(sc->sc_x, sc->sc_x_raw,
-					       sc->sc_noise);
-				y = smooth_pos(sc->sc_y, sc->sc_y_raw,
-					       sc->sc_noise);
-				*dx = x - sc->sc_x;
-				*dy = y - sc->sc_y;
-				sc->sc_x = x;
-				sc->sc_y = y;
+		switch (fingers) {
+		case 1:
+			/* Smooth position. */
+			if (sc->sc_x_raw >= 0) {
+				sc->sc_x_raw = (3 * sc->sc_x_raw + x_raw) / 4;
+				sc->sc_y_raw = (3 * sc->sc_y_raw + y_raw) / 4;
+				/* 
+				 * Compute virtual position and change if we
+				 * already have a decent position. 
+				 */
+				if (sc->sc_x >= 0) {
+					x = smooth_pos(sc->sc_x, sc->sc_x_raw,
+						       sc->sc_noise);
+					y = smooth_pos(sc->sc_y, sc->sc_y_raw,
+						       sc->sc_noise);
+					*dx = x - sc->sc_x;
+					*dy = y - sc->sc_y;
+					sc->sc_x = x;
+					sc->sc_y = y;
+				} else {
+					/* Initialise virtual position. */
+					sc->sc_x = sc->sc_x_raw;
+					sc->sc_y = sc->sc_y_raw;
+				}
 			} else {
-				/* Initialise virtual position. */
-				sc->sc_x = sc->sc_x_raw;
-				sc->sc_y = sc->sc_y_raw;
+				/* Initialise raw position. */
+				sc->sc_x_raw = x_raw;
+				sc->sc_y_raw = y_raw;
 			}
-		} else {
-			/* Initialise raw position. */
-			sc->sc_x_raw = x_raw;
-			sc->sc_y_raw = y_raw;
+			break;
+		case 2:
+			if (*buttons == 1)
+				*buttons = 4;
+			break;
+		case 3:
+			if (*buttons == 1)
+				*buttons = 2;
+			break;
 		}
 	}
 	return (1);
