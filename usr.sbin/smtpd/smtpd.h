@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.85 2009/03/08 19:11:22 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.86 2009/03/08 20:39:49 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -226,11 +226,20 @@ enum blockmodes {
 	BM_NONBLOCK
 };
 
+enum ctl_state {
+	CS_NONE = 0,
+	CS_INIT,
+	CS_RCPT,
+	CS_FD,
+	CS_DONE
+};
+
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
 	u_int8_t		 flags;
 #define CTL_CONN_NOTIFY		 0x01
 	struct imsgbuf		 ibuf;
+	enum ctl_state		 state;
 };
 TAILQ_HEAD(ctl_connlist, ctl_conn);
 
