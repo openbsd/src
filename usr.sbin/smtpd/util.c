@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.16 2009/03/01 21:58:53 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.17 2009/03/09 23:35:04 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -310,4 +310,35 @@ secure_file(int fd, char *path, struct passwd *pw)
 	}
 
 	return 1;
+}
+
+void
+addargs(arglist *args, char *fmt, ...)
+{
+	va_list ap;
+	char *cp;
+	u_int nalloc;
+	int r;
+
+	va_start(ap, fmt);
+	r = vasprintf(&cp, fmt, ap);
+	va_end(ap);
+	if (r == -1)
+		fatal("addargs: argument too long");
+
+	nalloc = args->nalloc;
+	if (args->list == NULL) {
+		nalloc = 32;
+		args->num = 0;
+	} else if (args->num+2 >= nalloc)
+		nalloc *= 2;
+
+	if (SIZE_T_MAX / nalloc < sizeof(char *))
+		fatalx("addargs: nalloc * size > SIZE_T_MAX");
+	args->list = realloc(args->list, nalloc * sizeof(char *));
+	if (args->list == NULL)
+		fatal("addargs: realloc");
+	args->nalloc = nalloc;
+	args->list[args->num++] = cp;
+	args->list[args->num] = NULL;
 }

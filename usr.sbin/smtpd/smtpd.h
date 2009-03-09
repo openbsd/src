@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.88 2009/03/09 16:31:09 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.89 2009/03/09 23:35:04 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -939,6 +939,14 @@ struct map	*map_find(struct smtpd *, objid_t);
 struct map	*map_findbyname(struct smtpd *, const char *);
 
 /* util.c */
+typedef struct arglist arglist;
+struct arglist {
+	char    **list;
+	u_int   num;
+	u_int   nalloc;
+};
+void		 addargs(arglist *, char *, ...)
+		     __attribute__((format(printf, 2, 3)));
 int		 bsnprintf(char *, size_t, const char *, ...)
     __attribute__ ((format (printf, 3, 4)));
 int		 safe_fclose(FILE *);

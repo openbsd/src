@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.42 2009/03/08 17:54:20 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.43 2009/03/09 23:35:04 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1093,6 +1093,8 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 {
 	pid_t pid;
 	int pipefd[2];
+	arglist args;
+	char *word;
 	struct mdaproc *mdaproc;
 
 	log_debug("executing filter as user: %s", pw->pw_name);
@@ -1125,12 +1127,17 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 			fatal("mta: cannot drop privileges");
 
+		bzero(&args, sizeof(args));
+		while ((word = strsep(&path, " \t")) != NULL)
+			if (*word != '\0')
+				addargs(&args, "%s", word);
+
 		close(pipefd[0]);
 		close(STDOUT_FILENO);
 		close(STDERR_FILENO);
 		dup2(pipefd[1], 0);
 
-		execlp(_PATH_BSHELL, "sh", "-c", path, (void *)NULL);
+		execvp(args.list[0], args.list);
 		_exit(1);
 	}
 
