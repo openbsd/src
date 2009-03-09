@@ -1271,7 +1271,7 @@ $(BFD32_LIBS) \
  $(ALL_MACHINES) \
  $(BFD32_BACKENDS) \
  $(BFD64_BACKENDS) \
- $(OPTIONAL_BACKENDS): $(BFD_H) $(BFD_H_DEPS) $(LOCAL_H_DEPS)
+ $(OPTIONAL_BACKENDS) @COREFILE@: $(BFD_H) $(BFD_H_DEPS) $(LOCAL_H_DEPS)
 
 install-bfdlibLTLIBRARIES: @INSTALL_LIBBFD_TRUE@install_libbfd
 	@$(NORMAL_INSTALL)
@@ -2167,6 +2167,8 @@ peigen.lo: peigen.c $(INCDIR)/filenames.h $(INCDIR)/coff/internal.h \
 pepigen.lo: pepigen.c $(INCDIR)/filenames.h $(INCDIR)/coff/internal.h \
   $(INCDIR)/coff/ia64.h $(INCDIR)/coff/external.h $(INCDIR)/coff/pe.h \
   libcoff.h $(INCDIR)/bfdlink.h libpei.h
+netbsd-core.lo: netbsd-core.c $(INCDIR)/filenames.h libaout.h \
+  $(INCDIR)/bfdlink.h
 # IF YOU PUT ANYTHING HERE IT WILL GO AWAY
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
