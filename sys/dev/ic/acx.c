@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.89 2009/02/26 23:11:31 stsp Exp $ */
+/*	$OpenBSD: acx.c,v 1.90 2009/03/09 11:25:22 stsp Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -267,10 +267,6 @@ acx_attach(struct acx_softc *sc)
 	}
 #undef EEINFO_RETRY_MAX
 
-	printf("%s: %s, radio %s (0x%02x)", sc->sc_dev.dv_xname,
-	    (sc->sc_flags & ACX_FLAG_ACX111) ? "ACX111" : "ACX100",
-	    acx_get_rf(sc->sc_radio_type), sc->sc_radio_type);
-
 #ifdef DUMP_EEPROM
 	for (i = 0; i < 0x40; ++i) {
 		uint8_t val;
@@ -286,12 +282,10 @@ acx_attach(struct acx_softc *sc)
 	/* Get EEPROM version */
 	error = acx_read_eeprom(sc, ACX_EE_VERSION_OFS, &sc->sc_eeprom_ver);
 	if (error) {
-		printf("\n%s: attach failed, could not get EEPROM version!\n",
+		printf("%s: attach failed, could not get EEPROM version!\n",
 		    sc->sc_dev.dv_xname);
 		return (error);
 	}
-
-	printf(", EEPROM ver %u", sc->sc_eeprom_ver);
 
 	ifp->if_softc = sc;
 	ifp->if_init = acx_init;
@@ -331,7 +325,11 @@ acx_attach(struct acx_softc *sc)
 		    &ic->ic_myaddr[i]);
 	}
 
-	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
+	printf("%s: %s, radio %s (0x%02x), EEPROM ver %u, address %s\n",
+	    sc->sc_dev.dv_xname,
+	    (sc->sc_flags & ACX_FLAG_ACX111) ? "ACX111" : "ACX100",
+	    acx_get_rf(sc->sc_radio_type), sc->sc_radio_type,
+	    sc->sc_eeprom_ver, ether_sprintf(ic->ic_myaddr));
 
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
