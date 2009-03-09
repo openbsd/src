@@ -1,4 +1,19 @@
-/*	$OpenBSD: m1x7_machdep.c,v 1.8 2009/03/04 19:35:54 miod Exp $ */
+/*	$OpenBSD: m1x7_machdep.c,v 1.9 2009/03/09 19:51:18 miod Exp $ */
+/*
+ * Copyright (c) 2009 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -74,6 +89,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/mutex.h>
+#include <sys/timetc.h>
 
 #include <machine/bus.h>
 
@@ -85,6 +102,20 @@
 
 int	m1x7_clockintr(void *);
 int	m1x7_statintr(void *);
+u_int	pcc_get_timecount(struct timecounter *);
+
+uint32_t	pcc_refcnt;
+struct mutex pcc_mutex = MUTEX_INITIALIZER(IPL_CLOCK);
+
+struct timecounter pcc_timecounter = {
+	pcc_get_timecount,
+	NULL,
+	0xffffffff,
+	1000000,	/* 1MHz */
+	"pcctwo",
+	0,
+	NULL
+};
 
 #define	PROF_RESET	(IPL_CLOCK | PCC2_IRQ_IEN | PCC2_IRQ_ICLR)
 #define	STAT_RESET	(IPL_STATCLOCK | PCC2_IRQ_IEN | PCC2_IRQ_ICLR)
@@ -148,6 +179,8 @@ m1x7_init_clocks(void)
 	statclock_ih.ih_wantframe = 1;
 	statclock_ih.ih_ipl = IPL_STATCLOCK;
 	pcctwointr_establish(PCC2V_TIMER2, &statclock_ih, "stat");
+
+	tc_init(&pcc_timecounter);
 }
 
 /*
@@ -158,12 +191,14 @@ m1x7_clockintr(void *eframe)
 {
 	uint oflow;
 
+	mtx_enter(&pcc_mutex);
 	oflow = (*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1CTL) &
 	    PCC2_TCTL_OVF) >> PCC2_TCTL_OVF_SHIFT;
 	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1CTL) =
 	    PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
-
+	pcc_refcnt += oflow * tick;
 	*(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1ICR) = PROF_RESET;
+	mtx_leave(&pcc_mutex);
 
 	while (oflow-- != 0) {
 		hardclock(eframe);
@@ -178,6 +213,36 @@ m1x7_clockintr(void *eframe)
 	}
 
 	return (1);
+}
+
+u_int
+pcc_get_timecount(struct timecounter *tc)
+{
+	uint32_t tcr1, tcr2;
+	uint8_t tctl;
+	uint cnt, oflow;
+
+	mtx_enter(&pcc_mutex);
+	tcr1 = *(volatile u_int32_t *)(PCC2_BASE + PCCTWO_T1COUNT);
+	tctl = *(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1CTL);
+	/*
+	 * Since we can not freeze the counter while reading the count
+	 * and overflow registers, read it a second time; if it has
+	 * wrapped, pick the second reading.
+	 */
+	tcr2 = *(volatile u_int32_t *)(PCC2_BASE + PCCTWO_T1COUNT);
+	if (tcr2 < tcr1) {
+		tcr1 = tcr2;
+		tctl = *(volatile u_int8_t *)(PCC2_BASE + PCCTWO_T1CTL);
+	}
+	cnt = pcc_refcnt;
+	mtx_leave(&pcc_mutex);
+
+	oflow = (tctl & PCC2_TCTL_OVF) >> PCC2_TCTL_OVF_SHIFT;
+	if (oflow != 0)
+		return cnt + tcr1 + oflow * tick;
+	else
+		return cnt + tcr1;
 }
 
 int
