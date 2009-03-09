@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.86 2009/03/08 20:39:49 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.87 2009/03/09 01:43:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -68,6 +68,7 @@
 
 /* number of MX records to lookup */
 #define MXARRAYSIZE	5
+#define MAX_MX_COUNT	10
 
 /* rfc5321 limits */
 #define	SMTP_TEXTLINE_MAX	1000
@@ -92,8 +93,10 @@ struct relayhost {
 };
 
 struct mxhost {
+	TAILQ_ENTRY(mxhost)	 entry;
 	u_int8_t flags;
 	struct sockaddr_storage ss;
+	char credentials[MAX_LINE_SIZE];
 };
 
 /* buffer specific headers */
@@ -170,6 +173,7 @@ enum imsg_type {
 	IMSG_LKA_MAIL,
 	IMSG_LKA_RCPT,
 	IMSG_LKA_MX,
+	IMSG_LKA_MX_END,
 	IMSG_LKA_HOST,
 	IMSG_MDA_MAILBOX_FILE,
 	IMSG_MDA_MESSAGE_FILE,
@@ -513,11 +517,6 @@ struct batch {
 	char				 session_hostname[MAXHOSTNAMELEN];
 	struct sockaddr_storage		 session_ss;
 
-	int8_t				 getaddrinfo_error;
-	struct mxhost			 mxarray[MXARRAYSIZE*2];
-	u_int8_t			 mx_cnt;
-	u_int8_t			 mx_off;
-
 	time_t				 creation;
 	time_t				 lasttry;
 	u_int8_t			 retry;
@@ -593,7 +592,8 @@ enum session_flags {
 	F_SECURE	= 0x8,
 	F_AUTHENTICATED	= 0x10,
 	F_PEERHASTLS	= 0x20,
-	F_EVLOCKED	= 0x40
+	F_PEERHASAUTH	= 0x40,
+	F_EVLOCKED	= 0x80
 };
 
 struct session {
@@ -619,12 +619,8 @@ struct session {
 
 	struct session_auth_req		 s_auth;
 
-	struct mxhost			*mxarray;
-	u_int8_t			 mx_cnt;
-	u_int8_t			 mx_off;
-
 	struct batch			*batch;
-
+	TAILQ_HEAD(mxhostlist, mxhost) mxhosts;
 };
 
 struct smtpd {
@@ -725,6 +721,18 @@ struct message_recipient {
 struct forward_req {
 	u_int64_t			 id;
 	char				 pw_name[MAXLOGNAME];
+};
+
+struct mxreq {
+	u_int64_t id;
+	char hostname[MAXHOSTNAMELEN];
+	struct rule rule;
+};
+
+struct mxrep {
+	u_int64_t id;
+	int getaddrinfo_error;
+	struct mxhost mxhost;
 };
 
 enum lkasession_flags {

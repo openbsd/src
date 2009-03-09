@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.32 2009/03/08 17:54:20 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.33 2009/03/09 01:43:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -30,11 +30,14 @@
 #include <event.h>
 #include <netdb.h>
 #include <pwd.h>
+#include <regex.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include <keynote.h>
 
 #include "smtpd.h"
 
@@ -45,6 +48,7 @@ void		lka_dispatch_mfa(int, short, void *);
 void		lka_dispatch_smtp(int, short, void *);
 void		lka_dispatch_queue(int, short, void *);
 void		lka_dispatch_runner(int, short, void *);
+void		lka_dispatch_mta(int, short, void *);
 void		lka_setup_events(struct smtpd *);
 void		lka_disable_events(struct smtpd *);
 int		lka_verify_mail(struct smtpd *, struct path *);
@@ -64,6 +68,7 @@ void		lka_expand_rcpt(struct smtpd *, struct aliaseslist *, struct lkasession *)
 int		lka_expand_rcpt_iteration(struct smtpd *, struct aliaseslist *, struct lkasession *);
 void		lka_rcpt_action(struct smtpd *, struct path *);
 void		lka_clear_aliaseslist(struct aliaseslist *);
+int		lka_encode_credentials(char *, char *);
 
 void
 lka_sig_handler(int sig, short event, void *p)
@@ -293,6 +298,219 @@ lka_dispatch_mfa(int sig, short event, void *p)
 }
 
 void
+lka_dispatch_mta(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = env->sc_ibufs[PROC_MTA];
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("lka_dispatch_mta: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_LKA_MX: {
+			struct mxreq *mxreq;
+			struct mxrep mxrep;
+			struct addrinfo hints, *res, *resp;
+			char **mx = NULL;
+			char *lmx[1];
+			int len, i;
+			int mxcnt;
+			int error;
+			struct mxhost mxhost;
+			char *secret;
+
+			mxreq = imsg.data;
+			mxrep.id = mxreq->id;
+			mxrep.getaddrinfo_error = 0;
+
+			if (mxreq->rule.r_action == A_RELAY) {
+				log_debug("attempting to resolve %s", mxreq->hostname);
+				len = getmxbyname(mxreq->hostname, &mx);
+				if (len != 0) {
+					mxrep.getaddrinfo_error = len;
+					imsg_compose(ibuf, IMSG_LKA_MX_END, 0, 0, -1,
+					    &mxrep, sizeof(struct mxrep));
+					break;
+				}
+				if (len == 0) {
+					lmx[0] = mxreq->hostname;
+					mx = lmx;
+					len = 1;
+				}
+			}
+			else if (mxreq->rule.r_action == A_RELAYVIA) {
+				lmx[0] = mxreq->rule.r_value.relayhost.hostname;
+				log_debug("attempting to resolve %s:%d (forced)", lmx[0],
+				    ntohs(mxreq->rule.r_value.relayhost.port));
+				mx = lmx;
+				len = 1;
+
+			}
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = PF_UNSPEC;
+			hints.ai_protocol = IPPROTO_TCP;
+
+			for (i = 0; i < len; ++i) {
+
+				error = getaddrinfo(mx[i], NULL, &hints, &res);
+				if (error) {
+					mxrep.getaddrinfo_error = error;
+					imsg_compose(ibuf, IMSG_LKA_MX_END, 0, 0, -1,
+					    &mxrep, sizeof(struct mxrep));
+				}
+
+				if (mxreq->rule.r_action == A_RELAYVIA)
+					mxhost.flags = mxreq->rule.r_value.relayhost.flags;
+
+				if (mxhost.flags & F_AUTH) {
+					secret = map_dblookup(env, "secrets", mx[i]);
+					if (secret == NULL) {
+						log_warn("no credentials for relay through \"%s\"", mx[i]);
+						freeaddrinfo(res);
+						continue;
+					}
+				}
+				if (secret)
+					lka_encode_credentials(mxhost.credentials, secret);
+
+				for (resp = res; resp != NULL && mxcnt < MAX_MX_COUNT; resp = resp->ai_next) {
+
+					if (resp->ai_family == PF_INET) {
+						struct sockaddr_in *ssin;
+						
+						mxhost.ss = *(struct sockaddr_storage *)resp->ai_addr;
+						
+						ssin = (struct sockaddr_in *)&mxhost.ss;
+						if (mxreq->rule.r_value.relayhost.port != 0) {
+							ssin->sin_port = mxreq->rule.r_value.relayhost.port;
+							mxrep.mxhost = mxhost;
+							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
+							    sizeof(struct mxrep));
+							continue;
+						}
+
+						switch (mxhost.flags & F_SSL) {
+						case F_SSMTP:
+							ssin->sin_port = htons(465);
+							mxrep.mxhost = mxhost;
+							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
+							    sizeof(struct mxrep));
+							break;
+						case F_SSL:
+							ssin->sin_port = htons(465);
+							mxrep.mxhost = mxhost;
+							mxrep.mxhost.flags &= ~F_STARTTLS;
+							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
+							    sizeof(struct mxrep));
+						case F_STARTTLS:
+							ssin->sin_port = htons(25);
+							mxrep.mxhost = mxhost;
+							mxrep.mxhost.flags &= ~F_SSMTP;
+							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
+							    sizeof(struct mxrep));
+							break;
+						default:
+							ssin->sin_port = htons(25);
+							mxrep.mxhost = mxhost;
+							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
+							    sizeof(struct mxrep));
+						}
+					}
+					
+					if (resp->ai_family == PF_INET6) {
+						struct sockaddr_in6 *ssin6;
+						
+						mxhost.ss = *(struct sockaddr_storage *)resp->ai_addr;
+						ssin6 = (struct sockaddr_in6 *)&mxhost.ss;
+						if (mxreq->rule.r_value.relayhost.port != 0) {
+							ssin6->sin6_port = mxreq->rule.r_value.relayhost.port;
+							mxrep.mxhost = mxhost;
+							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
+							    sizeof(struct mxrep));
+							continue;
+						}
+						
+						switch (mxhost.flags & F_SSL) {
+						case F_SSMTP:
+							ssin6->sin6_port = htons(465);
+							mxrep.mxhost = mxhost;
+							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
+							    sizeof(struct mxrep));
+							break;
+						case F_SSL:
+							ssin6->sin6_port = htons(465);
+							mxrep.mxhost = mxhost;
+							mxrep.mxhost.flags &= ~F_STARTTLS;
+							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
+							    sizeof(struct mxrep));
+						case F_STARTTLS:
+							ssin6->sin6_port = htons(25);
+							mxrep.mxhost = mxhost;
+							mxrep.mxhost.flags &= ~F_SSMTP;
+							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
+							    sizeof(struct mxrep));
+							break;
+						default:
+							ssin6->sin6_port = htons(25);
+							mxrep.mxhost = mxhost;
+							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
+							    sizeof(struct mxrep));
+						}
+					}
+				}
+				freeaddrinfo(res);
+				free(secret);
+				bzero(&mxhost.credentials, MAX_LINE_SIZE);
+			}
+
+			mxrep.getaddrinfo_error = error;
+
+			imsg_compose(ibuf, IMSG_LKA_MX_END, 0, 0, -1,
+			    &mxrep, sizeof(struct mxrep));
+
+			if (mx != lmx)
+				free(mx);
+
+			break;
+		}
+
+		default:
+			log_debug("lka_dispatch_mta: unexpected imsg %d",
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(ibuf);
+}
+
+void
 lka_dispatch_smtp(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
@@ -446,93 +664,6 @@ lka_dispatch_runner(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_LKA_MX: {
-			struct batch *batchp;
-			struct addrinfo hints, *res, *resp;
-			char **mx = NULL;
-			char *lmx[1];
-			int len, i, j;
-			int error;
-			u_int16_t port = htons(25);
-
-			batchp = imsg.data;
-
-			if (! IS_RELAY(batchp->rule.r_action))
-				fatalx("lka_dispatch_queue: inconsistent internal state");
-
-			if (batchp->rule.r_action == A_RELAY) {
-				log_debug("attempting to resolve %s", batchp->hostname);
-				len = getmxbyname(batchp->hostname, &mx);
-				if (len < 0) {
-					batchp->getaddrinfo_error = len;
-					imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1,
-					    batchp, sizeof(*batchp));
-					break;
-				}
-				if (len == 0) {
-					lmx[0] = batchp->hostname;
-					mx = lmx;
-					len = 1;
-				}
-			}
-			else if (batchp->rule.r_action == A_RELAYVIA) {
-
-				lmx[0] = batchp->rule.r_value.relayhost.hostname;
-				port = batchp->rule.r_value.relayhost.port;
-				log_debug("attempting to resolve %s:%d (forced)", lmx[0], ntohs(port));
-				mx = lmx;
-				len = 1;
-
-			}
-
-			memset(&hints, 0, sizeof(hints));
-			hints.ai_family = PF_UNSPEC;
-			hints.ai_protocol = IPPROTO_TCP;
-			for (i = j = 0; i < len && (j < MXARRAYSIZE * 2); ++i) {
-				error = getaddrinfo(mx[i], NULL, &hints, &res);
-				if (error)
-					continue;
-
-				log_debug("resolving MX: %s", mx[i]);
-
-				for (resp = res; resp != NULL && (j < MXARRAYSIZE * 2); resp = resp->ai_next) {
-
-					if (batchp->rule.r_action == A_RELAYVIA)
-						batchp->mxarray[j].flags = batchp->rule.r_value.relayhost.flags;
-
-					if (resp->ai_family == PF_INET) {
-						struct sockaddr_in *ssin;
-
-						batchp->mxarray[j].ss = *(struct sockaddr_storage *)resp->ai_addr;
-						ssin = (struct sockaddr_in *)&batchp->mxarray[j].ss;
-						ssin->sin_port = port;
-						++j;
-					}
-					if (resp->ai_family == PF_INET6) {
-						struct sockaddr_in6 *ssin6;
-
-						batchp->mxarray[j].ss = *(struct sockaddr_storage *)resp->ai_addr;
-						ssin6 = (struct sockaddr_in6 *)&batchp->mxarray[j].ss;
-						ssin6->sin6_port = port;
-						++j;
-					}
-				}
-				freeaddrinfo(res);
-			}
-
-			batchp->mx_cnt = j;
-			batchp->getaddrinfo_error = 0;
-			if (j == 0)
-				batchp->getaddrinfo_error = error;
-			imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, batchp,
-			    sizeof(*batchp));
-
-			if (mx != lmx)
-				free(mx);
-
-			break;
-		}
-
 		default:
 			log_debug("lka_dispatch_runner: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -575,6 +706,7 @@ lka(struct smtpd *env)
 		{ PROC_QUEUE,	lka_dispatch_queue },
 		{ PROC_SMTP,	lka_dispatch_smtp },
 		{ PROC_RUNNER,	lka_dispatch_runner },
+		{ PROC_MTA,	lka_dispatch_mta }
 	};
 
 	switch (pid = fork()) {
@@ -610,8 +742,8 @@ lka(struct smtpd *env)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	config_pipes(env, peers, 5);
-	config_peers(env, peers, 5);
+	config_pipes(env, peers, 6);
+	config_peers(env, peers, 6);
 
 	lka_setup_events(env);
 	event_dispatch();
@@ -1067,6 +1199,33 @@ lka_clear_aliaseslist(struct aliaseslist *aliaseslist)
 		TAILQ_REMOVE(aliaseslist, alias, entry);
 		free(alias);
 	}
+}
+
+int
+lka_encode_credentials(char *dest, char *src)
+{
+	size_t len;
+	char buffer[MAX_LINE_SIZE];
+	size_t i;
+
+	len = strlen(src) + 1;
+	if (len < 1)
+		return 0;
+
+	bzero(buffer, sizeof (buffer));
+	if (strlcpy(buffer + 1, src, sizeof(buffer) - 1) >=
+	    sizeof (buffer) - 1)
+		return 0;
+
+	while (i++ < len) {
+		if (buffer[i] == ':') {
+			buffer[i] = '\0';
+			break;
+		}
+	}
+	if (kn_encode_base64(buffer, len, dest, MAX_LINE_SIZE - 1) == -1)
+		return 0;
+	return 1;
 }
 
 SPLAY_GENERATE(lkatree, lkasession, nodes, lkasession_cmp);

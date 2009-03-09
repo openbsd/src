@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.31 2009/02/22 19:07:33 chl Exp $	*/
+/*	$OpenBSD: mta.c,v 1.32 2009/03/09 01:43:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -44,6 +44,7 @@ void		mta_sig_handler(int, short, void *);
 void		mta_dispatch_parent(int, short, void *);
 void		mta_dispatch_queue(int, short, void *);
 void		mta_dispatch_runner(int, short, void *);
+void		mta_dispatch_lka(int, short, void *);
 void		mta_setup_events(struct smtpd *);
 void		mta_disable_events(struct smtpd *);
 void		mta_timeout(int, short, void *);
@@ -54,7 +55,7 @@ void		mta_write_handler(struct bufferevent *, void *);
 void		mta_error_handler(struct bufferevent *, short, void *);
 int		mta_reply_handler(struct bufferevent *, void *);
 void		mta_batch_update_queue(struct batch *);
-void		mta_expand_mxarray(struct session *);
+void		mta_mxlookup(struct smtpd *, struct session *, char *, struct rule *);
 void		ssl_client_init(struct session *);
 
 void
@@ -108,6 +109,100 @@ mta_dispatch_parent(int sig, short event, void *p)
 		switch (imsg.hdr.type) {
 		default:
 			log_debug("parent_dispatch_mta: unexpected imsg %d",
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(ibuf);
+}
+
+void
+mta_dispatch_lka(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = env->sc_ibufs[PROC_LKA];
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("mta_dispatch_lka: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_LKA_MX: {
+			struct session key;
+			struct mxrep *mxrep;
+			struct session *s;
+			struct mxhost *mxhost;
+
+			mxrep = imsg.data;
+			key.s_id = mxrep->id;
+
+			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
+			if (s == NULL)
+				fatal("mta_dispatch_lka: session is gone");
+
+			mxhost = calloc(1, sizeof(struct mxhost));
+			if (mxhost == NULL)
+				fatal("mta_dispatch_lka: calloc");
+
+			*mxhost = mxrep->mxhost;
+ 			TAILQ_INSERT_TAIL(&s->mxhosts, mxhost, entry);
+
+			break;
+		}
+		case IMSG_LKA_MX_END: {
+			struct session key;
+			struct mxrep *mxrep;
+			struct session *s;
+			int ret;
+
+			mxrep = imsg.data;
+			key.s_id = mxrep->id;
+
+			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
+			if (s == NULL)
+				fatal("smtp_dispatch_parent: session is gone");
+
+			s->batch->flags |= F_BATCH_RESOLVED;
+
+			do {
+				ret = mta_connect(s);
+			} while (ret == 0);
+			
+			if (ret < 0) {
+				mta_batch_update_queue(s->batch);
+				session_destroy(s);
+			}
+
+			break;
+		}
+		default:
+			log_debug("mta_dispatch_lka: unexpected imsg %d",
 			    imsg.hdr.type);
 			break;
 		}
@@ -229,6 +324,7 @@ mta_dispatch_runner(int sig, short event, void *p)
 			s->s_state = S_INIT;
 			s->s_env = env;
 			s->s_id = queue_generate_id();
+			TAILQ_INIT(&s->mxhosts);
 			SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
 
 			/* create the batch for this session */
@@ -238,7 +334,6 @@ mta_dispatch_runner(int sig, short event, void *p)
 
 			*batchp = *(struct batch *)imsg.data;
 			batchp->session_id = s->s_id;
-			batchp->mx_off = 0;
 			batchp->env = env;
 			batchp->flags = 0;
 			batchp->sessionp = s;
@@ -290,10 +385,8 @@ mta_dispatch_runner(int sig, short event, void *p)
 
 			s = batchp->sessionp;
 
-			mta_expand_mxarray(s);
-			while (! mta_connect(s))
-				if (s->mx_off == s->mx_cnt)
-					break;
+			mta_mxlookup(env, s, batchp->hostname, &batchp->rule);
+
 			break;
 		}
 		default:
@@ -352,7 +445,8 @@ mta(struct smtpd *env)
 
 	struct peer peers[] = {
 		{ PROC_QUEUE,	mta_dispatch_queue },
-		{ PROC_RUNNER,	mta_dispatch_runner }
+		{ PROC_RUNNER,	mta_dispatch_runner },
+		{ PROC_LKA,	mta_dispatch_lka }
 	};
 
 	switch (pid = fork()) {
@@ -396,8 +490,8 @@ mta(struct smtpd *env)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	config_pipes(env, peers, 2);
-	config_peers(env, peers, 2);
+	config_pipes(env, peers, 3);
+	config_peers(env, peers, 3);
 
 	SPLAY_INIT(&env->batch_queue);
 
@@ -408,17 +502,34 @@ mta(struct smtpd *env)
 	return (0);
 }
 
+void
+mta_mxlookup(struct smtpd *env, struct session *sessionp, char *hostname, struct rule *rule)
+{
+	struct mxreq mxreq;
+
+	mxreq.id = sessionp->s_id;
+	mxreq.rule = *rule;
+	(void)strlcpy(mxreq.hostname, hostname, MAXHOSTNAMELEN);
+	imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_MX, 0, 0, -1,
+	    &mxreq, sizeof(struct mxreq));
+}
+
 /* shamelessly ripped usr.sbin/relayd/check_tcp.c ;) */
 int
-mta_connect(struct session* sessionp)
+mta_connect(struct session *sessionp)
 {
 	int s;
 	int type;
 	struct linger lng;
 	struct sockaddr_in ssin;
 	struct sockaddr_in6 ssin6;
+	struct mxhost *mxhost;
 
-	if ((s = socket(sessionp->mxarray[sessionp->mx_off].ss.ss_family, SOCK_STREAM, 0)) == -1) {
+	mxhost = TAILQ_FIRST(&sessionp->mxhosts);
+	if (mxhost == NULL)
+		return -1;
+
+	if ((s = socket(mxhost->ss.ss_family, SOCK_STREAM, 0)) == -1) {
 		goto bad;
 	}
 
@@ -434,8 +545,8 @@ mta_connect(struct session* sessionp)
 
 	session_socket_blockmode(s, BM_NONBLOCK);
 
-	if (sessionp->mxarray[sessionp->mx_off].ss.ss_family == PF_INET) {
-		ssin = *(struct sockaddr_in *)&sessionp->mxarray[sessionp->mx_off].ss;
+	if (mxhost->ss.ss_family == PF_INET) {
+		ssin = *(struct sockaddr_in *)&mxhost->ss;
 		if (connect(s, (struct sockaddr *)&ssin, sizeof(struct sockaddr_in)) == -1) {
 			if (errno != EINPROGRESS) {
 				goto bad;
@@ -443,15 +554,14 @@ mta_connect(struct session* sessionp)
 		}
 	}
 
-	if (sessionp->mxarray[sessionp->mx_off].ss.ss_family == PF_INET6) {
-		ssin6 = *(struct sockaddr_in6 *)&sessionp->mxarray[sessionp->mx_off].ss;
+	if (mxhost->ss.ss_family == PF_INET6) {
+		ssin6 = *(struct sockaddr_in6 *)&mxhost->ss;
 		if (connect(s, (struct sockaddr *)&ssin6, sizeof(struct sockaddr_in6)) == -1) {
 			if (errno != EINPROGRESS) {
 				goto bad;
 			}
 		}
 	}
-
 	sessionp->s_tv.tv_sec = SMTPD_CONNECT_TIMEOUT;
 	sessionp->s_tv.tv_usec = 0;
 	sessionp->s_fd = s;
@@ -461,7 +571,10 @@ mta_connect(struct session* sessionp)
 	return 1;
 
 bad:
-	sessionp->mx_off++;
+	if (mxhost) {
+		TAILQ_REMOVE(&sessionp->mxhosts, mxhost, entry);
+		free(mxhost);
+	}
 	close(s);
 	return 0;
 }
@@ -471,11 +584,15 @@ mta_write(int s, short event, void *arg)
 {
 	struct session *sessionp = arg;
 	struct batch *batchp = sessionp->batch;
+	struct mxhost *mxhost;
 	int ret;
 
 	if (event == EV_TIMEOUT) {
-		sessionp->mx_off++;
+
+		TAILQ_REMOVE(&sessionp->mxhosts, mxhost, entry);
+		free(mxhost);
 		close(s);
+
 		if (sessionp->s_bev) {
 			bufferevent_free(sessionp->s_bev);
 			sessionp->s_bev = NULL;
@@ -483,16 +600,15 @@ mta_write(int s, short event, void *arg)
 		strlcpy(batchp->errorline, "connection timed-out.",
 		    sizeof(batchp->errorline));
 
-		ret = 0;
-		while (sessionp->mx_off < sessionp->mx_cnt &&
-		    (ret = mta_connect(sessionp)) == 0) {
-			continue;
-		}
-		if (ret)
-			return;
+		do {
+			ret = mta_connect(sessionp);
+		} while (ret == 0);
 
-		mta_batch_update_queue(batchp);
-		session_destroy(sessionp);
+		if (ret < 0) {
+			mta_batch_update_queue(batchp);
+			session_destroy(sessionp);
+		}
+
 		return;
 	}
 
@@ -505,7 +621,8 @@ mta_write(int s, short event, void *arg)
 		return;
 	}
 
-	if (sessionp->mxarray[sessionp->mx_off].flags & F_SSMTP) {
+	mxhost = TAILQ_FIRST(&sessionp->mxhosts);
+	if (mxhost->flags & F_SSMTP) {
 		ssl_client_init(sessionp);
 		return;
 	}
@@ -534,6 +651,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	char codebuf[4];
 	const char *errstr;
 	int flags = 0;
+	struct mxhost *mxhost = TAILQ_FIRST(&sessionp->mxhosts);
 
 	line = evbuffer_readline(bev->input);
 	if (line == NULL)
@@ -555,6 +673,9 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	if (line[3] == '-') {
 		if (strcasecmp(&line[4], "STARTTLS") == 0)
 			sessionp->s_flags |= F_PEERHASTLS;
+		else if (strncasecmp(&line[4], "AUTH ", 5) == 0 ||
+		    strncasecmp(&line[4], "AUTH-", 5) == 0)
+			sessionp->s_flags |= F_PEERHASAUTH;
 		return 1;
 	}
 
@@ -575,9 +696,28 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		}
 
 		if (sessionp->s_state == S_GREETED &&
+		    (sessionp->s_flags & F_PEERHASAUTH) &&
+		    (sessionp->s_flags & F_SECURE)) {
+			log_debug("AUTH PLAIN %s", mxhost->credentials);
+			session_respond(sessionp, "AUTH PLAIN %s", mxhost->credentials);
+			sessionp->s_state = S_AUTH_INIT;
+			return 0;
+		}
+
+		if (sessionp->s_state == S_GREETED &&
 		    !(sessionp->s_flags & F_PEERHASTLS) &&
-		    sessionp->mxarray[sessionp->mx_off].flags & F_STARTTLS) {
+		    mxhost->flags & F_STARTTLS) {
 			/* PERM - we want TLS but it is not advertised */
+			batchp->status |= S_BATCH_PERMFAILURE;
+			mta_batch_update_queue(batchp);
+			session_destroy(sessionp);
+			return 0;
+		}
+
+		if (sessionp->s_state == S_GREETED &&
+		    !(sessionp->s_flags & F_PEERHASAUTH) &&
+		    mxhost->flags & F_AUTH) {
+			/* PERM - we want AUTH but it is not advertised */
 			batchp->status |= S_BATCH_PERMFAILURE;
 			mta_batch_update_queue(batchp);
 			session_destroy(sessionp);
@@ -598,6 +738,13 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		sessionp->s_state = S_GREETED;
 		return 1;
 
+	case 235:
+		if (sessionp->s_state == S_AUTH_INIT) {
+			sessionp->s_flags |= F_AUTHENTICATED;
+			sessionp->s_state = S_GREETED;
+			break;
+		}
+		return 0;
 	case 421:
 	case 450:
 	case 451:
@@ -631,6 +778,8 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 			return 0;
 		}
 
+	case 535:
+		/* Authentication failed*/
 	case 552:
 	case 553:
 		flags |= F_ISPROTOERROR;
@@ -921,119 +1070,4 @@ mta_batch_update_queue(struct batch *batchp)
 		fclose(batchp->messagefp);
 
 	free(batchp);
-}
-
-void
-mta_expand_mxarray(struct session *sessionp)
-{
-	int i;
-	int j;
-	u_int16_t	port;
-	struct mxhost		mxhost;
-	struct sockaddr_in	*ssin;
-	struct sockaddr_in6	*ssin6;
-	struct batch *batchp = sessionp->batch;
-
-	/* First pass, we compute the length of the final mxarray */
-	for (i = 0; i < batchp->mx_cnt; ++i) {
-		mxhost = batchp->mxarray[i];
-
-		if (mxhost.ss.ss_family == AF_INET) {
-			ssin = (struct sockaddr_in *)&mxhost.ss;
-			port = ntohs(ssin->sin_port);
-		}
-		else if (mxhost.ss.ss_family == AF_INET6) {
-			ssin6 = (struct sockaddr_in6 *)&mxhost.ss;
-			port = ntohs(ssin6->sin6_port);
-		}
-
-		if (port) {
-			++sessionp->mx_cnt;
-			continue;
-		}
-
-		switch (mxhost.flags & F_SSL) {
-		case F_SSL:
-			sessionp->mx_cnt += 2;
-			break;
-		case F_SSMTP:
-		case F_STARTTLS:
-		default:
-			++sessionp->mx_cnt;
-		}
-	}
-
-	/* Second pass, we actually fill the array */
-	sessionp->mxarray = calloc(sessionp->mx_cnt, sizeof(struct mxhost));
-	if (sessionp->mxarray == NULL)
-		fatal("calloc");
-
-	for (i = j = 0; i < batchp->mx_cnt; ++i) {
-		mxhost = batchp->mxarray[i];
-
-		if (mxhost.ss.ss_family == AF_INET) {
-			ssin = (struct sockaddr_in *)&mxhost.ss;
-			port = ntohs(ssin->sin_port);
-		}
-		else if (mxhost.ss.ss_family == AF_INET6) {
-			ssin6 = (struct sockaddr_in6 *)&mxhost.ss;
-			port = ntohs(ssin6->sin6_port);
-		}
-
-		if (port) {
-			sessionp->mxarray[j++] = mxhost;
-			continue;
-		}
-
-		switch (mxhost.flags & F_SSL) {
-		case F_SSL: {
-			u_int8_t flags = mxhost.flags;
-
-			if (mxhost.ss.ss_family == AF_INET) {
-				ssin->sin_port = htons(465);
-				mxhost.ss = *(struct sockaddr_storage *)ssin;
-			}
-			else if (mxhost.ss.ss_family == AF_INET6) {
-				ssin6->sin6_port = htons(465);
-				mxhost.ss = *(struct sockaddr_storage *)ssin6;
-			}
-			mxhost.flags = flags & ~F_STARTTLS;
-			sessionp->mxarray[j++] = mxhost;
-
-			if (mxhost.ss.ss_family == AF_INET) {
-				ssin->sin_port = htons(25);
-				mxhost.ss = *(struct sockaddr_storage *)ssin;
-			}
-			else if (mxhost.ss.ss_family == AF_INET6) {
-				ssin6->sin6_port = htons(25);
-				mxhost.ss = *(struct sockaddr_storage *)ssin6;
-			}
-			mxhost.flags = flags & ~F_SSMTP;
-			sessionp->mxarray[j++] = mxhost;
-			break;
-		}
-		case F_SSMTP:
-			if (mxhost.ss.ss_family == AF_INET) {
-				ssin->sin_port = htons(465);
-				mxhost.ss = *(struct sockaddr_storage *)ssin;
-			}
-			else if (mxhost.ss.ss_family == AF_INET6) {
-				ssin6->sin6_port = htons(465);
-				mxhost.ss = *(struct sockaddr_storage *)ssin6;
-			}
-			sessionp->mxarray[j++] = mxhost;
-			break;
-		case F_STARTTLS:
-		default:
-			if (mxhost.ss.ss_family == AF_INET) {
-				ssin->sin_port = htons(25);
-				mxhost.ss = *(struct sockaddr_storage *)ssin;
-			}
-			else if (mxhost.ss.ss_family == AF_INET6) {
-				ssin6->sin6_port = htons(25);
-				mxhost.ss = *(struct sockaddr_storage *)ssin6;
-			}
-			sessionp->mxarray[j++] = mxhost;
-		}
-	}
 }

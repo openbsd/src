@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.33 2009/02/24 12:07:47 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.34 2009/03/09 01:43:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -64,7 +64,6 @@ void		runner_process_queue(struct smtpd *);
 void		runner_process_runqueue(struct smtpd *);
 void		runner_process_batchqueue(struct smtpd *);
 
-int		runner_batch_resolved(struct smtpd *, struct batch *);
 void		runner_batch_dispatch(struct smtpd *, struct batch *, time_t);
 
 int		runner_message_schedule(struct message *, time_t);
@@ -355,10 +354,6 @@ runner_dispatch_lka(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_LKA_MX: {
-			runner_batch_resolved(env, imsg.data);
-			break;
-		}
 		default:
 			log_debug("runner_dispatch_lka: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -613,10 +608,10 @@ runner_process_batchqueue(struct smtpd *env)
 	     batchp != NULL;
 	     batchp = nxt) {
 		nxt = SPLAY_NEXT(batchtree, &env->batch_queue, batchp);
-		if ((batchp->type & T_MTA_BATCH) &&
-		    (batchp->flags & F_BATCH_RESOLVED) == 0) {
-			continue;
-		}
+//		if ((batchp->type & T_MTA_BATCH) &&
+//		    (batchp->flags & F_BATCH_RESOLVED) == 0) {
+//			continue;
+//		}
 
 		runner_batch_dispatch(env, batchp, curtime);
 
@@ -624,71 +619,6 @@ runner_process_batchqueue(struct smtpd *env)
 		bzero(batchp, sizeof(struct batch));
 		free(batchp);
 	}
-}
-
-int
-runner_batch_resolved(struct smtpd *env, struct batch *lookup)
-{
-	u_int32_t i;
-	struct batch *batchp;
-
-	batchp = batch_by_id(env, lookup->id);
-	batchp->getaddrinfo_error = lookup->getaddrinfo_error;
-	batchp->mx_cnt = lookup->mx_cnt;
-
-/*
-           EAI_NODATA        no address associated with hostname
-           EAI_NONAME        hostname or servname not provided, or not known
-           EAI_PROTOCOL      resolved protocol is unknown
-           EAI_SERVICE       servname not supported for ai_socktype
-           EAI_SOCKTYPE      ai_socktype not supported
-           EAI_SYSTEM        system error returned in errno
-
-
- */
-
-	switch (batchp->getaddrinfo_error) {
-	case 0:
-		batchp->flags |= F_BATCH_RESOLVED;
-		for (i = 0; i < batchp->mx_cnt; ++i) {
-			batchp->mxarray[i].flags = lookup->mxarray[i].flags;
-			batchp->mxarray[i].ss = lookup->mxarray[i].ss;
-		}
-		break;
-	case EAI_ADDRFAMILY:
-	case EAI_BADFLAGS:
-	case EAI_BADHINTS:
-	case EAI_FAIL:
-	case EAI_FAMILY:
-	case EAI_NODATA:
-	case EAI_NONAME:
-	case EAI_SERVICE:
-	case EAI_SOCKTYPE:
-	case EAI_SYSTEM:
-		/* XXX */
-		/*
-		 * In the case of a DNS permanent error, do not generate a
-		 * daemon message if the error originates from one already
-		 * as this would cause a loop. Remove the initial batch as
-		 * it will never succeed.
-		 *
-		 */
-		return 0;
-
-	case EAI_AGAIN:
-	case EAI_MEMORY:
-		/* XXX */
-		/*
-		 * Do not generate a daemon message if this error happened
-		 * while processing a daemon message. Do NOT remove batch,
-		 * it may succeed later.
-		 */
-		return 0;
-
-	default:
-		fatalx("runner_batch_resolved: unknown getaddrinfo error.");
-	}
-	return 1;
 }
 
 void
@@ -927,8 +857,8 @@ batch_record(struct smtpd *env, struct message *messagep)
 		}
 		else {
 			batchp->type |= T_MTA_BATCH;
-			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_MX,
-			    0, 0, -1, batchp, sizeof(struct batch));
+//			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_MX,
+//			    0, 0, -1, batchp, sizeof(struct batch));
 		}
 	}
 

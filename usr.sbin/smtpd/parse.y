@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.26 2009/03/08 21:50:33 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.27 2009/03/09 01:43:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -683,7 +683,7 @@ action		: DELIVER TO MAILDIR STRING	{
 		| RELAY				{
 			rule->r_action = A_RELAY;
 		}
-		| RELAY VIA ssl STRING port {
+		| RELAY VIA ssl STRING port auth {
 			rule->r_action = A_RELAYVIA;
 
 			if ($3)
@@ -698,6 +698,12 @@ action		: DELIVER TO MAILDIR STRING	{
 				rule->r_value.relayhost.port = 0;
 			else
 				rule->r_value.relayhost.port = $5;
+
+			if ($6) {
+				if (! $3)
+					fatalx("cannot auth over insecure channel");
+				rule->r_value.relayhost.flags |= F_AUTH;
+			}
 
 			free($4);
 		}
