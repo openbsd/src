@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.14 2009/02/24 12:07:47 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.15 2009/03/09 11:29:52 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -430,7 +430,7 @@ queue_update_envelope(struct message *messagep)
 	char dest[MAXPATHLEN];
 	FILE *fp;
 
-	if (! bsnprintf(temp, sizeof(temp), "%s/envelope.tmp", PATH_INCOMING))
+	if (! bsnprintf(temp, sizeof(temp), "%s/envelope.tmp", PATH_QUEUE))
 		fatalx("queue_update_envelope");
 
 	if (! bsnprintf(dest, sizeof(dest), "%s/%d/%s%s/%s", PATH_QUEUE,
