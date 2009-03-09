@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.33 2009/03/09 01:43:19 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.34 2009/03/09 16:31:09 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -974,7 +974,6 @@ lka_resolve_alias(struct path *path, struct alias *alias)
 		log_debug("ADDRESS: %s@%s", alias->u.path.user, alias->u.path.domain);
 		*path = alias->u.path;
 		break;
-	case ALIAS_TEXT:
 	case ALIAS_INCLUDE:
 		fatalx("lka_resolve_alias: unexpected type");
 		break;
