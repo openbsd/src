@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.283 2009/02/16 00:31:25 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.284 2009/03/09 13:53:10 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1063,6 +1063,7 @@ struct pfi_kif {
 	u_int64_t			 pfik_bytes[2][2][2];
 	u_int32_t			 pfik_tzero;
 	int				 pfik_flags;
+	int				 pfik_flags_new;
 	void				*pfik_ah_cookie;
 	struct ifnet			*pfik_ifp;
 	struct ifg_group		*pfik_group;
@@ -1749,6 +1750,7 @@ void		 pfi_update_status(const char *, struct pf_status *);
 int		 pfi_get_ifaces(const char *, struct pfi_kif *, int *);
 int		 pfi_set_flags(const char *, int);
 int		 pfi_clear_flags(const char *, int);
+void		 pfi_xcommit(void);
 
 int		 pf_match_tag(struct mbuf *, struct pf_rule *, int *);
 u_int16_t	 pf_tagname2tag(char *);
@@ -1767,6 +1769,7 @@ extern struct rwlock	pf_consistency_lock;
 struct pf_pool_limit {
 	void		*pp;
 	unsigned	 limit;
+	unsigned	 limit_new;
 };
 extern struct pf_pool_limit	pf_pool_limits[PF_LIMIT_MAX];
 

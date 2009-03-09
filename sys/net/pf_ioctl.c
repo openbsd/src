@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.214 2009/02/16 00:31:25 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.215 2009/03/09 13:53:10 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -114,7 +114,7 @@ int			 pf_addr_setup(struct pf_ruleset *,
 			    struct pf_addr_wrap *, sa_family_t);
 void			 pf_addr_copyout(struct pf_addr_wrap *);
 
-struct pf_rule		 pf_default_rule;
+struct pf_rule		 pf_default_rule, pf_default_rule_new;
 struct rwlock		 pf_consistency_lock = RWLOCK_INITIALIZER("pfcnslk");
 #ifdef ALTQ
 static int		 pf_altq_running;
@@ -1712,20 +1712,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCSETTIMEOUT: {
 		struct pfioc_tm	*pt = (struct pfioc_tm *)addr;
-		int		 old;
 
 		if (pt->timeout < 0 || pt->timeout >= PFTM_MAX ||
 		    pt->seconds < 0) {
 			error = EINVAL;
 			goto fail;
 		}
-		old = pf_default_rule.timeout[pt->timeout];
 		if (pt->timeout == PFTM_INTERVAL && pt->seconds == 0)
 			pt->seconds = 1;
-		pf_default_rule.timeout[pt->timeout] = pt->seconds;
-		if (pt->timeout == PFTM_INTERVAL && pt->seconds < old)
-			wakeup(pf_purge_thread);
-		pt->seconds = old;
+		pf_default_rule_new.timeout[pt->timeout] = pt->seconds;
+		pt->seconds = pf_default_rule.timeout[pt->timeout];
 		break;
 	}
 
@@ -1753,21 +1749,19 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCSETLIMIT: {
 		struct pfioc_limit	*pl = (struct pfioc_limit *)addr;
-		int			 old_limit;
 
 		if (pl->index < 0 || pl->index >= PF_LIMIT_MAX ||
 		    pf_pool_limits[pl->index].pp == NULL) {
 			error = EINVAL;
 			goto fail;
 		}
-		if (pool_sethardlimit(pf_pool_limits[pl->index].pp,
-		    pl->limit, NULL, 0) != 0) {
+		if (((struct pool *)pf_pool_limits[pl->index].pp)->pr_nout >
+		    pl->limit) {
 			error = EBUSY;
 			goto fail;
 		}
-		old_limit = pf_pool_limits[pl->index].limit;
-		pf_pool_limits[pl->index].limit = pl->limit;
-		pl->limit = old_limit;
+		pf_pool_limits[pl->index].limit_new = pl->limit;
+		pl->limit = pf_pool_limits[pl->index].limit;
 		break;
 	}
 
@@ -2433,6 +2427,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		ioe = malloc(sizeof(*ioe), M_TEMP, M_WAITOK);
 		table = malloc(sizeof(*table), M_TEMP, M_WAITOK);
+		pf_default_rule_new = pf_default_rule;
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
 				free(table, M_TEMP);
@@ -2619,6 +2614,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			}
 		}
+		/*
+		 * Checked already in DIOCSETLIMIT, but check again as the
+		 * situation might have changed.
+		 */
+		for (i = 0; i < PF_LIMIT_MAX; i++) {
+			if (((struct pool *)pf_pool_limits[i].pp)->pr_nout >
+			    pf_pool_limits[i].limit_new) {
+				error = EBUSY;
+				goto fail;
+			}
+		}
 		/* now do the commit - no errors should happen here */
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
@@ -2658,6 +2664,26 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			}
 		}
+		for (i = 0; i < PF_LIMIT_MAX; i++) {
+			if (pf_pool_limits[i].limit_new !=
+			    pf_pool_limits[i].limit &&
+			    pool_sethardlimit(pf_pool_limits[i].pp,
+			    pf_pool_limits[i].limit_new, NULL, 0) != 0) {
+				error = EBUSY;
+				goto fail; /* really bad */
+			}
+			pf_pool_limits[i].limit = pf_pool_limits[i].limit_new;
+		}
+		for (i = 0; i < PFTM_MAX; i++) {
+			int old = pf_default_rule.timeout[i];
+
+			pf_default_rule.timeout[i] =
+			    pf_default_rule_new.timeout[i];
+			if (pf_default_rule.timeout[i] == PFTM_INTERVAL &&
+			    pf_default_rule.timeout[i] < old)
+				wakeup(pf_purge_thread);
+		}
+		pfi_xcommit();
 		free(table, M_TEMP);
 		free(ioe, M_TEMP);
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.636 2009/03/07 01:15:41 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.637 2009/03/09 13:53:09 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -230,11 +230,11 @@ extern struct pool pfr_ktable_pl;
 extern struct pool pfr_kentry_pl;
 
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
-	{ &pf_state_pl, PFSTATE_HIWAT },
-	{ &pf_src_tree_pl, PFSNODE_HIWAT },
-	{ &pf_frent_pl, PFFRAG_FRENT_HIWAT },
-	{ &pfr_ktable_pl, PFR_KTABLE_HIWAT },
-	{ &pfr_kentry_pl, PFR_KENTRY_HIWAT }
+	{ &pf_state_pl, PFSTATE_HIWAT, PFSTATE_HIWAT },
+	{ &pf_src_tree_pl, PFSNODE_HIWAT, PFSNODE_HIWAT },
+	{ &pf_frent_pl, PFFRAG_FRENT_HIWAT, PFFRAG_FRENT_HIWAT },
+	{ &pfr_ktable_pl, PFR_KTABLE_HIWAT, PFR_KTABLE_HIWAT },
+	{ &pfr_kentry_pl, PFR_KENTRY_HIWAT, PFR_KENTRY_HIWAT }
 };
 
 enum { PF_ICMP_MULTI_NONE, PF_ICMP_MULTI_SOLICITED, PF_ICMP_MULTI_LINK };
