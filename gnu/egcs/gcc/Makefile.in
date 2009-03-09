@@ -1594,6 +1594,9 @@ recog.o : recog.c $(CONFIG_H) system.h $(RTL_H)  \
 reg-stack.o : reg-stack.c $(CONFIG_H) system.h $(RTL_H) $(TREE_H) recog.h \
    $(REGS_H) hard-reg-set.h flags.h insn-config.h insn-flags.h toplev.h
 dyn-string.o: dyn-string.c dyn-string.h $(CONFIG_H) system.h
+protector.o: protector.c $(CONFIG_H) insn-config.h flags.h $(RTL_H) \
+   $(TREE_H) $(EXPR_H) $(REGS_H) $(RECOG_H) insn-attr.h real.h output.h \
+    except.h
 
 $(out_object_file): $(out_file) $(CONFIG_H) $(TREE_H) \
    $(RTL_H) $(REGS_H) hard-reg-set.h real.h insn-config.h conditions.h \

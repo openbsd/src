@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.21 2006/07/17 09:47:57 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.22 2009/03/09 21:07:06 miod Exp $
 
 MAN=		cpp.1 gcc.1 protoize.1 gcov.1
 MLINKS+=	gcc.1 cc.1
@@ -11,6 +11,7 @@ LANGUAGES=--enable-languages='c,c++,objc,f77'
 MAN+=		cp/g++.1 f/g77.1
 MLINKS+=	g++.1 c++.1
 MLINKS+=	g77.1 f77.1
+BEFOREMAN=	config.status
 .endif
 
 FAKE_FILES=	/usr/share/info/cppinternals.info \
@@ -102,7 +103,7 @@ maninstall:
 # (pre-formatted) and also because of cpp, that we install by hand
 # elsewhere, until we get rid of that old `compatibility' script.
 
-target_path: Makefile
+target_path: config.status
 	__target=`sed -n '/^target=/s/target=//p' Makefile`; \
 	__version=`sed -n '/^gcc_version=/s/gcc_version=//p' Makefile`; \
 	echo /usr/lib/gcc-lib/$$__target/$$__version >target_path
