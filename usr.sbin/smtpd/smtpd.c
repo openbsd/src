@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.48 2009/03/10 19:13:28 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.49 2009/03/10 21:14:21 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -34,6 +34,7 @@
 #include <fcntl.h>
 #include <login_cap.h>
 #include <paths.h>
+#include <paths.h>
 #include <pwd.h>
 #include <regex.h>
 #include <signal.h>
@@ -68,6 +69,8 @@ int		parent_external_mda(char *, struct passwd *, struct batch *);
 int		parent_forward_open(char *);
 int		check_child(pid_t, const char *);
 int		setup_spool(uid_t, gid_t);
+
+extern char	**environ;
 
 pid_t	lka_pid = 0;
 pid_t	mfa_pid = 0;
@@ -1096,6 +1099,7 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 	arglist args;
 	char *word;
 	struct mdaproc *mdaproc;
+	char *envp[2];
 
 	log_debug("executing filter as user: %s", pw->pw_name);
 
@@ -1146,6 +1150,10 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 
 		if (closefrom(STDERR_FILENO + 1) == -1)
 			fatal("closefrom");
+
+		envp[0] = "PATH=" _PATH_DEFPATH;
+		envp[1] = (char *)NULL;
+		environ = envp;
 
 		execvp(args.list[0], args.list);
 		_exit(1);
