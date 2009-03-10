@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.21 2009/03/10 17:32:14 stsp Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.22 2009/03/10 17:36:39 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -343,39 +343,44 @@ lsa_intra_a_pref_check(struct lsa *lsa, u_int16_t len)
 }
 
 int
-lsa_self(struct lsa *lsa)
+lsa_self(struct rde_nbr *nbr, struct lsa *new, struct vertex *v)
 {
-	/* Determine if LSA is self-originated. */
-	return rde_router_id() == lsa->hdr.adv_rtr;
-}
+	struct lsa	*dummy;
 
-void
-lsa_flush(struct rde_nbr *nbr, struct lsa *lsa)
-{
-	struct lsa	*copy;
+	if (nbr->self)
+		return (0);
+
+	if (rde_router_id() != new->hdr.adv_rtr)
+		return (0);
+
+	if (v == NULL) {
+		/*
+		 * LSA is no longer announced, remove by premature aging.
+		 * The problem is that new may not be altered so a copy
+		 * needs to be added to the LSA DB first.
+		 */
+		if ((dummy = malloc(ntohs(new->hdr.len))) == NULL)
+			fatal("lsa_self");
+		memcpy(dummy, new, ntohs(new->hdr.len));
+		dummy->hdr.age = htons(MAX_AGE);
+		/*
+		 * The clue is that by using the remote nbr as originator
+		 * the dummy LSA will be reflooded via the default timeout
+		 * handler.
+		 */
+		(void)lsa_add(rde_nbr_self(nbr->area), dummy);
+		return (1);
+	}
 
 	/*
-	 * The LSA may not be altered because the caller may still use it,
-	 * so a copy needs to be added to the LSDB first.
-	 * The copy will be reflooded via the default timeout handler.
-	 */
-	if ((copy = malloc(ntohs(lsa->hdr.len))) == NULL)
-		fatal("lsa_flush");
-	memcpy(copy, lsa, ntohs(lsa->hdr.len));
-	copy->hdr.age = htons(MAX_AGE);
-	(void)lsa_add(rde_nbr_self(nbr->area), copy);
-}
-
-void
-lsa_reflood(struct vertex *v, struct lsa *new)
-{
-	/*
-	 * We need to create a new instance by setting the LSA sequence
-	 * number equal to the one of 'new' and calling lsa_refresh().
-	 * The LSA will be reflooded via the default timeout handler.
+	 * LSA is still originated, just reflood it. But we need to create
+	 * a new instance by setting the LSA sequence number equal to the
+	 * one of new and calling lsa_refresh(). Flooding will be done by the
+	 * caller.
 	 */
 	v->lsa->hdr.seq_num = new->hdr.seq_num;
 	lsa_refresh(v);
+	return (1);
 }
 
 int
@@ -557,7 +562,6 @@ lsa_num_links(struct vertex *v)
 {
 	switch (v->type) {
 	case LSA_TYPE_ROUTER:
-		/* TODO: multiple router LSAs */
 		return ((ntohs(v->lsa->hdr.len) - sizeof(struct lsa_hdr)
 		    - sizeof(u_int32_t)) / sizeof(struct lsa_rtr_link));
 	case LSA_TYPE_NETWORK:
