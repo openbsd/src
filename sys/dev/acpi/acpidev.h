@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.26 2007/11/12 21:58:14 deraadt Exp $ */
+/* $OpenBSD: acpidev.h,v 1.27 2009/03/10 20:36:10 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -314,5 +314,28 @@ struct acpidock_softc {
 #define ACPIDOCK_EVENT_INSERT	0
 #define	ACPIDOCK_EVENT_EJECT	3
 
+#define ACPIEC_MAX_EVENTS	256
+
+struct acpiec_event {
+	struct aml_node *event;
+};
+
+struct acpiec_softc {
+	struct device		sc_dev;
+
+	/* command/status register */
+	bus_space_tag_t		sc_cmd_bt;
+	bus_space_handle_t	sc_cmd_bh;
+
+	/* data register */
+	bus_space_tag_t		sc_data_bt;
+	bus_space_handle_t	sc_data_bh;
+
+	struct acpi_softc	*sc_acpi;
+	struct aml_node		*sc_devnode;
+	u_int32_t		sc_gpe;
+	struct acpiec_event	sc_events[ACPIEC_MAX_EVENTS];
+	int			sc_gotsci;
+};
 
 #endif /* __DEV_ACPI_ACPIDEV_H__ */

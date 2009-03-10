@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.42 2008/10/07 18:02:20 kettenis Exp $ */
+/* $OpenBSD: dsdt.h,v 1.43 2009/03/10 20:36:10 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -81,6 +81,8 @@ int			aml_evalnode(struct acpi_softc *, struct aml_node *,
 int			aml_evalname(struct acpi_softc *, struct aml_node *,
 			    const char *, int, struct aml_value *,
 			    struct aml_value *);
+int			aml_evalinteger(struct acpi_softc *, struct aml_node *,
+                            const char *, int, struct aml_value *, int64_t *);
 
 void			aml_fixup_dsdt(u_int8_t *, u_int8_t *, int);
 void			aml_create_defaultobjects(void);

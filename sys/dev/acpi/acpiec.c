@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.26 2008/11/06 23:41:28 marco Exp $ */
+/* $OpenBSD: acpiec.c,v 1.27 2009/03/10 20:36:10 jordan Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -77,31 +77,6 @@ struct aml_node	*aml_find_name(struct acpi_softc *, struct aml_node *,
 #define		EC_CMD_QR	0x84	/* Query */
 
 #define		REG_TYPE_EC	3
-
-#define ACPIEC_MAX_EVENTS	256
-
-struct acpiec_event {
-	struct aml_node *event;
-};
-
-struct acpiec_softc {
-	struct device		sc_dev;
-
-	/* command/status register */
-	bus_space_tag_t		sc_cmd_bt;
-	bus_space_handle_t	sc_cmd_bh;
-
-	/* data register */
-	bus_space_tag_t		sc_data_bt;
-	bus_space_handle_t	sc_data_bh;
-
-	struct acpi_softc	*sc_acpi;
-	struct aml_node		*sc_devnode;
-	u_int32_t		sc_gpe;
-	struct acpiec_event	sc_events[ACPIEC_MAX_EVENTS];
-	int			sc_gotsci;
-};
-
 
 int	acpiec_reg(struct acpiec_softc *);
 
