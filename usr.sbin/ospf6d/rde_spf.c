@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.6 2008/02/11 13:48:39 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.7 2009/03/10 17:37:45 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -1063,7 +1063,7 @@ linked(struct vertex *w, struct vertex *v)
 				break;
 #endif
 			default:
-				fatalx("spf_calc: invalid type");
+				fatalx("linked: invalid type");
 			}
 		}
 		return (0);
@@ -1076,12 +1076,12 @@ linked(struct vertex *w, struct vertex *v)
 					return (1);
 				break;
 			default:
-				fatalx("spf_calc: invalid type");
+				fatalx("linked: invalid type");
 			}
 		}
 		return (0);
 	default:
-		fatalx("spf_calc: invalid LSA type");
+		fatalx("linked: invalid LSA type");
 	}
 
 	return (0);
