@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.132 2009/02/21 13:09:20 marco Exp $ */
+/* $OpenBSD: acpi.c,v 1.133 2009/03/10 19:35:03 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1781,7 +1781,7 @@ acpi_resume(struct acpi_softc *sc)
 	env.v_integer = sc->sc_state;
 
 	if (sc->sc_bfs)
-		if (aml_evalnode(sc, sc->sc_pts, 1, &env, NULL) != 0) {
+		if (aml_evalnode(sc, sc->sc_bfs, 1, &env, NULL) != 0) {
 			dnprintf(10, "%s evaluating method _BFS failed.\n",
 			    DEVNAME(sc));
 		}
