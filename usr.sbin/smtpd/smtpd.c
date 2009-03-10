@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.46 2009/03/10 18:44:28 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.47 2009/03/10 19:09:29 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1108,13 +1108,6 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 		fatal("parent_external_mda: pipe");
 	}
 
-	/* raise privileges before fork so that the child can
-	 * revoke them permanently instead of inheriting the
-	 * saved uid.
-	 */
-	if (seteuid(0) == -1)
-		fatal("privraise failed");
-
 	pid = fork();
 	if (pid == -1) {
 		log_warn("parent_external_mda: fork");
@@ -1127,6 +1120,8 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 	if (pid == 0) {
 		setproctitle("external MDA");
 
+		if (seteuid(0) == -1)
+			fatal("privraise failed");
 		if (setgroups(1, &pw->pw_gid) ||
 		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
@@ -1152,9 +1147,6 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 		execvp(args.list[0], args.list);
 		_exit(1);
 	}
-
-	if (seteuid(pw->pw_uid) == -1)
-		fatal("privdrop failed");
 
 	mdaproc = calloc(1, sizeof (struct mdaproc));
 	if (mdaproc == NULL)
