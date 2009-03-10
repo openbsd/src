@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.123 2009/02/01 12:10:14 miod Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.124 2009/03/10 23:19:36 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -602,16 +602,11 @@ dhcpack(struct iaddr client_addr, struct option_data *options)
 {
 	struct client_lease *lease;
 
-	if (client->xid != client->packet.xid)
-		return;
-
 	if (client->state != S_REBOOTING &&
 	    client->state != S_REQUESTING &&
 	    client->state != S_RENEWING &&
 	    client->state != S_REBINDING)
 		return;
-
-	note("DHCPACK from %s", piaddr(client_addr));
 
 	lease = packet_to_lease(client_addr, options);
 	if (!lease) {
@@ -744,13 +739,8 @@ dhcpoffer(struct iaddr client_addr, struct option_data *options)
 	char *name = options[DHO_DHCP_MESSAGE_TYPE].len ? "DHCPOFFER" :
 	    "BOOTREPLY";
 
-	if (client->xid != client->packet.xid)
-		return;
-
 	if (client->state != S_SELECTING)
 		return;
-
-	note("%s from %s", name, piaddr(client_addr));
 
 	/* If this lease doesn't supply the minimum required parameters,
 	   blow it off. */
@@ -922,16 +912,11 @@ packet_to_lease(struct iaddr client_addr, struct option_data *options)
 void
 dhcpnak(struct iaddr client_addr, struct option_data *options)
 {
-	if (client->xid != client->packet.xid)
-		return;
-
 	if (client->state != S_REBOOTING &&
 	    client->state != S_REQUESTING &&
 	    client->state != S_RENEWING &&
 	    client->state != S_REBINDING)
 		return;
-
-	note("DHCPNAK from %s", piaddr(client_addr));
 
 	if (!client->active) {
 		note("DHCPNAK with no active lease.");

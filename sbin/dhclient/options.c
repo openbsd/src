@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.36 2007/06/02 01:29:11 pvalchev Exp $	*/
+/*	$OpenBSD: options.c,v 1.37 2009/03/10 23:19:36 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -489,6 +489,15 @@ do_packet(int len, unsigned int from_port, struct iaddr from,
 		handler = dhcpoffer;
 		type = "BOOTREPLY";
 	}
+
+	if (handler && client->xid == client->packet.xid) {
+		if (hfrom->hlen == 6)
+			note("%s from %s (%s)", type, piaddr(from),
+			    ether_ntoa((struct ether_addr *)hfrom->haddr));
+		else
+			note("%s from %s", type, piaddr(from));
+	} else
+		handler = NULL;
 
 	for (ap = config->reject_list; ap && handler; ap = ap->next)
 		if (addr_eq(from, ap->addr)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.67 2008/05/26 03:11:48 deraadt Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.68 2009/03/10 23:19:36 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -51,6 +51,7 @@
 #include <net/route.h>
 
 #include <netinet/in.h>
+#include <netinet/if_ether.h>
 #include <arpa/inet.h>
 
 #include <ctype.h>
