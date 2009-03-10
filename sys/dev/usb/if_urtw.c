@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.6 2009/03/03 07:49:27 kevlo Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.7 2009/03/10 09:48:46 kevlo Exp $	*/
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
  *
@@ -1799,12 +1799,6 @@ urtw_update_msr(struct urtw_softc *sc)
 		case IEEE80211_M_STA:
 		case IEEE80211_M_MONITOR:
 			data |= URTW_MSR_LINK_STA;
-			break;
-		case IEEE80211_M_IBSS:
-			data |= URTW_MSR_LINK_ADHOC;
-			break;
-		case IEEE80211_M_HOSTAP:
-			data |= URTW_MSR_LINK_HOSTAP;
 			break;
 		default:
 			panic("unsupported operation mode 0x%x\n",
