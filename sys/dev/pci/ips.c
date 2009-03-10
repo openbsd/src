@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.52 2009/03/09 20:21:50 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.53 2009/03/10 08:27:08 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -125,6 +125,8 @@ int ips_debug = IPS_D_ERR;
 #define IPS_REG_STAT_BASIC(x)	(((x) >> 16) & 0xff)
 #define IPS_REG_STAT_GSC(x)	(((x) >> 16) & 0x0f)
 #define IPS_REG_STAT_EXT(x)	(((x) >> 24) & 0xff)
+
+#define IPS_IOSIZE		128	/* max space size to map */
 
 /* Command frame */
 struct ips_cmd {
@@ -522,7 +524,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	/* Map registers */
 	maptype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, sc->sc_chip->ic_bar);
 	if (pci_mapreg_map(pa, sc->sc_chip->ic_bar, maptype, 0, &sc->sc_iot,
-	    &sc->sc_ioh, NULL, &iosize, 0)) {
+	    &sc->sc_ioh, NULL, &iosize, IPS_IOSIZE)) {
 		printf(": can't map regs\n");
 		return;
 	}
