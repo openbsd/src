@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.24 2009/03/10 15:03:17 oga Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.25 2009/03/10 23:28:42 oga Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -103,28 +103,29 @@
 extern paddr_t avail_end;
 extern struct extent *iomem_ex;
 
-int amdgarts;
 int amdgart_enable = 0;
 
 struct amdgart_softc {
-	pci_chipset_tag_t g_pc;
-	pcitag_t g_tag;
-	struct extent *g_ex;
-	paddr_t g_pa;
-	paddr_t g_scribpa;
-	void *g_scrib;
-	u_int32_t g_scribpte;
-	u_int32_t *g_pte;
-	bus_dma_tag_t g_dmat;
-} *amdgart_softcs;
+	pci_chipset_tag_t	 g_pc;
+	struct extent		*g_ex;
+	paddr_t			 g_pa;
+	paddr_t			 g_scribpa;
+	void			*g_scrib;
+	u_int32_t		 g_scribpte;
+	u_int32_t		*g_pte;
+	bus_dma_tag_t		 g_dmat;
+	int			 g_count;
+	pcitag_t		 g_tags[1];
+};
 
-void amdgart_invalidate_wait(void);
-void amdgart_invalidate(void);
+void amdgart_invalidate_wait(struct amdgart_softc *);
+void amdgart_invalidate(struct amdgart_softc *);
 void amdgart_probe(struct pcibus_attach_args *);
-void amdgart_dumpregs(void);
-int amdgart_iommu_map(bus_dmamap_t, struct extent *, bus_dma_segment_t *);
-int amdgart_iommu_unmap(struct extent *, bus_dma_segment_t *);
-int amdgart_reload(struct extent *, bus_dmamap_t);
+void amdgart_dumpregs(struct amdgart_softc *);
+int amdgart_iommu_map(struct amdgart_softc *, bus_dmamap_t,
+        bus_dma_segment_t *);
+int amdgart_iommu_unmap(struct amdgart_softc *, bus_dma_segment_t *);
+int amdgart_reload(struct amdgart_softc *, bus_dmamap_t);
 int amdgart_ok(pci_chipset_tag_t, pcitag_t);
 void amdgart_initpt(struct amdgart_softc *, u_long);
 
@@ -168,16 +169,14 @@ struct bus_dma_tag amdgart_bus_dma_tag = {
 };
 
 void
-amdgart_invalidate_wait(void)
+amdgart_invalidate_wait(struct amdgart_softc *sc)
 {
-	u_int32_t v;
-	int i, n;
+	int	i, n;
 
-	for (n = 0; n < amdgarts; n++) {
+	for (n = 0; n < sc->g_count; n++) {
 		for (i = 1000; i > 0; i--) {
-			v = pci_conf_read(amdgart_softcs[n].g_pc,
-			    amdgart_softcs[n].g_tag, GART_CACHECTRL);
-			if ((v & GART_CACHE_INVALIDATE) == 0)
+			if ((pci_conf_read(sc->g_pc, sc->g_tags[n],
+			    GART_CACHECTRL) & GART_CACHE_INVALIDATE) == 0)
 				break;
 			delay(1);
 		}
@@ -187,41 +186,39 @@ amdgart_invalidate_wait(void)
 }
 
 void
-amdgart_invalidate(void)
+amdgart_invalidate(struct amdgart_softc *sc)
 {
 	int n;
 
-	for (n = 0; n < amdgarts; n++)
-		pci_conf_write(amdgart_softcs[n].g_pc,
-		    amdgart_softcs[n].g_tag, GART_CACHECTRL,
+	for (n = 0; n < sc->g_count; n++)
+		pci_conf_write(sc->g_pc, sc->g_tags[n], GART_CACHECTRL,
 		    GART_CACHE_INVALIDATE);
-	amdgart_invalidate_wait();
+	amdgart_invalidate_wait(sc);
 }
 
 void
-amdgart_dumpregs(void)
+amdgart_dumpregs(struct amdgart_softc *sc)
 {
-	int n, i, dirty;
+	int n, i, dirty = 0;
 	u_int8_t *p;
 
-	for (n = 0; n < amdgarts; n++) {
+	for (n = 0; n < sc->g_count; n++) {
 		printf("GART%d:\n", n);
-		printf(" apctl %x\n", pci_conf_read(amdgart_softcs[n].g_pc,
-		    amdgart_softcs[n].g_tag, GART_APCTRL));
-		printf(" apbase %x\n", pci_conf_read(amdgart_softcs[n].g_pc,
-		    amdgart_softcs[n].g_tag, GART_APBASE));
-		printf(" tblbase %x\n", pci_conf_read(amdgart_softcs[n].g_pc,
-		    amdgart_softcs[n].g_tag, GART_TBLBASE));
-		printf(" cachectl %x\n", pci_conf_read(amdgart_softcs[n].g_pc,
-		    amdgart_softcs[n].g_tag, GART_CACHECTRL));
+		printf(" apctl %x\n", pci_conf_read(sc->g_pc, sc->g_tags[n],
+		    GART_APCTRL));
+		printf(" apbase %x\n", pci_conf_read(sc->g_pc, sc->g_tags[n],
+		    GART_APBASE));
+		printf(" tblbase %x\n", pci_conf_read(sc->g_pc, sc->g_tags[n],
+		    GART_TBLBASE));
+		printf(" cachectl %x\n", pci_conf_read(sc->g_pc, sc->g_tags[n],
+		    GART_CACHECTRL));
 
-		p = amdgart_softcs[n].g_scrib;
-		dirty = 0;
-		for (i = 0; i < PAGE_SIZE; i++, p++)
-			if (*p != '\0')
-				dirty++;
-		printf(" scribble: %s\n", dirty ? "dirty" : "clean");
 	}
+	p = sc->g_scrib;
+	for (i = 0; i < PAGE_SIZE; i++, p++)
+		if (*p != '\0')
+			dirty++;
+	printf(" scribble: %s\n", dirty ? "dirty" : "clean");
 }
 
 int
@@ -245,20 +242,18 @@ amdgart_ok(pci_chipset_tag_t pc, pcitag_t tag)
 void
 amdgart_probe(struct pcibus_attach_args *pba)
 {
-	int dev, func, count = 0, r;
-	u_long dvabase = (u_long)-1, mapsize, ptesize;
+	struct amdgart_softc *sc;
+	int dev, func, count = 0, r, nseg;
+	u_long mapsize, ptesize;
+	bus_dma_segment_t seg;
 	pcitag_t tag;
 	pcireg_t v;
-	struct pglist plist;
 	void *scrib = NULL;
-	struct extent *ex = NULL;
-	u_int32_t *pte;
+	u_int32_t *pte = NULL;
 	paddr_t ptepa;
 
 	if (amdgart_enable == 0)
 		return;
-
-	TAILQ_INIT(&plist);
 
 	for (count = 0, dev = 24; dev < 32; dev++) {
 		for (func = 0; func < 8; func++) {
@@ -272,30 +267,41 @@ amdgart_probe(struct pcibus_attach_args *pba)
 	if (count == 0)
 		return;
 
-	amdgart_softcs = malloc(sizeof(*amdgart_softcs) * count, M_DEVBUF,
-	    M_NOWAIT);
-	if (amdgart_softcs == NULL) {
+	sc = malloc(sizeof(*sc) + (sizeof(pcitag_t) * (count - 1)),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (sc == NULL) {
 		printf("\nGART: can't get softc");
-		goto err;
+		return;
 	}
 
-	dvabase = IOMMU_START;
+	sc->g_pa = IOMMU_START;
 
 	mapsize = IOMMU_SIZE * 1024 * 1024;
 	ptesize = mapsize / (PAGE_SIZE / sizeof(u_int32_t));
 
-	r = uvm_pglistalloc(ptesize, ptesize, trunc_page(avail_end),
-	    ptesize, ptesize, &plist, 1, 0);
+	/*
+	 * use the low level version so we know we get memory we can use.
+	 * Hardware can deal with up to 40bits, which should be all our memory,
+	 * be safe anyway.
+	 */
+	r = _bus_dmamem_alloc_range(pba->pba_dmat, ptesize, ptesize, ptesize,
+	    &seg, 1, &nseg, BUS_DMA_NOWAIT, ptesize, 0x4000000000);
 	if (r != 0) {
 		printf("\nGART: failed to get pte pages");
+		goto nofreeseg;
+	}
+
+	r = _bus_dmamem_map(pba->pba_dmat, &seg, 1, ptesize, (caddr_t *)&pte,
+	    BUS_DMA_NOWAIT | BUS_DMA_NOCACHE);
+	if (r != 0) {
+		printf("\nGART: failed to map pte pages");
 		goto err;
 	}
-	ptepa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&plist));
-	pte = (u_int32_t *)pmap_map_nc_direct(TAILQ_FIRST(&plist));
+	ptepa = seg.ds_addr;
 
-	ex = extent_create("iommu", dvabase, dvabase + mapsize - 1, M_DEVBUF,
-	    NULL, NULL, EX_NOWAIT | EX_NOCOALESCE);
-	if (ex == NULL) {
+	sc->g_ex = extent_create("iommu", sc->g_pa, sc->g_pa + mapsize - 1,
+	    M_DEVBUF, NULL, NULL, EX_NOWAIT | EX_NOCOALESCE);
+	if (sc->g_ex == NULL) {
 		printf("\nGART: extent create failed");
 		goto err;
 	}
@@ -305,6 +311,15 @@ amdgart_probe(struct pcibus_attach_args *pba)
 		printf("\nGART: didn't get scribble page");
 		goto err;
 	}
+	sc->g_pc = pba->pba_pc;
+	pmap_extract(pmap_kernel(), (vaddr_t)scrib,
+	    &sc->g_scribpa);
+	sc->g_scrib = scrib;
+	sc->g_scribpte = GART_PTE_VALID | GART_PTE_COHERENT |
+	    ((sc->g_scribpa >> 28) & GART_PTE_PHYSHI) |
+	    (sc->g_scribpa & GART_PTE_PHYSLO);
+	sc->g_pte = pte;
+	sc->g_dmat = pba->pba_dmat;
 
 	for (count = 0, dev = 24; dev < 32; dev++) {
 		for (func = 0; func < 8; func++) {
@@ -346,7 +361,7 @@ amdgart_probe(struct pcibus_attach_args *pba)
 			pci_conf_write(pba->pba_pc, tag, GART_APCTRL, v);
 
 			pci_conf_write(pba->pba_pc, tag, GART_APBASE,
-			    dvabase >> 25);
+			    sc->g_pa >> 25);
 
 			pci_conf_write(pba->pba_pc, tag, GART_TBLBASE,
 			    (ptepa >> 8) & GART_TBLBASE_MASK);
@@ -356,45 +371,30 @@ amdgart_probe(struct pcibus_attach_args *pba)
 			v &= ~GART_APCTRL_DISIO;
 			pci_conf_write(pba->pba_pc, tag, GART_APCTRL, v);
 
-			amdgart_softcs[count].g_pc = pba->pba_pc;
-			amdgart_softcs[count].g_tag = tag;
-			amdgart_softcs[count].g_ex = ex;
-			amdgart_softcs[count].g_pa = dvabase;
-			pmap_extract(pmap_kernel(), (vaddr_t)scrib,
-			    &amdgart_softcs[count].g_scribpa);
-			amdgart_softcs[count].g_scrib = scrib;
-			amdgart_softcs[count].g_scribpte =
-			    GART_PTE_VALID | GART_PTE_COHERENT |
-			    ((amdgart_softcs[count].g_scribpa >> 28) &
-			      GART_PTE_PHYSHI) |
-			     (amdgart_softcs[count].g_scribpa &
-			      GART_PTE_PHYSLO);
-			amdgart_softcs[count].g_pte = pte;
-			amdgart_softcs[count].g_dmat = pba->pba_dmat;
-
-			amdgart_initpt(&amdgart_softcs[count],
-			    ptesize / sizeof(*amdgart_softcs[count].g_pte));
+			sc->g_tags[count] = tag;
 
 			printf("\niommu%d at cpu%d: base 0x%lx length %dMB pte 0x%lx",
-			    count, dev - 24, dvabase, IOMMU_SIZE, ptepa);
+			    count, dev - 24, sc->g_pa, IOMMU_SIZE, ptepa);
 			count++;
 		}
 	}
+	amdgart_initpt(sc, ptesize / sizeof(*sc->g_pte));
+	sc->g_count = count;
 
+	amdgart_bus_dma_tag._cookie = sc;
 	pba->pba_dmat = &amdgart_bus_dma_tag;
-	amdgarts = count;
 
 	return;
 
 err:
-	if (ex != NULL)
-		extent_destroy(ex);
+	_bus_dmamem_free(pba->pba_dmat, &seg, 1);
+nofreeseg:
+	if (sc->g_ex != NULL)
+		extent_destroy(sc->g_ex);
 	if (scrib != NULL)
 		free(scrib, M_DEVBUF);
-	if (amdgart_softcs != NULL)
-		free(amdgart_softcs, M_DEVBUF);
-	if (!TAILQ_EMPTY(&plist))
-		uvm_pglistfree(&plist);
+	if (sc != NULL)
+		free(sc, M_DEVBUF);
 }
 
 void
@@ -404,11 +404,11 @@ amdgart_initpt(struct amdgart_softc *sc, u_long nent)
 
 	for (i = 0; i < nent; i++)
 		sc->g_pte[i] = sc->g_scribpte;
-	amdgart_invalidate();
+	amdgart_invalidate(sc);
 }
 
 int
-amdgart_reload(struct extent *ex, bus_dmamap_t dmam)
+amdgart_reload(struct amdgart_softc *sc, bus_dmamap_t dmam)
 {
 	int i, j, err;
 
@@ -416,10 +416,10 @@ amdgart_reload(struct extent *ex, bus_dmamap_t dmam)
 		psize_t len;
 
 		len = dmam->dm_segs[i].ds_len;
-		err = amdgart_iommu_map(dmam, ex, &dmam->dm_segs[i]);
+		err = amdgart_iommu_map(sc, dmam, &dmam->dm_segs[i]);
 		if (err) {
 			for (j = 0; j < i - 1; j++)
-				amdgart_iommu_unmap(ex, &dmam->dm_segs[j]);
+				amdgart_iommu_unmap(sc, &dmam->dm_segs[j]);
 			return (err);
 		}
 	}
@@ -427,7 +427,8 @@ amdgart_reload(struct extent *ex, bus_dmamap_t dmam)
 }
 
 int
-amdgart_iommu_map(bus_dmamap_t dmam, struct extent *ex, bus_dma_segment_t *seg)
+amdgart_iommu_map(struct amdgart_softc *sc, bus_dmamap_t dmam,
+    bus_dma_segment_t *seg)
 {
 	paddr_t base, end, idx;
 	psize_t alen;
@@ -440,7 +441,7 @@ amdgart_iommu_map(bus_dmamap_t dmam, struct extent *ex, bus_dma_segment_t *seg)
 	alen = end - base;
 
 	s = splhigh();
-	err = extent_alloc(ex, alen, PAGE_SIZE, 0, dmam->_dm_boundary,
+	err = extent_alloc(sc->g_ex, alen, PAGE_SIZE, 0, dmam->_dm_boundary,
 	    EX_NOWAIT, &res);
 	splx(s);
 	if (err) {
@@ -451,18 +452,18 @@ amdgart_iommu_map(bus_dmamap_t dmam, struct extent *ex, bus_dma_segment_t *seg)
 	seg->ds_addr = res | (seg->ds_addr & PGOFSET);
 
 	for (idx = 0; idx < alen; idx += PAGE_SIZE) {
-		pgno = ((res + idx) - amdgart_softcs[0].g_pa) >> PGSHIFT;
+		pgno = ((res + idx) - sc->g_pa) >> PGSHIFT;
 		flags = GART_PTE_VALID | GART_PTE_COHERENT |
 		    (((base + idx) >> 28) & GART_PTE_PHYSHI) |
 		     ((base + idx) & GART_PTE_PHYSLO);
-		amdgart_softcs[0].g_pte[pgno] = flags;
+		sc->g_pte[pgno] = flags;
 	}
 
 	return (0);
 }
 
 int
-amdgart_iommu_unmap(struct extent *ex, bus_dma_segment_t *seg)
+amdgart_iommu_unmap(struct amdgart_softc *sc, bus_dma_segment_t *seg)
 {
 	paddr_t base, end, idx;
 	psize_t alen;
@@ -479,12 +480,12 @@ amdgart_iommu_unmap(struct extent *ex, bus_dma_segment_t *seg)
 	 */
 
 	for (idx = 0; idx < alen; idx += PAGE_SIZE) {
-		pgno = ((base - amdgart_softcs[0].g_pa) + idx) >> PGSHIFT;
-		amdgart_softcs[0].g_pte[pgno] = amdgart_softcs[0].g_scribpte;
+		pgno = ((base - sc->g_pa) + idx) >> PGSHIFT;
+		sc->g_pte[pgno] = sc->g_scribpte;
 	}
 
 	s = splhigh();
-	err = extent_free(ex, base, alen, EX_NOWAIT);
+	err = extent_free(sc->g_ex, base, alen, EX_NOWAIT);
 	splx(s);
 	if (err) {
 		/* XXX Shouldn't happen, but if it does, I think we lose. */
@@ -499,31 +500,36 @@ int
 amdgart_dmamap_create(bus_dma_tag_t tag, bus_size_t size, int nsegments,
     bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
 {
-	return (bus_dmamap_create(amdgart_softcs[0].g_dmat, size, nsegments,
+	struct amdgart_softc *sc = tag->_cookie;
+
+	return (bus_dmamap_create(sc->g_dmat, size, nsegments,
 	    maxsegsz, boundary, flags, dmamp));
 }
 
 void
 amdgart_dmamap_destroy(bus_dma_tag_t tag, bus_dmamap_t dmam)
 {
-	bus_dmamap_destroy(amdgart_softcs[0].g_dmat, dmam);
+	struct amdgart_softc *sc = tag->_cookie;
+
+	bus_dmamap_destroy(sc->g_dmat, dmam);
 }
 
 int
 amdgart_dmamap_load(bus_dma_tag_t tag, bus_dmamap_t dmam, void *buf,
     bus_size_t buflen, struct proc *p, int flags)
 {
+	struct amdgart_softc *sc = tag->_cookie;
 	int err;
 
-	err = bus_dmamap_load(amdgart_softcs[0].g_dmat, dmam, buf, buflen,
+	err = bus_dmamap_load(sc->g_dmat, dmam, buf, buflen,
 	    p, flags);
 	if (err)
 		return (err);
-	err = amdgart_reload(amdgart_softcs[0].g_ex, dmam);
+	err = amdgart_reload(sc, dmam);
 	if (err)
-		bus_dmamap_unload(amdgart_softcs[0].g_dmat, dmam);
+		bus_dmamap_unload(sc->g_dmat, dmam);
 	else
-		amdgart_invalidate();
+		amdgart_invalidate(sc);
 	return (err);
 }
 
@@ -531,17 +537,18 @@ int
 amdgart_dmamap_load_mbuf(bus_dma_tag_t tag, bus_dmamap_t dmam,
     struct mbuf *chain, int flags)
 {
+	struct amdgart_softc *sc = tag->_cookie;
 	int err;
 
-	err = bus_dmamap_load_mbuf(amdgart_softcs[0].g_dmat, dmam,
+	err = bus_dmamap_load_mbuf(sc->g_dmat, dmam,
 	    chain, flags);
 	if (err)
 		return (err);
-	err = amdgart_reload(amdgart_softcs[0].g_ex, dmam);
+	err = amdgart_reload(sc, dmam);
 	if (err)
-		bus_dmamap_unload(amdgart_softcs[0].g_dmat, dmam);
+		bus_dmamap_unload(sc->g_dmat, dmam);
 	else
-		amdgart_invalidate();
+		amdgart_invalidate(sc);
 	return (err);
 }
 
@@ -549,16 +556,17 @@ int
 amdgart_dmamap_load_uio(bus_dma_tag_t tag, bus_dmamap_t dmam,
     struct uio *uio, int flags)
 {
+	struct amdgart_softc *sc = tag->_cookie;
 	int err;
 
-	err = bus_dmamap_load_uio(amdgart_softcs[0].g_dmat, dmam, uio, flags);
+	err = bus_dmamap_load_uio(sc->g_dmat, dmam, uio, flags);
 	if (err)
 		return (err);
-	err = amdgart_reload(amdgart_softcs[0].g_ex, dmam);
+	err = amdgart_reload(sc, dmam);
 	if (err)
-		bus_dmamap_unload(amdgart_softcs[0].g_dmat, dmam);
+		bus_dmamap_unload(sc->g_dmat, dmam);
 	else
-		amdgart_invalidate();
+		amdgart_invalidate(sc);
 	return (err);
 }
 
@@ -566,40 +574,44 @@ int
 amdgart_dmamap_load_raw(bus_dma_tag_t tag, bus_dmamap_t dmam,
     bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
+	struct amdgart_softc *sc = tag->_cookie;
 	int err;
 
-	err = bus_dmamap_load_raw(amdgart_softcs[0].g_dmat, dmam, segs, nsegs,
+	err = bus_dmamap_load_raw(sc->g_dmat, dmam, segs, nsegs,
 	    size, flags);
 	if (err)
 		return (err);
-	err = amdgart_reload(amdgart_softcs[0].g_ex, dmam);
+	err = amdgart_reload(sc, dmam);
 	if (err)
-		bus_dmamap_unload(amdgart_softcs[0].g_dmat, dmam);
+		bus_dmamap_unload(sc->g_dmat, dmam);
 	else
-		amdgart_invalidate();
+		amdgart_invalidate(sc);
 	return (err);
 }
 
 void
 amdgart_dmamap_unload(bus_dma_tag_t tag, bus_dmamap_t dmam)
 {
+	struct amdgart_softc *sc = tag->_cookie;
 	int i;
 
 	for (i = 0; i < dmam->dm_nsegs; i++)
-		amdgart_iommu_unmap(amdgart_softcs[0].g_ex, &dmam->dm_segs[i]);
-	amdgart_invalidate();
-	bus_dmamap_unload(amdgart_softcs[0].g_dmat, dmam);
+		amdgart_iommu_unmap(sc, &dmam->dm_segs[i]);
+	amdgart_invalidate(sc);
+	bus_dmamap_unload(sc->g_dmat, dmam);
 }
 
 void
 amdgart_dmamap_sync(bus_dma_tag_t tag, bus_dmamap_t dmam, bus_addr_t offset,
     bus_size_t size, int ops)
 {
+	struct amdgart_softc *sc = tag->_cookie;
+
 	/*
 	 * XXX how do we deal with non-coherent mappings?  We don't
 	 * XXX allow them right now.
 	 */
-	bus_dmamap_sync(amdgart_softcs[0].g_dmat, dmam, offset, size, ops);
+	bus_dmamap_sync(sc->g_dmat, dmam, offset, size, ops);
 }
 
 int
@@ -607,34 +619,44 @@ amdgart_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
-	return (bus_dmamem_alloc(amdgart_softcs[0].g_dmat, size, alignment,
+	struct amdgart_softc *sc = tag->_cookie;
+
+	return (bus_dmamem_alloc(sc->g_dmat, size, alignment,
 	    boundary, segs, nsegs, rsegs, flags));
 }
 
 void
 amdgart_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs)
 {
-	bus_dmamem_free(amdgart_softcs[0].g_dmat, segs, nsegs);
+	struct amdgart_softc *sc = tag->_cookie;
+
+	bus_dmamem_free(sc->g_dmat, segs, nsegs);
 }
 
 int
 amdgart_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
     size_t size, caddr_t *kvap, int flags)
 {
-	return (bus_dmamem_map(amdgart_softcs[0].g_dmat, segs, nsegs, size,
+	struct amdgart_softc *sc = tag->_cookie;
+
+	return (bus_dmamem_map(sc->g_dmat, segs, nsegs, size,
 	    kvap, flags));
 }
 
 void
 amdgart_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva, size_t size)
 {
-	bus_dmamem_unmap(amdgart_softcs[0].g_dmat, kva, size);
+	struct amdgart_softc *sc = tag->_cookie;
+
+	bus_dmamem_unmap(sc->g_dmat, kva, size);
 }
 
 paddr_t
 amdgart_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
     off_t off, int prot, int flags)
 {
-	return (bus_dmamem_mmap(amdgart_softcs[0].g_dmat, segs, nsegs, off,
+	struct amdgart_softc *sc = tag->_cookie;
+
+	return (bus_dmamem_mmap(sc->g_dmat, segs, nsegs, off,
 	    prot, flags));
 }
