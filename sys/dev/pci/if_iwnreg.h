@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.21 2009/02/15 08:58:22 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.22 2009/03/10 20:39:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -180,7 +180,7 @@
 #define IWN_HW_REV_TYPE_5350	3
 #define IWN_HW_REV_TYPE_5150	4
 #define IWN_HW_REV_TYPE_5100	5
-#define IWN_HW_REV_TYPE_100	6
+#define IWN_HW_REV_TYPE_1000	6
 #define IWN_HW_REV_TYPE_6000	7
 #define IWN_HW_REV_TYPE_6050	8
 
