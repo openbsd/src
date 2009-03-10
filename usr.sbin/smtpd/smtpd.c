@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.45 2009/03/10 13:05:05 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.46 2009/03/10 18:44:28 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1137,9 +1137,17 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 			if (*word != '\0')
 				addargs(&args, "%s", word);
 
+		if (setsid() == -1)
+			fatal("setsid");
+
+		if (signal(SIGPIPE, SIG_DFL) == SIG_ERR)
+			fatal("signal");
+
 		if (dup2(pipefd[0], STDIN_FILENO) == -1)
 			fatal("dup2");
-		close(pipefd[1]);
+
+		if (closefrom(STDERR_FILENO + 1) == -1)
+			fatal("closefrom");
 
 		execvp(args.list[0], args.list);
 		_exit(1);
