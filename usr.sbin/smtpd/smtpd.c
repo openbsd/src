@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.47 2009/03/10 19:09:29 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.48 2009/03/10 19:13:28 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1140,6 +1140,9 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 
 		if (dup2(pipefd[0], STDIN_FILENO) == -1)
 			fatal("dup2");
+
+		if (chdir(pw->pw_dir) == -1 && chdir("/") == -1)
+			fatal("chdir");
 
 		if (closefrom(STDERR_FILENO + 1) == -1)
 			fatal("closefrom");
