@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.54 2009/03/10 09:16:40 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.55 2009/03/10 14:07:44 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -727,6 +727,10 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 	u_int32_t blkno, blkcnt;
 	int code, error, flags, s;
 
+	DPRINTF(IPS_D_XFER, ("%s: ips_scsi_cmd: xs %p, target %d, "
+	    "opcode 0x%02x\n", sc->sc_dev.dv_xname, xs, target,
+	    xs->cmd->opcode));
+
 	if (target >= sc->sc_nunits || link->lun != 0) {
 		DPRINTF(IPS_D_INFO, ("%s: invalid scsi command, "
 		    "target %d, lun %d\n", sc->sc_dev.dv_xname,
@@ -885,7 +889,8 @@ ips_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 {
 	struct ips_softc *sc = (struct ips_softc *)dev;
 
-	DPRINTF(IPS_D_INFO, ("%s: ioctl %lu\n", sc->sc_dev.dv_xname, cmd));
+	DPRINTF(IPS_D_INFO, ("%s: ips_ioctl: cmd %lu\n",
+	    sc->sc_dev.dv_xname, cmd));
 
 	switch (cmd) {
 	case BIOCINQ:
@@ -909,6 +914,9 @@ ips_ioctl_inq(struct ips_softc *sc, struct bioc_inq *bi)
 	bi->bi_novol = sc->sc_nunits;
 	for (i = 0, bi->bi_nodisk = 0; i < sc->sc_nunits; i++)
 		bi->bi_nodisk += conf->ld[i].chunkcnt;
+
+	DPRINTF(IPS_D_INFO, ("%s: ips_ioctl_inq: novol %d, nodisk %d\n",
+	    bi->bi_dev, bi->bi_novol, bi->bi_nodisk));
 
 	return (0);
 }
@@ -947,6 +955,11 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 	dev = sc->sc_scsibus->sc_link[vid][0]->device_softc;
 	strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
 	strlcpy(bv->bv_vendor, "IBM", sizeof(bv->bv_vendor));
+
+	DPRINTF(IPS_D_INFO, ("%s: ips_ioctl_vol: vid %d, state 0x%02x, "
+	    "size %llu, level %d, nodisk %d, dev %s\n", sc->sc_dev.dv_xname,
+	    vid, ld->state, bv->bv_size, bv->bv_level, bv->bv_nodisk,
+	    bv->bv_dev));
 
 	return (0);
 }
@@ -992,6 +1005,10 @@ ips_ioctl_disk(struct ips_softc *sc, struct bioc_disk *bd)
 		bd->bd_status = BIOC_SDOFFLINE;
 	}
 
+	DPRINTF(IPS_D_INFO, ("%s: ips_ioctl_disk: vid %d, did %d, channel %d, "
+	    "target %d, size %llu, state 0x%02x\n", sc->sc_dev.dv_xname,
+	    vid, did, bd->bd_channel, bd->bd_target, bd->bd_size, dev->state));
+
 	return (0);
 }
 #endif	/* NBIO > 0 */
@@ -1006,6 +1023,9 @@ ips_sensors(void *arg)
 	int i;
 
 	if (ips_getconf(sc)) {
+		DPRINTF(IPS_D_ERR, ("%s: ips_sensors: ips_getconf failed\n",
+		    sc->sc_dev.dv_xname));
+
 		for (i = 0; i < sc->sc_nunits; i++) {
 			sc->sc_sensors[i].value = 0;
 			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
@@ -1013,8 +1033,10 @@ ips_sensors(void *arg)
 		return;
 	}
 
+	DPRINTF(IPS_D_INFO, ("%s: ips_sensors:", sc->sc_dev.dv_xname));
 	for (i = 0; i < sc->sc_nunits; i++) {
 		ld = &conf->ld[i];
+		DPRINTF(IPS_D_INFO, (" ld%d.state 0x%02x", i, ld->state));
 		switch (ld->state) {
 		case IPS_DS_ONLINE:
 			sc->sc_sensors[i].value = SENSOR_DRIVE_ONLINE;
@@ -1033,6 +1055,7 @@ ips_sensors(void *arg)
 			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;
 		}
 	}
+	DPRINTF(IPS_D_INFO, ("\n"));
 }
 #endif
 
