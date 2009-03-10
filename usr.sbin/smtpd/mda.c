@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.9 2009/02/22 19:07:33 chl Exp $	*/
+/*	$OpenBSD: mda.c,v 1.10 2009/03/10 22:33:26 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -432,6 +432,15 @@ mda_remove_message(struct smtpd *env, struct batch *batchp, struct message *mess
 {
 	imsg_compose(env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_UPDATE, 0, 0,
 	    -1, messagep, sizeof (struct message));
+
+	if ((batchp->message.status & S_MESSAGE_TEMPFAILURE) == 0 &&
+	    (batchp->message.status & S_MESSAGE_PERMFAILURE) == 0) {
+		log_info("%s: to=<%s@%s>, delay=%d, stat=Sent",
+		    messagep->message_uid,
+		    messagep->recipient.user,
+		    messagep->recipient.domain,
+		    time(NULL) - messagep->creation);
+	}
 
 	queue_remove_batch_message(env, batchp, messagep);
 }

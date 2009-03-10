@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.32 2009/03/09 01:43:19 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.33 2009/03/10 22:33:26 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1055,6 +1055,15 @@ mta_batch_update_queue(struct batch *batchp)
 		if (batchp->status & S_BATCH_TEMPFAILURE) {
 			if (messagep->status != S_MESSAGE_PERMFAILURE)
 				messagep->status |= S_MESSAGE_TEMPFAILURE;
+		}
+
+		if ((messagep->status & S_MESSAGE_TEMPFAILURE) == 0 &&
+		    (messagep->status & S_MESSAGE_PERMFAILURE) == 0) {
+			log_info("%s: to=<%s@%s>, delay=%d, stat=Sent",
+			    messagep->message_uid,
+			    messagep->recipient.user,
+			    messagep->recipient.domain,
+			    time(NULL) - messagep->creation);
 		}
 
 		imsg_compose(env->sc_ibufs[PROC_QUEUE],

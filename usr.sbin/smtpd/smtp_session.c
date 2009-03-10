@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.59 2009/03/08 19:11:22 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.60 2009/03/10 22:33:26 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -702,6 +702,15 @@ session_pickup(struct session *s, struct submit_status *ss)
 		s->s_state = S_HELO;
 		session_respond(s, "250 %s Message accepted for delivery",
 		    s->s_msg.message_id);
+		log_info("%s: from=<%s@%s>, nrcpts=%zd, proto=%s, relay=%s [%s]",
+		    s->s_msg.message_uid,
+		    s->s_msg.sender.user,
+		    s->s_msg.sender.domain,
+		    s->rcptcount,
+		    s->s_flags & F_EHLO ? "ESMTP" : "SMTP",
+		    s->s_hostname,
+		    ss_to_text(&s->s_ss));
+
 		s->s_msg.message_id[0] = '\0';
 		s->s_msg.message_uid[0] = '\0';
 		break;
