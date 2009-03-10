@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.43 2009/03/09 23:35:04 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.44 2009/03/10 10:01:39 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1100,8 +1100,12 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 	log_debug("executing filter as user: %s", pw->pw_name);
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pipefd) == -1) {
-		batchp->message.status |= S_MESSAGE_PERMFAILURE;
-		return -1;
+		if (errno == ENFILE) {
+			log_warn("parent_external_mda: socketpair");
+			batchp->message.status |= S_MESSAGE_TEMPFAILURE;
+			return -1;
+		}
+		fatal("parent_external_mda: socketpair");
 	}
 
 	/* raise privileges before fork so that the child can
@@ -1113,9 +1117,10 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 
 	pid = fork();
 	if (pid == -1) {
+		log_warn("parent_external_mda: fork");
 		close(pipefd[0]);
 		close(pipefd[1]);
-		batchp->message.status |= S_MESSAGE_PERMFAILURE;
+		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 		return -1;
 	}
 
