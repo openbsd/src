@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.55 2009/03/10 14:07:44 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.56 2009/03/10 14:18:28 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -995,12 +995,12 @@ ips_ioctl_disk(struct ips_softc *sc, struct bioc_disk *bd)
 	    sizeof(dev->devid)));
 
 	if (dev->state & IPS_DVS_PRESENT) {
-		if (dev->state & IPS_DVS_REBUILD)
-			bd->bd_status = BIOC_SDREBUILD;
-		if (dev->state & IPS_DVS_SPARE)
-			bd->bd_status = BIOC_SDHOTSPARE;
 		if (dev->state & IPS_DVS_MEMBER)
 			bd->bd_status = BIOC_SDONLINE;
+		if (dev->state & IPS_DVS_SPARE)
+			bd->bd_status = BIOC_SDHOTSPARE;
+		if (dev->state & IPS_DVS_REBUILD)
+			bd->bd_status = BIOC_SDREBUILD;
 	} else {
 		bd->bd_status = BIOC_SDOFFLINE;
 	}
