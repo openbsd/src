@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.56 2009/03/10 14:18:28 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.57 2009/03/10 15:31:04 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -728,8 +728,8 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 	int code, error, flags, s;
 
 	DPRINTF(IPS_D_XFER, ("%s: ips_scsi_cmd: xs %p, target %d, "
-	    "opcode 0x%02x\n", sc->sc_dev.dv_xname, xs, target,
-	    xs->cmd->opcode));
+	    "opcode 0x%02x, flags 0x%x\n", sc->sc_dev.dv_xname, xs, target,
+	    xs->cmd->opcode, xs->flags));
 
 	if (target >= sc->sc_nunits || link->lun != 0) {
 		DPRINTF(IPS_D_INFO, ("%s: invalid scsi command, "
