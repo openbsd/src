@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.44 2009/03/10 10:01:39 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.45 2009/03/10 13:05:05 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1099,13 +1099,13 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 
 	log_debug("executing filter as user: %s", pw->pw_name);
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pipefd) == -1) {
+	if (pipe(pipefd) == -1) {
 		if (errno == ENFILE) {
-			log_warn("parent_external_mda: socketpair");
+			log_warn("parent_external_mda: pipe");
 			batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 			return -1;
 		}
-		fatal("parent_external_mda: socketpair");
+		fatal("parent_external_mda: pipe");
 	}
 
 	/* raise privileges before fork so that the child can
@@ -1130,17 +1130,16 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 		if (setgroups(1, &pw->pw_gid) ||
 		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
-			fatal("mta: cannot drop privileges");
+			fatal("cannot drop privileges");
 
 		bzero(&args, sizeof(args));
 		while ((word = strsep(&path, " \t")) != NULL)
 			if (*word != '\0')
 				addargs(&args, "%s", word);
 
-		close(pipefd[0]);
-		close(STDOUT_FILENO);
-		close(STDERR_FILENO);
-		dup2(pipefd[1], 0);
+		if (dup2(pipefd[0], STDIN_FILENO) == -1)
+			fatal("dup2");
+		close(pipefd[1]);
 
 		execvp(args.list[0], args.list);
 		_exit(1);
@@ -1156,8 +1155,8 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 
 	SPLAY_INSERT(mdaproctree, &batchp->env->mdaproc_queue, mdaproc);
 
-	close(pipefd[1]);
-	return pipefd[0];
+	close(pipefd[0]);
+	return pipefd[1];
 }
 
 int
