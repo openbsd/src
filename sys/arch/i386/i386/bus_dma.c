@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.4 2009/03/07 15:34:34 miod Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.5 2009/03/10 15:03:17 oga Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -71,7 +71,6 @@
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
-#define _BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <dev/isa/isareg.h>

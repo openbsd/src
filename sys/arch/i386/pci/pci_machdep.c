@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.44 2009/01/27 15:33:59 oga Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.45 2009/03/10 15:03:17 oga Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -82,7 +82,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#define _BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/i8259.h>

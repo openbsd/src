@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.c,v 1.12 2008/12/03 15:46:06 oga Exp $	*/
+/*	$OpenBSD: eisa_machdep.c,v 1.13 2009/03/10 15:03:17 oga Exp $	*/
 /*	$NetBSD: eisa_machdep.c,v 1.10.22.2 2000/06/25 19:36:58 sommerfeld Exp $	*/
 
 /*-
@@ -72,7 +72,6 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#define _BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/i8259.h>
 

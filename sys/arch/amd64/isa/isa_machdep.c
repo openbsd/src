@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.19 2008/12/11 17:07:14 oga Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.20 2009/03/10 15:03:17 oga Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -85,7 +85,6 @@
 #include <machine/mpbiosvar.h>
 #endif
 
-#define _BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <machine/intr.h>

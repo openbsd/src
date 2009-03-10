@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.14 2009/02/05 01:15:20 oga Exp $	*/
+/*	$OpenBSD: bus.h,v 1.15 2009/03/10 15:03:16 oga Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -571,7 +571,6 @@ struct bus_dmamap {
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
 
-#ifdef _BUS_DMA_PRIVATE
 int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);
 void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
@@ -612,8 +611,5 @@ int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
  */
  
 paddr_t bus_space_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
-            
-
-#endif /* _BUS_DMA_PRIVATE */
 
 #endif /* _X86_BUS_H_ */

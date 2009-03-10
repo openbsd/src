@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.11 2008/12/03 15:46:06 oga Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.12 2009/03/10 15:03:16 oga Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#define _BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <dev/isa/isareg.h>
