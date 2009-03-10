@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.68 2008/07/11 00:12:35 martynas Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.69 2009/03/10 10:56:40 martynas Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -48,7 +48,7 @@ CONFIG_ARGS=	--with-layout="OpenBSD" --enable-module="ssl" \
 	--suexec-logfile="/var/log/suexec_log" --suexec-userdir="public_html" \
 	--suexec-uidmin="1000" --suexec-gidmin="1000" \
 	--suexec-safepath="/usr/bin:/bin:/usr/local/bin" \
-	--disable-rule=EXPAT
+	--disable-rule=EXPAT --server-uid="www" --server-gid="www"
 
 # This is stupid - to build a DSO module for Apache you not only need to
 # --enable-shared, you need to --enable-module or --enable-shared doesn't

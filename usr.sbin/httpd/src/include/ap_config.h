@@ -1,4 +1,4 @@
-/*	$OpenBSD: ap_config.h,v 1.22 2008/05/09 08:06:27 mbalmer Exp $ */
+/*	$OpenBSD: ap_config.h,v 1.23 2009/03/10 10:56:40 martynas Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -98,10 +98,10 @@ extern "C" {
 #undef NO_SETSID
 #define HAVE_SYSLOG 1
 #ifndef DEFAULT_USER
-#define DEFAULT_USER "nobody"
+#define DEFAULT_USER "www"
 #endif
 #ifndef DEFAULT_GROUP
-#define DEFAULT_GROUP "nogroup"
+#define DEFAULT_GROUP "www"
 #endif
 #define HAVE_SHMGET 1
 #define HAVE_MMAP 1
