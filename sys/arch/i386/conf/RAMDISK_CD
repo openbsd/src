@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.167 2009/02/25 03:08:25 kevlo Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.168 2009/03/10 09:54:14 kevlo Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -149,6 +149,7 @@ rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 zyd*	at uhub?		# Zydas ZD1211/ZD1211B
 upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
+urtw*	at uhub?		# RealTek 8187
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.651 2009/02/25 03:08:25 kevlo Exp $
+#	$OpenBSD: GENERIC,v 1.652 2009/03/10 09:54:14 kevlo Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -285,6 +285,7 @@ rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 zyd*	at uhub?		# Zydas ZD1211
 upgt*	at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
+urtw*	at uhub?		# RealTek 8187
 #option	NATM
 #ueagle* at uhub?		# Analog Devices Eagle ADSL
 udcf*	at uhub?		# Gude Expert mouseCLOCK
