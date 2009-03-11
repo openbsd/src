@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.32 2009/03/11 20:37:46 jordan Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.33 2009/03/11 21:54:15 jordan Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -385,6 +385,7 @@ acpiprt_getpcibus(struct acpiprt_softc *sc, struct aml_node *node)
 	pcitag_t tag;
 	pcireg_t reg;
 	int bus, dev, func, rv;
+	int64_t ires;
 
 	if (parent == NULL)
 		return 0;
@@ -407,21 +408,18 @@ acpiprt_getpcibus(struct acpiprt_softc *sc, struct aml_node *node)
 	 * If our parent is the root of the bus, it should specify the
 	 * base bus number.
 	 */
-	if (aml_evalname(sc->sc_acpi, parent, "_BBN.", 0, NULL, &res) == 0) {
-		rv = aml_val2int(&res);
-		aml_freevalue(&res);
-		return (rv);
+	if (aml_evalinteger(sc->sc_acpi, parent, "_BBN.", 0, NULL, &ires) == 0) {
+		return (ires);
 	}
 
 	/*
 	 * If our parent is a PCI-PCI bridge, get our bus number from its
 	 * PCI config space.
 	 */
-	if (aml_evalname(sc->sc_acpi, parent, "_ADR.", 0, NULL, &res) == 0) {
+	if (aml_evalinteger(sc->sc_acpi, parent, "_ADR.", 0, NULL, &ires) == 0) {
 		bus = acpiprt_getpcibus(sc, parent);
-		dev = ACPI_PCI_DEV(aml_val2int(&res) << 16);
-		func = ACPI_PCI_FN(aml_val2int(&res) << 16);
-		aml_freevalue(&res);
+		dev = ACPI_PCI_DEV(ires << 16);
+		func = ACPI_PCI_FN(ires << 16);
 
 		/*
 		 * Some systems return 255 as the device number for
@@ -456,7 +454,8 @@ acpiprt_route_interrupt(int bus, int dev, int pin)
 	struct aml_node *node = NULL;
 	struct aml_value res, res2;
 	union acpi_resource *crs;
-	int irq, newirq, sta;
+	int irq, newirq;
+	int64_t sta;
 
 	SIMPLEQ_FOREACH(p, &acpiprt_map_list, list) {
 		if (p->bus == bus && p->dev == dev && p->pin == (pin - 1)) {
@@ -469,13 +468,11 @@ acpiprt_route_interrupt(int bus, int dev, int pin)
 	if (node == NULL)
 		return;
 
-	if (aml_evalname(sc->sc_acpi, node, "_STA", 0, NULL, &res)) {
+	if (aml_evalinteger(sc->sc_acpi, node, "_STA", 0, NULL, &sta)) {
 		printf("no _STA method\n");
 		return;
 	}
 
-	sta = aml_val2int(&res);
-	aml_freevalue(&res);
 	KASSERT(sta & STA_PRESENT);
 
 	if (aml_evalname(sc->sc_acpi, node, "_CRS", 0, NULL, &res)) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.53 2008/11/06 23:41:28 marco Exp $ */
+/* $OpenBSD: acpibat.c,v 1.54 2009/03/11 21:54:15 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -64,17 +64,17 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpibat_softc	*sc = (struct acpibat_softc *)self;
 	struct acpi_attach_args	*aa = aux;
-	struct aml_value	res;
+	int64_t			sta;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &res)) {
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &sta)) {
 		dnprintf(10, "%s: no _STA\n", DEVNAME(sc));
 		return;
 	}
 
-	if ((res.v_integer & STA_BATTERY) != 0) {
+	if ((sta & STA_BATTERY) != 0) {
 		sc->sc_bat_present = 1;
 		acpibat_getbif(sc);
 		acpibat_getbst(sc);
@@ -93,8 +93,6 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_bat_present = 0;
 		printf(": %s not present\n", sc->sc_devnode->name);
 	}
-
-	aml_freevalue(&res);
 
 	/* create sensors */
 	acpibat_monitor(sc);
@@ -399,16 +397,15 @@ int
 acpibat_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpibat_softc	*sc = arg;
-	struct aml_value	res;
+	int64_t			sta;
 	int			present;
 
 	dnprintf(10, "acpibat_notify: %.2x %s\n", notify_type,
 	    sc->sc_devnode->name);
 
 	/* Check if installed state of battery has changed */
-	memset(&res, 0, sizeof(res));
-	if (aml_evalname(sc->sc_acpi, node, "_STA", 0, NULL, &res) == 0) {
- 		present = res.v_integer & STA_BATTERY;
+	if (aml_evalinteger(sc->sc_acpi, node, "_STA", 0, NULL, &sta) == 0) {
+ 		present = sta & STA_BATTERY;
 		if (!sc->sc_bat_present && present) {
 			printf("%s: %s inserted\n", DEVNAME(sc),
 			    sc->sc_devnode->name);
