@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.90 2009/03/09 11:25:22 stsp Exp $ */
+/*	$OpenBSD: acx.c,v 1.91 2009/03/11 23:51:15 stsp Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -164,7 +164,7 @@ void	 acx_rxeof(struct acx_softc *);
 
 int	 acx_dma_alloc(struct acx_softc *);
 void	 acx_dma_free(struct acx_softc *);
-int	 acx_init_tx_ring(struct acx_softc *);
+void	 acx_init_tx_ring(struct acx_softc *);
 int	 acx_init_rx_ring(struct acx_softc *);
 int	 acx_newbuf(struct acx_softc *, struct acx_rxbuf *, int);
 int	 acx_encap(struct acx_softc *, struct acx_txbuf *,
@@ -272,6 +272,8 @@ acx_attach(struct acx_softc *sc)
 		uint8_t val;
 
 		error = acx_read_eeprom(sc, i, &val);
+		if (error)
+			return (error);
 		if (i % 10 == 0)
 			printf("\n");
 		printf("%02x ", val);
@@ -323,6 +325,11 @@ acx_attach(struct acx_softc *sc)
 	for (i = 0; i < IEEE80211_ADDR_LEN; ++i) {
 		error = acx_read_eeprom(sc, sc->chip_ee_eaddr_ofs - i,
 		    &ic->ic_myaddr[i]);
+		if (error) {
+			printf("%s: attach failed, could not get station id\n",
+			    sc->sc_dev.dv_xname);
+			return error;
+		}
 	}
 
 	printf("%s: %s, radio %s (0x%02x), EEPROM ver %u, address %s\n",
@@ -402,15 +409,13 @@ acx_init(struct ifnet *ifp)
 		return (EIO);
 
 	/* enable card if possible */
-	if (sc->sc_enable != NULL)
-		(*sc->sc_enable)(sc);
-
-	error = acx_init_tx_ring(sc);
-	if (error) {
-		printf("%s: can't initialize TX ring\n",
-		    sc->sc_dev.dv_xname);
-		goto back;
+	if (sc->sc_enable != NULL) {
+		error = (*sc->sc_enable)(sc);
+		if (error)
+			return (EIO);
 	}
+
+	acx_init_tx_ring(sc);
 
 	error = acx_init_rx_ring(sc);
 	if (error) {
@@ -487,11 +492,10 @@ acx_init(struct ifnet *ifp)
 		/* in monitor mode change directly into run state */
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
-back:
-	if (error)
-		acx_stop(sc);
-
 	return (0);
+back:
+	acx_stop(sc);
+	return (error);
 }
 
 void
@@ -858,10 +862,10 @@ acx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if ((ifp->if_flags & IFF_RUNNING) == 0)
-				acx_init(ifp);
+				error = acx_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				acx_stop(sc);
+				error = acx_stop(sc);
 		}
 		break;
 	case SIOCADDMULTI:
@@ -897,8 +901,9 @@ acx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) ==
 		    (IFF_RUNNING | IFF_UP))
-			acx_init(ifp);
-		error = 0;
+			error = acx_init(ifp);
+		else
+			error = 0;
 	}
 
 	splx(s);
@@ -1739,7 +1744,10 @@ acx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			uint8_t chan;
 
 			chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
-			(void)acx_set_channel(sc, chan);
+			if (acx_set_channel(sc, chan) != 0) {
+				error = 1;
+				goto back;
+			}
 
 			timeout_add(&sc->sc_chanscan_timer,
 			    hz / acx_chanscan_rate);
@@ -2059,7 +2067,7 @@ acx_dma_free(struct acx_softc *sc)
 		bus_dmamap_destroy(sc->sc_dmat, bd->mbuf_tmp_dmamap);
 }
 
-int
+void
 acx_init_tx_ring(struct acx_softc *sc)
 {
 	struct acx_ring_data *rd;
@@ -2088,8 +2096,6 @@ acx_init_tx_ring(struct acx_softc *sc)
 	bd->tx_free_start = 0;
 	bd->tx_used_start = 0;
 	bd->tx_used_count = 0;
-
-	return (0);
 }
 
 int
@@ -2441,8 +2447,7 @@ acx_beacon_locate(struct mbuf *m, u_int8_t type)
 		if (frm[off] == type)
 			return (off);
 	}
-	/* type not found */
-	return (m->m_len);
+	return (-1);
 }
 
 int
@@ -2462,6 +2467,10 @@ acx_set_beacon_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 		return (1);
 
 	off = acx_beacon_locate(m, IEEE80211_ELEMID_TIM);
+	if (off < 0) {
+		m_free(m);
+		return (1);
+	}
 
 	m_copydata(m, 0, off, (caddr_t)&beacon.data);
 	len = off + sizeof(beacon.size);

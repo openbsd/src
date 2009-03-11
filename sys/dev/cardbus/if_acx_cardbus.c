@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.12 2009/02/26 23:03:05 stsp Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.13 2009/03/11 23:51:15 stsp Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -220,13 +220,18 @@ acx_cardbus_detach(struct device *self, int flags)
 int
 acx_cardbus_enable(struct acx_softc *sc)
 {
-	struct acx_cardbus_softc *csc = (struct acx_cardbus_softc *)sc;
+	struct acx_cardbus_softc *csc;
+	int error;
+
+	csc = (struct acx_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* power on the socket */
-	Cardbus_function_enable(ct);
+	error = Cardbus_function_enable(ct);
+	if (error)
+		return error;
 
 	/* setup the PCI configuration registers */
 	acx_cardbus_setup(csc);
