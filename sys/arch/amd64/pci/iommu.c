@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.25 2009/03/10 23:28:42 oga Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.26 2009/03/11 23:38:51 oga Exp $	*/
 
 /*
  * Copyright (c) 2005 Jason L. Wright (jason@thought.net)
@@ -229,7 +229,8 @@ amdgart_ok(pci_chipset_tag_t pc, pcitag_t tag)
 	v = pci_conf_read(pc, tag, PCI_ID_REG);
 	if (PCI_VENDOR(v) != PCI_VENDOR_AMD)
 		return (0);
-	if (PCI_PRODUCT(v) != PCI_PRODUCT_AMD_AMD64_0F_MISC)
+	if (PCI_PRODUCT(v) != PCI_PRODUCT_AMD_AMD64_0F_MISC &&
+	    PCI_PRODUCT(v) != PCI_PRODUCT_AMD_AMD64_10_MISC)
 		return (0);
 
 	v = pci_conf_read(pc, tag, GART_APCTRL);
