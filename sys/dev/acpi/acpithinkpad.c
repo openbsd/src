@@ -1,4 +1,4 @@
-/* $OpenBSD: acpithinkpad.c,v 1.17 2009/03/11 20:37:46 jordan Exp $ */
+/* $OpenBSD: acpithinkpad.c,v 1.18 2009/03/11 20:52:11 jordan Exp $ */
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -280,7 +280,6 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		event = val & 0x0fff;
 		handled = 0;
 
-		printf("ibmkey type:%x event:%.3x\n", type, event);
 		switch (type) {
 		case 1:
 			switch (event) {
