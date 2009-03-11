@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.34 2009/03/09 16:31:09 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.35 2009/03/11 11:11:08 pea Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -352,7 +352,7 @@ lka_dispatch_mta(int sig, short event, void *p)
 			if (mxreq->rule.r_action == A_RELAY) {
 				log_debug("attempting to resolve %s", mxreq->hostname);
 				len = getmxbyname(mxreq->hostname, &mx);
-				if (len != 0) {
+				if (len < 0) {
 					mxrep.getaddrinfo_error = len;
 					imsg_compose(ibuf, IMSG_LKA_MX_END, 0, 0, -1,
 					    &mxrep, sizeof(struct mxrep));
