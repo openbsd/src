@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.26 2008/11/06 23:41:28 marco Exp $ */
+/* $OpenBSD: acpiac.c,v 1.27 2009/03/11 20:37:46 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -100,20 +100,19 @@ acpiac_refresh(void *arg)
 int
 acpiac_getsta(struct acpiac_softc *sc)
 {
-	struct aml_value res;
+	int64_t sta;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, NULL)) {
 		dnprintf(10, "%s: no _STA\n",
 		    DEVNAME(sc));
 	}
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_PSR", 0, NULL, &res)) {
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_PSR", 0, NULL, &sta)) {
 		dnprintf(10, "%s: no _PSR\n",
 		    DEVNAME(sc));
 		return (1);
 	}
-	sc->sc_ac_stat = aml_val2int(&res);
-	aml_freevalue(&res);
+	sc->sc_ac_stat = sta;
 	return (0);
 }
 

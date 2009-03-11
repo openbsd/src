@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiprt.c,v 1.31 2009/01/27 21:32:00 kettenis Exp $ */
+/* $OpenBSD: acpiprt.c,v 1.32 2009/03/11 20:37:46 jordan Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -216,7 +216,8 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 	struct aml_node	*node;
 	struct aml_value res, *pp;
 	u_int64_t addr;
-	int pin, irq, sta;
+	int pin, irq;
+	int64_t sta;
 #if NIOAPIC > 0
 	struct mp_intr_map *map;
 	struct ioapic_softc *apic;
@@ -260,13 +261,11 @@ acpiprt_prt_add(struct acpiprt_softc *sc, struct aml_value *v)
 	}
 	if (pp->type == AML_OBJTYPE_DEVICE) {
 		node = pp->node;
-		if (aml_evalname(sc->sc_acpi, node, "_STA", 0, NULL, &res)) {
+		if (aml_evalinteger(sc->sc_acpi, node, "_STA", 0, NULL, &sta)) {
 			printf("no _STA method\n");
 			return;
 		}
 
-		sta = aml_val2int(&res);
-		aml_freevalue(&res);
 		if ((sta & STA_PRESENT) == 0)
 			return;
 

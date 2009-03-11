@@ -1,4 +1,4 @@
-/* $OpenBSD: acpithinkpad.c,v 1.16 2009/03/10 20:36:10 jordan Exp $ */
+/* $OpenBSD: acpithinkpad.c,v 1.17 2009/03/11 20:37:46 jordan Exp $ */
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -125,20 +125,19 @@ thinkpad_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args	*aa = aux;
 	struct cfdata		*cf = match;
-	struct aml_value	res;
+	int64_t			res;
 	int			rv = 0;
 
 	if (!acpi_matchhids(aa, acpithinkpad_hids, cf->cf_driver->cd_name))
 		return (0);
 
-	if (aml_evalname((struct acpi_softc *)parent, aa->aaa_node,
+	if (aml_evalinteger((struct acpi_softc *)parent, aa->aaa_node,
 	    "MHKV", 0, NULL, &res))
 		return (0);
 
-	if (aml_val2int(&res) == THINKPAD_HKEY_VERSION)
+	if (res == THINKPAD_HKEY_VERSION)
 		rv = 1;
 
-	aml_freevalue(&res);
 	return (rv);
 }
 
@@ -217,17 +216,15 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 int
 thinkpad_enable_events(struct acpithinkpad_softc *sc)
 {
-	struct aml_value	res, arg, args[2];
+	struct aml_value	arg, args[2];
 	int64_t			mask;
 	int			i, rv = 1;
 
 	/* get the supported event mask */
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "MHKA", 0, NULL, &res)) {
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "MHKA", 0, NULL, &mask)) {
 		printf("%s: no MHKA\n", DEVNAME(sc));
 		goto fail;
 	}
-	mask = aml_val2int(&res);
-	aml_freevalue(&res);
 
 	/* update hotkey mask */
 	bzero(args, sizeof(args));
@@ -261,8 +258,8 @@ int
 thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpithinkpad_softc *sc = arg;
-	struct aml_value	res;
-	int			val, type, event, handled, rv = 1, tot = 0;
+	int			type, event, handled, rv = 1, tot = 0;
+	int64_t			val;
 
 	if (notify_type == 0x00) {
 		/* poll sensors */
@@ -273,11 +270,9 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		goto fail;
 
 	for (;;) {
-		if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "MHKP", 0, NULL,
-		    &res))
+		if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "MHKP", 0, NULL,
+		    &val))
 			goto done;
-		val = aml_val2int(&res);
-		aml_freevalue(&res);
 		if (val == 0)
 			goto done;
 
@@ -285,6 +280,7 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		event = val & 0x0fff;
 		handled = 0;
 
+		printf("ibmkey type:%x event:%.3x\n", type, event);
 		switch (type) {
 		case 1:
 			switch (event) {
@@ -382,14 +378,12 @@ fail:
 int
 thinkpad_toggle_bluetooth(struct acpithinkpad_softc *sc)
 {
-	struct aml_value	res, arg;
-	int			bluetooth, rv = 1;
+	struct aml_value	arg;
+	int			rv = 1;
+	int64_t			bluetooth;
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "GBDC", 0, NULL, &res))
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "GBDC", 0, NULL, &bluetooth))
 		goto fail;
-
-	bluetooth = aml_val2int(&res);
-	aml_freevalue(&res);
 
 	if (!(bluetooth & THINKPAD_BLUETOOTH_PRESENT))
 		goto fail;
@@ -410,14 +404,12 @@ fail:
 int
 thinkpad_toggle_wan(struct acpithinkpad_softc *sc)
 {
-	struct aml_value	res, arg;
-	int			wan, rv = 1;;
+	struct aml_value	arg;
+	int			rv = 1;
+	int64_t			wan;
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "GWAN", 0, NULL, &res))
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "GWAN", 0, NULL, &wan))
 		goto fail;
-
-	wan = aml_val2int(&res);
-	aml_freevalue(&res);
 
 	if (!(wan & THINKPAD_WAN_PRESENT))
 		goto fail;

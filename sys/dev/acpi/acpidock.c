@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.30 2008/06/01 17:59:55 marco Exp $ */
+/* $OpenBSD: acpidock.c,v 1.31 2009/03/11 20:37:46 jordan Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -118,20 +118,20 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 int
 acpidock_status(struct acpidock_softc *sc)
 {
-	struct aml_value	res;
+	int64_t			sta;
 	int			rv;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL,
-	    &res) != 0)
+	    &sta) != 0) {
+		sta = 0;
 		rv = 0;
+	}
 	else
 		rv = 1;
 
-	sc->sc_sta = aml_val2int(&res);
+	sc->sc_sta = sta;
 
 	sc->sc_docked = sc->sc_sta & STA_PRESENT;
-
-	aml_freevalue(&res);
 
 	return (rv);
 }

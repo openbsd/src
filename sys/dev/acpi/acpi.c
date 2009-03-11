@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.133 2009/03/10 19:35:03 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.134 2009/03/11 20:37:46 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -272,13 +272,7 @@ int
 acpi_inidev(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
-	struct aml_value	res;
-	int st = 0;
-
-	/* Default value */
-	st = STA_PRESENT|STA_ENABLED;
-	st |= STA_SHOW_UI|STA_DEV_OK;
-	st |= STA_BATTERY;
+	int64_t st;
 
 	/*
 	 * Per the ACPI spec 6.5.1, only run _INI when device is there or
@@ -287,9 +281,8 @@ acpi_inidev(struct aml_node *node, void *arg)
 	 */
 
 	/* Evaluate _STA to decide _INI fate and walk fate */
-	if (!aml_evalname(sc, node->parent, "_STA", 0, NULL, &res))
-		st = (int)aml_val2int(&res);
-	aml_freevalue(&res);
+	if (aml_evalinteger(sc, node->parent, "_STA", 0, NULL, &st))
+		st = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
 
 	/* Evaluate _INI if we are present */
 	if (st & STA_PRESENT)
@@ -313,20 +306,13 @@ acpi_foundprt(struct aml_node *node, void *arg)
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
 	struct device		*self = (struct device *)arg;
 	struct acpi_attach_args	aaa;
-	struct aml_value	res;
-	int st = 0;
+	int64_t st = 0;
 
 	dnprintf(10, "found prt entry: %s\n", node->parent->name);
 
-	/* Default value */
-	st = STA_PRESENT|STA_ENABLED;
-	st |= STA_SHOW_UI|STA_DEV_OK;
-	st |= STA_BATTERY;
-
 	/* Evaluate _STA to decide _PRT fate and walk fate */
-	if (!aml_evalname(sc, node->parent, "_STA", 0, NULL, &res))
-		st = (int)aml_val2int(&res);
-	aml_freevalue(&res);
+	if (aml_evalinteger(sc, node->parent, "_STA", 0, NULL, &st))
+		st = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
 
 	if (st & STA_PRESENT) {
 		memset(&aaa, 0, sizeof(aaa));

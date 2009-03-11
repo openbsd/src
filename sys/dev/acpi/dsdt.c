@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.140 2009/03/10 20:36:10 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.141 2009/03/11 20:37:46 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1378,15 +1378,14 @@ int amlop_delay;
 u_int64_t
 aml_getpciaddr(struct acpi_softc *sc, struct aml_node *root)
 {
-	struct aml_value tmpres;
+	int64_t tmpres;
 	u_int64_t pciaddr;
 
 	/* PCI */
 	pciaddr = 0;
-	if (!aml_evalname(dsdt_softc, root, "_ADR", 0, NULL, &tmpres)) {
+	if (!aml_evalinteger(dsdt_softc, root, "_ADR", 0, NULL, &tmpres)) {
 		/* Device:Function are bits 16-31,32-47 */
-		pciaddr += (aml_val2int(&tmpres) << 16L);
-		aml_freevalue(&tmpres);
+		pciaddr += (tmpres << 16L);
 		dnprintf(20, "got _adr [%s]\n", aml_nodename(root));
 	} else {
 		/* Mark invalid */
@@ -1394,10 +1393,9 @@ aml_getpciaddr(struct acpi_softc *sc, struct aml_node *root)
 		return pciaddr;
 	}
 
-	if (!aml_evalname(dsdt_softc, root, "_BBN", 0, NULL, &tmpres)) {
+	if (!aml_evalinteger(dsdt_softc, root, "_BBN", 0, NULL, &tmpres)) {
 		/* PCI bus is in bits 48-63 */
-		pciaddr += (aml_val2int(&tmpres) << 48L);
-		aml_freevalue(&tmpres);
+		pciaddr += (tmpres << 48L);
 		dnprintf(20, "got _bbn [%s]\n", aml_nodename(root));
 	}
 	dnprintf(20, "got pciaddr: %s:%llx\n", aml_nodename(root), pciaddr);

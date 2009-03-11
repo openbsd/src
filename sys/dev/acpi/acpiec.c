@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.27 2009/03/10 20:36:10 jordan Exp $ */
+/* $OpenBSD: acpiec.c,v 1.28 2009/03/11 20:37:46 jordan Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -372,14 +372,14 @@ acpiec_getcrs(struct acpiec_softc *sc, struct acpi_attach_args *aa)
 	int			type1, type2;
 	char			*buf;
 	int			size, ret;
+	int64_t			gpe;
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_GPE", 0, NULL, &res)) {
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_GPE", 0, NULL, &gpe)) {
 		dnprintf(10, "%s: no _GPE\n", DEVNAME(sc));
 		return (1);
 	}
 
-	sc->sc_gpe = aml_val2int(&res);
-	aml_freevalue(&res);
+	sc->sc_gpe = gpe;
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CRS", 0, NULL, &res)) {
 		dnprintf(10, "%s: no _CRS\n", DEVNAME(sc));
