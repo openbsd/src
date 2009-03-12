@@ -1,4 +1,4 @@
-/*	$OpenBSD: raptor.c,v 1.4 2009/03/01 21:42:37 kettenis Exp $	*/
+/*	$OpenBSD: raptor.c,v 1.5 2009/03/12 19:10:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -253,7 +253,7 @@ raptor_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		*(u_int *)data = WSDISPLAY_TYPE_RAPTOR;
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
