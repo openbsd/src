@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.60 2009/03/12 21:00:41 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.61 2009/03/12 21:20:05 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1276,6 +1276,12 @@ ips_error(struct ips_softc *sc, struct ips_ccb *ccb)
 
 	if (gsc == IPS_STAT_OK)
 		return (0);
+	if (gsc == IPS_STAT_LDERR) {
+		DPRINTF(IPS_D_ERR, ("%s: ld%d error, stat 0x%02x, "
+		    "estat 0x%02x\n", sc->sc_dev.dv_xname, cmd->drive,
+		    ccb->c_stat, ccb->c_estat));
+		return (EIO);
+	}
 
 	if (xs)
 		sc_print_addr(xs->sc_link);
