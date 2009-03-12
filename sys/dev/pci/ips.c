@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.59 2009/03/12 11:12:41 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.60 2009/03/12 21:00:41 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -122,10 +122,31 @@ int ips_debug = IPS_D_ERR;
 #define IPS_REG_IQP		0x40	/* inbound queue port */
 #define IPS_REG_OQP		0x44	/* outbound queue port */
 
-#define IPS_REG_STAT_ID(x)	(((x) >> 8) & 0xff)
-#define IPS_REG_STAT_BASIC(x)	(((x) >> 16) & 0xff)
-#define IPS_REG_STAT_GSC(x)	(((x) >> 16) & 0x0f)
-#define IPS_REG_STAT_EXT(x)	(((x) >> 24) & 0xff)
+/* Status word fields */
+#define IPS_STAT_ID(x)		(((x) >> 8) & 0xff)	/* command id */
+#define IPS_STAT_BASIC(x)	(((x) >> 16) & 0xff)	/* basic status */
+#define IPS_STAT_EXT(x)		(((x) >> 24) & 0xff)	/* ext status */
+#define IPS_STAT_GSC(x)		((x) & 0x0f)
+
+/* Basic status codes */
+#define IPS_STAT_OK		0x00	/* success */
+#define IPS_STAT_RECOV		0x01	/* recovered error */
+#define IPS_STAT_INVOP		0x03	/* invalid opcode */
+#define IPS_STAT_INVCMD		0x04	/* invalid command block */
+#define IPS_STAT_INVPARM	0x05	/* invalid parameters block */
+#define IPS_STAT_BUSY		0x08	/* busy */
+#define IPS_STAT_CMPLERR	0x0c	/* completed with error */
+#define IPS_STAT_LDERR		0x0d	/* logical drive error */
+#define IPS_STAT_TIMO		0x0e	/* timeout */
+#define IPS_STAT_PDRVERR	0x0f	/* physical drive error */
+
+/* Extended status codes */
+#define IPS_ESTAT_SEL		0xf0	/* select device */
+#define IPS_ESTAT_OURUN		0xf2	/* over/underrun */
+#define IPS_ESTAT_HOSTRST	0xf7	/* host reset */
+#define IPS_ESTAT_DEVRST	0xf8	/* device reset */
+#define IPS_ESTAT_RECOV		0xfc	/* recovered error */
+#define IPS_ESTAT_CKCOND	0xff	/* check condition */
 
 #define IPS_IOSIZE		128	/* max space size to map */
 
@@ -286,12 +307,15 @@ struct ips_ccb {
 		IPS_CCB_QUEUED,
 		IPS_CCB_DONE
 	}			c_state;	/* command state */
+
 	void *			c_cmdva;	/* command frame virt addr */
 	paddr_t			c_cmdpa;	/* command frame phys addr */
 	bus_dmamap_t		c_dmam;		/* data buffer DMA map */
+
 	struct scsi_xfer *	c_xfer;		/* corresponding SCSI xfer */
-	int			c_stat;		/* status word copy */
-	int			c_estat;	/* ext status word copy */
+
+	u_int8_t		c_stat;		/* status byte copy */
+	u_int8_t		c_estat;	/* ext status byte copy */
 
 	void			(*c_done)(struct ips_softc *,	/* cmd done */
 				    struct ips_ccb *);		/* callback */
@@ -366,7 +390,7 @@ int	ips_poll(struct ips_softc *, struct ips_ccb *);
 void	ips_done(struct ips_softc *, struct ips_ccb *);
 void	ips_done_xs(struct ips_softc *, struct ips_ccb *);
 void	ips_done_mgmt(struct ips_softc *, struct ips_ccb *);
-void	ips_error(struct ips_softc *, struct ips_ccb *);
+int	ips_error(struct ips_softc *, struct ips_ccb *);
 int	ips_intr(void *);
 void	ips_timeout(void *);
 
@@ -1197,8 +1221,6 @@ ips_done(struct ips_softc *sc, struct ips_ccb *ccb)
 	    sc->sc_dev.dv_xname, ccb->c_id, ccb->c_flags, ccb->c_xfer));
 
 	ccb->c_done(sc, ccb);
-	if (ccb->c_stat)
-		ips_error(sc, ccb);
 
 	ccb->c_state = IPS_CCB_FREE;
 	ips_ccb_put(sc, ccb);
@@ -1208,6 +1230,7 @@ void
 ips_done_xs(struct ips_softc *sc, struct ips_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->c_xfer;
+	int error;
 
 	if (!(xs->flags & SCSI_POLL))
 		timeout_del(&xs->stimeout);
@@ -1219,10 +1242,14 @@ ips_done_xs(struct ips_softc *sc, struct ips_ccb *ccb)
 		bus_dmamap_unload(sc->sc_dmat, ccb->c_dmam);
 	}
 
-	if (ccb->c_stat > 1)
-		xs->error = XS_DRIVER_STUFFUP;
-	else
+	if ((error = ips_error(sc, ccb))) {
+		if (error == ETIMEDOUT)
+			xs->error = XS_TIMEOUT;
+		else
+			xs->error = XS_DRIVER_STUFFUP;
+	} else {
 		xs->resid = 0;
+	}
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
 }
@@ -1235,22 +1262,52 @@ ips_done_mgmt(struct ips_softc *sc, struct ips_ccb *ccb)
 		    sc->sc_infom.dm_map->dm_mapsize,
 		    ccb->c_flags & SCSI_DATA_IN ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
+
+	/* XXX: error checking */
+	(void)ips_error(sc, ccb);
 }
 
-void
+int
 ips_error(struct ips_softc *sc, struct ips_ccb *ccb)
 {
+	struct ips_cmd *cmd = ccb->c_cmdva;
 	struct scsi_xfer *xs = ccb->c_xfer;
+	u_int8_t gsc = IPS_STAT_GSC(ccb->c_stat);
+
+	if (gsc == IPS_STAT_OK)
+		return (0);
 
 	if (xs)
 		sc_print_addr(xs->sc_link);
 	else
 		printf("%s: ", sc->sc_dev.dv_xname);
-	if (ccb->c_stat == 1) {
-		printf("recovered error\n");
-	} else {
-		printf("error\n");
+
+	if (xs && (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)))
+		printf("%s blocks %u-%u", (xs->flags & SCSI_DATA_IN ?
+		    "read" : "write"), letoh32(cmd->lba),
+		    letoh32(cmd->lba) + letoh16(cmd->seccnt) - 1);
+	else
+		printf("command");
+
+	if (gsc == IPS_STAT_RECOV || (gsc == IPS_STAT_PDRVERR &&
+	    ccb->c_estat == IPS_ESTAT_RECOV))
+		printf(" recovered");
+	printf(" error, opcode 0x%02x, stat 0x%02x, estat 0x%02x\n",
+	    cmd->code, ccb->c_stat, ccb->c_estat);
+
+	switch (gsc) {
+	case IPS_STAT_RECOV:
+		return (0);
+	case IPS_STAT_BUSY:
+		return (EBUSY);
+	case IPS_STAT_TIMO:
+		return (ETIMEDOUT);
+	case IPS_STAT_PDRVERR:
+		if (ccb->c_estat == IPS_ESTAT_RECOV)
+			return (0);
 	}
+
+	return (EIO);
 }
 
 int
@@ -1273,7 +1330,7 @@ ips_intr(void *arg)
 		DPRINTF(IPS_D_XFER, ("%s: ips_intr: status 0x%08x\n",
 		    sc->sc_dev.dv_xname, status));
 
-		id = IPS_REG_STAT_ID(status);
+		id = IPS_STAT_ID(status);
 		if (id >= sc->sc_nccbs) {
 			DPRINTF(IPS_D_ERR, ("%s: ips_intr: invalid id %d\n",
 			    sc->sc_dev.dv_xname, id));
@@ -1289,8 +1346,8 @@ ips_intr(void *arg)
 		}
 
 		ccb->c_state = IPS_CCB_DONE;
-		ccb->c_stat = IPS_REG_STAT_GSC(status);
-		ccb->c_estat = IPS_REG_STAT_EXT(status);
+		ccb->c_stat = IPS_STAT_BASIC(status);
+		ccb->c_estat = IPS_STAT_EXT(status);
 
 		if (ccb->c_flags & SCSI_POLL)
 			wakeup(ccb);
