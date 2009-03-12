@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.409 2009/03/03 07:49:27 kevlo Exp $
+$OpenBSD: usbdevs,v 1.410 2009/03/12 05:05:41 claudio Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2323,6 +2323,7 @@ product PLANEX2 GWUS54GZL	0xc007	GW-US54GZL
 product PLANEX2 GWUS54GD	0xed01	GW-US54GD
 product PLANEX2 GWUSMM		0xed02	GW-USMM
 product PLANEX2 RT2870		0xed06	RT2870
+product PLANEX2 RT3070_2	0xed14	RT3070_2
 product PLANEX3 GWUS54GZ	0xab10	GW-US54GZ
 product PLANEX2	RT3070		0xab25	RT3070
 
