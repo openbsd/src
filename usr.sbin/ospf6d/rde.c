@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.25 2009/03/07 00:33:13 stsp Exp $ */
+/*	$OpenBSD: rde.c,v 1.26 2009/03/12 01:21:49 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -429,10 +429,17 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 				rde_req_list_del(nbr, &lsa->hdr);
 
-				if (!(self = lsa_self(nbr, lsa, v)))
-					if (lsa_add(nbr, lsa))
-						/* delayed lsa */
-						break;
+				self = lsa_self(lsa);
+				if (self) {
+					if (v == NULL)
+						/* LSA is no longer announced,
+						 * remove by premature aging. */
+						lsa_flush(nbr, lsa);
+					else
+						lsa_reflood(v, lsa);
+				} else if (lsa_add(nbr, lsa))
+					/* delayed lsa, don't flood yet */
+					break;
 
 				/* flood and perhaps ack LSA */
 				imsg_compose(ibuf_ospfe, IMSG_LS_FLOOD,
@@ -444,7 +451,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 					imsg_compose(ibuf_ospfe, IMSG_LS_FLOOD,
 					    v->peerid, 0, v->lsa,
 					    ntohs(v->lsa->hdr.len));
-				/* lsa not added so free it */
+				/* new LSA was not added so free it */
 				if (self)
 					free(lsa);
 			} else if (r < 0) {
