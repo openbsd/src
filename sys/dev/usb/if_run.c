@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.8 2009/02/10 17:10:50 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.9 2009/03/12 05:12:39 claudio Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -105,6 +105,7 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(CONCEPTRONIC2,		RT2870_6),
 	USB_ID(PLANEX2,			RT2870),
 	USB_ID(PLANEX2,			RT3070),
+	USB_ID(PLANEX2,			RT3070_2),
 	USB_ID(DLINK2,			RT2870_1),
 	USB_ID(DLINK2,			RT2870_2),
 	USB_ID(DLINK,			RT2870),
