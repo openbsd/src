@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.33 2009/03/10 22:33:26 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.34 2009/03/12 11:08:26 pea Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -885,8 +885,10 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		    batchp->session_helo, batchp->session_hostname,
 		    ss_to_text(&batchp->session_ss));
 
-		session_respond(sessionp, "\tby %s with ESMTP id %s",
+		session_respond(sessionp, "\tby %s with ESMTP id %s;",
 		    batchp->env->sc_hostname, batchp->message_id);
+
+		session_respond(sessionp, "\t%s", time_to_text(batchp->creation));
 
 		if (sessionp->s_flags & F_SECURE) {
 			session_respond(sessionp, "X-OpenSMTPD-Cipher: %s",

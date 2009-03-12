@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.18 2009/03/10 01:25:42 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.19 2009/03/12 11:08:26 pea Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"
@@ -261,6 +262,33 @@ valid_message_uid(char *muid)
 			return 0;
 
 	return (cnt != 0);
+}
+
+char *
+time_to_text(time_t when)
+{
+	struct tm *lt;
+	static char buf[40]; 
+	char *day[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+	char *month[] = {"Jan","Feb","Mar","Apr","May","Jun",
+		       "Jul","Aug","Sep","Oct","Nov","Dec"};
+
+	lt = localtime(&when);
+	if (lt == NULL || when == 0) 
+		fatalx("time_to_text: localtime");
+
+	/* We do not use strftime because it is subject to locale substitution*/
+	if (! bsnprintf(buf, sizeof(buf), "%s, %d %s %d %02d:%02d:%02d %c%02d%02d (%s)",
+		day[lt->tm_wday], lt->tm_mday, month[lt->tm_mon],
+		lt->tm_year + 1900,
+		lt->tm_hour, lt->tm_min, lt->tm_sec,
+		lt->tm_gmtoff >= 0 ? '+' : '-',
+		abs((int)lt->tm_gmtoff / 3600),
+		abs((int)lt->tm_gmtoff % 3600) / 60,
+		lt->tm_zone))
+		fatalx("time_to_text: bsnprintf");
+	
+	return buf;
 }
 
 /*

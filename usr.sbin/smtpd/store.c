@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.15 2009/03/03 15:47:28 gilles Exp $	*/
+/*	$OpenBSD: store.c,v 1.16 2009/03/12 11:08:26 pea Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -89,18 +89,10 @@ store_write_header(struct batch *batchp, struct message *messagep, FILE *fp,
     int finalize)
 {
 	time_t tm;
-	char timebuf[26];	/* current time	 */
-	char ctimebuf[26];	/* creation time */
 	void *p;
 	char addrbuf[INET6_ADDRSTRLEN];
 
 	tm = time(NULL);
-	ctime_r(&tm, timebuf);
-	timebuf[strcspn(timebuf, "\n")] = '\0';
-
-	tm = time(&messagep->creation);
-	ctime_r(&tm, ctimebuf);
-	ctimebuf[strcspn(ctimebuf, "\n")] = '\0';
 
 	if (messagep->session_ss.ss_family == PF_INET) {
 		struct sockaddr_in *ssin = (struct sockaddr_in *)&messagep->session_ss;
@@ -117,13 +109,13 @@ store_write_header(struct batch *batchp, struct message *messagep, FILE *fp,
 	if (messagep->recipient.rule.r_action != A_MBOX) {
 		if (batchp->type & T_DAEMON_BATCH) {
 			if (fprintf(fp, "From %s@%s %s\n", "MAILER-DAEMON",
-				batchp->env->sc_hostname, timebuf) == -1) {
+				batchp->env->sc_hostname, time_to_text(tm)) == -1) {
 				return 0;
 			}
 		}
 		else {
 			if (fprintf(fp, "From %s@%s %s\n",
-				messagep->sender.user, messagep->sender.domain, timebuf) == -1)
+				messagep->sender.user, messagep->sender.domain, time_to_text(tm)) == -1)
 				return 0;
 		}
 	}
@@ -134,7 +126,7 @@ store_write_header(struct batch *batchp, struct message *messagep, FILE *fp,
 	    messagep->session_helo, messagep->session_hostname,
 	    messagep->session_ss.ss_family == PF_INET ? "" : "IPv6:", addrbuf,
 	    batchp->env->sc_hostname, messagep->message_id,
-	    messagep->sender.user, messagep->sender.domain, ctimebuf,
+	    messagep->sender.user, messagep->sender.domain, time_to_text(messagep->creation),
 	    finalize ? "\n" : "") == -1) {
 		return 0;
 	}
