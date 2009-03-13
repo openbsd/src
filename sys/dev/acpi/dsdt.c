@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.142 2009/03/13 18:41:57 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.143 2009/03/13 19:01:03 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -4250,8 +4250,8 @@ aml_evalinteger(struct acpi_softc *sc, struct aml_node *parent,
 	parent = aml_searchname(parent, name);
 	rc = aml_evalnode(sc, parent, argc, argv, &res);
 	if (rc == 0) {
-	*ival = aml_val2int(&res);
-	aml_freevalue(&res);
+		*ival = aml_val2int(&res);
+		aml_freevalue(&res);
 	}
 	return rc;
 }
