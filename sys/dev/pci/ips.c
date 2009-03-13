@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.62 2009/03/13 07:49:28 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.63 2009/03/13 08:48:12 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -66,10 +66,7 @@ int ips_debug = IPS_D_ERR;
 
 #define IPS_MAXFER		(64 * 1024)
 #define IPS_MAXSGS		16
-#define IPS_MAXCMDSZ		(IPS_CMDSZ + IPS_MAXSGS * IPS_SGSZ)
 
-#define IPS_CMDSZ		sizeof(struct ips_cmd)
-#define IPS_SGSZ		sizeof(struct ips_sg)
 #define IPS_SECSZ		512
 #define IPS_NVRAMPGSZ		128
 #define IPS_SQSZ		(IPS_MAXCMDS * sizeof(u_int32_t))
@@ -94,13 +91,23 @@ int ips_debug = IPS_D_ERR;
 #define IPS_CMD_READ_SG		0x82
 #define IPS_CMD_WRITE_SG	0x83
 #define IPS_CMD_DCDB_SG		0x84
-#define IPS_CMD_EXT_DCDB	0x95
-#define IPS_CMD_EXT_DCDB_SG	0x96
+#define IPS_CMD_EDCDB		0x95
+#define IPS_CMD_EDCDB_SG	0x96
 #define IPS_CMD_RWNVRAMPAGE	0xbc
 #define IPS_CMD_GETVERINFO	0xc6
 #define IPS_CMD_FFDC		0xd7
 #define IPS_CMD_SG		0x80
 #define IPS_CMD_RWNVRAM		0xbc
+
+/* DCDB attributes */
+#define IPS_DCDB_DATAIN		0x01	/* data input */
+#define IPS_DCDB_DATAOUT	0x02	/* data output */
+#define IPS_DCDB_XFER64K	0x08	/* 64K transfer */
+#define IPS_DCDB_TIMO10		0x10	/* 10 secs timeout */
+#define IPS_DCDB_TIMO60		0x20	/* 60 secs timeout */
+#define IPS_DCDB_TIMO20M	0x30	/* 20 mins timeout */
+#define IPS_DCDB_NOAUTOREQSEN	0x40	/* no auto request sense */
+#define IPS_DCDB_DISCON		0x80	/* disconnect allowed */
 
 /* Register definitions */
 #define IPS_REG_HIS		0x08	/* host interrupt status */
@@ -165,10 +172,33 @@ struct ips_cmd {
 	u_int32_t	cccr;
 };
 
+/* Direct CDB (SCSI pass-through) frame */
+struct ips_dcdb {
+	u_int8_t	device;
+	u_int8_t	attr;
+	u_int16_t	datalen;
+	u_int32_t	sgaddr;
+	u_int8_t	cdblen;
+	u_int8_t	senselen;
+	u_int8_t	sgcnt;
+	u_int8_t	__reserved1;
+	u_int8_t	cdb[12];
+	u_int8_t	sense[64];
+	u_int8_t	status;
+	u_int8_t	__reserved2[3];
+};
+
 /* Scatter-gather array element */
 struct ips_sg {
 	u_int32_t	addr;
 	u_int32_t	size;
+};
+
+/* Command block */
+struct ips_cmdb {
+	struct ips_cmd	cmd;
+	struct ips_dcdb	dcdb;
+	struct ips_sg	sg[IPS_MAXSGS];
 };
 
 /* Data frames */
@@ -308,8 +338,8 @@ struct ips_ccb {
 		IPS_CCB_DONE
 	}			c_state;	/* command state */
 
-	void *			c_cmdva;	/* command frame virt addr */
-	paddr_t			c_cmdpa;	/* command frame phys addr */
+	void *			c_cmdbva;	/* command block virt addr */
+	paddr_t			c_cmdbpa;	/* command block phys addr */
 	bus_dmamap_t		c_dmam;		/* data buffer DMA map */
 
 	struct scsi_xfer *	c_xfer;		/* corresponding SCSI xfer */
@@ -357,7 +387,7 @@ struct ips_softc {
 
 	int			sc_nunits;
 
-	struct dmamem		sc_cmdm;
+	struct dmamem		sc_cmdbm;
 
 	struct ips_ccb *	sc_ccb;
 	int			sc_nccbs;
@@ -568,8 +598,8 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	ips_init(sc);
 
 	/* Allocate command buffer */
-	if (ips_dmamem_alloc(&sc->sc_cmdm, sc->sc_dmat,
-	    IPS_MAXCMDS * IPS_MAXCMDSZ)) {
+	if (ips_dmamem_alloc(&sc->sc_cmdbm, sc->sc_dmat,
+	    IPS_MAXCMDS * sizeof(struct ips_cmdb))) {
 		printf(": can't alloc cmd buffer\n");
 		goto fail1;
 	}
@@ -608,8 +638,8 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_nccbs = 1;
 	sc->sc_ccb = &ccb0;
 	bzero(&ccb0, sizeof(ccb0));
-	ccb0.c_cmdva = sc->sc_cmdm.dm_vaddr;
-	ccb0.c_cmdpa = sc->sc_cmdm.dm_paddr;
+	ccb0.c_cmdbva = sc->sc_cmdbm.dm_vaddr;
+	ccb0.c_cmdbpa = sc->sc_cmdbm.dm_paddr;
 	TAILQ_INIT(&sc->sc_ccbq_free);
 	TAILQ_INSERT_TAIL(&sc->sc_ccbq_free, &ccb0, c_link);
 
@@ -733,7 +763,7 @@ fail4:
 fail3:
 	ips_dmamem_free(&sc->sc_infom);
 fail2:
-	ips_dmamem_free(&sc->sc_cmdm);
+	ips_dmamem_free(&sc->sc_cmdbm);
 fail1:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 }
@@ -814,7 +844,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 			return (NO_CCB);
 		}
 
-		cmd = ccb->c_cmdva;
+		cmd = ccb->c_cmdbva;
 		cmd->code = code;
 		cmd->drive = target;
 		cmd->lba = htole32(blkno);
@@ -869,7 +899,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 			return (NO_CCB);
 		}
 
-		cmd = ccb->c_cmdva;
+		cmd = ccb->c_cmdbva;
 		cmd->code = IPS_CMD_FLUSH;
 
 		return (ips_start_xs(sc, ccb, xs));
@@ -1077,8 +1107,9 @@ ips_sensors(void *arg)
 int
 ips_load_xs(struct ips_softc *sc, struct ips_ccb *ccb, struct scsi_xfer *xs)
 {
-	struct ips_cmd *cmd = ccb->c_cmdva;
-	struct ips_sg *sg;
+	struct ips_cmdb *cmdb = ccb->c_cmdbva;
+	struct ips_cmd *cmd = &cmdb->cmd;
+	struct ips_sg *sg = cmdb->sg;
 	int nsegs, i;
 
 	if (xs->datalen == 0)
@@ -1097,10 +1128,10 @@ ips_load_xs(struct ips_softc *sc, struct ips_ccb *ccb, struct scsi_xfer *xs)
 
 	if (nsegs > 1) { 
 		cmd->sgcnt = nsegs;
-		cmd->sgaddr = htole32(ccb->c_cmdpa + IPS_CMDSZ);
+		cmd->sgaddr = htole32(ccb->c_cmdbpa + offsetof(struct ips_cmdb,
+		    sg));
 
 		/* Fill in scatter-gather array */
-		sg = (void *)(cmd + 1);
 		for (i = 0; i < nsegs; i++) {
 			sg[i].addr = htole32(ccb->c_dmam->dm_segs[i].ds_addr);
 			sg[i].size = htole32(ccb->c_dmam->dm_segs[i].ds_len);
@@ -1151,7 +1182,7 @@ ips_start_xs(struct ips_softc *sc, struct ips_ccb *ccb, struct scsi_xfer *xs)
 int
 ips_cmd(struct ips_softc *sc, struct ips_ccb *ccb)
 {
-	struct ips_cmd *cmd = ccb->c_cmdva;
+	struct ips_cmd *cmd = ccb->c_cmdbva;
 	int s, error = 0;
 
 	DPRINTF(IPS_D_XFER, ("%s: ips_cmd: id 0x%02x, flags 0x%x, xs %p, "
@@ -1270,7 +1301,7 @@ ips_done_mgmt(struct ips_softc *sc, struct ips_ccb *ccb)
 int
 ips_error(struct ips_softc *sc, struct ips_ccb *ccb)
 {
-	struct ips_cmd *cmd = ccb->c_cmdva;
+	struct ips_cmd *cmd = ccb->c_cmdbva;
 	struct scsi_xfer *xs = ccb->c_xfer;
 	u_int8_t gsc = IPS_STAT_GSC(ccb->c_stat);
 
@@ -1409,7 +1440,7 @@ ips_getadapterinfo(struct ips_softc *sc, int flags)
 	ccb->c_flags = SCSI_DATA_IN | SCSI_POLL | flags;
 	ccb->c_done = ips_done_mgmt;
 
-	cmd = ccb->c_cmdva;
+	cmd = ccb->c_cmdbva;
 	cmd->code = IPS_CMD_GETADAPTERINFO;
 	cmd->sgaddr = htole32(sc->sc_infom.dm_paddr + offsetof(struct ips_info,
 	    adapter));
@@ -1433,7 +1464,7 @@ ips_getdriveinfo(struct ips_softc *sc, int flags)
 	ccb->c_flags = SCSI_DATA_IN | SCSI_POLL | flags;
 	ccb->c_done = ips_done_mgmt;
 
-	cmd = ccb->c_cmdva;
+	cmd = ccb->c_cmdbva;
 	cmd->code = IPS_CMD_GETDRIVEINFO;
 	cmd->sgaddr = htole32(sc->sc_infom.dm_paddr + offsetof(struct ips_info,
 	    drive));
@@ -1457,7 +1488,7 @@ ips_getconf(struct ips_softc *sc, int flags)
 	ccb->c_flags = SCSI_DATA_IN | SCSI_POLL | flags;
 	ccb->c_done = ips_done_mgmt;
 
-	cmd = ccb->c_cmdva;
+	cmd = ccb->c_cmdbva;
 	cmd->code = IPS_CMD_READCONF;
 	cmd->sgaddr = htole32(sc->sc_infom.dm_paddr + offsetof(struct ips_info,
 	    conf));
@@ -1481,7 +1512,7 @@ ips_getpg5(struct ips_softc *sc, int flags)
 	ccb->c_flags = SCSI_DATA_IN | SCSI_POLL | flags;
 	ccb->c_done = ips_done_mgmt;
 
-	cmd = ccb->c_cmdva;
+	cmd = ccb->c_cmdbva;
 	cmd->code = IPS_CMD_RWNVRAM;
 	cmd->drive = 5;
 	cmd->sgaddr = htole32(sc->sc_infom.dm_paddr + offsetof(struct ips_info,
@@ -1506,7 +1537,7 @@ ips_copperhead_exec(struct ips_softc *sc, struct ips_ccb *ccb)
 		return;
 	}
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IPS_REG_CCSA, ccb->c_cmdpa);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IPS_REG_CCSA, ccb->c_cmdbpa);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, IPS_REG_CCC,
 	    IPS_REG_CCC_START);
 }
@@ -1576,7 +1607,7 @@ ips_copperhead_status(struct ips_softc *sc)
 void
 ips_morpheus_exec(struct ips_softc *sc, struct ips_ccb *ccb)
 {
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IPS_REG_IQP, ccb->c_cmdpa);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IPS_REG_IQP, ccb->c_cmdbpa);
 }
 
 void
@@ -1646,9 +1677,10 @@ ips_ccb_alloc(struct ips_softc *sc, int n)
 
 	for (i = 0; i < n; i++) {
 		ccb[i].c_id = i;
-		ccb[i].c_cmdva = (char *)sc->sc_cmdm.dm_vaddr +
-		    i * IPS_MAXCMDSZ;
-		ccb[i].c_cmdpa = sc->sc_cmdm.dm_paddr + i * IPS_MAXCMDSZ;
+		ccb[i].c_cmdbva = (char *)sc->sc_cmdbm.dm_vaddr +
+		    i * sizeof(struct ips_cmdb);
+		ccb[i].c_cmdbpa = sc->sc_cmdbm.dm_paddr +
+		    i * sizeof(struct ips_cmdb);
 		if (bus_dmamap_create(sc->sc_dmat, IPS_MAXFER, IPS_MAXSGS,
 		    IPS_MAXFER, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &ccb[i].c_dmam))
@@ -1684,7 +1716,7 @@ ips_ccb_get(struct ips_softc *sc)
 		TAILQ_REMOVE(&sc->sc_ccbq_free, ccb, c_link);
 		ccb->c_flags = 0;
 		ccb->c_xfer = NULL;
-		bzero(ccb->c_cmdva, sizeof(struct ips_cmd));
+		bzero(ccb->c_cmdbva, sizeof(struct ips_cmdb));
 	}
 
 	return (ccb);
