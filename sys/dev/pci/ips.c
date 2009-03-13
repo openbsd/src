@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.63 2009/03/13 08:48:12 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.64 2009/03/13 20:03:21 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -66,6 +66,7 @@ int ips_debug = IPS_D_ERR;
 
 #define IPS_MAXFER		(64 * 1024)
 #define IPS_MAXSGS		16
+#define IPS_MAXCDB		12
 
 #define IPS_SECSZ		512
 #define IPS_NVRAMPGSZ		128
@@ -182,7 +183,7 @@ struct ips_dcdb {
 	u_int8_t	senselen;
 	u_int8_t	sgcnt;
 	u_int8_t	__reserved1;
-	u_int8_t	cdb[12];
+	u_int8_t	cdb[IPS_MAXCDB];
 	u_int8_t	sense[64];
 	u_int8_t	status;
 	u_int8_t	__reserved2[3];
@@ -332,6 +333,7 @@ struct ips_softc;
 struct ips_ccb {
 	int			c_id;		/* command id */
 	int			c_flags;	/* SCSI_* flags */
+#define IPS_SCSI_PT 0x10000			/* SCSI pass-through */
 	enum {
 		IPS_CCB_FREE,
 		IPS_CCB_QUEUED,
@@ -373,6 +375,16 @@ struct ips_softc {
 	struct scsi_link	sc_scsi_link;
 	struct scsibus_softc *	sc_scsibus;
 
+	struct ips_pt {
+		struct ips_softc *	pt_sc;
+		int			pt_chan;
+
+		struct scsi_link	pt_link;
+
+		int			pt_proctgt;
+		char			pt_procdev[16];
+	}			sc_pt[IPS_MAXCHANS];
+
 	struct ksensordev	sc_sensordev;
 	struct ksensor *	sc_sensors;
 
@@ -403,6 +415,7 @@ int	ips_match(struct device *, void *, void *);
 void	ips_attach(struct device *, struct device *, void *);
 
 int	ips_scsi_cmd(struct scsi_xfer *);
+int	ips_scsi_pt_cmd(struct scsi_xfer *);
 int	ips_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
 	    struct proc *);
 
@@ -420,6 +433,7 @@ int	ips_cmd(struct ips_softc *, struct ips_ccb *);
 int	ips_poll(struct ips_softc *, struct ips_ccb *);
 void	ips_done(struct ips_softc *, struct ips_ccb *);
 void	ips_done_xs(struct ips_softc *, struct ips_ccb *);
+void	ips_done_pt(struct ips_softc *, struct ips_ccb *);
 void	ips_done_mgmt(struct ips_softc *, struct ips_ccb *);
 int	ips_error(struct ips_softc *, struct ips_ccb *);
 int	ips_intr(void *);
@@ -473,6 +487,21 @@ static struct scsi_adapter ips_scsi_adapter = {
 };
 
 static struct scsi_device ips_scsi_device = {
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
+static struct scsi_adapter ips_scsi_pt_adapter = {
+	ips_scsi_pt_cmd,
+	scsi_minphys,
+	NULL,
+	NULL,
+	NULL
+};
+
+static struct scsi_device ips_scsi_pt_device = {
 	NULL,
 	NULL,
 	NULL,
@@ -720,6 +749,29 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(self, &saa,
 	    scsiprint);
 
+	/* For each channel attach SCSI pass-through bus */
+	bzero(&saa, sizeof(saa));
+	for (i = 0; i < IPS_MAXCHANS; i++) {
+		struct ips_pt *pt;
+		struct scsi_link *link;
+
+		pt = &sc->sc_pt[i];
+		pt->pt_sc = sc;
+		pt->pt_chan = i;
+		pt->pt_proctgt = -1;
+
+		link = &pt->pt_link;
+		link->openings = 1;
+		link->adapter_target = IPS_MAXTARGETS + 1;
+		link->adapter_buswidth = IPS_MAXTARGETS;
+		link->device = &ips_scsi_pt_device;
+		link->adapter = &ips_scsi_pt_adapter;
+		link->adapter_softc = pt;
+
+		saa.saa_sc_link = link;
+		config_found(self, &saa, scsiprint);
+	}
+
 	/* Enable interrupts */
 	ips_intren(sc);
 
@@ -864,6 +916,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		if (cmd->sgcnt > 0)
 			cmd->code |= IPS_CMD_SG;
 
+		ccb->c_done = ips_done_xs;
 		return (ips_start_xs(sc, ccb, xs));
 	case INQUIRY:
 		bzero(&inq, sizeof(inq));
@@ -902,6 +955,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		cmd = ccb->c_cmdbva;
 		cmd->code = IPS_CMD_FLUSH;
 
+		ccb->c_done = ips_done_xs;
 		return (ips_start_xs(sc, ccb, xs));
 	case PREVENT_ALLOW:
 	case START_STOP:
@@ -918,6 +972,101 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 	splx(s);
 
 	return (COMPLETE);
+}
+
+int
+ips_scsi_pt_cmd(struct scsi_xfer *xs)
+{
+	struct scsi_link *link = xs->sc_link;
+	struct ips_pt *pt = link->adapter_softc;
+	struct ips_softc *sc = pt->pt_sc;
+	struct device *dev = link->device_softc;
+	struct ips_ccb *ccb;
+	struct ips_cmdb *cmdb;
+	struct ips_cmd *cmd;
+	struct ips_dcdb *dcdb;
+	int chan = pt->pt_chan, target = link->target;
+	int s;
+
+	DPRINTF(IPS_D_XFER, ("%s: ips_scsi_pt_cmd: xs %p, chan %d, target %d, "
+	    "opcode 0x%02x, flags 0x%x\n", sc->sc_dev.dv_xname, xs, chan,
+	    target, xs->cmd->opcode, xs->flags));
+
+	if (pt->pt_procdev[0] == '\0' && target == pt->pt_proctgt && dev)
+		strlcpy(pt->pt_procdev, dev->dv_xname, sizeof(pt->pt_procdev));
+
+	if (xs->cmdlen > IPS_MAXCDB) {
+		DPRINTF(IPS_D_ERR, ("%s: cmdlen %d too big\n",
+		    sc->sc_dev.dv_xname, xs->cmdlen));
+
+		bzero(&xs->sense, sizeof(xs->sense));
+		xs->sense.error_code = SSD_ERRCODE_VALID | 0x70;
+		xs->sense.flags = SKEY_ILLEGAL_REQUEST;
+		xs->sense.add_sense_code = 0x20; /* illcmd, 0x24 illfield */
+		xs->error = XS_SENSE;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return (COMPLETE);
+	}
+
+	xs->error = XS_NOERROR;
+	xs->flags |= IPS_SCSI_PT;
+
+	s = splbio();
+	ccb = ips_ccb_get(sc);
+	splx(s);
+	if (ccb == NULL) {
+		DPRINTF(IPS_D_ERR, ("%s: ips_scsi_pt_cmd: no ccb\n",
+		    sc->sc_dev.dv_xname));
+		return (NO_CCB);
+	}
+
+	cmdb = ccb->c_cmdbva;
+	cmd = &cmdb->cmd;
+	dcdb = &cmdb->dcdb;
+
+	cmd->code = IPS_CMD_DCDB;
+
+	dcdb->device = (chan << 4) | target;
+	if (xs->flags & SCSI_DATA_IN)
+		dcdb->attr |= IPS_DCDB_DATAIN;
+	if (xs->flags & SCSI_DATA_OUT)
+		dcdb->attr |= IPS_DCDB_DATAOUT;
+	if (xs->timeout <= 10000)
+		dcdb->attr |= IPS_DCDB_TIMO10;
+	else if (xs->timeout <= 60000)
+		dcdb->attr |= IPS_DCDB_TIMO60;
+	else
+		dcdb->attr |= IPS_DCDB_TIMO20M;
+	dcdb->attr |= IPS_DCDB_DISCON;
+	dcdb->datalen = xs->datalen;
+	dcdb->cdblen = xs->cmdlen;
+	dcdb->senselen = MIN(sizeof(xs->sense), sizeof(dcdb->sense));
+	memcpy(dcdb->cdb, xs->cmd, xs->cmdlen);
+
+	if (ips_load_xs(sc, ccb, xs)) {
+		DPRINTF(IPS_D_ERR, ("%s: ips_scsi_pt_cmd: ips_load_xs "
+		    "failed\n", sc->sc_dev.dv_xname));
+
+		s = splbio();
+		ips_ccb_put(sc, ccb);
+		splx(s);
+		xs->error = XS_DRIVER_STUFFUP;
+		s = splbio();
+		scsi_done(xs);
+		splx(s);
+		return (COMPLETE);
+	}
+	if (cmd->sgcnt > 0)
+		cmd->code |= IPS_CMD_SG;
+	dcdb->sgaddr = cmd->sgaddr;
+	dcdb->sgcnt = cmd->sgcnt;
+	cmd->sgaddr = ccb->c_cmdbpa + offsetof(struct ips_cmdb, dcdb);
+	cmd->sgcnt = 0;
+
+	ccb->c_done = ips_done_pt;
+	return (ips_start_xs(sc, ccb, xs));
 }
 
 int
@@ -1037,6 +1186,8 @@ ips_ioctl_disk(struct ips_softc *sc, struct bioc_disk *bd)
 	bzero(bd->bd_vendor, sizeof(bd->bd_vendor));
 	memcpy(bd->bd_vendor, dev->devid, MIN(sizeof(bd->bd_vendor),
 	    sizeof(dev->devid)));
+	strlcpy(bd->bd_procdev, sc->sc_pt[chunk->channel].pt_procdev,
+	    sizeof(bd->bd_procdev));
 
 	if (dev->state & IPS_DVS_PRESENT) {
 		if (dev->state & IPS_DVS_MEMBER)
@@ -1151,7 +1302,6 @@ ips_start_xs(struct ips_softc *sc, struct ips_ccb *ccb, struct scsi_xfer *xs)
 
 	ccb->c_flags = xs->flags;
 	ccb->c_xfer = xs;
-	ccb->c_done = ips_done_xs;
 
 	if (!(xs->flags & SCSI_POLL)) {
 		timeout_set(&xs->stimeout, ips_timeout, ccb);
@@ -1289,6 +1439,61 @@ ips_done_xs(struct ips_softc *sc, struct ips_ccb *ccb)
 }
 
 void
+ips_done_pt(struct ips_softc *sc, struct ips_ccb *ccb)
+{
+	struct scsi_xfer *xs = ccb->c_xfer;
+	struct scsi_link *link = xs->sc_link;
+	struct ips_pt *pt = link->adapter_softc;
+	struct ips_cmdb *cmdb = ccb->c_cmdbva;
+	struct ips_dcdb *dcdb = &cmdb->dcdb;
+	int target = link->target, type;
+
+	if (!(xs->flags & SCSI_POLL))
+		timeout_del(&xs->stimeout);
+
+	if (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
+		bus_dmamap_sync(sc->sc_dmat, ccb->c_dmam, 0,
+		    ccb->c_dmam->dm_mapsize, xs->flags & SCSI_DATA_IN ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, ccb->c_dmam);
+	}
+
+	xs->status = dcdb->status;
+
+	if (ccb->c_error) {
+		if (ccb->c_estat == IPS_ESTAT_CKCOND) {
+			xs->error = XS_SENSE;
+			memcpy(&xs->sense, dcdb->sense, MIN(sizeof(xs->sense),
+			    sizeof(dcdb->sense)));
+		} else {
+			if (ccb->c_error == ETIMEDOUT)
+				xs->error = XS_TIMEOUT;
+			else
+				xs->error = XS_DRIVER_STUFFUP;
+		}
+	} else {
+		if (xs->cmd->opcode == INQUIRY) {
+			type = ((struct scsi_inquiry_data *)xs->data)->device &
+			    SID_TYPE;
+
+			switch (type) {
+			case T_DIRECT:
+				/* skip physical drive */
+				xs->error = XS_DRIVER_STUFFUP;
+				break;
+			case T_ENCLOSURE:
+			case T_PROCESSOR:
+				/* remember our enclosure */
+				pt->pt_proctgt = target;
+			}
+		}
+		xs->resid = 0;
+	}
+	xs->flags |= ITSDONE;
+	scsi_done(xs);
+}
+
+void
 ips_done_mgmt(struct ips_softc *sc, struct ips_ccb *ccb)
 {
 	if (ccb->c_flags & (SCSI_DATA_IN | SCSI_DATA_OUT))
@@ -1311,6 +1516,12 @@ ips_error(struct ips_softc *sc, struct ips_ccb *ccb)
 		DPRINTF(IPS_D_ERR, ("%s: ld%d error, stat 0x%02x, "
 		    "estat 0x%02x\n", sc->sc_dev.dv_xname, cmd->drive,
 		    ccb->c_stat, ccb->c_estat));
+		return (EIO);
+	}
+	if (xs && xs->flags & IPS_SCSI_PT && gsc == IPS_STAT_PDRVERR) {
+		DPRINTF(IPS_D_ERR, ("%s: phys drive error, stat 0x%02x, "
+		    "estat 0x%02x\n", sc->sc_dev.dv_xname, ccb->c_stat,
+		    ccb->c_estat));
 		return (EIO);
 	}
 
