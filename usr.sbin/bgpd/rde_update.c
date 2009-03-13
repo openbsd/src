@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.64 2009/01/13 21:35:16 sthen Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.65 2009/03/13 04:18:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -917,13 +917,7 @@ up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 		return (NULL);
 
 	datalen += 3;	/* afi + safi */
-	if (datalen > 255) {
-		attrlen += 2 + datalen;
-		flags |= ATTR_EXTLEN;
-	} else {
-		attrlen += 1 + datalen;
-		buf++;
-	}
+
 	/* prepend header, need to do it reverse */
 	/* safi & afi */
 	buf[--wpos] = SAFI_UNICAST;
@@ -933,11 +927,15 @@ up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 
 	/* attribute length */
 	if (datalen > 255) {
+		attrlen += 2 + datalen;
+		flags |= ATTR_EXTLEN;
 		wpos -= sizeof(u_int16_t);
 		tmp = htons(datalen);
 		memcpy(buf + wpos, &tmp, sizeof(u_int16_t));
-	} else
+	} else {
+		attrlen += 1 + datalen;
 		buf[--wpos] = (u_char)datalen;
+	}
 
 	/* mp attribute */
 	buf[--wpos] = (u_char)ATTR_MP_UNREACH_NLRI;
@@ -958,7 +956,7 @@ up_dump_mp_unreach(u_char *buf, u_int16_t *len, struct rde_peer *peer)
 	/* total length includes the two 2-bytes length fields. */
 	*len = attrlen + 2 * sizeof(u_int16_t);
 
-	return (buf);
+	return (buf + wpos);
 }
 
 u_char *
