@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.61 2009/03/12 21:20:05 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.62 2009/03/13 07:49:28 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -316,6 +316,7 @@ struct ips_ccb {
 
 	u_int8_t		c_stat;		/* status byte copy */
 	u_int8_t		c_estat;	/* ext status byte copy */
+	int			c_error;	/* completion error */
 
 	void			(*c_done)(struct ips_softc *,	/* cmd done */
 				    struct ips_ccb *);		/* callback */
@@ -1176,7 +1177,7 @@ int
 ips_poll(struct ips_softc *sc, struct ips_ccb *ccb)
 {
 	struct timeval tv;
-	int timo;
+	int error, timo;
 
 	splassert(IPL_BIO);
 
@@ -1207,9 +1208,12 @@ ips_poll(struct ips_softc *sc, struct ips_ccb *ccb)
 
 	if (ccb->c_state != IPS_CCB_DONE)
 		return (ETIMEDOUT);
-	ips_done(sc, ccb);
 
-	return (0);
+	ips_done(sc, ccb);
+	error = ccb->c_error;
+	ips_ccb_put(sc, ccb);
+
+	return (error);
 }
 
 void
@@ -1220,17 +1224,14 @@ ips_done(struct ips_softc *sc, struct ips_ccb *ccb)
 	DPRINTF(IPS_D_XFER, ("%s: ips_done: id 0x%02x, flags 0x%x, xs %p\n",
 	    sc->sc_dev.dv_xname, ccb->c_id, ccb->c_flags, ccb->c_xfer));
 
+	ccb->c_error = ips_error(sc, ccb);
 	ccb->c_done(sc, ccb);
-
-	ccb->c_state = IPS_CCB_FREE;
-	ips_ccb_put(sc, ccb);
 }
 
 void
 ips_done_xs(struct ips_softc *sc, struct ips_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->c_xfer;
-	int error;
 
 	if (!(xs->flags & SCSI_POLL))
 		timeout_del(&xs->stimeout);
@@ -1242,13 +1243,15 @@ ips_done_xs(struct ips_softc *sc, struct ips_ccb *ccb)
 		bus_dmamap_unload(sc->sc_dmat, ccb->c_dmam);
 	}
 
-	if ((error = ips_error(sc, ccb))) {
-		if (error == ETIMEDOUT)
-			xs->error = XS_TIMEOUT;
-		else
-			xs->error = XS_DRIVER_STUFFUP;
-	} else {
+	switch (ccb->c_error) {
+	case 0:
 		xs->resid = 0;
+		break;
+	case ETIMEDOUT:
+		xs->error = XS_TIMEOUT;
+		break;
+	default:
+		xs->error = XS_DRIVER_STUFFUP;
 	}
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
@@ -1262,9 +1265,6 @@ ips_done_mgmt(struct ips_softc *sc, struct ips_ccb *ccb)
 		    sc->sc_infom.dm_map->dm_mapsize,
 		    ccb->c_flags & SCSI_DATA_IN ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
-
-	/* XXX: error checking */
-	(void)ips_error(sc, ccb);
 }
 
 int
@@ -1355,10 +1355,12 @@ ips_intr(void *arg)
 		ccb->c_stat = IPS_STAT_BASIC(status);
 		ccb->c_estat = IPS_STAT_EXT(status);
 
-		if (ccb->c_flags & SCSI_POLL)
+		if (ccb->c_flags & SCSI_POLL) {
 			wakeup(ccb);
-		else
+		} else {
 			ips_done(sc, ccb);
+			ips_ccb_put(sc, ccb);
+		}
 	}
 
 	return (1);
@@ -1692,6 +1694,8 @@ void
 ips_ccb_put(struct ips_softc *sc, struct ips_ccb *ccb)
 {
 	splassert(IPL_BIO);
+
+	ccb->c_state = IPS_CCB_FREE;
 	TAILQ_INSERT_TAIL(&sc->sc_ccbq_free, ccb, c_link);
 }
 
