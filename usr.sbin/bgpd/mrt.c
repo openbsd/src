@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.55 2009/03/13 05:43:50 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.56 2009/03/13 06:25:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -551,7 +551,7 @@ static int
 mrt_dump_header(struct buf *buf, u_int16_t type, u_int16_t subtype,
     u_int32_t len)
 {
-	time_t			now;
+	time_t	now;
 
 	now = time(NULL);
 
@@ -563,24 +563,15 @@ mrt_dump_header(struct buf *buf, u_int16_t type, u_int16_t subtype,
 	return (0);
 }
 
-int
+void
 mrt_write(struct mrt *mrt)
 {
-	struct buf	*b;
-	int		 r = 0;
+	int	r;
 
-	while ((b = TAILQ_FIRST(&mrt->wbuf.bufs)) &&
-	    (r = buf_write(mrt->wbuf.fd, b)) == 1) {
-		TAILQ_REMOVE(&mrt->wbuf.bufs, b, entry);
-		mrt->wbuf.queued--;
-		buf_free(b);
-	}
-	if (r <= -1) {
-		log_warn("mrt dump write");
+	if ((r = buf_write(&mrt->wbuf)) < 0) {
+		log_warn("mrt dump aborted, mrt_write");
 		mrt_clean(mrt);
-		return (-1);
 	}
-	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.224 2009/03/13 04:40:55 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.225 2009/03/13 06:25:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -742,7 +742,7 @@ void		*buf_seek(struct buf *, size_t, size_t);
 size_t		 buf_size(struct buf *);
 size_t		 buf_left(struct buf *);
 int		 buf_close(struct msgbuf *, struct buf *);
-int		 buf_write(int, struct buf *);
+int		 buf_write(struct msgbuf *);
 void		 buf_free(struct buf *);
 void		 msgbuf_init(struct msgbuf *);
 void		 msgbuf_clear(struct msgbuf *);

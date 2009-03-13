@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.237 2009/03/13 05:43:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.238 2009/03/13 06:25:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -300,11 +300,12 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 			rde_dispatch_imsg_session(ibuf_se_ctl);
 
 		if (pfd[PFD_MRT_FILE].revents & POLLOUT) {
-			if (mrt_write(mrt) == -1) {
+			mrt_write(mrt);
+			if (mrt->wbuf.queued == 0) {
+				close(mrt->wbuf.fd);
 				free(mrt);
 				mrt = NULL;
-			} else if (mrt->wbuf.queued == 0)
-				close(mrt->wbuf.fd);
+			}
 		}
 
 		rde_update_queue_runner();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.41 2009/03/13 04:40:55 claudio Exp $ */
+/*	$OpenBSD: buffer.c,v 1.42 2009/03/13 06:25:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -144,12 +144,23 @@ buf_close(struct msgbuf *msgbuf, struct buf *buf)
 }
 
 int
-buf_write(int sock, struct buf *buf)
+buf_write(struct msgbuf *msgbuf)
 {
+	struct iovec	 iov[IOV_MAX];
+	struct buf	*buf, *next;
+	unsigned int	 i = 0;
 	ssize_t	n;
 
-	if ((n = write(sock, buf->buf + buf->rpos,
-	    buf->size - buf->rpos)) == -1) {
+	bzero(&iov, sizeof(iov));
+	TAILQ_FOREACH(buf, &msgbuf->bufs, entry) {
+		if (i >= IOV_MAX)
+			break;
+		iov[i].iov_base = buf->buf + buf->rpos;
+		iov[i].iov_len = buf->size - buf->rpos;
+		i++;
+	}
+
+	if ((n = writev(msgbuf->fd, iov, i)) == -1) {
 		if (errno == EAGAIN || errno == ENOBUFS ||
 		    errno == EINTR)	/* try later */
 			return (0);
@@ -162,11 +173,19 @@ buf_write(int sock, struct buf *buf)
 		return (-2);
 	}
 
-	if (buf->rpos + n < buf->size) {	/* not all data written yet */
-		buf->rpos += n;
-		return (0);
-	} else
-		return (1);
+	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
+	    buf = next) {
+		next = TAILQ_NEXT(buf, entry);
+		if (buf->rpos + n >= buf->size) {
+			n -= buf->size - buf->rpos;
+			buf_dequeue(msgbuf, buf);
+		} else {
+			buf->rpos += n;
+			n = 0;
+		}
+	}
+
+	return (0);
 }
 
 void
