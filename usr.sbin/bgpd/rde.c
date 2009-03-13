@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.236 2009/03/13 04:19:43 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.237 2009/03/13 05:43:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -263,8 +263,8 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 			timeout = 0;
 
 		i = 3;
-		if (mrt && mrt->queued) {
-			pfd[PFD_MRT_FILE].fd = mrt->fd;
+		if (mrt && mrt->wbuf.queued) {
+			pfd[PFD_MRT_FILE].fd = mrt->wbuf.fd;
 			pfd[PFD_MRT_FILE].events = POLLOUT;
 			i++;
 		}
@@ -303,8 +303,8 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 			if (mrt_write(mrt) == -1) {
 				free(mrt);
 				mrt = NULL;
-			} else if (mrt->queued == 0)
-				close(mrt->fd);
+			} else if (mrt->wbuf.queued == 0)
+				close(mrt->wbuf.fd);
 		}
 
 		rde_update_queue_runner();
@@ -694,15 +694,14 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (xmrt == NULL)
 				fatal("rde_dispatch_imsg_parent");
 			memcpy(xmrt, imsg.data, sizeof(struct mrt));
-			TAILQ_INIT(&xmrt->bufs);
+			TAILQ_INIT(&xmrt->wbuf.bufs);
 
-			if ((xmrt->fd = imsg_get_fd(ibuf)) == -1)
+			if ((xmrt->wbuf.fd = imsg_get_fd(ibuf)) == -1)
 				log_warnx("expected to receive fd for mrt dump "
 				    "but didn't receive any");
-
-			if (xmrt->type == MRT_TABLE_DUMP) {
+			else if (xmrt->type == MRT_TABLE_DUMP) {
 				/* do not dump if another is still running */
-				if (mrt == NULL || mrt->queued == 0) {
+				if (mrt == NULL || mrt->wbuf.queued == 0) {
 					free(mrt);
 					mrt = xmrt;
 					mrt_clear_seq();
@@ -711,7 +710,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 					break;
 				}
 			}
-			close(xmrt->fd);
+			close(xmrt->wbuf.fd);
 			free(xmrt);
 			break;
 		case IMSG_MRT_CLOSE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.54 2009/02/19 21:34:40 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.55 2009/03/13 05:43:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -171,8 +171,7 @@ mrt_dump_bgp_msg(struct mrt *mrt, void *pkg, u_int16_t pkglen,
 		return (-1);
 	}
 
-	TAILQ_INSERT_TAIL(&mrt->bufs, buf, entry);
-	mrt->queued++;
+	buf_close(&mrt->wbuf, buf);
 
 	return (len + MRT_HEADER_SIZE);
 }
@@ -235,8 +234,7 @@ mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
 	DUMP_SHORT(buf, old_state);
 	DUMP_SHORT(buf, new_state);
 
-	TAILQ_INSERT_TAIL(&mrt->bufs, buf, entry);
-	mrt->queued++;
+	buf_close(&mrt->wbuf, buf);
 
 	return (len + MRT_HEADER_SIZE);
 }
@@ -452,8 +450,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		return (-1);
 	}
 
-	TAILQ_INSERT_TAIL(&mrt->bufs, buf, entry);
-	mrt->queued++;
+	buf_close(&mrt->wbuf, buf);
 
 	return (len + MRT_HEADER_SIZE);
 }
@@ -513,8 +510,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		return (-1);
 	}
 
-	TAILQ_INSERT_TAIL(&mrt->bufs, buf, entry);
-	mrt->queued++;
+	buf_close(&mrt->wbuf, buf);
 
 	return (len + MRT_HEADER_SIZE);
 }
@@ -573,10 +569,10 @@ mrt_write(struct mrt *mrt)
 	struct buf	*b;
 	int		 r = 0;
 
-	while ((b = TAILQ_FIRST(&mrt->bufs)) &&
-	    (r = buf_write(mrt->fd, b)) == 1) {
-		TAILQ_REMOVE(&mrt->bufs, b, entry);
-		mrt->queued--;
+	while ((b = TAILQ_FIRST(&mrt->wbuf.bufs)) &&
+	    (r = buf_write(mrt->wbuf.fd, b)) == 1) {
+		TAILQ_REMOVE(&mrt->wbuf.bufs, b, entry);
+		mrt->wbuf.queued--;
 		buf_free(b);
 	}
 	if (r <= -1) {
@@ -592,12 +588,12 @@ mrt_clean(struct mrt *mrt)
 {
 	struct buf	*b;
 
-	close(mrt->fd);
-	while ((b = TAILQ_FIRST(&mrt->bufs))) {
-		TAILQ_REMOVE(&mrt->bufs, b, entry);
+	close(mrt->wbuf.fd);
+	while ((b = TAILQ_FIRST(&mrt->wbuf.bufs))) {
+		TAILQ_REMOVE(&mrt->wbuf.bufs, b, entry);
 		buf_free(b);
 	}
-	mrt->queued = 0;
+	mrt->wbuf.queued = 0;
 }
 
 static struct imsgbuf	*mrt_imsgbuf[2];
@@ -613,18 +609,17 @@ int
 mrt_open(struct mrt *mrt, time_t now)
 {
 	enum imsg_type	type;
-	int		i;
+	int		i, fd;
 
 	if (strftime(MRT2MC(mrt)->file, sizeof(MRT2MC(mrt)->file),
 	    MRT2MC(mrt)->name, localtime(&now)) == 0) {
 		log_warnx("mrt_open: strftime conversion failed");
-		mrt->fd = -1;
 		return (-1);
 	}
 
-	mrt->fd = open(MRT2MC(mrt)->file,
+	fd = open(MRT2MC(mrt)->file,
 	    O_WRONLY|O_NONBLOCK|O_CREAT|O_TRUNC, 0644);
-	if (mrt->fd == -1) {
+	if (fd == -1) {
 		log_warn("mrt_open %s", MRT2MC(mrt)->file);
 		return (1);
 	}
@@ -636,7 +631,7 @@ mrt_open(struct mrt *mrt, time_t now)
 
 	i = mrt->type == MRT_TABLE_DUMP ? 0 : 1;
 
-	if (imsg_compose(mrt_imsgbuf[i], type, 0, 0, mrt->fd,
+	if (imsg_compose(mrt_imsgbuf[i], type, 0, 0, fd,
 	    mrt, sizeof(struct mrt)) == -1)
 		log_warn("mrt_open");
 
@@ -739,7 +734,6 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 			if ((xm = calloc(1, sizeof(struct mrt_config))) == NULL)
 				fatal("mrt_mergeconfig");
 			memcpy(xm, m, sizeof(struct mrt_config));
-			xm->fd = -1;
 			MRT2MC(xm)->state = MRT_STATE_OPEN;
 			LIST_INSERT_HEAD(xconf, xm, entry);
 		} else {
@@ -767,4 +761,3 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 
 	return (0);
 }
-

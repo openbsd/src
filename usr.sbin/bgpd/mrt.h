@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.16 2007/05/30 04:28:27 msf Exp $ */
+/*	$OpenBSD: mrt.h,v 1.17 2009/03/13 05:43:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -255,13 +255,11 @@ enum mrt_state {
 };
 
 struct mrt {
-	enum mrt_type		type;
+	struct msgbuf		wbuf;
+	LIST_ENTRY(mrt)		entry;
 	u_int32_t		peer_id;
 	u_int32_t		group_id;
-	u_int32_t		queued;
-	int			fd;
-	TAILQ_HEAD(, buf)	bufs;
-	LIST_ENTRY(mrt)		entry;
+	enum mrt_type		type;
 };
 
 struct mrt_config {
