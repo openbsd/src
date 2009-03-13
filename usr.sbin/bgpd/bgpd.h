@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.223 2008/12/12 23:15:12 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.224 2009/03/13 04:40:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -109,6 +109,7 @@ struct buf {
 	TAILQ_ENTRY(buf)	 entry;
 	u_char			*buf;
 	size_t			 size;
+	size_t			 max;
 	size_t			 wpos;
 	size_t			 rpos;
 	int			 fd;
@@ -734,9 +735,12 @@ int		 bgpd_filternexthop(struct kroute *, struct kroute6 *);
 
 /* buffer.c */
 struct buf	*buf_open(size_t);
-struct buf	*buf_grow(struct buf *, size_t);
+struct buf	*buf_dynamic(size_t, size_t);
 int		 buf_add(struct buf *, const void *, size_t);
 void		*buf_reserve(struct buf *, size_t);
+void		*buf_seek(struct buf *, size_t, size_t);
+size_t		 buf_size(struct buf *);
+size_t		 buf_left(struct buf *);
 int		 buf_close(struct msgbuf *, struct buf *);
 int		 buf_write(int, struct buf *);
 void		 buf_free(struct buf *);

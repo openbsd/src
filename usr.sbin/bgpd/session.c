@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.284 2008/09/11 14:49:58 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.285 2009/03/13 04:40:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1253,8 +1253,6 @@ session_capa_add(struct peer *p, struct buf *opb, u_int8_t capa_code,
 	op_type = OPT_PARAM_CAPABILITIES;
 	op_len = sizeof(capa_code) + sizeof(capa_len) + capa_len;
 	tot_len = sizeof(op_type) + sizeof(op_len) + op_len;
-	if (buf_grow(opb, tot_len) == NULL)
-		return (1);
 	errs += buf_add(opb, &op_type, sizeof(op_type));
 	errs += buf_add(opb, &op_len, sizeof(op_len));
 	errs += buf_add(opb, &capa_code, sizeof(capa_code));
@@ -1346,7 +1344,7 @@ session_open(struct peer *p)
 	u_int			 errs = 0;
 
 
-	if ((opb = buf_open(0)) == NULL) {
+	if ((opb = buf_dynamic(0, MAX_PKTSIZE - MSGSIZE_OPEN_MIN)) == NULL) {
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
 	}
