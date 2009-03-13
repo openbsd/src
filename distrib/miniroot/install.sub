@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.447 2009/02/19 02:11:32 krw Exp $
+#	$OpenBSD: install.sub,v 1.448 2009/03/13 01:20:44 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -479,7 +479,7 @@ addhostent() {
 
 	[[ $_addr == *:* ]] && _delim=":"
 
-	sed "/^[0-9a-fA-F]*[$_delim].* $_name\$/d" /tmp/hosts >/tmp/hosts.new
+	sed "/^[0-9a-fA-F]*[$_delim].*[ 	]$_name\$/d" /tmp/hosts >/tmp/hosts.new
 	mv /tmp/hosts.new /tmp/hosts
 
 	echo "$_addr $_name" >>/tmp/hosts
