@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.449 2009/03/14 14:23:05 krw Exp $
+#	$OpenBSD: install.sub,v 1.450 2009/03/14 15:55:39 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -411,19 +411,6 @@ bsort() {
 
 	# Sort remaining values.
 	bsort $_l
-}
-
-# Add interesting/useful comments from mnt/etc/$1 to /tmp/$1.
-#
-# $1 == file in /tmp and /mnt/etc directories
-save_comments() {
-	local _file=$1
-
-	if [[ -f /mnt/etc/$_file ]]; then
-		grep "^#" /mnt/etc/$_file >/tmp/$_file.new
-		[[ -f /tmp/$_file ]] && cat /tmp/$_file >>/tmp/$_file.new
-		mv /tmp/$_file.new /tmp/$_file
-	fi
 }
 
 # Offer to edit a file in /tmp and execute ${EDITOR} to do so if the user
