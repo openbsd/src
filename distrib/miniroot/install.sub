@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.448 2009/03/13 01:20:44 krw Exp $
+#	$OpenBSD: install.sub,v 1.449 2009/03/14 14:23:05 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -479,7 +479,8 @@ addhostent() {
 
 	[[ $_addr == *:* ]] && _delim=":"
 
-	sed "/^[0-9a-fA-F]*[$_delim].*[ 	]$_name\$/d" /tmp/hosts >/tmp/hosts.new
+	sed "/^[0-9a-fA-F]*[$_delim].*[ 	]$_name\$/d" /tmp/hosts \
+		>/tmp/hosts.new 2>/dev/null
 	mv /tmp/hosts.new /tmp/hosts
 
 	echo "$_addr $_name" >>/tmp/hosts
@@ -674,7 +675,9 @@ v4_config() {
 	dhcp)	if [[ ! -x /sbin/dhclient ]]; then
 			echo "DHCP not possible - no /sbin/dhclient."
 		elif dhcp_request $_ifs "$_name" || dhcp_request $_ifs ; then
-			addhostent "127.0.0.1" "$_name"
+			# Add hosts entry. Overwrites previous entry if any.
+			set -- $(v4_info $_ifs)
+			addhostent "$2" "$_name"
 			echo "dhcp NONE NONE NONE $_media" >>$_hn
 			# Create a new bpf in case we start another dhclient
 			makedev bpf$(ls /dev | grep -c "^bpf[0-9]")
@@ -708,9 +711,11 @@ v6_config() {
 		;;
 	rtsol)	[[ ! -x /sbin/rtsol ]] && { echo "No /sbin/rtsol." ; return ; }
 		ifconfig $_ifs up
-		rtsol -F $_ifs
-		addhostent "::1" "$_name"
-		echo "up\nrtsol $media" >>$_hn
+		if rtsol -F $_ifs; then
+			set -- $(v6_info $_ifs)
+			addhostent "$2" "$_name"
+			echo "up\nrtsol $media" >>$_hn
+		fi
 		return
 		;;
 	esac

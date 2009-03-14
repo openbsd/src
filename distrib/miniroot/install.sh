@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.162 2009/02/21 18:07:14 krw Exp $
+#	$OpenBSD: install.sh,v 1.163 2009/03/14 14:23:05 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -316,14 +316,6 @@ THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 # etc, or from resolv.conf.shadow.
 ( cd /tmp; rm -f host* my* resolv.conf resolv.conf.tail dhclient.* )
 
-# Always create new hosts file.
-cat >/tmp/hosts <<__EOT
-::1		localhost
-127.0.0.1	localhost
-::1		$(hostname -s)
-127.0.0.1	$(hostname -s)
-__EOT
-
 ask_yn "Configure the network?" yes
 [[ $resp == y ]] && donetconfig
 
@@ -370,9 +362,16 @@ echo -n "Saving configuration files..."
 ( cd /tmp
 hostname >myname
 
-# Add FQDN to /tmp/hosts entries, changing lines of the form '1.2.3.4 hostname'
-# to '1.2.3.4 hostname.$FQDN hostname'. Leave untouched any lines containing
-# domain information or aliases. The user added those manually.
+# Prepend localhost entries and add FQDN to /tmp/hosts entries, changing lines
+# of the form '1.2.3.4 hostname' to '1.2.3.4 hostname.$FQDN hostname'. Leave
+# untouched any lines containing 'localhost', domain information or aliases. The
+# first should not have domain info and the latter the user added manually.
+
+cat >hosts.new <<__EOT
+::1		localhost
+127.0.0.1	localhost
+__EOT
+
 _dn=$(get_fqdn)
 while read _addr _hn _aliases; do
 	if [[ -n $_aliases || $_hn != ${_hn%%.*} || -z $_dn ]]; then
@@ -380,7 +379,7 @@ while read _addr _hn _aliases; do
 	else
 		echo "$_addr\t$_hn.$_dn $_hn"
 	fi
-done <hosts >hosts.new
+done <hosts >>hosts.new
 mv hosts.new hosts
 
 # Prepend interesting comments from installed hosts and dhclient.conf files
