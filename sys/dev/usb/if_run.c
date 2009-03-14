@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.10 2009/03/14 06:25:24 jsg Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.11 2009/03/14 15:40:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -105,7 +105,6 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(CONCEPTRONIC2,		RT2870_6),
 	USB_ID(PLANEX2,			RT2870),
 	USB_ID(PLANEX2,			RT3070),
-	USB_ID(PLANEX2,			RT3070_2),
 	USB_ID(DLINK2,			RT2870_1),
 	USB_ID(DLINK2,			RT2870_2),
 	USB_ID(DLINK,			RT2870),
@@ -162,7 +161,12 @@ static const struct usb_devno run_devs[] = {
 
 	/* Entries not in the Ralink Linux driver. */
 	USB_ID(DLINK2,			DWA130),
-	USB_ID(LINKSYS4,		WUSB600N)
+	USB_ID(LINKSYS4,		WUSB600N),
+	USB_ID(MELCO,			WLIUCAG300N),
+	USB_ID(MELCO,			WLIUCGN),
+	USB_ID(PLANEX2,			GWUS300MINIS),
+	USB_ID(PLANEX2,			GWUSBMICRON),
+	USB_ID(COREGA,			CGWLUSB300GNM)
 };
 
 int		run_match(struct device *, void *, void *);
