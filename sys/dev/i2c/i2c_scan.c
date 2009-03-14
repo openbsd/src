@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_scan.c,v 1.130 2009/02/19 23:09:17 jsg Exp $	*/
+/*	$OpenBSD: i2c_scan.c,v 1.131 2009/03/14 06:31:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt <deraadt@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 /*
- * I2C bus scanning.
+ * I2C bus scanning.  We apologize in advance for the massive overuse of 0x.
  */
 
 #include "ipmi.h"
