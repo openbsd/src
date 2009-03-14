@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.637 2009/03/09 13:53:09 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.638 2009/03/14 23:44:09 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1581,21 +1581,21 @@ pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type,
 		*icmp_dir = PF_IN;
 	case ICMP_TSTAMPREPLY:
 		*icmptype = ICMP_TSTAMP;
-		*icmpid = 0; /* Time is not a secret. */
+		*icmpid = pd->hdr.icmp->icmp_id;
 		break;
 
 	case ICMP_IREQ:
 		*icmp_dir = PF_IN;
 	case ICMP_IREQREPLY:
 		*icmptype = ICMP_IREQ;
-		*icmpid = 0; /* Nothing sane to match on! */
+		*icmpid = pd->hdr.icmp->icmp_id;
 		break;
 
 	case ICMP_MASKREQ:
 		*icmp_dir = PF_IN;
 	case ICMP_MASKREPLY:
 		*icmptype = ICMP_MASKREQ;
-		*icmpid = 0; /* Nothing sane to match on! */
+		*icmpid = pd->hdr.icmp->icmp_id;
 		break;
 
 	case ICMP_IPV6_WHEREAREYOU:
