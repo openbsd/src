@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.29 2008/08/06 18:23:56 miod Exp $
+dnl	$OpenBSD: hardware,v 1.30 2009/03/14 20:38:12 jmc Exp $
 dnl When more than one model is supported, turn this into a list...
 The following Sharp Zaurus models are supported by OpenBSD:
 
@@ -240,6 +240,16 @@ and serial ports), many USB devices are supported. These {:-include-:}:
 		    Sitecom WL-172
 		    Sweex LW053
 		    TP-LINK TL-WN321G
+		Ralink Technology USB IEEE 802.11a/b/g/Draft-N USB adapters
+		    Buffalo WLI-UC-AG300N
+		    Buffalo WLI-UC-GN
+		    Corega CG-WLUSB300GNM
+		    D-Link DWA-130
+		    Edimax EW-7711UAn
+		    Gigabyte GN-WB32L
+		    Linksys WUSB600N
+		    Planex GW-USMicroN
+		    Planex GW-US300MiniS
 		WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b USB
 		adapters
 		    Acer Warplink USB-400

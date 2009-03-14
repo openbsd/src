@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.99 2008/11/27 15:15:03 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.100 2009/03/14 20:38:12 jmc Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -817,6 +817,16 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    Sitecom WL-172
 		    Sweex LW053
 		    TP-LINK TL-WN321G
+		Ralink Technology USB IEEE 802.11a/b/g/Draft-N USB adapters
+		    Buffalo WLI-UC-AG300N
+		    Buffalo WLI-UC-GN
+		    Corega CG-WLUSB300GNM
+		    D-Link DWA-130
+		    Edimax EW-7711UAn
+		    Gigabyte GN-WB32L
+		    Linksys WUSB600N
+		    Planex GW-USMicroN
+		    Planex GW-US300MiniS
 		Raytheon Raylink/WebGear Aviator IEEE 802.11FH PCMCIA adapters
 		    Raytheon Raylink WLAN
 		    WebGear Aviator 2.4

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.147 2009/02/28 20:34:18 kettenis Exp $
+dnl	$OpenBSD: hardware,v 1.148 2009/03/14 20:38:12 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Ultra 1/1E 
 	Ultra 2 
@@ -650,6 +650,16 @@ Supported devices {:-include-:}:
 		    Sitecom WL-172
 		    Sweex LW053
 		    TP-LINK TL-WN321G
+		Ralink Technology USB IEEE 802.11a/b/g/Draft-N USB adapters
+		    Buffalo WLI-UC-AG300N
+		    Buffalo WLI-UC-GN
+		    Corega CG-WLUSB300GNM
+		    D-Link DWA-130
+		    Edimax EW-7711UAn
+		    Gigabyte GN-WB32L
+		    Linksys WUSB600N
+		    Planex GW-USMicroN
+		    Planex GW-US300MiniS
 		TI ACX100/ACX111 IEEE 802.11a/b/g PCI adapters
 		    D-Link DWL-520+
 		    D-Link DWL-G520+

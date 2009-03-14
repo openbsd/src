@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.275 2008/11/27 15:15:03 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.276 2009/03/14 20:38:12 jmc Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -935,6 +935,17 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    Sitecom WL-172
 		    Sweex LW053
 		    TP-LINK TL-WN321G
+		Ralink Technology USB IEEE 802.11a/b/g/Draft-N USB adapters
+		[A] [B] [C]
+		    Buffalo WLI-UC-AG300N
+		    Buffalo WLI-UC-GN
+		    Corega CG-WLUSB300GNM
+		    D-Link DWA-130
+		    Edimax EW-7711UAn
+		    Gigabyte GN-WB32L
+		    Linksys WUSB600N
+		    Planex GW-USMicroN
+		    Planex GW-US300MiniS
 		Raytheon Raylink/WebGear Aviator IEEE 802.11FH PCMCIA adapters
 		[A] [B] [C]
 		    Raytheon Raylink WLAN

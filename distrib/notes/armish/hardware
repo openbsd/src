@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.5 2008/08/06 18:23:51 miod Exp $
+dnl	$OpenBSD: hardware,v 1.6 2009/03/14 20:38:12 jmc Exp $
 dnl When more than one model is supported, turn this into a list...
 OpenBSD/MACHINE runs on the Thecus N2100 and IOData HDL-G models at the moment.
 
@@ -235,6 +235,16 @@ Supported devices {:-include-:}:
 		    Sitecom WL-172
 		    Sweex LW053
 		    TP-LINK TL-WN321G
+		Ralink Technology USB IEEE 802.11a/b/g/Draft-N USB adapters
+		    Buffalo WLI-UC-AG300N
+		    Buffalo WLI-UC-GN
+		    Corega CG-WLUSB300GNM
+		    D-Link DWA-130
+		    Edimax EW-7711UAn
+		    Gigabyte GN-WB32L
+		    Linksys WUSB600N
+		    Planex GW-USMicroN
+		    Planex GW-US300MiniS
 
 	Serial ports
 		On-board serial (com) ports

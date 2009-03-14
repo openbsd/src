@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.96 2008/09/11 05:28:25 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.97 2009/03/14 20:38:12 jmc Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -543,6 +543,16 @@ Supported devices {:-include-:}:
 		    Sitecom WL-172
 		    Sweex LW053
 		    TP-LINK TL-WN321G
+		Ralink Technology USB IEEE 802.11a/b/g/Draft-N USB adapters
+		    Buffalo WLI-UC-AG300N
+		    Buffalo WLI-UC-GN
+		    Corega CG-WLUSB300GNM
+		    D-Link DWA-130
+		    Edimax EW-7711UAn
+		    Gigabyte GN-WB32L
+		    Linksys WUSB600N
+		    Planex GW-USMicroN
+		    Planex GW-US300MiniS
 		Realtek RTL8180L IEEE 802.11b CardBus adapters
 		    Allnet ALL0182
 		    Belkin F5D6020 V3
