@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.c,v 1.4 2004/03/03 23:13:49 miod Exp $	*/
+/*	$OpenBSD: ptrace.c,v 1.5 2009/03/14 16:54:26 miod Exp $	*/
 /*
  * Copyright (c) 2004, Mark Kettenis.
  * Copyright (c) 2004, Miodrag Vallat.
@@ -39,7 +39,7 @@
 /*
  * This tests checks whether ptrace will correctly cope with unaligned pc.
  *
- * Platforms known to fail at the moment are: sparc, m68060.
+ * Platforms known to fail at the moment are: sparc.
  */
 int
 main(void)
@@ -76,8 +76,12 @@ main(void)
 		regs.r_npc |= 0x03;
 #elif defined(__i386__)
 		regs.r_eip |= 0x03;
+#elif defined(__mips64__)
+		regs.r_regs[PC] |= 0x03;
 #elif defined(__powerpc__)
 		regs.pc |= 0x03;
+#elif defined(__sh__)
+		regs.r_spc |= 0x01;
 #elif defined( __sparcv9__)
 		regs.r_pc |= 0x07;
 		regs.r_npc |= 0x07;
@@ -87,9 +91,7 @@ main(void)
 #elif defined( __m88k__)
 		/*
 		 * The following code is for 88100 only, but should work with
-		 * 88110 too, as it does not set the DELAY bit in exip.
-		 * Though we might want to test the behaviour with delay set
-		 * in exip too...
+		 * 88110 too, even though it sets the DELAY bit in exip.
 		 */
 		regs.sxip |= 0x03;
 		regs.snip |= 0x03;
