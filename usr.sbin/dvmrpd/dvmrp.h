@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrp.h,v 1.2 2009/01/27 08:53:47 michele Exp $ */
+/*	$OpenBSD: dvmrp.h,v 1.3 2009/03/14 15:32:55 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -101,6 +101,7 @@ struct prune_hdr {
 	u_int32_t		lifetime;
 	u_int32_t		src_netmask;
 };
+#define	PRUNE_MIN_LEN			12
 
 /* Graft and Graft Ack header */
 struct graft_hdr {

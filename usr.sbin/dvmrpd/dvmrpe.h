@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.h,v 1.2 2006/11/10 11:09:56 michele Exp $ */
+/*	$OpenBSD: dvmrpe.h,v 1.3 2009/03/14 15:32:55 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -195,7 +195,7 @@ void		 recv_probe(struct iface *, struct in_addr, u_int32_t, u_int8_t,
 		    char *, u_int16_t);
 
 /* prune.c */
-int		 send_prune(struct nbr *, void *, int);
+int		 send_prune(struct nbr *, struct prune *);
 void		 recv_prune(struct nbr *, char *, u_int16_t);
 
 /* report.c */

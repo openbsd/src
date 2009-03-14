@@ -1,6 +1,7 @@
-/*	$OpenBSD: rde_mfc.c,v 1.4 2009/03/06 18:39:13 michele Exp $ */
+/*	$OpenBSD: rde_mfc.c,v 1.5 2009/03/14 15:32:55 michele Exp $ */
 
 /*
+ * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2006 Esben Norby <norby@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -23,6 +24,7 @@
 #include <arpa/inet.h>
 #include <err.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "igmp.h"
 #include "dvmrp.h"
@@ -33,11 +35,15 @@
 
 /* multicast forwarding cache */
 
-void	 mfc_invalidate(void);
 void	 mfc_expire_timer(int, short, void *);
 int	 mfc_start_expire_timer(struct mfc_node *);
 int	 mfc_reset_expire_timer(struct mfc_node *);
+void	 mfc_prune_timer(int, short, void *);
+int	 mfc_start_prune_timer(struct mfc_node *);
+int	 mfc_reset_prune_timer(struct mfc_node *);
+
 int	 mfc_compare(struct mfc_node *, struct mfc_node *);
+void	 mfc_invalidate(void);
 
 RB_HEAD(mfc_tree, mfc_node)	 mfc;
 RB_PROTOTYPE(mfc_tree, mfc_node, entry, mfc_compare)
@@ -83,6 +89,38 @@ mfc_start_expire_timer(struct mfc_node *mn)
 	timerclear(&tv);
 	tv.tv_sec = ROUTE_EXPIRATION_TIME;
 	return (evtimer_add(&mn->expiration_timer, &tv));
+}
+
+void
+mfc_prune_timer(int fd, short event, void *arg)
+{
+	struct mfc_node	*mn = arg;
+
+	log_debug("mfc_prune_timer: group %s", inet_ntoa(mn->group));
+
+	event_del(&mn->prune_timer);
+}
+
+int
+mfc_start_prune_timer(struct mfc_node *mn)
+{
+	struct timeval	tv;
+
+	log_debug("mfc_start_prune_timer: group %s", inet_ntoa(mn->group));
+
+	timerclear(&tv);
+	tv.tv_sec = MAX_PRUNE_LIFETIME;
+	return (evtimer_add(&mn->prune_timer, &tv));
+}
+
+int
+mfc_reset_prune_timer(struct mfc_node *mn)
+{
+	struct timeval	tv;
+
+	timerclear(&tv);
+	tv.tv_sec = MAX_PRUNE_LIFETIME;
+	return (evtimer_add(&mn->prune_timer, &tv));
 }
 
 /* route table */
@@ -185,19 +223,38 @@ mfc_dump(pid_t pid)
 	}
 }
 
+struct rt_node *
+mfc_find_origin(struct in_addr group)
+{
+	struct mfc_node	*mn;
+
+	RB_FOREACH(mn, mfc_tree, &mfc)
+		if (group.s_addr == mn->group.s_addr)
+			return (rt_match_origin(mn->origin.s_addr));
+
+	return (NULL);
+}
+
 void
 mfc_update_source(struct rt_node *rn)
 {
 	struct mfc_node		*mn;
 	struct mfc		 m;
+	struct prune		 p;
 	int			 i;
+	u_int8_t		 found;
 
 	RB_FOREACH(mn, mfc_tree, &mfc) {
 		if (rn->prefix.s_addr == mn->origin.s_addr) {
 			mn->ifindex = rn->ifindex;
 
-			for (i = 0; i < MAXVIFS; i++)
+			found = 0;
+
+			for (i = 0; i < MAXVIFS; i++) {
 				mn->ttls[i] = rn->ttls[i];
+				if (mn->ttls[i] != 0)
+					found = 1;
+			}
 
 			m.origin.s_addr = mn->origin.s_addr;
 			m.group.s_addr = mn->group.s_addr;
@@ -206,11 +263,27 @@ mfc_update_source(struct rt_node *rn)
 			for (i = 0; i < MAXVIFS; i++)
 				m.ttls[i] = mn->ttls[i];
 
-			if (mn->origin.s_addr != 0)
-				rde_imsg_compose_parent(IMSG_MFC_ADD, 0, &m,
-				    sizeof(m));
+			rde_imsg_compose_parent(IMSG_MFC_ADD, 0, &m, sizeof(m));
 
 			mfc_reset_expire_timer(mn);
+
+			if (!found) {
+				/* We have removed all downstream interfaces,
+				   start the pruning process */
+				bzero(&p, sizeof(p));
+
+				p.origin.s_addr = mn->origin.s_addr;
+				p.netmask.s_addr =
+				    prefixlen2mask(rn->prefixlen);
+				p.group.s_addr = mn->group.s_addr;
+				p.nexthop.s_addr = rn->nexthop.s_addr;
+				p.ifindex = mn->ifindex;
+
+				rde_imsg_compose_dvmrpe(IMSG_SEND_PRUNE, 0, 0,
+				    &p, sizeof(p));
+
+				mfc_start_prune_timer(mn);
+			}
 		}
 	}
 }
@@ -236,12 +309,12 @@ mfc_update(struct mfc *nmfc)
 			mn->ttls[i] = nmfc->ttls[i];
 
 		if (mfc_insert(mn) == 0) {
-			if (nmfc->origin.s_addr != 0)
-				rde_imsg_compose_parent(IMSG_MFC_ADD, 0, nmfc,
-				    sizeof(*nmfc));
+			rde_imsg_compose_parent(IMSG_MFC_ADD, 0, nmfc,
+			    sizeof(*nmfc));
 		}
 
 		evtimer_set(&mn->expiration_timer, mfc_expire_timer, mn);
+		evtimer_set(&mn->prune_timer, mfc_expire_timer, mn);
 		mfc_start_expire_timer(mn);
 	}
 }

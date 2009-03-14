@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.12 2009/03/07 12:47:17 michele Exp $ */
+/*	$OpenBSD: rde.h,v 1.13 2009/03/14 15:32:55 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -54,6 +54,7 @@ struct rt_node {
 struct mfc_node {
 	RB_ENTRY(mfc_node)	 entry;
 	struct event		 expiration_timer;
+	struct event		 prune_timer;
 	u_int8_t		 ttls[MAXVIFS];	/* outgoing vif(s) */
 	struct in_addr		 origin;
 	struct in_addr		 group;
@@ -86,6 +87,7 @@ void		 mfc_clear(void);
 void		 mfc_dump(pid_t);
 void		 mfc_update(struct mfc *);
 void		 mfc_delete(struct mfc *);
+struct rt_node	*mfc_find_origin(struct in_addr);
 void		 mfc_update_source(struct rt_node *);
 int		 mfc_check_members(struct rt_node *, struct iface *);
 
@@ -100,11 +102,13 @@ int		 rt_remove(struct rt_node *);
 void		 rt_clear(void);
 void		 rt_snap(u_int32_t);
 void		 rt_dump(pid_t);
+struct rt_node	*rt_match_origin(in_addr_t);
 
 int		 srt_check_route(struct route_report *, int);
 int		 src_compare(struct src_node *, struct src_node *);
 
 void		 srt_expire_nbr(struct in_addr, struct iface *);
+void		 srt_check_downstream_ifaces(struct rt_node *, struct iface *);
 
 RB_PROTOTYPE(src_head, src_node, entry, src_compare);
 

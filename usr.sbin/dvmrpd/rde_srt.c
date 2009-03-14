@@ -1,6 +1,7 @@
-/*	$OpenBSD: rde_srt.c,v 1.18 2009/03/06 18:39:13 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.19 2009/03/14 15:32:55 michele Exp $ */
 
 /*
+ * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -313,6 +314,18 @@ rt_update(struct rt_node *rn)
 		rt_start_expire_timer(rn);
 }
 
+struct rt_node *
+rt_match_origin(in_addr_t src)
+{
+	struct rt_node	*r;
+
+	RB_FOREACH(r, rt_tree, &rt)
+		if (r->prefix.s_addr == (src & prefixlen2mask(r->prefixlen)))
+			return (r);
+
+	return (NULL);
+}
+
 int
 srt_check_route(struct route_report *rr, int connected)
 {
@@ -518,6 +531,12 @@ srt_delete_ds(struct rt_node *rn, struct ds_nbr *ds_nbr, struct iface *iface)
 	free(ds_nbr);
 	rn->ds_cnt[iface->ifindex]--;
 
+	srt_check_downstream_ifaces(rn, iface);
+}
+
+void
+srt_check_downstream_ifaces(struct rt_node *rn, struct iface *iface)
+{
 	/* We are not the designated forwarder for this source on this
 	   interface. Keep things as they currently are */
 	if (rn->adv_rtr[iface->ifindex].addr.s_addr != iface->addr.s_addr)
@@ -530,7 +549,7 @@ srt_delete_ds(struct rt_node *rn, struct ds_nbr *ds_nbr, struct iface *iface)
 
 	/* There are still group members for this source on this iface
 	   Keep things as they currently are */
-	if (!mfc_check_members(rn, iface))
+	if (mfc_check_members(rn, iface))
 		return;
 
 	/* Remove interface from the downstream list */

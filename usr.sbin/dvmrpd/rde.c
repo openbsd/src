@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.12 2009/03/07 12:47:17 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.13 2009/03/14 15:32:55 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -187,6 +187,7 @@ void
 rde_dispatch_imsg(int fd, short event, void *bula)
 {
 	struct mfc		 mfc;
+	struct prune		 p;
 	struct imsgbuf		*ibuf = bula;
 	struct imsg		 imsg;
 	struct route_report	 rr;
@@ -294,6 +295,12 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 			rde_group_list_remove(iface, mfc.group);
 			break;
+		case IMSG_RECV_PRUNE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(p))
+				fatalx("invalid size of OE request");
+			memcpy(&p, imsg.data, sizeof(p));
+
+			break;
 		default:
 			log_debug("rde_dispatch_msg: unexpected imsg %d",
 			    imsg.hdr.type);
@@ -360,6 +367,7 @@ void
 rde_group_list_remove(struct iface *iface, struct in_addr group)
 {
 	struct rde_group	*rg;
+	struct rt_node		*rn;
 
 	if (TAILQ_EMPTY(&iface->rde_group_list))
 		fatalx("rde_group_list_remove: group does not exist");
@@ -373,4 +381,10 @@ rde_group_list_remove(struct iface *iface, struct in_addr group)
 			free(rg);
 		}
 	}
+
+	rn = mfc_find_origin(group);
+	if (rn == NULL)
+		return;
+
+	srt_check_downstream_ifaces(rn, iface);
 }

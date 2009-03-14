@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.3 2008/11/21 10:39:32 michele Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.4 2009/03/14 15:32:55 michele Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -272,6 +272,7 @@ dvmrpe_dispatch_rde(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = bula;
 	struct imsg		 imsg;
 	struct nbr		*nbr;
+	struct prune		 p;
 	struct iface		*iface;
 	struct route_report	*rr;
 	int			 n;
@@ -348,6 +349,26 @@ dvmrpe_dispatch_rde(int fd, short event, void *bula)
 
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			rr_list_send(&nbr->rr_list, NULL, nbr);
+			break;
+		case IMSG_SEND_PRUNE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(p))
+				fatalx("invalid size of RDE request");
+
+			memcpy(&p, imsg.data, sizeof(p));
+
+			LIST_FOREACH(iface, &deconf->iface_list, entry)
+				if (p.ifindex == iface->ifindex)
+					break;
+
+			if (iface == NULL)
+				fatalx("invalid interface in mfc");
+
+			nbr = nbr_find_ip(iface, p.nexthop.s_addr);
+			if (nbr == NULL)
+				fatalx("unknown neighbor to send prune");
+
+			send_prune(nbr, &p);
+
 			break;
 		case IMSG_FLASH_UPDATE:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(*rr))

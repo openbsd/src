@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.h,v 1.15 2009/03/07 12:47:17 michele Exp $ */
+/*	$OpenBSD: dvmrpd.h,v 1.16 2009/03/14 15:32:55 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -111,6 +111,8 @@ enum imsg_type {
 	IMSG_MFC_DEL,
 	IMSG_GROUP_ADD,
 	IMSG_GROUP_DEL,
+	IMSG_SEND_PRUNE,
+	IMSG_RECV_PRUNE,
 	IMSG_FLASH_UPDATE,
 	IMSG_FLASH_UPDATE_DS
 };
@@ -194,6 +196,15 @@ struct mfc {
 	struct in_addr		 group;
 	u_short			 ifindex;
 	u_int8_t		 ttls[MAXVIFS];
+};
+
+struct prune {
+	struct in_addr		 origin;
+	struct in_addr		 netmask;
+	struct in_addr		 group;
+	struct in_addr		 nexthop;
+	u_short			 ifindex;
+	u_int32_t		 lifetime;
 };
 
 TAILQ_HEAD(rr_head, rr_entry);
