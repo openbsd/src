@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_runvar.h,v 1.1 2009/01/03 18:39:33 damien Exp $	*/
+/*	$OpenBSD: if_runvar.h,v 1.2 2009/03/14 15:53:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -181,7 +181,7 @@ struct run_softc {
 	struct timeout			calib_to;
 
 	struct run_rx_ring		rxq;
-	struct run_tx_ring		txq[6];
+	struct run_tx_ring		txq[4];
 	struct run_host_cmd_ring	cmdq;
 	uint8_t				qfullmsk;
 	int				sifs;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.11 2009/03/14 15:40:29 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.12 2009/03/14 15:53:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -333,6 +333,8 @@ run_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Find all bulk endpoints.  There are 7 bulk endpoints: 1 for RX
 	 * and 6 for TX (4 EDCAs + HCCA + Prio).
+	 * Update 03-14-2009:  some devices like the Planex GW-US300MiniS
+	 * seem to have only 4 TX bulk endpoints (Fukaumi Naoki).
 	 */
 	nrx = ntx = 0;
 	id = usbd_get_interface_descriptor(sc->sc_iface);
@@ -344,7 +346,7 @@ run_attach(struct device *parent, struct device *self, void *aux)
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN) {
 			sc->rxq.pipe_no = ed->bEndpointAddress;
 			nrx++;
-		} else if (ntx < 6) {
+		} else if (ntx < 4) {
 			sc->txq[ntx].pipe_no = ed->bEndpointAddress;
 			sc->txq[ntx].pktsize =
 			    UE_GET_SIZE(UGETW(ed->wMaxPacketSize));
@@ -352,7 +354,7 @@ run_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 	/* make sure we've got them all */
-	if (nrx < 1 || ntx < 6) {
+	if (nrx < 1 || ntx < 4) {
 		printf("%s: missing endpoint\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -485,7 +487,7 @@ run_detach(struct device *self, int flags)
 		if_detach(ifp);
 	}
 
-	for (qid = 0; qid < 6; qid++)
+	for (qid = 0; qid < 4; qid++)
 		run_free_tx_ring(sc, qid);
 	run_free_rx_ring(sc);
 
@@ -2819,8 +2821,8 @@ run_init(struct ifnet *ifp)
 	/* init host command ring */
 	sc->cmdq.cur = sc->cmdq.next = sc->cmdq.queued = 0;
 
-	/* init Tx rings (4 EDCAs + HCCA + Prio) */
-	for (qid = 0; qid < 6; qid++) {
+	/* init Tx rings (4 EDCAs) */
+	for (qid = 0; qid < 4; qid++) {
 		if ((error = run_alloc_tx_ring(sc, qid)) != 0)
 			goto fail;
 	}
@@ -3051,7 +3053,7 @@ run_stop(struct ifnet *ifp, int disable)
 
 	/* reset Tx and Rx rings */
 	sc->qfullmsk = 0;
-	for (qid = 0; qid < 6; qid++)
+	for (qid = 0; qid < 4; qid++)
 		run_free_tx_ring(sc, qid);
 	run_free_rx_ring(sc);
 }
