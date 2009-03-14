@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.410 2009/03/12 05:05:41 claudio Exp $
+$OpenBSD: usbdevs,v 1.411 2009/03/14 06:23:46 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1187,6 +1187,7 @@ product DLINK2 DWA110		0x3c07	DWA-110
 product DLINK2 RT2870_1		0x3c09	RT2870
 product DLINK2 DWA160A		0x3c10	DWA-160A
 product DLINK2 RT2870_2		0x3c11	RT2870
+product DLINK2 DWA130		0x3c13	DWA-130
 
 /* D-Link(3) products */
 product DLINK3 KVM221		0x020f	KVM-221
