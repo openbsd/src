@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.9 2009/03/12 05:12:39 claudio Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.10 2009/03/14 06:25:24 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -161,6 +161,7 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(AIRTIES,			RT3070),
 
 	/* Entries not in the Ralink Linux driver. */
+	USB_ID(DLINK2,			DWA130),
 	USB_ID(LINKSYS4,		WUSB600N)
 };
 
