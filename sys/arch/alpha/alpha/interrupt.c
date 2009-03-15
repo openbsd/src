@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.26 2009/03/07 15:31:42 miod Exp $ */
+/* $OpenBSD: interrupt.c,v 1.27 2009/03/15 19:41:33 miod Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -659,12 +659,6 @@ void
 splassert_check(int wantipl, const char *func)
 {
 	int curipl = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
-
-	/*
-	 * Tell soft interrupts apart from regular levels.
-	 */
-	if (wantipl < 0)
-		wantipl = IPL_SOFTINT;
 
 	/*
 	 * Depending on the system, hardware interrupts may occur either
