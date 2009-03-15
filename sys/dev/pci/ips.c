@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.64 2009/03/13 20:03:21 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.65 2009/03/15 17:35:42 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -149,7 +149,7 @@ int ips_debug = IPS_D_ERR;
 #define IPS_STAT_PDRVERR	0x0f	/* physical drive error */
 
 /* Extended status codes */
-#define IPS_ESTAT_SEL		0xf0	/* select device */
+#define IPS_ESTAT_SELTIMO	0xf0	/* select timeout */
 #define IPS_ESTAT_OURUN		0xf2	/* over/underrun */
 #define IPS_ESTAT_HOSTRST	0xf7	/* host reset */
 #define IPS_ESTAT_DEVRST	0xf8	/* device reset */
@@ -1040,7 +1040,7 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 	else
 		dcdb->attr |= IPS_DCDB_TIMO20M;
 	dcdb->attr |= IPS_DCDB_DISCON;
-	dcdb->datalen = xs->datalen;
+	dcdb->datalen = htole16(xs->datalen);
 	dcdb->cdblen = xs->cmdlen;
 	dcdb->senselen = MIN(sizeof(xs->sense), sizeof(dcdb->sense));
 	memcpy(dcdb->cdb, xs->cmd, xs->cmdlen);
@@ -1062,7 +1062,7 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 		cmd->code |= IPS_CMD_SG;
 	dcdb->sgaddr = cmd->sgaddr;
 	dcdb->sgcnt = cmd->sgcnt;
-	cmd->sgaddr = ccb->c_cmdbpa + offsetof(struct ips_cmdb, dcdb);
+	cmd->sgaddr = htole32(ccb->c_cmdbpa + offsetof(struct ips_cmdb, dcdb));
 	cmd->sgcnt = 0;
 
 	ccb->c_done = ips_done_pt;
@@ -1298,32 +1298,23 @@ ips_load_xs(struct ips_softc *sc, struct ips_ccb *ccb, struct scsi_xfer *xs)
 int
 ips_start_xs(struct ips_softc *sc, struct ips_ccb *ccb, struct scsi_xfer *xs)
 {
-	int error, s;
-
 	ccb->c_flags = xs->flags;
 	ccb->c_xfer = xs;
+	int ispoll = xs->flags & SCSI_POLL;
 
-	if (!(xs->flags & SCSI_POLL)) {
+	if (!ispoll) {
 		timeout_set(&xs->stimeout, ips_timeout, ccb);
 		timeout_add_msec(&xs->stimeout, xs->timeout);
 	}
 
-	if ((error = ips_cmd(sc, ccb))) {
-		DPRINTF(IPS_D_ERR, ("%s: ips_start_xs: ips_cmd "
-		    "failed, error %d\n", sc->sc_dev.dv_xname, error));
+	/*
+	 * Return value not used here because ips_cmd() must complete
+	 * scsi_xfer on any failure and SCSI layer will handle possible
+	 * errors.
+	 */
+	(void)ips_cmd(sc, ccb);
 
-		if (error == ETIMEDOUT)
-			xs->error = XS_TIMEOUT;
-		else
-			xs->error = XS_DRIVER_STUFFUP;
-
-		s = splbio();
-		scsi_done(xs);
-		splx(s);
-		return (COMPLETE);
-	}
-
-	if (xs->flags & SCSI_POLL)
+	if (ispoll)
 		return (COMPLETE);
 	else
 		return (SUCCESSFULLY_QUEUED);
@@ -1338,8 +1329,8 @@ ips_cmd(struct ips_softc *sc, struct ips_ccb *ccb)
 	DPRINTF(IPS_D_XFER, ("%s: ips_cmd: id 0x%02x, flags 0x%x, xs %p, "
 	    "code 0x%02x, drive %d, sgcnt %d, lba %d, sgaddr 0x%08x, "
 	    "seccnt %d\n", sc->sc_dev.dv_xname, ccb->c_id, ccb->c_flags,
-	    ccb->c_xfer, cmd->code, cmd->drive, cmd->sgcnt, cmd->lba,
-	    cmd->sgaddr, cmd->seccnt));
+	    ccb->c_xfer, cmd->code, cmd->drive, cmd->sgcnt, letoh32(cmd->lba),
+	    letoh32(cmd->sgaddr), letoh16(cmd->seccnt)));
 
 	cmd->id = ccb->c_id;
 
@@ -1388,7 +1379,11 @@ ips_poll(struct ips_softc *sc, struct ips_ccb *ccb)
 	    ccb->c_state));
 
 	if (ccb->c_state != IPS_CCB_DONE)
-		return (ETIMEDOUT);
+		/*
+		 * Command never completed. Fake hardware status byte
+		 * to indicate timeout.
+		 */
+		ccb->c_stat = IPS_STAT_TIMO;
 
 	ips_done(sc, ccb);
 	error = ccb->c_error;
@@ -1424,16 +1419,8 @@ ips_done_xs(struct ips_softc *sc, struct ips_ccb *ccb)
 		bus_dmamap_unload(sc->sc_dmat, ccb->c_dmam);
 	}
 
-	switch (ccb->c_error) {
-	case 0:
-		xs->resid = 0;
-		break;
-	case ETIMEDOUT:
-		xs->error = XS_TIMEOUT;
-		break;
-	default:
-		xs->error = XS_DRIVER_STUFFUP;
-	}
+	xs->resid = 0;
+	xs->error = ccb->c_error;
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
 }
@@ -1446,7 +1433,7 @@ ips_done_pt(struct ips_softc *sc, struct ips_ccb *ccb)
 	struct ips_pt *pt = link->adapter_softc;
 	struct ips_cmdb *cmdb = ccb->c_cmdbva;
 	struct ips_dcdb *dcdb = &cmdb->dcdb;
-	int target = link->target, type;
+	int target = link->target;
 
 	if (!(xs->flags & SCSI_POLL))
 		timeout_del(&xs->stimeout);
@@ -1458,37 +1445,31 @@ ips_done_pt(struct ips_softc *sc, struct ips_ccb *ccb)
 		bus_dmamap_unload(sc->sc_dmat, ccb->c_dmam);
 	}
 
+	xs->resid = 0;
+	xs->error = ccb->c_error;
 	xs->status = dcdb->status;
 
-	if (ccb->c_error) {
-		if (ccb->c_estat == IPS_ESTAT_CKCOND) {
-			xs->error = XS_SENSE;
-			memcpy(&xs->sense, dcdb->sense, MIN(sizeof(xs->sense),
-			    sizeof(dcdb->sense)));
-		} else {
-			if (ccb->c_error == ETIMEDOUT)
-				xs->error = XS_TIMEOUT;
-			else
-				xs->error = XS_DRIVER_STUFFUP;
-		}
-	} else {
-		if (xs->cmd->opcode == INQUIRY) {
-			type = ((struct scsi_inquiry_data *)xs->data)->device &
-			    SID_TYPE;
+	if (xs->error == XS_SENSE)
+		memcpy(&xs->sense, dcdb->sense, MIN(sizeof(xs->sense),
+		    sizeof(dcdb->sense)));
 
-			switch (type) {
-			case T_DIRECT:
-				/* skip physical drive */
-				xs->error = XS_DRIVER_STUFFUP;
-				break;
-			case T_ENCLOSURE:
-			case T_PROCESSOR:
-				/* remember our enclosure */
-				pt->pt_proctgt = target;
-			}
+	if (xs->cmd->opcode == INQUIRY && xs->error == XS_NOERROR) {
+		int type = ((struct scsi_inquiry_data *)xs->data)->device &
+		    SID_TYPE;
+
+		switch (type) {
+		case T_DIRECT:
+			/* mask physical drives */
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+		case T_ENCLOSURE:
+		case T_PROCESSOR:
+			/* remember enclosure address */
+			pt->pt_proctgt = target;
+			break;
 		}
-		xs->resid = 0;
 	}
+
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
 }
@@ -1506,56 +1487,69 @@ ips_done_mgmt(struct ips_softc *sc, struct ips_ccb *ccb)
 int
 ips_error(struct ips_softc *sc, struct ips_ccb *ccb)
 {
-	struct ips_cmd *cmd = ccb->c_cmdbva;
-	struct scsi_xfer *xs = ccb->c_xfer;
+	struct ips_cmdb *cmdb = ccb->c_cmdbva;
+	struct ips_cmd *cmd = &cmdb->cmd;
+	struct ips_dcdb *dcdb = &cmdb->dcdb;
 	u_int8_t gsc = IPS_STAT_GSC(ccb->c_stat);
+	int error = XS_DRIVER_STUFFUP;
 
 	if (gsc == IPS_STAT_OK)
-		return (0);
-	if (gsc == IPS_STAT_LDERR) {
-		DPRINTF(IPS_D_ERR, ("%s: ld%d error, stat 0x%02x, "
-		    "estat 0x%02x\n", sc->sc_dev.dv_xname, cmd->drive,
-		    ccb->c_stat, ccb->c_estat));
-		return (EIO);
-	}
-	if (xs && xs->flags & IPS_SCSI_PT && gsc == IPS_STAT_PDRVERR) {
-		DPRINTF(IPS_D_ERR, ("%s: phys drive error, stat 0x%02x, "
-		    "estat 0x%02x\n", sc->sc_dev.dv_xname, ccb->c_stat,
-		    ccb->c_estat));
-		return (EIO);
-	}
+		return (XS_NOERROR);
 
-	if (xs)
-		sc_print_addr(xs->sc_link);
-	else
-		printf("%s: ", sc->sc_dev.dv_xname);
+	DPRINTF(IPS_D_ERR, ("%s: ips_error: stat 0x%02x, estat 0x%02x, "
+	    "cmd code 0x%02x, drive %d, sgcnt %d, lba %u, seccnt %d",
+	    sc->sc_dev.dv_xname, ccb->c_stat, ccb->c_estat, cmd->code,
+	    cmd->drive, cmd->sgcnt, letoh32(cmd->lba), letoh16(cmd->seccnt)));
+	if (cmd->code == IPS_CMD_DCDB || cmd->code == IPS_CMD_DCDB_SG) {
+		int i;
 
-	if (xs && (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)))
-		printf("%s blocks %u-%u", (xs->flags & SCSI_DATA_IN ?
-		    "read" : "write"), letoh32(cmd->lba),
-		    letoh32(cmd->lba) + letoh16(cmd->seccnt) - 1);
-	else
-		printf("command");
+		DPRINTF(IPS_D_ERR, (", dcdb device 0x%02x, attr 0x%02x, "
+		    "datalen %d, sgcnt %d, status 0x%02x",
+		    dcdb->device, dcdb->attr, letoh16(dcdb->datalen),
+		    dcdb->sgcnt, dcdb->status));
 
-	if (gsc == IPS_STAT_RECOV || (gsc == IPS_STAT_PDRVERR &&
-	    ccb->c_estat == IPS_ESTAT_RECOV))
-		printf(" recovered");
-	printf(" error, opcode 0x%02x, stat 0x%02x, estat 0x%02x\n",
-	    cmd->code, ccb->c_stat, ccb->c_estat);
+		DPRINTF(IPS_D_ERR, (", cdb"));
+		for (i = 0; i < dcdb->cdblen; i++)
+			DPRINTF(IPS_D_ERR, (" %x", dcdb->cdb[i]));
+		if (ccb->c_estat == IPS_ESTAT_CKCOND) {
+			DPRINTF(IPS_D_ERR, (", sense"));
+			for (i = 0; i < dcdb->senselen; i++)
+				DPRINTF(IPS_D_ERR, (" %x", dcdb->sense[i]));
+		}
+	}		
+	DPRINTF(IPS_D_ERR, ("\n"));
 
+	/* Map hardware error codes to SCSI ones */
 	switch (gsc) {
 	case IPS_STAT_RECOV:
-		return (0);
+		error = XS_NOERROR;
+		break;
 	case IPS_STAT_BUSY:
-		return (EBUSY);
+		error = XS_BUSY;
+		break;
 	case IPS_STAT_TIMO:
-		return (ETIMEDOUT);
+		error = XS_TIMEOUT;
+		break;
 	case IPS_STAT_PDRVERR:
-		if (ccb->c_estat == IPS_ESTAT_RECOV)
-			return (0);
+		switch (ccb->c_estat) {
+		case IPS_ESTAT_SELTIMO:
+			error = XS_SELTIMEOUT;
+			break;
+		case IPS_ESTAT_HOSTRST:
+		case IPS_ESTAT_DEVRST:
+			error = XS_RESET;
+			break;
+		case IPS_ESTAT_RECOV:
+			error = XS_NOERROR;
+			break;
+		case IPS_ESTAT_CKCOND:
+			error = XS_SENSE;
+			break;
+		}
+		break;
 	}
 
-	return (EIO);
+	return (error);
 }
 
 int
