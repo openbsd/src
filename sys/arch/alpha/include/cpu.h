@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.36 2008/10/15 23:23:44 deraadt Exp $ */
+/* $OpenBSD: cpu.h,v 1.37 2009/03/15 11:26:37 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -214,7 +214,7 @@ struct cpu_info {
 void	fpusave_cpu(struct cpu_info *, int);
 void	fpusave_proc(struct proc *, int);
 
-#define	CPU_INFO_UNIT(ci)		((ci)->ci_dev->dv_unit)
+#define	CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
 #define	CPU_INFO_ITERATOR		int
 #define	CPU_INFO_FOREACH(cii, ci)	for (cii = 0, ci = curcpu(); \
 					    ci != NULL; ci = ci->ci_next)
@@ -344,7 +344,7 @@ do {									\
 #define	CPU_BOOTED_KERNEL	6	/* string: booted kernel name */
 #define	CPU_FP_SYNC_COMPLETE	7	/* int: always fixup sync fp traps */
 #define CPU_CHIPSET		8	/* chipset information */
-#define CPU_ALLOWAPERTURE         9
+#define CPU_ALLOWAPERTURE	9
 
 #define	CPU_MAXID		10	/* valid machdep IDs */
 
