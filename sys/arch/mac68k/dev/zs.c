@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.26 2008/01/23 16:37:56 jsing Exp $	*/
+/*	$OpenBSD: zs.c,v 1.27 2009/03/15 20:40:25 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.19 1998/01/12 19:22:18 thorpej Exp $	*/
 
 /*
@@ -135,8 +135,6 @@ static int zs_defspeed[NZSC][2] = {
 };
 void	*zs_conschan = 0;
 int	zs_consunit;
-/* device to which the console is attached--if serial. */
-dev_t	mac68k_zsdev;
 /* Mac stuff */
 volatile unsigned char *sccA = 0;
 int	nzsc_attached = 0;	/* needed as long as we have spurious
@@ -231,7 +229,7 @@ struct cfdriver zsc_cd = {
 };
 
 int zshard(void *);
-int zssoft(void *);
+void zssoft(void *);
 
 
 /*
@@ -415,6 +413,8 @@ zsc_attach(parent, self, aux)
 		}
 	}
 
+	/* XXX - Now safe to install interrupt handlers. */
+
 	if (current_mac_model->class == MACH_CLASSAV) {
 		add_psc_lev4_intr(PSCINTR_SCCA, zshard, zsc);
 		add_psc_lev4_intr(PSCINTR_SCCB, zshard, zsc);
@@ -422,7 +422,7 @@ zsc_attach(parent, self, aux)
 		intr_establish(zshard, zsc, ZSHARD_PRI, self->dv_xname);
 	}
 
-	/* XXX - Now safe to install interrupt handlers. */
+	zsc->zsc_softih = softintr_establish(IPL_SOFTTTY, zssoft, zsc);
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.
@@ -482,8 +482,6 @@ zsmd_setclock(cs)
 	via_set_modem((xcs->cs_pclk_flag & ZSC_EXTERN) ? 1 : 0);
 }
 
-static int zssoftpending;
-
 /*
  * Do the minimum work to pull data off of the chip and queue it up
  * for later processing.
@@ -493,53 +491,48 @@ zshard(arg)
 	void *arg;
 {
 	struct zsc_softc *zsc = (struct zsc_softc *)arg;
-	int rval;
+	int rr3, rval;
+
+	/*
+	 * The horror: the adb subsystem will invoke us directly.
+	 * However if we were already servicing an interrupt,
+	 * we'll lose bigtime. Don't allow such reentrancy.
+	 */
+	static int zshard_busy = 0;
+
+	if (zshard_busy != 0)
+		return 0;
 
 	if (zsc == NULL)
 		return 0;
 
+	zshard_busy++;
+
 	rval = 0;
-	rval |= zsc_intr_hard(zsc);
+	while ((rr3 = zsc_intr_hard(zsc)))
+		rval |= rr3;
+
 	if ((zsc->zsc_cs[0]->cs_softreq) || (zsc->zsc_cs[1]->cs_softreq)) {
 		/* zsc_req_softint(zsc); */
-		/* We are at splzs here, so no need to lock. */
-		if (zssoftpending == 0) {
-			zssoftpending = 1;
-			setsoftserial();
-		}
+		softintr_schedule(zsc->zsc_softih);
 	}
+
+	zshard_busy--;
+
 	return (rval);
 }
 
-/*
- * Similar scheme as for zshard (look at all of them)
- */
-int
+void
 zssoft(arg)
 	void *arg;
 {
-	register struct zsc_softc *zsc;
-	register int unit;
+	struct zsc_softc *zsc = (struct zsc_softc *)arg;
+	int s;
 
-	/* This is not the only ISR on this IPL. */
-	if (zssoftpending == 0)
-		return (0);
-
-	/*
-	 * The soft intr. bit will be set by zshard only if
-	 * the variable zssoftpending is zero.
-	 */
-	zssoftpending = 0;
-
-	for (unit = 0; unit < zsc_cd.cd_ndevs; ++unit) {
-		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		(void) zsc_intr_soft(zsc);
-	}
-	return (1);
+	s = spltty();
+	zsc_intr_soft(zsc);
+	splx(s);
 }
-
 
 #ifndef ZS_TOLERANCE
 #define ZS_TOLERANCE 51
@@ -837,7 +830,8 @@ zs_write_reg(cs, reg, val)
 	ZS_DELAY();
 }
 
-u_char zs_read_csr(cs)
+u_char
+zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
 	u_char val;
@@ -849,7 +843,8 @@ u_char zs_read_csr(cs)
 	return val;
 }
 
-void  zs_write_csr(cs, val)
+void
+zs_write_csr(cs, val)
 	struct zs_chanstate *cs;
 	register u_char val;
 {
@@ -858,7 +853,8 @@ void  zs_write_csr(cs, val)
 	ZS_DELAY();
 }
 
-u_char zs_read_data(cs)
+u_char
+zs_read_data(cs)
 	struct zs_chanstate *cs;
 {
 	register u_char val;
@@ -868,7 +864,8 @@ u_char zs_read_data(cs)
 	return val;
 }
 
-void  zs_write_data(cs, val)
+void
+zs_write_data(cs, val)
 	struct zs_chanstate *cs;
 	u_char val;
 {
@@ -973,7 +970,7 @@ zscnprobe(struct consdev * cp)
 		zs_consunit = unit;
 		zs_conschan = (struct zschan *) -1; /* dummy flag for zs_init() */
 		
-		mac68k_zsdev = cp->cn_dev = makedev(maj, unit);
+		cp->cn_dev = makedev(maj, unit);
 	}
 	if (mac68k_machine.serial_boot_echo) {
 		/*

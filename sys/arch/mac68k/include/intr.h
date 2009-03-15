@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.18 2007/11/30 08:19:43 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.19 2009/03/15 20:40:25 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.9 1998/08/12 06:58:42 scottr Exp $	*/
 
 /*
@@ -55,8 +55,7 @@ extern u_short	mac68k_statclockipl;
  *	- compute CPU PSL values for the spl*() calls.
  */
 #define	IPL_NONE	0
-#define	IPL_SOFTNET	1
-#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTINT	1
 #define	IPL_BIO		2
 #define	IPL_AUDIO	PSLTOIPL(mac68k_audioipl)
 #define	IPL_NET		PSLTOIPL(mac68k_netipl)
@@ -96,25 +95,7 @@ extern u_short	mac68k_statclockipl;
 /* watch out for side effects */
 #define splx(s)         	((s) & PSL_IPL ? _spl(s) : spl0())
 
-/*
- * simulated software interrupt register
- */
-extern volatile u_int8_t ssir;
-
-#define	SIR_NET		0x01
-#define	SIR_CLOCK	0x02
-#define	SIR_SERIAL	0x04
-#define SIR_ADB		0x08
-
-#define	siron(mask)	\
-	__asm __volatile ( "orb %1,%0" : "=m" (ssir) : "i" (mask))
-#define	siroff(mask)	\
-	__asm __volatile ( "andb %1,%0" : "=m" (ssir) : "ir" (~(mask)))
-
-#define	setsoftnet()	siron(SIR_NET)
-#define	setsoftclock()	siron(SIR_CLOCK)
-#define	setsoftserial()	siron(SIR_SERIAL)
-#define	setsoftadb()	siron(SIR_ADB)
+#include <m68k/intr.h>		/* soft interrupt support */
 
 /* intr.c */
 void	intr_init(void);

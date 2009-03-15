@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.55 2008/06/08 20:57:19 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.56 2009/03/15 20:40:25 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -476,30 +476,19 @@ copyfault:
 
 	case T_SSIR:		/* Software interrupt */
 	case T_SSIR|T_USER:
-		if (ssir & SIR_SERIAL) {
-			void zssoft(int);
-			siroff(SIR_SERIAL);
-			uvmexp.softs++;
-			zssoft(0);
+	    {
+		int sir, q, mask;
+
+		while ((sir = softpending) != 0) {
+			atomic_clearbits_int(&softpending, sir);
+
+			for (q = SI_NQUEUES - 1, mask = 1 << (SI_NQUEUES - 1);
+			    mask != 0; q--, mask >>= 1)
+				if (mask & sir)
+					softintr_dispatch(q);
 		}
-		if (ssir & SIR_NET) {
-			void netintr(void);
-			siroff(SIR_NET);
-			uvmexp.softs++;
-			netintr();
-		}
-		if (ssir & SIR_CLOCK) {
-			void softclock(void);
-			siroff(SIR_CLOCK);
-			uvmexp.softs++;
-			softclock();
-		}
-		if (ssir & SIR_ADB) {
-			void adb_soft_intr(void);
-			siroff(SIR_ADB);
-			uvmexp.softs++;
-			adb_soft_intr();
-		}
+	    }
+
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.12 2008/06/26 05:42:12 ray Exp $	*/
+/*	$OpenBSD: intr.c,v 1.13 2009/03/15 20:40:25 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.2 1998/08/25 04:03:56 scottr Exp $	*/
 
 /*-
@@ -42,9 +42,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <net/netisr.h>
-
-#include <machine/atomic.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
@@ -201,28 +198,6 @@ intr_dispatch(int evec)	/* format | vector offset */
 #if 0
 		printf("spurious interrupt, ipl %d\n", ipl);
 #endif
-	}
-}
-
-int netisr;
-
-void
-netintr()
-{
-	int isr;
-
-	while ((isr = netisr) != 0) {
-		atomic_clearbits_int(&netisr, isr);
-		
-#define DONETISR(bit, fn)						\
-		do {							\
-			if (isr & (1 << bit))				\
-				(fn)();					\
-		} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef  DONETISR
 	}
 }
 

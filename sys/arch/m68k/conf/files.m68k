@@ -1,4 +1,4 @@
-#	$OpenBSD: files.m68k,v 1.19 2008/04/25 14:51:35 jmc Exp $
+#	$OpenBSD: files.m68k,v 1.20 2009/03/15 20:40:25 miod Exp $
 #	$NetBSD: files.m68k,v 1.18 1997/06/06 23:15:28 veego Exp $
 #
 file	arch/m68k/m68k/bcopy.s
@@ -17,6 +17,7 @@ file	arch/m68k/m68k/oc_cksum.s		inet
 file	arch/m68k/m68k/process_machdep.c
 file	arch/m68k/m68k/regdump.c
 file	arch/m68k/m68k/sig_machdep.c
+file	arch/m68k/m68k/softintr.c
 
 #
 # Older m68k4k executables binary compatibility

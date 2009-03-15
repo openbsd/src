@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.60 2009/03/01 22:08:13 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.61 2009/03/15 20:40:25 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1009,10 +1009,10 @@ ENTRY_NOPROFILE(trap0)
 	addql	#4,sp			| pop syscall arg
 	tstl	_C_LABEL(astpending)
 	jne	Lrei2
-	tstb	_C_LABEL(ssir)
+	tstl	_C_LABEL(softpending)
 	jeq	Ltrap1
 	movw	#SPL1,sr
-	tstb	_C_LABEL(ssir)
+	tstl	_C_LABEL(softpending)
 	jne	Lsir1
 Ltrap1:
 	movl	sp@(FR_SP),a0		| grab and restore
@@ -1197,7 +1197,7 @@ ENTRY_NOPROFILE(spurintr)
  * necessitating a stack cleanup.
  */
 
-BSS(ssir,1)
+BSS(softpending,4)
 
 ASENTRY_NOPROFILE(rei)
 	tstl	_C_LABEL(astpending)	| AST pending?
@@ -1235,7 +1235,7 @@ Laststkadj:
 	movl	sp@,sp			| and our SP
 	rte				| and do real RTE
 Lchksir:
-	tstb	_C_LABEL(ssir)		| SIR pending?
+	tstl	_C_LABEL(softpending)	| SIR pending?
 	jeq	Ldorte			| no, all done
 	movl	d0,sp@-			| need a scratch register
 	movw	sp@(4),d0		| get SR
@@ -1244,7 +1244,7 @@ Lchksir:
 	movl	sp@+,d0			| restore scratch register
 Lgotsir:
 	movw	#SPL1,sr		| prevent others from servicing int
-	tstb	_C_LABEL(ssir)		| too late?
+	tstl	_C_LABEL(softpending)	| too late?
 	jeq	Ldorte			| yes, oh well...
 	clrl	sp@-			| stack adjust
 	moveml	#0xFFFF,sp@-		| save all registers
@@ -1690,7 +1690,7 @@ ENTRY(spl0)
 	moveq	#0,d0
 	movw	sr,d0			| get old SR for return
 	movw	#PSL_LOWIPL,sr		| restore new SR
-	tstb	_C_LABEL(ssir)		| software interrupt pending?
+	tstl	_C_LABEL(softpending)	| software interrupt pending?
 	jeq	Lspldone		| no, all done
 	subql	#4,sp			| make room for RTE frame
 	movl	sp@(4),sp@(2)		| position return address

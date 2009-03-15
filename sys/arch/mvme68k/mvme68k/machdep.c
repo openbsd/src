@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.113 2009/03/01 22:08:13 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.114 2009/03/15 20:40:25 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -110,8 +110,6 @@
 #endif
  
 #include <dev/cons.h>
-
-#include <net/netisr.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -868,29 +866,6 @@ badvaddr(addr, size)
 	}
 	nofault = (int *)0;
 	return (0);
-}
-
-int netisr;
-
-void
-netintr(arg)
-	void *arg;
-{
-	int n;
-
-	while ((n = netisr) != 0) {
-		atomic_clearbits_int(&netisr, n);
-
-#define DONETISR(bit, fn)						\
-		do {							\
-			if (n & (1 << (bit)))				\
-				(fn)();					\
-		} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-	}
 }
 
 /*

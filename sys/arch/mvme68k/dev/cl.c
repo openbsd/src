@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.45 2009/03/01 21:37:41 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.46 2009/03/15 20:40:25 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -128,7 +128,7 @@ struct clsoftc {
 	char			sc_rxintrname[16 + 3];
 	char			sc_txintrname[16 + 3];
 	int			sc_flags;
-	u_int8_t		ssir;
+	void			*sc_softih;
 };
 
 const struct {
@@ -315,7 +315,7 @@ clattach(parent, self, aux)
 		sc->sc_cl[i].psupply = sc->sc_cl[i].buffer;
 		sc->sc_cl[i].nchar = 0;
 	}
-	sc->ssir = allocate_sir(cl_softint, (void *)sc);
+	sc->sc_softih = softintr_establish(IPL_SOFTTTY, cl_softint, sc);
 #endif
 	for (i = 0; i < CLCD_PORTS_PER_CHIP; i++) {
 #if 0
@@ -1973,7 +1973,7 @@ cl_appendbuf(sc, channel, c)
 		sc->sc_cl[channel].psupply = sc->sc_cl[channel].buffer;
 	}
 	sc->sc_cl[channel].nchar ++;
-	setsoftint(sc->ssir);
+	softintr_schedule(sc->sc_softih);
 	/* splx (s); */
 	
 }
@@ -2004,7 +2004,7 @@ cl_appendbufn(sc, channel, buf, cnt)
 		}
 		sc->sc_cl[channel].nchar ++;
 	}
-	setsoftint(sc->ssir);
+	softintr_schedule(sc->sc_softih);
 	/* splx (s); */
 }
 

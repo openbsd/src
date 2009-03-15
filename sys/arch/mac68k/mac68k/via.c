@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.31 2007/09/10 20:29:50 miod Exp $	*/
+/*	$OpenBSD: via.c,v 1.32 2009/03/15 20:40:25 miod Exp $	*/
 /*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
@@ -198,8 +198,7 @@ via1_intr(void *arg)
 		return (0);
 
 	/*
-	 * Unflag interrupts here.  If we do it after each interrupt,
-	 * the MRG ADB hangs up.
+	 * Unflag interrupts here.
 	 */
 	via_reg(VIA1, vIFR) = intbits;
 

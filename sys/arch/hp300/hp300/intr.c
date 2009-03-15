@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.22 2008/07/18 21:39:14 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.23 2009/03/15 20:40:23 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.5 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*-
@@ -41,13 +41,9 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <net/netisr.h>
 #include "ppp.h"
 #include "bridge.h"
 
-void	netintr(void);
-
-#include <machine/atomic.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
@@ -275,28 +271,6 @@ intr_dispatch(evec)
 		panic("intr_dispatch: too many stray interrupts");
 	else
 		printf("intr_dispatch: stray level %d interrupt\n", ipl);
-}
-
-int netisr;
-
-void
-netintr()
-{
-	int n;
-
-	while ((n = netisr) != 0) {
-		atomic_clearbits_int(&netisr, n);
-
-#define	DONETISR(bit, fn)						\
-		do {							\
-			if (n & (1 << (bit)))				\
-				(fn)();					\
-		} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef	DONETISR
-	}
 }
 
 #ifdef DIAGNOSTIC

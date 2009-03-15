@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.26 2007/04/10 17:47:54 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.27 2009/03/15 20:40:25 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.47 2005/06/16 22:43:36 jmc Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.51 2005/06/16 22:43:36 jmc Exp $	*/
 
@@ -112,6 +112,11 @@ int	adb_polling;		/* Are we polling?  (Debugger mode) */
 #ifdef ADB_DEBUG
 int	adb_debug;		/* Output debugging messages */
 #endif /* ADB_DEBUG */
+
+struct adb_softc {
+	struct device	 sc_dev;
+	void		*sc_softih;
+};
 
 /* some misc. leftovers */
 #define vPB		0x0000
@@ -298,7 +303,7 @@ int	adb_intr(void *);
 int	adb_intr_II(void *);
 int	adb_intr_IIsi(void *);
 int	adb_intr_cuda(void *);
-void	adb_soft_intr(void);
+void	adb_soft_intr(void *);
 int	send_adb_II(u_char *, u_char *, void *, void *, int);
 int	send_adb_IIsi(u_char *, u_char *, void *, void *, int);
 int	send_adb_cuda(u_char *, u_char *, void *, void *, int);
@@ -306,14 +311,14 @@ void	adb_intr_cuda_test(void);
 void	adb_cuda_tickle(void);
 void	adb_pass_up(struct adbCommand *);
 void	adb_op_comprout(caddr_t, caddr_t, int);
-void	adb_reinit(struct device *);
+void	adb_reinit(struct adb_softc *);
 int	count_adbs(void);
 int	get_ind_adb_info(ADBDataBlock *, int);
 int	get_adb_info(ADBDataBlock *, int);
 void	adb_setup_hw_type(void);
 int	adb_op(Ptr, Ptr, Ptr, short);
 void	adb_read_II(u_char *);
-void	adb_hw_setup(struct device *);
+void	adb_hw_setup(struct adb_softc *);
 void	adb_hw_setup_IIsi(u_char *);
 int	adb_cmd_result(u_char *);
 int	adb_guess_next_device(void);
@@ -394,7 +399,7 @@ adb_intr_cuda(void *arg)
 	struct adbCommand packet;
 
 	s = splhigh();		/* can't be too careful - might be called */
-	/* from a routine, NOT an interrupt */
+				/* from a routine, NOT an interrupt */
 
 	ADB_VIA_CLR_INTR();	/* clear interrupt */
 	ADB_VIA_INTR_DISABLE();	/* disable ADB interrupt on IIs. */
@@ -608,7 +613,7 @@ switch_start:
 	splx(s);		/* restore */
 
 	return (1);
-}				/* end adb_intr_cuda */
+}
 
 
 int
@@ -696,12 +701,12 @@ send_adb_cuda(u_char *in, u_char *buffer, void *compRout, void *data, int
 			if (ADB_SR_INTR_IS_ON) { /* wait for "interrupt" */
 				adb_intr_cuda(NULL); /* go process it */
 				if (adb_polling)
-					adb_soft_intr();
+					adb_soft_intr(NULL);
 			}
 	}
 
 	return 0;
-}				/* send_adb_cuda */
+}
 
 
 int
@@ -1139,7 +1144,7 @@ send_adb_II(u_char *in, u_char *buffer, void *compRout, void *data, int command)
 			if (ADB_SR_INTR_IS_ON) { /* wait for "interrupt" */
 				adb_intr_II(NULL); /* go process it */
 				if (adb_polling)
-					adb_soft_intr();
+					adb_soft_intr(NULL);
 			}
 	}
 
@@ -1418,7 +1423,7 @@ switch_start:
 	splx(s);		/* restore */
 
 	return (1);
-}				/* end adb_intr_IIsi */
+}
 
 
 /*****************************************************************************
@@ -1512,12 +1517,12 @@ send_adb_IIsi(u_char *in, u_char *buffer, void *compRout, void *data, int
 			if (ADB_SR_INTR_IS_ON) { /* wait for "interrupt" */
 				adb_intr_IIsi(NULL); /* go process it */
 				if (adb_polling)
-					adb_soft_intr();
+					adb_soft_intr(NULL);
 			}
 	}
 
-	 return 0;
-}				/* send_adb_IIsi */
+	return 0;
+}
 
 /*
  * adb_pass_up is called by the interrupt-time routines.
@@ -1546,6 +1551,8 @@ send_adb_IIsi(u_char *in, u_char *buffer, void *compRout, void *data, int
 void
 adb_pass_up(struct adbCommand *in)
 {
+	extern struct cfdriver adb_cd;
+	struct adb_softc *sc;
 	int start = 0, len = 0, cmd = 0;
 	ADBDataBlock block;
 
@@ -1650,10 +1657,14 @@ adb_pass_up(struct adbCommand *in)
 	 * If the debugger is running, call upper half manually.
 	 * Otherwise, trigger a soft interrupt to handle the rest later.
 	 */
-	if (adb_polling)
-		adb_soft_intr();
+	if (adb_cd.cd_ndevs != 0)
+		sc = (struct adb_softc *)adb_cd.cd_devs[0];
 	else
-		setsoftadb();
+		sc = NULL;
+	if (adb_polling || sc == NULL || sc->sc_softih == NULL)
+		adb_soft_intr(NULL);
+	else
+		softintr_schedule(sc->sc_softih);
 }
 
 
@@ -1663,7 +1674,7 @@ adb_pass_up(struct adbCommand *in)
  *
  */
 void
-adb_soft_intr(void)
+adb_soft_intr(void *arg)
 {
 	int s;
 	int cmd = 0;
@@ -1803,14 +1814,14 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
  * config (mainly VIA settings) for the various models.
  */
 void
-adb_hw_setup(struct device *self)
+adb_hw_setup(struct adb_softc *sc)
 {
 	volatile int i;
 	u_char send_string[ADB_MAX_MSG_LENGTH];
 
 	switch (adbHardware) {
 	case ADB_HW_II:
-		via1_register_irq(2, adb_intr_II, self, self->dv_xname);
+		via1_register_irq(2, adb_intr_II, sc, sc->sc_dev.dv_xname);
 
 		via_reg(VIA1, vDirB) |= 0x30;	/* register B bits 4 and 5:
 						 * outputs */
@@ -1829,7 +1840,7 @@ adb_hw_setup(struct device *self)
 		break;
 
 	case ADB_HW_IISI:
-		via1_register_irq(2, adb_intr_IIsi, self, self->dv_xname);
+		via1_register_irq(2, adb_intr_IIsi, sc, sc->sc_dev.dv_xname);
 		via_reg(VIA1, vDirB) |= 0x30;	/* register B bits 4 and 5:
 						 * outputs */
 		via_reg(VIA1, vDirB) &= 0xf7;	/* register B bit 3: input */
@@ -1864,11 +1875,11 @@ adb_hw_setup(struct device *self)
 		 * XXX - really PM_VIA_CLR_INTR - should we put it in
 		 * pm_direct.h?
 		 */
-		pm_hw_setup(self);
+		pm_hw_setup(&sc->sc_dev);
 		break;
 
 	case ADB_HW_CUDA:
-		via1_register_irq(2, adb_intr_cuda, self, self->dv_xname);
+		via1_register_irq(2, adb_intr_cuda, sc, sc->sc_dev.dv_xname);
 		via_reg(VIA1, vDirB) |= 0x30;	/* register B bits 4 and 5:
 						 * outputs */
 		via_reg(VIA1, vDirB) &= 0xf7;	/* register B bit 3: input */
@@ -1979,7 +1990,7 @@ adb_hw_setup_IIsi(u_char *buffer)
  *
  */
 void
-adb_reinit(struct device *self)
+adb_reinit(struct adb_softc *sc)
 {
 	u_char send_string[ADB_MAX_MSG_LENGTH];
 	ADBDataBlock data;	/* temp. holder for getting device info */
@@ -2012,7 +2023,7 @@ adb_reinit(struct device *self)
 		ADBDevTable[i].origAddr = ADBDevTable[i].currentAddr = 0;
 	}
 
-	adb_hw_setup(self);	/* init the VIA bits and hard reset ADB */
+	adb_hw_setup(sc);	/* init the VIA bits and hard reset ADB */
 
 	delay(1000);
 
@@ -2494,7 +2505,6 @@ set_adb_info(ADBSetInfoBlock *info, int adbAddr)
 		}
 
 	return (-1);		/* not found */
-
 }
 
 /* caller should really use machine-independant version: getPramTime */
@@ -2741,8 +2751,9 @@ void	adb_attach_deferred(void *);
 /*
  * Driver definition.
  */
+
 struct cfattach adb_ca = {
-	sizeof(struct device), adbmatch, adbattach
+	sizeof(struct adb_softc), adbmatch, adbattach
 };
 
 int
@@ -2769,15 +2780,15 @@ adbattach(struct device *parent, struct device *self, void *aux)
 void
 adb_attach_deferred(void *v)
 {
-	struct device *self = v;
+	struct adb_softc *sc = v;
 	ADBDataBlock adbdata;
 	struct adb_attach_args aa_args;
 	int totaladbs;
 	int adbindex, adbaddr;
 
-	printf("%s: ", self->dv_xname);
+	printf("%s: ", sc->sc_dev.dv_xname);
 	adb_polling = 1;
-	adb_reinit(self);
+	adb_reinit(sc);
 
 #ifdef ADB_DEBUG
 	if (adb_debug)
@@ -2797,7 +2808,9 @@ adb_attach_deferred(void *v)
 		aa_args.adbaddr = adbaddr;
 		aa_args.handler_id = (int)(adbdata.devType);
 
-		(void)config_found(self, &aa_args, adbprint);
+		(void)config_found(&sc->sc_dev, &aa_args, adbprint);
 	}
+
+	sc->sc_softih = softintr_establish(IPL_SOFTTTY, adb_soft_intr, NULL);
 	adb_polling = 0;
 }

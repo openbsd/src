@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.24 2008/07/18 21:39:16 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.25 2009/03/15 20:40:25 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -58,8 +58,7 @@ struct isr {
  *	- compute CPU PSL values for the spl*() calls.
  */
 #define	IPL_NONE	0
-#define	IPL_SOFTNET	1
-#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTINT	1
 #define	IPL_BIO		2
 #define	IPL_NET		3
 #define	IPL_TTY		4
@@ -90,21 +89,7 @@ extern	unsigned short hp300_varpsl[NISR];
 /* watch out for side effects */
 #define	splx(s)			((s) & PSL_IPL ? _spl((s)) : spl0())
 
-/*
- * Simulated software interrupt register.
- */
-extern volatile u_int8_t ssir;
-
-#define	SIR_NET		0x01
-#define	SIR_CLOCK	0x02
-
-#define	siron(mask)	\
-	__asm __volatile ( "orb %1,%0" : "=m" (ssir) : "i" (mask))
-#define	siroff(mask)	\
-	__asm __volatile ( "andb %1,%0" : "=m" (ssir) : "ir" (~(mask)))
-
-#define	setsoftnet()	siron(SIR_NET)
-#define	setsoftclock()	siron(SIR_CLOCK)
+#include <m68k/intr.h>		/* soft interrupt support */
 
 /* locore.s */
 int	spl0(void);

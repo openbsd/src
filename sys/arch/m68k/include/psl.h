@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.8 2009/03/15 19:40:40 miod Exp $	*/
+/*	$OpenBSD: psl.h,v 1.9 2009/03/15 20:40:25 miod Exp $	*/
 /*	$NetBSD: psl.h,v 1.5 1994/10/26 07:50:50 cgd Exp $	*/
 
 /*
@@ -71,27 +71,6 @@
 #define	USERMODE(ps)	(((ps) & PSL_S) == 0)
 
 #ifdef	_KERNEL
-
-/* SPL asserts */
-#ifdef DIAGNOSTIC
-/*
- * Although this function is implemented in MI code, it must be in this MD
- * header because we don't want this header to include MI includes.
- */
-void splassert_fail(int, int, const char *);
-extern int splassert_ctl;
-void splassert_check(int, const char *);
-#define splassert(__wantipl)						\
-do {									\
-	if (splassert_ctl > 0) {					\
-		splassert_check(__wantipl, __func__);			\
-	}								\
-} while (0)
-#define splsoftassert(wantipl) splassert(wantipl)
-#else
-#define	splassert(wantipl)	do { /* nothing */ } while (0)
-#define	splsoftassert(wantipl)	do { /* nothing */ } while (0)
-#endif
 
 /*
  * Convert PSL values to CPU IPLs and vice-versa.

@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.50 2008/11/28 02:44:17 brad Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.51 2009/03/15 20:40:25 miod Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -29,7 +29,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/netisr.h>
 
 #ifdef INET
 #include <netinet/in.h>
