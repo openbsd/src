@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.93 2009/03/15 19:15:25 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.94 2009/03/15 19:32:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -663,7 +663,7 @@ struct s_runner {
 	size_t		active;
 };
 
-struct s_smtp {
+struct s_session {
 	size_t		sessions;
 	size_t		sessions_active;
 
@@ -682,7 +682,8 @@ struct stats {
 		struct s_parent	parent;
 		struct s_queue	queue;
 		struct s_runner	runner;
-		struct s_smtp	smtp;
+		struct s_session smtp;
+		struct s_session mta;
 	}			u;
 };
 

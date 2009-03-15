@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.16 2009/03/01 12:12:58 jacekm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.17 2009/03/15 19:32:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -261,7 +261,7 @@ show_stats_output(struct imsg *imsg)
 	static struct s_parent	s_parent;
 	static struct s_queue	s_queue;
 	static struct s_runner	s_runner;
-	static struct s_smtp	s_smtp;
+	static struct s_session	s_smtp;
 
 	switch (imsg->hdr.type) {
 	case IMSG_PARENT_STATS:
@@ -274,7 +274,7 @@ show_stats_output(struct imsg *imsg)
 		s_runner = *(struct s_runner *)imsg->data;
 		break;
 	case IMSG_SMTP_STATS:
-		s_smtp = *(struct s_smtp *)imsg->data;
+		s_smtp = *(struct s_session *)imsg->data;
 		break;
 	default:
 		errx(1, "show_stats_output: bad hdr type (%d)", imsg->hdr.type);

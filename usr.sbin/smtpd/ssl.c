@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.10 2009/02/05 21:25:19 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.11 2009/03/15 19:32:11 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -55,7 +55,7 @@ void	 ssl_client_init(struct session *);
 extern void	bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 		    size_t, void *);
 
-extern struct s_smtp	s_smtp;
+extern struct s_session	s_smtp;
 
 void
 ssl_connect(int fd, short event, void *p)

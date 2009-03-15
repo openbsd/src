@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.30 2009/03/15 18:12:15 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.31 2009/03/15 19:32:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -50,7 +50,7 @@ void		smtp_accept(int, short, void *);
 void		session_timeout(int, short, void *);
 void		session_auth_pickup(struct session *, char *, size_t);
 
-struct s_smtp	s_smtp;
+struct s_session	s_smtp;
 
 void
 smtp_sig_handler(int sig, short event, void *p)

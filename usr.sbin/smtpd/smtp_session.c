@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.62 2009/03/15 18:12:15 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.63 2009/03/15 19:32:10 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -73,7 +73,7 @@ int		session_set_path(struct path *, char *);
 void		session_timeout(int, short, void *);
 void		session_cleanup(struct session *);
 
-extern struct s_smtp	s_smtp;
+extern struct s_session	s_smtp;
 
 struct session_timeout {
 	enum session_state	state;
