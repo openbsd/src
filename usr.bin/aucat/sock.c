@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.15 2009/03/12 07:26:04 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.16 2009/03/15 10:31:37 jakemsr Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -135,8 +135,8 @@ rsock_opos(struct aproc *p, struct abuf *obuf, int delta)
 	    f, delta, f->delta);
 
 	/*
-	 * negative deltas are xrun notifications for internal uses
-	 * only. Dont generate a packet for this, the client will be
+	 * Negative deltas are xrun notifications for internal uses
+	 * only. Don't generate a packet for this, the client will be
 	 * notified later.
 	 */
 	if (delta < 0)
@@ -242,8 +242,8 @@ wsock_ipos(struct aproc *p, struct abuf *obuf, int delta)
 	DPRINTFN(3, "wsock_ipos: %p, delta = %d, f->delta = %d\n",
 	    f, delta, f->delta);
 	/*
-	 * negative deltas are xrun notifications for internal uses
-	 * only. Dont generate a packet for this, the client will be
+	 * Negative deltas are xrun notifications for internal uses
+	 * only. Don't generate a packet for this, the client will be
 	 * notified later.
 	 */
 	if (delta < 0)
