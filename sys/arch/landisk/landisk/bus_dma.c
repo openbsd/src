@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.5 2009/03/07 15:34:34 miod Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.6 2009/03/15 09:35:50 miod Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*
@@ -532,14 +532,12 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
-	extern paddr_t avail_start, avail_end;	/* from pmap.c */
 	struct pglist mlist;
 	paddr_t curaddr, lastaddr;
 	struct vm_page *m;
 	int curseg, error;
 
 	DPRINTF(("bus_dmamem_alloc: t = %p, size = %ld, alignment = %ld, boundary = %ld, segs = %p, nsegs = %d, rsegs = %p, flags = %x\n", t, size, alignment, boundary, segs, nsegs, rsegs, flags));
-        DPRINTF(("bus_dmamem_alloc: avail_start = 0x%08lx, avail_end = 0x%08lx\n", avail_start, avail_end));
 
 	/* Always round the size. */
 	size = round_page(size);
