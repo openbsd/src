@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.53 2009/03/01 17:43:25 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.54 2009/03/15 20:39:53 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -2131,7 +2131,7 @@ ASGLOBAL(check_ast)
 	ld	FPTR, r31, 0	/* grab exception frame pointer */
 
 	/*
-	 * If the saved ipl is 0, then call dosoftint() to process soft
+	 * If the saved ipl is 0, then call spl0() to process soft
 	 * interrupts. And if returning to userland, look for ASTs.
 	 */
 
@@ -2142,29 +2142,41 @@ ASGLOBAL(check_ast)
 	ld	r2, FPTR, EF_MASK
 	bcnd	ne0, r2, _ASM_LABEL(ast_done)
 
-	/* save us the setipl calls if no pending software interrupts */
-	ldcr	r3,  CPU
-	ld	r2,   r3, CI_SOFTINTR
-	bcnd	eq0,  r2, _ASM_LABEL(softint_done)
+#ifdef MULTIPROCESSOR
+	/*
+	 * Check for IPI soft interrupt
+	 */
+	ldcr	r3,   CPU
+	or	r15,  r0,   r0
+	addu	r3,   r3,   CI_SOFTIPI_CB
+	xmem	r15,  r3,   r0
+	bcnd	eq0,  r15,   _ASM_LABEL(do_softint)
 
 	bsr.n	_C_LABEL(setipl)
-	 or	r2, r0, IPL_SOFTCLOCK
-	bsr	_C_LABEL(dosoftint)
-	bsr.n	_C_LABEL(setipl)
-	 or	r2, r0, IPL_NONE
+	 or	r2,   r0,   IPL_NONE
 
-ASGLOBAL(softint_done)
+	jsr	r15
+ASLOCAL(do_softint)
+#endif
+
+	/*
+	 * Process soft interrupts, if any.
+	 */
+	bsr	_C_LABEL(spl0)
+
 	/* do not service AST if not returning to user mode */
 	ld	r2, FPTR, EF_EPSR
 	bb1	PSR_SUPERVISOR_MODE_BIT, r2, _ASM_LABEL(ast_done)
-
+1:
 	ldcr	r2,  CPU
 	ld	r3,  r2, CI_CURPROC
 	ld	r2,  r3, P_ASTPENDING
 	bcnd	eq0, r2, _ASM_LABEL(ast_done)
 
-	or	r2, r0, FPTR
-	XCALL(_C_LABEL(ast), _ASM_LABEL(ast_done))
+	bsr.n	_C_LABEL(ast)
+	 or	r2, r0, FPTR
+
+	br	1b
 
 /*
  * void proc_trampoline(void (*func)(void *), void *proc)

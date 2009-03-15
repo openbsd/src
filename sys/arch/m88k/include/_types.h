@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.5 2008/07/21 20:50:54 martynas Exp $	*/
+/*	$OpenBSD: _types.h,v 1.6 2009/03/15 20:39:53 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -116,5 +116,8 @@ typedef int			__wint_t;
 typedef	int			__rune_t;
 typedef	void *			__wctrans_t;
 typedef	void *			__wctype_t;
+
+/* Feature test macros */
+#define __HAVE_GENERIC_SOFT_INTERRUPTS
 
 #endif	/* _M88K__TYPES_H_ */

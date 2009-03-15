@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.19 2009/02/16 22:55:03 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.20 2009/03/15 20:39:53 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -257,4 +257,7 @@ m187_bootstrap()
 	md_raiseipl = m187_raiseipl;
 	md_init_clocks = m1x7_init_clocks;
 	md_delay = m1x7_delay;
+#ifdef MULTIPROCESSOR
+	md_smp_setup = m88100_smp_setup;
+#endif
 }

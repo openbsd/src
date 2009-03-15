@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.52 2009/03/09 19:51:18 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.53 2009/03/15 20:39:53 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -163,7 +163,6 @@ vaddr_t	m188_memsize(void);
 u_int	m188_raiseipl(u_int);
 void	m188_send_ipi(int, cpuid_t);
 u_int	m188_setipl(u_int);
-void	m188_soft_ipi(void);
 void	m188_startup(void);
 
 /*
@@ -238,7 +237,6 @@ m188_bootstrap()
 	md_init_clocks = m188_init_clocks;
 #ifdef MULTIPROCESSOR
 	md_send_ipi = m188_send_ipi;
-	md_soft_ipi = m188_soft_ipi;
 #endif
 	md_delay = m188_delay;
 #ifdef MULTIPROCESSOR
@@ -449,12 +447,6 @@ m188_clock_ipi_handler(struct trapframe *eframe)
 		hardclock((struct clockframe *)eframe);
 	if (ipi & CI_IPI_STATCLOCK)
 		statclock((struct clockframe *)eframe);
-}
-
-void
-m188_soft_ipi()
-{
-	/* this function is not used on MVME188 */
 }
 
 #endif

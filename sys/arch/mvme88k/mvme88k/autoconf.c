@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.43 2009/03/05 21:55:15 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.44 2009/03/15 20:39:53 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -72,6 +72,8 @@ struct device *bootdv;	/* set by device drivers (if found) */
 void
 cpu_configure()
 {
+	softintr_init();
+
 	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
 

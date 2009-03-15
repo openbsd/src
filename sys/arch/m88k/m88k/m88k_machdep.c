@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.48 2009/03/04 19:37:15 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.49 2009/03/15 20:39:53 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -53,6 +53,7 @@
 #include <sys/exec.h>
 #include <sys/errno.h>
 #include <sys/lock.h>
+#include <sys/malloc.h>
 #ifdef MULTIPROCESSOR
 #include <sys/mplock.h>
 #endif
@@ -69,8 +70,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <net/netisr.h>
-
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
@@ -81,7 +80,6 @@ typedef struct {
 	u_int32_t word_one, word_two;
 } m88k_exception_vector_area;
 
-void	dosoftint(void);
 void	dumpconf(void);
 void	dumpsys(void);
 void	regdump(struct trapframe *f);
@@ -348,45 +346,27 @@ need_resched(struct cpu_info *ci)
 }
 
 /*
- * Soft interrupt interface
+ * Generic soft interrupt interface
  */
 
-int netisr;
+void	dosoftint(int);
+int	softpending;
 
 void
-dosoftint()
+dosoftint(int sir)
 {
-	struct cpu_info *ci = curcpu();
-	int sir, n;
-
-	if ((sir = atomic_clear_int(&ci->ci_softintr)) == 0)
-		return;
+	int q, mask;
 
 #ifdef MULTIPROCESSOR
 	__mp_lock(&kernel_lock);
 #endif
 
-	uvmexp.softs++;
-
-	if (ISSET(sir, SIR_NET)) {
-		while ((n = atomic_clear_int(&netisr)) != 0) {
-#define DONETISR(bit, fn)						\
-			do {						\
-				if (n & (1 << bit))			\
-					fn();				\
-			} while (0)
-#include <net/netisr_dispatch.h>
-#undef DONETISR
-		}
-	}
-
-	if (ISSET(sir, SIR_CLOCK))
-		softclock();
+	for (q = SI_NQUEUES - 1, mask = 1 << (SI_NQUEUES - 1); mask != 0;
+	    q--, mask >>= 1)
+		if (mask & sir)
+			softintr_dispatch(q);
 
 #ifdef MULTIPROCESSOR
-	if (ISSET(sir, SIR_IPI))
-		softipi();
-
 	__mp_unlock(&kernel_lock);
 #endif
 }
@@ -394,16 +374,16 @@ dosoftint()
 int
 spl0()
 {
-	struct cpu_info *ci = curcpu();
+	int sir;
 	int s;
 
 	/*
 	 * Try to avoid potentially expensive setipl calls if nothing
 	 * seems to be pending.
 	 */
-	if (ci->ci_softintr != 0) {
-		s = setipl(IPL_SOFTCLOCK);
-		dosoftint();
+	if ((sir = atomic_clear_int(&softpending)) != 0) {
+		s = setipl(IPL_SOFTINT);
+		dosoftint(sir);
 		setipl(IPL_NONE);
 	} else
 		s = setipl(IPL_NONE);

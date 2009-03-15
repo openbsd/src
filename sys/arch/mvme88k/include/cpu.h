@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.43 2009/02/27 05:19:34 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.44 2009/03/15 20:39:53 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -40,10 +40,11 @@
 #ifndef	_MVME88K_CPU_H_
 #define	_MVME88K_CPU_H_
 
-#include <sys/evcount.h>
 #include <m88k/cpu.h>
 
 #ifdef _KERNEL
+
+#include <sys/evcount.h>
 
 /* board dependent pointers */
 extern void	(*md_interrupt_func_ptr)(struct trapframe *);
@@ -58,7 +59,6 @@ extern u_int	(*md_raiseipl)(u_int);
 extern void	(*md_init_clocks)(void);
 extern void	(*md_send_ipi)(int, cpuid_t);
 extern void	(*md_delay)(int);
-extern void	(*md_soft_ipi)(void);
 extern void	(*md_smp_setup)(struct cpu_info *);
 
 struct intrhand {

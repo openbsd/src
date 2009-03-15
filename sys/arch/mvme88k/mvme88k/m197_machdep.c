@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.39 2009/03/04 19:39:41 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.40 2009/03/15 20:39:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -424,7 +424,6 @@ m197_bootstrap()
 	md_init_clocks = m1x7_init_clocks;
 #ifdef MULTIPROCESSOR
 	md_send_ipi = m197_send_ipi;
-	md_soft_ipi = m197_soft_ipi;
 	md_delay = m197_delay;
 	md_smp_setup = m197_smp_setup;
 #else
@@ -648,7 +647,9 @@ m197_ipi_handler(struct trapframe *eframe)
 			ci->ci_s_sxip = eframe->tf_sxip;
 			ci->ci_s_epsr = eframe->tf_epsr;
 		}
-		setsoftipi(ci);
+
+		/* inflict ourselves a soft ipi */
+		ci->ci_softipi_cb = m197_soft_ipi;
 	}
 
 	if (ipi & CI_IPI_DDB) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.227 2009/03/05 21:55:15 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.228 2009/03/15 20:39:53 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -135,7 +135,6 @@ u_int (*md_setipl)(u_int);
 u_int (*md_raiseipl)(u_int);
 #ifdef MULTIPROCESSOR
 void (*md_send_ipi)(int, cpuid_t);
-void (*md_soft_ipi)(void);
 #endif
 void (*md_delay)(int) = dumb_delay;
 #ifdef MULTIPROCESSOR
@@ -1204,12 +1203,6 @@ m88k_broadcast_ipi(int ipi)
 		if (ISSET(ci->ci_flags, CIF_ALIVE))
 			(*md_send_ipi)(ipi, ci->ci_cpuid);
 	}
-}
-
-void
-softipi()
-{
-	(*md_soft_ipi)();
 }
 
 #endif

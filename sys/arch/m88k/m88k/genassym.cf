@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.19 2009/02/21 18:35:22 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.20 2009/03/15 20:39:53 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -28,7 +28,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
-#	$Id: genassym.cf,v 1.19 2009/02/21 18:35:22 miod Exp $
+#	$Id: genassym.cf,v 1.20 2009/03/15 20:39:53 miod Exp $
 #
 
 include <sys/param.h>
@@ -68,7 +68,7 @@ member	ci_pfsr_i1
 member	ci_pfsr_d0
 member	ci_pfsr_d1
 member	ci_want_resched
-member	ci_softintr
+member	ci_softipi_cb
 
 # pcb fields
 struct	pcb
