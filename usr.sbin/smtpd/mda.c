@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.10 2009/03/10 22:33:26 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.11 2009/03/15 19:15:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -28,6 +28,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "smtpd.h"
@@ -92,6 +93,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_MDA_MAILBOX_FILE: {
+			struct session	*s;
 			struct batch	*batchp;
 			struct message	*messagep;
 			enum message_status status;
@@ -103,14 +105,15 @@ mda_dispatch_parent(int sig, short event, void *p)
 			batchp = batch_by_id(env, batchp->id);
 			if (batchp == NULL)
 				fatalx("mda_dispatch_parent: internal inconsistency.");
+			s = batchp->sessionp;
 
 			messagep = message_by_id(env, batchp, messagep->id);
 			if (messagep == NULL)
 				fatalx("mda_dispatch_parent: internal inconsistency.");
 			messagep->status = status;
 
-			messagep->mboxfd = imsg_get_fd(ibuf, &imsg);
-			if (messagep->mboxfd == -1) {
+			s->mboxfd = imsg_get_fd(ibuf, &imsg);
+			if (s->mboxfd == -1) {
 				mda_remove_message(env, batchp, messagep);
 				break;
 			}
@@ -123,6 +126,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 		}
 
 		case IMSG_MDA_MESSAGE_FILE: {
+			struct session	*s;
 			struct batch	*batchp;
 			struct message	*messagep;
 			enum message_status status;
@@ -135,16 +139,17 @@ mda_dispatch_parent(int sig, short event, void *p)
 			batchp = batch_by_id(env, batchp->id);
 			if (batchp == NULL)
 				fatalx("mda_dispatch_parent: internal inconsistency.");
+			s = batchp->sessionp;
 
 			messagep = message_by_id(env, batchp, messagep->id);
 			if (messagep == NULL)
 				fatalx("mda_dispatch_parent: internal inconsistency.");
 			messagep->status = status;
 
-			messagep->messagefd = imsg_get_fd(ibuf, &imsg);
-			if (messagep->messagefd == -1) {
-				if (messagep->mboxfd != -1)
-					close(messagep->mboxfd);
+			s->messagefd = imsg_get_fd(ibuf, &imsg);
+			if (s->messagefd == -1) {
+				if (s->mboxfd != -1)
+					close(s->mboxfd);
 				mda_remove_message(env, batchp, messagep);
 				break;
 			}
@@ -161,10 +166,10 @@ mda_dispatch_parent(int sig, short event, void *p)
 					    sizeof(struct batch));
 			}
 			else
-			if (messagep->mboxfd != -1)
-				close(messagep->mboxfd);
-			if (messagep->messagefd != -1)
-				close(messagep->messagefd);
+			if (s->mboxfd != -1)
+				close(s->mboxfd);
+			if (s->messagefd != -1)
+				close(s->messagefd);
 
 			mda_remove_message(env, batchp, messagep);
 			break;
@@ -262,14 +267,29 @@ mda_dispatch_runner(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_BATCH_CREATE: {
-			struct batch	*batchp;
+			struct session *s;
+			struct batch *batchp;
 
+			/* create a client session */
+			if ((s = calloc(1, sizeof(*s))) == NULL)
+				fatal(NULL);
+			s->s_state = S_INIT;
+			s->s_env = env;
+			s->s_id = queue_generate_id();
+			SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
+
+			/* create the batch for this session */
 			batchp = calloc(1, sizeof (struct batch));
 			if (batchp == NULL)
-				fatal("calloc");
+				fatal("mda_dispatch_runner: calloc");
+
 			*batchp = *(struct batch *)imsg.data;
+			batchp->session_id = s->s_id;
 			batchp->env = env;
 			batchp->flags = 0;
+			batchp->sessionp = s;
+
+			s->batch = batchp;
 
 			TAILQ_INIT(&batchp->messages);
 			SPLAY_INSERT(batchtree, &env->batch_queue, batchp);
@@ -282,26 +302,38 @@ mda_dispatch_runner(int sig, short event, void *p)
 
 			messagep = calloc(1, sizeof (struct message));
 			if (messagep == NULL)
-				fatal("calloc");
+				fatal("mda_dispatch_runner: calloc");
 
 			*messagep = *(struct message *)imsg.data;
+
 			batchp = batch_by_id(env, messagep->batch_id);
 			if (batchp == NULL)
 				fatalx("mda_dispatch_runner: internal inconsistency.");
 
-			TAILQ_INSERT_TAIL(&batchp->messages, messagep, entry);
+			batchp->session_ss = messagep->session_ss;
+			strlcpy(batchp->session_hostname,
+			    messagep->session_hostname,
+			    sizeof(batchp->session_hostname));
+			strlcpy(batchp->session_helo, messagep->session_helo,
+			    sizeof(batchp->session_helo));
+
+ 			TAILQ_INSERT_TAIL(&batchp->messages, messagep, entry);
 			break;
 		}
 
 		case IMSG_BATCH_CLOSE: {
+			struct batch		*batchp;
+			struct session		*s;
 			struct batch	lookup;
-			struct batch	*batchp;
 			struct message	*messagep;
 
-			lookup = *(struct batch *)imsg.data;
-			batchp = batch_by_id(env, lookup.id);
+			batchp = (struct batch *)imsg.data;
+			batchp = batch_by_id(env, batchp->id);
 			if (batchp == NULL)
 				fatalx("mda_dispatch_runner: internal inconsistency.");
+
+			batchp->flags |= F_BATCH_COMPLETE;
+			s = batchp->sessionp;
 
 			lookup = *batchp;
 			TAILQ_FOREACH(messagep, &batchp->messages, entry) {
@@ -310,7 +342,6 @@ mda_dispatch_runner(int sig, short event, void *p)
 				    IMSG_PARENT_MAILBOX_OPEN, 0, 0, -1, &lookup,
 				    sizeof(struct batch));
 			}
-
 			break;
 		}
 		default:
@@ -441,6 +472,9 @@ mda_remove_message(struct smtpd *env, struct batch *batchp, struct message *mess
 		    messagep->recipient.domain,
 		    time(NULL) - messagep->creation);
 	}
+
+	SPLAY_REMOVE(sessiontree, &env->sc_sessions, batchp->sessionp);
+	free(batchp->sessionp);
 
 	queue_remove_batch_message(env, batchp, messagep);
 }

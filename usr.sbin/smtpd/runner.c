@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.34 2009/03/09 01:43:19 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.35 2009/03/15 19:15:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -608,10 +608,6 @@ runner_process_batchqueue(struct smtpd *env)
 	     batchp != NULL;
 	     batchp = nxt) {
 		nxt = SPLAY_NEXT(batchtree, &env->batch_queue, batchp);
-//		if ((batchp->type & T_MTA_BATCH) &&
-//		    (batchp->flags & F_BATCH_RESOLVED) == 0) {
-//			continue;
-//		}
 
 		runner_batch_dispatch(env, batchp, curtime);
 
@@ -857,8 +853,6 @@ batch_record(struct smtpd *env, struct message *messagep)
 		}
 		else {
 			batchp->type |= T_MTA_BATCH;
-//			imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_MX,
-//			    0, 0, -1, batchp, sizeof(struct batch));
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.16 2009/03/12 11:08:26 pea Exp $	*/
+/*	$OpenBSD: store.c,v 1.17 2009/03/15 19:15:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -141,11 +141,11 @@ store_write_daemon(struct batch *batchp, struct message *messagep)
 	FILE *mboxfp;
 	FILE *messagefp;
 
-	mboxfp = fdopen(messagep->mboxfd, "a");
+	mboxfp = fdopen(batchp->sessionp->mboxfd, "a");
 	if (mboxfp == NULL)
 		return 0;
 
-	messagefp = fdopen(messagep->messagefd, "r");
+	messagefp = fdopen(batchp->sessionp->messagefd, "r");
 	if (messagefp == NULL)
 		goto bad;
 
@@ -237,11 +237,11 @@ store_write_message(struct batch *batchp, struct message *messagep)
 	FILE *mboxfp;
 	FILE *messagefp;
 
-	mboxfp = fdopen(messagep->mboxfd, "a");
+	mboxfp = fdopen(batchp->sessionp->mboxfd, "a");
 	if (mboxfp == NULL)
 		return 0;
 
-	messagefp = fdopen(messagep->messagefd, "r");
+	messagefp = fdopen(batchp->sessionp->messagefd, "r");
 	if (messagefp == NULL)
 		goto bad;
 
@@ -273,12 +273,12 @@ store_message(struct batch *batchp, struct message *messagep,
 {
 	struct stat sb;
 
-	if (fstat(messagep->mboxfd, &sb) == -1)
+	if (fstat(batchp->sessionp->mboxfd, &sb) == -1)
 		return 0;
 
 	if (! writer(batchp, messagep)) {
 		if (S_ISREG(sb.st_mode)) {
-			ftruncate(messagep->mboxfd, sb.st_size);
+			ftruncate(batchp->sessionp->mboxfd, sb.st_size);
 			return 0;
 		}
 		return 0;
