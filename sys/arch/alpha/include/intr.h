@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.30 2009/03/07 15:31:43 miod Exp $ */
+/* $OpenBSD: intr.h,v 1.31 2009/03/15 19:40:38 miod Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -152,8 +152,10 @@ void splassert_check(int, const char *);
 			splassert_check(__wantipl, __func__);		\
 		}							\
 	} while (0)
+#define	splsoftassert(wantipl)	splassert(IPL_SOFTINT)
 #else
 #define	splassert(wantipl)	do { /* nothing */ } while (0)
+#define	splsoftassert(wantipl)	do { /* nothing */ } while (0)
 #endif
 
 /* IPL-lowering/restoring macros */

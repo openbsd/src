@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.h,v 1.11 2007/05/19 15:47:16 miod Exp $ */
+/*	$OpenBSD: pxa2x0_intr.h,v 1.12 2009/03/15 19:40:40 miod Exp $ */
 /*	$NetBSD: pxa2x0_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /* Derived from i80321_intr.h */
@@ -116,8 +116,10 @@ void pxa2x0_splassert_check(int, const char *);
 		pxa2x0_splassert_check(__wantipl, __func__);	\
 	}							\
 } while (0)
+#define splsoftassert(wantipl) splassert(wantipl)
 #else
 #define	splassert(wantipl)	do { /* nothing */ } while (0)
+#define	splsoftassert(wantipl)	do { /* nothing */ } while (0)
 #endif
 
 #endif /* ! _LOCORE */

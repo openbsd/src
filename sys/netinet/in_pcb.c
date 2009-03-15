@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.103 2008/10/23 22:22:44 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.104 2009/03/15 19:40:41 miod Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -574,7 +574,7 @@ in_pcbnotifyall(table, dst, errno, notify)
 	struct inpcb *inp, *oinp;
 	struct in_addr faddr;
 
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 
 #ifdef INET6
 	/*

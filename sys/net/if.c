@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.188 2009/02/24 21:14:12 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.189 2009/03/15 19:40:41 miod Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1071,7 +1071,7 @@ if_down(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 
 	ifp->if_flags &= ~IFF_UP;
 	microtime(&ifp->if_lastchange);
@@ -1107,7 +1107,7 @@ if_up(struct ifnet *ifp)
 	struct ifaddr *ifa;
 #endif
 
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 
 	ifp->if_flags |= IFF_UP;
 	microtime(&ifp->if_lastchange);

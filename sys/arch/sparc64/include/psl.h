@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.25 2008/07/05 20:53:33 kettenis Exp $	*/
+/*	$OpenBSD: psl.h,v 1.26 2009/03/15 19:40:40 miod Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -249,8 +249,10 @@ void splassert_check(int, const char *);
 		splassert_check(__wantipl, __func__);	\
 	}						\
 } while (0)
+#define splsoftassert(wantipl) splassert(wantipl)
 #else
-#define splassert(wantipl) do { /* nada */ } while (0)
+#define splassert(wantipl)	do { /* nada */ } while (0)
+#define splsoftassert(wantipl)	do { /* nada */ } while (0)
 #endif
 
 /*

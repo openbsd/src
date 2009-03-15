@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.104 2009/02/27 13:15:40 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.105 2009/03/15 19:40:41 miod Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -459,7 +459,7 @@ rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
 	struct ifaddr		*ifa;
 	struct ifnet		*ifp = NULL;
 
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 
 	/* verify the gateway is directly reachable */
 	if ((ifa = ifa_ifwithnet(gateway)) == NULL) {

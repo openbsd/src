@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.29 2008/10/16 12:20:27 canacar Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.30 2009/03/15 19:40:41 miod Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -365,7 +365,7 @@ pppoeintr(void)
 	struct mbuf *m;
 	int s;
 
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 	
 	for (;;) {
 		s = splnet();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.20 2007/12/06 12:34:39 jsing Exp $ */
+/*	$OpenBSD: intr.h,v 1.21 2009/03/15 19:40:40 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -104,6 +104,7 @@
 void	splinit(void);
 
 #define	splassert(X)
+#define	splsoftassert(X)
 
 /*
  *  Schedule prioritys for base interrupts (CPU)

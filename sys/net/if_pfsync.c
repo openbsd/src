@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.115 2009/03/01 12:02:39 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.116 2009/03/15 19:40:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1771,7 +1771,7 @@ pfsync_insert_state(struct pf_state *st)
 {
 	struct pfsync_softc *sc = pfsyncif;
 
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 
 	if (ISSET(st->rule.ptr->rule_flag, PFRULE_NOSYNC) ||
 	    st->key[PF_SK_WIRE]->proto == IPPROTO_PFSYNC) {
@@ -1808,7 +1808,7 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_deferral *pd;
 
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 
 	if (sc->sc_deferred >= 128)
 		pfsync_undefer(TAILQ_FIRST(&sc->sc_deferrals), 0);
@@ -1837,7 +1837,7 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 {
 	struct pfsync_softc *sc = pfsyncif;
 
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 
 	TAILQ_REMOVE(&sc->sc_deferrals, pd, pd_entry);
 	sc->sc_deferred--;
@@ -1888,7 +1888,7 @@ pfsync_update_state(struct pf_state *st)
 	struct pfsync_softc *sc = pfsyncif;
 	int sync = 0;
 
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 
 	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING))
 		return;
@@ -2010,7 +2010,7 @@ pfsync_delete_state(struct pf_state *st)
 {
 	struct pfsync_softc *sc = pfsyncif;
 
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 
 	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING))
 		return;
@@ -2057,7 +2057,7 @@ pfsync_clear_states(u_int32_t creatorid, const char *ifname)
 		struct pfsync_clr clr;
 	} __packed r;
 
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 
 	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING))
 		return;

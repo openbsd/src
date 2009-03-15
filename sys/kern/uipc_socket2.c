@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.46 2009/01/13 13:36:12 blambert Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.47 2009/03/15 19:40:41 miod Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -156,7 +156,7 @@ sonewconn(struct socket *head, int connstatus)
 	extern u_long unpst_sendspace, unpst_recvspace;
 	u_long snd_sb_hiwat, rcv_sb_hiwat;
 
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 
 	if (mclpools[0].pr_nout > mclpools[0].pr_hardlimit * 95 / 100)
 		return ((struct socket *)0);

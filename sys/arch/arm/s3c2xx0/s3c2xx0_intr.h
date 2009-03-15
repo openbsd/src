@@ -1,4 +1,4 @@
-/*	$OpenBSD: s3c2xx0_intr.h,v 1.2 2008/12/08 20:50:20 drahn Exp $ */
+/*	$OpenBSD: s3c2xx0_intr.h,v 1.3 2009/03/15 19:40:40 miod Exp $ */
 /*	$NetBSD: s3c2xx0_intr.h,v 1.13 2008/11/19 06:35:55 matt Exp $ */
 
 /*
@@ -158,8 +158,10 @@ void pxa2x0_splassert_check(int, const char *);
 		pxa2x0_splassert_check(__wantipl, __func__);	\
 	}							\
 } while (0)
+#define splsoftassert(wantipl) splassert(wantipl)
 #else
 #define splassert(wantipl)      do { /* nothing */ } while (0)
+#define splsoftassert(wantipl)      do { /* nothing */ } while (0)
 #endif
 
 

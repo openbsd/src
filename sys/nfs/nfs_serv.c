@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.63 2009/01/27 23:40:14 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.64 2009/03/15 19:40:41 miod Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1175,7 +1175,7 @@ nfsrvw_coalesce(struct nfsrv_descript *owp, struct nfsrv_descript *nfsd)
         int overlap;
         struct mbuf *mp;
 
-	splassert(IPL_SOFTCLOCK);
+	splsoftassert(IPL_SOFTCLOCK);
 
         LIST_REMOVE(nfsd, nd_hash);
         LIST_REMOVE(nfsd, nd_tq);

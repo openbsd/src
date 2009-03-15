@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2007/11/17 05:32:05 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.10 2009/03/15 19:40:40 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -50,8 +50,10 @@ void splassert_check(int, const char *);
 		splassert_check(__wantipl, __func__);	\
 	}						\
 } while (0)
+#define splsoftassert(wantipl) splassert(wantipl)
 #else
 #define	splassert(wantipl)	do { /* nothing */ } while (0)
+#define	splsoftassert(wantipl)	do { /* nothing */ } while (0)
 #endif
 
 #endif /* _LOCORE */

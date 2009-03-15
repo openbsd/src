@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.52 2008/06/04 18:11:35 miod Exp $	*/
+/*	$OpenBSD: in.c,v 1.53 2009/03/15 19:40:41 miod Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -703,7 +703,7 @@ in_ifinit(ifp, ia, sin, scrub)
 	 * Is the "ifp" even in a consistent state?
 	 * Be safe for now.
 	 */
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 
 	if (scrub) {
 		ia->ia_ifa.ifa_addr = sintosa(&oldaddr);

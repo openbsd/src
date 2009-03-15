@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.80 2009/01/30 10:47:46 mcbride Exp $	*/
+/*	$OpenBSD: in6.c,v 1.81 2009/03/15 19:40:41 miod Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -781,7 +781,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	struct in6_multi_mship *imm;
 	struct rtentry *rt;
 
-	splassert(IPL_SOFTNET);
+	splsoftassert(IPL_SOFTNET);
 
 	/* Validate parameters */
 	if (ifp == NULL || ifra == NULL) /* this maybe redundant */
