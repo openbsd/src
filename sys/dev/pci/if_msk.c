@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.69 2009/02/22 16:40:13 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.70 2009/03/16 12:47:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -221,6 +221,7 @@ const struct pci_matchid mskc_devices[] = {
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8071 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8072 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8075 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8057 },
 	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK9Sxx },
 	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK9Exx }
 };
@@ -939,6 +940,7 @@ msk_probe(struct device *parent, void *match, void *aux)
 	case SK_YUKON_FE:
 	case SK_YUKON_FE_P:
 	case SK_YUKON_SUPR:
+	case SK_YUKON_ULTRA2:
 		return (1);
 	}
 
@@ -1156,7 +1158,7 @@ mskcprint(void *aux, const char *pnp)
 	struct skc_attach_args *sa = aux;
 
 	if (pnp)
-		printf("sk port %c at %s",
+		printf("msk port %c at %s",
 		    (sa->skc_port == SK_PORT_A) ? 'A' : 'B', pnp);
 	else
 		printf(" port %c", (sa->skc_port == SK_PORT_A) ? 'A' : 'B');
@@ -1317,6 +1319,9 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case SK_YUKON_SUPR:
 		sc->sk_name = "Yukon-2 Supreme";
+		break;
+	case SK_YUKON_ULTRA2:
+		sc->sk_name = "Yukon-2 Ultra2";
 		break;
 	default:
 		sc->sk_name = "Yukon (Unknown)";
