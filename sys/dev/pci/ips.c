@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.69 2009/03/16 15:08:46 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.70 2009/03/16 21:46:00 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -72,7 +72,7 @@ int ips_debug = IPS_D_ERR;
 #define IPS_NVRAMPGSZ		128
 #define IPS_SQSZ		(IPS_MAXCMDS * sizeof(u_int32_t))
 
-#define	IPS_TIMEOUT		10000	/* ms */
+#define	IPS_TIMEOUT		60000	/* ms */
 
 /* Command codes */
 #define IPS_CMD_READ		0x02
@@ -81,6 +81,7 @@ int ips_debug = IPS_D_ERR;
 #define IPS_CMD_GETADAPTERINFO	0x05
 #define IPS_CMD_FLUSH		0x0a
 #define IPS_CMD_REBUILDSTATUS	0x0c
+#define IPS_CMD_SETSTATE	0x10
 #define IPS_CMD_ERRORTABLE	0x17
 #define IPS_CMD_GETDRIVEINFO	0x19
 #define IPS_CMD_RESETCHAN	0x1a
@@ -99,6 +100,12 @@ int ips_debug = IPS_D_ERR;
 #define IPS_CMD_FFDC		0xd7
 #define IPS_CMD_SG		0x80
 #define IPS_CMD_RWNVRAM		0xbc
+
+/* SETSTATE states */
+#define IPS_SS_ONLINE		0x89
+#define IPS_SS_OFFLINE		0x08
+#define IPS_SS_HOTSPARE		0x85
+#define IPS_SS_REBUILD		0x8b
 
 /* DCDB attributes */
 #define IPS_DCDB_DATAIN		0x01	/* data input */
@@ -306,6 +313,15 @@ struct ips_conf {
 	u_int8_t	reserved[512];
 };
 
+struct ips_rblstat {
+	u_int8_t	__unknown[20];
+	struct {
+		u_int8_t	__unknown[4];
+		u_int32_t	total;
+		u_int32_t	remain;
+	}		ld[IPS_MAXDRIVES];
+};
+
 struct ips_pg5 {
 	u_int32_t	signature;
 	u_int8_t	__reserved1;
@@ -325,6 +341,7 @@ struct ips_info {
 	struct ips_adapterinfo	adapter;
 	struct ips_driveinfo	drive;
 	struct ips_conf		conf;
+	struct ips_rblstat	rblstat;
 	struct ips_pg5		pg5;
 };
 
@@ -422,6 +439,7 @@ int	ips_ioctl(struct device *, u_long, caddr_t);
 int	ips_ioctl_inq(struct ips_softc *, struct bioc_inq *);
 int	ips_ioctl_vol(struct ips_softc *, struct bioc_vol *);
 int	ips_ioctl_disk(struct ips_softc *, struct bioc_disk *);
+int	ips_ioctl_setstate(struct ips_softc *, struct bioc_setstate *);
 
 void	ips_sensors(void *);
 
@@ -441,7 +459,9 @@ void	ips_timeout(void *);
 int	ips_getadapterinfo(struct ips_softc *, int);
 int	ips_getdriveinfo(struct ips_softc *, int);
 int	ips_getconf(struct ips_softc *, int);
+int	ips_getrblstat(struct ips_softc *, int);
 int	ips_getpg5(struct ips_softc *, int);
+int	ips_setstate(struct ips_softc *, int, int, int, int);
 
 void	ips_copperhead_exec(struct ips_softc *, struct ips_ccb *);
 void	ips_copperhead_init(struct ips_softc *);
@@ -1090,6 +1110,8 @@ ips_ioctl(struct device *dev, u_long cmd, caddr_t addr)
 		return (ips_ioctl_vol(sc, (struct bioc_vol *)addr));
 	case BIOCDISK:
 		return (ips_ioctl_disk(sc, (struct bioc_disk *)addr));
+	case BIOCSETSTATE:
+		return (ips_ioctl_setstate(sc, (struct bioc_setstate *)addr));
 	default:
 		return (ENOTTY);
 	}
@@ -1117,9 +1139,11 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 {
 	struct ips_driveinfo *di = &sc->sc_info->drive;
 	struct ips_conf *conf = &sc->sc_info->conf;
+	struct ips_rblstat *rblstat = &sc->sc_info->rblstat;
 	struct ips_ld *ld;
 	int vid = bv->bv_volid;
 	struct device *dev;
+	u_int32_t total = 0, done = 0;
 
 	if (vid >= sc->sc_nunits)
 		return (EINVAL);
@@ -1139,6 +1163,11 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 		bv->bv_status = BIOC_SVINVALID;
 	}
 
+	total = letoh32(rblstat->ld[vid].total);
+	done = total - letoh32(rblstat->ld[vid].remain);
+	if (total)
+		bv->bv_percent = 100 * done / total;
+
 	bv->bv_size = (u_quad_t)letoh32(ld->size) * IPS_SECSZ;
 	bv->bv_level = di->drive[vid].raid;
 	bv->bv_nodisk = ld->chunkcnt;
@@ -1148,9 +1177,9 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 	strlcpy(bv->bv_vendor, "IBM", sizeof(bv->bv_vendor));
 
 	DPRINTF(IPS_D_INFO, ("%s: ips_ioctl_vol: vid %d, state 0x%02x, "
-	    "size %llu, level %d, nodisk %d, dev %s\n", sc->sc_dev.dv_xname,
-	    vid, ld->state, bv->bv_size, bv->bv_level, bv->bv_nodisk,
-	    bv->bv_dev));
+	    "total %u, done %u, size %llu, level %d, nodisk %d, dev %s\n",
+	    sc->sc_dev.dv_xname, vid, ld->state, total, done, bv->bv_size,
+	    bv->bv_level, bv->bv_nodisk, bv->bv_dev));
 
 	return (0);
 }
@@ -1204,6 +1233,31 @@ ips_ioctl_disk(struct ips_softc *sc, struct bioc_disk *bd)
 
 	return (0);
 }
+
+int
+ips_ioctl_setstate(struct ips_softc *sc, struct bioc_setstate *bs)
+{
+	int state;
+
+	switch (bs->bs_status) {
+	case BIOC_SSONLINE:
+		state = IPS_SS_ONLINE;
+		break;
+	case BIOC_SSOFFLINE:
+		state = IPS_SS_OFFLINE;
+		break;
+	case BIOC_SSHOTSPARE:
+		state = IPS_SS_HOTSPARE;
+		break;
+	case BIOC_SSREBUILD:
+		state = IPS_SS_REBUILD;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	return (ips_setstate(sc, bs->bs_channel, bs->bs_target, state, 0));
+}
 #endif	/* NBIO > 0 */
 
 #ifndef SMALL_KERNEL
@@ -1226,6 +1280,7 @@ ips_sensors(void *arg)
 		}
 		return;
 	}
+	(void)ips_getrblstat(sc, 0);
 
 	DPRINTF(IPS_D_INFO, ("%s: ips_sensors:", sc->sc_dev.dv_xname));
 	for (i = 0; i < sc->sc_nunits; i++) {
@@ -1709,6 +1764,30 @@ ips_getconf(struct ips_softc *sc, int flags)
 }
 
 int
+ips_getrblstat(struct ips_softc *sc, int flags)
+{
+	struct ips_ccb *ccb;
+	struct ips_cmd *cmd;
+	int s;
+
+	s = splbio();
+	ccb = ips_ccb_get(sc);
+	splx(s);
+	if (ccb == NULL)
+		return (1);
+
+	ccb->c_flags = SCSI_DATA_IN | SCSI_POLL | flags;
+	ccb->c_done = ips_done_mgmt;
+
+	cmd = ccb->c_cmdbva;
+	cmd->code = IPS_CMD_REBUILDSTATUS;
+	cmd->sgaddr = htole32(sc->sc_infom.dm_paddr + offsetof(struct ips_info,
+	    rblstat));
+
+	return (ips_cmd(sc, ccb));
+}
+
+int
 ips_getpg5(struct ips_softc *sc, int flags)
 {
 	struct ips_ccb *ccb;
@@ -1729,6 +1808,31 @@ ips_getpg5(struct ips_softc *sc, int flags)
 	cmd->drive = 5;
 	cmd->sgaddr = htole32(sc->sc_infom.dm_paddr + offsetof(struct ips_info,
 	    pg5));
+
+	return (ips_cmd(sc, ccb));
+}
+
+int
+ips_setstate(struct ips_softc *sc, int chan, int target, int state, int flags)
+{
+	struct ips_ccb *ccb;
+	struct ips_cmd *cmd;
+	int s;
+
+	s = splbio();
+	ccb = ips_ccb_get(sc);
+	splx(s);
+	if (ccb == NULL)
+		return (1);
+
+	ccb->c_flags = SCSI_POLL | flags;
+	ccb->c_done = ips_done_mgmt;
+
+	cmd = ccb->c_cmdbva;
+	cmd->code = IPS_CMD_SETSTATE;
+	cmd->drive = chan;
+	cmd->sgcnt = target;
+	cmd->seg4g = state;
 
 	return (ips_cmd(sc, ccb));
 }
