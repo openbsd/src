@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.81 2009/03/16 21:49:38 jacekm Exp $
+#	$OpenBSD: special,v 1.82 2009/03/16 22:16:12 jacekm Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -53,6 +53,7 @@ mail		type=dir mode=0755 uname=root gname=wheel
 aliases		type=file mode=0644 uname=root gname=wheel optional
 aliases.db	type=file mode=0644 uname=root gname=wheel optional
 secrets		type=file mode=0640 uname=root gname=_smtpd optional
+secrets.db	type=file mode=0640 uname=root gname=_smtpd optional
 sendmail.cf	type=file mode=0644 uname=root gname=wheel optional
 smtpd.conf	type=file mode=0644 uname=root gname=wheel
 spamd.conf	type=file mode=0644 uname=root gname=wheel optional
