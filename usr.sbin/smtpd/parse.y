@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2009/03/09 01:43:19 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.28 2009/03/16 23:26:40 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -118,7 +118,7 @@ typedef struct {
 %token	DNS DB TFILE EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
-%token	ARROW ENABLE AUTH TLS
+%token	ARROW ENABLE AUTH TLS LOCAL
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
@@ -633,6 +633,55 @@ condition	: NETWORK mapref		{
 			c->c_map = $2;
 			$$ = c;
 		}
+		| LOCAL {
+			struct cond	*c;
+			struct map	*m;
+			struct mapel	*me;
+
+			if ((m = calloc(1, sizeof(*m))) == NULL)
+				fatal("out of memory");
+			m->m_id = last_map_id++;
+			if (m->m_id == INT_MAX) {
+				yyerror("too many maps defined");
+				free(m);
+				YYERROR;
+			}
+			if (! bsnprintf(m->m_name, sizeof(m->m_name),
+				"<dynamic(%u)>", m->m_id))
+				fatal("snprintf");
+			m->m_flags |= F_DYNAMIC|F_USED;
+			m->m_type = T_SINGLE;
+
+			TAILQ_INIT(&m->m_contents);
+
+			if ((me = calloc(1, sizeof(*me))) == NULL)
+				fatal("out of memory");
+
+			(void)strlcpy(me->me_key.med_string, "localhost",
+			    sizeof(me->me_key.med_string));
+			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
+
+			if ((me = calloc(1, sizeof(*me))) == NULL)
+				fatal("out of memory");
+
+			if (gethostname(me->me_key.med_string,
+				sizeof(me->me_key.med_string)) == -1) {
+				yyerror("gethostname() failed");
+				free(me);
+				free(m);
+				YYERROR;
+			}
+			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
+
+			TAILQ_INSERT_TAIL(conf->sc_maps, m, m_entry);
+
+			if ((c = calloc(1, sizeof *c)) == NULL)
+				fatal("out of memory");
+			c->c_type = C_DOM;
+			c->c_map = m->m_id;
+
+			$$ = c;
+		}
 		| ALL				{
 			struct cond	*c;
 
@@ -878,6 +927,7 @@ lookup(char *s)
 		{ "interval",		INTERVAL },
 		{ "list",		LIST },
 		{ "listen",		LISTEN },
+		{ "local",		LOCAL },
 		{ "maildir",		MAILDIR },
 		{ "map",		MAP },
 		{ "mbox",		MBOX },
