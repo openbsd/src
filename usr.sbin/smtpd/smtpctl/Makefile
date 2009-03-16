@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2009/01/29 12:43:25 jacekm Exp $
+#	$OpenBSD: Makefile,v 1.7 2009/03/16 22:03:42 jacekm Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -7,7 +7,7 @@ BINOWN=	root
 
 BINMODE?=555
 
-BINDIR=	/usr/bin
+BINDIR=	/usr/sbin
 MAN=	smtpctl.8
 
 CFLAGS+=	-g3 -ggdb -I${.CURDIR}/..
