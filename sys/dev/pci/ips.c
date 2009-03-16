@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.66 2009/03/16 07:21:57 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.67 2009/03/16 08:09:05 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1842,12 +1842,8 @@ ips_morpheus_intrds(struct ips_softc *sc)
 int
 ips_morpheus_isintr(struct ips_softc *sc)
 {
-	u_int32_t reg;
-
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IPS_REG_OIS);
-	DPRINTF(IPS_D_XFER, ("%s: isintr 0x%08x\n", sc->sc_dev.dv_xname, reg));
-
-	return (reg & IPS_REG_OIS_PEND);
+	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh, IPS_REG_OIS) &
+	    IPS_REG_OIS_PEND);
 }
 
 int
