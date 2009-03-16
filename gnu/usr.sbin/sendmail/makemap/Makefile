@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2001/09/11 19:02:49 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 2009/03/16 14:26:24 jacekm Exp $
 
 PROG=	makemap
 MAN=	makemap.8
@@ -9,4 +9,7 @@ WANT_LIBSMDB=1
 WANT_LIBSMUTIL=1
 
 .include "../../Makefile.inc"
+
+BINDIR=/usr/libexec/sendmail
+
 .include <bsd.prog.mk>
