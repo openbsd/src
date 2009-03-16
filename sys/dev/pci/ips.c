@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.68 2009/03/16 14:04:04 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.69 2009/03/16 15:08:46 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1275,7 +1275,7 @@ ips_load_xs(struct ips_softc *sc, struct ips_ccb *ccb, struct scsi_xfer *xs)
 	if ((nsegs = ccb->c_dmam->dm_nsegs) > IPS_MAXSGS)
 		return (1);
 
-	if (nsegs > 1) { 
+	if (nsegs > 1) {
 		cmd->sgcnt = nsegs;
 		cmd->sgaddr = htole32(ccb->c_cmdbpa + offsetof(struct ips_cmdb,
 		    sg));
@@ -1431,7 +1431,7 @@ ips_done_pt(struct ips_softc *sc, struct ips_ccb *ccb)
 	struct ips_pt *pt = link->adapter_softc;
 	struct ips_cmdb *cmdb = ccb->c_cmdbva;
 	struct ips_dcdb *dcdb = &cmdb->dcdb;
-	int target = link->target;
+	int target = link->target, done = letoh16(dcdb->datalen);
 
 	if (!(xs->flags & SCSI_POLL))
 		timeout_del(&xs->stimeout);
@@ -1443,7 +1443,10 @@ ips_done_pt(struct ips_softc *sc, struct ips_ccb *ccb)
 		bus_dmamap_unload(sc->sc_dmat, ccb->c_dmam);
 	}
 
-	xs->resid = 0;
+	if (done && done < xs->datalen)
+		xs->resid = xs->datalen - done;
+	else
+		xs->resid = 0;
 	xs->error = ccb->c_error;
 	xs->status = dcdb->status;
 
