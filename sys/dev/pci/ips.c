@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.65 2009/03/15 17:35:42 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.66 2009/03/16 07:21:57 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -333,7 +333,6 @@ struct ips_softc;
 struct ips_ccb {
 	int			c_id;		/* command id */
 	int			c_flags;	/* SCSI_* flags */
-#define IPS_SCSI_PT 0x10000			/* SCSI pass-through */
 	enum {
 		IPS_CCB_FREE,
 		IPS_CCB_QUEUED,
@@ -1011,7 +1010,6 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 	}
 
 	xs->error = XS_NOERROR;
-	xs->flags |= IPS_SCSI_PT;
 
 	s = splbio();
 	ccb = ips_ccb_get(sc);
