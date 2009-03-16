@@ -1,4 +1,4 @@
-/*	$OpenBSD: audiovar.h,v 1.10 2008/03/22 11:05:31 ratchov Exp $	*/
+/*	$OpenBSD: audiovar.h,v 1.11 2009/03/16 19:45:09 ratchov Exp $	*/
 /*	$NetBSD: audiovar.h,v 1.18 1998/03/03 09:16:16 augustss Exp $	*/
 
 /*
@@ -66,8 +66,6 @@ struct audio_ringbuffer {
 	u_long	drops;		/* missed samples from over/underrun */
 	u_long	pdrops;		/* paused samples */
 	char	pause;		/* transfer is paused */
-	char	copying;	/* data is being copied */
-	char	needfill;	/* buffer needs filling when copying is done */
 	char	mmapped;	/* device is mmap()-ed */
 	u_char	blkset;		/* blksize has been set, for stickiness */
 };
