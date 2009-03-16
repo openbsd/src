@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.195 2008/12/23 18:33:36 reyk Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.196 2009/03/16 21:49:38 jacekm Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -364,6 +364,11 @@ lpr
 # ./libexec/sendmail
 sendmail	type=dir uname=root gname=wheel mode=0755
 # ./libexec/sendmail
+..
+
+# ./libexec/smtpd
+smtpd		type=dir uname=root gname=wheel mode=0755
+# ./libexec/smtpd
 ..
 
 # ./usr/libexec
@@ -2734,6 +2739,11 @@ mqueue		mode=0700
 # ./var/spool/output
 output		gname=daemon mode=0775
 # ./var/spool/output
+..
+
+# ./var/spool/smtpd
+smtpd		type=dir uname=root gname=wheel mode=0711
+# ./var/spool/smtpd
 ..
 
 # ./var/spool/sockets
