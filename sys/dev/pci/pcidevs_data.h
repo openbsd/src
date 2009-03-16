@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1461 2009/03/13 02:08:42 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.1462 2009/03/16 12:37:43 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -9534,6 +9534,74 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82740,
 	    "82740 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15W_HB,
+	    "US15W Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15L_HB,
+	    "US15L/UL11L Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15W_IGD,
+	    "US15W Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15L_IGD,
+	    "US15L/UL11L Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SCH_PCIE_1,
+	    "SCH PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SCH_PCIE_2,
+	    "SCH PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SCH_UHCI_1,
+	    "SCH USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SCH_UHCI_2,
+	    "SCH USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SCH_UHCI_3,
+	    "SCH USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SCH_EHCI,
+	    "SCH USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SCH_USBCL,
+	    "SCH USB Client",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SCH_LPC,
+	    "SCH LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SCH_IDE,
+	    "SCH IDE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SCH_HDA,
+	    "SCH HD Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SCH_SDMMC_1,
+	    "SCH SD/MMC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SCH_SDMMC_2,
+	    "SCH SD/MMC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SCH_SDMMC_3,
+	    "SCH SD/MMC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB,
