@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.6 2008/12/27 17:58:02 jacekm Exp $
+.\" $OpenBSD: smtpctl.8,v 1.7 2009/03/16 22:40:35 gilles Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 27 2008 $
+.Dd $Mdocdate: March 16 2009 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -38,6 +38,27 @@ that are currently in queue.
 .It Cm show runqueue
 Displays information concerning envelopes
 that are scheduled for delivery.
+.It Cm show stats
+Displays runtime statistics concerning
+.Xr smtpd 8 .
+.It Cm schedule message-uid
+Marks a message as ready for immediate delivery.
+.It Cm schedule message-id
+Marks all messages with same message id as ready
+for immediate delivery.
+.It Cm pause local
+Temporarily stop deliveries to local users.
+.It Cm resume local
+Resume deliveries to local users.
+.It Cm pause outgoing
+Temporarily stop relaying and deliveries to
+remote users.
+.It Cm resume outgoing
+Resume relaying and deliveries to remote users.
+.It Cm pause incoming
+Temporarily stop accepting incoming sessions.
+.It Cm resume incoming
+Resume accepting incoming sessions.
 .El
 .Sh FILES
 .Bl -tag -width "/var/run/smtpd.sockXX" -compact
