@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.67 2009/03/16 08:09:05 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.68 2009/03/16 14:04:04 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1488,6 +1488,7 @@ ips_error(struct ips_softc *sc, struct ips_ccb *ccb)
 	struct ips_cmdb *cmdb = ccb->c_cmdbva;
 	struct ips_cmd *cmd = &cmdb->cmd;
 	struct ips_dcdb *dcdb = &cmdb->dcdb;
+	struct scsi_xfer *xs = ccb->c_xfer;
 	u_int8_t gsc = IPS_STAT_GSC(ccb->c_stat);
 	int error = XS_DRIVER_STUFFUP;
 
@@ -1532,6 +1533,11 @@ ips_error(struct ips_softc *sc, struct ips_ccb *ccb)
 		switch (ccb->c_estat) {
 		case IPS_ESTAT_SELTIMO:
 			error = XS_SELTIMEOUT;
+			break;
+		case IPS_ESTAT_OURUN:
+			if (xs && letoh16(dcdb->datalen) < xs->datalen)
+				/* underrun */
+				error = XS_NOERROR;
 			break;
 		case IPS_ESTAT_HOSTRST:
 		case IPS_ESTAT_DEVRST:
