@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.53 2009/01/02 20:01:45 kettenis Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.54 2009/03/16 19:45:32 oga Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -699,7 +699,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 		boundary = map->_dm_boundary;
 	align = MAX(map->dm_segs[0]._ds_align, PAGE_SIZE);
 
-	pmap = p ? p->p_vmspace->vm_map.pmap : pmap = pmap_kernel();
+	pmap = p ? p->p_vmspace->vm_map.pmap : pmap_kernel();
 
 	/* Count up the total number of pages we need */
 	iommu_iomap_clear_pages(ims);
