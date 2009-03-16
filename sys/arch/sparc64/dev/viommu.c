@@ -1,4 +1,4 @@
-/*	$OpenBSD: viommu.c,v 1.3 2009/03/16 19:45:32 oga Exp $	*/
+/*	$OpenBSD: viommu.c,v 1.4 2009/03/16 21:00:48 oga Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -914,11 +914,9 @@ viommu_iomap_create(int n)
 		n = 16;
 
 	ims = malloc(sizeof(*ims) + (n - 1) * sizeof(ims->ims_map.ipm_map[0]),
-		M_DEVBUF, M_NOWAIT);
+		M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ims == NULL)
 		return (NULL);
-
-	memset(ims, 0, sizeof *ims);
 
 	/* Initialize the map. */
 	ims->ims_map.ipm_maxpage = n;
