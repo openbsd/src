@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.48 2009/03/17 07:19:13 ratchov Exp $
+.\"	$OpenBSD: aucat.1,v 1.49 2009/03/17 21:26:44 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -24,7 +24,7 @@
 .Nm aucat
 .Bk -words
 .Op Fl lnu
-.Op Fl b Ar nsamples
+.Op Fl b Ar nframes
 .Op Fl C Ar min : Ns Ar max
 .Op Fl c Ar min : Ns Ar max
 .Op Fl e Ar enc
@@ -53,10 +53,11 @@ which does not convert on the fly and supports playback of .au files.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl b Ar nsamples
+.It Fl b Ar nframes
 The buffer size in frames.
-This is the number of samples that will be buffered before being played
-and controls the playback latency.
+A frame consists of one sample for each channel in the stream.
+This is the number of frames that will be buffered before being played
+and thus controls the playback latency.
 .It Xo
 .Fl C Ar min : Ns Ar max ,
 .Fl c Ar min : Ns Ar max
@@ -335,9 +336,9 @@ require a low latency audio setup.
 To reduce the probability of buffer underruns or overruns,
 the
 .Xr renice 8
-command can be used to give higher priority to
+command can be used to give a higher priority to the
 .Nm
-process to.
+process.
 Superuser privileges are required.
 For example:
 .Bd -literal -offset indent
