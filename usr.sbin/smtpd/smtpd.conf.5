@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.6 2008/12/20 00:22:09 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.7 2009/03/17 00:18:39 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 20 2008 $
+.Dd $Mdocdate: March 17 2009 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -53,8 +53,8 @@ Macros are not expanded inside quotes.
 .Pp
 For example,
 .Bd -literal -offset indent
-smtp_port = 25
-listen on 127.0.0.1 port $smtp_port
+smtpport = 25
+listen on 127.0.0.1 port $smtpport
 listen on fxp0 port $smtp_port
 ssmtp listen on fxp0 port $smtp_port enable auth
 .Ed
@@ -89,9 +89,9 @@ for both localhost and example.com, as well as the relaying of mail
 destined for example.org through the mx1.example.org server and mail
 destined for example.net through regular MX records lookup:
 .Bd -literal -offset indent
-listen on 0.0.0.0 port 25
-accept for domain "localhost" deliver to mbox "/var/mail/%u"
-accept for domain "example.com" deliver to maildir "/home/%u/Maildir"
+listen on lo0
+accept for local deliver to mbox
+accept for domain "example.com" deliver to mbox
 accept for domain "example.org" relay via "mx1.example.org"
 accept for domain "example.net" relay
 .Ed
