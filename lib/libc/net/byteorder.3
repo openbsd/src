@@ -1,4 +1,4 @@
-.\"	$OpenBSD: byteorder.3,v 1.15 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: byteorder.3,v 1.16 2009/03/17 21:33:04 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 17 2009 $
 .Dt BYTEORDER 3
 .Os
 .Sh NAME
@@ -86,7 +86,7 @@
 .Ft u_int16_t
 .Fn letoh16 "u_int16_t little16"
 .Ft u_int64_t
-.Fn swap64 "u_int32_t val64"
+.Fn swap64 "u_int64_t val64"
 .Ft u_int32_t
 .Fn swap32 "u_int32_t val32"
 .Ft u_int16_t
