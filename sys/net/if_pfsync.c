@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.116 2009/03/15 19:40:41 miod Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.117 2009/03/17 05:06:54 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -842,12 +842,8 @@ pfsync_in_iack(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 			pfsync_deferred(st, 0);
 	}
 	splx(s);
-	/*
-	 * XXX this is not yet implemented, but we know the size of the
-	 * message so we can skip it.
-	 */
 
-	return (count * sizeof(struct pfsync_ins_ack));
+	return (len);
 }
 
 int
