@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.70 2009/03/16 21:46:00 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.71 2009/03/17 07:48:59 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1091,7 +1091,11 @@ int
 ips_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag,
     struct proc *p)
 {
+#if NBIO > 0
 	return (ips_ioctl(link->adapter_softc, cmd, addr));
+#else
+	return (ENOTTY);
+#endif
 }
 
 #if NBIO > 0
