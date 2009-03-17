@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ips.4,v 1.10 2009/02/11 15:17:33 jmc Exp $
+.\"	$OpenBSD: ips.4,v 1.11 2009/03/17 08:52:27 grange Exp $
 .\"
 .\" Copyright (c) 2006, 2009 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" TORTIOUS ACTION, ARISING OUT OF
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 11 2009 $
+.Dd $Mdocdate: March 17 2009 $
 .Dt IPS 4
 .Os
 .Sh NAME
@@ -43,20 +43,31 @@ ServeRAID 7k/7M/7t
 .Pp
 Although the controllers are actual RAID controllers,
 the driver makes them look just like SCSI controllers.
-All RAID configuration and management is done through the bootable
+All RAID configuration is done through the bootable
 IBM ServeRAID Support CD;
 a CD image is freely available at the IBM website.
 .Pp
-The driver also provides
+The management interface is provided through the
 .Xr bio 4
-support, though only volume information querying is available.
+device or one of the daughter
+.Xr sd 4
+devices as implemented in the
+.Xr bioctl 8
+utility.
+Logical disk status is exposed under the
+.Va hw.sensors
+.Xr sysctl 8
+and can be monitored using
+.Xr sensorsd 8 .
 .Sh SEE ALSO
 .Xr bio 4 ,
 .Xr intro 4 ,
 .Xr pci 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
-.Xr bioctl 8
+.Xr bioctl 8 ,
+.Xr sensorsd 8 ,
+.Xr sysctl 8
 .Pp
 .Pa http://www.ibm.com
 .Sh HISTORY
