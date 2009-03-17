@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.268 2008/06/15 01:52:19 todd Exp $
+#	$OpenBSD: Makefile,v 1.269 2009/03/17 00:13:59 gilles Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -87,6 +87,7 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g wheel -m 600 ipsec.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 sasyncd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 snmpd.conf ${DESTDIR}/etc
+	${INSTALL} -c -o root -g _smtpd -m 644 smtpd.conf ${DESTDIR}/etc/mail
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	cd root; \
