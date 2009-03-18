@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.35 2009/03/15 19:15:25 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.36 2009/03/18 00:07:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -696,9 +696,12 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 
 		if (sessionp->s_state == S_GREETED &&
 		    (sessionp->s_flags & F_PEERHASAUTH) &&
-		    (sessionp->s_flags & F_SECURE)) {
+		    (sessionp->s_flags & F_SECURE) &&
+		    (mxhost->flags & F_AUTH) &&
+		    (mxhost->credentials[0] != '\0')) {
 			log_debug("AUTH PLAIN %s", mxhost->credentials);
-			session_respond(sessionp, "AUTH PLAIN %s", mxhost->credentials);
+			session_respond(sessionp, "AUTH PLAIN %s",
+			    mxhost->credentials);
 			sessionp->s_state = S_AUTH_INIT;
 			return 0;
 		}
