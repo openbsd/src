@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.36 2009/03/18 00:07:41 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.37 2009/03/18 23:51:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -893,8 +893,11 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		session_respond(sessionp, "\t%s", time_to_text(batchp->creation));
 
 		if (sessionp->s_flags & F_SECURE) {
-			session_respond(sessionp, "X-OpenSMTPD-Cipher: %s",
-			    SSL_get_cipher(sessionp->s_ssl));
+			log_info("%s: version=%s cipher=%s bits=%d",
+			batchp->message_id,
+			SSL_get_cipher_version(sessionp->s_ssl),
+			SSL_get_cipher_name(sessionp->s_ssl),
+			SSL_get_cipher_bits(sessionp->s_ssl, NULL));
 		}
 
 		TAILQ_FOREACH(messagep, &batchp->messages, entry) {
