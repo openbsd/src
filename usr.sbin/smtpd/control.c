@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.19 2009/03/08 20:39:49 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.20 2009/03/18 14:48:27 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -993,7 +993,7 @@ session_socket_blockmode(int fd, enum blockmodes bm)
 
 	if (bm == BM_NONBLOCK)
 		flags |= O_NONBLOCK;
-
+	else
 		flags &= ~O_NONBLOCK;
 
 	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
