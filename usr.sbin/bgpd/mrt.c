@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.56 2009/03/13 06:25:04 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.57 2009/03/18 19:45:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -600,7 +600,7 @@ int
 mrt_open(struct mrt *mrt, time_t now)
 {
 	enum imsg_type	type;
-	int		i, fd;
+	int		i = 1, fd;
 
 	if (strftime(MRT2MC(mrt)->file, sizeof(MRT2MC(mrt)->file),
 	    MRT2MC(mrt)->name, localtime(&now)) == 0) {
@@ -620,7 +620,8 @@ mrt_open(struct mrt *mrt, time_t now)
 	else
 		type = IMSG_MRT_REOPEN;
 
-	i = mrt->type == MRT_TABLE_DUMP ? 0 : 1;
+	if (mrt->type == MRT_TABLE_DUMP || mrt->type == MRT_TABLE_DUMP_MP)
+		i = 0;
 
 	if (imsg_compose(mrt_imsgbuf[i], type, 0, 0, fd,
 	    mrt, sizeof(struct mrt)) == -1)
