@@ -2174,6 +2174,7 @@
 ./usr/share/man/cat5/sgi
 ./usr/share/man/cat5/shells.0
 ./usr/share/man/cat5/skey.0
+./usr/share/man/cat5/smtpd.conf.0
 ./usr/share/man/cat5/snmpd.conf.0
 ./usr/share/man/cat5/socppc
 ./usr/share/man/cat5/socppc/boot.conf.0
@@ -2637,6 +2638,8 @@
 ./usr/share/man/cat8/sliplogin.0
 ./usr/share/man/cat8/slstats.0
 ./usr/share/man/cat8/smrsh.0
+./usr/share/man/cat8/smtpctl.0
+./usr/share/man/cat8/smtpd.0
 ./usr/share/man/cat8/snkadm.0
 ./usr/share/man/cat8/snkinit.0
 ./usr/share/man/cat8/snmpctl.0

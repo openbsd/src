@@ -1897,10 +1897,13 @@
 ./usr/libexec/rpc.sprayd
 ./usr/libexec/rshd
 ./usr/libexec/sendmail
+./usr/libexec/sendmail/makemap
 ./usr/libexec/sendmail/sendmail
 ./usr/libexec/sftp-server
 ./usr/libexec/sm.bin
 ./usr/libexec/smrsh
+./usr/libexec/smtpd
+./usr/libexec/smtpd/makemap
 ./usr/libexec/spamd
 ./usr/libexec/spamd-setup
 ./usr/libexec/spamlogd
@@ -2082,6 +2085,8 @@
 ./usr/sbin/sensorsd
 ./usr/sbin/sliplogin
 ./usr/sbin/slstats
+./usr/sbin/smtpctl
+./usr/sbin/smtpd
 ./usr/sbin/snkadm
 ./usr/sbin/snkinit
 ./usr/sbin/snmpctl
@@ -4743,6 +4748,7 @@
 ./var/spool/lock
 ./var/spool/mqueue
 ./var/spool/output
+./var/spool/smtpd
 ./var/spool/uucp
 ./var/spool/uucppublic
 ./var/tmp

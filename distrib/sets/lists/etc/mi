@@ -54,6 +54,7 @@
 ./etc/mail/mailertable.db
 ./etc/mail/relay-domains
 ./etc/mail/sendmail.cf
+./etc/mail/smtpd.conf
 ./etc/mail/spamd.conf
 ./etc/mail/submit.cf
 ./etc/mail/trusted-users
