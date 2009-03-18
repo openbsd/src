@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.72 2009/03/17 08:17:48 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.73 2009/03/18 20:35:41 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -348,6 +348,7 @@ struct ips_info {
 /* Command control block */
 struct ips_softc;
 struct ips_ccb {
+	struct ips_softc *	c_sc;		/* driver softc */
 	int			c_id;		/* command id */
 	int			c_flags;	/* SCSI_* flags */
 	enum {
@@ -1703,8 +1704,8 @@ void
 ips_timeout(void *arg)
 {
 	struct ips_ccb *ccb = arg;
+	struct ips_softc *sc = ccb->c_sc;
 	struct scsi_xfer *xs = ccb->c_xfer;
-	struct ips_softc *sc = xs->sc_link->adapter_softc;
 	int s;
 
 	/*
@@ -2023,6 +2024,7 @@ ips_ccb_alloc(struct ips_softc *sc, int n)
 		return (NULL);
 
 	for (i = 0; i < n; i++) {
+		ccb[i].c_sc = sc;
 		ccb[i].c_id = i;
 		ccb[i].c_cmdbva = (char *)sc->sc_cmdbm.dm_vaddr +
 		    i * sizeof(struct ips_cmdb);
