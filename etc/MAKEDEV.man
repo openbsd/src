@@ -1,7 +1,7 @@
 define(COMM,`.\"')dnl
 include(MAKEDEV.mansub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.man,v 1.6 2009/02/06 17:02:14 grange Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp $-})dnl
 dnl
 define(quote,{-.Dq $1
 -})dnl
@@ -49,7 +49,7 @@ show_vers()dnl <-- now that all files are included, show versions
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2009 $
+.Dd $Mdocdate: March 18 2009 $
 .Dt MAKEDEV 8 MACHINE
 .Os
 .Sh NAME
@@ -57,8 +57,7 @@ show_vers()dnl <-- now that all files are included, show versions
 .Nd create system and device special files
 .Sh SYNOPSIS
 .Nm MAKEDEV
-.Ar name
-.Op Ar ...
+.Ar name ...
 .Sh DESCRIPTION
 The shell script
 .Nm ,
