@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.160 2009/02/23 21:32:08 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.161 2009/03/18 09:14:09 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -567,7 +567,7 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 		sticky[0] = '\0';
 
 	kbuf[0] = '\0';
-	if (cf->file_rcs->rf_expand != NULL) {
+	if (cf->file_rcs != NULL && cf->file_rcs->rf_expand != NULL) {
 		cf_kflag = rcs_kflag_get(cf->file_rcs->rf_expand);
 		if (kflag || cf_kflag != RCS_KWEXP_DEFAULT)
 			(void)xsnprintf(kbuf, sizeof(kbuf),
