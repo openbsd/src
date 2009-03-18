@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.225 2009/03/13 06:25:04 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.226 2009/03/18 19:41:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -241,6 +241,7 @@ struct peer_config {
 	u_int32_t		 id;
 	u_int32_t		 groupid;
 	u_int32_t		 remote_as;
+	u_int32_t		 local_as;
 	u_int32_t		 max_prefix;
 	enum announce_type	 announce_type;
 	enum enforce_as		 enforce_as;
@@ -248,6 +249,7 @@ struct peer_config {
 	u_int16_t		 max_prefix_restart;
 	u_int16_t		 holdtime;
 	u_int16_t		 min_holdtime;
+	u_int16_t		 local_short_as;
 	u_int8_t		 template;
 	u_int8_t		 remote_masklen;
 	u_int8_t		 cloned;
