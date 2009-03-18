@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.286 2009/03/13 05:43:51 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.287 2009/03/18 19:39:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1390,10 +1390,7 @@ session_open(struct peer *p)
 	}
 
 	msg.version = 4;
-	if (conf->as > USHRT_MAX)
-		msg.myas = htons(conf->short_as);
-	else
-		msg.myas = htons(conf->as);
+	msg.myas = htons(conf->short_as);
 	if (p->conf.holdtime)
 		msg.holdtime = htons(p->conf.holdtime);
 	else
