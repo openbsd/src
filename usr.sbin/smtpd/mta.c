@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.37 2009/03/18 23:51:34 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.38 2009/03/19 00:12:32 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -586,10 +586,14 @@ mta_write(int s, short event, void *arg)
 	struct mxhost *mxhost;
 	int ret;
 
+	mxhost = TAILQ_FIRST(&sessionp->mxhosts);
+
 	if (event == EV_TIMEOUT) {
 
-		TAILQ_REMOVE(&sessionp->mxhosts, mxhost, entry);
-		free(mxhost);
+		if (mxhost) {
+			TAILQ_REMOVE(&sessionp->mxhosts, mxhost, entry);
+			free(mxhost);
+		}
 		close(s);
 
 		if (sessionp->s_bev) {
@@ -620,8 +624,7 @@ mta_write(int s, short event, void *arg)
 		return;
 	}
 
-	mxhost = TAILQ_FIRST(&sessionp->mxhosts);
-	if (mxhost->flags & F_SSMTP) {
+	if (mxhost && mxhost->flags & F_SSMTP) {
 		ssl_client_init(sessionp);
 		return;
 	}
