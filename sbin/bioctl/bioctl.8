@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.65 2009/03/19 13:44:46 grunk Exp $
+.\"	$OpenBSD: bioctl.8,v 1.66 2009/03/19 15:11:59 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -224,12 +224,12 @@ volume:
 .Nm
 will ask for a passphrase, that will be needed to unlock the encrypted
 disk.
-After creating a new encrypted disk, the first megabyte of it should be
+After creating a newly encrypted disk, the first megabyte of it should be
 zeroed, so tools like
 .Xr fdisk 8
 or
 .Xr disklabel 8
-don't get confused by the random data that now appears on the new disk.
+don't get confused by the random data that appears on the new disk.
 This can be done with the following command (assuming the new disk is sd3):
 .Bd -literal -offset 3n
 # dd if=/dev/zero of=/dev/rsd3c bs=1M count=1
