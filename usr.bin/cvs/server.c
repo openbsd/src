@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.94 2009/03/19 09:53:16 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.95 2009/03/19 09:56:03 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -465,9 +465,7 @@ cvs_server_unchanged(char *data)
 void
 cvs_server_questionable(char *data)
 {
-	int fd;
 	CVSENTRIES *entlist;
-	struct cvs_ent *ent;
 	char entry[CVS_ENT_MAXLINELEN];
 
 	if (data == NULL)
