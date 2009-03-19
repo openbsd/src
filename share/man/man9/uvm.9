@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.37 2008/11/04 21:37:07 deraadt Exp $
+.\"	$OpenBSD: uvm.9,v 1.38 2009/03/19 20:09:00 jmc Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: November 4 2008 $
+.Dd $Mdocdate: March 19 2009 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -398,7 +398,6 @@ function causes process
 .Pa p2
 to share the address space of
 .Fa p1 .
-.Pp
 .Sh PAGE FAULT HANDLING
 .nr nS 1
 .Ft int
