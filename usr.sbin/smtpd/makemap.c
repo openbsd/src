@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.14 2009/03/09 16:31:09 jacekm Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.15 2009/03/19 22:03:33 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -82,10 +82,11 @@ ssl_load_certfile(struct smtpd *env, const char *name)
 int
 main(int argc, char *argv[])
 {
-	char	 dbname[MAXPATHLEN];
-	char	*opts;
-	char	*conf;
-	int	 ch;
+	struct stat	 sb;
+	char		 dbname[MAXPATHLEN];
+	char		*opts;
+	char		*conf;
+	int		 ch;
 
 	log_init(1);
 
@@ -133,6 +134,9 @@ main(int argc, char *argv[])
 	if (oflag == NULL && asprintf(&oflag, "%s.db", source) == -1)
 		err(1, "asprintf");
 
+	if (stat(source, &sb) == -1)
+		err(1, "stat: %s", source);
+
 	if (! bsnprintf(dbname, sizeof(dbname), "%s.XXXXXXXXXXX", oflag))
 		errx(1, "path too long");
 	if (mkstemp(dbname) == -1)
@@ -144,16 +148,17 @@ main(int argc, char *argv[])
 		goto bad;
 	}
 
+	if (fchmod(db->fd(db), sb.st_mode) == -1 ||
+	    fchown(db->fd(db), sb.st_uid, sb.st_gid) == -1) {
+		warn("couldn't carry ownership and perms to %s", dbname);
+		goto bad;
+	}
+
 	if (! parse_map(source))
 		goto bad;
 
 	if (db->close(db) == -1) {
 		warn("dbclose: %s", dbname);
-		goto bad;
-	}
-
-	if (chmod(dbname, 0644) == -1) {
-		warn("chmod: %s", dbname);
 		goto bad;
 	}
 
