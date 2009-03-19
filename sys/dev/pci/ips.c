@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.77 2009/03/19 16:19:51 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.78 2009/03/19 21:52:43 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -82,6 +82,7 @@ int ips_debug = IPS_D_ERR;
 #define IPS_CMD_FLUSH		0x0a
 #define IPS_CMD_REBUILDSTATUS	0x0c
 #define IPS_CMD_SETSTATE	0x10
+#define IPS_CMD_REBUILD		0x16
 #define IPS_CMD_ERRORTABLE	0x17
 #define IPS_CMD_GETDRIVEINFO	0x19
 #define IPS_CMD_RESETCHAN	0x1a
@@ -464,6 +465,7 @@ int	ips_getconf(struct ips_softc *, int);
 int	ips_getrblstat(struct ips_softc *, int);
 int	ips_getpg5(struct ips_softc *, int);
 int	ips_setstate(struct ips_softc *, int, int, int, int);
+int	ips_rebuild(struct ips_softc *, int, int, int, int, int);
 
 void	ips_copperhead_exec(struct ips_softc *, struct ips_ccb *);
 void	ips_copperhead_intren(struct ips_softc *);
@@ -1245,8 +1247,8 @@ ips_ioctl_setstate(struct ips_softc *sc, struct bioc_setstate *bs)
 		state = IPS_SS_HOTSPARE;
 		break;
 	case BIOC_SSREBUILD:
-		state = IPS_SS_REBUILD;
-		break;
+		return (ips_rebuild(sc, bs->bs_channel, bs->bs_target,
+		    bs->bs_channel, bs->bs_target, 0));
 	default:
 		return (EINVAL);
 	}
@@ -1858,6 +1860,32 @@ ips_setstate(struct ips_softc *sc, int chan, int target, int state, int flags)
 	cmd->drive = chan;
 	cmd->sgcnt = target;
 	cmd->seg4g = state;
+
+	return (ips_cmd(sc, ccb));
+}
+
+int
+ips_rebuild(struct ips_softc *sc, int chan, int target, int nchan,
+    int ntarget, int flags)
+{
+	struct ips_ccb *ccb;
+	struct ips_cmd *cmd;
+	int s;
+
+	s = splbio();
+	ccb = ips_ccb_get(sc);
+	splx(s);
+	if (ccb == NULL)
+		return (1);
+
+	ccb->c_flags = SCSI_POLL | flags;
+	ccb->c_done = ips_done_mgmt;
+
+	cmd = ccb->c_cmdbva;
+	cmd->code = IPS_CMD_REBUILD;
+	cmd->drive = chan;
+	cmd->sgcnt = target;
+	cmd->seccnt = htole16(ntarget << 8 | nchan);
 
 	return (ips_cmd(sc, ccb));
 }
