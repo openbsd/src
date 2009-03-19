@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.93 2009/02/21 13:39:01 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.94 2009/03/19 09:53:16 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -465,6 +465,20 @@ cvs_server_unchanged(char *data)
 void
 cvs_server_questionable(char *data)
 {
+	int fd;
+	CVSENTRIES *entlist;
+	struct cvs_ent *ent;
+	char entry[CVS_ENT_MAXLINELEN];
+
+	if (data == NULL)
+		fatal("Questionable request with no data attached");
+
+	(void)xsnprintf(entry, sizeof(entry), "/%s/%c///", data,
+	    CVS_SERVER_QUESTIONABLE);
+
+	entlist = cvs_ent_open(server_currentdir);
+	cvs_ent_add(entlist, entry);
+
 	/* sorry, we have to use TMP_DIR */
 	disable_fast_checkout = 1;
 }

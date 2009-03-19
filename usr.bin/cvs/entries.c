@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.101 2009/02/23 21:32:08 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.102 2009/03/19 09:53:16 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -156,17 +156,25 @@ cvs_ent_parse(const char *entry)
 		if (*fields[2] == '-') {
 			ent->ce_status = CVS_ENT_REMOVED;
 			sp = fields[2] + 1;
+		} else if (*fields[2] == CVS_SERVER_QUESTIONABLE) {
+			sp = NULL;
+			ent->ce_status = CVS_ENT_UNKNOWN;
 		} else {
 			sp = fields[2];
 			if (fields[2][0] == '0' && fields[2][1] == '\0')
 				ent->ce_status = CVS_ENT_ADDED;
 		}
 
-		if ((ent->ce_rev = rcsnum_parse(sp)) == NULL)
-			fatal("failed to parse entry revision '%s'", entry);
+		if (sp != NULL) {
+			if ((ent->ce_rev = rcsnum_parse(sp)) == NULL) {
+				fatal("failed to parse entry revision '%s'",
+				    entry);
+			}
+		}
 
 		if (fields[3][0] == '\0' ||
-		    strncmp(fields[3], CVS_DATE_DUMMY, sizeof(CVS_DATE_DUMMY) - 1) == 0 ||
+		    strncmp(fields[3], CVS_DATE_DUMMY,
+		    sizeof(CVS_DATE_DUMMY) - 1) == 0 ||
 		    strncmp(fields[3], "Initial ", 8) == 0 ||
 		    strcmp(fields[3], "Result of merge") == 0) {
 			ent->ce_mtime = CVS_DATE_DMSEC;
@@ -182,7 +190,6 @@ cvs_ent_parse(const char *entry)
 			/* Date field can be a '+=' with remote to indicate
 			 * conflict.  In this case do nothing. */
 			if (strptime(p, "%a %b %d %T %Y", &t) != NULL) {
-
 				t.tm_isdst = -1;	/* Figure out DST. */
 				t.tm_gmtoff = 0;
 				ent->ce_mtime = mktime(&t);

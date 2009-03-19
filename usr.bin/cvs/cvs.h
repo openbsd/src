@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.174 2009/02/21 14:11:08 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.175 2009/03/19 09:53:16 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -235,6 +235,7 @@ struct cvsroot {
 #define CVS_ENT_ADDED		1
 #define CVS_ENT_REMOVED		2
 #define CVS_ENT_UPTODATE	3
+#define CVS_ENT_UNKNOWN		4
 
 #define CVS_ENT_MAXLINELEN	1024
 
