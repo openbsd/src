@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.75 2009/03/19 13:25:18 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.76 2009/03/19 16:07:14 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1658,9 +1658,10 @@ ips_intr(void *arg)
 
 		ccb = &sc->sc_ccb[id];
 		if (ccb->c_state != IPS_CCB_QUEUED) {
-			DPRINTF(IPS_D_ERR, ("%s: ips_intr: cmd %d not queued, "
-			    "state %d, status 0x%08x\n", sc->sc_dev.dv_xname,
-			    ccb->c_id, ccb->c_state, status));
+			DPRINTF(IPS_D_ERR, ("%s: ips_intr: cmd 0x%02x not "
+			    "queued, state %d, status 0x%08x\n",
+			    sc->sc_dev.dv_xname, ccb->c_id, ccb->c_state,
+			    status));
 			continue;
 		}
 
