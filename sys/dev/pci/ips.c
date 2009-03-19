@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.76 2009/03/19 16:07:14 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.77 2009/03/19 16:19:51 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1032,12 +1032,22 @@ ips_scsi_pt_cmd(struct scsi_xfer *xs)
 		dcdb->attr |= IPS_DCDB_DATAIN;
 	if (xs->flags & SCSI_DATA_OUT)
 		dcdb->attr |= IPS_DCDB_DATAOUT;
-	if (xs->timeout <= 10000)
+
+	/*
+	 * Adjust timeout value to what controller supports. Make sure our
+	 * timeout will be fired after controller gives up.
+	 */
+	if (xs->timeout <= 10000) {
 		dcdb->attr |= IPS_DCDB_TIMO10;
-	else if (xs->timeout <= 60000)
+		xs->timeout = 11000;
+	} else if (xs->timeout <= 60000) {
 		dcdb->attr |= IPS_DCDB_TIMO60;
-	else
+		xs->timeout = 61000;
+	} else {
 		dcdb->attr |= IPS_DCDB_TIMO20M;
+		xs->timeout = 20 * 60000 + 1000;
+	}
+
 	dcdb->attr |= IPS_DCDB_DISCON;
 	dcdb->datalen = htole16(xs->datalen);
 	dcdb->cdblen = xs->cmdlen;
