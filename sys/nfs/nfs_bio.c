@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.57 2009/01/24 23:30:42 thib Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.58 2009/03/19 16:44:40 oga Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -591,15 +591,11 @@ nfs_doio(bp, p)
 	    if (bp->b_flags & B_READ) {
 		uiop->uio_rw = UIO_READ;
 		nfsstats.read_physios++;
-		bcstats.pendingreads++;
-		bcstats.numreads++;
 		error = nfs_readrpc(vp, uiop);
 	    } else {
 		iomode = NFSV3WRITE_DATASYNC;
 		uiop->uio_rw = UIO_WRITE;
 		nfsstats.write_physios++;
-		bcstats.pendingwrites++;
-		bcstats.numwrites++; 
 		error = nfs_writerpc(vp, uiop, &iomode, &must_commit);
 	    }
 	    if (error) {
