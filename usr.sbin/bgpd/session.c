@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.288 2009/03/18 19:49:31 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.289 2009/03/19 07:00:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -964,7 +964,7 @@ change_state(struct peer *peer, enum session_state state,
 		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
 		    mrt->peer_id == peer->conf.id || (mrt->group_id != 0 &&
 		    mrt->group_id == peer->conf.groupid))
-			mrt_dump_state(mrt, peer->state, state, peer, conf);
+			mrt_dump_state(mrt, peer->state, state, peer);
 	}
 	peer->prev_state = peer->state;
 	peer->state = state;
@@ -1318,7 +1318,7 @@ session_sendmsg(struct bgp_msg *msg, struct peer *p)
 		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
 		    mrt->peer_id == p->conf.id || (mrt->group_id == 0 &&
 		    mrt->group_id == p->conf.groupid))
-			mrt_dump_bgp_msg(mrt, msg->buf->buf, msg->len, p, conf);
+			mrt_dump_bgp_msg(mrt, msg->buf->buf, msg->len, p);
 	}
 
 	if (buf_close(&p->wbuf, msg->buf) == -1) {
@@ -1807,7 +1807,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
 		    mrt->peer_id == peer->conf.id || (mrt->group_id != 0 &&
 		    mrt->group_id == peer->conf.groupid))
-			mrt_dump_bgp_msg(mrt, data, *len, peer, conf);
+			mrt_dump_bgp_msg(mrt, data, *len, peer);
 	}
 	return (0);
 }
