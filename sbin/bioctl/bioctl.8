@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.64 2009/02/22 07:46:55 jmc Exp $
+.\"	$OpenBSD: bioctl.8,v 1.65 2009/03/19 13:44:46 grunk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 22 2009 $
+.Dd $Mdocdate: March 19 2009 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -224,10 +224,15 @@ volume:
 .Nm
 will ask for a passphrase, that will be needed to unlock the encrypted
 disk.
-After creating a new encrypted disk, it should be zeroed with the
-following command (assuming the new disk is sd3):
+After creating a new encrypted disk, the first megabyte of it should be
+zeroed, so tools like
+.Xr fdisk 8
+or
+.Xr disklabel 8
+don't get confused by the random data that now appears on the new disk.
+This can be done with the following command (assuming the new disk is sd3):
 .Bd -literal -offset 3n
-# dd if=/dev/zero of=/dev/rsd3c
+# dd if=/dev/zero of=/dev/rsd3c bs=1M count=1
 .Ed
 .Sh SEE ALSO
 .Xr ami 4 ,
