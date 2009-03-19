@@ -1,4 +1,4 @@
-/*	$OpenBSD: trigger.c,v 1.16 2008/08/29 09:51:21 tobias Exp $	*/
+/*	$OpenBSD: trigger.c,v 1.17 2009/03/19 09:55:19 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2008 Jonathan Armani <dbd@asystant.net>
@@ -280,19 +280,20 @@ again:
 				if (p[pos] == '\0')
 					goto bad;
 			} else {
-				if (!isalpha(*p)) {
+				for (pos = 0; isalpha(p[pos]); pos++)
+					;
+				if (pos == 0) {
 					cvs_log(LP_ERR,
 					    "unrecognized variable syntax");
 					goto bad;
 				}
-				pos = strcspn(p, " \t");
 			}
 			q = xmalloc(pos + 1);
 			memcpy(q, p, pos);
 			q[pos] = '\0';
 			if (expand_var(buf, q))
 				goto bad;
-			p += pos;
+			p += pos - (*(p - 1) == '{' ? 0 : 1);
 		} else {
 			switch (*p) {
 			case '\0':
