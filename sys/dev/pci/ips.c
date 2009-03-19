@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.74 2009/03/19 10:04:47 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.75 2009/03/19 13:25:18 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1687,21 +1687,21 @@ ips_timeout(void *arg)
 	struct scsi_xfer *xs = ccb->c_xfer;
 	int s;
 
-	/*
-	 * Command never completed. Cleanup and recover.
-	 */
 	s = splbio();
-	sc_print_addr(xs->sc_link);
-	printf("timeout");
-	DPRINTF(IPS_D_ERR, (", command %d", ccb->c_id));
-	printf("\n");
+	if (xs)
+		sc_print_addr(xs->sc_link);
+	else
+		printf("%s: ", sc->sc_dev.dv_xname);
+	printf("timeout\n");
 
+	/*
+	 * Command never completed. Fake hardware status byte
+	 * to indicate timeout.
+	 * XXX: need to remove command from controller.
+	 */
+	ccb->c_stat = IPS_STAT_TIMO;
+	ips_done(sc, ccb);
 	ips_ccb_put(sc, ccb);
-
-	xs->error = XS_TIMEOUT;
-	xs->flags |= ITSDONE;
-	scsi_done(xs);
-
 	splx(s);
 }
 
