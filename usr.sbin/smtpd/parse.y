@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.28 2009/03/16 23:26:40 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.29 2009/03/19 00:40:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -244,9 +244,9 @@ main		: QUEUE INTERVAL interval	{
 
 			if ($5 == 0) {
 				if ($1)
-					$5 = 487;
+					$5 = htons(465);
 				else
-					$5 = 25;
+					$5 = htons(25);
 			}
 			cert = ($6 != NULL) ? $6 : $4;
 
