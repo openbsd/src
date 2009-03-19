@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.73 2009/03/18 20:35:41 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.74 2009/03/19 10:04:47 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -466,19 +466,13 @@ int	ips_getpg5(struct ips_softc *, int);
 int	ips_setstate(struct ips_softc *, int, int, int, int);
 
 void	ips_copperhead_exec(struct ips_softc *, struct ips_ccb *);
-void	ips_copperhead_init(struct ips_softc *);
 void	ips_copperhead_intren(struct ips_softc *);
-void	ips_copperhead_intrds(struct ips_softc *);
 int	ips_copperhead_isintr(struct ips_softc *);
-int	ips_copperhead_reset(struct ips_softc *);
 u_int32_t ips_copperhead_status(struct ips_softc *);
 
 void	ips_morpheus_exec(struct ips_softc *, struct ips_ccb *);
-void	ips_morpheus_init(struct ips_softc *);
 void	ips_morpheus_intren(struct ips_softc *);
-void	ips_morpheus_intrds(struct ips_softc *);
 int	ips_morpheus_isintr(struct ips_softc *);
-int	ips_morpheus_reset(struct ips_softc *);
 u_int32_t ips_morpheus_status(struct ips_softc *);
 
 struct ips_ccb *ips_ccb_alloc(struct ips_softc *, int);
@@ -544,43 +538,31 @@ static const struct ips_chipset {
 	int		ic_bar;
 
 	void		(*ic_exec)(struct ips_softc *, struct ips_ccb *);
-	void		(*ic_init)(struct ips_softc *);
 	void		(*ic_intren)(struct ips_softc *);
-	void		(*ic_intrds)(struct ips_softc *);
 	int		(*ic_isintr)(struct ips_softc *);
-	int		(*ic_reset)(struct ips_softc *);
 	u_int32_t	(*ic_status)(struct ips_softc *);
 } ips_chips[] = {
 	{
 		IPS_CHIP_COPPERHEAD,
 		0x14,
 		ips_copperhead_exec,
-		ips_copperhead_init,
 		ips_copperhead_intren,
-		ips_copperhead_intrds,
 		ips_copperhead_isintr,
-		ips_copperhead_reset,
 		ips_copperhead_status
 	},
 	{
 		IPS_CHIP_MORPHEUS,
 		0x10,
 		ips_morpheus_exec,
-		ips_morpheus_init,
 		ips_morpheus_intren,
-		ips_morpheus_intrds,
 		ips_morpheus_isintr,
-		ips_morpheus_reset,
 		ips_morpheus_status
 	}
 };
 
 #define ips_exec(s, c)	(s)->sc_chip->ic_exec((s), (c))
-#define ips_init(s)	(s)->sc_chip->ic_init((s))
 #define ips_intren(s)	(s)->sc_chip->ic_intren((s))
-#define ips_intrds(s)	(s)->sc_chip->ic_intrds((s))
 #define ips_isintr(s)	(s)->sc_chip->ic_isintr((s))
-#define ips_reset(s)	(s)->sc_chip->ic_reset((s))
 #define ips_status(s)	(s)->sc_chip->ic_status((s))
 
 static const char *ips_names[] = {
@@ -643,9 +625,6 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map regs\n");
 		return;
 	}
-
-	/* Initialize hardware */
-	ips_init(sc);
 
 	/* Allocate command buffer */
 	if (ips_dmamem_alloc(&sc->sc_cmdbm, sc->sc_dmat,
@@ -1723,7 +1702,6 @@ ips_timeout(void *arg)
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
 
-	ips_reset(sc);
 	splx(s);
 }
 
@@ -1895,21 +1873,9 @@ ips_copperhead_exec(struct ips_softc *sc, struct ips_ccb *ccb)
 }
 
 void
-ips_copperhead_init(struct ips_softc *sc)
-{
-	/* XXX: not implemented */
-}
-
-void
 ips_copperhead_intren(struct ips_softc *sc)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IPS_REG_HIS, IPS_REG_HIS_EN);
-}
-
-void
-ips_copperhead_intrds(struct ips_softc *sc)
-{
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IPS_REG_HIS, 0);
 }
 
 int
@@ -1922,13 +1888,6 @@ ips_copperhead_isintr(struct ips_softc *sc)
 	if (reg != 0xff && (reg & IPS_REG_HIS_SCE))
 		return (1);
 
-	return (0);
-}
-
-int
-ips_copperhead_reset(struct ips_softc *sc)
-{
-	/* XXX: not implemented */
 	return (0);
 }
 
@@ -1963,12 +1922,6 @@ ips_morpheus_exec(struct ips_softc *sc, struct ips_ccb *ccb)
 }
 
 void
-ips_morpheus_init(struct ips_softc *sc)
-{
-	/* XXX: not implemented */
-}
-
-void
 ips_morpheus_intren(struct ips_softc *sc)
 {
 	u_int32_t reg;
@@ -1978,28 +1931,11 @@ ips_morpheus_intren(struct ips_softc *sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IPS_REG_OIM, reg);
 }
 
-void
-ips_morpheus_intrds(struct ips_softc *sc)
-{
-	u_int32_t reg;
-
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IPS_REG_OIM);
-	reg |= IPS_REG_OIM_DS;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IPS_REG_OIM, reg);
-}
-
 int
 ips_morpheus_isintr(struct ips_softc *sc)
 {
 	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh, IPS_REG_OIS) &
 	    IPS_REG_OIS_PEND);
-}
-
-int
-ips_morpheus_reset(struct ips_softc *sc)
-{
-	/* XXX: not implemented */
-	return (0);
 }
 
 u_int32_t
