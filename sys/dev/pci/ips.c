@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.80 2009/03/20 19:44:45 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.81 2009/03/20 19:48:41 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1215,6 +1215,7 @@ ips_ioctl_disk(struct ips_softc *sc, struct bioc_disk *bd)
 	    sizeof(bd->bd_procdev));
 
 	if (dev->state & IPS_DVS_READY) {
+		bd->bd_status = BIOC_SDUNUSED;
 		if (dev->state & IPS_DVS_MEMBER)
 			bd->bd_status = BIOC_SDONLINE;
 		if (dev->state & IPS_DVS_SPARE)
