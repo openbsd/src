@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.82 2009/03/20 20:11:07 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.83 2009/03/20 20:16:56 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1238,7 +1238,7 @@ out:
 	bd->bd_channel = chan;
 	bd->bd_target = target;
 	bd->bd_lun = 0;
-	bd->bd_size = (u_quad_t)letoh32(chunk->seccnt) * IPS_SECSZ;
+	bd->bd_size = (u_quad_t)letoh32(dev->seccnt) * IPS_SECSZ;
 
 	bzero(bd->bd_vendor, sizeof(bd->bd_vendor));
 	memcpy(bd->bd_vendor, dev->devid, MIN(sizeof(bd->bd_vendor),
