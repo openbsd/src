@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.33 2008/02/20 19:13:38 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.34 2009/03/20 18:41:06 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -36,7 +36,6 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <net/netisr.h>
 
 #include <machine/trap.h>
 #include <machine/psl.h>
@@ -76,8 +75,6 @@ struct {
 void dummy_do_pending_int(int);
 
 int_f *pending_hand = &dummy_do_pending_int;
-
-int netisr;
 
 /*
  *  Modern versions of MIPS processors have extended interrupt
@@ -191,30 +188,11 @@ interrupt(struct trap_frame *trapframe)
 	setsr((trapframe->sr & ~pending) | SR_INT_ENAB);
 #endif
 
-	xcpl = splsoftnet();
-	if ((ipending & SINT_CLOCKMASK) & ~xcpl) {
-		atomic_clearbits_int(&ipending, SINT_CLOCKMASK);
-		softclock();
-	}
-	if ((ipending & SINT_NETMASK) & ~xcpl) {
-		extern int netisr;
-		int isr;
-
-		atomic_clearbits_int(&ipending, SINT_NETMASK);
-		while ((isr = netisr) != 0) {
-			atomic_clearbits_int(&netisr, isr);
-
-#define DONETISR(b,f)   if (isr & (1 << (b)))   f();
-#include <net/netisr_dispatch.h>
-		}
+	xcpl = splsoft();
+	if ((ipending & SINT_ALLMASK) & ~xcpl) {
+		dosoftint(xcpl);
 	}
 
-#ifdef notyet
-	if ((ipending & SINT_TTYMASK) & ~xcpl) {
-		atomic_clearbits_int(&ipending, SINT_TTYMASK);
-		compoll(NULL);
-	}
-#endif
 	__asm__ (" .set noreorder\n");
 	cpl = xcpl;
 	__asm__ (" sync\n .set reorder\n");
@@ -280,251 +258,7 @@ softintr()
 	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
-
-intrmask_t intem = 0x0;
-intrmask_t intrtype[INTMASKSIZE], intrmask[INTMASKSIZE], intrlevel[INTMASKSIZE];
 struct intrhand *intrhand[INTMASKSIZE];
-
-/*======================================================================*/
-
-#if 0
-
-/*
- *	Generic interrupt handling code.
- *      ================================
- *
- *  This code can be used for interrupt models where only the
- *  processor status register has to be changed to mask/unmask.
- *  HW specific setup can be done in a MD function that can then
- *  call this function to use the generic interrupt code.
- */
-static int fakeintr(void *);
-static int fakeintr(void *a) {return 0;}
-
-/*
- *  Establish an interrupt handler called from the dispatcher.
- *  The interrupt function established should return zero if
- *  there was nothing to serve (no int) and non zero when an
- *  interrupt was serviced.
- *  Interrupts are numbered from 1 and up where 1 maps to HW int 0.
- */
-void *
-generic_intr_establish(icp, irq, type, level, ih_fun, ih_arg, ih_what)
-	void *icp;
-        u_long irq;	/* XXX pci_intr_handle_t compatible XXX */
-        int type;
-        int level;
-        int (*ih_fun)(void *);
-        void *ih_arg;
-        char *ih_what;
-{
-	struct intrhand **p, *q, *ih;
-	static struct intrhand fakehand = {NULL, fakeintr};
-	int edge;
-
-static int initialized = 0;
-
-	if (!initialized) {
-/*INIT CODE HERE*/
-		initialized = 1;
-	}
-
-	if (irq > 62 || irq < 1) {
-		panic("intr_establish: illegal irq %d", irq);
-	}
-	irq += 1;	/* Adjust for softint 1 and 0 */
-
-	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("intr_establish: can't malloc handler info");
-
-	if (type == IST_NONE || type == IST_PULSE)
-		panic("intr_establish: bogus type");
-
-	switch (intrtype[irq]) {
-	case IST_EDGE:
-	case IST_LEVEL:
-		if (type == intrtype[irq])
-			break;
-	}
-
-	switch (type) {
-	case IST_EDGE:
-		edge |= 1 << irq;
-		break;
-	case IST_LEVEL:
-		edge &= ~(1 << irq);
-		break;
-	}
-
-	/*
-	 * Figure out where to put the handler.
-	 * This is O(N^2), but we want to preserve the order, and N is
-	 * generally small.
-	 */
-	for (p = &intrhand[irq]; (q = *p) != NULL; p = &q->ih_next)
-		;
-
-	/*
-	 * Actually install a fake handler momentarily, since we might be doing
-	 * this with interrupts enabled and don't want the real routine called
-	 * until masking is set up.
-	 */
-	fakehand.ih_level = level;
-	*p = &fakehand;
-
-	generic_intr_makemasks();
-
-	/*
-	 * Poke the real handler in now.
-	 */
-	ih->ih_fun = ih_fun;
-	ih->ih_arg = ih_arg;
-	ih->ih_next = NULL;
-	ih->ih_level = level;
-	ih->ih_irq = irq;
-	ih->ih_what = ih_what;
-	evcount_attach(&ih->ih_count, ih_what, (void *)&ih->ih_irq,
-	    &evcount_intr);
-	*p = ih;
-
-	return (ih);
-}
-
-void
-generic_intr_disestablish(void *p1, void *p2)
-{
-}
-
-/*
- *  Regenerate interrupt masks to reflect reality.
- */
-void
-generic_intr_makemasks()
-{
-	int irq, level;
-	struct intrhand *q;
-
-	/* First, figure out which levels each IRQ uses. */
-	for (irq = 0; irq < INTMASKSIZE; irq++) {
-		int levels = 0;
-		for (q = intrhand[irq]; q; q = q->ih_next)
-			levels |= 1 << q->ih_level;
-		intrlevel[irq] = levels;
-	}
-
-	/* Then figure out which IRQs use each level. */
-	for (level = IPL_NONE; level < NIPLS; level++) {
-		register int irqs = 0;
-		for (irq = 0; irq < INTMASKSIZE; irq++)
-			if (intrlevel[irq] & (1 << level))
-				irqs |= 1 << irq;
-		imask[level] = irqs | SINT_ALLMASK;
-	}
-
-	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so imp > (tty | net | bio).
-	 *
-	 * Enforce a hierarchy that gives slow devices a better chance at not
-	 * dropping data.
-	 */
-	imask[IPL_NET] |= imask[IPL_BIO];
-	imask[IPL_TTY] |= imask[IPL_NET];
-	imask[IPL_VM] |= imask[IPL_TTY];
-	imask[IPL_CLOCK] |= imask[IPL_VM] | SPL_CLOCKMASK;
-
-	/*
-	 * These are pseudo-levels.
-	 */
-	imask[IPL_NONE] = 0;
-	imask[IPL_HIGH] = -1;
-
-	/* And eventually calculate the complete masks. */
-	for (irq = 0; irq < INTMASKSIZE; irq++) {
-		register int irqs = 1 << irq;
-		for (q = intrhand[irq]; q; q = q->ih_next)
-			irqs |= imask[q->ih_level];
-		intrmask[irq] = irqs | SINT_ALLMASK;
-	}
-
-	/* Lastly, determine which IRQs are actually in use. */
-	irq = 0;
-	for (level = 0; level < INTMASKSIZE; level++) {
-		if (intrhand[level]) {
-			irq |= 1 << level;
-		}
-	}
-	intem = irq;
-}
-
-void
-generic_do_pending_int(int newcpl)
-{
-	struct intrhand *ih;
-	int vector;
-	intrmask_t hwpend;
-	struct trap_frame cf;
-	static volatile int processing;
-
-	/* Don't recurse... but change the mask. */
-	if (processing) {
-		__asm__ (" .set noreorder\n");
-		cpl = newcpl;
-		__asm__ (" sync\n .set reorder\n");
-		return;
-	}
-	processing = 1;
-
-	/* XXX Fake a trapframe for clock pendings... */
-	cf.pc = (int)&generic_do_pending_int;
-	cf.sr = 0;
-	cf.cpl = cpl;
-
-	hwpend = ipending & ~newcpl;	/* Do pendings being unmasked */
-	hwpend &= ~(SINT_ALLMASK);
-	atomic_clearbits_int(&ipending, hwpend);
-	intem |= hwpend;
-	while (hwpend) {
-		vector = ffs(hwpend) - 1;
-		hwpend &= ~(1L << vector);
-		ih = intrhand[vector];
-		while (ih) {
-			ih->frame = &cf;
-			if ((*ih->ih_fun)(ih->ih_arg)) {
-				ih->ih_count.ec_count++;
-			}
-			ih = ih->ih_next;
-		}
-	}
-	if ((ipending & SINT_CLOCKMASK) & ~newcpl) {
-		atomic_clearbits_int(&ipending, SINT_CLOCKMASK);
-		softclock();
-	}
-	if ((ipending & SINT_NETMASK) & ~newcpl) {
-		int isr = netisr;
-		netisr = 0;
-		atomic_clearbits_int(&ipending, SINT_NETMASK);
-#define	DONETISR(b,f)	if (isr & (1 << (b)))   f();
-#include <net/netisr_dispatch.h>
-	}
-
-#ifdef NOTYET
-	if ((ipending & SINT_TTYMASK) & ~newcpl) {
-		atomic_clearbits_int(&ipending, SINT_TTYMASK);
-		compoll(NULL);
-	}
-#endif
-
-	__asm__ (" .set noreorder\n");
-	cpl = newcpl;
-	__asm__ (" sync\n .set reorder\n");
-	updateimask(newcpl);	/* Update CPU mask ins SR register */
-	processing = 0;
-}
-
-#endif
 
 void
 dummy_do_pending_int(int newcpl)
@@ -552,44 +286,6 @@ splinit()
 	hw_setintrmask(0);
 #endif
 }
-
-#if 0
-
-/*
- *  Process interrupts. The parameter pending has non-masked interrupts.
- */
-intrmask_t
-generic_iointr(intrmask_t pending, struct trap_frame *cf)
-{
-	struct intrhand *ih;
-	intrmask_t caught, vm;
-	int v;
-
-	caught = 0;
-
-	atomic_setbits_int(&ipending, (pending >> 8) & cpl);
-	pending &= ~(cpl << 8);
-	cf->sr &= ~((ipending << 8) & SR_INT_MASK);
-	cf->ic &= ~(ipending & IC_INT_MASK);
-
-	for (v = 2, vm = 0x400; pending != 0 && v < 16 ; v++, vm <<= 1) {
-		if (pending & vm) {
-			ih = intrhand[v];
-
-			while (ih) {
-				ih->frame = cf;
-				if ((*ih->ih_fun)(ih->ih_arg)) {
-					caught |= vm;
-					ih->ih_count.ec_count++;
-				}
-				ih = ih->ih_next;
-			}
-		}
-	}
-	return caught;
-}
-
-#endif
 
 #ifndef INLINE_SPLRAISE
 int

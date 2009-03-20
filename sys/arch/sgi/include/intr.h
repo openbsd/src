@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.21 2009/03/15 19:40:40 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.22 2009/03/20 18:41:07 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -50,17 +50,17 @@
 /* This define controls whether splraise is inlined or not */
 /* #define INLINE_SPLRAISE */
 
-
 /* Interrupt priority `levels'; not mutually exclusive. */
 #define	IPL_NONE	0	/* nothing */
-#define	IPL_BIO		1	/* block I/O */
+#define	IPL_SOFTINT	1	/* soft interrupts */
+#define	IPL_BIO		2	/* block I/O */
 #define IPL_AUDIO	IPL_BIO
-#define	IPL_NET		2	/* network */
-#define	IPL_TTY		3	/* terminal */
-#define	IPL_VM		4	/* memory allocation */
-#define	IPL_CLOCK	5	/* clock */
-#define	IPL_HIGH	6	/* everything */
-#define	NIPLS		7	/* Number of levels */
+#define	IPL_NET		3	/* network */
+#define	IPL_TTY		4	/* terminal */
+#define	IPL_VM		5	/* memory allocation */
+#define	IPL_CLOCK	6	/* clock */
+#define	IPL_HIGH	7	/* everything */
+#define	NIPLS		8	/* Number of levels */
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -68,38 +68,71 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
+#define	SINTBIT(q)	(31 - (q))
+#define	SINTMASK(q)	(1 << SINTBIT(q))
+
+#define	SPL_CLOCK	SINTBIT(SI_NQUEUES)
+#define	SPL_CLOCKMASK	SINTMASK(SI_NQUEUES)
+
 /* Soft interrupt masks. */
-#define	SINT_CLOCK	31
-#define	SINT_CLOCKMASK	(1 << SINT_CLOCK)
-#define	SINT_NET	30
-#define	SINT_NETMASK	((1 << SINT_NET) | SINT_CLOCKMASK)
-#define	SINT_TTY	29
-#define	SINT_TTYMASK	((1 << SINT_TTY) | SINT_CLOCKMASK)
-#define	SINT_ALLMASK	(SINT_CLOCKMASK | SINT_NETMASK | SINT_TTYMASK)
-#define	SPL_CLOCK	28
-#define	SPL_CLOCKMASK	(1 << SPL_CLOCK)
+
+#define	IPL_SOFT	0
+#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTNET	2
+#define	IPL_SOFTTTY	3
+
+#define	SI_SOFT		0	/* for IPL_SOFT */
+#define	SI_SOFTCLOCK	1	/* for IPL_SOFTCLOCK */
+#define	SI_SOFTNET	2	/* for IPL_SOFTNET */
+#define	SI_SOFTTTY	3	/* for IPL_SOFTTTY */
+
+#define	SINT_ALLMASK	(SINTMASK(SI_SOFT) | SINTMASK(SI_SOFTCLOCK) | \
+			 SINTMASK(SI_SOFTNET) | SINTMASK(SI_SOFTTTY))
+#define	SI_NQUEUES	4
 
 #ifndef _LOCORE
 
+#include <machine/mutex.h>
+#include <sys/queue.h>
+
+struct soft_intrhand {
+	TAILQ_ENTRY(soft_intrhand) sih_list;
+	void	(*sih_func)(void *);
+	void	*sih_arg;
+	struct soft_intrq *sih_siq;
+	int	sih_pending;
+};
+
+struct soft_intrq {
+	TAILQ_HEAD(, soft_intrhand) siq_list;
+	int siq_si;
+	struct mutex siq_mtx;
+};
+
+void	 softintr_disestablish(void *);
+void	 softintr_dispatch(int);
+void	*softintr_establish(int, void (*)(void *), void *);
+void	 softintr_init(void);
+void	 softintr_schedule(void *);
+
+/* XXX For legacy software interrupts. */
+extern struct soft_intrhand *softnet_intrhand;
+
+#define	setsoftnet()	softintr_schedule(softnet_intrhand)
+
+#define	splsoft()		splraise(imask[IPL_SOFTINT])
 #define splbio()		splraise(imask[IPL_BIO])
 #define splnet()		splraise(imask[IPL_NET])
 #define spltty()		splraise(imask[IPL_TTY])
 #define splaudio()		splraise(imask[IPL_AUDIO])
 #define splclock()		splraise(imask[IPL_CLOCK])
 #define splvm()			splraise(imask[IPL_VM])
-#define splsoftclock()		splraise(SINT_CLOCKMASK)
-#define splsoftnet()		splraise(SINT_NETMASK|SINT_CLOCKMASK)
-#define splsofttty()		splraise(SINT_TTYMASK)
+#define splsoftclock()		splraise(SINTMASK(SI_SOFTCLOCK))
+#define splsoftnet()		splraise(SINTMASK(SI_SOFTNET))
 #define splstatclock()		splhigh()
 #define splsched()		splhigh()
 #define splhigh()		splraise(-1)
 #define spl0()			spllower(0)
-
-#include <machine/atomic.h>
-
-#define setsoftclock()  	atomic_setbits_int(&ipending, SINT_CLOCKMASK)
-#define setsoftnet()    	atomic_setbits_int(&ipending, SINT_NETMASK)
-#define setsofttty()    	atomic_setbits_int(&ipending, SINT_TTYMASK)
 
 void	splinit(void);
 
@@ -226,18 +259,7 @@ void hw_setintrmask(intrmask_t);
 extern void *hwmask_addr;
 #endif
 
-/*
- *  Generic interrupt handling code that can be used for simple
- *  interrupt hardware models. Functions can also be used by
- *  more complex code especially the mask calculation code.
- */
-
-void *generic_intr_establish(void *, u_long, int, int,
-	    int (*)(void *), void *, char *);
-void generic_intr_disestablish(void *, void *);
-void generic_intr_makemasks(void);
-void generic_do_pending_int(int);
-intrmask_t generic_iointr(intrmask_t, struct trap_frame *);
+void	dosoftint(intrmask_t);
 
 #endif /* _LOCORE */
 

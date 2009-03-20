@@ -1,18 +1,18 @@
-#	$OpenBSD: files.mips64,v 1.9 2007/06/21 20:17:12 miod Exp $
-
-file	arch/mips64/mips64/mem.c
-file	arch/mips64/mips64/process_machdep.c
-file	arch/mips64/mips64/sys_machdep.c
-file	arch/mips64/mips64/vm_machdep.c
+#	$OpenBSD: files.mips64,v 1.10 2009/03/20 18:41:05 miod Exp $
 
 file	arch/mips64/mips64/arcbios.c		arcbios
 file	arch/mips64/mips64/clock.c
 file	arch/mips64/mips64/cpu.c
 file	arch/mips64/mips64/interrupt.c
 file	arch/mips64/mips64/mainbus.c
+file	arch/mips64/mips64/mem.c
 file	arch/mips64/mips64/pmap.c
+file	arch/mips64/mips64/process_machdep.c
 file	arch/mips64/mips64/sendsig.c
+file	arch/mips64/mips64/softintr.c
+file	arch/mips64/mips64/sys_machdep.c
 file	arch/mips64/mips64/trap.c
+file	arch/mips64/mips64/vm_machdep.c
 
 file	arch/mips64/mips64/cache_r5k.S
 file	arch/mips64/mips64/cache_r10k.S

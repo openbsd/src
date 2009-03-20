@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.21 2008/09/23 04:33:07 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.22 2009/03/20 18:41:06 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -159,7 +159,7 @@ clock_int5(intrmask_t mask, struct trap_frame *tf)
 		cp0_set_compare(cpu_counter_last);
 	}
 
-	if ((tf->cpl & SPL_CLOCKMASK) == 0) {
+	if (clock_started && (tf->cpl & SPL_CLOCKMASK) == 0) {
 		while (pendingticks) {
 			clk_count.ec_count++;
 			hardclock(tf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.2 2008/07/28 18:50:59 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.3 2009/03/20 18:41:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -365,7 +365,9 @@ xheart_intr_makemasks(struct xheart_softc *sc)
 		for (irq = 0; irq < INTMASKSIZE; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
-		imask[level] = irqs | SINT_ALLMASK;
+		if (level != IPL_NONE)
+			irqs |= SINT_ALLMASK;
+		imask[level] = irqs;
 	}
 
 	/*

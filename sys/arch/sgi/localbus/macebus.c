@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.37 2008/07/30 17:37:46 miod Exp $ */
+/*	$OpenBSD: macebus.c,v 1.38 2009/03/20 18:41:07 miod Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -628,7 +628,9 @@ macebus_intr_makemasks(void)
 		for (irq = 0; irq < INTMASKSIZE; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
-		imask[level] = irqs | SINT_ALLMASK;
+		if (level != IPL_NONE)
+			irqs |= SINT_ALLMASK;
+		imask[level] = irqs;
 	}
 
 	/*
@@ -671,92 +673,6 @@ macebus_intr_makemasks(void)
 void
 macebus_do_pending_int(int newcpl)
 {
-#if 0
-	struct intrhand *ih;
-	int vector;
-	intrmask_t hwpend;
-	struct trap_frame cf;
-	static volatile int processing;
-
-	/* Don't recurse... but change the mask. */
-	if (processing) {
-		__asm__ (" .set noreorder\n");
-		cpl = newcpl;
-		__asm__ (" sync\n .set reorder\n");
-		return;
-	}
-	processing = 1;
-
-
-	/* XXX Fake a trapframe for clock pendings... */
-	cf.pc = (int)&macebus_do_pending_int;
-	cf.sr = 0;
-	cf.cpl = cpl;
-
-	/* Hard mask current cpl so we don't get any new pendings. */
-	hw_setintrmask(cpl);
-
-	/* Find out what interrupts we should process. */
-	hwpend = ipending & ~newcpl;
-	hwpend &= ~SINT_ALLMASK;
-	atomic_clearbits_int(&ipending, hwpend);
-
-	/* Enable all non-pending non-masked hardware interrupts. */
-	__asm__ (" .set noreorder\n");
-	cpl = (cpl & SINT_ALLMASK) | (newcpl & ~SINT_ALLMASK) | hwpend;
-	__asm__ (" sync\n .set reorder\n");
-	hw_setintrmask(cpl);
-
-	while (hwpend) {
-		vector = ffs(hwpend) - 1;
-		hwpend &= ~(1L << vector);
-		ih = intrhand[vector];
-		while (ih) {
-			ih->frame = &cf;
-			if ((*ih->ih_fun)(ih->ih_arg)) {
-				ih->ih_count.ec_count++;
-			}
-			ih = ih->ih_next;
-		}
-	}
-
-	/* Enable all processed pending hardware interrupts. */
-	__asm__ (" .set noreorder\n");
-	cpl &= ~hwpend;
-	__asm__ (" sync\n .set reorder\n");
-	hw_setintrmask(cpl);
-
-	if ((ipending & SINT_CLOCKMASK) & ~newcpl) {
-		atomic_clearbits_int(&ipending, SINT_CLOCKMASK);
-		softclock();
-	}
-	if ((ipending & SINT_NETMASK) & ~newcpl) {
-		extern int netisr;
-		int isr;
-
-		atomic_clearbits_int(&ipending, SINT_NETMASK);
-		while ((isr = netisr) != 0) {
-			atomic_clearbits_int(&netisr, isr);
-#define	DONETISR(b,f)	if (isr & (1 << (b)))	f();
-#include <net/netisr_dispatch.h>
-		}
-	}
-
-#ifdef notyet
-	if ((ipending & SINT_TTYMASK) & ~newcpl) {
-		atomic_clearbits_int(&ipending, SINT_TTYMASK);
-		compoll(NULL);
-	}
-#endif
-
-	/* Update masks to new cpl. Order highly important! */
-	__asm__ (" .set noreorder\n");
-	cpl = newcpl;
-	__asm__ (" sync\n .set reorder\n");
-	hw_setintrmask(newcpl);
-
-	processing = 0;
-#else
 	/* Update masks to new cpl. Order highly important! */
 	__asm__ (" .set noreorder\n");
 	cpl = newcpl;
@@ -765,7 +681,6 @@ macebus_do_pending_int(int newcpl)
 	/* If we still have softints pending trigger processing. */
 	if (ipending & SINT_ALLMASK & ~newcpl)
 		setsoftintr0();
-#endif
 }
 
 /*
