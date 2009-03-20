@@ -190,7 +190,7 @@ drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
 			drm_free(map, sizeof(*map), DRM_MEM_MAPS);
 			return (EINVAL);
 		}
-		map->offset = map->offset + dev->sg->handle;
+		map->offset += dev->sg->handle;
 		break;
 	case _DRM_SHM:
 	case _DRM_CONSISTENT:
