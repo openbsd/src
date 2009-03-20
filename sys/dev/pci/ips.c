@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.79 2009/03/20 07:24:41 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.80 2009/03/20 19:44:45 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -101,12 +101,6 @@ int ips_debug = IPS_D_ERR;
 #define IPS_CMD_FFDC		0xd7
 #define IPS_CMD_SG		0x80
 #define IPS_CMD_RWNVRAM		0xbc
-
-/* SETSTATE states */
-#define IPS_SS_ONLINE		0x89
-#define IPS_SS_OFFLINE		0x08
-#define IPS_SS_HOTSPARE		0x85
-#define IPS_SS_REBUILD		0x8b
 
 /* DCDB attributes */
 #define IPS_DCDB_DATAIN		0x01	/* data input */
@@ -302,10 +296,12 @@ struct ips_conf {
 		u_int8_t	params;
 		u_int8_t	miscflag;
 		u_int8_t	state;
-#define IPS_DVS_PRESENT	0x81
+#define IPS_DVS_STANDBY	0x01
 #define IPS_DVS_REBUILD	0x02
 #define IPS_DVS_SPARE	0x04
 #define IPS_DVS_MEMBER	0x08
+#define IPS_DVS_ONLINE	0x80
+#define IPS_DVS_READY	(IPS_DVS_STANDBY | IPS_DVS_ONLINE)
 
 		u_int32_t	seccnt;
 		u_int8_t	devid[28];
@@ -1218,7 +1214,7 @@ ips_ioctl_disk(struct ips_softc *sc, struct bioc_disk *bd)
 	strlcpy(bd->bd_procdev, sc->sc_pt[chunk->channel].pt_procdev,
 	    sizeof(bd->bd_procdev));
 
-	if (dev->state & IPS_DVS_PRESENT) {
+	if (dev->state & IPS_DVS_READY) {
 		if (dev->state & IPS_DVS_MEMBER)
 			bd->bd_status = BIOC_SDONLINE;
 		if (dev->state & IPS_DVS_SPARE)
@@ -1239,17 +1235,24 @@ ips_ioctl_disk(struct ips_softc *sc, struct bioc_disk *bd)
 int
 ips_ioctl_setstate(struct ips_softc *sc, struct bioc_setstate *bs)
 {
+	struct ips_conf *conf = &sc->sc_info->conf;
+	struct ips_dev *dev;
 	int state;
+
+	if (bs->bs_channel >= IPS_MAXCHANS || bs->bs_target >= IPS_MAXTARGETS)
+		return (EINVAL);
+	dev = &conf->dev[bs->bs_channel][bs->bs_target];
+	state = dev->state;
 
 	switch (bs->bs_status) {
 	case BIOC_SSONLINE:
-		state = IPS_SS_ONLINE;
+		state |= IPS_DVS_READY;
 		break;
 	case BIOC_SSOFFLINE:
-		state = IPS_SS_OFFLINE;
+		state &= ~IPS_DVS_READY;
 		break;
 	case BIOC_SSHOTSPARE:
-		state = IPS_SS_HOTSPARE;
+		state |= IPS_DVS_SPARE;
 		break;
 	case BIOC_SSREBUILD:
 		return (ips_rebuild(sc, bs->bs_channel, bs->bs_target,
