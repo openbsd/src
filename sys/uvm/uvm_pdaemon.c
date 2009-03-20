@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.36 2009/01/12 19:03:12 miod Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.37 2009/03/20 15:19:04 oga Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -108,8 +108,7 @@ static void		uvmpd_tune(void);
  */
 
 void
-uvm_wait(wmsg)
-	const char *wmsg;
+uvm_wait(const char *wmsg)
 {
 	int timo = 0;
 	int s = splbio();
@@ -357,8 +356,7 @@ uvm_aiodone_daemon(void *arg)
  */
 
 static boolean_t
-uvmpd_scan_inactive(pglst)
-	struct pglist *pglst;
+uvmpd_scan_inactive(struct pglist *pglst)
 {
 	boolean_t retval = FALSE;	/* assume we haven't hit target */
 	int free, result;

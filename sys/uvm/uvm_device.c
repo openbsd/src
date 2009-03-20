@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.28 2007/10/29 17:08:08 chl Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.29 2009/03/20 15:19:04 oga Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -95,7 +95,7 @@ struct uvm_pagerops uvm_deviceops = {
  */
 
 void
-udv_init()
+udv_init(void)
 {
 
 	LIST_INIT(&udv_list);
@@ -110,13 +110,11 @@ udv_init()
  *
  * => caller must _not_ already be holding the lock on the uvm_object.
  * => in fact, nothing should be locked so that we can sleep here.
+ *
+ * The last two arguments (off and size) are only used for access checking.
  */
 struct uvm_object *
-udv_attach(arg, accessprot, off, size)
-	void *arg;
-	vm_prot_t accessprot;
-	voff_t off;			/* used only for access check */
-	vsize_t size;			/* used only for access check */
+udv_attach(void *arg, vm_prot_t accessprot, voff_t off, vsize_t size)
 {
 	dev_t device = *((dev_t *)arg);
 	struct uvm_device *udv, *lcv;
@@ -270,8 +268,7 @@ udv_attach(arg, accessprot, off, size)
  */
 
 static void
-udv_reference(uobj)
-	struct uvm_object *uobj;
+udv_reference(struct uvm_object *uobj)
 {
 	UVMHIST_FUNC("udv_reference"); UVMHIST_CALLED(maphist);
 
@@ -291,8 +288,7 @@ udv_reference(uobj)
  */
 
 static void
-udv_detach(uobj)
-	struct uvm_object *uobj;
+udv_detach(struct uvm_object *uobj)
 {
 	struct uvm_device *udv = (struct uvm_device *)uobj;
 	UVMHIST_FUNC("udv_detach"); UVMHIST_CALLED(maphist);
@@ -344,10 +340,7 @@ again:
  */
 
 static boolean_t
-udv_flush(uobj, start, stop, flags)
-	struct uvm_object *uobj;
-	voff_t start, stop;
-	int flags;
+udv_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 {
 
 	return(TRUE);
@@ -370,13 +363,8 @@ udv_flush(uobj, start, stop, flags)
  */
 
 static int
-udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
-	struct uvm_faultinfo *ufi;
-	vaddr_t vaddr;
-	vm_page_t *pps;
-	int npages, centeridx, flags;
-	vm_fault_t fault_type;
-	vm_prot_t access_type;
+udv_fault( struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps, int npages,
+    int centeridx, vm_fault_t fault_type, vm_prot_t access_type, int flags)
 {
 	struct vm_map_entry *entry = ufi->entry;
 	struct uvm_object *uobj = entry->object.uvm_obj;

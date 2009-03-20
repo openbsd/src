@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.48 2008/10/24 06:32:46 deraadt Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.49 2009/03/20 15:19:04 oga Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -101,10 +101,7 @@ int readbuffers = 0;		/* allow KGDB to read kern buffer pool */
  */
 
 boolean_t
-uvm_kernacc(addr, len, rw)
-	caddr_t addr;
-	size_t len;
-	int rw;
+uvm_kernacc(caddr_t addr, size_t len, int rw)
 {
 	boolean_t rv;
 	vaddr_t saddr, eaddr;
@@ -133,10 +130,7 @@ uvm_kernacc(addr, len, rw)
  * we can ensure the change takes place properly.
  */
 void
-uvm_chgkprot(addr, len, rw)
-	caddr_t addr;
-	size_t len;
-	int rw;
+uvm_chgkprot(caddr_t addr, size_t len, int rw)
 {
 	vm_prot_t prot;
 	paddr_t pa;
@@ -167,11 +161,7 @@ uvm_chgkprot(addr, len, rw)
  */
 
 int
-uvm_vslock(p, addr, len, access_type)
-	struct proc *p;
-	caddr_t	addr;
-	size_t	len;
-	vm_prot_t access_type;
+uvm_vslock(struct proc *p, caddr_t addr, size_t len, vm_prot_t access_type)
 {
 	vm_map_t map;
 	vaddr_t start, end;
@@ -196,10 +186,7 @@ uvm_vslock(p, addr, len, access_type)
  */
 
 void
-uvm_vsunlock(p, addr, len)
-	struct proc *p;
-	caddr_t	addr;
-	size_t	len;
+uvm_vsunlock(struct proc *p, caddr_t addr, size_t len)
 {
 	vaddr_t start, end;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.50 2008/09/16 18:52:52 chl Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.51 2009/03/20 15:19:04 oga Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -189,9 +189,7 @@ static __inline void uvmfault_anonflush(struct vm_anon **, int);
  */
 
 static __inline void
-uvmfault_anonflush(anons, n)
-	struct vm_anon **anons;
-	int n;
+uvmfault_anonflush(struct vm_anon **anons, int n)
 {
 	int lcv;
 	struct vm_page *pg;
@@ -230,8 +228,7 @@ uvmfault_anonflush(anons, n)
  */
 
 static void
-uvmfault_amapcopy(ufi)
-	struct uvm_faultinfo *ufi;
+uvmfault_amapcopy(struct uvm_faultinfo *ufi)
 {
 
 	/*
@@ -292,10 +289,8 @@ uvmfault_amapcopy(ufi)
  */
 
 int
-uvmfault_anonget(ufi, amap, anon)
-	struct uvm_faultinfo *ufi;
-	struct vm_amap *amap;
-	struct vm_anon *anon;
+uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
+    struct vm_anon *anon)
 {
 	boolean_t we_own;	/* we own anon's page? */
 	boolean_t locked;	/* did we relock? */
@@ -556,11 +551,8 @@ uvmfault_anonget(ufi, amap, anon)
 			 ~VM_PROT_WRITE : VM_PROT_ALL)
 
 int
-uvm_fault(orig_map, vaddr, fault_type, access_type)
-	vm_map_t orig_map;
-	vaddr_t vaddr;
-	vm_fault_t fault_type;
-	vm_prot_t access_type;
+uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
+    vm_prot_t access_type)
 {
 	struct uvm_faultinfo ufi;
 	vm_prot_t enter_prot;
@@ -1768,10 +1760,7 @@ Case2:
  */
 
 int
-uvm_fault_wire(map, start, end, access_type)
-	vm_map_t map;
-	vaddr_t start, end;
-	vm_prot_t access_type;
+uvm_fault_wire(vm_map_t map, vaddr_t start, vaddr_t end, vm_prot_t access_type)
 {
 	vaddr_t va;
 	pmap_t  pmap;
@@ -1803,9 +1792,7 @@ uvm_fault_wire(map, start, end, access_type)
  */
 
 void
-uvm_fault_unwire(map, start, end)
-	vm_map_t map;
-	vaddr_t start, end;
+uvm_fault_unwire(vm_map_t map, vaddr_t start, vaddr_t end)
 {
 
 	vm_map_lock_read(map);
@@ -1820,9 +1807,7 @@ uvm_fault_unwire(map, start, end)
  */
 
 void
-uvm_fault_unwire_locked(map, start, end)
-	vm_map_t map;
-	vaddr_t start, end;
+uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 {
 	vm_map_entry_t entry;
 	pmap_t pmap = vm_map_pmap(map);

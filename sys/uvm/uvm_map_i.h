@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map_i.h,v 1.22 2007/10/29 17:08:08 chl Exp $	*/
+/*	$OpenBSD: uvm_map_i.h,v 1.23 2009/03/20 15:19:04 oga Exp $	*/
 /*	$NetBSD: uvm_map_i.h,v 1.18 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -85,10 +85,7 @@
  */
 
 MAP_INLINE vm_map_t
-uvm_map_create(pmap, min, max, flags)
-	pmap_t pmap;
-	vaddr_t min, max;
-	int flags;
+uvm_map_create(pmap_t pmap, vaddr_t min, vaddr_t max, int flags)
 {
 	vm_map_t result;
 
@@ -105,10 +102,7 @@ uvm_map_create(pmap, min, max, flags)
  */
 
 MAP_INLINE void
-uvm_map_setup(map, min, max, flags)
-	vm_map_t map;
-	vaddr_t min, max;
-	int flags;
+uvm_map_setup(vm_map_t map, vaddr_t min, vaddr_t max, int flags)
 {
 
 	RB_INIT(&map->rbhead);
@@ -140,10 +134,7 @@ uvm_map_setup(map, min, max, flags)
  */
 
 MAP_INLINE void
-uvm_unmap_p(map, start, end, p)
-	vm_map_t map;
-	vaddr_t start,end;
-	struct proc *p;
+uvm_unmap_p(vm_map_t map, vaddr_t start, vaddr_t end, struct proc *p)
 {
 	vm_map_entry_t dead_entries;
 	UVMHIST_FUNC("uvm_unmap"); UVMHIST_CALLED(maphist);
@@ -172,8 +163,7 @@ uvm_unmap_p(map, start, end, p)
  */
 
 MAP_INLINE void
-uvm_map_reference(map)
-	vm_map_t map;
+uvm_map_reference(vm_map_t map)
 {
 	simple_lock(&map->ref_lock);
 	map->ref_count++; 
@@ -188,8 +178,7 @@ uvm_map_reference(map)
  */
 
 MAP_INLINE void
-uvm_map_deallocate(map)
-	vm_map_t map;
+uvm_map_deallocate(vm_map_t map)
 {
 	int c;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_loan.c,v 1.28 2007/06/18 21:51:15 pedro Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.29 2009/03/20 15:19:04 oga Exp $	*/
 /*	$NetBSD: uvm_loan.c,v 1.22 2000/06/27 17:29:25 mrg Exp $	*/
 
 /*
@@ -127,10 +127,7 @@ static int	uvm_loanzero(struct uvm_faultinfo *, void ***, int);
  */
 
 static __inline int
-uvm_loanentry(ufi, output, flags)
-	struct uvm_faultinfo *ufi;
-	void ***output;
-	int flags;
+uvm_loanentry(struct uvm_faultinfo *ufi, void ***output, int flags)
 {
 	vaddr_t curaddr = ufi->orig_rvaddr;
 	vsize_t togo = ufi->size;
@@ -209,12 +206,8 @@ uvm_loanentry(ufi, output, flags)
  */
 
 int
-uvm_loan(map, start, len, result, flags)
-	struct vm_map *map;
-	vaddr_t start;
-	vsize_t len;
-	void **result;
-	int flags;
+uvm_loan(struct vm_map *map, vaddr_t start, vsize_t len,
+    void **result, int flags)
 {
 	struct uvm_faultinfo ufi;
 	void **output;
@@ -316,11 +309,8 @@ fail:
  */
 
 int
-uvm_loananon(ufi, output, flags, anon)
-	struct uvm_faultinfo *ufi;
-	void ***output;
-	int flags;
-	struct vm_anon *anon;
+uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
+    struct vm_anon *anon)
 {
 	struct vm_page *pg;
 	int result;
@@ -405,11 +395,7 @@ uvm_loananon(ufi, output, flags, anon)
  */
 
 int
-uvm_loanuobj(ufi, output, flags, va)
-	struct uvm_faultinfo *ufi;
-	void ***output;
-	int flags;
-	vaddr_t va;
+uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
@@ -608,10 +594,7 @@ uvm_loanuobj(ufi, output, flags, va)
  */
 
 int
-uvm_loanzero(ufi, output, flags)
-	struct uvm_faultinfo *ufi;
-	void ***output;
-	int flags;
+uvm_loanzero(struct uvm_faultinfo *ufi, void ***output, int flags)
 {
 	struct vm_anon *anon;
 	struct vm_page *pg;
@@ -688,9 +671,7 @@ uvm_loanzero(ufi, output, flags)
  */
 
 void
-uvm_unloananon(aloans, nanons)
-	struct vm_anon **aloans;
-	int nanons;
+uvm_unloananon(struct vm_anon **aloans, int nanons)
 {
 	struct vm_anon *anon;
 
@@ -715,9 +696,7 @@ uvm_unloananon(aloans, nanons)
  */
 
 void
-uvm_unloanpage(ploans, npages)
-	struct vm_page **ploans;
-	int npages;
+uvm_unloanpage(struct vm_page **ploans, int npages)
 {
 	struct vm_page *pg;
 

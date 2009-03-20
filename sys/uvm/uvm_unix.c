@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.35 2009/03/05 19:52:24 kettenis Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.36 2009/03/20 15:19:04 oga Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -67,10 +67,7 @@
  */
 
 int
-sys_obreak(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_obreak(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_obreak_args /* {
 		syscallarg(char *) nsize;
@@ -117,9 +114,7 @@ sys_obreak(p, v, retval)
  */
 
 void
-uvm_grow(p, sp)
-	struct proc *p;
-	vaddr_t sp;
+uvm_grow(struct proc *p, vaddr_t sp)
 {
 	struct vmspace *vm = p->p_vmspace;
 	int si;
@@ -157,11 +152,8 @@ uvm_grow(p, sp)
  */
 
 int
-uvm_coredump(p, vp, cred, chdr)
-	struct proc *p;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
+uvm_coredump(struct proc *p, struct vnode *vp, struct ucred *cred,
+    struct core *chdr)
 {
 	struct vmspace *vm = p->p_vmspace;
 	vm_map_t map = &vm->vm_map;

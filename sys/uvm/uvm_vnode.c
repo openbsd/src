@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.52 2008/10/06 18:17:29 deraadt Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.53 2009/03/20 15:19:04 oga Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -84,22 +84,16 @@ struct rwlock uvn_sync_lock;			/* locks sync operation */
  * functions
  */
 
-void		   uvn_cluster(struct uvm_object *, voff_t,
-					   voff_t *, voff_t *);
-void                uvn_detach(struct uvm_object *);
-boolean_t           uvn_flush(struct uvm_object *, voff_t,
-					 voff_t, int);
-int                 uvn_get(struct uvm_object *, voff_t,
-					vm_page_t *, int *, int,
-					vm_prot_t, int, int);
-void		   uvn_init(void);
-int		   uvn_io(struct uvm_vnode *, vm_page_t *,
-				      int, int, int);
-int		   uvn_put(struct uvm_object *, vm_page_t *,
-					int, boolean_t);
-void                uvn_reference(struct uvm_object *);
-boolean_t	   uvn_releasepg(struct vm_page *,
-					      struct vm_page **);
+void		 uvn_cluster(struct uvm_object *, voff_t, voff_t *, voff_t *);
+void		 uvn_detach(struct uvm_object *);
+boolean_t	 uvn_flush(struct uvm_object *, voff_t, voff_t, int);
+int		 uvn_get(struct uvm_object *, voff_t, vm_page_t *, int *, int,
+		     vm_prot_t, int, int);
+void		 uvn_init(void);
+int		 uvn_io(struct uvm_vnode *, vm_page_t *, int, int, int);
+int		 uvn_put(struct uvm_object *, vm_page_t *, int, boolean_t);
+void		 uvn_reference(struct uvm_object *);
+boolean_t	 uvn_releasepg(struct vm_page *, struct vm_page **);
 
 /*
  * master pager structure
@@ -153,9 +147,7 @@ uvn_init(void)
  */
 
 struct uvm_object *
-uvn_attach(arg, accessprot)
-	void *arg;
-	vm_prot_t accessprot;
+uvn_attach(void *arg, vm_prot_t accessprot)
 {
 	struct vnode *vp = arg;
 	struct uvm_vnode *uvn = &vp->v_uvm;
@@ -323,8 +315,7 @@ uvn_attach(arg, accessprot)
 
 
 void
-uvn_reference(uobj)
-	struct uvm_object *uobj;
+uvn_reference(struct uvm_object *uobj)
 {
 #ifdef DEBUG
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
@@ -355,8 +346,7 @@ uvn_reference(uobj)
  *    (async i/o could still be pending).
  */
 void
-uvn_detach(uobj)
-	struct uvm_object *uobj;
+uvn_detach(struct uvm_object *uobj)
 {
 	struct uvm_vnode *uvn;
 	struct vnode *vp;
@@ -508,8 +498,7 @@ uvn_detach(uobj)
  */
 
 void
-uvm_vnp_terminate(vp)
-	struct vnode *vp;
+uvm_vnp_terminate(struct vnode *vp)
 {
 	struct uvm_vnode *uvn = &vp->v_uvm;
 	int oldflags;
@@ -658,9 +647,7 @@ uvm_vnp_terminate(vp)
  */
 
 boolean_t
-uvn_releasepg(pg, nextpgp)
-	struct vm_page *pg;
-	struct vm_page **nextpgp;	/* OUT */
+uvn_releasepg(struct vm_page *pg, struct vm_page **nextpgp /* OUT */)
 {
 	struct uvm_vnode *uvn = (struct uvm_vnode *) pg->uobject;
 #ifdef DIAGNOSTIC
@@ -800,10 +787,7 @@ uvn_releasepg(pg, nextpgp)
 #define UVN_HASH_PENALTY 4	/* XXX: a guess */
 
 boolean_t
-uvn_flush(uobj, start, stop, flags)
-	struct uvm_object *uobj;
-	voff_t start, stop;
-	int flags;
+uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 {
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
 	struct vm_page *pp, *ppnext, *ptmp;
@@ -1234,10 +1218,8 @@ ReTry:
  */
 
 void
-uvn_cluster(uobj, offset, loffset, hoffset)
-	struct uvm_object *uobj;
-	voff_t offset;
-	voff_t *loffset, *hoffset; /* OUT */
+uvn_cluster(struct uvm_object *uobj, voff_t offset, voff_t *loffset,
+    voff_t *hoffset)
 {
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
 	*loffset = offset;
@@ -1267,10 +1249,7 @@ uvn_cluster(uobj, offset, loffset, hoffset)
  */
 
 int
-uvn_put(uobj, pps, npages, flags)
-	struct uvm_object *uobj;
-	struct vm_page **pps;
-	int npages, flags;
+uvn_put(struct uvm_object *uobj, struct vm_page **pps, int npages, int flags)
 {
 	int retval;
 
@@ -1294,13 +1273,8 @@ uvn_put(uobj, pps, npages, flags)
  */
 
 int
-uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
-	struct uvm_object *uobj;
-	voff_t offset;
-	struct vm_page **pps;		/* IN/OUT */
-	int *npagesp;			/* IN (OUT if PGO_LOCKED) */
-	int centeridx, advice, flags;
-	vm_prot_t access_type;
+uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
+    int *npagesp, int centeridx, vm_prot_t access_type, int advice, int flags)
 {
 	voff_t current_offset;
 	struct vm_page *ptmp;
@@ -1545,10 +1519,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
  */
 
 int
-uvn_io(uvn, pps, npages, flags, rw)
-	struct uvm_vnode *uvn;
-	vm_page_t *pps;
-	int npages, flags, rw;
+uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 {
 	struct vnode *vn;
 	struct uio uio;
@@ -1848,9 +1819,7 @@ uvm_vnp_uncache(struct vnode *vp)
  */
 
 void
-uvm_vnp_setsize(vp, newsize)
-	struct vnode *vp;
-	voff_t newsize;
+uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 {
 	struct uvm_vnode *uvn = &vp->v_uvm;
 

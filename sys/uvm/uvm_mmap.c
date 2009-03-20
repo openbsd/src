@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.71 2008/11/10 03:56:16 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.72 2009/03/20 15:19:04 oga Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -101,10 +101,7 @@
 
 /* ARGSUSED */
 int
-sys_sbrk(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sbrk(struct proc *p, void *v, register_t *retval)
 {
 #if 0
 	struct sys_sbrk_args /* {
@@ -121,10 +118,7 @@ sys_sbrk(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_sstk(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sstk(struct proc *p, void *v, register_t *retval)
 {
 #if 0
 	struct sys_sstk_args /* {
@@ -147,10 +141,7 @@ sys_sstk(p, v, retval)
  */
 
 int
-sys_mquery(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_mquery(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_mquery_args /* {
 		syscallarg(void *) addr;
@@ -238,10 +229,7 @@ done:
 
 /* ARGSUSED */
 int
-sys_mincore(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_mincore(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_mincore_args /* {
 		syscallarg(void *) addr;
@@ -378,10 +366,7 @@ sys_mincore(p, v, retval)
  */
 
 int
-sys_mmap(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_mmap(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_mmap_args /* {
 		syscallarg(void *) addr;
@@ -622,10 +607,7 @@ out:
  */
 
 int
-sys_msync(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_msync(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_msync_args /* {
 		syscallarg(void *) addr;
@@ -709,10 +691,7 @@ sys_msync(p, v, retval)
  */
 
 int
-sys_munmap(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_munmap(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_munmap_args /* {
 		syscallarg(void *) addr;
@@ -779,10 +758,7 @@ sys_munmap(p, v, retval)
  */
 
 int
-sys_mprotect(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_mprotect(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_mprotect_args /* {
 		syscallarg(void *) addr;
@@ -820,10 +796,7 @@ sys_mprotect(p, v, retval)
  */
 
 int
-sys_minherit(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_minherit(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_minherit_args /* {
 		syscallarg(void *) addr;
@@ -855,10 +828,7 @@ sys_minherit(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_madvise(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_madvise(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_madvise_args /* {
 		syscallarg(void *) addr;
@@ -945,10 +915,7 @@ sys_madvise(p, v, retval)
  */
 
 int
-sys_mlock(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_mlock(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_mlock_args /* {
 		syscallarg(const void *) addr;
@@ -993,10 +960,7 @@ sys_mlock(p, v, retval)
  */
 
 int
-sys_munlock(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_munlock(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_munlock_args /* {
 		syscallarg(const void *) addr;
@@ -1035,10 +999,7 @@ sys_munlock(p, v, retval)
  */
 
 int
-sys_mlockall(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_mlockall(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_mlockall_args /* {
 		syscallarg(int) flags;
@@ -1068,10 +1029,7 @@ sys_mlockall(p, v, retval)
  */
 
 int
-sys_munlockall(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_munlockall(struct proc *p, void *v, register_t *retval)
 {
 
 	(void) uvm_map_pageable_all(&p->p_vmspace->vm_map, 0, 0);
@@ -1088,16 +1046,9 @@ sys_munlockall(p, v, retval)
  */
 
 int
-uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit, p)
-	vm_map_t map;
-	vaddr_t *addr;
-	vsize_t size;
-	vm_prot_t prot, maxprot;
-	int flags;
-	caddr_t handle;		/* XXX: VNODE? */
-	voff_t foff;
-	vsize_t locklimit;
-	struct proc *p;
+uvm_mmap(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
+    vm_prot_t maxprot, int flags, caddr_t handle, voff_t foff,
+    vsize_t locklimit, struct proc *p)
 {
 	struct uvm_object *uobj;
 	struct vnode *vp;
