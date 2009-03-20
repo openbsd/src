@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.87 2009/01/27 09:17:51 dlg Exp $	*/
+/*	$OpenBSD: gem.c,v 1.88 2009/03/20 23:29:47 kettenis Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -80,7 +80,7 @@ struct cfdriver gem_cd = {
 };
 
 void		gem_start(struct ifnet *);
-void		gem_stop(struct ifnet *, int);
+void		gem_stop(struct ifnet *);
 int		gem_ioctl(struct ifnet *, u_long, caddr_t);
 void		gem_tick(void *);
 void		gem_watchdog(struct ifnet *);
@@ -486,7 +486,7 @@ gem_rxdrain(struct gem_softc *sc)
  * Reset the whole thing.
  */
 void
-gem_stop(struct ifnet *ifp, int disable)
+gem_stop(struct ifnet *ifp)
 {
 	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
 	struct gem_sxd *sd;
@@ -522,8 +522,7 @@ gem_stop(struct ifnet *ifp, int disable)
 	}
 	sc->sc_tx_cnt = sc->sc_tx_prod = sc->sc_tx_cons = 0;
 
-	if (disable)
-		gem_rxdrain(sc);
+	gem_rxdrain(sc);
 }
 
 
@@ -714,7 +713,7 @@ gem_init(struct ifnet *ifp)
 	 */
 
 	/* step 1 & 2. Reset the Ethernet Channel */
-	gem_stop(ifp, 0);
+	gem_stop(ifp);
 	gem_reset(sc);
 	DPRINTF(sc, ("%s: gem_init: restarting\n", sc->sc_dev.dv_xname));
 
@@ -1438,7 +1437,7 @@ gem_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				gem_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				gem_stop(ifp, 1);
+				gem_stop(ifp);
 		}
 #ifdef GEM_DEBUG
 		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
@@ -1471,7 +1470,7 @@ gem_shutdown(void *arg)
 	struct gem_softc *sc = (struct gem_softc *)arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
-	gem_stop(ifp, 1);
+	gem_stop(ifp);
 }
 
 /*
