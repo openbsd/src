@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.49 2008/10/10 20:21:39 deraadt Exp $
+#	$OpenBSD: files.vax,v 1.50 2009/03/20 18:39:26 miod Exp $
 #	$NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -160,6 +160,11 @@ include	"scsi/files.scsi"
 major	{sd = 20}
 major	{st = 21}
 major	{cd = 22}
+
+# builtin NCR53C95 SCSI Controller on VAXstation 4000 VLC/60/9x
+device	asc: scsi, ncr53c9x
+attach	asc at vsbus with asc_vsbus
+file	arch/vax/vsa/asc_vsbus.c		asc needs-flag
 
 # builtin NCR5380 SCSI-controller on VAXstation 
 device	ncr: scsi, ncr5380sbc
@@ -350,15 +355,21 @@ file	arch/vax/vax/led.c			led needs-flag
 
 # These are general files needed for compilation.
 file	dev/cninit.c
-file	arch/vax/vax/locore.c
-file	arch/vax/vax/mem.c
+file	arch/vax/vax/autoconf.c
+file	arch/vax/vax/bus_dma.c
+file	arch/vax/vax/bus_mem.c
 file	arch/vax/vax/clock.c
-file	arch/vax/vax/gencons.c	vax8600|vax8200|vax780|vax750|vax630|vax650|vax660|vax670|vax680
-file	arch/vax/vax/pmap.c
-file	arch/vax/vax/machdep.c
-file	arch/vax/vax/ka820.c			vax8200
+file	arch/vax/vax/conf.c
 file	arch/vax/vax/crx.c			vax8200
-file	arch/vax/vax/ka630.c			vax630
+file	arch/vax/vax/cvax.c			vax60 | vax650
+file	arch/vax/vax/db_disasm.c		ddb
+file	arch/vax/vax/db_machdep.c		ddb
+file	arch/vax/vax/disksubr.c			disk | tape
+file	arch/vax/vax/emulate.s			insn_emulate
+file	arch/vax/vax/findcpu.c
+file	arch/vax/vax/gencons.c	vax8600|vax8200|vax780|vax750|vax630|vax650|vax660|vax670|vax680
+file	arch/vax/vax/in_cksum.c			inet
+file	arch/vax/vax/in4_cksum.c		inet
 file	arch/vax/vax/ka410.c			vax410
 file	arch/vax/vax/ka43.c			vax43
 file	arch/vax/vax/ka46.c			vax46
@@ -366,39 +377,29 @@ file	arch/vax/vax/ka48.c			vax48
 file	arch/vax/vax/ka49.c			vax49
 file	arch/vax/vax/ka53.c			vax53
 file	arch/vax/vax/ka60.c			vax60
-file	arch/vax/vax/emulate.s			insn_emulate
-file	arch/vax/vax/unimpl_emul.s		insn_emulate
+file	arch/vax/vax/ka630.c			vax630
 file	arch/vax/vax/ka650.c			vax650
 file	arch/vax/vax/ka660.c			vax660
 file	arch/vax/vax/ka670.c			vax670
 file	arch/vax/vax/ka680.c			vax680
-file	arch/vax/vax/vxt.c			vxt
-file	arch/vax/vax/cvax.c			vax60 | vax650
-file	arch/vax/vax/scb.c
-file	arch/vax/vax/conf.c
-file	arch/vax/vax/urem.s
-file	arch/vax/vax/udiv.s
-file	arch/vax/vax/trap.c
-file	arch/vax/vax/bus_dma.c
-file	arch/vax/vax/bus_mem.c
-file	arch/vax/vax/sgmap.c
-file	arch/vax/vax/vm_machdep.c
-file	arch/vax/vax/findcpu.c
-file	arch/vax/vax/autoconf.c
+file	arch/vax/vax/ka820.c			vax8200
+file	arch/vax/vax/locore.c
+file	arch/vax/vax/machdep.c
+file	arch/vax/vax/mem.c
 file	arch/vax/vax/mutex.c
-file	arch/vax/vax/in_cksum.c			inet
-file	arch/vax/vax/in4_cksum.c		inet
-file	arch/vax/vax/disksubr.c			disk | tape
-file	arch/vax/vax/db_machdep.c		ddb
-file	arch/vax/vax/db_disasm.c		ddb
 file	arch/vax/vax/opcodes.c
-file	arch/vax/uba/uba_dma.c			uba
+file	arch/vax/vax/pmap.c
+file	arch/vax/vax/scb.c
+file	arch/vax/vax/sgmap.c
+file	arch/vax/vax/softintr.c
+file	arch/vax/vax/trap.c
+file	arch/vax/vax/udiv.s
+file	arch/vax/vax/unimpl_emul.s		insn_emulate
+file	arch/vax/vax/urem.s
+file	arch/vax/vax/vm_machdep.c
+file	arch/vax/vax/vxt.c			vxt
 file	arch/vax/vax/wscons_machdep.c		wsdisplay | wskbd
-
-# builtin NCR53C95 SCSI Controller on VAXstation 4000 VLC/60/9x
-device	asc: scsi, ncr53c9x
-attach	asc at vsbus with asc_vsbus
-file	arch/vax/vsa/asc_vsbus.c		asc needs-flag
+file	arch/vax/uba/uba_dma.c			uba
 
 include	"compat/ultrix/files.ultrix"
 include	"compat/vax1k/files.vax1k"

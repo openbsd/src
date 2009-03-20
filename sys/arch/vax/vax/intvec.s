@@ -1,4 +1,4 @@
-/*	$OpenBSD: intvec.s,v 1.22 2008/08/18 23:05:38 miod Exp $   */
+/*	$OpenBSD: intvec.s,v 1.23 2009/03/20 18:39:30 miod Exp $   */
 /*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
 
 /*
@@ -121,11 +121,11 @@ _rpb:
 	NOVEC;				# Unused, 94
 	NOVEC;				# Unused, 98
 	NOVEC;				# Unused, 9C
-	INTVEC(softclock,ISTACK)	# Software clock interrupt
-	NOVEC;				# Unused, A4
-	NOVEC;				# Unused, A8
-	NOVEC;				# Unused, AC
-	INTVEC(netint,	ISTACK)		# Network interrupt
+	INTVEC(softintr,ISTACK)		# Software interrupts (IPL_SOFT)
+	INTVEC(softintr,ISTACK)		# Software interrupts (IPL_SOFTCLOCK)
+	INTVEC(softintr,ISTACK)		# Software interrupts (IPL_SOFTNET)
+	INTVEC(softintr,ISTACK)		# Software interrupts (IPL_SOFTTTY)
+	NOVEC;				# Unused, B0
 	NOVEC;				# Unused, B4
 	NOVEC;				# Unused, B8
 	INTVEC(ddbtrap, ISTACK) 	# Kernel debugger trap, BC
@@ -192,7 +192,7 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
 2:	movl	_memtest,(sp)	# REI to new address
 	rei
 
-	TRAPCALL(invkstk, T_KSPNOTVAL)
+TRAPCALL(invkstk, T_KSPNOTVAL)
 
 ENTRY(privinflt)	# Privileged/unimplemented instruction
 #ifdef INSN_EMULATE
@@ -202,9 +202,9 @@ ENTRY(privinflt)	# Privileged/unimplemented instruction
 	pushl $T_PRIVINFLT
 	jbr trap
 
-	TRAPCALL(xfcflt, T_XFCFLT);
-	TRAPCALL(resopflt, T_RESOPFLT)
-	TRAPCALL(resadflt, T_RESADFLT)
+TRAPCALL(xfcflt, T_XFCFLT);
+TRAPCALL(resopflt, T_RESOPFLT)
+TRAPCALL(resadflt, T_RESADFLT)
 
 /*
  * Translation fault, used only when simulating page reference bit.
@@ -244,10 +244,10 @@ access_v:
 ptelen: movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
 	jbr trap;
 
-	TRAPCALL(tracep, T_TRCTRAP)
-	TRAPCALL(breakp, T_BPTFLT)
+TRAPCALL(tracep, T_TRCTRAP)
+TRAPCALL(breakp, T_BPTFLT)
 
-	TRAPARGC(arithflt, T_ARITHFLT)
+TRAPARGC(arithflt, T_ARITHFLT)
 
 ENTRY(syscall)			# Main system call
 	pushl	$T_SYSCALL
@@ -277,26 +277,16 @@ ENTRY(sbiflt)
 	pushab	sbifltmsg
 	calls	$1, _panic
 
-	TRAPCALL(astintr, T_ASTFLT)
+TRAPCALL(astintr, T_ASTFLT)
 
-	FASTINTR(softclock,softclock)
+FASTINTR(softintr,softintr_dispatch)
 
 	.data
 	.global _netisr
 _netisr:
 	.long	0	# scheduling bits for network
 
-ENTRY(netint)
-	PUSHR
-/* XXX this relies on -traditional-cpp, since we can't use _C_LABEL here */
-#define	DONETISR(bit, fn) \
-	bbcc	$bit,_netisr,1f; calls $0,_/**/fn; 1:
-#include <net/netisr_dispatch.h>
-#undef	DONETISR
-	POPR
-	rei
-
-	TRAPCALL(ddbtrap, T_KDBTRAP)
+TRAPCALL(ddbtrap, T_KDBTRAP)
 
 ENTRY(hardclock)
 	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag

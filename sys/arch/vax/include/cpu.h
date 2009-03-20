@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.33 2008/10/15 23:23:50 deraadt Exp $      */
+/*      $OpenBSD: cpu.h,v 1.34 2009/03/20 18:39:30 miod Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -100,8 +100,6 @@ extern struct device *booted_from;
 extern int mastercpu;
 extern int bootdev;
 
-#define	setsoftnet()	mtpr(IPL_SOFTNET,PR_SIRR)
-#define setsoftclock()	mtpr(IPL_SOFTCLOCK,PR_SIRR)
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
