@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.78 2009/03/19 21:52:43 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.79 2009/03/20 07:24:41 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1140,6 +1140,7 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 	struct ips_ld *ld;
 	int vid = bv->bv_volid;
 	struct device *dev;
+	int rebuild = 0;
 	u_int32_t total = 0, done = 0;
 
 	if (vid >= sc->sc_nunits)
@@ -1152,18 +1153,22 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 		break;
 	case IPS_DS_DEGRADED:
 		bv->bv_status = BIOC_SVDEGRADED;
+		rebuild++;
 		break;
 	case IPS_DS_OFFLINE:
 		bv->bv_status = BIOC_SVOFFLINE;
+		rebuild++;
 		break;
 	default:
 		bv->bv_status = BIOC_SVINVALID;
 	}
 
-	total = letoh32(rblstat->ld[vid].total);
-	done = total - letoh32(rblstat->ld[vid].remain);
-	if (total)
-		bv->bv_percent = 100 * done / total;
+	if (rebuild) {
+		total = letoh32(rblstat->ld[vid].total);
+		done = total - letoh32(rblstat->ld[vid].remain);
+		if (total)
+			bv->bv_percent = 100 * done / total;
+	}
 
 	bv->bv_size = (u_quad_t)letoh32(ld->size) * IPS_SECSZ;
 	bv->bv_level = di->drive[vid].raid;
@@ -1264,7 +1269,7 @@ ips_sensors(void *arg)
 	struct ips_softc *sc = arg;
 	struct ips_conf *conf = &sc->sc_info->conf;
 	struct ips_ld *ld;
-	int i;
+	int i, rebuild = 0;
 
 	/* ips_sensors() runs from work queue thus allowed to sleep */
 	if (ips_getconf(sc, 0)) {
@@ -1277,7 +1282,6 @@ ips_sensors(void *arg)
 		}
 		return;
 	}
-	(void)ips_getrblstat(sc, 0);
 
 	DPRINTF(IPS_D_INFO, ("%s: ips_sensors:", sc->sc_dev.dv_xname));
 	for (i = 0; i < sc->sc_nunits; i++) {
@@ -1291,10 +1295,12 @@ ips_sensors(void *arg)
 		case IPS_DS_DEGRADED:
 			sc->sc_sensors[i].value = SENSOR_DRIVE_PFAIL;
 			sc->sc_sensors[i].status = SENSOR_S_WARN;
+			rebuild++;
 			break;
 		case IPS_DS_OFFLINE:
 			sc->sc_sensors[i].value = SENSOR_DRIVE_FAIL;
 			sc->sc_sensors[i].status = SENSOR_S_CRIT;
+			rebuild++;
 			break;
 		default:
 			sc->sc_sensors[i].value = 0;
@@ -1302,6 +1308,9 @@ ips_sensors(void *arg)
 		}
 	}
 	DPRINTF(IPS_D_INFO, ("\n"));
+
+	if (rebuild)
+		(void)ips_getrblstat(sc, 0);
 }
 #endif
 
