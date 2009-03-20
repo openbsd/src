@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.35 2009/03/11 11:11:08 pea Exp $	*/
+/*	$OpenBSD: lka.c,v 1.36 2009/03/20 09:34:34 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1216,7 +1216,7 @@ lka_encode_credentials(char *dest, char *src)
 	    sizeof (buffer) - 1)
 		return 0;
 
-	while (i++ < len) {
+	for (i = 0; i < len; ++i) {
 		if (buffer[i] == ':') {
 			buffer[i] = '\0';
 			break;
