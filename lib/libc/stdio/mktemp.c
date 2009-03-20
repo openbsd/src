@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.26 2009/03/01 13:35:46 millert Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.27 2009/03/20 16:05:11 millert Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
@@ -46,13 +46,13 @@ mktemp_internal(char *path, int slen, int mode)
 
 	if (*path == '\0') {
 		errno = EINVAL;
-		return(0);
+		return(-1);
 	}
 
 	len = strlen(path);
 	if (len == 0 || slen >= len) {
 		errno = EINVAL;
-		return(0);
+		return(-1);
 	}
 	ep = path + len - slen;
 
