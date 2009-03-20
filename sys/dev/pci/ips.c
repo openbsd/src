@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.81 2009/03/20 19:48:41 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.82 2009/03/20 20:11:07 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1135,7 +1135,7 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 	struct ips_rblstat *rblstat = &sc->sc_info->rblstat;
 	struct ips_ld *ld;
 	int vid = bv->bv_volid;
-	struct device *dev;
+	struct device *dv;
 	int rebuild = 0;
 	u_int32_t total = 0, done = 0;
 
@@ -1170,8 +1170,22 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 	bv->bv_level = di->drive[vid].raid;
 	bv->bv_nodisk = ld->chunkcnt;
 
-	dev = sc->sc_scsibus->sc_link[vid][0]->device_softc;
-	strlcpy(bv->bv_dev, dev->dv_xname, sizeof(bv->bv_dev));
+	/* Associate all unused and spare drives with first volume */
+	if (vid == 0) {
+		struct ips_dev *dev;
+		int chan, target;
+
+		for (chan = 0; chan < IPS_MAXCHANS; chan++)
+			for (target = 0; target < IPS_MAXTARGETS; target++) {
+				dev = &conf->dev[chan][target];
+				if (dev->state && !(dev->state &
+				    IPS_DVS_MEMBER))
+					bv->bv_nodisk++;
+			}
+	}
+
+	dv = sc->sc_scsibus->sc_link[vid][0]->device_softc;
+	strlcpy(bv->bv_dev, dv->dv_xname, sizeof(bv->bv_dev));
 	strlcpy(bv->bv_vendor, "IBM", sizeof(bv->bv_vendor));
 
 	DPRINTF(IPS_D_INFO, ("%s: ips_ioctl_vol: vid %d, state 0x%02x, "
@@ -1190,28 +1204,46 @@ ips_ioctl_disk(struct ips_softc *sc, struct bioc_disk *bd)
 	struct ips_chunk *chunk;
 	struct ips_dev *dev;
 	int vid = bd->bd_volid, did = bd->bd_diskid;
+	int chan, target, i;
 
 	if (vid >= sc->sc_nunits)
 		return (EINVAL);
 	ld = &conf->ld[vid];
 
-	if (did >= ld->chunkcnt)
-		return (EINVAL);
-	chunk = &ld->chunk[did];
+	if (did >= ld->chunkcnt) {
+		/* Probably unused or spare drives */
+		if (vid != 0)
+			return (EINVAL);
 
-	if (chunk->channel >= IPS_MAXCHANS || chunk->target >= IPS_MAXTARGETS)
-		return (EINVAL);
-	dev = &conf->dev[chunk->channel][chunk->target];
+		i = ld->chunkcnt;
+		for (chan = 0; chan < IPS_MAXCHANS; chan++)
+			for (target = 0; target < IPS_MAXTARGETS; target++) {
+				dev = &conf->dev[chan][target];
+				if (dev->state && !(dev->state &
+				    IPS_DVS_MEMBER))
+					if (i++ == did)
+						goto out;
+			}
+	} else {
+		chunk = &ld->chunk[did];
+		chan = chunk->channel;
+		target = chunk->target;
+	}
 
-	bd->bd_channel = chunk->channel;
-	bd->bd_target = chunk->target;
+out:
+	if (chan >= IPS_MAXCHANS || target >= IPS_MAXTARGETS)
+		return (EINVAL);
+	dev = &conf->dev[chan][target];
+
+	bd->bd_channel = chan;
+	bd->bd_target = target;
 	bd->bd_lun = 0;
 	bd->bd_size = (u_quad_t)letoh32(chunk->seccnt) * IPS_SECSZ;
 
 	bzero(bd->bd_vendor, sizeof(bd->bd_vendor));
 	memcpy(bd->bd_vendor, dev->devid, MIN(sizeof(bd->bd_vendor),
 	    sizeof(dev->devid)));
-	strlcpy(bd->bd_procdev, sc->sc_pt[chunk->channel].pt_procdev,
+	strlcpy(bd->bd_procdev, sc->sc_pt[chan].pt_procdev,
 	    sizeof(bd->bd_procdev));
 
 	if (dev->state & IPS_DVS_READY) {
