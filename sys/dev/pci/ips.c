@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.86 2009/03/21 12:44:44 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.87 2009/03/21 17:44:43 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1182,7 +1182,7 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 	if (rebuild) {
 		total = letoh32(rblstat->ld[vid].total);
 		done = total - letoh32(rblstat->ld[vid].remain);
-		if (total)
+		if (total && total > done)
 			bv->bv_percent = 100 * done / total;
 	}
 
