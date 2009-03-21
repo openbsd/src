@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.83 2009/03/20 20:16:56 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.84 2009/03/21 09:57:10 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1179,7 +1179,8 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 			for (target = 0; target < IPS_MAXTARGETS; target++) {
 				dev = &conf->dev[chan][target];
 				if (dev->state && !(dev->state &
-				    IPS_DVS_MEMBER))
+				    IPS_DVS_MEMBER) &&
+				    (dev->params & SID_TYPE) == T_DIRECT)
 					bv->bv_nodisk++;
 			}
 	}
@@ -1220,7 +1221,8 @@ ips_ioctl_disk(struct ips_softc *sc, struct bioc_disk *bd)
 			for (target = 0; target < IPS_MAXTARGETS; target++) {
 				dev = &conf->dev[chan][target];
 				if (dev->state && !(dev->state &
-				    IPS_DVS_MEMBER))
+				    IPS_DVS_MEMBER) &&
+				    (dev->params & SID_TYPE) == T_DIRECT)
 					if (i++ == did)
 						goto out;
 			}
