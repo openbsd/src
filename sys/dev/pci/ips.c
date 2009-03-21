@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.84 2009/03/21 09:57:10 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.85 2009/03/21 12:34:41 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -752,16 +752,36 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < IPS_MAXCHANS; i++) {
 		struct ips_pt *pt;
 		struct scsi_link *link;
+		int target, lastarget;
 
 		pt = &sc->sc_pt[i];
 		pt->pt_sc = sc;
 		pt->pt_chan = i;
 		pt->pt_proctgt = -1;
 
+		/* Check if channel has any devices besides disks */
+		for (target = 0, lastarget = -1; target < IPS_MAXTARGETS;
+		    target++) {
+			struct ips_dev *dev;
+			int type;
+
+			dev = &sc->sc_info->conf.dev[i][target];
+			type = dev->params & SID_TYPE;
+			if (dev->state && type != T_DIRECT) {
+				lastarget = target;
+				if (type == T_PROCESSOR ||
+				    type == T_ENCLOSURE)
+					/* remember enclosure address */
+					pt->pt_proctgt = target;
+			}
+		}
+		if (lastarget == -1)
+			continue;
+
 		link = &pt->pt_link;
 		link->openings = 1;
 		link->adapter_target = IPS_MAXTARGETS + 1;
-		link->adapter_buswidth = IPS_MAXTARGETS;
+		link->adapter_buswidth = lastarget + 1;
 		link->device = &ips_scsi_pt_device;
 		link->adapter = &ips_scsi_pt_adapter;
 		link->adapter_softc = pt;
@@ -1526,11 +1546,9 @@ void
 ips_done_pt(struct ips_softc *sc, struct ips_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->c_xfer;
-	struct scsi_link *link = xs->sc_link;
-	struct ips_pt *pt = link->adapter_softc;
 	struct ips_cmdb *cmdb = ccb->c_cmdbva;
 	struct ips_dcdb *dcdb = &cmdb->dcdb;
-	int target = link->target, done = letoh16(dcdb->datalen);
+	int done = letoh16(dcdb->datalen);
 
 	if (!(xs->flags & SCSI_POLL))
 		timeout_del(&xs->stimeout);
@@ -1557,17 +1575,9 @@ ips_done_pt(struct ips_softc *sc, struct ips_ccb *ccb)
 		int type = ((struct scsi_inquiry_data *)xs->data)->device &
 		    SID_TYPE;
 
-		switch (type) {
-		case T_DIRECT:
+		if (type == T_DIRECT)
 			/* mask physical drives */
 			xs->error = XS_DRIVER_STUFFUP;
-			break;
-		case T_ENCLOSURE:
-		case T_PROCESSOR:
-			/* remember enclosure address */
-			pt->pt_proctgt = target;
-			break;
-		}
 	}
 
 	xs->flags |= ITSDONE;
