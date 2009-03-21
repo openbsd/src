@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.85 2009/03/21 12:34:41 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.86 2009/03/21 12:44:44 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -60,7 +60,7 @@ int ips_debug = IPS_D_ERR;
 
 #define IPS_MAXDRIVES		8
 #define IPS_MAXCHANS		4
-#define IPS_MAXTARGETS		15
+#define IPS_MAXTARGETS		16
 #define IPS_MAXCHUNKS		16
 #define IPS_MAXCMDS		128
 
@@ -227,7 +227,7 @@ struct ips_adapterinfo {
 	u_int16_t	confupdcnt;
 	u_int8_t	blkflag;
 	u_int8_t	__reserved;
-	u_int16_t	deaddisk[IPS_MAXCHANS * (IPS_MAXTARGETS + 1)];
+	u_int16_t	deaddisk[IPS_MAXCHANS][IPS_MAXTARGETS];
 };
 
 struct ips_driveinfo {
@@ -305,7 +305,7 @@ struct ips_conf {
 
 		u_int32_t	seccnt;
 		u_int8_t	devid[28];
-	}		dev[IPS_MAXCHANS][IPS_MAXTARGETS + 1];
+	}		dev[IPS_MAXCHANS][IPS_MAXTARGETS];
 
 	u_int8_t	reserved[512];
 };
@@ -780,7 +780,7 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 
 		link = &pt->pt_link;
 		link->openings = 1;
-		link->adapter_target = IPS_MAXTARGETS + 1;
+		link->adapter_target = IPS_MAXTARGETS;
 		link->adapter_buswidth = lastarget + 1;
 		link->device = &ips_scsi_pt_device;
 		link->adapter = &ips_scsi_pt_adapter;
