@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.40 2008/02/24 11:06:13 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.41 2009/03/21 11:18:45 joris Exp $	*/
 /*-
  * Copyright (c) 2005-2007 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -190,5 +190,4 @@ release_check_files(struct cvs_file *cf)
 	    cf->file_status == FILE_PATCH ||
 	    cf->file_status == FILE_CONFLICT)
 		files_altered++;
-	return;
 }
