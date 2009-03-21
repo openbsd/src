@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.13 2007/11/13 13:50:10 kettenis Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.14 2009/03/21 12:24:26 kettenis Exp $	*/
 /*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
@@ -54,7 +54,10 @@
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 
+#include <dev/clock_subr.h>
 #include <dev/ofw/openfirm.h>
+
+extern todr_chip_handle_t todr_handle;
 
 #define OPROMMAXPARAM		32
 
@@ -192,7 +195,16 @@ openpromioctl(dev, cmd, data, flags, p)
 		if (error)
 			break;
 		s = splhigh();
+		/*
+		 * Make sure we can write to nvram, which on many
+		 * machines lives on the clock chip (and shares its
+		 * address space with the clock).
+		 */
+		if (todr_handle)
+			todr_wenable(todr_handle, 1);
 		len = OF_setprop(node, name, value, op->op_buflen + 1);
+		if (todr_handle)
+			todr_wenable(todr_handle, 0);
 		splx(s);
 		if (len != op->op_buflen)
 			error = EINVAL;
