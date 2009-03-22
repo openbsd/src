@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.88 2009/03/21 17:49:32 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.89 2009/03/22 07:02:32 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1372,7 +1372,7 @@ ips_sensors(void *arg)
 	if (rebuild)
 		(void)ips_getrblstat(sc, 0);
 }
-#endif
+#endif	/* !SMALL_KERNEL */
 
 int
 ips_load_xs(struct ips_softc *sc, struct ips_ccb *ccb, struct scsi_xfer *xs)
@@ -1849,6 +1849,7 @@ ips_getconf(struct ips_softc *sc, int flags)
 	return (ips_cmd(sc, ccb));
 }
 
+#ifndef SMALL_KERNEL
 int
 ips_getrblstat(struct ips_softc *sc, int flags)
 {
@@ -1872,6 +1873,7 @@ ips_getrblstat(struct ips_softc *sc, int flags)
 
 	return (ips_cmd(sc, ccb));
 }
+#endif	/* !SMALL_KERNEL */
 
 int
 ips_getpg5(struct ips_softc *sc, int flags)
@@ -1898,6 +1900,7 @@ ips_getpg5(struct ips_softc *sc, int flags)
 	return (ips_cmd(sc, ccb));
 }
 
+#if NBIO > 0
 int
 ips_setstate(struct ips_softc *sc, int chan, int target, int state, int flags)
 {
@@ -1948,6 +1951,7 @@ ips_rebuild(struct ips_softc *sc, int chan, int target, int nchan,
 
 	return (ips_cmd(sc, ccb));
 }
+#endif	/* NBIO > 0 */
 
 void
 ips_copperhead_exec(struct ips_softc *sc, struct ips_ccb *ccb)
