@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.90 2009/03/22 18:27:41 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.91 2009/03/22 18:41:34 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1156,11 +1156,13 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 	struct ips_ld *ld;
 	int vid = bv->bv_volid;
 	struct device *dv;
-	int rebuild = 0;
+	int error, rebuild = 0;
 	u_int32_t total = 0, done = 0;
 
 	if (vid >= sc->sc_nunits)
 		return (EINVAL);
+	if ((error = ips_getconf(sc, 0)))
+		return (error);
 	ld = &conf->ld[vid];
 
 	switch (ld->state) {
@@ -1178,7 +1180,7 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 		bv->bv_status = BIOC_SVINVALID;
 	}
 
-	if (rebuild) {
+	if (rebuild && ips_getrblstat(sc, 0) == 0) {
 		total = letoh32(rblstat->ld[vid].total);
 		done = total - letoh32(rblstat->ld[vid].remain);
 		if (total && total > done) {
@@ -1226,10 +1228,12 @@ ips_ioctl_disk(struct ips_softc *sc, struct bioc_disk *bd)
 	struct ips_chunk *chunk;
 	struct ips_dev *dev;
 	int vid = bd->bd_volid, did = bd->bd_diskid;
-	int chan, target, i;
+	int chan, target, error, i;
 
 	if (vid >= sc->sc_nunits)
 		return (EINVAL);
+	if ((error = ips_getconf(sc, 0)))
+		return (error);
 	ld = &conf->ld[vid];
 
 	if (did >= ld->chunkcnt) {
@@ -1293,10 +1297,12 @@ ips_ioctl_setstate(struct ips_softc *sc, struct bioc_setstate *bs)
 {
 	struct ips_conf *conf = &sc->sc_info->conf;
 	struct ips_dev *dev;
-	int state;
+	int state, error;
 
 	if (bs->bs_channel >= IPS_MAXCHANS || bs->bs_target >= IPS_MAXTARGETS)
 		return (EINVAL);
+	if ((error = ips_getconf(sc, 0)))
+		return (error);
 	dev = &conf->dev[bs->bs_channel][bs->bs_target];
 	state = dev->state;
 
