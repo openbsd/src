@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.72 2009/03/22 19:01:32 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.73 2009/03/22 20:51:58 jmc Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -58,9 +58,8 @@
 .Ar disk
 .Nm disklabel
 .Fl E
-.Op Fl A
 .Op Fl c | d
-.Op Fl nv
+.Op Fl Anv
 .Op Fl f Ar tempfile
 .Ar disk
 .Nm disklabel
@@ -108,7 +107,8 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl A
 If no disklabel is found on entering the Editor, prime label as if the
-'A' command had been entered.
+.Cm A
+command had been entered.
 .It Fl B
 Install bootstrap code.
 .It Fl b Ar boot1
