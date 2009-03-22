@@ -1579,7 +1579,10 @@
 ./usr/share/man/cat4/mvme68k/intro.0
 ./usr/share/man/cat4/mvme68k/kmem.0
 ./usr/share/man/cat4/mvme68k/le.0
+./usr/share/man/cat4/mvme68k/lrc.0
 ./usr/share/man/cat4/mvme68k/mem.0
+./usr/share/man/cat4/mvme68k/ofobio.0
+./usr/share/man/cat4/mvme68k/pcctwo.0
 ./usr/share/man/cat4/mvme68k/vs.0
 ./usr/share/man/cat4/mvme68k/vsbic.0
 ./usr/share/man/cat4/mvme88k
@@ -1826,6 +1829,7 @@
 ./usr/share/man/cat4/sparc64/pyro.0
 ./usr/share/man/cat4/sparc64/qe.0
 ./usr/share/man/cat4/sparc64/qec.0
+./usr/share/man/cat4/sparc64/raptor.0
 ./usr/share/man/cat4/sparc64/rfx.0
 ./usr/share/man/cat4/sparc64/rtc.0
 ./usr/share/man/cat4/sparc64/sab.0
@@ -2208,6 +2212,7 @@
 ./usr/share/man/cat7/ascii.0
 ./usr/share/man/cat7/cvsintro.0
 ./usr/share/man/cat7/environ.0
+./usr/share/man/cat7/glob.0
 ./usr/share/man/cat7/groff_char.0
 ./usr/share/man/cat7/groff_man.0
 ./usr/share/man/cat7/groff_me.0
