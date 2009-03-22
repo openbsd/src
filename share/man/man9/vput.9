@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vput.9,v 1.5 2007/05/31 19:20:01 jmc Exp $
+.\"     $OpenBSD: vput.9,v 1.6 2009/03/22 19:37:30 jmc Exp $
 .\" -*- nroff -*-
 .\"
 .\" Copyright (c) 1996 Doug Rabson
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/vput.9,v 1.9 2001/10/01 16:09:25 ru Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 22 2009 $
 .Os
 .Dt VPUT 9
 .Sh NAME
@@ -48,12 +48,12 @@ field of the vnode
 and unlock the vnode.
 .Pp
 This operation is functionally equivalent to calling
-.Fn VOP_UNLOCK
+.Xr VOP_UNLOCK 9
 followed by
 .Xr vrele 9 .
 .Sh SEE ALSO
-.Xr VOP_UNLOCK 9 ,
 .Xr vnode 9 ,
+.Xr VOP_UNLOCK 9 ,
 .Xr vref 9 ,
 .Xr vrele 9
 .Sh AUTHORS
