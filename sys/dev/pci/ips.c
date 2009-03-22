@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.89 2009/03/22 07:02:32 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.90 2009/03/22 18:27:41 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1173,7 +1173,6 @@ ips_ioctl_vol(struct ips_softc *sc, struct bioc_vol *bv)
 		break;
 	case IPS_DS_OFFLINE:
 		bv->bv_status = BIOC_SVOFFLINE;
-		rebuild++;
 		break;
 	default:
 		bv->bv_status = BIOC_SVINVALID;
@@ -1360,7 +1359,6 @@ ips_sensors(void *arg)
 		case IPS_DS_OFFLINE:
 			sc->sc_sensors[i].value = SENSOR_DRIVE_FAIL;
 			sc->sc_sensors[i].status = SENSOR_S_CRIT;
-			rebuild++;
 			break;
 		default:
 			sc->sc_sensors[i].value = 0;
