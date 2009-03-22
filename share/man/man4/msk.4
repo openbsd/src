@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msk.4,v 1.10 2008/09/07 06:55:34 jmc Exp $
+.\"	$OpenBSD: msk.4,v 1.11 2009/03/22 22:08:34 kettenis Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/man4.i386/sk.4,v 1.3 1999/08/28 00:20:29 peter Exp $
 .\"
-.Dd $Mdocdate: September 7 2008 $
+.Dd $Mdocdate: March 22 2009 $
 .Dt MSK 4
 .Os
 .Sh NAME
@@ -46,9 +46,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Marvell Yukon-2 88E802x, 88E805x, and 88E806x
-based Gigabit Ethernet adapters and 88E803x/88E804x based Fast Ethernet
-adapters, including the following:
+driver provides support for Marvell Yukon-2 88E802x, 88E805x, 88E806x,
+and 88E807x based Gigabit Ethernet adapters and 88E803x/88E804x based
+Fast Ethernet adapters, including the following:
 .Pp
 .Bl -bullet -offset indent -compact
 .It
@@ -87,8 +87,8 @@ SysKonnect SK-9S92 dual port, single mode fiber adapter
 SysKonnect SK-9E21D single port, copper adapter
 .El
 .Pp
-The Yukon-2 88E802x, 88E805x, and 88E806x also support a frame size
-of up to 9000 bytes.
+The Yukon-2 88E802x, 88E805x, 88E806x, and 88E807x also support a
+frame size of up to 9000 bytes.
 Support for Jumbo frames is provided via the interface MTU setting.
 Selecting an MTU larger than 1500 bytes with the
 .Xr ifconfig 8
