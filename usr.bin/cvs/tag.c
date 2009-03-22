@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.76 2008/06/20 14:04:29 tobias Exp $	*/
+/*	$OpenBSD: tag.c,v 1.77 2009/03/22 18:40:55 tobias Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -260,9 +260,6 @@ cvs_tag_check_files(struct cvs_file *cf)
 		break;
 	}
 
-	fi = xcalloc(1, sizeof(*fi));
-	fi->nrevstr = xstrdup(rbuf);
-
 	if (cvs_cmdop == CVS_OP_TAG) {
 		if (cf->file_ent == NULL)
 			return;
@@ -271,6 +268,8 @@ cvs_tag_check_files(struct cvs_file *cf)
 		srev = cf->file_rcsrev;
 
 	rcsnum_tostr(srev, rbuf, sizeof(rbuf));
+	fi = xcalloc(1, sizeof(*fi));
+	fi->nrevstr = xstrdup(rbuf);
 	fi->file_path = xstrdup(cf->file_path);
 
 	if (tag_oldname != NULL)
