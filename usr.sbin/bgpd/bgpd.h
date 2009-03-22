@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.226 2009/03/18 19:41:41 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.227 2009/03/22 22:34:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -262,6 +262,8 @@ struct peer_config {
 	u_int8_t		 softreconfig_in;
 	u_int8_t		 softreconfig_out;
 	u_int8_t		 ttlsec;	/* TTL security hack */
+	u_int8_t		 flags;
+	u_int8_t		 pad[3];
 };
 
 struct network_config {

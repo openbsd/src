@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.90 2008/12/19 18:58:12 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.91 2009/03/22 22:34:59 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 19 2008 $
+.Dd $Mdocdate: March 22 2009 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -726,6 +726,18 @@ The shared secret can either be given as a password or hexadecimal key.
 tcp md5sig password mekmidasdigoat
 tcp md5sig key deadbeef
 .Ed
+.Pp
+.It Xo
+.Ic transparent-as
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+If set to
+.Ic yes ,
+.Em AS paths
+to EBGP neighbors are not prepended with their own AS.
+The default is inherited from the global
+.Ic transparent-as
+setting.
 .Pp
 .It Xo
 .Ic ttl-security
