@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.138 2009/02/15 21:07:00 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.139 2009/03/22 19:01:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.138 2009/02/15 21:07:00 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.139 2009/03/22 19:01:32 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -105,6 +105,7 @@ enum {
 	UNSPEC, EDIT, EDITOR, READ, RESTORE, SETWRITEABLE, WRITE, WRITEBOOT
 } op = UNSPEC;
 
+int	aflag;
 int	cflag;
 int	dflag;
 int	tflag;
@@ -145,8 +146,11 @@ main(int argc, char *argv[])
 	char print_unit = 0;
 	FILE *t;
 
-	while ((ch = getopt(argc, argv, "BEf:NRWb:cdenp:s:tvw")) != -1)
+	while ((ch = getopt(argc, argv, "ABEf:NRWb:cdenp:s:tvw")) != -1)
 		switch (ch) {
+		case 'A':
+			++aflag;
+			break;
 #if NUMBOOT > 0
 		case 'B':
 			++installboot;
@@ -278,7 +282,7 @@ main(int argc, char *argv[])
 			usage();
 		if ((lp = readlabel(f)) == NULL)
 			exit(1);
-		error = editor(lp, f, specname, fstabfile);
+		error = editor(lp, f, specname, fstabfile, aflag);
 		break;
 	case READ:
 		if (argc != 1)
@@ -1724,7 +1728,7 @@ usage(void)
 	fprintf(stderr,
 	    "       disklabel -e [-c | -d] [-nv] disk\t\t\t(edit)\n");
 	fprintf(stderr,
-	    "       disklabel -E [-c | -d] [-nv] [-f tempfile] disk\t\t(simple editor)\n");
+	    "       disklabel -E [-A] [-c | -d] [-nv] [-f tempfile] disk\t\t(simple editor)\n");
 	fprintf(stderr,
 	    "       disklabel -R [-nv] disk protofile\t\t\t(restore)\n");
 	fprintf(stderr,

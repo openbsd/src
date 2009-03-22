@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.71 2008/08/10 13:00:25 sobrado Exp $
+.\"	$OpenBSD: disklabel.8,v 1.72 2009/03/22 19:01:32 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: August 10 2008 $
+.Dd $Mdocdate: March 22 2009 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -58,6 +58,7 @@
 .Ar disk
 .Nm disklabel
 .Fl E
+.Op Fl A
 .Op Fl c | d
 .Op Fl nv
 .Op Fl f Ar tempfile
@@ -105,6 +106,9 @@ locate the filesystems resident on the disk.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+If no disklabel is found on entering the Editor, prime label as if the
+'A' command had been entered.
 .It Fl B
 Install bootstrap code.
 .It Fl b Ar boot1
@@ -290,6 +294,8 @@ may be specified to get more detailed help.
 There is also
 .Pq simple
 context-sensitive help available at most prompts.
+.It Cm A
+Allocate all the disk space in the recommended manner.
 .It Cm a Op Ar part
 Add new partition.
 This option adds a new BSD partition.

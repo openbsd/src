@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.175 2009/03/07 02:12:00 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.176 2009/03/22 19:01:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.175 2009/03/07 02:12:00 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.176 2009/03/22 19:01:32 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,7 +61,36 @@ struct mountinfo {
 	int partno;
 };
 
+/* used when allocating all space according to recommendations */
+
+struct space_allocation {
+	daddr64_t	minblks;
+	daddr64_t	maxblks;
+	int		rate;		/* % of extra space to use */
+	char 	       *mp;
+};
+
+struct space_allocation alloc[MAXPARTITIONS] = {
+	{   156250,    1953125,   5, "/"	  }, /* a  80MB ->   1GB */
+	{  1953125,    7812500,   5, "swap"	  }, /* b   1GB ->   4GB */
+	{        0,          0,   0, ""		  }, /* c                */
+	{   156250,    1953125,   5, "/tmp"	  }, /* d  80MB ->   1GB */
+	{   156250,    1953125,   5, "/var"	  }, /* e  80MB ->   1GB */
+	{        0,          0,   0, ""		  }, /* f                */
+	{  3906250,   19531250,  20, "/usr"	  }, /* g   2GB ->  10GB */
+	{  1000000,    1953125,   5, "/usr/X11R6" }, /* h 512MB ->   1GB */
+	{        0,          0,   0, ""		  }, /* i                */
+	{  3906250,    5859375,   5, "/usr/local" }, /* j   2GB ->   3GB */
+	{     1953, 1953125000,  50, "/home"	  }, /* k 512MB ->   1TB */
+	{        0,          0,   0, ""		  }, /* l */
+	{        0,          0,   0, ""		  }, /* m */
+	{        0,          0,   0, ""		  }, /* n */
+	{        0,          0,   0, ""		  }, /* o */
+	{        0,          0,   0, ""		  }  /* p */
+};
+
 void	edit_parms(struct disklabel *);
+void	editor_allocspace(struct disklabel *, char **, int);
 void	editor_add(struct disklabel *, char **, char *);
 void	editor_change(struct disklabel *, char *);
 u_int64_t editor_countfree(struct disklabel *);
@@ -103,7 +132,7 @@ static int expert;
  * Simple partition editor.  Primarily intended for new labels.
  */
 int
-editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
+editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 {
 	struct disklabel lastlabel, tmplabel, label = *lp;
 	struct disklabel *disk_geop;
@@ -164,6 +193,9 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 	if (label.d_interleave == 0)
 		label.d_interleave = 1;
 
+	if (aflag)
+		editor_allocspace(&label, mountpoints, 0);
+
 	puts("Initial label editor (enter '?' for help at any prompt)");
 	lastlabel = label;
 	for (;;) {
@@ -184,6 +216,9 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 			editor_help(arg ? arg : "");
 			break;
 
+		case 'A':
+			editor_allocspace(&label, mountpoints, 1);
+			break;
 		case 'a':
 			tmplabel = lastlabel;
 			lastlabel = label;
@@ -434,6 +469,107 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 			break;
 		}
 	}
+}
+
+/*
+ * Allocate all disk space according to standard recommendations for a
+ * root disk.
+ */
+void
+editor_allocspace(struct disklabel *lp, char **mp, int forcealloc)
+{
+	struct partition *pp;
+	daddr64_t blks, cylblks, totblks, xtrablks;
+	int i, lastpart;
+
+	cylblks = DL_SECTOBLK(lp, lp->d_secpercyl);
+	xtrablks = totblks = DL_SECTOBLK(lp, ending_sector - starting_sector);
+
+	pp = &lp->d_partitions[0];
+	for (i = 0; i < MAXPARTITIONS; i++, pp++) {
+		blks = alloc[i].minblks;
+		if (i == RAW_PART)
+			continue;
+		if (DL_GETPSIZE(pp) != 0 && !forcealloc)
+			return; 
+		if (blks == 0)
+			continue;
+		xtrablks -= blks;
+		lastpart = i;
+	}
+
+	lp->d_npartitions = MAXPARTITIONS;
+
+	pp = &lp->d_partitions[0];
+	for (i = 0; i <= lastpart; i++, pp++) {
+		switch (i) {
+		case 0:
+			DL_SETPSIZE(pp, 0);
+			DL_SETPOFFSET(pp, starting_sector);
+			break;
+		case RAW_PART:
+			continue;
+		case RAW_PART+1:
+			DL_SETPSIZE(pp, 0);
+			DL_SETPOFFSET(pp,DL_GETPOFFSET(pp-2)+DL_GETPSIZE(pp-2));
+			break;
+		default:
+			DL_SETPSIZE(pp, 0);
+			DL_SETPOFFSET(pp,DL_GETPOFFSET(pp-1)+DL_GETPSIZE(pp-1));
+			break;
+		}
+		if (i == lastpart) {
+			if (totblks > alloc[i].maxblks)
+				blks = alloc[i].maxblks;
+			else
+				blks = totblks;
+		} else {
+			blks = alloc[i].minblks;
+			if (xtrablks > 0)
+				blks += (xtrablks / 100) * alloc[i].rate;
+			if (blks > alloc[i].maxblks)
+				blks = alloc[i].maxblks;
+			blks = ((blks + cylblks - 1) / cylblks) * cylblks;
+			totblks -= blks;
+			while (totblks < 0) {
+				blks -= cylblks;
+				totblks += cylblks;
+			}
+			if (i == 0 && blks > DL_SECTOBLK(lp, starting_sector)) {
+				blks -= DL_SECTOBLK(lp, starting_sector);
+				totblks += DL_SECTOBLK(lp, starting_sector);
+			}
+		}
+		if (blks < alloc[i].minblks) {
+			totblks += blks;
+			fprintf(stderr, "no space to auto allocate '%c'"
+			    " (%s)\n", 'a'+i, alloc[i].mp);
+			if (i == 0)
+				break;
+			else
+				continue;
+		}
+		DL_SETPSIZE(pp, DL_BLKTOSEC(lp, blks));
+		pp->p_fstype = (i == 1) ? FS_SWAP : FS_BSDFFS;
+#if defined (__sparc__) && !defined(__sparc64__)
+		/* can't boot from > 8k boot blocks */
+		pp->p_fragblock =
+		    DISKLABELV1_FFS_FRAGBLOCK(i == 0 ? 1024 : 2048, 8);
+#else
+		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
+#endif
+		pp->p_cpg = 1;
+		if (mp && alloc[i].mp[0] == '/') {
+			free(mp[i]);
+			if ((mp[i] = strdup(alloc[i].mp)) == NULL)
+				errx(4, "out of memory");
+		}
+	}
+
+	/* Zap remaining, unallocated partitions. */
+	for (; i < MAXPARTITIONS; i++, pp++)
+		if (i != RAW_PART)
+			memset(pp, 0, sizeof(*pp));
 }
 
 /*
@@ -1578,17 +1714,17 @@ editor_help(char *arg)
 	default:
 		puts("Available commands:");
 		puts(
-"  ? [command] - show help                  n [part] - set mount point\n"
-"  a [part]    - add partition              p [unit] - print partitions\n"
-"  b           - set OpenBSD boundaries     q        - quit & save changes\n"
-"  c [part]    - change partition size      r        - display free space\n"
-"  D           - reset label to default     s [path] - save label to file\n"
-"  d [part]    - delete partition           u        - undo last change\n"
-"  e           - edit drive parameters      w        - write label to disk\n"
-"  g [d | u]   - [d]isk or [u]ser geometry  X        - toggle expert mode\n"
-"  l [unit]    - print disk label header    x        - exit & lose changes\n"
-"  M           - disklabel(8) man page      z        - delete all partitions\n"
-"  m [part]    - modify partition\n"
+"  ? [cmd]  - show help                  m [part] - modify partition\n"
+"  A        - auto partition all space   n [part] - set mount point\n"
+"  a [part] - add partition              p [unit] - print partitions\n"
+"  b        - set OpenBSD boundaries     q        - quit & save changes\n"
+"  c [part] - change partition size      s [path] - save label to file\n"
+"  D        - reset label to default     r        - display free space\n"
+"  d [part] - delete partition           u        - undo last change\n"
+"  e        - edit drive parameters      w        - write label to disk\n"
+"  g [d|u]  - [d]isk or [u]ser geometry  X        - toggle expert mode\n"
+"  l [unit] - print disk label header    x        - exit & lose changes\n"
+"  M        - disklabel(8) man page      z        - delete all partitions\n"
 "\n"
 "Suffixes can be used to indicate units other than sectors:\n"
 "\t'b' (bytes), 'k' (kilobytes), 'm' (megabytes), 'g' (gigabytes)\n"
@@ -1917,16 +2053,13 @@ get_mp(struct disklabel *lp, char **mp, int partno)
 				return(1);
 			}
 			if (strcasecmp(p, "none") == 0) {
-				if (mp[partno] != NULL) {
-					free(mp[partno]);
-					mp[partno] = NULL;
-				}
+				free(mp[partno]);
+				mp[partno] = NULL;
 				break;
 			}
 			if (*p == '/') {
 				/* XXX - might as well realloc */
-				if (mp[partno] != NULL)
-					free(mp[partno]);
+				free(mp[partno]);
 				if ((mp[partno] = strdup(p)) == NULL)
 					errx(4, "out of memory");
 				break;
