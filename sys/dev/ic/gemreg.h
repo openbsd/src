@@ -1,4 +1,4 @@
-/*	$OpenBSD: gemreg.h,v 1.15 2008/11/07 17:44:14 brad Exp $	*/
+/*	$OpenBSD: gemreg.h,v 1.16 2009/03/22 21:46:31 kettenis Exp $	*/
 /*	$NetBSD: gemreg.h,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -374,6 +374,9 @@
 #define	GEM_MAC_CC_TX_PAUSE	0x00000001	/* send pause enabled */
 #define	GEM_MAC_CC_RX_PAUSE	0x00000002	/* receive pause enabled */
 #define	GEM_MAC_CC_PASS_PAUSE	0x00000004	/* pass pause up */
+
+/* GEM_MAC_MAC_STATE register bits */
+#define GEM_MAC_STATE_OVERFLOW	0x03800000
 
 /* GEM MIF registers */
 /* Bit bang registers use low bit only */

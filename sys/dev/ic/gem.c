@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.88 2009/03/20 23:29:47 kettenis Exp $	*/
+/*	$OpenBSD: gem.c,v 1.89 2009/03/22 21:46:31 kettenis Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -97,6 +97,7 @@ int		gem_reset_rx(struct gem_softc *);
 int		gem_reset_tx(struct gem_softc *);
 int		gem_disable_rx(struct gem_softc *);
 int		gem_disable_tx(struct gem_softc *);
+void		gem_rx_watchdog(void *);
 void		gem_rxdrain(struct gem_softc *);
 void		gem_fill_rx_ring(struct gem_softc *);
 int		gem_add_rxbuf(struct gem_softc *, int idx);
@@ -351,6 +352,7 @@ gem_config(struct gem_softc *sc)
 		panic("gem_config: can't establish shutdownhook");
 
 	timeout_set(&sc->sc_tick_ch, gem_tick, sc);
+	timeout_set(&sc->sc_rx_watchdog, gem_rx_watchdog, sc);
 	return;
 
 	/*
@@ -1047,7 +1049,6 @@ gem_add_rxbuf(struct gem_softc *sc, int idx)
 	return (0);
 }
 
-
 int
 gem_eint(struct gem_softc *sc, u_int status)
 {
@@ -1122,8 +1123,23 @@ gem_intr(void *v)
  			printf("%s: MAC rx fault, status %x\n",
  			    sc->sc_dev.dv_xname, rxstat);
 #endif
-		if (rxstat & GEM_MAC_RX_OVERFLOW)
+		if (rxstat & GEM_MAC_RX_OVERFLOW) {
 			ifp->if_ierrors++;
+
+			/*
+			 * Apparently a silicon bug causes ERI to hang
+			 * from time to time.  So if we detect an RX
+			 * FIFO overflow, we fire off a timer, and
+			 * check whether we're still making progress
+			 * by looking at the RX FIFO write and read
+			 * pointers.
+			 */
+			sc->sc_rx_fifo_wr_ptr =
+				bus_space_read_4(t, seb, GEM_RX_FIFO_WR_PTR);
+			sc->sc_rx_fifo_rd_ptr =
+				bus_space_read_4(t, seb, GEM_RX_FIFO_RD_PTR);
+			timeout_add_msec(&sc->sc_rx_watchdog, 400);
+		}
 #ifdef GEM_DEBUG
 		else if (rxstat & ~(GEM_MAC_RX_DONE | GEM_MAC_RX_FRAME_CNT))
 			printf("%s: MAC rx fault, status %x\n",
@@ -1133,6 +1149,36 @@ gem_intr(void *v)
 	return (r);
 }
 
+void
+gem_rx_watchdog(void *arg)
+{
+	struct gem_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t h = sc->sc_h1;
+	u_int32_t rx_fifo_wr_ptr;
+	u_int32_t rx_fifo_rd_ptr;
+	u_int32_t state;
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+
+	rx_fifo_wr_ptr = bus_space_read_4(t, h, GEM_RX_FIFO_WR_PTR);
+	rx_fifo_rd_ptr = bus_space_read_4(t, h, GEM_RX_FIFO_RD_PTR);
+	state = bus_space_read_4(t, h, GEM_MAC_MAC_STATE);
+	if ((state & GEM_MAC_STATE_OVERFLOW) == GEM_MAC_STATE_OVERFLOW &&
+	    ((rx_fifo_wr_ptr == rx_fifo_rd_ptr) ||
+	     ((sc->sc_rx_fifo_wr_ptr == rx_fifo_wr_ptr) &&
+	      (sc->sc_rx_fifo_rd_ptr == rx_fifo_rd_ptr)))) {
+		/*
+		 * The RX state machine is still in overflow state and
+		 * the RX FIFO write and read pointers seem to be
+		 * stuck.  Whack the chip over the head to get things
+		 * going again.
+		 */
+		gem_init(ifp);
+	}
+}
 
 void
 gem_watchdog(struct ifnet *ifp)
