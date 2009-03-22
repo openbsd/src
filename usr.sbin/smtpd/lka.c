@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.36 2009/03/20 09:34:34 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.37 2009/03/22 22:53:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -57,7 +57,7 @@ int		lka_forward_file(struct passwd *);
 size_t		lka_expand(char *, size_t, struct path *);
 int		aliases_exist(struct smtpd *, char *);
 int		aliases_get(struct smtpd *, struct aliaseslist *, char *);
-int		lka_resolve_alias(struct path *, struct alias *);
+int		lka_resolve_alias(struct smtpd *, struct path *, struct alias *);
 int		lka_parse_include(char *);
 int		lka_check_source(struct smtpd *, struct map *, struct sockaddr_storage *);
 int		lka_match_mask(struct sockaddr_storage *, struct netaddr *);
@@ -135,9 +135,34 @@ lka_dispatch_parent(int sig, short event, void *p)
 			--lkasession->pending;
 
 			if (fd == -1) {
-				if (fwreq->pw_name[0] != '\0') {
+				if (! fwreq->status) {
 					lkasession->ss.code = 530;
 					lkasession->flags |= F_ERROR;
+				}
+				else {
+					struct alias *alias;
+					struct message message;
+
+					alias = calloc(1, sizeof(struct alias));
+					if (alias == NULL)
+						fatal("lka_dispatch_parent: calloc");
+
+					alias_parse(alias, fwreq->pw_name);
+
+					message = lkasession->message;
+					bzero(&message.recipient, sizeof(struct path));			
+					lka_resolve_alias(env, &message.recipient, alias);
+					lka_rcpt_action(env, &message.recipient);
+
+					imsg_compose(env->sc_ibufs[PROC_QUEUE],
+					    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
+					    &message, sizeof(struct message));
+
+					if (! lkasession->pending)
+						imsg_compose(env->sc_ibufs[PROC_QUEUE],
+						    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1,
+						    &message, sizeof(struct message));
+					break;
 				}
 			}
 			else {
@@ -276,7 +301,6 @@ lka_dispatch_mfa(int sig, short event, void *p)
 
 			if (ret == 0) {
 				/* No aliases ... */
-				log_debug("expansion resulted in empty list");
 				ss->code = 530;
 				imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0,
 				    -1, ss, sizeof(*ss));
@@ -945,7 +969,7 @@ lka_expand(char *buf, size_t len, struct path *path)
 }
 
 int
-lka_resolve_alias(struct path *path, struct alias *alias)
+lka_resolve_alias(struct smtpd *env, struct path *path, struct alias *alias)
 {
 	switch (alias->type) {
 	case ALIAS_USERNAME:
@@ -953,6 +977,16 @@ lka_resolve_alias(struct path *path, struct alias *alias)
 		if (strlcpy(path->pw_name, alias->u.username,
 			sizeof(path->pw_name)) >= sizeof(path->pw_name))
 			return 0;
+		if (path->user[0] == '\0') {
+			if (strlcpy(path->user, alias->u.username,
+				sizeof(path->user)) >= sizeof(path->user))
+				return 0;
+		}
+		if (path->domain[0] == '\0') {
+			if (strlcpy(path->domain, env->sc_hostname,
+				sizeof(path->domain)) >= sizeof(path->domain))
+				return 0;
+		}
 		break;
 
 	case ALIAS_FILENAME:
@@ -997,21 +1031,20 @@ lka_expand_rcpt(struct smtpd *env, struct aliaseslist *aliases, struct lkasessio
 			lkasession->ss.code = 530;
 			lkasession->flags |= F_ERROR;
 		}
-		
+
 		if (lkasession->pending || ret <= 0)
 			break;
 	}
-	
+
 	if (lkasession->pending)
 		return;
-	
+
 	if (lkasession->flags & F_ERROR) {
 		lka_clear_aliaseslist(&lkasession->aliaseslist);
 		imsg_compose(env->sc_ibufs[PROC_MFA], IMSG_LKA_RCPT, 0, 0,
 		    -1, &lkasession->ss, sizeof(struct submit_status));
 	}
-	else if (ret == 0) {
-		log_debug("expansion resulted in empty list");
+	else if (TAILQ_FIRST(&lkasession->aliaseslist) == NULL) {
 		message = lkasession->message;
 		message.recipient = lkasession->path;
 		imsg_compose(env->sc_ibufs[PROC_QUEUE],
@@ -1027,7 +1060,7 @@ lka_expand_rcpt(struct smtpd *env, struct aliaseslist *aliases, struct lkasessio
 		while ((alias = TAILQ_FIRST(&lkasession->aliaseslist)) != NULL) {
 			bzero(&message.recipient, sizeof(struct path));
 			
-			lka_resolve_alias(&message.recipient, alias);
+			lka_resolve_alias(env, &message.recipient, alias);
 			lka_rcpt_action(env, &message.recipient);
 			
 			imsg_compose(env->sc_ibufs[PROC_QUEUE],
@@ -1090,10 +1123,8 @@ lka_expand_rcpt_iteration(struct smtpd *env, struct aliaseslist *aliases, struct
 		rmalias = NULL;
 	}
 
-	if (!done && lkasession->iterations == 5) {
-		log_debug("loop detected");
+	if (!done && lkasession->iterations == 5)
 		return -1;
-	}
 
 	if (TAILQ_FIRST(aliases) == NULL)
 		return 0;

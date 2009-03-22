@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.95 2009/03/19 20:27:49 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.96 2009/03/22 22:53:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -717,6 +717,7 @@ struct message_recipient {
 
 struct forward_req {
 	u_int64_t			 id;
+	u_int8_t			 status;
 	char				 pw_name[MAXLOGNAME];
 };
 

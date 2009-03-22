@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.36 2009/03/18 10:29:27 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.37 2009/03/22 22:53:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -868,7 +868,7 @@ batch_lookup(struct smtpd *env, struct message *message)
 	struct batch lookup;
 
 	/* We only support delivery of one message at a time, in MDA */
-	if (message->flags & T_MDA_MESSAGE)
+	if (message->type & T_MDA_MESSAGE)
 		return NULL;
 
 	/* If message->batch_id != 0, we can retrieve batch by id */

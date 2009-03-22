@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.49 2009/03/10 21:14:21 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.50 2009/03/22 22:53:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -200,9 +200,11 @@ parent_dispatch_lka(int fd, short event, void *p)
 
 			fwreq = imsg.data;
 			ret = parent_forward_open(fwreq->pw_name);
-			if (ret == -1)
+			fwreq->status = 0;
+			if (ret == -1) {
 				if (errno == ENOENT)
-					fwreq->pw_name[0] = '\0';
+					fwreq->status = 1;
+			}
 			imsg_compose(ibuf, IMSG_PARENT_FORWARD_OPEN, 0, 0, ret, fwreq, sizeof(*fwreq));
 			break;
 		}
@@ -1235,31 +1237,30 @@ parent_forward_open(char *username)
 	fd = open(pathname, O_RDONLY);
 	if (fd == -1) {
 		if (errno == ENOENT)
-			goto clear;
+			goto err;
 		return -1;
 	}
 
 	/* make sure ~/ is not writable by anyone but owner */
 	if (stat(pw->pw_dir, &sb) == -1)
-		goto clearlog;
+		goto errlog;
 
 	if (sb.st_uid != pw->pw_uid || sb.st_mode & (S_IWGRP|S_IWOTH))
-		goto clearlog;
+		goto errlog;
 
 	/* make sure ~/.forward is not writable by anyone but owner */
 	if (fstat(fd, &sb) == -1)
-		goto clearlog;
+		goto errlog;
 
 	if (sb.st_uid != pw->pw_uid || sb.st_mode & (S_IWGRP|S_IWOTH))
-		goto clearlog;
+		goto errlog;
 
 	return fd;
 
-clearlog:
+errlog:
 	log_info("cannot process forward file for user %s due to wrong permissions", username);
 
-clear:
-	username[0] = '\0';
+err:
 	return -1;
 }
 
