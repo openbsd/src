@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.91 2009/03/22 18:41:34 grange Exp $	*/
+/*	$OpenBSD: ips.c,v 1.92 2009/03/22 20:57:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -1853,7 +1853,6 @@ ips_getconf(struct ips_softc *sc, int flags)
 	return (ips_cmd(sc, ccb));
 }
 
-#ifndef SMALL_KERNEL
 int
 ips_getrblstat(struct ips_softc *sc, int flags)
 {
@@ -1877,7 +1876,6 @@ ips_getrblstat(struct ips_softc *sc, int flags)
 
 	return (ips_cmd(sc, ccb));
 }
-#endif	/* !SMALL_KERNEL */
 
 int
 ips_getpg5(struct ips_softc *sc, int flags)
