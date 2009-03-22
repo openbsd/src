@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.176 2009/03/22 19:01:32 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.177 2009/03/22 19:58:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.176 2009/03/22 19:01:32 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.177 2009/03/22 19:58:43 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -217,6 +217,8 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 			break;
 
 		case 'A':
+			tmplabel = lastlabel;
+			lastlabel = label;
 			editor_allocspace(&label, mountpoints, 1);
 			break;
 		case 'a':
