@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.286 2009/02/21 19:46:40 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.287 2009/03/22 18:39:10 tobias Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -614,12 +614,14 @@ rcs_branch_new(RCSFILE *file, RCSNUM *rev)
 			if (!rcsnum_cmp(sym->rs_num, brev, 0))
 				break;
 
-		if (sym != NULL) {
-			if (rcsnum_inc(brev) == NULL ||
-			    rcsnum_inc(brev) == NULL)
-				return (NULL);
-		} else
+		if (sym == NULL)
 			break;
+
+		if (rcsnum_inc(brev) == NULL ||
+		    rcsnum_inc(brev) == NULL) {
+			rcsnum_free(brev);
+			return (NULL);
+		}
 	}
 
 	return (brev);
