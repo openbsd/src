@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.72 2008/06/10 01:00:34 joris Exp $	*/
+/*	$OpenBSD: buf.c,v 1.73 2009/03/23 18:21:23 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -45,8 +45,6 @@ struct cvs_buf {
 	size_t	 cb_size;
 	size_t	 cb_len;
 };
-
-#define SIZE_LEFT(b)	(b->cb_size - b->cb_len)
 
 static void	cvs_buf_grow(BUF *, size_t);
 
