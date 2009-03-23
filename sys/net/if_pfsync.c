@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.117 2009/03/17 05:06:54 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.118 2009/03/23 06:19:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1205,11 +1205,10 @@ pfsync_in_bus(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 
 	switch (bus->status) {
 	case PFSYNC_BUS_START:
-		timeout_add_sec(&sc->sc_bulkfail_tmo, 5); /* XXX magic */
-#if XXX
+		timeout_add(&sc->sc_bulkfail_tmo, 4 * hz +
 		    pf_pool_limits[PF_LIMIT_STATES].limit /
-		    (PFSYNC_BULKPACKETS * sc->sc_maxcount));
-#endif
+		    ((sc->sc_if.if_mtu - PFSYNC_MINPKT) /
+		    sizeof(struct pfsync_state)));
 		if (pf_status.debug >= PF_DEBUG_MISC)
 			printf("pfsync: received bulk update start\n");
 		break;
@@ -1481,7 +1480,10 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			pfsync_sync_ok = 0;
 			if (pf_status.debug >= PF_DEBUG_MISC)
 				printf("pfsync: requesting bulk update\n");
-			timeout_add_sec(&sc->sc_bulkfail_tmo, 5);
+			timeout_add(&sc->sc_bulkfail_tmo, 4 * hz +
+			    pf_pool_limits[PF_LIMIT_STATES].limit /
+			    ((sc->sc_if.if_mtu - PFSYNC_MINPKT) /
+			    sizeof(struct pfsync_state)));
 			pfsync_request_update(0, 0);
 		}
 
