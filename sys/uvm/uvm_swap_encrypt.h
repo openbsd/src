@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.h,v 1.8 2009/03/23 22:07:41 oga Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.h,v 1.9 2009/03/23 22:10:04 oga Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -68,7 +68,7 @@ extern u_int uvm_swpkeyscreated;
 						arc4random_buf((x)->key,\
 						    sizeof((x)->key));	\
 						uvm_swpkeyscreated++;	\
-						}			\
+					}				\
 					(x)->refcount++;		\
 				} while(0);
 
