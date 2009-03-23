@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.91 2009/03/23 15:10:09 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.92 2009/03/23 15:13:58 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -115,8 +115,6 @@ cvs_getlog(int argc, char **argv)
 			    cvs_cmd_rlog.cmd_synopsis);
 		}
 	}
-
-	cvs_printf("dates: %s\n", logdate);
 
 	argc -= optind;
 	argv += optind;
