@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.92 2009/03/22 20:57:28 deraadt Exp $	*/
+/*	$OpenBSD: ips.c,v 1.93 2009/03/23 17:40:56 grange Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -433,13 +433,17 @@ int	ips_scsi_pt_cmd(struct scsi_xfer *);
 int	ips_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int,
 	    struct proc *);
 
+#if NBIO > 0
 int	ips_ioctl(struct device *, u_long, caddr_t);
 int	ips_ioctl_inq(struct ips_softc *, struct bioc_inq *);
 int	ips_ioctl_vol(struct ips_softc *, struct bioc_vol *);
 int	ips_ioctl_disk(struct ips_softc *, struct bioc_disk *);
 int	ips_ioctl_setstate(struct ips_softc *, struct bioc_setstate *);
+#endif
 
+#ifndef SMALL_KERNEL
 void	ips_sensors(void *);
+#endif
 
 int	ips_load_xs(struct ips_softc *, struct ips_ccb *, struct scsi_xfer *);
 int	ips_start_xs(struct ips_softc *, struct ips_ccb *, struct scsi_xfer *);
@@ -458,10 +462,13 @@ void	ips_timeout(void *);
 int	ips_getadapterinfo(struct ips_softc *, int);
 int	ips_getdriveinfo(struct ips_softc *, int);
 int	ips_getconf(struct ips_softc *, int);
-int	ips_getrblstat(struct ips_softc *, int);
 int	ips_getpg5(struct ips_softc *, int);
+
+#if NBIO > 0
+int	ips_getrblstat(struct ips_softc *, int);
 int	ips_setstate(struct ips_softc *, int, int, int, int);
 int	ips_rebuild(struct ips_softc *, int, int, int, int, int);
+#endif
 
 void	ips_copperhead_exec(struct ips_softc *, struct ips_ccb *);
 void	ips_copperhead_intren(struct ips_softc *);
@@ -1334,7 +1341,7 @@ ips_sensors(void *arg)
 	struct ips_softc *sc = arg;
 	struct ips_conf *conf = &sc->sc_info->conf;
 	struct ips_ld *ld;
-	int i, rebuild = 0;
+	int i;
 
 	/* ips_sensors() runs from work queue thus allowed to sleep */
 	if (ips_getconf(sc, 0)) {
@@ -1360,7 +1367,6 @@ ips_sensors(void *arg)
 		case IPS_DS_DEGRADED:
 			sc->sc_sensors[i].value = SENSOR_DRIVE_PFAIL;
 			sc->sc_sensors[i].status = SENSOR_S_WARN;
-			rebuild++;
 			break;
 		case IPS_DS_OFFLINE:
 			sc->sc_sensors[i].value = SENSOR_DRIVE_FAIL;
@@ -1372,9 +1378,6 @@ ips_sensors(void *arg)
 		}
 	}
 	DPRINTF(IPS_D_INFO, ("\n"));
-
-	if (rebuild)
-		(void)ips_getrblstat(sc, 0);
 }
 #endif	/* !SMALL_KERNEL */
 
@@ -1854,30 +1857,6 @@ ips_getconf(struct ips_softc *sc, int flags)
 }
 
 int
-ips_getrblstat(struct ips_softc *sc, int flags)
-{
-	struct ips_ccb *ccb;
-	struct ips_cmd *cmd;
-	int s;
-
-	s = splbio();
-	ccb = ips_ccb_get(sc);
-	splx(s);
-	if (ccb == NULL)
-		return (1);
-
-	ccb->c_flags = SCSI_DATA_IN | SCSI_POLL | flags;
-	ccb->c_done = ips_done_mgmt;
-
-	cmd = ccb->c_cmdbva;
-	cmd->code = IPS_CMD_REBUILDSTATUS;
-	cmd->sgaddr = htole32(sc->sc_infom.dm_paddr + offsetof(struct ips_info,
-	    rblstat));
-
-	return (ips_cmd(sc, ccb));
-}
-
-int
 ips_getpg5(struct ips_softc *sc, int flags)
 {
 	struct ips_ccb *ccb;
@@ -1903,6 +1882,30 @@ ips_getpg5(struct ips_softc *sc, int flags)
 }
 
 #if NBIO > 0
+int
+ips_getrblstat(struct ips_softc *sc, int flags)
+{
+	struct ips_ccb *ccb;
+	struct ips_cmd *cmd;
+	int s;
+
+	s = splbio();
+	ccb = ips_ccb_get(sc);
+	splx(s);
+	if (ccb == NULL)
+		return (1);
+
+	ccb->c_flags = SCSI_DATA_IN | SCSI_POLL | flags;
+	ccb->c_done = ips_done_mgmt;
+
+	cmd = ccb->c_cmdbva;
+	cmd->code = IPS_CMD_REBUILDSTATUS;
+	cmd->sgaddr = htole32(sc->sc_infom.dm_paddr + offsetof(struct ips_info,
+	    rblstat));
+
+	return (ips_cmd(sc, ccb));
+}
+
 int
 ips_setstate(struct ips_softc *sc, int chan, int target, int state, int flags)
 {
