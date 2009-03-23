@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.86 2009/03/20 15:19:04 oga Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.87 2009/03/23 22:07:41 oga Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 
 #include <uvm/uvm.h>
 #ifdef UVM_SWAP_ENCRYPT
+#include <dev/rndvar.h>
 #include <sys/syslog.h>
 #endif
 

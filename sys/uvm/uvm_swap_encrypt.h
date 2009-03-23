@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.h,v 1.7 2002/07/02 19:38:55 nate Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.h,v 1.8 2009/03/23 22:07:41 oga Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -61,17 +61,24 @@ void swap_decrypt(struct swap_key *,caddr_t, caddr_t, u_int64_t, size_t);
 void swap_key_cleanup(struct swap_key *);
 void swap_key_prepare(struct swap_key *, int);
 
-#define SWAP_KEY_GET(s,x) do { if ((x)->refcount == 0) {\
-					swap_key_create(x); \
-			       } \
-			       (x)->refcount++; } while(0);
-#define SWAP_KEY_PUT(s,x) do { (x)->refcount--; \
-			       if ((x)->refcount == 0) { \
-					swap_key_delete(x); \
-			       } \
-			     } while(0);
+extern u_int uvm_swpkeyscreated;
 
-void swap_key_create(struct swap_key *);
+#define SWAP_KEY_GET(s,x)	do {					\
+					if ((x)->refcount == 0) {	\
+						arc4random_buf((x)->key,\
+						    sizeof((x)->key));	\
+						uvm_swpkeyscreated++;	\
+						}			\
+					(x)->refcount++;		\
+				} while(0);
+
+#define SWAP_KEY_PUT(s,x)	do {					\
+					(x)->refcount--;		\
+					if ((x)->refcount == 0) {	\
+						swap_key_delete(x);	\
+					}				\
+				} while(0);
+
 void swap_key_delete(struct swap_key *);
 
 extern int uvm_doswapencrypt;		/* swapencrypt enabled/disabled */
