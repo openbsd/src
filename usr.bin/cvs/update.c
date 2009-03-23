@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.158 2009/03/21 11:16:28 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.159 2009/03/23 07:40:30 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -328,7 +328,7 @@ cvs_update_local(struct cvs_file *cf)
 
 		if (cf->file_status != FILE_UNKNOWN &&
 		    verbosity > 1)
-			cvs_log(LP_NOTICE, "Updating %s", cf->file_path);
+			cvs_log(LP_ERR, "Updating %s", cf->file_path);
 		return;
 	}
 
