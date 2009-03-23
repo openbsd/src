@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsi.h,v 1.1 2008/11/26 22:14:39 dlg Exp $ */
+/*	$OpenBSD: iscsi.h,v 1.2 2009/03/23 02:19:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -60,8 +60,9 @@ struct iscsi_pdu {
 #define ISCSI_OP_TEXT_RESPONSE		0x24
 #define ISCSI_OP_DATA_IN		0x25
 #define ISCSI_OP_LOGOUT_RESPONSE	0x26
-#define ISCSI_OP_R2T			0x27
-#define ISCSI_OP_ASYNC			0x28
+#define ISCSI_OP_R2T			0x31
+#define ISCSI_OP_ASYNC			0x32
+#define ISCSI_OP_REJECT			0x3f
 
 #define ISCSI_PDU_OPCODE(_o)		((_o) & 0x3f)
 #define ISCSI_PDU_I(_h)			((_h)->opcode & 0x40)
