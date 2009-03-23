@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 2008/10/28 20:16:58 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.20 2009/03/23 13:25:11 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -3327,7 +3327,7 @@ pmap_pageidlezero(struct vm_page *pg)
 
 	for (i = 0, ptr = (int *)cdstp;
 			i < (PAGE_SIZE / sizeof(int)); i++) {
-		if (!sched_is_idle()) {
+		if (!curcpu_is_idle()) {
 			/*
 			 * A process has become ready.  Abort now,
 			 * so we don't keep it waiting while we

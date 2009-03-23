@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.25 2009/03/20 15:19:04 oga Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.26 2009/03/23 13:25:11 art Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -97,10 +97,15 @@ uvm_meter(void)
 static void
 uvm_loadav(struct loadavg *avg)
 {
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 	int i, nrun;
 	struct proc *p;
+	int nrun_cpu[MAXCPUS];
 
 	nrun = 0;
+	memset(nrun_cpu, 0, sizeof(nrun_cpu));
+
 	LIST_FOREACH(p, &allproc, p_list) {
 		switch (p->p_stat) {
 		case SSLEEP:
@@ -113,11 +118,25 @@ uvm_loadav(struct loadavg *avg)
 				continue;
 		case SIDL:
 			nrun++;
+			if (p->p_cpu)
+				nrun_cpu[CPU_INFO_UNIT(p->p_cpu)]++;
 		}
 	}
-	for (i = 0; i < 3; i++)
+
+	for (i = 0; i < 3; i++) {
 		avg->ldavg[i] = (cexp[i] * avg->ldavg[i] +
 		    nrun * FSCALE * (FSCALE - cexp[i])) >> FSHIFT;
+	}
+
+	CPU_INFO_FOREACH(cii, ci) {
+		struct schedstate_percpu *spc = &ci->ci_schedstate;
+
+		if (nrun_cpu[CPU_INFO_UNIT(ci)] == 0)
+			continue;
+		spc->spc_ldavg = (cexp[0] * spc->spc_ldavg +
+		    nrun_cpu[CPU_INFO_UNIT(ci)] * FSCALE *
+		    (FSCALE - cexp[0])) >> FSHIFT;
+	}		
 }
 
 /*

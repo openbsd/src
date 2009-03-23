@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.19 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: sched.h,v 1.20 2009/03/23 13:25:11 art Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -87,6 +87,8 @@
 #define CP_IDLE		4
 #define CPUSTATES	5
 
+#define	SCHED_NQS	32			/* 32 run queues. */
+
 /*
  * Per-CPU scheduler state.
  * XXX - expose to userland for now.
@@ -101,6 +103,13 @@ struct schedstate_percpu {
 	int spc_pscnt;			/* prof/stat counter */
 	int spc_psdiv;			/* prof/stat divisor */	
 	struct proc *spc_idleproc;	/* idle proc for this cpu */
+
+	u_int spc_nrun;			/* procs on the run queues */
+	fixpt_t spc_ldavg;		/* shortest load avg. for this cpu */
+
+	TAILQ_HEAD(prochead, proc) spc_qs[SCHED_NQS];
+	volatile uint32_t spc_whichqs;
+
 #ifdef notyet
 	struct proc *spc_reaper;	/* dead proc reaper */
 #endif
@@ -114,11 +123,9 @@ struct schedstate_percpu {
 #define SPCF_SHOULDYIELD        0x0002  /* process should yield the CPU */
 #define SPCF_SWITCHCLEAR        (SPCF_SEENRR|SPCF_SHOULDYIELD)
 
-
-#define	NQS	32			/* 32 run queues. */
-#define	PPQ	(128 / NQS)		/* priorities per queue */
+#define	SCHED_PPQ	(128 / SCHED_NQS)	/* priorities per queue */
 #define NICE_WEIGHT 2			/* priorities per nice level */
-#define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - PPQ)
+#define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - SCHED_PPQ)
 
 extern int schedhz;			/* ideally: 16 */
 extern int rrticks_init;		/* ticks per roundrobin() */
@@ -133,12 +140,12 @@ void sched_exit(struct proc *);
 void mi_switch(void);
 void cpu_switchto(struct proc *, struct proc *);
 struct proc *sched_chooseproc(void);
+void sched_choosecpu(struct proc *);
 void cpu_idle_enter(void);
 void cpu_idle_cycle(void);
 void cpu_idle_leave(void);
 
-extern volatile int sched_whichqs;
-#define sched_is_idle()	(sched_whichqs == 0)
+#define curcpu_is_idle()	(curcpu()->ci_schedstate.spc_whichqs == 0)
 
 void sched_init_runqueues(void);
 void setrunqueue(struct proc *);

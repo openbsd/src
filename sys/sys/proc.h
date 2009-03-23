@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.112 2009/03/05 19:52:24 kettenis Exp $	*/
+/*	$OpenBSD: proc.h,v 1.113 2009/03/23 13:25:11 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -467,6 +467,28 @@ void	proc_trampoline_mp(void);	/* XXX */
 #endif
 
 int proc_isunder(struct proc *, struct proc *);
+
+/*
+ * functions to handle sets of cpus.
+ *
+ * For now we keep the cpus in ints so that we can use the generic
+ * atomic ops.
+ */
+#define CPUSET_ASIZE(x) (((x) - 1)/32 + 1)
+#define CPUSET_SSIZE CPUSET_ASIZE(MAXCPUS)
+struct cpuset {
+	int cs_set[CPUSET_SSIZE];
+};
+
+void cpuset_init_cpu(struct cpu_info *);
+
+void cpuset_clear(struct cpuset *);
+void cpuset_add(struct cpuset *, struct cpu_info *);
+void cpuset_del(struct cpuset *, struct cpu_info *);
+int cpuset_isset(struct cpuset *, struct cpu_info *);
+void cpuset_add_all(struct cpuset *);
+void cpuset_copy(struct cpuset *to, struct cpuset *from);
+struct cpu_info *cpuset_first(struct cpuset *);
 
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */
