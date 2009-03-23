@@ -1,4 +1,4 @@
-/*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
+/*	$OpenBSD: atphy.c,v 1.2 2009/03/23 05:26:47 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -213,7 +213,8 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		/*
 		 * Reset the PHY so all changes take effect.
 		 */
-		PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_RESET);
+		PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_RESET | BMCR_AUTOEN |
+		    BMCR_STARTNEG);
 done:
 		break;
 
