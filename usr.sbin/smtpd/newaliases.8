@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newaliases.8,v 1.5 2009/03/16 21:15:40 gilles Exp $
+.\"	$OpenBSD: newaliases.8,v 1.6 2009/03/23 21:48:40 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@openbsd.org>
 .\" Copyright (c) 2008-2009 Gilles Chechade <gilles@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 16 2009 $
+.Dd $Mdocdate: March 23 2009 $
 .Dt NEWALIASES 8
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@ the location of which is defined in
 .Xr smtpd.conf 5 ,
 and which by default is
 .Pa /etc/mail/aliases .
-This utility must be run each time aliases file is changed
+This utility must be run each time the aliases file is changed
 in order for the change to take effect.
 .Pp
 The options are as follows:
@@ -44,11 +44,11 @@ instead of the default
 .Pa /etc/mail/smtpd.conf .
 .El
 .Pp
-Note: this utility is provided for Sendmail compatibilty.
+Note: this utility is provided for sendmail compatibilty.
 The preferred way of rebuilding the database is with
 .Xr makemap 8 :
 .Bd -literal -offset indent
-makemap -t aliases /etc/mail/aliases
+# makemap -t aliases /etc/mail/aliases
 .Ed
 .Pp
 .Ex -std newaliases
@@ -57,7 +57,7 @@ makemap -t aliases /etc/mail/aliases
 .It Pa /etc/mail/aliases
 List of local user mail aliases.
 .It Pa /etc/mail/virtual
-List of virtual hosts aliases.
+List of virtual host aliases.
 .El
 .Sh SEE ALSO
 .Xr smtpd.conf 5 ,
@@ -67,4 +67,4 @@ The
 .Nm
 command first appeared in
 .Ox 4.6
-as the replacement for equivalent command shipped with sendmail.
+as a replacement for the equivalent command shipped with sendmail.

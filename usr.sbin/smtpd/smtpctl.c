@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.18 2009/03/22 13:52:03 ian Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.19 2009/03/23 21:48:40 jmc Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -78,7 +78,7 @@ usage(void)
 	if (sendmail)
 		fprintf(stderr, "usage: %s [-i] rcpt [...]\n", __progname);
 	else
-		fprintf(stderr, "usage: %s <command> [arg [...]]\n", __progname);
+		fprintf(stderr, "usage: %s command [argument ...]\n", __progname);
 	exit(1);
 }
 

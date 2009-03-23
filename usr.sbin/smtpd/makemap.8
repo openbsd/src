@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makemap.8,v 1.6 2009/03/16 20:43:29 gilles Exp $
+.\"	$OpenBSD: makemap.8,v 1.7 2009/03/23 21:48:40 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@openbsd.org>
 .\" Copyright (c) 2008-2009 Gilles Chechade <gilles@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 16 2009 $
+.Dd $Mdocdate: March 23 2009 $
 .Dt MAKEMAP 8
 .Os
 .Sh NAME
@@ -32,38 +32,39 @@ creates the database maps used by keyed map lookups in
 .Xr smtpd 8 .
 It reads input from
 .Ar file
-and writes database to a file
-whose name is made by adding .db suffix to
+and writes data to a file whose name is made by adding a
+.Dq .db
+suffix to
 .Ar file .
 .Pp
 In all cases,
 .Nm
 reads lines consisting of words separated by whitespace.
-The first is the database key,
-the remaining specify mapped value.
-Database key and value may optionally be separated
+The first word of a line is the database key;
+the remainder represents the mapped value.
+The database key and value may optionally be separated
 by the colon character.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl o Ar dbfile
-Write generated database to
+Write the generated database to
 .Ar dbfile .
 .It Fl t Ar type
-Specify format of resulting map file.
-Default map format is suitable for storing simple, unstructured
+Specify the format of the resulting map file.
+The default map format is suitable for storing simple, unstructured,
 key-to-value string associations.
-However, if mapped value has special meaning,
-as in case of virtual domains definition file,
-suitable
+However, if the mapped value has special meaning,
+as in the case of the virtual domains file,
+a suitable
 .Ar type
-argument must be provided.
-Available output types are:
+must be provided.
+The available output types are:
 .Bl -tag -width "aliases"
 .It Cm aliases
-Mapped value is comma-separated list of mail destinations.
+The mapped value is a comma-separated list of mail destinations.
 This format can be used for building user aliases and
-virtual domains database files.
+virtual domains files.
 .El
 .Pp
 .El
@@ -75,7 +76,7 @@ List of user mail aliases.
 .It Pa /etc/mail/virtual
 List of hosted virtual domains.
 .It Pa /etc/mail/secrets
-List of remote hosts credentials.
+List of remote host credentials.
 .El
 .Sh SEE ALSO
 .Xr aliases 5 ,
@@ -88,4 +89,4 @@ The
 .Nm
 command first appeared in
 .Ox 4.6
-as the replacement for equivalent command shipped with sendmail.
+as a replacement for the equivalent command shipped with sendmail.

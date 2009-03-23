@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.8,v 1.4 2008/12/12 17:24:51 jacekm Exp $
+.\"	$OpenBSD: smtpd.8,v 1.5 2009/03/23 21:48:40 jmc Exp $
 .\"
 .\" Copyright (c) 2008, Gilles Chehade <gilles@openbsd.org>
 .\" Copyright (c) 2008, Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,12 +15,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2008 $
+.Dd $Mdocdate: March 23 2009 $
 .Dt SMTPD 8
 .Os
 .Sh NAME
 .Nm smtpd
-.Nd "Simple Mail Transfer Protocol daemon"
+.Nd Simple Mail Transfer Protocol daemon
 .Sh SYNOPSIS
 .Nm
 .Op Fl dnv
@@ -37,8 +37,7 @@ can listen on a network interface and handle SMTP
 transactions; it can also be fed messages through the standard
 .Xr sendmail 8
 interface.
-.Nm
-can relay messages through remote mail transfer agents or store them
+It can relay messages through remote mail transfer agents or store them
 locally using either the mbox or maildir format.
 This implementation supports SMTP as defined by RFC 5321 as well as several
 extensions.
@@ -73,7 +72,7 @@ Only check the configuration file for validity.
 Produce more verbose output.
 .El
 .Sh FILES
-.Bl -tag -width "/var/run/smtpd.sockXX" -compact
+.Bl -tag -width "/var/run/smtpd.sockXXX" -compact
 .It /etc/mail/smtpd.conf
 Default
 .Nm
@@ -94,4 +93,4 @@ Unix-domain socket used for communication with
 The
 .Nm
 program first appeared in
-.Ox 4.5 .
+.Ox 4.6 .
