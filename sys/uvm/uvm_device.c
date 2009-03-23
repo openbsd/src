@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.29 2009/03/20 15:19:04 oga Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.30 2009/03/23 19:23:43 oga Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -363,7 +363,7 @@ udv_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
  */
 
 static int
-udv_fault( struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps, int npages,
+udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps, int npages,
     int centeridx, vm_fault_t fault_type, vm_prot_t access_type, int flags)
 {
 	struct vm_map_entry *entry = ufi->entry;
