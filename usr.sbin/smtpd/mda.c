@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.11 2009/03/15 19:15:25 gilles Exp $	*/
+/*	$OpenBSD: mda.c,v 1.12 2009/03/23 08:25:15 tobias Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -165,7 +165,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 					    IMSG_PARENT_MAILBOX_RENAME, 0, 0, -1, batchp,
 					    sizeof(struct batch));
 			}
-			else
+
 			if (s->mboxfd != -1)
 				close(s->mboxfd);
 			if (s->messagefd != -1)
