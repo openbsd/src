@@ -1,0 +1,175 @@
+.\" $OpenBSD: otus.4,v 1.1 2009/03/23 21:53:58 damien Exp $
+.\"
+.\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: March 23 2009 $
+.Os
+.Dt OTUS 4
+.Sh NAME
+.Nm otus
+.Nd Atheros USB IEEE 802.11a/b/g/Draft-N wireless network device
+.Sh SYNOPSIS
+.Cd "otus* at uhub? port ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports USB 2.0 wireless network devices based on Atheros
+Communications AR9001U chipset.
+.Pp
+The AR9001U chipset is made of an AR9170 MAC/Baseband
+and an AR9101 (1T1R), AR9102 (2T2R) or AR9104 (dual-band 2T2R)
+Radio.
+.Pp
+These are the modes the
+.Nm
+driver can operate in:
+.Bl -tag -width "IBSS-masterXX"
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+This mode is the default.
+.It monitor mode
+In this mode the driver is able to receive packets without
+associating with an access point.
+This disables the internal receive filter and enables the card to
+capture packets from networks which it wouldn't normally have access to,
+or to scan for access points.
+.El
+.Pp
+The
+.Nm
+driver can be configured to use
+Wireless Equivalent Privacy (WEP) or
+Wi-Fi Protected Access (WPA-PSK and WPA2-PSK).
+WPA is the de facto encryption standard for wireless networks.
+It is strongly recommended that WEP
+not be used as the sole mechanism
+to secure wireless communication,
+due to serious weaknesses in it.
+.Pp
+The
+.Nm
+driver can be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5 .
+.Sh FILES
+The driver needs at least version 1.0 of the following firmware files,
+which are loaded when an interface is attached:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It /etc/firmware/otus-init
+.It /etc/firmware/otus-main
+.El
+.Pp
+Although these firmware files are freely redistributable, their usage
+is restricted.
+A prepackaged version of the firmware, designed to be used with
+.Xr pkg_add 1 ,
+can be found at:
+.Pp
+.Pa http://damien.bergamini.free.fr/packages/openbsd/otus-firmware-1.0.tgz
+.Sh HARDWARE
+The following adapters should work:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Arcadyan WN7512
+.It AVM FRITZ!WLAN USB Stick N
+.It D-Link DWA-160A
+.It IO-Data WN-GDN/US2
+.It Netgear WNDA3100
+.It Netgear WN111 v2
+.It Planex GW-US300
+.It TP-Link TL-WN821N
+.It Ubiquiti SR71 USB
+.It Z-Com UB81
+.It Z-Com UB82
+.El
+.Sh EXAMPLES
+The following
+.Xr hostname.if 5
+example configures otus0 to join whatever network is available on boot,
+using WEP key
+.Dq 0x1deadbeef1 ,
+channel 11, obtaining an IP address using DHCP:
+.Bd -literal -offset indent
+dhcp NONE NONE NONE nwkey 0x1deadbeef1 chan 11
+.Ed
+.Pp
+Configure otus0 to join network
+.Dq my_net
+using WPA-PSK with passphrase
+.Dq my_passphrase :
+.Bd -literal -offset indent
+# ifconfig otus0 nwid my_net wpa wpapsk \e
+	`wpa-psk my_net my_passphrase`
+.Ed
+.Pp
+Return otus0 to its default settings:
+.Bd -literal -offset indent
+# ifconfig otus0 -bssid -chan media autoselect \e
+	nwid "" -nwkey -wpa -wpapsk
+.Ed
+.Pp
+Join an existing BSS network,
+.Dq my_net :
+.Bd -literal -offset indent
+# ifconfig otus0 192.168.1.1 netmask 0xffffff00 nwid my_net
+.Ed
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "otus%d: error %d, could not read firmware %s"
+For some reason, the driver was unable to read the microcode file from the
+filesystem.
+The file might be missing or corrupted.
+.It "otus%d: device timeout"
+A frame dispatched to the hardware for transmission did not complete in time.
+The driver will reset the hardware.
+This should not happen.
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr usb 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8 ,
+.Xr wpa-psk 8
+.Pp
+Atheros Communications AR9001U-2NX/AR9001U-2NG/AR9001U-NG:
+.Pa http://www.atheros.com/pt/bulletins/AR9001USBBulletin.pdf
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.6 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Damien Bergamini Aq damien@openbsd.org
+based on source code licensed under the ISC released in 2008 by Atheros
+Communications for Linux.
+.Sh CAVEATS
+The
+.Nm
+driver does not support any of the 802.11n capabilities offered by the
+AR9001U chipset.
+Additional work is required in
+.Xr ieee80211 9
+before those features can be supported.
