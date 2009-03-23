@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.110 2009/01/11 17:40:00 oga Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.111 2009/03/23 15:10:44 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -1156,12 +1156,15 @@ biodone(struct buf *bp)
 
 	if (!ISSET(bp->b_flags, B_READ)) {
 		CLR(bp->b_flags, B_WRITEINPROG);
-		bcstats.pendingwrites--;
 		vwakeup(bp->b_vp);
-	} else if (bcstats.numbufs && 
-	           (!(ISSET(bp->b_flags, B_RAW) || ISSET(bp->b_flags, B_PHYS))))
-		bcstats.pendingreads--;
-
+	}
+	if (bcstats.numbufs &&
+	    (!(ISSET(bp->b_flags, B_RAW) || ISSET(bp->b_flags, B_PHYS)))) {
+		if (!ISSET(bp->b_flags, B_READ))
+			bcstats.pendingwrites--;
+		else
+			bcstats.pendingreads--;
+	}
 	if (ISSET(bp->b_flags, B_CALL)) {	/* if necessary, call out */
 		CLR(bp->b_flags, B_CALL);	/* but note callout done */
 		(*bp->b_iodone)(bp);
