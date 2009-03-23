@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.15 2007/11/30 07:52:06 miod Exp $
+#	$OpenBSD: Makefile.amd64,v 1.16 2009/03/23 18:51:51 guenther Exp $
 
 # Makefile for OpenBSD
 #
@@ -155,6 +155,11 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AFILES}
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	    ${CPPFLAGS} ${PARAM} < ${AMD64}/amd64/genassym.cf
+	@sed -e 's/.*\.o: /assym.h: /' -e 's/\/tmp\/genassym_c.[^ ]*//' \
+	    < assym.dep >> .depend
+	@rm -f assym.dep
 
 
 # depend on root or device configuration
