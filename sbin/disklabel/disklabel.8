@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.73 2009/03/22 20:51:58 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.74 2009/03/23 16:36:38 jmc Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 22 2009 $
+.Dd $Mdocdate: March 23 2009 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -106,9 +106,8 @@ locate the filesystems resident on the disk.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl A
-If no disklabel is found on entering the Editor, prime label as if the
-.Cm A
-command had been entered.
+If no disklabel is found,
+allocate all the disk space in the recommended manner.
 .It Fl B
 Install bootstrap code.
 .It Fl b Ar boot1
