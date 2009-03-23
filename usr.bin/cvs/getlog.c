@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.90 2008/09/12 13:38:35 tobias Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.91 2009/03/23 15:10:09 joris Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include "cvs.h"
 #include "remote.h"
@@ -30,12 +31,20 @@
 #define L_LOGINS	0x10
 #define L_STATES	0x20
 
-void	cvs_log_local(struct cvs_file *);
+#define LDATE_LATER	0x01
+#define LDATE_EARLIER	0x02
+#define LDATE_SINGLE	0x04
+#define LDATE_RANGE	0x08
+#define LDATE_INCLUSIVE	0x10
 
-static void	log_rev_print(struct rcs_delta *);
+void		 cvs_log_local(struct cvs_file *);
+static void	 log_rev_print(struct rcs_delta *);
+static char 	*push_date(char *dest, const char *);
+static u_int	 date_select(RCSFILE *, char *);
 
 int	 runflags = 0;
 char	*logrev = NULL;
+char	*logdate = NULL;
 char	*slist = NULL;
 char	*wlist = NULL;
 
@@ -71,6 +80,9 @@ cvs_getlog(int argc, char **argv)
 	while ((ch = getopt(argc, argv, cvs_cmdop == CVS_OP_LOG ?
 	    cvs_cmd_log.cmd_opts : cvs_cmd_rlog.cmd_opts)) != -1) {
 		switch (ch) {
+		case 'd':
+			logdate = push_date(logdate, optarg);
+			break;
 		case 'h':
 			runflags |= L_HEAD;
 			break;
@@ -104,6 +116,8 @@ cvs_getlog(int argc, char **argv)
 		}
 	}
 
+	cvs_printf("dates: %s\n", logdate);
+
 	argc -= optind;
 	argv += optind;
 
@@ -125,6 +139,9 @@ cvs_getlog(int argc, char **argv)
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
 		cvs_client_connect_to_server();
 		cr.fileproc = cvs_client_sendfile;
+
+		if (logdate != NULL)
+			cvs_client_send_request("Argument -d%s", logdate);
 
 		if (runflags & L_HEAD)
 			cvs_client_send_request("Argument -h");
@@ -217,6 +234,8 @@ cvs_log_local(struct cvs_file *cf)
 
 	if (logrev != NULL)
 		nrev = cvs_revision_select(cf->file_rcs, logrev);
+	else if (logdate != NULL)
+		nrev = date_select(cf->file_rcs, logdate);
 	else
 		nrev = cf->file_rcs->rf_ndelta;
 
@@ -280,7 +299,8 @@ cvs_log_local(struct cvs_file *cf)
 			 * if selections are enabled verify that entry is
 			 * selected.
 			 */
-			if (logrev == NULL || (rdp->rd_flags & RCS_RD_SELECT))
+			if ((logrev == NULL && logdate == NULL) ||
+			    (rdp->rd_flags & RCS_RD_SELECT))
 				log_rev_print(rdp);
 		}
 	}
@@ -374,4 +394,167 @@ log_rev_print(struct rcs_delta *rdp)
 	}
 
 	cvs_printf("%s", rdp->rd_log);
+}
+
+static char *
+push_date(char *dest, const char *src)
+{
+	size_t len;
+
+	if (dest == NULL)
+		return (xstrdup(src));
+
+	/* 2 = ; and '\0' */
+	len = strlen(dest) + strlen(src) + 2;
+
+	dest[strlen(dest)] = ';';
+	dest = xrealloc(dest, len, 1);
+	strlcat(dest, src, len);
+	return (dest);
+}
+
+static u_int
+date_select(RCSFILE *file, char *date)
+{
+	int i, nrev, flags;
+	struct rcs_delta *rdp;
+	struct cvs_argvector *args;
+	char *first, *last, delim;
+	time_t firstdate, lastdate, rcsdate;
+
+	nrev = 0;
+	args = cvs_strsplit(date, ";");
+
+	for (i = 0; args->argv[i] != NULL; i++) {
+		flags = 0;
+		firstdate = lastdate = -1;
+
+		first = args->argv[i];
+		last = strchr(args->argv[i], '<');
+		if (last != NULL) {
+			delim = *last;
+			*last++ = '\0';
+
+			if (*last == '=') {
+				last++;
+				flags |= LDATE_INCLUSIVE;
+			}
+		} else {
+			last = strchr(args->argv[i], '>');
+			if (last != NULL) {
+				delim = *last;
+				*last++ = '\0';
+
+				if (*last == '=') {
+					last++;
+					flags |= LDATE_INCLUSIVE;
+				}
+			}
+		}
+
+		if (last == NULL) {
+			flags |= LDATE_SINGLE;
+			firstdate = cvs_date_parse(first);
+			delim = '\0';
+			last = "\0";
+		} else {
+			while (*last && isspace(*last))
+				last++;
+		}
+
+		if (delim == '>' && *last == '\0') {
+			flags |= LDATE_EARLIER;
+			firstdate = cvs_date_parse(first);
+		}
+
+		if (delim == '>' && *first == '\0' && *last != '\0') {
+			flags |= LDATE_LATER;
+			firstdate = cvs_date_parse(last);
+		}
+
+		if (delim == '<' && *last == '\0') {
+			flags |= LDATE_LATER;
+			firstdate = cvs_date_parse(first);
+		}
+
+		if (delim == '<' && *first == '\0' && *last != '\0') {
+			flags |= LDATE_EARLIER;
+			firstdate = cvs_date_parse(last);
+		}
+
+		if (*first != '\0' && *last != '\0') {
+			flags |= LDATE_RANGE;
+
+			if (delim == '<') {
+				firstdate = cvs_date_parse(first);
+				lastdate = cvs_date_parse(last);
+			} else {
+				firstdate = cvs_date_parse(last);
+				lastdate = cvs_date_parse(first);
+			}
+		}
+
+		TAILQ_FOREACH(rdp, &(file->rf_delta), rd_list) {
+			rcsdate = mktime(&(rdp->rd_date));
+
+			if (flags & LDATE_SINGLE) {
+				if (rcsdate <= firstdate) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					break;
+				}
+			}
+
+			if (flags & LDATE_EARLIER) {
+				if (rcsdate < firstdate) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					continue;
+				}
+
+				if (flags & LDATE_INCLUSIVE &&
+				    (rcsdate <= firstdate)) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					continue;
+				}
+			}
+
+			if (flags & LDATE_LATER) {
+				if (rcsdate > firstdate) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					continue;
+				}
+
+				if (flags & LDATE_INCLUSIVE &&
+				    (rcsdate >= firstdate)) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					continue;
+				}
+			}
+
+			if (flags & LDATE_RANGE) {
+				if ((rcsdate > firstdate) &&
+				    (rcsdate < lastdate)) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					continue;
+				}
+
+				if (flags & LDATE_INCLUSIVE &&
+				    ((rcsdate >= firstdate) &&
+				    (rcsdate <= lastdate))) {
+					rdp->rd_flags |= RCS_RD_SELECT;
+					nrev++;
+					continue;
+				}
+			}
+		}
+	}
+
+	cvs_argv_destroy(args);
+
+	return (nrev);
 }
