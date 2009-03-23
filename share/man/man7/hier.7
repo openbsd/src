@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.74 2008/12/23 18:33:36 reyk Exp $
+.\"	$OpenBSD: hier.7,v 1.75 2009/03/23 09:06:50 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: December 23 2008 $
+.Dd $Mdocdate: March 23 2009 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -346,6 +346,9 @@ binary.
 .It sm.bin/
 Binaries to be run by
 .Xr smrsh 8 .
+.It smtpd/
+Binaries related to
+.Xr smtpd 8 .
 .El
 .Pp
 .It lkm/
@@ -689,6 +692,9 @@ Undelivered mail queue (see
 .Xr sendmail 8 ) .
 .It output/
 Line printer spooling directories.
+.It smtpd/
+Mail spool for
+.Xr smtpd 8 .
 .It uucp/
 .Xr uucp
 spool directory.
