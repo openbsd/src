@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.146 2009/03/19 10:09:16 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.147 2009/03/23 07:28:05 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -266,7 +266,7 @@ cvs_diff_local(struct cvs_file *cf)
 
 	if (cf->file_type == CVS_DIR) {
 		if (verbosity > 1)
-			cvs_log(LP_NOTICE, "Diffing inside %s", cf->file_path);
+			cvs_log(LP_ERR, "Diffing inside %s", cf->file_path);
 		return;
 	}
 
@@ -306,8 +306,7 @@ cvs_diff_local(struct cvs_file *cf)
 			break;
 		default:
 			if (!(cf->file_flags & FILE_ON_DISK)) {
-				cvs_log(LP_ERR, "cannot find %s",
-					    cf->file_path);
+				cvs_printf("? %s\n", cf->file_path);
 				return;
 			}
 
