@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.15 2009/02/20 19:16:35 miod Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.16 2009/03/24 12:15:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -99,10 +99,9 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	struct sdmmc_scsi_softc *scbus;
 	struct sdmmc_function *sf;
 
-	scbus = (struct sdmmc_scsi_softc *)malloc(sizeof *scbus,
-	    M_DEVBUF, M_WAITOK | M_ZERO);
+	scbus = malloc(sizeof *scbus, M_DEVBUF, M_WAITOK | M_ZERO);
 
-	scbus->sc_tgt = (struct sdmmc_scsi_target *)malloc(sizeof(*scbus->sc_tgt) *
+	scbus->sc_tgt = malloc(sizeof(*scbus->sc_tgt) *
 	    (SDMMC_SCSIID_MAX+1), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/*
