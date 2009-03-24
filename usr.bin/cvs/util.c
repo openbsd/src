@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.150 2009/02/23 21:33:12 joris Exp $	*/
+/*	$OpenBSD: util.c,v 1.151 2009/03/24 06:59:19 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
@@ -870,7 +870,8 @@ int
 cvs_exec(char *prog, const char *in, int needwait)
 {
 	pid_t pid;
-	int fds[2], size, st;
+	size_t size;
+	int fds[2], st;
 	char *argp[4] = { "sh", "-c", prog, NULL };
 
 	if (in != NULL && pipe(fds) < 0) {
