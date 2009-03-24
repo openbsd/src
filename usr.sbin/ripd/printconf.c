@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.4 2007/10/18 09:42:47 claudio Exp $ */
+/*	$OpenBSD: printconf.c,v 1.5 2009/03/24 19:26:13 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -70,9 +70,6 @@ print_redistribute(struct ripd_conf *conf)
 {
 	struct redistribute	*r;
 
-	if (conf->redistribute & REDISTRIBUTE_DEFAULT)
-		printf("redistribute default\n");
-
 	SIMPLEQ_FOREACH(r, &conf->redist_list, entry) {
 		switch (r->type & ~REDIST_NO) {
 		case REDIST_STATIC:
@@ -84,6 +81,9 @@ print_redistribute(struct ripd_conf *conf)
 		case REDIST_LABEL:
 			printf("%sredistribute rtlabel %s\n",
 			    print_no(r->type), rtlabel_id2name(r->label));
+			break;
+		case REDIST_DEFAULT:
+			printf("redistribute default\n");
 			break;
 		case REDIST_ADDR:
 			printf("%ssredistribute %s/%d\n",

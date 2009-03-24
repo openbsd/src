@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.11 2008/12/17 14:19:39 michele Exp $ */
+/*	$OpenBSD: ripd.h,v 1.12 2009/03/24 19:26:13 michele Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -58,7 +58,6 @@
 #define	F_REDISTRIBUTED		0x0100
 
 #define REDISTRIBUTE_ON		0x01
-#define REDISTRIBUTE_DEFAULT	0x02
 
 #define	OPT_SPLIT_HORIZON	0x01
 #define	OPT_SPLIT_POISONED	0x02
@@ -256,7 +255,8 @@ enum {
 #define	REDIST_STATIC		0x02
 #define	REDIST_LABEL		0x04
 #define	REDIST_ADDR		0x08
-#define	REDIST_NO		0x10
+#define	REDIST_DEFAULT		0x10
+#define	REDIST_NO		0x20
 
 struct redistribute {
 	SIMPLEQ_ENTRY(redistribute)	entry;

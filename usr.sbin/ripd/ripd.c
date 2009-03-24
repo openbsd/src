@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.11 2008/12/17 14:19:39 michele Exp $ */
+/*	$OpenBSD: ripd.c,v 1.12 2009/03/24 19:26:13 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -54,7 +54,6 @@ void			 main_sig_handler(int, short, void *);
 void			 ripd_shutdown(void);
 void			 main_dispatch_ripe(int, short, void *);
 void			 main_dispatch_rde(int, short, void *);
-void			 ripd_redistribute_default(int);
 
 int			 pipe_parent2ripe[2];
 int			 pipe_parent2rde[2];
@@ -266,9 +265,6 @@ main(int argc, char *argv[])
 
 	if (kr_init(!(conf->flags & RIPD_FLAG_NO_FIB_UPDATE)) == -1)
 		fatalx("kr_init failed");
-
-	/* redistribute default */
-	ripd_redistribute_default(IMSG_NETWORK_ADD);
 
 	event_dispatch();
 
@@ -486,17 +482,20 @@ int
 rip_redistribute(struct kroute *kr)
 {
 	struct redistribute	*r;
+	u_int8_t		 is_default = 0;
 
 	if (kr->flags & F_RIPD_INSERTED)
 		return (1);
 
-	/* only allow 0.0.0.0/0 via REDISTRIBUTE_DEFAULT */
+	/* only allow 0.0.0.0/0 via REDIST_DEFAULT */
 	if (kr->prefix.s_addr == INADDR_ANY && kr->netmask.s_addr == INADDR_ANY)
-		return (0);
+		is_default = 1;
 
 	SIMPLEQ_FOREACH(r, &conf->redist_list, entry) {
 		switch (r->type & ~REDIST_NO) {
 		case REDIST_LABEL:
+			if (is_default)
+				continue;
 			if (kr->rtlabel == r->label)
 				return (r->type & REDIST_NO ? 0 : 1);
 			break;
@@ -506,18 +505,24 @@ rip_redistribute(struct kroute *kr)
 			 * so that link local addresses can be redistributed
 			 * via a rtlabel.
 			 */
+			if (is_default)
+				continue;
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if (kr->flags & F_STATIC)
 				return (r->type & REDIST_NO ? 0 : 1);
 			break;
 		case REDIST_CONNECTED:
+			if (is_default)
+				continue;
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if (kr->flags & F_CONNECTED)
 				return (r->type & REDIST_NO ? 0 : 1);
 			break;
 		case REDIST_ADDR:
+			if (is_default)
+				continue;
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if ((kr->prefix.s_addr & r->mask.s_addr) ==
@@ -526,23 +531,14 @@ rip_redistribute(struct kroute *kr)
 			    r->mask.s_addr)
 				return (r->type & REDIST_NO? 0 : 1);
 			break;
+		case REDIST_DEFAULT:
+			if (is_default)
+				return (1);
+			break;
 		}
 	}
 
 	return (0);
-}
-
-void
-ripd_redistribute_default(int type)
-{
-	struct kroute	kr;
-
-	if (!(conf->redistribute & REDISTRIBUTE_DEFAULT))
-		return;
-
-	bzero(&kr, sizeof(kr));
-	kr.metric = 1;	/* default metric */
-	main_imsg_compose_rde(type, 0, &kr, sizeof(struct kroute));
 }
 
 /* this needs to be added here so that ripctl can be used without libevent */

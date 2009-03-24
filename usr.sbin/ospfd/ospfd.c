@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.61 2009/03/01 16:03:12 michele Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.62 2009/03/24 19:26:13 michele Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -54,8 +54,6 @@ int		check_child(pid_t, const char *);
 
 void	main_dispatch_ospfe(int, short, void *);
 void	main_dispatch_rde(int, short, void *);
-
-void	ospf_redistribute_default(int);
 
 int	ospf_reload(void);
 int	ospf_sendboth(enum imsg_type, void *, u_int16_t);
@@ -291,9 +289,6 @@ main(int argc, char *argv[])
 		area_del(a);
 	}
 
-	/* redistribute default */
-	ospf_redistribute_default(IMSG_NETWORK_ADD);
-
 	event_dispatch();
 
 	ospfd_shutdown();
@@ -523,14 +518,17 @@ int
 ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 {
 	struct redistribute	*r;
+	u_int8_t		 is_default = 0;
 
-	/* only allow 0.0.0.0/0 via REDISTRIBUTE_DEFAULT */
+	/* only allow 0.0.0.0/0 via REDIST_DEFAULT */
 	if (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0)
-		return (0);
+		is_default = 1;
 
 	SIMPLEQ_FOREACH(r, &ospfd_conf->redist_list, entry) {
 		switch (r->type & ~REDIST_NO) {
 		case REDIST_LABEL:
+			if (is_default)
+				continue;
 			if (kr->rtlabel == r->label) {
 				*metric = r->metric;
 				return (r->type & REDIST_NO ? 0 : 1);
@@ -542,6 +540,8 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			 * so that link local addresses can be redistributed
 			 * via a rtlabel.
 			 */
+			if (is_default)
+				continue;
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if (kr->flags & F_STATIC) {
@@ -550,6 +550,8 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			}
 			break;
 		case REDIST_CONNECTED:
+			if (is_default)
+				continue;
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if (kr->flags & F_CONNECTED) {
@@ -558,6 +560,8 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			}
 			break;
 		case REDIST_ADDR:
+			if (is_default)
+				continue;
 			if (kr->flags & F_DYNAMIC)
 				continue;
 			if ((kr->prefix.s_addr & r->mask.s_addr) ==
@@ -568,31 +572,13 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			}
 			break;
 		case REDIST_DEFAULT:
-			/* nothing to be done here */
+			if (is_default)
+				return (1);
 			break;
 		}
 	}
 
 	return (0);
-}
-
-void
-ospf_redistribute_default(int type)
-{
-	struct rroute		 rr;
-	struct redistribute	*r;
-
-	SIMPLEQ_FOREACH(r, &ospfd_conf->redist_list, entry) {
-		if (r->type != REDIST_DEFAULT)
-			continue;
-		if (r->type == (REDIST_DEFAULT | REDIST_NO))
-			return;
-
-		bzero(&rr, sizeof(rr));
-		rr.metric = r->metric;
-		main_imsg_compose_rde(type, 0, &rr, sizeof(struct rroute));
-		return;
-	}
 }
 
 int
