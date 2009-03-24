@@ -1,7 +1,8 @@
- * Copyright 1999-2002 3Com Corporation.  All Rights Reserved.    
+ * Copyright 1999-2003 3Com Corporation.  All Rights Reserved.    
  *
- * Redistribution and use in source and binary forms of the 3CR990img.h microcode  
- * software are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms of the 3c990img.h
+ * microcode software are permitted provided that the following conditions
+ * are met:
  * 1. Redistribution of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistribution in binary form must reproduce the above copyright
@@ -21,12 +22,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * USER ACKNOWLEDGES AND AGREES THAT PURCHASE OR USE OF THE 3CR990img.h MICROCODE
- * SOFTWARE WILL NOT CREATE OR GIVE GROUNDS FOR A LICENSE BY IMPLICATION,
- * ESTOPPEL, OR OTHERWISE IN ANY INTELLECTUAL PROPERTY RIGHTS (PATENT, COPYRIGHT,
- * TRADE SECRET, MASK WORK, OR OTHER PROPRIETARY RIGHT) EMBODIED IN ANY OTHER
- * 3COM HARDWARE OR SOFTWARE EITHER SOLELY OR IN COMBINATION WITH THE 3CR990img.h
- * microcode SOFTWARE
+ * USER ACKNOWLEDGES AND AGREES THAT PURCHASE OR USE OF THE 3c990img.h
+ * MICROCODE SOFTWARE WILL NOT CREATE OR GIVE GROUNDS FOR A LICENSE BY
+ * IMPLICATION, ESTOPPEL, OR OTHERWISE IN ANY INTELLECTUAL PROPERTY RIGHTS
+ * (PATENT, COPYRIGHT, TRADE SECRET, MASK WORK, OR OTHER PROPRIETARY RIGHT)
+ * EMBODIED IN ANY OTHER 3COM HARDWARE OR SOFTWARE EITHER SOLELY OR IN
+ * COMBINATION WITH THE 3c990img.h MICROCODE SOFTWARE
 
 This license applies to the 3c990 firmware for the Typhoon adapters
 supported by the txp(4) driver.

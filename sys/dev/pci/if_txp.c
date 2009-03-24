@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.99 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.100 2009/03/24 11:12:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -401,6 +401,11 @@ txp_download_fw(struct txp_softc *sc)
 
 	/* Tell boot firmware to get ready for image */
 	WRITE_REG(sc, TXP_H2A_1, letoh32(fileheader->addr));
+	WRITE_REG(sc, TXP_H2A_2, letoh32(fileheader->hmac[0]));
+	WRITE_REG(sc, TXP_H2A_3, letoh32(fileheader->hmac[1]));
+	WRITE_REG(sc, TXP_H2A_4, letoh32(fileheader->hmac[2]));
+	WRITE_REG(sc, TXP_H2A_5, letoh32(fileheader->hmac[3]));
+	WRITE_REG(sc, TXP_H2A_6, letoh32(fileheader->hmac[4]));
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_RUNTIME_IMAGE);
 
 	if (txp_download_fw_wait(sc)) {
