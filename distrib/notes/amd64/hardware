@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.100 2009/03/14 20:38:12 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.101 2009/03/24 19:20:10 jmc Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -512,6 +512,18 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    TRENDware International TEW-504UB
 		    Unex Technology UR054ag
 		    ZyXEL XtremeMIMO M-202
+		Atheros USB IEEE 802.11a/b/g/Draft-N USB adapters
+		    Arcadyan WN7512
+		    AVM FRITZ!WLAN USB Stick N
+		    D-Link DWA-160A
+		    IO-Data WN-GDN/US2
+		    Netgear WNDA3100
+		    Netgear WN111 v2
+		    Planex GW-US300
+		    TP-Link TL-WN821N
+		    Ubiquiti SR71 USB
+		    Z-Com UB81
+		    Z-Com UB82
 		Atmel AT76C50x IEEE 802.11b USB adapters
 		    3Com 3CRSHEW696
 		    AboCom BWU613
