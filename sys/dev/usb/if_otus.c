@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.2 2009/03/24 19:18:28 damien Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.3 2009/03/24 19:28:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1058,6 +1058,7 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	/* Received MPDU. */
 	if (__predict_false(len < AR_PLCP_HDR_LEN + sizeof (*tail))) {
 		DPRINTF(("MPDU too short %d\n", len));
+		ifp->if_ierrors++;
 		return;
 	}
 	tail = (struct ar_rx_tail *)(plcp + len - sizeof (*tail));
@@ -1065,13 +1066,21 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	/* Discard error frames. */
 	if (__predict_false(tail->error != 0)) {
 		DPRINTF(("error frame 0x%02x\n", tail->error));
+		if (tail->error & AR_RX_ERROR_MMIC) {
+			/* Report Michael MIC failures to net80211. */
+			ic->ic_stats.is_rx_locmicfail++;
+			ieee80211_michael_mic_failure(ic, 0);
+		}
+		ifp->if_ierrors++;
 		return;
 	}
 	/* Compute MPDU's length. */
 	mlen = len - AR_PLCP_HDR_LEN - sizeof (*tail);
 	/* Make sure there's room for an 802.11 header + FCS. */
-	if (__predict_false(mlen < IEEE80211_MIN_LEN))
+	if (__predict_false(mlen < IEEE80211_MIN_LEN)) {
+		ifp->if_ierrors++;
 		return;
+	}
 	mlen -= IEEE80211_CRC_LEN;	/* strip 802.11 FCS */
 
 	wh = (struct ieee80211_frame *)(plcp + AR_PLCP_HDR_LEN);

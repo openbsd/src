@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otusreg.h,v 1.2 2009/03/24 19:18:28 damien Exp $	*/
+/*	$OpenBSD: if_otusreg.h,v 1.3 2009/03/24 19:28:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -144,7 +144,13 @@ struct ar_rx_tail {
 	uint8_t	sa_idx;
 	uint8_t	da_idx;
 	uint8_t	error;
+#define AR_RX_ERROR_TIMEOUT	(1 << 0)
+#define AR_RX_ERROR_OVERRUN	(1 << 1)
+#define AR_RX_ERROR_DECRYPT	(1 << 2)
 #define AR_RX_ERROR_FCS		(1 << 3)
+#define AR_RX_ERROR_BAD_RA	(1 << 4)
+#define AR_RX_ERROR_PLCP	(1 << 5)
+#define AR_RX_ERROR_MMIC	(1 << 6)
 
 	uint8_t	status;
 /* Modulation type (same as AR_TX_PHY_MT). */
