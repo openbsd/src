@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.412 2009/03/14 15:40:29 damien Exp $
+$OpenBSD: usbdevs,v 1.413 2009/03/24 17:51:01 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2759,6 +2759,7 @@ product SONY CLIE_41_MS		0x0099	Clie v4.1 Memory Stick
 product SONY CLIE_41		0x009a	Clie v4.1
 product SONY CLIE_NX60		0x00da	Clie nx60
 product SONY CLIE_TJ25		0x0169	Clie tj25
+product SONY CXD9192		0x0279	1seg TV tuner
 
 /* SOURCENEXT products */
 product SOURCENEXT KEIKAI8	0x039f	KeikaiDenwa 8
