@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.59 2008/12/16 07:57:28 guenther Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.60 2009/03/24 13:49:38 kurt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -65,6 +65,7 @@
 int selscan(struct proc *, fd_set *, fd_set *, int, int, register_t *);
 int seltrue(dev_t, int, struct proc *);
 void pollscan(struct proc *, struct pollfd *, u_int, register_t *);
+int pollout(struct pollfd *, struct pollfd *, u_int);
 
 /*
  * Read system call.
@@ -853,6 +854,25 @@ pollscan(struct proc *p, struct pollfd *pl, u_int nfd, register_t *retval)
 }
 
 /*
+ * Only copyout the revents field.
+ */
+int
+pollout(struct pollfd *pl, struct pollfd *upl, u_int nfds)
+{
+	int error = 0;
+	u_int i = 0;
+	
+	while (!error && i++ < nfds) {
+		error = copyout(&pl->revents, &upl->revents,
+		    sizeof(upl->revents));
+		pl++;
+		upl++;
+	}
+
+	return (error);
+}
+
+/*
  * We are using the same mechanism as select only we encode/decode args
  * differently.
  */
@@ -938,13 +958,13 @@ done:
 	 */
 	switch (error) {
 	case ERESTART:
-		error = copyout(pl, SCARG(uap, fds), sz);
+		error = pollout(pl, SCARG(uap, fds), nfds);
 		if (error == 0)
 			error = EINTR;
 		break;
 	case EWOULDBLOCK:
 	case 0:
-		error = copyout(pl, SCARG(uap, fds), sz);
+		error = pollout(pl, SCARG(uap, fds), nfds);
 		break;
 	}
 bad:
