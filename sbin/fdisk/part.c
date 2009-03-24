@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.47 2008/05/31 09:45:01 fgsch Exp $	*/
+/*	$OpenBSD: part.c,v 1.48 2009/03/24 15:10:03 todd Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -52,6 +52,7 @@ static const struct part_type {
 	{ 0x04, "DOS FAT-16  "},   /* Primary DOS with 16 bit FAT */
 	{ 0x05, "Extended DOS"},   /* Extended DOS */
 	{ 0x06, "DOS > 32MB  "},   /* Primary 'big' DOS (> 32MB) */
+	{ 0x07, "NTFS        "},   /* NTFS */
 	{ 0x07, "HPFS/QNX/AUX"},   /* OS/2 HPFS, QNX-2 or Advanced UNIX */
 	{ 0x08, "AIX fs      "},   /* AIX filesystem */
 	{ 0x09, "AIX/Coherent"},   /* AIX boot partition or Coherent */
@@ -71,6 +72,7 @@ static const struct part_type {
 	{ 0x1C, "ThinkPad Rec"},   /* IBM ThinkPad recovery partition */
 	{ 0x20, "Willowsoft  "},   /* Willowsoft OFS1 */
 	{ 0x24, "NEC DOS     "},   /* NEC DOS */
+	{ 0x27, "Win Recovery"},   /* Windows hidden Recovery Partition */
 	{ 0x38, "Theos       "},   /* Theos */
 	{ 0x39, "Plan 9      "},   /* Plan 9 */
 	{ 0x40, "VENIX 286   "},   /* VENIX 286 or LynxOS */
