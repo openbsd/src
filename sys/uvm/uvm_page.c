@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.68 2009/03/23 13:25:11 art Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.69 2009/03/24 16:29:42 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -1402,3 +1402,96 @@ uvm_pageidlezero()
 		uvm_unlock_fpageq();
 	} while (curcpu_is_idle());
 }
+
+/*
+ * when VM_PHYSSEG_MAX is 1, we can simplify these functions
+ */
+
+/*
+ * vm_physseg_find: find vm_physseg structure that belongs to a PA
+ */
+int
+vm_physseg_find(paddr_t pframe, int *offp)
+{
+#if VM_PHYSSEG_MAX == 1
+
+	/* 'contig' case */
+	if (pframe >= vm_physmem[0].start && pframe < vm_physmem[0].end) {
+		if (offp)
+			*offp = pframe - vm_physmem[0].start;
+		return(0);
+	}
+	return(-1);
+
+#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
+	/* binary search for it */
+	int	start, len, try;
+
+	/*
+	 * if try is too large (thus target is less than than try) we reduce
+	 * the length to trunc(len/2) [i.e. everything smaller than "try"]
+	 *
+	 * if the try is too small (thus target is greater than try) then
+	 * we set the new start to be (try + 1).   this means we need to
+	 * reduce the length to (round(len/2) - 1).
+	 *
+	 * note "adjust" below which takes advantage of the fact that
+	 *  (round(len/2) - 1) == trunc((len - 1) / 2)
+	 * for any value of len we may have
+	 */
+
+	for (start = 0, len = vm_nphysseg ; len != 0 ; len = len / 2) {
+		try = start + (len / 2);	/* try in the middle */
+
+		/* start past our try? */
+		if (pframe >= vm_physmem[try].start) {
+			/* was try correct? */
+			if (pframe < vm_physmem[try].end) {
+				if (offp)
+					*offp = pframe - vm_physmem[try].start;
+				return(try);            /* got it */
+			}
+			start = try + 1;	/* next time, start here */
+			len--;			/* "adjust" */
+		} else {
+			/*
+			 * pframe before try, just reduce length of
+			 * region, done in "for" loop
+			 */
+		}
+	}
+	return(-1);
+
+#else
+	/* linear search for it */
+	int	lcv;
+
+	for (lcv = 0; lcv < vm_nphysseg; lcv++) {
+		if (pframe >= vm_physmem[lcv].start &&
+		    pframe < vm_physmem[lcv].end) {
+			if (offp)
+				*offp = pframe - vm_physmem[lcv].start;
+			return(lcv);		   /* got it */
+		}
+	}
+	return(-1);
+
+#endif
+}
+
+/*
+ * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
+ * back from an I/O mapping (ugh!).   used in some MD code as well.
+ */
+struct vm_page *
+PHYS_TO_VM_PAGE(paddr_t pa)
+{
+	paddr_t pf = atop(pa);
+	int	off;
+	int	psi;
+
+	psi = vm_physseg_find(pf, &off);
+
+	return ((psi == -1) ? NULL : &vm_physmem[psi].pgs[off]);
+}
+
