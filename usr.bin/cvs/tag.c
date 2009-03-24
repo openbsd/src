@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.78 2009/03/22 18:41:25 tobias Exp $	*/
+/*	$OpenBSD: tag.c,v 1.79 2009/03/24 18:33:25 joris Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -226,7 +226,9 @@ cvs_tag(int argc, char **argv)
 	}
 
 bad:
-	cvs_trigger_freeinfo(&files_info);
+	if (line_list != NULL)
+		cvs_trigger_freeinfo(&files_info);
+
 	return (0);
 }
 
@@ -350,8 +352,6 @@ cvs_tag_local(struct cvs_file *cf)
 		if (tag_del(cf) == 0) {
 			if (verbosity > 0)
 				cvs_printf("D %s\n", cf->file_path);
-
-			rcs_write(cf->file_rcs);
 		}
 		return;
 	}
@@ -378,8 +378,6 @@ cvs_tag_local(struct cvs_file *cf)
 		if (tag_add(cf) == 0) {
 			if (verbosity > 0)
 				cvs_printf("T %s\n", cf->file_path);
-
-			rcs_write(cf->file_rcs);
 			cvs_history_add(CVS_HISTORY_TAG, cf, tag_name);
 		}
 		break;

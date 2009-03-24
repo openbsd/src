@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.254 2009/03/19 09:53:16 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.255 2009/03/24 18:33:25 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -695,13 +695,14 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 	rflags = RCS_READ;
 	switch (cvs_cmdop) {
 	case CVS_OP_COMMIT:
+	case CVS_OP_TAG:
+	case CVS_OP_RTAG:
 		rflags = RCS_WRITE;
 		break;
 	case CVS_OP_ADMIN:
 	case CVS_OP_IMPORT:
 	case CVS_OP_LOG:
 	case CVS_OP_RLOG:
-	case CVS_OP_RTAG:
 		rflags |= RCS_PARSE_FULLY;
 		break;
 	default:
