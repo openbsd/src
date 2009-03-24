@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.1 2009/03/23 21:53:57 damien Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.2 2009/03/24 19:18:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -242,7 +242,7 @@ otus_detach(struct device *self, int flags)
 	timeout_del(&sc->scan_to);
 	timeout_del(&sc->calib_to);
 
-	if (ifp->if_flags != 0) {	/* if_attach() has been called */
+	if (ifp->if_flags != 0) {	/* if_attach() has been called. */
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		ieee80211_ifdetach(ifp);
 		if_detach(ifp);
@@ -1046,7 +1046,7 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 		DPRINTF(("sub-xfer too short %d\n", len));
 		return;
 	}
-	plcp = (uint8_t *)buf;
+	plcp = buf;
 
 	/* All bits in the PLCP header are set to 1 for non-MPDU. */
 	if (memcmp(plcp, AR_PLCP_HDR_INTR, AR_PLCP_HDR_LEN) == 0) {
@@ -1110,10 +1110,10 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 		switch (tail->status & AR_RX_STATUS_MT_MASK) {
 		case AR_RX_STATUS_MT_CCK:
 			switch (plcp[0]) {
-			case 0x0: tap->wr_rate =   2; break;
-			case 0x1: tap->wr_rate =   4; break;
-			case 0x2: tap->wr_rate =  11; break;
-			case 0x3: tap->wr_rate =  22; break;
+			case  10: tap->wr_rate =   2; break;
+			case  20: tap->wr_rate =   4; break;
+			case  55: tap->wr_rate =  11; break;
+			case 110: tap->wr_rate =  22; break;
 			}
 			if (tail->status & AR_RX_STATUS_SHPREAMBLE)
 				tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
@@ -1234,6 +1234,7 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct ar_tx_head *head;
 	uint32_t phyctl;
 	uint16_t macctl, qos;
+	uint8_t tid, qid;
 	int error, ridx, hasqos, xferlen;
 
 	wh = mtod(m, struct ieee80211_frame *);
@@ -1244,8 +1245,12 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		wh = mtod(m, struct ieee80211_frame *);
 	}
 
-	if ((hasqos = ieee80211_has_qos(wh)))
+	if ((hasqos = ieee80211_has_qos(wh))) {
 		qos = ieee80211_get_qos(wh);
+		tid = qos & IEEE80211_QOS_TID;
+		qid = ieee80211_up_to_ac(ic, tid);
+	} else
+		qid = EDCA_AC_BE;
 
 	/* Pickup a rate index. */
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
@@ -1259,10 +1264,7 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	phyctl = 0;
 	macctl = AR_TX_MAC_BACKOFF | AR_TX_MAC_HW_DUR;
-#if 0
-	/* XXX this can be used to get Tx notifications of success. */
-	macctl |= AR_TX_MAC_RATE_PROBING;
-#endif
+	macctl |= AR_TX_MAC_QID(qid);
 
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    (hasqos && ((qos & IEEE80211_QOS_ACK_POLICY_MASK) ==
@@ -1456,6 +1458,16 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (error == ENETRESET)
 			error = 0;
 		break;
+	case SIOCS80211CHANNEL:
+		error = ieee80211_ioctl(ifp, cmd, data);
+		if (error == ENETRESET &&
+		    ic->ic_opmode == IEEE80211_M_MONITOR) {
+			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+			    (IFF_UP | IFF_RUNNING))
+				otus_set_chan(sc, ic->ic_ibss_chan);
+			error = 0;
+		}
+		break;
 	default:
 		error = ieee80211_ioctl(ifp, cmd, data);
 	}
@@ -1501,7 +1513,7 @@ otus_set_multi(struct otus_softc *sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
  done:
-	hi |= 1 << 31;	/* make sure the broadcast bit is set */
+	hi |= 1 << 31;	/* Make sure the broadcast bit is set. */
 	otus_write(sc, AR_MAC_REG_GROUP_HASH_TBL_L, lo);
 	otus_write(sc, AR_MAC_REG_GROUP_HASH_TBL_H, hi);
 	return otus_write_barrier(sc);
@@ -1666,7 +1678,7 @@ otus_phy_get_def(struct otus_softc *sc, uint32_t reg)
 	for (i = 0; i < nitems(ar5416_phy_regs); i++)
 		if (AR_PHY(ar5416_phy_regs[i]) == reg)
 			return sc->phy_vals[i];
-	return 0;	/* register not found */
+	return 0;	/* Register not found. */
 }
 
 /*
@@ -1852,7 +1864,7 @@ otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c)
 	otus_write(sc, AR_MAC_REG_DYNAMIC_SIFS_ACK, tmp);
 	(void)otus_write_barrier(sc);
 
-	/* clear bb_heavy_clip_enable */
+	/* Disable BB Heavy Clip. */
 	otus_phy_write(sc, 0x99e0, 0x200);
 	(void)otus_write_barrier(sc);
 
@@ -1860,7 +1872,7 @@ otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c)
 	if (error != 0)
 		return error;
 
-	/* Reprogram PHY and RF on band or channel bandwidth changes. */
+	/* Reprogram PHY and RF on channel band or bandwidth changes. */
 	if (1 || c->ic_flags != sc->sc_curchan->ic_flags) {
 		DPRINTF(("band switch\n"));
 
@@ -1912,10 +1924,10 @@ otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c)
 	d0 |= AR_BANK4_ADDR(1) | AR_BANK4_CHUP;
 	d1 = otus_reverse_bits(chansel);
 
-	/* write bits 0-4 of d0 and d1 */
+	/* Write bits 0-4 of d0 and d1. */
 	data = (d1 & 0x1f) << 5 | (d0 & 0x1f);
 	otus_phy_write(sc, AR_PHY(44), data);
-	/* write bits 5-7 of d0 and d1 */
+	/* Write bits 5-7 of d0 and d1. */
 	data = (d1 >> 5) << 5 | (d0 >> 5);
 	otus_phy_write(sc, AR_PHY(58), data);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otusreg.h,v 1.1 2009/03/23 21:53:57 damien Exp $	*/
+/*	$OpenBSD: if_otusreg.h,v 1.2 2009/03/24 19:18:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -111,6 +111,7 @@ struct ar_tx_head {
 #define AR_TX_MAC_BACKOFF	(1 <<  3)
 #define AR_TX_MAC_NOACK		(1 <<  2)
 #define AR_TX_MAC_HW_DUR	(1 <<  9)
+#define AR_TX_MAC_QID(qid)	((qid) << 10)
 #define AR_TX_MAC_RATE_PROBING	(1 << 15)
 
 	uint32_t	phyctl;
