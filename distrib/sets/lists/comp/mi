@@ -823,6 +823,7 @@
 ./usr/include/dev/usb/if_kuereg.h
 ./usr/include/dev/usb/if_kuevar.h
 ./usr/include/dev/usb/if_mosreg.h
+./usr/include/dev/usb/if_otusreg.h
 ./usr/include/dev/usb/if_ralreg.h
 ./usr/include/dev/usb/if_ralvar.h
 ./usr/include/dev/usb/if_rumreg.h
