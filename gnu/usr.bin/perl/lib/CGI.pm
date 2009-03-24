@@ -18,7 +18,7 @@ use Carp 'croak';
 # The most recent version and complete docs are available at:
 #   http://stein.cshl.org/WWW/software/CGI/
 
-$CGI::revision = '$Id: CGI.pm,v 1.11 2008/09/29 17:36:08 millert Exp $';
+$CGI::revision = '$Id: CGI.pm,v 1.12 2009/03/24 16:38:39 millert Exp $';
 $CGI::VERSION='3.29';
 
 # HARD-CODED LOCATION FOR FILE UPLOAD TEMPORARY FILES.
@@ -6002,9 +6002,9 @@ This is the recommended idiom.
 
 For robust code, consider reseting the file handle position to beginning of the
 file. Inside of larger frameworks, other code may have already used the query
-object and changed the filehandle postion:
+object and changed the filehandle position:
 
-  seek($fh,0,0); # reset postion to beginning of file.
+  seek($fh,0,0); # reset position to beginning of file.
 
 When a file is uploaded the browser usually sends along some
 information along with it in the format of headers.  The information

@@ -150,7 +150,7 @@ in future.
 
 =item $obj->TELL($fh)
 
-Returns file postion.
+Returns file position.
 Optional.  Default to be determined.
 
 =item $obj->UNREAD($buffer,$fh)
