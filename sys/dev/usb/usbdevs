@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.413 2009/03/24 17:51:01 sthen Exp $
+$OpenBSD: usbdevs,v 1.414 2009/03/24 18:55:30 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2463,6 +2463,7 @@ product RICOH VGPVCC6		0x1839	VGP-VCC6 Camera
 product RICOH VGPVCC7		0x183a	VGP-VCC7 Camera
 product RICOH VGPVCC8		0x183b	VGP-VCC8 Camera
 product RICOH VGPVCC9		0x183e	VGP-VCC9 Camera
+product RICOH VPGVCCX		0x18b2	VGP-VCCX Camera
 
 /* Roland products */
 product ROLAND UA100		0x0000	UA-100 Audio I/F
