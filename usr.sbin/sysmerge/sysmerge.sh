@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.30 2009/03/25 13:20:02 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.31 2009/03/25 18:02:12 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -36,7 +36,7 @@ PAGER="${PAGER:=/usr/bin/more}"
 # clean leftovers created by make in src
 clean_src() {
 	if [ "${SRCDIR}" ]; then
-		cd ${SRCDIR}/gnu/usr.sbin/sendmail/cf/cf && make cleandir 1> /dev/null
+		cd ${SRCDIR}/gnu/usr.sbin/sendmail/cf/cf && make cleandir > /dev/null
 	fi
 }
 
@@ -52,8 +52,8 @@ usage() {
 
 trap "clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
 
-if [ `id -u` -ne 0 ]; then
-	echo " *** ERROR: Need root privileges to run this script"
+if [ "`id -u`" -ne 0 ]; then
+	echo " *** Error: need root privileges to run this script"
 	usage
 	error_rm_wrkdir
 fi
@@ -71,7 +71,7 @@ do_pre() {
 		if [ -f "/usr/src/etc/Makefile" ]; then
 			SRCDIR=/usr/src
 		else
-			echo " *** ERROR: please specify a valid path to src or (x)etcXX.tgz"
+			echo " *** Error: please specify a valid path to src or (x)etcXX.tgz"
 			error_rm_wrkdir
 		fi
 	fi
@@ -80,13 +80,13 @@ do_pre() {
 		TGZV=`echo ${TGZ} | sed -e 's,^.*/,,' -e 's,etc,,' -e 's,.tgz,,'`
 		OTGZV=`echo ${OTGZ} | sed -e 's,^.*/,,' -e 's,etc,,' -e 's,.tgz,,'`
 		if [ -z "${TGZ}" ]; then
-			echo " *** ERROR: please specify a valid path to the new etcXX.tgz"
+			echo " *** Error: please specify a valid path to the new etcXX.tgz"
 			error_rm_wrkdir
-		elif [ `md5 -q ${OTGZ}` = `md5 -q ${TGZ}` ]; then
-			echo " *** ERROR: old and new etcXX.tgz are identical"
+		elif cmp -s ${OTGZ} ${TGZ}; then
+			echo " *** Error: old and new etcXX.tgz are identical"
 			error_rm_wrkdir
 		elif [ "${OTGZV}" -gt "${TGZV}" ]; then
-			echo " *** ERROR: old etc${OTGZV}.tgz version is higher than new etc${TGZV}.tgz"
+			echo " *** Error: old etc${OTGZV}.tgz version is higher than new etc${TGZV}.tgz"
 			error_rm_wrkdir
 		fi
 	fi
@@ -95,13 +95,13 @@ do_pre() {
 		XTGZV=`echo ${XTGZ} | sed -e 's,^.*/,,' -e 's,etc,,' -e 's,.tgz,,'`
 		OXTGZV=`echo ${OXTGZ} | sed -e 's,^.*/,,' -e 's,etc,,' -e 's,.tgz,,'`
 		if [ -z "${XTGZ}" ]; then
-			echo " *** ERROR: please specify a valid path to the new xetcXX.tgz"
+			echo " *** Error: please specify a valid path to the new xetcXX.tgz"
 			error_rm_wrkdir
-		elif [ `md5 -q ${OXTGZ}` = `md5 -q ${XTGZ}` ]; then
-			echo " *** ERROR: old and new xetcXX.tgz are identical"
+		elif cmp -s ${OXTGZ} ${XTGZ}; then
+			echo " *** Error: old and new xetcXX.tgz are identical"
 			error_rm_wrkdir
 		elif [ "${OXTGZV}" -gt "${XTGZV}" ]; then
-			echo " *** ERROR: old xetc${OXTGZV}.tgz version is higher than new xetc${XTGZV}.tgz"
+			echo " *** Error: old xetc${OXTGZV}.tgz version is higher than new xetc${XTGZV}.tgz"
 			error_rm_wrkdir
 		fi
 	fi
@@ -163,8 +163,7 @@ do_populate() {
 	mkdir -p ${TEMPROOT}
 	if [ "${SRCDIR}" ]; then
 		cd ${SRCDIR}/etc
-		make DESTDIR=${TEMPROOT} distribution-etc-root-var 2>&1 1> /dev/null \
-		  | tee | grep -v "WARNING\: World writable directory"
+		make DESTDIR=${TEMPROOT} distribution-etc-root-var > /dev/null 2>&1
 	fi
 
 	if [ "${TGZ}" -o "${XTGZ}" ]; then
@@ -256,7 +255,7 @@ mm_install() {
 
 
 merge_loop() {
-	if [ `expr "$MERGE_CMD" : ^sdiff.*` -gt 0 ]; then
+	if [ "`expr "${MERGE_CMD}" : ^sdiff.*`" -gt 0 ]; then
 		echo "===> Type h at the sdiff prompt (%) to get usage help\n"
 	fi
 	MERGE_AGAIN=1
@@ -288,7 +287,7 @@ merge_loop() {
 				if which ${EDIT} > /dev/null 2>&1; then
 					${EDIT} ${COMPFILE}.merged
 				else
-					echo " *** ERROR: ${EDIT} can not be found or is not executable"
+					echo " *** Error: ${EDIT} can not be found or is not executable"
 				fi
 				INSTALL_MERGED=v
 				;;
@@ -298,7 +297,7 @@ merge_loop() {
 					if mm_install "${COMPFILE}"; then
 						echo "===> Merged version of ${COMPFILE} installed successfully"
 					else
-						echo " *** WARNING: Problem installing ${COMPFILE}, it will remain to merge by hand"
+						echo " *** Warning: problem installing ${COMPFILE}, it will remain to merge by hand"
 					fi
 				unset MERGE_AGAIN
 				;;
@@ -353,7 +352,7 @@ diff_loop() {
 						echo "===> ${COMPFILE} installed successfully"
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 					else
-						echo " *** WARNING: Problem installing ${COMPFILE}, it will remain to merge by hand"
+						echo " *** Warning: problem installing ${COMPFILE}, it will remain to merge by hand"
 					fi
 					return
 				fi
@@ -376,7 +375,7 @@ diff_loop() {
 					echo "===> ${COMPFILE} installed successfully"
 					AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
 				else
-					echo " *** WARNING: Problem installing ${COMPFILE}, it will remain to merge by hand"
+					echo " *** Warning: problem installing ${COMPFILE}, it will remain to merge by hand"
 				fi
 				return
 			fi
@@ -411,7 +410,7 @@ diff_loop() {
 				if mm_install "${COMPFILE}"; then
 					echo "===> ${COMPFILE} installed successfully"
 				else
-					echo " *** WARNING: Problem installing ${COMPFILE}, it will remain to merge by hand"
+					echo " *** Warning: problem installing ${COMPFILE}, it will remain to merge by hand"
 				fi
 			else
 				echo "invalid choice: ${HANDLE_COMPFILE}\n"
@@ -470,8 +469,8 @@ do_compare() {
 		    -a "${COMPFILE}" != "./etc/login.conf" \
 		    -a "${COMPFILE}" != "./etc/sysctl.conf" \
 		    -a "${COMPFILE}" != "./etc/ttys" ]; then
-			CVSID1=`grep "[$]OpenBSD:" ${DESTDIR}${COMPFILE#.} 2>/dev/null`
-			CVSID2=`grep "[$]OpenBSD:" ${COMPFILE} 2>/dev/null` || CVSID2=none
+			CVSID1=`grep "[$]OpenBSD:" ${DESTDIR}${COMPFILE#.} 2> /dev/null`
+			CVSID2=`grep "[$]OpenBSD:" ${COMPFILE} 2> /dev/null` || CVSID2=none
 			if [ "${CVSID2}" = "${CVSID1}" ]; then rm "${COMPFILE}"; fi
 		fi
 
@@ -536,12 +535,12 @@ do_post() {
 	rm -rf ${OTEMPROOT}
 
 	echo "===> Making sure your directory hierarchy has correct perms, running mtree..."
-	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U 1> /dev/null
+	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U > /dev/null
 
-	FILES_IN_WRKDIR=`find ${WRKDIR} -type f -size +0 2>/dev/null`
+	FILES_IN_WRKDIR=`find ${WRKDIR} -type f -size +0 2> /dev/null`
 	if [ "${FILES_IN_WRKDIR}" ]; then
-		FILES_IN_TEMPROOT=`find ${TEMPROOT} -type f -size +0 2>/dev/null`
-		FILES_IN_BKPDIR=`find ${BKPDIR} -type f -size +0 2>/dev/null`
+		FILES_IN_TEMPROOT=`find ${TEMPROOT} -type f -size +0 2> /dev/null`
+		FILES_IN_BKPDIR=`find ${BKPDIR} -type f -size +0 2> /dev/null`
 		OBSOLETE_FILES=`stat -f %z ${WRKDIR}/obsolete_files 2> /dev/null`
 		if [ "${AUTO_INSTALLED_FILES}" ]; then
 			echo "===> Automatically installed file(s) listed in"
@@ -587,11 +586,11 @@ while getopts abs:x:S:X: arg; do
 			TGZ=${WRKDIR}/etc.tgz
 			TGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${TGZ} ${TGZURL}; then
-				echo " *** ERROR: Could not retrieve ${TGZURL}"
+				echo " *** Error: could not retrieve ${TGZURL}"
 				error_rm_wrkdir
 			fi
 		else
-			echo " *** ERROR: ${OPTARG} is not a path to src nor etcXX.tgz"
+			echo " *** Error: ${OPTARG} is not a path to src nor etcXX.tgz"
 			error_rm_wrkdir
 		fi
 		;;
@@ -605,11 +604,11 @@ while getopts abs:x:S:X: arg; do
 			XTGZ=${WRKDIR}/xetc.tgz
 			XTGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${XTGZ} ${XTGZURL}; then
-				echo " *** ERROR: Could not retrieve ${XTGZURL}"
+				echo " *** Error: could not retrieve ${XTGZURL}"
 				error_rm_wrkdir
 			fi
 		else
-			echo " *** ERROR: ${OPTARG} is not a path to xetcXX.tgz"
+			echo " *** Error: ${OPTARG} is not a path to xetcXX.tgz"
 			error_rm_wrkdir
 		fi
 		;;
@@ -623,11 +622,11 @@ while getopts abs:x:S:X: arg; do
 			OTGZ=${WRKDIR}/etc.tgz
 			OTGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${OTGZ} ${OTGZURL}; then
-				echo " *** ERROR: Could not retrieve ${OTGZURL}"
+				echo " *** Error: could not retrieve ${OTGZURL}"
 				error_rm_wrkdir
 			fi
 		else
-			echo " *** ERROR: ${OPTARG} is not a path to etcXX.tgz"
+			echo " *** Error: ${OPTARG} is not a path to etcXX.tgz"
 			error_rm_wrkdir
 		fi
 		;;
@@ -641,11 +640,11 @@ while getopts abs:x:S:X: arg; do
 			OXTGZ=${WRKDIR}/xetc.tgz
 			OXTGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${OXTGZ} ${OXTGZURL}; then
-				echo " *** ERROR: Could not retrieve ${OXTGZURL}"
+				echo " *** Error: could not retrieve ${OXTGZURL}"
 				error_rm_wrkdir
 			fi
 		else
-			echo " *** ERROR: ${OPTARG} is not a path to xetcXX.tgz"
+			echo " *** Error: ${OPTARG} is not a path to xetcXX.tgz"
 			error_rm_wrkdir
 		fi
 		;;
