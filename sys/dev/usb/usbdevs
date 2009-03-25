@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.414 2009/03/24 18:55:30 deraadt Exp $
+$OpenBSD: usbdevs,v 1.415 2009/03/25 14:58:39 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -522,6 +522,7 @@ vendor MEINBERG		0x1938	Meinberg Funkuhren
 vendor QUALCOMM3	0x19d2	Qualcomm Inc.
 vendor QUANTA		0x1a32	Quanta
 vendor WCH2		0x1a86	QinHeng Electronics
+vendor LONGCHEER	0x1c9e	Longcheer Technology
 vendor AIRTIES		0x1eda	AirTies
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
@@ -1921,6 +1922,10 @@ product LOGITECH RK53		0xc501	Cordless mouse
 product LOGITECH RB6		0xc503	Cordless keyboard
 product LOGITECH CDO		0xc504	Cordless Desktop Optical
 product LOGITECH QUICKCAMPRO2	0xd001	QuickCam Pro
+
+/* Longcheer products */
+product LONGCHEER D21LCMASS	0x9401	Emobile D21LC Mass only mode
+product LONGCHEER D21LC		0x9404	Emobile D21LC
 
 /* Longshine products */
 product ABOCOM LCS8138TX	0x401a	LCS-8138TX
