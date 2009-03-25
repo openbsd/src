@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lock.9,v 1.18 2009/03/25 01:50:50 oga Exp $
+.\"     $OpenBSD: lock.9,v 1.19 2009/03/25 21:20:50 oga Exp $
 .\"     $NetBSD: lock.9,v 1.12 2001/11/01 01:13:43 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -157,8 +157,6 @@ Valid lock flags are:
 .Bl -tag -width "LK_CANRECURSEXX" -compact
 .It LK_NOWAIT
 Processes should not sleep when attempting to acquire the lock.
-.It LK_SLEEPFAIL
-Processes should sleep, then return failure when acquiring the lock.
 .It LK_CANRECURSE
 Processes can acquire the lock recursively.
 .El
@@ -216,8 +214,6 @@ Locks will always succeed unless one of the following is true:
 .Bl -tag -width Er
 .It Bq Er EBUSY
 LK_NOWAIT is set and a sleep would be required.
-.It Bq Er ENOLCK
-LK_SLEEPFAIL is set and a sleep was done.
 .It Bq Er EINTR
 PCATCH is set in lock priority and a signal arrives to interrupt
 a system call.
