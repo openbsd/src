@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.145 2008/08/29 09:54:22 tobias Exp $	*/
+/*	$OpenBSD: commit.c,v 1.146 2009/03/25 21:50:33 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -110,10 +110,10 @@ cvs_commit(int argc, char **argv)
 	if (Fflag && mflag)
 		fatal("cannot specify both a log file and a message");
 
-	TAILQ_INIT(&files_affected);
-	TAILQ_INIT(&files_added);
-	TAILQ_INIT(&files_removed);
-	TAILQ_INIT(&files_modified);
+	RB_INIT(&files_affected);
+	RB_INIT(&files_added);
+	RB_INIT(&files_removed);
+	RB_INIT(&files_modified);
 
 	TAILQ_INIT(&files_info);
 	conflicts_found = 0;
@@ -132,7 +132,7 @@ cvs_commit(int argc, char **argv)
 		fatal("%d conflicts found, please correct these first",
 		    conflicts_found);
 
-	if (TAILQ_EMPTY(&files_affected))
+	if (RB_EMPTY(&files_affected))
 		return (0);
 
 	if (current_cvsroot->cr_method != CVS_METHOD_LOCAL) {
@@ -163,7 +163,7 @@ cvs_commit(int argc, char **argv)
 
 		line_list = cvs_trigger_getlines(CVS_PATH_COMMITINFO, repo);
 		if (line_list != NULL) {
-			TAILQ_FOREACH(l, &files_affected, flist) {
+			RB_FOREACH(l, cvs_flisthead, &files_affected) {
 				fi = xcalloc(1, sizeof(*fi));
 				fi->file_path = xstrdup(l->file_path);
 				TAILQ_INSERT_TAIL(&files_info, fi,
@@ -241,10 +241,10 @@ cvs_commit_loginfo(char *repo)
 
 	cvs_trigger_loginfo_header(buf, repo);
 
-	if (!TAILQ_EMPTY(&files_added)) {
+	if (!RB_EMPTY(&files_added)) {
 		cvs_buf_puts(buf, "Added Files:");
 
-		TAILQ_FOREACH(cf, &files_added, flist) {
+		RB_FOREACH(cf, cvs_flisthead, &files_added) {
 			cvs_buf_putc(buf, '\n');
 			cvs_buf_putc(buf, '\t');
 			cvs_buf_puts(buf, cf->file_path);
@@ -253,10 +253,10 @@ cvs_commit_loginfo(char *repo)
 		cvs_buf_putc(buf, '\n');
 	}
 
-	if (!TAILQ_EMPTY(&files_modified)) {
+	if (!RB_EMPTY(&files_modified)) {
 		cvs_buf_puts(buf, "Modified Files:");
 
-		TAILQ_FOREACH(cf, &files_modified, flist) {
+		RB_FOREACH(cf, cvs_flisthead, &files_modified) {
 			cvs_buf_putc(buf, '\n');
 			cvs_buf_putc(buf, '\t');
 			cvs_buf_puts(buf, cf->file_path);
@@ -265,10 +265,10 @@ cvs_commit_loginfo(char *repo)
 		cvs_buf_putc(buf, '\n');
 	}
 
-	if (!TAILQ_EMPTY(&files_removed)) {
+	if (!RB_EMPTY(&files_removed)) {
 		cvs_buf_puts(buf, "Removed Files:");
 
-		TAILQ_FOREACH(cf, &files_removed, flist) {
+		RB_FOREACH(cf, cvs_flisthead, &files_removed) {
 			cvs_buf_putc(buf, '\n');
 			cvs_buf_putc(buf, '\t');
 			cvs_buf_puts(buf, cf->file_path);

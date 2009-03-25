@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.51 2009/02/21 13:44:18 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.52 2009/03/25 21:50:33 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -29,6 +29,7 @@
 #define FILE_H
 
 #include <sys/queue.h>
+#include <sys/tree.h>
 
 #include <dirent.h>
 #include <stdio.h>
@@ -76,12 +77,13 @@ struct cvs_file {
 #define FILE_ON_DISK		0x08
 
 struct cvs_filelist {
+	RB_ENTRY(cvs_filelist) flist;
 	char	*file_path;
 	int	flags;
-	TAILQ_ENTRY(cvs_filelist) flist;
 };
 
-TAILQ_HEAD(cvs_flisthead, cvs_filelist);
+RB_HEAD(cvs_flisthead, cvs_filelist);
+RB_PROTOTYPE(cvs_flisthead, cvs_filelist, flist, cvs_filelist_cmp);
 
 struct cvs_recursion;
 
@@ -106,8 +108,9 @@ void	cvs_file_run(int, char **, struct cvs_recursion *);
 void	cvs_file_walklist(struct cvs_flisthead *, struct cvs_recursion *);
 void	cvs_file_walkdir(struct cvs_file *, struct cvs_recursion *);
 void	cvs_file_freelist(struct cvs_flisthead *);
-struct cvs_filelist *cvs_file_get(const char *, int, struct cvs_flisthead *);
+struct cvs_filelist *cvs_file_get(char *, int, struct cvs_flisthead *);
 
+int	cvs_filelist_cmp(struct cvs_filelist *, struct cvs_filelist *);
 int	cvs_file_chkign(const char *);
 int	cvs_file_cmpname(const char *, const char *);
 int	cvs_file_cmp(const char *, const char *);

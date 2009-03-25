@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.13 2008/03/08 21:58:34 tobias Exp $	*/
+/*	$OpenBSD: modules.c,v 1.14 2009/03/25 21:50:33 joris Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -159,8 +159,9 @@ modules_parse_line(char *line, int lineno)
 	mi->mi_str = bline;
 
 	dirname = NULL;
-	TAILQ_INIT(&(mi->mi_modules));
-	TAILQ_INIT(&(mi->mi_ignores));
+	RB_INIT(&(mi->mi_modules));
+	RB_INIT(&(mi->mi_ignores));
+
 	for (sp = val; *sp != '\0'; sp = dp) {
 		dp = sp;
 		while (!isspace(*dp) && *dp != '\0')
@@ -195,7 +196,7 @@ modules_parse_line(char *line, int lineno)
 		}
 	}
 
-	if (!(mi->mi_flags & MODULE_ALIAS) && TAILQ_EMPTY(&(mi->mi_modules)))
+	if (!(mi->mi_flags & MODULE_ALIAS) && RB_EMPTY(&(mi->mi_modules)))
 		cvs_file_get(dirname, 0, &(mi->mi_modules));
 
 	TAILQ_INSERT_TAIL(&modules, mi, m_list);
@@ -229,8 +230,8 @@ cvs_module_lookup(char *name)
 		}
 	}
 
-	TAILQ_INIT(&(mc->mc_modules));
-	TAILQ_INIT(&(mc->mc_ignores));
+	RB_INIT(&(mc->mc_modules));
+	RB_INIT(&(mc->mc_ignores));
 	cvs_file_get(name, 0, &(mc->mc_modules));
 	mc->mc_canfree = 1;
 	mc->mc_name = name;

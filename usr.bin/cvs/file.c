@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.255 2009/03/24 18:33:25 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.256 2009/03/25 21:50:33 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -80,6 +80,8 @@ char *cvs_directory_tag = NULL;
 struct ignore_head cvs_ign_pats;
 struct ignore_head dir_ign_pats;
 struct ignore_head checkout_ign_pats;
+
+RB_GENERATE(cvs_flisthead, cvs_filelist, flist, cvs_filelist_cmp);
 
 void
 cvs_file_init(void)
@@ -187,7 +189,7 @@ cvs_file_run(int argc, char **argv, struct cvs_recursion *cr)
 	int i;
 	struct cvs_flisthead fl;
 
-	TAILQ_INIT(&fl);
+	RB_INIT(&fl);
 
 	for (i = 0; i < argc; i++)
 		cvs_file_get(argv[i], FILE_USER_SUPPLIED, &fl);
@@ -197,23 +199,24 @@ cvs_file_run(int argc, char **argv, struct cvs_recursion *cr)
 }
 
 struct cvs_filelist *
-cvs_file_get(const char *name, int flags, struct cvs_flisthead *fl)
+cvs_file_get(char *name, int flags, struct cvs_flisthead *fl)
 {
-	const char *p;
-	struct cvs_filelist *l;
+	char *p;
+	struct cvs_filelist *l, find;
 
 	for (p = name; p[0] == '.' && p[1] == '/';)
 		p += 2;
 
-	TAILQ_FOREACH(l, fl, flist)
-		if (!strcmp(l->file_path, p))
-			return (l);
+	find.file_path = p;
+	l = RB_FIND(cvs_flisthead, fl, &find);
+	if (l != NULL)
+		return (l);
 
 	l = (struct cvs_filelist *)xmalloc(sizeof(*l));
 	l->file_path = xstrdup(p);
 	l->flags = flags;
 
-	TAILQ_INSERT_TAIL(fl, l, flist);
+	RB_INSERT(cvs_flisthead, fl, l);
 	return (l);
 }
 
@@ -259,7 +262,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 	struct cvs_filelist *l, *nxt;
 	char *d, *f, repo[MAXPATHLEN], fpath[MAXPATHLEN];
 
-	for (l = TAILQ_FIRST(fl); l != NULL; l = nxt) {
+	for (l = RB_MIN(cvs_flisthead, fl); l != NULL; l = nxt) {
 		if (cvs_quit)
 			fatal("received signal %d", sig_received);
 
@@ -373,7 +376,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 		cvs_file_free(cf);
 
 next:
-		nxt = TAILQ_NEXT(l, flist);
+		nxt = RB_NEXT(cvs_flisthead, fl, l);
 	}
 }
 
@@ -410,8 +413,8 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 	 * locally available directories or try to create them.
 	 */
 	if (!(cmdp->cmd_flags & CVS_USE_WDIR)) {
-		TAILQ_INIT(&fl);
-		TAILQ_INIT(&dl);
+		RB_INIT(&fl);
+		RB_INIT(&dl);
 		goto walkrepo;
 	}
 
@@ -459,8 +462,8 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 		bufsize = st.st_blksize;
 
 	buf = xmalloc(bufsize);
-	TAILQ_INIT(&fl);
-	TAILQ_INIT(&dl);
+	RB_INIT(&fl);
+	RB_INIT(&dl);
 
 	while ((nbytes = getdirentries(cf->fd, buf, bufsize, &base)) > 0) {
 		ebuf = buf + nbytes;
@@ -615,10 +618,11 @@ walkrepo:
 void
 cvs_file_freelist(struct cvs_flisthead *fl)
 {
-	struct cvs_filelist *f;
+	struct cvs_filelist *f, *nxt;
 
-	while ((f = TAILQ_FIRST(fl)) != NULL) {
-		TAILQ_REMOVE(fl, f, flist);
+	for (f = RB_MIN(cvs_flisthead, fl); f != NULL; f = nxt) {
+		nxt = RB_NEXT(cvs_flisthead, fl, f);
+		RB_REMOVE(cvs_flisthead, fl, f);
 		xfree(f->file_path);
 		xfree(f);
 	}
@@ -1103,4 +1107,10 @@ out:
 	(void)close(src);
 
 	return (ret);
+}
+
+int
+cvs_filelist_cmp(struct cvs_filelist *f1, struct cvs_filelist *f2)
+{
+	return (strcmp(f1->file_path, f2->file_path));
 }

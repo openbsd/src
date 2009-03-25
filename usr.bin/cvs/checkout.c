@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.161 2009/03/18 09:14:09 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.162 2009/03/25 21:50:33 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -299,10 +299,10 @@ checkout_check_repository(int argc, char **argv)
 		mc = cvs_module_lookup(argv[i]);
 		current_module = mc;
 
-		TAILQ_FOREACH(fl, &(mc->mc_ignores), flist)
+		RB_FOREACH(fl, cvs_flisthead, &(mc->mc_ignores))
 			cvs_file_ignore(fl->file_path, &checkout_ign_pats);
 
-		TAILQ_FOREACH(fl, &(mc->mc_modules), flist) {
+		RB_FOREACH(fl, cvs_flisthead, &(mc->mc_modules)) {
 			module_repo_root = NULL;
 
 			(void)xsnprintf(repo, sizeof(repo), "%s/%s",
@@ -363,10 +363,12 @@ checkout_check_repository(int argc, char **argv)
 		}
 
 		if (mc->mc_canfree == 1) {
-			for (fl = TAILQ_FIRST(&(mc->mc_modules));
-			    fl != TAILQ_END(&(mc->mc_modules)); fl = nxt) {
-				nxt = TAILQ_NEXT(fl, flist);
-				TAILQ_REMOVE(&(mc->mc_modules), fl, flist);
+			for (fl = RB_MIN(cvs_flisthead, &(mc->mc_modules));
+			    fl != NULL; fl = nxt) {
+				nxt = RB_NEXT(cvs_flisthead,
+				    &(mc->mc_modules), fl);
+				RB_REMOVE(cvs_flisthead,
+				    &(mc->mc_modules), fl);
 				xfree(fl->file_path);
 				xfree(fl);
 			}
@@ -424,8 +426,8 @@ checkout_repository(const char *repobase, const char *wdbase)
 	struct cvs_flisthead fl, dl;
 	struct cvs_recursion cr;
 
-	TAILQ_INIT(&fl);
-	TAILQ_INIT(&dl);
+	RB_INIT(&fl);
+	RB_INIT(&dl);
 
 	cvs_history_add((cvs_cmdop == CVS_OP_CHECKOUT) ?
 	    CVS_HISTORY_CHECKOUT : CVS_HISTORY_EXPORT, NULL, wdbase);
