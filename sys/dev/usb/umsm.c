@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.44 2009/02/24 13:23:03 yuo Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.45 2009/03/25 15:02:13 yuo Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -107,7 +107,8 @@ struct umsm_type {
 #define	DEV_HUAWEI	0x0001
 #define	DEV_UMASS1	0x0010
 #define	DEV_UMASS2	0x0020
-#define DEV_UMASS	(DEV_UMASS1 | DEV_UMASS2)
+#define	DEV_UMASS3	0x0040
+#define DEV_UMASS	(DEV_UMASS1 | DEV_UMASS2 | DEV_UMASS3)
 };
  
 static const struct umsm_type umsm_devs[] = {
@@ -123,6 +124,9 @@ static const struct umsm_type umsm_devs[] = {
 	{{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E220 }, DEV_HUAWEI},
 	{{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E510 }, DEV_HUAWEI},
 	{{ USB_VENDOR_HUAWEI,	USB_PRODUCT_HUAWEI_E618 }, DEV_HUAWEI},
+
+	{{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_D21LCMASS }, DEV_UMASS3},
+	{{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_D21LC }, 0},
 
 	{{ USB_VENDOR_KYOCERA2,	USB_PRODUCT_KYOCERA2_KPC650 }, 0},
 
@@ -588,17 +592,29 @@ umsm_umass_changemode(struct umsm_softc *sc)
 	cbw.bCBWLUN   = 0;
 	cbw.bCDBLength= 6; 
 	bzero(cbw.CBWCDB, sizeof(cbw.CBWCDB));
-	cbw.CBWCDB[0] = UMASS_CMD_REZERO_UNIT;
-	cbw.CBWCDB[1] = 0x0;	/* target LUN: 0 */
 
 	switch (sc->sc_flag) {
 	case DEV_UMASS1:
 		USETDW(cbw.dCBWDataTransferLength, 0x0); 
 		cbw.bCBWFlags = CBWFLAGS_OUT;
+		cbw.CBWCDB[0] = UMASS_CMD_REZERO_UNIT;
+		cbw.CBWCDB[1] = 0x0;	/* target LUN: 0 */
 		break;
 	case DEV_UMASS2:
 		USETDW(cbw.dCBWDataTransferLength, 0x1); 
 		cbw.bCBWFlags = CBWFLAGS_IN;
+		cbw.CBWCDB[0] = UMASS_CMD_REZERO_UNIT;
+		cbw.CBWCDB[1] = 0x0;	/* target LUN: 0 */
+		break;
+	case DEV_UMASS3: /* longcheer */
+		USETDW(cbw.dCBWDataTransferLength, 0x80); 
+		cbw.bCBWFlags = CBWFLAGS_IN;
+		cbw.CBWCDB[0] = 0x06;
+		cbw.CBWCDB[1] = 0xf5;
+		cbw.CBWCDB[2] = 0x04;
+		cbw.CBWCDB[3] = 0x02;
+		cbw.CBWCDB[4] = 0x52;
+		cbw.CBWCDB[5] = 0x70;
 		break;
 	default:
 		DPRINTF(("%s: unknown device type.\n", sc->sc_dev.dv_xname));
