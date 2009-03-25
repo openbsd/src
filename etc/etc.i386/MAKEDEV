@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.50 2009/02/06 21:17:14 grange Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.51 2009/03/25 19:30:28 miod Exp 
 #	OpenBSD: MAKEDEV.common,v 1.41 2008/11/30 03:33:09 jakemsr Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -50,7 +50,6 @@
 #	pty*	Set of 62 master pseudo terminals
 #	tty*	Set of 62 slave pseudo terminals
 # Console ports:
-#	drm*	Direct Rendering Manager
 #	ttyC-J*	wscons display devices
 #	wscons	Minimal wscons devices
 #	wskbd*	wscons keyboards
@@ -79,6 +78,7 @@
 #	bpf*	Berkeley Packet Filter
 #	bthub*	Bluetooth Hubs
 #	crypto	Hardware crypto access driver
+#	drm*	Direct Rendering Manager
 #	fd	fd/* nodes
 #	gpio*	General Purpose Input/Output
 #	gpr*	GPR400 smartcard reader
@@ -361,6 +361,10 @@ fd)
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"
 	;;
 
+drm*)
+	M drm$U c 88 $U 660
+	;;
+
 crypto)
 	M crypto c 70 0
 	;;
@@ -491,10 +495,6 @@ tty[C-J]*)
 	cfg) M tty${n}cfg c 12 $((255+$m)) 600;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
-	;;
-
-drm*)
-	M drm$U c 88 $U 660
 	;;
 
 pty*)

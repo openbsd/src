@@ -1,9 +1,9 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.67 2009/03/18 17:36:49 sobrado Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.68 2009/03/25 19:30:39 miod Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.i386/MAKEDEV.md,v 1.50 2009/02/06 21:17:14 grange Exp 
+.\"	OpenBSD: etc.i386/MAKEDEV.md,v 1.51 2009/03/25 19:30:28 miod Exp 
 .\"	OpenBSD: MAKEDEV.common,v 1.41 2008/11/30 03:33:09 jakemsr Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.7 2009/03/18 17:34:25 sobrado Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 18 2009 $
+.Dd $Mdocdate: March 25 2009 $
 .Dt MAKEDEV 8 i386
 .Os
 .Sh NAME
@@ -141,9 +141,6 @@ Set of 62 slave pseudo terminals, see
 .Pp
 .Sy Console ports
 .Bl -tag -width tenletters -compact
-.It Ar drm*
-Direct Rendering Manager, see
-.Xr drm 4 .
 .It Ar ttyC-J*
 wscons display devices, see
 .Xr wsdisplay 4 .
@@ -232,6 +229,9 @@ Bluetooth Hubs, see
 .It Ar crypto
 Hardware crypto access driver, see
 .Xr crypto 4 .
+.It Ar drm*
+Direct Rendering Manager, see
+.Xr drm 4 .
 .It Ar fd
 fd/* nodes, see
 .Xr fd 4 .
