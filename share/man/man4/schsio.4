@@ -1,4 +1,4 @@
-.\"	$OpenBSD: schsio.4,v 1.2 2009/02/08 15:34:06 mk Exp $
+.\"	$OpenBSD: schsio.4,v 1.3 2009/03/25 20:41:31 mk Exp $
 .\"
 .\" Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -13,17 +13,17 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: February 8 2009 $
+.Dd $Mdocdate: March 25 2009 $
 .Dt SCHSIO 4
 .Os
 .Sh NAME
 .Nm schsio
 .Nd SMSC SCH311x LPC Super I/O
 .Sh SYNOPSIS
-.Cd "schsio* at isa? port 0x2e
-.Cd "schsio* at isa? port 0x4e
-.Cd "schsio* at isa? port 0x162e
-.Cd "schsio* at isa? port 0x164e
+.Cd "schsio* at isa? port 0x2e   flags 0x0000"
+.Cd "schsio* at isa? port 0x4e   flags 0x0000"
+.Cd "schsio* at isa? port 0x162e flags 0x0000"
+.Cd "schsio* at isa? port 0x164e flags 0x0000"
 .Sh DESCRIPTION
 The
 .Nm
@@ -33,7 +33,8 @@ Among other things, the devices contain environment sensors, a watchdog
 timer, and fan control.
 The
 .Nm
-driver currently only supports the environment sensors.
+driver supports the environment sensors and the watchdog timer.
+.Pp
 The hardware provides the following sensors:
 .Bl -column "Internal diode" "Units" "Typical" -offset indent
 .It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical use"
@@ -51,12 +52,37 @@ The hardware provides the following sensors:
 .It Li "+3.3V (VTR)" Ta "uV" Ta "Voltage"
 .It Li "+3V (Vbat)" Ta "uV" Ta "Voltage"
 .El
+.Pp
+.Nm
+provides the standard
+.Xr watchdog 4
+interface and may be used with
+.Xr watchdogd 8 .
+The watchdog timer may be configured to a value from 1 second to 255
+minutes.
+The watchdog timer has a resolution of 1 second in the timeout interval
+1 to 255 seconds.
+Outside this interval, the resolution is 1 minute.
+.Pp
+Note that the pin used for signalling the timer expiration is
+configurable and may on some boards be intended for other uses than this.
+Because of this, the chip may not by default be configured to use the
+pin for watchdog operation.
+To force the
+.Nm
+device to use the pin for watchdog operation, the driver may be
+configured with an
+.Xr autoconf 9
+.Ar flags
+setting of 0x0001.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr watchdog 4 ,
 .Xr sensorsd 8 ,
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr watchdogd 8 ,
+.Xr autoconf 9
 .Sh HISTORY
 The
 .Nm
