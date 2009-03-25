@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.32 2009/01/15 07:48:55 grange Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.33 2009/03/25 21:20:26 oga Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -94,10 +94,6 @@ do {									\
 			(lkp)->lk_waitcount--;				\
 		if (error)						\
 			break;						\
-		if ((extflags) & LK_SLEEPFAIL) {			\
-			error = ENOLCK;					\
-			break;						\
-		}							\
 	}								\
 } while (0)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.h,v 1.18 2007/04/12 22:20:14 thib Exp $	*/
+/*	$OpenBSD: lock.h,v 1.19 2009/03/25 21:20:26 oga Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -111,7 +111,6 @@ struct lock {
  */
 #define LK_EXTFLG_MASK	0x00200070	/* mask of external flags */
 #define LK_NOWAIT	0x00000010	/* do not sleep to await lock */
-#define LK_SLEEPFAIL	0x00000020	/* sleep, then return failure */
 #define LK_CANRECURSE	0x00000040	/* allow recursive exclusive lock */
 #define LK_RECURSEFAIL	0x00200000	/* fail if recursive exclusive lock */
 /*
@@ -137,7 +136,6 @@ struct lock {
  * Successfully obtained locks return 0. Locks will always succeed
  * unless one of the following is true:
  *	LK_NOWAIT is set and a sleep would be required (returns EBUSY).
- *	LK_SLEEPFAIL is set and a sleep was done (returns ENOLCK).
  *	PCATCH is set in lock priority and a signal arrives (returns
  *	    either EINTR or ERESTART if system calls is to be restarted).
  *	Non-null lock timeout and timeout expires (returns EWOULDBLOCK).
