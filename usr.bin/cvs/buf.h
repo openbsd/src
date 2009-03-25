@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.25 2008/06/10 01:00:34 joris Exp $	*/
+/*	$OpenBSD: buf.h,v 1.26 2009/03/25 21:19:20 joris Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -29,9 +29,6 @@
 
 #include <sys/types.h>
 
-/* flags */
-#define BUF_AUTOEXT	1	/* autoextend on append */
-
 typedef struct cvs_buf BUF;
 
 BUF		*cvs_buf_alloc(size_t);
@@ -39,8 +36,7 @@ BUF		*cvs_buf_load(const char *);
 BUF		*cvs_buf_load_fd(int);
 void		 cvs_buf_free(BUF *);
 u_char		*cvs_buf_release(BUF *);
-u_char		 cvs_buf_getc(BUF *, size_t);
-void		 cvs_buf_empty(BUF *);
+u_char		*cvs_buf_get(BUF *);
 void		 cvs_buf_append(BUF *, const void *, size_t);
 void		 cvs_buf_putc(BUF *, int);
 void		 cvs_buf_puts(BUF *, const char *);
@@ -49,10 +45,5 @@ int		 cvs_buf_write_fd(BUF *, int);
 int		 cvs_buf_write(BUF *, const char *, mode_t);
 int		 cvs_buf_differ(const BUF *, const BUF *);
 int		 cvs_buf_write_stmp(BUF *, char *, struct timeval *);
-
-ssize_t		 cvs_buf_copy(BUF *, size_t, void *, size_t);
-const u_char	*cvs_buf_peek(BUF *, size_t);
-
-#define cvs_buf_get(b)	cvs_buf_peek(b, 0)
 
 #endif	/* BUF_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.175 2009/03/19 09:53:16 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.176 2009/03/25 21:19:20 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,9 +40,6 @@
 
 #define CVS_VERSION	"OpenCVS 4.5"
 
-#define CVS_HIST_CACHE	128
-#define CVS_HIST_NBFLD	6
-
 #define CVS_CKSUM_LEN	MD5_DIGEST_STRING_LENGTH
 
 #define CVS_REV_BUFSZ	32
@@ -79,8 +76,6 @@
 #define CVS_OP_VERSION		25
 #define CVS_OP_WATCH		26
 #define CVS_OP_WATCHERS		27
-
-#define CVS_OP_ANY		64	/* all operations */
 
 /* methods */
 #define CVS_METHOD_NONE		0
