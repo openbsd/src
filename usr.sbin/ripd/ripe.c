@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.8 2008/12/17 14:19:39 michele Exp $ */
+/*	$OpenBSD: ripe.c,v 1.9 2009/03/25 12:48:16 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -386,16 +386,9 @@ ripe_dispatch_rde(int fd, short event, void *bula)
 			memcpy(rr, imsg.data, sizeof(*rr));
 
 			if (imsg.hdr.peerid == 0) {
-				LIST_FOREACH(iface, &oeconf->iface_list,
-				    entry) {
-					if ((iface->addr.s_addr &
-					    iface->mask.s_addr) !=
-					    rr->address.s_addr ||
-					    iface->mask.s_addr !=
-					    rr->mask.s_addr)
-						add_entry(&iface->rp_list,
-						    rr);
-				}
+				LIST_FOREACH(iface, &oeconf->iface_list, entry)
+					add_entry(&iface->rp_list, rr);
+
 				break;
 			}
 
@@ -405,10 +398,8 @@ ripe_dispatch_rde(int fd, short event, void *bula)
 				break;
 			}
 			iface = nbr->iface;
-			if ((iface->addr.s_addr & iface->mask.s_addr) !=
-			    rr->address.s_addr ||
-			    iface->mask.s_addr != rr->mask.s_addr)
-				add_entry(&nbr->rp_list, rr);
+			add_entry(&nbr->rp_list, rr);
+
 			break;
 		case IMSG_SEND_RESPONSE:
 			if (imsg.hdr.peerid == 0) {
