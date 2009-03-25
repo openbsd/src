@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubsec.4,v 1.29 2007/05/31 19:19:52 jmc Exp $
+.\"	$OpenBSD: ubsec.4,v 1.30 2009/03/25 12:17:30 reyk Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: March 25 2009 $
 .Dt UBSEC 4
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@ This is the chip found on the Sun Crypto Accelerator 1000.
 .It Broadcom BCM5822
 Faster version of the BCM5820.
 .It Broadcom BCM5823
-Faster version of the BCM5822.
+Faster version of the BCM5822 that also supports AES.
 .El
 .Pp
 The
@@ -67,7 +67,8 @@ driver registers itself to accelerate DES, Triple-DES, MD5-HMAC,
 and SHA1-HMAC operations for
 .Xr ipsec 4
 and
-.Xr crypto 4 .
+.Xr crypto 4.
+The driver also supports acceleration of AES-CBC with the BCM5823.
 .Pp
 On those models which contain a public key engine (almost all of the
 more recent ones), this feature is registered with the
@@ -93,4 +94,5 @@ device driver appeared in
 .Ox 2.8 .
 .Sh BUGS
 The BCM5801 and BCM5802 have not actually been tested.
-Also, some of the newer chips support AES but it is not supported by the driver.
+Also, some of the newer chips support AES-CTR (AES Counter Mode) but
+it is not supported by the driver.

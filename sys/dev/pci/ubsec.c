@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.141 2008/06/09 07:07:16 djm Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.142 2009/03/25 12:17:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -182,6 +182,10 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG |
 		    UBS_FLAGS_LONGCTX | UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY;
 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5823)
+		sc->sc_flags |= UBS_FLAGS_AES;
+
 	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821) ||
 	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
@@ -255,6 +259,8 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 	algs[CRYPTO_DES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_MD5_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_SHA1_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	if (sc->sc_flags & UBS_FLAGS_AES)
+		algs[CRYPTO_AES_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	crypto_register(sc->sc_cid, algs, ubsec_newsession,
 	    ubsec_freesession, ubsec_process);
 
@@ -274,6 +280,8 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 	ubsec_init_board(sc);
 
 	printf(": 3DES MD5 SHA1");
+	if (sc->sc_flags & UBS_FLAGS_AES)
+		printf(" AES");
 
 #ifndef UBSEC_NO_RNG
 	if (sc->sc_flags & UBS_FLAGS_RNG) {
@@ -574,7 +582,8 @@ ubsec_newsession(u_int32_t *sidp, struct cryptoini *cri)
 				return (EINVAL);
 			macini = c;
 		} else if (c->cri_alg == CRYPTO_DES_CBC ||
-		    c->cri_alg == CRYPTO_3DES_CBC) {
+		    c->cri_alg == CRYPTO_3DES_CBC ||
+		    c->cri_alg == CRYPTO_AES_CBC) {
 			if (encini)
 				return (EINVAL);
 			encini = c;
@@ -583,6 +592,17 @@ ubsec_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	}
 	if (encini == NULL && macini == NULL)
 		return (EINVAL);
+
+	if (encini && encini->cri_alg == CRYPTO_AES_CBC) {
+		switch (encini->cri_klen) {
+		case 128:
+		case 192:
+		case 256:
+			break;
+		default:
+			return (EINVAL);
+		}
+	}
 
 	if (sc->sc_sessions == NULL) {
 		ses = sc->sc_sessions = (struct ubsec_session *)malloc(
@@ -623,19 +643,24 @@ ubsec_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		arc4random_buf(ses->ses_iv, sizeof(ses->ses_iv));
 
 		/* Go ahead and compute key in ubsec's byte order */
-		if (encini->cri_alg == CRYPTO_DES_CBC) {
-			bcopy(encini->cri_key, &ses->ses_deskey[0], 8);
-			bcopy(encini->cri_key, &ses->ses_deskey[2], 8);
-			bcopy(encini->cri_key, &ses->ses_deskey[4], 8);
+		if (encini->cri_alg == CRYPTO_AES_CBC) {
+			bcopy(encini->cri_key, ses->ses_key,
+			    encini->cri_klen / 8);
+		} else if (encini->cri_alg == CRYPTO_DES_CBC) {
+			bcopy(encini->cri_key, &ses->ses_key[0], 8);
+			bcopy(encini->cri_key, &ses->ses_key[2], 8);
+			bcopy(encini->cri_key, &ses->ses_key[4], 8);
 		} else
-			bcopy(encini->cri_key, ses->ses_deskey, 24);
+			bcopy(encini->cri_key, ses->ses_key, 24);
 
-		SWAP32(ses->ses_deskey[0]);
-		SWAP32(ses->ses_deskey[1]);
-		SWAP32(ses->ses_deskey[2]);
-		SWAP32(ses->ses_deskey[3]);
-		SWAP32(ses->ses_deskey[4]);
-		SWAP32(ses->ses_deskey[5]);
+		SWAP32(ses->ses_key[0]);
+		SWAP32(ses->ses_key[1]);
+		SWAP32(ses->ses_key[2]);
+		SWAP32(ses->ses_key[3]);
+		SWAP32(ses->ses_key[4]);
+		SWAP32(ses->ses_key[5]);
+		SWAP32(ses->ses_key[6]);
+		SWAP32(ses->ses_key[7]);
 	}
 
 	if (macini) {
@@ -718,9 +743,10 @@ ubsec_process(struct cryptop *crp)
 	int encoffset = 0, macoffset = 0, cpskip, cpoffset;
 	int sskip, dskip, stheend, dtheend;
 	int16_t coffset;
-	struct ubsec_session *ses;
-	struct ubsec_pktctx ctx;
+	struct ubsec_session *ses, key;
 	struct ubsec_dma *dmap = NULL;
+	u_int16_t flags = 0;
+	int ivlen = 0, keylen = 0;
 
 	if (crp == NULL || crp->crp_callback == NULL) {
 		ubsecstats.hst_invalid++;
@@ -749,7 +775,7 @@ ubsec_process(struct cryptop *crp)
 
 	dmap = q->q_dma; /* Save dma pointer */
 	bzero(q, sizeof(struct ubsec_q));
-	bzero(&ctx, sizeof(ctx));
+	bzero(&key, sizeof(key));
 
 	q->q_sesn = UBSEC_SESSION(crp->crp_sid);
 	q->q_dma = dmap;
@@ -785,7 +811,8 @@ ubsec_process(struct cryptop *crp)
 			maccrd = crd1;
 			enccrd = NULL;
 		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
-		    crd1->crd_alg == CRYPTO_3DES_CBC) {
+		    crd1->crd_alg == CRYPTO_3DES_CBC ||
+		    crd1->crd_alg == CRYPTO_AES_CBC) {
 			maccrd = NULL;
 			enccrd = crd1;
 		} else {
@@ -796,14 +823,16 @@ ubsec_process(struct cryptop *crp)
 		if ((crd1->crd_alg == CRYPTO_MD5_HMAC ||
 		    crd1->crd_alg == CRYPTO_SHA1_HMAC) &&
 		    (crd2->crd_alg == CRYPTO_DES_CBC ||
-			crd2->crd_alg == CRYPTO_3DES_CBC) &&
+		    crd2->crd_alg == CRYPTO_3DES_CBC ||
+		    crd2->crd_alg == CRYPTO_AES_CBC) &&
 		    ((crd2->crd_flags & CRD_F_ENCRYPT) == 0)) {
 			maccrd = crd1;
 			enccrd = crd2;
 		} else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
-		    crd1->crd_alg == CRYPTO_3DES_CBC) &&
+		    crd1->crd_alg == CRYPTO_3DES_CBC ||
+		    crd1->crd_alg == CRYPTO_AES_CBC) &&
 		    (crd2->crd_alg == CRYPTO_MD5_HMAC ||
-			crd2->crd_alg == CRYPTO_SHA1_HMAC) &&
+		    crd2->crd_alg == CRYPTO_SHA1_HMAC) &&
 		    (crd1->crd_flags & CRD_F_ENCRYPT)) {
 			enccrd = crd1;
 			maccrd = crd2;
@@ -817,67 +846,85 @@ ubsec_process(struct cryptop *crp)
 	}
 
 	if (enccrd) {
+		if (enccrd->crd_alg == CRYPTO_AES_CBC) {
+			if ((sc->sc_flags & UBS_FLAGS_AES) == 0) {
+				err = EINVAL;
+				goto errout;
+			}
+			flags |= htole16(UBS_PKTCTX_ENC_AES);
+			switch (enccrd->crd_klen) {
+			case 128:
+			case 192:
+			case 256:
+				keylen = enccrd->crd_klen / 8;
+				break;
+			default:
+				err = EINVAL;
+				goto errout;
+			}
+			ivlen = 16;
+		} else {
+			flags |= htole16(UBS_PKTCTX_ENC_3DES);
+			ivlen = 8;
+			keylen = 24;
+		}
+
 		encoffset = enccrd->crd_skip;
-		ctx.pc_flags |= htole16(UBS_PKTCTX_ENC_3DES);
 
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
 			q->q_flags |= UBSEC_QFLAGS_COPYOUTIV;
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, ctx.pc_iv, 8);
+				bcopy(enccrd->crd_iv, key.ses_iv, ivlen);
 			else {
-				ctx.pc_iv[0] = ses->ses_iv[0];
-				ctx.pc_iv[1] = ses->ses_iv[1];
+				for (i = 0; i < (ivlen / 4); i++)
+					key.ses_iv[i] = ses->ses_iv[i];
 			}
 
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0) {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
 					m_copyback(q->q_src_m,
 					    enccrd->crd_inject,
-					    8, ctx.pc_iv);
+					    ivlen, key.ses_iv);
 				else if (crp->crp_flags & CRYPTO_F_IOV)
 					cuio_copyback(q->q_src_io,
 					    enccrd->crd_inject,
-					    8, ctx.pc_iv);
+					    ivlen, key.ses_iv);
 			}
 		} else {
-			ctx.pc_flags |= htole16(UBS_PKTCTX_INBOUND);
+			flags |= htole16(UBS_PKTCTX_INBOUND);
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, ctx.pc_iv, 8);
+				bcopy(enccrd->crd_iv, key.ses_iv, ivlen);
 			else if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata(q->q_src_m, enccrd->crd_inject,
-				    8, (caddr_t)ctx.pc_iv);
+				    ivlen, (caddr_t)key.ses_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copydata(q->q_src_io,
-				    enccrd->crd_inject, 8,
-				    (caddr_t)ctx.pc_iv);
+				    enccrd->crd_inject, ivlen,
+				    (caddr_t)key.ses_iv);
 		}
 
-		ctx.pc_deskey[0] = ses->ses_deskey[0];
-		ctx.pc_deskey[1] = ses->ses_deskey[1];
-		ctx.pc_deskey[2] = ses->ses_deskey[2];
-		ctx.pc_deskey[3] = ses->ses_deskey[3];
-		ctx.pc_deskey[4] = ses->ses_deskey[4];
-		ctx.pc_deskey[5] = ses->ses_deskey[5];
-		SWAP32(ctx.pc_iv[0]);
-		SWAP32(ctx.pc_iv[1]);
+		for (i = 0; i < (keylen / 4); i++)
+			key.ses_key[i] = ses->ses_key[i];
+		for (i = 0; i < (ivlen / 4); i++)
+			SWAP32(key.ses_iv[i]);
 	}
 
 	if (maccrd) {
 		macoffset = maccrd->crd_skip;
 
 		if (maccrd->crd_alg == CRYPTO_MD5_HMAC)
-			ctx.pc_flags |= htole16(UBS_PKTCTX_AUTH_MD5);
+			flags |= htole16(UBS_PKTCTX_AUTH_MD5);
 		else
-			ctx.pc_flags |= htole16(UBS_PKTCTX_AUTH_SHA1);
+			flags |= htole16(UBS_PKTCTX_AUTH_SHA1);
 
 		for (i = 0; i < 5; i++) {
-			ctx.pc_hminner[i] = ses->ses_hminner[i];
-			ctx.pc_hmouter[i] = ses->ses_hmouter[i];
+			key.ses_hminner[i] = ses->ses_hminner[i];
+			key.ses_hmouter[i] = ses->ses_hmouter[i];
 
-			HTOLE32(ctx.pc_hminner[i]);
-			HTOLE32(ctx.pc_hmouter[i]);
+			HTOLE32(key.ses_hminner[i]);
+			HTOLE32(key.ses_hmouter[i]);
 		}
 	}
 
@@ -915,7 +962,6 @@ ubsec_process(struct cryptop *crp)
 		cpoffset = cpskip + dtheend;
 		coffset = 0;
 	}
-	ctx.pc_offset = htole16(coffset >> 2);
 
 	if (bus_dmamap_create(sc->sc_dmat, 0xfff0, UBS_MAX_SCATTER,
 		0xfff0, 0, BUS_DMA_NOWAIT, &q->q_src_map) != 0) {
@@ -1152,29 +1198,100 @@ ubsec_process(struct cryptop *crp)
 	dmap->d_dma->d_mcr.mcr_cmdctxp = htole32(dmap->d_alloc.dma_paddr +
 	    offsetof(struct ubsec_dmachunk, d_ctx));
 
-	if (sc->sc_flags & UBS_FLAGS_LONGCTX) {
-		struct ubsec_pktctx_long *ctxl;
+	if (enccrd && enccrd->crd_alg == CRYPTO_AES_CBC) {
+		struct ubsec_pktctx_aes128	*aes128;
+		struct ubsec_pktctx_aes192	*aes192;
+		struct ubsec_pktctx_aes256	*aes256;
+		struct ubsec_pktctx_hdr		*ph;
+		u_int8_t			*ctx;
 
-		ctxl = (struct ubsec_pktctx_long *)(dmap->d_alloc.dma_vaddr +
+		ctx = (u_int8_t *)(dmap->d_alloc.dma_vaddr +
 		    offsetof(struct ubsec_dmachunk, d_ctx));
-		
-		/* transform small context into long context */
-		ctxl->pc_len = htole16(sizeof(struct ubsec_pktctx_long));
-		ctxl->pc_type = htole16(UBS_PKTCTX_TYPE_IPSEC);
-		ctxl->pc_flags = ctx.pc_flags;
-		ctxl->pc_offset = ctx.pc_offset;
+
+		ph = (struct ubsec_pktctx_hdr *)ctx;
+		ph->ph_type = htole16(UBS_PKTCTX_TYPE_IPSEC_AES);
+		ph->ph_flags = flags;
+		ph->ph_offset = htole16(coffset >> 2);
+
+		switch (enccrd->crd_klen) {
+		case 128:
+			aes128 = (struct ubsec_pktctx_aes128 *)ctx;
+ 			ph->ph_len = htole16(sizeof(*aes128));
+			ph->ph_flags |= htole16(UBS_PKTCTX_KEYSIZE_128);
+			for (i = 0; i < 4; i++)
+				aes128->pc_aeskey[i] = key.ses_key[i];
+			for (i = 0; i < 5; i++)
+				aes128->pc_hminner[i] = key.ses_hminner[i];
+			for (i = 0; i < 5; i++)
+				aes128->pc_hmouter[i] = key.ses_hmouter[i];   
+			for (i = 0; i < 4; i++)
+				aes128->pc_iv[i] = key.ses_iv[i];
+			break;
+		case 192:
+			aes192 = (struct ubsec_pktctx_aes192 *)ctx;
+			ph->ph_len = htole16(sizeof(*aes192));
+			ph->ph_flags |= htole16(UBS_PKTCTX_KEYSIZE_192);
+			for (i = 0; i < 6; i++)
+				aes192->pc_aeskey[i] = key.ses_key[i];
+			for (i = 0; i < 5; i++)
+				aes192->pc_hminner[i] = key.ses_hminner[i];
+			for (i = 0; i < 5; i++)
+				aes192->pc_hmouter[i] = key.ses_hmouter[i];   
+			for (i = 0; i < 4; i++)
+				aes192->pc_iv[i] = key.ses_iv[i];
+			break;
+		case 256:
+			aes256 = (struct ubsec_pktctx_aes256 *)ctx;
+			ph->ph_len = htole16(sizeof(*aes256));
+			ph->ph_flags |= htole16(UBS_PKTCTX_KEYSIZE_256);
+			for (i = 0; i < 8; i++)
+				aes256->pc_aeskey[i] = key.ses_key[i];
+			for (i = 0; i < 5; i++)
+				aes256->pc_hminner[i] = key.ses_hminner[i];
+			for (i = 0; i < 5; i++)
+				aes256->pc_hmouter[i] = key.ses_hmouter[i];   
+			for (i = 0; i < 4; i++)
+				aes256->pc_iv[i] = key.ses_iv[i];
+			break;
+		}
+	} else if (sc->sc_flags & UBS_FLAGS_LONGCTX) {
+		struct ubsec_pktctx_3des	*ctx;
+		struct ubsec_pktctx_hdr		*ph;
+
+		ctx = (struct ubsec_pktctx_3des *)
+		    (dmap->d_alloc.dma_vaddr +
+		    offsetof(struct ubsec_dmachunk, d_ctx));
+
+		ph = (struct ubsec_pktctx_hdr *)ctx;
+		ph->ph_len = htole16(sizeof(*ctx));
+		ph->ph_type = htole16(UBS_PKTCTX_TYPE_IPSEC_3DES);
+		ph->ph_flags = flags;
+		ph->ph_offset = htole16(coffset >> 2);
+
 		for (i = 0; i < 6; i++)
-			ctxl->pc_deskey[i] = ctx.pc_deskey[i];
+			ctx->pc_deskey[i] = key.ses_key[i];
 		for (i = 0; i < 5; i++)
-			ctxl->pc_hminner[i] = ctx.pc_hminner[i];
+			ctx->pc_hminner[i] = key.ses_hminner[i];
 		for (i = 0; i < 5; i++)
-			ctxl->pc_hmouter[i] = ctx.pc_hmouter[i];   
-		ctxl->pc_iv[0] = ctx.pc_iv[0];
-		ctxl->pc_iv[1] = ctx.pc_iv[1];
-	} else
-		bcopy(&ctx, dmap->d_alloc.dma_vaddr +
-		    offsetof(struct ubsec_dmachunk, d_ctx),
-		    sizeof(struct ubsec_pktctx));
+			ctx->pc_hmouter[i] = key.ses_hmouter[i]; 
+		for (i = 0; i < 2; i++)
+			ctx->pc_iv[i] = key.ses_iv[i];
+	} else {
+		struct ubsec_pktctx *ctx = (struct ubsec_pktctx *)
+		    (dmap->d_alloc.dma_vaddr +
+		    offsetof(struct ubsec_dmachunk, d_ctx));
+
+		ctx->pc_flags = flags;
+		ctx->pc_offset = htole16(coffset >> 2);
+		for (i = 0; i < 6; i++)
+			ctx->pc_deskey[i] = key.ses_key[i];
+		for (i = 0; i < 5; i++)
+			ctx->pc_hminner[i] = key.ses_hminner[i];
+		for (i = 0; i < 5; i++)
+			ctx->pc_hmouter[i] = key.ses_hmouter[i];   
+		for (i = 0; i < 2; i++)
+			ctx->pc_iv[i] = key.ses_iv[i];
+	}
 
 	s = splnet();
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue, q, q_next);
@@ -1246,7 +1363,8 @@ ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 	if (q->q_flags & UBSEC_QFLAGS_COPYOUTIV) {
 		for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
 			if (crd->crd_alg != CRYPTO_DES_CBC &&
-			    crd->crd_alg != CRYPTO_3DES_CBC)
+			    crd->crd_alg != CRYPTO_3DES_CBC &&
+			    crd->crd_alg != CRYPTO_AES_CBC)
 				continue;
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata((struct mbuf *)crp->crp_buf,

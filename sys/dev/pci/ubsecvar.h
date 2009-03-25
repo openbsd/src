@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.36 2003/06/04 16:02:41 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.37 2009/03/25 12:17:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -111,7 +111,10 @@ struct ubsec_dmachunk {
 	struct ubsec_pktbuf	d_dbuf[UBS_MAX_SCATTER-1];
 	u_int32_t		d_macbuf[5];
 	union {
-		struct ubsec_pktctx_long	ctxl;
+		struct ubsec_pktctx_aes256	ctx_aes256;
+		struct ubsec_pktctx_aes192	ctx_aes192;
+		struct ubsec_pktctx_aes128	ctx_aes128;
+		struct ubsec_pktctx_3des	ctx_3des;
 		struct ubsec_pktctx		ctx;
 	} d_ctx;
 };
@@ -127,6 +130,7 @@ struct ubsec_dma {
 #define	UBS_FLAGS_BIGKEY	0x04		/* 2048bit keys */
 #define	UBS_FLAGS_HWNORM	0x08		/* hardware normalization */
 #define	UBS_FLAGS_RNG		0x10		/* hardware rng */
+#define UBS_FLAGS_AES		0x20		/* supports aes */
 
 struct ubsec_q {
 	SIMPLEQ_ENTRY(ubsec_q)		q_next;
@@ -175,10 +179,10 @@ struct ubsec_softc {
 
 struct ubsec_session {
 	u_int32_t	ses_used;
-	u_int32_t	ses_deskey[6];		/* 3DES key */
+	u_int32_t	ses_key[8];		/* 3DES/AES key */
 	u_int32_t	ses_hminner[5];		/* hmac inner state */
 	u_int32_t	ses_hmouter[5];		/* hmac outer state */
-	u_int32_t	ses_iv[2];		/* [3]DES iv */
+	u_int32_t	ses_iv[4];		/* [3]DES iv or AES iv/icv */
 };
 
 struct ubsec_stats {

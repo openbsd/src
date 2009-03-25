@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.28 2003/06/04 16:02:41 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.29 2009/03/25 12:17:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -91,6 +91,7 @@
 #define	BS_ERR_ADDR		0xfffffffc	/* error address mask */
 #define	BS_ERR_READ		0x00000002	/* fault was on read */
 
+/* DES/3DES */
 struct ubsec_pktctx {
 	u_int32_t	pc_deskey[6];		/* 3DES key */
 	u_int32_t	pc_hminner[5];		/* hmac inner state */
@@ -107,17 +108,56 @@ struct ubsec_pktctx {
 #define	UBS_PKTCTX_AUTH_MD5	0x1000		/* use hmac-md5 */
 #define	UBS_PKTCTX_AUTH_SHA1	0x2000		/* use hmac-sha1 */
 
-struct ubsec_pktctx_long {
-	volatile u_int16_t	pc_len;		/* length of ctx struct */
-	volatile u_int16_t	pc_type;	/* context type, 0 */
-	volatile u_int16_t	pc_flags;	/* flags, same as above */
-	volatile u_int16_t	pc_offset;	/* crypto/auth offset */
+/* "Long" cryptographic operations on newer chipsets */
+#define	UBS_PKTCTX_TYPE_IPSEC_3DES	0x0000
+#define	UBS_PKTCTX_TYPE_IPSEC_AES	0x0040
+
+struct ubsec_pktctx_hdr {
+	volatile u_int16_t	ph_len;		/* length of ctx struct */
+	volatile u_int16_t	ph_type;	/* context type, 0 */
+	volatile u_int16_t	ph_flags;	/* flags, same as above */
+	volatile u_int16_t	ph_offset;	/* crypto/auth offset */
+};
+
+/* Long version of DES/3DES */
+struct ubsec_pktctx_3des {
+	struct ubsec_pktctx_hdr	pc_hdr;		/* Common header */
 	volatile u_int32_t	pc_deskey[6];	/* 3DES key */
 	volatile u_int32_t	pc_iv[2];	/* [3]DES iv */
 	volatile u_int32_t	pc_hminner[5];	/* hmac inner state */
 	volatile u_int32_t	pc_hmouter[5];	/* hmac outer state */
 };
-#define	UBS_PKTCTX_TYPE_IPSEC	0x0000
+
+/* AES uses different structures for each supported key size */
+struct ubsec_pktctx_aes128 {
+	struct ubsec_pktctx_hdr	pc_hdr;		/* Common header */
+	volatile u_int32_t	pc_aeskey[4];	/* AES128 key */
+	volatile u_int32_t	pc_iv[4];	/* AES iv/ucv */
+	volatile u_int32_t	pc_hminner[5];	/* hmac inner state */
+	volatile u_int32_t	pc_hmouter[5];	/* hmac outer state */
+};
+
+struct ubsec_pktctx_aes192 {
+	struct ubsec_pktctx_hdr	pc_hdr;		/* Common header */
+	volatile u_int32_t	pc_aeskey[6];	/* AES192 key */
+	volatile u_int32_t	pc_iv[4];	/* AES iv/icv */
+	volatile u_int32_t	pc_hminner[5];	/* hmac inner state */
+	volatile u_int32_t	pc_hmouter[5];	/* hmac outer state */
+};
+
+struct ubsec_pktctx_aes256 {
+	struct ubsec_pktctx_hdr	pc_hdr;		/* Common header */
+	volatile u_int32_t	pc_aeskey[8];	/* AES256 key */
+	volatile u_int32_t	pc_iv[4];	/* AES iv/icv */
+	volatile u_int32_t	pc_hminner[5];	/* hmac inner state */
+	volatile u_int32_t	pc_hmouter[5];	/* hmac outer state */
+};
+#define UBS_PKTCTX_ENC_AES	0x8000		/* use aes */
+#define UBS_PKTCTX_MODE_CBC	0x0000		/* Cipher Block Chaining mode */
+#define UBS_PKTCTX_MODE_CTR	0x0400		/* Counter mode */
+#define UBS_PKTCTX_KEYSIZE_128	0x0000		/* AES128 */
+#define UBS_PKTCTX_KEYSIZE_192	0x0100		/* AES192 */
+#define UBS_PKTCTX_KEYSIZE_256	0x0200		/* AES256 */
 
 struct ubsec_pktbuf {
 	volatile u_int32_t	pb_addr;	/* address of buffer start */
