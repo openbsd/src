@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.15 2008/05/13 02:24:08 brad Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.16 2009/03/25 20:39:47 oga Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #include <sys/buf.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
 #endif
@@ -94,7 +94,7 @@ static int ntfs_uastrcmp(struct ntfsmount *, const wchar *, size_t, const char *
 static wchar *ntfs_toupper_tab;
 #define NTFS_U28(ch)		((((ch) & 0xE0) == 0) ? '_' : (ch) & 0xFF)
 #define NTFS_TOUPPER(ch)	(ntfs_toupper_tab[(unsigned char)(ch)])
-static struct lock ntfs_toupper_lock;
+struct rwlock ntfs_toupper_lock = RWLOCK_INITIALIZER("ntfs_toupper");
 static signed int ntfs_toupper_usecount;
 
 /* support macro for ntfs_ntvattrget() */
@@ -389,7 +389,7 @@ ntfs_ntget(
 
 	ip->i_usecount++;
 
-	lockmgr(&ip->i_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&ip->i_lock);
 
 	return 0;
 }
@@ -428,7 +428,7 @@ ntfs_ntlookup(
 			*ipp = ip;
 			return (0);
 		}
-	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE | LK_SLEEPFAIL, NULL));
+	} while (rw_enter(&ntfs_hashlock, RW_WRITE | RW_SLEEPFAIL));
 
 	ip = malloc(sizeof(*ip), M_NTFSNTNODE, M_WAITOK | M_ZERO);
 	ddprintf(("ntfs_ntlookup: allocating ntnode: %d: %p\n", ino, ip));
@@ -443,7 +443,7 @@ ntfs_ntlookup(
 	VREF(ip->i_devvp);
 
 	/* init lock and lock the newborn ntnode */
-	lockinit(&ip->i_lock, PINOD, "ntnode", 0, LK_EXCLUSIVE);
+	rw_init(&ip->i_lock, "ntnode");
 #ifndef __OpenBSD__
 	ntfs_ntget(ip);
 #else
@@ -452,7 +452,7 @@ ntfs_ntlookup(
 
 	ntfs_nthashins(ip);
 
-	lockmgr(&ntfs_hashlock, LK_RELEASE, NULL);
+	rw_exit(&ntfs_hashlock);
 
 	*ipp = ip;
 
@@ -491,7 +491,7 @@ ntfs_ntput(
 #endif
 
 	if (ip->i_usecount > 0) {
-		lockmgr(&ip->i_lock, LK_RELEASE, NULL);
+		rw_exit_write(&ip->i_lock);
 		return;
 	}
 
@@ -2054,7 +2054,6 @@ void
 ntfs_toupper_init()
 {
 	ntfs_toupper_tab = (wchar *) NULL;
-	lockinit(&ntfs_toupper_lock, PVFS, "ntfs_toupper", 0, 0);
 	ntfs_toupper_usecount = 0;
 }
 
@@ -2078,7 +2077,7 @@ ntfs_toupper_use(mp, ntmp, p)
 	struct vnode *vp;
 
 	/* get exclusive access */
-	lockmgr(&ntfs_toupper_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&ntfs_toupper_lock);
 
 	/* only read the translation data from a file if it hasn't been
 	 * read already */
@@ -2102,7 +2101,7 @@ ntfs_toupper_use(mp, ntmp, p)
 
     out:
 	ntfs_toupper_usecount++;
-	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL);
+	rw_exit_write(&ntfs_toupper_lock);
 	return (error);
 }
 
@@ -2119,7 +2118,7 @@ ntfs_toupper_unuse(p)
 #endif
 {
 	/* get exclusive access */
-	lockmgr(&ntfs_toupper_lock, LK_EXCLUSIVE, NULL);
+	rw_enter_write(&ntfs_toupper_lock);
 
 	ntfs_toupper_usecount--;
 	if (ntfs_toupper_usecount == 0) {
@@ -2134,5 +2133,5 @@ ntfs_toupper_unuse(p)
 #endif
 	
 	/* release the lock */
-	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL);
+	rw_exit_write(&ntfs_toupper_lock);
 }

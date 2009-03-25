@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_ihash.c,v 1.4 2008/05/13 02:24:08 brad Exp $	*/
+/*	$OpenBSD: ntfs_ihash.c,v 1.5 2009/03/25 20:39:47 oga Exp $	*/
 /*	$NetBSD: ntfs_ihash.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
@@ -65,7 +66,7 @@ static u_long	ntfs_nthash;		/* size of hash table - 1 */
 #ifndef NULL_SIMPLELOCKS
 static struct simplelock ntfs_nthash_slock;
 #endif
-struct lock ntfs_hashlock;
+struct rwlock ntfs_hashlock = RWLOCK_INITIALIZER("ntfs_nthashlock");
 
 /*
  * Initialize inode hash table.
@@ -73,7 +74,6 @@ struct lock ntfs_hashlock;
 void
 ntfs_nthashinit()
 {
-	lockinit(&ntfs_hashlock, PINOD, "ntfs_nthashlock", 0, 0);
 	ntfs_nthashtbl = HASHINIT(desiredvnodes, M_NTFSNTHASH, M_WAITOK,
 	    &ntfs_nthash);
 	simple_lock_init(&ntfs_nthash_slock);

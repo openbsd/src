@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_conv.c,v 1.5 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: ntfs_conv.c,v 1.6 2009/03/25 20:39:47 oga Exp $	*/
 /*	$NetBSD: ntfs_conv.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*-
@@ -43,7 +43,6 @@
 #include <sys/buf.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
 #endif
