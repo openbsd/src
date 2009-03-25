@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lock.9,v 1.17 2008/06/26 05:42:08 ray Exp $
+.\"     $OpenBSD: lock.9,v 1.18 2009/03/25 01:50:50 oga Exp $
 .\"     $NetBSD: lock.9,v 1.12 2001/11/01 01:13:43 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: March 25 2009 $
 .Dt LOCK 9
 .Os
 .Sh NAME
@@ -102,13 +102,6 @@ The functions which operate on simplelocks are:
 The simplelock
 .Fa slock
 is initialised to the unlocked state.
-A statically allocated simplelock also can be initialised with the macro
-SIMPLELOCK_INITIALIZER.
-The effect is the same as the dynamic initialisation by a call to
-simple_lock_init.
-For example,
-.Pp
-.Dl struct simplelock slock = SIMPLELOCK_INITIALIZER;
 .It Fn simple_lock "slock"
 The simplelock
 .Fa slock
@@ -201,24 +194,10 @@ This feature is used before freeing a lock that is part of a piece of
 memory that is about to be freed.
 .It LK_RECURSEFAIL
 Attempt at recursive lock fails.
-.It LK_INTERLOCK
-Unlock the simplelock
-.Fa slock
-when the lock is acquired.
 .El
 .Pp
 .It Fa slock
-Simplelock interlock.
-If the flag LK_INTERLOCK is set in
-.Fa flags ,
-.Fa slock
-is a simplelock held by the caller.
-When the lock
-.Fa lock
-is acquired, the simplelock is released.
-If the flag LK_INTERLOCK is not set,
-.Fa slock
-is ignored.
+This argument exists for legacy reasons, it is now ignored.
 .El
 .It Fn lockstatus "lock"
 Determine the status of lock
