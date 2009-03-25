@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.121 2009/02/27 06:00:31 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.122 2009/03/25 09:25:42 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1672,7 +1672,21 @@ uvideo_vs_open(struct uvideo_softc *sc)
 void
 uvideo_vs_close(struct uvideo_softc *sc)
 {
+	/*
+	 * XXX
+	 * A bulk device will crash the kernel here, because in almost all
+	 * cases we close the pipe before sc->sc_vs_cur->bulk_running = 0
+	 * gets noticed in the thread loop of uvideo_vs_start_bulk_thread(),
+	 * which make it access a closed pipe.  We need to fix this
+	 * properly.
+	 */
 	sc->sc_vs_cur->bulk_running = 0;
+
+	if (sc->sc_vs_cur->pipeh) {
+		usbd_abort_pipe(sc->sc_vs_cur->pipeh);
+		usbd_close_pipe(sc->sc_vs_cur->pipeh);
+		sc->sc_vs_cur->pipeh = NULL;
+	}
 
 	/*
 	 * Some devices need time to shutdown before we switch back to
@@ -1680,12 +1694,6 @@ uvideo_vs_close(struct uvideo_softc *sc)
 	 * back in a undefined condition.
 	 */
 	usbd_delay_ms(sc->sc_udev, 100);
-
-	if (sc->sc_vs_cur->pipeh) {
-		usbd_abort_pipe(sc->sc_vs_cur->pipeh);
-		usbd_close_pipe(sc->sc_vs_cur->pipeh);
-		sc->sc_vs_cur->pipeh = NULL;
-	}
 
 	/* switch back to default interface (turns off cam LED) */
 	(void)usbd_set_interface(sc->sc_vs_cur->ifaceh, 0);
