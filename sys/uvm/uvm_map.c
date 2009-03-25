@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.108 2008/11/10 18:11:59 oga Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.109 2009/03/25 20:00:18 oga Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -85,7 +85,6 @@
 #include <sys/shm.h>
 #endif
 
-#define UVM_MAP
 #include <uvm/uvm.h>
 #undef RB_AUGMENT
 #define RB_AUGMENT(x) uvm_rb_augment(x)
@@ -1406,6 +1405,39 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	}
 	return (NULL);
 }
+
+/*
+ *   U N M A P   -   m a i n   e n t r y   p o i n t
+ */
+
+/*
+ * uvm_unmap: remove mappings from a vm_map (from "start" up to "stop")
+ *
+ * => caller must check alignment and size 
+ * => map must be unlocked (we will lock it)
+ */
+void
+uvm_unmap_p(vm_map_t map, vaddr_t start, vaddr_t end, struct proc *p)
+{
+	vm_map_entry_t dead_entries;
+	UVMHIST_FUNC("uvm_unmap"); UVMHIST_CALLED(maphist);
+
+	UVMHIST_LOG(maphist, "  (map=%p, start=0x%lx, end=0x%lx)",
+	    map, start, end, 0);
+	/*
+	 * work now done by helper functions.   wipe the pmap's and then
+	 * detach from the dead entries...
+	 */
+	vm_map_lock(map);
+	uvm_unmap_remove(map, start, end, &dead_entries, p);
+	vm_map_unlock(map);
+
+	if (dead_entries != NULL)
+		uvm_unmap_detach(dead_entries, 0);
+
+	UVMHIST_LOG(maphist, "<- done", 0,0,0,0);
+}
+
 
 /*
  *   U N M A P   -   m a i n   h e l p e r   f u n c t i o n s
@@ -3333,6 +3365,87 @@ uvmspace_free(struct vmspace *vm)
 		pool_put(&uvm_vmspace_pool, vm);
 	}
 	UVMHIST_LOG(maphist,"<- done", 0,0,0,0);
+}
+
+/*
+ * uvm_map_create: create map
+ */
+vm_map_t
+uvm_map_create(pmap_t pmap, vaddr_t min, vaddr_t max, int flags)
+{
+	vm_map_t result;
+
+	result = malloc(sizeof(struct vm_map), M_VMMAP, M_WAITOK);
+	uvm_map_setup(result, min, max, flags);
+	result->pmap = pmap;
+	return(result);
+}
+
+/*
+ * uvm_map_setup: init map
+ *
+ * => map must not be in service yet.
+ */
+void
+uvm_map_setup(vm_map_t map, vaddr_t min, vaddr_t max, int flags)
+{
+
+	RB_INIT(&map->rbhead);
+	map->header.next = map->header.prev = &map->header;
+	map->nentries = 0;
+	map->size = 0;
+	map->ref_count = 1;
+	map->min_offset = min;
+	map->max_offset = max;
+	map->flags = flags;
+	map->first_free = &map->header;
+	map->hint = &map->header;
+	map->timestamp = 0;
+	rw_init(&map->lock, "vmmaplk");
+	simple_lock_init(&map->ref_lock);
+	simple_lock_init(&map->hint_lock);
+}
+
+
+
+/*
+ * uvm_map_reference: add reference to a map
+ *
+ * => map need not be locked (we use ref_lock).
+ */
+void
+uvm_map_reference(vm_map_t map)
+{
+	simple_lock(&map->ref_lock);
+	map->ref_count++; 
+	simple_unlock(&map->ref_lock);
+}
+
+/*
+ * uvm_map_deallocate: drop reference to a map
+ *
+ * => caller must not lock map
+ * => we will zap map if ref count goes to zero
+ */
+void
+uvm_map_deallocate(vm_map_t map)
+{
+	int c;
+
+	simple_lock(&map->ref_lock);
+	c = --map->ref_count;
+	simple_unlock(&map->ref_lock);
+	if (c > 0) {
+		return;
+	}
+
+	/*
+	 * all references gone.   unmap and free.
+	 */
+
+	uvm_unmap(map, map->min_offset, map->max_offset);
+	pmap_destroy(map->pmap);
+	free(map, M_VMMAP);
 }
 
 /*

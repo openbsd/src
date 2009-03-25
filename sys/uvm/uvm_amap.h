@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.h,v 1.17 2007/06/18 21:51:15 pedro Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.18 2009/03/25 20:00:18 oga Exp $	*/
 /*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -66,23 +66,12 @@
 struct vm_amap;
 
 /*
- * handle inline options... we allow amap ops to be inline, but we also
- * provide a hook to turn this off.  macros can also be used.
- */
-
-#ifdef UVM_AMAP_INLINE			/* defined/undef'd in uvm_amap.c */
-#define AMAP_INLINE static __inline	/* inline enabled */
-#else 
-#define AMAP_INLINE			/* inline disabled */
-#endif /* UVM_AMAP_INLINE */
-
-
-/*
  * prototypes for the amap interface 
  */
 
-AMAP_INLINE				/* add an anon to an amap */
-void		amap_add(struct vm_aref *, vaddr_t, struct vm_anon *, boolean_t);
+					/* add an anon to an amap */
+void		amap_add(struct vm_aref *, vaddr_t, struct vm_anon *,
+		    boolean_t);
 					/* allocate a new amap */
 struct vm_amap	*amap_alloc(vaddr_t, vaddr_t, int);
 					/* clear amap needs-copy flag */
@@ -98,11 +87,11 @@ int		amap_flags(struct vm_amap *);
 void		amap_free(struct vm_amap *);
 					/* init amap module (at boot time) */
 void		amap_init(void);
-AMAP_INLINE				/* lookup an anon @ offset in amap */
+					/* lookup an anon @ offset in amap */
 struct vm_anon	*amap_lookup(struct vm_aref *, vaddr_t);
-AMAP_INLINE				/* lookup multiple anons */
+					/* lookup multiple anons */
 void		amap_lookups(struct vm_aref *, vaddr_t, struct vm_anon **, int);
-AMAP_INLINE				/* add a reference to an amap */
+					/* add a reference to an amap */
 void		amap_ref(struct vm_amap *, vaddr_t, vsize_t, int);
 					/* get number of references of amap */
 int		amap_refs(struct vm_amap *);
@@ -110,9 +99,9 @@ int		amap_refs(struct vm_amap *);
 void		amap_share_protect(vm_map_entry_t, vm_prot_t);
 					/* split reference to amap into two */
 void		amap_splitref(struct vm_aref *, struct vm_aref *, vaddr_t);
-AMAP_INLINE				/* remove an anon from an amap */
+					/* remove an anon from an amap */
 void		amap_unadd(struct vm_aref *, vaddr_t);
-AMAP_INLINE				/* drop reference to an amap */
+					/* drop reference to an amap */
 void		amap_unref(struct vm_amap *, vaddr_t, vsize_t, int);
 					/* remove all anons from amap */
 void		amap_wipeout(struct vm_amap *);

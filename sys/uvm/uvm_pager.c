@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.47 2009/03/20 15:19:04 oga Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.48 2009/03/25 20:00:18 oga Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
  * uvm_pager.c: generic functions used to assist the pagers.
  */
 
-#define UVM_PAGER
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -88,10 +87,12 @@ struct	uvm_pseg psegs[PSEG_NUMSEGS];
 #define UVM_PSEG_EMPTY(pseg)	((pseg)->use == 0)
 #define UVM_PSEG_INUSE(pseg,id)	(((pseg)->use & (1 << (id))) != 0)
 
-void	uvm_pseg_init(struct uvm_pseg *);
-void	uvm_pseg_destroy(struct uvm_pseg *);
-vaddr_t	uvm_pseg_get(int);
-void	uvm_pseg_release(vaddr_t);
+void		uvm_pseg_init(struct uvm_pseg *);
+void		uvm_pseg_destroy(struct uvm_pseg *);
+vaddr_t		uvm_pseg_get(int);
+void		uvm_pseg_release(vaddr_t);
+
+struct vm_page	*uvm_pageratop(vaddr_t);
 
 /*
  * uvm_pager_init: init pagers (at boot time)
@@ -344,11 +345,8 @@ uvm_pagermapout(vaddr_t kva, int npages)
  */
 
 struct vm_page **
-uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
-	struct uvm_object *uobj;	/* IN */
-	struct vm_page **pps, *center;  /* IN/OUT, IN */
-	int *npages, flags;		/* IN/OUT, IN */
-	voff_t mlo, mhi;		/* IN (if !PGO_ALLPAGES) */
+uvm_mk_pcluster(struct uvm_object *uobj, struct vm_page **pps, int *npages,
+    struct vm_page *center, int flags, voff_t mlo, voff_t mhi)
 {
 	struct vm_page **ppsp, *pclust;
 	voff_t lo, hi, curoff;
@@ -504,12 +502,9 @@ uvm_mk_pcluster(uobj, pps, npages, center, flags, mlo, mhi)
  */
 
 int
-uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
-	struct uvm_object *uobj;	/* IN */
-	struct vm_page *pg, ***ppsp_ptr;/* IN, IN/OUT */
-	int *npages;			/* IN/OUT */
-	int flags;			/* IN */
-	voff_t start, stop;		/* IN, IN */
+uvm_pager_put(struct uvm_object *uobj, struct vm_page *pg,
+    struct vm_page ***ppsp_ptr, int *npages, int flags,
+    voff_t start, voff_t stop)
 {
 	int result;
 	daddr64_t swblk;
@@ -705,11 +700,8 @@ ReTry:
  */
 
 void
-uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags)
-	struct uvm_object *uobj;	/* IN */
-	struct vm_page *pg, **ppsp;	/* IN, IN/OUT */
-	int *npages;			/* IN/OUT */
-	int flags;
+uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
+    struct vm_page **ppsp, int *npages, int flags)
 {
 	int lcv;
 	boolean_t obj_is_alive; 
@@ -828,8 +820,7 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags)
  */
 
 void
-uvm_aio_biodone1(bp)
-	struct buf *bp;
+uvm_aio_biodone1(struct buf *bp)
 {
 	struct buf *mbp = bp->b_private;
 
@@ -856,8 +847,7 @@ uvm_aio_biodone1(bp)
  */
 
 void
-uvm_aio_biodone(bp)
-	struct buf *bp;
+uvm_aio_biodone(struct buf *bp)
 {
 	splassert(IPL_BIO);
 
@@ -876,8 +866,7 @@ uvm_aio_biodone(bp)
  */
 
 void
-uvm_aio_aiodone(bp)
-	struct buf *bp;
+uvm_aio_aiodone(struct buf *bp)
 {
 	int npages = bp->b_bufsize >> PAGE_SHIFT;
 	struct vm_page *pg, *pgs[MAXPHYS >> PAGE_SHIFT];
@@ -976,3 +965,21 @@ freed:
 	}
 	pool_put(&bufpool, bp);
 }
+
+/*
+ * uvm_pageratop: convert KVAs in the pager map back to their page
+ * structures.
+ */
+struct vm_page *
+uvm_pageratop(vaddr_t kva)
+{
+	struct vm_page *pg;
+	paddr_t pa;
+	boolean_t rv;
+ 
+	rv = pmap_extract(pmap_kernel(), kva, &pa);
+	KASSERT(rv);
+	pg = PHYS_TO_VM_PAGE(pa);
+	KASSERT(pg != NULL);
+	return (pg);
+} 

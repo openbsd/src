@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.69 2009/03/24 16:29:42 oga Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.70 2009/03/25 20:00:18 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -71,7 +71,6 @@
  * uvm_page.c: page ops.
  */
 
-#define UVM_PAGE                /* pull in uvm_page.h functions */
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -1495,3 +1494,187 @@ PHYS_TO_VM_PAGE(paddr_t pa)
 	return ((psi == -1) ? NULL : &vm_physmem[psi].pgs[off]);
 }
 
+/*
+ * uvm_pagelookup: look up a page
+ *
+ * => caller should lock object to keep someone from pulling the page
+ *	out from under it
+ */
+struct vm_page *
+uvm_pagelookup(struct uvm_object *obj, voff_t off)
+{
+	struct vm_page *pg;
+	struct pglist *buck;
+	int s;
+
+	buck = &uvm.page_hash[uvm_pagehash(obj,off)];
+
+	s = splvm();
+	simple_lock(&uvm.hashlock);
+	TAILQ_FOREACH(pg, buck, hashq) {
+		if (pg->uobject == obj && pg->offset == off) {
+			break;
+		}
+	}
+	simple_unlock(&uvm.hashlock);
+	splx(s);
+	return(pg);
+}
+
+/*
+ * uvm_pagewire: wire the page, thus removing it from the daemon's grasp
+ *
+ * => caller must lock page queues
+ */
+void
+uvm_pagewire(struct vm_page *pg)
+{
+	if (pg->wire_count == 0) {
+		if (pg->pg_flags & PQ_ACTIVE) {
+			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
+			atomic_clearbits_int(&pg->pg_flags, PQ_ACTIVE);
+			uvmexp.active--;
+		}
+		if (pg->pg_flags & PQ_INACTIVE) {
+			if (pg->pg_flags & PQ_SWAPBACKED)
+				TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
+			else
+				TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
+			atomic_clearbits_int(&pg->pg_flags, PQ_INACTIVE);
+			uvmexp.inactive--;
+		}
+		uvmexp.wired++;
+	}
+	pg->wire_count++;
+}
+
+/*
+ * uvm_pageunwire: unwire the page.   
+ *
+ * => activate if wire count goes to zero.
+ * => caller must lock page queues
+ */
+void
+uvm_pageunwire(struct vm_page *pg)
+{
+	pg->wire_count--;
+	if (pg->wire_count == 0) {
+		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
+		uvmexp.active++;
+		atomic_setbits_int(&pg->pg_flags, PQ_ACTIVE);
+		uvmexp.wired--;
+	}
+}
+
+/*
+ * uvm_pagedeactivate: deactivate page -- no pmaps have access to page
+ *
+ * => caller must lock page queues
+ * => caller must check to make sure page is not wired
+ * => object that page belongs to must be locked (so we can adjust pg->flags)
+ */
+void
+uvm_pagedeactivate(struct vm_page *pg)
+{
+	if (pg->pg_flags & PQ_ACTIVE) {
+		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
+		atomic_clearbits_int(&pg->pg_flags, PQ_ACTIVE);
+		uvmexp.active--;
+	}
+	if ((pg->pg_flags & PQ_INACTIVE) == 0) {
+		KASSERT(pg->wire_count == 0);
+		if (pg->pg_flags & PQ_SWAPBACKED)
+			TAILQ_INSERT_TAIL(&uvm.page_inactive_swp, pg, pageq);
+		else
+			TAILQ_INSERT_TAIL(&uvm.page_inactive_obj, pg, pageq);
+		atomic_setbits_int(&pg->pg_flags, PQ_INACTIVE);
+		uvmexp.inactive++;
+		pmap_clear_reference(pg);
+		/*
+		 * update the "clean" bit.  this isn't 100%
+		 * accurate, and doesn't have to be.  we'll
+		 * re-sync it after we zap all mappings when
+		 * scanning the inactive list.
+		 */
+		if ((pg->pg_flags & PG_CLEAN) != 0 &&
+		    pmap_is_modified(pg))
+			atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
+	}
+}
+
+/*
+ * uvm_pageactivate: activate page
+ *
+ * => caller must lock page queues
+ */
+void
+uvm_pageactivate(struct vm_page *pg)
+{
+	if (pg->pg_flags & PQ_INACTIVE) {
+		if (pg->pg_flags & PQ_SWAPBACKED)
+			TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
+		else
+			TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
+		atomic_clearbits_int(&pg->pg_flags, PQ_INACTIVE);
+		uvmexp.inactive--;
+	}
+	if (pg->wire_count == 0) {
+
+		/*
+		 * if page is already active, remove it from list so we
+		 * can put it at tail.  if it wasn't active, then mark
+		 * it active and bump active count
+		 */
+		if (pg->pg_flags & PQ_ACTIVE)
+			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
+		else {
+			atomic_setbits_int(&pg->pg_flags, PQ_ACTIVE);
+			uvmexp.active++;
+		}
+
+		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
+	}
+}
+
+/*
+ * uvm_pagezero: zero fill a page
+ *
+ * => if page is part of an object then the object should be locked
+ *	to protect pg->flags.
+ */
+void
+uvm_pagezero(struct vm_page *pg)
+{
+	atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
+	pmap_zero_page(pg);
+}
+
+/*
+ * uvm_pagecopy: copy a page
+ *
+ * => if page is part of an object then the object should be locked
+ *	to protect pg->flags.
+ */
+void
+uvm_pagecopy(struct vm_page *src, struct vm_page *dst)
+{
+	atomic_clearbits_int(&dst->pg_flags, PG_CLEAN);
+	pmap_copy_page(src, dst);
+}
+
+/*
+ * uvm_page_lookup_freelist: look up the free list for the specified page
+ */
+int
+uvm_page_lookup_freelist(struct vm_page *pg)
+{
+#if VM_PHYSSEG_MAX == 1
+	return (vm_physmem[0].free_list);
+#else
+	int lcv;
+
+	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
+	KASSERT(lcv != -1);
+	return (vm_physmem[lcv].free_list);
+#endif
+}

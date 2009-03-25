@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.39 2008/07/18 16:40:17 kurt Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.40 2009/03/25 20:00:18 oga Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /* 
@@ -259,16 +259,6 @@ struct vm_map_intrsafe {
 };
 
 /*
- * handle inline options
- */
-
-#ifdef UVM_MAP_INLINE
-#define MAP_INLINE static __inline
-#else 
-#define MAP_INLINE /* nothing */
-#endif /* UVM_MAP_INLINE */
-
-/*
  * globals:
  */
 
@@ -282,38 +272,34 @@ extern vaddr_t	uvm_maxkaddr;
  * protos: the following prototypes define the interface to vm_map
  */
 
-MAP_INLINE
 void		uvm_map_deallocate(vm_map_t);
 
 int		uvm_map_clean(vm_map_t, vaddr_t, vaddr_t, int);
 void		uvm_map_clip_start(vm_map_t, vm_map_entry_t, vaddr_t);
 void		uvm_map_clip_end(vm_map_t, vm_map_entry_t, vaddr_t);
-MAP_INLINE
 vm_map_t	uvm_map_create(pmap_t, vaddr_t, vaddr_t, int);
 int		uvm_map_extract(vm_map_t, vaddr_t, vsize_t, 
-			vm_map_t, vaddr_t *, int);
+		    vm_map_t, vaddr_t *, int);
 vm_map_entry_t	uvm_map_findspace(vm_map_t, vaddr_t, vsize_t, vaddr_t *,
-			struct uvm_object *, voff_t, vsize_t, int);
+		    struct uvm_object *, voff_t, vsize_t, int);
 vaddr_t		uvm_map_pie(vaddr_t);
 vaddr_t		uvm_map_hint(struct proc *, vm_prot_t);
 int		uvm_map_inherit(vm_map_t, vaddr_t, vaddr_t, vm_inherit_t);
 int		uvm_map_advice(vm_map_t, vaddr_t, vaddr_t, int);
 void		uvm_map_init(void);
 boolean_t	uvm_map_lookup_entry(vm_map_t, vaddr_t, vm_map_entry_t *);
-MAP_INLINE
 void		uvm_map_reference(vm_map_t);
 int		uvm_map_replace(vm_map_t, vaddr_t, vaddr_t,
-			vm_map_entry_t, int);
+		    vm_map_entry_t, int);
 int		uvm_map_reserve(vm_map_t, vsize_t, vaddr_t, vsize_t,
-			vaddr_t *);
+		    vaddr_t *);
 void		uvm_map_setup(vm_map_t, vaddr_t, vaddr_t, int);
 int		uvm_map_submap(vm_map_t, vaddr_t, vaddr_t, vm_map_t);
 #define		uvm_unmap(_m, _s, _e) uvm_unmap_p(_m, _s, _e, 0)
-MAP_INLINE
 void		uvm_unmap_p(vm_map_t, vaddr_t, vaddr_t, struct proc *);
 void		uvm_unmap_detach(vm_map_entry_t,int);
-void		uvm_unmap_remove(vm_map_t, vaddr_t, vaddr_t,
-				      vm_map_entry_t *, struct proc *);
+void		uvm_unmap_remove(vm_map_t, vaddr_t, vaddr_t, vm_map_entry_t *,
+		    struct proc *);
 
 #endif /* _KERNEL */
 

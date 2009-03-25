@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.h,v 1.21 2008/11/24 19:55:33 thib Exp $	*/
+/*	$OpenBSD: uvm_pager.h,v 1.22 2009/03/25 20:00:18 oga Exp $	*/
 /*	$NetBSD: uvm_pager.h,v 1.20 2000/11/27 08:40:05 chs Exp $	*/
 
 /*
@@ -136,34 +136,21 @@ struct uvm_pagerops {
 #ifdef _KERNEL
 
 /*
- * handle inline options
- */
-
-#ifdef UVM_PAGER_INLINE
-#define PAGER_INLINE static __inline
-#else 
-#define PAGER_INLINE /* nothing */
-#endif /* UVM_PAGER_INLINE */
-
-/*
  * prototypes
  */
 
-void		uvm_pager_dropcluster(struct uvm_object *, 
-					struct vm_page *, struct vm_page **, 
-					int *, int);
+void		uvm_pager_dropcluster(struct uvm_object *, struct vm_page *,
+		    struct vm_page **, int *, int);
 void		uvm_pager_init(void);
 int		uvm_pager_put(struct uvm_object *, struct vm_page *, 
-				   struct vm_page ***, int *, int, 
-				   voff_t, voff_t);
+		    struct vm_page ***, int *, int, voff_t, voff_t);
 
-PAGER_INLINE struct vm_page *uvm_pageratop(vaddr_t);
 
 vaddr_t		uvm_pagermapin(struct vm_page **, int, int);
 void		uvm_pagermapout(vaddr_t, int);
 struct vm_page **uvm_mk_pcluster(struct uvm_object *, struct vm_page **,
-				       int *, struct vm_page *, int, 
-				       voff_t, voff_t);
+		    int *, struct vm_page *, int, voff_t, voff_t);
+
 /* Flags to uvm_pagermapin() */
 #define	UVMPAGER_MAPIN_WAITOK	0x01	/* it's okay to wait */
 #define	UVMPAGER_MAPIN_READ	0x02	/* host <- device */

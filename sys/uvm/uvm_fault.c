@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.51 2009/03/20 15:19:04 oga Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.52 2009/03/25 20:00:18 oga Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -177,6 +177,7 @@ static struct uvm_advice uvmadvice[] = {
 
 static void uvmfault_amapcopy(struct uvm_faultinfo *);
 static __inline void uvmfault_anonflush(struct vm_anon **, int);
+void	uvmfault_unlockmaps(struct uvm_faultinfo *, boolean_t);
 
 /*
  * inline functions
@@ -1859,4 +1860,163 @@ uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 	}
 
 	uvm_unlock_pageq();
+}
+
+/*
+ * uvmfault_unlockmaps: unlock the maps
+ */
+void
+uvmfault_unlockmaps(struct uvm_faultinfo *ufi, boolean_t write_locked)
+{
+	/*
+	 * ufi can be NULL when this isn't really a fault,
+	 * but merely paging in anon data.
+	 */
+
+	if (ufi == NULL) {
+		return;
+	}
+
+	if (write_locked) {
+		vm_map_unlock(ufi->map);
+	} else {
+		vm_map_unlock_read(ufi->map);
+	}
+}
+
+/*
+ * uvmfault_unlockall: unlock everything passed in.
+ *
+ * => maps must be read-locked (not write-locked).
+ */
+void
+uvmfault_unlockall(struct uvm_faultinfo *ufi, struct vm_amap *amap,
+    struct uvm_object *uobj, struct vm_anon *anon)
+{
+
+	if (anon)
+		simple_unlock(&anon->an_lock);
+	if (uobj)
+		simple_unlock(&uobj->vmobjlock);
+	uvmfault_unlockmaps(ufi, FALSE);
+}
+
+/*
+ * uvmfault_lookup: lookup a virtual address in a map
+ *
+ * => caller must provide a uvm_faultinfo structure with the IN
+ *	params properly filled in
+ * => we will lookup the map entry (handling submaps) as we go
+ * => if the lookup is a success we will return with the maps locked
+ * => if "write_lock" is TRUE, we write_lock the map, otherwise we only
+ *	get a read lock.
+ * => note that submaps can only appear in the kernel and they are 
+ *	required to use the same virtual addresses as the map they
+ *	are referenced by (thus address translation between the main
+ *	map and the submap is unnecessary).
+ */
+
+boolean_t
+uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
+{
+	vm_map_t tmpmap;
+
+	/*
+	 * init ufi values for lookup.
+	 */
+
+	ufi->map = ufi->orig_map;
+	ufi->size = ufi->orig_size;
+
+	/*
+	 * keep going down levels until we are done.   note that there can
+	 * only be two levels so we won't loop very long.
+	 */
+
+	while (1) {
+
+		/*
+		 * lock map
+		 */
+		if (write_lock) {
+			vm_map_lock(ufi->map);
+		} else {
+			vm_map_lock_read(ufi->map);
+		}
+
+		/*
+		 * lookup
+		 */
+		if (!uvm_map_lookup_entry(ufi->map, ufi->orig_rvaddr, 
+								&ufi->entry)) {
+			uvmfault_unlockmaps(ufi, write_lock);
+			return(FALSE);
+		}
+
+		/*
+		 * reduce size if necessary
+		 */
+		if (ufi->entry->end - ufi->orig_rvaddr < ufi->size)
+			ufi->size = ufi->entry->end - ufi->orig_rvaddr;
+
+		/*
+		 * submap?    replace map with the submap and lookup again.
+		 * note: VAs in submaps must match VAs in main map.
+		 */
+		if (UVM_ET_ISSUBMAP(ufi->entry)) {
+			tmpmap = ufi->entry->object.sub_map;
+			if (write_lock) {
+				vm_map_unlock(ufi->map);
+			} else {
+				vm_map_unlock_read(ufi->map);
+			}
+			ufi->map = tmpmap;
+			continue;
+		}
+
+		/*
+		 * got it!
+		 */
+
+		ufi->mapv = ufi->map->timestamp;
+		return(TRUE);
+
+	}	/* while loop */
+
+	/*NOTREACHED*/
+}
+
+/*
+ * uvmfault_relock: attempt to relock the same version of the map
+ *
+ * => fault data structures should be unlocked before calling.
+ * => if a success (TRUE) maps will be locked after call.
+ */
+boolean_t
+uvmfault_relock(struct uvm_faultinfo *ufi)
+{
+	/*
+	 * ufi can be NULL when this isn't really a fault,
+	 * but merely paging in anon data.
+	 */
+
+	if (ufi == NULL) {
+		return TRUE;
+	}
+
+	uvmexp.fltrelck++;
+
+	/*
+	 * relock map.   fail if version mismatch (in which case nothing 
+	 * gets locked).
+	 */
+
+	vm_map_lock_read(ufi->map);
+	if (ufi->mapv != ufi->map->timestamp) {
+		vm_map_unlock_read(ufi->map);
+		return(FALSE);
+	}
+
+	uvmexp.fltrelckok++;
+	return(TRUE);		/* got it! */
 }
