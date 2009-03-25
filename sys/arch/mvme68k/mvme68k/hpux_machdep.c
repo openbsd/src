@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.16 2008/05/01 15:30:30 miod Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.17 2009/03/25 22:42:58 weingart Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.9 1997/03/16 10:00:45 thorpej Exp $	*/
 
 /*
@@ -670,7 +670,7 @@ hpux_sys_sigreturn(p, v, retval)
 	 */
 	if (flags & HSS_USERREGS)
 		bcopy((caddr_t)tstate.hss_frame.f_regs,
-		    (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*NBPW);
+		    (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*sizeof(int));
 
 	/*
 	 * Restore long stack frames.  Note that we do not copy

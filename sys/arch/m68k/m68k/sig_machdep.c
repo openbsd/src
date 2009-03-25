@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.19 2007/11/02 19:18:54 martin Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.20 2009/03/25 22:42:58 weingart Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
 
 /*
@@ -362,7 +362,7 @@ sys_sigreturn(p, v, retval)
 	 */
 	if (flags & SS_USERREGS)
 		bcopy((caddr_t)tstate.ss_frame.f_regs,
-		      (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*NBPW);
+		      (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*sizeof(int));
 	/*
 	 * Restore long stack frames.  Note that we do not copy
 	 * back the saved SR or PC, they were picked up above from
