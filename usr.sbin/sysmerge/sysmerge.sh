@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.29 2009/02/17 16:48:11 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.30 2009/03/25 13:20:02 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -9,7 +9,7 @@
 # Martti Kuparinen <martti@NetBSD.org>
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
-# Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
+# Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -47,7 +47,7 @@ error_rm_wrkdir() {
 }
 
 usage() {
-	echo "usage: ${0##*/} [-ab] [-s src | etcXX.tgz] [-x xetcXX.tgz]" >&2
+	echo "usage: ${0##*/} [-ab] [-S etcXX.tgz] [-s src | etcXX.tgz] [-X xetcXX.tgz] [-x xetcXX.tgz]" >&2
 }
 
 trap "clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
@@ -76,29 +76,72 @@ do_pre() {
 		fi
 	fi
 
+	if [ "${OTGZ}" ]; then
+		TGZV=`echo ${TGZ} | sed -e 's,^.*/,,' -e 's,etc,,' -e 's,.tgz,,'`
+		OTGZV=`echo ${OTGZ} | sed -e 's,^.*/,,' -e 's,etc,,' -e 's,.tgz,,'`
+		if [ -z "${TGZ}" ]; then
+			echo " *** ERROR: please specify a valid path to the new etcXX.tgz"
+			error_rm_wrkdir
+		elif [ `md5 -q ${OTGZ}` = `md5 -q ${TGZ}` ]; then
+			echo " *** ERROR: old and new etcXX.tgz are identical"
+			error_rm_wrkdir
+		elif [ "${OTGZV}" -gt "${TGZV}" ]; then
+			echo " *** ERROR: old etc${OTGZV}.tgz version is higher than new etc${TGZV}.tgz"
+			error_rm_wrkdir
+		fi
+	fi
+	
+	if [ "${OXTGZ}" ]; then
+		XTGZV=`echo ${XTGZ} | sed -e 's,^.*/,,' -e 's,etc,,' -e 's,.tgz,,'`
+		OXTGZV=`echo ${OXTGZ} | sed -e 's,^.*/,,' -e 's,etc,,' -e 's,.tgz,,'`
+		if [ -z "${XTGZ}" ]; then
+			echo " *** ERROR: please specify a valid path to the new xetcXX.tgz"
+			error_rm_wrkdir
+		elif [ `md5 -q ${OXTGZ}` = `md5 -q ${XTGZ}` ]; then
+			echo " *** ERROR: old and new xetcXX.tgz are identical"
+			error_rm_wrkdir
+		elif [ "${OXTGZV}" -gt "${XTGZV}" ]; then
+			echo " *** ERROR: old xetc${OXTGZV}.tgz version is higher than new xetc${XTGZV}.tgz"
+			error_rm_wrkdir
+		fi
+	fi
+
 	TEMPROOT="${WRKDIR}/temproot"
 	BKPDIR="${WRKDIR}/backups"
 
 	if [ -z "${BATCHMODE}" -a -z "${AUTOMODE}" ]; then
 		echo "\n===> Running ${0##*/} with the following settings:\n"
-		if [ -n "${TGZURL}" ]; then
-			echo " etc source:   ${TGZURL}"
-			echo "               (fetched in ${TGZ})"
-		elif [ -n "${TGZ}" ]; then
-			echo " etc source:   ${TGZ}"
-		elif [ -n "${SRCDIR}" ]; then
-			echo " etc source:   ${SRCDIR}"
+		if [ "${TGZURL}" ]; then
+			echo " etc source:          ${TGZURL}"
+			echo "                      (fetched in ${TGZ})"
+		elif [ "${TGZ}" ]; then
+			echo " etc source:          ${TGZ}"
+		elif [ "${SRCDIR}" ]; then
+			echo " etc source:          ${SRCDIR}"
 		fi
-		if [ -n "${XTGZURL}" ]; then
-			echo " xetc source:  ${XTGZURL}"
-			echo "               (fetched in ${XTGZ})"
+		if [ "${OTGZURL}" ]; then
+			echo " old etc source:      ${OTGZURL}"
+			echo "                      (fetched in ${OTGZ})"
 		else
-			[ -n "${XTGZ}" ] && echo " xetc source:  ${XTGZ}"
+			[ "${OTGZ}" ] && echo " old etc source:      ${OTGZ}"
+		fi
+		if [ "${OTGZ}" -o "${OXTGZ}" ]; then echo ""; fi
+		if [ "${XTGZURL}" ]; then
+			echo " xetc source:         ${XTGZURL}"
+			echo "                      (fetched in ${XTGZ})"
+		else
+			[ "${XTGZ}" ] && echo " xetc source:         ${XTGZ}"
+		fi
+		if [ "${OXTGZURL}" ]; then
+			echo " old xetc source:     ${OXTGZURL}"
+			echo "                      (fetched in ${OXTGZ})"
+		else
+			[ "${OXTGZ}" ] && echo " old xetc source:     ${OXTGZ}"
 		fi
 		echo ""
-		echo " base work directory:  ${WRKDIR}"
-		echo " temp root directory:  ${TEMPROOT}"
-		echo " backup directory:     ${BKPDIR}"
+		echo " base work directory: ${WRKDIR}"
+		echo " temp root directory: ${TEMPROOT}"
+		echo " backup directory:    ${BKPDIR}"
 		echo ""
 		echo -n "Continue? (y|[n]) "
 		read ANSWER
@@ -130,6 +173,21 @@ do_populate() {
 		done
 	fi
 
+	if [ "${OTGZ}" -o "${OXTGZ}" ]; then
+		OTEMPROOT="${WRKDIR}/.otemproot"
+		mkdir -p ${OTEMPROOT}
+		for i in ${OTGZ} ${OXTGZ}; do
+			tar -xzphf ${i} -C ${OTEMPROOT};
+			tar -tzf ${i} >> ${WRKDIR}/olist;
+		done
+		for i in ${TGZ} ${XTGZ}; do
+			tar -tzf ${i} >> ${WRKDIR}/nlist;
+		done
+		diff -C 0 ${WRKDIR}/olist ${WRKDIR}/nlist | grep -E '^- .' \
+			| sed -e 's,^- .,,g' > ${WRKDIR}/obsolete_files
+		rm -f ${WRKDIR}/olist ${WRKDIR}/nlist
+	fi
+
 	# files we don't want/need to deal with
 	IGNORE_FILES="/etc/*.db /etc/mail/*.db /etc/passwd /etc/motd /etc/myname /var/mail/root"
 	CF_FILES="/etc/mail/localhost.cf /etc/mail/sendmail.cf /etc/mail/submit.cf"
@@ -156,7 +214,10 @@ do_install_and_rm() {
 		cp ${5}/${4##*/} ${BKPDIR}/${4%/*}
 	fi
 
-	install -m "${1}" -o "${2}" -g "${3}" "${4}" "${5}"
+	if ! install -m "${1}" -o "${2}" -g "${3}" "${4}" "${5}" 2> /dev/null; then
+		rm -f ${BKPDIR}/${4%/*}/${4##*/}
+		return 1
+	fi
 	rm -f "${4}"
 }
 
@@ -171,11 +232,11 @@ mm_install() {
 	DIR_MODE=`stat -f "%OMp%OLp" "${TEMPROOT}/${INSTDIR}"`
 	eval `stat -f "FILE_MODE=%OMp%OLp FILE_OWN=%Su FILE_GRP=%Sg" ${1}`
 
-	if [ -n "${DESTDIR}${INSTDIR}" -a ! -d "${DESTDIR}${INSTDIR}" ]; then
+	if [ "${DESTDIR}${INSTDIR}" -a ! -d "${DESTDIR}${INSTDIR}" ]; then
 		install -d -o root -g wheel -m "${DIR_MODE}" "${DESTDIR}${INSTDIR}"
 	fi
 
-	do_install_and_rm "${FILE_MODE}" "${FILE_OWN}" "${FILE_GRP}" "${1}" "${DESTDIR}${INSTDIR}"
+	do_install_and_rm "${FILE_MODE}" "${FILE_OWN}" "${FILE_GRP}" "${1}" "${DESTDIR}${INSTDIR}" || return
 
 	case "${1#.}" in
 	/dev/MAKEDEV)
@@ -283,13 +344,27 @@ diff_loop() {
 			echo "\n========================================================================\n"
 		fi
 		if [ -f "${DESTDIR}${COMPFILE#.}" -a -f "${COMPFILE}" ]; then
+			# if current != new and current = old, auto-install new
+			if [ "${OTGZ}" -o "${OXTGZ}" ]; then
+				if diff -q "${DESTDIR}${COMPFILE#.}" "${OTEMPROOT}${COMPFILE#.}" > /dev/null 2>&1; then
+					echo "===> ${COMPFILE} has not been modified since previous release/snapshot,"
+					echo "     automatically installing new version"
+					if mm_install "${COMPFILE}"; then
+						echo "===> ${COMPFILE} installed successfully"
+						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
+					else
+						echo " *** WARNING: Problem installing ${COMPFILE}, it will remain to merge by hand"
+					fi
+					return
+				fi
+			fi
 			if [ "${HANDLE_COMPFILE}" = "v" ]; then
 				(
 					echo "===> Displaying differences between ${COMPFILE} and installed version:"
 					echo ""
 					diff -u "${DESTDIR}${COMPFILE#.}" "${COMPFILE}"
 				) | ${PAGER}
-			echo ""
+				echo ""
 			fi
 		else
 			echo "===> ${COMPFILE} was not found on the target system"
@@ -404,6 +479,9 @@ do_compare() {
 			# make sure files are different; if not, delete the one in temproot
 			if diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" > /dev/null 2>&1; then
 				rm "${COMPFILE}"
+			# delete file in temproot if it has not changed since last release
+			elif [ "${OTGZ}" -o "${OXTGZ}" ] && diff -q "${COMPFILE}" "${OTEMPROOT}${COMPFILE#.}" > /dev/null 2>&1; then
+				rm "${COMPFILE}"
 			# xetcXX.tgz contains binary files; set IS_BINFILE to disable sdiff
 			elif diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" | grep "Binary" > /dev/null 2>&1; then
 				IS_BINFILE=1
@@ -455,6 +533,7 @@ do_post() {
 	fi
 
 	clean_src
+	rm -rf ${OTEMPROOT}
 
 	echo "===> Making sure your directory hierarchy has correct perms, running mtree..."
 	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U 1> /dev/null
@@ -463,9 +542,14 @@ do_post() {
 	if [ "${FILES_IN_WRKDIR}" ]; then
 		FILES_IN_TEMPROOT=`find ${TEMPROOT} -type f -size +0 2>/dev/null`
 		FILES_IN_BKPDIR=`find ${BKPDIR} -type f -size +0 2>/dev/null`
+		OBSOLETE_FILES=`stat -f %z ${WRKDIR}/obsolete_files 2> /dev/null`
 		if [ "${AUTO_INSTALLED_FILES}" ]; then
 			echo "===> Automatically installed file(s) listed in"
 			echo "     ${WRKDIR}/auto_installed_files"
+		fi
+		if [ "${OBSOLETE_FILES}" -ne 0 ]; then
+			echo "===> File(s) removed from previous set (maybe obsolete) listed in"
+			echo "     ${WRKDIR}/obsolete_files"
 		fi
 		if [ "${FILES_IN_TEMPROOT}" ]; then
 			echo "===> File(s) remaining for you to merge by hand:"
@@ -483,7 +567,7 @@ do_post() {
 }
 
 
-while getopts abs:x: arg; do
+while getopts abs:x:S:X: arg; do
 	case ${arg} in
 	a)
 		AUTOMODE=1
@@ -522,6 +606,42 @@ while getopts abs:x: arg; do
 			XTGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${XTGZ} ${XTGZURL}; then
 				echo " *** ERROR: Could not retrieve ${XTGZURL}"
+				error_rm_wrkdir
+			fi
+		else
+			echo " *** ERROR: ${OPTARG} is not a path to xetcXX.tgz"
+			error_rm_wrkdir
+		fi
+		;;
+	S)
+		if [ -f "${OPTARG}" ] && echo -n ${OPTARG} | \
+		    awk -F/ '{print $NF}' | \
+		    grep '^etc[0-9][0-9]\.tgz$' > /dev/null 2>&1 ; then
+			OTGZ=${OPTARG}
+		elif echo ${OPTARG} | \
+		    grep -qE '^(http|ftp)://.*/etc[0-9][0-9]\.tgz$'; then
+			OTGZ=${WRKDIR}/etc.tgz
+			OTGZURL=${OPTARG}
+			if ! ${FETCH_CMD} -o ${OTGZ} ${OTGZURL}; then
+				echo " *** ERROR: Could not retrieve ${OTGZURL}"
+				error_rm_wrkdir
+			fi
+		else
+			echo " *** ERROR: ${OPTARG} is not a path to etcXX.tgz"
+			error_rm_wrkdir
+		fi
+		;;
+	X)
+		if [ -f "${OPTARG}" ] && echo -n ${OPTARG} | \
+		    awk -F/ '{print $NF}' | \
+		    grep '^xetc[0-9][0-9]\.tgz$' > /dev/null 2>&1 ; then
+			OXTGZ=${OPTARG}
+		elif echo ${OPTARG} | \
+		    grep -qE '^(http|ftp)://.*/xetc[0-9][0-9]\.tgz$'; then
+			OXTGZ=${WRKDIR}/xetc.tgz
+			OXTGZURL=${OPTARG}
+			if ! ${FETCH_CMD} -o ${OXTGZ} ${OXTGZURL}; then
+				echo " *** ERROR: Could not retrieve ${OXTGZURL}"
 				error_rm_wrkdir
 			fi
 		else

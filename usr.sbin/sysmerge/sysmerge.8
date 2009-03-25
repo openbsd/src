@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.14 2009/02/17 16:48:11 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.15 2009/03/25 13:20:02 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 17 2009 $
+.Dd $Mdocdate: March 25 2009 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -22,9 +22,13 @@
 .Nd update system configuration files
 .Sh SYNOPSIS
 .Nm
+.Bk -words
 .Op Fl ab
+.Op Fl S Ar etcXX.tgz
 .Op Fl s Ar src \*(Ba etcXX.tgz
+.Op Fl X Ar xetcXX.tgz
 .Op Fl x Ar xetcXX.tgz
+.Ek
 .Sh DESCRIPTION
 .Nm
 is a
@@ -112,6 +116,15 @@ Should any problems occur,
 such as a failure to upgrade a file,
 the user will be notified and have to deal with the issue by hand.
 .Pp
+If a tarball from an older snapshot or release is also specified
+using the
+.Fl S
+or
+.Fl X
+options,
+installed files which have not been modified since the earlier referenced
+sources will automatically be updated to the eventual new version.
+.Pp
 Files and directories can be excluded from comparison
 by listing them in the file
 .Pa /etc/sysmerge.ignore ,
@@ -154,10 +167,32 @@ If this option is specified,
 .Nm
 will run unattended (non-interactively), saving differing files for
 later manual processing.
+.It Fl S Ar etcXX.tgz
+Specify a path to an
+etcXX.tgz tarball,
+where XX represents the version to be upgraded from.
+.Nm
+will attempt to automatically upgrade files from this version
+to the one specified by
+.Fl s ,
+provided that the file has no local changes.
+A tarball path specified as an FTP or HTTP URL will be passed
+to ${FETCH_CMD}.
 .It Fl s Ar src \*(Ba etcXX.tgz
 Specify a path to an
 .Ox
 top src directory or an etcXX.tgz tarball.
+A tarball path specified as an FTP or HTTP URL will be passed
+to ${FETCH_CMD}.
+.It Fl X Ar xetcXX.tgz
+Specify a path to an
+xetcXX.tgz tarball,
+where XX represents the version to be upgraded from.
+.Nm
+will attempt to automatically upgrade files from this version
+to the one specified by
+.Fl s ,
+provided that the file has no local changes.
 A tarball path specified as an FTP or HTTP URL will be passed
 to ${FETCH_CMD}.
 .It Fl x Ar xetcXX.tgz
