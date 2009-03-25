@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.415 2009/03/25 14:58:39 yuo Exp $
+$OpenBSD: usbdevs,v 1.416 2009/03/25 20:03:42 mglocker Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -381,6 +381,7 @@ vendor DREAMCHEEKY	0x0a81	Dream Cheeky
 vendor IDQUANTIQUE	0x0aba	id Quantique
 vendor IDTECH		0x0acd	ID TECH
 vendor ZYDAS		0x0ace	ZyDAS Technology
+vendor CHENSOURCE	0x0ad2	Chen-Source
 vendor NEODIO		0x0aec  Neodio
 vendor OPTION		0x0af0  Option
 vendor TODOS		0x0b0c	Todos Data System
@@ -987,6 +988,9 @@ product CCYU EASYDISK		0x2136	EasyDisk Portable
 /* Cherry products */
 product CHERRY MY3000KBD	0x0001	My3000 keyboard
 product CHERRY MY3000HUB	0x0003	My3000 hub
+
+/* Chen-Source products */
+product CHENSOURCE CM12402	0x933d	CM12402 Eagle IR Cam
 
 /* Chic Technology products */
 product CHIC MOUSE1		0x0001	mouse
