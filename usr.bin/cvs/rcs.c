@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.287 2009/03/22 18:39:10 tobias Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.288 2009/03/25 21:23:17 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -3540,11 +3540,11 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 	int follow;
 	time_t deltatime;
 	char branch[CVS_REV_BUFSZ];
-	RCSNUM *brev, *frev, *rev, *rrev;
+	RCSNUM *brev, *frev, *rev;
 	struct rcs_delta *rdp, *trdp;
 	time_t cdate;
 
-	brev = frev = rrev = NULL;
+	brev = frev = NULL;
 
 	if (revstr == NULL) {
 		if (rfp->rf_branch != NULL) {
@@ -3567,7 +3567,7 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 	else {
 		frev = rcs_sym_getrev(rfp, revstr);
 		if (frev == NULL)
-			frev = rrev = rcsnum_parse(revstr);
+			frev = rcsnum_parse(revstr);
 
 		brev = rcsnum_alloc();
 		rcsnum_cpy(rev, brev, rev->rn_len - 1);
@@ -3579,8 +3579,6 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 			follow = 0;
 
 		rcsnum_free(brev);
-		if (rrev != NULL)
-			rcsnum_free(rrev);
 	}
 
 	if (cvs_specified_date != -1)
@@ -3609,12 +3607,10 @@ rcs_translate_tag(const char *revstr, RCSFILE *rfp)
 		return (rev);
 	}
 
-	if (frev != NULL)
-		rcsnum_tostr(frev, branch, sizeof(branch));
-
 	if (frev != NULL) {
 		brev = rcsnum_revtobr(frev);
 		brev->rn_len = rev->rn_len - 1;
+		rcsnum_free(frev);
 	}
 
 	rcsnum_free(rev);
