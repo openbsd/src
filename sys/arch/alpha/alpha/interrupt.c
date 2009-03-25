@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.27 2009/03/15 19:41:33 miod Exp $ */
+/* $OpenBSD: interrupt.c,v 1.28 2009/03/25 21:41:40 miod Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -521,7 +521,7 @@ softintr_init()
 	for (i = 0; i < SI_NSOFT; i++) {
 		asi = &alpha_soft_intrs[i];
 		TAILQ_INIT(&asi->softintr_q);
-		simple_lock_init(&asi->softintr_slock);
+		mtx_init(&asi->softintr_mtx, IPL_HIGH);
 		asi->softintr_siq = i;
 	}
 
@@ -550,8 +550,7 @@ softintr_dispatch()
 			asi = &alpha_soft_intrs[i];
 
 			for (;;) {
-				(void) alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH);
-				simple_lock(&asi->softintr_slock);
+				mtx_enter(&asi->softintr_mtx);
 
 				sih = TAILQ_FIRST(&asi->softintr_q);
 				if (sih != NULL) {
@@ -560,8 +559,7 @@ softintr_dispatch()
 					sih->sih_pending = 0;
 				}
 
-				simple_unlock(&asi->softintr_slock);
-				(void) alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT);
+				mtx_leave(&asi->softintr_mtx);
 
 				if (sih == NULL)
 					break;
@@ -633,18 +631,33 @@ softintr_disestablish(void *arg)
 {
 	struct alpha_soft_intrhand *sih = arg;
 	struct alpha_soft_intr *asi = sih->sih_intrhead;
-	int s;
 
-	s = splhigh();
-	simple_lock(&asi->softintr_slock);
+	mtx_enter(&asi->softintr_mtx);
 	if (sih->sih_pending) {
 		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
 		sih->sih_pending = 0;
 	}
-	simple_unlock(&asi->softintr_slock);
-	splx(s);
+	mtx_leave(&asi->softintr_mtx);
 
 	free(sih, M_DEVBUF);
+}
+
+/*
+ * Schedule a software interrupt.
+*/
+void
+softintr_schedule(void *arg)
+{
+	struct alpha_soft_intrhand *sih = arg;
+	struct alpha_soft_intr *si = sih->sih_intrhead;
+
+	mtx_enter(&si->softintr_mtx);
+	if (sih->sih_pending == 0) {
+		TAILQ_INSERT_TAIL(&si->softintr_q, sih, sih_q);
+		sih->sih_pending = 1;
+		setsoft(si->softintr_siq);
+	}
+	mtx_leave(&si->softintr_mtx);
 }
 
 int
