@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.8 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.9 2009/03/25 21:41:00 miod Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@ void tmu1_oneshot(void);
 int tmu1_intr(void *);
 void tmu2_oneshot(void);
 int tmu2_intr(void *);
+void setsoft(int);
 
 int netisr;
 
@@ -586,7 +587,6 @@ softintr_init(void)
 		TAILQ_INIT(&asi->softintr_q);
 
 		asi->softintr_ipl = IPL_SOFT + i;
-		simple_lock_init(&asi->softintr_slock);
 	}
 
 	/* XXX Establish legacy soft interrupt handlers. */
@@ -677,6 +677,22 @@ softintr_disestablish(void *arg)
 	_cpu_intr_resume(s);
 
 	free(sih, M_DEVBUF);
+}
+
+/* Schedule a software interrupt. */
+void softintr_schedule(void *arg)
+{
+	struct sh_soft_intrhand *sih = arg;
+	struct sh_soft_intr *si = sih->sih_intrhead;
+	int s;
+
+	s = _cpu_intr_suspend();
+	if (sih->sih_pending == 0) {
+		TAILQ_INSERT_TAIL(&si->softintr_q, sih, sih_q);
+		sih->sih_pending = 1;
+		setsoft(si->softintr_ipl);
+	}
+	_cpu_intr_resume(s);
 }
 
 /*
