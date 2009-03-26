@@ -42,7 +42,7 @@ drm_sg_cleanup(struct drm_device *dev, struct drm_sg_mem *entry)
 		return;
 
 	drm_dmamem_free(dev->dmat, entry->mem);
-	drm_free(entry, sizeof(entry), DRM_MEM_SGLISTS);
+	drm_free(entry);
 }
 
 int
@@ -55,7 +55,7 @@ drm_sg_alloc(struct drm_device * dev, struct drm_scatter_gather *request)
 	if (dev->sg != NULL)
 		return (EINVAL);
 
-	entry = drm_calloc(1, sizeof(*entry), DRM_MEM_SGLISTS);
+	entry = drm_calloc(1, sizeof(*entry));
         if (entry == NULL)
                 return (ENOMEM);
 

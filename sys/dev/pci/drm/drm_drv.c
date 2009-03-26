@@ -205,7 +205,7 @@ drm_detach(struct device *self, int flags)
 
 
 	if (dev->agp != NULL) {
-		drm_free(dev->agp, sizeof(*dev->agp), DRM_MEM_AGPLISTS);
+		drm_free(dev->agp);
 		dev->agp = NULL;
 	}
 
@@ -317,7 +317,7 @@ drm_lastclose(struct drm_device *dev)
 	/* Clear pid list */
 	while ((pt = SPLAY_ROOT(&dev->magiclist)) != NULL) {
 		SPLAY_REMOVE(drm_magic_tree, &dev->magiclist, pt);
-		drm_free(pt, sizeof(*pt), DRM_MEM_MAGIC);
+		drm_free(pt);
 	}
 
 	if (dev->sg != NULL) {
@@ -399,7 +399,7 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 
 	/* always allocate at least enough space for our data */
 	priv = drm_calloc(1, max(dev->driver->file_priv_size,
-	    sizeof(*priv)), DRM_MEM_FILES);
+	    sizeof(*priv)));
 	if (priv == NULL) {
 		ret = ENOMEM;
 		goto err;
@@ -436,8 +436,7 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 	return (0);
 
 free_priv:
-	drm_free(priv, max(dev->driver->file_priv_size,
-	    sizeof(*priv)), DRM_MEM_FILES);
+	drm_free(priv);
 err:
 	DRM_LOCK();
 	--dev->open_count;
@@ -518,8 +517,7 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 
 	DRM_LOCK();
 	TAILQ_REMOVE(&dev->files, file_priv, link);
-	drm_free(file_priv, max(dev->driver->file_priv_size, 
-	    sizeof(*file_priv)), DRM_MEM_FILES);
+	drm_free(file_priv);
 
 done:
 	if (--dev->open_count == 0) {

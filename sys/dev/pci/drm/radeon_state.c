@@ -2184,12 +2184,12 @@ radeon_cp_cmdbuf(struct drm_device *dev, void *data,
 	 */
 	orig_bufsz = cmdbuf->bufsz;
 	if (orig_bufsz != 0) {
-		kbuf = drm_alloc(cmdbuf->bufsz, DRM_MEM_DRIVER);
+		kbuf = drm_alloc(cmdbuf->bufsz);
 		if (kbuf == NULL)
 			return ENOMEM;
 		if (DRM_COPY_FROM_USER(kbuf, (void __user *)cmdbuf->buf,
 				       cmdbuf->bufsz)) {
-			drm_free(kbuf, orig_bufsz, DRM_MEM_DRIVER);
+			drm_free(kbuf);
 			return EFAULT;
 		}
 		cmdbuf->buf = kbuf;
@@ -2202,7 +2202,7 @@ radeon_cp_cmdbuf(struct drm_device *dev, void *data,
 		temp = r300_do_cp_cmdbuf(dev, file_priv, cmdbuf);
 
 		if (orig_bufsz != 0)
-			drm_free(kbuf, orig_bufsz, DRM_MEM_DRIVER);
+			drm_free(kbuf);
 
 		return temp;
 	}
@@ -2309,7 +2309,7 @@ radeon_cp_cmdbuf(struct drm_device *dev, void *data,
 	}
 
 	if (orig_bufsz != 0)
-		drm_free(kbuf, orig_bufsz, DRM_MEM_DRIVER);
+		drm_free(kbuf);
 
 	DRM_DEBUG("DONE\n");
 	COMMIT_RING();
@@ -2317,7 +2317,7 @@ radeon_cp_cmdbuf(struct drm_device *dev, void *data,
 
       err:
 	if (orig_bufsz != 0)
-		drm_free(kbuf, orig_bufsz, DRM_MEM_DRIVER);
+		drm_free(kbuf);
 	return EINVAL;
 }
 

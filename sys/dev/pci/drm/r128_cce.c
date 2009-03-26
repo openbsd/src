@@ -728,8 +728,7 @@ static int r128_freelist_init(struct drm_device * dev)
 	drm_r128_freelist_t *entry;
 	int i;
 
-	dev_priv->head = drm_calloc(1, sizeof(drm_r128_freelist_t),
-	    DRM_MEM_DRIVER);
+	dev_priv->head = drm_calloc(1, sizeof(*dev_priv->head));
 	if (dev_priv->head == NULL)
 		return ENOMEM;
 
@@ -739,7 +738,7 @@ static int r128_freelist_init(struct drm_device * dev)
 		buf = dma->buflist[i];
 		buf_priv = buf->dev_private;
 
-		entry = drm_alloc(sizeof(drm_r128_freelist_t), DRM_MEM_DRIVER);
+		entry = drm_alloc(sizeof(*entry));
 		if (!entry)
 			return ENOMEM;
 

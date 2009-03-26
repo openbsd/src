@@ -53,7 +53,7 @@ drm_getmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (file_priv->magic) {
 		auth->magic = file_priv->magic;
 	} else {
-		entry = drm_alloc(sizeof(*entry), DRM_MEM_MAGIC);
+		entry = drm_alloc(sizeof(*entry));
 		if (entry == NULL)
 			return (ENOMEM);
 		DRM_LOCK();
@@ -93,7 +93,7 @@ drm_authmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	SPLAY_REMOVE(drm_magic_tree, &dev->magiclist, pt);
 	DRM_UNLOCK();
 
-	drm_free(pt, sizeof(*pt), DRM_MEM_MAGIC);
+	drm_free(pt);
 
 	return (0);
 }

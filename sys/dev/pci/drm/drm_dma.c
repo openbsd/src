@@ -42,7 +42,7 @@ int
 drm_dma_setup(struct drm_device *dev)
 {
 
-	dev->dma = drm_calloc(1, sizeof(*dev->dma), DRM_MEM_DRIVER);
+	dev->dma = drm_calloc(1, sizeof(*dev->dma));
 	if (dev->dma == NULL)
 		return ENOMEM;
 
@@ -61,19 +61,16 @@ drm_cleanup_buf(struct drm_device *dev, drm_buf_entry_t *entry)
 	if (entry->seg_count) {
 		for (i = 0; i < entry->seg_count; i++)
 			drm_dmamem_free(dev->dmat, entry->seglist[i]);
-		drm_free(entry->seglist, entry->seg_count *
-		    sizeof(*entry->seglist), DRM_MEM_BUFS);
+		drm_free(entry->seglist);
 
 		entry->seg_count = 0;
 	}
 
    	if (entry->buf_count) {
 	   	for (i = 0; i < entry->buf_count; i++) {
-			drm_free(entry->buflist[i].dev_private,
-			    dev->driver->buf_priv_size, DRM_MEM_BUFS);
+			drm_free(entry->buflist[i].dev_private);
 		}
-		drm_free(entry->buflist, entry->buf_count *
-		    sizeof(*entry->buflist), DRM_MEM_BUFS);
+		drm_free(entry->buflist);
 
 		entry->buf_count = 0;
 	}
@@ -92,11 +89,9 @@ drm_dma_takedown(struct drm_device *dev)
 	for (i = 0; i <= DRM_MAX_ORDER; i++)
 		drm_cleanup_buf(dev, &dma->bufs[i]);
 
-	drm_free(dma->buflist, dma->buf_count * sizeof(*dma->buflist),
-	    DRM_MEM_BUFS);
-	drm_free(dma->pagelist, dma->page_count * sizeof(*dma->pagelist),
-	    DRM_MEM_BUFS);
-	drm_free(dev->dma, sizeof(*dev->dma), DRM_MEM_DMA);
+	drm_free(dma->buflist);
+	drm_free(dma->pagelist);
+	drm_free(dev->dma);
 	dev->dma = NULL;
 	DRM_SPINUNINIT(&dev->dma_lock);
 }

@@ -178,8 +178,7 @@ drm_vblank_cleanup(struct drm_device *dev)
 
 	vblank_disable(dev);
 
-	drm_free(dev->vblank, sizeof(*dev->vblank) *
-	    dev->num_crtcs, M_DRM);
+	drm_free(dev->vblank);
 
 	dev->vblank = NULL;
 	dev->num_crtcs = 0;
@@ -193,7 +192,7 @@ drm_vblank_init(struct drm_device *dev, int num_crtcs)
 	mtx_init(&dev->vbl_lock, IPL_BIO);
 	dev->num_crtcs = num_crtcs;
 
-	dev->vblank = drm_calloc(num_crtcs, sizeof(*dev->vblank), M_DRM);
+	dev->vblank = drm_calloc(num_crtcs, sizeof(*dev->vblank));
 	if (dev->vblank == NULL)
 		goto err;
 

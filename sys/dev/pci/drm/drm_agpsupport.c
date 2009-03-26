@@ -154,7 +154,7 @@ drm_agp_alloc(struct drm_device *dev, struct drm_agp_buffer *request)
 	if (dev->agp == NULL || !dev->agp->acquired)
 		return (EINVAL);
 
-	entry = drm_alloc(sizeof(*entry), DRM_MEM_AGPLISTS);
+	entry = drm_alloc(sizeof(*entry));
 	if (entry == NULL)
 		return (ENOMEM);
 
@@ -164,7 +164,7 @@ drm_agp_alloc(struct drm_device *dev, struct drm_agp_buffer *request)
 	handle = agp_alloc_memory(dev->agp->agpdev, type,
 	    pages << AGP_PAGE_SHIFT);
 	if (handle == NULL) {
-		drm_free(entry, sizeof(*entry), DRM_MEM_AGPLISTS);
+		drm_free(entry);
 		return (ENOMEM);
 	}
 	
@@ -291,7 +291,7 @@ drm_agp_remove_entry(struct drm_device *dev, struct drm_agp_mem *entry)
 	if (entry->bound)
 		agp_unbind_memory(dev->agp->agpdev, entry->handle);
 	agp_free_memory(dev->agp->agpdev, entry->handle);
-	drm_free(entry, sizeof(*entry), DRM_MEM_AGPLISTS);
+	drm_free(entry);
 }
 
 void
@@ -360,7 +360,7 @@ drm_agp_init(void)
 	DRM_DEBUG("agp_available = %d\n", agp_available);
 
 	if (agp_available) {
-		head = drm_calloc(1, sizeof(*head), DRM_MEM_AGPLISTS);
+		head = drm_calloc(1, sizeof(*head));
 		if (head == NULL)
 			return (NULL);
 		head->agpdev = agpdev;

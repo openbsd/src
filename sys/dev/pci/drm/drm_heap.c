@@ -44,8 +44,7 @@ drm_split_block(struct drm_heap *heap, struct drm_mem *p, int start,
 {
 	/* Maybe cut off the start of an existing block */
 	if (start > p->start) {
-		struct drm_mem *newblock =
-		    drm_alloc(sizeof(*newblock), DRM_MEM_BUFS);
+		struct drm_mem *newblock = drm_alloc(sizeof(*newblock));
 		if (newblock == NULL)
 			goto out;
 		newblock->start = start;
@@ -58,8 +57,7 @@ drm_split_block(struct drm_heap *heap, struct drm_mem *p, int start,
 
 	/* Maybe cut off the end of an existing block */
 	if (size < p->size) {
-		struct drm_mem *newblock =
-		    drm_alloc(sizeof(*newblock), DRM_MEM_BUFS);
+		struct drm_mem *newblock = drm_alloc(sizeof(*newblock));
 		if (newblock == NULL)
 			goto out;
 		newblock->start = start + size;
@@ -115,14 +113,14 @@ drm_free_block(struct drm_heap *heap, struct drm_mem *p)
 	    q->file_priv == NULL) {
 		p->size += q->size;
 		TAILQ_REMOVE(heap, q, link);
-		drm_free(q, sizeof(*q), DRM_MEM_BUFS);
+		drm_free(q);
 	}
 
 	if ((q = TAILQ_PREV(p, drm_heap, link)) != TAILQ_END(heap) &&
 	    q->file_priv == NULL) {
 		q->size += p->size;
 		TAILQ_REMOVE(heap, p, link);
-		drm_free(p, sizeof(*p), DRM_MEM_BUFS);
+		drm_free(p);
 	}
 }
 
@@ -136,7 +134,7 @@ drm_init_heap(struct drm_heap *heap, int start, int size)
 	if (!TAILQ_EMPTY(heap))
 		return (EBUSY);
 
-	if ((blocks  = drm_alloc(sizeof(*blocks), DRM_MEM_BUFS)) == NULL)
+	if ((blocks  = drm_alloc(sizeof(*blocks))) == NULL)
 		return (ENOMEM);
 
 	blocks->start = start;

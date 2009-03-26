@@ -82,7 +82,7 @@ drm_ctxbitmap_init(struct drm_device *dev)
 	int		 i, temp;
 
 	
-	bitmap = drm_calloc(1, PAGE_SIZE, DRM_MEM_CTXBITMAP);
+	bitmap = drm_calloc(1, PAGE_SIZE);
 	if (bitmap == NULL)
 		return (ENOMEM);
 	DRM_LOCK();
@@ -106,7 +106,7 @@ drm_ctxbitmap_cleanup(struct drm_device *dev)
 	bitmap = dev->ctx_bitmap;
 	dev->ctx_bitmap = NULL;
 	DRM_UNLOCK();
-	drm_free(bitmap, PAGE_SIZE, DRM_MEM_CTXBITMAP);
+	drm_free(bitmap);
 }
 
 int

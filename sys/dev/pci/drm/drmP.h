@@ -75,30 +75,6 @@
 #define DRM_KERNEL_CONTEXT    0	 /* Change drm_resctx if changed	  */
 #define DRM_RESERVED_CONTEXTS 1	 /* Change drm_resctx if changed	  */
 
-#define DRM_MEM_DMA		0
-#define DRM_MEM_SAREA		1
-#define DRM_MEM_DRIVER		2
-#define DRM_MEM_MAGIC		3
-#define DRM_MEM_IOCTLS		4
-#define DRM_MEM_MAPS		5
-#define DRM_MEM_BUFS		6
-#define DRM_MEM_SEGS		7
-#define DRM_MEM_PAGES		8
-#define DRM_MEM_FILES		9
-#define DRM_MEM_QUEUES		10
-#define DRM_MEM_CMDS		11
-#define DRM_MEM_MAPPINGS	12
-#define DRM_MEM_BUFLISTS	13
-#define DRM_MEM_AGPLISTS	14
-#define DRM_MEM_TOTALAGP	15
-#define DRM_MEM_BOUNDAGP	16
-#define DRM_MEM_CTXBITMAP	17
-#define DRM_MEM_CTXLIST		18
-#define DRM_MEM_STUB		19
-#define DRM_MEM_SGLISTS		20
-#define DRM_MEM_DRAWABLE	21
-#define DRM_MEM_MM		22
-
 #define DRM_MAX_CTXBITMAP (PAGE_SIZE * 8)
 
 				/* Internal types and structures */
@@ -557,15 +533,10 @@ drm_pci_id_list_t *drm_find_description(int , int , drm_pci_id_list_t *);
 struct drm_file	*drm_find_file_by_minor(struct drm_device *, int);
 
 /* Memory management support (drm_memory.c) */
-void	*_drm_alloc(size_t);
-#define	drm_alloc(size, area)	_drm_alloc(size)
-void	*_drm_calloc(size_t, size_t);
-#define	drm_calloc(nmemb, size, area) _drm_calloc(nmemb, size)
-void	*_drm_realloc(void *, size_t, size_t);
-#define	drm_realloc(old, oldsz, size, area) _drm_realloc(old, oldsz, size)
-void	_drm_free(void *);
-#define	drm_free(ptr, size, area) do { _drm_free(ptr); (void)(size); \
-} while( /*CONSTCOND*/ 0)
+void	*drm_alloc(size_t);
+void	*drm_calloc(size_t, size_t);
+void	*drm_realloc(void *, size_t, size_t);
+void	 drm_free(void *);
 void	*drm_ioremap(struct drm_device *, drm_local_map_t *);
 void	drm_ioremapfree(drm_local_map_t *);
 int	drm_mtrr_add(unsigned long, size_t, int);

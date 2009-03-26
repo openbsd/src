@@ -110,7 +110,7 @@ i915_mem_release(struct drm_device * dev, struct drm_file *file_priv,
 		    q->file_priv == NULL) {
 			p->size += q->size;
 			TAILQ_REMOVE(heap, q, link);
-			drm_free(q, sizeof(*q), DRM_MEM_DRIVER);
+			drm_free(q);
 		}
 		q = TAILQ_NEXT(p, link);
 	}
@@ -128,7 +128,7 @@ i915_mem_takedown(struct drm_heap *heap)
 
 	while ((p = TAILQ_FIRST(heap)) != NULL) {
 		TAILQ_REMOVE(heap, p, link);
-		drm_free(p, sizeof(*p), DRM_MEM_BUFLISTS);
+		drm_free(p);
 	}
 }
 
