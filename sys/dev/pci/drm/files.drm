@@ -1,12 +1,11 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.12 2009/02/15 20:10:24 oga Exp $
+# $OpenBSD: files.drm,v 1.13 2009/03/26 22:40:06 oga Exp $
 
 # direct rendering modules
 define drmbase {}
 device drm: drmbase
 attach drm at drmbase
 file   dev/pci/drm/drm_agpsupport.c    drm
-file   dev/pci/drm/drm_auth.c          drm
 file   dev/pci/drm/drm_bufs.c          drm
 file   dev/pci/drm/drm_context.c       drm
 file   dev/pci/drm/drm_dma.c           drm

@@ -243,12 +243,6 @@ typedef struct drm_pci_id_list
 struct drm_file;
 struct drm_device;
 
-struct drm_magic_entry {
-	drm_magic_t	       magic;
-	struct drm_file	       *priv;
-	SPLAY_ENTRY(drm_magic_entry) node;
-};
-
 typedef struct drm_buf {
 	int		  idx;	       /* Index into master buflist	     */
 	int		  total;       /* Buffer size			     */
@@ -280,7 +274,7 @@ typedef struct drm_buf_entry {
 
 typedef TAILQ_HEAD(drm_file_list, drm_file) drm_file_list_t;
 struct drm_file {
-	TAILQ_ENTRY(drm_file)	 link;
+	SPLAY_ENTRY(drm_file)	 link;
 	int			 authenticated;
 	unsigned long		 ioctl_count;
 	dev_t			 kdev;
@@ -468,9 +462,8 @@ struct drm_device {
 	int		  buf_use;	/* Buffers in use -- cannot alloc  */
 
 				/* Authentication */
-	drm_file_list_t   files;
+	SPLAY_HEAD(drm_file_tree, drm_file)	files;
 	drm_magic_t	  magicid;
-	SPLAY_HEAD(drm_magic_tree, drm_magic_entry)	magiclist;
 
 	/* Linked list of mappable regions. Protected by dev_lock */
 	struct extent	*handle_ext;
@@ -625,19 +618,12 @@ int	drm_ati_pcigart_cleanup(struct drm_device *,
 /* Locking IOCTL support (drm_drv.c) */
 int	drm_lock(struct drm_device *, void *, struct drm_file *);
 int	drm_unlock(struct drm_device *, void *, struct drm_file *);
-int	drm_version(struct drm_device *, void *, struct drm_file *);
 
 /* Context IOCTL support (drm_context.c) */
 int	drm_resctx(struct drm_device *, void *, struct drm_file *);
 int	drm_addctx(struct drm_device *, void *, struct drm_file *);
 int	drm_getctx(struct drm_device *, void *, struct drm_file *);
 int	drm_rmctx(struct drm_device *, void *, struct drm_file *);
-
-/* Authentication IOCTL support (drm_auth.c) */
-int	drm_getmagic(struct drm_device *, void *, struct drm_file *);
-int	drm_authmagic(struct drm_device *, void *, struct drm_file *);
-int	drm_magic_cmp(struct drm_magic_entry *, struct drm_magic_entry *);
-SPLAY_PROTOTYPE(drm_magic_tree, drm_magic_entry, node, drm_magic_cmp);
 
 /* Buffer management support (drm_bufs.c) */
 int	drm_addmap_ioctl(struct drm_device *, void *, struct drm_file *);
