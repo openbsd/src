@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.18 2008/10/15 23:23:49 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.19 2009/03/26 17:24:33 oga Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -124,7 +124,6 @@ do {									\
 
 extern int want_resched;		/* need_resched() was called */
 
-#define	cpu_wait(p)	((void)(p))
 /*
  * We need a machine-independent name for this.
  */

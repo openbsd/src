@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.29 2008/10/15 23:23:49 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.30 2009/03/26 17:24:33 oga Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -359,12 +359,6 @@ extern vaddr_t uncached_base;
 /*
  * Exported definitions unique to mips cpu support.
  */
-
-/*
- * definitions of cpu-dependent requirements
- * referenced in generic code
- */
-#define	cpu_wait(p)		/* nothing */
 
 #ifndef _LOCORE
 

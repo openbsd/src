@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.23 2008/10/15 23:23:46 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.24 2009/03/26 17:24:33 oga Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -251,8 +251,6 @@ extern int astpending;
  */
 
 #define signotify(p)            setsoftast()
-
-#define cpu_wait(p)    /* nothing */
 
 /*
  * Preempt the current process if in interrupt from user mode,

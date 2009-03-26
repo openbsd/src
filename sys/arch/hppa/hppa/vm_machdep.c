@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.65 2009/03/26 17:24:33 oga Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -189,12 +189,6 @@ cpu_exit(p)
 
 	pmap_deactivate(p);
 	sched_exit(p);
-}
-
-void
-cpu_wait(p)
-	struct proc *p;
-{
 }
 
 /*

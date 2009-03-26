@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.47 2008/07/18 23:43:31 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.48 2009/03/26 17:24:33 oga Exp $	*/
 /*	$NetBSD: cpu.h,v 1.45 1997/02/10 22:13:40 scottr Exp $	*/
 
 /*
@@ -77,12 +77,6 @@
  * Get interrupt glue.
  */
 #include <machine/intr.h>
-
-/*
- * definitions of cpu-dependent requirements
- * referenced in generic code
- */
-#define	cpu_wait(p)			/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
