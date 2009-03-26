@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.58 2009/02/08 15:34:39 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.59 2009/03/26 20:38:29 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -39,8 +39,8 @@
 
 #ifdef	SMALL_KERNEL
 #define IEEE80211_STA_ONLY	1
-#endif
 #define IEEE80211_NO_HT		1	/* no HT yet */
+#endif
 
 #include <sys/timeout.h>
 
