@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otusreg.h,v 1.3 2009/03/24 19:28:31 damien Exp $	*/
+/*	$OpenBSD: if_otusreg.h,v 1.4 2009/03/26 19:54:16 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -763,15 +763,6 @@ typedef struct ar5416eeprom {
 	uint8_t			padding;
 } __packed AR5416_EEPROM;
 
-/* Default EDCA parameters for when QoS is disabled. */
-static const struct ieee80211_edca_ac_params otus_edca_def[EDCA_NUM_AC] = {
-	{ 4, 10, 3,  0 },
-	{ 4, 10, 7,  0 },
-	{ 3,  4, 2, 94 },
-	{ 2,  3, 2, 47 }
-};
-
-
 
 #define OTUS_TX_DATA_LIST_COUNT	8
 #define OTUS_RX_DATA_LIST_COUNT	1
@@ -784,6 +775,14 @@ static const struct ieee80211_edca_ac_params otus_edca_def[EDCA_NUM_AC] = {
 #define OTUS_MAX_TXCMDSZ	64
 #define OTUS_RXBUFSZ		(8 * 1024)
 #define OTUS_TXBUFSZ		(4 * 1024)
+
+/* Default EDCA parameters for when QoS is disabled. */
+static const struct ieee80211_edca_ac_params otus_edca_def[EDCA_NUM_AC] = {
+	{ 4, 10, 3,  0 },
+	{ 4, 10, 7,  0 },
+	{ 3,  4, 2, 94 },
+	{ 2,  3, 2, 47 }
+};
 
 #define OTUS_RIDX_CCK1		 0
 #define OTUS_RIDX_OFDM6		 4

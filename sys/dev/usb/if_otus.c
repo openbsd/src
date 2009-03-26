@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.4 2009/03/26 19:52:51 damien Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.5 2009/03/26 19:54:16 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -99,23 +99,16 @@ void		otus_attach(struct device *, struct device *, void *);
 int		otus_detach(struct device *, int);
 void		otus_attachhook(void *);
 void		otus_get_chanlist(struct otus_softc *);
+int		otus_load_firmware(struct otus_softc *, const char *,
+		    uint32_t);
+int		otus_open_pipes(struct otus_softc *);
+void		otus_close_pipes(struct otus_softc *);
 int		otus_alloc_tx_cmd(struct otus_softc *);
 void		otus_free_tx_cmd(struct otus_softc *);
 int		otus_alloc_tx_data_list(struct otus_softc *);
 void		otus_free_tx_data_list(struct otus_softc *);
 int		otus_alloc_rx_data_list(struct otus_softc *);
 void		otus_free_rx_data_list(struct otus_softc *);
-int		otus_load_firmware(struct otus_softc *, const char *,
-		    uint32_t);
-int		otus_open_pipes(struct otus_softc *);
-void		otus_close_pipes(struct otus_softc *);
-int		otus_cmd(struct otus_softc *, uint8_t, const void *, int,
-		    void *);
-void		otus_write(struct otus_softc *, uint32_t, uint32_t);
-int		otus_write_barrier(struct otus_softc *);
-void		otus_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
-struct		ieee80211_node *otus_node_alloc(struct ieee80211com *);
-int		otus_media_change(struct ifnet *);
 void		otus_next_scan(void *);
 void		otus_task(void *);
 void		otus_do_async(struct otus_softc *,
@@ -123,9 +116,16 @@ void		otus_do_async(struct otus_softc *,
 int		otus_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 void		otus_newstate_cb(struct otus_softc *, void *);
+int		otus_cmd(struct otus_softc *, uint8_t, const void *, int,
+		    void *);
+void		otus_write(struct otus_softc *, uint32_t, uint32_t);
+int		otus_write_barrier(struct otus_softc *);
+struct		ieee80211_node *otus_node_alloc(struct ieee80211com *);
+int		otus_media_change(struct ifnet *);
 int		otus_read_eeprom(struct otus_softc *);
 void		otus_newassoc(struct ieee80211com *, struct ieee80211_node *,
 		    int);
+void		otus_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 void		otus_cmd_rxeof(struct otus_softc *, uint8_t *, int);
 void		otus_sub_rxeof(struct otus_softc *, uint8_t *, int);
 void		otus_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -135,7 +135,6 @@ int		otus_tx(struct otus_softc *, struct mbuf *,
 void		otus_start(struct ifnet *);
 void		otus_watchdog(struct ifnet *);
 int		otus_ioctl(struct ifnet *, u_long, caddr_t);
-int		otus_set_beacon(struct otus_softc *);
 int		otus_set_multi(struct otus_softc *);
 void		otus_updateedca(struct ieee80211com *);
 void		otus_updateedca_cb(struct otus_softc *, void *);
@@ -303,7 +302,8 @@ otus_attachhook(void *xsc)
 		return;
 	}
 	if (in != out) {
-		printf("%s: echo reply mismatch\n", sc->sc_dev.dv_xname);
+		printf("%s: echo reply mismatch: 0x%08x!=0x%08x\n",
+		    sc->sc_dev.dv_xname, in, out);
 		return;
 	}
 
@@ -863,17 +863,6 @@ otus_write_barrier(struct otus_softc *sc)
 	return error;
 }
 
-/* ARGSUSED */
-void
-otus_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
-{
-	/*
-	 * The Rx intr pipe is unused with current firmware.  Notifications
-	 * and replies to commands are sent through the Rx bulk pipe instead
-	 * (with a magic PLCP header.)
-	 */
-}
-
 struct ieee80211_node *
 otus_node_alloc(struct ieee80211com *ic)
 {
@@ -954,6 +943,31 @@ otus_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 		DPRINTF(("rate=0x%02x ridx=%d\n",
 		    rs->rs_rates[i], on->ridx[i]));
 	}
+}
+
+/* ARGSUSED */
+void
+otus_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+{
+#if 0
+	struct otus_softc *sc = priv;
+	int len;
+
+	/*
+	 * The Rx intr pipe is unused with current firmware.  Notifications
+	 * and replies to commands are sent through the Rx bulk pipe instead
+	 * (with a magic PLCP header.)
+	 */
+	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
+		DPRINTF(("intr status=%d\n", status));
+		if (status == USBD_STALLED)
+			usbd_clear_endpoint_stall_async(sc->cmd_rx_pipe);
+		return;
+	}
+	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
+
+	otus_cmd_rxeof(sc, sc->ibuf, len);
+#endif
 }
 
 void
@@ -1281,15 +1295,16 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	     IEEE80211_QOS_ACK_POLICY_NOACK)))
 		macctl |= AR_TX_MAC_NOACK;
 
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-	    m->m_pkthdr.len + IEEE80211_CRC_LEN >= ic->ic_rtsthreshold)
-		macctl |= AR_TX_MAC_RTS;
-	else if ((ic->ic_flags & IEEE80211_F_USEPROT) &&
-	    ridx >= OTUS_RIDX_OFDM6) {
-		if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)
-			macctl |= AR_TX_MAC_CTS;
-		else if (ic->ic_protmode == IEEE80211_PROT_RTSCTS)
+	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+		if (m->m_pkthdr.len + IEEE80211_CRC_LEN >= ic->ic_rtsthreshold)
 			macctl |= AR_TX_MAC_RTS;
+		else if ((ic->ic_flags & IEEE80211_F_USEPROT) &&
+		    ridx >= OTUS_RIDX_OFDM6) {
+			if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)
+				macctl |= AR_TX_MAC_CTS;
+			else if (ic->ic_protmode == IEEE80211_PROT_RTSCTS)
+				macctl |= AR_TX_MAC_RTS;
+		}
 	}
 
 	phyctl |= AR_TX_PHY_MCS(otus_rates[ridx].mcs);
@@ -1304,7 +1319,7 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		phyctl |= AR_TX_PHY_ANTMSK(5);
 	}
 
-	/* Update rate control stats for frames that need an ACK. */
+	/* Update rate control stats for frames that are ACK'ed. */
 	if (!(macctl & AR_TX_MAC_NOACK))
 		((struct otus_node *)ni)->amn.amn_txcnt++;
 
@@ -2205,7 +2220,7 @@ otus_init(struct ifnet *ifp)
 
 	/* Start Rx. */
 	otus_write(sc, 0x1c3d30, 0x100);
-	otus_write_barrier(sc);
+	(void)otus_write_barrier(sc);
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
