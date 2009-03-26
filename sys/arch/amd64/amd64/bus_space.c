@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.12 2009/03/10 15:03:16 oga Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.13 2009/03/26 19:04:56 oga Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -138,7 +138,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = x86_mem_add_mapping(bpa, size, 0, bshp);
+	error = x86_mem_add_mapping(bpa, size, flags, bshp);
 	if (error) {
 		if (extent_free(ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -168,7 +168,7 @@ _bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	return (x86_mem_add_mapping(bpa, size, 0, bshp));
+	return (x86_mem_add_mapping(bpa, size, flags, bshp));
 }
 
 int
@@ -219,7 +219,7 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = x86_mem_add_mapping(bpa, size, 0, bshp);
+	error = x86_mem_add_mapping(bpa, size, flags, bshp);
 	if (error) {
 		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -235,13 +235,45 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 }
 
 int
-x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
+x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
-	if (cacheable)
-		*bshp = PMAP_DIRECT_MAP(bpa);
-	else
-		*bshp = PMAP_DIRECT_NC_MAP(bpa);
+	u_long pa, endpa;
+	vaddr_t va, sva;
+	pt_entry_t *pte;
+	bus_size_t map_size;
+
+	pa = trunc_page(bpa);
+	endpa = round_page(bpa + size);
+
+#ifdef DIAGNOSTIC
+	if (endpa <= pa && endpa != 0)
+		panic("bus_mem_add_mapping: overflow");
+#endif
+
+	map_size = endpa - pa;
+
+	va = uvm_km_valloc(kernel_map, map_size);
+	if (va == 0)
+		return (ENOMEM);
+
+	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
+
+	sva = va;
+	for (; map_size > 0;
+	    pa += PAGE_SIZE, va += PAGE_SIZE, map_size -= PAGE_SIZE) {
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+
+		pte = kvtopte(va);
+		if (flags & BUS_SPACE_MAP_CACHEABLE)
+			*pte &= ~PG_N;
+		else
+			*pte |= PG_N;
+	}
+	pmap_tlb_shootrange(pmap_kernel(), sva, va);
+	pmap_tlb_shootwait();
+	pmap_update(pmap_kernel());
+
 	return 0;
 }
 
@@ -259,36 +291,50 @@ void
 _bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size,
     bus_addr_t *adrp)
 {
+	u_long va, endva;
 	bus_addr_t bpa;
 
 	/*
-	 * Find the correct extent and bus physical address.
+	 * Find the correct bus physical address.
 	 */
 	if (t == X86_BUS_SPACE_IO) {
 		bpa = bsh;
 	} else if (t == X86_BUS_SPACE_MEM) {
-		if (bsh >= atdevbase && (bsh + size) <= (atdevbase + IOM_SIZE)) {
-			bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
-		} else {
-			if (bsh >= PMAP_DIRECT_BASE_NC &&
-			    bsh < PMAP_DIRECT_END_NC)
-				bpa = PMAP_DIRECT_NC_UNMAP(bsh);
-			else
-				bpa = PMAP_DIRECT_UNMAP(bsh);
-		}
-	} else {
-		panic("_bus_space_unmap: bad bus space tag");
-	}
+		bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
+		if (IOM_BEGIN <= bpa && bpa <= IOM_END)
+			goto ok;
 
-	if (adrp != NULL) {
+		va = trunc_page(bsh);
+		endva = round_page(bsh + size);
+
+#ifdef DIAGNOSTIC
+		if (endva <= va)
+			panic("_bus_space_unmap: overflow");
+#endif
+
+		(void) pmap_extract(pmap_kernel(), va, &bpa);
+		bpa += (bsh & PGOFSET);
+
+		pmap_kremove(va, endva - va);
+		pmap_update(pmap_kernel());
+
+		/*
+		 * Free the kernel virtual mapping.
+		 */
+		uvm_km_free(kernel_map, va, endva - va);
+	} else
+		panic("bus_space_unmap: bad bus space tag");
+
+ok:
+	if (adrp != NULL)
 		*adrp = bpa;
-	}
 }
 
 void
 bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 	struct extent *ex;
+	u_long va, endva;
 	bus_addr_t bpa;
 
 	/*
@@ -299,18 +345,28 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		bpa = bsh;
 	} else if (t == X86_BUS_SPACE_MEM) {
 		ex = iomem_ex;
-
-		if (bsh >= atdevbase &&
-		    (bsh + size) <= (atdevbase + IOM_SIZE)) {
-			bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
+		bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
+		if (IOM_BEGIN <= bpa && bpa <= IOM_END)
 			goto ok;
-		}
 
-		if (bsh >= PMAP_DIRECT_BASE_NC &&
-		    bsh < PMAP_DIRECT_END_NC)
-			bpa = PMAP_DIRECT_NC_UNMAP(bsh);
-		else
-			bpa = PMAP_DIRECT_UNMAP(bsh);
+		va = trunc_page(bsh);
+		endva = round_page(bsh + size);
+
+#ifdef DIAGNOSTIC
+		if (endva <= va)
+			panic("bus_space_unmap: overflow");
+#endif
+
+		(void)pmap_extract(pmap_kernel(), va, &bpa);
+		bpa += (bsh & PGOFSET);
+
+		pmap_kremove(va, endva - va);
+		pmap_update(pmap_kernel());
+
+		/*
+		 * Free the kernel virtual mapping.
+		 */
+		uvm_km_free(kernel_map, va, endva - va);
 	} else
 		panic("bus_space_unmap: bad bus space tag");
 
