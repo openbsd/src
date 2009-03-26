@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.12 2009/03/14 15:53:23 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.13 2009/03/26 20:17:27 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -348,8 +348,6 @@ run_attach(struct device *parent, struct device *self, void *aux)
 			nrx++;
 		} else if (ntx < 4) {
 			sc->txq[ntx].pipe_no = ed->bEndpointAddress;
-			sc->txq[ntx].pktsize =
-			    UE_GET_SIZE(UGETW(ed->wMaxPacketSize));
 			ntx++;
 		}
 	}
@@ -2028,8 +2026,6 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	ieee80211_release_node(ic, ni);
 
 	xferlen += sizeof (*txd) + 4;
-	if ((xferlen % ring->pktsize) == 0)
-		xferlen += 4;
 
 	usbd_setup_xfer(data->xfer, ring->pipeh, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RUN_TX_TIMEOUT, run_txeof);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_runvar.h,v 1.2 2009/03/14 15:53:23 damien Exp $	*/
+/*	$OpenBSD: if_runvar.h,v 1.3 2009/03/26 20:17:27 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -93,7 +93,6 @@ struct run_tx_ring {
 	usbd_pipe_handle	pipeh;
 	int			cur;
 	int			queued;
-	uint16_t		pktsize;
 	uint8_t			pipe_no;
 };
 
