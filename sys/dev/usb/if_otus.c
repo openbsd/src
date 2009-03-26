@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.3 2009/03/24 19:28:31 damien Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.4 2009/03/26 19:52:51 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -83,6 +83,7 @@ static const struct usb_devno otus_devs[] = {
 	{ USB_VENDOR_ACCTON,	USB_PRODUCT_ACCTON_WN7512 },
 	{ USB_VENDOR_ATHEROS2,	USB_PRODUCT_ATHEROS2_TG121N },
 	{ USB_VENDOR_ATHEROS2,	USB_PRODUCT_ATHEROS2_AR9170 },
+	{ USB_VENDOR_CACE,	USB_PRODUCT_CACE_AIRPCAPNX },
 	{ USB_VENDOR_DLINK2,	USB_PRODUCT_DLINK2_DWA160A },
 	{ USB_VENDOR_IODATA,	USB_PRODUCT_IODATA_WNGDNUS2 },
 	{ USB_VENDOR_NETGEAR,	USB_PRODUCT_NETGEAR_WN111V2 },
