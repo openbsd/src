@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.66 2009/03/22 22:35:00 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.67 2009/03/26 13:59:30 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -317,7 +317,7 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tdemote %s\n", c, p->demote_group);
 	if (p->if_depend[0])
 		printf("%s\tdepend on \"%s\"\n", c, p->if_depend);
-	if (p->flags & BGPD_FLAG_DECISION_TRANS_AS)
+	if (p->flags & PEERFLAG_TRANS_AS)
 		printf("%s\ttransparent-as yes\n", c);
 
 	if (p->auth.method == AUTH_MD5SIG)

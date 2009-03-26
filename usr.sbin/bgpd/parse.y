@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.221 2009/03/22 22:34:59 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.222 2009/03/26 13:59:30 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1060,9 +1060,9 @@ peeropts	: REMOTEAS as4number	{
 		}
 		| TRANSPARENT yesno	{
 			if ($2 == 1)
-				curpeer->conf.flags |= BGPD_FLAG_DECISION_TRANS_AS;
+				curpeer->conf.flags |= PEERFLAG_TRANS_AS;
 			else
-				curpeer->conf.flags &= ~BGPD_FLAG_DECISION_TRANS_AS;
+				curpeer->conf.flags &= ~PEERFLAG_TRANS_AS;
 		}
 		;
 
@@ -2488,8 +2488,8 @@ new_peer(void)
 		p->conf.local_short_as = curgroup->conf.local_short_as;
 	}
 	p->next = NULL;
-	p->conf.flags = (conf->flags & BGPD_FLAG_DECISION_TRANS_AS);
-
+	if (conf->flags & BGPD_FLAG_DECISION_TRANS_AS)
+		p->conf.flags |= PEERFLAG_TRANS_AS;
 	return (p);
 }
 

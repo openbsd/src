@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.66 2009/03/22 22:35:00 henning Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.67 2009/03/26 13:59:30 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -629,7 +629,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 
 	/* aspath */
 	if (!peer->conf.ebgp ||
-	    peer->conf.flags & BGPD_FLAG_DECISION_TRANS_AS)
+	    peer->conf.flags & PEERFLAG_TRANS_AS)
 		pdata = aspath_prepend(a->aspath, rde_local_as(), 0, &plen);
 	else
 		pdata = aspath_prepend(a->aspath, rde_local_as(), 1, &plen);
@@ -762,7 +762,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	/* NEW to OLD conversion when going sending stuff to a 2byte AS peer */
 	if (neednewpath) {
 		if (!peer->conf.ebgp ||
-		    peer->conf.flags & BGPD_FLAG_DECISION_TRANS_AS)
+		    peer->conf.flags & PEERFLAG_TRANS_AS)
 			pdata = aspath_prepend(a->aspath, rde_local_as(), 0,
 			    &plen);
 		else
