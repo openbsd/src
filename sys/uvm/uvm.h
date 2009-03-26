@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.26 2009/03/25 20:00:17 oga Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.27 2009/03/26 13:38:45 oga Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ struct uvm {
 	struct pglist *page_hash;	/* page hash table (vp/off->page) */
 	int page_nhash;			/* number of buckets */
 	int page_hashmask;		/* hash mask */
-	simple_lock_data_t hashlock;	/* lock on page_hash array */
+	struct mutex hashlock;		/* lock on page_hash array */
 
 	/* static kernel map entry pool */
 	vm_map_entry_t kentry_free;	/* free page pool */

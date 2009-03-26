@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.70 2009/03/25 20:00:18 oga Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.71 2009/03/26 13:38:45 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -154,16 +154,13 @@ __inline static void
 uvm_pageinsert(struct vm_page *pg)
 {
 	struct pglist *buck;
-	int s;
 	UVMHIST_FUNC("uvm_pageinsert"); UVMHIST_CALLED(pghist);
 
 	KASSERT((pg->pg_flags & PG_TABLED) == 0);
+	mtx_enter(&uvm.hashlock);
 	buck = &uvm.page_hash[uvm_pagehash(pg->uobject,pg->offset)];
-	s = splvm();
-	simple_lock(&uvm.hashlock);
 	TAILQ_INSERT_TAIL(buck, pg, hashq);	/* put in hash */
-	simple_unlock(&uvm.hashlock);
-	splx(s);
+	mtx_leave(&uvm.hashlock);
 
 	TAILQ_INSERT_TAIL(&pg->uobject->memq, pg, listq); /* put in object */
 	atomic_setbits_int(&pg->pg_flags, PG_TABLED);
@@ -181,16 +178,13 @@ static __inline void
 uvm_pageremove(struct vm_page *pg)
 {
 	struct pglist *buck;
-	int s;
 	UVMHIST_FUNC("uvm_pageremove"); UVMHIST_CALLED(pghist);
 
 	KASSERT(pg->pg_flags & PG_TABLED);
+	mtx_enter(&uvm.hashlock);
 	buck = &uvm.page_hash[uvm_pagehash(pg->uobject,pg->offset)];
-	s = splvm();
-	simple_lock(&uvm.hashlock);
 	TAILQ_REMOVE(buck, pg, hashq);
-	simple_unlock(&uvm.hashlock);
-	splx(s);
+	mtx_leave(&uvm.hashlock);
 
 #ifdef UBC
 	if (pg->uobject->pgops == &uvm_vnodeops) {
@@ -214,8 +208,7 @@ uvm_pageremove(struct vm_page *pg)
  */
 
 void
-uvm_page_init(kvm_startp, kvm_endp)
-	vaddr_t *kvm_startp, *kvm_endp;
+uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 {
 	vsize_t freepages, pagecount, n;
 	vm_page_t pagearray;
@@ -253,7 +246,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	uvm.page_hashmask = 0;			/* mask for hash function */
 	uvm.page_hash = &uvm_bootbucket;	/* install bootstrap bucket */
 	TAILQ_INIT(uvm.page_hash);		/* init hash table */
-	simple_lock_init(&uvm.hashlock);	/* init hash table lock */
+	mtx_init(&uvm.hashlock, IPL_VM);	/* init hash table lock */
 
 	/* 
 	 * allocate vm_page structures.
@@ -381,7 +374,7 @@ uvm_page_init(kvm_startp, kvm_endp)
  */   
 
 void
-uvm_setpagesize()
+uvm_setpagesize(void)
 {
 	if (uvmexp.pagesize == 0)
 		uvmexp.pagesize = DEFAULT_PAGE_SIZE;
@@ -398,8 +391,7 @@ uvm_setpagesize()
  */
 
 vaddr_t
-uvm_pageboot_alloc(size)
-	vsize_t size;
+uvm_pageboot_alloc(vsize_t size)
 {
 #if defined(PMAP_STEAL_MEMORY)
 	vaddr_t addr;
@@ -496,9 +488,7 @@ uvm_pageboot_alloc(size)
 static boolean_t uvm_page_physget_freelist(paddr_t *, int);
 
 static boolean_t
-uvm_page_physget_freelist(paddrp, freelist)
-	paddr_t *paddrp;
-	int freelist;
+uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 {
 	int lcv, x;
 	UVMHIST_FUNC("uvm_page_physget_freelist"); UVMHIST_CALLED(pghist);
@@ -591,8 +581,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 }
 
 boolean_t
-uvm_page_physget(paddrp)
-	paddr_t *paddrp;
+uvm_page_physget(paddr_t *paddrp)
 {
 	int i;
 	UVMHIST_FUNC("uvm_page_physget"); UVMHIST_CALLED(pghist);
@@ -615,9 +604,8 @@ uvm_page_physget(paddrp)
  */
 
 void
-uvm_page_physload(start, end, avail_start, avail_end, free_list)
-	paddr_t start, end, avail_start, avail_end;
-	int free_list;
+uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
+    paddr_t avail_end, int free_list)
 {
 	int preload, lcv;
 	psize_t npages;
@@ -768,9 +756,9 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
  */
 
 void
-uvm_page_rehash()
+uvm_page_rehash(void)
 {
-	int freepages, lcv, bucketcount, s, oldcount;
+	int freepages, lcv, bucketcount, oldcount;
 	struct pglist *newbuckets, *oldbuckets;
 	struct vm_page *pg;
 	size_t newsize, oldsize;
@@ -818,8 +806,7 @@ uvm_page_rehash()
 	 * now replace the old buckets with the new ones and rehash everything
 	 */
 
-	s = splvm();
-	simple_lock(&uvm.hashlock);
+	mtx_enter(&uvm.hashlock);
 	uvm.page_hash = newbuckets;
 	uvm.page_nhash = bucketcount;
 	uvm.page_hashmask = bucketcount - 1;  /* power of 2 */
@@ -833,8 +820,7 @@ uvm_page_rehash()
 			  pg, hashq);
 		}
 	}
-	simple_unlock(&uvm.hashlock);
-	splx(s);
+	mtx_leave(&uvm.hashlock);
 
 	/*
 	 * free old bucket array if is not the boot-time table
@@ -856,7 +842,7 @@ void uvm_page_physdump(void); /* SHUT UP GCC */
 
 /* call from DDB */
 void
-uvm_page_physdump()
+uvm_page_physdump(void)
 {
 	int lcv;
 
@@ -906,12 +892,8 @@ uvm_shutdown(void)
  */
 
 struct vm_page *
-uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
-	struct uvm_object *obj;
-	voff_t off;
-	int flags;
-	struct vm_anon *anon;
-	int strat, free_list;
+uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
+    int flags, int strat, int free_list)
 {
 	int lcv, try1, try2, zeroit = 0;
 	struct vm_page *pg;
@@ -1082,10 +1064,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
  */
 
 void
-uvm_pagerealloc(pg, newobj, newoff)
-	struct vm_page *pg;
-	struct uvm_object *newobj;
-	voff_t newoff;
+uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
 {
 
 	UVMHIST_FUNC("uvm_pagerealloc"); UVMHIST_CALLED(pghist);
@@ -1249,9 +1228,7 @@ uvm_pagefree(struct vm_page *pg)
  */
 
 void
-uvm_page_unbusy(pgs, npgs)
-	struct vm_page **pgs;
-	int npgs;
+uvm_page_unbusy(struct vm_page **pgs, int npgs)
 {
 	struct vm_page *pg;
 	struct uvm_object *uobj;
@@ -1296,9 +1273,7 @@ uvm_page_unbusy(pgs, npgs)
  * => if "tag" is NULL then we are releasing page ownership
  */
 void
-uvm_page_own(pg, tag)
-	struct vm_page *pg;
-	char *tag;
+uvm_page_own(struct vm_page *pg, char *tag)
 {
 	/* gain ownership? */
 	if (tag) {
@@ -1332,7 +1307,7 @@ uvm_page_own(pg, tag)
  *	there is a process ready to run.
  */
 void
-uvm_pageidlezero()
+uvm_pageidlezero(void)
 {
 	struct vm_page *pg;
 	struct pgfreelist *pgfl;
@@ -1505,19 +1480,16 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
 	struct pglist *buck;
-	int s;
 
+	mtx_enter(&uvm.hashlock);
 	buck = &uvm.page_hash[uvm_pagehash(obj,off)];
 
-	s = splvm();
-	simple_lock(&uvm.hashlock);
 	TAILQ_FOREACH(pg, buck, hashq) {
 		if (pg->uobject == obj && pg->offset == off) {
 			break;
 		}
 	}
-	simple_unlock(&uvm.hashlock);
-	splx(s);
+	mtx_leave(&uvm.hashlock);
 	return(pg);
 }
 
