@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.146 2009/03/25 21:50:33 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.147 2009/03/26 22:54:37 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -420,17 +420,17 @@ next:
 	    cf->file_status != FILE_MODIFIED)
 		return;
 
-	cvs_file_get(cf->file_path, 0, &files_affected);
+	cvs_file_get(cf->file_path, 0, &files_affected, CVS_FILE);
 
 	switch (cf->file_status) {
 	case FILE_ADDED:
-		cvs_file_get(cf->file_path, 0, &files_added);
+		cvs_file_get(cf->file_path, 0, &files_added, CVS_FILE);
 		break;
 	case FILE_REMOVED:
-		cvs_file_get(cf->file_path, 0, &files_removed);
+		cvs_file_get(cf->file_path, 0, &files_removed, CVS_FILE);
 		break;
 	case FILE_MODIFIED:
-		cvs_file_get(cf->file_path, 0, &files_modified);
+		cvs_file_get(cf->file_path, 0, &files_modified, CVS_FILE);
 		break;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.52 2009/03/25 21:50:33 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.53 2009/03/26 22:54:37 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -80,6 +80,7 @@ struct cvs_filelist {
 	RB_ENTRY(cvs_filelist) flist;
 	char	*file_path;
 	int	flags;
+	int	type;
 };
 
 RB_HEAD(cvs_flisthead, cvs_filelist);
@@ -108,7 +109,7 @@ void	cvs_file_run(int, char **, struct cvs_recursion *);
 void	cvs_file_walklist(struct cvs_flisthead *, struct cvs_recursion *);
 void	cvs_file_walkdir(struct cvs_file *, struct cvs_recursion *);
 void	cvs_file_freelist(struct cvs_flisthead *);
-struct cvs_filelist *cvs_file_get(char *, int, struct cvs_flisthead *);
+struct cvs_filelist *cvs_file_get(char *, int, struct cvs_flisthead *, int);
 
 int	cvs_filelist_cmp(struct cvs_filelist *, struct cvs_filelist *);
 int	cvs_file_chkign(const char *);

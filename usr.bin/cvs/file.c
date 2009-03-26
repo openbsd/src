@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.256 2009/03/25 21:50:33 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.257 2009/03/26 22:54:37 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -191,15 +191,17 @@ cvs_file_run(int argc, char **argv, struct cvs_recursion *cr)
 
 	RB_INIT(&fl);
 
-	for (i = 0; i < argc; i++)
-		cvs_file_get(argv[i], FILE_USER_SUPPLIED, &fl);
+	for (i = 0; i < argc; i++) {
+		STRIP_SLASH(argv[i]);
+		cvs_file_get(argv[i], FILE_USER_SUPPLIED, &fl, 0);
+	}
 
 	cvs_file_walklist(&fl, cr);
 	cvs_file_freelist(&fl);
 }
 
 struct cvs_filelist *
-cvs_file_get(char *name, int flags, struct cvs_flisthead *fl)
+cvs_file_get(char *name, int flags, struct cvs_flisthead *fl, int type)
 {
 	char *p;
 	struct cvs_filelist *l, find;
@@ -215,6 +217,7 @@ cvs_file_get(char *name, int flags, struct cvs_flisthead *fl)
 	l = (struct cvs_filelist *)xmalloc(sizeof(*l));
 	l->file_path = xstrdup(p);
 	l->flags = flags;
+	l->type = type;
 
 	RB_INSERT(cvs_flisthead, fl, l);
 	return (l);
@@ -274,24 +277,26 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 		if ((d = dirname(l->file_path)) == NULL)
 			fatal("cvs_file_walklist: dirname failed");
 
-		type = CVS_FILE;
+		type = l->type;
 		if ((fd = open(l->file_path, O_RDONLY)) != -1) {
-			if (fstat(fd, &st) == -1) {
-				cvs_log(LP_ERRNO, "%s", l->file_path);
-				(void)close(fd);
-				goto next;
-			}
+			if (type == 0) {
+				if (fstat(fd, &st) == -1) {
+					cvs_log(LP_ERRNO, "%s", l->file_path);
+					(void)close(fd);
+					goto next;
+				}
 
-			if (S_ISDIR(st.st_mode))
-				type = CVS_DIR;
-			else if (S_ISREG(st.st_mode))
-				type = CVS_FILE;
-			else {
-				cvs_log(LP_ERR,
-				    "ignoring bad file type for %s",
-				    l->file_path);
-				(void)close(fd);
-				goto next;
+				if (S_ISDIR(st.st_mode))
+					type = CVS_DIR;
+				else if (S_ISREG(st.st_mode))
+					type = CVS_FILE;
+				else {
+					cvs_log(LP_ERR,
+					    "ignoring bad file type for %s",
+					    l->file_path);
+					(void)close(fd);
+					goto next;
+				}
 			}
 		} else if (current_cvsroot->cr_method == CVS_METHOD_LOCAL) {
 			/*
@@ -314,7 +319,7 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 				fd = open(fpath, O_RDONLY);
 			}
 
-			if (fd != -1) {
+			if (fd != -1 && type == 0) {
 				if (fstat(fd, &st) == -1)
 					fatal("cvs_file_walklist: %s: %s",
 					     fpath, strerror(errno));
@@ -334,11 +339,13 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 				/* this file is not in our working copy yet */
 				(void)close(fd);
 				fd = -1;
+			} else if (fd != -1) {
+				close(fd);
+				fd = -1;
 			}
 		}
 
-		cf = cvs_file_get_cf(d, f, l->file_path,
-		    fd, type, l->flags);
+		cf = cvs_file_get_cf(d, f, l->file_path, fd, type, l->flags);
 		if (cf->file_type == CVS_DIR) {
 			cvs_file_walkdir(cf, cr);
 		} else {
@@ -536,10 +543,10 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 			switch (type) {
 			case CVS_DIR:
 				if (cr->flags & CR_RECURSE_DIRS)
-					cvs_file_get(fpath, 0, &dl);
+					cvs_file_get(fpath, 0, &dl, CVS_DIR);
 				break;
 			case CVS_FILE:
-				cvs_file_get(fpath, 0, &fl);
+				cvs_file_get(fpath, 0, &fl, CVS_FILE);
 				break;
 			default:
 				fatal("type %d unknown, shouldn't happen",
@@ -572,9 +579,9 @@ cvs_file_walkdir(struct cvs_file *cf, struct cvs_recursion *cr)
 		    ent->ce_type == CVS_ENT_DIR)
 			continue;
 		if (ent->ce_type == CVS_ENT_DIR)
-			cvs_file_get(fpath, 0, &dl);
+			cvs_file_get(fpath, 0, &dl, CVS_DIR);
 		else if (ent->ce_type == CVS_ENT_FILE)
-			cvs_file_get(fpath, 0, &fl);
+			cvs_file_get(fpath, 0, &fl, CVS_FILE);
 
 		cvs_ent_free(ent);
 	}
@@ -667,6 +674,23 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		cf->file_ent = NULL;
 
 	if (cf->file_ent != NULL) {
+		if (cf->file_ent->ce_tag != NULL && cvs_specified_tag == NULL)
+			tag = cf->file_ent->ce_tag;
+
+		if (cf->file_flags & FILE_ON_DISK &&
+		    cf->file_ent->ce_type == CVS_ENT_FILE &&
+		    cf->file_type == CVS_DIR && tag != NULL) {
+			cf->file_status = FILE_SKIP;
+			return;
+		}
+
+		if (cf->file_flags & FILE_ON_DISK &&
+		    cf->file_ent->ce_type == CVS_ENT_DIR &&
+		    cf->file_type == CVS_FILE && tag != NULL) {
+			cf->file_status = FILE_SKIP;
+			return;
+		}
+
 		if (cf->file_flags & FILE_ON_DISK &&
 		    cf->file_ent->ce_type == CVS_ENT_DIR &&
 		    cf->file_type != CVS_DIR)
@@ -677,9 +701,6 @@ cvs_file_classify(struct cvs_file *cf, const char *tag)
 		    cf->file_type != CVS_FILE)
 			fatal("%s is supposed to be a file, but it is not",
 			    cf->file_path);
-
-		if (cf->file_ent->ce_tag != NULL && cvs_specified_tag == NULL)
-			tag = cf->file_ent->ce_tag;
 	}
 
 	if (cf->file_type == CVS_DIR) {

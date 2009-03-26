@@ -1,4 +1,4 @@
-/*	$OpenBSD: repository.c,v 1.21 2009/02/21 13:44:18 joris Exp $	*/
+/*	$OpenBSD: repository.c,v 1.22 2009/03/26 22:54:37 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -157,8 +157,10 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 			}
 		}
 
-		if (!(flags & REPOSITORY_DODIRS) && type == CVS_DIR)
-			continue;
+		if (!(flags & REPOSITORY_DODIRS) && type == CVS_DIR) {
+			if (strcmp(dp->d_name, CVS_PATH_ATTIC))
+				continue;
+		}
 
 		switch (type) {
 		case CVS_DIR:
@@ -166,7 +168,7 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 				cvs_repository_getdir(rpath, wdir, fl, dl,
 				    REPOSITORY_IS_ATTIC);
 			} else {
-				cvs_file_get(fpath, 0, dl);
+				cvs_file_get(fpath, 0, dl, CVS_DIR);
 			}
 			break;
 		case CVS_FILE:
@@ -175,7 +177,7 @@ cvs_repository_getdir(const char *dir, const char *wdir,
 				*s = '\0';
 				cvs_file_get(fpath, 
 				    (flags & REPOSITORY_IS_ATTIC) ?
-				    FILE_INSIDE_ATTIC : 0, fl);
+				    FILE_INSIDE_ATTIC : 0, fl, CVS_FILE);
 			}
 			break;
 		default:
