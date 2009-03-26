@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.101 2009/03/24 19:20:10 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.102 2009/03/26 21:48:16 jmc Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -515,6 +515,7 @@ dnl		XR16850-based ports (only in the pccom driver)
 		Atheros USB IEEE 802.11a/b/g/Draft-N USB adapters
 		    Arcadyan WN7512
 		    AVM FRITZ!WLAN USB Stick N
+		    CACE AirPcap Nx
 		    D-Link DWA-160A
 		    IO-Data WN-GDN/US2
 		    Netgear WNDA3100
