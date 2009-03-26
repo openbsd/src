@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.39 2009/01/28 18:55:18 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.40 2009/03/26 20:34:54 damien Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -542,8 +542,8 @@ ieee80211_sa_query_request(struct ieee80211com *ic, struct ieee80211_node *ni)
 		ni->ni_flags &= ~IEEE80211_NODE_SA_QUERY_FAILED;
 		ni->ni_sa_query_count = 0;
 	}
-	/* generate random Transaction Identifier */
-	arc4random_buf(ni->ni_sa_query_trid, 16);
+	/* generate new Transaction Identifier */
+	ni->ni_sa_query_trid++;
 
 	/* send SA Query Request */
 	IEEE80211_SEND_ACTION(ic, ni, IEEE80211_CATEG_SA_QUERY,

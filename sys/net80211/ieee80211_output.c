@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.84 2009/03/06 18:35:02 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.85 2009/03/26 20:34:54 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1553,14 +1553,16 @@ ieee80211_get_sa_query(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct mbuf *m;
 	u_int8_t *frm;
 
-	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA, 18);
+	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA, 4);
 	if (m == NULL)
 		return NULL;
 
 	frm = mtod(m, u_int8_t *);
 	*frm++ = IEEE80211_CATEG_SA_QUERY;
 	*frm++ = action;	/* ACTION_SA_QUERY_REQ/RESP */
-	memcpy(frm, ni->ni_sa_query_trid, 16);
+	LE_WRITE_2(frm, ni->ni_sa_query_trid); frm += 2;
+
+	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
 	return m;
 }
