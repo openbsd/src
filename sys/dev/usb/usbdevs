@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.416 2009/03/25 20:03:42 mglocker Exp $
+$OpenBSD: usbdevs,v 1.417 2009/03/26 19:46:22 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -558,6 +558,7 @@ vendor INTEL		0x8086	Intel
 vendor SITECOM2		0x9016	Sitecom
 vendor MOSCHIP		0x9710	MosChip
 vendor 3COM3		0xa727	3Com
+vendor CACE		0xcace	CACE Technologies
 vendor EVOLUTION	0xdeee	Evolution Robotics
 vendor EMPIA		0xeb1a	eMPIA Technology
 vendor HP2		0xf003	Hewlett Packard
@@ -956,6 +957,9 @@ product BTC BTC7932		0x6782	Keyboard/Mouse
 
 /* Bernd Walter Computer Technology products */
 product BWCT 6CHCONSER		0x0001	6ch ConSer
+
+/* CACE Technologies products */
+product CACE AIRPCAPNX		0x0300	AirPcap Nx
 
 /* Canon, Inc. products */
 product CANON N656U		0x2206	CANOSCAN N656U
