@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.34 2008/10/22 20:31:20 jmc Exp $
+.\"	$OpenBSD: passwd.5,v 1.35 2009/03/27 12:31:31 schwarze Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)passwd.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: October 22 2008 $
+.Dd $Mdocdate: March 27 2009 $
 .Dt PASSWD 5
 .Os
 .Sh NAME
@@ -278,6 +278,11 @@ will result in
 containing:
 .Pp
 +:*:0:0:::
+.Pp
+When YP is enabled but temporarily unavailable, login becomes impossible
+for all users except those having an entry in the
+.Xr netid 5
+file.
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr login 1 ,
@@ -286,6 +291,7 @@ containing:
 .Xr getpwent 3 ,
 .Xr login.conf 5 ,
 .Xr netgroup 5 ,
+.Xr netid 5 ,
 .Xr adduser 8 ,
 .Xr Makefile.yp 8 ,
 .Xr pwd_mkdb 8 ,

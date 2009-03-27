@@ -1,5 +1,6 @@
-/*	$OpenBSD: getgrouplist.c,v 1.15 2008/08/23 10:08:02 chl Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.16 2009/03/27 12:31:31 schwarze Exp $ */
 /*
+ * Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -43,6 +44,101 @@
 #include <rpc/rpc.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
+
+#ifdef YP
+#define _PATH_NETID	"/etc/netid"
+#define MAXLINELENGTH	1024
+
+static int _parse_netid(char*, uid_t, gid_t*, int*, int);
+static int _read_netid(const char *, uid_t, gid_t*, int*, int);
+
+/*
+ * Parse one string of the form "uid:gid[,gid[,...]]".
+ * If the uid matches, add the groups to the group list.
+ * If the groups fit, return 1, otherwise return -1. 
+ * If the uid does not match, return 0.
+ */
+static int
+_parse_netid(char *netid, uid_t uid, gid_t *groups, int *ngroups,
+	     int maxgroups)
+{
+	const char *errstr = NULL;
+	char *start, *p;
+	uid_t tuid;
+	gid_t gid;
+	int i;
+
+	/* Check the uid. */
+	p = strchr(netid, ':');
+	if (!p)
+		return (0);
+	*p++ = '\0';
+	tuid = (uid_t)strtonum(netid, 0, UID_MAX, &errstr);
+	if (errstr || tuid != uid)
+		return (0);
+
+        /* Loop over the gids. */
+	while (p && *p) {
+		start = p;
+		p = strchr(start, ',');
+		if (p)
+			*p++ = '\0';
+		gid = (gid_t)strtonum(start, 0, GID_MAX, &errstr);
+		if (errstr)
+			continue;
+
+		/* Skip this group if it is already in the list. */
+		for (i = 0; i < *ngroups; i++)
+			if (groups[i] == gid)
+				break;
+
+		/* Try to add this new group to the list. */
+		if (i == *ngroups) {
+			if (*ngroups >= maxgroups)
+				return (-1);
+			groups[(*ngroups)++] = gid;
+		}
+	}
+	return (1);
+}
+
+/*
+ * Search /etc/netid for a particular uid and process that line.
+ * See _parse_netid for details, including return values.
+ */
+static int
+_read_netid(const char *key, uid_t uid, gid_t *groups, int *ngroups,
+	    int maxgroups)
+{
+	FILE *fp;
+	char line[MAXLINELENGTH], *p;
+	int found = 0;
+
+	fp = fopen(_PATH_NETID, "r");
+	if (!fp) 
+		return (0);
+	while (!found && fgets(line, sizeof(line), fp)) {
+		p = strchr(line, '\n');
+		if (p)
+			*p = '\0';
+		else { /* Skip lines that are too long. */
+			int ch;
+			while ((ch = getc(fp)) != '\n' && ch != EOF)
+				;
+			continue;
+		}
+		p = strchr(line, ' ');
+		if (!p)
+			continue;
+		*p++ = '\0';
+		if (strcmp(line, key))
+			continue;
+		found = _parse_netid(p, uid, groups, ngroups, maxgroups);
+	}
+	(void)fclose(fp);
+	return (found);
+}
+#endif /* YP */
 
 int
 getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
@@ -92,70 +188,36 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 
 #ifdef YP
 	/*
-	 * If we were told that there is a YP marker, look there now.
+	 * If we were told that there is a YP marker, look at netid data.
 	 */
 	if (needyp) {
-		char buf[1024], *ypdata = NULL, *key, *p;
-		const char *errstr = NULL;
+		char buf[MAXLINELENGTH], *ypdata = NULL, *key;
 		static char *__ypdomain;
 		struct passwd pwstore;
-		int r, ypdatalen;
-		gid_t gid;
-		uid_t uid;
-	
-		if (!__ypdomain) {
-			if (_yp_check(&__ypdomain) == 0) {
-				goto ypout;
-			}
-		}
+		int ypdatalen;
 
-		if (getpwnam_r(uname, &pwstore, buf, sizeof buf, NULL))
-			goto ypout;
-
+		/* Construct the netid key to look up. */
+		if (getpwnam_r(uname, &pwstore, buf, sizeof buf, NULL) ||
+		    !__ypdomain && yp_get_default_domain(&__ypdomain))
+			goto out;
 		asprintf(&key, "unix.%u@%s", pwstore.pw_uid, __ypdomain);
 		if (key == NULL)
-			goto ypout;
-		r = yp_match(__ypdomain, "netid.byname", key,
-		    (int)strlen(key), &ypdata, &ypdatalen);
+			goto out;
+
+		/* First scan the static netid file. */
+		if (ret = _read_netid(key, pwstore.pw_uid,
+				      groups, &ngroups, maxgroups))
+			goto out;
+
+		/* Only access YP when there is no static entry. */
+		if (!yp_bind(__ypdomain) &&
+		    !yp_match(__ypdomain, "netid.byname", key,
+			     (int)strlen(key), &ypdata, &ypdatalen))
+			ret = _parse_netid(ypdata, pwstore.pw_uid,
+			    		   groups, &ngroups, maxgroups);
+
 		free(key);
-		if (r != 0)
-			goto ypout;
-
-		/* Parse the "uid:gid[,gid,gid[,...]]" string. */
-		p = strchr(ypdata, ':');
-		if (!p)
-			goto ypout;
-		*p++ = '\0';
-		uid = (uid_t)strtonum(ypdata, 0, UID_MAX, &errstr);
-		if (errstr || uid != pwstore.pw_uid)
-			goto ypout;
-		while (p && *p) {
-			char *start = p;
-
-			p = strchr(start, ',');
-			if (p)
-				*p++ = '\0';
-			gid = (uid_t)strtonum(start, 0, GID_MAX, &errstr);
-			if (errstr)
-				goto ypout;
-
-			/* Add new groups to the group list */
-			for (i = 0; i < ngroups; i++) {
-				if (groups[i] == gid)
-					break;
-			}
-			if (i == ngroups) {
-				if (ngroups >= maxgroups) {
-					ret = -1;
-					goto ypout;
-				}
-				groups[ngroups++] = gid;
-			}
-		}
-ypout:
-		if (ypdata)
-			free(ypdata);
-		goto out;
+		free(ypdata);
 	}
 #endif /* YP */
 

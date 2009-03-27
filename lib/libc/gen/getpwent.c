@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.38 2008/07/23 19:36:47 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.39 2009/03/27 12:31:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -577,20 +577,12 @@ static struct passwd *
 __yppwlookup(int lookup, char *name, uid_t uid, struct passwd *pw,
     char *buf, size_t buflen, int *flagsp)
 {
-	char bf[1 + _PW_NAME_LEN], *ypcurrent = NULL, *map;
+	char bf[1 + _PW_NAME_LEN], *ypcurrent = NULL, *map = NULL;
 	int yp_pw_flags = 0, ypcurrentlen, r, s = -1, pw_keynum;
 	static long yppbuf[_PW_BUF_LEN / sizeof(long)];
 	struct _ypexclude *ypexhead = NULL;
 	const char *host, *user, *dom;
 	DBT key;
-
-	if (lookup == LOOKUP_BYNAME) {
-		map = PASSWD_BYNAME;
-		name = strdup(name);
-	} else {
-		map = PASSWD_BYUID;
-		asprintf(&name, "%u", uid);
-	}
 
 	for (pw_keynum = 1; pw_keynum; pw_keynum++) {
 		bf[0] = _PW_KEYBYNUM;
@@ -606,6 +598,15 @@ __yppwlookup(int lookup, char *name, uid_t uid, struct passwd *pw,
 					continue;
 			}
 			__ypproto_set(pw, yppbuf, *flagsp, &yp_pw_flags);
+			if (!map) {
+				if (lookup == LOOKUP_BYNAME) {
+					map = PASSWD_BYNAME;
+					name = strdup(name);
+				} else {
+					map = PASSWD_BYUID;
+					asprintf(&name, "%u", uid);
+				}
+			}
 
 			switch (pw->pw_name[1]) {
 			case '\0':
@@ -715,7 +716,8 @@ done:
 	if (ypcurrent)
 		free(ypcurrent);
 	ypcurrent = NULL;
-	free(name);
+	if (map)
+		free(name);
 	return (pw);
 }
 #endif /* YP */

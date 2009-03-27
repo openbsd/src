@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgrouplist.3,v 1.12 2008/07/28 20:19:32 jmc Exp $
+.\"	$OpenBSD: getgrouplist.3,v 1.13 2009/03/27 12:31:31 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 28 2008 $
+.Dd $Mdocdate: March 27 2009 $
 .Dt GETGROUPLIST 3
 .Os
 .Sh NAME
@@ -49,6 +49,8 @@ is automatically included in the groups list.
 Typically this value is given as
 the group number from the password file.
 If YP is active, the
+.Xr netid 5
+file and the
 .Pa netid.byname
 YP map will be used in addition to the group file.
 .Pp
@@ -76,6 +78,7 @@ group database file
 .Xr initgroups 3 ,
 .Xr yp_match 3 ,
 .Xr group 5 ,
+.Xr netid 5 ,
 .Xr yp 8
 .Sh HISTORY
 The
