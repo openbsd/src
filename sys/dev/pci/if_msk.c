@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.72 2009/03/23 21:58:54 kettenis Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.73 2009/03/27 10:16:17 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1246,10 +1246,46 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		case SK_YUKON_EC_U_REV_A1:
 			revstr = "A1";
 			break;
+		case SK_YUKON_EC_U_REV_B0:
+			revstr = "B0";
+			break;
 		default:
 			;
 		}
 	}
+
+	if (sc->sk_type == SK_YUKON_FE) {
+		switch (sc->sk_rev) {
+		case SK_YUKON_FE_REV_A1:
+			revstr = "A1";
+			break;
+		case SK_YUKON_FE_REV_A2:
+			revstr = "A2";
+			break;
+		default:
+			;
+		}
+	}
+
+	if (sc->sk_type == SK_YUKON_FE_P && sc->sk_rev == SK_YUKON_FE_P_REV_A0)
+		revstr = "A0";
+
+	if (sc->sk_type == SK_YUKON_EX) {
+		switch (sc->sk_rev) {
+		case SK_YUKON_EX_REV_A0:
+			revstr = "A0";
+			break;
+		case SK_YUKON_EX_REV_B0:
+			revstr = "B0";
+			break;
+		default:
+			;
+		}
+	}
+
+	if (sc->sk_type == SK_YUKON_SUPR && sc->sk_rev == SK_YUKON_SUPR_REV_A0)
+		revstr = "A0";
+
 
 	/* Announce the product name. */
 	printf(", %s", sc->sk_name);
