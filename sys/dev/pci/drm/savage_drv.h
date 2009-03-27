@@ -202,7 +202,8 @@ typedef struct drm_savage_private {
 
 /* ioctls */
 extern int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_priv);
-extern int savage_bci_buffers(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int savage_bci_buffers(struct drm_device *, struct drm_dma *,
+    struct drm_file *);
 extern int savage_bci_init(struct drm_device *, void *, struct drm_file *);
 extern int savage_bci_event_emit(struct drm_device *, void *, struct drm_file *);
 extern int savage_bci_event_wait(struct drm_device *, void *, struct drm_file *);

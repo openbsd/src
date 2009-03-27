@@ -337,7 +337,8 @@ extern int radeon_cp_stop(struct drm_device *dev, void *data, struct drm_file *f
 extern int radeon_cp_reset(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_cp_idle(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_cp_resume(struct drm_device *dev);
-extern int radeon_cp_buffers(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int radeon_cp_buffers(struct drm_device *, struct drm_dma *,
+    struct drm_file *);
 extern u32 radeon_read_fb_location(drm_radeon_private_t *dev_priv);
 
 extern int radeon_surface_alloc(struct drm_device *, void *, struct drm_file *);

@@ -146,7 +146,8 @@ extern int r128_cce_reset(struct drm_device *dev, void *data, struct drm_file *f
 extern int r128_cce_idle(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int r128_engine_reset(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int r128_fullscreen(struct drm_device *dev, void *data, struct drm_file *file_priv);
-extern int r128_cce_buffers(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int r128_cce_buffers(struct drm_device *, struct drm_dma *,
+    struct drm_file *);
 extern int r128_cce_swap(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int r128_cce_flip(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int r128_cce_clear(struct drm_device *dev, void *data, struct drm_file *file_priv);

@@ -441,13 +441,37 @@ drm_reclaim_buffers(struct drm_device *dev, struct drm_file *file_priv)
 int
 drm_dma(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
+	struct drm_device_dma	*dma = dev->dma;
+	struct drm_dma		*d = data;
+	int			 ret = 0;
 
-	if (dev->driver->dma_ioctl != NULL) {
-		return (dev->driver->dma_ioctl(dev, data, file_priv));
-	} else {
+	if (dev->driver->dma_ioctl == NULL) {
 		DRM_DEBUG("DMA ioctl on driver with no dma handler\n");
-		return EINVAL;
+		return (EINVAL);
 	}
+
+	LOCK_TEST_WITH_RETURN(dev, file_priv);
+
+	/* Please don't send us buffers.
+	 */
+	if (d->send_count != 0) {
+		DRM_ERROR("process trying to send %d buffers via drmDMA\n",
+		    d->send_count);
+		return (EINVAL);
+	}
+
+	/* We'll send you buffers.
+	 */
+	if (d->request_count < 0 || d->request_count > dma->buf_count) {
+		DRM_ERROR("Process trying to get %d buffers (of %d max)\n",
+			  curproc->p_pid, d->request_count, dma->buf_count);
+		return (EINVAL);
+	}
+	d->granted_count = 0;
+
+	if (d->request_count)
+		ret = dev->driver->dma_ioctl(dev, d, file_priv);
+	return (ret);
 }
 
 int

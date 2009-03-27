@@ -155,8 +155,8 @@ extern int mga_dma_flush(struct drm_device *dev, void *data,
 			 struct drm_file *file_priv);
 extern int mga_dma_reset(struct drm_device *dev, void *data,
 			 struct drm_file *file_priv);
-extern int mga_dma_buffers(struct drm_device *dev, void *data,
-			   struct drm_file *file_priv);
+extern int mga_dma_buffers(struct drm_device *, struct drm_dma *,
+    struct drm_file *);
 extern void mga_driver_lastclose(struct drm_device * dev);
 extern int mga_driver_dma_quiescent(struct drm_device * dev);
 extern int mga_dma_swap(struct drm_device *, void *, struct drm_file *);

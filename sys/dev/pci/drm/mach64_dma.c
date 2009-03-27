@@ -1658,9 +1658,10 @@ int mach64_freelist_put(drm_mach64_private_t *dev_priv, struct drm_buf *copy_buf
 /** \name DMA buffer request and submission IOCTL handler */
 /*@{*/
 
-static int mach64_dma_get_buffers(struct drm_device *dev,
-				  struct drm_file *file_priv,
-				  struct drm_dma * d)
+
+int
+mach64_dma_buffers(struct drm_device *dev, struct drm_dma *d,
+    struct drm_file *file_priv)
 {
 	int i;
 	struct drm_buf *buf;
@@ -1688,40 +1689,6 @@ static int mach64_dma_get_buffers(struct drm_device *dev,
 		d->granted_count++;
 	}
 	return 0;
-}
-
-int mach64_dma_buffers(struct drm_device *dev, void *data,
-		       struct drm_file *file_priv)
-{
-	struct drm_device_dma *dma = dev->dma;
-	struct drm_dma *d = data;
-	int ret = 0;
-
-	LOCK_TEST_WITH_RETURN(dev, file_priv);
-
-	/* Please don't send us buffers.
-	 */
-	if (d->send_count != 0) {
-		DRM_ERROR("Process %d trying to send %d buffers via drmDMA\n",
-			  DRM_CURRENTPID, d->send_count);
-		return EINVAL;
-	}
-
-	/* We'll send you buffers.
-	 */
-	if (d->request_count < 0 || d->request_count > dma->buf_count) {
-		DRM_ERROR("Process %d trying to get %d buffers (of %d max)\n",
-			  DRM_CURRENTPID, d->request_count, dma->buf_count);
-		ret = EINVAL;
-	}
-
-	d->granted_count = 0;
-
-	if (d->request_count) {
-		ret = mach64_dma_get_buffers(dev, file_priv, d);
-	}
-
-	return ret;
 }
 
 void mach64_driver_lastclose(struct drm_device * dev)

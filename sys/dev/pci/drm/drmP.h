@@ -202,7 +202,8 @@ DRM_SPINUNLOCK(&dev->irq_lock)
 
 #define DRM_ERROR(fmt, arg...) \
 	printf("error: [" DRM_NAME ":pid%d:%s] *ERROR* " fmt,		\
-	    DRM_CURRENTPID, __func__ , ## arg)
+	    curproc->p_pid, __func__ , ## arg)
+
 
 #define DRM_INFO(fmt, arg...)  printf("%s: " fmt, dev_priv->dev.dv_xname, ## arg)
 
@@ -210,7 +211,7 @@ DRM_SPINUNLOCK(&dev->irq_lock)
 #undef DRM_DEBUG
 #define DRM_DEBUG(fmt, arg...) do {					\
 	if (drm_debug_flag)						\
-		printf("[" DRM_NAME ":pid%d:%s] " fmt, DRM_CURRENTPID,	\
+		printf("[" DRM_NAME ":pid%d:%s] " fmt, curproc->p_pid,	\
 			__func__ , ## arg);				\
 } while (0)
 #else
@@ -390,7 +391,8 @@ struct drm_driver_info {
 	void	(*lastclose)(struct drm_device *);
 	void	(*reclaim_buffers_locked)(struct drm_device *,
 		    struct drm_file *);
-	int	(*dma_ioctl)(struct drm_device *, void *, struct drm_file *);
+	int	(*dma_ioctl)(struct drm_device *, struct drm_dma *,
+		    struct drm_file *);
 	int	(*dma_quiescent)(struct drm_device *);
 	int	(*context_ctor)(struct drm_device *, int);
 	int	(*context_dtor)(struct drm_device *, int);
@@ -470,7 +472,7 @@ struct drm_device {
 	struct timeout		 vblank_disable_timer;	/* timer for disable */
 	struct drm_vblank	*vblank;		/* One per ctrc */
 
-	pid_t		  buf_pgid;
+	pid_t			 buf_pgid;
 
 	struct drm_agp_head	*agp;
 	struct drm_sg_mem	*sg;  /* Scatter gather memory */

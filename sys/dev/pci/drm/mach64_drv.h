@@ -126,8 +126,8 @@ extern int mach64_dma_flush(struct drm_device *dev, void *data,
 			    struct drm_file *file_priv);
 extern int mach64_engine_reset(struct drm_device *dev, void *data,
 			       struct drm_file *file_priv);
-extern int mach64_dma_buffers(struct drm_device *dev, void *data,
-			      struct drm_file *file_priv);
+extern int mach64_dma_buffers(struct drm_device *, struct drm_dma *,
+    struct drm_file *);
 extern void mach64_driver_lastclose(struct drm_device * dev);
 
 extern int mach64_init_freelist(struct drm_device * dev);
