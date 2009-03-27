@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.72 2008/10/15 19:12:18 blambert Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.73 2009/03/27 11:40:56 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -132,6 +132,7 @@ static const struct zyd_type {
 	ZYD_ZD1211B_DEV(PHILIPS,	SNU5600),
 	ZYD_ZD1211B_DEV(PLANEX2,	GW_US54GXS),
 	ZYD_ZD1211B_DEV(SAGEM,		XG76NA),
+	ZYD_ZD1211B_DEV(SITECOMEU,	WL603),
 	ZYD_ZD1211B_DEV(SITECOMEU,	ZD1211B),
 	ZYD_ZD1211B_DEV(UMEDIA,		TEW429UBC1),
 	ZYD_ZD1211B_DEV(UNKNOWN1,	ZD1211B_1),
