@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.420 2009/03/27 13:00:55 jsg Exp $
+$OpenBSD: usbdevs,v 1.421 2009/03/27 14:56:00 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1224,7 +1224,11 @@ product DYNASTREAM ANT2USB	0x1004	ANT2USB
 product EASYDISK EASYDISK	0x0005	Flash Disk
 
 /* EDIMAX products */
+product EDIMAX EW7318		0x7318	EW-7318
+product EDIMAX EW7618		0x7618	EW-7618
 product EDIMAX RT2870_1		0x7711	RT2870
+product EDIMAX EW7717		0x7717	EW-7717
+product EDIMAX EW7718		0x7718	EW-7718
 
 /* eGalax Products */
 product EGALAX TPANEL		0x0001	Touch Panel
