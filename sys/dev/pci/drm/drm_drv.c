@@ -287,9 +287,8 @@ drm_firstopen(struct drm_device *dev)
 		dev->driver->firstopen(dev);
 
 	if (dev->driver->flags & DRIVER_DMA) {
-		i = drm_dma_setup(dev);
-		if (i != 0)
-			return i;
+		if ((i = drm_dma_setup(dev)) != 0)
+			return (i);
 	}
 
 	dev->magicid = 1;
@@ -618,7 +617,7 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 		case DRM_IOCTL_RM_CTX:
 			return (drm_rmctx(dev, data, file_priv));
 		case DRM_IOCTL_ADD_BUFS:
-			return (drm_addbufs_ioctl(dev, data, file_priv));
+			return (drm_addbufs(dev, (struct drm_buf_desc *)data));
 		case DRM_IOCTL_CONTROL:
 			return (drm_control(dev, data, file_priv));
 		case DRM_IOCTL_AGP_ACQUIRE:
@@ -701,18 +700,14 @@ drmmmap(dev_t kdev, off_t offset, int prot)
 
 	if (dev->dma && offset >= 0 && offset < ptoa(dev->dma->page_count)) {
 		drm_device_dma_t *dma = dev->dma;
+		paddr_t	phys = -1;
 
-		DRM_SPINLOCK(&dev->dma_lock);
+		rw_enter_write(&dma->dma_lock);
+		if (dma->pagelist != NULL)
+			phys = atop(dma->pagelist[offset >> PAGE_SHIFT]);
+		rw_exit_write(&dma->dma_lock);
 
-		if (dma->pagelist != NULL) {
-			paddr_t phys = dma->pagelist[offset >> PAGE_SHIFT];
-
-			DRM_SPINUNLOCK(&dev->dma_lock);
-			return (atop(phys));
-		} else {
-			DRM_SPINUNLOCK(&dev->dma_lock);
-			return (-1);
-		}
+		return (phys);
 	}
 
 	/*

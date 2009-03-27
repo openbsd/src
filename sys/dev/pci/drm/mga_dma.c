@@ -510,7 +510,7 @@ static int mga_do_agp_dma_bootstrap(struct drm_device *dev,
 	req.flags = _DRM_AGP_BUFFER;
 	req.agp_start = offset;
 
-	err = drm_addbufs_agp(dev, &req);
+	err = drm_addbufs(dev, &req);
 	if (err) {
 		DRM_ERROR("Unable to add secondary DMA buffers: %d\n", err);
 		return err;
@@ -621,7 +621,7 @@ static int mga_do_pci_dma_bootstrap(struct drm_device * dev,
 		req.count = bin_count;
 		req.size = dma_bs->secondary_bin_size;
 
-		err = drm_addbufs_pci(dev, &req);
+		err = drm_addbufs(dev, &req);
 		if (!err) {
 			break;
 		}

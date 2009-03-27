@@ -1007,5 +1007,5 @@ void savage_reclaim_buffers(struct drm_device *dev, struct drm_file *file_priv)
 		}
 	}
 
-	drm_core_reclaim_buffers(dev, file_priv);
+	drm_reclaim_buffers(dev, file_priv);
 }
