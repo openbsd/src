@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.142 2009/03/25 12:17:30 reyk Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -90,6 +90,7 @@ void	ubsec_feed(struct ubsec_softc *);
 void	ubsec_mcopy(struct mbuf *, struct mbuf *, int, int);
 void	ubsec_callback2(struct ubsec_softc *, struct ubsec_q2 *);
 void	ubsec_feed2(struct ubsec_softc *);
+void	ubsec_feed4(struct ubsec_softc *);
 void	ubsec_rng(void *);
 int	ubsec_dma_malloc(struct ubsec_softc *, bus_size_t,
     struct ubsec_dma_alloc *, int);
@@ -133,6 +134,10 @@ const struct pci_matchid ubsec_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5821 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5822 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5823 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5825 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5860 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5861 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5862 },
 	{ PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SCA1K },
 	{ PCI_VENDOR_SUN, PCI_PRODUCT_SUN_5821 },
 };
@@ -151,6 +156,7 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
+	pcireg_t memtype;
 	const char *intrstr = NULL;
 	struct ubsec_dma *dmap;
 	bus_size_t iosize;
@@ -163,8 +169,11 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INIT(&sc->sc_queue2);
 	SIMPLEQ_INIT(&sc->sc_qchip2);
 	SIMPLEQ_INIT(&sc->sc_q2free);
+	SIMPLEQ_INIT(&sc->sc_queue4);
+	SIMPLEQ_INIT(&sc->sc_qchip4);
 
 	sc->sc_statmask = BS_STAT_MCR1_DONE | BS_STAT_DMAERR;
+	sc->sc_maxaggr = UBS_MIN_AGGR;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601)
@@ -177,14 +186,9 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5822 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5823))
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5822))
 		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG |
 		    UBS_FLAGS_LONGCTX | UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5823)
-		sc->sc_flags |= UBS_FLAGS_AES;
 
 	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821) ||
@@ -197,7 +201,32 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 		    UBS_FLAGS_LONGCTX | UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY;
 	}
 
-	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0,
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5823 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5825))
+		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG |
+		    UBS_FLAGS_LONGCTX | UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY |
+		    UBS_FLAGS_AES;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5860 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5861 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5862)) {
+		sc->sc_maxaggr = UBS_MAX_AGGR;
+		sc->sc_statmask |=
+		    BS_STAT_MCR1_ALLEMPTY | BS_STAT_MCR2_ALLEMPTY |
+		    BS_STAT_MCR3_ALLEMPTY | BS_STAT_MCR4_ALLEMPTY;
+		sc->sc_flags |= UBS_FLAGS_MULTIMCR | UBS_FLAGS_HWNORM |
+		    UBS_FLAGS_LONGCTX | UBS_FLAGS_AES |
+		    UBS_FLAGS_KEY | UBS_FLAGS_BIGKEY;
+#if 0
+		/* The RNG is not yet supported */
+		sc->sc_flags |= UBS_FLAGS_RNG | UBS_FLAGS_RNG4;
+#endif
+	}
+
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BS_BAR);
+	if (pci_mapreg_map(pa, BS_BAR, memtype, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, &iosize, 0)) {
 		printf(": can't find mem space\n");
 		return;
@@ -285,7 +314,10 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 
 #ifndef UBSEC_NO_RNG
 	if (sc->sc_flags & UBS_FLAGS_RNG) {
-		sc->sc_statmask |= BS_STAT_MCR2_DONE;
+		if (sc->sc_flags & UBS_FLAGS_RNG4)
+			sc->sc_statmask |= BS_STAT_MCR4_DONE;
+		else
+			sc->sc_statmask |= BS_STAT_MCR2_DONE;
 
 		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_mcr),
 		    &sc->sc_rng.rng_q.q_mcr, 0))
@@ -342,6 +374,7 @@ ubsec_intr(void *arg)
 	volatile u_int32_t stat;
 	struct ubsec_q *q;
 	struct ubsec_dma *dmap;
+	u_int16_t flags;
 	int npkts = 0, i;
 
 	stat = READ_REG(sc, BS_STAT);
@@ -404,7 +437,13 @@ ubsec_intr(void *arg)
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 			mcr = (struct ubsec_mcr *)q2->q_mcr.dma_vaddr;
-			if ((mcr->mcr_flags & htole16(UBS_MCR_DONE)) == 0) {
+
+			/* A bug in new devices requires to swap this field */
+			if (sc->sc_flags & UBS_FLAGS_MULTIMCR)
+				flags = swap16(mcr->mcr_flags);
+			else
+				flags = mcr->mcr_flags;
+			if ((flags & htole16(UBS_MCR_DONE)) == 0) {
 				bus_dmamap_sync(sc->sc_dmat,
 				    q2->q_mcr.dma_map, 0,
 				    q2->q_mcr.dma_map->dm_mapsize,
@@ -419,6 +458,39 @@ ubsec_intr(void *arg)
 			 */
 			if (!(stat & BS_STAT_DMAERR))
 				ubsec_feed2(sc);
+		}
+	}
+	if ((sc->sc_flags & UBS_FLAGS_RNG4) && (stat & BS_STAT_MCR4_DONE)) {
+		struct ubsec_q2 *q2;
+		struct ubsec_mcr *mcr;
+
+		while (!SIMPLEQ_EMPTY(&sc->sc_qchip4)) {
+			q2 = SIMPLEQ_FIRST(&sc->sc_qchip4);
+
+			bus_dmamap_sync(sc->sc_dmat, q2->q_mcr.dma_map,
+			    0, q2->q_mcr.dma_map->dm_mapsize,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+			mcr = (struct ubsec_mcr *)q2->q_mcr.dma_vaddr;
+
+			/* A bug in new devices requires to swap this field */
+			flags = swap16(mcr->mcr_flags);
+
+			if ((flags & htole16(UBS_MCR_DONE)) == 0) {
+				bus_dmamap_sync(sc->sc_dmat,
+				    q2->q_mcr.dma_map, 0,
+				    q2->q_mcr.dma_map->dm_mapsize,
+				    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+				break;
+			}
+			SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip4, q_next);
+			ubsec_callback2(sc, q2);
+			/*
+			 * Don't send any more packet to chip if there has been
+			 * a DMAERR.
+			 */
+			if (!(stat & BS_STAT_DMAERR))
+				ubsec_feed4(sc);
 		}
 	}
 
@@ -456,8 +528,8 @@ ubsec_feed(struct ubsec_softc *sc)
 	u_int32_t stat;
 
 	npkts = sc->sc_nqueue;
-	if (npkts > UBS_MAX_AGGR)
-		npkts = UBS_MAX_AGGR;
+	if (npkts > sc->sc_maxaggr)
+		npkts = sc->sc_maxaggr;
 	if (npkts < 2)
 		goto feed1;
 
@@ -1461,6 +1533,33 @@ ubsec_feed2(struct ubsec_softc *sc)
 }
 
 /*
+ * feed the RNG (used instead of ubsec_feed2() on 5827+ devices)
+ */
+void
+ubsec_feed4(struct ubsec_softc *sc)
+{
+	struct ubsec_q2 *q;
+
+	while (!SIMPLEQ_EMPTY(&sc->sc_queue4)) {
+		if (READ_REG(sc, BS_STAT) & BS_STAT_MCR4_FULL)
+			break;
+		q = SIMPLEQ_FIRST(&sc->sc_queue4);
+
+		bus_dmamap_sync(sc->sc_dmat, q->q_mcr.dma_map, 0,
+		    q->q_mcr.dma_map->dm_mapsize,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		bus_dmamap_sync(sc->sc_dmat, q->q_ctx.dma_map, 0,
+		    q->q_ctx.dma_map->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+		WRITE_REG(sc, BS_MCR4, q->q_mcr.dma_paddr);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue4, q_next);
+		--sc->sc_nqueue4;
+		SIMPLEQ_INSERT_TAIL(&sc->sc_qchip4, q, q_next);
+	}
+}
+
+/*
  * Callback for handling random numbers
  */
 void
@@ -1575,15 +1674,20 @@ ubsec_rng(void *vsc)
 	struct ubsec_q2_rng *rng = &sc->sc_rng;
 	struct ubsec_mcr *mcr;
 	struct ubsec_ctx_rngbypass *ctx;
-	int s;
+	int s, *nqueue;
 
 	s = splnet();
 	if (rng->rng_used) {
 		splx(s);
 		return;
 	}
-	sc->sc_nqueue2++;
-	if (sc->sc_nqueue2 >= UBS_MAX_NQUEUE)
+	if (sc->sc_flags & UBS_FLAGS_RNG4)
+		nqueue = &sc->sc_nqueue4;
+	else
+		nqueue = &sc->sc_nqueue2;
+
+	(*nqueue)++;
+	if (*nqueue >= UBS_MAX_NQUEUE)
 		goto out;
 
 	mcr = (struct ubsec_mcr *)rng->rng_q.q_mcr.dma_vaddr;
@@ -1607,9 +1711,15 @@ ubsec_rng(void *vsc)
 	bus_dmamap_sync(sc->sc_dmat, rng->rng_buf.dma_map, 0,
 	    rng->rng_buf.dma_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
-	SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, &rng->rng_q, q_next);
-	rng->rng_used = 1;
-	ubsec_feed2(sc);
+	if (sc->sc_flags & UBS_FLAGS_RNG4) {
+		SIMPLEQ_INSERT_TAIL(&sc->sc_queue4, &rng->rng_q, q_next);
+		rng->rng_used = 1;
+		ubsec_feed4(sc);
+	} else {
+		SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, &rng->rng_q, q_next);
+		rng->rng_used = 1;
+		ubsec_feed2(sc);
+	}
 	splx(s);
 
 	return;
@@ -1618,7 +1728,7 @@ out:
 	/*
 	 * Something weird happened, generate our own call back.
 	 */
-	sc->sc_nqueue2--;
+	(*nqueue)--;
 	splx(s);
 	timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 }
@@ -1677,16 +1787,23 @@ ubsec_dma_free(struct ubsec_softc *sc, struct ubsec_dma_alloc *dma)
 void
 ubsec_reset_board(struct ubsec_softc *sc)
 {
-    volatile u_int32_t ctrl;
+	volatile u_int32_t ctrl;
 
-    ctrl = READ_REG(sc, BS_CTRL);
-    ctrl |= BS_CTRL_RESET;
-    WRITE_REG(sc, BS_CTRL, ctrl);
+	/* Reset the device */
+	ctrl = READ_REG(sc, BS_CTRL);
+	ctrl |= BS_CTRL_RESET;
+	WRITE_REG(sc, BS_CTRL, ctrl);
 
-    /*
-     * Wait aprox. 30 PCI clocks = 900 ns = 0.9 us
-     */
-    DELAY(10);
+	/*
+	* Wait aprox. 30 PCI clocks = 900 ns = 0.9 us
+	*/
+	DELAY(10);
+
+	/* Enable RNG and interrupts on newer devices */
+	if (sc->sc_flags & UBS_FLAGS_MULTIMCR) {
+		WRITE_REG(sc, BS_CFG, BS_CFG_RNG);
+		WRITE_REG(sc, BS_INT, BS_INT_DMAINT);
+	}
 }
 
 /*
@@ -1708,6 +1825,16 @@ ubsec_init_board(struct ubsec_softc *sc)
 
 	if (sc->sc_flags & UBS_FLAGS_HWNORM)
 		ctrl &= ~BS_CTRL_SWNORM;
+
+	if (sc->sc_flags & UBS_FLAGS_MULTIMCR) {
+		ctrl |= BS_CTRL_BSIZE240;
+		ctrl &= ~BS_CTRL_MCR3INT; /* MCR3 is reserved for SSL */
+
+		if (sc->sc_flags & UBS_FLAGS_RNG4)
+			ctrl |= BS_CTRL_MCR4INT;
+		else
+			ctrl &= ~BS_CTRL_MCR4INT;
+	}
 
 	WRITE_REG(sc, BS_CTRL, ctrl);
 }

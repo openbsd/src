@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubsec.4,v 1.31 2009/03/25 14:53:08 jmc Exp $
+.\"	$OpenBSD: ubsec.4,v 1.32 2009/03/27 13:31:30 reyk Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 25 2009 $
+.Dd $Mdocdate: March 27 2009 $
 .Dt UBSEC 4
 .Os
 .Sh NAME
@@ -59,6 +59,14 @@ This is the chip found on the Sun Crypto Accelerator 1000.
 Faster version of the BCM5820.
 .It Broadcom BCM5823
 Faster version of the BCM5822 that also supports AES.
+.It Broadcom BCM5825
+Faster PCI Express or PCI-X version of the chip.
+.It Broadcom BCM5860
+IPSec/SSL Security Processor that is faster and has more features.
+.It Broadcom BCM5861
+Faster version of the BCM5860.
+.It Broadcom BCM5862
+Faster version of the BCM5861.
 .El
 .Pp
 The
@@ -68,7 +76,7 @@ and SHA1-HMAC operations for
 .Xr ipsec 4
 and
 .Xr crypto 4 .
-The driver also supports acceleration of AES-CBC with the BCM5823.
+The driver also supports acceleration of AES-CBC with the BCM5823 or newer.
 .Pp
 On those models which contain a public key engine (almost all of the
 more recent ones), this feature is registered with the
@@ -96,3 +104,7 @@ device driver appeared in
 The BCM5801 and BCM5802 have not actually been tested.
 Also, some of the newer chips support AES-CTR (AES Counter Mode) but
 it is not supported by the driver.
+The advanced SSL/TLS acceleration features of the BCM5860 or newer
+are not supported by the driver and the
+.Xr crypto 4
+subsystem.
