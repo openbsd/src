@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.30 2009/02/26 19:57:10 todd Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.31 2009/03/27 16:01:37 oga Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -39,7 +39,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/mount.h>		/* for vfs_syncwait() */
 #include <sys/proc.h>
 #include <sys/device.h>
@@ -62,8 +62,8 @@
 #define	DPRINTF(x)	/**/
 #endif
 
-#define APM_LOCK(sc)    lockmgr(&(sc)->sc_lock, LK_EXCLUSIVE, NULL)
-#define APM_UNLOCK(sc)  lockmgr(&(sc)->sc_lock, LK_RELEASE, NULL)
+#define APM_LOCK(sc)    rw_enter_write(&(sc)->sc_lock);
+#define APM_UNLOCK(sc)  rw_exit_write(&(sc)->sc_lock);
 
 struct cfdriver apm_cd = {
 	NULL, "apm", DV_DULL
@@ -650,7 +650,7 @@ pxa2x0_apm_attach_sub(struct pxa2x0_apm_softc *sc)
 		return;
 	}
 
-	lockinit(&sc->sc_lock, PWAIT, "apmlk", 0, 0);
+	rw_init(&sc->sc_lock, "apmlk");
 
 	kthread_create_deferred(apm_thread_create, sc);
 

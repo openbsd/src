@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.h,v 1.7 2005/04/13 05:40:07 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.h,v 1.8 2009/03/27 16:01:37 oga Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -27,7 +27,7 @@
 struct pxa2x0_apm_softc {
 	struct	device sc_dev;
 	struct	proc *sc_thread;
-	struct	lock sc_lock;
+	struct	rwlock sc_lock;
 	struct	klist sc_note;
 	int	sc_flags;
 	int	sc_wakeon;	/* enabled wakeup sources */
