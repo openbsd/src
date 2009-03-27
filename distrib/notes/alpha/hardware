@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.98 2009/03/14 20:38:11 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.99 2009/03/27 13:59:05 jmc Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run OpenBSD,
 or if you are able to run OpenBSD on hardware not listed here, please
@@ -690,6 +690,7 @@ Supported Peripherals:
 		    Hercules HWGUSB2-54-LB
 		    Hercules HWGUSB2-54V2-AP
 		    LevelOne WNC-0301USB v3
+		    Linksys WUSB200
 		    Linksys WUSB54G rev C
 		    Linksys WUSB54GR
 		    Planex GW-US54HP
@@ -701,10 +702,12 @@ Supported Peripherals:
 		    Sweex LW053
 		    TP-LINK TL-WN321G
 		Ralink Technology USB IEEE 802.11a/b/g/Draft-N USB adapters
+		    ASUS USB-N11
 		    Buffalo WLI-UC-AG300N
 		    Buffalo WLI-UC-GN
 		    Corega CG-WLUSB300GNM
 		    D-Link DWA-130
+		    D-Link DWA-140
 		    Edimax EW-7711UAn
 		    Gigabyte GN-WB32L
 		    Linksys WUSB600N

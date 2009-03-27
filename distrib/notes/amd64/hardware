@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.102 2009/03/26 21:48:16 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.103 2009/03/27 13:59:06 jmc Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -613,17 +613,24 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    PLANEX GW-DS54G
 		    SMC EZ Connect g 2.4GHz SMC2802W
 		    SMC 2802Wv2
-		Conexant/Intersil Prism GT SoftMAC IEEE 802.11b/g USB adapters
+		Conexant/Intersil PrismGT SoftMAC IEEE 802.11b/g USB adapters
 		    Belkin F5D7050 (version 1000)
 		    Cohiba Proto Board
 		    D-Link DWL-G120 Cohiba
+		    D-Link DWL-G122 rev A2
 		    FSC Connect2Air E-5400 USB D1700
 		    Gigaset USB Adapter 54
 		    Inventel UR045G
+		    IOGear GWU513
+		    Linksys WUSB54AG
+		    Linksys WUSB54G ver 2
+		    Medion MD40900
+		    Philips CPWUA054
 		    SMC EZ ConnectG SMC2862W-G
 		    Sagem XG703A
 		    Spinnaker DUT
 		    Spinnaker Proto Board
+		    Thomson SpeedTouch 121g
 		Intel PRO/Wireless 2200BG/2225BG/2915ABG IEEE 802.11a/b/g PCI
 		adapters
 		Intel PRO/Wireless 3945ABG IEEE 802.11a/b/g PCI adapters
@@ -820,6 +827,7 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    Hercules HWGUSB2-54-LB
 		    Hercules HWGUSB2-54V2-AP
 		    LevelOne WNC-0301USB v3
+		    Linksys WUSB200
 		    Linksys WUSB54G rev C
 		    Linksys WUSB54GR
 		    Planex GW-US54HP
@@ -831,10 +839,12 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    Sweex LW053
 		    TP-LINK TL-WN321G
 		Ralink Technology USB IEEE 802.11a/b/g/Draft-N USB adapters
+		    ASUS USB-N11
 		    Buffalo WLI-UC-AG300N
 		    Buffalo WLI-UC-GN
 		    Corega CG-WLUSB300GNM
 		    D-Link DWA-130
+		    D-Link DWA-140
 		    Edimax EW-7711UAn
 		    Gigabyte GN-WB32L
 		    Linksys WUSB600N
@@ -1029,6 +1039,7 @@ dnl		XR16850-based ports (only in the pccom driver)
 		    Sagem XG 76NA
 		    Sandberg Wireless G54 USB
 		    Sitecom WL-113
+		    Sitecom WL-603
 		    SMC SMCWUSB-G
 		    Sweex wireless USB 54 Mbps
 		    Tekram/Siemens USB adapter

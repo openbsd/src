@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.6 2009/03/14 20:38:12 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.7 2009/03/27 13:59:06 jmc Exp $
 OpenBSD/MACHINE runs on the following SH4-based IO-DATA made models:
 	IO-DATA USL-5P, using CF storage (Japan)
 	IO-DATA HDL-U, HDL-AV, HDL-W and HDLM-U series (Japan)
@@ -251,6 +251,7 @@ Supported devices {:-include-:}:
 		    Hercules HWGUSB2-54-LB
 		    Hercules HWGUSB2-54V2-AP
 		    LevelOne WNC-0301USB v3
+		    Linksys WUSB200
 		    Linksys WUSB54G rev C
 		    Linksys WUSB54GR
 		    Planex GW-US54HP
@@ -262,10 +263,12 @@ Supported devices {:-include-:}:
 		    Sweex LW053
 		    TP-LINK TL-WN321G
 		Ralink Technology USB IEEE 802.11a/b/g/Draft-N USB adapters
+	    	    ASUS USB-N11
 		    Buffalo WLI-UC-AG300N
 		    Buffalo WLI-UC-GN
 		    Corega CG-WLUSB300GNM
 		    D-Link DWA-130
+		    D-Link DWA-140
 		    Edimax EW-7711UAn
 		    Gigabyte GN-WB32L
 		    Linksys WUSB600N
@@ -299,6 +302,7 @@ Supported devices {:-include-:}:
 		    Sagem XG 76NA
 		    Sandberg Wireless G54 USB
 		    Sitecom  WL-113
+		    Sitecom WL-603
 		    SMC SMCWUSB-G
 		    Sweex wireless USB 54 Mbps
 		    Tekram/Siemens USB adapter
