@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.47 2007/09/05 08:58:34 jsg Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.48 2009/03/27 07:31:27 phessler Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.47 2007/09/05 08:58:34 jsg Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.48 2009/03/27 07:31:27 phessler Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -330,9 +330,52 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 				files_match = 1;
 				(void)unlink(tempfile);
 			}
-			(void) close(temp_fd);
 		}
+		(void)close(to_fd);
+		to_fd = temp_fd;
 	}
+
+	/*
+	 * Preserve the timestamp of the source file if necessary.
+	 */
+	if (dopreserve && !files_match) {
+		utb.actime = from_sb.st_atime;
+		utb.modtime = from_sb.st_mtime;
+		(void)utime(safecopy ? tempfile : to_name, &utb);
+	}
+
+	/*
+	 * Set owner, group, mode for target; do the chown first,
+	 * chown may lose the setuid bits.
+	 */
+	if ((gid != (gid_t)-1 || uid != (uid_t)-1) &&
+	    fchown(to_fd, uid, gid)) {
+		serrno = errno;
+		(void)unlink(safecopy ? tempfile : to_name);
+		errx(EX_OSERR, "%s: chown/chgrp: %s", 
+		    safecopy ? tempfile : to_name, strerror(serrno));
+	}
+	if (fchmod(to_fd, mode)) {
+		serrno = errno;
+		(void)unlink(safecopy ? tempfile : to_name);
+		errx(EX_OSERR, "%s: chmod: %s", safecopy ? tempfile : to_name,
+		    strerror(serrno));
+	}
+
+	/*
+	 * If provided a set of flags, set them, otherwise, preserve the
+	 * flags, except for the dump flag.
+	 */
+	if (fchflags(to_fd,
+	    flags & SETFLAGS ? fset : from_sb.st_flags & ~UF_NODUMP)) {
+		if (errno != EOPNOTSUPP || (from_sb.st_flags & ~UF_NODUMP) != 0)
+			warnx("%s: chflags: %s", 
+			    safecopy ? tempfile :to_name, strerror(errno));
+	}
+
+	(void)close(to_fd);
+	if (!devnull)
+		(void)close(from_fd);
 
 	/*
 	 * Move the new file into place if doing a safe copy
@@ -360,50 +403,7 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 			errx(EX_OSERR, "rename: %s to %s: %s", tempfile,
 			     to_name, strerror(serrno));
 		}
-
-		/* Re-open to_fd so we aren't hosed by the rename(2). */
-		(void) close(to_fd);
-		if ((to_fd = open(to_name, O_RDONLY, 0)) < 0)
-			err(EX_OSERR, "%s", to_name);
 	}
-
-	/*
-	 * Preserve the timestamp of the source file if necessary.
-	 */
-	if (dopreserve && !files_match) {
-		utb.actime = from_sb.st_atime;
-		utb.modtime = from_sb.st_mtime;
-		(void)utime(to_name, &utb);
-	}
-
-	/*
-	 * Set owner, group, mode for target; do the chown first,
-	 * chown may lose the setuid bits.
-	 */
-	if ((gid != (gid_t)-1 || uid != (uid_t)-1) && fchown(to_fd, uid, gid)) {
-		serrno = errno;
-		(void)unlink(to_name);
-		errx(EX_OSERR, "%s: chown/chgrp: %s", to_name, strerror(serrno));
-	}
-	if (fchmod(to_fd, mode)) {
-		serrno = errno;
-		(void)unlink(to_name);
-		errx(EX_OSERR, "%s: chmod: %s", to_name, strerror(serrno));
-	}
-
-	/*
-	 * If provided a set of flags, set them, otherwise, preserve the
-	 * flags, except for the dump flag.
-	 */
-	if (fchflags(to_fd,
-	    flags & SETFLAGS ? fset : from_sb.st_flags & ~UF_NODUMP)) {
-		if (errno != EOPNOTSUPP || (from_sb.st_flags & ~UF_NODUMP) != 0)
-			warnx("%s: chflags: %s", to_name, strerror(errno));
-	}
-
-	(void)close(to_fd);
-	if (!devnull)
-		(void)close(from_fd);
 }
 
 /*
