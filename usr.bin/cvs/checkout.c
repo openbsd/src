@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.162 2009/03/25 21:50:33 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.163 2009/03/27 07:28:57 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -598,9 +598,11 @@ cvs_checkout_file(struct cvs_file *cf, RCSNUM *rnum, char *tag, int co_flags)
 
 		/*
 		 * If this file has a tag, push out the Directory with the
-		 * tag to the client. 
+		 * tag to the client. Except when this file was explicitly
+		 * specified on the command line.
 		 */
-		if (tag != NULL && strcmp(cf->file_wd, lastwd)) {
+		if (tag != NULL && strcmp(cf->file_wd, lastwd) &&
+		    !(cf->file_flags & FILE_USER_SUPPLIED)) {
 			strlcpy(lastwd, cf->file_wd, MAXPATHLEN);
 			cvs_server_set_sticky(cf->file_wd, sticky);
 		}
