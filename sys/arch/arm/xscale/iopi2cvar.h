@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopi2cvar.h,v 1.2 2006/07/10 15:39:56 drahn Exp $	*/
+/*	$OpenBSD: iopi2cvar.h,v 1.3 2009/03/27 16:02:41 oga Exp $	*/
 /*	$NetBSD: iopi2cvar.h,v 1.2 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ struct iopiic_softc {
 	void *sc_ih;
 
 	struct i2c_controller sc_i2c;
-	struct lock sc_buslock;
+	struct rwlock sc_buslock;
 	uint32_t sc_icr;
 };
 

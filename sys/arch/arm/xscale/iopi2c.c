@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopi2c.c,v 1.2 2006/07/10 15:39:56 drahn Exp $	*/
+/*	$OpenBSD: iopi2c.c,v 1.3 2009/03/27 16:02:41 oga Exp $	*/
 /*	$NetBSD: iopi2c.c,v 1.3 2005/12/11 12:16:51 christos Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * Intel i80321 I/O Processor I2C Controller Unit support.
  */
 #include <sys/param.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -96,7 +96,7 @@ iopiic_acquire_bus(void *cookie, int flags)
 	if (flags & I2C_F_POLL)
 		return (0);
 
-	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL));
+	return (rw_enter(&sc->sc_buslock, RW_WRITE | RW_INTR));
 }
 
 static void
@@ -108,7 +108,7 @@ iopiic_release_bus(void *cookie, int flags)
 	if (flags & I2C_F_POLL)
 		return;
 
-	(void) lockmgr(&sc->sc_buslock, LK_RELEASE, NULL);
+	rw_exit(&sc->sc_buslock);
 }
 
 #define	IOPIIC_TIMEOUT		100	/* protocol timeout, in uSecs */
