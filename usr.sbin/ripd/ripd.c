@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.12 2009/03/24 19:26:13 michele Exp $ */
+/*	$OpenBSD: ripd.c,v 1.13 2009/03/27 14:37:25 michele Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -494,8 +494,6 @@ rip_redistribute(struct kroute *kr)
 	SIMPLEQ_FOREACH(r, &conf->redist_list, entry) {
 		switch (r->type & ~REDIST_NO) {
 		case REDIST_LABEL:
-			if (is_default)
-				continue;
 			if (kr->rtlabel == r->label)
 				return (r->type & REDIST_NO ? 0 : 1);
 			break;
@@ -521,10 +519,17 @@ rip_redistribute(struct kroute *kr)
 				return (r->type & REDIST_NO ? 0 : 1);
 			break;
 		case REDIST_ADDR:
-			if (is_default)
-				continue;
 			if (kr->flags & F_DYNAMIC)
 				continue;
+
+			if (r->addr.s_addr == INADDR_ANY &&
+			    r->mask.s_addr == INADDR_ANY) {
+				if (is_default)
+					return (r->type & REDIST_NO? 0 : 1);
+				else
+					return (0);
+			}
+
 			if ((kr->prefix.s_addr & r->mask.s_addr) ==
 			    (r->addr.s_addr & r->mask.s_addr) &&
 			    (kr->netmask.s_addr & r->mask.s_addr) ==
@@ -533,7 +538,7 @@ rip_redistribute(struct kroute *kr)
 			break;
 		case REDIST_DEFAULT:
 			if (is_default)
-				return (1);
+				return (r->type & REDIST_NO? 0 : 1);
 			break;
 		}
 	}
