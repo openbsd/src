@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgrouplist.3,v 1.13 2009/03/27 12:31:31 schwarze Exp $
+.\"	$OpenBSD: getgrouplist.3,v 1.14 2009/03/27 21:42:57 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,6 +72,8 @@ Here, the group array will be filled with as many groups as will fit.
 .Bl -tag -width /etc/group -compact
 .It Pa /etc/group
 group database file
+.It Pa /etc/netid
+static group lists to override YP data
 .El
 .Sh SEE ALSO
 .Xr setgroups 2 ,
