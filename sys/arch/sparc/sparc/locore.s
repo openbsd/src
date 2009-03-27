@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.82 2008/10/10 20:21:39 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.83 2009/03/27 23:21:18 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -2404,6 +2404,10 @@ _C_LABEL(sparc_interrupt4m):
 	sethi	%hi(ICR_PI_CLR), %l6
 	sll	%l4, 16, %l5
 	st	%l5, [%l6 + %lo(ICR_PI_CLR)]
+	/* Drain hw reg; might be necessary for Ross CPUs */
+	sethi	%hi(ICR_PI_PEND), %l6
+	ld	[%l6 + %lo(ICR_PI_PEND)], %g0
+
 	b,a	softintr_common
 #endif
 
