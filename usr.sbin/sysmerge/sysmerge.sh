@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.31 2009/03/25 18:02:12 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.32 2009/03/27 15:17:31 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -239,16 +239,30 @@ mm_install() {
 
 	case "${1#.}" in
 	/dev/MAKEDEV)
-		NEED_MAKEDEV=1
+		echo -n "===> A new ${DESTDIR}/dev/MAKEDEV script was installed, "
+		echo "MAKEDEV will be run"
+		cd ${DESTDIR}/dev && /bin/sh MAKEDEV all
 		;;
 	/etc/login.conf)
-		if [ -f ${DESTDIR}/etc/login.conf.db ]; then NEED_CAP_MKDB=1; fi
+		if [ -f ${DESTDIR}/etc/login.conf.db ]; then
+			echo -n "===> A new ${DESTDIR}/etc/login.conf file was installed, "
+			echo "cap_mkdb will be run"
+			cap_mkdb ${DESTDIR}/etc/login.conf
+		fi
 		;;
 	/etc/mail/aliases)
-		NEED_NEWALIASES=1
+		echo -n "===> A new ${DESTDIR}/etc/mail/aliases file was installed, "
+		echo "newaliases will be run"
+		if [ "${DESTDIR}" ]; then
+			chroot ${DESTDIR} newaliases || NEED_NEWALIASES=1
+		else
+			newaliases
+		fi
 		;;
 	/etc/master.passwd)
-		NEED_PWD_MKDB=1
+		echo -n "===> A new ${DESTDIR}/etc/master.passwd file was installed, "
+		echo "pwd_mkdb will be run"
+		pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd
 		;;
 	esac
 }
@@ -501,35 +515,11 @@ do_post() {
 		echo "${AUTO_INSTALLED_FILES}" > ${WRKDIR}/auto_installed_files
 	fi
 
-	if [ "${NEED_CAP_MKDB}" ]; then
-		echo -n "===> A new ${DESTDIR}/etc/login.conf file was installed, "
-		echo "running cap_mkdb..."
-		cap_mkdb ${DESTDIR}/etc/login.conf
-	fi
-
-	if [ "${NEED_PWD_MKDB}" ]; then
-		echo -n "===> A new ${DESTDIR}/etc/master.passwd file was installed, "
-		echo "running pwd_mkdb..."
-		pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd
-	fi
-
-	if [ "${NEED_MAKEDEV}" ]; then
-		echo -n "===> A new ${DESTDIR}/dev/MAKEDEV script was installed, "
-		echo "running MAKEDEV..."
-		cd ${DESTDIR}/dev && /bin/sh MAKEDEV all
-	fi
-
 	if [ "${NEED_NEWALIASES}" ]; then
-		echo -n "===> A new ${DESTDIR}/etc/mail/aliases file was installed, "
-		if [ "${DESTDIR}" ]; then
-			echo "\n     but the newaliases command is limited to the directories configured"
-			echo "     in sendmail.cf.  Make sure to create your aliases database by"
-			echo "     hand when your sendmail configuration is done."
-		else
-			echo "running newaliases..."
-			newaliases
-		fi
-	fi
+		echo "===> A new ${DESTDIR}/etc/mail/aliases file was installed."
+		echo "However ${DESTDIR}/usr/bin/newaliases could not be run, you will"
+		echo "need to rebuild your aliases database manually."
+        fi
 
 	clean_src
 	rm -rf ${OTEMPROOT}
