@@ -93,7 +93,6 @@ drm_dma_takedown(struct drm_device *dev)
 	drm_free(dma->pagelist);
 	drm_free(dev->dma);
 	dev->dma = NULL;
-	DRM_SPINUNINIT(&dev->dma_lock);
 }
 
 

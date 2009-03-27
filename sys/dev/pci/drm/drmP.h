@@ -78,37 +78,21 @@
 #define DRM_MAX_CTXBITMAP (PAGE_SIZE * 8)
 
 				/* Internal types and structures */
-#define DRM_ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
-#define DRM_MIN(a,b) ((a)<(b)?(a):(b))
-#define DRM_MAX(a,b) ((a)>(b)?(a):(b))
-
 #define DRM_IF_VERSION(maj, min) (maj << 16 | min)
 
 #define __OS_HAS_AGP	1
 
-#define DRM_WAKEUP(w)		wakeup((void *)w)
-
-#define DRM_CURPROC		curproc
 #define DRM_CURRENTPID		curproc->p_pid
-#define DRM_NOOP		do {} while(0)
 #define DRM_SPINTYPE		struct mutex
 #define DRM_SPININIT(l,name)	mtx_init(l,IPL_NONE)
-#define DRM_SPINUNINIT(l)	DRM_NOOP
 #define DRM_SPINLOCK(l)		mtx_enter(l)
 #define DRM_SPINUNLOCK(l)	mtx_leave(l)
-#define DRM_SPINLOCK_IRQSAVE(l, irqflags) do {		\
-	DRM_SPINLOCK(l);				\
-	(void)irqflags;					\
-} while (0)
-#define DRM_SPINUNLOCK_IRQRESTORE(u, irqflags) DRM_SPINUNLOCK(u)
-#define DRM_SPINLOCK_ASSERT(l)	DRM_NOOP
 #define DRM_LOCK()		rw_enter_write(&dev->dev_lock)
 #define DRM_UNLOCK()		rw_exit_write(&dev->dev_lock)
 #define DRM_MAXUNITS	8
 
 /* Deal with netbsd code where only the print statements differ */
 #define printk printf
-#define __unused /* nothing */
 
 #define DRM_IRQ_ARGS		void *arg
 typedef int			irqreturn_t;

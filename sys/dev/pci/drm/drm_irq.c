@@ -96,7 +96,6 @@ drm_irq_install(struct drm_device *dev)
 err:
 	DRM_LOCK();
 	dev->irq_enabled = 0;
-	DRM_SPINUNINIT(&dev->irq_lock);
 	DRM_UNLOCK();
 	return (ret);
 }
@@ -118,9 +117,7 @@ drm_irq_uninstall(struct drm_device *dev)
 
 	dev->driver->irq_uninstall(dev);
 
-	DRM_SPINUNINIT(&dev->irq_lock);
-
-	return 0;
+	return (0);
 }
 
 int
@@ -182,7 +179,6 @@ drm_vblank_cleanup(struct drm_device *dev)
 
 	dev->vblank = NULL;
 	dev->num_crtcs = 0;
-	DRM_SPINUNINIT(&dev->vbl_lock);
 }
 
 int

@@ -83,7 +83,7 @@ irqreturn_t mga_driver_irq_handler(DRM_IRQ_ARGS)
 		}
 
 		atomic_inc(&dev_priv->last_fence_retired);
-		DRM_WAKEUP(dev_priv);
+		wakeup(dev_priv);
 		handled = 1;
 	}
 

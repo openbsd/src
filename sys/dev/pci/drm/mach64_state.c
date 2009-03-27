@@ -436,7 +436,7 @@ static int mach64_do_get_frames_queued(drm_mach64_private_t * dev_priv)
 	head = ring->head;
 
 	start = (MACH64_MAX_QUEUED_FRAMES -
-		 DRM_MIN(MACH64_MAX_QUEUED_FRAMES, sarea_priv->frames_queued));
+		 min(MACH64_MAX_QUEUED_FRAMES, sarea_priv->frames_queued));
 
 	if (head == tail) {
 		sarea_priv->frames_queued = 0;

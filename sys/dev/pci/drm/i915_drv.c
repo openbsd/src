@@ -189,8 +189,6 @@ inteldrm_detach(struct device *self, int flags)
 	if (dev_priv->regs != NULL)
 		vga_pci_bar_unmap(dev_priv->regs);
 
-	DRM_SPINUNINIT(&dev_priv->user_irq_lock);
-
 	return (0);
 }
 

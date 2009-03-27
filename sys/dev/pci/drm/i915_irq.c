@@ -230,7 +230,7 @@ irqreturn_t i915_driver_irq_handler(DRM_IRQ_ARGS)
 		dev_priv->sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
 
 	if (iir & I915_USER_INTERRUPT) {
-		DRM_WAKEUP(dev_priv);
+		wakeup(dev_priv);
 	}
 
 	if (pipea_stats & I915_VBLANK_INTERRUPT_STATUS)

@@ -897,7 +897,7 @@ drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (!vfinddev(file_priv->kdev, VCHR, &vn))
 		return EINVAL;
 
-	vms = DRM_CURPROC->p_vmspace;
+	vms = curproc->p_vmspace;
 
 	DRM_SPINLOCK(&dev->dma_lock);
 	dev->buf_use++;		/* Can't allocate more after this call */
@@ -927,7 +927,8 @@ drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	vaddr = round_page((vaddr_t)vms->vm_daddr + MAXDSIZ);
 	retcode = uvm_mmap(&vms->vm_map, &vaddr, size,
 	    UVM_PROT_READ | UVM_PROT_WRITE, UVM_PROT_ALL, MAP_SHARED,
-	    (caddr_t)vn, foff, DRM_CURPROC->p_rlimit[RLIMIT_MEMLOCK].rlim_cur,DRM_CURPROC);
+	    (caddr_t)vn, foff, curproc->p_rlimit[RLIMIT_MEMLOCK].rlim_cur,
+	    curproc);
 	if (retcode) {
 		DRM_DEBUG("uvm_mmap failed\n");
 		goto done;

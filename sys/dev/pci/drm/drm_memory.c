@@ -130,7 +130,7 @@ drm_mtrr_add(unsigned long offset, size_t size, int flags)
 }
 
 int
-drm_mtrr_del(int __unused handle, unsigned long offset, size_t size, int flags)
+drm_mtrr_del(int handle, unsigned long offset, size_t size, int flags)
 {
 #ifndef DRM_NO_MTRR
 	int act;

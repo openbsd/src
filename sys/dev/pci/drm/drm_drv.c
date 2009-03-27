@@ -843,7 +843,7 @@ drm_setversion(struct drm_device *dev, void *data, struct drm_file *file_priv)
 			return EINVAL;
 		}
 		if_version = DRM_IF_VERSION(ver.drm_di_major, ver.drm_dd_minor);
-		dev->if_version = DRM_MAX(if_version, dev->if_version);
+		dev->if_version = imax(if_version, dev->if_version);
 	}
 
 	if (ver.drm_dd_major != -1) {

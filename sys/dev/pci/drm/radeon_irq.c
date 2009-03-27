@@ -207,7 +207,7 @@ irqreturn_t radeon_driver_irq_handler(DRM_IRQ_ARGS)
 
 	/* SW interrupt */
 	if (stat & RADEON_SW_INT_TEST)
-		DRM_WAKEUP(dev_priv);
+		wakeup(dev_priv);
 
 	/* VBLANK interrupt */
 	if ((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RS690) {
