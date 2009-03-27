@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.419 2009/03/27 11:31:38 jsg Exp $
+$OpenBSD: usbdevs,v 1.420 2009/03/27 13:00:55 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -515,6 +515,7 @@ vendor CMOTECH		0x16d8	CMOTECH
 vendor AXESSTEL		0x1726	Axesstel
 vendor LINKSYS4		0x1737	Linksys
 vendor SENAO		0x1740	Senao
+vendor ASUS2		0x1761	ASUS
 vendor METAGEEK		0x1781	MetaGeek
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
@@ -818,6 +819,7 @@ product ASIX AX88178		0x1780	AX88178
 product ASIX AX88772		0x7720	AX88772
 
 /* ASUS products */
+product ASUS2 USBN11		0x0b05	USB-N11
 product ASUS RT2570		0x1706	RT2570
 product ASUS RT2570_2		0x1707	RT2570
 product ASUS RT2573_1		0x1723	RT2573
