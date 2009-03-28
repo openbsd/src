@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.177 2009/03/22 19:58:43 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.178 2009/03/28 07:08:32 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.177 2009/03/22 19:58:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.178 2009/03/28 07:08:32 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,23 +70,25 @@ struct space_allocation {
 	char 	       *mp;
 };
 
+#define MEG(x)	((x) * 1024LL * (1024 / 512))
+
 struct space_allocation alloc[MAXPARTITIONS] = {
-	{   156250,    1953125,   5, "/"	  }, /* a  80MB ->   1GB */
-	{  1953125,    7812500,   5, "swap"	  }, /* b   1GB ->   4GB */
-	{        0,          0,   0, ""		  }, /* c                */
-	{   156250,    1953125,   5, "/tmp"	  }, /* d  80MB ->   1GB */
-	{   156250,    1953125,   5, "/var"	  }, /* e  80MB ->   1GB */
-	{        0,          0,   0, ""		  }, /* f                */
-	{  3906250,   19531250,  20, "/usr"	  }, /* g   2GB ->  10GB */
-	{  1000000,    1953125,   5, "/usr/X11R6" }, /* h 512MB ->   1GB */
-	{        0,          0,   0, ""		  }, /* i                */
-	{  3906250,    5859375,   5, "/usr/local" }, /* j   2GB ->   3GB */
-	{     1953, 1953125000,  50, "/home"	  }, /* k 512MB ->   1TB */
-	{        0,          0,   0, ""		  }, /* l */
-	{        0,          0,   0, ""		  }, /* m */
-	{        0,          0,   0, ""		  }, /* n */
-	{        0,          0,   0, ""		  }, /* o */
-	{        0,          0,   0, ""		  }  /* p */
+	{   MEG(80),      MEG(1024),   5, "/"		},	/* a */
+	{ MEG(1024),      MEG(4096),   5, "swap"	},	/* b */
+	{         0,              0,   0, ""		},	/* c */
+	{   MEG(80),      MEG(4096),  10, "/tmp"	},	/* d */
+	{   MEG(80),      MEG(4096),  10, "/var"	},	/* e */
+	{         0,              0,   0, ""		},	/* f */
+	{ MEG(2048),     MEG(10240),  20, "/usr"	},	/* g */
+	{  MEG(512),      MEG(1024),   5, "/usr/X11R6"	},	/* h */
+	{         0,              0,   0, ""		},	/* i */
+	{ MEG(2048),      MEG(3072),   5, "/usr/local"	},	/* j */
+	{ MEG(1024),      MEG(2048),   5, "/usr/src"	},	/* k */
+	{ MEG(2048),      MEG(2048),   0, "/usr/obj"	},	/* l */
+	{  MEG(512), MEG(1024*1024),  35, "/home"	},	/* m */
+	{         0,              0,   0, ""		},	/* n */
+	{         0,              0,   0, ""		},	/* o */
+	{         0,              0,   0, ""		}	/* p */
 };
 
 void	edit_parms(struct disklabel *);
