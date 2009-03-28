@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.141 2009/03/28 14:03:42 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.142 2009/03/28 16:27:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.141 2009/03/28 14:03:42 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.142 2009/03/28 16:27:24 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -292,7 +292,8 @@ main(int argc, char *argv[])
 		if (tflag)
 			makedisktab(stdout, lp);
 		else
-			display(stdout, lp, NULL, print_unit, 1);
+			display(stdout, lp, NULL, print_unit,
+			    (verbose ? SHOW_PHYSINFO : 0) | SHOW_PARTINFO);
 		error = checklabel(lp);
 		break;
 	case RESTORE:
@@ -596,20 +597,24 @@ findopenbsd(int f, off_t mbroff, struct dos_partition **first, int *n)
 		}
 		switch (dp[part].dp_typ) {
 		case DOSPTYP_OPENBSD:
-			fprintf(stderr, "# Inside MBR partition %d: "
-			    "type %02X start %u size %u\n",
-			    part, dp[part].dp_typ,
-			    letoh32(dp[part].dp_start), letoh32(dp[part].dp_size));
+			if (verbose)
+				fprintf(stderr, "# Inside MBR partition %d: "
+				    "type %02X start %u size %u\n",
+				    part, dp[part].dp_typ,
+				    letoh32(dp[part].dp_start),
+				    letoh32(dp[part].dp_size));
 			bcopy(&dp[part], &res, sizeof(struct dos_partition));
 			res.dp_start =
 			    htole32((off_t)letoh32(res.dp_start) + mbroff);
 			return (&res);
 		case DOSPTYP_EXTEND:
 		case DOSPTYP_EXTENDL:
-			fprintf(stderr, "# Extended partition %d: "
-			    "type %02X start %u size %u\n",
-			    part, dp[part].dp_typ,
-			    letoh32(dp[part].dp_start), letoh32(dp[part].dp_size));
+			if (verbose)
+				fprintf(stderr, "# Extended partition %d: "
+				    "type %02X start %u size %u\n",
+				    part, dp[part].dp_typ,
+				    letoh32(dp[part].dp_start),
+				    letoh32(dp[part].dp_size));
 			start = letoh32(dp[part].dp_start) + mbroff;
 			p = findopenbsd(f, start, NULL, n);
 			if (p != NULL)
@@ -1011,63 +1016,69 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 }
 
 void
-display(FILE *f, struct disklabel *lp, char **mp, char unit, int all)
+display(FILE *f, struct disklabel *lp, char **mp, char unit, int opts)
 {
 	int i, j;
 	double d;
 
 	unit = toupper(unit);
-	fprintf(f, "# %s:\n", specname);
 
-	if ((unsigned) lp->d_type < DKMAXTYPES)
-		fprintf(f, "type: %s\n", dktypenames[lp->d_type]);
-	else
-		fprintf(f, "type: %d\n", lp->d_type);
-	fprintf(f, "disk: %.*s\n", (int)sizeof(lp->d_typename), lp->d_typename);
-	fprintf(f, "label: %.*s\n", (int)sizeof(lp->d_packname), lp->d_packname);
-	fprintf(f, "flags:");
-	if (lp->d_flags & D_BADSECT)
-		fprintf(f, " badsect");
-	if (lp->d_flags & D_VENDOR)
-		fprintf(f, " vendor");
-	putc('\n', f);
+	if (opts & SHOW_PHYSINFO) {
+		fprintf(f, "# %s:\n", specname);
+		if ((unsigned) lp->d_type < DKMAXTYPES)
+			fprintf(f, "type: %s\n", dktypenames[lp->d_type]);
+		else
+			fprintf(f, "type: %d\n", lp->d_type);
+		fprintf(f, "disk: %.*s\n", (int)sizeof(lp->d_typename),
+		    lp->d_typename);
+		fprintf(f, "label: %.*s\n", (int)sizeof(lp->d_packname),
+		    lp->d_packname);
+		fprintf(f, "flags:");
+		if (lp->d_flags & D_BADSECT)
+			fprintf(f, " badsect");
+		if (lp->d_flags & D_VENDOR)
+			fprintf(f, " vendor");
+		putc('\n', f);
 
-	fprintf(f, "bytes/sector: %u\n", lp->d_secsize);
-	fprintf(f, "sectors/track: %u\n", lp->d_nsectors);
-	fprintf(f, "tracks/cylinder: %u\n", lp->d_ntracks);
-	fprintf(f, "sectors/cylinder: %u\n", lp->d_secpercyl);
-	fprintf(f, "cylinders: %u\n", lp->d_ncylinders);
-	d = scale(DL_GETDSIZE(lp), unit, lp);
-	if (d < 0)
-		fprintf(f, "total sectors: %llu\n", DL_GETDSIZE(lp));
-	else
-		fprintf(f, "total bytes: %.*f%c\n", unit == 'B' ? 0 : 1,
-		    d, unit);
+		fprintf(f, "bytes/sector: %u\n", lp->d_secsize);
+		fprintf(f, "sectors/track: %u\n", lp->d_nsectors);
+		fprintf(f, "tracks/cylinder: %u\n", lp->d_ntracks);
+		fprintf(f, "sectors/cylinder: %u\n", lp->d_secpercyl);
+		fprintf(f, "cylinders: %u\n", lp->d_ncylinders);
+		d = scale(DL_GETDSIZE(lp), unit, lp);
+		if (d < 0)
+			fprintf(f, "total sectors: %llu\n", DL_GETDSIZE(lp));
+		else
+			fprintf(f, "total bytes: %.*f%c\n", unit == 'B' ? 0 : 1,
+			    d, unit);
 
-	fprintf(f, "rpm: %hu\n", lp->d_rpm);
-	fprintf(f, "interleave: %hu\n", lp->d_interleave);
-	fprintf(f, "trackskew: %hu\n", lp->d_trackskew);
-	fprintf(f, "cylinderskew: %hu\n", lp->d_cylskew);
-	fprintf(f, "headswitch: %u\t\t# microseconds\n",
-	    lp->d_headswitch);
-	fprintf(f, "track-to-track seek: %u\t# microseconds\n",
-	    lp->d_trkseek);
-	fprintf(f, "drivedata: ");
-	for (i = NDDATA - 1; i >= 0; i--)
-		if (lp->d_drivedata[i])
-			break;
-	if (i < 0)
-		i = 0;
-	for (j = 0; j <= i; j++)
-		fprintf(f, "%d ", lp->d_drivedata[j]);
-	fprintf(f, "\n");
-	if (all) {
+		fprintf(f, "rpm: %hu\n", lp->d_rpm);
+		fprintf(f, "interleave: %hu\n", lp->d_interleave);
+		fprintf(f, "trackskew: %hu\n", lp->d_trackskew);
+		fprintf(f, "cylinderskew: %hu\n", lp->d_cylskew);
+		fprintf(f, "headswitch: %u\t\t# microseconds\n",
+		    lp->d_headswitch);
+		fprintf(f, "track-to-track seek: %u\t# microseconds\n",
+		    lp->d_trkseek);
+		fprintf(f, "drivedata: ");
+		for (i = NDDATA - 1; i >= 0; i--)
+			if (lp->d_drivedata[i])
+				break;
+		if (i < 0)
+			i = 0;
+		for (j = 0; j <= i; j++)
+			fprintf(f, "%d ", lp->d_drivedata[j]);
+		fprintf(f, "\n");
+	}
+
+	if (opts & SHOW_PARTINFO) {
 		fprintf(f, "\n%hu partitions:\n", lp->d_npartitions);
 		fprintf(f, "#    %16.16s %16.16s  fstype [fsize bsize  cpg]\n",
 		    "size", "offset");
 		for (i = 0; i < lp->d_npartitions; i++)
 			display_partition(f, lp, mp, i, unit);
 	}
+
 	fflush(f);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.9 2009/03/22 19:01:32 krw Exp $	*/
+/*	$OpenBSD: extern.h,v 1.10 2009/03/28 16:27:24 krw Exp $	*/
 
 /*
  * Copyright (c) 2003 Theo de Raadt <deraadt@openbsd.org>
@@ -15,6 +15,10 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* Display options. */
+#define	SHOW_PHYSINFO	0x1
+#define	SHOW_PARTINFO	0x2
 
 u_short	dkcksum(struct disklabel *);
 int	checklabel(struct disklabel *);
