@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.15 2009/03/27 15:00:50 jsg Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.16 2009/03/28 12:32:40 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -160,15 +160,25 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(AIRTIES,			RT3070),
 
 	/* Entries not in the Ralink Linux driver. */
+	USB_ID(AMIT,			CGWLUSB2GNR),
 	USB_ID(ASUS2,			USBN11),
+	USB_ID(BELKIN,			F5D8053V3),
+	USB_ID(BELKIN,			F5D8055),
+	USB_ID(CONCEPTRONIC2,		VIGORN61),
 	USB_ID(DLINK2,			DWA130),
 	USB_ID(EDIMAX,			EW7717),
 	USB_ID(EDIMAX,			EW7718),
+	USB_ID(GIGABYTE,		GNWB31N),
+	USB_ID(HAWKING,			HWUN2),
+	USB_ID(LINKSYS4,		WUSB100),
 	USB_ID(LINKSYS4,		WUSB600N),
 	USB_ID(MELCO,			WLIUCAG300N),
+	USB_ID(MELCO,			WLIUCG300N),
 	USB_ID(MELCO,			WLIUCGN),
 	USB_ID(PLANEX2,			GWUS300MINIS),
 	USB_ID(PLANEX2,			GWUSBMICRON),
+	USB_ID(SWEEX2,			LW303),
+	USB_ID(SWEEX2,			LW313),
 	USB_ID(COREGA,			CGWLUSB300GNM)
 };
 
