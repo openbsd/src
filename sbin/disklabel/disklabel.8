@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.74 2009/03/23 16:36:38 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.75 2009/03/28 13:54:15 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 23 2009 $
+.Dd $Mdocdate: March 28 2009 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -625,11 +625,8 @@ option to
 can still be used to install old style boot code,
 but this usage is deprecated.
 .Pp
-On some machines, such as the sparc, partition tables
-may not exhibit the full functionality that is described above.
-.Pp
 .Nm
-only supports up to a maximum of 15 partitions,
+supports 15 configurable partitions,
 .Sq a
 through
 .Sq p ,
@@ -647,22 +644,6 @@ but all other letters can be used in any order for any other
 partitions as desired.
 .Pp
 The maximum disk and partition size is 64PB.
-.Sh BUGS
-When a disk name is given without a full pathname, the constructed
-device name uses the
-.Sq a
-partition on the tahoe, the
-.Sq c
-partition on all others.
-In
-.Fl E
-mode,
-.Nm
-is far too quick to shuffle partitions around; it should keep a
-free block list and only move partitions around with the user's
-permission.
-Also, in
-.Fl E
-mode, partitions outside the
-.Ox
-portion of the disk should be changeable.
+.Pp
+On some machines, such as the sparc, partition tables
+may not exhibit the full functionality that is described above.
