@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.62 2008/12/12 19:30:17 martynas Exp $
+#  $OpenBSD: Makefile,v 1.63 2009/03/28 16:16:30 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -117,7 +117,7 @@ NOIEEE_SRCS = n_acosh.c n_argred.c n_asincos.c n_asinh.c n_atan.c \
 	n_erf.c n_exp.c n_exp__E.c n_expm1.c n_fdim.c n_floor.c \
 	n_fmax.c n_fmaxf.c n_fmin.c n_fminf.c n_fmod.c n_hypot.c \
 	n_infnan.c n_j0.c n_j1.c n_jn.c n_lgamma.c n_log.c n_log10.c \
-	n_log1p.c n_log__L.c n_pow.c n_round.c n_sincos.c n_sinh.c \
+	n_log1p.c n_log__L.c n_nan.c n_pow.c n_round.c n_sincos.c n_sinh.c \
 	n_sqrt.c n_support.c n_tan.c n_tanh.c n_tgamma.c
 
 # OpenBSD's C library supplies these functions:
