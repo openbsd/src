@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.75 2009/03/28 13:54:15 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.76 2009/03/28 14:03:21 deraadt Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -110,6 +110,11 @@ If no disklabel is found,
 allocate all the disk space in the recommended manner.
 .It Fl B
 Install bootstrap code.
+Some architectures instead require bootstrap code installation to be
+done using an
+.Xr installboot 8
+type program, as described in
+.Xr boot 8 .
 .It Fl b Ar boot1
 Specify the single level boot program, or the primary boot program,
 depending on the system boot architecture
