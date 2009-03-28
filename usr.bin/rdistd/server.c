@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.19 2008/05/25 22:33:56 millert Exp $	*/
+/*	$OpenBSD: server.c,v 1.20 2009/03/28 15:18:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -36,7 +36,7 @@ static char RCSid[] __attribute__((__unused__)) =
 "$From: server.c,v 1.10 1999/08/04 15:57:33 christos Exp $";
 #else
 static char RCSid[] __attribute__((__unused__)) =
-"$OpenBSD: server.c,v 1.19 2008/05/25 22:33:56 millert Exp $";
+"$OpenBSD: server.c,v 1.20 2009/03/28 15:18:29 deraadt Exp $";
 #endif
 
 static char sccsid[] __attribute__((__unused__)) =
@@ -1163,7 +1163,7 @@ recvdir(opt_t opts, int mode, char *owner, char *group)
 static void
 recvlink(char *new, opt_t opts, int mode, off_t size)
 {
-	char tbuf[MAXPATHLEN];
+	char tbuf[MAXPATHLEN], dbuf[BUFSIZ];
 	struct stat stb;
 	char *optarget;
 	int uptodate;
@@ -1180,10 +1180,15 @@ recvlink(char *new, opt_t opts, int mode, off_t size)
 		return;
 	}
 
+	if (DECODE(dbuf, buf) == -1) {
+		error("recvlink: cannot decode symlink target");
+		return;
+	}
+
 	uptodate = 0;
 	if ((i = readlink(target, tbuf, sizeof(tbuf)-1)) != -1) {
 		tbuf[i] = '\0';
-		if (i == size && strncmp(buf, tbuf, (int) size) == 0)
+		if (i == size && strncmp(dbuf, tbuf, (int) size) == 0)
 			uptodate = 1;
 	}
 	mode &= 0777;
@@ -1204,10 +1209,11 @@ recvlink(char *new, opt_t opts, int mode, off_t size)
 	/*
 	 * Make new symlink using a temporary name
 	 */
-	if (mktemp(new) == NULL || symlink(buf, new) < 0) {
+	if (mktemp(new) == NULL || symlink(dbuf, new) < 0) {
 		if (errno != ENOENT || chkparent(new, opts) < 0 ||
-		    mktemp(new) == NULL || symlink(buf, new) < 0) {
-			error("%s -> %s: symlink failed: %s", new, buf, SYSERR);
+		    mktemp(new) == NULL || symlink(dbuf, new) < 0) {
+			error("%s -> %s: symlink failed: %s", new, dbuf,
+			    SYSERR);
 			return;
 		}
 	}
