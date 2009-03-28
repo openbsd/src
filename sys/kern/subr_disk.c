@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.84 2009/02/09 20:00:48 otto Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.85 2009/03/28 14:58:10 dlg Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -752,7 +752,7 @@ disk_init(void)
 int
 disk_construct(struct disk *diskp, char *lockname)
 {
-	rw_init(&diskp->dk_lock, lockname);
+	rw_init(&diskp->dk_lock, "dklk");
 	mtx_init(&diskp->dk_mtx, IPL_BIO);
 	
 	diskp->dk_flags |= DKF_CONSTRUCTED;
