@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.122 2009/03/25 09:25:42 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.123 2009/03/28 09:18:28 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -245,6 +245,7 @@ struct video_hw_if uvideo_hw_if = {
 #define UVIDEO_FLAG_ISIGHT_STREAM_HEADER	0x1
 #define UVIDEO_FLAG_REATTACH			0x2
 #define UVIDEO_FLAG_VENDOR_CLASS		0x4
+#define UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE	0x8
 struct uvideo_devs {
 	struct usb_devno	 uv_dev;
 	char			*ucode_name;
@@ -319,7 +320,14 @@ struct uvideo_devs {
 	    NULL,
 	    NULL,
 	    UVIDEO_FLAG_VENDOR_CLASS
-	}
+	},
+	{
+	    /* Needs to fix dwMaxVideoFrameSize */
+	    { USB_VENDOR_CHENSOURCE, USB_PRODUCT_CHENSOURCE_CM12402},
+	    NULL,
+	    NULL,
+	    UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE
+	},
 };
 #define uvideo_lookup(v, p) \
 	((struct uvideo_devs *)usb_lookup(uvideo_devs, v, p))
@@ -1071,6 +1079,8 @@ uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
 {
 	struct usb_video_frame_uncompressed_desc *d;
 	int fmtidx;
+	uint32_t fbuf_size;
+	struct usb_video_frame_uncompressed_desc *fd;
 
 	d = (struct usb_video_frame_uncompressed_desc *)(uint8_t *)desc;
 
@@ -1095,9 +1105,25 @@ uvideo_vs_parse_desc_frame_uncompressed(struct uvideo_softc *sc,
 	    sc->sc_fmtgrp[fmtidx].format->bNumFrameDescriptors)
 		sc->sc_fmtgrp_idx++;
 
+	/*
+	 * On some broken device, dwMaxVideoFrameBufferSize is not correct.
+	 * So fix it by frame width/height.
+	 *   XXX: YUV2 format only
+	 */
+	if (sc->sc_quirk &&
+	    sc->sc_quirk->flags & UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE &&
+	    sc->sc_fmtgrp[fmtidx].pixelformat == V4L2_PIX_FMT_YUYV) {
+		fd = (struct usb_video_frame_uncompressed_desc *)
+		    sc->sc_fmtgrp[fmtidx].frame[d->bFrameIndex]; 
+		fbuf_size = UGETW(fd->wWidth) * UGETW(fd->wHeight) * 2;
+		DPRINTF(1, "wWidth = %d, wHeight = %d\n",
+			UGETW(fd->wWidth), UGETW(fd->wHeight));
+	} else
+		fbuf_size = UGETDW(d->dwMaxVideoFrameBufferSize);
+
 	/* store max value */
-	if (UGETDW(d->dwMaxVideoFrameBufferSize) > sc->sc_max_fbuf_size)
-		sc->sc_max_fbuf_size = UGETDW(d->dwMaxVideoFrameBufferSize);
+	if (fbuf_size > sc->sc_max_fbuf_size)
+		sc->sc_max_fbuf_size = fbuf_size;
 
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -1207,7 +1233,7 @@ uvideo_vs_set_alt(struct uvideo_softc *sc, usbd_interface_handle ifaceh,
 		/* save endpoint with requested bandwidth */
 		psize = UGETW(ed->wMaxPacketSize);
 		psize = UE_GET_SIZE(psize) * (1 + UE_GET_TRANS(psize));
-		if (psize == max_packet_size) {
+		if (psize >= max_packet_size) {
 			sc->sc_vs_cur->endpoint = ed->bEndpointAddress;
 			sc->sc_vs_cur->curalt = id->bAlternateSetting;
 			sc->sc_vs_cur->psize = psize;
@@ -1399,6 +1425,7 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 	usbd_status error;
 	uint16_t tmp;
 	struct usb_video_probe_commit *pc;
+	struct usb_video_header_desc *hd;
 
 	req.bmRequestType = UVIDEO_GET_IF;
 	req.bRequest = request;
@@ -1417,6 +1444,33 @@ uvideo_vs_get_probe(struct uvideo_softc *sc, uint8_t *probe_data,
 		return (USBD_INVAL);
 	}
 	DPRINTF(1, "%s: GET probe request successfully\n", DEVNAME(sc));
+
+	/*
+	 * Some UVC 1.00 devices return dwMaxVideoFrameSize = 0.
+	 * If so, fix it by format/frame descriptors.
+	 */
+	hd = sc->sc_desc_vc_header.fix;
+	if (UGETDW(pc->dwMaxVideoFrameSize) == 0 &&
+	    UGETW(hd->bcdUVC) < 0x0110 ) {
+		DPRINTF(1, "%s: dwMaxVideoFrameSize == 0, fixed\n",
+		    DEVNAME(sc));
+		USETDW(pc->dwMaxVideoFrameSize, 
+		    UGETDW(sc->sc_fmtgrp_cur->frame_cur
+			->dwMaxVideoFrameBufferSize));
+
+		/*
+		 * On some broken device, the above value is not correct.
+		 * So fix it by frame width/height (XXX:YUV2 format only)
+		 */
+		if (sc->sc_quirk &&
+		    sc->sc_quirk->flags &
+			 UVIDEO_FLAG_FIX_MAX_VIDEO_FRAME_SIZE &&
+		    sc->sc_fmtgrp_cur->pixelformat == V4L2_PIX_FMT_YUYV) {
+			USETDW(pc->dwMaxVideoFrameSize, 
+		    	    UGETW(sc->sc_fmtgrp_cur->frame_cur->wWidth) *
+			    UGETW(sc->sc_fmtgrp_cur->frame_cur->wHeight) * 2);
+		}
+	}
 
 	DPRINTF(1, "bmHint=0x%02x\n", UGETW(pc->bmHint));
 	DPRINTF(1, "bFormatIndex=0x%02x\n", pc->bFormatIndex);
