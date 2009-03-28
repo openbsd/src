@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.11 2008/12/28 22:05:04 sobrado Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.12 2009/03/28 15:38:58 michele Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -713,7 +713,7 @@ merge_interfaces(struct area *a, struct area *xa)
 	for (i = LIST_FIRST(&a->iface_list); i != NULL; i = ni) {
 		ni = LIST_NEXT(i, entry);
 		if (iface_lookup(xa, i) == NULL) {
-			log_debug("merge_config: proc %d area %s removing "
+			log_debug("merge_interfaces: proc %d area %s removing "
 			    "interface %s", ospfd_process, inet_ntoa(a->id),
 			    i->name);
 			if (ospfd_process == PROC_OSPF_ENGINE)
@@ -727,7 +727,7 @@ merge_interfaces(struct area *a, struct area *xa)
 		ni = LIST_NEXT(xi, entry);
 		if ((i = iface_lookup(a, xi)) == NULL) {
 			/* new interface but delay initialisation */
-			log_debug("merge_config: proc %d area %s adding "
+			log_debug("merge_interfaces: proc %d area %s adding "
 			    "interface %s", ospfd_process, inet_ntoa(a->id),
 			    xi->name);
 			LIST_REMOVE(xi, entry);
@@ -736,8 +736,8 @@ merge_interfaces(struct area *a, struct area *xa)
 				xi->state = IF_STA_NEW;
 			continue;
 		}
-		log_debug("merge_config: proc %d area %s merging interface %s",
-		    ospfd_process, inet_ntoa(a->id), i->name);
+		log_debug("merge_interfaces: proc %d area %s merging "
+		    "interface %s", ospfd_process, inet_ntoa(a->id), i->name);
 		i->addr = xi->addr;
 		i->dst = xi->dst;
 		i->abr_id = xi->abr_id;
