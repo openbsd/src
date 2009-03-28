@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.140 2009/03/22 20:51:58 jmc Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.141 2009/03/28 14:03:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.140 2009/03/22 20:51:58 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.141 2009/03/28 14:03:42 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1713,10 +1713,13 @@ usage(void)
 {
 	char *boot = "";
 	char *blank = "       ";
+	char *Bflag = "";
 
 #if NUMBOOT == 1
+	Bflag = "B";
 	boot = " [-b boot1]";
 #elif NUMBOOT == 2
+	Bflag = "B";
 	boot = " [-b boot1] [-s boot2]";
 	blank = "  ";
 #endif
@@ -1733,15 +1736,17 @@ usage(void)
 	    "       disklabel -R [-nv] disk protofile\t\t\t(restore)\n");
 	fprintf(stderr,
 	    "       disklabel -N | -W [-nv] disk\t\t\t\t(protect)\n\n");
+#if NUMBOOT > 0
 	fprintf(stderr,
 	    "%sdisklabel -B  [-nv]%s disk [disktype]           (boot)\n",
 	    blank, boot);
+#endif
 	fprintf(stderr,
-	    "%sdisklabel -Bw [-nv]%s disk disktype [packid]    (write)\n",
-	    blank, boot);
+	    "%sdisklabel -%sw [-nv]%s disk disktype [packid]    (write)\n",
+	    blank, Bflag, boot);
 	fprintf(stderr,
-	    "%sdisklabel -BR [-nv]%s disk protofile [disktype] (restore)\n\n",
-	    blank, boot);
+	    "%sdisklabel -%sR [-nv]%s disk protofile [disktype] (restore)\n\n",
+	    blank, Bflag, boot);
 	fprintf(stderr,
 	    "`disk' may be of the form: sd0 or /dev/rsd0%c.\n", 'a'+RAW_PART);
 	fprintf(stderr,
