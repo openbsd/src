@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.7 2009/03/27 13:59:06 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.8 2009/03/28 07:39:16 jmc Exp $
 OpenBSD/MACHINE runs on the following SH4-based IO-DATA made models:
 	IO-DATA USL-5P, using CF storage (Japan)
 	IO-DATA HDL-U, HDL-AV, HDL-W and HDLM-U series (Japan)
@@ -244,7 +244,9 @@ Supported devices {:-include-:}:
 		    D-Link DWL-G122 rev C1
 		    D-Link WUA-1340
 		    Digitus DN-7003GR
-		    Edimax EW-7318USG
+		    Edimax EW-7318Ug
+		    Edimax EW-7318USg
+		    Edimax EW-7618Ug
 		    Gigabyte GN-WB01GS
 		    Hawking HWUG1
 		    Hawking HWU54DM
@@ -264,12 +266,17 @@ Supported devices {:-include-:}:
 		    TP-LINK TL-WN321G
 		Ralink Technology USB IEEE 802.11a/b/g/Draft-N USB adapters
 	    	    ASUS USB-N11
+		    ASUS WL-160N
+		    Belkin F5D8051 ver 3000
+		    Belkin F5D8053
 		    Buffalo WLI-UC-AG300N
 		    Buffalo WLI-UC-GN
 		    Corega CG-WLUSB300GNM
 		    D-Link DWA-130
 		    D-Link DWA-140
 		    Edimax EW-7711UAn
+		    Edimax EW-7717Un
+		    Edimax EW-7718Un
 		    Gigabyte GN-WB32L
 		    Linksys WUSB600N
 		    Planex GW-USMicroN

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.40 2009/03/27 13:59:06 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.41 2009/03/28 07:39:16 jmc Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 - PA7000-based
 	705, 710, 720, 730, 750
@@ -237,7 +237,9 @@ Supported devices {:-include-:}:
 	    D-Link DWL-G122 rev C1
 	    D-Link WUA-1340
 	    Digitus DN-7003GR
-	    Edimax EW-7318USG
+	    Edimax EW-7318Ug
+	    Edimax EW-7318USg
+	    Edimax EW-7618Ug
 	    Gigabyte GN-WB01GS
 	    Gigabyte GN-WI05GS
 	    Hawking HWUG1
@@ -258,12 +260,17 @@ Supported devices {:-include-:}:
 	    TP-LINK TL-WN321G
 	Ralink Technology USB IEEE 802.11a/b/g/Draft-N USB adapters
 	    ASUS USB-N11
+	    ASUS WL-160N
+	    Belkin F5D8051 ver 3000
+	    Belkin F5D8053
 	    Buffalo WLI-UC-AG300N
 	    Buffalo WLI-UC-GN
 	    Corega CG-WLUSB300GNM
 	    D-Link DWA-130
 	    D-Link DWA-140
 	    Edimax EW-7711UAn
+	    Edimax EW-7717Un
+	    Edimax EW-7718Un
 	    Gigabyte GN-WB32L
 	    Linksys WUSB600N
 	    Planex GW-USMicroN
