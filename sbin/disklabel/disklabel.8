@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.76 2009/03/28 14:03:21 deraadt Exp $
+.\"	$OpenBSD: disklabel.8,v 1.77 2009/03/28 14:40:20 deraadt Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -620,16 +620,6 @@ will not install bootstrap code that overlaps it.
 .Xr disktab 5 ,
 .Xr scan_ffs 8
 .Sh CAVEATS
-On architectures which have it,
-.Xr installboot 8
-is normally used to install boot code.
-The
-.Fl B
-option to
-.Nm
-can still be used to install old style boot code,
-but this usage is deprecated.
-.Pp
 .Nm
 supports 15 configurable partitions,
 .Sq a
