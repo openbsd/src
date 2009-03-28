@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.178 2009/03/28 07:08:32 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.179 2009/03/28 16:18:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.178 2009/03/28 07:08:32 otto Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.179 2009/03/28 16:18:50 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -109,7 +109,7 @@ void	getdisktype(struct disklabel *, char *, char *);
 void	find_bounds(struct disklabel *);
 void	set_bounds(struct disklabel *);
 struct diskchunk *free_chunks(struct disklabel *);
-char **	mpcopy(char **, char **);
+void	mpcopy(char **, char **);
 int	micmp(const void *, const void *);
 int	mpequal(char **, char **);
 int	mpsave(struct disklabel *, char **, char *, char *);
@@ -136,17 +136,19 @@ static int expert;
 int
 editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 {
-	struct disklabel lastlabel, tmplabel, label = *lp;
+	struct disklabel origlabel, lastlabel, tmplabel, label = *lp;
 	struct disklabel *disk_geop;
 	struct partition *pp;
 	FILE *fp;
 	char buf[BUFSIZ], *cmd, *arg;
-	char **mountpoints = NULL, **omountpoints = NULL, **tmpmountpoints = NULL;
+	char **mountpoints = NULL, **omountpoints = NULL;
+	char **origmountpoints = NULL, **tmpmountpoints = NULL;
 
 	/* Alloc and init mount point info */
 	if (fstabfile) {
 		if (!(mountpoints = calloc(MAXPARTITIONS, sizeof(char *))) ||
 		    !(omountpoints = calloc(MAXPARTITIONS, sizeof(char *))) ||
+		    !(origmountpoints = calloc(MAXPARTITIONS, sizeof(char *))) ||
 		    !(tmpmountpoints = calloc(MAXPARTITIONS, sizeof(char *))))
 			errx(4, "out of memory");
 	}
@@ -195,6 +197,9 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 	if (label.d_interleave == 0)
 		label.d_interleave = 1;
 
+	/* Save the (U)ndo label, origmountpoints is already NULLs. */
+	origlabel = label;
+
 	if (aflag)
 		editor_allocspace(&label, mountpoints, 0);
 
@@ -211,101 +216,61 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 			continue;
 		arg = strtok(NULL, " \t\r\n");
 
-		switch (*cmd) {
+		if ((*cmd != 'u') && (*cmd != 'U')) {
+			/*
+			 * Save undo info in case the command tries to make
+			 * changes but decides not to.
+			 */
+			tmplabel = lastlabel;
+			lastlabel = label;
+			if (mountpoints != NULL) {
+				mpcopy(tmpmountpoints, omountpoints);
+				mpcopy(omountpoints, mountpoints);
+			}
+		}
 
+		switch (*cmd) {
 		case '?':
 		case 'h':
 			editor_help(arg ? arg : "");
 			break;
 
 		case 'A':
-			tmplabel = lastlabel;
-			lastlabel = label;
 			editor_allocspace(&label, mountpoints, 1);
 			break;
 		case 'a':
-			tmplabel = lastlabel;
-			lastlabel = label;
-			if (mountpoints != NULL) {
-				mpcopy(tmpmountpoints, omountpoints);
-				mpcopy(omountpoints, mountpoints);
-			}
 			editor_add(&label, mountpoints, arg);
-			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
-				lastlabel = tmplabel;
-			if (mountpoints != NULL && mpequal(omountpoints, tmpmountpoints))
-				mpcopy(omountpoints, tmpmountpoints);
 			break;
 
 		case 'b':
-			tmplabel = lastlabel;
-			lastlabel = label;
 			set_bounds(&label);
-			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
-				lastlabel = tmplabel;
 			break;
 
 		case 'c':
-			tmplabel = lastlabel;
-			lastlabel = label;
 			editor_change(&label, arg);
-			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
-				lastlabel = tmplabel;
 			break;
 
 		case 'D':
-			tmplabel = lastlabel;
-			lastlabel = label;
-			if (ioctl(f, DIOCGPDINFO, &label) == 0) {
+			if (ioctl(f, DIOCGPDINFO, &label) == 0)
 				dflag = 1;
-			} else {
+			else
 				warn("unable to get default partition table");
-				lastlabel = tmplabel;
-			}
 			break;
 
 		case 'd':
-			tmplabel = lastlabel;
-			lastlabel = label;
-			if (mountpoints != NULL) {
-				mpcopy(tmpmountpoints, omountpoints);
-				mpcopy(omountpoints, mountpoints);
-			}
 			editor_delete(&label, mountpoints, arg);
-			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
-				lastlabel = tmplabel;
-			if (mountpoints != NULL && mpequal(omountpoints, tmpmountpoints))
-				mpcopy(omountpoints, tmpmountpoints);
 			break;
 
 		case 'e':
-			tmplabel = lastlabel;
-			lastlabel = label;
 			edit_parms(&label);
-			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
-				lastlabel = tmplabel;
 			break;
 
 		case 'g':
-			tmplabel = lastlabel;
-			lastlabel = label;
 			set_geometry(&label, disk_geop, lp, arg);
-			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
-				lastlabel = tmplabel;
 			break;
 
 		case 'm':
-			tmplabel = lastlabel;
-			lastlabel = label;
-			if (mountpoints != NULL) {
-				mpcopy(tmpmountpoints, omountpoints);
-				mpcopy(omountpoints, mountpoints);
-			}
 			editor_modify(&label, mountpoints, arg);
-			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
-				lastlabel = tmplabel;
-			if (mountpoints != NULL && mpequal(omountpoints, tmpmountpoints))
-				mpcopy(omountpoints, tmpmountpoints);
 			break;
 
 		case 'n':
@@ -314,11 +279,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 				    "without the -f flag.\n", stderr);
 				break;
 			}
-			mpcopy(tmpmountpoints, omountpoints);
-			mpcopy(omountpoints, mountpoints);
 			editor_name(&label, mountpoints, arg);
-			if (mpequal(omountpoints, tmpmountpoints))
-				mpcopy(omountpoints, tmpmountpoints);
 			break;
 
 		case 'p':
@@ -416,18 +377,40 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 			}
 			break;
 
+		case 'U':
+			if (memcmp(&label, &origlabel, sizeof(label)) == 0 &&
+			    (mountpoints == NULL || 
+			    mpequal(mountpoints, origmountpoints))) {
+				puts("Nothing to undo!");
+			} else {
+				tmplabel = label;
+				label = origlabel;
+				lastlabel = tmplabel;
+				/* Restore mountpoints */
+				if (mountpoints != NULL) {
+					mpcopy(tmpmountpoints, mountpoints);
+					mpcopy(mountpoints, origmountpoints);
+					mpcopy(omountpoints, tmpmountpoints);
+				}
+				puts("All changes undone.");
+			}
+			break;
+
 		case 'u':
 			if (memcmp(&label, &lastlabel, sizeof(label)) == 0 &&
-			    mountpoints != NULL &&
-			    mpequal(mountpoints, omountpoints)) {
+			    (mountpoints == NULL ||
+			    mpequal(mountpoints, omountpoints))) {
 				puts("Nothing to undo!");
 			} else {
 				tmplabel = label;
 				label = lastlabel;
 				lastlabel = tmplabel;
 				/* Restore mountpoints */
-				if (mountpoints != NULL)
+				if (mountpoints != NULL) {
+					mpcopy(tmpmountpoints, mountpoints);
 					mpcopy(mountpoints, omountpoints);
+					mpcopy(omountpoints, tmpmountpoints);
+				}
 				puts("Last change undone.");
 			}
 			break;
@@ -460,9 +443,9 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 			break;
 
 		case 'z':
-			tmplabel = lastlabel;
-			lastlabel = label;
 			zero_partitions(&label);
+			if (mountpoints != NULL)
+				mpcopy(mountpoints, origmountpoints);
 			break;
 
 		case '\n':
@@ -471,6 +454,17 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 		default:
 			printf("Unknown option: %c ('?' for help)\n", *cmd);
 			break;
+		}
+
+		/*
+		 * If no changes were made to label or mountpoints, then
+		 * restore undo info.
+		 */
+		if (memcmp(&label, &lastlabel, sizeof(label)) == 0 &&
+		    (mountpoints == NULL || 
+		    mpequal(mountpoints, omountpoints))) {
+			lastlabel = tmplabel;
+			mpcopy(omountpoints, tmpmountpoints);
 		}
 	}
 }
@@ -1738,7 +1732,7 @@ editor_help(char *arg)
 	}
 }
 
-char **
+void
 mpcopy(char **to, char **from)
 {
 	int i;
@@ -1758,7 +1752,6 @@ mpcopy(char **to, char **from)
 			to[i] = NULL;
 		}
 	}
-	return(to);
 }
 
 int
