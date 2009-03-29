@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.89 2009/02/16 21:19:06 miod Exp $ */
+/* $OpenBSD: mfi.c,v 1.90 2009/03/29 01:02:35 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1163,6 +1163,7 @@ mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
 	struct mfi_ccb		*ccb;
 	struct mfi_dcmd_frame	*dcmd;
 	int			rv = 1;
+	int			s;
 
 	DNPRINTF(MFI_D_MISC, "%s: mfi_mgmt %#x\n", DEVNAME(sc), opc);
 
@@ -1199,11 +1200,13 @@ mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
 		if (mfi_poll(ccb))
 			goto done;
 	} else {
+		s = splbio();
 		mfi_post(sc, ccb);
 
 		DNPRINTF(MFI_D_MISC, "%s: mfi_mgmt sleeping\n", DEVNAME(sc));
 		while (ccb->ccb_state != MFI_CCB_DONE)
 			tsleep(ccb, PRIBIO, "mfi_mgmt", 0);
+		splx(s);
 
 		if (ccb->ccb_flags & MFI_CCB_F_ERR)
 			goto done;
