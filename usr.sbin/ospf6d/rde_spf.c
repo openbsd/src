@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.8 2009/03/29 19:25:49 stsp Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.9 2009/03/29 19:28:10 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -1011,25 +1011,22 @@ get_rtr_link(struct vertex *v, unsigned int idx)
 
 /* network LSA links */
 struct lsa_net_link *
-get_net_link(struct vertex *v, int idx)
+get_net_link(struct vertex *v, unsigned int idx)
 {
 	struct lsa_net_link	*net_link = NULL;
 	char			*buf = (char *)v->lsa;
-	u_int16_t		 i, off, nlinks;
+	unsigned int		 i;
 
 	if (v->type != LSA_TYPE_NETWORK)
 		fatalx("get_net_link: invalid LSA type");
 
-	off = sizeof(v->lsa->hdr) + sizeof(u_int32_t);
-
-	/* nlinks validated earlier by lsa_check() */
-	nlinks = lsa_num_links(v);
-	for (i = 0; i < nlinks; i++) {
-		net_link = (struct lsa_net_link *)(buf + off);
+	/* number of links validated earlier by lsa_check() */
+	net_link = (struct lsa_net_link *)(buf + sizeof(v->lsa->hdr) +
+	    sizeof(struct lsa_net));
+	for (i = 0; i < lsa_num_links(v); i++) {
 		if (i == idx)
 			return (net_link);
-
-		off += sizeof(struct lsa_net_link);
+		net_link++;
 	}
 
 	return (NULL);
