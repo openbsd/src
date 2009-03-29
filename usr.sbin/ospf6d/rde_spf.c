@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.7 2009/03/10 17:37:45 stsp Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.8 2009/03/29 19:25:49 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -56,7 +56,7 @@ spf_calc(struct area *area)
 	struct lsa_rtr_link	*rtr_link = NULL;
 	struct lsa_net_link	*net_link;
 	u_int32_t		 d;
-	int			 i;
+	unsigned int		 i;
 	struct in_addr		 addr;
 
 	/* clear SPF tree */
@@ -988,23 +988,22 @@ rt_lookup(enum dst_type type, struct in6_addr *addr)
 
 /* router LSA links */
 struct lsa_rtr_link *
-get_rtr_link(struct vertex *v, int idx)
+get_rtr_link(struct vertex *v, unsigned int idx)
 {
 	struct lsa_rtr_link	*rtr_link = NULL;
 	char			*buf = (char *)v->lsa;
-	u_int16_t		 i, off, nlinks;
+	unsigned int		 i;
 
 	if (v->type != LSA_TYPE_ROUTER)
 		fatalx("get_rtr_link: invalid LSA type");
 
-	off = sizeof(v->lsa->hdr) + sizeof(struct lsa_rtr);
-
-	/* nlinks validated earlier by lsa_check() */
-	nlinks = lsa_num_links(v);
-	for (i = 0; i < nlinks; i++) {
-		rtr_link = (struct lsa_rtr_link *)(buf + off);
+	/* number of links validated earlier by lsa_check() */
+	rtr_link = (struct lsa_rtr_link *)(buf + sizeof(v->lsa->hdr) +
+	    sizeof(struct lsa_rtr));
+	for (i = 0; i < lsa_num_links(v); i++) {
 		if (i == idx)
 			return (rtr_link);
+		rtr_link++;
 	}
 
 	return (NULL);

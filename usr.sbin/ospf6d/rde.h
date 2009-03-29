@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.14 2009/03/29 19:18:20 stsp Exp $ */
+/*	$OpenBSD: rde.h,v 1.15 2009/03/29 19:25:49 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -178,7 +178,7 @@ int		 rt_remove(struct rt_node *);
 void		 rt_clear(void);
 void		 rt_dump(struct in_addr, pid_t, u_int8_t);
 
-struct lsa_rtr_link	*get_rtr_link(struct vertex *, int);
+struct lsa_rtr_link	*get_rtr_link(struct vertex *, unsigned int);
 struct lsa_net_link	*get_net_link(struct vertex *, int);
 
 RB_PROTOTYPE(lsa_tree, vertex, entry, lsa_compare)
