@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.90 2009/03/29 01:02:35 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.91 2009/03/29 01:05:56 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1035,7 +1035,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 		    0, NULL, mbox))
 			goto stuffup;
 
-		return (COMPLETE);
+		goto complete;
 		/* NOTREACHED */
 
 	/* hand it of to the firmware and let it deal with it */
@@ -1085,6 +1085,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 
 stuffup:
 	xs->error = XS_DRIVER_STUFFUP;
+complete:
 	xs->flags |= ITSDONE;
 	s = splbio();
 	scsi_done(xs);
