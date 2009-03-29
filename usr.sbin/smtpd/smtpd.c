@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.50 2009/03/22 22:53:47 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.51 2009/03/29 14:18:20 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -209,9 +209,9 @@ parent_dispatch_lka(int fd, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("parent_dispatch_lka: unexpected imsg %d",
+			log_warnx("parent_dispatch_lka: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("parent_dispatch_lka: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -255,9 +255,9 @@ parent_dispatch_mfa(int fd, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		default:
-			log_debug("parent_dispatch_lka: unexpected imsg %d",
+			log_warnx("parent_dispatch_mfa: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("parent_dispatch_mfa: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -399,9 +399,9 @@ parent_dispatch_mda(int fd, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("parent_dispatch_mda: unexpected imsg %d",
+			log_warnx("parent_dispatch_mfa: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("parent_dispatch_mda: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -473,9 +473,9 @@ parent_dispatch_smtp(int fd, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("parent_dispatch_smtp: unexpected imsg %d",
+			log_warnx("parent_dispatch_smtp: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("parent_dispatch_smtp: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -527,9 +527,9 @@ parent_dispatch_control(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("parent_dispatch_control: unexpected imsg %d",
+			log_warnx("parent_dispatch_control: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("parent_dispatch_control: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -579,7 +579,7 @@ parent_sig_handler(int sig, short event, void *p)
 				lookup.pid = pid;
 				mdaproc = SPLAY_FIND(mdaproctree, &env->mdaproc_queue, &lookup);
 				if (mdaproc == NULL)
-					errx(1, "received SIGCHLD but no known child for that pid (#%d)", pid);
+					fatalx("unexpected SIGCHLD");
 
 				if (WIFEXITED(status) && !WIFSIGNALED(status)) {
 					switch (WEXITSTATUS(status)) {
@@ -590,11 +590,11 @@ parent_sig_handler(int sig, short event, void *p)
 						log_debug("DEBUG: external mda reported temporary failure");
 						break;
 					default:
-						log_debug("DEBUG: external mda reported permanent failure");
+						log_warnx("external mda returned %d", WEXITSTATUS(status));
 					}
 				}
 				else {
-					log_debug("DEBUG: external mda process has terminated in a baaaad way");
+					log_warnx("external mda terminated abnormally");
 				}
 
 				SPLAY_REMOVE(mdaproctree, &env->mdaproc_queue,
@@ -603,7 +603,6 @@ parent_sig_handler(int sig, short event, void *p)
 			}
 		} while (pid > 0 || (pid == -1 && errno == EINTR));
 
-		/**/
 		break;
 	default:
 		fatalx("unexpected signal");

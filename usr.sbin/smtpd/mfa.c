@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.17 2009/03/08 19:11:22 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.18 2009/03/29 14:18:20 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -105,9 +105,9 @@ mfa_dispatch_parent(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		default:
-			log_debug("parent_dispatch_mfa: unexpected imsg %d",
+			log_warnx("mfa_dispatch_parent: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("mfa_dispatch_parent: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -157,9 +157,9 @@ mfa_dispatch_smtp(int sig, short event, void *p)
 			mfa_test_rcpt(env, imsg.data, PROC_SMTP);
 			break;
 		default:
-			log_debug("mfa_dispatch_smtp: unexpected imsg %d",
+			log_warnx("mfa_dispatch_smtp: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("mfa_dispatch_smtp: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -223,9 +223,9 @@ mfa_dispatch_lka(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("mfa_dispatch_lka: unexpected imsg %d",
+			log_warnx("mfa_dispatch_lka: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("mfa_dispatch_lka: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -272,9 +272,9 @@ mfa_dispatch_control(int sig, short event, void *p)
 			mfa_test_rcpt(env, imsg.data, PROC_CONTROL);
 			break;
 		default:
-			log_debug("mfa_dispatch_smtp: unexpected imsg %d",
+			log_warnx("mfa_dispatch_control: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("mfa_dispatch_control: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}

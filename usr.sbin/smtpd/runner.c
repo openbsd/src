@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.37 2009/03/22 22:53:47 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.38 2009/03/29 14:18:20 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -165,9 +165,9 @@ runner_dispatch_control(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("queue_dispatch_control: unexpected imsg %d",
+			log_warnx("runner_dispatch_control: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("runner_dispatch_control: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -216,9 +216,9 @@ runner_dispatch_queue(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("runner_dispatch_queue: unexpected imsg %d",
+			log_warnx("runner_dispatch_queue: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("runner_dispatch_queue: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -262,9 +262,9 @@ runner_dispatch_mda(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		default:
-			log_debug("runner_dispatch_mda: unexpected imsg %d",
+			log_warnx("runner_dispatch_mda: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("runner_dispatch_mda: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -309,9 +309,9 @@ runner_dispatch_mta(int sig, short event, void *p)
 		switch (imsg.hdr.type) {
 
 		default:
-			log_debug("runner_dispatch_mta: unexpected imsg %d",
+			log_warnx("runner_dispatch_mta: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("runner_dispatch_mta: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -355,9 +355,9 @@ runner_dispatch_lka(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		default:
-			log_debug("runner_dispatch_lka: unexpected imsg %d",
+			log_warnx("runner_dispatch_lka: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("runner_dispatch_lka: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}

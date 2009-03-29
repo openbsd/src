@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.31 2009/03/15 19:32:10 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.32 2009/03/29 14:18:20 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -192,9 +192,9 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("parent_dispatch_smtp: unexpected imsg %d",
+			log_warnx("smtp_dispatch_parent: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("smtp_dispatch_parent: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -262,9 +262,9 @@ smtp_dispatch_mfa(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("smtp_dispatch_mfa: unexpected imsg %d",
+			log_warnx("smtp_dispatch_mfa: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("smtp_dispatch_mfa: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -329,9 +329,9 @@ smtp_dispatch_lka(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("smtp_dispatch_lka: unexpected imsg %d",
+			log_warnx("smtp_dispatch_lka: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("smtp_dispatch_lka: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -487,9 +487,9 @@ smtp_dispatch_queue(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("smtp_dispatch_queue: unexpected imsg %d",
+			log_warnx("smtp_dispatch_queue: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("smtp_dispatch_queue: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -547,9 +547,9 @@ smtp_dispatch_control(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("smtp_dispatch_control: unexpected imsg %d",
+			log_warnx("smtp_dispatch_control: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("smtp_dispatch_control: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}

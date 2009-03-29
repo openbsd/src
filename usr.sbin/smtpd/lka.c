@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.37 2009/03/22 22:53:47 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.38 2009/03/29 14:18:20 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -176,9 +176,9 @@ lka_dispatch_parent(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("parent_dispatch_lka: unexpected imsg %d",
+			log_warnx("lka_dispatch_parent: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("lka_dispatch_parent: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -312,9 +312,9 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("lka_dispatch_mfa: unexpected imsg %d",
+			log_warnx("lka_dispatch_mfa: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("lka_dispatch_mfa: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -525,9 +525,9 @@ lka_dispatch_mta(int sig, short event, void *p)
 		}
 
 		default:
-			log_debug("lka_dispatch_mta: unexpected imsg %d",
+			log_warnx("lka_dispatch_mta: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("lka_dispatch_mta: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -597,9 +597,9 @@ lka_dispatch_smtp(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("lka_dispatch_mfa: unexpected imsg %d",
+			log_warnx("lka_dispatch_smtp: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("lka_dispatch_smtp: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -643,9 +643,9 @@ lka_dispatch_queue(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		default:
-			log_debug("lka_dispatch_queue: unexpected imsg %d",
-			    imsg.hdr.type);
-			break;
+			log_warnx("lka_dispatch_queue: got imsg %d",
+			   imsg.hdr.type);
+			fatalx("lka_dispatch_queue: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -689,9 +689,9 @@ lka_dispatch_runner(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		default:
-			log_debug("lka_dispatch_runner: unexpected imsg %d",
+			log_warnx("lka_dispatch_runner: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("lka_dispatch_runner: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}

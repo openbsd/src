@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.12 2009/03/23 08:25:15 tobias Exp $	*/
+/*	$OpenBSD: mda.c,v 1.13 2009/03/29 14:18:20 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -175,9 +175,9 @@ mda_dispatch_parent(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("mda_dispatch_parent: unexpected imsg %d",
+			log_warnx("mda_dispatch_parent: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("mda_dispatch_parent: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -221,9 +221,9 @@ mda_dispatch_queue(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		default:
-			log_debug("parent_dispatch_queue: unexpected imsg %d",
+			log_warnx("mda_dispatch_queue: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("mda_dispatch_queue: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -345,9 +345,9 @@ mda_dispatch_runner(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("parent_dispatch_runner: unexpected imsg %d",
+			log_warnx("mda_dispatch_runner: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("mda_dispatch_runner: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}

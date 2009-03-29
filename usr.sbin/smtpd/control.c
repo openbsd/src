@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.20 2009/03/18 14:48:27 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.21 2009/03/29 14:18:20 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -565,9 +565,9 @@ control_dispatch_parent(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("control_dispatch_parent: unexpected imsg %d",
+			log_warnx("control_dispatch_parent: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("control_dispatch_parent: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -621,9 +621,9 @@ control_dispatch_lka(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("control_dispatch_lka: unexpected imsg %d",
+			log_warnx("control_dispatch_lka: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("control_dispatch_lka: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -687,9 +687,9 @@ control_dispatch_mfa(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("control_dispatch_mfa: unexpected imsg %d",
+			log_warnx("control_dispatch_mfa: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("control_dispatch_mfa: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -836,9 +836,9 @@ control_dispatch_queue(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("control_dispatch_queue: unexpected imsg %d",
+			log_warnx("control_dispatch_queue: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("control_dispatch_queue: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -913,9 +913,9 @@ control_dispatch_runner(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("control_dispatch_runner: unexpected imsg %d",
+			log_warnx("control_dispatch_runner: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("control_dispatch_runner: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -974,9 +974,9 @@ control_dispatch_smtp(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("control_dispatch_smtp: unexpected imsg %d",
+			log_warnx("control_dispatch_smtp: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("control_dispatch_smtp: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}

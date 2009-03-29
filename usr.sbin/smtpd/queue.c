@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.57 2009/03/01 12:12:58 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.58 2009/03/29 14:18:20 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -111,7 +111,7 @@ queue_dispatch_control(int sig, short event, void *p)
 			struct message		*messagep;
 			struct submit_status	 ss;
 
-			log_debug("mfa_dispatch_control: creating message file");
+			log_debug("queue_dispatch_control: creating message file");
 			messagep = imsg.data;
 
 			ss.id = messagep->session_id;
@@ -171,9 +171,9 @@ queue_dispatch_control(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("queue_dispatch_control: unexpected imsg %d",
+			log_warnx("queue_dispatch_control: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("queue_dispatch_control: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -220,7 +220,7 @@ queue_dispatch_smtp(int sig, short event, void *p)
 			struct message		*messagep;
 			struct submit_status	 ss;
 
-			log_debug("mfa_dispatch_smtp: creating message file");
+			log_debug("queue_dispatch_smtp: creating message file");
 			messagep = imsg.data;
 			ss.id = messagep->session_id;
 			ss.code = 250;
@@ -274,9 +274,9 @@ queue_dispatch_smtp(int sig, short event, void *p)
 			break;
 		}
 		default:
-			log_debug("queue_dispatch_smtp: unexpected imsg %d",
+			log_warnx("queue_dispatch_smtp: got imsg %d",
 			    imsg.hdr.type);
-			break;
+			fatalx("queue_dispatch_smtp: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -327,9 +327,8 @@ queue_dispatch_mda(int sig, short event, void *p)
 		}
 
 		default:
-			log_debug("queue_dispatch_mda: unexpected imsg %d",
-			    imsg.hdr.type);
-			break;
+			log_warnx("got imsg %d", imsg.hdr.type);
+			fatalx("queue_dispatch_mda: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -391,9 +390,8 @@ queue_dispatch_mta(int sig, short event, void *p)
 		}
 
 		default:
-			log_debug("queue_dispatch_mda: unexpected imsg %d",
-			    imsg.hdr.type);
-			break;
+			log_warnx("got imsg %d", imsg.hdr.type);
+			fatalx("queue_dispatch_mda: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -493,9 +491,8 @@ queue_dispatch_lka(int sig, short event, void *p)
 		}
 
 		default:
-			log_debug("queue_dispatch_lka: unexpected imsg %d",
-			    imsg.hdr.type);
-			break;
+			log_warnx("got imsg %d", imsg.hdr.type);
+			fatalx("queue_dispatch_lka: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -539,9 +536,8 @@ queue_dispatch_runner(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		default:
-			log_debug("queue_dispatch_runner: unexpected imsg %d",
-			    imsg.hdr.type);
-			break;
+			log_warnx("got imsg %d", imsg.hdr.type);
+			fatalx("queue_dispatch_runner: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
