@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.91 2009/03/29 01:05:56 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.92 2009/03/29 15:03:17 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1484,7 +1484,7 @@ mfi_ioctl_vol(struct mfi_softc *sc, struct bioc_vol *bv)
 
 	/*
 	 * The RAID levels are determined per the SNIA DDF spec, this is only
-	 * a subset that is valid for the MFI contrller.
+	 * a subset that is valid for the MFI controller.
 	 */
 	bv->bv_level = sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_pri_raid;
 	if (sc->sc_ld_details[i].mld_cfg.mlc_parm.mpa_sec_raid ==
