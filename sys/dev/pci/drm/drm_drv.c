@@ -467,7 +467,6 @@ drmclose(dev_t kdev, int flags, int fmt, struct proc *p)
 			}
 			if (drm_lock_take(&dev->lock, DRM_KERNEL_CONTEXT)) {
 				dev->lock.file_priv = file_priv;
-				dev->lock.lock_time = jiffies;
 				break;	/* Got lock */
 			}
 				/* Contention */
@@ -501,7 +500,7 @@ done:
 
 	DRM_UNLOCK();
 	
-	return retcode;
+	return (retcode);
 }
 
 /* drmioctl is called whenever a process performs an ioctl on /dev/drm.

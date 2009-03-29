@@ -270,11 +270,10 @@ struct drm_file {
 };
 
 struct drm_lock_data {
+	struct mutex		 spinlock;
 	struct drm_hw_lock	*hw_lock;	/* Hardware lock */
 	/* Unique identifier of holding process (NULL is kernel) */
 	struct drm_file		*file_priv;
-	unsigned long	 	 lock_time;	/* Time of last lock */
-	struct mutex		 spinlock;
 };
 
 /* This structure, in the struct drm_device, is always initialized while

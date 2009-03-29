@@ -63,20 +63,13 @@ drm_lock_take(struct drm_lock_data *lock_data, unsigned int context)
 			new = context | _DRM_LOCK_HELD;
 	} while (!atomic_cmpset_int(lock, old, new));
 
-	if (_DRM_LOCKING_CONTEXT(old) == context) {
-		if (old & _DRM_LOCK_HELD) {
-			if (context != DRM_KERNEL_CONTEXT) {
-				DRM_ERROR("%d holds heavyweight lock\n",
-				    context);
-			}
-			return 0;
-		}
+	if (_DRM_LOCKING_CONTEXT(old) == context && _DRM_LOCK_IS_HELD(old)) {
+		if (context != DRM_KERNEL_CONTEXT)
+			DRM_ERROR("%d holds heavyweight lock\n", context);
+		return (0);
 	}
-	if (new == (context | _DRM_LOCK_HELD)) {
-		/* Have lock */
-		return 1;
-	}
-	return 0;
+	/* If the lock wasn't held before, it's ours */
+	return (!_DRM_LOCK_IS_HELD(old));
 }
 
 int
@@ -122,7 +115,6 @@ drm_lock(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	for (;;) {
 		if (drm_lock_take(&dev->lock, lock->context)) {
 			dev->lock.file_priv = file_priv;
-			dev->lock.lock_time = jiffies;
 			break;  /* Got lock */
 		}
 
