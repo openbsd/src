@@ -1,4 +1,4 @@
-/*	$OpenBSD: ht.c,v 1.11 2007/05/08 03:22:11 deraadt Exp $	*/
+/*	$OpenBSD: ht.c,v 1.12 2009/03/29 22:58:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -184,6 +184,7 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_intr_disestablish = ht_intr_disestablish;
 	sc->sc_pc.pc_ether_hw_addr = ht_ether_hw_addr;
 
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = sc->sc_iot;
 	pba.pba_memt = sc->sc_memt;
@@ -191,7 +192,6 @@ ht_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
-	pba.pba_bridgetag = NULL;
 
 	printf(", %d devices\n", sc->sc_maxdevs);
 

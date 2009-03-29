@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.37 2008/03/25 22:38:28 kettenis Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.38 2009/03/29 22:58:31 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -438,6 +438,7 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	if ((strcmp(compat, "bandit")) != 0)
 		pci_addr_fixup(sc, &lcp->lc_pc, 32);
 
+	bzero(&pba, sizeof(pba));
 	pba.pba_dmat = &pci_bus_dma_tag;
 
 	pba.pba_busname = "pci";
@@ -446,7 +447,6 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
-	pba.pba_bridgetag = NULL;
 
 	/* we want to check pci irq settings */
 	if (of_node != 0) {
