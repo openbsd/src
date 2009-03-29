@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.25 2009/03/29 19:14:23 stsp Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.26 2009/03/29 19:18:20 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -561,27 +561,6 @@ lsa_find_rtr(struct area *area, u_int32_t rtr_id)
 		lsa_age(r);
 
 	return (r);
-}
-
-struct vertex *
-lsa_find_net(struct area *area, u_int32_t ls_id)
-{
-	struct lsa_tree	*tree = &area->lsa_tree;
-	struct vertex	*v;
-
-	/* XXX speed me up */
-	RB_FOREACH(v, lsa_tree, tree) {
-		if (v->lsa->hdr.type == LSA_TYPE_NETWORK &&
-		    v->lsa->hdr.ls_id == ls_id) {
-			/* LSA that are deleted are not findable */
-			if (v->deleted)
-				return (NULL);
-			lsa_age(v);
-			return (v);
-		}
-	}
-
-	return (NULL);
 }
 
 u_int16_t
