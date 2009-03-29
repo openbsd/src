@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.47 2009/01/12 17:14:46 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.48 2009/03/29 17:32:06 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -372,8 +372,11 @@ fbwscons_init(struct sunfb *sf, int isconsole)
 			wt = wl = 0;
 		} else {
 			/*
-			 * Make sure window-top and window-left
-			 * values are consistent with the font metrics.
+			 * We have valid font metrics, but the
+			 * window-top and window-left values might not
+			 * be available.  Also, we have to make sure
+			 * their values are consistent with the font
+			 * metrics.
 			 */
 			if (wt <= 0 || wt > sf->sf_width - cols * fw ||
 			    wl <= 0 || wl > sf->sf_height - rows * fh)
@@ -667,33 +670,58 @@ fb_get_console_metrics(int *fontwidth, int *fontheight, int *wtop, int *wleft)
 	char buf[200];
 
 	/*
-	 * This code currently only works for PROM >= 2.9; see
-	 * autoconf.c romgetcursoraddr() for details.
+	 * Get the PROM font metrics.
 	 */
-	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
-		return (1);
 
 	/*
-	 * Get the PROM font metrics and address
+	 * char-height and char-width are global in older proms (rom vector
+	 * < 2) and in some newer proms.  They are local in version 2.9.  The
+	 * correct cutoff point is unknown, as yet; we use 2.9 here.
 	 */
-	if (snprintf(buf, sizeof buf, "stdout @ is my-self "
-	    "addr char-height %lx ! addr char-width %lx ! "
-	    "addr window-top %lx ! addr window-left %lx !",
-	    (vaddr_t)&romheight, (vaddr_t)&romwidth,
-	    (vaddr_t)&windowtop, (vaddr_t)&windowleft) >=
-	    sizeof buf)
-		return (1);
-	romheight = romwidth = windowtop = windowleft = NULL;
+	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009) {
+		if (snprintf(buf, sizeof buf,
+		    "' char-height >body >user %lx ! "
+		    "' char-width >body >user %lx !",
+		    (vaddr_t)&romheight, (vaddr_t)&romwidth) >= sizeof buf)
+			return (1);
+	} else {
+		if (snprintf(buf, sizeof buf, "stdout @ is my-self "
+		    "addr char-height %lx ! addr char-width %lx !",
+		    (vaddr_t)&romheight, (vaddr_t)&romwidth) >= sizeof buf)
+			return (1);
+	}
+
+	romheight = romwidth = NULL;
 	rominterpret(buf);
 
-	if (romheight == NULL || romwidth == NULL || windowtop == NULL ||
-	    windowleft == NULL || *romheight == 0 || *romwidth == 0)
+	if (romheight == NULL || romwidth == NULL ||
+	    *romheight == 0 || *romwidth == 0)
 		return (1);
 
 	*fontwidth = *romwidth;
 	*fontheight = *romheight;
-	*wtop = *windowtop;
-	*wleft = *windowleft;
+
+	/*
+	 * Get the PROM console window position, if possible.
+	 */
+
+	*wtop = *wleft = 0;	/* if no values available... */
+	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
+		return (0);	/* not available */
+
+	if (snprintf(buf, sizeof buf, "stdout @ is my-self "
+	    "addr window-top %lx ! addr window-left %lx !",
+	    (vaddr_t)&windowtop, (vaddr_t)&windowleft) >= sizeof buf)
+		return (0);	/* XXX shouldn't happen */
+
+	windowtop = windowleft = NULL;
+	rominterpret(buf);
+
+	if (windowtop != NULL)
+		*wtop = *windowtop;
+	if (windowleft != NULL)
+		*wleft = *windowleft;
+
 	return (0);
 }
 #endif	/* SUN4C || SUN4M */
