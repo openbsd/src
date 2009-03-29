@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.73 2009/03/27 10:16:17 jsg Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.74 2009/03/29 12:53:41 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2053,7 +2053,6 @@ msk_stop(struct sk_if_softc *sc_if)
 	/* Stop transfer of Rx descriptors */
 
 	/* Turn off various components of this interface. */
-	SK_XM_SETBIT_2(sc_if, XM_GPIO, XM_GPIO_RESETMAC);
 	SK_IF_WRITE_1(sc_if,0, SK_RXMF1_CTRL_TEST, SK_RFCTL_RESET_SET);
 	SK_IF_WRITE_1(sc_if,0, SK_TXMF1_CTRL_TEST, SK_TFCTL_RESET_SET);
 	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, SK_RXBMU_OFFLINE);
@@ -2075,9 +2074,6 @@ msk_stop(struct sk_if_softc *sc_if)
 	else
 		sc->sk_intrmask &= ~SK_Y2_INTRS2;
 	CSR_WRITE_4(sc, SK_IMR, sc->sk_intrmask);
-
-	SK_XM_READ_2(sc_if, XM_ISR);
-	SK_XM_WRITE_2(sc_if, XM_IMR, 0xFFFF);
 
 	/* Free RX and TX mbufs still in the queues. */
 	for (i = 0; i < MSK_RX_RING_CNT; i++) {
