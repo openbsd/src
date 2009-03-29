@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.26 2009/03/12 01:21:49 stsp Exp $ */
+/*	$OpenBSD: rde.c,v 1.27 2009/03/29 21:42:30 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -49,7 +49,6 @@ void		 rde_send_summary(pid_t);
 void		 rde_send_summary_area(struct area *, pid_t);
 void		 rde_nbr_init(u_int32_t);
 void		 rde_nbr_free(void);
-struct rde_nbr	*rde_nbr_find(u_int32_t);
 struct rde_nbr	*rde_nbr_new(u_int32_t, struct rde_nbr *);
 void		 rde_nbr_del(struct rde_nbr *);
 

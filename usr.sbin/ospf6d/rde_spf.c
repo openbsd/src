@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.10 2009/03/29 19:34:23 stsp Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.11 2009/03/29 21:42:30 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -37,7 +37,11 @@ RB_GENERATE(rt_tree, rt_node, entry, rt_compare)
 struct vertex			*spf_root = NULL;
 
 void		 calc_nexthop_clear(struct vertex *);
-void		 calc_nexthop_add(struct vertex *, struct vertex *, u_int32_t);
+void		 calc_nexthop_add(struct vertex *, struct vertex *,
+		     const struct in6_addr *, u_int32_t);
+struct in6_addr	*calc_nexthop_lladdr(struct vertex *, struct lsa_rtr_link *);
+void		 calc_nexthop_transit_nbr(struct vertex *, struct vertex *,
+		     u_int32_t ifindex);
 void		 calc_nexthop(struct vertex *, struct vertex *);
 void		 rt_nexthop_clear(struct rt_node *);
 void		 rt_nexthop_add(struct rt_node *, struct v_nexthead *,
@@ -374,21 +378,78 @@ calc_nexthop_clear(struct vertex *v)
 }
 
 void
-calc_nexthop_add(struct vertex *dst, struct vertex *parent, u_int32_t nexthop)
+calc_nexthop_add(struct vertex *dst, struct vertex *parent,
+	const struct in6_addr *nexthop, u_int32_t ifindex)
 {
 	struct v_nexthop	*vn;
-
-	if (nexthop == 0)
-		/* invalid nexthop, skip it */
-		return;
 
 	if ((vn = calloc(1, sizeof(*vn))) == NULL)
 		fatal("calc_nexthop_add");
 
 	vn->prev = parent;
-	/* XXX  vn->nexthop.s_addr = nexthop; */
+	if (nexthop)
+		vn->nexthop = *nexthop;
+	vn->ifindex = ifindex;
 
 	TAILQ_INSERT_TAIL(&dst->nexthop, vn, entry);
+}
+
+struct in6_addr *
+calc_nexthop_lladdr(struct vertex *dst, struct lsa_rtr_link *rtr_link)
+{
+	struct iface	*iface;
+	struct vertex	*link;
+	struct rde_nbr	*nbr;
+
+	/* Find outgoing interface, we need its LSA tree */
+	LIST_FOREACH(iface, &dst->area->iface_list, entry) {
+		if (ntohl(rtr_link->iface_id) == iface->ifindex)
+			break;
+	}
+	if (!iface) {
+		warnx("calc_nexthop_lladdr: no interface found for ifindex");
+		return (NULL);
+	}
+
+	/* Determine neighbor's link-local address.
+	 * Try to get it from link LSA first. */
+	link = lsa_find_tree(&iface->lsa_tree,
+		htons(LSA_TYPE_LINK), rtr_link->nbr_iface_id,
+		htonl(dst->adv_rtr));
+	if (link)
+		return &link->lsa->data.link.lladdr;
+
+	/* Not found, so fall back to source address
+	 * advertised in hello packet. */
+	if ((nbr = rde_nbr_find(dst->peerid)) == NULL)
+		fatalx("next hop is not a neighbor");
+	return &nbr->addr;
+}
+
+void
+calc_nexthop_transit_nbr(struct vertex *dst, struct vertex *parent,
+    u_int32_t ifindex)
+{
+	struct lsa_rtr_link	*rtr_link;
+	unsigned int		 i;
+	struct in6_addr		*lladdr;
+
+	if (dst->type != LSA_TYPE_ROUTER)
+		fatalx("calc_nexthop_transit_nbr: dst is not a router");
+	if (parent->type != LSA_TYPE_NETWORK)
+		fatalx("calc_nexthop_transit_nbr: parent is not a network");
+
+	/* dst is a neighbor on a directly attached transit network.
+	 * Figure out dst's link local address and add it as nexthop. */
+	for (i = 0; i < lsa_num_links(dst); i++) {
+		rtr_link = get_rtr_link(dst, i);
+		if (rtr_link->type == LINK_TYPE_TRANSIT_NET &&
+		    rtr_link->nbr_rtr_id == parent->lsa->hdr.adv_rtr &&
+		    rtr_link->nbr_iface_id == parent->lsa->hdr.ls_id) {
+			lladdr = calc_nexthop_lladdr(dst, rtr_link);
+			calc_nexthop_add(dst, parent, lladdr, ifindex);
+		}
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.16 2009/03/29 19:28:10 stsp Exp $ */
+/*	$OpenBSD: rde.h,v 1.17 2009/03/29 21:42:30 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -30,6 +30,7 @@ struct v_nexthop {
 	TAILQ_ENTRY(v_nexthop)	 entry;
 	struct vertex		*prev;
 	struct in6_addr		 nexthop;
+	u_int32_t		 ifindex;
 };
 
 TAILQ_HEAD(v_nexthead, v_nexthop);
@@ -130,6 +131,7 @@ void		 rde_send_delete_kroute(struct rt_node *);
 void		 rde_nbr_del(struct rde_nbr *);
 int		 rde_nbr_loading(struct area *);
 struct rde_nbr	*rde_nbr_self(struct area *);
+struct rde_nbr	*rde_nbr_find(u_int32_t);
 void		 rde_summary_update(struct rt_node *, struct area *);
 
 /* rde_lsdb.c */
