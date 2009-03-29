@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.23 2009/03/12 01:21:49 stsp Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.24 2009/03/29 19:11:11 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -556,11 +556,11 @@ lsa_num_links(struct vertex *v)
 {
 	switch (v->type) {
 	case LSA_TYPE_ROUTER:
-		return ((ntohs(v->lsa->hdr.len) - sizeof(struct lsa_hdr)
-		    - sizeof(u_int32_t)) / sizeof(struct lsa_rtr_link));
+		return ((ntohs(v->lsa->hdr.len) - sizeof(struct lsa_hdr) -
+		    sizeof(struct lsa_rtr)) / sizeof(struct lsa_rtr_link));
 	case LSA_TYPE_NETWORK:
-		return ((ntohs(v->lsa->hdr.len) - sizeof(struct lsa_hdr)
-		    - sizeof(u_int32_t)) / sizeof(struct lsa_net_link));
+		return ((ntohs(v->lsa->hdr.len) - sizeof(struct lsa_hdr) -
+		    sizeof(struct lsa_net)) / sizeof(struct lsa_net_link));
 	default:
 		fatalx("lsa_num_links: invalid LSA type");
 	}
