@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.143 2009/03/29 05:37:13 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.144 2009/03/29 19:58:27 weingart Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.143 2009/03/29 05:37:13 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.144 2009/03/29 19:58:27 weingart Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -96,9 +96,6 @@ char	*xxboot;	/* primary boot */
 char	*bootxx;	/* secondary boot */
 char	boot0[MAXPATHLEN];
 void	setbootflag(struct disklabel *);
-#if NUMBOOT > 1
-char	boot1[MAXPATHLEN];
-#endif
 #endif
 
 enum {
@@ -158,11 +155,6 @@ main(int argc, char *argv[])
 		case 'b':
 			xxboot = optarg;
 			break;
-#if NUMBOOT > 1
-		case 's':
-			bootxx = optarg;
-			break;
-#endif
 #endif
 		case 'N':
 			if (op != UNSPEC)
@@ -383,16 +375,6 @@ makelabel(char *type, char *name, struct disklabel *lp)
 			(void)strlcpy(boot0, lp->d_boot0, sizeof boot0);
 		xxboot = boot0;
 	}
-#if NUMBOOT > 1
-	if (!bootxx && lp->d_boot1) {
-		if (*lp->d_boot1 != '/')
-			(void)snprintf(boot1, sizeof boot1, "%s%s",
-			    _PATH_BOOTDIR, lp->d_boot1);
-		else
-			(void)strlcpy(boot1, lp->d_boot1, sizeof boot1);
-		bootxx = boot1;
-	}
-#endif
 #endif
 	/* d_packname is union d_boot[01], so zero */
 	memset(lp->d_packname, 0, sizeof(lp->d_packname));
@@ -734,9 +716,7 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 #if NUMBOOT > 0
 	char *dkbasename;
 	int b;
-#if NUMBOOT == 1
 	struct stat sb;
-#endif
 #endif
 
 	/* XXX */
@@ -780,18 +760,6 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 			    "%s%sboot", _PATH_BOOTDIR, dkbasename);
 			np += strlen(xxboot) + 1;
 		}
-#if NUMBOOT > 1
-		if (!bootxx) {
-			(void)snprintf(np, namebuf + sizeof namebuf - np,
-			    "%sboot%s", _PATH_BOOTDIR, dkbasename);
-			if (access(np, F_OK) < 0 && dkbasename[0] == 'r')
-				dkbasename++;
-			bootxx = np;
-			(void)snprintf(bootxx, namebuf + sizeof namebuf - bootxx,
-			    "%sboot%s", _PATH_BOOTDIR, dkbasename);
-			np += strlen(bootxx) + 1;
-		}
-#endif
 	}
 	if (verbose)
 		warnx("bootstraps: xxboot = %s, bootxx = %s", xxboot,
@@ -810,16 +778,6 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 	b = open(xxboot, O_RDONLY);
 	if (b < 0)
 		err(4, "%s", xxboot);
-#if NUMBOOT > 1
-	if (read(b, boot, (int)dp->d_secsize) < 0)
-		err(4, "%s", xxboot);
-	(void)close(b);
-	b = open(bootxx, O_RDONLY);
-	if (b < 0)
-		err(4, "%s", bootxx);
-	if (read(b, &boot[dp->d_secsize], (int)(dp->d_bbsize-dp->d_secsize)) < 0)
-		err(4, "%s", bootxx);
-#else
 	if (read(b, boot, (int)dp->d_bbsize) < 0)
 		err(4, "%s", xxboot);
 	(void)fstat(b, &sb);
@@ -835,7 +793,6 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 			err(4, "%s", xxboot);
 		}
 	}
-#endif
 	(void)close(b);
 #endif
 	/*
@@ -1718,10 +1675,6 @@ usage(void)
 #if NUMBOOT == 1
 	Bflag = "B";
 	boot = " [-b boot1]";
-#elif NUMBOOT == 2
-	Bflag = "B";
-	boot = " [-b boot1] [-s boot2]";
-	blank = "  ";
 #endif
 
 	fprintf(stderr,
