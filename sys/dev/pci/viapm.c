@@ -1,4 +1,4 @@
-/*	$OpenBSD: viapm.c,v 1.9 2008/02/17 21:29:48 brad Exp $	*/
+/*	$OpenBSD: viapm.c,v 1.10 2009/03/29 21:53:53 sthen Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis <kettenis@openbsd.org>
@@ -160,7 +160,7 @@ viapm_attach(struct device *parent, struct device *self, void *aux)
 	if (iobase == 0 ||
 	    bus_space_map(sc->sc_iot, iobase & 0xfffe,
 	    VIAPM_SMB_SIZE, 0, &sc->sc_ioh)) {
-		printf(": can't map I/O space\n");
+		printf(": can't map i/o space\n");
 		return;
 	}
 

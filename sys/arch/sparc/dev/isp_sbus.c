@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.25 2008/06/01 15:49:25 kettenis Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.26 2009/03/29 21:53:52 sthen Exp $	*/
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -362,7 +362,7 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 	isp->isp_rquest_dma = (u_int32_t)
 	    kdvma_mapin((caddr_t)isp->isp_rquest, len, 0);
 	if (isp->isp_rquest_dma == 0) {
-		printf("%s: could not mapin request queue\n", isp->isp_name);
+		printf("%s: can't mapin request queue\n", isp->isp_name);
 		return (1);
 	}
 
@@ -378,7 +378,7 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 	isp->isp_result_dma = (u_int32_t)
 	    kdvma_mapin((caddr_t)isp->isp_result, len, 0);
 	if (isp->isp_result_dma == 0) {
-		printf("%s: could not mapin result queue\n", isp->isp_name);
+		printf("%s: can't mapin result queue\n", isp->isp_name);
 		return (1);
 	}
 	return (0);

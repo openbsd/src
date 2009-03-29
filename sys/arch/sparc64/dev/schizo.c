@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.58 2009/01/02 20:01:45 kettenis Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.59 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -219,7 +219,7 @@ schizo_init(struct schizo_softc *sc, int busa)
 	pbm->sp_dmat = schizo_alloc_dma_tag(pbm);
 
 	if (bus_space_map(pbm->sp_cfgt, 0, 0x1000000, 0, &pbm->sp_cfgh))
-		panic("schizo: could not map config space");
+		panic("schizo: can't map config space");
 
 	pbm->sp_pc = schizo_alloc_chipset(pbm, sc->sc_node,
 	    &_sparc_pci_chipset);

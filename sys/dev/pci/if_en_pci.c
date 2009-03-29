@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_en_pci.c,v 1.11 2005/09/11 18:17:08 mickey Exp $	*/
+/*	$OpenBSD: if_en_pci.c,v 1.12 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*
  *
@@ -203,14 +203,14 @@ void *aux;
    */
 
   if (pci_intr_map(pa, &ih)) {
-    printf(": couldn't map interrupt\n");
+    printf(": can't map interrupt\n");
     return;
   }
   intrstr = pci_intr_string(scp->en_pc, ih);
   scp->sc_ih = pci_intr_establish(scp->en_pc, ih, IPL_NET, en_intr, sc,
       sc->sc_dev.dv_xname);
   if (scp->sc_ih == NULL) {
-    printf(": couldn't establish interrupt");
+    printf(": can't establish interrupt");
     if (intrstr != NULL)
       printf(" at %s", intrstr);
     printf("\n");
@@ -226,7 +226,7 @@ void *aux;
     &sc->en_memt, &sc->en_base, NULL, &sc->en_obmemsz, 0);
  
   if (retval) {
-    printf(": couldn't map memory\n");
+    printf(": can't map mem space\n");
     return;
   }
 

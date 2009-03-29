@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.31 2008/10/02 20:21:13 brad Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.32 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -326,7 +326,7 @@ egprobe(parent, match, aux)
 	}
 	
 	if (bus_space_map(bst, ia->ia_iobase, EG_IO_PORTS, 0, &bsh)) {
-		DPRINTF(("%s: can't map I/O space\n", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: can't map i/o space\n", sc->sc_dev.dv_xname));
 		return (0);
 	}
 	sc->sc_bsh = bsh;

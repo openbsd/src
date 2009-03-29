@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.43 2006/11/26 19:46:28 deraadt Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.44 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -194,13 +194,13 @@ wi_pci_acex_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 
 	if (pci_mapreg_map(pa, WI_ACEX_CMDRES, PCI_MAPREG_TYPE_IO,
 	    0, &commandt, &commandh, NULL, &commandsize, 0) != 0) {
-		printf(": can't map command I/O space\n");
+		printf(": can't map command i/o space\n");
 		return (ENXIO);
 	}
 
 	if (pci_mapreg_map(pa, WI_ACEX_LOCALRES, PCI_MAPREG_TYPE_IO,
 	    0, &localt, &localh, NULL, &localsize, 0) != 0) {
-		printf(": can't map local I/O space\n");
+		printf(": can't map local i/o space\n");
 		bus_space_unmap(commandt, commandh, commandsize);
 		return (ENXIO);
 	}
@@ -209,7 +209,7 @@ wi_pci_acex_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 
 	if (pci_mapreg_map(pa, WI_TMD_IORES, PCI_MAPREG_TYPE_IO,
 	    0, &iot, &ioh, NULL, &iosize, 0) != 0) {
-		printf(": can't map I/O space\n");
+		printf(": can't map i/o space\n");
 		bus_space_unmap(localt, localh, localsize);
 		bus_space_unmap(commandt, commandh, commandsize);
 		return (ENXIO);
@@ -310,7 +310,7 @@ wi_pci_plx_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 
 	if (pci_mapreg_map(pa, WI_PLX_IORES,
 	    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, NULL, &iosize, 0) != 0) {
-		printf(": can't map I/O space\n");
+		printf(": can't map i/o space\n");
 		bus_space_unmap(memt, memh, memsize);
 		return (ENXIO);
 	}
@@ -441,7 +441,7 @@ wi_pci_tmd_attach(struct pci_attach_args *pa, struct wi_softc *sc)
 
 	if (pci_mapreg_map(pa, WI_TMD_IORES, PCI_MAPREG_TYPE_IO,
 	    0, &iot, &ioh, NULL, &iosize, 0) != 0) {
-		printf(": can't map I/O space\n");
+		printf(": can't map i/o space\n");
 		bus_space_unmap(localt, localh, localsize);
 		return (ENXIO);
 	}

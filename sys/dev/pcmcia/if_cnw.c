@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.18 2008/10/03 01:41:40 brad Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.19 2009/03/29 21:53:53 sthen Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -401,7 +401,7 @@ cnw_attach(parent, self, aux)
 	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_MEM_COMMON, CNW_MEM_ADDR,
 			   CNW_MEM_SIZE, &sc->sc_pcmemh, &sc->sc_memoff,
 			   &sc->sc_memwin) != 0) {
-		printf(": can't map memory\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 	sc->sc_memt = sc->sc_pcmemh.memt;

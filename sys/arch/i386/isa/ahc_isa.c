@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_isa.c,v 1.17 2007/11/25 16:40:04 jmc Exp $	*/
+/*	$OpenBSD: ahc_isa.c,v 1.18 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: ahc_isa.c,v 1.5 1996/10/21 22:27:39 thorpej Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ ahc_isa_match(struct isa_attach_args *ia, bus_addr_t iobase)
 		 * be common on machines configured to look for
 		 * ahc_eisa and ahc_isa.
 		 */
-		printf("ahc_isa_match: can't map I/O space for 0x%x\n",
+		printf("ahc_isa_match: can't map i/o space for 0x%x\n",
 		    iobase);
 #endif
 		return (0);
@@ -351,7 +351,7 @@ ahc_isa_attach(struct device *parent, struct device *self, void *aux)
 	ahc->chip = AHC_VL; /* We are a VL Bus Controller */  
 	
 	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
-		panic("ahc_isa_attach: could not map slot I/O addresses");
+		panic("ahc_isa_attach: can't map slot i/o addresses");
 	if (!ahc_isa_idstring(iot, ioh, idstring))
 		panic("ahc_isa_attach: could not read ID string");
 	if ((irq = ahc_isa_irq(iot, ioh)) < 0)

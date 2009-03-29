@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.64 2008/10/14 18:01:53 naddy Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -169,14 +169,14 @@ malo_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	/* enable card */
 	pcmcia_function_init(psc->sc_pf, cfe);
 	if (pcmcia_function_enable(psc->sc_pf)) {
-		printf(": can't enable function!\n");
+		printf(": can't enable function\n");
 		return;
 	}
 
 	/* allocate I/O space */
 	if (pcmcia_io_alloc(psc->sc_pf, 0,
 	    cfe->iospace[0].length, cfe->iospace[0].length, &psc->sc_pcioh)) {
-		printf(": can't allocate i/o space!\n");
+		printf(": can't allocate i/o space\n");
 		pcmcia_function_disable(psc->sc_pf);
 		return;
 	}
@@ -184,7 +184,7 @@ malo_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	/* map I/O space */
 	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_IO16, 0,
 	    cfe->iospace[0].length, &psc->sc_pcioh, &psc->sc_io_window)) {
-		printf(": can't map i/o space!\n");
+		printf(": can't map i/o space\n");
 		pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 		pcmcia_function_disable(psc->sc_pf);
 		return;
@@ -198,7 +198,7 @@ malo_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, cmalo_intr, sc,
 	    sc->sc_dev.dv_xname);
 	if (psc->sc_ih == NULL) {
-		printf(": can't establish interrupt!\n");
+		printf(": can't establish interrupt\n");
 		return;
 	}
 	intrstr = pcmcia_intr_string(psc->sc_pf, psc->sc_ih);
@@ -494,7 +494,7 @@ cmalo_fw_load_helper(struct malo_softc *sc)
 		return (0);
 	if (val8 != MALO_VAL_SCRATCH_READY) {
 		/* bad register value */
-		printf("%s: device not ready for FW download!\n",
+		printf("%s: device not ready for FW download\n",
 		    sc->sc_dev.dv_xname);
 		return (EIO);
 	}
@@ -525,7 +525,7 @@ cmalo_fw_load_helper(struct malo_softc *sc)
 			delay(1000);
 		}
 		if (i == 50) {
-			printf("%s: timeout while helper FW block download!\n",
+			printf("%s: timeout while helper FW block download\n",
 			    sc->sc_dev.dv_xname);
 			return (EIO);
 		}
@@ -553,7 +553,7 @@ cmalo_fw_load_main(struct malo_softc *sc)
 		delay(1000);
 	}
 	if (i == 10) {
-		printf("%s: helper FW not loaded!\n", sc->sc_dev.dv_xname);
+		printf("%s: helper FW not loaded\n", sc->sc_dev.dv_xname);
 		return (EIO);
 	}
 	DPRINTF(1, "%s: helper FW loaded successfully\n", sc->sc_dev.dv_xname);
@@ -568,7 +568,7 @@ cmalo_fw_load_main(struct malo_softc *sc)
 		 */
 		if (val16 & 0x0001) {
 			if (retry > MALO_FW_MAIN_MAXRETRY) {
-				printf("%s: main FW download failed!\n",
+				printf("%s: main FW download failed\n",
 				    sc->sc_dev.dv_xname);
 				return (EIO);
 			}
@@ -597,7 +597,7 @@ cmalo_fw_load_main(struct malo_softc *sc)
 				break;
 		}
 		if (i == 5000) {
-			printf("%s: timeout while main FW block download!\n",
+			printf("%s: timeout while main FW block download\n",
 			    sc->sc_dev.dv_xname);
 			return (EIO);
 		}
@@ -613,7 +613,7 @@ cmalo_fw_load_main(struct malo_softc *sc)
 		delay(1000);
 	}
 	if (i == 500) {
-		printf("%s: main FW not loaded!\n", sc->sc_dev.dv_xname);
+		printf("%s: main FW not loaded\n", sc->sc_dev.dv_xname);
 		return (EIO);
 	}
 
@@ -755,7 +755,7 @@ cmalo_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			cmalo_cmd_set_scan(sc);
 			if (!sc->sc_net_num) {
 				/* no networks found */
-				DPRINTF(1, "%s: no networks found!\n",
+				DPRINTF(1, "%s: no networks found\n",
 				    sc->sc_dev.dv_xname);
 				break;
 			}
@@ -930,7 +930,7 @@ cmalo_rx(struct malo_softc *sc)
 	m = m_devget(sc->sc_data + rxdesc->pkgoffset,
 	    rxdesc->pkglen, ETHER_ALIGN, ifp, NULL);
 	if (m == NULL) {
-		DPRINTF(1, "RX m_devget failed!\n");
+		DPRINTF(1, "RX m_devget failed\n");
 		ifp->if_ierrors++;
 		return;
 	}
@@ -1094,7 +1094,7 @@ cmalo_select_network(struct malo_softc *sc)
 			}
 		}
 		DPRINTF(1, "%s: desired network not found in scan results "
-		    "(%s)!\n",
+		    "(%s)\n",
 		    sc->sc_dev.dv_xname, ic->ic_des_essid);
 	}
 
@@ -1833,7 +1833,7 @@ cmalo_cmd_rsp_assoc(struct malo_softc *sc)
 	body = (struct malo_cmd_body_rsp_assoc *)(hdr + 1);
 
 	if (body->status) {
-		DPRINTF(1, "%s: association failed (status %d)!\n",
+		DPRINTF(1, "%s: association failed (status %d)\n",
 		    sc->sc_dev.dv_xname, body->status);
 		sc->sc_flags |= MALO_ASSOC_FAILED;
 	} else
@@ -2008,7 +2008,7 @@ cmalo_cmd_request(struct malo_softc *sc, uint16_t psize, int no_response)
 
 	/* wait for the command response */
 	if (tsleep(sc, 0, "malocmd", 500)) {
-		printf("%s: timeout while waiting for cmd response!\n",
+		printf("%s: timeout while waiting for cmd response\n",
 		    sc->sc_dev.dv_xname);
 		return (EIO);
 	}
@@ -2053,7 +2053,7 @@ cmalo_cmd_response(struct malo_softc *sc)
 
 	/* check for a valid command response */
 	if (!(hdr->cmd & MALO_CMD_RESP)) {
-		printf("%s: got invalid command response (0x%04x)!\n",
+		printf("%s: got invalid command response (0x%04x)\n",
 		    sc->sc_dev.dv_xname, hdr->cmd);
 		splx(s);
 		return (EIO);
@@ -2151,7 +2151,7 @@ cmalo_cmd_response(struct malo_softc *sc)
 		    sc->sc_dev.dv_xname);
 		break;
 	default:
-		printf("%s: got unknown cmd response (0x%04x)!\n",
+		printf("%s: got unknown cmd response (0x%04x)\n",
 		    sc->sc_dev.dv_xname, hdr->cmd);
 		break;
 	}

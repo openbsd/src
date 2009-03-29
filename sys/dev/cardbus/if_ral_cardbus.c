@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.12 2008/11/25 22:20:11 damien Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.13 2009/03/29 21:53:52 sthen Exp $  */
 
 /*-
  * Copyright (c) 2005-2007
@@ -172,7 +172,7 @@ ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &base,
 	    &csc->sc_mapsize);
 	if (error != 0) {
-		printf(": could not map memory space\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 

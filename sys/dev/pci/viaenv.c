@@ -1,4 +1,4 @@
-/*	$OpenBSD: viaenv.c,v 1.11 2007/05/14 00:37:18 jsg Exp $	*/
+/*	$OpenBSD: viaenv.c,v 1.12 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $	*/
 
 /*
@@ -280,7 +280,7 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 	}
 	sc->sc_iot = pa->pa_iot;
 	if (bus_space_map(sc->sc_iot, iobase & 0xff80, 128, 0, &sc->sc_ioh)) {
-		printf(": failed to map HWM I/O space");
+		printf(": can't map HWM i/o space");
 		goto nohwm;
 	}
 
@@ -333,7 +333,7 @@ nohwm:
 	iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, VIAENV_PMBASE);
 	if (bus_space_map(sc->sc_iot, PCI_MAPREG_IO_ADDR(iobase),
 	    VIAENV_PMSIZE, 0, &sc->sc_pm_ioh)) {
-		printf(": failed to map PM I/O space");
+		printf(": can't map PM i/o space");
 		goto nopm;
 	}
 

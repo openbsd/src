@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.22 2008/10/25 22:30:43 jakemsr Exp $ */
+/* $OpenBSD: auixp.c,v 1.23 2009/03/29 21:53:52 sthen Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -1252,7 +1252,7 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	/* map memory; its not sized -> what is the size? max PCI slot size? */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_iot, &sc->sc_ioh, &sc->sc_iob, &sc->sc_ios, 0)) {
-		printf(": can't map memory space\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_nubus.c,v 1.2 2007/09/10 20:29:46 miod Exp $	*/
+/*	$OpenBSD: if_sm_nubus.c,v 1.3 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: if_sm_nubus.c,v 1.2 2000/08/01 13:08:39 briggs Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ sm_nubus_attach(parent, self, aux)
 
 	bst = na->na_tag;
 	if (bus_space_map(bst, NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &bsh)) {
-		printf(": failed to map memory space.\n");
+		printf(": can't map mem space.\n");
 		return;
 	}
 
@@ -131,7 +131,7 @@ sm_nubus_attach(parent, self, aux)
 	switch (na->drsw) {
 	case NUBUS_DRSW_FOCUS:
 		if (bus_space_subregion(bst, bsh, 0xFF8000, 0x20, &prom_bsh)) {
-			printf(": failed to map EEPROM space.\n");
+			printf(": can't map EEPROM space\n");
 			break;
 		}
 
@@ -139,7 +139,7 @@ sm_nubus_attach(parent, self, aux)
 		break;
 	case NUBUS_DRSW_ASANTEF:
 		if (bus_space_subregion(bst, bsh, 0xFE0000, 0x20, &prom_bsh)) {
-			printf(": failed to map EEPROM space.\n");
+			printf(": can't map EEPROM space\n");
 			break;
 		}
 

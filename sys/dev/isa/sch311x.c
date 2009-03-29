@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.5 2009/03/25 20:41:31 mk Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.6 2009/03/29 21:53:52 sthen Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -269,7 +269,7 @@ schsio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = ia->ia_iot;
 	if (bus_space_map(sc->sc_iot, ia->ipa_io[0].base,
 	    SCHSIO_IOSIZE, 0, &sc->sc_ioh)) {
-		printf(": can't map I/O space\n");
+		printf(": can't map i/o space\n");
 		return;
 	}
 
@@ -306,7 +306,7 @@ schsio_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sc->sc_iot, iobase, SCHSIO_LDEV_RUNTIME_SZ,
 	    0, &sc->sc_ioh_rr)) {
-		printf(": can't map I/O space\n");
+		printf(": can't map i/o space\n");
 		return;
 	}
 	    

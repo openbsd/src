@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc_obio.c,v 1.6 2006/06/24 13:23:27 miod Exp $	*/
+/*	$OpenBSD: if_mc_obio.c,v 1.7 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: if_mc_obio.c,v 1.13 2004/03/26 12:15:46 wiz Exp $	*/
 
 /*-
@@ -145,7 +145,7 @@ mc_obio_attach(parent, self, aux)
 	}
 	sc->sc_txbuf = (u_char *)uvm_km_valloc(kernel_map, PAGE_SIZE);
 	if (sc->sc_txbuf == NULL) {
-		printf(": could not map transmit buffer memory\n");
+		printf(": can't map transmit buffer memory\n");
 		goto out2;
 	}
 	pg = TAILQ_FIRST(&txlist);
@@ -166,7 +166,7 @@ mc_obio_attach(parent, self, aux)
 	sc->sc_rxbuf = (u_char *)(va = uvm_km_valloc(kernel_map,
 	    MC_NPAGES * PAGE_SIZE));
 	if (sc->sc_rxbuf == NULL) {
-		printf(": could not map receive buffer memory\n");
+		printf(": can't map receive buffer memory\n");
 		goto out4;
 	}
 	pg = TAILQ_FIRST(&rxlist);

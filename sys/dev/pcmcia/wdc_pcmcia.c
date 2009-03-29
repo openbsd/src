@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.18 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.19 2009/03/29 21:53:53 sthen Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -309,7 +309,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	if (pcmcia_io_map(pa->pf, quirks & WDC_PCMCIA_FORCE_16BIT_IO ?
 	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_pioh.size, &sc->sc_pioh, &sc->sc_iowindow)) {
-		printf(": can't map first I/O space\n");
+		printf(": can't map first i/o space\n");
 		goto iomap_failed;
 	} 
 
@@ -322,7 +322,7 @@ wdc_pcmcia_attach(parent, self, aux)
 		sc->sc_auxiowindow = -1;
 	else if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
-		printf(": can't map second I/O space\n");
+		printf(": can't map second i/o space\n");
 		goto iomapaux_failed;
 	}
 

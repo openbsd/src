@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_pci.c,v 1.9 2008/09/11 20:55:34 brad Exp $ */
+/*	$OpenBSD: if_bwi_pci.c,v 1.10 2009/03/29 21:53:52 sthen Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -126,13 +126,13 @@ bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BWI_PCI_BAR0); 
 	if (pci_mapreg_map(pa, BWI_PCI_BAR0, memtype, 0, &sc->sc_mem_bt,
 	    &sc->sc_mem_bh, NULL, &psc->psc_mapsize, 0)) {
-		printf(": could not map memory space\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 
 	/* map interrupt */
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": could not map interrupt\n");
+		printf(": can't map interrupt\n");
 		return;
 	}
 
@@ -141,7 +141,7 @@ bwi_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_ih = pci_intr_establish(psc->psc_pc, ih, IPL_NET, bwi_intr, sc,
 	    sc->sc_dev.dv_xname);
 	if (psc->psc_ih == NULL) {
-		printf(": could not establish interrupt");
+		printf(": can't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");

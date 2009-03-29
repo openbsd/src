@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malo_cardbus.c,v 1.5 2006/11/29 10:37:11 mglocker Exp $ */
+/*	$OpenBSD: if_malo_cardbus.c,v 1.6 2009/03/29 21:53:52 sthen Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -109,7 +109,7 @@ malo_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_mem1_bt,
 	    &sc->sc_mem1_bh, &base, &csc->sc_mapsize1);
 	if (error != 0) {
-		printf(": could not map 1st memory space\n");
+		printf(": can't map mem1 space\n");
 		return;
 	}
 	csc->sc_bar1_val = base | CARDBUS_MAPREG_TYPE_MEM;
@@ -119,7 +119,7 @@ malo_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_mem2_bt,
 	    &sc->sc_mem2_bh, &base, &csc->sc_mapsize2);
 	if (error != 0) {
-		printf(": could not map 2nd memory space\n");
+		printf(": can't map mem2 space\n");
 		Cardbus_mapreg_unmap(ct, CARDBUS_BASE0_REG, sc->sc_mem1_bt,
 		    sc->sc_mem1_bh, csc->sc_mapsize1);
 		return;

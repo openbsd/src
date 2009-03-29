@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.38 2008/02/25 20:30:56 brad Exp $	*/
+/*	$OpenBSD: cardbus.c,v 1.39 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -205,7 +205,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 		if (Cardbus_mapreg_map(ca->ca_ct, reg,
 		    CARDBUS_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 		    &bar_tag, &bar_memh, &bar_addr, &bar_size)) {
-			printf("%s: failed to map memory\n",
+			printf("%s: can't map memory\n",
 			    sc->sc_dev.dv_xname);
 			return (1);
 		}

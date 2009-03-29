@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay.c,v 1.9 2006/11/29 19:08:22 miod Exp $ */
+/* $OpenBSD: pcdisplay.c,v 1.10 2009/03/29 21:53:52 sthen Exp $ */
 /* $NetBSD: pcdisplay.c,v 1.9.4.1 2000/06/30 16:27:48 simonb Exp $ */
 
 /*
@@ -185,10 +185,10 @@ pcdisplay_init(dc, iot, memt, mono)
 
 	if (bus_space_map(memt, mono ? 0xb0000 : 0xb8000, 0x8000,
 			  0, &ph->ph_memh))
-		panic("pcdisplay_init: cannot map memory");
+		panic("pcdisplay_init: can't map mem space");
 	if (bus_space_map(iot, mono ? 0x3b0 : 0x3d0, 0x10,
 			  0, &ph->ph_ioh_6845))
-		panic("pcdisplay_init: cannot map io");
+		panic("pcdisplay_init: can't map i/o space");
 
 	/*
 	 * initialize the only screen

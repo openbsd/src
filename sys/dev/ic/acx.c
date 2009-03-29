@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.91 2009/03/11 23:51:15 stsp Exp $ */
+/*	$OpenBSD: acx.c,v 1.92 2009/03/29 21:53:52 sthen Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1927,7 +1927,7 @@ acx_dma_alloc(struct acx_softc *sc)
 	    BUS_DMA_NOWAIT);
 
 	if (error != 0) {
-		printf("%s: could not map rx desc DMA memory\n",
+		printf("%s: can't map rx desc DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		return (error);
 	}
@@ -1967,7 +1967,7 @@ acx_dma_alloc(struct acx_softc *sc)
 	    ACX_TX_RING_SIZE, (caddr_t *)&rd->tx_ring, BUS_DMA_NOWAIT);
 
 	if (error != 0) {
-		printf("%s: could not map tx desc DMA memory\n",
+		printf("%s: can't map tx desc DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		return (error);
 	}

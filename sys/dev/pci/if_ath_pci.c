@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.18 2008/07/30 16:47:09 brad Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.19 2009/03/29 21:53:52 sthen Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (pci_mapreg_map(pa, ATH_BAR0, mem_type, 0, &sc->sc_st, &sc->sc_sh,
 	    NULL, &sc->sc_ss, 0)) {
-		printf(": cannot map register space\n");
+		printf(": can't map register space\n");
 		goto fail;
 	}
 
@@ -161,7 +161,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Arrange interrupt line.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt!\n");
+		printf(": can't map interrupt\n");
 		goto unmap;
 	}
 
@@ -169,7 +169,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ath_intr, sc,
 	    sc->sc_dev.dv_xname);
 	if (psc->sc_ih == NULL) {
-		printf(": couldn't map interrupt!\n");
+		printf(": can't map interrupt\n");
 		goto unmap;
 	}
 
@@ -179,7 +179,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	psc->sc_sdhook = shutdownhook_establish(ath_pci_shutdown, psc);
 	if (psc->sc_sdhook == NULL) {
-		printf(": couldn't establish shutdown hook!\n");
+		printf(": can't establish shutdown hook\n");
 		goto deintr;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fea.c,v 1.17 2004/05/12 06:35:10 tedu Exp $	*/
+/*	$OpenBSD: if_fea.c,v 1.18 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: if_fea.c,v 1.9 1996/10/21 22:31:05 thorpej Exp $	*/
 
 /*-
@@ -189,7 +189,7 @@ pdq_eisa_attach(parent, self, aux)
 
 	if (bus_space_map(sc->sc_csrtag, maddr, msize, 0, &sc->sc_csrhandle)) {
 		bus_space_unmap(sc->sc_iotag, sc->sc_iobase, EISA_SLOT_SIZE);
-		printf("\n%s: failed to map memory (0x%x-0x%x)!\n",
+		printf("\n%s: can't map mem space (0x%x-0x%x)!\n",
 		    sc->sc_dev.dv_xname, maddr, maddr + msize - 1);
 		return;
 	}
@@ -203,7 +203,7 @@ pdq_eisa_attach(parent, self, aux)
 	}
 
 	if (eisa_intr_map(ea->ea_ec, irq, &ih)) {
-		printf("%s: couldn't map interrupt (%d)\n",
+		printf("%s: can't map interrupt (%d)\n",
 		    sc->sc_dev.dv_xname, irq);
 		return;
 	}
@@ -211,7 +211,7 @@ pdq_eisa_attach(parent, self, aux)
 	sc->sc_ih = eisa_intr_establish(ea->ea_ec, ih, IST_LEVEL, IPL_NET,
 	    (int (*)(void *)) pdq_interrupt, sc->sc_pdq, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+		printf("%s: can't establish interrupt", sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -228,7 +228,7 @@ pdq_eisa_attach(parent, self, aux)
 	sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset,
 	    sc->sc_pdq);
 	if (sc->sc_ats == NULL)
-		printf("%s: warning: couldn't establish shutdown hook\n",
+		printf("%s: warning: can't establish shutdown hook\n",
 		    self->dv_xname);
 #if !defined(PDQ_IOMAPPED)
 	printf("%s: using iomem 0x%x-0x%x\n", sc->sc_dev.dv_xname, maddr,

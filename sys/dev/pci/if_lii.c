@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.21 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.22 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -216,7 +216,7 @@ lii_attach(struct device *parent, struct device *self, void *aux)
 	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, PCI_MAPREG_START);
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0,  &sc->sc_mmiot, 
 	    &sc->sc_mmioh, NULL, &sc->sc_mmios, 0)) {
-		printf(": failed to map memory!\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 
@@ -233,13 +233,13 @@ lii_attach(struct device *parent, struct device *self, void *aux)
 	lii_read_macaddr(sc, sc->sc_ac.ac_enaddr);
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": failed to map interrupt!\n");
+		printf(": can't map interrupt\n");
 		goto unmap;
 	}
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET,
 	    lii_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
-		printf(": failed to establish interrupt!\n");
+		printf(": can't establish interrupt\n");
 		goto unmap;
 	}
 
@@ -987,25 +987,25 @@ lii_alloc_rings(struct lii_softc *sc)
 
 	if (bus_dmamap_create(sc->sc_dmat, bs, 1, bs, (1<<30),
 	    BUS_DMA_NOWAIT, &sc->sc_ringmap) != 0) {
-		printf(": failed to create DMA map!\n");
+		printf(": failed to create DMA map\n");
 		return 1;
 	}
 
 	if (bus_dmamem_alloc(sc->sc_dmat, bs, PAGE_SIZE, (1<<30),
 	    &sc->sc_ringseg, 1, &nsegs, BUS_DMA_NOWAIT) != 0) {
-		printf(": failed to allocate DMA memory!\n");
+		printf(": failed to allocate DMA memory\n");
 		goto destroy;
 	}
 
 	if (bus_dmamem_map(sc->sc_dmat, &sc->sc_ringseg, nsegs, bs,
 	    (caddr_t *)&sc->sc_ring, BUS_DMA_NOWAIT) != 0) {
-		printf(": failed to map DMA memory!\n");
+		printf(": failed to map DMA memory\n");
 		goto free;
 	}
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_ringmap, sc->sc_ring,
 	    bs, NULL, BUS_DMA_NOWAIT) != 0) {
-		printf(": failed to load DMA memory!\n");
+		printf(": failed to load DMA memory\n");
 		goto unmap;
 	}
 

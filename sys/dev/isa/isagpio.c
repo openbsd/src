@@ -1,4 +1,4 @@
-/*	$OpenBSD: isagpio.c,v 1.3 2006/04/01 08:32:52 grange Exp $	*/
+/*	$OpenBSD: isagpio.c,v 1.4 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*
  * Copyright (c) 2006 Oleg Safiullin <form@pdp-11.org.ru>
@@ -98,7 +98,7 @@ isagpio_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(ia->ia_iot, ia->ia_iobase, ia->ia_iosize, 0,
 	    &sc->sc_ioh) != 0) {
-		printf(": couldn't map I/O space\n");
+		printf(": can't map i/o space\n");
 		return;
 	}
 

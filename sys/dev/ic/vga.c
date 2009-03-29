@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.49 2009/02/15 17:08:23 chl Exp $ */
+/* $OpenBSD: vga.c,v 1.50 2009/03/29 21:53:52 sthen Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*-
@@ -500,7 +500,7 @@ vga_init(vc, iot, memt)
         vh->vh_memt = memt;
 
         if (bus_space_map(vh->vh_iot, 0x3c0, 0x10, 0, &vh->vh_ioh_vga))
-                panic("vga_common_setup: couldn't map vga io");
+                panic("vga_common_setup: can't map vga i/o");
 
 	/* read "misc output register" */
 	mor = bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, 0xc);
@@ -508,10 +508,10 @@ vga_init(vc, iot, memt)
 
 	if (bus_space_map(vh->vh_iot, (vh->vh_mono ? 0x3b0 : 0x3d0), 0x10, 0,
 			  &vh->vh_ioh_6845))
-                panic("vga_common_setup: couldn't map 6845 io");
+                panic("vga_common_setup: can't map 6845 i/o");
 
         if (bus_space_map(vh->vh_memt, 0xa0000, 0x20000, 0, &vh->vh_allmemh))
-                panic("vga_common_setup: couldn't map memory");
+                panic("vga_common_setup: can't map mem space");
 
         if (bus_space_subregion(vh->vh_memt, vh->vh_allmemh,
 				(vh->vh_mono ? 0x10000 : 0x18000), 0x8000,

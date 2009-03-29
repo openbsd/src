@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_pci.c,v 1.14 2008/11/25 22:20:11 damien Exp $  */
+/*	$OpenBSD: if_ral_pci.c,v 1.15 2009/03/29 21:53:52 sthen Exp $  */
 
 /*-
  * Copyright (c) 2005-2007
@@ -159,12 +159,12 @@ ral_pci_attach(struct device *parent, struct device *self, void *aux)
 	error = pci_mapreg_map(pa, RAL_PCI_BAR0, memtype, 0, &sc->sc_st,
 	    &sc->sc_sh, NULL, &psc->sc_mapsize, 0);
 	if (error != 0) {
-		printf(": could not map memory space\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": could not map interrupt\n");
+		printf(": can't map interrupt\n");
 		return;
 	}
 
@@ -172,7 +172,7 @@ ral_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->sc_ih = pci_intr_establish(psc->sc_pc, ih, IPL_NET,
 	    psc->sc_opns->intr, sc, sc->sc_dev.dv_xname);
 	if (psc->sc_ih == NULL) {
-		printf(": could not establish interrupt");
+		printf(": can't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");

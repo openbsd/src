@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.35 2008/09/23 20:45:27 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.36 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ vgafb_common_setup(bus_space_tag_t iot, bus_space_tag_t  memt,
 	memsize = cons_height * cons_linebytes;
         if (bus_space_map(vc->vc_memt, membase, memsize, 
 	    /* XXX */ppc_proc_is_64b ? 0 : 1, &vc->vc_memh))
-		panic("vgafb_common_setup: couldn't map memory"); 
+		panic("vgafb_common_setup: can't map mem space"); 
 	cons_display_mem_h = vc->vc_memh;
 	vc->vc_ofh = cons_display_ofh;
 

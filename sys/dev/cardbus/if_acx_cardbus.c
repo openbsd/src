@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.13 2009/03/11 23:51:15 stsp Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.14 2009/03/29 21:53:52 sthen Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -135,7 +135,7 @@ acx_cardbus_attach(struct device *parent, struct device *self, void *aux)
 		    CARDBUS_MAPREG_TYPE_IO, 0, &csc->sc_io_bt, &csc->sc_io_bh,
 		    &base, &csc->sc_iomapsize);
 		if (error != 0) {
-			printf(": could not map i/o space\n");
+			printf(": can't map i/o space\n");
 			return;
 		}
 		csc->sc_iobar_val = base | CARDBUS_MAPREG_TYPE_IO;
@@ -147,7 +147,7 @@ acx_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	error = Cardbus_mapreg_map(ct, b1, CARDBUS_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_mem1_bt, &sc->sc_mem1_bh, &base, &csc->sc_mapsize1);
 	if (error != 0) {
-		printf(": could not map memory1 space\n");
+		printf(": can't map mem1 space\n");
 		return;
 	}
 
@@ -157,7 +157,7 @@ acx_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	error = Cardbus_mapreg_map(ct, b2, CARDBUS_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_mem2_bt, &sc->sc_mem2_bh, &base, &csc->sc_mapsize2);
 	if (error != 0) {
-		printf(": could not map memory2 space\n");
+		printf(": can't map mem2 space\n");
 		return;
 	}
 

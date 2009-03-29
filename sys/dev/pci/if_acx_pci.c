@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_pci.c,v 1.6 2006/11/18 20:44:40 grange Exp $  */
+/*	$OpenBSD: if_acx_pci.c,v 1.7 2009/03/29 21:53:52 sthen Exp $  */
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -118,7 +118,7 @@ acx_pci_attach(struct device *parent, struct device *self, void *aux)
 		    PCI_MAPREG_TYPE_IO, 0, &psc->sc_io_bt,
 		    &psc->sc_io_bh, NULL, &psc->sc_iomapsize, 0);
 		if (error != 0) {
-			printf(": could not map i/o space\n");
+			printf(": can't map i/o space\n");
 			return;
 		}
 		b1 = ACX_PCI_BAR1;
@@ -129,7 +129,7 @@ acx_pci_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_mem1_bt,
 	    &sc->sc_mem1_bh, NULL, &psc->sc_mapsize1, 0);
 	if (error != 0) {
-		printf(": could not map memory1 space\n");
+		printf(": can't map mem1 space\n");
 		return;
 	}
 
@@ -137,12 +137,12 @@ acx_pci_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_mem2_bt,
 	    &sc->sc_mem2_bh, NULL, &psc->sc_mapsize2, 0);
 	if (error != 0) {
-		printf(": could not map memory2 space\n");
+		printf(": can't map mem2 space\n");
 		return;
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": could not map interrupt\n");
+		printf(": can't map interrupt\n");
 		return;
 	}
 
@@ -150,7 +150,7 @@ acx_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->sc_ih = pci_intr_establish(psc->sc_pc, ih, IPL_NET,
 	    acx_intr, sc, sc->sc_dev.dv_xname);
 	if (psc->sc_ih == NULL) {
-		printf(": could not establish interrupt");
+		printf(": can't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");

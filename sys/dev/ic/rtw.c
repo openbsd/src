@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.72 2009/01/21 21:54:00 grange Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.73 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -3956,7 +3956,7 @@ rtw_attach(struct rtw_softc *sc)
 	    (caddr_t*)&sc->sc_descs, BUS_DMA_COHERENT);
 
 	if (rc != 0) {
-		printf("\n%s: could not map hw descriptors, error %d\n",
+		printf("\n%s: can't map hw descriptors, error %d\n",
 		    sc->sc_dev.dv_xname, rc);
 		goto fail1;
 	}

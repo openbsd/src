@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.16 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.17 2009/03/29 21:53:52 sthen Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -206,12 +206,12 @@ et_attach(struct device *parent, struct device *self, void *aux)
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, ET_PCIR_BAR);
 	if (pci_mapreg_map(pa, ET_PCIR_BAR, memtype, 0, &sc->sc_mem_bt,
 	    &sc->sc_mem_bh, NULL, &sc->sc_mem_size, 0)) {
-		printf(": could not map mem space\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": could not map interrupt\n");
+		printf(": can't map interrupt\n");
 		return;
 	}
 

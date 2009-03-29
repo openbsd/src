@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.3 2009/02/27 03:40:25 kevlo Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.4 2009/03/29 21:53:52 sthen Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -381,12 +381,12 @@ ale_attach(struct device *parent, struct device *self, void *aux)
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, ALE_PCIR_BAR);
 	if (pci_mapreg_map(pa, ALE_PCIR_BAR, memtype, 0, &sc->sc_mem_bt,
 	    &sc->sc_mem_bh, NULL, &sc->sc_mem_size, 0)) {
-		printf(": could not map mem space\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": could not map interrupt\n");
+		printf(": can't map interrupt\n");
 		goto fail;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.29 2008/05/25 00:36:10 brad Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.30 2009/03/29 21:53:53 sthen Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -189,7 +189,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	DPR(("pci_mapreg_map: memt %lx, memh %lx, size %x\n",
 	     bktr->memt, bktr->memh, bktr->obmemsz));
 	if (retval) {
-		printf("%s: couldn't map memory\n", bktr_name(bktr));
+		printf("%s: can't map mem space\n", bktr_name(bktr));
 		return;
 	}
 
@@ -203,7 +203,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	 * map interrupt
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n",
+		printf("%s: can't map interrupt\n",
 		       bktr_name(bktr));
 		return;
 	}
@@ -211,7 +211,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	bktr->ih = pci_intr_establish(pa->pa_pc, ih, IPL_VIDEO,
 	    bktr_intr, bktr, bktr->bktr_dev.dv_xname);
 	if (bktr->ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		printf("%s: can't establish interrupt",
 		       bktr_name(bktr));
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);

@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn.c,v 1.51 2009/03/15 20:40:25 miod Exp $        */
+/*    $OpenBSD: if_sn.c,v 1.52 2009/03/29 21:53:52 sthen Exp $        */
 /*    $NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $        */
 
 /*
@@ -125,7 +125,7 @@ snsetup(struct sn_softc *sc, u_int8_t *lladdr)
 	 */
 	sc->space = uvm_km_valloc(kernel_map, SN_NPAGES * PAGE_SIZE);
 	if (sc->space == NULL) {
-		printf(": could not map descriptor memory\n");
+		printf(": can't map descriptor memory\n");
 		uvm_pglistfree(&pglist);
 		return (ENOMEM);
 	}

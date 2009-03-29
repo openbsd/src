@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malo_pci.c,v 1.3 2006/12/29 07:17:53 mglocker Exp $ */
+/*	$OpenBSD: if_malo_pci.c,v 1.4 2009/03/29 21:53:52 sthen Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -105,7 +105,7 @@ malo_pci_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &sc->sc_mem1_bt, &sc->sc_mem1_bh, NULL, &psc->sc_mapsize1, 0);
 	if (error != 0) {
-		printf(": could not map 1st memory space\n");
+		printf(": can't map 1st mem space\n");
 		return;
 	}
 
@@ -114,13 +114,13 @@ malo_pci_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &sc->sc_mem2_bt, &sc->sc_mem2_bh, NULL, &psc->sc_mapsize2, 0);
 	if (error != 0) {
-		printf(": could not map 2nd memory space\n");
+		printf(": can't map 2nd mem space\n");
 		return;
 	}
 
 	/* map interrupt */
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": could not map interrupt\n");
+		printf(": can't map interrupt\n");
 		return;
 	}
 

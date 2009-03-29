@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha_pci.c,v 1.9 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: bha_pci.c,v 1.10 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: bha_pci.c,v 1.16 1998/08/15 10:10:53 mycroft Exp $	*/
 
 /*-
@@ -118,7 +118,7 @@ bha_pci_attach(parent, self, aux)
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,
 	    NULL, &iosize, 0)) {
-		printf(": unable to map I/O space\n");
+		printf(": can't map i/o space\n");
 		return;
 	}
 
@@ -134,7 +134,7 @@ bha_pci_attach(parent, self, aux)
 	sc->sc_dmaflags = 0;
 
 	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
+		printf(": can't map interrupt\n");
 		bus_space_unmap(iot, ioh, iosize);
 		return;
 	}
@@ -142,7 +142,7 @@ bha_pci_attach(parent, self, aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, bha_intr, sc,
 	    sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
+		printf(": can't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha_eisa.c,v 1.5 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: bha_eisa.c,v 1.6 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: bha_eisa.c,v 1.16 1998/08/15 10:10:49 mycroft Exp $	*/
 
 /*-
@@ -164,13 +164,13 @@ bha_eisa_attach(parent, self, aux)
 	if (bus_space_map(iot,
 	    EISA_SLOT_ADDR(ea->ea_slot) + BHA_EISA_SLOT_OFFSET, BHA_EISA_IOSIZE,
 	    0, &ioh)) {
-		printf(": could not map EISA slot\n");
+		printf(": can't map EISA slot\n");
 		return;
 	}
 
 	if (bha_eisa_address(iot, ioh, &port) ||
 	    bus_space_map(iot, port, BHA_ISA_IOSIZE, 0, &ioh2)) {
-		printf(": could not map ISA address\n");
+		printf(": can't map ISA address\n");
 		return;
 	}
 

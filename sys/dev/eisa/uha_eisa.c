@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_eisa.c,v 1.8 2009/01/21 21:53:59 grange Exp $	*/
+/*	$OpenBSD: uha_eisa.c,v 1.9 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: uha_eisa.c,v 1.5 1996/10/21 22:31:07 thorpej Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ uha_eisa_attach(parent, self, aux)
 
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
 	    UHA_EISA_SLOT_OFFSET, UHA_EISA_IOSIZE, 0, &ioh))
-		panic("uha_attach: could not map I/O addresses");
+		panic("uha_attach: can't map I/O addresses");
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;

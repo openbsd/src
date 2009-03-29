@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.28 2007/04/19 19:00:01 kettenis Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.29 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -247,7 +247,7 @@ gem_attach_pci(struct device *parent, struct device *self, void *aux)
 #define PCI_GEM_BASEADDR	0x10
 	if (pci_mapreg_map(pa, PCI_GEM_BASEADDR, type, 0,
 	    &gsc->gsc_memt, &gsc->gsc_memh, NULL, &size, 0) != 0) {
-		printf(": could not map registers\n");
+		printf(": can't map registers\n");
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.46 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.47 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -2003,7 +2003,7 @@ tl_attach(parent, self, aux)
 	    &sc->tl_btag, &sc->tl_bhandle, NULL, &iosize, 0)) {
 		if (pci_mapreg_map(pa, TL_PCI_LOMEM, PCI_MAPREG_TYPE_IO, 0,
 		    &sc->tl_btag, &sc->tl_bhandle, NULL, &iosize, 0)) {
-			printf(": failed to map i/o space\n");
+			printf(": can't map i/o space\n");
 			return;
 		}
 	}
@@ -2012,7 +2012,7 @@ tl_attach(parent, self, aux)
 	    &sc->tl_btag, &sc->tl_bhandle, NULL, &iosize, 0)){
 		if (pci_mapreg_map(pa, TL_PCI_LOIO, PCI_MAPREG_TYPE_MEM, 0,
 		    &sc->tl_btag, &sc->tl_bhandle, NULL, &iosize, 0)){
-			printf(": failed to map memory space\n");
+			printf(": can't map mem space\n");
 			return;
 		}
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.30 2007/10/01 15:34:48 krw Exp $ */
+/* $OpenBSD: tga.c,v 1.31 2009/03/29 21:53:52 sthen Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -436,21 +436,21 @@ tgaattach(parent, self, aux)
 		    sc->sc_dc);
 	}
 	if (sc->sc_dc->dc_vaddr == NULL) {
-		printf(": couldn't map memory space; punt!\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 
 	/* XXX say what's going on. */
 	intrstr = NULL;
 	if (pci_intr_map(pa, &intrh)) {
-		printf(": couldn't map interrupt");
+		printf(": can't map interrupt");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrh);
 	sc->sc_intr = pci_intr_establish(pa->pa_pc, intrh, IPL_TTY, tga_intr,
 	    sc->sc_dc, sc->sc_dev.dv_xname);
 	if (sc->sc_intr == NULL) {
-		printf(": couldn't establish interrupt");
+		printf(": can't establish interrupt");
 		if (intrstr != NULL)
 			printf("at %s", intrstr);
 		printf("\n");
@@ -790,7 +790,7 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 
 	/* sanity checks */
 	if (dcp->dc_vaddr == NULL)
-		panic("tga_console(%d, %d): couldn't map memory space",
+		panic("tga_console(%d, %d): can't map mem space",
 		    device, function);
 	if (dcp->dc_tgaconf == NULL)
 		panic("tga_console(%d, %d): unknown board configuration",

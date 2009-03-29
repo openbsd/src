@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.64 2009/01/02 20:01:45 kettenis Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.65 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -518,7 +518,7 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_configtag = psycho_alloc_config_tag(sc->sc_psycho_this);
 		if (bus_space_map(sc->sc_configtag,
 		    sc->sc_basepaddr, 0x01000000, 0, &sc->sc_configaddr))
-			panic("could not map psycho PCI configuration space");
+			panic("can't map psycho PCI configuration space");
 	} else {
 		/* Just copy IOMMU state, config tag and address */
 		sc->sc_is = osc->sc_is;

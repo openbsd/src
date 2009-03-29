@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae_nubus.c,v 1.18 2007/09/10 20:29:46 miod Exp $	*/
+/*	$OpenBSD: if_ae_nubus.c,v 1.19 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: if_ae_nubus.c,v 1.17 1997/05/01 18:17:16 briggs Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ ae_nubus_attach(parent, self, aux)
 	bst = na->na_tag;
 	if (bus_space_map(bst, NUBUS_SLOT2PA(na->slot), NBMEMSIZE,
 	    0, &bsh)) {
-		printf(": can't map memory space\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 

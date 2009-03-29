@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.80 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.81 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -482,27 +482,27 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 #ifdef VR_USEIOSPACE
 	if (pci_mapreg_map(pa, VR_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->vr_btag, &sc->vr_bhandle, NULL, &size, 0)) {
-		printf(": failed to map i/o space\n");
+		printf(": can't map i/o space\n");
 		return;
 	}
 #else
 	if (pci_mapreg_map(pa, VR_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->vr_btag, &sc->vr_bhandle, NULL, &size, 0)) {
-		printf(": failed to map memory space\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 #endif
 
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
+		printf(": can't map interrupt\n");
 		goto fail_1;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, vr_intr, sc,
 				       self->dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf(": could not establish interrupt");
+		printf(": can't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");

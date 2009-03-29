@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_isa.c,v 1.4 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: aic_isa.c,v 1.5 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ aic_isa_attach(parent, self, aux)
 	struct aic_softc *sc = (void *)self;
 
 	if (bus_space_map(iot, ia->ia_iobase, AIC_NPORTS, 0, &ioh))
-		panic("%s: could not map I/O-ports", sc->sc_dev.dv_xname);
+		panic("%s: can't map i/o-ports", sc->sc_dev.dv_xname);
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;

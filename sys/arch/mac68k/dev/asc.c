@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.25 2006/09/16 10:42:23 miod Exp $	*/
+/*	$OpenBSD: asc.c,v 1.26 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: asc.c,v 1.20 1997/02/24 05:47:33 scottr Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ ascattach(parent, self, aux)
 		addr = (bus_addr_t)MAC68K_ASC_BASE;
 	if (bus_space_map(sc->sc_tag, addr, MAC68K_ASC_LEN, 0,
 	    &sc->sc_handle)) {
-		printf(": can't map memory space\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 	sc->sc_open = 0;

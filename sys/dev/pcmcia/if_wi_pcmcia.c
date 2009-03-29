@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.66 2006/11/26 19:46:28 deraadt Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.67 2009/03/29 21:53:53 sthen Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -399,7 +399,7 @@ wi_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pcmcia_io_map(pf, PCMCIA_WIDTH_IO16, 0, WI_IOSIZ,
 	    &psc->sc_pcioh, &psc->sc_io_window)) {
-		printf(": can't map io space\n");
+		printf(": can't map i/o space\n");
 		goto bad;
 	}
 	state++;
@@ -420,7 +420,7 @@ wi_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, wi_intr, psc,
 	    sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
+		printf("%s: can't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
 		goto bad;
 	}

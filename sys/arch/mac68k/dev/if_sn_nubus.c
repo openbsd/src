@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn_nubus.c,v 1.19 2007/09/10 20:29:46 miod Exp $  */
+/*    $OpenBSD: if_sn_nubus.c,v 1.20 2009/03/29 21:53:52 sthen Exp $  */
 /*    $NetBSD: if_sn_nubus.c,v 1.13 1997/05/11 19:11:34 scottr Exp $  */
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -115,7 +115,7 @@ sn_nubus_attach(struct device *parent, struct device *self, void *aux)
 
 	bst = na->na_tag;
 	if (bus_space_map(bst, NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &bsh)) {
-		printf(": failed to map memory space.\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 
@@ -137,13 +137,13 @@ sn_nubus_attach(struct device *parent, struct device *self, void *aux)
 
 		if (bus_space_subregion(bst, bsh,
 		    0x00180000, SN_REGSIZE, &sc->sc_regh)) {
-			printf(": failed to map register space.\n");
+			printf(": can't map register space\n");
 			break;
 		}
 
 		if (bus_space_subregion(bst, bsh,
 		    0x00ffe004, ETHER_ADDR_LEN, &tmp_bsh)) {
-			printf(": failed to map ROM space.\n");
+			printf(": can't map ROM space\n");
 			break;
 		}
 

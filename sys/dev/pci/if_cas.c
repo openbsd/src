@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.24 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.25 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*
  *
@@ -319,7 +319,7 @@ cas_attach(struct device *parent, struct device *self, void *aux)
 #define PCI_CAS_BASEADDR	0x10
 	if (pci_mapreg_map(pa, PCI_CAS_BASEADDR, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_memt, &sc->sc_memh, NULL, &size, 0) != 0) {
-		printf(": could not map registers\n");
+		printf(": can't map registers\n");
 		return;
 	}
 

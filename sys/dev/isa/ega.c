@@ -1,4 +1,4 @@
-/* $OpenBSD: ega.c,v 1.12 2007/02/06 22:03:24 miod Exp $ */
+/* $OpenBSD: ega.c,v 1.13 2009/03/29 21:53:52 sthen Exp $ */
 /* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -432,14 +432,14 @@ ega_init(vc, iot, memt, mono)
 	vh->vh_mono = mono;
 
         if (bus_space_map(vh->vh_iot, 0x3c0, 0x10, 0, &vh->vh_ioh_vga))
-                panic("ega_common_setup: couldn't map ega io");
+                panic("ega_common_setup: can't map ega i/o");
 
 	if (bus_space_map(vh->vh_iot, (vh->vh_mono ? 0x3b0 : 0x3d0), 0x10, 0,
 			  &vh->vh_ioh_6845))
-                panic("ega_common_setup: couldn't map 6845 io");
+                panic("ega_common_setup: can't map 6845 i/o");
 
         if (bus_space_map(vh->vh_memt, 0xa0000, 0x20000, 0, &vh->vh_allmemh))
-                panic("ega_common_setup: couldn't map memory");
+                panic("ega_common_setup: can't map mem space");
 
         if (bus_space_subregion(vh->vh_memt, vh->vh_allmemh,
 				(vh->vh_mono ? 0x10000 : 0x18000), 0x8000,

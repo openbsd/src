@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.1 2008/04/07 22:53:00 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.2 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -119,7 +119,7 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM, 0,
 	    &memt, &memh, NULL, &memsize, 0)) {
-		printf(": cannot map memory space!\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 
@@ -138,7 +138,7 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->sc_mem_bus_space == NULL) {
 		bus_space_unmap(memt, memh, memsize);
-		printf(": cannot allocate bus_space\n");
+		printf(": can't allocate bus_space\n");
 		return;
 	}
 

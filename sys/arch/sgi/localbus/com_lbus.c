@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_lbus.c,v 1.8 2008/05/18 07:36:10 jsing Exp $ */
+/*	$OpenBSD: com_lbus.c,v 1.9 2009/03/29 21:53:52 sthen Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -91,7 +91,7 @@ com_macebus_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		if (bus_space_map(sc->sc_iot, ca->ca_baseaddr, COM_NPORTS, 0,
 		    &sc->sc_ioh)) {
-			printf(": failed to map I/O space!\n");
+			printf(": can't map i/o space\n");
 			return;
 		}
 	}

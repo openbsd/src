@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.14 2009/01/28 16:50:02 kettenis Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.15 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -253,7 +253,7 @@ hmeattach_pci(parent, self, aux)
 #define PCI_HME_BASEADDR	0x10
 	if (pci_mapreg_map(pa, PCI_HME_BASEADDR, type, 0,
 	    &hsc->hsc_memt, &hsc->hsc_memh, NULL, &size, 0) != 0) {
-		printf(": could not map hme registers\n");
+		printf(": can't map registers\n");
 		return;
 	}
 	sc->sc_seb = hsc->hsc_memh;

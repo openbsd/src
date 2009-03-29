@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.22 2008/10/25 22:30:43 jakemsr Exp $	*/
+/*	$OpenBSD: autri.c,v 1.23 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -525,7 +525,7 @@ autri_attach(parent, self, aux)
 	/* map register to memory */
 	if (pci_mapreg_map(pa, AUTRI_PCI_MEMORY_BASE,
 	    PCI_MAPREG_TYPE_MEM, 0, &sc->memt, &sc->memh, NULL, &iosize, 0)) {
-		printf("%s: can't map memory space\n", sc->sc_dev.dv_xname);
+		printf("%s: can't map mem space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 

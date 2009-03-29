@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.26 2008/10/25 22:30:43 jakemsr Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.27 2009/03/29 21:53:52 sthen Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -653,14 +653,14 @@ maestro_attach(parent, self, aux)
 
 	/* Map interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
+		printf(": can't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->ih = pci_intr_establish(pc, ih, IPL_AUDIO, maestro_intr, sc,
 	    sc->dev.dv_xname);
 	if (sc->ih == NULL) {
-		printf(": couldn't establish interrupt");
+		printf(": can't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s\n", intrstr);
 		return;
@@ -674,7 +674,7 @@ maestro_attach(parent, self, aux)
 	/* Map i/o */
 	if ((error = pci_mapreg_map(pa, PCI_MAPS, PCI_MAPREG_TYPE_IO, 
 	    0, &sc->iot, &sc->ioh, NULL, NULL, 0)) != 0) {
-		printf(", couldn't map i/o space\n");
+		printf(", can't map i/o space\n");
 		goto bad;
 	};
 
@@ -752,7 +752,7 @@ maestro_attach(parent, self, aux)
 		sc->host_if.write = maestro_write_codec;
 		sc->host_if.reset = maestro_reset_codec;
 		if (ac97_attach(&sc->host_if) != 0) {
-			printf("%s: couldn't attach codec\n", sc->dev.dv_xname);
+			printf("%s: can't attach codec\n", sc->dev.dv_xname);
 			goto bad;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.27 2008/10/25 22:30:43 jakemsr Exp $	*/
+/*	$OpenBSD: eso.c,v 1.28 2009/03/29 21:53:52 sthen Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -228,12 +228,12 @@ eso_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O registers. */
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_IO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL, 0)) {
-		printf(", can't map I/O space\n");
+		printf(": can't map i/o space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_SB, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_sb_iot, &sc->sc_sb_ioh, NULL, NULL, 0)) {
-		printf(", can't map SB I/O space\n");
+		printf(": can't map SB I/O space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_VC, PCI_MAPREG_TYPE_IO, 0,
@@ -243,7 +243,7 @@ eso_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_MPU, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_mpu_iot, &sc->sc_mpu_ioh, NULL, NULL, 0)) {
-		printf(", can't map MPU I/O space\n");
+		printf(": can't map MPU I/O space\n");
 		return;
 	}
 

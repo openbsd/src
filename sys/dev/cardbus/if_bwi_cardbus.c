@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_cardbus.c,v 1.8 2008/09/11 20:55:34 brad Exp $ */
+/*	$OpenBSD: if_bwi_cardbus.c,v 1.9 2009/03/29 21:53:52 sthen Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -118,7 +118,7 @@ bwi_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_mem_bt,
 	    &sc->sc_mem_bh, &base, &csc->csc_mapsize);
 	if (error != 0) {
-		printf(": could not map memory space\n");
+		printf(": can't map mem space\n");
 		return;
 	}
 	csc->csc_bar_val = base | CARDBUS_MAPREG_TYPE_MEM;
