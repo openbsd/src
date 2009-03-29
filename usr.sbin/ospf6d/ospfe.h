@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.14 2009/02/19 22:08:14 stsp Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.15 2009/03/29 16:24:38 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -192,7 +192,8 @@ void		 lsa_cache_put(struct lsa_ref *, struct nbr *);
 
 /* neighbor.c */
 void		 nbr_init(u_int32_t);
-struct nbr	*nbr_new(u_int32_t, struct iface *, u_int32_t, int);
+struct nbr	*nbr_new(u_int32_t, struct iface *, u_int32_t, int,
+		     struct in6_addr *);
 void		 nbr_del(struct nbr *);
 
 struct nbr	*nbr_find_id(struct iface *, u_int32_t);

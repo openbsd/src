@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.13 2009/01/27 21:58:28 stsp Exp $ */
+/*	$OpenBSD: hello.c,v 1.14 2009/03/29 16:24:38 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -169,7 +169,7 @@ recv_hello(struct iface *iface, struct in6_addr *src, u_int32_t rtr_id,
 	}
 
 	if (!nbr) {
-		nbr = nbr_new(rtr_id, iface, ntohl(hello.iface_id), 0);
+		nbr = nbr_new(rtr_id, iface, ntohl(hello.iface_id), 0, src);
 		/* set neighbor parameters */
 		nbr->dr.s_addr = hello.d_rtr;
 		nbr->bdr.s_addr = hello.bd_rtr;

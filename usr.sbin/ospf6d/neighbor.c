@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.10 2009/02/19 22:02:59 stsp Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.11 2009/03/29 16:24:38 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -269,7 +269,8 @@ nbr_init(u_int32_t hashsize)
 }
 
 struct nbr *
-nbr_new(u_int32_t nbr_id, struct iface *iface, u_int32_t iface_id, int self)
+nbr_new(u_int32_t nbr_id, struct iface *iface, u_int32_t iface_id, int self,
+	struct in6_addr *addr)
 {
 	struct nbr_head	*head;
 	struct nbr	*nbr;
@@ -315,6 +316,8 @@ nbr_new(u_int32_t nbr_id, struct iface *iface, u_int32_t iface_id, int self)
 	evtimer_set(&nbr->adj_timer, nbr_adj_timer, nbr);
 
 	bzero(&rn, sizeof(rn));
+	if (addr)
+		rn.addr = *addr;
 	rn.id.s_addr = nbr->id.s_addr;
 	rn.area_id.s_addr = nbr->iface->area_id.s_addr;
 	rn.ifindex = nbr->iface->ifindex;

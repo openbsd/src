@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.13 2009/02/19 22:08:14 stsp Exp $ */
+/*	$OpenBSD: interface.c,v 1.14 2009/03/29 16:24:38 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -280,7 +280,8 @@ void
 if_start(struct ospfd_conf *xconf, struct iface *iface)
 {
 	/* init the dummy local neighbor */
-	iface->self = nbr_new(ospfe_router_id(), iface, iface->ifindex, 1);
+	iface->self = nbr_new(ospfe_router_id(), iface, iface->ifindex, 1,
+			NULL);
 
 	/* set event handlers for interface */
 	evtimer_set(&iface->lsack_tx_timer, ls_ack_tx_timer, iface);
