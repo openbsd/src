@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.17 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.18 2009/03/29 22:52:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -209,10 +209,10 @@ pyro_init(struct pyro_softc *sc, int busa)
 	pbm->pp_pc->bustag = pbm->pp_cfgt;
 	pbm->pp_pc->bushandle = pbm->pp_cfgh;
 
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = busranges[0];
-	pba.pba_bridgetag = NULL;
 	pba.pba_pc = pbm->pp_pc;
 #if 0
 	pba.pba_flags = pbm->pp_flags;
