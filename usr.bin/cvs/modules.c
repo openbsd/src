@@ -1,4 +1,4 @@
-/*	$OpenBSD: modules.c,v 1.15 2009/03/26 22:54:37 joris Exp $	*/
+/*	$OpenBSD: modules.c,v 1.16 2009/03/29 19:17:26 joris Exp $	*/
 /*
  * Copyright (c) 2008 Joris Vink <joris@openbsd.org>
  *
@@ -46,7 +46,7 @@ cvs_modules_list(void)
 	struct module_info *mi;
 
 	TAILQ_FOREACH(mi, &modules, m_list)
-		printf("%s\n", mi->mi_str);
+		cvs_printf("%s\n", mi->mi_str);
 }
 
 int
