@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.89 2009/03/22 21:46:31 kettenis Exp $	*/
+/*	$OpenBSD: gem.c,v 1.90 2009/03/29 11:53:47 kettenis Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -113,7 +113,6 @@ void		gem_pcs_writereg(struct device *, int, int, int);
 int		gem_mediachange(struct ifnet *);
 void		gem_mediastatus(struct ifnet *, struct ifmediareq *);
 
-struct mbuf	*gem_get(struct gem_softc *, int, int);
 int		gem_eint(struct gem_softc *, u_int);
 int		gem_rint(struct gem_softc *);
 int		gem_tint(struct gem_softc *, u_int32_t);
