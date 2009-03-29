@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.25 2009/03/29 16:08:23 stsp Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.26 2009/03/29 18:31:47 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -704,6 +704,7 @@ show_db_msg_detail(struct imsg *imsg)
 	struct iface		*iface;
 	struct lsa		*lsa;
 	struct lsa_rtr_link	*rtr_link;
+	struct lsa_net_link	*net_link;
 	struct lsa_prefix	*prefix;
 	struct lsa_asext	*asext;
 	u_int16_t		 i, nlinks, off;
@@ -774,14 +775,16 @@ show_db_msg_detail(struct imsg *imsg)
 		printf("Options: %s\n",
 		    print_ospf_options(LSA_24_GETLO(ntohl(lsa->data.net.opts))));
 
-		nlinks = (ntohs(lsa->hdr.len) - sizeof(struct lsa_hdr)
-		    - sizeof(u_int32_t)) / sizeof(struct lsa_net_link);
-		off = sizeof(lsa->hdr) + sizeof(u_int32_t);
+		nlinks = (ntohs(lsa->hdr.len) - sizeof(struct lsa_hdr) -
+		    sizeof(struct lsa_net)) / sizeof(struct lsa_net_link);
+		net_link = (struct lsa_net_link *)((char *)lsa +
+		    sizeof(lsa->hdr) + sizeof(lsa->data.net));
 		printf("Number of Routers: %d\n", nlinks);
 
 		for (i = 0; i < nlinks; i++) {
-			addr.s_addr = lsa->data.net.att_rtr[i];
+			addr.s_addr = net_link->att_rtr;
 			printf("    Attached Router: %s\n", inet_ntoa(addr));
+			net_link++;
 		}
 
 		printf("\n");
