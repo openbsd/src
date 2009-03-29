@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.12 2009/03/29 21:46:10 stsp Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.13 2009/03/29 21:48:35 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -62,16 +62,13 @@ spf_calc(struct area *area)
 	struct lsa_net_link	*net_link;
 	u_int32_t		 d;
 	unsigned int		 i;
-	struct in_addr		 addr;
 
 	/* clear SPF tree */
 	spf_tree_clr(area);
 	cand_list_clr();
 
 	/* initialize SPF tree */
-	if ((v = spf_root = lsa_find(LIST_FIRST(&area->iface_list), /* XXX */
-	    LSA_TYPE_ROUTER, rde_router_id(),
-	    rde_router_id())) == NULL)
+	if ((v = spf_root = lsa_find_rtr(area, rde_router_id())) == NULL)
 		/* empty area because no interface is active */
 		return;
 
@@ -81,6 +78,10 @@ spf_calc(struct area *area)
 
 	/* calculate SPF tree */
 	do {
+		/* TODO: Treat multiple router LSAs originated by a single
+		 * router as one aggregate. We don't do this [yet],
+		 * but RFC5340 says we MUST do it. */
+
 		/* loop links */
 		for (i = 0; i < lsa_num_links(v); i++) {
 			switch (v->type) {
@@ -90,17 +91,16 @@ spf_calc(struct area *area)
 				case LINK_TYPE_POINTTOPOINT:
 				case LINK_TYPE_VIRTUAL:
 					/* find router LSA */
-#if 0
-					w = lsa_find(area, LSA_TYPE_ROUTER,
-					    rtr_link->id, rtr_link->id);
+					w = lsa_find_rtr(area,
+					    rtr_link->nbr_rtr_id);
 					break;
-#endif
 				case LINK_TYPE_TRANSIT_NET:
 					/* find network LSA */
-#if 0
-					w = lsa_find_net(area, rtr_link->id);
+					w = lsa_find_tree(&area->lsa_tree,
+					    htons(LSA_TYPE_NETWORK),
+					    rtr_link->nbr_iface_id,
+					    rtr_link->nbr_rtr_id);
 					break;
-#endif
 				default:
 					fatalx("spf_calc: invalid link type");
 				}
@@ -108,9 +108,7 @@ spf_calc(struct area *area)
 			case LSA_TYPE_NETWORK:
 				net_link = get_net_link(v, i);
 				/* find router LSA */
-				w = lsa_find(LIST_FIRST(&area->iface_list), /* XXX */
-				    LSA_TYPE_ROUTER,
-				    net_link->att_rtr, net_link->att_rtr);
+				w = lsa_find_rtr(area, net_link->att_rtr);
 				break;
 			default:
 				fatalx("spf_calc: invalid LSA type");
@@ -119,16 +117,21 @@ spf_calc(struct area *area)
 			if (w == NULL)
 				continue;
 
-			if (w->lsa->hdr.age == MAX_AGE)
+			if (ntohs(w->lsa->hdr.age) == MAX_AGE)
+				continue;
+
+			if (lsa_num_links(w) == 0)
 				continue;
 
 			if (!linked(w, v)) {
-				addr.s_addr = htonl(w->ls_id);
-				log_debug("spf_calc: w id %s type %d has ",
-				    inet_ntoa(addr), w->type);
-				addr.s_addr = htonl(v->ls_id);
-				log_debug("    no link to v id %s type %d",
-				    inet_ntoa(addr), v->type);
+				log_debug("spf_calc: w adv_rtr %s ls_id %s "
+				    "type 0x%x numlinks %hu has no link to "
+				    "v adv_rtr %s ls_id %s type 0x%x",
+				    log_rtr_id(htonl(w->adv_rtr)),
+				    log_rtr_id(htonl(w->ls_id)), w->type,
+				    lsa_num_links(w),
+				    log_rtr_id(htonl(v->adv_rtr)),
+				    log_rtr_id(htonl(v->ls_id)), v->type);
 				continue;
 			}
 
@@ -168,8 +171,32 @@ spf_calc(struct area *area)
 	} while (v != NULL);
 
 	/* spf_dump(area); */
-	log_debug("spf_calc: area %s calculated",
-	    inet_ntoa(area->id));
+	log_debug("spf_calc: area %s calculated", inet_ntoa(area->id));
+
+	/* Dump SPF tree to log */
+	RB_FOREACH(v, lsa_tree, &area->lsa_tree) {
+		struct v_nexthop *vn;
+		char hops[4096];
+		struct iface *iface;
+
+		bzero(hops, sizeof(hops));
+
+		if (v->type != LSA_TYPE_ROUTER && v->type != LSA_TYPE_NETWORK)
+			continue;
+
+		TAILQ_FOREACH(vn, &v->nexthop, entry) {
+			strlcat(hops, log_in6addr(&vn->nexthop), sizeof(hops));
+			strlcat(hops, "%", sizeof(hops));
+			if ((iface = if_find(vn->ifindex)) == NULL)
+				fatalx("spf_calc: lost iface");
+			strlcat(hops, iface->name, sizeof(hops));
+			if (vn != TAILQ_LAST(&v->nexthop, v_nexthead))
+				strlcat(hops, ", ", sizeof(hops));
+		}
+		log_debug("%s(%s, 0x%x, %s) cost %u has nexthops [%s]",
+		    v == spf_root ? "*" : " ", log_rtr_id(htonl(v->adv_rtr)),
+		    v->type, log_rtr_id(htonl(v->ls_id)), v->cost, hops);
+	}
 
 	area->num_spf_calc++;
 	start_spf_timer();
