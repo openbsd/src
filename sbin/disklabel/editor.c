@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.181 2009/03/28 17:50:05 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.182 2009/03/29 05:37:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.181 2009/03/28 17:50:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.182 2009/03/29 05:37:13 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -288,8 +288,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 			break;
 
 		case 'l':
-			display(stdout, &label, mountpoints, arg ? *arg : 0,
-			   SHOW_PHYSINFO);
+			display(stdout, &label, mountpoints, arg ? *arg : 0, 0);
 			break;
 
 		case 'M': {
@@ -373,8 +372,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 			if ((fp = fopen(arg, "w")) == NULL) {
 				warn("cannot open %s", arg);
 			} else {
-				display(fp, &label, NULL, 0, SHOW_PHYSINFO |
-				    SHOW_PARTINFO);
+				display(fp, &label, NULL, 0, 1);
 				(void)fclose(fp);
 			}
 			break;
