@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.24 2009/01/30 22:23:30 stsp Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.25 2009/03/29 16:08:23 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -806,11 +806,12 @@ show_db_msg_detail(struct imsg *imsg)
 		for (i = 0; i < nlinks; i++) {
 			rtr_link = (struct lsa_rtr_link *)((char *)lsa + off);
 
-			printf("    Link connected to: %s\n",
+			printf("    Link (Interface ID %s) connected to: %s\n",
+			    log_id(rtr_link->iface_id),
 			    print_rtr_link_type(rtr_link->type));
 
 			addr.s_addr = rtr_link->nbr_rtr_id;
-			data.s_addr = rtr_link->iface_id;
+			data.s_addr = rtr_link->nbr_iface_id;
 
 			switch (rtr_link->type) {
 			case LINK_TYPE_POINTTOPOINT:
