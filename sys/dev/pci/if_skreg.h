@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.52 2009/03/27 10:16:17 jsg Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.53 2009/03/29 14:36:34 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1291,6 +1291,9 @@
 #define SK_PAT_CTR6		0x0f3e	/* Pattern Counter 6 */
 #define SK_PAT_CTR7		0x0f3f	/* Pattern Counter 7 */
 
+#define SK_GMAC_BYP_MACSECRX	0x00002000	/* Bypass macsec for Rx */
+#define SK_GMAC_BYP_MACSECTX	0x00000800	/* Bypass macsec for Tx */
+#define SK_GMAC_BYP_RETR_FIFO	0x00000200	/* Bypass retransmit FIFO */
 #define SK_GMAC_LOOP_ON		0x00000020	/* Loopback mode for testing */
 #define SK_GMAC_LOOP_OFF	0x00000010	/* purposes */
 #define SK_GMAC_PAUSE_ON	0x00000008	/* enable forward of pause */

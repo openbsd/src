@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.74 2009/03/29 12:53:41 jsg Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.75 2009/03/29 14:36:34 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -697,6 +697,11 @@ mskc_reset(struct sk_softc *sc)
 	DELAY(1000);
 	CSR_WRITE_2(sc, SK_LINK_CTRL, SK_LINK_RESET_CLEAR);
 	CSR_WRITE_2(sc, SK_LINK_CTRL + SK_WIN_LEN, SK_LINK_RESET_CLEAR);
+
+	if (sc->sk_type == SK_YUKON_EX || sc->sk_type == SK_YUKON_SUPR) {
+		CSR_WRITE_2(sc, SK_GMAC_CTRL, SK_GMAC_BYP_MACSECRX |
+		    SK_GMAC_BYP_MACSECTX | SK_GMAC_BYP_RETR_FIFO);
+	}
 
 	sk_win_write_1(sc, SK_TESTCTL1, 1);
 
