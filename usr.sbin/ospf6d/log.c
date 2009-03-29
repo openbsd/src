@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.3 2007/10/14 20:42:05 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.4 2009/03/29 19:07:56 stsp Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -193,6 +193,22 @@ log_in6addr(const struct in6_addr *addr)
 }
 
 #define NUM_LOGS	4
+const char *
+log_rtr_id(u_int32_t id)
+{
+	static char	buf[NUM_LOGS][16];
+	static int	round = 0;
+	struct in_addr	addr;
+
+	round = (round + 1) % NUM_LOGS;
+
+	addr.s_addr = id;
+	if (inet_ntop(AF_INET, &addr, buf[round], 16) == NULL)
+		return ("?");
+	else
+		return buf[round];
+}
+
 const char *
 log_sockaddr(void *vp)
 {
