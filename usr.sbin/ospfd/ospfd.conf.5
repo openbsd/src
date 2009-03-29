@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.34 2009/01/26 23:08:31 claudio Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.35 2009/03/29 18:40:24 claudio Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 26 2009 $
+.Dd $Mdocdate: March 29 2009 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -301,7 +301,7 @@ The valid range for
 .Ar key-id
 is 0\-255.
 The default key-id is 1.
-While key-id 0 is valid, it is unavailable on Cisco devices.
+While key-id 0 is valid, it is unavailable on various other implementations.
 .It Xo
 .Ic auth-type
 .Po Ic none Ns \&| Ns
