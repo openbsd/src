@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.9 2009/03/29 19:28:10 stsp Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.10 2009/03/29 19:34:23 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -1038,7 +1038,7 @@ linked(struct vertex *w, struct vertex *v)
 {
 	struct lsa_rtr_link	*rtr_link = NULL;
 	struct lsa_net_link	*net_link = NULL;
-	int			 i;
+	unsigned int		 i;
 
 	switch (w->type) {
 	case LSA_TYPE_ROUTER:
@@ -1046,18 +1046,16 @@ linked(struct vertex *w, struct vertex *v)
 			rtr_link = get_rtr_link(w, i);
 			switch (v->type) {
 			case LSA_TYPE_ROUTER:
-#if 0
 				if (rtr_link->type == LINK_TYPE_POINTTOPOINT &&
-				    rtr_link->id == htonl(v->ls_id))
+				    rtr_link->nbr_rtr_id == htonl(v->adv_rtr))
 					return (1);
 				break;
-#endif
 			case LSA_TYPE_NETWORK:
-#if 0
-				if (rtr_link->id == htonl(v->ls_id))
+				if (rtr_link->type == LINK_TYPE_TRANSIT_NET &&
+				    rtr_link->nbr_rtr_id == htonl(v->adv_rtr) &&
+				    rtr_link->nbr_iface_id == htonl(v->ls_id))
 					return (1);
 				break;
-#endif
 			default:
 				fatalx("linked: invalid type");
 			}
@@ -1068,7 +1066,7 @@ linked(struct vertex *w, struct vertex *v)
 			net_link = get_net_link(w, i);
 			switch (v->type) {
 			case LSA_TYPE_ROUTER:
-				if (net_link->att_rtr == htonl(v->ls_id))
+				if (net_link->att_rtr == htonl(v->adv_rtr))
 					return (1);
 				break;
 			default:
