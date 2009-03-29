@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.24 2009/03/29 19:11:11 stsp Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.25 2009/03/29 19:14:23 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -528,6 +528,39 @@ lsa_find_tree(struct lsa_tree *tree, u_int16_t type, u_int32_t ls_id,
 		lsa_age(v);
 
 	return (v);
+}
+
+struct vertex *
+lsa_find_rtr(struct area *area, u_int32_t rtr_id)
+{
+	struct vertex	*v;
+	struct vertex	*r;
+
+	/* A router can originate multiple router LSAs,
+	 * differentiated by link state ID. Our job is
+	 * to find among those the LSA with the lowest
+	 * link state ID, because this is where the options
+	 * field and router-type bits come from. */
+
+	r = NULL;
+	/* XXX speed me up */
+	RB_FOREACH(v, lsa_tree, &area->lsa_tree) {
+		if (v->deleted)
+			continue;
+
+		if (v->type == LSA_TYPE_ROUTER &&
+		    v->adv_rtr == ntohl(rtr_id)) {
+			if (r == NULL)
+				r = v;
+			else if (v->ls_id < r->ls_id)
+				r = v;
+		}
+	}
+
+	if (r)
+		lsa_age(r);
+
+	return (r);
 }
 
 struct vertex *
