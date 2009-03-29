@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.24 2009/02/19 22:08:14 stsp Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.25 2009/03/29 19:02:58 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -908,8 +908,8 @@ orig_net_lsa(struct iface *iface)
 	struct lsa_hdr		 lsa_hdr;
 	struct nbr		*nbr;
 	struct buf		*buf;
+	struct lsa_net		 lsa_net;
 	int			 num_rtr = 0;
-	u_int32_t		 opts;
 	u_int16_t		 chksum;
 
 	/* XXX READ_BUF_SIZE */
@@ -917,16 +917,16 @@ orig_net_lsa(struct iface *iface)
 		fatal("orig_net_lsa");
 
 	/* reserve space for LSA header and options field */
-	if (buf_reserve(buf, sizeof(lsa_hdr) + sizeof(opts)) == NULL)
+	if (buf_reserve(buf, sizeof(lsa_hdr) + sizeof(lsa_net)) == NULL)
 		fatal("orig_net_lsa: buf_reserve failed");
 
-	opts = 0;
+	lsa_net.opts = 0;
 	/* fully adjacent neighbors + self */
 	LIST_FOREACH(nbr, &iface->nbr_list, entry)
 		if (nbr->state & NBR_STA_FULL) {
 			if (buf_add(buf, &nbr->id, sizeof(nbr->id)))
 				fatal("orig_net_lsa: buf_add failed");
-			opts |= nbr->options;
+			lsa_net.opts |= nbr->options;
 			num_rtr++;
 		}
 
@@ -951,9 +951,9 @@ orig_net_lsa(struct iface *iface)
 	lsa_hdr.ls_chksum = 0;		/* updated later */
 	memcpy(buf_seek(buf, 0, sizeof(lsa_hdr)), &lsa_hdr, sizeof(lsa_hdr));
 
-	opts &= opts & htonl(LSA_24_MASK);
-	memcpy(buf_seek(buf, sizeof(lsa_hdr), sizeof(opts)), &opts,
-	    sizeof(opts));
+	lsa_net.opts &= lsa_net.opts & htonl(LSA_24_MASK);
+	memcpy(buf_seek(buf, sizeof(lsa_hdr), sizeof(lsa_net)), &lsa_net,
+	    sizeof(lsa_net));
 
 	chksum = htons(iso_cksum(buf->buf, buf->wpos, LS_CKSUM_OFFSET));
 	memcpy(buf_seek(buf, LS_CKSUM_OFFSET, sizeof(chksum)),
