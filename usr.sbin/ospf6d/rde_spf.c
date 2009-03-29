@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.11 2009/03/29 21:42:30 stsp Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.12 2009/03/29 21:46:10 stsp Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -42,7 +42,8 @@ void		 calc_nexthop_add(struct vertex *, struct vertex *,
 struct in6_addr	*calc_nexthop_lladdr(struct vertex *, struct lsa_rtr_link *);
 void		 calc_nexthop_transit_nbr(struct vertex *, struct vertex *,
 		     u_int32_t ifindex);
-void		 calc_nexthop(struct vertex *, struct vertex *);
+void		 calc_nexthop(struct vertex *, struct vertex *,
+		     struct area *, struct lsa_rtr_link *);
 void		 rt_nexthop_clear(struct rt_node *);
 void		 rt_nexthop_add(struct rt_node *, struct v_nexthead *,
 		     struct in_addr);
@@ -142,7 +143,7 @@ spf_calc(struct area *area)
 				if (d < w->cost) {
 					w->cost = d;
 					calc_nexthop_clear(w);
-					calc_nexthop(w, v);
+					calc_nexthop(w, v, area, rtr_link);
 					/*
 					 * need to readd to candidate list
 					 * because the list is sorted
@@ -151,12 +152,12 @@ spf_calc(struct area *area)
 					cand_list_add(w);
 				} else
 					/* equal cost path */
-					calc_nexthop(w, v);
+					calc_nexthop(w, v, area, rtr_link);
 			} else if (w->cost == LS_INFINITY && d < LS_INFINITY) {
 				w->cost = d;
 
 				calc_nexthop_clear(w);
-				calc_nexthop(w, v);
+				calc_nexthop(w, v, area, rtr_link);
 				cand_list_add(w);
 			}
 		}
@@ -453,81 +454,54 @@ calc_nexthop_transit_nbr(struct vertex *dst, struct vertex *parent,
 }
 
 void
-calc_nexthop(struct vertex *dst, struct vertex *parent)
+calc_nexthop(struct vertex *dst, struct vertex *parent,
+    struct area *area, struct lsa_rtr_link *rtr_link)
 {
-#if 0
-	struct lsa_rtr_link	*rtr_link = NULL;
 	struct v_nexthop	*vn;
-	int			 i;
+	struct in6_addr		*nexthop;
 
 	/* case 1 */
 	if (parent == spf_root) {
 		switch (dst->type) {
 		case LSA_TYPE_ROUTER:
-			for (i = 0; i < lsa_num_links(dst); i++) {
-				rtr_link = get_rtr_link(dst, i);
-				if (rtr_link->type == LINK_TYPE_POINTTOPOINT &&
-				    ntohl(rtr_link->id) == parent->ls_id) {
-					calc_nexthop_add(dst, parent,
-					    rtr_link->data);
-					break;
-				}
-			}
-			return;
+			if (rtr_link->type != LINK_TYPE_POINTTOPOINT)
+				fatalx("inconsistent SPF tree");
+			nexthop = calc_nexthop_lladdr(dst, rtr_link);
+			break;
 		case LSA_TYPE_NETWORK:
-			for (i = 0; i < lsa_num_links(parent); i++) {
-				rtr_link = get_rtr_link(parent, i);
-				switch (rtr_link->type) {
-				case LINK_TYPE_POINTTOPOINT:
-					/* ignore */
-					break;
-				case LINK_TYPE_TRANSIT_NET:
-					if ((htonl(dst->ls_id) &
-					    dst->lsa->data.net.mask) ==
-					    (rtr_link->data &
-					     dst->lsa->data.net.mask)) {
-						calc_nexthop_add(dst, parent,
-						    rtr_link->data);
-					}
-					break;
-				default:
-					fatalx("calc_nexthop: invalid link "
-					    "type");
-				}
-			}
-			return;
+			if (rtr_link->type != LINK_TYPE_TRANSIT_NET)
+				fatalx("inconsistent SPF tree");
+
+			/* Next hop address cannot be determined yet,
+			 * we only know the outgoing interface. */
+			nexthop = NULL;
+			break;
 		default:
 			fatalx("calc_nexthop: invalid dst type");
 		}
+
+		calc_nexthop_add(dst, spf_root, nexthop,
+		    ntohl(rtr_link->iface_id));
+		return;
 	}
 
 	/* case 2 */
 	if (parent->type == LSA_TYPE_NETWORK && dst->type == LSA_TYPE_ROUTER) {
 		TAILQ_FOREACH(vn, &parent->nexthop, entry) {
-			if (vn->prev == spf_root) {
-				for (i = 0; i < lsa_num_links(dst); i++) {
-					rtr_link = get_rtr_link(dst, i);
-					if ((rtr_link->type ==
-					    LINK_TYPE_TRANSIT_NET) &&
-					    (rtr_link->data &
-					    parent->lsa->data.net.mask) ==
-					    (htonl(parent->ls_id) &
-					    parent->lsa->data.net.mask))
-						calc_nexthop_add(dst, parent,
-						    rtr_link->data);
-				}
-			} else {
-				calc_nexthop_add(dst, parent, 0
-				    /* XXX vn->nexthop.s_addr */);
-			}
+			if (vn->prev == spf_root)
+				calc_nexthop_transit_nbr(dst, parent,
+				    vn->ifindex);
+			else
+				/* dst is more than one transit net away */
+				calc_nexthop_add(dst, parent, &vn->nexthop,
+				    vn->ifindex);
 		}
 		return;
 	}
 
 	/* case 3 */
 	TAILQ_FOREACH(vn, &parent->nexthop, entry)
-	    calc_nexthop_add(dst, parent, 0 /* XXX vn->nexthop.s_addr */);
-#endif
+	    calc_nexthop_add(dst, parent, &vn->nexthop, vn->ifindex);
 }
 
 /* candidate list */
