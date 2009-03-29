@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.86 2009/03/01 20:59:09 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.87 2009/03/29 21:57:26 kettenis Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -166,6 +166,7 @@ isp*	at sbus?
 option ISP_COMPILE_1000_FW=1
 scsibus* at esp?
 
+ahc*	at pci?
 siop*	at pci?
 isp*	at pci?
 mpi*	at pci?
@@ -177,6 +178,7 @@ pciide*	at jmb?
 ahci*	at pci?
 
 option ISP_COMPILE_FW=1
+scsibus*	at ahc?
 scsibus*	at siop?
 scsibus*	at isp?
 scsibus*	at mpi?
