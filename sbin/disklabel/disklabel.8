@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.78 2009/03/28 23:47:31 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.79 2009/03/30 10:40:41 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 28 2009 $
+.Dd $Mdocdate: March 30 2009 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -407,6 +407,8 @@ format (suitable for loading via the
 .Fl R
 option).
 If no path is specified, the user will be prompted for one.
+.It Cm U
+Undo all changes made since entering the editor.
 .It Cm u
 Undo
 .Pq or redo
