@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.6 2009/03/30 17:43:15 ratchov Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.7 2009/03/30 18:12:24 deraadt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -367,9 +367,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 {
 	vaddr_t va;
 	bus_addr_t addr;
-	int curseg, pmapflags;
+	int curseg, pmapflags = VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED;
 
-	pmapflags = VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED;
 	if (flags & BUS_DMA_NOCACHE)
 		pmapflags |= PMAP_NOCACHE;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.16 2009/03/10 15:03:16 oga Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.17 2009/03/30 18:12:24 deraadt Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -412,7 +412,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 {
 	vaddr_t va;
 	bus_addr_t addr;
-	int curseg, pmapflags = 0;
+	int curseg, pmapflags = VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED;
 
 	if (flags & BUS_DMA_NOCACHE)
 		pmapflags |= PMAP_NOCACHE;
@@ -431,9 +431,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED |
-			    pmapflags);
+			    VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 		}
 	}
 	pmap_update(pmap_kernel());
