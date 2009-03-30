@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.66 2008/05/13 13:28:15 jmc Exp $
+.\"	$OpenBSD: fdisk.8,v 1.67 2009/03/30 04:52:50 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 13 2008 $
+.Dd $Mdocdate: March 30 2009 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -178,10 +178,11 @@ MBR partition in linear block addresses.
 .El
 .Pp
 .Em NOTE :
-The BIOS geometry sectors field is
+The BIOS geometry sectors field (C/H/S) is
 .Dq 1 based ,
-but the start field is
+but the LBA "start" field is
 .Dq 0 based .
+.Pp
 The CHS values will need to be in the BIOS's geometry
 for the system to be able to boot and use the drive correctly.
 These values must be kept correctly synchronized or a variety of
@@ -256,17 +257,16 @@ to enter an interactive command mode.
 The prompt contains information about the state of the edit
 process.
 .Pp
-.Dl fdisk:*0>
+.Dl fdisk:*1\*(Gt
 .Pp
 .Sq *
 means that the in-memory copy of the boot block has been modified, but
 not yet written to disk.
 .Pp
-0 is the disk offset of the currently selected boot block being edited.
-This number could be something other than zero when extended MBR partitions
-are being edited (using the
-.Em select
-subcommand).
+1 is the disk offset of the currently selected boot block being edited.
+This number will be 2 when editing an extended MBR partition,
+3 when editing an extended MBR partition within an extended MBR partition,
+and so on.
 .Pp
 The list of commands and their explanations are given below.
 .Bl -tag -width Ds
@@ -362,8 +362,8 @@ default MBR template
 .Xr disklabel 8
 .Sh CAVEATS
 Hand crafted disk layouts are highly error prone.
-MBR partitions should start on a cylinder boundary
-(head 0, sector 1),
-except when starting on track 0,
-(these should begin at head 1, sector 1).
-MBR partitions should also end at cylinder boundaries.
+It is common practice,
+though by no means required,
+that MBR partitions start on a cylinder boundary
+(generally head 0, sector 1, but head 1, sector 1 for track 0),
+and that MBR partitions also end at cylinder boundaries.
