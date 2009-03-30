@@ -1,4 +1,4 @@
-/*	$OpenBSD: i80321.c,v 1.5 2006/12/14 17:36:12 kettenis Exp $	*/
+/*	$OpenBSD: i80321.c,v 1.6 2009/03/30 09:28:12 kettenis Exp $	*/
 /*	$NetBSD: i80321.c,v 1.18 2006/02/25 02:28:56 wiz Exp $	*/
 
 /*
@@ -216,6 +216,7 @@ i80321_attach(struct i80321_softc *sc)
 	preg = PCIXSR_BUSNO(preg);
 	if (preg == 0xff)
 		preg = 0;
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_pci_iot;
 	pba.pba_memt = &sc->sc_pci_memt;
@@ -223,9 +224,6 @@ i80321_attach(struct i80321_softc *sc)
 	pba.pba_pc = &sc->sc_pci_chipset;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = preg;
-	pba.pba_bridgetag = NULL;
-	pba.pba_intrswiz = 0;	/* XXX what if busno != 0? */
-	pba.pba_intrtag = 0;
 
 	config_found((struct device *)sc, &pba, i80321_iopxs_print);
 }
