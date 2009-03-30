@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.144 2009/03/29 19:58:27 weingart Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.145 2009/03/30 00:39:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.144 2009/03/29 19:58:27 weingart Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.145 2009/03/30 00:39:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -84,11 +84,11 @@ static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.144 2009/03/29 19:58:27 w
 
 char	*dkname, *specname;
 char	tmpfil[] = _PATH_TMPFILE;
-char	namebuf[BBSIZE], *np = namebuf;
 struct	disklabel lab;
 char	bootarea[BBSIZE];
 
 #if NUMBOOT > 0
+char	namebuf[BBSIZE], *np = namebuf;
 int	installboot;	/* non-zero if we should install a boot program */
 char	*bootbuf;	/* pointer to buffer with remainder of boot prog */
 int	bootsize;	/* size of remaining boot program */
@@ -386,8 +386,10 @@ makelabel(char *type, char *name, struct disklabel *lp)
 int
 writelabel(int f, char *boot, struct disklabel *lp)
 {
+#if NUMBOOT > 0
 	int writeable;
 	off_t sectoffset = 0;
+#endif
 
 #if NUMBOOT > 0
 	setbootflag(lp);
@@ -610,7 +612,7 @@ struct dos_partition *
 readmbr(int f)
 {
 	struct dos_partition *dp, *first = NULL;
-	int part, n = 8;
+	int n = 8;
 
 	dp = findopenbsd(f, DOSBBSECTOR, &first, &n);
 	if (dp != NULL)
