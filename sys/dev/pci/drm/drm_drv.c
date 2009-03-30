@@ -98,7 +98,7 @@ int
 drmprint(void *aux, const char *pnp)
 {
 	if (pnp != NULL)
-		printf("drm at %s\n", pnp);
+		printf("drm at %s", pnp);
 	return (UNCONF);
 }
 
