@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.47 2009/03/15 19:40:41 miod Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.48 2009/03/30 14:29:30 blambert Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -162,10 +162,9 @@ sonewconn(struct socket *head, int connstatus)
 		return ((struct socket *)0);
 	if (head->so_qlen + head->so_q0len > head->so_qlimit * 3)
 		return ((struct socket *)0);
-	so = pool_get(&socket_pool, PR_NOWAIT);
+	so = pool_get(&socket_pool, PR_NOWAIT|PR_ZERO);
 	if (so == NULL)
 		return ((struct socket *)0);
-	bzero(so, sizeof(*so));
 	so->so_type = head->so_type;
 	so->so_options = head->so_options &~ SO_ACCEPTCONN;
 	so->so_linger = head->so_linger;
