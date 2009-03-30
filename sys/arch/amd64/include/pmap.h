@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.20 2009/02/05 01:15:20 oga Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.21 2009/03/30 16:09:36 oga Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -157,13 +157,11 @@
 #define L4_SLOT_KERNBASE	511
 #define L4_SLOT_APTE		510
 #define L4_SLOT_DIRECT		509
-#define L4_SLOT_DIRECT_NC	508
 
 #define PDIR_SLOT_KERN		L4_SLOT_KERN
 #define PDIR_SLOT_PTE		L4_SLOT_PTE
 #define PDIR_SLOT_APTE		L4_SLOT_APTE
 #define PDIR_SLOT_DIRECT	L4_SLOT_DIRECT
-#define PDIR_SLOT_DIRECT_NC	L4_SLOT_DIRECT_NC
 
 /*
  * the following defines give the virtual addresses of various MMU
@@ -178,8 +176,6 @@
 #define APTE_BASE ((pt_entry_t *) (VA_SIGN_NEG((L4_SLOT_APTE * NBPD_L4))))
 #define PMAP_DIRECT_BASE	(VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
 #define PMAP_DIRECT_END		(VA_SIGN_NEG(((L4_SLOT_DIRECT + 1) * NBPD_L4)))
-#define PMAP_DIRECT_BASE_NC	(VA_SIGN_NEG((L4_SLOT_DIRECT_NC * NBPD_L4)))
-#define PMAP_DIRECT_END_NC	(VA_SIGN_NEG(((L4_SLOT_DIRECT_NC + 1) * NBPD_L4)))
 
 #define L1_BASE		PTE_BASE
 #define AL1_BASE	APTE_BASE
@@ -566,11 +562,6 @@ vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 #define PMAP_DIRECT_UNMAP(va)	((paddr_t)va - PMAP_DIRECT_BASE)
 #define pmap_map_direct(pg)	PMAP_DIRECT_MAP(VM_PAGE_TO_PHYS(pg))
 #define pmap_unmap_direct(va)	PHYS_TO_VM_PAGE(PMAP_DIRECT_UNMAP(va))
-
-#define PMAP_DIRECT_NC_MAP(pa)	((vaddr_t)PMAP_DIRECT_BASE_NC + pa)
-#define PMAP_DIRECT_NC_UNMAP(va) ((paddr_t)va - PMAP_DIRECT_BASE_NC)
-#define pmap_map_nc_direct(pg)		PMAP_DIRECT_NC_MAP(VM_PAGE_TO_PHYS(pg))
-#define pmap_unmap_nc_direct(va)	PHYS_TO_VM_PAGE(PMAP_DIRECT_NC_UNMAP(va))
 
 #define __HAVE_PMAP_DIRECT
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.38 2009/03/23 13:25:11 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.39 2009/03/30 16:09:36 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -643,42 +643,6 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_V | PG_KW | PG_U |
 	    PG_M;
 
-	/*
-	 * Now do the same thing, but for the direct uncached map.
-	 */
-	ndmpdp = (max_pa + NBPD_L3 - 1) >> L3_SHIFT;
-	if (ndmpdp < NDML2_ENTRIES)
-		ndmpdp = NDML2_ENTRIES;		/* At least 4GB */
-
-	dmpdp = first_avail;	first_avail += PAGE_SIZE;
-	dmpd = first_avail;	first_avail += ndmpdp * PAGE_SIZE;
-
-	for (i = 0; i < NPDPG * ndmpdp; i++) {
-		paddr_t pdp;
-		vaddr_t va;
-
-		pdp = (paddr_t)&(((pd_entry_t *)dmpd)[i]);
-		va = PMAP_DIRECT_MAP(pdp);
-
-		*((pd_entry_t *)va) = (paddr_t)i << L2_SHIFT;
-		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_PS | PG_G | PG_N |
-		    PG_U | PG_M;
-	}
-
-	for (i = 0; i < ndmpdp; i++) {
-		paddr_t pdp;
-		vaddr_t va;
-
-		pdp = (paddr_t)&(((pd_entry_t *)dmpdp)[i]);
-		va = PMAP_DIRECT_MAP(pdp);
-
-		*((pd_entry_t *)va) = dmpd + (i << PAGE_SHIFT);
-		*((pd_entry_t *)va) |= PG_RW | PG_V | PG_U | PG_M;
-	}
-
-	kpm->pm_pdir[PDIR_SLOT_DIRECT_NC] = dmpdp | PG_V | PG_KW | PG_U |
-	    PG_M;
-	
 	tlbflush();
 
 	msgbuf_vaddr = virtual_avail;
@@ -1028,7 +992,6 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	    (NTOPLEVEL_PDES - (PDIR_SLOT_KERN + npde)) * sizeof(pd_entry_t));
 
 	pdir[PDIR_SLOT_DIRECT] = pmap_kernel()->pm_pdir[PDIR_SLOT_DIRECT];
-	pdir[PDIR_SLOT_DIRECT_NC] = pmap_kernel()->pm_pdir[PDIR_SLOT_DIRECT_NC];
 
 #if VM_MIN_KERNEL_ADDRESS != KERNBASE
 	pdir[pl4_pi(KERNBASE)] = PDP_BASE[pl4_pi(KERNBASE)];
@@ -1238,12 +1201,6 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	if (pmap == pmap_kernel() && va >= PMAP_DIRECT_BASE &&
 	    va < PMAP_DIRECT_END) {
 		*pap = va - PMAP_DIRECT_BASE;
-		return (TRUE);
-	}
-
-	if (pmap == pmap_kernel() && va >= PMAP_DIRECT_BASE_NC &&
-	    va < PMAP_DIRECT_END_NC) {
-		*pap = va - PMAP_DIRECT_BASE_NC;
 		return (TRUE);
 	}
 
