@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.24 2008/07/23 19:14:13 miod Exp $	*/
+/*	$OpenBSD: dino.c,v 1.25 2009/03/30 21:24:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Michael Shalayeff
@@ -1783,6 +1783,7 @@ dinoattach(parent, self, aux)
 	ca->ca_hpamask = -1;
 	pdc_scanbus(self, ca, MAXMODBUS, 0);
 
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_iot;
 	pba.pba_memt = &sc->sc_memt;
@@ -1790,7 +1791,6 @@ dinoattach(parent, self, aux)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
-	pba.pba_bridgetag = NULL;
 	config_found(self, &pba, dinoprint);
 
 	/* postpone cleanup if necessary */
