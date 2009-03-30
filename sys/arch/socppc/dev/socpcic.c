@@ -1,4 +1,4 @@
-/*	$OpenBSD: socpcic.c,v 1.2 2008/05/17 15:49:05 kettenis Exp $	*/
+/*	$OpenBSD: socpcic.c,v 1.3 2009/03/30 20:09:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -102,6 +102,7 @@ socpcic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_intr_disestablish = socpcic_intr_disestablish;
 	sc->sc_pc.pc_ether_hw_addr = socpcic_ether_hw_addr;
 
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_io_bus_space;
 	pba.pba_memt = &sc->sc_mem_bus_space;
@@ -109,7 +110,6 @@ socpcic_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
-	pba.pba_bridgetag = NULL;
 
 	printf("\n");
 
