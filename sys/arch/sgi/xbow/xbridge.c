@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.4 2008/08/25 13:35:34 jsing Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.5 2009/03/30 09:41:00 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -278,6 +278,7 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach children.
 	 */
 
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = sc->sc_io_bus_space;
 	pba.pba_memt = sc->sc_mem_bus_space;
@@ -285,7 +286,6 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_dev.dv_unit;
-	pba.pba_bridgetag = NULL;
 
 	config_found(self, &pba, xbridge_print);
 	return;

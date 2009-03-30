@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.17 2008/07/30 17:37:46 miod Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.18 2009/03/30 09:41:00 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -244,6 +244,7 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 *  Configure our PCI devices.
 	 */
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = sc->sc_io_bus_space;
 	pba.pba_memt = sc->sc_mem_bus_space;
@@ -252,7 +253,6 @@ mace_pcibrattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_dev.dv_unit;
-	pba.pba_bridgetag = NULL;
 	config_found(self, &pba, mace_pcibrprint);
 
 	/* Clear PCI errors and set up error interrupt */
