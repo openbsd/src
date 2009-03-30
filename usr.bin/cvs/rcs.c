@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.288 2009/03/25 21:23:17 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.289 2009/03/30 21:45:33 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -80,8 +80,6 @@
 
 /* opaque parse data */
 struct rcs_pdata {
-	u_int	rp_lines;
-
 	char	*rp_buf;
 	size_t	 rp_blen;
 	char	*rp_bufend;
@@ -1652,7 +1650,6 @@ rcs_parse_init(RCSFILE *rfp)
 
 	pdp = xcalloc(1, sizeof(*pdp));
 
-	pdp->rp_lines = 0;
 	pdp->rp_pttype = RCS_TOK_ERR;
 
 	if ((pdp->rp_file = fdopen(rfp->fd, "r")) == NULL)
@@ -2330,8 +2327,6 @@ rcs_gettok(RCSFILE *rfp)
 	/* XXX we must skip backspace too for compatibility, should we? */
 	do {
 		ch = getc(pdp->rp_file);
-		if (ch == '\n')
-			pdp->rp_lines++;
 	} while (isspace(ch));
 
 	if (ch == EOF) {
@@ -2386,8 +2381,7 @@ rcs_gettok(RCSFILE *rfp)
 					ungetc(ch, pdp->rp_file);
 					break;
 				}
-			} else if (ch == '\n')
-				pdp->rp_lines++;
+			}
 
 			*(bp++) = ch;
 			pdp->rp_tlen++;
