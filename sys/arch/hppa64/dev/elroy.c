@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroy.c,v 1.5 2008/04/20 18:41:45 kettenis Exp $	*/
+/*	$OpenBSD: elroy.c,v 1.6 2009/03/30 09:34:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1175,12 +1175,12 @@ letoh64(r->eio_base), letoh64(r->eio_mask));
 	sc->sc_dmatag = elroy_dmat;
 	sc->sc_dmatag._cookie = sc;
 
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_iot;
 	pba.pba_memt = &sc->sc_memt;
 	pba.pba_dmat = &sc->sc_dmatag;
 	pba.pba_pc = &sc->sc_pc;
-	pba.pba_bridgetag = NULL;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0; /* (letoh32(elroy_read32(&r->busnum)) & 0xff) >> 4; */
 	config_found(self, &pba, elroy_print);
