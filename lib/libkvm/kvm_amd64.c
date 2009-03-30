@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_amd64.c,v 1.6 2009/01/02 05:16:56 miod Exp $	*/
+/*	$OpenBSD: kvm_amd64.c,v 1.7 2009/03/30 21:16:14 kettenis Exp $	*/
 /*	$NetBSD: kvm_x86_64.c,v 1.3 2002/06/05 22:01:55 fvdl Exp $	*/
 
 /*-
@@ -102,11 +102,6 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 
 	if (va >= PMAP_DIRECT_BASE && va <= PMAP_DIRECT_END) {
 		*pa = va - PMAP_DIRECT_BASE;
-		return (int)(NBPG - page_off);
-	}
-
-	if (va >= PMAP_DIRECT_BASE_NC && va <= PMAP_DIRECT_END_NC) {
-		*pa = va - PMAP_DIRECT_BASE_NC;
 		return (int)(NBPG - page_off);
 	}
 
