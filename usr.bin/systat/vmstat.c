@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.67 2008/12/07 02:56:06 canacar Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.68 2009/03/30 05:35:22 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.67 2008/12/07 02:56:06 canacar Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.68 2009/03/30 05:35:22 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -89,6 +89,7 @@ static float cputime(int);
 static void dinfo(int, int);
 static void getinfo(struct Info *);
 void putint(int, int, int, int);
+void putintmk(int, int, int, int);
 void putuint64(u_int64_t, int, int, int);
 void putfloat(double, int, int, int, int, int);
 int ucount(void);
@@ -288,7 +289,7 @@ labelkre(void)
 	mvprintw(DISKROW, DISKCOL, "Disks");
 	mvprintw(DISKROW + 1, DISKCOL, "seeks");
 	mvprintw(DISKROW + 2, DISKCOL, "xfers");
-	mvprintw(DISKROW + 3, DISKCOL, "Kbyte");
+	mvprintw(DISKROW + 3, DISKCOL, "speed");
 	mvprintw(DISKROW + 4, DISKCOL, "  sec");
 	for (i = 0, j = 0; i < cur.dk_ndrive && j < DRIVESPACE; i++)
 		if (cur.dk_select[i] && (j + strlen(dr_name[i])) < DRIVESPACE) {
@@ -525,6 +526,31 @@ putint(int n, int l, int c, int w)
 }
 
 void
+putintmk(int n, int l, int c, int w)
+{
+	char b[128];
+
+	move(l, c);
+	if (n == 0) {
+		while (w-- > 0)
+			addch(' ');
+		return;
+	}
+	if (n > 1024 * 1024)
+		snprintf(b, sizeof b, "%*dG", w - 1, n / 1024 / 1024);
+	else if (n > 1024)
+		snprintf(b, sizeof b, "%*dM", w - 1, n / 1024);
+	else
+		snprintf(b, sizeof b, "%*dK", w - 1, n);
+	if (strlen(b) > w) {
+		while (w-- > 0)
+			addch('*');
+		return;
+	}
+	addstr(b);
+}
+
+void
 putuint64(u_int64_t n, int l, int c, int w)
 {
 	char b[128];
@@ -648,7 +674,7 @@ dinfo(int dn, int c)
 	putint((int)((float)cur.dk_seek[dn]/etime+0.5), DISKROW + 1, c, 5);
 	putint((int)((float)(cur.dk_rxfer[dn] + cur.dk_wxfer[dn])/etime+0.5),
 	    DISKROW + 2, c, 5);
-	putint((int)(words/etime + 0.5), DISKROW + 3, c, 5);
+	putintmk((int)(words/etime + 0.5), DISKROW + 3, c, 5);
 	putfloat(atime/etime, DISKROW + 4, c, 5, 1, 1);
 }
 
