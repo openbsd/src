@@ -97,7 +97,7 @@ typedef struct drm_i915_private {
 
 	atomic_t irq_received;
 	/* Protects user_irq_refcount and irq_mask reg */
-	DRM_SPINTYPE user_irq_lock;
+	struct mutex user_irq_lock;
 	/* Refcount for user irq, only enabled when needed */
 	int user_irq_refcount;
 	/* Cached value of IMR to avoid reads in updating the bitfield */

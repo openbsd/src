@@ -83,10 +83,6 @@
 #define __OS_HAS_AGP	1
 
 #define DRM_CURRENTPID		curproc->p_pid
-#define DRM_SPINTYPE		struct mutex
-#define DRM_SPININIT(l,name)	mtx_init(l,IPL_NONE)
-#define DRM_SPINLOCK(l)		mtx_enter(l)
-#define DRM_SPINUNLOCK(l)	mtx_leave(l)
 #define DRM_LOCK()		rw_enter_write(&dev->dev_lock)
 #define DRM_UNLOCK()		rw_exit_write(&dev->dev_lock)
 #define DRM_MAXUNITS	8
@@ -191,14 +187,14 @@ do {									\
 } while (0)
 
 #define DRM_WAIT_ON( ret, queue, timeout, condition )	\
-DRM_SPINLOCK(&dev->irq_lock);				\
+mtx_enter(&dev->irq_lock);				\
 while ( ret == 0 ) {					\
 	if (condition)					\
 		break;					\
 	ret = msleep((queue), &dev->irq_lock,	 	\
 	     PZERO | PCATCH, "drmwtq", (timeout));	\
 }							\
-DRM_SPINUNLOCK(&dev->irq_lock)
+mtx_leave(&dev->irq_lock)
 
 #define DRM_ERROR(fmt, arg...) \
 	printf("error: [" DRM_NAME ":pid%d:%s] *ERROR* " fmt,		\
@@ -440,7 +436,7 @@ struct drm_device {
 	
 	int		  if_version;	/* Highest interface version set */
 				/* Locks */
-	DRM_SPINTYPE	  irq_lock;	/* protects irq condition checks */
+	struct mutex	  irq_lock;	/* protects irq condition checks */
 	struct rwlock	  dev_lock;	/* protects everything else */
 
 				/* Usage Counters */
@@ -466,7 +462,7 @@ struct drm_device {
 	/* VBLANK support */
 	int			 num_crtcs;		/* number of crtcs */
 	u_int32_t		 max_vblank_count;	/* size of counter reg*/
-	DRM_SPINTYPE		 vbl_lock;		/* VBLANK data lock */
+	struct mutex		 vbl_lock;		/* VBLANK data lock */
 	int			 vblank_disable_allowed;
 	struct timeout		 vblank_disable_timer;	/* timer for disable */
 	struct drm_vblank	*vblank;		/* One per ctrc */

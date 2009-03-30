@@ -62,9 +62,9 @@ drm_irq_handler_wrap(DRM_IRQ_ARGS)
 	irqreturn_t ret;
 	struct drm_device *dev = (struct drm_device *)arg;
 
-	DRM_SPINLOCK(&dev->irq_lock);
+	mtx_enter(&dev->irq_lock);
 	ret = dev->driver->irq_handler(arg);
-	DRM_SPINUNLOCK(&dev->irq_lock);
+	mtx_leave(&dev->irq_lock);
 
 	return ret;
 }
@@ -148,7 +148,7 @@ vblank_disable(void *arg)
 	struct drm_device *dev = (struct drm_device*)arg;
 	int i;
 
-	DRM_SPINLOCK(&dev->vbl_lock);
+	mtx_enter(&dev->vbl_lock);
 	if (!dev->vblank_disable_allowed)
 		goto out;
 
@@ -162,7 +162,7 @@ vblank_disable(void *arg)
 		}
 	}
 out:
-	DRM_SPINUNLOCK(&dev->vbl_lock);
+	mtx_leave(&dev->vbl_lock);
 }
 
 void
@@ -233,7 +233,7 @@ drm_vblank_get(struct drm_device *dev, int crtc)
 	if (dev->irq_enabled == 0)
 		return (EINVAL);
 
-	DRM_SPINLOCK(&dev->vbl_lock);
+	mtx_enter(&dev->vbl_lock);
 	atomic_add(1, &dev->vblank[crtc].vbl_refcount);
 	if (dev->vblank[crtc].vbl_refcount == 1 &&
 	    dev->vblank[crtc].vbl_enabled == 0) {
@@ -245,7 +245,7 @@ drm_vblank_get(struct drm_device *dev, int crtc)
 		}
 
 	}
-	DRM_SPINUNLOCK(&dev->vbl_lock);
+	mtx_leave(&dev->vbl_lock);
 
 	return (ret);
 }
@@ -256,12 +256,12 @@ drm_vblank_put(struct drm_device *dev, int crtc)
 	if (dev->irq_enabled == 0)
 		return;
 
-	DRM_SPINLOCK(&dev->vbl_lock);
+	mtx_enter(&dev->vbl_lock);
 	/* Last user schedules interrupt disable */
 	atomic_dec(&dev->vblank[crtc].vbl_refcount);
 	if (dev->vblank[crtc].vbl_refcount == 0) 
 		timeout_add_sec(&dev->vblank_disable_timer, 5);
-	DRM_SPINUNLOCK(&dev->vbl_lock);
+	mtx_leave(&dev->vbl_lock);
 }
 
 int
@@ -288,18 +288,18 @@ drm_modeset_ctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	switch (modeset->cmd) {
 	case _DRM_PRE_MODESET:
 		if (dev->vblank[crtc].vbl_inmodeset == 0) {
-			DRM_SPINLOCK(&dev->vbl_lock);
+			mtx_enter(&dev->vbl_lock);
 			dev->vblank[crtc].vbl_inmodeset = 1;
-			DRM_SPINUNLOCK(&dev->vbl_lock);
+			mtx_leave(&dev->vbl_lock);
 			drm_vblank_get(dev, crtc);
 		}
 		break;
 	case _DRM_POST_MODESET:
 		if (dev->vblank[crtc].vbl_inmodeset) {
-			DRM_SPINLOCK(&dev->vbl_lock);
+			mtx_enter(&dev->vbl_lock);
 			dev->vblank_disable_allowed = 1;
 			dev->vblank[crtc].vbl_inmodeset = 0;
-			DRM_SPINUNLOCK(&dev->vbl_lock);
+			mtx_leave(&dev->vbl_lock);
 			drm_vblank_put(dev, crtc);
 		}
 		break;
@@ -346,7 +346,7 @@ drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (flags & _DRM_VBLANK_SIGNAL) {
 		ret = EINVAL;
 	} else {
-		DRM_SPINLOCK(&dev->vbl_lock);
+		mtx_enter(&dev->vbl_lock);
 		while (ret == 0) {
 			if ((drm_vblank_count(dev, crtc)
 			    - vblwait->request.sequence) <= (1 << 23))
@@ -355,7 +355,7 @@ drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_priv)
 			    &dev->vbl_lock, PZERO | PCATCH,
 			    "drmvblq", 3 * DRM_HZ);
 		}
-		DRM_SPINUNLOCK(&dev->vbl_lock);
+		mtx_leave(&dev->vbl_lock);
 
 		if (ret != EINTR) {
 			struct timeval now;
