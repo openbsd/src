@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.183 2009/03/30 00:39:26 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.184 2009/03/30 10:51:37 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.183 2009/03/30 00:39:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.184 2009/03/30 10:51:37 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1713,17 +1713,18 @@ editor_help(char *arg)
 	default:
 		puts("Available commands:");
 		puts(
-"  ? [cmd]  - show help                  m [part] - modify partition\n"
-"  A        - auto partition all space   n [part] - set mount point\n"
-"  a [part] - add partition              p [unit] - print partitions\n"
-"  b        - set OpenBSD boundaries     q        - quit & save changes\n"
-"  c [part] - change partition size      s [path] - save label to file\n"
-"  D        - reset label to default     r        - display free space\n"
+"  ? [cmd]  - show help                  n [part] - set mount point\n"
+"  A        - auto partition all space   p [unit] - print partitions\n"
+"  a [part] - add partition              q        - quit & save changes\n"
+"  b        - set OpenBSD boundaries     s [path] - save label to file\n"
+"  c [part] - change partition size      r        - display free space\n"
+"  D        - reset label to default     U        - undo all changes\n"
 "  d [part] - delete partition           u        - undo last change\n"
 "  e        - edit drive parameters      w        - write label to disk\n"
 "  g [d|u]  - [d]isk or [u]ser geometry  X        - toggle expert mode\n"
 "  l [unit] - print disk label header    x        - exit & lose changes\n"
 "  M        - disklabel(8) man page      z        - delete all partitions\n"
+"  m [part] - modify partition\n"
 "\n"
 "Suffixes can be used to indicate units other than sectors:\n"
 "\t'b' (bytes), 'k' (kilobytes), 'm' (megabytes), 'g' (gigabytes)\n"
