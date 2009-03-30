@@ -1,4 +1,4 @@
-/* $OpenBSD: tsc.c,v 1.13 2006/12/14 17:36:12 kettenis Exp $ */
+/* $OpenBSD: tsc.c,v 1.14 2009/03/30 21:43:13 kettenis Exp $ */
 /* $NetBSD: tsc.c,v 1.3 2000/06/25 19:17:40 thorpej Exp $ */
 
 /*-
@@ -193,6 +193,7 @@ tspattach(parent, self, aux)
 
 	pci_6600_pickintr(pcp);
 
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = &pcp->pc_iot;
 	pba.pba_memt = &pcp->pc_memt;
@@ -201,7 +202,6 @@ tspattach(parent, self, aux)
 	pba.pba_pc = &pcp->pc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
-	pba.pba_bridgetag = NULL;
 #ifdef	notyet
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;

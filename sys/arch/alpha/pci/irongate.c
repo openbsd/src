@@ -1,4 +1,4 @@
-/*	$OpenBSD: irongate.c,v 1.10 2008/06/26 05:42:08 ray Exp $	*/
+/*	$OpenBSD: irongate.c,v 1.11 2009/03/30 21:43:13 kettenis Exp $	*/
 /* $NetBSD: irongate.c,v 1.3 2000/11/29 06:29:10 thorpej Exp $ */
 
 /*-
@@ -170,6 +170,7 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 		panic("irongate_attach: shouldn't be here, really...");
 	}
 
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = &icp->ic_iot;
 	pba.pba_memt = &icp->ic_memt;
@@ -178,12 +179,11 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = &icp->ic_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
-	pba.pba_bridgetag = NULL;
 #ifdef notyet
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 #endif
-	(void) config_found(self, &pba, irongate_print);
+	config_found(self, &pba, irongate_print);
 }
 
 int

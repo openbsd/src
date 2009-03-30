@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs.c,v 1.21 2008/06/26 05:42:08 ray Exp $	*/
+/*	$OpenBSD: apecs.c,v 1.22 2009/03/30 21:43:13 kettenis Exp $	*/
 /*	$NetBSD: apecs.c,v 1.16 1996/12/05 01:39:34 cgd Exp $	*/
 
 /*-
@@ -230,6 +230,7 @@ apecsattach(parent, self, aux)
 		panic("apecsattach: shouldn't be here, really...");
 	}
 
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = &acp->ac_iot;
 	pba.pba_memt = &acp->ac_memt;
@@ -238,7 +239,6 @@ apecsattach(parent, self, aux)
 	pba.pba_pc = &acp->ac_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
-	pba.pba_bridgetag = NULL;
 #ifdef notyet
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;

@@ -1,4 +1,4 @@
-/* $OpenBSD: mcpcia.c,v 1.3 2008/06/26 05:42:09 ray Exp $ */
+/* $OpenBSD: mcpcia.c,v 1.4 2009/03/30 21:43:13 kettenis Exp $ */
 /* $NetBSD: mcpcia.c,v 1.20 2007/03/04 05:59:11 christos Exp $ */
 
 /*-
@@ -200,6 +200,7 @@ mcpciaattach(parent, self, aux)
 	/*
 	 * Attach PCI bus
 	 */
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = &ccp->cc_iot;
 	pba.pba_memt = &ccp->cc_memt;
@@ -208,9 +209,8 @@ mcpciaattach(parent, self, aux)
 	pba.pba_pc = &ccp->cc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
-	pba.pba_bridgetag = NULL;
 
-	(void) config_found(self, &pba, mcpciaprint);
+	config_found(self, &pba, mcpciaprint);
 
 	/*
 	 * Clear any errors that may have occurred during the probe

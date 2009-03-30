@@ -1,4 +1,4 @@
-/* $OpenBSD: cia.c,v 1.24 2008/06/26 05:42:08 ray Exp $ */
+/* $OpenBSD: cia.c,v 1.25 2009/03/30 21:43:13 kettenis Exp $ */
 /* $NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $ */
 
 /*-
@@ -387,6 +387,7 @@ ciaattach(parent, self, aux)
 		panic("ciaattach: shouldn't be here, really...");
 	}
 
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = &ccp->cc_iot;
 	pba.pba_memt = &ccp->cc_memt;
@@ -395,8 +396,6 @@ ciaattach(parent, self, aux)
 	pba.pba_pc = &ccp->cc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
-	pba.pba_bridgetag = NULL;
-
 #ifdef notyet
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	if ((ccp->cc_flags & CCF_PYXISBUG) == 0)
