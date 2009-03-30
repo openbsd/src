@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.64 2009/03/15 19:40:41 miod Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.65 2009/03/30 19:58:50 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -233,7 +233,9 @@ nfsrv_setattr(nfsd, slp, procp, mrq)
 	VATTR_NULL(&va);
 	if (v3) {
 		va.va_vaflags |= VA_UTIMES_NULL;
-		nfsm_srvsattr(&va);
+		error = nfsm_srvsattr(&md, &va, mrep, &dpos);
+		if (error)
+			goto nfsmout;
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		gcheck = fxdr_unsigned(int, *tl);
 		if (gcheck) {
@@ -1283,7 +1285,9 @@ nfsrv_create(nfsd, slp, procp, mrq)
 				break;
 			}
 		case NFSV3CREATE_UNCHECKED:
-			nfsm_srvsattr(&va);
+			error = nfsm_srvsattr(&md, &va, mrep, &dpos);
+			if (error)
+				goto nfsmout;
 			break;
 		case NFSV3CREATE_EXCLUSIVE:
 			nfsm_dissect(cp, caddr_t, NFSX_V3CREATEVERF);
@@ -1510,7 +1514,9 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 		goto out;
 	}
 	VATTR_NULL(&va);
-	nfsm_srvsattr(&va);
+	error = nfsm_srvsattr(&md, &va, mrep, &dpos);
+	if (error)
+		goto nfsmout;
 	if (vtyp == VCHR || vtyp == VBLK) {
 		nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 		major = fxdr_unsigned(u_int32_t, *tl++);
@@ -2007,7 +2013,9 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 		goto out;
 	VATTR_NULL(&va);
 	if (v3)
-		nfsm_srvsattr(&va);
+		error = nfsm_srvsattr(&md, &va, mrep, &dpos);
+		if (error)
+			goto nfsmout;
 	nfsm_strsiz(len2, NFS_MAXPATHLEN);
 	pathcp = malloc(len2 + 1, M_TEMP, M_WAITOK);
 	iv.iov_base = pathcp;
@@ -2150,7 +2158,9 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 	}
 	VATTR_NULL(&va);
 	if (v3) {
-		nfsm_srvsattr(&va);
+		error = nfsm_srvsattr(&md, &va, mrep, &dpos);
+		if (error)
+			goto nfsmout;
 	} else {
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		va.va_mode = nfstov_mode(*tl++);

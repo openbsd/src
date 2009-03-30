@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.33 2009/01/24 23:30:42 thib Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.34 2009/03/30 19:58:50 blambert Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -289,49 +289,5 @@
 		if ((nfsd->nd_flag & ND_NFSV3) == 0) \
 			nfsm_adv(NFSX_V2FH - NFSX_V3FH); \
 		}
-
-#define nfsm_srvsattr(a) \
-		{ nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
-		if (*tl == nfs_true) { \
-			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
-			(a)->va_mode = nfstov_mode(*tl); \
-		} \
-		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
-		if (*tl == nfs_true) { \
-			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
-			(a)->va_uid = fxdr_unsigned(uid_t, *tl); \
-		} \
-		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
-		if (*tl == nfs_true) { \
-			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
-			(a)->va_gid = fxdr_unsigned(gid_t, *tl); \
-		} \
-		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
-		if (*tl == nfs_true) { \
-			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED); \
-			(a)->va_size = fxdr_hyper(tl); \
-		} \
-		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
-		switch (fxdr_unsigned(int, *tl)) { \
-		case NFSV3SATTRTIME_TOCLIENT: \
-			(a)->va_vaflags &= ~VA_UTIMES_NULL; \
-			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED); \
-			fxdr_nfsv3time(tl, &(a)->va_atime); \
-			break; \
-		case NFSV3SATTRTIME_TOSERVER: \
-			getnanotime(&(a)->va_atime); \
-			break; \
-		}; \
-		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
-		switch (fxdr_unsigned(int, *tl)) { \
-		case NFSV3SATTRTIME_TOCLIENT: \
-			(a)->va_vaflags &= ~VA_UTIMES_NULL; \
-			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED); \
-			fxdr_nfsv3time(tl, &(a)->va_mtime); \
-			break; \
-		case NFSV3SATTRTIME_TOSERVER: \
-			getnanotime(&(a)->va_mtime); \
-			break; \
-		}; }
 
 #endif
