@@ -1,4 +1,4 @@
-/*	$OpenBSD: fins.c,v 1.1 2008/03/19 19:33:09 deraadt Exp $	*/
+/*	$OpenBSD: fins.c,v 1.2 2009/03/30 00:36:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -46,30 +46,44 @@
  * This section of the chip controls the fans. We don't do anything to them.
  */
 
-
 #define FINS_UNLOCK	0x87	/* magic constant - write 2x to select chip */
 #define FINS_LOCK	0xaa	/* magic constant - write 1x to deselect reg */
-
-#define FINS_FUNC_SEL	0x07	/* select which subchip to access */
-#  define FINS_FUNC_SENSORS 0x4
 
 /* ISA registers index to an internal register space on chip */
 #define FINS_ADDR	0x00
 #define FINS_DATA	0x01
 
-/* Chip identification regs and values in bank 0 */
-#define FINS_MANUF	0x23	/* manufacturer ID */
-# define FINTEK_ID	0x1934
+#define FINS_FUNC_SEL	0x07	/* select which chip function to access */
 #define FINS_CHIP	0x20	/* chip ID */
-# define FINS_ID	0x0406
+#define FINS_MANUF	0x23	/* manufacturer ID */
+#define FINS_BASEADDR	0x60	/* I/O base of chip function */
 
-/* in bank sensors of config space */
-#define FINS_SENSADDR	0x60	/* sensors assigned I/O address (2 bytes) */
+#define FINS_71806	0x0341	/* same as F71872 */
+#define FINS_71805	0x0406
+#define FINS_71882	0x0541	/* same as F71883 */
+#define FINS_71862	0x0601	/* same as F71863 */
+#define FINTEK_ID	0x1934
 
-/* in sensors space */
-#define FINS_TMODE	0x01	/* temperature mode reg */
+#define FINS_FUNC_SENSORS	0x04
+#define FINS_FUNC_WATCHDOG	0x07
 
-#define FINS_MAX_SENSORS	20
+/* sensors device registers */
+#define FINS_SENS_TMODE(sc)	((sc)->fins_chipid <= FINS_71805 ? 0x01 : 0x6b)
+#define FINS_SENS_VDIVS		0x0e
+
+/* watchdog device registers (mapped straight to i/o port offsets) */
+#define FINS_WDOG_CR0	0x00
+#define FINS_WDOG_CR1	0x05
+#define FINS_WDOG_TIMER	0x06
+
+/* CR0 flags */
+#define FINS_WDOG_OUTEN	0x80
+
+/* CR1 flags */
+#define FINS_WDOG_EN	0x20
+#define FINS_WDOG_MINS	0x08
+
+#define FINS_MAX_SENSORS 18
 /*
  * Fintek chips typically measure voltages using 8mv steps.
  * To measure higher voltages the input is attenuated with (external)
@@ -81,21 +95,14 @@
 #define FRFACT(x, y)	(FRFACT_NONE * ((x) + (y)) / (y))
 #define FNRFACT(x, y)	(-FRFACT_NONE * (x) / (y))
 
-#if defined(FINSDEBUG)
-#define DPRINTF(x)		do { printf x; } while (0)
-#else
-#define DPRINTF(x)
-#endif
-
 struct fins_softc;
 
 struct fins_sensor {
 	char *fs_desc;
-	enum sensor_type fs_type;
-	u_int8_t fs_aux;
-	u_int8_t fs_reg;
 	void (*fs_refresh)(struct fins_softc *, int);
-	int fs_rfact;
+	enum sensor_type fs_type;
+	int fs_aux;
+	u_int8_t fs_reg;
 };
 
 struct fins_softc {
@@ -105,227 +112,295 @@ struct fins_softc {
 	struct ksensordev fins_sensordev;
 	struct sensor_task *fins_sensortask;
 	struct fins_sensor *fins_sensors;
-	u_int fins_numsensors;
-	void (*refresh_sensor_data) (struct fins_softc *);
 
-	u_int8_t (*fins_readreg)(struct fins_softc *, int);
-	void (*fins_writereg)(struct fins_softc *, int, int);
-	u_int fins_tempsel;
-};
-
-
-struct fins_isa_softc {
-	struct fins_softc sc_finssc;
-
+	bus_space_handle_t sc_ioh_sens;
+	bus_space_handle_t sc_ioh_wdog;
 	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
+
+	u_int16_t fins_chipid;
+	u_int8_t fins_tempsel;
+	u_int8_t fins_wdog_cr;
 };
 
-int  fins_isa_match(struct device *, void *, void *);
-void fins_isa_attach(struct device *, struct device *, void *);
-u_int8_t fins_isa_readreg(struct fins_softc *, int);
-void fins_isa_writereg(struct fins_softc *, int, int);
+int  fins_match(struct device *, void *, void *);
+void fins_attach(struct device *, struct device *, void *);
+
+void fins_unlock(bus_space_tag_t, bus_space_handle_t);
+void fins_lock(bus_space_tag_t, bus_space_handle_t);
+
+u_int8_t fins_read(bus_space_tag_t, bus_space_handle_t, int);
+u_int16_t fins_read_2(bus_space_tag_t, bus_space_handle_t, int);
+void fins_write(bus_space_tag_t, bus_space_handle_t, int, u_int8_t);
+
+static __inline u_int8_t fins_read_sens(struct fins_softc *, int);
+static __inline u_int16_t fins_read_sens_2(struct fins_softc *, int);
+
+static __inline u_int8_t fins_read_wdog(struct fins_softc *, int);
+static __inline void fins_write_wdog(struct fins_softc *, int, u_int8_t);
 
 void fins_setup_sensors(struct fins_softc *, struct fins_sensor *);
 void fins_refresh(void *);
 
-void fins_refresh_volt(struct fins_softc *, int);
-void fins_refresh_temp(struct fins_softc *, int);
-void fins_refresh_offset(struct fins_softc *, int);
-void fins_refresh_fanrpm(struct fins_softc *, int);
-void fins_attach(struct fins_softc *);
-int fins_detach(struct fins_softc *);
+void fins_get_rpm(struct fins_softc *, int);
+void fins_get_temp(struct fins_softc *, int);
+void fins_get_volt(struct fins_softc *, int);
+
+int fins_wdog_cb(void *, int);
 
 struct cfattach fins_ca = {
-	sizeof(struct fins_isa_softc),
-	fins_isa_match,
-	fins_isa_attach
+	sizeof(struct fins_softc),
+	fins_match,
+	fins_attach
 };
 
 struct cfdriver fins_cd = {
 	NULL, "fins", DV_DULL
 };
 
-struct fins_sensor fins_sensors[] = {
-	/* Voltage */
-	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x10, fins_refresh_volt, FRFACT(100, 100) },
-	{ "Vtt", SENSOR_VOLTS_DC, 0, 0x11, fins_refresh_volt, FRFACT_NONE },
-	{ "Vram", SENSOR_VOLTS_DC, 0, 0x12, fins_refresh_volt, FRFACT(100, 100) },
-	{ "Vchips", SENSOR_VOLTS_DC, 0, 0x13, fins_refresh_volt, FRFACT(47, 100) },
-	{ "+5V", SENSOR_VOLTS_DC, 0, 0x14, fins_refresh_volt, FRFACT(200, 47) },
-	{ "+12V", SENSOR_VOLTS_DC, 0, 0x15, fins_refresh_volt, FRFACT(200, 20) },
-	{ "Vcc 1.5V", SENSOR_VOLTS_DC, 0, 0x16, fins_refresh_volt, FRFACT_NONE },
-	{ "VCore", SENSOR_VOLTS_DC, 0, 0x17, fins_refresh_volt, FRFACT_NONE },
-	{ "Vsb", SENSOR_VOLTS_DC, 0, 0x18, fins_refresh_volt, FRFACT(200, 47) },
-	{ "Vsbint", SENSOR_VOLTS_DC, 0, 0x19, fins_refresh_volt, FRFACT(200, 47) },
-	{ "Vbat", SENSOR_VOLTS_DC, 0, 0x1A, fins_refresh_volt, FRFACT(200, 47) },
+struct fins_sensor fins_71805_sensors[] = {
+	{ "+3.3V",  fins_get_volt, SENSOR_VOLTS_DC, FRFACT(100, 100),	0x10 },
+	{ "Vtt",    fins_get_volt, SENSOR_VOLTS_DC, FRFACT_NONE,	0x11 },
+	{ "Vram",   fins_get_volt, SENSOR_VOLTS_DC, FRFACT(100, 100),	0x12 },
+	{ "Vchips", fins_get_volt, SENSOR_VOLTS_DC, FRFACT(47, 100),	0x13 },
+	{ "+5V",    fins_get_volt, SENSOR_VOLTS_DC, FRFACT(200, 47),	0x14 },
+	{ "+12V",   fins_get_volt, SENSOR_VOLTS_DC, FRFACT(200, 20),	0x15 },
+	{ "+1.5V",  fins_get_volt, SENSOR_VOLTS_DC, FRFACT_NONE,	0x16 },
+	{ "Vcore",  fins_get_volt, SENSOR_VOLTS_DC, FRFACT_NONE,	0x17 },
+	{ "Vsb",    fins_get_volt, SENSOR_VOLTS_DC, FRFACT(200, 47),	0x18 },
+	{ "Vsbint", fins_get_volt, SENSOR_VOLTS_DC, FRFACT(200, 47),	0x19 },
+	{ "Vbat",   fins_get_volt, SENSOR_VOLTS_DC, FRFACT(200, 47),	0x1a },
 
-	/* Temperature */
-	{ "Temp1", SENSOR_TEMP, 0x01, 0x1B, fins_refresh_temp },
-	{ "Temp2", SENSOR_TEMP, 0x02, 0x1C, fins_refresh_temp },
-	{ "Temp3", SENSOR_TEMP, 0x04, 0x1D, fins_refresh_temp },
+	{ NULL, fins_get_temp, SENSOR_TEMP, 0x01, 0x1b },
+	{ NULL, fins_get_temp, SENSOR_TEMP, 0x02, 0x1c },
+	{ NULL, fins_get_temp, SENSOR_TEMP, 0x04, 0x1d },
 
-	/* Fans */
-	{ "Fan1", SENSOR_FANRPM, 0, 0x20, fins_refresh_fanrpm },
-	{ "Fan2", SENSOR_FANRPM, 0, 0x22, fins_refresh_fanrpm },
-	{ "Fan3", SENSOR_FANRPM, 0, 0x24, fins_refresh_fanrpm },
+	{ NULL, fins_get_rpm, SENSOR_FANRPM, 0, 0x20 },
+	{ NULL, fins_get_rpm, SENSOR_FANRPM, 0, 0x22 },
+	{ NULL, fins_get_rpm, SENSOR_FANRPM, 0, 0x24 },
 
 	{ NULL }
 };
 
+struct fins_sensor fins_71882_sensors[] = {
+	{ "+3.3V",  fins_get_volt, SENSOR_VOLTS_DC, FRFACT(100, 100),	0x20 },
+	{ "Vcore",  fins_get_volt, SENSOR_VOLTS_DC, FRFACT_NONE,	0x21 },
+	{ "Vram",   fins_get_volt, SENSOR_VOLTS_DC, FRFACT(100, 100),	0x22 },
+	{ "Vchips", fins_get_volt, SENSOR_VOLTS_DC, FRFACT(47, 100),	0x23 },
+	{ "+5V",    fins_get_volt, SENSOR_VOLTS_DC, FRFACT(200, 47),	0x24 },
+	{ "+12V",   fins_get_volt, SENSOR_VOLTS_DC, FRFACT(200, 20),	0x25 },
+	{ "+1.5V",  fins_get_volt, SENSOR_VOLTS_DC, FRFACT_NONE,	0x26 },
+	{ "Vsb",    fins_get_volt, SENSOR_VOLTS_DC, FRFACT(100, 100),	0x27 },
+	{ "Vbat",   fins_get_volt, SENSOR_VOLTS_DC, FRFACT(100, 100),	0x28 },
+
+	{ NULL, fins_get_temp, SENSOR_TEMP, 0x02, 0x72 },
+	{ NULL, fins_get_temp, SENSOR_TEMP, 0x04, 0x74 },
+	{ NULL, fins_get_temp, SENSOR_TEMP, 0x08, 0x76 },
+
+	{ NULL, fins_get_rpm, SENSOR_FANRPM, 0, 0xa0 },
+	{ NULL, fins_get_rpm, SENSOR_FANRPM, 0, 0xb0 },
+	{ NULL, fins_get_rpm, SENSOR_FANRPM, 0, 0xc0 },
+	{ NULL, fins_get_rpm, SENSOR_FANRPM, 0, 0xd0 },
+
+	{ NULL }
+};
 
 int
-fins_isa_match(struct device *parent, void *match, void *aux)
+fins_match(struct device *parent, void *match, void *aux)
 {
-	bus_space_tag_t iot;
-	bus_addr_t iobase;
-	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
-	u_int val;
+	bus_space_handle_t ioh;
+	bus_space_tag_t iot;
+	int ret = 0;
+	u_int16_t id;
 
 	iot = ia->ia_iot;
-	iobase = ia->ipa_io[0].base;
-
-	if (bus_space_map(iot, iobase, 2, 0, &ioh))
+	if (bus_space_map(iot, ia->ipa_io[0].base, 2, 0, &ioh))
 		return (0);
 
 	/* Fintek uses magic cookie locks to distinguish their chips */
-	bus_space_write_1(iot, ioh, 0, FINS_UNLOCK);
-	bus_space_write_1(iot, ioh, 0, FINS_UNLOCK);
-	bus_space_write_1(iot, ioh, 0, FINS_FUNC_SEL);
-	bus_space_write_1(iot, ioh, 1, 0);	/* IDs appear only in space 0 */
-	bus_space_write_1(iot, ioh, 0, FINS_MANUF);
-	val = bus_space_read_1(iot, ioh, 1) << 8;
-	bus_space_write_1(iot, ioh, 0, FINS_MANUF + 1);
-	val |= bus_space_read_1(iot, ioh, 1);
-	if (val != FINTEK_ID) {
-		bus_space_write_1(iot, ioh, 0, FINS_LOCK);
-		goto notfound;
-	}
-	bus_space_write_1(iot, ioh, 0, FINS_CHIP);
-	val = bus_space_read_1(iot, ioh, 1) << 8;
-	bus_space_write_1(iot, ioh, 0, FINS_CHIP + 1);
-	val |= bus_space_read_1(iot, ioh, 1);
-	/* If we cared which Fintek chip this was we would save the chip ID here */
-	if (val != FINS_ID) {
-		bus_space_write_1(iot, ioh, 0, FINS_LOCK);
-		goto notfound;
-	}
-	/* select sensor function of the chip */
-	bus_space_write_1(iot, ioh, FINS_ADDR, FINS_FUNC_SEL);
-	bus_space_write_1(iot, ioh, FINS_DATA, FINS_FUNC_SENSORS);
-	/* read I/O address assigned by BIOS to this function */
-	bus_space_write_1(iot, ioh, FINS_ADDR, FINS_SENSADDR);
-	val = bus_space_read_1(iot, ioh, FINS_DATA) << 8;
-	bus_space_write_1(iot, ioh, FINS_ADDR, FINS_SENSADDR + 1);
-	val |= bus_space_read_1(iot, ioh, FINS_DATA);
-	bus_space_write_1(iot, ioh, 0, FINS_LOCK);
-	ia->ipa_io[1].length = 2;
-	ia->ipa_io[1].base = val;
+	fins_unlock(iot, ioh);
 
-	bus_space_unmap(iot, ioh, 2);
-	ia->ipa_nio = 2;
-	ia->ipa_io[0].length = 2;
-	ia->ipa_nmem = 0;
-	ia->ipa_nirq = 0;
-	ia->ipa_ndrq = 0;
-	return (1);
-
- notfound:
-	bus_space_unmap(iot, ioh, 2);
-	return (0);
+	fins_write(iot, ioh, FINS_FUNC_SEL, 0);	/* IDs appear only in space 0 */
+	if (fins_read_2(iot, ioh, FINS_MANUF) != FINTEK_ID)
+		goto match_done;
+	id = fins_read_2(iot, ioh, FINS_CHIP);
+	switch(id) {
+	case FINS_71882:
+	case FINS_71862:
+		ia->ipa_nio = 3;
+		fins_write(iot, ioh, FINS_FUNC_SEL, FINS_FUNC_WATCHDOG);
+		ia->ipa_io[2].base = fins_read_2(iot, ioh, FINS_BASEADDR);
+		ia->ipa_io[2].length = 8;
+		fins_write(iot, ioh, FINS_FUNC_SEL, FINS_FUNC_SENSORS);
+		ia->ipa_io[1].base = fins_read_2(iot, ioh, FINS_BASEADDR);
+		ia->ipa_io[1].base += 5;
+		break;
+	case FINS_71806:
+	case FINS_71805:
+		ia->ipa_nio = 2;
+		fins_write(iot, ioh, FINS_FUNC_SEL, FINS_FUNC_SENSORS);
+		ia->ipa_io[1].base = fins_read_2(iot, ioh, FINS_BASEADDR);
+		break;
+	default:
+		goto match_done;
+	}
+	ia->ipa_io[0].length = ia->ipa_io[1].length = 2;
+	ia->ipa_nmem = ia->ipa_nirq = ia->ipa_ndrq = 0;
+	ia->ia_aux = (void *)(u_long)id;
+	ret = 1;
+match_done:
+	fins_lock(iot, ioh);
+	return (ret);
 }
 
 void
-fins_isa_attach(struct device *parent, struct device *self, void *aux)
+fins_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct fins_isa_softc *sc = (struct fins_isa_softc *)self;
+	struct fins_softc *sc = (struct fins_softc *)self;
 	struct isa_attach_args *ia = aux;
 	bus_addr_t iobase;
+	u_int32_t iosize;
+	u_int i;
 
 	sc->sc_iot = ia->ia_iot;
+	sc->fins_chipid = (u_int16_t)(u_long)ia->ia_aux;
 	iobase = ia->ipa_io[1].base;
-	sc->sc_finssc.fins_writereg = fins_isa_writereg;
-	sc->sc_finssc.fins_readreg = fins_isa_readreg;
-	if (bus_space_map(sc->sc_iot, iobase, 2, 0, &sc->sc_ioh)) {
-		printf(": can't map i/o space\n");
+	iosize = ia->ipa_io[1].length;
+	if (bus_space_map(sc->sc_iot, iobase, iosize, 0, &sc->sc_ioh_sens)) {
+		printf(": can't map sensor i/o space\n");
 		return;
 	}
-	fins_attach(&sc->sc_finssc);
+	switch(sc->fins_chipid) {
+	case FINS_71882:
+	case FINS_71862:
+		fins_setup_sensors(sc, fins_71882_sensors);
+		break;
+	case FINS_71806:
+	case FINS_71805:
+		fins_setup_sensors(sc, fins_71805_sensors);
+		break;
+	}
+	sc->fins_sensortask = sensor_task_register(sc, fins_refresh, 5);
+	if (sc->fins_sensortask == NULL) {
+		printf(": can't register update task\n");
+		return;
+	}
+	for (i = 0; sc->fins_sensors[i].fs_refresh != NULL; ++i)
+		sensor_attach(&sc->fins_sensordev, &sc->fins_ksensors[i]);
+	sensordev_install(&sc->fins_sensordev);
+
+	if (sc->fins_chipid <= FINS_71805)
+		goto attach_done;
+	iobase = ia->ipa_io[2].base;
+	iosize = ia->ipa_io[2].length;
+	if (bus_space_map(sc->sc_iot, iobase, iosize, 0, &sc->sc_ioh_wdog)) {
+		printf(": can't map watchdog i/o space\n");
+		return;
+	}
+	sc->fins_wdog_cr = fins_read_wdog(sc, FINS_WDOG_CR1);
+	sc->fins_wdog_cr &= ~(FINS_WDOG_MINS | FINS_WDOG_EN);
+	fins_write_wdog(sc, FINS_WDOG_CR1, sc->fins_wdog_cr);
+	wdog_register(sc, fins_wdog_cb);
+attach_done:
+	printf("\n");
 }
 
 u_int8_t
-fins_isa_readreg(struct fins_softc *lmsc, int reg)
+fins_read(bus_space_tag_t iot, bus_space_handle_t ioh, int reg)
 {
-	struct fins_isa_softc *sc = (struct fins_isa_softc *)lmsc;
+	bus_space_write_1(iot, ioh, FINS_ADDR, reg);
+	return (bus_space_read_1(iot, ioh, FINS_DATA));
+}
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, FINS_ADDR, reg);
-	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh, FINS_DATA));
+u_int16_t
+fins_read_2(bus_space_tag_t iot, bus_space_handle_t ioh, int reg)
+{
+	u_int16_t val;
+
+	bus_space_write_1(iot, ioh, FINS_ADDR, reg);
+	val = bus_space_read_1(iot, ioh, FINS_DATA) << 8;
+	bus_space_write_1(iot, ioh, FINS_ADDR, reg + 1);
+	return (val | bus_space_read_1(iot, ioh, FINS_DATA));
 }
 
 void
-fins_isa_writereg(struct fins_softc *lmsc, int reg, int val)
+fins_write(bus_space_tag_t iot, bus_space_handle_t ioh, int reg, u_int8_t val)
 {
-	struct fins_isa_softc *sc = (struct fins_isa_softc *)lmsc;
+	bus_space_write_1(iot, ioh, FINS_ADDR, reg);
+	bus_space_write_1(iot, ioh, FINS_DATA, val);
+}
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, FINS_ADDR, reg);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, FINS_DATA, val);
+static __inline u_int8_t
+fins_read_sens(struct fins_softc *sc, int reg)
+{
+	return (fins_read(sc->sc_iot, sc->sc_ioh_sens, reg));
+}
+
+static __inline u_int16_t
+fins_read_sens_2(struct fins_softc *sc, int reg)
+{
+	return (fins_read_2(sc->sc_iot, sc->sc_ioh_sens, reg));
+}
+
+static __inline u_int8_t
+fins_read_wdog(struct fins_softc *sc, int reg)
+{
+	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh_wdog, reg));
+}
+
+static __inline void
+fins_write_wdog(struct fins_softc *sc, int reg, u_int8_t val)
+{
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh_wdog, reg, val);
 }
 
 void
-fins_attach(struct fins_softc *sc)
+fins_unlock(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
-	u_int i;
-
-	fins_setup_sensors(sc, fins_sensors);
-	sc->fins_sensortask = sensor_task_register(sc, fins_refresh, 5);
-	if (sc->fins_sensortask == NULL) {
-		printf(": unable to register update task\n");
-		return;
-	}
-
-	printf("\n");
-	/* Add sensors */
-	for (i = 0; i < sc->fins_numsensors; ++i)
-		sensor_attach(&sc->fins_sensordev, &sc->fins_ksensors[i]);
-	sensordev_install(&sc->fins_sensordev);
+	bus_space_write_1(iot, ioh, 0, FINS_UNLOCK);
+	bus_space_write_1(iot, ioh, 0, FINS_UNLOCK);
 }
 
-int
-fins_detach(struct fins_softc *sc)
+void
+fins_lock(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
-	int i;
-
-	/* Remove sensors */
-	sensordev_deinstall(&sc->fins_sensordev);
-	for (i = 0; i < sc->fins_numsensors; i++)
-		sensor_detach(&sc->fins_sensordev, &sc->fins_ksensors[i]);
-
-	if (sc->fins_sensortask != NULL)
-		sensor_task_unregister(sc->fins_sensortask);
-
-	return 0;
+	bus_space_write_1(iot, ioh, 0, FINS_LOCK);
+	bus_space_unmap(iot, ioh, 2);
 }
-
 
 void
 fins_setup_sensors(struct fins_softc *sc, struct fins_sensor *sensors)
 {
 	int i;
-	struct ksensor *ksensor = sc->fins_ksensors;
 
-	strlcpy(sc->fins_sensordev.xname, sc->sc_dev.dv_xname,
-	    sizeof(sc->fins_sensordev.xname));
-
-	for (i = 0; sensors[i].fs_desc; i++) {
-		ksensor[i].type = sensors[i].fs_type;
-		strlcpy(ksensor[i].desc, sensors[i].fs_desc,
-			sizeof(ksensor[i].desc));
+	for (i = 0; sensors[i].fs_refresh != NULL; ++i) {
+		sc->fins_ksensors[i].type = sensors[i].fs_type;
+		if (sensors[i].fs_desc != NULL)
+			strlcpy(sc->fins_ksensors[i].desc, sensors[i].fs_desc,
+				sizeof(sc->fins_ksensors[i].desc));
 	}
-	sc->fins_numsensors = i;
+	strlcpy(sc->fins_sensordev.xname, sc->sc_dev.dv_xname,
+		sizeof(sc->fins_sensordev.xname));
 	sc->fins_sensors = sensors;
-	sc->fins_tempsel = sc->fins_readreg(sc, FINS_TMODE);
+	sc->fins_tempsel = fins_read_sens(sc, FINS_SENS_TMODE(sc));
 }
+
+#if 0
+void
+fins_get_dividers(struct fins_softc *sc)
+{
+	int i, p, m;
+	u_int16_t r = fins_read_sens_2(sc, FINS_SENS_VDIVS);
+
+	for (i = 0; i < 6; ++i) {
+		p = (i < 4) ? i : i + 2;
+		m = (r & (0x03 << p)) >> p;
+		if (m == 3)
+			m = 4;
+		fins_71882_sensors[i + 1].fs_aux = FRFACT_NONE << m;
+	}
+}
+#endif
 
 void
 fins_refresh(void *arg)
@@ -333,30 +408,30 @@ fins_refresh(void *arg)
 	struct fins_softc *sc = arg;
 	int i;
 
-	for (i = 0; i < sc->fins_numsensors; i++)
+	for (i = 0; sc->fins_sensors[i].fs_refresh != NULL; ++i)
 		sc->fins_sensors[i].fs_refresh(sc, i);
 }
 
 void
-fins_refresh_volt(struct fins_softc *sc, int n)
+fins_get_volt(struct fins_softc *sc, int n)
 {
 	struct ksensor *sensor = &sc->fins_ksensors[n];
 	struct fins_sensor *fs = &sc->fins_sensors[n];
 	int data;
 
-	data = sc->fins_readreg(sc, fs->fs_reg);
+	data = fins_read_sens(sc, fs->fs_reg);
 	if (data == 0xff || data == 0) {
 		sensor->flags |= SENSOR_FINVALID;
 		sensor->value = 0;
 	} else {
 		sensor->flags &= ~SENSOR_FINVALID;
-		sensor->value = data * fs->fs_rfact;
+		sensor->value = data * fs->fs_aux;
 	}
 }
 
 /* The BIOS seems to add a fudge factor to the CPU temp of +5C */
 void
-fins_refresh_temp(struct fins_softc *sc, int n)
+fins_get_temp(struct fins_softc *sc, int n)
 {
 	struct ksensor *sensor = &sc->fins_ksensors[n];
 	struct fins_sensor *fs = &sc->fins_sensors[n];
@@ -369,7 +444,7 @@ fins_refresh_temp(struct fins_softc *sc, int n)
 	 * what kind of sensor is used.
 	 * A disconnected sensor seems to read over 110 or so.
 	 */
-	data = sc->fins_readreg(sc, fs->fs_reg) & 0xFF;
+	data = fins_read_sens(sc, fs->fs_reg);
 	max = (sc->fins_tempsel & fs->fs_aux) ? 111 : 128;
 	if (data == 0 || data >= max) {	/* disconnected? */
 		sensor->flags |= SENSOR_FINVALID;
@@ -382,6 +457,7 @@ fins_refresh_temp(struct fins_softc *sc, int n)
 
 /* The chip holds a fudge factor for BJT sensors */
 /* this is currently unused but might be reenabled */
+#if 0
 void
 fins_refresh_offset(struct fins_softc *sc, int n)
 {
@@ -390,22 +466,21 @@ fins_refresh_offset(struct fins_softc *sc, int n)
 	u_int data;
 
 	sensor->flags &= ~SENSOR_FINVALID;
-	data = sc->fins_readreg(sc, fs->fs_reg);
+	data = fins_read_sens(sc, fs->fs_reg);
 	data |= ~0 * (data & 0x40);	/* sign extend 7-bit value */
 	sensor->value = data * 1000000 + 273150000;
 }
-
+#endif
 
 /* fan speed appears to be a 12-bit number */
 void
-fins_refresh_fanrpm(struct fins_softc *sc, int n)
+fins_get_rpm(struct fins_softc *sc, int n)
 {
 	struct ksensor *sensor = &sc->fins_ksensors[n];
 	struct fins_sensor *fs = &sc->fins_sensors[n];
 	int data;
 
-	data = sc->fins_readreg(sc, fs->fs_reg) << 8;
-	data |= sc->fins_readreg(sc, fs->fs_reg + 1);
+	data = fins_read_sens_2(sc, fs->fs_reg);
 	if (data >= 0xfff) {
 		sensor->value = 0;
 		sensor->flags |= SENSOR_FINVALID;
@@ -413,4 +488,29 @@ fins_refresh_fanrpm(struct fins_softc *sc, int n)
 		sensor->value = 1500000 / data;
 		sensor->flags &= ~SENSOR_FINVALID;
 	}
+}
+
+int
+fins_wdog_cb(void *arg, int period)
+{
+	struct fins_softc *sc = arg;
+	u_int8_t cr0, cr1, t;
+
+	cr0 = fins_read_wdog(sc, FINS_WDOG_CR0) & ~FINS_WDOG_OUTEN;
+	fins_write_wdog(sc, FINS_WDOG_CR0, cr0);
+
+	cr1 = sc->fins_wdog_cr;
+	if (period > 0xff) {
+		cr1 |= FINS_WDOG_MINS;
+		t = (period + 59) / 60;
+		period = (int)t * 60;
+	} else if (period > 0)
+		t = period;
+	else
+		return (0);
+
+	fins_write_wdog(sc, FINS_WDOG_TIMER, t);
+	fins_write_wdog(sc, FINS_WDOG_CR0, cr0 | FINS_WDOG_OUTEN);
+	fins_write_wdog(sc, FINS_WDOG_CR1, cr1 | FINS_WDOG_EN);
+	return (period);
 }
