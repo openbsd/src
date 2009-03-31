@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2008/12/01 23:32:18 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.6 2009/03/31 21:03:48 tobias Exp $ */
 
 /*
  * Copyright (c) 2008 Uwe Stuehler <uwe@openbsd.org>
@@ -486,9 +486,13 @@ pushfile(const char *name)
 {
 	struct file	*nfile;
 
-	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
-	    (nfile->name = strdup(name)) == NULL) {
+	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
 		log_warn("malloc");
+		return (NULL);
+	}
+	if ((nfile->name = strdup(name)) == NULL) {
+		log_warn("malloc");
+		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {

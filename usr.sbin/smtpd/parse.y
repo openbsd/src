@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.29 2009/03/19 00:40:34 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.30 2009/03/31 21:03:49 tobias Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1228,9 +1228,13 @@ pushfile(const char *name, int secret)
 {
 	struct file	*nfile;
 
-	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
-	    (nfile->name = strdup(name)) == NULL) {
+	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
 		log_warn("malloc");
+		return (NULL);
+	}
+	if ((nfile->name = strdup(name)) == NULL) {
+		log_warn("malloc");
+		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
@@ -1273,9 +1277,13 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 
 	conf = x_conf;
 	bzero(conf, sizeof(*conf));
-	if ((conf->sc_maps = calloc(1, sizeof(*conf->sc_maps))) == NULL ||
-	    (conf->sc_rules = calloc(1, sizeof(*conf->sc_rules))) == NULL) {
+	if ((conf->sc_maps = calloc(1, sizeof(*conf->sc_maps))) == NULL) {
 		log_warn("cannot allocate memory");
+		return 0;
+	}
+	if ((conf->sc_rules = calloc(1, sizeof(*conf->sc_rules))) == NULL) {
+		log_warn("cannot allocate memory");
+		free(conf->sc_maps);
 		return 0;
 	}
 

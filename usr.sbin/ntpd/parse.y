@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.45 2008/10/17 14:32:47 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.46 2009/03/31 21:03:48 tobias Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -559,9 +559,13 @@ pushfile(const char *name)
 {
 	struct file	*nfile;
 
-	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
-	    (nfile->name = strdup(name)) == NULL) {
+	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
 		log_warn("malloc");
+		return (NULL);
+	}
+	if ((nfile->name = strdup(name)) == NULL) {
+		log_warn("malloc");
+		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {

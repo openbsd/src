@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.127 2008/12/05 16:53:07 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.128 2009/03/31 21:03:49 tobias Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1807,9 +1807,13 @@ pushfile(const char *name, int secret)
 {
 	struct file	*nfile;
 
-	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
-	    (nfile->name = strdup(name)) == NULL) {
+	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
 		log_warn("malloc");
+		return (NULL);
+	}
+	if ((nfile->name = strdup(name)) == NULL) {
+		log_warn("malloc");
+		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
@@ -1857,6 +1861,17 @@ parse_config(const char *filename, int opts)
 	    (conf->sc_relays = calloc(1, sizeof(*conf->sc_relays))) == NULL ||
 	    (conf->sc_protos = calloc(1, sizeof(*conf->sc_protos))) == NULL ||
 	    (conf->sc_rdrs = calloc(1, sizeof(*conf->sc_rdrs))) == NULL) {
+		if (conf != NULL) {
+			if (conf->sc_tables != NULL)
+				free(conf->sc_tables);
+			if (conf->sc_relays != NULL)
+				free(conf->sc_relays);
+			if (conf->sc_protos != NULL)
+				free(conf->sc_protos);
+			if (conf->sc_rdrs != NULL)
+				free(conf->sc_rdrs);
+			free(conf);
+		}
 		log_warn("cannot allocate memory");
 		return (NULL);
 	}

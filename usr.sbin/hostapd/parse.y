@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.40 2009/02/15 22:27:13 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.41 2009/03/31 21:03:48 tobias Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1665,9 +1665,13 @@ pushfile(const char *name, int secret)
 {
 	struct file	*nfile;
 
-	if ((nfile = calloc(1, sizeof(struct file))) == NULL ||
-	    (nfile->name = strdup(name)) == NULL) {
+	if ((nfile = calloc(1, sizeof(struct file))) == NULL) {
 		warn("out of memory");
+		return (NULL);
+	}
+	if ((nfile->name = strdup(name)) == NULL) {
+		warn("out of memory");
+		free(nfile);
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
