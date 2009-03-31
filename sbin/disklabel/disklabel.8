@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.80 2009/03/31 00:32:25 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.81 2009/03/31 11:33:47 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -339,9 +339,6 @@ Delete an existing partition (or
 .Ql *
 to delete all partitions).
 If no partition is specified, the user will be prompted for one.
-The
-.Ql c
-partition cannot be deleted.
 .It Cm e
 Edit drive parameters.
 This option is used to set the following parameters:
@@ -426,9 +423,7 @@ By default, some settings are reserved for experts only
 .It Cm x
 Exit the editor without saving any changes to the label.
 .It Cm z
-Zeroes out the existing partition table, leaving only the
-.Sq c
-partition.
+Zero out the existing partition table and mountpoint information.
 The drive parameters are not changed.
 .El
 .Pp
@@ -629,7 +624,9 @@ excluding
 .Sq c .
 The
 .Sq c
-partition is reserved for the entire physical disk.
+partition describes the entire physical disk, is automatically created
+by the kernel, and cannot be modified or deleted by
+.Nm .
 By convention, the
 .Sq a
 partition of the boot disk is the root partition, and the
