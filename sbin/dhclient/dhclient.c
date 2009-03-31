@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.124 2009/03/10 23:19:36 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.125 2009/03/31 01:31:26 dlg Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -379,10 +379,8 @@ main(int argc, char *argv[])
 	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) == -1)
 		error("socket(PF_ROUTE, SOCK_RAW): %m");
 
-	ROUTE_SETFILTER(rtfilter, RTM_NEWADDR);
-	ROUTE_SETFILTER(rtfilter, RTM_DELADDR);
-	ROUTE_SETFILTER(rtfilter, RTM_IFINFO);
-	ROUTE_SETFILTER(rtfilter, RTM_IFANNOUNCE);
+	rtfilter = ROUTE_FILTER(RTM_NEWADDR) | ROUTE_FILTER(RTM_DELADDR) |
+	    ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_IFANNOUNCE);
 
 	if (setsockopt(routefd, PF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)

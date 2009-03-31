@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.59 2009/02/03 16:42:54 michele Exp $	*/
+/*	$OpenBSD: route.h,v 1.60 2009/03/31 01:31:26 dlg Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -301,7 +301,7 @@ struct rt_omsghdr {
 #define ROUTE_MSGFILTER	1	/* bitmask to specifiy which types should be
 				   sent to the client. */
 
-#define ROUTE_SETFILTER(x, m)	(x) |= (1 << (m))
+#define ROUTE_FILTER(m)	(1 << (m))
 
 struct rt_addrinfo {
 	int	rti_addrs;
