@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.13 2008/05/09 12:47:42 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.14 2009/03/31 09:11:45 michele Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -917,7 +917,7 @@ fetchtable(void)
 		if (iface != NULL)
 			kr->r.metric = iface->cost;
 		else
-			kr->r.metric = 1;
+			kr->r.metric = DEFAULT_COST;
 
 		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
 			switch (sa->sa_family) {
@@ -1036,8 +1036,10 @@ dispatch_rtmsg(void)
 	struct sockaddr_rtlabel	*label;
 	struct kroute_node	*kr;
 	struct in_addr		 prefix, nexthop, netmask;
+	struct iface		*iface = NULL;
 	int			 flags;
 	u_short			 ifindex = 0;
+	u_int8_t		 metric;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
 		log_warn("dispatch_rtmsg: read error");
@@ -1162,9 +1164,17 @@ dispatch_rtmsg(void)
 					log_warn("dispatch_rtmsg");
 					return (-1);
 				}
+
+				iface = if_find_index(rtm->rtm_index);
+				if (iface != NULL)
+					metric = iface->cost;
+				else
+					metric = DEFAULT_COST;
+
 				kr->r.prefix.s_addr = prefix.s_addr;
 				kr->r.netmask.s_addr = netmask.s_addr;
 				kr->r.nexthop.s_addr = nexthop.s_addr;
+				kr->r.metric = metric;
 				kr->r.flags = flags;
 				kr->r.ifindex = ifindex;
 
