@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.31 2009/02/15 17:06:30 mikeb Exp $	*/
+/*	$OpenBSD: locore.S,v 1.32 2009/03/31 08:49:18 art Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -715,35 +715,6 @@ ENTRY(longjmp)
 /*****************************************************************************/
 
 /*
- * The following primitives manipulate the run queues.
- * _whichqs tells which of the 32 queues _qs
- * have processes in them.  Setrq puts processes into queues, Remrq
- * removes them from queues.  The running process is on no queue,
- * other processes are on a queue related to p->p_pri, divided by 4
- * actually to shrink the 0-127 range of priorities into the 32 available
- * queues.
- */
-	.globl	_C_LABEL(uvmexp),_C_LABEL(panic)
-
-#ifdef DIAGNOSTIC
-NENTRY(switch_error1)
-	movabsq	$1f,%rdi
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_switch 1"
-NENTRY(switch_error2)
-	movabsq	$1f,%rdi
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_switch 2"
-NENTRY(switch_error3)
-	movabsq	$1f,%rdi
-	call	_C_LABEL(panic)
-	/* NOTREACHED */
-1:	.asciz	"cpu_switch 3"
-#endif /* DIAGNOSTIC */
-
-/*
  * int cpu_switchto(struct proc *old, struct proc *new)
  * Switch from "old" proc to "new".
  */
@@ -852,13 +823,6 @@ switch_restored:
 
 switch_return:
 
-#if 0
-	/* Violation of lock ordering, since we're holding the sched_lock */
-	movl	$IPL_NONE,%edi
-	call	_C_LABEL(Xspllower)
-	movl	$IPL_HIGH,CPUVAR(ILEVEL)
-#endif
-
 	popq	%r15
 	popq	%r14
 	popq	%r13
@@ -877,6 +841,25 @@ ENTRY(cpu_idle_cycle)
 ENTRY(cpu_idle_leave)
 	ret
 
+	.globl	_C_LABEL(panic)
+
+#ifdef DIAGNOSTIC
+NENTRY(switch_error1)
+	movabsq	$1f,%rdi
+	call	_C_LABEL(panic)
+	/* NOTREACHED */
+1:	.asciz	"cpu_switch 1"
+NENTRY(switch_error2)
+	movabsq	$1f,%rdi
+	call	_C_LABEL(panic)
+	/* NOTREACHED */
+1:	.asciz	"cpu_switch 2"
+NENTRY(switch_error3)
+	movabsq	$1f,%rdi
+	call	_C_LABEL(panic)
+	/* NOTREACHED */
+1:	.asciz	"cpu_switch 3"
+#endif /* DIAGNOSTIC */
 
 /*
  * savectx(struct pcb *pcb);
