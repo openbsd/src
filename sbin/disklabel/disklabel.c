@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.146 2009/03/31 01:22:41 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.147 2009/03/31 23:58:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.146 2009/03/31 01:22:41 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.147 2009/03/31 23:58:36 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1547,7 +1547,7 @@ checklabel(struct disklabel *lp)
 		pp = &lp->d_partitions[i];
 		if (DL_GETPSIZE(pp) == 0 && DL_GETPOFFSET(pp) != 0)
 			warnx("warning, partition %c: size 0, but offset %lld",
-			    part, DL_GETPSIZE(pp));
+			    part, DL_GETPOFFSET(pp));
 #ifdef SUN_CYLCHECK
 		if (lp->d_flags & D_VENDOR) {
 			if (i != RAW_PART && DL_GETPSIZE(pp) % lp->d_secpercyl)
