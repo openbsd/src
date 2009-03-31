@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.145 2009/03/30 00:39:26 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.146 2009/03/31 01:22:41 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.145 2009/03/30 00:39:26 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.146 2009/03/31 01:22:41 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -768,14 +768,9 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 		    bootxx ? bootxx : "NONE");
 
 	/*
-	 * Strange rules:
-	 * 1. One-piece bootstrap (hp300/hp800)
-	 *	up to d_bbsize bytes of ``xxboot'' go in bootarea, the rest
-	 *	is remembered and written later following the bootarea.
-	 * 2. Two-piece bootstraps (vax/i386?/mips?)
-	 *	up to d_secsize bytes of ``xxboot'' go in first d_secsize
-	 *	bytes of bootarea, remaining d_bbsize-d_secsize filled
-	 *	from ``bootxx''.
+	 * For NUMBOOT > 0 architectures (hp300/hppa/hppa64/landisk/vax)
+	 * up to d_bbsize bytes of ``xxboot'' go in bootarea, the rest
+	 * is remembered and written later following the bootarea.
 	 */
 	b = open(xxboot, O_RDONLY);
 	if (b < 0)
