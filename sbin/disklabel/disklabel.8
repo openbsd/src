@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.79 2009/03/30 10:40:41 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.80 2009/03/31 00:32:25 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 30 2009 $
+.Dd $Mdocdate: March 31 2009 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -132,8 +132,7 @@ partitions on the disk.
 Note that this option will only work for disks
 that are capable of reporting their geometry, such as SCSI, IDE, and ESDI.
 .It Fl E
-Use a simple initial label editor, using the command-driven built-in
-editor described below.
+Use the built-in command-driven label editor described below.
 .It Fl e
 Edit an existing disk label using the editor specified in the
 .Ev EDITOR
@@ -257,10 +256,9 @@ When the editor terminates, the formatted label is reread and
 used to rewrite the disk label.
 Existing bootstrap code is unchanged.
 .Pp
-The initial label editor mode
+The built-in label editor
 .Pq fourth form
-is only intended for new disks as it will move partitions around as necessary
-to maintain a contiguous pool of free blocks.
+provides a simple interactive label editor.
 Some commands or prompts take an optional unit.
 Available units are
 .Sq b
