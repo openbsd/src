@@ -489,7 +489,7 @@ radeon_do_cp_reset(drm_radeon_private_t *dev_priv)
 
 	cur_read_ptr = RADEON_READ(RADEON_CP_RB_RPTR);
 	RADEON_WRITE(RADEON_CP_RB_WPTR, cur_read_ptr);
-	SET_RING_HEAD(dev_priv, cur_read_ptr);
+	radeondrm_set_ring_head(dev_priv, cur_read_ptr);
 	dev_priv->ring.tail = cur_read_ptr;
 }
 
@@ -617,7 +617,7 @@ radeon_cp_init_ring_buffer(struct drm_device *dev,
 	/* Initialize the ring buffer's read and write pointers */
 	cur_read_ptr = RADEON_READ(RADEON_CP_RB_RPTR);
 	RADEON_WRITE(RADEON_CP_RB_WPTR, cur_read_ptr);
-	SET_RING_HEAD(dev_priv, cur_read_ptr);
+	radeondrm_set_ring_head(dev_priv, cur_read_ptr);
 	dev_priv->ring.tail = cur_read_ptr;
 
 #if __OS_HAS_AGP
@@ -665,10 +665,6 @@ radeon_cp_init_ring_buffer(struct drm_device *dev,
 	RADEON_WRITE(RADEON_SCRATCH_ADDR, RADEON_READ(RADEON_CP_RB_RPTR_ADDR)
 		     + RADEON_SCRATCH_REG_OFFSET);
 
-	dev_priv->scratch = ((__volatile__ u32 *)
-			     dev_priv->ring_rptr->handle +
-			     (RADEON_SCRATCH_REG_OFFSET / sizeof(u32)));
-
 	RADEON_WRITE(RADEON_SCRATCH_UMSK, 0x7);
 
 	/* Turn on bus mastering */
@@ -702,14 +698,17 @@ radeon_cp_init_ring_buffer(struct drm_device *dev,
 		break;
 	}
 
-	dev_priv->sarea_priv->last_frame = dev_priv->scratch[0] = 0;
+	radeondrm_write_rptr(dev_priv, RADEON_SCRATCHOFF(0), 0);
+	dev_priv->sarea_priv->last_frame = 0;
 	RADEON_WRITE(RADEON_LAST_FRAME_REG, dev_priv->sarea_priv->last_frame);
 
-	dev_priv->sarea_priv->last_dispatch = dev_priv->scratch[1] = 0;
+	radeondrm_write_rptr(dev_priv, RADEON_SCRATCHOFF(1), 0);
+	dev_priv->sarea_priv->last_dispatch = 0;
 	RADEON_WRITE(RADEON_LAST_DISPATCH_REG,
 		     dev_priv->sarea_priv->last_dispatch);
 
-	dev_priv->sarea_priv->last_clear = dev_priv->scratch[2] = 0;
+	radeondrm_write_rptr(dev_priv, RADEON_SCRATCHOFF(2), 0);
+	dev_priv->sarea_priv->last_clear = 0;
 	RADEON_WRITE(RADEON_LAST_CLEAR_REG, dev_priv->sarea_priv->last_clear);
 
 	radeon_do_wait_for_idle(dev_priv);
@@ -731,11 +730,11 @@ radeon_test_writeback(drm_radeon_private_t *dev_priv)
 	/* Writeback doesn't seem to work everywhere, test it here and possibly
 	 * enable it if it appears to work
 	 */
-	DRM_WRITE32(dev_priv->ring_rptr, RADEON_SCRATCHOFF(1), 0);
+	radeondrm_write_rptr(dev_priv, RADEON_SCRATCHOFF(1), 0);
 	RADEON_WRITE(RADEON_SCRATCH_REG1, 0xdeadbeef);
 
 	for (tmp = 0; tmp < dev_priv->usec_timeout; tmp++) {
-		if (DRM_READ32(dev_priv->ring_rptr, RADEON_SCRATCHOFF(1)) ==
+		if (radeondrm_read_rptr(dev_priv, RADEON_SCRATCHOFF(1)) ==
 		    0xdeadbeef)
 			break;
 		DRM_UDELAY(1);
@@ -1516,7 +1515,8 @@ radeon_freelist_get(struct drm_device *dev)
 	start = dev_priv->last_buf;
 
 	for (t = 0; t < dev_priv->usec_timeout; t++) {
-		u32 done_age = GET_SCRATCH(1);
+		u_int32_t done_age = radeondrm_get_scratch(dev_priv, 1);
+
 		DRM_DEBUG("done_age = %d\n", done_age);
 		for (i = start; i < dma->buf_count; i++) {
 			buf = dma->buflist[i];
@@ -1547,7 +1547,9 @@ struct drm_buf *radeon_freelist_get(struct drm_device * dev)
 	struct drm_buf *buf;
 	int i, t;
 	int start;
-	u32 done_age = DRM_READ32(dev_priv->ring_rptr, RADEON_SCRATCHOFF(1));
+	u32 done_age;
+
+	done_age = radeondrm_get_scratch(dev_priv, 1);
 
 	if (++dev_priv->last_buf >= dma->buf_count)
 		dev_priv->last_buf = 0;
@@ -1593,12 +1595,14 @@ radeon_freelist_reset(struct drm_device *dev)
 int
 radeon_wait_ring(drm_radeon_private_t *dev_priv, int n)
 {
-	drm_radeon_ring_buffer_t *ring = &dev_priv->ring;
-	int i;
-	u32 last_head = GET_RING_HEAD(dev_priv);
+	drm_radeon_ring_buffer_t	*ring = &dev_priv->ring;
+	u_int32_t			 last_head;
+	int				 i;
+
+	last_head = radeondrm_get_ring_head(dev_priv);
 
 	for (i = 0; i < dev_priv->usec_timeout; i++) {
-		u_int32_t head = GET_RING_HEAD(dev_priv);
+		u_int32_t head = radeondrm_get_ring_head(dev_priv);
 
 		ring->space = head - ring->tail;
 		if (ring->space <= 0)

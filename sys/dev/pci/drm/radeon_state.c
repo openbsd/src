@@ -2341,13 +2341,13 @@ radeon_cp_getparam(struct drm_device *dev, void *data,
 		value = dev_priv->gart_buffers_offset;
 		break;
 	case RADEON_PARAM_LAST_FRAME:
-		value = GET_SCRATCH(0);
+		value = radeondrm_get_scratch(dev_priv, 0);
 		break;
 	case RADEON_PARAM_LAST_DISPATCH:
-		value = GET_SCRATCH(1);
+		value = radeondrm_get_scratch(dev_priv, 1);
 		break;
 	case RADEON_PARAM_LAST_CLEAR:
-		value = GET_SCRATCH(2);
+		value = radeondrm_get_scratch(dev_priv, 2);
 		break;
 	case RADEON_PARAM_IRQ_NR:
 		value = dev->irq;

@@ -686,6 +686,58 @@ radeondrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
 	return (EINVAL);
 }
 
+u_int32_t
+radeondrm_read_rptr(struct drm_radeon_private *dev_priv, u_int32_t off)
+{
+	u_int32_t val;
+
+	if (dev_priv->flags & RADEON_IS_AGP) {
+		val = bus_space_read_4(dev_priv->ring_rptr->bst,
+		    dev_priv->ring_rptr->bsh, off);
+	} else {
+		val = *(((volatile u_int32_t *)dev_priv->ring_rptr->handle) +
+		    (off / sizeof(u_int32_t)));
+		val = letoh32(val);
+	}
+	return (val);
+}
+
+void
+radeondrm_write_rptr(struct drm_radeon_private *dev_priv, u_int32_t off,
+    u_int32_t val)
+{
+	if (dev_priv->flags & RADEON_IS_AGP) {
+		bus_space_write_4(dev_priv->ring_rptr->bst,
+		    dev_priv->ring_rptr->bsh, off, val);
+	} else
+		*(((volatile u_int32_t *)dev_priv->ring_rptr->handle +
+		    (off / sizeof(u_int32_t)))) = htole32(val);
+}
+
+u_int32_t
+radeondrm_get_ring_head(struct drm_radeon_private *dev_priv)
+{
+	if (dev_priv->writeback_works)
+		return (radeondrm_read_rptr(dev_priv, 0));
+	else
+		return (RADEON_READ(RADEON_CP_RB_RPTR));
+}
+
+void
+radeondrm_set_ring_head(struct drm_radeon_private *dev_priv, u_int32_t val)
+{
+	radeondrm_write_rptr(dev_priv, 0, val);
+}
+
+u_int32_t
+radeondrm_get_scratch(struct drm_radeon_private *dev_priv, u_int32_t off)
+{
+	if (dev_priv->writeback_works)
+		return (radeondrm_read_rptr(dev_priv, RADEON_SCRATCHOFF(off)));
+	else
+		return (RADEON_READ( RADEON_SCRATCH_REG0 + 4*(off) ));
+}
+
 void
 radeondrm_begin_ring(struct drm_radeon_private *dev_priv, int ncmd)
 {
@@ -718,7 +770,7 @@ radeondrm_commit_ring(struct drm_radeon_private *dev_priv)
 {
 	/* flush write combining buffer and writes to ring */
 	DRM_MEMORYBARRIER();
-	GET_RING_HEAD(dev_priv);
+	radeondrm_get_ring_head(dev_priv);
 	RADEON_WRITE(RADEON_CP_RB_WPTR, dev_priv->ring.tail);
 	/* read from PCI bus to ensure correct posting */
 	RADEON_READ(RADEON_CP_RB_RPTR);

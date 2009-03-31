@@ -154,10 +154,6 @@ enum radeon_chip_flags {
 	RADEON_IS_IGPGART = 0x01000000UL,
 };
 
-#define GET_RING_HEAD(dev_priv)	(dev_priv->writeback_works ? \
-        DRM_READ32(  (dev_priv)->ring_rptr, 0 ) : RADEON_READ(RADEON_CP_RB_RPTR))
-#define SET_RING_HEAD(dev_priv,val)	DRM_WRITE32( (dev_priv)->ring_rptr, 0, (val) )
-
 typedef struct drm_radeon_freelist {
 	unsigned int age;
 	struct drm_buf *buf;
@@ -236,7 +232,6 @@ typedef struct drm_radeon_private {
 	drm_radeon_freelist_t *head;
 	drm_radeon_freelist_t *tail;
 	int last_buf;
-	volatile u32 *scratch;
 	int writeback_works;
 
 	int usec_timeout;
@@ -324,11 +319,18 @@ static __inline__ int radeon_check_offset(drm_radeon_private_t *dev_priv,
 		(off >= gart_start && off <= gart_end));
 }
 
-void	radeondrm_begin_ring(struct drm_radeon_private *, int);
-void	radeondrm_advance_ring(struct drm_radeon_private *);
-void	radeondrm_commit_ring(struct drm_radeon_private *);
-void	radeondrm_out_ring(struct drm_radeon_private *, u_int32_t);
-void	radeondrm_out_ring_table(struct drm_radeon_private *, u_int32_t *, int);
+u_int32_t	radeondrm_read_rptr(struct drm_radeon_private *, u_int32_t);
+void		radeondrm_write_rptr(struct drm_radeon_private *, u_int32_t,
+		    u_int32_t);
+u_int32_t	radeondrm_get_ring_head(struct drm_radeon_private *);
+void		radeondrm_set_ring_head(struct drm_radeon_private *, u_int32_t);
+u_int32_t	radeondrm_get_scratch(struct drm_radeon_private *, u_int32_t);
+void		radeondrm_begin_ring(struct drm_radeon_private *, int);
+void		radeondrm_advance_ring(struct drm_radeon_private *);
+void		radeondrm_commit_ring(struct drm_radeon_private *);
+void		radeondrm_out_ring(struct drm_radeon_private *, u_int32_t);
+void		radeondrm_out_ring_table(struct drm_radeon_private *,
+		    u_int32_t *, int);
 
 				/* radeon_cp.c */
 extern int radeon_cp_init(struct drm_device *dev, void *data, struct drm_file *file_priv);
@@ -600,10 +602,6 @@ extern int r300_do_cp_cmdbuf(struct drm_device *dev,
 #define RADEON_SCRATCH_ADDR		0x0774
 
 #define RADEON_SCRATCHOFF( x )		(RADEON_SCRATCH_REG_OFFSET + 4*(x))
-
-#define GET_SCRATCH( x )	(dev_priv->writeback_works			\
-				? DRM_READ32( dev_priv->ring_rptr, RADEON_SCRATCHOFF(x) ) \
-				: RADEON_READ( RADEON_SCRATCH_REG0 + 4*(x) ) )
 
 #define RADEON_CRTC_CRNT_FRAME 0x0214
 #define RADEON_CRTC2_CRNT_FRAME 0x0314

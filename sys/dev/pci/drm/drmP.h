@@ -149,13 +149,6 @@ typedef u_int8_t u8;
 					"lock; addl $0,0(%%rsp)" : : : "memory");
 #endif
 
-#define DRM_READ8(map, offset) drm_read8(map, offset)
-#define DRM_READ16(map, offset) drm_read16(map, offset)
-#define DRM_READ32(map, offset) drm_read32(map, offset)
-#define DRM_WRITE8(map, offset, val) drm_write8(map, offset, val)
-#define DRM_WRITE16(map, offset, val) drm_write16(map, offset, val)
-#define DRM_WRITE32(map, offset, val) drm_write32(map, offset, val)
-
 #define DRM_VERIFYAREA_READ( uaddr, size )				\
 	(!uvm_map_checkprot(&(curproc->p_vmspace->vm_map),		\
 	    (vaddr_t)uaddr, (vaddr_t)uaddr+size, UVM_PROT_READ))
@@ -529,12 +522,6 @@ int	drm_ctxbitmap_init(struct drm_device *);
 void	drm_ctxbitmap_cleanup(struct drm_device *);
 void	drm_ctxbitmap_free(struct drm_device *, int);
 int	drm_ctxbitmap_next(struct drm_device *);
-u_int8_t	drm_read8(drm_local_map_t *, unsigned long);
-u_int16_t drm_read16(drm_local_map_t *, unsigned long);
-u_int32_t drm_read32(drm_local_map_t *, unsigned long);
-void	drm_write8(drm_local_map_t *, unsigned long, u_int8_t);
-void	drm_write16(drm_local_map_t *, unsigned long, u_int16_t);
-void	drm_write32(drm_local_map_t *, unsigned long, u_int32_t);
 
 /* Locking IOCTL support (drm_lock.c) */
 int	drm_lock_take(struct drm_lock_data *, unsigned int);
