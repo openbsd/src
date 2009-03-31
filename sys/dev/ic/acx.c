@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.92 2009/03/29 21:53:52 sthen Exp $ */
+/*	$OpenBSD: acx.c,v 1.93 2009/03/31 22:06:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1093,7 +1093,7 @@ acx_watchdog(struct ifnet *ifp)
 	if (sc->sc_txtimer) {
 		if (--sc->sc_txtimer == 0) {
 			printf("%s: watchdog timeout\n", ifp->if_xname);
-			acx_txeof(ifp->if_softc);
+			acx_init(ifp);
 			ifp->if_oerrors++;
 			return;
 		} else
