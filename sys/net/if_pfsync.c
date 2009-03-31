@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.118 2009/03/23 06:19:59 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.119 2009/03/31 01:21:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -89,16 +89,13 @@
 #define PFSYNC_MINPKT ( \
 	sizeof(struct ip) + \
 	sizeof(struct pfsync_header) + \
-	sizeof(struct pfsync_subheader) + \
-	sizeof(struct pfsync_eof))
+	sizeof(struct pfsync_subheader))
 
 struct pfsync_pkt {
 	struct ip *ip;
 	struct in_addr src;
 	u_int8_t flags;
 };
-
-int	pfsync_input_hmac(struct mbuf *, int);
 
 int	pfsync_upd_tcp(struct pf_state *, struct pfsync_state_peer *,
 	    struct pfsync_state_peer *);
@@ -622,7 +619,7 @@ pfsync_input(struct mbuf *m, ...)
 	struct pfsync_header *ph;
 	struct pfsync_subheader subh;
 
-	int offset;
+	int offset, len;
 	int rv;
 
 	pfsyncstats.pfsyncs_ipackets++;
@@ -667,13 +664,11 @@ pfsync_input(struct mbuf *m, ...)
 		pfsyncstats.pfsyncs_badver++;
 		goto done;
 	}
-
-#if 0
-	if (pfsync_input_hmac(m, offset) != 0) {
-		/* XXX stats */
+	len = ntohs(ph->len) + offset;
+	if (m->m_pkthdr.len < len) {
+		pfsyncstats.pfsyncs_badlen++;
 		goto done;
 	}
-#endif
 
 	/* Cheaper to grab this now than having to mess with mbufs later */
 	pkt.ip = ip;
@@ -684,7 +679,7 @@ pfsync_input(struct mbuf *m, ...)
 		pkt.flags |= PFSYNC_SI_CKSUM;
 
 	offset += sizeof(*ph);
-	for (;;) {
+	while (offset <= len - sizeof(subh)) {
 		m_copydata(m, offset, sizeof(subh), (caddr_t)&subh);
 		offset += sizeof(subh);
 
@@ -1314,8 +1309,8 @@ int
 pfsync_in_eof(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 {
 	/* check if we are at the right place in the packet */
-	if (offset != m->m_pkthdr.len - sizeof(struct pfsync_eof))
-		pfsyncstats.pfsyncs_badact++;
+	if (offset != m->m_pkthdr.len)
+		pfsyncstats.pfsyncs_badlen++;
 
 	/* we're done. free and let the caller return */
 	m_freem(m);
@@ -1732,8 +1727,6 @@ pfsync_sendout(void)
 	bzero(subh, sizeof(*subh));
 	subh->action = PFSYNC_ACT_EOF;
 	subh->count = htons(1);
-
-	/* XXX write checksum in EOF here */
 
 	/* we're done, let's put it on the wire */
 #if NBPFILTER > 0

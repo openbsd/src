@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.36 2009/02/16 00:31:25 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.37 2009/03/31 01:21:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -100,8 +100,6 @@
  * | ...			|
  * +----------------------------+
  * | EOF pfsync_subheader	|
- * +----------------------------+
- * | HMAC			|
  * +============================+
  */
 
