@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.129 2009/04/01 14:56:38 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.130 2009/04/01 15:07:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -447,7 +447,7 @@ rdroptsl	: forwardmode TO tablespec interface	{
 			}
 			$3->conf.fwdmode = $1;
 			$3->conf.rdrid = rdr->conf.id;
-			$3->conf.flags |= F_USED | $1;
+			$3->conf.flags |= F_USED;
 		}
 		| LISTEN ON STRING port interface {
 			if (host($3, &rdr->virts,
