@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.100 2009/02/16 19:46:12 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.101 2009/04/01 14:56:38 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2009 $
+.Dd $Mdocdate: April 1 2009 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -500,7 +500,9 @@ configuration directives are described below:
 Start the relay but immediately close any accepted connections.
 .It Xo
 .Op Ic transparent
-.Ic forward to
+.Ic forward
+.Op Ic with ssl
+.Ic to
 .Ar address
 .Op Ic port Ar port
 .Ar options ...
@@ -515,6 +517,13 @@ Use the
 .Ic transparent
 keyword to enable fully-transparent mode; the source address of the
 client will be retained in this case.
+.Pp
+The
+.Ic with ssl
+directive enables client-side SSL mode to connect to the remote host.
+Note that
+.Xr relayd 8
+will not verify the remote SSL certificate.
 .Pp
 The following options may be specified for forward directives:
 .Pp
@@ -1131,3 +1140,7 @@ program was written by
 .An Pierre-Yves Ritschard Aq pyr@openbsd.org
 and
 .An Reyk Floeter Aq reyk@openbsd.org .
+.Sh CAVEATS
+.Xr relayd 8
+does not support verification of server certificates when connecting
+to a remote host using the SSL protocol.

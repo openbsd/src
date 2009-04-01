@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.128 2009/03/31 21:03:49 tobias Exp $	*/
+/*	$OpenBSD: parse.y,v 1.129 2009/04/01 14:56:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -140,8 +140,9 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table
-%type	<v.number>	http_type loglevel mark optssl parent sslcache
+%type	<v.number>	http_type loglevel mark parent
 %type	<v.number>	direction dstmode flag forwardmode proto_type retry
+%type	<v.number>	optssl optsslclient sslcache
 %type	<v.port>	port
 %type	<v.host>	host
 %type	<v.tv>		timeout
@@ -178,6 +179,10 @@ include		: INCLUDE STRING		{
 
 optssl		: /*empty*/	{ $$ = 0; }
 		| SSL		{ $$ = 1; }
+		;
+
+optsslclient	: /*empty*/	{ $$ = 0; }
+		| WITH SSL	{ $$ = 1; }
 		;
 
 http_type	: STRING	{
@@ -573,7 +578,7 @@ tableopts_l	: tableopts tableopts_l
 		| tableopts
 		;
 
-tableopts	: CHECK tablecheck
+tableopts	: CHECK tablecheck 
 		| port			{
 			if ($1.op != PF_OP_EQ) {
 				yyerror("invalid port");
@@ -1217,11 +1222,11 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			}
 			tableport = h->port.val[0];
 		}
-		| forwardmode TO forwardspec interface dstaf	{
+		| forwardmode optsslclient TO forwardspec interface dstaf {
 			rlay->rl_conf.fwdmode = $1;
 			switch ($1) {
 			case FWD_NORMAL:
-				if ($4 == NULL)
+				if ($5 == NULL)
 					break;
 				yyerror("superfluous interface");
 				YYERROR;
@@ -1229,15 +1234,19 @@ relayoptsl	: LISTEN ON STRING port optssl {
 				yyerror("no route for redirections");
 				YYERROR;
 			case FWD_TRANS:
-				if ($4 != NULL)
+				if ($5 != NULL)
 					break;
 				yyerror("missing interface");
 				YYERROR;
 			}
-			if ($4 != NULL) {
-				strlcpy(rlay->rl_conf.ifname, $4,
+			if ($5 != NULL) {
+				strlcpy(rlay->rl_conf.ifname, $5,
 				    sizeof(rlay->rl_conf.ifname));
-				free($4);
+				free($5);
+			}
+			if ($2) {
+				rlay->rl_conf.flags |= F_SSLCLIENT;
+				conf->sc_flags |= F_SSLCLIENT;
 			}
 		}
 		| SESSION TIMEOUT NUMBER		{
@@ -1266,19 +1275,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 		| include
 		;
 
-forwardspec	: tablespec	{
-			if (rlay->rl_dsttable) {
-				yyerror("table already specified");
-				purge_table(conf->sc_tables, $1);
-				YYERROR;
-			}
-
-			rlay->rl_dsttable = $1;
-			rlay->rl_dsttable->conf.flags |= F_USED;
-			rlay->rl_conf.dsttable = $1->conf.id;
-			rlay->rl_conf.dstport = $1->conf.port;
-		}
-		| STRING port retry {
+forwardspec	: STRING port retry	{
 			struct addresslist	 al;
 			struct address		*h;
 
@@ -1307,10 +1304,22 @@ forwardspec	: tablespec	{
 			rlay->rl_conf.dstport = h->port.val[0];
 			rlay->rl_conf.dstretry = $3;
 		}
-		| NAT LOOKUP retry		{
+		| NAT LOOKUP retry	{
 			conf->sc_flags |= F_NEEDPF;
 			rlay->rl_conf.flags |= F_NATLOOK;
 			rlay->rl_conf.dstretry = $3;
+		}
+		| tablespec	{
+			if (rlay->rl_dsttable) {
+				yyerror("table already specified");
+				purge_table(conf->sc_tables, $1);
+				YYERROR;
+			}
+
+			rlay->rl_dsttable = $1;
+			rlay->rl_dsttable->conf.flags |= F_USED;
+			rlay->rl_conf.dsttable = $1->conf.id;
+			rlay->rl_conf.dstport = $1->conf.port;
 		}
 		;
 

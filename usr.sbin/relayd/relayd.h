@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.113 2008/12/05 16:37:56 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.114 2009/04/01 14:56:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -344,6 +344,7 @@ TAILQ_HEAD(addresslist, address);
 #define F_TRAP			0x00040000
 #define F_NEEDPF		0x00080000
 #define F_PORT			0x00100000
+#define F_SSLCLIENT		0x00200000
 
 enum forwardmode {
 	FWD_NORMAL		= 0,

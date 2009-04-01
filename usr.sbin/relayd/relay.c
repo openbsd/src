@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.107 2008/09/29 15:50:56 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.108 2009/04/01 14:56:38 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -103,8 +103,10 @@ void		 relay_close_http(struct session *, u_int, const char *,
 		    u_int16_t);
 
 SSL_CTX		*relay_ssl_ctx_create(struct relay *);
-void		 relay_ssl_transaction(struct session *);
+void		 relay_ssl_transaction(struct session *,
+		    struct ctl_relay_event *);
 void		 relay_ssl_accept(int, short, void *);
+void		 relay_ssl_connect(int, short, void *);
 void		 relay_ssl_connected(struct ctl_relay_event *);
 void		 relay_ssl_readcb(int, short, void *);
 void		 relay_ssl_writecb(int, short, void *);
@@ -408,7 +410,7 @@ relay_privinit(void)
 	struct relay	*rlay;
 	extern int	 debug;
 
-	if (env->sc_flags & F_SSL)
+	if (env->sc_flags & (F_SSL|F_SSLCLIENT))
 		ssl_init(env);
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
@@ -460,7 +462,7 @@ relay_init(void)
 		fatal("relay_init: failed to set resource limit");
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
-		if ((rlay->rl_conf.flags & F_SSL) &&
+		if ((rlay->rl_conf.flags & (F_SSL|F_SSLCLIENT)) &&
 		    (rlay->rl_ssl_ctx = relay_ssl_ctx_create(rlay)) == NULL)
 			fatal("relay_init: failed to create SSL context");
 
@@ -749,9 +751,15 @@ relay_connected(int fd, short sig, void *arg)
 	evbuffercb		 outrd = relay_read;
 	evbuffercb		 outwr = relay_write;
 	struct bufferevent	*bev;
+	struct ctl_relay_event	*out = &con->se_out;
 
 	if (sig == EV_TIMEOUT) {
 		relay_close_http(con, 504, "connect timeout", 0);
+		return;
+	}
+
+	if ((rlay->rl_conf.flags & F_SSLCLIENT) && (out->ssl == NULL)) {
+		relay_ssl_transaction(con, out);
 		return;
 	}
 
@@ -791,8 +799,12 @@ relay_connected(int fd, short sig, void *arg)
 	bev->output = con->se_out.output;
 	if (bev->output == NULL)
 		fatal("relay_connected: invalid output buffer");
-
 	con->se_out.bev = bev;
+
+	/* Initialize the SSL wrapper */
+	if ((rlay->rl_conf.flags & F_SSLCLIENT) && (out->ssl != NULL))
+		relay_ssl_connected(out);
+
 	bufferevent_settimeout(bev,
 	    rlay->rl_conf.timeout.tv_sec, rlay->rl_conf.timeout.tv_sec);
 	bufferevent_enable(bev, EV_READ|EV_WRITE);
@@ -2179,7 +2191,7 @@ relay_session(struct session *con)
 	}
 
 	if ((rlay->rl_conf.flags & F_SSL) && (in->ssl == NULL)) {
-		relay_ssl_transaction(con);
+		relay_ssl_transaction(con, in);
 		return;
 	}
 
@@ -2603,6 +2615,9 @@ relay_ssl_ctx_create(struct relay *rlay)
 	if (!SSL_CTX_set_cipher_list(ctx, proto->sslciphers))
 		goto err;
 
+	if ((rlay->rl_conf.flags & F_SSL) == 0)
+		return (ctx);
+
 	log_debug("relay_ssl_ctx_create: loading certificate");
 	if (!ssl_ctx_use_certificate_chain(ctx,
 	    rlay->rl_ssl_cert, rlay->rl_ssl_cert_len))
@@ -2630,31 +2645,49 @@ relay_ssl_ctx_create(struct relay *rlay)
 }
 
 void
-relay_ssl_transaction(struct session *con)
+relay_ssl_transaction(struct session *con, struct ctl_relay_event *cre)
 {
 	struct relay	*rlay = (struct relay *)con->se_relay;
 	SSL		*ssl;
+	SSL_METHOD	*method;
+	void		(*cb)(int, short, void *);
+	u_int		 flags = EV_TIMEOUT;
 
 	ssl = SSL_new(rlay->rl_ssl_ctx);
 	if (ssl == NULL)
 		goto err;
 
-	if (!SSL_set_ssl_method(ssl, SSLv23_server_method()))
-		goto err;
-	if (!SSL_set_fd(ssl, con->se_in.s))
-		goto err;
-	SSL_set_accept_state(ssl);
+	if (cre->dir == RELAY_DIR_REQUEST) {
+		cb = relay_ssl_accept;
+		method = SSLv23_server_method();
+		flags |= EV_READ;
+	} else {
+		cb = relay_ssl_connect;
+		method = SSLv23_client_method();
+		flags |= EV_WRITE;
+	}
 
-	con->se_in.ssl = ssl;
+	if (!SSL_set_ssl_method(ssl, method))
+		goto err;
+	if (!SSL_set_fd(ssl, cre->s))
+		goto err;
 
-	event_again(&con->se_ev, con->se_in.s, EV_TIMEOUT|EV_READ,
-	    relay_ssl_accept, &con->se_tv_start, &env->sc_timeout, con);
+	if (cre->dir == RELAY_DIR_REQUEST)
+		SSL_set_accept_state(ssl);
+	else
+		SSL_set_connect_state(ssl);
+
+	cre->ssl = ssl;
+
+	event_again(&con->se_ev, cre->s, EV_TIMEOUT|flags,
+	    cb, &con->se_tv_start, &env->sc_timeout, con);
 	return;
 
  err:
 	if (ssl != NULL)
 		SSL_free(ssl);
 	ssl_error(rlay->rl_conf.name, "relay_ssl_transaction");
+	relay_close(con, "session ssl failed");
 }
 
 void
@@ -2713,6 +2746,64 @@ retry:
 	DPRINTF("relay_ssl_accept: session %d: scheduling on %s", con->se_id,
 	    (retry_flag == EV_READ) ? "EV_READ" : "EV_WRITE");
 	event_again(&con->se_ev, fd, EV_TIMEOUT|retry_flag, relay_ssl_accept,
+	    &con->se_tv_start, &env->sc_timeout, con);
+}
+
+void
+relay_ssl_connect(int fd, short event, void *arg)
+{
+	struct session	*con = (struct session *)arg;
+	struct relay	*rlay = (struct relay *)con->se_relay;
+	int		 ret;
+	int		 ssl_err;
+	int		 retry_flag;
+
+	if (event == EV_TIMEOUT) {
+		relay_close(con, "SSL connect timeout");
+		return;
+	}
+
+	retry_flag = ssl_err = 0;
+
+	ret = SSL_connect(con->se_out.ssl);
+	if (ret <= 0) {
+		ssl_err = SSL_get_error(con->se_out.ssl, ret);
+
+		switch (ssl_err) {
+		case SSL_ERROR_WANT_READ:
+			retry_flag = EV_READ;
+			goto retry;
+		case SSL_ERROR_WANT_WRITE:
+			retry_flag = EV_WRITE;
+			goto retry;
+		case SSL_ERROR_ZERO_RETURN:
+		case SSL_ERROR_SYSCALL:
+			if (ret == 0) {
+				relay_close(con, "closed");
+				return;
+			}
+			/* FALLTHROUGH */
+		default:
+			ssl_error(rlay->rl_conf.name, "relay_ssl_connect");
+			relay_close(con, "SSL connect error");
+			return;
+		}
+	}
+
+#ifdef DEBUG
+	log_info("relay %s, session %d connected (%d active)",
+	    rlay->rl_conf.name, con->se_id, relay_sessions);
+#else
+	log_debug("relay %s, session %d connected (%d active)",
+	    rlay->rl_conf.name, con->se_id, relay_sessions);
+#endif
+	relay_connected(fd, EV_WRITE, con);
+	return;
+
+retry:
+	DPRINTF("relay_ssl_connect: session %d: scheduling on %s", con->se_id,
+	    (retry_flag == EV_READ) ? "EV_READ" : "EV_WRITE");
+	event_again(&con->se_ev, fd, EV_TIMEOUT|retry_flag, relay_ssl_connect,
 	    &con->se_tv_start, &env->sc_timeout, con);
 }
 
