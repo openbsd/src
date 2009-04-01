@@ -168,7 +168,7 @@ MaxRequestsPerChild 0
 
 #
 # MaxFOOPerChild: these directives set the current and hard rlimits for
-# the child processes. Attempts to exceed them will cause the the OS to
+# the child processes. Attempts to exceed them will cause the OS to
 # take appropriate action. See the setrlimit(2) and signal(3).
 #
 MaxCPUPerChild 0
