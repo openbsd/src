@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.26 2008/12/24 20:48:33 otto Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.27 2009/04/01 05:31:55 jsg Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -2065,7 +2065,7 @@ main(int argc, char **argv)
 		    "before growing the Filesystem\n\n"
 		    " Did you backup your data (Yes/No) ? ");
 		if (fgets(reply, (int)sizeof(reply), stdin) == NULL ||
-		    strncmp(reply, "Yes", 3)) {
+		    strncasecmp(reply, "Yes", 3)) {
 			printf("\n Nothing done \n");
 			exit (0);
 		}
