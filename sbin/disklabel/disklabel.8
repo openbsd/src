@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.81 2009/03/31 11:33:47 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.82 2009/04/01 06:44:01 jmc Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 31 2009 $
+.Dd $Mdocdate: April 1 2009 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -102,6 +102,26 @@ The disk label contains information about disk characteristics
 and the partition layout, stored on the disk itself.
 It is used by the operating system to optimize disk I/O and
 locate the filesystems resident on the disk.
+.Pp
+.Nm
+supports 15 configurable partitions,
+.Sq a
+through
+.Sq p ,
+excluding
+.Sq c .
+The
+.Sq c
+partition describes the entire physical disk, is automatically created
+by the kernel, and cannot be modified or deleted by
+.Nm .
+By convention, the
+.Sq a
+partition of the boot disk is the root partition, and the
+.Sq b
+partition of the boot disk is the swap partition,
+but all other letters can be used in any order for any other
+partitions as desired.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -615,26 +635,6 @@ will not install bootstrap code that overlaps it.
 .Xr disktab 5 ,
 .Xr scan_ffs 8
 .Sh CAVEATS
-.Nm
-supports 15 configurable partitions,
-.Sq a
-through
-.Sq p ,
-excluding
-.Sq c .
-The
-.Sq c
-partition describes the entire physical disk, is automatically created
-by the kernel, and cannot be modified or deleted by
-.Nm .
-By convention, the
-.Sq a
-partition of the boot disk is the root partition, and the
-.Sq b
-partition of the boot disk is the swap partition,
-but all other letters can be used in any order for any other
-partitions as desired.
-.Pp
 The maximum disk and partition size is 64PB.
 .Pp
 On some machines, such as Sparc and Sparc64, partition tables
