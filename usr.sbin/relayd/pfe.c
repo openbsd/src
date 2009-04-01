@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.53 2008/12/05 16:37:55 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.54 2009/04/01 15:05:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -431,6 +431,7 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 			break;
 		case IMSG_RECONF_END:
 			log_warnx("pfe: configuration reloaded");
+			init_tables(env);
 			pfe_setup_events();
 			pfe_sync();
 			break;
