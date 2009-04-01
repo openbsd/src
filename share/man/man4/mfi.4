@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mfi.4,v 1.12 2009/02/10 19:50:27 grange Exp $
+.\"	$OpenBSD: mfi.4,v 1.13 2009/04/01 11:58:56 marco Exp $
 .\"
 .\" Written by Marco Peereboom <marco@peereboom.us>
 .\"
@@ -23,7 +23,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 10 2009 $
+.Dd $Mdocdate: April 1 2009 $
 .Dt MFI 4
 .Os
 .Sh NAME
@@ -57,8 +57,8 @@ MegaRAID SAS 8888ELP,
 MegaRAID SAS 8880EM2
 .El
 .Pp
-These controllers support RAID 0, RAID 1, RAID 5, RAID 10 and RAID 50
-using either SAS or SATA II drives.
+These controllers support RAID 0, RAID 1, RAID 5, RAID 6, RAID 10, RAID 50 and
+RAID 60 using either SAS or SATA II drives.
 .Pp
 Although the controllers are actual RAID controllers,
 the driver makes them look just like SCSI controllers.
