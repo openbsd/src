@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.28 2008/12/28 23:08:06 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.29 2009/04/01 19:51:10 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -167,6 +167,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	 * XXX Don't pass-through Memory Read Multiple.  Should we?
 	 * XXX Consult the spec...
 	 */
+	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = pa->pa_iot;
 	pba.pba_memt = pa->pa_memt;
