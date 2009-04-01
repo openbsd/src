@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.48 2009/03/24 15:10:03 todd Exp $	*/
+/*	$OpenBSD: part.c,v 1.49 2009/04/01 15:00:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -53,7 +53,6 @@ static const struct part_type {
 	{ 0x05, "Extended DOS"},   /* Extended DOS */
 	{ 0x06, "DOS > 32MB  "},   /* Primary 'big' DOS (> 32MB) */
 	{ 0x07, "NTFS        "},   /* NTFS */
-	{ 0x07, "HPFS/QNX/AUX"},   /* OS/2 HPFS, QNX-2 or Advanced UNIX */
 	{ 0x08, "AIX fs      "},   /* AIX filesystem */
 	{ 0x09, "AIX/Coherent"},   /* AIX boot partition or Coherent */
 	{ 0x0A, "OS/2 Bootmgr"},   /* OS/2 Boot Manager or OPUS */
