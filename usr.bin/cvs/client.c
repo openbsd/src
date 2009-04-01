@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.119 2009/02/23 21:28:57 tobias Exp $	*/
+/*	$OpenBSD: client.c,v 1.120 2009/04/01 06:41:58 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -493,7 +493,7 @@ cvs_client_sendfile(struct cvs_file *cf)
 			    sizeof(timebuf));
 			if (len >= sizeof(timebuf))
 				fatal("cvs_client_sendfile: truncation");
-			len = strlcat(timebuf, "+", sizeof(timebuf));
+			len = strlcat(timebuf, "+=", sizeof(timebuf));
 			if (len >= sizeof(timebuf))
 				fatal("cvs_client_sendfile: truncation");
 		}

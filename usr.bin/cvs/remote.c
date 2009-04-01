@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.25 2009/02/21 14:50:53 joris Exp $	*/
+/*	$OpenBSD: remote.c,v 1.26 2009/04/01 06:41:58 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -271,7 +271,7 @@ cvs_remote_classify_file(struct cvs_file *cf)
 			fatal("cvs_remote_classify_file(%s): %s", cf->file_path,
 			    strerror(errno));
 
-		if (st.st_mtime != cf->file_ent->ce_mtime)
+		if (st.st_mtime != cf->file_ent->ce_mtime || cf->file_ent != NULL)
 			cf->file_status = FILE_MODIFIED;
 		else
 			cf->file_status = FILE_UPTODATE;
