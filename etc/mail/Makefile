@@ -1,9 +1,12 @@
-# $OpenBSD: Makefile,v 1.6 2009/03/18 01:56:52 jacekm Exp $
+# $OpenBSD: Makefile,v 1.7 2009/04/02 10:21:08 jacekm Exp $
 #
 # Generate the various .db versions from their source files.
 # The sendmail .mc files are not built here.  They live in
 # /usr/share/sendmail/cf and have their own Makefile.
 #
+
+SENDMAIL=	/usr/libexec/sendmail/sendmail
+MAKEMAP=	/usr/libexec/sendmail/makemap
 
 .for DB in access aliases genericstable mailertable virtusertable userdb
 . if exists(${DB})
@@ -23,20 +26,20 @@ distribution:
 	    ${DESTDIR}/etc/mail/README
 	${INSTALL} -c -o root -g wheel -m 644 access \
 	    ${DESTDIR}/etc/mail/access
-	makemap hash ${DESTDIR}/etc/mail/access < access
+	${MAKEMAP} hash ${DESTDIR}/etc/mail/access < access
 	${INSTALL} -c -o root -g wheel -m 644 aliases \
 	    ${DESTDIR}/etc/mail/aliases
-	/usr/libexec/sendmail/sendmail -C${DESTDIR}/etc/mail/sendmail.cf \
+	${SENDMAIL} -C${DESTDIR}/etc/mail/sendmail.cf \
 	    -bi -O AliasFile=${DESTDIR}/etc/mail/aliases \
 	    -O DontBlameSendmail=mapinunsafedirpath
 	${INSTALL} -c -o root -g wheel -m 644 local-host-names \
 	    ${DESTDIR}/etc/mail/local-host-names
 	${INSTALL} -c -o root -g wheel -m 644 genericstable \
 	    ${DESTDIR}/etc/mail/genericstable
-	makemap hash ${DESTDIR}/etc/mail/genericstable < genericstable
+	${MAKEMAP} hash ${DESTDIR}/etc/mail/genericstable < genericstable
 	${INSTALL} -c -o root -g wheel -m 644 mailertable \
 	    ${DESTDIR}/etc/mail/mailertable
-	makemap hash ${DESTDIR}/etc/mail/mailertable < mailertable
+	${MAKEMAP} hash ${DESTDIR}/etc/mail/mailertable < mailertable
 	${INSTALL} -c -o root -g wheel -m 644 relay-domains \
 	    ${DESTDIR}/etc/mail/relay-domains
 	${INSTALL} -c -o root -g wheel -m 644 trusted-users \
@@ -47,29 +50,29 @@ distribution:
 	    ${DESTDIR}/etc/mail/spamd.conf
 	${INSTALL} -c -o root -g wheel -m 644 smtpd.conf \
 	    ${DESTDIR}/etc/mail/smtpd.conf
-	makemap hash ${DESTDIR}/etc/mail/virtusertable < virtusertable
+	${MAKEMAP} hash ${DESTDIR}/etc/mail/virtusertable < virtusertable
 	@for db in access.db aliases.db genericstable.db mailertable.db \
 	    virtusertable.db; do \
 		chmod 644 ${DESTDIR}/etc/mail/$$db; \
 	done
 
 access.db: access
-	makemap hash ${.ALLSRC} < ${.ALLSRC}
+	${MAKEMAP} hash ${.ALLSRC} < ${.ALLSRC}
 
 aliases.db: aliases
-	sendmail -bi
+	${SENDMAIL} -bi
 
 genericstable.db: genericstable
-	makemap hash ${.ALLSRC} < ${.ALLSRC}
+	${MAKEMAP} hash ${.ALLSRC} < ${.ALLSRC}
 
 mailertable.db: mailertable
-	makemap hash ${.ALLSRC} < ${.ALLSRC}
+	${MAKEMAP} hash ${.ALLSRC} < ${.ALLSRC}
 
 virtusertable.db: virtusertable
-	makemap hash ${.ALLSRC} < ${.ALLSRC}
+	${MAKEMAP} hash ${.ALLSRC} < ${.ALLSRC}
 
 userdb.db: userdb
-	makemap btree ${.ALLSRC} < ${.ALLSRC}
+	${MAKEMAP} btree ${.ALLSRC} < ${.ALLSRC}
 
 .PHONY: distribution
 .include <bsd.own.mk>
