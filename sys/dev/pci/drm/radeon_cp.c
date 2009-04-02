@@ -628,17 +628,9 @@ radeon_cp_init_ring_buffer(struct drm_device *dev,
 	} else
 #endif
 	{
-		struct drm_sg_mem *entry = dev->sg;
-		unsigned long tmp_ofs, page_ofs;
-
-		tmp_ofs = dev_priv->ring_rptr->offset - dev->sg->handle;
-		page_ofs = tmp_ofs >> PAGE_SHIFT;
-
 		RADEON_WRITE(RADEON_CP_RB_RPTR_ADDR,
-		    entry->mem->map->dm_segs[page_ofs].ds_addr);
-		DRM_DEBUG("ring rptr: offset=0x%08lx handle=0x%08lx\n",
-		    (unsigned long)entry->mem->map->dm_segs[page_ofs].ds_addr,
-		    entry->handle + tmp_ofs);
+		    dev_priv->ring_rptr->offset - dev->sg->handle +
+		    dev_priv->gart_vm_start);
 	}
 
 	/* Set ring buffer size */
