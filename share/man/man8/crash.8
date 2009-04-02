@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crash.8,v 1.30 2009/04/01 22:03:40 kettenis Exp $
+.\"	$OpenBSD: crash.8,v 1.31 2009/04/02 13:18:24 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)crash.8	6.5 (Berkeley) 4/20/91
 .\"
-.Dd $Mdocdate: April 1 2009 $
+.Dd $Mdocdate: April 2 2009 $
 .Dt CRASH 8
 .Os
 .Sh NAME
@@ -267,7 +267,7 @@ You need to add back KERNBASE though, that value can be found in
 This analyzes memory allocations at the time of the crash.
 Perhaps some resource was starving the system?
 .Ss Analyzing a live kernel
-Like the tools mentioned above
+Like the tools mentioned above,
 .Xr gdb 1
 can be used to analyze a live system as well.
 This can be accomplished by not specifying a crash dump when selecting the
@@ -281,7 +281,7 @@ It is possible to inspect processes that entered the kernel by
 specifying a process'
 .Li struct proc
 address to the
-.IC kvm proc
+.Ic kvm proc
 command:
 .Bd -literal -offset indent
 (gdb) kvm proc 0xd69dada0
@@ -292,7 +292,7 @@ command:
 .Pp
 After this, the
 .Ic where
-command will show a trace of prodecure calls, right back to where the
+command will show a trace of procedure calls, right back to where the
 selected process entered the kernel.
 .Sh CRASH LOCATION DETERMINATION
 The following example should make it easier for a novice kernel
