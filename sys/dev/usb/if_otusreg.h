@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otusreg.h,v 1.4 2009/03/26 19:54:16 damien Exp $	*/
+/*	$OpenBSD: if_otusreg.h,v 1.5 2009/04/02 19:03:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -52,6 +52,8 @@
 #define AR_MAC_REG_SNIFFER		(AR_MAC_REG_BASE + 0x674)
 #define AR_MAC_REG_ACK_EXTENSION	(AR_MAC_REG_BASE + 0x690)
 #define AR_MAC_REG_EIFS_AND_SIFS	(AR_MAC_REG_BASE + 0x698)
+#define AR_MAC_REG_BUSY			(AR_MAC_REG_BASE + 0x6e8)
+#define AR_MAC_REG_BUSY_EXT		(AR_MAC_REG_BASE + 0x6ec)
 #define AR_MAC_REG_SLOT_TIME		(AR_MAC_REG_BASE + 0x6f0)
 #define AR_MAC_REG_AC0_CW		(AR_MAC_REG_BASE + 0xb00)
 #define AR_MAC_REG_AC1_CW		(AR_MAC_REG_BASE + 0xb04)
@@ -65,6 +67,8 @@
 					(AR_MAC_REG_BASE + 0xb30)
 #define AR_MAC_REG_AC1_AC0_TXOP		(AR_MAC_REG_BASE + 0xb44)
 #define AR_MAC_REG_AC3_AC2_TXOP		(AR_MAC_REG_BASE + 0xb48)
+#define AR_MAC_REG_OFDM_PHY_ERRORS	(AR_MAC_REG_BASE + 0xcb4)
+#define AR_MAC_REG_CCK_PHY_ERRORS	(AR_MAC_REG_BASE + 0xcb8)
 #define AR_MAC_REG_BCN_HT1		(AR_MAC_REG_BASE + 0xda0)
 
 /* Possible values for register AR_USB_MODE_CTRL. */
@@ -83,19 +87,40 @@
 /*
  * PHY registers.
  */
-#define AR_PHY(reg)		(0x9800 + (reg) * 4)
-#define AR_PHY_SWITCH_COM	0x9964
-#define AR_PHY_SWITCH_CHAIN_0	0x9960
-#define AR_PHY_SETTLING		0x9844
-#define AR_PHY_DESIRED_SZ	0x9850
-#define AR_PHY_RF_CTL4		0x9834
-#define AR_PHY_RF_CTL3		0x9828
-#define AR_PHY_RXGAIN		0x9848
-#define AR_PHY_TIMING_CTRL4	0x9920
-#define AR_PHY_GAIN_2GHZ	0xa20c
-#define AR_PHY_CCA		0xc864
+#define AR_PHY_BASE			0x1c5800
+#define AR_PHY(reg)			(AR_PHY_BASE + (reg) * 4)
+#define AR_PHY_TURBO			(AR_PHY_BASE + 0x0004)
+#define AR_PHY_RF_CTL3			(AR_PHY_BASE + 0x0028)
+#define AR_PHY_RF_CTL4			(AR_PHY_BASE + 0x0034)
+#define AR_PHY_SETTLING			(AR_PHY_BASE + 0x0044)
+#define AR_PHY_RXGAIN			(AR_PHY_BASE + 0x0048)
+#define AR_PHY_DESIRED_SZ		(AR_PHY_BASE + 0x0050)
+#define AR_PHY_FIND_SIG			(AR_PHY_BASE + 0x0058)
+#define AR_PHY_AGC_CTL1			(AR_PHY_BASE + 0x005c)
+#define AR_PHY_SFCORR			(AR_PHY_BASE + 0x0068)
+#define AR_PHY_SFCORR_LOW		(AR_PHY_BASE + 0x006c)
+#define AR_PHY_TIMING_CTRL4		(AR_PHY_BASE + 0x0120)
+#define AR_PHY_TIMING5			(AR_PHY_BASE + 0x0124)
+#define AR_PHY_POWER_TX_RATE1		(AR_PHY_BASE + 0x0134)
+#define AR_PHY_POWER_TX_RATE2		(AR_PHY_BASE + 0x0138)
+#define AR_PHY_POWER_TX_RATE_MAX	(AR_PHY_BASE + 0x013c)
+#define AR_PHY_SWITCH_CHAIN_0		(AR_PHY_BASE + 0x0160)
+#define AR_PHY_SWITCH_COM		(AR_PHY_BASE + 0x0164)
+#define AR_PHY_HEAVY_CLIP_ENABLE	(AR_PHY_BASE + 0x01e0)
+#define AR_PHY_CCK_DETECT		(AR_PHY_BASE + 0x0a08)
+#define AR_PHY_GAIN_2GHZ		(AR_PHY_BASE + 0x0a0c)
+#define AR_PHY_POWER_TX_RATE3		(AR_PHY_BASE + 0x0a34)
+#define AR_PHY_POWER_TX_RATE4		(AR_PHY_BASE + 0x0a38)
+#define AR_PHY_TPCRG1			(AR_PHY_BASE + 0x0a58)
+#define AR_PHY_POWER_TX_RATE5		(AR_PHY_BASE + 0x0b8c)
+#define AR_PHY_POWER_TX_RATE6		(AR_PHY_BASE + 0x0b90)
+#define AR_PHY_POWER_TX_RATE7		(AR_PHY_BASE + 0x0bcc)
+#define AR_PHY_POWER_TX_RATE8		(AR_PHY_BASE + 0x0bd0)
+#define AR_PHY_POWER_TX_RATE9		(AR_PHY_BASE + 0x0bd4)
+#define AR_PHY_CCA			(AR_PHY_BASE + 0x3064)
 
 #define AR_SEEPROM_HW_TYPE_OFFSET	0x1374
+#define AR_EEPROM_OFFSET		0x1600
 
 #define AR_BANK4_CHUP			(1 << 0)
 #define AR_BANK4_BMODE_LF_SYNTH_FREQ	(1 << 1)
@@ -267,7 +292,7 @@ static const uint8_t ar_chans[] = {
  * section overhead (5.1KB instead of 8.5KB).
  */
 
-/* NB: offset from 0x9800. */
+/* NB: apply AR_PHY(). */
 static const uint16_t ar5416_phy_regs[] = {
 	0x000, 0x001, 0x002, 0x003, 0x004, 0x005, 0x006, 0x007, 0x008,
 	0x009, 0x00a, 0x00b, 0x00c, 0x00d, 0x00e, 0x00f, 0x010, 0x011,
@@ -588,7 +613,7 @@ static const uint32_t ar5416_phy_vals_2ghz_20mhz[] = {
 	0x5fd80682, 0x7fe00482, 0x7f3c7bba, 0xf3307ff0
 };
 
-/* NB: offset from 0x9800. */
+/* NB: apply AR_PHY(). */
 static const uint8_t ar5416_banks_regs[] = {
 	0x2c, 0x38, 0x2c, 0x3b, 0x2c, 0x38, 0x3c, 0x2c, 0x3a, 0x2c, 0x39,
 	0x2c, 0x2c, 0x2c, 0x2c, 0x2c, 0x2c, 0x2c, 0x2c, 0x2c, 0x2c, 0x2c,
@@ -896,6 +921,8 @@ struct otus_softc {
 	usbd_interface_handle		sc_iface;
 
 	struct ar5416eeprom		eeprom;
+	uint8_t				rxmask;
+	uint8_t				txmask;
 
 	usbd_pipe_handle		data_tx_pipe;
 	usbd_pipe_handle		data_rx_pipe;
