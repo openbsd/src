@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.148 2009/04/02 09:09:40 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.149 2009/04/02 21:13:50 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -323,9 +323,6 @@ cvs_diff_local(struct cvs_file *cf)
 	    date1 == -1 && date2 == -1)
 		return;
 
-	if (cf->file_status == FILE_PATCH)
-		return;
-
 	if (cf->file_rcs != NULL && cf->file_rcs->rf_head == NULL) {
 		cvs_log(LP_ERR, "no head revision in RCS file for %s\n",
 		    cf->file_path);
@@ -413,9 +410,8 @@ cvs_diff_local(struct cvs_file *cf)
 
 	switch (cvs_cmdop) {
 	case CVS_OP_DIFF:
-		if (cf->file_status == FILE_UPTODATE && diff_rev1 != NULL &&
-		    diff_rev2 == NULL &&
-		    rcsnum_cmp(diff_rev1, cf->file_rcsrev, 0) == 0)
+		if (diff_rev1 != NULL && diff_rev2 == NULL &&
+		    rcsnum_cmp(diff_rev1, cf->file_ent->ce_rev, 0) == 0)
 			goto cleanup;
 		break;
 	case CVS_OP_RDIFF:
@@ -462,17 +458,29 @@ cvs_diff_local(struct cvs_file *cf)
 	} else if (cvs_cmdop == CVS_OP_DIFF &&
 	    (cf->file_flags & FILE_ON_DISK) &&
 	    cf->file_ent->ce_status != CVS_ENT_REMOVED) {
-		if (fstat(cf->fd, &st) == -1)
-			fatal("fstat failed %s", strerror(errno));
-		b1 = cvs_buf_load_fd(cf->fd);
-
-		tv2[0].tv_sec = st.st_mtime;
-		tv2[0].tv_usec = 0;
-		tv2[1] = tv2[0];
-
 		(void)xasprintf(&p2, "%s/diff2.XXXXXXXXXX", cvs_tmpdir);
-		fd2 = cvs_buf_write_stmp(b1, p2, tv2);
-		cvs_buf_free(b1);
+		if (cvs_server_active == 1 && cf->fd == -1) {
+			tv2[0].tv_sec = rcs_rev_getdate(cf->file_rcs,
+			    cf->file_ent->ce_rev);
+			tv2[0].tv_usec = 0;
+			tv2[1] = tv2[0];
+
+			fd2 = rcs_rev_write_stmp(cf->file_rcs,
+			    cf->file_ent->ce_rev, p2, 0);
+			if (futimes(fd2, tv2) == -1)
+				fatal("cvs_diff_local: futimes failed");
+		} else {
+			if (fstat(cf->fd, &st) == -1)
+				fatal("fstat failed %s", strerror(errno));
+			b1 = cvs_buf_load_fd(cf->fd);
+
+			tv2[0].tv_sec = st.st_mtime;
+			tv2[0].tv_usec = 0;
+			tv2[1] = tv2[0];
+
+			fd2 = cvs_buf_write_stmp(b1, p2, tv2);
+			cvs_buf_free(b1);
+		}
 	}
 
 	switch (cvs_cmdop) {
