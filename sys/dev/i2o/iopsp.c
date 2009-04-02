@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopsp.c,v 1.14 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: iopsp.c,v 1.15 2009/04/02 18:44:49 oga Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -45,7 +45,7 @@
 #include <sys/endian.h>
 #include <sys/malloc.h>
 #include <sys/scsiio.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 
@@ -371,13 +371,7 @@ iopsp_rescan(struct iopsp_softc *sc)
 
 	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
 
-	rv = lockmgr(&iop->sc_conflock, LK_EXCLUSIVE, NULL);
-	if (rv != 0) {
-#ifdef I2ODEBUG
-		printf("iopsp_rescan: unable to acquire lock\n");
-#endif
-		return (rv);
-	}
+	rw_enter_write(&iop->sc_conflock);
 
 	im = iop_msg_alloc(iop, &sc->sc_ii, IM_WAIT);
 
@@ -395,7 +389,7 @@ iopsp_rescan(struct iopsp_softc *sc)
 	if ((rv = iop_lct_get(iop)) == 0)
 		rv = iopsp_reconfig(&sc->sc_dv);
 
-	lockmgr(&iop->sc_conflock, LK_RELEASE, NULL);
+	rw_exit_write(&iop->sc_conflock);
 	return (rv);
 }
 

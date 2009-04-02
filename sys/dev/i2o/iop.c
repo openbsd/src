@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.35 2008/06/26 05:42:14 ray Exp $	*/
+/*	$OpenBSD: iop.c,v 1.36 2009/04/02 18:44:49 oga Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -391,7 +391,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	    sc->sc_maxob, letoh32(sc->sc_status.maxoutboundmframes));
 #endif
 
-	lockinit(&sc->sc_conflock, PRIBIO, "iopconf", 0, 0);
+	rw_init(&sc->sc_conflock, "iopconf");
 
 	startuphook_establish((void (*)(void *))iop_config_interrupts, sc);
 	return;
@@ -530,12 +530,13 @@ iop_config_interrupts(struct device *self)
 	config_found_sm(self, &ia, iop_vendor_print, iop_submatch);
 #endif
 
-	lockmgr(&sc->sc_conflock, LK_EXCLUSIVE, NULL);
-	if ((rv = iop_reconfigure(sc, 0)) == -1) {
+	rw_enter_write(&sc->sc_conflock);
+	rv = iop_reconfigure(sc, 0);
+	rw_exit_write(&sc->sc_conflock);
+	if (rv == -1) {
 		printf("%s: configure failed (%d)\n", sc->sc_dv.dv_xname, rv);
 		return;
 	}
-	lockmgr(&sc->sc_conflock, LK_RELEASE, NULL);
 	kthread_create_deferred(iop_create_reconf_thread, sc);
 }
 
@@ -584,11 +585,11 @@ iop_reconf_thread(void *cookie)
 		DPRINTF(("%s: async reconfig: notified (0x%08x, %d)\n",
 		    sc->sc_dv.dv_xname, letoh32(lct.changeindicator), rv));
 
-		if (rv == 0 &&
-		    lockmgr(&sc->sc_conflock, LK_EXCLUSIVE, NULL) == 0) {
+		if (rv == 0) {
+			rw_enter_write(&sc->sc_conflock);
 			iop_reconfigure(sc, letoh32(lct.changeindicator));
 			chgind = sc->sc_chgind + 1;
-			lockmgr(&sc->sc_conflock, LK_RELEASE, NULL);
+			rw_exit_write(&sc->sc_conflock);
 		}
 
 		tsleep(iop_reconf_thread, PWAIT, "iopzzz", hz * 5);
@@ -2359,8 +2360,7 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (ENOTTY);
 	}
 
-	if ((rv = lockmgr(&sc->sc_conflock, LK_SHARED, NULL)) != 0)
-		return (rv);
+	rw_enter_read(&sc->sc_conflock);
 
 	switch (cmd) {
 	case IOPIOCGLCT:
@@ -2388,7 +2388,7 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	}
 
-	lockmgr(&sc->sc_conflock, LK_RELEASE, NULL);
+	rw_exit_read(&sc->sc_conflock);
 	return (rv);
 }
 

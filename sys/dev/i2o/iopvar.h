@@ -1,4 +1,4 @@
-/*	$OpenBSD: iopvar.h,v 1.9 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: iopvar.h,v 1.10 2009/04/02 18:44:49 oga Exp $	*/
 /*	$NetBSD: iopvar.h,v 1.5 2001/03/20 13:01:49 ad Exp $	*/
 
 /*-
@@ -32,6 +32,8 @@
 
 #ifndef _I2O_IOPVAR_H_
 #define	_I2O_IOPVAR_H_
+
+#include <sys/rwlock.h>
 
 /*
  * Transfer descriptor.
@@ -106,7 +108,7 @@ struct iop_softc {
 	bus_space_tag_t	sc_iot;		/* bus space tag */
 	bus_dma_tag_t	sc_dmat;	/* bus DMA tag */
 	void	 	*sc_ih;		/* interrupt handler cookie */
-	struct lock	sc_conflock;	/* autoconfiguration lock */
+	struct rwlock	sc_conflock;	/* autoconfiguration lock */
 	bus_addr_t	sc_memaddr;	/* register window address */
 	bus_size_t	sc_memsize;	/* register window size */
 
