@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.101 2009/04/01 14:56:38 reyk Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.102 2009/04/02 14:30:51 reyk Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 1 2009 $
+.Dd $Mdocdate: April 2 2009 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -521,9 +521,9 @@ client will be retained in this case.
 The
 .Ic with ssl
 directive enables client-side SSL mode to connect to the remote host.
-Note that
-.Xr relayd 8
-will not verify the remote SSL certificate.
+Verification of server certificates can be enabled by setting the
+.Ic ca file
+option in the protocol section.
 .Pp
 The following options may be specified for forward directives:
 .Pp
@@ -945,6 +945,13 @@ Set the SSL options and session settings.
 This is only used if SSL is enabled in the relay.
 Valid options are:
 .Bl -tag -width Ds
+.It Ic ca file Ar path
+This option enables CA verification in SSL client mode.
+The daemon will load the CA (Certificate Authority) certificates from
+the specified path to verify the server certificates.
+.Ox
+provides a default CA bundle in
+.Pa /etc/ssl/cert.pem .
 .It Ic ciphers Ar string
 Set the string defining the SSL cipher suite.
 If not specified, the default value
@@ -1036,6 +1043,9 @@ Service name database.
 Location of the relay SSL server certificates, where
 .Ar address
 is the configured IP address of the relay.
+.It Pa /etc/ssl/cert.pem
+Default location of the CA bundle that can be used with
+.Xr relayd 8 .
 .El
 .Sh EXAMPLES
 This configuration file would create a service
@@ -1142,5 +1152,7 @@ and
 .An Reyk Floeter Aq reyk@openbsd.org .
 .Sh CAVEATS
 .Xr relayd 8
-does not support verification of server certificates when connecting
-to a remote host using the SSL protocol.
+Verification of SSL server certificates is based on a static CA bundle
+and
+.Xr relayd 8
+currently does not support CRLs (Certificate Revocation Lists).

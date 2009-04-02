@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.108 2009/04/01 14:56:38 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.109 2009/04/02 14:30:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2615,6 +2615,15 @@ relay_ssl_ctx_create(struct relay *rlay)
 	if (!SSL_CTX_set_cipher_list(ctx, proto->sslciphers))
 		goto err;
 
+	/* Verify the server certificate if we have a CA chain */
+	if ((rlay->rl_conf.flags & F_SSLCLIENT) &&
+	    (rlay->rl_ssl_ca != NULL)) {
+		if (!ssl_ctx_load_verify_memory(ctx,
+		    rlay->rl_ssl_ca, rlay->rl_ssl_ca_len))
+			goto err;
+		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+	}
+
 	if ((rlay->rl_conf.flags & F_SSL) == 0)
 		return (ctx);
 
@@ -3113,8 +3122,16 @@ relay_load_file(const char *name, off_t *len)
 int
 relay_load_certfiles(struct relay *rlay)
 {
+	struct protocol *proto = rlay->rl_proto;
 	char	 certfile[PATH_MAX];
 	char	 hbuf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
+
+	if ((rlay->rl_conf.flags & F_SSLCLIENT) && (proto->sslca != NULL)) {
+		if ((rlay->rl_ssl_ca = relay_load_file(proto->sslca,
+		    &rlay->rl_ssl_ca_len)) == NULL)
+			return (-1);
+		log_debug("relay_load_certfiles: using ca %s", proto->sslca);
+	}
 
 	if ((rlay->rl_conf.flags & F_SSL) == 0)
 		return (0);
@@ -3128,7 +3145,7 @@ relay_load_certfiles(struct relay *rlay)
 	if ((rlay->rl_ssl_cert = relay_load_file(certfile,
 	    &rlay->rl_ssl_cert_len)) == NULL)
 		return (-1);
-	log_debug("relay_load_certfile: using certificate %s", certfile);
+	log_debug("relay_load_certfiles: using certificate %s", certfile);
 
 	if (snprintf(certfile, sizeof(certfile),
 	    "/etc/ssl/private/%s.key", hbuf) == -1)
@@ -3136,7 +3153,7 @@ relay_load_certfiles(struct relay *rlay)
 	if ((rlay->rl_ssl_key = relay_load_file(certfile,
 	    &rlay->rl_ssl_key_len)) == NULL)
 		return (-1);
-	log_debug("relay_load_certfile: using private key %s", certfile);
+	log_debug("relay_load_certfiles: using private key %s", certfile);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.130 2009/04/01 15:07:38 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.131 2009/04/02 14:30:51 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -127,7 +127,7 @@ typedef struct {
 
 %}
 
-%token	ALL APPEND BACKLOG BACKUP BUFFER CACHE CHANGE CHECK
+%token	ALL APPEND BACKLOG BACKUP BUFFER CA CACHE CHANGE CHECK
 %token	CIPHERS CODE COOKIE DEMOTE DIGEST DISABLE ERROR EXPECT
 %token	EXTERNAL FILENAME FILTER FORWARD FROM HASH HEADER HOST ICMP
 %token	INCLUDE INET INET6 INTERFACE INTERVAL IP LABEL LISTEN
@@ -136,7 +136,7 @@ typedef struct {
 %token	QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST RESPONSE RETRY
 %token	RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION SOCKET
 %token	SSL STICKYADDR STYLE TABLE TAG TCP TIMEOUT TO
-%token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH 
+%token	TRANSPARENT TRAP UPDATES URL VIRTUAL WITH
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table
@@ -886,6 +886,14 @@ sslflags	: SESSION CACHE sslcache	{ proto->cache = $3; }
 			}
 			free($2);
 		}
+		| CA FILENAME STRING		{
+			if (proto->sslca != NULL) {
+				yyerror("sslca already specified");
+				free($3);
+				YYERROR;
+			}
+			proto->sslca = $3;
+		}
 		| NO flag			{ proto->sslflags &= ~($2); }
 		| flag				{ proto->sslflags |= $1; }
 		;
@@ -1466,6 +1474,7 @@ lookup(char *s)
 		{ "backlog",		BACKLOG },
 		{ "backup",		BACKUP },
 		{ "buffer",		BUFFER },
+		{ "ca",			CA },
 		{ "cache",		CACHE },
 		{ "change",		CHANGE },
 		{ "check",		CHECK },
