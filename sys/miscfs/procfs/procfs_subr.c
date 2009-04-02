@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.28 2007/12/09 21:34:32 hshoexer Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.29 2009/04/02 18:43:08 oga Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/rwlock.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
@@ -49,13 +50,12 @@
 #include <miscfs/procfs/procfs.h>
 
 static TAILQ_HEAD(, pfsnode)	pfshead;
-struct lock pfs_vlock;
+struct rwlock pfs_vlock = RWLOCK_INITIALIZER("procfsl");
 
 /*ARGSUSED*/
 int
 procfs_init(struct vfsconf *vfsp)
 {
-	lockinit(&pfs_vlock, PVFS, "procfsl", 0, 0);
 	TAILQ_INIT(&pfshead);
 	return (0);
 }
@@ -97,9 +97,7 @@ procfs_allocvp(struct mount *mp, struct vnode **vpp, pid_t pid, pfstype pfs_type
 	/*
 	 * Lock the vp list, getnewvnode can sleep.
 	 */
-	error = lockmgr(&pfs_vlock, LK_EXCLUSIVE, NULL);
-	if (error)
-		return (error);
+	rw_enter_write(&pfs_vlock);
 loop:
 	TAILQ_FOREACH(pfs, &pfshead, list) {
 		vp = PFSTOV(pfs);
@@ -175,7 +173,7 @@ loop:
 	TAILQ_INSERT_TAIL(&pfshead, pfs, list);
 	uvm_vnp_setsize(vp, 0);
 out:
-	lockmgr(&pfs_vlock, LK_RELEASE, NULL);
+	rw_exit_write(&pfs_vlock);
 
 	return (error);
 }
