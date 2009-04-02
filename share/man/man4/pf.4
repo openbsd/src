@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.63 2009/03/17 21:37:31 jmc Exp $
+.\"	$OpenBSD: pf.4,v 1.64 2009/04/02 13:46:06 sthen Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 17 2009 $
+.Dd $Mdocdate: April 2 2009 $
 .Dt PF 4
 .Os
 .Sh NAME
@@ -73,6 +73,10 @@ separated by
 characters, similar to how file system hierarchies are laid out.
 The final component of the anchor path is the anchor under which
 operations will be performed.
+Anchor names with characters after the terminating null byte are
+considered invalid; if used in an ioctl,
+.Er EINVAL
+will be returned.
 .Sh IOCTL INTERFACE
 .Nm
 supports the following
