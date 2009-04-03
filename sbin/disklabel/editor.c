@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.184 2009/03/30 10:51:37 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.185 2009/04/03 23:18:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.184 2009/03/30 10:51:37 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.185 2009/04/03 23:18:11 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -131,7 +131,7 @@ static u_int64_t ending_sector;
 static int expert;
 
 /*
- * Simple partition editor.  Primarily intended for new labels.
+ * Simple partition editor.
  */
 int
 editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
