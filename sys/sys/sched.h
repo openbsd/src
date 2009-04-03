@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.20 2009/03/23 13:25:11 art Exp $	*/
+/*	$OpenBSD: sched.h,v 1.21 2009/04/03 09:29:15 art Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -144,6 +144,7 @@ void sched_choosecpu(struct proc *);
 void cpu_idle_enter(void);
 void cpu_idle_cycle(void);
 void cpu_idle_leave(void);
+void sched_peg_curproc(struct cpu_info *ci);
 
 #define curcpu_is_idle()	(curcpu()->ci_schedstate.spc_whichqs == 0)
 

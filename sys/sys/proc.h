@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.114 2009/03/26 17:24:33 oga Exp $	*/
+/*	$OpenBSD: proc.h,v 1.115 2009/04/03 09:29:15 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -305,6 +305,7 @@ struct proc {
 #define	P_IGNEXITRV	0x8000000	/* For thread kills */
 #define	P_SOFTDEP	0x10000000	/* Stuck processing softdep worklist */
 #define P_STOPPED	0x20000000	/* Just stopped. */
+#define P_CPUPEG	0x40000000	/* Do not move to another cpu. */
 
 #define	P_BITS \
     ("\20\01ADVLOCK\02CTTY\04NOCLDSTOP\05PPWAIT\06PROFIL\07SELECT" \

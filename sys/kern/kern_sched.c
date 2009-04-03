@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.9 2009/03/23 13:25:11 art Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.10 2009/04/03 09:29:15 art Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -291,6 +291,12 @@ sched_choosecpu(struct proc *p)
 	struct cpu_info *ci;
 	struct cpuset set;
 
+	/*
+	 * If pegged to a cpu, don't allow it to move.
+	 */
+	if (p->p_flag & P_CPUPEG)
+		return;
+
 	sched_choose++;
 
 	/*
@@ -479,6 +485,26 @@ sched_proc_to_cpu_cost(struct cpu_info *ci, struct proc *p)
 	}
 
 	return (cost);
+}
+
+/*
+ * Peg a proc to a cpu.
+ */
+void
+sched_peg_curproc(struct cpu_info *ci)
+{
+	struct proc *p = curproc;
+	int s;
+
+	SCHED_LOCK(s);
+	p->p_priority = p->p_usrpri;
+	p->p_stat = SRUN;
+	p->p_cpu = ci;
+	atomic_setbits_int(&p->p_flag, P_CPUPEG);
+	setrunqueue(p);
+	p->p_stats->p_ru.ru_nvcsw++;
+	mi_switch();
+	SCHED_UNLOCK(s);
 }
 
 /*
