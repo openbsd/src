@@ -556,6 +556,7 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	printf(": %s\n", pci_intr_string(pa->pa_pc, dev_priv->ih));
+	mtx_init(&dev_priv->swi_lock, IPL_BIO);
 
 	switch (dev_priv->flags & RADEON_FAMILY_MASK) {
 	case CHIP_R100:
