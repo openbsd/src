@@ -308,7 +308,7 @@ static void mga_freelist_cleanup(struct drm_device * dev)
  */
 static void mga_freelist_reset(struct drm_device * dev)
 {
-	drm_device_dma_t *dma = dev->dma;
+	struct drm_device_dma *dma = dev->dma;
 	struct drm_buf *buf;
 	drm_mga_buf_priv_t *buf_priv;
 	int i;

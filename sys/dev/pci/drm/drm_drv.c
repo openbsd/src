@@ -698,7 +698,7 @@ drmmmap(dev_t kdev, off_t offset, int prot)
 		return (-1);
 
 	if (dev->dma && offset >= 0 && offset < ptoa(dev->dma->page_count)) {
-		drm_device_dma_t *dma = dev->dma;
+		struct drm_device_dma *dma = dev->dma;
 		paddr_t	phys = -1;
 
 		rw_enter_write(&dma->dma_lock);

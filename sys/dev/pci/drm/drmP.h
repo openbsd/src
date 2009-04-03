@@ -251,7 +251,7 @@ struct drm_lock_data {
  * The high/low watermarks of bufs are only touched by the X Server, and thus
  * not concurrently accessed, so no locking is needed.
  */
-typedef struct drm_device_dma {
+struct drm_device_dma {
 	struct rwlock	 	 dma_lock;
 	struct drm_buf_entry	 bufs[DRM_MAX_ORDER+1];
 	struct drm_buf		**buflist;	/* Vector of pointers info bufs*/
@@ -265,7 +265,7 @@ typedef struct drm_device_dma {
 		_DRM_DMA_USE_AGP = 0x01,
 		_DRM_DMA_USE_SG  = 0x02
 	} flags;
-} drm_device_dma_t;
+};
 
 struct drm_agp_mem {
 	void               *handle;
@@ -423,7 +423,7 @@ struct drm_device {
 	struct drm_lock_data  lock;	/* Information on hardware lock	*/
 
 				/* DMA queues (contexts) */
-	drm_device_dma_t  *dma;		/* Optional pointer for DMA support */
+	struct drm_device_dma  *dma;		/* Optional pointer for DMA support */
 
 				/* Context support */
 	int		  irq;		/* Interrupt used by board	   */

@@ -395,8 +395,8 @@ drm_cleanup_buf(struct drm_device *dev, struct drm_buf_entry *entry)
 void
 drm_dma_takedown(struct drm_device *dev)
 {
-	drm_device_dma_t *dma = dev->dma;
-	int i;
+	struct drm_device_dma	*dma = dev->dma;
+	int			 i;
 
 	if (dma == NULL)
 		return;
@@ -426,8 +426,8 @@ drm_free_buffer(struct drm_device *dev, struct drm_buf *buf)
 void
 drm_reclaim_buffers(struct drm_device *dev, struct drm_file *file_priv)
 {
-	drm_device_dma_t *dma = dev->dma;
-	int i;
+	struct drm_device_dma	*dma = dev->dma;
+	int			 i;
 
 	if (dma == NULL)
 		return;
@@ -477,7 +477,7 @@ drm_dma(struct drm_device *dev, void *data, struct drm_file *file_priv)
 int
 drm_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
 {
-	drm_device_dma_t	*dma = dev->dma;
+	struct drm_device_dma	*dma = dev->dma;
 	struct drm_buf_entry	*entry;
 	struct drm_buf		*buf, **temp_buflist;
 	unsigned long		 agp_offset, offset;
@@ -601,7 +601,7 @@ drm_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
 int
 drm_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 {
-	drm_device_dma_t	*dma = dev->dma;
+	struct drm_device_dma	*dma = dev->dma;
 	struct drm_buf		*buf, **temp_buflist;
 	struct drm_buf_entry	*entry;
 	int			 alignment, byte_count, count, i, order;
@@ -735,7 +735,7 @@ drm_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 int
 drm_addbufs_sg(struct drm_device *dev, struct drm_buf_desc *request)
 {
-	drm_device_dma_t	*dma = dev->dma;
+	struct drm_device_dma	*dma = dev->dma;
 	struct drm_buf_entry	*entry;
 	struct drm_buf		*buf, **temp_buflist;
 	unsigned long		 agp_offset, offset;
@@ -869,7 +869,7 @@ drm_addbufs(struct drm_device *dev, struct drm_buf_desc *request)
 int
 drm_freebufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_device_dma_t	*dma = dev->dma;
+	struct drm_device_dma	*dma = dev->dma;
 	struct drm_buf_free	*request = data;
 	struct drm_buf		*buf;
 	int			 i, idx, retcode = 0;
@@ -905,8 +905,8 @@ drm_freebufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 int
 drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
+	struct drm_device_dma	*dma = dev->dma;
 	struct drm_buf_map	*request = data;
-	drm_device_dma_t	*dma = dev->dma;
 	struct vmspace		*vms;
 	struct vnode		*vn;
 	vaddr_t			 address, vaddr;
