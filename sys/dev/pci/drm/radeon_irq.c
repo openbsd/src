@@ -35,7 +35,7 @@
 #include "radeon_drm.h"
 #include "radeon_drv.h"
 
-int		radeon_driver_irq_handler(void *);
+int		radeondrm_intr(void *);
 void		r500_vbl_irq_set_state(struct drm_device *, u_int32_t, int);
 u_int32_t	radeon_acknowledge_irqs(drm_radeon_private_t *, u_int32_t *);
 int		radeon_emit_irq(struct drm_device *);
@@ -190,7 +190,7 @@ radeon_acknowledge_irqs(drm_radeon_private_t *dev_priv, u32 *r500_disp_int)
  */
 
 int
-radeon_driver_irq_handler(void *arg)
+radeondrm_intr(void *arg)
 {
 	struct drm_device	*dev = arg;
 	drm_radeon_private_t	*dev_priv = dev->dev_private;
@@ -341,7 +341,7 @@ radeon_driver_irq_install(struct drm_device * dev)
 	radeon_acknowledge_irqs(dev_priv, &dummy);
 
 	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_BIO,
-	    radeon_driver_irq_handler, dev, dev_priv->dev.dv_xname);
+	    radeondrm_intr, dev, dev_priv->dev.dv_xname);
 	if (dev_priv->irqh == NULL)
 		return (ENOENT);
 

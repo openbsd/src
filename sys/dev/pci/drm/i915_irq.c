@@ -31,7 +31,7 @@
 #include "i915_drm.h"
 #include "i915_drv.h"
 
-int	i915_driver_irq_handler(void *);
+int	inteldrm_intr(void *);
 void	i915_enable_irq(drm_i915_private_t *, u_int32_t);
 void	i915_disable_irq(drm_i915_private_t *, u_int32_t);
 void	i915_enable_pipestat(drm_i915_private_t *, int, u_int32_t);
@@ -196,7 +196,7 @@ i915_get_vblank_counter(struct drm_device *dev, int plane)
 }
 
 int
-i915_driver_irq_handler(void *arg)
+inteldrm_intr(void *arg)
 {
 	struct drm_device *dev = (struct drm_device *)arg;
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *)dev->dev_private;
@@ -405,7 +405,7 @@ i915_driver_irq_install(struct drm_device *dev)
 	(void)I915_READ(IER);
 
 	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_BIO,
-	    i915_driver_irq_handler, dev, dev_priv->dev.dv_xname);
+	    inteldrm_intr, dev, dev_priv->dev.dv_xname);
 	if (dev_priv->irqh == NULL)
 		return (ENOENT);
 

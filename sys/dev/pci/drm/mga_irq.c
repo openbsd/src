@@ -36,7 +36,7 @@
 #include "mga_drm.h"
 #include "mga_drv.h"
 
-int	mga_driver_irq_handler(void *);
+int	mgadrm_intr(void *);
 
 u_int32_t
 mga_get_vblank_counter(struct drm_device *dev, int crtc)
@@ -52,7 +52,7 @@ mga_get_vblank_counter(struct drm_device *dev, int crtc)
 
 
 int
-mga_driver_irq_handler(void *arg)
+mgadrm_intr(void *arg)
 {
 	struct drm_device	*dev =  arg;
 	drm_mga_private_t	*dev_priv = dev->dev_private;
@@ -156,7 +156,7 @@ mga_driver_irq_install(struct drm_device * dev)
 	MGA_WRITE(MGA_ICLEAR, ~0);
 
 	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_BIO,
-	    mga_driver_irq_handler, dev, dev_priv->dev.dv_xname);
+	    mgadrm_intr, dev, dev_priv->dev.dv_xname);
 	if (dev_priv->irqh == NULL)
 		return (ENOENT);
 

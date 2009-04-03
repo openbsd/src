@@ -35,7 +35,7 @@
 #include "r128_drm.h"
 #include "r128_drv.h"
 
-int	r128_driver_irq_handler(void *);
+int	ragedrm_intr(void *);
 
 u_int32_t
 r128_get_vblank_counter(struct drm_device *dev, int crtc)
@@ -49,7 +49,7 @@ r128_get_vblank_counter(struct drm_device *dev, int crtc)
 }
 
 int
-r128_driver_irq_handler(void *arg)
+ragedrm_intr(void *arg)
 {
 	struct drm_device	*dev = (struct drm_device *) arg;
 	drm_r128_private_t	*dev_priv = dev->dev_private;
@@ -108,7 +108,7 @@ r128_driver_irq_install(struct drm_device * dev)
 	R128_WRITE(R128_GEN_INT_STATUS, R128_CRTC_VBLANK_INT_AK);
 
 	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_BIO,
-	    r128_driver_irq_handler, dev, dev_priv->dev.dv_xname);
+	    ragedrm_intr, dev, dev_priv->dev.dv_xname);
 	if (dev_priv->irqh == NULL)
 		return (ENOENT);
 	return (0);
