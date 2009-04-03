@@ -114,8 +114,6 @@ enum {
 
 /* DRM_SUSER returns true if the user is superuser */
 #define DRM_SUSER(p)		(suser(p, p->p_acflag) == 0)
-extern int ticks;		/* really should be in a header */
-#define jiffies			ticks
 #define DRM_MTRR_WC		MDF_WRITECOMBINE
 
 #define PAGE_ALIGN(addr)	(((addr) + PAGE_SIZE - 1) & PAGE_MASK)
