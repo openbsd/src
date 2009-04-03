@@ -43,7 +43,7 @@ struct tdfxdrm_softc {
 int	tdfxdrm_probe(struct device *, void *, void *);
 void	tdfxdrm_attach(struct device *, struct device *, void *);
 
-const static drm_pci_id_list_t tdfxdrm_pciidlist[] = {
+const static struct drm_pcidev tdfxdrm_pciidlist[] = {
 	{PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_BANSHEE},
 	{PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO32000},
 	{PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO3},

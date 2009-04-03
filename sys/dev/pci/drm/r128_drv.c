@@ -41,7 +41,7 @@ void	ragedrm_attach(struct device *, struct device *, void *);
 int	ragedrm_detach(struct device *, int);
 int	ragedrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
-const static drm_pci_id_list_t ragedrm_pciidlist[] = {
+const static struct drm_pcidev ragedrm_pciidlist[] = {
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_LE},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MOBILITY_M3},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_MF},

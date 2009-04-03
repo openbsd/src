@@ -44,7 +44,7 @@ int	mgadrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
 #define MGA_DEFAULT_USEC_TIMEOUT	10000
 
-const static drm_pci_id_list_t mgadrm_pciidlist[] = {
+const static struct drm_pcidev mgadrm_pciidlist[] = {
 	{PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_II_G200_PCI,
 	    MGA_CARD_TYPE_G200},
 	{PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_II_G200_AGP,
@@ -138,7 +138,7 @@ mgadrm_attach(struct device *parent, struct device *self, void *aux)
 	drm_mga_private_t	*dev_priv = (drm_mga_private_t *)self;
 	struct pci_attach_args	*pa = aux;
 	struct vga_pci_bar	*bar;
-	const drm_pci_id_list_t	*id_entry;
+	const struct drm_pcidev	*id_entry;
 	int			 is_agp;
 
 	dev_priv->usec_timeout = MGA_DEFAULT_USEC_TIMEOUT;

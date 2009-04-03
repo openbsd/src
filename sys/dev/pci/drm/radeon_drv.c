@@ -41,7 +41,7 @@ int	radeondrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
 int radeon_no_wb;
 
-const static drm_pci_id_list_t radeondrm_pciidlist[] = {
+const static struct drm_pcidev radeondrm_pciidlist[] = {
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M241P,
 	    CHIP_RV380|RADEON_IS_MOBILITY},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300M24,
@@ -521,7 +521,7 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 	drm_radeon_private_t	*dev_priv = (drm_radeon_private_t *)self;
 	struct pci_attach_args	*pa = aux;
 	struct vga_pci_bar	*bar;
-	const drm_pci_id_list_t	*id_entry;
+	const struct drm_pcidev	*id_entry;
 	int			 is_agp;
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),

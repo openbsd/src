@@ -200,12 +200,11 @@ do {									\
 #define DRM_DEBUG(fmt, arg...) do { } while(/* CONSTCOND */ 0)
 #endif
 
-typedef struct drm_pci_id_list
-{
+struct drm_pcidev {
 	int vendor;
 	int device;
 	long driver_private;
-} drm_pci_id_list_t;
+};
 
 struct drm_file;
 struct drm_device;
@@ -473,7 +472,7 @@ struct drm_attach_args {
 extern int	drm_debug_flag;
 
 /* Device setup support (drm_drv.c) */
-int	drm_pciprobe(struct pci_attach_args *, const drm_pci_id_list_t * );
+int	drm_pciprobe(struct pci_attach_args *, const struct drm_pcidev * );
 struct device	*drm_attach_pci(const struct drm_driver_info *, 
 		     struct pci_attach_args *, int, struct device *);
 dev_type_ioctl(drmioctl);
@@ -485,8 +484,8 @@ struct drm_dmamem	*drm_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
 			     int, bus_size_t, int, int);
 void	drm_dmamem_free(bus_dma_tag_t, struct drm_dmamem *);
 
-const drm_pci_id_list_t	*drm_find_description(int , int ,
-			     const drm_pci_id_list_t *);
+const struct drm_pcidev	*drm_find_description(int , int ,
+			     const struct drm_pcidev *);
 
 /* File operations helpers (drm_fops.c) */
 struct drm_file	*drm_find_file_by_minor(struct drm_device *, int);
