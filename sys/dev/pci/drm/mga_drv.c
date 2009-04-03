@@ -39,7 +39,6 @@
 int	mgadrm_probe(struct device *, void *, void *);
 void	mgadrm_attach(struct device *, struct device *, void *);
 int	mgadrm_detach(struct device *, int);
-int	mga_driver_device_is_agp(struct drm_device * );
 int	mgadrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
 #define MGA_DEFAULT_USEC_TIMEOUT	10000
@@ -55,52 +54,6 @@ const static struct drm_pcidev mgadrm_pciidlist[] = {
 	    MGA_CARD_TYPE_G550},
 	{0, 0, 0}
 };
-
-/**
- * Determine if the device really is AGP or not.
- *
- * In addition to the usual tests performed by \c drm_device_is_agp, this
- * function detects PCI G450 cards that appear to the system exactly like
- * AGP G450 cards.
- *
- * \param dev   The device to be tested.
- *
- * \returns
- * If the device is a PCI G450, zero is returned.  Otherwise non-zero is
- * returned.
- *
- * \bug
- * This function needs to be filled in!  The implementation in
- * linux-core/mga_drv.c shows what needs to be done.
- */
-int
-mga_driver_device_is_agp(struct drm_device * dev)
-{
-#ifdef __FreeBSD__
-	device_t bus;
-
-	/* There are PCI versions of the G450.  These cards have the
-	 * same PCI ID as the AGP G450, but have an additional PCI-to-PCI
-	 * bridge chip.  We detect these cards, which are not currently
-	 * supported by this driver, by looking at the device ID of the
-	 * bus the "card" is on.  If vendor is 0x3388 (Hint Corp) and the
-	 * device is 0x0021 (HB6 Universal PCI-PCI bridge), we reject the
-	 * device.
-	 */
-#if __FreeBSD_version >= 700010
-	bus = device_get_parent(device_get_parent(dev->device));
-#else
-	bus = device_get_parent(dev->device);
-#endif
-	if (pci_get_device(dev->device) == 0x0525 &&
-	    pci_get_vendor(bus) == 0x3388 &&
-	    pci_get_device(bus) == 0x0021)
-		return DRM_IS_NOT_AGP;
-	else
-#endif /* XXX Fixme for non freebsd */
-		return DRM_MIGHT_BE_AGP;
-
-}
 
 static const struct drm_driver_info mga_driver = {
 	.buf_priv_size		= sizeof(drm_mga_buf_priv_t),
