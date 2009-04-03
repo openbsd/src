@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.10 2005/11/28 00:14:29 jsg Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.11 2009/04/03 09:30:15 art Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -49,11 +49,27 @@ sys_reboot(struct proc *p, void *v, register_t *retval)
 	struct sys_reboot_args /* {
 		syscallarg(int) opt;
 	} */ *uap = v;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 	int error;
 
 	if ((error = suser(p, 0)) != 0)
 		return (error);
+
+	/*
+	 * Make sure this thread only runs on the primary cpu.
+	 */
+	CPU_INFO_FOREACH(cii, ci) {
+		if (CPU_IS_PRIMARY(ci)) {
+			sched_peg_curproc(ci);
+			break;
+		}
+	}
+
 	boot(SCARG(uap, opt));
+
+	atomic_clearbits_int(&p->p_flag, P_CPUPEG);	/* XXX */
+
 	return (0);
 }
 
