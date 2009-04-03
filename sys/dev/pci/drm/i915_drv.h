@@ -227,7 +227,6 @@ void		inteldrm_update_ring(struct drm_i915_private *);
 extern void i915_driver_lastclose(struct drm_device * dev);
 extern void i915_driver_close(struct drm_device *dev,
 				 struct drm_file *file_priv);
-extern int i915_driver_device_is_agp(struct drm_device * dev);
 extern long i915_compat_ioctl(struct file *filp, unsigned int cmd,
 			      unsigned long arg);
 extern void i915_emit_breadcrumb(struct drm_device *dev);
