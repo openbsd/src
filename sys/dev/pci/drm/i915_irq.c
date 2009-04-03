@@ -201,6 +201,9 @@ i915_driver_irq_handler(DRM_IRQ_ARGS)
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *)dev->dev_private;
 	u_int32_t iir, pipea_stats = 0, pipeb_stats = 0;
 
+	/*
+	 * lock is to protect from writes to PIPESTAT and IMR from other cores.
+	 */
 	mtx_enter(&dev_priv->user_irq_lock);
 	atomic_inc(&dev_priv->irq_received);
 	iir = I915_READ(IIR);
@@ -223,7 +226,6 @@ i915_driver_irq_handler(DRM_IRQ_ARGS)
 
 	I915_WRITE(IIR, iir);
 	(void)I915_READ(IIR); /* Flush posted writes */
-	mtx_leave(&dev_priv->user_irq_lock);
 
 	if (dev_priv->sarea_priv != NULL)
 		dev_priv->sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
@@ -231,6 +233,7 @@ i915_driver_irq_handler(DRM_IRQ_ARGS)
 	if (iir & I915_USER_INTERRUPT) {
 		wakeup(dev_priv);
 	}
+	mtx_leave(&dev_priv->user_irq_lock);
 
 	if (pipea_stats & I915_VBLANK_INTERRUPT_STATUS)
 		drm_handle_vblank(dev, i915_get_plane(dev, 0));
@@ -289,23 +292,10 @@ i915_wait_irq(struct drm_device *dev, int irq_nr)
 	DRM_DEBUG("irq_nr=%d breadcrumb=%d\n", irq_nr,
 		  READ_BREADCRUMB(dev_priv));
 
-	if (READ_BREADCRUMB(dev_priv) >= irq_nr) {
-		if (dev_priv->sarea_priv != NULL) {
-			dev_priv->sarea_priv->last_dispatch =
-			    READ_BREADCRUMB(dev_priv);
-		}
-		return (0);
-	}
-
 	i915_user_irq_get(dev);
-	DRM_WAIT_ON(ret, dev_priv, &dev->irq_lock, 3 * hz, "i915wt",
+	DRM_WAIT_ON(ret, dev_priv, &dev_priv->user_irq_lock, 3 * hz, "i915wt",
 	    READ_BREADCRUMB(dev_priv) >= irq_nr);
 	i915_user_irq_put(dev);
-
-	if (ret == EBUSY) {
-		DRM_ERROR("EBUSY -- rec: %d emitted: %d\n",
-			  READ_BREADCRUMB(dev_priv), (int)dev_priv->counter);
-	}
 
 	if (dev_priv->sarea_priv != NULL)
 		dev_priv->sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
@@ -414,7 +404,7 @@ i915_driver_irq_install(struct drm_device *dev)
 	(void)I915_READ(IER);
 
 	dev_priv->irqh = pci_intr_establish(dev_priv->pc, dev_priv->ih, IPL_BIO,
-	    drm_irq_handler_wrap, dev, dev_priv->dev.dv_xname);
+	    i915_driver_irq_handler, dev, dev_priv->dev.dv_xname);
 	if (dev_priv->irqh == NULL)
 		return (ENOENT);
 
