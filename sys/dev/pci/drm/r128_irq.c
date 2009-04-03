@@ -35,7 +35,7 @@
 #include "r128_drm.h"
 #include "r128_drv.h"
 
-irqreturn_t r128_driver_irq_handler(DRM_IRQ_ARGS);
+int	r128_driver_irq_handler(void *);
 
 u_int32_t
 r128_get_vblank_counter(struct drm_device *dev, int crtc)
@@ -48,8 +48,8 @@ r128_get_vblank_counter(struct drm_device *dev, int crtc)
 	return (atomic_read(&dev_priv->vbl_received));
 }
 
-irqreturn_t
-r128_driver_irq_handler(DRM_IRQ_ARGS)
+int
+r128_driver_irq_handler(void *arg)
 {
 	struct drm_device	*dev = (struct drm_device *) arg;
 	drm_r128_private_t	*dev_priv = dev->dev_private;

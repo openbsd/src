@@ -40,10 +40,10 @@
 #include "mach64_drm.h"
 #include "mach64_drv.h"
 
-irqreturn_t mach64_driver_irq_handler(DRM_IRQ_ARGS);
+int	mach64_driver_irq_handler(void *);
 
-irqreturn_t
-mach64_driver_irq_handler(DRM_IRQ_ARGS)
+int
+mach64_driver_irq_handler(void *arg)
 {
 	struct drm_device	*dev = arg;
 	drm_mach64_private_t	*dev_priv = dev->dev_private;

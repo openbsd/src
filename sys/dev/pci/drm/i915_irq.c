@@ -31,7 +31,7 @@
 #include "i915_drm.h"
 #include "i915_drv.h"
 
-irqreturn_t i915_driver_irq_handler(DRM_IRQ_ARGS);
+int	i915_driver_irq_handler(void *);
 void	i915_enable_irq(drm_i915_private_t *, u_int32_t);
 void	i915_disable_irq(drm_i915_private_t *, u_int32_t);
 void	i915_enable_pipestat(drm_i915_private_t *, int, u_int32_t);
@@ -195,8 +195,8 @@ i915_get_vblank_counter(struct drm_device *dev, int plane)
 	return ((high1 << 8) | low);
 }
 
-irqreturn_t
-i915_driver_irq_handler(DRM_IRQ_ARGS)
+int
+i915_driver_irq_handler(void *arg)
 {
 	struct drm_device *dev = (struct drm_device *)arg;
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *)dev->dev_private;

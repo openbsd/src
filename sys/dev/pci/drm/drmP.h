@@ -90,8 +90,6 @@
 /* Deal with netbsd code where only the print statements differ */
 #define printk printf
 
-#define DRM_IRQ_ARGS		void *arg
-typedef int			irqreturn_t;
 #define IRQ_HANDLED		1
 #define IRQ_NONE		0
 

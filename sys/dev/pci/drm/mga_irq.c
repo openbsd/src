@@ -36,7 +36,7 @@
 #include "mga_drm.h"
 #include "mga_drv.h"
 
-irqreturn_t mga_driver_irq_handler(DRM_IRQ_ARGS);
+int	mga_driver_irq_handler(void *);
 
 u_int32_t
 mga_get_vblank_counter(struct drm_device *dev, int crtc)
@@ -51,8 +51,8 @@ mga_get_vblank_counter(struct drm_device *dev, int crtc)
 }
 
 
-irqreturn_t
-mga_driver_irq_handler(DRM_IRQ_ARGS)
+int
+mga_driver_irq_handler(void *arg)
 {
 	struct drm_device	*dev =  arg;
 	drm_mga_private_t	*dev_priv = dev->dev_private;

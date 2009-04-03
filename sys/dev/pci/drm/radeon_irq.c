@@ -35,7 +35,7 @@
 #include "radeon_drm.h"
 #include "radeon_drv.h"
 
-irqreturn_t	radeon_driver_irq_handler(DRM_IRQ_ARGS);
+int		radeon_driver_irq_handler(void *);
 void		r500_vbl_irq_set_state(struct drm_device *, u_int32_t, int);
 u_int32_t	radeon_acknowledge_irqs(drm_radeon_private_t *, u_int32_t *);
 int		radeon_emit_irq(struct drm_device *);
@@ -189,8 +189,8 @@ radeon_acknowledge_irqs(drm_radeon_private_t *dev_priv, u32 *r500_disp_int)
  * tied to dma at all, this is just a hangover from dri prehistory.
  */
 
-irqreturn_t
-radeon_driver_irq_handler(DRM_IRQ_ARGS)
+int
+radeon_driver_irq_handler(void *arg)
 {
 	struct drm_device	*dev = arg;
 	drm_radeon_private_t	*dev_priv = dev->dev_private;
