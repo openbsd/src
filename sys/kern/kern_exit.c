@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.83 2009/03/26 17:24:33 oga Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.84 2009/04/03 04:22:49 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -60,9 +60,6 @@
 #include <sys/ktrace.h>
 #include <sys/pool.h>
 #include <sys/mutex.h>
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
@@ -183,7 +180,8 @@ exit1(struct proc *p, int rv, int flags)
 	fdfree(p);
 
 #ifdef SYSVSEM
-	semexit(p);
+	if ((p->p_flag & P_THREAD) == 0)
+		semexit(p->p_p);
 #endif
 	if (SESS_LEADER(p)) {
 		struct session *sp = p->p_session;

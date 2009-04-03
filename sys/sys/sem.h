@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.19 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: sem.h,v 1.20 2009/04/03 04:22:49 guenther Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ union semun {
  */
 struct sem_undo {
 	SLIST_ENTRY(sem_undo) un_next;	/* ptr to next active undo structure */
-	struct	proc *un_proc;		/* owner of this structure */
+	struct	process *un_proc;	/* owner of this structure */
 	short	un_cnt;			/* # of active entries */
 	struct undo {
 		short	un_adjval;	/* adjust on exit values */
@@ -215,7 +215,7 @@ int	semconfig(int);
 __END_DECLS
 #else
 void	seminit(void);
-void	semexit(struct proc *);
+void	semexit(struct process *);
 int	sysctl_sysvsem(int *, u_int, void *, size_t *, void *, size_t);
 int	semctl1(struct proc *, int, int, int, union semun *, register_t *,
 	    int (*)(const void *, void *, size_t),
