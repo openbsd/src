@@ -119,9 +119,10 @@ typedef struct drm_mga_private {
 	u32 clear_cmd;
 	u32 maccess;
 
-	atomic_t vbl_received;		/**< Number of vblanks received. */
-	atomic_t last_fence_retired;
-	u32 next_fence_to_post;
+	atomic_t	vbl_received;	/**< Number of vblanks received. */
+	struct mutex	fence_lock;
+	u_int32_t	last_fence_retired;
+	u_int32_t	next_fence_to_post;
 
 	unsigned int fb_cpp;
 	unsigned int front_offset;
@@ -186,8 +187,7 @@ extern int mga_warp_init(drm_mga_private_t * dev_priv);
 extern int mga_enable_vblank(struct drm_device *dev, int crtc);
 extern void mga_disable_vblank(struct drm_device *dev, int crtc);
 extern u32 mga_get_vblank_counter(struct drm_device *dev, int crtc);
-extern int mga_driver_fence_wait(struct drm_device * dev, unsigned int *sequence);
-extern int mga_driver_vblank_wait(struct drm_device * dev, unsigned int *sequence);
+extern int mga_driver_fence_wait(struct drm_device * dev, u_int32_t *sequence);
 extern irqreturn_t mga_driver_irq_handler(DRM_IRQ_ARGS);
 extern int mga_driver_irq_install(struct drm_device * dev);
 extern void mga_driver_irq_uninstall(struct drm_device * dev);

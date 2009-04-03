@@ -1102,19 +1102,18 @@ int mga_set_fence(struct drm_device *dev, void *data, struct drm_file *file_priv
 	return 0;
 }
 
-int mga_wait_fence(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int
+mga_wait_fence(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	u32 *fence = data;
+	drm_mga_private_t	*dev_priv = dev->dev_private;
+	u_int32_t		*fence = data;
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
 		return EINVAL;
 	}
 
-	DRM_DEBUG("pid=%d\n", DRM_CURRENTPID);
-
 	mga_driver_fence_wait(dev, fence);
 
-	return 0;
+	return (0);
 }
