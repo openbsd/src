@@ -90,9 +90,6 @@
 /* Deal with netbsd code where only the print statements differ */
 #define printk printf
 
-#define IRQ_HANDLED		1
-#define IRQ_NONE		0
-
 enum {
 	DRM_IS_NOT_AGP,
 	DRM_IS_AGP,

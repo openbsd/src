@@ -210,7 +210,7 @@ i915_driver_irq_handler(void *arg)
 	iir = I915_READ(IIR);
 	if (iir == 0) {
 		mtx_leave(&dev_priv->user_irq_lock);
-		return (IRQ_NONE);
+		return (0);
 	}
 
 	/*
@@ -242,7 +242,7 @@ i915_driver_irq_handler(void *arg)
 	if (pipeb_stats & I915_VBLANK_INTERRUPT_STATUS)
 		drm_handle_vblank(dev, i915_get_plane(dev, 1));
 
-	return (IRQ_HANDLED);
+	return (1);
 }
 
 int i915_emit_irq(struct drm_device *dev)

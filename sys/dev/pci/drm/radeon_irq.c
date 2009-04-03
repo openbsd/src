@@ -198,7 +198,7 @@ radeon_driver_irq_handler(void *arg)
 
 	stat = radeon_acknowledge_irqs(dev_priv, &r500_disp_int);
 	if (!stat)
-		return (IRQ_NONE);
+		return (0);
 
 	stat &= dev_priv->irq_enable_reg;
 
@@ -221,7 +221,7 @@ radeon_driver_irq_handler(void *arg)
 		if (stat & RADEON_CRTC2_VBLANK_STAT)
 			drm_handle_vblank(dev, 1);
 	}
-	return (IRQ_HANDLED);
+	return (1);
 }
 
 int

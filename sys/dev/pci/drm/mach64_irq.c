@@ -47,7 +47,8 @@ mach64_driver_irq_handler(void *arg)
 {
 	struct drm_device	*dev = arg;
 	drm_mach64_private_t	*dev_priv = dev->dev_private;
-	int			 status;
+	u_int32_t		 status;
+	int			 handled = 0;
 
 	status = MACH64_READ(MACH64_CRTC_INT_CNTL);
 
@@ -66,9 +67,9 @@ mach64_driver_irq_handler(void *arg)
 
 		atomic_inc(&dev_priv->vbl_received);
 		drm_handle_vblank(dev, 0);
-		return (IRQ_HANDLED);
+		handled = 1;
 	}
-	return (IRQ_NONE);
+	return (handled);
 }
 
 u_int32_t

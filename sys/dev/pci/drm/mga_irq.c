@@ -90,9 +90,7 @@ mga_driver_irq_handler(void *arg)
 		handled = 1;
 	}
 
-	if (handled)
-		return (IRQ_HANDLED);
-	return (IRQ_NONE);
+	return (handled);
 }
 
 int
