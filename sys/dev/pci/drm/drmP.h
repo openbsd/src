@@ -238,7 +238,6 @@ typedef struct drm_buf_entry {
 	int			 seg_count;
 } drm_buf_entry_t;
 
-typedef TAILQ_HEAD(drm_file_list, drm_file) drm_file_list_t;
 struct drm_file {
 	SPLAY_ENTRY(drm_file)	 link;
 	int			 authenticated;
