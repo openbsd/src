@@ -95,8 +95,6 @@
 	(minor(_kdev) < drm_cd.cd_ndevs) ? drm_cd.cd_devs[minor(_kdev)] : NULL
 #endif
 
-
-
 /* DRM_SUSER returns true if the user is superuser */
 #define DRM_SUSER(p)		(suser(p, p->p_acflag) == 0)
 #define DRM_MTRR_WC		MDF_WRITECOMBINE
@@ -199,7 +197,7 @@ struct drm_pcidev {
 struct drm_file;
 struct drm_device;
 
-typedef struct drm_buf {
+struct drm_buf {
 	int		  idx;	       /* Index into master buflist	     */
 	int		  total;       /* Buffer size			     */
 	int		  used;	       /* Amount of buffer in use (for DMA)  */
@@ -209,7 +207,7 @@ typedef struct drm_buf {
 	__volatile__ int  pending;     /* On hardware DMA queue		     */
 	struct drm_file   *file_priv;  /* Unique identifier of holding process */
 	void		  *dev_private;  /* Per-buffer private storage       */
-} drm_buf_t;
+};
 
 struct drm_dmamem {
 	bus_dmamap_t		map;
@@ -221,7 +219,7 @@ struct drm_dmamem {
 
 typedef struct drm_buf_entry {
 	struct drm_dmamem	**seglist;
-	drm_buf_t		*buflist;
+	struct drm_buf		*buflist;
 	int			 buf_size;
 	int			 buf_count;
 	int			 page_order;
@@ -256,7 +254,7 @@ struct drm_lock_data {
 typedef struct drm_device_dma {
 	struct rwlock	 dma_lock;
 	drm_buf_entry_t	 bufs[DRM_MAX_ORDER+1];
-	drm_buf_t	**buflist;	/* Vector of pointers info bufs	   */
+	struct drm_buf	**buflist;	/* Vector of pointers info bufs	   */
 	unsigned long	*pagelist;
 	unsigned long	 byte_count;
 	int		 buf_use;	/* Buffers in use -- cannot alloc  */
@@ -522,7 +520,7 @@ int	drm_dma(struct drm_device *, void *, struct drm_file *);
 int	drm_dma_setup(struct drm_device *);
 void	drm_dma_takedown(struct drm_device *);
 void	drm_cleanup_buf(struct drm_device *, drm_buf_entry_t *);
-void	drm_free_buffer(struct drm_device *, drm_buf_t *);
+void	drm_free_buffer(struct drm_device *, struct drm_buf *);
 void	drm_reclaim_buffers(struct drm_device *, struct drm_file *);
 
 /* IRQ support (drm_irq.c) */

@@ -413,7 +413,7 @@ drm_dma_takedown(struct drm_device *dev)
 
 
 void
-drm_free_buffer(struct drm_device *dev, drm_buf_t *buf)
+drm_free_buffer(struct drm_device *dev, struct drm_buf *buf)
 {
 	if (buf == NULL)
 		return;
@@ -477,23 +477,15 @@ drm_dma(struct drm_device *dev, void *data, struct drm_file *file_priv)
 int
 drm_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
 {
-	drm_device_dma_t *dma = dev->dma;
-	drm_buf_entry_t *entry;
-	drm_buf_t *buf;
-	unsigned long offset;
-	unsigned long agp_offset;
-	int count;
-	int order;
-	int size;
-	int alignment;
-	int page_order;
-	int total;
-	int byte_count;
-	int i;
-	drm_buf_t **temp_buflist;
+	drm_device_dma_t	*dma = dev->dma;
+	drm_buf_entry_t		*entry;
+	struct drm_buf		*buf, **temp_buflist;
+	unsigned long		 agp_offset, offset;
+	int			 alignment, count, order, page_order, size;
+	int			 total, byte_count, i;
 #if 0 /* disabled for now */
-	struct drm_agp_mem *agp_entry;
-	int valid;
+	struct drm_agp_mem	*agp_entry;
+	int			 valid;
 #endif
 
 	count = request->count;
@@ -609,21 +601,12 @@ drm_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
 int
 drm_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 {
-	drm_device_dma_t *dma = dev->dma;
-	int count;
-	int order;
-	int size;
-	int total;
-	int page_order;
-	drm_buf_entry_t *entry;
-	drm_buf_t *buf;
-	int alignment;
-	unsigned long offset;
-	int i;
-	int byte_count;
-	int page_count;
-	unsigned long *temp_pagelist;
-	drm_buf_t **temp_buflist;
+	drm_device_dma_t	*dma = dev->dma;
+	struct drm_buf		*buf, **temp_buflist;
+	drm_buf_entry_t		*entry;
+	int			 alignment, byte_count, count, i, order;
+	int			 page_count, page_order, size, total;
+	unsigned long		 offset, *temp_pagelist;
 
 	count = request->count;
 	order = drm_order(request->size);
@@ -752,20 +735,12 @@ drm_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 int
 drm_addbufs_sg(struct drm_device *dev, struct drm_buf_desc *request)
 {
-	drm_device_dma_t *dma = dev->dma;
-	drm_buf_entry_t *entry;
-	drm_buf_t *buf;
-	unsigned long offset;
-	unsigned long agp_offset;
-	int count;
-	int order;
-	int size;
-	int alignment;
-	int page_order;
-	int total;
-	int byte_count;
-	int i;
-	drm_buf_t **temp_buflist;
+	drm_device_dma_t	*dma = dev->dma;
+	drm_buf_entry_t		*entry;
+	struct drm_buf		*buf, **temp_buflist;
+	unsigned long		 agp_offset, offset;
+	int			 alignment, byte_count, count, i, order;
+	int			 page_order, size, total;
 
 	count = request->count;
 	order = drm_order(request->size);
@@ -896,7 +871,7 @@ drm_freebufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_device_dma_t	*dma = dev->dma;
 	struct drm_buf_free	*request = data;
-	drm_buf_t		*buf;
+	struct drm_buf		*buf;
 	int			 i, idx, retcode = 0;
 
 	DRM_DEBUG("%d\n", request->count);
@@ -930,18 +905,15 @@ drm_freebufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 int
 drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_device_dma_t *dma = dev->dma;
-	struct vmspace *vms;
-	struct vnode *vn;
-	vaddr_t address;
-	voff_t foff;
-	vsize_t size;
-	vaddr_t vaddr;
-	int retcode = 0;
-	const int zero = 0;
-
-	struct drm_buf_map *request = data;
-	int i;
+	struct drm_buf_map	*request = data;
+	drm_device_dma_t	*dma = dev->dma;
+	struct vmspace		*vms;
+	struct vnode		*vn;
+	vaddr_t			 address, vaddr;
+	voff_t			 foff;
+	vsize_t			 size;
+	const int		 zero = 0;
+	int			 i, retcode = 0;
 
 	if (!vfinddev(file_priv->kdev, VCHR, &vn))
 		return EINVAL;
