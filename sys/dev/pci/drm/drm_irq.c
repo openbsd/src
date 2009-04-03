@@ -346,16 +346,9 @@ drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (flags & _DRM_VBLANK_SIGNAL) {
 		ret = EINVAL;
 	} else {
-		mtx_enter(&dev->vbl_lock);
-		while (ret == 0) {
-			if ((drm_vblank_count(dev, crtc)
-			    - vblwait->request.sequence) <= (1 << 23))
-				break;
-			ret = msleep(&dev->vblank[crtc],
-			    &dev->vbl_lock, PZERO | PCATCH,
-			    "drmvblq", 3 * DRM_HZ);
-		}
-		mtx_leave(&dev->vbl_lock);
+		DRM_WAIT_ON(ret, &dev->vblank[crtc], &dev->vbl_lock, 3 * hz,
+		    "drmvblq", (drm_vblank_count(dev, crtc) -
+		    vblwait->request.sequence) <= (1 << 23));
 
 		if (ret != EINTR) {
 			struct timeval now;

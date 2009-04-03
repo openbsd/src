@@ -245,17 +245,16 @@ radeon_emit_irq(struct drm_device * dev)
 int
 radeon_wait_irq(struct drm_device * dev, int swi_nr)
 {
-	drm_radeon_private_t *dev_priv =
-	    (drm_radeon_private_t *) dev->dev_private;
-	int ret = 0;
+	drm_radeon_private_t	*dev_priv = dev->dev_private;
+	int			 ret = 0;
 
 	if (RADEON_READ(RADEON_LAST_SWI_REG) >= swi_nr)
 		return 0;
 
-	DRM_WAIT_ON(ret, dev_priv, 3 * DRM_HZ,
-		    RADEON_READ(RADEON_LAST_SWI_REG) >= swi_nr);
+	DRM_WAIT_ON(ret, dev_priv, &dev->irq_lock, 3 * hz, "rdnwt",
+	    RADEON_READ(RADEON_LAST_SWI_REG) >= swi_nr);
 
-	return ret;
+	return (ret);
 }
 
 u32 radeon_get_vblank_counter(struct drm_device *dev, int crtc)

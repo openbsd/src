@@ -164,7 +164,6 @@ typedef u_int8_t u8;
 #define le32_to_cpu(x) letoh32(x)
 #define cpu_to_le32(x) htole32(x)
 
-#define DRM_HZ			hz
 #define DRM_UDELAY(udelay)	DELAY(udelay)
 
 #define LOCK_TEST_WITH_RETURN(dev, file_priv)				\
@@ -177,15 +176,16 @@ do {									\
 	}								\
 } while (0)
 
-#define DRM_WAIT_ON( ret, queue, timeout, condition )	\
-mtx_enter(&dev->irq_lock);				\
-while ( ret == 0 ) {					\
-	if (condition)					\
-		break;					\
-	ret = msleep((queue), &dev->irq_lock,	 	\
-	     PZERO | PCATCH, "drmwtq", (timeout));	\
-}							\
-mtx_leave(&dev->irq_lock)
+#define DRM_WAIT_ON(ret, queue, lock,  timeout, msg, condition ) do {	\
+	mtx_enter(lock);						\
+	while ((ret) == 0) {						\
+		if (condition)						\
+			break;						\
+		ret = msleep((queue), (lock), PZERO | PCATCH,		\
+		    (msg), (timeout));					\
+	}								\
+	mtx_leave(lock);						\
+} while (/* CONSTCOND */ 0)
 
 #define DRM_ERROR(fmt, arg...) \
 	printf("error: [" DRM_NAME ":pid%d:%s] *ERROR* " fmt,		\

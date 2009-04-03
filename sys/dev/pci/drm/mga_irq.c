@@ -36,26 +36,26 @@
 #include "mga_drm.h"
 #include "mga_drv.h"
 
-u32 mga_get_vblank_counter(struct drm_device *dev, int crtc)
+u_int32_t
+mga_get_vblank_counter(struct drm_device *dev, int crtc)
 {
-	const drm_mga_private_t *const dev_priv = 
-		(drm_mga_private_t *) dev->dev_private;
+	const drm_mga_private_t *const	dev_priv = dev->dev_private;
 
 	if (crtc != 0) {
-		return 0;
+		return (0);
 	}
 
 
-	return atomic_read(&dev_priv->vbl_received);
+	return (atomic_read(&dev_priv->vbl_received));
 }
 
 
-irqreturn_t mga_driver_irq_handler(DRM_IRQ_ARGS)
+irqreturn_t
+mga_driver_irq_handler(DRM_IRQ_ARGS)
 {
-	struct drm_device *dev = (struct drm_device *) arg;
-	drm_mga_private_t *dev_priv = (drm_mga_private_t *) dev->dev_private;
-	int status;
-	int handled = 0;
+	struct drm_device	*dev =  arg;
+	drm_mga_private_t	*dev_priv = dev->dev_private;
+	int			 status, handled = 0;
 
 	status = MGA_READ(MGA_STATUS);
 
@@ -88,8 +88,8 @@ irqreturn_t mga_driver_irq_handler(DRM_IRQ_ARGS)
 	}
 
 	if (handled)
-		return IRQ_HANDLED;
-	return IRQ_NONE;
+		return (IRQ_HANDLED);
+	return (IRQ_NONE);
 }
 
 int mga_enable_vblank(struct drm_device *dev, int crtc)
@@ -132,9 +132,9 @@ int mga_driver_fence_wait(struct drm_device * dev, unsigned int *sequence)
 	 * by about a day rather than she wants to wait for years
 	 * using fences.
 	 */
-	DRM_WAIT_ON(ret, dev_priv, 3 * DRM_HZ,
-		    (((cur_fence = atomic_read(&dev_priv->last_fence_retired))
-		      - *sequence) <= (1 << 23)));
+	DRM_WAIT_ON(ret, dev_priv, &dev->irq_lock, 3 * hz, "mgawt",
+	    (((cur_fence = atomic_read(&dev_priv->last_fence_retired)) -
+	    *sequence) <= (1 << 23)));
 
 	*sequence = cur_fence;
 

@@ -159,13 +159,13 @@ i915_pipe_enabled(struct drm_device *dev, int pipe)
 	return 0;
 }
 
-u32 i915_get_vblank_counter(struct drm_device *dev, int plane)
+u_int32_t
+i915_get_vblank_counter(struct drm_device *dev, int plane)
 {
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
-	unsigned long high_frame;
-	unsigned long low_frame;
-	u32 high1, high2, low, count;
-	int pipe;
+	drm_i915_private_t	*dev_priv = dev->dev_private;
+	bus_size_t		 high_frame, low_frame;
+	u_int32_t		 high1, high2, low;
+	int			 pipe;
 
 	pipe = i915_get_pipe(dev, plane);
 	high_frame = pipe ? PIPEBFRAMEHIGH : PIPEAFRAMEHIGH;
@@ -174,7 +174,7 @@ u32 i915_get_vblank_counter(struct drm_device *dev, int plane)
 	if (!i915_pipe_enabled(dev, pipe)) {
 		DRM_DEBUG("trying to get vblank count for disabled pipe %d\n",
 		    pipe);
-		return 0;
+		return (0);
 	}
 
 	/*
@@ -191,12 +191,11 @@ u32 i915_get_vblank_counter(struct drm_device *dev, int plane)
 			 PIPE_FRAME_HIGH_SHIFT);
 	} while (high1 != high2);
 
-	count = (high1 << 8) | low;
-
-	return count;
+	return ((high1 << 8) | low);
 }
 
-irqreturn_t i915_driver_irq_handler(DRM_IRQ_ARGS)
+irqreturn_t
+i915_driver_irq_handler(DRM_IRQ_ARGS)
 {
 	struct drm_device *dev = (struct drm_device *)arg;
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *)dev->dev_private;
@@ -281,10 +280,11 @@ void i915_user_irq_put(struct drm_device *dev)
 }
 
 
-int i915_wait_irq(struct drm_device * dev, int irq_nr)
+int
+i915_wait_irq(struct drm_device *dev, int irq_nr)
 {
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
-	int ret = 0;
+	drm_i915_private_t	*dev_priv =  dev->dev_private;
+	int			 ret = 0;
 
 	DRM_DEBUG("irq_nr=%d breadcrumb=%d\n", irq_nr,
 		  READ_BREADCRUMB(dev_priv));
@@ -294,12 +294,12 @@ int i915_wait_irq(struct drm_device * dev, int irq_nr)
 			dev_priv->sarea_priv->last_dispatch =
 			    READ_BREADCRUMB(dev_priv);
 		}
-		return 0;
+		return (0);
 	}
 
 	i915_user_irq_get(dev);
-	DRM_WAIT_ON(ret, dev_priv, 3 * DRM_HZ,
-		    READ_BREADCRUMB(dev_priv) >= irq_nr);
+	DRM_WAIT_ON(ret, dev_priv, &dev->irq_lock, 3 * hz, "i915wt",
+	    READ_BREADCRUMB(dev_priv) >= irq_nr);
 	i915_user_irq_put(dev);
 
 	if (ret == EBUSY) {
@@ -309,7 +309,7 @@ int i915_wait_irq(struct drm_device * dev, int irq_nr)
 
 	if (dev_priv->sarea_priv != NULL)
 		dev_priv->sarea_priv->last_dispatch = READ_BREADCRUMB(dev_priv);
-	return ret;
+	return (ret);
 }
 
 /* Needs the lock as it touches the ring.
