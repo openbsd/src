@@ -477,7 +477,7 @@ radeon_emit_clip_rect(drm_radeon_private_t *dev_priv, struct drm_clip_rect *box)
  * 1.3 cmdbuffers allow all previous state to be updated as well as
  * the tcl scalar and vector areas.
  */
-static struct {
+const static struct {
 	int start;
 	int len;
 	const char *name;

@@ -35,7 +35,7 @@ void	sisdrm_attach(struct device *, struct device *, void *);
 int	sisdrm_detach(struct device *, int);
 int	sisdrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
-static drm_pci_id_list_t sis_pciidlist[] = {
+const static drm_pci_id_list_t sis_pciidlist[] = {
 	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_300},
 	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5300},
 	{PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6300},

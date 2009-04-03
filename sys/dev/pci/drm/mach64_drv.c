@@ -43,7 +43,7 @@ void	machdrm_attach(struct device *, struct device *, void *);
 int	machdrm_detach(struct device *, int);
 int	machdrm_ioctl(struct drm_device *, u_long, caddr_t, struct drm_file *);
 
-static drm_pci_id_list_t mach64_pciidlist[] = {
+const static drm_pci_id_list_t mach64_pciidlist[] = {
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GI},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GP},
 	{PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GQ},

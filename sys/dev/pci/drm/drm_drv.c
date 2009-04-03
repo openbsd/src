@@ -103,9 +103,9 @@ drmprint(void *aux, const char *pnp)
 }
 
 int
-drm_pciprobe(struct pci_attach_args *pa, drm_pci_id_list_t *idlist)
+drm_pciprobe(struct pci_attach_args *pa, const drm_pci_id_list_t *idlist)
 {
-	drm_pci_id_list_t *id_entry;
+	const drm_pci_id_list_t *id_entry;
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), idlist);
@@ -241,8 +241,8 @@ struct cfdriver drm_cd = {
 	0, "drm", DV_DULL
 };
 
-drm_pci_id_list_t *
-drm_find_description(int vendor, int device, drm_pci_id_list_t *idlist)
+const drm_pci_id_list_t *
+drm_find_description(int vendor, int device, const drm_pci_id_list_t *idlist)
 {
 	int i = 0;
 	
