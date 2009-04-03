@@ -76,7 +76,7 @@ drm_free(void *pt)
 }
 
 void *
-drm_ioremap(struct drm_device *dev, drm_local_map_t *map)
+drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 {
 	DRM_DEBUG("offset: 0x%x size: 0x%x type: %d\n", map->offset, map->size,
 	    map->type);
@@ -102,7 +102,7 @@ drm_ioremap(struct drm_device *dev, drm_local_map_t *map)
 }
 
 void
-drm_ioremapfree(drm_local_map_t *map)
+drm_ioremapfree(struct drm_local_map *map)
 {
 	if (map == NULL || (map->type != _DRM_AGP && map->type !=
 	    _DRM_FRAME_BUFFER))

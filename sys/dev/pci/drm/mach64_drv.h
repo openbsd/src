@@ -110,11 +110,11 @@ typedef struct drm_mach64_private {
 	u32 back_offset_pitch;
 	u32 depth_offset_pitch;
 
-	drm_local_map_t *sarea;
-	drm_local_map_t *fb;
-	drm_local_map_t *ring_map;
-	drm_local_map_t *dev_buffers;	/* this is a pointer to a structure in dev */
-	drm_local_map_t *agp_textures;
+	struct drm_local_map *sarea;
+	struct drm_local_map *fb;
+	struct drm_local_map *ring_map;
+	struct drm_local_map *dev_buffers;	/* this is a pointer to a structure in dev */
+	struct drm_local_map *agp_textures;
 } drm_mach64_private_t;
 
 				/* mach64_dma.c */

@@ -293,9 +293,7 @@ struct drm_sg_mem {
 	unsigned long		 handle;
 };
 
-typedef TAILQ_HEAD(drm_map_list, drm_local_map) drm_map_list_t;
-
-typedef struct drm_local_map {
+struct drm_local_map {
 	TAILQ_ENTRY(drm_local_map)	 link;	/* Link for map list */
 	struct drm_dmamem		*dmamem;/* Handle to DMA mem */
 	void				*handle;/* KVA, if mapped */
@@ -307,7 +305,7 @@ typedef struct drm_local_map {
 	int				 mtrr;	/* Boolean: MTRR used */
 	enum drm_map_flags		 flags;	/* Flags */
 	enum drm_map_type		 type;	/* Type of memory mapped */
-} drm_local_map_t;
+};
 
 struct drm_vblank {
 	u_int32_t	last_vblank;	/* Last vblank we recieved */
@@ -339,7 +337,7 @@ struct drm_mem {
 #define upper_32_bits(_val) ((u_int32_t)(((_val) >> 16) >> 16))
 
 struct drm_ati_pcigart_info {
-	drm_local_map_t		 mapping;
+	struct drm_local_map	 mapping;
 	struct drm_dmamem	*mem;
 	void			*addr;
 	bus_addr_t		 bus_addr;
@@ -417,8 +415,9 @@ struct drm_device {
 	drm_magic_t	  magicid;
 
 	/* Linked list of mappable regions. Protected by dev_lock */
-	struct extent	*handle_ext;
-	drm_map_list_t	  maplist;
+	struct extent				*handle_ext;
+	TAILQ_HEAD(drm_map_list, drm_local_map)	 maplist;
+
 
 	struct drm_lock_data  lock;	/* Information on hardware lock	*/
 
@@ -443,7 +442,7 @@ struct drm_device {
 	struct drm_sg_mem	*sg;  /* Scatter gather memory */
 	atomic_t		*ctx_bitmap;
 	void			*dev_private;
-	drm_local_map_t		*agp_buffer_map;
+	struct drm_local_map	*agp_buffer_map;
 };
 
 struct drm_attach_args {
@@ -466,10 +465,10 @@ dev_type_ioctl(drmioctl);
 dev_type_open(drmopen);
 dev_type_close(drmclose);
 dev_type_mmap(drmmmap);
-extern drm_local_map_t	*drm_getsarea(struct drm_device *);
+struct drm_local_map	*drm_getsarea(struct drm_device *);
 struct drm_dmamem	*drm_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
 			     int, bus_size_t, int, int);
-void	drm_dmamem_free(bus_dma_tag_t, struct drm_dmamem *);
+void			 drm_dmamem_free(bus_dma_tag_t, struct drm_dmamem *);
 
 const struct drm_pcidev	*drm_find_description(int , int ,
 			     const struct drm_pcidev *);
@@ -482,8 +481,8 @@ void	*drm_alloc(size_t);
 void	*drm_calloc(size_t, size_t);
 void	*drm_realloc(void *, size_t, size_t);
 void	 drm_free(void *);
-void	*drm_ioremap(struct drm_device *, drm_local_map_t *);
-void	drm_ioremapfree(drm_local_map_t *);
+void	*drm_ioremap(struct drm_device *, struct drm_local_map *);
+void	drm_ioremapfree(struct drm_local_map *);
 int	drm_mtrr_add(unsigned long, size_t, int);
 int	drm_mtrr_del(int, unsigned long, size_t, int);
 
@@ -508,11 +507,11 @@ int	drm_lock_free(struct drm_lock_data *, unsigned int);
 /* Buffer management and DMA support (drm_bufs.c) */
 int	drm_order(unsigned long);
 int	drm_rmmap_ioctl(struct drm_device *, void *, struct drm_file *);
-void	drm_rmmap(struct drm_device *, drm_local_map_t *);
-void	drm_rmmap_locked(struct drm_device *, drm_local_map_t *);
+void	drm_rmmap(struct drm_device *, struct drm_local_map *);
+void	drm_rmmap_locked(struct drm_device *, struct drm_local_map *);
 int	drm_addmap_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_addmap(struct drm_device *, unsigned long, unsigned long,
-	    enum drm_map_type, enum drm_map_flags, drm_local_map_t **);
+	    enum drm_map_type, enum drm_map_flags, struct drm_local_map **);
 int	drm_addbufs(struct drm_device *, struct drm_buf_desc *);
 int	drm_freebufs(struct drm_device *, void *, struct drm_file *);
 int	drm_mapbufs(struct drm_device *, void *, struct drm_file *);
@@ -591,19 +590,23 @@ int	drm_sg_free(struct drm_device *, void *, struct drm_file *);
 
 /* Inline replacements for DRM_IOREMAP macros */
 #define drm_core_ioremap_wc drm_core_ioremap
-static __inline__ void drm_core_ioremap(struct drm_local_map *map, struct drm_device *dev)
+static __inline__ void
+drm_core_ioremap(struct drm_local_map *map, struct drm_device *dev)
 {
 	map->handle = drm_ioremap(dev, map);
 }
-static __inline__ void drm_core_ioremapfree(struct drm_local_map *map)
+
+static __inline__ void
+drm_core_ioremapfree(struct drm_local_map *map)
 {
 	if ( map->handle && map->size )
 		drm_ioremapfree(map);
 }
 
-static __inline__ struct drm_local_map *drm_core_findmap(struct drm_device *dev, unsigned long offset)
+static __inline__ struct drm_local_map *
+drm_core_findmap(struct drm_device *dev, unsigned long offset)
 {
-	drm_local_map_t *map;
+	struct drm_local_map	*map;
 
 	DRM_LOCK();
 	TAILQ_FOREACH(map, &dev->maplist, link) {

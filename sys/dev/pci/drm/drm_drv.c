@@ -274,8 +274,8 @@ drm_find_file_by_minor(struct drm_device *dev, int minor)
 int
 drm_firstopen(struct drm_device *dev)
 {
-	drm_local_map_t *map;
-	int i;
+	struct drm_local_map	*map;
+	int			 i;
 
 	/* prebuild the SAREA */
 	i = drm_addmap(dev, 0, SAREA_MAX, _DRM_SHM,
@@ -306,7 +306,7 @@ drm_firstopen(struct drm_device *dev)
 int
 drm_lastclose(struct drm_device *dev)
 {
-	drm_local_map_t *map, *mapsave;
+	struct drm_local_map	*map, *mapsave;
 
 	DRM_DEBUG("\n");
 
@@ -661,10 +661,10 @@ drmioctl(dev_t kdev, u_long cmd, caddr_t data, int flags,
 		return (EINVAL);
 }
 
-drm_local_map_t *
+struct drm_local_map *
 drm_getsarea(struct drm_device *dev)
 {
-	drm_local_map_t *map;
+	struct drm_local_map	*map;
 
 	DRM_LOCK();
 	TAILQ_FOREACH(map, &dev->maplist, link) {
@@ -679,7 +679,7 @@ paddr_t
 drmmmap(dev_t kdev, off_t offset, int prot)
 {
 	struct drm_device	*dev = drm_get_device_from_kdev(kdev);
-	drm_local_map_t		*map;
+	struct drm_local_map	*map;
 	struct drm_file		*priv;
 	enum drm_map_type	 type;
 

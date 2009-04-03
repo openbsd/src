@@ -56,7 +56,7 @@ enum sis_family {
 #define SIS_WRITE(reg, val)   DRM_WRITE32(SIS_BASE, reg, val);
 
 typedef struct drm_sis_private {
-	drm_local_map_t *mmio;
+	struct drm_local_map *mmio;
 	unsigned int idle_fault;
 	struct drm_sman sman;
 	unsigned int chipset;

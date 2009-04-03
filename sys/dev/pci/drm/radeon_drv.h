@@ -259,10 +259,10 @@ typedef struct drm_radeon_private {
 	unsigned long buffers_offset;
 	unsigned long gart_textures_offset;
 
-	drm_local_map_t *sarea;
-	drm_local_map_t *cp_ring;
-	drm_local_map_t *ring_rptr;
-	drm_local_map_t *gart_textures;
+	struct drm_local_map	*sarea;
+	struct drm_local_map	*cp_ring;
+	struct drm_local_map	*ring_rptr;
+	struct drm_local_map	*gart_textures;
 
 	struct drm_heap gart_heap;
 	struct drm_heap fb_heap;

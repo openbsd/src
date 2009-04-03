@@ -137,11 +137,11 @@ typedef struct drm_mga_private {
 	unsigned int texture_offset;
 	unsigned int texture_size;
 
-	drm_local_map_t *sarea;
-	drm_local_map_t *status;
-	drm_local_map_t *warp;
-	drm_local_map_t *primary;
-	drm_local_map_t *agp_textures;
+	struct drm_local_map *sarea;
+	struct drm_local_map *status;
+	struct drm_local_map *warp;
+	struct drm_local_map *primary;
+	struct drm_local_map *agp_textures;
 
 	unsigned long agp_handle;
 	unsigned int agp_size;

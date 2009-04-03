@@ -123,10 +123,10 @@ typedef struct drm_r128_private {
 	u32 depth_pitch_offset_c;
 	u32 span_pitch_offset_c;
 
-	drm_local_map_t *sarea;
-	drm_local_map_t *cce_ring;
-	drm_local_map_t *ring_rptr;
-	drm_local_map_t *agp_textures;
+	struct drm_local_map *sarea;
+	struct drm_local_map *cce_ring;
+	struct drm_local_map *ring_rptr;
+	struct drm_local_map *agp_textures;
 	struct drm_ati_pcigart_info gart_info;
 } drm_r128_private_t;
 

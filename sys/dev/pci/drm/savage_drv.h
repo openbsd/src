@@ -156,13 +156,13 @@ typedef struct drm_savage_private {
 	unsigned int texture_size;
 
 	/* memory regions in physical memory */
-	drm_local_map_t *sarea;
-	drm_local_map_t *fb;
-	drm_local_map_t *aperture;
-	drm_local_map_t *status;
-	drm_local_map_t *agp_textures;
-	drm_local_map_t *cmd_dma;
-	drm_local_map_t fake_dma;
+	struct drm_local_map *sarea;
+	struct drm_local_map *fb;
+	struct drm_local_map *aperture;
+	struct drm_local_map *status;
+	struct drm_local_map *agp_textures;
+	struct drm_local_map *cmd_dma;
+	struct drm_local_map fake_dma;
 
 	struct {
 		int handle;

@@ -1649,9 +1649,9 @@ radeon_cp_buffers(struct drm_device *dev, struct drm_dma * d,
 int
 radeon_driver_firstopen(struct drm_device *dev)
 {
-	int ret;
-	drm_local_map_t *map;
-	drm_radeon_private_t *dev_priv = dev->dev_private;
+	drm_radeon_private_t	*dev_priv = dev->dev_private;
+	struct drm_local_map	*map;
+	int			 ret;
 
 	dev_priv->gart_info.table_size = RADEON_PCIGART_TABLE_SIZE;
 

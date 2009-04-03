@@ -61,13 +61,14 @@ drm_order(unsigned long size)
 
 int
 drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
-    enum drm_map_type type, enum drm_map_flags flags, drm_local_map_t **map_ptr)
+    enum drm_map_type type, enum drm_map_flags flags,
+    struct drm_local_map **map_ptr)
 {
-	drm_local_map_t *map;
-	int align, ret = 0;
+	struct drm_local_map	*map;
+	int			 align, ret = 0;
 #if 0 /* disabled for now */
-	struct drm_agp_mem *entry;
-	int valid;
+	struct drm_agp_mem	*entry;
+	int			 valid;
 #endif 
 
 	/* Only allow shared memory to be removable since we only keep enough
@@ -247,7 +248,7 @@ int
 drm_addmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	struct drm_map		*request = data;
-	drm_local_map_t		*map;
+	struct drm_local_map	*map;
 	int			 err;
 
 	if (!(file_priv->flags & (FREAD|FWRITE)))
@@ -271,7 +272,7 @@ drm_addmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 }
 
 void
-drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
+drm_rmmap(struct drm_device *dev, struct drm_local_map *map)
 {
 	DRM_LOCK();
 	drm_rmmap_locked(dev, map);
@@ -280,7 +281,7 @@ drm_rmmap(struct drm_device *dev, drm_local_map_t *map)
 
 
 void
-drm_rmmap_locked(struct drm_device *dev, drm_local_map_t *map)
+drm_rmmap_locked(struct drm_device *dev, struct drm_local_map *map)
 {
 	TAILQ_REMOVE(&dev->maplist, map, link);
 
@@ -323,8 +324,8 @@ drm_rmmap_locked(struct drm_device *dev, drm_local_map_t *map)
 int
 drm_rmmap_ioctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_local_map_t	*map;
-	struct drm_map	*request = data;
+	struct drm_local_map	*map;
+	struct drm_map		*request = data;
 
 	DRM_LOCK();
 	TAILQ_FOREACH(map, &dev->maplist, link) {
@@ -931,7 +932,7 @@ drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	    (dma->flags & _DRM_DMA_USE_AGP)) ||
 	    (dev->driver->flags & DRIVER_SG &&
 	    (dma->flags & _DRM_DMA_USE_SG))) {
-		drm_local_map_t *map = dev->agp_buffer_map;
+		struct drm_local_map *map = dev->agp_buffer_map;
 
 		if (map == NULL) {
 			DRM_DEBUG("couldn't find agp buffer map\n");

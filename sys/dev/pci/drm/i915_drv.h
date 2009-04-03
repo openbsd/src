@@ -85,11 +85,11 @@ typedef struct drm_i915_private {
 
 	struct vga_pci_bar	*regs;
 
-	drm_local_map_t		*sarea;
+	struct drm_local_map	*sarea;
 	drm_i915_sarea_t	*sarea_priv;
 
 	struct inteldrm_ring	 ring;
-	drm_local_map_t		 hws_map;
+	struct drm_local_map	 hws_map;
 	struct drm_dmamem	*hws_dmamem;
 	void			*hw_status_page;
 	unsigned int		 status_gfx_addr;
