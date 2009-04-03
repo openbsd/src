@@ -90,13 +90,6 @@
 /* Deal with netbsd code where only the print statements differ */
 #define printk printf
 
-enum {
-	DRM_IS_NOT_AGP,
-	DRM_IS_AGP,
-	DRM_MIGHT_BE_AGP
-};
-#define DRM_AGP_MEM		struct agp_memory_info
-
 /* D_CLONE only supports one device, this will be fixed eventually */
 #define drm_get_device_from_kdev(_kdev)	\
 	(drm_cd.cd_ndevs > 0 ? drm_cd.cd_devs[0] : NULL)
