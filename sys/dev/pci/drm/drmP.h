@@ -217,14 +217,14 @@ struct drm_dmamem {
 	bus_dma_segment_t	segs[1];
 };
 
-typedef struct drm_buf_entry {
+struct drm_buf_entry {
 	struct drm_dmamem	**seglist;
 	struct drm_buf		*buflist;
-	int			 buf_size;
 	int			 buf_count;
+	int			 buf_size;
 	int			 page_order;
 	int			 seg_count;
-} drm_buf_entry_t;
+};
 
 struct drm_file {
 	SPLAY_ENTRY(drm_file)	 link;
@@ -252,15 +252,15 @@ struct drm_lock_data {
  * not concurrently accessed, so no locking is needed.
  */
 typedef struct drm_device_dma {
-	struct rwlock	 dma_lock;
-	drm_buf_entry_t	 bufs[DRM_MAX_ORDER+1];
-	struct drm_buf	**buflist;	/* Vector of pointers info bufs	   */
-	unsigned long	*pagelist;
-	unsigned long	 byte_count;
-	int		 buf_use;	/* Buffers in use -- cannot alloc  */
-	int		 buf_count;
-	int		 page_count;
-	int		 seg_count;
+	struct rwlock	 	 dma_lock;
+	struct drm_buf_entry	 bufs[DRM_MAX_ORDER+1];
+	struct drm_buf		**buflist;	/* Vector of pointers info bufs*/
+	unsigned long		*pagelist;
+	unsigned long		 byte_count;
+	int			 buf_use;	/* Buffers used no more alloc */
+	int			 buf_count;
+	int			 page_count;
+	int			 seg_count;
 	enum {
 		_DRM_DMA_USE_AGP = 0x01,
 		_DRM_DMA_USE_SG  = 0x02
@@ -519,7 +519,7 @@ int	drm_mapbufs(struct drm_device *, void *, struct drm_file *);
 int	drm_dma(struct drm_device *, void *, struct drm_file *);
 int	drm_dma_setup(struct drm_device *);
 void	drm_dma_takedown(struct drm_device *);
-void	drm_cleanup_buf(struct drm_device *, drm_buf_entry_t *);
+void	drm_cleanup_buf(struct drm_device *, struct drm_buf_entry *);
 void	drm_free_buffer(struct drm_device *, struct drm_buf *);
 void	drm_reclaim_buffers(struct drm_device *, struct drm_file *);
 

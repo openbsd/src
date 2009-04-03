@@ -370,7 +370,7 @@ drm_dma_setup(struct drm_device *dev)
 }
 
 void
-drm_cleanup_buf(struct drm_device *dev, drm_buf_entry_t *entry)
+drm_cleanup_buf(struct drm_device *dev, struct drm_buf_entry *entry)
 {
 	int i;
 
@@ -478,7 +478,7 @@ int
 drm_addbufs_agp(struct drm_device *dev, struct drm_buf_desc *request)
 {
 	drm_device_dma_t	*dma = dev->dma;
-	drm_buf_entry_t		*entry;
+	struct drm_buf_entry	*entry;
 	struct drm_buf		*buf, **temp_buflist;
 	unsigned long		 agp_offset, offset;
 	int			 alignment, count, order, page_order, size;
@@ -603,7 +603,7 @@ drm_addbufs_pci(struct drm_device *dev, struct drm_buf_desc *request)
 {
 	drm_device_dma_t	*dma = dev->dma;
 	struct drm_buf		*buf, **temp_buflist;
-	drm_buf_entry_t		*entry;
+	struct drm_buf_entry	*entry;
 	int			 alignment, byte_count, count, i, order;
 	int			 page_count, page_order, size, total;
 	unsigned long		 offset, *temp_pagelist;
@@ -736,7 +736,7 @@ int
 drm_addbufs_sg(struct drm_device *dev, struct drm_buf_desc *request)
 {
 	drm_device_dma_t	*dma = dev->dma;
-	drm_buf_entry_t		*entry;
+	struct drm_buf_entry	*entry;
 	struct drm_buf		*buf, **temp_buflist;
 	unsigned long		 agp_offset, offset;
 	int			 alignment, byte_count, count, i, order;
