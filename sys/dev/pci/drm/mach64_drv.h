@@ -170,7 +170,6 @@ extern int mach64_get_param(struct drm_device *dev, void *data,
 extern u32 mach64_get_vblank_counter(struct drm_device *dev, int crtc);
 extern int mach64_enable_vblank(struct drm_device *dev, int crtc);
 extern void mach64_disable_vblank(struct drm_device *dev, int crtc);
-extern irqreturn_t mach64_driver_irq_handler(DRM_IRQ_ARGS);
 extern int mach64_driver_irq_install(struct drm_device *dev);
 extern void mach64_driver_irq_uninstall(struct drm_device *dev);
 

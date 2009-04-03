@@ -112,7 +112,6 @@ static const struct drm_driver_info mga_driver = {
 	.get_vblank_counter	= mga_get_vblank_counter,
 	.irq_install		= mga_driver_irq_install,
 	.irq_uninstall		= mga_driver_irq_uninstall,
-	.irq_handler		= mga_driver_irq_handler,
 	.dma_ioctl		= mga_dma_buffers,
 	.dma_quiescent		= mga_driver_dma_quiescent,
 

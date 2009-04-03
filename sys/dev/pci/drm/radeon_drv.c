@@ -496,7 +496,6 @@ static const struct drm_driver_info radeondrm_driver = {
 	.disable_vblank		= radeon_disable_vblank,
 	.irq_install		= radeon_driver_irq_install,
 	.irq_uninstall		= radeon_driver_irq_uninstall,
-	.irq_handler		= radeon_driver_irq_handler,
 	.dma_ioctl		= radeon_cp_buffers,
 
 	.name			= DRIVER_NAME,

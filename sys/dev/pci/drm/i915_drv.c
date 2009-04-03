@@ -101,7 +101,6 @@ static const struct drm_driver_info inteldrm_driver = {
 	.disable_vblank		= i915_disable_vblank,
 	.irq_install		= i915_driver_irq_install,
 	.irq_uninstall		= i915_driver_irq_uninstall,
-	.irq_handler		= i915_driver_irq_handler,
 
 	.name			= DRIVER_NAME,
 	.desc			= DRIVER_DESC,

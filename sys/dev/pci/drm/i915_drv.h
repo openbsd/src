@@ -244,7 +244,6 @@ extern int i915_irq_emit(struct drm_device *dev, void *data,
 extern int i915_irq_wait(struct drm_device *dev, void *data,
 			 struct drm_file *file_priv);
 
-extern irqreturn_t i915_driver_irq_handler(DRM_IRQ_ARGS);
 extern int i915_driver_irq_install(struct drm_device * dev);
 extern void i915_driver_irq_uninstall(struct drm_device * dev);
 extern int i915_vblank_pipe_get(struct drm_device *dev, void *data,

@@ -77,7 +77,6 @@ static const struct drm_driver_info machdrm_driver = {
 	.disable_vblank		= mach64_disable_vblank,
 	.irq_install		= mach64_driver_irq_install,
 	.irq_uninstall		= mach64_driver_irq_uninstall,
-	.irq_handler		= mach64_driver_irq_handler,
 	.dma_ioctl		= mach64_dma_buffers,
 
 	.name			= DRIVER_NAME,

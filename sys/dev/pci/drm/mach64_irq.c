@@ -40,6 +40,8 @@
 #include "mach64_drm.h"
 #include "mach64_drv.h"
 
+irqreturn_t mach64_driver_irq_handler(DRM_IRQ_ARGS);
+
 irqreturn_t
 mach64_driver_irq_handler(DRM_IRQ_ARGS)
 {

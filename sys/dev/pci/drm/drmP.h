@@ -384,7 +384,6 @@ struct drm_driver_info {
 	int	(*context_dtor)(struct drm_device *, int);
 	int	(*irq_install)(struct drm_device *);
 	void	(*irq_uninstall)(struct drm_device *);
-	irqreturn_t	(*irq_handler)(DRM_IRQ_ARGS);
 	int	vblank_pipes;
 	u_int32_t (*get_vblank_counter)(struct drm_device *, int);
 	int	(*enable_vblank)(struct drm_device *, int);
@@ -427,7 +426,6 @@ struct drm_device {
 	
 	int		  if_version;	/* Highest interface version set */
 				/* Locks */
-	struct mutex	  irq_lock;	/* protects irq condition checks */
 	struct rwlock	  dev_lock;	/* protects everything else */
 
 				/* Usage Counters */
@@ -546,7 +544,6 @@ void	drm_reclaim_buffers(struct drm_device *, struct drm_file *);
 /* IRQ support (drm_irq.c) */
 int	drm_irq_install(struct drm_device *);
 int	drm_irq_uninstall(struct drm_device *);
-irqreturn_t	drm_irq_handler_wrap(DRM_IRQ_ARGS);
 void	drm_vblank_cleanup(struct drm_device *);
 int	drm_vblank_init(struct drm_device *, int);
 u_int32_t drm_vblank_count(struct drm_device *, int);

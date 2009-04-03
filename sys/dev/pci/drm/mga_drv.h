@@ -188,7 +188,6 @@ extern int mga_enable_vblank(struct drm_device *dev, int crtc);
 extern void mga_disable_vblank(struct drm_device *dev, int crtc);
 extern u32 mga_get_vblank_counter(struct drm_device *dev, int crtc);
 extern int mga_driver_fence_wait(struct drm_device * dev, u_int32_t *sequence);
-extern irqreturn_t mga_driver_irq_handler(DRM_IRQ_ARGS);
 extern int mga_driver_irq_install(struct drm_device * dev);
 extern void mga_driver_irq_uninstall(struct drm_device * dev);
 extern long mga_compat_ioctl(struct file *filp, unsigned int cmd,

@@ -377,7 +377,6 @@ extern int radeon_irq_wait(struct drm_device *dev, void *data, struct drm_file *
 extern u32 radeon_get_vblank_counter(struct drm_device *dev, int crtc);
 extern int radeon_enable_vblank(struct drm_device *dev, int crtc);
 extern void radeon_disable_vblank(struct drm_device *dev, int crtc);
-extern irqreturn_t radeon_driver_irq_handler(DRM_IRQ_ARGS);
 extern int radeon_driver_irq_install(struct drm_device * dev);
 extern void radeon_driver_irq_uninstall(struct drm_device * dev);
 

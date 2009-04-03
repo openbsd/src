@@ -93,7 +93,6 @@ static const struct drm_driver_info ragedrm_driver = {
 	.disable_vblank		= r128_disable_vblank,
 	.irq_install		= r128_driver_irq_install,
 	.irq_uninstall		= r128_driver_irq_uninstall,
-	.irq_handler		= r128_driver_irq_handler,
 	.dma_ioctl		= r128_cce_buffers,
 
 	.name			= DRIVER_NAME,

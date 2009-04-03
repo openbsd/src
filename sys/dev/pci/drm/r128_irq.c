@@ -35,6 +35,8 @@
 #include "r128_drm.h"
 #include "r128_drv.h"
 
+irqreturn_t r128_driver_irq_handler(DRM_IRQ_ARGS);
+
 u_int32_t
 r128_get_vblank_counter(struct drm_device *dev, int crtc)
 {

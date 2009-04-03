@@ -35,6 +35,7 @@
 #include "radeon_drm.h"
 #include "radeon_drv.h"
 
+irqreturn_t	radeon_driver_irq_handler(DRM_IRQ_ARGS);
 void		r500_vbl_irq_set_state(struct drm_device *, u_int32_t, int);
 u_int32_t	radeon_acknowledge_irqs(drm_radeon_private_t *, u_int32_t *);
 int		radeon_emit_irq(struct drm_device *);

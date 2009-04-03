@@ -31,6 +31,7 @@
 #include "i915_drm.h"
 #include "i915_drv.h"
 
+irqreturn_t i915_driver_irq_handler(DRM_IRQ_ARGS);
 void	i915_enable_irq(drm_i915_private_t *, u_int32_t);
 void	i915_disable_irq(drm_i915_private_t *, u_int32_t);
 void	i915_enable_pipestat(drm_i915_private_t *, int, u_int32_t);

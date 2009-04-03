@@ -56,19 +56,6 @@ drm_irq_by_busid(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	return 0;
 }
 
-irqreturn_t
-drm_irq_handler_wrap(DRM_IRQ_ARGS)
-{
-	irqreturn_t ret;
-	struct drm_device *dev = (struct drm_device *)arg;
-
-	mtx_enter(&dev->irq_lock);
-	ret = dev->driver->irq_handler(arg);
-	mtx_leave(&dev->irq_lock);
-
-	return ret;
-}
-
 int
 drm_irq_install(struct drm_device *dev)
 {
@@ -86,8 +73,6 @@ drm_irq_install(struct drm_device *dev)
 	}
 	dev->irq_enabled = 1;
 	DRM_UNLOCK();
-
-	mtx_init(&dev->irq_lock, IPL_BIO);
 
 	if ((ret = dev->driver->irq_install(dev)) != 0)
 		goto err;
