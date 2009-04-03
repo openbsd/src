@@ -171,7 +171,7 @@ i915_get_vblank_counter(struct drm_device *dev, int plane)
 	high_frame = pipe ? PIPEBFRAMEHIGH : PIPEAFRAMEHIGH;
 	low_frame = pipe ? PIPEBFRAMEPIXEL : PIPEAFRAMEPIXEL;
 
-	if (!i915_pipe_enabled(dev, pipe)) {
+	if (i915_pipe_enabled(dev, pipe) == 0) {
 		DRM_DEBUG("trying to get vblank count for disabled pipe %d\n",
 		    pipe);
 		return (0);
@@ -360,9 +360,8 @@ int i915_enable_vblank(struct drm_device *dev, int plane)
 {
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int pipe = i915_get_pipe(dev, plane);
-	int pipeconf_reg = (pipe == 0) ? PIPEACONF : PIPEBCONF;
- 
-	if ((I915_READ(pipeconf_reg) & PIPEACONF_ENABLE) == 0)
+
+	if (i915_pipe_enabled(dev, pipe) == 0)
 		return (EINVAL);
 
 	mtx_enter(&dev_priv->user_irq_lock);
