@@ -92,17 +92,17 @@ static int R128_READ_PLL(struct drm_device * dev, int addr)
 #if R128_FIFO_DEBUG
 static void r128_status(drm_r128_private_t * dev_priv)
 {
-	printk("GUI_STAT           = 0x%08x\n",
+	printf("GUI_STAT           = 0x%08x\n",
 	       (unsigned int)R128_READ(R128_GUI_STAT));
-	printk("PM4_STAT           = 0x%08x\n",
+	printf("PM4_STAT           = 0x%08x\n",
 	       (unsigned int)R128_READ(R128_PM4_STAT));
-	printk("PM4_BUFFER_DL_WPTR = 0x%08x\n",
+	printf("PM4_BUFFER_DL_WPTR = 0x%08x\n",
 	       (unsigned int)R128_READ(R128_PM4_BUFFER_DL_WPTR));
-	printk("PM4_BUFFER_DL_RPTR = 0x%08x\n",
+	printf("PM4_BUFFER_DL_RPTR = 0x%08x\n",
 	       (unsigned int)R128_READ(R128_PM4_BUFFER_DL_RPTR));
-	printk("PM4_MICRO_CNTL     = 0x%08x\n",
+	printf("PM4_MICRO_CNTL     = 0x%08x\n",
 	       (unsigned int)R128_READ(R128_PM4_MICRO_CNTL));
-	printk("PM4_BUFFER_CNTL    = 0x%08x\n",
+	printf("PM4_BUFFER_CNTL    = 0x%08x\n",
 	       (unsigned int)R128_READ(R128_PM4_BUFFER_CNTL));
 }
 #endif

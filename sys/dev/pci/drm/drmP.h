@@ -87,9 +87,6 @@
 #define DRM_UNLOCK()		rw_exit_write(&dev->dev_lock)
 #define DRM_MAXUNITS	8
 
-/* Deal with netbsd code where only the print statements differ */
-#define printk printf
-
 /* D_CLONE only supports one device, this will be fixed eventually */
 #define drm_get_device_from_kdev(_kdev)	\
 	(drm_cd.cd_ndevs > 0 ? drm_cd.cd_devs[0] : NULL)

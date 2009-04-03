@@ -196,22 +196,22 @@ RADEON_READ_PCIE(drm_radeon_private_t *dev_priv, int addr)
 static void
 radeon_status(drm_radeon_private_t *dev_priv)
 {
-	printk("%s:\n", __FUNCTION__);
-	printk("RBBM_STATUS = 0x%08x\n",
+	printf("%s:\n", __FUNCTION__);
+	printf("RBBM_STATUS = 0x%08x\n",
 	       (unsigned int)RADEON_READ(RADEON_RBBM_STATUS));
-	printk("CP_RB_RTPR = 0x%08x\n",
+	printf("CP_RB_RTPR = 0x%08x\n",
 	       (unsigned int)RADEON_READ(RADEON_CP_RB_RPTR));
-	printk("CP_RB_WTPR = 0x%08x\n",
+	printf("CP_RB_WTPR = 0x%08x\n",
 	       (unsigned int)RADEON_READ(RADEON_CP_RB_WPTR));
-	printk("AIC_CNTL = 0x%08x\n",
+	printf("AIC_CNTL = 0x%08x\n",
 	       (unsigned int)RADEON_READ(RADEON_AIC_CNTL));
-	printk("AIC_STAT = 0x%08x\n",
+	printf("AIC_STAT = 0x%08x\n",
 	       (unsigned int)RADEON_READ(RADEON_AIC_STAT));
-	printk("AIC_PT_BASE = 0x%08x\n",
+	printf("AIC_PT_BASE = 0x%08x\n",
 	       (unsigned int)RADEON_READ(RADEON_AIC_PT_BASE));
-	printk("TLB_ADDR = 0x%08x\n",
+	printf("TLB_ADDR = 0x%08x\n",
 	       (unsigned int)RADEON_READ(RADEON_AIC_TLB_ADDR));
-	printk("TLB_DATA = 0x%08x\n",
+	printf("TLB_DATA = 0x%08x\n",
 	       (unsigned int)RADEON_READ(RADEON_AIC_TLB_DATA));
 }
 #endif

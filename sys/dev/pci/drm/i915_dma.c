@@ -202,7 +202,7 @@ int i915_dma_init(struct drm_device *dev, void *data,
  * instruction detected will be given a size of zero, which is a
  * signal to abort the rest of the buffer.
  */
-static int do_validate_cmd(int cmd)
+static int validate_cmd(int cmd)
 {
 	switch (((cmd >> 29) & 0x7)) {
 	case 0x0:
@@ -258,15 +258,6 @@ static int do_validate_cmd(int cmd)
 	}
 
 	return 0;
-}
-
-static int validate_cmd(int cmd)
-{
-	int ret = do_validate_cmd(cmd);
-
-/*	printk("validate_cmd( %x ): %d\n", cmd, ret); */
-
-	return ret;
 }
 
 static int i915_emit_cmds(struct drm_device *dev, int __user *buffer,
