@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.8 2008/12/06 19:59:38 tedu Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.9 2009/04/04 16:03:17 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
 
 /*
@@ -76,7 +76,6 @@ typedef struct {
  */
 extern int pci_mode;
 int		pci_mode_detect(void);
-int		pci_bus_flags(void);
 struct		pci_attach_args;
 
 /*
