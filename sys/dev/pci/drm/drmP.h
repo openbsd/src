@@ -481,8 +481,12 @@ void	*drm_alloc(size_t);
 void	*drm_calloc(size_t, size_t);
 void	*drm_realloc(void *, size_t, size_t);
 void	 drm_free(void *);
-void	*drm_ioremap(struct drm_device *, struct drm_local_map *);
-void	drm_ioremapfree(struct drm_local_map *);
+
+/* XXX until we get PAT support */
+#define drm_core_ioremap_wc drm_core_ioremap
+void	drm_core_ioremap(struct drm_local_map *, struct drm_device *);
+void	drm_core_ioremapfree(struct drm_local_map *);
+
 int	drm_mtrr_add(unsigned long, size_t, int);
 int	drm_mtrr_del(int, unsigned long, size_t, int);
 
@@ -506,6 +510,7 @@ int	drm_lock_free(struct drm_lock_data *, unsigned int);
 
 /* Buffer management and DMA support (drm_bufs.c) */
 int	drm_order(unsigned long);
+struct drm_local_map *drm_core_findmap(struct drm_device *, unsigned long);
 int	drm_rmmap_ioctl(struct drm_device *, void *, struct drm_file *);
 void	drm_rmmap(struct drm_device *, struct drm_local_map *);
 void	drm_rmmap_locked(struct drm_device *, struct drm_local_map *);
@@ -587,35 +592,6 @@ int	drm_agp_bind_ioctl(struct drm_device *, void *, struct drm_file *);
 /* Scatter Gather Support (drm_scatter.c) */
 int	drm_sg_alloc_ioctl(struct drm_device *, void *, struct drm_file *);
 int	drm_sg_free(struct drm_device *, void *, struct drm_file *);
-
-/* Inline replacements for DRM_IOREMAP macros */
-#define drm_core_ioremap_wc drm_core_ioremap
-static __inline__ void
-drm_core_ioremap(struct drm_local_map *map, struct drm_device *dev)
-{
-	map->handle = drm_ioremap(dev, map);
-}
-
-static __inline__ void
-drm_core_ioremapfree(struct drm_local_map *map)
-{
-	if ( map->handle && map->size )
-		drm_ioremapfree(map);
-}
-
-static __inline__ struct drm_local_map *
-drm_core_findmap(struct drm_device *dev, unsigned long offset)
-{
-	struct drm_local_map	*map;
-
-	DRM_LOCK();
-	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if (offset == map->ext)
-			break;
-	}
-	DRM_UNLOCK();
-	return (map);
-}
 
 #endif /* __KERNEL__ */
 #endif /* _DRM_P_H_ */

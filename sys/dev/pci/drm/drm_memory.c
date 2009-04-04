@@ -75,11 +75,15 @@ drm_free(void *pt)
 		free(pt, M_DRM);
 }
 
-void *
-drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
+/* Inline replacements for DRM_IOREMAP macros */
+void
+drm_core_ioremap(struct drm_local_map *map, struct drm_device *dev)
 {
 	DRM_DEBUG("offset: 0x%x size: 0x%x type: %d\n", map->offset, map->size,
 	    map->type);
+
+	/* default to failure. */
+	map->handle = 0;
 
 	if (map->type == _DRM_AGP || map->type == _DRM_FRAME_BUFFER) {
 	/*
@@ -92,23 +96,21 @@ drm_ioremap(struct drm_device *dev, struct drm_local_map *map)
 		if (bus_space_map(map->bst, map->offset,
 		    map->size, BUS_SPACE_MAP_LINEAR, &map->bsh)) {
 			DRM_ERROR("ioremap fail\n");
-			return (NULL);
+			return;
 		}
-	} else {
-		return (NULL);
+		/* handles are still supposed to be kernel virtual addresses */
+		map->handle = bus_space_vaddr(map->bst, map->bsh);
 	}
-	/* handles are still supposed to be kernel virtual addresses */
-	return bus_space_vaddr(map->bst, map->bsh);
 }
 
 void
-drm_ioremapfree(struct drm_local_map *map)
+drm_core_ioremapfree(struct drm_local_map *map)
 {
-	if (map == NULL || (map->type != _DRM_AGP && map->type !=
-	    _DRM_FRAME_BUFFER))
-		return;
-
-	bus_space_unmap(map->bst, map->bsh, map->size);
+	if (map->handle && map->size && (map->type == _DRM_AGP ||
+	    map->type == _DRM_FRAME_BUFFER)) {
+		bus_space_unmap(map->bst, map->bsh, map->size);
+		map->handle = 0;
+	}
 }
 
 int

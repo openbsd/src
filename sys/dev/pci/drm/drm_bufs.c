@@ -59,6 +59,20 @@ drm_order(unsigned long size)
 	return order;
 }
 
+struct drm_local_map *
+drm_core_findmap(struct drm_device *dev, unsigned long offset)
+{
+	struct drm_local_map	*map;
+
+	DRM_LOCK();
+	TAILQ_FOREACH(map, &dev->maplist, link) {
+		if (offset == map->ext)
+			break;
+	}
+	DRM_UNLOCK();
+	return (map);
+}
+
 int
 drm_addmap(struct drm_device * dev, unsigned long offset, unsigned long size,
     enum drm_map_type type, enum drm_map_flags flags,
