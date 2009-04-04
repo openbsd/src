@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.116 2009/02/05 01:25:21 oga Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.117 2009/04/04 02:59:39 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1260,6 +1260,7 @@ azalia_codec_init(codec_t *this)
 
 	this->speaker = -1;
 	this->mic = -1;
+	this->nsense_pins = 0;
 	FOR_EACH_WIDGET(this, i) {
 		err = azalia_widget_init(&this->w[i], this, i);
 		if (err)
@@ -2253,8 +2254,7 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 		if (err)
 			return err;
 		if (!(CORB_CD_MISC(result) & CORB_CD_PRESENCEOV)) {
-			wcodec->sense_pins[codec->nsense_pins] = this->nid;
-			wcodec->nsense_pins++;
+			wcodec->sense_pins[wcodec->nsense_pins++] = this->nid;
 		}
 	}
 
