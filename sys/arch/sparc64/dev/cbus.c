@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.3 2009/01/04 17:53:25 kettenis Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.4 2009/04/04 11:35:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -277,16 +277,12 @@ again:
 	return (va);
 
 unload:
-	printf("unload\n");
 	bus_dmamap_unload(sc->sc_dmatag, map);
 unmap:
-	printf("unmap\n");
 	bus_dmamem_unmap(sc->sc_dmatag, va, size);
 free:
-	printf("free\n");
 	bus_dmamem_free(sc->sc_dmatag, &seg, 1);
 destroy:
-	printf("destroy\n");
 	bus_dmamap_destroy(sc->sc_dmatag, map);
 
 	/*
