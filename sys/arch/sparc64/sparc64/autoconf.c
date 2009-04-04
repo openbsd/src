@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.102 2009/04/04 11:12:46 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.103 2009/04/04 21:07:48 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -115,7 +115,7 @@ static	void mainbus_attach(struct device *, struct device *, void *);
 int	get_ncpus(void);
 
 struct device *booted_device;
-struct	bootpath bootpath[8];
+struct	bootpath bootpath[16];
 int	nbootpath;
 int	bootnode;
 static	void bootpath_build(void);
