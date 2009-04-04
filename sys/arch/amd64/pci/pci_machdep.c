@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.22 2009/03/10 15:03:17 oga Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.23 2009/04/04 15:08:05 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -79,7 +79,6 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/lock.h>
 
 #include <uvm/uvm_extern.h>
 
