@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.119 2009/03/31 01:21:29 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.120 2009/04/04 13:09:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -563,7 +563,7 @@ pfsync_state_import(struct pfsync_state *sp, u_int8_t flags)
 	st->anchor.ptr = NULL;
 	st->rt_kif = NULL;
 
-	st->pfsync_time = time_second;
+	st->pfsync_time = time_uptime;
 	st->sync_state = PFSYNC_S_NONE;
 
 	/* XXX when we have nat_rule/anchors, use STATE_INC_COUNTERS */
@@ -960,7 +960,7 @@ pfsync_in_upd(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 		pf_state_peer_ntoh(&sp->dst, &st->dst);
 		st->expire = ntohl(sp->expire) + time_second;
 		st->timeout = sp->timeout;
-		st->pfsync_time = time_second;
+		st->pfsync_time = time_uptime;
 	}
 	splx(s);
 
@@ -1052,7 +1052,7 @@ pfsync_in_upd_c(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 		pf_state_peer_ntoh(&up->dst, &st->dst);
 		st->expire = ntohl(up->expire) + time_second;
 		st->timeout = up->timeout;
-		st->pfsync_time = time_second;
+		st->pfsync_time = time_uptime;
 	}
 	splx(s);
 
@@ -1918,7 +1918,7 @@ pfsync_update_state(struct pf_state *st)
 		    st->sync_state);
 	}
 
-	if (sync || (time_second - st->pfsync_time) < 2) {
+	if (sync || (time_uptime - st->pfsync_time) < 2) {
 		pfsync_upds++;
 		schednetisr(NETISR_PFSYNC);
 	}
