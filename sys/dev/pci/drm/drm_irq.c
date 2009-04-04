@@ -88,6 +88,7 @@ err:
 int
 drm_irq_uninstall(struct drm_device *dev)
 {
+	int i;
 
 	DRM_LOCK();
 	if (!dev->irq_enabled) {
@@ -97,6 +98,20 @@ drm_irq_uninstall(struct drm_device *dev)
 
 	dev->irq_enabled = 0;
 	DRM_UNLOCK();
+
+	/*
+	 * Ick. we're about to turn of vblanks, so make sure anyone waiting
+	 * on them gets woken up. Also make sure we update state correctly
+	 * so that we can continue refcounting correctly.
+	 */
+	mtx_enter(&dev->vbl_lock);
+	for (i = 0; i < dev->num_crtcs; i++) {
+		wakeup(&dev->vblank[i]);
+		dev->vblank[i].vbl_enabled = 0;
+		dev->vblank[i].last_vblank =
+		    dev->driver->get_vblank_counter(dev, i);
+	}
+	mtx_leave(&dev->vbl_lock);
 
 	DRM_DEBUG("irq=%d\n", dev->irq);
 
@@ -238,9 +253,6 @@ drm_vblank_get(struct drm_device *dev, int crtc)
 void
 drm_vblank_put(struct drm_device *dev, int crtc)
 {
-	if (dev->irq_enabled == 0)
-		return;
-
 	mtx_enter(&dev->vbl_lock);
 	/* Last user schedules interrupt disable */
 	atomic_dec(&dev->vblank[crtc].vbl_refcount);
@@ -274,18 +286,20 @@ drm_modeset_ctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	case _DRM_PRE_MODESET:
 		if (dev->vblank[crtc].vbl_inmodeset == 0) {
 			mtx_enter(&dev->vbl_lock);
-			dev->vblank[crtc].vbl_inmodeset = 1;
+			dev->vblank[crtc].vbl_inmodeset = 0x1;
 			mtx_leave(&dev->vbl_lock);
-			drm_vblank_get(dev, crtc);
+			if (drm_vblank_get(dev, crtc) == 0)
+				dev->vblank[crtc].vbl_inmodeset |= 0x2;
 		}
 		break;
 	case _DRM_POST_MODESET:
 		if (dev->vblank[crtc].vbl_inmodeset) {
 			mtx_enter(&dev->vbl_lock);
 			dev->vblank_disable_allowed = 1;
-			dev->vblank[crtc].vbl_inmodeset = 0;
 			mtx_leave(&dev->vbl_lock);
-			drm_vblank_put(dev, crtc);
+			if (dev->vblank[crtc].vbl_inmodeset & 0x2)
+				drm_vblank_put(dev, crtc);
+			dev->vblank[crtc].vbl_inmodeset = 0;
 		}
 		break;
 	default:
@@ -332,8 +346,9 @@ drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		ret = EINVAL;
 	} else {
 		DRM_WAIT_ON(ret, &dev->vblank[crtc], &dev->vbl_lock, 3 * hz,
-		    "drmvblq", (drm_vblank_count(dev, crtc) -
-		    vblwait->request.sequence) <= (1 << 23));
+		    "drmvblq", ((drm_vblank_count(dev, crtc) -
+		    vblwait->request.sequence) <= (1 << 23)) ||
+		    dev->irq_enabled == 0);
 
 		if (ret != EINTR) {
 			struct timeval now;
