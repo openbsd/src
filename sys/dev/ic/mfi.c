@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.92 2009/03/29 15:03:17 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.93 2009/04/04 03:22:30 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -171,11 +171,13 @@ void
 mfi_put_ccb(struct mfi_ccb *ccb)
 {
 	struct mfi_softc	*sc = ccb->ccb_sc;
+	struct mfi_frame_header	*hdr = &ccb->ccb_frame->mfr_header;
 	int			s;
 
 	DNPRINTF(MFI_D_CCB, "%s: mfi_put_ccb: %p\n", DEVNAME(sc), ccb);
 
-	s = splbio();
+	hdr->mfh_cmd_status = 0x0;
+	hdr->mfh_flags = 0x0;
 	ccb->ccb_state = MFI_CCB_FREE;
 	ccb->ccb_xs = NULL;
 	ccb->ccb_flags = 0;
@@ -186,6 +188,8 @@ mfi_put_ccb(struct mfi_ccb *ccb)
 	ccb->ccb_sgl = NULL;
 	ccb->ccb_data = NULL;
 	ccb->ccb_len = 0;
+
+	s = splbio();
 	TAILQ_INSERT_TAIL(&sc->sc_ccb_freeq, ccb, ccb_link);
 	splx(s);
 }
