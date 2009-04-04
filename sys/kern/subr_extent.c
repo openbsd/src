@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.34 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.35 2009/04/04 22:32:05 kettenis Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -66,6 +66,10 @@
 #define	panic				printf
 #define	splvm()				(1)
 #define	splx(s)				((void)(s))
+#endif
+
+#if defined(DIAGNOSTIC) || defined(DDB)
+void	extent_print1(struct extent *, int (*)(const char *, ...));
 #endif
 
 static	void extent_insert_and_optimize(struct extent *, u_long, u_long,
@@ -142,7 +146,7 @@ extent_print_all(void)
 	struct extent *ep;
 
 	LIST_FOREACH(ep, &ext_list, ex_link) {
-		extent_print(ep);
+		extent_print1(ep, db_printf);
 	}
 }
 #endif
@@ -1088,13 +1092,17 @@ extent_free_region_descriptor(struct extent *ex, struct extent_region *rp)
 	splx(s);
 }
 
-#ifndef DDB
-#define db_printf printf
-#endif
-
+	
 #if defined(DIAGNOSTIC) || defined(DDB) || !defined(_KERNEL)
+
 void
 extent_print(struct extent *ex)
+{
+	extent_print1(ex, printf);
+}
+
+void
+extent_print1(struct extent *ex, int (*pr)(const char *, ...))
 {
 	struct extent_region *rp;
 
@@ -1102,14 +1110,14 @@ extent_print(struct extent *ex)
 		panic("extent_print: NULL extent");
 
 #ifdef _KERNEL
-	db_printf("extent `%s' (0x%lx - 0x%lx), flags=%b\n", ex->ex_name,
+	(*pr)("extent `%s' (0x%lx - 0x%lx), flags=%b\n", ex->ex_name,
 	    ex->ex_start, ex->ex_end, ex->ex_flags, EXF_BITS);
 #else
-	db_printf("extent `%s' (0x%lx - 0x%lx), flags = 0x%x\n", ex->ex_name,
+	(*pr)("extent `%s' (0x%lx - 0x%lx), flags = 0x%x\n", ex->ex_name,
 	    ex->ex_start, ex->ex_end, ex->ex_flags);
 #endif
 
 	LIST_FOREACH(rp, &ex->ex_regions, er_link)
-		db_printf("     0x%lx - 0x%lx\n", rp->er_start, rp->er_end);
+		(*pr)("     0x%lx - 0x%lx\n", rp->er_start, rp->er_end);
 }
 #endif
