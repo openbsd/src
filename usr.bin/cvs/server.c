@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.95 2009/03/19 09:56:03 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.96 2009/04/04 11:29:57 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -819,4 +819,29 @@ cvs_server_clear_sticky(char *dir)
 
 	cvs_server_send_response("Clear-sticky %s//", dir);
 	cvs_remote_output(fpath);
+}
+
+void
+cvs_server_exp_modules(char *module)
+{
+	struct module_checkout *mo;
+	struct cvs_filelist *fl;
+
+	if (server_argc != 2)
+		fatal("expand-modules with no arguments");
+
+	mo = cvs_module_lookup(server_argv[1]);
+
+	RB_FOREACH(fl, cvs_flisthead, &(mo->mc_modules))
+		cvs_server_send_response("Module-expansion %s", fl->file_path);
+	cvs_server_send_response("ok");
+
+	if (mo->mc_canfree == 1) {
+		xfree(mo->mc_name);
+		xfree(mo);
+	}
+
+	server_argc--;
+	xfree(server_argv[1]);
+	server_argv[1] = NULL;
 }

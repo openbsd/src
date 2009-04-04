@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.120 2009/04/01 06:41:58 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.121 2009/04/04 11:29:57 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -55,6 +55,7 @@ struct cvs_req cvs_requests[] = {
 	{ "Argumentx",		0,	cvs_server_argumentx, REQ_NEEDED },
 	{ "Global_option",	0,	cvs_server_globalopt, REQ_NEEDED },
 	{ "Set",		0,	cvs_server_set, REQ_NEEDED },
+	{ "expand-modules",	0,	cvs_server_exp_modules, 0 },
 
 	/*
 	 * used to tell the server what is going on in our
@@ -73,7 +74,6 @@ struct cvs_req cvs_requests[] = {
 	{ "Kerberos-encrypt",		0,	NULL, 0 },
 	{ "Gssapi-encrypt",		0,	NULL, 0 },
 	{ "Gssapi-authenticate",	0,	NULL, 0 },
-	{ "expand-modules",		0,	NULL, 0 },
 
 	/* commands that might be supported */
 	{ "ci",			0,	cvs_server_commit,	REQ_NEEDDIR },
