@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.96 2009/04/04 11:29:57 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.97 2009/04/04 11:32:48 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -835,11 +835,6 @@ cvs_server_exp_modules(char *module)
 	RB_FOREACH(fl, cvs_flisthead, &(mo->mc_modules))
 		cvs_server_send_response("Module-expansion %s", fl->file_path);
 	cvs_server_send_response("ok");
-
-	if (mo->mc_canfree == 1) {
-		xfree(mo->mc_name);
-		xfree(mo);
-	}
 
 	server_argc--;
 	xfree(server_argv[1]);
