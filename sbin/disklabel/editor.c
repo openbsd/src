@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.185 2009/04/03 23:18:11 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.186 2009/04/04 16:04:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.185 2009/04/03 23:18:11 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.186 2009/04/04 16:04:44 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -64,9 +64,9 @@ struct mountinfo {
 /* used when allocating all space according to recommendations */
 
 struct space_allocation {
-	daddr64_t	minblks;
-	daddr64_t	maxblks;
-	int		rate;		/* % of extra space to use */
+	daddr64_t	minsz;	/* starts as blocks, xlated to sectors. */
+	daddr64_t	maxsz;	/* starts as blocks, xlated to sectors. */
+	int		rate;	/* % of extra space to use */
 	char 	       *mp;
 };
 
@@ -478,22 +478,24 @@ void
 editor_allocspace(struct disklabel *lp, char **mp, int forcealloc)
 {
 	struct partition *pp;
-	daddr64_t blks, cylblks, totblks, xtrablks;
+	daddr64_t secs, cylsecs, totsecs, xtrasecs;
 	int i, lastpart;
 
-	cylblks = DL_SECTOBLK(lp, lp->d_secpercyl);
-	xtrablks = totblks = DL_SECTOBLK(lp, ending_sector - starting_sector);
+	cylsecs = lp->d_secpercyl;
+	xtrasecs = totsecs = ending_sector - starting_sector;
 
 	pp = &lp->d_partitions[0];
 	for (i = 0; i < MAXPARTITIONS; i++, pp++) {
-		blks = alloc[i].minblks;
 		if (i == RAW_PART)
 			continue;
 		if (DL_GETPSIZE(pp) != 0 && !forcealloc)
 			return; 
-		if (blks == 0)
+		alloc[i].minsz = DL_BLKTOSEC(lp, alloc[i].minsz);
+		alloc[i].maxsz = DL_BLKTOSEC(lp, alloc[i].maxsz);
+		secs = alloc[i].minsz;
+		if (secs == 0)
 			continue;
-		xtrablks -= blks;
+		xtrasecs -= secs;
 		lastpart = i;
 	}
 
@@ -518,29 +520,29 @@ editor_allocspace(struct disklabel *lp, char **mp, int forcealloc)
 			break;
 		}
 		if (i == lastpart) {
-			if (totblks > alloc[i].maxblks)
-				blks = alloc[i].maxblks;
+			if (totsecs > alloc[i].maxsz)
+				secs = alloc[i].maxsz;
 			else
-				blks = totblks;
+				secs = totsecs;
 		} else {
-			blks = alloc[i].minblks;
-			if (xtrablks > 0)
-				blks += (xtrablks / 100) * alloc[i].rate;
-			if (blks > alloc[i].maxblks)
-				blks = alloc[i].maxblks;
-			blks = ((blks + cylblks - 1) / cylblks) * cylblks;
-			totblks -= blks;
-			while (totblks < 0) {
-				blks -= cylblks;
-				totblks += cylblks;
+			secs = alloc[i].minsz;
+			if (xtrasecs > 0)
+				secs += (xtrasecs / 100) * alloc[i].rate;
+			if (secs > alloc[i].maxsz)
+				secs = alloc[i].maxsz;
+			secs = ((secs + cylsecs - 1) / cylsecs) * cylsecs;
+			totsecs -= secs;
+			while (totsecs < 0) {
+				secs -= cylsecs;
+				totsecs += cylsecs;
 			}
-			if (i == 0 && blks > DL_SECTOBLK(lp, starting_sector)) {
-				blks -= DL_SECTOBLK(lp, starting_sector);
-				totblks += DL_SECTOBLK(lp, starting_sector);
+			if (i == 0 && secs > starting_sector) {
+				secs -= starting_sector;
+				totsecs += starting_sector;
 			}
 		}
-		if (blks < alloc[i].minblks) {
-			totblks += blks;
+		if (secs < alloc[i].minsz) {
+			totsecs += secs;
 			fprintf(stderr, "no space to auto allocate '%c'"
 			    " (%s)\n", 'a'+i, alloc[i].mp);
 			if (i == 0)
@@ -548,7 +550,7 @@ editor_allocspace(struct disklabel *lp, char **mp, int forcealloc)
 			else
 				continue;
 		}
-		DL_SETPSIZE(pp, DL_BLKTOSEC(lp, blks));
+		DL_SETPSIZE(pp, secs);
 		pp->p_fstype = (i == 1) ? FS_SWAP : FS_BSDFFS;
 #if defined (__sparc__) && !defined(__sparc64__)
 		/* can't boot from > 8k boot blocks */
