@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$Id: ypinit.sh,v 1.12 2005/05/13 13:16:13 jmc Exp $
+#	$Id: ypinit.sh,v 1.13 2009/04/04 12:49:10 schwarze Exp $
 #
 # ypinit.sh - setup an master or slave server.
 #
@@ -261,10 +261,10 @@ then
 
 	echo ""
 	if [ "${ERROR_EXISTS}" = "YES"  ]; then
-		echo "${HOST} has been setup as an YP slave server with errors. " 1>&2
-		echo "Please remember fix any problem that occurred." 1>&2
+		echo "${HOST} has been set up as a YP slave server with errors. " 1>&2
+		echo "Please remember to fix any problems that occurred." 1>&2
 	else
-		echo "${HOST} has been setup as an YP slave server without any errors. "
+		echo "${HOST} has been set up as a YP slave server without any errors. "
 	fi
 
 	echo "Don't forget to update map ypservers on ${MASTER}."
@@ -373,26 +373,7 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ "${SERVERTYPE}" = "MASTER" ]; then
-	CUR_PWD=`pwd`
-	cd ${YP_DIR}/${DOMAIN}
-	echo "Running ${YP_DIR}/${DOMAIN}/Makefile..."
-	if ! make NOPUSH=1; then
-		echo "" 1>&2
-		echo "Error running Makefile." 1>&2
-		ERROR_EXISTS="YES"
-		if [ "${ERROR_EXIT}" = "YES" ]; then
-			exit 1
-		fi
-	fi
-
-	cd ${CUR_PWD}
-
-	echo ""
-	if [ "${ERROR_EXISTS}" = "YES" ]; then
-		echo "${HOST} has been setup as an YP master server with errors. " 1>&2
-		echo "Please remember fix any problem that occurred." 1>&2
-	else
-		echo "${HOST} has been setup as an YP master server without any errors. "
-	fi
-
+	echo "${HOST} has been set up as a YP master server."
+	echo "Edit ${YP_DIR}/${DOMAIN}/Makefile to suit your needs."
+	echo "After that, run \`make' in ${YP_DIR}."
 fi

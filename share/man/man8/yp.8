@@ -1,4 +1,4 @@
-.\"	$OpenBSD: yp.8,v 1.28 2008/10/22 20:31:20 jmc Exp $
+.\"	$OpenBSD: yp.8,v 1.29 2009/04/04 12:49:11 schwarze Exp $
 .\"	$NetBSD: yp.8,v 1.9 1995/08/11 01:16:52 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 22 2008 $
+.Dd $Mdocdate: April 4 2009 $
 .Dt YP 8
 .Os
 .Sh NAME
@@ -141,21 +141,19 @@ is used to initialize
 as a master or a slave.
 This creates various files in
 .Pa /var/yp .
-By default the
-.Nm YP
-server will be set up in backwards compatible mode.
-To enable
-.Dq secure
-mode, the file
+After running
+.Nm ypinit Fl m ,
+optionally edit
+.Pa /var/yp/DOMAINNAME/Makefile
+to change settings, for example to switch from the default
+backwards compatible mode to secure mode, then run
+.Xr make 1
+in
+.Pa /var/yp
+in any case.
+See
 .Xr Makefile.yp 8
-must be edited.
-This
-.Dq secure
-mode is compatible with
-.Ox
-and
-.Fx
-clients.
+for details.
 .Pp
 If set up as a slave, the required databases are automatically copied
 from the specified server.
