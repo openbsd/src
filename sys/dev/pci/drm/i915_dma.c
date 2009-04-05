@@ -274,7 +274,7 @@ static int i915_emit_cmds(struct drm_device *dev, int __user *buffer,
 	for (i = 0; i < dwords;) {
 		int cmd, sz;
 
-		if (DRM_COPY_FROM_USER_UNCHECKED(&cmd, &buffer[i], sizeof(cmd)))
+		if (DRM_COPY_FROM_USER(&cmd, &buffer[i], sizeof(cmd)))
 			return EINVAL;
 
 		if ((sz = validate_cmd(cmd)) == 0 || i + sz > dwords)
@@ -283,8 +283,7 @@ static int i915_emit_cmds(struct drm_device *dev, int __user *buffer,
 		OUT_RING(cmd);
 
 		while (++i, --sz) {
-			if (DRM_COPY_FROM_USER_UNCHECKED(&cmd, &buffer[i],
-							 sizeof(cmd))) {
+			if (DRM_COPY_FROM_USER(&cmd, &buffer[i], sizeof(cmd))) {
 				return EINVAL;
 			}
 			OUT_RING(cmd);
@@ -299,20 +298,21 @@ static int i915_emit_cmds(struct drm_device *dev, int __user *buffer,
 	return 0;
 }
 
-static int i915_emit_box(struct drm_device * dev,
-			 struct drm_clip_rect __user * boxes,
-			 int i, int DR1, int DR4)
+static int
+i915_emit_box(struct drm_device * dev, struct drm_clip_rect *boxes,
+    int i, int DR1, int DR4)
 {
 	drm_i915_private_t *dev_priv = dev->dev_private;
 	struct drm_clip_rect box;
 
-	if (DRM_COPY_FROM_USER_UNCHECKED(&box, &boxes[i], sizeof(box))) {
+	if (DRM_COPY_FROM_USER(&box, &boxes[i], sizeof(box))) {
 		return EFAULT;
 	}
 
-	if (box.y2 <= box.y1 || box.x2 <= box.x1 || box.y2 <= 0 || box.x2 <= 0) {
+	if (box.y2 <= box.y1 || box.x2 <= box.x1 || box.y2 <= 0 ||
+	    box.x2 <= 0) {
 		DRM_ERROR("Bad box %d,%d..%d,%d\n",
-			  box.x1, box.y1, box.x2, box.y2);
+		    box.x1, box.y1, box.x2, box.y2);
 		return EINVAL;
 	}
 
@@ -480,10 +480,6 @@ int i915_batchbuffer(struct drm_device *dev, void *data,
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
-	if (batch->num_cliprects && DRM_VERIFYAREA_READ(batch->cliprects,
-	    batch->num_cliprects * sizeof(struct drm_clip_rect)))
-		return EFAULT;
-
 	DRM_LOCK();
 	ret = i915_dispatch_batchbuffer(dev, batch);
 	DRM_UNLOCK();
@@ -507,14 +503,6 @@ int i915_cmdbuffer(struct drm_device *dev, void *data,
 		return EINVAL;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
-
-	if (cmdbuf->num_cliprects &&
-	    DRM_VERIFYAREA_READ(cmdbuf->cliprects,
-				cmdbuf->num_cliprects *
-				sizeof(struct drm_clip_rect))) {
-		DRM_ERROR("Fault accessing cliprects\n");
-		return EFAULT;
-	}
 
 	DRM_LOCK();
 	ret = i915_dispatch_cmdbuffer(dev, cmdbuf);

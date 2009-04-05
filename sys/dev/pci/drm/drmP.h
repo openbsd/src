@@ -85,7 +85,7 @@
 #define DRM_CURRENTPID		curproc->p_pid
 #define DRM_LOCK()		rw_enter_write(&dev->dev_lock)
 #define DRM_UNLOCK()		rw_exit_write(&dev->dev_lock)
-#define DRM_MAXUNITS	8
+#define DRM_MAXUNITS		8
 
 /* D_CLONE only supports one device, this will be fixed eventually */
 #define drm_get_device_from_kdev(_kdev)	\
@@ -130,20 +130,8 @@ typedef u_int8_t u8;
 					"lock; addl $0,0(%%rsp)" : : : "memory");
 #endif
 
-#define DRM_VERIFYAREA_READ( uaddr, size )				\
-	(!uvm_map_checkprot(&(curproc->p_vmspace->vm_map),		\
-	    (vaddr_t)uaddr, (vaddr_t)uaddr+size, UVM_PROT_READ))
-
-#define DRM_COPY_TO_USER(user, kern, size) \
-	copyout(kern, user, size)
-#define DRM_COPY_FROM_USER(kern, user, size) \
-	copyin(user, kern, size)
-#define DRM_COPY_FROM_USER_UNCHECKED(arg1, arg2, arg3) 	\
-	copyin(arg2, arg1, arg3)
-#define DRM_COPY_TO_USER_UNCHECKED(arg1, arg2, arg3)	\
-	copyout(arg2, arg1, arg3)
-#define DRM_GET_USER_UNCHECKED(val, uaddr)		\
-	((val) = fuword(uaddr), 0)
+#define	DRM_COPY_TO_USER(user, kern, size)	copyout(kern, user, size)
+#define	DRM_COPY_FROM_USER(kern, user, size)	copyin(user, kern, size)
 #define le32_to_cpu(x) letoh32(x)
 #define cpu_to_le32(x) htole32(x)
 
