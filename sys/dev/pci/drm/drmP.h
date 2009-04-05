@@ -295,12 +295,19 @@ struct drm_local_map {
 	enum drm_map_type		 type;	/* Type of memory mapped */
 };
 
-struct drm_vblank {
-	u_int32_t	last_vblank;	/* Last vblank we recieved */
-	atomic_t	vbl_count;	/* Number of interrupts */
-	atomic_t	vbl_refcount;	/* Number of users */
-	int		vbl_enabled;	/* Enabled? */
-	int		vbl_inmodeset;	/* is the DDX currently modesetting */
+struct drm_vblank_info {
+	struct mutex		 vb_lock;		/* VBLANK data lock */
+	struct timeout		 vb_disable_timer;	/* timer for disable */
+	int			 vb_disable_allowed;
+	int			 vb_num;		/* number of crtcs */
+	u_int32_t		 vb_max;		/* counter reg size */
+	struct drm_vblank {
+		u_int32_t	 vbl_last;		/* Last recieved */
+		u_int32_t	 vbl_count;		/* interrupt no. */
+		int		 vbl_refs;		/* Number of users */
+		int		 vbl_enabled;		/* Enabled? */
+		int		 vbl_inmodeset;		/* in a modeset? */
+	}			 vb_crtcs[1];
 };
 
 /* Heap implementation for radeon and i915 legacy */
@@ -417,12 +424,7 @@ struct drm_device {
 	int		  irq_enabled;	/* True if the irq handler is enabled */
 
 	/* VBLANK support */
-	int			 num_crtcs;		/* number of crtcs */
-	u_int32_t		 max_vblank_count;	/* size of counter reg*/
-	struct mutex		 vbl_lock;		/* VBLANK data lock */
-	int			 vblank_disable_allowed;
-	struct timeout		 vblank_disable_timer;	/* timer for disable */
-	struct drm_vblank	*vblank;		/* One per ctrc */
+	struct drm_vblank_info	*vblank;		/* One per ctrc */
 
 	pid_t			 buf_pgid;
 
