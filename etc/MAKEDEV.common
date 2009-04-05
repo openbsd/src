@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.41 2008/11/30 03:33:09 jakemsr Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.42 2009/04/05 17:49:14 jmc Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -474,7 +474,7 @@ _mkdev(au, audio*, {-M sound$U	c major_au_c $U
 	MKlist[${#MKlist[*]}]=";[ -e mixer ] || ln -s mixer$U mixer"
 	MKlist[${#MKlist[*]}]=";[ -e sound ] || ln -s sound$U sound"
 	MKlist[${#MKlist[*]}]=";[ -e audioctl ] || ln -s audioctl$U audioctl"-})dnl
-__devitem(vi, video*, Video V4L devices,video)dnl
+__devitem(vi, video*, Video V4L2 devices,video)dnl
 _mkdev(vi, video*, {-M video$U  c major_vi_c $U
 	MKlist[${#MKlist[*]}]=";[ -e video ] || ln -s video$U video"-})dnl
 __devitem(asc, asc*, ASC Audio device)dnl
