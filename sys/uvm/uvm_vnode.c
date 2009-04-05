@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.53 2009/03/20 15:19:04 oga Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.54 2009/04/05 18:11:03 oga Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -650,6 +650,7 @@ boolean_t
 uvn_releasepg(struct vm_page *pg, struct vm_page **nextpgp /* OUT */)
 {
 	struct uvm_vnode *uvn = (struct uvm_vnode *) pg->uobject;
+	struct vnode *vp = (struct vnode *)uvn;
 #ifdef DIAGNOSTIC
 	if ((pg->pg_flags & PG_RELEASED) == 0)
 		panic("uvn_releasepg: page not released!");
@@ -687,6 +688,7 @@ uvn_releasepg(struct vm_page *pg, struct vm_page **nextpgp /* OUT */)
 
 			uvn->u_flags = 0;		/* DEAD! */
 			simple_unlock(&uvn->u_obj.vmobjlock);
+			vrele(vp);
 			return (FALSE);
 		}
 	}
