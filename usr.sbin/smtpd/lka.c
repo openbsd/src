@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.38 2009/03/29 14:18:20 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.39 2009/04/05 16:33:12 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -415,7 +415,7 @@ lka_dispatch_mta(int sig, short event, void *p)
 				if (mxhost.flags & F_AUTH) {
 					secret = map_dblookup(env, "secrets", mx[i]);
 					if (secret == NULL) {
-						log_warn("no credentials for relay through \"%s\"", mx[i]);
+						log_warnx("no credentials for relay through \"%s\"", mx[i]);
 						freeaddrinfo(res);
 						continue;
 					}
