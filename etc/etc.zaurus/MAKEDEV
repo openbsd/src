@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.zaurus/MAKEDEV.md,v 1.19 2009/02/06 21:17:15 grange Exp 
-#	OpenBSD: MAKEDEV.common,v 1.41 2008/11/30 03:33:09 jakemsr Exp 
+#	OpenBSD: MAKEDEV.common,v 1.42 2009/04/05 17:49:14 jmc Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -79,7 +79,7 @@
 #	ss*	SCSI scanners
 #	systrace*	System call tracing device
 #	tuner*	Tuner devices
-#	video*	Video V4L devices
+#	video*	Video V4L2 devices
 #	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
