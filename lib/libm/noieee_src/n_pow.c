@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_pow.c,v 1.10 2008/06/25 17:49:31 martynas Exp $	*/
+/*	$OpenBSD: n_pow.c,v 1.11 2009/04/05 02:12:43 martynas Exp $	*/
 /*	$NetBSD: n_pow.c,v 1.1 1995/10/10 23:37:02 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -117,7 +117,7 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
 #define infnan(x)	0.0
 #endif		/* defined(__vax__) */
 
-const static double zero=0.0, one=1.0, two=2.0, negone= -1.0;
+static const double zero=0.0, one=1.0, two=2.0, negone= -1.0;
 
 static double pow_P(double, double);
 

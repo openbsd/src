@@ -1,4 +1,4 @@
-/*	$OpenBSD: mathimpl.h,v 1.8 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: mathimpl.h,v 1.9 2009/04/05 02:12:43 martynas Exp $	*/
 /*	$NetBSD: mathimpl.h,v 1.1 1995/10/10 23:36:31 ragge Exp $	*/
 /*
  * Copyright (c) 1988, 1993
@@ -64,7 +64,7 @@
     * We define "vccast" if this needs doing.
     */
 #  define vc(name, value, x1,x2,x3,x4, bexp, xval) \
-	const static long cat3(name,,x)[] = {cat3t(0x,x1,x2), cat3t(0x,x3,x4)};
+	static const long cat3(name,,x)[] = {cat3t(0x,x1,x2), cat3t(0x,x3,x4)};
 
 #  define ic(name, value, bexp, xval) ;
 
@@ -75,7 +75,7 @@
 #  define vc(name, value, x1,x2,x3,x4, bexp, xval) ;
 
 #  define ic(name, value, bexp, xval) \
-	const static double name = value;
+	static const double name = value;
 
 #endif	/* defined(__vax__) */
 

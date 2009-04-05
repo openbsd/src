@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_asinh.c,v 1.7 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_asinh.c,v 1.8 2009/04/05 02:12:43 martynas Exp $	*/
 /*	$NetBSD: n_asinh.c,v 1.1 1995/10/10 23:36:35 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -84,7 +84,7 @@ double
 asinh(double x)
 {
 	double t,s;
-	const static double	small=1.0E-10,	/* fl(1+small*small) == 1 */
+	static const double	small=1.0E-10,	/* fl(1+small*small) == 1 */
 				big  =1.0E20,	/* fl(1+big) == big */
 				one  =1.0   ;
 

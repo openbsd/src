@@ -1,4 +1,4 @@
-/*	$OpenBSD: b_exp__D.c,v 1.3 2008/06/25 17:49:31 martynas Exp $	*/
+/*	$OpenBSD: b_exp__D.c,v 1.4 2009/04/05 02:12:43 martynas Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -71,16 +71,16 @@ static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 6/4/93";
 #include "math.h"
 #include "math_private.h"
 
-const static double p1 = 0x1.555555555553ep-3;
-const static double p2 = -0x1.6c16c16bebd93p-9;
-const static double p3 = 0x1.1566aaf25de2cp-14;
-const static double p4 = -0x1.bbd41c5d26bf1p-20;
-const static double p5 = 0x1.6376972bea4d0p-25;
-const static double ln2hi = 0x1.62e42fee00000p-1;
-const static double ln2lo = 0x1.a39ef35793c76p-33;
-const static double lnhuge = 0x1.6602b15b7ecf2p9;
-const static double lntiny = -0x1.77af8ebeae354p9;
-const static double invln2 = 0x1.71547652b82fep0;
+static const double p1 = 0x1.555555555553ep-3;
+static const double p2 = -0x1.6c16c16bebd93p-9;
+static const double p3 = 0x1.1566aaf25de2cp-14;
+static const double p4 = -0x1.bbd41c5d26bf1p-20;
+static const double p5 = 0x1.6376972bea4d0p-25;
+static const double ln2hi = 0x1.62e42fee00000p-1;
+static const double ln2lo = 0x1.a39ef35793c76p-33;
+static const double lnhuge = 0x1.6602b15b7ecf2p9;
+static const double lntiny = -0x1.77af8ebeae354p9;
+static const double invln2 = 0x1.71547652b82fep0;
 
 /* returns exp(r = x + c) for |c| < |x| with no overlap.  */
 

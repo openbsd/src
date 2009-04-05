@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_exp__E.c,v 1.9 2008/07/22 19:58:40 martynas Exp $	*/
+/*	$OpenBSD: n_exp__E.c,v 1.10 2009/04/05 02:12:43 martynas Exp $	*/
 /*	$NetBSD: n_exp__E.c,v 1.1 1995/10/10 23:36:45 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -109,7 +109,7 @@ ic(q2, 9.9176615021572857300E-4, -10, 1.03FC4CB8C98E8)
 double
 __exp__E(double x, double c)
 {
-	const static double zero=0.0, one=1.0, half=1.0/2.0, small=1.0E-19;
+	static const double zero=0.0, one=1.0, half=1.0/2.0, small=1.0E-19;
 	double z,p,q,xp,xh,w;
 	if(copysign(x,one)>small) {
            z = x*x  ;

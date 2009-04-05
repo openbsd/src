@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_expm1.c,v 1.9 2008/07/18 13:08:58 martynas Exp $	*/
+/*	$OpenBSD: n_expm1.c,v 1.10 2009/04/05 02:12:43 martynas Exp $	*/
 /*	$NetBSD: n_expm1.c,v 1.1 1995/10/10 23:36:46 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -107,7 +107,7 @@ ic(invln2, 1.4426950408889633870E0,     0, 1.71547652B82FE)
 double
 expm1(double x)
 {
-	const static double one=1.0, half=1.0/2.0, tiny=1e-300;
+	static const double one=1.0, half=1.0/2.0, tiny=1e-300;
 	double  z,hi,lo,c;
 	int k;
 #if defined(__vax__)
