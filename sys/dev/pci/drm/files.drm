@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.14 2009/03/27 19:00:45 oga Exp $
+# $OpenBSD: files.drm,v 1.15 2009/04/06 04:45:19 oga Exp $
 
 # direct rendering modules
 define drmbase {}
@@ -63,8 +63,6 @@ file	dev/pci/drm/savage_state.c	savagedrm
 device	sisdrm: drmbase
 attach	sisdrm at drmdev
 file	dev/pci/drm/sis_drv.c		sisdrm
-file	dev/pci/drm/sis_ds.c		sisdrm
-file	dev/pci/drm/sis_mm.c		sisdrm
 
 device	tdfxdrm: drmbase
 attach	tdfxdrm at drmdev
