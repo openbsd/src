@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.62 2008/11/03 14:49:23 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.63 2009/04/06 18:57:07 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: November 3 2008 $
+.Dd $Mdocdate: April 6 2009 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -7393,6 +7393,7 @@ option was added in
 .Op Fl fingerprint
 .Op Fl hash
 .Op Fl issuer
+.Op Fl issuer_hash
 .Op Fl md2 | md5 | sha1
 .Op Fl modulus
 .Op Fl noout
@@ -7403,6 +7404,7 @@ option was added in
 .Op Fl serial
 .Op Fl startdate
 .Op Fl subject
+.Op Fl subject_hash
 .Op Fl text
 .Op Fl trustout
 .Op Fl x509toreq
@@ -7534,15 +7536,15 @@ Prints out the digest of the DER-encoded version of the whole certificate
 (see
 .Sx DIGEST OPTIONS ) .
 .It Fl hash
-Outputs the
-.Qq hash
-of the certificate subject name.
-This is used in
-.Nm OpenSSL
-to form an index to allow certificates in a directory to be looked up
-by subject name.
+A synonym for
+.Fl subject_hash ,
+for backwards compatibility.
 .It Fl issuer
 Outputs the issuer name.
+.It Fl issuer_hash
+Outputs the
+.Qq hash
+of the certificate issuer name.
 .It Fl modulus
 This option prints out the value of the modulus of the public key
 contained in the certificate.
@@ -7571,6 +7573,14 @@ Prints out the start date of the certificate; that is, the
 date.
 .It Fl subject
 Outputs the subject name.
+.It Fl subject_hash
+Outputs the
+.Qq hash
+of the certificate subject name.
+This is used in
+.Nm OpenSSL
+to form an index to allow certificates in a directory to be looked up
+by subject name.
 .It Fl text
 Prints out the certificate in text form.
 Full details are output including the public key, signature algorithms,
