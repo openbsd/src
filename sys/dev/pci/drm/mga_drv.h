@@ -61,18 +61,13 @@ typedef struct drm_mga_primary_buffer {
 	u32 high_mark;
 } drm_mga_primary_buffer_t;
 
-typedef struct drm_mga_freelist {
-	struct drm_mga_freelist *next;
-	struct drm_mga_freelist *prev;
-	drm_mga_age_t age;
-	struct drm_buf *buf;
-} drm_mga_freelist_t;
-
-typedef struct {
-	drm_mga_freelist_t *list_entry;
-	int discard;
-	int dispatched;
-} drm_mga_buf_priv_t;
+struct mgadrm_buf_priv {
+	TAILQ_ENTRY(mgadrm_buf_priv)	 link;
+	drm_mga_age_t			 age;
+	struct drm_buf			*buf;
+	int				 discard;
+	int				 dispatched;
+};
 
 typedef struct drm_mga_private {
 	struct device		 dev;
@@ -87,8 +82,7 @@ typedef struct drm_mga_private {
 	drm_mga_primary_buffer_t prim;
 	drm_mga_sarea_t *sarea_priv;
 
-	drm_mga_freelist_t *head;
-	drm_mga_freelist_t *tail;
+	TAILQ_HEAD(mga_freelist, mgadrm_buf_priv) freelist;
 
 	unsigned int warp_pipe;
 	unsigned long warp_pipe_phys[MGA_MAX_WARP_PIPES];
@@ -372,14 +366,13 @@ do {									\
 
 #define AGE_BUFFER( buf_priv )						\
 do {									\
-	drm_mga_freelist_t *entry = (buf_priv)->list_entry;		\
 	if ( (buf_priv)->dispatched ) {					\
-		entry->age.head = (dev_priv->prim.tail +		\
+		buf_priv->age.head = (dev_priv->prim.tail +		\
 				   dev_priv->primary->offset);		\
-		entry->age.wrap = dev_priv->sarea_priv->last_wrap;	\
+		buf_priv->age.wrap = dev_priv->sarea_priv->last_wrap;	\
 	} else {							\
-		entry->age.head = 0;					\
-		entry->age.wrap = 0;					\
+		buf_priv->age.head = 0;					\
+		buf_priv->age.wrap = 0;					\
 	}								\
 } while (0)
 

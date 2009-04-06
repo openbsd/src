@@ -56,7 +56,7 @@ const static struct drm_pcidev mgadrm_pciidlist[] = {
 };
 
 static const struct drm_driver_info mga_driver = {
-	.buf_priv_size		= sizeof(drm_mga_buf_priv_t),
+	.buf_priv_size		= sizeof(struct mgadrm_buf_priv),
 	.ioctl			= mgadrm_ioctl,
 	.lastclose		= mga_driver_lastclose,
 	.vblank_pipes		= 1,

@@ -225,8 +225,8 @@ void mga_do_dma_wrap_end(drm_mga_private_t * dev_priv)
 #if MGA_FREELIST_DEBUG
 static void mga_freelist_print(struct drm_device * dev)
 {
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_freelist_t *entry;
+	drm_mga_private_t	*dev_priv = dev->dev_private;
+	struct mgadrm_buf_priv	*entry;
 
 	DRM_INFO("\n");
 	DRM_INFO("current dispatch: last=0x%x done=0x%x\n",
@@ -235,7 +235,7 @@ static void mga_freelist_print(struct drm_device * dev)
 				dev_priv->primary->offset));
 	DRM_INFO("current freelist:\n");
 
-	for (entry = dev_priv->head->next; entry; entry = entry->next) {
+	TAILQ_FOREACH(entry, &dev_priv->freelist, link) {
 		DRM_INFO("   %p   idx=%2d  age=0x%x 0x%06lx\n",
 			 entry, entry->buf->idx, entry->age.head,
 			 entry->age.head - dev_priv->primary->offset);
@@ -244,144 +244,77 @@ static void mga_freelist_print(struct drm_device * dev)
 }
 #endif
 
-static int mga_freelist_init(struct drm_device * dev, drm_mga_private_t * dev_priv)
+static int
+mga_freelist_init(struct drm_device *dev, drm_mga_private_t *dev_priv)
 {
-	struct drm_device_dma *dma = dev->dma;
-	struct drm_buf *buf;
-	drm_mga_buf_priv_t *buf_priv;
-	drm_mga_freelist_t *entry;
-	int i;
+	struct drm_device_dma	*dma = dev->dma;
+	struct drm_buf		*buf;
+	struct mgadrm_buf_priv	*buf_priv;
+	int 			 i;
+
 	DRM_DEBUG("count=%d\n", dma->buf_count);
 
-	dev_priv->head = drm_calloc(1, sizeof(*(dev_priv->head)));
-	if (dev_priv->head == NULL)
-		return ENOMEM;
-
-	SET_AGE(&dev_priv->head->age, MGA_BUFFER_USED, 0);
-
-	for (i = 0; i < dma->buf_count; i++) {
-		buf = dma->buflist[i];
-		buf_priv = (drm_mga_buf_priv_t *)buf;
-
-		entry = drm_calloc(1, sizeof(*entry));
-		if (entry == NULL)
-			return ENOMEM;
-
-		entry->next = dev_priv->head->next;
-		entry->prev = dev_priv->head;
-		SET_AGE(&entry->age, MGA_BUFFER_FREE, 0);
-
-		if (dev_priv->head->next != NULL)
-			dev_priv->head->next->prev = entry;
-		if (entry->next == NULL)
-			dev_priv->tail = entry;
-
-		buf_priv->list_entry = entry;
-		buf_priv->discard = 0;
-		buf_priv->dispatched = 0;
-
-		dev_priv->head->next = entry;
-	}
-
-	return 0;
-}
-
-static void mga_freelist_cleanup(struct drm_device * dev)
-{
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_freelist_t *entry;
-	drm_mga_freelist_t *next;
-	DRM_DEBUG("\n");
-
-	entry = dev_priv->head;
-	while (entry) {
-		next = entry->next;
-		drm_free(entry);
-		entry = next;
-	}
-
-	dev_priv->head = dev_priv->tail = NULL;
-}
-
-#if 0
-/* FIXME: Still needed?
- */
-static void mga_freelist_reset(struct drm_device * dev)
-{
-	struct drm_device_dma *dma = dev->dma;
-	struct drm_buf *buf;
-	drm_mga_buf_priv_t *buf_priv;
-	int i;
+	/* if we have a freelist lying around, this'll nuke them. */
+	TAILQ_INIT(&dev_priv->freelist);
 
 	for (i = 0; i < dma->buf_count; i++) {
 		buf = dma->buflist[i];
 		buf_priv = buf->dev_private;
-		SET_AGE(&buf_priv->list_entry->age, MGA_BUFFER_FREE, 0);
-	}
-}
-#endif
 
-static struct drm_buf *mga_freelist_get(struct drm_device * dev)
+		TAILQ_INSERT_HEAD(&dev_priv->freelist, buf_priv, link);
+		SET_AGE(&buf_priv->age, MGA_BUFFER_FREE, 0);
+		buf_priv->discard = 0;
+		buf_priv->dispatched = 0;
+	}
+
+	return (0);
+}
+
+static struct drm_buf *
+mga_freelist_get(struct drm_device *dev)
 {
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_freelist_t *next;
-	drm_mga_freelist_t *prev;
-	drm_mga_freelist_t *tail = dev_priv->tail;
-	u32 head, wrap;
+	drm_mga_private_t	*dev_priv = dev->dev_private;
+	struct mgadrm_buf_priv	*entry;
+	u_int32_t		 head, wrap;
+
 	DRM_DEBUG("\n");
 
 	head = MGA_READ(MGA_PRIMADDRESS);
 	wrap = dev_priv->sarea_priv->last_wrap;
 
-	DRM_DEBUG("   tail=0x%06lx %d\n",
-		  tail->age.head ?
-		  tail->age.head - dev_priv->primary->offset : 0,
-		  tail->age.wrap);
-	DRM_DEBUG("   head=0x%06lx %d\n",
-		  head - dev_priv->primary->offset, wrap);
+	DRM_DEBUG("   tail=0x%06lx %d\n", tail->age.head ?
+	    tail->age.head - dev_priv->primary->offset : 0, tail->age.wrap);
+	DRM_DEBUG("   head=0x%06lx %d\n", head - dev_priv->primary->offset,
+	    wrap);
 
-	if (TEST_AGE(&tail->age, head, wrap)) {
-		prev = dev_priv->tail->prev;
-		next = dev_priv->tail;
-		prev->next = NULL;
-		next->prev = next->next = NULL;
-		dev_priv->tail = prev;
-		SET_AGE(&next->age, MGA_BUFFER_USED, 0);
-		return next->buf;
+	if ((entry = TAILQ_LAST(&dev_priv->freelist, mga_freelist)) != NULL &&
+	    TEST_AGE(&entry->age, head, wrap)) {
+		TAILQ_REMOVE(&dev_priv->freelist, entry, link);
+		SET_AGE(&entry->age, MGA_BUFFER_USED, 0);
+		return (entry->buf);
 	}
 
 	DRM_DEBUG("returning NULL!\n");
-	return NULL;
+	return (NULL);
 }
 
-int mga_freelist_put(struct drm_device * dev, struct drm_buf * buf)
+int
+mga_freelist_put(struct drm_device *dev, struct drm_buf *buf)
 {
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_buf_priv_t *buf_priv = (drm_mga_buf_priv_t *)buf;
-	drm_mga_freelist_t *head, *entry, *prev;
+	drm_mga_private_t	*dev_priv = dev->dev_private;
+	struct mgadrm_buf_priv	*buf_priv = buf->dev_private;
 
-	DRM_DEBUG("age=0x%06lx wrap=%d\n",
-		  buf_priv->list_entry->age.head -
-		  dev_priv->primary->offset, buf_priv->list_entry->age.wrap);
+	DRM_DEBUG("age=0x%06lx wrap=%d\n", buf_priv->list_entry->age.head -
+	    dev_priv->primary->offset, buf_priv->list_entry->age.wrap);
 
-	entry = buf_priv->list_entry;
-	head = dev_priv->head;
-
-	if (buf_priv->list_entry->age.head == MGA_BUFFER_USED) {
-		SET_AGE(&entry->age, MGA_BUFFER_FREE, 0);
-		prev = dev_priv->tail;
-		prev->next = entry;
-		entry->prev = prev;
-		entry->next = NULL;
+	if (buf_priv->age.head == MGA_BUFFER_USED) {
+		SET_AGE(&buf_priv->age, MGA_BUFFER_FREE, 0);
+		TAILQ_INSERT_TAIL(&dev_priv->freelist, buf_priv, link);
 	} else {
-		prev = head->next;
-		head->next = entry;
-		prev->prev = entry;
-		entry->prev = head;
-		entry->next = prev;
+		TAILQ_INSERT_HEAD(&dev_priv->freelist, buf_priv, link);
 	}
 
-	return 0;
+	return (0);
 }
 
 /* ================================================================
@@ -920,10 +853,6 @@ static int mga_do_cleanup_dma(struct drm_device *dev, int full_cleanup)
 	memset(&dev_priv->prim, 0, sizeof(dev_priv->prim));
 	dev_priv->warp_pipe = 0;
 	memset(dev_priv->warp_pipe_phys, 0, sizeof(dev_priv->warp_pipe_phys));
-
-	if (dev_priv->head != NULL) {
-		mga_freelist_cleanup(dev);
-	}
 
 	return err;
 }

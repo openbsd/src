@@ -649,12 +649,12 @@ static void mga_dma_dispatch_swap(struct drm_device * dev)
 
 static void mga_dma_dispatch_vertex(struct drm_device * dev, struct drm_buf * buf)
 {
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_buf_priv_t *buf_priv = buf->dev_private;
-	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	u32 address = (u32) buf->bus_address;
-	u32 length = (u32) buf->used;
-	int i = 0;
+	drm_mga_private_t	*dev_priv = dev->dev_private;
+	struct mgadrm_buf_priv	*buf_priv = buf->dev_private;
+	drm_mga_sarea_t		*sarea_priv = dev_priv->sarea_priv;
+	u_int32_t		 address = (u_int32_t) buf->bus_address;
+	u_int32_t		 length = (u_int32_t) buf->used;
+	int			 i = 0;
 	DMA_LOCALS;
 	DRM_DEBUG("buf=%d used=%d\n", buf->idx, buf->used);
 
@@ -697,11 +697,11 @@ static void mga_dma_dispatch_vertex(struct drm_device * dev, struct drm_buf * bu
 static void mga_dma_dispatch_indices(struct drm_device * dev, struct drm_buf * buf,
 				     unsigned int start, unsigned int end)
 {
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_buf_priv_t *buf_priv = buf->dev_private;
-	drm_mga_sarea_t *sarea_priv = dev_priv->sarea_priv;
-	u32 address = (u32) buf->bus_address;
-	int i = 0;
+	drm_mga_private_t	*dev_priv = dev->dev_private;
+	struct mgadrm_buf_priv	*buf_priv = buf->dev_private;
+	drm_mga_sarea_t		*sarea_priv = dev_priv->sarea_priv;
+	u_int32_t		 address = (u_int32_t) buf->bus_address;
+	int			 i = 0;
 	DMA_LOCALS;
 	DRM_DEBUG("buf=%d start=%d end=%d\n", buf->idx, start, end);
 
@@ -746,13 +746,14 @@ static void mga_dma_dispatch_indices(struct drm_device * dev, struct drm_buf * b
 static void mga_dma_dispatch_iload(struct drm_device * dev, struct drm_buf * buf,
 				   unsigned int dstorg, unsigned int length)
 {
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	drm_mga_buf_priv_t *buf_priv = buf->dev_private;
-	drm_mga_context_regs_t *ctx = &dev_priv->sarea_priv->context_state;
-	u32 srcorg = buf->bus_address | dev_priv->dma_access | MGA_SRCMAP_SYSMEM;
-	u32 y2;
+	drm_mga_private_t	*dev_priv = dev->dev_private;
+	struct mgadrm_buf_priv	*buf_priv = buf->dev_private;
+	drm_mga_context_regs_t	*ctx = &dev_priv->sarea_priv->context_state;
+	u_int32_t		 srcorg, y2;
 	DMA_LOCALS;
 	DRM_DEBUG("buf=%d used=%d\n", buf->idx, buf->used);
+
+	srcorg = buf->bus_address | dev_priv->dma_access | MGA_SRCMAP_SYSMEM;
 
 	y2 = length / 64;
 
@@ -906,11 +907,11 @@ int mga_dma_swap(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
 int mga_dma_vertex(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	struct drm_device_dma *dma = dev->dma;
-	struct drm_buf *buf;
-	drm_mga_buf_priv_t *buf_priv;
-	drm_mga_vertex_t *vertex = data;
+	drm_mga_private_t	*dev_priv = dev->dev_private;
+	struct drm_device_dma	*dma = dev->dma;
+	struct drm_buf		*buf;
+	struct mgadrm_buf_priv	*buf_priv;
+	drm_mga_vertex_t	*vertex = data;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -941,11 +942,11 @@ int mga_dma_vertex(struct drm_device *dev, void *data, struct drm_file *file_pri
 
 int mga_dma_indices(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	struct drm_device_dma *dma = dev->dma;
-	struct drm_buf *buf;
-	drm_mga_buf_priv_t *buf_priv;
-	drm_mga_indices_t *indices = data;
+	drm_mga_private_t	*dev_priv = dev->dev_private;
+	struct drm_device_dma	*dma = dev->dma;
+	struct drm_buf		*buf;
+	struct mgadrm_buf_priv	*buf_priv;
+	drm_mga_indices_t	*indices = data;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -976,11 +977,11 @@ int mga_dma_indices(struct drm_device *dev, void *data, struct drm_file *file_pr
 
 int mga_dma_iload(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	struct drm_device_dma *dma = dev->dma;
-	drm_mga_private_t *dev_priv = dev->dev_private;
-	struct drm_buf *buf;
-	drm_mga_buf_priv_t *buf_priv;
-	drm_mga_iload_t *iload = data;
+	struct drm_device_dma	*dma = dev->dma;
+	drm_mga_private_t	*dev_priv = dev->dev_private;
+	struct drm_buf		*buf;
+	struct mgadrm_buf_priv	*buf_priv;
+	drm_mga_iload_t		*iload = data;
 	DRM_DEBUG("\n");
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
