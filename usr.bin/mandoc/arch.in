@@ -1,0 +1,54 @@
+/* $Id: arch.in,v 1.1 2009/04/06 20:30:40 kristaps Exp $ */
+/*
+ * Copyright (c) 2009 Kristaps Dzonsons <kristaps@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * This file defines the architecture token of the .Dt prologue macro.
+ * All architectures that your system supports (or the manuals of your
+ * system) should be included here.  The right-hand-side is the
+ * formatted output.
+ *
+ * Be sure to escape strings.
+ */
+
+LINE("alpha",		"Alpha")
+LINE("amd64",		"AMD64")
+LINE("amiga",		"Amiga")
+LINE("arc",		"ARC")
+LINE("arm",		"ARM")
+LINE("armish",		"ARMISH")
+LINE("aviion",		"AViiON")
+LINE("hp300",		"HP300")
+LINE("hppa",		"HPPA")
+LINE("hppa64",		"HPPA64")
+LINE("i386",		"i386")
+LINE("landisk",		"LANDISK")
+LINE("luna88k",		"Luna88k")
+LINE("mac68k",		"Mac68k")
+LINE("macppc",		"MacPPC")
+LINE("mvme68k",		"MVME68k")
+LINE("mvme88k",		"MVME88k")
+LINE("mvmeppc",		"MVMEPPC")
+LINE("pmax",		"PMAX")
+LINE("sgi",		"SGI")
+LINE("socppc",		"SOCPPC")
+LINE("sparc",		"SPARC")
+LINE("sparc64",		"SPARC64")
+LINE("sun3",		"Sun3")
+LINE("vax",		"VAX")
+LINE("zaurus",		"Zaurus")

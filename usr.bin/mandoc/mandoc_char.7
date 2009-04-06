@@ -1,0 +1,469 @@
+.\" $Id: mandoc_char.7,v 1.1 2009/04/06 20:30:40 kristaps Exp $
+.\"
+.\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the
+.\" above copyright notice and this permission notice appear in all
+.\" copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+.\" WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+.\" AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+.\" DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+.\" PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+.\" TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\" 
+.Dd $Mdocdate: April 6 2009 $
+.Dt mandoc_char 7
+.Os
+.\" SECTION
+.Sh NAME
+.Nm mandoc_char
+.Nd mandoc special characters
+.\" SECTION
+.Sh DESCRIPTION
+This documents the special characters accepted by 
+.Xr mandoc 1
+to format
+.Xr mdoc 7
+and
+.Xr man 7
+documents.  Specific output devices of
+.Xr mandoc 1 ,
+dictated by the
+.Fl T Ns Ar output
+argument, will properly render these sequences.
+.Pp
+Both
+.Xr mdoc 7
+and
+.Xr man 7
+encode special characters with slightly different semantics; consult the
+respective manuals for these escapes.
+.Pp
+Grammatic:
+.Bl -tag -width 12n -offset "XXXX" -compact
+.It \e(em
+.Pq em-dash
+.It \e(en
+.Pq en-dash
+.It \e-
+.Pq hyphen
+.It \e\e
+.Pq back-slash
+.It \e'
+.Pq apostrophe
+.It \e`
+.Pq back-tick
+.It \e
+.Pq space
+.It \e.
+.Pq period
+.It \e(r!
+.Pq upside-down exclamation
+.It \e(r?
+.Pq upside-down question
+.El
+.\" PARAGRAPH
+.Pp
+Enclosures:
+.Bl -tag -width 12n -offset "XXXX" -compact
+.It \e(lh
+.Pq left hand
+.It \e(rh
+.Pq right hand
+.It \e(Fo
+.Pq left guillemet
+.It \e(Fc
+.Pq right guillemet
+.It \e(fo
+.Pq left guilsing
+.It \e(fc
+.Pq right guilsing
+.It \e(rC
+.Pq right brace
+.It \e(lC
+.Pq left brace
+.It \e(ra
+.Pq right angle
+.It \e(la
+.Pq left angle
+.It \e(rB
+.Pq right bracket
+.It \e(lB
+.Pq left bracket
+.It \eq
+.Pq double-quote
+.It \e(lq
+.Pq left double-quote
+.It \e(Lq
+.Pq left double-quote, deprecated
+.It \e(rq
+.Pq right double-quote
+.It \e(Rq
+.Pq right double-quote, deprecated
+.It \e(oq
+.Pq left single-quote
+.It \e(aq
+.Pq right single-quote
+.It \e(Bq
+.Pq right low double-quote
+.It \e(bq
+.Pq right low single-quote
+.El
+.\" PARAGRAPH
+.Pp
+Indicatives:
+.Bl -tag -width 12n -offset "XXXX" -compact
+.It \e(<-
+.Pq left arrow
+.It \e(->
+.Pq right arrow
+.It \e(ua
+.Pq up arrow
+.It \e(da
+.Pq down arrow
+.It \e(<>
+.Pq left-right arrow
+.It \e(lA
+.Pq left double-arrow
+.It \e(rA
+.Pq right double-arrow
+.It \e(uA
+.Pq up double-arrow
+.It \e(dA
+.Pq down double-arrow
+.It \e(hA
+.Pq left-right double-arrow
+.El
+.\" PARAGRAPH
+.Pp
+Mathematical:
+.Bl -tag -width 12n -offset "XXXX" -compact
+.It \e(es
+.Pq empty set
+.It \e(ca
+.Pq intersection
+.It \e(cu
+.Pq union
+.It \e(gr
+.Pq gradient
+.It \e(pd
+.Pq partial differential
+.It \e(ap
+.Pq similarity
+.It \e(=)
+.Pq proper superset
+.It \e((=
+.Pq proper subset
+.It \e(eq
+.Pq equals
+.It \e(di
+.Pq division
+.It \e(mu
+.Pq multiplication
+.It \e(pl
+.Pq addition
+.It \e(nm
+.Pq not element
+.It \e(mo
+.Pq element
+.It \e(Im
+.Pq imaginary
+.It \e(Re
+.Pq real
+.It \e(Ah
+.Pq aleph
+.It \e(te
+.Pq existential quantifier
+.It \e(fa
+.Pq universal quantifier
+.It \e(AN
+.Pq logical AND
+.It \e(OR
+.Pq logical OR
+.It \e(no
+.Pq logical NOT
+.It \e(st
+.Pq such that
+.It \e(tf
+.Pq therefore
+.It \e(~~
+.Pq approximate
+.It \e(~=
+.Pq approximately equals
+.It \e(=~
+.Pq congruent
+.It \e(Gt
+.Pq greater-than, deprecated
+.It \e(Lt
+.Pq less-than, deprecated
+.It \e(<=
+.Pq less-than-equal
+.It \e(Le
+.Pq less-than-equal, deprecated
+.It \e(>=
+.Pq greater-than-equal
+.It \e(Ge
+.Pq greater-than-equal
+.It \e(==
+.Pq equal
+.It \e(!=
+.Pq not equal
+.It \e(Ne
+.Pq not equal, deprecated
+.It \e(if
+.Pq infinity
+.It \e(If
+.Pq infinity, deprecated
+.It \e(na
+.Pq NaN , an extension
+.It \e(Na
+.Pq NaN, deprecated
+.It \e(+-
+.Pq plus-minus
+.It \e(Pm
+.Pq plus-minus, deprecated
+.It \e(**
+.Pq asterisk
+.El
+.\" PARAGRAPH
+.Pp
+Ligatures:
+.Bl -tag -width 12n -offset "XXXX" -compact
+.It \e(ss
+.Pq German eszett
+.It \e(AE
+.Pq upper-case AE
+.It \e(ae
+.Pq lower-case AE
+.It \e(OE
+.Pq upper-case OE
+.It \e(oe
+.Pq lower-case OE
+.It \e(ff
+.Pq ff ligature
+.It \e(fi
+.Pq fi ligature
+.It \e(fl
+.Pq fl ligature
+.It \e(Fi
+.Pq ffi ligature
+.It \e(Fl
+.Pq ffl ligature
+.El
+.\" PARAGRAPH
+.Pp
+Diacritics and letters:
+.Bl -tag -width 12n -offset "XXXX" -compact
+.It \e(ga
+.Pq grave accent
+.It \e(aa
+.Pq accute accent
+.It \e(a"
+.Pq umlaut accent
+.It \e(ad
+.Pq dieresis accent
+.It \e(a~
+.Pq tilde accent
+.It \e(a^
+.Pq circumflex accent
+.It \e(ac
+.Pq cedilla accent
+.It \e(ad
+.Pq dieresis accent
+.It \e(ah
+.Pq caron accent
+.It \e(ao
+.Pq ring accent
+.It \e(ho
+.Pq hook accent
+.It \e(ab
+.Pq breve accent
+.It \e(a-
+.Pq macron accent
+.It \e(-D
+.Pq upper-case eth
+.It \e(Sd
+.Pq lower-case eth
+.It \e(TP
+.Pq upper-case thorn
+.It \e(Tp
+.Pq lower-case thorn
+.It \e('A
+.Pq upper-case acute A
+.It \e('E
+.Pq upper-case acute E
+.It \e('I
+.Pq upper-case acute I
+.It \e('O
+.Pq upper-case acute O
+.It \e('U
+.Pq upper-case acute U
+.It \e('a
+.Pq lower-case acute a
+.It \e('e
+.Pq lower-case acute e
+.It \e('i
+.Pq lower-case acute i
+.It \e('o
+.Pq lower-case acute o
+.It \e('u
+.Pq lower-case acute u
+.It \e(`A
+.Pq upper-case grave A
+.It \e(`E
+.Pq upper-case grave E
+.It \e(`I
+.Pq upper-case grave I
+.It \e(`O
+.Pq upper-case grave O
+.It \e(`U
+.Pq upper-case grave U
+.It \e(`a
+.Pq lower-case grave a
+.It \e(`e
+.Pq lower-case grave e
+.It \e(`i
+.Pq lower-case grave i
+.It \e(`o
+.Pq lower-case grave o
+.It \e(`u
+.Pq lower-case grave u
+.It \e(~A
+.Pq upper-case tilde A
+.It \e(~N
+.Pq upper-case tilde N
+.It \e(~O
+.Pq upper-case tilde O
+.It \e(~a
+.Pq lower-case tilde a
+.It \e(~n
+.Pq lower-case tilde n
+.It \e(~o
+.Pq lower-case tilde o
+.It \e(:A
+.Pq upper-case dieresis A
+.It \e(:E
+.Pq upper-case dieresis E
+.It \e(:I
+.Pq upper-case dieresis I
+.It \e(:O
+.Pq upper-case dieresis O
+.It \e(:U
+.Pq upper-case dieresis U
+.It \e(:a
+.Pq lower-case dieresis a
+.It \e(:e
+.Pq lower-case dieresis e
+.It \e(:i
+.Pq lower-case dieresis i
+.It \e(:o
+.Pq lower-case dieresis o
+.It \e(:u
+.Pq lower-case dieresis u
+.It \e(:y
+.Pq lower-case dieresis y
+.It \e(^A
+.Pq upper-case circumflex A
+.It \e(^E
+.Pq upper-case circumflex E
+.It \e(^I
+.Pq upper-case circumflex I
+.It \e(^O
+.Pq upper-case circumflex O
+.It \e(^U
+.Pq upper-case circumflex U
+.It \e(^a
+.Pq lower-case circumflex a
+.It \e(^e
+.Pq lower-case circumflex e
+.It \e(^i
+.Pq lower-case circumflex i
+.It \e(^o
+.Pq lower-case circumflex o
+.It \e(^u
+.Pq lower-case circumflex u
+.It \e(,C
+.Pq upper-case cedilla C
+.It \e(,c
+.Pq lower-case cedilla c
+.It \e(/L
+.Pq upper-case stroke L
+.It \e(/l
+.Pq lower-case stroke l
+.It \e(/O
+.Pq upper-case stroke O
+.It \e(/o
+.Pq lower-case stroke o
+.It \e(oA
+.Pq upper-case ring A
+.It \e(oa
+.Pq lower-case ring a
+.El
+.\" PARAGRAPH
+.Pp
+Monetary:
+.Bl -tag -width 12n -offset "XXXX" -compact
+.It \e(Cs
+.Pq Scandinavian
+.It \e(Do
+.Pq dollar
+.It \e(Po
+.Pq pound
+.It \e(Ye
+.Pq yen
+.It \e(Fn
+.Pq florin
+.It \e(ct
+.Pq cent
+.El
+.\" PARAGRAPH
+.Pp
+Special symbols:
+.Bl -tag -width 12n -offset "XXXX" -compact
+.It \e0
+.Pq white-space
+.It \e(de
+.Pq degree
+.It \e(ps
+.Pq paragraph
+.It \e(sc
+.Pq section
+.It \e(dg
+.Pq dagger
+.It \e(dd
+.Pq double dagger
+.It \e(ci
+.Pq circle
+.It \e(ba
+.Pq bar
+.It \e(bb
+.Pq broken bar
+.It \e(Ba
+.Pq bar, deprecated
+.It \e(co
+.Pq copyright
+.It \e(rg
+.Pq registered
+.It \e(tm
+.Pq trademarked
+.It \e&
+.Pq non-breaking space
+.It \ee
+.Pq escape
+.It \e(Am
+.Pq ampersand, deprecated
+.El 
+.\" SECTION
+.Sh SEE ALSO
+.Xr mandoc 1
+.\" SECTION
+.Sh AUTHORS
+The
+.Nm
+utility was written by 
+.An Kristaps Dzonsons Aq kristaps@openbsd.org .

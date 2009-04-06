@@ -1,0 +1,604 @@
+.\" $Id: mdoc.7,v 1.1 2009/04/06 20:30:40 kristaps Exp $
+.\"
+.\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the
+.\" above copyright notice and this permission notice appear in all
+.\" copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+.\" WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+.\" AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+.\" DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+.\" PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+.\" TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\" 
+.Dd $Mdocdate: April 6 2009 $
+.Dt mdoc 7
+.Os
+.\" SECTION
+.Sh NAME
+.Nm mdoc
+.Nd mdoc language reference
+.\" SECTION
+.Sh DESCRIPTION
+The
+.Nm mdoc
+language is used to format 
+.Bx 
+.Ux
+manuals.  In this reference document, we describe the syntax, ontology
+and structure of the 
+.Nm
+language.
+.\" PARAGRAPH
+.Pp
+An
+.Nm
+document follows simple rules:  lines beginning with the control
+character 
+.Sq \.
+are parsed for macros.  Other lines are interpreted within the scope of
+prior macros:
+.Bd -literal -offset XXX
+\&.Sh Macro lines change control state.
+Other lines are interpreted within the current state.
+.Ed
+.\" SECTION
+.Sh INPUT ENCODING
+.Nm
+documents may contain only graphable 7-bit ASCII characters, the space
+character
+.Sq \  ,
+and, in certain circumstances, the tab character
+.Sq \et .
+All manuals must have
+.Sq \en
+line termination.  
+.Pp
+The only time a blank line is acceptable is within
+the context of 
+.Sq \&.Bd \-literal
+or
+.Sq \&.Bd \-unfilled .
+.Pp
+Tab characters 
+.Pq \et
+are only acceptable when delimiting 
+.Sq \&.Bl \-column 
+and in
+.Sq \&.Bd \-literal
+or
+.Sq \&.Bd \-unfilled
+contexts.
+.\" SUB-SECTION
+.Ss Reserved Characters
+Within a macro line, the following characters are reserved:
+.Bl -tag -width 12n -offset XXXX -compact
+.It \&.
+.Pq period
+.It \&,
+.Pq comma
+.It \&:
+.Pq colon
+.It \&;
+.Pq semicolon
+.It \&(
+.Pq left-parenthesis
+.It \&)
+.Pq right-parenthesis
+.It \&[
+.Pq left-bracket
+.It \&]
+.Pq right-bracket
+.It \&?
+.Pq question
+.It \&!
+.Pq exclamation 
+.El
+.\" PARAGRAPH
+.Pp
+Use of reserved characters is described in
+.Sx Closure .
+For general non-reserved use, characters must either be escaped with a
+non-breaking space
+.Pq Sq \e&
+or, if applicable, an appropriate escape-sequence used.  
+.\" SUB-SECTION
+.Ss Special Characters
+Special character sequences begin with the escape character
+.Sq \e
+followed by either an open-parenthesis 
+.Sq \&(
+for two-character sequences; an open-bracket
+.Sq \&[
+for n-character sequences (terminated at a close-bracket
+.Sq \&] ) ;
+or a single one-character sequence.
+.Pp
+Characters may alternatively be escaped by a slash-asterisk,
+.Sq \e* ,
+with the same combinations as described above.  This form is deprecated.  
+.\" SECTION
+.Sh STRUCTURE
+Macros are classified in an ontology described by their scope rules.
+Some macros are allowed to deviate from their classifications to
+preserve backward-compatibility with old macro combinations still found
+in the manual corpus.  These are specifically noted on a per-macro
+basis.
+.\" SUB-SECTION
+.Ss Scope
+.Bl -inset 
+.\" LIST-ITEM
+.It Em Block
+macros enclose other block macros, in-line macros or text, and
+may span multiple lines.
+.Bl -inset -offset XXXX
+.\" LIST-ITEM
+.It Em Full-block
+macros always span multiple lines.  They consist of zero or 
+more
+.Qq heads ,
+subsequent macros or text on the same line following invocation; an
+optional
+.Qq body ,
+which spans subsequent lines of text or macros; and an optional
+.Qq tail ,
+macros or text on the same line following closure.
+.\" LIST-ITEM
+.It Em Partial-block
+macros may span multiple lines.  They consists of a optional
+.Qq head ,
+text immediately following invocation; always a 
+.Qq body ,
+text or macros following the head on the same and subsequent lines; and
+optionally a
+.Qq tail ,
+text immediately following closure.
+.\" LIST-ITEM
+.It Em In-line
+macros may only enclose text and span at most a single line. 
+.El
+.El
+.\" SUB-SECTION
+.Ss Closure
+Closure of a macro's scope depends first on its classification, then
+on whether it's parsable.  In this table,
+.Sq BFE
+refers to block full-explicit and so on.
+.\" PARAGRAPH
+.Pp
+.Bl -tag -width 12n -offset XXXX -compact
+.It BPE , BFE
+corresponding explicit closure macro
+.It BFI
+end-of-file or a corresponding implicit closure macro
+.It BPI
+end-of-line (body may be closed by >0 space-separated
+.Sx Reserved Characters ,
+although block scope will still be open)
+.It INL
+end-of-line
+.El
+.\" PARAGRAPH
+.Pp
+If a macro (block or in-line) is parsable, it may also be closed out by
+one of the following scenarios (unless specifically noted otherwise):
+.\" PARAGRAPH
+.Pp
+.Bl -dash -offset XXXX -compact
+.It 
+a sequence of >0 space-separated
+.Sx Reserved Characters ,
+.It
+another macro,
+.It
+end-of-line, or
+.It
+completion of a set number of arguments.
+.El
+.\" PARAGRAPH
+.Pp
+If >0 space-separated
+.Sx Reserved Characters
+are followed by non-reserved characters, the behaviour differs per
+macro.  In general, scope of the macro is closed and re-opened:
+subsequent tokens are interpreted as if the scope had just been opened.
+In other circumstances, scope is simply closed out.
+.\" SECTION
+.Sh SYNTAX
+Macros are two or three characters in length.  The syntax of macro
+invocation depends on its classification.  
+.Qq \-arg
+refers to the macro arguments (which may contain zero or more values).
+In these illustrations, 
+.Sq \&.Yo
+opens the scope of a macro, and if specified,
+.Sq \&.Yc
+closes it out (closure may be implicit at end-of-line or end-of-file).
+.\" PARAGRAPH
+.Pp
+Block full-explicit (may contain head, body, tail).
+.Bd -literal -offset XXXX
+\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBhead...\(rB 
+\(lBbody...\(rB 
+\&.Yc \(lBtail...\(rB 
+.Ed
+.\" PARAGRAPH
+.Pp
+Block full-implicit (may contain zero or more heads, body, no tail).
+.Bd -literal -offset XXXX
+\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBhead... \(lBTa head...\(rB\(rB 
+\(lBbody...\(rB 
+\&.Yc
+.Ed
+.\" PARAGRAPH
+.Pp
+Block partial-explicit (may contain head, multi-line body, tail).
+.Bd -literal -offset XXXX
+\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBhead...\(rB 
+\(lBbody...\(rB 
+\&.Yc \(lBtail...\(rB 
+
+\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBhead...\(rB \
+\(lBbody...\(rB \&Yc \(lBtail...\(rB 
+.Ed
+.\" PARAGRAPH
+.Pp
+Block partial-implicit (no head, body, no tail).  Note that the body
+section may be followed by zero or more 
+.Sx Reserved Words .
+These are in the block scope, but not in the body scope.
+.Bd -literal -offset XXXX
+\&.Yo \(lB\-arg \(lBval...\(rB\(rB \(lBbody...\(rB \(lBreserved...\(rB
+.Ed
+.\" PARAGRAPH
+.Pp
+In-lines have \(>=0 scoped arguments.
+.Bd -literal -offset XXX
+\&.Yy \(lB\-arg \(lBval...\(rB\(rB \(lBargs...\(rB
+
+\&.Yy \(lB\-arg \(lBval...\(rB\(rB arg0 arg1 argN
+.Ed
+.\"
+.Sh MACROS
+This section contains a complete list of all 
+.Nm
+macros, arranged ontologically.  A 
+.Qq callable
+macro is invoked subsequent to the initial macro-line macro.  A
+.Qq parsable
+macro may be followed by further (ostensibly callable) macros.
+.\" SUB-SECTION
+.Ss Block full-implicit
+The head of these macros follows invocation; the body is the content of
+subsequent lines prior to closure.  None of these macros have tails;
+some 
+.Po
+.Sq \&.It \-bullet , 
+.Sq \-hyphen , 
+.Sq \-dash ,
+.Sq \-enum ,
+.Sq \-item 
+.Pc
+don't have heads.
+.Pp
+.Bl -column "MacroX" "CallableX" "ParsableX" "Closing" -compact -offset XXXX
+.It Em Macro Ta Em Callable Ta Em Parsable Ta Em Closing
+.It \&.Sh    Ta    \&No    Ta    \&No    Ta    \&.Sh
+.It \&.Ss    Ta    \&No    Ta    \&No    Ta    \&.Sh, \&.Ss
+.It \&.It    Ta    \&No    Ta    Yes     Ta    \&.It, \&.El
+.El
+.\" SUB-SECTION
+.Ss Block full-explicit
+None of these macros are callable or parsed.  The last column indicates
+the explicit scope rules.  All contains bodies, some may contain heads 
+.Pq So \&Bf Sc .
+.Pp
+.Bl -column "MacroX" "CallableX" "ParsableX" "closed by XXX" -compact -offset XXXX
+.It Em Macro Ta Em Callable Ta Em Parsable Ta Em Scope
+.It \&.Bd    Ta    \&No    Ta    \&No    Ta    closed by \&.Ed
+.It \&.Ed    Ta    \&No    Ta    \&No    Ta    opened by \&.Bd
+.It \&.Bl    Ta    \&No    Ta    \&No    Ta    closed by \&.El
+.It \&.El    Ta    \&No    Ta    \&No    Ta    opened by \&.Bl
+.It \&.Bf    Ta    \&No    Ta    \&No    Ta    closed by \&.Ef
+.It \&.Ef    Ta    \&No    Ta    \&No    Ta    opened by \&.Bf
+.It \&.Bk    Ta    \&No    Ta    \&No    Ta    closed by \&.Ek
+.It \&.Ek    Ta    \&No    Ta    \&No    Ta    opened by \&.Bk
+.El
+.\" SUB-SECTION
+.Ss Block partial-implicit
+All of these are callable and parsed for further macros.  Their scopes
+close at the invocation's end-of-line.
+.Pp
+.Bl -column "MacroX" "CallableX" "ParsableX" -compact -offset XXXX
+.It Em Macro Ta Em Callable Ta Em Parsable
+.It \&.Aq    Ta    Yes   Ta    Yes
+.It \&.Op    Ta    Yes   Ta    Yes
+.It \&.Bq    Ta    Yes   Ta    Yes
+.It \&.Dq    Ta    Yes   Ta    Yes
+.It \&.Pq    Ta    Yes   Ta    Yes
+.It \&.Qq    Ta    Yes   Ta    Yes
+.It \&.Sq    Ta    Yes   Ta    Yes
+.It \&.Brq   Ta    Yes   Ta    Yes
+.It \&.D1    Ta    \&No  Ta    \&Yes
+.It \&.Dl    Ta    \&No  Ta    Yes
+.It \&.Ql    Ta    Yes   Ta    Yes
+.El
+.\" PARAGRAPH
+.Pp
+The
+.Sq \&.Op
+may be broken by 
+.Sq \&.Oc 
+as in the following example:
+.Bd -literal -offset XXXX
+\&.Oo
+\&.Op Fl a Oc
+.Ed
+.Pp
+In the above example, the scope of
+.Sq \&.Op
+is technically broken by 
+.Sq \&.Oc ,
+however, due to the overwhelming existence of this sequence, it's
+allowed.
+.\" SUB-SECTION
+.Ss Block partial-explicit
+Each of these contains at least a body and, in limited circumstances, a
+head 
+.Pq So \&.Fo Sc , So \&.Eo Sc
+and/or tail 
+.Pq So \&.Ec Sc .
+.Pp
+.Bl -column "MacroX" "CallableX" "ParsableX" "closed by XXXX" -compact -offset XXXX
+.It Em Macro Ta Em Callable Ta Em Parsable Ta Em Scope
+.It \&.Ao    Ta    Yes   Ta    Yes    Ta    closed by \&.Ac
+.It \&.Ac    Ta    Yes   Ta    Yes    Ta    opened by \&.Ao
+.It \&.Bc    Ta    Yes   Ta    Yes    Ta    closed by \&.Bo
+.It \&.Bo    Ta    Yes   Ta    Yes    Ta    opened by \&.Bc
+.It \&.Pc    Ta    Yes   Ta    Yes    Ta    closed by \&.Po
+.It \&.Po    Ta    Yes   Ta    Yes    Ta    opened by \&.Pc
+.It \&.Do    Ta    Yes   Ta    Yes    Ta    closed by \&.Dc
+.It \&.Dc    Ta    Yes   Ta    Yes    Ta    opened by \&.Do
+.It \&.Xo    Ta    Yes   Ta    Yes    Ta    closed by \&.Xc
+.It \&.Xc    Ta    Yes   Ta    Yes    Ta    opened by \&.Xo
+.It \&.Bro   Ta    Yes   Ta    Yes    Ta    closed by \&.Brc
+.It \&.Brc   Ta    Yes   Ta    Yes    Ta    opened by \&.Bro
+.It \&.Oc    Ta    Yes   Ta    Yes    Ta    closed by \&.Oo
+.It \&.Oo    Ta    Yes   Ta    Yes    Ta    opened by \&.Oc
+.It \&.So    Ta    Yes   Ta    Yes    Ta    closed by \&.Sc
+.It \&.Sc    Ta    Yes   Ta    Yes    Ta    opened by \&.So
+.It \&.Fc    Ta    Yes   Ta    Yes    Ta    opened by \&.Fo
+.It \&.Fo    Ta    \&No  Ta    \&No   Ta    closed by \&.Fc
+.It \&.Ec    Ta    Yes   Ta    Yes    Ta    opened by \&.Eo
+.It \&.Eo    Ta    Yes   Ta    Yes    Ta    closed by \&.Ec
+.It \&.Qc    Ta    Yes   Ta    Yes    Ta    opened by \&.Oo
+.It \&.Qo    Ta    Yes   Ta    Yes    Ta    closed by \&.Oc
+.It \&.Re    Ta    \&No  Ta    \&No   Ta    opened by \&.Rs
+.It \&.Rs    Ta    \&No  Ta    \&No   Ta    closed by \&.Re
+.El
+.\" SUB-SECTION
+.Ss In-line 
+In-line macros have only text children.  If a number (or inequality) of
+arguments is
+.Pq n , 
+then the macro accepts an arbitrary number of arguments.
+.Pp
+.Bl -column "MacroX" "CallableX" "ParsableX" "Arguments" -compact -offset XXXX
+.It Em Macro Ta Em Callable Ta Em Parsable Ta Em Arguments
+.It \&.Dd    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.Dt    Ta    \&No  Ta    \&No    Ta    n
+.It \&.Os    Ta    \&No  Ta    \&No    Ta    n
+.It \&.Pp    Ta    \&No  Ta    \&No    Ta    0
+.It \&.Ad    Ta    Yes   Ta    Yes     Ta    n
+.It \&.An    Ta    \&No  Ta    Yes     Ta    n
+.It \&.Ar    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Cd    Ta    Yes   Ta    \&No    Ta    >0
+.It \&.Cm    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Dv    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Er    Ta    Yes   Ta    Yes     Ta    >0
+.It \&.Ev    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Ex    Ta    \&No  Ta    \&No    Ta    0
+.It \&.Fa    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Fd    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.Fl    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Fn    Ta    Yes   Ta    Yes     Ta    >0
+.It \&.Ft    Ta    \&No  Ta    Yes     Ta    n
+.It \&.Ic    Ta    Yes   Ta    Yes     Ta    >0
+.It \&.In    Ta    \&No  Ta    \&No    Ta    n
+.It \&.Li    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Nd    Ta    \&No  Ta    \&No    Ta    n
+.It \&.Nm    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Ot    Ta    \&No  Ta    \&No    Ta    n
+.It \&.Pa    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Rv    Ta    \&No  Ta    \&No    Ta    0
+.It \&.St    Ta    \&No  Ta    Yes     Ta    1
+.It \&.Va    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Vt    Ta    Yes   Ta    Yes     Ta    >0
+.It \&.Xr    Ta    Yes   Ta    Yes     Ta    >0, <3
+.It \&.%A    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.%B    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.%C    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.%D    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.%I    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.%J    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.%N    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.%O    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.%P    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.%R    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.%T    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.%V    Ta    \&No  Ta    \&No    Ta    >0
+.It \&.At    Ta    Yes   Ta    Yes     Ta    1
+.It \&.Bsx   Ta    Yes   Ta    Yes     Ta    n
+.It \&.Bx    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Db    Ta    \&No  Ta    \&No    Ta    1
+.It \&.Em    Ta    Yes   Ta    Yes     Ta    >0
+.It \&.Fx    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Ms    Ta    \&No  Ta    Yes     Ta    >0
+.It \&.No    Ta    Yes   Ta    Yes     Ta    0
+.It \&.Ns    Ta    Yes   Ta    Yes     Ta    0
+.It \&.Nx    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Ox    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Pf    Ta    \&No  Ta    Yes     Ta    1
+.It \&.Sm    Ta    \&No  Ta    \&No    Ta    1
+.It \&.Sx    Ta    Yes   Ta    Yes     Ta    >0
+.It \&.Sy    Ta    Yes   Ta    Yes     Ta    >0
+.It \&.Tn    Ta    Yes   Ta    Yes     Ta    >0
+.It \&.Ux    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Dx    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Bt    Ta    \&No  Ta    \&No    Ta    0
+.It \&.Hf    Ta    \&No  Ta    \&No    Ta    n
+.It \&.Fr    Ta    \&No  Ta    \&No    Ta    n
+.It \&.Ud    Ta    \&No  Ta    \&No    Ta    0
+.It \&.Lb    Ta    \&No  Ta    \&No    Ta    1
+.It \&.Ap    Ta    Yes   Ta    Yes     Ta    0
+.It \&.Lp    Ta    \&No  Ta    \&No    Ta    0
+.It \&.Lk    Ta    \&No  Ta    Yes     Ta    >0
+.It \&.Mt    Ta    \&No  Ta    Yes     Ta    >0
+.It \&.Es    Ta    \&No  Ta    \&No    Ta    0
+.It \&.En    Ta    \&No  Ta    \&No    Ta    0
+.El
+.Pp
+The
+.Sq \&.Ot ,
+.Sq \&.Fr ,
+.Sq \&.Es 
+and
+.Sq \&.En ,
+macros are obsolete.
+.\" SECTION
+.Sh COMPATIBILITY
+The mdoc language was traditionally a 
+.Qq roff
+macro package; most existing manuals were written with mdoc syntax
+dictated by system-dependent roff installations.  This section documents
+compatibility with these systems.
+.Pp
+.Bl -dash -compact
+.\" LIST-ITEM
+.It
+.Sq \&.Fo
+and
+.Sq \&.St
+historically weren't always callable.  Both are now correctly callable.
+.\" LIST-ITEM
+.It
+.Sq \&.It \-nested
+is assumed for all lists: any list may be nested and
+.Sq \-enum
+lists will restart the sequence only for the sub-list.
+.\" LIST-ITEM
+.It
+.Sq \&.It \-column
+syntax where column widths may be preceeded by other arguments (instead
+of proceeded) is not supported.
+.\" LIST-ITEM
+.It
+The 
+.Sq \&.At
+macro only accepts a single parameter.
+.\" LIST-ITEM
+.It
+The system-name macros (
+.Ns Sq \&.At ,
+.Sq \&.Bsx ,
+.Sq \&.Bx ,
+.Sq \&.Fx ,
+.Sq \&.Nx ,
+.Sq \&.Ox ,
+and
+.Sq \&.Ux )
+are callable.
+.\" LIST-ITEM
+.It
+Some manuals use
+.Sq \&.Li
+incorrectly by following it with a reserved character and expecting the
+delimiter to render.  This is not supported.
+.\" LIST-ITEM
+.It
+.Sq \&.Cd
+is callable.
+.El
+.\" SECTION
+.Sh SEE ALSO
+.Xr mandoc 1 ,
+.Xr mandoc_char 7
+.\" SECTION
+.Sh AUTHORS
+The
+.Nm
+utility was written by 
+.An Kristaps Dzonsons Aq kristaps@openbsd.org .
+.\" SECTION
+.Sh CAVEATS
+There are several ambiguous parts of mdoc.
+.Pp
+.Bl -dash -compact
+.\" LIST-ITEM
+.It
+.Sq \&.Fa
+should be 
+.Sq \&.Va
+as function arguments are variables.
+.\" LIST-ITEM
+.It
+.Sq \&.Ft
+should be
+.Sq \&.Vt
+as function return types are still types.  Furthermore, the
+.Sq \&.Ft
+should be removed and
+.Sq \&.Fo ,
+which ostensibly follows it, should follow the same convention as
+.Sq \&.Va .
+.\" LIST-ITEM
+.It
+.Sq \&.Va
+should formalise that only one or two arguments are acceptable: a
+variable name and optional, preceeding type.
+.\" LIST-ITEM
+.It
+.Sq \&.Fd
+is ambiguous.  It's commonly used to indicate an include file in the
+synopsis section.  
+.Sq \&.In
+should be used, instead.
+.\" LIST-ITEM
+.It
+Only the
+.Sq \-literal
+argument to
+.Sq \&.Bd
+makes sense.  The remaining ones should be removed.
+.\" LIST-ITEM
+.It
+The 
+.Sq \&.Xo
+and
+.Sq \&.Xc
+macros should be deprecated.
+.\" LIST-ITEM
+.It
+The
+.Sq \&.Dt
+macro lacks clarity.  It should be absolutely clear which title will
+render when formatting the manual page.
+.\" LIST-ITEM
+.It
+A
+.Sq \&.Lx
+should be provided for Linux (\(`a la 
+.Sq \&.Ox ,
+.Sq \&.Nx 
+etc.).
+.\" LIST-ITEM
+.It
+There's no way to refer to references in
+.Sq \&.Rs/.Re
+blocks.
+.El

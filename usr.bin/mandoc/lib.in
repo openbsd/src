@@ -1,0 +1,59 @@
+/* $Id: lib.in,v 1.1 2009/04/06 20:30:40 kristaps Exp $ */
+/*
+ * Copyright (c) 2009 Kristaps Dzonsons <kristaps@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * These are all possible .Lb strings.  When a new library is added, add
+ * its short-string to the left-hand side and formatted string to the
+ * right-hand side.
+ *
+ * Be sure to escape strings.
+ */
+
+LINE("libarm",		"ARM Architecture Library (libarm, \\-larm)")
+LINE("libarm32",	"ARM32 Architecture Library (libarm32, \\-larm32)")
+LINE("libc",		"Standard C Library (libc, \\-lc)")
+LINE("libcdk",		"Curses Development Kit Library (libcdk, \\-lcdk)")
+LINE("libcompat",	"Compatibility Library (libcompat, \\-lcompat)")
+LINE("libcrypt",	"Crypt Library (libcrypt, \\-lcrypt)")
+LINE("libcurses",	"Curses Library (libcurses, \\-lcurses)")
+LINE("libedit",		"Command Line Editor Library (libedit, \\-ledit)")
+LINE("libevent",	"Event Notification Library (libevent, \\-levent)")
+LINE("libform",		"Curses Form Library (libform, \\-lform)")
+LINE("libi386",		"i386 Architecture Library (libi386, \\-li386)")
+LINE("libintl",		"Internationalized Message Handling Library (libintl, \\-lintl)")
+LINE("libipsec",	"IPsec Policy Control Library (libipsec, \\-lipsec)")
+LINE("libkvm",		"Kernel Data Access Library (libkvm, \\-lkvm)")
+LINE("libm",		"Math Library (libm, \\-lm)")
+LINE("libm68k",		"m68k Architecture Library (libm68k, \\-lm68k)")
+LINE("libmagic",	"Magic Number Recognition Library (libmagic, \\-lmagic)")
+LINE("libmenu",		"Curses Menu Library (libmenu, \\-lmenu)")
+LINE("libossaudio",	"OSS Audio Emulation Library (libossaudio, \\-lossaudio)")
+LINE("libpam",		"Pluggable Authentication Module Library (libpam, \\-lpam)")
+LINE("libpcap",		"Capture Library (libpcap, \\-lpcap)")
+LINE("libpci",		"PCI Bus Access Library (libpci, \\-lpci)")
+LINE("libpmc",		"Performance Counters Library (libpmc, \\-lpmc)")
+LINE("libposix",	"POSIX Compatibility Library (libposix, \\-lposix)")
+LINE("libpthread",	"POSIX Threads Library (libpthread, \\-lpthread)")
+LINE("libresolv",	"DNS Resolver Library (libresolv, \\-lresolv)")
+LINE("librt",		"POSIX Real\\-time Library (librt, -lrt)")
+LINE("libtermcap",	"Termcap Access Library (libtermcap, \\-ltermcap)")
+LINE("libusbhid",	"USB Human Interface Devices Library (libusbhid, \\-lusbhid)")
+LINE("libutil",		"System Utilities Library (libutil, \\-lutil)")
+LINE("libx86_64",	"x86_64 Architecture Library (libx86_64, \\-lx86_64)")
+LINE("libz",		"Compression Library (libz, \\-lz)")

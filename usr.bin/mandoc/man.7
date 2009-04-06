@@ -1,0 +1,205 @@
+.\" $Id: man.7,v 1.1 2009/04/06 20:30:40 kristaps Exp $
+.\"
+.\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the
+.\" above copyright notice and this permission notice appear in all
+.\" copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+.\" WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+.\" AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+.\" DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+.\" PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+.\" TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\" 
+.Dd $Mdocdate: April 6 2009 $
+.Dt man 7
+.Os
+.\" SECTION
+.Sh NAME
+.Nm man
+.Nd man language reference
+.\" SECTION
+.Sh DESCRIPTION
+The
+.Nm man
+language was historically used to format 
+.Ux
+manuals.  This reference document describes the syntax and structure of
+this language.
+.Pp
+.Em \&Do not
+use 
+.Nm
+to write your manuals.  Use the
+.Xr mdoc 7
+language, instead.
+.\" PARAGRAPH
+.Pp
+An
+.Nm
+document follows simple rules:  lines beginning with the control
+character 
+.Sq \&.
+are parsed for macros.  Other lines are interpreted within the scope of
+prior macros:
+.Bd -literal -offset indent
+\&.SH Macro lines change control state.
+Other lines are interpreted within the current state.
+.Ed
+.\" SECTION
+.Sh INPUT ENCODING
+.Nm
+documents may contain only graphable 7-bit ASCII characters and the
+space character
+.Sq \  .
+All manuals must have
+.Ux
+.Sq \en
+line termination.  
+.Pp
+Blank lines are acceptable; where found, the output will assert a
+vertical space.
+.Pp
+The
+.Sq \ec
+escape is common in historical
+.Nm
+documents; if encountered at the end of a word, it ensures that the
+subsequent word isn't off-set by whitespace.
+.\" SUB-SECTION
+.Ss Special Characters
+Special character sequences begin with the escape character
+.Sq \e
+followed by either an open-parenthesis 
+.Sq \&(
+for two-character sequences; an open-bracket
+.Sq \&[
+for n-character sequences (terminated at a close-bracket
+.Sq \&] ) ;
+or a single one-character sequence.
+.Pp
+Characters may alternatively be escaped by a slash-asterisk,
+.Sq \e* ,
+with the same combinations as described above.  This form is deprecated.  
+.\" SECTION
+.Sh STRUCTURE
+Macros are one to three three characters in length and begin with a
+control character ,
+.Sq \&. ,
+at the beginning of the line.  An arbitrary amount of whitespace may
+sit between the control character and the macro name.  Thus,
+.Sq \&.PP
+and
+.Sq \&.\ \ \ \&PP
+are equivalent.
+.Pp
+All 
+.Nm
+macros follow the same structural rules:
+.Bd -literal -offset indent
+\&.YO \(lBbody...\(rB 
+.Ed
+.Pp
+The
+.Dq body
+consists of zero or more arguments to the macro.
+.Pp
+.Nm
+has a primitive notion of multi-line scope for the following macros: 
+.Sq \&.TM ,
+.Sq \&.SM ,
+.Sq \&.SB ,
+.Sq \&.BI ,
+.Sq \&.IB ,
+.Sq \&.BR ,
+.Sq \&.RB ,
+.Sq \&.R ,
+.Sq \&.B ,
+.Sq \&.I ,
+.Sq \&.IR 
+and
+.Sq \&.RI .
+When these macros are invoked without arguments, the subsequent line is
+considered a continuation of the macro.  Thus:
+.Bd -literal -offset indent 
+\&.RI 
+foo
+.Ed
+.Pp
+is equivalent to 
+.Sq \&.RI foo .
+If two consecutive lines exhibit the latter behaviour,
+an error is raised.  Thus, the following is not acceptable:
+.Bd -literal -offset indent 
+\&.RI 
+\&.I 
+Hello, world.
+.Ed
+.Pp
+The
+.Sq \&.TP
+macro is similar, but does not need an empty argument line to trigger
+the behaviour.
+.\" PARAGRAPH
+.Sh MACROS
+This section contains a complete list of all 
+.Nm
+macros and corresponding number of arguments.
+.Pp
+.Bl -column "MacroX" "Arguments" -compact -offset indent
+.It Em Macro Ta Em Arguments
+.It \&.TH    Ta    >1, <6
+.It \&.SH    Ta    >0
+.It \&.SS    Ta    >0
+.It \&.TP    Ta    n
+.It \&.LP    Ta    0
+.It \&.PP    Ta    0
+.It \&.P     Ta    0
+.It \&.IP    Ta    <3
+.It \&.HP    Ta    <2
+.It \&.SM    Ta    n
+.It \&.SB    Ta    n
+.It \&.BI    Ta    n
+.It \&.IB    Ta    n
+.It \&.BR    Ta    n
+.It \&.RB    Ta    n
+.It \&.R     Ta    n
+.It \&.B     Ta    n
+.It \&.I     Ta    n
+.It \&.IR    Ta    n
+.It \&.RI    Ta    n
+.El
+.Pp
+Although not historically part of the
+.Nm
+system, the following macros are also supported:
+.Pp
+.Bl -column "MacroX" "Arguments" -compact -offset indent
+.It Em Macro Ta Em Arguments
+.It \&.br    Ta    0
+.It \&.i     Ta    n
+.El
+.Pp
+These follow the same calling conventions as the above
+.Nm
+macros.
+.\" SECTION
+.Sh SEE ALSO
+.Xr mandoc 1 ,
+.Xr mandoc_char 7
+.\" SECTION
+.Sh AUTHORS
+The
+.Nm
+utility was written by 
+.An Kristaps Dzonsons Aq kristaps@openbsd.org .
+.\" SECTION
+.Sh CAVEATS
+Do not use this language.  Use
+.Xr mdoc 7 ,
+instead.

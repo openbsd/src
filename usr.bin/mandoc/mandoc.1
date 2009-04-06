@@ -1,0 +1,289 @@
+.\" $Id: mandoc.1,v 1.1 2009/04/06 20:30:40 kristaps Exp $
+.\"
+.\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the
+.\" above copyright notice and this permission notice appear in all
+.\" copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+.\" WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+.\" AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+.\" DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+.\" PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+.\" TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+.\" PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 6 2009 $
+.Dt mandoc 1
+.Os
+.\" SECTION
+.Sh NAME
+.Nm mandoc
+.Nd format and display UNIX manuals
+.\" SECTION
+.Sh SYNOPSIS
+.Nm mandoc
+.Op Fl f Ns Ar option...
+.Op Fl m Ns Ar format
+.Op Fl W Ns Ar err...
+.Op Fl T Ns Ar output
+.Op Ar infile...
+.\" SECTION
+.Sh DESCRIPTION
+The
+.Nm
+utility formats 
+.Ux
+manual pages for display.  The arguments are as follows:
+.Bl -tag -width XXXXXXXXXXXX
+.\" ITEM
+.It Fl f Ns Ar option...
+Override default compiler behaviour.  See 
+.Sx Compiler Options
+for details.
+.\" ITEM
+.It Fl m Ns Ar format
+Input format.  See
+.Sx Input Formats
+for available formats.  Defaults to
+.Fl m Ns Ar andoc .
+.\" ITEM
+.It Fl T Ns Ar output
+Output format.  See
+.Sx Output Formats
+for available formats.  Defaults to
+.Fl T Ns Ar ascii .
+.\" ITEM
+.It Fl W Ns Ar err...
+Print warning messages.  May be set to 
+.Fl W Ns Ar all
+for all warnings, 
+.Ar compat
+for groff/troff-compatibility warnings, or
+.Ar syntax
+for syntax warnings.  If
+.Fl W Ns Ar error 
+is specified, warnings are considered errors and cause utility
+termination.  Multiple 
+.Fl W
+arguments may be comma-separated, such as
+.Fl W Ns Ar error,all .
+.\" ITEM
+.It Ar infile...
+Read input from zero or more
+.Ar infile .
+If unspecified, reads from stdin.  If multiple files are specified,
+.Nm
+will halt with the first failed parse.
+.El
+.\" PARAGRAPH
+.Pp
+By default, 
+.Nm 
+reads 
+.Xr mdoc 7
+or
+.Xr man 7
+text from stdin, implying
+.Fl m Ns Ar andoc ,
+and prints 78-column backspace-encoded output to stdout as if
+.Fl T Ns Ar ascii
+were provided.
+.\" PARAGRAPH
+.Pp
+.Ex -std mandoc
+.\" SUB-SECTION
+.Ss Punctuation
+If punctuation is set apart from words, such as in the phrase
+.Dq to be \&, or not to be ,
+it's processed by
+.Nm
+according to the following rules.  Opening punctuation
+.Po
+.Sq \&( , 
+.Sq \&[ , 
+and
+.Sq \&{
+.Pc 
+is not followed by a space. Closing punctuation
+.Po
+.Sq \&. , 
+.Sq \&, , 
+.Sq \&; , 
+.Sq \&: , 
+.Sq \&? , 
+.Sq \&! , 
+.Sq \&) , 
+.Sq \&] 
+and
+.Sq \&}
+.Pc 
+is not preceeded by whitespace.
+.Pp
+If the input is
+.Xr mdoc 7 ,
+these rules are also applied to macro arguments when appropriate.
+.\" SUB-SECTION
+.Ss Input Formats
+The
+.Nm
+utility accepts
+.Xr mdoc 7
+and
+.Xr man 7
+input with
+.Fl m Ns Ar doc
+and
+.Fl m Ns Ar an ,
+respectively.  The
+.Xr mdoc 7
+format is
+.Em strongly
+recommended; 
+.Xr man 7
+should only be used for legacy manuals.
+.Pp
+A third option,
+.Fl m Ns Ar andoc ,
+which is also the default, determines encoding on-the-fly: if the first
+non-comment macro is 
+.Sq \&.Dd
+or
+.Sq \&.Dt ,
+the 
+.Xr mdoc 7
+parser is used; otherwise, the
+.Xr man 7
+parser is used.
+.Pp
+If multiple
+files are specified with 
+.Fl m Ns Ar andoc , 
+each has its file-type determined this way.  If multiple files are
+specified and
+.Fl m Ns Ar doc
+or
+.Fl m Ns Ar an
+is specified, then this format is used exclusively.
+.\" .Pp
+.\" The following escape sequences are recognised, although the per-format
+.\" compiler may not allow certain sequences.
+.\" .Bl -tag -width Ds -offset XXXX
+.\" .It \efX
+.\" sets the font mode to X (B, I, R or P, where P resets the font)
+.\" .It \eX, \e(XX, \e[XN]
+.\" queries the special-character table for a corresponding symbol
+.\" .It \e*X, \e*(XX, \e*[XN]
+.\" deprecated special-character format
+.\" .El
+.\" SUB-SECTION
+.Ss Output Formats
+The
+.Nm
+utility accepts the following
+.Fl T
+arguments:
+.Bl -tag -width XXXXXXXXXXXX 
+.It Fl T Ns Ar ascii
+Produce 7-bit ASCII output, backspace-encoded for bold and underline
+styles.  This is the default.
+.It Fl T Ns Ar tree
+Produce an indented parse tree.
+.It Fl T Ns Ar lint
+Parse only: produce no output.
+.El
+.Pp
+If multiple input files are specified, these will be processed by the
+corresponding filter in-order.
+.\" SUB-SECTION
+.Ss Compiler Options
+Default compiler behaviour may be overriden with the
+.Fl f
+flag.
+.Bl -tag -width XXXXXXXXXXXXXXXXXXXX 
+.It Fl f Ns Ar ign-scope
+When rewinding the scope of a block macro, forces the compiler to ignore
+scope violations.  This can seriously mangle the resulting tree.
+.Pq mdoc only
+.It Fl f Ns Ar no-ign-escape
+Don't ignore invalid escape sequences.
+.It Fl f Ns Ar no-ign-macro
+Do not ignore unknown macros at the start of input lines.
+.It Fl f Ns Ar no-ign-chars
+Do not ignore disallowed characters.
+.It Fl f Ns Ar strict
+Implies 
+.Fl f Ns Ar no-ign-escape ,
+.Fl f Ns Ar no-ign-macro 
+and
+.Fl f Ns Ar no-ign-chars . 
+.El
+.\" PARAGRAPH
+.Pp
+As with the
+.Fl W
+flag, multiple
+.Fl f
+options may be grouped and delimited with a comma.  Using
+.Fl f Ns Ar ign-scope,no-ign-escape ,
+for example, will try to ignore scope and not ignore character-escape
+errors.
+.\" SECTION
+.Sh EXAMPLES
+To page manuals to the terminal:
+.\" PARAGRAPH
+.Pp
+.D1 % mandoc \-Wall,error \-fstrict mandoc.1 2>&1 | less
+.D1 % mandoc mandoc.1 mdoc.3 mdoc.7 | less
+.\" SECTION
+.Sh SEE ALSO
+.Xr mandoc_char 7 ,
+.Xr mdoc 7 ,
+.Xr man 7
+.\" 
+.Sh AUTHORS
+The
+.Nm
+utility was written by 
+.An Kristaps Dzonsons Aq kristaps@openbsd.org .
+.\" SECTION
+.Sh CAVEATS
+The 
+.Nm
+utility in
+.Fl T Ns Ar ascii
+mode doesn't yet know how to display the following:
+.Pp
+.Bl -bullet -compact
+.It
+The \-hang 
+.Sq \&.Bl
+list is not yet supported.
+.El
+.Pp
+Other macros still aren't supported by virtue of nobody complaining
+about their absence.  Please report any omissions: this is a work in
+progress.
+.Pp
+The following list documents differences between traditional
+.Xr nroff 1
+output and
+.Nm :
+.Pp
+.Bl -bullet -compact
+.It 
+A list of display following
+.Sq \&.Ss
+does not assert a prior vertical break, just as it doesn't with
+.Sq \&.Sh .
+.It
+Special characters don't follow the current font style.
+.\" LIST-ITEM
+.It
+The \-literal and \-unfilled 
+.Sq \&.Bd
+displays types are synonyms, as are \-filled and \-ragged.
+.El

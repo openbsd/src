@@ -1,0 +1,49 @@
+/* $Id: st.in,v 1.1 2009/04/06 20:30:40 kristaps Exp $ */
+
+/*
+ * This file defines the .St macro arguments.  If you add a new
+ * standard, make sure that the left-and side corresponds to the .St
+ * argument (like .St -p1003.1) and the right-hand side corresponds to
+ * the formatted output string.
+ *
+ * Be sure to escape strings.
+ */
+
+LINE("-p1003.1-88",	"IEEE Std 1003.1-1988 (\\(lqPOSIX\\(rq)")
+LINE("-p1003.1-90",	"IEEE Std 1003.1-1990 (\\(lqPOSIX\\(rq)")
+LINE("-p1003.1-96",	"ISO/IEC 9945-1:1996 (\\(lqPOSIX\\(rq)")
+LINE("-p1003.1-2001",	"IEEE Std 1003.1-2001 (\\(lqPOSIX\\(rq)")
+LINE("-p1003.1-2004",	"IEEE Std 1003.1-2004 (\\(lqPOSIX\\(rq)")
+LINE("-p1003.1-2008",	"IEEE Std 1003.1-2008 (\\(lqPOSIX\\(rq)")
+LINE("-p1003.1",	"IEEE Std 1003.1 (\\(lqPOSIX\\(rq)")
+LINE("-p1003.1b",	"IEEE Std 1003.1b (\\(lqPOSIX\\(rq)")
+LINE("-p1003.1b-93",	"IEEE Std 1003.1b-1993 (\\(lqPOSIX\\(rq)")
+LINE("-p1003.1c-95",	"IEEE Std 1003.1c-1995 (\\(lqPOSIX\\(rq)")
+LINE("-p1003.1g-2000",	"IEEE Std 1003.1g-2000 (\\(lqPOSIX\\(rq)")
+LINE("-p1003.2-92",	"IEEE Std 1003.2-1992 (\\(lqPOSIX.2\\(rq)")
+LINE("-p1387.2-95",	"IEEE Std 1387.2-1995 (\\(lqPOSIX.7.2\\(rq)")
+LINE("-p1003.2",	"IEEE Std 1003.2 (\\(lqPOSIX.2\\(rq)")
+LINE("-p1387.2",	"IEEE Std 1387.2 (\\(lqPOSIX.7.2\\(rq)")
+LINE("-isoC-90",	"ISO/IEC 9899:1990 (\\(lqISO C90\\(rq)")
+LINE("-isoC-amd1",	"ISO/IEC 9899/AMD1:1995 (\\(lqISO C90\\(rq)")
+LINE("-isoC-tcor1",	"ISO/IEC 9899/TCOR1:1994 (\\(lqISO C90\\(rq)")
+LINE("-isoC-tcor2",	"ISO/IEC 9899/TCOR2:1995 (\\(lqISO C90\\(rq)")
+LINE("-isoC-99",	"ISO/IEC 9899:1999 (\\(lqISO C99\\(rq)")
+LINE("-ansiC",		"ANSI X3.159-1989 (\\(lqANSI C\\(rq)")
+LINE("-ansiC-89",	"ANSI X3.159-1989 (\\(lqANSI C\\(rq)")
+LINE("-ansiC-99",	"ANSI/ISO/IEC 9899-1999 (\\(lqANSI C99\\(rq)")
+LINE("-ieee754",	"IEEE Std 754-1985")
+LINE("-iso8802-3",	"ISO 8802-3: 1989")
+LINE("-xpg3",		"X/Open Portability Guide Issue 3 (\\(lqXPG3\\(rq)")
+LINE("-xpg4",		"X/Open Portability Guide Issue 4 (\\(lqXPG4\\(rq)")
+LINE("-xpg4.2",		"X/Open Portability Guide Issue 4.2 (\\(lqXPG4.2\\(rq)")
+LINE("-xpg4.3",		"X/Open Portability Guide Issue 4.3 (\\(lqXPG4.3\\(rq)")
+LINE("-xbd5",		"X/Open System Interface Definitions Issue 5 (\\(lqXBD5\\(rq)")
+LINE("-xcu5",		"X/Open Commands and Utilities Issue 5 (\\(lqXCU5\\(rq)")
+LINE("-xsh5",		"X/Open System Interfaces and Headers Issue 5 (\\(lqXSH5\\(rq)")
+LINE("-xns5",		"X/Open Networking Services Issue 5 (\\(lqXNS5\\(rq)")
+LINE("-xns5.2d2.0",	"X/Open Networking Services Issue 5.2 Draft 2.0 (\\(lqXNS5.2D2.0\\(rq)")
+LINE("-xcurses4.2",	"X/Open Curses Issue 4 Version 2 (\\(lqXCURSES4.2\\(rq)")
+LINE("-susv2",		"Version 2 of the Single UNIX Specification")
+LINE("-susv3",		"Version 3 of the Single UNIX Specification")
+LINE("-svid4",		"System V Interface Definition, Fourth Edition (\\(lqSVID4\\(rq)")
