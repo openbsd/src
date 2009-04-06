@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac_pci.c,v 1.12 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: cac_pci.c,v 1.13 2009/04/06 15:18:45 kettenis Exp $	*/
 /*	$NetBSD: cac_pci.c,v 1.10 2001/01/10 16:48:04 ad Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ struct cac_pci_product {
 	u_short	cp_product;
 } cac_pci_product[] = {
 	{ PCI_VENDOR_COMPAQ,	PCI_PRODUCT_COMPAQ_SMART2P },
-	{ PCI_VENDOR_DEC,	PCI_PRODUCT_DEC_CPQ42XX },
+	{ PCI_VENDOR_DEC,	PCI_PRODUCT_DEC_21554 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_1510 },
 };
 
