@@ -123,7 +123,7 @@ fips_premain_dso$(EXE_EXT): fips_premain.c
 		$(FIPSLIBDIR)fipscanister.o ../libcrypto.a $(EX_LIBS)
 # this is executed only when linking with external fipscanister.o
 fips_standalone_sha1$(EXE_EXT):	sha/fips_standalone_sha1.c
-	$(CC) $(CFLAGS) -DFIPSCANISTER_O -o $@ sha/fips_standalone_sha1.c $(FIPSLIBDIR)fipscanister.o
+	$(CC) $(CFLAGS) -DFIPSCANISTER_O -o $@ sha/fips_standalone_sha1.c $(FIPSLIBDIR)fipscanister.o $(EX_LIBS)
 
 subdirs:
 	@target=all; $(RECURSIVE_MAKE)
@@ -179,8 +179,15 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 	@target=install; $(RECURSIVE_MAKE)
-	@cp -p -f fipscanister.o fipscanister.o.sha1 fips_premain.c \
-		fips_premain.c.sha1 \
+	for i in $(EXE) ; \
+	do \
+		echo "installing $$i"; \
+		cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
+		chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
+		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
+	done
+	cp -p -f $(FIPSLIBDIR)fipscanister.o $(FIPSLIBDIR)fipscanister.o.sha1 \
+		$(FIPSLIBDIR)fips_premain.c $(FIPSLIBDIR)fips_premain.c.sha1 \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/; \
 	chmod 0444 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/fips*
 
