@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.37 2009/03/20 15:19:04 oga Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.38 2009/04/06 12:02:52 oga Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -287,34 +287,16 @@ uvm_aiodone_daemon(void *arg)
 	for (;;) {
 
 		/*
-		 * carefully attempt to go to sleep (without losing "wakeups"!).
-		 * we need splbio because we want to make sure the aio_done list
-		 * is totally empty before we go to sleep.
+		 * Check for done aio structures. If we've got structures to
+		 * process, do so. Otherwise sleep while avoiding races.
 		 */
-
-		s = splbio();
-		simple_lock(&uvm.aiodoned_lock);
-		if (TAILQ_FIRST(&uvm.aio_done) == NULL) {
-			UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
-			UVM_UNLOCK_AND_WAIT(&uvm.aiodoned,
-			    &uvm.aiodoned_lock, FALSE, "aiodoned", 0);
-			UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
-
-			/* relock aiodoned_lock, still at splbio */
-			simple_lock(&uvm.aiodoned_lock);
-		}
-
-		/*
-		 * check for done aio structures
-		 */
-
-		bp = TAILQ_FIRST(&uvm.aio_done);
-		if (bp) {
-			TAILQ_INIT(&uvm.aio_done);
-		}
-
-		simple_unlock(&uvm.aiodoned_lock);
-		splx(s);
+		mtx_enter(&uvm.aiodoned_lock);
+		while ((bp = TAILQ_FIRST(&uvm.aio_done)) == NULL)
+			msleep(&uvm.aiodoned, &uvm.aiodoned_lock,
+			    PVM, "aiodoned", 0);
+		/* Take the list for ourselves. */
+		TAILQ_INIT(&uvm.aio_done);
+		mtx_leave(&uvm.aiodoned_lock);
 
 		/*
 		 * process each i/o that's done.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.71 2009/03/26 13:38:45 oga Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.72 2009/04/06 12:02:52 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -339,7 +339,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	simple_lock_init(&uvm.pagedaemon_lock);
-	simple_lock_init(&uvm.aiodoned_lock);
+	mtx_init(&uvm.aiodoned_lock, IPL_BIO);
 
 	/*
 	 * init reserve thresholds

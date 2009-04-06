@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.27 2009/03/26 13:38:45 oga Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.28 2009/04/06 12:02:52 oga Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ struct uvm {
 		/* aiodone daemon trigger */
 	int aiodoned;			/* daemon sleeps on this */
 	struct proc *aiodoned_proc;	/* daemon's pid */
-	simple_lock_data_t aiodoned_lock;
+	struct mutex aiodoned_lock;
 
 		/* page hash */
 	struct pglist *page_hash;	/* page hash table (vp/off->page) */
@@ -106,7 +106,7 @@ struct uvm {
 	vm_map_entry_t kentry_free;	/* free page pool */
 	simple_lock_data_t kentry_lock;
 
-	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
+	/* aio_done is locked by uvm.aiodoned_lock. */
 	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */
 
 	/* swap-related items */
