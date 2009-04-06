@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.18 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.19 2009/04/06 12:09:06 henning Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Id: print-pflog.c,v 1.18 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
+    "@(#) $Id: print-pflog.c,v 1.19 2009/04/06 12:09:06 henning Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -126,6 +126,9 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 			    (unsigned)hdr->rule_pid);
 
 		switch (hdr->action) {
+		case PF_MATCH:
+			printf("match");
+			break;
 		case PF_SCRUB:
 			printf("scrub");
 			break;
@@ -218,6 +221,9 @@ pflog_old_if_print(u_char *user, const struct pcap_pkthdr *h,
 		printf("rule %d/%s: ",
 		    (short)ntohs(hdr->rnr), reason);
 		switch (ntohs(hdr->action)) {
+		case PF_MATCH:
+			printf("match");
+			break;
 		case PF_SCRUB:
 			printf("scrub");
 			break;
