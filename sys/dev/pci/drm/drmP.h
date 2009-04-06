@@ -354,8 +354,6 @@ struct drm_driver_info {
 	int	(*dma_ioctl)(struct drm_device *, struct drm_dma *,
 		    struct drm_file *);
 	int	(*dma_quiescent)(struct drm_device *);
-	int	(*context_ctor)(struct drm_device *, int);
-	int	(*context_dtor)(struct drm_device *, int);
 	int	(*irq_install)(struct drm_device *);
 	void	(*irq_uninstall)(struct drm_device *);
 	int	vblank_pipes;
@@ -489,8 +487,7 @@ void		 drm_free_block(struct drm_heap *, struct drm_mem *);
 void		 drm_mem_release(struct drm_heap *, struct drm_file *);
 void		 drm_mem_takedown(struct drm_heap *);
 
-
-
+/* Context management (DRI1, deprecated) */
 int	drm_ctxbitmap_init(struct drm_device *);
 void	drm_ctxbitmap_cleanup(struct drm_device *);
 void	drm_ctxbitmap_free(struct drm_device *, int);

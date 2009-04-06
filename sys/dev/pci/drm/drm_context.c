@@ -57,22 +57,22 @@ drm_ctxbitmap_free(struct drm_device *dev, int ctx_handle)
 int
 drm_ctxbitmap_next(struct drm_device *dev)
 {
-	int bit;
+	int	bit;
 
 	if (dev->ctx_bitmap == NULL)
-		return -1;
+		return (-1);
 
 	DRM_LOCK();
 	bit = find_first_zero_bit(dev->ctx_bitmap, DRM_MAX_CTXBITMAP);
 	if (bit >= DRM_MAX_CTXBITMAP) {
 		DRM_UNLOCK();
-		return -1;
+		return (-1);
 	}
 
 	set_bit(bit, dev->ctx_bitmap);
 	DRM_DEBUG("drm_ctxbitmap_next bit : %d\n", bit);
 	DRM_UNLOCK();
-	return bit;
+	return (bit);
 }
 
 int
@@ -82,8 +82,7 @@ drm_ctxbitmap_init(struct drm_device *dev)
 	int		 i, temp;
 
 	
-	bitmap = drm_calloc(1, PAGE_SIZE);
-	if (bitmap == NULL)
+	if ((bitmap = drm_calloc(1, PAGE_SIZE)) == NULL)
 		return (ENOMEM);
 	DRM_LOCK();
 	dev->ctx_bitmap = bitmap;
@@ -94,7 +93,7 @@ drm_ctxbitmap_init(struct drm_device *dev)
 	   	DRM_DEBUG("drm_ctxbitmap_init : %d\n", temp);
 	}
 
-	return 0;
+	return (0);
 }
 
 void
@@ -122,12 +121,12 @@ drm_resctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 			ctx.handle = i;
 			if (DRM_COPY_TO_USER(&res->contexts[i],
 			    &ctx, sizeof(ctx)))
-				return EFAULT;
+				return (EFAULT);
 		}
 	}
 	res->count = DRM_RESERVED_CONTEXTS;
 
-	return 0;
+	return (0);
 }
 
 int
@@ -144,13 +143,10 @@ drm_addctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (ctx->handle == -1) {
 		DRM_DEBUG("Not enough free contexts.\n");
 		/* Should this return -EBUSY instead? */
-		return ENOMEM;
+		return (ENOMEM);
 	}
 
-	if (dev->driver->context_ctor && ctx->handle != DRM_KERNEL_CONTEXT)
-		dev->driver->context_ctor(dev, ctx->handle);
-
-	return 0;
+	return (0);
 }
 
 int
@@ -161,7 +157,7 @@ drm_getctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	/* This is 0, because we don't handle any context flags */
 	ctx->flags = 0;
 
-	return 0;
+	return (0);
 }
 
 int
@@ -170,12 +166,8 @@ drm_rmctx(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	struct drm_ctx	*ctx = data;
 
 	DRM_DEBUG("%d\n", ctx->handle);
-	if (ctx->handle != DRM_KERNEL_CONTEXT) {
-		if (dev->driver->context_dtor)
-			dev->driver->context_dtor(dev, ctx->handle);
-
+	if (ctx->handle != DRM_KERNEL_CONTEXT)
 		drm_ctxbitmap_free(dev, ctx->handle);
-	}
 
-	return 0;
+	return (0);
 }
