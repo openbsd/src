@@ -96,7 +96,7 @@ typedef struct drm_i915_private {
 	u_int32_t		 counter;
 
 	/* Protects user_irq_refcount and irq_mask reg */
-	struct			 mutex user_irq_lock;
+	struct mutex		 user_irq_lock;
 	/* Refcount for user irq, only enabled when needed */
 	int			 user_irq_refcount;
 	/* Cached value of IMR to avoid reads in updating the bitfield */
