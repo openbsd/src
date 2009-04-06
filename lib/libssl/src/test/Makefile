@@ -404,6 +404,8 @@ FIPS_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 	elif [ -n "$(FIPSCANLIB)" ]; then \
 		FIPSLD_CC=$(CC); CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
 		LIBRARIES="$${FIPSLIBDIR:-$(TOP)/fips/}fipscanister.o"; \
+	else \
+		LIBRARIES="$(LIBCRYPTO)"; \
 	fi; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		CC=$${CC} APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \

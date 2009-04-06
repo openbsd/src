@@ -4,7 +4,7 @@
 ## Makefile for OpenSSL
 ##
 
-VERSION=0.9.8j
+VERSION=0.9.8k
 MAJOR=0
 MINOR=9.8
 SHLIB_VERSION_NUMBER=0.9.8
@@ -133,7 +133,7 @@ FIPSCANLIB=
 
 BASEADDR=0xFB00000
 
-DIRS=   crypto fips ssl engines apps test tools
+DIRS=   crypto ssl engines apps test tools
 SHLIBDIRS= crypto ssl
 
 # dirs in crypto to build
@@ -506,6 +506,9 @@ links:
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
 	@set -e; target=links; $(RECURSIVE_BUILD_CMD)
+	@if [ -z "$(FIPSCANLIB)" ]; then \
+		set -e; target=links; dir=fips ; $(BUILD_CMD) ; \
+	fi
 
 gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \

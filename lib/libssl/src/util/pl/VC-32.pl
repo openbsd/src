@@ -164,7 +164,7 @@ if ($FLAVOR =~ /NT/)
 	$ex_libs="unicows.lib $ex_libs";
 	}
 # static library stuff
-$mklib='lib';
+$mklib='lib /nologo';
 $ranlib='';
 $plib="";
 $libp=".lib";
@@ -184,7 +184,7 @@ if ($nasm) {
 	$asm.=' /Zi' if $debug;
 	$afile='/Fo';
 } else {
-	$asm='ml /Cp /coff /c /Cx';
+	$asm='ml /nologo /Cp /coff /c /Cx';
 	$asm.=" /Zi" if $debug;
 	$afile='/Fo';
 }
@@ -404,7 +404,7 @@ sub do_link_rule
 	if ($standalone == 1)
 		{
 		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n\t";
-		$ret.= "$mwex advapi32.lib " if ($files =~ /O_FIPSCANISTER/ && !$fipscanisterbuild);
+		$ret.= "\$(EX_LIBS) " if ($files =~ /O_FIPSCANISTER/ && !$fipscanisterbuild);
 		$ret.="$files $libs\n<<\n";
 		}
 	elsif ($standalone == 2)

@@ -122,7 +122,7 @@ struct dh_st
 	int version;
 	BIGNUM *p;
 	BIGNUM *g;
-	int length; /* optional */
+	long length; /* optional */
 	BIGNUM *pub_key;	/* g^x */
 	BIGNUM *priv_key;	/* x */
 
@@ -238,8 +238,6 @@ void ERR_load_DH_strings(void);
 #define DH_R_KEY_SIZE_TOO_SMALL				 104
 #define DH_R_MODULUS_TOO_LARGE				 103
 #define DH_R_NO_PRIVATE_VALUE				 100
-#define DH_R_INVALID_PUBKEY				 102
-#define DH_R_MODULUS_TOO_LARGE				 103
 
 #ifdef  __cplusplus
 }
