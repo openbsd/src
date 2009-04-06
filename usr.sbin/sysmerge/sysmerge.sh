@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.32 2009/03/27 15:17:31 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.33 2009/04/06 10:35:20 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -29,6 +29,7 @@ umask 0022
 WRKDIR=`mktemp -d -p /var/tmp sysmerge.XXXXX` || exit 1
 SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
 MERGE_CMD="${MERGE_CMD:=sdiff -as -w ${SWIDTH} -o}"
+REPORT="${REPORT:=${WRKDIR}/sysmerge.log}"
 
 EDITOR="${EDITOR:=/usr/bin/vi}"
 PAGER="${PAGER:=/usr/bin/more}"
@@ -182,8 +183,7 @@ do_populate() {
 		for i in ${TGZ} ${XTGZ}; do
 			tar -tzf ${i} >> ${WRKDIR}/nlist;
 		done
-		diff -C 0 ${WRKDIR}/olist ${WRKDIR}/nlist | grep -E '^- .' \
-			| sed -e 's,^- .,,g' > ${WRKDIR}/obsolete_files
+		OBSOLETE_FILES=`diff -C 0 ${WRKDIR}/olist ${WRKDIR}/nlist | grep -E '^- .' | sed -e 's,^- .,,g'`
 		rm -f ${WRKDIR}/olist ${WRKDIR}/nlist
 	fi
 
@@ -511,43 +511,39 @@ do_compare() {
 
 
 do_post() {
-	if [ "${AUTO_INSTALLED_FILES}" ]; then
-		echo "${AUTO_INSTALLED_FILES}" > ${WRKDIR}/auto_installed_files
-	fi
-
 	if [ "${NEED_NEWALIASES}" ]; then
 		echo "===> A new ${DESTDIR}/etc/mail/aliases file was installed."
-		echo "However ${DESTDIR}/usr/bin/newaliases could not be run, you will"
-		echo "need to rebuild your aliases database manually."
+		echo "     However ${DESTDIR}/usr/bin/newaliases could not be run,"
+		echo "     you will need to rebuild your aliases database manually."
         fi
 
 	clean_src
 	rm -rf ${OTEMPROOT}
 
-	echo "===> Making sure your directory hierarchy has correct perms, running mtree..."
+	echo "===> Making sure your directory hierarchy has correct perms, running mtree"
 	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U > /dev/null
 
-	FILES_IN_WRKDIR=`find ${WRKDIR} -type f -size +0 2> /dev/null`
-	if [ "${FILES_IN_WRKDIR}" ]; then
-		FILES_IN_TEMPROOT=`find ${TEMPROOT} -type f -size +0 2> /dev/null`
-		FILES_IN_BKPDIR=`find ${BKPDIR} -type f -size +0 2> /dev/null`
-		OBSOLETE_FILES=`stat -f %z ${WRKDIR}/obsolete_files 2> /dev/null`
-		if [ "${AUTO_INSTALLED_FILES}" ]; then
-			echo "===> Automatically installed file(s) listed in"
-			echo "     ${WRKDIR}/auto_installed_files"
-		fi
-		if [ "${OBSOLETE_FILES}" -ne 0 ]; then
-			echo "===> File(s) removed from previous set (maybe obsolete) listed in"
-			echo "     ${WRKDIR}/obsolete_files"
-		fi
-		if [ "${FILES_IN_TEMPROOT}" ]; then
-			echo "===> File(s) remaining for you to merge by hand:"
-			find "${TEMPROOT}" -type f ! -name \*.merged -size +0 -exec echo "     {}" \;
-		fi
-		if [ "${FILES_IN_BKPDIR}" ]; then
-			echo "===> Backup of replaced file(s) can be found under"
-			echo "     ${BKPDIR}"
-		fi
+	FILES_IN_TEMPROOT=`find ${TEMPROOT} -type f ! -name \*.merged -size +0 2> /dev/null`
+	FILES_IN_BKPDIR=`find ${BKPDIR} -type f -size +0 2> /dev/null`
+	if [ "${AUTO_INSTALLED_FILES}" ]; then
+		echo "===> Automatically installed file(s)" >> ${REPORT}
+		echo "${AUTO_INSTALLED_FILES}" >> ${REPORT}
+	fi
+	if [ "${FILES_IN_BKPDIR}" ]; then
+		echo "===> Backup of replaced file(s) can be found under" >> ${REPORT}
+		echo "${BKPDIR}\n" >> ${REPORT}
+	fi
+	if [ "${OBSOLETE_FILES}" ]; then
+		echo "===> File(s) removed from previous set (maybe obsolete)" >> ${REPORT}
+		echo "${OBSOLETE_FILES}" >> ${REPORT}
+	fi
+	if [ "${FILES_IN_TEMPROOT}" ]; then
+		echo "===> File(s) remaining for you to merge by hand" >> ${REPORT}
+		echo "${FILES_IN_TEMPROOT}" >> ${REPORT}
+	fi
+
+	if [ -e "${REPORT}" ]; then
+		echo "===> Manual intervention may be needed, see ${REPORT}"
 		echo "===> When done, ${WRKDIR} and its subdirectories should be removed"
 	else
 		echo "===> Removing ${WRKDIR}"

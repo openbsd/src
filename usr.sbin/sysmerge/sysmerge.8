@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.16 2009/03/25 18:02:12 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.17 2009/04/06 10:35:20 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 25 2009 $
+.Dd $Mdocdate: April 6 2009 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -122,8 +122,10 @@ may be provided using the
 or
 .Fl X
 options.
-Installed files which have not been modified from the originals
-will be updated automatically.
+If files differ between the supplied tarballs, then installed
+files which have not been modified from the originals will
+be updated automatically.  Those that have been modified will
+be offered for comparison.
 .Pp
 Files and directories can be excluded from comparison
 by listing them in the file
@@ -191,7 +193,7 @@ where XX represents the version to be upgraded from.
 .Nm
 will attempt to automatically upgrade files from this version
 to the one specified by
-.Fl s ,
+.Fl x ,
 provided that the file has no local changes.
 A tarball path specified as an FTP or HTTP URL will be passed
 to ${FETCH_CMD}.
@@ -234,6 +236,11 @@ output file to create, the second argument is the currently installed
 file and the third argument is the reference file.
 If unset, this defaults to
 .Dq sdiff -as -w ${SWIDTH} -o .
+.It Ev REPORT
+Log summary which may contain information for further, manual,
+updating.
+Defaults to
+.Pa ${WRKDIR}/sysmerge.log .
 .It Ev TMPDIR
 Directory in which the work directory is created.
 If unset, this defaults to
@@ -248,6 +255,8 @@ The
 and
 .Sy backup
 directories are created relative to this.
+.It ${WRKDIR}/sysmerge.log
+Default log file.
 .It /etc/sysmerge.ignore
 Files and directories to ignore from comparison.
 .El
