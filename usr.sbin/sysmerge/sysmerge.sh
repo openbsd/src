@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.33 2009/04/06 10:35:20 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.34 2009/04/06 15:25:10 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -241,7 +241,7 @@ mm_install() {
 	/dev/MAKEDEV)
 		echo -n "===> A new ${DESTDIR}/dev/MAKEDEV script was installed, "
 		echo "MAKEDEV will be run"
-		cd ${DESTDIR}/dev && /bin/sh MAKEDEV all
+		(cd ${DESTDIR}/dev && /bin/sh MAKEDEV all)
 		;;
 	/etc/login.conf)
 		if [ -f ${DESTDIR}/etc/login.conf.db ]; then
