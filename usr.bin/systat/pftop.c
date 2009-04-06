@@ -1,4 +1,4 @@
-/* $Id: pftop.c,v 1.9 2009/04/04 03:29:53 canacar Exp $	 */
+/* $Id: pftop.c,v 1.10 2009/04/06 12:08:26 henning Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1410,23 +1410,7 @@ print_rule(struct pf_rule *pr)
 	if (pr->allow_opts)
 		tbprintf("allow-opts ");
 
-	if (pr->action == PF_SCRUB) {
-#ifdef PFRULE_REASSEMBLE_TCP
-		if (pr->rule_flag & PFRULE_REASSEMBLE_TCP)
-			tbprintf("reassemble tcp ");
-#endif
-#ifdef PFRULE_FRAGDROP
-		if (pr->rule_flag & PFRULE_FRAGDROP)
-			tbprintf("fragment drop-ovl ");
-		else
-#endif
-#ifdef PFRULE_FRAGCROP
-		if (pr->rule_flag & PFRULE_FRAGCROP)
-			tbprintf("fragment crop ");
-		else
-#endif
-			tbprintf("fragment reassemble ");
-	}
+	/* XXX more missing */
 
 	if (pr->qname[0] && pr->pqname[0])
 		tbprintf("queue(%s, %s) ", pr->qname, pr->pqname);
