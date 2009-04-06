@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.242 2009/04/06 12:05:55 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.243 2009/04/06 12:11:52 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -961,20 +961,43 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		printf(")");
 	}
 
-	if (r->scrub_flags & PFSTATE_NODF || r->min_ttl || r->max_mss) {
-		printf(" scrub(");
-		if (r->scrub_flags & PFSTATE_NODF)
-			printf(" no-df");
-		if (r->scrub_flags & PFSTATE_RANDOMID)
-			printf(" random-id");
-		if (r->min_ttl)
-			printf(" min-ttl %d", r->min_ttl);
-		if (r->scrub_flags & PFSTATE_SETTOS)
-			printf(" set-tos 0x%2.2x", r->set_tos);
-		if (r->scrub_flags & PFSTATE_SCRUB_TCP)
-			printf(" reassemble tcp");
-		if (r->max_mss)
-			printf(" max-mss %d", r->max_mss);
+	if (r->scrub_flags >= PFSTATE_NODF || r->min_ttl || r->max_mss) {
+		printf(" scrub (");
+		opts = 1;
+		if (r->scrub_flags & PFSTATE_NODF) {
+			printf("no-df");
+			opts = 0;
+		}
+		if (r->scrub_flags & PFSTATE_RANDOMID) {
+			if (!opts)
+				printf(" ");
+			printf("random-id");
+			opts = 0;
+		}
+		if (r->min_ttl) {
+			if (!opts)
+				printf(" ");
+			printf("min-ttl %d", r->min_ttl);
+			opts = 0;
+		}
+		if (r->scrub_flags & PFSTATE_SETTOS) {
+			if (!opts)
+				printf(" ");
+			printf("set-tos 0x%2.2x", r->set_tos);
+			opts = 0;
+		}
+		if (r->scrub_flags & PFSTATE_SCRUB_TCP) {
+			if (!opts)
+				printf(" ");
+			printf("reassemble tcp");
+			opts = 0;
+		}
+		if (r->max_mss) {
+			if (!opts)
+				printf(" ");
+			printf("max-mss %d", r->max_mss);
+			opts = 0;
+		}
 		printf(")");
 	}
 
