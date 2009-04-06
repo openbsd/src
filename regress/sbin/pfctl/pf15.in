@@ -1,19 +1,11 @@
-no scrub on lo0 from 192.168.1.1 to 10.1.2.3
-scrub in on lo0 from any to any no-df
-scrub in log on lo0 from any to any min-ttl 25
-scrub on lo0 from any to any max-mss 224
-scrub out log on lo1000000 from any to 10.0.0.1 no-df max-mss 224
-scrub in on lo0 from any to any max-mss 224
-scrub in log on {lo0 lo1000000} from any to any
-scrub in on lo0 inet from (lo0) to any
-scrub in log on lo0 inet6 from { (lo1000000), (lo0) } to 2000::1
-scrub in inet from { 10.0.0.1, 10.0.0.2 } to { 10.0.0.3, 10.0.0.4 }
-scrub in from { lo0 10.1.1.1 } to any
-scrub in from { 10.0.0.1 lo0 } to any
-scrub in from !lo0 to any
-scrub in on !lo0
-scrub proto udp set-tos lowdelay
-scrub out proto esp set-tos throughput
-scrub out proto ah set-tos reliability
-scrub out proto icmp set-tos 0x12
-scrub out all tagged THROUGHPUT set-tos throughput
+set reassemble yes no-df
+set reassemble no
+match scrub(no-df)
+match scrub(min-ttl 25)
+match scrub(max-mss 224)
+match scrub(no-df max-mss 224)
+match scrub(set-tos lowdelay)
+match out proto esp scrub(set-tos throughput)
+match out proto ah scrub(set-tos reliability)
+match out proto icmp scrub(set-tos 0x12)
+match out all tagged THROUGHPUT scrub (set-tos throughput)

@@ -1,9 +1,3 @@
-scrub all fragment reassemble
-scrub all fragment reassemble
-scrub in all fragment reassemble
-scrub out all fragment reassemble
-scrub in all fragment reassemble
-scrub all fragment reassemble
 block drop all
 block return all
 block return-rst proto tcp all

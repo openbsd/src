@@ -14,43 +14,43 @@
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@0 scrub in from <regress.1:2> to any fragment reassemble
+@0 match in from <regress.1:2> to any
   [ Skip steps: i=end d=2 f=end p=end sp=end da=2 dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@1 scrub in from ! <regress.2:*> to any fragment reassemble
+@1 match in from ! <regress.2:*> to any
   [ Skip steps: i=end f=end p=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@2 scrub out from any to ! <regress.1:2> fragment reassemble
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end dp=end ]
+@2 match out from any to ! <regress.1:2>
+  [ Skip steps: i=end d=4 f=end p=end sa=4 sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 scrub out from any to <regress.2:*> fragment reassemble
-  [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
-  [ queue: qname= qid=0 pqname= pqid=0 ]
-  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@0 pass in from <regress:6> to any flags S/SA keep state
-  [ Skip steps: i=end d=3 f=end p=end sp=end da=3 dp=end ]
-  [ queue: qname= qid=0 pqname= pqid=0 ]
-  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@1 pass in from <regress.1:2> to any flags S/SA keep state
-  [ Skip steps: i=end d=3 f=end p=end sp=end da=3 dp=end ]
-  [ queue: qname= qid=0 pqname= pqid=0 ]
-  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@2 pass in from <regress.2:*> to any flags S/SA keep state
+@3 match out from any to <regress.2:*>
   [ Skip steps: i=end f=end p=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@3 pass out from any to <regress:6> flags S/SA keep state
+@4 pass in from <regress:6> to any flags S/SA keep state
+  [ Skip steps: i=end d=7 f=end p=end sp=end da=7 dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@5 pass in from <regress.1:2> to any flags S/SA keep state
+  [ Skip steps: i=end d=7 f=end p=end sp=end da=7 dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@6 pass in from <regress.2:*> to any flags S/SA keep state
+  [ Skip steps: i=end f=end p=end sp=end dp=end ]
+  [ queue: qname= qid=0 pqname= pqid=0 ]
+  [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
+@7 pass out from any to <regress:6> flags S/SA keep state
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@4 pass out from any to ! <regress.1:2> flags S/SA keep state
+@8 pass out from any to ! <regress.1:2> flags S/SA keep state
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
-@5 pass out from any to ! <regress.2:*> flags S/SA keep state
+@9 pass out from any to ! <regress.2:*> flags S/SA keep state
   [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
   [ queue: qname= qid=0 pqname= pqid=0 ]
   [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]

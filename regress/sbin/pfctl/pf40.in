@@ -1,9 +1,3 @@
-scrub
-scrub all
-scrub in
-scrub out
-scrub in all
-scrub from any to any
 block
 block return
 block return-rst proto tcp

@@ -1,5 +1,4 @@
-# Test rule order processing: should fail unless scrub -> nat -> filter
-scrub in on lo0 all
+# Test rule order processing: should fail unless nat -> filter
 nat on lo0 from 192.168.1.1 to any -> 10.0.0.1
 rdr on lo0 proto tcp from any to 1.2.3.4/32 port 2222 -> 10.0.0.10 port 22   
 binat on lo0 from 192.168.1.1 to any -> 10.0.0.1

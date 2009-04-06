@@ -1,32 +1,11 @@
-no scrub on lo0 inet from 192.168.1.1 to 10.1.2.3
-scrub in on lo0 all no-df fragment reassemble
-scrub in log on lo0 all min-ttl 25 fragment reassemble
-scrub on lo0 all max-mss 224 fragment reassemble
-scrub out log on lo1000000 inet from any to 10.0.0.1 no-df max-mss 224 fragment reassemble
-scrub in on lo0 all max-mss 224 fragment reassemble
-scrub in log on lo0 all fragment reassemble
-scrub in log on lo1000000 all fragment reassemble
-scrub in on lo0 inet from (lo0) to any fragment reassemble
-scrub in log on lo0 inet6 from (lo1000000) to 2000::1 fragment reassemble
-scrub in log on lo0 inet6 from (lo0) to 2000::1 fragment reassemble
-scrub in inet from 10.0.0.1 to 10.0.0.3 fragment reassemble
-scrub in inet from 10.0.0.1 to 10.0.0.4 fragment reassemble
-scrub in inet from 10.0.0.2 to 10.0.0.3 fragment reassemble
-scrub in inet from 10.0.0.2 to 10.0.0.4 fragment reassemble
-scrub in inet from 127.0.0.1 to any fragment reassemble
-scrub in inet6 from ::1 to any fragment reassemble
-scrub in on lo0 inet6 from fe80::1 to any fragment reassemble
-scrub in inet from 10.1.1.1 to any fragment reassemble
-scrub in inet from 10.0.0.1 to any fragment reassemble
-scrub in inet from 127.0.0.1 to any fragment reassemble
-scrub in inet6 from ::1 to any fragment reassemble
-scrub in on lo0 inet6 from fe80::1 to any fragment reassemble
-scrub in inet from ! 127.0.0.1 to any fragment reassemble
-scrub in inet6 from ! ::1 to any fragment reassemble
-scrub in on lo0 inet6 from ! fe80::1 to any fragment reassemble
-scrub in on ! lo0 all fragment reassemble
-scrub proto udp all set-tos 0x10 fragment reassemble
-scrub out proto esp all set-tos 0x08 fragment reassemble
-scrub out proto ah all set-tos 0x04 fragment reassemble
-scrub out proto icmp all set-tos 0x12 fragment reassemble
-scrub out all set-tos 0x08 fragment reassemble tagged THROUGHPUT
+set reassemble yes no-df
+set reassemble no 
+match all scrub (no-df)
+match all scrub (min-ttl 25)
+match all scrub (max-mss 224)
+match all scrub (no-df max-mss 224)
+match all scrub (set-tos 0x10)
+match out proto esp all scrub (set-tos 0x08)
+match out proto ah all scrub (set-tos 0x04)
+match out proto icmp all scrub (set-tos 0x12)
+match out all scrub (set-tos 0x08) tagged THROUGHPUT

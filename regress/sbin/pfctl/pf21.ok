@@ -1,4 +1,3 @@
-scrub in all fragment reassemble
-scrub in all fragment reassemble
-scrub in all fragment drop-ovl
-scrub in all fragment crop
+set reassemble yes 
+set reassemble no 
+set reassemble yes no-df

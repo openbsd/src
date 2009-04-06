@@ -1,11 +1,6 @@
-scrub in quick from any to any
-scrub in on ! lo0
-scrub in no-df no-df
-scrub out min-ttl 4 min-ttl 5
-scrub in all min-ttl 256 
-scrub out min-ttl 65536
-scrub in from localhost to localhost max-mss 512 max-mss 1280
-scrub on lo0 fragment crop fragment crop
-scrub in on lo0 from any to localhost fragment drop-ovl fragment crop
-scrub in on lo0 from any to 127.0.0.1 fragment reassemble fragment drop-ovl
-scrub from localhost random-id random-id
+match scrub(no-df no-df)
+match scrub(min-ttl 4 min-ttl 5)
+match in all scrub(min-ttl 256)
+match out scrub(min-ttl 65536)
+match in from localhost to localhost scrub(max-mss 512 max-mss 1280)
+match from localhost scrub(random-id random-id)

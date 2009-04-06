@@ -1,5 +1,4 @@
-# Test rule order processing: should fail unless scrub -> nat -> filter
-nat on lo0 all -> lo0
+# Test rule order processing: should fail unless nat -> filter
 pass in on lo1000000 all
-scrub in on lo0 all
+nat on lo0 all -> lo0
 
