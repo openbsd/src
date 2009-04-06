@@ -150,6 +150,7 @@ sisdrm_lastclose(struct drm_device *dev)
 	drm_mem_takedown(&dev_priv->agp_heap);
 	drm_mem_takedown(&dev_priv->fb_heap);
 }
+
 int
 sisdrm_ioctl(struct drm_device *dev, u_long cmd, caddr_t data,
     struct drm_file *file_priv)

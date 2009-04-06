@@ -35,7 +35,6 @@
 
 struct drm_heap *radeon_get_heap(drm_radeon_private_t *, int);
 
-
 /* IOCTL HANDLERS */
 
 struct drm_heap *
