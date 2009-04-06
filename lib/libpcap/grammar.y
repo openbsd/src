@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: grammar.y,v 1.17 2008/06/11 15:02:21 dtucker Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.18 2009/04/06 12:06:39 henning Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -24,7 +24,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.17 2008/06/11 15:02:21 dtucker Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/grammar.y,v 1.18 2009/04/06 12:06:39 henning Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -315,6 +315,8 @@ action:	  ID			{ if (strcasecmp($1, "pass") == 0 ||
 				  else if (strcasecmp($1, "drop") == 0 ||
 				      strcasecmp($1, "block") == 0)
 					$$ = PF_DROP;
+				  else if (strcasecmp($1, "match") == 0)
+					$$ = PF_MATCH;
 				  else if (strcasecmp($1, "rdr") == 0)
 				  	$$ = PF_RDR;
 				  else if (strcasecmp($1, "nat") == 0)
