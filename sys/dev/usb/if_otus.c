@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.6 2009/04/02 19:03:40 damien Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.7 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -334,9 +334,18 @@ otus_attachhook(void *xsc)
 	    IEEE80211_C_WEP |		/* WEP */
 	    IEEE80211_C_RSN;		/* WPA/RSN */
 
-	/* Set supported .11b and .11g rates. */
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
+	if (sc->eeprom.baseEepHeader.opCapFlags & AR5416_OPFLAGS_11G) {
+		/* Set supported .11b and .11g rates. */
+		ic->ic_sup_rates[IEEE80211_MODE_11B] =
+		    ieee80211_std_rateset_11b;
+		ic->ic_sup_rates[IEEE80211_MODE_11G] =
+		    ieee80211_std_rateset_11g;
+	}
+	if (sc->eeprom.baseEepHeader.opCapFlags & AR5416_OPFLAGS_11A) {
+		/* Set supported .11a rates. */
+		ic->ic_sup_rates[IEEE80211_MODE_11A] =
+		    ieee80211_std_rateset_11a;
+	}
 
 	/* Build the list of supported channels. */
 	otus_get_chanlist(sc);
@@ -545,20 +554,22 @@ otus_open_pipes(struct otus_softc *sc)
 void
 otus_close_pipes(struct otus_softc *sc)
 {
+	otus_free_tx_cmd(sc);
+	otus_free_tx_data_list(sc);
+	otus_free_rx_data_list(sc);
+
 	if (sc->data_rx_pipe != NULL)
 		usbd_close_pipe(sc->data_rx_pipe);
-	if (sc->cmd_rx_pipe != NULL)
+	if (sc->cmd_rx_pipe != NULL) {
+		usbd_abort_pipe(sc->cmd_rx_pipe);
 		usbd_close_pipe(sc->cmd_rx_pipe);
+	}
 	if (sc->ibuf != NULL)
 		free(sc->ibuf, M_USBDEV);
 	if (sc->data_tx_pipe != NULL)
 		usbd_close_pipe(sc->data_tx_pipe);
 	if (sc->cmd_tx_pipe != NULL)
 		usbd_close_pipe(sc->cmd_tx_pipe);
-
-	otus_free_tx_cmd(sc);
-	otus_free_tx_data_list(sc);
-	otus_free_rx_data_list(sc);
 }
 
 int
@@ -585,7 +596,7 @@ otus_alloc_tx_cmd(struct otus_softc *sc)
 void
 otus_free_tx_cmd(struct otus_softc *sc)
 {
-	/* Make sure no transfer is pending. */
+	/* Make sure no transfers are pending. */
 	usbd_abort_pipe(sc->cmd_tx_pipe);
 
 	if (sc->tx_cmd.xfer != NULL)
@@ -629,7 +640,7 @@ otus_free_tx_data_list(struct otus_softc *sc)
 {
 	int i;
 
-	/* make sure no transfers are pending */
+	/* Make sure no transfers are pending. */
 	usbd_abort_pipe(sc->data_tx_pipe);
 
 	for (i = 0; i < OTUS_TX_DATA_LIST_COUNT; i++)
@@ -1082,7 +1093,9 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	/* Discard error frames. */
 	if (__predict_false(tail->error != 0)) {
 		DPRINTF(("error frame 0x%02x\n", tail->error));
-		if (tail->error & AR_RX_ERROR_MMIC) {
+		if (tail->error & AR_RX_ERROR_FCS) {
+			DPRINTFN(3, ("bad FCS\n"));
+		} else if (tail->error & AR_RX_ERROR_MMIC) {
 			/* Report Michael MIC failures to net80211. */
 			ic->ic_stats.is_rx_locmicfail++;
 			ieee80211_michael_mic_failure(ic, 0);
@@ -1288,8 +1301,7 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		ridx = on->ridx[ni->ni_txrate];
 
 	phyctl = 0;
-	macctl = AR_TX_MAC_BACKOFF | AR_TX_MAC_HW_DUR;
-	macctl |= AR_TX_MAC_QID(qid);
+	macctl = AR_TX_MAC_BACKOFF | AR_TX_MAC_HW_DUR | AR_TX_MAC_QID(qid);
 
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    (hasqos && ((qos & IEEE80211_QOS_ACK_POLICY_MASK) ==
@@ -1966,19 +1978,16 @@ otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c)
 	otus_get_delta_slope(coeff, &exp, &man);
 	cmd.delta_slope_coeff_exp = htole32(exp);
 	cmd.delta_slope_coeff_man = htole32(man);
+	DPRINTF(("delta slope exp=%u man=%u\n", exp, man));
 	/* For Short GI, coeff is 9/10 of normal coeff. */
 	coeff = (9 * coeff) / 10;
 	otus_get_delta_slope(coeff, &exp, &man);
 	cmd.delta_slope_coeff_exp_shgi = htole32(exp);
 	cmd.delta_slope_coeff_man_shgi = htole32(man);
+	DPRINTF(("delta slope shgi exp=%u man=%u\n", exp, man));
 	/* Set wait time for AGC and noise calibration (100ms). */
 	cmd.check_loop_count = htole32(1000);
-	DPRINTF(("%s: exp=%d man=%d exp_shgi=%d man_shgi=%d\n",
-	    (code == AR_CMD_RF_INIT) ? "RF_INIT" : "FREQUENCY",
-	    letoh32(cmd.delta_slope_coeff_exp),
-	    letoh32(cmd.delta_slope_coeff_man),
-	    letoh32(cmd.delta_slope_coeff_exp_shgi),
-	    letoh32(cmd.delta_slope_coeff_man_shgi)));
+	DPRINTF(("%s\n", (code == AR_CMD_RF_INIT) ? "RF_INIT" : "FREQUENCY"));
 	error = otus_cmd(sc, code, &cmd, sizeof (cmd), &rsp);
 	if (error != 0)
 		return error;
@@ -2017,11 +2026,12 @@ otus_set_key_cb(struct otus_softc *sc, void *arg)
 	if (k->k_flags & IEEE80211_KEY_GROUP) {
 		key.uid = htole16(k->k_id);
 		IEEE80211_ADDR_COPY(key.macaddr, sc->sc_ic.ic_myaddr);
+		key.macaddr[0] |= 0x80;
 	} else {
 		key.uid = htole16(OTUS_UID(cmd->associd));
 		IEEE80211_ADDR_COPY(key.macaddr, ni->ni_macaddr);
 	}
-	key.kid = htole16(0);
+	key.kix = htole16(0);
 	/* Map net80211 cipher to hardware. */
 	switch (k->k_cipher) {
 	case IEEE80211_CIPHER_WEP40:
@@ -2046,7 +2056,7 @@ otus_set_key_cb(struct otus_softc *sc, void *arg)
 		return;
 
 	/* TKIP: set Tx/Rx MIC Key. */
-	key.kid = htole16(1);
+	key.kix = htole16(1);
 	memcpy(key.key, k->k_key + 16, 16);
 	(void)otus_cmd(sc, AR_CMD_EKEY, &key, sizeof key, NULL);
 }

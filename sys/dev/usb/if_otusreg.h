@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otusreg.h,v 1.5 2009/04/02 19:03:40 damien Exp $	*/
+/*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -255,7 +255,7 @@ struct ar_rsp_frequency {
 /* Structure for command AR_CMD_EKEY. */
 struct ar_cmd_ekey {
 	uint16_t	uid;	/* user ID */
-	uint16_t	kid;
+	uint16_t	kix;
 	uint16_t	cipher;
 #define AR_CIPHER_NONE		0
 #define AR_CIPHER_WEP64		1
