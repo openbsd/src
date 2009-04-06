@@ -34,6 +34,8 @@
 
 struct drm_mem *drm_split_block(struct drm_heap *, struct drm_mem *, int,
 		    int, struct drm_file *);
+struct drm_mem *drm_find_block(struct drm_heap *, int);
+void		drm_free_block(struct drm_heap *, struct drm_mem *);
 /*
  * Very simple allocator for GART memory, working on a static range
  * already mapped into each client's address space.
@@ -143,6 +145,23 @@ drm_init_heap(struct drm_heap *heap, int start, int size)
 	blocks->file_priv = NULL;
 	TAILQ_INSERT_HEAD(heap, blocks, link);
 
+	return (0);
+}
+
+/*
+ * Free block at offset ``offset'' owned by file_priv.
+ */
+int
+drm_mem_free(struct drm_heap *heap, int offset, struct drm_file *file_priv)
+{
+	struct drm_mem	*p;
+
+	if ((p = drm_find_block(heap, offset)) == NULL)
+		return (EFAULT);
+	if (p->file_priv != file_priv)
+		return (EPERM);
+
+	drm_free_block(heap, p);
 	return (0);
 }
 

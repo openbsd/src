@@ -245,15 +245,7 @@ sis_alloc(struct drm_heap *heap, drm_sis_mem_t *mem,
 int
 sis_free(struct drm_heap *heap, drm_sis_mem_t *mem, struct drm_file *file_priv)
 {
-	struct drm_mem		*block; 
-
 	DRM_DEBUG("free fb, free = 0x%lx\n", mem->free);
 
-	if ((block = drm_find_block(heap, mem->free)) == NULL)
-		return (EFAULT);
-	if (block->file_priv != file_priv)
-		return (EPERM);
-
-	drm_free_block(heap, block);
-	return (0);
+	return (drm_mem_free(heap, mem->free, file_priv));
 }

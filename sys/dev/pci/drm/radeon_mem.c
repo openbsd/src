@@ -63,8 +63,7 @@ radeon_mem_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		return (EINVAL);
 	}
 
-	heap = radeon_get_heap(dev_priv, alloc->region);
-	if (heap == NULL)
+	if ((heap = radeon_get_heap(dev_priv, alloc->region)) == NULL)
 		return (EFAULT);
 
 	/*
@@ -74,15 +73,11 @@ radeon_mem_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (alloc->alignment < 12)
 		alloc->alignment = 12;
 
-	block = drm_alloc_block(heap, alloc->size, alloc->alignment, file_priv);
-
-	if (block == NULL)
+	if ((block = drm_alloc_block(heap, alloc->size, alloc->alignment,
+	    file_priv)) == NULL)
 		return (ENOMEM);
 
-	if (DRM_COPY_TO_USER(alloc->region_offset, &block->start, sizeof(int)))
-		return (EFAULT);
-
-	return 0;
+	return (copyout(&block->start, alloc->region_offset, sizeof(int)));
 }
 
 int
@@ -91,7 +86,6 @@ radeon_mem_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	drm_radeon_private_t	*dev_priv = dev->dev_private;
 	drm_radeon_mem_free_t	*memfree = data;
 	struct drm_heap		*heap;
-	struct drm_mem		*block;
 
 	if (dev_priv == NULL) {
 		DRM_ERROR("called with no initialization\n");
@@ -102,15 +96,7 @@ radeon_mem_free(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	if (heap == NULL)
 		return (EFAULT);
 
-	block = drm_find_block(heap, memfree->region_offset);
-	if (block == NULL)
-		return (EFAULT);
-
-	if (block->file_priv != file_priv)
-		return (EPERM);
-
-	drm_free_block(heap, block);
-	return (0);
+	return (drm_mem_free(heap, memfree->region_offset, file_priv));
 }
 
 int
@@ -127,8 +113,7 @@ radeon_mem_init_heap(struct drm_device *dev, void *data,
 	}
 
 	/* Make sure it's valid and initialised */
-	heap = radeon_get_heap(dev_priv, initheap->region);
-	if (heap == NULL || !TAILQ_EMPTY(heap))
+	if ((heap = radeon_get_heap(dev_priv, initheap->region)) == NULL)
                 return (EFAULT);
 
 	return (drm_init_heap(heap, initheap->start, initheap->size));
