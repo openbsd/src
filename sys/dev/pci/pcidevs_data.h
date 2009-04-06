@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1466 2009/03/26 23:14:02 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1467 2009/04/06 15:16:18 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -5100,8 +5100,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "21154 PCI-PCI",
 	},
 	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_CPQ42XX,
-	    "Compaq SMART RAID 42xx",
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21554,
+	    "21554 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_SWXCR,

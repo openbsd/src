@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1466 2009/03/26 23:14:02 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1467 2009/04/06 15:16:18 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1759,7 +1759,7 @@
 #define	PCI_PRODUCT_DEC_21152	0x0024		/* 21152 PCI-PCI */
 #define	PCI_PRODUCT_DEC_21153	0x0025		/* 21153 PCI-PCI */
 #define	PCI_PRODUCT_DEC_21154	0x0026		/* 21154 PCI-PCI */
-#define	PCI_PRODUCT_DEC_CPQ42XX	0x0046		/* Compaq SMART RAID 42xx */
+#define	PCI_PRODUCT_DEC_21554	0x0046		/* 21554 PCI-PCI */
 #define	PCI_PRODUCT_DEC_SWXCR	0x1065		/* SWXCR RAID */
 
 /* Dell Computer products */
