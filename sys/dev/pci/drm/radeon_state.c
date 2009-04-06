@@ -2487,8 +2487,8 @@ radeon_driver_close(struct drm_device *dev, struct drm_file *file_priv)
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
 	dev_priv->page_flipping = 0;
-	radeon_mem_release(file_priv, &dev_priv->gart_heap);
-	radeon_mem_release(file_priv, &dev_priv->fb_heap);
+	drm_mem_release(&dev_priv->gart_heap, file_priv);
+	drm_mem_release(&dev_priv->fb_heap, file_priv);
 	if (dev_priv->cp_running)
 		radeon_surfaces_release(file_priv, dev_priv);
 }

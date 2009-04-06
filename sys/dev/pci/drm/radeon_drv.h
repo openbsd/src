@@ -366,8 +366,6 @@ extern int radeon_do_cp_idle(drm_radeon_private_t * dev_priv);
 extern int radeon_mem_alloc(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_mem_free(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int radeon_mem_init_heap(struct drm_device *dev, void *data, struct drm_file *file_priv);
-extern void radeon_mem_takedown(struct drm_heap *heap);
-extern void radeon_mem_release(struct drm_file *, struct drm_heap *);
 
 				/* radeon_irq.c */
 extern void radeon_irq_set_state(struct drm_device *dev, u32 mask, int state);
@@ -386,8 +384,6 @@ extern void radeon_driver_close(struct drm_device * dev,
 extern void radeon_driver_lastclose(struct drm_device * dev);
 extern int radeon_driver_open(struct drm_device * dev,
 			      struct drm_file * file_priv);
-extern long radeon_compat_ioctl(struct file *filp, unsigned int cmd,
-					 unsigned long arg);
 
 /* r300_cmdbuf.c */
 extern void r300_init_reg_flags(struct drm_device *dev);

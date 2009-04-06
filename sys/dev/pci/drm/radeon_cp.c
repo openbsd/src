@@ -1387,8 +1387,8 @@ radeon_driver_lastclose(struct drm_device *dev)
 	}
 
 	/* Free memory heap structures */
-	radeon_mem_takedown(&(dev_priv->gart_heap));
-	radeon_mem_takedown(&(dev_priv->fb_heap));
+	drm_mem_takedown(&dev_priv->gart_heap);
+	drm_mem_takedown(&dev_priv->fb_heap);
 
 	/* deallocate kernel resources */
 	radeon_do_cleanup_cp(dev);

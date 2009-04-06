@@ -481,12 +481,14 @@ int	drm_mtrr_add(unsigned long, size_t, int);
 int	drm_mtrr_del(int, unsigned long, size_t, int);
 
 /* Heap interface (DEPRECATED) */
-int	drm_init_heap(struct drm_heap *, int, int);
-struct drm_mem *
-	drm_alloc_block(struct drm_heap *, int, int, struct drm_file *);
-struct drm_mem *
-	drm_find_block(struct drm_heap *, int);
-void	drm_free_block(struct drm_heap *, struct drm_mem *);
+int		 drm_init_heap(struct drm_heap *, int, int);
+struct drm_mem	*drm_alloc_block(struct drm_heap *, int, int,
+		     struct drm_file *);
+struct drm_mem	*drm_find_block(struct drm_heap *, int);
+void		 drm_free_block(struct drm_heap *, struct drm_mem *);
+void		 drm_mem_release(struct drm_heap *, struct drm_file *);
+void		 drm_mem_takedown(struct drm_heap *);
+
 
 
 int	drm_ctxbitmap_init(struct drm_device *);
