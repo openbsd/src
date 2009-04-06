@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.87 2007/10/13 16:35:18 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.88 2009/04/06 12:05:55 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -91,6 +91,7 @@ struct pfctl {
 	u_int32_t	 limit[PF_LIMIT_MAX];
 	u_int32_t	 debug;
 	u_int32_t	 hostid;
+	u_int32_t	 reassemble;
 	char		*ifname;
 
 	u_int8_t	 timeout_set[PFTM_MAX];
@@ -98,6 +99,7 @@ struct pfctl {
 	u_int8_t	 debug_set;
 	u_int8_t	 hostid_set;
 	u_int8_t	 ifname_set;
+	u_int8_t	 reass_set;
 };
 
 struct node_if {
@@ -197,6 +199,7 @@ void	pfctl_move_pool(struct pf_pool *, struct pf_pool *);
 void	pfctl_clear_pool(struct pf_pool *);
 
 int	pfctl_set_timeout(struct pfctl *, const char *, int, int);
+int	pfctl_set_reassembly(struct pfctl *, int, int);
 int	pfctl_set_optimization(struct pfctl *, const char *);
 int	pfctl_set_limit(struct pfctl *, const char *, unsigned int);
 int	pfctl_set_logif(struct pfctl *, char *);

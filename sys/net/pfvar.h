@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.284 2009/03/09 13:53:10 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.285 2009/04/06 12:05:55 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -59,9 +59,10 @@ struct ip6_hdr;
 
 enum	{ PF_INOUT, PF_IN, PF_OUT };
 enum	{ PF_PASS, PF_DROP, PF_SCRUB, PF_NOSCRUB, PF_NAT, PF_NONAT,
-	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP, PF_DEFER };
-enum	{ PF_RULESET_SCRUB, PF_RULESET_FILTER, PF_RULESET_NAT,
-	  PF_RULESET_BINAT, PF_RULESET_RDR, PF_RULESET_MAX };
+	  PF_BINAT, PF_NOBINAT, PF_RDR, PF_NORDR, PF_SYNPROXY_DROP, PF_DEFER,
+	  PF_MATCH };
+enum	{ PF_RULESET_FILTER, PF_RULESET_NAT, PF_RULESET_BINAT,
+	  PF_RULESET_RDR, PF_RULESET_MAX };
 enum	{ PF_OP_NONE, PF_OP_IRG, PF_OP_EQ, PF_OP_NE, PF_OP_LT,
 	  PF_OP_LE, PF_OP_GT, PF_OP_GE, PF_OP_XRG, PF_OP_RRG };
 enum	{ PF_DEBUG_NONE, PF_DEBUG_URGENT, PF_DEBUG_MISC, PF_DEBUG_NOISY };
@@ -122,6 +123,7 @@ enum	{ PF_ADDR_ADDRMASK, PF_ADDR_NOROUTE, PF_ADDR_DYNIFTL,
 #define	PF_LOG			0x01
 #define	PF_LOG_ALL		0x02
 #define	PF_LOG_SOCKET_LOOKUP	0x04
+#define	PF_LOG_FORCE		0x08
 
 struct pf_addr {
 	union {
@@ -491,6 +493,17 @@ struct pf_osfp_ioctl {
 	int			fp_getnum;	/* DIOCOSFPGET number */
 };
 
+struct pf_rule_actions {
+	int		rtableid;
+	u_int16_t	qid;
+	u_int16_t	pqid;
+	u_int16_t	max_mss;
+	u_int8_t	log;
+	u_int8_t	set_tos;
+	u_int8_t	min_ttl;
+	u_int8_t	flags;
+	u_int8_t	pad[2];
+};
 
 union pf_rule_ptr {
 	struct pf_rule		*ptr;
@@ -599,6 +612,8 @@ struct pf_rule {
 #define PF_FLUSH		0x01
 #define PF_FLUSH_GLOBAL		0x02
 	u_int8_t		 flush;
+	u_int8_t		 scrub_flags;
+	u_int8_t		 pad2[3];
 
 	struct {
 		struct pf_addr		addr;
@@ -615,14 +630,6 @@ struct pf_rule {
 #define	PFRULE_NOSYNC		0x0010
 #define PFRULE_SRCTRACK		0x0020  /* track source states */
 #define PFRULE_RULESRCTRACK	0x0040  /* per rule */
-
-/* scrub flags */
-#define	PFRULE_NODF		0x0100
-#define	PFRULE_FRAGCROP		0x0200	/* non-buffering frag cache */
-#define	PFRULE_FRAGDROP		0x0400	/* drop funny fragments */
-#define PFRULE_RANDOMID		0x0800
-#define PFRULE_REASSEMBLE_TCP	0x1000
-#define PFRULE_SET_TOS		0x2000
 
 /* rule flags again */
 #define PFRULE_IFBOUND		0x00010000	/* if-bound */
@@ -642,6 +649,13 @@ struct pf_threshold {
 	u_int32_t	count;
 	u_int32_t	last;
 };
+
+struct pf_rule_item {
+	SLIST_ENTRY(pf_rule_item)	 entry;
+	struct pf_rule			*r;
+};
+
+SLIST_HEAD(pf_rule_slist, pf_rule_item);
 
 struct pf_src_node {
 	RB_ENTRY(pf_src_node) entry;
@@ -747,6 +761,7 @@ struct pf_state {
 	RB_ENTRY(pf_state)	 entry_id;
 	struct pf_state_peer	 src;
 	struct pf_state_peer	 dst;
+	struct pf_rule_slist	 match_rules;
 	union pf_rule_ptr	 rule;
 	union pf_rule_ptr	 anchor;
 	union pf_rule_ptr	 nat_rule;
@@ -761,20 +776,30 @@ struct pf_state {
 	u_int32_t		 creation;
 	u_int32_t	 	 expire;
 	u_int32_t		 pfsync_time;
+	u_int16_t		 qid;
+	u_int16_t		 pqid;
 	u_int16_t		 tag;
+	u_int16_t		 state_flags;
+#define	PFSTATE_ALLOWOPTS	0x0001
+#define	PFSTATE_SLOPPY		0x0002
+#define	PFSTATE_PFLOW		0x0004
+#define	PFSTATE_NOSYNC		0x0008
+#define	PFSTATE_ACK		0x0010
+#define	PFSTATE_NODF		0x0020
+#define	PFSTATE_SETTOS		0x0040
+#define	PFSTATE_RANDOMID	0x0080
+#define	PFSTATE_SCRUB_TCP	0x0100
 	u_int8_t		 log;
-	u_int8_t		 state_flags;
-#define	PFSTATE_ALLOWOPTS	0x01
-#define	PFSTATE_SLOPPY		0x02
-#define	PFSTATE_PFLOW		0x04
-#define	PFSTATE_NOSYNC		0x08
-#define	PFSTATE_ACK		0x10
 	u_int8_t		 timeout;
 	u_int8_t		 sync_state; /* PFSYNC_S_x */
 
 	/* XXX */
 	u_int8_t		 sync_updates;
-	u_int8_t		_tail[3];
+
+	int16_t			 rtableid;
+	u_int8_t		 min_ttl;
+	u_int8_t		 set_tos;
+	u_int16_t		 max_mss;
 };
 
 /*
@@ -1110,9 +1135,7 @@ struct pf_pdesc {
 
 	u_int16_t	*ip_sum;
 	u_int16_t	*proto_sum;
-	u_int16_t	 flags;		/* Let SCRUB trigger behavior in
-					 * state code. Easier than tags */
-#define PFDESC_TCP_NORM	0x0001		/* TCP shall be statefully scrubbed */
+	u_int16_t	 flags;
 #define PFDESC_IP_REAS	0x0002		/* IP frags would've been reassembled */
 	sa_family_t	 af;
 	u_int8_t	 proto;
@@ -1250,9 +1273,13 @@ struct pf_status {
 	u_int32_t	since;
 	u_int32_t	debug;
 	u_int32_t	hostid;
+	u_int32_t	reass;			/* reassembly */
 	char		ifname[IFNAMSIZ];
 	u_int8_t	pf_chksum[PF_MD5_DIGEST_LENGTH];
 };
+
+#define PF_REASS_ENABLED	0x01
+#define PF_REASS_NODF		0x02
 
 struct cbq_opts {
 	u_int		minburst;
@@ -1579,6 +1606,7 @@ struct pfioc_iface {
 #define DIOCSETIFFLAG	_IOWR('D', 89, struct pfioc_iface)
 #define DIOCCLRIFFLAG	_IOWR('D', 90, struct pfioc_iface)
 #define DIOCKILLSRCNODES	_IOWR('D', 91, struct pfioc_src_node_kill)
+#define DIOCSETREASS	_IOWR('D', 92, u_int32_t)
 
 #ifdef _KERNEL
 RB_HEAD(pf_src_tree, pf_src_node);
@@ -1612,7 +1640,7 @@ extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern struct pool		 pf_src_tree_pl, pf_rule_pl;
 extern struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl,
-				    pf_altq_pl, pf_pooladdr_pl;
+				    pf_altq_pl, pf_pooladdr_pl, pf_rule_item_pl;
 extern struct pool		 pf_state_scrub_pl;
 extern void			 pf_purge_thread(void *);
 extern void			 pf_purge_expired_src_nodes(int);
@@ -1683,6 +1711,9 @@ int	pf_normalize_tcp_init(struct mbuf *, int, struct pf_pdesc *,
 int	pf_normalize_tcp_stateful(struct mbuf *, int, struct pf_pdesc *,
 	    u_short *, struct tcphdr *, struct pf_state *,
 	    struct pf_state_peer *, struct pf_state_peer *, int *);
+int	pf_normalize_mss(struct mbuf *, int, struct pf_pdesc *, u_int16_t);
+void	pf_scrub_ip(struct mbuf **, u_int8_t, u_int8_t, u_int8_t);
+void	pf_scrub_ip6(struct mbuf **, u_int8_t);
 u_int32_t
 	pf_state_expires(const struct pf_state *);
 void	pf_purge_expired_fragments(void);

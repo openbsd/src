@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.215 2009/03/09 13:53:10 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.216 2009/04/06 12:05:55 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -151,6 +151,8 @@ pfattach(int num)
 	    "pfstatekeypl", NULL);
 	pool_init(&pf_state_item_pl, sizeof(struct pf_state_item), 0, 0, 0,
 	    "pfstateitempl", NULL);
+	pool_init(&pf_rule_item_pl, sizeof(struct pf_rule_item), 0, 0, 0,
+	    "pfruleitempl", NULL);
 	pool_init(&pf_altq_pl, sizeof(struct pf_altq), 0, 0, 0, "pfaltqpl",
 	    &pool_allocator_nointr);
 	pool_init(&pf_pooladdr_pl, sizeof(struct pf_pooladdr), 0, 0, 0,
@@ -853,10 +855,6 @@ pf_setup_pfsync_matching(struct pf_ruleset *rs)
 
 	MD5Init(&ctx);
 	for (rs_cnt = 0; rs_cnt < PF_RULESET_MAX; rs_cnt++) {
-		/* XXX PF_RULESET_SCRUB as well? */
-		if (rs_cnt == PF_RULESET_SCRUB)
-			continue;
-
 		if (rs->rules[rs_cnt].inactive.ptr_array)
 			free(rs->rules[rs_cnt].inactive.ptr_array, M_TEMP);
 		rs->rules[rs_cnt].inactive.ptr_array = NULL;
@@ -2836,6 +2834,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_iface *io = (struct pfioc_iface *)addr;
 
 		error = pfi_clear_flags(io->pfiio_name, io->pfiio_flags);
+		break;
+	}
+
+	case DIOCSETREASS: {
+		u_int32_t	*reass = (u_int32_t *)addr;
+
+		pf_status.reass = *reass;
+		if (!(pf_status.reass & PF_REASS_ENABLED))
+			pf_status.reass = 0;
 		break;
 	}
 

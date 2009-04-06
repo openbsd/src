@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.241 2008/09/09 13:56:38 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.242 2009/04/06 12:05:55 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -413,6 +413,7 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 			print_addr(&pooladdr->addr, af, 0);
 			break;
 		case PF_PASS:
+		case PF_MATCH:
 			if (PF_AZERO(&pooladdr->addr.v.a.addr, af))
 				printf("%s", pooladdr->ifname);
 			else {
@@ -651,6 +652,7 @@ print_src_node(struct pf_src_node *sn, int opts)
 				printf(", rdr rule %u", sn->rule.nr);
 			break;
 		case PF_PASS:
+		case PF_MATCH:
 			if (sn->rule.nr != -1)
 				printf(", filter rule %u", sn->rule.nr);
 			break;
@@ -663,7 +665,8 @@ void
 print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 {
 	static const char *actiontypes[] = { "pass", "block", "scrub",
-	    "no scrub", "nat", "no nat", "binat", "no binat", "rdr", "no rdr" };
+	    "no scrub", "nat", "no nat", "binat", "no binat", "rdr", "no rdr",
+	    "", "", "match"};
 	static const char *anchortypes[] = { "anchor", "anchor", "anchor",
 	    "anchor", "nat-anchor", "nat-anchor", "binat-anchor",
 	    "binat-anchor", "rdr-anchor", "rdr-anchor" };
@@ -671,7 +674,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 
 	if (verbose)
 		printf("@%d ", r->nr);
-	if (r->action > PF_NORDR)
+	if (r->action > PF_MATCH)
 		printf("action(%d)", r->action);
 	else if (anchor_call[0]) {
 		if (anchor_call[0] == '_') {
@@ -799,7 +802,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		print_flags(r->flags);
 		printf("/");
 		print_flags(r->flagset);
-	} else if (r->action == PF_PASS &&
+	} else if ((r->action == PF_PASS || r->action == PF_MATCH) &&
 	    (!r->proto || r->proto == IPPROTO_TCP) &&
 	    !(r->rule_flag & PFRULE_FRAGMENT) &&
 	    !anchor_call[0] && r->keep_state)
@@ -957,31 +960,26 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			}
 		printf(")");
 	}
-	if (r->rule_flag & PFRULE_FRAGMENT)
-		printf(" fragment");
-	if (r->rule_flag & PFRULE_NODF)
-		printf(" no-df");
-	if (r->rule_flag & PFRULE_RANDOMID)
-		printf(" random-id");
-	if (r->min_ttl)
-		printf(" min-ttl %d", r->min_ttl);
-	if (r->max_mss)
-		printf(" max-mss %d", r->max_mss);
-	if (r->rule_flag & PFRULE_SET_TOS)
-		printf(" set-tos 0x%2.2x", r->set_tos);
+
+	if (r->scrub_flags & PFSTATE_NODF || r->min_ttl || r->max_mss) {
+		printf(" scrub(");
+		if (r->scrub_flags & PFSTATE_NODF)
+			printf(" no-df");
+		if (r->scrub_flags & PFSTATE_RANDOMID)
+			printf(" random-id");
+		if (r->min_ttl)
+			printf(" min-ttl %d", r->min_ttl);
+		if (r->scrub_flags & PFSTATE_SETTOS)
+			printf(" set-tos 0x%2.2x", r->set_tos);
+		if (r->scrub_flags & PFSTATE_SCRUB_TCP)
+			printf(" reassemble tcp");
+		if (r->max_mss)
+			printf(" max-mss %d", r->max_mss);
+		printf(")");
+	}
+
 	if (r->allow_opts)
 		printf(" allow-opts");
-	if (r->action == PF_SCRUB) {
-		if (r->rule_flag & PFRULE_REASSEMBLE_TCP)
-			printf(" reassemble tcp");
-
-		if (r->rule_flag & PFRULE_FRAGDROP)
-			printf(" fragment drop-ovl");
-		else if (r->rule_flag & PFRULE_FRAGCROP)
-			printf(" fragment crop");
-		else
-			printf(" fragment reassemble");
-	}
 	if (r->label[0])
 		printf(" label \"%s\"", r->label);
 	if (r->qname[0] && r->pqname[0])

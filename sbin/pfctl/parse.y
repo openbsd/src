@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.555 2009/02/19 17:08:42 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.556 2009/04/06 12:05:55 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -108,7 +108,6 @@ int		 atoul(char *, u_long *);
 enum {
 	PFCTL_STATE_NONE,
 	PFCTL_STATE_OPTION,
-	PFCTL_STATE_SCRUB,
 	PFCTL_STATE_QUEUE,
 	PFCTL_STATE_NAT,
 	PFCTL_STATE_FILTER
@@ -205,11 +204,15 @@ struct node_qassign {
 
 struct filter_opts {
 	int			 marker;
-#define FOM_FLAGS	0x01
-#define FOM_ICMP	0x02
-#define FOM_TOS		0x04
-#define FOM_KEEP	0x08
-#define FOM_SRCTRACK	0x10
+#define FOM_FLAGS	0x0001
+#define FOM_ICMP	0x0002
+#define FOM_TOS		0x0004
+#define FOM_KEEP	0x0008
+#define FOM_SRCTRACK	0x0010
+#define FOM_MINTTL	0x0020
+#define FOM_MAXMSS	0x0040
+#define FOM_SETTOS	0x0100
+#define FOM_SCRUB_TCP	0x0200
 	struct node_uid		*uid;
 	struct node_gid		*gid;
 	struct {
@@ -237,6 +240,13 @@ struct filter_opts {
 		struct node_host	*addr;
 		u_int16_t		port;
 	}			 divert;
+
+	/* scrub opts */
+	int			 nodf;
+	int			 minttl;
+	int			 settos;
+	int			 randomid;
+	int			 max_mss;
 } filter_opts;
 
 struct antispoof_opts {
@@ -246,20 +256,12 @@ struct antispoof_opts {
 
 struct scrub_opts {
 	int			marker;
-#define SOM_MINTTL	0x01
-#define SOM_MAXMSS	0x02
-#define SOM_FRAGCACHE	0x04
-#define SOM_SETTOS	0x08
 	int			nodf;
 	int			minttl;
 	int			maxmss;
 	int			settos;
-	int			fragcache;
 	int			randomid;
 	int			reassemble_tcp;
-	char		       *match_tag;
-	u_int8_t		match_tag_not;
-	u_int			rtableid;
 } scrub_opts;
 
 struct queue_opts {
@@ -430,7 +432,7 @@ int	parseport(char *, struct range *r, int);
 
 %}
 
-%token	PASS BLOCK SCRUB RETURN IN OS OUT LOG QUICK ON FROM TO FLAGS
+%token	PASS BLOCK MATCH SCRUB RETURN IN OS OUT LOG QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL ERROR ALLOWOPTS FASTROUTE FILENAME ROUTETO DUPTO REPLYTO NO LABEL
@@ -452,11 +454,11 @@ int	parseport(char *, struct range *r, int);
 %token	<v.i>			PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number icmptype icmp6type uid gid
-%type	<v.number>		tos not yesno
+%type	<v.number>		tos not yesno optnodf
 %type	<v.probability>		probability
-%type	<v.i>			no dir af fragcache optimizer
+%type	<v.i>			no dir af optimizer
 %type	<v.i>			sourcetrack flush unaryop statelock
-%type	<v.b>			action nataction natpasslog scrubaction
+%type	<v.b>			action nataction natpasslog
 %type	<v.b>			flags flag blockspec
 %type	<v.range>		portplain portstar portrange
 %type	<v.hashkey>		hashkey
@@ -504,7 +506,6 @@ ruleset		: /* empty */
 		| ruleset include '\n'
 		| ruleset '\n'
 		| ruleset option '\n'
-		| ruleset scrubrule '\n'
 		| ruleset natrule '\n'
 		| ruleset binatrule '\n'
 		| ruleset pfrule '\n'
@@ -560,7 +561,16 @@ optimizer	: string	{
 		}
 		;
 
-option		: SET OPTIMIZATION STRING		{
+optnodf		: /* empty */	{ $$ = 0; }
+		| NODF		{ $$ = 1; }
+		;
+
+option		: SET REASSEMBLE yesno optnodf		{
+			if (check_rulestate(PFCTL_STATE_OPTION))
+				YYERROR;
+			pfctl_set_reassembly(pf, $3, $4);
+		}
+		| SET OPTIMIZATION STRING		{
 			if (check_rulestate(PFCTL_STATE_OPTION)) {
 				free($3);
 				YYERROR;
@@ -1018,87 +1028,18 @@ loadrule	: LOAD ANCHOR string FROM string	{
 			free($5);
 		};
 
-scrubaction	: no SCRUB {
-			$$.b2 = $$.w = 0;
-			if ($1)
-				$$.b1 = PF_NOSCRUB;
-			else
-				$$.b1 = PF_SCRUB;
-		}
-		;
-
-scrubrule	: scrubaction dir logquick interface af proto fromto scrub_opts
-		{
-			struct pf_rule	r;
-
-			if (check_rulestate(PFCTL_STATE_SCRUB))
-				YYERROR;
-
-			memset(&r, 0, sizeof(r));
-
-			r.action = $1.b1;
-			r.direction = $2;
-
-			r.log = $3.log;
-			r.logif = $3.logif;
-			if ($3.quick) {
-				yyerror("scrub rules do not support 'quick'");
-				YYERROR;
-			}
-
-			r.af = $5;
-			if ($8.nodf)
-				r.rule_flag |= PFRULE_NODF;
-			if ($8.randomid)
-				r.rule_flag |= PFRULE_RANDOMID;
-			if ($8.reassemble_tcp) {
-				if (r.direction != PF_INOUT) {
-					yyerror("reassemble tcp rules can not "
-					    "specify direction");
-					YYERROR;
-				}
-				r.rule_flag |= PFRULE_REASSEMBLE_TCP;
-			}
-			if ($8.minttl)
-				r.min_ttl = $8.minttl;
-			if ($8.maxmss)
-				r.max_mss = $8.maxmss;
-			if ($8.marker & SOM_SETTOS) {
-				r.rule_flag |= PFRULE_SET_TOS;
-				r.set_tos = $8.settos;
-			}
-			if ($8.fragcache)
-				r.rule_flag |= $8.fragcache;
-			if ($8.match_tag)
-				if (strlcpy(r.match_tagname, $8.match_tag,
-				    PF_TAG_NAME_SIZE) >= PF_TAG_NAME_SIZE) {
-					yyerror("tag too long, max %u chars",
-					    PF_TAG_NAME_SIZE - 1);
-					YYERROR;
-				}
-			r.match_tag_not = $8.match_tag_not;
-			r.rtableid = $8.rtableid;
-
-			expand_rule(&r, $4, NULL, $6, $7.src_os,
-			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
-			    NULL, NULL, NULL, "");
-		}
-		;
-
 scrub_opts	:	{
 				bzero(&scrub_opts, sizeof scrub_opts);
-				scrub_opts.rtableid = -1;
 			}
 		    scrub_opts_l
 			{ $$ = scrub_opts; }
 		| /* empty */ {
 			bzero(&scrub_opts, sizeof scrub_opts);
-			scrub_opts.rtableid = -1;
 			$$ = scrub_opts;
 		}
 		;
 
-scrub_opts_l	: scrub_opts_l scrub_opt
+scrub_opts_l	: scrub_opts_l comma scrub_opt
 		| scrub_opt
 		;
 
@@ -1110,7 +1051,7 @@ scrub_opt	: NODF	{
 			scrub_opts.nodf = 1;
 		}
 		| MINTTL NUMBER {
-			if (scrub_opts.marker & SOM_MINTTL) {
+			if (scrub_opts.marker & FOM_MINTTL) {
 				yyerror("min-ttl cannot be respecified");
 				YYERROR;
 			}
@@ -1118,11 +1059,11 @@ scrub_opt	: NODF	{
 				yyerror("illegal min-ttl value %d", $2);
 				YYERROR;
 			}
-			scrub_opts.marker |= SOM_MINTTL;
+			scrub_opts.marker |= FOM_MINTTL;
 			scrub_opts.minttl = $2;
 		}
 		| MAXMSS NUMBER {
-			if (scrub_opts.marker & SOM_MAXMSS) {
+			if (scrub_opts.marker & FOM_MAXMSS) {
 				yyerror("max-mss cannot be respecified");
 				YYERROR;
 			}
@@ -1130,24 +1071,16 @@ scrub_opt	: NODF	{
 				yyerror("illegal max-mss value %d", $2);
 				YYERROR;
 			}
-			scrub_opts.marker |= SOM_MAXMSS;
+			scrub_opts.marker |= FOM_MAXMSS;
 			scrub_opts.maxmss = $2;
 		}
 		| SETTOS tos {
-			if (scrub_opts.marker & SOM_SETTOS) {
+			if (scrub_opts.marker & FOM_SETTOS) {
 				yyerror("set-tos cannot be respecified");
 				YYERROR;
 			}
-			scrub_opts.marker |= SOM_SETTOS;
+			scrub_opts.marker |= FOM_SETTOS;
 			scrub_opts.settos = $2;
-		}
-		| fragcache {
-			if (scrub_opts.marker & SOM_FRAGCACHE) {
-				yyerror("fragcache cannot be respecified");
-				YYERROR;
-			}
-			scrub_opts.marker |= SOM_FRAGCACHE;
-			scrub_opts.fragcache = $1;
 		}
 		| REASSEMBLE STRING {
 			if (strcasecmp($2, "tcp") != 0) {
@@ -1170,22 +1103,6 @@ scrub_opt	: NODF	{
 			}
 			scrub_opts.randomid = 1;
 		}
-		| RTABLE NUMBER				{
-			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
-				yyerror("invalid rtable id");
-				YYERROR;
-			}
-			scrub_opts.rtableid = $2;
-		}
-		| not TAGGED string			{
-			scrub_opts.match_tag = $3;
-			scrub_opts.match_tag_not = $1;
-		}
-		;
-
-fragcache	: FRAGMENT REASSEMBLE	{ $$ = 0; /* default */ }
-		| FRAGMENT FRAGCROP	{ $$ = PFRULE_FRAGCROP; }
-		| FRAGMENT FRAGDROP	{ $$ = PFRULE_FRAGDROP; }
 		;
 
 antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
@@ -1872,6 +1789,21 @@ pfrule		: action dir logquick interface route af proto fromto
 			r.prob = $9.prob;
 			r.rtableid = $9.rtableid;
 
+			if ($9.nodf)
+				r.scrub_flags |= PFSTATE_NODF;
+			if ($9.randomid)
+				r.scrub_flags |= PFSTATE_RANDOMID;
+			if ($9.minttl)
+				r.min_ttl = $9.minttl;
+			if ($9.max_mss)
+				r.max_mss = $9.max_mss;
+			if ($9.marker & FOM_SETTOS) {
+				r.scrub_flags |= PFSTATE_SETTOS;
+				r.set_tos = $9.settos;
+			}
+			if ($9.marker & FOM_SCRUB_TCP)
+				r.scrub_flags |= PFSTATE_SCRUB_TCP;
+
 			r.af = $6;
 			if ($9.tag)
 				if (strlcpy(r.tagname, $9.tag,
@@ -2377,6 +2309,16 @@ filter_opt	: USER uids {
 		| DIVERTREPLY {
 			filter_opts.divert.port = 1;	/* some random value */
 		}
+		| SCRUB '(' scrub_opts ')' {
+			filter_opts.nodf = $3.nodf;
+			filter_opts.minttl = $3.minttl;
+			filter_opts.settos = $3.settos;
+			filter_opts.randomid = $3.randomid;
+			filter_opts.max_mss = $3.maxmss;
+			if ($3.reassemble_tcp)
+				filter_opts.marker |= FOM_SCRUB_TCP;
+			filter_opts.marker |= $3.marker;
+		}
 		;
 
 probability	: STRING				{
@@ -2402,6 +2344,7 @@ probability	: STRING				{
 
 
 action		: PASS			{ $$.b1 = PF_PASS; $$.b2 = $$.w = 0; }
+		| MATCH			{ $$.b1 = PF_MATCH; $$.b2 = $$.w = 0; }
 		| BLOCK blockspec	{ $$ = $2; $$.b1 = PF_DROP; }
 		;
 
@@ -4364,9 +4307,8 @@ rule_consistent(struct pf_rule *r, int anchor_call)
 
 	switch (r->action) {
 	case PF_PASS:
+	case PF_MATCH:
 	case PF_DROP:
-	case PF_SCRUB:
-	case PF_NOSCRUB:
 		problems = filter_consistent(r, anchor_call);
 		break;
 	case PF_NAT:
@@ -4434,8 +4376,8 @@ filter_consistent(struct pf_rule *r, int anchor_call)
 		yyerror("max-src-nodes requires 'source-track rule'");
 		problems++;
 	}
-	if (r->action == PF_DROP && r->keep_state) {
-		yyerror("keep state on block rules doesn't make sense");
+	if (r->action != PF_PASS && r->keep_state) {
+		yyerror("keep state is great, but only for pass rules");
 		problems++;
 	}
 	if (r->rule_flag & PFRULE_STATESLOPPY &&
@@ -4444,6 +4386,18 @@ filter_consistent(struct pf_rule *r, int anchor_call)
 		yyerror("sloppy state matching cannot be used with "
 		    "synproxy state or modulate state");
 		problems++;
+	}
+	/* match rules rules */
+	if (r->action == PF_MATCH) {
+		if (r->divert.port) {
+			yyerror("divert is not supported on match rules");
+			problems++;
+		}
+		if (r->rt) {
+			yyerror("route-to, reply-to, dup-to and fastroute "
+			   "must not be used on match rules");
+			problems++;
+		}
 	}
 	return (-problems);
 }
@@ -5267,6 +5221,7 @@ lookup(char *s)
 		{ "load",		LOAD},
 		{ "log",		LOG},
 		{ "loginterface",	LOGINTERFACE},
+		{ "match",		MATCH},
 		{ "max",		MAXIMUM},
 		{ "max-mss",		MAXMSS},
 		{ "max-src-conn",	MAXSRCCONN},
