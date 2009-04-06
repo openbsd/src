@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.54 2008/06/26 05:42:11 ray Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.55 2009/04/06 20:37:52 oga Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -154,7 +154,6 @@
 
 #include <machine/pte.h>
 
-/* #define UVM_PAGE_INLINE */
 #include <uvm/uvm.h>
 
 #include <machine/cpu.h>
