@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.16 2009/04/06 04:58:09 oga Exp $
+# $OpenBSD: files.drm,v 1.17 2009/04/06 20:56:25 oga Exp $
 
 # direct rendering modules
 define drmbase {}
@@ -9,7 +9,7 @@ file   dev/pci/drm/drm_agpsupport.c    drm
 file   dev/pci/drm/drm_bufs.c          drm
 file   dev/pci/drm/drm_context.c       drm
 file   dev/pci/drm/drm_drv.c           drm	needs-flag
-file   dev/pci/drm/drm_heap.c          inteldrm | radeondrm | sisdrm
+file   dev/pci/drm/drm_heap.c          radeondrm | sisdrm
 file   dev/pci/drm/drm_irq.c           drm
 file   dev/pci/drm/drm_lock.c          drm
 file   dev/pci/drm/drm_memory.c        drm
@@ -20,7 +20,6 @@ attach	inteldrm at drmdev
 file	dev/pci/drm/i915_drv.c		inteldrm
 file	dev/pci/drm/i915_dma.c		inteldrm
 file	dev/pci/drm/i915_irq.c		inteldrm
-file	dev/pci/drm/i915_mem.c		inteldrm
 
 device	machdrm: drmbase
 attach	machdrm at drmdev

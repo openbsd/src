@@ -573,7 +573,7 @@ int i915_setparam(struct drm_device *dev, void *data,
 	case I915_SETPARAM_USE_MI_BATCHBUFFER_START:
 		break;
 	case I915_SETPARAM_TEX_LRU_LOG_GRANULARITY:
-		dev_priv->tex_lru_log_granularity = param->value;
+		/* We really don't care anymore */
 		break;
 	case I915_SETPARAM_ALLOW_BATCHBUFFER:
 		dev_priv->allow_batchbuffer = param->value;
@@ -640,13 +640,5 @@ void i915_driver_lastclose(struct drm_device * dev)
 
 	dev_priv->sarea_priv = NULL;
 
-	i915_mem_takedown(&dev_priv->agp_heap);
-
 	i915_dma_cleanup(dev);
-}
-
-void i915_driver_close(struct drm_device * dev, struct drm_file *file_priv)
-{
-	drm_i915_private_t *dev_priv = dev->dev_private;
-	i915_mem_release(dev, file_priv, &dev_priv->agp_heap);
 }

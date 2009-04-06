@@ -103,9 +103,7 @@ typedef struct drm_i915_private {
 	u_int32_t		 irq_mask_reg;
 	u_int32_t		 pipestat[2];
 
-	int tex_lru_log_granularity;
-	int allow_batchbuffer;
-	struct drm_heap agp_heap;
+	int			 allow_batchbuffer;
 
 	/* Register state */
 	u8 saveLBB;
