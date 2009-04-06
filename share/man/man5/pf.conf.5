@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.409 2009/04/06 17:22:02 sthen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.410 2009/04/06 17:33:21 sobrado Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1259,20 +1259,34 @@ packets that match explicit rules is specify a first filter rule of:
 .Bd -literal -offset indent
 block all
 .Ed
+.It Ar match
+Every time a packet is matched by one of these rules, the
+.Ar queue ,
+.Ar rtable ,
+.Ar set-tos ,
+.Ar min-ttl ,
+.Ar max-mss ,
+.Ar no-df ,
+.Ar random-id ,
+and
+.Ar reassemble tcp
+parameters can be overwritten when supplied to the
+.Ar match
+rule.
+Note that these changes may happen on any
+.Ar match
+rule, not only on the last matching one.
+When
+.Ar logging
+is specified, every matching rule causes the packet to be logged.
+This means that a single packet can get logged more than once.
+.Pp
+This action does not change the state of the packet.
 .It Ar pass
 The packet is passed;
 state is created unless the
 .Ar no state
 option is specified.
-.It Ar match
-Action is unaltered, the previously matched rule's action still matters.
-Match rules apply queue and rtable assignments for every matched packet,
-subsequent matching pass or match rules can overwrite the assignment,
-if they don't specify a queue or an rtable, respectively, the previously
-set value remains.
-Additionally, match rules can contain log statements; the is logging done
-for each and every matching match rule, so it is possible to log a single
-packet multiple times.
 .El
 .Pp
 By default
