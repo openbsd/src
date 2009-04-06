@@ -95,14 +95,13 @@ typedef struct drm_i915_private {
 	unsigned int		 status_gfx_addr;
 	u_int32_t		 counter;
 
-	atomic_t irq_received;
 	/* Protects user_irq_refcount and irq_mask reg */
-	struct mutex user_irq_lock;
+	struct			 mutex user_irq_lock;
 	/* Refcount for user irq, only enabled when needed */
-	int user_irq_refcount;
+	int			 user_irq_refcount;
 	/* Cached value of IMR to avoid reads in updating the bitfield */
-	u_int32_t irq_mask_reg;
-	u_int32_t pipestat[2];
+	u_int32_t		 irq_mask_reg;
+	u_int32_t		 pipestat[2];
 
 	int tex_lru_log_granularity;
 	int allow_batchbuffer;

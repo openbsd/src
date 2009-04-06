@@ -206,7 +206,6 @@ inteldrm_intr(void *arg)
 	 * lock is to protect from writes to PIPESTAT and IMR from other cores.
 	 */
 	mtx_enter(&dev_priv->user_irq_lock);
-	atomic_inc(&dev_priv->irq_received);
 	iir = I915_READ(IIR);
 	if (iir == 0) {
 		mtx_leave(&dev_priv->user_irq_lock);
