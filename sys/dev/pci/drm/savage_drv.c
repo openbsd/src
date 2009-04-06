@@ -64,7 +64,7 @@ const static struct drm_pcidev savagedrm_pciidlist[] = {
 };
 
 static const struct drm_driver_info savagedrm_driver = {
-	.buf_priv_size		= sizeof(drm_savage_buf_priv_t),
+	.buf_priv_size		= sizeof(struct savagedrm_buf_priv),
 	.firstopen		= savage_driver_firstopen,
 	.lastclose		= savage_driver_lastclose,
 	.reclaim_buffers_locked = savage_reclaim_buffers,

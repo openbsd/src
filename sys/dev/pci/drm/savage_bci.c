@@ -203,22 +203,17 @@ uint16_t savage_bci_emit_event(drm_savage_private_t *dev_priv,
 /*
  * Freelist management
  */
-static int savage_freelist_init(struct drm_device *dev)
+static int
+savage_freelist_init(struct drm_device *dev)
 {
-	drm_savage_private_t *dev_priv = dev->dev_private;
-	struct drm_device_dma *dma = dev->dma;
-	struct drm_buf *buf;
-	drm_savage_buf_priv_t *entry;
-	int i;
+	drm_savage_private_t		*dev_priv = dev->dev_private;
+	struct drm_device_dma		*dma = dev->dma;
+	struct drm_buf			*buf;
+	struct savagedrm_buf_priv	*entry;
+	int				 i;
 	DRM_DEBUG("count=%d\n", dma->buf_count);
 
-	dev_priv->head.next = &dev_priv->tail;
-	dev_priv->head.prev = NULL;
-	dev_priv->head.buf = NULL;
-
-	dev_priv->tail.next = NULL;
-	dev_priv->tail.prev = &dev_priv->head;
-	dev_priv->tail.buf = NULL;
+	TAILQ_INIT(&dev_priv->freelist);
 
 	for (i = 0; i < dma->buf_count; i++) {
 		buf = dma->buflist[i];
@@ -226,22 +221,21 @@ static int savage_freelist_init(struct drm_device *dev)
 
 		SET_AGE(&entry->age, 0, 0);
 		entry->buf = buf;
+		entry->free = 1;
 
-		entry->next = dev_priv->head.next;
-		entry->prev = &dev_priv->head;
-		dev_priv->head.next->prev = entry;
-		dev_priv->head.next = entry;
+		TAILQ_INSERT_HEAD(&dev_priv->freelist, entry, link);
 	}
 
-	return 0;
+	return (0);
 }
 
-static struct drm_buf *savage_freelist_get(struct drm_device *dev)
+static struct drm_buf *
+savage_freelist_get(struct drm_device *dev)
 {
-	drm_savage_private_t *dev_priv = dev->dev_private;
-	drm_savage_buf_priv_t *tail = dev_priv->tail.prev;
-	uint16_t event;
-	unsigned int wrap;
+	drm_savage_private_t		*dev_priv = dev->dev_private;
+	struct savagedrm_buf_priv	*tail;
+	uint16_t			 event;
+	unsigned int			 wrap;
 	DRM_DEBUG("\n");
 
 	UPDATE_EVENT_COUNTER();
@@ -256,37 +250,36 @@ static struct drm_buf *savage_freelist_get(struct drm_device *dev)
 	DRM_DEBUG("   tail=0x%04x %d\n", tail->age.event, tail->age.wrap);
 	DRM_DEBUG("   head=0x%04x %d\n", event, wrap);
 
-	if (tail->buf && (TEST_AGE(&tail->age, event, wrap) || event == 0)) {
-		drm_savage_buf_priv_t *next = tail->next;
-		drm_savage_buf_priv_t *prev = tail->prev;
-		prev->next = next;
-		next->prev = prev;
-		tail->next = tail->prev = NULL;
-		return tail->buf;
+	if (TAILQ_EMPTY(&dev_priv->freelist))
+		goto out;
+
+	tail = TAILQ_LAST(&dev_priv->freelist, savage_freelist);
+	if (TEST_AGE(&tail->age, event, wrap) || event == 0) {
+		TAILQ_REMOVE(&dev_priv->freelist, tail, link);
+		tail->free = 0;
+		return (tail->buf);
 	}
 
+out:
 	DRM_DEBUG("returning NULL, tail->buf=%p!\n", tail->buf);
 	return NULL;
 }
 
-void savage_freelist_put(struct drm_device *dev, struct drm_buf *buf)
+void
+savage_freelist_put(struct drm_device *dev, struct drm_buf *buf)
 {
-	drm_savage_private_t *dev_priv = dev->dev_private;
-	drm_savage_buf_priv_t *entry = buf->dev_private, *prev, *next;
+	drm_savage_private_t		*dev_priv = dev->dev_private;
+	struct savagedrm_buf_priv	*entry = buf->dev_private;
 
 	DRM_DEBUG("age=0x%04x wrap=%d\n", entry->age.event, entry->age.wrap);
 
-	if (entry->next != NULL || entry->prev != NULL) {
+	if (entry->free == 1) {
 		DRM_ERROR("entry already on freelist.\n");
 		return;
 	}
 
-	prev = &dev_priv->head;
-	next = prev->next;
-	prev->next = entry;
-	next->prev = entry;
-	entry->prev = prev;
-	entry->next = next;
+	entry->free = 1;
+	TAILQ_INSERT_HEAD(&dev_priv->freelist, entry, link);
 }
 
 /*
@@ -950,9 +943,9 @@ savage_bci_buffers(struct drm_device *dev, struct drm_dma *d,
 
 void savage_reclaim_buffers(struct drm_device *dev, struct drm_file *file_priv)
 {
-	struct drm_device_dma *dma = dev->dma;
-	drm_savage_private_t *dev_priv = dev->dev_private;
-	int i;
+	struct drm_device_dma	*dma = dev->dma;
+	drm_savage_private_t	*dev_priv = dev->dev_private;
+	int			 i;
 
 	if (!dma)
 		return;
@@ -963,11 +956,12 @@ void savage_reclaim_buffers(struct drm_device *dev, struct drm_file *file_priv)
 
 	for (i = 0; i < dma->buf_count; i++) {
 		struct drm_buf *buf = dma->buflist[i];
-		drm_savage_buf_priv_t *buf_priv = buf->dev_private;
+		struct savagedrm_buf_priv *buf_priv = buf->dev_private;
 
 		if (buf->file_priv == file_priv && buf_priv &&
-		    buf_priv->next == NULL && buf_priv->prev == NULL) {
+		    buf_priv->free == 0) {
 			uint16_t event;
+
 			DRM_DEBUG("reclaimed from client\n");
 			event = savage_bci_emit_event(dev_priv, SAVAGE_WAIT_3D);
 			SET_AGE(&buf_priv->age, event, dev_priv->event_wrap);
