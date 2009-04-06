@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.72 2009/04/06 12:02:52 oga Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.73 2009/04/06 17:03:51 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -1381,23 +1381,15 @@ uvm_pageidlezero(void)
  * when VM_PHYSSEG_MAX is 1, we can simplify these functions
  */
 
+#if VM_PHYSSEG_MAX > 1
 /*
  * vm_physseg_find: find vm_physseg structure that belongs to a PA
  */
 int
 vm_physseg_find(paddr_t pframe, int *offp)
 {
-#if VM_PHYSSEG_MAX == 1
 
-	/* 'contig' case */
-	if (pframe >= vm_physmem[0].start && pframe < vm_physmem[0].end) {
-		if (offp)
-			*offp = pframe - vm_physmem[0].start;
-		return(0);
-	}
-	return(-1);
-
-#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
+#if (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
 	/* binary search for it */
 	int	start, len, try;
 
@@ -1468,6 +1460,7 @@ PHYS_TO_VM_PAGE(paddr_t pa)
 
 	return ((psi == -1) ? NULL : &vm_physmem[psi].pgs[off]);
 }
+#endif /* VM_PHYSSEG_MAX > 1 */
 
 /*
  * uvm_pagelookup: look up a page

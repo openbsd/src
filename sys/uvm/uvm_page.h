@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.29 2009/03/25 20:00:18 oga Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.30 2009/04/06 17:03:51 oga Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -260,8 +260,45 @@ void		uvm_pagezero(struct vm_page *);
 
 int		uvm_page_lookup_freelist(struct vm_page *);
 
+#if  VM_PHYSSEG_MAX == 1
+/*
+ * Inline functions for archs like the vax where function calls are expensive.
+ */
+/*
+ * vm_physseg_find: find vm_physseg structure that belongs to a PA
+ */
+static __inline int
+vm_physseg_find(paddr_t pframe, int *offp)
+{
+	/* 'contig' case */
+	if (pframe >= vm_physmem[0].start && pframe < vm_physmem[0].end) {
+		if (offp)
+			*offp = pframe - vm_physmem[0].start;
+		return(0);
+	}
+	return(-1);
+}
+
+/*
+ * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
+ * back from an I/O mapping (ugh!).   used in some MD code as well.
+ */
+static __inline struct vm_page *
+PHYS_TO_VM_PAGE(paddr_t pa)
+{
+	paddr_t pf = atop(pa);
+	int	off;
+	int	psi;
+
+	psi = vm_physseg_find(pf, &off);
+
+	return ((psi == -1) ? NULL : &vm_physmem[psi].pgs[off]);
+}
+#else
+/* if VM_PHYSSEG_MAX > 1 they're not inline, they're in uvm_page.c. */
 struct vm_page	*PHYS_TO_VM_PAGE(paddr_t);
 int		vm_physseg_find(paddr_t, int *);
+#endif
 
 /*
  * macros
