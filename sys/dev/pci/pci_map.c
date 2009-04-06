@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.23 2008/06/26 05:42:17 ray Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.24 2009/04/06 20:51:48 kettenis Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -320,8 +320,22 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type, int busflags,
 	    &base, &size, &flags)) != 0)
 		return (rv);
 #if !defined(__sparc64__) && !defined(__socppc__)
-	if (base == 0)
-		return (EINVAL);	/* disabled because of invalid BAR */
+	if (base == 0) {
+		struct extent *ex;
+
+		if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO)
+			ex = pa->pa_ioex;
+		else
+			ex = pa->pa_memex;
+
+		if (ex == NULL || extent_alloc(ex, size, size, 0, 0, 0, &base))
+			return (EINVAL); /* disabled because of invalid BAR */
+
+		pci_conf_write(pa->pa_pc, pa->pa_tag, reg, base);
+		if (PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT)
+			pci_conf_write(pa->pa_pc, pa->pa_tag, reg + 4,
+			    (u_int64_t)base >> 32);
+	}
 #endif
 
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);

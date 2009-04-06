@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.59 2008/12/28 18:26:53 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.60 2009/04/06 20:51:48 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/ppbreg.h>
 
 int pcimatch(struct device *, void *, void *);
 void pciattach(struct device *, struct device *, void *);
@@ -84,6 +85,7 @@ int	pcisubmatch(struct device *, void *, void *);
 int pci_enumerate_bus(struct pci_softc *,
     int (*)(struct pci_attach_args *), struct pci_attach_args *);
 #endif
+int	pci_reserve_resources(struct pci_attach_args *);
 
 /*
  * Important note about PCI-ISA bridges:
@@ -153,6 +155,8 @@ pciattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_memt = pba->pba_memt;
 	sc->sc_dmat = pba->pba_dmat;
 	sc->sc_pc = pba->pba_pc;
+	sc->sc_ioex = pba->pba_ioex;
+	sc->sc_memex = pba->pba_memex;
 	sc->sc_domain = pba->pba_domain;
 	sc->sc_bus = pba->pba_bus;
 	sc->sc_bridgetag = pba->pba_bridgetag;
@@ -160,6 +164,7 @@ pciattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_maxndevs = pci_bus_maxdevs(pba->pba_pc, pba->pba_bus);
 	sc->sc_intrswiz = pba->pba_intrswiz;
 	sc->sc_intrtag = pba->pba_intrtag;
+	pci_enumerate_bus(sc, pci_reserve_resources, NULL);
 	pci_enumerate_bus(sc, NULL, NULL);
 }
 
@@ -276,6 +281,8 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	pa.pa_memt = sc->sc_memt;
 	pa.pa_dmat = sc->sc_dmat;
 	pa.pa_pc = pc;
+	pa.pa_ioex = sc->sc_ioex;
+	pa.pa_memex = sc->sc_memex;
 	pa.pa_domain = sc->sc_domain;
 	pa.pa_bus = bus;
 	pa.pa_device = device;
@@ -497,6 +504,112 @@ pci_enumerate_bus(struct pci_softc *sc,
 	return (0);
 }
 #endif /* PCI_MACHDEP_ENUMERATE_BUS */
+
+int
+pci_reserve_resources(struct pci_attach_args *pa)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	pcireg_t bhlc, blr, type;
+	bus_addr_t base, limit;
+	bus_size_t size;
+	int reg, reg_start, reg_end;
+
+	bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	switch (PCI_HDRTYPE_TYPE(bhlc)) {
+	case 0:
+		reg_start = PCI_MAPREG_START;
+		reg_end = PCI_MAPREG_END;
+		break;
+	case 1: /* PCI-PCI bridge */
+		reg_start = PCI_MAPREG_START;
+		reg_end = PCI_MAPREG_PPB_END;
+		break;
+	case 2: /* PCI-CardBus bridge */
+		reg_start = PCI_MAPREG_START;
+		reg_end = PCI_MAPREG_PCB_END;
+		break;
+	default:
+		return (0);
+	}
+    
+	for (reg = reg_start; reg < reg_end; reg += 4) {
+		if (!pci_mapreg_probe(pc, tag, reg, &type))
+			continue;
+
+		if (pci_mapreg_info(pc, tag, reg, type, &base, &size, NULL))
+			continue;
+
+		if (base == 0)
+			continue;
+
+		switch (type) {
+		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+			if (pa->pa_memex && extent_alloc_region(pa->pa_memex,
+			    base, size, EX_NOWAIT))
+				printf("mem address conflict 0x%x/0x%x\n",
+				    base, size);
+			break;
+		case PCI_MAPREG_TYPE_IO:
+			if (pa->pa_ioex && extent_alloc_region(pa->pa_ioex,
+			    base, size, EX_NOWAIT))
+				printf("io address conflict 0x%x/0x%x\n",
+				    base, size);
+			break;
+		}
+
+		if (type & PCI_MAPREG_MEM_TYPE_64BIT)
+			reg += 4;
+	}
+
+	if (PCI_HDRTYPE_TYPE(bhlc) != 1)
+		return (0);
+
+	/* Figure out the I/O address range of the bridge. */
+	blr = pci_conf_read(pc, tag, PPB_REG_IOSTATUS);
+	base = (blr & 0x000000f0) << 8;
+	limit = (blr & 0x000f000) | 0x00000fff;
+	if (limit > base)
+		size = (limit - base + 1);
+	else
+		size = 0;
+	if (pa->pa_ioex && base > 0 && size > 0) {
+		if (extent_alloc_region(pa->pa_ioex, base, size, EX_NOWAIT))
+			printf("bridge io address conflict 0x%x/0x%x\n",
+			       base, size);
+	}
+
+	/* Figure out the memory mapped I/O address range of the bridge. */
+	blr = pci_conf_read(pc, tag, PPB_REG_MEM);
+	base = (blr & 0x0000fff0) << 16;
+	limit = (blr & 0xfff00000) | 0x000fffff;
+	if (limit > base)
+		size = (limit - base + 1);
+	else
+		size = 0;
+	if (pa->pa_memex && base > 0 && size > 0) {
+		if (extent_alloc_region(pa->pa_memex, base, size, EX_NOWAIT))
+			printf("bridge mem address conflict 0x%x/0x%x\n",
+			       base, size);
+	}
+
+	/* Figure out the prefetchable memory address range of the bridge. */
+	blr = pci_conf_read(pc, tag, PPB_REG_PREFMEM);
+	base = (blr & 0x0000fff0) << 16;
+	limit = (blr & 0xfff00000) | 0x000fffff;
+	if (limit > base)
+		size = (limit - base + 1);
+	else
+		size = 0;
+	if (pa->pa_memex && base > 0 && size > 0) {
+		if (extent_alloc_region(pa->pa_memex, base, size, EX_NOWAIT))
+			printf("bridge mem address conflict 0x%x/0x%x\n",
+			       base, size);
+	}
+
+	return (0);
+}
 
 /*
  * Vital Product Data (PCI 2.2)
