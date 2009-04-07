@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.77 2009/01/22 01:06:28 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.78 2009/04/07 03:11:59 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -283,7 +283,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 		npp = &lp->d_partitions[i];
 		DL_SETPOFFSET(npp, spp->sdkp_cyloffset * secpercyl);
 		DL_SETPSIZE(npp, spp->sdkp_nsectors);
-		if (DL_GETPSIZE(npp) == 0) {
+		if (DL_GETPSIZE(npp) == 0)) {
 			npp->p_fstype = FS_UNUSED;
 		} else {
 			npp->p_fstype = sun_fstypes[i];
@@ -325,7 +325,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 			npp = &lp->d_partitions[i+8];
 			DL_SETPOFFSET(npp, spp->sdkp_cyloffset * secpercyl);
 			DL_SETPSIZE(npp, spp->sdkp_nsectors);
-			if (DL_GETPSIZE(npp) == 0) {
+			if (DL_GETPSIZE(npp) == 0)) {
 				npp->p_fstype = FS_UNUSED;
 				continue;
 			}
@@ -421,27 +421,28 @@ disklabel_bsd_to_sun(struct disklabel *lp, struct sun_disklabel *sl)
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
-
-		if (DL_GETPOFFSET(npp) % secpercyl)
-			return (EINVAL);
-		spp->sdkp_cyloffset = DL_GETPOFFSET(npp) / secpercyl;
-		spp->sdkp_nsectors = DL_GETPSIZE(npp);
+		spp->sdkp_cyloffset = 0;
+		spp->sdkp_nsectors = 0;
+		if (DL_GETPSIZE(npp) {
+			if (DL_GETPOFFSET(npp) % secpercyl)
+				return (EINVAL);
+			spp->sdkp_cyloffset = DL_GETPOFFSET(npp) / secpercyl;
+			spp->sdkp_nsectors = DL_GETPSIZE(npp);
+		}
 	}
 	sl->sl_magic = SUN_DKMAGIC;
 
 	for (i = 0; i < SUNXPART; i++) {
-		if (DL_GETPOFFSET(&lp->d_partitions[i+8]) ||
-		    DL_GETPSIZE(&lp->d_partitions[i+8]))
-			break;
-	}
-	for (i = 0; i < SUNXPART; i++) {
 		spp = &sl->sl_xpart[i];
 		npp = &lp->d_partitions[i+8];
-		if (DL_GETPOFFSET(npp) % secpercyl)
-			return (EINVAL);
-		sl->sl_xpart[i].sdkp_cyloffset =
-		    DL_GETPOFFSET(npp) / secpercyl;
-		sl->sl_xpart[i].sdkp_nsectors = DL_GETPSIZE(npp);
+		spp->sdkp_cyloffset = 0;
+		spp->sdkp_nsectors = 0;
+		if (DL_GETPSIZE(npp) {
+			if (DL_GETPOFFSET(npp) % secpercyl)
+				return (EINVAL);
+			spp->sdkp_cyloffset = DL_GETPOFFSET(npp) / secpercyl;
+			spp->sdkp_nsectors = DL_GETPSIZE(npp);
+		}
 	}
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		npp = &lp->d_partitions[i];
