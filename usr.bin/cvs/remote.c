@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.27 2009/04/02 20:57:47 joris Exp $	*/
+/*	$OpenBSD: remote.c,v 1.28 2009/04/07 21:27:45 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -249,10 +249,15 @@ cvs_remote_classify_file(struct cvs_file *cf)
 	cf->file_ent = cvs_ent_get(entlist, cf->file_name);
 
 	if (cf->file_ent != NULL && cf->file_ent->ce_status != CVS_ENT_REG) {
-		if (cf->file_ent->ce_status == CVS_ENT_ADDED)
-			cf->file_status = FILE_ADDED;
-		else
+		if (cf->file_ent->ce_status == CVS_ENT_ADDED) {
+			if (cf->fd != -1)
+				cf->file_status = FILE_ADDED;
+			else
+				cf->file_status = FILE_UNKNOWN;
+		} else {
 			cf->file_status = FILE_REMOVED;
+		}
+
 		return;
 	}
 
