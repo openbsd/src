@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.411 2009/04/07 12:50:44 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.412 2009/04/07 12:52:57 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -606,6 +606,7 @@ and thus the reassembled packet doesn't have
 .Ar dont-fragment
 set either.
 Setting this option does not affect non-fragmented packets.
+Fragment reassembly is turned on by default.
 .El
 .Sh TRAFFIC NORMALIZATION
 Traffic normalization is used to sanitize packet content in such
