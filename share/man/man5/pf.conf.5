@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.415 2009/04/07 13:48:38 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.416 2009/04/07 13:52:29 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2820,12 +2820,12 @@ option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
 pf-rule        = action [ ( "in" | "out" ) ]
                  [ "log" [ "(" logopts ")"] ] [ "quick" ]
                  [ "on" ifspec ] [ "fastroute" | route ] [ af ] [ protospec ]
-                 hosts [ filteropt-list ]
+                 hosts [ filteropts ]
 
-logopts        = logopt [ "," logopts ]
+logopts        = logopt [ [ "," ] logopts ]
 logopt         = "all" | "user" | "to" interface-name
 
-filteropt-list = filteropt-list filteropt | filteropt
+filteropts     = filteropt [ [ "," ] filteropts ]
 filteropt      = user | group | flags | icmp-type | icmp6-type | "tos" tos |
                  ( "no" | "keep" | "modulate" | "synproxy" ) "state"
                  [ "(" state-opts ")" ] | "scrub" "(" scrubopts ")" |
@@ -2834,7 +2834,7 @@ filteropt      = user | group | flags | icmp-type | icmp6-type | "tos" tos |
                  "queue" ( string | "(" string [ [ "," ] string ] ")" ) |
                  "rtable" number | "probability" number"%"
 
-scrubopts      = scrubopt [ "," scrubopts ]
+scrubopts      = scrubopt [ [ "," ] scrubopts ]
 scrubopt       = "no-df" | "min-ttl" number | "max-mss" number |
                  "set-tos" tos | "reassemble tcp" | "random-id"
 
@@ -2860,11 +2860,11 @@ rdr-rule       = [ "no" ] "rdr" [ "pass" [ "log" [ "(" logopts ")" ] ] ]
 antispoof-rule = "antispoof" [ "log" ] [ "quick" ]
                  "for" ifspec [ af ] [ "label" string ]
 
-table-rule     = "table" "\*(Lt" string "\*(Gt" [ tableopts-list ]
-tableopts-list = tableopts-list tableopts | tableopts
-tableopts      = "persist" | "const" | "counters" | "file" string |
-                 "{" [ tableaddr-list ] "}"
-tableaddr-list = tableaddr-list [ "," ] tableaddr-spec | tableaddr-spec
+table-rule     = "table" "\*(Lt" string "\*(Gt" [ tableopts ]
+tableopts      = tableopt [ tableopts ]
+tableopt      = "persist" | "const" | "counters" | "file" string |
+                 "{" [ tableaddrs ] "}"
+tableaddrs     = tableaddr-spec [ [ "," ] tableaddrs ]
 tableaddr-spec = [ "!" ] tableaddr [ "/" mask-bits ]
 tableaddr      = hostname | ifspec | "self" |
                  ipv4-dotted-quad | ipv6-coloned-hex
