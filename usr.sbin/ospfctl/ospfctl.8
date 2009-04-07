@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfctl.8,v 1.18 2008/12/06 13:18:12 sobrado Exp $
+.\"	$OpenBSD: ospfctl.8,v 1.19 2009/04/07 14:57:33 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 6 2008 $
+.Dd $Mdocdate: April 7 2009 $
 .Dt OSPFCTL 8
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nd control the Open Shortest Path First daemon
 .Sh SYNOPSIS
 .Nm
+.Op Fl s Ar socket
 .Ar command
 .Op Ar argument ...
 .Sh DESCRIPTION
@@ -30,6 +31,17 @@ The
 program controls the
 .Xr ospfd 8
 daemon.
+.Pp
+The following option is available:
+.Bl -tag -width Ds
+.It Fl s Ar socket
+Use
+.Ar socket
+instead of the default
+.Pa /var/run/ospfd.sock
+to communicate with
+.Xr ospfd 8 .
+.El
 .Pp
 The following commands are available:
 .Bl -tag -width Ds

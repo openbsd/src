@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.45 2009/01/30 12:43:18 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.46 2009/04/07 14:57:33 reyk Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -76,7 +76,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s command [argument ...]\n", __progname);
+	fprintf(stderr, "usage: %s [-s socket] command [argument ...]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -97,9 +98,25 @@ main(int argc, char *argv[])
 	int			 ctl_sock;
 	int			 done = 0;
 	int			 n;
+	int			 ch;
+	char			*sockname;
+
+	sockname = OSPFD_SOCKET;
+	while ((ch = getopt(argc, argv, "s:")) != -1) {
+		switch (ch) {
+		case 's':
+			sockname = optarg;
+			break;
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+	argc -= optind;
+	argv += optind;
 
 	/* parse options */
-	if ((res = parse(argc - 1, argv + 1)) == NULL)
+	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
 
 	/* connect to ospfd control socket */
@@ -108,9 +125,10 @@ main(int argc, char *argv[])
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, OSPFD_SOCKET, sizeof(sun.sun_path));
+
+	strlcpy(sun.sun_path, sockname, sizeof(sun.sun_path));
 	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
-		err(1, "connect: %s", OSPFD_SOCKET);
+		err(1, "connect: %s", sockname);
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.8,v 1.22 2009/01/31 19:37:12 sobrado Exp $
+.\"	$OpenBSD: ospfd.8,v 1.23 2009/04/07 14:57:33 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2009 $
+.Dd $Mdocdate: April 7 2009 $
 .Dt OSPFD 8
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Fl D Ar macro Ns = Ns Ar value Oc
 .Xc
 .Op Fl f Ar file
+.Op Fl s Ar socket
 .Sh DESCRIPTION
 .Nm
 is an Open Shortest Path First
@@ -143,6 +144,8 @@ Specify an alternative configuration file.
 .It Fl n
 Configtest mode.
 Only check the configuration file for validity.
+.It Fl s Ar socket
+Use an alternate location for the default control socket.
 .It Fl v
 Produce more verbose output.
 .El

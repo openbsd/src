@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.22 2009/02/25 17:09:55 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.23 2009/04/07 14:57:33 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,7 @@ struct ctl_conn	*control_connbypid(pid_t);
 void		 control_close(int);
 
 int
-control_init(void)
+control_init(char *path)
 {
 	struct sockaddr_un	 sun;
 	int			 fd;
@@ -54,28 +54,28 @@ control_init(void)
 
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, OSPFD_SOCKET, sizeof(sun.sun_path));
+	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
 
-	if (unlink(OSPFD_SOCKET) == -1)
+	if (unlink(path) == -1)
 		if (errno != ENOENT) {
-			log_warn("control_init: unlink %s", OSPFD_SOCKET);
+			log_warn("control_init: unlink %s", path);
 			close(fd);
 			return (-1);
 		}
 
 	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
-		log_warn("control_init: bind: %s", OSPFD_SOCKET);
+		log_warn("control_init: bind: %s", path);
 		close(fd);
 		umask(old_umask);
 		return (-1);
 	}
 	umask(old_umask);
 
-	if (chmod(OSPFD_SOCKET, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
+	if (chmod(path, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
 		log_warn("control_init: chmod");
 		close(fd);
-		(void)unlink(OSPFD_SOCKET);
+		(void)unlink(path);
 		return (-1);
 	}
 
@@ -102,10 +102,10 @@ control_listen(void)
 }
 
 void
-control_cleanup(void)
+control_cleanup(char *path)
 {
-
-	unlink(OSPFD_SOCKET);
+	if (path)
+		unlink(path);
 }
 
 /* ARGSUSED */
