@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.413 2009/04/07 13:27:32 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.414 2009/04/07 13:40:18 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1086,7 +1086,7 @@ if no rule matches the packet, the default action is to pass
 the packet.
 For
 .Ar match ,
-actions are taken every time a rule matches;
+actions are taken every time the rule matches;
 the pass/block state of a packet remains unchanged.
 .Pp
 The following actions can be used in the filter:
