@@ -83,7 +83,7 @@ const static struct drm_pcidev ragedrm_pciidlist[] = {
 };
 
 static const struct drm_driver_info ragedrm_driver = {
-	.buf_priv_size		= sizeof(drm_r128_buf_priv_t),
+	.buf_priv_size		= sizeof(struct ragedrm_buf_priv),
 	.ioctl			= ragedrm_ioctl,
 	.close			= r128_driver_close,
 	.lastclose		= r128_driver_lastclose,

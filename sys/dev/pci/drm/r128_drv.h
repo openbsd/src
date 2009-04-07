@@ -55,13 +55,6 @@
 
 #define GET_RING_HEAD(dev_priv)		R128_READ( R128_PM4_BUFFER_DL_RPTR )
 
-typedef struct drm_r128_freelist {
-	unsigned int age;
-	struct drm_buf *buf;
-	struct drm_r128_freelist *next;
-	struct drm_r128_freelist *prev;
-} drm_r128_freelist_t;
-
 typedef struct drm_r128_ring_buffer {
 	u32 *start;
 	u32 *end;
@@ -90,9 +83,6 @@ typedef struct drm_r128_private {
 	int cce_mode;
 	int cce_fifo_size;
 	int cce_running;
-
-	drm_r128_freelist_t *head;
-	drm_r128_freelist_t *tail;
 
 	int usec_timeout;
 	int is_pci;
@@ -130,13 +120,12 @@ typedef struct drm_r128_private {
 	struct drm_ati_pcigart_info gart_info;
 } drm_r128_private_t;
 
-typedef struct drm_r128_buf_priv {
-	u32 age;
-	int prim;
-	int discard;
-	int dispatched;
-	drm_r128_freelist_t *list_entry;
-} drm_r128_buf_priv_t;
+struct ragedrm_buf_priv {
+	u_int32_t	 age;
+	int		 prim;
+	int		 discard;
+	int		 dispatched;
+};
 
 				/* r128_cce.c */
 extern int r128_cce_init(struct drm_device *dev, void *data, struct drm_file *file_priv);
