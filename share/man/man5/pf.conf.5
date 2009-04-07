@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.414 2009/04/07 13:40:18 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.415 2009/04/07 13:48:38 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2814,7 +2814,8 @@ option         = "set" ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "require-order" ( "yes" | "no" ) ]
                  [ "fingerprints" filename ] |
                  [ "skip on" ifspec ] |
-                 [ "debug" ( "none" | "urgent" | "misc" | "loud" ) ] )
+                 [ "debug" ( "none" | "urgent" | "misc" | "loud" ) ] |
+		 [ "reassemble" ( "yes" | "no" ) [ "no-df" ] )
 
 pf-rule        = action [ ( "in" | "out" ) ]
                  [ "log" [ "(" logopts ")"] ] [ "quick" ]
@@ -2827,13 +2828,15 @@ logopt         = "all" | "user" | "to" interface-name
 filteropt-list = filteropt-list filteropt | filteropt
 filteropt      = user | group | flags | icmp-type | icmp6-type | "tos" tos |
                  ( "no" | "keep" | "modulate" | "synproxy" ) "state"
-                 [ "(" state-opts ")" ] |
-                 "fragment" | "no-df" | "min-ttl" number | "set-tos" tos |
-                 "max-mss" number | "random-id" | "reassemble tcp" |
-                 fragmentation | "allow-opts" |
+                 [ "(" state-opts ")" ] | "scrub" "(" scrubopts ")" |
+                 "fragment" | "allow-opts" |
                  "label" string | "tag" string | [ ! ] "tagged" string |
                  "queue" ( string | "(" string [ [ "," ] string ] ")" ) |
                  "rtable" number | "probability" number"%"
+
+scrubopts      = scrubopt [ "," scrubopts ]
+scrubopt       = "no-df" | "min-ttl" number | "max-mss" number |
+                 "set-tos" tos | "reassemble tcp" | "random-id"
 
 nat-rule       = [ "no" ] "nat" [ "pass" [ "log" [ "(" logopts ")" ] ] ]
                  [ "on" ifspec ] [ af ]
@@ -2888,7 +2891,7 @@ queueopts      = [ "bandwidth" bandwidth-spec ] |
 schedulers     = ( cbq-def | priq-def | hfsc-def )
 bandwidth-spec = "number" ( "b" | "Kb" | "Mb" | "Gb" | "%" )
 
-action         = "pass" | "match" | "block" [ return ] | [ "no" ] "scrub"
+action         = "pass" | "match" | "block" [ return ]
 return         = "drop" | "return" | "return-rst" [ "( ttl" number ")" ] |
                  "return-icmp" [ "(" icmpcode [ [ "," ] icmp6code ] ")" ] |
                  "return-icmp6" [ "(" icmp6code ")" ]
@@ -2960,9 +2963,6 @@ state-opt      = ( "max" number | "no-sync" | timeout | "sloppy" | "pflow" |
                  "max-src-conn-rate" number "/" number |
                  "overload" "\*(Lt" string "\*(Gt" [ "flush" ] |
                  "if-bound" | "floating" )
-
-fragmentation  = [ "fragment reassemble" | "fragment crop" |
-                 "fragment drop-ovl" ]
 
 timeout-list   = timeout [ [ "," ] timeout-list ]
 timeout        = ( "tcp.first" | "tcp.opening" | "tcp.established" |
