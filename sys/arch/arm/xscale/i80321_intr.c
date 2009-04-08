@@ -1,4 +1,4 @@
-/* $OpenBSD: i80321_intr.c,v 1.11 2007/05/19 15:47:16 miod Exp $ */
+/* $OpenBSD: i80321_intr.c,v 1.12 2009/04/08 21:19:31 kettenis Exp $ */
 
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
@@ -160,8 +160,8 @@ i80321intc_calc_mask(void)
 			i80321intc_smask[i] |= SI_TO_IRQBIT(SI_SOFTCLOCK);
 		if (i < IPL_SOFTNET)
 			i80321intc_smask[i] |= SI_TO_IRQBIT(SI_SOFTNET);
-		if (i < IPL_SOFTSERIAL)
-			i80321intc_smask[i] |= SI_TO_IRQBIT(SI_SOFTSERIAL);
+		if (i < IPL_SOFTTTY)
+			i80321intc_smask[i] |= SI_TO_IRQBIT(SI_SOFTTTY);
 #if 0
 		printf("mask[%d]: %x %x\n", i, i80321intc_smask[i],
 		    i80321intc_imask[i]);
@@ -199,7 +199,7 @@ i80321intc_do_pending(void)
 	}
 
 	do {
-		DO_SOFTINT(SI_SOFTSERIAL, IPL_SOFTSERIAL);
+		DO_SOFTINT(SI_SOFTTTY, IPL_SOFTTTY);
 		DO_SOFTINT(SI_SOFTNET, IPL_SOFTNET);
 		DO_SOFTINT(SI_SOFTCLOCK, IPL_SOFTCLOCK);
 		DO_SOFTINT(SI_SOFT, IPL_SOFT);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.h,v 1.2 2007/05/10 17:59:24 deraadt Exp $	*/
+/*	$OpenBSD: softintr.h,v 1.3 2009/04/08 21:19:30 kettenis Exp $	*/
 /*	$NetBSD: softintr.h,v 1.1 2002/01/29 22:54:14 thorpej Exp $	*/
 
 /*
@@ -51,16 +51,9 @@
 #define	SI_SOFT			0	/* for IPL_SOFT */
 #define	SI_SOFTCLOCK		1	/* for IPL_SOFTCLOCK */
 #define	SI_SOFTNET		2	/* for IPL_SOFTNET */
-#define	SI_SOFTSERIAL		3	/* for IPL_SOFTSERIAL */
+#define	SI_SOFTTTY		3	/* for IPL_SOFTTTY */
 
 #define	SI_NQUEUES		4
-
-#define	SI_QUEUENAMES {							\
-	"generic",							\
-	"clock",							\
-	"net",								\
-	"serial",							\
-}
 
 struct soft_intrhand {
 	TAILQ_ENTRY(soft_intrhand) sih_list;

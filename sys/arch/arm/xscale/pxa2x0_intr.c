@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.17 2008/05/19 18:42:12 miod Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.18 2009/04/08 21:19:31 kettenis Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -152,14 +152,14 @@ pxaintc_attach(struct device *parent, struct device *self, void *args)
 		handler[i].name = "stray";
 		handler[i].func = pxa2x0_stray_interrupt;
 		handler[i].arg = (void *)(u_int32_t) i;
-		extirq_level[i] = IPL_SERIAL;
+		extirq_level[i] = IPL_HIGH;
 #endif
 
 	}
 
 	pxa2x0_init_interrupt_masks();
 
-	_splraise(IPL_SERIAL);
+	_splraise(IPL_HIGH);
 	enable_interrupts(I32_bit);
 }
 
@@ -191,7 +191,7 @@ static const int si_to_ipl[SI_NQUEUES] = {
 	IPL_SOFT,		/* SI_SOFT */
 	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
 	IPL_SOFTNET,		/* SI_SOFTNET */
-	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
+	IPL_SOFTTTY,		/* SI_SOFTTTY */
 };
 
 /*
@@ -297,7 +297,7 @@ pxa2x0_update_intr_masks(int irqno, int irqlevel)
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		int i;
 		int max = IPL_NONE;
-		int min = IPL_HIGH; /* XXX kill IPL_SERIAL */
+		int min = IPL_HIGH;
 		TAILQ_FOREACH(ih, &handler[irq].list, ih_list) {
 			if (ih->ih_level > max)
 				max = ih->ih_level;
@@ -316,7 +316,7 @@ pxa2x0_update_intr_masks(int irqno, int irqlevel)
 			pxa2x0_imask[i] |= (1 << irq);
 
 		/* Disable interrupt at upper level */
-		for( ; i < NIPL-1; ++i)
+		for( ; i < NIPL; ++i)
 			pxa2x0_imask[i] &= ~(1 << irq);
 	}
 
@@ -325,17 +325,17 @@ pxa2x0_update_intr_masks(int irqno, int irqlevel)
 	    SI_TO_IRQBIT(SI_SOFT) |
 	    SI_TO_IRQBIT(SI_SOFTCLOCK) |
 	    SI_TO_IRQBIT(SI_SOFTNET) |
-	    SI_TO_IRQBIT(SI_SOFTSERIAL);
+	    SI_TO_IRQBIT(SI_SOFTTTY);
 	pxa2x0_imask[IPL_SOFT] |=
 	    SI_TO_IRQBIT(SI_SOFTCLOCK) |
 	    SI_TO_IRQBIT(SI_SOFTNET) |
-	    SI_TO_IRQBIT(SI_SOFTSERIAL);
+	    SI_TO_IRQBIT(SI_SOFTTTY);
 	pxa2x0_imask[IPL_SOFTCLOCK] |=
 	    SI_TO_IRQBIT(SI_SOFTNET) |
-	    SI_TO_IRQBIT(SI_SOFTSERIAL);
+	    SI_TO_IRQBIT(SI_SOFTTTY);
 	pxa2x0_imask[IPL_SOFTNET] |=
-	    SI_TO_IRQBIT(SI_SOFTSERIAL);
-	pxa2x0_imask[IPL_SOFTSERIAL] |=
+	    SI_TO_IRQBIT(SI_SOFTTTY);
+	pxa2x0_imask[IPL_SOFTTTY] |=
 	    0;
 #else
 	int level; /* debug */
@@ -346,7 +346,7 @@ pxa2x0_update_intr_masks(int irqno, int irqlevel)
 	for(i = 0; i < irqlevel; ++i)
 		pxa2x0_imask[i] |= mask; /* Enable interrupt at lower level */
 
-	for( ; i < NIPL-1; ++i)
+	for( ; i < NIPL; ++i)
 		pxa2x0_imask[i] &= ~mask; /* Disable interrupt at upper level */
 #endif
 
@@ -357,8 +357,8 @@ pxa2x0_update_intr_masks(int irqno, int irqlevel)
 	 */
 	pxa2x0_imask[IPL_BIO] &= pxa2x0_imask[IPL_SOFTNET];
 	pxa2x0_imask[IPL_NET] &= pxa2x0_imask[IPL_BIO];
-	pxa2x0_imask[IPL_SOFTSERIAL] &= pxa2x0_imask[IPL_NET];
-	pxa2x0_imask[IPL_TTY] &= pxa2x0_imask[IPL_SOFTSERIAL];
+	pxa2x0_imask[IPL_SOFTTTY] &= pxa2x0_imask[IPL_NET];
+	pxa2x0_imask[IPL_TTY] &= pxa2x0_imask[IPL_SOFTTTY];
 
 	/*
 	 * splvm() blocks all interrupts that use the kernel memory
@@ -382,12 +382,6 @@ pxa2x0_update_intr_masks(int irqno, int irqlevel)
 	 * splhigh() must block "everything".
 	 */
 	pxa2x0_imask[IPL_HIGH] &= pxa2x0_imask[IPL_STATCLOCK];
-
-	/*
-	 * XXX We need serial drivers to run at the absolute highest priority
-	 * in order to avoid overruns, so serial > high.
-	 */
-	pxa2x0_imask[IPL_SERIAL] &= pxa2x0_imask[IPL_HIGH];
 
 #ifdef DEBUG
 	for (level = IPL_NONE; level < NIPL; level++) {
@@ -426,7 +420,7 @@ pxa2x0_init_interrupt_masks(void)
 	    SI_TO_IRQBIT(SI_SOFT) |
 	    SI_TO_IRQBIT(SI_SOFTCLOCK) |
 	    SI_TO_IRQBIT(SI_SOFTNET) |
-	    SI_TO_IRQBIT(SI_SOFTSERIAL);
+	    SI_TO_IRQBIT(SI_SOFTTTY);
 
 	/*
 	 * Initialize the soft interrupt masks to block themselves.
@@ -434,7 +428,7 @@ pxa2x0_init_interrupt_masks(void)
 	pxa2x0_imask[IPL_SOFT] = ~SI_TO_IRQBIT(SI_SOFT);
 	pxa2x0_imask[IPL_SOFTCLOCK] = ~SI_TO_IRQBIT(SI_SOFTCLOCK);
 	pxa2x0_imask[IPL_SOFTNET] = ~SI_TO_IRQBIT(SI_SOFTNET);
-	pxa2x0_imask[IPL_SOFTSERIAL] = ~SI_TO_IRQBIT(SI_SOFTSERIAL);
+	pxa2x0_imask[IPL_SOFTTTY] = ~SI_TO_IRQBIT(SI_SOFTTTY);
 
 	pxa2x0_imask[IPL_SOFT] &= pxa2x0_imask[IPL_NONE];
 
@@ -480,7 +474,7 @@ pxa2x0_do_pending(void)
 	}
 
 	do {
-		DO_SOFTINT(SI_SOFTSERIAL,IPL_SOFTSERIAL);
+		DO_SOFTINT(SI_SOFTTTY,IPL_SOFTTTY);
 		DO_SOFTINT(SI_SOFTNET, IPL_SOFTNET);
 		DO_SOFTINT(SI_SOFTCLOCK, IPL_SOFTCLOCK);
 		DO_SOFTINT(SI_SOFT, IPL_SOFT);
@@ -623,8 +617,8 @@ pxa2x0_intr_disestablish(void *cookie)
 	ih->arg = (void *) irqno;
 	ih->func = pxa2x0_stray_interrupt;
 	ih->name = "stray";
-	extirq_level[irqno] = IPL_SERIAL;
-	pxa2x0_update_intr_masks(irqno, IPL_SERIAL);
+	extirq_level[irqno] = IPL_HIGH;
+	pxa2x0_update_intr_masks(irqno, IPL_HIGH);
 
 	restore_interrupts(psw);
 #endif
