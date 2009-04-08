@@ -511,8 +511,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/savage_drm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/savage_drv.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/sis_drm.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/sis_drv.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/sis_ds.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/drm/tdfx_drv.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/eapreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/emuxkireg.ph

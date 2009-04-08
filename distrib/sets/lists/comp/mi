@@ -530,8 +530,6 @@
 ./usr/include/dev/pci/drm/savage_drm.h
 ./usr/include/dev/pci/drm/savage_drv.h
 ./usr/include/dev/pci/drm/sis_drm.h
-./usr/include/dev/pci/drm/sis_drv.h
-./usr/include/dev/pci/drm/sis_ds.h
 ./usr/include/dev/pci/drm/tdfx_drv.h
 ./usr/include/dev/pci/eapreg.h
 ./usr/include/dev/pci/emuxkireg.h
