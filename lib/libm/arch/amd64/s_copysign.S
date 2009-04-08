@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_copysign.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
+/*	$OpenBSD: s_copysign.S,v 1.3 2009/04/08 22:30:41 martynas Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -10,24 +10,12 @@
 
 #include <machine/asm.h>
 
-#ifdef __x86_64__
 .Lpos:
 	.quad	0x8000000000000000
 .Lneg:
 	.quad	0x7fffffffffffffff
-#endif
-
 
 ENTRY(copysign)
-#ifdef __i386__
-	movl	16(%esp),%edx
-	andl	$0x80000000,%edx
-	movl	8(%esp),%eax
-	andl	$0x7fffffff,%eax
-	orl	%edx,%eax
-	movl	%eax,8(%esp)
-	fldl	4(%esp)
-#else
 #if 0
 	/*
 	 * XXXfvdl gas doesn't grok this yet.
@@ -47,6 +35,5 @@ ENTRY(copysign)
 	orl	%edx,%eax
 	movl	%eax,-4(%rsp)
 	movsd	-8(%rsp),%xmm0
-#endif
 #endif
 	ret
