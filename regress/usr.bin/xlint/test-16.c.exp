@@ -1,3 +1,1 @@
-/usr/include/sys/time.h:207: warning: converted from 'long' to 'unsigned long long'
-/usr/include/sys/time.h:224: warning: converted from 'long' to 'unsigned long long'
 Lint pass2:
