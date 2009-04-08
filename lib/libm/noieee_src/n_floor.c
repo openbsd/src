@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_floor.c,v 1.10 2008/12/10 01:08:24 martynas Exp $	*/
+/*	$OpenBSD: n_floor.c,v 1.11 2009/04/08 21:58:28 martynas Exp $	*/
 /*	$NetBSD: n_floor.c,v 1.1 1995/10/10 23:36:48 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)floor.c	8.1 (Berkeley) 6/4/93";
 
 #include "mathimpl.h"
 
-vc(L, 4503599627370496.0E0 ,0000,5c00,0000,0000, 55, 1.0) /* 2**55 */
+vc(L, 36028797018963968.0E0 ,0000,5c00,0000,0000, 55, 1.0) /* 2**55 */
 
 ic(L, 4503599627370496.0E0, 52, 1.0)			  /* 2**52 */
 
