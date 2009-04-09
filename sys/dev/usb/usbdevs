@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.423 2009/04/02 17:45:17 damien Exp $
+$OpenBSD: usbdevs,v 1.424 2009/04/09 08:22:14 mglocker Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -518,6 +518,7 @@ vendor SENAO		0x1740	Senao
 vendor ASUS2		0x1761	ASUS
 vendor SWEEX2		0x177f	Sweex
 vendor METAGEEK		0x1781	MetaGeek
+vendor DISPLAYLINK	0x17e9	DisplayLink
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
@@ -1213,6 +1214,9 @@ product DLINK2 DWA130		0x3c13	DWA-130
 
 /* D-Link(3) products */
 product DLINK3 KVM221		0x020f	KVM-221
+
+/* DisplayLink products */
+product DISPLAYLINK DL120	0x01bb	DL-120
 
 /* DMI products */
 product DMI SA2_0		0xb001	Storage Adapter
