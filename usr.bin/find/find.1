@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.73 2009/02/08 17:33:01 jmc Exp $
+.\"	$OpenBSD: find.1,v 1.74 2009/04/09 14:30:39 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 8 2009 $
+.Dd $Mdocdate: April 9 2009 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -466,6 +466,10 @@ a preceding minus sign means
 .Dq less than n ,
 and neither means
 .Dq exactly n .
+Exceptions are the primaries
+.Ic mindepth
+and
+.Ic maxdepth .
 .Sh OPERATORS
 The primaries may be combined using the following operators.
 The operators are listed in order of decreasing precedence.
