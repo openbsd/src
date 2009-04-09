@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.10 2009/02/03 14:06:18 stsp Exp $ */
+/*	$OpenBSD: kroute.c,v 1.11 2009/04/09 19:03:10 stsp Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -177,7 +177,7 @@ kr_change(struct kroute *kroute)
 	}
 
 	/* nexthop within 127/8 -> ignore silently */
-	if (IN6_IS_ADDR_LOOPBACK(&kr->r.nexthop))
+	if (kr && IN6_IS_ADDR_LOOPBACK(&kr->r.nexthop))
 		return (0);
 
 	/*
@@ -204,7 +204,7 @@ kr_change(struct kroute *kroute)
 
 		if (kroute_insert(kr) == -1)
 			free(kr);
-	} else
+	} else if (kr)
 		kr->r.nexthop = kroute->nexthop;
 
 	return (0);
