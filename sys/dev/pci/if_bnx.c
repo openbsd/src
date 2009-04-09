@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.72 2009/03/30 02:38:53 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.73 2009/04/09 11:36:05 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -853,7 +853,7 @@ bnx_attachhook(void *xsc)
 	ifp->if_watchdog = bnx_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, USABLE_TX_BD - 1);
 	IFQ_SET_READY(&ifp->if_snd);
-        m_clsetwms(ifp, MCLBYTES, 2, USABLE_RX_BD);
+	m_clsetwms(ifp, MCLBYTES, 2, USABLE_RX_BD);
 	bcopy(sc->eaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	bcopy(sc->bnx_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -1861,7 +1861,7 @@ bnx_nvram_write(struct bnx_softc *sc, u_int32_t offset, u_int8_t *data_buf,
 	}
 
 	if (len32 & 3) {
-	       	if ((len32 > 4) || !align_start) {
+		if ((len32 > 4) || !align_start) {
 			align_end = 4 - (len32 & 3);
 			len32 += align_end;
 			if ((rc = bnx_nvram_read(sc, offset32 + len32 - 4,
@@ -4283,9 +4283,9 @@ bnx_mgmt_init(struct bnx_softc *sc)
 
 	/* Enable all critical blocks in the MAC. */
 	REG_WR(sc, BNX_MISC_ENABLE_SET_BITS,
-	       BNX_MISC_ENABLE_SET_BITS_RX_V2P_ENABLE |
-	       BNX_MISC_ENABLE_SET_BITS_RX_DMA_ENABLE |
-	       BNX_MISC_ENABLE_SET_BITS_COMPLETION_ENABLE);
+	    BNX_MISC_ENABLE_SET_BITS_RX_V2P_ENABLE |
+	    BNX_MISC_ENABLE_SET_BITS_RX_DMA_ENABLE |
+	    BNX_MISC_ENABLE_SET_BITS_COMPLETION_ENABLE);
 	REG_RD(sc, BNX_MISC_ENABLE_SET_BITS);
 	DELAY(20);
 
@@ -4725,7 +4725,7 @@ bnx_intr(void *xsc)
 	/* Re-enable interrupts. */
 	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
 	    BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | sc->last_status_idx |
-            BNX_PCICFG_INT_ACK_CMD_MASK_INT);
+	    BNX_PCICFG_INT_ACK_CMD_MASK_INT);
 	REG_WR(sc, BNX_PCICFG_INT_ACK_CMD,
 	    BNX_PCICFG_INT_ACK_CMD_INDEX_VALID | sc->last_status_idx);
 
