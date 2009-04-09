@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.96 2009/03/22 22:53:47 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.97 2009/04/09 19:49:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -73,9 +73,9 @@
 #define	SMTP_ANYLINE_MAX	SMTP_TEXTLINE_MAX
 
 #define F_STARTTLS		 0x01
-#define F_SSMTP			 0x02
+#define F_SMTPS			 0x02
 #define F_AUTH			 0x04
-#define F_SSL			(F_SSMTP|F_STARTTLS)
+#define F_SSL			(F_SMTPS|F_STARTTLS)
 
 
 struct netaddr {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.11 2009/03/15 19:32:11 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.12 2009/04/09 19:49:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -509,7 +509,7 @@ ssl_session_accept(int fd, short event, void *p)
 	log_info("ssl_session_accept: accepted ssl client");
 	s->s_flags |= F_SECURE;
 
-	if (s->s_l->flags & F_SSMTP) {
+	if (s->s_l->flags & F_SMTPS) {
 		s_smtp.ssmtp++;
 		s_smtp.ssmtp_active++;
 	}
@@ -601,7 +601,7 @@ ssl_session_destroy(struct session *s)
 		return;
 	}
 
-	if (s->s_l->flags & F_SSMTP) {
+	if (s->s_l->flags & F_SMTPS) {
 		if (s->s_flags & F_SECURE)
 			s_smtp.ssmtp_active--;
 	}

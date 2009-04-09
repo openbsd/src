@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.32 2009/03/29 14:18:20 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.33 2009/04/09 19:49:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -143,9 +143,6 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			memcpy(l, imsg.data, sizeof(*l));
 			if ((l->fd = imsg_get_fd(ibuf, &imsg)) == -1)
 				fatal("cannot get fd");
-
-			log_debug("smtp_dispatch_parent: "
-			    "got fd %d for listener: %p", l->fd, l);
 
 			(void)strlcpy(key.ssl_name, l->ssl_cert_name,
 			    sizeof(key.ssl_name));
@@ -639,8 +636,9 @@ smtp_setup_events(struct smtpd *env)
 	struct timeval	 tv;
 
 	TAILQ_FOREACH(l, &env->sc_listeners, entry) {
-		log_debug("smtp_setup_events: configuring listener: %p%s.",
-		    l, (l->flags & F_SSL)?" (with ssl)":"");
+		log_debug("smtp_setup_events: listen on %s port %d flags 0x%01x"
+		    " cert \"%s\"", ss_to_text(&l->ss), ntohs(l->port),
+		    l->flags, l->ssl_cert_name);
 
 		session_socket_blockmode(l->fd, BM_NONBLOCK);
 		if (listen(l->fd, SMTPD_BACKLOG) == -1)

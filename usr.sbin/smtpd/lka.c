@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.39 2009/04/05 16:33:12 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.40 2009/04/09 19:49:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -440,7 +440,7 @@ lka_dispatch_mta(int sig, short event, void *p)
 						}
 
 						switch (mxhost.flags & F_SSL) {
-						case F_SSMTP:
+						case F_SMTPS:
 							ssin->sin_port = htons(465);
 							mxrep.mxhost = mxhost;
 							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
@@ -455,7 +455,7 @@ lka_dispatch_mta(int sig, short event, void *p)
 						case F_STARTTLS:
 							ssin->sin_port = htons(25);
 							mxrep.mxhost = mxhost;
-							mxrep.mxhost.flags &= ~F_SSMTP;
+							mxrep.mxhost.flags &= ~F_SMTPS;
 							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
 							    sizeof(struct mxrep));
 							break;
@@ -481,7 +481,7 @@ lka_dispatch_mta(int sig, short event, void *p)
 						}
 						
 						switch (mxhost.flags & F_SSL) {
-						case F_SSMTP:
+						case F_SMTPS:
 							ssin6->sin6_port = htons(465);
 							mxrep.mxhost = mxhost;
 							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
@@ -496,7 +496,7 @@ lka_dispatch_mta(int sig, short event, void *p)
 						case F_STARTTLS:
 							ssin6->sin6_port = htons(25);
 							mxrep.mxhost = mxhost;
-							mxrep.mxhost.flags &= ~F_SSMTP;
+							mxrep.mxhost.flags &= ~F_SMTPS;
 							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
 							    sizeof(struct mxrep));
 							break;

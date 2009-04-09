@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.39 2009/03/29 14:18:20 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.40 2009/04/09 19:49:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -624,7 +624,7 @@ mta_write(int s, short event, void *arg)
 		return;
 	}
 
-	if (mxhost && mxhost->flags & F_SSMTP) {
+	if (mxhost && mxhost->flags & F_SMTPS) {
 		ssl_client_init(sessionp);
 		return;
 	}

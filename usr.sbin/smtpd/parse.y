@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2009/03/31 21:03:49 tobias Exp $	*/
+/*	$OpenBSD: parse.y,v 1.31 2009/04/09 19:49:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -113,8 +113,8 @@ typedef struct {
 
 %}
 
-%token	QUEUE INTERVAL LISTEN ON ALL PORT USE
-%token	MAP TYPE HASH LIST SINGLE SSL SSMTP CERTIFICATE
+%token	QUEUE INTERVAL LISTEN ON ALL PORT
+%token	MAP TYPE HASH LIST SINGLE SSL SMTPS CERTIFICATE
 %token	DNS DB TFILE EXTERNAL DOMAIN CONFIG SOURCE
 %token  RELAY VIA DELIVER TO MAILDIR MBOX HOSTNAME
 %token	ACCEPT REJECT INCLUDE NETWORK ERROR MDA FROM FOR
@@ -122,7 +122,7 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.map>		map
-%type	<v.number>	quantifier decision port ssmtp from auth ssl
+%type	<v.number>	quantifier decision port from auth ssl
 %type	<v.cond>	condition
 %type	<v.tv>		interval
 %type	<v.object>	mapref
@@ -214,19 +214,15 @@ port		: PORT STRING			{
 		}
 		;
 
-certname	: USE CERTIFICATE STRING	{
-			if (($$ = strdup($3)) == NULL)
+certname	: CERTIFICATE STRING	{
+			if (($$ = strdup($2)) == NULL)
 				fatal(NULL);
-			free($3);
+			free($2);
 		}
 		| /* empty */			{ $$ = NULL; }
 		;
 
-ssmtp		: SSMTP				{ $$ = 1; }
-		| /* empty */			{ $$ = 0; }
-		;
-
-ssl		: SSMTP				{ $$ = F_SSMTP; }
+ssl		: SMTPS				{ $$ = F_SMTPS; }
 		| TLS				{ $$ = F_STARTTLS; }
 		| SSL				{ $$ = F_SSL; }
 		| /* empty */			{ $$ = 0; }
@@ -238,19 +234,33 @@ auth		: ENABLE AUTH  			{ $$ = 1; }
 main		: QUEUE INTERVAL interval	{
 			conf->sc_qintval = $3;
 		}
-		| ssmtp LISTEN ON STRING port certname auth {
+		| LISTEN ON STRING port ssl certname auth {
 			char		*cert;
 			u_int8_t	 flags;
 
-			if ($5 == 0) {
-				if ($1)
-					$5 = htons(465);
-				else
-					$5 = htons(25);
+			if ($5 == F_SSL) {
+				yyerror("syntax error");
+				free($6);
+				free($3);
+				YYERROR;
 			}
-			cert = ($6 != NULL) ? $6 : $4;
 
-			flags = 0;
+			if ($5 == 0 && ($6 != NULL || $7)) {
+				yyerror("error: must specify tls or smtps");
+				free($6);
+				free($3);
+				YYERROR;
+			}
+
+			if ($4 == 0) {
+				if ($5 == F_SMTPS)
+					$4 = htons(465);
+				else
+					$4 = htons(25);
+			}
+
+			cert = ($6 != NULL) ? $6 : $3;
+			flags = $5;
 
 			if ($7)
 				flags |= F_AUTH;
@@ -258,33 +268,27 @@ main		: QUEUE INTERVAL interval	{
 			if (ssl_load_certfile(conf, cert) < 0) {
 				log_warnx("warning: could not load cert: %s, "
 				    "no SSL/TLS/AUTH support", cert);
-				if ($1 || $6 != NULL) {
+				if ($5) {
 					yyerror("cannot load certificate: %s",
 					    cert);
 					free($6);
-					free($4);
+					free($3);
 					YYERROR;
 				}
 			}
-			else {
-				if ($1)
-					flags |= F_SSMTP;
-				else
-					flags |= F_STARTTLS;
-			}
 
-			if (! interface($4, &conf->sc_listeners,
-				MAX_LISTEN, $5, flags)) {
-				if (host($4, &conf->sc_listeners,
-					MAX_LISTEN, $5, flags) <= 0) {
-					yyerror("invalid virtual ip or interface: %s", $4);
+			if (! interface($3, &conf->sc_listeners,
+				MAX_LISTEN, $4, flags)) {
+				if (host($3, &conf->sc_listeners,
+					MAX_LISTEN, $4, flags) <= 0) {
+					yyerror("invalid virtual ip or interface: %s", $3);
 					free($6);
-					free($4);
+					free($3);
 					YYERROR;
 				}
 			}
 			free($6);
-			free($4);
+			free($3);
 		}
 		| HOSTNAME STRING		{
 			if (strlcpy(conf->sc_hostname, $2,
@@ -732,29 +736,27 @@ action		: DELIVER TO MAILDIR STRING	{
 		| RELAY				{
 			rule->r_action = A_RELAY;
 		}
-		| RELAY VIA ssl STRING port auth {
+		| RELAY VIA STRING port ssl auth {
 			rule->r_action = A_RELAYVIA;
 
-			if ($3)
-				rule->r_value.relayhost.flags = $3;
+			if ($5 == 0 && $6) {
+				yyerror("error: auth over insecure channel");
+				free($3);
+				YYERROR;
+			}
 
-			if (strlcpy(rule->r_value.relayhost.hostname, $4,
+			if (strlcpy(rule->r_value.relayhost.hostname, $3,
 			    sizeof(rule->r_value.relayhost.hostname))
 			    >= sizeof(rule->r_value.relayhost.hostname))
 				fatal("hostname too long");
 
-			if ($5 == 0)
-				rule->r_value.relayhost.port = 0;
-			else
-				rule->r_value.relayhost.port = $5;
+			rule->r_value.relayhost.port = $4;
+			rule->r_value.relayhost.flags |= $5;
 
-			if ($6) {
-				if (! $3)
-					fatalx("cannot auth over insecure channel");
+			if ($6)
 				rule->r_value.relayhost.flags |= F_AUTH;
-			}
 
-			free($4);
+			free($3);
 		}
 		;
 
@@ -939,13 +941,12 @@ lookup(char *s)
 		{ "reject",		REJECT },
 		{ "relay",		RELAY },
 		{ "single",		SINGLE },
+		{ "smtps",		SMTPS },
 		{ "source",		SOURCE },
 		{ "ssl",		SSL },
-		{ "ssmtp",		SSMTP },
 		{ "tls",		TLS },
 		{ "to",			TO },
 		{ "type",		TYPE },
-		{ "use",		USE },
 		{ "via",		VIA },
 	};
 	const struct keywords	*p;
