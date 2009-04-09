@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.27 2009/03/29 21:42:30 stsp Exp $ */
+/*	$OpenBSD: rde.c,v 1.28 2009/04/09 19:00:40 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1238,7 +1238,7 @@ orig_intra_lsa_net(struct iface *iface, struct vertex *old)
 		fatal("orig_intra_lsa_net");
 
 	lsa->data.pref_intra.ref_type = htons(LSA_TYPE_NETWORK);
-	lsa->data.pref_intra.ref_lsid = htonl(iface->ifindex);
+	lsa->data.pref_intra.ref_ls_id = htonl(iface->ifindex);
 	lsa->data.pref_intra.ref_adv_rtr = rde_router_id();
 
 	numprefix = 0;
@@ -1398,7 +1398,7 @@ orig_intra_lsa_rtr(struct area *area, struct vertex *old)
 		fatal("orig_intra_lsa_net");
 
 	lsa->data.pref_intra.ref_type = htons(LSA_TYPE_ROUTER);
-	lsa->data.pref_intra.ref_lsid = 0;
+	lsa->data.pref_intra.ref_ls_id = 0;
 	lsa->data.pref_intra.ref_adv_rtr = rde_router_id();
 
 	log_debug("orig_intra_lsa_rtr: area %s", inet_ntoa(area->id));
