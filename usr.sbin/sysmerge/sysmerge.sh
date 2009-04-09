@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.34 2009/04/06 15:25:10 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.35 2009/04/09 10:44:50 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -240,28 +240,34 @@ mm_install() {
 	case "${1#.}" in
 	/dev/MAKEDEV)
 		echo -n "===> A new ${DESTDIR}/dev/MAKEDEV script was installed, "
-		echo "MAKEDEV will be run"
+		echo "running MAKEDEV"
 		(cd ${DESTDIR}/dev && /bin/sh MAKEDEV all)
 		;;
 	/etc/login.conf)
 		if [ -f ${DESTDIR}/etc/login.conf.db ]; then
 			echo -n "===> A new ${DESTDIR}/etc/login.conf file was installed, "
-			echo "cap_mkdb will be run"
+			echo "running cap_mkdb"
 			cap_mkdb ${DESTDIR}/etc/login.conf
 		fi
 		;;
+	/etc/mail/access|/etc/mail/genericstable|/etc/mail/mailertable|/etc/mail/virtusertable)
+		DBFILE=`echo ${1} | sed -e 's,.*/,,'`
+		echo -n "===> A new ${DESTDIR}/${1#.} file was installed, "
+		echo "running makemap"
+		/usr/libexec/sendmail/makemap hash ${DESTDIR}/${1#.} < ${DESTDIR}/${1#.}
+		;;
 	/etc/mail/aliases)
 		echo -n "===> A new ${DESTDIR}/etc/mail/aliases file was installed, "
-		echo "newaliases will be run"
+		echo "running newaliases"
 		if [ "${DESTDIR}" ]; then
-			chroot ${DESTDIR} newaliases || NEED_NEWALIASES=1
+			chroot ${DESTDIR} newaliases || export NEED_NEWALIASES=1
 		else
 			newaliases
 		fi
 		;;
 	/etc/master.passwd)
 		echo -n "===> A new ${DESTDIR}/etc/master.passwd file was installed, "
-		echo "pwd_mkdb will be run"
+		echo "running pwd_mkdb"
 		pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd
 		;;
 	esac
@@ -511,17 +517,18 @@ do_compare() {
 
 
 do_post() {
-	if [ "${NEED_NEWALIASES}" ]; then
-		echo "===> A new ${DESTDIR}/etc/mail/aliases file was installed."
-		echo "     However ${DESTDIR}/usr/bin/newaliases could not be run,"
-		echo "     you will need to rebuild your aliases database manually."
-        fi
-
 	clean_src
 	rm -rf ${OTEMPROOT}
 
 	echo "===> Making sure your directory hierarchy has correct perms, running mtree"
 	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U > /dev/null
+
+	if [ "${NEED_NEWALIASES}" ]; then
+		echo "===> A new ${DESTDIR}/etc/mail/aliases file was installed." >> ${REPORT}
+		echo "However ${DESTDIR}/usr/bin/newaliases could not be run," >> ${REPORT}
+		echo "you will need to rebuild your aliases database manually.\n" >> ${REPORT}
+		unset NEED_NEWALIASES
+	fi
 
 	FILES_IN_TEMPROOT=`find ${TEMPROOT} -type f ! -name \*.merged -size +0 2> /dev/null`
 	FILES_IN_BKPDIR=`find ${BKPDIR} -type f -size +0 2> /dev/null`
@@ -543,7 +550,11 @@ do_post() {
 	fi
 
 	if [ -e "${REPORT}" ]; then
-		echo "===> Manual intervention may be needed, see ${REPORT}"
+		if [ "${OBSOLETE_FILES}" -o "${FILES_IN_TEMPROOT}" ]; then
+			echo "===> Manual intervention may be needed, see ${REPORT}"
+		else
+			echo "===> Output log available at ${REPORT}"
+		fi
 		echo "===> When done, ${WRKDIR} and its subdirectories should be removed"
 	else
 		echo "===> Removing ${WRKDIR}"
