@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spdmem.4,v 1.4 2007/10/27 07:04:40 jmc Exp $
+.\"	$OpenBSD: spdmem.4,v 1.5 2009/04/09 15:52:41 jsg Exp $
 .\"
 .\" Copyright (c) 2007 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 27 2007 $
+.Dd $Mdocdate: April 9 2009 $
 .Dt SPDMEM 4
 .Os
 .Sh NAME
@@ -32,8 +32,7 @@ driver retrieves information about memory modules from an
 onboard EEPROM, standardised as JEDEC 21-C.
 Currently
 .Nm
-is able to decode information relating to SDRAM, DDR SDRAM,
-and DDR2 SDRAM.
+is able to decode information relating to SDRAM and DDR/DDR2/DDR3 SDRAM.
 .Sh SEE ALSO
 .Xr iic 4
 .Sh HISTORY
