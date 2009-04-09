@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.43 2009/03/27 11:11:37 jsg Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.44 2009/04/09 09:15:24 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -536,7 +536,7 @@ upgt_activate(struct device *self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-	case (DVACT_DEACTIVATE):
+	case DVACT_DEACTIVATE:
 		break;
 	}
 
