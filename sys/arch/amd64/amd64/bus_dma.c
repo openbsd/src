@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.20 2009/04/09 03:06:35 dlg Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.21 2009/04/09 03:08:36 dlg Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -318,9 +318,9 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 
 	bmask  = ~(map->_dm_boundary - 1);
 
-	for (i = 0; i < nsegs; i++) {
+	for (i = 0; i < nsegs && size > 0; i++) {
 		paddr = segs[i].ds_addr;
-		plen = segs[i].ds_len;
+		plen = MIN(segs[i].ds_len, size);
 
 		while (plen > 0) {
 			/*
@@ -363,9 +363,11 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 				}
 			}
 
-			lastaddr = paddr + sgsize;
 			paddr += sgsize;
 			plen -= sgsize;
+			size -= sgsize;
+
+			lastaddr = paddr;
 		}
 	}
 
