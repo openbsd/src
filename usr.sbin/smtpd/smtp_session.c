@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.64 2009/04/09 19:49:34 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.65 2009/04/09 20:19:03 todd Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -206,10 +206,12 @@ int
 session_rfc4954_auth_login(struct session *s, char *arg, size_t nr)
 {
 	struct session_auth_req req;
+	int blen = 0;
 	size_t len = 0;
 
 	switch (s->s_state) {
 	case S_HELO:
+		/* "Username:" base64 encoded is "VXNlcm5hbWU6" */
 		session_respond(s, "334 VXNlcm5hbWU6");
 		s->s_auth.session_id = s->s_id;
 		s->s_state = S_AUTH_USERNAME;
@@ -217,19 +219,27 @@ session_rfc4954_auth_login(struct session *s, char *arg, size_t nr)
 
 	case S_AUTH_USERNAME:
 		bzero(s->s_auth.buffer, sizeof(s->s_auth.buffer));
-		if (kn_decode_base64(arg, req.buffer, 1024) == -1 ||
-		    ! bsnprintf(s->s_auth.buffer + 1, sizeof(s->s_auth.buffer) - 1, "%s", req.buffer))
+		if ((blen = kn_decode_base64(arg, req.buffer, sizeof(req.buffer) - 1)) == -1)
+			goto err;
+		/* req.buffer is a byte string, NUL terminate */
+		req.buffer[blen] = '\0';
+		if (! bsnprintf(s->s_auth.buffer + 1, sizeof(s->s_auth.buffer) - 1, "%s", req.buffer))
 			goto err;
 
+		/* "Password:" base64 encoded is "UGFzc3dvcmQ6" */
 		session_respond(s, "334 UGFzc3dvcmQ6");
 		s->s_state = S_AUTH_PASSWORD;
 
 		return 1;
 
 	case S_AUTH_PASSWORD: {
+		if ((blen = kn_decode_base64(arg, req.buffer, sizeof(req.buffer) - 1)) == -1)
+			goto err;
+		/* req.buffer is a byte string, NUL terminate */
+		req.buffer[blen] = '\0';
+
 		len = strlen(s->s_auth.buffer + 1);
-		if (kn_decode_base64(arg, req.buffer, 1024) == -1 ||
-		    ! bsnprintf(s->s_auth.buffer + len + 2, sizeof(s->s_auth.buffer) - len - 2, "%s", req.buffer))
+		if (! bsnprintf(s->s_auth.buffer + len + 2, sizeof(s->s_auth.buffer) - len - 2, "%s", req.buffer))
 			goto err;
 
 		break;
