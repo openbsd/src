@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.32 2009/03/28 07:39:16 jmc Exp $
+dnl	$OpenBSD: hardware,v 1.33 2009/04/09 16:02:24 jsg Exp $
 dnl When more than one model is supported, turn this into a list...
 The following Sharp Zaurus models are supported by OpenBSD:
 
@@ -114,188 +114,16 @@ and serial ports), many USB devices are supported. These {:-include-:}:
 		    Z-TEK ZK-R02
 	Wireless Ethernet Adapters
 		Atmel AT76C50x IEEE 802.11b USB adapters
-		    3Com 3CRSHEW696
-		    AboCom BWU613
-		    Accton 2664W
-		    Acer Peripherals AWL300
-		    Acer Peripherals AWL400
-		    Actiontec 802UAT1
-		    Addtron AWU120
-		    Aincomm AWU2000B
-		    Askey Computer Voyager 1010
-		    Askey Computer WLL013 (Intersil Radio)
-		    Askey Computer WLL013 (RFMD Radio)
-		    Atmel AT76C503 (Intersil Radio)
-		    Atmel AT76C503 (RFMD Radio)
-		    Atmel AT76C505 (RFMD Radio)
-		    Atmel AT76C505 (RFMD 2958 Radio)
-		    Atmel AT76C505A (RFMD 2958 Radio)
-		    Atmel AT76C505AS (RFMD 2958 Radio)
-		    Belkin F5D6050
-		    Bluetake BW002
-		    Compaq iPAQ h54xx/h55xx Internal WLAN
-		    Conceptronic C11U
-		    Conceptronic WL210
-		    Corega WLAN USB Stick 11
-		    Dick Smith Electronics CHUSB 611G
-		    Dick Smith Electronics WL200U
-		    Dick Smith Electronics WL240U
-		    Dick Smith Electronics XH1153
-		    D-Link DWL-120 rev E
-		    Geowave GW-US11S
-		    Gigabyte GN-WLBM101
-		    Gigaset WLAN
-		    Hewlett-Packard HN210W
-		    Intel AP310 AnyPoint II
-		    I/O DATA USB WN-B11
-		    Lexar 2662W-AR
-		    Linksys WUSB11 802.11b
-		    Linksys WUSB11 802.11b v2.8
-		    MSI WLAN
-		    Netgear MA101
-		    Netgear MA101 rev B
-		    OQO model 01 WiFi
-		    Ovislink AirLive WL-1120USB
-		    OvisLink AirLive WL-1130USB
-		    Planex Communications GW-US11S
-		    Samsung SWL2100W
-		    Siemens WLL013
-		    SMC EZ Connect 11Mbps (SMC2662w)
-		    SMC EZ Connect 11Mbps v2 (SMC2662wV2)
-		    Tekram U-300C
-		    TRENDnet TEW-229UB
-		    W-Buddie WN210
-		    Z-Com M4Y-750
 		Marvell Libertas IEEE 802.11b/g Compact Flash adapters (will be
-		detected as PCMCIA adapters)
+		 detected as PCMCIA adapters)
 		    Ambicom WL54CF
 		Ralink Technology IEEE 802.11b/g USB adapters
-		    AMIT WL532U
-		    ASUS WL-167g
-		    Belkin F5D7050
-		    Buffalo WLI-U2-KG54
-		    Buffalo WLI-U2-KG54-AI
-		    Buffalo WLI-U2-KG54-YB
-		    CNet CWD-854
-		    Compex WLU54G
-		    Conceptronic C54RU
-		    D-Link DWL-G122 (b1)
-		    Dynalink WLG25USB
-		    E-Tech WGUS02
-		    Eminent 3035
-		    Gigabyte GN-WBKG
-		    Hercules HWGUSB2-54
-		    KCORP LifeStyle KLS-685
-		    Linksys WUSB54G v4
-		    Linksys WUSB54GP v4
-		    MSI MS-6861
-		    MSI MS-6865
-		    MSI MS-6869
-		    Nintendo Wi-Fi USB Connector
-		    Nova Tech NV-902W
-		    OvisLink Evo-W54USB
-		    SerComm UB801R
-		    SparkLAN WL-685R
-		    Sphairon UB801R
-		    Surecom EP-9001-g rev 3A
-		    Sweex LC100060
-		    Tonze UW-6200C
-		    Zaapa ZNWUSB-54
-		    Zinwell ZPlus-G250
-		    Zinwell ZWX-G261
-		    Zonet ZEW2500
 		Ralink Technology USB IEEE 802.11a/b/g USB adapters
-		    3Com Aolynk WUB320g
-		    Abocom WUG2700
-		    Airlink101 AWLL5025
-		    ASUS WL-167g ver 2
-		    Atlantis Land A02-UP1-W54
-		    Belkin F5D7050 ver 3
-		    Belkin F5D9050 ver 3
-		    Buffalo WLI-U2-SG54HP
-		    Buffalo WLI-U2-G54HP
-		    CNet CWD-854 ver F
-		    Conceptronic C54RU ver 2
-		    Corega CG-WLUSB2GL
-		    Corega CG-WLUSB2GO
-		    Corega CG-WLUSB2GPX
-		    D-Link DWL-G122 rev C1
-		    D-Link WUA-1340
-		    Digitus DN-7003GR
-		    Edimax EW-7318Ug
-		    Edimax EW-7318USg
-		    Edimax EW-7618Ug
-		    Gigabyte GN-WB01GS
-		    Gigabyte GN-WI05GS
-		    Hawking HWUG1
-		    Hawking HWU54DM
-		    Hercules HWGUSB2-54-LB
-		    Hercules HWGUSB2-54V2-AP
-		    LevelOne WNC-0301USB v3
-		    Linksys WUSB200
-		    Linksys WUSB54G rev C
-		    Linksys WUSB54GR
-		    Planex GW-US54HP
-		    Planex GW-US54Mini2
-		    Planex GW-USMM
-		    Senao NUB-3701
-		    Sitecom WL-113 ver 2
-		    Sitecom WL-172
-		    Sweex LW053
-		    TP-LINK TL-WN321G
 		Ralink Technology USB IEEE 802.11a/b/g/Draft-N USB adapters
-		    ASUS USB-N11
-		    ASUS WL-160N
-		    Belkin F5D8051 ver 3000
-		    Belkin F5D8053
-		    Buffalo WLI-UC-AG300N
-		    Buffalo WLI-UC-GN
-		    Corega CG-WLUSB300GNM
-		    D-Link DWA-130
-		    D-Link DWA-140
-		    Edimax EW-7711UAn
-		    Edimax EW-7717Un
-		    Edimax EW-7718Un
-		    Gigabyte GN-WB32L
-		    Linksys WUSB600N
-		    Planex GW-USMicroN
-		    Planex GW-US300MiniS
 		WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b USB
-		adapters
-		    Acer Warplink USB-400
-		    Actiontec HWU01170
-		    AirVast WM168b
-		    Ambit WLAN
-		    Apacer Wireless Steno MB112
-		    ASUS WL-140
-		    Compaq W100
-		    Corega WLUSB-11
-		    Corega WLUSB-11 Key
-		    D-Link DWL-120 (rev F)
-		    D-Link DWL-122
-		    I-O DATA WN-B11/USB
-		    Intel PRO/Wireless 2011B
-		    Intersil Prism 2X
-		    JVC MP-XP7250
-		    Linksys WUSB11 v3.0
-		    Linksys WUSB12
-		    Melco WLI-USB-KB11
-		    Melco WLI-USB-KS11G
-		    Melco WLI-USB-S11
-		    Microsoft MN510
-		    Netgear MA111 (version 1 only)
-		    Pheenet WL-503IA
-		    Planex GW-US11H
-		    Siemens SpeedStream SS1022
-		    Sitecom WL-022
-		    Syntax USB-400
-		    US Robotics 1120
-		    ViewSonic Airsync
-		    Z-Com XI-725/726
-		    Z-Com XI-735
-		    ZyXEL ZyAIR B-200
+		 adapters
 		WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b Compact
-		Flash adapters (will be detected as PCMCIA adapters)
+		 Flash adapters (will be detected as PCMCIA adapters)
 		    AmbiCom WL1100C-CF
 		    ASUS SpaceLink WL-110
 		    Belkin F5D6060 (version 1 only)
@@ -307,55 +135,7 @@ and serial ports), many USB devices are supported. These {:-include-:}:
 		    Pretec Compact WLAN OC-WLBXX-A
 		    Senao NL-2511CF
 		WaveLAN/IEEE, PRISM 2-3, and Spectrum24 IEEE 802.11b PCMCIA
-		adapters
-		    3Com AirConnect 3CRWE737A
-		    Actiontec HWC01170
-		    Adaptec AWN-8030
-		    Addtron AWP-100
-		    Agere ORiNOCO
-		    ARtem Onair
-		    ASUS SpaceLink WL-100
-		    Belkin F5D6020 (version 1 only)
-		    Buffalo AirStation
-		    Cabletron RoamAbout
-		    Compaq Agency NC5004
-		    Contec FLEXLAN/FX-DS110-PCC
-		    Corega PCC-11
-		    Corega PCCA-11
-		    Corega PCCB-11
-		    D-Link DWL-650 (rev A1-J3 only)
-		    ELSA XI300
-		    ELSA XI325
-		    ELSA XI325H
-		    EMTAC A2424i
-		    Ericsson Wireless LAN CARD C11
-		    Gemtek WL-311
-		    Hawking Technology WE110P
-		    I-O DATA WN-B11/PCM
-		    Intel PRO/Wireless 2011
-		    Intersil Prism II
-		    Linksys Instant Wireless WPC11
-		    Linksys Instant Wireless WPC11 2.5
-		    Linksys Instant Wireless WPC11 3.0
-		    Lucent WaveLAN
-		    Microsoft MN520
-		    NANOSPEED ROOT-RZ2000
-		    NEC CMZ-RT-WP
-		    Netgear MA401
-		    Netgear MA401RA
-		    Nokia C020 Wireless LAN
-		    Nokia C110/C111 Wireless LAN
-		    NTT-ME 11Mbps Wireless LAN
-		    Planex GW-NS11H
-		    Proxim Harmony
-		    Proxim RangeLAN-DS
-		    Samsung MagicLAN SWL-2000N
-		    Siemens SpeedStream SS1021
-		    SMC 2632 EZ Connect
-		    Symbol Spectrum24
-		    TDK LAK-CD011WL
-		    US Robotics 2410
-		    US Robotics 2445
+		 adapters
 	Serial ports
 		Most modems, digital cellular modems, and serial
 		cards should work
