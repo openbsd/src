@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.82 2009/04/01 06:44:01 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.83 2009/04/10 20:54:08 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 1 2009 $
+.Dd $Mdocdate: April 10 2009 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -42,19 +42,19 @@
 .Sh SYNOPSIS
 .Nm disklabel
 .Op Fl c | d | t
-.Op Fl v
+.Op Fl Av
 .Op Fl p Ar unit
 .Ar disk
 .Nm disklabel
 .Fl w
 .Op Fl c | d
-.Op Fl nv
+.Op Fl Anv
 .Ar disk Ar disktype
 .Op Ar packid
 .Nm disklabel
 .Fl e
 .Op Fl c | d
-.Op Fl nv
+.Op Fl Anv
 .Ar disk
 .Nm disklabel
 .Fl E
@@ -126,8 +126,9 @@ partitions as desired.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl A
-If no disklabel is found,
-allocate all the disk space in the recommended manner.
+Automatically allocate all the disk space in the
+.Ox
+portion of the disk in the recommended manner.
 .It Fl B
 Install bootstrap code.
 Some architectures instead require bootstrap code installation to be

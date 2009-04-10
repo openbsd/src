@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.186 2009/04/04 16:04:44 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.187 2009/04/10 20:54:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.186 2009/04/04 16:04:44 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.187 2009/04/10 20:54:08 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,34 +72,28 @@ struct space_allocation {
 
 #define MEG(x)	((x) * 1024LL * (1024 / 512))
 
-struct space_allocation alloc[MAXPARTITIONS] = {
-	{   MEG(80),      MEG(1024),   5, "/"		},	/* a */
-	{ MEG(1024),      MEG(4096),   5, "swap"	},	/* b */
-	{         0,              0,   0, ""		},	/* c */
-	{   MEG(80),      MEG(4096),  10, "/tmp"	},	/* d */
-	{   MEG(80),      MEG(4096),  10, "/var"	},	/* e */
-	{         0,              0,   0, ""		},	/* f */
-	{ MEG(2048),     MEG(10240),  20, "/usr"	},	/* g */
-	{  MEG(512),      MEG(1024),   5, "/usr/X11R6"	},	/* h */
-	{         0,              0,   0, ""		},	/* i */
-	{ MEG(2048),      MEG(3072),   5, "/usr/local"	},	/* j */
-	{ MEG(1024),      MEG(2048),   5, "/usr/src"	},	/* k */
-	{ MEG(2048),      MEG(2048),   0, "/usr/obj"	},	/* l */
-	{  MEG(512), MEG(1024*1024),  35, "/home"	},	/* m */
-	{         0,              0,   0, ""		},	/* n */
-	{         0,              0,   0, ""		},	/* o */
-	{         0,              0,   0, ""		}	/* p */
+struct space_allocation alloc[] = {
+	{   MEG(80),      MEG(1024),   5, "/"		},
+	{   MEG(80),      MEG(4096),   5, "swap"	},
+	{   MEG(80),      MEG(4096),  10, "/tmp"	},
+	{   MEG(80),      MEG(4096),  10, "/var"	},
+	{ MEG(2048),     MEG(10240),  20, "/usr"	},
+	{  MEG(512),      MEG(1024),   5, "/usr/X11R6"	},
+	{ MEG(2048),      MEG(3072),   5, "/usr/local"	},
+	{ MEG(1024),      MEG(2048),   5, "/usr/src"	},
+	{ MEG(2048),      MEG(2048),   0, "/usr/obj"	},
+	{  MEG(512), MEG(1024*1024),  35, "/home"	}
 };
 
 void	edit_parms(struct disklabel *);
-void	editor_allocspace(struct disklabel *, char **, int);
-void	editor_add(struct disklabel *, char **, char *);
+void	editor_allocspace(struct disklabel *);
+void	editor_add(struct disklabel *, char *);
 void	editor_change(struct disklabel *, char *);
 u_int64_t editor_countfree(struct disklabel *);
-void	editor_delete(struct disklabel *, char **, char *);
+void	editor_delete(struct disklabel *, char *);
 void	editor_help(char *);
-void	editor_modify(struct disklabel *, char **, char *);
-void	editor_name(struct disklabel *, char **, char *);
+void	editor_modify(struct disklabel *, char *);
+void	editor_name(struct disklabel *, char *);
 char	*getstring(char *, char *, char *);
 u_int64_t getuint(struct disklabel *, char *, char *, u_int64_t, u_int64_t, u_int64_t, int);
 int	has_overlap(struct disklabel *);
@@ -112,11 +106,11 @@ struct diskchunk *free_chunks(struct disklabel *);
 void	mpcopy(char **, char **);
 int	micmp(const void *, const void *);
 int	mpequal(char **, char **);
-int	mpsave(struct disklabel *, char **, char *, char *);
+int	mpsave(struct disklabel *);
 int	get_bsize(struct disklabel *, int);
 int	get_fsize(struct disklabel *, int);
 int	get_fstype(struct disklabel *, int);
-int	get_mp(struct disklabel *, char **, int);
+int	get_mp(struct disklabel *, int);
 int	get_offset(struct disklabel *, int);
 int	get_size(struct disklabel *, int);
 void	get_geometry(int, struct disklabel **);
@@ -124,7 +118,7 @@ void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *,
 	    char *);
 void	zero_partitions(struct disklabel *);
 u_int64_t max_partition_size(struct disklabel *, int);
-void	display_edit(struct disklabel *, char **, char, u_int64_t);
+void	display_edit(struct disklabel *, char, u_int64_t);
 
 static u_int64_t starting_sector;
 static u_int64_t ending_sector;
@@ -134,27 +128,26 @@ static int expert;
  * Simple partition editor.
  */
 int
-editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
+editor(struct disklabel *lp, int f)
 {
 	struct disklabel origlabel, lastlabel, tmplabel, label = *lp;
 	struct disklabel *disk_geop;
 	struct partition *pp;
 	FILE *fp;
 	char buf[BUFSIZ], *cmd, *arg;
-	char **mountpoints = NULL, **omountpoints = NULL;
+	char **omountpoints = NULL;
 	char **origmountpoints = NULL, **tmpmountpoints = NULL;
 
 	/* Alloc and init mount point info */
 	if (fstabfile) {
-		if (!(mountpoints = calloc(MAXPARTITIONS, sizeof(char *))) ||
-		    !(omountpoints = calloc(MAXPARTITIONS, sizeof(char *))) ||
+		if (!(omountpoints = calloc(MAXPARTITIONS, sizeof(char *))) ||
 		    !(origmountpoints = calloc(MAXPARTITIONS, sizeof(char *))) ||
 		    !(tmpmountpoints = calloc(MAXPARTITIONS, sizeof(char *))))
 			errx(4, "out of memory");
 	}
 
 	/* Don't allow disk type of "unknown" */
-	getdisktype(&label, "You need to specify a type for this disk.", dev);
+	getdisktype(&label, "You need to specify a type for this disk.", specname);
 
 	/* Get the on-disk geometries if possible */
 	get_geometry(f, &disk_geop);
@@ -197,14 +190,11 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 	if (label.d_interleave == 0)
 		label.d_interleave = 1;
 
-	/* Save the (U)ndo label, origmountpoints is already NULLs. */
+	/* Save the (U|u)ndo labels, origmountpoints is already NULLs. */
 	origlabel = label;
-
-	if (aflag)
-		editor_allocspace(&label, mountpoints, 0);
-
-	puts("Initial label editor (enter '?' for help at any prompt)");
 	lastlabel = label;
+
+	puts("Label editor (enter '?' for help at any prompt)");
 	for (;;) {
 		fputs("> ", stdout);
 		if (fgets(buf, sizeof(buf), stdin) == NULL) {
@@ -223,7 +213,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 			 */
 			tmplabel = lastlabel;
 			lastlabel = label;
-			if (mountpoints != NULL) {
+			if (fstabfile) {
 				mpcopy(tmpmountpoints, omountpoints);
 				mpcopy(omountpoints, mountpoints);
 			}
@@ -236,10 +226,13 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 			break;
 
 		case 'A':
-			editor_allocspace(&label, mountpoints, 1);
+			if (ioctl(f, DIOCGPDINFO, &label) == 0)
+				editor_allocspace(&label);
+			else
+				label = lastlabel;
 			break;
 		case 'a':
-			editor_add(&label, mountpoints, arg);
+			editor_add(&label, arg);
 			break;
 
 		case 'b':
@@ -258,7 +251,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 			break;
 
 		case 'd':
-			editor_delete(&label, mountpoints, arg);
+			editor_delete(&label, arg);
 			break;
 
 		case 'e':
@@ -270,25 +263,24 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 			break;
 
 		case 'm':
-			editor_modify(&label, mountpoints, arg);
+			editor_modify(&label, arg);
 			break;
 
 		case 'n':
-			if (mountpoints == NULL) {
+			if (fstabfile) {
 				fputs("This option is not valid when run "
 				    "without the -f flag.\n", stderr);
 				break;
 			}
-			editor_name(&label, mountpoints, arg);
+			editor_name(&label, arg);
 			break;
 
 		case 'p':
-			display_edit(&label, mountpoints, arg ? *arg : 0,
-			    editor_countfree(&label));
+			display_edit(&label, arg ? *arg : 0, editor_countfree(&label));
 			break;
 
 		case 'l':
-			display(stdout, &label, mountpoints, arg ? *arg : 0, 0);
+			display(stdout, &label, arg ? *arg : 0, 0);
 			break;
 
 		case 'M': {
@@ -318,8 +310,8 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 				return(1);
 			}
 			/* Save mountpoint info if there is any. */
-			if (mountpoints != NULL)
-				mpsave(&label, mountpoints, dev, fstabfile);
+			if (fstabfile)
+				mpsave(&label);
 			/*
 			 * If we didn't manufacture a new default label and
 			 * didn't change the label read from disk, there is no
@@ -372,22 +364,21 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 			if ((fp = fopen(arg, "w")) == NULL) {
 				warn("cannot open %s", arg);
 			} else {
-				display(fp, &label, NULL, 0, 1);
+				display(fp, &label, 0, 1);
 				(void)fclose(fp);
 			}
 			break;
 
 		case 'U':
 			if (memcmp(&label, &origlabel, sizeof(label)) == 0 &&
-			    (mountpoints == NULL || 
-			    mpequal(mountpoints, origmountpoints))) {
+			    (!fstabfile || mpequal(mountpoints, origmountpoints))) {
 				puts("Nothing to undo!");
 			} else {
 				tmplabel = label;
 				label = origlabel;
 				lastlabel = tmplabel;
 				/* Restore mountpoints */
-				if (mountpoints != NULL) {
+				if (fstabfile) {
 					mpcopy(tmpmountpoints, mountpoints);
 					mpcopy(mountpoints, origmountpoints);
 					mpcopy(omountpoints, tmpmountpoints);
@@ -398,15 +389,14 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 
 		case 'u':
 			if (memcmp(&label, &lastlabel, sizeof(label)) == 0 &&
-			    (mountpoints == NULL ||
-			    mpequal(mountpoints, omountpoints))) {
+			    (!fstabfile || mpequal(mountpoints, omountpoints))) {
 				puts("Nothing to undo!");
 			} else {
 				tmplabel = label;
 				label = lastlabel;
 				lastlabel = tmplabel;
 				/* Restore mountpoints */
-				if (mountpoints != NULL) {
+				if (fstabfile) {
 					mpcopy(tmpmountpoints, mountpoints);
 					mpcopy(mountpoints, omountpoints);
 					mpcopy(omountpoints, tmpmountpoints);
@@ -421,8 +411,8 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 				break;
 			}
 			/* Save mountpoint info if there is any. */
-			if (mountpoints != NULL)
-				mpsave(&label, mountpoints, dev, fstabfile);
+			if (fstabfile)
+				mpsave(&label);
 			/* Write label to disk. */
 			if (writelabel(f, bootarea, &label) != 0)
 				warnx("unable to write label");
@@ -444,7 +434,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 
 		case 'z':
 			zero_partitions(&label);
-			if (mountpoints != NULL)
+			if (fstabfile)
 				mpcopy(mountpoints, origmountpoints);
 			break;
 
@@ -461,10 +451,9 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
 		 * restore undo info.
 		 */
 		if (memcmp(&label, &lastlabel, sizeof(label)) == 0 &&
-		    (mountpoints == NULL || 
-		    mpequal(mountpoints, omountpoints))) {
+		    (!fstabfile || mpequal(mountpoints, omountpoints))) {
 			lastlabel = tmplabel;
-			if (mountpoints != NULL)
+			if (fstabfile)
 				mpcopy(omountpoints, tmpmountpoints);
 		}
 	}
@@ -475,83 +464,102 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile, int aflag)
  * root disk.
  */
 void
-editor_allocspace(struct disklabel *lp, char **mp, int forcealloc)
+editor_allocspace(struct disklabel *lp)
 {
+	struct space_allocation *ap;
 	struct partition *pp;
-	daddr64_t secs, cylsecs, totsecs, xtrasecs;
-	int i, lastpart;
+	struct diskchunk *chunks;
+	daddr64_t secs, chunkstart, chunksize, cylsecs, totsecs, xtrasecs;
+	char **partmp;
+	int i, j, lastalloc;
+
+	/* How big is the OpenBSD portion of the disk?  */
+	find_bounds(lp);
 
 	cylsecs = lp->d_secpercyl;
-	xtrasecs = totsecs = ending_sector - starting_sector;
+	xtrasecs = totsecs = editor_countfree(lp);
 
-	pp = &lp->d_partitions[0];
-	for (i = 0; i < MAXPARTITIONS; i++, pp++) {
-		if (i == RAW_PART)
-			continue;
-		if (DL_GETPSIZE(pp) != 0 && !forcealloc)
-			return; 
+	if (totsecs < DL_BLKTOSEC(lp, alloc[0].minsz + alloc[1].minsz))
+		/* Must have space for root and swap at least. */
+		return;
+
+	lastalloc = sizeof(alloc) / sizeof(alloc[0]);
+	for (i = 0; i < lastalloc; i++) {
 		alloc[i].minsz = DL_BLKTOSEC(lp, alloc[i].minsz);
 		alloc[i].maxsz = DL_BLKTOSEC(lp, alloc[i].maxsz);
-		secs = alloc[i].minsz;
-		if (secs == 0)
-			continue;
-		xtrasecs -= secs;
-		lastpart = i;
+		if (xtrasecs > alloc[i].minsz)
+			xtrasecs -= alloc[i].minsz;
+		else
+			xtrasecs = 0;
 	}
 
-	lp->d_npartitions = MAXPARTITIONS;
+	for (i = 0; i < lastalloc; i++) {
+		/* Find next available partition. */
+		for (j = 0;  j < MAXPARTITIONS; j++)
+			if (DL_GETPSIZE(&lp->d_partitions[j]) == 0)
+				break;
+		if (j == MAXPARTITIONS)
+			return;
+		pp = &lp->d_partitions[j];
+		if (fstabfile)
+			partmp = &mountpoints[j];
+		ap = &alloc[i];
 
-	pp = &lp->d_partitions[0];
-	for (i = 0; i <= lastpart; i++, pp++) {
-		switch (i) {
-		case 0:
-			DL_SETPSIZE(pp, 0);
-			DL_SETPOFFSET(pp, starting_sector);
-			break;
-		case RAW_PART:
-			continue;
-		case RAW_PART+1:
-			DL_SETPSIZE(pp, 0);
-			DL_SETPOFFSET(pp,DL_GETPOFFSET(pp-2)+DL_GETPSIZE(pp-2));
-			break;
-		default:
-			DL_SETPSIZE(pp, 0);
-			DL_SETPOFFSET(pp,DL_GETPOFFSET(pp-1)+DL_GETPSIZE(pp-1));
-			break;
-		}
-		if (i == lastpart) {
-			if (totsecs > alloc[i].maxsz)
-				secs = alloc[i].maxsz;
+		/* Figure out the size of the partition. */
+		if (i == lastalloc - 1) {
+			if (totsecs > ap->maxsz)
+				secs = ap->maxsz;
 			else
 				secs = totsecs;
 		} else {
-			secs = alloc[i].minsz;
+			secs = ap->minsz;
 			if (xtrasecs > 0)
-				secs += (xtrasecs / 100) * alloc[i].rate;
-			if (secs > alloc[i].maxsz)
-				secs = alloc[i].maxsz;
+				secs += (xtrasecs / 100) * ap->rate;
+			if (secs > ap->maxsz)
+				secs = ap->maxsz;
 			secs = ((secs + cylsecs - 1) / cylsecs) * cylsecs;
 			totsecs -= secs;
 			while (totsecs < 0) {
 				secs -= cylsecs;
 				totsecs += cylsecs;
 			}
-			if (i == 0 && secs > starting_sector) {
-				secs -= starting_sector;
-				totsecs += starting_sector;
-			}
 		}
-		if (secs < alloc[i].minsz) {
+
+		/* Find largest chunk of free space. */
+		chunks = free_chunks(lp);
+		chunkstart = 0;
+		chunksize = 0;
+		for (j = 0; chunks[j].start != 0 || chunks[j].stop != 0; j++)
+			if ((chunks[j].stop - chunks[j].start) > chunksize) {
+				chunkstart = chunks[j].start;
+				chunksize = chunks[j].stop - chunks[j].start;
+			}
+#ifdef SUN_CYLCHECK
+		if (lp->d_flags & D_VENDOR) {
+			/* Align chunk to cylinder boundaries. */
+			chunksize -= cylsecs - chunkstart % cylsecs;
+			chunksize -= chunksize % cylsecs;
+			chunkstart += cylsecs - chunkstart % cylsecs;
+		}
+#endif
+		/* See if partition can fit into chunk. */
+		if (secs > chunksize) {
+			totsecs += secs - chunksize;
+			secs = chunksize;
+		}
+		if (secs < ap->minsz) {
 			totsecs += secs;
-			fprintf(stderr, "no space to auto allocate '%c'"
-			    " (%s)\n", 'a'+i, alloc[i].mp);
+			fprintf(stderr, "no space to auto allocate %s\n", 
+			    ap->mp);
 			if (i == 0)
 				break;
 			else
 				continue;
 		}
+
+		/* Everything seems ok so configure the partition. */
 		DL_SETPSIZE(pp, secs);
-		pp->p_fstype = (i == 1) ? FS_SWAP : FS_BSDFFS;
+		DL_SETPOFFSET(pp, chunkstart);
 #if defined (__sparc__) && !defined(__sparc64__)
 		/* can't boot from > 8k boot blocks */
 		pp->p_fragblock =
@@ -560,24 +568,28 @@ editor_allocspace(struct disklabel *lp, char **mp, int forcealloc)
 		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(2048, 8);
 #endif
 		pp->p_cpg = 1;
-		if (mp && alloc[i].mp[0] == '/') {
-			free(mp[i]);
-			if ((mp[i] = strdup(alloc[i].mp)) == NULL)
-				errx(4, "out of memory");
+		if (ap->mp[0] != '/')
+			pp->p_fstype = FS_SWAP;
+		else {
+			pp->p_fstype = FS_BSDFFS;
+			if (fstabfile) {
+				free(*partmp);
+				if ((*partmp = strdup(ap->mp)) == NULL)
+					errx(4, "out of memory");
+			}
 		}
 	}
 
-	/* Zap remaining, unallocated partitions. */
-	for (; i < MAXPARTITIONS; i++, pp++)
-		if (i != RAW_PART)
-			memset(pp, 0, sizeof(*pp));
+	/* Save mountpoint info if there is any. */
+	if (fstabfile)
+		mpsave(lp);
 }
 
 /*
  * Add a new partition.
  */
 void
-editor_add(struct disklabel *lp, char **mp, char *p)
+editor_add(struct disklabel *lp, char *p)
 {
 	struct partition *pp;
 	struct diskchunk *chunks;
@@ -675,7 +687,7 @@ editor_add(struct disklabel *lp, char **mp, char *p)
 	if (get_offset(lp, partno) == 0 &&
 	    get_size(lp, partno) == 0   &&
 	    get_fstype(lp, partno) == 0 &&
-	    get_mp(lp, mp, partno) == 0 &&
+	    get_mp(lp, partno) == 0 &&
 	    get_fsize(lp, partno) == 0  &&
 	    get_bsize(lp, partno) == 0)
 		return;
@@ -688,7 +700,7 @@ editor_add(struct disklabel *lp, char **mp, char *p)
  * Set the mountpoint of an existing partition ('name').
  */
 void
-editor_name(struct disklabel *lp, char **mp, char *p)
+editor_name(struct disklabel *lp, char *p)
 {
 	struct partition *pp;
 	int partno;
@@ -724,14 +736,14 @@ editor_name(struct disklabel *lp, char **mp, char *p)
 		return;
 	}
 
-	get_mp(lp, mp, partno);
+	get_mp(lp, partno);
 }
 
 /*
  * Change an existing partition.
  */
 void
-editor_modify(struct disklabel *lp, char **mp, char *p)
+editor_modify(struct disklabel *lp, char *p)
 {
 	struct partition origpart, *pp;
 	int partno;
@@ -763,7 +775,7 @@ editor_modify(struct disklabel *lp, char **mp, char *p)
 	if (get_offset(lp, partno) == 0 &&
 	    get_size(lp, partno) == 0   &&
 	    get_fstype(lp, partno) == 0 &&
-	    get_mp(lp, mp, partno) == 0 &&
+	    get_mp(lp, partno) == 0 &&
 	    get_fsize(lp, partno) == 0  &&
 	    get_bsize(lp, partno) == 0)
 		return;
@@ -776,7 +788,7 @@ editor_modify(struct disklabel *lp, char **mp, char *p)
  * Delete an existing partition.
  */
 void
-editor_delete(struct disklabel *lp, char **mp, char *p)
+editor_delete(struct disklabel *lp, char *p)
 {
 	struct partition *pp;
 	int partno;
@@ -809,11 +821,8 @@ editor_delete(struct disklabel *lp, char **mp, char *p)
 
 	/* Really delete it (as opposed to just setting to "unused") */
 	memset(pp, 0, sizeof(*pp));
-
-	if (mp != NULL && mp[partno] != NULL) {
-		free(mp[partno]);
-		mp[partno] = NULL;
-	}
+	free(mountpoints[partno]);
+	mountpoints[partno] = NULL;
 }
 
 /*
@@ -1068,8 +1077,8 @@ has_overlap(struct disklabel *lp)
 				    'a' + i, 'a' + j);
 				printf("#    %16.16s %16.16s  fstype "
 				    "[fsize bsize  cpg]\n", "size", "offset");
-				display_partition(stdout, lp, NULL, i, 0);
-				display_partition(stdout, lp, NULL, j, 0);
+				display_partition(stdout, lp, i, 0);
+				display_partition(stdout, lp, j, 0);
 
 				/* Get partition to disable or ^D */
 				do {
@@ -1536,15 +1545,19 @@ find_bounds(struct disklabel *lp)
 #endif
 
 	if (has_bounds) {
-		printf("Treating sectors %llu-%llu as the OpenBSD portion of the "
-		    "disk.\nYou can use the 'b' command to change this.\n\n",
-		    starting_sector, ending_sector);
+		if (verbose)
+			printf("Treating sectors %llu-%llu as the OpenBSD"
+			    " portion of the disk.\nYou can use the 'b'"
+			    " command to change this.\n\n", starting_sector,
+			    ending_sector);
 	} else {
 #if (NUMBOOT == 1)
 		/* Boot blocks take up the first cylinder */
 		starting_sector = lp->d_secpercyl;
-		printf("Reserving the first data cylinder for boot blocks.\n"
-		    "You can use the 'b' command to change this.\n\n");
+		if (verbose)
+			printf("Reserving the first data cylinder for boot"
+			    " blocks.\nYou can use the 'b' command to change"
+			    " this.\n\n");
 #endif
 	}
 }
@@ -1776,7 +1789,7 @@ mpequal(char **mp1, char **mp2)
 }
 
 int
-mpsave(struct disklabel *lp, char **mp, char *cdev, char *fstabfile)
+mpsave(struct disklabel *lp)
 {
 	int i, j, mpset;
 	char bdev[MAXPATHLEN], *p;
@@ -1786,8 +1799,8 @@ mpsave(struct disklabel *lp, char **mp, char *cdev, char *fstabfile)
 	memset(&mi, 0, sizeof(mi));
 
 	for (i = 0, mpset = 0; i < MAXPARTITIONS; i++) {
-		if (mp[i] != NULL) {
-			mi[i].mountpoint = mp[i];
+		if (mountpoints[i] != NULL) {
+			mi[i].mountpoint = mountpoints[i];
 			mi[i].partno = i;
 			mpset = 1;
 		}
@@ -1796,16 +1809,16 @@ mpsave(struct disklabel *lp, char **mp, char *cdev, char *fstabfile)
 	if (!mpset)
 		return(0);
 
-	/* Convert cdev to bdev */
-	if (strncmp(_PATH_DEV, cdev, sizeof(_PATH_DEV) - 1) == 0 &&
-	    cdev[sizeof(_PATH_DEV) - 1] == 'r') {
+	/* Convert specname to bdev */
+	if (strncmp(_PATH_DEV, specname, sizeof(_PATH_DEV) - 1) == 0 &&
+	    specname[sizeof(_PATH_DEV) - 1] == 'r') {
 		snprintf(bdev, sizeof(bdev), "%s%s", _PATH_DEV,
-		    &cdev[sizeof(_PATH_DEV)]);
+		    &specname[sizeof(_PATH_DEV)]);
 	} else {
-		if ((p = strrchr(cdev, '/')) == NULL || *(++p) != 'r')
+		if ((p = strrchr(specname, '/')) == NULL || *(++p) != 'r')
 			return(1);
 		*p = '\0';
-		snprintf(bdev, sizeof(bdev), "%s%s", cdev, p + 1);
+		snprintf(bdev, sizeof(bdev), "%s%s", specname, p + 1);
 		*p = 'r';
 	}
 	bdev[strlen(bdev) - 1] = '\0';
@@ -2037,31 +2050,31 @@ get_fstype(struct disklabel *lp, int partno)
 }
 
 int
-get_mp(struct disklabel *lp, char **mp, int partno)
+get_mp(struct disklabel *lp, int partno)
 {
 	char *p;
 	struct partition *pp = &lp->d_partitions[partno];
 
-	if (mp != NULL && pp->p_fstype != FS_UNUSED &&
+	if (fstabfile && pp->p_fstype != FS_UNUSED &&
 	    pp->p_fstype != FS_SWAP && pp->p_fstype != FS_BOOT &&
 	    pp->p_fstype != FS_OTHER) {
 		for (;;) {
 			p = getstring("mount point",
 			    "Where to mount this filesystem (ie: / /var /usr)",
-			    mp[partno] ? mp[partno] : "none");
+			    mountpoints[partno] ? mountpoints[partno] : "none");
 			if (p == NULL) {
 				fputs("Command aborted\n", stderr);
 				return(1);
 			}
 			if (strcasecmp(p, "none") == 0) {
-				free(mp[partno]);
-				mp[partno] = NULL;
+				free(mountpoints[partno]);
+				mountpoints[partno] = NULL;
 				break;
 			}
 			if (*p == '/') {
 				/* XXX - might as well realloc */
-				free(mp[partno]);
-				if ((mp[partno] = strdup(p)) == NULL)
+				free(mountpoints[partno]);
+				if ((mountpoints[partno] = strdup(p)) == NULL)
 					errx(4, "out of memory");
 				break;
 			}
@@ -2206,7 +2219,7 @@ psize(daddr64_t sz, char unit, struct disklabel *lp)
 }
 
 void
-display_edit(struct disklabel *lp, char **mp, char unit, u_int64_t fr)
+display_edit(struct disklabel *lp, char unit, u_int64_t fr)
 {
 	int i;
 
@@ -2224,6 +2237,6 @@ display_edit(struct disklabel *lp, char **mp, char unit, u_int64_t fr)
 	printf("\n#    %16.16s %16.16s  fstype [fsize bsize  cpg]\n",
 	    "size", "offset");
 	for (i = 0; i < lp->d_npartitions; i++)
-		display_partition(stdout, lp, mp, i, unit);
+		display_partition(stdout, lp, i, unit);
 }
 
