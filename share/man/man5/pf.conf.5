@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.417 2009/04/10 21:27:04 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.418 2009/04/10 21:43:37 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -161,12 +161,6 @@ will be cleared on load.
 .Pp
 Tables may be defined with the following attributes:
 .Bl -tag -width persist
-.It Ar persist
-The
-.Ar persist
-flag forces the kernel to keep the table even when no rules refer to it.
-If the flag is not set, the kernel will automatically remove the table
-when the last rule referring to it is flushed.
 .It Ar const
 The
 .Ar const
@@ -183,23 +177,31 @@ The
 .Ar counters
 flag enables per-address packet and byte counters which can be displayed with
 .Xr pfctl 8 .
+.It Ar persist
+The
+.Ar persist
+flag forces the kernel to keep the table even when no rules refer to it.
+If the flag is not set, the kernel will automatically remove the table
+when the last rule referring to it is flushed.
 .El
 .Pp
-For example,
+This example
+creates a table called private,
+to hold RFC 1918 private network blocks,
+and a table called badhosts,
+which is initially empty.
+A filter rule is set up to block all traffic coming from addresses listed in
+either table:
 .Bd -literal -offset indent
 table \*(Ltprivate\*(Gt const { 10/8, 172.16/12, 192.168/16 }
 table \*(Ltbadhosts\*(Gt persist
 block on fxp0 from { \*(Ltprivate\*(Gt, \*(Ltbadhosts\*(Gt } to any
 .Ed
 .Pp
-creates a table called private, to hold RFC 1918 private network
-blocks, and a table called badhosts, which is initially empty.
-A filter rule is set up to block all traffic coming from addresses listed in
-either table.
 The private table cannot have its contents changed and the badhosts table
 will exist even when no active filter rules reference it.
 Addresses may later be added to the badhosts table, so that traffic from
-these hosts can be blocked by using
+these hosts can be blocked by using the following:
 .Bd -literal -offset indent
 # pfctl -t badhosts -Tadd 204.92.77.111
 .Ed
@@ -216,15 +218,17 @@ The files
 and
 .Pa /etc/openrelays
 list IP addresses, one per line.
-Any lines beginning with a # are treated as comments and ignored.
+Any lines beginning with a
+.Sq #
+are treated as comments and ignored.
 In addition to being specified by IP address, hosts may also be
 specified by their hostname.
 When the resolver is called to add a hostname to a table,
-.Em all
+.Ar all
 resulting IPv4 and IPv6 addresses are placed into the table.
 IP addresses can also be entered in a table by specifying a valid interface
-name, a valid interface group or the
-.Em self
+name, a valid interface group, or the
+.Ar self
 keyword, in which case all addresses assigned to the interface(s) will be
 added to the table.
 .Sh OPTIONS
