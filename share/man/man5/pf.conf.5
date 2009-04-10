@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.416 2009/04/07 13:52:29 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.417 2009/04/10 21:27:04 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 7 2009 $
+.Dd $Mdocdate: April 10 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1064,16 +1064,8 @@ has the ability to
 .Ar pass ,
 and
 .Ar match
-packets based on attributes of their layer 3 (see
-.Xr ip 4
-and
-.Xr ip6 4 )
-and layer 4 (see
-.Xr icmp 4 ,
-.Xr icmp6 4 ,
-.Xr tcp 4 ,
-.Xr udp 4 )
-headers.
+packets based on attributes of their layer 3
+and layer 4 headers.
 .Pp
 For each packet processed by the packet filter, the filter rules are
 evaluated in sequential order, from first to last.
@@ -1086,7 +1078,7 @@ if no rule matches the packet, the default action is to pass
 the packet.
 For
 .Ar match ,
-actions are taken every time the rule matches;
+rules are evaluated every time they match;
 the pass/block state of a packet remains unchanged.
 .Pp
 The following actions can be used in the filter:
@@ -1106,20 +1098,20 @@ option, or on a per-rule basis with one of the following options:
 .Bl -tag -width xxxx -compact
 .It Ar drop
 The packet is silently dropped.
+.It Ar return
+This causes a TCP RST to be returned for
+.Xr tcp 4
+packets and an ICMP UNREACHABLE for other types of packets.
 .It Ar return-rst
 This applies only to
 .Xr tcp 4
-packets, and issues a TCP RST which closes the
-connection.
+packets,
+and issues a TCP RST which closes the connection.
 .It Ar return-icmp
 .It Ar return-icmp6
 This causes ICMP messages to be returned for packets which match the rule.
 By default this is an ICMP UNREACHABLE message, however this
 can be overridden by specifying a message as a code or number.
-.It Ar return
-This causes a TCP RST to be returned for
-.Xr tcp 4
-packets and an ICMP UNREACHABLE for UDP and other packets.
 .El
 .Pp
 Options returning ICMP packets currently have no effect if
@@ -1134,28 +1126,31 @@ packets that match explicit rules is specify a first filter rule of:
 block all
 .Ed
 .It Ar match
-Every time a packet is matched by one of these rules, the
-.Ar queue ,
-.Ar rtable ,
-.Ar set-tos ,
-.Ar min-ttl ,
+The packet is matched.
+This mechanism is used to provide fine grained filtering
+without altering the block/pass state of a packet.
+.Ar match
+rules differ from block and pass rules in that
+parameters are set every time a packet matches the rule,
+not only on the last matching rule.
+For the following parameters,
+this means that the parameter effectively becomes
+.Dq sticky
+until explicitly overridden:
 .Ar max-mss ,
+.Ar min-ttl ,
 .Ar no-df ,
+.Ar queue ,
 .Ar random-id ,
+.Ar reassemble tcp ,
+.Ar rtable ,
 and
-.Ar reassemble tcp
-parameters can be overwritten when supplied to the
-.Ar match
-rule.
-These changes happen every time a
-.Ar match
-rule matches, not only on the last matching one.
-When
-.Ar logging
-is specified, every matching rule causes the packet to be logged.
-This means that a single packet can get logged more than once.
+.Ar set-tos .
 .Pp
-This action does not change the state of the packet.
+.Ar log
+is different still,
+in that the action happens every time a rule matches
+i.e. a single packet can get logged more than once.
 .It Ar pass
 The packet is passed;
 state is created unless the
@@ -1187,13 +1182,12 @@ Similarly,
 .Xr pf 4
 knows how to match ICMP replies to states.
 For example,
+to allow echo requests (such as those created by
+.Xr ping 8 )
+out statefully and match incoming echo replies correctly to states:
 .Bd -literal -offset indent
 pass out inet proto icmp all icmp-type echoreq
 .Ed
-.Pp
-allows echo requests (such as those created by
-.Xr ping 8 )
-out statefully, and matches incoming echo replies correctly to states.
 .Pp
 Also, looking up states is usually faster than evaluating rules.
 If there are 50 rules, all of them are evaluated sequentially in O(n).
@@ -1210,7 +1204,10 @@ For example if an ICMP source quench message referring to a stateful TCP
 connection arrives, it will be matched to the state and get passed.
 .Pp
 Finally, state tracking is required for
-.Ar nat , binat No and Ar rdr
+.Ar binat ,
+.Ar nat ,
+and
+.Ar rdr
 rules, in order to track address and port translations and reverse the
 translation on returning packets.
 .Pp
