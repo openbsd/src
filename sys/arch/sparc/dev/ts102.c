@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.18 2006/08/11 18:57:35 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.19 2009/04/10 20:54:57 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -112,6 +112,7 @@ struct	tslot_data {
 	/* Interrupt handler */
 	int			(*td_intr)(void *);
 	void			*td_intrarg;
+	void			*td_softintr;
 
 	/* Socket status */
 	int			td_slot;
@@ -137,6 +138,7 @@ void	tslot_create_event_thread(void *);
 void	tslot_event_thread(void *);
 int	tslot_intr(void *);
 void	tslot_intr_disestablish(pcmcia_chipset_handle_t, void *);
+void	tslot_intr_dispatch(void *);
 void	*tslot_intr_establish(pcmcia_chipset_handle_t, struct pcmcia_function *,
 	    int, int (*)(void *), void *, char *);
 const char *tslot_intr_string(pcmcia_chipset_handle_t, void *);
@@ -664,6 +666,10 @@ tslot_intr(void *v)
 	struct tslot_data *td;
 	int intregs[TS102_NUM_SLOTS], *intreg;
 	int i, rc = 0;
+	int s;
+
+	/* protect hardware access against soft interrupts */
+	s = splhigh();
 
 	/*
 	 * Scan slots, and acknowledge the interrupt if necessary first
@@ -704,6 +710,7 @@ tslot_intr(void *v)
 			tslot_slot_intr(td, *intreg);
 	}
 
+	splx(s);
 	return (rc);
 }
 
@@ -765,14 +772,37 @@ tslot_slot_intr(struct tslot_data *td, int intreg)
 			return;
 		}
 
-		if (td->td_intr != NULL) {
+		if (td->td_softintr != NULL) {
 			/*
-			 * XXX There is no way to honour the interrupt handler
-			 * requested IPL level...
+			 * Disable this sbus interrupt, until the
+			 * softintr handler had a chance to run.
 			 */
-			(*td->td_intr)(td->td_intrarg);
+			TSLOT_WRITE(td, TS102_REG_CARD_A_INT,
+			    TSLOT_READ(td, TS102_REG_CARD_A_INT) &
+			    ~TS102_CARD_INT_MASK_IRQ);
+
+			softintr_schedule(td->td_softintr);
 		}
 	}
+}
+
+/*
+ * Software interrupt called to invoke the real driver interrupt handler.
+ */
+void
+tslot_intr_dispatch(void *arg)
+{
+	struct tslot_data *td = (struct tslot_data *)arg;
+	int s;
+
+	/* invoke driver handler */
+	td->td_intr(td->td_intrarg);
+
+	/* enable SBUS interrupts for PCMCIA interrupts again */
+	s = splhigh();
+	TSLOT_WRITE(td, TS102_REG_CARD_A_INT,
+	    TSLOT_READ(td, TS102_REG_CARD_A_INT) | TS102_CARD_INT_MASK_IRQ);
+	splx(s);
 }
 
 void
@@ -780,6 +810,10 @@ tslot_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	struct tslot_data *td = (struct tslot_data *)pch;
 
+	if (td->td_softintr != NULL) {
+		softintr_disestablish(td->td_softintr);
+		td->td_softintr = NULL;
+	}
 	td->td_intr = NULL;
 	td->td_intrarg = NULL;
 }
@@ -800,8 +834,14 @@ tslot_intr_establish(pcmcia_chipset_handle_t pch, struct pcmcia_function *pf,
 {
 	struct tslot_data *td = (struct tslot_data *)pch;
 
+	/*
+	 * Note that this code relies on softintr_establish() to be
+	 * used with real, hardware ipl values. All platforms with
+	 * SBus support support this.
+	 */
 	td->td_intr = handler;
 	td->td_intrarg = arg;
+	td->td_softintr = softintr_establish(ipl, tslot_intr_dispatch, td);
 
-	return (td);
+	return td->td_softintr != NULL ? td : NULL;
 }

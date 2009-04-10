@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020var.h,v 1.4 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: stp4020var.h,v 1.5 2009/04/10 20:54:59 miod Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -46,13 +46,15 @@ struct stp4020_socket {
 #define	STP4020_SOCKET_ENABLING	0x0004
 	int		sense;
 	int		sock;		/* Socket number (0 or 1) */
+	int		int_enable;	/* ICR0 value for interrupt enabled */
+	int		int_disable;	/* ICR0 value for interrupt disabled */
 	bus_space_tag_t	tag;		/* socket control space */
 	bus_space_handle_t	regs;	/* 			*/
 	struct device	*pcmcia;	/* Associated PCMCIA device */
 	int		(*intrhandler)	/* Card driver interrupt handler */
 			    (void *);
 	void		*intrarg;	/* Card interrupt handler argument */
-	int		ipl;		/* Interrupt level suggested by card */
+	void		*softint;	/* softintr cookie */
 	bus_space_tag_t	wintag;		/* windows access tag */
 	struct {
 		bus_space_handle_t	winaddr;/* this window's address */
