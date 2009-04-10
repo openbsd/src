@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.97 2009/04/04 11:32:48 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.98 2009/04/10 11:26:10 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -791,12 +791,7 @@ cvs_server_set_sticky(const char *dir, const char *tag)
 	char repo[MAXPATHLEN];
 
 	cvs_get_repository_path(dir, repo, MAXPATHLEN);
-	if (module_repo_root != NULL) {
-		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s/%s",
-		    current_cvsroot->cr_dir, module_repo_root, repo);
-	} else {
-		(void)xsnprintf(fpath, MAXPATHLEN, "%s/", repo);
-	}
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/", repo);
 
 	cvs_server_send_response("Set-sticky %s/", dir);
 	cvs_remote_output(fpath);
@@ -810,12 +805,7 @@ cvs_server_clear_sticky(char *dir)
 	char repo[MAXPATHLEN];
 
 	cvs_get_repository_path(dir, repo, MAXPATHLEN);
-	if (module_repo_root != NULL) {
-		(void)xsnprintf(fpath, MAXPATHLEN, "%s/%s/%s",
-		    current_cvsroot->cr_dir, module_repo_root, repo);
-	} else {
-		(void)xsnprintf(fpath, MAXPATHLEN, "%s/", repo);
-	}
+	(void)xsnprintf(fpath, MAXPATHLEN, "%s/", repo);
 
 	cvs_server_send_response("Clear-sticky %s//", dir);
 	cvs_remote_output(fpath);
