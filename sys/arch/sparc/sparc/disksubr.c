@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.78 2009/04/07 03:11:59 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.79 2009/04/10 06:32:47 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -283,7 +283,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 		npp = &lp->d_partitions[i];
 		DL_SETPOFFSET(npp, spp->sdkp_cyloffset * secpercyl);
 		DL_SETPSIZE(npp, spp->sdkp_nsectors);
-		if (DL_GETPSIZE(npp) == 0)) {
+		if (DL_GETPSIZE(npp) == 0) {
 			npp->p_fstype = FS_UNUSED;
 		} else {
 			npp->p_fstype = sun_fstypes[i];
@@ -325,7 +325,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 			npp = &lp->d_partitions[i+8];
 			DL_SETPOFFSET(npp, spp->sdkp_cyloffset * secpercyl);
 			DL_SETPSIZE(npp, spp->sdkp_nsectors);
-			if (DL_GETPSIZE(npp) == 0)) {
+			if (DL_GETPSIZE(npp) == 0) {
 				npp->p_fstype = FS_UNUSED;
 				continue;
 			}
@@ -423,7 +423,7 @@ disklabel_bsd_to_sun(struct disklabel *lp, struct sun_disklabel *sl)
 		npp = &lp->d_partitions[i];
 		spp->sdkp_cyloffset = 0;
 		spp->sdkp_nsectors = 0;
-		if (DL_GETPSIZE(npp) {
+		if (DL_GETPSIZE(npp)) {
 			if (DL_GETPOFFSET(npp) % secpercyl)
 				return (EINVAL);
 			spp->sdkp_cyloffset = DL_GETPOFFSET(npp) / secpercyl;
@@ -437,7 +437,7 @@ disklabel_bsd_to_sun(struct disklabel *lp, struct sun_disklabel *sl)
 		npp = &lp->d_partitions[i+8];
 		spp->sdkp_cyloffset = 0;
 		spp->sdkp_nsectors = 0;
-		if (DL_GETPSIZE(npp) {
+		if (DL_GETPSIZE(npp)) {
 			if (DL_GETPOFFSET(npp) % secpercyl)
 				return (EINVAL);
 			spp->sdkp_cyloffset = DL_GETPOFFSET(npp) / secpercyl;
