@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 2008/03/23 17:05:41 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 2009/04/10 20:55:56 miod Exp $	*/
 /*	OpenBSD: autoconf.c,v 1.64 2005/03/23 17:10:24 miod Exp 	*/
 
 /*
@@ -140,7 +140,7 @@ bootstrap()
 	asize += (1 + nenv) * sizeof(const char *);
 	
 	/*
-	 * Setup the intial mappings.
+	 * Setup the initial mappings.
 	 */
 	pmap_bootstrap(asize);
 
@@ -318,6 +318,7 @@ diskconf(void)
 {
 	struct bootpath *bp;
 	struct device *bootdv;
+	int bootpart;
 
 	/*
 	 * Configure swap area and related system
@@ -325,8 +326,9 @@ diskconf(void)
 	 */
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
 	bootdv = (bp == NULL) ? NULL : bp->dev;
+	bootpart = (bp == NULL) ? 0 : bp->val[2];
 
-	setroot(bootdv, bp->val[2], RB_USERREQ | RB_HALT);
+	setroot(bootdv, bootpart, RB_USERREQ | RB_HALT);
 	dumpconf();
 }
 
