@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.49 2009/03/17 21:26:44 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.50 2009/04/10 18:51:44 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 17 2009 $
+.Dd $Mdocdate: April 10 2009 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -70,9 +70,9 @@ The default is signed, 16-bit, native byte order.
 .It Fl f Ar device
 The
 .Xr audio 4
-device to use for playing and/or recording.
-The default is
-.Pa /dev/audio .
+device or
+.Nm
+socket to use for playing and/or recording.
 .It Fl h Ar fmt
 File format of the playback or record stream (see below).
 The default is auto.
@@ -380,7 +380,13 @@ will exit with an error.
 The debug level:
 may be a value between 0 and 4.
 .It Ev AUDIODEVICE
-The audio device to use.
+Name of the
+.Xr aucat 1
+socket to connect to, or path to the
+.Xr audio 4
+device to use if the
+.Fl f
+option is not specified.
 .El
 .Sh EXAMPLES
 The following will mix and play two stereo streams,
