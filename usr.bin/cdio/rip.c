@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.c,v 1.11 2008/12/28 15:48:32 ratchov Exp $	*/
+/*	$OpenBSD: rip.c,v 1.12 2009/04/10 18:19:41 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
@@ -451,17 +451,13 @@ rip_next_track(struct track_info *info)
 int
 play_next_track(struct track_info *info)
 {
-	char *dev;
-
 	if (!info->isaudio)
 		return (NXTRACK_SKIP);
 
 	if (info->hdl != NULL)
 		return (NXTRACK_OK);
 
-	dev = getenv("AUDIODEVICE");
-
-	info->hdl = sio_open(dev, SIO_PLAY, 0);
+	info->hdl = sio_open(NULL, SIO_PLAY, 0);
 	if (info->hdl == NULL) {
 		warnx("could not open audio backend");
 		goto bad;
