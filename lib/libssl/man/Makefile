@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2009/01/08 17:43:43 oga Exp $
+# $OpenBSD: Makefile,v 1.15 2009/04/10 06:04:49 djm Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -6,7 +6,11 @@ POD2MAN=pod2man --official --release="OpenBSD ${OSREV}" --center=OpenSSL
 
 .ifndef NOMAN
 MANALL=	\
-	BF_set_key.cat3 \
+	ASN1_OBJECT_new.cat3 \
+	ASN1_STRING_length.cat3 \
+	ASN1_STRING_new.cat3 \
+	ASN1_STRING_print_ex.cat3 \
+	ASN1_generate_nconf.cat3 \
 	BIO_ctrl.cat3 \
 	BIO_f_base64.cat3 \
 	BIO_f_buffer.cat3 \
@@ -28,6 +32,7 @@ MANALL=	\
 	BIO_s_socket.cat3 \
 	BIO_set_callback.cat3 \
 	BIO_should_retry.cat3 \
+	BN_BLINDING_new.cat3 \
 	BN_CTX_new.cat3 \
 	BN_CTX_start.cat3 \
 	BN_add.cat3 \
@@ -45,9 +50,9 @@ MANALL=	\
 	BN_set_bit.cat3 \
 	BN_swap.cat3 \
 	BN_zero.cat3 \
-	BUF_MEM_new.cat3 \
+	CONF_modules_free.cat3 \
+	CONF_modules_load_file.cat3 \
 	CRYPTO_set_ex_data.cat3 \
-	CRYPTO_set_locking_callback.cat3 \
 	DH_generate_key.cat3 \
 	DH_generate_parameters.cat3 \
 	DH_get_ex_new_index.cat3 \
@@ -73,26 +78,33 @@ MANALL=	\
 	ERR_print_errors.cat3 \
 	ERR_put_error.cat3 \
 	ERR_remove_state.cat3 \
+	ERR_set_mark.cat3 \
 	EVP_BytesToKey.cat3 \
 	EVP_DigestInit.cat3 \
 	EVP_EncryptInit.cat3 \
 	EVP_OpenInit.cat3 \
+	EVP_PKEY_new.cat3 \
+	EVP_PKEY_set1_RSA.cat3 \
 	EVP_SealInit.cat3 \
 	EVP_SignInit.cat3 \
 	EVP_VerifyInit.cat3 \
-	HMAC.cat3 \
-	MD5.cat3 \
+	OBJ_nid2obj.cat3 \
 	OPENSSL_VERSION_NUMBER.cat3 \
+	OPENSSL_config.cat3 \
+	OPENSSL_load_builtin_modules.cat3 \
 	OpenSSL_add_all_algorithms.cat3 \
-	PEM_read_bio_PrivateKey.cat3 \
+	PKCS12_create.cat3 \
+	PKCS12_parse.cat3 \
+	PKCS7_decrypt.cat3 \
+	PKCS7_encrypt.cat3 \
+	PKCS7_sign.cat3 \
+	PKCS7_verify.cat3 \
 	RAND_add.cat3 \
 	RAND_bytes.cat3 \
 	RAND_cleanup.cat3 \
 	RAND_egd.cat3 \
 	RAND_load_file.cat3 \
 	RAND_set_rand_method.cat3 \
-	RC4.cat3 \
-	RIPEMD160.cat3 \
 	RSA_blinding_on.cat3 \
 	RSA_check_key.cat3 \
 	RSA_generate_key.cat3 \
@@ -106,7 +118,8 @@ MANALL=	\
 	RSA_sign.cat3 \
 	RSA_sign_ASN1_OCTET_STRING.cat3 \
 	RSA_size.cat3 \
-	SHA1.cat3 \
+	SMIME_read_PKCS7.cat3 \
+	SMIME_write_PKCS7.cat3 \
 	SSL_CIPHER_get_name.cat3 \
 	SSL_COMP_add_compression_method.cat3 \
 	SSL_CTX_add_extra_chain_cert.cat3 \
@@ -184,19 +197,70 @@ MANALL=	\
 	SSL_state_string.cat3 \
 	SSL_want.cat3 \
 	SSL_write.cat3 \
-	acss.cat3 \
+	X509_NAME_ENTRY_get_object.cat3 \
+	X509_NAME_add_entry_by_txt.cat3 \
+	X509_NAME_get_index_by_NID.cat3 \
+	X509_NAME_print_ex.cat3 \
+	X509_new.cat3 \
 	bn.cat3 \
 	bn_internal.cat3 \
 	crypto.cat3 \
+	d2i_ASN1_OBJECT.cat3 \
 	d2i_DHparams.cat3 \
+	d2i_DSAPublicKey.cat3 \
+	d2i_PKCS8PrivateKey.cat3 \
 	d2i_RSAPublicKey.cat3 \
 	d2i_SSL_SESSION.cat3 \
+	d2i_X509.cat3 \
+	d2i_X509_ALGOR.cat3 \
+	d2i_X509_CRL.cat3 \
+	d2i_X509_NAME.cat3 \
+	d2i_X509_REQ.cat3 \
+	d2i_X509_SIG.cat3 \
 	dh.cat3 \
 	dsa.cat3 \
+	ecdsa.cat3 \
+	engine.cat3 \
+	evp.cat3 \
 	lh_stats.cat3 \
 	lhash.cat3 \
+	pem.cat3 \
 	rsa.cat3 \
-	ssl.cat3
+	ssl.cat3 \
+	ui.cat3 \
+	ui_compat.cat3 \
+	x509.cat3 \
+	BF_set_key.cat3 \
+	BIO.cat3 \
+	BUF_MEM_new.cat3 \
+	CRYPTO_set_locking_callback.cat3 \
+	DES_set_key.cat3 \
+	ERR.cat3 \
+	HMAC.cat3 \
+	MD5.cat3 \
+	PEM_read_bio_PrivateKey.cat3 \
+	RAND.cat3 \
+	RC4.cat3 \
+	RIPEMD160.cat3 \
+	SHA1.cat3 \
+	acss.cat3
+
+# These pages removed/renamed
+#	OPENSSL_ia32cap.cat3 \	# i386-only, internal API
+#	OPENSSL_Applink.cat3 \	# Win32 only
+#	bio.cat3 \		# conflict; see below
+#	blowfish.cat3 \		# conflict; see below
+#	buffer.cat3 \		# conflict; see below
+#	des.cat3 \		# conflict; see below
+#	des_modes.cat3 \	# fairly pointless
+#	hmac.cat3 \		# conflict; see below
+#	md5.cat3 \		# conflict; see below
+#	mdc2.cat3 \		# patents; removed
+#	rand.cat3 \		# conflict; see below
+#	rc4.cat3 \		# conflict; see below
+#	ripemd.cat3 \		# conflict; see below
+#	sha.cat3 \		# conflict; see below
+
 
 .if MANPS
 PSALL=	${MANALL:S/.cat1/.ps1/g:S/.cat2/.ps2/g:S/.cat3/.ps3/g:S/.cat4/.ps4/g:S/.cat5/.ps5/g:S/.cat6/.ps6/g:S/.cat7/.ps7/g:S/.cat8/.ps8/g:S/.cat9/.ps9/g}
@@ -207,14 +271,18 @@ PSALL=	${MANALL:S/.cat1/.ps1/g:S/.cat2/.ps2/g:S/.cat3/.ps3/g:S/.cat4/.ps4/g:S/.c
 
 .for page src in \
 	BF_set_key blowfish \
+	BIO bio \
 	BUF_MEM_new buffer \
 	CRYPTO_set_locking_callback threads \
+	DES_set_key des \
+	ERR err \
 	HMAC hmac \
 	MD5 md5 \
 	PEM_read_bio_PrivateKey pem \
+	RAND rand \
 	RC4 rc4 \
 	RIPEMD160 ripemd \
-	SHA1 sha \
+	SHA1 sha
 
 ${page}.cat3: ${src}.pod
 	${POD2MAN} --section=3 --name=${page:U} ${.ALLSRC} | \
@@ -227,6 +295,18 @@ ${page}.ps3: ${src}.pod
 .endfor
 
 MLINKS+=\
+	ASN1_OBJECT_new.3 ASN1_OBJECT_free.3 \
+	ASN1_STRING_length.3 ASN1_STRING_cmp.3 \
+	ASN1_STRING_length.3 ASN1_STRING_data.3 \
+	ASN1_STRING_length.3 ASN1_STRING_dup.3 \
+	ASN1_STRING_length.3 ASN1_STRING_set.3 \
+	ASN1_STRING_length.3 ASN1_STRING_to_UTF8.3 \
+	ASN1_STRING_length.3 ASN1_STRING_type.3 \
+	ASN1_STRING_new.3 ASN1_STRING_free.3 \
+	ASN1_STRING_new.3 ASN1_STRING_type_new.3 \
+	ASN1_STRING_print_ex.3 ASN1_STRING_print.3 \
+	ASN1_STRING_print_ex.3 ASN1_STRING_print_ex_fp.3 \
+	ASN1_generate_nconf.3 ASN1_generate_v3.3 \
 	BF_set_key.3 BF_cbc_encrypt.3 \
 	BF_set_key.3 BF_cfb64_encrypt.3 \
 	BF_set_key.3 BF_decrypt.3 \
@@ -254,15 +334,15 @@ MLINKS+=\
 	BIO_f_buffer.3 BIO_set_buffer_size.3 \
 	BIO_f_buffer.3 BIO_set_read_buffer_size.3 \
 	BIO_f_buffer.3 BIO_set_write_buffer_size.3 \
-	BIO_f_cipher.3 BIO_set_cipher.3 \
 	BIO_f_cipher.3 BIO_get_cipher_ctx.3 \
 	BIO_f_cipher.3 BIO_get_cipher_status.3 \
+	BIO_f_cipher.3 BIO_set_cipher.3 \
 	BIO_f_md.3 BIO_get_md.3 \
 	BIO_f_md.3 BIO_get_md_ctx.3 \
 	BIO_f_md.3 BIO_set_md.3 \
 	BIO_f_ssl.3 BIO_do_handshake.3 \
-	BIO_f_ssl.3 BIO_get_ssl.3 \
 	BIO_f_ssl.3 BIO_get_num_renegotiates.3 \
+	BIO_f_ssl.3 BIO_get_ssl.3 \
 	BIO_f_ssl.3 BIO_new_buffer_ssl_connect.3 \
 	BIO_f_ssl.3 BIO_new_ssl.3 \
 	BIO_f_ssl.3 BIO_new_ssl_connect.3 \
@@ -274,14 +354,14 @@ MLINKS+=\
 	BIO_f_ssl.3 BIO_ssl_shutdown.3 \
 	BIO_find_type.3 BIO_method_type.3 \
 	BIO_find_type.3 BIO_next.3 \
-	BIO_new.3 BIO_set.3 \
 	BIO_new.3 BIO_free.3 \
-	BIO_new.3 BIO_vfree.3 \
 	BIO_new.3 BIO_free_all.3 \
+	BIO_new.3 BIO_set.3 \
+	BIO_new.3 BIO_vfree.3 \
 	BIO_push.3 BIO_pop.3 \
-	BIO_read.3 BIO_write.3 \
 	BIO_read.3 BIO_gets.3 \
 	BIO_read.3 BIO_puts.3 \
+	BIO_read.3 BIO_write.3 \
 	BIO_s_accept.3 BIO_do_accept.3 \
 	BIO_s_accept.3 BIO_get_accept_port.3 \
 	BIO_s_accept.3 BIO_get_bind_mode.3 \
@@ -339,6 +419,17 @@ MLINKS+=\
 	BIO_should_retry.3 BIO_should_io_special.3 \
 	BIO_should_retry.3 BIO_should_read.3 \
 	BIO_should_retry.3 BIO_should_write.3 \
+	BN_BLINDING_new.3 BN_BLINDING_convert.3 \
+	BN_BLINDING_new.3 BN_BLINDING_convert_ex.3 \
+	BN_BLINDING_new.3 BN_BLINDING_create_param.3 \
+	BN_BLINDING_new.3 BN_BLINDING_free.3 \
+	BN_BLINDING_new.3 BN_BLINDING_get_thread_id.3 \
+	BN_BLINDING_new.3 BN_BLINDING_invert.3 \
+	BN_BLINDING_new.3 BN_BLINDING_invert_ex.3 \
+	BN_BLINDING_new.3 BN_BLINDING_get_flags.3 \
+	BN_BLINDING_new.3 BN_BLINDING_set_flags.3 \
+	BN_BLINDING_new.3 BN_BLINDING_set_thread_id.3 \
+	BN_BLINDING_new.3 BN_BLINDING_update.3 \
 	BN_CTX_new.3 BN_CTX_free.3 \
 	BN_CTX_new.3 BN_CTX_init.3 \
 	BN_CTX_start.3 BN_CTX_end.3 \
@@ -407,6 +498,9 @@ MLINKS+=\
 	BUF_MEM_new.3 BUF_MEM_free.3 \
 	BUF_MEM_new.3 BUF_MEM_grow.3 \
 	BUF_MEM_new.3 BUF_strdup.3 \
+	CONF_modules_free.3 CONF_modules_finish.3 \
+	CONF_modules_free.3 CONF_modules_unload.3 \
+	CONF_modules_load_file.3 CONF_modules_load.3 \
 	CRYPTO_set_ex_data.3 CRYPTO_get_ex_data.3 \
 	CRYPTO_set_locking_callback.3 CRYPTO_add.3 \
 	CRYPTO_set_locking_callback.3 CRYPTO_add_lock.3 \
@@ -459,6 +553,7 @@ MLINKS+=\
 	ERR_load_strings.3 ERR_get_next_error_library.3 \
 	ERR_print_errors.3 ERR_print_errors_fp.3 \
 	ERR_put_error.3 ERR_add_error_data.3 \
+	ERR_set_mark.3 ERR_pop_to_mark.3 \
 	EVP_DigestInit.3 EVP_DigestFinal.3 \
 	EVP_DigestInit.3 EVP_DigestUpdate.3 \
 	EVP_DigestInit.3 EVP_MD_CTX_block_size.3 \
@@ -515,6 +610,19 @@ MLINKS+=\
 	EVP_EncryptInit.3 OBJ_obj2nid.3 \
 	EVP_OpenInit.3 EVP_OpenFinal.3 \
 	EVP_OpenInit.3 EVP_OpenUpdate.3 \
+	EVP_PKEY_new.3 EVP_PKEY_free.3 \
+	EVP_PKEY_set1_RSA.3 EVP_PKEY_assign_DH.3 \
+	EVP_PKEY_set1_RSA.3 EVP_PKEY_assign_DSA.3 \
+	EVP_PKEY_set1_RSA.3 EVP_PKEY_assign_EC_KEY.3 \
+	EVP_PKEY_set1_RSA.3 EVP_PKEY_assign_RSA.3 \
+	EVP_PKEY_set1_RSA.3 EVP_PKEY_get1_DH.3 \
+	EVP_PKEY_set1_RSA.3 EVP_PKEY_get1_DSA.3 \
+	EVP_PKEY_set1_RSA.3 EVP_PKEY_get1_EC_KEY.3 \
+	EVP_PKEY_set1_RSA.3 EVP_PKEY_get1_RSA.3 \
+	EVP_PKEY_set1_RSA.3 EVP_PKEY_set1_DH.3 \
+	EVP_PKEY_set1_RSA.3 EVP_PKEY_set1_DSA.3 \
+	EVP_PKEY_set1_RSA.3 EVP_PKEY_set1_EC_KEY.3 \
+	EVP_PKEY_set1_RSA.3 EVP_PKEY_type.3 \
 	EVP_SealInit.3 EVP_SealFinal.3 \
 	EVP_SealInit.3 EVP_SealUpdate.3 \
 	EVP_SignInit.3 EVP_PKEY_size.3 \
@@ -537,8 +645,23 @@ MLINKS+=\
 	MD5.3 MD5_Final.3 \
 	MD5.3 MD5_Init.3 \
 	MD5.3 MD5_Update.3 \
+	OBJ_nid2obj.3 OBJ_cleanup.3 \
+	OBJ_nid2obj.3 OBJ_cmp.3 \
+	OBJ_nid2obj.3 OBJ_create.3 \
+	OBJ_nid2obj.3 OBJ_dup.3 \
+	OBJ_nid2obj.3 OBJ_ln2nid.3 \
+	OBJ_nid2obj.3 OBJ_nid2ln.3 \
+	OBJ_nid2obj.3 OBJ_nid2sn.3 \
+	OBJ_nid2obj.3 OBJ_obj2nid.3 \
+	OBJ_nid2obj.3 OBJ_obj2txt.3 \
+	OBJ_nid2obj.3 OBJ_sn2nid.3 \
+	OBJ_nid2obj.3 OBJ_txt2nid.3 \
+	OBJ_nid2obj.3 OBJ_txt2obj.3 \
 	OPENSSL_VERSION_NUMBER.3 SSLeay.3 \
 	OPENSSL_VERSION_NUMBER.3 SSLeay_version.3 \
+	OPENSSL_config.3 OPENSSL_no_config.3 \
+	OPENSSL_load_builtin_modules.3 ASN1_add_oid_module.3 \
+	OPENSSL_load_builtin_modules.3 ENGINE_add_conf_module.3 \
 	OpenSSL_add_all_algorithms.3 EVP_cleanup.3 \
 	OpenSSL_add_all_algorithms.3 OpenSSL_add_all_ciphers.3 \
 	OpenSSL_add_all_algorithms.3 OpenSSL_add_all_digests.3 \
@@ -787,6 +910,17 @@ MLINKS+=\
 	SSL_want.3 SSL_want_read.3 \
 	SSL_want.3 SSL_want_write.3 \
 	SSL_want.3 SSL_want_x509_lookup.3 \
+	X509_NAME_ENTRY_get_object.3 X509_NAME_ENTRY_create_by_NID.3 \
+	X509_NAME_ENTRY_get_object.3 X509_NAME_ENTRY_create_by_OBJ.3 \
+	X509_NAME_ENTRY_get_object.3 X509_NAME_ENTRY_create_by_txt.3 \
+	X509_NAME_ENTRY_get_object.3 X509_NAME_ENTRY_get_data.3 \
+	X509_NAME_ENTRY_get_object.3 X509_NAME_ENTRY_set_data.3 \
+	X509_NAME_ENTRY_get_object.3 X509_NAME_ENTRY_set_object.3 \
+	X509_NAME_add_entry_by_txt.3 X509_NAME_add_entry.3 \
+	X509_NAME_add_entry_by_txt.3 X509_NAME_add_entry_by_NID.3 \
+	X509_NAME_add_entry_by_txt.3 X509_NAME_add_entry_by_OBJ.3 \
+	X509_NAME_add_entry_by_txt.3 X509_NAME_delete_entry.3 \
+	X509_new.3 X509_free.3 \
 	acss.3 acss_setkey.3 \
 	bn_internal.3 bn_add_words.3 \
 	bn_internal.3 bn_check_top.3 \
@@ -820,13 +954,46 @@ MLINKS+=\
 	bn_internal.3 mul.3 \
 	bn_internal.3 mul_add.3 \
 	bn_internal.3 sqr.3 \
+	d2i_ASN1_OBJECT.3 i2d_ASN1_OBJECT.3 \
 	d2i_DHparams.3 i2d_DHparams.3 \
+	d2i_DSAPublicKey.3 d2i_DSAPrivateKey.3 \
+	d2i_DSAPublicKey.3 d2i_DSA_PUBKEY.3 \
+	d2i_DSAPublicKey.3 d2i_DSA_SIG.3 \
+	d2i_DSAPublicKey.3 d2i_DSAparams.3 \
+	d2i_DSAPublicKey.3 i2d_DSAPrivateKey.3 \
+	d2i_DSAPublicKey.3 i2d_DSAPublicKey.3 \
+	d2i_DSAPublicKey.3 i2d_DSA_PUBKEY.3 \
+	d2i_DSAPublicKey.3 i2d_DSA_SIG.3 \
+	d2i_DSAPublicKey.3 i2d_DSAparams.3 \
+	d2i_PKCS8PrivateKey.3 d2i_PKCS8PrivateKey_bio.3 \
+	d2i_PKCS8PrivateKey.3 d2i_PKCS8PrivateKey_fp.3 \
+	d2i_PKCS8PrivateKey.3 i2d_PKCS8PrivateKey_bio.3 \
+	d2i_PKCS8PrivateKey.3 i2d_PKCS8PrivateKey_fp.3 \
+	d2i_PKCS8PrivateKey.3 i2d_PKCS8PrivateKey_nid_bio.3 \
+	d2i_PKCS8PrivateKey.3 i2d_PKCS8PrivateKey_nid_fp.3 \
 	d2i_RSAPublicKey.3 d2i_Netscape_RSA.3 \
 	d2i_RSAPublicKey.3 d2i_RSAPrivateKey.3 \
 	d2i_RSAPublicKey.3 i2d_Netscape_RSA.3 \
 	d2i_RSAPublicKey.3 i2d_RSAPrivateKey.3 \
 	d2i_RSAPublicKey.3 i2d_RSAPublicKey.3 \
 	d2i_SSL_SESSION.3 i2d_SSL_SESSION.3 \
+	d2i_X509.3 d2i_X509_bio.3 \
+	d2i_X509.3 d2i_X509_fp.3 \
+	d2i_X509.3 i2d_X509.3 \
+	d2i_X509.3 i2d_X509_bio.3 \
+	d2i_X509.3 i2d_X509_fp.3 \
+	d2i_X509_ALGOR.3 i2d_X509_ALGOR.3 \
+	d2i_X509_CRL.3 d2i_X509_CRL_bio.3 \
+	d2i_X509_CRL.3 d2i_X509_CRL_fp.3 \
+	d2i_X509_CRL.3 i2d_X509_CRL.3 \
+	d2i_X509_CRL.3 i2d_X509_CRL_bio.3 \
+	d2i_X509_CRL.3 i2d_X509_CRL_fp.3 \
+	d2i_X509_NAME.3 i2d_X509_NAME.3 \
+	d2i_X509_REQ.3 d2i_X509_REQ_bio.3 \
+	d2i_X509_REQ.3 d2i_X509_REQ_fp.3 \
+	d2i_X509_REQ.3 i2d_X509_REQ.3 \
+	d2i_X509_REQ.3 i2d_X509_REQ_bio.3 \
+	d2i_X509_REQ.3 i2d_X509_REQ_fp.3 \
 	dsa.3 DSA_OpenSSL.3 \
 	dsa.3 DSA_SIG_free.3 \
 	dsa.3 DSA_do_verify.3 \
@@ -838,14 +1005,34 @@ MLINKS+=\
 	dsa.3 DSA_set_ex_data.3 \
 	dsa.3 DSA_sign_setup.3 \
 	dsa.3 DSA_verify.3 \
-	dsa.3 d2i_DSAPrivateKey.3 \
-	dsa.3 d2i_DSAPublicKey.3 \
-	dsa.3 d2i_DSA_SIG.3 \
-	dsa.3 d2i_DSAparams.3 \
-	dsa.3 i2d_DSAPrivateKey.3 \
-	dsa.3 i2d_DSAPublicKey.3 \
-	dsa.3 i2d_DSA_SIG.3 \
-	dsa.3 i2d_DSAparams.3 \
+	ecdsa.3 ECDSA_OpenSSL.3 \
+	ecdsa.3 ECDSA_SIG_free.3 \
+	ecdsa.3 ECDSA_SIG_new.3 \
+	ecdsa.3 ECDSA_do_sign.3 \
+	ecdsa.3 ECDSA_do_sign_ex.3 \
+	ecdsa.3 ECDSA_do_verify.3 \
+	ecdsa.3 ECDSA_get_default_method.3 \
+	ecdsa.3 ECDSA_get_ex_data.3 \
+	ecdsa.3 ECDSA_get_ex_new_index.3 \
+	ecdsa.3 ECDSA_set_default_method.3 \
+	ecdsa.3 ECDSA_set_ex_data.3 \
+	ecdsa.3 ECDSA_set_method.3 \
+	ecdsa.3 ECDSA_sign.3 \
+	ecdsa.3 ECDSA_sign_ex.3 \
+	ecdsa.3 ECDSA_sign_setup.3 \
+	ecdsa.3 ECDSA_verify.3 \
+	ecdsa.3 d2i_ECDSA_SIG.3 \
+	ecdsa.3 i2d_ECDSA_SIG.3 \
+	engine.3 ENGINE_add.3 \
+	engine.3 ENGINE_by_id.3 \
+	engine.3 ENGINE_finish.3 \
+	engine.3 ENGINE_get_first.3 \
+	engine.3 ENGINE_get_last.3 \
+	engine.3 ENGINE_get_next.3 \
+	engine.3 ENGINE_get_prev.3 \
+	engine.3 ENGINE_init.3 \
+	engine.3 ENGINE_load_builtin_engines.3 \
+	engine.3 ENGINE_remove.3 \
 	lh_stats.3 lh_node_stats.3 \
 	lh_stats.3 lh_node_stats_bio.3 \
 	lh_stats.3 lh_node_usage_stats.3 \
@@ -858,7 +1045,35 @@ MLINKS+=\
 	lhash.3 lh_free.3 \
 	lhash.3 lh_insert.3 \
 	lhash.3 lh_new.3 \
-	lhash.3 lh_retrieve.3
+	lhash.3 lh_retrieve.3 \
+	ui.3 UI_OpenSSL.3 \
+	ui.3 UI_add_error_string.3 \
+	ui.3 UI_add_info_string.3 \
+	ui.3 UI_add_input_boolean.3 \
+	ui.3 UI_add_input_string.3 \
+	ui.3 UI_add_user_data.3 \
+	ui.3 UI_add_verify_string.3 \
+	ui.3 UI_construct_prompt.3 \
+	ui.3 UI_ctrl.3 \
+	ui.3 UI_dup_error_string.3 \
+	ui.3 UI_dup_info_string.3 \
+	ui.3 UI_dup_input_boolean.3 \
+	ui.3 UI_dup_input_string.3 \
+	ui.3 UI_dup_verify_string.3 \
+	ui.3 UI_free.3 \
+	ui.3 UI_get0_result.3 \
+	ui.3 UI_get0_user_data.3 \
+	ui.3 UI_get_default_method.3 \
+	ui.3 UI_get_method.3 \
+	ui.3 UI_new.3 \
+	ui.3 UI_new_method.3 \
+	ui.3 UI_process.3 \
+	ui.3 UI_set_default_method.3 \
+	ui.3 UI_set_method.3 \
+	ui_compat.3 des_read_2passwords.3 \
+	ui_compat.3 des_read_password.3 \
+	ui_compat.3 des_read_pw.3 \
+	ui_compat.3 des_read_pw_string.3
 
 .include <bsd.man.mk>
 .else
