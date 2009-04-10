@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.164 2009/03/14 15:55:39 krw Exp $
+#	$OpenBSD: install.sh,v 1.165 2009/04/10 18:26:50 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -374,7 +374,9 @@ while read _addr _hn _aliases; do
 		echo "$_addr\t$_hn.$_dn $_hn"
 	fi
 done <hosts >>/mnt/etc/hosts
-rm hosts
+# rm hosts because we don't want to move it to /mnt/etc/., and rm -f because
+# we may not have configured any interfaces and thus have no file to remove.
+rm -f hosts
 
 # Append dhclient.conf to installed dhclient.conf.
 _f=dhclient.conf
