@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.8 2009/04/09 20:32:45 jacekm Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.9 2009/04/10 05:35:31 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: April 9 2009 $
+.Dd $Mdocdate: April 10 2009 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -72,14 +72,12 @@ listen on $wan_if tls enable auth
 .Ed
 .Sh GLOBAL CONFIGURATION
 Here are the settings that can be set globally:
-.Pp
-.Bl -tag -width Ds -compact
+.Bl -tag -width Ds
 .It Ic hostname Ar name
 Specify primary domain name of the server.
 By default, current host name is used,
 as returned by
 .Xr hostname 1 .
-.Pp
 .It Xo
 .Ic listen on Ar interface
 .Op Ic port Ar port
@@ -113,8 +111,10 @@ Creation of certificates is documented in
 If the
 .Ic enable auth
 parameter is used,
-sender that passed SMTPAUTH is allowed to relay mail using standard DNS-based routing,
+sender that passed SMTPAUTH is allowed to relay mail using
+standard DNS-based routing,
 unless a filter rule was matched that dictated different action.
+.El
 .Sh MAPS
 Maps provide generic interface for associating textual key to a value.
 Such associations may be accessed through a flat file, database, or DNS.
@@ -220,7 +220,8 @@ Finally, method of delivery is specified:
 Message is delivered to local user's system mailbox in
 .Pa /var/mail .
 .It Ic deliver to maildir Ar path
-Message is added to a maildir. Its location,
+Message is added to a maildir.
+Its location,
 .Ar path ,
 may contain format specifiers that are expanded before use,
 see the
