@@ -1,4 +1,4 @@
-/*	$OpenBSD: magmareg.h,v 1.10 2008/11/29 01:55:06 ray Exp $	*/
+/*	$OpenBSD: magmareg.h,v 1.11 2009/04/10 20:53:51 miod Exp $	*/
 
 /*-
  *  Copyright (c) 1998 Iain Hibbert
@@ -110,7 +110,7 @@ struct magma_softc {
 	struct mbpp_softc *ms_mbpp;
 
 	struct intrhand ms_hardint;	/* hard interrupt handler */
-	struct intrhand ms_softint;	/* soft interrupt handler */
+	void	*ms_softint;		/* soft interrupt handler */
 };
 
 #define MTTY_RBUF_SIZE		(2 * 512)
@@ -191,7 +191,7 @@ void cd1400_enable_transmitter(struct cd1400 *, int);
 int magma_match(struct device *, void *, void *);
 void magma_attach(struct device *, struct device *, void *);
 int magma_hard(void *);
-int magma_soft(void *);
+void magma_soft(void *);
 
 int mtty_match(struct device *, void *, void *);
 void mtty_attach(struct device *, struct device *, void *);

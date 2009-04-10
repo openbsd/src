@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.83 2009/03/27 23:21:18 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.84 2009/04/10 20:53:54 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -2330,15 +2330,23 @@ return_from_syscall:
  * this contains the psr, pc, npc, and interrupt level.
  */
 softintr_sun44c:
+	/*
+	 * Entry point for level 1, 4 or 6 interrupts on sun4/sun4c
+	 * which may be software interrupts. Check the interrupt
+	 * register to see whether we're dealing software or hardware
+	 * interrupt.
+	 */
 	sethi	%hi(INTRREG_VA), %l6
 	ldub	[%l6 + %lo(INTRREG_VA)], %l5
-	andn	%l5, %l4, %l5
+	btst	%l5, %l4		! is IE_L{1,4,6} set?
+	bz	sparc_interrupt_common	! if not, must be a hw intr
+	 andn	%l5, %l4, %l5		! clear soft intr bit
 	stb	%l5, [%l6 + %lo(INTRREG_VA)]
 
 softintr_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
-	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
+	INCR(_C_LABEL(uvmexp)+V_SOFTS)	! uvmexp.softs++; (clobbers %o0,%o1)
 	mov	%g1, %l7
 	rd	%y, %l6
 	std	%g4, [%sp + CCFSZ + 32]
@@ -2351,28 +2359,29 @@ softintr_common:
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
 	std	%l2, [%sp + CCFSZ + 8]
-	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
+	set	_C_LABEL(sintrhand), %l4	! %l4 = sintrhand[intlev];
 	ld	[%l4 + %l5], %l4
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
 
-1:	rd	%psr, %o1
+1:	ld	[%l4 + SIH_PENDING], %o0
+	tst	%o0
+	bz	2f			! if (ih->sih_pending != 0)
+	 st	%g0, [%l4 + SIH_PENDING]
+	rd	%psr, %o1
 	ld	[%l4 + IH_IPL], %o0
 	and	%o1, ~PSR_PIL, %o1
 	wr	%o1, %o0, %psr
-	ld	[%l4 + IH_ARG], %o0
 	ld	[%l4 + IH_FUN], %o1
-	tst	%o0
-	bz,a	2f
-	 add	%sp, CCFSZ, %o0
-2:	jmpl	%o1, %o7		!	(void)(*ih->ih_fun)(...)
-	 nop
+	jmpl	%o1, %o7		!	(void)(*ih->ih_fun)(...)
+	 ld	[%l4 + IH_ARG], %o0
 	mov	%l4, %l3
 	ldd	[%l3 + IH_COUNT], %l4
 	inccc	%l5
 	addx	%l4, 0, %l4
 	std	%l4, [%l3 + IH_COUNT]
-	ld	[%l3 + IH_NEXT], %l4	!	and ih = ih->ih_next
+	mov	%l3, %l4
+2:	ld	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 3:	tst	%l4			! while ih != NULL
 	bnz	1b
 	 nop
@@ -2393,17 +2402,19 @@ softintr_common:
 _C_LABEL(sparc_interrupt4m):
 	mov	1, %l4
 	sethi	%hi(ICR_PI_PEND), %l5
-	ld	[%l5 + %lo(ICR_PI_PEND)], %l5
-	sll	%l4, %l3, %l4
-	andcc	%l5, %l4, %g0
-	bne	_C_LABEL(sparc_interrupt_common)
+	ld	[%l5 + %lo(ICR_PI_PEND)], %l5	! get pending interrupts
+	sll	%l4, %l3, %l4	! hw intr bits are in the lower halfword
+
+	btst	%l4, %l5	! has pending hw intr at this level?
+	bnz	sparc_interrupt_common
 	 nop
 
-	! a soft interrupt; clear bit in interrupt-pending register
-	! XXX - this is CPU0's register set.
+	! both softint pending and clear bits are in upper halfwords of
+	! their respective registers so shift the test bit in %l4 up there
+	sll	%l4, 16, %l4
+
 	sethi	%hi(ICR_PI_CLR), %l6
-	sll	%l4, 16, %l5
-	st	%l5, [%l6 + %lo(ICR_PI_CLR)]
+	st	%l4, [%l6 + %lo(ICR_PI_CLR)]	! ack soft intr
 	/* Drain hw reg; might be necessary for Ross CPUs */
 	sethi	%hi(ICR_PI_PEND), %l6
 	ld	[%l6 + %lo(ICR_PI_PEND)], %g0
@@ -2415,7 +2426,7 @@ _C_LABEL(sparc_interrupt4m):
 	.globl	_C_LABEL(sparc_interrupt44c)
 _C_LABEL(sparc_interrupt44c):
 #endif
-_C_LABEL(sparc_interrupt_common):
+sparc_interrupt_common:
 	INTR_SETUP(-CCFSZ-80)
 	std	%g2, [%sp + CCFSZ + 24]	! save registers
 	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
@@ -3850,8 +3861,7 @@ Lgandul:	nop
 	 nop
 
 	/*
-	 * Call main.  This returns to us after loading /sbin/init into
-	 * user space.  (If the exec fails, main() does not return.)
+	 * Call main.
 	 */
 	call	_C_LABEL(main)
 	 clr	%o0			! our frame arg is ignored

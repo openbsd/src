@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.46 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: zs.c,v 1.47 2009/04/10 20:53:51 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -95,19 +95,6 @@ int zs_major = 12;
  * The Sun provides a 4.9152 MHz clock to the ZS chips.
  */
 #define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
-
-/*
- * Select software interrupt bit based on TTY ipl.
- */
-#if IPL_TTY == 1
-# define IE_ZSSOFT IE_L1
-#elif IPL_TTY == 4
-# define IE_ZSSOFT IE_L4
-#elif IPL_TTY == 6
-# define IE_ZSSOFT IE_L6
-#else
-# error "no suitable software interrupt bit"
-#endif
 
 #define	ZS_DELAY()		(CPU_ISSUN4C ? (0) : delay(2))
 
@@ -213,9 +200,8 @@ struct cfdriver zs_cd = {
 
 /* Interrupt handlers. */
 int zshard(void *);
-int zssoft(void *);
+void zssoft(void *);
 struct intrhand levelhard = { zshard };
-struct intrhand levelsoft = { zssoft };
 
 int zs_get_speed(struct zs_chanstate *);
 
@@ -360,9 +346,10 @@ zs_attach(parent, self, aux)
 		didintr = 1;
 		prevpri = pri;
 		intr_establish(pri, &levelhard, IPL_ZS, self->dv_xname);
-		intr_establish(IPL_TTY, &levelsoft, IPL_TTY, self->dv_xname);
 	} else if (pri != prevpri)
 		panic("broken zs interrupt scheme");
+
+	zsc->zsc_softih = softintr_establish(IPL_SOFTTTY, zssoft, zsc);
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.
@@ -419,8 +406,6 @@ zs_print(aux, name)
 	return UNCONF;
 }
 
-volatile int zssoftpending;
-
 /*
  * Our ZS chips all share a common, autovectored interrupt,
  * so we have to look at all of them on each interrupt.
@@ -442,56 +427,27 @@ zshard(arg)
 		if (rr3) {
 			rval |= rr3;
 		}
-		softreq |= zsc->zsc_cs[0].cs_softreq;
-		softreq |= zsc->zsc_cs[1].cs_softreq;
+		if (zsc->zsc_cs[0].cs_softreq || zsc->zsc_cs[1].cs_softreq)
+			softintr_schedule(zsc->zsc_softih);
 	}
 
-	/* We are at splzs here, so no need to lock. */
-	if (softreq && (zssoftpending == 0)) {
-		zssoftpending = IE_ZSSOFT;
-#if defined(SUN4M)
-		if (CPU_ISSUN4M)
-			raise(0, IPL_TTY);
-		else
-#endif
-		ienab_bis(IE_ZSSOFT);
-	}
 	return (rval);
 }
 
 /*
  * Similar scheme as for zshard (look at all of them)
  */
-int
+void
 zssoft(arg)
 	void *arg;
 {
-	struct zsc_softc *zsc;
-	int s, unit;
-
-	/* This is not the only ISR on this IPL. */
-	if (zssoftpending == 0)
-		return (0);
-
-	/*
-	 * The soft intr. bit will be set by zshard only if
-	 * the variable zssoftpending is zero.  The order of
-	 * these next two statements prevents our clearing
-	 * the soft intr bit just after zshard has set it.
-	 */
-	/* ienab_bic(IE_ZSSOFT); */
-	zssoftpending = 0;
+	struct zsc_softc *zsc = (struct zsc_softc *)arg;
+	int s;
 
 	/* Make sure we call the tty layer at spltty. */
 	s = spltty();
-	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
-		zsc = zs_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		(void)zsc_intr_soft(zsc);
-	}
+	(void)zsc_intr_soft(zsc);
 	splx(s);
-	return (1);
 }
 
 

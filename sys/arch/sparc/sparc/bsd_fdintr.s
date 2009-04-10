@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_fdintr.s,v 1.11 2004/09/29 07:35:13 miod Exp $	*/
+/*	$OpenBSD: bsd_fdintr.s,v 1.12 2009/04/10 20:53:54 miod Exp $	*/
 /*	$NetBSD: bsd_fdintr.s,v 1.11 1997/04/07 21:00:36 pk Exp $ */
 
 /*
@@ -42,6 +42,13 @@
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/dev/fdreg.h>
 #include <sparc/dev/fdvar.h>
+
+/*
+ * Note the following code hardcodes soft interrupt level 4, instead of
+ * picking the actual bits from the softintr cookie. We don't have enough
+ * free registers to be able to pick it easily, anyway; it's just not
+ * worth doing.
+ */
 
 #define FD_SET_SWINTR_4C				\
 	sethi	%hi(INTRREG_VA), %l5;			\

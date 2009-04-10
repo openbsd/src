@@ -1,4 +1,4 @@
-/*	$OpenBSD: intreg.h,v 1.8 2006/05/29 20:40:01 miod Exp $	*/
+/*	$OpenBSD: intreg.h,v 1.9 2009/04/10 20:53:54 miod Exp $	*/
 /*	$NetBSD: intreg.h,v 1.6 1997/07/22 20:19:10 pk Exp $ */
 
 /*
@@ -60,14 +60,6 @@
  * be cleared in software.  This is done in locore.s.  The ALLIE bit must
  * be cleared to clear asynchronous memory error (level 15) interrupts.
  */
-#ifdef solbourne
-#define	IE_L14		14
-#define	IE_L10		10
-#define	IE_L8		8
-#define	IE_L6		6
-#define	IE_L4		4
-#define	IE_L1		1
-#else
 #define	IE_L14		0x80	/* enable level 14 (counter 1) interrupts */
 #define	IE_L10		0x20	/* enable level 10 (counter 0) interrupts */
 #define	IE_L8		0x10	/* enable level 8 interrupts */
@@ -75,7 +67,6 @@
 #define	IE_L4		0x04	/* request software level 4 interrupt */
 #define	IE_L1		0x02	/* request software level 1 interrupt */
 #define	IE_ALLIE	0x01	/* enable interrupts */
-#endif
 
 #ifndef _LOCORE
 void	ienab_bis(int bis);	/* set given bits */

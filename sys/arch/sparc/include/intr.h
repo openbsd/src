@@ -1,5 +1,5 @@
-/*	$OpenBSD: z8530var.h,v 1.4 2009/04/10 20:53:54 miod Exp $	*/
-/*	$NetBSD: z8530var.h,v 1.1 1997/10/18 00:01:30 gwr Exp $	*/
+/*	$OpenBSD: intr.h,v 1.1 2009/04/10 20:53:54 miod Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,43 +38,65 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
+ *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  */
 
-#include <sparc/dev/z8530sc.h>
+#ifndef _SPARC_INTR_H_
+#define _SPARC_INTR_H_
 
-struct zsc_softc {
-	struct	device zsc_dev;		/* required first: base device */
-	void	*zsc_softih;		/* softintr cookie */
-	struct	zs_chanstate zsc_cs[2];	/* channel A and B soft state */
-};
+#ifdef _KERNEL
+#include <sys/evcount.h>
 
 /*
- * Functions to read and write individual registers in a channel.
- * The ZS chip requires a 1.6 uSec. recovery time between accesses.
- * On the SparcStation the recovery time is handled in hardware.
- * On the older Sun4 machine it isn't, and software must do it.
- *
- * However, it *is* a problem on some Sun4m's (i.e. the SS20) (XXX: why?).
- * Thus we leave in the delay (done in the functions below).
- * XXX: (ABB) Think about this more.
- *
- * The functions below could be macros instead if we are concerned
- * about the function call overhead where ZS_DELAY does nothing.
+ * Interrupt handler chains.  Interrupt handlers should return 0 for
+ * ``not me'' or 1 (``I took care of it'').  intr_establish() inserts a
+ * handler into the list.  The handler is called with its (single)
+ * argument, or with a pointer to a clockframe if ih_arg is NULL.
+ * ih_ipl specifies the interrupt level that should be blocked when
+ * executing this handler.
  */
+struct intrhand {
+	int			(*ih_fun)(void *);
+	void			*ih_arg;
+	int			ih_ipl;
+	int			ih_vec;		/* ipl for vmstat */
+	struct	evcount		ih_count;
+	struct	intrhand	*ih_next;	/* global list */
+};
+extern struct intrhand *intrhand[15];		/* XXX obio.c */
 
-u_char zs_read_reg(struct zs_chanstate *cs, u_char reg);
-u_char zs_read_csr(struct zs_chanstate *cs);
-u_char zs_read_data(struct zs_chanstate *cs);
+void	intr_establish(int, struct intrhand *, int, const char *);
+void	vmeintr_establish(int, int, struct intrhand *, int, const char *);
 
-void  zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val);
-void  zs_write_csr(struct zs_chanstate *cs, u_char val);
-void  zs_write_data(struct zs_chanstate *cs, u_char val);
+/*
+ * intr_fasttrap() is a lot like intr_establish, but is used for ``fast''
+ * interrupt vectors (vectors that are not shared and are handled in the
+ * trap window).  Such functions must be written in assembly.
+ */
+int	intr_fasttrap(int, void (*)(void), int (*)(void *), void *);
+void	intr_fastuntrap(int);
 
-/* The sparc has splzs() in psl.h */
+void	intr_init(void);
 
-/* We want to call it "zs" instead of "zsc" (sigh). */
-#ifndef ZSCCF_CHANNEL
-#define ZSCCF_CHANNEL 0
-#define ZSCCF_CHANNEL_DEFAULT -1
-#endif
+/*
+ * Soft interrupt handler chains. In addition to a struct intrhand for
+ * proper dispatching, we also remember a pending state as well as the
+ * bits to frob in the software interrupt register.
+ */
+struct sintrhand {
+	struct intrhand	sih_ih;
+	int		sih_pending;	/* nonzero if triggered */
+	int		sih_hw;		/* hw dependent */
+	int		sih_ipl;	/* ipl it's registered at */
+};
+
+void	 softintr_disestablish(void *);
+void	*softintr_establish(int, void (*)(void *), void *);
+void	 softintr_schedule(void *);
+
+/* XXX legacy software interrupts */
+extern void *softnet_ih;
+#define	 setsoftnet()	softintr_schedule(softnet_ih)
+
+#endif /* _KERNEL */
+#endif /* _SPARC_INTR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.20 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: spif.c,v 1.21 2009/04/10 20:53:51 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -53,16 +53,6 @@
 #include <sparc/dev/spifreg.h>
 #include <sparc/dev/spifvar.h>
 
-#if IPL_TTY == 1
-# define IE_MSOFT IE_L1
-#elif IPL_TTY == 4
-# define IE_MSOFT IE_L4
-#elif IPL_TTY == 6
-# define IE_MSOFT IE_L6
-#else
-# error "no suitable software interrupt bit"
-#endif
-
 int	spifmatch(struct device *, void *, void *);
 void	spifattach(struct device *, struct device *, void *);
 
@@ -80,7 +70,7 @@ int	spifstcintr_mx(struct spif_softc *, int *);
 int	spifstcintr_tx(struct spif_softc *, int *);
 int	spifstcintr_rx(struct spif_softc *, int *);
 int	spifstcintr_rxexception(struct spif_softc *, int *);
-int	spifsoftintr(void *);
+void	spifsoftintr(void *);
 
 int	stty_param(struct tty *, struct termios *);
 struct tty *sttytty(dev_t);
@@ -213,9 +203,7 @@ spifattach(parent, self, aux)
 	sc->sc_stcih.ih_arg = sc;
 	intr_establish(stcpri, &sc->sc_stcih, -1, self->dv_xname);
 
-	sc->sc_softih.ih_fun = spifsoftintr;
-	sc->sc_softih.ih_arg = sc;
-	intr_establish(IPL_TTY, &sc->sc_softih, IPL_TTY, self->dv_xname);
+	sc->sc_softih = softintr_establish(IPL_SOFTTTY, spifsoftintr, sc);
 }
 
 int
@@ -869,24 +857,18 @@ spifstcintr(vsc)
 			r |= spifstcintr_mx(sc, &needsoft);
 	}
 
-	if (needsoft) {
-#if defined(SUN4M)
-		if (CPU_ISSUN4M)
-			raise(0, IPL_TTY);
-		else
-#endif
-			ienab_bis(IE_MSOFT);
-	}
+	if (needsoft)
+		softintr_schedule(sc->sc_softih);
 	return (r);
 }
 
-int
+void
 spifsoftintr(vsc)
 	void *vsc;
 {
 	struct spif_softc *sc = (struct spif_softc *)vsc;
 	struct stty_softc *stc = sc->sc_ttys;
-	int r = 0, i, data, s, flags;
+	int i, data, s, flags;
 	u_int8_t stat, msvr;
 	struct stty_port *sp;
 	struct tty *tp;
@@ -913,7 +895,6 @@ spifsoftintr(vsc)
 					data |= TTY_PE;
 
 				(*linesw[tp->t_line].l_rint)(data, tp);
-				r = 1;
 			}
 
 			s = splhigh();
@@ -931,13 +912,11 @@ spifsoftintr(vsc)
 				sp->sp_carrier = msvr & CD180_MSVR_CD;
 				(*linesw[tp->t_line].l_modem)(tp,
 				    sp->sp_carrier);
-				r = 1;
 			}
 
 			if (ISSET(flags, STTYF_RING_OVERFLOW)) {
 				log(LOG_WARNING, "%s-%x: ring overflow\n",
 					stc->sc_dev.dv_xname, i);
-				r = 1;
 			}
 
 			if (ISSET(flags, STTYF_DONE)) {
@@ -945,12 +924,9 @@ spifsoftintr(vsc)
 				    sp->sp_txp - tp->t_outq.c_cf);
 				CLR(tp->t_state, TS_BUSY);
 				(*linesw[tp->t_line].l_start)(tp);
-				r = 1;
 			}
 		}
 	}
-
-	return (r);
 }
 
 static __inline	void

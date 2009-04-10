@@ -1,4 +1,4 @@
-/*	$OpenBSD: spifvar.h,v 1.4 2006/06/02 20:00:54 miod Exp $	*/
+/*	$OpenBSD: spifvar.h,v 1.5 2009/04/10 20:53:51 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -61,7 +61,7 @@ struct spif_softc {
 	struct	device sc_dev;		/* base device */
 	struct	intrhand sc_stcih;	/* stc interrupt vectoring */
 	struct	intrhand sc_ppcih;	/* ppc interrupt vectoring */
-	struct	intrhand sc_softih;	/* hard interrupt vectoring */
+	void	*sc_softih;		/* soft interrupt vectoring */
 	int	sc_rev;			/* revision level */
 	int	sc_osc;			/* oscillator speed (hz) */
 	int	sc_node;		/* which sbus node */
