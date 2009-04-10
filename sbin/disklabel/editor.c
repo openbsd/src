@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.187 2009/04/10 20:54:08 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.188 2009/04/10 21:16:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.187 2009/04/10 20:54:08 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.188 2009/04/10 21:16:51 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -79,7 +79,7 @@ struct space_allocation alloc[] = {
 	{   MEG(80),      MEG(4096),  10, "/var"	},
 	{ MEG(2048),     MEG(10240),  20, "/usr"	},
 	{  MEG(512),      MEG(1024),   5, "/usr/X11R6"	},
-	{ MEG(2048),      MEG(3072),   5, "/usr/local"	},
+	{ MEG(2048),      MEG(5120),   5, "/usr/local"	},
 	{ MEG(1024),      MEG(2048),   5, "/usr/src"	},
 	{ MEG(2048),      MEG(2048),   0, "/usr/obj"	},
 	{  MEG(512), MEG(1024*1024),  35, "/home"	}
