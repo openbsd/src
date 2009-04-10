@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.165 2009/04/10 18:26:50 krw Exp $
+#	$OpenBSD: install.sh,v 1.166 2009/04/10 21:01:32 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -101,6 +101,7 @@ if [ ! -f /etc/fstab ]; then
 		# some platforms may not be able to provide this functionality.
 		# /tmp/fstab.$DISK is created here with 'disklabel -f'.
 		rm -f /tmp/*.$DISK
+		AUTOROOT=n
 		md_prep_disklabel $DISK
 
 		# Get the lists of BSD and swap partitions.
@@ -156,8 +157,14 @@ if [ ! -f /etc/fstab ]; then
 			_mp=${_mount_points[$_i]}
 			_size=$(stdsize ${_psizes[$_i]})
 
-			# Get the mount point from the user
-			ask "Mount point for $_pp ($_size)? (or 'none' or 'done')" "$_mp"
+			if [[ $AUTOROOT == y ]]; then
+				# No need to disturb the user.
+				resp=""
+			else
+				# Get the mount point from the user.
+				ask "Mount point for $_pp ($_size)? (or 'none' or 'done')" "$_mp"
+			fi
+
 			case $resp in
 			"")	;;
 			none)	_mp=
@@ -192,7 +199,10 @@ if [ ! -f /etc/fstab ]; then
 			_mount_points[$_i]=$_mp
 
 			: $(( _i += 1))
-			[ $_i -ge ${#_partitions[*]} ] && _i=0
+			if [[ $_i -ge ${#_partitions[*]} ]]; then
+				[[ $AUTOROOT == y ]] && break
+				_i=0
+			fi
 		done
 
 		# Append mount information to $FILESYSTEMS
@@ -204,7 +214,8 @@ if [ ! -f /etc/fstab ]; then
 		done
 	done
 
-	cat <<__EOT
+	if [[ $AUTOROOT == n ]]; then
+		cat <<__EOT
 
 OpenBSD filesystems:
 $(<$FILESYSTEMS)
@@ -212,8 +223,9 @@ $(<$FILESYSTEMS)
 The next step *DESTROYS* all existing data on these partitions!
 __EOT
 
-	ask_yn "Are you really sure that you're ready to proceed?"
-	[[ $resp == n ]] && { echo "Ok, try again later." ; exit ; }
+		ask_yn "Are you really sure that you're ready to proceed?"
+		[[ $resp == n ]] && { echo "Ok, try again later." ; exit ; }
+	fi
 
 	# Read $FILESYSTEMS, creating a new filesystem on each listed
 	# partition and saving the partition and mount point information
