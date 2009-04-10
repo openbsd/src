@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.144 2009/04/09 16:52:32 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.145 2009/04/10 03:32:24 marco Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -80,8 +80,6 @@ struct aml_value	*aml_evaltarget(struct aml_scope *scope,
 			    struct aml_value *res);
 int			aml_evalterm(struct aml_scope *scope,
 			    struct aml_value *raw, struct aml_value *dst);
-void			aml_gasio(struct acpi_softc *, int, uint64_t, uint64_t,
-			    int, int, int, void *, int);
 
 struct aml_opcode	*aml_findopcode(int);
 
