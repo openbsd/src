@@ -1,4 +1,4 @@
-# $OpenBSD: extest.awk,v 1.1 2005/04/21 17:45:54 miod Exp $
+# $OpenBSD: extest.awk,v 1.2 2009/04/10 20:57:04 kettenis Exp $
 # $NetBSD: extest.awk,v 1.6 2002/02/21 03:59:25 mrg Exp $
 
 BEGIN {
@@ -48,8 +48,13 @@ $1 == "boundary" {
 }
 
 $1 == "alloc_region" {
-	printf("error = extent_alloc_region(ex, %s, %s, 0);\n",
-	       $2, $3)
+	if ($4 == "") {
+		flags = "0";
+	} else {
+		flags = $4;
+	}
+	printf("error = extent_alloc_region(ex, %s, %s, %s);\n",
+	       $2, $3, flags)
 	printf("if (error)\n\tprintf(\"error: %%s\\n\", strerror(error));\n")
 }
 

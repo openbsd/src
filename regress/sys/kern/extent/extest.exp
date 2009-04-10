@@ -1,4 +1,4 @@
-# $OpenBSD: extest.exp,v 1.1 2005/04/21 17:45:54 miod Exp $
+# $OpenBSD: extest.exp,v 1.2 2009/04/10 20:57:04 kettenis Exp $
 # $NetBSD: extest.exp,v 1.9 2005/03/15 18:27:23 bouyer Exp $
 # real output must start in line 5
 
@@ -75,3 +75,14 @@ extent `test11' (0x10 - 0x20), flags = 0x2
      0x14 - 0x14
      0x1e - 0x1f
      0x20 - 0x20
+output for test12
+error: Resource temporarily unavailable
+output for test13
+extent `test13' (0x0 - 0xffffffff), flags = 0x0
+     0xfce00000 - 0xfcefffff
+output for test14
+extent `test14' (0x0 - 0xffffffff), flags = 0x0
+     0xfce00000 - 0xfce010ff
+output for test15
+extent `test15' (0x0 - 0xffffffff), flags = 0x0
+     0xf8000000 - 0xffffffff

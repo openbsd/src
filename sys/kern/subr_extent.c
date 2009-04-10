@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.35 2009/04/04 22:32:05 kettenis Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.36 2009/04/10 20:57:04 kettenis Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -401,6 +401,9 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 		 ex->ex_name, start, size);
 		panic("extent_alloc_region: overflow");
 	}
+	if ((flags & EX_CONFLICTOK) && (flags & EX_WAITSPACE))
+		panic("extent_alloc_region: EX_CONFLICTOK and EX_WAITSPACE "
+		    "are mutually exclusive");
 #endif
 
 	/*
@@ -476,6 +479,36 @@ extent_alloc_region(struct extent *ex, u_long start, u_long size, int flags)
 					return (error);
 				goto alloc_start;
 			}
+
+			/*
+			 * If we tolerate conflicts adjust things such
+			 * that all space in the requested region is
+			 * allocated.
+			 */
+			if (flags & EX_CONFLICTOK) {
+				/*
+				 * There are two possibilities:
+				 *
+				 * 1. The current region overlaps.
+				 *    Adjust the requested region to
+				 *    start at the end of the current
+				 *    region, and try again.
+				 *
+				 * 2. The current region falls
+                                 *    completely within the requested
+                                 *    region.  Free the current region
+                                 *    and try again.
+				 */
+				if (rp->er_start <= start) {
+					start = rp->er_end + 1;
+					size = end - start + 1;
+				} else {
+					LIST_REMOVE(rp, er_link);
+					extent_free_region_descriptor(ex, rp);
+				}
+				goto alloc_start;
+			}
+
 			extent_free_region_descriptor(ex, myrp);
 			return (EAGAIN);
 		}

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: extent.9,v 1.12 2008/06/26 05:42:08 ray Exp $
+.\"	$OpenBSD: extent.9,v 1.13 2009/04/10 20:57:04 kettenis Exp $
 .\"	$NetBSD: extent.9,v 1.15 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: April 10 2009 $
 .Dt EXTENT 9
 .Os
 .Sh NAME
@@ -234,12 +234,18 @@ beginning at
 .Fa start
 with the size
 .Fa size .
+If the caller specifies the
+.Dv EX_CONFLICTOK
+flag, the allocation will succeed even if part of the requested region
+has already been allocated.
 The caller may specify that it is okay to wait for the indicated
 region to be free by setting the flag
 .Dv EX_WAITSPACE .
-If
+If neither
 .Dv EX_WAITSPACE
-is not set, the allocation will fail if the request can not be
+nor
+.Dv EX_CONFLICTOK
+is set, the allocation will fail if the request can not be
 satisfied without sleeping.
 .Pp
 .Fn extent_free

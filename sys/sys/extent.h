@@ -1,4 +1,4 @@
-/*	$OpenBSD: extent.h,v 1.9 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: extent.h,v 1.10 2009/04/10 20:57:04 kettenis Exp $	*/
 /*	$NetBSD: extent.h,v 1.6 1997/10/09 07:43:05 jtc Exp $	*/
 
 /*-
@@ -82,6 +82,7 @@ struct extent_fixed {
 #define EX_MALLOCOK	0x10		/* safe to call malloc() */
 #define EX_WAITSPACE	0x20		/* wait for space to become free */
 #define EX_BOUNDZERO	0x40		/* boundary lines start at 0 */
+#define EX_CONFLICTOK	0x80		/* allow conlficts */
 
 /*
  * Special place holders for "alignment" and "boundary" arguments,
