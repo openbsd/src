@@ -1,7 +1,7 @@
-/*	$OpenBSD: sti_pci_machdep.c,v 1.1 2007/01/11 22:06:39 miod Exp $	*/
+/*	$OpenBSD: sti_pci_machdep.c,v 1.2 2009/04/10 17:11:27 miod Exp $	*/
 
 /*
- * Copyright (c) 2007 Miodrag Vallat.
+ * Copyright (c) 2007, 2009 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,5 +31,47 @@ int	sti_pci_is_console(struct pci_attach_args *, bus_addr_t *);
 int
 sti_pci_is_console(struct pci_attach_args *paa, bus_addr_t *bases)
 {
-	return ((hppa_hpa_t)bases[0] == (hppa_hpa_t)PAGE0->mem_cons.pz_hpa);
+	u_int32_t cf;
+	bus_addr_t addr;
+	int bar;
+	int rc;
+
+	/*
+	 * PAGE0 console information will point to one of our BARs,
+	 * but depending on the particular sti model, this might not
+	 * be the BAR mapping the rom (region #0).
+	 *
+	 * For example, on Visualize FXe, regions #0, #2 and #3 are
+	 * mapped by BAR 0x18, while region #1 is mapped by BAR 0x10,
+	 * which matches PAGE0 console address.
+	 *
+	 * Rather than trying to be smart, reread the region->BAR array
+	 * again, and compare the BAR mapping region #1 against PAGE0
+	 * values, we simply try all the valid BARs; if any of them
+	 * matches what PAGE0 says, then we are the console, and it
+	 * doesn't matter which BAR matched.
+	 */
+	for (bar = PCI_MAPREG_START; bar <= PCI_MAPREG_PPB_END; ) {
+		cf = pci_conf_read(paa->pa_pc, paa->pa_tag, bar);
+
+		if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO) {
+			rc = pci_io_find(paa->pa_pc, paa->pa_tag, bar, &addr,
+			    NULL);
+			bar += 4;
+		} else {
+			rc = pci_mem_find(paa->pa_pc, paa->pa_tag, bar, &addr,
+			    NULL, NULL);
+			if (PCI_MAPREG_MEM_TYPE(cf) ==
+			    PCI_MAPREG_MEM_TYPE_64BIT)
+				bar += 8;
+			else
+				bar += 4;
+		}
+
+		if (rc == 0 &&
+		    (hppa_hpa_t)addr == (hppa_hpa_t)PAGE0->mem_cons.pz_hpa)
+			return 1;
+	}
+
+	return 0;
 }
