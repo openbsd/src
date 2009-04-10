@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.145 2009/04/10 03:32:24 marco Exp $ */
+/* $OpenBSD: dsdt.c,v 1.146 2009/04/10 16:05:10 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2481,7 +2481,7 @@ aml_rwfield(struct aml_value *fld, int bpos, int blen, struct aml_value *val, in
 		aml_rwgas(ref1, fld->v_field.bitpos, fld->v_field.bitlen, val, mode, fld->v_field.flags);
 	}
 	else if (fld->v_field.type == AMLOP_FIELD) {
-		aml_rwgas(ref1, fld->v_field.bitpos, fld->v_field.bitlen, val, mode, fld->v_field.flags);
+		aml_rwgas(ref1, fld->v_field.bitpos+bpos, blen, val, mode, fld->v_field.flags);
 	}
 	else if (mode == ACPI_IOREAD) {
 		/* bufferfield:read */
