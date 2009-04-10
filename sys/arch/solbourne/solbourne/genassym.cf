@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 2005/04/20 01:00:18 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.2 2009/04/10 20:57:28 miod Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -104,3 +104,7 @@ export	SONPROC
 struct	uvmexp		V_
 member	INTR		intrs
 member	swtch
+
+# CPU info structure
+struct cpu_softc
+member CPUINFO_CURPROC ci.ci_curproc
