@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.9 2008/11/03 09:32:14 landry Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.10 2009/04/11 23:07:07 schwarze Exp $
 
 =head1 NAME
 
@@ -71,7 +71,7 @@ the package gets installed).
 They are recorded in a L<OpenBSD::PackingList(3p)>, the module offers
 everything needed to manipulate packing-lists.
 The packing-list format has a text representation, which is documented
-in L<pkg_create(3p)>.
+in L<pkg_create(1)>.
 Internally, packing-lists are heavily structured. Objects are reordered
 by the internals of L<OpenBSD::PackingList(3p)>, and there are some standard
 filters defined to gain access to some commonly used information (dependencies
@@ -192,7 +192,7 @@ stuff that's no longer in use.
 =item virtual file system
 
 Most package operations will lead to the installation and removal of some
-files.   Everything is checked beforehand: the package systeme must verify
+files.   Everything is checked beforehand: the package system must verify
 that no new file will erase an existing file, or that the file system
 won't overflow during the package installation.
 The package tools also have a "pretend" mode where the user can check what
