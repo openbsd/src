@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.189 2009/04/11 15:17:11 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.190 2009/04/11 23:57:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.189 2009/04/11 15:17:11 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.190 2009/04/11 23:57:56 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -501,8 +501,7 @@ editor_allocspace(struct disklabel *lp)
 		if (j == MAXPARTITIONS)
 			return;
 		pp = &lp->d_partitions[j];
-		if (fstabfile)
-			partmp = &mountpoints[j];
+		partmp = &mountpoints[j];
 		ap = &alloc[i];
 
 		/* Figure out the size of the partition. */
@@ -568,11 +567,9 @@ editor_allocspace(struct disklabel *lp)
 			pp->p_fstype = FS_SWAP;
 		else {
 			pp->p_fstype = FS_BSDFFS;
-			if (fstabfile) {
-				free(*partmp);
-				if ((*partmp = strdup(ap->mp)) == NULL)
-					errx(4, "out of memory");
-			}
+			free(*partmp);
+			if ((*partmp = strdup(ap->mp)) == NULL)
+				errx(4, "out of memory");
 		}
 	}
 
