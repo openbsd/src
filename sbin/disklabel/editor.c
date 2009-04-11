@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.188 2009/04/10 21:16:51 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.189 2009/04/11 15:17:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.188 2009/04/10 21:16:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.189 2009/04/11 15:17:11 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -548,13 +548,9 @@ editor_allocspace(struct disklabel *lp)
 			secs = chunksize;
 		}
 		if (secs < ap->minsz) {
+			/* If this one doesn't fit, ignore subsequent ones. */
 			totsecs += secs;
-			fprintf(stderr, "no space to auto allocate %s\n", 
-			    ap->mp);
-			if (i == 0)
-				break;
-			else
-				continue;
+			break;
 		}
 
 		/* Everything seems ok so configure the partition. */
