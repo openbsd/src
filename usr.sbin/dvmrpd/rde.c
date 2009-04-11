@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.13 2009/03/14 15:32:55 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.14 2009/04/11 10:21:20 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -42,6 +42,8 @@
 void		 rde_sig_handler(int sig, short, void *);
 void		 rde_shutdown(void);
 void		 rde_dispatch_imsg(int, short, void *);
+
+int		 rde_select_ds_ifs(struct mfc *, struct iface *);
 
 volatile sig_atomic_t	 rde_quit = 0;
 struct dvmrpd_conf	*rdeconf = NULL;
@@ -254,7 +256,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				mfc.ttls[i] = 0;
 
 			LIST_FOREACH(iface, &rdeconf->iface_list, entry) {
-				if (mfc.ifindex != iface->ifindex)
+				if (rde_select_ds_ifs(&mfc, iface))
 					mfc.ttls[iface->ifindex] = 1;
 			}
 
@@ -309,6 +311,30 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	imsg_event_add(ibuf);
+}
+
+int
+rde_select_ds_ifs(struct mfc *mfc, struct iface *iface)
+{
+	struct rt_node	*rn;
+
+	if (mfc->ifindex == iface->ifindex)
+		return (0);
+
+	if (rde_group_list_find(iface, mfc->group))
+		return (1);
+
+	rn = rt_match_origin(mfc->origin.s_addr);
+	if (rn == NULL) {
+		log_debug("rde_selected_ds_iface: no informations about "
+		    "the origin %s", inet_ntoa(mfc->origin));
+		return (0);
+	}
+
+	if (rn->ds_cnt[iface->ifindex] != 0)
+		return (1);
+
+	return (0);
 }
 
 /* rde group functions */
