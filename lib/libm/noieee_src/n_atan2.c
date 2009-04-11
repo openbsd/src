@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_atan2.c,v 1.11 2008/12/10 01:08:24 martynas Exp $	*/
+/*	$OpenBSD: n_atan2.c,v 1.12 2009/04/11 20:03:21 martynas Exp $	*/
 /*	$NetBSD: n_atan2.c,v 1.1 1995/10/10 23:36:37 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -112,66 +112,25 @@ static char sccsid[] = "@(#)atan2.c	8.1 (Berkeley) 6/4/93";
 
 #include "mathimpl.h"
 
-vc(athfhi, 4.6364760900080611433E-1  ,6338,3fed,da7b,2b0d,  -1, .ED63382B0DDA7B)
-vc(athflo, 1.9338828231967579916E-19 ,5005,2164,92c0,9cfe, -62, .E450059CFE92C0)
-vc(PIo4,   7.8539816339744830676E-1  ,0fda,4049,68c2,a221,   0, .C90FDAA22168C2)
-vc(at1fhi, 9.8279372324732906796E-1  ,985e,407b,b4d9,940f,   0, .FB985E940FB4D9)
-vc(at1flo,-3.5540295636764633916E-18 ,1edc,a383,eaea,34d6, -57,-.831EDC34D6EAEA)
-vc(PIo2,   1.5707963267948966135E0   ,0fda,40c9,68c2,a221,   1, .C90FDAA22168C2)
-vc(PI,     3.1415926535897932270E0   ,0fda,4149,68c2,a221,   2, .C90FDAA22168C2)
-vc(a1,     3.3333333333333473730E-1  ,aaaa,3faa,ab75,aaaa,  -1, .AAAAAAAAAAAB75)
-vc(a2,    -2.0000000000017730678E-1  ,cccc,bf4c,946e,cccd,  -2,-.CCCCCCCCCD946E)
-vc(a3,     1.4285714286694640301E-1  ,4924,3f12,4262,9274,  -2, .92492492744262)
-vc(a4,    -1.1111111135032672795E-1  ,8e38,bee3,6292,ebc6,  -3,-.E38E38EBC66292)
-vc(a5,     9.0909091380563043783E-2  ,2e8b,3eba,d70c,b31b,  -3, .BA2E8BB31BD70C)
-vc(a6,    -7.6922954286089459397E-2  ,89c8,be9d,7f18,27c3,  -3,-.9D89C827C37F18)
-vc(a7,     6.6663180891693915586E-2  ,86b4,3e88,9e58,ae37,  -3, .8886B4AE379E58)
-vc(a8,    -5.8772703698290408927E-2  ,bba5,be70,a942,8481,  -4,-.F0BBA58481A942)
-vc(a9,     5.2170707402812969804E-2  ,b0f3,3e55,13ab,a1ab,  -4, .D5B0F3A1AB13AB)
-vc(a10,   -4.4895863157820361210E-2  ,e4b9,be37,048f,7fd1,  -4,-.B7E4B97FD1048F)
-vc(a11,    3.3006147437343875094E-2  ,3174,3e07,2d87,3cf7,  -4, .8731743CF72D87)
-vc(a12,   -1.4614844866464185439E-2  ,731a,bd6f,76d9,2f34,  -6,-.EF731A2F3476D9)
-
-ic(athfhi, 4.6364760900080609352E-1  ,  -2,  1.DAC670561BB4F)
-ic(athflo, 4.6249969567426939759E-18 , -58,  1.5543B8F253271)
-ic(PIo4,   7.8539816339744827900E-1  ,  -1,  1.921FB54442D18)
-ic(at1fhi, 9.8279372324732905408E-1  ,  -1,  1.F730BD281F69B)
-ic(at1flo,-2.4407677060164810007E-17 , -56, -1.C23DFEFEAE6B5)
-ic(PIo2,   1.5707963267948965580E0   ,   0,  1.921FB54442D18)
-ic(PI,     3.1415926535897931160E0   ,   1,  1.921FB54442D18)
-ic(a1,     3.3333333333333942106E-1  ,  -2,  1.55555555555C3)
-ic(a2,    -1.9999999999979536924E-1  ,  -3, -1.9999999997CCD)
-ic(a3,     1.4285714278004377209E-1  ,  -3,  1.24924921EC1D7)
-ic(a4,    -1.1111110579344973814E-1  ,  -4, -1.C71C7059AF280)
-ic(a5,     9.0908906105474668324E-2  ,  -4,  1.745CE5AA35DB2)
-ic(a6,    -7.6919217767468239799E-2  ,  -4, -1.3B0FA54BEC400)
-ic(a7,     6.6614695906082474486E-2  ,  -4,  1.10DA924597FFF)
-ic(a8,    -5.8358371008508623523E-2  ,  -5, -1.DE125FDDBD793)
-ic(a9,     4.9850617156082015213E-2  ,  -5,  1.9860524BDD807)
-ic(a10,   -3.6700606902093604877E-2  ,  -5, -1.2CA6C04C6937A)
-ic(a11,    1.6438029044759730479E-2  ,  -6,  1.0D52174A1BB54)
-
-#ifdef vccast
-#define	athfhi	vccast(athfhi)
-#define	athflo	vccast(athflo)
-#define	PIo4	vccast(PIo4)
-#define	at1fhi	vccast(at1fhi)
-#define	at1flo	vccast(at1flo)
-#define	PIo2	vccast(PIo2)
-#define	PI	vccast(PI)
-#define	a1	vccast(a1)
-#define	a2	vccast(a2)
-#define	a3	vccast(a3)
-#define	a4	vccast(a4)
-#define	a5	vccast(a5)
-#define	a6	vccast(a6)
-#define	a7	vccast(a7)
-#define	a8	vccast(a8)
-#define	a9	vccast(a9)
-#define	a10	vccast(a10)
-#define	a11	vccast(a11)
-#define	a12	vccast(a12)
-#endif
+static const double athfhi = 4.6364760900080611433E-1;
+static const double athflo = 1.9338828231967579916E-19;
+static const double PIo4 = 7.8539816339744830676E-1;
+static const double at1fhi = 9.8279372324732906796E-1;
+static const double at1flo = -3.5540295636764633916E-18;
+static const double PIo2 = 1.5707963267948966135E0;
+static const double PI = 3.1415926535897932270E0;
+static const double a1 = 3.3333333333333473730E-1;
+static const double a2 = -2.0000000000017730678E-1;
+static const double a3 = 1.4285714286694640301E-1;
+static const double a4 = -1.1111111135032672795E-1;
+static const double a5 = 9.0909091380563043783E-2;
+static const double a6 = -7.6922954286089459397E-2;
+static const double a7 = 6.6663180891693915586E-2;
+static const double a8 = -5.8772703698290408927E-2;
+static const double a9 = 5.2170707402812969804E-2;
+static const double a10 = -4.4895863157820361210E-2;
+static const double a11 = 3.3006147437343875094E-2;
+static const double a12 = -1.4614844866464185439E-2;
 
 double
 atan2(double y, double x)

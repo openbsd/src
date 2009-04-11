@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_cosh.c,v 1.8 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_cosh.c,v 1.9 2009/04/11 20:03:21 martynas Exp $	*/
 /*	$NetBSD: n_cosh.c,v 1.1 1995/10/10 23:36:42 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -83,19 +83,9 @@ static char sccsid[] = "@(#)cosh.c	8.1 (Berkeley) 6/4/93";
 #include "math.h"
 #include "mathimpl.h"
 
-vc(mln2hi, 8.8029691931113054792E1   ,0f33,43b0,2bdb,c7e2,   7, .B00F33C7E22BDB)
-vc(mln2lo,-4.9650192275318476525E-16 ,1b60,a70f,582a,279e, -50,-.8F1B60279E582A)
-vc(lnovfl, 8.8029691931113053016E1   ,0f33,43b0,2bda,c7e2,   7, .B00F33C7E22BDA)
-
-ic(mln2hi, 7.0978271289338397310E2,    10, 1.62E42FEFA39EF)
-ic(mln2lo, 2.3747039373786107478E-14, -45, 1.ABC9E3B39803F)
-ic(lnovfl, 7.0978271289338397310E2,     9, 1.62E42FEFA39EF)
-
-#ifdef vccast
-#define   mln2hi    vccast(mln2hi)
-#define   mln2lo    vccast(mln2lo)
-#define   lnovfl    vccast(lnovfl)
-#endif
+static const double mln2hi = 8.8029691931113054792E1;
+static const double mln2lo = -4.9650192275318476525E-16;
+static const double lnovfl = 8.8029691931113053016E1;
 
 #if defined(__vax__)
 static max = 126                      ;

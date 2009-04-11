@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_acosh.c,v 1.7 2008/06/21 08:26:19 martynas Exp $	*/
+/*	$OpenBSD: n_acosh.c,v 1.8 2009/04/11 20:03:21 martynas Exp $	*/
 /*	$NetBSD: n_acosh.c,v 1.1 1995/10/10 23:36:33 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -73,16 +73,8 @@ static char sccsid[] = "@(#)acosh.c	8.1 (Berkeley) 6/4/93";
 #include "math.h"
 #include "mathimpl.h"
 
-vc(ln2hi, 6.9314718055829871446E-1  ,7217,4031,0000,f7d0,   0, .B17217F7D00000)
-vc(ln2lo, 1.6465949582897081279E-12 ,bcd5,2ce7,d9cc,e4f1, -39, .E7BCD5E4F1D9CC)
-
-ic(ln2hi, 6.9314718036912381649E-1,  -1, 1.62E42FEE00000)
-ic(ln2lo, 1.9082149292705877000E-10,-33, 1.A39EF35793C76)
-
-#ifdef vccast
-#define    ln2hi    vccast(ln2hi)
-#define    ln2lo    vccast(ln2lo)
-#endif
+static const double ln2hi = 6.9314718055829871446E-1;
+static const double ln2lo = 1.6465949582897081279E-12;
 
 double
 acosh(double x)

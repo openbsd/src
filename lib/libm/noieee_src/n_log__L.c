@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_log__L.c,v 1.7 2008/07/22 19:58:40 martynas Exp $	*/
+/*	$OpenBSD: n_log__L.c,v 1.8 2009/04/11 20:03:21 martynas Exp $	*/
 /*	$NetBSD: n_log__L.c,v 1.1 1995/10/10 23:37:01 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -70,33 +70,14 @@ static char sccsid[] = "@(#)log__L.c	8.1 (Berkeley) 6/4/93";
 #include "math.h"
 #include "mathimpl.h"
 
-vc(L1, 6.6666666666666703212E-1 ,aaaa,402a,aac5,aaaa,  0, .AAAAAAAAAAAAC5)
-vc(L2, 3.9999999999970461961E-1 ,cccc,3fcc,2684,cccc, -1, .CCCCCCCCCC2684)
-vc(L3, 2.8571428579395698188E-1 ,4924,3f92,5782,92f8, -1, .92492492F85782)
-vc(L4, 2.2222221233634724402E-1 ,8e38,3f63,af2c,39b7, -2, .E38E3839B7AF2C)
-vc(L5, 1.8181879517064680057E-1 ,2eb4,3f3a,655e,cc39, -2, .BA2EB4CC39655E)
-vc(L6, 1.5382888777946145467E-1 ,8551,3f1d,781d,e8c5, -2, .9D8551E8C5781D)
-vc(L7, 1.3338356561139403517E-1 ,95b3,3f08,cd92,907f, -2, .8895B3907FCD92)
-vc(L8, 1.2500000000000000000E-1 ,0000,3f00,0000,0000, -2, .80000000000000)
-
-ic(L1, 6.6666666666667340202E-1, -1, 1.5555555555592)
-ic(L2, 3.9999999999416702146E-1, -2, 1.999999997FF24)
-ic(L3, 2.8571428742008753154E-1, -2, 1.24924941E07B4)
-ic(L4, 2.2222198607186277597E-1, -3, 1.C71C52150BEA6)
-ic(L5, 1.8183562745289935658E-1, -3, 1.74663CC94342F)
-ic(L6, 1.5314087275331442206E-1, -3, 1.39A1EC014045B)
-ic(L7, 1.4795612545334174692E-1, -3, 1.2F039F0085122)
-
-#ifdef vccast
-#define	L1	vccast(L1)
-#define	L2	vccast(L2)
-#define	L3	vccast(L3)
-#define	L4	vccast(L4)
-#define	L5	vccast(L5)
-#define	L6	vccast(L6)
-#define	L7	vccast(L7)
-#define	L8	vccast(L8)
-#endif
+static const double L1 = 6.6666666666666703212E-1;
+static const double L2 = 3.9999999999970461961E-1;
+static const double L3 = 2.8571428579395698188E-1;
+static const double L4 = 2.2222221233634724402E-1;
+static const double L5 = 1.8181879517064680057E-1;
+static const double L6 = 1.5382888777946145467E-1;
+static const double L7 = 1.3338356561139403517E-1;
+static const double L8 = 1.2500000000000000000E-1;
 
 double
 __log__L(double z)

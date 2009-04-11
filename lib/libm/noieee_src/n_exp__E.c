@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_exp__E.c,v 1.10 2009/04/05 02:12:43 martynas Exp $	*/
+/*	$OpenBSD: n_exp__E.c,v 1.11 2009/04/11 20:03:21 martynas Exp $	*/
 /*	$NetBSD: n_exp__E.c,v 1.1 1995/10/10 23:36:45 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -87,24 +87,11 @@ static char sccsid[] = "@(#)exp__E.c	8.1 (Berkeley) 6/4/93";
 #include "math.h"
 #include "mathimpl.h"
 
-vc(p1, 1.5150724356786683059E-2 ,3abe,3d78,066a,67e1,  -6, .F83ABE67E1066A)
-vc(p2, 6.3112487873718332688E-5 ,5b42,3984,0173,48cd, -13, .845B4248CD0173)
-vc(q1, 1.1363478204690669916E-1 ,b95a,3ee8,ec45,44a2,  -3, .E8B95A44A2EC45)
-vc(q2, 1.2624568129896839182E-3 ,7905,3ba5,f5e7,72e4,  -9, .A5790572E4F5E7)
-vc(q3, 1.5021856115869022674E-6 ,9eb4,36c9,c395,604a, -19, .C99EB4604AC395)
-
-ic(p1, 1.3887401997267371720E-2,  -7, 1.C70FF8B3CC2CF)
-ic(p2, 3.3044019718331897649E-5, -15, 1.15317DF4526C4)
-ic(q1, 1.1110813732786649355E-1,  -4, 1.C719538248597)
-ic(q2, 9.9176615021572857300E-4, -10, 1.03FC4CB8C98E8)
-
-#ifdef vccast
-#define       p1    vccast(p1)
-#define       p2    vccast(p2)
-#define       q1    vccast(q1)
-#define       q2    vccast(q2)
-#define       q3    vccast(q3)
-#endif
+static const double p1 = 1.5150724356786683059E-2;
+static const double p2 = 6.3112487873718332688E-5;
+static const double q1 = 1.1363478204690669916E-1;
+static const double q2 = 1.2624568129896839182E-3;
+static const double q3 = 1.5021856115869022674E-6;
 
 double
 __exp__E(double x, double c)

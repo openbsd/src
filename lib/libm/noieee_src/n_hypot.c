@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_hypot.c,v 1.1 2008/10/07 22:25:53 martynas Exp $	*/
+/*	$OpenBSD: n_hypot.c,v 1.2 2009/04/11 20:03:21 martynas Exp $	*/
 /*	$NetBSD: n_cabs.c,v 1.1 1995/10/10 23:36:39 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -89,19 +89,9 @@ static char sccsid[] = "@(#)cabs.c	8.1 (Berkeley) 6/4/93";
 #include "math.h"
 #include "mathimpl.h"
 
-vc(r2p1hi, 2.4142135623730950345E0   ,8279,411a,ef32,99fc,   2, .9A827999FCEF32)
-vc(r2p1lo, 1.4349369327986523769E-17 ,597d,2484,754b,89b3, -55, .84597D89B3754B)
-vc(sqrt2,  1.4142135623730950622E0   ,04f3,40b5,de65,33f9,   1, .B504F333F9DE65)
-
-ic(r2p1hi, 2.4142135623730949234E0   ,   1, 1.3504F333F9DE6)
-ic(r2p1lo, 1.2537167179050217666E-16 , -53, 1.21165F626CDD5)
-ic(sqrt2,  1.4142135623730951455E0   ,   0, 1.6A09E667F3BCD)
-
-#ifdef vccast
-#define	r2p1hi	vccast(r2p1hi)
-#define	r2p1lo	vccast(r2p1lo)
-#define	sqrt2	vccast(sqrt2)
-#endif
+static const double r2p1hi = 2.4142135623730950345E0;
+static const double r2p1lo = 1.4349369327986523769E-17;
+static const double sqrt2 = 1.4142135623730950622E0;
 
 double
 hypot(double x, double y)

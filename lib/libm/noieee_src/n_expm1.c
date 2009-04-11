@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_expm1.c,v 1.10 2009/04/05 02:12:43 martynas Exp $	*/
+/*	$OpenBSD: n_expm1.c,v 1.11 2009/04/11 20:03:21 martynas Exp $	*/
 /*	$NetBSD: n_expm1.c,v 1.1 1995/10/10 23:36:46 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -87,22 +87,10 @@ static char sccsid[] = "@(#)expm1.c	8.1 (Berkeley) 6/4/93";
 #include "math.h"
 #include "mathimpl.h"
 
-vc(ln2hi,  6.9314718055829871446E-1  ,7217,4031,0000,f7d0,   0, .B17217F7D00000)
-vc(ln2lo,  1.6465949582897081279E-12 ,bcd5,2ce7,d9cc,e4f1, -39, .E7BCD5E4F1D9CC)
-vc(lnhuge, 9.4961163736712506989E1   ,ec1d,43bd,9010,a73e,   7, .BDEC1DA73E9010)
-vc(invln2, 1.4426950408889634148E0   ,aa3b,40b8,17f1,295c,   1, .B8AA3B295C17F1)
-
-ic(ln2hi,  6.9314718036912381649E-1,   -1, 1.62E42FEE00000)
-ic(ln2lo,  1.9082149292705877000E-10, -33, 1.A39EF35793C76)
-ic(lnhuge, 7.1602103751842355450E2,     9, 1.6602B15B7ECF2)
-ic(invln2, 1.4426950408889633870E0,     0, 1.71547652B82FE)
-
-#ifdef vccast
-#define	ln2hi	vccast(ln2hi)
-#define	ln2lo	vccast(ln2lo)
-#define	lnhuge	vccast(lnhuge)
-#define	invln2	vccast(invln2)
-#endif
+static const double ln2hi = 6.9314718055829871446E-1;
+static const double ln2lo = 1.6465949582897081279E-12;
+static const double lnhuge = 9.4961163736712506989E1;
+static const double invln2 = 1.4426950408889634148E0;
 
 double
 expm1(double x)

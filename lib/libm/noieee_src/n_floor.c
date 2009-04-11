@@ -1,4 +1,4 @@
-/*	$OpenBSD: n_floor.c,v 1.11 2009/04/08 21:58:28 martynas Exp $	*/
+/*	$OpenBSD: n_floor.c,v 1.12 2009/04/11 20:03:21 martynas Exp $	*/
 /*	$NetBSD: n_floor.c,v 1.1 1995/10/10 23:36:48 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
@@ -38,13 +38,7 @@ static char sccsid[] = "@(#)floor.c	8.1 (Berkeley) 6/4/93";
 
 #include "mathimpl.h"
 
-vc(L, 36028797018963968.0E0 ,0000,5c00,0000,0000, 55, 1.0) /* 2**55 */
-
-ic(L, 4503599627370496.0E0, 52, 1.0)			  /* 2**52 */
-
-#ifdef vccast
-#define	L	vccast(L)
-#endif
+static const double L = 36028797018963968.0E0;
 
 /*
  * floor(x) := the largest integer no larger than x;
