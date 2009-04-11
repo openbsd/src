@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.76 2009/03/31 21:57:57 kettenis Exp $ */
+/*	$OpenBSD: pchb.c,v 1.77 2009/04/11 14:59:59 kettenis Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -180,7 +180,6 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_AMD_AMD64_0F_HT:
 		case PCI_PRODUCT_AMD_AMD64_10_HT:
-		case PCI_PRODUCT_AMD_AMD64_11_HT:
 			for (i = 0; i < AMD64HT_NUM_LDT; i++)
 				pchb_amd64ht_attach(self, pa, i);
 			break;
