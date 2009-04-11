@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_recvmsg.c,v 1.8 2007/05/01 18:16:38 kurt Exp $	*/
+/*	$OpenBSD: uthread_recvmsg.c,v 1.9 2009/04/11 20:26:58 jakemsr Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -52,6 +52,7 @@ recvmsg(int fd, struct msghdr *msg, int flags)
 	if ((ret = _FD_LOCK(fd, FD_READ, NULL)) == 0) {
 		while ((ret = _thread_sys_recvmsg(fd, msg, flags)) < 0) {
 			if (!(_thread_fd_table[fd]->status_flags->flags & O_NONBLOCK) &&
+			    !(flags & MSG_DONTWAIT) &&
 			    ((errno == EWOULDBLOCK) || (errno == EAGAIN))) {
 				curthread->data.fd.fd = fd;
 
