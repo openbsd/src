@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.19 2009/03/14 15:32:55 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.20 2009/04/11 09:36:35 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -202,6 +202,9 @@ rr_new_rt(struct route_report *rr, u_int32_t adj_metric, int connected)
 int
 rt_insert(struct rt_node *r)
 {
+	log_debug("rt_insert: inserting route %s/%d", inet_ntoa(r->prefix),
+	    r->prefixlen);
+
 	if (RB_INSERT(rt_tree, &rt, r) != NULL) {
 		log_warnx("rt_insert failed for %s/%u", inet_ntoa(r->prefix),
 		    r->prefixlen);
@@ -319,9 +322,11 @@ rt_match_origin(in_addr_t src)
 {
 	struct rt_node	*r;
 
-	RB_FOREACH(r, rt_tree, &rt)
-		if (r->prefix.s_addr == (src & prefixlen2mask(r->prefixlen)))
+	RB_FOREACH(r, rt_tree, &rt) {
+		if (r->prefix.s_addr == (src &
+		    htonl(prefixlen2mask(r->prefixlen))))
 			return (r);
+	}
 
 	return (NULL);
 }
@@ -502,6 +507,9 @@ srt_add_ds(struct rt_node *rn, u_int32_t nbr_report, u_int32_t ifindex)
 {
 	struct ds_nbr	*ds_nbr;
 
+	log_debug("srt_add_ds: adding downstream router for source %s/%d",
+	    inet_ntoa(rn->prefix), rn->prefixlen);
+
 	if ((ds_nbr = malloc(sizeof(struct ds_nbr))) == NULL)
 		fatal("srt_add_ds");
 
@@ -527,6 +535,9 @@ srt_find_ds(struct rt_node *rn, u_int32_t nbr_report)
 void
 srt_delete_ds(struct rt_node *rn, struct ds_nbr *ds_nbr, struct iface *iface)
 {
+	log_debug("srt_delete_ds: deleting downstream router for source %s/%d",
+	    inet_ntoa(rn->prefix), rn->prefixlen);
+
 	LIST_REMOVE(ds_nbr, entry);
 	free(ds_nbr);
 	rn->ds_cnt[iface->ifindex]--;
