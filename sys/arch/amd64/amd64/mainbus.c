@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.17 2009/03/31 22:19:57 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.18 2009/04/11 17:13:33 kettenis Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -196,11 +196,15 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 #if NPCI > 0
 	if (pci_mode != 0) {
+		pci_init_extents();
+
 		bzero(&mba.mba_pba, sizeof(mba.mba_pba));
 		mba.mba_pba.pba_busname = "pci";
 		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
+		mba.mba_pba.pba_ioex = pciio_ex;
+		mba.mba_pba.pba_memex = pcimem_ex;
 		mba.mba_pba.pba_domain = pci_ndomains++;
 		mba.mba_pba.pba_bus = 0;
 		config_found(self, &mba.mba_pba, mainbus_print);

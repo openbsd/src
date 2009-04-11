@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.9 2009/04/04 16:03:17 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.10 2009/04/11 17:13:33 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
 
 /*
@@ -77,6 +77,10 @@ typedef struct {
 extern int pci_mode;
 int		pci_mode_detect(void);
 struct		pci_attach_args;
+
+extern struct extent *pciio_ex;
+extern struct extent *pcimem_ex;
+void		pci_init_extents(void);
 
 /*
  * Functions provided to machine-independent PCI code.

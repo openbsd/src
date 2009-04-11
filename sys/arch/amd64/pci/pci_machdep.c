@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.24 2009/04/04 16:03:17 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.25 2009/04/11 17:13:33 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -79,6 +79,8 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/extent.h>
+#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -86,6 +88,7 @@
 
 #include <machine/pio.h>
 #include <machine/intr.h>
+#include <machine/biosvar.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -548,4 +551,41 @@ void
 pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 	intr_disestablish(cookie);
+}
+
+struct extent *pciio_ex;
+struct extent *pcimem_ex;
+
+void
+pci_init_extents(void)
+{
+	bios_memmap_t *bmp;
+	u_int64_t size;
+
+	if (pciio_ex == NULL)
+		pciio_ex = extent_create("pciio", 0, 0xffff, M_DEVBUF,
+		    NULL, 0, EX_NOWAIT);
+
+	if (pcimem_ex == NULL) {
+		pcimem_ex = extent_create("pcimem", 0, 0xffffffff, M_DEVBUF,
+		    NULL, 0, EX_NOWAIT);
+		if (pcimem_ex == NULL)
+			return;
+
+		for (bmp = bios_memmap; bmp->type != BIOS_MAP_END; bmp++) {
+			/*
+			 * Ignore address space beyond 4G.
+			 */
+			if (bmp->addr >= 0x100000000ULL)
+				continue;
+			size = bmp->size;
+			if (bmp->addr + size >= 0x100000000ULL)
+				size = 0x100000000ULL - bmp->addr;
+
+			if (extent_alloc_region(pcimem_ex, bmp->addr, size,
+			    EX_NOWAIT))
+				printf("memory map conflict 0x%llx/0x%llx\n",
+				    bmp->addr, bmp->size);
+		}
+	}
 }
