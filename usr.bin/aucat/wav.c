@@ -38,7 +38,7 @@ wav_new_in(struct fileops *ops, int fd, char *name,
 	if (f == NULL)
 		return NULL;
 	if (hdr == HDR_WAV) {
-		if (!wav_readhdr(f->pipe.fd, par, &f->rbytes))
+		if (!wav_readhdr(f->pipe.fd, par, &f->rbytes, NULL))
 			exit(1);
 		f->hpar = *par;
 	} else

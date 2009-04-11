@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.4 2009/01/23 17:38:15 ratchov Exp $	*/
+/*	$OpenBSD: headers.c,v 1.5 2009/04/11 10:24:21 jakemsr Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -52,7 +52,7 @@ char wav_id_data[4] = { 'd', 'a', 't', 'a' };
 char wav_id_fmt[4] = { 'f', 'm', 't', ' ' };
 
 int
-wav_readfmt(int fd, unsigned csize, struct aparams *par)
+wav_readfmt(int fd, unsigned csize, struct aparams *par, int *renc)
 {
 	struct wavfmt fmt;
 	unsigned nch, cmax, rate, bits, enc;
@@ -66,7 +66,7 @@ wav_readfmt(int fd, unsigned csize, struct aparams *par)
 		return 0;
 	}
 	enc = letoh16(fmt.fmt);
-	if (enc != 1) {
+	if (renc == NULL && enc != 1) {
 		warnx("%u: only \"pcm\" encoding supported", enc);
 		return 0;
 	}
@@ -97,6 +97,8 @@ wav_readfmt(int fd, unsigned csize, struct aparams *par)
 	par->msb = 1;
 	par->cmax = cmax;
 	par->rate = rate;
+	if (renc)
+		*renc = enc;
 #ifdef DEBUG
 	if (debug_level > 0) {
 		fprintf(stderr, "wav_readfmt: using ");
@@ -108,7 +110,7 @@ wav_readfmt(int fd, unsigned csize, struct aparams *par)
 }
 
 int
-wav_readhdr(int fd, struct aparams *par, off_t *datasz)
+wav_readhdr(int fd, struct aparams *par, off_t *datasz, int *renc)
 {
 	struct wavriff riff;
 	struct wavchunk chunk;
@@ -136,7 +138,7 @@ wav_readhdr(int fd, struct aparams *par, off_t *datasz)
 		}
 		csize = letoh32(chunk.size);
 		if (memcmp(chunk.id, wav_id_fmt, 4) == 0) {
-			if (!wav_readfmt(fd, csize, par))
+			if (!wav_readfmt(fd, csize, par, renc))
 				return 0;
 			fmt_done = 1;
 		} else if (memcmp(chunk.id, wav_id_data, 4) == 0) {

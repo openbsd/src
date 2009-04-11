@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.51 2009/04/10 21:18:11 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.52 2009/04/11 10:24:21 jakemsr Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 10 2009 $
+.Dd $Mdocdate: April 11 2009 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -362,12 +362,10 @@ reads files sequentially, and writes them to the specified device.
 If a Sun .au header is detected it is skipped over and not copied to
 the audio device.
 .Nm
-will attempt to play data from Sun .au files as monaural 8-bit ulaw
-samples with a sampling frequency of 8000 Hz.
-However,
-.Nm
-will not fail if the audio device cannot be configured for these
-parameters.
+will attempt to parse the format, number of channels and sample rate
+from Sun .au file headers.
+However, only alaw and ulaw formats are supported for .au files.
+Other formats will be interpreted as ulaw.
 If a Microsoft .wav header (RIFF) is detected it is interpreted
 to select the right audio encoding for playback and the data chunk of the
 file is copied to the audio device.
