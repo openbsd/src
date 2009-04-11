@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.16 2009/02/19 21:02:05 marco Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.17 2009/04/11 08:22:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -467,6 +467,7 @@ struct acpi_facs {
 #define ACPI_DEV_PCIB	"PNP0A03"	/* PCI bus */
 #define ACPI_DEV_GISAB	"PNP0A05"	/* Generic ISA Bus */
 #define ACPI_DEV_EIOB	"PNP0A06"	/* Extended I/O Bus */
+#define ACPI_DEV_PCIEB	"PNP0A08"	/* PCIe bus */
 #define ACPI_DEV_MR	"PNP0C02"	/* Motherboard resources */
 #define ACPI_DEV_NPROC	"PNP0C04"	/* Numeric data processor */
 #define ACPI_DEV_CS	"PNP0C08"	/* ACPI-Compliant System */
