@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.148 2009/04/10 20:54:08 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.149 2009/04/11 16:54:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.148 2009/04/10 20:54:08 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.149 2009/04/11 16:54:28 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -265,27 +265,24 @@ main(int argc, char *argv[])
 	case EDIT:
 		if (argc != 1)
 			usage();
-		if ((lp = readlabel(f)) == NULL)
-			exit(1);
-		error = edit(lp, f);
+		readlabel(f);
+		error = edit(&lab, f);
 		break;
 	case EDITOR:
 		if (argc != 1)
 			usage();
-		if ((lp = readlabel(f)) == NULL)
-			exit(1);
-		error = editor(lp, f);
+		readlabel(f);
+		error = editor(&lab, f);
 		break;
 	case READ:
 		if (argc != 1)
 			usage();
-		if ((lp = readlabel(f)) == NULL)
-			exit(1);
+		readlabel(f);
 		if (tflag)
-			makedisktab(stdout, lp);
+			makedisktab(stdout, &lab);
 		else
-			display(stdout, lp, print_unit, 1);
-		error = checklabel(lp);
+			display(stdout, &lab, print_unit, 1);
+		error = checklabel(&lab);
 		break;
 	case RESTORE:
 		if (argc < 2 || argc > 3)
@@ -311,8 +308,7 @@ main(int argc, char *argv[])
 		break;
 	case WRITE:
 		if (dflag | aflag) {
-			if (readlabel(f) == NULL)
-				exit(1);
+			readlabel(f);
 		} else if (argc < 2 || argc > 3)
 			usage();
 		else
@@ -327,9 +323,8 @@ main(int argc, char *argv[])
 	{
 		struct disklabel tlab;
 
-		if ((lp = readlabel(f)) == NULL)
-			exit(1);
-		tlab = *lp;
+		readlabel(f);
+		tlab = lab;
 		if (argc == 2)
 			makelabel(argv[1], NULL, &lab);
 		lp = makebootarea(bootarea, &lab, f);
@@ -685,30 +680,24 @@ check_dpme(int f, uint32_t *start, uint32_t *size)
 #endif
 
 /*
- * Fetch disklabel for disk using ioctl.
+ * Fetch requested disklabel into 'lab' using ioctl.
  */
-struct disklabel *
+void
 readlabel(int f)
 {
-	struct disklabel *lp = NULL;
-
 	if (cflag && ioctl(f, DIOCRLDINFO) < 0)
 		err(4, "ioctl DIOCRLDINFO");
 
 	if (dflag | aflag) {
-		lp = &lab;
-		if (ioctl(f, DIOCGPDINFO, lp) < 0)
+		if (ioctl(f, DIOCGPDINFO, &lab) < 0)
 			err(4, "ioctl DIOCGPDINFO");
 	} else {
-		lp = &lab;
-		if (ioctl(f, DIOCGDINFO, lp) < 0)
+		if (ioctl(f, DIOCGDINFO, &lab) < 0)
 			err(4, "ioctl DIOCGDINFO");
 	}
 
 	if (aflag)
-		editor_allocspace(lp);
-
-	return (lp);
+		editor_allocspace(&lab);
 }
 
 /*
