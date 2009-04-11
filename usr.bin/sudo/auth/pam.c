@@ -73,12 +73,12 @@
 #endif
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: pam.c,v 1.66 2008/12/09 23:48:19 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: pam.c,v 1.67 2009/02/25 12:21:11 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
 			  struct pam_response **, void *));
-static char *def_prompt;
+static char *def_prompt = "Password:";
 static int gotintr;
 
 #ifndef PAM_DATA_SILENT

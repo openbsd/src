@@ -1,3 +1,30 @@
+What's new in Sudo 1.7.1?
+
+ * A new Defaults option "pwfeedback" will cause sudo to provide visual
+   feedback when the user is entering a password.
+
+ * A new Defaults option "fast_glob" will cause sudo to use the fnmatch()
+   function for file name globbing instead of glob().  When this option
+   is enabled, sudo will not check the file system when expanding wildcards.
+   This is faster but a side effect is that relative paths with wildcard
+   will no longer work.
+
+ * New BSM audit support for systems that support it such as FreeBSD
+   and Mac OS X.
+
+ * The file name specified with the #include directive may now include
+   a %h escape which is expanded to the short form of hostname.
+
+ * The -k flag may now be specified along with a command, causing the
+   user's timestamp file to be ignored.
+
+ * New support for Tivoli-based LDAP START_TLS, present in AIX.
+
+ * New support for /etc/netsvc.conf on AIX.
+
+ * The unused alias checks in visudo now handle the case of an alias
+   referring to another alias.
+
 What's new in Sudo 1.7.0?
 
  * Rewritten parser that converts sudoers into a set of data structures.

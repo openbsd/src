@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Sudo: logging.h,v 1.13 2008/11/09 14:13:12 millert Exp $
+ * $Sudo: logging.h,v 1.14 2009/02/21 13:37:47 millert Exp $
  */
 
 #ifndef _LOGGING_H
@@ -49,6 +49,8 @@
 # define MAXSYSLOGLEN		960
 #endif
 
+void audit_success		__P((char **));
+void audit_failure		__P((char **, char const * const, ...));
 void log_allowed		__P((int));
 void log_denial			__P((int, int));
 void log_error			__P((int flags, const char *fmt, ...))

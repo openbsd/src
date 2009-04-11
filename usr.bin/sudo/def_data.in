@@ -223,3 +223,12 @@ sudoers_locale
 visiblepw
 	T_FLAG
 	"Allow sudo to prompt for a password even if it would be visisble"
+pwfeedback
+	T_FLAG
+	"Provide visual feedback at the password prompt when there is user input"
+fast_glob
+	T_FLAG
+	"Use faster globbing that is less accurate but does not access the filesystem"
+umask_override
+	T_FLAG
+	"The umask specified in sudoers will override the user's, even if it is more permissive"

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2008/11/14 11:58:08 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 2009/04/11 11:48:06 millert Exp $
 
 .PATH:		${.CURDIR}/.. ${.CURDIR}/../auth
 
@@ -8,9 +8,9 @@ BINMODE=4555
 LINKS=  ${BINDIR}/sudo ${BINDIR}/sudoedit
 CFLAGS+=-DSUDO_DEVEL
 
-SRCS=	check.c env.c getspwuid.c interfaces.c lbuf.c logging.c parse.c \
-	pwutil.c set_perms.c sudo.c sudo_edit.c sudo_nss.c tgetpass.c \
-	sudo_auth.c bsdauth.c
+SRCS=	audit.c check.c env.c getspwuid.c interfaces.c lbuf.c logging.c \
+	parse.c pwutil.c set_perms.c sudo.c sudo_edit.c sudo_nss.c term.c \
+	tgetpass.c sudo_auth.c bsdauth.c
 CPPFLAGS+=	-I..
 
 BINDIR=	/usr/bin

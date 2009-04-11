@@ -27,10 +27,6 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
-#ifdef HAVE_SYS_BSDTYPES_H
-# include <sys/bsdtypes.h>
-#endif /* HAVE_SYS_BSDTYPES_H */
-#include <sys/time.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
 # include <stdlib.h>
@@ -57,65 +53,22 @@
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
-#ifdef HAVE_TERMIOS_H
-# include <termios.h>
-#else
-# ifdef HAVE_TERMIO_H
-#  include <termio.h>
-# else
-#  include <sgtty.h>
-#  include <sys/ioctl.h>
-# endif /* HAVE_TERMIO_H */
-#endif /* HAVE_TERMIOS_H */
 
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.126 2008/12/09 20:55:49 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: tgetpass.c,v 1.130 2009/02/15 20:53:49 millert Exp $";
 #endif /* lint */
-
-#ifndef TCSASOFT
-# define TCSASOFT	0
-#endif
-#ifndef ECHONL
-# define ECHONL	0
-#endif
-
-#ifndef _POSIX_VDISABLE
-# ifdef VDISABLE
-#  define _POSIX_VDISABLE	VDISABLE
-# else
-#  define _POSIX_VDISABLE	0
-# endif
-#endif
-
-/*
- * Compat macros for non-termios systems.
- */
-#ifndef HAVE_TERMIOS_H
-# ifdef HAVE_TERMIO_H
-#  undef termios
-#  define termios		termio
-#  define tcgetattr(f, t)	ioctl(f, TCGETA, t)
-#  define tcsetattr(f, a, t)	ioctl(f, a, t)
-#  undef TCSAFLUSH
-#  define TCSAFLUSH		TCSETAF
-# else
-#  undef termios
-#  define termios		sgttyb
-#  define c_lflag		sg_flags
-#  define tcgetattr(f, t)	ioctl(f, TIOCGETP, t)
-#  define tcsetattr(f, a, t)	ioctl(f, a, t)
-#  undef TCSAFLUSH
-#  define TCSAFLUSH		TIOCSETP
-# endif /* HAVE_TERMIO_H */
-#endif /* HAVE_TERMIOS_H */
 
 static volatile sig_atomic_t signo;
 
 static void handler __P((int));
-static char *getln __P((int, char *, size_t));
+static char *getln __P((int, char *, size_t, int));
 static char *sudo_askpass __P((const char *));
+
+extern int term_restore __P((int));
+extern int term_noecho __P((int));
+extern int term_raw __P((int));
 
 /*
  * Like getpass(3) but with timeout and echo flags.
@@ -128,10 +81,9 @@ tgetpass(prompt, timeout, flags)
 {
     sigaction_t sa, savealrm, saveint, savehup, savequit, saveterm;
     sigaction_t savetstp, savettin, savettou;
-    struct termios term, oterm;
     char *pass;
     static char buf[SUDO_PASS_MAX + 1];
-    int input, output, save_errno;
+    int input, output, save_errno, neednl;;
 
     (void) fflush(stdout);
 
@@ -167,19 +119,10 @@ restart:
     (void) sigaction(SIGTTIN, &sa, &savettin);
     (void) sigaction(SIGTTOU, &sa, &savettou);
 
-    /* Turn echo off/on as specified by flags.  */
-    if (tcgetattr(input, &oterm) == 0) {
-	(void) memcpy(&term, &oterm, sizeof(term));
-	if (!ISSET(flags, TGP_ECHO))
-	    CLR(term.c_lflag, ECHO|ECHONL);
-#ifdef VSTATUS
-	term.c_cc[VSTATUS] = _POSIX_VDISABLE;
-#endif
-	(void) tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
-    } else {
-	zero_bytes(&term, sizeof(term));
-	zero_bytes(&oterm, sizeof(oterm));
-    }
+    if (def_pwfeedback)
+	neednl = term_raw(input);
+    else
+	neednl = term_noecho(input);
 
     /* No output if we are already backgrounded. */
     if (signo != SIGTTOU && signo != SIGTTIN) {
@@ -188,20 +131,16 @@ restart:
 
 	if (timeout > 0)
 	    alarm(timeout);
-	pass = getln(input, buf, sizeof(buf));
+	pass = getln(input, buf, sizeof(buf), def_pwfeedback);
 	alarm(0);
 	save_errno = errno;
 
-	if (!ISSET(term.c_lflag, ECHO))
+	if (neednl)
 	    (void) write(output, "\n", 1);
     }
 
     /* Restore old tty settings and signals. */
-    if (memcmp(&term, &oterm, sizeof(term)) != 0) {
-	while (tcsetattr(input, TCSAFLUSH|TCSASOFT, &oterm) == -1 &&
-	    errno == EINTR)
-	    continue;
-    }
+    term_restore(input);
     (void) sigaction(SIGALRM, &savealrm, NULL);
     (void) sigaction(SIGINT, &saveint, NULL);
     (void) sigaction(SIGHUP, &savehup, NULL);
@@ -269,35 +208,64 @@ sudo_askpass(prompt)
 
     /* Get response from child (askpass) and restore SIGPIPE handler */
     (void) close(pfd[1]);
-    pass = getln(pfd[0], buf, sizeof(buf));
+    pass = getln(pfd[0], buf, sizeof(buf), 0);
     (void) close(pfd[0]);
     (void) sigaction(SIGPIPE, &saved_sa_pipe, NULL);
 
     return(pass);
 }
 
+extern int term_erase, term_kill;
+
 static char *
-getln(fd, buf, bufsiz)
+getln(fd, buf, bufsiz, feedback)
     int fd;
     char *buf;
     size_t bufsiz;
+    int feedback;
 {
+    size_t left = bufsiz;
     ssize_t nr = -1;
     char *cp = buf;
     char c = '\0';
 
-    if (bufsiz == 0) {
+    if (left == 0) {
 	errno = EINVAL;
 	return(NULL);			/* sanity */
     }
 
-    while (--bufsiz) {
+    while (--left) {
 	nr = read(fd, &c, 1);
 	if (nr != 1 || c == '\n' || c == '\r')
 	    break;
+	if (feedback) {
+	    if (c == term_kill) {
+		while (cp > buf) {
+		    (void) write(fd, "\b \b", 3);
+		    --cp;
+		}
+		left = bufsiz;
+		continue;
+	    } else if (c == term_erase) {
+		if (cp > buf) {
+		    (void) write(fd, "\b \b", 3);
+		    --cp;
+		    left++;
+		}
+		continue;
+	    }
+	    (void) write(fd, "*", 1);
+	}
 	*cp++ = c;
     }
     *cp = '\0';
+    if (feedback) {
+	/* erase stars */
+	while (cp > buf) {
+	    (void) write(fd, "\b \b", 3);
+	    --cp;
+	}
+    }
 
     return(nr == 1 ? buf : NULL);
 }

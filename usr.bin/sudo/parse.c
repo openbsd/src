@@ -49,7 +49,7 @@
 #include <gram.h>
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: parse.c,v 1.238 2008/12/09 13:49:55 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: parse.c,v 1.239 2009/03/28 13:07:16 millert Exp $";
 #endif /* lint */
 
 /* Characters that must be quoted in sudoers */
@@ -639,7 +639,7 @@ _print_member(lbuf, name, type, negated, alias_type)
 	    }
 	    break;
 	case ALIAS:
-	    if ((a = find_alias(name, alias_type)) != NULL) {
+	    if ((a = alias_find(name, alias_type)) != NULL) {
 		tq_foreach_fwd(&a->members, m) {
 		    if (m != tq_first(&a->members))
 			lbuf_append(lbuf, ", ", NULL);

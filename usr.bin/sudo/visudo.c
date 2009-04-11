@@ -83,11 +83,12 @@
 #include "sudo.h"
 #include "interfaces.h"
 #include "parse.h"
+#include "redblack.h"
 #include <gram.h>
 #include "version.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.223 2008/11/22 15:12:26 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.229 2009/04/05 16:25:04 millert Exp $";
 #endif /* lint */
 
 struct sudoersfile {
@@ -105,14 +106,16 @@ struct sudoersfile {
 static RETSIGTYPE quit		__P((int));
 static char *get_args		__P((char *));
 static char *get_editor		__P((char **));
+static void get_hostname	__P((void));
 static char whatnow		__P((void));
-static int check_aliases	__P((int));
+static int check_aliases	__P((int, int));
 static int check_syntax		__P((char *, int, int));
 static int edit_sudoers		__P((struct sudoersfile *, char *, char *, int));
 static int install_sudoers	__P((struct sudoersfile *, int));
 static int print_unused		__P((void *, void *));
 static int reparse_sudoers	__P((char *, char *, int, int));
 static int run_command		__P((char *, char **));
+static void print_undefined	__P((char *name, int, int, int));
 static void setup_signals	__P((void));
 static void usage		__P((void)) __attribute__((__noreturn__));
 
@@ -122,6 +125,7 @@ extern void yyrestart		__P((FILE *));
 /*
  * External globals exported by the parser
  */
+extern struct rbtree *aliases;
 extern FILE *yyin;
 extern char *sudoers, *errorfile;
 extern int errorlineno, parse_error;
@@ -141,6 +145,7 @@ struct passwd *list_pw;
 static struct sudoerslist {
     struct sudoersfile *first, *last;
 } sudoerslist;
+static struct rbtree *alias_freelist;
 
 int
 main(argc, argv)
@@ -195,9 +200,10 @@ main(argc, argv)
     sudo_setgrent();
 
     /* Mock up a fake sudo_user struct. */
-    user_host = user_shost = user_cmnd = "";
+    user_cmnd = "";
     if ((sudo_user.pw = sudo_getpwuid(getuid())) == NULL)
 	errorx(1, "you don't exist in the passwd database");
+    get_hostname();
 
     /* Setup defaults data structures. */
     init_defaults();
@@ -428,7 +434,7 @@ reparse_sudoers(editor, args, strict, quiet)
 	    parse_error = TRUE;
 	}
 	fclose(yyin);
-	if (check_aliases(strict) != 0)
+	if (check_aliases(strict, quiet) != 0)
 	    parse_error = TRUE;
 
 	/*
@@ -698,6 +704,10 @@ check_syntax(sudoers_path, quiet, strict)
 	    warningx("failed to parse %s file, unknown error", sudoers_path);
 	parse_error = TRUE;
     }
+    if (!parse_error) {
+	if (check_aliases(strict, quiet) != 0)
+	    parse_error = TRUE;
+    }
     error = parse_error;
     if (!quiet) {
 	if (parse_error)
@@ -909,12 +919,58 @@ get_args(cmnd)
 }
 
 /*
+ * Look up the hostname and set user_host and user_shost.
+ */
+static void
+get_hostname()
+{
+    char *p, thost[MAXHOSTNAMELEN + 1];
+
+    if (gethostname(thost, sizeof(thost)) != 0) {
+	user_host = user_shost = "localhost";
+	return;
+    }
+    thost[sizeof(thost) - 1] = '\0';
+    user_host = estrdup(thost);
+
+    if ((p = strchr(user_host, '.'))) {
+	*p = '\0';
+	user_shost = estrdup(user_host);
+	*p = '.';
+    } else {
+	user_shost = user_host;
+    }
+}
+
+static void
+alias_remove_recursive(name, type)
+    char *name;
+    int type;
+{
+    struct member *m;
+    struct alias *a;
+
+    if ((a = alias_find(name, type)) != NULL) {
+	tq_foreach_fwd(&a->members, m) {
+	    if (m->type == ALIAS) {
+		alias_remove_recursive(m->name, type);
+	    }
+	}
+    }
+    alias_seqno++;
+    a = alias_remove(name, type);
+    if (a)
+	rbinsert(alias_freelist, a);
+}
+
+/*
  * Iterate through the sudoers datastructures looking for undefined
  * aliases or unused aliases.
  */
 static int
-check_aliases(strict)
+check_aliases(strict, quiet)
     int strict;
+    int quiet;
 {
     struct cmndspec *cs;
     struct member *m, *binding;
@@ -923,14 +979,15 @@ check_aliases(strict)
     struct defaults *d;
     int atype, error = 0;
 
+    alias_freelist = rbcreate(alias_compare);
+
     /* Forward check. */
     tq_foreach_fwd(&userspecs, us) {
 	tq_foreach_fwd(&us->users, m) {
 	    if (m->type == ALIAS) {
 		alias_seqno++;
-		if (find_alias(m->name, USERALIAS) == NULL) {
-		    warningx("%s: User_Alias `%s' referenced but not defined",
-			strict ? "Error" : "Warning", m->name);
+		if (alias_find(m->name, USERALIAS) == NULL) {
+		    print_undefined(m->name, USERALIAS, strict, quiet);
 		    error++;
 		}
 	    }
@@ -939,9 +996,8 @@ check_aliases(strict)
 	    tq_foreach_fwd(&priv->hostlist, m) {
 		if (m->type == ALIAS) {
 		    alias_seqno++;
-		    if (find_alias(m->name, HOSTALIAS) == NULL) {
-			warningx("%s: Host_Alias `%s' referenced but not defined",
-			    strict ? "Error" : "Warning", m->name);
+		    if (alias_find(m->name, HOSTALIAS) == NULL) {
+			print_undefined(m->name, HOSTALIAS, strict, quiet);
 			error++;
 		    }
 		}
@@ -950,18 +1006,16 @@ check_aliases(strict)
 		tq_foreach_fwd(&cs->runasuserlist, m) {
 		    if (m->type == ALIAS) {
 			alias_seqno++;
-			if (find_alias(m->name, RUNASALIAS) == NULL) {
-			    warningx("%s: Runas_Alias `%s' referenced but not defined",
-				strict ? "Error" : "Warning", m->name);
+			if (alias_find(m->name, RUNASALIAS) == NULL) {
+			    print_undefined(m->name, RUNASALIAS, strict, quiet);
 			    error++;
 			}
 		    }
 		}
 		if ((m = cs->cmnd)->type == ALIAS) {
 		    alias_seqno++;
-		    if (find_alias(m->name, CMNDALIAS) == NULL) {
-			warningx("%s: Cmnd_Alias `%s' referenced but not defined",
-			    strict ? "Error" : "Warning", m->name);
+		    if (alias_find(m->name, CMNDALIAS) == NULL) {
+			print_undefined(m->name, CMNDALIAS, strict, quiet);
 			error++;
 		    }
 		}
@@ -972,21 +1026,22 @@ check_aliases(strict)
     /* Reverse check (destructive) */
     tq_foreach_fwd(&userspecs, us) {
 	tq_foreach_fwd(&us->users, m) {
-	    if (m->type == ALIAS)
-		(void) alias_remove(m->name, USERALIAS);
+	    if (m->type == ALIAS) {
+		(void) alias_remove_recursive(m->name, USERALIAS);
+	    }
 	}
 	tq_foreach_fwd(&us->privileges, priv) {
 	    tq_foreach_fwd(&priv->hostlist, m) {
 		if (m->type == ALIAS)
-		    (void) alias_remove(m->name, HOSTALIAS);
+		    (void) alias_remove_recursive(m->name, HOSTALIAS);
 	    }
 	    tq_foreach_fwd(&priv->cmndlist, cs) {
 		tq_foreach_fwd(&cs->runasuserlist, m) {
 		    if (m->type == ALIAS)
-			(void) alias_remove(m->name, RUNASALIAS);
+			(void) alias_remove_recursive(m->name, RUNASALIAS);
 		}
 		if ((m = cs->cmnd)->type == ALIAS)
-		    (void) alias_remove(m->name, CMNDALIAS);
+		    (void) alias_remove_recursive(m->name, CMNDALIAS);
 	    }
 	}
     }
@@ -1010,16 +1065,35 @@ check_aliases(strict)
 	tq_foreach_fwd(&d->binding, binding) {
 	    for (m = binding; m != NULL; m = m->next) {
 		if (m->type == ALIAS)
-		    (void) alias_remove(m->name, atype);
+		    (void) alias_remove_recursive(m->name, atype);
 	    }
 	}
     }
+    rbdestroy(alias_freelist, alias_free);
 
     /* If all aliases were referenced we will have an empty tree. */
     if (no_aliases())
 	return(0);
-    alias_apply(print_unused, strict ? "Error" : "Warning");
+    if (!quiet) {
+	alias_apply(print_unused, strict ? "Error" : "Warning");
+    }
     return (strict ? 1 : 0);
+}
+
+static void
+print_undefined(name, type, strict, quiet)
+    char *name;
+    int type;
+    int strict;
+    int quiet;
+{
+    if (!quiet) {
+	warningx("%s: %s_Alias `%s' referenced but not defined",
+	    strict ? "Error" : "Warning",
+	    type == HOSTALIAS ? "Host" : type == CMNDALIAS ? "Cmnd" :
+	    type == USERALIAS ? "User" : type == RUNASALIAS ? "Runas" :
+	    "Unknown", name);
+    }
 }
 
 static int

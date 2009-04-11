@@ -18,7 +18,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: sudo.h,v 1.269 2008/11/25 17:01:34 millert Exp $
+ * $Sudo: sudo.h,v 1.270 2009/03/01 00:58:40 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -237,6 +237,12 @@ void *memrchr		__P((const void *, int, size_t));
 #ifndef HAVE_MKSTEMP
 int mkstemp		__P((char *));
 #endif
+#ifndef HAVE_SETENV
+int setenv		__P((const char *, const char *, int));
+#endif
+#ifndef HAVE_UNSETENV
+int unsetenv		__P((const char *));
+#endif
 char *sudo_goodpath	__P((const char *, struct stat *));
 char *tgetpass		__P((const char *, int, int));
 int find_path		__P((char *, char **, struct stat *, char *));
@@ -297,8 +303,6 @@ void display_privs	__P((struct sudo_nss_list *, struct passwd *));
 int display_cmnd	__P((struct sudo_nss_list *, struct passwd *));
 int get_ttycols		__P((void));
 char *sudo_parseln	__P((FILE *));
-void sudo_setenv	__P((const char *, const char *, int));
-void sudo_unsetenv	__P((const char *));
 void sudo_setgrent	__P((void));
 void sudo_endgrent	__P((void));
 void sudo_setpwent	__P((void));

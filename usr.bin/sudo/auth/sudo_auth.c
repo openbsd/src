@@ -53,7 +53,7 @@
 #include "insults.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.38 2008/11/07 17:45:52 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.39 2009/02/11 01:18:02 millert Exp $";
 #endif /* lint */
 
 sudo_auth auth_switch[] = {
@@ -100,6 +100,9 @@ verify_user(pw, prompt)
     char *p;
     sudo_auth *auth;
     sigaction_t sa, osa;
+#ifdef HAVE_BSM_AUDIT
+    extern char **NewArgv;
+#endif
 
     /* Enable suspend during password entry. */
     sigemptyset(&sa.sa_mask);
@@ -108,11 +111,15 @@ verify_user(pw, prompt)
     (void) sigaction(SIGTSTP, &sa, &osa);
 
     /* Make sure we have at least one auth method. */
-    if (auth_switch[0].name == NULL)
+    if (auth_switch[0].name == NULL) {
+#ifdef HAVE_BSM_AUDIT
+	audit_failure(NewArgv, "no authentication methods");
+#endif
     	log_error(0, "%s  %s %s",
 	    "There are no authentication methods compiled into sudo!",
 	    "If you want to turn off authentication, use the",
 	    "--disable-authentication configure option.");
+    }
 
     /* Set FLAG_ONEANDONLY if there is only one auth method. */
     if (auth_switch[1].name == NULL)
@@ -127,8 +134,12 @@ verify_user(pw, prompt)
 	    status = (auth->init)(pw, &prompt, auth);
 	    if (status == AUTH_FAILURE)
 		CLR(auth->flags, FLAG_CONFIGURED);
-	    else if (status == AUTH_FATAL)	/* XXX log */
+	    else if (status == AUTH_FATAL) {	/* XXX log */
+#ifdef HAVE_BSM_AUDIT
+		audit_failure(NewArgv, "authentication failure");
+#endif
 		exit(1);		/* assume error msg already printed */
+	    }
 
 	    if (NEEDS_USER(auth))
 		set_perms(PERM_ROOT);
@@ -145,8 +156,12 @@ verify_user(pw, prompt)
 		status = (auth->setup)(pw, &prompt, auth);
 		if (status == AUTH_FAILURE)
 		    CLR(auth->flags, FLAG_CONFIGURED);
-		else if (status == AUTH_FATAL)	/* XXX log */
+		else if (status == AUTH_FATAL) {/* XXX log */
+#ifdef HAVE_BSM_AUDIT
+		    audit_failure(NewArgv, "authentication failure");
+#endif
 		    exit(1);		/* assume error msg already printed */
+		}
 
 		if (NEEDS_USER(auth))
 		    set_perms(PERM_ROOT);
@@ -193,8 +208,12 @@ cleanup:
 		set_perms(PERM_USER);
 
 	    status = (auth->cleanup)(pw, auth);
-	    if (status == AUTH_FATAL)	/* XXX log */
+	    if (status == AUTH_FATAL) {	/* XXX log */
+#ifdef HAVE_BSM_AUDIT
+		audit_failure(NewArgv, "authentication failure");
+#endif
 		exit(1);		/* assume error msg already printed */
+	    }
 
 	    if (NEEDS_USER(auth))
 		set_perms(PERM_ROOT);
@@ -212,12 +231,18 @@ cleanup:
 		    flags = 0;
 		else
 		    flags = NO_MAIL;
+#ifdef HAVE_BSM_AUDIT
+		audit_failure(NewArgv, "authentication failure");
+#endif
 		log_error(flags, "%d incorrect password attempt%s",
 		    def_passwd_tries - counter,
 		    (def_passwd_tries - counter == 1) ? "" : "s");
 	    }
 	    /* FALLTHROUGH */
 	case AUTH_FATAL:
+#ifdef HAVE_BSM_AUDIT
+	    audit_failure(NewArgv, "authentication failure");
+#endif
 	    exit(1);
     }
     /* NOTREACHED */

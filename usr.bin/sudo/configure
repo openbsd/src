@@ -799,6 +799,7 @@ LIBS
 build_alias
 host_alias
 target_alias
+HAVE_BSM_AUDIT
 LIBTOOL
 CFLAGS
 PROGS
@@ -864,6 +865,7 @@ path_info
 ldap_conf
 ldap_secret
 nsswitch_conf
+netsvc_conf
 EGREPPROG
 CC
 ac_ct_CC
@@ -878,10 +880,6 @@ host
 host_cpu
 host_vendor
 host_os
-target
-target_cpu
-target_vendor
-target_os
 SED
 GREP
 EGREP
@@ -1474,7 +1472,6 @@ _ACEOF
 System types:
   --build=BUILD     configure for building on BUILD [guessed]
   --host=HOST       cross-compile to build programs to run on HOST [BUILD]
-  --target=TARGET   configure for building compilers for TARGET [HOST]
 _ACEOF
 fi
 
@@ -1499,6 +1496,7 @@ Optional Features:
   --enable-shell-sets-home
                           Set $HOME to target user in shell mode
   --disable-path-info     Print 'command not allowed' not 'command not found'
+  --enable-env-debug      Whether to enable environment debugging.
   --enable-gss-krb5-ccache-name
                           Use GSS-API to set the Kerberos V cred cache name
   --enable-static[=PKGS]  build static libraries [default=no]
@@ -1517,6 +1515,7 @@ Optional Packages:
   --with-CC               C compiler to use
   --with-rpath            pass -R flag in addition to -L for lib paths
   --with-blibpath=PATH    pass -blibpath flag to ld for additional lib paths
+  --with-bsm-audit        enable BSM audit support
   --with-incpath          additional places to look for include files
   --with-libpath          additional places to look for libraries
   --with-libraries        additional libraries to link with
@@ -1590,6 +1589,7 @@ Optional Packages:
   --with-pic              try to use only PIC/non-PIC objects [default=use
                           both]
   --with-noexec=PATH      fully qualified pathname of sudo_noexec.so
+  --with-netsvc[=PATH]  path to netsvc.conf
 
 Some influential environment variables:
   CC          C compiler command
@@ -2105,6 +2105,8 @@ echo "$as_me: Configuring Sudo version 1.7" >&6;}
 
 
 
+
+
 timeout=5
 password_timeout=5
 sudo_umask=0022
@@ -2229,6 +2231,26 @@ if test "${with_blibpath+set}" = set; then
     yes|no)	;;
     *)		{ echo "$as_me:$LINENO: will pass -blibpath:${with_blibpath} to the loader." >&5
 echo "$as_me: will pass -blibpath:${with_blibpath} to the loader." >&6;}
+		;;
+esac
+fi
+
+
+
+# Check whether --with-bsm-audit was given.
+if test "${with_bsm_audit+set}" = set; then
+  withval=$with_bsm_audit; case $with_bsm_audit in
+    yes)	cat >>confdefs.h <<\_ACEOF
+#define HAVE_BSM_AUDIT 1
+_ACEOF
+
+		SUDO_LIBS="${SUDO_LIBS} -lbsm"
+		SUDO_OBJS="${SUDO_OBJS} bsm_audit.o"
+		;;
+    no)		;;
+    *)		{ { echo "$as_me:$LINENO: error: \"--with-bsm-audit does not take an argument.\"" >&5
+echo "$as_me: error: \"--with-bsm-audit does not take an argument.\"" >&2;}
+   { (exit 1); exit 1; }; }
 		;;
 esac
 fi
@@ -3579,21 +3601,12 @@ if test "${with_nsswitch+set}" = set; then
 esac
 fi
 
-if test ${with_nsswitch-"yes"} != "no"; then
-    cat >>confdefs.h <<EOF
-#define _PATH_NSSWITCH_CONF "${with_nsswitch-/etc/nsswitch.conf}"
-EOF
-
-    nsswitch_conf=${with_nsswitch-/etc/nsswitch.conf}
-else
-    nsswitch_conf='/etc/nsswitch.conf'
-fi
 
 
 # Check whether --with-ldap was given.
 if test "${with_ldap+set}" = set; then
   withval=$with_ldap; case $with_ldap in
-    no)		with_ldap="";;
+    no)		;;
     *)		cat >>confdefs.h <<\_ACEOF
 #define HAVE_LDAP 1
 _ACEOF
@@ -4005,6 +4018,34 @@ _ACEOF
 echo "${ECHO_T}no" >&6; }
 		{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --enable-path-info: $enableval" >&5
 echo "$as_me: WARNING: Ignoring unknown argument to --enable-path-info: $enableval" >&2;}
+		;;
+  esac
+
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+{ echo "$as_me:$LINENO: checking whether to enable environment debugging" >&5
+echo $ECHO_N "checking whether to enable environment debugging... $ECHO_C" >&6; }
+# Check whether --enable-env_debug was given.
+if test "${enable_env_debug+set}" = set; then
+  enableval=$enable_env_debug;  case "$enableval" in
+    yes)	{ echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+		cat >>confdefs.h <<\_ACEOF
+#define ENV_DEBUG 1
+_ACEOF
+
+		;;
+    no)		{ echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+		;;
+    *)		{ echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+    		{ echo "$as_me:$LINENO: WARNING: Ignoring unknown argument to --enable-env-debug: $enableval" >&5
+echo "$as_me: WARNING: Ignoring unknown argument to --enable-env-debug: $enableval" >&2;}
 		;;
   esac
 
@@ -5441,49 +5482,6 @@ IFS=$ac_save_IFS
 case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
-{ echo "$as_me:$LINENO: checking target system type" >&5
-echo $ECHO_N "checking target system type... $ECHO_C" >&6; }
-if test "${ac_cv_target+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test "x$target_alias" = x; then
-  ac_cv_target=$ac_cv_host
-else
-  ac_cv_target=`$SHELL "$ac_aux_dir/config.sub" $target_alias` ||
-    { { echo "$as_me:$LINENO: error: $SHELL $ac_aux_dir/config.sub $target_alias failed" >&5
-echo "$as_me: error: $SHELL $ac_aux_dir/config.sub $target_alias failed" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_target" >&5
-echo "${ECHO_T}$ac_cv_target" >&6; }
-case $ac_cv_target in
-*-*-*) ;;
-*) { { echo "$as_me:$LINENO: error: invalid value of canonical target" >&5
-echo "$as_me: error: invalid value of canonical target" >&2;}
-   { (exit 1); exit 1; }; };;
-esac
-target=$ac_cv_target
-ac_save_IFS=$IFS; IFS='-'
-set x $ac_cv_target
-shift
-target_cpu=$1
-target_vendor=$2
-shift; shift
-# Remember, the first character of IFS is used to create $*,
-# except with old shells:
-target_os=$*
-IFS=$ac_save_IFS
-case $target_os in *\ *) target_os=`echo "$target_os" | sed 's/ /-/g'`;; esac
-
-
-# The aliases save the names the user supplied, while $host etc.
-# will get canonicalized.
-test -n "$target_alias" &&
-  test "$program_prefix$program_suffix$program_transform_name" = \
-    NONENONEs,x,x, &&
-  program_prefix=${target_alias}-
 # Check whether --enable-static was given.
 if test "${enable_static+set}" = set; then
   enableval=$enable_static; p=${PACKAGE-default}
@@ -6209,7 +6207,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6212 "configure"' > conftest.$ac_ext
+  echo '#line 6210 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -8068,11 +8066,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8071: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8069: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8075: \$? = $ac_status" >&5
+   echo "$as_me:8073: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8358,11 +8356,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8361: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8359: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:8365: \$? = $ac_status" >&5
+   echo "$as_me:8363: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -8462,11 +8460,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8465: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8463: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8469: \$? = $ac_status" >&5
+   echo "$as_me:8467: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10822,7 +10820,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10825 "configure"
+#line 10823 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10922,7 +10920,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10925 "configure"
+#line 10923 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11947,6 +11945,22 @@ _ACEOF
 fi
 done
 
+		fi
+
+		# AIX analog of nsswitch.conf, enabled by default
+
+# Check whether --with-netsvc was given.
+if test "${with_netsvc+set}" = set; then
+  withval=$with_netsvc; case $with_netsvc in
+		    no)		;;
+		    yes)	with_netsvc="/etc/netsvc.conf"
+				;;
+		    *)		;;
+		esac
+fi
+
+		if test -z "$with_nsswitch" -a -z "$with_netsvc"; then
+		    with_netsvc="/etc/netsvc.conf"
 		fi
 
 		# AIX-specific functions
@@ -15629,9 +15643,10 @@ LIBS=$ac_save_LIBS
 
 
 
+
 for ac_func in strchr strrchr memchr memcpy memset sysconf tzset \
 	       strftime setrlimit initgroups getgroups fstat gettimeofday \
-	       setlocale getaddrinfo setsid
+	       setlocale getaddrinfo setsid setenv
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 { echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -15723,6 +15738,230 @@ _ACEOF
 
 fi
 done
+
+
+for ac_func in unsetenv
+do
+as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking for $ac_func" >&5
+echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6; }
+if { as_var=$as_ac_var; eval "test \"\${$as_var+set}\" = set"; }; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
+   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+#define $ac_func innocuous_$ac_func
+
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char $ac_func (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+
+#undef $ac_func
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char $ac_func ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined __stub_$ac_func || defined __stub___$ac_func
+choke me
+#endif
+
+int
+main ()
+{
+return $ac_func ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  eval "$as_ac_var=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	eval "$as_ac_var=no"
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+ac_res=`eval echo '${'$as_ac_var'}'`
+	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+echo "${ECHO_T}$ac_res" >&6; }
+if test `eval echo '${'$as_ac_var'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+ { echo "$as_me:$LINENO: checking whether unsetenv returns void" >&5
+echo $ECHO_N "checking whether unsetenv returns void... $ECHO_C" >&6; }
+if test "${sudo_cv_func_unsetenv_void+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test "$cross_compiling" = yes; then
+  sudo_cv_func_unsetenv_void=yes
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+        int unsetenv();
+
+int
+main ()
+{
+
+        return unsetenv("FOO") != 0;
+
+  ;
+  return 0;
+}
+
+_ACEOF
+rm -f conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  sudo_cv_func_unsetenv_void=no
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+sudo_cv_func_unsetenv_void=yes
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+
+
+fi
+{ echo "$as_me:$LINENO: result: $sudo_cv_func_unsetenv_void" >&5
+echo "${ECHO_T}$sudo_cv_func_unsetenv_void" >&6; }
+    if test $sudo_cv_func_unsetenv_void = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define UNSETENV_VOID 1
+_ACEOF
+
+    fi
+
+fi
+done
+
+{ echo "$as_me:$LINENO: checking whether putenv has a const argument" >&5
+echo $ECHO_N "checking whether putenv has a const argument... $ECHO_C" >&6; }
+if test "${sudo_cv_func_putenv_const+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+int putenv(const char *string) {return 0;}
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  sudo_cv_func_putenv_const=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	sudo_cv_func_putenv_const=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+{ echo "$as_me:$LINENO: result: $sudo_cv_func_putenv_const" >&5
+echo "${ECHO_T}$sudo_cv_func_putenv_const" >&6; }
+  if test $sudo_cv_func_putenv_const = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define PUTENV_CONST 1
+_ACEOF
+
+  fi
 
 if test -z "$SKIP_SETRESUID"; then
 
@@ -19386,6 +19625,22 @@ fi
 done
 
 
+netsvc_conf='/etc/netsvc.conf'
+nsswitch_conf='/etc/nsswitch.conf'
+if test ${with_netsvc-"no"} != "no"; then
+    cat >>confdefs.h <<EOF
+#define _PATH_NETSVC_CONF "${with_netsvc-/etc/netsvc.conf}"
+EOF
+
+    netsvc_conf=${with_netsvc-/etc/netsvc.conf}
+elif test ${with_nsswitch-"yes"} != "no"; then
+    cat >>confdefs.h <<EOF
+#define _PATH_NSSWITCH_CONF "${with_nsswitch-/etc/nsswitch.conf}"
+EOF
+
+    nsswitch_conf=${with_nsswitch-/etc/nsswitch.conf}
+fi
+
 
 if test -z "${AUTH_EXCL}${AUTH_REG}" -a -n "$AUTH_EXCL_DEF"; then
     for auth in $AUTH_EXCL_DEF; do
@@ -22548,109 +22803,7 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
 
 
 
-
-
-
-
-
-
-
-
-for ac_func in ldap_initialize ldap_start_tls_s ldap_sasl_interactive_bind_s ldapssl_init ldapssl_set_strength ldap_search_ext_s ldap_unbind_ext_s ldap_str2dn ldap_create ldap_sasl_bind_s
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-{ echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6; }
-if { as_var=$as_ac_var; eval "test \"\${$as_var+set}\" = set"; }; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
-#define $ac_func innocuous_$ac_func
-
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.
-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
-    <limits.h> exists even on freestanding compilers.  */
-
-#ifdef __STDC__
-# include <limits.h>
-#else
-# include <assert.h>
-#endif
-
-#undef $ac_func
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char $ac_func ();
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined __stub_$ac_func || defined __stub___$ac_func
-choke me
-#endif
-
-int
-main ()
-{
-return $ac_func ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	eval "$as_ac_var=no"
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-fi
-ac_res=`eval echo '${'$as_ac_var'}'`
-	       { echo "$as_me:$LINENO: result: $ac_res" >&5
-echo "${ECHO_T}$ac_res" >&6; }
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-done
-
-
-for ac_header in sasl/sasl.h
+for ac_header in sasl/sasl.h sasl.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
@@ -22785,6 +22938,99 @@ if test `eval echo '${'$as_ac_Header'}'` = yes; then
 #define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
 
+for ac_func in ldap_sasl_interactive_bind_s
+do
+as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking for $ac_func" >&5
+echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6; }
+if { as_var=$as_ac_var; eval "test \"\${$as_var+set}\" = set"; }; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
+   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+#define $ac_func innocuous_$ac_func
+
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char $ac_func (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+
+#undef $ac_func
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char $ac_func ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined __stub_$ac_func || defined __stub___$ac_func
+choke me
+#endif
+
+int
+main ()
+{
+return $ac_func ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  eval "$as_ac_var=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	eval "$as_ac_var=no"
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+ac_res=`eval echo '${'$as_ac_var'}'`
+	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+echo "${ECHO_T}$ac_res" >&6; }
+if test `eval echo '${'$as_ac_var'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+, break
 fi
 
 done
@@ -22846,6 +23092,110 @@ _ACEOF
  break
 fi
 
+done
+
+
+
+
+
+
+
+
+
+
+
+
+for ac_func in ldap_initialize ldap_start_tls_s ldapssl_init ldapssl_set_strength ldap_search_ext_s ldap_unbind_ext_s ldap_str2dn ldap_create ldap_sasl_bind_s ldap_ssl_client_init ldap_start_tls_s_np
+do
+as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking for $ac_func" >&5
+echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6; }
+if { as_var=$as_ac_var; eval "test \"\${$as_var+set}\" = set"; }; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
+   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+#define $ac_func innocuous_$ac_func
+
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char $ac_func (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+
+#undef $ac_func
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char $ac_func ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined __stub_$ac_func || defined __stub___$ac_func
+choke me
+#endif
+
+int
+main ()
+{
+return $ac_func ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  eval "$as_ac_var=yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	eval "$as_ac_var=no"
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+fi
+ac_res=`eval echo '${'$as_ac_var'}'`
+	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+echo "${ECHO_T}$ac_res" >&6; }
+if test `eval echo '${'$as_ac_var'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
 done
 
 
@@ -24153,6 +24503,7 @@ LIBS!$LIBS$ac_delim
 build_alias!$build_alias$ac_delim
 host_alias!$host_alias$ac_delim
 target_alias!$target_alias$ac_delim
+HAVE_BSM_AUDIT!$HAVE_BSM_AUDIT$ac_delim
 LIBTOOL!$LIBTOOL$ac_delim
 CFLAGS!$CFLAGS$ac_delim
 PROGS!$PROGS$ac_delim
@@ -24212,7 +24563,6 @@ runas_default!$runas_default$ac_delim
 env_editor!$env_editor$ac_delim
 passwd_tries!$passwd_tries$ac_delim
 tty_tickets!$tty_tickets$ac_delim
-insults!$insults$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -24254,11 +24604,13 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+insults!$insults$ac_delim
 root_sudo!$root_sudo$ac_delim
 path_info!$path_info$ac_delim
 ldap_conf!$ldap_conf$ac_delim
 ldap_secret!$ldap_secret$ac_delim
 nsswitch_conf!$nsswitch_conf$ac_delim
+netsvc_conf!$netsvc_conf$ac_delim
 EGREPPROG!$EGREPPROG$ac_delim
 CC!$CC$ac_delim
 ac_ct_CC!$ac_ct_CC$ac_delim
@@ -24273,10 +24625,6 @@ host!$host$ac_delim
 host_cpu!$host_cpu$ac_delim
 host_vendor!$host_vendor$ac_delim
 host_os!$host_os$ac_delim
-target!$target$ac_delim
-target_cpu!$target_cpu$ac_delim
-target_vendor!$target_vendor$ac_delim
-target_os!$target_os$ac_delim
 SED!$SED$ac_delim
 GREP!$GREP$ac_delim
 EGREP!$EGREP$ac_delim
@@ -24297,7 +24645,7 @@ KRB5CONFIG!$KRB5CONFIG$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 41; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 39; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -24764,6 +25112,8 @@ echo "$as_me: You will need to customize sample.pam and install it as /etc/pam.d
 	    ;;
     esac
 fi
+
+
 
 
 

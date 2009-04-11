@@ -95,14 +95,14 @@
 # include <selinux/selinux.h>
 #endif
 
+#include <sudo_usage.h>
 #include "sudo.h"
-#include "sudo_usage.h"
 #include "lbuf.h"
 #include "interfaces.h"
 #include "version.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo.c,v 1.501 2009/01/09 00:13:37 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo.c,v 1.510 2009/03/10 20:44:05 millert Exp $";
 #endif /* lint */
 
 /*
@@ -231,7 +231,7 @@ main(argc, argv, envp)
 	user_cmnd = "shell";
     else if (ISSET(sudo_mode, MODE_EDIT))
 	user_cmnd = "sudoedit";
-    else
+    else {
 	switch (sudo_mode) {
 	    case MODE_VERSION:
 		show_version();
@@ -240,6 +240,7 @@ main(argc, argv, envp)
 		usage(0);
 		break;
 	    case MODE_VALIDATE:
+	    case MODE_VALIDATE|MODE_INVALIDATE:
 		user_cmnd = "validate";
 		pwflag = I_VERIFYPW;
 		break;
@@ -253,13 +254,16 @@ main(argc, argv, envp)
 		exit(0);
 		break;
 	    case MODE_LIST:
+	    case MODE_LIST|MODE_INVALIDATE:
 		user_cmnd = "list";
 		pwflag = I_LISTPW;
 		break;
 	    case MODE_CHECK:
+	    case MODE_CHECK|MODE_INVALIDATE:
 		pwflag = I_LISTPW;
 		break;
 	}
+    }
 
     /* Must have a command to run... */
     if (user_cmnd == NULL && NewArgc == 0)
@@ -341,9 +345,15 @@ main(argc, argv, envp)
     tq_foreach_fwd(snl, nss) {
 	validated = nss->lookup(nss, validated, pwflag);
 
-	/* Handle [NOTFOUND=return] */
-	if (!ISSET(validated, VALIDATE_OK) && nss->ret_notfound)
-	    break;
+	if (ISSET(validated, VALIDATE_OK)) {
+	    /* Handle "= auth" in netsvc.conf */
+	    if (nss->ret_if_found)
+		break;
+	} else {
+	    /* Handle [NOTFOUND=return] */
+	    if (nss->ret_if_notfound)
+		break;
+	}
     }
     if (safe_cmnd == NULL)
 	safe_cmnd = estrdup(user_cmnd);
@@ -382,9 +392,10 @@ main(argc, argv, envp)
 
     /* Bail if a tty is required and we don't have one.  */
     if (def_requiretty) {
-	if ((fd = open(_PATH_TTY, O_RDWR|O_NOCTTY)) == -1)
+	if ((fd = open(_PATH_TTY, O_RDWR|O_NOCTTY)) == -1) {
+	    audit_failure(NewArgv, "no tty");
 	    log_error(NO_MAIL, "sorry, you must have a tty to run sudo");
-	else
+	} else
 	    (void) close(fd);
     }
 
@@ -404,7 +415,7 @@ main(argc, argv, envp)
 
     /* Require a password if sudoers says so.  */
     if (def_authenticate)
-	check_user(validated, !ISSET(sudo_mode, MODE_NONINTERACTIVE));
+	check_user(validated, sudo_mode);
 
     /* If run as root with SUDO_USER set, set sudo_user.pw to that user. */
     /* XXX - causes confusion when root is not listed in sudoers */
@@ -419,10 +430,13 @@ main(argc, argv, envp)
 
     if (ISSET(validated, VALIDATE_OK)) {
 	/* Finally tell the user if the command did not exist. */
-	if (cmnd_status == NOT_FOUND_DOT)
+	if (cmnd_status == NOT_FOUND_DOT) {
+	    audit_failure(NewArgv, "command in current directory");
 	    errorx(1, "ignoring `%s' found in '.'\nUse `sudo ./%s' if this is the `%s' you wish to run.", user_cmnd, user_cmnd, user_cmnd);
-	else if (cmnd_status == NOT_FOUND)
+	} else if (cmnd_status == NOT_FOUND) {
+	    audit_failure(NewArgv, "%s: command not found", user_cmnd);
 	    errorx(1, "%s: command not found", user_cmnd);
+	}
 
 	/* If user specified env vars make sure sudoers allows it. */
 	if (ISSET(sudo_mode, MODE_RUN) && !def_setenv) {
@@ -434,9 +448,9 @@ main(argc, argv, envp)
 	}
 
 	log_allowed(validated);
-	if (sudo_mode == MODE_CHECK)
+	if (ISSET(sudo_mode, MODE_CHECK))
 	    rc = display_cmnd(snl, list_pw ? list_pw : sudo_user.pw);
-	else if (sudo_mode == MODE_LIST)
+	else if (ISSET(sudo_mode, MODE_LIST))
 	    display_privs(snl, list_pw ? list_pw : sudo_user.pw);
 
 	/* Cleanup sudoers sources */
@@ -444,19 +458,23 @@ main(argc, argv, envp)
 	    nss->close(nss);
 
 	/* Deferred exit due to sudo_ldap_close() */
-	if (sudo_mode == MODE_VALIDATE || sudo_mode == MODE_CHECK ||
-	    sudo_mode == MODE_LIST)
+	if (ISSET(sudo_mode, (MODE_VALIDATE|MODE_CHECK|MODE_LIST)))
 	    exit(rc);
 
 	/*
-	 * Override user's umask if configured to do so.
-	 * If user's umask is more restrictive, OR in those bits too.
+	 * Set umask based on sudoers.
+	 * If user's umask is more restrictive, OR in those bits too
+	 * unless umask_override is set.
 	 */
 	if (def_umask != 0777) {
-	    mode_t mask = umask(def_umask);
-	    mask |= def_umask;
-	    if (mask != def_umask)
-		umask(mask);
+	    if (def_umask_override) {
+		umask(def_umask);
+	    } else {
+		mode_t mask = umask(def_umask);
+		mask |= def_umask;
+		if (mask != def_umask)
+		    umask(mask);
+	    }
 	}
 
 	/* Restore coredumpsize resource limit. */
@@ -509,14 +527,17 @@ main(argc, argv, envp)
 	closefrom(def_closefrom + 1);
 
 #ifndef PROFILING
-	if (ISSET(sudo_mode, MODE_BACKGROUND) && fork() > 0)
+	if (ISSET(sudo_mode, MODE_BACKGROUND) && fork() > 0) {
+	    syslog(LOG_AUTH|LOG_ERR, "fork");
+	    audit_success(NewArgv);
 	    exit(0);
-	else {
+	} else {
 #ifdef HAVE_SELINUX
 	    if (is_selinux_enabled() > 0 && user_role != NULL)
 		selinux_exec(user_role, user_type, NewArgv,
 		    ISSET(sudo_mode, MODE_LOGIN_SHELL));
 #endif
+	    audit_success(NewArgv);
 	    execv(safe_cmnd, NewArgv);
 	}
 #else
@@ -530,9 +551,11 @@ main(argc, argv, envp)
 	    NewArgv[0] = "sh";
 	    NewArgv[1] = safe_cmnd;
 	    execv(_PATH_BSHELL, NewArgv);
-	} warning("unable to execute %s", safe_cmnd);
+	}
+	warning("unable to execute %s", safe_cmnd);
 	exit(127);
     } else if (ISSET(validated, FLAG_NO_USER | FLAG_NO_HOST)) {
+	audit_failure(NewArgv, "No user or host");
 	log_denial(validated, 1);
 	exit(1);
     } else {
@@ -554,6 +577,7 @@ main(argc, argv, envp)
 	    /* Just tell the user they are not allowed to run foo. */
 	    log_denial(validated, 1);
 	}
+	audit_failure(NewArgv, "validation failure");
 	exit(1);
     }
     exit(0);	/* not reached */
@@ -666,7 +690,7 @@ init_vars(sudo_mode, envp)
 	 * users to place "sudo -k" in a .logout file which can cause sudo to
 	 * be run during reboot after the YP/NIS/NIS+/LDAP/etc daemon has died.
 	 */
-	if (sudo_mode & (MODE_INVALIDATE|MODE_KILL))
+	if (sudo_mode == MODE_KILL || sudo_mode == MODE_INVALIDATE)
 	    errorx(1, "unknown uid: %s", pw_name);
 	log_error(0, "unknown uid: %s", pw_name);
     }
@@ -802,6 +826,9 @@ set_cmnd(sudo_mode)
     if (!update_defaults(SETDEF_CMND))
 	log_error(NO_STDERR|NO_EXIT, "problem with defaults entries");
 
+    if (!runas_user)
+	set_runaspw(def_runas_default);	/* may have been updated above */
+
     return(rval);
 }
 
@@ -817,7 +844,7 @@ parse_args(argc, argv)
 {
     int mode = 0;		/* what mode is sudo to be run in? */
     int flags = 0;		/* mode flags */
-    int ch;
+    int valid_flags, ch;
 
     /* First, check to see if we were invoked as "sudoedit". */
     if (strcmp(getprogname(), "sudoedit") == 0)
@@ -831,6 +858,10 @@ parse_args(argc, argv)
 #define is_envar (optind < argc && argv[optind][0] != '/' && \
 	    strchr(argv[optind], '=') != NULL)
 
+    /* Flags allowed when running a command */
+    valid_flags = MODE_BACKGROUND|MODE_PRESERVE_ENV|MODE_RESET_HOME|
+		  MODE_LOGIN_SHELL|MODE_INVALIDATE|MODE_NONINTERACTIVE|
+		  MODE_PRESERVE_GROUPS|MODE_SHELL;
     for (;;) {
 	/*
 	 * We disable arg permutation for GNU getopt().
@@ -869,6 +900,7 @@ parse_args(argc, argv)
 		    if (mode && mode != MODE_EDIT)
 			usage_excl(1);
 		    mode = MODE_EDIT;
+		    valid_flags = MODE_INVALIDATE|MODE_NONINTERACTIVE;
 		    break;
 		case 'g':
 		    runas_group = optarg;
@@ -877,28 +909,31 @@ parse_args(argc, argv)
 		    SET(flags, MODE_RESET_HOME);
 		    break;
 		case 'h':
-		    if (mode && mode != MODE_HELP)
-			usage_excl(1);
+		    if (mode && mode != MODE_HELP) {
+			if (strcmp(getprogname(), "sudoedit") != 0)
+			    usage_excl(1);
+		    }
 		    mode = MODE_HELP;
+		    valid_flags = 0;
 		    break;
 		case 'i':
 		    SET(flags, MODE_LOGIN_SHELL);
 		    def_env_reset = TRUE;
 		    break;
 		case 'k':
-		    if (mode && mode != MODE_INVALIDATE)
-			usage_excl(1);
-		    mode = MODE_INVALIDATE;
+		    SET(flags, MODE_INVALIDATE);
 		    break;
 		case 'K':
 		    if (mode && mode != MODE_KILL)
 			usage_excl(1);
 		    mode = MODE_KILL;
+		    valid_flags = 0;
 		    break;
 		case 'L':
 		    if (mode && mode != MODE_LISTDEFS)
 			usage_excl(1);
 		    mode = MODE_LISTDEFS;
+		    valid_flags = MODE_INVALIDATE|MODE_NONINTERACTIVE;
 		    break;
 		case 'l':
 		    if (mode) {
@@ -908,6 +943,7 @@ parse_args(argc, argv)
 			    usage_excl(1);
 		    }
 		    mode = MODE_LIST;
+		    valid_flags = MODE_INVALIDATE|MODE_NONINTERACTIVE;
 		    break;
 		case 'n':
 		    SET(flags, MODE_NONINTERACTIVE);
@@ -944,11 +980,13 @@ parse_args(argc, argv)
 		    if (mode && mode != MODE_VALIDATE)
 			usage_excl(1);
 		    mode = MODE_VALIDATE;
+		    valid_flags = MODE_INVALIDATE|MODE_NONINTERACTIVE;
 		    break;
 		case 'V':
 		    if (mode && mode != MODE_VERSION)
 			usage_excl(1);
 		    mode = MODE_VERSION;
+		    valid_flags = 0;
 		    break;
 		default:
 		    usage(1);
@@ -973,8 +1011,16 @@ parse_args(argc, argv)
     NewArgc = argc - optind;
     NewArgv = argv + optind;
 
-    if (!mode)
-	mode = MODE_RUN;
+    if (!mode) {
+	/* Defer -k mode setting until we know whether it is a flag or not */
+	if (ISSET(flags, MODE_INVALIDATE) && NewArgc == 0) {
+	    mode = MODE_INVALIDATE;	/* -k by itself */
+	    CLR(flags, MODE_INVALIDATE);
+	    valid_flags = 0;
+	} else {
+	    mode = MODE_RUN;		/* running a command */
+	}
+    }
 
     if (NewArgc > 0 && mode == MODE_LIST)
 	mode = MODE_CHECK;
@@ -990,6 +1036,8 @@ parse_args(argc, argv)
 	}
 	SET(flags, MODE_SHELL);
     }
+    if ((flags & valid_flags) != flags)
+	usage(1);
     if (mode == MODE_EDIT &&
        (ISSET(flags, MODE_PRESERVE_ENV) || sudo_user.env_vars != NULL)) {
 	if (ISSET(mode, MODE_PRESERVE_ENV))
@@ -1315,8 +1363,10 @@ set_runaspw(user)
 	if ((runas_pw = sudo_getpwuid(atoi(user + 1))) == NULL)
 	    runas_pw = sudo_fakepwnam(user, runas_gr ? runas_gr->gr_gid : 0);
     } else {
-	if ((runas_pw = sudo_getpwnam(user)) == NULL)
+	if ((runas_pw = sudo_getpwnam(user)) == NULL) {
+	    audit_failure(NewArgv, "unknown user: %s", user);
 	    log_error(NO_MAIL|MSG_ONLY, "unknown user: %s", user);
+	}
     }
 }
 
@@ -1411,7 +1461,7 @@ static void
 usage_excl(exit_val)
     int exit_val;
 {
-    warningx("Only one of the -e, -h, -i, -k, -K, -l, -s, -v or -V options may be specified");
+    warningx("Only one of the -e, -h, -i, -K, -l, -s, -v or -V options may be specified");
     usage(exit_val);
 }
 
@@ -1424,21 +1474,22 @@ usage(exit_val)
     int exit_val;
 {
     struct lbuf lbuf;
-    char *uvec[5];
+    char *uvec[6];
     int i, ulen;
 
     /*
      * Use usage vectors appropriate to the progname.
      */
     if (strcmp(getprogname(), "sudoedit") == 0) {
-	uvec[0] = SUDO_USAGE4 + 3;
+	uvec[0] = SUDO_USAGE5 + 3;
 	uvec[1] = NULL;
     } else {
 	uvec[0] = SUDO_USAGE1;
 	uvec[1] = SUDO_USAGE2;
 	uvec[2] = SUDO_USAGE3;
 	uvec[3] = SUDO_USAGE4;
-	uvec[4] = NULL;
+	uvec[4] = SUDO_USAGE5;
+	uvec[5] = NULL;
     }
 
     /*

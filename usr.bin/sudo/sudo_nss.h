@@ -13,7 +13,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Sudo: sudo_nss.h,v 1.5 2008/11/09 14:13:12 millert Exp $
+ * $Sudo: sudo_nss.h,v 1.6 2009/03/10 20:44:05 millert Exp $
  */
 
 struct lbuf;
@@ -32,7 +32,8 @@ struct sudo_nss {
     int (*display_bound_defaults) __P((struct sudo_nss *nss, struct passwd *, struct lbuf *));
     int (*display_privs) __P((struct sudo_nss *nss, struct passwd *, struct lbuf *));
     void *handle;
-    int ret_notfound;
+    short ret_if_found;
+    short ret_if_notfound;
 };
 
 TQ_DECLARE(sudo_nss)

@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudoers.pod,v 1.154 2008/11/24 15:08:16 millert Exp $
+$Sudo: sudoers.pod,v 1.163 2009/03/08 15:51:01 millert Exp $
 =pod
 
 =head1 NAME
@@ -238,7 +238,7 @@ Defaults entries are parsed in the following order: generic, host
 and user Defaults first, then runas Defaults and finally command
 defaults.
 
-See L</"SUDOERS OPTIONS"> for a list of supported Defaults parameters.
+See L<"SUDOERS OPTIONS"> for a list of supported Defaults parameters.
 
 =head2 User Specification
 
@@ -376,9 +376,10 @@ be overridden by use of the C<UNSETENV> tag.
 =head2 Wildcards
 
 B<sudo> allows shell-style I<wildcards> (aka meta or glob characters)
-to be used in pathnames as well as command line arguments in the
-I<sudoers> file.  Wildcard matching is done via the B<POSIX>
-L<fnmatch(3)> routine.  Note that these are I<not> regular expressions.
+to be used in hostnames, pathnames and command line arguments in
+the I<sudoers> file.  Wildcard matching is done via the B<POSIX>
+L<glob(3)> and L<fnmatch(3)> routines.  Note that these are I<not>
+regular expressions.
 
 =over 8
 
@@ -405,10 +406,10 @@ escape special characters such as: "*", "?", "[", and "}".
 
 =back
 
-POSIX character classes may also be used if your system's
-L<fnmatch(3)> function supports them.  However, because the
-C<':'> character has special meaning in I<sudoers>, it must
-be escaped.  For example:
+POSIX character classes may also be used if your system's L<glob(3)>
+and L<fnmatch(3)> functions support them.  However, because the
+C<':'> character has special meaning in I<sudoers>, it must be
+escaped.  For example:
 
     /bin/ls [[\:alpha\:]]*
 
@@ -446,9 +447,13 @@ useful, for example, for keeping a site-wide I<sudoers> file in
 addition to a per-machine local one.  For the sake of this example
 the site-wide I<sudoers> will be F</etc/sudoers> and the per-machine
 one will be F</etc/sudoers.local>.  To include F</etc/sudoers.local>
-from F</etc/sudoers> we would use the following line in F</etc/sudoers>:
+from within F</etc/sudoers> we would use the following line in F</etc/sudoers>:
 
- #include /etc/sudoers.local
+=over 4
+
+C<#include /etc/sudoers.local>
+
+=back
 
 When B<sudo> reaches this line it will suspend processing of the
 current file (F</etc/sudoers>) and switch to F</etc/sudoers.local>.
@@ -456,6 +461,13 @@ Upon reaching the end of F</etc/sudoers.local>, the rest of
 F</etc/sudoers> will be processed.  Files that are included may
 themselves include other files.  A hard limit of 128 nested include
 files is enforced to prevent include file loops.
+
+The filename may include the C<%h> escape, signifying the short form
+of the hostname.  I.e., if the machine's hostname is "xerxes", then
+
+ #include /etc/sudoers.%h
+
+will cause B<sudo> to include the file F</etc/sudoers.xerxes>.
 
 =head2 Other special characters and reserved words
 
@@ -653,11 +665,22 @@ will always be used.  This flag is I<off> by default.
 
 =item preserve_groups
 
-By default B<sudo> will initialize the group vector to the list of
+By default, B<sudo> will initialize the group vector to the list of
 groups the target user is in.  When I<preserve_groups> is set, the
 user's existing group vector is left unaltered.  The real and
 effective group IDs, however, are still set to match the target
 user.  This flag is I<off> by default.
+
+=item pwfeedback
+
+By default, B<sudo> reads the password like most other Unix programs,
+by turning off echo until the user hits the return (or enter) key.
+Some users become confused by this as it appears to them that B<sudo>
+has hung at this point.  When I<pwfeedback> is set, B<sudo> will
+provide visual feedback when the user presses a key.  Note that
+this does have a security impact as an onlooker may be able to
+determine the length of the password being entered.
+This flag is I<off> by default.
 
 =item requiretty
 
@@ -723,6 +746,18 @@ shell is determined by the C<SHELL> environment variable if it is
 set, falling back on the shell listed in the invoking user's
 /etc/passwd entry if not).  This flag is I<off> by default.
 
+=item fast_glob
+
+Normally, B<sudo> uses the L<glob(3)> function to do shell-style
+globbing when matching pathnames.  However, since it accesses the
+file system, L<glob(3)> can take a long time to complete for some
+patterns, especially when the pattern references a network file
+system that is mounted on demand (automounted).  The I<fast_glob>
+option causes B<sudo> to use the L<fnmatch(3)> function, which does
+not access the file system to do its matching.  The disadvantage
+of I<fast_glob> is that it is unable to match relative pathnames
+such as F<./ls> or F<../bin/ls>.  This flag is I<off> by default.
+
 =item stay_setuid
 
 Normally, when B<sudo> executes a command the real and effective
@@ -749,6 +784,15 @@ B<sudo> uses a directory in the ticket dir with the same name as
 the user running it.  With this flag enabled, B<sudo> will use a
 file named for the tty the user is logged in on in that directory.
 This flag is I<@tty_tickets@> by default.
+
+=item umask_override
+
+If set, B<sudo> will set the umask as specified by I<sudoers> without
+modification.  This makes it possible to specify a more permissive
+umask in I<sudoers> than the user's own umask and matches historical
+behavior.  If I<umask_override> is not set, B<sudo> will set the
+umask to be the union of the user's umask and what is specified in
+I<sudoers>.  This flag is I<off> by default.
 
 =item use_loginclass
 
@@ -1424,7 +1468,7 @@ B<sudoedit>.
 
 =head1 SEE ALSO
 
-L<rsh(1)>, L<su(1)>, L<fnmatch(3)>, L<sudo(8)>, L<visudo(8)>
+L<rsh(1)>, L<su(1)>, L<fnmatch(3)>, L<glob(3)>, L<sudo(8)>, L<visudo(8)>
 
 =head1 CAVEATS
 

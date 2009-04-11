@@ -1,3 +1,320 @@
+2009-04-10 16:59  millert
+
+	* configure, configure.in: Fix a warning when --without-ldap is
+	  specified.
+
+2009-04-05 12:25  millert
+
+	* alias.c, parse.h, visudo.c: Store aliases that we remove during
+	  check_aliases in a freelist and free them at the end so we don't
+	  leak memory.
+
+2009-03-28 09:30  millert
+
+	* visudo.c: Check aliases in -c mode too.
+
+2009-03-28 09:09  millert
+
+	* alias.c, parse.h, visudo.c: Make alias_remove return the alias
+	  struct instead of freeing it directly.  Fixes a use after free in
+	  alias_remove_recursive, the only consumer.
+
+2009-03-28 09:07  millert
+
+	* alias.c, match.c, parse.c, parse.h, visudo.c: Rename find_alias
+	  -> alias_find for consistency.
+
+2009-03-27 19:29  millert
+
+	* visudo.c: When checking for unused aliases, recurse if the alias
+	  points to another alias.
+
+2009-03-16 12:11  millert
+
+	* ldap.c: Back out rev 1.105 for now.  Real ldapux_client.conf
+	  support will be done later after some refactoring.
+
+2009-03-14 12:02  millert
+
+	* ldap.c: Treat ldap_hostport the same as "host" for ldapux.
+
+2009-03-13 21:04  millert
+
+	* configure, configure.in: Only check for
+	  ldap_sasl_interactive_bind_s if we can find sasl.h.  Fixes
+	  compilation with ldapux.
+
+2009-03-11 20:03  millert
+
+	* fileops.c: fix char subscript
+
+2009-03-11 19:19  millert
+
+	* Makefile.in: remove errant carriage returns
+
+2009-03-11 19:01  millert
+
+	* audit.c, env.c: fix K&R compilation
+
+2009-03-11 12:12  millert
+
+	* sudo.man.in, sudo.cat, sudoers.cat, sudoers.ldap.cat,
+	  sudoers.ldap.man.in, sudoers.man.in, visudo.cat, visudo.man.in:
+	  regen
+
+2009-03-10 17:34  millert
+
+	* config.h.in: Add missing HAVE_BSM_AUDIT
+
+2009-03-10 17:21  millert
+
+	* WHATSNEW: Add 1.7.1 features
+
+2009-03-10 17:10  millert
+
+	* INSTALL: Mention --with-netsvc
+
+2009-03-10 17:08  millert
+
+	* sudoers.ldap.pod: Document netsvc.conf support
+
+2009-03-10 16:44  millert
+
+	* configure, configure.in, pathnames.h.in, sudo.c, sudo_nss.c,
+	  sudo_nss.h: Add support for AIX netsvc.conf (like nsswitch.conf).
+
+2009-03-08 16:57  millert
+
+	* configure, config.h.in, configure.in, env.c: Add
+	  --enable-env-debug flag to enable environment sanity checks.
+
+2009-03-08 11:51  millert
+
+	* sudoers.ldap.pod, sudoers.pod: Work around some pod2html issue.
+
+2009-03-07 17:10  millert
+
+	* env.c: Only sync environ for putenv, setenv, and unsetenv.  We
+	  need to make sure that sudo_putenv and sudo_setenv only modify
+	  env.envp, not environ.
+
+2009-03-02 14:19  millert
+
+	* env.c: Really fix UNSETENV_VOID
+
+2009-03-02 14:18  millert
+
+	* env.c: Fix unsetenv when UNSETENV_VOID
+
+2009-03-02 08:00  millert
+
+	* aclocal.m4, configure: Fix SUDO_FUNC_PUTENV_CONST
+
+2009-03-02 07:36  millert
+
+	* ldap.c: tivoli-based ldap does not have ldapssl_err2string
+
+2009-03-02 07:30  millert
+
+	* configure: regen
+
+2009-03-01 16:20  millert
+
+	* config.h.in, configure, configure.in, ldap.c: Add support for
+	  Tivoli-based LDAP start TLS as seen in AIX.  Untested.
+
+2009-03-01 08:52  millert
+
+	* env.c: Add sanity checks for setenv/unsetenv
+
+2009-02-28 20:17  millert
+
+	* Makefile.in: Include bsm_audit.h in the tarball
+
+2009-02-28 20:00  millert
+
+	* Makefile.in, version.h: bump version for sudo 1.7.1
+
+2009-02-28 19:58  millert
+
+	* aclocal.m4, config.h.in, configure, configure.in, env.c, ldap.c,
+	  sudo.h, auth/aix_auth.c: Replace sudo_setenv/sudo_unsetenv with
+	  calls to setenv/unsetenv and provide our own
+	  setenv/unsetenv/putenv that operates on own env pointer.  Make
+	  sync_env() inline in setenv/unsetenv/putenv functions.
+
+2009-02-25 07:33  millert
+
+	* sudo.c: Make "sudoedit -h" work as expected
+
+2009-02-25 07:21  millert
+
+	* auth/pam.c: Make sure def_prompt is always defined.  This is a
+	  workaround for pam configs that prompt for a password in the
+	  session but don't have an auth line.	A better fix is to expand
+	  the sudo prompt earlier and set def_prompt to that when
+	  initializing.
+
+2009-02-25 06:17  millert
+
+	* sudo.pod: Mention that the helper for -A may be graphical.
+
+2009-02-25 06:16  millert
+
+	* TROUBLESHOOTING: Document what happens if there is no tty.
+
+2009-02-25 06:05  millert
+
+	* sudo.c: cosmetic changes
+
+2009-02-25 05:47  millert
+
+	* term.c: Fix term_restore
+
+2009-02-24 20:23  millert
+
+	* sudo.c: Fix "sudo -k" with no other args
+
+2009-02-24 08:04  millert
+
+	* check.c, sudo.c, sudo.pod, sudo_usage.h.in: Allow the -k flag to
+	  be specified in conjunction with a command or another option that
+	  may require authentication.
+
+2009-02-23 09:18  millert
+
+	* configure, configure.in: Remove unneeded AC_CANONICAL_TARGET;
+	  from Diego E. 'Flameeyes'
+
+2009-02-23 09:15  millert
+
+	* Makefile.in: Parallel make fix.  From Diego E. 'Flameeyes'
+
+2009-02-21 17:03  millert
+
+	* def_data.c, def_data.h, def_data.in, sudo.c, sudoers.pod:
+	  Implement umask_override
+
+2009-02-21 16:51  millert
+
+	* toke.c: regen
+
+2009-02-21 16:49  millert
+
+	* sudoers.pod, toke.l, visudo.c: Implement %h escape in sudoers
+	  include filenames.
+
+2009-02-21 08:43  millert
+
+	* audit.c: Need to include compat.h
+
+2009-02-21 08:37  millert
+
+	* Makefile.in, audit.c, bsm_audit.c, bsm_audit.h, logging.h,
+	  sudo.c: Make audit_success and audit_failure generic functions in
+	  preparation for integrating linux audit support.
+
+2009-02-21 08:06  millert
+
+	* term.c: remove duplicate include
+
+2009-02-20 16:13  millert
+
+	* bsm_audit.c: Add missing include
+
+2009-02-20 15:55  millert
+
+	* sudo.c: May need to update the runas user after parsing
+	  command-based defaults.
+
+2009-02-18 10:53  millert
+
+	* glob.c: Add missing pair of braces introduced with character
+	  class support.
+
+2009-02-15 15:53  millert
+
+	* def_data.c, def_data.h, def_data.in, sudoers.pod, tgetpass.c:
+	  Rename pwstars to pwfeedback
+
+2009-02-10 20:25  millert
+
+	* bsm_audit.c, bsm_audit.h: Add const to make MacOS happy.
+
+2009-02-10 20:18  millert
+
+	* Makefile.in, bsm_audit.c, bsm_audit.h, configure, configure.in,
+	  sudo.c, auth/sudo_auth.c: Add bsm audit support from Christian
+	  S.J. Peron
+
+2009-02-10 19:58  millert
+
+	* term.c: This is new code, no DARPA notice.
+
+2009-02-10 14:04  millert
+
+	* def_data.c, def_data.h, def_data.in, match.c, sudoers.pod: Rename
+	  simple_glob -> fast_glob
+
+2009-02-10 09:39  millert
+
+	* match.c: g/c unused var
+
+2009-02-10 08:09  millert
+
+	* def_data.c, def_data.h, def_data.in, match.c, sudoers.pod: Add
+	  simple_glob option to use fnmatch() instead of glob().  This is
+	  useful when you need to specify patterns that reference network
+	  file systems.
+
+2009-02-10 07:58  millert
+
+	* tgetpass.c: add term_* proto
+
+2009-02-10 07:51  millert
+
+	* sudoers.pod: mention glob()
+
+2009-02-09 07:59  millert
+
+	* tgetpass.c: Delete any pwstars we wrote after the user hits
+	  return.  That way there is no record on screen as to the user's
+	  password length.
+
+2009-02-08 10:27  millert
+
+	* term.c: Move terminal setting bits from tgetpass.c to term.c
+
+2009-02-07 19:50  millert
+
+	* Makefile.in, def_data.c, def_data.h, def_data.in, sudoers.pod,
+	  tgetpass.c: Add pwstars sudoers option that causes sudo to print
+	  a star every time the user presses a key.
+
+2009-02-03 10:10  millert
+
+	* Makefile.in: Fix up F<> brokenness for visudo.man.in and
+	  sudoers.ldap.man.in.
+
+2009-01-27 11:54  millert
+
+	* ldap.c: For ldap_search_ext_s() the sizelimit param should be 0,
+	  not -1, to indicate no limit.  From Mark Janssen.
+
+2009-01-17 17:36  millert
+
+	* toke.c, toke.l: Comments that begin with #- should not be parsed
+	  as uids.
+
+2009-01-08 19:13  millert
+
+	* sudo.c: Do not try to set the close on exec flag if we didn't
+	  actually open sudoers.
+
+2008-12-19 12:40  millert
+
+	* ChangeLog: regen
+
 2008-12-14 17:40  millert
 
 	* TODO: sync
@@ -4506,7 +4823,7 @@
 2004-10-01 10:58  millert
 
 	* sample.pam, sample.sudoers, sample.syslog.conf, sudoers: Add
-	  $Sudo: ChangeLog,v 1.19 2008/12/19 17:40:39 millert Exp $ tags.
+	  $Sudo$ tags.
 
 2004-10-01 10:47  millert
 

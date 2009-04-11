@@ -54,7 +54,7 @@
 #endif
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: fileops.c,v 1.16 2008/11/09 14:13:12 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: fileops.c,v 1.17 2009/03/12 00:03:04 millert Exp $";
 #endif /* lint */
 
 /*
@@ -172,7 +172,7 @@ sudo_parseln(fp)
 
 	/* Trim leading and trailing whitespace/newline */
 	len = strlen(buf);
-	while (len > 0 && isspace(buf[len - 1]))
+	while (len > 0 && isspace((unsigned char)buf[len - 1]))
 	    buf[--len] = '\0';
 	for (cp = buf; isblank(*cp); cp++)
 	    continue;

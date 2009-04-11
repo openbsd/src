@@ -195,6 +195,11 @@ Special features/options:
 	If nsswitch is disabled but LDAP is enabled, sudo will check
 	LDAP first, then the sudoers file.
 
+  --with-netsvc[=filename]
+        Path to netsvc.conf or "no" to disable netsvc.conf support.
+        If specified, sudo uses this file instead of /etc/netsvc.conf
+        on AIX systems.
+
   --with-aixauth
 	Enable support for the AIX 4.x general authentication function.
 	This will use the authentication scheme specified for the user

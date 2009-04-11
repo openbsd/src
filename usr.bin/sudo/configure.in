@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.538 2008/12/09 21:13:01 millert Exp $
+dnl $Sudo: configure.in,v 1.546 2009/04/10 20:59:42 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2008 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -13,6 +13,7 @@ AC_MSG_NOTICE([Configuring Sudo version 1.7])
 dnl
 dnl Variables that get substituted in the Makefile and man pages
 dnl
+AC_SUBST(HAVE_BSM_AUDIT)
 AC_SUBST(LIBTOOL)
 AC_SUBST(CFLAGS)
 AC_SUBST(PROGS)
@@ -82,6 +83,7 @@ AC_SUBST(path_info)
 AC_SUBST(ldap_conf)
 AC_SUBST(ldap_secret)
 AC_SUBST(nsswitch_conf)
+AC_SUBST(netsvc_conf)
 dnl
 dnl Initial values for above
 dnl
@@ -198,6 +200,20 @@ AC_ARG_WITH(blibpath, [  --with-blibpath[=PATH]    pass -blibpath flag to ld for
 [case $with_blibpath in
     yes|no)	;;
     *)		AC_MSG_NOTICE([will pass -blibpath:${with_blibpath} to the loader.])
+		;;
+esac])
+
+dnl
+dnl Handle BSM auditing support.
+dnl
+AC_ARG_WITH(bsm-audit, [  --with-bsm-audit        enable BSM audit support],
+[case $with_bsm_audit in
+    yes)	AC_DEFINE(HAVE_BSM_AUDIT)
+		SUDO_LIBS="${SUDO_LIBS} -lbsm"
+		SUDO_OBJS="${SUDO_OBJS} bsm_audit.o"
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-bsm-audit does not take an argument."])
 		;;
 esac])
 
@@ -930,16 +946,10 @@ AC_ARG_WITH(nsswitch, [  --with-nsswitch[[=PATH]]  path to nsswitch.conf],
 		;;
     *)		;;
 esac])
-if test ${with_nsswitch-"yes"} != "no"; then
-    SUDO_DEFINE_UNQUOTED(_PATH_NSSWITCH_CONF, "${with_nsswitch-/etc/nsswitch.conf}")
-    nsswitch_conf=${with_nsswitch-/etc/nsswitch.conf}
-else
-    nsswitch_conf='/etc/nsswitch.conf'
-fi
 
 AC_ARG_WITH(ldap, [  --with-ldap[[=DIR]]       enable LDAP support],
 [case $with_ldap in
-    no)		with_ldap="";;
+    no)		;;
     *)		AC_DEFINE(HAVE_LDAP)
 		AC_MSG_CHECKING(whether to use sudoers from LDAP)
 		AC_MSG_RESULT(yes)
@@ -1166,6 +1176,21 @@ AC_ARG_ENABLE(path_info,
   esac
 ], AC_MSG_RESULT(no))
 
+AC_MSG_CHECKING(whether to enable environment debugging)
+AC_ARG_ENABLE(env_debug,
+[  --enable-env-debug      Whether to enable environment debugging.],
+[ case "$enableval" in
+    yes)	AC_MSG_RESULT(yes)
+		AC_DEFINE(ENV_DEBUG)
+		;;
+    no)		AC_MSG_RESULT(no)
+		;;
+    *)		AC_MSG_RESULT(no)
+    		AC_MSG_WARN([Ignoring unknown argument to --enable-env-debug: $enableval])
+		;;
+  esac
+], AC_MSG_RESULT(no))
+
 AC_ARG_WITH(selinux, [  --with-selinux          enable SELinux support],
 [case $with_selinux in
     yes)	SELINUX_USAGE="[[-r role]] [[-t type]] "
@@ -1212,7 +1237,6 @@ dnl
 dnl Libtool magic; enable shared libs and disable static libs
 dnl
 AC_CANONICAL_HOST
-AC_CANONICAL_TARGET([])
 AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
@@ -1332,6 +1356,18 @@ case "$host" in
 		# Use authenticate(3) as the default authentication method
 		if test X"$with_aixauth" = X""; then
 		    AC_CHECK_FUNCS(authenticate, [AUTH_EXCL_DEF="AIX_AUTH"])
+		fi
+
+		# AIX analog of nsswitch.conf, enabled by default
+		AC_ARG_WITH(netsvc, [  --with-netsvc[[=PATH]]  path to netsvc.conf],
+		[case $with_netsvc in
+		    no)		;;
+		    yes)	with_netsvc="/etc/netsvc.conf"
+				;;
+		    *)		;;
+		esac])
+		if test -z "$with_nsswitch" -a -z "$with_netsvc"; then
+		    with_netsvc="/etc/netsvc.conf"
 		fi
 
 		# AIX-specific functions
@@ -1762,7 +1798,9 @@ dnl
 AC_FUNC_GETGROUPS
 AC_CHECK_FUNCS(strchr strrchr memchr memcpy memset sysconf tzset \
 	       strftime setrlimit initgroups getgroups fstat gettimeofday \
-	       setlocale getaddrinfo setsid)
+	       setlocale getaddrinfo setsid setenv)
+AC_CHECK_FUNCS(unsetenv, SUDO_FUNC_UNSETENV_VOID)
+SUDO_FUNC_PUTENV_CONST
 if test -z "$SKIP_SETRESUID"; then
     AC_CHECK_FUNCS(setresuid, [SKIP_SETREUID=yes])
 fi
@@ -1856,6 +1894,19 @@ AC_CHECK_FUNCS(getprogname, , [
     fi
     AC_MSG_RESULT($sudo_cv___progname)
 ])
+
+dnl
+dnl nsswitch.conf and its equivalents
+dnl
+netsvc_conf='/etc/netsvc.conf'
+nsswitch_conf='/etc/nsswitch.conf'
+if test ${with_netsvc-"no"} != "no"; then
+    SUDO_DEFINE_UNQUOTED(_PATH_NETSVC_CONF, "${with_netsvc-/etc/netsvc.conf}")
+    netsvc_conf=${with_netsvc-/etc/netsvc.conf}
+elif test ${with_nsswitch-"yes"} != "no"; then
+    SUDO_DEFINE_UNQUOTED(_PATH_NSSWITCH_CONF, "${with_nsswitch-/etc/nsswitch.conf}")
+    nsswitch_conf=${with_nsswitch-/etc/nsswitch.conf}
+fi
 
 dnl
 dnl Mutually exclusive auth checks come first, followed by
@@ -2389,9 +2440,9 @@ if test ${with_ldap-'no'} != "no"; then
     AC_MSG_RESULT([yes])
     AC_DEFINE(HAVE_LBER_H)])
 
-    AC_CHECK_FUNCS(ldap_initialize ldap_start_tls_s ldap_sasl_interactive_bind_s ldapssl_init ldapssl_set_strength ldap_search_ext_s ldap_unbind_ext_s ldap_str2dn ldap_create ldap_sasl_bind_s)
-    AC_CHECK_HEADERS([sasl/sasl.h])
+    AC_CHECK_HEADERS([sasl/sasl.h] [sasl.h], [AC_CHECK_FUNCS(ldap_sasl_interactive_bind_s), [break]])
     AC_CHECK_HEADERS([ldap_ssl.h] [mps/ldap_ssl.h], [break], [], [#include <ldap.h>])
+    AC_CHECK_FUNCS(ldap_initialize ldap_start_tls_s ldapssl_init ldapssl_set_strength ldap_search_ext_s ldap_unbind_ext_s ldap_str2dn ldap_create ldap_sasl_bind_s ldap_ssl_client_init ldap_start_tls_s_np)
 
     if test X"$check_gss_krb5_ccache_name" = X"yes"; then
 	AC_CHECK_LIB(gssapi, gss_krb5_ccache_name,
@@ -2539,6 +2590,7 @@ AH_TEMPLATE(HAL_INSULTS, [Define to 1 if you want 2001-like insults.])
 AH_TEMPLATE(HAVE_AFS, [Define to 1 if you use AFS.])
 AH_TEMPLATE(HAVE_AIXAUTH, [Define to 1 if you use AIX general authentication.])
 AH_TEMPLATE(HAVE_BSD_AUTH_H, [Define to 1 if you use BSD authentication.])
+AH_TEMPLATE(HAVE_BSM_AUDIT, [Define to 1 to enable BSM auditing.])
 AH_TEMPLATE(HAVE_DCE, [Define to 1 if you use OSF DCE.])
 AH_TEMPLATE(HAVE_DD_FD, [Define to 1 if your `DIR' contains dd_fd.])
 AH_TEMPLATE(HAVE_DIRFD, [Define to 1 if you have the `dirfd' function or macro.])

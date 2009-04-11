@@ -18,7 +18,7 @@ Sponsored in part by the Defense Advanced Research Projects
 Agency (DARPA) and Air Force Research Laboratory, Air Force
 Materiel Command, USAF, under agreement number F39502-99-1-0512.
 
-$Sudo: sudo.pod,v 1.120 2008/11/15 18:34:01 millert Exp $
+$Sudo: sudo.pod,v 1.122 2009/02/25 11:17:26 millert Exp $
 =pod
 
 =head1 NAME
@@ -27,10 +27,16 @@ sudo, sudoedit - execute a command as another user
 
 =head1 SYNOPSIS
 
-B<sudo> [B<-n>] B<-h> | B<-K> | B<-k> | B<-L> | B<-V> | B<-v>
+B<sudo> B<-h> | B<-K> | B<-k> | B<-L> | B<-V>
 
-B<sudo> B<-l[l]> [B<-AnS>] S<[B<-g> I<groupname>|I<#gid>]> S<[B<-U> I<username>]>
-S<[B<-u> I<username>|I<#uid>]> [I<command>]
+B<sudo> B<-v> [B<-AknS>]
+S<[B<-a> I<auth_type>]>
+S<[B<-p> I<prompt>]>
+
+B<sudo> B<-l[l]> [B<-AknS>]
+S<[B<-a> I<auth_type>]>
+S<[B<-g> I<groupname>|I<#gid>]> S<[B<-p> I<prompt>]>
+S<[B<-U> I<username>]> S<[B<-u> I<username>|I<#uid>]> [I<command>]
 
 B<sudo> [B<-AbEHnPS>]
 S<[B<-a> I<auth_type>]>
@@ -104,11 +110,11 @@ B<sudo> accepts the following command line options:
 
 Normally, if B<sudo> requires a password, it will read it from the
 current terminal.  If the B<-A> (I<askpass>) option is specified,
-a helper program is executed to read the user's password and output
-the password to the standard output.  If the C<SUDO_ASKPASS>
-environment variable is set, it specifies the path to the helper
-program.  Otherwise, the value specified by the I<askpass> option
-in L<sudoers(5)> is used.
+a (possibly graphical) helper program is executed to read the
+user's password and output the password to the standard output.  If
+the C<SUDO_ASKPASS> environment variable is set, it specifies the
+path to the helper program.  Otherwise, the value specified by the
+I<askpass> option in L<sudoers(5)> is used.
 
 =item -a I<type>
 
@@ -230,16 +236,23 @@ All other environment variables are removed.
 =item -K
 
 The B<-K> (sure I<kill>) option is like B<-k> except that it removes
-the user's timestamp entirely.  Like B<-k>, this option does not
-require a password.
+the user's timestamp entirely and may not be used in conjunction
+with a command or other option.  This option does not require a
+password.
 
 =item -k
 
-The B<-k> (I<kill>) option to B<sudo> invalidates the user's timestamp
-by setting the time on it to the Epoch.  The next time B<sudo> is
-run a password will be required.  This option does not require a password
-and was added to allow a user to revoke B<sudo> permissions from a .logout
-file.
+When used by itself, the B<-k> (I<kill>) option to B<sudo> invalidates
+the user's timestamp by setting the time on it to the Epoch.  The
+next time B<sudo> is run a password will be required.  This option
+does not require a password and was added to allow a user to revoke
+B<sudo> permissions from a .logout file.
+
+When used in conjunction with a command or an option that may require
+a password, the B<-k> option will cause B<sudo> to ignore the user's
+timestamp file.  As a result, B<sudo> will prompt for a password
+(if one is required by I<sudoers>) and will not update the user's
+timestamp file.
 
 =item -L
 

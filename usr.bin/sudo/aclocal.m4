@@ -219,7 +219,7 @@ dnl
 dnl check for isblank(3)
 dnl
 AC_DEFUN([SUDO_FUNC_ISBLANK],
-  [AC_CACHE_CHECK([for isblank], sudo_cv_func_isblank,
+  [AC_CACHE_CHECK([for isblank], [sudo_cv_func_isblank],
     [AC_TRY_LINK([#include <ctype.h>], [return (isblank('a'));],
     sudo_cv_func_isblank=yes, sudo_cv_func_isblank=no)])
 ] [
@@ -227,6 +227,43 @@ AC_DEFUN([SUDO_FUNC_ISBLANK],
     AC_DEFINE(HAVE_ISBLANK, 1, [Define if you have isblank(3).])
   else
     AC_LIBOBJ(isblank)
+  fi
+])
+
+dnl
+dnl check unsetenv() return value
+dnl
+AC_DEFUN([SUDO_FUNC_UNSETENV_VOID],
+  [AC_CACHE_CHECK([whether unsetenv returns void], [sudo_cv_func_unsetenv_void],
+    [AC_RUN_IFELSE([AC_LANG_PROGRAM(
+      [AC_INCLUDES_DEFAULT
+        int unsetenv();
+      ], [
+        [return unsetenv("FOO") != 0;]
+      ])
+    ],
+    [sudo_cv_func_unsetenv_void=no],
+    [sudo_cv_func_unsetenv_void=yes],
+    [sudo_cv_func_unsetenv_void=yes])])
+    if test $sudo_cv_func_unsetenv_void = yes; then
+      AC_DEFINE(UNSETENV_VOID, 1,
+        [Define to 1 if the `unsetenv' function returns void instead of `int'.])
+    fi
+  ])
+
+dnl
+dnl check putenv() argument for const
+dnl
+AC_DEFUN([SUDO_FUNC_PUTENV_CONST],
+[AC_CACHE_CHECK([whether putenv has a const argument],
+sudo_cv_func_putenv_const,
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT
+int putenv(const char *string) {return 0;}], [])],
+    [sudo_cv_func_putenv_const=yes],
+    [sudo_cv_func_putenv_const=no])
+  ])
+  if test $sudo_cv_func_putenv_const = yes; then
+    AC_DEFINE(PUTENV_CONST, 1, [Define to 1 if the `putenv' has a const argument.])
   fi
 ])
 

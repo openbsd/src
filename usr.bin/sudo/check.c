@@ -59,7 +59,7 @@
 #include "sudo.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: check.c,v 1.245 2008/11/25 17:01:34 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: check.c,v 1.246 2009/02/24 13:04:39 millert Exp $";
 #endif /* lint */
 
 /* Status codes for timestamp_status() */
@@ -84,24 +84,29 @@ static void  update_timestamp	__P((char *, char *));
  * verify who he/she is.
  */
 void
-check_user(validated, interactive)
+check_user(validated, mode)
     int validated;
-    int interactive;
+    int mode;
 {
     char *timestampdir = NULL;
     char *timestampfile = NULL;
     char *prompt;
     int status;
 
-    if (user_uid == 0 || user_uid == runas_pw->pw_uid || user_is_exempt())
-	return;
+    if (mode & MODE_INVALIDATE) {
+	/* do not check or update timestamp */
+	status = TS_ERROR;
+    } else {
+	if (user_uid == 0 || user_uid == runas_pw->pw_uid || user_is_exempt())
+	    return;
 
-    build_timestamp(&timestampdir, &timestampfile);
-    status = timestamp_status(timestampdir, timestampfile, user_name,
+	build_timestamp(&timestampdir, &timestampfile);
+	status = timestamp_status(timestampdir, timestampfile, user_name,
 	TS_MAKE_DIRS);
+    }
     if (status != TS_CURRENT || ISSET(validated, FLAG_CHECK_USER)) {
 	/* Bail out if we are non-interactive and a password is required */
-	if (!interactive)
+	if (ISSET(mode, MODE_NONINTERACTIVE))
 	    errorx(1, "sorry, a password is required to run %s", getprogname());
 
 	/* If user specified -A, make sure we have an askpass helper. */
@@ -139,7 +144,6 @@ check_user(validated, interactive)
 
 /*
  * Standard sudo lecture.
- * TODO: allow the user to specify a file name instead.
  */
 static void
 lecture(status)

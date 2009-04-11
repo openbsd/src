@@ -19,7 +19,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: pathnames.h.in,v 1.62 2008/03/02 14:31:56 millert Exp $
+ * $Sudo: pathnames.h.in,v 1.64 2009/03/10 20:44:05 millert Exp $
  */
 
 /*
@@ -51,7 +51,7 @@
 #endif /* _PATH_ENVIRONMENT */
 
 /*
- * NOTE: _PATH_SUDOERS is usually overriden by the Makefile.
+ * NOTE: _PATH_SUDOERS is usually overridden by the Makefile.
  */
 #ifndef _PATH_SUDOERS
 #define _PATH_SUDOERS		"/etc/sudoers"
@@ -128,3 +128,7 @@
 #ifndef _PATH_NSSWITCH_CONF
 #define	_PATH_NSSWITCH_CONF "/etc/nsswitch.conf"
 #endif /* _PATH_NSSWITCH_CONF */
+
+#ifndef _PATH_NETSVC_CONF
+/* #undef	_PATH_NETSVC_CONF */
+#endif /* _PATH_NETSVC_CONF */

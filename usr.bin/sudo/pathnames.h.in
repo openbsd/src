@@ -18,7 +18,7 @@
  * Agency (DARPA) and Air Force Research Laboratory, Air Force
  * Materiel Command, USAF, under agreement number F39502-99-1-0512.
  *
- * $Sudo: pathnames.h.in,v 1.63 2008/11/10 13:07:38 millert Exp $
+ * $Sudo: pathnames.h.in,v 1.64 2009/03/10 20:44:05 millert Exp $
  */
 
 /*
@@ -127,3 +127,7 @@
 #ifndef _PATH_NSSWITCH_CONF
 #undef	_PATH_NSSWITCH_CONF
 #endif /* _PATH_NSSWITCH_CONF */
+
+#ifndef _PATH_NETSVC_CONF
+#undef	_PATH_NETSVC_CONF
+#endif /* _PATH_NETSVC_CONF */

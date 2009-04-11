@@ -21,7 +21,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.326 2008/12/03 20:40:47 millert Exp $
+# $Sudo: Makefile.in,v 1.334 2009/03/11 23:19:56 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -102,25 +102,26 @@ SHELL = /bin/sh
 
 PROGS = @PROGS@
 
-SRCS = aix.c alias.c alloc.c check.c closefrom.c def_data.c defaults.c env.c \
-       error.c fileops.c find_path.c fnmatch.c getcwd.c getprogname.c \
-       getspwuid.c gettime.c glob.c goodpath.c gram.c gram.y interfaces.c \
-       isblank.c lbuf.c ldap.c list.c logging.c match.c mkstemp.c memrchr.c \
-       parse.c pwutil.c  set_perms.c sigaction.c snprintf.c strcasecmp.c \
-       strerror.c strlcat.c strlcpy.c sudo.c sudo_noexec.c sudo_edit.c \
-       sudo_nss.c testsudoers.c tgetpass.c toke.c toke.l tsgetgrpw.c utimes.c \
-       visudo.c zero_bytes.c redblack.c selinux.c sesh.c $(AUTH_SRCS)
+SRCS = aix.c alias.c alloc.c audit.c bsm_audit.c check.c closefrom.c \
+       def_data.c defaults.c env.c error.c fileops.c find_path.c fnmatch.c \
+       getcwd.c getprogname.c getspwuid.c gettime.c glob.c goodpath.c gram.c \
+       gram.y interfaces.c isblank.c lbuf.c ldap.c list.c logging.c match.c \
+       mkstemp.c memrchr.c parse.c pwutil.c  set_perms.c sigaction.c \
+       snprintf.c strcasecmp.c strerror.c strlcat.c strlcpy.c sudo.c \
+       sudo_noexec.c sudo_edit.c sudo_nss.c term.c testsudoers.c tgetpass.c \
+       toke.c toke.l tsgetgrpw.c utimes.c visudo.c zero_bytes.c redblack.c \
+       selinux.c sesh.c $(AUTH_SRCS)
 
 AUTH_SRCS = auth/afs.c auth/aix_auth.c auth/bsdauth.c auth/dce.c auth/fwtk.c \
 	    auth/kerb4.c auth/kerb5.c auth/pam.c auth/passwd.c auth/rfc1938.c \
 	    auth/secureware.c auth/securid.c auth/securid5.c auth/sia.c \
 	    auth/sudo_auth.c
 
-HDRS = compat.h def_data.h defaults.h error.h ins_2001.h ins_classic.h \
-       ins_csops.h ins_goons.h insults.h interfaces.h lbuf.h list.h \
-       logging.h parse.h sudo.h sudo_nss.h gram.h version.h auth/sudo_auth.h \
-       emul/charclass.h emul/fnmatch.h emul/glob.h emul/timespec.h \
-       emul/utime.h redblack.h
+HDRS = bsm_audit.h compat.h def_data.h defaults.h error.h ins_2001.h \
+       ins_classic.h ins_csops.h ins_goons.h insults.h interfaces.h lbuf.h \
+       list.h logging.h parse.h sudo.h sudo_nss.h gram.h version.h \
+       auth/sudo_auth.h emul/charclass.h emul/fnmatch.h emul/glob.h \
+       emul/timespec.h emul/utime.h redblack.h
 
 AUTH_OBJS = sudo_auth.o @AUTH_OBJS@
 
@@ -128,10 +129,10 @@ AUTH_OBJS = sudo_auth.o @AUTH_OBJS@
 COMMON_OBJS = gram.o alias.o alloc.o defaults.o error.o list.o match.o \
 	      toke.o redblack.o zero_bytes.o
 
-SUDO_OBJS = $(COMMON_OBJS) $(AUTH_OBJS) @SUDO_OBJS@ check.o env.o \
+SUDO_OBJS = $(COMMON_OBJS) $(AUTH_OBJS) @SUDO_OBJS@ audit.o check.o env.o \
 	    getspwuid.o gettime.o goodpath.o fileops.o find_path.o \
 	    interfaces.o lbuf.o logging.o parse.o pwutil.o set_perms.o \
-	    sudo.o sudo_edit.o sudo_nss.o tgetpass.o
+	    sudo.o sudo_edit.o sudo_nss.o term.o tgetpass.o
 
 VISUDO_OBJS = $(COMMON_OBJS) visudo.o fileops.o gettime.o goodpath.o \
 	      find_path.o pwutil.o
@@ -140,7 +141,7 @@ TEST_OBJS = $(COMMON_OBJS) interfaces.o testsudoers.o tsgetgrpw.o tspwutil.o
 
 LIB_OBJS = @LIBOBJS@
 
-VERSION = 1.7.0
+VERSION = 1.7.1
 
 DISTFILES = $(SRCS) $(HDRS) ChangeLog HISTORY INSTALL INSTALL.configure \
             LICENSE Makefile.in PORTING README README.LDAP TROUBLESHOOTING \
@@ -226,6 +227,10 @@ alias.o: $(srcdir)/alias.c $(SUDODEP) $(srcdir)/parse.h $(srcdir)/list.h $(srcdi
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/alias.c
 alloc.o: $(srcdir)/alloc.c $(SUDODEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/alloc.c
+audit.o: $(srcdir)/audit.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/audit.c
+bsm_audit.o: $(srcdir)/bsm_audit.c $(SUDODEP) bsm_audit.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/bsm_audit.c
 check.o: $(srcdir)/check.c $(SUDODEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/check.c
 closefrom.o: $(srcdir)/closefrom.c config.h
@@ -304,6 +309,8 @@ sudo_noexec.o: $(srcdir)/sudo_noexec.c $(srcdir)/compat.h config.h
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/sudo_noexec.c
 sudo_nss.o: $(srcdir)/sudo_nss.c $(SUDODEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/sudo_nss.c
+term.o: $(srcdir)/term.c $(SUDODEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/term.c
 testsudoers.o: $(srcdir)/testsudoers.c $(SUDODEP) $(srcdir)/parse.h $(srcdir)/list.h $(srcdir)/interfaces.h $(devdir)/gram.h
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(srcdir)/testsudoers.c
 tgetpass.o: $(srcdir)/tgetpass.c $(SUDODEP)
@@ -365,7 +372,7 @@ sudo.cat: sudo.man
 
 visudo.man.in: $(srcdir)/visudo.pod
 	@rm -f $(srcdir)/$@
-	( cd $(srcdir); mansectsu=`echo @MANSECTSU@|tr A-Z a-z`; mansectform=`echo @MANSECTFORM@|tr A-Z a-z`; sed -n -e '/^=pod/q' -e 's/^/.\\" /p' visudo.pod > $@; pod2man --quotes=none --date="`date '+%B %e, %Y'`" --section=$$mansectsu --release=$(VERSION) --center="MAINTENANCE COMMANDS" visudo.pod | sed -e "s/(5)/($$mansectform)/" -e "s/(8)/($$mansectsu)/" >> $@ )
+	( cd $(srcdir); mansectsu=`echo @MANSECTSU@|tr A-Z a-z`; mansectform=`echo @MANSECTFORM@|tr A-Z a-z`; sed -n -e '/^=pod/q' -e 's/^/.\\" /p' visudo.pod > $@; pod2man --quotes=none --date="`date '+%B %e, %Y'`" --section=$$mansectsu --release=$(VERSION) --center="MAINTENANCE COMMANDS" visudo.pod | sed -e "s/(5)/($$mansectform)/" -e "s/(8)/($$mansectsu)/" -e 's|\\fI\\f\((CW*\)*I@\([^@]*\)\\fI@|\\fI@\2@|g' >> $@ )
 
 visudo.man: visudo.man.in
 	CONFIG_FILES=$@ CONFIG_HEADERS= sh ./config.status
@@ -383,7 +390,7 @@ sudoers.cat: sudoers.man
 
 sudoers.ldap.man.in: $(srcdir)/sudoers.ldap.pod
 	@rm -f $(srcdir)/$@
-	( cd $(srcdir); mansectsu=`echo @MANSECTSU@|tr A-Z a-z`; mansectform=`echo @MANSECTFORM@|tr A-Z a-z`; sed -n -e '/^=pod/q' -e 's/^/.\\" /p' sudoers.ldap.pod > $@; pod2man --quotes=none --date="`date '+%B %e, %Y'`" --section=$$mansectform --release=$(VERSION) --center="MAINTENANCE COMMANDS" sudoers.ldap.pod | sed -e "s/(5)/($$mansectform)/" -e "s/(8)/($$mansectsu)/" >> $@ )
+	( cd $(srcdir); mansectsu=`echo @MANSECTSU@|tr A-Z a-z`; mansectform=`echo @MANSECTFORM@|tr A-Z a-z`; sed -n -e '/^=pod/q' -e 's/^/.\\" /p' sudoers.ldap.pod > $@; pod2man --quotes=none --date="`date '+%B %e, %Y'`" --section=$$mansectform --release=$(VERSION) --center="MAINTENANCE COMMANDS" sudoers.ldap.pod | sed -e "s/(5)/($$mansectform)/" -e "s/(8)/($$mansectsu)/" -e 's|\\fI\\f\((CW*\)*I@\([^@]*\)\\fI@|\\fI@\2@|g' >> $@ )
 
 sudoers.ldap.man:: sudoers.ldap.man.in
 	CONFIG_FILES=$@ CONFIG_HEADERS= sh ./config.status
@@ -407,22 +414,22 @@ install-dirs:
 	    $(DESTDIR)$(mandirsu) $(DESTDIR)$(mandirform) \
 	    $(DESTDIR)$(noexecdir)
 
-install-binaries: $(PROGS)
+install-binaries: install-dirs $(PROGS)
 	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 4111 -s sudo $(DESTDIR)$(sudodir)/sudo
 	rm -f $(DESTDIR)$(sudodir)/sudoedit
 	ln $(DESTDIR)$(sudodir)/sudo $(DESTDIR)$(sudodir)/sudoedit
 	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0111 -s visudo $(DESTDIR)$(visudodir)/visudo
 @SELINUX@	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0111 -s sesh $(DESTDIR)$(libexecdir)/sesh
 
-install-noexec: sudo_noexec.la
+install-noexec: install-dirs sudo_noexec.la
 	test -f .libs/$(noexecfile) && $(INSTALL) -O $(install_uid) -G $(install_gid) -M 0755 .libs/$(noexecfile) $(DESTDIR)$(noexecdir)
 
-install-sudoers:
+install-sudoers: install-dirs
 	test -f $(DESTDIR)$(sudoersdir)/sudoers || \
 	    $(INSTALL) -O $(sudoers_uid) -G $(sudoers_gid) -M $(sudoers_mode) \
 		$(srcdir)/sudoers $(DESTDIR)$(sudoersdir)/sudoers
 
-install-man:
+install-man: install-dirs
 	$(INSTALL) -O $(install_uid) -G $(install_gid) -M 0444 @mansrcdir@/sudo.$(mantype) $(DESTDIR)$(mandirsu)/sudo.$(mansectsu)
 	@rm -f $(DESTDIR)$(mandirsu)/sudoedit.$(mansectsu)
 	ln $(DESTDIR)$(mandirsu)/sudo.$(mansectsu) $(DESTDIR)$(mandirsu)/sudoedit.$(mansectsu)

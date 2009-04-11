@@ -177,6 +177,14 @@ A) The default user sudo tries to run things as is always root, even if
     Defaults:bob	runas_default=oracle
    would achieve the desired result ofr the preceding sudoers fragment.
 
+Q) When I try to run sudo via ssh, I get the error:
+    sudo: no tty present and no askpass program specified
+A) ssh does not allocate a tty by default when running a remote command.
+   Without a tty, sudo cannot disable echo when prompting for a password.
+   You can use ssh's "-t" option to force it to allocate a tty.
+   Alternately, if you do not mind your password being echoed to the
+   screen, you can use the "visiblepw" sudoers option to allow this.
+
 Q) How do you pronounce `sudo'?
 A) The official pronunciation is soo-doo (for su "do").  However, an
    alternate pronunciation, a homophone of "pseudo", is also common.

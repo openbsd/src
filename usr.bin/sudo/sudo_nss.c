@@ -39,12 +39,13 @@
 #endif /* HAVE_UNISTD_H */
 #include <pwd.h>
 #include <grp.h>
+#include <ctype.h>
 
 #include "sudo.h"
 #include "lbuf.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: sudo_nss.c,v 1.6 2008/02/08 13:18:12 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: sudo_nss.c,v 1.7 2009/03/10 20:44:05 millert Exp $";
 #endif /* lint */
 
 extern struct sudo_nss sudo_nss_file;
@@ -89,7 +90,7 @@ sudo_read_nss()
 		got_match = TRUE;
 	    } else if (strcasecmp(cp, "[NOTFOUND=return]") == 0 && got_match) {
 		/* NOTFOUND affects the most recent entry */
-		tq_last(&snl)->ret_notfound = TRUE;
+		tq_last(&snl)->ret_if_notfound = TRUE;
 		got_match = FALSE;
 	    } else
 		got_match = FALSE;
@@ -109,6 +110,85 @@ nomatch:
 
 #else /* HAVE_LDAP && _PATH_NSSWITCH_CONF */
 
+# if defined(HAVE_LDAP) && defined(_PATH_NETSVC_CONF)
+
+/*
+ * Read in /etc/netsvc.conf (like nsswitch.conf on AIX)
+ * Returns a tail queue of matches.
+ */
+struct sudo_nss_list *
+sudo_read_nss()
+{
+    FILE *fp;
+    char *cp, *ep;
+    int saw_files = FALSE;
+    int saw_ldap = FALSE;
+    int got_match = FALSE;
+    static struct sudo_nss_list snl;
+
+    if ((fp = fopen(_PATH_NETSVC_CONF, "r")) == NULL)
+	goto nomatch;
+
+    while ((cp = sudo_parseln(fp)) != NULL) {
+	/* Skip blank or comment lines */
+	if (*cp == '\0')
+	    continue;
+
+	/* Look for a line starting with "sudoers = " */
+	if (strncasecmp(cp, "sudoers", 7) != 0)
+	    continue;
+	cp += 7;
+	while (isspace((unsigned char)*cp))
+	    cp++;
+	if (*cp++ != '=')
+	    continue;
+
+	/* Parse line */
+	for ((cp = strtok(cp, ",")); cp != NULL; (cp = strtok(NULL, ","))) {
+	    /* Trim leading whitespace. */
+	    while (isspace((unsigned char)*cp))
+		cp++;
+
+	    if (!saw_files && strncasecmp(cp, "files", 5) == 0 &&
+		(isspace((unsigned char)cp[5]) || cp[5] == '\0')) {
+		tq_append(&snl, &sudo_nss_file);
+		got_match = TRUE;
+		ep = &cp[5];
+	    } else if (!saw_ldap && strncasecmp(cp, "ldap", 4) == 0 &&
+		(isspace((unsigned char)cp[4]) || cp[4] == '\0')) {
+		tq_append(&snl, &sudo_nss_ldap);
+		got_match = TRUE;
+		ep = &cp[4];
+	    } else {
+		got_match = FALSE;
+	    }
+
+	    /* check for = auth qualifier */
+	    if (got_match && *ep) {
+		cp = ep;
+		while (isspace((unsigned char)*cp) || *cp == '=')
+		    cp++;
+		if (strncasecmp(cp, "auth", 4) == 0 &&
+		    (isspace((unsigned char)cp[4]) || cp[4] == '\0')) {
+		    tq_last(&snl)->ret_if_found = TRUE;
+		}
+	    }
+	}
+	/* Only parse the first "sudoers" line */
+	break;
+    }
+    fclose(fp);
+
+nomatch:
+    /* Default to files only if no matches */
+    if (tq_empty(&snl))
+	tq_append(&snl, &sudo_nss_file);
+
+    return(&snl);
+}
+
+# else /* !_PATH_NETSVC_CONF && !_PATH_NSSWITCH_CONF */
+
 /*
  * Non-nsswitch.conf version with hard-coded order.
  */
@@ -117,13 +197,15 @@ sudo_read_nss()
 {
     static struct sudo_nss_list snl;
 
-# ifdef HAVE_LDAP
+#  ifdef HAVE_LDAP
     tq_append(&snl, &sudo_nss_ldap);
-# endif
+#  endif
     tq_append(&snl, &sudo_nss_file);
 
     return(&snl);
 }
+
+# endif /* !HAVE_LDAP || !_PATH_NETSVC_CONF */
 
 #endif /* HAVE_LDAP && _PATH_NSSWITCH_CONF */
 

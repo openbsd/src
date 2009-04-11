@@ -47,7 +47,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: aix_auth.c,v 1.25 2008/11/09 14:13:13 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: aix_auth.c,v 1.26 2009/03/01 00:58:41 millert Exp $";
 #endif /* lint */
 
 /*
@@ -82,7 +82,7 @@ aixauth_cleanup(pw, auth)
     sudo_auth *auth;
 {
     /* Unset AUTHSTATE as it may not be correct for the runas user. */
-    sudo_unsetenv("AUTHSTATE");
+    unsetenv("AUTHSTATE");
 
     return(AUTH_SUCCESS);
 }

@@ -303,6 +303,18 @@ struct sudo_defs_types sudo_defs_table[] = {
 	"Allow sudo to prompt for a password even if it would be visisble",
 	NULL,
     }, {
+	"pwfeedback", T_FLAG,
+	"Provide visual feedback at the password prompt when there is user input",
+	NULL,
+    }, {
+	"fast_glob", T_FLAG,
+	"Use faster globbing that is less accurate but does not access the filesystem",
+	NULL,
+    }, {
+	"umask_override", T_FLAG,
+	"The umask specified in sudoers will override the user's, even if it is more permissive",
+	NULL,
+    }, {
 	NULL, 0, NULL
     }
 };

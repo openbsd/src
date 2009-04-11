@@ -91,12 +91,15 @@
 #endif /* HAVE_EXTENDED_GLOB */
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: match.c,v 1.38 2008/11/02 14:35:37 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: match.c,v 1.42 2009/03/28 13:07:16 millert Exp $";
 #endif /* lint */
 
 static struct member_list empty;
 
 static int command_matches_dir __P((char *, size_t));
+static int command_matches_glob __P((char *, char *));
+static int command_matches_fnmatch __P((char *, char *));
+static int command_matches_normal __P((char *, char *));
 
 /*
  * Returns TRUE if string 's' contains meta characters.
@@ -130,7 +133,7 @@ _userlist_matches(pw, list)
 		    matched = !m->negated;
 		break;
 	    case ALIAS:
-		if ((a = find_alias(m->name, USERALIAS)) != NULL) {
+		if ((a = alias_find(m->name, USERALIAS)) != NULL) {
 		    rval = _userlist_matches(pw, &a->members);
 		    if (rval != UNSPEC)
 			matched = m->negated ? !rval : rval;
@@ -193,7 +196,7 @@ _runaslist_matches(user_list, group_list)
 			matched = !m->negated;
 		    break;
 		case ALIAS:
-		    if ((a = find_alias(m->name, RUNASALIAS)) != NULL) {
+		    if ((a = alias_find(m->name, RUNASALIAS)) != NULL) {
 			rval = _runaslist_matches(&a->members, &empty);
 			if (rval != UNSPEC)
 			    matched = m->negated ? !rval : rval;
@@ -217,7 +220,7 @@ _runaslist_matches(user_list, group_list)
 		    matched = !m->negated;
 		    break;
 		case ALIAS:
-		    if ((a = find_alias(m->name, RUNASALIAS)) != NULL) {
+		    if ((a = alias_find(m->name, RUNASALIAS)) != NULL) {
 			rval = _runaslist_matches(&a->members, &empty);
 			if (rval != UNSPEC)
 			    matched = m->negated ? !rval : rval;
@@ -273,7 +276,7 @@ _hostlist_matches(list)
 		    matched = !m->negated;
 		break;
 	    case ALIAS:
-		if ((a = find_alias(m->name, HOSTALIAS)) != NULL) {
+		if ((a = alias_find(m->name, HOSTALIAS)) != NULL) {
 		    rval = _hostlist_matches(&a->members);
 		    if (rval != UNSPEC)
 			matched = m->negated ? !rval : rval;
@@ -346,7 +349,7 @@ cmnd_matches(m)
 	    break;
 	case ALIAS:
 	    alias_seqno++;
-	    if ((a = find_alias(m->name, CMNDALIAS)) != NULL) {
+	    if ((a = alias_find(m->name, CMNDALIAS)) != NULL) {
 		rval = _cmndlist_matches(&a->members);
 		if (rval != UNSPEC)
 		    matched = m->negated ? !rval : rval;
@@ -370,11 +373,6 @@ command_matches(sudoers_cmnd, sudoers_args)
     char *sudoers_cmnd;
     char *sudoers_args;
 {
-    struct stat sudoers_stat;
-    char **ap, *base, *cp;
-    glob_t gl;
-    size_t dlen;
-
     /* Check for pseudo-commands */
     if (strchr(user_cmnd, '/') == NULL) {
 	/*
@@ -396,110 +394,163 @@ command_matches(sudoers_cmnd, sudoers_args)
 	} else
 	    return(FALSE);
     }
-    dlen = strlen(sudoers_cmnd);
 
-    /*
-     * If sudoers_cmnd has meta characters in it, we may need to
-     * use glob(3) and fnmatch(3) to do the matching.
-     */
     if (has_meta(sudoers_cmnd)) {
 	/*
-	 * First check to see if we can avoid the call to glob(3).
-	 * Short circuit if there are no meta chars in the command itself
-	 * and user_base and basename(sudoers_cmnd) don't match.
+	 * If sudoers_cmnd has meta characters in it, we need to
+	 * use glob(3) and/or fnmatch(3) to do the matching.
 	 */
-	if (sudoers_cmnd[dlen - 1] != '/') {
-	    if ((base = strrchr(sudoers_cmnd, '/')) != NULL) {
-		base++;
-		if (!has_meta(base) && strcmp(user_base, base) != 0)
-		    return(FALSE);
-	    }
-	}
-	/*
-	 * Return true if we find a match in the glob(3) results AND
-	 *  a) there are no args in sudoers OR
-	 *  b) there are no args on command line and none required by sudoers OR
-	 *  c) there are args in sudoers and on command line and they match
-	 * else return false.
-	 */
-#define GLOB_FLAGS	(GLOB_NOSORT | GLOB_MARK | GLOB_BRACE | GLOB_TILDE)
-	if (glob(sudoers_cmnd, GLOB_FLAGS, NULL, &gl) != 0) {
-	    globfree(&gl);
-	    return(FALSE);
-	}
-	/* For each glob match, compare basename, st_dev and st_ino. */
-	for (ap = gl.gl_pathv; (cp = *ap) != NULL; ap++) {
-	    /* If it ends in '/' it is a directory spec. */
-	    dlen = strlen(cp);
-	    if (cp[dlen - 1] == '/') {
-		if (command_matches_dir(cp, dlen))
-		    return(TRUE);
-		continue;
-	    }
+	if (def_fast_glob)
+	    return(command_matches_fnmatch(sudoers_cmnd, sudoers_args));
+	return(command_matches_glob(sudoers_cmnd, sudoers_args));
+    }
+    return(command_matches_normal(sudoers_cmnd, sudoers_args));
+}
 
-	    /* Only proceed if user_base and basename(cp) match */
-	    if ((base = strrchr(cp, '/')) != NULL)
-		base++;
-	    else
-		base = cp;
-	    if (strcmp(user_base, base) != 0 ||
-		stat(cp, &sudoers_stat) == -1)
-		continue;
-	    if (user_stat == NULL ||
-		(user_stat->st_dev == sudoers_stat.st_dev &&
-		user_stat->st_ino == sudoers_stat.st_ino)) {
-		efree(safe_cmnd);
-		safe_cmnd = estrdup(cp);
-		break;
-	    }
-	}
-	globfree(&gl);
-	if (cp == NULL)
-	    return(FALSE);
-
-	if (!sudoers_args ||
-	    (!user_args && sudoers_args && !strcmp("\"\"", sudoers_args)) ||
-	    (sudoers_args &&
-	     fnmatch(sudoers_args, user_args ? user_args : "", 0) == 0)) {
-	    efree(safe_cmnd);
-	    safe_cmnd = estrdup(user_cmnd);
-	    return(TRUE);
-	}
+static int
+command_matches_fnmatch(sudoers_cmnd, sudoers_args)
+    char *sudoers_cmnd;
+    char *sudoers_args;
+{
+    /*
+     * Return true if fnmatch(3) succeeds AND
+     *  a) there are no args in sudoers OR
+     *  b) there are no args on command line and none required by sudoers OR
+     *  c) there are args in sudoers and on command line and they match
+     * else return false.
+     */
+    if (fnmatch(sudoers_cmnd, user_cmnd, FNM_PATHNAME) != 0)
 	return(FALSE);
-    } else {
-	/* If it ends in '/' it is a directory spec. */
-	if (sudoers_cmnd[dlen - 1] == '/')
-	    return(command_matches_dir(sudoers_cmnd, dlen));
+    if (!sudoers_args ||
+	(!user_args && sudoers_args && !strcmp("\"\"", sudoers_args)) ||
+	(sudoers_args &&
+	 fnmatch(sudoers_args, user_args ? user_args : "", 0) == 0)) {
+	if (safe_cmnd)
+	    free(safe_cmnd);
+	safe_cmnd = estrdup(user_cmnd);
+	return(TRUE);
+    } else
+	return(FALSE);
+}
 
-	/* Only proceed if user_base and basename(sudoers_cmnd) match */
-	if ((base = strrchr(sudoers_cmnd, '/')) == NULL)
-	    base = sudoers_cmnd;
-	else
+static int
+command_matches_glob(sudoers_cmnd, sudoers_args)
+    char *sudoers_cmnd;
+    char *sudoers_args;
+{
+    struct stat sudoers_stat;
+    size_t dlen;
+    char **ap, *base, *cp;
+    glob_t gl;
+
+    /*
+     * First check to see if we can avoid the call to glob(3).
+     * Short circuit if there are no meta chars in the command itself
+     * and user_base and basename(sudoers_cmnd) don't match.
+     */
+    dlen = strlen(sudoers_cmnd);
+    if (sudoers_cmnd[dlen - 1] != '/') {
+	if ((base = strrchr(sudoers_cmnd, '/')) != NULL) {
 	    base++;
-	if (strcmp(user_base, base) != 0 ||
-	    stat(sudoers_cmnd, &sudoers_stat) == -1)
-	    return(FALSE);
-
-	/*
-	 * Return true if inode/device matches AND
-	 *  a) there are no args in sudoers OR
-	 *  b) there are no args on command line and none req by sudoers OR
-	 *  c) there are args in sudoers and on command line and they match
-	 */
-	if (user_stat != NULL &&
-	    (user_stat->st_dev != sudoers_stat.st_dev ||
-	    user_stat->st_ino != sudoers_stat.st_ino))
-	    return(FALSE);
-	if (!sudoers_args ||
-	    (!user_args && sudoers_args && !strcmp("\"\"", sudoers_args)) ||
-	    (sudoers_args &&
-	     fnmatch(sudoers_args, user_args ? user_args : "", 0) == 0)) {
-	    efree(safe_cmnd);
-	    safe_cmnd = estrdup(sudoers_cmnd);
-	    return(TRUE);
+	    if (!has_meta(base) && strcmp(user_base, base) != 0)
+		return(FALSE);
 	}
+    }
+    /*
+     * Return true if we find a match in the glob(3) results AND
+     *  a) there are no args in sudoers OR
+     *  b) there are no args on command line and none required by sudoers OR
+     *  c) there are args in sudoers and on command line and they match
+     * else return false.
+     */
+#define GLOB_FLAGS	(GLOB_NOSORT | GLOB_MARK | GLOB_BRACE | GLOB_TILDE)
+    if (glob(sudoers_cmnd, GLOB_FLAGS, NULL, &gl) != 0) {
+	globfree(&gl);
 	return(FALSE);
     }
+    /* For each glob match, compare basename, st_dev and st_ino. */
+    for (ap = gl.gl_pathv; (cp = *ap) != NULL; ap++) {
+	/* If it ends in '/' it is a directory spec. */
+	dlen = strlen(cp);
+	if (cp[dlen - 1] == '/') {
+	    if (command_matches_dir(cp, dlen))
+		return(TRUE);
+	    continue;
+	}
+
+	/* Only proceed if user_base and basename(cp) match */
+	if ((base = strrchr(cp, '/')) != NULL)
+	    base++;
+	else
+	    base = cp;
+	if (strcmp(user_base, base) != 0 ||
+	    stat(cp, &sudoers_stat) == -1)
+	    continue;
+	if (user_stat == NULL ||
+	    (user_stat->st_dev == sudoers_stat.st_dev &&
+	    user_stat->st_ino == sudoers_stat.st_ino)) {
+	    efree(safe_cmnd);
+	    safe_cmnd = estrdup(cp);
+	    break;
+	}
+    }
+    globfree(&gl);
+    if (cp == NULL)
+	return(FALSE);
+
+    if (!sudoers_args ||
+	(!user_args && sudoers_args && !strcmp("\"\"", sudoers_args)) ||
+	(sudoers_args &&
+	 fnmatch(sudoers_args, user_args ? user_args : "", 0) == 0)) {
+	efree(safe_cmnd);
+	safe_cmnd = estrdup(user_cmnd);
+	return(TRUE);
+    }
+    return(FALSE);
+}
+
+static int
+command_matches_normal(sudoers_cmnd, sudoers_args)
+    char *sudoers_cmnd;
+    char *sudoers_args;
+{
+    struct stat sudoers_stat;
+    char *base;
+    size_t dlen;
+
+    /* If it ends in '/' it is a directory spec. */
+    dlen = strlen(sudoers_cmnd);
+    if (sudoers_cmnd[dlen - 1] == '/')
+	return(command_matches_dir(sudoers_cmnd, dlen));
+
+    /* Only proceed if user_base and basename(sudoers_cmnd) match */
+    if ((base = strrchr(sudoers_cmnd, '/')) == NULL)
+	base = sudoers_cmnd;
+    else
+	base++;
+    if (strcmp(user_base, base) != 0 ||
+	stat(sudoers_cmnd, &sudoers_stat) == -1)
+	return(FALSE);
+
+    /*
+     * Return true if inode/device matches AND
+     *  a) there are no args in sudoers OR
+     *  b) there are no args on command line and none req by sudoers OR
+     *  c) there are args in sudoers and on command line and they match
+     */
+    if (user_stat != NULL &&
+	(user_stat->st_dev != sudoers_stat.st_dev ||
+	user_stat->st_ino != sudoers_stat.st_ino))
+	return(FALSE);
+    if (!sudoers_args ||
+	(!user_args && sudoers_args && !strcmp("\"\"", sudoers_args)) ||
+	(sudoers_args &&
+	 fnmatch(sudoers_args, user_args ? user_args : "", 0) == 0)) {
+	efree(safe_cmnd);
+	safe_cmnd = estrdup(sudoers_cmnd);
+	return(TRUE);
+    }
+    return(FALSE);
 }
 
 /*
