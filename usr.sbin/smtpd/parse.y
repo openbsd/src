@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.31 2009/04/09 19:49:34 jacekm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.32 2009/04/12 16:03:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -92,12 +92,12 @@ struct mapel_list	*contents = NULL;
 
 struct listener	*host_v4(const char *, in_port_t);
 struct listener	*host_v6(const char *, in_port_t);
-int		 host_dns(const char *, struct listenerlist *,
+int		 host_dns(const char *, const char *, struct listenerlist *,
 		    int, in_port_t, u_int8_t);
-int		 host(const char *, struct listenerlist *,
+int		 host(const char *, const char *, struct listenerlist *,
 		    int, in_port_t, u_int8_t);
-int		 interface(const char *, struct listenerlist *, int, in_port_t,
-		    u_int8_t);
+int		 interface(const char *, const char *, struct listenerlist *,
+		    int, in_port_t, u_int8_t);
 
 typedef struct {
 	union {
@@ -277,9 +277,9 @@ main		: QUEUE INTERVAL interval	{
 				}
 			}
 
-			if (! interface($3, &conf->sc_listeners,
+			if (! interface($3, cert, &conf->sc_listeners,
 				MAX_LISTEN, $4, flags)) {
-				if (host($3, &conf->sc_listeners,
+				if (host($3, cert, &conf->sc_listeners,
 					MAX_LISTEN, $4, flags) <= 0) {
 					yyerror("invalid virtual ip or interface: %s", $3);
 					free($6);
@@ -1473,7 +1473,7 @@ host_v6(const char *s, in_port_t port)
 }
 
 int
-host_dns(const char *s, struct listenerlist *al, int max, in_port_t port,
+host_dns(const char *s, const char *cert, struct listenerlist *al, int max, in_port_t port,
     u_int8_t flags)
 {
 	struct addrinfo		 hints, *res0, *res;
@@ -1505,7 +1505,9 @@ host_dns(const char *s, struct listenerlist *al, int max, in_port_t port,
 		h->flags = flags;
 		h->ss.ss_family = res->ai_family;
 		h->ssl = NULL;
-		(void)strlcpy(h->ssl_cert_name, s, sizeof(h->ssl_cert_name));
+		h->ssl_cert_name[0] = '\0';
+		if (cert != NULL)
+			(void)strlcpy(h->ssl_cert_name, cert, sizeof(h->ssl_cert_name));
 
 		if (res->ai_family == AF_INET) {
 			sain = (struct sockaddr_in *)&h->ss;
@@ -1533,7 +1535,7 @@ host_dns(const char *s, struct listenerlist *al, int max, in_port_t port,
 }
 
 int
-host(const char *s, struct listenerlist *al, int max, in_port_t port,
+host(const char *s, const char *cert, struct listenerlist *al, int max, in_port_t port,
     u_int8_t flags)
 {
 	struct listener *h;
@@ -1548,17 +1550,20 @@ host(const char *s, struct listenerlist *al, int max, in_port_t port,
 		h->port = port;
 		h->flags = flags;
 		h->ssl = NULL;
-		(void)strlcpy(h->ssl_cert_name, s, sizeof(h->ssl_cert_name));
+		h->ssl_cert_name[0] = '\0';
+		if (cert != NULL)
+			(void)strlcpy(h->ssl_cert_name, cert, sizeof(h->ssl_cert_name));
+
 
 		TAILQ_INSERT_HEAD(al, h, entry);
 		return (1);
 	}
 
-	return (host_dns(s, al, max, port, flags));
+	return (host_dns(s, cert, al, max, port, flags));
 }
 
 int
-interface(const char *s, struct listenerlist *al, int max, in_port_t port,
+interface(const char *s, const char *cert, struct listenerlist *al, int max, in_port_t port,
     u_int8_t flags)
 {
 	struct ifaddrs *ifap, *p;
@@ -1586,7 +1591,9 @@ interface(const char *s, struct listenerlist *al, int max, in_port_t port,
 			h->port = port;
 			h->flags = flags;
 			h->ssl = NULL;
-			(void)strlcpy(h->ssl_cert_name, s, sizeof(h->ssl_cert_name));
+			h->ssl_cert_name[0] = '\0';
+			if (cert != NULL)
+				(void)strlcpy(h->ssl_cert_name, cert, sizeof(h->ssl_cert_name));
 
 			ret = 1;
 			TAILQ_INSERT_HEAD(al, h, entry);
@@ -1604,7 +1611,9 @@ interface(const char *s, struct listenerlist *al, int max, in_port_t port,
 			h->port = port;
 			h->flags = flags;
 			h->ssl = NULL;
-			(void)strlcpy(h->ssl_cert_name, s, sizeof(h->ssl_cert_name));
+			h->ssl_cert_name[0] = '\0';
+			if (cert != NULL)
+				(void)strlcpy(h->ssl_cert_name, cert, sizeof(h->ssl_cert_name));
 
 			ret = 1;
 			TAILQ_INSERT_HEAD(al, h, entry);
