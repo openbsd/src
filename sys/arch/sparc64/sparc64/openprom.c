@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.14 2009/03/21 12:24:26 kettenis Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.15 2009/04/12 22:17:52 kettenis Exp $	*/
 /*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
@@ -53,6 +53,7 @@
 #include <machine/openpromio.h>
 #include <machine/autoconf.h>
 #include <machine/conf.h>
+#include <machine/mdesc.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ofw/openfirm.h>
@@ -85,6 +86,37 @@ openpromclose(dev, flags, mode, p)
 {
 
 	return (0);
+}
+
+int
+openpromread(dev_t dev, struct uio *uio, int flags)
+{
+#ifdef SUN4V
+	int error;
+	size_t len;
+	caddr_t v;
+
+	if (minor(dev) != 1)
+		return (ENXIO);
+
+	while (uio->uio_resid > 0) {
+		if (uio->uio_offset >= mdesc_len)
+			break;
+
+		v = mdesc + uio->uio_offset;
+		len = mdesc_len - uio->uio_offset;
+		if (len > uio->uio_resid)
+			len = uio->uio_resid;
+		
+		error = uiomove(v, len, uio);
+		if (error)
+			return (error);
+	}
+
+	return (0);
+#else
+	return (ENXIO);
+#endif
 }
 
 /*
