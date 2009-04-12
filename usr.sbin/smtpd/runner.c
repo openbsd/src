@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.38 2009/03/29 14:18:20 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.39 2009/04/12 15:42:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -528,7 +528,11 @@ runner_process_queue(struct smtpd *env)
 		if (! runner_message_schedule(&message, now))
 			continue;
 
-		runner_check_loop(&message);
+		if (runner_check_loop(&message)) {
+			log_debug("TODO: generate mailer daemon");
+			queue_remove_envelope(&message);
+			continue;
+		}
 
 		message.flags |= F_MESSAGE_SCHEDULED;
 		message.flags &= ~F_MESSAGE_FORCESCHEDULE;
