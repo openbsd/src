@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.13 2009/04/11 16:54:28 krw Exp $	*/
+/*	$OpenBSD: extern.h,v 1.14 2009/04/12 01:01:24 krw Exp $	*/
 
 /*
  * Copyright (c) 2003 Theo de Raadt <deraadt@openbsd.org>
@@ -32,6 +32,7 @@ extern	char *mountpoints[MAXPARTITIONS];
 extern  int donothing;
 extern  int dflag;
 extern	int verbose;
+extern	char print_unit;
 
 #ifdef DOSLABEL
 extern  struct dos_partition *dosdp;    /* DOS partition, if found */

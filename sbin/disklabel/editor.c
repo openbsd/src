@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.190 2009/04/11 23:57:56 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.191 2009/04/12 01:01:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.190 2009/04/11 23:57:56 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.191 2009/04/12 01:01:24 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -475,6 +475,13 @@ editor_allocspace(struct disklabel *lp)
 
 	/* How big is the OpenBSD portion of the disk?  */
 	find_bounds(lp);
+	if (print_unit == '\0') {
+		if (DL_BLKTOSEC(lp, MEG(10 * 1024)) > (ending_sector -
+		    starting_sector))
+			print_unit = 'm';
+		else
+			print_unit = 'g';
+	}
 
 	cylsecs = lp->d_secpercyl;
 	xtrasecs = totsecs = editor_countfree(lp);

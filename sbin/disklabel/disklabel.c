@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.150 2009/04/11 23:57:56 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.151 2009/04/12 01:01:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.150 2009/04/11 23:57:56 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.151 2009/04/12 01:01:24 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -109,6 +109,7 @@ int	dflag;
 int	tflag;
 int	verbose;
 int	donothing;
+char	print_unit;
 
 #ifdef DOSLABEL
 struct dos_partition *dosdp;	/* DOS partition, if found */
@@ -140,7 +141,6 @@ main(int argc, char *argv[])
 {
 	int ch, f, writeable, error = 0;
 	struct disklabel *lp;
-	char print_unit = 0;
 	FILE *t;
 
 	while ((ch = getopt(argc, argv, "ABEf:NRWb:cdenp:s:tvw")) != -1)
