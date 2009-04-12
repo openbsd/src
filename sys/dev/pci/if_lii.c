@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.22 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.23 2009/04/12 15:16:07 jsing Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -1105,10 +1105,10 @@ lii_iff(struct lii_softc *sc)
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (ifp->if_flags & IFF_PROMISC) {
-		ifp ->if_flags |= IFF_ALLMULTI;
+		ifp->if_flags |= IFF_ALLMULTI;
 		val |= MACC_PROMISC_EN;
 	} else if (ac->ac_multirangecnt > 0) {
-		ifp ->if_flags |= IFF_ALLMULTI;
+		ifp->if_flags |= IFF_ALLMULTI;
 		val |= MACC_ALLMULTI_EN;
 	} else {
 		/* Clear multicast hash table. */
