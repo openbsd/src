@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.5 2009/03/30 09:41:00 kettenis Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.6 2009/04/12 17:55:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -36,6 +36,7 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <mips64/archtype.h>
 #include <sgi/xbow/xbow.h>
@@ -344,7 +345,7 @@ pcireg_t
 xbridge_conf_read(void *cookie, pcitag_t tag, int offset)
 {
 	struct xbridge_softc *sc = cookie;
-	pcireg_t data;
+	pcireg_t id, data;
 	int bus, dev, fn;
 	paddr_t pa;
 	int s;
@@ -360,9 +361,49 @@ xbridge_conf_read(void *cookie, pcitag_t tag, int offset)
 	} else
 		pa = sc->sc_regh + BRIDGE_PCI_CFG_SPACE + (dev << 12);
 
-	pa += (fn << 8) + offset;
-	if (guarded_read_4(pa, &data) != 0)
-		data = 0xffffffff;
+	/*
+	 * IOC3 devices only implement a subset of the PCI configuration
+	 * registers.
+	 * Depending on which particular model we encounter, things may
+	 * seem to work, or write access to nonexisting registers would
+	 * completely freeze the machine.
+	 *
+	 * We thus check for the device type here, and handle the non
+	 * existing registers ourselves.
+	 */
+
+	if (guarded_read_4(pa + PCI_ID_REG, &id) != 0) {
+		splx(s);
+		return 0xffffffff;
+	}
+
+	if (id == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3)) {
+		switch (offset) {
+		case PCI_ID_REG:
+		case PCI_COMMAND_STATUS_REG:
+		case PCI_CLASS_REG:
+		case PCI_BHLC_REG:
+		case PCI_MAPREG_START:
+			/* These registers are implemented. Go ahead. */
+			id = 0;
+			break;
+		case PCI_INTERRUPT_REG:
+			/* This register is not implemented. Fake it. */
+			data = PCI_INTERRUPT_PIN_A << PCI_INTERRUPT_PIN_SHIFT;
+			break;
+		default:
+			/* These registers are not implemented. */
+			data = 0;
+			break;
+		}
+	} else
+		id = 0;
+
+	if (id == 0) {
+		pa += (fn << 8) + offset;
+		if (guarded_read_4(pa, &data) != 0)
+			data = 0xffffffff;
+	}
 
 	splx(s);
 	return(data);
@@ -372,6 +413,7 @@ void
 xbridge_conf_write(void *cookie, pcitag_t tag, int offset, pcireg_t data)
 {
 	struct xbridge_softc *sc = cookie;
+	pcireg_t id;
 	int bus, dev, fn;
 	paddr_t pa;
 	int s;
@@ -387,8 +429,50 @@ xbridge_conf_write(void *cookie, pcitag_t tag, int offset, pcireg_t data)
 	} else
 		pa = sc->sc_regh + BRIDGE_PCI_CFG_SPACE + (dev << 12);
 
-	pa += (fn << 8) + offset;
-	guarded_write_4(pa, data);
+	/*
+	 * IOC3 devices only implement a subset of the PCI configuration
+	 * registers.
+	 * Depending on which particular model we encounter, things may
+	 * seem to work, or write access to nonexisting registers would
+	 * completely freeze the machine.
+	 *
+	 * We thus check for the device type here, and handle the non
+	 * existing registers ourselves.
+	 */
+
+	if (guarded_read_4(pa + PCI_ID_REG, &id) != 0) {
+		splx(s);
+		return;
+	}
+
+	if (id == PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3)) {
+		switch (offset) {
+		case PCI_COMMAND_STATUS_REG:
+			/*
+			 * Some IOC models do not support having this bit
+			 * cleared (which is what pci_mapreg_probe() will
+			 * do), so we set it unconditionnaly.
+			 */
+			data |= PCI_COMMAND_MEM_ENABLE;
+			/* FALLTHROUGH */
+		case PCI_ID_REG:
+		case PCI_CLASS_REG:
+		case PCI_BHLC_REG:
+		case PCI_MAPREG_START:
+			/* These registers are implemented. Go ahead. */
+			id = 0;
+			break;
+		default:
+			/* These registers are not implemented. */
+			break;
+		}
+	} else
+		id = 0;
+
+	if (id == 0) {
+		pa += (fn << 8) + offset;
+		guarded_write_4(pa, data);
+	}
 
 	splx(s);
 }
