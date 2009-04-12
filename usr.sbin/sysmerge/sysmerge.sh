@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.37 2009/04/12 07:52:10 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.38 2009/04/12 11:17:58 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -239,25 +239,25 @@ mm_install() {
 
 	case "${1#.}" in
 	/dev/MAKEDEV)
-		echo -n "===> A new ${DESTDIR}/dev/MAKEDEV script was installed, "
+		echo -n "===> A new ${DESTDIR%/}/dev/MAKEDEV script was installed, "
 		echo "running MAKEDEV"
 		(cd ${DESTDIR}/dev && /bin/sh MAKEDEV all)
 		;;
 	/etc/login.conf)
 		if [ -f ${DESTDIR}/etc/login.conf.db ]; then
-			echo -n "===> A new ${DESTDIR}/etc/login.conf file was installed, "
+			echo -n "===> A new ${DESTDIR%/}/etc/login.conf file was installed, "
 			echo "running cap_mkdb"
 			cap_mkdb ${DESTDIR}/etc/login.conf
 		fi
 		;;
 	/etc/mail/access|/etc/mail/genericstable|/etc/mail/mailertable|/etc/mail/virtusertable)
 		DBFILE=`echo ${1} | sed -e 's,.*/,,'`
-		echo -n "===> A new ${DESTDIR}/${1#.} file was installed, "
+		echo -n "===> A new ${DESTDIR%/}/${1#.} file was installed, "
 		echo "running makemap"
 		/usr/libexec/sendmail/makemap hash ${DESTDIR}/${1#.} < ${DESTDIR}/${1#.}
 		;;
 	/etc/mail/aliases)
-		echo -n "===> A new ${DESTDIR}/etc/mail/aliases file was installed, "
+		echo -n "===> A new ${DESTDIR%/}/etc/mail/aliases file was installed, "
 		echo "running newaliases"
 		if [ "${DESTDIR}" ]; then
 			chroot ${DESTDIR} newaliases || export NEED_NEWALIASES=1
@@ -266,7 +266,7 @@ mm_install() {
 		fi
 		;;
 	/etc/master.passwd)
-		echo -n "===> A new ${DESTDIR}/etc/master.passwd file was installed, "
+		echo -n "===> A new ${DESTDIR%/}/etc/master.passwd file was installed, "
 		echo "running pwd_mkdb"
 		pwd_mkdb -d ${DESTDIR}/etc -p ${DESTDIR}/etc/master.passwd
 		;;
