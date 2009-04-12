@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.15 2009/03/09 11:29:52 jacekm Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.16 2009/04/12 12:33:43 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -373,7 +373,8 @@ queue_message_update(struct message *messagep)
 	messagep->retry++;
 
 	if (messagep->status & S_MESSAGE_PERMFAILURE) {
-		if (messagep->type & T_DAEMON_MESSAGE)
+		if (messagep->type & T_DAEMON_MESSAGE ||
+		    (messagep->sender.user[0] == '\0' && messagep->sender.domain[0] == '\0'))
 			queue_remove_envelope(messagep);
 		else {
 			messagep->id = queue_generate_id();
