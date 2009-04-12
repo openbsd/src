@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.35 2009/04/09 10:44:50 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.36 2009/04/12 07:43:17 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -363,6 +363,19 @@ diff_loop() {
 			echo "\n========================================================================\n"
 		fi
 		if [ -f "${DESTDIR}${COMPFILE#.}" -a -f "${COMPFILE}" ]; then
+			# automatically install files which differ only by CVS Id
+			if [ "${AUTOMODE}" ]; then
+				if diff -q -I'[$]OpenBSD:.*$' "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" > /dev/null 2>&1; then
+					if mm_install "${COMPFILE}"; then
+						echo "===> ${COMPFILE} installed successfully"
+						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
+					else
+						echo " *** Warning: problem installing ${COMPFILE}, it will remain to merge by hand"
+					fi
+					return
+				fi
+			fi
+				
 			# if current != new and current = old, auto-install new
 			if [ "${OTGZ}" -o "${OXTGZ}" ]; then
 				if diff -q "${DESTDIR}${COMPFILE#.}" "${OTEMPROOT}${COMPFILE#.}" > /dev/null 2>&1; then
