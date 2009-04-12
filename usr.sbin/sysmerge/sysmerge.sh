@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.36 2009/04/12 07:43:17 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.37 2009/04/12 07:52:10 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -416,7 +416,7 @@ diff_loop() {
 
 		if [ -z "${BATCHMODE}" ]; then
 			echo "  Use 'd' to delete the temporary ${COMPFILE}"
-			if [ "${COMPFILE}" != "./etc/master.passwd" -a "${COMPFILE}" != "./etc/group" ]; then
+			if [ "${COMPFILE}" != "./etc/master.passwd" -a "${COMPFILE}" != "./etc/group" -a "${COMPFILE}" != "./etc/hosts" ]; then
 				echo "  Use 'i' to install the temporary ${COMPFILE}"
 			fi
 			if [ -z "${NO_INSTALLED}" -a -z "${IS_BINFILE}" ]; then
@@ -438,7 +438,7 @@ diff_loop() {
 			echo "\n===> Deleting ${COMPFILE}"
 			;;
 		[iI])
-			if [ "${COMPFILE}" != "./etc/master.passwd" -a "${COMPFILE}" != "./etc/group" ]; then
+			if [ "${COMPFILE}" != "./etc/master.passwd" -a "${COMPFILE}" != "./etc/group" -a "${COMPFILE}" != "./etc/hosts" ]; then
 				echo ""
 				if mm_install "${COMPFILE}"; then
 					echo "===> ${COMPFILE} installed successfully"
