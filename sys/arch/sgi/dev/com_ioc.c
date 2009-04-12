@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ioc.c,v 1.3 2008/09/17 01:29:39 jsing Exp $ */
+/*	$OpenBSD: com_ioc.c,v 1.4 2009/04/12 17:56:58 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -106,8 +106,6 @@ com_ioc_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(sc);
 
-#ifdef notyet
-	ioc_intr_establish(NULL, iaa->iaa_intr, IST_EDGE, IPL_TTY,
-	    comintr, (void *)sc, sc->sc_dev.dv_xname);
-#endif
+	ioc_intr_establish(parent, iaa->iaa_dev, IPL_TTY, comintr,
+	    (void *)sc, sc->sc_dev.dv_xname);
 }

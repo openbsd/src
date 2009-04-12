@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.22 2008/04/07 22:36:26 miod Exp $
+#	$OpenBSD: files.sgi,v 1.23 2009/04/12 17:56:56 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -64,9 +64,9 @@ device	xbow
 attach	xbow at mainbus
 file	arch/sgi/xbow/xbow.c			xbow
 
-include "dev/onewire/files.onewire"
-
 include "arch/sgi/xbow/files.xbow"
+
+include "dev/onewire/files.onewire"
 
 #
 #	PCI Bus bridges
@@ -86,7 +86,7 @@ include	"dev/i2o/files.i2o"
 include	"dev/pci/files.pci"
 
 # IOC3
-define	ioc {[base = -1], [irq = -1]}
+define	ioc {[base = -1], [dev = -1]}
 device	ioc: onewirebus
 attach	ioc at pci
 file	arch/sgi/pci/ioc.c			ioc
@@ -106,9 +106,19 @@ device	gbe: wsemuldisplaydev, rasops8, rasops16, rasops32
 attach	gbe at mainbus
 file	arch/sgi/dev/gbe.c			gbe	needs-flag
 
+# Impact graphics
+device	impact: wsemuldisplaydev, rasops8, rasops16, rasops32
+attach	impact at xbow
+file	arch/sgi/xbow/impact.c			impact	needs-flag
+
 # 16[45]50-based "com" ports on localbus
 attach	com at macebus with com_macebus
 file	arch/sgi/localbus/com_lbus.c		com_macebus
+
+# IOC Ethernet
+device	ef: ether, ifnet, ifmedia, mii
+attach	ef at ioc
+file	arch/sgi/dev/if_ef.c			ef
 
 # MACE MAC-110 ethernet
 device	mec: ether, ifnet, ifmedia, mii
@@ -156,6 +166,7 @@ include	"dev/usb/files.usb"
 device	owmac
 attach	owmac at onewire
 file	arch/sgi/dev/owmac.c			owmac
+
 # Serial numbers
 device	owserial
 attach	owserial at onewire

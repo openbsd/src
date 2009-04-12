@@ -1,4 +1,4 @@
-/*	$OpenBSD: iocreg.h,v 1.1 2008/04/07 22:53:00 miod Exp $	*/
+/*	$OpenBSD: iocreg.h,v 1.2 2009/04/12 17:56:58 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -20,14 +20,30 @@
  * Register definitions for SGI IOC ASIC.
  */
 
-#define	IOC3_MCR		0x00030
+#define IOC_NDEVS		6
 
-#define	IOC3_RTC_BASE		0x20168
+#define IOCDEV_SERIAL_A		0
+#define IOCDEV_SERIAL_B		1
+#define IOCDEV_PARPORT		2
+#define IOCDEV_KEYBOARD		3
+#define IOCDEV_RTC		4
+#define IOCDEV_EF		5
 
-#define	IOC3_UARTA_BASE		0x20178
-#define	IOC3_UARTB_BASE		0x20170
+#define IOC3_SIO_IR		0x0000001c
+#define IOC3_SIO_IES		0x00000020
+#define IOC3_SIO_IEC		0x00000024
+#define IOC3_SIO_CR		0x00000028
+#define	IOC3_MCR		0x00000030
 
-#define	IOC3_BYTEBUS_0		0x80000
-#define	IOC3_BYTEBUS_1		0xa0000
-#define	IOC3_BYTEBUS_2		0xc0000
-#define	IOC3_BYTEBUS_3		0xe0000
+#define	IOC3_EF_BASE		0x000000f0
+#define	IOC3_EF_SIZE		0x60
+
+#define	IOC3_RTC_BASE		0x00020168
+
+#define	IOC3_UARTA_BASE		0x00020178
+#define	IOC3_UARTB_BASE		0x00020170
+
+#define	IOC3_BYTEBUS_0		0x00080000
+#define	IOC3_BYTEBUS_1		0x000a0000
+#define	IOC3_BYTEBUS_2		0x000c0000
+#define	IOC3_BYTEBUS_3		0x000e0000
