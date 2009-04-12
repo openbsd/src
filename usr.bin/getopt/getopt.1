@@ -1,9 +1,9 @@
-.\"	$OpenBSD: getopt.1,v 1.14 2007/05/31 19:20:10 jmc Exp $	-*- nroff -*-
+.\"	$OpenBSD: getopt.1,v 1.15 2009/04/12 23:13:36 okan Exp $	-*- nroff -*-
 .\"
 .\" This material, written by Henry Spencer, was released by him
 .\" into the public domain and is thus not subject to any copyright.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 12 2009 $
 .Dt GETOPT 1
 .Os
 .Sh NAME
@@ -21,6 +21,9 @@ is a string of recognized option letters (see
 if a letter is followed by a colon, the option
 is expected to have an argument which may or may not be
 separated from it by whitespace.
+However, if a letter is followed by two colons, the argument is optional
+and may not be separated by whitespace \- this is an extension not
+covered by POSIX.
 The special option
 .Sq --
 is used to delimit the end of the options.

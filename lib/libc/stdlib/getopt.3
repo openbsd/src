@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.40 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: getopt.3,v 1.41 2009/04/12 23:13:36 okan Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 12 2009 $
 .Dt GETOPT 3
 .Os
 .Sh NAME
@@ -73,7 +73,9 @@ recognizes an option and argument
 .Fl x Ar argument .
 It does not matter to
 .Fn getopt
-if a following argument has leading whitespace.
+if a following argument has leading whitespace; except in the case where
+the argument is optional, denoted with two colons, no leading whitespace
+is permitted.
 .Pp
 On return from
 .Fn getopt ,
