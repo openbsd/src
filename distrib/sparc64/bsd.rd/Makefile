@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2008/12/02 03:20:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 2009/04/12 16:12:53 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -55,7 +55,7 @@ bsd.rd_unz: bsd ${IMAGE} ${RDSETROOT}
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/sparc64/conf && config ${RAMDISK}
 	cd ${.CURDIR}/../../../sys/arch/sparc64/compile/${RAMDISK} && \
-	    ${MAKE} depend && ${MAKE} clean && COPTS=-Os ${MAKE}
+	    ${MAKE} clean && ${MAKE} depend && COPTS=-Os ${MAKE}
 	cp ${.CURDIR}/../../../sys/arch/sparc64/compile/${RAMDISK}/bsd bsd
 
 ${IMAGE}:	do_prep do_mount do_files do_umount

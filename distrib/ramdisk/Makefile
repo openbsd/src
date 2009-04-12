@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2008/12/02 03:20:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.34 2009/04/12 16:12:53 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -85,7 +85,7 @@ ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 bsd:
 	cd ${.CURDIR}/../../sys/arch/${MACHINE}/conf && config ${KERNEL}
 	cd ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL} && \
-	    ${MAKE} depend && ${MAKE} clean && COPTS=-Os ${MAKE}
+	    ${MAKE} clean && ${MAKE} depend && COPTS=-Os ${MAKE}
 	cp ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL}/bsd bsd
 
 bsd.rd:	bsd ${IMAGE} ${RDSETROOT}

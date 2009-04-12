@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2008/12/02 03:20:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2009/04/12 16:12:53 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -53,7 +53,7 @@ ${IMAGE}: rd_setup do_files rd_teardown
 bsd:
 	cd ${TOP}/../../sys/arch/mvmeppc/conf && config RAMDISK
 	cd ${TOP}/../../sys/arch/mvmeppc/compile/RAMDISK && \
-	    ${MAKE} clean && ${MAKE}
+	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
 	cp ${TOP}/../../sys/arch/mvmeppc/compile/RAMDISK/bsd bsd
 
 rd_setup:
