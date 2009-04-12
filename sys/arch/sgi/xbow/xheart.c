@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.3 2009/03/20 18:41:07 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.4 2009/04/12 17:53:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -28,6 +28,7 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 
+#include <machine/atomic.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -448,7 +449,7 @@ xheart_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 		}
 	}
 
-	return CR_INT_0;	/* hwpend */
+	return CR_INT_0;
 }
 
 void
