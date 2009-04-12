@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.103 2009/04/04 21:07:48 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.104 2009/04/12 14:53:15 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -68,6 +68,7 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/hypervisor.h>
+#include <machine/mdesc.h>
 #include <machine/openfirm.h>
 #include <machine/sparc64.h>
 #include <machine/cpu.h>
@@ -612,6 +613,11 @@ bootpath_store(storep, bp)
 void
 cpu_configure()
 {
+#ifdef SUN4V
+	if (CPU_ISSUN4V)
+		mdesc_init();
+#endif
+
 	/* build the bootpath */
 	bootpath_build();
 

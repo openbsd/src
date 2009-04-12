@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.119 2009/03/09 22:36:43 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.120 2009/04/12 14:53:15 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -302,6 +302,7 @@ file	arch/sparc64/sparc64/kgdb_machdep.c	kgdb
 # because it must come first in the "ld" command line.
 file	arch/sparc64/sparc64/lock_machdep.c	multiprocessor
 file	arch/sparc64/sparc64/machdep.c
+file	arch/sparc64/sparc64/mdesc.c		sun4v
 file	arch/sparc64/sparc64/mem.c
 file	arch/sparc64/sparc64/mutex.S
 file	arch/sparc64/sparc64/openprom.c
