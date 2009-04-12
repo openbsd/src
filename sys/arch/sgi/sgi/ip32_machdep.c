@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.3 2008/05/04 12:27:46 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.4 2009/04/12 17:53:02 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -29,7 +29,9 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 #include <sys/extent.h>
+#include <sys/tty.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -44,13 +46,11 @@
 #include <sgi/localbus/crimebus.h>
 #include <sgi/localbus/macebus.h>
 
+#include <dev/ic/comvar.h>
+
 void crime_configure_memory(void);
 
 extern int bootdriveoffs;
-
-extern bus_addr_t comconsaddr;
-extern bus_space_tag_t comconsiot;
-extern int comconsfreq;
 
 void
 crime_configure_memory(void)

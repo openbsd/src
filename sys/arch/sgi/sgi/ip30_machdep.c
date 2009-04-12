@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.2 2008/04/24 12:52:26 jsing Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.3 2009/04/12 17:53:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -22,6 +22,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/tty.h>
 
 #include <mips64/arcbios.h>
 
@@ -39,13 +41,11 @@
 #include <sgi/xbow/xheartreg.h>
 #include <sgi/pci/iocreg.h>
 
+#include <dev/ic/comvar.h>
+
 paddr_t	ip30_widget_short(int16_t, u_int);
 paddr_t	ip30_widget_long(int16_t, u_int);
 int	ip30_widget_id(int16_t, u_int, uint32_t *);
-
-extern bus_addr_t comconsaddr;
-extern bus_space_tag_t comconsiot;
-extern int comconsfreq;
 
 void
 ip30_setup()
