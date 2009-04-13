@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.23 2008/08/25 16:15:53 jasper Exp $
+#	$OpenBSD: RAMDISK,v 1.24 2009/04/13 21:13:46 miod Exp $
 #
 
 machine		sgi mips64
@@ -156,3 +156,5 @@ pseudo-device	bpfilter	1	# packet filter ports
 
 pseudo-device	rd		1	# Ram disk.
 pseudo-device	bio		1	# ioctl multiplexing device
+
+option		BOOT_CONFIG	# add support for boot -c
