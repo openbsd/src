@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.93 2009/03/30 19:58:50 blambert Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.94 2009/04/13 17:51:57 blambert Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1947,6 +1947,28 @@ nfsm_build(struct mbuf **mp, u_int len)
 	*mp = mb;
 
 	return (bpos);
+}
+
+void
+nfsm_fhtom(struct mbuf **mp, struct vnode *v, int v3)
+{
+	struct nfsnode *n = VTONFS(v);
+
+	if (v3) {
+		nfsm_strtombuf(mp, n->n_fhp, n->n_fhsize);
+	} else {
+		nfsm_buftombuf(mp, n->n_fhp, NFSX_V2FH);
+	}
+}
+
+void
+nfsm_srvfhtom(struct mbuf **mp, fhandle_t *f, int v3)
+{
+	if (v3) {
+		nfsm_strtombuf(mp, f, NFSX_V3FH);
+	} else {
+		nfsm_buftombuf(mp, f, NFSX_V2FH);
+	}
 }
 
 int

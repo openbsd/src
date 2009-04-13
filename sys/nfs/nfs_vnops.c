@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.111 2009/01/24 23:37:56 thib Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.112 2009/04/13 17:51:57 blambert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -290,7 +290,7 @@ nfs_access(v)
 	if (v3) {
 		nfsstats.rpccnt[NFSPROC_ACCESS]++;
 		mb = mreq = nfsm_reqhead(NFSX_FH(v3) + NFSX_UNSIGNED);
-		nfsm_fhtom(vp, v3);
+		nfsm_fhtom(&mb, vp, v3);
 		tl = nfsm_build(&mb, NFSX_UNSIGNED);
 		if (ap->a_mode & VREAD)
 			mode = NFSV3ACCESS_READ;
@@ -507,7 +507,7 @@ nfs_getattr(v)
 		return (0);
 	nfsstats.rpccnt[NFSPROC_GETATTR]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3));
-	nfsm_fhtom(vp, v3);
+	nfsm_fhtom(&mb, vp, v3);
 	nfsm_request(vp, NFSPROC_GETATTR, ap->a_p, ap->a_cred);
 	if (!error)
 		nfsm_loadattr(vp, ap->a_vap);
@@ -620,7 +620,7 @@ nfs_setattrrpc(vp, vap, cred, procp)
 
 	nfsstats.rpccnt[NFSPROC_SETATTR]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3) + NFSX_SATTR(v3));
-	nfsm_fhtom(vp, v3);
+	nfsm_fhtom(&mb, vp, v3);
 	if (v3) {
 		nfsm_v3attrbuild(&mb, vap, 1);
 		tl = nfsm_build(&mb, NFSX_UNSIGNED);
@@ -769,7 +769,7 @@ dorpc:
 	nfsstats.rpccnt[NFSPROC_LOOKUP]++;
 	len = cnp->cn_namelen;
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3) + NFSX_UNSIGNED + nfsm_rndup(len));
-	nfsm_fhtom(dvp, v3);
+	nfsm_fhtom(&mb, dvp, v3);
 	nfsm_strtom(cnp->cn_nameptr, len, NFS_MAXNAMLEN);
 	nfsm_request(dvp, NFSPROC_LOOKUP, cnp->cn_proc, cnp->cn_cred);
 	if (error) {
@@ -956,7 +956,7 @@ nfs_readlinkrpc(vp, uiop, cred)
 
 	nfsstats.rpccnt[NFSPROC_READLINK]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3));
-	nfsm_fhtom(vp, v3);
+	nfsm_fhtom(&mb, vp, v3);
 	nfsm_request(vp, NFSPROC_READLINK, uiop->uio_procp, cred);
 	if (v3)
 		nfsm_postop_attr(vp, attrflag);
@@ -996,7 +996,7 @@ nfs_readrpc(vp, uiop)
 		nfsstats.rpccnt[NFSPROC_READ]++;
 		len = (tsiz > nmp->nm_rsize) ? nmp->nm_rsize : tsiz;
 		mb = mreq = nfsm_reqhead(NFSX_FH(v3) + NFSX_UNSIGNED * 3);
-		nfsm_fhtom(vp, v3);
+		nfsm_fhtom(&mb, vp, v3);
 		tl = nfsm_build(&mb, NFSX_UNSIGNED * 3);
 		if (v3) {
 			txdr_hyper(uiop->uio_offset, tl);
@@ -1062,7 +1062,7 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 		len = (tsiz > nmp->nm_wsize) ? nmp->nm_wsize : tsiz;
 		mb = mreq = nfsm_reqhead(NFSX_FH(v3) + 5 * NFSX_UNSIGNED +
 		    nfsm_rndup(len));
-		nfsm_fhtom(vp, v3);
+		nfsm_fhtom(&mb, vp, v3);
 		if (v3) {
 			tl = nfsm_build(&mb, 5 * NFSX_UNSIGNED);
 			txdr_hyper(uiop->uio_offset, tl);
@@ -1178,7 +1178,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 	nfsstats.rpccnt[NFSPROC_MKNOD]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3) + 4 * NFSX_UNSIGNED +
 	    nfsm_rndup(cnp->cn_namelen) + NFSX_SATTR(v3));
-	nfsm_fhtom(dvp, v3);
+	nfsm_fhtom(&mb, dvp, v3);
 	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
 	if (v3) {
 		tl = nfsm_build(&mb, NFSX_UNSIGNED);
@@ -1284,7 +1284,7 @@ again:
 	nfsstats.rpccnt[NFSPROC_CREATE]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3) + 2 * NFSX_UNSIGNED +
 	    nfsm_rndup(cnp->cn_namelen) + NFSX_SATTR(v3));
-	nfsm_fhtom(dvp, v3);
+	nfsm_fhtom(&mb, dvp, v3);
 	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
 	if (v3) {
 		tl = nfsm_build(&mb, NFSX_UNSIGNED);
@@ -1452,7 +1452,7 @@ nfs_removerpc(dvp, name, namelen, cred, proc)
 	nfsstats.rpccnt[NFSPROC_REMOVE]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3) + NFSX_UNSIGNED +
 	     nfsm_rndup(namelen));
-	nfsm_fhtom(dvp, v3);
+	nfsm_fhtom(&mb, dvp, v3);
 	nfsm_strtom(name, namelen, NFS_MAXNAMLEN);
 	nfsm_request(dvp, NFSPROC_REMOVE, proc, cred);
 	if (v3)
@@ -1570,9 +1570,9 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, proc)
 	nfsstats.rpccnt[NFSPROC_RENAME]++;
 	mb = mreq = nfsm_reqhead((NFSX_FH(v3) + NFSX_UNSIGNED)*2 +
 	    nfsm_rndup(fnamelen) + nfsm_rndup(tnamelen));
-	nfsm_fhtom(fdvp, v3);
+	nfsm_fhtom(&mb, fdvp, v3);
 	nfsm_strtom(fnameptr, fnamelen, NFS_MAXNAMLEN);
-	nfsm_fhtom(tdvp, v3);
+	nfsm_fhtom(&mb, tdvp, v3);
 	nfsm_strtom(tnameptr, tnamelen, NFS_MAXNAMLEN);
 	nfsm_request(fdvp, NFSPROC_RENAME, proc, cred);
 	if (v3) {
@@ -1628,8 +1628,8 @@ nfs_link(v)
 	nfsstats.rpccnt[NFSPROC_LINK]++;
 	mb = mreq = nfsm_reqhead(2 * NFSX_FH(v3) + NFSX_UNSIGNED +
 	    nfsm_rndup(cnp->cn_namelen));
-	nfsm_fhtom(vp, v3);
-	nfsm_fhtom(dvp, v3);
+	nfsm_fhtom(&mb, vp, v3);
+	nfsm_fhtom(&mb, dvp, v3);
 	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
 	nfsm_request(vp, NFSPROC_LINK, cnp->cn_proc, cnp->cn_cred);
 	if (v3) {
@@ -1675,7 +1675,7 @@ nfs_symlink(v)
 	slen = strlen(ap->a_target);
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3) + 2 * NFSX_UNSIGNED +
 	    nfsm_rndup(cnp->cn_namelen) + nfsm_rndup(slen) + NFSX_SATTR(v3));
-	nfsm_fhtom(dvp, v3);
+	nfsm_fhtom(&mb, dvp, v3);
 	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
 	if (v3)
 		nfsm_v3attrbuild(&mb, vap, 0);
@@ -1735,7 +1735,7 @@ nfs_mkdir(v)
 	nfsstats.rpccnt[NFSPROC_MKDIR]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3) + NFSX_UNSIGNED +
 	    nfsm_rndup(len) + NFSX_SATTR(v3));
-	nfsm_fhtom(dvp, v3);
+	nfsm_fhtom(&mb, dvp, v3);
 	nfsm_strtom(cnp->cn_nameptr, len, NFS_MAXNAMLEN);
 	if (v3) {
 		nfsm_v3attrbuild(&mb, vap, 0);
@@ -1809,7 +1809,7 @@ nfs_rmdir(v)
 	nfsstats.rpccnt[NFSPROC_RMDIR]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3) + NFSX_UNSIGNED +
 	    nfsm_rndup(cnp->cn_namelen));
-	nfsm_fhtom(dvp, v3);
+	nfsm_fhtom(&mb, dvp, v3);
 	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
 	nfsm_request(dvp, NFSPROC_RMDIR, cnp->cn_proc, cnp->cn_cred);
 	if (v3)
@@ -2045,7 +2045,7 @@ nfs_readdirrpc(struct vnode *vp,
 	while (more_dirs && bigenough) {
 		nfsstats.rpccnt[NFSPROC_READDIR]++;
 		mb = mreq = nfsm_reqhead(NFSX_FH(v3) + NFSX_READDIR(v3));
-		nfsm_fhtom(vp, v3);
+		nfsm_fhtom(&mb, vp, v3);
 		if (v3) {
 			tl = nfsm_build(&mb, 5 * NFSX_UNSIGNED);
 			*tl++ = cookie.nfsuquad[0];
@@ -2236,7 +2236,7 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred,
 	while (more_dirs && bigenough) {
 		nfsstats.rpccnt[NFSPROC_READDIRPLUS]++;
 		mb = mreq = nfsm_reqhead(NFSX_FH(1) + 6 * NFSX_UNSIGNED);
-		nfsm_fhtom(vp, 1);
+		nfsm_fhtom(&mb, vp, 1);
  		tl = nfsm_build(&mb, 6 * NFSX_UNSIGNED);
 		*tl++ = cookie.nfsuquad[0];
 		*tl++ = cookie.nfsuquad[1];
@@ -2508,7 +2508,7 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 	nfsstats.rpccnt[NFSPROC_LOOKUP]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3) + NFSX_UNSIGNED +
 	    nfsm_rndup(len));
-	nfsm_fhtom(dvp, v3);
+	nfsm_fhtom(&mb, dvp, v3);
 	nfsm_strtom(name, len, NFS_MAXNAMLEN);
 	nfsm_request(dvp, NFSPROC_LOOKUP, procp, cred);
 	if (npp && !error) {
@@ -2574,7 +2574,7 @@ nfs_commit(vp, offset, cnt, procp)
 		return (0);
 	nfsstats.rpccnt[NFSPROC_COMMIT]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(1));
-	nfsm_fhtom(vp, 1);
+	nfsm_fhtom(&mb, vp, 1);
 	tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED);
 	txdr_hyper(offset, tl);
 	tl += 2;

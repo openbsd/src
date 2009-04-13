@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.65 2009/03/30 19:58:50 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.66 2009/04/13 17:51:57 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -391,7 +391,7 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 		nfsm_srvpostop_attr(nfsd, dirattr_ret, &dirattr, &mb);
 		return (0);
 	}
-	nfsm_srvfhtom(fhp, v3);
+	nfsm_srvfhtom(&mb, fhp, v3);
 	if (v3) {
 		nfsm_srvpostop_attr(nfsd, 0, &va, &mb);
 		nfsm_srvpostop_attr(nfsd, dirattr_ret, &dirattr, &mb);
@@ -1436,7 +1436,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
 		    &mb);
 	} else {
-		nfsm_srvfhtom(fhp, v3);
+		nfsm_srvfhtom(&mb, fhp, v3);
 		fp = nfsm_build(&mb, NFSX_V2FATTR);
 		nfsm_srvfattr(nfsd, &va, fp);
 	}
@@ -2201,7 +2201,7 @@ out:
 		nfsm_srvwcc(nfsd, dirfor_ret, &dirfor, diraft_ret, &diraft,
 		    &mb);
 	} else {
-		nfsm_srvfhtom(fhp, v3);
+		nfsm_srvfhtom(&mb, fhp, v3);
 		fp = nfsm_build(&mb, NFSX_V2FATTR);
 		nfsm_srvfattr(nfsd, &va, fp);
 	}
