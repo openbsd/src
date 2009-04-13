@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbeginS.c,v 1.9 2009/02/04 19:43:48 kettenis Exp $	*/
+/*	$OpenBSD: crtbeginS.c,v 1.10 2009/04/13 20:15:24 kurt Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -45,6 +45,18 @@
 #include "md_init.h"
 #include "os-note-elf.h"
 #include "extern.h"
+
+/*
+ * java class registration hooks
+ */
+
+#if (__GNUC__ > 2)
+static void *__JCR_LIST__[]
+    __attribute__((section(".jcr"), aligned(sizeof(void*)))) = { };
+
+extern void _Jv_RegisterClasses (void *)
+    __attribute__((weak));
+#endif
 
 /*
  * Include support for the __cxa_atexit/__cxa_finalize C++ abi for
@@ -118,6 +130,12 @@ _do_init(void)
 	 */
 	if (!initialized) {
 		initialized = 1;
+
+#if (__GNUC__ > 2)
+		if (__JCR_LIST__[0] && _Jv_RegisterClasses)
+			_Jv_RegisterClasses(__JCR_LIST__);
+#endif
+
 		__ctors();
 	}
 }

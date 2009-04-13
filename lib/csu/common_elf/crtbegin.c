@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.12 2007/09/03 14:40:16 millert Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.13 2009/04/13 20:15:24 kurt Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -58,6 +58,18 @@ void __register_frame_info(const void *begin, struct dwarf2_eh_object *ob)
 
 static const char __EH_FRAME_BEGIN__[]
     __attribute__((section(".eh_frame"), aligned(4))) = { };
+
+/*
+ * java class registration hooks
+ */
+
+#if (__GNUC__ > 2)
+static void *__JCR_LIST__[]
+    __attribute__((section(".jcr"), aligned(sizeof(void*)))) = { };
+
+extern void _Jv_RegisterClasses (void *)
+    __attribute__((weak));
+#endif
 
 /*
  * Include support for the __cxa_atexit/__cxa_finalize C++ abi for
@@ -132,6 +144,11 @@ __do_init()
 		initialized = 1;
 
 		__register_frame_info(__EH_FRAME_BEGIN__, &object);
+
+#if (__GNUC__ > 2)
+		if (__JCR_LIST__[0] && _Jv_RegisterClasses)
+			_Jv_RegisterClasses(__JCR_LIST__);
+#endif
 
 		(__ctors)();
 
