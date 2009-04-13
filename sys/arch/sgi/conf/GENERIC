@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.36 2009/02/10 18:35:44 damien Exp $
+#	$OpenBSD: GENERIC,v 1.37 2009/04/13 21:13:34 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -23,11 +23,6 @@ option	WSDISPLAY_COMPAT_RAWKBD	# Provide raw scancodes; needed for X11
 
 option		PCIVERBOSE
 option		USER_PCICONF	# User-space PCI configuration
-
-#option		UVMHIST		# Enable uvm history logging
-
-#option		DEBUG
-#option		SYSCALL_DEBUG
 
 # Define what targets to support
 option		TGT_O2
