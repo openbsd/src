@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.166 2009/04/10 21:01:32 krw Exp $
+#	$OpenBSD: install.sh,v 1.167 2009/04/13 02:22:12 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -377,18 +377,18 @@ hostname >myname
 # Append entries to installed hosts file, changing '1.2.3.4 hostname'
 # to '1.2.3.4 hostname.$FQDN hostname'. Leave untouched lines containing
 # domain information or aliases. These are lines the user added/changed
-# manually.
-_dn=$(get_fqdn)
-while read _addr _hn _aliases; do
-	if [[ -n $_aliases || $_hn != ${_hn%%.*} || -z $_dn ]]; then
-		echo "$_addr\t$_hn $_aliases"
-	else
-		echo "$_addr\t$_hn.$_dn $_hn"
-	fi
-done <hosts >>/mnt/etc/hosts
-# rm hosts because we don't want to move it to /mnt/etc/., and rm -f because
-# we may not have configured any interfaces and thus have no file to remove.
-rm -f hosts
+# manually. Note we may have no hosts file if no interfaces were configured.
+if [[ -f hosts ]]; then
+	_dn=$(get_fqdn)
+	while read _addr _hn _aliases; do
+		if [[ -n $_aliases || $_hn != ${_hn%%.*} || -z $_dn ]]; then
+			echo "$_addr\t$_hn $_aliases"
+		else
+			echo "$_addr\t$_hn.$_dn $_hn"
+		fi
+	done <hosts >>/mnt/etc/hosts
+	rm hosts
+fi
 
 # Append dhclient.conf to installed dhclient.conf.
 _f=dhclient.conf
