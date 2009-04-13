@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.7 2009/02/03 19:44:58 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.8 2009/04/13 16:05:50 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -121,6 +121,8 @@ struct sio_cap {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct pollfd;
 
 int sio_strtoenc(struct sio_par *, char *);
 int sio_enctostr(struct sio_par *, char *);
