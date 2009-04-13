@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.71 2008/08/22 08:52:35 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.72 2009/04/13 01:47:04 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: main.c,v 1.71 2008/08/22 08:52:35 sobrado Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.72 2009/04/13 01:47:04 deraadt Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -182,7 +182,7 @@ main(volatile int argc, char *argv[])
 	cookiefile = getenv("http_cookies");
 #endif /* !SMALL */
 
-	while ((ch = getopt(argc, argv, "46AaCc:dEegik:mno:pP:r:tvV")) != -1) {
+	while ((ch = getopt(argc, argv, "46AaCc:dEegik:mno:pP:r:tT:vV")) != -1) {
 		switch (ch) {
 		case '4':
 			family = PF_INET;
@@ -279,6 +279,10 @@ main(volatile int argc, char *argv[])
 
 		case 't':
 			trace = 1;
+			break;
+
+		case 'T':
+			title = strdup(optarg);
 			break;
 
 		case 'v':
@@ -770,8 +774,8 @@ usage(void)
 #ifndef SMALL
 	    "d"
 #endif /* !SMALL */
-	    "EegimnptVv] [-k seconds] "
-	    "[-P port] [-r seconds] [host [port]]\n"
+	    "EegimnptVv] [-k seconds] [-P port] [-r seconds]\n"
+	    "           [-T title] [host [port]]\n"
 	    "       %s "
 #ifndef SMALL
 	    "[-C] "

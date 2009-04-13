@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.56 2009/01/27 22:04:36 martynas Exp $	*/
+/*	$OpenBSD: util.c,v 1.57 2009/04/13 01:47:04 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: util.c,v 1.56 2009/01/27 22:04:36 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.57 2009/04/13 01:47:04 deraadt Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -749,6 +749,8 @@ updateprogressmeter(int signo)
  */
 static struct timeval start;
 
+char    *title;
+
 void
 progressmeter(int flag)
 {
@@ -763,7 +765,7 @@ progressmeter(int flag)
 	struct timeval now, td, wait;
 	off_t cursize, abbrevsize;
 	double elapsed;
-	int ratio, barlength, i, remaining;
+	int ratio, barlength, i, remaining, overhead = 30;
 	char buf[512];
 
 	if (flag == -1) {
@@ -782,9 +784,24 @@ progressmeter(int flag)
 		ratio = 100;
 	ratio = MAX(ratio, 0);
 	ratio = MIN(ratio, 100);
-	snprintf(buf, sizeof(buf), "\r%3d%% ", ratio);
+	if (title) {
+		int l = strlen(title);
+		char *dotdot = "";
 
-	barlength = ttywidth - 30;
+		if (l < 12)
+			l = 12;
+		else if (l > 25) {
+			l = 22;
+			dotdot = "...";
+			overhead += 3;
+		}
+		snprintf(buf, sizeof(buf), "\r%-*.*s%s %3d%% ", l, l, title,
+		    dotdot, ratio);
+		overhead += l + 1;
+	} else		
+		snprintf(buf, sizeof(buf), "\r%3d%% ", ratio);
+
+	barlength = ttywidth - overhead;
 	if (barlength > 0) {
 		i = barlength * ratio / 100;
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),

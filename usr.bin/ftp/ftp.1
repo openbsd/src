@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.74 2008/09/08 19:31:16 martynas Exp $
+.\" 	$OpenBSD: ftp.1,v 1.75 2009/04/13 01:47:04 deraadt Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: September 8 2008 $
+.Dd $Mdocdate: April 13 2009 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Op Fl k Ar seconds
 .Op Fl P Ar port
 .Op Fl r Ar seconds
+.Op Fl T Ar title
 .Op Ar host Op Ar port
 .Nm ftp
 .Op Fl C
@@ -209,6 +210,10 @@ if the server does not support passive connections.
 .It Fl r Ar seconds
 Retry to connect if failed, pausing for number of
 .Ar seconds .
+.It Fl T Ar title
+Set a filename
+.Ar title
+which will appear in the transfer progress bar.
 .It Fl t
 Enables packet tracing.
 .It Fl V
