@@ -1,4 +1,4 @@
-/*	$OpenBSD: owmac.c,v 1.1 2008/04/07 22:55:57 miod Exp $	*/
+/*	$OpenBSD: owmac.c,v 1.2 2009/04/13 21:14:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -61,8 +61,20 @@ void	owmac_read_mac(struct owmac_softc *);
 int
 owmac_match(struct device *parent, void *match, void *aux)
 {
-	return (onewire_matchbyfam(aux, owmac_fams,
-	    sizeof(owmac_fams) /sizeof(owmac_fams[0])));
+	struct onewire_attach_args *oa = aux;
+	
+	if (ONEWIRE_ROM_FAMILY_TYPE(oa->oa_rom) == ONEWIRE_FAMILY_DS1982)
+		return 1;
+
+	/*
+	 * Also match on UniqueWare devices with specific 0x91 family code.
+	 */
+	if ((ONEWIRE_ROM_SN(oa->oa_rom) >> (48 - 12)) == 0x5e7 &&
+	    ONEWIRE_ROM_FAMILY_CUSTOM(oa->oa_rom) &&
+	    ONEWIRE_ROM_FAMILY(oa->oa_rom) == 0x91)
+		return 1;
+
+	return 0;
 }
 
 void
@@ -174,7 +186,7 @@ owmac_read_mac(struct owmac_softc *sc)
 
 	sc->sc_enaddr[0] = buf[10];
 	sc->sc_enaddr[1] = buf[9];
-	sc->sc_enaddr[2] = buf[0];
+	sc->sc_enaddr[2] = buf[8];
 	sc->sc_enaddr[3] = buf[7];
 	sc->sc_enaddr[4] = buf[6];
 	sc->sc_enaddr[5] = buf[5];
