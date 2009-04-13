@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.418 2009/04/10 21:43:37 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.419 2009/04/13 19:08:49 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 10 2009 $
+.Dd $Mdocdate: April 13 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -236,131 +236,72 @@ added to the table.
 may be tuned for various situations using the
 .Ar set
 command.
-.Bl -tag -width xxxx
-.It Ar set timeout
+.Bl -tag -width Ds
+.It Ar set block-policy
+The
+.Ar block-policy
+option sets the default behaviour for the packet
+.Ar block
+action:
 .Pp
-.Bl -tag -width "src.track" -compact
-.It Ar interval
-Interval between purging expired states and fragments.
-.It Ar frag
-Seconds before an unassembled fragment is expired.
-.It Ar src.track
-Length of time to retain a source tracking entry after the last state
-expires.
+.Bl -tag -width xxxxxxxx -compact
+.It Ar drop
+Packet is silently dropped.
+.It Ar return
+A TCP RST is returned for blocked TCP packets,
+an ICMP UNREACHABLE is returned for blocked UDP packets,
+and all other packets are silently dropped.
 .El
-.Pp
-When a packet matches a stateful connection, the seconds to live for the
-connection will be updated to that of the
-.Ar proto.modifier
-which corresponds to the connection state.
-Each packet which matches this state will reset the TTL.
-Tuning these values may improve the performance of the
-firewall at the risk of dropping valid idle connections.
-.Pp
-.Bl -tag -width xxxx -compact
-.It Ar tcp.first
-The state after the first packet.
-.It Ar tcp.opening
-The state before the destination host ever sends a packet.
-.It Ar tcp.established
-The fully established state.
-.It Ar tcp.closing
-The state after the first FIN has been sent.
-.It Ar tcp.finwait
-The state after both FINs have been exchanged and the connection is closed.
-Some hosts (notably web servers on Solaris) send TCP packets even after closing
-the connection.
-Increasing
-.Ar tcp.finwait
-(and possibly
-.Ar tcp.closing )
-can prevent blocking of such packets.
-.It Ar tcp.closed
-The state after one endpoint sends an RST.
-.El
-.Pp
-ICMP and UDP are handled in a fashion similar to TCP, but with a much more
-limited set of states:
-.Pp
-.Bl -tag -width xxxx -compact
-.It Ar udp.first
-The state after the first packet.
-.It Ar udp.single
-The state if the source host sends more than one packet but the destination
-host has never sent one back.
-.It Ar udp.multiple
-The state if both hosts have sent packets.
-.It Ar icmp.first
-The state after the first packet.
-.It Ar icmp.error
-The state after an ICMP error came back in response to an ICMP packet.
-.El
-.Pp
-Other protocols are handled similarly to UDP:
-.Pp
-.Bl -tag -width xxxx -compact
-.It Ar other.first
-.It Ar other.single
-.It Ar other.multiple
-.El
-.Pp
-Timeout values can be reduced adaptively as the number of state table
-entries grows.
-.Pp
-.Bl -tag -width xxxx -compact
-.It Ar adaptive.start
-When the number of state entries exceeds this value, adaptive scaling
-begins.
-All timeout values are scaled linearly with factor
-(adaptive.end - number of states) / (adaptive.end - adaptive.start).
-.It Ar adaptive.end
-When reaching this number of state entries, all timeout values become
-zero, effectively purging all state entries immediately.
-This value is used to define the scale factor, it should not actually
-be reached (set a lower state limit, see below).
-.El
-.Pp
-Adaptive timeouts are enabled by default, with an adaptive.start value
-equal to 60% of the state limit, and an adaptive.end value equal to
-120% of the state limit.
-They can be disabled by setting both adaptive.start and adaptive.end to 0.
-.Pp
-The adaptive timeout values can be defined both globally and for each rule.
-When used on a per-rule basis, the values relate to the number of
-states created by the rule, otherwise to the total number of
-states.
 .Pp
 For example:
 .Bd -literal -offset indent
-set timeout tcp.first 120
-set timeout tcp.established 86400
-set timeout { adaptive.start 6000, adaptive.end 12000 }
-set limit states 10000
+set block-policy return
 .Ed
+.It Ar set debug
+Set the debug
+.Ar level
+to one of the following:
 .Pp
-With 9000 state table entries, the timeout values are scaled to 50%
-(tcp.first 60, tcp.established 43200).
+.Bl -tag -width xxxxxxxx -compact
+.It Ar loud
+Generate debug messages for common conditions.
+.It Ar misc
+Generate debug messages for various errors.
+.It Ar none
+Don't generate debug messages.
+.It Ar urgent
+Generate debug messages only for serious errors.
+.El
+.It Ar set fingerprints
+Load fingerprints of known operating systems from the given filename.
+By default fingerprints of known operating systems are automatically
+loaded from
+.Xr pf.os 5
+in
+.Pa /etc
+but can be overridden via this option.
+Setting this option may leave a small period of time where the fingerprints
+referenced by the currently active ruleset are inconsistent until the new
+ruleset finishes loading.
 .Pp
-.It Ar set loginterface
-Enable collection of packet and byte count statistics for the given
-interface or interface group.
-These statistics can be viewed using
+For example:
+.Pp
+.Dl set fingerprints \&"/etc/pf.os.devel\&"
+.It Ar set hostid
+The 32-bit
+.Ar hostid
+identifies this firewall's state table entries to other firewalls
+in a
+.Xr pfsync 4
+failover cluster.
+By default the hostid is set to a pseudo-random value, however it may be
+desirable to manually configure it, for example to more easily identify the
+source of state table entries.
 .Bd -literal -offset indent
-# pfctl -s info
+set hostid 1
 .Ed
 .Pp
-In this example
-.Xr pf 4
-collects statistics on the interface named dc0:
-.Bd -literal -offset indent
-set loginterface dc0
-.Ed
-.Pp
-One can disable the loginterface using:
-.Bd -literal -offset indent
-set loginterface none
-.Ed
-.Pp
+The hostid may be specified in either decimal or hexadecimal.
 .It Ar set limit
 Sets hard limits on the memory pools used by the packet filter.
 See
@@ -411,11 +352,82 @@ Various limits can be combined on a single line:
 .Bd -literal -offset indent
 set limit { states 20000, frags 20000, src-nodes 2000 }
 .Ed
+.It Ar set loginterface
+Enable collection of packet and byte count statistics for the given
+interface or interface group.
+These statistics can be viewed using
+.Bd -literal -offset indent
+# pfctl -s info
+.Ed
 .Pp
+In this example
+.Xr pf 4
+collects statistics on the interface named dc0:
+.Bd -literal -offset indent
+set loginterface dc0
+.Ed
+.Pp
+One can disable the loginterface using:
+.Bd -literal -offset indent
+set loginterface none
+.Ed
+.It Ar set optimization
+Optimize state timeouts for one of the following network environments:
+.Pp
+.Bl -tag -width Ds -compact
+.It Ar aggressive
+Aggressively expire connections.
+This can greatly reduce the memory usage of the firewall at the cost of
+dropping idle connections early.
+.It Ar conservative
+Extremely conservative settings.
+Avoid dropping legitimate connections at the
+expense of greater memory utilization (possibly much greater on a busy
+network) and slightly increased processor utilization.
+.It Ar high-latency
+A high-latency environment (such as a satellite connection).
+.It Ar normal
+A normal network environment.
+Suitable for almost all networks.
+.It Ar satellite
+Alias for
+.Ar high-latency .
+.El
+.Pp
+For example:
+.Bd -literal -offset indent
+set optimization aggressive
+.Ed
+.It Ar set reassemble
+The
+.Ar reassemble
+option turns reassembly of fragmented packets on or off.
+If
+.Ar no-df
+is given fragments with the
+.Ar dont-fragment
+bit set have it cleared before entering the fragment cache,
+and thus the reassembled packet doesn't have
+.Ar dont-fragment
+set either.
+Setting this option does not affect non-fragmented packets.
+Fragment reassembly is turned on by default.
+.It Ar set require-order
+By default
+.Xr pfctl 8
+enforces an ordering of the statement types in the ruleset to:
+.Em options ,
+.Em queueing ,
+.Em translation ,
+.Em filtering .
+Setting this option to
+.Ar no
+disables this enforcement.
+There may be non-trivial and non-obvious implications to an out of
+order ruleset.
+Consider carefully before disabling the order enforcement.
 .It Ar set ruleset-optimization
 .Bl -tag -width xxxxxxxx -compact
-.It Ar none
-Disable the ruleset optimizer.
 .It Ar basic
 Enable basic ruleset optimization.
 This is the default behaviour.
@@ -432,7 +444,8 @@ combine multiple rules into a table when advantageous
 .It
 re-order the rules to improve evaluation performance
 .El
-.Pp
+.It Ar none
+Disable the ruleset optimizer.
 .It Ar profile
 Uses the currently loaded ruleset as a feedback profile to tailor the
 ordering of quick rules to actual network traffic.
@@ -450,70 +463,15 @@ Optimization can also be set as a command-line argument to
 .Xr pfctl 8 ,
 overriding the settings in
 .Nm .
-.It Ar set optimization
-Optimize state timeouts for one of the following network environments:
-.Pp
-.Bl -tag -width xxxx -compact
-.It Ar normal
-A normal network environment.
-Suitable for almost all networks.
-.It Ar high-latency
-A high-latency environment (such as a satellite connection).
-.It Ar satellite
-Alias for
-.Ar high-latency .
-.It Ar aggressive
-Aggressively expire connections.
-This can greatly reduce the memory usage of the firewall at the cost of
-dropping idle connections early.
-.It Ar conservative
-Extremely conservative settings.
-Avoid dropping legitimate connections at the
-expense of greater memory utilization (possibly much greater on a busy
-network) and slightly increased processor utilization.
-.El
-.Pp
+.It Ar set skip on Aq Ar ifspec
+List interfaces for which packets should not be filtered.
+Packets passing in or out on such interfaces are passed as if pf was
+disabled, i.e. pf does not process them in any way.
+This can be useful on loopback and other virtual interfaces, when
+packet filtering is not desired and can have unexpected effects.
 For example:
-.Bd -literal -offset indent
-set optimization aggressive
-.Ed
 .Pp
-.It Ar set block-policy
-The
-.Ar block-policy
-option sets the default behaviour for the packet
-.Ar block
-action:
-.Pp
-.Bl -tag -width xxxxxxxx -compact
-.It Ar drop
-Packet is silently dropped.
-.It Ar return
-A TCP RST is returned for blocked TCP packets,
-an ICMP UNREACHABLE is returned for blocked UDP packets,
-and all other packets are silently dropped.
-.El
-.Pp
-For example:
-.Bd -literal -offset indent
-set block-policy return
-.Ed
-.It Ar set state-policy
-The
-.Ar state-policy
-option sets the default behaviour for states:
-.Pp
-.Bl -tag -width group-bound -compact
-.It Ar if-bound
-States are bound to interface.
-.It Ar floating
-States can match packets on any interfaces (the default).
-.El
-.Pp
-For example:
-.Bd -literal -offset indent
-set state-policy if-bound
-.Ed
+.Dl set skip on lo0
 .It Ar set state-defaults
 The
 .Ar state-defaults
@@ -524,90 +482,125 @@ For example:
 .Bd -literal -offset indent
 set state-defaults pflow, no-sync
 .Ed
-.It Ar set hostid
-The 32-bit
-.Ar hostid
-identifies this firewall's state table entries to other firewalls
-in a
-.Xr pfsync 4
-failover cluster.
-By default the hostid is set to a pseudo-random value, however it may be
-desirable to manually configure it, for example to more easily identify the
-source of state table entries.
+.It Ar set state-policy
+The
+.Ar state-policy
+option sets the default behaviour for states:
+.Pp
+.Bl -tag -width if-bound -compact
+.It Ar if-bound
+States are bound to interface.
+.It Ar floating
+States can match packets on any interfaces (the default).
+.El
+.Pp
+For example:
 .Bd -literal -offset indent
-set hostid 1
+set state-policy if-bound
+.Ed
+.It Ar set timeout
+.Pp
+.Bl -tag -width "src.track" -compact
+.It Ar frag
+Seconds before an unassembled fragment is expired.
+.It Ar interval
+Interval between purging expired states and fragments.
+.It Ar src.track
+Length of time to retain a source tracking entry after the last state
+expires.
+.El
+.Pp
+When a packet matches a stateful connection, the seconds to live for the
+connection will be updated to that of the
+.Ar proto.modifier
+which corresponds to the connection state.
+Each packet which matches this state will reset the TTL.
+Tuning these values may improve the performance of the
+firewall at the risk of dropping valid idle connections.
+.Pp
+.Bl -tag -width Ds -compact
+.It Ar tcp.closed
+The state after one endpoint sends an RST.
+.It Ar tcp.closing
+The state after the first FIN has been sent.
+.It Ar tcp.established
+The fully established state.
+.It Ar tcp.finwait
+The state after both FINs have been exchanged and the connection is closed.
+Some hosts (notably web servers on Solaris) send TCP packets even after closing
+the connection.
+Increasing
+.Ar tcp.finwait
+(and possibly
+.Ar tcp.closing )
+can prevent blocking of such packets.
+.It Ar tcp.first
+The state after the first packet.
+.It Ar tcp.opening
+The state before the destination host ever sends a packet.
+.El
+.Pp
+ICMP and UDP are handled in a fashion similar to TCP, but with a much more
+limited set of states:
+.Pp
+.Bl -tag -width Ds -compact
+.It Ar icmp.error
+The state after an ICMP error came back in response to an ICMP packet.
+.It Ar icmp.first
+The state after the first packet.
+.It Ar udp.first
+The state after the first packet.
+.It Ar udp.multiple
+The state if both hosts have sent packets.
+.It Ar udp.single
+The state if the source host sends more than one packet but the destination
+host has never sent one back.
+.El
+.Pp
+Other protocols are handled similarly to UDP:
+.Pp
+.Bl -tag -width xxxx -compact
+.It Ar other.first
+.It Ar other.multiple
+.It Ar other.single
+.El
+.Pp
+Timeout values can be reduced adaptively as the number of state table
+entries grows.
+.Pp
+.Bl -tag -width Ds -compact
+.It Ar adaptive.end
+When reaching this number of state entries, all timeout values become
+zero, effectively purging all state entries immediately.
+This value is used to define the scale factor, it should not actually
+be reached (set a lower state limit, see below).
+.It Ar adaptive.start
+When the number of state entries exceeds this value, adaptive scaling
+begins.
+All timeout values are scaled linearly with factor
+(adaptive.end - number of states) / (adaptive.end - adaptive.start).
+.El
+.Pp
+Adaptive timeouts are enabled by default, with an adaptive.start value
+equal to 60% of the state limit, and an adaptive.end value equal to
+120% of the state limit.
+They can be disabled by setting both adaptive.start and adaptive.end to 0.
+.Pp
+The adaptive timeout values can be defined both globally and for each rule.
+When used on a per-rule basis, the values relate to the number of
+states created by the rule, otherwise to the total number of
+states.
+.Pp
+For example:
+.Bd -literal -offset indent
+set timeout tcp.first 120
+set timeout tcp.established 86400
+set timeout { adaptive.start 6000, adaptive.end 12000 }
+set limit states 10000
 .Ed
 .Pp
-The hostid may be specified in either decimal or hexadecimal.
-.It Ar set require-order
-By default
-.Xr pfctl 8
-enforces an ordering of the statement types in the ruleset to:
-.Em options ,
-.Em queueing ,
-.Em translation ,
-.Em filtering .
-Setting this option to
-.Ar no
-disables this enforcement.
-There may be non-trivial and non-obvious implications to an out of
-order ruleset.
-Consider carefully before disabling the order enforcement.
-.It Ar set fingerprints
-Load fingerprints of known operating systems from the given filename.
-By default fingerprints of known operating systems are automatically
-loaded from
-.Xr pf.os 5
-in
-.Pa /etc
-but can be overridden via this option.
-Setting this option may leave a small period of time where the fingerprints
-referenced by the currently active ruleset are inconsistent until the new
-ruleset finishes loading.
-.Pp
-For example:
-.Pp
-.Dl set fingerprints \&"/etc/pf.os.devel\&"
-.Pp
-.It Ar set skip on Aq Ar ifspec
-List interfaces for which packets should not be filtered.
-Packets passing in or out on such interfaces are passed as if pf was
-disabled, i.e. pf does not process them in any way.
-This can be useful on loopback and other virtual interfaces, when
-packet filtering is not desired and can have unexpected effects.
-For example:
-.Pp
-.Dl set skip on lo0
-.Pp
-.It Ar set debug
-Set the debug
-.Ar level
-to one of the following:
-.Pp
-.Bl -tag -width xxxxxxxx -compact
-.It Ar none
-Don't generate debug messages.
-.It Ar urgent
-Generate debug messages only for serious errors.
-.It Ar misc
-Generate debug messages for various errors.
-.It Ar loud
-Generate debug messages for common conditions.
-.El
-.It Ar set reassemble
-The
-.Ar reassemble
-option turns reassembly of fragmented packets on or off.
-If
-.Ar no-df
-is given fragments with the
-.Ar dont-fragment
-bit set have it cleared before entering the fragment cache,
-and thus the reassembled packet doesn't have
-.Ar dont-fragment
-set either.
-Setting this option does not affect non-fragmented packets.
-Fragment reassembly is turned on by default.
+With 9000 state table entries, the timeout values are scaled to 50%
+(tcp.first 60, tcp.established 43200).
 .El
 .Sh QUEUEING
 Packets can be assigned to queues for the purpose of bandwidth
