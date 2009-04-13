@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.51 2008/11/22 18:12:32 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.52 2009/04/13 08:31:36 kettenis Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -708,11 +708,11 @@ cpu_boot_secondary_processors(void)
 		else
 			cpuid = getpropint(ci->ci_node, "cpuid", -1);
 
-		if (cpuid == -1) {
-			prom_start_cpu(ci->ci_node,
+		if (OF_test("SUNW,start-cpu-by-cpuid") == 0) {
+			prom_start_cpu_by_cpuid(cpuid,
 			    (void *)cpu_mp_startup, ci->ci_paddr);
 		} else {
-			prom_start_cpu_by_cpuid(cpuid,
+			prom_start_cpu(ci->ci_node,
 			    (void *)cpu_mp_startup, ci->ci_paddr);
 		}
 
