@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.46 2009/04/11 17:13:33 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.47 2009/04/13 21:22:38 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -631,6 +631,10 @@ pci_init_extents(void)
 			size = bmp->size;
 			if (bmp->addr + size >= 0x100000000ULL)
 				size = 0x100000000ULL - bmp->addr;
+
+			/* Ignore zero-sized regions. */
+			if (size == 0)
+				continue;
 
 			if (extent_alloc_region(pcimem_ex, bmp->addr, size,
 			    EX_NOWAIT))
