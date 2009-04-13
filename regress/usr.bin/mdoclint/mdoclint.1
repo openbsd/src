@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoclint.1,v 1.6 2009/04/13 12:41:27 espie Exp $
+.\"	$OpenBSD: mdoclint.1,v 1.7 2009/04/13 19:06:38 jmc Exp $
 .\" $NetBSD: mdoclint.1,v 1.3 2003/05/09 09:22:05 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2008 Thomas Klausner
@@ -33,7 +33,7 @@
 .Nd man page verifier
 .Sh SYNOPSIS
 .Nm
-.Op Fl aDdeFfHhmnoPprSsvXx
+.Op Fl aDdeFfHhmnoPprSsvwXx
 .Ar
 .Sh DESCRIPTION
 .Nm
@@ -43,7 +43,7 @@ errors that occur when writing man pages as possible.
 If no flags are given,
 .Fl aDdfHmnoPprSsXx
 is assumed (that is, everything except
-.Fl eFhv ) .
+.Fl eFhvw ) .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -111,6 +111,10 @@ wrong order (see
 Warn about superfluous whitespace at the end of line.
 .It Fl v
 Verbose output.
+.It Fl w
+Display the section name,
+in addition to the relevant line number,
+in warnings.
 .It Fl X
 Warn about explicit mentions of the words
 .Dq FreeBSD ,
