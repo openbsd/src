@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsrtc.c,v 1.1 2008/04/07 22:36:26 miod Exp $ */
+/*	$OpenBSD: dsrtc.c,v 1.2 2009/04/13 21:17:54 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -95,10 +95,13 @@ tobcd(int x)
 int
 dsrtc_match_ioc(struct device *parent, void *match, void *aux)
 {
-	if (sys_config.system_type != SGI_OCTANE)
+	switch (sys_config.system_type) {
+	case SGI_OCTANE:
+	case SGI_O200:
+		return 1;
+	default:
 		return 0;
-
-	return 1;
+	}
 }
 
 void

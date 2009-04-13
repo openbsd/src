@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.3 2009/04/12 17:53:02 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.4 2009/04/13 21:17:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -35,6 +35,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <sgi/sgi/ip30.h>
+#include <sgi/xbow/widget.h>
 #include <sgi/xbow/xbow.h>
 #include <sgi/xbow/xbridgereg.h>
 
@@ -147,7 +148,7 @@ ip30_widget_id(int16_t nasid, u_int widget, uint32_t *wid)
 
 	if (widget != 0)
 	{
-		if (widget < 8 || widget > 15)
+		if (widget < WIDGET_MIN || widget > WIDGET_MAX)
 			return EINVAL;
 
 		linkpa = ip30_widget_short(nasid, 0) + XBOW_WIDGET_LINK(widget);
@@ -161,4 +162,14 @@ ip30_widget_id(int16_t nasid, u_int widget, uint32_t *wid)
 		*wid = *(uint32_t *)(wpa + WIDGET_ID);
 
 	return 0;
+}
+
+void
+hw_setintrmask(intrmask_t m)
+{
+	extern intrmask_t heart_intem;
+
+	paddr_t heart;
+	heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC);
+	*(volatile uint64_t *)(heart + HEART_IMR(0)) = heart_intem & ~m;
 }

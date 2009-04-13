@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.h,v 1.1 2008/04/07 22:47:40 miod Exp $	*/
+/*	$OpenBSD: xbow.h,v 1.2 2009/04/13 21:17:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -99,6 +99,13 @@ extern	void	(*xbow_intr_widget_intr_disestablish)(int);
 #define	WIDGET_LINK_RESET		0x0034
 #define	WIDGET_LINK_AUX_STATUS		0x003c
 
+/*
+ * Valid widget values
+ */
+
+#define	WIDGET_MIN			8
+#define	WIDGET_MAX			15
+
 
 struct xbow_attach_args {
 	int		xaa_widget;
@@ -116,6 +123,8 @@ int	xbow_intr_register(int, int, int *);
 int	xbow_intr_establish(int (*)(void *), void *, int, int, const char *);
 void	xbow_intr_disestablish(int);
 
+int	xbow_space_map_short(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
 uint8_t xbow_read_1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 uint16_t xbow_read_2(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 void	xbow_write_1(bus_space_tag_t, bus_space_handle_t, bus_size_t, uint8_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.3 2009/04/12 17:56:58 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.4 2009/04/13 21:17:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -27,6 +27,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <mips64/archtype.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -41,7 +42,9 @@
 #include <dev/onewire/onewirereg.h>
 #include <dev/onewire/onewirevar.h>
 
+#if 0
 #include <sgi/dev/if_efreg.h>
+#endif
 #include <sgi/dev/owmacvar.h>
 
 #include <sgi/xbow/xbow.h>
@@ -227,6 +230,10 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mem_bus_space->_space_read_2 = xbow_read_2;
 	sc->sc_mem_bus_space->_space_write_1 = xbow_write_1;
 	sc->sc_mem_bus_space->_space_write_2 = xbow_write_2;
+
+	/* XXX undo IP27 xbridge weird mapping */
+	if (sys_config.system_type != SGI_OCTANE)
+		sc->sc_mem_bus_space->_space_map = xbow_space_map_short;
 
 	sc->sc_memt = sc->sc_mem_bus_space;
 	sc->sc_memh = memh;
@@ -515,6 +522,7 @@ ioc_intr_superio(void *v)
 int
 ioc_intr_ethernet(void *v)
 {
+#if 0
 	struct ioc_softc *sc = (struct ioc_softc *)v;
 	uint32_t stat;
 
@@ -527,6 +535,9 @@ ioc_intr_ethernet(void *v)
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, EF_INTR_STATUS, stat);
 
 	return 1;
+#else
+	return 0;
+#endif
 }
 
 void

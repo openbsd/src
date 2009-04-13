@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.23 2009/04/12 17:56:56 miod Exp $
+#	$OpenBSD: files.sgi,v 1.24 2009/04/13 21:17:52 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -57,13 +57,9 @@ file	arch/sgi/localbus/macebus.c		macebus
 file	arch/sgi/localbus/macectrl.S		macebus
 
 #
-#	Origin200/Origin2000 XBOW mux bridge
+#	Origin200/Origin2000 node configuration enumerator, and
+#	Octane XBOW mux bridge
 #
-define	xbow {[vendor = -1], [product = -1]}
-device	xbow
-attach	xbow at mainbus
-file	arch/sgi/xbow/xbow.c			xbow
-
 include "arch/sgi/xbow/files.xbow"
 
 include "dev/onewire/files.onewire"

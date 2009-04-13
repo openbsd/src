@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.6 2009/04/12 17:55:20 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.7 2009/04/13 21:17:54 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -109,6 +109,8 @@ void	xbridge_read_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    uint8_t *, bus_size_t);
 void	xbridge_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    const uint8_t *, bus_size_t);
+int	xbridge_space_map_short(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
 
 bus_addr_t xbridge_pa_to_device(paddr_t);
 paddr_t	xbridge_device_to_pa(bus_addr_t);
@@ -184,21 +186,35 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_io_bus_space == NULL)
 		goto fail2;
 
-	bcopy(xaa->xaa_long_tag, sc->sc_mem_bus_space,
-	    sizeof(*sc->sc_mem_bus_space));
-	sc->sc_mem_bus_space->bus_base = xaa->xaa_long_tag->bus_base +
-	    BRIDGE_PCI_MEM_SPACE_BASE;
+	if (sys_config.system_type == SGI_OCTANE) {
+		bcopy(xaa->xaa_long_tag, sc->sc_mem_bus_space,
+		    sizeof(*sc->sc_mem_bus_space));
+		sc->sc_mem_bus_space->bus_base += BRIDGE_PCI_MEM_SPACE_BASE;
 
-	if (sc->sc_rev >= 4) {
-		/* Unrestricted I/O mappings in the large window */
-		bcopy(xaa->xaa_long_tag, sc->sc_io_bus_space,
-		    sizeof(*sc->sc_io_bus_space));
-		sc->sc_io_bus_space->bus_base +=
-		    BRIDGE_PCI_IO_SPACE_BASE;
+		if (sc->sc_rev >= 4) {
+			/* Unrestricted I/O mappings in the large window */
+			bcopy(xaa->xaa_long_tag, sc->sc_io_bus_space,
+			    sizeof(*sc->sc_io_bus_space));
+			sc->sc_io_bus_space->bus_base +=
+			    BRIDGE_PCI_IO_SPACE_BASE;
+		} else {
+			/* Programmable I/O mappings in the small window */
+			bcopy(xaa->xaa_short_tag, sc->sc_io_bus_space,
+			    sizeof(*sc->sc_io_bus_space));
+		}
 	} else {
-		/* Programmable I/O mappings in the small window */
+		/* Limited memory mappings in the small window */
+		bcopy(xaa->xaa_short_tag, sc->sc_mem_bus_space,
+		    sizeof(*sc->sc_mem_bus_space));
+		sc->sc_mem_bus_space->bus_private = sc;
+		sc->sc_mem_bus_space->_space_map = xbridge_space_map_short;
+
+		/* Limited I/O mappings in the small window */
 		bcopy(xaa->xaa_short_tag, sc->sc_io_bus_space,
 		    sizeof(*sc->sc_io_bus_space));
+		sc->sc_io_bus_space->bus_private = sc;
+		sc->sc_io_bus_space->_space_map = xbridge_space_map_short;
+		sc->sc_io_bus_space->bus_base += 0xa00000;
 	}
 
 	sc->sc_io_bus_space->_space_read_1 = xbridge_read_1;
@@ -766,6 +782,28 @@ xbridge_write_raw_8(bus_space_tag_t t, bus_space_handle_t h, bus_addr_t o,
 		*addr = *(uint64_t *)buf;
 		buf += 8;
 	}
+}
+
+/*
+ * On IP27, we can not use the default xbow space_map_short because
+ * of the games we play with bus addresses.
+ */
+int
+xbridge_space_map_short(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
+    int cacheable, bus_space_handle_t *bshp)
+{
+	struct xbridge_softc *sc = (struct xbridge_softc *)t->bus_private;
+	bus_addr_t bpa;
+
+	bpa = t->bus_base - (sc->sc_widget << 24) + offs;
+
+	/* check that this neither underflows nor overflows the window */
+	if (((bpa + size - 1) >> 24) != (t->bus_base >> 24) ||
+	    (bpa >> 24) != (t->bus_base >> 24))
+		return (EINVAL);
+
+	*bshp = bpa;
+	return 0;
 }
 
 /*
