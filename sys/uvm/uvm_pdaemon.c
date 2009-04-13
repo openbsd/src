@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.38 2009/04/06 12:02:52 oga Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.39 2009/04/13 22:17:54 oga Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -860,13 +860,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 					    &nextpg))
 						/* uobj died after release */
 						uobj = NULL;
-
-					/*
-					 * lock page queues here so that they're
-					 * always locked at the end of the loop.
-					 */
-
-					uvm_lock_pageq();
 				}
 			} else {	/* page was not released during I/O */
 				uvm_lock_pageq();
@@ -900,6 +893,9 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			else if (uobj)
 				simple_unlock(&uobj->vmobjlock);
 
+			if (nextpg && (nextpg->pg_flags & PQ_INACTIVE) == 0) {
+				nextpg = TAILQ_FIRST(pglst);	/* reload! */
+			}
 		} else {
 
 			/*
@@ -915,10 +911,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			 */
 
 			uvm_lock_pageq();
-		}
-
-		if (nextpg && (nextpg->pg_flags & PQ_INACTIVE) == 0) {
-			nextpg = TAILQ_FIRST(pglst);	/* reload! */
 		}
 	}
 	return (retval);

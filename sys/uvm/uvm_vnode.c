@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.54 2009/04/05 18:11:03 oga Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.55 2009/04/13 22:17:54 oga Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1127,7 +1127,10 @@ ReTry:
 				UVM_PAGE_OWN(ptmp, NULL);
 				if (ptmp->pg_flags & PG_RELEASED) {
 
-					/* pgo_releasepg wants this */
+					/*
+					 * pgo_releasepg needs to grab the
+					 * pageq lock itself.
+					 */
 					uvm_unlock_pageq();
 					if (!uvn_releasepg(ptmp, NULL))
 						return (TRUE);
