@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.450 2009/03/14 15:55:39 krw Exp $
+#	$OpenBSD: install.sub,v 1.451 2009/04/13 01:48:05 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -953,11 +953,11 @@ __EOT
 
 	for _f in $THESETS ; do
 		isin $_f $_get_sets || continue
-		echo "Getting $_f ..."
+		echo -n "Getting $_f ..."
 		case $_f in
-		*.tgz)	ftp $FTPOPTS -o - -m "$_src/$_f" | tar zxphf - -C /mnt
+		*.tgz)	ftp -T "$_f" $FTPOPTS -o - -m "$_src/$_f" | tar zxphf - -C /mnt
 			;;
-		*)	ftp $FTPOPTS -o "/mnt/$_f" -m "$_src/$_f"
+		*)	ftp -T "$_f" $FTPOPTS -o "/mnt/$_f" -m "$_src/$_f"
 			;;
 		esac
 		if [ $? -ne 0 ]; then
