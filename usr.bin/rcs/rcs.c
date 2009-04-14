@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.53 2009/02/25 23:16:20 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.54 2009/04/14 21:16:40 jj Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1175,7 +1175,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *frev)
 		}
 	}
 
-	/* No matter what, we're going to need up the the description parsed */
+	/* No matter what, we'll need everything parsed up until the description
+           so go for it. */
 	rcs_parse_desc(rfp, NULL);
 
 	rdp = rcs_findrev(rfp, rfp->rf_head);
