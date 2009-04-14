@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.20 2007/05/29 09:53:59 sobrado Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.21 2009/04/14 16:01:04 oga Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -184,7 +184,7 @@ iommu_attach(parent, self, aux)
 	TAILQ_INIT(&mlist);
 #define DVMA_PTESIZE ((0 - DVMA4M_BASE) / 1024)
 	if (uvm_pglistalloc(DVMA_PTESIZE, 0, 0xffffffff, DVMA_PTESIZE,
-			    0, &mlist, 1, 0) ||
+			    0, &mlist, 1, UVM_PLA_NOWAIT) ||
 	    (va = uvm_km_valloc(kernel_map, DVMA_PTESIZE)) == 0)
 		panic("iommu_attach: can't allocate memory for pagetables");
 #undef DVMA_PTESIZE

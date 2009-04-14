@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.25 2009/03/20 15:19:04 oga Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.26 2009/04/14 16:01:04 oga Exp $	*/
 /*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
@@ -184,7 +184,7 @@ out:
 
 int
 uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
-    paddr_t boundary, struct pglist *rlist, int nsegs, int waitok)
+    paddr_t boundary, struct pglist *rlist, int nsegs, int flags)
 {
 	int psi;
 	struct vm_page *pgs;
@@ -201,6 +201,11 @@ uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
 
 	KASSERT((alignment & (alignment - 1)) == 0);
 	KASSERT((boundary & (boundary - 1)) == 0);
+	/*
+	 * This argument is always ignored for now, but ensure drivers always
+	 * show intention.
+	 */
+	KASSERT(!(flags & UVM_PLA_WAITOK) ^ !(flags & UVM_PLA_NOWAIT));
 	
 	/*
 	 * Our allocations are always page granularity, so our alignment

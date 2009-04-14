@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.29 2009/03/07 15:34:34 miod Exp $	*/
+/*	$OpenBSD: dma.c,v 1.30 2009/04/14 16:01:04 oga Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -552,7 +552,7 @@ _dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	vaddr_t curaddr, lastaddr;
 	struct vm_page *m;
 	struct pglist mlist;
-	int curseg, error;
+	int curseg, error, plaflag;
 
 	/* Always round the size. */
 	size = round_page(size);
@@ -560,9 +560,11 @@ _dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	/*
 	 * Allocate pages from the VM system.
 	 */
+	plaflag = flags & BUS_DMA_NOWAIT ? UVM_PLA_NOWAIT : UVM_PLA_WAITOK;
+
 	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(size, low, high,
-	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+	    alignment, boundary, &mlist, nsegs, plaflag);
 	if (error)
 		return (error);
 

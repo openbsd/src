@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.62 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: aha.c,v 1.63 2009/04/14 16:01:04 oga Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1122,10 +1122,10 @@ aha_init(sc)
 	 */
 	size = round_page(sizeof(struct aha_mbx));
 	TAILQ_INIT(&pglist);
-	if (uvm_pglistalloc(size, 0, 0xffffff, PAGE_SIZE, 0, &pglist, 1, 0) ||
-	    uvm_map(kernel_map, &va, size, NULL, UVM_UNKNOWN_OFFSET, 0,
-		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-			UVM_ADV_RANDOM, 0)))
+	if (uvm_pglistalloc(size, 0, 0xffffff, PAGE_SIZE, 0, &pglist, 1,
+	    UVM_PLA_NOWAIT) || uvm_map(kernel_map, &va, size, NULL,
+	    UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
+	    UVM_INH_NONE, UVM_ADV_RANDOM, 0)))
 		panic("aha_init: could not allocate mailbox");
 
 	wmbx = (struct aha_mbx *)va;

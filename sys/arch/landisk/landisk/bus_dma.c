@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.6 2009/03/15 09:35:50 miod Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.7 2009/04/14 16:01:04 oga Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*
@@ -535,19 +535,21 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	struct pglist mlist;
 	paddr_t curaddr, lastaddr;
 	struct vm_page *m;
-	int curseg, error;
+	int curseg, error, plaflag;
 
 	DPRINTF(("bus_dmamem_alloc: t = %p, size = %ld, alignment = %ld, boundary = %ld, segs = %p, nsegs = %d, rsegs = %p, flags = %x\n", t, size, alignment, boundary, segs, nsegs, rsegs, flags));
 
 	/* Always round the size. */
 	size = round_page(size);
 
-	TAILQ_INIT(&mlist);
 	/*
 	 * Allocate the pages from the VM system.
 	 */
-	error = uvm_pglistalloc(size, 0, -1,
-	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
+	plaflag = flags & BUS_DMA_NOWAIT ? UVM_PLA_NOWAIT : UVM_PLA_WAITOK;
+
+	TAILQ_INIT(&mlist);
+	error = uvm_pglistalloc(size, 0, -1, alignment, boundary,
+	    &mlist, nsegs, plaflag);
 	if (error)
 		return (error);
 

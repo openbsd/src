@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
+/*	$OpenBSD: astro.c,v 1.9 2009/04/14 16:01:04 oga Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -271,7 +271,8 @@ astro_attach(struct device *parent, struct device *self, void *aux)
 
 	size = (1 << (iova_bits - PAGE_SHIFT)) * sizeof(u_int64_t);
 	TAILQ_INIT(&mlist);
-	if (uvm_pglistalloc(size, 0, -1, PAGE_SIZE, 0, &mlist, 1, 0) != 0)
+	if (uvm_pglistalloc(size, 0, -1, PAGE_SIZE, 0, &mlist,
+	    1, UVM_PLA_NOWAIT) != 0)
 		panic("astrottach: no memory");
 
 	va = uvm_km_valloc(kernel_map, size);

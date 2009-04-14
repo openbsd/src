@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.56 2009/04/05 21:57:41 oga Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.57 2009/04/14 16:01:04 oga Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, u_int32_t iovabase)
 	size = PAGE_SIZE << is->is_tsbsize;
 	TAILQ_INIT(&mlist);
 	if (uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
-		(paddr_t)PAGE_SIZE, (paddr_t)0, &mlist, 1, 0) != 0)
+	    (paddr_t)PAGE_SIZE, (paddr_t)0, &mlist, 1, UVM_PLA_NOWAIT) != 0)
 		panic("iommu_init: no memory");
 
 	va = uvm_km_valloc(kernel_map, size);
