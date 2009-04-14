@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.55 2009/04/13 22:17:54 oga Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.56 2009/04/14 20:12:05 oga Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1164,6 +1164,10 @@ ReTry:
 						atomic_setbits_int(
 						    &ptmp->pg_flags,
 						    PG_RELEASED);
+				/*
+				 * XXX if ! busy, io is already done. shouldn't
+				 * XXX we free the pages ourselves?
+				 */
 				} else {
 					if (result != VM_PAGER_OK) {
 						printf("uvn_flush: obj=%p, "

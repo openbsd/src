@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.39 2009/04/13 22:17:54 oga Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.40 2009/04/14 20:12:05 oga Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -110,8 +110,7 @@ static void		uvmpd_tune(void);
 void
 uvm_wait(const char *wmsg)
 {
-	int timo = 0;
-	int s = splbio();
+	int	timo = 0;
 
 	/*
 	 * check for page daemon going to sleep (waiting for itself)
@@ -143,12 +142,9 @@ uvm_wait(const char *wmsg)
 #endif
 	}
 
-	simple_lock(&uvm.pagedaemon_lock);
+	uvm_lock_fpageq();
 	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
-	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvm.pagedaemon_lock, FALSE, wmsg,
-	    timo);
-
-	splx(s);
+	msleep(&uvmexp.free, &uvm.fpageqlock, PVM | PNORELOCK, wmsg, timo);
 }
 
 
@@ -216,11 +212,10 @@ uvm_pageout(void *arg)
 	 */
 
 	for (;;) {
-		simple_lock(&uvm.pagedaemon_lock);
-
+		uvm_lock_fpageq();
 		UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
-		UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
-		    &uvm.pagedaemon_lock, FALSE, "pgdaemon", 0);
+		msleep(&uvm.pagedaemon, &uvm.fpageqlock, PVM | PNORELOCK,
+		    "pgdaemon", 0);
 		uvmexp.pdwoke++;
 		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
 
@@ -255,11 +250,12 @@ uvm_pageout(void *arg)
 		 * if there's any free memory to be had,
 		 * wake up any waiters.
 		 */
-
+		uvm_lock_fpageq();
 		if (uvmexp.free > uvmexp.reserve_kernel ||
 		    uvmexp.paging == 0) {
 			wakeup(&uvmexp.free);
 		}
+		uvm_unlock_fpageq();
 
 		/*
 		 * scan done.  unlock page queues (the only lock we are holding)
@@ -313,15 +309,10 @@ uvm_aiodone_daemon(void *arg)
 			splx(s);
 			bp = nbp;
 		}
-		if (free <= uvmexp.reserve_kernel) {
-			uvm_lock_fpageq();
-			wakeup(&uvm.pagedaemon);
-			uvm_unlock_fpageq();
-		} else {
-			simple_lock(&uvm.pagedaemon_lock);
-			wakeup(&uvmexp.free);
-			simple_unlock(&uvm.pagedaemon_lock);
-		}
+		uvm_lock_fpageq();
+		wakeup(free <= uvmexp.reserve_kernel ? &uvm.pagedaemon :
+		    &uvmexp.free);
+		uvm_unlock_fpageq();
 	}
 }
 
