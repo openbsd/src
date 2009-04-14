@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2008/11/09 23:00:42 espie Exp $
+#	$OpenBSD: Makefile,v 1.12 2009/04/14 21:28:10 chl Exp $
 
 MAGIC=		/etc/magic
 MAGICOWN=	root
@@ -11,15 +11,23 @@ SRCS=		file.c apprentice.c fsmagic.c softmagic.c ascmagic.c is_tar.c \
 CFLAGS+=	-DMAGIC='"$(MAGIC)"' -DUSE_UTIMES -DHAVE_CONFIG_H
 MAN=		file.1 magic.5
 
-CLEANFILES+=	magic
+CLEANFILES+=	magic post-magic
 all:		file magic
 
-MAGFILES=	$(.CURDIR)/magdir/Header\
+MAG1=		$(.CURDIR)/magdir/Header\
 		$(.CURDIR)/magdir/Localstuff\
-		$(.CURDIR)/magdir/OpenBSD\
-		$(.CURDIR)/magdir/[0-9a-z]*
-magic:		$(MAGFILES)
-	cat ${.ALLSRC:N*.orig} > $(.TARGET)
+		$(.CURDIR)/magdir/OpenBSD
+MAGFILES=	$(.CURDIR)/magdir/[0-9a-z]*
+
+post-magic:	$(MAGFILES)
+	for i in ${.ALLSRC:N*.orig}; \
+	do \
+		echo $$i; \
+	done|sort|xargs -n 1024 cat > $(.TARGET)
+
+magic:		$(MAG1) post-magic
+	cat ${MAG1} post-magic > $(.TARGET)
+
 
 afterinstall:
 	${INSTALL} ${INSTALL_COPY} -o $(MAGICOWN) -g $(MAGICGRP) -m $(MAGICMODE) magic \
