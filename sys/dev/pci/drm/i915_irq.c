@@ -103,7 +103,7 @@ i915_disable_pipestat(drm_i915_private_t *dev_priv, int pipe, u_int32_t mask)
 }
 
 /**
- * i915_get_pipe - return the the pipe associated with a given plane
+ * i915_get_pipe - return the pipe associated with a given plane
  * @dev: DRM device
  * @plane: plane to look for
  *
