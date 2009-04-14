@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.420 2009/04/14 08:29:06 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.421 2009/04/14 14:03:53 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -114,14 +114,9 @@ processor usage and memory consumption, than a large number of rules which
 differ only in IP address (either created explicitly or automatically by rule
 expansion).
 .Pp
-Tables can be used as the source or destination of filter rules,
-or
-translation rules such as
-.Ar nat
-or
-.Ar rdr
-(see below for details on the various rule types).
-Tables can also be used for the redirect address of
+Tables can be used as the source or destination of filter
+or translation rules.
+They can also be used for the redirect address of
 .Ar nat
 and
 .Ar rdr
@@ -143,7 +138,7 @@ option of
 .Xr pfctl 8 ,
 before or after the ruleset has been loaded.
 .It Pa pf.conf
-Table definitions can be placed directly in this file, and loaded at the
+Table definitions can be placed directly in this file and loaded at the
 same time as other rules are loaded, atomically.
 Table definitions inside
 .Nm pf.conf
@@ -175,7 +170,7 @@ when running with
 .It Ar counters
 The
 .Ar counters
-flag enables per-address packet and byte counters which can be displayed with
+flag enables per-address packet and byte counters, which can be displayed with
 .Xr pfctl 8 .
 .It Ar persist
 The
