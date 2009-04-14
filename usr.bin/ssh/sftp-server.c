@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-server.c,v 1.84 2008/06/26 06:10:09 djm Exp $ */
+/* $OpenBSD: sftp-server.c,v 1.85 2009/04/14 16:33:42 stevesk Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -1312,7 +1312,7 @@ sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 
 	log_init(__progname, log_level, log_facility, log_stderr);
 
-	while (!skipargs && (ch = getopt(argc, argv, "C:f:l:che")) != -1) {
+	while (!skipargs && (ch = getopt(argc, argv, "f:l:che")) != -1) {
 		switch (ch) {
 		case 'c':
 			/*
