@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.13 2009/03/14 15:32:55 michele Exp $ */
+/*	$OpenBSD: rde.h,v 1.14 2009/04/14 19:27:43 michele Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -28,23 +28,29 @@
 
 struct adv_rtr {
 	struct in_addr		 addr;
-	u_int32_t		 metric;
+	u_int8_t		 metric;
 };
 
 struct rt_node {
 	RB_ENTRY(rt_node)	 entry;
 	struct event		 expiration_timer;
 	struct event		 holddown_timer;
+
+	struct adv_rtr		 adv_rtr[MAXVIFS];
+
+	u_int16_t		 ds_cnt[MAXVIFS];
 	u_int8_t		 ttls[MAXVIFS];	/* downstream vif(s) */
+
+	LIST_HEAD(, ds_nbr)	 ds_list;
+
 	struct in_addr		 prefix;
 	struct in_addr		 nexthop;
-	u_int32_t		 cost;
-	u_int32_t		 old_cost;	/* used when in hold-down */
-	u_short			 ifindex;	/* learned from this iface */
-	struct adv_rtr		 adv_rtr[MAXVIFS];
-	u_int16_t		 ds_cnt[MAXVIFS];
-	LIST_HEAD(, ds_nbr)	 ds_list;
 	time_t			 uptime;
+
+	u_short			 ifindex;	/* learned from this iface */
+
+	u_int8_t		 cost;
+	u_int8_t		 old_cost;	/* used when in hold-down */
 	u_int8_t		 flags;
 	u_int8_t		 prefixlen;
 	u_int8_t		 invalid;
@@ -55,11 +61,11 @@ struct mfc_node {
 	RB_ENTRY(mfc_node)	 entry;
 	struct event		 expiration_timer;
 	struct event		 prune_timer;
-	u_int8_t		 ttls[MAXVIFS];	/* outgoing vif(s) */
 	struct in_addr		 origin;
 	struct in_addr		 group;
-	u_short			 ifindex;	/* incoming vif */
 	time_t			 uptime;
+	u_short			 ifindex;	/* incoming vif */
+	u_int8_t		 ttls[MAXVIFS];	/* outgoing vif(s) */
 };
 
 /* downstream neighbor per source */
