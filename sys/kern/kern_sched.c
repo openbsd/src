@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.10 2009/04/03 09:29:15 art Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.11 2009/04/14 09:13:25 art Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -207,7 +207,6 @@ setrunqueue(struct proc *p)
 	int queue = p->p_priority >> 2;
 
 	SCHED_ASSERT_LOCKED();
-	sched_choosecpu(p);
 	spc = &p->p_cpu->ci_schedstate;
 	spc->spc_nrun++;
 
@@ -215,7 +214,7 @@ setrunqueue(struct proc *p)
 	spc->spc_whichqs |= (1 << queue);
 	cpuset_add(&sched_queued_cpus, p->p_cpu);
 
-	if (p->p_cpu != curcpu())
+	if (cpuset_isset(&sched_idle_cpus, p->p_cpu))
 		cpu_unidle(p->p_cpu);
 }
 
@@ -283,7 +282,58 @@ uint64_t sched_choose;
 uint64_t sched_wasidle;
 uint64_t sched_nomigrations;
 
-void
+struct cpu_info *
+sched_choosecpu_fork(struct proc *parent, int flags)
+{
+	struct cpu_info *choice = NULL;
+	fixpt_t load, best_load = ~0;
+	int run, best_run = INT_MAX;
+	struct cpu_info *ci;
+	struct cpuset set;
+
+#if 0
+	/*
+	 * XXX
+	 * Don't do this until we have a painless way to move the cpu in exec.
+	 * Preferably when nuking the old pmap and getting a new one on a
+	 * new cpu.
+	 */
+	/*
+	 * PPWAIT forks are simple. We know that the parent will not
+	 * run until we exec and choose another cpu, so we just steal its
+	 * cpu.
+	 */
+	if (flags & FORK_PPWAIT)
+		return (parent->p_cpu);
+#endif
+
+	/*
+	 * Look at all cpus that are currently idle and have nothing queued.
+	 * If there are none, pick the one with least queued procs first,
+	 * then the one with lowest load average.
+	 */
+	cpuset_complement(&set, &sched_queued_cpus, &sched_idle_cpus);
+	if (cpuset_first(&set) == NULL)
+		cpuset_add_all(&set);
+
+	while ((ci = cpuset_first(&set)) != NULL) {
+		cpuset_del(&set, ci);
+
+		load = ci->ci_schedstate.spc_ldavg;
+		run = ci->ci_schedstate.spc_nrun;
+
+		if (choice == NULL || run < best_run ||
+		    (run == best_run &&load < best_load)) {
+			choice = ci;
+			best_load = load;
+			best_run = run;
+		}
+	}
+
+	return (choice);
+}
+
+struct cpu_info *
 sched_choosecpu(struct proc *p)
 {
 	struct cpu_info *choice = NULL;
@@ -295,41 +345,34 @@ sched_choosecpu(struct proc *p)
 	 * If pegged to a cpu, don't allow it to move.
 	 */
 	if (p->p_flag & P_CPUPEG)
-		return;
+		return (p->p_cpu);
 
 	sched_choose++;
 
 	/*
-	 * The simplest case. Our cpu of choice was idle. This happens
-	 * when we were sleeping and something woke us up.
-	 *
-	 * We also need to check sched_queued_cpus to make sure that
-	 * we're not thundering herding one cpu that hasn't managed to
-	 * get out of the idle loop yet.
+	 * Look at all cpus that are currently idle and have nothing queued.
+	 * If there are none, pick the cheapest of those.
+	 * (idle + queued could mean that the cpu is handling an interrupt
+	 * at this moment and haven't had time to leave idle yet).
 	 */
-	if (p->p_cpu && cpuset_isset(&sched_idle_cpus, p->p_cpu) &&
-	    !cpuset_isset(&sched_queued_cpus, p->p_cpu)) {
+	cpuset_complement(&set, &sched_queued_cpus, &sched_idle_cpus);
+
+	/*
+	 * First, just check if our current cpu is in that set, if it is,
+	 * this is simple.
+	 * Also, our cpu might not be idle, but if it's the current cpu
+	 * and it has nothing else queued and we're curproc, take it.
+	 */
+	if (cpuset_isset(&set, p->p_cpu) ||
+	    (p->p_cpu == curcpu() && p->p_cpu->ci_schedstate.spc_nrun == 0 &&
+	    curproc == p)) {
 		sched_wasidle++;
-		return;
+		return (p->p_cpu);
 	}
 
-#if 0
+	if (cpuset_first(&set) == NULL)
+		cpuset_add_all(&set);
 
-		/* Most likely, this is broken. don't do it. */
-	/*
-	 * Second case. (shouldn't be necessary in the future)
-	 * If our cpu is not idle, but has nothing else queued (which
-	 * means that we are curproc and roundrobin asks us to reschedule).
-	 */
-	if (p->p_cpu && p->p_cpu->ci_schedstate.spc_nrun == 0)
-		return;
-#endif
-
-	/*
-	 * Look at all cpus that are currently idle. Pick the cheapest of
-	 * those.
-	 */
-	cpuset_copy(&set, &sched_idle_cpus);
 	while ((ci = cpuset_first(&set)) != NULL) {
 		int cost = sched_proc_to_cpu_cost(ci, p);
 
@@ -340,35 +383,12 @@ sched_choosecpu(struct proc *p)
 		cpuset_del(&set, ci);
 	}
 
-	/*
-	 * All cpus are busy. Pick one.
-	 */
-	if (choice == NULL) {
-		CPU_INFO_ITERATOR cii;
-
-		sched_noidle++;
-
-		/*
-		 * Not curproc, pick the cpu with the lowest cost to switch to.
-		 */
-		CPU_INFO_FOREACH(cii, ci) {
-			int cost = sched_proc_to_cpu_cost(ci, p);
-
-			if (choice == NULL || cost < last_cost) {
-				choice = ci;
-				last_cost = cost;
-			}
-		}
-	}
-
-	KASSERT(choice);
-
-	if (p->p_cpu && p->p_cpu != choice)
+	if (p->p_cpu != choice)
 		sched_nmigrations++;
-	else if (p->p_cpu != NULL)
+	else
 		sched_nomigrations++;
 
-	p->p_cpu = choice;
+	return (choice);
 }
 
 /*
@@ -576,4 +596,31 @@ cpuset_first(struct cpuset *cs)
 			return (cpuset_infos[i * 32 + ffs(cs->cs_set[i]) - 1]);
 
 	return (NULL);
+}
+
+void
+cpuset_union(struct cpuset *to, struct cpuset *a, struct cpuset *b)
+{
+	int i;
+
+	for (i = 0; i < CPUSET_ASIZE(ncpus); i++)
+		to->cs_set[i] = a->cs_set[i] | b->cs_set[i];
+}
+
+void
+cpuset_intersection(struct cpuset *to, struct cpuset *a, struct cpuset *b)
+{
+	int i;
+
+	for (i = 0; i < CPUSET_ASIZE(ncpus); i++)
+		to->cs_set[i] = a->cs_set[i] & b->cs_set[i];
+}
+
+void
+cpuset_complement(struct cpuset *to, struct cpuset *a, struct cpuset *b)
+{
+	int i;
+
+	for (i = 0; i < CPUSET_ASIZE(ncpus); i++)
+		to->cs_set[i] = b->cs_set[i] & ~a->cs_set[i];
 }

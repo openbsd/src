@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.21 2009/04/03 09:29:15 art Exp $	*/
+/*	$OpenBSD: sched.h,v 1.22 2009/04/14 09:13:25 art Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -140,7 +140,8 @@ void sched_exit(struct proc *);
 void mi_switch(void);
 void cpu_switchto(struct proc *, struct proc *);
 struct proc *sched_chooseproc(void);
-void sched_choosecpu(struct proc *);
+struct cpu_info *sched_choosecpu(struct proc *);
+struct cpu_info *sched_choosecpu_fork(struct proc *parent, int);
 void cpu_idle_enter(void);
 void cpu_idle_cycle(void);
 void cpu_idle_leave(void);
