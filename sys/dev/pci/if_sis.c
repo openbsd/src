@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.87 2009/02/24 21:10:14 claudio Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.88 2009/04/14 19:06:49 claudio Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -115,10 +115,13 @@ struct cfdriver sis_cd = {
 
 int sis_intr(void *);
 void sis_shutdown(void *);
-int sis_newbuf(struct sis_softc *, struct sis_desc *, struct mbuf *);
+void sis_fill_rx_ring(struct sis_softc *);
+int sis_newbuf(struct sis_softc *, struct sis_desc *);
 int sis_encap(struct sis_softc *, struct mbuf *, u_int32_t *);
 void sis_rxeof(struct sis_softc *);
+#if 0
 void sis_rxeoc(struct sis_softc *);
+#endif
 void sis_txeof(struct sis_softc *);
 void sis_tick(void *);
 void sis_start(struct ifnet *);
@@ -1098,17 +1101,12 @@ sis_attach(struct device *parent, struct device *self, void *aux)
 	sc->sis_ldata = (struct sis_list_data *)sc->sc_listkva;
 	bzero(sc->sis_ldata, sizeof(struct sis_list_data));
 
-	for (i = 0; i < SIS_RX_LIST_CNT_MAX; i++) {
+	for (i = 0; i < SIS_RX_LIST_CNT; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
 		    BUS_DMA_NOWAIT, &sc->sis_ldata->sis_rx_list[i].map) != 0) {
 			printf(": can't create rx map\n");
 			goto fail_2;
 		}
-	}
-	if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
-	    BUS_DMA_NOWAIT, &sc->sc_rx_sparemap) != 0) {
-		printf(": can't create rx spare map\n");
-		goto fail_2;
 	}
 
 	for (i = 0; i < SIS_TX_LIST_CNT; i++) {
@@ -1139,6 +1137,8 @@ sis_attach(struct device *parent, struct device *self, void *aux)
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+	m_clsetwms(ifp, MCLBYTES, 2, SIS_RX_LIST_CNT - 1);
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = sis_miibus_readreg;
@@ -1179,7 +1179,7 @@ sis_ring_init(struct sis_softc *sc)
 {
 	struct sis_list_data	*ld;
 	struct sis_ring_data	*cd;
-	int			i, error, nexti;
+	int			i, nexti;
 
 	cd = &sc->sis_cdata;
 	ld = sc->sis_ldata;
@@ -1190,8 +1190,9 @@ sis_ring_init(struct sis_softc *sc)
 		else
 			nexti = i + 1;
 		ld->sis_tx_list[i].sis_nextdesc = &ld->sis_tx_list[nexti];
-		ld->sis_tx_list[i].sis_next = sc->sc_listmap->dm_segs[0].ds_addr +
-			offsetof(struct sis_list_data, sis_tx_list[nexti]);
+		ld->sis_tx_list[i].sis_next =
+		    sc->sc_listmap->dm_segs[0].ds_addr +
+		    offsetof(struct sis_list_data, sis_tx_list[nexti]);
 		ld->sis_tx_list[i].sis_mbuf = NULL;
 		ld->sis_tx_list[i].sis_ptr = 0;
 		ld->sis_tx_list[i].sis_ctl = 0;
@@ -1199,67 +1200,69 @@ sis_ring_init(struct sis_softc *sc)
 
 	cd->sis_tx_prod = cd->sis_tx_cons = cd->sis_tx_cnt = 0;
 
-	if (sc->arpcom.ac_if.if_flags & IFF_UP)
-		sc->sc_rxbufs = SIS_RX_LIST_CNT_MAX;
-	else
-		sc->sc_rxbufs = SIS_RX_LIST_CNT_MIN;
-
-	for (i = 0; i < sc->sc_rxbufs; i++) {
-		error = sis_newbuf(sc, &ld->sis_rx_list[i], NULL);
-		if (error)
-			return (error);
-		if (i == (sc->sc_rxbufs - 1))
+	for (i = 0; i < SIS_RX_LIST_CNT; i++) {
+		if (i == SIS_RX_LIST_CNT - 1)
 			nexti = 0;
 		else
 			nexti = i + 1;
 		ld->sis_rx_list[i].sis_nextdesc = &ld->sis_rx_list[nexti];
-		ld->sis_rx_list[i].sis_next = sc->sc_listmap->dm_segs[0].ds_addr +
-			offsetof(struct sis_list_data, sis_rx_list[nexti]);
+		ld->sis_rx_list[i].sis_next =
+		    sc->sc_listmap->dm_segs[0].ds_addr +
+		    offsetof(struct sis_list_data, sis_rx_list[nexti]);
+		ld->sis_rx_list[i].sis_ctl = 0;
 	}
 
-	cd->sis_rx_pdsc = &ld->sis_rx_list[0];
+	cd->sis_rx_prod = cd->sis_rx_cons = cd->sis_rx_cnt = 0;
+	sis_fill_rx_ring(sc);
 
 	return (0);
+}
+
+void
+sis_fill_rx_ring(struct sis_softc *sc)
+{
+	struct sis_list_data    *ld;
+	struct sis_ring_data    *cd;
+
+	cd = &sc->sis_cdata;
+	ld = sc->sis_ldata;
+
+	while (cd->sis_rx_cnt < SIS_RX_LIST_CNT) {
+		if (sis_newbuf(sc, &ld->sis_rx_list[cd->sis_rx_prod]))
+			break;
+		SIS_INC(cd->sis_rx_prod, SIS_RX_LIST_CNT);
+		cd->sis_rx_cnt++;
+	}
 }
 
 /*
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
 int
-sis_newbuf(struct sis_softc *sc, struct sis_desc *c, struct mbuf *m)
+sis_newbuf(struct sis_softc *sc, struct sis_desc *c)
 {
 	struct mbuf		*m_new = NULL;
-	bus_dmamap_t		map;
 
 	if (c == NULL)
 		return (EINVAL);
 
-	if (m == NULL) {
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL)
-			return (ENOBUFS);
+	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+	if (m_new == NULL)
+		return (ENOBUFS);
 
-		MCLGET(m_new, M_DONTWAIT);
-		if (!(m_new->m_flags & M_EXT)) {
-			m_freem(m_new);
-			return (ENOBUFS);
-		}
-	} else {
-		m_new = m;
-		m_new->m_data = m_new->m_ext.ext_buf;
-	}
-
-	m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, sc->sc_rx_sparemap, m_new,
-	    BUS_DMA_NOWAIT)) {
+	MCLGETI(m_new, M_DONTWAIT, &sc->arpcom.ac_if, MCLBYTES);
+	if (!(m_new->m_flags & M_EXT)) {
 		m_freem(m_new);
 		return (ENOBUFS);
 	}
 
-	map = c->map;
-	c->map = sc->sc_rx_sparemap;
-	sc->sc_rx_sparemap = map;
+	m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
+
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, c->map, m_new,
+	    BUS_DMA_NOWAIT)) {
+		m_freem(m_new);
+		return (ENOBUFS);
+	}
 
 	bus_dmamap_sync(sc->sc_dmat, c->map, 0, c->map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD);
@@ -1290,9 +1293,10 @@ sis_rxeof(struct sis_softc *sc)
 
 	ifp = &sc->arpcom.ac_if;
 
-	for(cur_rx = sc->sis_cdata.sis_rx_pdsc; SIS_OWNDESC(cur_rx);
-	    cur_rx = cur_rx->sis_nextdesc) {
-
+	while(sc->sis_cdata.sis_rx_cnt > 0) {
+		cur_rx = &sc->sis_ldata->sis_rx_list[sc->sis_cdata.sis_rx_cons];
+		if (!SIS_OWNDESC(cur_rx))
+			break;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 		    ((caddr_t)cur_rx - sc->sc_listkva),
 		    sizeof(struct sis_desc),
@@ -1302,6 +1306,9 @@ sis_rxeof(struct sis_softc *sc)
 		m = cur_rx->sis_mbuf;
 		cur_rx->sis_mbuf = NULL;
 		total_len = SIS_RXBYTES(cur_rx);
+		/* from here on the buffer is consumed */
+		SIS_INC(sc->sis_cdata.sis_rx_cons, SIS_RX_LIST_CNT);
+		sc->sis_cdata.sis_rx_cnt--;
 
 		/*
 		 * If an error occurs, update stats, clear the
@@ -1317,14 +1324,14 @@ sis_rxeof(struct sis_softc *sc)
 			ifp->if_ierrors++;
 			if (rxstat & SIS_RXSTAT_COLL)
 				ifp->if_collisions++;
-			sis_newbuf(sc, cur_rx, m);
+			m_freem(m);
 			continue;
 		}
 
 		/* No errors; receive the packet. */
 		bus_dmamap_sync(sc->sc_dmat, cur_rx->map, 0,
 		    cur_rx->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-#ifndef __STRICT_ALIGNMENT
+#ifdef __STRICT_ALIGNMENT
 		/*
 		 * On some architectures, we do not have alignment problems,
 		 * so try to allocate a new buffer for the receive ring, and
@@ -1334,23 +1341,22 @@ sis_rxeof(struct sis_softc *sc)
 		 * if the allocation fails, then use m_devget and leave the
 		 * existing buffer in the receive ring.
 		 */
-		if (sis_newbuf(sc, cur_rx, NULL) == 0) {
-			m->m_pkthdr.rcvif = ifp;
-			m->m_pkthdr.len = m->m_len = total_len;
-		} else
-#endif
-		{
+		if (1) {
 			struct mbuf *m0;
 			m0 = m_devget(mtod(m, char *), total_len, ETHER_ALIGN,
 			    ifp, NULL);
-			sis_newbuf(sc, cur_rx, m);
+			m_freem(m);
 			if (m0 == NULL) {
 				ifp->if_ierrors++;
 				continue;
 			}
 			m = m0;
+		} else
+#endif
+		{
+			m->m_pkthdr.rcvif = ifp;
+			m->m_pkthdr.len = m->m_len = total_len;
 		}
-
 		ifp->if_ipackets++;
 
 #if NBPFILTER > 0
@@ -1362,15 +1368,17 @@ sis_rxeof(struct sis_softc *sc)
 		ether_input_mbuf(ifp, m);
 	}
 
-	sc->sis_cdata.sis_rx_pdsc = cur_rx;
+	sis_fill_rx_ring(sc);
 }
 
+#if 0
 void
 sis_rxeoc(struct sis_softc *sc)
 {
 	sis_rxeof(sc);
 	sis_init(sc);
 }
+#endif
 
 /*
  * A frame was downloaded to the chip. It's safe for us to clean up
@@ -1500,13 +1508,20 @@ sis_intr(void *arg)
 		     SIS_ISR_RX_ERR | SIS_ISR_RX_IDLE))
 			sis_rxeof(sc);
 
+#if 0
 		if (status & SIS_ISR_RX_OFLOW)
 			sis_rxeoc(sc);
-
-#if 0
-		if (status & (SIS_ISR_RX_IDLE))
-			SIS_SETBIT(sc, SIS_CSR, SIS_CSR_RX_ENABLE);
 #endif
+		if (status & (SIS_ISR_RX_IDLE)) {
+			/* consume what's there so that sis_rx_cons points
+			 * to the first HW owned descriptor. */
+			sis_rxeof(sc);
+			/* reprogram the RX listptr */
+			CSR_WRITE_4(sc, SIS_RX_LISTPTR,
+			    sc->sc_listmap->dm_segs[0].ds_addr +
+			    offsetof(struct sis_list_data,
+			    sis_rx_list[sc->sis_cdata.sis_rx_cons]));
+		}
 
 		if (status & SIS_ISR_SYSERR) {
 			sis_reset(sc);
@@ -2003,7 +2018,7 @@ sis_stop(struct sis_softc *sc)
 	/*
 	 * Free data in the RX lists.
 	 */
-	for (i = 0; i < SIS_RX_LIST_CNT_MAX; i++) {
+	for (i = 0; i < SIS_RX_LIST_CNT; i++) {
 		if (sc->sis_ldata->sis_rx_list[i].map->dm_nsegs != 0) {
 			bus_dmamap_t map = sc->sis_ldata->sis_rx_list[i].map;
 
