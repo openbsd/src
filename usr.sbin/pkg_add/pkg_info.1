@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.31 2009/04/13 22:44:16 schwarze Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.32 2009/04/14 17:53:58 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: April 13 2009 $
+.Dd $Mdocdate: April 14 2009 $
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Sh SYNOPSIS
 .Nm pkg_info
 .Bk -words
-.Op Fl AacDdfIiKkLMPqRrSstUv
+.Op Fl AacCDdfIiKkLMPqRrSstUv
 .Op Fl E Ar filename
 .Op Fl e Ar pkg-name
 .Op Fl l Ar str
@@ -70,6 +70,8 @@ including internal packages.
 Show information for all currently installed packages.
 .It Fl c
 Show the one-line comment field for each package.
+.It Fl C
+Show certificate information for signed packages.
 .It Fl D
 Show the install-message file (if any) for each package (deprecated option).
 .It Fl d

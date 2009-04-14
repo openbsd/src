@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.48 2008/07/26 01:11:30 jmc Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.49 2009/04/14 17:53:58 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: July 26 2008 $
+.Dd $Mdocdate: April 14 2009 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Op Fl M Ar displayfile
 .Op Fl P Ar pkg-dependency
 .Op Fl p Ar prefix
+.Op Fl s Ar signature-parameter
 .Op Fl S Ar pkg-destdir
 .Op Fl U Ar undisplayfile
 .Op Fl W Ar wantedlib
@@ -189,6 +190,28 @@ Print out the actual packing-list of the package being generated
 (query mode).
 Most often used in combination with
 .Fl n .
+.It Xo
+.Fl s Ar x509
+.Fl s Ar cert
+.Fl s Ar privkey
+.Xc
+Specify signature parameters for signed packages. 
+For now, the only supported use involves three
+.Fl s
+options:
+.Ar x509
+to indicate x509-style signatures,
+.Ar cert
+the path to the signer's certificate
+and
+.Ar privkey
+the path to the signer's private key.
+The signer's certificate and the signer's private key should be generated
+using standard openssl x509 commands.
+This assumes the existence of a certificate authority (or several), whose
+public information is recorded as a
+.Pa /etc/ssl/pkgca.pem
+file.
 .It Fl S Ar pkg-destdir
 Deprecated, use
 identical
@@ -815,6 +838,7 @@ or
 option is specified.
 .El
 .Sh SEE ALSO
+.Xr openssl 1 ,
 .Xr pkg_add 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,

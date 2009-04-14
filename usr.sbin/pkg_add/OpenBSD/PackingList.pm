@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.86 2009/03/05 10:43:00 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.87 2009/04/14 17:53:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -377,7 +377,8 @@ sub localbase
 
 sub is_signed
 {
-	return 0;
+	my $self = shift;
+	return defined $self->{'digital-signature'};
 }
 
 our @unique_categories =

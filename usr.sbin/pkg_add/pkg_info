@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.71 2008/12/15 15:56:40 espie Exp $
+# $OpenBSD: pkg_info,v 1.72 2009/04/14 17:53:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -226,8 +226,8 @@ sub find_by_path
 	}
 }
 
-our ($opt_c, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_K, $opt_L, 
-    $opt_m, $opt_Q, $opt_q, $opt_R, $opt_r, $opt_s, $opt_v, $opt_h,
+our ($opt_c, $opt_C, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_K, 
+    $opt_L, $opt_m, $opt_Q, $opt_q, $opt_R, $opt_r, $opt_s, $opt_v, $opt_h,
     $opt_l, $opt_a, $opt_M, $opt_U, $opt_A, $opt_S, $opt_P, $opt_t);
 my $terse = 0;
 my $exit_code = 0;
@@ -305,10 +305,10 @@ sub print_info
 			print "\n";
 		}
 		my $plist;
-		if ($opt_f || $opt_L || $opt_s || $opt_S) {
+		if ($opt_f || $opt_L || $opt_s || $opt_S || $opt_C) {
 			require OpenBSD::PackingList;
 
-			if ($opt_f || $opt_s || $opt_S) {
+			if ($opt_f || $opt_s || $opt_S || $opt_C) {
 				$plist = $handle->plist;
 			} else {
 				$plist = $handle->plist(\&OpenBSD::PackingList::FilesOnly);
@@ -321,6 +321,17 @@ sub print_info
 			print $opt_l, "Files:\n" unless $opt_q;
 			$plist->dump_file($opt_K);
 			print "\n";
+		}
+		if ($opt_C) {
+			just_in_time_header($pkg, $handle ,\$done);
+			if ($plist->is_signed) {
+
+				require OpenBSD::x509;
+				print $opt_l, "Certificate info:\n" unless $opt_q;
+				OpenBSD::x509::print_certificate_info($plist);
+			} else {
+				print $opt_l, "No digital signature\n" unless $opt_q;
+			}
 		}
 		if ($opt_s) {
 			just_in_time_header($pkg, $handle ,\$done);
@@ -357,12 +368,12 @@ sub print_info
 	}
 }
 
-set_usage('pkg_info [-AacDdfIiKkLMPqRrSstUv] [-F opt] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
+set_usage('pkg_info [-AacCDdfIiKkLMPqRrSstUv] [-F opt] [-E filename] [-e pkg-name] [-l str] [-Q query] [pkg-name] [...]');
 
 my %defines;
 my $locked;
 try { 
-	getopts('cDdfF:hIikKLmPQ:qRrsSUve:E:Ml:aAt',
+	getopts('cCDdfF:hIikKLmPQ:qRrsSUve:E:Ml:aAt',
 	    {'e' =>
 		    sub {
 			    my $pat = shift;

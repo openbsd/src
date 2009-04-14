@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.154 2009/03/05 10:43:00 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.155 2009/04/14 17:53:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -387,6 +387,7 @@ sub may_check_digest
 sub check_digest
 {
 	my ($self, $file, $state) = @_;
+	return if $self->{link} or $self->{symlink};
 	if (!defined $self->{d}) {
 		$state->fatal($self->fullname, " does not have a signature");
 	}
@@ -1646,6 +1647,12 @@ sub new
 		$class;
 }
 
+sub new_x509
+{
+	my ($class) = @_;
+	bless { key => 'x509', timestamp => time, b64sig => '' }, $class;
+}
+ 
 
 sub stringize
 {

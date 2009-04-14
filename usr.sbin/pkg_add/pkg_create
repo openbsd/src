@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.119 2008/10/24 16:50:27 espie Exp $
+# $OpenBSD: pkg_create,v 1.120 2009/04/14 17:53:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -145,6 +145,9 @@ sub prepare_for_archival
 	return $o;
 }
 
+sub copy_over
+{
+}
 package OpenBSD::PackingElement::SpecialFile;
 sub archive
 {
@@ -185,6 +188,14 @@ sub prepare_for_archival
 	$o->{gid} = 0;
 	$o->{mode} &= 0555; # zap all write and suid modes
 	return $o;
+}
+
+sub copy_over
+{
+	my ($self, $wrarc, $rdarc) = @_;
+	$wrarc->destdir($rdarc->info);
+	my $e = $wrarc->prepare($self->{name});
+	$e->write;
 }
 
 # override for CONTENTS: we cannot checksum this.
@@ -259,6 +270,16 @@ sub verify_checksum
 {
 	my ($self, $base, $stash) = @_;
 	$self->verify_checksum_with_base($base, $stash);
+}
+
+sub copy_over
+{
+	my ($self, $wrarc, $rdarc) = @_;
+	my $e = $rdarc->next;
+	if (!$e->check_name($self)) {
+		die "Names don't match: ", $e->{name}, " ", $self->{name};
+	}
+	$e->copy_long($wrarc);
 }
 
 package OpenBSD::PackingElement::InfoFile;
@@ -443,15 +464,17 @@ sub add_description
 
 our $errors = 0;
 
-my (@contents, %dependencies, %wantlib);
+my (@contents, %dependencies, %wantlib, @signature_params);
 
 my $regen_package = 0;
+my $sign_only = 0;
+my ($cert, $privkey);
 
 
 set_usage(
 'pkg_create [-nQqv] [-A arches] [-B pkg-destdir] [-D name=value]',
 '[-i iscript] [-k dscript] [-L localbase] [-M displayfile]',
-'[-P pkg-dependency] [-p prefix] [-S pkg-destdir]',
+'[-P pkg-dependency] [-p prefix] [-s x509 -s cert -s priv] [-S pkg-destdir]',
 '[-U undisplayfile] [-W wantedlib] -c desc -d desc -f packinglist pkg-name');
 
 my $plist = new OpenBSD::PackingList;
@@ -473,6 +496,9 @@ try {
 	 'W' => sub {
 	 		my $w = shift;
 	 		$wantlib{$w} = 1;
+		},
+	 's' => sub {
+	 		push(@signature_params, shift);
 		}
 	}); 
 } catchall {
@@ -482,13 +508,21 @@ try {
 if (@ARGV == 0) {
 	$regen_package = 1;
 } elsif (@ARGV != 1) {
-	Usage "Exactly one single package name is required: ", join(' ', @ARGV);
+	if (@contents || @signature_params == 0) {
+		Usage "Exactly one single package name is required: ", 
+		    join(' ', @ARGV);
+	}
 }
 
 try {
 
-if (defined $opt_s) {
-	Usage "Option s is no longer supported";
+if (@signature_params > 0) {
+	if (@signature_params != 3 || $signature_params[0] ne 'x509' || 
+	    !-f $signature_params[1] || !-f $signature_params[2]) {
+		Usage "Signature only works as -s x509 -s cert -s privkey";
+	}
+	$cert = $signature_params[1];
+	$privkey = $signature_params[2];
 }
 
 if (defined $opt_O) {
@@ -500,7 +534,11 @@ if (defined $opt_Q) {
 }
 
 if (!@contents) {
-	Usage "Packing list required";
+	if (@signature_params > 0) {
+		$sign_only = 1;
+	} else {
+		Usage "Packing list required";
+	}
 }
 
 if ($regen_package) {
@@ -515,6 +553,36 @@ if ($regen_package) {
 	}
 	$plist->fromfile($contents[0]) or 
 	    Fatal "Can't read packing list $contents[0]";
+} elsif ($sign_only) {
+	if ($opt_n) {
+		Fatal "Can't pretend to sign existing packages";
+	}
+	for my $pkgname (@ARGV) {
+		require OpenBSD::PackageLocator;
+		require OpenBSD::x509;
+
+		my $true_package = OpenBSD::PackageLocator->find($pkgname);
+		die "No such package $pkgname" unless $true_package;
+		my $dir = $true_package->info;
+		my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS);
+		$plist->set_infodir($dir);
+		my $sig = OpenBSD::PackingElement::DigitalSignature->new_x509;
+		$sig->add_object($plist);
+		$sig->{b64sig} = OpenBSD::x509::compute_signature($plist, 
+		    $cert, $privkey);
+		$plist->save;
+		my $tmp = OpenBSD::Temp::permanent_file(".", "pkg");
+		open( my $outfh, "|-", OpenBSD::Paths->gzip, "-o", $tmp);
+
+		my $wrarc = OpenBSD::Ustar->new($outfh, ".");
+		$plist->copy_over($wrarc, $true_package);
+		$wrarc->close;
+		$true_package->wipe_info;
+		unlink($plist->pkgname.".tgz");
+		rename($tmp, $plist->pkgname.".tgz") or 
+		    die "Can't create final signed package $!";
+	}
+	exit(0);
 } else {
 	if (defined $opt_i) {
 		print STDERR "Warning: INSTALL scripts are deprecated\n";
@@ -620,6 +688,12 @@ if ($errors) {
 	exit 1;
 }
 
+if (defined $cert) {
+	my $sig = OpenBSD::PackingElement::DigitalSignature->new_x509;
+	$sig->add_object($plist);
+	require OpenBSD::x509;
+	$sig->{b64sig} = OpenBSD::x509::compute_signature($plist, $cert, $privkey);
+}
 	
 my $wname;
 if ($regen_package) {

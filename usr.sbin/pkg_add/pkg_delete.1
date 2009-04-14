@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.28 2008/03/09 15:36:45 jmc Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.29 2009/04/14 17:53:58 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: March 9 2008 $
+.Dd $Mdocdate: April 14 2009 $
 .Dt PKG_DELETE 1
 .Os
 .Sh NAME
@@ -93,6 +93,7 @@ would be taken if it were.
 .It Fl q
 Delete package quickly, do not bother with checksums before removing normal
 files.
+For signed packages, do not bother verifying signatures either.
 If used twice,
 it will not bother with checksums for configuration files either.
 .It Fl v

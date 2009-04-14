@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.75 2008/10/29 12:35:10 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.76 2009/04/14 17:53:58 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: October 29 2008 $
+.Dd $Mdocdate: April 14 2009 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -70,6 +70,26 @@ option
 .Pp
 Details of packing-list internals are documented in
 .Xr pkg_create 1 .
+.Pp
+If a package is digitally signed:
+.Bl -bullet
+.It 
+.Nm
+checks that its packing-list is not corrupted and matches the cryptographic
+signature stored within.
+.It 
+.Nm
+verifies that the signature was emitted by a valid user certificate, signed
+by one of the authorities in
+.Pa /etc/ssl/pkgca.pem
+.It
+.Nm
+verifies that each file matches its sha256 checksum right after extraction,
+before doing anything with it.
+.It
+.Nm
+verifies that any dangerous mode or owner is registered in the packing-list.
+.El
 .Pp
 In normal mode,
 the package names given on the command lines are names of new packages that
@@ -223,6 +243,9 @@ update when using
 .Fl u .
 .It Ar nonroot
 install even if not running as root.
+.It Ar nosig
+do not check digital signatures.
+Still displays a very prominent message if a signature is found.
 .It Ar pkgpath
 with
 .Fl u ,

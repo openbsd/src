@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.78 2008/10/20 10:25:16 espie Exp $
+# $OpenBSD: Delete.pm,v 1.79 2009/04/14 17:53:58 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -97,6 +97,14 @@ sub delete_package
 	}
 	if ($plist->pkgname ne $pkgname) {
 		Fatal "Package $pkgname real name does not match";
+	}
+	if ($plist->is_signed) {
+		if (!$state->{quick}) {
+			require OpenBSD::x509;
+			if (!OpenBSD::x509::check_signature($plist, $state)) {
+				Fatal "Package $pkgname is corrupted";
+			}
+		}
 	}
 
 	$state->{problems} = 0;
