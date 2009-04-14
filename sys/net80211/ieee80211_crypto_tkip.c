@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.12 2008/12/03 17:25:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.13 2009/04/14 17:43:26 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -59,9 +59,9 @@ struct ieee80211_tkip_ctx {
 	struct rc4_ctx	rc4;
 	const u_int8_t	*txmic;
 	const u_int8_t	*rxmic;
-	u_int16_t	TTAK1[5];
-	u_int16_t	TTAK2[5];
-	u_int8_t	TTAK2ok;
+	u_int16_t	txttak[5];
+	u_int16_t	rxttak[5];
+	u_int8_t	rxttak_ok;
 };
 
 /*
@@ -227,8 +227,8 @@ ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 
 	/* compute WEP seed */
 	if ((k->k_tsc & 0xffff) == 0)
-		Phase1(ctx->TTAK1, k->k_key, wh->i_addr2, k->k_tsc >> 16);
-	Phase2((u_int8_t *)wepseed, k->k_key, ctx->TTAK1, k->k_tsc & 0xffff);
+		Phase1(ctx->txttak, k->k_key, wh->i_addr2, k->k_tsc >> 16);
+	Phase2((u_int8_t *)wepseed, k->k_key, ctx->txttak, k->k_tsc & 0xffff);
 	rc4_keysetup(&ctx->rc4, (u_int8_t *)wepseed, 16);
 
 	/* encrypt frame body and compute WEP ICV */
@@ -381,11 +381,11 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
 
 	/* compute WEP seed */
-	if (!ctx->TTAK2ok || ((tsc >> 16) != (*prsc >> 16))) {
-		Phase1(ctx->TTAK2, k->k_key, wh->i_addr2, tsc >> 16);
-		ctx->TTAK2ok = 1;
+	if (!ctx->rxttak_ok || (tsc >> 16) != (*prsc >> 16)) {
+		ctx->rxttak_ok = 0;	/* invalidate cached TTAK (if any) */
+		Phase1(ctx->rxttak, k->k_key, wh->i_addr2, tsc >> 16);
 	}
-	Phase2((u_int8_t *)wepseed, k->k_key, ctx->TTAK2, tsc & 0xffff);
+	Phase2((u_int8_t *)wepseed, k->k_key, ctx->rxttak, tsc & 0xffff);
 	rc4_keysetup(&ctx->rc4, (u_int8_t *)wepseed, 16);
 
 	/* decrypt frame body and compute WEP ICV */
@@ -459,6 +459,8 @@ ieee80211_tkip_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 
 	/* update last seen packet number (MIC is validated) */
 	*prsc = tsc;
+	/* mark cached TTAK as valid */
+	ctx->rxttak_ok = 1;
 
 	m_freem(m0);
 	return n0;
