@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.168 2009/03/10 09:54:14 kevlo Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.169 2009/04/14 12:58:37 jsg Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -354,6 +354,7 @@ mskc*	at pci?				# Marvell Yukon-2
 msk*	at mskc?			#  each port of above
 em*	at pci?				# Intel Pro/1000 ethernet
 ixgb*	at pci?				# Intel Pro/10Gb ethernet
+ix*	at pci?				# Intel 82598EB 10Gb ethernet
 txp*	at pci?				# 3com 3CR990
 nge*	at pci?				# NS DP83820/DP83821 GigE
 re*	at pci?				# Realtek 8169/8169S/8110S
