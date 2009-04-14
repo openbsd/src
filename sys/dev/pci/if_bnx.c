@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.73 2009/04/09 11:36:05 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.74 2009/04/14 07:41:24 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -378,7 +378,7 @@ int	bnx_init_rx_chain(struct bnx_softc *);
 void	bnx_free_rx_chain(struct bnx_softc *);
 void	bnx_free_tx_chain(struct bnx_softc *);
 
-int	bnx_tx_encap(struct bnx_softc *, struct mbuf **);
+int	bnx_tx_encap(struct bnx_softc *, struct mbuf *);
 void	bnx_start(struct ifnet *);
 int	bnx_ioctl(struct ifnet *, u_long, caddr_t);
 void	bnx_watchdog(struct ifnet *);
@@ -4303,34 +4303,32 @@ bnx_mgmt_init_exit:
 /*   0 for success, positive value for failure.                             */
 /****************************************************************************/
 int
-bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
+bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 {
 	bus_dmamap_t		map;
 	struct tx_bd 		*txbd = NULL;
-	struct mbuf		*m0;
 	u_int16_t		vlan_tag = 0, flags = 0;
 	u_int16_t		chain_prod, prod;
 #ifdef BNX_DEBUG
 	u_int16_t		debug_prod;
 #endif
 	u_int32_t		addr, prod_bseq;
-	int			i, error, rc = 0;
+	int			i, error;
 
-	m0 = *m_head;
 	/* Transfer any checksum offload flags to the bd. */
-	if (m0->m_pkthdr.csum_flags) {
-		if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+	if (m->m_pkthdr.csum_flags) {
+		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 			flags |= TX_BD_FLAGS_IP_CKSUM;
-		if (m0->m_pkthdr.csum_flags &
+		if (m->m_pkthdr.csum_flags &
 		    (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT))
 			flags |= TX_BD_FLAGS_TCP_UDP_CKSUM;
 	}
 
 #if NVLAN > 0
 	/* Transfer any VLAN tags to the bd. */
-	if (m0->m_flags & M_VLANTAG) {
+	if (m->m_flags & M_VLANTAG) {
 		flags |= TX_BD_FLAGS_VLAN_TAG;
-		vlan_tag = m0->m_pkthdr.ether_vtag;
+		vlan_tag = m->m_pkthdr.ether_vtag;
 	}
 #endif
 
@@ -4340,12 +4338,10 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 	map = sc->tx_mbuf_map[chain_prod];
 
 	/* Map the mbuf into our DMA address space. */
-	error = bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m0, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: Error mapping mbuf into TX chain!\n",
 		    sc->bnx_dev.dv_xname);
-		m_freem(m0);
-		*m_head = NULL;
 		sc->tx_dma_map_failures++;
 		return (error);
 	}
@@ -4410,7 +4406,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 	 * and we don't want to unload the map before
 	 * all of the segments have been freed.
 	 */
-	sc->tx_mbuf_ptr[chain_prod] = m0;
+	sc->tx_mbuf_ptr[chain_prod] = m;
 	sc->used_tx_bd += map->dm_nsegs;
 
 	/* Update some debug statistics counters */
@@ -4426,7 +4422,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf **m_head)
 	sc->tx_prod = prod;
 	sc->tx_prod_bseq = prod_bseq;
 
-	return (rc);
+	return (0);
 }
 
 /****************************************************************************/
@@ -4472,7 +4468,7 @@ bnx_start(struct ifnet *ifp)
 		 * don't have room, set the OACTIVE flag to wait
 		 * for the NIC to drain the chain.
 		 */
-		if (bnx_tx_encap(sc, &m_head)) {
+		if (bnx_tx_encap(sc, m_head)) {
 			ifp->if_flags |= IFF_OACTIVE;
 			DBPRINT(sc, BNX_INFO_SEND, "TX chain is closed for "
 			    "business! Total tx_bd used = %d\n",
