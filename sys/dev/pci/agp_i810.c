@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.46 2009/02/17 18:41:32 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.47 2009/04/15 03:09:20 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -669,6 +669,8 @@ agp_i810_bind_memory(void *sc, struct agp_memory *mem, off_t offset)
 	struct agp_i810_softc	*isc = sc;
 	u_int32_t 		 regval, i;
 
+	if (mem->am_is_bound != 0)
+		return (EINVAL);
 	/*
 	 * XXX evil hack: the PGTBL_CTL appearently gets overwritten by the
 	 * X server for mysterious reasons which leads to crashes if we write
@@ -709,6 +711,9 @@ agp_i810_unbind_memory(void *sc, struct agp_memory *mem)
 {
 	struct agp_i810_softc	*isc = sc;
 	u_int32_t		 i;
+
+	if (mem->am_is_bound == 0)
+		return (EINVAL);
 
 	if (mem->am_type == 2) {
 		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE) {
