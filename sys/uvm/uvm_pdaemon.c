@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.40 2009/04/14 20:12:05 oga Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.41 2009/04/15 12:43:07 oga Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -381,10 +381,7 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			 * update our copy of "free" and see if we've met
 			 * our target
 			 */
-
-			uvm_lock_fpageq();
 			free = uvmexp.free - BUFPAGES_DEFICIT;
-			uvm_unlock_fpageq();
 
 			if (free + uvmexp.paging >= uvmexp.freetarg << 2 ||
 			    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
