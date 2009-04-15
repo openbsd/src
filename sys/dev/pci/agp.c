@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.27 2008/11/09 15:11:19 oga Exp $ */
+/* $OpenBSD: agp.c,v 1.28 2009/04/15 03:09:47 oga Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -53,26 +53,6 @@
  * integrated graphics, since they are not technically a true agp chipset,
  * but provide an almost identical interface.
  */
-#define AGP_ENABLE(sc, m) ((sc->sc_methods->enable != NULL) ?	\
-	sc->sc_methods->enable(sc->sc_chipc, m) :		    	\
-	agp_generic_enable(sc, m))
-
-#define AGP_ALLOC_MEMORY(sc, t, s) ((sc->sc_methods->alloc_memory != NULL) ? \
-	sc->sc_methods->alloc_memory(sc->sc_chipc, t, s) :		    \
-	agp_generic_alloc_memory(sc, t, s))
-
-#define AGP_FREE_MEMORY(sc, m) ((sc->sc_methods->free_memory != NULL) ?	\
-	sc->sc_methods->free_memory(sc->sc_chipc, m) :			\
-	agp_generic_free_memory(sc, m))
-
-#define AGP_BIND_MEMORY(sc, m, o) ((sc->sc_methods->bind_memory != NULL) ? \
-	sc->sc_methods->bind_memory(sc->sc_chipc, m, o)	:	 	  \
-	agp_generic_bind_memory(sc, m, o))
-
-#define AGP_UNBIND_MEMORY(sc, m) ((sc->sc_methods->unbind_memory != NULL) ? \
-	sc->sc_methods->unbind_memory(sc->sc_chipc, m) :		   \
-	agp_generic_unbind_memory(sc, m))
-
 int	agp_generic_enable(struct agp_softc *, u_int32_t);
 struct agp_memory *
 	agp_generic_alloc_memory(struct agp_softc *, int, vsize_t size);
@@ -324,9 +304,9 @@ agpclose(dev_t dev, int flags, int devtype, struct proc *p)
 	if (sc->sc_state == AGP_ACQUIRE_USER) {
 		while ((mem = TAILQ_FIRST(&sc->sc_memory)) != 0) {
 			if (mem->am_is_bound) {
-				AGP_UNBIND_MEMORY(sc, mem);
+				agp_unbind_memory(sc, mem);
 			}
-			AGP_FREE_MEMORY(sc, mem);
+			agp_free_memory(sc, mem);
 		}
                 agp_release_helper(sc, AGP_ACQUIRE_USER);
 	}
@@ -626,7 +606,7 @@ agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 
 	rw_enter_write(&sc->sc_lock);
 
-	if (!mem->am_is_bound) {
+	if (mem->am_is_bound == 0) {
 		printf("AGP: memory is not bound\n");
 		rw_exit_write(&sc->sc_lock);
 		return (EINVAL);
@@ -753,7 +733,7 @@ agp_release_helper(void *dev, enum agp_acquire_state state)
 		if (mem->am_is_bound) {
 			printf("agp_release_helper: mem %d is bound\n",
 			    mem->am_id);
-			AGP_UNBIND_MEMORY(sc, mem);
+			agp_unbind_memory(sc, mem);
 		}
 	}
 	sc->sc_state = AGP_ACQUIRE_FREE;
@@ -789,22 +769,22 @@ agp_info_user(void *dev, agp_info *info)
 int
 agp_setup_user(void *dev, agp_setup *setup)
 {
-	struct agp_softc *sc = (struct agp_softc *)dev;
+	struct agp_softc	*sc = dev;
 
-	return (AGP_ENABLE(sc, setup->agp_mode));
+	return (agp_enable(sc, setup->agp_mode));
 }
 
 int
 agp_allocate_user(void *dev, agp_allocate *alloc)
 {
-	struct agp_softc *sc = (struct agp_softc *)dev;
-	struct agp_memory* mem; 
-	size_t size = alloc->pg_count << AGP_PAGE_SHIFT;
+	struct agp_softc	*sc = dev;
+	struct agp_memory	*mem; 
+	size_t			 size = alloc->pg_count << AGP_PAGE_SHIFT;
 
 	if (sc->sc_allocated + size > sc->sc_maxmem)
 		return (EINVAL);
 
-	mem = AGP_ALLOC_MEMORY(sc, alloc->type, size);
+	mem = agp_alloc_memory(sc, alloc->type, size);
 	if (mem) {
 		alloc->key = mem->am_id;
 		alloc->physical = mem->am_physical;
@@ -816,10 +796,11 @@ agp_allocate_user(void *dev, agp_allocate *alloc)
 int
 agp_deallocate_user(void *dev, int id)
 {
-	struct agp_softc *sc = (struct agp_softc *) dev;
-	struct agp_memory *mem = agp_find_memory(sc, id);
-	if (mem) {
-		AGP_FREE_MEMORY(sc, mem);
+	struct agp_softc	*sc = dev;
+	struct agp_memory	*mem;
+
+	if ((mem = agp_find_memory(sc, id)) != NULL) {
+		agp_free_memory(sc, mem);
 		return (0);
 	} else
 		return (ENOENT);
@@ -828,26 +809,25 @@ agp_deallocate_user(void *dev, int id)
 int
 agp_bind_user(void *dev, agp_bind *bind)
 {
-	struct agp_softc *sc = (struct agp_softc *) dev;
-	struct agp_memory *mem = agp_find_memory(sc, bind->key);
+	struct agp_softc	*sc = dev;
+	struct agp_memory	*mem;
 
-	if (!mem)
+	if ((mem = agp_find_memory(sc, bind->key)) == NULL)
 		return (ENOENT);
-
-	return (AGP_BIND_MEMORY(sc, mem, bind->pg_start << AGP_PAGE_SHIFT));
+	return (agp_bind_memory(sc, mem, bind->pg_start << AGP_PAGE_SHIFT));
 }
 
 
 int
 agp_unbind_user(void *dev, agp_unbind *unbind)
 {
-	struct agp_softc *sc = (struct agp_softc *) dev;
-	struct agp_memory *mem = agp_find_memory(sc, unbind->key);
+	struct agp_softc	*sc = dev;
+	struct agp_memory	*mem;
 
-	if (!mem)
+	if ((mem = agp_find_memory(sc, unbind->key)) == NULL)
 		return (ENOENT);
 
-	return (AGP_UNBIND_MEMORY(sc, mem));
+	return (agp_unbind_memory(sc, mem));
 }
 
 /* Implementation of the kernel api */
@@ -902,44 +882,72 @@ agp_release(void *dev)
 int
 agp_enable(void *dev, u_int32_t mode)
 {
-	struct agp_softc *sc = (struct agp_softc *) dev;
+	struct agp_softc	*sc = dev;
+	int			 ret;
 
-        return (AGP_ENABLE(sc, mode));
+	if (sc->sc_methods->enable != NULL) {
+		ret = sc->sc_methods->enable(sc->sc_chipc, mode);
+	} else {
+		ret = agp_generic_enable(sc, mode);
+	}
+	return (ret);
 }
 
 void *
 agp_alloc_memory(void *dev, int type, vsize_t bytes)
 {
-	struct agp_softc *sc = (struct agp_softc *)dev;
+	struct agp_softc	*sc = dev;
+	struct agp_memory	*mem;
 
-        return  (AGP_ALLOC_MEMORY(sc, type, bytes));
+	if (sc->sc_methods->alloc_memory != NULL) {
+		mem = sc->sc_methods->alloc_memory(sc->sc_chipc, type, bytes);
+	} else {
+		mem = agp_generic_alloc_memory(sc, type, bytes);
+	}
+        return  (mem);
 }
 
 void
 agp_free_memory(void *dev, void *handle)
 {
-	struct agp_softc *sc = (struct agp_softc *) dev;
-        struct agp_memory *mem = (struct agp_memory *) handle;
+	struct agp_softc *sc = dev;
+        struct agp_memory *mem = handle;
 
-        AGP_FREE_MEMORY(sc, mem);
+	if (sc->sc_methods->free_memory != NULL) {
+		sc->sc_methods->free_memory(sc->sc_chipc, mem);
+	} else {
+		agp_generic_free_memory(sc, mem);
+	}
 }
 
 int
 agp_bind_memory(void *dev, void *handle, off_t offset)
 {
-	struct agp_softc *sc = (struct agp_softc *) dev;
-	struct agp_memory *mem = (struct agp_memory *) handle;
+	struct agp_softc	*sc = dev;
+	struct agp_memory	*mem = handle;
+	int			 ret;	
 
-	return (AGP_BIND_MEMORY(sc, mem, offset));
+	if (sc->sc_methods->bind_memory != NULL) {
+		ret = sc->sc_methods->bind_memory(sc->sc_chipc, mem, offset);
+	} else {
+		ret = agp_generic_bind_memory(sc, mem, offset);
+	}
+	return (ret);
 }
 
 int
 agp_unbind_memory(void *dev, void *handle)
 {
-	struct agp_softc *sc = (struct agp_softc *) dev;
-        struct agp_memory *mem = (struct agp_memory *) handle;
+	struct agp_softc	*sc = dev;
+        struct agp_memory	*mem = handle;
+	int			 ret;	
 
-        return (AGP_UNBIND_MEMORY(sc, mem));
+	if (sc->sc_methods->unbind_memory != NULL) {
+		ret = sc->sc_methods->unbind_memory(sc->sc_chipc, mem);
+	} else {
+		ret = agp_generic_unbind_memory(sc, mem);
+	}
+	return (ret);
 }
 
 void
