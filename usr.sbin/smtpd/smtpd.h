@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.97 2009/04/09 19:49:34 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.98 2009/04/15 20:34:59 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -668,8 +668,8 @@ struct s_session {
 	size_t		sessions;
 	size_t		sessions_active;
 
-	size_t		ssmtp;
-	size_t		ssmtp_active;
+	size_t		smtps;
+	size_t		smtps_active;
 
 	size_t		starttls;
 	size_t		starttls_active;
