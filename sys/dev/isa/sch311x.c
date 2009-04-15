@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.6 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.7 2009/04/15 20:21:09 mk Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -63,8 +63,6 @@
 #define SCHSIO_HWM_INTERVAL	5 /* seconds */
 
 /* Register access */
-#define SCHSIO_HWM_IOSIZE 0x100
-#define SCHSIO_HWM_OFFSET	0x70
 #define SCHSIO_HWM_INDEX	0x70
 #define SCHSIO_HWM_DATA		0x71
 
