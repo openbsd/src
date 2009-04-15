@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.424 2009/04/15 08:27:08 sobrado Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.425 2009/04/15 09:54:29 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -745,11 +745,10 @@ ECN implies RED.
 Enables Random Early Detection (RED) on this queue.
 RED drops packets with a probability proportional to the average
 queue length.
-.It Ar rio
-Enables RIO on this queue.
-RIO is RED with IN/OUT, thus running
-RED two times more than RIO would achieve the same effect.
-RIO is currently not supported in the GENERIC kernel.
+.\" .It Ar rio
+.\" Enables RIO on this queue.
+.\" RIO is RED with IN/OUT, thus running
+.\" RED two times more than RIO would achieve the same effect.
 .El
 .Pp
 The
