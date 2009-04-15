@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.4 2009/04/13 21:17:54 miod Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.5 2009/04/15 18:42:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -35,7 +35,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <sgi/sgi/ip30.h>
-#include <sgi/xbow/widget.h>
 #include <sgi/xbow/xbow.h>
 #include <sgi/xbow/xbridgereg.h>
 
