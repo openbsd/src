@@ -1,7 +1,7 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.1 2009/04/13 21:17:54 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.2 2009/04/15 18:46:40 miod Exp $	*/
 
 /*
- * Copyright (c) 2008 Miodrag Vallat.
+ * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -36,6 +36,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <sgi/xbow/hub.h>
 #include <sgi/xbow/xbow.h>
 #include <sgi/xbow/xbridgereg.h>
 
@@ -50,7 +51,8 @@ int	ip27_widget_id(int16_t, u_int, uint32_t *);
 static paddr_t io_base;
 
 int	ip27_hub_intr_register(int, int, int *);
-int	ip27_hub_intr_establish(int (*)(void *), void *, int, int, const char *);
+int	ip27_hub_intr_establish(int (*)(void *), void *, int, int,
+	    const char *);
 void	ip27_hub_intr_disestablish(int);
 intrmask_t ip27_hub_intr_handler(intrmask_t, struct trap_frame *);
 void	ip27_hub_intr_makemasks(void);
@@ -104,6 +106,16 @@ ip27_setup()
 
 	set_intr(INTPRI_XBOWMUX, CR_INT_0, ip27_hub_intr_handler);
 	register_pending_int_handler(ip27_hub_do_pending_int);
+
+	/*
+	 * Disable all hardware interrupts.
+	 */
+	IP27_LHUB_S(HUB_CPU0_IMR0, 0);
+	IP27_LHUB_S(HUB_CPU0_IMR1, 0);
+	IP27_LHUB_S(HUB_CPU1_IMR0, 0);
+	IP27_LHUB_S(HUB_CPU1_IMR1, 0);
+	(void)IP27_LHUB_L(HUB_IR0);
+	(void)IP27_LHUB_L(HUB_IR1);
 }
 
 /*
@@ -169,15 +181,14 @@ ip27_hub_intr_register(int widget, int level, int *intrbit)
 	/*
 	 * All interrupts will be serviced at hardware level 0,
 	 * so the `level' argument can be ignored.
-	 * On HUB, the low 63 bits of the interrupt register
-	 * are level 0 sources. However, we'll only consider the
-	 * lowest 32 bits for now.
+	 * On HUB, the low 7 bits of the level 0 interrupt register
+	 * are reserved.
 	 */
-	for (bit = SPL_CLOCK - 1; bit >= 0; bit--)
+	for (bit = SPL_CLOCK - 1; bit >= 7; bit--)
 		if ((ip27_hub_intrmask & (1 << bit)) == 0)
 			break;
 
-	if (bit < 0)
+	if (bit < 7)
 		return EINVAL;
 
 	*intrbit = bit;
@@ -199,7 +210,7 @@ ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
 #endif
 
 	/*
-	 * HEART interrupts are not supposed to be shared - the interrupt
+	 * Widget interrupts are not supposed to be shared - the interrupt
 	 * mask is large enough for all widgets.
 	 */
 	if (intrhand[intrbit] != NULL)
@@ -220,7 +231,10 @@ ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
 	ip27_hub_intrmask |= 1UL << intrbit;
 	ip27_hub_intr_makemasks();
 
-	/* TODO frob hardware */
+	/* XXX this assumes we run on cpu0 */
+	IP27_LHUB_S(HUB_CPU0_IMR0,
+	    IP27_LHUB_L(HUB_CPU0_IMR0) | (1UL << intrbit));
+	(void)IP27_LHUB_L(HUB_IR0);
 
 	return 0;
 }
@@ -243,7 +257,10 @@ ip27_hub_intr_disestablish(int intrbit)
 		return;
 	}
 
-	/* TODO frob hardware */
+	/* XXX this assumes we run on cpu0 */
+	IP27_LHUB_S(HUB_CPU0_IMR0,
+	    IP27_LHUB_L(HUB_CPU0_IMR0) & ~(1UL << intrbit));
+	(void)IP27_LHUB_L(HUB_IR0);
 
 	intrhand[intrbit] = NULL;
 
@@ -254,8 +271,6 @@ ip27_hub_intr_disestablish(int intrbit)
 
 	splx(s);
 }
-
-intrmask_t ip27_hub_intem = 0;
 
 /*
  * Recompute interrupt masks.
@@ -304,8 +319,6 @@ ip27_hub_intr_makemasks()
 	imask[IPL_NONE] = 0;
 	imask[IPL_HIGH] = -1;
 
-	/* Lastly, determine which IRQs are actually in use. */
-	ip27_hub_intem = ip27_hub_intrmask & 0x00000000ffffffffL;
 	hw_setintrmask(0);
 }
 
@@ -330,9 +343,9 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 	intrmask_t mask;
 	struct intrhand *ih;
 
-	/* TODO frob hardware */
-	isr = 0;
-	imr = 0;
+	/* XXX this assumes we run on cpu0 */
+	isr = IP27_LHUB_L(HUB_IR0);
+	imr = IP27_LHUB_L(HUB_CPU0_IMR0);
 
 	isr &= imr;
 	if (isr == 0)
@@ -344,7 +357,9 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 	 */
 	if ((mask = isr & frame->cpl) != 0) {
 		atomic_setbits_int(&ipending, mask);
-		/* TODO frob hardware */
+		/* XXX this assumes we run on cpu0 */
+		IP27_LHUB_S(HUB_CPU0_IMR0, imr & ~mask);
+		(void)IP27_LHUB_L(HUB_IR0);
 		isr &= ~mask;
 	}
 
@@ -353,14 +368,19 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 	 */
 	mask = isr & ~frame->cpl;
 	atomic_clearbits_int(&ipending, mask);
-	for (bit = SPL_CLOCK - 1, mask = 1 << bit; bit >= 0;
-	    bit--, mask >>= 1) {
-		if ((isr & mask) == 0)
-			continue;
+	if (isr != 0) {
+		for (bit = SPL_CLOCK - 1, mask = 1 << bit; bit >= 7;
+		    bit--, mask >>= 1) {
+			if ((isr & mask) == 0)
+				continue;
 
-		for (ih = intrhand[bit]; ih != NULL; ih = ih->ih_next) {
-			if ((*ih->ih_fun)(ih->ih_arg) != 0)
-				ih->ih_count.ec_count++;
+			for (ih = intrhand[bit]; ih != NULL; ih = ih->ih_next) {
+				if ((*ih->ih_fun)(ih->ih_arg) != 0)
+					ih->ih_count.ec_count++;
+			}
+
+			IP27_LHUB_S(HUB_IR_CHANGE, HUB_IR_CLR | bit);
+			(void)IP27_LHUB_L(HUB_IR0);
 		}
 	}
 
@@ -370,5 +390,6 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 void
 hw_setintrmask(intrmask_t m)
 {
-	/* TODO frob hardware */
+	IP27_LHUB_S(HUB_CPU0_IMR0, ip27_hub_intrmask & ~((uint64_t)m));
+	(void)IP27_LHUB_L(HUB_IR0);
 }
