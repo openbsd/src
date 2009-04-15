@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.3 2009/04/13 21:17:54 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.4 2009/04/15 18:45:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -66,7 +66,9 @@
 #include <machine/atomic.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
+#include <machine/mnode.h>
 
+#include <sgi/xbow/hub.h>
 #include <sgi/xbow/xbow.h>
 #include <sgi/xbow/xbowdevs.h>
 #include <sgi/xbow/xbowdevs_data.h>
@@ -121,7 +123,7 @@ struct cfdriver xbow_cd = {
 static const bus_space_t xbowbus_short_tag = {
 	NULL,
 	(bus_addr_t)0,		/* will be modified in widgets bus_space_t */
-	(bus_addr_t)0,
+	NULL,
 	0,
 	xbow_read_1,
 	xbow_write_1,
@@ -146,7 +148,7 @@ static const bus_space_t xbowbus_short_tag = {
 static const bus_space_t xbowbus_long_tag = {
 	NULL,
 	(bus_addr_t)0,		/* will be modified in widgets bus_space_t */
-	(bus_addr_t)0,
+	NULL,
 	0,
 	xbow_read_1,
 	xbow_write_1,
@@ -303,14 +305,15 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 	 * complete XBow, but only a limited topology. This is
 	 * found on the Origin 200 (but probably not on the Origin 2000).
 	 */
-	if (vendor == XBOW_VENDOR_SGI4 &&
-	    product == XBOW_PRODUCT_SGI4_BRIDGE) {
+	if (vendor == XBOW_VENDOR_SGI4 && product == XBOW_PRODUCT_SGI4_BRIDGE) {
 		/*
 		 * Interrupt widget is #a (this is another facet of this
 		 * bridge).
 		 */
 		xbow_intr_widget = 0x0a;
-		xbow_intr_widget_register = 0x90;
+		xbow_intr_widget_register = (1UL << 47) /* XIO I/O space */ |
+		    ((paddr_t)IP27_RHUB_ADDR(nasid, HUB_IR_CHANGE) -
+		     IP27_NODE_IO_BASE(nasid)) /* HUB register offset */;
 
 		xbow_attach_widget(self, nasid, WIDGET_MIN,
 		    xbowsubmatch_pass2, xbowprint_pass2);
@@ -596,7 +599,7 @@ xbow_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
  */
 
 int	xbow_intr_widget = 0;
-unsigned int xbow_intr_widget_register = 0;
+paddr_t	xbow_intr_widget_register;
 int	(*xbow_intr_widget_intr_register)(int, int, int *) = NULL;
 int	(*xbow_intr_widget_intr_establish)(int (*)(void *), void *, int, int,
 	    const char *) = NULL;

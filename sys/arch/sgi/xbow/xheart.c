@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.4 2009/04/12 17:53:26 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.5 2009/04/15 18:45:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -450,12 +450,4 @@ xheart_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 	}
 
 	return CR_INT_0;
-}
-
-void
-hw_setintrmask(intrmask_t m)
-{
-	paddr_t heart;
-	heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC);
-	*(volatile uint64_t *)(heart + HEART_IMR(0)) = heart_intem & ~m;
 }

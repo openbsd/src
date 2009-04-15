@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.h,v 1.2 2009/04/13 21:17:54 miod Exp $	*/
+/*	$OpenBSD: xbow.h,v 1.3 2009/04/15 18:45:41 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -45,7 +45,7 @@ extern	unsigned int xbow_long_shift;
 
 extern	int	(*xbow_widget_id)(int16_t, u_int, uint32_t *);
 extern	int	xbow_intr_widget;
-extern	unsigned int xbow_intr_widget_register;
+extern	paddr_t	xbow_intr_widget_register;
 
 extern	int	(*xbow_intr_widget_intr_register)(int, int, int *);
 extern	int	(*xbow_intr_widget_intr_establish)(int (*)(void *), void *,
