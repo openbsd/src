@@ -1,4 +1,4 @@
-/* $Id: libmdoc.h,v 1.1 2009/04/06 20:30:40 kristaps Exp $ */
+/* $Id: libmdoc.h,v 1.2 2009/04/15 20:10:20 miod Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@openbsd.org>
  *
@@ -57,38 +57,6 @@ struct	mdoc_macro {
 	/* Reserved words in arguments treated as text. */
 };
 
-#define	mdoc_nwarn(mdoc, node, type, fmt, ...) \
-		  mdoc_vwarn((mdoc), (node)->line, \
-		  (node)->pos, (type), (fmt), ##__VA_ARGS__)
-
-#define	mdoc_nerr(mdoc, node, fmt, ...) \
-		  mdoc_verr((mdoc), (node)->line, \
-		  (node)->pos, (fmt), ##__VA_ARGS__)
-
-#define	mdoc_warn(mdoc, type, fmt, ...) \
-		  mdoc_vwarn((mdoc), (mdoc)->last->line, \
-		  (mdoc)->last->pos, (type), (fmt), ##__VA_ARGS__)
-
-#define	mdoc_err(mdoc, fmt, ...) \
-		  mdoc_verr((mdoc), (mdoc)->last->line, \
-		  (mdoc)->last->pos, (fmt), ##__VA_ARGS__)
-
-#define	mdoc_msg(mdoc, fmt, ...) \
-		  mdoc_vmsg((mdoc), (mdoc)->last->line, \
-		  (mdoc)->last->pos, (fmt), ##__VA_ARGS__)
-
-#define	mdoc_pmsg(mdoc, line, pos, fmt, ...) \
-		  mdoc_vmsg((mdoc), (line), \
-	  	  (pos), (fmt), ##__VA_ARGS__)
-
-#define	mdoc_pwarn(mdoc, line, pos, type, fmt, ...) \
-		  mdoc_vwarn((mdoc), (line), \
-	  	  (pos), (type), (fmt), ##__VA_ARGS__)
-
-#define	mdoc_perr(mdoc, line, pos, fmt, ...) \
-		  mdoc_verr((mdoc), (line), \
-	  	  (pos), (fmt), ##__VA_ARGS__)
-
 extern	const struct mdoc_macro *const mdoc_macros;
 
 __BEGIN_DECLS
@@ -99,6 +67,17 @@ void		  mdoc_vmsg(struct mdoc *, int, int,
 			const char *, ...);
 int		  mdoc_verr(struct mdoc *, int, int, 
 			const char *, ...);
+int		  mdoc_nwarn(struct mdoc *, const struct mdoc_node *,
+			enum mdoc_warn, const char *, ...);
+int		  mdoc_nerr(struct mdoc *, const struct mdoc_node *,
+			const char *, ...);
+int		  mdoc_warn(struct mdoc *, enum mdoc_warn, const char *, ...);
+int		  mdoc_err(struct mdoc *, const char *, ...);
+void		  mdoc_msg(struct mdoc *, const char *, ...);
+void		  mdoc_pmsg(struct mdoc *, int, int, const char *, ...);
+int		  mdoc_pwarn(struct mdoc *, int, int,
+			enum mdoc_warn,const char *, ...);
+int		  mdoc_perr(struct mdoc *, int, int, const char *, ...);
 int		  mdoc_macro(MACRO_PROT_ARGS);
 int		  mdoc_word_alloc(struct mdoc *, 
 			int, int, const char *);
