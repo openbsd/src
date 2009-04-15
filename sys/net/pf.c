@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.642 2009/04/14 19:39:56 grange Exp $ */
+/*	$OpenBSD: pf.c,v 1.643 2009/04/15 05:14:45 david Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4365,7 +4365,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 				REASON_SET(reason, PFRES_BADSTATE);
 				return (PF_DROP);
 			} else {
-				if (pf_status.debug >= PF_DEBUG_MISC) {
+				if (pf_status.debug >= PF_DEBUG_NOISY) {
 					printf("pf: OK ICMP %d:%d ",
 					    icmptype, pd->hdr.icmp->icmp_code);
 					pf_print_host(pd->src, 0, pd->af);
