@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.12 2008/09/06 12:00:19 djm Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.13 2009/04/15 00:55:52 djm Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -201,6 +201,7 @@ const static u_int32_t sha256_initial_hash_value[8] = {
 	0x5be0cd19UL
 };
 
+#ifndef SHA256_ONLY
 /* Hash constant words K for SHA-384 and SHA-512: */
 const static u_int64_t K512[80] = {
 	0x428a2f98d728ae22ULL, 0x7137449123ef65cdULL,
@@ -268,7 +269,7 @@ const static u_int64_t sha512_initial_hash_value[8] = {
 	0x1f83d9abfb41bd6bULL,
 	0x5be0cd19137e2179ULL
 };
-
+#endif /* SHA256_ONLY */
 
 /*** SHA-256: *********************************************************/
 void
@@ -550,6 +551,7 @@ SHA256Final(u_int8_t digest[SHA256_DIGEST_LENGTH], SHA2_CTX *context)
 }
 
 
+#ifndef SHA256_ONLY
 /*** SHA-512: *********************************************************/
 void
 SHA512Init(SHA2_CTX *context)
@@ -868,3 +870,4 @@ SHA384Final(u_int8_t digest[SHA384_DIGEST_LENGTH], SHA2_CTX *context)
 	/* Zero out state data */
 	memset(context, 0, sizeof(*context));
 }
+#endif /* SHA256_ONLY */
