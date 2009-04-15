@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.39 2008/11/01 05:59:21 deraadt Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.40 2009/04/15 10:47:46 art Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -108,10 +108,6 @@ procinit(void)
 	    &pool_allocator_nointr);
 }
 
-/*
- * Change the count associated with number of processes
- * a given user is using.
- */
 struct uidinfo *
 uid_find(uid_t uid)
 {
@@ -138,6 +134,10 @@ uid_find(uid_t uid)
 	return (nuip);
 }
 
+/*
+ * Change the count associated with number of processes
+ * a given user is using.
+ */
 int
 chgproccnt(uid_t uid, int diff)
 {
