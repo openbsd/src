@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.243 2009/04/06 12:11:52 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.244 2009/04/15 05:07:02 david Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -960,6 +960,9 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			}
 		printf(")");
 	}
+
+	if (r->rule_flag & PFRULE_FRAGMENT)
+		printf(" fragment");
 
 	if (r->scrub_flags >= PFSTATE_NODF || r->min_ttl || r->max_mss) {
 		printf(" scrub (");
