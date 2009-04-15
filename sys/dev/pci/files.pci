@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.259 2009/02/25 03:05:32 kevlo Exp $
+#	$OpenBSD: files.pci,v 1.260 2009/04/15 06:54:44 oga Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -239,12 +239,6 @@ file	dev/pci/qli_pci.c		qli_pci
 device	de: ether, ifnet, ifmedia
 attach	de at pci
 file	dev/pci/if_de.c			de
-
-# ENI ATM driver
-device	en: atm, ifnet
-attach	en at pci with en_pci
-file	dev/pci/if_en_pci.c		en
-file	dev/ic/midway.c			en
 
 # 3Com 3c590 and 3c595 Ethernet controllers
 # device declaration in sys/conf/files
