@@ -303,8 +303,6 @@
 ./usr/include/dev/ic/mc6845reg.h
 ./usr/include/dev/ic/mfireg.h
 ./usr/include/dev/ic/mfivar.h
-./usr/include/dev/ic/midwayreg.h
-./usr/include/dev/ic/midwayvar.h
 ./usr/include/dev/ic/mk48txxreg.h
 ./usr/include/dev/ic/monitors.h
 ./usr/include/dev/ic/mpireg.h

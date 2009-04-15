@@ -1000,8 +1000,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/mc6845reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/mfireg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/mfivar.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/midwayreg.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/midwayvar.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/mk48txxreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/monitors.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/mpireg.ph
