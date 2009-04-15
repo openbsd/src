@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.23 2009/04/15 01:58:27 oga Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.24 2009/04/15 02:03:33 oga Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -312,6 +312,12 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 	bus_size_t plen, sgsize;
 	int first = 1;
 	int i, seg = 0;
+
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
 
 	if (nsegs > map->_dm_segcnt || size > map->_dm_size)
 		return (EINVAL);
