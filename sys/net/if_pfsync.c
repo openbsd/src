@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.120 2009/04/04 13:09:29 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.121 2009/04/15 05:11:49 david Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -942,7 +942,7 @@ pfsync_in_upd(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 		}
 
 		if (sfail) {
-			if (pf_status.debug >= PF_DEBUG_MISC) {
+			if (pf_status.debug >= PF_DEBUG_NOISY) {
 				printf("pfsync: %s stale update (%d)"
 				    " id: %016llx creatorid: %08x\n",
 				    (sfail < 7 ?  "ignoring" : "partial"),
@@ -1034,7 +1034,7 @@ pfsync_in_upd_c(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 		}
 
 		if (sfail) {
-			if (pf_status.debug >= PF_DEBUG_MISC) {
+			if (pf_status.debug >= PF_DEBUG_NOISY) {
 				printf("pfsync: ignoring stale update "
 				    "(%d) id: %016llx "
 				    "creatorid: %08x\n", sfail,
