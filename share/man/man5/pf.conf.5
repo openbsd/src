@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.421 2009/04/14 14:03:53 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.422 2009/04/15 06:08:27 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 14 2009 $
+.Dd $Mdocdate: April 15 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -617,23 +617,6 @@ as long as excess bandwidth is available
 (see the option
 .Ar borrow ,
 below).
-.It Ar priq
-Priority Queueing.
-.Ar Queues
-are flat attached to the interface, thus,
-.Ar queues
-cannot have further child
-.Ar queues .
-Each
-.Ar queue
-has a unique
-.Ar priority
-assigned, ranging from 0 to 15.
-Packets in the
-.Ar queue
-with the highest
-.Ar priority
-are processed first.
 .It Ar hfsc
 Hierarchical Fair Service Curve.
 .Ar Queues
@@ -658,6 +641,23 @@ and its unique feature is an ability to decouple
 and
 .Ar bandwidth
 allocation.
+.It Ar priq
+Priority Queueing.
+.Ar Queues
+are flat attached to the interface, thus,
+.Ar queues
+cannot have further child
+.Ar queues .
+Each
+.Ar queue
+has a unique
+.Ar priority
+assigned, ranging from 0 to 15.
+Packets in the
+.Ar queue
+with the highest
+.Ar priority
+are processed first.
 .El
 .Pp
 The interfaces on which queueing should be activated are declared using
@@ -781,6 +781,9 @@ Parameters are as follows:
 .It Ar default
 Packets not matched by another queue are assigned to this one.
 Exactly one default queue is required.
+.It Ar ecn
+Enables ECN (Explicit Congestion Notification) on this queue.
+ECN implies RED.
 .It Ar red
 Enable RED (Random Early Detection) on this queue.
 RED drops packets with a probability proportional to the average
@@ -790,16 +793,14 @@ Enables RIO on this queue.
 RIO is RED with IN/OUT, thus running
 RED two times more than RIO would achieve the same effect.
 RIO is currently not supported in the GENERIC kernel.
-.It Ar ecn
-Enables ECN (Explicit Congestion Notification) on this queue.
-ECN implies RED.
 .El
 .Pp
 The
 .Ar cbq
 .Ar scheduler
 supports an additional option:
-.Bl -tag -width Fl
+.Pp
+.Bl -tag -width "upperlimit <sc>XXX" -compact -offset 3n
 .It Ar borrow
 The queue can borrow bandwidth from the parent.
 .El
@@ -808,13 +809,14 @@ The
 .Ar hfsc
 .Ar scheduler
 supports some additional options:
-.Bl -tag -width Fl
+.Pp
+.Bl -tag -width "upperlimit <sc>XXX" -compact -offset 3n
+.It Ar linkshare Aq Ar sc
+The bandwidth share of a backlogged queue.
 .It Ar realtime Aq Ar sc
 The minimum required bandwidth for the queue.
 .It Ar upperlimit Aq Ar sc
 The maximum allowed bandwidth for the queue.
-.It Ar linkshare Aq Ar sc
-The bandwidth share of a backlogged queue.
 .El
 .Pp
 .Aq Ar sc
