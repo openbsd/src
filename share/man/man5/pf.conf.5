@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.422 2009/04/15 06:08:27 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.423 2009/04/15 07:21:26 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -582,36 +582,27 @@ rules will be queued, while for
 rules it specifies where any resulting ICMP or TCP RST
 packets should be queued.
 The
-.Ar scheduler
+.Em scheduler
 defines the algorithm used to decide which packets get delayed, dropped, or
 sent out immediately.
-There are three
-.Ar schedulers
-currently supported.
+There are three schedulers currently supported:
 .Bl -tag -width xxxx
 .It Ar cbq
 Class Based Queueing.
-.Ar Queues
-attached to an interface build a tree, thus each
-.Ar queue
-can have further child
-.Ar queues .
+Queues attached to an interface build a tree,
+thus each queue can have further child queues.
 Each queue can have a
 .Ar priority
 and a
 .Ar bandwidth
 assigned.
-.Ar Priority
-mainly controls the time packets take to get sent out, while
-.Ar bandwidth
-has primarily effects on throughput.
+Priority mainly controls the time packets take to get sent out,
+while bandwidth has primarily effects on throughput.
 .Ar cbq
 achieves both partitioning and sharing of link bandwidth
 by hierarchically structured classes.
-Each class has its own
-.Ar queue
-and is assigned its share of
-.Ar bandwidth .
+Each class has its own queue
+and is assigned its share of bandwidth.
 A child class can borrow bandwidth from its parent class
 as long as excess bandwidth is available
 (see the option
@@ -619,45 +610,28 @@ as long as excess bandwidth is available
 below).
 .It Ar hfsc
 Hierarchical Fair Service Curve.
-.Ar Queues
-attached to an interface build a tree, thus each
-.Ar queue
-can have further child
-.Ar queues .
+Queues attached to an interface build a tree,
+thus each queue can have further child queues.
 Each queue can have a
 .Ar priority
 and a
 .Ar bandwidth
 assigned.
-.Ar Priority
-mainly controls the time packets take to get sent out, while
-.Ar bandwidth
-primarily affects throughput.
+Priority mainly controls the time packets take to get sent out,
+while bandwidth primarily affects throughput.
 .Ar hfsc
 supports both link-sharing and guaranteed real-time services.
 It employs a service curve based QoS model,
 and its unique feature is an ability to decouple
-.Ar delay
-and
-.Ar bandwidth
-allocation.
+delay and bandwidth allocation.
 .It Ar priq
 Priority Queueing.
-.Ar Queues
-are flat attached to the interface, thus,
-.Ar queues
-cannot have further child
-.Ar queues .
-Each
-.Ar queue
-has a unique
+Queues are flat attached to the interface,
+thus queues cannot have further child queues.
+Each queue has a unique
 .Ar priority
 assigned, ranging from 0 to 15.
-Packets in the
-.Ar queue
-with the highest
-.Ar priority
-are processed first.
+Packets in the queue with the highest priority are processed first.
 .El
 .Pp
 The interfaces on which queueing should be activated are declared using
@@ -671,14 +645,6 @@ has the following keywords:
 Queueing is enabled on the named interface.
 .It Aq Ar scheduler
 Specifies which queueing scheduler to use.
-Currently supported values
-are
-.Ar cbq
-for Class Based Queueing,
-.Ar priq
-for Priority Queueing and
-.Ar hfsc
-for the Hierarchical Fair Service Curve scheduler.
 .It Ar bandwidth Aq Ar bw
 The maximum bitrate for all queues on an
 interface may be specified using the
@@ -724,16 +690,11 @@ Once interfaces are activated for queueing using the
 directive, a sequence of
 .Ar queue
 directives may be defined.
-The name associated with a
-.Ar queue
-must match a queue defined in the
-.Ar altq
-directive (e.g. mail), or, except for the
+The name associated with a queue
+must match a queue defined in the altq
+directive or, except for the
 .Ar priq
-.Ar scheduler ,
-in a parent
-.Ar queue
-declaration.
+scheduler, in a parent queue declaration.
 The following keywords can be used:
 .Bl -tag -width xxxx
 .It Ar on Aq Ar interface
@@ -759,33 +720,29 @@ the range is 0 to 7 and for
 .Ar priq ,
 the range is 0 to 15.
 The default for all is 1.
-.Ar Priq
+.Ar priq
 queues with a higher priority are always served first.
-.Ar Cbq
+.Ar cbq
 and
-.Ar Hfsc
+.Ar hfsc
 queues with a higher priority are preferred in the case of overload.
 .It Ar qlimit Aq Ar limit
 The maximum number of packets held in the queue.
 The default is 50.
 .El
 .Pp
-The
-.Ar scheduler
-can get additional parameters with
-.Xo Aq Ar scheduler
-.Pf ( Aq Ar parameters ) .
-.Xc
-Parameters are as follows:
+The scheduler can specify additional parameters using the format
+.Ar scheduler Ns Pq Ar parameters .
+The parameters are:
 .Bl -tag -width Fl
 .It Ar default
 Packets not matched by another queue are assigned to this one.
 Exactly one default queue is required.
 .It Ar ecn
-Enables ECN (Explicit Congestion Notification) on this queue.
+Enables Explicit Congestion Notification (ECN) on this queue.
 ECN implies RED.
 .It Ar red
-Enable RED (Random Early Detection) on this queue.
+Enables Random Early Detection (RED) on this queue.
 RED drops packets with a probability proportional to the average
 queue length.
 .It Ar rio
@@ -797,20 +754,18 @@ RIO is currently not supported in the GENERIC kernel.
 .Pp
 The
 .Ar cbq
-.Ar scheduler
-supports an additional option:
+scheduler supports an additional option:
 .Pp
-.Bl -tag -width "upperlimit <sc>XXX" -compact -offset 3n
+.Bl -tag -width "upperlimit XXXXXXX" -compact -offset 3n
 .It Ar borrow
 The queue can borrow bandwidth from the parent.
 .El
 .Pp
 The
 .Ar hfsc
-.Ar scheduler
-supports some additional options:
+scheduler supports some additional options:
 .Pp
-.Bl -tag -width "upperlimit <sc>XXX" -compact -offset 3n
+.Bl -tag -width "upperlimit XXXXXXX" -compact -offset 3n
 .It Ar linkshare Aq Ar sc
 The bandwidth share of a backlogged queue.
 .It Ar realtime Aq Ar sc
@@ -820,7 +775,7 @@ The maximum allowed bandwidth for the queue.
 .El
 .Pp
 .Aq Ar sc
-is an acronym for
+is an abbreviation for
 .Ar service curve .
 .Pp
 The format for service curve specifications is
@@ -853,10 +808,8 @@ keyword.
 Normally only one
 .Ar queue
 is specified; when a second one is specified it will instead be used for
-packets which have a
-.Em TOS
-of
-.Em lowdelay
+packets which have a TOS of
+.Ar lowdelay
 and for TCP ACKs with no data payload.
 .Pp
 To continue the previous example, the examples below would specify the
@@ -871,7 +824,7 @@ and
 The queues may then be referenced by filtering rules (see
 .Sx PACKET FILTERING
 below).
-.Bd -literal
+.Bd -literal -offset 4n
 queue std bandwidth 10% cbq(default)
 queue http bandwidth 60% priority 2 cbq(borrow red) \e
       { employees, developers }
