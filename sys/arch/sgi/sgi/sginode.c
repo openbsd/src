@@ -1,5 +1,4 @@
-#define	DEBUG
-/*	$OpenBSD: sginode.c,v 1.1 2009/04/13 21:17:54 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.2 2009/04/15 18:47:15 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
