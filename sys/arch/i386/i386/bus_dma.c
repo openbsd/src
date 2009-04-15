@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.12 2009/04/14 16:01:04 oga Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.13 2009/04/15 01:58:27 oga Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -338,6 +338,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 		}
 	}
 
+	map->dm_mapsize = size;
 	map->dm_nsegs = seg + 1;
 	return (0);
 }

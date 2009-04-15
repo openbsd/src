@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.22 2009/04/14 16:01:04 oga Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.23 2009/04/15 01:58:27 oga Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -371,6 +371,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 		}
 	}
 
+	map->dm_mapsize = size;
 	map->dm_nsegs = seg + 1;
 	return (0);
 }
