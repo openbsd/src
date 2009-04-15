@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.643 2009/04/15 05:14:45 david Exp $ */
+/*	$OpenBSD: pf.c,v 1.644 2009/04/15 13:10:38 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5381,6 +5381,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_pdesc		 pd;
 	int			 off, dirndx, pqid = 0;
+	u_int16_t		 qid;
 
 	if (!pf_status.running)
 		return (PF_PASS);
@@ -5583,25 +5584,29 @@ done:
 		    ("pf: dropping packet with ip options\n"));
 	}
 
-	if (s)
+	if (s) {
 		pf_scrub_ip(&m, s->state_flags, s->min_ttl, s->set_tos);
-	else
+		pf_tag_packet(m, s->tag, s->rtableid);
+		if (pqid || (pd.tos & IPTOS_LOWDELAY))
+			qid = s->pqid;
+		else
+			qid = s->qid;
+	} else {
 		pf_scrub_ip(&m, r->scrub_flags, r->min_ttl, r->set_tos);
-
-	if (s && (s->tag || s->rtableid))
-		pf_tag_packet(m, s ? s->tag : 0, s->rtableid);
+		pf_tag_packet(m, r->tag, r->rtableid);
+		if (pqid || (pd.tos & IPTOS_LOWDELAY))
+			qid = r->pqid;
+		else
+			qid = r->qid;
+	}
 
 	if (dir == PF_IN && s && s->key[PF_SK_STACK])
 		m->m_pkthdr.pf.statekey = s->key[PF_SK_STACK];
 
 #ifdef ALTQ
-	if (action == PF_PASS && s && s->qid) {
-		if (pqid || (pd.tos & IPTOS_LOWDELAY))
-			m->m_pkthdr.pf.qid = s->pqid;
-		else
-			m->m_pkthdr.pf.qid = s->qid;
-		/* add hints for ecn */
-		m->m_pkthdr.pf.hdr = h;
+	if (action == PF_PASS && qid) {
+		m->m_pkthdr.pf.qid = qid;
+		m->m_pkthdr.pf.hdr = h;	/* hints for ecn */
 	}
 #endif /* ALTQ */
 
