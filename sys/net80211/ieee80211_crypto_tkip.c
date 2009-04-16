@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.13 2009/04/14 17:43:26 damien Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.14 2009/04/16 18:32:24 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -61,6 +61,7 @@ struct ieee80211_tkip_ctx {
 	const u_int8_t	*rxmic;
 	u_int16_t	txttak[5];
 	u_int16_t	rxttak[5];
+	u_int8_t	txttak_ok;
 	u_int8_t	rxttak_ok;
 };
 
@@ -213,6 +214,8 @@ ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	hdrlen = ieee80211_get_hdrlen(wh);
 	memcpy(mtod(n0, caddr_t), wh, hdrlen);
 
+	k->k_tsc++;	/* increment the 48-bit TSC */
+
 	/* construct TKIP header */
 	ivp = mtod(n0, u_int8_t *) + hdrlen;
 	ivp[0] = k->k_tsc >> 8;		/* TSC1 */
@@ -226,8 +229,10 @@ ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	ivp[7] = k->k_tsc >> 40;	/* TSC5 */
 
 	/* compute WEP seed */
-	if ((k->k_tsc & 0xffff) == 0)
+	if (!ctx->txttak_ok || (k->k_tsc & 0xffff) == 0) {
 		Phase1(ctx->txttak, k->k_key, wh->i_addr2, k->k_tsc >> 16);
+		ctx->txttak_ok = 1;
+	}
 	Phase2((u_int8_t *)wepseed, k->k_key, ctx->txttak, k->k_tsc & 0xffff);
 	rc4_keysetup(&ctx->rc4, (u_int8_t *)wepseed, 16);
 
@@ -298,8 +303,6 @@ ieee80211_tkip_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	n->m_len += IEEE80211_WEP_CRCLEN;
 
 	n0->m_pkthdr.len += IEEE80211_TKIP_TAILLEN;
-
-	k->k_tsc++;	/* increment the 48-bit TSC */
 
 	m_freem(m0);
 	return n0;
