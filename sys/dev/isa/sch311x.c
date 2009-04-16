@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.7 2009/04/15 20:21:09 mk Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.8 2009/04/16 20:16:04 mk Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -168,14 +168,14 @@ static __inline void schsio_config_disable(bus_space_tag_t iot,
     bus_space_handle_t ioh);
 
 u_int8_t schsio_config_read(bus_space_tag_t iot, bus_space_handle_t ioh,
-    int reg);
-void schsio_config_write(bus_space_tag_t iot,
-    bus_space_handle_t ioh, int reg, u_int8_t val);
+    u_int8_t reg);
+void schsio_config_write(bus_space_tag_t iot, bus_space_handle_t ioh,
+    u_int8_t reg, u_int8_t val);
 
 /* HWM prototypes */
 void schsio_hwm_init(struct schsio_softc *sc);
 void schsio_hwm_update(void *arg);
-u_int8_t schsio_hwm_read(struct schsio_softc *sc, int reg);
+u_int8_t schsio_hwm_read(struct schsio_softc *sc, u_int8_t reg);
 
 /* Watchdog prototypes */
 
@@ -205,15 +205,16 @@ schsio_config_disable(bus_space_tag_t iot, bus_space_handle_t ioh)
 }
 
 u_int8_t
-schsio_config_read(bus_space_tag_t iot, bus_space_handle_t ioh, int reg)
+schsio_config_read(bus_space_tag_t iot, bus_space_handle_t ioh,
+    u_int8_t reg)
 {
 	bus_space_write_1(iot, ioh, SCHSIO_PORT_INDEX, reg);
 	return (bus_space_read_1(iot, ioh, SCHSIO_PORT_DATA));
 }
 
 void
-schsio_config_write(bus_space_tag_t iot, bus_space_handle_t ioh, int reg,
-    u_int8_t val)
+schsio_config_write(bus_space_tag_t iot, bus_space_handle_t ioh,
+    u_int8_t reg, u_int8_t val)
 {
 	bus_space_write_1(iot, ioh, SCHSIO_PORT_INDEX, reg);
 	bus_space_write_1(iot, ioh, SCHSIO_PORT_DATA, val);
@@ -446,7 +447,7 @@ schsio_hwm_update(void *arg)
 }
 
 u_int8_t
-schsio_hwm_read(struct schsio_softc *sc, int reg)
+schsio_hwm_read(struct schsio_softc *sc, u_int8_t reg)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_rr, SCHSIO_HWM_INDEX, reg);
 	return (bus_space_read_1(sc->sc_iot, sc->sc_ioh_rr, SCHSIO_HWM_DATA));
