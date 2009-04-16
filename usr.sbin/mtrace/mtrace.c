@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.26 2007/02/18 21:16:03 jmc Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.27 2009/04/16 20:13:13 sobrado Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.26 2007/02/18 21:16:03 jmc Exp $";
+    "@(#) $Id: mtrace.c,v 1.27 2009/04/16 20:13:13 sobrado Exp $";
 #endif
 
 #include <netdb.h>
@@ -1155,7 +1155,7 @@ main(int argc, char *argv[])
 		    break;
 		} else
 		    goto usage;
-	      case 'M':			/* Use multicast for reponse */
+	      case 'M':			/* Use multicast for response */
 		multicast = TRUE;
 		break;
 	      case 'l':			/* Loop updating stats indefinitely */

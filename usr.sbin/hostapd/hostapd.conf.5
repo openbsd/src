@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.36 2007/05/31 19:20:24 jmc Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.37 2009/04/16 20:13:13 sobrado Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: April 16 2009 $
 .Dt HOSTAPD.CONF 5
 .Os
 .Sh NAME
@@ -698,7 +698,7 @@ hostap handle skip type management subtype ! beacon \e
     with log \e
     rate 100 / 10 sec
 
-# Log rogue accesspoints via IAPP, limited to every second,
+# Log rogue access points via IAPP, limited to every second,
 # and skip further IAPP processing.
 hostap handle skip type management subtype beacon bssid !<myess> \e
     with iapp type radiotap limit 1 sec
@@ -709,7 +709,7 @@ hostap handle type data bssid !<myess> with frame type management \e
     from &bssid to &from bssid &bssid
 
 # Send authentication requests from random station addresses to
-# rogue accesspoints. This is a common way to test the quality of
+# rogue access points. This is a common way to test the quality of
 # various hostap implementations.
 hostap handle skip type management subtype beacon bssid <pentest> \e
     with frame type management subtype auth \e
@@ -722,7 +722,7 @@ hostap handle on ath0 type management subtype auth with resend
 hostap handle type management subtype auth from <blacklist> \e
     with node delete &from
 
-# Log rogue accesspoints with a strong signal quality on
+# Log rogue access points with a strong signal quality on
 # channel 3 (2.422GHz) transmitting frames with 1Mb.
 hostap handle type management subtype beacon bssid !<myess> \e
     signal >= 50% txrate 1Mb freq 2.422GHz \e

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.17 2007/02/08 11:15:55 reyk Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.18 2009/04/16 20:13:13 sobrado Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -95,7 +95,7 @@ hostapd_iapp_add_notify(struct hostapd_apme *apme, struct hostapd_node *node)
 		return (0);
 
 	/*
-	 * Send an ADD.notify message to other accesspoints to notify
+	 * Send an ADD.notify message to other access points to notify
 	 * about a new association on our Host AP.
 	 */
 	bzero(&frame, sizeof(frame));
@@ -142,7 +142,7 @@ hostapd_iapp_radiotap(struct hostapd_apme *apme, u_int8_t *buf,
 	struct iovec iov[2];
 
 	/*
-	 * Send an HOSTAPD.pcap/radiotap message to other accesspoints with
+	 * Send an HOSTAPD.pcap/radiotap message to other access points
 	 * with an appended network dump. This is an hostapd extension to
 	 * IAPP.
 	 */
