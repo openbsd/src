@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_srt.c,v 1.20 2009/04/11 09:36:35 michele Exp $ */
+/*	$OpenBSD: rde_srt.c,v 1.21 2009/04/16 17:59:07 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -518,6 +518,8 @@ srt_add_ds(struct rt_node *rn, u_int32_t nbr_report, u_int32_t ifindex)
 	LIST_INSERT_HEAD(&rn->ds_list, ds_nbr, entry);
 	rn->ds_cnt[ifindex]++;
 	rn->ttls[ifindex] = 1;
+
+	mfc_update_source(rn);
 }
 
 struct ds_nbr *
