@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.21 2009/03/29 14:18:20 jacekm Exp $	*/
+/*	$OpenBSD: control.c,v 1.22 2009/04/16 15:35:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -315,57 +315,10 @@ control_dispatch_ext(int fd, short event, void *arg)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_MFA_RCPT: {
-			struct message_recipient *mr;
-
-			if (c->state != CS_INIT && c->state != CS_RCPT)
-				goto badstate;
-
-			mr = imsg.data;
-			imsg_compose(env->sc_ibufs[PROC_MFA], IMSG_MFA_RCPT, 0, 0, -1,
-			    mr, sizeof(*mr));
-			event_del(&c->ibuf.ev);
+		case IMSG_SMTP_ENQUEUE:
+			imsg_compose(env->sc_ibufs[PROC_SMTP],
+			    IMSG_SMTP_ENQUEUE, 0, 0, -1, &fd, sizeof(fd));
 			break;
-		}
-		case IMSG_QUEUE_CREATE_MESSAGE: {
-			struct message *messagep;
-
-			if (c->state != CS_NONE && c->state != CS_DONE)
-				goto badstate;
-
-			messagep = imsg.data;
-			messagep->session_id = fd;
-			imsg_compose(env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1,
-			    messagep, sizeof(*messagep));
-			event_del(&c->ibuf.ev);
-			break;
-		}
-		case IMSG_QUEUE_MESSAGE_FILE: {
-			struct message *messagep;
-
-			if (c->state != CS_RCPT)
-				goto badstate;
-
-			messagep = imsg.data;
-			messagep->session_id = fd;
-			imsg_compose(env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_FILE, 0, 0, -1,
-			    messagep, sizeof(*messagep));
-			event_del(&c->ibuf.ev);
-			break;
-		}
-		case IMSG_QUEUE_COMMIT_MESSAGE: {
-			struct message *messagep;
-
-			if (c->state != CS_FD)
-				goto badstate;
-
-			messagep = imsg.data;
-			messagep->session_id = fd;
-			imsg_compose(env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1,
-			    messagep, sizeof(*messagep));
-			event_del(&c->ibuf.ev);
-			break;
-		}
 		case IMSG_STATS: {
 			struct stats	s;
 
@@ -504,7 +457,6 @@ control_dispatch_ext(int fd, short event, void *arg)
 		imsg_free(&imsg);
 		continue;
 
-badstate:
 badcred:
 		imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 		    NULL, 0);
@@ -610,16 +562,6 @@ control_dispatch_lka(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_QUEUE_TEMPFAIL: {
-			struct submit_status	 *ss;
-
-			log_debug("GOT LFA REPLY");
-			ss = imsg.data;
-			if (ss->code != 250)
-				log_debug("LKA FAILED WITH TEMPORARY ERROR");
-
-			break;
-		}
 		default:
 			log_warnx("control_dispatch_lka: got imsg %d",
 			    imsg.hdr.type);
@@ -666,26 +608,6 @@ control_dispatch_mfa(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_MFA_RCPT: {
-			struct submit_status	 *ss;
-			struct ctl_conn		*c;
-
-			ss = imsg.data;
-			if ((c = control_connbyfd(ss->id)) == NULL) {
-				log_warn("control_dispatch_queue: fd %lld: not found", ss->id);
-				return;
-			}
-
-			event_add(&c->ibuf.ev, NULL);
-			if (ss->code == 250) {
-				c->state = CS_RCPT;
-				break;
-			}
-
-			imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
-
-			break;
-		}
 		default:
 			log_warnx("control_dispatch_mfa: got imsg %d",
 			    imsg.hdr.type);
@@ -732,94 +654,6 @@ control_dispatch_queue(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_QUEUE_CREATE_MESSAGE: {
-			struct submit_status	 *ss;
-			struct ctl_conn		*c;
-			
-			ss = imsg.data;
-			if ((c = control_connbyfd(ss->id)) == NULL) {
-				log_warn("control_dispatch_queue: fd %lld: not found", ss->id);
-				return;
-			}
-			event_add(&c->ibuf.ev, NULL);
-
-			if (ss->code != 250) {
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
-				    NULL, 0);
-			}
-			else {
-				c->state = CS_INIT;
-				ss->msg.session_id = ss->id;
-				strlcpy(ss->msg.message_id, ss->u.msgid,
-				    sizeof(ss->msg.message_id));
-				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
-				    &ss->msg, sizeof(struct message));
-			}
-
-			break;
-		}
-		case IMSG_QUEUE_COMMIT_ENVELOPES: {
-			struct submit_status	 *ss;
-			struct ctl_conn		*c;
-			
-			ss = imsg.data;
-			if ((c = control_connbyfd(ss->id)) == NULL) {
-				log_warn("control_dispatch_queue: fd %lld: not found", ss->id);
-				return;
-			}
-			event_add(&c->ibuf.ev, NULL);
-			c->state = CS_RCPT;
-			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
-			    NULL, 0);
-
-			break;
-		}
-		case IMSG_QUEUE_MESSAGE_FILE: {
-			struct submit_status	 *ss;
-			struct ctl_conn *c;
-			int fd;
-
-			ss = imsg.data;
-			if ((c = control_connbyfd(ss->id)) == NULL) {
-				log_warn("control_dispatch_queue: fd %lld: not found",
-				    ss->id);
-				return;
-			}
-			event_add(&c->ibuf.ev, NULL);
-
-			fd = imsg_get_fd(ibuf, &imsg);
-			if (ss->code == 250) {
-				c->state = CS_FD;
-				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, fd,
-				    &ss->msg, sizeof(struct message));
-			}
-			else
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
-				    &ss->msg, sizeof(struct message));
-			break;
-		}
-		case IMSG_QUEUE_COMMIT_MESSAGE: {
-			struct submit_status	 *ss;
-			struct ctl_conn *c;
-
-			ss = imsg.data;
-			if ((c = control_connbyfd(ss->id)) == NULL) {
-				log_warn("control_dispatch_queue: fd %lld: not found",
-				    ss->id);
-				return;
-			}
-			event_add(&c->ibuf.ev, NULL);
-
-			if (ss->code == 250) {
-				c->state = CS_DONE;
-				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
-				    &ss->msg, sizeof(struct message));
-			}
-			else
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
-				    &ss->msg, sizeof(struct message));
-			break;
-		}
 		case IMSG_STATS: {
 			struct stats	*s;
 			struct ctl_conn	*c;
@@ -971,6 +805,21 @@ control_dispatch_smtp(int sig, short event, void *p)
 			imsg_compose(&c->ibuf, IMSG_SMTP_STATS, 0, 0, -1,
 			    &s->u.smtp, sizeof(s->u.smtp));
 
+			break;
+		}
+		case IMSG_SMTP_ENQUEUE: {
+			struct ctl_conn	*c;
+			int		client_fd;
+
+			client_fd = *(int *)imsg.data;
+
+			if ((c = control_connbyfd(client_fd)) == NULL) {
+				log_warn("control_dispatch_smtp: fd %d not found", client_fd);
+				return;
+			}
+
+			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
+			    imsg_get_fd(ibuf, &imsg), NULL, 0);
 			break;
 		}
 		default:

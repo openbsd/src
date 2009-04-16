@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.18 2009/03/29 14:18:20 jacekm Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.19 2009/04/16 15:35:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -47,8 +47,8 @@ void		mfa_setup_events(struct smtpd *);
 void		mfa_disable_events(struct smtpd *);
 void		mfa_timeout(int, short, void *);
 
-void		mfa_test_mail(struct smtpd *, struct message *, int);
-void		mfa_test_rcpt(struct smtpd *, struct message_recipient *, int);
+void		mfa_test_mail(struct smtpd *, struct message *);
+void		mfa_test_rcpt(struct smtpd *, struct message_recipient *);
 int		mfa_ruletest_rcpt(struct smtpd *, struct path *, struct sockaddr_storage *);
 int		mfa_check_source(struct map *, struct sockaddr_storage *);
 int		mfa_match_mask(struct sockaddr_storage *, struct netaddr *);
@@ -151,10 +151,10 @@ mfa_dispatch_smtp(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_MFA_MAIL:
-			mfa_test_mail(env, imsg.data, PROC_SMTP);
+			mfa_test_mail(env, imsg.data);
 			break;
 		case IMSG_MFA_RCPT:
-			mfa_test_rcpt(env, imsg.data, PROC_SMTP);
+			mfa_test_rcpt(env, imsg.data);
 			break;
 		default:
 			log_warnx("mfa_dispatch_smtp: got imsg %d",
@@ -214,12 +214,8 @@ mfa_dispatch_lka(int sig, short event, void *p)
 			struct submit_status	 *ss;
 
 			ss = imsg.data;
-			if (ss->msg.flags & F_MESSAGE_ENQUEUED)
-				imsg_compose(env->sc_ibufs[PROC_CONTROL], IMSG_MFA_RCPT,
-				    0, 0, -1, ss, sizeof(*ss));
-			else
-				imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT,
-				    0, 0, -1, ss, sizeof(*ss));
+			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT,
+			    0, 0, -1, ss, sizeof(*ss));
 			break;
 		}
 		default:
@@ -268,9 +264,6 @@ mfa_dispatch_control(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_MFA_RCPT:
-			mfa_test_rcpt(env, imsg.data, PROC_CONTROL);
-			break;
 		default:
 			log_warnx("mfa_dispatch_control: got imsg %d",
 			    imsg.hdr.type);
@@ -398,7 +391,7 @@ msg_cmp(struct message *m1, struct message *m2)
 }
 
 void
-mfa_test_mail(struct smtpd *env, struct message *m, int sender)
+mfa_test_mail(struct smtpd *env, struct message *m)
 {
 	struct submit_status	 ss;
 
@@ -422,7 +415,7 @@ mfa_test_mail(struct smtpd *env, struct message *m, int sender)
 	goto accept;
 
 refuse:
-	imsg_compose(env->sc_ibufs[sender], IMSG_MFA_MAIL, 0, 0, -1, &ss,
+	imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_MAIL, 0, 0, -1, &ss,
 	    sizeof(ss));
 	return;
 
@@ -433,7 +426,7 @@ accept:
 }
 
 void
-mfa_test_rcpt(struct smtpd *env, struct message_recipient *mr, int sender)
+mfa_test_rcpt(struct smtpd *env, struct message_recipient *mr)
 {
 	struct submit_status	 ss;
 
@@ -451,14 +444,14 @@ mfa_test_rcpt(struct smtpd *env, struct message_recipient *mr, int sender)
 	    ! valid_domainpart(ss.u.path.domain))
 		goto refuse;
 
-	if (sender == PROC_SMTP && (ss.flags & F_MESSAGE_AUTHENTICATED))
+	if (ss.flags & F_MESSAGE_AUTHENTICATED)
 		goto accept;
 
 	if (mfa_ruletest_rcpt(env, &ss.u.path, &ss.ss))
 		goto accept;
 		
 refuse:
-	imsg_compose(env->sc_ibufs[sender], IMSG_MFA_RCPT, 0, 0, -1, &ss,
+	imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT, 0, 0, -1, &ss,
 	    sizeof(ss));
 	return;
 

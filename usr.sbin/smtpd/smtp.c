@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.33 2009/04/09 19:49:34 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.34 2009/04/16 15:35:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -25,6 +25,7 @@
 
 #include <ctype.h>
 #include <event.h>
+#include <netdb.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -529,6 +530,62 @@ smtp_dispatch_control(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_SMTP_ENQUEUE: {
+			static struct listener	 l;
+			struct addrinfo		 hints, *res;
+			struct session		*s;
+			int			 fd[2];
+
+			bzero(&l, sizeof(l));
+			l.env = env;
+
+			if (s_smtp.sessions_active >= env->sc_maxconn) {
+				log_warnx("denying local connection, too many"
+				    " sessions active");
+				imsg_compose(ibuf, IMSG_SMTP_ENQUEUE, 0, 0, -1,
+				    imsg.data, sizeof(int));
+				break;
+			}
+
+			if (socketpair(
+			    AF_UNIX, SOCK_STREAM, PF_UNSPEC, fd) == -1)
+				fatal("socketpair");
+
+			if ((s = calloc(1, sizeof(*s))) == NULL)
+				fatal(NULL);
+
+			s->s_id = queue_generate_id();
+			s->s_fd = fd[0];
+			s->s_tm = time(NULL);
+			s->s_env = env;
+			s->s_l = &l;
+			s->s_msg.flags |= F_MESSAGE_ENQUEUED;
+
+			bzero(&hints, sizeof(hints));
+			hints.ai_family = PF_UNSPEC;
+			hints.ai_flags = AI_NUMERICHOST;
+
+			if (getaddrinfo("::1", NULL, &hints, &res) != 0)
+				fatal("getaddrinfo");
+
+			memcpy(&s->s_ss, res->ai_addr, res->ai_addrlen);
+
+			s_smtp.sessions++;
+			s_smtp.sessions_active++;
+
+			strlcpy(s->s_hostname, "localhost",
+			    sizeof(s->s_hostname));
+			strlcpy(s->s_msg.session_hostname, s->s_hostname,
+			    sizeof(s->s_msg.session_hostname));
+
+			SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
+
+			session_init(s->s_l, s);
+
+			imsg_compose(ibuf, IMSG_SMTP_ENQUEUE, 0, 0, fd[1],
+			    imsg.data, sizeof(int));
+			break;
+		}
 		case IMSG_SMTP_PAUSE:
 			smtp_pause(env);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.65 2009/04/09 20:19:03 todd Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.66 2009/04/16 15:35:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -901,7 +901,8 @@ session_destroy(struct session *s)
 	close(s->s_fd);
 
 	s_smtp.sessions_active--;
-	if (s_smtp.sessions_active < s->s_env->sc_maxconn)
+	if (s_smtp.sessions_active < s->s_env->sc_maxconn &&
+	    !(s->s_msg.flags & F_MESSAGE_ENQUEUED))
 		event_add(&s->s_l->ev, NULL);
 
 	if (s->s_bev != NULL) {

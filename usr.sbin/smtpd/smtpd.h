@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.98 2009/04/15 20:34:59 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.99 2009/04/16 15:35:06 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -216,7 +216,9 @@ enum imsg_type {
 	IMSG_MTA_RESUME,
 	IMSG_SMTP_RESUME,
 
-	IMSG_STATS
+	IMSG_STATS,
+
+	IMSG_SMTP_ENQUEUE
 };
 
 #define IMSG_HEADER_SIZE	 sizeof(struct imsg_hdr)
@@ -227,20 +229,11 @@ enum blockmodes {
 	BM_NONBLOCK
 };
 
-enum ctl_state {
-	CS_NONE = 0,
-	CS_INIT,
-	CS_RCPT,
-	CS_FD,
-	CS_DONE
-};
-
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
 	u_int8_t		 flags;
 #define CTL_CONN_NOTIFY		 0x01
 	struct imsgbuf		 ibuf;
-	enum ctl_state		 state;
 };
 TAILQ_HEAD(ctl_connlist, ctl_conn);
 
