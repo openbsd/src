@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.6 2009/03/07 12:47:17 michele Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.7 2009/04/16 20:11:12 michele Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -348,6 +348,8 @@ nbr_act_start_itimer(struct nbr *nbr)
 int
 nbr_act_delete(struct nbr *nbr)
 {
+	struct nbr_msg	nm;
+
 	log_debug("nbr_act_delete: neighbor ID %s", inet_ntoa(nbr->id));
 
 	/* stop timers */
@@ -356,6 +358,11 @@ nbr_act_delete(struct nbr *nbr)
 		    "neighbor ID %s", inet_ntoa(nbr->id));
 		return (-1);
 	}
+
+	nm.address.s_addr = nbr->addr.s_addr;
+	nm.ifindex = nbr->iface->ifindex;
+
+	dvmrpe_imsg_compose_rde(IMSG_NBR_DEL, 0, 0, &nm, sizeof(nm));
 
 	return (nbr_del(nbr));
 }

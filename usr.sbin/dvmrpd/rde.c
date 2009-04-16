@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.14 2009/04/11 10:21:20 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.15 2009/04/16 20:11:12 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -193,6 +193,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = bula;
 	struct imsg		 imsg;
 	struct route_report	 rr;
+	struct nbr_msg		 nm;
 	int			 i, n, connected = 0;
 	struct iface		*iface;
 
@@ -296,6 +297,14 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			}
 
 			rde_group_list_remove(iface, mfc.group);
+			break;
+		case IMSG_NBR_DEL:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(nm))
+				fatalx("invalid size of OE request"); 
+
+			memcpy(&nm, imsg.data, sizeof(nm));
+			srt_expire_nbr(nm.address, nm.ifindex);
+
 			break;
 		case IMSG_RECV_PRUNE:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(p))
