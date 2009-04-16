@@ -1699,6 +1699,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ieeefp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/internal_types.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/intr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/limits.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/lock.ph

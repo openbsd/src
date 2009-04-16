@@ -165,6 +165,7 @@
 ./usr/include/m68k/ieee.h
 ./usr/include/m68k/ieeefp.h
 ./usr/include/m68k/internal_types.h
+./usr/include/m68k/intr.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
 ./usr/include/m68k/lock.h
