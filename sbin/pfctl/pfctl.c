@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.281 2009/04/06 12:05:55 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.282 2009/04/16 04:40:19 david Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1546,6 +1546,7 @@ pfctl_init_options(struct pfctl *pf)
 		pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT_SMALL; 
 
 	pf->debug = PF_DEBUG_URGENT;
+	pf->reassemble = PF_REASS_ENABLED;
 }
 
 int
@@ -1705,7 +1706,9 @@ pfctl_set_reassembly(struct pfctl *pf, int on, int nodf)
 	if (on) {
 		pf->reassemble = PF_REASS_ENABLED;
 		if (nodf)
-			pf->reassemble &= PF_REASS_NODF;
+			pf->reassemble |= PF_REASS_NODF;
+	} else {
+		pf->reassemble = 0;
 	}
 
 	if (pf->opts & PF_OPT_VERBOSE)

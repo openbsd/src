@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.217 2009/04/07 12:48:40 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.218 2009/04/16 04:40:19 david Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2842,8 +2842,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int32_t	*reass = (u_int32_t *)addr;
 
 		pf_status.reass = *reass;
-		if (!(pf_status.reass & PF_REASS_ENABLED))
-			pf_status.reass = 0;
 		break;
 	}
 
