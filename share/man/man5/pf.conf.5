@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.425 2009/04/15 09:54:29 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.426 2009/04/16 07:31:51 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 15 2009 $
+.Dd $Mdocdate: April 16 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -851,19 +851,18 @@ A stateful connection is automatically created to track packets matching
 such a rule as long as they are not blocked by the filtering section of
 .Nm pf.conf .
 The translation engine modifies the specified address and/or port in the
-packet, recalculates IP, TCP and UDP checksums as necessary, and passes it to
+packet, recalculates IP, TCP, and UDP checksums as necessary, and passes it to
 the packet filter for evaluation.
 .Pp
-Since translation occurs before filtering the filter
-engine will see packets as they look after any
-addresses and ports have been translated.
+Since translation occurs before filtering,
+the filter engine will see packets as they look
+after any addresses and ports have been translated.
 Filter rules will therefore have to filter based on the translated
 address and port number.
-Packets that match a translation rule are only automatically passed if
-the
+Packets that match a translation rule are only automatically passed if the
 .Ar pass
-modifier is given, otherwise they are
-still subject to
+modifier is given,
+otherwise they are still subject to
 .Ar block
 and
 .Ar pass
@@ -891,11 +890,11 @@ on the translating host to support network traffic for a larger range of
 machines on an "inside" network.
 Although in theory any IP address can be used on the inside, it is strongly
 recommended that one of the address ranges defined by RFC 1918 be used.
-These netblocks are:
-.Bd -literal
-10.0.0.0 - 10.255.255.255 (all of net 10, i.e., 10/8)
-172.16.0.0 - 172.31.255.255 (i.e., 172.16/12)
-192.168.0.0 - 192.168.255.255 (i.e., 192.168/16)
+Those netblocks are:
+.Bd -literal -offset indent
+10.0.0.0 \(en 10.255.255.255 (all of net 10, i.e. 10/8)
+172.16.0.0 \(en 172.31.255.255 (i.e. 172.16/12)
+192.168.0.0 \(en 192.168.255.255 (i.e. 192.168/16)
 .Ed
 .It Pa rdr
 The packet is redirected to another destination and possibly a
@@ -909,11 +908,8 @@ redirects port 2000 to 4000, 2001 to 4001, ..., 2999 to 4999.
 .El
 .Pp
 In addition to modifying the address, some translation rules may modify
-source or destination ports for
-.Xr tcp 4
-or
-.Xr udp 4
-connections; implicitly in the case of
+source or destination ports for TCP or UDP connections;
+implicitly in the case of
 .Ar nat
 rules and explicitly in the case of
 .Ar rdr
@@ -923,7 +919,7 @@ Port numbers are never translated with a
 rule.
 .Pp
 Evaluation order of the translation rules is dependent on the type
-of the translation rules and of the direction of a packet.
+of the translation rules and the direction of a packet.
 .Ar binat
 rules are always evaluated first.
 Then either the
@@ -940,8 +936,8 @@ The
 option prefixed to a translation rule causes packets to remain untranslated,
 much in the same way as
 .Ar drop quick
-works in the packet filter (see below).
-If no rule matches the packet it is passed to the filter engine unmodified.
+works in the packet filter.
+If no rule matches the packet, it is passed to the filter engine unmodified.
 .Pp
 Translation rules apply only to packets that pass through
 the specified interface, and if no interface is specified,
@@ -955,23 +951,19 @@ Redirections cannot reflect packets back through the interface they arrive
 on, they can only be redirected to hosts connected to different interfaces
 or to the firewall itself.
 .Pp
-Note that redirecting external incoming connections to the loopback
-address, as in
+Note that redirecting external incoming connections to the loopback address
+will effectively allow an external host to connect to daemons
+bound solely to the loopback address, circumventing the traditional
+blocking of such connections on a real interface.
+For example:
 .Bd -literal -offset indent
 rdr on ne3 inet proto tcp to port smtp -\*(Gt 127.0.0.1 port spamd
 .Ed
 .Pp
-will effectively allow an external host to connect to daemons
-bound solely to the loopback address, circumventing the traditional
-blocking of such connections on a real interface.
 Unless this effect is desired, any of the local non-loopback addresses
-should be used as redirection target instead, which allows external
+should be used instead as the redirection target, which allows external
 connections only to daemons bound to this address or not bound to
 any address.
-.Pp
-See
-.Sx TRANSLATION EXAMPLES
-below.
 .Sh PACKET FILTERING
 .Xr pf 4
 has the ability to
