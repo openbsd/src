@@ -1,11 +1,10 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.20 2008/12/09 18:57:41 deraadt Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.21 2009/04/17 07:23:26 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1997 Per Fogelstrom. (ELF modifications)
  * All rights reserved.
- *
- * ELF modifications Copyright (c) 1997 Per Fogelstrom.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -266,15 +265,15 @@ find_rd_root_image(char *file, Elf_Phdr *ph, int segment)
 	 * Sanity check locations of db_* symbols
 	 */
 	if (rd_root_image_off < 0 || rd_root_image_off >= kernel_size)
-		return(0);
+		return (0);
 	if (rd_root_size_off < 0 || rd_root_size_off >= kernel_size) {
 		fprintf(stderr, "%s: rd_root_size not in data segment?\n",
 		    file);
-		return(0);
+		return (0);
 	}
 	mmap_off = ph->p_offset;
 	mmap_size = kernel_size;
-	return(1);
+	return (1);
 }
 
 __dead void
