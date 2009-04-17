@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.455 2009/04/17 07:00:44 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.456 2009/04/17 16:05:47 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -980,7 +980,7 @@ __EOT
 	for _f in $THESETS ; do
 		isin $_f $_get_sets || continue
 		echo -n "Getting $_f ..."
-		rm /tmp/h
+		rm -f /tmp/h
 		case $_f in
 		*.tgz)	ftp -T "$_f" $FTPOPTS -o - -m "$_src/$_f" | \
 			    $shacmd | tar zxphf - -C /mnt
