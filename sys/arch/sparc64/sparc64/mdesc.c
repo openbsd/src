@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.1 2009/04/12 14:53:15 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.2 2009/04/17 21:31:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -47,7 +47,8 @@ again:
 	size = round_page(len);
 
 	TAILQ_INIT(&mlist);
-	err = uvm_pglistalloc(len, 0, -1, PAGE_SIZE, 0, &mlist, 1, 0);
+	err = uvm_pglistalloc(len, 0, -1, PAGE_SIZE, 0, &mlist, 1,
+	    UVM_PLA_NOWAIT);
 	if (err)
 		panic("%s: out of memory", __func__);
  
