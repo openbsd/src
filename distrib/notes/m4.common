@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.82 2009/04/17 03:53:59 deraadt Exp $
+dnl	$OpenBSD: m4.common,v 1.83 2009/04/17 04:03:33 deraadt Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -817,8 +817,8 @@ define({:-OpenBSDXferFloppyFromUNIX-:},
 {:-Creating a bootable floppy disk using SunOS, Solaris or other Un*x-like system:
 
 	First, you will need obtain a local copy of the bootable filesystem
-	image as described above.  If possible use the md5(1) command to
-	verify the checksums of the images vs. the values in the MD5 file
+	image as described above.  If possible use the sha1(1) command to
+	verify the checksums of the images vs. the values in the SHA256 file
 	on the mirror site.
 
 	Next, use the dd(1) utility to copy the file to the floppy drive.
