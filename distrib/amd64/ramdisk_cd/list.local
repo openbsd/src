@@ -1,6 +1,8 @@
-# $OpenBSD: list.local,v 1.11 2009/02/10 19:03:23 damien Exp $
+# $OpenBSD: list.local,v 1.12 2009/04/17 03:55:20 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
+LINK	instbin					bin/sha256
+
 #LINK	instbin					sbin/ccdconfig
 LINK	instbin					sbin/ping6
 LINK	instbin					sbin/rtsol
@@ -24,3 +26,5 @@ COPY	${DESTDIR}/etc/firmware/zd1211b		etc/firmware/zd1211b
 # dhcp things
 SCRIPT	${DESTDIR}/sbin/dhclient-script 	sbin/dhclient-script
 SPECIAL chmod 755 sbin/dhclient-script
+
+HASH	var/hash

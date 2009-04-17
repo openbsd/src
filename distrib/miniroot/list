@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.39 2007/02/14 23:38:20 deraadt Exp $
+#	$OpenBSD: list,v 1.40 2009/04/17 03:55:19 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -23,6 +23,7 @@ LINK	instbin					bin/mt bin/eject
 LINK	instbin					bin/mv
 LINK	instbin					bin/pax bin/tar bin/cpio
 LINK	instbin					bin/rm
+LINK	instbin					bin/sha256
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
 LINK	instbin					sbin/dmesg
@@ -60,3 +61,5 @@ SCRIPT	${CURDIR}/upgrade.sh			upgrade
 SCRIPT	${CURDIR}/install.sh			install
 SCRIPT	${CURDIR}/install.sub			install.sub
 SPECIAL	chmod 755 install upgrade
+
+HASH	/var/hash

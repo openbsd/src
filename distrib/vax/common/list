@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.16 2007/02/14 23:38:21 deraadt Exp $
+#	$OpenBSD: list,v 1.17 2009/04/17 03:55:20 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -21,6 +21,7 @@ LINK	instbin					bin/mkdir
 LINK	instbin					bin/mt bin/eject
 LINK	instbin					bin/mv
 LINK	instbin					bin/rm
+LINK	instbin					bin/sha256
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
 LINK	instbin					sbin/disklabel
@@ -68,3 +69,5 @@ TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 
 COPY	${DESTDIR}/bsd				.
 COPY	${DESTDIR}/boot				.
+
+HASH	var/hash

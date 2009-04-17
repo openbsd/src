@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.33 2009/02/19 23:43:54 krw Exp $
+#	$OpenBSD: list,v 1.34 2009/04/17 03:55:20 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -22,6 +22,7 @@ LINK	instbin					bin/mt bin/eject
 LINK	instbin					bin/mv
 LINK	instbin					bin/pax bin/tar bin/cpio
 LINK	instbin					bin/rm
+LINK	instbin					bin/sha256
 LINK	instbin					bin/stty
 LINK	instbin					sbin/dhclient
 LINK	instbin					sbin/disklabel
@@ -80,3 +81,5 @@ SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
 
 SPECIAL	chmod 755 install upgrade sbin/dhclient-script
+
+HASH	var/hash

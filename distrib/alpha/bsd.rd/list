@@ -1,3 +1,5 @@
+LINK	instbin					bin/sha256
+
 LINK	instbin					bin/dd
 LINK	instbin					sbin/mount_cd9660
 LINK	instbin					sbin/dhclient
@@ -13,3 +15,5 @@ COPY	${DESTDIR}/etc/firmware/3c990		etc/firmware/3c990
 SCRIPT	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
 SPECIAL	chmod 755 sbin/dhclient-script
 SPECIAL	cd dev; sh MAKEDEV bpf0
+
+HASH	var/hash
