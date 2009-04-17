@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2009/04/17 04:24:15 deraadt Exp $
 
 kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/landisk/compile/GENERIC/bsd \
@@ -9,7 +9,6 @@ bsd:
 	cd ${.CURDIR}/../sys/arch/landisk/compile/GENERIC && \
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
-# probably will be replaced by procedure to build 'miniroot' image
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/mbr ${RELEASEDIR}
 	cp ${DESTDIR}/usr/mdec/xxboot ${RELEASEDIR}
