@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.426 2009/04/16 07:31:51 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.427 2009/04/17 07:00:26 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 16 2009 $
+.Dd $Mdocdate: April 17 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1002,23 +1002,20 @@ explicit either globally, by setting the
 .Ar block-policy
 option, or on a per-rule basis with one of the following options:
 .Pp
-.Bl -tag -width xxxx -compact
+.Bl -tag -width "return-icmp6XXX" -compact
 .It Ar drop
 The packet is silently dropped.
 .It Ar return
-This causes a TCP RST to be returned for
-.Xr tcp 4
-packets and an ICMP UNREACHABLE for other types of packets.
-.It Ar return-rst
-This applies only to
-.Xr tcp 4
-packets,
-and issues a TCP RST which closes the connection.
+This causes a TCP RST to be returned for TCP packets
+and an ICMP UNREACHABLE for other types of packets.
 .It Ar return-icmp
 .It Ar return-icmp6
 This causes ICMP messages to be returned for packets which match the rule.
 By default this is an ICMP UNREACHABLE message, however this
 can be overridden by specifying a message as a code or number.
+.It Ar return-rst
+This applies only to TCP packets,
+and issues a TCP RST which closes the connection.
 .El
 .Pp
 Options returning ICMP packets currently have no effect if
