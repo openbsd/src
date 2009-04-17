@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.20 2009/04/17 03:55:20 deraadt Exp $
+# $OpenBSD: list.local,v 1.21 2009/04/17 15:59:48 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					sbin/ccdconfig
@@ -43,4 +43,4 @@ COPY	${DESTDIR}/etc/firmware/zd1211b		etc/firmware/zd1211b
 #COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-ext etc/firmware/atu-rfmd2958smc-ext
 #COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-int etc/firmware/atu-rfmd2958smc-int
 
-HASH	var/hash		# hashes of install sets
+HASH	var/hash

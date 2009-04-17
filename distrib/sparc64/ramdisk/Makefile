@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2009/04/17 03:58:55 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.22 2009/04/17 15:59:48 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -30,7 +30,7 @@ GZIPEXT?=	.gz
 MOUNT_POINT?=	/mnt
 DISKTYPE=	rdroot
 PID!=		echo $$$$
-REALIMAGE!=	echo /tmp/image.${PID}
+REALIMAGE!=	echo /var/tmp/image.${PID}
 IMAGE?=		ramdisk${REV}.fs
 IMAGESIZE?=	8192 # 4MB in 512 byte blocks
 NEWFS_WILL_FAIL?=false
