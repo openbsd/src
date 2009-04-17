@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.41 2009/04/15 12:43:07 oga Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.42 2009/04/17 07:14:04 oga Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -925,9 +925,7 @@ uvmpd_scan(void)
 	/*
 	 * get current "free" page count
 	 */
-	uvm_lock_fpageq();
 	free = uvmexp.free - BUFPAGES_DEFICIT;
-	uvm_unlock_fpageq();
 
 #ifndef __SWAP_BROKEN
 	/*
