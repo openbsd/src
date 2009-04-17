@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.271 2009/04/14 23:09:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.272 2009/04/17 03:58:52 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -29,6 +29,9 @@ BIN1+=	wsconsctl.conf
 
 # -rw-rw-r--
 BIN2=	motd
+
+MISETS=	bsd base${OSrev}.tgz comp${OSrev}.tgz misc${OSrev}.tgz \
+	man${OSrev}.tgz game${OSrev}.tgz etc${OSrev}.tgz
 
 PCS=	pcs750.bin
 
@@ -264,27 +267,15 @@ release:
 	@echo setenv RELEASEDIR before building a release.
 	@false
 .else
+
 release-sets:
-	cd ${.CURDIR}/../distrib/notes && ${MAKE} && exec ${SUDO} ${MAKE} install
 	cd ${.CURDIR}/../distrib/sets && exec ${SUDO} sh maketars ${OSrev}
 
-release: distribution snap_pre release-sets snap_md
-	-cp ${DESTDIR}/snapshot/*bsd* ${RELEASEDIR}
-	-cp ${DESTDIR}/snapshot/*boot* ${RELEASEDIR}
-	-cp ${DESTDIR}/snapshot/cdbr ${RELEASEDIR}
-	-cp ${DESTDIR}/snapshot/*BOOT* ${RELEASEDIR}
-	-cp ${DESTDIR}/snapshot/cd*.iso ${RELEASEDIR}
-	-cp ${DESTDIR}/snapshot/Packages ${RELEASEDIR}
-	-cp ${DESTDIR}/snapshot/INSTALL.* ${RELEASEDIR}
-	-cp ${DESTDIR}/snapshot/*.fs ${DESTDIR}/snapshot/*.fs.gz ${RELEASEDIR}
+sha:
 	-cd ${RELEASEDIR}; \
-		md5 *bsd!(*.gz) *boot* cdbr *BOOT* INSTALL.* Packages *.fs \
-		    *.iso *.gz *.tgz > MD5
-	-cd ${RELEASEDIR} && sort -o MD5 MD5
+	    sum -a sha256 bsd.rd INSTALL.`arch -ks` ${MDEXT} ${MISETS} > SHA256
 
-snap_pre:
-	${SUDO} /bin/rm -rf ${DESTDIR}/snapshot
-	${SUDO} ${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}/snapshot
+release: distribution kernels release-sets distrib sha
 
 .endif
 
@@ -306,7 +297,7 @@ update-moduli:
 	) > moduli
 
 .PHONY: distribution-etc-root-var distribution distrib-dirs \
-	release allarchs snap_md m4 snap_pre
+	release allarchs kernels release-sets m4
 
 SUBDIR+= etc.alpha etc.amd64 etc.armish etc.aviion etc.hp300 etc.hppa
 SUBDIR+= etc.hppa64 etc.i386 etc.landisk etc.luna88k etc.mac68k etc.macppc

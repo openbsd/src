@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2007/11/09 18:15:22 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2009/04/17 03:58:54 deraadt Exp $
 
-.ifdef DESTDIR
-snap_md: bsd bsd.mp bootblocks distrib
+kernels: bsd bsd.mp bootblocks
 	cp ${.CURDIR}/../sys/arch/mvme88k/compile/GENERIC/bsd \
-	    ${DESTDIR}/snapshot/bsd
+	    ${RELEASEDIR}/bsd
 	cp ${.CURDIR}/../sys/arch/mvme88k/compile/GENERIC.MP/bsd \
-	    ${DESTDIR}/snapshot/bsd.mp
+	    ${RELEASEDIR}/bsd.mp
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/mvme88k/conf && config GENERIC
@@ -18,8 +17,8 @@ bsd.mp:
 	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
 
 bootblocks:
-	cp ${DESTDIR}/usr/mdec/* ${DESTDIR}/snapshot/
+	cp ${DESTDIR}/usr/mdec/* ${RELEASEDIR}/
+
+MDEXT=	
 
 .PHONY: bsd bsd.mp bootblocks
-
-.endif	# DESTDIR check

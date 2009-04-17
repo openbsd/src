@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2008/09/04 01:09:20 jsing Exp $
+#	$OpenBSD: Makefile,v 1.9 2009/04/17 03:58:54 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -53,6 +53,11 @@ ${CDROM}:
 
 install:
 	cp ${CDROM} ${RELDIR}/
+	# update the SHA256 file
+	grep -v ${CDROM} ${RELDIR}/SHA256 > ${RELDIR}/SHA256.new
+	sum -a sha256 ${CDROM} >> ${RELDIR}/SHA256.new
+	sort ${RELDIR}/SHA256.new > ${RELDIR}/SHA256
+	rm ${RELDIR}/SHA256.new
 
 unconfig:
 	-umount /mnt

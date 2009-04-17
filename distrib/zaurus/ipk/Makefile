@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2005/07/14 02:59:30 uwe Exp $
+#	$OpenBSD: Makefile,v 1.10 2009/04/17 03:58:55 deraadt Exp $
 
 TOP=    ${.CURDIR}/..
 IPK=	openbsd${OSrev}_arm.ipk
@@ -59,9 +59,11 @@ Packages: ${IPK}
 	echo "Size:" `/bin/ls -l ${IPK} | awk '{print $$5}'` \
 	    >> ${.OBJDIR}/Packages
 
+.ifdef RELEASEDIR
 install: ${IPK} Packages
-	cp ${IPK} ${DESTDIR}/snapshot
-	cp Packages ${DESTDIR}/snapshot
+	cp ${IPK} ${RELEASEDIR}
+	cp Packages ${RELEASEDIR}
+.endif
 
 clean cleandir:
 	rm -rf data control ${IPK} debian-binary control.tar.gz data.tar.gz \

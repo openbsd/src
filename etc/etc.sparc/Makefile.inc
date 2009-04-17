@@ -1,13 +1,12 @@
-#	$OpenBSD: Makefile.inc,v 1.14 2006/07/27 01:58:21 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.15 2009/04/17 03:58:54 deraadt Exp $
 
-.ifdef DESTDIR
-snap_md: bsd bootblocks distrib
+kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/sparc/compile/GENERIC/bsd \
-	    ${DESTDIR}/snapshot/bsd
-	s=`printf "find sd\nexit" | config -e ${DESTDIR}/snapshot/bsd | \
+	    ${RELEASEDIR}/bsd
+	s=`printf "find sd\nexit" | config -e ${RELEASEDIR}/bsd | \
 	    grep scsibus | awk '{print $$1}'`; \
 	    printf "add sd0\n%s\n%s\nchange %s\ny\n3\n\n\nquit\n" $$s $$s $$s | \
-	    config -e -o ${DESTDIR}/snapshot/bsd.scsi3 ${DESTDIR}/snapshot/bsd
+	    config -e -o ${RELEASEDIR}/bsd.scsi3 ${RELEASEDIR}/bsd
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/sparc/conf && config GENERIC
@@ -15,10 +14,10 @@ bsd:
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 bootblocks:
-	cp ${DESTDIR}/usr/mdec/*boot* ${DESTDIR}/snapshot
+	cp ${DESTDIR}/usr/mdec/*boot* ${RELEASEDIR}
 	${DESTDIR}/usr/mdec/binstall net /tmp && \
-	  mv /tmp/boot.sparc.openbsd ${DESTDIR}/snapshot/boot.net
+	    mv /tmp/boot.sparc.openbsd ${RELEASEDIR}/boot.net
+
+MDEXT=	bsd.scsi3 boot boot.net bootxx installboot
 
 .PHONY: bsd bootblocks
-
-.endif	# DESTDIR check

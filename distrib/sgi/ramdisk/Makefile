@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2009/04/12 03:18:52 jsing Exp $
+#	$OpenBSD: Makefile,v 1.9 2009/04/17 03:58:54 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -71,9 +71,6 @@ unconfig:
 
 .PRECIOUS:	${IMAGE}
 
-install:
-	cp ${BSD_RD} ${DESTDIR}/snapshot/
-
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -M -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
@@ -87,15 +84,17 @@ do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
-	    sh ${TOP}/../miniroot/runlist.sh ${LISTS}
+	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
 	rm ${MOUNT_POINT}/${CBIN}
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	*.o *.lo *.c bsd ${BSD_RD} rdsetroot
 
-beforeinstall:
-	cp ${BSD.RD} ${DESTDIR}/snapshot
+.ifdef RELEASEDIR
+install:
+	cp ${BSD_RD} ${RELEASEDIR}
+.endif
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

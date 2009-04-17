@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.13 2008/12/02 03:20:57 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 2009/04/17 03:58:54 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -95,13 +95,15 @@ unconfig:
 
 .PRECIOUS:	${IMAGE}
 
+.ifdef RELEASEDIR
 install:
 .ifndef NOBSDRD
-	cp bsd.rd ${DESTDIR}/snapshot/bsd.rd
+	cp bsd.rd ${RELEASEDIR}/bsd.rd
 .endif
 .ifndef NOFS
-	cp ${FS} ${DESTDIR}/snapshot/${FS}
+	cp ${FS} ${RELEASEDIR}/${FS}
 .endif
+.endif	# RELEASEDIR
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -E -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib \
@@ -118,7 +120,7 @@ do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
-	    sh ${UTILS}/runlist.sh ${LISTS}
+	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
 	rm ${MOUNT_POINT}/${CBIN}
 
 clean cleandir:

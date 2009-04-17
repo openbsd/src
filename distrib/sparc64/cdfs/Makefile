@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2008/03/04 05:37:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2009/04/17 03:58:55 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -32,8 +32,10 @@ ${CDROM}:
 	vnconfig -u svnd0
 	mksuncd f ${.OBJDIR}/${CDROM} ${.OBJDIR}/../miniroot/miniroot${REV}.fs
 
+.ifdef RELEASEDIR
 install:
-	cp ${CDROM} ${DESTDIR}/snapshot
+	cp ${CDROM} ${RELEASEDIR}
+.endif
 
 clean cleandir:
 	/bin/rm -rf ${CDROM} ${.OBJDIR}/cd-dir

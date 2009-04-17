@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2009/04/12 16:12:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2009/04/17 03:58:54 deraadt Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -86,8 +86,9 @@ ${IMAGE}: ${CBIN}
 	newfs ${NEWFSOPTS_RD} ${VND_RDEV} || ${NEWFS_WILL_FAIL}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
-	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
-	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} sh ${UTILS}/runlist.sh ${LISTS}
+	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    ARCHDIR=${ARCHDIR} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
+	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
 	rm ${MOUNT_POINT}/${CBIN}
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -111,10 +112,10 @@ clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	${CBIN}.conf *.o *.lo *.c obsd bsd bsd.* ${LIF} ${CDROM}
 
+.ifdef RELEASEDIR
 beforeinstall:
-	cp bsd.rd ${DESTDIR}/snapshot
-	cp ${LIF} ${DESTDIR}/snapshot
-	cp ${CDROM} ${DESTDIR}/snapshot
+	cp bsd.rd ${LIF} ${CDROM} ${RELEASEDIR}
+.endif
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.15 2006/07/27 03:11:23 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.16 2009/04/17 03:58:53 deraadt Exp $
 
-.ifdef DESTDIR
-snap_md: bsd bootblocks distrib
+kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/alpha/compile/GENERIC/bsd \
-	    ${DESTDIR}/snapshot/bsd
+	    ${RELEASEDIR}/bsd
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/alpha/conf && config GENERIC
@@ -11,10 +10,11 @@ bsd:
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 bootblocks:
-	cp ${DESTDIR}/usr/mdec/boot ${DESTDIR}/snapshot
-	cp ${DESTDIR}/usr/mdec/bootxx ${DESTDIR}/snapshot
-	cp ${DESTDIR}/usr/mdec/netboot ${DESTDIR}/snapshot
+	cp ${DESTDIR}/usr/mdec/boot ${RELEASEDIR}
+	cp ${DESTDIR}/usr/mdec/bootxx ${RELEASEDIR}
+	cp ${DESTDIR}/usr/mdec/netboot ${RELEASEDIR}
+
+MDEXT=	cd${OSrev}.iso floppy${OSrev}.fs floppyB${OSrev}.fs \
+	boot bootxx netboot
 
 .PHONY: bsd bootblocks
-
-.endif	# DESTDIR check

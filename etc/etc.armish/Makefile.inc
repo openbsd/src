@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2006/08/30 21:40:05 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2009/04/17 03:58:53 deraadt Exp $
 
-.ifdef DESTDIR
-snap_md: bsd bootblocks distrib
+kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/armish/compile/GENERIC/bsd \
-	    ${DESTDIR}/snapshot/bsd
+	    ${RELEASEDIR}/bsd
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/armish/conf && config GENERIC
@@ -11,8 +10,8 @@ bsd:
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 bootblocks:
-	cp ${DESTDIR}/usr/mdec/boot ${DESTDIR}/snapshot
+	cp ${DESTDIR}/usr/mdec/boot ${RELEASEDIR}
+
+MDEXT=	
 
 .PHONY: bsd bootblocks
-
-.endif	# DESTDIR check

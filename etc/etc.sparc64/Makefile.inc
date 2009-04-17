@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2007/11/09 18:14:33 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2009/04/17 03:58:54 deraadt Exp $
 
-.ifdef DESTDIR
-snap_md: bsd bsd.mp bootblocks distrib
+kernels: bsd bsd.mp bootblocks
 	cp ${.CURDIR}/../sys/arch/sparc64/compile/GENERIC/bsd \
-	    ${DESTDIR}/snapshot/bsd
+	    ${RELEASEDIR}/bsd
 	cp ${.CURDIR}/../sys/arch/sparc64/compile/GENERIC.MP/bsd \
-	    ${DESTDIR}/snapshot/bsd.mp
+	    ${RELEASEDIR}/bsd.mp
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/sparc64/conf && config GENERIC
@@ -18,8 +17,10 @@ bsd.mp:
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 bootblocks:
-	cp ${DESTDIR}/usr/mdec/*boot* ${DESTDIR}/snapshot
+	cp ${DESTDIR}/usr/mdec/*boot* ${RELEASEDIR}
+
+MDEXT=	bsd.mp cd${OSrev}.iso miniroot${OSrev}.fs \
+	floppy${OSrev}.fs floppyB${OSrev}.fs \
+	bootblk installboot ofwboot ofwboot.net
 
 .PHONY: bsd bsd.mp bootblocks
-
-.endif	# DESTDIR check

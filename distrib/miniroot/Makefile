@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2009/04/12 16:12:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.31 2009/04/17 03:58:54 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -10,6 +10,8 @@ ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
 .if exists(${ARCHDIR}/Makefile.inc)
 .include "${ARCHDIR}/Makefile.inc"
 .endif
+
+UTILS=		${.CURDIR}
 
 MOUNT_POINT?=	/mnt
 VND?=		svnd0
@@ -51,8 +53,9 @@ all: ${CBIN} bsd
 	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} || ${NEWFS_WILL_FAIL}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
-	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${.CURDIR}/runlist.sh ${LISTS}
+	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    UTILS=${UTILS} ARCHDIR=${ARCHDIR} TARGDIR=${MOUNT_POINT} \
+	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
 	rm ${MOUNT_POINT}/${CBIN}
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -76,10 +79,12 @@ clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	${CBIN}.conf *.o *.lo *.c
 
-beforeinstall:
-	cp ${IMAGE} ${DESTDIR}/snapshot
-
 .endif	# DESTDIR check
+
+.ifdef RELEASEDIR
+beforeinstall:
+	cp ${IMAGE} ${RELEASEDIR}
+.endif
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

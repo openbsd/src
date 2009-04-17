@@ -1,18 +1,13 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2006/07/27 02:53:55 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2009/04/17 03:58:54 deraadt Exp $
 
-.ifdef DESTDIR
-snap_md: bsd bootblocks distrib
+kernels: bsd
 	cp ${.CURDIR}/../sys/arch/luna88k/compile/GENERIC/bsd \
-	    ${DESTDIR}/snapshot/bsd
+	    ${RELEASEDIR}/bsd
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/luna88k/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/luna88k/compile/GENERIC && \
 	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
 
-bootblocks:
-	#none needed
+.PHONY: bsd
 
-.PHONY: bsd bootblocks
-
-.endif	# DESTDIR check

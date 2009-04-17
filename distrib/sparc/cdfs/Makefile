@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2005/03/11 15:40:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2009/04/17 03:58:55 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -35,8 +35,10 @@ ${CDROM}:
 	# XXX For now we pad the image.
 	dd if=/dev/zero bs=2k count=200 >> ${.OBJDIR}/${CDROM}
 
+.ifdef RELEASEDIR
 install:
-	cp ${CDROM} ${DESTDIR}/snapshot
+	cp ${CDROM} ${RELEASEDIR}
+.endif
 
 clean cleandir:
 	/bin/rm -f ${CDROM}

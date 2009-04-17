@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.453 2009/04/13 02:04:11 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.454 2009/04/17 03:58:54 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -971,20 +971,33 @@ __EOT
 	[[ -n $resp ]] || return
 	_get_sets=$resp
 
-	ask_yn "Ready to $MODE sets?" yes
 	[[ $resp = n ]] && return
 
+	shacmd="cat"
+	[[ -x /bin/sha256 ]] && shacmd="sha256 /tmp/h"
+
+	ask_yn "Ready to $MODE sets?" yes
 	for _f in $THESETS ; do
 		isin $_f $_get_sets || continue
 		echo -n "Getting $_f ..."
+		rm /tmp/h
 		case $_f in
-		*.tgz)	ftp -T "$_f" $FTPOPTS -o - -m "$_src/$_f" | tar zxphf - -C /mnt
+		*.tgz)	ftp -T "$_f" $FTPOPTS -o - -m "$_src/$_f" | \
+			    $shacmd | tar zxphf - -C /mnt
 			;;
-		*)	ftp -T "$_f" $FTPOPTS -o "/mnt/$_f" -m "$_src/$_f"
+		*)	ftp -T "$_f" $FTPOPTS -o - -m "$_src/$_f" | \
+			    $shacmd > "/mnt/$_f"
 			;;
 		esac
 		if [ $? -ne 0 ]; then
 			echo "'$_f' did not install correctly."
+		elif [ -f /tmp/h -a -f "/var/hash/$_f" ]; then
+			if [ "$(</tmp/h)" != "$(</var/hash/$_f)" ]; then
+				echo "The SHA256 hash for $_f did not match what bsd.rd expected:"
+				cat /tmp/h
+				# XXX should mark failure somehow
+			fi
+			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
 		else
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
 		fi

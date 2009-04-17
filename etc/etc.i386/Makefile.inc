@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.16 2006/07/27 02:53:38 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 2009/04/17 03:58:53 deraadt Exp $
 
-.ifdef DESTDIR
-snap_md: bsd bsd.mp bootblocks notes distrib
+kernels: bsd bsd.mp bootblocks linux-notes
 	cp ${.CURDIR}/../sys/arch/i386/compile/GENERIC/bsd \
-	    ${DESTDIR}/snapshot/bsd
+	    ${RELEASEDIR}/bsd
 	cp ${.CURDIR}/../sys/arch/i386/compile/GENERIC.MP/bsd \
-	    ${DESTDIR}/snapshot/bsd.mp
+	    ${RELEASEDIR}/bsd.mp
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERIC
@@ -18,13 +17,15 @@ bsd.mp:
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 bootblocks:
-	cp ${DESTDIR}/usr/mdec/pxeboot ${DESTDIR}/snapshot
-	cp ${DESTDIR}/usr/mdec/cdboot ${DESTDIR}/snapshot
-	cp ${DESTDIR}/usr/mdec/cdbr ${DESTDIR}/snapshot
+	cp ${DESTDIR}/usr/mdec/pxeboot ${RELEASEDIR}
+	cp ${DESTDIR}/usr/mdec/cdboot ${RELEASEDIR}
+	cp ${DESTDIR}/usr/mdec/cdbr ${RELEASEDIR}
 
-notes:
-	cp ${.CURDIR}/etc.i386/INSTALL.* ${DESTDIR}/snapshot
+linux-notes:
+	cp ${.CURDIR}/etc.i386/INSTALL.* ${RELEASEDIR}
 
-.PHONY: bsd bsd.mp bootblocks notes
+MDEXT=	bsd.mp cd${OSrev}.iso cdemu${OSrev}.iso \
+	floppy${OSrev}.fs floppyB${OSrev}.fs floppyC${OSrev}.fs \
+	pxeboot cdboot cdbr INSTALL.linux
 
-.endif	# DESTDIR check
+.PHONY: bsd bsd.mp bootblocks

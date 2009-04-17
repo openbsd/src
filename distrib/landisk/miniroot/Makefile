@@ -58,8 +58,10 @@ unconfig:
 
 .PRECIOUS:	${IMAGE}
 
+.ifdef RELEASEDIR
 install:
-	cp ${IMAGE} ${DESTDIR}/snapshot/
+	cp ${IMAGE} ${RELEASEDIR}
+.endif
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

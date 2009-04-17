@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.10 2008/04/25 04:04:15 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 2009/04/17 03:58:54 deraadt Exp $
 
-.ifdef DESTDIR
-snap_md: bsd bsd.mp bootblocks distrib gzip_bsd.rd
+kernels: bsd bsd.mp bootblocks
 	cp ${.CURDIR}/../sys/arch/macppc/compile/GENERIC/bsd \
-	    ${DESTDIR}/snapshot/bsd
+	    ${RELEASEDIR}/bsd
 	cp ${.CURDIR}/../sys/arch/macppc/compile/GENERIC.MP/bsd \
-	    ${DESTDIR}/snapshot/bsd.mp
+	    ${RELEASEDIR}/bsd.mp
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/macppc/conf && config GENERIC
@@ -18,14 +17,12 @@ bsd.mp:
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 bootblocks:
-	cp ${DESTDIR}/usr/mdec/ofwboot ${DESTDIR}/snapshot/ofwboot
-	cp ${DESTDIR}/usr/mdec/bsd.tbxi ${DESTDIR}/snapshot/bsd.tbxi
-	cp ${DESTDIR}/usr/mdec/boot.mac ${DESTDIR}/snapshot/boot.mac
+	cp ${DESTDIR}/usr/mdec/ofwboot ${RELEASEDIR}/ofwboot
+	cp ${DESTDIR}/usr/mdec/bsd.tbxi ${RELEASEDIR}/bsd.tbxi
+	cp ${DESTDIR}/usr/mdec/boot.mac ${RELEASEDIR}/boot.mac
 
-gzip_bsd.rd:
-	gzip -9 ${DESTDIR}/snapshot/bsd.rd
-	mv ${DESTDIR}/snapshot/bsd.rd.gz ${DESTDIR}/snapshot/bsd.rd
+MDEXT=	bsd.mp cd${OSrev}.iso \
+	ofwboot bsd.tbxi boot.mac
 
-.PHONY: bootblocks bsd gzip_bsd.rd
+.PHONY: bsd bsd.mp bootblocks
 
-.endif	# DESTDIR check

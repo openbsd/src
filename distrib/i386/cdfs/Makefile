@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2005/03/11 15:40:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2009/04/17 03:58:54 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -25,8 +25,10 @@ ${CDROM}:
 	    -b ${OSREV}/i386/cdbr -c ${OSREV}/i386/boot.catalog \
 	    ${.OBJDIR}/cd-dir
 
+.ifdef RELEASEDIR
 install:
-	cp ${CDROM} ${DESTDIR}/snapshot
+	cp ${CDROM} ${RELEASEDIR}
+.endif	# RELEASEDIR check
 
 clean cleandir:
 	/bin/rm -f ${CDROM}

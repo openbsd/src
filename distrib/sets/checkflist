@@ -1,5 +1,5 @@
 #!/bin/sh -x
-#	$OpenBSD: checkflist,v 1.10 2003/12/11 00:13:27 deraadt Exp $
+#	$OpenBSD: checkflist,v 1.11 2009/04/17 03:58:54 deraadt Exp $
 #
 # Copyright (c) 2001 Theo de Raadt
 # All rights reserved.
@@ -34,4 +34,4 @@ trap 'rm -f $TMP' 0 1 15
 
 sh makeflist > $TMP
 ( cd $DESTDIR ; find . \( -type d -o -type f -o -type l \) ) | \
-    grep -v -e '^\./snapshot' -e '^.$' | sort -H | diff $TMP - 
+    grep -v -e '^.$' | sort -H | diff $TMP - 

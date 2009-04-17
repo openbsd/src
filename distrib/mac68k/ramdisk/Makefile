@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2008/12/02 03:20:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2009/04/17 03:58:54 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -61,10 +61,12 @@ unconfig:
 
 .PRECIOUS:	${IMAGE}
 
+.ifdef RELEASEDIR
 install:
-	cp ${BSD_RD} ${DESTDIR}/snapshot/${BSD_RD}
+	cp ${BSD_RD} ${RELEASEDIR}/${BSD_RD}
 	printf "disable ncrscsi\nenable sbc\nquit" | config -e \
-	    -o ${DESTDIR}/snapshot/${BSDSBC_RD} ${DESTDIR}/snapshot/${BSD_RD}
+	    -o ${RELEASEDIR}/${BSDSBC_RD} ${RELEASEDIR}/${BSD_RD}
+.endif
 
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
@@ -79,7 +81,7 @@ do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
-	    sh ${UTILS}/runlist.sh ${LISTS}
+	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
 	rm ${MOUNT_POINT}/${CBIN}
 
 clean cleandir:
