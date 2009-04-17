@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.23 2009/02/19 23:43:54 krw Exp $
+#	$OpenBSD: list,v 1.24 2009/04/17 07:18:55 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -58,8 +58,7 @@ COPY	${CURDIR}/../../miniroot/services	etc/services
 COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
 TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 
-# so DNS can work
-SYMLINK /tmp/resolv.conf.shadow			etc/resolv.conf
+SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
 
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
