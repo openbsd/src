@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_script.c,v 1.7 2008/12/05 16:37:55 reyk Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.8 2009/04/17 09:58:40 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -126,6 +126,13 @@ script_exec(struct relayd *env, struct ctl_script *scr)
 		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 			fatal("script_exec: can't drop privileges");
+
+		/*
+		 * close fds before executing an external program, to
+		 * prevent access to internal fds, eg. IMSG connections
+		 * of internal processes.
+		 */
+		closefrom(STDERR_FILENO + 1);
 
 		execlp(file, file, arg, (char *)NULL);
 		_exit(0);
