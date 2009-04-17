@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.116 2009/04/14 09:13:25 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.117 2009/04/17 15:17:27 blambert Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -463,8 +463,6 @@ int	msleep(void *, struct mutex *, int,  const char*, int);
 #if defined(MULTIPROCESSOR)
 void	proc_trampoline_mp(void);	/* XXX */
 #endif
-
-int proc_isunder(struct proc *, struct proc *);
 
 /*
  * functions to handle sets of cpus.
