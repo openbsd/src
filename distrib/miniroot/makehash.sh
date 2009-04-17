@@ -22,12 +22,6 @@ if [ -f $rel/bsd.mp ]; then
 	#echo bsd.mp `cat $dir/bsd.mp`
 fi
 
-if [ -f $rel/bsd.rd ]; then
-	cat $rel/bsd.rd | sum -a sha256 > $dir/bsd.rd
-	#ls -alF $rel/bsd.rd
-	#echo bsd.rd `cat $dir/bsd.rd`
-fi
-
 for i in base comp etc misc man game ; do
 	cat $rel/$i$rev.tgz | sum -a sha256 > $dir/$i$rev.tgz
 	#ls -alF $rel/$i$rev.tgz
