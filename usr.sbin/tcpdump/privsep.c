@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.27 2008/04/18 21:35:11 djm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.28 2009/04/17 22:31:24 jmc Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -49,7 +49,7 @@
 #include "pfctl_parser.h"
 
 /*
- * tcpdump goes through five states: STATE_INIT is where the
+ * tcpdump goes through four states: STATE_INIT is where the
  * bpf device and the input file is opened. In STATE_BPF, the
  * pcap filter gets set. STATE_FILTER is used for parsing
  * /etc/services and /etc/protocols and opening the output
