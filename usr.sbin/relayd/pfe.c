@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.54 2009/04/01 15:05:06 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.55 2009/04/17 09:47:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -334,7 +334,7 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 
 	static struct rdr	*rdr = NULL;
 	static struct table	*table = NULL;
-	struct host		*host;
+	struct host		*host, *parent;
 	struct address		*virt;
 
 	ibuf = ptr;
@@ -400,6 +400,11 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 			memcpy(&host->conf, imsg.data, sizeof(host->conf));
 			host->tablename = table->conf.name;
 			TAILQ_INSERT_TAIL(&table->hosts, host, entry);
+			if (host->conf.parentid) {
+				parent = host_find(env, host->conf.parentid);
+				SLIST_INSERT_HEAD(&parent->children,
+				    host, child);
+			}
 			break;
 		case IMSG_RECONF_RDR:
 			if ((rdr = calloc(1, sizeof(*rdr))) == NULL)

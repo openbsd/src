@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.46 2008/12/05 16:37:55 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.47 2009/04/17 09:47:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -452,9 +452,8 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 	struct ctl_script	 scr;
 	ssize_t			 n;
 	size_t			 len;
-
 	static struct table	*table = NULL;
-	struct host		*host;
+	struct host		*host, *parent;
 
 	ibuf = ptr;
 	switch (event) {
@@ -525,6 +524,11 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 			memcpy(&host->conf, imsg.data, sizeof(host->conf));
 			host->tablename = table->conf.name;
 			TAILQ_INSERT_TAIL(&table->hosts, host, entry);
+			if (host->conf.parentid) {
+				parent = host_find(env, host->conf.parentid);
+				SLIST_INSERT_HEAD(&parent->children,
+				    host, child);
+			}
 			break;
 		case IMSG_RECONF_END:
 			log_warnx("hce: configuration reloaded");
