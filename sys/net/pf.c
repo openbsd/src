@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.644 2009/04/15 13:10:38 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.645 2009/04/17 18:37:06 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2917,10 +2917,10 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    r->os_fingerprint)))
 			r = TAILQ_NEXT(r, entries);
 		else {
-			lastr = r;
 			if (r->tag)
 				tag = r->tag;
 			if (r->anchor == NULL) {
+				lastr = r;
 				if (r->action == PF_MATCH) {
 					ri = pool_get(&pf_rule_item_pl,
 					    PR_NOWAIT);
