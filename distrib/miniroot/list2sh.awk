@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.12 2002/11/28 03:06:30 deraadt Exp $
+#	$OpenBSD: list2sh.awk,v 1.13 2009/04/17 03:50:53 deraadt Exp $
 #	$NetBSD: list2sh.awk,v 1.2 1996/05/04 15:45:31 pk Exp $
 
 BEGIN {
@@ -57,6 +57,11 @@ $1 == "LIBS" {
 }
 $1 == "CRUNCHSPECIAL" {
 	# crunchgen directive; ignored here
+	next;
+}
+$1 == "HASH" {
+	printf("echo '%s' from RELEASEDIR=$RELEASEDIR for REV=$REV\n", $0);
+	printf("(cd ${TARGDIR}; sh $UTILS/makehash.sh var/hash $REV $RELEASEDIR)\n");
 	next;
 }
 $1 == "COPYDIR" {
