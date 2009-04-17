@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.323 2009/03/16 23:18:45 jacekm Exp $
+#	$OpenBSD: rc,v 1.324 2009/04/17 17:17:03 henning Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -272,7 +272,7 @@ if [ X"${pf}" != X"NO" ]; then
 	case `sysctl vfs.mounts.nfs 2>/dev/null` in
 	*[1-9]*)
 		# don't kill NFS
-		RULES="scrub in all no-df\n$RULES"
+		RULES="set reassemble yes no-df\n$RULES"
 		RULES="$RULES\npass in proto { tcp, udp } from any port { 111, 2049 } to any"
 		RULES="$RULES\npass out proto { tcp, udp } from any to any port { 111, 2049 }"
 		;;
