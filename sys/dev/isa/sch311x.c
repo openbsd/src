@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.8 2009/04/16 20:16:04 mk Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.9 2009/04/17 21:48:54 mk Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -248,6 +248,7 @@ schsio_probe(struct device *parent, void *match, void *aux)
 		ia->ipa_nmem = 0;
 		ia->ipa_nirq = 0;
 		ia->ipa_ndrq = 0;
+		ia->ia_aux = (void *)(u_long) reg;
 
 		return (1);
 		break;
@@ -275,8 +276,8 @@ schsio_attach(struct device *parent, struct device *self, void *aux)
 	/* Enter configuration mode */
 	schsio_config_enable(sc->sc_iot, sc->sc_ioh);
 
-	/* Read device ID */
-	reg0 = schsio_config_read(sc->sc_iot, sc->sc_ioh, SCHSIO_IDX_DEVICE);
+	/* Check device ID */
+	reg0 = (u_int8_t)(u_long) ia->ia_aux;
 	switch (reg0) {
 	case SCHSIO_ID_SCH3112:
 		printf(": SCH3112");
