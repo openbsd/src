@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.17 2009/04/17 03:55:20 deraadt Exp $
+#	$OpenBSD: list,v 1.18 2009/04/17 07:06:34 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -76,7 +76,7 @@ TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 #COPY	${DESTDIR}/etc/firmware/tigon2		etc/firmware/tigon2
 
 # dhcp things
-COPY	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
+SCRIPT	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
 
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile

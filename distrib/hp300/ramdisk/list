@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.50 2009/04/17 03:55:20 deraadt Exp $
+#	$OpenBSD: list,v 1.51 2009/04/17 07:06:33 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -74,7 +74,7 @@ SYMLINK	/tmp/hosts				etc/hosts
 TERMCAP	vt100,vt220,dumb,hp2392,hpansi,hpsub,hpex,hp700-wy,hp70092	usr/share/misc/termcap
 
 # dhcp things
-SCRIPT    ${DESTDIR}/sbin/dhclient-script	sbin/dhclient-script
+SCRIPT	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
 
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile

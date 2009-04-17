@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.34 2009/04/17 03:55:20 deraadt Exp $
+#	$OpenBSD: list,v 1.35 2009/04/17 07:06:34 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -83,7 +83,7 @@ COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
 COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
 
 # dhcp things
-SCRIPT    ${DESTDIR}/sbin/dhclient-script	sbin/dhclient-script
+SCRIPT	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
 
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
