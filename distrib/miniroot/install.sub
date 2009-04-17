@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.454 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.455 2009/04/17 07:00:44 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -169,7 +169,7 @@ stripcom () {
 		[[ -n ${_l%%#*} ]] && echo $_l
 	done <$1
 }
-		
+
 scan_dmesg() {
 	bsort $(sed -ne "$1" /var/run/dmesg.boot)
 }
@@ -657,7 +657,7 @@ __EOT
 		mv /etc/resolv.conf.tail /tmp/resolv.conf.tail
 		return 0
 	fi
-	
+
 	ifconfig $_ifs delete down
 	rm /etc/dhclient.conf /etc/resolv.conf.tail
 	return 1
