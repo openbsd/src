@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.19 2009/02/20 00:02:49 krw Exp $
+#	$OpenBSD: list,v 1.20 2009/04/17 07:17:13 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -54,7 +54,7 @@ LINK	instbin					usr/bin/disknames
 LINK	instbin					usr/mdec/installboot
 
 # copy the MAKEDEV script and make some devices
-SCRIPT ${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
+SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
 # we need the contents of /usr/mdec
