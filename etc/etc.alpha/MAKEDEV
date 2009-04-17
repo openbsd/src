@@ -216,7 +216,7 @@ U=`unt $i`
 
 case $i in
 ramdisk)
-	R std fd0 wd0 wd1 wd2 sd0 sd1 sd2
+	R std fd0 wd0 wd1 wd2 sd0 sd1 sd2 bpf0
 	R st0 cd0 ttyC0 rd0 bio
 	;;
 
