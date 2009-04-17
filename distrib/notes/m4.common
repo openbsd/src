@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.81 2008/10/16 00:05:09 krw Exp $
+dnl	$OpenBSD: m4.common,v 1.82 2009/04/17 03:53:59 deraadt Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -51,8 +51,9 @@ out as follows:
 
 	INSTALL.MACHINE	Installation notes; this file.
 
-	MD5		Output of the md5(1) program, usable for verification
-			of the correctness of downloaded files.')dnl
+	SHA256		Output of the sum(1) program using the option
+			-a sha256, usable for verification of the
+			correctness of downloaded files.')dnl
 dnl
 dnl Change the quote.  There were too many `word' situations that would
 dnl have to have been changed to ``word''.  The quote gets changed to
