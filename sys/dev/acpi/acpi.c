@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.134 2009/03/11 20:37:46 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.135 2009/04/17 13:20:20 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -81,6 +81,9 @@ void	acpi_load_dsdt(paddr_t, struct acpi_q **);
 void	acpi_init_states(struct acpi_softc *);
 void	acpi_init_gpes(struct acpi_softc *);
 void	acpi_init_pm(struct acpi_softc *);
+
+void	acpi_dev_sort(void);
+void	acpi_dev_free(void);
 
 #ifdef ACPI_SLEEP_ENABLED
 void acpi_sleep_walk(struct acpi_softc *, int);
@@ -2144,5 +2147,50 @@ acpi_foundvideo(struct aml_node *node, void *arg)
 	config_found(self, &aaa, acpi_print);
 
 	return (0);
+}
+
+TAILQ_HEAD(acpi_dv_hn, acpi_dev_rank) acpi_dv_h;
+void
+acpi_dev_sort(void)
+{
+	struct device		*dev, *idev;
+	struct acpi_dev_rank	*rentry, *ientry;
+	int			rank;
+
+	TAILQ_INIT(&acpi_dv_h);
+
+	TAILQ_FOREACH(dev, &alldevs, dv_list) {
+		for (rank = -1, idev = dev; idev != NULL;
+		    idev = idev->dv_parent, rank++)
+			;	/* nothing */
+
+		rentry = malloc(sizeof(*rentry), M_DEVBUF, M_WAITOK | M_ZERO);
+		rentry->rank = rank;
+		rentry->dev = dev;
+
+		if (TAILQ_FIRST(&acpi_dv_h) == NULL)
+			TAILQ_INSERT_HEAD(&acpi_dv_h, rentry, link);
+		TAILQ_FOREACH_REVERSE(ientry, &acpi_dv_h, acpi_dv_hn, link) {
+			if (rentry->rank > ientry->rank) {
+				TAILQ_INSERT_AFTER(&acpi_dv_h, ientry, rentry, 
+				    link);
+				break;
+			}
+		}
+	}
+}
+
+void
+acpi_dev_free(void)
+{
+	struct acpi_dev_rank	*dvr;
+
+	while ((dvr = TAILQ_FIRST(&acpi_dv_h)) != NULL) {
+		TAILQ_REMOVE(&acpi_dv_h, dvr, link);
+		if (dvr != NULL) {
+			free(dvr, M_DEVBUF);
+			dvr = NULL;
+		}
+	}
 }
 #endif /* SMALL_KERNEL */
