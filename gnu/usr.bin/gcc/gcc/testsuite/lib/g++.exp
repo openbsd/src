@@ -72,6 +72,7 @@ proc g++_version { } {
 #
 proc g++_include_flags { paths } {
     global srcdir
+    global objdir
     global HAVE_LIBSTDCXX_V3
     global TESTING_IN_BUILD_TREE
 
@@ -89,7 +90,7 @@ proc g++_include_flags { paths } {
     set gccpath ${paths}
 
     if { ${HAVE_LIBSTDCXX_V3} } {
-      set odir_v3 [lookfor_file ${gccpath} libstdc++-v3]
+      set odir_v3 ${objdir}/../../../lib/libstdc++
       append flags [exec sh ${odir_v3}/testsuite_flags --build-includes]
     } else {
       set odir_v2 [lookfor_file ${gccpath} libstdc++]
