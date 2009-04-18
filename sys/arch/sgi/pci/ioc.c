@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.5 2009/04/15 18:41:32 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.6 2009/04/18 14:47:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -42,9 +42,6 @@
 #include <dev/onewire/onewirereg.h>
 #include <dev/onewire/onewirevar.h>
 
-#if 0
-#include <sgi/dev/if_efreg.h>
-#endif
 #include <sgi/dev/owmacvar.h>
 
 #include <sgi/xbow/xbow.h>
@@ -92,7 +89,7 @@ struct cfdriver ioc_cd = {
 	NULL, "ioc", DV_DULL,
 };
 
-void	ioc_intr_dispatch(struct ioc_softc *, int);
+int	ioc_intr_dispatch(struct ioc_softc *, int);
 int	ioc_intr_ethernet(void *);
 int	ioc_intr_superio(void *);
 
@@ -521,7 +518,7 @@ ioc_intr_superio(void *v)
 
 	for (dev = 0; dev < IOC_NDEVS - 1 /* skip Ethernet */; dev++) {
 		if (pending & ioc_intrbits[dev]) {
-			ioc_intr_dispatch(sc, dev);
+			(void)ioc_intr_dispatch(sc, dev);
 
 			/* Ack, then reenable, pending interrupts */
 			bus_space_write_4(sc->sc_memt, sc->sc_memh,
@@ -537,32 +534,24 @@ ioc_intr_superio(void *v)
 int
 ioc_intr_ethernet(void *v)
 {
-#if 0
 	struct ioc_softc *sc = (struct ioc_softc *)v;
-	uint32_t stat;
 
-	stat = bus_space_read_4(sc->sc_memt, sc->sc_memh, EF_INTR_STATUS);
-
-	if (stat == 0)
-		return 0;
-
-	ioc_intr_dispatch(sc, IOCDEV_EF);
-	bus_space_write_4(sc->sc_memt, sc->sc_memh, EF_INTR_STATUS, stat);
-
-	return 1;
-#else
-	return 0;
-#endif
+	/* this interrupt source is not shared between several devices. */
+	return ioc_intr_dispatch(sc, IOCDEV_EF);
 }
 
-void
+int
 ioc_intr_dispatch(struct ioc_softc *sc, int dev)
 {
 	struct ioc_intr *ii;
+	int rc = 0;
 
 	/* Call registered interrupt function. */
 	if ((ii = sc->sc_intr[dev]) != NULL && ii->ii_func != NULL) {
-		if ((*ii->ii_func)(ii->ii_arg) != 0)
+		rc = (*ii->ii_func)(ii->ii_arg);
+		if (rc != 0)
                		ii->ii_count.ec_count++;
 	}
+
+	return rc;
 }
