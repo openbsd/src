@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.456 2009/04/17 16:05:47 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.457 2009/04/18 00:21:01 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1538,8 +1538,7 @@ donetconfig() {
 		for _ns in $resp; do
 			echo "nameserver $_ns" >>/tmp/resolv.conf
 		done
-		ask_yn "Use the nameserver now?" yes
-		[[ $resp == y ]] && cp /tmp/resolv.conf /tmp/resolv.conf.shadow
+		cp /tmp/resolv.conf /tmp/resolv.conf.shadow
 	fi
 
 	# Get/Confirm an IPv4 default route if an IPv4 address was configured.
