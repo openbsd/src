@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.5 2009/04/15 18:45:41 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.6 2009/04/18 14:48:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -243,14 +243,12 @@ xheart_intr_register(int widget, int level, int *intrbit)
 	/*
 	 * All interrupts will be serviced at hardware level 0,
 	 * so the `level' argument can be ignored.
-	 * On HEART, the low 16 bits of the interrupt register
-	 * are level 0 sources.
 	 */
-	for (bit = 15; bit >= 0; bit--)
+	for (bit = HEART_INTR_WIDGET_MAX; bit >= HEART_INTR_WIDGET_MIN; bit--)
 		if ((sc->sc_intrmask & (1 << bit)) == 0)
 			break;
 
-	if (bit < 0)
+	if (bit < HEART_INTR_WIDGET_MIN)
 		return EINVAL;
 
 	*intrbit = bit;
@@ -269,7 +267,7 @@ xheart_intr_establish(int (*func)(void *), void *arg, int intrbit,
 	paddr_t heart;
 
 #ifdef DIAGNOSTIC
-	if (intrbit < 0 || intrbit >= 16)
+	if (intrbit < HEART_INTR_MIN || intrbit > HEART_INTR_MAX)
 		return EINVAL;
 #endif
 
@@ -311,7 +309,7 @@ xheart_intr_disestablish(int intrbit)
 	int s;
 
 #ifdef DIAGNOSTIC
-	if (intrbit < 0 || intrbit >= 16)
+	if (intrbit < HEART_INTR_MIN || intrbit > HEART_INTR_MAX)
 		return;
 #endif
 
@@ -340,7 +338,7 @@ xheart_intr_disestablish(int intrbit)
  * Xheart interrupt handler driver.
  */
 
-intrmask_t heart_intem = 0;
+uint64_t heart_intem = 0;
 
 /*
  * Recompute interrupt masks.
@@ -389,8 +387,7 @@ xheart_intr_makemasks(struct xheart_softc *sc)
 	imask[IPL_NONE] = 0;
 	imask[IPL_HIGH] = -1;
 
-	/* Lastly, determine which IRQs are actually in use. */
-	heart_intem = sc->sc_intrmask & 0x00000000ffffffffL;
+	heart_intem = sc->sc_intrmask;
 	hw_setintrmask(0);
 }
 
@@ -412,9 +409,11 @@ xheart_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 {
 	paddr_t heart;
 	uint64_t imr, isr;
+	int icpl;
 	int bit;
 	intrmask_t mask;
 	struct intrhand *ih;
+	int rc;
 
 	heart = PHYS_TO_XKPHYS(HEART_PIU_BASE, CCA_NC);
 	isr = *(volatile uint64_t *)(heart + HEART_ISR);
@@ -425,28 +424,55 @@ xheart_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 		return 0;	/* not for us */
 
 	/*
-	 * If interrupts are spl-masked, mark them as pending and mask
-	 * them in hardware.
+	 * Mask all pending interrupts.
+	 */
+	*(volatile uint64_t *)(heart + HEART_IMR(0)) &= ~isr;
+
+	/*
+	 * If interrupts are spl-masked, mark them as pending only.
 	 */
 	if ((mask = isr & frame->cpl) != 0) {
 		atomic_setbits_int(&ipending, mask);
-		*(volatile uint64_t *)(heart + HEART_IMR(0)) &= ~mask;
 		isr &= ~mask;
 	}
 
 	/*
 	 * Now process unmasked interrupts.
 	 */
-	mask = isr & ~frame->cpl;
-	atomic_clearbits_int(&ipending, mask);
-	for (bit = 15, mask = 1 << 15; bit >= 0; bit--, mask >>= 1) {
-		if ((isr & mask) == 0)
-			continue;
+	if (isr != 0) {
+		atomic_clearbits_int(&ipending, isr);
 
-		for (ih = intrhand[bit]; ih != NULL; ih = ih->ih_next) {
-			if ((*ih->ih_fun)(ih->ih_arg) != 0)
-				ih->ih_count.ec_count++;
+		__asm__ (" .set noreorder\n");
+		icpl = cpl;
+		__asm__ (" sync\n .set reorder\n");
+
+		/* XXX Rework this to dispatch in decreasing levels */
+		for (bit = HEART_INTR_MAX, mask = 1 << bit;
+		    bit >= HEART_INTR_MIN; bit--, mask >>= 1) {
+			if ((isr & mask) == 0)
+				continue;
+
+			rc = 0;
+			for (ih = intrhand[bit]; ih != NULL; ih = ih->ih_next) {
+				splraise(imask[ih->ih_level]);
+				ih->frame = frame;
+				if ((*ih->ih_fun)(ih->ih_arg) != 0) {
+					rc = 1;
+					ih->ih_count.ec_count++;
+				}
+			}
+			if (rc == 0)
+				printf("spurious interrupt, source %d\n", bit);
 		}
+
+		/*
+		 * Reenable interrupts which have been serviced.
+		 */
+		*(volatile uint64_t *)(heart + HEART_IMR(0)) |= isr;
+
+		__asm__ (" .set noreorder\n");
+		cpl = icpl;
+		__asm__ (" sync\n .set reorder\n");
 	}
 
 	return CR_INT_0;

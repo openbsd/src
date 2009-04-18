@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheartreg.h,v 1.1 2008/04/07 22:47:40 miod Exp $	*/
+/*	$OpenBSD: xheartreg.h,v 1.2 2009/04/18 14:48:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -44,3 +44,15 @@
 #define	HEART_ISR_SET		0x00010020
 #define	HEART_ISR_CLR		0x00010028
 #define	HEART_ISR		0x00010030
+
+/*
+ * ISR bit assignments (partial).
+ */
+
+#define	HEART_INTR_ACFAIL	15
+#define	HEART_INTR_POWER	14
+#define	HEART_INTR_WIDGET_MAX	13
+#define	HEART_INTR_WIDGET_MIN	0
+
+#define	HEART_INTR_MAX		15
+#define	HEART_INTR_MIN		0
