@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.461 2009/04/18 01:07:48 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.462 2009/04/18 15:12:39 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -126,12 +126,6 @@ __EOT
 		;;
 
 	install)
-		cat <<__EOT
-It is often helpful to have the installation notes handy. For complex disk
-configurations, relevant disk hardware manuals and a calculator are useful.
-
-__EOT
-
 		if [ -f /etc/fstab ]; then
 			cat <<__EOT
 You seem to be trying to restart an interrupted installation! You can skip
