@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.457 2009/04/18 00:21:01 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.458 2009/04/18 00:23:03 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1544,7 +1544,6 @@ donetconfig() {
 	# Get/Confirm an IPv4 default route if an IPv4 address was configured.
 	[[ -n $(ifconfig -a | sed -ne '/[ 	]inet .* broadcast /p') ]] && v4_defroute
 
-	edit_tmp_file hosts
 	manual_net_cfg
 }
 
