@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.84 2009/02/03 16:42:54 michele Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.85 2009/04/18 10:45:47 michele Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -323,7 +323,7 @@ route_output(struct mbuf *m, ...)
 	struct rawcb		*rp = NULL;
 	struct sockaddr_rtlabel	 sa_rt;
 #ifdef MPLS
-	struct sockaddr_mpls	 sa_mpls;
+	struct sockaddr_mpls	 sa_mpls, *psa_mpls;
 #endif
 	const char		*label;
 	va_list			 ap;
@@ -666,7 +666,45 @@ report:
 				rt->rt_labelid =
 				    rtlabel_name2id(rtlabel);
 			}
+#ifdef MPLS
+			if (info.rti_info[RTAX_SRC] != NULL) {
+				struct rt_mpls *rt_mpls;
 
+				psa_mpls = (struct sockaddr_mpls *)
+				    info.rti_info[RTAX_SRC];
+
+				if (rt->rt_llinfo == NULL) {
+					rt->rt_llinfo = (caddr_t)
+					    malloc(sizeof(struct rt_mpls),
+					    M_TEMP, M_NOWAIT|M_ZERO);
+				}
+				if (rt->rt_llinfo == NULL) {
+					error = ENOMEM;
+					goto flush;
+				}
+
+				rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
+
+				if (psa_mpls != NULL) {
+					rt_mpls->mpls_label =
+					    psa_mpls->smpls_label;
+				}
+
+				rt_mpls->mpls_operation = info.rti_mpls;
+
+				/* XXX: set experimental bits */
+
+				rt->rt_flags |= RTF_MPLS;
+			} else {
+				if (rt->rt_llinfo != NULL &&
+				    rt->rt_flags & RTF_MPLS) {
+					free(rt->rt_llinfo, M_TEMP);
+					rt->rt_llinfo = NULL;
+
+					rt->rt_flags &= (~RTF_MPLS);
+				}
+			}
+#endif
 			if_group_routechange(dst, netmask);
 			/* FALLTHROUGH */
 		case RTM_LOCK:
