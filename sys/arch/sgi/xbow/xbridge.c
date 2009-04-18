@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.8 2009/04/15 18:45:41 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.9 2009/04/18 19:26:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -309,7 +309,7 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_dmat = &xbridge_dma_tag;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
-	pba.pba_bus = sc->sc_dev.dv_unit;
+	pba.pba_bus = 0;
 
 	config_found(self, &pba, xbridge_print);
 	return;
