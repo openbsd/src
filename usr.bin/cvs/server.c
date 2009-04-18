@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.98 2009/04/10 11:26:10 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.99 2009/04/18 16:26:01 joris Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -40,11 +40,13 @@ struct cvs_resp cvs_responses[] = {
 	{ "Updated",		0,	cvs_client_updated, RESP_NEEDED },
 	{ "Merged",		0,	cvs_client_merged, RESP_NEEDED },
 	{ "Removed",		0,	cvs_client_removed, RESP_NEEDED },
-	{ "Remove-entry",	0,	cvs_client_remove_entry, RESP_NEEDED },
-	{ "Set-static-directory",	0,	cvs_client_set_static_directory, RESP_NEEDED },
-	{ "Clear-static-directory",	0,	cvs_client_clear_static_directory, RESP_NEEDED },
-	{ "Set-sticky",		0,	cvs_client_set_sticky, RESP_NEEDED },
-	{ "Clear-sticky",	0,	cvs_client_clear_sticky, RESP_NEEDED },
+	{ "Remove-entry",	0,	cvs_client_remove_entry, 0 },
+	{ "Set-static-directory",	0,
+	    cvs_client_set_static_directory, 0 },
+	{ "Clear-static-directory",	0,
+	    cvs_client_clear_static_directory, 0 },
+	{ "Set-sticky",		0,	cvs_client_set_sticky, 0 },
+	{ "Clear-sticky",	0,	cvs_client_clear_sticky, 0 },
 
 	/* unsupported responses until told otherwise */
 	{ "New-entry",			0,	NULL, 0 },
