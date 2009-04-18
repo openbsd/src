@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.124 2009/03/29 16:45:35 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.125 2009/04/18 07:30:50 mk Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1526,7 +1526,8 @@ uvideo_vs_alloc_frame(struct uvideo_softc *sc)
 	/* don't overflow the upper layer frame buffer */
 	if (sc->sc_max_fbuf_size < fb->buf_size &&
 	    sc->sc_mmap_flag == 0) {
-		printf("%s: sofware video buffer is too small!\n", DEVNAME(sc));
+		printf("%s: software video buffer is too small!\n",
+		    DEVNAME(sc));
 		return (USBD_NOMEM);
 	}
 
