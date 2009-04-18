@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.191 2009/04/12 01:01:24 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.192 2009/04/18 00:15:46 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.191 2009/04/12 01:01:24 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.192 2009/04/18 00:15:46 sthen Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -317,7 +317,8 @@ editor(struct disklabel *lp, int f)
 			 * didn't change the label read from disk, there is no
 			 * need to do anything before exiting.
 			 */
-			if (!dflag && memcmp(lp, &label, sizeof(label)) == 0) {
+			if (!aflag && !dflag &&
+			    memcmp(lp, &label, sizeof(label)) == 0) {
 				puts("No label changes.");
 				return(1);
 			}
