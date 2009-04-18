@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.458 2009/04/18 00:23:03 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.459 2009/04/18 00:38:50 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -553,7 +553,7 @@ __EOT
 }
 
 configure_ifs() {
-	local _IFDEVS=$IFDEVS _ifs _name _media _hn
+	local _IFDEVS=$IFDEVS _ifs _name _hn
 
 	while :; do
 		ask_which "interface" "do you wish to initialize" "$_IFDEVS" \
@@ -567,31 +567,9 @@ configure_ifs() {
 		ask "Symbolic (host) name for $_ifs?" "$(hostname -s)"
 		_name=$resp
 
-		# Get and apply media options.
-		_media=$(ifconfig $_ifs media | grep "media ")
-		if [[ -n $_media ]]; then
-			cat <<__EOT
-The media options for $_ifs are currently
-$(ifconfig $_ifs media | sed -n '/supported/D;/media:/p')
-__EOT
-			ask_yn "Do you want to change the media options?"
-			case $resp in
-			y)	cat <<__EOT
-Supported media options for $_ifs are:
-$_media
-__EOT
-				ask "Media options for $_ifs?"
-				_media=$resp
-				ifconfig $_ifs $_media || return 1
-				;;
-			n)	_media=
-				;;
-			esac
-		fi
-
 		rm -f $_hn
-		v4_config "$_ifs" "$_media" "$_name" "$_hn"
-		v6_config "$_ifs" "$_media" "$_name" "$_hn"
+		v4_config "$_ifs" "$_name" "$_hn"
+		v6_config "$_ifs" "$_name" "$_hn"
 
 		[[ -f $_hn ]] && chmod 640 $_hn && _IFDEVS=$(rmel "$_ifs" $_IFDEVS)
 	done
@@ -664,7 +642,7 @@ __EOT
 }
 
 v4_config() {
-	local _ifs=$1 _media=$2 _name=$3 _hn=$4 _prompt _addr _mask
+	local _ifs=$1 _name=$2 _hn=$3 _prompt _addr _mask
 
 	if ifconfig $_ifs | grep 'groups:.* dhcp' >/dev/null 2>&1; then
 		_addr=dhcp
@@ -688,7 +666,7 @@ v4_config() {
 			# Add hosts entry. Overwrites previous entry if any.
 			set -- $(v4_info $_ifs)
 			addhostent "$2" "$_name"
-			echo "dhcp NONE NONE NONE $_media" >>$_hn
+			echo "dhcp" >>$_hn
 			# Create a new bpf in case we start another dhclient
 			makedev bpf$(ls /dev | grep -c "^bpf[0-9]")
 		fi
@@ -698,14 +676,14 @@ v4_config() {
 		ifconfig $_ifs -group dhcp >/dev/null 2>&1
 		if ifconfig $_ifs inet $_addr netmask $resp up ; then
 			addhostent "$_addr" "$_name"
-			echo "inet $_addr $resp NONE $_media" >$_hn
+			echo "inet $_addr $resp" >$_hn
 		fi
 		;;
 	esac
 }
 
 v6_config() {
-	local _ifs=$1 _media=$2 _name=$3 _hn=$4 _addr _prefixlen _prompt
+	local _ifs=$1 _name=$2 _hn=$3 _addr _prefixlen _prompt
 
 	ifconfig lo0 inet6 >/dev/null 2>&1 || return
 
@@ -724,7 +702,7 @@ v6_config() {
 		if rtsol -F $_ifs; then
 			set -- $(v6_info $_ifs)
 			addhostent "$2" "$_name"
-			echo "up\nrtsol $media" >>$_hn
+			echo "up\nrtsol" >>$_hn
 		fi
 		return
 		;;
@@ -733,7 +711,7 @@ v6_config() {
 	_addr=$resp
 	ask_until "IPv6 prefix length for $_ifs?" "${_prefixlen:=64}"
 	ifconfig $_ifs inet6 $_addr prefixlen $resp up || return
-	echo "inet6 $_addr $resp $media" >>$_hn
+	echo "inet6 $_addr $resp" >>$_hn
 	addhostent "$_addr" "$_name"
 
 	v6_defroute $_ifs
