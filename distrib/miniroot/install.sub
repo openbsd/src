@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.459 2009/04/18 00:38:50 krw Exp $
+#	$OpenBSD: install.sub,v 1.460 2009/04/18 00:42:28 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -481,7 +481,7 @@ addhostent() {
 # Set $resp to list of selected sets.
 select_sets() {
 	local _avail=$1 _selected=$2 _next _f _action _col _p
-	typeset -L16 _l
+	typeset -L18 _l
 
 	cat <<__EOT
 
@@ -503,7 +503,7 @@ __EOT
 			if (( _col == 0 )); then
 				echo -n '    '
 			fi
-			if (( ${#_p} > 16 )); then
+			if (( ${#_p} > 18 )); then
 				# probably site##-hostname.tgz, so print the
 				# long version and force a newline
 				print -n "$_p"
