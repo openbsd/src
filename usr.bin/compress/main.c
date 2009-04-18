@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.74 2008/10/08 17:06:30 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.75 2009/04/18 18:21:54 naddy Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.74 2008/10/08 17:06:30 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.75 2009/04/18 18:21:54 naddy Exp $";
 #endif
 
 #include <sys/param.h>
@@ -141,8 +141,8 @@ main(int argc, char *argv[])
 	char *nargv[512];	/* some estimate based on ARG_MAX */
 	int bits, ch, error, i, rc, cflag, oflag;
 	static const char *optstr[3] = {
-		"123456789ab:cdfghlLnNOo:qrS:tvV",
-		"cfhlNno:qrtv",
+		"123456789ab:cdfghLlNnOo:qrS:tVv",
+		"cfhlNno:qrtVv",
 		"fghqr"
 	};
 
@@ -909,7 +909,7 @@ usage(int status)
 		    __progname, (int)strlen(__progname), "");
 		break;
 	case MODE_DECOMP:
-		fprintf(stderr, "usage: %s [-cfhlNnqrtv] [-o filename] "
+		fprintf(stderr, "usage: %s [-cfhlNnqrtVv] [-o filename] "
 		    "[file ...]\n", __progname);
 		break;
 	case MODE_CAT:
