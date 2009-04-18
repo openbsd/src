@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.59 2009/04/16 15:35:06 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.60 2009/04/18 21:01:20 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -107,61 +107,6 @@ queue_dispatch_control(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_QUEUE_CREATE_MESSAGE: {
-			struct message		*messagep;
-			struct submit_status	 ss;
-
-			log_debug("queue_dispatch_control: creating message file");
-			messagep = imsg.data;
-
-			ss.id = messagep->session_id;
-			ss.code = 250;
-			bzero(ss.u.msgid, MAX_ID_SIZE);
-
-			if (! enqueue_create_layout(ss.u.msgid))
-				ss.code = 421;
-
-			imsg_compose(ibuf, IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1,
-			    &ss, sizeof(ss));
-
-			break;
-		}
-		case IMSG_QUEUE_MESSAGE_FILE: {
-			int fd;
-			struct submit_status ss;
-			struct message *messagep;
-
-			messagep = imsg.data;
-			ss.msg = *messagep;
-			ss.id = messagep->session_id;
-			ss.code = 250;
-			fd = enqueue_open_messagefile(messagep);
-			if (fd == -1) 
-				ss.code = 421;
-
-			imsg_compose(ibuf, IMSG_QUEUE_MESSAGE_FILE, 0, 0, fd, &ss,
-			    sizeof(ss));
-
-			break;
-		}
-		case IMSG_QUEUE_COMMIT_MESSAGE: {
-			struct message		*messagep;
-			struct submit_status	 ss;
-
-			messagep = imsg.data;
-			ss.id = messagep->session_id;
-
-			ss.code = 250;
-			if (enqueue_commit_message(messagep))
-				s_queue.inserts_local++;
-			else
-				ss.code = 421;
-
-			imsg_compose(ibuf, IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1,
-			    &ss, sizeof(ss));
-
-			break;
-		}
 		case IMSG_STATS: {
 			struct stats *s;
 
@@ -468,7 +413,6 @@ queue_dispatch_lka(int sig, short event, void *p)
 			struct message		*messagep;
 			struct submit_status	 ss;
 			int (*f)(struct message *);
-			enum smtp_proc_type peer;
 
 			messagep = imsg.data;
 			messagep->id = queue_generate_id();
@@ -481,19 +425,16 @@ queue_dispatch_lka(int sig, short event, void *p)
 				messagep->type = T_MTA_MESSAGE;
 
 			/* Write to disk */
-			if (messagep->flags & F_MESSAGE_ENQUEUED) {
+			if (messagep->flags & F_MESSAGE_ENQUEUED)
 				f = enqueue_record_envelope;
-				peer = PROC_CONTROL;
-			}
-			else {
+			else
 				f = queue_record_incoming_envelope;
-				peer = PROC_SMTP;
-			}
 
 			if (! f(messagep)) {
 				ss.code = 421;
-				imsg_compose(env->sc_ibufs[peer], IMSG_QUEUE_TEMPFAIL,
-				    0, 0, -1, &ss, sizeof(ss));
+				imsg_compose(env->sc_ibufs[PROC_SMTP],
+				    IMSG_QUEUE_TEMPFAIL, 0, 0, -1, &ss,
+				    sizeof(ss));
 			}
 
 			break;
