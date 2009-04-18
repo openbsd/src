@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.460 2009/04/18 00:42:28 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.461 2009/04/18 01:07:48 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -525,8 +525,10 @@ __EOT
 		fi
 		: ${_next:=done}
 
-		ask "Set name? (or 'done')" "$_next"
+		ask "Set name? (or 'abort' or 'done')" "$_next"
 		case $resp in
+		abort)	_selected=
+			break ;;
 		done)	break ;;
 		-*)	_action=rmel ;;
 		esac
@@ -954,7 +956,6 @@ __EOT
 	shacmd="cat"
 	[[ -x /bin/sha256 ]] && shacmd="sha256 /tmp/h"
 
-	ask_yn "Ready to $MODE sets?" yes
 	for _f in $THESETS ; do
 		isin $_f $_get_sets || continue
 		echo -n "Getting $_f ..."
