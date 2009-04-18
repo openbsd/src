@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.39 2009/04/12 15:42:13 gilles Exp $	*/
+/*	$OpenBSD: runner.c,v 1.40 2009/04/18 21:13:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -771,24 +771,24 @@ runner_purge_message(char *msgid)
 	struct dirent *dp;
 	
 	if (! bsnprintf(rootdir, sizeof(rootdir), "%s/%s", PATH_PURGE, msgid))
-		fatal("queue_delete_incoming_message: snprintf");
+		fatal("runner_purge_message: snprintf");
 
 	if (! bsnprintf(evpdir, sizeof(evpdir), "%s%s", rootdir,
 		PATH_ENVELOPES))
-		fatal("queue_delete_incoming_message: snprintf");
+		fatal("runner_purge_message: snprintf");
 	
 	if (! bsnprintf(msgpath, sizeof(msgpath), "%s/message", rootdir))
-		fatal("queue_delete_incoming_message: snprintf");
+		fatal("runner_purge_message: snprintf");
 
 	if (unlink(msgpath) == -1)
 		if (errno != ENOENT)
-			fatal("queue_delete_incoming_message: unlink");
+			fatal("runner_purge_message: unlink");
 
 	dirp = opendir(evpdir);
 	if (dirp == NULL) {
 		if (errno == ENOENT)
 			goto delroot;
-		fatal("queue_delete_incoming_message: opendir");
+		fatal("runner_purge_message: opendir");
 	}
 	while ((dp = readdir(dirp)) != NULL) {
 		if (strcmp(dp->d_name, ".") == 0 ||
@@ -796,22 +796,22 @@ runner_purge_message(char *msgid)
 			continue;
 		if (! bsnprintf(evppath, sizeof(evppath), "%s/%s", evpdir,
 			dp->d_name))
-			fatal("queue_delete_incoming_message: snprintf");
+			fatal("runner_purge_message: snprintf");
 
 		if (unlink(evppath) == -1)
 			if (errno != ENOENT)
-				fatal("queue_delete_incoming_message: unlink");
+				fatal("runner_purge_message: unlink");
 	}
 	closedir(dirp);
 
 	if (rmdir(evpdir) == -1)
 		if (errno != ENOENT)
-			fatal("queue_delete_incoming_message: rmdir");
+			fatal("runner_purge_message: rmdir");
 
 delroot:
 	if (rmdir(rootdir) == -1)
 		if (errno != ENOENT)
-			fatal("queue_delete_incoming_message: rmdir");
+			fatal("runner_purge_message: rmdir");
 }
 
 struct batch *
