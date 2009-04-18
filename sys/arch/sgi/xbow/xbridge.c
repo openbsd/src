@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.9 2009/04/18 19:26:18 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.10 2009/04/18 19:26:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -142,6 +142,10 @@ xbridge_match(struct device *parent, void *match, void *aux)
 
 	if (xaa->xaa_vendor == XBOW_VENDOR_SGI4 &&
 	    xaa->xaa_product == XBOW_PRODUCT_SGI4_BRIDGE)
+		return 1;
+
+	if (xaa->xaa_vendor == XBOW_VENDOR_SGI3 &&
+	    xaa->xaa_product == XBOW_PRODUCT_SGI3_XBRIDGE)
 		return 1;
 
 	return 0;
