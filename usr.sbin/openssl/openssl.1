@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.63 2009/04/06 18:57:07 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.64 2009/04/19 07:39:37 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -112,7 +112,7 @@
 .\"
 .\" OPENSSL
 .\"
-.Dd $Mdocdate: April 6 2009 $
+.Dd $Mdocdate: April 19 2009 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -5587,10 +5587,13 @@ certificate itself is displayed.
 Send the protocol-specific message(s) to switch to TLS for communication.
 .Ar protocol
 is a keyword for the intended protocol.
-Currently, the only supported keywords are
-.Qq smtp
+Currently, the supported keywords are
+.Qq ftp ,
+.Qq imap ,
+.Qq smtp ,
+.Qq pop3 ,
 and
-.Qq pop3 .
+.Qq xmpp .
 .It Fl state
 Prints out the SSL session states.
 .It Fl verify Ar depth
