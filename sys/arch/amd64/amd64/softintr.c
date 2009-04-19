@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.4 2009/04/19 17:50:18 oga Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.5 2009/04/19 19:13:57 oga Exp $	*/
 /*	$NetBSD: softintr.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $	*/
 
 /*-
@@ -88,9 +88,11 @@ softintr_dispatch(int which)
 		}
 		TAILQ_REMOVE(&si->softintr_q, sih, sih_q);
 		sih->sih_pending = 0;
-		mtx_leave(&si->softintr_lock);
 
 		uvmexp.softs++;
+
+		mtx_leave(&si->softintr_lock);
+
 		(*sih->sih_fn)(sih->sih_arg);
 	}
 }

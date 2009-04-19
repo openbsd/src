@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.28 2009/03/25 21:41:40 miod Exp $ */
+/* $OpenBSD: interrupt.c,v 1.29 2009/04/19 19:13:57 oga Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -553,18 +553,17 @@ softintr_dispatch()
 				mtx_enter(&asi->softintr_mtx);
 
 				sih = TAILQ_FIRST(&asi->softintr_q);
-				if (sih != NULL) {
-					TAILQ_REMOVE(&asi->softintr_q, sih,
-					    sih_q);
-					sih->sih_pending = 0;
+				if (sih == NULL) {
+					mtx_leave(&asi->softintr_mtx);
+					break;
 				}
+				TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
+				sih->sih_pending = 0;
+
+				uvmexp.softs++;
 
 				mtx_leave(&asi->softintr_mtx);
 
-				if (sih == NULL)
-					break;
-
-				uvmexp.softs++;
 				(*sih->sih_fn)(sih->sih_arg);
 			}
 		}
