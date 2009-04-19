@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.36 2009/03/03 20:01:01 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.37 2009/04/19 20:34:05 sthen Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -1007,6 +1007,7 @@ print_columns(struct shf *shf, int n, char *(*func) (void *, int, char *, int),
 	int r, c;
 	int rows, cols;
 	int nspace;
+	int col_width;
 
 	/* max_width + 1 for the space.  Note that no space
 	 * is printed after the last column to avoid problems
@@ -1025,6 +1026,9 @@ print_columns(struct shf *shf, int n, char *(*func) (void *, int, char *, int),
 			rows = n;
 	}
 
+	col_width = max_width;
+	if (cols == 1)
+		col_width = 0; /* Don't pad entries in single column output. */
 	nspace = (x_cols - max_width * cols) / cols;
 	if (nspace <= 0)
 		nspace = 1;
@@ -1033,7 +1037,7 @@ print_columns(struct shf *shf, int n, char *(*func) (void *, int, char *, int),
 			i = c * rows + r;
 			if (i < n) {
 				shf_fprintf(shf, "%-*s",
-				    max_width,
+				    col_width,
 				    (*func)(arg, i, str, max_width + 1));
 				if (c + 1 < cols)
 					shf_fprintf(shf, "%*s", nspace, null);
