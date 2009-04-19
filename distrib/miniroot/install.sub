@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.463 2009/04/19 00:00:35 krw Exp $
+#	$OpenBSD: install.sub,v 1.464 2009/04/19 00:59:39 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -171,7 +171,7 @@ scan_dmesg() {
 scan_disknames() {
 	local _n _oifs=$IFS
 	IFS=","
-	bsort $(for _n in $(disknames); do echo "$_n "; done | sed -ne "$1")
+	bsort $(for _n in $(sysctl -n hw.disknames); do echo "$_n "; done | sed -ne "$1")
 	IFS=$_oifs
 }
 

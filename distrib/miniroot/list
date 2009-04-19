@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.41 2009/04/17 07:18:55 deraadt Exp $
+#	$OpenBSD: list,v 1.42 2009/04/19 00:59:39 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -47,7 +47,7 @@ LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/sed
-LINK	instbin					usr/bin/disknames
+LINK	instbin					sbin/sysctl
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group

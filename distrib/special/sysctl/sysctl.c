@@ -1,6 +1,7 @@
-/*	$OpenBSD: sysctl.c,v 1.1 2009/04/19 00:57:44 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.2 2009/04/19 00:59:39 deraadt Exp $	*/
 
 /*
+ * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
  * Copyright (c) 2007 Kenneth R. Westerback <krw@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
