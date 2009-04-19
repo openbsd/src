@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.11 2009/04/19 12:52:33 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.12 2009/04/19 18:37:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -60,6 +60,7 @@ struct xbridge_softc {
 
 	struct mips_bus_space *sc_mem_bus_space;
 	struct mips_bus_space *sc_io_bus_space;
+	struct machine_bus_dma_tag sc_dmatag;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_regh;
@@ -115,7 +116,7 @@ int	xbridge_space_map_short(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 bus_addr_t xbridge_pa_to_device(paddr_t);
 paddr_t	xbridge_device_to_pa(bus_addr_t);
 
-struct machine_bus_dma_tag xbridge_dma_tag = {
+const struct machine_bus_dma_tag xbridge_dma_tag = {
 	NULL,			/* _cookie */
 	_dmamap_create,
 	_dmamap_destroy,
@@ -306,11 +307,20 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach children.
 	 */
 
+	bcopy(&xbridge_dma_tag, &sc->sc_dmatag, sizeof(xbridge_dma_tag));
+	if (sys_config.system_type == SGI_OCTANE) {
+		/*
+		 * Make sure we do not risk crossing the direct mapping
+		 * window.
+		 */
+		sc->sc_dmatag._dma_mask = BRIDGE_DMA_DIRECT_LENGTH - 1;
+	}
+
 	bzero(&pba, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = sc->sc_io_bus_space;
 	pba.pba_memt = sc->sc_mem_bus_space;
-	pba.pba_dmat = &xbridge_dma_tag;
+	pba.pba_dmat = &sc->sc_dmatag;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
@@ -633,7 +643,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 	    (1 << intrbit));
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, BRIDGE_INT_DEV,
 	    bus_space_read_4(sc->sc_iot, sc->sc_regh, BRIDGE_INT_DEV) |
-	    (7 << (intrbit * 3)));
+	    (intrbit << (intrbit * 3)));
 	(void)bus_space_read_4(sc->sc_iot, sc->sc_regh, WIDGET_TFLUSH);
 
 	return (void *)((uint64_t)ih | 8);	/* XXX don't return zero */
