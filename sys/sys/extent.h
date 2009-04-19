@@ -1,4 +1,4 @@
-/*	$OpenBSD: extent.h,v 1.11 2009/04/19 11:04:11 kettenis Exp $	*/
+/*	$OpenBSD: extent.h,v 1.12 2009/04/19 15:26:52 kettenis Exp $	*/
 /*	$NetBSD: extent.h,v 1.6 1997/10/09 07:43:05 jtc Exp $	*/
 
 /*-
@@ -74,15 +74,16 @@ struct extent_fixed {
 #define EXF_BITS	"\20\4FLWANTED\3WANTED\2NOCOALESCE\1FIXED"
 
 /* misc. flags passed to extent functions */
-#define EX_NOWAIT	0x00		/* not safe to sleep */
-#define EX_WAITOK	0x01		/* safe to sleep */
-#define EX_FAST		0x02		/* take first fit in extent_alloc() */
-#define EX_CATCH	0x04		/* catch signals while sleeping */
-#define EX_NOCOALESCE	0x08		/* create a non-coalescing extent */
-#define EX_MALLOCOK	0x10		/* safe to call malloc() */
-#define EX_WAITSPACE	0x20		/* wait for space to become free */
-#define EX_BOUNDZERO	0x40		/* boundary lines start at 0 */
-#define EX_CONFLICTOK	0x80		/* allow conflicts */
+#define EX_NOWAIT	0x0000		/* not safe to sleep */
+#define EX_WAITOK	0x0001		/* safe to sleep */
+#define EX_FAST		0x0002		/* take first fit in extent_alloc() */
+#define EX_CATCH	0x0004		/* catch signals while sleeping */
+#define EX_NOCOALESCE	0x0008		/* create a non-coalescing extent */
+#define EX_MALLOCOK	0x0010		/* safe to call malloc() */
+#define EX_WAITSPACE	0x0020		/* wait for space to become free */
+#define EX_BOUNDZERO	0x0040		/* boundary lines start at 0 */
+#define EX_CONFLICTOK	0x0080		/* allow conflicts */
+#define EX_FILLED	0x0100		/* create a filled extent */
 
 /*
  * Special place holders for "alignment" and "boundary" arguments,

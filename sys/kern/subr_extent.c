@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.36 2009/04/10 20:57:04 kettenis Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.37 2009/04/19 15:26:52 kettenis Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -227,6 +227,18 @@ extent_create(char *name, u_long start, u_long end, int mtype, caddr_t storage,
 		ex->ex_flags |= EXF_FIXED;
 	if (flags & EX_NOCOALESCE)
 		ex->ex_flags |= EXF_NOCOALESCE;
+
+	if (flags & EX_FILLED) {
+		rp = extent_alloc_region_descriptor(ex, flags);
+		if (rp == NULL) {
+			if (!fixed_extent)
+				free(ex, mtype);
+			return (NULL);
+		}
+		rp->er_start = start;
+		rp->er_end = end;
+		LIST_INSERT_HEAD(&ex->ex_regions, rp, er_link);
+	}
 
 #if defined(DIAGNOSTIC) || defined(DDB)
 	extent_register(ex);
