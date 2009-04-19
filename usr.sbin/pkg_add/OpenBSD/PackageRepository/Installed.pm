@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.12 2007/06/10 17:13:48 espie Exp $
+# $OpenBSD: Installed.pm,v 1.13 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -40,12 +40,12 @@ sub match
 sub match_locations
 {
 	my ($self, $search, @filters) = @_;
-	my @l = $search->match_locations($self);
+	my $l = $search->match_locations($self);
 	while (my $filter = (shift @filters)) {
-		last if @l == 0; # don't bother filtering empty list
-		@l = $filter->filter_locations(@l);
+		last if @$l == 0; # don't bother filtering empty list
+		$l = $filter->filter_locations($l);
 	}
-	return @l;
+	return $l;
 }
 
 sub url
@@ -88,6 +88,32 @@ sub canonicalize
 	return $name;
 }
 
+sub locations_list
+{
+	my $self = shift;
+	if (!defined $self->{locations}) {
+		my $l = [];
+		require OpenBSD::PackageLocation;
+
+		for my $name (@{$self->list}) {
+			push @$l, OpenBSD::PackageLocation->new($self, $name);
+		}
+		$self->{locations} = $l;
+	}
+	return $self->{locations};
+}
+
+sub grab_info
+{
+	my ($repository, $location) = @_;
+	$location->grabInfoFiles;
+}
+
+sub get_plist
+{
+	my ($repository, $location, $code) = @_;
+	$location->_plist($code);
+}
 package OpenBSD::PackageRepository::Installed;
 
 our @ISA = (qw(OpenBSD::PackageRepositoryBase));
@@ -123,6 +149,7 @@ sub canonicalize
 	my ($self, $name) = @_;
 	return installed_name($name);
 }
+
 sub find
 {
 	my ($repository, $name, $arch) = @_;
@@ -135,6 +162,19 @@ sub find
 		$self->{dir} = installed_info($name);
 	}
 	return $self;
+}
+
+sub grab_info
+{
+	my ($repository, $location) = @_;
+	$location->{dir} = installed_info($location->name);
+}
+
+sub get_plist
+{
+	my ($repository, $location, $code) = @_;
+	require OpenBSD::PackingList;
+	return OpenBSD::PackingList->from_installation($location->name, $code);
 }
 
 sub grabPlist

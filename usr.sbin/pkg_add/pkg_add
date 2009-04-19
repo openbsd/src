@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.333 2009/04/14 17:53:58 espie Exp $
+# $OpenBSD: pkg_add,v 1.334 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -230,20 +230,6 @@ sub can_install
 
 package main;
 
-sub thunderbird_special_case
-{
-	my $plist = shift;
-	for my $item (@{$plist->{items}}) {
-		next unless $item->IsFile;
-		my $t = $item->{tempname};
-		if (defined $t && $t =~ s/^(.*\/mozilla-thunderbird)\/extensions(.*)\/pkg\./$1\/pkg\./) {
-			rename $item->{tempname}, $t;
-			rmdir("$1/extensions$2");
-			$item->{tempname} = $t;
-		}
-	}
-}
-
 sub failed_message
 {
 	my ($base_msg, $interrupted, @l) = @_;
@@ -362,10 +348,6 @@ sub really_add
 			my $oldname = $o->{pkgname};
 			$state->progress->set_header($oldname." (deleting)");
 			$state->set_name_from_handle($o);
-			require OpenBSD::Search;
-			if (OpenBSD::Search::PkgSpec->new("mozilla-thunderbird-<=1.0.2p0")->filter($oldname)) {
-			    	thunderbird_special_case($plist);
-			}
 			require OpenBSD::Delete;
 			try {
 			    OpenBSD::Delete::delete_plist($o->{plist}, $state);
@@ -504,10 +486,11 @@ sub install_set
 }
 
 
-sub find_truenames
+sub find_truelocations
 {
 	my ($old, $new, $state) = @_;
 
+	my $cache = {};
 	for my $pkgname (@$old) {
 		if (OpenBSD::PackageName::is_stem($pkgname)) {
 		    my ($h, $path, $repo);
@@ -518,21 +501,30 @@ sub find_truenames
 			$h = 'OpenBSD::PackageLocator';
 			$path = "";
 		    }
-		    my @l = $h->match(OpenBSD::Search::Stem->new($pkgname));
-		    if (@l > 1 && !$state->{defines}->{allversions}) {
-			@l = OpenBSD::PackageName::keep_most_recent(@l);
+		    my $l = $h->match_locations(OpenBSD::Search::Stem->new($pkgname));
+		    if (@$l > 1 && !$state->{defines}->{allversions}) {
+			$l = OpenBSD::Search::FilterLocation->keep_most_recent->filter_locations($l);
 		    }
-		    my $result = OpenBSD::Interactive::choose1($pkgname, $state->{interactive}, sort @l);
-		    if (defined $result) {
-			    if (defined $path) {
-				$result = $path.$result;
-			    }
-			    push(@$new, $result);
+		    if (@$l == 0) {
+		    	print "Can't resolve $pkgname\n";
+			$bad = 1;
+		    } elsif (@$l > 1) {
+		    	my %h = map {($_->name, $_)} @$l;
+			$h{'<None>'} = undef;
+		    	my $result = OpenBSD::Interactive::ask_list("Ambiguous choose package for $pkgname", $state->{interactive}, sort keys %h);
+			if (defined $h{$result}) {
+				push(@$new, OpenBSD::UpdateSet->from_location($h{$result}));
+			} else {
+				$bad = 1;
+			}
 		    } else {
-			    $bad = 1;
+				push(@$new, OpenBSD::UpdateSet->from_location($l->[0]));
 		    }
 		} else {
-		    push(@$new, $pkgname);
+			if (!defined $cache->{$pkgname}) {
+				$cache->{$pkgname} = OpenBSD::UpdateSet->create_new($pkgname);
+			}
+			push(@$new, $cache->{$pkgname});
 		}
 	}
 }
@@ -641,6 +633,7 @@ $state->check_root;
 
 
 my @todo = ();
+my @todo2 = ();
 
 if ($opt_u) {
 	require OpenBSD::Update;
@@ -672,18 +665,19 @@ if ($opt_u) {
 	@todo = @{$updater->updates};
 	if (@todo > 0 && !$bad) {
 		print "Running the equivalent of pkg_add -r ",
-		    join(' ', @todo), "\n";
+		    join(' ', (map {$_->name} @todo)), "\n";
 	}
+	@todo2 = map { OpenBSD::UpdateSet->from_location($_) } @todo;
 } else {
-	find_truenames(\@ARGV, \@todo, $state);
-	OpenBSD::Add::tag_user_packages(@todo);
-	if (defined $state->{defines}->{kitchensink}) {
-		reorder(\@todo);
-		if (!$opt_r) {
-			@todo = grep {s/\.tgz$//o; !is_installed($_);} @todo;
-		}
-		print "Adding in order:\n", (map { "\t$_\n" } @todo), "\n";
-	}
+	find_truelocations(\@ARGV, \@todo2, $state);
+#	OpenBSD::Add::tag_user_packages(@todo);
+#	if (defined $state->{defines}->{kitchensink}) {
+#		reorder(\@todo);
+#		if (!$opt_r) {
+#			@todo = grep {s/\.tgz$//o; !is_installed($_);} @todo;
+#		}
+#		print "Adding in order:\n", (map { "\t$_\n" } @todo), "\n";
+#	}
 }
 
 if ($bad) {
@@ -692,14 +686,6 @@ if ($bad) {
 
 # convert everything to UpdateSets
 
-my @todo2 = ();
-my $cache = {};
-for my $pkg (@todo) {
-	if (!defined $cache->{$pkg}) {
-		$cache->{$pkg} = OpenBSD::UpdateSet->create_new($pkg);
-	}
-	push(@todo2, $cache->{$pkg});
-}
 	
 eval {
 while (my $set = shift @todo2) {
@@ -777,7 +763,7 @@ sub get_plist
 		print $state->deptree_header($pkg);
 		print "parsing $pkg\n";
 	}
-	my $plist = $location->plist;
+	my $plist = $location->grabPlist;
 	unless (defined $plist) {
 		print "Can't find CONTENTS from ", $location->url, "\n";
 		$location->close_with_client_error;

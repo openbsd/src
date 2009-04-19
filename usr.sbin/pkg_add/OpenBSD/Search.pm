@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.8 2007/12/28 12:55:03 espie Exp $
+# $OpenBSD: Search.pm,v 1.9 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -20,21 +20,22 @@ sub match_locations
 {
 	my ($self, $o) = @_;
 	require OpenBSD::PackageLocation;
-
-	return map {OpenBSD::PackageLocation->new($o, $_)} $self->match($o);
+	
+	my @l = map {OpenBSD::PackageLocation->new($o, $_)} $self->match($o);
+	return \@l;
 }
 
 # XXX this is not efficient
 sub filter_locations
 {
-	my $self = shift;
-	my @r = ();
-	while (my $loc = shift @_) {
+	my ($self, $l) = @_;
+	my $r = [];
+	for my $loc (@$l) {
 		if ($self->filter($loc->{name})) {
-			push(@r, $loc);
+			push(@$r, $loc);
 		}
 	}
-	return @r;
+	return $r;
 }
 
 package OpenBSD::Search::PkgSpec;
@@ -43,19 +44,25 @@ our @ISA=(qw(OpenBSD::Search));
 sub match_ref
 {
 	my ($self, $r) = @_;
-	my @l = ();
-
-	for my $subpattern (@{$self->{patterns}}) {
-		require OpenBSD::PkgSpec;
-		push(@l, OpenBSD::PkgSpec::subpattern_match($subpattern, $r));
-	}
-	return @l;
+	return $self->{spec}->match_ref($r);
 }
 
 sub match
 {
 	my ($self, $o) = @_;
 	return $self->match_ref($o->list);
+}
+
+sub match_locations
+{
+	my ($self, $o) = @_;
+	return $self->{spec}->match_locations($o->locations_list);
+}
+
+sub filter_locations
+{
+	my ($self, $l) = @_;
+	return $self->{$spec}->match_locations($l);
 }
 
 sub filter
@@ -67,8 +74,9 @@ sub filter
 sub new
 {
 	my ($class, $pattern) = @_;
-	my @l = split /\|/o, $pattern;
-	bless { patterns => \@l }, $class;
+	require OpenBSD::PkgSpec;
+
+	bless { spec => $class->spec_class->new($pattern)}, $class;
 }
 
 sub add_pkgpath_hint
@@ -77,43 +85,13 @@ sub add_pkgpath_hint
 	$self->{pkgpath} = $pkgpath;
 }
 
+sub spec_class
+{ "OpenBSD::PkgSpec" }
+
 package OpenBSD::Search::Exact;
 our @ISA=(qw(OpenBSD::Search::PkgSpec));
-sub match_ref
-{
-	my ($self, $r) = @_;
-	my @l = ();
-
-	for my $subpattern (@{$self->{patterns}}) {
-		if ($subpattern !~ m/^(.*?)\-(\d[^-]*)(.*)$/o) {
-			next;
-		}
-		my ($stem, $version, $flavor) = ($1, $2, $3);
-		$version =~ s/p\d+//;
-		for my $pkg (@$r) {
-			if ($pkg eq $subpattern) {
-				push(@l, $pkg);
-				next;
-			}
-			if ($pkg !~ m/^(.*?)\-(\d[^-]*)(.*)$/o) {
-				next;
-			}
-			if ($1 ne $stem) {
-				next;
-			}
-			if ($3 ne $flavor) {
-				next;
-			}
-			my $pkgversion = $2;
-			$pkgversion =~ s/p\d+//;
-			if ($pkgversion ne $version) {
-				next;
-			}
-			push(@l, $pkg);
-		}
-	}
-	return @l;
-}
+sub spec_class
+{ "OpenBSD::PkgSpec::Exact" }
 
 package OpenBSD::Search::Stem;
 our @ISA=(qw(OpenBSD::Search));
@@ -190,14 +168,6 @@ sub filter
 	return &{$self->{code}}(@l);
 }
 
-sub keep_most_recent
-{
-	my $class = shift;
-	require OpenBSD::PackageName;
-	
-	return $class->new(\&OpenBSD::PackageName::keep_most_recent);
-}
-
 package OpenBSD::Search::FilterLocation;
 our @ISA=(qw(OpenBSD::Search));
 sub new
@@ -209,8 +179,53 @@ sub new
 
 sub filter_locations
 {
-	my ($self, @l) = @_;
-	return &{$self->{code}}(@l);
+	my ($self, $l) = @_;
+	return &{$self->{code}}($l);
+}
+
+sub keep_most_recent
+{
+	my $class = shift;
+	return $class->new(
+sub {
+	my $l = shift;
+	# no need to filter
+	return $l if @$l <= 1;
+
+	require OpenBSD::PackageName;
+	my $h = {};
+	# we have to prove we have to keep it
+	while (my $e = pop @$l) {
+		my $stem = $e->pkgname->{stem};
+		my $keep = 1;
+		# so let's compare with every element in $h with the same stem
+		for my $f (@{$h->{$e->pkgname->{stem}}}) {
+			# if this is not the same flavors,
+			# we don't filter
+			if ($f->pkgname->flavor_string ne $e->pkgname->flavor_string) {
+				next;
+			}
+			# okay, now we need to prove there's a common pkgpath
+			if (!$e->update_info->match_pkgpath($f->update_info)) {
+				next;
+			}
+
+			if ($f->pkgname->{version}->compare($e->pkgname->{version}) < 0) {
+			    $f = $e;
+			} 
+			$keep = 0;
+			last;
+
+		}
+		if ($keep) {
+			push(@{$h->{$e->pkgname->{stem}}}, $e);
+		}
+	}
+	my $largest = [];
+	push @$largest, map {@$_} values %$h;
+	return $largest;
+}
+	);
 }
 
 1;

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.120 2009/04/14 17:53:58 espie Exp $
+# $OpenBSD: pkg_create,v 1.121 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -112,7 +112,7 @@ sub makesum_plist_with_base
 sub verify_checksum_with_base
 {
 	my ($self, $base, $stash) = @_;
-	my $check = ref($self)->new($self->{name});
+	my $check = ref($self)->new($self->name);
 	$self->compute_checksum($check, $base, $stash);
 
 	for my $field (qw(symlink link size)) {  # md5
@@ -162,7 +162,7 @@ sub pretend_to_archive
 sub comment_create_package
 {
 	my ($self) = @_;
-	print "Adding ", $self->{name}, "\n";
+	print "Adding ", $self->name, "\n";
 }
 
 sub makesum_plist
@@ -213,20 +213,20 @@ package OpenBSD::PackingElement::Cwd;
 sub archive
 {
 	my ($self, $arc, $base) = @_;
-	$arc->destdir($base."/".$self->{name});
+	$arc->destdir($base."/".$self->name);
 }
 
 sub pretend_to_archive
 {
 	my ($self, $arc, $base) = @_;
-	$arc->destdir($base."/".$self->{name});
+	$arc->destdir($base."/".$self->name);
 	$self->comment_create_package;
 }
 
 sub comment_create_package
 {
 	my ($self) = @_;
-	print "Cwd: ", $self->{name}, "\n";
+	print "Cwd: ", $self->name, "\n";
 }
 
 package OpenBSD::PackingElement::FileBase;
@@ -251,7 +251,7 @@ sub pretend_to_archive
 sub comment_create_package
 {
 	my ($self) = @_;
-	print "Adding ", $self->{name}, "\n";
+	print "Adding ", $self->name, "\n";
 }
 
 sub print_file
@@ -290,7 +290,7 @@ sub makesum_plist
 	my $fname = $self->fullname;
 	for (my $i = 1; ; $i++) {
 		if (-e "$base/$fname-$i") {
-			my $e = OpenBSD::PackingElement::File->add($plist, $self->{name}."-".$i);
+			my $e = OpenBSD::PackingElement::File->add($plist, $self->name."-".$i);
 			$e->compute_checksum($e, $base, $stash);
 		} else {
 			last;
@@ -592,7 +592,7 @@ if ($regen_package) {
 	}
 	print "Creating package $ARGV[0]\n" if !(defined $opt_q) && $opt_v;
 	if (!$opt_q) {
-		$plist->set_infodir(OpenBSD::Temp::dir());
+		$plist->set_infodir(OpenBSD::Temp->dir);
 	}
 	add_description($plist, DESC, $opt_c, $opt_d);
 	add_special_file($plist, INSTALL, $opt_i);

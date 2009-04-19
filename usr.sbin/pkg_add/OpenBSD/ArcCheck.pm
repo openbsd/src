@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.10 2007/06/12 09:53:36 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.11 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -28,9 +28,9 @@ package OpenBSD::Ustar::Object;
 sub check_name
 {
 	my ($self, $item) = @_;
-	return 1 if $self->{name} eq $item->{name};
-	if ($self->{name} =~ m/^LongName\d+$/o) {
-		$self->{name} = $item->{name};
+	return 1 if $self->name eq $item->name;
+	if ($self->name =~ m/^LongName\d+$/o) {
+		$self->set_name($item->name);
 		return 1;
 	}
 	return 0;
@@ -98,12 +98,12 @@ sub verify_modes
 sub copy_long
 {
 	my ($self, $wrarc) = @_;
-	if ($self->{name} =~ m/^LongName(\d+)$/o) {
+	if ($self->name =~ m/^LongName(\d+)$/o) {
 		$wrarc->{name_index} = $1 + 1;
 	}
-	if (length($self->{name}) > MAXFILENAME+MAXPREFIX+1) {
+	if (length($self->name) > MAXFILENAME+MAXPREFIX+1) {
 		$wrarc->{name_index} = 0 if !defined $wrarc->{name_index};
-		$entry->{name} = 'LongName'.$wrarc->{name_index}++;
+		$self->set_name('LongName'.$wrarc->{name_index}++);
 	}
 	$self->copy($wrarc);
 }
@@ -114,18 +114,18 @@ package OpenBSD::Ustar;
 sub prepare_long
 {
 	my ($self, $item) = @_;
-	my $filename = $item->{name};
+	my $filename = $item->name;
 	my $entry = $self->prepare($filename);
 	if (!defined $entry->{uname}) {
-		die "No user name for ", $entry->{name}, " (uid ", $entry->{uid}, ")";
+		die "No user name for ", $entry->name, " (uid ", $entry->{uid}, ")";
 	}
 	if (!defined $entry->{gname}) {
-		die "No group name for ", $entry->{name}, " (gid ", $entry->{gid}. ")";
+		die "No group name for ", $entry->name, " (gid ", $entry->{gid}. ")";
 	}
-	my ($prefix, $name) = split_name($entry->{name});
+	my ($prefix, $name) = split_name($entry->name);
 	if (length($name) > MAXFILENAME || length($prefix) > MAXPREFIX) {
 		$self->{name_index} = 0 if !defined $self->{name_index};
-		$entry->{name} = 'LongName'.$self->{name_index}++;
+		$entry->name = 'LongName'.$self->{name_index}++;
 	}
 	if (length($entry->{linkname}) > MAXLINKNAME) {
 		$self->{linkname_index} = 0 if !defined $self->{linkname_index};

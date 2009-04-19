@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.13 2007/06/16 09:29:37 espie Exp $
+# $OpenBSD: Temp.pm,v 1.14 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -69,7 +69,7 @@ $SIG{'HUP'} = $handler;
 $SIG{'KILL'} = $handler;
 $SIG{'TERM'} = $handler;
 
-sub dir()
+sub dir
 {
 	my $caught;
 	my $h = sub { $caught = shift; };
@@ -90,7 +90,7 @@ sub dir()
 	return "$dir/";
 }
 
-sub file()
+sub file
 {
 	my $caught;
 	my $h = sub { $caught = shift; };

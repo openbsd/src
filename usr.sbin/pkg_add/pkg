@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg,v 1.9 2007/06/12 09:53:36 espie Exp $
+# $OpenBSD: pkg,v 1.10 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -25,9 +25,9 @@ sub check_dependencies($)
 	require OpenBSD::Search;
 	require OpenBSD::PackageRepository::Installed;
 	my $dependency = shift;
-	my @m = OpenBSD::PackageRepository::Installed->new
-	    ->match(OpenBSD::Search::PkgSpec->new($dependency));
-	return (@m != 0) ? 1 : 0;
+	my $m = OpenBSD::PackageRepository::Installed->new
+	    ->match_locations(OpenBSD::Search::PkgSpec->new($dependency));
+	return (@$m != 0) ? 1 : 0;
 }
 
 # Pass this off to the old package commands

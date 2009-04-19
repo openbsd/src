@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.50 2007/06/16 09:29:37 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.51 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2002-2007 Marc Espie <espie@openbsd.org>
 #
@@ -188,7 +188,7 @@ sub split_name
 sub mkheader
 {
 	my ($entry, $type) = @_;
-	my ($prefix, $name) = split_name($entry->{name});
+	my ($prefix, $name) = split_name($entry->name);
 	my $linkname = $entry->{linkname};
 	my $size = $entry->{size};
 	if (!$entry->isFile) {
@@ -349,18 +349,30 @@ sub new
 	bless $object, $class;
 }
 
+sub name
+{
+	my $self = shift;
+	return $self->{name};
+}
+
+sub set_name
+{
+	my ($self, $v) = @_;
+	$self->{name} = $v;
+}
+
 sub set_modes
 {
 	my $self = shift;
-	chown $self->{uid}, $self->{gid}, $self->{destdir}.$self->{name};
-	chmod $self->{mode}, $self->{destdir}.$self->{name};
-	utime $self->{mtime}, $self->{mtime}, $self->{destdir}.$self->{name};
+	chown $self->{uid}, $self->{gid}, $self->{destdir}.$self->name;
+	chmod $self->{mode}, $self->{destdir}.$self->name;
+	utime $self->{mtime}, $self->{mtime}, $self->{destdir}.$self->name;
 }
 
 sub make_basedir
 {
 	my $self = shift;
-	my $dir = $self->{destdir}.File::Basename::dirname($self->{name});
+	my $dir = $self->{destdir}.File::Basename::dirname($self->name);
 	File::Path::mkpath($dir) unless -d $dir;
 }
 
@@ -376,7 +388,7 @@ sub write
 	$self->write_contents($arc);
 	my $k = $self->{key};
 	if (!defined $arc->{key}->{$k}) {
-		$arc->{key}->{$k} = $self->{name};
+		$arc->{key}->{$k} = $self->name;
 	}
 }
 
@@ -431,7 +443,7 @@ our @ISA=qw(OpenBSD::Ustar::Object);
 sub create
 {
 	my $self = shift;
-	File::Path::mkpath($self->{destdir}.$self->{name});
+	File::Path::mkpath($self->{destdir}.$self->name);
 	$self->set_modes;
 }
 
@@ -445,13 +457,14 @@ our @ISA=qw(OpenBSD::Ustar::Object);
 sub create
 {
 	my $self = shift;
-	$self->make_basedir($self->{name});
+	$self->make_basedir($self->name);
 	my $linkname = $self->{linkname};
 	if (defined $self->{cwd}) {
 		$linkname=$self->{cwd}.'/'.$linkname;
 	}
-	link $self->{destdir}.$linkname, $self->{destdir}.$self->{name} or
-	    die "Can't link $self->{destdir}$linkname to $self->{destdir}$self->{name}: $!";
+	link $self->{destdir}.$linkname, $self->{destdir}.$self->name or
+	    die "Can't link $self->{destdir}$linkname to $self->{destdir}",
+	    	$self->name, ": $!";
 }
 
 sub resolve_links
@@ -478,9 +491,10 @@ our @ISA=qw(OpenBSD::Ustar::Object);
 sub create
 {
 	my $self = shift;
-	$self->make_basedir($self->{name});
-	symlink $self->{linkname}, $self->{destdir}.$self->{name} or 
-	    die "Can't symlink $self->{linkname} to $self->{destdir}$self->{name}: $!";
+	$self->make_basedir($self->name);
+	symlink $self->{linkname}, $self->{destdir}.$self->name or 
+	    die "Can't symlink $self->{linkname} to $self->{destdir}",
+	    	$self->name, ": $!";
 }
 
 sub isLink() { 1 }
@@ -494,10 +508,10 @@ our @ISA=qw(OpenBSD::Ustar::Object);
 sub create
 {
 	my $self = shift;
-	$self->make_basedir($self->{name});
+	$self->make_basedir($self->name);
 	require POSIX;
-	POSIX::mkfifo($self->{destdir}.$self->{name}, $self->{mode}) or
-	    die "Can't create fifo $self->{name}: $!";
+	POSIX::mkfifo($self->{destdir}.$self->name, $self->{mode}) or
+	    die "Can't create fifo ", $self->name,": $!";
 	$self->set_modes;
 }
 
@@ -510,9 +524,9 @@ our @ISA=qw(OpenBSD::Ustar::Object);
 sub create
 {
 	my $self = shift;
-	$self->make_basedir($self->{name});
+	$self->make_basedir($self->name);
 	system(OpenBSD::Paths->mknod, 
-	    '-m', $self->{mode}, $self->{destdir}.$self->{name}, 
+	    '-m', $self->{mode}, $self->{destdir}.$self->name, 
 	    $self->devicetype, $self->{major}, $self->{minor});
 	$self->set_modes;
 }
@@ -615,11 +629,11 @@ sub new
 sub create
 {
 	my $self = shift;
-	$self->make_basedir($self->{name});
+	$self->make_basedir($self->name);
 	my $buffer;
-	my $out = OpenBSD::CompactWriter->new($self->{destdir}.$self->{name});
+	my $out = OpenBSD::CompactWriter->new($self->{destdir}.$self->name);
 	if (!defined $out) {
-		die "Can't write to $self->{destdir}$self->{name}: $!";
+		die "Can't write to $self->{destdir}", $self->name, ": $!";
 	}
 	my $toread = $self->{size};
 	while ($toread > 0) {
@@ -634,12 +648,14 @@ sub create
 		}
 		$self->{archive}->{swallow} -= $actual;
 		unless ($out->write($buffer)) {
-			die "Error writing to $self->{destdir}$self->{name}: $!";
+			die "Error writing to $self->{destdir}", $self->name,
+			    ": $!";
 		}
 			
 		$toread -= $actual;
 	}
-	$out->close or die "Error closing $self->{destdir}$self->{name}: $!";
+	$out->close or die "Error closing $self->{destdir}", $self->name, 
+	    ": $!";
 	$self->set_modes;
 }
 
@@ -720,7 +736,7 @@ sub copy_contents
 		print $out "\0" x (512 - $size % 512) or 
 		    die "Error writing to archive: $!";
 	}
-	$self->alias($arc, $self->{name});
+	$self->alias($arc, $self->name);
 }
 
 sub isFile() { 1 }

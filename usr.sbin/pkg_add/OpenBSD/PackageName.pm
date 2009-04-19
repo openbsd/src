@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.33 2009/03/07 12:04:13 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.34 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -81,46 +81,6 @@ sub is_stem
 	} else {
 		return 1;
 	}
-}
-
-sub splitp
-{
-	my $_ = shift;
-
-	if (/^(.*\-\d[^-]*)p(\d+)(.*)$/o) {
-		return ($1.$3, $2);
-	} else {
-		return ($_,-1);
-	}
-}
-
-sub rebuildp
-{
-	my ($pkg, $p) = @_;
-	if ($p == -1) {
-		return $pkg;
-	}
-	if ($pkg =~ m/^(.*?)(\-\d[^-v]*)(.*)$/o) {
-		return "$1$2p$p$3";
-	} else {
-		return $pkg."p".$p;
-	}
-}
-
-sub keep_most_recent
-{
-	my $h = {};
-	for my $pkgname (@_) {
-		my ($p, $v) = splitp($pkgname);
-		if (!defined $h->{$p} || $h->{$p} < $v) {
-			$h->{$p} = $v;
-		}
-	}
-	my @list = ();
-	while (my ($p, $v) = each %$h) {
-		push(@list, rebuildp($p, $v));
-	}
-	return @list;
 }
 
 sub compile_stemlist
@@ -355,16 +315,23 @@ sub to_pattern
 }
 
 package OpenBSD::PackageName::Name;
+sub flavor_string
+{
+	my $o = shift;
+	return join('-', sort keys %{$o->{flavors}});
+}
+
 sub to_string
 {
 	my $o = shift;
-	return join('-', $o->{stem}, $o->{version}->to_string, sort keys %{$o->{flavors}});
+	return join('-', $o->{stem}, $o->{version}->to_string, 
+	    $o->flavor_string);
 }
 
 sub to_pattern
 {
 	my $o = shift;
-	return join('-', $o->{stem}, '*', sort keys %{$o->{flavors}});
+	return join('-', $o->{stem}, '*', $o->flavor_string);
 }
 
 1;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.80 2009/04/18 08:30:02 espie Exp $
+# $OpenBSD: Delete.pm,v 1.81 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -179,11 +179,11 @@ sub rename_file_to_temp
 	close $fh;
 	if (rename($n, $j)) {
 		print "Renaming old file $n to $j\n";
-		if ($self->{name} !~ m/^\//o && $self->cwd ne '.') {
+		if ($self->name !~ m/^\//o && $self->cwd ne '.') {
 			my $c = $self->cwd;
 			$j =~ s|^\Q$c\E/||;
 		}
-		$self->{name} = $j;
+		$self->set_name($j);
 	} else {
 		print "Bad rename $n to $j: $!\n";
 	}
@@ -277,7 +277,7 @@ sub delete
 	my ($self, $state) = @_;
 
 	if ($state->{beverbose}) {
-		print "rmuser: $self->{name}\n";
+		print "rmuser: ", $self->name, "\n";
 	}
 
 	$self->record_shared($state->{recorder}, $state->{pkgname});
@@ -286,7 +286,7 @@ sub delete
 sub record_shared
 {
 	my ($self, $recorder, $pkgname) = @_;
-	$recorder->{users}->{$self->{name}} = $pkgname;
+	$recorder->{users}->{$self->name} = $pkgname;
 }
 
 package OpenBSD::PackingElement::NewGroup;
@@ -295,7 +295,7 @@ sub delete
 	my ($self, $state) = @_;
 
 	if ($state->{beverbose}) {
-		print "rmgroup: $self->{name}\n";
+		print "rmgroup: ", $self->name, "\n";
 	}
 
 	$self->record_shared($state->{recorder}, $state->{pkgname});
@@ -304,7 +304,7 @@ sub delete
 sub record_shared
 {
 	my ($self, $recorder, $pkgname) = @_;
-	$recorder->{groups}->{$self->{name}} = $pkgname;
+	$recorder->{groups}->{$self->name} = $pkgname;
 }
 
 package OpenBSD::PackingElement::DirBase;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.16 2007/05/19 09:50:31 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.17 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -23,20 +23,20 @@ package OpenBSD::PackageRepositoryList;
 sub new
 {
 	my $class = shift;
-	return bless {list => [] }, $class;
+	return bless [], $class;
 }
 
 sub add
 {
 	my $self = shift;
-	push @{$self->{list}}, @_;
+	push @$self, @_;
 }
 
 sub find
 {
 	my ($self, $pkgname, $arch) = @_;
 
-	for my $repo (@{$self->{list}}) {
+	for my $repo (@$self) {
 		my $pkg = $repo->find($pkgname, $arch);
 		return $pkg if defined $pkg;
 	}
@@ -47,7 +47,7 @@ sub grabPlist
 {
 	my ($self, $pkgname, $arch, $code) = @_;
 
-	for my $repo (@{$self->{list}}) {
+	for my $repo (@$self) {
 		my $plist = $repo->grabPlist($pkgname, $arch, $code);
 		return $plist if defined $plist;
 	}
@@ -57,7 +57,7 @@ sub grabPlist
 sub match
 {
 	my ($self, @search) = @_;
-	for my $repo (@{$self->{list}}) {
+	for my $repo (@$self) {
 		my @l = $repo->match(@search);
 		if (@l > 0) {
 			return @l;
@@ -69,21 +69,32 @@ sub match
 sub match_locations
 {
 	my ($self, @search) = @_;
-	for my $repo (@{$self->{list}}) {
-		my @l = $repo->match_locations(@search);
-		if (@l > 0) {
-			return @l;
+	for my $repo (@$self) {
+		my $l = $repo->match_locations(@search);
+		if (@$l > 0) {
+			return $l;
 		}
 	}
-	return ();
+	return [];
 }
 
 sub cleanup
 {
 	my $self = shift;
-	for my $repo (@{$self->{list}}) {
+	for my $repo (@$self) {
 		$repo->cleanup;
 	}
+}
+
+sub print_without_src
+{
+	my $self = shift;
+	my @l = ();
+	for my $repo (@$self) {
+		next if $repo->isa("OpenBSD::PackageRepository::Source");
+		push(@l, $repo->url);
+	}
+	return join(':', @l);
 }
 
 1;

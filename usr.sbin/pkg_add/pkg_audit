@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_audit,v 1.5 2008/08/14 13:06:04 espie Exp $
+# $OpenBSD: pkg_audit,v 1.6 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -37,7 +37,7 @@ for my $pkg (installed_packages()) {
 
 print "\nFiles not accounted for by any package: \n";
 find(sub {
-	return unless -f $_;
+	return unless -l $_ || -f _;
 	if ($found{$File::Find::name}) {
 		delete $found{$File::Find::name};
 	} else {
@@ -48,6 +48,7 @@ find(sub {
 print "\nStuff that should be there, but isn't:\n";
 my %packages;
 for my $item (keys %found) {
+	next unless $item =~ m|^/usr/local|;
 	push(@{$packages{$found{$item}}}, $item);
 }
 for my $pkg (keys %packages) {

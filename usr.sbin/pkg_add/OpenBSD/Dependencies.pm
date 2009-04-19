@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.64 2008/06/21 14:01:10 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.65 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -162,7 +162,7 @@ sub find_in_plist
 	my ($self, $plist, $dep) = @_;
 	if ($plist->has('define-tag')) {
 		for my $t (@{$plist->{'define-tag'}}) {
-			$self->{known_tags}->{$t->{name}} = $dep;
+			$self->{known_tags}->{$t->name} = $dep;
 		}
 	}
 }
@@ -241,15 +241,17 @@ sub find_dep_in_repositories
 	my ($self, $state, $dep) = @_;
 	require OpenBSD::PackageLocator;
 
-	my @candidates = OpenBSD::PackageLocator->match_locations($dep->spec);
-	# XXX not really efficient, but hey
-	my %c = map {($_->{name}, $_)} @candidates;
-	my @pkgs = keys %c;
+	my $candidates = OpenBSD::PackageLocator->match_locations($dep->spec);
 	if (!$state->{defines}->{allversions}) {
-		@pkgs = OpenBSD::PackageName::keep_most_recent(@pkgs);
+		require OpenBSD::Search;
+		$candidates = OpenBSD::Search::FilterLocation->
+		    keep_most_recent->filter_locations($candidates);
 	}
+	# XXX not really efficient, but hey
+	my %c = map {($_->name, $_)} @$candidates;
+	my @pkgs = keys %c;
 	if (@pkgs == 1) {
-		return $c{$pkgs[0]};
+		return $candidates->[0];
 	} elsif (@pkgs > 1) {
 		require OpenBSD::Interactive;
 
@@ -301,7 +303,7 @@ sub solve_dependency
 	$v = $self->find_dep_in_repositories($state, $dep);
 	if ($v) {
 		push(@{$self->{deplist}}, 
-		    OpenBSD::UpdateSet->from_location($v->openPackage));
+		    OpenBSD::UpdateSet->from_location($v));
 		return $v->{name};
 	}
 

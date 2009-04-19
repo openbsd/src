@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.62 2009/02/02 20:41:47 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.63 2009/04/19 14:58:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -231,7 +231,9 @@ sub find
 	my ($repository, $name, $arch) = @_;
 	my $self = OpenBSD::PackageLocation->new($repository, $name, $arch);
 
-	return $self->openPackage;
+	if ($self->contents) {
+		return $self;
+	}
 }
 
 sub grabPlist
@@ -482,7 +484,7 @@ sub open_pipe
 	require OpenBSD::Temp;
 
 	my ($self, $object) = @_;
-	$object->{errors} = OpenBSD::Temp::file();
+	$object->{errors} = OpenBSD::Temp->file;
 	$object->{cache_dir} = $ENV{'PKG_CACHE'};
 	$object->{parent} = $$;
 
@@ -560,9 +562,6 @@ sub grab_object
 {
 	my ($self, $object) = @_;
 	my ($ftp, @extra) = split(/\s+/, OpenBSD::Paths->ftp);
-	if (defined $ENV{'FTP_KEEPALIVE'}) {
-		push(@extra, "-k", $ENV{'FTP_KEEPALIVE'});
-	}
 	exec {$ftp} 
 	    $ftp,
 	    @extra,
@@ -691,7 +690,7 @@ sub list
 	my ($self) = @_;
 	if (!defined $self->{list}) {
 		$self->make_room;
-		my $error = OpenBSD::Temp::file();
+		my $error = OpenBSD::Temp->file;
 		$self->{list} = $self->obtain_list($error);
 		$self->parse_problems($error);
 	}
