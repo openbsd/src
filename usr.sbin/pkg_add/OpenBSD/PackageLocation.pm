@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.16 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.17 2009/04/19 15:18:23 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -143,7 +143,6 @@ sub find_fat_contents
 		if ($plist->has('arch')) {
 			if ($plist->{arch}->check($self->{arch})) {
 				$self->{filter} = $prefix;
-				bless $self, "OpenBSD::FatPackageLocation";
 				return $contents;
 			}
 		}
@@ -164,7 +163,7 @@ sub contents
 	return $self->{contents};
 }
 
-sub grabInfoFiles
+sub grab_info
 {
 	my $self = shift;
 	my $dir = $self->{dir} = OpenBSD::Temp->dir;
@@ -223,7 +222,7 @@ sub info
 	my $self = shift;
 
 	if (!defined $self->{dir}) {
-		$self->{repository}->grab_info($self);
+		$self->grab_info;
 	}
 	return $self->{dir};
 }
@@ -231,13 +230,6 @@ sub info
 sub plist
 {
 	my ($self, $code) = @_;
-	$self->{repository}->get_plist($self, $code);
-}
-
-sub _plist
-{
-	my ($self, $code) = @_;
-
 	require OpenBSD::PackingList;
 
 	if (defined $self->{dir} && -f $self->{dir}.CONTENTS) {
@@ -331,7 +323,20 @@ sub getNext
 {
 	my $self = shift;
 
-	return $self->{_archive}->next;
+	my $e = $self->{_archive}->next;
+	if (defined $self->{filter}) {
+		if ($e->{name} =~ m/^(.*?)\/(.*)$/o) {
+			my ($beg, $name) = ($1, $2);
+			if (index($beg, $self->{filter}) == -1) {
+				return $self->getNext;
+			}
+			$e->{name} = $name;
+			if ($e->isHardLink) {
+				$e->{linkname} =~ s/^(.*?)\///o;
+			}
+		}
+	}
+	return $e;
 }
 
 sub skip
@@ -340,25 +345,22 @@ sub skip
 	return $self->{_archive}->skip;
 }
 
-package OpenBSD::FatPackageLocation;
-our @ISA=qw(OpenBSD::PackageLocation);
+package OpenBSD::PackageLocation::Installed;
+our @ISA = qw(OpenBSD::PackageLocation);
 
-sub getNext
+
+sub info
 {
 	my $self = shift;
+	require OpenBSD::PackageInfo;
+	$self->{dir} = OpenBSD::PackageInfo::installed_info($self->name);
+}
 
-	my $e = $self->SUPER::getNext;
-	if ($e->{name} =~ m/^(.*?)\/(.*)$/o) {
-		my ($beg, $name) = ($1, $2);
-		if (index($beg, $self->{filter}) == -1) {
-			return $self->next;
-		}
-		$e->{name} = $name;
-		if ($e->isHardLink) {
-			$e->{linkname} =~ s/^(.*?)\///o;
-		}
-	}
-	return $e;
+sub plist
+{
+	my ($self, $code) = @_;
+	require OpenBSD::PackingList;
+	return OpenBSD::PackingList->from_installation($self->name, $code);
 }
 
 1;

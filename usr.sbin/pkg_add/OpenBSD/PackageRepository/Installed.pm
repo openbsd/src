@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.13 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: Installed.pm,v 1.14 2009/04/19 15:18:23 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -88,6 +88,16 @@ sub canonicalize
 	return $name;
 }
 
+sub new_location
+{
+	my ($self, @args) = @_;
+
+	return $self->locationClassName->new($self, @args);
+}
+
+sub locationClassName
+{ "OpenBSD::PackageLocation" }
+
 sub locations_list
 {
 	my $self = shift;
@@ -96,24 +106,13 @@ sub locations_list
 		require OpenBSD::PackageLocation;
 
 		for my $name (@{$self->list}) {
-			push @$l, OpenBSD::PackageLocation->new($self, $name);
+			push @$l, $self->new_location($name);
 		}
 		$self->{locations} = $l;
 	}
 	return $self->{locations};
 }
 
-sub grab_info
-{
-	my ($repository, $location) = @_;
-	$location->grabInfoFiles;
-}
-
-sub get_plist
-{
-	my ($repository, $location, $code) = @_;
-	$location->_plist($code);
-}
 package OpenBSD::PackageRepository::Installed;
 
 our @ISA = (qw(OpenBSD::PackageRepositoryBase));
@@ -158,24 +157,14 @@ sub find
 	if (is_installed($name)) {
 		require OpenBSD::PackageLocation;
 
-		$self = OpenBSD::PackageLocation->new($repository, $name);
+		$self = $repository->new_location($name);
 		$self->{dir} = installed_info($name);
 	}
 	return $self;
 }
 
-sub grab_info
-{
-	my ($repository, $location) = @_;
-	$location->{dir} = installed_info($location->name);
-}
-
-sub get_plist
-{
-	my ($repository, $location, $code) = @_;
-	require OpenBSD::PackingList;
-	return OpenBSD::PackingList->from_installation($location->name, $code);
-}
+sub locationClassName
+{ "OpenBSD::PackageLocation::Installed" }
 
 sub grabPlist
 {

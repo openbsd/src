@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Search.pm,v 1.9 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: Search.pm,v 1.10 2009/04/19 15:18:23 espie Exp $
 #
 # Copyright (c) 2007 Marc Espie <espie@openbsd.org>
 #
@@ -21,7 +21,7 @@ sub match_locations
 	my ($self, $o) = @_;
 	require OpenBSD::PackageLocation;
 	
-	my @l = map {OpenBSD::PackageLocation->new($o, $_)} $self->match($o);
+	my @l = map {$o->new_location($_)} $self->match($o);
 	return \@l;
 }
 
