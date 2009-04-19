@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.7 2009/04/19 12:51:44 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.8 2009/04/19 16:10:40 jsing Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -556,8 +556,8 @@ ioc_intr_ethernet(void *v)
 {
 	struct ioc_softc *sc = (struct ioc_softc *)v;
 
-	/* this interrupt source is not shared between several devices. */
-	return ioc_intr_dispatch(sc, IOCDEV_EF);
+	/* This interrupt source is not shared between several devices. */
+	return ioc_intr_dispatch(sc, IOCDEV_EF - 1);
 }
 
 int
