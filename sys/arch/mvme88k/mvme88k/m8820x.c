@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.49 2007/11/17 05:36:23 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.50 2009/04/19 17:56:13 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -100,7 +100,7 @@ m8820x_setup_board_config()
 		vme188_config = 0x0a;
 		m8820x_cmmu[0].cmmu_regs = (void *)SBC_CMMU_I;
 		m8820x_cmmu[1].cmmu_regs = (void *)SBC_CMMU_D;
-		max_cpus = 1;
+		ncpusfound = 1;
 		max_cmmus = 2;
 		cmmu_shift = 1;
 		m8820x_pfsr = pfsr_save_187;
@@ -118,10 +118,10 @@ m8820x_setup_board_config()
 		m8820x_cmmu[5].cmmu_regs = (void *)VME_CMMU_D2;
 		m8820x_cmmu[6].cmmu_regs = (void *)VME_CMMU_I3;
 		m8820x_cmmu[7].cmmu_regs = (void *)VME_CMMU_D3;
-		max_cpus = bd_config[vme188_config].ncpus;
+		ncpusfound = bd_config[vme188_config].ncpus;
 		max_cmmus = bd_config[vme188_config].ncmmus;
 		m8820x_pfsr = bd_config[vme188_config].pfsr;
-		cmmu_shift = ff1(max_cmmus / max_cpus);
+		cmmu_shift = ff1(max_cmmus / ncpusfound);
 		break;
 #endif /* MVME188 */
 	}
@@ -132,7 +132,7 @@ m8820x_setup_board_config()
 		if (brdtyp == BRD_188) {
 			printf("MVME188 board configuration #%X "
 			    "(%d CPUs %d CMMUs)\n",
-			    vme188_config, max_cpus, max_cmmus);
+			    vme188_config, ncpusfound, max_cmmus);
 		}
 	} else {
 		panic("unrecognized MVME%x board configuration #%X",
@@ -170,7 +170,7 @@ m8820x_setup_board_config()
 	/*
 	 * Now that we know which CMMUs are there, report every association
 	 */
-	for (num = 0; num < max_cpus; num++) {
+	for (num = 0; num < ncpusfound; num++) {
 		int type;
 
 		type = CMMU_TYPE(m8820x_cmmu[num << cmmu_shift].

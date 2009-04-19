@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.14 2007/11/14 23:12:45 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.15 2009/04/19 17:56:13 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -126,14 +126,14 @@ m8820x_setup_board_config()
 			break;
 	}
 
-	max_cpus = num >> 1;
-	max_cmmus = max_cpus << 1;
+	ncpusfound = num >> 1;
+	max_cmmus = ncpusfound << 1;
 	cmmu_shift = 1;	/* fixed 2:1 configuration */
 
 	/*
 	 * Now that we know which CMMUs are there, report every association
 	 */
-	for (num = 0; num < max_cpus; num++) {
+	for (num = 0; num < ncpusfound; num++) {
 		volatile unsigned *cr;
 		int type;
 

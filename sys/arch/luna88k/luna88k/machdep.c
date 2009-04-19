@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.61 2009/02/16 22:55:03 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.62 2009/04/19 17:56:13 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1062,7 +1062,7 @@ luna88k_bootstrap()
 	 * currently-running CPU; initialize the others with similar settings
 	 * as well, after calling pmap_bootstrap() above.
 	 */
-	for (cpu = 0; cpu < max_cpus; cpu++) {
+	for (cpu = 0; cpu < ncpusfound; cpu++) {
 		if (cpu == master_cpu)
 			continue;
 		m8820x_initialize_cpu(cpu);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.49 2009/03/15 20:39:53 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.50 2009/04/19 17:56:13 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -95,8 +95,6 @@ __cpu_simple_lock_t cmmu_cpu_lock = __SIMPLELOCK_UNLOCKED;
 #endif
 
 struct cpu_info m88k_cpus[MAX_CPUS];
-u_int	max_cpus;
-
 struct cmmu_p *cmmu;
 
 /*

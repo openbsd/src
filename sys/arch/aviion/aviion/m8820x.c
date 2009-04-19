@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.5 2007/12/13 18:51:01 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.6 2009/04/19 17:56:12 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2006, Miodrag Vallat.
  *
@@ -168,7 +168,7 @@ knowledge:
 		/* NOTREACHED */
 	}
 
-	max_cpus = scc.cpucount;
+	ncpusfound = scc.cpucount;
 	if (scc.igang == 1) {
 		cmmu_shift = 1;
 		m8820x_pfsr = pfsr_av400_straight;
@@ -176,12 +176,12 @@ knowledge:
 		cmmu_shift = 2;
 		m8820x_pfsr = pfsr_av400_double;
 	}
-	max_cmmus = max_cpus << scc.igang;
+	max_cmmus = ncpusfound << scc.igang;
 
 	/*
 	 * Now that we know which CMMUs are there, report every association
 	 */
-	for (cpu_num = 0; cpu_num < max_cpus; cpu_num++) {
+	for (cpu_num = 0; cpu_num < ncpusfound; cpu_num++) {
 		cmmu_num = cpu_num << cmmu_shift;
 		cr = m8820x_cmmu[cmmu_num].cmmu_regs;
 		if (badaddr((vaddr_t)cr, 4) == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.62 2009/02/16 23:03:33 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.63 2009/04/19 17:56:13 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -167,13 +167,12 @@ patc_clear(void)
 void
 m88110_setup_board_config(void)
 {
-	max_cpus = 1;
+	ncpusfound = 1;
 }
 
 void
 m88410_setup_board_config(void)
 {
-#ifdef MULTIPROCESSOR
 	struct mvmeprom_brdid brdid;
 
 	/*
@@ -184,13 +183,9 @@ m88410_setup_board_config(void)
 	bzero(&brdid, sizeof(brdid));
 	bugbrdid(&brdid);
 	if (bcmp(brdid.pwa, "01-W3815B04", 11) == 0)
-		max_cpus = 1;
+		ncpusfound = 1;
 	else
-		max_cpus = 2;
-	/* XXX what about 01-W3977B QP boards??? */
-#else
-	max_cpus = 1;
-#endif
+		ncpusfound = 2;
 }
 
 /*

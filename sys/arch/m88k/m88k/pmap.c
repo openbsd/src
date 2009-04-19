@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.46 2009/03/04 19:39:05 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.47 2009/04/19 17:56:13 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -717,9 +717,9 @@ pmap_bootstrap(vaddr_t load_start)
 	 */
 
 	phys_map_vaddr = virtual_avail;
-	phys_map_vaddr_end = virtual_avail + 2 * (max_cpus << PAGE_SHIFT);
-	avail_start += 2 * (max_cpus << PAGE_SHIFT);
-	virtual_avail += 2 * (max_cpus << PAGE_SHIFT);
+	phys_map_vaddr_end = virtual_avail + 2 * (ncpusfound << PAGE_SHIFT);
+	avail_start += 2 * (ncpusfound << PAGE_SHIFT);
+	virtual_avail += 2 * (ncpusfound << PAGE_SHIFT);
 
 	/*
 	 * Create all the machine-specific mappings.

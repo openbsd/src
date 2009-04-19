@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.47 2009/03/26 17:24:33 oga Exp $ */
+/*	$OpenBSD: cpu.h,v 1.48 2009/04/19 17:56:13 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -76,8 +76,6 @@
 #endif
 
 #ifndef _LOCORE
-
-extern u_int max_cpus;
 
 #include <machine/lock.h>
 

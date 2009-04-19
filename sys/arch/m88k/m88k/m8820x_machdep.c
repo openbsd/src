@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.37 2009/02/16 23:03:33 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.38 2009/04/19 17:56:13 miod Exp $	*/
 /*
  * Copyright (c) 2004, 2007, Miodrag Vallat.
  *
@@ -423,7 +423,7 @@ m8820x_initialize_cpu(cpuid_t cpu)
 		 */
 		sctr = 0;
 #ifdef MULTIPROCESSOR
-		if (max_cpus > 1)
+		if (ncpusfound > 1)
 			sctr |= CMMU_SCTR_SE;
 #endif
 		cmmu->cmmu_regs[CMMU_SCTR] = sctr;

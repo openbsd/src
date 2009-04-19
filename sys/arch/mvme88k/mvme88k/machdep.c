@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.228 2009/03/15 20:39:53 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.229 2009/04/19 17:56:13 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1090,7 +1090,7 @@ cpu_hatch_secondary_processors(void *unused)
 #ifdef MVME197
 	case BRD_197:
 #endif
-		for (cpu = 0; cpu < max_cpus; cpu++) {
+		for (cpu = 0; cpu < ncpusfound; cpu++) {
 			if (cpu != ci->ci_cpuid) {
 				__cpu_simple_lock(&cpu_hatch_mutex);
 				rc = spin_cpu(cpu, (vaddr_t)secondary_start);
