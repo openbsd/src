@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.462 2009/04/18 15:12:39 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.463 2009/04/19 00:00:35 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -650,8 +650,8 @@ v4_config() {
 		fi
 	fi
 
-	[[ -x /sbin/dhclient ]] && { _prompt=" or 'dhcp'" ; : ${_addr:=dhcp} ; }
-	_prompt="IPv4 address for $_ifs? (or 'none'$_prompt)"
+	[[ -x /sbin/dhclient ]] && { _prompt="or 'dhcp' " ; : ${_addr:=dhcp} ; }
+	_prompt="IPv4 address for $_ifs? (${_prompt}or 'none')"
 
 	ask_until "$_prompt" "$_addr"
 	case $resp in
