@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.2 2009/04/19 00:59:39 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.3 2009/04/19 17:56:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -37,6 +37,8 @@ int	pint(struct var *);
 struct var vars[] = {
 	{ "hw.disknames", pstring, 2,
 	    { CTL_HW, HW_DISKNAMES }},
+	{ "hw.ncpufound", pint, 2,
+	    { CTL_HW, HW_NCPUFOUND }},
 };
 
 int	nflag;

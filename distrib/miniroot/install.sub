@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.464 2009/04/19 00:59:39 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.465 2009/04/19 17:56:01 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1676,6 +1676,9 @@ md_consoleinfo
 # the contents of the other sets, not the other way around.
 THESETS="bsd bsd.rd bsd.mp $MDSETS"
 DEFAULTSETS="bsd bsd.rd"
+if [ $(sysctl -n hw.ncpufound) -gt 1 ]; then
+	DEFAULTSETS="$DEFAULTSETS bsd.mp"
+fi
 for _set in base etc misc comp man game xbase xetc xshare xfont xserv site ; do
 	[[ $MODE == upgrade && ( $_set == etc || $_set == xetc ) ]] && continue
 	THESETS="$THESETS ${_set}${VERSION}.tgz"
