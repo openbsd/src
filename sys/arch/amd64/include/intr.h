@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.16 2009/03/15 19:40:40 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.17 2009/04/19 17:50:18 oga Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -255,22 +255,10 @@ struct x86_soft_intrhand {
 
 struct x86_soft_intr {
 	TAILQ_HEAD(, x86_soft_intrhand)
-		softintr_q;
-	int softintr_ssir;
-	struct simplelock softintr_slock;
+			softintr_q;
+	int		softintr_ssir;
+	struct mutex	softintr_lock;
 };
-
-#define	x86_softintr_lock(si, s)					\
-do {									\
-	(s) = splhigh();						\
-	simple_lock(&si->softintr_slock);				\
-} while (/*CONSTCOND*/ 0)
-
-#define	x86_softintr_unlock(si, s)					\
-do {									\
-	simple_unlock(&si->softintr_slock);				\
-	splx((s));							\
-} while (/*CONSTCOND*/ 0)
 
 void	*softintr_establish(int, void (*)(void *), void *);
 void	softintr_disestablish(void *);
@@ -281,15 +269,14 @@ void	softintr_dispatch(int);
 do {									\
 	struct x86_soft_intrhand *__sih = (arg);			\
 	struct x86_soft_intr *__si = __sih->sih_intrhead;		\
-	int __s;							\
 									\
-	x86_softintr_lock(__si, __s);					\
+	mtx_enter(&__si->softintr_lock);				\
 	if (__sih->sih_pending == 0) {					\
 		TAILQ_INSERT_TAIL(&__si->softintr_q, __sih, sih_q);	\
 		__sih->sih_pending = 1;					\
 		softintr(__si->softintr_ssir);				\
 	}								\
-	x86_softintr_unlock(__si, __s);					\
+	mtx_leave(&__si->softintr_lock);				\
 } while (/*CONSTCOND*/ 0)
 #endif /* _LOCORE */
 

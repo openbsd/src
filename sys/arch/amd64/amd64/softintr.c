@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.3 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.4 2009/04/19 17:50:18 oga Exp $	*/
 /*	$NetBSD: softintr.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@ softintr_init(void)
 	for (i = 0; i < X86_NSOFTINTR; i++) {
 		si = &x86_soft_intrs[i];
 		TAILQ_INIT(&si->softintr_q);
-		simple_lock_init(&si->softintr_slock);
+		mtx_init(&si->softintr_lock, IPL_HIGH);
 		si->softintr_ssir = x86_soft_intr_to_ssir[i];
 	}
 }
@@ -78,18 +78,17 @@ softintr_dispatch(int which)
 {
 	struct x86_soft_intr *si = &x86_soft_intrs[which];
 	struct x86_soft_intrhand *sih;
-	int s;
 
 	for (;;) {
-		x86_softintr_lock(si, s);
+		mtx_enter(&si->softintr_lock);
 		sih = TAILQ_FIRST(&si->softintr_q);
 		if (sih == NULL) {
-			x86_softintr_unlock(si, s);
+			mtx_leave(&si->softintr_lock);
 			break;
 		}
 		TAILQ_REMOVE(&si->softintr_q, sih, sih_q);
 		sih->sih_pending = 0;
-		x86_softintr_unlock(si, s);
+		mtx_leave(&si->softintr_lock);
 
 		uvmexp.softs++;
 		(*sih->sih_fn)(sih->sih_arg);
@@ -148,14 +147,13 @@ softintr_disestablish(void *arg)
 {
 	struct x86_soft_intrhand *sih = arg;
 	struct x86_soft_intr *si = sih->sih_intrhead;
-	int s;
 
-	x86_softintr_lock(si, s);
+	mtx_enter(&si->softintr_lock);
 	if (sih->sih_pending) {
 		TAILQ_REMOVE(&si->softintr_q, sih, sih_q);
 		sih->sih_pending = 0;
 	}
-	x86_softintr_unlock(si, s);
+	mtx_leave(&si->softintr_lock);
 
 	free(sih, M_DEVBUF);
 }
