@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.8 2009/04/14 16:01:04 oga Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.9 2009/04/19 18:34:36 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -134,7 +134,8 @@ _dmamap_load(t, map, buf, buflen, p, flags)
 
 	lastaddr = ~0;		/* XXX gcc */
 	bmask  = ~(map->_dm_boundary - 1);
-	bmask &= t->_dma_mask;
+	if (t->_dma_mask != 0)
+		bmask &= t->_dma_mask;
 
 	saved_buflen = buflen;
 	for (first = 1, seg = 0; buflen > 0; ) {
@@ -299,7 +300,8 @@ _dmamap_load_raw(t, map, segs, nsegs, size, flags)
 		bus_addr_t bmask = ~(map->_dm_boundary - 1);
 		int i;
 
-		bmask &= t->_dma_mask;
+		if (t->_dma_mask != 0)
+			bmask &= t->_dma_mask;
 		for (i = 0; i < nsegs; i++) {
 			if (segs[i].ds_len > map->_dm_maxsegsz)
 				return (EINVAL);
@@ -521,7 +523,7 @@ _dmamem_map(t, segs, nsegs, size, kvap, flags)
 			segs[curseg].ds_vaddr = va;
 
 			if (flags & BUS_DMA_COHERENT &&
-			    sys_config.system_type == SGI_O2) 
+			    sys_config.system_type == SGI_O2)
 				pmap_page_cache(PHYS_TO_VM_PAGE(pa),
 				    PV_UNCACHED);
 		}
