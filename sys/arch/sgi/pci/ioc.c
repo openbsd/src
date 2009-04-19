@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.8 2009/04/19 16:10:40 jsing Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.9 2009/04/19 18:36:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -43,6 +43,7 @@
 #include <dev/onewire/onewirevar.h>
 
 #include <sgi/dev/owmacvar.h>
+#include <sgi/dev/owserialvar.h>
 
 #include <sgi/xbow/xbow.h>
 
@@ -72,13 +73,14 @@ struct ioc_softc {
 	bus_dma_tag_t		 sc_dmat;
 	pci_chipset_tag_t	 sc_pc;
 
-	void			*sc_sih;	/* SuperIO interrupt */
-	void			*sc_eih;	/* Ethernet interrupt */
+	void			*sc_ih1;	/* Ethernet interrupt */
+	void			*sc_ih2;	/* SuperIO interrupt */
 	struct ioc_intr		*sc_intr[IOC_NDEVS];
 
 	struct onewire_bus	 sc_bus;
 
 	struct owmac_softc	*sc_owmac;
+	struct owserial_softc	*sc_owserial;
 };
 
 struct cfattach ioc_ca = {
@@ -133,12 +135,13 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ioc_softc *sc = (struct ioc_softc *)self;
 	struct pci_attach_args *pa = aux;
-	pci_intr_handle_t sih, eih;
+	pci_intr_handle_t ih1, ih2;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 	bus_size_t memsize;
 	uint32_t data;
 	int dev;
+	int dual_irq, has_ethernet, has_ps2, has_serial;
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_MEM, 0,
 	    &memt, &memh, NULL, &memsize, 0)) {
@@ -157,87 +160,7 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_COMMAND_SERR_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, data);
 
-	/*
-	 * IOC3 is not a real PCI device - it's a poor wrapper over a set
-	 * of convenience chips. And it actually needs to use two interrupts,
-	 * one for the superio chip, and the other for the Ethernet chip.
-	 *
-	 * Since our pci layer doesn't handle this, we cheat and compute
-	 * the superio interrupt cookie ourselves. This is ugly, and
-	 * depends on xbridge knowledge.
-	 *
-	 * (What the above means is that you should wear peril-sensitive
-	 * sunglasses from now on).
-	 *
-	 * To make things ever worse, some IOC3 boards (real boards, not
-	 * on-board components) lack the Ethernet component. We should
-	 * eventually handle them there, but it's not worth doing yet...
-	 * (and we'll need to parse the ownum serial numbers to know
-	 * this anyway)
-	 */
-
-	if (pci_intr_map(pa, &eih) != 0) {
-		printf(": failed to map interrupt!\n");
-		goto unmap;
-	}
-
-	/*
-	 * The second vector source seems to be the next unused PCI
-	 * slot.
-	 * On Octane systems, the on-board IOC3 is device #2 and
-	 * immediately followed by the RAD1 audio, device #3, thus
-	 * the next empty slot is #4.
-	 * XXX Is this still true with the Octane PCI cardcage?
-	 * On Origin systems, there is no RAD1 audio, slot #3 is
-	 * empty (available PCI slots are #5-#7).
-	 * And on Fuel systems, the on-board IOC3 is device #4,
-	 * with the USB controller being device #5, and slot #6
-	 * is empty (available PCI slots are on a different bridge).
-	 */
-	for (dev = pa->pa_device + 1;
-	    dev < pci_bus_maxdevs(pa->pa_pc, pa->pa_bus); dev++) {
-		pcitag_t tag;
-
-		tag = pci_make_tag(pa->pa_pc, pa->pa_bus, dev, 0);
-		if (pci_conf_read(pa->pa_pc, tag, PCI_ID_REG) == 0xffffffff) {
-			pa->pa_tag = tag;
-			if (pci_intr_map(pa, &sih) != 0) {
-				printf(": failed to map superio interrupt!\n");
-				goto unmap;
-			}
-			pa->pa_tag = pci_make_tag(pa->pa_pc, pa->pa_bus,
-			    pa->pa_device, pa->pa_function);
-
-			goto establish;
-		}
-	}
-
-	printf(": could not discover superio interrupt!\n");
-	goto unmap;
-
-establish:
-	/*
-	 * Register the superio interrupt.
-	 */
-	sc->sc_sih = pci_intr_establish(sc->sc_pc, sih, IPL_TTY,
-	    ioc_intr_superio, sc, self->dv_xname);
-	if (sc->sc_sih == NULL) {
-		printf(": failed to establish superio interrupt!\n");
-		goto unmap;
-	}
-	printf(": superio %s", pci_intr_string(sc->sc_pc, sih));
-
-	/*
-	 * Register the ethernet interrupt.
-	 */
-	sc->sc_eih = pci_intr_establish(sc->sc_pc, eih, IPL_NET,
-	    ioc_intr_ethernet, sc, self->dv_xname);
-	if (sc->sc_eih == NULL) {
-		printf("\n%s: failed to establish ethernet interrupt!\n",
-		    self->dv_xname);
-		goto unregister;
-	}
-	printf(", ethernet %s\n", pci_intr_string(sc->sc_pc, eih));
+	printf("\n");
 
 	/*
 	 * Build a suitable bus_space_handle by rebasing the xbridge
@@ -269,6 +192,151 @@ establish:
 	sc->sc_memt = sc->sc_mem_bus_space;
 	sc->sc_memh = memh;
 
+	/*
+	 * Attach the 1-Wire bus now, so that we can get our own part
+	 * number and deduce which devices are really available on the
+	 * board.
+	 */
+
+	config_search(ioc_search_onewire, self, aux);
+
+	/*
+	 * Now figure out what our configuration is.
+	 */
+
+	printf("%s: ", self->dv_xname);
+
+	dual_irq = 0;
+	has_ethernet = has_ps2 = has_serial = 0;
+	if (sc->sc_owserial != NULL) {
+		if (strncmp(sc->sc_owserial->sc_product, "030-0891-", 9) == 0) {
+			/* IP30 on-board IOC3 */
+			has_ethernet = has_ps2 = has_serial = 1;
+			dual_irq = 1;
+		} else
+		if (strncmp(sc->sc_owserial->sc_product, "030-1155-", 9) == 0) {
+			/* CADDuo board */
+			has_ps2 = 1;
+		} else
+		if (strncmp(sc->sc_owserial->sc_product, "030-1657-", 9) == 0 ||
+		    strncmp(sc->sc_owserial->sc_product, "030-1664-", 9) == 0) {
+			has_serial = 1;
+		} else {
+			goto unknown;
+		}
+	} else {
+		/*
+		 * If no owserial device has been found, then it is
+		 * very likely that we are the on-board IOC3 found
+		 * on IP27 and IP35 systems.
+		 */
+		if (sys_config.system_type == SGI_O200 ||
+		    sys_config.system_type == SGI_O300) {
+			has_ethernet = has_ps2 = has_serial = 1;
+			dual_irq = 1;
+		} else {
+unknown:
+			/*
+			 * Well, we don't really know what kind of device
+			 * we are.  We should probe various registers
+			 * to figure out, but for now we'll just
+			 * chicken out.
+			 */
+			printf("unknown flavour\n");
+			return;
+		}
+	}
+
+	/*
+	 * IOC3 is not a real PCI device - it's a poor wrapper over a set
+	 * of convenience chips. And when it is in full-blown configuration,
+	 * it actually needs to use two interrupts, one for the superio
+	 * chip, and the other for the Ethernet chip.
+	 *
+	 * Since our pci layer doesn't handle this, we cheat and compute
+	 * the superio interrupt cookie ourselves. This is ugly, and
+	 * depends on xbridge knowledge.
+	 *
+	 * (What the above means is that you should wear peril-sensitive
+	 * sunglasses from now on).
+	 *
+	 * To make things ever worse, some IOC3 boards (real boards, not
+	 * on-board components) lack the Ethernet component. We should
+	 * eventually handle them there, but it's not worth doing yet...
+	 * (and we'll need to parse the ownum serial numbers to know
+	 * this anyway)
+	 */
+
+	if (pci_intr_map(pa, &ih1) != 0) {
+		printf("failed to map interrupt!\n");
+		goto unmap;
+	}
+
+	/*
+	 * The second vector source seems to be the next unused PCI
+	 * slot.
+	 * On Octane systems, the on-board IOC3 is device #2 and
+	 * immediately followed by the RAD1 audio, device #3, thus
+	 * the next empty slot is #4.
+	 * XXX Is this still true with the Octane PCI cardcage?
+	 * On Origin systems, there is no RAD1 audio, slot #3 is
+	 * empty (available PCI slots are #5-#7).
+	 * And on Fuel systems, the on-board IOC3 is device #4,
+	 * with the USB controller being device #5, and slot #6
+	 * is empty (available PCI slots are on a different bridge).
+	 */
+	if (dual_irq) {
+		for (dev = pa->pa_device + 1;
+		    dev < pci_bus_maxdevs(pa->pa_pc, pa->pa_bus); dev++) {
+			pcitag_t tag;
+
+			tag = pci_make_tag(pa->pa_pc, pa->pa_bus, dev, 0);
+			if (pci_conf_read(pa->pa_pc, tag, PCI_ID_REG) ==
+			    0xffffffff) {
+				pa->pa_tag = tag;
+				if (pci_intr_map(pa, &ih2) != 0) {
+					printf(": failed to map superio"
+					    " interrupt!\n");
+					goto unmap;
+				}
+				pa->pa_tag = pci_make_tag(pa->pa_pc, pa->pa_bus,
+				    pa->pa_device, pa->pa_function);
+
+				goto establish;
+			}
+		}
+
+		printf("could not discover superio interrupt!\n");
+		goto unmap;
+
+establish:
+		/*
+		 * Register the second (superio) interrupt.
+		 */
+		sc->sc_ih2 = pci_intr_establish(sc->sc_pc, ih2, IPL_TTY,
+		    ioc_intr_superio, sc, self->dv_xname);
+		if (sc->sc_ih2 == NULL) {
+			printf("failed to establish superio interrupt!\n");
+			goto unmap;
+		}
+
+		printf("superio %s", pci_intr_string(sc->sc_pc, ih2));
+	}
+
+	/*
+	 * Register the main (Ethernet if available, superio otherwise)
+	 * interrupt.
+	 */
+	sc->sc_ih1 = pci_intr_establish(sc->sc_pc, ih1, IPL_NET,
+	    ioc_intr_ethernet, sc, self->dv_xname);
+	if (sc->sc_ih1 == NULL) {
+		printf("\n%s: failed to establish %sinterrupt!\n",
+		    self->dv_xname, dual_irq ? "ethernet " : "");
+		goto unregister;
+	}
+	printf("%s%s\n", dual_irq ? ", ethernet " : "",
+	    pci_intr_string(sc->sc_pc, ih1));
+
 	/* Initialise interrupt handling structures. */
 	for (dev = 0; dev < IOC_NDEVS; dev++)
 		sc->sc_intr[dev] = NULL;
@@ -282,12 +350,6 @@ establish:
 	    bus_space_read_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IR));
 
 	/*
-	 * Attach the 1-Wire interface first, other sub-devices may
-	 * need the information they'll provide.
-	 */
-	config_search(ioc_search_onewire, self, aux);
-
-	/*
 	 * Attach other sub-devices.
 	 */
 	config_search(ioc_search_mundane, self, aux);
@@ -295,9 +357,10 @@ establish:
 	return;
 
 unregister2:
-	pci_intr_disestablish(sc->sc_pc, sc->sc_eih);
+	pci_intr_disestablish(sc->sc_pc, sc->sc_ih1);
 unregister:
-	pci_intr_disestablish(sc->sc_pc, sc->sc_sih);
+	if (dual_irq)
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih2);
 unmap:
 	bus_space_unmap(memt, memh, memsize);
 }
@@ -349,6 +412,8 @@ ioc_search_onewire(struct device *parent, void *vcf, void *args)
 	struct onewirebus_attach_args oba;
 	struct device *owdev, *dev;
 	extern struct cfdriver owmac_cd;
+	extern struct cfdriver owserial_cd;
+	struct owserial_softc *s;
 
 	if (strcmp(cf->cf_driver->cd_name, "onewire") != 0)
 		return 0;
@@ -386,6 +451,27 @@ ioc_search_onewire(struct device *parent, void *vcf, void *args)
 				break;
 			}
 	}
+
+	/*
+	 * Find the first owserial child of the onewire bus not
+	 * reporting power supply information, and keep a pointer
+	 * to it.  This is a bit overkill since we do not need to
+	 * keep the pointer after attach, but it makes that kind
+	 * of code contained in the same place.
+	 */
+	if (owdev != NULL) {
+		TAILQ_FOREACH(dev, &alldevs, dv_list)
+			if (dev->dv_parent == owdev &&
+			    dev->dv_cfdata->cf_driver == &owserial_cd) {
+				s = (struct owserial_softc *)dev;
+				if (strncmp(s->sc_name, "PWR", 3) == 0)
+					continue;
+				sc->sc_owserial = s;
+				break;
+			}
+	}
+
+
 	return 1;
 }
 
@@ -557,7 +643,7 @@ ioc_intr_ethernet(void *v)
 	struct ioc_softc *sc = (struct ioc_softc *)v;
 
 	/* This interrupt source is not shared between several devices. */
-	return ioc_intr_dispatch(sc, IOCDEV_EF - 1);
+	return ioc_intr_dispatch(sc, IOCDEV_EF);
 }
 
 int
