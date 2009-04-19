@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.66 2009/04/16 15:35:06 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.67 2009/04/19 12:48:27 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -72,6 +72,8 @@ void		session_command(struct session *, char *, char *);
 int		session_set_path(struct path *, char *);
 void		session_timeout(int, short, void *);
 void		session_cleanup(struct session *);
+void		session_imsg(struct session *, enum smtp_proc_type,
+		    enum imsg_type, u_int32_t, pid_t, int, void *, u_int16_t);
 
 extern struct s_session	s_smtp;
 
@@ -194,10 +196,8 @@ session_rfc4954_auth_plain(struct session *s, char *arg, size_t nr)
 
 	s->s_state = S_AUTH_FINALIZE;
 
-	imsg_compose(s->s_env->sc_ibufs[PROC_PARENT], IMSG_PARENT_AUTHENTICATE,
-	    0, 0, -1, &s->s_auth, sizeof(s->s_auth));
-	s->s_flags |= F_EVLOCKED;
-	bufferevent_disable(s->s_bev, EV_READ);
+	session_imsg(s, PROC_PARENT, IMSG_PARENT_AUTHENTICATE, 0, 0, -1,
+	    &s->s_auth, sizeof(s->s_auth));
 
 	return 1;
 }
@@ -255,10 +255,8 @@ session_rfc4954_auth_login(struct session *s, char *arg, size_t nr)
 	if (kn_encode_base64(req.buffer, len, s->s_auth.buffer, sizeof(s->s_auth.buffer)) == -1)
 		goto err;
 
-	imsg_compose(s->s_env->sc_ibufs[PROC_PARENT], IMSG_PARENT_AUTHENTICATE,
-	    0, 0, -1, &s->s_auth, sizeof(s->s_auth));
-	s->s_flags |= F_EVLOCKED;
-	bufferevent_disable(s->s_bev, EV_READ);
+	session_imsg(s, PROC_PARENT, IMSG_PARENT_AUTHENTICATE, 0, 0, -1,
+	    &s->s_auth, sizeof(s->s_auth));
 
 	return 1;
 err:
@@ -402,10 +400,8 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 
 	log_debug("session_mail_handler: sending notification to mfa");
 
-	imsg_compose(s->s_env->sc_ibufs[PROC_MFA], IMSG_MFA_MAIL,
-	    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
-	s->s_flags |= F_EVLOCKED;
-	bufferevent_disable(s->s_bev, EV_READ);
+	session_imsg(s, PROC_MFA, IMSG_MFA_MAIL, 0, 0, -1, &s->s_msg,
+	    sizeof(s->s_msg));
 	return 1;
 }
 
@@ -451,10 +447,7 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 		mr.flags |= F_MESSAGE_AUTHENTICATED;
 	}
 
-	imsg_compose(s->s_env->sc_ibufs[PROC_MFA], IMSG_MFA_RCPT,
-	    0, 0, -1, &mr, sizeof(mr));
-	s->s_flags |= F_EVLOCKED;
-	bufferevent_disable(s->s_bev, EV_READ);
+	session_imsg(s, PROC_MFA, IMSG_MFA_RCPT, 0, 0, -1, &mr, sizeof(mr));
 	return 1;
 }
 
@@ -651,11 +644,8 @@ session_pickup(struct session *s, struct submit_status *ss)
 		s->s_state = S_MAIL;
 		s->s_msg.sender = ss->u.path;
 
-		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
-		    IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1, &s->s_msg,
-		    sizeof(s->s_msg));
-		s->s_flags |= F_EVLOCKED;
-		bufferevent_disable(s->s_bev, EV_READ);
+		session_imsg(s, PROC_QUEUE, IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1,
+		    &s->s_msg, sizeof(s->s_msg));
 		break;
 
 	case S_MAIL:
@@ -690,11 +680,8 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	case S_DATAREQUEST:
 		s->s_state = S_DATA;
-		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
-		    IMSG_QUEUE_MESSAGE_FILE, 0, 0, -1, &s->s_msg,
-		    sizeof(s->s_msg));
-		s->s_flags |= F_EVLOCKED;
-		bufferevent_disable(s->s_bev, EV_READ);
+		session_imsg(s, PROC_QUEUE, IMSG_QUEUE_MESSAGE_FILE, 0, 0, -1,
+		    &s->s_msg, sizeof(s->s_msg));
 		break;
 
 	case S_DATA:
@@ -924,13 +911,15 @@ session_cleanup(struct session *s)
 	}
 
 	if (s->s_msg.message_id[0] != '\0') {
+		/*
+		 * IMSG_QUEUE_REMOVE_MESSAGE must not be sent using session_imsg
+		 * since no reply for it is expected.
+		 */
 		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
 		    IMSG_QUEUE_REMOVE_MESSAGE, 0, 0, -1, &s->s_msg,
 		    sizeof(s->s_msg));
 		s->s_msg.message_id[0] = '\0';
 		s->s_msg.message_uid[0] = '\0';
-		s->s_flags |= F_EVLOCKED;
-		bufferevent_disable(s->s_bev, EV_READ);
 	}
 }
 
@@ -953,11 +942,8 @@ session_error(struct bufferevent *bev, short event, void *p)
 void
 session_msg_submit(struct session *s)
 {
-	imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
-	    IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1, &s->s_msg,
-	    sizeof(s->s_msg));
-	s->s_flags |= F_EVLOCKED;
-	bufferevent_disable(s->s_bev, EV_READ);
+	session_imsg(s, PROC_QUEUE, IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1,
+	    &s->s_msg, sizeof(s->s_msg));
 	s->s_state = S_DONE;
 }
 
@@ -1044,6 +1030,35 @@ session_respond(struct session *s, char *fmt, ...)
 	va_end(ap);
 
 	bufferevent_enable(s->s_bev, EV_WRITE);
+}
+
+/*
+ * Send IMSG, waiting for reply safely.
+ */
+void
+session_imsg(struct session *s, enum smtp_proc_type proc, enum imsg_type type,
+    u_int32_t peerid, pid_t pid, int fd, void *data, u_int16_t datalen)
+{
+	imsg_compose(s->s_env->sc_ibufs[proc], type, peerid, pid, fd, data,
+	    datalen);
+
+	/*
+	 * Most IMSGs require replies before session can be safely resumed.
+	 * Ignore client events so that malicious client cannot trigger
+	 * session_pickup at a bad time.
+	 */
+	bufferevent_disable(s->s_bev, EV_READ);
+
+	/*
+	 * If session is unexpectedly teared down, event(3) calls session_error
+	 * without honoring EV_READ block.
+	 * To avoid session data being destroyed while an IMSG requiring it
+	 * is with other process, provide a flag that session_error can use to
+	 * determine if it is safe to destroy session data.
+	 */
+	if (s->s_flags & F_EVLOCKED)
+		fatalx("session_imsg: imsg sent when another is pending");
+	s->s_flags |= F_EVLOCKED;
 }
 
 SPLAY_GENERATE(sessiontree, session, s_nodes, session_cmp);
