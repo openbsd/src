@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.6 2009/04/18 14:47:25 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.7 2009/04/19 12:51:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -190,12 +190,32 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 	 * XXX Is this still true with the Octane PCI cardcage?
 	 * On Origin systems, there is no RAD1 audio, slot #3 is
 	 * empty (available PCI slots are #5-#7).
+	 * And on Fuel systems, the on-board IOC3 is device #4,
+	 * with the USB controller being device #5, and slot #6
+	 * is empty (available PCI slots are on a different bridge).
 	 */
-	if (sys_config.system_type == SGI_OCTANE)
-		sih = eih + 2;	/* XXX ACK GAG BARF */
-	else
-		sih = eih + 1;	/* XXX ACK GAG BARF */
+	for (dev = pa->pa_device + 1;
+	    dev < pci_bus_maxdevs(pa->pa_pc, pa->pa_bus); dev++) {
+		pcitag_t tag;
 
+		tag = pci_make_tag(pa->pa_pc, pa->pa_bus, dev, 0);
+		if (pci_conf_read(pa->pa_pc, tag, PCI_ID_REG) == 0xffffffff) {
+			pa->pa_tag = tag;
+			if (pci_intr_map(pa, &sih) != 0) {
+				printf(": failed to map superio interrupt!\n");
+				goto unmap;
+			}
+			pa->pa_tag = pci_make_tag(pa->pa_pc, pa->pa_bus,
+			    pa->pa_device, pa->pa_function);
+
+			goto establish;
+		}
+	}
+
+	printf(": could not discover superio interrupt!\n");
+	goto unmap;
+
+establish:
 	/*
 	 * Register the superio interrupt.
 	 */
