@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_shared.c,v 1.16 2009/04/12 12:33:43 gilles Exp $	*/
+/*	$OpenBSD: queue_shared.c,v 1.17 2009/04/19 12:42:39 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -560,7 +560,10 @@ qwalk(struct qwalk *q, char *filepath)
 	struct dirent	*dp;
 
 again:
+	errno = 0;
 	dp = readdir(q->dirs[q->level]);
+	if (errno)
+		fatal("qwalk: readdir");
 	if (dp == NULL) {
 		closedir(q->dirs[q->level]);
 		q->dirs[q->level] = NULL;
