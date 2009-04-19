@@ -178,6 +178,12 @@ i915_get_vblank_counter(struct drm_device *dev, int plane)
 		return (0);
 	}
 
+	/* GM45 just had to be different... */
+	if (IS_GM45(dev_priv) || IS_G4X(dev_priv)) {
+		return (I915_READ(pipe ? PIPEB_FRMCOUNT_GM45 :
+		    PIPEA_FRMCOUNT_GM45));
+	}
+
 	/*
 	 * High & low register fields aren't synchronized, so make sure
 	 * we get a low value that's stable across two reads of the high
