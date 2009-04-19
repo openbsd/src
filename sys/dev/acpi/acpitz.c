@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.29 2009/03/11 21:54:15 jordan Exp $ */
+/* $OpenBSD: acpitz.c,v 1.30 2009/04/19 21:50:02 cnst Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -337,7 +337,7 @@ acpitz_refresh(void *arg)
 				acpitz_setfan(sc, i, "_OFF");
 		}
 	}
-	sc->sc_sens.value = sc->sc_tmp * 100000;
+	sc->sc_sens.value = sc->sc_tmp * 100000 - 50000;
 }
 
 int
