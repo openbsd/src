@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.135 2009/04/17 13:20:20 pirofti Exp $ */
+/* $OpenBSD: acpi.c,v 1.136 2009/04/19 21:33:43 krw Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1866,6 +1866,7 @@ acpi_powerdown(void)
 	 * In case acpi_prepare_sleep fails, we shouldn't try to enter
 	 * the sleep state. It might cost us the battery.
 	 */
+	acpi_sleep_walk(acpi_softc, ACPI_STATE_S5);
 	if (acpi_prepare_sleep_state(acpi_softc, ACPI_STATE_S5) == 0)
 		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 }
