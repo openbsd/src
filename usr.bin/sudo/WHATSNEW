@@ -104,3 +104,7 @@ What's new in Sudo 1.7.0?
 
  * visudo will now check the sudoers file owner and mode in -c (check)
    mode when the -s (strict) flag is specified.
+
+ * A new Defaults option "umask_override" will cause sudo to set the
+   umask specified in sudoers even if it is more permissive than the
+   invoking user's umask.

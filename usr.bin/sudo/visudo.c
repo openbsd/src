@@ -88,7 +88,7 @@
 #include "version.h"
 
 #ifndef lint
-__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.229 2009/04/05 16:25:04 millert Exp $";
+__unused static const char rcsid[] = "$Sudo: visudo.c,v 1.231 2009/04/16 12:22:04 millert Exp $";
 #endif /* lint */
 
 struct sudoersfile {
@@ -711,7 +711,7 @@ check_syntax(sudoers_path, quiet, strict)
     error = parse_error;
     if (!quiet) {
 	if (parse_error)
-	    (void) printf("parse error in %s near line %d\n", sudoers_path,
+	    (void) printf("parse error in %s near line %d\n", errorfile,
 		errorlineno);
 	else
 	    (void) printf("%s: parsed OK\n", sudoers_path);
@@ -782,8 +782,6 @@ open_sudoers(path, keepopen)
 	    sudoerslist.last->next = entry;
 	    sudoerslist.last = entry;
 	}
-	if (keepopen != NULL)
-	    *keepopen = TRUE;
     } else {
 	/* Already exists, open .tmp version if there is one. */
 	if (entry->tpath != NULL) {
@@ -792,8 +790,11 @@ open_sudoers(path, keepopen)
 	} else {
 	    if ((fp = fdopen(entry->fd, "r")) == NULL)
 		error(1, "%s", entry->path);
+	    rewind(fp);
 	}
     }
+    if (keepopen != NULL)
+	*keepopen = TRUE;
     return(fp);
 }
 

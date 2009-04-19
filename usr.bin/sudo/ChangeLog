@@ -1,3 +1,26 @@
+2009-04-18 10:27  millert
+
+	* WHATSNEW: Forgot umask_override
+
+2009-04-18 09:25  millert
+
+	* ChangeLog, TODO: sync
+
+2009-04-16 08:22  millert
+
+	* visudo.c: Rewind stream if we fdopen sudoers since it may not be
+	  at the beginning.  Set the keepopen flag on already-open files
+	  too so the lexer doesn't close them out from under us.
+
+2009-04-16 08:18  millert
+
+	* visudo.c: Print the proper file name when there is a parse error
+	  in an include file.
+
+2009-04-11 07:45  millert
+
+	* WHATSNEW: Sync
+
 2009-04-10 16:59  millert
 
 	* configure, configure.in: Fix a warning when --without-ldap is
@@ -4823,7 +4846,7 @@
 2004-10-01 10:58  millert
 
 	* sample.pam, sample.sudoers, sample.syslog.conf, sudoers: Add
-	  $Sudo$ tags.
+	  $Sudo: ChangeLog,v 1.21 2009/04/18 16:06:05 millert Exp $ tags.
 
 2004-10-01 10:47  millert
 
