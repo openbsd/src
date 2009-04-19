@@ -1,4 +1,4 @@
-/*	$OpenBSD: owserial.c,v 1.1 2008/04/07 22:55:57 miod Exp $	*/
+/*	$OpenBSD: owserial.c,v 1.2 2009/04/19 18:33:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -176,8 +176,10 @@ void
 owserial_read_serial(struct owserial_softc *sc)
 {
 	uint8_t buf[EEPROM_PAGE_SIZE * 2];
-	char serial[1 + OWSERIAL_NAME_LEN];
-	char descr[1 + OWSERIAL_SERIAL_LEN], *dptr;
+	char name[1 + OWSERIAL_NAME_LEN];
+	char product[1 + OWSERIAL_PRODUCT_LEN];
+	char serial[1 + OWSERIAL_SERIAL_LEN];
+	char *s, *e;
 	int pg;
 	int i;
 
@@ -196,22 +198,47 @@ owserial_read_serial(struct owserial_softc *sc)
 		if (buf[i] != 0xff)
 			return;
 
-	bcopy(buf + 21, serial, 9);
-	bcopy(buf + EEPROM_PAGE_SIZE + 3, serial + 9, 3);
-	serial[OWSERIAL_NAME_LEN] = '\0';
-	for (i = 0; i < OWSERIAL_NAME_LEN; i++)
-		if (serial[i] != '-' && (serial[i] < '0' || serial[i] > '9'))
+	bcopy(buf + 21, product, 9);
+	bcopy(buf + EEPROM_PAGE_SIZE + 3, product + 9, 3);
+	product[OWSERIAL_PRODUCT_LEN] = '\0';
+	for (i = 0; i < OWSERIAL_PRODUCT_LEN; i++)
+		if (product[i] != '-' && (product[i] < '0' || product[i] > '9'))
 			return;
 		
-	bcopy(buf + EEPROM_PAGE_SIZE + 16, descr, OWSERIAL_SERIAL_LEN);
-	descr[OWSERIAL_SERIAL_LEN] = '\0';
-	for (i = 0; i < OWSERIAL_SERIAL_LEN; i++)
-		if (descr[i] < ' ' || descr[i] > '~')
+	bcopy(buf + EEPROM_PAGE_SIZE + 16, name, OWSERIAL_NAME_LEN);
+	name[OWSERIAL_NAME_LEN] = '\0';
+	for (i = 0; i < OWSERIAL_NAME_LEN; i++)
+		if (name[i] < ' ' || name[i] > '~')
 			return;
-	for (dptr = descr; *dptr == ' '; dptr++);
 
-	strlcpy(sc->sc_name, dptr, sizeof sc->sc_name);
-	strlcpy(sc->sc_serial, serial, sizeof sc->sc_serial);
+	bcopy(buf + 1, serial, OWSERIAL_SERIAL_LEN);
+	serial[OWSERIAL_SERIAL_LEN] = '\0';
+	for (i = 0; i < OWSERIAL_SERIAL_LEN; i++)
+		if (serial[i] < ' ' || serial[i] > '~')
+			return;
 
-	printf("%s: \"%s\" serial %s\n", sc->sc_dev.dv_xname, dptr, serial);
+	/*
+	 * Trim leading and trailing spaces from name and serial #
+	 */
+
+	strlcpy(sc->sc_product, product, sizeof sc->sc_product);
+
+	s = name;
+	while (*s == ' ')
+		s++;
+	e = name + OWSERIAL_NAME_LEN - 1;
+	while (*e == ' ' && e >= s)
+		*e-- = '\0';
+	strlcpy(sc->sc_name, s, sizeof sc->sc_name);
+
+	s = serial;
+	while (*s == ' ')
+		s++;
+	e = serial + OWSERIAL_SERIAL_LEN - 1;
+	while (*e == ' ' && e >= s)
+		*e-- = '\0';
+	strlcpy(sc->sc_serial, s, sizeof sc->sc_serial);
+
+	printf("%s: \"%s\" p/n %s, serial %s\n",
+	    sc->sc_dev.dv_xname, sc->sc_name, sc->sc_product, sc->sc_serial);
 }

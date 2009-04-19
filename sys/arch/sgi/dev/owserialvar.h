@@ -1,4 +1,4 @@
-/*	$OpenBSD: owserialvar.h,v 1.1 2008/04/07 22:55:57 miod Exp $	*/
+/*	$OpenBSD: owserialvar.h,v 1.2 2009/04/19 18:33:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -22,8 +22,9 @@
  * SGI seems to use DS2505 (or compatibles) to store serial numbers.
  */
 
-#define	OWSERIAL_NAME_LEN	12
-#define	OWSERIAL_SERIAL_LEN	14
+#define	OWSERIAL_NAME_LEN	14
+#define	OWSERIAL_PRODUCT_LEN	12
+#define	OWSERIAL_SERIAL_LEN	20
 
 struct owserial_softc {
 	struct device	 sc_dev;
@@ -35,5 +36,6 @@ struct owserial_softc {
 	uint8_t		 sc_redir[256];		/* redirection table */
 
 	char		 sc_name[1 + OWSERIAL_NAME_LEN];
+	char		 sc_product[1 + OWSERIAL_PRODUCT_LEN];
 	char		 sc_serial[1 + OWSERIAL_SERIAL_LEN];
 };
