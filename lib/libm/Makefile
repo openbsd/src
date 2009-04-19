@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.65 2009/04/10 11:30:33 martynas Exp $
+#  $OpenBSD: Makefile,v 1.66 2009/04/19 16:48:02 martynas Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -94,7 +94,7 @@ COMMON_SRCS = b_exp__D.c b_log__D.c b_tgamma.c \
 	s_ctanhf.c s_erf.c s_erff.c s_exp2.c s_exp2f.c s_expm1.c s_expm1f.c \
 	s_fabsf.c s_fdim.c s_fmax.c s_fmaxf.c s_fmin.c s_fminf.c \
 	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
-	s_ldexpf.c s_log1p.c \
+	s_log1p.c \
 	s_log1pf.c s_logb.c s_logbf.c s_llrint.c s_llrintf.c s_lrint.c \
 	s_lrintf.c s_modff.c s_nan.c \
 	s_nextafter.c s_nextafterf.c s_remquo.c s_remquof.c s_rint.c \
@@ -125,7 +125,7 @@ NOIEEE_SRCS = n_acosh.c n_argred.c n_asincos.c n_asinh.c n_atan.c \
 	n_sqrt.c n_support.c n_tan.c n_tanh.c n_tgamma.c
 
 # OpenBSD's C library supplies these functions:
-#COMMON_SRCS+=	s_fabs.c s_frexp.c s_ldexp.c s_modf.c
+#COMMON_SRCS+=	s_fabs.c s_frexp.c s_modf.c
 
 .if (${MACHINE_ARCH} == "vax")
 SRCS=	${NOIEEE_SRCS} ${NOIEEE_ARCH}

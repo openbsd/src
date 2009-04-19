@@ -27,7 +27,7 @@ huge   = 1.0e+30,
 tiny   = 1.0e-30;
 
 float
-scalbnf (float x, int n)
+scalbnf(float x, int n)
 {
 	int32_t k,ix;
 	GET_FLOAT_WORD(ix,x);
@@ -51,4 +51,10 @@ scalbnf (float x, int n)
         k += 25;				/* subnormal result */
 	SET_FLOAT_WORD(x,(ix&0x807fffff)|(k<<23));
         return x*twom25;
+}
+
+float
+ldexpf(float x, int n)
+{
+	return scalbnf(x, n);
 }
