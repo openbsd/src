@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.465 2009/04/19 17:56:01 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.466 2009/04/19 21:42:00 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -551,23 +551,24 @@ __EOT
 configure_ifs() {
 	local _IFDEVS=$IFDEVS _ifs _name _hn
 
-	while :; do
-		ask_which "interface" "do you wish to initialize" "$_IFDEVS" \
-			"" "No more interfaces to initialize"
+	while [[ -n $_IFDEVS ]]; do
+		ask_which "interface" "do you wish to configure" "$_IFDEVS"
 		[[ $resp == done ]] && break
 
 		_ifs=$resp
 		_hn=/tmp/hostname.$_ifs
+		rm -f $_hn
 
-		# Get symbolic name - will be used in DHCP requests.
-		ask "Symbolic (host) name for $_ifs?" "$(hostname -s)"
+		# First interface configured will use the hostname without
+		# asking the user.
+		resp=$(hostname -s)
+		[[ $_IFDEVS != $IFDEVS ]] && ask "Symbolic (host) name for $_ifs?" $resp
 		_name=$resp
 
-		rm -f $_hn
-		v4_config "$_ifs" "$_name" "$_hn"
-		v6_config "$_ifs" "$_name" "$_hn"
+		v4_config $_ifs $_name $_hn
+		v6_config $_ifs $_name $_hn
 
-		[[ -f $_hn ]] && chmod 640 $_hn && _IFDEVS=$(rmel "$_ifs" $_IFDEVS)
+		[[ -f $_hn ]] && chmod 640 $_hn && _IFDEVS=$(rmel $_ifs $_IFDEVS)
 	done
 }
 
