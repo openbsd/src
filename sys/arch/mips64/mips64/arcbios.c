@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.15 2008/12/03 15:43:17 sthen Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.16 2009/04/19 12:52:33 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -78,7 +78,8 @@ static struct systypes {
     { NULL,		"SGI-IP26",			SGI_POWERI },
     { NULL,		"SGI-IP27",			SGI_O200 },
     { NULL,		"SGI-IP30",			SGI_OCTANE },
-    { NULL,		"SGI-IP32",			SGI_O2 }
+    { NULL,		"SGI-IP32",			SGI_O2 },
+    { NULL,		"SGI-IP35",			SGI_O300 },
 };
 
 #define KNOWNSYSTEMS (sizeof(sys_types) / sizeof(struct systypes))
@@ -220,8 +221,10 @@ bios_configure_memory()
 	uint64_t start, count;
 	MEMORYTYPE type;
 	vaddr_t seg_start, seg_end;
-	int	i;
+	int seen_free;
+	int i;
 
+	seen_free = 0;
 	descr = (arc_mem_t *)Bios_GetMemoryDescriptor(descr);
 	while (descr != NULL) {
 		if (bios_is_32bit) {
@@ -245,24 +248,45 @@ bios_configure_memory()
 				type = FreeMemory;
 #endif
 
+			if (type == FreeMemory && seen_free == 0) {
+				seen_free = 1;
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+				/*
+				 * For the lack of a better way to tell
+				 * IP27 apart from IP35, look at the
+				 * start of the first chunk of free
+				 * memory. On IP27, it starts under
+				 * 0x20000 (which allows us to link
+				 * kernels at 0xa800000000020000).
+				 * On IP35, it starts at 0x40000.
+				 */
+				if (start >= 0x20)	/* IP35 */
+					sys_config.system_type = SGI_O300;
+#endif
+			}
+
 #if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
 			/*
-			 * On Origin200 systems, data after the first
+			 * On IP27 and IP35 systems, data after the first
 			 * FirmwarePermanent entry is not reliable
 			 * (entries conflict with each other), and memory
 			 * after 32MB is not listed anyway.
 			 * So, break from the loop as soon as a
 			 * FirmwarePermanent entry is found, after
-			 * making it span the end of the first 32MB.
+			 * making it span the end of the first 32MB
+			 * (64MB on IP35).
+			 *
 			 * The rest of the memory is gathered from the
 			 * node structures.  This probably loses some of
-			 * the first 32MB, but at least we're safe to
+			 * the first few MB, but at least we're safe to
 			 * use ARCBios after going virtual.
 			 */
-			if (sys_config.system_type == SGI_O200 &&
-			    type == FirmwarePermanent) {
-				count = (32 << (20 - 12)) - start;
+			if (type == FirmwarePermanent &&
+			    (sys_config.system_type == SGI_O200 ||
+			     sys_config.system_type == SGI_O300)) {
 				descr = NULL;
+				count = ((sys_config.system_type == SGI_O200 ?
+				    32 : 64) << (20 - 12)) - start;
 			}
 #endif
 		}
@@ -298,7 +322,7 @@ bios_configure_memory()
 			}
 			break;
 
-		case ExeceptionBlock:
+		case ExceptionBlock:
 		case SystemParameterBlock:
 		case FirmwareTemporary:
 		case FirmwarePermanent:
@@ -390,7 +414,10 @@ bios_get_system_type()
 	} else {
 #if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
 		if (IP27_KLD_KLCONFIG(0)->magic == IP27_KLDIR_MAGIC) {
-			/* If we find a kldir assume IP27 */
+			/*
+			 * If we find a kldir assume IP27 for now.
+			 * We'll decide whether this is IP27 or IP35 later.
+			 */
 			return SGI_O200;
 		}
 #endif

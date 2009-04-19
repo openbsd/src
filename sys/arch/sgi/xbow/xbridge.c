@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.10 2009/04/18 19:26:33 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.11 2009/04/19 12:52:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -618,6 +618,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 		break;
 	default:
 	case SGI_O200:
+	case SGI_O300:
 		int_addr = 0x20000 | intrsrc | (nasid << 8);
 		break;
 	}

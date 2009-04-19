@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.10 2008/02/18 19:48:35 miod Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.11 2009/04/19 12:52:31 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -156,7 +156,7 @@ typedef enum arc_status
  */
 #ifdef __arc__
 typedef enum {
-	ExeceptionBlock,	SystemParameterBlock,	FreeMemory,
+	ExceptionBlock,		SystemParameterBlock,	FreeMemory,
 	BadMemory,		LoadedProgram,		FirmwareTemporary,
 	FirmwarePermanent,	FreeContigous
 } MEMORYTYPE;
@@ -164,7 +164,7 @@ typedef enum {
 
 #ifdef __sgi__
 typedef enum {
-	ExeceptionBlock,	SystemParameterBlock,	FreeContigous,
+	ExceptionBlock,		SystemParameterBlock,	FreeContigous,
 	FreeMemory,		BadMemory,		LoadedProgram,
 	FirmwareTemporary,	FirmwarePermanent,
 } MEMORYTYPE;

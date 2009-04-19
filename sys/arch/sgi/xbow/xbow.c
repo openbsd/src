@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.4 2009/04/15 18:45:41 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.5 2009/04/19 12:52:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -189,6 +189,7 @@ xbowmatch(struct device *parent, void *match, void *aux)
 {
 	switch (sys_config.system_type) {
 	case SGI_O200:
+	case SGI_O300:
 	case SGI_OCTANE:
 		return (1);
 	default:
@@ -301,9 +302,17 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 	    (wid & WIDGET_ID_REV_MASK) >> WIDGET_ID_REV_SHIFT);
 
 	/*
+	 * Default value for the interrupt register. If this system
+	 * has a Heart widget, the Heart code will take care of changing it.
+	 */
+	xbow_intr_widget_register = (1UL << 47) /* XIO I/O space */ |
+	    ((paddr_t)IP27_RHUB_ADDR(nasid, HUB_IR_CHANGE) -
+	     IP27_NODE_IO_BASE(nasid)) /* HUB register offset */;
+
+	/*
 	 * If widget 0 reports itself as a bridge, this is not a
 	 * complete XBow, but only a limited topology. This is
-	 * found on the Origin 200 (but probably not on the Origin 2000).
+	 * found on at least the Origin 200.
 	 */
 	if (vendor == XBOW_VENDOR_SGI4 && product == XBOW_PRODUCT_SGI4_BRIDGE) {
 		/*
@@ -311,9 +320,6 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 		 * bridge).
 		 */
 		xbow_intr_widget = 0x0a;
-		xbow_intr_widget_register = (1UL << 47) /* XIO I/O space */ |
-		    ((paddr_t)IP27_RHUB_ADDR(nasid, HUB_IR_CHANGE) -
-		     IP27_NODE_IO_BASE(nasid)) /* HUB register offset */;
 
 		xbow_attach_widget(self, nasid, WIDGET_MIN,
 		    xbowsubmatch_pass2, xbowprint_pass2);
