@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.38 2009/02/08 17:15:10 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.39 2009/04/19 13:12:28 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: February 8 2009 $
+.Dd $Mdocdate: April 19 2009 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -1631,8 +1631,7 @@ character is usually
 Edit the file containing the specified tag.
 .Pp
 .It Xo
-.Op Cm Tt Ns
-.Cm agn Ns Op Cm ext Ns
+.Cm tagn Ns Op Cm ext Ns
 .Op Cm !\&
 .Xc
 Edit the file containing the next context for the current tag.
@@ -1645,8 +1644,7 @@ Edit the file containing the next context for the current tag.
 Pop to the specified tag in the tags stack.
 .Pp
 .It Xo
-.Op Cm Tt Ns
-.Cm agp Ns Op Cm rev Ns
+.Cm tagpr Ns Op Cm ev Ns
 .Op Cm !\&
 .Xc
 Edit the file containing the previous context for the current tag.
