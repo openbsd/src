@@ -96,7 +96,7 @@ drm_ati_pcigart_init(struct drm_device *dev,
 
 	u_int32_t	*pci_gart;
 	bus_addr_t	 entry_addr;
-	u_long		 pages, max_pages;
+	u_long		 pages, max_ati_pages, max_real_pages;
 	int		 i, j, ret;
 
 	/* we need to support large memory configurations */
@@ -130,13 +130,14 @@ drm_ati_pcigart_init(struct drm_device *dev,
 			  (unsigned int)bus_address, (unsigned long)address);
 	}
 
-	pci_gart = (u_int32_t *) gart_info->addr;
+	pci_gart = (u_int32_t *)gart_info->addr;
 
-	max_pages = (gart_info->table_size / sizeof(u_int32_t));
-	pages = (dev->sg->mem->map->dm_nsegs <= max_pages) ?
-	    dev->sg->mem->map->dm_nsegs : max_pages;
+	max_ati_pages = (gart_info->table_size / sizeof(u_int32_t));
+	max_real_pages = max_ati_pages / (PAGE_SIZE / ATI_PCIGART_PAGE_SIZE);
+	pages = (dev->sg->mem->map->dm_nsegs <= max_real_pages) ?
+	    dev->sg->mem->map->dm_nsegs : max_real_pages;
 
-	memset(pci_gart, 0, max_pages * sizeof(u32));
+	memset(pci_gart, 0, max_ati_pages * sizeof(u_int32_t));
 
 	KASSERT(PAGE_SIZE >= ATI_PCIGART_PAGE_SIZE);
 
@@ -151,7 +152,7 @@ drm_ati_pcigart_init(struct drm_device *dev,
 
 	return (0);
 
-    error:
+error:
 	gart_info->addr = NULL;
 	gart_info->bus_addr = 0;
 	return (ret);
