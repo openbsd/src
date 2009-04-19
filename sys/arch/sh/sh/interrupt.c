@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.9 2009/03/25 21:41:00 miod Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.10 2009/04/19 18:54:06 oga Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -585,7 +585,7 @@ softintr_init(void)
 	for (i = 0; i < _IPL_NSOFT; i++) {
 		asi = &sh_soft_intrs[i];
 		TAILQ_INIT(&asi->softintr_q);
-
+		mtx_init(&asi->softintr_lock, IPL_HIGH);
 		asi->softintr_ipl = IPL_SOFT + i;
 	}
 
@@ -605,24 +605,24 @@ softintr_dispatch(int ipl)
 {
 	struct sh_soft_intr *asi;
 	struct sh_soft_intrhand *sih;
-	int s;
-
-	s = _cpu_intr_suspend();
 
 	asi = &sh_soft_intrs[ipl - IPL_SOFT];
 
-	while ((sih = TAILQ_FIRST(&asi->softintr_q)) != NULL) {
+	for (;;) {
+		mtx_enter(&asi->softintr_lock);
+		sih = TAILQ_FIRST(&asi->softintr_q);
+		if (sih == NULL) {
+			mtx_leave(&asi->softintr_lock);
+			break;
+		}
 		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
 		sih->sih_pending = 0;
 
 		uvmexp.softs++;
+		mtx_leave(&asi->softintr_lock);
 
-		_cpu_intr_resume(s);
 		(*sih->sih_fn)(sih->sih_arg);
-		s = _cpu_intr_suspend();
 	}
-
-	_cpu_intr_resume(s);
 }
 
 void
@@ -640,7 +640,6 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 {
 	struct sh_soft_intr *asi;
 	struct sh_soft_intrhand *sih;
-	int s;
 
 	if (__predict_false(ipl >= (IPL_SOFT + _IPL_NSOFT) ||
 			    ipl < IPL_SOFT))
@@ -648,7 +647,6 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 
 	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
 
-	s = _cpu_intr_suspend();
 	asi = &sh_soft_intrs[ipl - IPL_SOFT];
 	if (__predict_true(sih != NULL)) {
 		sih->sih_intrhead = asi;
@@ -656,7 +654,6 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 		sih->sih_arg = arg;
 		sih->sih_pending = 0;
 	}
-	_cpu_intr_resume(s);
 
 	return (sih);
 }
@@ -667,14 +664,13 @@ softintr_disestablish(void *arg)
 {
 	struct sh_soft_intrhand *sih = arg;
 	struct sh_soft_intr *asi = sih->sih_intrhead;
-	int s;
 
-	s = _cpu_intr_suspend();
+	mtx_enter(&asi->softintr_lock);
 	if (sih->sih_pending) {
 		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
 		sih->sih_pending = 0;
 	}
-	_cpu_intr_resume(s);
+	mtx_leave(&asi->softintr_lock);
 
 	free(sih, M_DEVBUF);
 }
@@ -684,15 +680,14 @@ void softintr_schedule(void *arg)
 {
 	struct sh_soft_intrhand *sih = arg;
 	struct sh_soft_intr *si = sih->sih_intrhead;
-	int s;
 
-	s = _cpu_intr_suspend();
+	mtx_enter(&si->softintr_lock);
 	if (sih->sih_pending == 0) {
 		TAILQ_INSERT_TAIL(&si->softintr_q, sih, sih_q);
 		sih->sih_pending = 1;
 		setsoft(si->softintr_ipl);
 	}
-	_cpu_intr_resume(s);
+	mtx_leave(&si->softintr_lock);
 }
 
 /*

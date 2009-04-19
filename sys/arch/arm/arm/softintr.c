@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.c,v 1.5 2009/04/08 21:19:30 kettenis Exp $	*/
+/*	$OpenBSD: softintr.c,v 1.6 2009/04/19 18:54:06 oga Exp $	*/
 /*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ softintr_init(void)
 	for (i = 0; i < SI_NQUEUES; i++) {
 		siq = &soft_intrq[i];
 		TAILQ_INIT(&siq->siq_list);
+		mtx_init(&siq->siq_mtx, IPL_HIGH);
 		siq->siq_si = i;
 	}
 
@@ -89,13 +90,12 @@ softintr_dispatch(int si)
 {
 	struct soft_intrq *siq = &soft_intrq[si];
 	struct soft_intrhand *sih;
-	int oldirqstate;
 
 	for (;;) {
-		oldirqstate = disable_interrupts(I32_bit);
+		mtx_enter(&siq->siq_mtx);
 		sih = TAILQ_FIRST(&siq->siq_list);
 		if (sih == NULL) {
-			restore_interrupts(oldirqstate);
+			mtx_leave(&siq->siq_mtx);
 			break;
 		}
 
@@ -103,8 +103,7 @@ softintr_dispatch(int si)
 		sih->sih_pending = 0;
 
 		uvmexp.softs++;
-
-		restore_interrupts(oldirqstate);
+		mtx_leave(&siq->siq_mtx);
 
 		(*sih->sih_func)(sih->sih_arg);
 	}
@@ -163,14 +162,13 @@ softintr_disestablish(void *arg)
 {
 	struct soft_intrhand *sih = arg;
 	struct soft_intrq *siq = sih->sih_siq;
-	int oldirqstate;
 
-	oldirqstate = disable_interrupts(I32_bit);
+	mtx_enter(&siq->siq_mtx);
 	if (sih->sih_pending) {
 		TAILQ_REMOVE(&siq->siq_list, sih, sih_list);
 		sih->sih_pending = 0;
 	}
-	restore_interrupts(oldirqstate);
+	mtx_leave(&siq->siq_mtx);
 
 	free(sih, M_DEVBUF);
 }
