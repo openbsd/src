@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.260 2009/03/24 18:56:17 damien Exp $
+#	$OpenBSD: GENERIC,v 1.261 2009/04/19 21:33:49 mk Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -80,8 +80,8 @@ it*	at isa? port 0x4e	# IT8726F and SiS SiS950 monitors and
 				
 schsio*	at isa? port 0x2e	# SMSC SCH311x Super I/O
 schsio*	at isa? port 0x4e
-#schsio*	at isa? port 0x162e
-#schsio*	at isa? port 0x164e
+schsio*	at isa? port 0x162e
+schsio*	at isa? port 0x164e
 
 viaenv*	at pci?			# VIA VT82C686A hardware monitor
 #viasio* at isa? port 0x2e flags 0x0000	# VIA VT1211 LPC Super I/O
