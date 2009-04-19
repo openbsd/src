@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.22 2009/02/16 20:11:06 kettenis Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.23 2009/04/19 17:53:39 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -240,8 +240,10 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			memset(&caa, 0, sizeof(struct cpu_attach_args));
 			if (lapic_cpu_number() == entry->madt_lapic.apic_id)
 				caa.cpu_role = CPU_ROLE_BP;
-			else
+			else {
 				caa.cpu_role = CPU_ROLE_AP;
+				ncpusfound++;
+			}
 			caa.caa_name = "cpu";
 			caa.cpu_number = entry->madt_lapic.apic_id;
 #ifdef MULTIPROCESSOR

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.95 2009/01/21 21:02:41 miod Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.96 2009/04/19 17:53:39 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -536,7 +536,7 @@ struct kinfo_proc2 {
  */
 #define	HW_MACHINE	 1		/* string: machine class */
 #define	HW_MODEL	 2		/* string: specific machine model */
-#define	HW_NCPU		 3		/* int: number of cpus */
+#define	HW_NCPU		 3		/* int: number of cpus being used */
 #define	HW_BYTEORDER	 4		/* int: machine byte order */
 #define	HW_PHYSMEM	 5		/* int: total memory */
 #define	HW_USERMEM	 6		/* int: non-kernel memory */
@@ -554,7 +554,8 @@ struct kinfo_proc2 {
 #define	HW_UUID		18		/* string: universal unique id */
 #define	HW_PHYSMEM64	19		/* quad: total memory */
 #define	HW_USERMEM64	20		/* quad: non-kernel memory */
-#define	HW_MAXID	21		/* number of valid hw ids */
+#define	HW_NCPUFOUND	21		/* int: number of cpus found*/
+#define	HW_MAXID	22		/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -578,6 +579,7 @@ struct kinfo_proc2 {
 	{ "uuid", CTLTYPE_STRING }, \
 	{ "physmem", CTLTYPE_QUAD }, \
 	{ "usermem", CTLTYPE_QUAD }, \
+	{ "ncpufound", CTLTYPE_INT }, \
 }
 
 /*

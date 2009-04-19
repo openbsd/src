@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.168 2009/01/21 21:02:40 miod Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.169 2009/04/19 17:53:38 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -564,6 +564,8 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstring(oldp, oldlenp, newp, cpu_model));
 	case HW_NCPU:
 		return (sysctl_rdint(oldp, oldlenp, newp, ncpus));
+	case HW_NCPUFOUND:
+		return (sysctl_rdint(oldp, oldlenp, newp, ncpusfound));
 	case HW_BYTEORDER:
 		return (sysctl_rdint(oldp, oldlenp, newp, BYTE_ORDER));
 	case HW_PHYSMEM:

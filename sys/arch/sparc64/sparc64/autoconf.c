@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.104 2009/04/12 14:53:15 kettenis Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.105 2009/04/19 17:53:39 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -215,7 +215,6 @@ str2hex(char *str, long *vp)
 int
 get_ncpus(void)
 {
-#ifdef MULTIPROCESSOR
 	int node, child, stack[4], depth, ncpus;
 	char buf[32];
 
@@ -228,7 +227,7 @@ get_ncpus(void)
 
 		if (node == 0 || node == -1) {
 			if (--depth < 0)
-				return (ncpus);
+				goto done;
 			
 			stack[depth] = OF_peer(stack[depth]);
 			continue;
@@ -245,7 +244,10 @@ get_ncpus(void)
 			stack[depth] = OF_peer(stack[depth]);
 	}
 
-	return (0);
+done:
+	ncpusfound = ncpus;
+#ifdef MULTIPROCESSOR
+	return (ncpus);
 #else
 	return (1);
 #endif

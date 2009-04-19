@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.16 2009/01/13 19:38:44 grange Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.17 2009/04/19 17:53:39 deraadt Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -692,8 +692,10 @@ mpbios_cpu(const u_int8_t *ent, struct device *self)
 	/* check for BSP flag */
 	if (entry->cpu_flags & PROCENTRY_FLAG_BP)
 		caa.cpu_role = CPU_ROLE_BP;
-	else
+	else {
 		caa.cpu_role = CPU_ROLE_AP;
+		ncpusfound++;
+	}
 
 	caa.caa_name = "cpu";
 	caa.cpu_number = entry->apic_id;

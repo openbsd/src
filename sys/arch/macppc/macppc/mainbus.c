@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.20 2007/10/14 17:29:04 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.21 2009/04/19 17:53:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -123,6 +123,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	cpucnt = 0;
+	ncpusfound = 0;
 	node = OF_finddevice("/cpus");
 	if (node != -1) {
 		for (node = OF_child(node); node != 0; node = OF_peer(node)) {
@@ -135,6 +136,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
 				nca.ca_reg = reg;
 				reg[0] = cpucnt;
 				config_found(self, &nca, mbprint);
+				ncpusfound++;
 				cpucnt++;
 			}
 		}
@@ -144,6 +146,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
 		nca.ca_bus = &sc->sc_bus;
 		nca.ca_reg = reg;
 		reg[0] = 0;
+		ncpusfound++;
 		config_found(self, &nca, mbprint);
 	}
 
@@ -167,6 +170,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
 				nca.ca_bus = &sc->sc_bus;
 				nca.ca_reg = reg;
 				reg[0] = 1;
+				ncpusfound++;
 				config_found(self, &nca, mbprint);
 			}
 		}
