@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.185 2008/09/30 16:16:21 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.186 2009/04/20 21:04:25 schwarze Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.185 2008/09/30 16:16:21 deraadt Exp $";
+    "$OpenBSD: ftpd.c,v 1.186 2009/04/20 21:04:25 schwarze Exp $";
 #endif
 #endif /* not lint */
 
@@ -2174,8 +2174,13 @@ dolog(struct sockaddr *sa)
 	setproctitle("%s", proctitle);
 #endif /* HASSETPROCTITLE */
 
-	if (logging)
-		syslog(LOG_INFO, "connection from %s", remotehost);
+	if (logging) {
+		int error;
+		error = getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf),
+		    NULL, 0, NI_NUMERICHOST);
+		syslog(LOG_INFO, "connection from %s [%s]", remotehost,
+		    error ? gai_strerror(error) : hbuf);
+	}
 }
 
 /*
