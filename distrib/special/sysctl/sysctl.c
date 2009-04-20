@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.3 2009/04/19 17:56:03 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.4 2009/04/20 16:10:39 jasper Exp $	*/
 
 /*
  * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct var {
 	char *name;
@@ -35,6 +36,8 @@ int	pstring(struct var *);
 int	pint(struct var *);
 
 struct var vars[] = {
+	{ "hw.model", pstring, 2,
+	    { CTL_HW, HW_MODEL }},
 	{ "hw.disknames", pstring, 2,
 	    { CTL_HW, HW_DISKNAMES }},
 	{ "hw.ncpufound", pint, 2,
