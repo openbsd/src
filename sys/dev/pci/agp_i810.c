@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.47 2009/04/15 03:09:20 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.48 2009/04/20 01:28:45 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -251,7 +251,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	gatt = malloc(sizeof(*gatt), M_AGP, M_NOWAIT);
+	gatt = malloc(sizeof(*gatt), M_AGP, M_NOWAIT | M_ZERO);
 	if (gatt == NULL) {
 		printf("can't alloc gatt\n");
 		goto out;
@@ -271,7 +271,6 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (isc->chiptype == CHIP_I810) {
-		int dummyseg;
 		/* Some i810s have on-chip memory called dcache */
 		if (READ1(AGP_I810_DRT) & AGP_I810_DRT_POPULATED)
 			isc->dcache_size = 4 * 1024 * 1024;
@@ -279,14 +278,15 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 			isc->dcache_size = 0;
 
 		/* According to the specs the gatt on the i810 must be 64k */
-		if (agp_alloc_dmamem(pa->pa_dmat, 64 * 1024,
-		    0, &gatt->ag_dmamap, (caddr_t *)&gatt->ag_virtual,
-		    &gatt->ag_physical, &gatt->ag_dmaseg, 1, &dummyseg) != 0) {
+		if (agp_alloc_dmamem(pa->pa_dmat, 64 * 1024, &gatt->ag_dmamap,
+		    &gatt->ag_physical, &gatt->ag_dmaseg) != 0) {
 			goto out;
 		}
-
 		gatt->ag_size = gatt->ag_entries * sizeof(u_int32_t);
-		memset(gatt->ag_virtual, 0, gatt->ag_size);
+
+		if (bus_dmamem_map(pa->pa_dmat, &gatt->ag_dmaseg, 1, 64 * 1024,
+		    (caddr_t *)&gatt->ag_virtual, BUS_DMA_NOWAIT) != 0)
+			goto out;
 
 		agp_flush_cache();
 		/* Install the GATT. */
@@ -461,7 +461,11 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	    gmaddr, memtype, &isc->dev);
 	return;
 out:
+
 	if (isc->gatt)
+		if (isc->gatt->ag_size != 0)
+			agp_free_dmamem(pa->pa_dmat, gatt->ag_size,
+			    gatt->ag_dmamap, &gatt->ag_dmaseg);
 		free(isc->gatt, M_AGP);
 	if (isc->gtt_map != NULL)
 		vga_pci_bar_unmap(isc->gtt_map);
@@ -491,8 +495,10 @@ agp_i810_detach(struct agp_softc *sc)
 	}
 
 	if (sc->chiptype == CHIP_I810) {
+		bus_dmamem_unmap(pa->pa_dmat, isc->gatt->ag_virtual,
+		    gatt->ag_size);
 		agp_free_dmamem(sc->sc_dmat, gatt->ag_size, gatt->ag_dmamap,
-		    (void *)gatt->ag_virtual, &gatt->ag_dmaseg, 1);
+		    &gatt->ag_dmaseg);
 	}
 	free(sc->gatt, M_AGP);
 
@@ -613,17 +619,16 @@ agp_i810_alloc_memory(void *softc, int type, vsize_t size)
 		 * Allocate and wire down the pages now so that we can
 		 * get their physical address.
 		 */
-		mem->am_dmaseg = malloc(sizeof *mem->am_dmaseg, M_AGP,
-		    M_WAITOK);
-		if ((error = agp_alloc_dmamem(sc->sc_dmat, size, 0,
-		    &mem->am_dmamap, &mem->am_virtual, &mem->am_physical,
-		    mem->am_dmaseg, 1, &mem->am_nseg)) != 0) {
-			free(mem->am_dmaseg, M_AGP);
+		if ((mem->am_dmaseg = malloc(sizeof (*mem->am_dmaseg), M_AGP,
+		    M_WAITOK | M_CANFAIL)) == NULL)
+			return (NULL);
+
+		if ((error = agp_alloc_dmamem(sc->sc_dmat, size,
+		    &mem->am_dmamap, &mem->am_physical, mem->am_dmaseg)) != 0) {
 			free(mem, M_AGP);
 			printf("agp: agp_alloc_dmamem(%d)\n", error);
 			return (NULL);
 		}
-		memset(mem->am_virtual, 0, size);
 	} else if (type != 1) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, size,
 		    size / PAGE_SIZE + 1, size, 0, BUS_DMA_NOWAIT,
@@ -651,7 +656,7 @@ agp_i810_free_memory(void *softc, struct agp_memory *mem)
 
 	if (mem->am_type == 2) {
 		agp_free_dmamem(sc->sc_dmat, mem->am_size, mem->am_dmamap,
-		    mem->am_virtual, mem->am_dmaseg, mem->am_nseg);
+		    mem->am_dmaseg);
 		free(mem->am_dmaseg, M_AGP);
 	} else if (mem->am_type != 1) {
 		bus_dmamap_destroy(sc->sc_dmat, mem->am_dmamap);

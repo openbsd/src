@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.15 2008/11/09 15:11:19 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.16 2009/04/20 01:28:45 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -74,7 +74,6 @@ struct agp_memory {
 	off_t		am_offset;		/* page offset if bound */
 	int		am_is_bound;		/* non-zero if bound */
 	bus_addr_t	am_physical;
-	caddr_t		am_virtual;
 	bus_dmamap_t	am_dmamap;
 	int		am_nseg;
 	bus_dma_segment_t *am_dmaseg;
@@ -162,10 +161,10 @@ void	agp_flush_cache(void);
 int	agp_generic_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 int	agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
 
-int	agp_alloc_dmamem(bus_dma_tag_t, size_t, int, bus_dmamap_t *,
-	    caddr_t *, bus_addr_t *, bus_dma_segment_t *, int, int *);
+int	agp_alloc_dmamem(bus_dma_tag_t, size_t, bus_dmamap_t *,
+	    bus_addr_t *, bus_dma_segment_t *);
 void	agp_free_dmamem(bus_dma_tag_t, size_t, bus_dmamap_t,
-	    caddr_t, bus_dma_segment_t *, int nseg) ;
+	    bus_dma_segment_t *);
 int	agpdev_print(void *, const char *);
 int	agpbus_probe(struct agp_attach_args *aa);
 

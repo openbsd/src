@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_amd.c,v 1.9 2008/11/09 15:11:19 oga Exp $	*/
+/*	$OpenBSD: agp_amd.c,v 1.10 2009/04/20 01:28:45 oga Exp $	*/
 /*	$NetBSD: agp_amd.c,v 1.6 2001/10/06 02:48:50 thorpej Exp $	*/
 
 /*-
@@ -111,12 +111,20 @@ agp_amd_alloc_gatt(bus_dma_tag_t dmat, bus_size_t apsize)
 	gatt = malloc(sizeof(struct agp_amd_gatt), M_AGP, M_NOWAIT);
 	if (!gatt)
 		return (0);
+	gatt->ag_size = AGP_PAGE_SIZE + entries * sizeof(u_int32_t);
 
-	if (agp_alloc_dmamem(dmat,
-	    AGP_PAGE_SIZE + entries * sizeof(u_int32_t), 0,
-	    &gatt->ag_dmamap, &vdir, &gatt->ag_pdir,
-	    &gatt->ag_dmaseg, 1, &gatt->ag_nseg) != 0) {
+	if (agp_alloc_dmamem(dmat, gatt->ag_size, &gatt->ag_dmamap,
+	    &gatt->ag_pdir, &gatt->ag_dmaseg) != 0) {
 		printf("failed to allocate GATT\n");
+		free(gatt, M_AGP);
+		return (NULL);
+	}
+
+	if (bus_dmamem_map(dmat, &gatt->ag_dmaseg, 1, gatt->ag_size,
+	    &vdir, BUS_DMA_NOWAIT) != 0) {
+		printf("failed to map GATT\n");
+		agp_free_dmamem(dmat, gatt->ag_size, gatt->ag_dmamap,
+		    &gatt->ag_dmaseg);
 		free(gatt, M_AGP);
 		return (NULL);
 	}
@@ -126,9 +134,6 @@ agp_amd_alloc_gatt(bus_dma_tag_t dmat, bus_size_t apsize)
 	gatt->ag_virtual = (u_int32_t *)(vdir + AGP_PAGE_SIZE);
 	gatt->ag_physical = gatt->ag_pdir + AGP_PAGE_SIZE;
 	gatt->ag_size = AGP_PAGE_SIZE + entries * sizeof(u_int32_t);
-
-	memset(gatt->ag_vdir, 0, AGP_PAGE_SIZE);
-	memset(gatt->ag_virtual, 0, entries * sizeof(u_int32_t));
 
 	/*
 	 * Map the pages of the GATT into the page directory.
@@ -151,6 +156,7 @@ agp_amd_alloc_gatt(bus_dma_tag_t dmat, bus_size_t apsize)
 void
 agp_amd_free_gatt(bus_dma_tag_t dmat, struct agp_amd_gatt *gatt)
 {
+	bus_dmamem_unmap(dmat, gatt->ag_virtual, gatt->ag_size);
 	agp_free_dmamem(dmat, gatt->ag_size,
 	    gatt->ag_dmamap, (caddr_t)gatt->ag_virtual, &gatt->ag_dmaseg,
 	    gatt->ag_nseg);
