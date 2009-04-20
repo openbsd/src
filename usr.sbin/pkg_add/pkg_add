@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.334 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: pkg_add,v 1.335 2009/04/20 08:29:02 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -670,7 +670,7 @@ if ($opt_u) {
 	@todo2 = map { OpenBSD::UpdateSet->from_location($_) } @todo;
 } else {
 	find_truelocations(\@ARGV, \@todo2, $state);
-#	OpenBSD::Add::tag_user_packages(@todo);
+	OpenBSD::Add::tag_user_packages(@todo2);
 #	if (defined $state->{defines}->{kitchensink}) {
 #		reorder(\@todo);
 #		if (!$opt_r) {
@@ -684,9 +684,6 @@ if ($bad) {
 	exit(1);
 }
 
-# convert everything to UpdateSets
-
-	
 eval {
 while (my $set = shift @todo2) {
 	unshift(@todo2, install_set($set, $state, @todo2));
