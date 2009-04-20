@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.74 2009/04/14 07:41:24 kettenis Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.75 2009/04/20 11:39:02 reyk Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -3451,11 +3451,14 @@ bnx_free_tx_chain(struct bnx_softc *sc)
 	/* Unmap, unload, and free any mbufs still in the TX mbuf chain. */
 	for (i = 0; i < TOTAL_TX_BD; i++) {
 		if (sc->tx_mbuf_ptr[i] != NULL) {
-			if (sc->tx_mbuf_map != NULL)
+			if (sc->tx_mbuf_map[i] != NULL) {
 				bus_dmamap_sync(sc->bnx_dmatag,
 				    sc->tx_mbuf_map[i], 0,
 				    sc->tx_mbuf_map[i]->dm_mapsize,
 				    BUS_DMASYNC_POSTWRITE);
+				bus_dmamap_unload(sc->bnx_dmatag,
+				    sc->tx_mbuf_map[i]);
+			}
 			m_freem(sc->tx_mbuf_ptr[i]);
 			sc->tx_mbuf_ptr[i] = NULL;
 			DBRUNIF(1, sc->tx_mbuf_alloc--);
@@ -3623,11 +3626,14 @@ bnx_free_rx_chain(struct bnx_softc *sc)
 	/* Free any mbufs still in the RX mbuf chain. */
 	for (i = 0; i < TOTAL_RX_BD; i++) {
 		if (sc->rx_mbuf_ptr[i] != NULL) {
-			if (sc->rx_mbuf_map[i] != NULL)
+			if (sc->rx_mbuf_map[i] != NULL) {
 				bus_dmamap_sync(sc->bnx_dmatag,
 				    sc->rx_mbuf_map[i],	0,
 				    sc->rx_mbuf_map[i]->dm_mapsize,
 				    BUS_DMASYNC_POSTREAD);
+				bus_dmamap_unload(sc->bnx_dmatag,
+				    sc->rx_mbuf_map[i]);
+			}
 			m_freem(sc->rx_mbuf_ptr[i]);
 			sc->rx_mbuf_ptr[i] = NULL;
 			DBRUNIF(1, sc->rx_mbuf_alloc--);
