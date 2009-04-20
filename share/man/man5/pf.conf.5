@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.427 2009/04/17 07:00:26 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.428 2009/04/20 20:42:49 sthen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 17 2009 $
+.Dd $Mdocdate: April 20 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1074,9 +1074,9 @@ removed.
 .Pp
 This has several advantages.
 For TCP connections, comparing a packet to a state involves checking
-its sequence numbers, as well as TCP timestamps if a
-.Ar scrub reassemble tcp
-rule applies to the connection.
+its sequence numbers, as well as TCP timestamps if a rule using the
+.Ar reassemble tcp
+parameter applies to the connection.
 If these values are outside the narrow windows of expected
 values, the packet is dropped.
 This prevents spoofing attacks, such as when an attacker sends packets with
