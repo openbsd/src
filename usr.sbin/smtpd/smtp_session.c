@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.69 2009/04/20 17:40:38 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.70 2009/04/20 18:48:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -381,6 +381,11 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 
 	if (s->s_state == S_GREETED) {
 		session_respond(s, "503 Polite people say HELO first");
+		return 1;
+	}
+
+	if (s->s_state != S_HELO) {
+		session_respond(s, "503 Sender already specified");
 		return 1;
 	}
 
