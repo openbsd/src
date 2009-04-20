@@ -1,5 +1,5 @@
 /*	$NetBSD: bus.h,v 1.1 2001/06/06 17:37:37 matt Exp $	*/
-/*	$OpenBSD: bus_mi.h,v 1.9 2008/06/26 05:42:12 ray Exp $	*/
+/*	$OpenBSD: bus_mi.h,v 1.10 2009/04/20 00:42:06 oga Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -970,6 +970,7 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 #define	BUS_DMA_STREAMING	0x400	/* hint: sequential, unidirectional */
+#define	BUS_DMA_ZERO		0x800	/* zero memory in dmamem_alloc */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

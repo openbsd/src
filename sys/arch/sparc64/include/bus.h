@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.24 2008/06/26 05:42:13 ray Exp $	*/
+/*	$OpenBSD: bus.h,v 1.25 2009/04/20 00:42:06 oga Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -360,6 +360,7 @@ bus_space_barrier(t, h, o, s, f)
 #define	BUS_DMA_STREAMING	0x100	/* hint: sequential, unidirectional */
 #define	BUS_DMA_READ		0x200	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x400	/* mapping is memory -> device only */
+#define	BUS_DMA_ZERO		0x800	/* zero memory in dmamem_alloc */
 
 #define	BUS_DMA_NOCACHE		BUS_DMA_BUS1
 #define	BUS_DMA_DVMA		BUS_DMA_BUS2	/* Don't bother with alignment */

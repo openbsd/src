@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.15 2009/04/15 03:35:26 oga Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.16 2009/04/20 00:42:06 oga Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -607,6 +607,8 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	 * For non-ISA mappings first try higher memory segments.
 	 */
 	plaflag = flags & BUS_DMA_NOWAIT ? UVM_PLA_NOWAIT : UVM_PLA_WAITOK;
+	if (flags & BUS_DMA_ZERO)
+		plaflag |= UVM_PLA_ZERO;
 
 	if (high <= ISA_DMA_BOUNCE_THRESHOLD || (error = uvm_pglistalloc(size,
 	    round_page(ISA_DMA_BOUNCE_THRESHOLD), high, alignment, boundary,

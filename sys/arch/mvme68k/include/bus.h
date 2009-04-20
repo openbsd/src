@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 2009/02/17 22:28:41 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 2009/04/20 00:42:06 oga Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -728,6 +728,7 @@ void d16_bzero(void *, size_t);
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 #define	BUS_DMA_STREAMING	0x400	/* hint: sequential, unidirectional */
+#define	BUS_DMA_ZERO		0x800	/* zero memory in dmamem_alloc */
 
 #define BUS_DMASYNC_PREREAD	0x01
 #define BUS_DMASYNC_POSTREAD	0x02

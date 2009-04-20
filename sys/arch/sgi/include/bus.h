@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.12 2009/04/13 21:17:54 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.13 2009/04/20 00:42:06 oga Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -306,18 +306,19 @@ bus_space_copy_8(void *v, bus_space_handle_t h1, bus_size_t o1,
 
 #define BUS_SPACE_MAP_LINEAR	0x02
 
-#define	BUS_DMA_WAITOK		0x00
-#define	BUS_DMA_NOWAIT		0x01
-#define	BUS_DMA_ALLOCNOW	0x02
-#define	BUS_DMAMEM_NOSYNC	0x04
-#define	BUS_DMA_COHERENT	0x08
-#define	BUS_DMA_BUS1		0x10	/* placeholders for bus functions... */
-#define	BUS_DMA_BUS2		0x20
-#define	BUS_DMA_BUS3		0x40
-#define	BUS_DMA_BUS4		0x80
-#define BUS_DMA_READ		0x100   /* mapping is device -> memory only */
-#define BUS_DMA_WRITE		0x200   /* mapping is memory -> device only */
-#define BUS_DMA_STREAMING	0x400   /* hint: sequential, unidirectional */
+#define	BUS_DMA_WAITOK		0x000
+#define	BUS_DMA_NOWAIT		0x001
+#define	BUS_DMA_ALLOCNOW	0x002
+#define	BUS_DMAMEM_NOSYNC	0x004
+#define	BUS_DMA_COHERENT	0x008
+#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
+#define	BUS_DMA_BUS2		0x020
+#define	BUS_DMA_BUS3		0x040
+#define	BUS_DMA_BUS4		0x080
+#define	BUS_DMA_READ		0x100   /* mapping is device -> memory only */
+#define	BUS_DMA_WRITE		0x200   /* mapping is memory -> device only */
+#define	BUS_DMA_STREAMING	0x400   /* hint: sequential, unidirectional */
+#define	BUS_DMA_ZERO		0x800	/* zero memory in dmamem_alloc */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

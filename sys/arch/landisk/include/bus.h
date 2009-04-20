@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 2008/06/26 05:42:11 ray Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 2009/04/20 00:42:06 oga Exp $	*/
 /*	$NetBSD: bus.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -433,6 +433,7 @@ struct _bus_space {
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 #define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
+#define	BUS_DMA_ZERO		0x800	/* zero memory in dmamem_alloc */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.10 2008/06/26 05:42:09 ray Exp $	*/
+/*	$OpenBSD: bus.h,v 1.11 2009/04/20 00:42:06 oga Exp $	*/
 /*	$NetBSD: bus.h,v 1.12 2003/10/23 15:03:24 scw Exp $	*/
 
 /*-
@@ -628,6 +628,7 @@ bs_c_8_proto(f);
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 #define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
+#define	BUS_DMA_ZERO		0x800	/* dmamem_alloc returns zeroed mem */
 
 /*
  * Private flags stored in the DMA map.
