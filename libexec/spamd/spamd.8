@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.113 2009/04/20 17:42:21 beck Exp $
+.\"	$OpenBSD: spamd.8,v 1.114 2009/04/20 21:08:27 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -398,9 +398,8 @@ Any destination address which does not match one of the suffixes listed in
 .Pa spamd.alloweddomains
 will be trapped, exactly as if it were sent to a spamtrap address.
 Comment lines beginning with
-.Ar #
+.Sq #
 and empty lines are ignored.
-
 .Pp
 For example, if
 .Pa spamd.alloweddomains
