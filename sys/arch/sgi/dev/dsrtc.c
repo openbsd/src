@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsrtc.c,v 1.2 2009/04/13 21:17:54 miod Exp $ */
+/*	$OpenBSD: dsrtc.c,v 1.3 2009/04/20 20:31:06 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -95,13 +95,65 @@ tobcd(int x)
 int
 dsrtc_match_ioc(struct device *parent, void *match, void *aux)
 {
-	switch (sys_config.system_type) {
-	case SGI_OCTANE:
-	case SGI_O200:
-		return 1;
-	default:
+	struct ioc_attach_args *iaa = aux;
+	bus_space_handle_t ih, ih2;
+	uint c, c2, c3;
+	int rc = 0;
+
+	/*
+	 * The IOC3 RTC is either a Dallas (now Maxim) DS1386 or compatible
+	 * (likely a more recent DS1687), or a Mostek (now SGS Thomson)
+	 * MK48T35.
+	 */
+
+	if (bus_space_map(iaa->iaa_memt, IOC3_BYTEBUS_1, 1, 0, &ih) != 0)
 		return 0;
-	}
+
+	if (bus_space_map(iaa->iaa_memt, IOC3_BYTEBUS_2, 1, 0, &ih2) != 0)
+		goto unmap;
+
+	/*
+	 * Check the low 4 bits of control register C. If any is set,
+	 * or if the values written to them stick, then this is not
+	 * a Dallas chip.
+	 *
+	 * Note that the value we read the next few times can't be
+	 * compared to the first value read, as the upper four bits
+	 * are cleared by reading them. And might get set again
+	 * between two reads.
+	 */
+
+	bus_space_write_1(iaa->iaa_memt, ih, 0, DS1687_CTRL_C);
+	c = bus_space_read_1(iaa->iaa_memt, ih2, 0);
+	if ((c & 0x0f) != 0)
+		goto done;
+
+	bus_space_write_1(iaa->iaa_memt, ih, 0, DS1687_CTRL_C);
+	bus_space_write_1(iaa->iaa_memt, ih2, 0, c | 0x0f);
+
+	bus_space_write_1(iaa->iaa_memt, ih, 0, DS1687_CTRL_C);
+	c2 = bus_space_read_1(iaa->iaa_memt, ih2, 0);
+	if ((c2 & 0x0f) == 0)
+		rc = 1;
+	
+	bus_space_write_1(iaa->iaa_memt, ih, 0, DS1687_CTRL_C);
+	bus_space_write_1(iaa->iaa_memt, ih2, 0, c2 | 0x0f);
+
+	bus_space_write_1(iaa->iaa_memt, ih, 0, DS1687_CTRL_C);
+	c3 = bus_space_read_1(iaa->iaa_memt, ih2, 0);
+	if ((c3 & 0x0f) != 0)
+		rc = 0;
+
+	/* write back first value read in case this is not a Dallas chip */
+	bus_space_write_1(iaa->iaa_memt, ih, 0, DS1687_CTRL_C);
+	bus_space_write_1(iaa->iaa_memt, ih2, 0, c);
+	
+done:
+	bus_space_unmap(iaa->iaa_memt, ih2, 1);
+unmap:
+	bus_space_unmap(iaa->iaa_memt, ih, 1);
+
+	return rc;
 }
 
 void
