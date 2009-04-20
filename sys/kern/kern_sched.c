@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.11 2009/04/14 09:13:25 art Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.12 2009/04/20 08:48:17 art Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -407,19 +407,24 @@ sched_steal_proc(struct cpu_info *self)
 
 	while ((ci = cpuset_first(&set)) != NULL) {
 		struct proc *p;
+		int queue;
 		int cost;
 
 		cpuset_del(&set, ci);
 
 		spc = &ci->ci_schedstate;
 
-		p = TAILQ_FIRST(&spc->spc_qs[ffs(spc->spc_whichqs) - 1]);
-		KASSERT(p);
-		cost = sched_proc_to_cpu_cost(self, p);
+		queue = ffs(spc->spc_whichqs) - 1;
+		TAILQ_FOREACH(p, &spc->spc_qs[queue], p_runq) {
+			if (p->p_flag & P_CPUPEG)
+				continue;
 
-		if (best == NULL || cost < bestcost) {
-			best = p;
-			bestcost = cost;
+			cost = sched_proc_to_cpu_cost(self, p);
+
+			if (best == NULL || cost < bestcost) {
+				best = p;
+				bestcost = cost;
+			}
 		}
 	}
 	if (best == NULL)
