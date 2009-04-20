@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.98 2009/02/14 20:05:09 chl Exp $ */
+/*	$OpenBSD: ehci.c,v 1.99 2009/04/20 14:11:57 reyk Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1265,7 +1265,7 @@ ehci_device_clear_toggle(usbd_pipe_handle pipe)
 
 	DPRINTF(("ehci_device_clear_toggle: epipe=%p status=0x%x\n",
 	    epipe, epipe->sqh->qh.qh_qtd.qtd_status));
-#ifdef EHCI_DEBUG
+#if defined(EHCI_DEBUG) && defined(USB_DEBUG)
 	if (ehcidebug)
 		usbd_dump_pipe(pipe);
 #endif
@@ -2982,7 +2982,7 @@ ehci_timeout(void *addr)
 	ehci_softc_t *sc = (ehci_softc_t *)epipe->pipe.device->bus;
 
 	DPRINTF(("ehci_timeout: exfer=%p\n", exfer));
-#ifdef ECHI_DEBUG
+#if defined(EHCI_DEBUG) && defined(USB_DEBUG)
 	if (ehcidebug > 1)
 		usbd_dump_pipe(exfer->xfer.pipe);
 #endif
