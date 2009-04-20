@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.68 2009/04/20 17:07:01 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.69 2009/04/20 17:40:38 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -72,8 +72,7 @@ void		session_error(struct bufferevent *, short, void *);
 void		session_msg_submit(struct session *);
 void		session_command(struct session *, char *, char *);
 int		session_set_path(struct path *, char *);
-void		session_set_timeout(struct session *, struct session_timeout *,
-		    void (*)(int, short, void *));
+void		session_set_timeout(struct session *, struct session_timeout *);
 void		smtp_timeout(int, short, void *);
 void		session_cleanup(struct session *);
 void		session_imsg(struct session *, enum smtp_proc_type,
@@ -735,7 +734,8 @@ session_init(struct listener *l, struct session *s)
 {
 	s->s_state = S_INIT;
 
-	session_set_timeout(s, rfc5321_timeouttab, smtp_timeout);
+	evtimer_set(&s->s_timeout, smtp_timeout, s);
+	session_set_timeout(s, rfc5321_timeouttab);
 
 	if ((s->s_bev = bufferevent_new(s->s_fd, session_read, session_write,
 	    session_error, s)) == NULL)
@@ -762,7 +762,7 @@ session_read(struct bufferevent *bev, void *p)
 	size_t		 nr;
 
 read:
-	session_set_timeout(s, rfc5321_timeouttab, smtp_timeout);
+	session_set_timeout(s, rfc5321_timeouttab);
 	nr = EVBUFFER_LENGTH(bev->input);
 	line = evbuffer_readline(bev->input);
 	if (line == NULL) {
@@ -984,8 +984,7 @@ session_set_path(struct path *path, char *line)
 }
 
 void
-session_set_timeout(struct session *s, struct session_timeout *tab,
-    void (*cb)(int, short, void *))
+session_set_timeout(struct session *s, struct session_timeout *tab)
 {
 	struct timeval tv;
 
@@ -998,7 +997,6 @@ session_set_timeout(struct session *s, struct session_timeout *tab,
 		}
 	if (! tab->timeout)
 		tv.tv_sec = SMTPD_SESSION_TIMEOUT;
-	evtimer_set(&s->s_timeout, cb, s);
 	evtimer_add(&s->s_timeout, &tv);
 }
 
