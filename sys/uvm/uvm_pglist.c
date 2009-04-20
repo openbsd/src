@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.26 2009/04/14 16:01:04 oga Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.27 2009/04/20 00:30:18 oga Exp $	*/
 /*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
@@ -129,7 +129,6 @@ uvm_pglistalloc_simple(psize_t size, paddr_t low, paddr_t high,
 			uvmexp.free--;
 			if (pg->pg_flags & PG_ZERO)
 				uvmexp.zeropages--;
-			pg->pg_flags = PG_CLEAN;
 			pg->uobject = NULL;
 			pg->uanon = NULL;
 			pg->pg_version++;
@@ -225,8 +224,10 @@ uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
 	 * no need to be smart.
 	 */
 	if ((nsegs >= size / PAGE_SIZE) && (alignment == PAGE_SIZE) &&
-	    (boundary == 0))
-		return (uvm_pglistalloc_simple(size, low, high, rlist));
+	    (boundary == 0)) {
+		error = uvm_pglistalloc_simple(size, low, high, rlist);
+		goto done;
+	}
 
 	if (boundary != 0 && boundary < size)
 		return (EINVAL);
@@ -339,7 +340,6 @@ found:
 		uvmexp.free--;
 		if (m->pg_flags & PG_ZERO)
 			uvmexp.zeropages--;
-		m->pg_flags = PG_CLEAN;
 		m->uobject = NULL;
 		m->uanon = NULL;
 		m->pg_version++;
@@ -362,6 +362,17 @@ out:
 	}
 
 	uvm_unlock_fpageq();
+
+done: 
+	/* No locking needed here, pages are not on any queue. */
+	if (error == 0) {
+		TAILQ_FOREACH(m, rlist, pageq) {
+			if (flags & UVM_PLA_ZERO &&
+			    (m->pg_flags & PG_ZERO) == 0)
+				uvm_pagezero(m);
+			m->pg_flags = PG_CLEAN;
+		}
+	}
 
 	return (error);
 }

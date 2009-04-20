@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.75 2009/04/14 16:01:04 oga Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.76 2009/04/20 00:30:18 oga Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -225,6 +225,7 @@ typedef int		vm_prot_t;
  */
 #define UVM_PLA_WAITOK		0x0001	/* may sleep */
 #define UVM_PLA_NOWAIT		0x0002	/* can't sleep (need one of the two) */
+#define UVM_PLA_ZERO		0x0004	/* zero all pages before returning */
 
 /*
  * lockflags that control the locking behavior of various functions.
