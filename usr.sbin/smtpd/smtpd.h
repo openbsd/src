@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.99 2009/04/16 15:35:06 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.100 2009/04/20 17:07:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -587,12 +587,12 @@ struct session {
 
 	enum session_flags		 s_flags;
 	enum session_state		 s_state;
-	time_t				 s_tm;
 	int				 s_fd;
 	struct sockaddr_storage		 s_ss;
 	char				 s_hostname[MAXHOSTNAMELEN];
 	struct event			 s_ev;
 	struct bufferevent		*s_bev;
+	struct event			 s_timeout;
 	struct listener			*s_l;
 	struct smtpd			*s_env;
 	void				*s_ssl;
@@ -668,6 +668,7 @@ struct s_session {
 	size_t		starttls_active;
 
 	size_t		aborted;
+	size_t		timeout;
 };
 
 struct stats {

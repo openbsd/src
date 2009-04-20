@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.34 2009/04/16 15:35:06 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.35 2009/04/20 17:07:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -556,7 +556,6 @@ smtp_dispatch_control(int sig, short event, void *p)
 
 			s->s_id = queue_generate_id();
 			s->s_fd = fd[0];
-			s->s_tm = time(NULL);
 			s->s_env = env;
 			s->s_l = &l;
 			s->s_msg.flags |= F_MESSAGE_ENQUEUED;
@@ -690,7 +689,6 @@ void
 smtp_setup_events(struct smtpd *env)
 {
 	struct listener *l;
-	struct timeval	 tv;
 
 	TAILQ_FOREACH(l, &env->sc_listeners, entry) {
 		log_debug("smtp_setup_events: listen on %s port %d flags 0x%01x"
@@ -705,11 +703,6 @@ smtp_setup_events(struct smtpd *env)
 		event_add(&l->ev, NULL);
 		ssl_setup(env, l);
 	}
-
-	evtimer_set(&env->sc_ev, session_timeout, env);
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
-	evtimer_add(&env->sc_ev, &tv);
 }
 
 void
@@ -767,7 +760,6 @@ smtp_accept(int fd, short event, void *p)
 
 	s->s_id = queue_generate_id();
 	s->s_fd = s_fd;
-	s->s_tm = time(NULL);
 	s->s_env = l->env;
 	s->s_l = l;
 

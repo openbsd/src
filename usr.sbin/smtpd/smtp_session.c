@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.67 2009/04/19 12:48:27 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.68 2009/04/20 17:07:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -40,6 +40,8 @@
 
 #include "smtpd.h"
 
+struct session_timeout;
+
 int		session_rfc5321_helo_handler(struct session *, char *);
 int		session_rfc5321_ehlo_handler(struct session *, char *);
 int		session_rfc5321_rset_handler(struct session *, char *);
@@ -70,7 +72,9 @@ void		session_error(struct bufferevent *, short, void *);
 void		session_msg_submit(struct session *);
 void		session_command(struct session *, char *, char *);
 int		session_set_path(struct path *, char *);
-void		session_timeout(int, short, void *);
+void		session_set_timeout(struct session *, struct session_timeout *,
+		    void (*)(int, short, void *));
+void		smtp_timeout(int, short, void *);
 void		session_cleanup(struct session *);
 void		session_imsg(struct session *, enum smtp_proc_type,
 		    enum imsg_type, u_int32_t, pid_t, int, void *, u_int16_t);
@@ -90,7 +94,8 @@ struct session_timeout rfc5321_timeouttab[] = {
 	{ S_RCPT,		300 },
 	{ S_DATA,		120 },
 	{ S_DATACONTENT,	180 },
-	{ S_DONE,		600 }
+	{ S_DONE,		600 },
+	{ 0,			0   }
 };
 
 struct session_cmd {
@@ -730,6 +735,8 @@ session_init(struct listener *l, struct session *s)
 {
 	s->s_state = S_INIT;
 
+	session_set_timeout(s, rfc5321_timeouttab, smtp_timeout);
+
 	if ((s->s_bev = bufferevent_new(s->s_fd, session_read, session_write,
 	    session_error, s)) == NULL)
 		fatalx("session_init: bufferevent_new failed");
@@ -755,7 +762,7 @@ session_read(struct bufferevent *bev, void *p)
 	size_t		 nr;
 
 read:
-	s->s_tm = time(NULL);
+	session_set_timeout(s, rfc5321_timeouttab, smtp_timeout);
 	nr = EVBUFFER_LENGTH(bev->input);
 	line = evbuffer_readline(bev->input);
 	if (line == NULL) {
@@ -896,6 +903,7 @@ session_destroy(struct session *s)
 		bufferevent_free(s->s_bev);
 	}
 	ssl_session_destroy(s);
+	evtimer_del(&s->s_timeout);
 
 	SPLAY_REMOVE(sessiontree, &s->s_env->sc_sessions, s);
 	bzero(s, sizeof(*s));
@@ -976,46 +984,36 @@ session_set_path(struct path *path, char *line)
 }
 
 void
-session_timeout(int fd, short event, void *p)
+session_set_timeout(struct session *s, struct session_timeout *tab,
+    void (*cb)(int, short, void *))
 {
-	struct smtpd		*env = p;
-	struct session		*sessionp;
-	struct session		*rmsession;
-	struct timeval		 tv;
-	time_t			 tm;
-	u_int8_t		 i;
+	struct timeval tv;
 
-	tm = time(NULL);
-	rmsession = NULL;
-	SPLAY_FOREACH(sessionp, sessiontree, &env->sc_sessions) {
+	bzero(&tv, sizeof(tv));
 
-		if (rmsession != NULL) {
-			session_destroy(rmsession);
-			rmsession = NULL;
+	for (; tab->timeout; tab++)
+		if (s->s_state == tab->state) {
+			tv.tv_sec = tab->timeout;
+			break;
 		}
+	if (! tab->timeout)
+		tv.tv_sec = SMTPD_SESSION_TIMEOUT;
+	evtimer_set(&s->s_timeout, cb, s);
+	evtimer_add(&s->s_timeout, &tv);
+}
 
-		for (i = 0; i < sizeof (rfc5321_timeouttab) /
-			 sizeof(struct session_timeout); ++i)
-			if (rfc5321_timeouttab[i].state == sessionp->s_state)
-				break;
+void
+smtp_timeout(int fd, short event, void *p)
+{
+	struct session *s = p;
 
-		if (i == sizeof (rfc5321_timeouttab) / sizeof (struct session_timeout)) {
-			if (tm - SMTPD_SESSION_TIMEOUT < sessionp->s_tm)
-				continue;
-		}
-		else if (tm - rfc5321_timeouttab[i].timeout < sessionp->s_tm) {
-				continue;
-		}
+	log_debug("smtp_timeout: fd %d at state %d", s->s_fd, s->s_state);
 
-		rmsession = sessionp;
-	}
-
-	if (rmsession != NULL)
-		session_destroy(rmsession);
-
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
-	evtimer_add(&env->sc_ev, &tv);
+	s_smtp.timeout++;
+	if (s->s_flags & F_EVLOCKED)
+		s->s_flags |= F_QUIT;
+	else
+		session_destroy(s);
 }
 
 void

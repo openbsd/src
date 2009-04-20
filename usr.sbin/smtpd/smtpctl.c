@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.21 2009/04/16 15:35:06 jacekm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.22 2009/04/20 17:07:01 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -294,6 +294,7 @@ show_stats_output(struct imsg *imsg)
 
 	printf("smtp.sessions=%zd\n", s_smtp.sessions);
 	printf("smtp.sessions.aborted=%zd\n", s_smtp.aborted);
+	printf("smtp.sessions.timeout=%zd\n", s_smtp.timeout);
 	printf("smtp.sessions.active=%zd\n", s_smtp.sessions_active);
 	printf("smtp.sessions.smtps=%zd\n", s_smtp.smtps);
 	printf("smtp.sessions.smtps.active=%zd\n", s_smtp.smtps_active);
