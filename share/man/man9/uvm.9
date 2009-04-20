@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.39 2009/04/14 17:07:08 oga Exp $
+.\"	$OpenBSD: uvm.9,v 1.40 2009/04/20 00:44:48 oga Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -30,7 +30,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd $Mdocdate: April 14 2009 $
+.Dd $Mdocdate: April 20 2009 $
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -708,6 +708,7 @@ can be any of:
 .Bd -literal
 #define UVM_PLA_WAITOK		0x0001	/* may sleep */
 #define UVM_PLA_NOWAIT		0x0002	/* can't sleep */
+#define UVM_PLA_ZERO		0x0004	/* zero all pages before returning */
 .Ed
 .Pp
 The
@@ -718,6 +719,9 @@ Conversely, the
 .Dv UVM_PLA_NOWAIT
 flag signifies that the function may not sleep while allocating.
 It is an error not to provide one of the above flags.
+Optionally, one may also specify the
+.Dv UVM_PLA_ZERO
+flag to receive zeroed memory in the page list.
 .Pp
 The
 .Fn uvm_pglistfree
