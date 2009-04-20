@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.261 2009/04/19 21:33:49 mk Exp $
+#	$OpenBSD: GENERIC,v 1.262 2009/04/20 13:26:20 ariane Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -68,6 +68,7 @@ pcib*	at pci?			# PCI-ISA bridge
 amdpcib* at pci?		# AMD 8111 LPC bridge
 kate*	at pci?			# AMD K8 temperature sensor
 km*	at pci?			# AMD K10 temperature sensor
+amas*	at pci? disable		# AMD memory configuration
 
 # National Semiconductor LM7[89] and compatible hardware monitors
 lm0	at isa? port 0x290

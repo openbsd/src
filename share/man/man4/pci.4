@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.268 2009/03/07 05:51:42 grange Exp $
+.\"	$OpenBSD: pci.4,v 1.269 2009/04/20 13:26:07 ariane Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 7 2009 $
+.Dd $Mdocdate: April 20 2009 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -410,6 +410,8 @@ ICS PCI-WDT500/501 watchdog timer device
 .Bl -tag -width "piixpcib(4)" -offset ind -compact
 .It Xr alipm 4
 Acer Labs M7101 SMBus controller
+.It Xr amas 4
+AMD memory address map
 .It Xr amdiic 4
 AMD-8111 SMBus controller
 .It Xr amdpcib 4
