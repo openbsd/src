@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.46 2009/02/25 19:00:36 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.47 2009/04/20 17:42:21 beck Exp $	*/
 
 /*
  * Copyright (c) 2004-2006 Bob Beck.  All rights reserved.
@@ -316,12 +316,24 @@ readsuffixlists(void)
 	struct mail_addr *m;
 
 	while (!SLIST_EMPTY(&match_suffix)) {
-		m = SLIST_FIRST(&match_suffix);	  
+		m = SLIST_FIRST(&match_suffix);
 		SLIST_REMOVE_HEAD(&match_suffix, entry);
 		free(m);
 	}
 	if ((fp = fopen(alloweddomains_file, "r")) != NULL) {
 		while ((buf = fgetln(fp, &len))) {
+			/* strip white space-characters */
+			while (len > 0 && isspace(buf[len-1]))
+				len--;
+			while (len > 0 && isspace(*buf)) {
+				buf++;
+				len--;
+			}
+			if (len == 0)
+				continue;
+			/* jump over comments and blank lines */
+			if (*buf == '#' || *buf == '\n')
+				continue;
 			if (buf[len-1] == '\n')
 				len--;
 			if ((m = malloc(sizeof(struct mail_addr))) == NULL)
@@ -533,8 +545,7 @@ db_notin(DB *db, char *key)
 	memset(&dbk, 0, sizeof(dbk));
 	dbk.size = strlen(key);
 	dbk.data = key;
-	memset(&dbd, 0,
- sizeof(dbd));
+	memset(&dbd, 0, sizeof(dbd));
 	i = db->get(db, &dbk, &dbd, 0);
 	if (i == -1)
 		return (-1);
@@ -838,7 +849,7 @@ greyupdate(char *dbname, char *helo, char *ip, char *from, char *to, int sync,
 		if (sync &&  low_prio_mx_ip &&
 		    (strcmp(cip, low_prio_mx_ip) == 0) &&
 		    ((startup + 60)  < now)) {
-			/* we haven't seen a greylist entry for this tuple, 
+			/* we haven't seen a greylist entry for this tuple,
 			 * and yet the connection was to a low priority MX
 			 * which we know can't be hit first if the client
 			 * is adhering to the RFC's - soo.. kill it!
