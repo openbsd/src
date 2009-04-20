@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_dma.9,v 1.27 2008/06/26 05:42:08 ray Exp $
+.\"	$OpenBSD: bus_dma.9,v 1.28 2009/04/20 00:46:47 oga Exp $
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: April 20 2009 $
 .Dt BUS_DMA 9
 .Os
 .Sh NAME
@@ -622,6 +622,8 @@ Flags are defined as follows:
 It is safe to wait (sleep) for resources during this call.
 .It Dv BUS_DMA_NOWAIT
 It is not safe to wait (sleep) for resources during this call.
+.It Dv BUS_DMA_ZERO
+The memory allocated should be zeroed.
 .It Dv BUS_DMA_STREAMING
 Adjusts, if necessary, the size, alignment, and boundary constraints
 to conform to the platform-dependent requirements for the use of the
