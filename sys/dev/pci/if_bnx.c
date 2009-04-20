@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.75 2009/04/20 11:39:02 reyk Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.76 2009/04/20 12:24:52 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4314,7 +4314,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 	bus_dmamap_t		map;
 	struct tx_bd 		*txbd = NULL;
 	u_int16_t		vlan_tag = 0, flags = 0;
-	u_int16_t		chain_prod, prod;
+	u_int16_t		chain_prod, chain_head, prod;
 #ifdef BNX_DEBUG
 	u_int16_t		debug_prod;
 #endif
@@ -4340,8 +4340,8 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 
 	/* Map the mbuf into DMAable memory. */
 	prod = sc->tx_prod;
-	chain_prod = TX_CHAIN_IDX(prod);
-	map = sc->tx_mbuf_map[chain_prod];
+	chain_head = chain_prod = TX_CHAIN_IDX(prod);
+	map = sc->tx_mbuf_map[chain_head];
 
 	/* Map the mbuf into our DMA address space. */
 	error = bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m, BUS_DMA_NOWAIT);
@@ -4412,6 +4412,8 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 	 * and we don't want to unload the map before
 	 * all of the segments have been freed.
 	 */
+	sc->tx_mbuf_map[chain_head] = sc->tx_mbuf_map[chain_prod];
+	sc->tx_mbuf_map[chain_prod] = map;
 	sc->tx_mbuf_ptr[chain_prod] = m;
 	sc->used_tx_bd += map->dm_nsegs;
 
@@ -4423,6 +4425,9 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 
 	DBRUN(BNX_VERBOSE_SEND, bnx_dump_tx_mbuf_chain(sc, chain_prod, 
 	    map->dm_nsegs));
+
+	bus_dmamap_sync(sc->bnx_dmatag, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 
 	/* prod points to the next free tx_bd at this point. */
 	sc->tx_prod = prod;
