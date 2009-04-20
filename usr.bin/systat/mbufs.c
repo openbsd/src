@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.23 2009/03/29 21:51:54 kettenis Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.24 2009/04/20 20:30:41 chl Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -145,7 +145,7 @@ initmembufs(void)
 			continue;
 
 		if (mclpool_count == MCLPOOLS) {
-			warnx("mbufs: Too many mcl* pools", i);
+			warnx("mbufs: Too many mcl* pools");
 			break;
 		}
 
@@ -336,8 +336,6 @@ print_mb(void)
 static void
 showmbuf(struct if_info *ifi, int p, int showif)
 {
-	int i;
-
 	if (showif)
 		print_fld_str(FLD_MB_IFACE, ifi->name);
 
@@ -346,8 +344,6 @@ showmbuf(struct if_info *ifi, int p, int showif)
 		print_fld_size(FLD_MB_MALIVE, mbpool.pr_nget - mbpool.pr_nput);
 		print_fld_size(FLD_MB_MHWM, mbpool.pr_hiwat);
 	}
-
-
 
 #if NOTYET
 	print_fld_uint(FLD_MB_RXDELAY, ifi->data.ifi_rxdelay);
@@ -371,5 +367,3 @@ showmbuf(struct if_info *ifi, int p, int showif)
 
 	end_line();
 }
-
-
