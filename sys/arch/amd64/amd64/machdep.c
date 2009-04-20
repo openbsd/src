@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.88 2009/02/15 02:03:40 marco Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.89 2009/04/20 15:44:49 reyk Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1238,7 +1238,6 @@ extern vector IDTVEC(osyscall);
 extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
 
-/* Tweakable by config(8) */
 int bigmem = 0;
 
 void
