@@ -1,4 +1,4 @@
-/*	$OpenBSD: amas.c,v 1.1 2009/04/20 13:26:20 ariane Exp $	*/
+/*	$OpenBSD: amas.c,v 1.2 2009/04/20 20:29:11 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -138,7 +138,7 @@ const struct pci_matchid amas_devices[] = {
 };
 
 int
-amas_match(struct device* parent, void* match, void* aux)
+amas_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args* pa = aux;
 
@@ -148,10 +148,10 @@ amas_match(struct device* parent, void* match, void* aux)
 }
 
 void
-amas_attach(struct device* parent, struct device* self, void* aux)
+amas_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pci_attach_args* pa = aux;
-	struct amas_softc* amas = (struct amas_softc*)self;
+	struct pci_attach_args *pa = aux;
+	struct amas_softc *amas = (struct amas_softc*)self;
 #ifdef DEBUG
 	paddr_t start_pg, end_pg;
 	int nodes, i;
@@ -199,7 +199,7 @@ amas_attach(struct device* parent, struct device* self, void* aux)
  * Returns 0 if the memory is not interleaved.
  */
 int
-amas_intl_nodes(struct amas_softc* amas)
+amas_intl_nodes(struct amas_softc *amas)
 {
 	pcireg_t base_reg, limit_reg;
 	int mask;
@@ -230,8 +230,8 @@ amas_intl_nodes(struct amas_softc* amas)
  * This device supports at most 8 nodes.
  */
 void
-amas_get_pagerange(struct amas_softc* amas, int node,
-    paddr_t* start_pg_idx, paddr_t* end_pg_idx)
+amas_get_pagerange(struct amas_softc *amas, int node,
+    paddr_t *start_pg_idx, paddr_t *end_pg_idx)
 {
 	pcireg_t base, ebase, limit, elimit;
 	paddr_t base_addr, ebase_addr, limit_addr, elimit_addr;
