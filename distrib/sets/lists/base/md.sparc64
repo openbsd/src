@@ -1575,6 +1575,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/limits.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/lock.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/mdesc.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/mplock.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/mutex.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/openfirm.ph
