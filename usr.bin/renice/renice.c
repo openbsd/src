@@ -1,4 +1,4 @@
-/*	$OpenBSD: renice.c,v 1.13 2008/12/08 21:23:10 millert Exp $	*/
+/*	$OpenBSD: renice.c,v 1.14 2009/04/20 13:58:20 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: renice.c,v 1.13 2008/12/08 21:23:10 millert Exp $";
+static const char rcsid[] = "$OpenBSD: renice.c,v 1.14 2009/04/20 13:58:20 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,7 +63,8 @@ main(int argc, char **argv)
 		err(1, NULL);
 
 	/* Backwards compatibility: first arg may be priority. */
-	if (isdigit((unsigned char)argv[1][0])) {
+	if (isdigit((unsigned char)argv[1][0]) ||
+	    (argv[1][0] == '-' && isdigit((unsigned char)argv[1][1]))) {
 		argv[0] = "-n";
 		argc++;
 		argv--;
