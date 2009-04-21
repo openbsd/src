@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.45 2009/04/19 16:42:06 martynas Exp $
+#	$OpenBSD: Makefile.inc,v 1.46 2009/04/21 09:34:51 martynas Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -12,7 +12,7 @@ SRCS+=  alarm.c assert.c auth_subr.c authenticate.c \
         getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
         getpwent.c getttyent.c getusershell.c glob.c initgroups.c \
         isatty.c isctype.c isfdtype.c isfinite.c isinf.c isnan.c \
-        isnormal.c signbit.c ldexp.c lockf.c login_cap.c modf.c nice.c \
+        isnormal.c signbit.c lockf.c login_cap.c nice.c \
         nlist.c nftw.c opendir.c pause.c popen.c psignal.c pw_dup.c \
         pwcache.c raise.c readdir.c readpassphrase.c rewinddir.c scandir.c \
         seekdir.c setdomainname.c sethostname.c setjmperr.c setmode.c \
