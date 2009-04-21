@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.26 2008/06/24 23:02:42 brad Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.27 2009/04/21 06:56:38 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4589,25 +4589,25 @@ struct fw_info {
 
 struct bnx_softc
 {
-	struct device			bnx_dev;			/* Parent device handle */
-	struct arpcom			arpcom;
+	struct device		bnx_dev;	/* Parent device handle */
+	struct arpcom		arpcom;
 
-	struct pci_attach_args		bnx_pa;
-	pci_intr_handle_t		bnx_ih;
+	struct pci_attach_args	bnx_pa;
+	pci_intr_handle_t	bnx_ih;
 
-	bus_space_tag_t		bnx_btag;			/* Device bus tag */
-	bus_space_handle_t	bnx_bhandle;		/* Device bus handle */
+	bus_space_tag_t		bnx_btag;	/* Device bus tag */
+	bus_space_handle_t	bnx_bhandle;	/* Device bus handle */
 	bus_size_t		bnx_size;
 
-	void				*bnx_intrhand;		/* Interrupt handler */
-	void				*bnx_powerhook;
-	void				*bnx_shutdownhook;
+	void			*bnx_intrhand;		/* Interrupt handler */
+	void			*bnx_powerhook;
+	void			*bnx_shutdownhook;
 
 	/* ASIC Chip ID. */
-	u_int32_t					bnx_chipid;
+	u_int32_t		bnx_chipid;
 
 	/* General controller flags. */
-	u_int32_t					bnx_flags;
+	u_int32_t		bnx_flags;
 #define BNX_PCIX_FLAG			0x01
 #define BNX_PCI_32BIT_FLAG 		0x02
 #define BNX_ONE_TDMA_FLAG		0x04		/* Deprecated */
@@ -4618,88 +4618,88 @@ struct bnx_softc
 #define BNX_ACTIVE_FLAG			0x80
 
 	/* PHY specific flags. */
-	u_int32_t					bnx_phy_flags;
-#define BNX_PHY_SERDES_FLAG					1
-#define BNX_PHY_CRC_FIX_FLAG				2
-#define BNX_PHY_PARALLEL_DETECT_FLAG		4
-#define BNX_PHY_2_5G_CAPABLE_FLAG			8
-#define BNX_PHY_INT_MODE_MASK_FLAG			0x300
+	u_int32_t		bnx_phy_flags;
+#define BNX_PHY_SERDES_FLAG			0x001
+#define BNX_PHY_CRC_FIX_FLAG			0x002
+#define BNX_PHY_PARALLEL_DETECT_FLAG		0x004
+#define BNX_PHY_2_5G_CAPABLE_FLAG		0x008
+#define BNX_PHY_INT_MODE_MASK_FLAG		0x300
 #define BNX_PHY_INT_MODE_AUTO_POLLING_FLAG	0x100
 #define BNX_PHY_INT_MODE_LINK_READY_FLAG	0x200
 
 	/* Values that need to be shared with the PHY driver. */
-	u_int32_t					bnx_shared_hw_cfg;
-	u_int32_t					bnx_port_hw_cfg;
+	u_int32_t		bnx_shared_hw_cfg;
+	u_int32_t		bnx_port_hw_cfg;
 
-	int					bnx_if_flags;
+	int			bnx_if_flags;
 
-	u_int16_t					bus_speed_mhz;		/* PCI bus speed */
+	u_int16_t		bus_speed_mhz;		/* PCI bus speed */
 	struct flash_spec	*bnx_flash_info;	/* Flash NVRAM settings */
-	u_int32_t					bnx_flash_size;		/* Flash NVRAM size */
-	u_int32_t					bnx_shmem_base;		/* Shared Memory base address */
-	char *				bnx_name;			/* Name string */
+	u_int32_t		bnx_flash_size;		/* Flash NVRAM size */
+	u_int32_t		bnx_shmem_base;		/* ShMem base address */
+	char *			bnx_name;		/* Name string */
 
 	/* Tracks the version of bootcode firmware. */
-	u_int32_t					bnx_fw_ver;
+	u_int32_t		bnx_fw_ver;
 
 	/* Tracks the state of the firmware.  0 = Running while any     */
 	/* other value indicates that the firmware is not responding.   */
-	u_int16_t					bnx_fw_timed_out;
+	u_int16_t		bnx_fw_timed_out;
 
 	/* An incrementing sequence used to coordinate messages passed   */
 	/* from the driver to the firmware.                              */
-	u_int16_t					bnx_fw_wr_seq;
+	u_int16_t		bnx_fw_wr_seq;
 
 	/* An incrementing sequence used to let the firmware know that   */
 	/* the driver is still operating.  Without the pulse, management */
 	/* firmware such as IPMI or UMP will operate in OS absent state. */
-	u_int16_t					bnx_fw_drv_pulse_wr_seq;
+	u_int16_t		bnx_fw_drv_pulse_wr_seq;
 
 	/* Ethernet MAC address. */
-	u_char				eaddr[6];
+	u_char			eaddr[6];
 
 	/* These setting are used by the host coalescing (HC) block to   */
 	/* to control how often the status block, statistics block and   */
 	/* interrupts are generated.                                     */
-	u_int16_t					bnx_tx_quick_cons_trip_int;
-	u_int16_t					bnx_tx_quick_cons_trip;
-	u_int16_t					bnx_rx_quick_cons_trip_int;
-	u_int16_t					bnx_rx_quick_cons_trip;
-	u_int16_t					bnx_comp_prod_trip_int;
-	u_int16_t					bnx_comp_prod_trip;
-	u_int16_t					bnx_tx_ticks_int;
-	u_int16_t					bnx_tx_ticks;
-	u_int16_t					bnx_rx_ticks_int;
-	u_int16_t					bnx_rx_ticks;
-	u_int16_t					bnx_com_ticks_int;
-	u_int16_t					bnx_com_ticks;
-	u_int16_t					bnx_cmd_ticks_int;
-	u_int16_t					bnx_cmd_ticks;
-	u_int32_t					bnx_stats_ticks;
+	u_int16_t		bnx_tx_quick_cons_trip_int;
+	u_int16_t		bnx_tx_quick_cons_trip;
+	u_int16_t		bnx_rx_quick_cons_trip_int;
+	u_int16_t		bnx_rx_quick_cons_trip;
+	u_int16_t		bnx_comp_prod_trip_int;
+	u_int16_t		bnx_comp_prod_trip;
+	u_int16_t		bnx_tx_ticks_int;
+	u_int16_t		bnx_tx_ticks;
+	u_int16_t		bnx_rx_ticks_int;
+	u_int16_t		bnx_rx_ticks;
+	u_int16_t		bnx_com_ticks_int;
+	u_int16_t		bnx_com_ticks;
+	u_int16_t		bnx_cmd_ticks_int;
+	u_int16_t		bnx_cmd_ticks;
+	u_int32_t			bnx_stats_ticks;
 
 	/* The address of the integrated PHY on the MII bus. */
-	int					bnx_phy_addr;
+	int			bnx_phy_addr;
 
 	/* The device handle for the MII bus child device. */
-	struct mii_data				bnx_mii;
+	struct mii_data		bnx_mii;
 
 	/* Driver maintained TX chain pointers and byte counter. */
-	u_int16_t					rx_prod;
-	u_int16_t					rx_cons;
-	u_int32_t					rx_prod_bseq;	/* Counts the bytes used.  */
-	u_int16_t					tx_prod;
-	u_int16_t					tx_cons;
-	u_int32_t					tx_prod_bseq;	/* Counts the bytes used.  */
+	u_int16_t		rx_prod;
+	u_int16_t		rx_cons;
+	u_int32_t		rx_prod_bseq;	/* Counts the bytes used.  */
+	u_int16_t		tx_prod;
+	u_int16_t		tx_cons;
+	u_int32_t		tx_prod_bseq;	/* Counts the bytes used.  */
 
-	int					bnx_link;
-	struct timeout				bnx_timeout;
+	int			bnx_link;
+	struct timeout		bnx_timeout;
 
 	/* Frame size and mbuf allocation size for RX frames. */
-	u_int32_t					max_frame_size;
-	int					mbuf_alloc_size;
+	u_int32_t		max_frame_size;
+	int			mbuf_alloc_size;
 
 	/* Receive mode settings (i.e promiscuous, multicast, etc.). */
-	u_int32_t					rx_mode;
+	u_int32_t		rx_mode;
 
 	/* Bus tag for the bnx controller. */
 	bus_dma_tag_t		bnx_dmatag;
@@ -4709,33 +4709,33 @@ struct bnx_softc
 	int			tx_bd_chain_rseg[TX_PAGES];
 	bus_dmamap_t		tx_bd_chain_map[TX_PAGES];
 	struct tx_bd		*tx_bd_chain[TX_PAGES];
-	bus_addr_t			tx_bd_chain_paddr[TX_PAGES];
+	bus_addr_t		tx_bd_chain_paddr[TX_PAGES];
 
 	/* H/W maintained RX buffer descriptor chain structure. */
 	bus_dma_segment_t	rx_bd_chain_seg[TX_PAGES];
 	int			rx_bd_chain_rseg[TX_PAGES];
 	bus_dmamap_t		rx_bd_chain_map[RX_PAGES];
 	struct rx_bd		*rx_bd_chain[RX_PAGES];
-	bus_addr_t			rx_bd_chain_paddr[RX_PAGES];
+	bus_addr_t		rx_bd_chain_paddr[RX_PAGES];
 
 	/* H/W maintained status block. */
 	bus_dma_segment_t	status_seg;
 	int			status_rseg;
 	bus_dmamap_t		status_map;
-	struct status_block	*status_block;				/* virtual address */
-	bus_addr_t			status_block_paddr;			/* Physical address */
+	struct status_block	*status_block;		/* virtual address */
+	bus_addr_t		status_block_paddr;	/* Physical address */
 
 	/* Driver maintained status block values. */
-	u_int16_t					last_status_idx;
-	u_int16_t					hw_rx_cons;
-	u_int16_t					hw_tx_cons;
+	u_int16_t		last_status_idx;
+	u_int16_t		hw_rx_cons;
+	u_int16_t		hw_tx_cons;
 
 	/* H/W maintained statistics block. */
 	bus_dma_segment_t	stats_seg;
 	int			stats_rseg;
 	bus_dmamap_t		stats_map;
 	struct statistics_block *stats_block;		/* Virtual address */
-	bus_addr_t			stats_block_paddr;		/* Physical address */
+	bus_addr_t		stats_block_paddr;	/* Physical address */
 
 	/* Bus tag for RX/TX mbufs. */
 	bus_dma_segment_t	rx_mbuf_seg;
@@ -4745,103 +4745,103 @@ struct bnx_softc
 
 	/* S/W maintained mbuf TX chain structure. */
 	bus_dmamap_t		tx_mbuf_map[TOTAL_TX_BD];
-	struct mbuf			*tx_mbuf_ptr[TOTAL_TX_BD];
+	struct mbuf		*tx_mbuf_ptr[TOTAL_TX_BD];
 
 	/* S/W maintained mbuf RX chain structure. */
 	bus_dmamap_t		rx_mbuf_map[TOTAL_RX_BD];
-	struct mbuf			*rx_mbuf_ptr[TOTAL_RX_BD];
+	struct mbuf		*rx_mbuf_ptr[TOTAL_RX_BD];
 
 	/* Track the number of rx_bd and tx_bd's in use. */
-	u_int16_t free_rx_bd;
-	u_int16_t max_rx_bd;
-	u_int16_t used_tx_bd;
-	u_int16_t max_tx_bd;
+	u_int16_t		free_rx_bd;
+	u_int16_t		max_rx_bd;
+	u_int16_t		used_tx_bd;
+	u_int16_t		max_tx_bd;
 
 	/* Provides access to hardware statistics through sysctl. */
-	u_int64_t stat_IfHCInOctets;
-	u_int64_t stat_IfHCInBadOctets;
-	u_int64_t stat_IfHCOutOctets;
-	u_int64_t stat_IfHCOutBadOctets;
-	u_int64_t stat_IfHCInUcastPkts;
-	u_int64_t stat_IfHCInMulticastPkts;
-	u_int64_t stat_IfHCInBroadcastPkts;
-	u_int64_t stat_IfHCOutUcastPkts;
-	u_int64_t stat_IfHCOutMulticastPkts;
-	u_int64_t stat_IfHCOutBroadcastPkts;
+	u_int64_t		stat_IfHCInOctets;
+	u_int64_t		stat_IfHCInBadOctets;
+	u_int64_t		stat_IfHCOutOctets;
+	u_int64_t		stat_IfHCOutBadOctets;
+	u_int64_t		stat_IfHCInUcastPkts;
+	u_int64_t		stat_IfHCInMulticastPkts;
+	u_int64_t		stat_IfHCInBroadcastPkts;
+	u_int64_t		stat_IfHCOutUcastPkts;
+	u_int64_t		stat_IfHCOutMulticastPkts;
+	u_int64_t		stat_IfHCOutBroadcastPkts;
 
-	u_int32_t stat_emac_tx_stat_dot3statsinternalmactransmiterrors;
-	u_int32_t stat_Dot3StatsCarrierSenseErrors;
-	u_int32_t stat_Dot3StatsFCSErrors;
-	u_int32_t stat_Dot3StatsAlignmentErrors;
-	u_int32_t stat_Dot3StatsSingleCollisionFrames;
-	u_int32_t stat_Dot3StatsMultipleCollisionFrames;
-	u_int32_t stat_Dot3StatsDeferredTransmissions;
-	u_int32_t stat_Dot3StatsExcessiveCollisions;
-	u_int32_t stat_Dot3StatsLateCollisions;
-	u_int32_t stat_EtherStatsCollisions;
-	u_int32_t stat_EtherStatsFragments;
-	u_int32_t stat_EtherStatsJabbers;
-	u_int32_t stat_EtherStatsUndersizePkts;
-	u_int32_t stat_EtherStatsOverrsizePkts;
-	u_int32_t stat_EtherStatsPktsRx64Octets;
-	u_int32_t stat_EtherStatsPktsRx65Octetsto127Octets;
-	u_int32_t stat_EtherStatsPktsRx128Octetsto255Octets;
-	u_int32_t stat_EtherStatsPktsRx256Octetsto511Octets;
-	u_int32_t stat_EtherStatsPktsRx512Octetsto1023Octets;
-	u_int32_t stat_EtherStatsPktsRx1024Octetsto1522Octets;
-	u_int32_t stat_EtherStatsPktsRx1523Octetsto9022Octets;
-	u_int32_t stat_EtherStatsPktsTx64Octets;
-	u_int32_t stat_EtherStatsPktsTx65Octetsto127Octets;
-	u_int32_t stat_EtherStatsPktsTx128Octetsto255Octets;
-	u_int32_t stat_EtherStatsPktsTx256Octetsto511Octets;
-	u_int32_t stat_EtherStatsPktsTx512Octetsto1023Octets;
-	u_int32_t stat_EtherStatsPktsTx1024Octetsto1522Octets;
-	u_int32_t stat_EtherStatsPktsTx1523Octetsto9022Octets;
-	u_int32_t stat_XonPauseFramesReceived;
-	u_int32_t stat_XoffPauseFramesReceived;
-	u_int32_t stat_OutXonSent;
-	u_int32_t stat_OutXoffSent;
-	u_int32_t stat_FlowControlDone;
-	u_int32_t stat_MacControlFramesReceived;
-	u_int32_t stat_XoffStateEntered;
-	u_int32_t stat_IfInFramesL2FilterDiscards;
-	u_int32_t stat_IfInRuleCheckerDiscards;
-	u_int32_t stat_IfInFTQDiscards;
-	u_int32_t stat_IfInMBUFDiscards;
-	u_int32_t stat_IfInRuleCheckerP4Hit;
-	u_int32_t stat_CatchupInRuleCheckerDiscards;
-	u_int32_t stat_CatchupInFTQDiscards;
-	u_int32_t stat_CatchupInMBUFDiscards;
-	u_int32_t stat_CatchupInRuleCheckerP4Hit;
+	u_int32_t		stat_emac_tx_stat_dot3statsinternalmactransmiterrors;
+	u_int32_t		stat_Dot3StatsCarrierSenseErrors;
+	u_int32_t		stat_Dot3StatsFCSErrors;
+	u_int32_t		stat_Dot3StatsAlignmentErrors;
+	u_int32_t		stat_Dot3StatsSingleCollisionFrames;
+	u_int32_t		stat_Dot3StatsMultipleCollisionFrames;
+	u_int32_t		stat_Dot3StatsDeferredTransmissions;
+	u_int32_t		stat_Dot3StatsExcessiveCollisions;
+	u_int32_t		stat_Dot3StatsLateCollisions;
+	u_int32_t		stat_EtherStatsCollisions;
+	u_int32_t		stat_EtherStatsFragments;
+	u_int32_t		stat_EtherStatsJabbers;
+	u_int32_t		stat_EtherStatsUndersizePkts;
+	u_int32_t		stat_EtherStatsOverrsizePkts;
+	u_int32_t		stat_EtherStatsPktsRx64Octets;
+	u_int32_t		stat_EtherStatsPktsRx65Octetsto127Octets;
+	u_int32_t		stat_EtherStatsPktsRx128Octetsto255Octets;
+	u_int32_t		stat_EtherStatsPktsRx256Octetsto511Octets;
+	u_int32_t		stat_EtherStatsPktsRx512Octetsto1023Octets;
+	u_int32_t		stat_EtherStatsPktsRx1024Octetsto1522Octets;
+	u_int32_t		stat_EtherStatsPktsRx1523Octetsto9022Octets;
+	u_int32_t		stat_EtherStatsPktsTx64Octets;
+	u_int32_t		stat_EtherStatsPktsTx65Octetsto127Octets;
+	u_int32_t		stat_EtherStatsPktsTx128Octetsto255Octets;
+	u_int32_t		stat_EtherStatsPktsTx256Octetsto511Octets;
+	u_int32_t		stat_EtherStatsPktsTx512Octetsto1023Octets;
+	u_int32_t		stat_EtherStatsPktsTx1024Octetsto1522Octets;
+	u_int32_t		stat_EtherStatsPktsTx1523Octetsto9022Octets;
+	u_int32_t		stat_XonPauseFramesReceived;
+	u_int32_t		stat_XoffPauseFramesReceived;
+	u_int32_t		stat_OutXonSent;
+	u_int32_t		stat_OutXoffSent;
+	u_int32_t		stat_FlowControlDone;
+	u_int32_t		stat_MacControlFramesReceived;
+	u_int32_t		stat_XoffStateEntered;
+	u_int32_t		stat_IfInFramesL2FilterDiscards;
+	u_int32_t		stat_IfInRuleCheckerDiscards;
+	u_int32_t		stat_IfInFTQDiscards;
+	u_int32_t		stat_IfInMBUFDiscards;
+	u_int32_t		stat_IfInRuleCheckerP4Hit;
+	u_int32_t		stat_CatchupInRuleCheckerDiscards;
+	u_int32_t		stat_CatchupInFTQDiscards;
+	u_int32_t		stat_CatchupInMBUFDiscards;
+	u_int32_t		stat_CatchupInRuleCheckerP4Hit;
 
 	/* Mbuf allocation failure counter. */
-	u_int32_t mbuf_alloc_failed;
+	u_int32_t		mbuf_alloc_failed;
 
 	/* TX DMA mapping failure counter. */
-	u_int32_t tx_dma_map_failures;
+	u_int32_t		tx_dma_map_failures;
 
 #ifdef BNX_DEBUG
 	/* Track the number of enqueued mbufs. */
-	int	tx_mbuf_alloc;
-	int rx_mbuf_alloc;
+	int			tx_mbuf_alloc;
+	int			rx_mbuf_alloc;
 
 	/* Track the distribution buffer segments. */
-	u_int32_t rx_mbuf_segs[BNX_MAX_SEGMENTS+1];
+	u_int32_t		rx_mbuf_segs[BNX_MAX_SEGMENTS+1];
 
 	/* Track how many and what type of interrupts are generated. */
-	u_int32_t interrupts_generated;
-	u_int32_t interrupts_handled;
-	u_int32_t rx_interrupts;
-	u_int32_t tx_interrupts;
+	u_int32_t		interrupts_generated;
+	u_int32_t		interrupts_handled;
+	u_int32_t		rx_interrupts;
+	u_int32_t		tx_interrupts;
 
-	u_int32_t	rx_low_watermark;			/* Lowest number of rx_bd's free. */
-	u_int32_t rx_empty_count;			/* Number of times the RX chain was empty. */
-	u_int32_t tx_hi_watermark;			/* Greatest number of tx_bd's used. */
-	u_int32_t tx_full_count;			/* Number of times the TX chain was full. */
-	u_int32_t	mbuf_sim_alloc_failed;			/* Mbuf simulated allocation failure counter. */
-	u_int32_t l2fhdr_status_errors;
-	u_int32_t unexpected_attentions;
-	u_int32_t	lost_status_block_updates;
+	u_int32_t		rx_low_watermark;	/* Lowest number of rx_bd's free. */
+	u_int32_t		rx_empty_count;		/* Number of times the RX chain was empty. */
+	u_int32_t		tx_hi_watermark;	/* Greatest number of tx_bd's used. */
+	u_int32_t		tx_full_count;		/* Number of times the TX chain was full. */
+	u_int32_t		mbuf_sim_alloc_failed;	/* Mbuf simulated allocation failure counter. */
+	u_int32_t		l2fhdr_status_errors;
+	u_int32_t		unexpected_attentions;
+	u_int32_ts		lost_status_block_updates;
 #endif
 };
 
