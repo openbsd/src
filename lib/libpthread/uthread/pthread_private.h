@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.70 2008/12/18 09:30:32 guenther Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.71 2009/04/21 12:43:01 kurt Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -388,7 +388,12 @@ enum pthread_susp {
 /*
  * Miscellaneous definitions.
  */
-#define PTHREAD_STACK_DEFAULT			65536
+#ifdef __LP64__
+#define PTHREAD_STACK_DEFAULT			(512 * 1024)
+#else
+#define PTHREAD_STACK_DEFAULT			(256 * 1024)
+#endif
+
 /*
  * Maximum size of initial thread's stack.  This perhaps deserves to be larger
  * than the stacks of other threads, since many applications are likely to run
