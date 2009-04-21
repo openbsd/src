@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.10 2009/04/11 17:13:33 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.11 2009/04/21 19:18:09 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
 
 /*
@@ -36,24 +36,9 @@
  */
 
 /*
- * i386-specific PCI structure and type definitions.
+ * amd64-specific PCI structure and type definitions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
- *
- * Configuration tag; created from a {bus,device,function} triplet by
- * pci_make_tag(), and passed to pci_conf_read() and pci_conf_write().
- * We could instead always pass the {bus,device,function} triplet to
- * the read and write routines, but this would cause extra overhead.
- *
- * Mode 2 is historical and deprecated by the Revision 2.0 specification.
  */
-union x86_pci_tag_u {
-	u_int32_t mode1;
-	struct {
-		u_int16_t port;
-		u_int8_t enable;
-		u_int8_t forward;
-	} mode2;
-};
 
 extern struct bus_dma_tag pci_bus_dma_tag;
 
@@ -61,7 +46,7 @@ extern struct bus_dma_tag pci_bus_dma_tag;
  * Types provided to machine-independent PCI code
  */
 typedef void *pci_chipset_tag_t;
-typedef union x86_pci_tag_u pcitag_t;
+typedef u_int32_t pcitag_t;
 
 typedef struct {
 	pcitag_t tag;
@@ -71,11 +56,9 @@ typedef struct {
 #define	pci_intr_line(ih)	((ih.line) & 0xff)
 
 /*
- * i386-specific PCI variables and functions.
+ * amd64-specific PCI variables and functions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
-extern int pci_mode;
-int		pci_mode_detect(void);
 struct		pci_attach_args;
 
 extern struct extent *pciio_ex;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.18 2009/04/11 17:13:33 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.19 2009/04/21 19:18:09 kettenis Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -146,10 +146,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-#if NPCI > 0
-	pci_mode = pci_mode_detect();
-#endif
-
 #if NBIOS > 0
 	{
 		mba.mba_bios.ba_name = "bios";
@@ -195,7 +191,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 #if NPCI > 0
-	if (pci_mode != 0) {
+	{
 		pci_init_extents();
 
 		bzero(&mba.mba_pba, sizeof(mba.mba_pba));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.17 2009/04/19 17:53:39 deraadt Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.18 2009/04/21 19:18:09 kettenis Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -672,8 +672,7 @@ mpbios_scan(struct device *self)
 	mpbios_scanned = 1;
 
 #if NPCI > 0
-	if (pci_mode != 0)
-		mpbios_intr_fixup();
+	mpbios_intr_fixup();
 #endif
 }
 
