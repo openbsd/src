@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.60 2009/04/18 21:01:20 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.61 2009/04/21 14:37:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -102,7 +102,7 @@ queue_dispatch_control(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("queue_dispatch_control: imsg_read error");
+			fatalx("queue_dispatch_control: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -156,7 +156,7 @@ queue_dispatch_smtp(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("queue_dispatch_smtp: imsg_read error");
+			fatalx("queue_dispatch_smtp: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -288,7 +288,7 @@ queue_dispatch_mda(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("queue_dispatch_mda: imsg_read error");
+			fatalx("queue_dispatch_mda: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -340,7 +340,7 @@ queue_dispatch_mta(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("queue_dispatch_mda: imsg_read error");
+			fatalx("queue_dispatch_mta: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -403,7 +403,7 @@ queue_dispatch_lka(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("queue_dispatch_lka: imsg_read error");
+			fatalx("queue_dispatch_lka: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -494,7 +494,7 @@ queue_dispatch_runner(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("queue_dispatch_runner: imsg_read error");
+			fatalx("queue_dispatch_runner: imsg_get error");
 		if (n == 0)
 			break;
 

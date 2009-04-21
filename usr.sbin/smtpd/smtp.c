@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.35 2009/04/20 17:07:01 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.36 2009/04/21 14:37:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -97,7 +97,7 @@ smtp_dispatch_parent(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("parent_dispatch_smtp: imsg_read error");
+			fatalx("smtp_dispatch_parent: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -230,7 +230,7 @@ smtp_dispatch_mfa(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("smtp_dispatch_mfa: imsg_read error");
+			fatalx("smtp_dispatch_mfa: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -300,7 +300,7 @@ smtp_dispatch_lka(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("smtp_dispatch_lka: imsg_read error");
+			fatalx("smtp_dispatch_lka: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -367,7 +367,7 @@ smtp_dispatch_queue(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("smtp_dispatch_queue: imsg_read error");
+			fatalx("smtp_dispatch_queue: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -525,7 +525,7 @@ smtp_dispatch_control(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("smtp_dispatch_control: imsg_read error");
+			fatalx("smtp_dispatch_control: imsg_get error");
 		if (n == 0)
 			break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.40 2009/04/09 19:49:34 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.41 2009/04/21 14:37:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -114,7 +114,7 @@ lka_dispatch_parent(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("parent_dispatch_lka: imsg_read error");
+			fatalx("lka_dispatch_parent: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -216,7 +216,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("lka_dispatch_mfa: imsg_read error");
+			fatalx("lka_dispatch_mfa: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -352,7 +352,7 @@ lka_dispatch_mta(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("lka_dispatch_mta: imsg_read error");
+			fatalx("lka_dispatch_mta: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -565,7 +565,7 @@ lka_dispatch_smtp(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("lka_dispatch_mfa: imsg_read error");
+			fatalx("lka_dispatch_smtp: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -637,7 +637,7 @@ lka_dispatch_queue(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("lka_dispatch_queue: imsg_read error");
+			fatalx("lka_dispatch_queue: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -683,7 +683,7 @@ lka_dispatch_runner(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("lka_dispatch_runner: imsg_read error");
+			fatalx("lka_dispatch_runner: imsg_get error");
 		if (n == 0)
 			break;
 

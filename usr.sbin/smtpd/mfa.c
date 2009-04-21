@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.19 2009/04/16 15:35:06 jacekm Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.20 2009/04/21 14:37:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -99,7 +99,7 @@ mfa_dispatch_parent(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("parent_dispatch_mfa: imsg_read error");
+			fatalx("mfa_dispatch_parent: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -145,7 +145,7 @@ mfa_dispatch_smtp(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("mfa_dispatch_smtp: imsg_read error");
+			fatalx("mfa_dispatch_smtp: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -197,7 +197,7 @@ mfa_dispatch_lka(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("mfa_dispatch_lka: imsg_read error");
+			fatalx("mfa_dispatch_lka: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -259,7 +259,7 @@ mfa_dispatch_control(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("mfa_dispatch_smtp: imsg_read error");
+			fatalx("mfa_dispatch_control: imsg_get error");
 		if (n == 0)
 			break;
 
