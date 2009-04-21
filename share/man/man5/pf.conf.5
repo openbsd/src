@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.430 2009/04/21 12:41:48 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.431 2009/04/21 14:08:18 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1176,11 +1176,9 @@ As with
 packets are logged to
 .Xr pflog 4 .
 .It Ar log Pq Ar user
-Logs the UID of the user that owns the socket
-and the PID of the process that has the socket open
-where the packet is sourced from or destined to
-(depending on which socket is local).
-This is in addition to the normal information logged.
+Logs the UID and PID of the
+socket on the local host used to send or receive a packet,
+in addition to the normal information.
 .It Ar log Pq Ar to Aq Ar interface
 Send logs to the specified
 .Xr pflog 4
