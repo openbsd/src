@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.h,v 1.8 2009/04/13 16:05:50 ratchov Exp $	*/
+/*	$OpenBSD: sndio.h,v 1.1 2009/04/21 19:14:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
