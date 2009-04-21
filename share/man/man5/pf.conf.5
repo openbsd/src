@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.432 2009/04/21 16:04:27 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.433 2009/04/21 16:11:51 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1778,21 +1778,16 @@ route the packet according to the type of route option.
 When such a rule creates state, the route option is also applied to all
 packets matching the same connection.
 .Bl -tag -width xxxx
+.It Ar dup-to
+The
+.Ar dup-to
+option creates a duplicate of the packet and routes it like
+.Ar route-to .
+The original packet gets routed as it normally would.
 .It Ar fastroute
 The
 .Ar fastroute
 option does a normal route lookup to find the next hop for the packet.
-.It Ar route-to
-The
-.Ar route-to
-option routes the packet to the specified interface with an optional address
-for the next hop.
-When a
-.Ar route-to
-rule creates state, only packets that pass in the same direction as the
-filter rule specifies will be routed in this way.
-Packets passing in the opposite direction (replies) are not affected
-and are routed normally.
 .It Ar reply-to
 The
 .Ar reply-to
@@ -1806,12 +1801,17 @@ is useful only in rules that create state.
 It can be used on systems with multiple external connections to
 route all outgoing packets of a connection through the interface
 the incoming connection arrived through (symmetric routing enforcement).
-.It Ar dup-to
+.It Ar route-to
 The
-.Ar dup-to
-option creates a duplicate of the packet and routes it like
-.Ar route-to .
-The original packet gets routed as it normally would.
+.Ar route-to
+option routes the packet to the specified interface with an optional address
+for the next hop.
+When a
+.Ar route-to
+rule creates state, only packets that pass in the same direction as the
+filter rule specifies will be routed in this way.
+Packets passing in the opposite direction (replies) are not affected
+and are routed normally.
 .El
 .Sh POOL OPTIONS
 For
@@ -1840,6 +1840,14 @@ destination with
 The
 .Ar random
 option selects an address at random within the defined block of addresses.
+.It Ar round-robin
+The
+.Ar round-robin
+option loops through the redirection address(es).
+.Pp
+When more than one redirection address is specified,
+.Ar round-robin
+is the only permitted pool type.
 .It Ar source-hash
 The
 .Ar source-hash
@@ -1850,14 +1858,6 @@ string; by default
 .Xr pfctl 8
 randomly generates a key for source-hash every time the
 ruleset is reloaded.
-.It Ar round-robin
-The
-.Ar round-robin
-option loops through the redirection address(es).
-.Pp
-When more than one redirection address is specified,
-.Ar round-robin
-is the only permitted pool type.
 .It Ar static-port
 With
 .Ar nat
@@ -1993,13 +1993,10 @@ state will not match this rule until existing states time out.
 Prevent state changes for states created by this rule from appearing on the
 .Xr pfsync 4
 interface.
-.It Xo Aq Ar timeout
-.Aq Ar seconds
-.Xc
-Changes the timeout values used for states created by this rule.
-For a list of all valid timeout names, see
-.Sx OPTIONS
-above.
+.It Ar pflow
+States created by this rule are exported on the
+.Xr pflow 4
+interface.
 .It Ar sloppy
 Uses a sloppy TCP connection tracker that does not check sequence
 numbers at all, which makes insertion and ICMP teardown attacks way
@@ -2007,10 +2004,13 @@ easier.
 This is intended to be used in situations where one does not see all
 packets of a connection, e.g. in asymmetric routing situations.
 Cannot be used with modulate or synproxy state.
-.It Ar pflow
-States created by this rule are exported on the
-.Xr pflow 4
-interface.
+.It Xo Aq Ar timeout
+.Aq Ar seconds
+.Xc
+Changes the timeout values used for states created by this rule.
+For a list of all valid timeout names, see
+.Sx OPTIONS
+above.
 .El
 .Pp
 Multiple options can be specified, separated by commas:
@@ -2026,14 +2026,6 @@ When the
 keyword is specified, the number of states per source IP is tracked.
 .Pp
 .Bl -tag -width xxxx -compact
-.It Ar source-track rule
-The maximum number of states created by this rule is limited by the rule's
-.Ar max-src-nodes
-and
-.Ar max-src-states
-options.
-Only state entries created by this particular rule count toward the rule's
-limits.
 .It Ar source-track global
 The number of states created by all rules that use this option is limited.
 Each rule can specify different
@@ -2042,6 +2034,14 @@ and
 .Ar max-src-states
 options, however state entries created by any participating rule count towards
 each individual rule's limits.
+.It Ar source-track rule
+The maximum number of states created by this rule is limited by the rule's
+.Ar max-src-nodes
+and
+.Ar max-src-states
+options.
+Only state entries created by this particular rule count toward the rule's
+limits.
 .El
 .Pp
 The following limits can be set:
@@ -2296,6 +2296,21 @@ attachment point
 using the following kinds
 of rules:
 .Bl -tag -width xxxx
+.It Ar anchor Aq Ar name
+Evaluates the filter rules in the specified
+.Ar anchor .
+.It Ar binat-anchor Aq Ar name
+Evaluates the
+.Ar binat
+rules in the specified
+.Ar anchor .
+.It Xo Ar load anchor
+.Aq Ar name
+.Ar from Aq Ar file
+.Xc
+Loads the rules from the specified file into the
+anchor
+.Ar name .
 .It Ar nat-anchor Aq Ar name
 Evaluates the
 .Ar nat
@@ -2306,21 +2321,6 @@ Evaluates the
 .Ar rdr
 rules in the specified
 .Ar anchor .
-.It Ar binat-anchor Aq Ar name
-Evaluates the
-.Ar binat
-rules in the specified
-.Ar anchor .
-.It Ar anchor Aq Ar name
-Evaluates the filter rules in the specified
-.Ar anchor .
-.It Xo Ar load anchor
-.Aq Ar name
-.Ar from Aq Ar file
-.Xc
-Loads the rules from the specified file into the
-anchor
-.Ar name .
 .El
 .Pp
 When evaluation of the main ruleset reaches an
