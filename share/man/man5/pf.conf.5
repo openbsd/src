@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.428 2009/04/20 20:42:49 sthen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.429 2009/04/21 11:33:42 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 20 2009 $
+.Dd $Mdocdate: April 21 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1141,7 +1141,7 @@ matching attributes.
 Certain parameters can be expressed as lists, in which case
 .Xr pfctl 8
 generates all needed rule combinations.
-.Bl -tag -width xxxx
+.Bl -tag -width Ds
 .It Ar in No or Ar out
 This rule applies to incoming or outgoing packets.
 If neither
@@ -1236,6 +1236,8 @@ of the following keywords:
 .Bl -tag -width xxxxxxxxxxxxxx -compact
 .It Ar any
 Any address.
+.It Ar no-route
+Any address which is not currently routable.
 .It Ar route Aq Ar label
 Any address whose associated route has label
 .Aq Ar label .
@@ -1243,14 +1245,12 @@ See
 .Xr route 4
 and
 .Xr route 8 .
-.It Ar no-route
-Any address which is not currently routable.
+.It Aq Ar table
+Any address that matches the given table.
 .It Ar urpf-failed
 Any source address that fails a unicast reverse path forwarding (URPF)
 check, i.e. packets coming in on an interface other than that which holds
 the route back to the packet's source address.
-.It Aq Ar table
-Any address that matches the given table.
 .El
 .Pp
 Ranges of addresses are specified by using the
@@ -1264,14 +1264,14 @@ hence addresses 10.1.1.10, 10.1.1.11, and 10.1.1.12.
 Interface names and interface group names can have modifiers appended:
 .Pp
 .Bl -tag -width xxxxxxxxxxxx -compact
-.It Ar :network
-Translates to the network(s) attached to the interface.
-.It Ar :broadcast
-Translates to the interface's broadcast address(es).
-.It Ar :peer
-Translates to the point-to-point interface's peer address(es).
 .It Ar :0
 Do not include interface aliases.
+.It Ar :broadcast
+Translates to the interface's broadcast address(es).
+.It Ar :network
+Translates to the network(s) attached to the interface.
+.It Ar :peer
+Translates to the point-to-point interface's peer address(es).
 .El
 .Pp
 Host names may also have the
@@ -1353,63 +1353,48 @@ pass in proto tcp from 10.0.0.0/8 port \*(Gt 1024 \e
 pass in proto tcp from any os "OpenBSD"
 pass in proto tcp from route "DTAG"
 .Ed
+.El
+.Pp
+A number of other parameters can be used with filtering rules:
+.Pp
+.Bl -tag -width Ds -compact
 .It Ar all
 This is equivalent to "from any to any".
-.It Ar group Aq Ar group
-Similar to
-.Ar user ,
-this rule only applies to packets of sockets owned by the specified group.
-.It Ar user Aq Ar user
-This rule only applies to packets of sockets owned by the specified user.
-For outgoing connections initiated from the firewall, this is the user
-that opened the connection.
-For incoming connections to the firewall itself, this is the user that
-listens on the destination port.
-For forwarded connections, where the firewall is not a connection endpoint,
-the user and group are
-.Em unknown .
 .Pp
-All packets, both outgoing and incoming, of one connection are associated
-with the same user and group.
-Only TCP and UDP packets can be associated with users; for other protocols
-these parameters are ignored.
+.It Ar allow-opts
+By default, IPv4 packets with IP options or IPv6 packets with routing
+extension headers are blocked.
+When
+.Ar allow-opts
+is specified for a
+.Ar pass
+rule, packets that pass the filter based on that rule (last matching)
+do so even if they contain IP options or routing extension headers.
+For packets that match state, the rule that initially created the
+state is used.
+The implicit
+.Ar pass
+rule that is used when a packet does not match any rules does not
+allow IP options.
 .Pp
-User and group refer to the effective (as opposed to the real) IDs, in
-case the socket is created by a setuid/setgid process.
-User and group IDs are stored when a socket is created;
-when a process creates a listening socket as root (for instance, by
-binding to a privileged port) and subsequently changes to another
-user ID (to drop privileges), the credentials will remain root.
+.It Ar divert-reply
+Used to receive replies for sockets that are bound to addresses
+which are not local to the machine.
+See
+.Xr setsockopt 2
+for information on how to bind these sockets.
 .Pp
-User and group IDs can be specified as either numbers or names.
-The syntax is similar to the one for ports.
-The value
-.Em unknown
-matches packets of forwarded connections.
-.Em unknown
-can only be used with the operators
-.Cm =
+.It Xo Ar divert-to Aq Ar host
+.Ar port Aq Ar port
+.Xc
+Used to redirect packets to a local socket bound to
+.Ar host
 and
-.Cm != .
-Other constructs like
-.Cm user \*(Ge unknown
-are invalid.
-Forwarded packets with unknown user and group ID match only rules
-that explicitly compare against
-.Em unknown
-with the operators
-.Cm =
-or
-.Cm != .
-For instance
-.Cm user \*(Ge 0
-does not match forwarded packets.
-The following example allows only selected users to open outgoing
-connections:
-.Bd -literal -offset indent
-block out proto { tcp, udp } all
-pass  out proto { tcp, udp } all user { \*(Lt 1000, dhartmei }
-.Ed
+.Ar port .
+The packets will not be modified, so
+.Xr getsockname 2
+on the socket will return the original destination address of the packet.
+.Pp
 .It Xo Ar flags Aq Ar a
 .Pf / Ns Aq Ar b
 .No \*(Ba / Ns Aq Ar b
@@ -1466,6 +1451,12 @@ options, or scrubbed with
 .Ar reassemble tcp
 will also not be recoverable from intermediate packets.
 Such connections will stall and time out.
+.Pp
+.It Ar group Aq Ar group
+Similar to
+.Ar user ,
+this rule only applies to packets of sockets owned by the specified group.
+.Pp
 .It Xo Ar icmp-type Aq Ar type
 .Ar code Aq Ar code
 .Xc
@@ -1487,41 +1478,7 @@ or
 .Ar icmp6-type
 .Pc
 must match.
-.It Xo Ar tos Aq Ar string
-.No \*(Ba Aq Ar number
-.Xc
-This rule applies to packets with the specified
-.Em TOS
-bits set.
-.Em TOS
-may be
-given as one of
-.Ar lowdelay ,
-.Ar throughput ,
-.Ar reliability ,
-or as either hex or decimal.
 .Pp
-For example, the following rules are identical:
-.Bd -literal -offset indent
-pass all tos lowdelay
-pass all tos 0x10
-pass all tos 16
-.Ed
-.It Ar allow-opts
-By default, IPv4 packets with IP options or IPv6 packets with routing
-extension headers are blocked.
-When
-.Ar allow-opts
-is specified for a
-.Ar pass
-rule, packets that pass the filter based on that rule (last matching)
-do so even if they contain IP options or routing extension headers.
-For packets that match state, the rule that initially created the
-state is used.
-The implicit
-.Ar pass
-rule that is used when a packet does not match any rules does not
-allow IP options.
 .It Ar label Aq Ar string
 Adds a label (name) to the rule, which can be used to identify the rule.
 For instance,
@@ -1530,21 +1487,21 @@ shows per-rule statistics for rules that have labels.
 .Pp
 The following macros can be used in labels:
 .Pp
-.Bl -tag -width $srcaddr -compact -offset indent
-.It Ar $if
-The interface.
-.It Ar $srcaddr
-The source IP address.
+.Bl -tag -width "$srcaddrXXX" -compact -offset indent
 .It Ar $dstaddr
 The destination IP address.
-.It Ar $srcport
-The source port specification.
 .It Ar $dstport
 The destination port specification.
-.It Ar $proto
-The protocol name.
+.It Ar $if
+The interface.
 .It Ar $nr
 The rule number.
+.It Ar $proto
+The protocol name.
+.It Ar $srcaddr
+The source IP address.
+.It Ar $srcport
+The source port specification.
 .El
 .Pp
 For example:
@@ -1565,6 +1522,17 @@ pass in inet proto tcp from any to 1.2.3.5 \e
 The macro expansion for the
 .Ar label
 directive occurs only at configuration file parse time, not during runtime.
+.Pp
+.It Ar probability Aq Ar number
+A probability attribute can be attached to a rule, with a value set between
+0 and 1, bounds not included.
+In that case, the rule will be honoured using the given probability value
+only.
+For example, the following rule will drop 20% of incoming ICMP packets:
+.Bd -literal -offset indent
+block in proto icmp probability 20%
+.Ed
+.Pp
 .It Xo Ar queue Aq Ar queue
 .No \*(Ba ( Aq Ar queue ,
 .Aq Ar queue )
@@ -1584,6 +1552,17 @@ For example:
 pass in proto tcp to port 25 queue mail
 pass in proto tcp to port 22 queue(ssh_bulk, ssh_prio)
 .Ed
+.Pp
+.It Ar rtable Aq Ar number
+Used to select an alternate routing table for the routing lookup.
+Only effective before the route lookup happened, i.e. when filtering inbound.
+.Pp
+.It Ar scrub Aq Ar parameter
+Perform traffic normalization on matching packets.
+See
+.Sx TRAFFIC NORMALIZATION
+for further information.
+.Pp
 .It Ar tag Aq Ar string
 Packets matching this rule will be tagged with the
 specified string.
@@ -1606,6 +1585,7 @@ or
 .Ar binat
 rules in addition to filter rules.
 Tags take the same macros as labels (see above).
+.Pp
 .It Ar tagged Aq Ar string
 Used with filter or translation rules
 to specify that packets must already
@@ -1616,39 +1596,79 @@ by specifying the
 operator before the
 .Ar tagged
 keyword.
-.It Ar rtable Aq Ar number
-Used to select an alternate routing table for the routing lookup.
-Only effective before the route lookup happened, i.e. when filtering inbound.
-.It Xo Ar divert-to Aq Ar host
-.Ar port Aq Ar port
+.Pp
+.It Xo Ar tos Aq Ar string
+.No \*(Ba Aq Ar number
 .Xc
-Used to redirect packets to a local socket bound to
-.Ar host
-and
-.Ar port .
-The packets will not be modified, so
-.Xr getsockname 2
-on the socket will return the original destination address of the packet.
-.It Ar divert-reply
-Used to receive replies for sockets that are bound to addresses
-which are not local to the machine.
-See
-.Xr setsockopt 2
-for information on how to bind these sockets.
-.It Ar probability Aq Ar number
-A probability attribute can be attached to a rule, with a value set between
-0 and 1, bounds not included.
-In that case, the rule will be honoured using the given probability value
-only.
-For example, the following rule will drop 20% of incoming ICMP packets:
+This rule applies to packets with the specified
+.Em TOS
+bits set.
+.Em TOS
+may be
+given as one of
+.Ar lowdelay ,
+.Ar throughput ,
+.Ar reliability ,
+or as either hex or decimal.
+.Pp
+For example, the following rules are identical:
 .Bd -literal -offset indent
-block in proto icmp probability 20%
+pass all tos lowdelay
+pass all tos 0x10
+pass all tos 16
 .Ed
-.It Ar scrub Aq Ar parameter
-Perform traffic normalization on matching packets.
-See
-.Sx TRAFFIC NORMALIZATION
-for further information.
+.Pp
+.It Ar user Aq Ar user
+This rule only applies to packets of sockets owned by the specified user.
+For outgoing connections initiated from the firewall, this is the user
+that opened the connection.
+For incoming connections to the firewall itself, this is the user that
+listens on the destination port.
+For forwarded connections, where the firewall is not a connection endpoint,
+the user and group are
+.Em unknown .
+.Pp
+All packets, both outgoing and incoming, of one connection are associated
+with the same user and group.
+Only TCP and UDP packets can be associated with users; for other protocols
+these parameters are ignored.
+.Pp
+User and group refer to the effective (as opposed to the real) IDs, in
+case the socket is created by a setuid/setgid process.
+User and group IDs are stored when a socket is created;
+when a process creates a listening socket as root (for instance, by
+binding to a privileged port) and subsequently changes to another
+user ID (to drop privileges), the credentials will remain root.
+.Pp
+User and group IDs can be specified as either numbers or names.
+The syntax is similar to the one for ports.
+The value
+.Em unknown
+matches packets of forwarded connections.
+.Em unknown
+can only be used with the operators
+.Cm =
+and
+.Cm != .
+Other constructs like
+.Cm user \*(Ge unknown
+are invalid.
+Forwarded packets with unknown user and group ID match only rules
+that explicitly compare against
+.Em unknown
+with the operators
+.Cm =
+or
+.Cm != .
+For instance
+.Cm user \*(Ge 0
+does not match forwarded packets.
+The following example allows only selected users to open outgoing
+connections:
+.Bd -literal -offset indent
+block out proto { tcp, udp } all
+pass  out proto { tcp, udp } all user { \*(Lt 1000, dhartmei }
+.Ed
 .El
 .Sh TRAFFIC NORMALIZATION
 Traffic normalization is used to sanitize packet content in such
