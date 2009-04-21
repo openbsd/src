@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.36 2009/04/21 13:57:14 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.37 2009/04/21 15:25:52 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,7 @@
 #define	IOV_CNT	20
 
 static u_int32_t	sadb_msg_seq = 0;
+static u_int32_t	pid = 0; /* should pid_t but pfkey needs u_int32_t */
 static int		fd;
 
 int	pfkey_reply(int, u_int32_t *);
@@ -73,6 +74,9 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 	int			len = 0;
 	int			iov_cnt;
 	struct sockaddr_storage	ssrc, sdst, speer, smask, dmask;
+
+	if (!pid)
+		pid = getpid();
 
 	/* we need clean sockaddr... no ports set */
 	bzero(&ssrc, sizeof(ssrc));
@@ -130,7 +134,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 	bzero(&smsg, sizeof(smsg));
 	smsg.sadb_msg_version = PF_KEY_V2;
 	smsg.sadb_msg_seq = ++sadb_msg_seq;
-	smsg.sadb_msg_pid = getpid();
+	smsg.sadb_msg_pid = pid;
 	smsg.sadb_msg_len = sizeof(smsg) / 8;
 	smsg.sadb_msg_type = mtype;
 	smsg.sadb_msg_satype = satype;
@@ -422,7 +426,7 @@ pfkey_reply(int sd, u_int32_t *spip)
 		}
 
 		if (hdr.sadb_msg_seq == sadb_msg_seq &&
-		    hdr.sadb_msg_pid == getpid())
+		    hdr.sadb_msg_pid == pid)
 			break;
 
 		/* not ours, discard */
