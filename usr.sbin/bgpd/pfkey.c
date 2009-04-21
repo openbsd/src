@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.35 2009/02/25 19:18:04 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.36 2009/04/21 13:57:14 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,7 +36,7 @@
 #define	ROUNDUP(x) (((x) + (PFKEY2_CHUNK - 1)) & ~(PFKEY2_CHUNK - 1))
 #define	IOV_CNT	20
 
-static u_int32_t	sadb_msg_seq = 1;
+static u_int32_t	sadb_msg_seq = 0;
 static int		fd;
 
 int	pfkey_reply(int, u_int32_t *);
@@ -129,7 +129,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 
 	bzero(&smsg, sizeof(smsg));
 	smsg.sadb_msg_version = PF_KEY_V2;
-	smsg.sadb_msg_seq = sadb_msg_seq++;
+	smsg.sadb_msg_seq = ++sadb_msg_seq;
 	smsg.sadb_msg_pid = getpid();
 	smsg.sadb_msg_len = sizeof(smsg) / 8;
 	smsg.sadb_msg_type = mtype;
@@ -415,10 +415,23 @@ pfkey_reply(int sd, u_int32_t *spip)
 	u_int8_t *data;
 	ssize_t len;
 
-	if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
-		log_warn("pfkey peek");
-		return (-1);
+	for (;;) {
+		if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
+			log_warn("pfkey peek");
+			return (-1);
+		}
+
+		if (hdr.sadb_msg_seq == sadb_msg_seq &&
+		    hdr.sadb_msg_pid == getpid())
+			break;
+
+		/* not ours, discard */
+		if (read(sd, &hdr, sizeof(hdr)) == -1) {
+			log_warn("pfkey read");
+			return (-1);
+		}
 	}
+
 	if (hdr.sadb_msg_errno != 0) {
 		errno = hdr.sadb_msg_errno;
 		if (errno == ESRCH)
