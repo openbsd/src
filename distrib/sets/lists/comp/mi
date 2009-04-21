@@ -6519,6 +6519,7 @@
 ./usr/share/man/cat9/timeout.0
 ./usr/share/man/cat9/timeout_add.0
 ./usr/share/man/cat9/timeout_add_bt.0
+./usr/share/man/cat9/timeout_add_msec.0
 ./usr/share/man/cat9/timeout_add_nsec.0
 ./usr/share/man/cat9/timeout_add_sec.0
 ./usr/share/man/cat9/timeout_add_ts.0
