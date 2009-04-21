@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.17 2008/06/27 06:08:43 canacar Exp $	*/
+/*	$OpenBSD: aps.c,v 1.18 2009/04/21 19:36:17 mk Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
@@ -353,7 +353,7 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Refresh sensor data every 0.5 seconds */
 	timeout_set(&aps_timeout, aps_refresh, sc);
-	timeout_add(&aps_timeout, (5 * hz) / 10);
+	timeout_add_msec(&aps_timeout, 500);
 	return;
 out:
 	printf("%s: failed to initialize\n", sc->sc_dev.dv_xname);
@@ -481,7 +481,7 @@ aps_refresh(void *arg)
 	struct aps_softc *sc = (struct aps_softc *)arg;
 
 	aps_refresh_sensor_data(sc);
-	timeout_add(&aps_timeout, (5 * hz) / 10);
+	timeout_add_msec(&aps_timeout, 500);
 }
 
 void
@@ -507,5 +507,5 @@ aps_power(int why, void *arg)
 	    || aps_init(iot, ioh))
 		printf("aps: failed to wake up\n");
 	else
-		timeout_add(&aps_timeout, (5 * hz) / 10);
+		timeout_add_msec(&aps_timeout, 500);
 }
