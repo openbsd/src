@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.42 2009/04/21 18:12:05 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.43 2009/04/21 18:39:00 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -127,7 +127,7 @@ runner_dispatch_parent(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("runner_dispatch_parent: imsg_read error");
+			fatalx("runner_dispatch_parent: imsg_get error");
 		if (n == 0)
 			break;
 

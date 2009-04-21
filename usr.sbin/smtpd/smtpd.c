@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.55 2009/04/21 18:12:05 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.56 2009/04/21 18:39:00 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -534,7 +534,7 @@ parent_dispatch_runner(int sig, short event, void *p)
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("parent_dispatch_runner: imsg_read error");
+			fatalx("parent_dispatch_runner: imsg_get error");
 		if (n == 0)
 			break;
 
@@ -1324,7 +1324,7 @@ parent_enqueue_offline(struct smtpd *env, char *runner_path)
 
 	errno = 0;
 	if ((pw = safe_getpwuid(sb.st_uid)) == NULL) {
-		log_warn("parent_enqueue_offline: getpwuid for %d failed",
+		log_warn("parent_enqueue_offline: getpwuid for uid %d failed",
 		    sb.st_uid);
 		unlink(path);
 		return (0);
