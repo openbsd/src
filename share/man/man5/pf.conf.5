@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.429 2009/04/21 11:33:42 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.430 2009/04/21 12:41:48 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1166,7 +1166,7 @@ logging daemon, which dumps the logged packets to the file
 in
 .Xr pcap 3
 binary format.
-.It Ar log (all)
+.It Ar log Pq Ar all
 Used to force logging of all packets for a connection.
 This is not necessary when
 .Ar no state
@@ -1175,14 +1175,13 @@ As with
 .Ar log ,
 packets are logged to
 .Xr pflog 4 .
-.It Ar log (user)
-Logs the
-.Ux
-user ID of the user that owns the socket and the PID of the process that
-has the socket open where the packet is sourced from or destined to
+.It Ar log Pq Ar user
+Logs the UID of the user that owns the socket
+and the PID of the process that has the socket open
+where the packet is sourced from or destined to
 (depending on which socket is local).
 This is in addition to the normal information logged.
-.It Ar log (to Aq Ar interface )
+.It Ar log Pq Ar to Aq Ar interface
 Send logs to the specified
 .Xr pflog 4
 interface instead of
@@ -1209,12 +1208,7 @@ and
 .Ar inet6 .
 .It Ar proto Aq Ar protocol
 This rule applies only to packets of this protocol.
-Common protocols are
-.Xr icmp 4 ,
-.Xr icmp6 4 ,
-.Xr tcp 4 ,
-and
-.Xr udp 4 .
+Common protocols are ICMP, ICMP6, TCP, and UDP.
 For a list of all the protocol name to number mappings used by
 .Xr pfctl 8 ,
 see the file
@@ -1239,21 +1233,18 @@ Any address.
 .It Ar no-route
 Any address which is not currently routable.
 .It Ar route Aq Ar label
-Any address whose associated route has label
-.Aq Ar label .
-See
-.Xr route 4
-and
-.Xr route 8 .
+Any address matching the given
+.Xr route 8
+label.
 .It Aq Ar table
-Any address that matches the given table.
+Any address matching the given table.
 .It Ar urpf-failed
 Any source address that fails a unicast reverse path forwarding (URPF)
 check, i.e. packets coming in on an interface other than that which holds
 the route back to the packet's source address.
 .El
 .Pp
-Ranges of addresses are specified by using the
+Ranges of addresses are specified using the
 .Sq -
 operator.
 For instance:
@@ -1300,7 +1291,7 @@ For a list of all port name to number mappings used by
 see the file
 .Pa /etc/services .
 .Pp
-Ports and ranges of ports are specified by using these operators:
+Ports and ranges of ports are specified using these operators:
 .Bd -literal -offset indent
 =	(equal)
 !=	(unequal)
@@ -1319,30 +1310,31 @@ and
 .Sq \&:
 are binary operators (they take two arguments).
 For instance:
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Ar port 2000:2004
 means
 .Sq all ports \*(Ge 2000 and \*(Le 2004 ,
-hence ports 2000, 2001, 2002, 2003 and 2004.
+hence ports 2000, 2001, 2002, 2003, and 2004.
 .It Ar port 2000 \*(Gt\*(Lt 2004
 means
 .Sq all ports \*(Gt 2000 and \*(Lt 2004 ,
-hence ports 2001, 2002 and 2003.
+hence ports 2001, 2002, and 2003.
 .It Ar port 2000 \*(Lt\*(Gt 2004
 means
 .Sq all ports \*(Lt 2000 or \*(Gt 2004 ,
-hence ports 1-1999 and 2005-65535.
+hence ports 1\(en1999 and 2005\(en65535.
 .El
 .Pp
 The operating system of the source host can be specified in the case of TCP
 rules with the
-.Ar OS
+.Ar os
 modifier.
 See the
 .Sx OPERATING SYSTEM FINGERPRINTING
 section for more information.
 .Pp
-The host, port and OS specifications are optional, as in the following examples:
+The host, port, and OS specifications are optional,
+as in the following examples:
 .Bd -literal -offset indent
 pass in all
 pass in from any to any
@@ -1397,8 +1389,7 @@ on the socket will return the original destination address of the packet.
 .Pp
 .It Xo Ar flags Aq Ar a
 .Pf / Ns Aq Ar b
-.No \*(Ba / Ns Aq Ar b
-.No \*(Ba any
+.No \*(Ba Ar any
 .Xc
 This rule only applies to TCP packets that have the flags
 .Aq Ar a
@@ -1419,11 +1410,11 @@ The other flags are ignored.
 .It Ar flags S/SA
 This is the default setting for stateful connections.
 Out of SYN and ACK, exactly SYN may be set.
-SYN, SYN+PSH and SYN+RST match, but SYN+ACK, ACK and ACK+RST do not.
+SYN, SYN+PSH, and SYN+RST match, but SYN+ACK, ACK, and ACK+RST do not.
 This is more restrictive than the previous example.
 .It Ar flags /SFRA
 If the first set is not specified, it defaults to none.
-All of SYN, FIN, RST and ACK must be unset.
+All of SYN, FIN, RST, and ACK must be unset.
 .El
 .Pp
 Because
@@ -1444,11 +1435,16 @@ if one flushes the state table.
 However, states created from such intermediate packets may be missing
 connection details such as the TCP window scaling factor.
 States which modify the packet flow, such as those affected by
-.Ar nat , binat No or Ar rdr
+.Ar nat ,
+.Ar binat ,
+or
+.Ar rdr
 rules,
-.Ar modulate No or Ar synproxy state
+.Ar modulate
+or
+.Ar synproxy state
 options, or scrubbed with
-.Ar reassemble tcp
+.Ar reassemble tcp ,
 will also not be recoverable from intermediate packets.
 Such connections will stall and time out.
 .Pp
@@ -1463,14 +1459,12 @@ this rule only applies to packets of sockets owned by the specified group.
 .It Xo Ar icmp6-type Aq Ar type
 .Ar code Aq Ar code
 .Xc
-This rule only applies to ICMP or ICMPv6 packets with the specified type
+This rule only applies to ICMP or ICMP6 packets with the specified type
 and code.
 Text names for ICMP types and codes are listed in
 .Xr icmp 4
 and
 .Xr icmp6 4 .
-This parameter is only valid for rules that cover protocols ICMP or
-ICMP6.
 The protocol and the ICMP type indicator
 .Po
 .Ar icmp-type
@@ -1480,9 +1474,9 @@ or
 must match.
 .Pp
 .It Ar label Aq Ar string
-Adds a label (name) to the rule, which can be used to identify the rule.
+Adds a label to the rule, which can be used to identify the rule.
 For instance,
-pfctl -s labels
+.Dq pfctl -s labels
 shows per-rule statistics for rules that have labels.
 .Pp
 The following macros can be used in labels:
@@ -1505,14 +1499,14 @@ The source port specification.
 .El
 .Pp
 For example:
-.Bd -literal -offset indent
+.Bd -literal -offset indent -compact
 ips = \&"{ 1.2.3.4, 1.2.3.5 }\&"
 pass in proto tcp from any to $ips \e
       port \*(Gt 1023 label \&"$dstaddr:$dstport\&"
 .Ed
 .Pp
-expands to
-.Bd -literal -offset indent
+Expands to:
+.Bd -literal -offset indent -compact
 pass in inet proto tcp from any to 1.2.3.4 \e
       port \*(Gt 1023 label \&"1.2.3.4:\*(Gt1023\&"
 pass in inet proto tcp from any to 1.2.3.5 \e
@@ -1538,10 +1532,8 @@ block in proto icmp probability 20%
 .Aq Ar queue )
 .Xc
 Packets matching this rule will be assigned to the specified queue.
-If two queues are given, packets which have a
-.Em TOS
-of
-.Em lowdelay
+If two queues are given, packets which have a TOS of
+.Ar lowdelay
 and TCP ACKs with no data payload will be assigned to the second one.
 See
 .Sx QUEUEING
@@ -1600,16 +1592,15 @@ keyword.
 .It Xo Ar tos Aq Ar string
 .No \*(Ba Aq Ar number
 .Xc
-This rule applies to packets with the specified
-.Em TOS
-bits set.
-.Em TOS
-may be
-given as one of
+This rule applies to packets with the specified TOS bits set.
+.Ar string
+may be one of
 .Ar lowdelay ,
 .Ar throughput ,
-.Ar reliability ,
-or as either hex or decimal.
+or
+.Ar reliability ;
+.Ar number
+may be either a hex or decimal number.
 .Pp
 For example, the following rules are identical:
 .Bd -literal -offset indent
@@ -1643,9 +1634,9 @@ user ID (to drop privileges), the credentials will remain root.
 User and group IDs can be specified as either numbers or names.
 The syntax is similar to the one for ports.
 The value
-.Em unknown
+.Ar unknown
 matches packets of forwarded connections.
-.Em unknown
+.Ar unknown
 can only be used with the operators
 .Cm =
 and
@@ -1654,8 +1645,8 @@ Other constructs like
 .Cm user \*(Ge unknown
 are invalid.
 Forwarded packets with unknown user and group ID match only rules
-that explicitly compare against
-.Em unknown
+that explicitly compare
+.Ar unknown
 with the operators
 .Cm =
 or
