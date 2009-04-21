@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.16 2009/04/17 03:58:53 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 2009/04/21 09:12:26 deraadt Exp $
 
 kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/alpha/compile/GENERIC/bsd \
@@ -14,7 +14,7 @@ bootblocks:
 	cp ${DESTDIR}/usr/mdec/bootxx ${RELEASEDIR}
 	cp ${DESTDIR}/usr/mdec/netboot ${RELEASEDIR}
 
-MDEXT=	cd${OSrev}.iso floppy${OSrev}.fs floppyB${OSrev}.fs \
+MDEXT=	bsd bsd.rd cd${OSrev}.iso floppy${OSrev}.fs floppyB${OSrev}.fs \
 	boot bootxx netboot
 
 .PHONY: bsd bootblocks

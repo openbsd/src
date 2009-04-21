@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2009/04/21 09:12:27 deraadt Exp $
 
 kernels: bsd
 	cp ${.CURDIR}/../sys/arch/sgi/compile/GENERIC/bsd \
@@ -9,7 +9,6 @@ bsd:
 	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC && \
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
-MDEXT=	
+MDEXT=	bsd bsd.rd cd${OSrev}.iso
 
 .PHONY: bsd
-

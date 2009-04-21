@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2009/04/21 09:12:29 deraadt Exp $
 
 kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/zaurus/compile/GENERIC/bsd \
@@ -13,6 +13,6 @@ bootblocks:
 	cp ${DESTDIR}/usr/mdec/zboot ${RELEASEDIR}
 	cp ${DESTDIR}/usr/mdec/zbsdmod.o ${RELEASEDIR}
 
-MDEXT=	zboot zbsdmod.o openbsd45_arm.ipk Packages
+MDEXT=	bsd bsd.rd zboot zbsdmod.o openbsd45_arm.ipk Packages
 
 .PHONY: bsd bootblocks

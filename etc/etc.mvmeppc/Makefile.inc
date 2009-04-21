@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2009/04/21 09:12:27 deraadt Exp $
 
 kernels: bsd bootblocks
 	cp ${.CURDIR}/../sys/arch/mvmeppc/compile/GENERIC/bsd \
@@ -14,6 +14,6 @@ bootblocks:
 	cp ${DESTDIR}/usr/mdec/bootsd ${RELEASEDIR}/bootsd
 	cp ${DESTDIR}/usr/mdec/installboot ${RELEASEDIR}/installboot
 
-MDEXT=	
+MDEXT=	bsd bsd.rd bootxx bootsd installboot
 
 .PHONY: bsd bootblocks

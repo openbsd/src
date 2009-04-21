@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.272 2009/04/17 03:58:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.273 2009/04/21 09:12:24 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -30,7 +30,7 @@ BIN1+=	wsconsctl.conf
 # -rw-rw-r--
 BIN2=	motd
 
-MISETS=	bsd base${OSrev}.tgz comp${OSrev}.tgz misc${OSrev}.tgz \
+MISETS=	base${OSrev}.tgz comp${OSrev}.tgz misc${OSrev}.tgz \
 	man${OSrev}.tgz game${OSrev}.tgz etc${OSrev}.tgz
 
 PCS=	pcs750.bin
@@ -273,7 +273,7 @@ release-sets:
 
 sha:
 	-cd ${RELEASEDIR}; \
-	    sum -a sha256 bsd.rd INSTALL.`arch -ks` ${MDEXT} ${MISETS} > SHA256
+	    sum -a sha256 INSTALL.`arch -ks` ${MDEXT} ${MISETS} > SHA256
 
 release: distribution kernels release-sets distrib sha
 

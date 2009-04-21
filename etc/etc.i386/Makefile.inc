@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.17 2009/04/17 03:58:53 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.18 2009/04/21 09:12:26 deraadt Exp $
 
 kernels: bsd bsd.mp bootblocks linux-notes
 	cp ${.CURDIR}/../sys/arch/i386/compile/GENERIC/bsd \
@@ -24,7 +24,7 @@ bootblocks:
 linux-notes:
 	cp ${.CURDIR}/etc.i386/INSTALL.* ${RELEASEDIR}
 
-MDEXT=	bsd.mp cd${OSrev}.iso cdemu${OSrev}.iso \
+MDEXT=	bsd bsd.mp bsd.rd cd${OSrev}.iso cdemu${OSrev}.iso \
 	floppy${OSrev}.fs floppyB${OSrev}.fs floppyC${OSrev}.fs \
 	pxeboot cdboot cdbr INSTALL.linux
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2009/04/21 09:12:27 deraadt Exp $
 
 kernels: bsd bsd.mp bootblocks
 	cp ${.CURDIR}/../sys/arch/macppc/compile/GENERIC/bsd \
@@ -21,7 +21,7 @@ bootblocks:
 	cp ${DESTDIR}/usr/mdec/bsd.tbxi ${RELEASEDIR}/bsd.tbxi
 	cp ${DESTDIR}/usr/mdec/boot.mac ${RELEASEDIR}/boot.mac
 
-MDEXT=	bsd.mp cd${OSrev}.iso \
+MDEXT=	bsd bsd.mp bsd.rd cd${OSrev}.iso \
 	ofwboot bsd.tbxi boot.mac
 
 .PHONY: bsd bsd.mp bootblocks
