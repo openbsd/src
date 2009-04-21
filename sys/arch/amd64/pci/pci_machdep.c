@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.26 2009/04/13 21:23:16 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.27 2009/04/21 17:05:29 oga Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -175,7 +175,9 @@ pci_attach_hook(struct device *parent, struct device *self,
 {
 	if (pba->pba_bus == 0) {
 		printf(": configuration mode %d", pci_mode);
+#ifndef SMALL_KERNEL
 		amdgart_probe(pba);
+#endif /* !SMALL_KERNEL */
 	}
 }
 
