@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.424 2009/04/09 08:22:14 mglocker Exp $
+$OpenBSD: usbdevs,v 1.425 2009/04/21 05:22:52 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1339,6 +1339,7 @@ product FREECOM DVD		0xfc01	Connector for DVD drive
 /* Future Technology Devices products */
 product FTDI FT232_1		0x0232	Serial
 product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial
+product FTDI SERIAL_8U232AM4	0x6004	8U232AM Serial
 product FTDI FT232_3		0x6006	Serial
 product FTDI FT232_4		0x6007	Serial
 product FTDI FT232_5		0x6008	Serial
