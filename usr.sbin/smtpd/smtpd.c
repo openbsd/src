@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.54 2009/04/21 14:37:32 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.55 2009/04/21 18:12:05 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -56,6 +56,7 @@ void		parent_dispatch_lka(int, short, void *);
 void		parent_dispatch_mda(int, short, void *);
 void		parent_dispatch_mfa(int, short, void *);
 void		parent_dispatch_smtp(int, short, void *);
+void		parent_dispatch_runner(int, short, void *);
 void		parent_dispatch_control(int, short, void *);
 void		parent_sig_handler(int, short, void *);
 int		parent_open_message_file(struct batch *);
@@ -66,9 +67,11 @@ int		parent_mailfile_rename(struct batch *, struct path *);
 int		parent_maildir_open(char *, struct passwd *, struct batch *);
 int		parent_maildir_init(struct passwd *, char *);
 int		parent_external_mda(char *, struct passwd *, struct batch *);
+int		parent_enqueue_offline(struct smtpd *, char *);
 int		parent_forward_open(char *);
 int		check_child(pid_t, const char *);
 int		setup_spool(uid_t, gid_t);
+int		path_starts_with(char *, char *);
 
 extern char	**environ;
 
@@ -501,6 +504,57 @@ out:
 }
 
 void
+parent_dispatch_runner(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = env->sc_ibufs[PROC_RUNNER];
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("parent_dispatch_runner: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_PARENT_ENQUEUE_OFFLINE:
+			if (! parent_enqueue_offline(env, imsg.data))
+				imsg_compose(ibuf, IMSG_PARENT_ENQUEUE_OFFLINE,
+				    0, 0, -1, NULL, 0);
+			break;
+		default:
+			log_warnx("parent_dispatch_runner: got imsg %d",
+			    imsg.hdr.type);
+			fatalx("parent_dispatch_runner: unexpected imsg");
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(ibuf);
+}
+
+void
 parent_dispatch_control(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
@@ -600,19 +654,40 @@ parent_sig_handler(int sig, short event, void *p)
 					fatalx("unexpected SIGCHLD");
 
 				if (WIFEXITED(status) && !WIFSIGNALED(status)) {
-					switch (WEXITSTATUS(status)) {
-					case EX_OK:
-						log_debug("DEBUG: external mda reported success");
+					switch (mdaproc->type) {
+					case CHILD_ENQUEUE_OFFLINE:
+						if (WEXITSTATUS(status) == 0)
+							log_debug("offline enqueue was successful");
+						else
+							log_debug("offline enqueue failed");
+						imsg_compose(env->sc_ibufs[PROC_RUNNER],
+						    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1,
+						    NULL, 0);
 						break;
-					case EX_TEMPFAIL:
-						log_debug("DEBUG: external mda reported temporary failure");
+					case CHILD_MDA:
+						if (WEXITSTATUS(status) == EX_OK)
+							log_debug("DEBUG: external mda reported success");
+						else if (WEXITSTATUS(status) == EX_TEMPFAIL)
+							log_debug("DEBUG: external mda reported temporary failure");
+						else
+							log_warnx("external mda returned %d", WEXITSTATUS(status));
 						break;
 					default:
-						log_warnx("external mda returned %d", WEXITSTATUS(status));
+						fatalx("invalid child type");
+						break;
 					}
-				}
-				else {
-					log_warnx("external mda terminated abnormally");
+				} else {
+					switch (mdaproc->type) {
+					case CHILD_ENQUEUE_OFFLINE:
+						log_warnx("offline enqueue terminated abnormally");
+						break;
+					case CHILD_MDA:
+						log_warnx("external mda terminated abnormally");
+						break;
+					default:
+						fatalx("invalid child type");
+						break;
+					}
 				}
 
 				SPLAY_REMOVE(mdaproctree, &env->mdaproc_queue,
@@ -647,6 +722,7 @@ main(int argc, char *argv[])
 		{ PROC_MDA,	parent_dispatch_mda },
 		{ PROC_MFA,	parent_dispatch_mfa },
 		{ PROC_SMTP,	parent_dispatch_smtp },
+		{ PROC_RUNNER,	parent_dispatch_runner }
 	};
 
 	opts = 0;
@@ -763,8 +839,8 @@ main(int argc, char *argv[])
 	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
 
-	config_pipes(&env, peers, 5);
-	config_peers(&env, peers, 5);
+	config_pipes(&env, peers, 6);
+	config_peers(&env, peers, 6);
 
 	evtimer_set(&env.sc_ev, parent_send_config, &env);
 	bzero(&tv, sizeof(tv));
@@ -802,7 +878,8 @@ setup_spool(uid_t uid, gid_t gid)
 	unsigned int	 n;
 	char		*paths[] = { PATH_INCOMING, PATH_ENQUEUE, PATH_QUEUE,
 				     PATH_RUNQUEUE, PATH_RUNQUEUELOW,
-				     PATH_RUNQUEUEHIGH, PATH_PURGE };
+				     PATH_RUNQUEUEHIGH, PATH_PURGE,
+				     PATH_OFFLINE };
 	char		 pathname[MAXPATHLEN];
 	struct stat	 sb;
 	int		 ret;
@@ -852,6 +929,20 @@ setup_spool(uid_t uid, gid_t gid)
 
 	ret = 1;
 	for (n = 0; n < sizeof(paths)/sizeof(paths[0]); n++) {
+		mode_t	mode;
+		uid_t	owner;
+		gid_t	group;
+
+		if (paths[n] == PATH_OFFLINE) {
+			mode = 01777;
+			owner = 0;
+			group = 0;
+		} else {
+			mode = 0700;
+			owner = uid;
+			group = gid;
+		}
+
 		if (! bsnprintf(pathname, sizeof(pathname), "%s%s", PATH_SPOOL,
 			paths[n]))
 			fatal("snprintf");
@@ -863,14 +954,20 @@ setup_spool(uid_t uid, gid_t gid)
 				continue;
 			}
 
-			if (mkdir(pathname, 0700) == -1) {
+			/* chmod is deffered to avoid umask effect */
+			if (mkdir(pathname, 0) == -1) {
 				ret = 0;
 				warn("mkdir: %s", pathname);
 			}
 
-			if (chown(pathname, uid, gid) == -1) {
+			if (chown(pathname, owner, group) == -1) {
 				ret = 0;
 				warn("chown: %s", pathname);
+			}
+
+			if (chmod(pathname, mode) == -1) {
+				ret = 0;
+				warn("chmod: %s", pathname);
 			}
 
 			if (stat(pathname, &sb) == -1)
@@ -883,22 +980,24 @@ setup_spool(uid_t uid, gid_t gid)
 			warnx("%s is not a directory", pathname);
 		}
 
-		/* check that it is owned by uid/gid */
-		if (sb.st_uid != uid) {
+		/* check that it is owned by owner/group */
+		if (sb.st_uid != owner) {
 			ret = 0;
-			warnx("%s is not owned by uid %d", pathname, uid);
+			warnx("%s is not owned by uid %d", pathname, owner);
 		}
-		if (sb.st_gid != gid) {
+		if (sb.st_gid != group) {
 			ret = 0;
-			warnx("%s is not owned by gid %d", pathname, gid);
+			warnx("%s is not owned by gid %d", pathname, group);
 		}
 
 		/* check permission */
-		if ((sb.st_mode & (S_IRUSR|S_IWUSR|S_IXUSR)) != (S_IRUSR|S_IWUSR|S_IXUSR) ||
-		    (sb.st_mode & (S_IRGRP|S_IWGRP|S_IXGRP)) ||
-		    (sb.st_mode & (S_IROTH|S_IWOTH|S_IXOTH))) {
+		if ((sb.st_mode & 07777) != mode) {
+			char mode_str[12];
+
 			ret = 0;
-			warnx("%s must be rwx------ (0700)", pathname);
+			strmode(mode, mode_str);
+			mode_str[10] = '\0';
+			warnx("%s must be %s (%o)", pathname, mode_str + 1, mode);
 		}
 	}
 	return ret;
@@ -1034,6 +1133,7 @@ parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 	if (mdaproc == NULL)
 		fatal("calloc");
 	mdaproc->pid = pid;
+	mdaproc->type = CHILD_MDA;
 
 	SPLAY_INSERT(mdaproctree, &batchp->env->mdaproc_queue, mdaproc);
 
@@ -1181,11 +1281,129 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 	if (mdaproc == NULL)
 		fatal("calloc");
 	mdaproc->pid = pid;
+	mdaproc->type = CHILD_MDA;
 
 	SPLAY_INSERT(mdaproctree, &batchp->env->mdaproc_queue, mdaproc);
 
 	close(pipefd[0]);
 	return pipefd[1];
+}
+
+int
+parent_enqueue_offline(struct smtpd *env, char *runner_path)
+{
+	char		 path[MAXPATHLEN];
+	struct passwd	*pw;
+	struct mdaproc	*mdaproc;
+	struct stat	 sb;
+	pid_t		 pid;
+
+	log_debug("parent_enqueue_offline: path %s", runner_path);
+
+	if (! bsnprintf(path, sizeof(path), "%s%s", PATH_SPOOL, runner_path))
+		fatalx("parent_enqueue_offline: filename too long");
+
+	if (! path_starts_with(path, PATH_SPOOL PATH_OFFLINE))
+		fatalx("parent_enqueue_offline: path outside offline dir");
+
+	if (lstat(path, &sb) == -1) {
+		if (errno == ENOENT) {
+			log_warn("parent_enqueue_offline: %s", path);
+			return (0);
+		}
+		fatal("parent_enqueue_offline: lstat");
+	}
+
+	if (chflags(path, 0) == -1) {
+		if (errno == ENOENT) {
+			log_warn("parent_enqueue_offline: %s", path);
+			return (0);
+		}
+		fatal("parent_enqueue_offline: chflags");
+	}
+
+	errno = 0;
+	if ((pw = safe_getpwuid(sb.st_uid)) == NULL) {
+		log_warn("parent_enqueue_offline: getpwuid for %d failed",
+		    sb.st_uid);
+		unlink(path);
+		return (0);
+	}
+
+	if (! S_ISREG(sb.st_mode)) {
+		log_warnx("file %s (uid %d) not regular, removing", path, sb.st_uid);
+		if (S_ISDIR(sb.st_mode))
+			rmdir(path);
+		else
+			unlink(path);
+		return (0);
+	}
+
+	if ((pid = fork()) == -1)
+		fatal("parent_enqueue_offline: fork");
+
+	if (pid == 0) {
+		char	*envp[2], *p, *tmp;
+		FILE	*fp;
+		size_t	 len;
+		arglist	 args;
+
+		bzero(&args, sizeof(args));
+
+		if (setgroups(1, &pw->pw_gid) ||
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) ||
+		    closefrom(STDERR_FILENO + 1) == -1) {
+			unlink(path);
+			_exit(1);
+		}
+
+		if ((fp = fopen(path, "r")) == NULL) {
+			unlink(path);
+			_exit(1);
+		}
+		unlink(path);
+
+		if (chdir(pw->pw_dir) == -1 && chdir("/") == -1)
+			_exit(1);
+
+		if (setsid() == -1 ||
+		    signal(SIGPIPE, SIG_DFL) == SIG_ERR ||
+		    dup2(fileno(fp), STDIN_FILENO) == -1)
+			_exit(1);
+
+		if ((p = fgetln(fp, &len)) == NULL)
+			_exit(1);
+
+		if (p[len - 1] != '\n')
+			_exit(1);
+		p[len - 1] = '\0';
+
+		addargs(&args, "%s", _PATH_SENDMAIL);
+
+		while ((tmp = strsep(&p, "|")) != NULL)
+			addargs(&args, "%s", tmp);
+
+		if (lseek(fileno(fp), len, SEEK_SET) == -1)
+			_exit(1);
+
+		envp[0] = "PATH=" _PATH_DEFPATH;
+		envp[1] = (char *)NULL;
+		environ = envp;
+
+		execvp(args.list[0], args.list);
+		_exit(1);
+	}
+
+	mdaproc = calloc(1, sizeof (struct mdaproc));
+	if (mdaproc == NULL)
+		fatal("calloc");
+	mdaproc->pid = pid;
+	mdaproc->type = CHILD_ENQUEUE_OFFLINE;
+
+	SPLAY_INSERT(mdaproctree, &env->mdaproc_queue, mdaproc);
+
+	return (1);
 }
 
 int
@@ -1278,6 +1496,18 @@ errlog:
 
 err:
 	return -1;
+}
+
+int
+path_starts_with(char *file, char *prefix)
+{
+	char	 rprefix[MAXPATHLEN];
+	char	 rfile[MAXPATHLEN];
+
+	if (realpath(file, rfile) == NULL || realpath(prefix, rprefix) == NULL)
+		return (-1);
+
+	return (strncmp(rfile, rprefix, strlen(rprefix)) == 0);
 }
 
 int

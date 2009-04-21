@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.22 2009/04/20 17:07:01 jacekm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.23 2009/04/21 18:12:05 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -45,7 +45,6 @@
 __dead void	usage(void);
 int		show_command_output(struct imsg*);
 int		show_stats_output(struct imsg *);
-int		enqueue(int, char **);
 
 /*
 struct imsgname {
@@ -133,8 +132,11 @@ connected:
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, SMTPD_SOCKET, sizeof(sun.sun_path));
-	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
+	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
+		if (sendmail)
+			return enqueue_offline(argc, argv);
 		err(1, "connect: %s", SMTPD_SOCKET);
+	}
 
 	if ((ibuf = calloc(1, sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);

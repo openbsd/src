@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.13 2009/04/17 16:26:18 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.14 2009/04/21 18:12:05 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -60,7 +60,6 @@ void	 rcptto(char *);
 void	 start_data(void);
 void	 send_message(int);
 void	 end_data(void);
-int	 enqueue(int, char **);
 
 enum headerfields {
 	HDR_NONE,
@@ -709,4 +708,51 @@ end_data(void)
 
 	if ((status = read_reply()) != STATUS_QUIT)
 		errx(1, "server sends error after QUIT");
+}
+
+int
+enqueue_offline(int argc, char *argv[])
+{
+	char	 path[MAXPATHLEN];
+	FILE	*fp;
+	int	 i, fd, ch;
+
+	if (! bsnprintf(path, sizeof(path), "%s%s/%d,XXXXXXXXXX", PATH_SPOOL,
+		PATH_OFFLINE, time(NULL)))
+		err(1, "snprintf");
+
+	if ((fd = mkstemp(path)) == -1 || (fp = fdopen(fd, "w+")) == NULL) {
+		warn("cannot create temporary file %s", path);
+		if (fd != -1)
+			unlink(path);
+		exit(1);
+	}
+
+	for (i = 1; i < argc; i++) {
+		if (strchr(argv[i], '|') != NULL) {
+			warnx("%s contains illegal character", argv[i]);
+			unlink(path);
+			exit(1);
+		}
+		fprintf(fp, "%s%s", i == 1 ? "" : "|", argv[i]);
+	}
+
+	fprintf(fp, "\n");
+
+	while ((ch = fgetc(stdin)) != EOF)
+		if (fputc(ch, fp) == EOF) {
+			warn("write error");
+			unlink(path);
+			exit(1);
+		}
+
+	if (ferror(stdin)) {
+		warn("read error");
+		unlink(path);
+		exit(1);
+	}
+
+	fclose(fp);
+
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.41 2009/04/21 14:37:32 eric Exp $	*/
+/*	$OpenBSD: runner.c,v 1.42 2009/04/21 18:12:05 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -48,6 +48,7 @@
 
 __dead void	runner_shutdown(void);
 void		runner_sig_handler(int, short, void *);
+void		runner_dispatch_parent(int, short, void *);
 void	        runner_dispatch_control(int, short, void *);
 void	        runner_dispatch_queue(int, short, void *);
 void	        runner_dispatch_mda(int, short, void *);
@@ -57,6 +58,7 @@ void		runner_setup_events(struct smtpd *);
 void		runner_disable_events(struct smtpd *);
 
 void		runner_reset_flags(void);
+void		runner_process_offline(struct smtpd *);
 
 void		runner_timeout(int, short, void *);
 
@@ -92,6 +94,55 @@ runner_sig_handler(int sig, short event, void *p)
 	default:
 		fatalx("runner_sig_handler: unexpected signal");
 	}
+}
+
+void
+runner_dispatch_parent(int sig, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = env->sc_ibufs[PROC_PARENT];
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("runner_dispatch_parent: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_PARENT_ENQUEUE_OFFLINE:
+			runner_process_offline(env);
+			break;
+		default:
+			log_warnx("runner_dispatch_parent: got imsg %d",
+			    imsg.hdr.type);
+			fatalx("runner_dispatch_parent: unexpected imsg");
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(ibuf);
 }
 
 void
@@ -398,6 +449,7 @@ runner(struct smtpd *env)
 	struct event	 ev_sigterm;
 
 	struct peer peers[] = {
+		{ PROC_PARENT,	runner_dispatch_parent },
 		{ PROC_CONTROL,	runner_dispatch_control },
 		{ PROC_MDA,	runner_dispatch_mda },
 		{ PROC_MTA,	runner_dispatch_mta },
@@ -448,17 +500,34 @@ runner(struct smtpd *env)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	config_pipes(env, peers, 5);
-	config_peers(env, peers, 5);
+	config_pipes(env, peers, 6);
+	config_peers(env, peers, 6);
 
 	unlink(PATH_QUEUE "/envelope.tmp");
 	runner_reset_flags();
+	runner_process_offline(env);
 
 	runner_setup_events(env);
 	event_dispatch();
 	runner_shutdown();
 
 	return (0);
+}
+
+void
+runner_process_offline(struct smtpd *env)
+{
+	char		 path[MAXPATHLEN];
+	struct qwalk	*q;
+
+	q = qwalk_new(PATH_OFFLINE);
+
+	if (qwalk(q, path))
+		imsg_compose(env->sc_ibufs[PROC_PARENT],
+		    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1, path,
+		    strlen(path) + 1);
+
+	qwalk_close(q);
 }
 
 void
