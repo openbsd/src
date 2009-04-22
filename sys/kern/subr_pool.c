@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.78 2009/02/17 07:53:55 deraadt Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.79 2009/04/22 01:16:11 dlg Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -332,6 +332,11 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_serial = ++pool_serial;
 	if (pool_serial == 0)
 		panic("pool_init: too much uptime");
+
+        /* constructor, destructor, and arg */
+	pp->pr_ctor = NULL;
+	pp->pr_dtor = NULL;
+	pp->pr_arg = NULL;
 
 	/*
 	 * Decide whether to put the page header off page to avoid
