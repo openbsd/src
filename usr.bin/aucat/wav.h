@@ -1,4 +1,4 @@
-/*	$OpenBSD: wav.h,v 1.2 2009/04/11 10:24:21 jakemsr Exp $	*/
+/*	$OpenBSD: wav.h,v 1.3 2009/04/22 10:57:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -31,6 +31,7 @@ struct wav {
 	struct aparams hpar;	/* parameters to write on the header */
 	off_t rbytes;		/* bytes to read, -1 if no limit */
 	off_t wbytes;		/* bytes to write, -1 if no limit */
+	short *map;		/* mulaw/alaw -> s16 conversion table */
 };
 
 extern struct fileops wav_ops;
@@ -42,10 +43,14 @@ struct wav *wav_new_out(struct fileops *, int, char *,
 unsigned wav_read(struct file *, unsigned char *, unsigned);
 unsigned wav_write(struct file *, unsigned char *, unsigned);
 void wav_close(struct file *);
-int wav_readhdr(int, struct aparams *, off_t *, int *);
+int wav_readhdr(int, struct aparams *, off_t *, short **);
 int wav_writehdr(int, struct aparams *);
+void wav_conv(unsigned char *, unsigned, short *);
 
 /* legacy */
 int legacy_play(char *, char *);
+
+extern short wav_ulawmap[256];
+extern short wav_alawmap[256];
 
 #endif /* !defined(WAV_H) */

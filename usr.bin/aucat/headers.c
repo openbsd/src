@@ -1,4 +1,4 @@
-/*	$OpenBSD: headers.c,v 1.5 2009/04/11 10:24:21 jakemsr Exp $	*/
+/*	$OpenBSD: headers.c,v 1.6 2009/04/22 10:57:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -25,6 +25,14 @@
 
 #include "conf.h"
 #include "aparams.h"
+#include "wav.h"
+
+/*
+ * encoding IDs used in .wav headers
+ */
+#define WAV_ENC_PCM	1
+#define WAV_ENC_ALAW	6
+#define WAV_ENC_ULAW	7
 
 struct wavriff {
 	char magic[4];
@@ -52,7 +60,7 @@ char wav_id_data[4] = { 'd', 'a', 't', 'a' };
 char wav_id_fmt[4] = { 'f', 'm', 't', ' ' };
 
 int
-wav_readfmt(int fd, unsigned csize, struct aparams *par, int *renc)
+wav_readfmt(int fd, unsigned csize, struct aparams *par, short **map)
 {
 	struct wavfmt fmt;
 	unsigned nch, cmax, rate, bits, enc;
@@ -66,9 +74,18 @@ wav_readfmt(int fd, unsigned csize, struct aparams *par, int *renc)
 		return 0;
 	}
 	enc = letoh16(fmt.fmt);
-	if (renc == NULL && enc != 1) {
-		warnx("%u: only \"pcm\" encoding supported", enc);
-		return 0;
+	switch (enc) {
+	case WAV_ENC_PCM:
+		*map = NULL;
+		break;
+	case WAV_ENC_ALAW:
+		*map = wav_alawmap;
+		break;
+	case WAV_ENC_ULAW:
+		*map = wav_ulawmap;
+		break;
+	default:
+		errx(1, "%u: unsupported encoding in .wav file", enc);
 	}
 	nch = letoh16(fmt.nch);
 	if (nch == 0) {
@@ -90,15 +107,24 @@ wav_readfmt(int fd, unsigned csize, struct aparams *par, int *renc)
 		warnx("%u: bad number of bits", bits);
 		return 0;
 	}
-	par->bps = (bits + 7) / 8;
-	par->bits = bits;
-	par->le = 1;
-	par->sig = (bits <= 8) ? 0 : 1;	/* ask microsoft why... */
+	if (enc == WAV_ENC_PCM) {
+		par->bps = (bits + 7) / 8;
+		par->bits = bits;
+		par->le = 1;
+		par->sig = (bits <= 8) ? 0 : 1;	/* ask microsoft why... */
+	} else {
+		if (bits != 8) {
+			warnx("%u: mulaw/alaw encoding not 8-bit", bits);
+			return 0;
+		}
+		par->bits = 8 * sizeof(short);
+		par->bps = sizeof(short);
+		par->le = NATIVE_LE;
+		par->sig = 1;
+	}
 	par->msb = 1;
 	par->cmax = cmax;
 	par->rate = rate;
-	if (renc)
-		*renc = enc;
 #ifdef DEBUG
 	if (debug_level > 0) {
 		fprintf(stderr, "wav_readfmt: using ");
@@ -110,7 +136,7 @@ wav_readfmt(int fd, unsigned csize, struct aparams *par, int *renc)
 }
 
 int
-wav_readhdr(int fd, struct aparams *par, off_t *datasz, int *renc)
+wav_readhdr(int fd, struct aparams *par, off_t *datasz, short **map)
 {
 	struct wavriff riff;
 	struct wavchunk chunk;
@@ -138,7 +164,7 @@ wav_readhdr(int fd, struct aparams *par, off_t *datasz, int *renc)
 		}
 		csize = letoh32(chunk.size);
 		if (memcmp(chunk.id, wav_id_fmt, 4) == 0) {
-			if (!wav_readfmt(fd, csize, par, renc))
+			if (!wav_readfmt(fd, csize, par, map))
 				return 0;
 			fmt_done = 1;
 		} else if (memcmp(chunk.id, wav_id_data, 4) == 0) {
