@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.433 2009/04/21 16:11:51 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.434 2009/04/22 13:32:25 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 21 2009 $
+.Dd $Mdocdate: April 22 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1818,11 +1818,11 @@ For
 .Ar nat
 and
 .Ar rdr
-rules, (as well as for the
-.Ar route-to ,
-.Ar reply-to
+rules (as well as for the
+.Ar dup-to ,
+.Ar reply-to ,
 and
-.Ar dup-to
+.Ar route-to
 rule options) for which there is a single redirection address which has a
 subnet mask smaller than 32 for IPv4 or 128 for IPv6 (more than one IP
 address), a variety of different methods for assigning this address can be
@@ -1836,25 +1836,39 @@ to be modified (source with
 .Ar nat ,
 destination with
 .Ar rdr ) .
-.It Ar random
+.It Ar random Op Ar sticky-address
 The
 .Ar random
 option selects an address at random within the defined block of addresses.
-.It Ar round-robin
+.Pp
+.Ar sticky-address
+can be specified to ensure that multiple connections from the
+same source are mapped to the same redirection address.
+Associations are destroyed as soon as there are
+no longer states which refer to them;
+in order to make the mappings last
+beyond the lifetime of the states,
+increase the global options with
+.Ar set timeout src.track .
+.It Ar round-robin Op Ar sticky-address
 The
 .Ar round-robin
 option loops through the redirection address(es).
+.Ar sticky-address
+is as described above.
 .Pp
 When more than one redirection address is specified,
 .Ar round-robin
 is the only permitted pool type.
-.It Ar source-hash
+.It Ar source-hash Op Ar key
 The
 .Ar source-hash
 option uses a hash of the source address to determine the redirection address,
 ensuring that the redirection address is always the same for a given source.
-An optional key can be specified after this keyword either in hex or as a
-string; by default
+An optional
+.Ar key
+can be specified after this keyword either in hex or as a string;
+by default
 .Xr pfctl 8
 randomly generates a key for source-hash every time the
 ruleset is reloaded.
@@ -1867,23 +1881,6 @@ option prevents
 .Xr pf 4
 from modifying the source port on TCP and UDP packets.
 .El
-.Pp
-Additionally, the
-.Ar sticky-address
-option can be specified to help ensure that multiple connections from the
-same source are mapped to the same redirection address.
-This option can be used with the
-.Ar random
-and
-.Ar round-robin
-pool options.
-Note that by default these associations are destroyed as soon as there are
-no longer states which refer to them; in order to make the mappings last
-beyond the lifetime of the states, increase the global options with
-.Ar set timeout src.track .
-See
-.Sx STATEFUL TRACKING OPTIONS
-for more ways to control the source tracking.
 .Sh STATE MODULATION
 Much of the security derived from TCP is attributable to how well the
 initial sequence numbers (ISNs) are chosen.
@@ -1911,7 +1908,7 @@ pass in  proto tcp from any to any port 25 flags S/SFRA \e
 .Ed
 .Pp
 Note that modulated connections will not recover when the state table
-is lost (firewall reboot, flushing the state table, etc...).
+is lost (firewall reboot, flushing the state table, etc.).
 .Xr pf 4
 will not be able to infer a connection again after the state table flushes
 the connection's modulator.
@@ -1937,8 +1934,7 @@ for further information.
 By default,
 .Xr pf 4
 passes packets that are part of a
-.Xr tcp 4
-handshake between the endpoints.
+TCP handshake between the endpoints.
 The
 .Ar synproxy state
 option can be used to cause
@@ -1951,7 +1947,7 @@ completed the handshake, hence so-called SYN floods with spoofed source
 addresses will not reach the passive endpoint, as the sender can't complete the
 handshake.
 .Pp
-The proxy is transparent to both endpoints, they each see a single
+The proxy is transparent to both endpoints; they each see a single
 connection from/to the other endpoint.
 .Xr pf 4
 chooses random initial sequence numbers for both handshakes.
@@ -1977,7 +1973,7 @@ pass in proto tcp from any to any port www synproxy state
 A number of options related to stateful tracking can be applied on a
 per-rule basis.
 .Ar keep state ,
-.Ar modulate state
+.Ar modulate state ,
 and
 .Ar synproxy state
 support these options, and
@@ -2003,7 +1999,10 @@ numbers at all, which makes insertion and ICMP teardown attacks way
 easier.
 This is intended to be used in situations where one does not see all
 packets of a connection, e.g. in asymmetric routing situations.
-Cannot be used with modulate or synproxy state.
+It cannot be used with
+.Ar modulate
+or
+.Ar synproxy state .
 .It Xo Aq Ar timeout
 .Aq Ar seconds
 .Xc
@@ -2103,7 +2102,7 @@ pass in on $ext_if proto tcp to $webserver port www keep state \e
       (max-src-conn-rate 100/10, overload \*(Ltbad_hosts\*(Gt flush global)
 .Ed
 .Sh OPERATING SYSTEM FINGERPRINTING
-Passive OS Fingerprinting is a mechanism to inspect nuances of a TCP
+Passive OS fingerprinting is a mechanism to inspect nuances of a TCP
 connection's initial SYN packet and guess at the host's operating system.
 Unfortunately these nuances are easily spoofed by an attacker so the
 fingerprint is not useful in making security decisions.
@@ -2121,7 +2120,7 @@ firewall itself.
 The version of the oldest available
 .Ox
 release on the main FTP site
-would be 2.6 and the fingerprint would be written
+would be 2.6 and the fingerprint would be written as:
 .Pp
 .Dl \&"OpenBSD 2.6\&"
 .Pp
@@ -2132,7 +2131,7 @@ In the case of
 the only subtype is for a fingerprint that was
 normalized by the
 .Ar no-df
-scrub option and would be specified as
+scrub option and would be specified as:
 .Pp
 .Dl \&"OpenBSD 3.3 no-df\&"
 .Pp
@@ -2185,13 +2184,13 @@ traffic with a source IP from the network(s) directly connected
 to the specified interface(s) from entering the system through
 any other interface.
 .Pp
-For example, the line
-.Bd -literal -offset indent
+For example:
+.Bd -literal -offset indent -compact
 antispoof for lo0
 .Ed
 .Pp
-expands to
-.Bd -literal -offset indent
+Expands to:
+.Bd -literal -offset indent -compact
 block drop in on ! lo0 inet from 127.0.0.1/8 to any
 block drop in on ! lo0 inet6 from ::1 to any
 .Ed
@@ -2199,14 +2198,13 @@ block drop in on ! lo0 inet6 from ::1 to any
 For non-loopback interfaces, there are additional rules to block incoming
 packets with a source IP address identical to the interface's IP(s).
 For example, assuming the interface wi0 had an IP address of 10.0.0.1 and a
-netmask of 255.255.255.0,
-the line
+netmask of 255.255.255.0:
 .Bd -literal -offset indent
 antispoof for wi0 inet
 .Ed
 .Pp
-expands to
-.Bd -literal -offset indent
+Expands to:
+.Bd -literal -offset indent -compact
 block drop in on ! wi0 inet from 10.0.0.0/24 to any
 block drop in inet from 10.0.0.1 to any
 .Ed
@@ -2242,23 +2240,22 @@ fragments, but not complete packets.
 Filter rules without the
 .Ar fragment
 option still apply to fragments, if they only specify IP header fields.
-For instance, the rule
+For instance:
 .Bd -literal -offset indent
 pass in proto tcp from any to any port 80
 .Ed
 .Pp
-never applies to a fragment, even if the fragment is part of a TCP
-packet with destination port 80, because without reassembly this information
+The rule above never applies to a fragment,
+even if the fragment is part of a TCP packet with destination port 80,
+because without reassembly this information
 is not available for each fragment.
 This also means that fragments cannot create new or match existing
 state table entries, which makes stateful filtering and address
 translation (NAT, redirection) for fragments impossible.
 .Pp
 In most cases, the benefits of reassembly outweigh the additional
-memory cost, and it's recommended to use
-.Ar set reassemble
-to reassemble
-all fragments.
+memory cost,
+so reassembly is on by default.
 .Pp
 The memory allocated for fragment caching can be limited using
 .Xr pfctl 8 .
@@ -2297,30 +2294,24 @@ using the following kinds
 of rules:
 .Bl -tag -width xxxx
 .It Ar anchor Aq Ar name
-Evaluates the filter rules in the specified
-.Ar anchor .
+Evaluates the filter rules in the specified anchor.
 .It Ar binat-anchor Aq Ar name
 Evaluates the
 .Ar binat
-rules in the specified
-.Ar anchor .
+rules in the specified anchor.
 .It Xo Ar load anchor
 .Aq Ar name
 .Ar from Aq Ar file
 .Xc
-Loads the rules from the specified file into the
-anchor
-.Ar name .
+Loads the rules from the specified file into the specified anchor.
 .It Ar nat-anchor Aq Ar name
 Evaluates the
 .Ar nat
-rules in the specified
-.Ar anchor .
+rules in the specified anchor.
 .It Ar rdr-anchor Aq Ar name
 Evaluates the
 .Ar rdr
-rules in the specified
-.Ar anchor .
+rules in the specified anchor.
 .El
 .Pp
 When evaluation of the main ruleset reaches an
@@ -2343,12 +2334,10 @@ matched by any rule within the anchor.
 .Pp
 .Ar anchor
 rules are evaluated relative to the anchor in which they are contained.
-For example, all
-.Ar anchor
+For example, all anchor
 rules specified in the main ruleset will reference anchor
-attachment points underneath the main ruleset, and
-.Ar anchor
-rules specified in a file loaded from a
+attachment points underneath the main ruleset,
+and anchor rules specified in a file loaded from a
 .Ar load anchor
 rule will be attached under that anchor point.
 .Pp
@@ -2358,7 +2347,11 @@ attachment points which do not contain any rules when the main ruleset
 is loaded, and later such anchors can be manipulated through
 .Xr pfctl 8
 without reloading the main ruleset or other anchors.
-For example,
+.Pp
+The following example blocks all packets on the external interface by default,
+then evaluates all rules in the anchor named "spam",
+and finally passes all outgoing connections and
+incoming connections to port 25:
 .Bd -literal -offset indent
 ext_if = \&"kue0\&"
 block on $ext_if all
@@ -2367,24 +2360,15 @@ pass out on $ext_if all
 pass in on $ext_if proto tcp from any to $ext_if port smtp
 .Ed
 .Pp
-blocks all packets on the external interface by default, then evaluates
-all rules in the
-.Ar anchor
-named "spam", and finally passes all outgoing connections and
-incoming connections to port 25.
+This loads a single rule into the anchor,
+which blocks all packets from a specific address:
 .Bd -literal -offset indent
 # echo \&"block in quick from 1.2.3.4 to any\&" \&| pfctl -a spam -f -
 .Ed
 .Pp
-This loads a single rule into the
-.Ar anchor ,
-which blocks all packets from a specific address.
-.Pp
 The anchor can also be populated by adding a
 .Ar load anchor
-rule after the
-.Ar anchor
-rule:
+rule after the anchor rule:
 .Bd -literal -offset indent
 anchor spam
 load anchor spam from "/etc/pf-spam.conf"
@@ -2399,12 +2383,10 @@ it will also load all the rules from the file
 into the anchor.
 .Pp
 Optionally,
-.Ar anchor
-rules can specify packet filtering parameters using the same syntax as
-filter rules.
-When parameters are used, the
-.Ar anchor
-rule is only evaluated for matching packets.
+anchor rules can specify packet filtering parameters
+using the same syntax as filter rules.
+When parameters are used,
+the anchor rule is only evaluated for matching packets.
 This allows conditional evaluation of anchors, like:
 .Bd -literal -offset indent
 block on $ext_if all
@@ -2413,33 +2395,27 @@ pass out on $ext_if all
 pass in on $ext_if proto tcp from any to $ext_if port smtp
 .Ed
 .Pp
-The rules inside
-.Ar anchor
-spam are only evaluated for
-.Ar tcp
-packets with destination port 25.
-Hence,
+The rules inside anchor "spam" are only evaluated
+for TCP packets with destination port 25.
+Hence, the following
+will only block connections from 1.2.3.4 to port 25:
 .Bd -literal -offset indent
 # echo \&"block in quick from 1.2.3.4 to any" \&| pfctl -a spam -f -
 .Ed
-.Pp
-will only block connections from 1.2.3.4 to port 25.
 .Pp
 Anchors may end with the asterisk
 .Pq Sq *
 character, which signifies that all anchors attached at that point
 should be evaluated in the alphabetical ordering of their anchor name.
 For example,
+the following
+will evaluate each rule in each anchor attached to the "spam" anchor:
 .Bd -literal -offset indent
 anchor "spam/*"
 .Ed
 .Pp
-will evaluate each rule in each anchor attached to the
-.Li spam
-anchor.
 Note that it will only evaluate anchors that are directly attached to the
-.Li spam
-anchor, and will not descend to evaluate anchors recursively.
+"spam" anchor, and will not descend to evaluate anchors recursively.
 .Pp
 Since anchors are evaluated relative to the anchor in which they are
 contained, there is a mechanism for accessing the parent and ancestor
@@ -2457,17 +2433,13 @@ As an example, consider the following:
 .Ed
 .Pp
 Evaluation of the main ruleset will lead into the
-.Li spam/allowed
-anchor, which will evaluate the rules in the
-.Li spam/banned
-anchor, if any, before finally evaluating the
+spam/allowed anchor, which will evaluate the rules in the
+spam/banned anchor, if any, before finally evaluating the
 .Ar pass
 rule.
 .Pp
-Filter rule
-.Ar anchors
-can also be loaded inline in the ruleset within a brace ('{' '}') delimited
-block.
+Filter rule anchors can also be loaded inline in the ruleset
+within a brace ('{' '}') delimited block.
 Brace delimited blocks may contain rules or other brace-delimited blocks.
 When anchors are loaded this way the anchor name becomes optional.
 .Bd -literal -offset indent
@@ -2918,25 +2890,12 @@ Protocol name database.
 Service name database.
 .El
 .Sh SEE ALSO
-.Xr carp 4 ,
-.Xr icmp 4 ,
-.Xr icmp6 4 ,
-.Xr ip 4 ,
-.Xr ip6 4 ,
 .Xr pf 4 ,
 .Xr pflow 4 ,
 .Xr pfsync 4 ,
-.Xr route 4 ,
-.Xr tcp 4 ,
-.Xr udp 4 ,
-.Xr hosts 5 ,
 .Xr pf.os 5 ,
-.Xr protocols 5 ,
-.Xr services 5 ,
-.Xr ftp-proxy 8 ,
 .Xr pfctl 8 ,
-.Xr pflogd 8 ,
-.Xr route 8
+.Xr pflogd 8
 .Sh HISTORY
 The
 .Nm
