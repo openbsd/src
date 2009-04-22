@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.76 2009/04/20 12:24:52 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.77 2009/04/22 00:38:04 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -400,6 +400,10 @@ int	bnx_intr(void *);
 void	bnx_set_rx_mode(struct bnx_softc *);
 void	bnx_stats_update(struct bnx_softc *);
 void	bnx_tick(void *);
+
+struct rwlock bnx_tx_pool_lk = RWLOCK_INITIALIZER("bnxplinit");
+struct pool *bnx_tx_pool = NULL;
+void	bnx_alloc_pkts(void *, void *);
 
 /****************************************************************************/
 /* OpenBSD device dispatch table.                                           */
@@ -2134,13 +2138,8 @@ bnx_dma_free(struct bnx_softc *sc)
 		}
 	}
 
-	/* Unload and destroy the TX mbuf maps. */
-	for (i = 0; i < TOTAL_TX_BD; i++) {
-		if (sc->tx_mbuf_map[i] != NULL) {
-			bus_dmamap_unload(sc->bnx_dmatag, sc->tx_mbuf_map[i]);
-			bus_dmamap_destroy(sc->bnx_dmatag, sc->tx_mbuf_map[i]);
-		}
-	}
+	/* Destroy the TX dmamaps. */
+	/* This isn't necessary since we dont allocate them up front */
 
 	/* Free, unmap and destroy all RX buffer descriptor chain pages. */
 	for (i = 0; i < RX_PAGES; i++ ) {
@@ -2314,17 +2313,12 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	}
 
 	/*
-	 * Create DMA maps for the TX buffer mbufs.
+	 * Create lists to hold TX mbufs.
 	 */
-	for (i = 0; i < TOTAL_TX_BD; i++) {
-		if (bus_dmamap_create(sc->bnx_dmatag,
-		    MCLBYTES * BNX_MAX_SEGMENTS, USABLE_TX_BD,
-		    MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->tx_mbuf_map[i])) {
-			printf(": Could not create Tx mbuf %d DMA map!\n", i);
-			rc = ENOMEM;
-			goto bnx_dma_alloc_exit;
-		}
-	}
+	TAILQ_INIT(&sc->tx_free_pkts);
+	TAILQ_INIT(&sc->tx_used_pkts);
+	sc->tx_pkt_count = 0;
+	mtx_init(&sc->tx_pkt_mtx, IPL_NET);
 
 	/*
 	 * Allocate DMA memory for the Rx buffer descriptor chain,
@@ -3360,6 +3354,52 @@ bnx_get_buf(struct bnx_softc *sc, u_int16_t *prod,
 	return (0);
 }
 
+void
+bnx_alloc_pkts(void *xsc, void *arg)
+{
+	struct bnx_softc *sc = xsc;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct bnx_pkt *pkt;
+	int i;
+	int s;
+
+	for (i = 0; i < 4; i++) { /* magic! */
+		pkt = pool_get(bnx_tx_pool, PR_WAITOK);
+		if (pkt == NULL)
+			break;
+
+		if (bus_dmamap_create(sc->bnx_dmatag,
+		    MCLBYTES * BNX_MAX_SEGMENTS, USABLE_TX_BD,
+		    MCLBYTES, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    &pkt->pkt_dmamap) != 0)
+			goto put;
+
+		if (!ISSET(ifp->if_flags, IFF_UP))
+			goto stopping;
+
+		mtx_enter(&sc->tx_pkt_mtx);
+		TAILQ_INSERT_TAIL(&sc->tx_free_pkts, pkt, pkt_entry);
+		sc->tx_pkt_count++;
+		mtx_leave(&sc->tx_pkt_mtx);
+	}
+
+	mtx_enter(&sc->tx_pkt_mtx);
+	CLR(sc->bnx_flags, BNX_ALLOC_PKTS_FLAG);
+	mtx_leave(&sc->tx_pkt_mtx);
+
+	s = splnet();
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+		bnx_start(ifp);
+	splx(s);
+
+	return;
+
+stopping:
+	bus_dmamap_destroy(sc->bnx_dmatag, pkt->pkt_dmamap);
+put:
+	pool_put(bnx_tx_pool, pkt);
+}
+
 /****************************************************************************/
 /* Allocate memory and initialize the TX data structures.                   */
 /*                                                                          */
@@ -3374,6 +3414,9 @@ bnx_init_tx_chain(struct bnx_softc *sc)
 	int			i, rc = 0;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
+
+	/* Force an allocation of some dmamaps for tx up front */
+	bnx_alloc_pkts(sc, NULL);
 
 	/* Set the initial TX producer/consumer indices. */
 	sc->tx_prod = 0;
@@ -3444,26 +3487,39 @@ bnx_init_tx_chain(struct bnx_softc *sc)
 void
 bnx_free_tx_chain(struct bnx_softc *sc)
 {
+	struct bnx_pkt		*pkt;
 	int			i;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
 	/* Unmap, unload, and free any mbufs still in the TX mbuf chain. */
-	for (i = 0; i < TOTAL_TX_BD; i++) {
-		if (sc->tx_mbuf_ptr[i] != NULL) {
-			if (sc->tx_mbuf_map[i] != NULL) {
-				bus_dmamap_sync(sc->bnx_dmatag,
-				    sc->tx_mbuf_map[i], 0,
-				    sc->tx_mbuf_map[i]->dm_mapsize,
-				    BUS_DMASYNC_POSTWRITE);
-				bus_dmamap_unload(sc->bnx_dmatag,
-				    sc->tx_mbuf_map[i]);
-			}
-			m_freem(sc->tx_mbuf_ptr[i]);
-			sc->tx_mbuf_ptr[i] = NULL;
-			DBRUNIF(1, sc->tx_mbuf_alloc--);
-		}			
+	mtx_enter(&sc->tx_pkt_mtx);
+	while ((pkt = TAILQ_FIRST(&sc->tx_used_pkts)) != NULL) {
+		TAILQ_REMOVE(&sc->tx_used_pkts, pkt, pkt_entry);
+		mtx_leave(&sc->tx_pkt_mtx);
+
+		bus_dmamap_sync(sc->bnx_dmatag, pkt->pkt_dmamap, 0,
+		    pkt->pkt_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->bnx_dmatag, pkt->pkt_dmamap);
+
+		m_freem(pkt->pkt_mbuf);
+
+		mtx_enter(&sc->tx_pkt_mtx);
+		TAILQ_INSERT_TAIL(&sc->tx_free_pkts, pkt, pkt_entry);
 	}
+
+	/* Destroy all the dmamaps we allocated for TX */
+	while ((pkt = TAILQ_FIRST(&sc->tx_free_pkts)) != NULL) {
+		TAILQ_REMOVE(&sc->tx_free_pkts, pkt, pkt_entry);
+		sc->tx_pkt_count--;
+		mtx_leave(&sc->tx_pkt_mtx);
+
+		bus_dmamap_destroy(sc->bnx_dmatag, pkt->pkt_dmamap);
+		pool_put(bnx_tx_pool, pkt);
+
+		mtx_enter(&sc->tx_pkt_mtx);
+	}
+	mtx_leave(&sc->tx_pkt_mtx);
 
 	/* Clear each TX chain page. */
 	for (i = 0; i < TX_PAGES; i++)
@@ -4046,6 +4102,8 @@ bnx_tx_intr(struct bnx_softc *sc)
 {
 	struct status_block	*sblk = sc->status_block;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
+	struct bnx_pkt		*pkt;
+	bus_dmamap_t		map;
 	u_int16_t		hw_tx_cons, sw_tx_cons, sw_tx_chain_cons;
 
 	DBRUNIF(1, sc->tx_interrupts++);
@@ -4090,34 +4148,29 @@ bnx_tx_intr(struct bnx_softc *sc)
 		DBRUN(BNX_INFO_SEND, printf("%s: ", __FUNCTION__);
 		    bnx_dump_txbd(sc, sw_tx_chain_cons, txbd));
 
-		/*
-		 * Free the associated mbuf. Remember
-		 * that only the last tx_bd of a packet
-		 * has an mbuf pointer and DMA map.
-		 */
-		if (sc->tx_mbuf_ptr[sw_tx_chain_cons] != NULL) {
-			/* Validate that this is the last tx_bd. */
-			DBRUNIF((!(txbd->tx_bd_flags & TX_BD_FLAGS_END)),
-			    printf("%s: tx_bd END flag not set but "
-			    "txmbuf == NULL!\n");
-			    bnx_breakpoint(sc));
+		mtx_enter(&sc->tx_pkt_mtx);
+		pkt = TAILQ_FIRST(&sc->tx_used_pkts);
+		if (pkt != NULL && pkt->pkt_end_desc == sw_tx_chain_cons) {
+			TAILQ_REMOVE(&sc->tx_used_pkts, pkt, pkt_entry);
+			mtx_leave(&sc->tx_pkt_mtx);
+			/*
+			 * Free the associated mbuf. Remember
+			 * that only the last tx_bd of a packet
+			 * has an mbuf pointer and DMA map.
+			 */
+			map = pkt->pkt_dmamap;
+			bus_dmamap_sync(sc->bnx_dmatag, map, 0,
+			    map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->bnx_dmatag, map);
 
-			DBRUN(BNX_INFO_SEND,
-			    printf("%s: Unloading map/freeing mbuf "
-			    "from tx_bd[0x%04X]\n",
-			    __FUNCTION__, sw_tx_chain_cons));
-
-			/* Unmap the mbuf. */
-			bus_dmamap_unload(sc->bnx_dmatag,
-			    sc->tx_mbuf_map[sw_tx_chain_cons]);
-	
-			/* Free the mbuf. */
-			m_freem(sc->tx_mbuf_ptr[sw_tx_chain_cons]);
-			sc->tx_mbuf_ptr[sw_tx_chain_cons] = NULL;
-			DBRUNIF(1, sc->tx_mbuf_alloc--);
+			m_freem(pkt->pkt_mbuf);
 
 			ifp->if_opackets++;
+
+			mtx_enter(&sc->tx_pkt_mtx);
+			TAILQ_INSERT_TAIL(&sc->tx_free_pkts, pkt, pkt_entry);
 		}
+		mtx_leave(&sc->tx_pkt_mtx);
 
 		sc->used_tx_bd--;
 		sw_tx_cons = NEXT_TX_BD(sw_tx_cons);
@@ -4197,9 +4250,26 @@ bnx_init(void *xsc)
 	struct bnx_softc	*sc = (struct bnx_softc *)xsc;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	u_int32_t		ether_mtu;
+	int			txpl = 1;
 	int			s;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
+
+	if (rw_enter(&bnx_tx_pool_lk, RW_WRITE | RW_INTR) != 0)
+		return;
+	if (bnx_tx_pool == NULL) {
+		bnx_tx_pool = malloc(sizeof(*bnx_tx_pool), M_DEVBUF,
+		    M_WAITOK | M_ZERO);
+		if (bnx_tx_pool != NULL) {
+			pool_init(bnx_tx_pool, sizeof(struct bnx_pkt),
+			    0, 0, 0, "bnxpkts", &pool_allocator_nointr);
+		} else
+			txpl = 0;
+	}
+	rw_exit(&bnx_tx_pool_lk);
+
+	if (!txpl)
+		return;
 
 	s = splnet();
 
@@ -4311,15 +4381,30 @@ bnx_mgmt_init_exit:
 int
 bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 {
+	struct bnx_pkt		*pkt;
 	bus_dmamap_t		map;
 	struct tx_bd 		*txbd = NULL;
 	u_int16_t		vlan_tag = 0, flags = 0;
-	u_int16_t		chain_prod, chain_head, prod;
+	u_int16_t		chain_prod, prod;
 #ifdef BNX_DEBUG
 	u_int16_t		debug_prod;
 #endif
 	u_int32_t		addr, prod_bseq;
 	int			i, error;
+
+	mtx_enter(&sc->tx_pkt_mtx);
+	pkt = TAILQ_FIRST(&sc->tx_free_pkts);
+	if (pkt == NULL) {
+		if (sc->tx_pkt_count <= TOTAL_TX_BD &&
+		    !ISSET(sc->bnx_flags, BNX_ALLOC_PKTS_FLAG) &&
+		    workq_add_task(NULL, 0, bnx_alloc_pkts, sc, NULL) == 0)
+			SET(sc->bnx_flags, BNX_ALLOC_PKTS_FLAG);
+
+		mtx_leave(&sc->tx_pkt_mtx);
+		return (ENOMEM);
+	}
+	TAILQ_REMOVE(&sc->tx_free_pkts, pkt, pkt_entry);
+	mtx_leave(&sc->tx_pkt_mtx);
 
 	/* Transfer any checksum offload flags to the bd. */
 	if (m->m_pkthdr.csum_flags) {
@@ -4340,23 +4425,22 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 
 	/* Map the mbuf into DMAable memory. */
 	prod = sc->tx_prod;
-	chain_head = chain_prod = TX_CHAIN_IDX(prod);
-	map = sc->tx_mbuf_map[chain_head];
+	chain_prod = TX_CHAIN_IDX(prod);
+	map = pkt->pkt_dmamap;
 
 	/* Map the mbuf into our DMA address space. */
-	error = bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m, BUS_DMA_NOWAIT);
+	error = bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m,
+	    BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: Error mapping mbuf into TX chain!\n",
 		    sc->bnx_dev.dv_xname);
 		sc->tx_dma_map_failures++;
-		return (error);
+		goto maperr;
 	}
 
 	/* Make sure there's room in the chain */
-	if (map->dm_nsegs > (sc->max_tx_bd - sc->used_tx_bd)) {
-		bus_dmamap_unload(sc->bnx_dmatag, map);
-		return (ENOBUFS);
-	}
+	if (map->dm_nsegs > (sc->max_tx_bd - sc->used_tx_bd))
+		goto nospace;
 
 	/* prod points to an empty tx_bd at this point. */
 	prod_bseq = sc->tx_prod_bseq;
@@ -4391,7 +4475,7 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 			txbd->tx_bd_flags |= htole16(TX_BD_FLAGS_START);
 		prod = NEXT_TX_BD(prod);
  	}
- 
+
 	/* Set the END flag on the last TX buffer descriptor. */
 	txbd->tx_bd_flags |= htole16(TX_BD_FLAGS_END);
 
@@ -4403,18 +4487,13 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 		"prod_bseq = 0x%08X\n",
 		__FUNCTION__, prod, chain_prod, prod_bseq);
 
-	/*
-	 * Ensure that the mbuf pointer for this
-	 * transmission is placed at the array
-	 * index of the last descriptor in this
-	 * chain.  This is done because a single
-	 * map is used for all segments of the mbuf
-	 * and we don't want to unload the map before
-	 * all of the segments have been freed.
-	 */
-	sc->tx_mbuf_map[chain_head] = sc->tx_mbuf_map[chain_prod];
-	sc->tx_mbuf_map[chain_prod] = map;
-	sc->tx_mbuf_ptr[chain_prod] = m;
+	pkt->pkt_mbuf = m;
+	pkt->pkt_end_desc = chain_prod;
+	
+	mtx_enter(&sc->tx_pkt_mtx);
+	TAILQ_INSERT_TAIL(&sc->tx_used_pkts, pkt, pkt_entry);
+	mtx_leave(&sc->tx_pkt_mtx);
+
 	sc->used_tx_bd += map->dm_nsegs;
 
 	/* Update some debug statistics counters */
@@ -4434,6 +4513,15 @@ bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m)
 	sc->tx_prod_bseq = prod_bseq;
 
 	return (0);
+
+nospace:
+	bus_dmamap_unload(sc->bnx_dmatag, map);
+maperr:
+	mtx_enter(&sc->tx_pkt_mtx);
+	TAILQ_INSERT_TAIL(&sc->tx_free_pkts, pkt, pkt_entry);
+	mtx_leave(&sc->tx_pkt_mtx);
+
+	return (ENOMEM);
 }
 
 /****************************************************************************/

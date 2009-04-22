@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.27 2009/04/21 06:56:38 dlg Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.28 2009/04/22 00:38:04 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -47,6 +47,9 @@
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/timeout.h>
+#include <sys/pool.h>
+#include <sys/rwlock.h>
+#include <sys/workq.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -4587,8 +4590,16 @@ struct fw_info {
 #define BNX_TX_CHAIN_PAGE_SZ	BCM_PAGE_SIZE
 #define BNX_RX_CHAIN_PAGE_SZ	BCM_PAGE_SIZE
 
-struct bnx_softc
-{
+struct bnx_pkt {
+	TAILQ_ENTRY(bnx_pkt)	 pkt_entry;
+	bus_dmamap_t		 pkt_dmamap;
+	struct mbuf		*pkt_mbuf;
+	u_int16_t		 pkt_end_desc;
+};
+
+TAILQ_HEAD(bnx_pkt_list, bnx_pkt);
+
+struct bnx_softc {
 	struct device		bnx_dev;	/* Parent device handle */
 	struct arpcom		arpcom;
 
@@ -4616,6 +4627,7 @@ struct bnx_softc
 #define BNX_USING_MSI_FLAG 		0x20
 #define BNX_MFW_ENABLE_FLAG		0x40
 #define BNX_ACTIVE_FLAG			0x80
+#define BNX_ALLOC_PKTS_FLAG		0x100
 
 	/* PHY specific flags. */
 	u_int32_t		bnx_phy_flags;
@@ -4744,8 +4756,10 @@ struct bnx_softc
 	int			tx_mbuf_rseg;
 
 	/* S/W maintained mbuf TX chain structure. */
-	bus_dmamap_t		tx_mbuf_map[TOTAL_TX_BD];
-	struct mbuf		*tx_mbuf_ptr[TOTAL_TX_BD];
+	struct mutex		tx_pkt_mtx;
+	u_int			tx_pkt_count;
+	struct bnx_pkt_list	tx_free_pkts;
+	struct bnx_pkt_list	tx_used_pkts;
 
 	/* S/W maintained mbuf RX chain structure. */
 	bus_dmamap_t		rx_mbuf_map[TOTAL_RX_BD];
