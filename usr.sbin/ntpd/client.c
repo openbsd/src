@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.84 2009/03/04 19:17:36 stevesk Exp $ */
+/*	$OpenBSD: client.c,v 1.85 2009/04/22 07:42:17 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -255,6 +255,16 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	T1 = p->query->xmttime;
 	T2 = lfp_to_d(msg.rectime);
 	T3 = lfp_to_d(msg.xmttime);
+
+	/*
+	 * XXX workaround: time_t / tv_sec must never wrap.
+	 * around 2020 we will need a solution (64bit time_t / tv_sec).
+	 * consider every answer with a timestamp beyond january 2030 bogus.
+	 */
+	if (T2 > JAN_2030 || T3 > JAN_2030) {
+		set_next(p, error_interval());
+		return (0);
+	}
 
 	p->reply[p->shift].offset = ((T2 - T1) + (T3 - T4)) / 2;
 	p->reply[p->shift].delay = (T4 - T1) - (T3 - T2);
