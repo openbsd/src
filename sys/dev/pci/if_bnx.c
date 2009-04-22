@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.77 2009/04/22 00:38:04 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.78 2009/04/22 01:17:26 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -4258,8 +4258,7 @@ bnx_init(void *xsc)
 	if (rw_enter(&bnx_tx_pool_lk, RW_WRITE | RW_INTR) != 0)
 		return;
 	if (bnx_tx_pool == NULL) {
-		bnx_tx_pool = malloc(sizeof(*bnx_tx_pool), M_DEVBUF,
-		    M_WAITOK | M_ZERO);
+		bnx_tx_pool = malloc(sizeof(*bnx_tx_pool), M_DEVBUF, M_WAITOK);
 		if (bnx_tx_pool != NULL) {
 			pool_init(bnx_tx_pool, sizeof(struct bnx_pkt),
 			    0, 0, 0, "bnxpkts", &pool_allocator_nointr);
