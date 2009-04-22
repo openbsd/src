@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.29 2009/04/01 19:51:10 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.30 2009/04/22 20:45:57 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -49,9 +49,14 @@ struct ppb_softc {
 	pcitag_t sc_tag;		/* ...and tag. */
 	pci_intr_handle_t sc_ih[4];
 	void *sc_intrhand;
+	struct extent *sc_ioex;
+	struct extent *sc_memex;
 	struct device *sc_psc;
 	int sc_cap_off;
 	struct timeout sc_to;
+
+	bus_addr_t sc_iobase, sc_iolimit;
+	bus_addr_t sc_membase, sc_memlimit;
 };
 
 int	ppbmatch(struct device *, void *, void *);
@@ -107,7 +112,8 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct pcibus_attach_args pba;
 	pci_intr_handle_t ih;
-	pcireg_t busdata, reg;
+	pcireg_t busdata, reg, blr;
+	char *name;
 	int pin;
 
 	sc->sc_pc = pc;
@@ -161,6 +167,37 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		pci_intr_map(pa, &sc->sc_ih[pin - PCI_INTERRUPT_PIN_A]);
 	}
 
+	/* Figure out the I/O address range of the bridge. */
+	blr = pci_conf_read(pc, pa->pa_tag, PPB_REG_IOSTATUS);
+	sc->sc_iobase = (blr & 0x000000f0) << 8;
+	sc->sc_iolimit = (blr & 0x000f000) | 0x00000fff;
+	if (sc->sc_iolimit > sc->sc_iobase) {
+		name = malloc(32, M_DEVBUF, M_NOWAIT);
+		if (name) {
+			snprintf(name, 32, "%s pciio", sc->sc_dev.dv_xname);
+			sc->sc_ioex = extent_create(name, 0, 0xffff,
+			    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
+			extent_free(sc->sc_ioex, sc->sc_iobase,
+			    sc->sc_iolimit - sc->sc_iobase + 1, EX_NOWAIT);
+		}
+	}
+
+	/* Figure out the memory mapped I/O address range of the bridge. */
+	blr = pci_conf_read(pc, pa->pa_tag, PPB_REG_MEM);
+	sc->sc_membase = (blr & 0x0000fff0) << 16;
+	sc->sc_memlimit = (blr & 0xfff00000) | 0x000fffff;
+	if (sc->sc_memlimit > sc->sc_membase) {
+		name = malloc(32, M_DEVBUF, M_NOWAIT);
+		if (name) {
+			snprintf(name, 32, "%s pcimem", sc->sc_dev.dv_xname);
+			sc->sc_memex = extent_create(name, 0, 0xffffffff,
+			    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
+			extent_free(sc->sc_memex, sc->sc_membase,
+			    sc->sc_memlimit - sc->sc_membase + 1,
+			    EX_NOWAIT);
+		}
+	}
+
 	/*
 	 * Attach the PCI bus that hangs off of it.
 	 *
@@ -173,6 +210,8 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = pa->pa_memt;
 	pba.pba_dmat = pa->pa_dmat;
 	pba.pba_pc = pc;
+	pba.pba_ioex = sc->sc_ioex;
+	pba.pba_memex = sc->sc_memex;
 #if 0
 	pba.pba_flags = pa->pa_flags & ~PCI_FLAGS_MRM_OKAY;
 #endif
@@ -190,11 +229,27 @@ int
 ppbdetach(struct device *self, int flags)
 {
 	struct ppb_softc *sc = (struct ppb_softc *)self;
+	char *name;
+	int rv;
 
 	if (sc->sc_intrhand)
 		pci_intr_disestablish(sc->sc_pc, sc->sc_intrhand);
 
-	return config_detach_children(self, flags);
+	rv = config_detach_children(self, flags);
+
+	if (sc->sc_ioex) {
+		name = sc->sc_ioex->ex_name;
+		extent_destroy(sc->sc_ioex);
+		free(name, M_DEVBUF);
+	}
+
+	if (sc->sc_memex) {
+		name = sc->sc_memex->ex_name;
+		extent_destroy(sc->sc_memex);
+		free(name, M_DEVBUF);
+	}
+
+	return (rv);
 }
 
 int
@@ -281,73 +336,8 @@ ppb_hotplug_fixup(struct pci_attach_args *pa)
 int
 ppb_hotplug_fixup_type0(pci_chipset_tag_t pc, pcitag_t tag, pcitag_t bridgetag)
 {
-	pcireg_t blr, type, intr;
-	int reg, line;
-	bus_addr_t base, io_base, io_limit, mem_base, mem_limit;
-	bus_size_t size, io_size, mem_size;
-
-	/*
-	 * The code below assumes that the address ranges on our
-	 * parent PCI Express bridge are really available and don't
-	 * overlap with other devices in the system.
-	 */
-
-	/* Figure out the I/O address range of the bridge. */
-	blr = pci_conf_read(pc, bridgetag, PPB_REG_IOSTATUS);
-	io_base = (blr & 0x000000f0) << 8;
-	io_limit = (blr & 0x000f000) | 0x00000fff;
-	if (io_limit > io_base)
-		io_size = (io_limit - io_base + 1);
-	else
-		io_size = 0;
-
-	/* Figure out the memory mapped I/O address range of the bridge. */
-	blr = pci_conf_read(pc, bridgetag, PPB_REG_MEM);
-	mem_base = (blr & 0x0000fff0) << 16;
-	mem_limit = (blr & 0xffff0000) | 0x000fffff;
-	if (mem_limit > mem_base)
-		mem_size = (mem_limit - mem_base + 1);
-	else
-		mem_size = 0;
-
-	/* Assign resources to the Base Address Registers. */
-	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg += 4) {
-		if (!pci_mapreg_probe(pc, tag, reg, &type))
-			continue;
-
-		if (pci_mapreg_info(pc, tag, reg, type, &base, &size, NULL))
-			continue;
-
-		if (base != 0)
-			continue;
-
-		switch (type) {
-		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
-		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-			base = roundup(mem_base, size);
-			size += base - mem_base;
-			if (size > mem_size)
-				continue;
-			pci_conf_write(pc, tag, reg, base);
-			mem_base += size;
-			mem_size -= size;
-			break;
-		case PCI_MAPREG_TYPE_IO:
-			base = roundup(io_base, size);
-			size += base - io_base;
-			if (size > io_size)
-				continue;
-			pci_conf_write(pc, tag, reg, base);
-			io_base += size;
-			io_size -= size;
-			break;
-		default:
-			break;
-		}
-
-		if (type & PCI_MAPREG_MEM_TYPE_64BIT)
-			reg += 4;
-	}
+	pcireg_t intr;
+	int line;
 
 	/*
 	 * Fill in the interrupt line for platforms that need it.
@@ -435,8 +425,25 @@ ppb_hotplug_remove(void *arg1, void *arg2)
 	struct ppb_softc *sc = arg1;
 	struct pci_softc *psc = (struct pci_softc *)sc->sc_psc;
 
-	if (psc)
+	if (psc) {
 		pci_detach_devices(psc, DETACH_FORCE);
+
+		/*
+		 * XXX Allocate the entire window with EX_CONFLICTOK
+		 * such that we can easily free it.
+		 */
+		extent_alloc_region(sc->sc_ioex, sc->sc_iobase,
+		    sc->sc_iolimit - sc->sc_iobase + 1,
+		    EX_NOWAIT | EX_CONFLICTOK);
+		extent_free(sc->sc_ioex, sc->sc_iobase,
+		    sc->sc_iolimit - sc->sc_iobase + 1, EX_NOWAIT);
+
+		extent_alloc_region(sc->sc_memex, sc->sc_membase,
+		    sc->sc_memlimit - sc->sc_membase + 1,
+		    EX_NOWAIT | EX_CONFLICTOK);
+		extent_free(sc->sc_memex, sc->sc_membase,
+		    sc->sc_memlimit - sc->sc_membase + 1, EX_NOWAIT);
+	}
 }
 
 int
