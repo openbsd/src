@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.425 2009/04/21 05:22:52 deraadt Exp $
+$OpenBSD: usbdevs,v 1.426 2009/04/22 18:56:33 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -517,7 +517,7 @@ vendor LINKSYS4		0x1737	Linksys
 vendor SENAO		0x1740	Senao
 vendor ASUS2		0x1761	ASUS
 vendor SWEEX2		0x177f	Sweex
-vendor METAGEEK		0x1781	MetaGeek
+vendor MECANIQUE	0x1781	Mecanique
 vendor DISPLAYLINK	0x17e9	DisplayLink
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
@@ -2005,8 +2005,9 @@ product MELCO SG54HG		0x00f4	WLI-U2-SG54HG
 product MELCO WLIUCAG300N	0x012e	WLI-UC-AG300N
 product MELCO WLIUCGN		0x015d	WLI-UC-GN
 
-/* MetaGeek products */
-product METAGEEK WISPY		0x083e	Wi-Spy
+/* MetaGeek tagged products */
+product MECANIQUE WISPY		0x083e	MetaGeek Wi-Spy
+product MECANIQUE TELLSTICK	0x0c30	Telldus Tellstick
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
