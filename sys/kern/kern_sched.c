@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.12 2009/04/20 08:48:17 art Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.13 2009/04/22 08:35:54 art Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -120,6 +120,8 @@ sched_idle(void *v)
 	SCHED_LOCK(s);
 	cpuset_add(&sched_idle_cpus, ci);
 	p->p_stat = SSLEEP;
+	p->p_cpu = ci;
+	atomic_setbits_int(&p->p_flag, P_CPUPEG);
 	mi_switch();
 	cpuset_del(&sched_idle_cpus, ci);
 	SCHED_UNLOCK(s);
