@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.60 2008/06/12 06:58:40 deraadt Exp $	*/
+/*	$OpenBSD: buf.h,v 1.61 2009/04/22 13:12:26 art Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -247,8 +247,10 @@ struct buf *incore(struct vnode *, daddr64_t);
 void	buf_mem_init(vsize_t);
 void	buf_acquire(struct buf *);
 void	buf_acquire_unmapped(struct buf *);
+void	buf_map(struct buf *);
 void	buf_release(struct buf *);
 int	buf_dealloc_mem(struct buf *);
+void	buf_shrink_mem(struct buf *, vsize_t);
 void	buf_alloc_pages(struct buf *, vsize_t);
 void	buf_free_pages(struct buf *);
 

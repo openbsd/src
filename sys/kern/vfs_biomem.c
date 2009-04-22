@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.4 2008/11/08 23:20:50 pedro Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.5 2009/04/22 13:12:26 art Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -75,7 +75,6 @@ buf_mem_init(vsize_t size)
 void
 buf_acquire(struct buf *bp)
 {
-	vaddr_t va;
 	int s;
 
 	KASSERT((bp->b_flags & B_BUSY) == 0);
@@ -85,6 +84,32 @@ buf_acquire(struct buf *bp)
 	 * Busy before waiting for kvm.
 	 */
 	SET(bp->b_flags, B_BUSY);
+	buf_map(bp);
+
+	splx(s);
+}
+
+/*
+ * Busy a buffer, but don't map it.
+ * If it has a mapping, we keep it, but we also keep the mapping on
+ * the list since we assume that it won't be used anymore.
+ */
+void
+buf_acquire_unmapped(struct buf *bp)
+{
+	int s;
+
+	s = splbio();
+	SET(bp->b_flags, B_BUSY|B_NOTMAPPED);
+	splx(s);
+}
+
+void
+buf_map(struct buf *bp)
+{
+	vaddr_t va;
+
+	splassert(IPL_BIO);
 
 	if (bp->b_data == NULL) {
 		unsigned long i;
@@ -123,22 +148,8 @@ buf_acquire(struct buf *bp)
 	} else {
 		TAILQ_REMOVE(&buf_valist, bp, b_valist);
 	}
-	splx(s);
-}
 
-/*
- * Busy a buffer, but don't map it.
- * If it has a mapping, we keep it, but we also keep the mapping on
- * the list since we assume that it won't be used anymore.
- */
-void
-buf_acquire_unmapped(struct buf *bp)
-{
-	int s;
-
-	s = splbio();
-	SET(bp->b_flags, B_BUSY|B_NOTMAPPED);
-	splx(s);
+	CLR(bp->b_flags, B_NOTMAPPED);
 }
 
 void
@@ -207,6 +218,18 @@ buf_dealloc_mem(struct buf *bp)
 	splx(s);
 
 	return (1);
+}
+
+void
+buf_shrink_mem(struct buf *bp, vsize_t newsize)
+{
+	vaddr_t va = (vaddr_t)bp->b_data;
+
+	if (newsize < bp->b_bufsize) {
+		pmap_kremove(va + newsize, bp->b_bufsize - newsize);
+		pmap_update(pmap_kernel());
+		bp->b_bufsize = newsize;
+	}
 }
 
 vaddr_t
