@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn_stubs.c,v 1.10 2005/11/28 16:54:18 deraadt Exp $	*/
+/*	$OpenBSD: dlfcn_stubs.c,v 1.11 2009/04/22 07:15:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -41,7 +41,9 @@ int	 dlclose(void *handle) __attribute__((weak));
 void	*dlsym(void *handle, const char *name) __attribute__((weak));
 int	 dlctl(void *handle, int command, void *data) __attribute__((weak));
 const char *	dlerror(void) __attribute__((weak));
-int	dladdr(const void *addr, void *info) __attribute__((weak));
+
+struct dl_info;
+int	dladdr(const void *addr, struct dl_info *info) __attribute__((weak));
 
 struct dl_phdr_info;
 int	 dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),	    void *date) __attribute__((weak));
@@ -96,7 +98,7 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
 
 /*ARGSUSED*/
 int
-dladdr(const void *addr, void *info)
+dladdr(const void *addr, struct dl_info *info)
 {
 	printf("Wrong dl symbols!\n");
 	return -1;
