@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.470 2009/04/23 21:44:27 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.471 2009/04/23 23:15:08 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1084,16 +1084,6 @@ ftp_error() {
 	return 1
 }
 
-set_ftp_opt() {
-	local _q=$1 _opt=$2
-	ask_yn "Use $_q?" $(isin $_opt $FTPOPTS && echo "yes")
-
-	case $resp in
-	y) FTPOPTS=$(addel $_opt $FTPOPTS) ;;
-	n) FTPOPTS=$(rmel $_opt $FTPOPTS) ;;
-	esac
-}
-
 # Get several parameters from the user, and xfer
 # files from the server.
 # $1 = url type (ftp or http)
@@ -1152,13 +1142,6 @@ install_url() {
 			;;
 		esac
 	done
-
-	# Some older servers lie about their support for passive mode ftp, so
-	# ask the user if it worth trying passive mode to the chosen server.
-	# Irrelevant if using a proxy.
-	if [[ $_url_type == ftp && -z $ftp_proxy ]]; then
-		set_ftp_opt "active mode ftp" "-A"
-	fi
 
 	# Get server directory
 	eval resp=\$_${_url_type}_server_dir
