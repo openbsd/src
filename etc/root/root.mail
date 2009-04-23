@@ -3,7 +3,7 @@ Return-Path: root
 Date: May 1 05:45:45 MDT 2009
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
-Subject: Welcome to OpenBSD 4.5!  Secure by Default!
+Subject: Welcome to OpenBSD 4.5!
 
 This message attempts to describe the most basic initial questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
