@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.193 2009/04/20 17:40:43 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.194 2009/04/23 00:00:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.193 2009/04/20 17:40:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.194 2009/04/23 00:00:06 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -226,9 +226,10 @@ editor(struct disklabel *lp, int f)
 			break;
 
 		case 'A':
-			if (ioctl(f, DIOCGPDINFO, &label) == 0)
+			if (ioctl(f, DIOCGPDINFO, &label) == 0) {
+				aflag = 1;
 				editor_allocspace(&label);
-			else
+			} else
 				label = lastlabel;
 			break;
 		case 'a':
@@ -313,11 +314,13 @@ editor(struct disklabel *lp, int f)
 			if (fstabfile)
 				mpsave(&label);
 			/*
-			 * If we didn't manufacture a new default label and
-			 * didn't change the label read from disk, there is no
-			 * need to do anything before exiting.
+			 * If we haven't changed the label we started with, and it was not
+			 * a default label or an auto-allocated label, there is no
+			 * need to do anything before exiting. Note that 'w' will reset
+			 * dflag and aflag to allow 'q' to exit with further questions.
 			 */
-			if (!dflag && memcmp(lp, &label, sizeof(label)) == 0) {
+			if (!dflag && !aflag &&
+			    memcmp(lp, &label, sizeof(label)) == 0) {
 				puts("No label changes.");
 				return(1);
 			}
@@ -417,7 +420,7 @@ editor(struct disklabel *lp, int f)
 			if (writelabel(f, bootarea, &label) != 0)
 				warnx("unable to write label");
 			else {
-				dflag = 0;
+				dflag = aflag = 0;
 				*lp = label;
 			}
 			break;
