@@ -1,6 +1,7 @@
 Mail Command			Description
 -------------------------	--------------------------------------------
 t [message list]		type message(s).
+more [message list]		read message(s), through the $PAGER
 n				goto and type next message.
 e [message list]		edit message(s).
 f [message list]		give head lines of messages.
