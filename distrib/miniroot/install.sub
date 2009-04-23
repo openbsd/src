@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.468 2009/04/23 20:23:35 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.469 2009/04/23 21:02:15 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1457,7 +1457,7 @@ munge_fstab() {
 # Must mount filesystems manually, one at a time, so we can make
 # sure the mount points exist.
 mount_fs() {
-	local _async=$1 _dev _mp _fstype _opt _rest
+	local _async=$1 _dev _mp _fstype _opt _rest _err _msg
 
 	while read _dev _mp _fstype _opt _rest; do
 		# If not the root filesystem, make sure the mount
@@ -1465,7 +1465,10 @@ mount_fs() {
 		[ "$_mp" = "/mnt" ] || mkdir -p $_mp
 
 		# Mount the filesystem. If the mount fails, exit.
-		if ! mount -v -t $_fstype $_async -o $_opt $_dev $_mp ; then
+		_msg=$(mount -v -t $_fstype $_async -o $_opt $_dev $_mp)
+		_err=$?
+		echo $_msg | sed -e 's/, ctime=[^,(]*\([,)]\)/\1/'
+		if ! $_e ; then
 			# In addition to the error message displayed by mount ...
 			cat <<__EOT
 
