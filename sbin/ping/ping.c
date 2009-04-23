@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.78 2007/02/06 15:25:18 jmc Exp $	*/
+/*	$OpenBSD: ping.c,v 1.79 2009/04/23 23:18:35 sthen Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.78 2007/02/06 15:25:18 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.79 2009/04/23 23:18:35 sthen Exp $";
 #endif
 #endif /* not lint */
 
@@ -761,8 +761,7 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 			return;
 		ip2 = (struct ip *)(buf + hlen + sizeof (struct icmp));
 		hlen2 = ip2->ip_hl << 2;
-		if (cc >= hlen2 + 8 && check_icmph((struct ip *)(icp +
-		    sizeof (struct icmp))) != 1)
+		if (cc >= hlen2 + 8 && check_icmph(ip2) != 1)
 			return;
 		(void)printf("%d bytes from %s: ", cc,
 		    pr_addr(from->sin_addr.s_addr));
