@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.467 2009/04/23 18:26:14 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.468 2009/04/23 20:23:35 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -320,7 +320,8 @@ user_setup() {
 
 	mkdir -p /mnt/home/$_u
 	(cd /mnt/etc/skel; cp -pR . /mnt/home/$_u)
-	chown -R 1000.10 /mnt/home/$_u
+	cp -p /mnt/var/mail/root /mnt/var/mail/$_u
+	chown -R 1000.10 /mnt/home/$_u /mnt/var/mail/$_u
 	echo "1,s@wheel:.:0:root\$@wheel:\*:0:root,${_u}@
 w
 q" | /mnt/bin/ed /mnt/etc/group 2>/dev/null
