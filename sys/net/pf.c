@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.645 2009/04/17 18:37:06 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.646 2009/04/23 02:01:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4075,7 +4075,7 @@ pf_icmp_state_lookup(struct pf_state_key_cmp *key, struct pf_pdesc *pd,
 	    PF_IN : PF_OUT) != icmp_dir) {
 		if (pf_status.debug >= PF_DEBUG_MISC) {
 			printf("pf: icmp type %d in wrong direction (%d): ",
-			    icmp_dir);
+			    ntohs(type), icmp_dir);
 			pf_print_state(*state);
 			printf("\n");
 		}
