@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.466 2009/04/19 21:42:00 krw Exp $
+#	$OpenBSD: install.sub,v 1.467 2009/04/23 18:26:14 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -280,6 +280,50 @@ ask() {
 		esac
 	done
 	set +o noglob
+}
+
+# Ask for a password twice, saving the input in $_password
+askpassword() {
+	_oifs=$IFS
+	IFS=
+	while :; do
+		askpass "Password for $1 account? (will not echo)"
+		_password=$resp
+
+		askpass "Password for $1 account? (again)"
+		# N.B.: Need quotes around $resp and $_password to preserve leading
+		#       or trailing spaces.
+		[[ "$resp" == "$_password" ]] && break
+
+		echo "Passwords do not match, try again."
+	done
+	IFS=$_oifs
+}
+
+user_setup() {
+	local _u _n _encr
+
+	ask "Setup a user? (enter a lower-case loginname, or 'no')" no
+
+	case $resp in
+	n|no)	return ;;
+	esac
+
+	_u=$resp
+	ask "Full user name for $_u?" $_u
+	_n=$resp
+
+	askpassword $_u
+	_encr=`/mnt/usr/bin/encrypt -b 8 -- "$_password"`
+	echo "${_u}:${_encr}:1000:10::0:0:${_n}:/home/${_u}:/bin/ksh" \
+	    >> /mnt/etc/master.passwd
+
+	mkdir -p /mnt/home/$_u
+	(cd /mnt/etc/skel; cp -pR . /mnt/home/$_u)
+	chown -R 1000.10 /mnt/home/$_u
+	echo "1,s@wheel:.:0:root\$@wheel:\*:0:root,${_u}@
+w
+q" | /mnt/bin/ed /mnt/etc/group 2>/dev/null
 }
 
 # Ask for user input until a non-empty reply is entered.
