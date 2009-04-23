@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.10 2009/02/24 19:32:37 deraadt Exp $ */
+/*	$OpenBSD: est.c,v 1.11 2009/04/23 07:30:03 jsg Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -207,7 +207,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 		}
 		break;
 	default: 
-		printf("%s: unknown i686 model 0x%x, can't get bus clock",
+		printf("%s: unknown i686 model 0x%x, can't get bus clock\n",
 		    ci->ci_dev->dv_xname, ci->ci_model);
 	}
 }
