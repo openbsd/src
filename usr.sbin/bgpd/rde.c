@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.240 2009/03/18 19:45:09 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.241 2009/04/23 19:23:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -97,7 +97,6 @@ void		 network_init(struct network_head *);
 void		 network_add(struct network_config *, int);
 void		 network_delete(struct network_config *, int);
 void		 network_dump_upcall(struct pt_entry *, void *);
-void		 network_flush(int);
 
 void		 rde_shutdown(void);
 int		 sa_cmp(struct bgpd_addr *, struct sockaddr *);
@@ -106,8 +105,7 @@ volatile sig_atomic_t	 rde_quit = 0;
 struct bgpd_config	*conf, *nconf;
 time_t			 reloadtime;
 struct rde_peer_head	 peerlist;
-struct rde_peer		 peerself;
-struct rde_peer		 peerdynamic;
+struct rde_peer		*peerself;
 struct filter_head	*rules_l, *newrules;
 struct imsgbuf		*ibuf_se;
 struct imsgbuf		*ibuf_se_ctl;
@@ -439,7 +437,8 @@ badnet:
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			network_flush(0);
+			prefix_network_clean(peerself, time(NULL),
+			    F_ANN_DYNAMIC);
 			break;
 		case IMSG_FILTER_SET:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -629,10 +628,12 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			free(nconf);
 			nconf = NULL;
 			parent_set = NULL;
-			prefix_network_clean(&peerself, reloadtime);
+			prefix_network_clean(peerself, reloadtime, 0);
 
 			/* check if filter changed */
 			LIST_FOREACH(peer, &peerlist, peer_l) {
+				if (peer->conf.id == 0)
+					continue;
 				peer->reconf_out = 0;
 				peer->reconf_in = 0;
 				if (peer->conf.softreconfig_out &&
@@ -1824,8 +1825,6 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 				rde_dump_filterout(peer, p, req);
 			return;
 		}
-		LIST_FOREACH(peer, &peerlist, peer_l)
-			rde_dump_filterout(peer, p, req);
 	}
 }
 
@@ -2122,6 +2121,8 @@ rde_softreconfig_out(struct pt_entry *pt, void *ptr)
 
 	pt_getaddr(pt, &addr);
 	LIST_FOREACH(peer, &peerlist, peer_l) {
+		if (peer->conf.id == 0)
+			continue;
 		if (peer->reconf_out == 0)
 			continue;
 		if (up_test_update(peer, p) != 1)
@@ -2249,6 +2250,8 @@ rde_generate_updates(struct prefix *new, struct prefix *old)
 		return;
 
 	LIST_FOREACH(peer, &peerlist, peer_l) {
+		if (peer->conf.id == 0)
+			continue;
 		if (peer->state != PEER_UP)
 			continue;
 		up_generate_updates(rules_l, peer, new, old);
@@ -2266,6 +2269,8 @@ rde_update_queue_runner(void)
 	do {
 		sent = 0;
 		LIST_FOREACH(peer, &peerlist, peer_l) {
+			if (peer->conf.id == 0)
+				continue;
 			if (peer->state != PEER_UP)
 				continue;
 			/* first withdraws */
@@ -2312,6 +2317,8 @@ rde_update6_queue_runner(void)
 	do {
 		sent = 0;
 		LIST_FOREACH(peer, &peerlist, peer_l) {
+			if (peer->conf.id == 0)
+				continue;
 			if (peer->state != PEER_UP)
 				continue;
 			len = sizeof(queue_buf) - MSGSIZE_HEADER;
@@ -2333,6 +2340,8 @@ rde_update6_queue_runner(void)
 	do {
 		sent = 0;
 		LIST_FOREACH(peer, &peerlist, peer_l) {
+			if (peer->conf.id == 0)
+				continue;
 			if (peer->state != PEER_UP)
 				continue;
 			len = sizeof(queue_buf) - MSGSIZE_HEADER;
@@ -2395,6 +2404,8 @@ struct peer_table {
 void
 peer_init(u_int32_t hashsize)
 {
+	struct peer_config pc;
+	struct in_addr   id;
 	u_int32_t	 hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
@@ -2408,6 +2419,19 @@ peer_init(u_int32_t hashsize)
 	LIST_INIT(&peerlist);
 
 	peertable.peer_hashmask = hs - 1;
+
+	bzero(&pc, sizeof(pc));
+	pc.remote_as = conf->as;
+	id.s_addr = conf->bgpid;
+	snprintf(pc.descr, sizeof(pc.descr), "LOCAL: ID %s", inet_ntoa(id));
+
+	peerself = peer_add(0, &pc);
+	if (peerself == NULL)
+		fatalx("peer_init add self");
+
+	peerself->state = PEER_UP;
+	peerself->remote_bgpid = ntohl(conf->bgpid);
+	peerself->short_as = conf->short_as;
 }
 
 void
@@ -2660,24 +2684,8 @@ void
 network_init(struct network_head *net_l)
 {
 	struct network	*n;
-	struct in_addr   id;
 
 	reloadtime = time(NULL);
-	bzero(&peerself, sizeof(peerself));
-	peerself.state = PEER_UP;
-	peerself.remote_bgpid = ntohl(conf->bgpid);
-	id.s_addr = conf->bgpid;
-	peerself.conf.remote_as = conf->as;
-	peerself.short_as = conf->short_as;
-	snprintf(peerself.conf.descr, sizeof(peerself.conf.descr),
-	    "LOCAL: ID %s", inet_ntoa(id));
-	bzero(&peerdynamic, sizeof(peerdynamic));
-	peerdynamic.state = PEER_UP;
-	peerdynamic.remote_bgpid = ntohl(conf->bgpid);
-	peerdynamic.conf.remote_as = conf->as;
-	peerdynamic.short_as = conf->short_as;
-	snprintf(peerdynamic.conf.descr, sizeof(peerdynamic.conf.descr),
-	    "LOCAL: ID %s", inet_ntoa(id));
 
 	while ((n = TAILQ_FIRST(net_l)) != NULL) {
 		TAILQ_REMOVE(net_l, n, entry);
@@ -2690,7 +2698,7 @@ void
 network_add(struct network_config *nc, int flagstatic)
 {
 	struct rde_aspath	*asp;
-	struct rde_peer		*p;
+	u_int32_t		 flags = F_PREFIX_ANNOUNCED;
 
 	asp = path_get();
 	asp->aspath = aspath_get(NULL, 0);
@@ -2698,15 +2706,12 @@ network_add(struct network_config *nc, int flagstatic)
 	asp->flags = F_ATTR_ORIGIN | F_ATTR_ASPATH |
 	    F_ATTR_LOCALPREF | F_PREFIX_ANNOUNCED;
 	/* the nexthop is unset unless a default set overrides it */
+	if (!flagstatic)
+		flags |= F_ANN_DYNAMIC;
 
-	if (flagstatic)
-		p = &peerself;
-	else
-		p = &peerdynamic;
-
-	rde_apply_set(asp, &nc->attrset, nc->prefix.af, p, p);
-	path_update(p, asp, &nc->prefix, nc->prefixlen, F_ORIGINAL);
-	path_update(p, asp, &nc->prefix, nc->prefixlen, F_LOCAL);
+	rde_apply_set(asp, &nc->attrset, nc->prefix.af, peerself, peerself);
+	path_update(peerself, asp, &nc->prefix, nc->prefixlen, flags | F_ORIGINAL);
+	path_update(peerself, asp, &nc->prefix, nc->prefixlen, flags | F_LOCAL);
 
 	path_put(asp);
 	filterset_free(&nc->attrset);
@@ -2715,15 +2720,13 @@ network_add(struct network_config *nc, int flagstatic)
 void
 network_delete(struct network_config *nc, int flagstatic)
 {
-	struct rde_peer	*p;
+	u_int32_t	 flags = F_PREFIX_ANNOUNCED;
 
-	if (flagstatic)
-		p = &peerself;
-	else
-		p = &peerdynamic;
+	if (!flagstatic)
+		flags |= F_ANN_DYNAMIC;
 
-	prefix_remove(p, &nc->prefix, nc->prefixlen, F_LOCAL);
-	prefix_remove(p, &nc->prefix, nc->prefixlen, F_ORIGINAL);
+	prefix_remove(peerself, &nc->prefix, nc->prefixlen, flags | F_LOCAL);
+	prefix_remove(peerself, &nc->prefix, nc->prefixlen, flags | F_ORIGINAL);
 }
 
 void
@@ -2745,7 +2748,7 @@ network_dump_upcall(struct pt_entry *pt, void *ptr)
 			pt_getaddr(p->prefix, &addr);
 			k.prefix.s_addr = addr.v4.s_addr;
 			k.prefixlen = p->prefix->prefixlen;
-			if (p->aspath->peer == &peerself)
+			if (p->aspath->peer == peerself)
 				k.flags = F_KERNEL;
 			if (imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NETWORK, 0,
 			    pid, -1, &k, sizeof(k)) == -1)
@@ -2757,7 +2760,7 @@ network_dump_upcall(struct pt_entry *pt, void *ptr)
 			pt_getaddr(p->prefix, &addr);
 			memcpy(&k6.prefix, &addr.v6, sizeof(k6.prefix));
 			k6.prefixlen = p->prefix->prefixlen;
-			if (p->aspath->peer == &peerself)
+			if (p->aspath->peer == peerself)
 				k6.flags = F_KERNEL;
 			if (imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NETWORK6, 0,
 			    pid, -1, &k6, sizeof(k6)) == -1)
@@ -2767,21 +2770,11 @@ network_dump_upcall(struct pt_entry *pt, void *ptr)
 	}
 }
 
-void
-network_flush(int flagstatic)
-{
-	if (flagstatic)
-		prefix_network_clean(&peerself, time(NULL));
-	else
-		prefix_network_clean(&peerdynamic, time(NULL));
-}
-
 /* clean up */
 void
 rde_shutdown(void)
 {
 	struct rde_peer		*p;
-	struct rde_aspath	*asp, *nasp;
 	struct filter_rule	*r;
 	u_int32_t		 i;
 
@@ -2796,21 +2789,6 @@ rde_shutdown(void)
 	for (i = 0; i <= peertable.peer_hashmask; i++)
 		while ((p = LIST_FIRST(&peertable.peer_hashtbl[i])) != NULL)
 			peer_down(p->conf.id);
-
-	/* free announced network prefixes */
-	peerself.remote_bgpid = 0;
-	peerself.state = PEER_DOWN;
-	for (asp = LIST_FIRST(&peerself.path_h); asp != NULL; asp = nasp) {
-		nasp = LIST_NEXT(asp, peer_l);
-		path_remove(asp);
-	}
-
-	peerdynamic.remote_bgpid = 0;
-	peerdynamic.state = PEER_DOWN;
-	for (asp = LIST_FIRST(&peerdynamic.path_h); asp != NULL; asp = nasp) {
-		nasp = LIST_NEXT(asp, peer_l);
-		path_remove(asp);
-	}
 
 	/* free filters */
 	while ((r = TAILQ_FIRST(rules_l)) != NULL) {

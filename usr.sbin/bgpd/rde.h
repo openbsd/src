@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.105 2009/03/19 06:52:59 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.106 2009/04/23 19:23:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -164,6 +164,8 @@ LIST_HEAD(prefix_head, prefix);
 #define	F_ATTR_LINKED		0x20000
 #define	F_LOCAL			0x40000	/* Local-RIB */
 #define	F_ORIGINAL		0x80000	/* Adj-RIB-In */
+#define	F_RIB_MASK		(F_LOCAL | F_ORIGINAL)
+#define	F_ANN_DYNAMIC		0x100000
 
 
 #define ORIGIN_IGP		0
@@ -357,7 +359,7 @@ struct prefix	*prefix_bypeer(struct pt_entry *, struct rde_peer *, u_int32_t);
 void		 prefix_updateall(struct rde_aspath *, enum nexthop_state,
 		     enum nexthop_state);
 void		 prefix_destroy(struct prefix *);
-void		 prefix_network_clean(struct rde_peer *, time_t);
+void		 prefix_network_clean(struct rde_peer *, time_t, u_int32_t);
 
 void		 nexthop_init(u_int32_t);
 void		 nexthop_shutdown(void);

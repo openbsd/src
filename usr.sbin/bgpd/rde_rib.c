@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.97 2008/11/21 17:41:22 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.98 2009/04/23 19:23:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -104,14 +104,14 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 	    NULL) {
 		do {
 			if (path_compare(nasp, p->aspath) == 0) {
-				if ((p->flags & flags) == 0) {
+				if ((p->flags & flags & F_RIB_MASK) == 0) {
 					if (oldp != NULL) {
 						asp = oldp->aspath;
 						prefix_destroy(oldp);
 						if (path_empty(asp))
 							path_destroy(asp);
 					}
-					p->flags |= flags;
+					p->flags |= flags & F_RIB_MASK;
 					PREFIX_COUNT(p->aspath, flags, 1);
 					PREFIX_COUNT(peer, flags, 1);
 
@@ -136,7 +136,7 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 	}
 
 	/* Do not try to move a prefix that is in the wrong RIB. */
-	if (p == NULL || (p->flags & flags) == 0)
+	if (p == NULL || (p->flags & flags & F_RIB_MASK) == 0)
 		p = oldp;
 
 	/*
@@ -477,12 +477,12 @@ prefix_move(struct rde_aspath *asp, struct prefix *p, u_int32_t flags)
 	 * to flags the old prefix p may not be removed but instead p->flags
 	 * needs to be adjusted.
 	 */
-	if (p->flags != flags) {
-		if ((p->flags & flags) == 0)
+	if ((p->flags & F_RIB_MASK) != (flags & F_RIB_MASK)) {
+		if ((p->flags & flags & F_RIB_MASK) == 0)
 			fatalx("prefix_move: "
 			    "prefix is not part of desired RIB");
 
-		p->flags &= ~flags;
+		p->flags &= ~(flags & F_RIB_MASK);
 		PREFIX_COUNT(p->aspath, flags, -1);
 		/* as before peer count needs no update because of move */
 
@@ -557,8 +557,8 @@ prefix_remove(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen,
 	}
 
 	/* if prefix belongs to more than one RIB just remove one instance */
-	if (p->flags != flags) {
-		p->flags &= ~flags;
+	if ((p->flags & F_RIB_MASK) != (flags & F_RIB_MASK)) {
+		p->flags &= ~(flags & F_RIB_MASK);
 
 		PREFIX_COUNT(p->aspath, flags, -1);
 		PREFIX_COUNT(peer, flags, -1);
@@ -609,8 +609,13 @@ prefix_bypeer(struct pt_entry *pte, struct rde_peer *peer, u_int32_t flags)
 	struct prefix	*p;
 
 	LIST_FOREACH(p, &pte->prefix_h, prefix_l) {
-		if (p->aspath->peer == peer && p->flags & flags)
-			return (p);
+		if (p->aspath->peer != peer ||
+		    (p->flags & flags & F_RIB_MASK) == 0)
+			continue;
+		if (flags & F_PREFIX_ANNOUNCED &&
+		    (flags & F_ANN_DYNAMIC) != (p->flags & F_ANN_DYNAMIC))
+			continue;
+		return (p);
 	}
 	return (NULL);
 }
@@ -679,7 +684,7 @@ prefix_destroy(struct prefix *p)
  * helper function to clean up the connected networks after a reload
  */
 void
-prefix_network_clean(struct rde_peer *peer, time_t reloadtime)
+prefix_network_clean(struct rde_peer *peer, time_t reloadtime, u_int32_t flags)
 {
 	struct rde_aspath	*asp, *xasp;
 	struct prefix		*p, *xp;
@@ -689,7 +694,8 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime)
 		xasp = LIST_NEXT(asp, peer_l);
 		for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = xp) {
 			xp = LIST_NEXT(p, path_l);
-			if (reloadtime > p->lastchange) {
+			if (reloadtime > p->lastchange &&
+			    (p->flags & F_ANN_DYNAMIC) == flags) {
 				pte = p->prefix;
 				prefix_unlink(p);
 				prefix_free(p);
