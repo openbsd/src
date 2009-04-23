@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.169 2009/04/23 18:26:14 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.170 2009/04/23 23:16:34 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -328,8 +328,7 @@ THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 # etc, or from resolv.conf.shadow.
 ( cd /tmp; rm -f host* my* resolv.conf resolv.conf.tail dhclient.* )
 
-ask_yn "Configure the network?" yes
-[[ $resp == y ]] && donetconfig
+donetconfig
 
 askpassword root
 _rootpass="$_password"
