@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.55 2009/04/17 20:20:18 kettenis Exp $	*/
+/*	$OpenBSD: hme.c,v 1.56 2009/04/23 21:24:14 kettenis Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -362,11 +362,19 @@ void
 hme_stop(sc)
 	struct hme_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t seb = sc->sc_seb;
 	int n;
 
 	timeout_del(&sc->sc_tick_ch);
+
+	/*
+	 * Mark the interface down and cancel the watchdog timer.
+	 */
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
+
 	mii_down(&sc->sc_mii);
 
 	/* Mask all interrupts */
@@ -1303,7 +1311,6 @@ hme_ioctl(ifp, cmd, data)
 			 * stop it.
 			 */
 			hme_stop(sc);
-			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
