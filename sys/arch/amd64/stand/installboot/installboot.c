@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.10 2008/08/04 15:58:13 reyk Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.11 2009/04/23 16:39:16 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -152,11 +152,9 @@ main(int argc, char *argv[])
 	    OPENDEV_PART, &realdev)) < 0)
 		err(1, "open: %s", realdev);
 
-	if (verbose) {
-		fprintf(stderr, "boot: %s\n", boot);
-		fprintf(stderr, "proto: %s\n", proto);
-		fprintf(stderr, "device: %s\n", realdev);
-	}
+	if (verbose)
+		fprintf(stderr, "boot: %s proto: %s device: %s\n",
+		    boot, proto, realdev);
 
 	if (ioctl(devfd, DIOCGDINFO, &dl) != 0)
 		err(1, "disklabel: %s", realdev);
@@ -243,19 +241,17 @@ findopenbsd(int devfd, struct disklabel *dl, off_t mbroff, int *n)
 		if (!dp->dp_size)
 			continue;
 		if (dp->dp_typ == DOSPTYP_OPENBSD) {
-			fprintf(stderr, "using MBR partition %ld: "
-			    "type %d (0x%02x) offset %d (0x%x)\n",
+			fprintf(stderr,
+			    "using MBR partition %ld: type 0x%02X offset %d\n",
 			    (long)(dp - mbr.dmbr_parts),
-			    dp->dp_typ, dp->dp_typ,
-			    dp->dp_start, dp->dp_start);
+			    dp->dp_typ, dp->dp_start);
 			return (dp->dp_start + mbroff);
 		} else if (dp->dp_typ == DOSPTYP_EXTEND ||
 		    dp->dp_typ == DOSPTYP_EXTENDL) {
-			fprintf(stderr, "extended partition %ld: "
-			    "type %d (0x%02x) offset %d (0x%x)\n",
+			fprintf(stderr,
+			    "extended partition %ld: type 0x%02X offset %d\n",
 			    (long)(dp - mbr.dmbr_parts),
-			    dp->dp_typ, dp->dp_typ,
-			    dp->dp_start, dp->dp_start);
+			    dp->dp_typ, dp->dp_start);
 			startoff = (off_t)dp->dp_start + mbroff;
 			start = findopenbsd(devfd, dl, startoff, n);
 			if (start != -1)
@@ -330,11 +326,6 @@ loadproto(char *fname, long *size)
 	}
 
 	*size = tdsize;	/* not aligned to DEV_BSIZE */
-
-	if (verbose) {
-		fprintf(stderr, "%s: entry point %#x\n", fname, eh.e_entry);
-		fprintf(stderr, "proto bootblock size %ld\n", *size);
-	}
 
 	close(fd);
 	return bp;
