@@ -1,4 +1,4 @@
-/* $Id: pftop.c,v 1.10 2009/04/06 12:08:26 henning Exp $	 */
+/* $Id: pftop.c,v 1.11 2009/04/23 12:58:44 henning Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1267,8 +1267,9 @@ tb_print_flags(u_int8_t f)
 void
 print_rule(struct pf_rule *pr)
 {
-	static const char *actiontypes[] = { "Pass", "Block", "Scrub", "Nat",
-	    "no Nat", "Binat", "no Binat", "Rdr", "no Rdr" };
+	static const char *actiontypes[] = { "Pass", "Block", "Scrub",
+	    "no Scrub", "Nat", "no Nat", "Binat", "no Binat", "Rdr",
+	    "no Rdr", "SynProxy Block", "Defer", "Match" };
 	int numact = sizeof(actiontypes) / sizeof(char *);
 
 	static const char *routetypes[] = { "", "fastroute", "route-to",
@@ -1308,10 +1309,11 @@ print_rule(struct pf_rule *pr)
 	else if (pr->log == 2)
 		print_fld_str(FLD_LOG, "All");
 
-	if (pr->action >= numact)
+		printf("%u ", pr->action);
+/*	if (pr->action >= numact)
 		print_fld_uint(FLD_ACTION, pr->action);
 	else print_fld_str(FLD_ACTION, actiontypes[pr->action]);
-
+*/
 	if (pr->proto) {
 		struct protoent *p = getprotobynumber(pr->proto);
 
