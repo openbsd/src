@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.261 2009/01/27 09:17:51 dlg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.262 2009/04/23 19:15:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -162,11 +162,9 @@ int bge_read_eeprom(struct bge_softc *, caddr_t, int, int);
 
 void bge_iff(struct bge_softc *);
 
-int bge_alloc_jumbo_mem(struct bge_softc *);
-void *bge_jalloc(struct bge_softc *);
-void bge_jfree(caddr_t, u_int, void *);
-int bge_newbuf_jumbo(struct bge_softc *, int, struct mbuf *);
+int bge_newbuf_jumbo(struct bge_softc *, int);
 int bge_init_rx_ring_jumbo(struct bge_softc *);
+void bge_fill_rx_ring_jumbo(struct bge_softc *);
 void bge_free_rx_ring_jumbo(struct bge_softc *);
 
 int bge_newbuf(struct bge_softc *, int);
@@ -712,152 +710,6 @@ bge_miibus_statchg(struct device *dev)
 }
 
 /*
- * Memory management for Jumbo frames.
- */
-
-int
-bge_alloc_jumbo_mem(struct bge_softc *sc)
-{
-	caddr_t			ptr, kva;
-	bus_dma_segment_t	seg;
-	int		i, rseg, state, error;
-	struct bge_jpool_entry   *entry;
-
-	state = error = 0;
-
-	/* Grab a big chunk o' storage. */
-	if (bus_dmamem_alloc(sc->bge_dmatag, BGE_JMEM, PAGE_SIZE, 0,
-			     &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't alloc rx buffers\n", sc->bge_dev.dv_xname);
-		return (ENOBUFS);
-	}
-
-	state = 1;
-	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg, BGE_JMEM, &kva,
-			   BUS_DMA_NOWAIT)) {
-		printf("%s: can't map dma buffers (%d bytes)\n",
-		    sc->bge_dev.dv_xname, BGE_JMEM);
-		error = ENOBUFS;
-		goto out;
-	}
-
-	state = 2;
-	if (bus_dmamap_create(sc->bge_dmatag, BGE_JMEM, 1, BGE_JMEM, 0,
-	    BUS_DMA_NOWAIT, &sc->bge_cdata.bge_rx_jumbo_map)) {
-		printf("%s: can't create dma map\n", sc->bge_dev.dv_xname);
-		error = ENOBUFS;
-		goto out;
-	}
-
-	state = 3;
-	if (bus_dmamap_load(sc->bge_dmatag, sc->bge_cdata.bge_rx_jumbo_map,
-			    kva, BGE_JMEM, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load dma map\n", sc->bge_dev.dv_xname);
-		error = ENOBUFS;
-		goto out;
-	}
-
-	state = 4;
-	sc->bge_cdata.bge_jumbo_buf = (caddr_t)kva;
-	DPRINTFN(1,("bge_jumbo_buf = 0x%08X\n", sc->bge_cdata.bge_jumbo_buf));
-
-	SLIST_INIT(&sc->bge_jfree_listhead);
-	SLIST_INIT(&sc->bge_jinuse_listhead);
-
-	/*
-	 * Now divide it up into 9K pieces and save the addresses
-	 * in an array.
-	 */
-	ptr = sc->bge_cdata.bge_jumbo_buf;
-	for (i = 0; i < BGE_JSLOTS; i++) {
-		sc->bge_cdata.bge_jslots[i] = ptr;
-		ptr += BGE_JLEN;
-		entry = malloc(sizeof(struct bge_jpool_entry),
-		    M_DEVBUF, M_NOWAIT);
-		if (entry == NULL) {
-			printf("%s: no memory for jumbo buffer queue!\n",
-			    sc->bge_dev.dv_xname);
-			error = ENOBUFS;
-			goto out;
-		}
-		entry->slot = i;
-		SLIST_INSERT_HEAD(&sc->bge_jfree_listhead,
-				 entry, jpool_entries);
-	}
-out:
-	if (error != 0) {
-		switch (state) {
-		case 4:
-			bus_dmamap_unload(sc->bge_dmatag,
-			    sc->bge_cdata.bge_rx_jumbo_map);
-		case 3:
-			bus_dmamap_destroy(sc->bge_dmatag,
-			    sc->bge_cdata.bge_rx_jumbo_map);
-		case 2:
-			bus_dmamem_unmap(sc->bge_dmatag, kva, BGE_JMEM);
-		case 1:
-			bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
-			break;
-		default:
-			break;
-		}
-	}
-
-	return (error);
-}
-
-/*
- * Allocate a Jumbo buffer.
- */
-void *
-bge_jalloc(struct bge_softc *sc)
-{
-	struct bge_jpool_entry   *entry;
-
-	entry = SLIST_FIRST(&sc->bge_jfree_listhead);
-
-	if (entry == NULL)
-		return (NULL);
-
-	SLIST_REMOVE_HEAD(&sc->bge_jfree_listhead, jpool_entries);
-	SLIST_INSERT_HEAD(&sc->bge_jinuse_listhead, entry, jpool_entries);
-	return (sc->bge_cdata.bge_jslots[entry->slot]);
-}
-
-/*
- * Release a Jumbo buffer.
- */
-void
-bge_jfree(caddr_t buf, u_int size, void *arg)
-{
-	struct bge_jpool_entry *entry;
-	struct bge_softc *sc;
-	int i;
-
-	/* Extract the softc struct pointer. */
-	sc = (struct bge_softc *)arg;
-
-	if (sc == NULL)
-		panic("bge_jfree: can't find softc pointer!");
-
-	/* calculate the slot this buffer belongs to */
-
-	i = ((vaddr_t)buf
-	     - (vaddr_t)sc->bge_cdata.bge_jumbo_buf) / BGE_JLEN;
-
-	if ((i < 0) || (i >= BGE_JSLOTS))
-		panic("bge_jfree: asked to free buffer that we don't manage!");
-
-	entry = SLIST_FIRST(&sc->bge_jinuse_listhead);
-	if (entry == NULL)
-		panic("bge_jfree: buffer not in use!");
-	entry->slot = i;
-	SLIST_REMOVE_HEAD(&sc->bge_jinuse_listhead, jpool_entries);
-	SLIST_INSERT_HEAD(&sc->bge_jfree_listhead, entry, jpool_entries);
-}
-
-
-/*
  * Intialize a standard receive ring descriptor.
  */
 int
@@ -915,59 +767,80 @@ bge_newbuf(struct bge_softc *sc, int i)
 }
 
 /*
- * Initialize a Jumbo receive ring descriptor. This allocates
- * a Jumbo buffer from the pool managed internally by the driver.
+ * Initialize a Jumbo receive ring descriptor.
  */
 int
-bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
+bge_newbuf_jumbo(struct bge_softc *sc, int i)
 {
-	struct mbuf *m_new = NULL;
-	struct bge_rx_bd *r;
+	bus_dmamap_t		dmap = sc->bge_cdata.bge_rx_jumbo_map[i];
+	struct bge_ext_rx_bd	*r = &sc->bge_rdata->bge_rx_jumbo_ring[i];
+	struct mbuf		*m;
+	int			error;
 
-	if (m == NULL) {
-		caddr_t			buf = NULL;
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return (ENOBUFS);
 
-		/* Allocate the mbuf. */
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL)
-			return (ENOBUFS);
+	MCLGETI(m, M_DONTWAIT, &sc->arpcom.ac_if, BGE_JLEN);
+	if (!(m->m_flags & M_EXT)) {
+		m_freem(m);
+		return (ENOBUFS);
+	}
+	m->m_len = m->m_pkthdr.len = BGE_JUMBO_FRAMELEN;
+	if (!(sc->bge_flags & BGE_RX_ALIGNBUG))
+	    m_adj(m, ETHER_ALIGN);
 
-		/* Allocate the Jumbo buffer */
-		buf = bge_jalloc(sc);
-		if (buf == NULL) {
-			m_freem(m_new);
-			return (ENOBUFS);
-		}
-
-		/* Attach the buffer to the mbuf. */
-		m_new->m_len = m_new->m_pkthdr.len = BGE_JUMBO_FRAMELEN;
-		MEXTADD(m_new, buf, BGE_JUMBO_FRAMELEN, 0, bge_jfree, sc);
-	} else {
-		/*
-		 * We're re-using a previously allocated mbuf;
-		 * be sure to re-init pointers and lengths to
-		 * default values.
-		 */
-		m_new = m;
-		m_new->m_data = m_new->m_ext.ext_buf;
-		m_new->m_ext.ext_size = BGE_JUMBO_FRAMELEN;
+	error = bus_dmamap_load_mbuf(sc->bge_dmatag, dmap, m,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
+	if (error) {
+		m_freem(m);
+		return (ENOBUFS);
 	}
 
-	if (!(sc->bge_flags & BGE_RX_ALIGNBUG))
-		m_adj(m_new, ETHER_ALIGN);
-	/* Set up the descriptor. */
-	r = &sc->bge_rdata->bge_rx_jumbo_ring[i];
-	sc->bge_cdata.bge_rx_jumbo_chain[i] = m_new;
-	BGE_HOSTADDR(r->bge_addr, BGE_JUMBO_DMA_ADDR(sc, m_new));
-	r->bge_flags = BGE_RXBDFLAG_END|BGE_RXBDFLAG_JUMBO_RING;
-	r->bge_len = m_new->m_len;
-	r->bge_idx = i;
+	bus_dmamap_sync(sc->bge_dmatag, dmap, 0, dmap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
+	sc->bge_cdata.bge_rx_jumbo_chain[i] = m;
 
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
 	    offsetof(struct bge_ring_data, bge_rx_jumbo_ring) +
-		i * sizeof (struct bge_rx_bd),
-	    sizeof (struct bge_rx_bd),
-	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
+		i * sizeof (struct bge_ext_rx_bd),
+	    sizeof (struct bge_ext_rx_bd),
+	    BUS_DMASYNC_POSTWRITE);
+
+	/*
+	 * Fill in the extended RX buffer descriptor.
+	 */
+	r->bge_bd.bge_flags = BGE_RXBDFLAG_JUMBO_RING | BGE_RXBDFLAG_END;
+	r->bge_bd.bge_idx = i;
+	r->bge_len3 = r->bge_len2 = r->bge_len1 = 0;
+	switch (dmap->dm_nsegs) {
+	case 4:
+		BGE_HOSTADDR(r->bge_addr3, dmap->dm_segs[3].ds_addr);
+		r->bge_len3 = dmap->dm_segs[3].ds_len;
+		/* FALLTHROUGH */
+	case 3:
+		BGE_HOSTADDR(r->bge_addr2, dmap->dm_segs[2].ds_addr);
+		r->bge_len2 = dmap->dm_segs[2].ds_len;
+		/* FALLTHROUGH */
+	case 2:
+		BGE_HOSTADDR(r->bge_addr1, dmap->dm_segs[1].ds_addr);
+		r->bge_len1 = dmap->dm_segs[1].ds_len;
+		/* FALLTHROUGH */
+	case 1:
+		BGE_HOSTADDR(r->bge_bd.bge_addr, dmap->dm_segs[0].ds_addr);
+		r->bge_bd.bge_len = dmap->dm_segs[0].ds_len;
+		break;
+	default:
+		panic("%s: %d segments\n", __func__, dmap->dm_nsegs);
+	}
+
+	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
+	    offsetof(struct bge_ring_data, bge_rx_jumbo_ring) +
+		i * sizeof (struct bge_ext_rx_bd),
+	    sizeof (struct bge_ext_rx_bd),
+	    BUS_DMASYNC_PREWRITE);
+
+	sc->bge_jumbo_cnt++;
 
 	return (0);
 }
@@ -1021,7 +894,12 @@ bge_rxtick(void *arg)
 	int s;
 
 	s = splnet();
-	bge_fill_rx_ring_std(sc);
+	if (ISSET(sc->bge_flags, BGE_RXRING_VALID) &&
+	    sc->bge_std_cnt <= 8)
+		bge_fill_rx_ring_std(sc);
+	if (ISSET(sc->bge_flags, BGE_JUMBO_RXRING_VALID) &&
+	    sc->bge_jumbo_cnt <= 8)
+		bge_fill_rx_ring_jumbo(sc);
 	splx(s);
 }
 
@@ -1085,47 +963,100 @@ bge_free_rx_ring_std(struct bge_softc *sc)
 int
 bge_init_rx_ring_jumbo(struct bge_softc *sc)
 {
-	int i;
 	volatile struct bge_rcb *rcb;
+	int i;
 
-	if (sc->bge_flags & BGE_JUMBO_RXRING_VALID)
+	if (ISSET(sc->bge_flags, BGE_JUMBO_RXRING_VALID))
 		return (0);
 
 	for (i = 0; i < BGE_JUMBO_RX_RING_CNT; i++) {
-		if (bge_newbuf_jumbo(sc, i, NULL) == ENOBUFS)
-			return (ENOBUFS);
-	};
+		if (bus_dmamap_create(sc->bge_dmatag, BGE_JLEN, 4, BGE_JLEN, 0,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    &sc->bge_cdata.bge_rx_jumbo_map[i]) != 0) {
+			printf("%s: unable to create dmamap for slot %d\n",
+			    sc->bge_dev.dv_xname, i);
+			goto uncreate;
+		}
+		bzero((char *)&sc->bge_rdata->bge_rx_jumbo_ring[i],
+		    sizeof(struct bge_ext_rx_bd));
+	}
 
-	sc->bge_jumbo = i - 1;
-	sc->bge_flags |= BGE_JUMBO_RXRING_VALID;
+	sc->bge_jumbo = BGE_JUMBO_RX_RING_CNT - 1;
+	sc->bge_jumbo_cnt = 0;
+	bge_fill_rx_ring_jumbo(sc);
+
+	SET(sc->bge_flags, BGE_JUMBO_RXRING_VALID);
 
 	rcb = &sc->bge_rdata->bge_info.bge_jumbo_rx_rcb;
-	rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(0, 0);
+	rcb->bge_maxlen_flags =
+	    BGE_RCB_MAXLEN_FLAGS(0, BGE_RCB_FLAG_USE_EXT_RX_BD);
 	CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_MAXLEN_FLAGS, rcb->bge_maxlen_flags);
 
-	bge_writembx(sc, BGE_MBX_RX_JUMBO_PROD_LO, sc->bge_jumbo);
-
 	return (0);
+
+uncreate:
+	while (--i) {
+		bus_dmamap_destroy(sc->bge_dmatag,
+		    sc->bge_cdata.bge_rx_jumbo_map[i]);
+	}
+	return (1);
+}
+
+void
+bge_fill_rx_ring_jumbo(struct bge_softc *sc)
+{
+	int i;
+	int post = 0;
+
+	i = sc->bge_jumbo;
+	while (sc->bge_jumbo_cnt < BGE_JUMBO_RX_RING_CNT) {
+		BGE_INC(i, BGE_JUMBO_RX_RING_CNT);
+
+		if (bge_newbuf_jumbo(sc, i) != 0)
+			break;
+
+		sc->bge_jumbo = i;
+		post = 1;
+	}
+
+	if (post)
+		bge_writembx(sc, BGE_MBX_RX_JUMBO_PROD_LO, sc->bge_jumbo);
+
+	/*
+	 * bge always needs more than 8 packets on the ring. if we cant do
+	 * that now, then try again later.
+	 */
+	if (sc->bge_jumbo_cnt <= 8)
+		timeout_add(&sc->bge_rxtimeout, 1);
 }
 
 void
 bge_free_rx_ring_jumbo(struct bge_softc *sc)
 {
+	bus_dmamap_t dmap;
+	struct mbuf *m;
 	int i;
 
-	if (!(sc->bge_flags & BGE_JUMBO_RXRING_VALID))
+	if (!ISSET(sc->bge_flags, BGE_JUMBO_RXRING_VALID))
 		return;
 
 	for (i = 0; i < BGE_JUMBO_RX_RING_CNT; i++) {
-		if (sc->bge_cdata.bge_rx_jumbo_chain[i] != NULL) {
-			m_freem(sc->bge_cdata.bge_rx_jumbo_chain[i]);
+		dmap = sc->bge_cdata.bge_rx_jumbo_map[i];
+		m = sc->bge_cdata.bge_rx_jumbo_chain[i];
+		if (m != NULL) {
+			bus_dmamap_sync(sc->bge_dmatag, dmap, 0,
+			    dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->bge_dmatag, dmap);
+			m_freem(m);
 			sc->bge_cdata.bge_rx_jumbo_chain[i] = NULL;
 		}
+		bus_dmamap_destroy(sc->bge_dmatag, dmap);
+		sc->bge_cdata.bge_rx_jumbo_map[i] = NULL;
 		bzero((char *)&sc->bge_rdata->bge_rx_jumbo_ring[i],
-		    sizeof(struct bge_rx_bd));
+		    sizeof(struct bge_ext_rx_bd));
 	}
 
-	sc->bge_flags &= ~BGE_JUMBO_RXRING_VALID;
+	CLR(sc->bge_flags, BGE_JUMBO_RXRING_VALID);
 }
 
 void
@@ -1492,9 +1423,8 @@ bge_blockinit(struct bge_softc *sc)
 		rcb = &sc->bge_rdata->bge_info.bge_jumbo_rx_rcb;
 		BGE_HOSTADDR(rcb->bge_hostaddr,
 		    BGE_RING_DMA_ADDR(sc, bge_rx_jumbo_ring));
-		rcb->bge_maxlen_flags =
-		    BGE_RCB_MAXLEN_FLAGS(BGE_JUMBO_FRAMELEN,
-		        BGE_RCB_FLAG_RING_DISABLED);
+		rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(0,
+		    BGE_RCB_FLAG_USE_EXT_RX_BD | BGE_RCB_FLAG_RING_DISABLED);
 		rcb->bge_nicaddr = BGE_JUMBO_RX_RINGS;
 
 		CSR_WRITE_4(sc, BGE_RX_JUMBO_RCB_HADDR_HI,
@@ -1519,29 +1449,16 @@ bge_blockinit(struct bge_softc *sc)
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 
-#if 0
 	/*
 	 * Set the BD ring replenish thresholds. The recommended
 	 * values are 1/8th the number of descriptors allocated to
-	 * each ring.
+	 * each ring, but since we try to avoid filling the entire
+	 * ring we set these to the minimal value of 8.  This needs to
+	 * be done on several of the supported chip revisions anyway,
+	 * to work around HW bugs.
 	 */
-	i = BGE_STD_RX_RING_CNT / 8;
-
-	/*
-	 * Use a value of 8 for the following chips to workaround HW errata.
-	 * Some of these chips have been added based on empirical
-	 * evidence (they don't work unless this is done).
-	 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
-#endif
-		i = 8;
-
-	CSR_WRITE_4(sc, BGE_RBDI_STD_REPL_THRESH, i);
-	CSR_WRITE_4(sc, BGE_RBDI_JUMBO_REPL_THRESH, BGE_JUMBO_RX_RING_CNT / 8);
+	CSR_WRITE_4(sc, BGE_RBDI_STD_REPL_THRESH, 8);
+	CSR_WRITE_4(sc, BGE_RBDI_JUMBO_REPL_THRESH, 8);
 
 	/*
 	 * Disable all unused send rings by setting the 'ring disabled'
@@ -2104,16 +2021,6 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	bzero(sc->bge_rdata, sizeof(struct bge_ring_data));
 
-	/*
-	 * Try to allocate memory for Jumbo buffers.
-	 */
-	if (BGE_IS_JUMBO_CAPABLE(sc)) {
-		if (bge_alloc_jumbo_mem(sc)) {
-			printf(": jumbo buffer allocation failed\n");
-			goto fail_5;
-		}
-	}
-
 	/* Set default tuneable values. */
 	sc->bge_stat_ticks = BGE_TICKS_PER_SEC;
 	sc->bge_rx_coal_ticks = 150;
@@ -2139,6 +2046,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 
 	/* lwm must be greater than the replenish threshold */
 	m_clsetwms(ifp, MCLBYTES, 17, BGE_STD_RX_RING_CNT);
+	m_clsetwms(ifp, BGE_JLEN, 17, BGE_JUMBO_RX_RING_CNT);
 
 	DPRINTFN(5, ("bcopy\n"));
 	bcopy(sc->bge_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -2462,7 +2370,7 @@ bge_reset(struct bge_softc *sc)
  * on the receive return list.
  *
  * Note: we have to be able to handle two possibilities here:
- * 1) the frame is from the Jumbo receive ring
+ * 1) the frame is from the jumbo receive ring
  * 2) the frame is from the standard receive ring
  */
 
@@ -2522,27 +2430,21 @@ bge_rxeof(struct bge_softc *sc)
 		BGE_INC(sc->bge_rx_saved_considx, sc->bge_return_ring_cnt);
 
 		if (cur_rx->bge_flags & BGE_RXBDFLAG_JUMBO_RING) {
-			BGE_INC(sc->bge_jumbo, BGE_JUMBO_RX_RING_CNT);
 			m = sc->bge_cdata.bge_rx_jumbo_chain[rxidx];
 			sc->bge_cdata.bge_rx_jumbo_chain[rxidx] = NULL;
+
 			jumbocnt++;
+			sc->bge_jumbo_cnt--;
+
+			dmamap = sc->bge_cdata.bge_rx_jumbo_map[rxidx];
+			bus_dmamap_sync(sc->bge_dmatag, dmamap, 0,
+			    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->bge_dmatag, dmamap);
+
 			if (cur_rx->bge_flags & BGE_RXBDFLAG_ERROR) {
+				m_freem(m);
 				ifp->if_ierrors++;
-				bge_newbuf_jumbo(sc, sc->bge_jumbo, m);
 				continue;
-			}
-			if (bge_newbuf_jumbo(sc, sc->bge_jumbo, NULL)
-			    == ENOBUFS) {
-				struct mbuf             *m0;
-				m0 = m_devget(mtod(m, char *),
-				    cur_rx->bge_len - ETHER_CRC_LEN,
-				    ETHER_ALIGN, ifp, NULL);
-				bge_newbuf_jumbo(sc, sc->bge_jumbo, m);
-				if (m0 == NULL) {
-					ifp->if_ierrors++;
-					continue;
-				}
-				m = m0;
 			}
 		} else {
 			m = sc->bge_cdata.bge_rx_std_chain[rxidx];
@@ -2615,7 +2517,7 @@ bge_rxeof(struct bge_softc *sc)
 	if (stdcnt)
 		bge_fill_rx_ring_std(sc);
 	if (jumbocnt)
-		bge_writembx(sc, BGE_MBX_RX_JUMBO_PROD_LO, sc->bge_jumbo);
+		bge_fill_rx_ring_jumbo(sc);
 }
 
 void

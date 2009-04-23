@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.90 2008/12/23 00:12:22 dlg Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.91 2009/04/23 19:15:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1989,6 +1989,24 @@ struct bge_rx_bd {
 	u_int32_t		bge_opaque;
 };
 
+struct bge_ext_rx_bd {
+	bge_hostaddr		bge_addr1;
+	bge_hostaddr		bge_addr2;
+	bge_hostaddr		bge_addr3;
+#if BYTE_ORDER == LITTLE_ENDIAN
+	u_int16_t		bge_len2;
+	u_int16_t		bge_len1;
+	u_int16_t		bge_rsvd;
+	u_int16_t		bge_len3;
+#else
+	u_int16_t		bge_len1;
+	u_int16_t		bge_len2;
+	u_int16_t		bge_len3;
+	u_int16_t		bge_rsvd;
+#endif
+	struct bge_rx_bd	bge_bd;
+};
+
 #define BGE_RXBDFLAG_END		0x0004
 #define BGE_RXBDFLAG_JUMBO_RING		0x0020
 #define BGE_RXBDFLAG_VLAN_TAG		0x0040
@@ -2330,9 +2348,6 @@ struct bge_gib {
 #define BGE_JRAWLEN (BGE_JUMBO_FRAMELEN + ETHER_ALIGN)
 #define BGE_JLEN (BGE_JRAWLEN + (sizeof(u_int64_t) - \
 	(BGE_JRAWLEN % sizeof(u_int64_t))))
-#define BGE_JPAGESZ PAGE_SIZE
-#define BGE_RESID (BGE_JPAGESZ - (BGE_JLEN * BGE_JSLOTS) % BGE_JPAGESZ)
-#define BGE_JMEM ((BGE_JLEN * BGE_JSLOTS) + BGE_RESID)
 
 /*
  * Ring structures. Most of these reside in host memory and we tell
@@ -2342,7 +2357,7 @@ struct bge_gib {
  */
 struct bge_ring_data {
 	struct bge_rx_bd	bge_rx_std_ring[BGE_STD_RX_RING_CNT];
-	struct bge_rx_bd	bge_rx_jumbo_ring[BGE_JUMBO_RX_RING_CNT];
+	struct bge_ext_rx_bd	bge_rx_jumbo_ring[BGE_JUMBO_RX_RING_CNT];
 	struct bge_rx_bd	bge_rx_return_ring[BGE_RETURN_RING_CNT];
 	struct bge_tx_bd	bge_tx_ring[BGE_TX_RING_CNT];
 	struct bge_status_block	bge_status_block;
@@ -2380,15 +2395,8 @@ struct bge_chain_data {
 	struct mbuf		*bge_rx_mini_chain[BGE_MINI_RX_RING_CNT];
 	bus_dmamap_t		bge_tx_map[BGE_TX_RING_CNT];
 	bus_dmamap_t		bge_rx_std_map[BGE_STD_RX_RING_CNT];
-	bus_dmamap_t		bge_rx_jumbo_map;
-	/* Stick the jumbo mem management stuff here too. */
-	caddr_t			bge_jslots[BGE_JSLOTS];
-	void			*bge_jumbo_buf;
+	bus_dmamap_t		bge_rx_jumbo_map[BGE_JUMBO_RX_RING_CNT];
 };
-
-#define BGE_JUMBO_DMA_ADDR(sc, m) \
-	((sc)->bge_cdata.bge_rx_jumbo_map->dm_segs[0].ds_addr + \
-	 (mtod((m), char *) - (char *)(sc)->bge_cdata.bge_jumbo_buf))
 
 struct bge_type {
 	u_int16_t		bge_vid;
@@ -2398,11 +2406,6 @@ struct bge_type {
 
 #define BGE_TIMEOUT		100000
 #define BGE_TXCONS_UNSET		0xFFFF	/* impossible value */
-
-struct bge_jpool_entry {
-	int                             slot;
-	SLIST_ENTRY(bge_jpool_entry)	jpool_entries;
-};
 
 struct txdmamap_pool_entry {
 	bus_dmamap_t dmamap;
@@ -2458,8 +2461,7 @@ struct bge_softc {
 	u_int16_t		bge_std;	/* current std ring head */
 	int			bge_std_cnt;
 	u_int16_t		bge_jumbo;	/* current jumo ring head */
-	SLIST_HEAD(__bge_jfreehead, bge_jpool_entry)	bge_jfree_listhead;
-	SLIST_HEAD(__bge_jinusehead, bge_jpool_entry)	bge_jinuse_listhead;
+	int			bge_jumbo_cnt;
 	u_int32_t		bge_stat_ticks;
 	u_int32_t		bge_rx_coal_ticks;
 	u_int32_t		bge_tx_coal_ticks;
