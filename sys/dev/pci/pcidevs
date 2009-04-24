@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1468 2009/04/12 13:45:23 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1469 2009/04/24 17:32:48 mk Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4204,6 +4204,7 @@ product PICOPOWER PT86C523_2	0x8002	PT86C523_2
 
 /* Pijnenburg */
 product PIJNENBURG PCC_ISES	0x0001	PCC-ISES
+product PIJNENBURG PCWD_PCI	0x5030	PCI PC WD
 
 /* Platform */
 product PLATFORM ES1849		0x0100	ES1849
