@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.293 2009/02/07 02:09:01 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.294 2009/04/24 07:59:50 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -505,6 +505,22 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  piixsata_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_82801I_SATA_6, /* Intel 82801I (ICH9M) SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801JD_SATA_1, /* Intel 82801JD (ICH10) SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801JD_SATA_2, /* Intel 82801JD (ICH10) SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801JI_SATA_1, /* Intel 82801JI (ICH10) SATA */
+	  0,
+	  piixsata_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801JI_SATA_2, /* Intel 82801JI (ICH10) SATA */
 	  0,
 	  piixsata_chip_map
 	},
