@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.269 2009/04/20 13:26:07 ariane Exp $
+.\"	$OpenBSD: pci.4,v 1.270 2009/04/24 21:06:19 mk Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 20 2009 $
+.Dd $Mdocdate: April 24 2009 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -389,6 +389,8 @@ Gemtek PCI FM radio device
 .El
 .Ss Hardware Sensors
 .Bl -tag -width 10n -offset ind -compact
+.It Xr berkwdt 4
+Berkshire Products PCI PC Watchdog
 .It Xr elansc 4
 AMD Elan SC520 System Controller with watchdog timer and GPIO
 .It Xr geodesc 4
