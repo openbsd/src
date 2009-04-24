@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.434 2009/04/22 13:32:25 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.435 2009/04/24 05:44:39 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 22 2009 $
+.Dd $Mdocdate: April 24 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -36,10 +36,20 @@
 .Sh DESCRIPTION
 The
 .Xr pf 4
-packet filter modifies, drops or passes packets according to rules or
+packet filter modifies, drops, or passes packets according to rules or
 definitions specified in
 .Nm pf.conf .
-.Sh STATEMENT ORDER
+.Pp
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extend to the end of the current line.
+Additional configuration files can be included with the
+.Ic include
+keyword, for example:
+.Bd -literal -offset indent
+include "/etc/pf/sub.filter.conf"
+.Ed
+.Pp
 There are six types of statements in
 .Nm pf.conf :
 .Bl -tag -width xxxx
@@ -66,8 +76,7 @@ With the exception of
 .Cm macros
 and
 .Cm tables ,
-the types of statements should be grouped and appear in
-.Nm pf.conf
+the types of statements should be grouped and appear
 in the order shown above, as this matches the operation of the underlying
 packet filtering engine.
 By default
@@ -75,17 +84,6 @@ By default
 enforces this order (see
 .Ar set require-order
 below).
-.Pp
-Comments can be put anywhere in the file using a hash mark
-.Pq Sq # ,
-and extend to the end of the current line.
-.Pp
-Additional configuration files can be included with the
-.Ic include
-keyword, for example:
-.Bd -literal -offset indent
-include "/etc/pf/sub.filter.conf"
-.Ed
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, and may contain letters, digits
@@ -964,6 +962,70 @@ Unless this effect is desired, any of the local non-loopback addresses
 should be used instead as the redirection target, which allows external
 connections only to daemons bound to this address or not bound to
 any address.
+.Pp
+For
+.Ar nat
+and
+.Ar rdr
+rules
+for which there is a single redirection address which has a
+subnet mask smaller than 32 for IPv4 or 128 for IPv6 (more than one IP
+address), a variety of different methods for assigning this address can be
+used:
+.Bl -tag -width xxxx
+.It Ar bitmask
+The
+.Ar bitmask
+option applies the network portion of the redirection address to the address
+to be modified (source with
+.Ar nat ,
+destination with
+.Ar rdr ) .
+.It Ar random Op Ar sticky-address
+The
+.Ar random
+option selects an address at random within the defined block of addresses.
+.Pp
+.Ar sticky-address
+can be specified to ensure that multiple connections from the
+same source are mapped to the same redirection address.
+Associations are destroyed as soon as there are
+no longer states which refer to them;
+in order to make the mappings last
+beyond the lifetime of the states,
+increase the global options with
+.Ar set timeout src.track .
+.It Ar round-robin Op Ar sticky-address
+The
+.Ar round-robin
+option loops through the redirection address(es).
+.Ar sticky-address
+is as described above.
+.Pp
+When more than one redirection address is specified,
+.Ar round-robin
+is the only permitted pool type.
+.It Ar source-hash Op Ar key
+The
+.Ar source-hash
+option uses a hash of the source address to determine the redirection address,
+ensuring that the redirection address is always the same for a given source.
+An optional
+.Ar key
+can be specified after this keyword either in hex or as a string;
+by default
+.Xr pfctl 8
+randomly generates a key for source-hash every time the
+ruleset is reloaded.
+.It Ar static-port
+With
+.Ar nat
+rules, the
+.Ar static-port
+option prevents
+.Xr pf 4
+from modifying the source port on TCP and UDP packets.
+.El
 .Sh PACKET FILTERING
 .Xr pf 4
 has the ability to
@@ -973,6 +1035,8 @@ and
 .Ar match
 packets based on attributes of their layer 3
 and layer 4 headers.
+Filter rules determine which of these actions are taken;
+filter parameters specify the packets to which a rule applies.
 .Pp
 For each packet processed by the packet filter, the filter rules are
 evaluated in sequential order, from first to last.
@@ -987,6 +1051,24 @@ For
 .Ar match ,
 rules are evaluated every time they match;
 the pass/block state of a packet remains unchanged.
+.Pp
+Most parameters are optional.
+If a parameter is specified, the rule only applies to packets with
+matching attributes.
+Certain parameters can be expressed as lists, in which case
+.Xr pfctl 8
+generates all needed rule combinations.
+.Pp
+By default
+.Xr pf 4
+filters packets statefully:
+the first time a packet matches a
+.Ar pass
+rule, a state entry is created; for subsequent packets the filter checks
+whether the packet matches any state.
+If it does, the packet is passed without evaluation of any rules.
+After the connection is closed or times out, the state entry is automatically
+removed.
 .Pp
 The following actions can be used in the filter:
 .Bl -tag -width xxxx
@@ -1062,93 +1144,16 @@ state is created unless the
 option is specified.
 .El
 .Pp
-By default
-.Xr pf 4
-filters packets statefully; the first time a packet matches a
-.Ar pass
-rule, a state entry is created; for subsequent packets the filter checks
-whether the packet matches any state.
-If it does, the packet is passed without evaluation of any rules.
-After the connection is closed or times out, the state entry is automatically
-removed.
-.Pp
-This has several advantages.
-For TCP connections, comparing a packet to a state involves checking
-its sequence numbers, as well as TCP timestamps if a rule using the
-.Ar reassemble tcp
-parameter applies to the connection.
-If these values are outside the narrow windows of expected
-values, the packet is dropped.
-This prevents spoofing attacks, such as when an attacker sends packets with
-a fake source address/port but does not know the connection's sequence
-numbers.
-Similarly,
-.Xr pf 4
-knows how to match ICMP replies to states.
-For example,
-to allow echo requests (such as those created by
-.Xr ping 8 )
-out statefully and match incoming echo replies correctly to states:
-.Bd -literal -offset indent
-pass out inet proto icmp all icmp-type echoreq
-.Ed
-.Pp
-Also, looking up states is usually faster than evaluating rules.
-If there are 50 rules, all of them are evaluated sequentially in O(n).
-Even with 50000 states, only 16 comparisons are needed to match a
-state, since states are stored in a binary search tree that allows
-searches in O(log2 n).
-.Pp
-Furthermore, correct handling of ICMP error messages is critical to
-many protocols, particularly TCP.
-.Xr pf 4
-matches ICMP error messages to the correct connection, checks them against
-connection parameters, and passes them if appropriate.
-For example if an ICMP source quench message referring to a stateful TCP
-connection arrives, it will be matched to the state and get passed.
-.Pp
-Finally, state tracking is required for
-.Ar binat ,
-.Ar nat ,
-and
-.Ar rdr
-rules, in order to track address and port translations and reverse the
-translation on returning packets.
-.Pp
-.Xr pf 4
-will also create state for other protocols which are effectively stateless by
-nature.
-UDP packets are matched to states using only host addresses and ports,
-and other protocols are matched to states using only the host addresses.
-.Pp
-If stateless filtering of individual packets is desired,
-the
-.Ar no state
-keyword can be used to specify that state will not be created
-if this is the last matching rule.
-A number of parameters can also be set to affect how
-.Xr pf 4
-handles state tracking.
-See
-.Sx STATEFUL TRACKING OPTIONS
-below for further details.
-.Sh PARAMETERS
-The rule parameters specify the packets to which a rule applies.
-A packet always comes in on, or goes out through, one interface.
-Most parameters are optional.
-If a parameter is specified, the rule only applies to packets with
-matching attributes.
-Certain parameters can be expressed as lists, in which case
-.Xr pfctl 8
-generates all needed rule combinations.
+The following parameters can be used in the filter:
 .Bl -tag -width Ds
 .It Ar in No or Ar out
-This rule applies to incoming or outgoing packets.
-If neither
+A packet always comes in on, or goes out through, one interface.
 .Ar in
-nor
+and
 .Ar out
-are specified, the rule will match packets in both directions.
+apply to incoming and outgoing packets;
+if neither are specified,
+the rule will match packets in both directions.
 .It Ar log
 In addition to the action specified, a log message is generated.
 Only the packet that establishes the state is logged,
@@ -1345,7 +1350,7 @@ pass in proto tcp from route "DTAG"
 .Ed
 .El
 .Pp
-A number of other parameters can be used with filtering rules:
+The following additional parameters can be used in the filter:
 .Pp
 .Bl -tag -width Ds -compact
 .It Ar all
@@ -1547,12 +1552,6 @@ pass in proto tcp to port 22 queue(ssh_bulk, ssh_prio)
 Used to select an alternate routing table for the routing lookup.
 Only effective before the route lookup happened, i.e. when filtering inbound.
 .Pp
-.It Ar scrub Aq Ar parameter
-Perform traffic normalization on matching packets.
-See
-.Sx TRAFFIC NORMALIZATION
-for further information.
-.Pp
 .It Ar tag Aq Ar string
 Packets matching this rule will be tagged with the
 specified string.
@@ -1659,119 +1658,6 @@ block out proto { tcp, udp } all
 pass  out proto { tcp, udp } all user { \*(Lt 1000, dhartmei }
 .Ed
 .El
-.Sh TRAFFIC NORMALIZATION
-Traffic normalization is used to sanitize packet content in such
-a way that there are no ambiguities in packet interpretation on
-the receiving side.
-Packet normalization is invoked with the
-.Ar scrub
-option, added to regular rules.
-.Pp
-.Ar scrub
-has the following parameters:
-.Bl -tag -width xxxx
-.It Ar no-df
-Clears the
-.Ar dont-fragment
-bit from a matching IP packet.
-Some operating systems are known to generate fragmented packets with the
-.Ar dont-fragment
-bit set.
-This is particularly true with NFS.
-.Xr pf 4
-will drop such fragmented
-.Ar dont-fragment
-packets unless
-.Ar no-df
-is specified.
-.Pp
-Unfortunately some operating systems also generate their
-.Ar dont-fragment
-packets with a zero IP identification field.
-Clearing the
-.Ar dont-fragment
-bit on packets with a zero IP ID may cause deleterious results if an
-upstream router later fragments the packet.
-Using the
-.Ar random-id
-modifier (see below) is recommended in combination with the
-.Ar no-df
-modifier to ensure unique IP identifiers.
-.It Ar min-ttl Aq Ar number
-Enforces a minimum TTL for matching IP packets.
-.It Ar max-mss Aq Ar number
-Enforces a maximum MSS for matching TCP packets.
-.It Xo Ar set-tos Aq Ar string
-.No \*(Ba Aq Ar number
-.Xc
-Enforces a TOS for matching IP packets.
-.Ar string
-may be one of
-.Ar lowdelay ,
-.Ar throughput ,
-or
-.Ar reliability ;
-.Ar number
-may be either a hex or decimal number.
-.It Ar random-id
-Replaces the IP identification field with random values to compensate
-for predictable values generated by many hosts.
-This option only applies to packets that are not fragmented
-after the optional fragment reassembly.
-.It Ar reassemble tcp
-Statefully normalizes TCP connections.
-.Ar reassemble tcp
-performs the following normalizations:
-.Bl -ohang
-.It TTL
-Neither side of the connection is allowed to reduce their IP TTL.
-An attacker may send a packet such that it reaches the firewall, affects
-the firewall state, and expires before reaching the destination host.
-.Ar reassemble tcp
-will raise the TTL of all packets back up to the highest value seen on
-the connection.
-.It Timestamp Modulation
-Modern TCP stacks will send a timestamp on every TCP packet and echo
-the other endpoint's timestamp back to them.
-Many operating systems will merely start the timestamp at zero when
-first booted, and increment it several times a second.
-The uptime of the host can be deduced by reading the timestamp and multiplying
-by a constant.
-Also observing several different timestamps can be used to count hosts
-behind a NAT device.
-And spoofing TCP packets into a connection requires knowing or guessing
-valid timestamps.
-Timestamps merely need to be monotonically increasing and not derived off a
-guessable base time.
-.Ar reassemble tcp
-will cause
-.Ar scrub
-to modulate the TCP timestamps with a random number.
-.It Extended PAWS Checks
-There is a problem with TCP on long fat pipes, in that a packet might get
-delayed for longer than it takes the connection to wrap its 32-bit sequence
-space.
-In such an occurrence, the old packet would be indistinguishable from a
-new packet and would be accepted as such.
-The solution to this is called PAWS: Protection Against Wrapped Sequence
-numbers.
-It protects against it by making sure the timestamp on each packet does
-not go backwards.
-.Ar reassemble tcp
-also makes sure the timestamp on the packet does not go forward more
-than the RFC allows.
-By doing this,
-.Xr pf 4
-artificially extends the security of TCP sequence numbers by 10 to 18
-bits when the host uses appropriately randomized timestamps, since a
-blind attacker would have to guess the timestamp as well.
-.El
-.El
-.Pp
-For example:
-.Bd -literal -offset indent
-match in all scrub (no-df max-mss 1440)
-.Ed
 .Sh ROUTING
 If a packet matches a rule with a route option set, the packet filter will
 route the packet according to the type of route option.
@@ -1813,75 +1699,86 @@ filter rule specifies will be routed in this way.
 Packets passing in the opposite direction (replies) are not affected
 and are routed normally.
 .El
-.Sh POOL OPTIONS
-For
-.Ar nat
-and
-.Ar rdr
-rules (as well as for the
+.Pp
+For the
 .Ar dup-to ,
 .Ar reply-to ,
 and
 .Ar route-to
-rule options) for which there is a single redirection address which has a
+route options
+for which there is a single redirection address which has a
 subnet mask smaller than 32 for IPv4 or 128 for IPv6 (more than one IP
-address), a variety of different methods for assigning this address can be
-used:
-.Bl -tag -width xxxx
-.It Ar bitmask
-The
-.Ar bitmask
-option applies the network portion of the redirection address to the address
-to be modified (source with
-.Ar nat ,
-destination with
-.Ar rdr ) .
-.It Ar random Op Ar sticky-address
-The
-.Ar random
-option selects an address at random within the defined block of addresses.
-.Pp
-.Ar sticky-address
-can be specified to ensure that multiple connections from the
-same source are mapped to the same redirection address.
-Associations are destroyed as soon as there are
-no longer states which refer to them;
-in order to make the mappings last
-beyond the lifetime of the states,
-increase the global options with
-.Ar set timeout src.track .
-.It Ar round-robin Op Ar sticky-address
-The
-.Ar round-robin
-option loops through the redirection address(es).
-.Ar sticky-address
-is as described above.
-.Pp
-When more than one redirection address is specified,
-.Ar round-robin
-is the only permitted pool type.
-.It Ar source-hash Op Ar key
-The
-.Ar source-hash
-option uses a hash of the source address to determine the redirection address,
-ensuring that the redirection address is always the same for a given source.
-An optional
-.Ar key
-can be specified after this keyword either in hex or as a string;
-by default
-.Xr pfctl 8
-randomly generates a key for source-hash every time the
-ruleset is reloaded.
-.It Ar static-port
-With
-.Ar nat
-rules, the
-.Ar static-port
-option prevents
+address),
+the methods
+.Ar random ,
+.Ar round-robin ,
+and
+.Ar source-hash ,
+as described above in
+.Sx TRANSLATION ,
+can be used.
+.Sh STATEFUL FILTERING
 .Xr pf 4
-from modifying the source port on TCP and UDP packets.
-.El
-.Sh STATE MODULATION
+filters packets statefully,
+which has several advantages.
+For TCP connections, comparing a packet to a state involves checking
+its sequence numbers, as well as TCP timestamps if a rule using the
+.Ar reassemble tcp
+parameter applies to the connection.
+If these values are outside the narrow windows of expected
+values, the packet is dropped.
+This prevents spoofing attacks, such as when an attacker sends packets with
+a fake source address/port but does not know the connection's sequence
+numbers.
+Similarly,
+.Xr pf 4
+knows how to match ICMP replies to states.
+For example,
+to allow echo requests (such as those created by
+.Xr ping 8 )
+out statefully and match incoming echo replies correctly to states:
+.Bd -literal -offset indent
+pass out inet proto icmp all icmp-type echoreq
+.Ed
+.Pp
+Also, looking up states is usually faster than evaluating rules.
+If there are 50 rules, all of them are evaluated sequentially in O(n).
+Even with 50000 states, only 16 comparisons are needed to match a
+state, since states are stored in a binary search tree that allows
+searches in O(log2 n).
+.Pp
+Furthermore, correct handling of ICMP error messages is critical to
+many protocols, particularly TCP.
+.Xr pf 4
+matches ICMP error messages to the correct connection, checks them against
+connection parameters, and passes them if appropriate.
+For example if an ICMP source quench message referring to a stateful TCP
+connection arrives, it will be matched to the state and get passed.
+.Pp
+Finally, state tracking is required for
+.Ar binat ,
+.Ar nat ,
+and
+.Ar rdr
+rules, in order to track address and port translations and reverse the
+translation on returning packets.
+.Pp
+.Xr pf 4
+will also create state for other protocols which are effectively stateless by
+nature.
+UDP packets are matched to states using only host addresses and ports,
+and other protocols are matched to states using only the host addresses.
+.Pp
+If stateless filtering of individual packets is desired,
+the
+.Ar no state
+keyword can be used to specify that state will not be created
+if this is the last matching rule.
+A number of parameters can also be set to affect how
+.Xr pf 4
+handles state tracking,
+as detailed below.
+.Ss State Modulation
 Much of the security derived from TCP is attributable to how well the
 initial sequence numbers (ISNs) are chosen.
 Some popular stack implementations choose
@@ -1930,7 +1827,7 @@ See
 and
 .Xr pfsync 4
 for further information.
-.Sh SYN PROXY
+.Ss SYN Proxy
 By default,
 .Xr pf 4
 passes packets that are part of a
@@ -1969,7 +1866,7 @@ Example:
 .Bd -literal -offset indent
 pass in proto tcp from any to any port www synproxy state
 .Ed
-.Sh STATEFUL TRACKING OPTIONS
+.Ss Stateful Tracking Options
 A number of options related to stateful tracking can be applied on a
 per-rule basis.
 .Ar keep state ,
@@ -2101,120 +1998,124 @@ block quick from \*(Ltbad_hosts\*(Gt
 pass in on $ext_if proto tcp to $webserver port www keep state \e
       (max-src-conn-rate 100/10, overload \*(Ltbad_hosts\*(Gt flush global)
 .Ed
-.Sh OPERATING SYSTEM FINGERPRINTING
-Passive OS fingerprinting is a mechanism to inspect nuances of a TCP
-connection's initial SYN packet and guess at the host's operating system.
-Unfortunately these nuances are easily spoofed by an attacker so the
-fingerprint is not useful in making security decisions.
-But the fingerprint is typically accurate enough to make policy decisions
-upon.
+.Sh TRAFFIC NORMALISATION
+Traffic normalisation is a broad umbrella term
+for aspects of the packet filter which deal with
+verifying packets, packet fragments, spoof traffic,
+and other irregularities.
+.Ss Scrub
+Scrub involves sanitising packet content in such a way
+that there are no ambiguities in packet interpretation on the receiving side.
+It is invoked with the
+.Ar scrub
+option, added to regular rules.
 .Pp
-The fingerprints may be specified by operating system class, by
-version, or by subtype/patchlevel.
-The class of an operating system is typically the vendor or genre
-and would be
-.Ox
-for the
+Parameters are specified enclosed in parentheses.
+At least one of the following parameters must be specified:
+.Bl -tag -width xxxx
+.It Ar max-mss Aq Ar number
+Enforces a maximum MSS for matching TCP packets.
+.It Ar min-ttl Aq Ar number
+Enforces a minimum TTL for matching IP packets.
+.It Ar no-df
+Clears the
+.Ar dont-fragment
+bit from a matching IP packet.
+Some operating systems are known to generate fragmented packets with the
+.Ar dont-fragment
+bit set.
+This is particularly true with NFS.
 .Xr pf 4
-firewall itself.
-The version of the oldest available
-.Ox
-release on the main FTP site
-would be 2.6 and the fingerprint would be written as:
-.Pp
-.Dl \&"OpenBSD 2.6\&"
-.Pp
-The subtype of an operating system is typically used to describe the
-patchlevel if that patch led to changes in the TCP stack behavior.
-In the case of
-.Ox ,
-the only subtype is for a fingerprint that was
-normalized by the
+will drop such fragmented
+.Ar dont-fragment
+packets unless
 .Ar no-df
-scrub option and would be specified as:
+is specified.
 .Pp
-.Dl \&"OpenBSD 3.3 no-df\&"
-.Pp
-Fingerprints for most popular operating systems are provided by
-.Xr pf.os 5 .
-Once
+Unfortunately some operating systems also generate their
+.Ar dont-fragment
+packets with a zero IP identification field.
+Clearing the
+.Ar dont-fragment
+bit on packets with a zero IP ID may cause deleterious results if an
+upstream router later fragments the packet.
+Using
+.Ar random-id
+is recommended in combination with
+.Ar no-df
+to ensure unique IP identifiers.
+.It Ar random-id
+Replaces the IP identification field with random values to compensate
+for predictable values generated by many hosts.
+This option only applies to packets that are not fragmented
+after the optional fragment reassembly.
+.It Ar reassemble tcp
+Statefully normalises TCP connections.
+.Ar reassemble tcp
+performs the following normalisations:
+.Bl -ohang
+.It TTL
+Neither side of the connection is allowed to reduce their IP TTL.
+An attacker may send a packet such that it reaches the firewall, affects
+the firewall state, and expires before reaching the destination host.
+.Ar reassemble tcp
+will raise the TTL of all packets back up to the highest value seen on
+the connection.
+.It Timestamp Modulation
+Modern TCP stacks will send a timestamp on every TCP packet and echo
+the other endpoint's timestamp back to them.
+Many operating systems will merely start the timestamp at zero when
+first booted, and increment it several times a second.
+The uptime of the host can be deduced by reading the timestamp and multiplying
+by a constant.
+Also observing several different timestamps can be used to count hosts
+behind a NAT device.
+And spoofing TCP packets into a connection requires knowing or guessing
+valid timestamps.
+Timestamps merely need to be monotonically increasing and not derived off a
+guessable base time.
+.Ar reassemble tcp
+will cause
+.Ar scrub
+to modulate the TCP timestamps with a random number.
+.It Extended PAWS Checks
+There is a problem with TCP on long fat pipes, in that a packet might get
+delayed for longer than it takes the connection to wrap its 32-bit sequence
+space.
+In such an occurrence, the old packet would be indistinguishable from a
+new packet and would be accepted as such.
+The solution to this is called PAWS: Protection Against Wrapped Sequence
+numbers.
+It protects against it by making sure the timestamp on each packet does
+not go backwards.
+.Ar reassemble tcp
+also makes sure the timestamp on the packet does not go forward more
+than the RFC allows.
+By doing this,
 .Xr pf 4
-is running, a complete list of known operating system fingerprints may
-be listed by running:
-.Pp
-.Dl # pfctl -so
-.Pp
-Filter rules can enforce policy at any level of operating system specification
-assuming a fingerprint is present.
-Policy could limit traffic to approved operating systems or even ban traffic
-from hosts that aren't at the latest service pack.
-.Pp
-The
-.Ar unknown
-class can also be used as the fingerprint which will match packets for
-which no operating system fingerprint is known.
-.Pp
-Examples:
-.Bd -literal -offset indent
-pass  out proto tcp from any os OpenBSD
-block out proto tcp from any os Doors
-block out proto tcp from any os "Doors PT"
-block out proto tcp from any os "Doors PT SP3"
-block out from any os "unknown"
-pass on lo0 proto tcp from any os "OpenBSD 3.3 lo0"
-.Ed
-.Pp
-Operating system fingerprinting is limited only to the TCP SYN packet.
-This means that it will not work on other protocols and will not match
-a currently established connection.
-.Pp
-Caveat: operating system fingerprints are occasionally wrong.
-There are three problems: an attacker can trivially craft his packets to
-appear as any operating system he chooses;
-an operating system patch could change the stack behavior and no fingerprints
-will match it until the database is updated;
-and multiple operating systems may have the same fingerprint.
-.Sh BLOCKING SPOOFED TRAFFIC
-"Spoofing" is the faking of IP addresses, typically for malicious
-purposes.
-The
-.Ar antispoof
-directive expands to a set of filter rules which will block all
-traffic with a source IP from the network(s) directly connected
-to the specified interface(s) from entering the system through
-any other interface.
+artificially extends the security of TCP sequence numbers by 10 to 18
+bits when the host uses appropriately randomized timestamps, since a
+blind attacker would have to guess the timestamp as well.
+.El
+.It Xo Ar set-tos Aq Ar string
+.No \*(Ba Aq Ar number
+.Xc
+Enforces a TOS for matching IP packets.
+.Ar string
+may be one of
+.Ar lowdelay ,
+.Ar throughput ,
+or
+.Ar reliability ;
+.Ar number
+may be either a hex or decimal number.
+.El
 .Pp
 For example:
-.Bd -literal -offset indent -compact
-antispoof for lo0
-.Ed
-.Pp
-Expands to:
-.Bd -literal -offset indent -compact
-block drop in on ! lo0 inet from 127.0.0.1/8 to any
-block drop in on ! lo0 inet6 from ::1 to any
-.Ed
-.Pp
-For non-loopback interfaces, there are additional rules to block incoming
-packets with a source IP address identical to the interface's IP(s).
-For example, assuming the interface wi0 had an IP address of 10.0.0.1 and a
-netmask of 255.255.255.0:
 .Bd -literal -offset indent
-antispoof for wi0 inet
+match in all scrub (no-df max-mss 1440)
 .Ed
-.Pp
-Expands to:
-.Bd -literal -offset indent -compact
-block drop in on ! wi0 inet from 10.0.0.0/24 to any
-block drop in inet from 10.0.0.1 to any
-.Ed
-.Pp
-Caveat: Rules created by the
-.Ar antispoof
-directive interfere with packets sent over loopback interfaces
-to local addresses.
-One should pass these explicitly.
-.Sh FRAGMENT HANDLING
+.Ss Fragment Handling
 The size of IP datagrams (packets) can be significantly larger than the
 maximum transmission unit (MTU) of the network.
 In cases when it is necessary or more efficient to send such large packets,
@@ -2265,19 +2166,129 @@ The timeout value can also be adjusted.
 .Pp
 Currently, only IPv4 fragments are supported and IPv6 fragments
 are blocked unconditionally.
+.Ss Blocking Spoofed Traffic
+Spoofing is the faking of IP addresses,
+typically for malicious purposes.
+The
+.Ar antispoof
+directive expands to a set of filter rules which will block all
+traffic with a source IP from the network(s) directly connected
+to the specified interface(s) from entering the system through
+any other interface.
+.Pp
+For example:
+.Bd -literal -offset indent -compact
+antispoof for lo0
+.Ed
+.Pp
+Expands to:
+.Bd -literal -offset indent -compact
+block drop in on ! lo0 inet from 127.0.0.1/8 to any
+block drop in on ! lo0 inet6 from ::1 to any
+.Ed
+.Pp
+For non-loopback interfaces, there are additional rules to block incoming
+packets with a source IP address identical to the interface's IP(s).
+For example, assuming the interface wi0 had an IP address of 10.0.0.1 and a
+netmask of 255.255.255.0:
+.Bd -literal -offset indent
+antispoof for wi0 inet
+.Ed
+.Pp
+Expands to:
+.Bd -literal -offset indent -compact
+block drop in on ! wi0 inet from 10.0.0.0/24 to any
+block drop in inet from 10.0.0.1 to any
+.Ed
+.Pp
+Caveat: Rules created by the
+.Ar antispoof
+directive interfere with packets sent over loopback interfaces
+to local addresses.
+One should pass these explicitly.
+.Sh OPERATING SYSTEM FINGERPRINTING
+Passive OS fingerprinting is a mechanism to inspect nuances of a TCP
+connection's initial SYN packet and guess at the host's operating system.
+Unfortunately these nuances are easily spoofed by an attacker so the
+fingerprint is not useful in making security decisions.
+But the fingerprint is typically accurate enough to make policy decisions
+upon.
+.Pp
+The fingerprints may be specified by operating system class, by
+version, or by subtype/patchlevel.
+The class of an operating system is typically the vendor or genre
+and would be
+.Ox
+for the
+.Xr pf 4
+firewall itself.
+The version of the oldest available
+.Ox
+release on the main FTP site
+would be 2.6 and the fingerprint would be written as:
+.Pp
+.Dl \&"OpenBSD 2.6\&"
+.Pp
+The subtype of an operating system is typically used to describe the
+patchlevel if that patch led to changes in the TCP stack behavior.
+In the case of
+.Ox ,
+the only subtype is for a fingerprint that was
+normalised by the
+.Ar no-df
+scrub option and would be specified as:
+.Pp
+.Dl \&"OpenBSD 3.3 no-df\&"
+.Pp
+Fingerprints for most popular operating systems are provided by
+.Xr pf.os 5 .
+Once
+.Xr pf 4
+is running, a complete list of known operating system fingerprints may
+be listed by running:
+.Pp
+.Dl # pfctl -so
+.Pp
+Filter rules can enforce policy at any level of operating system specification
+assuming a fingerprint is present.
+Policy could limit traffic to approved operating systems or even ban traffic
+from hosts that aren't at the latest service pack.
+.Pp
+The
+.Ar unknown
+class can also be used as the fingerprint which will match packets for
+which no operating system fingerprint is known.
+.Pp
+Examples:
+.Bd -literal -offset indent
+pass  out proto tcp from any os OpenBSD
+block out proto tcp from any os Doors
+block out proto tcp from any os "Doors PT"
+block out proto tcp from any os "Doors PT SP3"
+block out from any os "unknown"
+pass on lo0 proto tcp from any os "OpenBSD 3.3 lo0"
+.Ed
+.Pp
+Operating system fingerprinting is limited only to the TCP SYN packet.
+This means that it will not work on other protocols and will not match
+a currently established connection.
+.Pp
+Caveat: operating system fingerprints are occasionally wrong.
+There are three problems: an attacker can trivially craft his packets to
+appear as any operating system he chooses;
+an operating system patch could change the stack behavior and no fingerprints
+will match it until the database is updated;
+and multiple operating systems may have the same fingerprint.
 .Sh ANCHORS
 Besides the main ruleset,
 .Xr pfctl 8
 can load rulesets into
 .Ar anchor
 attachment points.
-An
-.Ar anchor
-is a container that can hold rules, address tables, and other anchors.
+An anchor is a container that can hold rules,
+address tables, and other anchors.
 .Pp
-An
-.Ar anchor
-has a name which specifies the path where
+An anchor has a name which specifies the path where
 .Xr pfctl 8
 can be used to access the anchor to perform operations on it, such as
 attaching child anchors to it or loading rules into it.
@@ -2287,11 +2298,8 @@ characters, similar to how file system hierarchies are laid out.
 The main ruleset is actually the default anchor, so filter and
 translation rules, for example, may also be contained in any anchor.
 .Pp
-An anchor can reference another
-.Ar anchor
-attachment point
-using the following kinds
-of rules:
+An anchor can reference another anchor attachment point
+using the following kinds of rules:
 .Bl -tag -width xxxx
 .It Ar anchor Aq Ar name
 Evaluates the filter rules in the specified anchor.
@@ -2439,7 +2447,7 @@ spam/banned anchor, if any, before finally evaluating the
 rule.
 .Pp
 Filter rule anchors can also be loaded inline in the ruleset
-within a brace ('{' '}') delimited block.
+within a brace-delimited block.
 Brace delimited blocks may contain rules or other brace-delimited blocks.
 When anchors are loaded this way the anchor name becomes optional.
 .Bd -literal -offset indent
@@ -2581,7 +2589,7 @@ rdr on $ext_if proto tcp from any to any port 80 \e
 # use a macro for the interface name, so it can be changed easily
 ext_if = \&"kue0\&"
 
-# normalize all incoming traffic
+# normalise all incoming traffic
 match in all scrub (no-df max-mss 1440)
 
 # block and log everything by default
@@ -2650,7 +2658,7 @@ pass quick on $ext_if proto ipv6
 # three interfaces: $int_if, $ext_if, and $wifi_if (wireless). NAT is
 # being done on $ext_if for all outgoing packets. tag packets in on
 # $int_if and pass those tagged packets out on $ext_if.  all other
-# outgoing packets (i.e., packets from the wireless network) are only
+# outgoing packets (i.e. packets from the wireless network) are only
 # permitted to access port 80.
 
 pass in on $int_if from any to any tag INTNET
@@ -2877,7 +2885,7 @@ sc-spec        = ( bandwidth-spec |
 include        = "include" filename
 .Ed
 .Sh FILES
-.Bl -tag -width "/etc/protocols" -compact
+.Bl -tag -width "/etc/protocolsXXX" -compact
 .It Pa /etc/hosts
 Host name database.
 .It Pa /etc/pf.conf
