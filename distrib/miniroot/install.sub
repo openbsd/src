@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.471 2009/04/23 23:15:08 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.472 2009/04/24 00:15:21 sthen Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1450,7 +1450,7 @@ mount_fs() {
 		# Mount the filesystem. If the mount fails, exit.
 		_msg=$(mount -v -t $_fstype $_async -o $_opt $_dev $_mp)
 		_err=$?
-		echo $_msg | sed -e 's/, ctime=[^,(]*//'
+		echo $_msg | sed -e 's/, ctime=[^,)]*//'
 		if ! $_e ; then
 			# In addition to the error message displayed by mount ...
 			cat <<__EOT
