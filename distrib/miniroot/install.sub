@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.473 2009/04/24 01:04:33 krw Exp $
+#	$OpenBSD: install.sub,v 1.474 2009/04/24 01:14:01 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -936,18 +936,6 @@ enable_network() {
 	# Use loopback, not the wire.
 	route -qn add -host `hostname` 127.0.0.1 >/dev/null
 	route -qn add -net 127 127.0.0.1 -reject >/dev/null
-
-	# Display results...
-	echo "Network interface configuration:"
-	ifconfig -a media
-
-	# enable the resolver if resolv.conf is available
-	route -n show
-	if [ -f /etc/resolv.conf ]; then
-		echo "\nResolver enabled."
-	else
-		echo "\nResolver not enabled."
-	fi
 }
 
 # Install a user-selected subset of the files in $2 from the source
