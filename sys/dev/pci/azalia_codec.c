@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.115 2009/04/24 16:05:06 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.116 2009/04/24 16:18:23 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
 
 int	azalia_generic_codec_init_dacgroup(codec_t *);
 int	azalia_generic_codec_add_convgroup(codec_t *, convgroupset_t *,
-    uint32_t, uint32_t);
+    struct io_pin *, int, nid_t *, int, uint32_t, uint32_t);
 
 int	azalia_generic_unsol(codec_t *, int);
 
@@ -274,17 +274,29 @@ int
 azalia_generic_codec_init_dacgroup(codec_t *this)
 {
 	this->dacs.ngroups = 0;
-	azalia_generic_codec_add_convgroup(this, &this->dacs,
-	    COP_AWTYPE_AUDIO_OUTPUT, 0);
-	azalia_generic_codec_add_convgroup(this, &this->dacs,
-	    COP_AWTYPE_AUDIO_OUTPUT, COP_AWCAP_DIGITAL);
+	if (this->na_dacs > 0)
+		azalia_generic_codec_add_convgroup(this, &this->dacs,
+		    this->opins, this->nopins,
+		    this->a_dacs, this->na_dacs,
+		    COP_AWTYPE_AUDIO_OUTPUT, 0);
+	if (this->na_dacs_d > 0)
+		azalia_generic_codec_add_convgroup(this, &this->dacs,
+		    this->opins_d, this->nopins_d,
+		    this->a_dacs_d, this->na_dacs_d,
+		    COP_AWTYPE_AUDIO_OUTPUT, COP_AWCAP_DIGITAL);
 	this->dacs.cur = 0;
 
 	this->adcs.ngroups = 0;
-	azalia_generic_codec_add_convgroup(this, &this->adcs,
-	    COP_AWTYPE_AUDIO_INPUT, 0);
-	azalia_generic_codec_add_convgroup(this, &this->adcs,
-	    COP_AWTYPE_AUDIO_INPUT, COP_AWCAP_DIGITAL);
+	if (this->na_adcs > 0)
+		azalia_generic_codec_add_convgroup(this, &this->adcs,
+		    this->ipins, this->nipins,
+		    this->a_adcs, this->na_adcs,
+		    COP_AWTYPE_AUDIO_INPUT, 0);
+	if (this->na_adcs_d > 0)
+		azalia_generic_codec_add_convgroup(this, &this->adcs,
+		    this->ipins_d, this->nipins_d,
+		    this->a_adcs_d, this->na_adcs_d,
+		    COP_AWTYPE_AUDIO_INPUT, COP_AWCAP_DIGITAL);
 	this->adcs.cur = 0;
 
 	return 0;
@@ -292,94 +304,58 @@ azalia_generic_codec_init_dacgroup(codec_t *this)
 
 int
 azalia_generic_codec_add_convgroup(codec_t *this, convgroupset_t *group,
+    struct io_pin *pins, int npins, nid_t *all_convs, int nall_convs,
     uint32_t type, uint32_t digital)
 {
-	nid_t all_convs[HDA_MAX_CHANNELS];
-	int nall_convs;
 	nid_t convs[HDA_MAX_CHANNELS];
 	int nconvs;
-	int assoc, seq;
 	nid_t conv;
 	int i, j, k;
 
-	DPRINTF(("%s: looking for %s %s\n", __func__,
-	    digital ? "digital" : "analog",
-	    (type == COP_AWTYPE_AUDIO_OUTPUT) ? "DACs" : "ADCs"));
-
 	nconvs = 0;
-	nall_convs = 0;
 
-	FOR_EACH_WIDGET(this, i) {
-		if (this->w[i].type == type &&
-		    (this->w[i].widgetcap & COP_AWCAP_DIGITAL) == digital &&
-		    nall_convs < HDA_MAX_CHANNELS)
-			all_convs[nall_convs++] = this->w[i].nid;
+	/* default pin connections */
+	for (i = 0; i < npins; i++) {
+		conv = pins[i].conv;
+		if (conv < 0)
+			continue;
+		for (j = 0; j < nconvs; j++) {
+			if (convs[j] == conv)
+				break;
+		}
+		if (j < nconvs)
+			continue;
+		convs[nconvs++] = conv;
+		if (nconvs >= nall_convs) {
+			goto done;
+		}
 	}
-	if (nall_convs == 0)
-		goto done;
-
-	for (assoc = 0; assoc <= CORB_CD_ASSOCIATION_MAX; assoc++) {
-		for (seq = 0; seq <= CORB_CD_SEQUENCE_MAX; seq++) {
-			FOR_EACH_WIDGET(this, i) {
-				const widget_t *w;
-
-				w = &this->w[i];
-				if (!w->enable)
+	/* non-default connections */
+	for (i = 0; i < npins; i++) {
+		for (j = 0; j < nall_convs; j++) {
+			conv = all_convs[j];
+			for (k = 0; k < nconvs; k++) {
+				if (convs[k] == conv)
+					break;
+			}
+			if (k < nconvs)
+				continue;
+			if (type == COP_AWTYPE_AUDIO_OUTPUT) {
+				k = azalia_codec_fnode(this, conv,
+				    pins[i].nid, 0);
+				if (k < 0)
 					continue;
-				if (w->type != COP_AWTYPE_PIN_COMPLEX)
+			} else {
+				if (!azalia_widget_enabled(this, conv))
 					continue;
-				if ((w->widgetcap &
-				    COP_AWCAP_DIGITAL) != digital)
+				k = azalia_codec_fnode(this, pins[i].nid,
+				    conv, 0);
+				if (k < 0)
 					continue;
-				if (w->d.pin.sequence != seq ||
-				    w->d.pin.association != assoc)
-					continue;
-				if (type == COP_AWTYPE_AUDIO_OUTPUT) {
-					if (!(w->d.pin.cap & COP_PINCAP_OUTPUT))
-						continue;
-					if (this->mic != -1 &&
-					    w->nid == this->mic)
-						continue;
-				} else {
-					if (!(w->d.pin.cap & COP_PINCAP_INPUT))
-						continue;
-					if (this->speaker != -1 &&
-					    w->nid == this->speaker)
-						continue;
-				}
-				DPRINTF(("\tpin=%2.2x, assoc=%d, seq=%d:",
-				    w->nid, assoc, seq));
-				for (j = 0; j < nall_convs; j++) {
-					conv = all_convs[j];
-					for (k = 0; k < nconvs; k++) {
-						if (convs[k] == conv)
-							break;
-					}
-					if (k < nconvs)
-						continue;
-					if (type == COP_AWTYPE_AUDIO_OUTPUT) {
-						k = azalia_codec_fnode
-						    (this, conv, i, 0);
-						if (k < 0)
-							continue;
-					} else {
-						if (!azalia_widget_enabled(this,
-						    conv))
-							continue;
-						k = azalia_codec_fnode
-						    (this, w->nid, conv, 0);
-						if (k < 0)
-							continue;
-					}
-					convs[nconvs++] = conv;
-					DPRINTF(("%2.2x", conv));
-					if (nconvs >= nall_convs ||
-					    nconvs >= HDA_MAX_CHANNELS) {
-						DPRINTF(("\n"));
-						goto done;
-					}
-				}
-				DPRINTF(("\n"));
+			}
+			convs[nconvs++] = conv;
+			if (nconvs >= nall_convs) {
+				goto done;
 			}
 		}
 	}
@@ -410,7 +386,6 @@ azalia_codec_fnode(codec_t *this, nid_t node, int index, int depth)
 
 	w = &this->w[index];
 	if (w->nid == node) {
-		DPRINTF((" depth=%d:", depth));
 		return index;
 	}
 	/* back at the beginning or a bad end */
@@ -424,8 +399,7 @@ azalia_codec_fnode(codec_t *this, nid_t node, int index, int depth)
 	for (i = 0; i < w->nconnections; i++) {
 		if (!azalia_widget_enabled(this, w->connections[i]))
 			continue;
-		ret = azalia_codec_fnode(this, node,
-		    w->connections[i], depth);
+		ret = azalia_codec_fnode(this, node, w->connections[i], depth);
 		if (ret >= 0)
 			return ret;
 	}
