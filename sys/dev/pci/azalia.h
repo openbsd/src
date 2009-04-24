@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.42 2009/04/24 16:02:17 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.43 2009/04/24 16:05:06 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -685,3 +685,4 @@ int	azalia_codec_init_vtbl(codec_t *);
 int	azalia_codec_construct_format(codec_t *, int, int);
 int	azalia_widget_enabled(const codec_t *, nid_t);
 int	azalia_codec_gpio_quirks(codec_t *);
+int	azalia_codec_fnode(codec_t *, nid_t, int, int);

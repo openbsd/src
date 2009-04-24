@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.114 2009/01/24 09:44:02 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.115 2009/04/24 16:05:06 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -66,7 +66,6 @@
 #define STAC9228X_DELL_V1400	0x02271028
 
 int	azalia_generic_codec_init_dacgroup(codec_t *);
-int	azalia_generic_codec_fnode(codec_t *, nid_t, int, int);
 int	azalia_generic_codec_add_convgroup(codec_t *, convgroupset_t *,
     uint32_t, uint32_t);
 
@@ -359,7 +358,7 @@ azalia_generic_codec_add_convgroup(codec_t *this, convgroupset_t *group,
 					if (k < nconvs)
 						continue;
 					if (type == COP_AWTYPE_AUDIO_OUTPUT) {
-						k = azalia_generic_codec_fnode
+						k = azalia_codec_fnode
 						    (this, conv, i, 0);
 						if (k < 0)
 							continue;
@@ -367,7 +366,7 @@ azalia_generic_codec_add_convgroup(codec_t *this, convgroupset_t *group,
 						if (!azalia_widget_enabled(this,
 						    conv))
 							continue;
-						k = azalia_generic_codec_fnode
+						k = azalia_codec_fnode
 						    (this, w->nid, conv, 0);
 						if (k < 0)
 							continue;
@@ -404,7 +403,7 @@ done:
 }
 
 int
-azalia_generic_codec_fnode(codec_t *this, nid_t node, int index, int depth)
+azalia_codec_fnode(codec_t *this, nid_t node, int index, int depth)
 {
 	const widget_t *w;
 	int i, ret;
@@ -425,7 +424,7 @@ azalia_generic_codec_fnode(codec_t *this, nid_t node, int index, int depth)
 	for (i = 0; i < w->nconnections; i++) {
 		if (!azalia_widget_enabled(this, w->connections[i]))
 			continue;
-		ret = azalia_generic_codec_fnode(this, node,
+		ret = azalia_codec_fnode(this, node,
 		    w->connections[i], depth);
 		if (ret >= 0)
 			return ret;
