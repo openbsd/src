@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.16 2009/01/30 06:19:13 form Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.17 2009/04/24 10:02:35 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -44,6 +44,7 @@ int alias_is_include(struct alias *, char *, size_t);
 int
 aliases_exist(struct smtpd *env, char *username)
 {
+	char buf[MAXLOGNAME];
 	int ret;
 	DBT key;
 	DBT val;
@@ -58,7 +59,9 @@ aliases_exist(struct smtpd *env, char *username)
 	if (aliasesdb == NULL)
 		return 0;
 
-	key.data = username;
+	lowercase(buf, username, sizeof(buf));
+
+	key.data = buf;
 	key.size = strlen(key.data) + 1;
 
 	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) == -1) {
@@ -73,6 +76,7 @@ aliases_exist(struct smtpd *env, char *username)
 int
 aliases_get(struct smtpd *env, struct aliaseslist *aliases, char *username)
 {
+	char buf[MAXLOGNAME];
 	int ret;
 	DBT key;
 	DBT val;
@@ -91,7 +95,9 @@ aliases_get(struct smtpd *env, struct aliaseslist *aliases, char *username)
 	if (aliasesdb == NULL)
 		return 0;
 
-	key.data = username;
+	lowercase(buf, username, sizeof(buf));
+
+	key.data = buf;
 	key.size = strlen(key.data) + 1;
 
 	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
@@ -148,6 +154,8 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 		return 0;
 	}
 
+	lowercase(strkey, strkey, sizeof(strkey));
+
 	key.data = strkey;
 	key.size = strlen(key.data) + 1;
 
@@ -157,6 +165,8 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 			aliasesdb->close(aliasesdb);
 			return 0;
 		}
+
+		lowercase(strkey, strkey, sizeof(strkey));
 
 		key.data = strkey;
 		key.size = strlen(key.data) + 1;
@@ -200,6 +210,8 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 		return 0;
 	}
 
+	lowercase(strkey, strkey, sizeof(strkey));
+
 	key.data = strkey;
 	key.size = strlen(key.data) + 1;
 
@@ -209,6 +221,8 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 			aliasesdb->close(aliasesdb);
 			return 0;
 		}
+
+		lowercase(strkey, strkey, sizeof(strkey));
 
 		key.data = strkey;
 		key.size = strlen(key.data) + 1;

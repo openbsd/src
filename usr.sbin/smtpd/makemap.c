@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.15 2009/03/19 22:03:33 jacekm Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.16 2009/04/24 10:02:35 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -248,6 +248,7 @@ parse_entry(char *line, size_t len, size_t lineno)
 			goto bad;
 		break;
 	case T_ALIASES:
+		lowercase(key.data, key.data, strlen(key.data) + 1);
 		if (! make_aliases(&val, valp))
 			goto bad;
 		break;
