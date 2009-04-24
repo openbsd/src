@@ -1,4 +1,4 @@
-/*	$OpenBSD: berkwdt.c,v 1.2 2009/04/24 18:01:10 mk Exp $ */
+/*	$OpenBSD: berkwdt.c,v 1.3 2009/04/24 18:59:30 mk Exp $ */
 
 /*
  * Copyright (c) 2009 Wim Van Sebroeck <wim@iguana.be>
@@ -36,14 +36,14 @@
 
 struct berkwdt_softc {
 	/* wdt_dev must be the first item in the struct */
-	struct device		berkwdt_dev;
-
-	/* the watchdog's heartbeat */
-	int			heartbeat;
+	struct device	sc_dev;
 
 	/* device access through bus space */
-	bus_space_tag_t		iot;
-	bus_space_handle_t	ioh;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+
+	/* the watchdog's heartbeat */
+	int		sc_period;
 };
 
 int berkwdt_match(struct device *, void *, void *);
@@ -102,26 +102,26 @@ berkwdt_send_command(struct berkwdt_softc *sc, u_int8_t cmd, int *val)
 	int count;
 
 	/* Send command with data (data first!) */
-	bus_space_write_1(sc->iot, sc->ioh, PCWD_PCI_LSB, lsb);
-	bus_space_write_1(sc->iot, sc->ioh, PCWD_PCI_MSB, msb);
-	bus_space_write_1(sc->iot, sc->ioh, PCWD_PCI_CMD, cmd);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_LSB, lsb);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_MSB, msb);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_CMD, cmd);
 
-	got_response = bus_space_read_1(sc->iot, sc->ioh, PCWD_PCI_CS2);
+	got_response = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_CS2);
 	got_response &= WD_PCI_WRSP;
 	for (count = 0; (count < PCI_CMD_TIMEOUT) && (!got_response); count++) {
 		delay(1000);
-		got_response = bus_space_read_1(sc->iot, sc->ioh, PCWD_PCI_CS2);
+		got_response = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_CS2);
 		got_response &= WD_PCI_WRSP;
 	}
 
 	if (got_response) {
 		/* read back response */
-		lsb = bus_space_read_1(sc->iot, sc->ioh, PCWD_PCI_LSB);
-		msb = bus_space_read_1(sc->iot, sc->ioh, PCWD_PCI_MSB);
+		lsb = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_LSB);
+		msb = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_MSB);
 		*val = (msb << 8) + lsb;
 
 		/* clear WRSP bit */
-		bus_space_read_1(sc->iot, sc->ioh, PCWD_PCI_CMD);
+		bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_CMD);
 		return 1;
 	}
 
@@ -133,14 +133,14 @@ berkwdt_start(struct berkwdt_softc *sc)
 {
 	u_int8_t reg;
 
-	bus_space_write_1(sc->iot, sc->ioh,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 	    PCWD_PCI_WDT_DIS, 0x00);
 	delay(1000);
 
-	reg = bus_space_read_1(sc->iot, sc->ioh, PCWD_PCI_CS2);
+	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_CS2);
 	if (reg & WD_PCI_WDIS) {
 		printf("%s: Card did not acknowledge enable attempt\n",
-		    sc->berkwdt_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 	}
 }
 
@@ -149,22 +149,22 @@ berkwdt_stop(struct berkwdt_softc *sc)
 {
 	u_int8_t reg;
 
-	bus_space_write_1(sc->iot, sc->ioh, PCWD_PCI_WDT_DIS, 0xa5);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_WDT_DIS, 0xa5);
 	delay(1000);
-	bus_space_write_1(sc->iot, sc->ioh, PCWD_PCI_WDT_DIS, 0xa5);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_WDT_DIS, 0xa5);
 	delay(1000);
 
-	reg = bus_space_read_1(sc->iot, sc->ioh, PCWD_PCI_CS2);
+	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_CS2);
 	if (!(reg & WD_PCI_WDIS)) {
 		printf("%s: Card did not acknowledge disable attempt\n",
-		    sc->berkwdt_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 	}
 }
 
 void
 berkwdt_reload(struct berkwdt_softc *sc)
 {
-	bus_space_write_1(sc->iot, sc->ioh, PCWD_PCI_RELOAD, 0x42);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_RELOAD, 0x42);
 }
 
 int
@@ -184,13 +184,13 @@ berkwdt_attach(struct device *parent, struct device *self, void *aux)
 
 	/* retrieve the I/O region (BAR 0) */
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->iot, &sc->ioh, NULL, &iosize, 0) != 0) {
+	    &sc->sc_iot, &sc->sc_ioh, NULL, &iosize, 0) != 0) {
 		printf(": couldn't find PCI I/O region\n");
 		return;
 	}
 
 	/* Check for reboot by the card */
-	reg = bus_space_read_1(sc->iot, sc->ioh, PCWD_PCI_CS1);
+	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_CS1);
 	if (reg & WD_PCI_WTRP) {
 		printf(": Previous reset was caused by the Watchdog card");
 
@@ -200,7 +200,7 @@ berkwdt_attach(struct device *parent, struct device *self, void *aux)
 		/* clear trip status & LED and keep mode of relay 2 */
 		reg &= WD_PCI_R2DS;
 		reg |= WD_PCI_WTRP;
-		bus_space_write_1(sc->iot, sc->ioh, PCWD_PCI_CS1, reg);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_CS1, reg);
 	}
 
 	printf("\n");
@@ -209,7 +209,7 @@ berkwdt_attach(struct device *parent, struct device *self, void *aux)
 	 * ensure that the watchdog is disabled
 	 */
 	berkwdt_stop(sc);
-	sc->heartbeat = 0;
+	sc->sc_period = 0;
 
 	/*
 	 * register with the watchdog framework
@@ -227,12 +227,12 @@ berkwdt_set_timeout(void *self, int timeout)
 		/* Disable watchdog */
 		berkwdt_stop(sc);
 	} else {
-		if (sc->heartbeat != timeout) {
+		if (sc->sc_period != timeout) {
 			/* Set new timeout */
 			berkwdt_send_command(sc, CMD_WRITE_WD_TIMEOUT,
 			    &new_timeout);
 		}
-		if (sc->heartbeat == 0) {
+		if (sc->sc_period == 0) {
 			/* Enable watchdog */
 			berkwdt_start(sc);
 			berkwdt_reload(sc);
@@ -241,7 +241,7 @@ berkwdt_set_timeout(void *self, int timeout)
 			berkwdt_reload(sc);
 		}
 	}
-	sc->heartbeat = timeout;
+	sc->sc_period = timeout;
 
 	return (timeout);
 }
