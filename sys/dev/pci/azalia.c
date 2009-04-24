@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.117 2009/04/04 02:59:39 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.118 2009/04/24 15:07:57 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1353,7 +1353,7 @@ int
 azalia_codec_find_defdac(codec_t *this, int index, int depth)
 {
 	const widget_t *w;
-	int ret;
+	int i, ret;
 
 	w = &this->w[index];
 	if (w->enable == 0)
@@ -1370,11 +1370,25 @@ azalia_codec_find_defdac(codec_t *this, int index, int depth)
 		return -1;
 
 	if (w->nconnections > 0) {
-		index = w->connections[w->selected];
-		if (VALID_WIDGET_NID(index, this)) {
-			ret = azalia_codec_find_defdac(this, index, depth);
-			if (ret >= 0)
-				return ret;
+		/* by default, all mixer connections are active */
+		if (w->type == COP_AWTYPE_AUDIO_MIXER) {
+			for (i = 0; i < w->nconnections; i++) {
+				index = w->connections[i];
+				if (!azalia_widget_enabled(this, index))
+					continue;
+				ret = azalia_codec_find_defdac(this, index,
+				    depth);
+				if (ret >= 0)
+					return ret;
+			}
+		} else {
+			index = w->connections[w->selected];
+			if (VALID_WIDGET_NID(index, this)) {
+				ret = azalia_codec_find_defdac(this, index,
+				    depth);
+				if (ret >= 0)
+					return ret;
+			}
 		}
 	}
 
