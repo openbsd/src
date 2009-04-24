@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.26 2007/04/13 18:57:49 art Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.27 2009/04/24 08:13:24 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -308,7 +308,7 @@ debug_malloc_printit(int (*pr)(const char *, ...), vaddr_t addr)
 		TAILQ_FOREACH(md, &debug_malloc_freelist, md_list) {
 			if (addr >= md->md_va &&
 			    addr < md->md_va + 2 * PAGE_SIZE) {
-				(*pr)("Memory at address 0x%x is in a freed "
+				(*pr)("Memory at address 0x%lx is in a freed "
 				      "area. type %d, size: %d\n ",
 				      addr, md->md_type, md->md_size);
 				return;
@@ -317,13 +317,14 @@ debug_malloc_printit(int (*pr)(const char *, ...), vaddr_t addr)
 		TAILQ_FOREACH(md, &debug_malloc_usedlist, md_list) {
 			if (addr >= md->md_va + PAGE_SIZE &&
 			    addr < md->md_va + 2 * PAGE_SIZE) {
-				(*pr)("Memory at address 0x%x is just outside "
+				(*pr)("Memory at address 0x%lx is just outside "
 				      "an allocated area. type %d, size: %d\n",
 				      addr, md->md_type, md->md_size);
 				return;
 			}
 		}
-		(*pr)("Memory at address 0x%x is outside debugged malloc.\n");
+		(*pr)("Memory at address 0x%lx is outside debugged malloc.\n",
+		    addr);
 		return;
 	}
 
@@ -335,10 +336,10 @@ debug_malloc_printit(int (*pr)(const char *, ...), vaddr_t addr)
 	(*pr)("\taddr:\tsize:\n");
 	(*pr)("free chunks:\n");
 	TAILQ_FOREACH(md, &debug_malloc_freelist, md_list)
-		(*pr)("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size,
+		(*pr)("\t0x%lx\t0x%lx\t%d\n", md->md_va, md->md_size,
 		      md->md_type);
 	(*pr)("used chunks:\n");
 	TAILQ_FOREACH(md, &debug_malloc_usedlist, md_list)
-		(*pr)("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size,
+		(*pr)("\t0x%lx\t0x%lx\t%d\n", md->md_va, md->md_size,
 		      md->md_type);
 }
