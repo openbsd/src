@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.654 2009/04/19 21:33:49 mk Exp $
+#	$OpenBSD: GENERIC,v 1.655 2009/04/24 17:52:55 mk Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -100,6 +100,7 @@ geodesc* at pci?		# Geode SC1100/SCx200 IAOC
 #gscpm*	at pci?			# NS Geode SC1100 SMI/ACPI module
 #ichwdt* at pci?		# Intel 6300ESB ICH watchdog timer
 wdt0	at pci?			# Ind Computer Source PCI-WDT50x driver
+#berkwdt0 at pci?		# Berkshire PCI-PC Watchdog driver
 pwdog0	at pci?			# Quancom PWDOG1 watchdog timer
 
 # National Semiconductor LM7[89] and compatible hardware monitors

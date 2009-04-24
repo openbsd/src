@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.260 2009/04/15 06:54:44 oga Exp $
+#	$OpenBSD: files.pci,v 1.261 2009/04/24 17:52:55 mk Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -470,6 +470,11 @@ file	dev/pci/if_ste.c		ste
 device	wdt: pcibus
 attach	wdt at pci
 file	dev/pci/wdt.c			wdt
+
+# Berkshire PCI-PC Watchdog
+device	berkwdt: pcibus
+attach	berkwdt at pci
+file	dev/pci/berkwdt.c		berkwdt
 
 # Quancom PWDOG1
 device	pwdog: pcibus
