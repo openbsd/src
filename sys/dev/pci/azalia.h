@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.40 2009/01/05 09:46:26 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.41 2009/04/24 15:31:18 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -639,17 +639,22 @@ typedef struct codec_t {
 	int nmixers, maxmixers;
 	mixer_item_t *mixers;
 
-	struct audio_format* formats;
+	struct audio_format *formats;
 	int nformats;
-	struct audio_encoding* encs;
+	struct audio_encoding *encs;
 	int nencs;
 
-	int headphones;
-	int hp_dac;
-	int speaker;
-	int spkr_dac;
+	nid_t a_dacs[HDA_MAX_CHANNELS], a_dacs_d[HDA_MAX_CHANNELS];
+	int na_dacs, na_dacs_d;
+	nid_t a_adcs[HDA_MAX_CHANNELS], a_adcs_d[HDA_MAX_CHANNELS];
+	int na_adcs, na_adcs_d;
+
+	nid_t mic;		/* fixed (internal) mic */
+	nid_t mic_adc;
+	nid_t speaker;		/* fixed (internal) speaker */
+	nid_t spkr_dac;
+
 	int spkr_muters;
-	int mic;
 
 	volgroup_t playvols;
 	volgroup_t recvols;

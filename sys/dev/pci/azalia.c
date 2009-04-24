@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.118 2009/04/24 15:07:57 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.119 2009/04/24 15:31:18 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -206,7 +206,6 @@ int	azalia_codec_connect_stream(codec_t *, int, uint16_t, int);
 int	azalia_codec_disconnect_stream(codec_t *, int);
 void	azalia_codec_print_audiofunc(const codec_t *);
 void	azalia_codec_print_groups(const codec_t *);
-int	azalia_codec_init_hp_spkr(codec_t *);
 int	azalia_codec_find_defdac(codec_t *, int, int);
 int	azalia_codec_init_volgroups(codec_t *);
 
@@ -1258,9 +1257,6 @@ azalia_codec_init(codec_t *this)
 	strlcpy(this->w[this->audiofunc].name, "hdaudio",
 	    sizeof(this->w[this->audiofunc].name));
 
-	this->speaker = -1;
-	this->mic = -1;
-	this->nsense_pins = 0;
 	FOR_EACH_WIDGET(this, i) {
 		err = azalia_widget_init(&this->w[i], this, i);
 		if (err)
@@ -1274,17 +1270,75 @@ azalia_codec_init(codec_t *this)
 		if (this->init_widget != NULL)
 			this->init_widget(this, &this->w[i], this->w[i].nid);
 	}
-	/* Find widgets without any enabled inputs and disable them.
-	 * Must be done after all widgets are initialized and
-	 * their connections created.
-	 */
+
+	this->na_dacs = this->na_dacs_d = 0;
+	this->na_adcs = this->na_adcs_d = 0;
+	this->speaker = this->spkr_dac = this->mic = -1;
+	this->nsense_pins = 0;
 	FOR_EACH_WIDGET(this, i) {
-		if (this->w[i].type == COP_AWTYPE_AUDIO_MIXER ||
-		    this->w[i].type == COP_AWTYPE_AUDIO_SELECTOR) {
+		if (!this->w[i].enable)
+			continue;
+
+		switch (this->w[i].type) {
+
+		case COP_AWTYPE_AUDIO_MIXER:
+		case COP_AWTYPE_AUDIO_SELECTOR:
 			if (!azalia_widget_check_conn(this, i, 0))
 				this->w[i].enable = 0;
+			break;
+
+		case COP_AWTYPE_AUDIO_OUTPUT:
+			if ((this->w[i].widgetcap & COP_AWCAP_DIGITAL) == 0) {
+				if (this->na_dacs < HDA_MAX_CHANNELS)
+					this->a_dacs[this->na_dacs++] = i;
+			} else {
+				if (this->na_dacs_d < HDA_MAX_CHANNELS)
+					this->a_dacs_d[this->na_dacs_d++] = i;
+			}
+			break;
+
+		case COP_AWTYPE_AUDIO_INPUT:
+			if ((this->w[i].widgetcap & COP_AWCAP_DIGITAL) == 0) {
+				if (this->na_adcs < HDA_MAX_CHANNELS)
+					this->a_adcs[this->na_adcs++] = i;
+			} else {
+				if (this->na_adcs_d < HDA_MAX_CHANNELS)
+					this->a_adcs_d[this->na_adcs_d++] = i;
+			}
+			break;
+
+		case COP_AWTYPE_PIN_COMPLEX:
+			switch (CORB_CD_PORT(this->w[i].d.pin.config)) {
+			case CORB_CD_FIXED:
+				switch (this->w[i].d.pin.device) {
+				case CORB_CD_SPEAKER:
+					this->speaker = i;
+					this->spkr_dac = azalia_codec_find_defdac(this, i, 0);
+					break;
+				case CORB_CD_MICIN:
+					this->mic = i;
+					this->mic_adc = -1;	/* XXX */
+					break;
+				}
+				break;
+			case CORB_CD_JACK:
+				if (this->nsense_pins >= HDA_MAX_SENSE_PINS ||
+				    !(this->w[i].d.pin.cap & COP_PINCAP_PRESENCE))
+					break;
+				/* check override bit */
+				err = this->comresp(this, i,
+				    CORB_GET_CONFIGURATION_DEFAULT, 0, &result);
+				if (err)
+					break;
+				if (!(CORB_CD_MISC(result) & CORB_CD_PRESENCEOV)) {
+					this->sense_pins[this->nsense_pins++] = i;
+				}
+				break;
+			}
+			break;
 		}
 	}
+
 	err = this->init_dacgroup(this);
 	if (err)
 		return err;
@@ -1299,10 +1353,6 @@ azalia_codec_init(codec_t *this)
 	if (err)
 		return err;
 
-	err = azalia_codec_init_hp_spkr(this);
-	if (err)
-		return err;
-
 	err = azalia_codec_init_volgroups(this);
 	if (err)
 		return err;
@@ -1314,37 +1364,6 @@ azalia_codec_init(codec_t *this)
 	err = this->mixer_init(this);
 	if (err)
 		return err;
-
-	return 0;
-}
-
-int
-azalia_codec_init_hp_spkr(codec_t *this)
-{
-	int i;
-
-	this->hp_dac = -1;
-	this->spkr_dac = -1;
-
-	if (this->speaker != -1)
-		this->spkr_dac = azalia_codec_find_defdac(this,
-		    this->speaker, 0);
-
-	if (this->headphones == -1) {
-		FOR_EACH_WIDGET(this, i) {
-			if (this->w[i].type != COP_AWTYPE_PIN_COMPLEX)
-				continue;
-			if (this->w[i].d.pin.device == CORB_CD_LINEOUT &&
-			    (this->w[i].d.pin.cap & COP_PINCAP_HEADPHONE)) {
-				this->headphones = i;
-				break;
-			}
-		}
-	}
-
-	if (this->headphones != -1)
-		this->hp_dac = azalia_codec_find_defdac(this,
-		    this->headphones, 0);
 
 	return 0;
 }
@@ -1438,7 +1457,7 @@ azalia_codec_init_volgroups(codec_t *this)
 		if (dac == -1)
 			continue;
 		if (dac != this->dacs.groups[this->dacs.cur].conv[0] &&
-		    dac != this->hp_dac && dac != this->spkr_dac)
+		    dac != this->spkr_dac)
 			continue;
 		if ((cap & COP_AMPCAP_MUTE) && COP_AMPCAP_NUMSTEPS(cap)) {
 			if (w->type == COP_AWTYPE_BEEP_GENERATOR) {
@@ -1463,7 +1482,7 @@ azalia_codec_init_volgroups(codec_t *this)
 			if (dac == -1)
 				continue;
 			if (dac != this->dacs.groups[this->dacs.cur].conv[0] &&
-			    dac != this->hp_dac && dac != this->spkr_dac)
+			    dac != this->spkr_dac)
 				continue;
 			if (w->type == COP_AWTYPE_BEEP_GENERATOR)
 				continue;
@@ -1811,8 +1830,7 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 		stream_chan = (number << 4);
 		if (curchan < nchan) {
 			stream_chan |= curchan;
-		} else if (w->nid == this->spkr_dac ||
-		    w->nid == this->hp_dac) {
+		} else if (w->nid == this->spkr_dac) {
 			stream_chan |= 0;	/* first channel(s) */
 		} else
 			stream_chan = 0;	/* idle stream */
@@ -2190,7 +2208,6 @@ azalia_widget_init_audio(widget_t *this, const codec_t *codec)
 int
 azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 {
-	codec_t *wcodec;
 	uint32_t result, dir;
 	int err;
 
@@ -2251,56 +2268,8 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 	}
 
 	/* Disable unconnected pins */
-	if (CORB_CD_PORT(this->d.pin.config) == CORB_CD_NONE) {
+	if (CORB_CD_PORT(this->d.pin.config) == CORB_CD_NONE)
 		this->enable = 0;
-		return 0;
-	}
-
-	/* need a non const codec pointer */
-	wcodec = &codec->az->codecs[codec->az->codecno];
-
-	if (codec->nsense_pins < HDA_MAX_SENSE_PINS &&
-	    this->d.pin.cap & COP_PINCAP_PRESENCE &&
-	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_JACK) {
-		/* check override bit */
-		err = codec->comresp(codec, this->nid,
-		    CORB_GET_CONFIGURATION_DEFAULT, 0, &result);
-		if (err)
-			return err;
-		if (!(CORB_CD_MISC(result) & CORB_CD_PRESENCEOV)) {
-			wcodec->sense_pins[wcodec->nsense_pins++] = this->nid;
-		}
-	}
-
-	if (this->d.pin.device == CORB_CD_HEADPHONE &&
-	    (this->d.pin.cap & COP_PINCAP_OUTPUT) &&
-	    (CORB_CD_PORT(this->d.pin.config) == CORB_CD_JACK ||
-	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_BOTH)) {
-		if (codec->headphones == -1 ||
-		    (this->d.pin.association <
-		    codec->w[codec->headphones].d.pin.association))
-			wcodec->headphones = this->nid;
-	}
-
-	if (this->d.pin.device == CORB_CD_SPEAKER &&
-	    (this->d.pin.cap & COP_PINCAP_OUTPUT) &&
-	    (CORB_CD_PORT(this->d.pin.config) == CORB_CD_FIXED ||
-	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_BOTH)) {
-		if (codec->speaker == -1 ||
-		    (this->d.pin.association <
-		    codec->w[codec->speaker].d.pin.association))
-			wcodec->speaker = this->nid;
-	}
-
-	if (this->d.pin.device == CORB_CD_MICIN &&
-	    (this->d.pin.cap & COP_PINCAP_INPUT) &&
-	    (CORB_CD_PORT(this->d.pin.config) == CORB_CD_FIXED ||
-	    CORB_CD_PORT(this->d.pin.config) == CORB_CD_BOTH)) {
-		if (codec->mic == -1 ||
-		    (this->d.pin.association <
-		    codec->w[codec->mic].d.pin.association))
-			wcodec->mic = this->nid;
-	}
 
 	return 0;
 }
