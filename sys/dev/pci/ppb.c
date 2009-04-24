@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.30 2009/04/22 20:45:57 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.31 2009/04/24 20:03:55 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -167,15 +167,26 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		pci_intr_map(pa, &sc->sc_ih[pin - PCI_INTERRUPT_PIN_A]);
 	}
 
+	/*
+	 * The UltraSPARC-IIi APB doesn't implement the standard
+	 * address range registers.
+	 */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_SIMBA)
+		goto attach;
+
 	/* Figure out the I/O address range of the bridge. */
 	blr = pci_conf_read(pc, pa->pa_tag, PPB_REG_IOSTATUS);
 	sc->sc_iobase = (blr & 0x000000f0) << 8;
 	sc->sc_iolimit = (blr & 0x000f000) | 0x00000fff;
+	blr = pci_conf_read(pc, pa->pa_tag, PPB_REG_IO_HI);
+	sc->sc_iobase |= (blr & 0x0000ffff) << 16;
+	sc->sc_iolimit |= (blr & 0xffff0000);
 	if (sc->sc_iolimit > sc->sc_iobase) {
 		name = malloc(32, M_DEVBUF, M_NOWAIT);
 		if (name) {
 			snprintf(name, 32, "%s pciio", sc->sc_dev.dv_xname);
-			sc->sc_ioex = extent_create(name, 0, 0xffff,
+			sc->sc_ioex = extent_create(name, 0, 0xffffffff,
 			    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
 			extent_free(sc->sc_ioex, sc->sc_iobase,
 			    sc->sc_iolimit - sc->sc_iobase + 1, EX_NOWAIT);
@@ -198,6 +209,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
+ attach:
 	/*
 	 * Attach the PCI bus that hangs off of it.
 	 *
