@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.26 2009/04/24 01:04:33 krw Exp $
+#	$OpenBSD: install.md,v 1.27 2009/04/24 01:43:27 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -48,7 +48,6 @@ md_installboot() {
 		echo "Multiprocessor machine; using bsd.mp instead of bsd."
 		mv bsd bsd.sp 2>/dev/null
 		mv bsd.mp bsd
-		ln -sf bsd bsd.mp
 	fi
 
 	# use extracted mdec if it exists (may be newer)

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.39 2009/04/24 01:04:33 krw Exp $
+#	$OpenBSD: install.md,v 1.40 2009/04/24 01:43:27 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@ md_installboot() {
 		echo "Multiprocessor machine; using bsd.mp instead of bsd."
 		mv bsd bsd.sp 2>/dev/null
 		mv bsd.mp bsd
-		ln -sf bsd bsd.mp
 	fi
 
 	[[ $disklabeltype == MBR ]] || return
