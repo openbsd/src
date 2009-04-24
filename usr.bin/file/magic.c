@@ -1,4 +1,4 @@
-/* $OpenBSD: magic.c,v 1.5 2008/05/08 01:40:56 chl Exp $ */
+/* $OpenBSD: magic.c,v 1.6 2009/04/24 18:54:34 chl Exp $ */
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -64,8 +64,17 @@
 #include "patchlevel.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)$Id: magic.c,v 1.5 2008/05/08 01:40:56 chl Exp $")
+FILE_RCSID("@(#)$Id: magic.c,v 1.6 2009/04/24 18:54:34 chl Exp $")
 #endif	/* lint */
+
+#ifndef PIPE_BUF 
+/* Get the PIPE_BUF from pathconf */
+#ifdef _PC_PIPE_BUF
+#define PIPE_BUF pathconf(".", _PC_PIPE_BUF)
+#else
+#define PIPE_BUF 512
+#endif
+#endif
 
 #ifdef __EMX__
 private char *apptypeName = NULL;
@@ -77,6 +86,9 @@ private void free_mlist(struct mlist *);
 private void close_and_restore(const struct magic_set *, const char *, int,
     const struct stat *);
 private int info_from_stat(struct magic_set *, mode_t);
+#ifndef COMPILE_ONLY
+private const char *file_or_fd(struct magic_set *, const char *, int);
+#endif
 
 #ifndef	STDIN_FILENO
 #define	STDIN_FILENO	0
@@ -92,20 +104,14 @@ magic_open(int flags)
 
 	if (magic_setflags(ms, flags) == -1) {
 		errno = EINVAL;
-		goto free1;
+		goto free;
 	}
 
-	ms->o.ptr = ms->o.buf = malloc(ms->o.left = ms->o.size = 1024);
-	if (ms->o.buf == NULL)
-		goto free1;
-
-	ms->o.pbuf = malloc(ms->o.psize = 1024);
-	if (ms->o.pbuf == NULL)
-		goto free2;
+	ms->o.buf = ms->o.pbuf = NULL;
 
 	ms->c.li = malloc((ms->c.len = 10) * sizeof(*ms->c.li));
 	if (ms->c.li == NULL)
-		goto free3;
+		goto free;
 	
 	ms->haderr = 0;
 	ms->error = -1;
@@ -113,11 +119,7 @@ magic_open(int flags)
 	ms->file = "unknown";
 	ms->line = 0;
 	return ms;
-free3:
-	free(ms->o.pbuf);
-free2:
-	free(ms->o.buf);
-free1:
+free:
 	free(ms);
 	return NULL;
 }
@@ -216,6 +218,7 @@ close_and_restore(const struct magic_set *ms, const char *name, int fd,
 		 */
 #ifdef HAVE_UTIMES
 		struct timeval  utsbuf[2];
+		(void)memset(utsbuf, 0, sizeof(utsbuf));
 		utsbuf[0].tv_sec = sb->st_atime;
 		utsbuf[1].tv_sec = sb->st_mtime;
 
@@ -223,6 +226,7 @@ close_and_restore(const struct magic_set *ms, const char *name, int fd,
 #elif defined(HAVE_UTIME_H) || defined(HAVE_SYS_UTIME_H)
 		struct utimbuf  utbuf;
 
+		(void)memset(utbuf, 0, sizeof(utbuf));
 		utbuf.actime = sb->st_atime;
 		utbuf.modtime = sb->st_mtime;
 		(void) utime(name, &utbuf); /* don't care if loses */
@@ -231,13 +235,28 @@ close_and_restore(const struct magic_set *ms, const char *name, int fd,
 }
 
 #ifndef COMPILE_ONLY
+
+/*
+ * find type of descriptor
+ */
+public const char *
+magic_descriptor(struct magic_set *ms, int fd)
+{
+	return file_or_fd(ms, NULL, fd);
+}
+
 /*
  * find type of named file
  */
 public const char *
 magic_file(struct magic_set *ms, const char *inname)
 {
-	int	fd = 0;
+	return file_or_fd(ms, inname, STDIN_FILENO);
+}
+
+private const char *
+file_or_fd(struct magic_set *ms, const char *inname, int fd)
+{
 	int	rv = -1;
 	unsigned char *buf;
 	struct stat	sb;
@@ -266,7 +285,6 @@ magic_file(struct magic_set *ms, const char *inname)
 	}
 
 	if (inname == NULL) {
-		fd = STDIN_FILENO;
 		if (fstat(fd, &sb) == 0 && S_ISFIFO(sb.st_mode))
 			ispipe = 1;
 	} else {
@@ -280,16 +298,18 @@ magic_file(struct magic_set *ms, const char *inname)
 		errno = 0;
 		if ((fd = open(inname, flags)) < 0) {
 #ifdef __CYGWIN__
-		    char *tmp = alloca(strlen(inname) + 5);
-		    (void)strcat(strcpy(tmp, inname), ".exe");
-		    if ((fd = open(tmp, flags)) < 0) {
+			/* FIXME: Do this with EXEEXT from autotools */
+			char *tmp = alloca(strlen(inname) + 5);
+			(void)strcat(strcpy(tmp, inname), ".exe");
+			if ((fd = open(tmp, flags)) < 0) {
 #endif
-			if (info_from_stat(ms, sb.st_mode) == -1)
-			    goto done;
-			rv = 0;
-			goto done;
+				fprintf(stderr, "couldn't open file\n");
+				if (info_from_stat(ms, sb.st_mode) == -1)
+					goto done;
+				rv = 0;
+				goto done;
 #ifdef __CYGWIN__
-		    }
+			}
 #endif
 		}
 #ifdef O_NONBLOCK
@@ -327,18 +347,9 @@ magic_file(struct magic_set *ms, const char *inname)
 		}
 	}
 
-	if (nbytes == 0) {
-		if (file_printf(ms, (ms->flags & MAGIC_MIME) ?
-		    "application/x-empty" : "empty") == -1)
-			goto done;
-	} else if (nbytes == 1) {
-		if (file_printf(ms, "very short file (no magic)") == -1)
-			goto done;
-	} else {
-		(void)memset(buf + nbytes, 0, SLOP); /* NUL terminate */
-		if (file_buffer(ms, fd, inname, buf, (size_t)nbytes) == -1)
-			goto done;
-	}
+	(void)memset(buf + nbytes, 0, SLOP); /* NUL terminate */
+	if (file_buffer(ms, fd, inname, buf, (size_t)nbytes) == -1)
+		goto done;
 	rv = 0;
 done:
 	free(buf);

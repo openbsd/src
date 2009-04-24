@@ -1,4 +1,4 @@
-$OpenBSD: MAINT,v 1.4 2008/05/08 01:40:56 chl Exp $
+$OpenBSD: MAINT,v 1.5 2009/04/24 18:54:34 chl Exp $
 
 Maintenance notes:
 
@@ -41,5 +41,4 @@ ascmagic.c			file_ascmagic()
 readelf.c		file_tryelf()
 				"unknown"
 
-Christos Zoulas
-christos@astron.com
+Christos Zoulas (see README for email address)

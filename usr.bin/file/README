@@ -1,5 +1,10 @@
-@(#) $OpenBSD: README,v 1.4 2008/05/08 01:40:56 chl Exp $
 ** README for file(1) Command **
+@(#) $OpenBSD: README,v 1.5 2009/04/24 18:54:34 chl Exp $
+
+E-mail: christos@astron.com
+Mailing List: file@mx.gw.com
+
+Phone: Do not even think of telephoning me about this program. Send cash first!
 
 This is Release 4.x of Ian Darwin's (copyright but distributable)
 file(1) command. This version is the standard "file" command for Linux,
@@ -71,6 +76,10 @@ readelf.[ch] - Stand-alone elf parsing code.
 compress.c - on-the-fly decompression.
 print.c - print results, errors, warnings.
 
+You can download the latest version of file from:
+
+	ftp://ftp.astron.com/pub/file/
+
 If your gzip sometimes fails to decompress things complaining about a short
 file, apply this patch [which is going to be in the next version of gzip]:
 *** -   Tue Oct 29 02:06:35 1996
@@ -84,10 +93,6 @@ file, apply this patch [which is going to be in the next version of gzip]:
         read_error();
       }
       bytes_in += (ulg)insize;
-
-E-mail: christos@astron.com
-
-Phone: Do not even think of telephoning me about this program. Send cash first!
 
 Parts of this software were developed at SoftQuad Inc., developers
 of SGML/HTML/XML publishing software, in Toronto, Canada.

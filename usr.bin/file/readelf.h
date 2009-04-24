@@ -1,4 +1,4 @@
-/*	$OpenBSD: readelf.h,v 1.6 2008/05/08 01:40:56 chl Exp $ */
+/*	$OpenBSD: readelf.h,v 1.7 2009/04/24 18:54:34 chl Exp $ */
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -45,7 +45,7 @@ typedef uint16_t	Elf32_Half;
 typedef uint32_t	Elf32_Word;
 typedef uint8_t		Elf32_Char;
 
-#if SIZEOF_UINT64_T != 8
+#if SIZEOF_LONG_LONG != 8
 #define USE_ARRAY_FOR_64BIT_TYPES
 typedef	uint32_t 	Elf64_Addr[2];
 typedef	uint32_t 	Elf64_Off[2];
@@ -97,7 +97,9 @@ typedef struct {
 } Elf64_Ehdr;
 
 /* e_type */
+#define ET_REL		1
 #define ET_EXEC		2
+#define ET_DYN		3
 #define ET_CORE		4
 
 /* sh_type */
@@ -191,12 +193,6 @@ typedef struct {
     Elf64_Off	sh_entsize;
 } Elf64_Shdr;
 
-/* Notes used in ET_CORE */
-#define NT_PRSTATUS	1
-#define NT_PRFPREG	2
-#define NT_PRPSINFO	3
-#define NT_TASKSTRUCT	4
-
 #define	NT_NETBSD_CORE_PROCINFO		1
 
 /* Note header in a PT_NOTE section */
@@ -212,10 +208,12 @@ typedef struct {
     Elf64_Word	n_type;
 } Elf64_Nhdr;
 
+/* Notes used in ET_CORE */
 #define	NT_PRSTATUS	1
 #define	NT_PRFPREG	2
 #define	NT_PRPSINFO	3
 #define	NT_PRXREG	4
+#define NT_TASKSTRUCT	4
 #define	NT_PLATFORM	5
 #define	NT_AUXV		6
 
@@ -233,5 +231,7 @@ typedef struct {
 #define GNU_OS_LINUX	0
 #define GNU_OS_HURD	1
 #define GNU_OS_SOLARIS	2
+#define GNU_OS_KFREEBSD	3
+#define GNU_OS_KNETBSD	4
 
 #endif

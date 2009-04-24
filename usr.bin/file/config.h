@@ -4,7 +4,7 @@
  * but can still carefully import stuff from Christos' version.
  *
  * This file is in the public domain. Original Author Ian F. Darwin.
- * $OpenBSD: config.h,v 1.3 2008/05/08 01:40:56 chl Exp $
+ * $OpenBSD: config.h,v 1.4 2009/04/24 18:54:34 chl Exp $
  */
 
 /* header file issues. */
@@ -16,7 +16,8 @@
 #define	HAVE_INTTYPES_H 1
 #define HAVE_GETOPT_H 1
 #define HAVE_LIMITS_H 1
-/* #define	HAVE_LIBZ 1  DO NOT ENABLE YET -- ian */
+/* #define	HAVE_ZLIB_H	1	DO NOT ENABLE YET -- chl */
+/* #define	HAVE_LIBZ	1	DO NOT ENABLE YET -- ian */
 
 #define HAVE_STRTOUL
 #define HAVE_STRERROR

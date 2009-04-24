@@ -1,4 +1,4 @@
-#	$OpenBSD: riff,v 1.2 2008/05/14 20:45:35 chl Exp $
+#	$OpenBSD: riff,v 1.3 2009/04/24 18:54:34 chl Exp $
 
 #------------------------------------------------------------------------------
 # riff:  file(1) magic for RIFF format
@@ -34,6 +34,7 @@
 >8	string		RMP3		\b, MPEG Layer 3 audio
 # Microsoft WAVE format (*.wav)
 >8	string		WAVE		\b, WAVE audio
+!:mime	audio/x-wav
 >>20	leshort		1		\b, Microsoft PCM
 >>>34	leshort		>0		\b, %d bit
 >>20	leshort		2		\b, Microsoft ADPCM
@@ -51,8 +52,10 @@
 >>24	lelong		>0		%d Hz
 # Corel Draw Picture
 >8	string		CDRA		\b, Corel Draw Picture
+!:mime	image/x-coreldraw
 # AVI == Audio Video Interleave
 >8	string		AVI\040		\b, AVI
+!:mime	video/x-msvideo
 >>12    string          LIST
 >>>20   string          hdrlavih
 >>>>&36 lelong          x               \b, %lu x
@@ -131,6 +134,7 @@
 >>>>>>>(104.l+132)      string/c        divx    DivX 4
 >>>>>>>(104.l+132)      string/c        dx50    DivX 5
 >>>>>>>(104.l+132)      string/c        xvid    XviD
+>>>>>>>(104.l+132)	string/c	h264	H.264
 >>>>>>>(104.l+132)      string/c        wmv3    Windows Media Video 9
 >>>>>>>(104.l+132)      string/c        h264    X.264
 >>>>>>>(104.l+132)      lelong  0

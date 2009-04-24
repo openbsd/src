@@ -1,4 +1,4 @@
-#	$OpenBSD: mup,v 1.2 2008/05/14 20:45:35 chl Exp $
+#	$OpenBSD: mup,v 1.3 2009/04/24 18:54:34 chl Exp $
 
 # ------------------------------------------------------------------------
 # mup: file(1) magic for Mup (Music Publisher) input file.
@@ -10,7 +10,7 @@
 # compatibility. Noteedit also use mup format, but is not forcing
 # user to use any header as well.
 #
-0		string		//!Mup		Mup music publication program input text
+0		search/1	//!Mup		Mup music publication program input text
 >6		string		-Arkkra		(Arkkra)
 >>13		string		-		
 >>>16		string		.		

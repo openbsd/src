@@ -1,4 +1,4 @@
-#	$OpenBSD: cddb,v 1.1 2004/06/03 03:14:19 tedu Exp $
+#	$OpenBSD: cddb,v 1.2 2009/04/24 18:54:34 chl Exp $
 
 #------------------------------------------------------------------------------
 # CDDB: file(1) magic for CDDB(tm) format CD text data files
@@ -9,4 +9,4 @@
 # CDDB-enabled CD player applications.
 #
 
-0       string/b        #\040xmcd               CDDB(tm) format CD text data
+0	search/1/b	#\040xmcd	CDDB(tm) format CD text data

@@ -1,4 +1,4 @@
-#	$OpenBSD: elf,v 1.16 2008/05/08 01:40:57 chl Exp $
+#	$OpenBSD: elf,v 1.17 2009/04/24 18:54:34 chl Exp $
 
 #------------------------------------------------------------------------------
 # elf:  file(1) magic for ELF executables
@@ -16,12 +16,17 @@
 >5	byte		0		invalid byte order
 >5	byte		1		LSB
 >>16	leshort		0		no file type,
+!:mime	application/octet-stream
 >>16	leshort		1		relocatable,
+!:mime	application/x-object
 >>16	leshort		2		executable,
+!:mime	application/x-executable
 >>16	leshort		3		shared object,
+!:mime	application/x-sharedlib
 # Core handling from Peter Tobias <tobias@server.et-inf.fho-emden.de>
 # corrections by Christian 'Dr. Disk' Hechelmann <drdisk@ds9.au.s.shuttle.de>
 >>16	leshort		4		core file
+!:mime	application/x-coredump
 # Core file detection is not reliable.
 #>>>(0x38+0xcc) string	>\0		of '%s'
 #>>>(0x38+0x10) lelong	>0		(signal %d),
@@ -52,10 +57,10 @@
 >>>>36  lelong&0xf0000000	0x20000000	MIPS-III
 >>>>36  lelong&0xf0000000	0x30000000	MIPS-IV
 >>>>36  lelong&0xf0000000	0x40000000	MIPS-V
->>>>36  lelong&0xf0000000	0x60000000	MIPS32
->>>>36  lelong&0xf0000000	0x70000000	MIPS64
->>>>36  lelong&0xf0000000	0x80000000	MIPS32 rel2
->>>>36  lelong&0xf0000000	0x90000000	MIPS64 rel2
+>>>>36  lelong&0xf0000000	0x50000000	MIPS32
+>>>>36  lelong&0xf0000000	0x60000000	MIPS64
+>>>>36  lelong&0xf0000000	0x70000000	MIPS32 rel2
+>>>>36  lelong&0xf0000000	0x80000000	MIPS64 rel2
 # only for 64-bit
 >>>4	byte		2
 >>>>48  lelong&0xf0000000	0x00000000	MIPS-I
@@ -63,10 +68,10 @@
 >>>>48  lelong&0xf0000000	0x20000000	MIPS-III
 >>>>48  lelong&0xf0000000	0x30000000	MIPS-IV
 >>>>48  lelong&0xf0000000	0x40000000	MIPS-V
->>>>48  lelong&0xf0000000	0x60000000	MIPS32
->>>>48  lelong&0xf0000000	0x70000000	MIPS64 
->>>>48  lelong&0xf0000000	0x80000000	MIPS32 rel2
->>>>48  lelong&0xf0000000	0x90000000	MIPS64 rel2
+>>>>48  lelong&0xf0000000	0x50000000	MIPS32
+>>>>48  lelong&0xf0000000	0x60000000	MIPS64
+>>>>48  lelong&0xf0000000	0x70000000	MIPS32 rel2
+>>>>48  lelong&0xf0000000	0x80000000	MIPS64 rel2
 >>18	leshort		9		Amdahl - invalid byte order,
 >>18	leshort		10		MIPS (deprecated),
 >>18	leshort		11		RS6000 - invalid byte order,
@@ -97,9 +102,46 @@
 >>18	leshort		51		Stanford MIPS-X,
 >>18	leshort		52		Motorola Coldfire,
 >>18	leshort		53		Motorola M68HC12,
+>>18	leshort		54		Fujitsu MMA,
+>>18	leshort		55		Siemens PCP,
+>>18	leshort		56		Sony nCPU,
+>>18	leshort		57		Denso NDR1,
+>>18	leshort		58		Start*Core,
+>>18	leshort		59		Toyota ME16,
+>>18	leshort		60		ST100,
+>>18	leshort		61		Tinyj emb.,
 >>18	leshort		62		x86-64,
+>>18	leshort		63		Sony DSP,
+>>18	leshort		66		FX66,
+>>18	leshort		67		ST9+ 8/16 bit,
+>>18	leshort		68		ST7 8 bit,
+>>18	leshort		69		MC68HC16,
+>>18	leshort		70		MC68HC11,
+>>18	leshort		71		MC68HC08,
+>>18	leshort		72		MC68HC05,
+>>18	leshort		73		SGI SVx,
+>>18	leshort		74		ST19 8 bit,
 >>18	leshort		75		Digital VAX,
+>>18	leshort		76		Axis cris,
+>>18	leshort		77		Infineon 32-bit embedded,
+>>18	leshort		78		Element 14 64-bit DSP,
+>>18	leshort		79		LSI Logic 16-bit DSP,
+>>18	leshort		80		MMIX,
+>>18	leshort		81		Harvard machine-independent,
+>>18	leshort		82		SiTera Prism,
+>>18	leshort		83		Atmel AVR 8-bit,
+>>18	leshort		84		Fujitsu FR30,
+>>18	leshort		85		Mitsubishi D10V,
+>>18	leshort		86		Mitsubishi D30V,
+>>18	leshort		87		NEC v850,
 >>18	leshort		88		Renesas M32R,
+>>18	leshort		89		Matsushita MN10300,
+>>18	leshort		90		Matsushita MN10200,
+>>18	leshort		91		picoJava,
+>>18	leshort		92		OpenRISC,
+>>18	leshort		93		ARC Cores Tangent-A5,
+>>18	leshort		0x3426		OpenRISC (obsolete),
+>>18	leshort		0x8472		OpenRISC (obsolete),
 >>18	leshort		94		Tensilica Xtensa,
 >>18	leshort		97		NatSemi 32k,
 >>18	leshort		106		Analog Devices Blackfin,
@@ -109,10 +151,15 @@
 >>36	lelong		1		MathCoPro/FPU/MAU Required
 >5	byte		2		MSB
 >>16	beshort		0		no file type,
+!:mime	application/octet-stream
 >>16	beshort		1		relocatable,
+!:mime	application/x-object
 >>16	beshort		2		executable,
+!:mime	application/x-executable
 >>16	beshort		3		shared object,
+!:mime	application/x-sharedlib
 >>16	beshort		4		core file,
+!:mime	application/x-coredump
 #>>>(0x38+0xcc) string	>\0		of '%s'
 #>>>(0x38+0x10) belong	>0		(signal %d),
 >>16	beshort		&0xff00		processor-specific,
@@ -140,10 +187,10 @@
 >>>>36  belong&0xf0000000	0x20000000	MIPS-III
 >>>>36  belong&0xf0000000	0x30000000	MIPS-IV
 >>>>36  belong&0xf0000000	0x40000000	MIPS-V
->>>>36  belong&0xf0000000	0x60000000	MIPS32
->>>>36  belong&0xf0000000	0x70000000	MIPS64
->>>>36  belong&0xf0000000	0x80000000	MIPS32 rel2
->>>>36  belong&0xf0000000	0x90000000	MIPS64 rel2
+>>>>36  belong&0xf0000000	0x50000000	MIPS32
+>>>>36  belong&0xf0000000	0x60000000	MIPS64
+>>>>36  belong&0xf0000000	0x70000000	MIPS32 rel2
+>>>>36  belong&0xf0000000	0x80000000	MIPS64 rel2
 # only for 64-bit
 >>>4	byte		2
 >>>>48	belong&0xf0000000	0x00000000	MIPS-I
@@ -151,10 +198,10 @@
 >>>>48	belong&0xf0000000	0x20000000	MIPS-III
 >>>>48	belong&0xf0000000	0x30000000	MIPS-IV
 >>>>48	belong&0xf0000000	0x40000000	MIPS-V
->>>>48	belong&0xf0000000	0x60000000	MIPS32
->>>>48	belong&0xf0000000	0x70000000	MIPS64 
->>>>48	belong&0xf0000000	0x80000000	MIPS32 rel2
->>>>48	belong&0xf0000000	0x90000000	MIPS64 rel2
+>>>>48	belong&0xf0000000	0x50000000	MIPS32
+>>>>48	belong&0xf0000000	0x60000000	MIPS64
+>>>>48	belong&0xf0000000	0x70000000	MIPS32 rel2
+>>>>48	belong&0xf0000000	0x80000000	MIPS64 rel2
 >>18	beshort		9		Amdahl,
 >>18	beshort		10		MIPS (deprecated),
 >>18	beshort		11		RS6000,
@@ -195,8 +242,12 @@
 >>18	beshort		73		Cray NV1,
 >>18	beshort		75		Digital VAX,
 >>18	beshort		88		Renesas M32R,
+>>18	leshort		92		OpenRISC,
+>>18	leshort		0x3426		OpenRISC (obsolete),
+>>18	leshort		0x8472		OpenRISC (obsolete),
 >>18	beshort		94		Tensilica Xtensa,
 >>18	beshort		97		NatSemi 32k,
+>>18	beshort		0x18ad		AVR32 (unofficial),
 >>18	beshort		0x9026		Alpha (unofficial),
 >>18	beshort		0xa390		IBM S/390 (obsolete),
 >>20	belong		0		invalid version

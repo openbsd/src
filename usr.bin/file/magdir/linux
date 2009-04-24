@@ -1,4 +1,4 @@
-#	$OpenBSD: linux,v 1.5 2008/05/08 01:40:57 chl Exp $
+#	$OpenBSD: linux,v 1.6 2009/04/24 18:54:34 chl Exp $
 
 #------------------------------------------------------------------------------
 # linux:  file(1) magic for Linux files
@@ -104,16 +104,18 @@
 >0x1e9		string	Loading		from prehistoric times
 
 # System.map files - Nicolás Lichtmaier <nick@debian.org>
-8	string	\ A\ _text	Linux kernel symbol map text
+8	search/1	\ A\ _text	Linux kernel symbol map text
 
 # LSM entries - Nicolás Lichtmaier <nick@debian.org>
-0	string	Begin3	Linux Software Map entry text
-0	string	Begin4	Linux Software Map entry text (new format)
+0	search/1	Begin3	Linux Software Map entry text
+0	search/1	Begin4	Linux Software Map entry text (new format)
 
-# From Matt Zimmerman
-0       belong  0x4f4f4f4d      User-mode Linux COW file
->4      belong  x               \b, version %d
->8      string  >\0             \b, backing file %s
+# From Matt Zimmerman, enhanced for v3 by Matthew Palmer
+0	belong	0x4f4f4f4d	User-mode Linux COW file
+>4	belong	<3		\b, version %d
+>>8	string	>\0		\b, backing file %s
+>4	belong	>2		\b, version %d
+>>32	string	>\0		\b, backing file %s
 
 ############################################################################
 # Linux kernel versions

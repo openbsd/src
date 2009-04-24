@@ -1,4 +1,4 @@
-#	$OpenBSD: msdos,v 1.4 2008/05/08 01:40:57 chl Exp $
+#	$OpenBSD: msdos,v 1.5 2009/04/24 18:54:34 chl Exp $
 
 #------------------------------------------------------------------------------
 # msdos:  file(1) magic for MS-DOS files
@@ -17,10 +17,6 @@
 # the matched commands seem to be common in REXX and uncommon elsewhere
 100	regex/c =^[\ \t]{0,10}call[\ \t]{1,10}rxfunc OS/2 REXX batch file text
 100	regex/c =^[\ \t]{0,10}say\ ['"]	     OS/2 REXX batch file text
-
-
-100 regex/c =^\\s*call\\s+rxfuncadd.*sysloadfu OS/2 REXX batch file text
-100 regex/c =^\\s*say\ ['"] OS/2 REXX batch file text
 
 0	leshort		0x14c	MS Windows COFF Intel 80386 object file
 #>4	ledate		x	stamp %s
@@ -51,6 +47,7 @@
 # many of the compressed formats were extraced from IDARC 1.23 source code
 #
 0	string	MZ		MS-DOS executable
+!:mime	application/x-dosexec
 >0 string MZ\0\0\0\0\0\0\0\0\0\0PE\0\0 \b, PE for MS Windows
 >>&18	leshort&0x2000	>0	(DLL)
 >>&88	leshort		0	(unknown subsystem)
@@ -69,6 +66,11 @@
 >>&18	leshort&0x1000	>0	system file
 >>&0xf4 search/0x140 \x0\x40\x1\x0
 >>>(&0.l+(4)) string MSCF \b, WinHKI CAB self-extracting archive
+>30		string	Copyright\ 1989-1990\ PKWARE\ Inc.	Self-extracting PKZIP archive
+!:mime	application/zip
+# Is next line correct? One might expect "Corp." not "Copr." If it is right, add a note to that effect.
+>30		string	PKLITE\ Copr.	Self-extracting PKZIP archive
+!:mime	application/zip
 
 >0x18  leshort >0x3f
 >>(0x3c.l) string PE\0\0 PE 
@@ -220,7 +222,9 @@
 >0x1e	string	PKLITE \b, %s compressed
 >0x64   string  W\ Collis\0\0 \b, Compack compressed
 >0x24	string	LHa's\ SFX \b, LHa self-extracting archive
+!:mime	application/x-lha
 >0x24	string	LHA's\ SFX \b, LHa self-extracting archive
+!:mime	application/x-lha
 >0x24   string  \ $ARX \b, ARX self-extracting archive
 >0x24   string  \ $LHarc \b, LHarc self-extracting archive
 >0x20   string  SFX\ by\ LARC \b, LARC self-extracting archive
@@ -267,8 +271,8 @@
 # Uncommenting only the first two lines will cover about 2/3 of COM files,
 # but it isn't feasible to match all COM files since there must be at least
 # two dozen different one-byte "magics".
-0	byte		0xe9		DOS executable (COM)
->0x1FE	leshort		0xAA55		\b, boot code
+#0	byte		0xe9		DOS executable (COM)
+#>0x1FE	leshort		0xAA55		\b, boot code
 >6	string		SFX\ of\ LHarc	(%s)
 0	belong	0xffffffff		DOS executable (device driver)
 #CMD640X2.SYS
@@ -291,15 +295,15 @@
 >>77	string	>\x40			
 >>>77	string	<\x5B			
 >>>>77	string	x			\b, name: %.8s
-0	byte		0x8c		DOS executable (COM)
+#0	byte		0x8c		DOS executable (COM)
 # 0xeb conflicts with "sequent" magic
-0	byte		0xeb		DOS executable (COM)
->0x1FE	leshort		0xAA55		\b, boot code
->85	string		UPX		\b, UPX compressed
->4	string		\ $ARX		\b, ARX self-extracting archive
->4	string		\ $LHarc	\b, LHarc self-extracting archive
->0x20e	string		SFX\ by\ LARC	\b, LARC self-extracting archive
-0	byte		0xb8		COM executable
+#0	byte		0xeb		DOS executable (COM)
+#>0x1FE	leshort		0xAA55		\b, boot code
+#>85	string		UPX		\b, UPX compressed
+#>4	string		\ $ARX		\b, ARX self-extracting archive
+#>4	string		\ $LHarc	\b, LHarc self-extracting archive
+#>0x20e	string		SFX\ by\ LARC	\b, LARC self-extracting archive
+#0	byte		0xb8		COM executable
 # modified by Joerg Jenderek
 >1	lelong          !0x21cd4cff	for DOS
 # http://syslinux.zytor.com/comboot.php
@@ -364,38 +368,58 @@
 >30	byte	12		(4kB sectors)
 
 # Popular applications
-# False positive with PPT
-#0       string \xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x3E\x00\x03\x00\xFE\xFF Microsoft Installer
 2080	string	Microsoft\ Word\ 6.0\ Document	%s
+!:mime	application/msword
 2080	string	Documento\ Microsoft\ Word\ 6 Spanish Microsoft Word 6 document data
+!:mime	application/msword
 # Pawel Wiecek <coven@i17linuxb.ists.pwr.wroc.pl> (for polish Word)
 2112	string	MSWordDoc			Microsoft Word document data
+!:mime	application/msword
 #
 0	belong	0x31be0000			Microsoft Word Document
+!:mime	application/msword
 #
 0       string  PO^Q`				Microsoft Word 6.0 Document
+!:mime	application/msword
 #
 0	string	\376\067\0\043			Microsoft Office Document
+!:mime	application/msword
 0	string	\333\245-\0\0\0			Microsoft Office Document
+!:mime	application/msword
+512	string		\354\245\301		Microsoft Word Document
+!:mime	application/msword
 #
 2080	string	Microsoft\ Excel\ 5.0\ Worksheet	%s
+!:mime	application/vnd.ms-excel
+
 2080	string	Foglio\ di\ lavoro\ Microsoft\ Exce	%s
+!:mime	application/vnd.ms-excel
 #
 # Pawel Wiecek <coven@i17linuxb.ists.pwr.wroc.pl> (for polish Excel)
 2114	string	Biff5		Microsoft Excel 5.0 Worksheet
+!:mime	application/vnd.ms-excel
 # Italian MS-Excel
 2121	string	Biff5		Microsoft Excel 5.0 Worksheet
+!:mime	application/vnd.ms-excel
 0	string	\x09\x04\x06\x00\x00\x00\x10\x00	Microsoft Excel Worksheet
+!:mime	application/vnd.ms-excel
 #
 0	belong	0x00001a00	Lotus 1-2-3
+!:mime	application/x-123
 >4	belong	0x00100400	wk3 document data
 >4	belong	0x02100400	wk4 document data
 >4	belong	0x07800100	fm3 or fmb document data
 >4	belong	0x07800000	fm3 or fmb document data
 #
 0	belong	0x00000200 	Lotus 1-2-3
+!:mime	application/x-123
 >4	belong	0x06040600	wk1 document data
 >4	belong	0x06800200	fmt document data
+0	string		WordPro\0	Lotus WordPro
+!:mime	application/vnd.lotus-wordpro
+0	string		WordPro\r\373	Lotus WordPro
+!:mime	application/vnd.lotus-wordpro
+
 
 # Help files
 0	string	?_\3\0		MS Windows Help Data
@@ -449,6 +473,7 @@
 
 # Windows icons (Ian Springer <ips@fpk.hp.com>)
 0	string	\000\000\001\000	MS Windows icon resource
+!:mime	image/x-ico
 >4	byte	1			- 1 icon
 >4	byte	>1			- %d icons
 >>6	byte	>0			\b, %dx
@@ -523,7 +548,9 @@
 >>>>24	long		>0		length %d
 
 # TNEF magic From "Joomy" <joomy@se-ed.net> 
+# Microsoft Outlook's Transport Neutral Encapsulation Format (TNEF)
 0	leshort		0x223e9f78	TNEF
+!:mime	application/vnd.ms-tnef
 
 # HtmlHelp files (.chm)
 0	string  ITSF\003\000\000\000\x60\000\000\000\001\000\000\000	MS Windows HtmlHelp Data
@@ -587,17 +614,17 @@
 # syntax available by some file commands you could write:
 # 0 lelong 1
 # &40 ulelong 0x464D4520 Windows Enhanced Metafile (EMF) image data
-40	ulelong 0x464D4520	Windows Enhanced Metafile (EMF) image data
->44	ulelong x		version 0x%x.
+#40	ulelong 0x464D4520	Windows Enhanced Metafile (EMF) image data
+#>44	ulelong x		version 0x%x.
 # If the description has a length greater than zero, it exists and is 
 # found at offset (*64).
->64	ulelong >0		Description available at offset 0x%x
->>60	ulelong	>0		(length 0x%x)
+#>64	ulelong >0		Description available at offset 0x%x
+#>>60	ulelong	>0		(length 0x%x)
 # Note it would be better to print out the description, which is found 
 # as below. Unfortunately the following only prints out the first couple
 # of characters instead of all the "description length"
 # number of characters -- indicated by the ulelong at offset 60.
->>(64.l)  lestring16 >0 Description: %15.15s
+#>>(64.l)  lestring16 >0 Description: %15.15s
 
 # From: Alex Beregszaszi <alex@fsn.hu>
 0	string	COWD		VMWare3
@@ -611,10 +638,44 @@
 0	string	VMDK		 VMware4 disk image
 0	string	KDMV		 VMware4 disk image
 
-0	belong	0x514649fb	QEMU Copy-On-Write disk image
->4	belong	x		version %d,
->24	belong	x		size %d +
->28	belong	x		%d
+#--------------------------------------------------------------------
+# Qemu Emulator Images
+# Lines written by Friedrich Schwittay (f.schwittay@yousable.de)
+# Made by reading sources and doing trial and error on existing
+# qcow files
+0       string  QFI     Qemu Image, Format: Qcow
+
+# Uncomment the following line to display Magic (only used for debugging
+# this magic number)
+#>0     string  x       , Magic: %s
+
+# There are currently 2 Versions: "1" and "2"
+# I do not use Version 2 and therefor branch here
+# but can assure: it works (tested on both versions)
+# Also my Qemu 0.9.0 which uses this Version 2 refuses
+# to start in its bios
+>0x04   belong  2       , Version: 2
+>0x04   belong  1       , Version: 1
+
+# Using the existence of the Backing File Offset to Branch or not
+# to read Backing File Information
+>>0xc    belong  >0      , Backing File( Offset: %lu
+>>>(0xc.L)       string >\0     , Path: %s
+
+# Didn't get the trick here how qemu stores the "Size" at this Position
+# There is actually something stored but nothing makes sense
+# The header in the sources talks about it
+#>>>16   lelong  x       , Size: %lu
+
+# Modification time of the Backing File
+# Really useful if you want to know if your backing
+# file is still usable together with this image
+>>>20    bedate x       , Mtime: %s )
+
+# Don't know how to calculate in Magicfiles
+# Also: this Information is not reliably
+#       stored in image-files
+>>24     lelong  x       , Disk Size could be: %d * 256 bytes
 
 0	string	QEVM		QEMU's suspend to disk image
 
@@ -625,5 +686,43 @@
 0	lelong	0x02468ace			Bochs Sparse disk image
 
 # from http://filext.com by Derek M Jones <derek@knosof.co.uk>
-0	string	\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x3E\x00\x03\x00\xFE\xFF	Microsoft Installer
+# False positive with PPT (also currently this string is too long)
+#0	string	\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x3E\x00\x03\x00\xFE\xFF\x09\x00\x06	Microsoft Installer
 0	string	\320\317\021\340\241\261\032\341	Microsoft Office Document
+#>48	byte	0x1B	                                Excel Document
+#!:mime	application/vnd.ms-excel
+>546	string	bjbj			Microsoft Word Document
+!:mime	application/msword
+>546	string	jbjb			Microsoft Word Document
+!:mime	application/msword
+
+0       string	\224\246\056		Microsoft Word Document
+!:mime	application/msword
+
+512	string	R\0o\0o\0t\0\ \0E\0n\0t\0r\0y	Microsoft Word Document
+!:mime	application/msword
+
+# From: "Nelson A. de Oliveira" <naoliv@gmail.com>
+# Magic type for Dell's BIOS .hdr files
+# Dell's .hdr
+0	string $RBU
+>23	string Dell			%s system BIOS
+>48	string x			version %.3s
+
+# Type: Microsoft DirectDraw Surface
+# URL:  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/DDSFileReference/ddsfileformat.asp
+# From: Morten Hustveit <morten@debian.org>
+0	string	DDS\040\174\000\000\000	Microsoft DirectDraw Surface (DDS),
+>16	lelong	>0			%hd x
+>12	lelong	>0			%hd,
+>84	string	x			%.4s
+
+# Type: Microsoft Document Imaging Format (.mdi)
+# URL:  http://en.wikipedia.org/wiki/Microsoft_Document_Imaging_Format
+# From: Daniele Sempione <scrows@oziosi.org>
+0	short	0x5045			Microsoft Document Imaging Format
+
+# MS eBook format (.lit)
+0	string  ITOLITLS		Microsoft Reader eBook Data
+>8	lelong	x			\b, version %u
+!:mime					application/x-ms-reader

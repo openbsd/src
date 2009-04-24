@@ -1,4 +1,4 @@
-#	$OpenBSD: cafebabe,v 1.2 2008/05/14 20:45:35 chl Exp $
+#	$OpenBSD: cafebabe,v 1.3 2009/04/24 18:54:34 chl Exp $
 
 #------------------------------------------------------------------------------
 # Cafe Babes unite!
@@ -14,10 +14,14 @@
 # (and use as a hack). Let's not use 18, because the Mach-O people
 # might add another one or two as time goes by...
 #
-0	belong		0xcafebabe
+0	beshort		0xcafe
+>2	beshort         0xbabe
+!:mime	application/x-java-applet
 >4	belong		>30		compiled Java class data,
->>6     beshort		x	        version %d.
->>4     beshort		x       	\b%d
->4	belong		1		Mach-O fat file with 1 architecture
->4	belong		>1
->>4	belong		<20		Mach-O fat file with %ld architectures
+>>6	beshort		x	        version %d.
+>>4	beshort		x       	\b%d
+>>4	belong		1		Mach-O fat file with 1 architecture
+>>4	belong		>1
+>>>4	belong		<20		Mach-O fat file with %ld architectures
+>2	beshort		0xd00d		JAR compressed with pack200
+!:mime	application/x-java-pack200

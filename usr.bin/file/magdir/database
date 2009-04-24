@@ -1,4 +1,4 @@
-#	$OpenBSD: database,v 1.5 2008/05/08 01:40:57 chl Exp $
+#	$OpenBSD: database,v 1.6 2009/04/24 18:54:34 chl Exp $
 
 #------------------------------------------------------------------------------
 # database:  file(1) magic for various databases
@@ -10,8 +10,11 @@
 #  Will be maintained as part of the GDBM distribution in the future.
 #  <downsj@teeny.org>
 0	belong	0x13579ace	GNU dbm 1.x or ndbm database, big endian
+!:mime	application/x-gdbm
 0	lelong	0x13579ace	GNU dbm 1.x or ndbm database, little endian
+!:mime	application/x-gdbm
 0	string	GDBM		GNU dbm 2.x database
+!:mime	application/x-gdbm
 #
 # Berkeley DB
 #
@@ -22,6 +25,7 @@
 # Hash and Btree 2.X and later databases store the metadata in host byte order.
 
 0	long	0x00061561	Berkeley DB
+!:mime	application/x-dbm
 >8	belong	4321
 >>4	belong	>2		1.86
 >>4	belong	<3		1.85
@@ -108,74 +112,87 @@
 #>>0x04	  byte		6	non-incrementing secondary index .XGn file 
 #>>0x04	  byte		7	secondary index .YGn file 
 #>>>0x04	  byte		8	incrementing secondary index .XGn file 
+
 ## XBase database files
 #0      byte       0x02	
 #>8     leshort	  >0
 #>>12   leshort    0	FoxBase 
+#!:mime	application/x-dbf
 #>>>0x04	lelong		0		(no records)
 #>>>0x04	lelong		>0		(%ld records)
 #
 #0      byte       0x03	
+#!:mime	application/x-dbf
 #>8     leshort	  >0
 #>>12   leshort    0	FoxBase+, FoxPro, dBaseIII+, dBaseIV, no memo 
 #>>>0x04	lelong		0		(no records)
 #>>>0x04	lelong		>0		(%ld records)
 #
 #0      byte       0x04	
+#!:mime	application/x-dbf
 #>8     leshort	  >0
 #>>12   leshort    0	dBASE IV no memo file 
 #>>>0x04	lelong		0		(no records)
 #>>>0x04	lelong		>0		(%ld records)
 #
 #0      byte       0x05	
+#!:mime	application/x-dbf
 #>8     leshort	  >0
 #>>12   leshort    0	dBASE V no memo file 
 #>>>0x04	lelong		0		(no records)
 #>>>0x04	lelong		>0		(%ld records)
 #
 #0      byte       0x30
+#!:mime	application/x-dbf
 #>8     leshort	  >0
 #>>12   leshort    0	Visual FoxPro 
 #>>>0x04	lelong		0		(no records)
 #>>>0x04	lelong		>0		(%ld records)
 #
 #0      byte       0x43
+#!:mime	application/x-dbf
 #>8     leshort	  >0
 #>>12   leshort    0	FlagShip with memo var size 
 #>>>0x04	lelong		0		(no records)
 #>>>0x04	lelong		>0		(%ld records)
 #
 #0      byte       0x7b
+#!:mime	application/x-dbf
 #>8     leshort	  >0
 #>>12   leshort    0	dBASEIV with memo 
 #>>>0x04	lelong		0		(no records)
 #>>>0x04	lelong		>0		(%ld records)
 #
 #0      byte       0x83	
+#!:mime	application/x-dbf
 #>8     leshort	  >0
 #>>12   leshort    0	FoxBase+, dBaseIII+ with memo 
 #>>>0x04	lelong		0		(no records)
 #>>>0x04	lelong		>0		(%ld records)
 #
 #0      byte       0x8b
+#!:mime	application/x-dbf
 #>8     leshort	  >0
 #>>12   leshort    0	dBaseIV with memo 
 #>>>0x04	lelong		0		(no records)
 #>>>0x04	lelong		>0		(%ld records)
 #
 #0      byte       0x8e	
+#!:mime	application/x-dbf
 #>8     leshort	  >0
 #>>12   leshort    0	dBaseIV with SQL Table 
 #>>>0x04	lelong		0		(no records)
 #>>>0x04	lelong		>0		(%ld records)
 #
 #0      byte       0xb3
+#!:mime	application/x-dbf
 #>8     leshort	  >0
 #>>12   leshort    0	FlagShip with .dbt memo 
 #>>>0x04	lelong		0		(no records)
 #>>>0x04	lelong		>0		(%ld records)
 #
 #0      byte       0xf5
+#!:mime	application/x-dbf
 #>8     leshort	  >0
 #>>12   leshort    0	FoxPro with memo 
 #>>>0x04	lelong		0		(no records)
@@ -184,7 +201,8 @@
 #0	leshort		0x0006		DBase 3 index file
 
 # MS Access database
-4	  string	Standard\ Jet\ DB	Microsoft Access Database
+4	string	Standard\ Jet\ DB	Microsoft Access Database
+!:mime	application/x-msaccess
 
 # TDB database from Samba et al - Martin Pool <mbp@samba.org>
 0	string	TDB\ file		TDB database
@@ -211,3 +229,17 @@
 16	string		MIT-MAGIC-COOKIE-1	X11 Xauthority data
 17	string		MIT-MAGIC-COOKIE-1	X11 Xauthority data
 18	string		MIT-MAGIC-COOKIE-1	X11 Xauthority data
+
+# From: Maxime Henrion <mux@FreeBSD.org>
+# PostgreSQL's custom dump format, Maxime Henrion <mux@FreeBSD.org>
+0	string		PGDMP		PostgreSQL custom database dump
+>5	byte		x		- v%d
+>6	byte		x		\b.%d
+>5	beshort		<=0x100		\b-0
+>5	beshort		>0x100
+>>7	byte		x		\b-%d
+
+# Type: Advanced Data Format (ADF) database
+# URL:  http://www.grc.nasa.gov/WWW/cgns/adf/
+# From: Nicolas Chauvat <nicolas.chauvat@logilab.fr>
+0	string	@(#)ADF\ Database	CGNS Advanced Data Format

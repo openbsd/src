@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsmagic.c,v 1.12 2008/05/08 01:40:56 chl Exp $ */
+/*	$OpenBSD: fsmagic.c,v 1.13 2009/04/24 18:54:34 chl Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -58,13 +58,31 @@
 #undef HAVE_MAJOR
 
 #ifndef	lint
-FILE_RCSID("@(#)$Id: fsmagic.c,v 1.12 2008/05/08 01:40:56 chl Exp $")
+FILE_RCSID("@(#)$Id: fsmagic.c,v 1.13 2009/04/24 18:54:34 chl Exp $")
 #endif	/* lint */
+
+private int
+bad_link(struct magic_set *ms, int err, char *buf)
+{
+	char *errfmt;
+	if (err == ELOOP)
+		errfmt = "symbolic link in a loop";
+	else
+		errfmt = "broken symbolic link to `%s'";
+	if (ms->flags & MAGIC_ERROR) {
+		file_error(ms, err, errfmt, buf);
+		return -1;
+	} 
+	if (file_printf(ms, errfmt, buf) == -1)
+		return -1;
+	return 1;
+}
 
 protected int
 file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 {
 	int ret = 0;
+	int mime = ms->flags & MAGIC_MIME;
 #ifdef	S_IFLNK
 	char buf[BUFSIZ+4];
 	int nch;
@@ -96,11 +114,12 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 		return 1;
 	}
 
-	if ((ms->flags & MAGIC_MIME) != 0) {
+	if (mime) {
 		if ((sb->st_mode & S_IFMT) != S_IFREG) {
-			if (file_printf(ms, "application/x-not-regular-file")
+			if ((mime & MAGIC_MIME_TYPE) &&
+			    file_printf(ms, "application/x-not-regular-file")
 			    == -1)
-				return -1;
+				    return -1;
 			return 1;
 		}
 	}
@@ -136,7 +155,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 		 */
 		if ((ms->flags & MAGIC_DEVICES) != 0)
 			break;
-#ifdef HAVE_ST_RDEV
+#ifdef HAVE_STAT_ST_RDEV
 # ifdef dv_unit
 		if (file_printf(ms, "character special (%d/%d/%d)",
 		    major(sb->st_rdev), dv_unit(sb->st_rdev),
@@ -162,7 +181,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 		 */
 		if ((ms->flags & MAGIC_DEVICES) != 0)
 			break;
-#ifdef HAVE_ST_RDEV
+#ifdef HAVE_STAT_ST_RDEV
 # ifdef dv_unit
 		if (file_printf(ms, "block special (%d/%d/%d)",
 		    major(sb->st_rdev), dv_unit(sb->st_rdev),
@@ -208,23 +227,13 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 				return -1;
 			return 1;
 		}
-		buf[nch] = '\0';	/* readlink(2) forgets this */
+		buf[nch] = '\0';	/* readlink(2) does not do this */
 
 		/* If broken symlink, say so and quit early. */
 		if (*buf == '/') {
-		    if (stat(buf, &tstatbuf) < 0) {
-			    if (ms->flags & MAGIC_ERROR) {
-				    file_error(ms, errno, 
-					"broken symbolic link to `%s'", buf);
-				    return -1;
-			    } 
-			    if (file_printf(ms, "broken symbolic link to `%s'",
-				buf) == -1)
-				    return -1;
-			    return 1;
-		    }
-		}
-		else {
+			if (stat(buf, &tstatbuf) < 0)
+				return bad_link(ms, errno, buf);
+		} else {
 			char *tmp;
 			char buf2[BUFSIZ+BUFSIZ+4];
 
@@ -247,18 +256,8 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 				(void)strlcat(buf2, buf, sizeof buf2); /* plus (rel) link */
 				tmp = buf2;
 			}
-			if (stat(tmp, &tstatbuf) < 0) {
-				if (ms->flags & MAGIC_ERROR) {
-					file_error(ms, errno, 
-					    "broken symbolic link to `%s'",
-					    buf);
-					return -1;
-				}
-				if (file_printf(ms,
-				    "broken symbolic link to `%s'", buf) == -1)
-					return -1;
-				return 1;
-			}
+			if (stat(tmp, &tstatbuf) < 0)
+				return bad_link(ms, errno, buf);
 		}
 
 		/* Otherwise, handle it. */
@@ -304,8 +303,9 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 	 * when we read the file.)
 	 */
 	if ((ms->flags & MAGIC_DEVICES) == 0 && sb->st_size == 0) {
-		if (file_printf(ms, (ms->flags & MAGIC_MIME) ?
-		    "application/x-empty" : "empty") == -1)
+		if ((!mime || (mime & MAGIC_MIME_TYPE)) &&
+		    file_printf(ms, mime ? "application/x-empty" :
+		    "empty") == -1)
 			return -1;
 		return 1;
 	}

@@ -1,15 +1,32 @@
-#	$OpenBSD: apple,v 1.5 2008/05/08 01:40:57 chl Exp $
+#	$OpenBSD: apple,v 1.6 2009/04/24 18:54:34 chl Exp $
 
 #------------------------------------------------------------------------------
 # apple:  file(1) magic for Apple file formats
 #
-0	string		FiLeStArTfIlEsTaRt	binscii (apple ][) text
+0	search/1	FiLeStArTfIlEsTaRt	binscii (apple ][) text
 0	string		\x0aGL			Binary II (apple ][) data
 0	string		\x76\xff		Squeezed (apple ][) data
 0	string		NuFile			NuFile archive (apple ][) data
 0	string		N\xf5F\xe9l\xe5		NuFile archive (apple ][) data
 0	belong		0x00051600		AppleSingle encoded Macintosh file
 0	belong		0x00051607		AppleDouble encoded Macintosh file
+
+# Type: Apple Emulator 2IMG format
+# From: Radek Vokal <rvokal@redhat.com>
+0	string		2IMG	Apple ][ 2IMG Disk Image
+>4	string		XGS!	\b, XGS
+>4	string		CTKG	\b, Catakig
+>4	string		ShIm	\b, Sheppy's ImageMaker
+>4	string		WOOF	\b, Sweet 16
+>4	string		B2TR	\b, Bernie ][ the Rescue
+>4	string		!nfc	\b, ASIMOV2
+>4	string		x	\b, Unknown Format
+>0xc	byte		00	\b, DOS 3.3 sector order
+>>0x10	byte		00	\b, Volume 254
+>>0x10	byte&0x7f	x	\b, Volume %u
+>0xc	byte		01	\b, ProDOS sector order
+>>0x14	short		x	\b, %u Blocks
+>0xc	byte		02	\b, NIB data
 
 # magic for Newton PDA package formats
 # from Ruda Moura <ruda@helllabs.org>
@@ -119,11 +136,12 @@
 # Nevertheless this will manage to catch a lot of images that happen
 # to have a solid-colored line at the bottom of the screen.
 
-8144	string	\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F	Apple II image with white background
-8144	string	\x55\x2A\x55\x2A\x55\x2A\x55\x2A	Apple II image with purple background
-8144	string	\x2A\x55\x2A\x55\x2A\x55\x2A\x55	Apple II image with green background
-8144	string	\xD5\xAA\xD5\xAA\xD5\xAA\xD5\xAA	Apple II image with blue background
-8144	string	\xAA\xD5\xAA\xD5\xAA\xD5\xAA\xD5	Apple II image with orange background
+# GRR: Magic too weak
+#8144	string	\x7F\x7F\x7F\x7F\x7F\x7F\x7F\x7F	Apple II image with white background
+#8144	string	\x55\x2A\x55\x2A\x55\x2A\x55\x2A	Apple II image with purple background
+#8144	string	\x2A\x55\x2A\x55\x2A\x55\x2A\x55	Apple II image with green background
+#8144	string	\xD5\xAA\xD5\xAA\xD5\xAA\xD5\xAA	Apple II image with blue background
+#8144	string	\xAA\xD5\xAA\xD5\xAA\xD5\xAA\xD5	Apple II image with orange background
 
 # Beagle Bros. Apple Mechanic fonts
 
@@ -190,3 +208,44 @@
 >0		byte		<5		\b
 >>13	byte		0x81	\b
 >>>14	uleshort	x		\b, system %hd
+
+#------------------------------------------------------------------------------
+# CAF: Apple CoreAudio File Format
+#
+# Container format for high-end audio purposes.
+# From: David Remahl <dremahl@apple.com>
+#
+0	string		caff		CoreAudio Format audio file
+>4	beshort		<10		version %d
+>6	beshort		x
+
+
+#------------------------------------------------------------------------------
+# Keychain database files
+0	string		kych		Mac OS X Keychain File
+
+#------------------------------------------------------------------------------
+# Code Signing related file types
+0	belong		0xfade0c00	Mac OS X Code Requirement
+>8	belong		1			(opExpr)
+>4	belong		x			- %d bytes
+
+0	belong		0xfade0c01	Mac OS X Code Requirement Set
+>8	belong		>1			containing %d items
+>4	belong		x			- %d bytes
+
+0	belong		0xfade0c02	Mac OS X Code Directory
+>8	belong		x			version %x
+>12	belong		>0			flags 0x%x
+>4	belong		x			- %d bytes
+
+0	belong		0xfade0cc0	Mac OS X Detached Code Signature (non-executable)
+>4	belong		x			- %d bytes
+
+0	belong		0xfade0cc1	Mac OS X Detached Code Signature
+>8	belong		>1			(%d elements)
+>4	belong		x			- %d bytes
+
+# From: "Nelson A. de Oliveira" <naoliv@gmail.com>
+# .vdi
+4	string innotek\ VirtualBox\ Disk\ Image %s

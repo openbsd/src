@@ -1,6 +1,7 @@
-#	$OpenBSD: sc,v 1.2 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: sc,v 1.3 2009/04/24 18:54:34 chl Exp $
 
 #------------------------------------------------------------------------------
 # sc:  file(1) magic for "sc" spreadsheet
 #
 38	string		Spreadsheet	sc spreadsheet file
+!:mime	application/x-sc

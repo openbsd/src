@@ -1,12 +1,12 @@
-#	$OpenBSD: lex,v 1.3 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: lex,v 1.4 2009/04/24 18:54:34 chl Exp $
 
 #------------------------------------------------------------------------------
 # lex:  file(1) magic for lex
 #
 #	derived empirically, your offsets may vary!
-53	string		yyprevious	C program text (from lex)
->3	string		>\0		 for %s
+0	search/100	yyprevious	C program text (from lex)
+>3	search/1	>\0		 for %s
 # C program text from GNU flex, from Daniel Quinlan <quinlan@yggdrasil.com>
-21	string		generated\ by\ flex	C program text (from flex)
+0	search/100	generated\ by\ flex	C program text (from flex)
 # lex description file, from Daniel Quinlan <quinlan@yggdrasil.com>
-0	string		%{		lex description text
+0	search/1	%{		lex description text

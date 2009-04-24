@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.14 2008/05/08 01:40:56 chl Exp $ */
+/*	$OpenBSD: print.c,v 1.15 2009/04/24 18:54:34 chl Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -42,7 +42,7 @@
 #include <time.h>
 
 #ifndef lint
-FILE_RCSID("@(#)$Id: print.c,v 1.14 2008/05/08 01:40:56 chl Exp $")
+FILE_RCSID("@(#)$Id: print.c,v 1.15 2009/04/24 18:54:34 chl Exp $")
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
@@ -90,8 +90,8 @@ file_mdump(struct magic *m)
 			if (m->str_flags & REGEX_OFFSET_START) 
 				(void) fputc(CHAR_REGEX_OFFSET_START, stderr);
 		}
-		if (m->str_count)
-			(void) fprintf(stderr, "/%u", m->str_count);
+		if (m->str_range)
+			(void) fprintf(stderr, "/%u", m->str_range);
 	}
 	else {
 		if ((m->mask_op & FILE_OPS_MASK) < SZOF(optyp))
@@ -158,6 +158,16 @@ file_mdump(struct magic *m)
 			(void)fprintf(stderr, "%s,",
 			    file_fmttime((uint32_t)m->value.q, 0));
 			break;
+		case FILE_FLOAT:
+		case FILE_BEFLOAT:
+		case FILE_LEFLOAT:
+			(void) fprintf(stderr, "%G", m->value.f);
+			break;
+		case FILE_DOUBLE:
+		case FILE_BEDOUBLE:
+		case FILE_LEDOUBLE:
+			(void) fprintf(stderr, "%G", m->value.d);
+			break;
 		case FILE_DEFAULT:
 			/* XXX - do anything here? */
 			break;
@@ -175,13 +185,15 @@ protected void
 file_magwarn(struct magic_set *ms, const char *f, ...)
 {
 	va_list va;
-	va_start(va, f);
 
 	/* cuz we use stdout for most, stderr here */
 	(void) fflush(stdout); 
 
-	(void) fprintf(stderr, "%s, %lu: Warning ", ms->file,
-	    (unsigned long)ms->line);
+	if (ms->file)
+		(void) fprintf(stderr, "%s, %lu: ", ms->file,
+		    (unsigned long)ms->line);
+	(void) fprintf(stderr, "Warning: ");
+	va_start(va, f);
 	(void) vfprintf(stderr, f, va);
 	va_end(va);
 	(void) fputc('\n', stderr);

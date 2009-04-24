@@ -1,11 +1,11 @@
-#	$OpenBSD: diff,v 1.3 2008/05/08 01:40:57 chl Exp $
+#	$OpenBSD: diff,v 1.4 2009/04/24 18:54:34 chl Exp $
 
 #------------------------------------------------------------------------------
 # diff:  file(1) magic for diff(1) output
 #
-0	string		diff\ 	'diff' output text
-0	string		***\ 		'diff' output text
-0	string		Only\ in\ 	'diff' output text
-0	string		Common\ subdirectories:\ 	'diff' output text
+0	search/1	diff\ 		diff output text
+0	search/1	***\ 		diff output text
+0	search/1	Only\ in\ 	diff output text
+0	search/1	Common\ subdirectories:\ 	diff output text
 
-0	string		Index:		RCS/CVS diff output text
+0	search/1	Index:		RCS/CVS diff output text
