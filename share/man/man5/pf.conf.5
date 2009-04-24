@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.436 2009/04/24 15:40:02 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.437 2009/04/24 20:35:01 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2332,27 +2332,23 @@ Matching filter and translation rules marked with the
 .Ar quick
 option are final and abort the evaluation of the rules in other
 anchors and the main ruleset.
-If the
-.Ar anchor
-itself is marked with the
+If the anchor itself is marked with the
 .Ar quick
 option,
 ruleset evaluation will terminate when the anchor is exited if the packet is
 matched by any rule within the anchor.
 .Pp
-.Ar anchor
-rules are evaluated relative to the anchor in which they are contained.
-For example, all anchor
-rules specified in the main ruleset will reference anchor
-attachment points underneath the main ruleset,
+Anchor rules are evaluated relative to the anchor in which they are contained.
+For example,
+all anchor rules specified in the main ruleset will reference
+anchor attachment points underneath the main ruleset,
 and anchor rules specified in a file loaded from a
 .Ar load anchor
 rule will be attached under that anchor point.
 .Pp
-Rules may be contained in
-.Ar anchor
-attachment points which do not contain any rules when the main ruleset
-is loaded, and later such anchors can be manipulated through
+Rules may be contained in anchor attachment points
+which do not contain any rules when the main ruleset is loaded,
+and later such anchors can be manipulated through
 .Xr pfctl 8
 without reloading the main ruleset or other anchors.
 .Pp
@@ -2376,12 +2372,7 @@ which blocks all packets from a specific address:
 .Pp
 The anchor can also be populated by adding a
 .Ar load anchor
-rule after the anchor rule:
-.Bd -literal -offset indent
-anchor spam
-load anchor spam from "/etc/pf-spam.conf"
-.Ed
-.Pp
+rule after the anchor rule.
 When
 .Xr pfctl 8
 loads
@@ -2389,6 +2380,11 @@ loads
 it will also load all the rules from the file
 .Pa /etc/pf-spam.conf
 into the anchor.
+.Pp
+.Bd -literal -offset indent
+anchor spam
+load anchor spam from "/etc/pf-spam.conf"
+.Ed
 .Pp
 Optionally,
 anchor rules can specify packet filtering parameters
@@ -2429,7 +2425,7 @@ Since anchors are evaluated relative to the anchor in which they are
 contained, there is a mechanism for accessing the parent and ancestor
 anchors of a given anchor.
 Similar to file system path name resolution, if the sequence
-.Dq ..
+.Sq ..
 appears as an anchor path component, the parent anchor of the current
 anchor in the path evaluation at that point will become the new current
 anchor.
