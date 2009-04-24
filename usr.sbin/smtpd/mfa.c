@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.20 2009/04/21 14:37:32 eric Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.21 2009/04/24 08:32:12 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -48,7 +48,7 @@ void		mfa_disable_events(struct smtpd *);
 void		mfa_timeout(int, short, void *);
 
 void		mfa_test_mail(struct smtpd *, struct message *);
-void		mfa_test_rcpt(struct smtpd *, struct message_recipient *);
+void		mfa_test_rcpt(struct smtpd *, struct message *);
 int		mfa_ruletest_rcpt(struct smtpd *, struct path *, struct sockaddr_storage *);
 int		mfa_check_source(struct map *, struct sockaddr_storage *);
 int		mfa_match_mask(struct sockaddr_storage *, struct netaddr *);
@@ -426,17 +426,16 @@ accept:
 }
 
 void
-mfa_test_rcpt(struct smtpd *env, struct message_recipient *mr)
+mfa_test_rcpt(struct smtpd *env, struct message *m)
 {
 	struct submit_status	 ss;
 
-	ss.id = mr->id;
+	ss.id = m->session_id;
 	ss.code = 530;
-	ss.u.path = mr->path;
-	ss.ss = mr->ss;
-	ss.msg = mr->msg;
-
-	ss.flags = mr->flags;
+	ss.u.path = m->session_rcpt;
+	ss.ss = m->session_ss;
+	ss.msg = *m;
+	ss.flags = m->flags;
 
 	strip_source_route(ss.u.path.user, sizeof(ss.u.path.user));
 

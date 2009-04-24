@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.70 2009/04/20 18:48:23 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.71 2009/04/24 08:32:12 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -418,7 +418,6 @@ int
 session_rfc5321_rcpt_handler(struct session *s, char *args)
 {
 	char buffer[MAX_PATH_SIZE];
-	struct message_recipient	mr;
 
 	if (s->s_state == S_GREETED) {
 		session_respond(s, "503 Polite people say HELO first");
@@ -430,33 +429,26 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	bzero(&mr, sizeof(mr));
-
 	if (strlcpy(buffer, args, sizeof(buffer)) >= sizeof(buffer)) {
 		session_respond(s, "553 Recipient address syntax error");
 		return 1;
 	}
 
-	if (! session_set_path(&mr.path, buffer)) {
+	if (! session_set_path(&s->s_msg.session_rcpt, buffer)) {
 		/* No need to even transmit to MFA, path is invalid */
 		session_respond(s, "553 Recipient address syntax error");
 		return 1;
 	}
 
-	s->s_msg.session_rcpt = mr.path;
-
-	mr.id = s->s_msg.id;
 	s->s_state = S_RCPTREQUEST;
-	mr.ss = s->s_ss;
-	mr.msg = s->s_msg;
 
 
 	if (s->s_flags & F_AUTHENTICATED) {
 		s->s_msg.flags |= F_MESSAGE_AUTHENTICATED;
-		mr.flags |= F_MESSAGE_AUTHENTICATED;
 	}
 
-	session_imsg(s, PROC_MFA, IMSG_MFA_RCPT, 0, 0, -1, &mr, sizeof(mr));
+	session_imsg(s, PROC_MFA, IMSG_MFA_RCPT, 0, 0, -1, &s->s_msg,
+	    sizeof(s->s_msg));
 	return 1;
 }
 

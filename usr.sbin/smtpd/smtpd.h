@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.101 2009/04/21 18:12:05 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.102 2009/04/24 08:32:12 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -708,14 +708,6 @@ struct submit_status {
 	}				 u;
 	enum message_flags		 flags;
 	struct sockaddr_storage		 ss;
-	struct message			 msg;
-};
-
-struct message_recipient {
-	u_int64_t			 id;
-	struct sockaddr_storage		 ss;
-	enum message_flags		 flags;
-	struct path			 path;
 	struct message			 msg;
 };
 
