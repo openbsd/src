@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.36 2009/04/21 14:37:32 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.37 2009/04/24 08:35:48 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -48,7 +48,6 @@ void		smtp_disable_events(struct smtpd *);
 void		smtp_pause(struct smtpd *);
 void		smtp_resume(struct smtpd *);
 void		smtp_accept(int, short, void *);
-void		session_timeout(int, short, void *);
 void		session_auth_pickup(struct session *, char *, size_t);
 
 struct s_session	s_smtp;
