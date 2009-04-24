@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.122 2009/04/24 16:27:38 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.123 2009/04/24 16:29:49 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -211,6 +211,7 @@ int	azalia_codec_find_defadc(codec_t *, int, int);
 int	azalia_codec_find_defadc_sub(codec_t *, nid_t, int, int);
 int	azalia_codec_init_volgroups(codec_t *);
 int	azalia_codec_sort_pins(codec_t *);
+int	azalia_codec_select_micadc(codec_t *);
 
 int	azalia_widget_init(widget_t *, const codec_t *, int);
 int	azalia_widget_label_widgets(codec_t *);
@@ -1342,6 +1343,15 @@ azalia_codec_init(codec_t *this)
 		}
 	}
 
+	this->mic_adc = -1;
+
+	/* make sure built-in mic is connected to an adc */
+	if (this->mic != -1 && this->mic_adc == -1) {
+		if (azalia_codec_select_micadc(this)) {
+			DPRINTF(("%s: cound not select mic adc\n", __func__));
+		}
+	}
+
 	err = azalia_codec_sort_pins(this);
 	if (err)
 		return err;
@@ -1373,6 +1383,41 @@ azalia_codec_init(codec_t *this)
 		return err;
 
 	return 0;
+}
+
+int
+azalia_codec_select_micadc(codec_t *this)
+{
+	widget_t *w;
+	int i, j, err;
+
+	for (i = 0; i < this->na_adcs; i++) {
+		if (azalia_codec_fnode(this, this->mic,
+		    this->a_adcs[i], 0) >= 0)
+			break;
+	}
+	if (i >= this->na_adcs)
+		return(-1);
+	w = &this->w[this->a_adcs[i]];
+	for (j = 0; j < 10; j++) {
+		for (i = 0; i < w->nconnections; i++) {
+			if (azalia_codec_fnode(this, this->mic,
+			    w->connections[i], j + 1) >= 0) {
+				break;
+			}
+		}
+		if (i >= w->nconnections)
+			return(-1);
+		err = this->comresp(this, w->nid,
+		    CORB_SET_CONNECTION_SELECT_CONTROL, i, 0);
+		if (err)
+			return(err);
+		w->selected = i;
+		if (w->connections[i] == this->mic)
+			return(0);
+		w = &this->w[w->connections[i]];
+	}
+	return(-1);
 }
 
 int
