@@ -1,4 +1,4 @@
-/*	$OpenBSD: berkwdt.c,v 1.3 2009/04/24 18:59:30 mk Exp $ */
+/*	$OpenBSD: berkwdt.c,v 1.4 2009/04/24 19:30:11 mk Exp $ */
 
 /*
  * Copyright (c) 2009 Wim Van Sebroeck <wim@iguana.be>
@@ -35,24 +35,25 @@
 #include <dev/pci/pcidevs.h>
 
 struct berkwdt_softc {
-	/* wdt_dev must be the first item in the struct */
 	struct device	sc_dev;
 
 	/* device access through bus space */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
-	/* the watchdog's heartbeat */
+	/* the timeout period */
 	int		sc_period;
 };
 
 int berkwdt_match(struct device *, void *, void *);
 void berkwdt_attach(struct device *, struct device *, void *);
-int berkwdt_set_timeout(void *, int);
 
 void berkwdt_start(struct berkwdt_softc *sc);
 void berkwdt_stop(struct berkwdt_softc *sc);
 void berkwdt_reload(struct berkwdt_softc *sc);
+int berkwdt_send_command(struct berkwdt_softc *sc, u_int8_t cmd, int *val);
+
+int berkwdt_set_timeout(void *, int);
 
 struct cfattach berkwdt_ca = {
 	sizeof(struct berkwdt_softc), berkwdt_match, berkwdt_attach
@@ -93,7 +94,7 @@ const struct pci_matchid berkwdt_devices[] = {
 /* Watchdog's internal commands */
 #define CMD_WRITE_WD_TIMEOUT	0x19
 
-static int
+int
 berkwdt_send_command(struct berkwdt_softc *sc, u_int8_t cmd, int *val)
 {
 	u_int8_t msb = *val / 256;
