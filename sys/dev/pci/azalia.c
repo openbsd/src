@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.119 2009/04/24 15:31:18 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.120 2009/04/24 15:37:12 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -207,6 +207,8 @@ int	azalia_codec_disconnect_stream(codec_t *, int);
 void	azalia_codec_print_audiofunc(const codec_t *);
 void	azalia_codec_print_groups(const codec_t *);
 int	azalia_codec_find_defdac(codec_t *, int, int);
+int	azalia_codec_find_defadc(codec_t *, int, int);
+int	azalia_codec_find_defadc_sub(codec_t *, nid_t, int, int);
 int	azalia_codec_init_volgroups(codec_t *);
 
 int	azalia_widget_init(widget_t *, const codec_t *, int);
@@ -1317,7 +1319,7 @@ azalia_codec_init(codec_t *this)
 					break;
 				case CORB_CD_MICIN:
 					this->mic = i;
-					this->mic_adc = -1;	/* XXX */
+					this->mic_adc = azalia_codec_find_defadc(this, i, 0);
 					break;
 				}
 				break;
@@ -1412,6 +1414,66 @@ azalia_codec_find_defdac(codec_t *this, int index, int depth)
 	}
 
 	return -1;
+}
+
+int
+azalia_codec_find_defadc_sub(codec_t *this, nid_t node, int index, int depth)
+{
+	const widget_t *w;
+	int i, ret;
+
+	w = &this->w[index];
+	if (w->nid == node) {
+		return index;
+	}
+	/* back at the beginning or a bad end */
+	if (depth > 0 &&
+	    (w->type == COP_AWTYPE_PIN_COMPLEX ||
+	    w->type == COP_AWTYPE_AUDIO_OUTPUT ||
+	    w->type == COP_AWTYPE_AUDIO_INPUT))
+		return -1;
+	if (++depth >= 10)
+		return -1;
+
+	if (w->nconnections > 0) {
+		/* by default, all mixer connections are active */
+		if (w->type == COP_AWTYPE_AUDIO_MIXER) {
+			for (i = 0; i < w->nconnections; i++) {
+				if (!azalia_widget_enabled(this, w->connections[i]))
+					continue;
+				ret = azalia_codec_find_defadc_sub(this, node,
+				    w->connections[i], depth);
+				if (ret >= 0)
+					return ret;
+			}
+		} else {
+			index = w->connections[w->selected];
+			if (VALID_WIDGET_NID(index, this)) {
+				ret = azalia_codec_find_defadc_sub(this, node,
+				    index, depth);
+				if (ret >= 0)
+					return ret;
+			}
+		}
+	}
+	return -1;
+}
+
+int
+azalia_codec_find_defadc(codec_t *this, int index, int depth)
+{
+	int i, j, conv;
+
+	conv = -1;
+	for (i = 0; i < this->na_adcs; i++) {
+		j = azalia_codec_find_defadc_sub(this, index,
+		    this->a_adcs[i], 0);
+		if (j >= 0) {
+			conv = this->a_adcs[i];
+			break;
+		}
+	}
+	return(conv);
 }
 
 int
