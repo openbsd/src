@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.120 2009/04/24 15:37:12 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.121 2009/04/24 16:02:17 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -210,6 +210,7 @@ int	azalia_codec_find_defdac(codec_t *, int, int);
 int	azalia_codec_find_defadc(codec_t *, int, int);
 int	azalia_codec_find_defadc_sub(codec_t *, nid_t, int, int);
 int	azalia_codec_init_volgroups(codec_t *);
+int	azalia_codec_sort_pins(codec_t *);
 
 int	azalia_widget_init(widget_t *, const codec_t *, int);
 int	azalia_widget_label_widgets(codec_t *);
@@ -1341,6 +1342,10 @@ azalia_codec_init(codec_t *this)
 		}
 	}
 
+	err = azalia_codec_sort_pins(this);
+	if (err)
+		return err;
+
 	err = this->init_dacgroup(this);
 	if (err)
 		return err;
@@ -1368,6 +1373,220 @@ azalia_codec_init(codec_t *this)
 		return err;
 
 	return 0;
+}
+
+int
+azalia_codec_sort_pins(codec_t *this)
+{
+#define MAX_PINS	16
+	const widget_t *w;
+	struct io_pin opins[MAX_PINS], opins_d[MAX_PINS];
+	struct io_pin ipins[MAX_PINS], ipins_d[MAX_PINS];
+	int nopins, nopins_d, nipins, nipins_d;
+	int prio, add, nd, conv;
+	int i, j, k;
+
+	nopins = nopins_d = nipins = nipins_d = 0;
+
+	FOR_EACH_WIDGET(this, i) {
+		w = &this->w[i];
+		if (!w->enable || w->type != COP_AWTYPE_PIN_COMPLEX)
+			continue;
+
+		prio = w->d.pin.association << 4 | w->d.pin.sequence;
+		conv = -1;
+
+		/* analog out */
+		if ((w->d.pin.cap & COP_PINCAP_OUTPUT) && 
+		    !(w->widgetcap & COP_AWCAP_DIGITAL)) {
+			add = nd = 0;
+			conv = azalia_codec_find_defdac(this, w->nid, 0);
+			switch(w->d.pin.device) {
+			/* primary - output by default */
+			case CORB_CD_SPEAKER:
+				if (w->nid == this->speaker)
+					break;
+				/* FALLTHROUGH */
+			case CORB_CD_HEADPHONE:
+			case CORB_CD_LINEOUT:
+				add = 1;
+				break;
+			/* secondary - input by default */
+			case CORB_CD_MICIN:
+				if (w->nid == this->mic)
+					break;
+				/* FALLTHROUGH */
+			case CORB_CD_LINEIN:
+				add = nd = 1;
+				break;
+			}
+			if (add && nopins < MAX_PINS) {
+				opins[nopins].nid = w->nid;
+				opins[nopins].conv = conv;
+				opins[nopins].prio = prio | (nd << 8);
+				nopins++;
+			}
+		}
+		/* digital out */
+		if ((w->d.pin.cap & COP_PINCAP_OUTPUT) && 
+		    (w->widgetcap & COP_AWCAP_DIGITAL)) {
+			conv = azalia_codec_find_defdac(this, w->nid, 0);
+			switch(w->d.pin.device) {
+			case CORB_CD_SPDIFOUT:
+			case CORB_CD_DIGITALOUT:
+				if (nopins_d < MAX_PINS) {
+					opins_d[nopins_d].nid = w->nid;
+					opins_d[nopins_d].conv = conv;
+					opins_d[nopins_d].prio = prio;
+					nopins_d++;
+				}
+				break;
+			}
+		}
+		/* analog in */
+		if ((w->d.pin.cap & COP_PINCAP_INPUT) &&
+		    !(w->widgetcap & COP_AWCAP_DIGITAL)) {
+			add = nd = 0;
+			conv = azalia_codec_find_defadc(this, w->nid, 0);
+			switch(w->d.pin.device) {
+			/* primary - input by default */
+			case CORB_CD_MICIN:
+			case CORB_CD_LINEIN:
+				add = 1;
+				break;
+			/* secondary - output by default */
+			case CORB_CD_SPEAKER:
+				if (w->nid == this->speaker)
+					break;
+				/* FALLTHROUGH */
+			case CORB_CD_HEADPHONE:
+			case CORB_CD_LINEOUT:
+				add = nd = 1;
+				break;
+			}
+			if (add && nipins < MAX_PINS) {
+				ipins[nipins].nid = w->nid;
+				ipins[nipins].prio = prio | (nd << 8);
+				ipins[nipins].conv = conv;
+				nipins++;
+			}
+		}
+		/* digital in */
+		if ((w->d.pin.cap & COP_PINCAP_INPUT) && 
+		    (w->widgetcap & COP_AWCAP_DIGITAL)) {
+			conv = azalia_codec_find_defadc(this, w->nid, 0);
+			switch(w->d.pin.device) {
+			case CORB_CD_SPDIFIN:
+			case CORB_CD_DIGITALIN:
+			case CORB_CD_MICIN:
+				if (nipins_d < MAX_PINS) {
+					ipins_d[nipins_d].nid = w->nid;
+					ipins_d[nipins_d].prio = prio;
+					ipins_d[nipins_d].conv = conv;
+					nipins_d++;
+				}
+				break;
+			}
+		}
+	}
+
+	this->opins = malloc(nopins * sizeof(struct io_pin), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
+	if (this->opins == NULL)
+		return(ENOMEM);
+	this->nopins = 0;
+	for (i = 0; i < nopins; i++) {
+		for (j = 0; j < this->nopins; j++)
+			if (this->opins[j].prio > opins[i].prio)
+				break;
+		for (k = this->nopins; k > j; k--)
+			this->opins[k] = this->opins[k - 1];
+		if (j < nopins)
+			this->opins[j] = opins[i];
+		this->nopins++;
+		if (this->nopins == nopins)
+			break;
+	}
+
+	this->opins_d = malloc(nopins_d * sizeof(struct io_pin), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
+	if (this->opins_d == NULL)
+		return(ENOMEM);
+	this->nopins_d = 0;
+	for (i = 0; i < nopins_d; i++) {
+		for (j = 0; j < this->nopins_d; j++)
+			if (this->opins_d[j].prio > opins_d[i].prio)
+				break;
+		for (k = this->nopins_d; k > j; k--)
+			this->opins_d[k] = this->opins_d[k - 1];
+		if (j < nopins_d)
+			this->opins_d[j] = opins_d[i];
+		this->nopins_d++;
+		if (this->nopins_d == nopins_d)
+			break;
+	}
+
+	this->ipins = malloc(nipins * sizeof(struct io_pin), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
+	if (this->ipins == NULL)
+		return(ENOMEM);
+	this->nipins = 0;
+	for (i = 0; i < nipins; i++) {
+		for (j = 0; j < this->nipins; j++)
+			if (this->ipins[j].prio > ipins[i].prio)
+				break;
+		for (k = this->nipins; k > j; k--)
+			this->ipins[k] = this->ipins[k - 1];
+		if (j < nipins)
+			this->ipins[j] = ipins[i];
+		this->nipins++;
+		if (this->nipins == nipins)
+			break;
+	}
+
+	this->ipins_d = malloc(nipins_d * sizeof(struct io_pin), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
+	if (this->ipins_d == NULL)
+		return(ENOMEM);
+	this->nipins_d = 0;
+	for (i = 0; i < nipins_d; i++) {
+		for (j = 0; j < this->nipins_d; j++)
+			if (this->ipins_d[j].prio > ipins_d[i].prio)
+				break;
+		for (k = this->nipins_d; k > j; k--)
+			this->ipins_d[k] = this->ipins_d[k - 1];
+		if (j < nipins_d)
+			this->ipins_d[j] = ipins_d[i];
+		this->nipins_d++;
+		if (this->nipins_d == nipins_d)
+			break;
+	}
+
+#ifdef AZALIA_DEBUG
+	printf("%s: analog out pins:", __func__);
+	for (i = 0; i < this->nopins; i++)
+		printf(" 0x%2.2x->0x%2.2x", this->opins[i].nid,
+		    this->opins[i].conv);
+	printf("\n");
+	printf("%s: digital out pins:", __func__);
+	for (i = 0; i < this->nopins_d; i++)
+		printf(" 0x%2.2x->0x%2.2x", this->opins_d[i].nid,
+		    this->opins_d[i].conv);
+	printf("\n");
+	printf("%s: analog in pins:", __func__);
+	for (i = 0; i < this->nipins; i++)
+		printf(" 0x%2.2x->0x%2.2x", this->ipins[i].nid,
+		    this->ipins[i].conv);
+	printf("\n");
+	printf("%s: digital in pins:", __func__);
+	for (i = 0; i < this->nipins_d; i++)
+		printf(" 0x%2.2x->0x%2.2x", this->ipins_d[i].nid,
+		    this->ipins_d[i].conv);
+	printf("\n");
+#endif
+
+	return 0;
+#undef MAX_PINS
 }
 
 int
@@ -1667,6 +1886,30 @@ azalia_codec_delete(codec_t *this)
 		this->encs = NULL;
 	}
 	this->nencs = 0;
+
+	if (this->opins != NULL) {
+		free(this->opins, M_DEVBUF);
+		this->opins = NULL;
+	}
+	this->nopins = 0;
+
+	if (this->opins_d != NULL) {
+		free(this->opins_d, M_DEVBUF);
+		this->opins_d = NULL;
+	}
+	this->nopins_d = 0;
+
+	if (this->ipins != NULL) {
+		free(this->ipins, M_DEVBUF);
+		this->ipins = NULL;
+	}
+	this->nipins = 0;
+
+	if (this->ipins_d != NULL) {
+		free(this->ipins_d, M_DEVBUF);
+		this->ipins_d = NULL;
+	}
+	this->nipins_d = 0;
 
 	if (this->w != NULL) {
 		free(this->w, M_DEVBUF);

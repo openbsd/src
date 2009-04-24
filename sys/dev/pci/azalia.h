@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.41 2009/04/24 15:31:18 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.42 2009/04/24 16:02:17 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -609,6 +609,12 @@ typedef struct {
 	int cur;
 } volgroup_t;
 
+struct io_pin {
+	nid_t nid;		/* NID of pin */
+	nid_t conv;		/* NID of default converter */
+	int prio;		/* assoc/seq/dir "priority" */
+};
+
 typedef struct codec_t {
 	int (*comresp)(const struct codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
 	int (*init_dacgroup)(struct codec_t *);
@@ -643,6 +649,15 @@ typedef struct codec_t {
 	int nformats;
 	struct audio_encoding *encs;
 	int nencs;
+
+	struct io_pin *ipins;
+	int nipins;
+	struct io_pin *ipins_d;
+	int nipins_d;
+	struct io_pin *opins;
+	int nopins;
+	struct io_pin *opins_d;
+	int nopins_d;
 
 	nid_t a_dacs[HDA_MAX_CHANNELS], a_dacs_d[HDA_MAX_CHANNELS];
 	int na_dacs, na_dacs_d;
