@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.116 2009/04/24 16:18:23 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.117 2009/04/24 16:27:38 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -367,12 +367,18 @@ done:
 		group->ngroups++;
 	}
 
+	/* Disable converters that aren't in a convgroup and aren't the
+	 * speaker dac.
+	 */
 	for (i = 0; i < nall_convs; i++) {
+		conv = all_convs[i];
+		if (this->spkr_dac == conv)
+			continue;
 		for (j = 0; j < nconvs; j++)
-			if (convs[j] == all_convs[i])
+			if (convs[j] == conv)
 				break;
 		if (j == nconvs)
-			this->w[all_convs[i]].enable = 0;
+			this->w[conv].enable = 0;
 	}
 
 	return 0;
