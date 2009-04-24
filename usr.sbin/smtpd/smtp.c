@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.37 2009/04/24 08:35:48 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.38 2009/04/24 09:38:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -49,6 +49,7 @@ void		smtp_pause(struct smtpd *);
 void		smtp_resume(struct smtpd *);
 void		smtp_accept(int, short, void *);
 void		session_auth_pickup(struct session *, char *, size_t);
+struct session *session_lookup(struct smtpd *, u_int64_t);
 
 struct s_session	s_smtp;
 
@@ -162,24 +163,13 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			env->sc_flags &= ~SMTPD_CONFIGURING;
 			break;
 		case IMSG_PARENT_AUTHENTICATE: {
-			struct session		*s;
-			struct session		 key;
-			struct session_auth_reply *reply;
+			struct session			*s;
+			struct session_auth_reply	*reply = imsg.data;
 
 			log_debug("smtp_dispatch_parent: parent handled authentication");
-			reply = imsg.data;
-			key.s_id = reply->session_id;
-			key.s_msg.id = reply->session_id;
 
-			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL)
-				fatal("smtp_dispatch_parent: session is gone");
-
-			if (s->s_flags & F_QUIT) {
-				session_destroy(s);
+			if ((s = session_lookup(env, reply->session_id)) == NULL)
 				break;
-			}
-			s->s_flags &= ~F_EVLOCKED;
 
 			if (reply->value)
 				s->s_flags |= F_AUTHENTICATED;
@@ -236,24 +226,13 @@ smtp_dispatch_mfa(int sig, short event, void *p)
 		switch (imsg.hdr.type) {
 		case IMSG_MFA_MAIL:
 		case IMSG_MFA_RCPT: {
-			struct submit_status	*ss;
+			struct submit_status	*ss = imsg.data;
 			struct session		*s;
-			struct session		 key;
 
 			log_debug("smtp_dispatch_mfa: mfa handled return path");
-			ss = imsg.data;
-			key.s_id = ss->id;
-			key.s_msg.id = ss->id;
 
-			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL)
-				fatal("smtp_dispatch_mfa: session is gone");
-
-			if (s->s_flags & F_QUIT) {
-				session_destroy(s);
+			if ((s = session_lookup(env, ss->id)) == NULL)
 				break;
-			}
-			s->s_flags &= ~F_EVLOCKED;
 
 			session_pickup(s, ss);
 			break;
@@ -372,24 +351,13 @@ smtp_dispatch_queue(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_QUEUE_CREATE_MESSAGE: {
-			struct submit_status	*ss;
+			struct submit_status	*ss = imsg.data;
 			struct session		*s;
-			struct session		 key;
 
 			log_debug("smtp_dispatch_queue: queue handled message creation");
-			ss = imsg.data;
 
-			key.s_id = ss->id;
-
-			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL)
-				fatal("smtp_dispatch_queue: session is gone");
-
-			if (s->s_flags & F_QUIT) {
-				session_destroy(s);
+			if ((s = session_lookup(env, ss->id)) == NULL)
 				break;
-			}
-			s->s_flags &= ~F_EVLOCKED;
 
 			(void)strlcpy(s->s_msg.message_id, ss->u.msgid,
 			    sizeof(s->s_msg.message_id));
@@ -397,27 +365,16 @@ smtp_dispatch_queue(int sig, short event, void *p)
 			break;
 		}
 		case IMSG_QUEUE_MESSAGE_FILE: {
-			struct submit_status	*ss;
+			struct submit_status	*ss = imsg.data;
 			struct session		*s;
-			struct session		 key;
 			int			 fd;
 
 			log_debug("smtp_dispatch_queue: queue handled message creation");
-			ss = imsg.data;
-
-			key.s_id = ss->id;
-
-			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL)
-				fatal("smtp_dispatch_queue: session is gone");
 
 			fd = imsg_get_fd(ibuf, &imsg);
 
-			if (s->s_flags & F_QUIT) {
-				session_destroy(s);
+			if ((s = session_lookup(env, ss->id)) == NULL)
 				break;
-			}
-			s->s_flags &= ~F_EVLOCKED;
 
 			if (fd != -1) {
 				s->datafp = fdopen(fd, "w");
@@ -433,52 +390,40 @@ smtp_dispatch_queue(int sig, short event, void *p)
 			break;
 		}
 		case IMSG_QUEUE_TEMPFAIL: {
-			struct submit_status	*ss;
+			struct submit_status	*ss = imsg.data;
 			struct session		*s;
 			struct session		 key;
 
-			log_debug("smtp_dispatch_queue: queue acknownedged a temporary failure");
-			ss = imsg.data;
-			key.s_id = ss->id;
-			key.s_msg.id = ss->id;
+			log_debug("smtp_dispatch_queue: tempfail in queue");
 
+			/*
+			 * IMSG_QUEUE_TEMPFAIL is not the final reply to
+			 * IMSG_MFA_RCPT - IMSG_QUEUE_COMMIT_ENVELOPES is.
+			 * Therefore, nothing more but updating the flags
+			 * is allowed here. If session_lookup were to be
+			 * called, then subsequent session_lookup in the
+			 * IMSG_QUEUE_COMMIT_ENVELOPES handler would fatal for
+			 * either of two reasons: missing session, or missing
+			 * EVLOCKED flag.
+			 */
+			key.s_id = ss->id;
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
 			if (s == NULL)
-				fatal("smtp_dispatch_queue: session is gone");
+				fatalx("smtp_dispatch_queue: session is gone");
 
-			if (s->s_flags & F_QUIT) {
-				session_destroy(s);
-				break;
-			}
-			s->s_flags &= ~F_EVLOCKED;
 			s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
 			break;
 		}
 
 		case IMSG_QUEUE_COMMIT_ENVELOPES:
 		case IMSG_QUEUE_COMMIT_MESSAGE: {
-			struct submit_status	*ss;
+			struct submit_status	*ss = imsg.data;
 			struct session		*s;
-			struct session		 key;
 
 			log_debug("smtp_dispatch_queue: queue acknowledged message submission");
-			ss = imsg.data;
-			key.s_id = ss->id;
-			key.s_msg.id = ss->id;
 
-			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
-			if (s == NULL)
-				fatal("smtp_dispatch_queue: session is gone");
-
-			if (s->s_flags & F_QUIT) {
-				if (imsg.hdr.type == IMSG_QUEUE_COMMIT_MESSAGE) {
-					s->s_msg.message_id[0] = '\0';
-					s->s_msg.message_uid[0] = '\0';
-				}
-				session_destroy(s);
+			if ((s = session_lookup(env, ss->id)) == NULL)
 				break;
-			}
-			s->s_flags &= ~F_EVLOCKED;
 
 			session_pickup(s, ss);
 			break;
@@ -794,4 +739,30 @@ smtp_listener_setup(struct smtpd *env, struct listener *l)
 
 	if (bind(l->fd, (struct sockaddr *)&l->ss, l->ss.ss_len) == -1)
 		fatal("bind");
+}
+
+/*
+ * Helper function for handling IMSG replies.
+ */
+struct session *
+session_lookup(struct smtpd *env, u_int64_t id)
+{
+	struct session	 key;
+	struct session	*s;
+
+	key.s_id = id;
+	s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
+	if (s == NULL)
+		fatalx("session_lookup: session is gone");
+
+	if (!(s->s_flags & F_EVLOCKED))
+		fatalx("session_lookup: corrupt session");
+	s->s_flags &= ~F_EVLOCKED;
+
+	if (s->s_flags & F_QUIT) {
+		session_destroy(s);
+		s = NULL;
+	}
+
+	return (s);
 }

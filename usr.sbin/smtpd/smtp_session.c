@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.72 2009/04/24 08:35:48 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.73 2009/04/24 09:38:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -891,7 +891,7 @@ session_cleanup(struct session *s)
 		s->datafp = NULL;
 	}
 
-	if (s->s_msg.message_id[0] != '\0') {
+	if (s->s_msg.message_id[0] != '\0' && s->s_state != S_DONE) {
 		/*
 		 * IMSG_QUEUE_REMOVE_MESSAGE must not be sent using session_imsg
 		 * since no reply for it is expected.
