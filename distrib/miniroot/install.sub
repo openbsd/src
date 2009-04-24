@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.472 2009/04/24 00:15:21 sthen Exp $
+#	$OpenBSD: install.sub,v 1.473 2009/04/24 01:04:33 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1642,6 +1642,7 @@ finish_up() {
 	cd /
 
 	md_installboot $ROOTDISK
+	cd /
 
 	populateusrlocal
 
@@ -1707,10 +1708,7 @@ md_consoleinfo
 # Ensure that siteXX.tgz is the *last* set listed so its contents overwrite
 # the contents of the other sets, not the other way around.
 THESETS="bsd bsd.rd bsd.mp $MDSETS"
-DEFAULTSETS="bsd bsd.rd"
-if [ $(sysctl -n hw.ncpufound) -gt 1 ]; then
-	DEFAULTSETS="$DEFAULTSETS bsd.mp"
-fi
+: ${DEFAULTSETS:="bsd bsd.rd"}
 for _set in base etc misc comp man game xbase xetc xshare xfont xserv site ; do
 	[[ $MODE == upgrade && ( $_set == etc || $_set == xetc ) ]] && continue
 	THESETS="$THESETS ${_set}${VERSION}.tgz"
@@ -1719,7 +1717,7 @@ for _set in base etc misc comp man game xbase xetc xshare xfont xserv site ; do
 done
 # Since etc${VERSION}.tgz is not in DEFAULTSETS for upgrades, it can always be
 # in SANESETS.
-SANESETS="bsd base${VERSION}.tgz etc${VERSION}.tgz"
+SANESETS="${SANESETS:-bsd} base${VERSION}.tgz etc${VERSION}.tgz"
 
 # decide upon an editor
 : ${EDITOR:=ed}

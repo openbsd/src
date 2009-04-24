@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.30 2009/04/12 12:56:02 krw Exp $
+#       $OpenBSD: install.md,v 1.31 2009/04/24 01:04:33 krw Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -33,8 +33,19 @@
 
 MDTERM=vt100
 ARCH=ARCH
+NCPU=$(sysctl -n hw.ncpufound)
+
+((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp" ; SANESETS="bsd bsd.mp" ; }
 
 md_installboot() {
+	cd /mnt
+	if [[ -f bsd.mp ]] && ((NCPU > 1)); then
+		echo "Multiprocessor machine; using bsd.mp instead of bsd."
+		mv bsd bsd.sp 2>/dev/null
+		mv bsd.mp bsd
+		ln -sf bsd bsd.mp
+	fi
+
 	echo "Installing boot block..."
 	cp /mnt/usr/mdec/bootsd /mnt/boot
 	/mnt/usr/mdec/installboot -v /mnt/boot /mnt/usr/mdec/bootxx /dev/r${1}a

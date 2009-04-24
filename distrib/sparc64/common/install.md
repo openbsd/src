@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.25 2009/04/12 12:56:02 krw Exp $
+#	$OpenBSD: install.md,v 1.26 2009/04/24 01:04:33 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -36,9 +36,20 @@
 MDTERM=sun
 MDXAPERTURE=1
 ARCH=ARCH
+NCPU=$(sysctl -n hw.ncpufound)
+
+((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp" ; SANESETS="bsd bsd.mp" ; }
 
 md_installboot() {
 	local _rawdev=/dev/r${1}c _prefix
+
+	cd /mnt
+	if [[ -f bsd.mp ]] && ((NCPU > 1)); then
+		echo "Multiprocessor machine; using bsd.mp instead of bsd."
+		mv bsd bsd.sp 2>/dev/null
+		mv bsd.mp bsd
+		ln -sf bsd bsd.mp
+	fi
 
 	# use extracted mdec if it exists (may be newer)
 	if [ -e /mnt/usr/mdec/bootblk ]; then

@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.170 2009/04/23 23:16:34 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.171 2009/04/24 01:04:33 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -334,14 +334,6 @@ askpassword root
 _rootpass="$_password"
 
 install_sets
-
-if [ -f /mnt/bsd.mp -a -f /mnt/bsd ]; then
-	if [ $(sysctl -n hw.ncpufound) -gt 1 ]; then
-		echo "Multiprocessor machine; using bsd.mp automatically."
-		mv /mnt/bsd /mnt/bsd.sp
-		mv /mnt/bsd.mp /mnt/bsd
-	fi
-fi
 
 # Remount all filesystems in /etc/fstab with the options from /etc/fstab, i.e.
 # without any options such as async which may have been used in the first
