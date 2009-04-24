@@ -1,4 +1,4 @@
-/*	$OpenBSD: berkwdt.c,v 1.1 2009/04/24 17:52:55 mk Exp $ */
+/*	$OpenBSD: berkwdt.c,v 1.2 2009/04/24 18:01:10 mk Exp $ */
 
 /*
  * Copyright (c) 2009 Wim Van Sebroeck <wim@iguana.be>
@@ -49,6 +49,10 @@ struct berkwdt_softc {
 int berkwdt_match(struct device *, void *, void *);
 void berkwdt_attach(struct device *, struct device *, void *);
 int berkwdt_set_timeout(void *, int);
+
+void berkwdt_start(struct berkwdt_softc *sc);
+void berkwdt_stop(struct berkwdt_softc *sc);
+void berkwdt_reload(struct berkwdt_softc *sc);
 
 struct cfattach berkwdt_ca = {
 	sizeof(struct berkwdt_softc), berkwdt_match, berkwdt_attach
