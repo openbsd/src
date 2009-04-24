@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.109 2009/04/02 14:30:51 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.110 2009/04/24 13:22:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1366,7 +1366,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 		}
 		if (*pk.value == ':') {
 			*pk.value++ = '\0';
-			pk.value++;
+			pk.value += strspn(pk.value, " \t\r\n");
 			header = 1;
 		} else {
 			*pk.value++ = '\0';
