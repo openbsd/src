@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1468 2009/04/12 13:45:23 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1469 2009/04/24 17:32:48 mk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4209,6 +4209,7 @@
 
 /* Pijnenburg */
 #define	PCI_PRODUCT_PIJNENBURG_PCC_ISES	0x0001		/* PCC-ISES */
+#define	PCI_PRODUCT_PIJNENBURG_PCWD_PCI	0x5030		/* PCI PC WD */
 
 /* Platform */
 #define	PCI_PRODUCT_PLATFORM_ES1849	0x0100		/* ES1849 */
