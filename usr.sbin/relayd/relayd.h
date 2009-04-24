@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.115 2009/04/02 14:30:51 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.116 2009/04/24 14:20:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -317,6 +317,7 @@ struct portrange {
 
 struct address {
 	struct sockaddr_storage	 ss;
+	int			 ipproto;
 	struct portrange	 port;
 	char			 ifname[IFNAMSIZ];
 	TAILQ_ENTRY(address)	 entry;

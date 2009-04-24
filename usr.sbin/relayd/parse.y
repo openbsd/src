@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.132 2009/04/17 09:37:25 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.133 2009/04/24 14:20:24 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -102,9 +102,9 @@ static int		 nodedirection;
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
 int		 host_dns(const char *, struct addresslist *,
-		    int, struct portrange *, const char *);
+		    int, struct portrange *, const char *, int);
 int		 host(const char *, struct addresslist *,
-		    int, struct portrange *, const char *);
+		    int, struct portrange *, const char *, int);
 
 struct table	*table_inherit(struct table *);
 int		 getservice(char *);
@@ -141,8 +141,9 @@ typedef struct {
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table
 %type	<v.number>	http_type loglevel mark parent
-%type	<v.number>	direction dstmode flag forwardmode proto_type retry
+%type	<v.number>	direction dstmode flag forwardmode retry
 %type	<v.number>	optssl optsslclient sslcache
+%type	<v.number>	redirect_proto relay_proto
 %type	<v.port>	port
 %type	<v.host>	host
 %type	<v.tv>		timeout
@@ -211,7 +212,7 @@ hostname	: /* empty */		{
 		}
 		;
 
-proto_type	: /* empty */			{ $$ = RELAY_PROTO_TCP; }
+relay_proto	: /* empty */			{ $$ = RELAY_PROTO_TCP; }
 		| TCP				{ $$ = RELAY_PROTO_TCP; }
 		| STRING			{
 			if (strcmp("http", $1) == 0) {
@@ -224,6 +225,22 @@ proto_type	: /* empty */			{ $$ = RELAY_PROTO_TCP; }
 				YYERROR;
 			}
 			free($1);
+		}
+		;
+
+redirect_proto	: /* empty */			{ $$ = IPPROTO_TCP; }
+		| TCP				{ $$ = IPPROTO_TCP; }
+		| STRING			{
+			struct protoent	*p;
+
+			if ((p = getprotobyname($1)) == NULL) {
+				yyerror("invalid protocol: %s", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+
+			$$ = p->p_proto;
 		}
 		;
 
@@ -450,18 +467,18 @@ rdroptsl	: forwardmode TO tablespec interface	{
 			$3->conf.rdrid = rdr->conf.id;
 			$3->conf.flags |= F_USED;
 		}
-		| LISTEN ON STRING port interface {
+		| LISTEN ON STRING redirect_proto port interface {
 			if (host($3, &rdr->virts,
-				 SRV_MAX_VIRTS, &$4, $5) <= 0) {
+			    SRV_MAX_VIRTS, &$5, $6, $4) <= 0) {
 				yyerror("invalid virtual ip: %s", $3);
 				free($3);
-				free($5);
+				free($6);
 				YYERROR;
 			}
 			free($3);
-			free($5);
+			free($6);
 			if (rdr->conf.port == 0)
-				rdr->conf.port = $4.val[0];
+				rdr->conf.port = $5.val[0];
 			tableport = rdr->conf.port;
 		}
 		| DISABLE		{ rdr->conf.flags |= F_DISABLE; }
@@ -731,7 +748,7 @@ digest		: DIGEST STRING
 		}
 		;
 
-proto		: proto_type PROTO STRING	{
+proto		: relay_proto PROTO STRING	{
 			struct protocol *p;
 
 			if (strcmp($3, "default") == 0) {
@@ -1216,7 +1233,7 @@ relayoptsl	: LISTEN ON STRING port optssl {
 			}
 
 			TAILQ_INIT(&al);
-			if (host($3, &al, 1, &$4, NULL) <= 0) {
+			if (host($3, &al, 1, &$4, NULL, -1) <= 0) {
 				yyerror("invalid listen ip: %s", $3);
 				free($3);
 				YYERROR;
@@ -1301,7 +1318,7 @@ forwardspec	: STRING port retry	{
 			}
 
 			TAILQ_INIT(&al);
-			if (host($1, &al, 1, &$2, NULL) <= 0) {
+			if (host($1, &al, 1, &$2, NULL, -1) <= 0) {
 				yyerror("invalid listen ip: %s", $1);
 				free($1);
 				YYERROR;
@@ -1372,7 +1389,7 @@ host		: STRING retry parent	{
 				fatal("out of memory");
 
 			TAILQ_INIT(&al);
-			if (host($1, &al, 1, NULL, NULL) <= 0) {
+			if (host($1, &al, 1, NULL, NULL, -1) <= 0) {
 				yyerror("invalid host %s", $2);
 				free($1);
 				free($$);
@@ -1945,6 +1962,7 @@ parse_config(const char *filename, int opts)
 	popfile();
 
 	endservent();
+	endprotoent();
 
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
@@ -2160,7 +2178,7 @@ host_v6(const char *s)
 
 int
 host_dns(const char *s, struct addresslist *al, int max,
-    struct portrange *port, const char *ifname)
+    struct portrange *port, const char *ifname, int ipproto)
 {
 	struct addrinfo		 hints, *res0, *res;
 	int			 error, cnt = 0;
@@ -2196,7 +2214,10 @@ host_dns(const char *s, struct addresslist *al, int max,
 			freeaddrinfo(res0);
 			return (-1);
 		}
+		if (ipproto != -1)
+			h->ipproto = ipproto;
 		h->ss.ss_family = res->ai_family;
+
 		if (res->ai_family == AF_INET) {
 			sain = (struct sockaddr_in *)&h->ss;
 			sain->sin_len = sizeof(struct sockaddr_in);
@@ -2222,7 +2243,7 @@ host_dns(const char *s, struct addresslist *al, int max,
 
 int
 host(const char *s, struct addresslist *al, int max,
-    struct portrange *port, const char *ifname)
+    struct portrange *port, const char *ifname, int ipproto)
 {
 	struct address *h;
 
@@ -2242,12 +2263,14 @@ host(const char *s, struct addresslist *al, int max,
 				return (-1);
 			}
 		}
+		if (ipproto != -1)
+			h->ipproto = ipproto;
 
 		TAILQ_INSERT_HEAD(al, h, entry);
 		return (1);
 	}
 
-	return (host_dns(s, al, max, port, ifname));
+	return (host_dns(s, al, max, port, ifname, ipproto));
 }
 
 struct table *
