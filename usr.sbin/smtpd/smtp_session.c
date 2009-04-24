@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.73 2009/04/24 09:38:11 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.74 2009/04/24 15:26:59 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -652,9 +652,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		s->rcptcount++;
 		s->s_msg.recipient = ss->u.path;
 
-	case S_RCPT:
-		if (ss == NULL)
-			fatalx("bad ss at S_RCPT");
 		session_respond(s, "%d Recipient ok", ss->code);
 		break;
 
