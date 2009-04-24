@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.64 2009/04/19 15:18:23 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.65 2009/04/24 23:22:20 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -546,7 +546,7 @@ sub finish_and_close
 {
 	my ($self, $object) = @_;
 	if (defined $object->{cache_dir}) {
-		while (defined $object->intNext) {
+		while (defined $object->_next) {
 		}
 	}
 	$self->SUPER::finish_and_close($object);
