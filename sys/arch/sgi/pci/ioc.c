@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.9 2009/04/19 18:36:07 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.10 2009/04/24 18:16:46 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -217,6 +217,14 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 		if (strncmp(sc->sc_owserial->sc_product, "030-1155-", 9) == 0) {
 			/* CADDuo board */
 			has_ps2 = 1;
+			/*
+			 * XXX This card supposedly has the Ethernet part,
+			 * XXX too. If this is true, then it is likely than
+			 * XXX they share the single interrupt; the
+			 * XXX existing ioc3 interrupt code will need to
+			 * XXX cope with this.
+			 */
+			/* has_ethernet = 1; */
 		} else
 		if (strncmp(sc->sc_owserial->sc_product, "030-1657-", 9) == 0 ||
 		    strncmp(sc->sc_owserial->sc_product, "030-1664-", 9) == 0) {
@@ -286,9 +294,12 @@ unknown:
 	 * is empty (available PCI slots are on a different bridge).
 	 */
 	if (dual_irq) {
-		for (dev = pa->pa_device + 1;
+		for (dev = 0;
 		    dev < pci_bus_maxdevs(pa->pa_pc, pa->pa_bus); dev++) {
 			pcitag_t tag;
+
+			if (dev == pa->pa_device)
+				continue;
 
 			tag = pci_make_tag(pa->pa_pc, pa->pa_bus, dev, 0);
 			if (pci_conf_read(pa->pa_pc, tag, PCI_ID_REG) ==
@@ -307,6 +318,10 @@ unknown:
 		}
 
 		printf("could not discover superio interrupt!\n");
+		/*
+		 * XXX Then we'd probably use a shared interrupt
+		 * XXX handler there.
+		 */
 		goto unmap;
 
 establish:
@@ -352,6 +367,8 @@ establish:
 	/*
 	 * Attach other sub-devices.
 	 */
+
+	/* XXX need to limit search depending upon has_xxx values */
 	config_search(ioc_search_mundane, self, aux);
 
 	return;
