@@ -1,4 +1,4 @@
-$OpenBSD: xbowdevs,v 1.1 2008/04/07 22:47:40 miod Exp $
+$OpenBSD: xbowdevs,v 1.2 2009/04/25 20:36:18 miod Exp $
 /*
  * Copyright (c) 2008 Miodrag Vallat.
  *
@@ -32,6 +32,13 @@ product	SGI2	ODYSSEY		0xc013	Odyssey
 
 product	SGI3	TPU		0xc202	TPU
 product	SGI3	XBRIDGE		0xd002	XBridge
+/* PIC is really a single chip but two widgets, with 4 PCI-X slots per widget */
+product	SGI3	PIC0		0xd102	PIC (bus 0)
+product	SGI3	PIC1		0xd112	PIC (bus 1)
+/* Supposedly a PIC-compatible chip, maybe a different revision */
+/* product	SGI3	?		0xe000	? (bus 0) */
+/* product	SGI3	?		0xe010	? (bus 1) */
+product	SGI3	TIOCA		0xe020	TIO:CA
 
 product	SGI4	HEART		0xc001	Heart
 product	SGI4	BRIDGE		0xc002	Bridge
