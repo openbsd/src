@@ -1,8 +1,8 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.65 2008/06/27 06:06:13 ray Exp $
+#	$OpenBSD: upgrade.sh,v 1.66 2009/04/25 16:55:02 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
-# Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
+# Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -78,11 +78,9 @@ done
 hostname $(stripcom /tmp/myname)
 THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 
-ask_yn "Enable network using configuration stored on root filesystem?" yes
-[[ $resp == y ]] && enable_network
 
-# Offer the user the opportunity to tweak, repair, or create the network
-# configuration by hand.
+# Configure the network
+enable_network
 manual_net_cfg
 
 cat <<__EOT
