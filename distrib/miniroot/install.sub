@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.482 2009/04/25 05:47:26 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.483 2009/04/25 16:28:40 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -764,6 +764,9 @@ v6_config() {
 
 v4_defroute() {
 	local _dr _prompt=" or 'none'"
+	
+	# Get/Confirm an IPv4 default route if an IPv4 address was configured.
+	[[ -n $(ifconfig | sed -ne '/[ 	]inet .* broadcast /p') ]] || return
 
 	[[ -x /sbin/dhclient ]] && _prompt=", 'dhcp'$_prompt"
 	_prompt="Default IPv4 route? (IPv4 address$_prompt)"
@@ -1499,6 +1502,7 @@ donetconfig() {
 	local _dn _ns _n
 
 	configure_ifs
+	v4_defroute
 
 	# As dhclient will populate /etc/resolv.conf, a symbolic link to
 	# /tmp/resolv.conf.shadow, mv any such file to /tmp/resolv.conf
@@ -1535,9 +1539,6 @@ donetconfig() {
 		done
 		cp /tmp/resolv.conf /tmp/resolv.conf.shadow
 	fi
-
-	# Get/Confirm an IPv4 default route if an IPv4 address was configured.
-	[[ -n $(ifconfig -a | sed -ne '/[ 	]inet .* broadcast /p') ]] && v4_defroute
 
 	manual_net_cfg
 }
