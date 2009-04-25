@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: xbowdevs,v 1.1 2008/04/07 22:47:40 miod Exp 
+ *	OpenBSD: xbowdevs,v 1.2 2009/04/25 20:36:18 miod Exp 
  */
 
 /*
@@ -49,6 +49,18 @@ static const struct xbow_product xbow_products[] = {
 	{
 	    XBOW_VENDOR_SGI3, XBOW_PRODUCT_SGI3_XBRIDGE,
 	    "XBridge",
+	},
+	{
+	    XBOW_VENDOR_SGI3, XBOW_PRODUCT_SGI3_PIC0,
+	    "PIC (bus 0)",
+	},
+	{
+	    XBOW_VENDOR_SGI3, XBOW_PRODUCT_SGI3_PIC1,
+	    "PIC (bus 1)",
+	},
+	{
+	    XBOW_VENDOR_SGI3, XBOW_PRODUCT_SGI3_TIOCA,
+	    "TIO:CA",
 	},
 	{
 	    XBOW_VENDOR_SGI4, XBOW_PRODUCT_SGI4_HEART,

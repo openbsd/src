@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: xbowdevs,v 1.1 2008/04/07 22:47:40 miod Exp 
+ *	OpenBSD: xbowdevs,v 1.2 2009/04/25 20:36:18 miod Exp 
  */
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -37,6 +37,13 @@
 
 #define	XBOW_PRODUCT_SGI3_TPU	0xc202		/* TPU */
 #define	XBOW_PRODUCT_SGI3_XBRIDGE	0xd002		/* XBridge */
+/* PIC is really a single chip but two widgets, with 4 PCI-X slots per widget */
+#define	XBOW_PRODUCT_SGI3_PIC0	0xd102		/* PIC (bus 0) */
+#define	XBOW_PRODUCT_SGI3_PIC1	0xd112		/* PIC (bus 1) */
+/* Supposedly a PIC-compatible chip, maybe a different revision */
+/* product	SGI3	?		0xe000	? (bus 0) */
+/* product	SGI3	?		0xe010	? (bus 1) */
+#define	XBOW_PRODUCT_SGI3_TIOCA	0xe020		/* TIO:CA */
 
 #define	XBOW_PRODUCT_SGI4_HEART	0xc001		/* Heart */
 #define	XBOW_PRODUCT_SGI4_BRIDGE	0xc002		/* Bridge */
