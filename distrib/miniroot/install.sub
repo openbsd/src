@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.480 2009/04/25 03:53:54 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.481 2009/04/25 05:46:44 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1549,6 +1549,13 @@ populateusrlocal() {
 xquestions() {
 	local _xdmask=y
 
+	# If any of the X11 sets are missing, then no need to enable X
+	for i in xbase xetc xshare xfont xserv; do
+		if ! isin $i${VERSION}.tgz $GOTSETS; then
+			return
+		fi
+	done
+			
 	# XXX if any of the X sets are not installed, we should
 	# not ask these questions
 	if [[ -n $MDXAPERTURE ]]; then
