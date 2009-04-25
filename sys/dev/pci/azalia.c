@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.124 2009/04/25 05:02:40 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.125 2009/04/25 05:07:56 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1260,6 +1260,7 @@ azalia_codec_init(codec_t *this)
 	    sizeof(this->w[CORB_NID_ROOT].name));
 	strlcpy(this->w[this->audiofunc].name, "hdaudio",
 	    sizeof(this->w[this->audiofunc].name));
+	this->w[this->audiofunc].enable = 1;
 
 	FOR_EACH_WIDGET(this, i) {
 		err = azalia_widget_init(&this->w[i], this, i);
