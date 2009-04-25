@@ -106,6 +106,7 @@
 ./etc/sensorsd.conf
 ./etc/services
 ./etc/shells
+./etc/skel/.Xdefaults
 ./etc/skel/.cshrc
 ./etc/skel/.login
 ./etc/skel/.mailrc
@@ -128,6 +129,7 @@
 ./etc/systrace/usr_sbin_named
 ./etc/ttys
 ./etc/weekly
+./root/.Xdefaults
 ./root/.cshrc
 ./root/.klogin
 ./root/.login
