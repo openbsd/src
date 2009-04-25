@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.171 2009/04/24 01:04:33 krw Exp $
+#	$OpenBSD: install.sh,v 1.172 2009/04/25 03:47:35 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -353,6 +353,8 @@ questions
 
 user_setup
 
+set_timezone
+
 echo -n "Saving configuration files..."
 
 # Save any leases obtained during install.
@@ -401,8 +403,6 @@ echo "1,s@^root::@root:${_encr}:@
 w
 q" | /mnt/bin/ed /mnt/etc/master.passwd 2>/dev/null
 /mnt/usr/sbin/pwd_mkdb -p -d /mnt/etc /etc/master.passwd
-
-set_timezone
 
 # Perform final steps common to both an install and an upgrade.
 finish_up
