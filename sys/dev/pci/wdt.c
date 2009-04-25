@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.17 2008/08/30 02:46:56 jsg Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.18 2009/04/25 17:50:48 mk Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -42,18 +42,18 @@
 
 struct wdt_softc {
 	/* wdt_dev must be the first item in the struct */
-	struct device		wdt_dev;
+	struct device		sc_dev;
 
 	/* feature set: 0 = none   1 = temp, buzzer, etc. */
-	int			features;
+	int			sc_features;
 
 	/* device access through bus space */
-	bus_space_tag_t		iot;
-	bus_space_handle_t	ioh;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
 };
 
-int	wdtprobe(struct device *, void *, void *);
-void	wdtattach(struct device *, struct device *, void *);
+int	wdt_probe(struct device *, void *, void *);
+void	wdt_attach(struct device *, struct device *, void *);
 
 int	wdt_is501(struct wdt_softc *);
 void	wdt_8254_count(struct wdt_softc *, int, u_int16_t);
@@ -65,7 +65,7 @@ void	wdt_timer_disable(struct wdt_softc *);
 void	wdt_buzzer_enable(struct wdt_softc *);
 
 struct cfattach wdt_ca = {
-	sizeof(struct wdt_softc), wdtprobe, wdtattach
+	sizeof(struct wdt_softc), wdt_probe, wdt_attach
 };
 
 struct cfdriver wdt_cd = {
@@ -100,14 +100,14 @@ const struct pci_matchid wdt_devices[] = {
 #define WDT_STOP_BUZZER		5
 
 int
-wdtprobe(struct device *parent, void *match, void *aux)
+wdt_probe(struct device *parent, void *match, void *aux)
 {
 	return (pci_matchbyid((struct pci_attach_args *)aux, wdt_devices,
 	    sizeof(wdt_devices)/sizeof(wdt_devices[0])));
 }
 
 void
-wdtattach(struct device *parent, struct device *self, void *aux)
+wdt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wdt_softc *wdt = (struct wdt_softc *)self;
 	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
@@ -115,16 +115,16 @@ wdtattach(struct device *parent, struct device *self, void *aux)
 
 	/* retrieve the I/O region (BAR2) */
 	if (pci_mapreg_map(pa, 0x18, PCI_MAPREG_TYPE_IO, 0,
-	    &wdt->iot, &wdt->ioh, NULL, &iosize, 0) != 0) {
+	    &wdt->sc_iot, &wdt->sc_ioh, NULL, &iosize, 0) != 0) {
 		printf("%s: couldn't find PCI I/O region\n",
-		    wdt->wdt_dev.dv_xname);
+		    wdt->sc_dev.dv_xname);
 		return;
 	}
 
 	/* sanity check I/O size */
 	if (iosize != (bus_size_t)16) {
 		printf("%s: invalid I/O region size\n",
-		    wdt->wdt_dev.dv_xname);
+		    wdt->sc_dev.dv_xname);
 		return;
 	}
 
@@ -132,11 +132,11 @@ wdtattach(struct device *parent, struct device *self, void *aux)
 
 	/* check the feature set available */
 	if (wdt_is501(wdt))
-		wdt->features = 1;
+		wdt->sc_features = 1;
 	else
-		wdt->features = 0;
+		wdt->sc_features = 0;
 
-	if (wdt->features) {
+	if (wdt->sc_features) {
 		/*
 		 * turn off the buzzer, it may have been activated
 		 * by a previous timeout
@@ -173,7 +173,7 @@ wdt_is501(struct wdt_softc *wdt)
 	 *	by the device ID, so we have to resort to testing
 	 *	the presence of a register to determine the type.
 	 */
-	int v = bus_space_read_1(wdt->iot, wdt->ioh, WDT_TEMPERATURE);
+	int v = bus_space_read_1(wdt->sc_iot, wdt->sc_ioh, WDT_TEMPERATURE);
 
 	/* XXX may not be reliable */
 	if (v == 0 || v == 0xFF)
@@ -190,9 +190,9 @@ wdt_is501(struct wdt_softc *wdt)
 void
 wdt_8254_count(struct wdt_softc *wdt, int counter, u_int16_t v)
 {
-	bus_space_write_1(wdt->iot, wdt->ioh,
+	bus_space_write_1(wdt->sc_iot, wdt->sc_ioh,
 			WDT_8254_BASE + counter, v & 0xFF);
-	bus_space_write_1(wdt->iot, wdt->ioh, WDT_8254_BASE + counter, v >> 8);
+	bus_space_write_1(wdt->sc_iot, wdt->sc_ioh, WDT_8254_BASE + counter, v >> 8);
 }
 
 /*
@@ -203,7 +203,7 @@ wdt_8254_count(struct wdt_softc *wdt, int counter, u_int16_t v)
 void
 wdt_8254_mode(struct wdt_softc *wdt, int counter, int mode)
 {
-	bus_space_write_1(wdt->iot, wdt->ioh, WDT_8254_CTL,
+	bus_space_write_1(wdt->sc_iot, wdt->sc_ioh, WDT_8254_CTL,
 		(counter << 6) | 0x30 | (mode << 1));
 }
 
@@ -240,7 +240,7 @@ wdt_set_timeout(void *self, int seconds)
 	wdt_8254_count(wdt, WDT_8254_TC_HI, v);
 
 	/* enable the timer */
-	bus_space_write_1(wdt->iot, wdt->ioh, WDT_ENABLE_TIMER, 0);
+	bus_space_write_1(wdt->sc_iot, wdt->sc_ioh, WDT_ENABLE_TIMER, 0);
 
 	splx(s);
 
@@ -256,7 +256,7 @@ wdt_set_timeout(void *self, int seconds)
 void
 wdt_timer_disable(struct wdt_softc *wdt)
 {
-	(void)bus_space_read_1(wdt->iot, wdt->ioh, WDT_DISABLE_TIMER);
+	(void)bus_space_read_1(wdt->sc_iot, wdt->sc_ioh, WDT_DISABLE_TIMER);
 }
 
 /*
@@ -286,7 +286,7 @@ wdt_init_timer(struct wdt_softc *wdt)
 void
 wdt_buzzer_off(struct wdt_softc *wdt)
 {
-	bus_space_write_1(wdt->iot, wdt->ioh, WDT_STOP_BUZZER, 0);
+	bus_space_write_1(wdt->sc_iot, wdt->sc_ioh, WDT_STOP_BUZZER, 0);
 }
 
 #ifndef WDT_DISABLE_BUZZER
@@ -298,7 +298,7 @@ wdt_buzzer_off(struct wdt_softc *wdt)
 void
 wdt_buzzer_enable(struct wdt_softc *wdt)
 {
-	bus_space_write_1(wdt->iot, wdt->ioh, WDT_8254_BUZZER, 1);
+	bus_space_write_1(wdt->sc_iot, wdt->sc_ioh, WDT_8254_BUZZER, 1);
 	wdt_8254_mode(wdt, WDT_8254_BUZZER, 1);
 }
 #else
