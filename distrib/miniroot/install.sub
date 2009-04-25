@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.478 2009/04/25 03:50:46 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.479 2009/04/25 03:51:48 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1525,7 +1525,7 @@ donetconfig() {
 	hostname "$(hostname -s).$resp"
 
 	# Get/Confirm nameservers, and construct appropriate resolv.conf.
-	ask "DNS nameserver? (IP address or 'none')" "${_ns:=none}"
+	ask "DNS nameservers? (IP address list or 'none')" "${_ns:=none}"
 	if [[ $resp != none ]]; then
 		echo "lookup file bind" >/tmp/resolv.conf
 		for _ns in $resp; do
