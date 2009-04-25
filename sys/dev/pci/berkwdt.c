@@ -1,4 +1,4 @@
-/*	$OpenBSD: berkwdt.c,v 1.4 2009/04/24 19:30:11 mk Exp $ */
+/*	$OpenBSD: berkwdt.c,v 1.5 2009/04/25 07:11:55 mk Exp $ */
 
 /*
  * Copyright (c) 2009 Wim Van Sebroeck <wim@iguana.be>
@@ -97,10 +97,13 @@ const struct pci_matchid berkwdt_devices[] = {
 int
 berkwdt_send_command(struct berkwdt_softc *sc, u_int8_t cmd, int *val)
 {
-	u_int8_t msb = *val / 256;
-	u_int8_t lsb = *val % 256;
+	u_int8_t msb;
+	u_int8_t lsb;
 	u_int8_t got_response;
 	int count;
+
+	msb = *val / 256;
+	lsb = *val % 256;
 
 	/* Send command with data (data first!) */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_LSB, lsb);
@@ -109,7 +112,7 @@ berkwdt_send_command(struct berkwdt_softc *sc, u_int8_t cmd, int *val)
 
 	got_response = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_CS2);
 	got_response &= WD_PCI_WRSP;
-	for (count = 0; (count < PCI_CMD_TIMEOUT) && (!got_response); count++) {
+	for (count = 0; count < PCI_CMD_TIMEOUT && !got_response; count++) {
 		delay(1000);
 		got_response = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_CS2);
 		got_response &= WD_PCI_WRSP;
@@ -134,14 +137,12 @@ berkwdt_start(struct berkwdt_softc *sc)
 {
 	u_int8_t reg;
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-	    PCWD_PCI_WDT_DIS, 0x00);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_WDT_DIS, 0x00);
 	delay(1000);
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_CS2);
 	if (reg & WD_PCI_WDIS) {
-		printf("%s: Card did not acknowledge enable attempt\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: unable to enable\n", sc->sc_dev.dv_xname);
 	}
 }
 
@@ -157,8 +158,7 @@ berkwdt_stop(struct berkwdt_softc *sc)
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_CS2);
 	if (!(reg & WD_PCI_WDIS)) {
-		printf("%s: Card did not acknowledge disable attempt\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: unable to disable\n", sc->sc_dev.dv_xname);
 	}
 }
 
@@ -193,10 +193,10 @@ berkwdt_attach(struct device *parent, struct device *self, void *aux)
 	/* Check for reboot by the card */
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCWD_PCI_CS1);
 	if (reg & WD_PCI_WTRP) {
-		printf(": Previous reset was caused by the Watchdog card");
+		printf(", warning: watchdog triggered");
 
 		if (reg & WD_PCI_TTRP)
-			printf("- Card sensed a CPU Overheat");
+			printf(", overheat detected");
 
 		/* clear trip status & LED and keep mode of relay 2 */
 		reg &= WD_PCI_R2DS;
@@ -206,15 +206,11 @@ berkwdt_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	/*
-	 * ensure that the watchdog is disabled
-	 */
+	/* ensure that the watchdog is disabled */
 	berkwdt_stop(sc);
 	sc->sc_period = 0;
 
-	/*
-	 * register with the watchdog framework
-	 */
+	/* register with the watchdog framework */
 	wdog_register(sc, berkwdt_set_timeout);
 }
 
