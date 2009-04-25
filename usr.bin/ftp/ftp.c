@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.73 2008/07/08 21:07:57 martynas Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.74 2009/04/25 12:22:19 martynas Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: ftp.c,v 1.73 2008/07/08 21:07:57 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: ftp.c,v 1.74 2009/04/25 12:22:19 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -364,6 +364,12 @@ void
 may_receive_noop_ack()
 {
 	int i;
+
+	if (cout == NULL) {
+		/* Lost connection;  so just pretend we're fine. */
+		current_nop_pos = full_noops_sent = 0;
+		return;
+	}
 
 	/* finish sending last incomplete noop */
 	if (current_nop_pos != 0) {
