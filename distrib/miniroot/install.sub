@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.484 2009/04/25 19:25:29 krw Exp $
+#	$OpenBSD: install.sub,v 1.485 2009/04/25 20:56:39 miod Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -224,7 +224,7 @@ stdsize ()  {
 
 	set -- " " K M G T P E Z Y
 
-	while (( ${#_sz} > 3 )); do
+	while (( ${#_sz} > 4 )); do
 		shift
 		_p=${_sz%[0-9][0-9][0-9]}
 		_s=${_sz#$_p}
@@ -232,9 +232,16 @@ stdsize ()  {
 		_sz=$_p
 	done
 
-	(( _s > 500 )) && : $(( _sz = _sz + 1 ))
+	_sz=$(( _sz * 512))
+	if (( ${#_sz} > 3 )); then
+		shift
+		_p=${_sz%[0-9][0-9][0-9]}
+		_s=${_sz#$_p}
+		_s=${_s##+(0)}
+		_sz=$_p
+	fi
 
-	echo "$(( _sz * 512 )) ${1}Bytes"
+	echo "${_sz} ${1}Bytes"
 }
 
 # Ask for a password, saving the input in $resp.
