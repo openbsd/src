@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.483 2009/04/25 16:28:40 krw Exp $
+#	$OpenBSD: install.sub,v 1.484 2009/04/25 19:25:29 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -450,17 +450,6 @@ bsort() {
 
 	# Sort remaining values.
 	bsort $_l
-}
-
-# Offer to edit a file in /tmp and execute ${EDITOR} to do so if the user
-# accepts the offer.
-#
-# $1 == file in /tmp to edit
-edit_tmp_file() {
-	local _file=$1
-
-	ask_yn "Edit $_file with $EDITOR?"
-	[[ $resp == y ]] && $EDITOR /tmp/$_file
 }
 
 # Offer to shell out for manual network configuration, and do so if
