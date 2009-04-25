@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 2008/09/23 04:34:02 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.36 2009/04/25 20:35:31 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -225,9 +225,11 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			*vendp = virtual_end;
 
 		/*
-		 * Prefer KSEG0 addresses for now, whenever possible.
+		 * If we are running with a 32 bit ARCBios (i.e. kernel
+		 * linked in KSEG0), return a KSEG0 address whenever possible.
 		 */
-		if (pa + size < KSEG_SIZE)
+		if ((vaddr_t)&pmap_steal_memory - KSEG0_BASE < KSEG_SIZE &&
+		    pa + size < KSEG_SIZE)
 			va = PHYS_TO_KSEG0(pa);
 		else
 			va = PHYS_TO_XKPHYS(pa, CCA_CACHED);
