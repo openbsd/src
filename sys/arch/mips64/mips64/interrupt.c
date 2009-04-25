@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.34 2009/03/20 18:41:06 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.35 2009/04/25 20:35:06 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -270,7 +270,7 @@ dummy_do_pending_int(int newcpl)
  *  splinit() is special in that sense that it require us to update
  *  the interrupt mask in the CPU since it may be the first time we arm
  *  the interrupt system. This function is called right after
- *  autoconfiguration has compleeted in autoconf.c.
+ *  autoconfiguration has completed in autoconf.c.
  *  We enable everything in idle_mask.
  */
 void
