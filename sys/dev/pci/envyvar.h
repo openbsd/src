@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyvar.h,v 1.6 2009/04/25 12:10:19 ratchov Exp $	*/
+/*	$OpenBSD: envyvar.h,v 1.7 2009/04/25 12:15:10 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -47,6 +47,7 @@ struct envy_ak {
 struct envy_softc {
 	struct device		dev;
 	struct device	       *audio;
+	int			isht;		/* is a Envy24HT ? */
 	struct envy_buf		ibuf, obuf;
 	pcitag_t		pci_tag;
 	pci_chipset_tag_t	pci_pc;
