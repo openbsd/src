@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.63 2009/04/22 04:40:29 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.64 2009/04/25 20:38:32 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -156,6 +156,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	char *cp;
 	int i;
 	caddr_t sd;
+	u_int cputype;
 	extern char start[], edata[], end[];
 	extern char tlb_miss_tramp[], e_tlb_miss_tramp[];
 	extern char xtlb_miss_tramp[], e_xtlb_miss_tramp[];
@@ -422,6 +423,35 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	case MIPS_R10000:
 	case MIPS_R12000:
 	case MIPS_R14000:
+		cputype = MIPS_R10000;
+		break;
+	case MIPS_R5000:
+	case MIPS_RM7000:
+	case MIPS_RM52X0:
+	case MIPS_RM9000:
+		cputype = MIPS_R5000;
+		break;
+	default:
+		/*
+		 * If we can't identify the cpu type, it must be
+		 * r10k-compatible on Octane and Origin families, and
+		 * it is likely to be r5k-compatible on O2.
+		 */
+		switch (sys_config.system_type) {
+		case SGI_O2:
+			cputype = MIPS_R5000;
+			break;
+		default:
+		case SGI_OCTANE:
+		case SGI_O200:
+		case SGI_O300:
+			cputype = MIPS_R10000;
+			break;
+		}
+		break;
+	}
+	switch (cputype) {
+	case MIPS_R10000:
 		Mips10k_ConfigCache();
 		sys_config._SyncCache = Mips10k_SyncCache;
 		sys_config._InvalidateICache = Mips10k_InvalidateICache;
@@ -431,8 +461,8 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 		sys_config._IOSyncDCache = Mips10k_IOSyncDCache;
 		sys_config._HitInvalidateDCache = Mips10k_HitInvalidateDCache;
 		break;
-
 	default:
+	case MIPS_R5000:
 		Mips5k_ConfigCache();
 		sys_config._SyncCache = Mips5k_SyncCache;
 		sys_config._InvalidateICache = Mips5k_InvalidateICache;
