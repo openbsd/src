@@ -1,4 +1,4 @@
-.\"	$OpenBSD: berkwdt.4,v 1.1 2009/04/24 21:04:27 mk Exp $
+.\"	$OpenBSD: berkwdt.4,v 1.2 2009/04/25 05:51:08 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -13,18 +13,18 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: April 24 2009 $
+.Dd $Mdocdate: April 25 2009 $
 .Dt BERKWDT 4
 .Os
 .Sh NAME
 .Nm berkwdt
-.Nd Berkshire Products PCI PC Watchdog
+.Nd Berkshire Products watchdog timer device
 .Sh SYNOPSIS
 .Cd "berkwdt0 at pci?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Berkshire Products PCI PC Watchdog.
+driver provides support for the Berkshire Products PCI PC watchdog.
 These devices contain a watchdog timer and general purpose digital inputs
 and outputs, but currently only the watchdog timer is supported.
 .Pp
