@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic.c,v 1.7 2007/07/11 18:21:35 miod Exp $	*/
+/*	$OpenBSD: shpcic.c,v 1.8 2009/04/25 16:25:12 kettenis Exp $	*/
 /*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
@@ -142,6 +142,8 @@ shpcic_attach(struct device *parent, struct device *self, void *aux)
 	const struct shpcic_product *spp;
 	struct shpcic_softc *sc = (struct shpcic_softc *)self;
 	struct pcibus_attach_args pba;
+	struct extent *io_ex;
+	struct extent *mem_ex;
 
 	shpcic_found = 1;
 
@@ -248,15 +250,21 @@ shpcic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iobus_space.bus_size =  SH4_PCIC_IO_SIZE;
 	sc->sc_iobus_space.bus_io = 1;;
 
+	io_ex = extent_create("pciio", SH4_PCIC_IO,
+	    SH4_PCIC_IO + SH4_PCIC_IO_SIZE - 1, M_DEVBUF, NULL, 0, EX_NOWAIT);
+	mem_ex = extent_create("pcimem", SH4_PCIC_MEM,
+	    SH4_PCIC_MEM + SH4_PCIC_MEM_SIZE - 1, M_DEVBUF, NULL, 0, EX_NOWAIT);
+
 	sc->sc_pci_chipset = shpcic_get_bus_mem_tag();
-	pci_addr_fixup(sc, 1);
-	
+
 	/* PCI bus */
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_iot = shpcic_get_bus_io_tag();
 	pba.pba_memt = shpcic_get_bus_mem_tag();
 	pba.pba_dmat = shpcic_get_bus_dma_tag();
+	pba.pba_ioex = io_ex;
+	pba.pba_memex = mem_ex;
 	pba.pba_pc = NULL;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
