@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.5 2008/11/21 17:35:52 deraadt Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.6 2009/04/25 20:14:43 weingart Exp $	*/
 
 /*
  * Copyright (c) 2007 Dale Rahn
@@ -80,6 +80,61 @@ ENTRY(mtx_enter)
 	bl 	panic
 .L_paniclocked:
 	.string "mtx_enter: recursed %x %x\n"
+#endif
+
+
+ENTRY(mtx_enter_try)
+	stwu	%r1,-32(%r1)			# reserve stack
+	mflr	%r0
+	stw	%r0,36(%r1)			# save return address
+	GET_CPUINFO(%r4)
+	lwz	%r5,MTX_WANTIPL(%r3)		# load new ipl
+	lis	%r6,_C_LABEL(imask)@ha		# convert into cpl
+	slwi	%r5,%r5,2
+	addi	%r5,%r5,_C_LABEL(imask)@l
+	lwzx	%r5,%r5,%r6
+	lwz	%r7,CI_CPL(%r4)			# load current cpl
+	or	%r6,%r5,%r7			# raise	cpl
+	stw	%r6,CI_CPL(%r4)			# store new cpl
+	li	%r5,MTX_OWNER			# load offset constant
+	lwarx	%r6,%r5,%r3			# load reserve owner
+	cmpwi	0,%r6,0				# test owner == 0
+	beq+	0,.L_mutex_try_free		# if owner == 0 branch free
+.L_mutex_try_locked:
+#ifdef DIAGNOSTIC
+	cmpl	0,%r4,%r6
+	beq-	.L_mutex_try_selflocked
+#endif
+	stw	%r3,28(%r1)			# save mtx during lcsplx
+	la	%r4,28(%r1)
+	stwcx.	%r3,0,%r4			# unreserve owner
+	mr	%r3,%r7				# move old cpl to arg0
+	bl	_C_LABEL(lcsplx)		# call splx on old cpl
+
+	lwz	%r0,36(%r1)			# load return address
+	mtlr	%r0
+	addi	%r1,%r1,32			# restore stack
+	li	%r2,0				# return zero
+	blr
+
+.L_mutex_try_free:
+	stwcx.	%r4,%r5,%r3			# old owner was 0 cond store
+	bne-	.L_mutex_try_locked		# branch if reserve cancelled
+	stw	%r7,MTX_OLDCPL(%r3)		# save old ipl
+	lwz	%r0,36(%r1)			# load return address
+	mtlr	%r0
+	addi	%r1,%r1,32			# restore stack
+	li	%r2,1				# return nonzero
+	blr
+
+#ifdef DIAGNOSTIC
+.L_mutex_try_selflocked:
+	mr	%r5, %r3
+	lis	%r3,.L_panictrylocked@ha
+	la	%r3,.L_panictrylocked@l(%r3)
+	bl 	panic
+.L_panictrylocked:
+	.string "mtx_enter_try: recursed %x %x\n"
 #endif
 
 
