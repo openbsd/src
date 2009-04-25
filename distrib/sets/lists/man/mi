@@ -1232,6 +1232,7 @@
 ./usr/share/man/cat4/az.0
 ./usr/share/man/cat4/azalia.0
 ./usr/share/man/cat4/bce.0
+./usr/share/man/cat4/berkwdt.0
 ./usr/share/man/cat4/bge.0
 ./usr/share/man/cat4/bha.0
 ./usr/share/man/cat4/bio.0
@@ -1388,7 +1389,6 @@
 ./usr/share/man/cat4/i386/apm.0
 ./usr/share/man/cat4/i386/auglx.0
 ./usr/share/man/cat4/i386/autoconf.0
-./usr/share/man/cat4/i386/berkwdt.0
 ./usr/share/man/cat4/i386/bios.0
 ./usr/share/man/cat4/i386/cpu.0
 ./usr/share/man/cat4/i386/elansc.0
