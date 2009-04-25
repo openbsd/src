@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.479 2009/04/25 03:51:48 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.480 2009/04/25 03:53:54 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1658,6 +1658,8 @@ finish_up() {
 
 CONGRATULATIONS! Your OpenBSD $MODE has been successfully completed!
 To boot the new system, enter "reboot" or "halt" at the command prompt.
+When you login to your new system the first time, please read your mail
+using the "mail" command.
 __EOT
 
 	md_congrats
