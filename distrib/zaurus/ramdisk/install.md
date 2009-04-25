@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.19 2009/04/12 12:56:02 krw Exp $
+#	$OpenBSD: install.md,v 1.20 2009/04/25 03:21:51 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 # machine dependent section of installation/upgrade script.
 #
 
+MDXDM=y
 ARCH=ARCH
 
 md_installboot() {

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 2009/04/24 01:43:27 krw Exp $
+#	$OpenBSD: install.md,v 1.16 2009/04/25 03:21:50 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #
 
 MDXAPERTURE=2
+MDXDM=y
 ARCH=ARCH
 NCPU=$(sysctl -n hw.ncpufound)
 

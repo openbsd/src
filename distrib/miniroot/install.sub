@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.476 2009/04/25 02:36:32 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.477 2009/04/25 03:21:51 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1546,6 +1546,30 @@ populateusrlocal() {
 	fi
 }
 
+xquestions() {
+	local _xdmask=y
+
+	# XXX if any of the X sets are not installed, we should
+	# not ask these questions
+	if [[ -n $MDXAPERTURE ]]; then
+		ask_yn "Do you expect to run the X Window System?"
+		if [[ $resp == y ]]; then
+			sed -e "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
+				/mnt/etc/sysctl.conf >/tmp/sysctl.conf
+			cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
+		fi
+		_xdmask=$resp	# if aperture was n, do not ask for xdm
+	fi
+
+	if [[ -n $MDXDM && $_xdmask == y ]]; then
+		ask_yn "Do you want the X Window System to be started by xdm(1)?"
+		if [[ $resp == y ]]; then
+			echo "xdm_flags=		# enabled during install" \
+				>>/mnt/etc/rc.conf.local
+		fi
+	fi
+}
+
 questions() {
 	local _d
 
@@ -1571,14 +1595,7 @@ server $1
 		fi
 	fi
 
-	if [[ -n $MDXAPERTURE ]]; then
-		ask_yn "Do you expect to run the X Window System?"
-		if [[ $resp == y ]]; then
-			sed -e "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
-				/mnt/etc/sysctl.conf >/tmp/sysctl.conf
-			cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
-		fi
-	fi
+	xquestions
 
 	[[ -n $CDEV ]] || return
 	_d=${CPROM:-$CDEV}

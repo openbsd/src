@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.58 2009/04/12 12:56:02 krw Exp $
+#	$OpenBSD: install.md,v 1.59 2009/04/25 03:21:51 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -34,6 +34,7 @@
 #
 
 MDTERM=sun
+MDXDM=y
 MDDKDEVS='/^sd[0-9] /s/ .*//p;/^x[dy][0-9] /s/ .*//p'
 ARCH=ARCH
 
