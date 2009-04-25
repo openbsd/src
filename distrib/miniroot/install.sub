@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.475 2009/04/24 10:26:59 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.476 2009/04/25 02:36:32 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -597,7 +597,7 @@ configure_ifs() {
 	local _IFDEVS=$IFDEVS _ifs _name _hn
 
 	while [[ -n $_IFDEVS ]]; do
-		ask_which "interface" "do you wish to configure" "$_IFDEVS"
+		ask_which "network interface" "do you wish to configure" "$_IFDEVS"
 		[[ $resp == done ]] && break
 
 		_ifs=$resp
