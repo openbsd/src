@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.4 2008/11/29 18:32:18 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.5 2009/04/25 12:10:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -58,9 +58,9 @@
 /*
  * CCI registers to access GPIO pins
  */
-#define ENVY_GPIO_DATA		0x20
-#define ENVY_GPIO_MASK		0x21
-#define ENVY_GPIO_DIR		0x22
+#define ENVY_CCI_GPIODATA	0x20
+#define ENVY_CCI_GPIOMASK	0x21
+#define ENVY_CCI_GPIODIR	0x22
 
 /*
  * GPIO pin numbers
@@ -81,8 +81,6 @@
 #define ENVY_EEPROM_GPIOST	11
 #define ENVY_EEPROM_GPIODIR	12
 
-#define ENVY_EEPROM_MAXSZ	32
-
 /*
  * MT registers for play/record params
  */
@@ -93,14 +91,15 @@
 #define   ENVY_MT_INTR_RMASK	0x80
 #define ENVY_MT_RATE		1
 #define   ENVY_MT_RATEMASK	0x0f
+#define ENVY_MT_IMASK		3
+#define   ENVY_MT_IMASK_PDMA0	0x1
+#define   ENVY_MT_IMASK_RDMA0	0x2
 #define ENVY_MT_PADDR		0x10
 #define ENVY_MT_PBUFSZ		0x14
 #define ENVY_MT_PBLKSZ		0x16
 #define ENVY_MT_CTL		0x18
 #define   ENVY_MT_CTL_PSTART	0x01
-#define   ENVY_MT_CTL_PPAUSE	0x02
 #define   ENVY_MT_CTL_RSTART	0x04
-#define   ENVY_MT_CTL_RPAUSE	0x08
 #define ENVY_MT_RADDR		0x20
 #define ENVY_MT_RBUFSZ		0x24
 #define ENVY_MT_RBLKSZ		0x26
@@ -174,11 +173,9 @@
 /*
  * default formats
  */
-#define ENVY_RFRAME_SIZE	(4 * 12)
-#define ENVY_PFRAME_SIZE	(4 * 10)
-#define ENVY_RBUF_SIZE		(ENVY_RFRAME_SIZE * 0x1000)
-#define ENVY_PBUF_SIZE		(ENVY_PFRAME_SIZE * 0x1000)
 #define ENVY_RCHANS		12
 #define ENVY_PCHANS		10
+#define ENVY_RFRAME_SIZE	(4 * ENVY_RCHANS)
+#define ENVY_PFRAME_SIZE	(4 * ENVY_PCHANS)
 
 #endif /* !defined(SYS_DEV_PCI_ENVYREG_H) */

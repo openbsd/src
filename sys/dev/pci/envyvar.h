@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyvar.h,v 1.5 2008/03/22 11:23:11 ratchov Exp $	*/
+/*	$OpenBSD: envyvar.h,v 1.6 2009/04/25 12:10:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -22,6 +22,8 @@
 #include <sys/device.h>
 #include <dev/audio_if.h>
 
+struct envy_softc;
+
 struct envy_buf {
 	bus_dma_segment_t	seg;
 	bus_dmamap_t		map;
@@ -29,11 +31,17 @@ struct envy_buf {
 	size_t			size;
 };
 
-/*
- * ak4524 codecs
- */
+struct envy_card {
+	int subid;
+	char *name;
+	int nadc, ndac;
+	void (*init)(struct envy_softc *);
+	void (*ak_write)(struct envy_softc *, int, int, int);
+	unsigned char *eeprom;
+};
+
 struct envy_ak {
-	unsigned char reg[8];	/* shadow for ak4524 registers */
+	unsigned char reg[16];
 };
 
 struct envy_softc {
@@ -50,7 +58,10 @@ struct envy_softc {
 	bus_space_tag_t		mt_iot;
 	bus_space_handle_t      mt_ioh;
 	bus_size_t		mt_iosz;
+	struct envy_card       *card;
 	struct envy_ak		ak[4];
+#define ENVY_EEPROM_MAXSZ 32
+	unsigned char		eeprom[ENVY_EEPROM_MAXSZ];
 	void (*iintr)(void *);
 	void *iarg;
 	void (*ointr)(void *);
