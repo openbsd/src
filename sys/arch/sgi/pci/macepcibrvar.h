@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibrvar.h,v 1.4 2008/07/30 17:37:46 miod Exp $ */
+/*	$OpenBSD: macepcibrvar.h,v 1.5 2009/04/25 15:28:59 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB (www.opsycon.se)
@@ -31,8 +31,8 @@
 
 #define	MACE_PCI_IO_BASE	0x18000000
 #define	MACE_PCI_IO_SIZE	0x02000000
-#define	MACE_PCI_MEM_BASE	0x1a000000
-#define	MACE_PCI_MEM_SIZE	0x02000000
+#define	MACE_PCI_MEM_BASE	0x280000000
+#define	MACE_PCI_MEM_SIZE	0x100000000
 
 struct mace_pcibr_softc {
 	struct device	sc_dev;

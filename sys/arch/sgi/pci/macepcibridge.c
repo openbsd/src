@@ -1,4 +1,4 @@
-/*	$OpenBSD: macepcibridge.c,v 1.20 2009/04/19 15:13:06 kettenis Exp $ */
+/*	$OpenBSD: macepcibridge.c,v 1.21 2009/04/25 15:28:59 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB (www.opsycon.se)
@@ -599,7 +599,8 @@ mace_pcib_space_map(bus_space_tag_t t, bus_addr_t offs, bus_size_t size,
 {
 	bus_addr_t bpa;
 	int error;
-	bpa = t->bus_base + (offs & 0x01ffffff);
+
+	bpa = t->bus_base + (offs & 0x7fffffff);
 
 	if ((error = extent_alloc_region(t->bus_extent, bpa, size,
 	    EX_NOWAIT | extent_malloc_flags))) {
