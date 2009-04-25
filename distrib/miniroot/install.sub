@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.481 2009/04/25 05:46:44 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.482 2009/04/25 05:47:26 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1005,8 +1005,10 @@ __EOT
 				# XXX should mark failure somehow
 			fi
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
+			GOTSETS="$GOTSETS $_f"
 		else
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
+			GOTSETS="$GOTSETS $_f"
 		fi
 	done
 }
