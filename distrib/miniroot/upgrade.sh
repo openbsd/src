@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.67 2009/04/25 17:43:08 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.68 2009/04/25 18:31:26 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -45,41 +45,31 @@ MODE=upgrade
 
 # Have the user confirm that $ROOTDEV is the root filesystem.
 while :; do
-	ask "Root filesystem?" "$ROOTDEV"
+	ask "Root filesystem?" $ROOTDEV
 	resp=${resp##*/}
 	[[ -b /dev/$resp ]] && break
 
-	echo "Sorry, $resp is not a block device."
+	echo "$resp is not a block device."
 done
 ROOTDEV=$resp
 
-echo -n "Checking root filesystem (fsck -fp /dev/${ROOTDEV}) ... "
-if ! fsck -fp /dev/$ROOTDEV >/dev/null 2>&1; then
-	echo	"FAILED.\nYou must fsck ${ROOTDEV} manually."
-	exit
-fi
+echo -n "Checking root filesystem (fsck -fp /dev/$ROOTDEV)..."
+fsck -fp /dev/$ROOTDEV >/dev/null 2>&1 || { echo "FAILED." ; exit ; }
 echo	"OK."
 
-echo -n "Mounting root filesystem..."
-if ! mount -o ro /dev/$ROOTDEV /mnt; then
-	echo	"ERROR: can't mount root filesystem!"
-	exit
-fi
-echo	"done."
+echo -n "Mounting root filesystem (mount -o ro /dev/$ROOTDEV /mnt)..."
+mount -o ro /dev/$ROOTDEV /mnt || { echo "FAILED." ; exit ; }
+echo	"OK."
 
 # The fstab, hosts and myname files are required.
-for _file in fstab hosts myname; do
-	if [ ! -f /mnt/etc/$_file ]; then
-		echo "ERROR: no /mnt/etc/${_file}!"
-		exit
-	fi
-	cp /mnt/etc/$_file /tmp/$_file
+for _f in fstab hosts myname; do
+	[[ -f /mnt/etc/$_f ]] || { echo "No /mnt/etc/$_f!" ; exit ; }
+	cp /mnt/etc/$_f /tmp/$_f
 done
 hostname $(stripcom /tmp/myname)
 THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 
-
-# Configure the network
+# Configure the network.
 enable_network
 manual_net_cfg
 
@@ -90,10 +80,7 @@ munge_fstab
 check_fs
 
 # Mount filesystems in /etc/fstab.
-if ! umount /mnt; then
-	echo	"ERROR: can't unmount previously mounted root!"
-	exit
-fi
+umount /mnt || { echo "Can't umount $ROOTDEV!" ; exit ; }
 mount_fs
 
 # Install sets.
