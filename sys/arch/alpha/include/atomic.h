@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.7 2008/06/26 05:42:08 ray Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.8 2009/04/25 19:14:58 miod Exp $	*/
 /* $NetBSD: atomic.h,v 1.7 2001/12/17 23:34:57 thorpej Exp $ */
 
 /*-
@@ -61,8 +61,8 @@ atomic_setbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_setbits_ulong"
-		: "=&r" (t0), "=m" (*ulp)
-		: "r" (v), "m" (*ulp)
+		: "=&r" (t0), "+m" (*ulp)
+		: "r" (v), "1" (*ulp)
 		: "memory");
 }
 
@@ -87,8 +87,8 @@ atomic_clearbits_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_clearbits_ulong"
-		: "=&r" (t0), "=m" (*ulp)
-		: "r" (~v), "m" (*ulp)
+		: "=&r" (t0), "+m" (*ulp)
+		: "r" (~v), "1" (*ulp)
 		: "memory");
 }
 
@@ -113,8 +113,8 @@ atomic_add_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_add_ulong"
-		: "=&r" (t0), "=m" (*ulp)
-		: "r" (v), "m" (*ulp)
+		: "=&r" (t0), "+m" (*ulp)
+		: "r" (v), "1" (*ulp)
 		: "memory");
 }
 
@@ -139,8 +139,8 @@ atomic_sub_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_sub_ulong"
-		: "=&r" (t0), "=m" (*ulp)
-		: "r" (v), "m" (*ulp)
+		: "=&r" (t0), "+m" (*ulp)
+		: "r" (v), "1" (*ulp)
 		: "memory");
 }
 
@@ -165,8 +165,8 @@ atomic_loadlatch_ulong(__volatile unsigned long *ulp, unsigned long v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_loadlatch_ulong"
-		: "=&r" (t0), "=r" (v0), "=m" (*ulp)
-		: "r" (v), "m" (*ulp)
+		: "=&r" (t0), "=r" (v0), "+m" (*ulp)
+		: "r" (v), "2" (*ulp)
 		: "memory");
 
 	return (v0);
@@ -193,8 +193,8 @@ atomic_setbits_int(__volatile unsigned int *uip, unsigned int v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_setbits_int"
-		: "=&r" (t0), "=m" (*uip)
-		: "r" (v), "m" (*uip)
+		: "=&r" (t0), "+m" (*uip)
+		: "r" (v), "1" (*uip)
 		: "memory");
 }
 
@@ -219,8 +219,8 @@ atomic_clearbits_int(__volatile unsigned int *uip, unsigned int v)
 		"2:	br	1b		\n"
 		"3:				\n"
 		"	# END atomic_clearbits_int"
-		: "=&r" (t0), "=m" (*uip)
-		: "r" (~v), "m" (*uip)
+		: "=&r" (t0), "+m" (*uip)
+		: "r" (~v), "1" (*uip)
 		: "memory");
 }
 
