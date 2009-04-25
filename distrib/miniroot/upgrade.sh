@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: upgrade.sh,v 1.66 2009/04/25 16:55:02 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.67 2009/04/25 17:43:08 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -83,22 +83,7 @@ THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 enable_network
 manual_net_cfg
 
-cat <<__EOT
-
-The fstab is configured as follows:
-
-$(</tmp/fstab)
-
-For the $MODE, filesystems in the fstab will be automatically mounted if the
-'noauto' option is absent, and /sbin/mount_<fstype> is found, and the fstype is
-not nfs. Non-ffs filesystems will be mounted read-only.
-
-You can edit the fstab now, before it is used, but the edited fstab will only
-be used during the upgrade. It will not be copied back to disk.
-__EOT
-edit_tmp_file fstab
-
-# Create /etc/fstab.
+# Create fstab for use during upgrade.
 munge_fstab
 
 # fsck -p non-root filesystems in /etc/fstab.
