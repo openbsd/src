@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_scalbn.S,v 1.2 2005/08/02 11:17:31 espie Exp $ */
+/*	$OpenBSD: s_scalbn.S,v 1.3 2009/04/25 11:03:35 martynas Exp $ */
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
@@ -9,10 +9,13 @@
 #include "abi.h"
 
 ENTRY(scalbn)
-	XMM_TWO_ARG_DOUBLE_PROLOGUE
-	fildl	ARG_DOUBLE_TWO
-	fldl	ARG_DOUBLE_ONE
+	movsd	%xmm0,-8(%rsp)
+	movl	%edi,-12(%rsp)
+	fildl	-12(%rsp)
+	fldl	-8(%rsp)
 	fscale
 	fstp	%st(1)		/* bug fix for fp stack overflow */
-	XMM_DOUBLE_EPILOGUE
+	fstpl	-8(%rsp)
+	movsd	-8(%rsp),%xmm0
 	ret
+
