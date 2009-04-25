@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.118 2009/04/24 16:30:58 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.119 2009/04/25 05:02:40 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -395,6 +395,7 @@ azalia_codec_fnode(codec_t *this, nid_t node, int index, int depth)
 	/* back at the beginning or a bad end */
 	if (depth > 0 &&
 	    (w->type == COP_AWTYPE_PIN_COMPLEX ||
+	    w->type == COP_AWTYPE_BEEP_GENERATOR ||
 	    w->type == COP_AWTYPE_AUDIO_OUTPUT ||
 	    w->type == COP_AWTYPE_AUDIO_INPUT))
 		return -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.123 2009/04/24 16:29:49 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.124 2009/04/25 05:02:40 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1649,6 +1649,7 @@ azalia_codec_find_defdac(codec_t *this, int index, int depth)
 
 	if (depth > 0 &&
 	    (w->type == COP_AWTYPE_PIN_COMPLEX ||
+	    w->type == COP_AWTYPE_BEEP_GENERATOR ||
 	    w->type == COP_AWTYPE_AUDIO_INPUT))
 		return -1;
 	if (++depth >= 10)
@@ -1693,6 +1694,7 @@ azalia_codec_find_defadc_sub(codec_t *this, nid_t node, int index, int depth)
 	/* back at the beginning or a bad end */
 	if (depth > 0 &&
 	    (w->type == COP_AWTYPE_PIN_COMPLEX ||
+	    w->type == COP_AWTYPE_BEEP_GENERATOR ||
 	    w->type == COP_AWTYPE_AUDIO_OUTPUT ||
 	    w->type == COP_AWTYPE_AUDIO_INPUT))
 		return -1;
@@ -2696,6 +2698,9 @@ azalia_widget_check_conn(codec_t *codec, int index, int depth)
 	int i;
 
 	w = &codec->w[index];
+
+	if (w->type == COP_AWTYPE_BEEP_GENERATOR)
+		return 0;
 
 	if (depth > 0 &&
 	    (w->type == COP_AWTYPE_PIN_COMPLEX ||
