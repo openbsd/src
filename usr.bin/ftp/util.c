@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.57 2009/04/13 01:47:04 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.58 2009/04/26 10:30:07 sthen Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: util.c,v 1.57 2009/04/13 01:47:04 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.58 2009/04/26 10:30:07 sthen Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -412,7 +412,7 @@ remglob2(char *argv[], int doswitch, char **errbuf, FILE **ftemp, char *type)
 			temp[len++] = '/';
 		(void)strlcpy(&temp[len], TMPFILE, sizeof temp - len);
 		if ((fd = mkstemp(temp)) < 0) {
-			warn("unable to create temporary file %s", temp);
+			warn("unable to create temporary file: %s", temp);
 			return (NULL);
 		}
 		close(fd);
