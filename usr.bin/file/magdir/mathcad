@@ -1,3 +1,4 @@
+#	$OpenBSD: mathcad,v 1.2 2009/04/26 14:17:45 chl Exp $
 
 #------------------------------------------------------------------------------
 # mathcad:  file(1) magic for Mathcad documents

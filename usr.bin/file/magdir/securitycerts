@@ -1,3 +1,5 @@
+#	$OpenBSD: securitycerts,v 1.2 2009/04/26 14:17:45 chl Exp $
+
 0	search/1		-----BEGIN\ CERTIFICATE------	RFC1421 Security Certificate text
 0	search/1		-----BEGIN\ NEW\ CERTIFICATE	RFC1421 Security Certificate Signing Request text
 0	belong	0xedfeedfe	Sun 'jks' Java Keystore File data

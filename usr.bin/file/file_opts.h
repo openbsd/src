@@ -1,3 +1,4 @@
+/*	$OpenBSD: file_opts.h,v 1.2 2009/04/26 14:17:45 chl Exp $ */
 /*
  * Table of command-line options
  *

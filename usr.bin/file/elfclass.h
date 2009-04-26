@@ -1,3 +1,4 @@
+/*	$OpenBSD: elfclass.h,v 1.2 2009/04/26 14:17:45 chl Exp $ */
 /*
  * Copyright (c) Christos Zoulas 2008.
  * All Rights Reserved.

@@ -1,3 +1,5 @@
+#	$OpenBSD: lua,v 1.2 2009/04/26 14:17:45 chl Exp $
+
 #------------------------------------------------------------------------------
 # lua:  file(1) magic for Lua scripting language
 # URL:  http://www.lua.org/

@@ -1,3 +1,4 @@
+#	$OpenBSD: erlang,v 1.2 2009/04/26 14:17:45 chl Exp $
 
 #------------------------------------------------------------------------------
 # erlang:  file(1) magic for Erlang JAM and BEAM files

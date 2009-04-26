@@ -1,3 +1,5 @@
+#	$OpenBSD: fortran,v 1.2 2009/04/26 14:17:45 chl Exp $
+
 # FORTRAN source
 0	string/c	c\ 		FORTRAN program
 !:mime	text/x-fortran

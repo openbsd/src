@@ -1,3 +1,4 @@
+#	$OpenBSD: inform,v 1.2 2009/04/26 14:17:45 chl Exp $
 
 #------------------------------------------------------------------------------
 # inform:  file(1) magic for Inform interactive fiction language

@@ -1,3 +1,5 @@
+#	$OpenBSD: gnome-keyring,v 1.2 2009/04/26 14:17:45 chl Exp $
+
 # GNOME keyring
 # Contributed by Josh Triplett
 # FIXME: Could be simplified if pstring supported two-byte counts

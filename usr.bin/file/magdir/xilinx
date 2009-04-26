@@ -1,3 +1,4 @@
+#	$OpenBSD: xilinx,v 1.2 2009/04/26 14:17:45 chl Exp $
 
 #------------------------------------------------------------------------------
 # This is Aaron's attempt at a MAGIC file for Xilinx .bit files.
