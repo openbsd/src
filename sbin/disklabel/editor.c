@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.197 2009/04/26 20:05:30 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.198 2009/04/26 20:25:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.197 2009/04/26 20:05:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.198 2009/04/26 20:25:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,30 +72,31 @@ struct space_allocation {
 };
 
 #define MEG(x)	((x) * 1024LL * (1024 / 512))
+#define GIG(x)  (MEG(x) * 1024LL)
 
 /* entries for swap and var are changed by editor_allocspace() */
 const struct space_allocation alloc_big[] = {
-	{   MEG(80),      MEG(1024),   5, "/"		},
+	{   MEG(80),         GIG(1),   5, "/"		},
 	{   MEG(80),       MEG(256),   5, "swap"	},
-	{   MEG(80),      MEG(4096),  10, "/tmp"	},
-	{   MEG(80),      MEG(4096),  10, "/var"	},
-	{ MEG(1024),      MEG(4096),  20, "/usr"	},
-	{  MEG(512),      MEG(1024),   5, "/usr/X11R6"	},
-	{ MEG(2048),    MEG(6*1024),   5, "/usr/local"	},
-	{ MEG(1024),      MEG(2048),   5, "/usr/src"	},
-	{ MEG(1200),      MEG(2048),   5, "/usr/obj"	},
-	{  MEG(512), MEG(1024*1024),  30, "/home"	}
+	{   MEG(80),         GIG(4),  12, "/tmp"	},
+	{   MEG(80),         GIG(4),  13, "/var"	},
+	{  MEG(600),         GIG(2),   2, "/usr"	},
+	{  MEG(512),         GIG(1),   3, "/usr/X11R6"	},
+	{    GIG(2),         GIG(6),   5, "/usr/local"	},
+	{    GIG(1),         GIG(2),   3, "/usr/src"	},
+	{    GIG(1),         GIG(2),   3, "/usr/obj"	},
+	{    GIG(1),       GIG(300),  49, "/home"	}
 };
 
 const struct space_allocation alloc_medium[] = {
-	{  MEG(800),      MEG(2048),  15, "/"		},
+	{  MEG(800),         GIG(2),  15, "/"		},
 	{   MEG(80),       MEG(256),  10, "swap"	},
-	{  MEG(900), MEG(1024*1024),  10, "/usr"	},
-	{  MEG(512), MEG(1024*1024),  65, "/home"	}
+	{  MEG(900),         GIG(1),  10, "/usr"	},
+	{  MEG(512),         GIG(1),  65, "/home"	}
 };
 
 const struct space_allocation alloc_small[] = {
-	{  MEG(700),      MEG(4096),  95, "/"		},
+	{  MEG(700),         GIG(4),  95, "/"		},
 	{    MEG(1),       MEG(256),   5, "swap"	}
 };
 
