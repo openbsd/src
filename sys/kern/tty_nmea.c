@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.33 2008/12/25 21:25:55 stevesk Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.34 2009/04/26 02:25:36 cnst Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -107,13 +107,11 @@ nmeaopen(dev_t dev, struct tty *tp)
 	nmea_count++;
 	np->time.status = SENSOR_S_UNKNOWN;
 	np->time.type = SENSOR_TIMEDELTA;
-	np->time.value = 0LL;
 	sensor_attach(&np->timedev, &np->time);
 
 	np->signal.type = SENSOR_PERCENT;
 	np->signal.status = SENSOR_S_UNKNOWN;
 	np->signal.value = 100000LL;
-	np->signal.flags = 0;
 	strlcpy(np->signal.desc, "Signal", sizeof(np->signal.desc));
 	sensor_attach(&np->timedev, &np->signal);
 
