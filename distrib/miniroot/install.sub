@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.485 2009/04/25 20:56:39 miod Exp $
+#	$OpenBSD: install.sub,v 1.486 2009/04/26 03:00:32 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2007 Todd Miller, Theo de Raadt, Ken Westerback
@@ -760,7 +760,7 @@ v6_config() {
 
 v4_defroute() {
 	local _dr _prompt=" or 'none'"
-	
+
 	# Get/Confirm an IPv4 default route if an IPv4 address was configured.
 	[[ -n $(ifconfig | sed -ne '/[ 	]inet .* broadcast /p') ]] || return
 
@@ -1554,7 +1554,7 @@ xquestions() {
 			return
 		fi
 	done
-			
+
 	# XXX if any of the X sets are not installed, we should
 	# not ask these questions
 	if [[ -n $MDXAPERTURE ]]; then
