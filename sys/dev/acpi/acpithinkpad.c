@@ -1,4 +1,4 @@
-/* $OpenBSD: acpithinkpad.c,v 1.18 2009/03/11 20:52:11 jordan Exp $ */
+/* $OpenBSD: acpithinkpad.c,v 1.19 2009/04/26 02:20:58 cnst Exp $ */
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -157,7 +157,6 @@ thinkpad_sensor_attach(struct acpithinkpad_softc *sc)
 		snprintf(sc->sc_sens[i].desc, sizeof(sc->sc_sens[i].desc), 
 		    "TMP%d", i);
 		sc->sc_sens[i].type = SENSOR_TEMP;
-		sc->sc_sens[i].value = 0;
 		sensor_attach(&sc->sc_sensdev, &sc->sc_sens[i]);
 	}
 
@@ -165,7 +164,6 @@ thinkpad_sensor_attach(struct acpithinkpad_softc *sc)
 	strlcpy(sc->sc_sens[i].desc, "fan", 
 	    sizeof(sc->sc_sens[i].desc));
 	sc->sc_sens[i].type = SENSOR_FANRPM;
-	sc->sc_sens[i].value = 0;
 	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[i]);
 
 	sensordev_install(&sc->sc_sensdev);

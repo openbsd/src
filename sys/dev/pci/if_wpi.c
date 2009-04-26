@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.84 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.85 2009/04/26 02:20:58 cnst Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -367,7 +367,6 @@ wpi_sensor_attach(struct wpi_softc *sc)
 	    sizeof sc->sensor.desc);
 	sc->sensor.type = SENSOR_INTEGER;	/* not in muK! */
 	/* Temperature is not valid unless interface is up. */
-	sc->sensor.value = 0;
 	sc->sensor.flags = SENSOR_FINVALID;
 	sensor_attach(&sc->sensordev, &sc->sensor);
 	sensordev_install(&sc->sensordev);

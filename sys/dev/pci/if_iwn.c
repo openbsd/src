@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.49 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.50 2009/04/26 02:20:58 cnst Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -608,7 +608,6 @@ iwn_sensor_attach(struct iwn_softc *sc)
 	    sizeof sc->sensordev.xname);
 	sc->sensor.type = SENSOR_TEMP;
 	/* Temperature is not valid unless interface is up. */
-	sc->sensor.value = 0;
 	sc->sensor.flags = SENSOR_FINVALID;
 	sensor_attach(&sc->sensordev, &sc->sensor);
 	sensordev_install(&sc->sensordev);

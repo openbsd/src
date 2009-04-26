@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.8 2008/11/21 11:38:12 mbalmer Exp $ */
+/*	$OpenBSD: umbg.c,v 1.9 2009/04/26 02:20:58 cnst Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -191,15 +191,11 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_timedelta.type = SENSOR_TIMEDELTA;
 	sc->sc_timedelta.status = SENSOR_S_UNKNOWN;
-	sc->sc_timedelta.value = 0LL;
-	sc->sc_timedelta.flags = 0;
 	strlcpy(sc->sc_timedelta.desc, "USB5131",
 	    sizeof(sc->sc_timedelta.desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_timedelta);
 
 	sc->sc_signal.type = SENSOR_PERCENT;
-	sc->sc_signal.value = 0LL;
-	sc->sc_signal.flags = 0;
 	strlcpy(sc->sc_signal.desc, "Signal", sizeof(sc->sc_signal.desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_signal);
 	sensordev_install(&sc->sc_sensordev);

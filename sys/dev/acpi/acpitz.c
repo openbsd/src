@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.30 2009/04/19 21:50:02 cnst Exp $ */
+/* $OpenBSD: acpitz.c,v 1.31 2009/04/26 02:20:58 cnst Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -142,7 +142,6 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sens.type = SENSOR_TEMP;
 	sensor_attach(&sc->sc_sensdev, &sc->sc_sens);
 	sensordev_install(&sc->sc_sensdev);
-	sc->sc_sens.value = 0;
 
 	aml_register_notify(sc->sc_devnode, NULL,
 	    acpitz_notify, sc, ACPIDEV_POLL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiodcf.c,v 1.1 2008/11/28 17:42:43 mbalmer Exp $ */
+/*	$OpenBSD: gpiodcf.c,v 1.2 2009/04/26 02:20:58 cnst Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -192,15 +192,11 @@ gpiodcf_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sensor.type = SENSOR_TIMEDELTA;
 	sc->sc_sensor.status = SENSOR_S_UNKNOWN;
-	sc->sc_sensor.value = 0LL;
-	sc->sc_sensor.flags = 0;
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
 
 #ifdef GPIODCF_DEBUG
 	sc->sc_skew.type = SENSOR_TIMEDELTA;
 	sc->sc_skew.status = SENSOR_S_UNKNOWN;
-	sc->sc_skew.value = 0LL;
-	sc->sc_skew.flags = 0;
 	strlcpy(sc->sc_skew.desc, "local clock skew",
 	    sizeof(sc->sc_skew.desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_skew);
