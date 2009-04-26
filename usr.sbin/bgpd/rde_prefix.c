@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.26 2009/04/19 21:24:55 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.27 2009/04/26 14:40:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -51,8 +51,6 @@ static struct pt_entry	*pt_restart(struct pt_context *);
 
 int	pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);
 
-#define MIN_PREFIX 0
-#define MAX_PREFIX 32
 RB_HEAD(pt_tree, pt_entry);
 RB_PROTOTYPE(pt_tree, pt_entry, pt_e, pt_prefix_cmp);
 RB_GENERATE(pt_tree, pt_entry, pt_e, pt_prefix_cmp);
