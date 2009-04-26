@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.22 2008/11/10 10:48:43 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.23 2009/04/26 09:25:49 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -72,6 +72,7 @@ static char **recheck_command_for_shell(char **);
 
 static int setup_and_run_command(char *, GNode *, int);
 static void run_command(const char *, bool);
+static int run_prepared_gnode(GNode *);
 static void handle_compat_interrupts(GNode *);
 
 bool
@@ -777,29 +778,55 @@ run_gnode(GNode *gn)
 {
 	if (gn != NULL && (gn->type & OP_DUMMY) == 0) {
 		expand_commands(gn);
+		return run_prepared_gnode(gn);
+	} else {
+		return NOSUCHNODE;
 	}
-	return run_prepared_gnode(gn, 0);
 }
 
-int
-run_prepared_gnode(GNode *gn, int parallel)
+static int
+run_prepared_gnode(GNode *gn)
 {
 	char *cmd;
 
-	if (gn != NULL && (gn->type & OP_DUMMY) == 0) {
-		gn->built_status = MADE;
-		while ((cmd = Lst_DeQueue(&gn->expanded)) != NULL) {
-			if (setup_and_run_command(cmd, gn, 
-			    parallel && Lst_IsEmpty(&gn->expanded)) == 0)
-				break;
-			free(cmd);
-		}
+	gn->built_status = MADE;
+	while ((cmd = Lst_DeQueue(&gn->expanded)) != NULL) {
+		if (setup_and_run_command(cmd, gn, 0) == 0)
+			break;
 		free(cmd);
-		if (got_signal && !parallel)
-			handle_compat_interrupts(gn);
-		return gn->built_status;
-	} else
-		return NOSUCHNODE;
+	}
+	free(cmd);
+	if (got_signal)
+		handle_compat_interrupts(gn);
+	return gn->built_status;
+}
+
+void
+run_gnode_parallel(GNode *gn)
+{
+	char *cmd;
+
+	gn->built_status = MADE;
+	/* XXX don't bother freeing cmd, we're dead anyways ! */
+	while ((cmd = Lst_DeQueue(&gn->expanded)) != NULL) {
+		if (setup_and_run_command(cmd, gn, 
+		    Lst_IsEmpty(&gn->expanded)) == 0)
+			break;
+	}
+	/* Normally, we don't reach this point, unless the last command
+	 * ignores error, in which case we interpret the status ourselves.
+	 */
+	switch(gn->built_status) {
+	case MADE:
+		exit(0);
+	case ERROR:
+		exit(1);
+	default:
+		fprintf(stderr, 
+		    "Could not run gnode, returned %d\n", 
+			gn->built_status);
+		exit(1);
+	}
 }
 
 void
