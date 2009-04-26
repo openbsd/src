@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.83 2008/10/16 23:15:53 martynas Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.84 2009/04/26 21:26:03 martynas Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.83 2008/10/16 23:15:53 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: fetch.c,v 1.84 2009/04/26 21:26:03 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -304,7 +304,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 
 		bytes = 0;
 		hashbytes = mark;
-		progressmeter(-1);
+		progressmeter(-1, path);
 
 		if ((buf = malloc(4096)) == NULL)
 			errx(1, "Can't allocate memory for transfer buffer");
@@ -339,7 +339,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile)
 			warn("Reading from file");
 			goto cleanup_url_get;
 		}
-		progressmeter(1);
+		progressmeter(1, NULL);
 		if (verbose)
 			fputs("Successfully retrieved file.\n", ttyout);
 		(void)signal(SIGINT, oldintr);
@@ -690,7 +690,7 @@ again:
 
 	bytes = 0;
 	hashbytes = mark;
-	progressmeter(-1);
+	progressmeter(-1, path);
 
 	free(buf);
 
@@ -728,7 +728,7 @@ again:
 		warn("Reading from socket");
 		goto cleanup_url_get;
 	}
-	progressmeter(1);
+	progressmeter(1, NULL);
 	if (
 #ifndef SMALL
 		!resume &&

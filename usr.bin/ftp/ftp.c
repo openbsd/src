@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.74 2009/04/25 12:22:19 martynas Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.75 2009/04/26 21:26:03 martynas Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: ftp.c,v 1.74 2009/04/25 12:22:19 martynas Exp $";
+static const char rcsid[] = "$OpenBSD: ftp.c,v 1.75 2009/04/26 21:26:03 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 #include <sys/types.h>
@@ -708,7 +708,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 	dout = dataconn(lmode);
 	if (dout == NULL)
 		goto abort;
-	progressmeter(-1);
+	progressmeter(-1, remote);
 	may_reset_noop_timeout();
 	oldintp = signal(SIGPIPE, SIG_IGN);
 	switch (curtype) {
@@ -789,7 +789,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 		}
 		break;
 	}
-	progressmeter(1);
+	progressmeter(1, NULL);
 	progress = oprogress;
 	if (closefunc != NULL)
 		(*closefunc)(fin);
@@ -1024,7 +1024,7 @@ recvrequest(const char *cmd, const char * volatile local, const char *remote,
 			progress = 0;
 		preserve = 0;
 	}
-	progressmeter(-1);
+	progressmeter(-1, remote);
 	may_reset_noop_timeout();
 	switch (curtype) {
 
@@ -1166,7 +1166,7 @@ break2:
 			warnx("local: %s: %s", local, strerror(serrno));
 		break;
 	}
-	progressmeter(1);
+	progressmeter(1, NULL);
 	progress = oprogress;
 	preserve = opreserve;
 	if (closefunc != NULL)

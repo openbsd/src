@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.58 2009/04/26 10:30:07 sthen Exp $	*/
+/*	$OpenBSD: util.c,v 1.59 2009/04/26 21:26:03 martynas Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: util.c,v 1.58 2009/04/26 10:30:07 sthen Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.59 2009/04/26 21:26:03 martynas Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -733,7 +733,7 @@ updateprogressmeter(int signo)
 
 	/* update progressmeter if foreground process or in -m mode */
 	if (foregroundproc() || progress == -1)
-		progressmeter(0);
+		progressmeter(0, NULL);
 	errno = save_errno;
 }
 
@@ -749,10 +749,8 @@ updateprogressmeter(int signo)
  */
 static struct timeval start;
 
-char    *title;
-
 void
-progressmeter(int flag)
+progressmeter(int flag, const char *filename)
 {
 	/*
 	 * List of order of magnitude prefixes.
@@ -762,6 +760,7 @@ progressmeter(int flag)
 
 	static struct timeval lastupdate;
 	static off_t lastsize;
+	static char *title = NULL;
 	struct timeval now, td, wait;
 	off_t cursize, abbrevsize;
 	double elapsed;
@@ -784,7 +783,12 @@ progressmeter(int flag)
 		ratio = 100;
 	ratio = MAX(ratio, 0);
 	ratio = MIN(ratio, 100);
-	if (title) {
+	if (!verbose && flag == -1) {
+		filename = basename(filename);
+		if (filename != NULL)
+			title = strdup(filename);
+	}
+	if (!verbose && title != NULL) {
 		int l = strlen(title);
 		char *dotdot = "";
 
@@ -798,7 +802,7 @@ progressmeter(int flag)
 		snprintf(buf, sizeof(buf), "\r%-*.*s%s %3d%% ", l, l, title,
 		    dotdot, ratio);
 		overhead += l + 1;
-	} else		
+	} else
 		snprintf(buf, sizeof(buf), "\r%3d%% ", ratio);
 
 	barlength = ttywidth - overhead;
@@ -879,6 +883,10 @@ progressmeter(int flag)
 	} else if (flag == 1) {
 		alarmtimer(0);
 		(void)putc('\n', ttyout);
+		if (title != NULL) {
+			free(title);
+			title = NULL;
+		}
 	}
 	fflush(ttyout);
 }

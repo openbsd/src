@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.36 2009/04/13 01:47:04 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.37 2009/04/26 21:26:03 martynas Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ void	mput(int, char **);
 char   *onoff(int);
 void	newer(int, char **);
 void	page(int, char **);
-void    progressmeter(int);
+void    progressmeter(int, const char *);
 char   *prompt(void);
 void	proxabort(int);
 void    proxtrans(const char *, const char *, const char *);
@@ -210,7 +210,6 @@ extern struct	cmd cmdtab[];
 extern FILE    *cout;
 extern int	data;
 extern char    *home;
-extern char    *title;
 extern jmp_buf	jabort;
 extern int	family;
 extern int	proxy;
