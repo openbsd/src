@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.34 2009/04/06 10:12:08 ajacoutot Exp $
+.\"	$OpenBSD: port-modules.5,v 1.35 2009/04/26 11:04:31 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 6 2009 $
+.Dd $Mdocdate: April 26 2009 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -412,7 +412,7 @@ All ports that generate egg-info files should set MODPY_EGG_VERSION
 to the version string used by the port's setup.py setup() function.
 Extra arguments to the build and install commands can be passed via
 MODPY_DISTUTILS_BUILDARGS and MODPY_DISTUTILS_INSTALLARGS.
-Also affects CATEGORIES, MAKE_ENV, SHARED_ONLY, and SUBST_VARS.
+Also affects CATEGORIES, MAKE_ENV, CONFIGURE_ENV, SHARED_ONLY, and SUBST_VARS.
 May affect the regress target.
 .It lang/ruby
 Sets MODRUBY_REV, RUBY, MODRUBY_RUN_DEPENDS, MODRUBY_LIB_DEPENDS,
