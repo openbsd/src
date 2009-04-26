@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.194 2009/04/23 00:00:06 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.195 2009/04/26 01:23:40 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.194 2009/04/23 00:00:06 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.195 2009/04/26 01:23:40 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -268,7 +268,7 @@ editor(struct disklabel *lp, int f)
 			break;
 
 		case 'n':
-			if (fstabfile) {
+			if (!fstabfile) {
 				fputs("This option is not valid when run "
 				    "without the -f flag.\n", stderr);
 				break;
