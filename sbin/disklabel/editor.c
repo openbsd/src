@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.195 2009/04/26 01:23:40 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.196 2009/04/26 19:49:50 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,13 +17,14 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.195 2009/04/26 01:23:40 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.196 2009/04/26 19:49:50 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
+#include <sys/sysctl.h>
 #define	DKTYPENAMES
 #include <sys/disklabel.h>
 
@@ -72,17 +73,41 @@ struct space_allocation {
 
 #define MEG(x)	((x) * 1024LL * (1024 / 512))
 
-struct space_allocation alloc[] = {
+/* entries for swap and var are changed by editor_allocspace() */
+const struct space_allocation alloc_big[] = {
 	{   MEG(80),      MEG(1024),   5, "/"		},
-	{   MEG(80),      MEG(4096),   5, "swap"	},
+	{   MEG(80),       MEG(256),   5, "swap"	},
 	{   MEG(80),      MEG(4096),  10, "/tmp"	},
 	{   MEG(80),      MEG(4096),  10, "/var"	},
-	{ MEG(2048),     MEG(10240),  20, "/usr"	},
+	{ MEG(1024),      MEG(4096),  20, "/usr"	},
 	{  MEG(512),      MEG(1024),   5, "/usr/X11R6"	},
-	{ MEG(2048),      MEG(5120),   5, "/usr/local"	},
+	{ MEG(2048),    MEG(6*1024),   5, "/usr/local"	},
 	{ MEG(1024),      MEG(2048),   5, "/usr/src"	},
-	{ MEG(2048),      MEG(2048),   0, "/usr/obj"	},
-	{  MEG(512), MEG(1024*1024),  35, "/home"	}
+	{ MEG(1200),      MEG(2048),   5, "/usr/obj"	},
+	{  MEG(512), MEG(1024*1024),  30, "/home"	}
+};
+
+const struct space_allocation alloc_medium[] = {
+	{ MEG(1024),      MEG(2048),  25, "/"		},
+	{   MEG(80),       MEG(256),  10, "swap"	},
+	{ MEG(1024), MEG(1024*1024),  25, "/usr"	},
+	{  MEG(512), MEG(1024*1024),  40, "/home"	}
+};
+
+const struct space_allocation alloc_small[] = {
+	{  MEG(700),      MEG(4096),   95, "/"		},
+	{    MEG(1),       MEG(256),    5, "swap"	}
+};
+
+const struct space_allocation alloc_stupid[] = {
+	{  MEG(1),      MEG(2048),   100, "/"		}
+};
+
+const struct { const struct space_allocation *table; int sz; } alloc_table[] = {
+	{ alloc_big,	nitems(alloc_big) },
+	{ alloc_medium,	nitems(alloc_medium) },
+	{ alloc_small,	nitems(alloc_small) },
+	{ alloc_stupid,	nitems(alloc_stupid) }
 };
 
 void	edit_parms(struct disklabel *);
@@ -462,38 +487,69 @@ editor(struct disklabel *lp, int f)
 	}
 }
 
+int64_t
+getphysmem(void)
+{
+	int64_t physmem;
+	size_t sz = sizeof(physmem);
+	int mib[] = { CTL_HW, HW_PHYSMEM64 };
+	if (sysctl(mib, 2, &physmem, &sz, NULL, (size_t)0) == -1)
+		errx(4, "can't get mem size");
+	return physmem;
+}
+
 /*
  * Allocate all disk space according to standard recommendations for a
  * root disk.
  */
 void
-editor_allocspace(struct disklabel *lp)
+editor_allocspace(struct disklabel *lp_org)
 {
+	struct disklabel *lp, label;
+	struct space_allocation *alloc;
 	struct space_allocation *ap;
 	struct partition *pp;
 	struct diskchunk *chunks;
 	daddr64_t secs, chunkstart, chunksize, cylsecs, totsecs, xtrasecs;
 	char **partmp;
-	int i, j, lastalloc;
+	int i, j, lastalloc, index = 0;
+	int64_t physmem;
+
+	physmem = getphysmem() / lp_org->d_secsize;
 
 	/* How big is the OpenBSD portion of the disk?  */
-	find_bounds(lp);
+	find_bounds(lp_org);
 	if (print_unit == '\0') {
-		if (DL_BLKTOSEC(lp, MEG(10 * 1024)) > (ending_sector -
+		if (DL_BLKTOSEC(lp_org, MEG(10 * 1024)) > (ending_sector -
 		    starting_sector))
 			print_unit = 'm';
 		else
 			print_unit = 'g';
 	}
 
-	cylsecs = lp->d_secpercyl;
+	cylsecs = lp_org->d_secpercyl;
+again:
+	lp = &label;
+	memcpy(lp, lp_org, sizeof(struct disklabel));
+	lastalloc = alloc_table[index].sz;
+	alloc = malloc(lastalloc * sizeof(struct space_allocation));
+	if (alloc == NULL)
+		errx(4, "out of memory");
+	memcpy(alloc, alloc_table[index].table,
+	    lastalloc * sizeof(struct space_allocation));
+
+	/* bump max swap based on phys mem, little physmem gets 2x swap */
+	if (index == 0) {
+		if (physmem < 256LL * 1024 * 1024 / lp->d_secsize)
+			alloc[1].maxsz = 2 * physmem;
+		else
+			alloc[1].maxsz += physmem;
+		/* bump max /var to make room for 2 crash dumps */
+		alloc[3].maxsz += 2 * physmem;
+	}
+
 	xtrasecs = totsecs = editor_countfree(lp);
 
-	if (totsecs < DL_BLKTOSEC(lp, alloc[0].minsz + alloc[1].minsz))
-		/* Must have space for root and swap at least. */
-		return;
-
-	lastalloc = sizeof(alloc) / sizeof(alloc[0]);
 	for (i = 0; i < lastalloc; i++) {
 		alloc[i].minsz = DL_BLKTOSEC(lp, alloc[i].minsz);
 		alloc[i].maxsz = DL_BLKTOSEC(lp, alloc[i].maxsz);
@@ -557,9 +613,12 @@ editor_allocspace(struct disklabel *lp)
 			secs = chunksize;
 		}
 		if (secs < ap->minsz) {
-			/* If this one doesn't fit, ignore subsequent ones. */
-			totsecs += secs;
-			break;
+			/* It did not work out, try next strategy */
+			free(alloc);
+			if (++index < nitems(alloc_table))
+				goto again;
+			else
+				return;
 		}
 
 		/* Everything seems ok so configure the partition. */
@@ -583,6 +642,8 @@ editor_allocspace(struct disklabel *lp)
 		}
 	}
 
+	free(alloc);
+	memcpy(lp_org, lp, sizeof(struct disklabel));
 	/* Save mountpoint info if there is any. */
 	if (fstabfile)
 		mpsave(lp);
