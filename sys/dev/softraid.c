@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.127 2009/02/16 21:19:06 miod Exp $ */
+/* $OpenBSD: softraid.c,v 1.128 2009/04/26 17:04:53 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -590,7 +590,7 @@ restart:
 		    DEVNAME(sc), src->src_meta.scmi.scm_devname,
 		    m->ssdi.ssd_volid, m->ssdi.ssd_chunk_id);
 
-		if (sr_debug &= SR_D_META)
+		if (sr_debug & SR_D_META)
 			sr_checksum_print((u_int8_t *)&m->ssd_checksum);
 		DNPRINTF(SR_D_META, "\n");
 		sr_meta_print(m);
@@ -679,14 +679,15 @@ sr_meta_read(struct sr_discipline *sd)
 			om = (struct sr_meta_opt *) ((u_int8_t *)(sm + 1) +
 			    sizeof(struct sr_meta_chunk) *
 			    sm->ssdi.ssd_chunk_no);
-			bcopy(om, &ch_entry->src_opt, sizeof(ch_entry->src_opt));
+			bcopy(om, &ch_entry->src_opt,
+			    sizeof(ch_entry->src_opt));
 
 			if (om->somi.som_type == SR_OPT_CRYPTO) {
-				bcopy(&ch_entry->src_opt.somi.som_meta.smm_crypto,
+				bcopy(
+				    &ch_entry->src_opt.somi.som_meta.smm_crypto,
 				    &sd->mds.mdd_crypto.scr_meta,
 				    sizeof(sd->mds.mdd_crypto.scr_meta));
 			}
-
 		}
 
 		cp++;
@@ -2462,7 +2463,7 @@ sr_raid_sync(struct sr_workunit *wu)
 
 	DNPRINTF(SR_D_DIS, "%s: sr_raid_sync\n", DEVNAME(sd->sd_sc));
 
-	/* when doing a fake sync don't coun't the wu */
+	/* when doing a fake sync don't count the wu */
 	ios = wu->swu_fake ? 0 : 1;
 
 	s = splbio();
