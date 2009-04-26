@@ -1,4 +1,4 @@
-/* $OpenBSD: acpithinkpad.c,v 1.19 2009/04/26 02:20:58 cnst Exp $ */
+/* $OpenBSD: acpithinkpad.c,v 1.20 2009/04/26 02:59:05 cnst Exp $ */
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -154,15 +154,11 @@ thinkpad_sensor_attach(struct acpithinkpad_softc *sc)
 	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensdev.xname));
 	for (i=0; i<THINKPAD_NTEMPSENSORS; i++) {
-		snprintf(sc->sc_sens[i].desc, sizeof(sc->sc_sens[i].desc), 
-		    "TMP%d", i);
 		sc->sc_sens[i].type = SENSOR_TEMP;
 		sensor_attach(&sc->sc_sensdev, &sc->sc_sens[i]);
 	}
 
 	/* Add fan probe */
-	strlcpy(sc->sc_sens[i].desc, "fan", 
-	    sizeof(sc->sc_sens[i].desc));
 	sc->sc_sens[i].type = SENSOR_FANRPM;
 	sensor_attach(&sc->sc_sensdev, &sc->sc_sens[i]);
 
@@ -175,11 +171,13 @@ thinkpad_sensor_refresh(void *arg)
 	struct acpithinkpad_softc *sc = arg;
 	u_int8_t lo, hi, i;
 	int64_t tmp;
+	char sname[5];
 
 	/* Refresh sensor readings */
 	for (i=0; i<THINKPAD_NTEMPSENSORS; i++) {
+		snprintf(sname, sizeof(sname), "TMP%d", i);
 		aml_evalinteger(sc->sc_acpi, sc->sc_ec->sc_devnode, 
-		    sc->sc_sens[i].desc, 0, 0, &tmp);
+		    sname, 0, 0, &tmp);
 		sc->sc_sens[i].value = (tmp * 1000000) + 273150000;
 		if (tmp > 127 || tmp < -127)
 			sc->sc_sens[i].flags = SENSOR_FINVALID;
