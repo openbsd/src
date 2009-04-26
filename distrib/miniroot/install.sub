@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.488 2009/04/26 21:20:27 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.489 2009/04/26 21:21:12 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1322,9 +1322,7 @@ set_timezone() {
 
 		if [[ -f $_zonepath ]]; then
 			TZ=${_zonepath#$_zoneroot}
-			echo -n "Setting local timezone to '$TZ'..."
 			ln -sf /usr/share/zoneinfo/$TZ /mnt/etc/localtime
-			echo "done."
 			return
 		fi
 
