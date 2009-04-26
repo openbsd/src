@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.61 2009/01/01 22:50:13 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.62 2009/04/26 12:48:06 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -435,7 +435,7 @@ start:
 	}
 
 	if (dr == NULL) {
-		/* no designate router found use backup DR */
+		/* no designated router found use backup DR */
 		dr = bdr;
 		bdr = NULL;
 	}

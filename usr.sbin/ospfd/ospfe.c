@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.64 2009/04/07 14:57:33 reyk Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.65 2009/04/26 12:48:06 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -939,7 +939,7 @@ orig_rtr_lsa(struct area *area)
 	if (oeconf->border)
 		lsa_rtr.flags |= OSPF_RTR_B;
 	/* TODO set V flag if a active virtual link ends here and the
-	 * area is the tranist area for this link. */
+	 * area is the transit area for this link. */
 	if (virtual)
 		lsa_rtr.flags |= OSPF_RTR_V;
 
@@ -1003,7 +1003,7 @@ orig_net_lsa(struct iface *iface)
 		}
 
 	if (num_rtr == 1) {
-		/* non transit net therefor no need to generate a net lsa */
+		/* non transit net therefore no need to generate a net lsa */
 		buf_free(buf);
 		return;
 	}
