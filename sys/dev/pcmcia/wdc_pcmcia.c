@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.19 2009/03/29 21:53:53 sthen Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.20 2009/04/26 22:26:12 kettenis Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -439,6 +439,10 @@ wdc_pcmcia_activate(self, act)
 {
 	struct wdc_pcmcia_softc *sc = (struct wdc_pcmcia_softc *)self;
 	int rv = 0, s;
+
+	if (sc->sc_iowindow == -1)
+		/* Nothing to activate/deactivate. */
+		return (0);
 
 	s = splbio();
 	switch (act) {
