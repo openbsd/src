@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.437 2009/04/24 20:35:01 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.438 2009/04/26 12:30:20 sthen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 24 2009 $
+.Dd $Mdocdate: April 26 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -71,19 +71,6 @@ other addresses.
 .It Cm Packet Filtering
 Packet filtering provides rule-based blocking or passing of packets.
 .El
-.Pp
-With the exception of
-.Cm macros
-and
-.Cm tables ,
-the types of statements should be grouped and appear
-in the order shown above, as this matches the operation of the underlying
-packet filtering engine.
-By default
-.Xr pfctl 8
-enforces this order (see
-.Ar set require-order
-below).
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, and may contain letters, digits
@@ -383,19 +370,17 @@ set either.
 Setting this option does not affect non-fragmented packets.
 Fragment reassembly is turned on by default.
 .It Ar set require-order
-By default
+If set to
+.Ar yes ,
 .Xr pfctl 8
-enforces an ordering of the statement types in the ruleset to:
+will enforce that statement types in the ruleset are listed in the
+following order, to match the operation of the underlying packet
+filtering engine:
 .Em options ,
 .Em queueing ,
 .Em translation ,
 .Em filtering .
-Setting this option to
-.Ar no
-disables this enforcement.
-There may be non-trivial and non-obvious implications to an out of
-order ruleset.
-Consider carefully before disabling the order enforcement.
+This option is disabled by default.
 .It Ar set ruleset-optimization
 .Bl -tag -width xxxxxxxx -compact
 .It Ar basic

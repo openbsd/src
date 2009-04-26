@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.557 2009/04/25 19:29:54 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.558 2009/04/26 12:30:20 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -69,7 +69,7 @@ static u_int16_t	 returnicmpdefault =
 static u_int16_t	 returnicmp6default =
 			    (ICMP6_DST_UNREACH << 8) | ICMP6_DST_UNREACH_NOPORT;
 static int		 blockpolicy = PFRULE_DROP;
-static int		 require_order = 1;
+static int		 require_order = 0;
 static int		 default_statelock;
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
