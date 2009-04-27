@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.17 2009/04/23 07:42:02 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.18 2009/04/27 17:48:22 deraadt Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -106,9 +106,10 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 #endif
 	*pcb = p1->p_addr->u_pcb;
 
-	pcb->pcb_pmap = p2->p_vmspace->vm_map.pmap;
-	pcb->pcb_ldt_sel = p2->p_vmspace->vm_map.pmap->pm_ldt_sel;
-	pcb->pcb_cr3 = p2->p_vmspace->vm_map.pmap->pm_pdirpa;
+	/*
+	 * Activate the address space.  Note this will refresh pcb_ldt_sel.
+	 */
+	pmap_activate(p2);
 
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_rsp0 = (u_int64_t)p2->p_addr + USPACE - 16;
@@ -158,7 +159,7 @@ cpu_exit(struct proc *p)
 	if (p->p_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(p);
 
-	pmap_tlb_droppmap(p->p_vmspace->vm_map.pmap);
+	pmap_deactivate(p);
 	tss_free(p->p_md.md_tss_sel);
 	sched_exit(p);
 }

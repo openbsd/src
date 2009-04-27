@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.23 2009/04/23 07:42:02 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.24 2009/04/27 17:48:21 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -294,7 +294,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
 #endif
-	ci->ci_curpmap = pmap_kernel();
 
 	/* further PCB init done later. */
 

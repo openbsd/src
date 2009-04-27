@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.16 2009/04/23 07:42:02 art Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.17 2009/04/27 17:48:22 deraadt Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -234,8 +234,6 @@ lapic_boot_init(paddr_t lapic_base)
 	idt_vec_set(LAPIC_IPI_INVLPG, Xipi_invlpg);
 	idt_allocmap[LAPIC_IPI_INVLRANGE] = 1;
 	idt_vec_set(LAPIC_IPI_INVLRANGE, Xipi_invlrange);
-	idt_allocmap[LAPIC_IPI_RELOADCR3] = 1;
-	idt_vec_set(LAPIC_IPI_RELOADCR3, Xipi_reloadcr3);
 #endif
 	idt_allocmap[LAPIC_SPURIOUS_VECTOR] = 1;
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);

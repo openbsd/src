@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.33 2009/04/23 07:42:02 art Exp $	*/
+/*	$OpenBSD: locore.S,v 1.34 2009/04/27 17:48:22 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -132,9 +132,19 @@
 
 #include <machine/asm.h>
 
+#define SET_CURPROC(proc,cpu)			\
+	movq	CPUVAR(SELF),cpu	;	\
+	movq	proc,CPUVAR(CURPROC)      ;	\
+	movq	cpu,P_CPU(proc)
+
+#define GET_CURPCB(reg)			movq	CPUVAR(CURPCB),reg      
+#define SET_CURPCB(reg)			movq	reg,CPUVAR(CURPCB)
+
+
 /* XXX temporary kluge; these should not be here */
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
 #include <dev/isa/isareg.h>
+
 
 /*
  * Initialization
@@ -716,29 +726,43 @@ ENTRY(cpu_switchto)
 	pushq	%r14
 	pushq	%r15
 
+	movq	%rdi, %r13
+	movq	%rsi, %r12
+
 #ifdef DIAGNOSTIC
 	xorq	%rax,%rax
-	cmpq	%rax,P_WCHAN(%rsi)
+	cmpq	%rax,P_WCHAN(%r12)
 	jne	_C_LABEL(switch_error2)
-	cmpb	$SRUN,P_STAT(%rsi)
+	cmpb	$SRUN,P_STAT(%r12)
 	jne	_C_LABEL(switch_error3)
 #endif
 
-	/* No interrupts while loading new state. */
-	cli
-
 	/* Record new proc. */
-	movb	$SONPROC,P_STAT(%rsi)	# p->p_stat = SONPROC
-	movq	%rsi, CPUVAR(CURPROC)
+	movb	$SONPROC,P_STAT(%r12)	# p->p_stat = SONPROC
+	SET_CURPROC(%r12,%rcx)
 
-	/* If old proc exited, don't bother saving state. */
-	testq	%rdi,%rdi
+	/* If old proc exited, don't bother. */
+	testq	%r13,%r13
 	jz	switch_exited
 
+	/*
+	 * Save old context.
+	 *
+	 * Registers:
+	 *   %rax, %rcx - scratch
+	 *   %r13 - old proc, then old pcb
+	 *   %r12 - new proc
+	 */
+
+	movq	%r13,%rdi
+	call	pmap_deactivate
+
+	movq	P_ADDR(%r13),%r13
+
 	/* Save stack pointers. */
-	movq	P_ADDR(%rdi),%r13
 	movq	%rsp,PCB_RSP(%r13)
 	movq	%rbp,PCB_RBP(%r13)
+
 switch_exited:
 	/*
 	 * Restore saved context.
@@ -746,26 +770,41 @@ switch_exited:
 	 * Registers:
 	 *   %rax, %rcx, %rdx - scratch
 	 *   %r13 - new pcb
+	 *   %r12 - new process
 	 */
 
+	/* No interrupts while loading new state. */
+	cli
+	movq	P_ADDR(%r12),%r13
+
 	/* Restore stack pointers. */
-	movq	P_ADDR(%rsi),%r13
 	movq	PCB_RSP(%r13),%rsp
 	movq	PCB_RBP(%r13),%rbp
 
-	movq	%r13, CPUVAR(CURPCB)
+#if 0
+	/* Don't bother with the rest if switching to a system process. */
+	testl	$P_SYSTEM,P_FLAG(%r12)
+	jnz	switch_restored
+#endif
 
 	/* Load TSS info. */
+#ifdef MULTIPROCESSOR
 	movq    CPUVAR(GDT),%rax
-	movl	P_MD_TSS_SEL(%rsi),%edx
+#else   
+	movq	_C_LABEL(gdtstore)(%rip),%rax
+#endif
+	movl	P_MD_TSS_SEL(%r12),%edx
 
 	/* Switch TSS. Reset "task busy" flag before */
 	andl	$~0x0200,4(%rax,%rdx, 1)
 	ltr	%dx
 
-	call	_C_LABEL(pmap_switch)
-	/* %rsi and %rdi no longer valid */
+	movq	%r12,%rdi
+	call	_C_LABEL(pmap_activate)
 
+#if 0
+switch_restored:
+#endif
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%r13),%ecx
 #ifdef MULTIPROCESSOR
@@ -777,8 +816,12 @@ switch_exited:
 #endif
 	movq	%rcx,%cr0
 
+	SET_CURPCB(%r13)
+
 	/* Interrupts are okay again. */
 	sti
+
+switch_return:
 
 	popq	%r15
 	popq	%r14
