@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.214 2009/02/16 20:04:12 canacar Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.215 2009/04/27 22:52:55 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -334,10 +334,12 @@ const struct	cmd {
 	{ "range",	NEXTARG,	0,		setatrange },
 	{ "phase",	NEXTARG,	0,		setatphase },
 	{ "mplslabel",	NEXTARG,	0,		setmpelabel },
+#endif /* SMALL */
 	{ "vlan",	NEXTARG,	0,		setvlantag },
 	{ "vlanprio",	NEXTARG,	0,		setvlanprio },
 	{ "vlandev",	NEXTARG,	0,		setvlandev },
 	{ "-vlandev",	1,		0,		unsetvlandev },
+#ifndef SMALL
 	{ "advbase",	NEXTARG,	0,		setcarp_advbase },
 	{ "advskew",	NEXTARG,	0,		setcarp_advskew },
 	{ "carppeer",	NEXTARG,	0,		setcarppeer },
@@ -2605,7 +2607,9 @@ status(int link, struct sockaddr_dl *sdl)
 	if (ioctl(s, SIOCGIFPRIORITY, &ifrdesc) == 0)
 		printf("\tpriority: %d\n", ifrdesc.ifr_metric);
 
+#endif
 	vlan_status();
+#ifndef SMALL
 	carp_status();
 	pfsync_status();
 	pppoe_status();
@@ -3112,6 +3116,7 @@ setmpelabel(const char *val, int d)
 	if (ioctl(s, SIOCSETLABEL, (caddr_t)&ifr) == -1)
 		warn("SIOCSETLABEL");
 }
+#endif /* SMALL */
 
 static int __tag = 0;
 static int __have_tag = 0;
@@ -3238,6 +3243,7 @@ unsetvlandev(const char *val, int d)
 		err(1, "SIOCSETVLAN");
 }
 
+#ifndef SMALL
 static const char *carp_states[] = { CARP_STATES };
 static const char *carp_bal_modes[] = { CARP_BAL_MODES };
 
