@@ -1,4 +1,4 @@
-# $OpenBSD: dot.profile,v 1.5 2005/03/30 21:18:33 millert Exp $
+# $OpenBSD: dot.profile,v 1.6 2009/04/27 05:02:12 deraadt Exp $
 #
 # sh/ksh initialization
 
@@ -8,6 +8,6 @@ export PATH
 export HOME
 umask 022
 
-if [ -x /usr/bin/tset ]; then
+if [ x"$TERM" != xxterm -a -x /usr/bin/tset ]; then
 	eval `/usr/bin/tset -sQ \?$TERM`
 fi
