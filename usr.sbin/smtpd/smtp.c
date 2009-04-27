@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.38 2009/04/24 09:38:11 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.39 2009/04/27 16:22:17 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -373,8 +373,10 @@ smtp_dispatch_queue(int sig, short event, void *p)
 
 			fd = imsg_get_fd(ibuf, &imsg);
 
-			if ((s = session_lookup(env, ss->id)) == NULL)
+			if ((s = session_lookup(env, ss->id)) == NULL) {
+				close(fd);
 				break;
+			}
 
 			if (fd != -1) {
 				s->datafp = fdopen(fd, "w");
