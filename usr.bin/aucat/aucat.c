@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.59 2009/03/17 21:26:44 jmc Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.60 2009/04/27 18:09:34 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -476,7 +476,7 @@ main(int argc, char **argv)
 	 */
 	if (l_flag && SLIST_EMPTY(&sfiles)) {
 		farg_add(&sfiles, &dopar, &dipar,
-		    MIDI_MAXCTL, HDR_RAW, XRUN_IGNORE, DEFAULT_SOCKET);
+		    volctl, HDR_RAW, XRUN_IGNORE, DEFAULT_SOCKET);
 	}
 
 	if (!u_flag) {
