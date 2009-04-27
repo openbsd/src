@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.76 2009/04/27 16:20:34 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.77 2009/04/27 20:17:21 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -67,7 +67,6 @@ void		session_read(struct bufferevent *, void *);
 int		session_read_data(struct session *, char *, size_t);
 void		session_write(struct bufferevent *, void *);
 void		session_error(struct bufferevent *, short, void *);
-void		session_msg_submit(struct session *);
 void		session_command(struct session *, char *, char *);
 int		session_set_path(struct path *, char *);
 void		session_imsg(struct session *, enum smtp_proc_type,
@@ -799,7 +798,8 @@ session_read_data(struct session *s, char *line, size_t nread)
 			session_respond(s, "421 Temporary failure");
 			s->s_state = S_HELO;
 		} else {
-			session_msg_submit(s);
+			session_imsg(s, PROC_QUEUE, IMSG_QUEUE_COMMIT_MESSAGE,
+			    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
 			s->s_state = S_DONE;
 		}
 
@@ -914,14 +914,6 @@ session_error(struct bufferevent *bev, short event, void *p)
 		bufferevent_disable(s->s_bev, EV_READ);
 	} else
 		session_destroy(s);
-}
-
-void
-session_msg_submit(struct session *s)
-{
-	session_imsg(s, PROC_QUEUE, IMSG_QUEUE_COMMIT_MESSAGE, 0, 0, -1,
-	    &s->s_msg, sizeof(s->s_msg));
-	s->s_state = S_DONE;
 }
 
 int
