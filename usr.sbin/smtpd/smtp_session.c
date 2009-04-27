@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.74 2009/04/24 15:26:59 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.75 2009/04/27 16:10:20 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -437,6 +437,7 @@ session_rfc5321_quit_handler(struct session *s, char *args)
 	session_respond(s, "221 %s Closing connection", s->s_env->sc_hostname);
 
 	s->s_flags |= F_QUIT;
+	bufferevent_disable(s->s_bev, EV_READ);
 
 	return 1;
 }
@@ -697,8 +698,9 @@ session_pickup(struct session *s, struct submit_status *ss)
 	return;
 
 tempfail:
-	s->s_flags |= F_QUIT;
 	session_respond(s, "421 Service temporarily unavailable");
+	s->s_flags |= F_QUIT;
+	bufferevent_disable(s->s_bev, EV_READ);
 	return;
 }
 
@@ -740,6 +742,7 @@ read:
 		if (EVBUFFER_LENGTH(bev->input) > SMTP_ANYLINE_MAX) {
 			session_respond(s, "500 Line too long");
 			s->s_flags |= F_QUIT;
+			bufferevent_disable(s->s_bev, EV_READ);
 		}
 		return;
 	}
@@ -915,9 +918,10 @@ session_error(struct bufferevent *bev, short event, void *p)
 	 * but set F_QUIT flag so that we destroy it as
 	 * soon as the event lock is removed.
 	 */
-	if (s->s_flags & F_EVLOCKED)
+	if (s->s_flags & F_EVLOCKED) {
 		s->s_flags |= F_QUIT;
-	else
+		bufferevent_disable(s->s_bev, EV_READ);
+	} else
 		session_destroy(s);
 }
 
