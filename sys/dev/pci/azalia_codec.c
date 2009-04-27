@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.119 2009/04/25 05:02:40 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.120 2009/04/27 23:49:04 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -357,6 +357,17 @@ azalia_generic_codec_add_convgroup(codec_t *this, convgroupset_t *group,
 			}
 		}
 	}
+	/* Make sure the speaker dac is part of the analog output convgroup
+	 * or it won't get connected by azalia_codec_connect_stream().
+	 */
+	if (type == COP_AWTYPE_AUDIO_OUTPUT && !digital &&
+	    nconvs < nall_convs && this->spkr_dac != -1) {
+		for (i = 0; i < nconvs; i++)
+			if (convs[i] == this->spkr_dac)
+				break;
+		if (i == nconvs)
+			convs[nconvs++] = this->spkr_dac;
+	}
 done:
 	for (i = 0; i < nconvs; i++)
 		group->groups[group->ngroups].conv[i] = convs[i];
@@ -365,13 +376,9 @@ done:
 		group->ngroups++;
 	}
 
-	/* Disable converters that aren't in a convgroup and aren't the
-	 * speaker dac.
-	 */
+	/* Disable converters that aren't in a convgroup. */
 	for (i = 0; i < nall_convs; i++) {
 		conv = all_convs[i];
-		if (this->spkr_dac == conv)
-			continue;
 		for (j = 0; j < nconvs; j++)
 			if (convs[j] == conv)
 				break;

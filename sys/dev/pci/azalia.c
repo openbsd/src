@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.125 2009/04/25 05:07:56 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.126 2009/04/27 23:49:04 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2408,11 +2408,6 @@ azalia_widget_label_widgets(codec_t *codec)
 						    wtypes[w->type]);
 					break;
 				}
-			}
-			if (j == codec->dacs.groups[0].nconv &&
-			    w->nid == codec->spkr_dac) {
-				snprintf(w->name, sizeof(w->name), "%s%d",
-				    wtypes[w->type], j + 1);
 			}
 			if (codec->dacs.ngroups < 2)
 				break;
