@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.9 2009/04/17 21:48:54 mk Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.10 2009/04/27 21:01:27 mk Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -309,7 +309,6 @@ schsio_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map i/o space\n");
 		return;
 	}
-	    
 
 	schsio_wdt_init(sc);
 	schsio_hwm_init(sc);
@@ -318,7 +317,6 @@ schsio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Escape from configuration mode */
 	schsio_config_disable(sc->sc_iot, sc->sc_ioh);
-
 }
 
 void
@@ -520,7 +518,7 @@ schsio_wdt_cb(void *arg, int period)
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_rr, SCHSIO_WDT_TIMEOUT,
 	    reg);
-	    
+
 	/* Set value */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_rr, SCHSIO_WDT_VAL, val);
 
