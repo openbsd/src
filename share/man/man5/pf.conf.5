@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.440 2009/04/27 19:04:42 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.441 2009/04/27 21:52:26 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -40,6 +40,30 @@ packet filter modifies, drops, or passes packets according to rules or
 definitions specified in
 .Nm .
 .Pp
+This is an overview of the sections in this manual page:
+.Bl -ohang
+.It Sy Options
+Global options tune the behaviour of the packet filtering engine.
+.It Sy Queueing
+Queueing provides rule-based bandwidth control.
+.It Sy Translation
+Translation specifies how addresses are mapped to other addresses.
+.It Sy Packet Filtering
+Packet filtering provides rule-based blocking or passing of packets.
+.It Sy Tables
+Tables provide a method for dealing with large numbers of addresses.
+.It Sy Anchors
+Anchors are containers for rules and tables.
+.It Sy Stateful Filtering
+Stateful filtering tracks packets by state.
+.It Sy Traffic Normalisation
+Including scrub, fragment handling, and blocking spoofed traffic.
+.It Sy Operating System Fingerprinting
+A method for detecting a host's operating system.
+.It Sy Examples
+Translation and filter examples.
+.El
+.Pp
 Comments can be put anywhere in the file using a hash mark
 .Pq Sq # ,
 and extend to the end of the current line.
@@ -50,28 +74,6 @@ keyword, for example:
 include "/etc/pf/sub.filter.conf"
 .Ed
 .Pp
-There are six types of statements in
-.Nm :
-.Bl -tag -width xxxx
-.It Cm Macros
-User-defined variables may be defined and used later, simplifying
-the configuration file.
-Macros must be defined before they are referenced in
-.Nm .
-.It Cm Tables
-Tables provide a mechanism for increasing the performance and flexibility of
-rules with large numbers of source or destination addresses.
-.It Cm Options
-Options tune the behaviour of the packet filtering engine.
-.It Cm Queueing
-Queueing provides rule-based bandwidth control.
-.It Cm Translation Li (various forms of NAT)
-Translation rules specify how addresses are to be mapped or redirected to
-other addresses.
-.It Cm Packet Filtering
-Packet filtering provides rule-based blocking or passing of packets.
-.El
-.Sh MACROS
 Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, and may contain letters, digits
 and underscores.
@@ -88,128 +90,6 @@ all_ifs = "{" $ext_if lo0 "}"
 pass out on $ext_if from any to any
 pass in  on $ext_if proto tcp from any to any port 25
 .Ed
-.Sh TABLES
-Tables are named structures which can hold a collection of addresses and
-networks.
-Lookups against tables in
-.Xr pf 4
-are relatively fast, making a single rule with tables much more efficient,
-in terms of
-processor usage and memory consumption, than a large number of rules which
-differ only in IP address (either created explicitly or automatically by rule
-expansion).
-.Pp
-Tables can be used as the source or destination of filter
-or translation rules.
-They can also be used for the redirect address of
-.Ar nat
-and
-.Ar rdr
-rules and in the routing options of filter rules, but only for
-.Ar round-robin
-pools.
-.Pp
-Tables can be defined with any of the following
-.Xr pfctl 8
-mechanisms.
-As with macros, reserved words may not be used as table names.
-.Bl -tag -width "manually"
-.It Ar manually
-Persistent tables can be manually created with the
-.Ar add
-or
-.Ar replace
-option of
-.Xr pfctl 8 ,
-before or after the ruleset has been loaded.
-.It Pa pf.conf
-Table definitions can be placed directly in this file and loaded at the
-same time as other rules are loaded, atomically.
-Table definitions inside
-.Nm
-use the
-.Ar table
-statement, and are especially useful to define non-persistent tables.
-The contents of a pre-existing table defined without a list of addresses
-to initialize it is not altered when
-.Nm
-is loaded.
-A table initialized with the empty list,
-.Li { } ,
-will be cleared on load.
-.El
-.Pp
-Tables may be defined with the following attributes:
-.Bl -tag -width persist
-.It Ar const
-The
-.Ar const
-flag prevents the user from altering the contents of the table once it
-has been created.
-Without that flag,
-.Xr pfctl 8
-can be used to add or remove addresses from the table at any time, even
-when running with
-.Xr securelevel 7
-= 2.
-.It Ar counters
-The
-.Ar counters
-flag enables per-address packet and byte counters, which can be displayed with
-.Xr pfctl 8 .
-.It Ar persist
-The
-.Ar persist
-flag forces the kernel to keep the table even when no rules refer to it.
-If the flag is not set, the kernel will automatically remove the table
-when the last rule referring to it is flushed.
-.El
-.Pp
-This example
-creates a table called private,
-to hold RFC 1918 private network blocks,
-and a table called badhosts,
-which is initially empty.
-A filter rule is set up to block all traffic coming from addresses listed in
-either table:
-.Bd -literal -offset indent
-table \*(Ltprivate\*(Gt const { 10/8, 172.16/12, 192.168/16 }
-table \*(Ltbadhosts\*(Gt persist
-block on fxp0 from { \*(Ltprivate\*(Gt, \*(Ltbadhosts\*(Gt } to any
-.Ed
-.Pp
-The private table cannot have its contents changed and the badhosts table
-will exist even when no active filter rules reference it.
-Addresses may later be added to the badhosts table, so that traffic from
-these hosts can be blocked by using the following:
-.Pp
-.Dl # pfctl -t badhosts -Tadd 204.92.77.111
-.Pp
-A table can also be initialized with an address list specified in one or more
-external files, using the following syntax:
-.Bd -literal -offset indent
-table \*(Ltspam\*(Gt persist file "/etc/spammers" file "/etc/openrelays"
-block on fxp0 from \*(Ltspam\*(Gt to any
-.Ed
-.Pp
-The files
-.Pa /etc/spammers
-and
-.Pa /etc/openrelays
-list IP addresses, one per line.
-Any lines beginning with a
-.Sq #
-are treated as comments and ignored.
-In addition to being specified by IP address, hosts may also be
-specified by their hostname.
-When the resolver is called to add a hostname to a table,
-.Ar all
-resulting IPv4 and IPv6 addresses are placed into the table.
-IP addresses can also be entered in a table by specifying a valid interface
-name, a valid interface group, or the
-.Ar self
-keyword, in which case all addresses assigned to the interface(s) will be
-added to the table.
 .Sh OPTIONS
 .Xr pf 4
 may be tuned for various situations using the
@@ -1633,9 +1513,9 @@ block out proto { tcp, udp } all
 pass  out proto { tcp, udp } all user { \*(Lt 1000, dhartmei }
 .Ed
 .El
-.Sh ROUTING
-If a packet matches a rule with a route option set, the packet filter will
-route the packet according to the type of route option.
+.Ss Routing
+If a packet matches a rule with one of the following route options set,
+the packet filter will route the packet according to the type of route option.
 When such a rule creates state, the route option is also applied to all
 packets matching the same connection.
 .Bl -tag -width xxxx
@@ -1692,6 +1572,296 @@ and
 as described above in
 .Sx TRANSLATION ,
 can be used.
+.Sh TABLES
+Tables are named structures which can hold a collection of addresses and
+networks.
+Lookups against tables in
+.Xr pf 4
+are relatively fast, making a single rule with tables much more efficient,
+in terms of
+processor usage and memory consumption, than a large number of rules which
+differ only in IP address (either created explicitly or automatically by rule
+expansion).
+.Pp
+Tables can be used as the source or destination of filter
+or translation rules.
+They can also be used for the redirect address of
+.Ar nat
+and
+.Ar rdr
+rules and in the routing options of filter rules, but only for
+.Ar round-robin
+pools.
+.Pp
+Tables can be defined with any of the following
+.Xr pfctl 8
+mechanisms.
+As with macros, reserved words may not be used as table names.
+.Bl -tag -width "manually"
+.It Ar manually
+Persistent tables can be manually created with the
+.Ar add
+or
+.Ar replace
+option of
+.Xr pfctl 8 ,
+before or after the ruleset has been loaded.
+.It Pa pf.conf
+Table definitions can be placed directly in this file and loaded at the
+same time as other rules are loaded, atomically.
+Table definitions inside
+.Nm
+use the
+.Ar table
+statement, and are especially useful to define non-persistent tables.
+The contents of a pre-existing table defined without a list of addresses
+to initialize it is not altered when
+.Nm
+is loaded.
+A table initialized with the empty list,
+.Li { } ,
+will be cleared on load.
+.El
+.Pp
+Tables may be defined with the following attributes:
+.Bl -tag -width persist
+.It Ar const
+The
+.Ar const
+flag prevents the user from altering the contents of the table once it
+has been created.
+Without that flag,
+.Xr pfctl 8
+can be used to add or remove addresses from the table at any time, even
+when running with
+.Xr securelevel 7
+= 2.
+.It Ar counters
+The
+.Ar counters
+flag enables per-address packet and byte counters, which can be displayed with
+.Xr pfctl 8 .
+.It Ar persist
+The
+.Ar persist
+flag forces the kernel to keep the table even when no rules refer to it.
+If the flag is not set, the kernel will automatically remove the table
+when the last rule referring to it is flushed.
+.El
+.Pp
+This example
+creates a table called private,
+to hold RFC 1918 private network blocks,
+and a table called badhosts,
+which is initially empty.
+A filter rule is set up to block all traffic coming from addresses listed in
+either table:
+.Bd -literal -offset indent
+table \*(Ltprivate\*(Gt const { 10/8, 172.16/12, 192.168/16 }
+table \*(Ltbadhosts\*(Gt persist
+block on fxp0 from { \*(Ltprivate\*(Gt, \*(Ltbadhosts\*(Gt } to any
+.Ed
+.Pp
+The private table cannot have its contents changed and the badhosts table
+will exist even when no active filter rules reference it.
+Addresses may later be added to the badhosts table, so that traffic from
+these hosts can be blocked by using the following:
+.Pp
+.Dl # pfctl -t badhosts -Tadd 204.92.77.111
+.Pp
+A table can also be initialized with an address list specified in one or more
+external files, using the following syntax:
+.Bd -literal -offset indent
+table \*(Ltspam\*(Gt persist file "/etc/spammers" file "/etc/openrelays"
+block on fxp0 from \*(Ltspam\*(Gt to any
+.Ed
+.Pp
+The files
+.Pa /etc/spammers
+and
+.Pa /etc/openrelays
+list IP addresses, one per line.
+Any lines beginning with a
+.Sq #
+are treated as comments and ignored.
+In addition to being specified by IP address, hosts may also be
+specified by their hostname.
+When the resolver is called to add a hostname to a table,
+.Ar all
+resulting IPv4 and IPv6 addresses are placed into the table.
+IP addresses can also be entered in a table by specifying a valid interface
+name, a valid interface group, or the
+.Ar self
+keyword, in which case all addresses assigned to the interface(s) will be
+added to the table.
+.Sh ANCHORS
+Besides the main ruleset,
+.Nm
+can specify
+.Ar anchor
+attachment points.
+An anchor is a container that can hold rules,
+address tables, and other anchors.
+When evaluation of the main ruleset reaches an
+.Ar anchor
+rule,
+.Xr pf 4
+will proceed to evaluate all rules specified in that anchor.
+.Pp
+The following example blocks all packets on the external interface by default,
+then evaluates all rules in the anchor named "spam",
+and finally passes all outgoing connections and
+incoming connections to port 25:
+.Bd -literal -offset indent
+ext_if = "kue0"
+block on $ext_if all
+anchor spam
+pass out on $ext_if all
+pass in on $ext_if proto tcp from any to $ext_if port smtp
+.Ed
+.Pp
+Anchors can be manipulated through
+.Xr pfctl 8
+without reloading the main ruleset or other anchors.
+This loads a single rule into the anchor,
+which blocks all packets from a specific address:
+.Bd -literal -offset indent
+# echo "block in quick from 1.2.3.4 to any" | pfctl -a spam -f -
+.Ed
+.Pp
+The anchor can also be populated by adding a
+.Ar load anchor
+rule after the anchor rule.
+When
+.Xr pfctl 8
+loads
+.Nm ,
+it will also load all the rules from the file
+.Pa /etc/pf-spam.conf
+into the anchor.
+.Bd -literal -offset indent
+anchor spam
+load anchor spam from "/etc/pf-spam.conf"
+.Ed
+.Pp
+Filter rule anchors can also be loaded inline in the ruleset
+within a brace-delimited block.
+Brace delimited blocks may contain rules or other brace-delimited blocks.
+When anchors are loaded this way the anchor name becomes optional.
+Since the parser specification for anchor names is a string,
+double quote characters
+.Pq Sq \&"
+should be placed around the anchor name.
+.Bd -literal -offset indent
+anchor "external" on egress {
+	block
+	anchor out {
+		pass proto tcp from any to port { 25, 80, 443 }
+	}
+	pass in proto tcp to any port 22
+}
+.Ed
+.Pp
+Anchor rules can also specify packet filtering parameters
+using the same syntax as filter rules.
+When parameters are used,
+the anchor rule is only evaluated for matching packets.
+This allows conditional evaluation of anchors, like:
+.Bd -literal -offset indent
+block on $ext_if all
+anchor spam proto tcp from any to any port smtp
+pass out on $ext_if all
+pass in on $ext_if proto tcp from any to $ext_if port smtp
+.Ed
+.Pp
+The rules inside anchor "spam" are only evaluated
+for TCP packets with destination port 25.
+Hence, the following
+will only block connections from 1.2.3.4 to port 25:
+.Bd -literal -offset indent
+# echo "block in quick from 1.2.3.4 to any" | pfctl -a spam -f -
+.Ed
+.Pp
+Matching filter and translation rules marked with the
+.Ar quick
+option are final and abort the evaluation of the rules in other
+anchors and the main ruleset.
+If the anchor itself is marked with the
+.Ar quick
+option,
+ruleset evaluation will terminate when the anchor is exited if the packet is
+matched by any rule within the anchor.
+.Pp
+An anchor references other anchor attachment points
+using the following syntax:
+.Bl -tag -width xxxx
+.It Ar anchor Aq Ar name
+Evaluates the filter rules in the specified anchor.
+.It Ar binat-anchor Aq Ar name
+Evaluates the
+.Ar binat
+rules in the specified anchor.
+.It Ar nat-anchor Aq Ar name
+Evaluates the
+.Ar nat
+rules in the specified anchor.
+.It Ar rdr-anchor Aq Ar name
+Evaluates the
+.Ar rdr
+rules in the specified anchor.
+.El
+.Pp
+An anchor has a name which specifies the path where
+.Xr pfctl 8
+can be used to access the anchor to perform operations on it, such as
+attaching child anchors to it or loading rules into it.
+Anchors may be nested, with components separated by
+.Sq /
+characters, similar to how file system hierarchies are laid out.
+The main ruleset is actually the default anchor, so filter and
+translation rules, for example, may also be contained in any anchor.
+.Pp
+Anchor rules are evaluated relative to the anchor in which they are contained.
+For example,
+all anchor rules specified in the main ruleset will reference
+anchor attachment points underneath the main ruleset,
+and anchor rules specified in a file loaded from a
+.Ar load anchor
+rule will be attached under that anchor point.
+.Pp
+Anchors may end with the asterisk
+.Pq Sq *
+character, which signifies that all anchors attached at that point
+should be evaluated in the alphabetical ordering of their anchor name.
+For example,
+the following
+will evaluate each rule in each anchor attached to the "spam" anchor:
+.Bd -literal -offset indent
+anchor "spam/*"
+.Ed
+.Pp
+Note that it will only evaluate anchors that are directly attached to the
+"spam" anchor, and will not descend to evaluate anchors recursively.
+.Pp
+Since anchors are evaluated relative to the anchor in which they are
+contained, there is a mechanism for accessing the parent and ancestor
+anchors of a given anchor.
+Similar to file system path name resolution, if the sequence
+.Sq ..
+appears as an anchor path component, the parent anchor of the current
+anchor in the path evaluation at that point will become the new current
+anchor.
+As an example, consider the following:
+.Bd -literal -offset indent
+# echo 'anchor "spam/allowed"' | pfctl -f -
+# echo 'anchor "../banned"\enpass' | pfctl -a spam/allowed -f -
+.Ed
+.Pp
+Evaluation of the main ruleset will lead into the
+spam/allowed anchor, which will evaluate the rules in the
+spam/banned anchor, if any, before finally evaluating the
+.Ar pass
+rule.
 .Sh STATEFUL FILTERING
 .Xr pf 4
 filters packets statefully,
@@ -2150,7 +2320,6 @@ to the specified interface(s) from entering the system through
 any other interface.
 .Pp
 For example:
-.Pp
 .Dl antispoof for lo0
 .Pp
 Expands to:
@@ -2250,174 +2419,6 @@ appear as any operating system he chooses;
 an operating system patch could change the stack behavior and no fingerprints
 will match it until the database is updated;
 and multiple operating systems may have the same fingerprint.
-.Sh ANCHORS
-Besides the main ruleset,
-.Nm
-can specify
-.Ar anchor
-attachment points.
-An anchor is a container that can hold rules,
-address tables, and other anchors.
-When evaluation of the main ruleset reaches an
-.Ar anchor
-rule,
-.Xr pf 4
-will proceed to evaluate all rules specified in that anchor.
-.Pp
-The following example blocks all packets on the external interface by default,
-then evaluates all rules in the anchor named "spam",
-and finally passes all outgoing connections and
-incoming connections to port 25:
-.Bd -literal -offset indent
-ext_if = "kue0"
-block on $ext_if all
-anchor spam
-pass out on $ext_if all
-pass in on $ext_if proto tcp from any to $ext_if port smtp
-.Ed
-.Pp
-Anchors can be manipulated through
-.Xr pfctl 8
-without reloading the main ruleset or other anchors.
-This loads a single rule into the anchor,
-which blocks all packets from a specific address:
-.Bd -literal -offset indent
-# echo "block in quick from 1.2.3.4 to any" | pfctl -a spam -f -
-.Ed
-.Pp
-The anchor can also be populated by adding a
-.Ar load anchor
-rule after the anchor rule.
-When
-.Xr pfctl 8
-loads
-.Nm ,
-it will also load all the rules from the file
-.Pa /etc/pf-spam.conf
-into the anchor.
-.Bd -literal -offset indent
-anchor spam
-load anchor spam from "/etc/pf-spam.conf"
-.Ed
-.Pp
-Filter rule anchors can also be loaded inline in the ruleset
-within a brace-delimited block.
-Brace delimited blocks may contain rules or other brace-delimited blocks.
-When anchors are loaded this way the anchor name becomes optional.
-Since the parser specification for anchor names is a string,
-double quote characters
-.Pq Sq \&"
-should be placed around the anchor name.
-.Bd -literal -offset indent
-anchor "external" on egress {
-	block
-	anchor out {
-		pass proto tcp from any to port { 25, 80, 443 }
-	}
-	pass in proto tcp to any port 22
-}
-.Ed
-.Pp
-Anchor rules can also specify packet filtering parameters
-using the same syntax as filter rules.
-When parameters are used,
-the anchor rule is only evaluated for matching packets.
-This allows conditional evaluation of anchors, like:
-.Bd -literal -offset indent
-block on $ext_if all
-anchor spam proto tcp from any to any port smtp
-pass out on $ext_if all
-pass in on $ext_if proto tcp from any to $ext_if port smtp
-.Ed
-.Pp
-The rules inside anchor "spam" are only evaluated
-for TCP packets with destination port 25.
-Hence, the following
-will only block connections from 1.2.3.4 to port 25:
-.Bd -literal -offset indent
-# echo "block in quick from 1.2.3.4 to any" | pfctl -a spam -f -
-.Ed
-.Pp
-Matching filter and translation rules marked with the
-.Ar quick
-option are final and abort the evaluation of the rules in other
-anchors and the main ruleset.
-If the anchor itself is marked with the
-.Ar quick
-option,
-ruleset evaluation will terminate when the anchor is exited if the packet is
-matched by any rule within the anchor.
-.Pp
-An anchor references other anchor attachment points
-using the following syntax:
-.Bl -tag -width xxxx
-.It Ar anchor Aq Ar name
-Evaluates the filter rules in the specified anchor.
-.It Ar binat-anchor Aq Ar name
-Evaluates the
-.Ar binat
-rules in the specified anchor.
-.It Ar nat-anchor Aq Ar name
-Evaluates the
-.Ar nat
-rules in the specified anchor.
-.It Ar rdr-anchor Aq Ar name
-Evaluates the
-.Ar rdr
-rules in the specified anchor.
-.El
-.Pp
-An anchor has a name which specifies the path where
-.Xr pfctl 8
-can be used to access the anchor to perform operations on it, such as
-attaching child anchors to it or loading rules into it.
-Anchors may be nested, with components separated by
-.Sq /
-characters, similar to how file system hierarchies are laid out.
-The main ruleset is actually the default anchor, so filter and
-translation rules, for example, may also be contained in any anchor.
-.Pp
-Anchor rules are evaluated relative to the anchor in which they are contained.
-For example,
-all anchor rules specified in the main ruleset will reference
-anchor attachment points underneath the main ruleset,
-and anchor rules specified in a file loaded from a
-.Ar load anchor
-rule will be attached under that anchor point.
-.Pp
-Anchors may end with the asterisk
-.Pq Sq *
-character, which signifies that all anchors attached at that point
-should be evaluated in the alphabetical ordering of their anchor name.
-For example,
-the following
-will evaluate each rule in each anchor attached to the "spam" anchor:
-.Bd -literal -offset indent
-anchor "spam/*"
-.Ed
-.Pp
-Note that it will only evaluate anchors that are directly attached to the
-"spam" anchor, and will not descend to evaluate anchors recursively.
-.Pp
-Since anchors are evaluated relative to the anchor in which they are
-contained, there is a mechanism for accessing the parent and ancestor
-anchors of a given anchor.
-Similar to file system path name resolution, if the sequence
-.Sq ..
-appears as an anchor path component, the parent anchor of the current
-anchor in the path evaluation at that point will become the new current
-anchor.
-As an example, consider the following:
-.Bd -literal -offset indent
-# echo 'anchor "spam/allowed"' | pfctl -f -
-# echo 'anchor "../banned"\enpass' | pfctl -a spam/allowed -f -
-.Ed
-.Pp
-Evaluation of the main ruleset will lead into the
-spam/allowed anchor, which will evaluate the rules in the
-spam/banned anchor, if any, before finally evaluating the
-.Ar pass
-rule.
 .Sh TRANSLATION EXAMPLES
 This example maps incoming requests on port 80 to port 8080, on
 which a daemon is running (because, for example, it is not run as root,
