@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.75 2009/04/27 16:10:20 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.76 2009/04/27 16:20:34 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -70,7 +70,6 @@ void		session_error(struct bufferevent *, short, void *);
 void		session_msg_submit(struct session *);
 void		session_command(struct session *, char *, char *);
 int		session_set_path(struct path *, char *);
-void		session_cleanup(struct session *);
 void		session_imsg(struct session *, enum smtp_proc_type,
 		    enum imsg_type, u_int32_t, pid_t, int, void *, u_int16_t);
 
@@ -379,7 +378,6 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	session_cleanup(s);
 	s->rcptcount = 0;
 	s->s_state = S_MAILREQUEST;
 	s->s_msg.id = s->s_id;
@@ -863,9 +861,23 @@ session_write(struct bufferevent *bev, void *p)
 void
 session_destroy(struct session *s)
 {
-	session_cleanup(s);
-
 	log_debug("session_destroy: killing client: %p", s);
+
+	if (s->datafp != NULL)
+		fclose(s->datafp);
+
+	if (s->s_msg.message_id[0] != '\0' && s->s_state != S_DONE) {
+		/*
+		 * IMSG_QUEUE_REMOVE_MESSAGE must not be sent using session_imsg
+		 * since no reply for it is expected.
+		 */
+		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
+		    IMSG_QUEUE_REMOVE_MESSAGE, 0, 0, -1, &s->s_msg,
+		    sizeof(s->s_msg));
+		s->s_msg.message_id[0] = '\0';
+		s->s_msg.message_uid[0] = '\0';
+	}
+
 	close(s->s_fd);
 
 	s_smtp.sessions_active--;
@@ -881,27 +893,6 @@ session_destroy(struct session *s)
 	SPLAY_REMOVE(sessiontree, &s->s_env->sc_sessions, s);
 	bzero(s, sizeof(*s));
 	free(s);
-}
-
-void
-session_cleanup(struct session *s)
-{
-	if (s->datafp != NULL) {
-		fclose(s->datafp);
-		s->datafp = NULL;
-	}
-
-	if (s->s_msg.message_id[0] != '\0' && s->s_state != S_DONE) {
-		/*
-		 * IMSG_QUEUE_REMOVE_MESSAGE must not be sent using session_imsg
-		 * since no reply for it is expected.
-		 */
-		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
-		    IMSG_QUEUE_REMOVE_MESSAGE, 0, 0, -1, &s->s_msg,
-		    sizeof(s->s_msg));
-		s->s_msg.message_id[0] = '\0';
-		s->s_msg.message_uid[0] = '\0';
-	}
 }
 
 void
