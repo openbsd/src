@@ -1,4 +1,4 @@
-/*	$OpenBSD: domacro.c,v 1.15 2009/04/27 21:37:13 deraadt Exp $	*/
+/*	$OpenBSD: domacro.c,v 1.16 2009/04/27 22:51:51 martynas Exp $	*/
 /*	$NetBSD: domacro.c,v 1.10 1997/07/20 09:45:45 lukem Exp $	*/
 
 /*
@@ -29,6 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef SMALL
 
 #include <ctype.h>
 #include <signal.h>
@@ -142,3 +144,5 @@ TOP:
 		goto TOP;
 	}
 }
+
+#endif /* !SMALL */

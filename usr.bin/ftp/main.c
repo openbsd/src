@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.75 2009/04/27 21:37:13 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.76 2009/04/27 22:51:51 martynas Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -334,7 +334,9 @@ main(volatile int argc, char *argv[])
 				if (!retry_connect)
 					break;
 				if (!connected) {
+#ifndef SMALL
 					macnum = 0;
+#endif /* !SMALL */
 					fputs("Retrying...\n", ttyout);
 					sleep(retry_connect);
 				}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.76 2009/04/27 21:37:13 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.77 2009/04/27 22:51:51 martynas Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -524,6 +524,7 @@ getreply(int expecteof)
 	}
 }
 
+#ifndef SMALL
 jmp_buf	sendabort;
 
 /* ARGSUSED */
@@ -822,6 +823,7 @@ abort:
 	if (bytes > 0)
 		ptransfer(0);
 }
+#endif /* !SMALL */
 
 jmp_buf	recvabort;
 

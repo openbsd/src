@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.37 2009/04/26 21:26:03 martynas Exp $	*/
+/*	$OpenBSD: extern.h,v 1.38 2009/04/27 22:51:51 martynas Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -66,7 +66,9 @@
 void    abort_remote(FILE *);
 void    abortpt(int);
 void    abortrecv(int);
+#ifndef SMALL
 void    abortsend(int);
+#endif /* !SMALL */
 void	account(int, char **);
 void	alarmtimer(int);
 int	another(int *, char ***, const char *);
@@ -88,7 +90,9 @@ void	deletecmd(int, char **);
 void	disconnect(int, char **);
 void	do_chmod(int, char **);
 void	do_umask(int, char **);
+#ifndef SMALL
 void	domacro(int, char **);
+#endif /* !SMALL */
 char   *domap(char *);
 void	doproxy(int, char **);
 char   *dotrans(char *);
@@ -113,14 +117,18 @@ void	lostpeer(void);
 void	lpwd(int, char **);
 void	ls(int, char **);
 void	mabort(int);
+#ifndef SMALL
 void	macdef(int, char **);
+#endif /* !SMALL */
 void	makeargv(void);
 void	makedir(int, char **);
 void	mdelete(int, char **);
 void	mget(int, char **);
 void	mls(int, char **);
 void	modtime(int, char **);
+#ifndef SMALL
 void	mput(int, char **);
+#endif /* !SMALL */
 char   *onoff(int);
 void	newer(int, char **);
 void	page(int, char **);
@@ -132,8 +140,10 @@ void    psabort(int);
 void	psummary(int);
 void    pswitch(int);
 void    ptransfer(int);
+#ifndef SMALL
 void	put(int, char **);
 void	putit(int, char **, int);
+#endif /* !SMALL */
 void	pwd(int, char **);
 void	quit(int, char **);
 void	quote(int, char **);
@@ -149,12 +159,16 @@ off_t	remotesize(const char *, int);
 time_t	remotemodtime(const char *, int);
 void	removedir(int, char **);
 void	renamefile(int, char **);
+#ifndef SMALL
 void	reput(int, char **);
+#endif /* !SMALL */
 void    reset(int, char **);
 void	restart(int, char **);
 void	rmthelp(int, char **);
 void	rmtstatus(int, char **);
+#ifndef SMALL
 void    sendrequest(const char *, const char *, const char *, int);
+#endif /* !SMALL */
 void	setascii(int, char **);
 void	setbell(int, char **);
 void	setbinary(int, char **);

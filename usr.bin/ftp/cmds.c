@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.68 2009/04/27 21:37:13 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.69 2009/04/27 22:51:51 martynas Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -270,16 +270,19 @@ reput(int argc, char *argv[])
 }
 #endif /* !SMALL */
 
+#ifndef SMALL
 void
 put(int argc, char *argv[])
 {
  
 	(void)putit(argc, argv, 0);
 }
+#endif /* !SMALL */
 
 /*
  * Send a single file.
  */
+#ifndef SMALL
 void
 putit(int argc, char *argv[], int restartit)
 {
@@ -342,10 +345,12 @@ usage:
 	if (oldargv1 != argv[1])	/* free up after globulize() */
 		free(argv[1]);
 }
+#endif /* !SMALL */
 
 /*
  * Send multiple files.
  */
+#ifndef SMALL
 void
 mput(int argc, char *argv[])
 {
@@ -514,6 +519,7 @@ usage:
 	(void)signal(SIGINT, oldintr);
 	mflag = 0;
 }
+#endif /* !SMALL */
 
 #ifndef SMALL
 void
@@ -857,13 +863,13 @@ status(int argc, char *argv[])
 	    epsv4bad ? " (disabled for this connection)" : "");
 #ifndef SMALL
 	fprintf(ttyout, "Command line editing: %s.\n", onoff(editing));
-#endif /* !SMALL */
 	if (macnum > 0) {
 		fputs("Macros:\n", ttyout);
 		for (i=0; i<macnum; i++) {
 			fprintf(ttyout, "\t%s\n", macros[i].mac_name);
 		}
 	}
+#endif /* !SMALL */
 	code = 0;
 }
 
@@ -1682,9 +1688,11 @@ disconnect(int argc, char *argv[])
 	cout = NULL;
 	connected = 0;
 	data = -1;
+#ifndef SMALL
 	if (!proxy) {
 		macnum = 0;
 	}
+#endif /* !SMALL */
 }
 
 void
@@ -2122,6 +2130,7 @@ syst(int argc, char *argv[])
 	(void)command("SYST");
 }
 
+#ifndef SMALL
 void
 macdef(int argc, char *argv[])
 {
@@ -2179,6 +2188,7 @@ macdef(int argc, char *argv[])
 		}
 	}
 }
+#endif /* !SMALL */
 
 /*
  * Get size of file on remote machine

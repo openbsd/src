@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.60 2009/04/27 21:37:13 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.61 2009/04/27 22:51:51 martynas Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -316,6 +316,7 @@ tryagain:
 	if (proxy)
 		return (1);
 	connected = -1;
+#ifndef SMALL
 	for (n = 0; n < macnum; ++n) {
 		if (!strcmp("init", macros[n].mac_name)) {
 			(void)strlcpy(line, "$init", sizeof line);
@@ -324,6 +325,7 @@ tryagain:
 			break;
 		}
 	}
+#endif /* SMALL */
 	return (1);
 }
 

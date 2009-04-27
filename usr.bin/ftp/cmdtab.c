@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.24 2009/04/27 21:37:13 deraadt Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.25 2009/04/27 22:51:51 martynas Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.17 1997/08/18 10:20:17 lukem Exp $	*/
 
 /*
@@ -131,9 +131,13 @@ char	empty[] = "";
 
 struct cmd cmdtab[] = {
 	{ "!",		H(shellhelp),	0, 0, 0, CMPL0		shell },
+#ifndef SMALL
 	{ "$",		H(domachelp),	1, 0, 0, CMPL0		domacro },
+#endif /* !SMALL */
 	{ "account",	H(accounthelp),	0, 1, 1, CMPL0		account},
+#ifndef SMALL
 	{ "append",	H(appendhelp),	1, 1, 1, CMPL(lr)	put },
+#endif /* !SMALL */
 	{ "ascii",	H(asciihelp),	0, 1, 1, CMPL0		setascii },
 	{ "bell",	H(beephelp),	0, 0, 0, CMPL0		setbell },
 	{ "binary",	H(binaryhelp),	0, 1, 1, CMPL0		setbinary },
@@ -168,7 +172,9 @@ struct cmd cmdtab[] = {
 	{ "less",	H(pagehelp),	1, 1, 1, CMPL(r)	page },
 	{ "lpwd",	H(lpwdhelp),	0, 0, 0, CMPL0		lpwd },
 	{ "ls",		H(lshelp),	1, 1, 1, CMPL(rl)	ls },
+#ifndef SMALL
 	{ "macdef",	H(macdefhelp),	0, 0, 0, CMPL0		macdef },
+#endif /* !SMALL */
 	{ "mdelete",	H(mdeletehelp),	1, 1, 1, CMPL(R)	mdelete },
 	{ "mdir",	H(mdirhelp),	1, 1, 1, CMPL(R)	mls },
 	{ "mget",	H(mgethelp),	1, 1, 1, CMPL(R)	mget },
@@ -177,8 +183,10 @@ struct cmd cmdtab[] = {
 	{ "mode",	H(modehelp),	0, 1, 1, CMPL0		setftmode },
 	{ "modtime",	H(modtimehelp),	0, 1, 1, CMPL(r)	modtime },
 	{ "more",	H(pagehelp),	1, 1, 1, CMPL(r)	page },
+#ifndef SMALL
 	{ "mput",	H(mputhelp),	1, 1, 1, CMPL(L)	mput },
 	{ "msend",	H(mputhelp),	1, 1, 1, CMPL(L)	mput },
+#endif /* !SMALL */
 	{ "newer",	H(newerhelp),	1, 1, 1, CMPL(r)	newer },
 	{ "nlist",	H(nlisthelp),	1, 1, 1, CMPL(rl)	ls },
 	{ "nmap",	H(nmaphelp),	0, 0, 1, CMPL0		setnmap },
@@ -190,7 +198,9 @@ struct cmd cmdtab[] = {
 	{ "progress",	H(progresshelp),0, 0, 0, CMPL0		setprogress },
 	{ "prompt",	H(prompthelp),	0, 0, 0, CMPL0		setprompt },
 	{ "proxy",	H(proxyhelp),	0, 0, 1, CMPL(c)	doproxy },
+#ifndef SMALL
 	{ "put",	H(sendhelp),	1, 1, 1, CMPL(lr)	put },
+#endif /* !SMALL */
 	{ "pwd",	H(pwdhelp),	0, 1, 1, CMPL0		pwd },
 	{ "quit",	H(quithelp),	0, 0, 0, CMPL0		quit },
 	{ "quote",	H(quotehelp),	1, 1, 1, CMPL0		quote },
@@ -208,7 +218,9 @@ struct cmd cmdtab[] = {
 	{ "rmdir",	H(rmdirhelp),	0, 1, 1, CMPL(r)	removedir },
 	{ "rstatus",	H(rmtstatushelp),0, 1, 1, CMPL(r)	rmtstatus },
 	{ "runique",	H(runiquehelp),	0, 0, 1, CMPL0		setrunique },
+#ifndef SMALL
 	{ "send",	H(sendhelp),	1, 1, 1, CMPL(lr)	put },
+#endif /* !SMALL */
 	{ "sendport",	H(porthelp),	0, 0, 0, CMPL0		setport },
 	{ "site",	H(sitehelp),	0, 1, 1, CMPL0		site },
 	{ "size",	H(sizecmdhelp),	1, 1, 1, CMPL(r)	sizecmd },
