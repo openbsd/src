@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.49 2006/01/14 21:21:46 otto Exp $	*/
+/*	$OpenBSD: commands.c,v 1.50 2009/04/27 06:08:10 matthieu Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -38,7 +38,6 @@ int tos = -1;
 #endif	/* defined(IPPROTO_IP) && defined(IP_TOS) */
 
 char	*hostname;
-static char _hostname[MAXHOSTNAMELEN];
 
 typedef int (*intrtn_t)(int, char**);
 static int call(intrtn_t, ...);
