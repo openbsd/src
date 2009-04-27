@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.S,v 1.5 2009/04/25 20:14:43 weingart Exp $	*/
+/*	$OpenBSD: mutex.S,v 1.6 2009/04/27 21:48:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -88,51 +88,6 @@ ENTRY(mtx_enter)
 	call	_C_LABEL(panic)
 6:	.asciz	"mtx_enter: locking against myself"
 #endif
-
-ENTRY(mtx_enter_try)
-	pushl	%ebp
-	movl	%esp, %ebp	
-1:	movl	SOFF(%ebp), %ecx
-	movl	MTX_WANTIPL(%ecx), %eax
-	movl	CPL, %edx		# oipl = cpl;
-	cmpl	%edx, %eax		# if (cpl < mtx->mtx_wantipl)
-	jle	2f
-	movl	%eax, CPL		#	cpl = mtx->mtx_wantipl;
-2:	/*
-	 * %edx now contains the oldipl.
-	 * %ecx contains the mtx.
-	 */
-	movl	$1, %eax
-	xchgl	%eax, MTX_LOCK(%ecx)	# test_and_set(mtx->mtx_lock)
-	testl	%eax, %eax		# if (already held)
-	jnz	3f
-	movl	CPUVAR(SELF), %eax
-	movl	%eax, MTX_OWNER(%ecx)
-	movl	%edx, MTX_OLDIPL(%ecx)
-	movl	$1, %eax
-	leave
-	ret
-
-	/* We failed to obtain the lock. splx and return zero. */
-3:	pushl	%edx
-	call	_C_LABEL(splx)
-	movl	%ebp, %esp
-	movl	SOFF(%ebp), %ecx		# %ecx clobbered
-#ifdef DIAGNOSTIC
-	movl	CPUVAR(SELF), %edx
-	cmpl	MTX_OWNER(%ecx), %edx
-	je	4f
-#endif
-	xorl	%eax, %eax
-	leave
-	ret
-
-#ifdef DIAGNOSTIC
-4:	pushl	$5f
-	call	_C_LABEL(panic)
-5:	.asciz	"mtx_enter: locking against myself"
-#endif
-
 	
 ENTRY(mtx_leave)
 	pushl	%ebp
