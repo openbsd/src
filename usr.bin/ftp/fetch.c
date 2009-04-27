@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.84 2009/04/26 21:26:03 martynas Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.85 2009/04/27 21:37:13 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -29,10 +29,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: fetch.c,v 1.84 2009/04/26 21:26:03 martynas Exp $";
-#endif /* not lint and not SMALL */
 
 /*
  * FTP User Program -- Command line file retrieval

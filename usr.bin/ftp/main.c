@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.74 2009/04/27 08:32:15 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.75 2009/04/27 21:37:13 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -58,16 +58,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: main.c,v 1.74 2009/04/27 08:32:15 sobrado Exp $";
-#endif /* not lint and not SMALL */
 
 /*
  * FTP User Program -- Command Interface.

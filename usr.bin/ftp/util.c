@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.59 2009/04/26 21:26:03 martynas Exp $	*/
+/*	$OpenBSD: util.c,v 1.60 2009/04/27 21:37:13 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -62,10 +62,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: util.c,v 1.59 2009/04/26 21:26:03 martynas Exp $";
-#endif /* not lint and not SMALL */
 
 /*
  * FTP User Program -- Misc support routines

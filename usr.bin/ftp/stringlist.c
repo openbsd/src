@@ -1,4 +1,4 @@
-/*	$OpenBSD: stringlist.c,v 1.8 2007/09/02 15:19:32 deraadt Exp $	*/
+/*	$OpenBSD: stringlist.c,v 1.9 2009/04/27 21:37:13 deraadt Exp $	*/
 /*	$NetBSD: stringlist.c,v 1.2 1997/01/17 07:26:20 lukem Exp $	*/
 
 /*
@@ -31,10 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(LIBC_SCCS) && !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: stringlist.c,v 1.8 2007/09/02 15:19:32 deraadt Exp $";
-#endif /* LIBC_SCCS and not lint and not SMALL */
 
 #include <stdio.h>
 #include <string.h>

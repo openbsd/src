@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.67 2008/10/16 23:15:53 martynas Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.68 2009/04/27 21:37:13 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -58,10 +58,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if !defined(lint) && !defined(SMALL)
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.67 2008/10/16 23:15:53 martynas Exp $";
-#endif /* not lint and not SMALL */
 
 /*
  * FTP User Program -- Command Routines.
