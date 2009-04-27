@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.438 2009/04/26 12:30:20 sthen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.439 2009/04/27 15:32:52 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 26 2009 $
+.Dd $Mdocdate: April 27 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -81,10 +81,10 @@ Macro names may not be reserved words (for example
 .Ar out ) .
 Macros are not expanded inside quotes.
 .Pp
-For example,
+For example:
 .Bd -literal -offset indent
-ext_if = \&"kue0\&"
-all_ifs = \&"{\&" $ext_if lo0 \&"}\&"
+ext_if = "kue0"
+all_ifs = "{" $ext_if lo0 "}"
 pass out on $ext_if from any to any
 pass in  on $ext_if proto tcp from any to any port 25
 .Ed
@@ -189,7 +189,7 @@ these hosts can be blocked by using the following:
 A table can also be initialized with an address list specified in one or more
 external files, using the following syntax:
 .Bd -literal -offset indent
-table \*(Ltspam\*(Gt persist file \&"/etc/spammers\&" file \&"/etc/openrelays\&"
+table \*(Ltspam\*(Gt persist file "/etc/spammers" file "/etc/openrelays"
 block on fxp0 from \*(Ltspam\*(Gt to any
 .Ed
 .Pp
@@ -1488,17 +1488,17 @@ The source port specification.
 .Pp
 For example:
 .Bd -literal -offset indent -compact
-ips = \&"{ 1.2.3.4, 1.2.3.5 }\&"
+ips = "{ 1.2.3.4, 1.2.3.5 }"
 pass in proto tcp from any to $ips \e
-      port \*(Gt 1023 label \&"$dstaddr:$dstport\&"
+      port \*(Gt 1023 label "$dstaddr:$dstport"
 .Ed
 .Pp
 Expands to:
 .Bd -literal -offset indent -compact
 pass in inet proto tcp from any to 1.2.3.4 \e
-      port \*(Gt 1023 label \&"1.2.3.4:\*(Gt1023\&"
+      port \*(Gt 1023 label "1.2.3.4:\*(Gt1023"
 pass in inet proto tcp from any to 1.2.3.5 \e
-      port \*(Gt 1023 label \&"1.2.3.5:\*(Gt1023\&"
+      port \*(Gt 1023 label "1.2.3.5:\*(Gt1023"
 .Ed
 .Pp
 The macro expansion for the
@@ -2266,93 +2266,37 @@ will match it until the database is updated;
 and multiple operating systems may have the same fingerprint.
 .Sh ANCHORS
 Besides the main ruleset,
-.Xr pfctl 8
-can load rulesets into
+.Nm
+can specify
 .Ar anchor
 attachment points.
 An anchor is a container that can hold rules,
 address tables, and other anchors.
-.Pp
-An anchor has a name which specifies the path where
-.Xr pfctl 8
-can be used to access the anchor to perform operations on it, such as
-attaching child anchors to it or loading rules into it.
-Anchors may be nested, with components separated by
-.Sq /
-characters, similar to how file system hierarchies are laid out.
-The main ruleset is actually the default anchor, so filter and
-translation rules, for example, may also be contained in any anchor.
-.Pp
-An anchor can reference another anchor attachment point
-using the following kinds of rules:
-.Bl -tag -width xxxx
-.It Ar anchor Aq Ar name
-Evaluates the filter rules in the specified anchor.
-.It Ar binat-anchor Aq Ar name
-Evaluates the
-.Ar binat
-rules in the specified anchor.
-.It Xo Ar load anchor
-.Aq Ar name
-.Ar from Aq Ar file
-.Xc
-Loads the rules from the specified file into the specified anchor.
-.It Ar nat-anchor Aq Ar name
-Evaluates the
-.Ar nat
-rules in the specified anchor.
-.It Ar rdr-anchor Aq Ar name
-Evaluates the
-.Ar rdr
-rules in the specified anchor.
-.El
-.Pp
 When evaluation of the main ruleset reaches an
 .Ar anchor
 rule,
 .Xr pf 4
 will proceed to evaluate all rules specified in that anchor.
 .Pp
-Matching filter and translation rules marked with the
-.Ar quick
-option are final and abort the evaluation of the rules in other
-anchors and the main ruleset.
-If the anchor itself is marked with the
-.Ar quick
-option,
-ruleset evaluation will terminate when the anchor is exited if the packet is
-matched by any rule within the anchor.
-.Pp
-Anchor rules are evaluated relative to the anchor in which they are contained.
-For example,
-all anchor rules specified in the main ruleset will reference
-anchor attachment points underneath the main ruleset,
-and anchor rules specified in a file loaded from a
-.Ar load anchor
-rule will be attached under that anchor point.
-.Pp
-Rules may be contained in anchor attachment points
-which do not contain any rules when the main ruleset is loaded,
-and later such anchors can be manipulated through
-.Xr pfctl 8
-without reloading the main ruleset or other anchors.
-.Pp
 The following example blocks all packets on the external interface by default,
 then evaluates all rules in the anchor named "spam",
 and finally passes all outgoing connections and
 incoming connections to port 25:
 .Bd -literal -offset indent
-ext_if = \&"kue0\&"
+ext_if = "kue0"
 block on $ext_if all
 anchor spam
 pass out on $ext_if all
 pass in on $ext_if proto tcp from any to $ext_if port smtp
 .Ed
 .Pp
+Anchors can be manipulated through
+.Xr pfctl 8
+without reloading the main ruleset or other anchors.
 This loads a single rule into the anchor,
 which blocks all packets from a specific address:
 .Bd -literal -offset indent
-# echo \&"block in quick from 1.2.3.4 to any\&" \&| pfctl -a spam -f -
+# echo "block in quick from 1.2.3.4 to any" | pfctl -a spam -f -
 .Ed
 .Pp
 The anchor can also be populated by adding a
@@ -2365,14 +2309,30 @@ loads
 it will also load all the rules from the file
 .Pa /etc/pf-spam.conf
 into the anchor.
-.Pp
 .Bd -literal -offset indent
 anchor spam
 load anchor spam from "/etc/pf-spam.conf"
 .Ed
 .Pp
-Optionally,
-anchor rules can specify packet filtering parameters
+Filter rule anchors can also be loaded inline in the ruleset
+within a brace-delimited block.
+Brace delimited blocks may contain rules or other brace-delimited blocks.
+When anchors are loaded this way the anchor name becomes optional.
+Since the parser specification for anchor names is a string,
+double quote characters
+.Pq Sq \&"
+should be placed around the anchor name.
+.Bd -literal -offset indent
+anchor "external" on egress {
+	block
+	anchor out {
+		pass proto tcp from any to port { 25, 80, 443 }
+	}
+	pass in proto tcp to any port 22
+}
+.Ed
+.Pp
+Anchor rules can also specify packet filtering parameters
 using the same syntax as filter rules.
 When parameters are used,
 the anchor rule is only evaluated for matching packets.
@@ -2389,8 +2349,55 @@ for TCP packets with destination port 25.
 Hence, the following
 will only block connections from 1.2.3.4 to port 25:
 .Bd -literal -offset indent
-# echo \&"block in quick from 1.2.3.4 to any" \&| pfctl -a spam -f -
+# echo "block in quick from 1.2.3.4 to any" | pfctl -a spam -f -
 .Ed
+.Pp
+Matching filter and translation rules marked with the
+.Ar quick
+option are final and abort the evaluation of the rules in other
+anchors and the main ruleset.
+If the anchor itself is marked with the
+.Ar quick
+option,
+ruleset evaluation will terminate when the anchor is exited if the packet is
+matched by any rule within the anchor.
+.Pp
+An anchor references other anchor attachment points
+using the following syntax:
+.Bl -tag -width xxxx
+.It Ar anchor Aq Ar name
+Evaluates the filter rules in the specified anchor.
+.It Ar binat-anchor Aq Ar name
+Evaluates the
+.Ar binat
+rules in the specified anchor.
+.It Ar nat-anchor Aq Ar name
+Evaluates the
+.Ar nat
+rules in the specified anchor.
+.It Ar rdr-anchor Aq Ar name
+Evaluates the
+.Ar rdr
+rules in the specified anchor.
+.El
+.Pp
+An anchor has a name which specifies the path where
+.Xr pfctl 8
+can be used to access the anchor to perform operations on it, such as
+attaching child anchors to it or loading rules into it.
+Anchors may be nested, with components separated by
+.Sq /
+characters, similar to how file system hierarchies are laid out.
+The main ruleset is actually the default anchor, so filter and
+translation rules, for example, may also be contained in any anchor.
+.Pp
+Anchor rules are evaluated relative to the anchor in which they are contained.
+For example,
+all anchor rules specified in the main ruleset will reference
+anchor attachment points underneath the main ruleset,
+and anchor rules specified in a file loaded from a
+.Ar load anchor
+rule will be attached under that anchor point.
 .Pp
 Anchors may end with the asterisk
 .Pq Sq *
@@ -2416,9 +2423,8 @@ anchor in the path evaluation at that point will become the new current
 anchor.
 As an example, consider the following:
 .Bd -literal -offset indent
-# echo ' anchor "spam/allowed" ' | pfctl -f -
-# echo -e ' anchor "../banned" \en pass' | \e
-      pfctl -a spam/allowed -f -
+# echo 'anchor "spam/allowed"' | pfctl -f -
+# echo 'anchor "../banned"\enpass' | pfctl -a spam/allowed -f -
 .Ed
 .Pp
 Evaluation of the main ruleset will lead into the
@@ -2426,27 +2432,6 @@ spam/allowed anchor, which will evaluate the rules in the
 spam/banned anchor, if any, before finally evaluating the
 .Ar pass
 rule.
-.Pp
-Filter rule anchors can also be loaded inline in the ruleset
-within a brace-delimited block.
-Brace delimited blocks may contain rules or other brace-delimited blocks.
-When anchors are loaded this way the anchor name becomes optional.
-.Bd -literal -offset indent
-anchor "external" on egress {
-	block
-	anchor out {
-		pass proto tcp from any to port { 25, 80, 443 }
-	}
-	pass in proto tcp to any port 22
-}
-.Ed
-.Pp
-Since the parser specification for anchor names is a string, any
-reference to an anchor name containing
-.Sq /
-characters will require double quote
-.Pq Sq \&"
-characters around the anchor name.
 .Sh TRANSLATION EXAMPLES
 This example maps incoming requests on port 80 to port 8080, on
 which a daemon is running (because, for example, it is not run as root,
@@ -2535,7 +2520,7 @@ We use a macro for the interface name, so it can be changed easily.
 All incoming traffic is "normalised",
 and everything is blocked and logged by default.
 .Bd -literal -offset 4n
-ext_if = \&"kue0\&"
+ext_if = "kue0"
 match in all scrub (no-df max-mss 1440)
 block return log on $ext_if all
 .Ed
