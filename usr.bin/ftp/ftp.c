@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.77 2009/04/27 22:51:51 martynas Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.78 2009/04/27 23:20:48 martynas Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -189,7 +189,7 @@ hookup(char *host, char *port)
 		}
 		if (error) {
 			/* this "if" clause is to prevent print warning twice */
-			if (res->ai_next) {
+			if (verbose && res->ai_next) {
 				if (getnameinfo(res->ai_addr, res->ai_addrlen,
 				    hbuf, sizeof(hbuf), NULL, 0,
 				    NI_NUMERICHOST) != 0)
