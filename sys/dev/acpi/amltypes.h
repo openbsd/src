@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.30 2008/06/08 02:51:55 deraadt Exp $ */
+/* $OpenBSD: amltypes.h,v 1.31 2009/04/27 23:39:14 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -184,6 +184,8 @@ enum aml_objecttype {
 	AML_OBJTYPE_SCOPE,
 	AML_OBJTYPE_NOTARGET,
 	AML_OBJTYPE_STATICINT = AML_OBJTYPE_INTEGER|AML_STATIC,
+	AML_OBJTYPE_HEXSTRING,
+	AML_OBJTYPE_DECSTRING,
 };
 
 /* AML Opcode Arguments */
