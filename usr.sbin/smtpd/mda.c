@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.14 2009/04/21 14:37:32 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.15 2009/04/28 21:27:25 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -40,7 +40,6 @@ void		mda_dispatch_queue(int, short, void *);
 void		mda_dispatch_runner(int, short, void *);
 void		mda_setup_events(struct smtpd *);
 void		mda_disable_events(struct smtpd *);
-void		mda_timeout(int, short, void *);
 void		mda_remove_message(struct smtpd *, struct batch *, struct message *x);
 
 void
@@ -365,29 +364,11 @@ mda_shutdown(void)
 void
 mda_setup_events(struct smtpd *env)
 {
-	struct timeval	 tv;
-
-	evtimer_set(&env->sc_ev, mda_timeout, env);
-	tv.tv_sec = 3;
-	tv.tv_usec = 0;
-	evtimer_add(&env->sc_ev, &tv);
 }
 
 void
 mda_disable_events(struct smtpd *env)
 {
-	evtimer_del(&env->sc_ev);
-}
-
-void
-mda_timeout(int fd, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct timeval		 tv;
-
-	tv.tv_sec = 3;
-	tv.tv_usec = 0;
-	evtimer_add(&env->sc_ev, &tv);
 }
 
 pid_t

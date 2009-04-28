@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.22 2009/04/27 16:15:21 jacekm Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.23 2009/04/28 21:27:25 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -45,7 +45,6 @@ void		mfa_dispatch_lka(int, short, void *);
 void		mfa_dispatch_control(int, short, void *);
 void		mfa_setup_events(struct smtpd *);
 void		mfa_disable_events(struct smtpd *);
-void		mfa_timeout(int, short, void *);
 
 void		mfa_test_mail(struct smtpd *, struct message *);
 void		mfa_test_rcpt(struct smtpd *, struct message *);
@@ -284,29 +283,11 @@ mfa_shutdown(void)
 void
 mfa_setup_events(struct smtpd *env)
 {
-	struct timeval	 tv;
-
-	evtimer_set(&env->sc_ev, mfa_timeout, env);
-	tv.tv_sec = 3;
-	tv.tv_usec = 0;
-	evtimer_add(&env->sc_ev, &tv);
 }
 
 void
 mfa_disable_events(struct smtpd *env)
 {
-	evtimer_del(&env->sc_ev);
-}
-
-void
-mfa_timeout(int fd, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct timeval		 tv;
-
-	tv.tv_sec = 3;
-	tv.tv_usec = 0;
-	evtimer_add(&env->sc_ev, &tv);
 }
 
 pid_t

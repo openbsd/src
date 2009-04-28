@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.42 2009/04/21 14:37:32 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.43 2009/04/28 21:27:25 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -47,7 +47,6 @@ void		mta_dispatch_runner(int, short, void *);
 void		mta_dispatch_lka(int, short, void *);
 void		mta_setup_events(struct smtpd *);
 void		mta_disable_events(struct smtpd *);
-void		mta_timeout(int, short, void *);
 void		mta_write(int, short, void *);
 int		mta_connect(struct session *);
 void		mta_read_handler(struct bufferevent *, void *);
@@ -408,29 +407,11 @@ mta_shutdown(void)
 void
 mta_setup_events(struct smtpd *env)
 {
-	struct timeval	 tv;
-
-	evtimer_set(&env->sc_ev, mta_timeout, env);
-	tv.tv_sec = 3;
-	tv.tv_usec = 0;
-	evtimer_add(&env->sc_ev, &tv);
 }
 
 void
 mta_disable_events(struct smtpd *env)
 {
-	evtimer_del(&env->sc_ev);
-}
-
-void
-mta_timeout(int fd, short event, void *p)
-{
-	struct smtpd		*env = p;
-	struct timeval		 tv;
-
-	tv.tv_sec = 3;
-	tv.tv_usec = 0;
-	evtimer_add(&env->sc_ev, &tv);
 }
 
 pid_t
