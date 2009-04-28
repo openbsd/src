@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.19 2009/04/17 12:10:08 michele Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.20 2009/04/28 12:07:43 michele Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -147,7 +147,6 @@ mpls_input(struct mbuf *m)
 #endif
 
 		if (ntohl(smpls->smpls_label) < MPLS_LABEL_RESERVED_MAX) {
-
 			hasbos = MPLS_BOS_ISSET(shim->shim_label);
 			m = mpls_shim_pop(m);
 			shim = mtod(m, struct shim_hdr *);
@@ -190,12 +189,29 @@ mpls_input(struct mbuf *m)
 		rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
 
 		if (rt_mpls == NULL || (rt->rt_flags & RTF_MPLS) == 0) {
+#ifdef MPLS_DEBUG
+			printf("MPLS_DEBUG: no MPLS information "
+			    "attached\n");
+#endif
+			m_freem(m);
+			goto done;
+		}
+
+		if (rt_mpls->mpls_operation == MPLS_OP_LOCAL) {
 			/* Packet is for us */
 			hasbos = MPLS_BOS_ISSET(shim->shim_label);
-			m = mpls_shim_pop(m);
-			if (!hasbos || !rt->rt_gateway) {
+			if (!hasbos) {
 #ifdef MPLS_DEBUG
-				printf("MPLS_DEBUG: no MPLS information "
+				printf("MPLS_DEBUG: packet malformed\n");
+#endif
+				m_freem(m);
+				goto done;
+			}
+			m = mpls_shim_pop(m);
+
+			if (!rt->rt_gateway) {
+#ifdef MPLS_DEBUG
+				printf("MPLS_DEBUG: no layer 3 informations "
 				    "attached\n");
 #endif
 				m_freem(m);
