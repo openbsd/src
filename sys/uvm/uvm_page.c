@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.75 2009/04/14 20:12:05 oga Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.76 2009/04/28 16:06:07 miod Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -233,7 +233,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	TAILQ_INIT(&uvm.page_active);
 	TAILQ_INIT(&uvm.page_inactive_swp);
 	TAILQ_INIT(&uvm.page_inactive_obj);
-	mtx_init(&uvm.pageqlock, IPL_NONE);
+	simple_lock_init(&uvm.pageqlock);
 	mtx_init(&uvm.fpageqlock, IPL_VM);
 
 	/*
