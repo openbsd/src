@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.122 2009/03/25 09:47:26 joris Exp $
+.\"	$OpenBSD: cvs.1,v 1.123 2009/04/28 09:05:39 sthen Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 25 2009 $
+.Dd $Mdocdate: April 28 2009 $
 .Dt CVS 1
 .Os
 .Sh NAME
@@ -517,7 +517,7 @@ command is very similar to the
 program, except that the differential comparisons that it generates are
 between local or remote revisions of files stored in the CVS repository.
 .Bd -literal -offset indent
-usage: cvs diff [-cilNnpRu]
+usage: cvs diff [-abcdilNnpRuw]
                 [[-D date1 | -r rev1] [-D date2 | -r rev2]]
                 [-k mode] [file ...]
 .Ed
@@ -526,8 +526,21 @@ The
 .Ic diff
 command takes the following options:
 .Bl -tag -width Ds -offset 3n
+.It Fl a
+Treat all files as ASCII text.
+See
+.Xr diff 1
+for more information.
+.It Fl b
+Causes trailing blanks (spaces and tabs) to be ignored, and other
+strings of blanks to compare equal.
 .It Fl c
 Produces a diff with three lines of context.
+See
+.Xr diff 1
+for more information.
+.It Fl d
+Try very hard to produce a diff as small as possible.
 See
 .Xr diff 1
 for more information.
@@ -583,6 +596,14 @@ Produces a unified diff with three lines of context.
 See
 .Xr diff 1
 for more information.
+.It Fl w
+Is similar to
+.Fl b
+but causes whitespace (blanks and tabs) to be totally ignored.
+E.g.,
+.Dq if (\ \&a == b \&)
+will compare equal to
+.Dq if(a==b) .
 .El
 .Pp
 Aliases:

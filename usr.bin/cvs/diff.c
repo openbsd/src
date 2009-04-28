@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.151 2009/04/03 19:46:56 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.152 2009/04/28 09:05:40 sthen Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -46,9 +46,9 @@ struct cvs_cmd cvs_cmd_diff = {
 	CVS_OP_DIFF, CVS_USE_WDIR, "diff",
 	{ "di", "dif" },
 	"Show differences between revisions",
-	"[-cilNnpRu] [[-D date] [-r rev] [-D date2 | -r rev2]] "
+	"[-abcdilNnpRuw] [[-D date] [-r rev] [-D date2 | -r rev2]] "
 	"[-k mode] [file ...]",
-	"cfD:ik:lNnpr:Ru",
+	"bcfD:ik:lNnpr:Ruw",
 	NULL,
 	cvs_diff
 };
@@ -78,9 +78,21 @@ cvs_diff(int argc, char **argv)
 	while ((ch = getopt(argc, argv, cvs_cmdop == CVS_OP_DIFF ?
 	    cvs_cmd_diff.cmd_opts : cvs_cmd_rdiff.cmd_opts)) != -1) {
 		switch (ch) {
+		case 'a':
+			strlcat(diffargs, " -a", sizeof(diffargs));
+			diff_aflag = 1;
+			break;
+		case 'b':
+			strlcat(diffargs, " -b", sizeof(diffargs));
+			diff_bflag = 1;
+			break;
 		case 'c':
 			strlcat(diffargs, " -c", sizeof(diffargs));
 			diff_format = D_CONTEXT;
+			break;
+		case 'd':
+			strlcat(diffargs, " -d", sizeof(diffargs));
+			diff_dflag = 1;
 			break;
 		case 'D':
 			if (date1 == -1 && rev1 == NULL) {
@@ -147,6 +159,10 @@ cvs_diff(int argc, char **argv)
 		case 'V':
 			fatal("the -V option is obsolete "
 			    "and should not be used");
+		case 'w':
+			strlcat(diffargs, " -w", sizeof(diffargs));
+			diff_wflag = 1;
+			break;
 		default:
 			fatal("%s", cvs_cmdop == CVS_OP_DIFF ?
 			    cvs_cmd_diff.cmd_synopsis :

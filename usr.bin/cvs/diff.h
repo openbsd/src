@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.17 2008/03/08 20:26:34 joris Exp $	*/
+/*	$OpenBSD: diff.h,v 1.18 2009/04/28 09:05:40 sthen Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -98,8 +98,12 @@ int		ed_patch_lines(struct cvs_lines *, struct cvs_lines *);
 
 extern int       diff_format;
 extern int	 diff3_conflicts;
+extern int	 diff_aflag;
+extern int	 diff_bflag;
+extern int	 diff_dflag;
 extern int	 diff_iflag;
 extern int	 diff_pflag;
+extern int	 diff_wflag;
 extern char	*diff_file;
 extern char	 diffargs[128];
 extern BUF	*diffbuf;

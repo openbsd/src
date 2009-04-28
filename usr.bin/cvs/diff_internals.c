@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.25 2008/06/11 03:38:28 tobias Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.26 2009/04/28 09:05:40 sthen Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -197,11 +197,15 @@ static int	 files_differ(FILE *, FILE *);
 static char	*match_function(const long *, int, FILE *);
 static char	*preadline(int, size_t, off_t);
 
-static int aflag, bflag, dflag, tflag, Tflag, wflag;
+static int tflag, Tflag;
 static int context = 3;
 int diff_format = D_NORMAL;
+int diff_aflag = 0;
+int diff_bflag = 0;
+int diff_dflag = 0;
 int diff_iflag = 0;
 int diff_pflag = 0;
+int diff_wflag = 0;
 const char *diff_file1 = NULL;
 const char *diff_file2 = NULL;
 RCSNUM *diff_rev1 = NULL;
@@ -541,7 +545,7 @@ stone(int *a, int n, int *b, int *c)
 	u_int numtries;
 
 	/* XXX move the isqrt() out of the macro to avoid multiple calls */
-	const u_int bound = dflag ? UINT_MAX : MAX(256, (u_int)isqrt(n));
+	const u_int bound = diff_dflag ? UINT_MAX : MAX(256, (u_int)isqrt(n));
 
 	k = 0;
 	c[0] = newcand(0, 0, 0);
@@ -657,7 +661,7 @@ check(FILE *f1, FILE *f2)
 			ixnew[j] = ctnew += skipline(f2);
 			j++;
 		}
-		if (bflag == 1 || wflag == 1 || diff_iflag == 1) {
+		if (diff_bflag == 1 || diff_wflag == 1 || diff_iflag == 1) {
 			for (;;) {
 				c = getc(f1);
 				d = getc(f2);
@@ -665,14 +669,14 @@ check(FILE *f1, FILE *f2)
 				 * GNU diff ignores a missing newline
 				 * in one file for -b or -w.
 				 */
-				if ((bflag == 1 || wflag == 1) &&
+				if ((diff_bflag == 1 || diff_wflag == 1) &&
 				    ((c == EOF && d == '\n') ||
 				    (c == '\n' && d == EOF))) {
 					break;
 				}
 				ctold++;
 				ctnew++;
-				if (bflag == 1 && isspace(c) && isspace(d)) {
+				if (diff_bflag == 1 && isspace(c) && isspace(d)) {
 					do {
 						if (c == '\n')
 							break;
@@ -683,7 +687,7 @@ check(FILE *f1, FILE *f2)
 							break;
 						ctnew++;
 					} while (isspace(d = getc(f2)));
-				} else if (wflag == 1) {
+				} else if (diff_wflag == 1) {
 					while (isspace(c) && c != '\n') {
 						c = getc(f1);
 						ctold++;
@@ -1141,7 +1145,7 @@ readhash(FILE *f)
 
 	sum = 1;
 	space = 0;
-	if (bflag != 1 && wflag != 1) {
+	if (diff_bflag != 1 && diff_wflag != 1) {
 		if (diff_iflag == 1)
 			for (i = 0; (t = getc(f)) != '\n'; i++) {
 				if (t == EOF) {
@@ -1171,7 +1175,7 @@ readhash(FILE *f)
 				space++;
 				continue;
 			default:
-				if (space != 0 && wflag != 1) {
+				if (space != 0 && diff_wflag != 1) {
 					i++;
 					space = 0;
 				}
@@ -1201,7 +1205,7 @@ asciifile(FILE *f)
 	unsigned char buf[BUFSIZ];
 	size_t i, cnt;
 
-	if (aflag == 1 || f == NULL)
+	if (diff_aflag == 1 || f == NULL)
 		return (1);
 
 	rewind(f);
