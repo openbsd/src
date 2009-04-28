@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.123 2009/04/28 09:05:39 sthen Exp $
+.\"	$OpenBSD: cvs.1,v 1.124 2009/04/28 11:43:43 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004-2008 Xavier Santolaria <xsa@openbsd.org>
@@ -539,11 +539,6 @@ Produces a diff with three lines of context.
 See
 .Xr diff 1
 for more information.
-.It Fl d
-Try very hard to produce a diff as small as possible.
-See
-.Xr diff 1
-for more information.
 .It Xo Fl D Ar date1
 .Op Fl D Ar date2
 .Xc
@@ -554,6 +549,11 @@ and the working copy or
 and
 .Ar date2
 (if specified).
+.It Fl d
+Try very hard to produce a diff as small as possible.
+See
+.Xr diff 1
+for more information.
 .It Fl i
 Ignore the case of letters.
 For example,
@@ -600,7 +600,7 @@ for more information.
 Is similar to
 .Fl b
 but causes whitespace (blanks and tabs) to be totally ignored.
-E.g.,
+For example,
 .Dq if (\ \&a == b \&)
 will compare equal to
 .Dq if(a==b) .
