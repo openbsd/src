@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.41 2009/04/21 14:37:32 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.42 2009/04/28 22:38:22 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -69,6 +69,7 @@ int		lka_expand_rcpt_iteration(struct smtpd *, struct aliaseslist *, struct lkas
 void		lka_rcpt_action(struct smtpd *, struct path *);
 void		lka_clear_aliaseslist(struct aliaseslist *);
 int		lka_encode_credentials(char *, char *);
+void		lka_dns_reverse(struct session *s);
 
 void
 lka_sig_handler(int sig, short event, void *p)
@@ -570,32 +571,11 @@ lka_dispatch_smtp(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_LKA_HOST: {
-			struct sockaddr *sa;
-			char addr[NI_MAXHOST];
-			struct addrinfo hints, *res;
-			struct session *s;
-
-			s = imsg.data;
-			sa = (struct sockaddr *)&s->s_ss;
-			if (getnameinfo(sa, sa->sa_len, addr, sizeof(addr),
-			    NULL, 0, NI_NAMEREQD))
-				break;
-
-			memset(&hints, 0, sizeof(hints));
-			hints.ai_socktype = SOCK_DGRAM;
-			hints.ai_flags = AI_NUMERICHOST;
-			if (getaddrinfo(addr, NULL, &hints, &res) == 0) {
-				/* Malicious PTR record. */
-				freeaddrinfo(res);
-				break;
-			}
-
-			strlcpy(s->s_hostname, addr, sizeof(s->s_hostname));
-			imsg_compose(ibuf, IMSG_LKA_HOST, 0, 0, -1, s,
+		case IMSG_LKA_HOST:
+			lka_dns_reverse(imsg.data);
+			imsg_compose(ibuf, IMSG_LKA_HOST, 0, 0, -1, imsg.data,
 			    sizeof(struct session));
 			break;
-		}
 		default:
 			log_warnx("lka_dispatch_smtp: got imsg %d",
 			    imsg.hdr.type);
@@ -1256,6 +1236,32 @@ lka_encode_credentials(char *dest, char *src)
 	if (kn_encode_base64(buffer, len, dest, MAX_LINE_SIZE - 1) == -1)
 		return 0;
 	return 1;
+}
+
+void
+lka_dns_reverse(struct session *s)
+{
+	char		 addr[NI_MAXHOST];
+	struct addrinfo	 hints, *res;
+	struct sockaddr	*sa;
+
+	strlcpy(s->s_hostname, "<unknown>", sizeof(s->s_hostname));
+
+	sa = (struct sockaddr *)&s->s_ss;
+	if (getnameinfo(sa, sa->sa_len, addr, sizeof(addr),
+	    NULL, 0, NI_NAMEREQD))
+		return;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_NUMERICHOST;
+
+	if (getaddrinfo(addr, NULL, &hints, &res))
+		return; /* malicious PTR record. */
+
+	freeaddrinfo(res);
+
+	strlcpy(s->s_hostname, addr, sizeof(s->s_hostname));
 }
 
 SPLAY_GENERATE(lkatree, lkasession, nodes, lkasession_cmp);
