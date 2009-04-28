@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.7 2008/11/25 23:05:17 marco Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.8 2009/04/28 02:54:53 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -210,6 +210,7 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 	switch (old_state) {
 	case BIOC_SVONLINE:
 		switch (new_state) {
+		case BIOC_SVONLINE: /* can go to same state */
 		case BIOC_SVOFFLINE:
 		case BIOC_SVDEGRADED:
 			break;
