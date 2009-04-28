@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.104 2009/04/24 10:02:35 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.105 2009/04/28 23:11:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -360,12 +360,13 @@ struct rule {
 };
 
 enum path_flags {
-	F_ALIAS = 0x1,
-	F_VIRTUAL = 0x2,
-	F_EXPANDED = 0x4,
-	F_NOFORWARD = 0x8,
-	F_FORWARDED = 0x10,
-	F_ACCOUNT = 0x20,
+	F_PATH_ALIAS = 0x1,
+	F_PATH_VIRTUAL = 0x2,
+	F_PATH_EXPANDED = 0x4,
+	F_PATH_NOFORWARD = 0x8,
+	F_PATH_FORWARDED = 0x10,
+	F_PATH_ACCOUNT = 0x20,
+	F_PATH_AUTHENTICATED = 0x40,
 };
 
 struct path {

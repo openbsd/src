@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.42 2009/04/28 22:38:22 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.43 2009/04/28 23:11:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -283,7 +283,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			SPLAY_INSERT(lkatree, &env->lka_sessions, lkasession);
 
 			ret = 0;
-			if (lkasession->path.flags & F_ACCOUNT) {
+			if (lkasession->path.flags & F_PATH_ACCOUNT) {
 				fwreq.id = lkasession->id;
 				(void)strlcpy(fwreq.pw_name, ss->u.path.pw_name, sizeof(fwreq.pw_name));
 				imsg_compose(env->sc_ibufs[PROC_PARENT], IMSG_PARENT_FORWARD_OPEN, 0, 0, -1,
@@ -291,10 +291,10 @@ lka_dispatch_mfa(int sig, short event, void *p)
 				++lkasession->pending;
 				break;
 			}
-			else if (lkasession->path.flags & F_ALIAS) {
+			else if (lkasession->path.flags & F_PATH_ALIAS) {
 				ret = aliases_get(env, &lkasession->aliaseslist, lkasession->path.user);
 			}
-			else if (lkasession->path.flags & F_VIRTUAL) {
+			else if (lkasession->path.flags & F_PATH_VIRTUAL) {
 				ret = aliases_virtual_get(env, &lkasession->aliaseslist, &lkasession->path);
 			}
 			else
@@ -813,9 +813,9 @@ lka_resolve_mail(struct smtpd *env, struct rule *rule, struct path *path)
 	*p = '\0';
 
 	if (aliases_virtual_exist(env, path))
-		path->flags |= F_VIRTUAL;
+		path->flags |= F_PATH_VIRTUAL;
 	else if (aliases_exist(env, username))
-		path->flags |= F_ALIAS;
+		path->flags |= F_PATH_ALIAS;
 	else {
 		pw = safe_getpwnam(username);
 		if (pw == NULL)
@@ -1126,11 +1126,11 @@ lka_resolve_path(struct smtpd *env, struct path *path)
 	*p = '\0';
 
 	if (aliases_virtual_exist(env, path))
-		path->flags |= F_VIRTUAL;
+		path->flags |= F_PATH_VIRTUAL;
 	else if (aliases_exist(env, username))
-		path->flags |= F_ALIAS;
+		path->flags |= F_PATH_ALIAS;
 	else {
-		path->flags |= F_ACCOUNT;
+		path->flags |= F_PATH_ACCOUNT;
 		pw = safe_getpwnam(username);
 		if (pw == NULL)
 			return 0;

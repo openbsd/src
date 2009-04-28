@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.23 2009/04/28 21:27:25 jacekm Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.24 2009/04/28 23:11:25 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -428,7 +428,7 @@ mfa_test_rcpt(struct smtpd *env, struct message *m)
 		goto refuse;
 
 	if (ss.flags & F_MESSAGE_AUTHENTICATED)
-		goto accept;
+		ss.u.path.flags |= F_PATH_AUTHENTICATED;
 
 	if (mfa_ruletest_rcpt(env, &ss.u.path, &ss.ss))
 		goto accept;
@@ -453,7 +453,8 @@ mfa_ruletest_rcpt(struct smtpd *env, struct path *path, struct sockaddr_storage 
 	struct mapel *me;
 
 	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
-		if (! mfa_check_source(r->r_sources, ss))
+		if (!(path->flags & F_PATH_AUTHENTICATED) &&
+		    ! mfa_check_source(r->r_sources, ss))
 			continue;
 
 		TAILQ_FOREACH(cond, &r->r_conditions, c_entry) {
