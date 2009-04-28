@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.78 2009/04/28 21:55:16 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.79 2009/04/28 21:56:45 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -354,8 +354,6 @@ session_rfc5321_noop_handler(struct session *s, char *args)
 int
 session_rfc5321_mail_handler(struct session *s, char *args)
 {
-	char buffer[MAX_PATH_SIZE];
-
 	if (s->s_state == S_GREETED) {
 		session_respond(s, "503 Polite people say HELO first");
 		return 1;
@@ -366,12 +364,7 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	if (strlcpy(buffer, args, sizeof(buffer)) >= sizeof(buffer)) {
-		session_respond(s, "553 Sender address syntax error");
-		return 1;
-	}
-
-	if (! session_set_path(&s->s_msg.sender, buffer)) {
+	if (! session_set_path(&s->s_msg.sender, args)) {
 		/* No need to even transmit to MFA, path is invalid */
 		session_respond(s, "553 Sender address syntax error");
 		return 1;
@@ -393,8 +386,6 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 int
 session_rfc5321_rcpt_handler(struct session *s, char *args)
 {
-	char buffer[MAX_PATH_SIZE];
-
 	if (s->s_state == S_GREETED) {
 		session_respond(s, "503 Polite people say HELO first");
 		return 1;
@@ -405,19 +396,13 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	if (strlcpy(buffer, args, sizeof(buffer)) >= sizeof(buffer)) {
-		session_respond(s, "553 Recipient address syntax error");
-		return 1;
-	}
-
-	if (! session_set_path(&s->s_msg.session_rcpt, buffer)) {
+	if (! session_set_path(&s->s_msg.session_rcpt, args)) {
 		/* No need to even transmit to MFA, path is invalid */
 		session_respond(s, "553 Recipient address syntax error");
 		return 1;
 	}
 
 	s->s_state = S_RCPTREQUEST;
-
 
 	if (s->s_flags & F_AUTHENTICATED) {
 		s->s_msg.flags |= F_MESSAGE_AUTHENTICATED;
