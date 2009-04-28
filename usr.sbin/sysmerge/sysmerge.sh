@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.38 2009/04/12 11:17:58 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.39 2009/04/28 08:25:27 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -292,6 +292,7 @@ merge_loop() {
 			echo "  Use 'o' to view a diff between the old and merged files"
 			echo "  Use 'r' to re-do the merge"
 			echo "  Use 'v' to view the merged file"
+			echo "  Use 'x' to delete the merged file and go back to previous menu"
 			echo "  Default is to leave the temporary file to deal with by hand"
 			echo ""
 			echo -n "===> How should I deal with the merged file? [Leave it for later] "
@@ -314,21 +315,25 @@ merge_loop() {
 			[iI])
 				mv "${COMPFILE}.merged" "${COMPFILE}"
 				echo ""
-					if mm_install "${COMPFILE}"; then
-						echo "===> Merged version of ${COMPFILE} installed successfully"
-					else
-						echo " *** Warning: problem installing ${COMPFILE}, it will remain to merge by hand"
-					fi
+				if mm_install "${COMPFILE}"; then
+					echo "===> Merged version of ${COMPFILE} installed successfully"
+				else
+					echo " *** Warning: problem installing ${COMPFILE}, it will remain to merge by hand"
+				fi
 				unset MERGE_AGAIN
 				;;
 			[nN])
-				echo "comparison between merged and new files:\n"
-				diff -u ${COMPFILE}.merged ${COMPFILE}
+				(
+					echo "comparison between merged and new files:\n"
+					diff -u ${COMPFILE}.merged ${COMPFILE}
+				) | ${PAGER}
 				INSTALL_MERGED=v
 				;;
 			[oO])
-				echo "comparison between old and merged files:\n"
-				diff -u ${DESTDIR}${COMPFILE#.} ${COMPFILE}.merged
+				(
+					echo "comparison between old and merged files:\n"
+					diff -u ${DESTDIR}${COMPFILE#.} ${COMPFILE}.merged
+				) | ${PAGER}
 				INSTALL_MERGED=v
 				;;
 			[rR])
@@ -336,6 +341,10 @@ merge_loop() {
 				;;
 			[vV])
 				${PAGER} "${COMPFILE}.merged"
+				;;
+			[xX])
+				rm "${COMPFILE}.merged"
+				return 1
 				;;
 			'')
 				echo "===> ${COMPFILE} will remain for your consideration"
@@ -358,6 +367,9 @@ diff_loop() {
 		HANDLE_COMPFILE=v
 	fi
 
+	unset NO_INSTALLED
+	unset CAN_INSTALL
+
 	while [ "${HANDLE_COMPFILE}" = "v" -o "${HANDLE_COMPFILE}" = "todo" ]; do
 		if [ "${HANDLE_COMPFILE}" = "v" ]; then
 			echo "\n========================================================================\n"
@@ -375,9 +387,8 @@ diff_loop() {
 					return
 				fi
 			fi
-				
-			# if current != new and current = old, auto-install new
 			if [ "${OTGZ}" -o "${OXTGZ}" ]; then
+				# if current != new and current = old, auto-install new
 				if diff -q "${DESTDIR}${COMPFILE#.}" "${OTEMPROOT}${COMPFILE#.}" > /dev/null 2>&1; then
 					echo "===> ${COMPFILE} has not been modified since previous release/snapshot,"
 					echo "     automatically installing new version"
@@ -417,6 +428,7 @@ diff_loop() {
 		if [ -z "${BATCHMODE}" ]; then
 			echo "  Use 'd' to delete the temporary ${COMPFILE}"
 			if [ "${COMPFILE}" != "./etc/master.passwd" -a "${COMPFILE}" != "./etc/group" -a "${COMPFILE}" != "./etc/hosts" ]; then
+				CAN_INSTALL=1
 				echo "  Use 'i' to install the temporary ${COMPFILE}"
 			fi
 			if [ -z "${NO_INSTALLED}" -a -z "${IS_BINFILE}" ]; then
@@ -438,7 +450,7 @@ diff_loop() {
 			echo "\n===> Deleting ${COMPFILE}"
 			;;
 		[iI])
-			if [ "${COMPFILE}" != "./etc/master.passwd" -a "${COMPFILE}" != "./etc/group" -a "${COMPFILE}" != "./etc/hosts" ]; then
+			if [ -n "${CAN_INSTALL}" ]; then
 				echo ""
 				if mm_install "${COMPFILE}"; then
 					echo "===> ${COMPFILE} installed successfully"
@@ -453,7 +465,7 @@ diff_loop() {
 			;;
 		[mM])
 			if [ -z "${NO_INSTALLED}" -a -z "${IS_BINFILE}" ]; then
-				merge_loop
+				merge_loop || HANDLE_COMPFILE="todo"
 			else
 				echo "invalid choice: ${HANDLE_COMPFILE}\n"
 				HANDLE_COMPFILE="todo"
@@ -477,8 +489,6 @@ diff_loop() {
 			;;
 		esac
 	done
-
-	unset NO_INSTALLED
 }
 
 
