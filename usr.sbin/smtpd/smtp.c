@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.39 2009/04/27 16:22:17 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.40 2009/04/28 21:55:16 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -378,17 +378,14 @@ smtp_dispatch_queue(int sig, short event, void *p)
 				break;
 			}
 
-			if (fd != -1) {
-				s->datafp = fdopen(fd, "w");
-				if (s->datafp == NULL) {
-					/* no need to handle error, it will be
-					 * caught in session_pickup()
-					 */
-					close(fd);
-				}
+			if ((s->datafp = fdopen(fd, "w")) == NULL) {
+				/* queue may have experienced tempfail. */
+				if (ss->code != 421)
+					fatal("smtp_dispatch_queue: fdopen");
+				close(fd);
 			}
-			session_pickup(s, ss);
 
+			session_pickup(s, ss);
 			break;
 		}
 		case IMSG_QUEUE_TEMPFAIL: {

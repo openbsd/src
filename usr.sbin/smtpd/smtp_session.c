@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.77 2009/04/27 20:17:21 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.78 2009/04/28 21:55:16 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -458,7 +458,10 @@ session_rfc5321_data_handler(struct session *s, char *args)
 	}
 
 	s->s_state = S_DATAREQUEST;
-	session_pickup(s, NULL);
+
+	session_imsg(s, PROC_QUEUE, IMSG_QUEUE_MESSAGE_FILE, 0, 0, -1,
+	    &s->s_msg, sizeof(s->s_msg));
+
 	return 1;
 }
 
@@ -588,8 +591,12 @@ session_pickup(struct session *s, struct submit_status *ss)
 	bufferevent_enable(s->s_bev, EV_READ);
 
 	if ((ss != NULL && ss->code == 421) ||
-	    (s->s_msg.status & S_MESSAGE_TEMPFAILURE))
-		goto tempfail;
+	    (s->s_msg.status & S_MESSAGE_TEMPFAILURE)) {
+		session_respond(s, "421 Service temporarily unavailable");
+		s->s_flags |= F_QUIT;
+		bufferevent_disable(s->s_bev, EV_READ);
+		return;
+	}
 
 	switch (s->s_state) {
 	case S_INIT:
@@ -654,17 +661,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_DATAREQUEST:
-		s->s_state = S_DATA;
-		session_imsg(s, PROC_QUEUE, IMSG_QUEUE_MESSAGE_FILE, 0, 0, -1,
-		    &s->s_msg, sizeof(s->s_msg));
-		break;
-
-	case S_DATA:
-		if (ss == NULL)
-			fatalx("bad ss at S_DATA");
-		if (s->datafp == NULL)
-			goto tempfail;
-
 		s->s_state = S_DATACONTENT;
 		session_respond(s, "354 Enter mail, end with \".\" on a line by"
 		    " itself");
@@ -689,16 +685,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 
 	default:
 		fatal("session_pickup: unknown state");
-		break;
 	}
-
-	return;
-
-tempfail:
-	session_respond(s, "421 Service temporarily unavailable");
-	s->s_flags |= F_QUIT;
-	bufferevent_disable(s->s_bev, EV_READ);
-	return;
 }
 
 void
