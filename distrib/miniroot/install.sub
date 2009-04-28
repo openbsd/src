@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.492 2009/04/28 19:55:26 sthen Exp $
+#	$OpenBSD: install.sub,v 1.493 2009/04/28 21:40:12 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -590,7 +590,7 @@ __EOT
 }
 
 configure_ifs() {
-	local _IFDEVS=$IFDEVS _ifs _name _hn _vl _vli _vd _vi
+	local _IFDEVS=$IFDEVS _ifs _name _hn _vl _vli _vd _vi _p
 
 	# Check if the kernel supports vlans, and if so, offer it up
 	ifconfig $vlan99 destroy >/dev/null 2>&1
@@ -599,8 +599,14 @@ configure_ifs() {
 		_vli=0
 		_vl="vlan$_vli"
 	fi
+
+	# First time, default value is first interface
+	set -- $IFDEVS
+	_p=$1
+
 	while [[ -n $_IFDEVS ]]; do
-		ask_which "network interface" "do you wish to configure" "$_IFDEVS $_vl"
+		ask_which "network interface" "do you wish to configure" \
+			"$_IFDEVS $_vl" "$_p"
 		[[ $resp == done ]] && break
 
 		_ifs=$resp
@@ -610,9 +616,9 @@ configure_ifs() {
 		# If the offered vlan is chosen, ask the relevant
 		# questions and bring it up
 		if [[ $resp == $_vl ]]; then
-			set -- $IFDEVS
 			_vi=$_vli
 			[[ $_vli == 0 ]] && _vi=1
+			set -- $IFDEVS
 			ask "Which interface:tag should $_vl be on?" ${1}:$_vi
 			_oifs=$IFS
 			IFS=: ; set -- $resp
@@ -660,6 +666,7 @@ configure_ifs() {
 		v6_config $_ifs $_name $_hn
 
 		[[ -f $_hn ]] && chmod 640 $_hn && _IFDEVS=$(rmel $_ifs $_IFDEVS)
+		_p=done
 	done
 }
 
