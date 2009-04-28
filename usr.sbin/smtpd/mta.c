@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.43 2009/04/28 21:27:25 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.44 2009/04/28 21:56:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -379,6 +379,9 @@ mta_dispatch_runner(int sig, short event, void *p)
 
 			batchp->flags |= F_BATCH_COMPLETE;
 
+			/* assume temporary failure by default, safest choice */
+			batchp->status = S_BATCH_TEMPFAILURE;
+
 			log_debug("batch ready, we can initiate a session");
 
 			s = batchp->sessionp;
@@ -506,44 +509,36 @@ mta_connect(struct session *sessionp)
 	struct mxhost *mxhost;
 
 	mxhost = TAILQ_FIRST(&sessionp->mxhosts);
-	if (mxhost == NULL) {
-		sessionp->batch->status |= S_BATCH_TEMPFAILURE;
+	if (mxhost == NULL)
 		return -1;
-	}
 
-	if ((s = socket(mxhost->ss.ss_family, SOCK_STREAM, 0)) == -1) {
+	if ((s = socket(mxhost->ss.ss_family, SOCK_STREAM, 0)) == -1)
 		goto bad;
-	}
 
 	bzero(&lng, sizeof(lng));
-	if (setsockopt(s, SOL_SOCKET, SO_LINGER, &lng, sizeof (lng)) == -1) {
+	if (setsockopt(s, SOL_SOCKET, SO_LINGER, &lng, sizeof (lng)) == -1)
 		goto bad;
-	}
 
 	type = 1;
-	if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &type, sizeof (type)) == -1) {
+	if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &type, sizeof (type)) == -1)
 		goto bad;
-	}
 
 	session_socket_blockmode(s, BM_NONBLOCK);
 
 	if (mxhost->ss.ss_family == PF_INET) {
 		ssin = *(struct sockaddr_in *)&mxhost->ss;
-		if (connect(s, (struct sockaddr *)&ssin, sizeof(struct sockaddr_in)) == -1) {
-			if (errno != EINPROGRESS) {
+		if (connect(s, (struct sockaddr *)&ssin, sizeof(struct sockaddr_in)) == -1)
+			if (errno != EINPROGRESS)
 				goto bad;
-			}
-		}
 	}
 
 	if (mxhost->ss.ss_family == PF_INET6) {
 		ssin6 = *(struct sockaddr_in6 *)&mxhost->ss;
-		if (connect(s, (struct sockaddr *)&ssin6, sizeof(struct sockaddr_in6)) == -1) {
-			if (errno != EINPROGRESS) {
+		if (connect(s, (struct sockaddr *)&ssin6, sizeof(struct sockaddr_in6)) == -1)
+			if (errno != EINPROGRESS)
 				goto bad;
-			}
-		}
 	}
+
 	sessionp->s_tv.tv_sec = SMTPD_CONNECT_TIMEOUT;
 	sessionp->s_tv.tv_usec = 0;
 	sessionp->s_fd = s;
@@ -648,7 +643,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	code = strtonum(codebuf, 0, UINT16_MAX, &errstr);
 	if (errstr || code < 100) {
 		/* Server sent invalid line, protocol error */
-		batchp->status |= S_BATCH_PERMFAILURE;
+		batchp->status = S_BATCH_PERMFAILURE;
 		strlcpy(batchp->errorline, line, sizeof(batchp->errorline));
 		mta_batch_update_queue(batchp);
 		session_destroy(sessionp);
@@ -667,6 +662,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	switch (code) {
 	case 250:
 		if (sessionp->s_state == S_DONE) {
+			batchp->status = S_BATCH_ACCEPTED;
 			mta_batch_update_queue(batchp);
 			session_destroy(sessionp);
 			return 0;
@@ -696,7 +692,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		    !(sessionp->s_flags & F_PEERHASTLS) &&
 		    mxhost->flags & F_STARTTLS) {
 			/* PERM - we want TLS but it is not advertised */
-			batchp->status |= S_BATCH_PERMFAILURE;
+			batchp->status = S_BATCH_PERMFAILURE;
 			mta_batch_update_queue(batchp);
 			session_destroy(sessionp);
 			return 0;
@@ -706,7 +702,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		    !(sessionp->s_flags & F_PEERHASAUTH) &&
 		    mxhost->flags & F_AUTH) {
 			/* PERM - we want AUTH but it is not advertised */
-			batchp->status |= S_BATCH_PERMFAILURE;
+			batchp->status = S_BATCH_PERMFAILURE;
 			mta_batch_update_queue(batchp);
 			session_destroy(sessionp);
 			return 0;
@@ -736,7 +732,6 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	case 421:
 	case 450:
 	case 451:
-		batchp->status |= S_BATCH_TEMPFAILURE;
 		strlcpy(batchp->errorline, line, sizeof(batchp->errorline));
 		mta_batch_update_queue(batchp);
 		session_destroy(sessionp);
@@ -761,6 +756,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 
 	case 221:
 		if (sessionp->s_state == S_DONE) {
+			batchp->status = S_BATCH_ACCEPTED;
 			mta_batch_update_queue(batchp);
 			session_destroy(sessionp);
 			return 0;
@@ -774,9 +770,8 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	default:
 		/* Server sent code we know nothing about, error */
 		if (!(flags & F_ISPROTOERROR))
-			log_debug("Ouch, SMTP session returned unhandled %d status.", code);
+			log_warn("SMTP session returned unknown status %d.", code);
 
-		batchp->status |= S_BATCH_PERMFAILURE;
 		strlcpy(batchp->errorline, line, sizeof(batchp->errorline));
 		mta_batch_update_queue(batchp);
 		session_destroy(sessionp);
@@ -854,7 +849,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 						break;
 				}
 				if (messagep == NULL) {
-					batchp->status |= S_BATCH_PERMFAILURE;
+					batchp->status = S_BATCH_PERMFAILURE;
 					mta_batch_update_queue(batchp);
 					session_destroy(sessionp);
 					return 0;
@@ -899,7 +894,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 			session_respond(sessionp, "just a notification to let you know that an error has occured.");
 			session_respond(sessionp, "%s", "");
 
-			if (batchp->status & S_BATCH_PERMFAILURE) {
+			if (batchp->status == S_BATCH_PERMFAILURE) {
 				session_respond(sessionp, "You ran into a PERMANENT FAILURE, which means that the e-mail can't");
 				session_respond(sessionp, "be delivered to the remote host no matter how much I'll try.");
 				session_respond(sessionp, "%s", "");
@@ -908,7 +903,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 				session_respond(sessionp, "%s", "");
 			}
 
-			if (batchp->status & S_BATCH_TEMPFAILURE) {
+			if (batchp->status == S_BATCH_TEMPFAILURE) {
 				session_respond(sessionp, "You ran into a TEMPORARY FAILURE, which means that the e-mail can't");
 				session_respond(sessionp, "be delivered right now, but could be deliberable at a later time. I");
 				session_respond(sessionp, "will attempt until it succeeds for the next four days, then let you");
@@ -1041,11 +1036,11 @@ mta_batch_update_queue(struct batch *batchp)
 
 	while ((messagep = TAILQ_FIRST(&batchp->messages)) != NULL) {
 
-		if (batchp->status & S_BATCH_PERMFAILURE) {
+		if (batchp->status == S_BATCH_PERMFAILURE) {
 			messagep->status |= S_MESSAGE_PERMFAILURE;
 		}
-
-		if (batchp->status & S_BATCH_TEMPFAILURE) {
+		
+		if (batchp->status == S_BATCH_TEMPFAILURE) {
 			if (messagep->status != S_MESSAGE_PERMFAILURE)
 				messagep->status |= S_MESSAGE_TEMPFAILURE;
 		}
