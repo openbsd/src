@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.77 2009/01/06 23:03:16 jasper Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.78 2009/04/28 17:10:23 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -318,6 +318,7 @@ wskbd*		at pckbd? mux 1
 wsmouse*	at pms? mux 0
 
 pseudo-device	bpfilter	1
+pseudo-device	vlan		# IEEE 802.1Q VLAN 
 pseudo-device	loop
 pseudo-device	rd		1
 pseudo-device	wsmux		2
