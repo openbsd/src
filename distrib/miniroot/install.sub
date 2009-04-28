@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.490 2009/04/27 18:05:33 sthen Exp $
+#	$OpenBSD: install.sub,v 1.491 2009/04/28 16:46:10 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -590,15 +590,65 @@ __EOT
 }
 
 configure_ifs() {
-	local _IFDEVS=$IFDEVS _ifs _name _hn
+	local _IFDEVS=$IFDEVS _ifs _name _hn _vl _vli _vd _vi
 
+	# Check if the kernel supports vlans, and if so, offer it up
+	ifconfig $vlan99 destroy >/dev/null 2>&1
+	if ifconfig vlan99 create >/dev/null 2>&1; then
+		ifconfig vlan99 destroy
+		_vli=0
+		_vl="vlan$_vli"
+	fi
 	while [[ -n $_IFDEVS ]]; do
-		ask_which "network interface" "do you wish to configure" "$_IFDEVS"
+		ask_which "network interface" "do you wish to configure" "$_IFDEVS $_vl"
 		[[ $resp == done ]] && break
 
 		_ifs=$resp
 		_hn=/tmp/hostname.$_ifs
 		rm -f $_hn
+
+		# If the offered vlan is chosen, ask the relevant
+		# questions and bring it up
+		if [[ $resp == $_vl ]]; then
+			set -- $IFDEVS
+			_vi=$_vli
+			[[ $_vli == 0 ]] && _vi=1
+			ask "Which interface:tag should $_vl be on?" ${1}:$_vi
+			_oifs=$IFS
+			IFS=: ; set -- $resp
+			_vd=$1
+			_vi=$2
+			IFS=$_oifs
+
+			# Validate that $_vd is a real interface
+			if ! isin $_vd $IFDEVS; then
+				echo "Invalid interface choice $_vd"
+				continue
+			fi
+
+			# Validate range of $_vi as 0-4095
+			if (( _vi < 1 || _vi > 4095 )); then
+				echo "Invalid vlan tag $_vi"
+				continue
+			fi
+
+			# hostname.$_vd must say something, anything, to
+			# make sure it is up
+			echo "up" >> /tmp/hostname.$_vd
+			ifconfig $_vd up
+
+			# Make sure a hostname.$_vl is created with this info
+			ifconfig $_vl destroy >/dev/null 2>&1
+			ifconfig $_vl vlan $_vi vlandev $_vd
+			echo "vlan $_vi vlandev $_vd" >>$_hn
+
+			# Now we can act like it is a real interface
+			IFDEVS="$IFDEVS $_vl"
+
+			# Next time around, offer up another vlan to modify
+			: $(( _vli += 1 ))
+			_vl="vlan$_vli"
+		fi
 
 		# First interface configured will use the hostname without
 		# asking the user.
@@ -714,7 +764,7 @@ v4_config() {
 		ifconfig $_ifs -group dhcp >/dev/null 2>&1
 		if ifconfig $_ifs inet $_addr netmask $resp up ; then
 			addhostent "$_addr" "$_name"
-			echo "inet $_addr $resp" >$_hn
+			echo "inet $_addr $resp" >>$_hn
 		fi
 		;;
 	esac
