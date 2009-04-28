@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.491 2009/04/28 16:46:10 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.492 2009/04/28 19:55:26 sthen Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -626,7 +626,7 @@ configure_ifs() {
 				continue
 			fi
 
-			# Validate range of $_vi as 0-4095
+			# Validate range of $_vi as 1-4095
 			if (( _vi < 1 || _vi > 4095 )); then
 				echo "Invalid vlan tag $_vi"
 				continue
