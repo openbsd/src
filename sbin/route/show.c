@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.76 2009/02/03 16:44:15 michele Exp $	*/
+/*	$OpenBSD: show.c,v 1.77 2009/04/28 12:09:35 michele Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -550,7 +550,7 @@ p_sockaddr_mpls(struct sockaddr *in, struct sockaddr *out, int flags, int width)
 	if (in->sa_family != AF_MPLS)
 		return;
 
-	if (flags & MPLS_OP_POP)
+	if (flags & MPLS_OP_POP || flags == MPLS_OP_LOCAL)
 		cp = label_print(in, NULL);
 	else
 		cp = label_print(in, out);
@@ -885,6 +885,8 @@ char *
 label_print_op(u_int32_t type)
 {
 	switch (type & (MPLS_OP_PUSH | MPLS_OP_POP | MPLS_OP_SWAP)) {
+	case MPLS_OP_LOCAL:
+		return ("LOCAL");
 	case MPLS_OP_POP:
 		return ("POP");
 	case MPLS_OP_SWAP:

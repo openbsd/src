@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.127 2009/02/03 16:44:15 michele Exp $	*/
+/*	$OpenBSD: route.c,v 1.128 2009/04/28 12:09:35 michele Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ int	rtm_addrs, s;
 int	forcehost, forcenet, Fflag, nflag, af, qflag, tflag;
 int	iflag, verbose, aflen = sizeof(struct sockaddr_in);
 int	locking, lockrest, debugonly;
-u_long	mpls_flags = 0;
+u_long	mpls_flags = MPLS_OP_LOCAL;
 u_long	rtm_inits;
 uid_t	uid;
 u_int	tableid = 0;
@@ -404,7 +404,10 @@ newroute(int argc, char **argv)
 				if (!--argc)
 					usage(1+*argv);
 				if (af != AF_MPLS)
-					errx(1, "-in requires -mpls");
+					errx(1, "-out requires -mpls");
+				if (mpls_flags == MPLS_OP_LOCAL)
+					errx(1, "-out requires -push, -pop, "
+					    "-swap");
 				getmplslabel(*++argv, 0);
 				break;
 			case K_POP:
