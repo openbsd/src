@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.19 2005/02/27 15:46:42 otto Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.20 2009/04/28 06:46:03 chl Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -1516,15 +1516,12 @@ env_opt_start()
 {
 	unsigned char *p;
 
-	if (opt_reply) {
-		p = (unsigned char *)realloc(opt_reply, OPT_REPLY_SIZE);
-		if (p == NULL)
-			free(opt_reply);
-	} else
-		p = (unsigned char *)malloc(OPT_REPLY_SIZE);
+	p = (unsigned char *)realloc(opt_reply, OPT_REPLY_SIZE);
+	if (p == NULL)
+		free(opt_reply);
 	opt_reply = p;
 	if (opt_reply == NULL) {
-/*@*/		printf("env_opt_start: malloc()/realloc() failed!!!\n");
+/*@*/		printf("env_opt_start: realloc() failed!!!\n");
 		opt_reply = opt_replyp = opt_replyend = NULL;
 		return;
 	}
@@ -2190,8 +2187,6 @@ Scheduler(block)
 telnet(user)
     char *user;
 {
-    int printed_encrypt = 0;
-
     sys_telnet_init();
 
 #if	defined(AUTHENTICATION) || defined(ENCRYPTION)
@@ -2240,6 +2235,7 @@ telnet(user)
     if (wantencryption) {
 	extern int auth_has_failed;
 	time_t timeout = time(0) + 60;
+	int printed_encrypt = 0;
 	
 	send_do(TELOPT_ENCRYPT, 1);
 	send_will(TELOPT_ENCRYPT, 1);
