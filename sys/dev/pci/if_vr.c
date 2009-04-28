@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.81 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.82 2009/04/28 12:54:31 mpf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -366,20 +366,38 @@ allmulti:
 void
 vr_setcfg(struct vr_softc *sc, int media)
 {
-	int restart = 0;
+	int i;
 
-	if (CSR_READ_2(sc, VR_COMMAND) & (VR_CMD_TX_ON|VR_CMD_RX_ON)) {
-		restart = 1;
-		VR_CLRBIT16(sc, VR_COMMAND, (VR_CMD_TX_ON|VR_CMD_RX_ON));
-	}
+	if (sc->sc_mii.mii_media_status & IFM_ACTIVE &&
+	    IFM_SUBTYPE(sc->sc_mii.mii_media_active) != IFM_NONE) {
+		sc->vr_link = 1;
 
-	if ((media & IFM_GMASK) == IFM_FDX)
-		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
-	else
-		VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
+		if (CSR_READ_2(sc, VR_COMMAND) & (VR_CMD_TX_ON|VR_CMD_RX_ON))
+			VR_CLRBIT16(sc, VR_COMMAND,
+			    (VR_CMD_TX_ON|VR_CMD_RX_ON));
 
-	if (restart)
+		if ((media & IFM_GMASK) == IFM_FDX)
+			VR_SETBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
+		else
+			VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_FULLDUPLEX);
+
 		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_RX_ON);
+	} else {
+		sc->vr_link = 0;
+		VR_CLRBIT16(sc, VR_COMMAND, (VR_CMD_TX_ON|VR_CMD_RX_ON));
+		for (i = VR_TIMEOUT; i > 0; i--) {
+			DELAY(10);
+			if (!(CSR_READ_2(sc, VR_COMMAND) &
+			    (VR_CMD_TX_ON|VR_CMD_RX_ON)))
+				break;
+		}
+		if (i == 0) {
+#ifdef VR_DEBUG
+			printf("%s: rx shutdown error!\n", sc->sc_dev.dv_xname);
+#endif
+			sc->vr_flags |= VR_F_RESTART;
+		}
+	}
 }
 
 void
@@ -1132,10 +1150,10 @@ vr_start(struct ifnet *ifp)
 	struct mbuf		*m_head;
 	struct vr_chain		*cur_tx;
 
-	if (ifp->if_flags & IFF_OACTIVE)
-		return;
-
 	sc = ifp->if_softc;
+
+	if (ifp->if_flags & IFF_OACTIVE || sc->vr_link == 0)
+		return;
 
 	cur_tx = sc->vr_cdata.vr_tx_prod;
 	while (cur_tx->vr_mbuf == NULL) {
@@ -1283,6 +1301,7 @@ vr_init(void *xsc)
 	CSR_WRITE_2(sc, VR_IMR, VR_INTRS);
 
 	/* Restore state of BMCR */
+	sc->vr_link = 0;
 	mii_mediachg(mii);
 
 	ifp->if_flags |= IFF_RUNNING;

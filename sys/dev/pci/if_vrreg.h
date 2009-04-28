@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.21 2008/07/18 13:38:40 thib Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.22 2009/04/28 12:54:31 mpf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -350,7 +350,8 @@ struct vr_desc {
 #define VR_RXSTAT_RX_PHYS	0x00000800
 #define VR_RXSTAT_RX_BROAD	0x00001000
 #define VR_RXSTAT_RX_MULTI	0x00002000
-#define VR_RXSTAT_RX_OK		0x00004000
+#define VR_RXSTAT_RX_VIDHIT	0x00004000 /* 6105M */
+#define VR_RXSTAT_RX_OK		0x00008000
 #define VR_RXSTAT_RXLEN		0x07FF0000
 #define VR_RXSTAT_RXLEN_EXT	0x78000000
 #define VR_RXSTAT_OWN		0x80000000
@@ -469,6 +470,7 @@ struct vr_softc {
 	bus_dma_segment_t	sc_listseg;
 	int			sc_if_flags;
 	int			sc_rxbufs;
+	int			vr_link;
 };
 
 #define VR_F_RESTART		0x01		/* Restart unit on next tick */
