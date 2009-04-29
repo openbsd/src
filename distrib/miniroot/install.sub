@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.496 2009/04/29 20:30:53 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.498 2009/04/29 22:44:42 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -321,7 +321,7 @@ user_setup() {
 	_n=$resp
 
 	askpassword $_u
-	_encr=`/mnt/usr/bin/encrypt -b 8 -- "$_password"`
+	[[ -n "$_password" ]] && _encr=`/mnt/usr/bin/encrypt -b 8 -- "$_password"`
 	echo "${_u}:${_encr}:1000:10::0:0:${_n}:/home/${_u}:/bin/ksh" \
 	    >> /mnt/etc/master.passwd
 
@@ -953,7 +953,7 @@ enable_network() {
 					cmd2="$dt $dtaddr"
 					;;
 				esac
-				if [ ! -n "$name" ]; then
+				if [ -z "$name" ]; then
 					echo "/mnt/etc/hostname.$if: invalid network configuration file"
 					return
 				fi
@@ -1785,7 +1785,7 @@ THESETS="bsd bsd.rd bsd.mp $MDSETS"
 for _set in base etc misc comp man game xbase xetc xshare xfont xserv site ; do
 	[[ $MODE == upgrade && ( $_set == etc || $_set == xetc ) ]] && continue
 	THESETS="$THESETS ${_set}${VERSION}.tgz"
-	if [[ ! -n $DISPLAY ]]; then
+	if [[ -z $DISPLAY ]]; then
 		# If we have no displays, skip the X sets
 		isin $_set xbase xetc xshare xfont xserv site && continue
 	fi
