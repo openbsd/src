@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.493 2009/04/28 21:40:12 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.494 2009/04/29 17:26:07 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1762,6 +1762,7 @@ DKDEVS=$(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
 CDDEVS=$(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
 MTDEVS=$(scan_dmesg "${MDMTDEVS:-/^[cms]t[0-9][0-9]* /s/ .*//p}")
 IFDEVS=$(get_ifdevs)
+DISPLAY=$(scan_dmesg '/^wsdisplay[0-9]* /s/ .*//p')
 
 CONSOLE=$(scan_dmesg '/^\([^ ]*\).*: console$/s//\1/p')
 CONSOLE=${CONSOLE% }
@@ -1780,7 +1781,11 @@ THESETS="bsd bsd.rd bsd.mp $MDSETS"
 for _set in base etc misc comp man game xbase xetc xshare xfont xserv site ; do
 	[[ $MODE == upgrade && ( $_set == etc || $_set == xetc ) ]] && continue
 	THESETS="$THESETS ${_set}${VERSION}.tgz"
-	isin $_set xbase xetc xshare xfont xserv site && continue
+	if [[ ! -n $DISPLAY ]]; then
+		# If we have no displays, skip the X sets
+		isin $_set xbase xetc xshare xfont xserv site && continue
+	fi
+	isin $_set site && continue
 	DEFAULTSETS="$DEFAULTSETS ${_set}${VERSION}.tgz"
 done
 # Since etc${VERSION}.tgz is not in DEFAULTSETS for upgrades, it can always be
