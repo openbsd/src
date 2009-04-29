@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.130 2009/04/28 03:29:00 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.131 2009/04/29 00:52:30 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1499,7 +1499,7 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 
 	if ((wu = sr_wu_get(sd)) == NULL) {
 		DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd no wu\n", DEVNAME(sc));
-		return (TRY_AGAIN_LATER);
+		return (NO_CCB);
 	}
 
 	xs->error = XS_NOERROR;
