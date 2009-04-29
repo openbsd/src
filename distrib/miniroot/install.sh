@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.173 2009/04/28 21:41:03 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.174 2009/04/29 17:22:49 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -345,10 +345,10 @@ sed -e "/^console.*on.*secure.*$/s/std\.[0-9]*/std.$(stty speed)/" \
 # Move ttys back in case questions() needs to massage it more.
 mv /tmp/ttys /mnt/etc/ttys
 
-questions
-
 askpassword root
 _rootpass="$_password"
+
+questions
 
 user_setup
 
