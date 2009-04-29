@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.23 2008/02/14 09:28:02 thib Exp $
+.\"	$OpenBSD: arp.8,v 1.24 2009/04/29 07:10:38 jmc Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)arp.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 14 2008 $
+.Dd $Mdocdate: April 29 2009 $
 .Dt ARP 8
 .Os
 .Sh NAME
@@ -166,7 +166,8 @@ for IP addresses 204.1.2.3 and 204.1.2.4:
 .Sh SEE ALSO
 .Xr inet 3 ,
 .Xr arp 4 ,
-.Xr ifconfig 8
+.Xr ifconfig 8 ,
+.Xr ndp 8
 .Sh HISTORY
 The
 .Nm
