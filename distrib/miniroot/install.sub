@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.495 2009/04/29 18:10:54 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.496 2009/04/29 20:30:53 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -600,9 +600,13 @@ configure_ifs() {
 		_vl="vlan$_vli"
 	fi
 
-	# First time, default value is first interface
-	set -- $IFDEVS
-	_p=$1
+	# Select the default interface
+	if ifconfig netboot >/dev/null 2>&1; then
+		_p=$(ifconfig netboot | sed -ne '1s/:.*//p')
+	else
+		set -- $IFDEVS
+		_p=$1
+	fi
 
 	while [[ -n $_IFDEVS ]]; do
 		ask_which "network interface" "do you wish to configure" \
