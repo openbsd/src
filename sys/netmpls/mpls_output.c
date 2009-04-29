@@ -1,4 +1,4 @@
-/* $OpenBSD: mpls_output.c,v 1.5 2009/01/28 22:18:44 michele Exp $ */
+/* $OpenBSD: mpls_output.c,v 1.6 2009/04/29 19:26:52 michele Exp $ */
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -92,9 +92,11 @@ mpls_output(struct mbuf *m, struct rtentry *rt0)
 			m = mpls_shim_push(m, rt_mpls);
 			break;
 		case MPLS_OP_POP:
+			m = mpls_shim_pop(m);
+			break;
 		case MPLS_OP_SWAP:
-			/* We are entring a LSP. There isn't anything to pop
-			   or swap yet. */
+			m = mpls_shim_swap(m, rt_mpls);
+			break;
 		default:
 			m_freem(m);
 			goto bad;

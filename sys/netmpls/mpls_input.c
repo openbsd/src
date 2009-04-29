@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.20 2009/04/28 12:07:43 michele Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.21 2009/04/29 19:26:52 michele Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -232,13 +232,10 @@ mpls_input(struct mbuf *m)
 			goto done;
 		}
 
-		switch (rt_mpls->mpls_operation & (MPLS_OP_PUSH | MPLS_OP_POP |
-		    MPLS_OP_SWAP)){
-
-		case MPLS_OP_POP:
+		if (rt_mpls->mpls_operation & MPLS_OP_POP) {
 			hasbos = MPLS_BOS_ISSET(shim->shim_label);
-			m = mpls_shim_pop(m);
 			if (hasbos) {
+				m = mpls_shim_pop(m);
 #if NMPE > 0
 				if (rt->rt_ifp->if_type == IFT_MPLS) {
 					mpe_input(m, rt->rt_ifp, smpls, ttl);
@@ -249,20 +246,7 @@ mpls_input(struct mbuf *m)
 				m_freem(m);
 				goto done;
 			}
-			break;
-		case MPLS_OP_PUSH:
-			m = mpls_shim_push(m, rt_mpls);
-			break;
-		case MPLS_OP_SWAP:
-			m = mpls_shim_swap(m, rt_mpls);
-			break;
-		default:
-			m_freem(m);
-			goto done;
 		}
-
-		if (m == NULL)
-			goto done;
 
 		/* refetch label */
 		shim = mtod(m, struct shim_hdr *);
