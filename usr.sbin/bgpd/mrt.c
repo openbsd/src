@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.58 2009/03/19 07:00:06 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.59 2009/04/29 20:04:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -32,17 +32,14 @@
 
 #include "mrt.h"
 
-static int		mrt_attr_dump(struct buf *, struct rde_aspath *,
-			    struct bgpd_addr *);
-static int		mrt_dump_entry_mp(struct mrt *, struct prefix *,
-			    u_int16_t, struct rde_peer*);
-static int		mrt_dump_entry(struct mrt *, struct prefix *,
-			    u_int16_t, struct rde_peer*);
-static int		mrt_dump_hdr_se(struct buf **, struct peer *,
-			    u_int16_t, u_int16_t, u_int32_t, int);
-static int		mrt_dump_hdr_rde(struct buf **, u_int16_t type,
-			    u_int16_t, u_int32_t);
-static int		mrt_open(struct mrt *, time_t);
+int mrt_attr_dump(struct buf *, struct rde_aspath *, struct bgpd_addr *);
+int mrt_dump_entry_mp(struct mrt *, struct prefix *, u_int16_t,
+    struct rde_peer*);
+int mrt_dump_entry(struct mrt *, struct prefix *, u_int16_t, struct rde_peer*);
+int mrt_dump_hdr_se(struct buf **, struct peer *, u_int16_t, u_int16_t,
+    u_int32_t, int);
+int mrt_dump_hdr_rde(struct buf **, u_int16_t type, u_int16_t, u_int32_t);
+int mrt_open(struct mrt *, time_t);
 
 #define DUMP_BYTE(x, b)							\
 	do {								\
@@ -126,7 +123,7 @@ fail:
 	buf_free(buf);
 }
 
-static int
+int
 mrt_attr_dump(struct buf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop)
 {
 	struct attr	*oa;
@@ -188,7 +185,7 @@ mrt_attr_dump(struct buf *buf, struct rde_aspath *a, struct bgpd_addr *nexthop)
 	return (0);
 }
 
-static int
+int
 mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, u_int16_t snum,
     struct rde_peer *peer)
 {
@@ -309,7 +306,7 @@ fail:
 	return (-1);
 }
 
-static int
+int
 mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
     struct rde_peer *peer)
 {
@@ -400,7 +397,7 @@ mrt_dump_upcall(struct pt_entry *pt, void *ptr)
 	}
 }
 
-static int
+int
 mrt_dump_hdr_se(struct buf ** bp, struct peer *peer, u_int16_t type,
     u_int16_t subtype, u_int32_t len, int swap)
 {
@@ -503,7 +500,7 @@ fail:
 	return (-1);
 }
 
-static int
+int
 mrt_dump_hdr_rde(struct buf **bp, u_int16_t type, u_int16_t subtype,
     u_int32_t len)
 {
