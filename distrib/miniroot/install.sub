@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.494 2009/04/29 17:26:07 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.495 2009/04/29 18:10:54 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1409,7 +1409,7 @@ install_sets() {
 	local _d=disk _locs="disk ftp http"
 
 	[[ -n $CDDEVS ]] && { _locs="cd $_locs" ; _d=cd ; }
-	ifconfig -g netboot > /dev/null 2>&1 && _d=ftp
+	ifconfig netboot > /dev/null 2>&1 && _d=ftp
 	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
 	[[ -n $MTDEVS && -x /bin/mt ]] && _locs="$_locs tape"
 
