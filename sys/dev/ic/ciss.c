@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.33 2009/02/16 21:19:06 miod Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.34 2009/04/29 08:24:26 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -332,9 +332,14 @@ ciss_attach(struct ciss_softc *sc)
 	sc->maxunits = inq->numld;
 	sc->nbus = inq->nscsi_bus;
 	sc->ndrives = inq->buswidth? inq->buswidth : 256;
-	printf(": %d LD%s, HW rev %d, FW %4.4s/%4.4s\n",
+	printf(": %d LD%s, HW rev %d, FW %4.4s/%4.4s",
 	    inq->numld, inq->numld == 1? "" : "s",
 	    inq->hw_rev, inq->fw_running, inq->fw_stored);
+	if (sc->cfg.methods & CISS_METH_FIFO64)
+		printf(", 64bit fifo");
+	else if (sc->cfg.methods & CISS_METH_FIFO64_RRO)
+		printf(", 64bit fifo rro");
+	printf("\n");
 
 	CISS_UNLOCK_SCRATCH(sc, lock);
 
@@ -481,6 +486,7 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	struct ciss_cmd *cmd = &ccb->ccb_cmd;
 	struct ciss_ccb *ccb1;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
+	u_int64_t addr;
 	u_int32_t id;
 	int i, tohz, error = 0;
 
@@ -538,7 +544,18 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, ccb_link);
 	ccb->ccb_state = CISS_CCB_ONQ;
 	CISS_DPRINTF(CISS_D_CMD, ("submit=0x%x ", cmd->id));
-	bus_space_write_4(sc->iot, sc->ioh, CISS_INQ, ccb->ccb_cmdpa);
+	if (sc->cfg.methods & (CISS_METH_FIFO64|CISS_METH_FIFO64_RRO)) {
+		/*
+		 * Write the upper 32bits immediately before the lower
+		 * 32bits and set bit 63 to indicate 64bit FIFO mode.
+		 */
+		addr = (u_int64_t)ccb->ccb_cmdpa;
+		bus_space_write_4(sc->iot, sc->ioh, CISS_INQ64_HI,
+		    (addr >> 32) | 0x80000000);
+		bus_space_write_4(sc->iot, sc->ioh, CISS_INQ64_LO,
+		    addr & 0x00000000ffffffffULL);
+	} else
+		bus_space_write_4(sc->iot, sc->ioh, CISS_INQ, ccb->ccb_cmdpa);
 
 	if (wait & SCSI_POLL) {
 		struct timeval tv;
@@ -576,15 +593,37 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 					continue;
 				}
 
-				if ((id = bus_space_read_4(sc->iot, sc->ioh,
-				    CISS_OUTQ)) == 0xffffffff) {
-					CISS_DPRINTF(CISS_D_CMD, ("Q"));
-					continue;
+				if (sc->cfg.methods & CISS_METH_FIFO64) {
+					if (bus_space_read_4(sc->iot, sc->ioh,
+					    CISS_OUTQ64_HI) == 0xffffffff) {
+						CISS_DPRINTF(CISS_D_CMD, ("Q"));
+						continue;
+					}
+					id = bus_space_read_4(sc->iot, sc->ioh,
+					    CISS_OUTQ64_LO);
+				} else if (sc->cfg.methods &
+				    CISS_METH_FIFO64_RRO) {
+					id = bus_space_read_4(sc->iot, sc->ioh,
+					    CISS_OUTQ64_LO);
+					if (id == 0xffffffff) {
+						CISS_DPRINTF(CISS_D_CMD, ("Q"));
+						continue;
+					}
+					(void)bus_space_read_4(sc->iot,
+					    sc->ioh, CISS_OUTQ64_HI);
+				} else {
+					id = bus_space_read_4(sc->iot, sc->ioh,
+					    CISS_OUTQ);
+					if (id == 0xffffffff) {
+						CISS_DPRINTF(CISS_D_CMD, ("Q"));
+						continue;
+					}
 				}
 
 				CISS_DPRINTF(CISS_D_CMD, ("got=0x%x ", id));
 				ccb1 = sc->ccbs + (id >> 2) * sc->ccblen;
 				ccb1->ccb_cmd.id = htole32(id);
+				ccb1->ccb_cmd.id_hi = htole32(0);
 			}
 
 			error = ciss_done(ccb1);
@@ -940,6 +979,7 @@ ciss_intr(void *v)
 	struct ciss_softc *sc = v;
 	struct ciss_ccb *ccb;
 	ciss_lock_t lock;
+	bus_size_t reg;
 	u_int32_t id;
 	int hit = 0;
 
@@ -949,11 +989,23 @@ ciss_intr(void *v)
 		return 0;
 
 	lock = CISS_LOCK(sc);
-	while ((id = bus_space_read_4(sc->iot, sc->ioh, CISS_OUTQ)) !=
-	    0xffffffff) {
 
+	if (sc->cfg.methods & CISS_METH_FIFO64)
+		reg = CISS_OUTQ64_HI;
+	else if (sc->cfg.methods & CISS_METH_FIFO64_RRO)
+		reg = CISS_OUTQ64_LO;
+	else
+		reg = CISS_OUTQ;
+	while ((id = bus_space_read_4(sc->iot, sc->ioh, reg)) != 0xffffffff) {
+		if (reg == CISS_OUTQ64_HI)
+			id = bus_space_read_4(sc->iot, sc->ioh,
+			    CISS_OUTQ64_LO);
+		else if (reg == CISS_OUTQ64_LO)
+			(void)bus_space_read_4(sc->iot, sc->ioh,
+			    CISS_OUTQ64_HI);
 		ccb = sc->ccbs + (id >> 2) * sc->ccblen;
 		ccb->ccb_cmd.id = htole32(id);
+		ccb->ccb_cmd.id_hi = htole32(0); /* ignore the upper 32bits */
 		if (ccb->ccb_state == CISS_CCB_POLL) {
 			ccb->ccb_state = CISS_CCB_ONQ;
 			wakeup(ccb);
