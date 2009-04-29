@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.152 2009/04/28 09:05:40 sthen Exp $	*/
+/*	$OpenBSD: diff.c,v 1.153 2009/04/29 12:56:15 joris Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -48,7 +48,7 @@ struct cvs_cmd cvs_cmd_diff = {
 	"Show differences between revisions",
 	"[-abcdilNnpRuw] [[-D date] [-r rev] [-D date2 | -r rev2]] "
 	"[-k mode] [file ...]",
-	"bcfD:ik:lNnpr:Ruw",
+	"abcfdD:ik:lNnpr:Ruw",
 	NULL,
 	cvs_diff
 };
