@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.47 2009/04/13 21:22:38 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.48 2009/04/29 18:28:37 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -612,9 +612,19 @@ pci_init_extents(void)
 	bios_memmap_t *bmp;
 	u_int64_t size;
 
-	if (pciio_ex == NULL)
-		pciio_ex = extent_create("pciio", 0, 0xffff, M_DEVBUF,
-		    NULL, 0, EX_NOWAIT);
+	if (pciio_ex == NULL) {
+		/*
+		 * We only have 64K of addressable I/O space.
+		 * However, since BARs may contain garbage, we cover
+		 * the full 32-bit address space defined by PCI of
+		 * which we only make the first 64K available.
+		 */
+		pciio_ex = extent_create("pciio", 0, 0xffffffff, M_DEVBUF,
+		    NULL, 0, EX_NOWAIT | EX_FILLED);
+		if (pciio_ex == NULL)
+			return;
+		extent_free(pciio_ex, 0, 0x10000, M_NOWAIT);
+	}
 
 	if (pcimem_ex == NULL) {
 		pcimem_ex = extent_create("pcimem", 0, 0xffffffff, M_DEVBUF,
