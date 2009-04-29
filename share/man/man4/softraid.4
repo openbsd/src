@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.19 2008/09/05 06:58:42 fkr Exp $
+.\"	$OpenBSD: softraid.4,v 1.20 2009/04/29 07:02:02 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 5 2008 $
+.Dd $Mdocdate: April 29 2009 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -48,6 +48,23 @@ Essentially a discipline is a lower
 level driver that provides the I/O transformation for the softraid
 device.
 .Pp
+A
+.Em volume
+is a virtual disk device that is made up of a collection of chunks.
+.Pp
+A
+.Em chunk
+is a partition or storage area of fstype
+.Dq RAID .
+.Xr disklabel 8
+can be used to alter the fstype,
+though some platforms,
+such as SUN,
+are not capable of using this
+and should use fstype
+.Dq 4.2BSD
+instead.
+.Pp
 Currently
 .Nm
 supports the following disciplines:
@@ -56,33 +73,25 @@ supports the following disciplines:
 A
 .Em striping
 discipline.
-It segments data over a number of disks to increase performance.
+It segments data over a number of chunks to increase performance.
 RAID 0 does not provide for data loss (redundancy).
 .It RAID 1
 A
 .Em mirroring
 discipline.
-It copies data across more than one disk to provide for data loss.
+It copies data across more than one chunk to provide for data loss.
 Read performance is increased,
 though at the cost of write speed.
 Unlike traditional RAID 1,
 .Nm
-supports the use of more than two disks in a RAID 1 setup.
+supports the use of more than two chunks in a RAID 1 setup.
 .It CRYPTO
 An
 .Em encrypting
 discipline.
-It encrypts data on a single disk to provide for data confidentiality.
+It encrypts data on a single chunk to provide for data confidentiality.
 CRYPTO does not provide redundancy.
 .El
-.Pp
-A
-.Em volume
-is a virtual disk device that is made up of a collection of chunks.
-.Pp
-A
-.Em chunk
-is a partition or storage area of the type RAID.
 .Sh EXAMPLES
 An example to create a 3 chunk RAID 1 from scratch is as follows:
 .Pp
@@ -108,7 +117,7 @@ Assemble the RAID volume:
 The console will show what device was added to the system:
 .Bd -literal -offset indent
 scsibus0 at softraid0: 1 targets
-sd0 at scsibus0 targ 0 lun 0: <OPENBSD, SR RAID 1, 001> SCSI2
+sd0 at scsibus0 targ 0 lun 0: \*(LtOPENBSD, SR RAID 1, 001\*(Gt SCSI2
 sd0: 1MB, 0 cyl, 255 head, 63 sec, 512 bytes/sec, 3714 sec total
 .Ed
 .Pp
@@ -126,27 +135,13 @@ new RAID volume:
 .Ed
 .Pp
 The RAID volume is now ready to be used as a normal disk device.
-.Pp
 See
 .Xr bioctl 8
 for more information on configuration of RAID sets.
-.Pp
-All component partitions must be of type
-.Dv RAID .
-Some platforms, such as SUN, are not capable of using the
-.Dv RAID
-partition type.
-The
-.Dv 4.2BSD
-partition type should be used on such platforms.
 .Sh SEE ALSO
-.Xr sd 4 ,
-.Xr wd 4 ,
 .Xr bioctl 8 ,
-.Xr config 8 ,
-.Xr fsck 8 ,
-.Xr MAKEDEV 8 ,
-.Xr mount 8 ,
+.Xr disklabel 8 ,
+.Xr fdisk 8 ,
 .Xr newfs 8
 .Sh HISTORY
 The
