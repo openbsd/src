@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.174 2009/04/29 17:22:49 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.175 2009/04/29 22:45:20 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -397,10 +397,12 @@ echo -n "done.\nGenerating initial host.random file..."
 chmod 600 host.random >/dev/null 2>&1 )
 echo "done."
 
-_encr=`/mnt/usr/bin/encrypt -b 8 -- "$_rootpass"`
-echo "1,s@^root::@root:${_encr}:@
+if [[ -n "$_rootpass" ]]; then
+    _encr=`/mnt/usr/bin/encrypt -b 8 -- "$_rootpass"`
+    echo "1,s@^root::@root:${_encr}:@
 w
 q" | /mnt/bin/ed /mnt/etc/master.passwd 2>/dev/null
+fi
 /mnt/usr/sbin/pwd_mkdb -p -d /mnt/etc /etc/master.passwd
 
 # Perform final steps common to both an install and an upgrade.

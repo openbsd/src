@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.498 2009/04/29 22:44:42 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.499 2009/04/29 22:45:20 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -323,7 +323,7 @@ user_setup() {
 	askpassword $_u
 	[[ -n "$_password" ]] && _encr=`/mnt/usr/bin/encrypt -b 8 -- "$_password"`
 	echo "${_u}:${_encr}:1000:10::0:0:${_n}:/home/${_u}:/bin/ksh" \
-	    >> /mnt/etc/master.passwd
+		>> /mnt/etc/master.passwd
 
 	mkdir -p /mnt/home/$_u
 	(cd /mnt/etc/skel; cp -pR . /mnt/home/$_u)
