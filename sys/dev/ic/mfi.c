@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.93 2009/04/04 03:22:30 dlg Exp $ */
+/* $OpenBSD: mfi.c,v 1.94 2009/04/29 00:48:24 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -44,7 +44,7 @@ uint32_t	mfi_debug = 0
 /*		    | MFI_D_INTR */
 /*		    | MFI_D_MISC */
 /*		    | MFI_D_DMA */
-		    | MFI_D_IOCTL
+/*		    | MFI_D_IOCTL */
 /*		    | MFI_D_RW */
 /*		    | MFI_D_MEM */
 /*		    | MFI_D_CCB */
