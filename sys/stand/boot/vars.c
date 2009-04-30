@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.13 2005/05/24 20:48:35 uwe Exp $	*/
+/*	$OpenBSD: vars.c,v 1.14 2009/04/30 01:12:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -35,12 +35,14 @@
 
 extern char prog_ident[];
 extern int debug;
+int db_console = -1;
 
 static int Xaddr(void);
 static int Xdevice(void);
 #ifdef DEBUG
 static int Xdebug(void);
 #endif
+static int Xdb_console(void);
 static int Ximage(void);
 static int Xhowto(void);
 static int Xtty(void);
@@ -58,6 +60,7 @@ const struct cmd_table cmd_set[] = {
 	{"tty",    CMDT_VAR, Xtty},
 	{"image",  CMDT_VAR, Ximage},
 	{"timeout",CMDT_VAR, Xtimeout},
+	{"db_console", CMDT_VAR, Xdb_console},
 	{NULL,0}
 };
 
@@ -74,6 +77,33 @@ Xdebug(void)
 	return 0;
 }
 #endif
+
+int
+Xdb_console(void)
+{
+	if (cmd.argc != 2) {
+		switch (db_console) {
+		case 0:
+			printf("off\n");
+			break;
+		case 1:
+			printf("on\n");
+			break;
+		default:
+			printf("unset\n");
+			break;
+		}
+	} else {
+		if (strcmp(cmd.argv[1], "0") == 0 ||
+		    strcmp(cmd.argv[1], "off") == 0)
+			db_console = 0;
+		else if (strcmp(cmd.argv[1], "1") == 0 ||
+		    strcmp(cmd.argv[1], "on") == 0)
+			db_console = 1;
+	}
+
+	return (0);
+}
 
 static int
 Xtimeout(void)
