@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.136 2009/04/19 21:33:43 krw Exp $ */
+/* $OpenBSD: acpi.c,v 1.137 2009/04/30 20:42:14 marco Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -802,6 +802,7 @@ acpiclose(dev_t dev, int flag, int mode, struct proc *p)
 	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
 		return (ENXIO);
+
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
 	case APMDEV_NORMAL:
@@ -836,10 +837,12 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	/* fake APM */
 	switch (cmd) {
 #ifdef ACPI_SLEEP_ENABLED
+	case APM_IOC_STANDBY_REQ:
+	case APM_IOC_SUSPEND_REQ:
 	case APM_IOC_SUSPEND:
 	case APM_IOC_STANDBY:
 		workq_add_task(NULL, 0, (workq_fn)acpi_sleep_state,
-		acpi_softc, (void *)ACPI_STATE_S3);
+		    acpi_softc, (void *)ACPI_STATE_S3);
 		break;
 #endif /* ACPI_SLEEP_ENABLED */
 	case APM_IOC_GETPOWER:
