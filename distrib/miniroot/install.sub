@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.503 2009/04/30 02:42:45 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.504 2009/04/30 21:18:29 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1138,7 +1138,7 @@ ftp_error() {
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
 #	and FTPOPTS must be global.
 install_url() {
-	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd
+	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd _setdir
 
 	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" \
 		"${ftp_proxy:-none}"
@@ -1192,8 +1192,10 @@ install_url() {
 	done
 
 	# Get server directory
+	_setdir=$SETDIR
+	[[ $_url_type == ftp || $_url_type == http ]] && _setdir=$FTPSETDIR
 	eval resp=\$_${_url_type}_server_dir
-	ask_until "Server directory?" "${resp:-pub/OpenBSD/$SETDIR}"
+	ask_until "Server directory?" "${resp:-pub/OpenBSD/$_setdir}"
 	eval _${_url_type}_server_dir=$resp
 
 	if [[ $_url_type == ftp ]]; then
@@ -1761,8 +1763,9 @@ dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
 
 # Are we in a real release, or a snapshot?  If this is a snapshot
 # install media, default us to a snapshot directory.
+FTPSETDIR=$SETDIR
 CURRENT=$(scan_dmesg '/^OpenBSD 4.5\([^ ]*\).*$/s//\1/p')
-[[ -n $CURRENT ]] && SETDIR=snapshots/$ARCH
+[[ -n $CURRENT ]] && FTPSETDIR=snapshots/$ARCH
 
 # Scan /var/run/dmesg.boot for interesting devices.
 DKDEVS=$(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
