@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.499 2009/04/29 22:45:20 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.500 2009/04/30 00:28:22 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1760,6 +1760,11 @@ done
 
 # Extract and save one boot's worth of dmesg
 dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' >/var/run/dmesg.boot
+
+# Are we in a real release, or a snapshot?  If this is a snapshot
+# install media, default us to a snapshot directory.
+CURRENT=$(scan_dmesg '/^OpenBSD 4.5\([^ ]*\).*$/s//\1/p')
+[[ -n $CURRENT ]] && SETDIR=snapshots/$ARCH
 
 # Scan /var/run/dmesg.boot for interesting devices.
 DKDEVS=$(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
