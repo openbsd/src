@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.157 2009/01/23 19:16:39 kettenis Exp $	*/
+/*	$OpenBSD: locore.s,v 1.158 2009/04/30 11:36:57 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -108,7 +108,14 @@ _C_LABEL(sun4v_mp_patch):
 	.previous
 #endif
 
+/*
+ * The UltraSPARC T1 has a "feature" where a LDXA/STXA to ASI_SCRATCHPAD
+ * registers may corrupt an unrelated integer register file register.
+ * To prevent this, it is required to have a non-store or NOP instruction
+ * before any LDXA/STXA to this register.
+ */
 #define GET_CPUINFO_VA(ci) \
+	nop					;\
 999:	set	CPUINFO_VA, ci			;\
 	.section	.sun4v_mp_patch, "ax"	;\
 	.word	999b				;\
