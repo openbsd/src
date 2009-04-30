@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.27 2009/04/20 00:30:18 oga Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.28 2009/04/30 09:06:01 oga Exp $	*/
 /*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
@@ -400,7 +400,7 @@ uvm_pglistfree(struct pglist *list)
 #ifdef DEBUG
 		if (m->uobject == (void *)0xdeadbeef &&
 		    m->uanon == (void *)0xdeadbeef) {
-			panic("uvm_pagefree: freeing free page %p", m);
+			panic("uvm_pglistfree: freeing free page %p", m);
 		}
 
 		m->uobject = (void *)0xdeadbeef;
