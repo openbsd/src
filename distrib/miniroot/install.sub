@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.500 2009/04/30 00:28:22 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.501 2009/04/30 01:01:56 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -83,7 +83,7 @@ set_term() {
 	while :; do
 		ask "kbd(8) mapping? ('?' for list)" "none"
 		case $resp in
-		?)	echo "Major tables: $_tables" ;;
+		"?")	echo "Major tables: $_tables" ;;
 		none)	return ;;
 		*)	kbd $resp && { echo $resp >/tmp/kbdtype ; return ; } ;;
 		esac
@@ -1365,7 +1365,7 @@ set_timezone() {
 
 		ask "What timezone are you in? ('?' for list)" "$TZ"
 
-		if [[ $resp == ? ]]; then
+		if [[ $resp == "?" ]]; then
 			ls -F ${_zonepath}
 			continue;
 		fi
@@ -1376,7 +1376,7 @@ set_timezone() {
 			ask "What sub-timezone of '${_zonepath#$_zoneroot}' are you in? ('?' for list)"
 			case $resp in
 			"")	;;
-			?)	ls -F $_zonepath ;;
+			"?")	ls -F $_zonepath ;;
 			*)	_zonepath=$_zonepath/$resp ;;
 			esac
 		done
