@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.200 2009/04/29 22:57:05 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.201 2009/04/30 06:56:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.200 2009/04/29 22:57:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.201 2009/04/30 06:56:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,14 +78,15 @@ struct space_allocation {
 const struct space_allocation alloc_big[] = {
 	{   MEG(80),         GIG(1),   5, "/"		},
 	{   MEG(80),       MEG(256),   5, "swap"	},
-	{   MEG(80),         GIG(4),  12, "/tmp"	},
+	{  MEG(120),         GIG(4),   8, "/tmp"	},
 	{   MEG(80),         GIG(4),  13, "/var"	},
 	{  MEG(600),         GIG(2),   2, "/usr"	},
 	{  MEG(512),         GIG(1),   3, "/usr/X11R6"	},
 	{    GIG(2),         GIG(6),   5, "/usr/local"	},
 	{    GIG(1),         GIG(2),   3, "/usr/src"	},
 	{    GIG(1),         GIG(2),   3, "/usr/obj"	},
-	{    GIG(1),       GIG(300),  49, "/home"	}
+	{    GIG(1),       GIG(300),  53, "/home"	}
+	/* Anything beyond this leave for the user to decide */
 };
 
 const struct space_allocation alloc_medium[] = {
