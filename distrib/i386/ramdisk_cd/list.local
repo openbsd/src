@@ -1,10 +1,10 @@
-# $OpenBSD: list.local,v 1.21 2009/04/17 15:59:48 deraadt Exp $
+# $OpenBSD: list.local,v 1.22 2009/04/30 07:15:45 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
+LINK	instbin					bin/sha256
 LINK	instbin					sbin/ccdconfig
 LINK	instbin					sbin/ping6
 LINK	instbin					sbin/rtsol
-LINK	instbin					sbin/sha256
 LINK	instbin					sbin/apm sbin/zzz
 LINK	instbin					sbin/apmd
 LINK	instbin					sbin/mount_udf
