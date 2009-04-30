@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.94 2009/04/29 00:48:24 marco Exp $ */
+/* $OpenBSD: mfi.c,v 1.95 2009/04/30 01:24:05 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -84,7 +84,7 @@ int		mfi_create_sgl(struct mfi_ccb *, int);
 
 /* commands */
 int		mfi_scsi_ld(struct mfi_ccb *, struct scsi_xfer *);
-int		mfi_scsi_io(struct mfi_ccb *, struct scsi_xfer *, uint32_t,
+int		mfi_scsi_io(struct mfi_ccb *, struct scsi_xfer *, uint64_t,
 		    uint32_t);
 void		mfi_scsi_xs_done(struct mfi_ccb *);
 int		mfi_mgmt(struct mfi_softc *, uint32_t, uint32_t, uint32_t,
@@ -840,7 +840,7 @@ mfi_intr(void *arg)
 }
 
 int
-mfi_scsi_io(struct mfi_ccb *ccb, struct scsi_xfer *xs, uint32_t blockno,
+mfi_scsi_io(struct mfi_ccb *ccb, struct scsi_xfer *xs, uint64_t blockno,
     uint32_t blockcnt)
 {
 	struct scsi_link	*link = xs->sc_link;
@@ -865,8 +865,8 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsi_xfer *xs, uint32_t blockno,
 	io->mif_header.mfh_flags = 0;
 	io->mif_header.mfh_sense_len = MFI_SENSE_SIZE;
 	io->mif_header.mfh_data_len= blockcnt;
-	io->mif_lba_hi = 0;
-	io->mif_lba_lo = blockno;
+	io->mif_lba_hi = (uint32_t)(blockno >> 32);
+	io->mif_lba_lo = (uint32_t)(blockno & 0xffffffffull);
 	io->mif_sense_addr_lo = htole32(ccb->ccb_psense);
 	io->mif_sense_addr_hi = 0;
 
@@ -985,7 +985,9 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	struct mfi_ccb		*ccb;
 	struct scsi_rw		*rw;
 	struct scsi_rw_big	*rwb;
-	uint32_t		blockno, blockcnt;
+	struct scsi_rw_16	*rw16;
+	uint64_t		blockno;
+	uint32_t		blockcnt;
 	uint8_t			target = link->target;
 	uint8_t			mbox[MFI_MBOX_SIZE];
 	int			s;
@@ -1012,7 +1014,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	case READ_BIG:
 	case WRITE_BIG:
 		rwb = (struct scsi_rw_big *)xs->cmd;
-		blockno = _4btol(rwb->addr);
+		blockno = (uint64_t)_4btol(rwb->addr);
 		blockcnt = _2btol(rwb->length);
 		if (mfi_scsi_io(ccb, xs, blockno, blockcnt)) {
 			mfi_put_ccb(ccb);
@@ -1023,8 +1025,20 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	case READ_COMMAND:
 	case WRITE_COMMAND:
 		rw = (struct scsi_rw *)xs->cmd;
-		blockno = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
+		blockno =
+		    (uint64_t)(_3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff));
 		blockcnt = rw->length ? rw->length : 0x100;
+		if (mfi_scsi_io(ccb, xs, blockno, blockcnt)) {
+			mfi_put_ccb(ccb);
+			goto stuffup;
+		}
+		break;
+
+	case READ_16:
+	case WRITE_16:
+		rw16 = (struct scsi_rw_16 *)xs->cmd;
+		blockno = _8btol(rw16->addr);
+		blockcnt = _4btol(rw16->length);
 		if (mfi_scsi_io(ccb, xs, blockno, blockcnt)) {
 			mfi_put_ccb(ccb);
 			goto stuffup;
