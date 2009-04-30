@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.502 2009/04/30 01:03:28 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.503 2009/04/30 02:42:45 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -516,7 +516,7 @@ addhostent() {
 #
 # Set $resp to list of selected sets.
 select_sets() {
-	local _avail=$1 _selected=$2 _next _f _action _col _p
+	local _avail=$1 _selected=$2 _f _action _col _p
 	typeset -L18 _l
 
 	cat <<__EOT
@@ -527,14 +527,12 @@ sets are labelled '[X]'.
 __EOT
 	while :; do
 		_action=
-		_next=
 		_col=0
 		for _f in $_avail; do
 			if isin $_f $_selected; then
 				_p="[X] $_f"
 			else
 				_p="[ ] $_f"
-				: ${_next:=$_f}
 			fi
 			if (( _col == 0 )); then
 				echo -n '    '
@@ -559,9 +557,8 @@ __EOT
 			# complete a partial column
 			echo
 		fi
-		: ${_next:=done}
 
-		ask "Set name? (or 'abort' or 'done')" "$_next"
+		ask "Set name? (or 'abort' or 'done')" done
 		case $resp in
 		abort)	_selected=
 			break ;;
