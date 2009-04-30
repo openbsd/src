@@ -1,5 +1,5 @@
 /* XXX - DSR */
-/*	$OpenBSD: biosvar.h,v 1.9 2008/09/01 17:30:55 deraadt Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.10 2009/04/30 01:16:56 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -201,6 +201,11 @@ typedef struct _bios_consdev {
 typedef struct _bios_bootmac {
 	char	mac[6];
 } __packed bios_bootmac_t;
+
+#define BOOTARG_DDB 8
+typedef struct _bios_ddb {
+	int	db_console;
+} __packed bios_ddb_t;
 
 #if defined(_KERNEL) || defined (_STANDALONE)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.89 2009/04/20 15:44:49 reyk Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.90 2009/04/30 01:16:56 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -126,6 +126,7 @@
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
+extern int db_console;
 #endif
 
 #include "isa.h"
@@ -1833,6 +1834,7 @@ void
 getbootinfo(char *bootinfo, int bootinfo_size)
 {
 	bootarg32_t *q;
+	bios_ddb_t *bios_ddb;
 
 #undef BOOTINFO_DEBUG
 #ifdef BOOTINFO_DEBUG
@@ -1910,6 +1912,13 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 			break;
 		case BOOTARG_BOOTMAC:
 			bios_bootmac = (bios_bootmac_t *)q->ba_arg;
+			break;
+
+		case BOOTARG_DDB:
+			bios_ddb = (bios_ddb_t *)q->ba_arg;
+#ifdef DDB
+			db_console = bios_ddb->db_console;
+#endif
 			break;
 
 		default:
