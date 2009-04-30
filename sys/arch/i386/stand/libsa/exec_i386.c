@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.32 2007/07/27 17:46:56 tom Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.33 2009/04/30 13:47:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -52,6 +52,8 @@ run_loadfile(u_long *marks, int howto)
 	caddr_t av = (caddr_t)BOOTARG_OFF;
 	bios_consdev_t cd;
 	extern int com_speed; /* from bioscons.c */
+	bios_ddb_t ddb;
+	extern int db_console;
 
 	if (sa_cleanup != NULL)
 		(*sa_cleanup)();
@@ -62,6 +64,11 @@ run_loadfile(u_long *marks, int howto)
 
 	if (bootmac != NULL)
 		addbootarg(BOOTARG_BOOTMAC, sizeof(bios_bootmac_t), bootmac);
+
+	if (db_console != -1) {
+		ddb.db_console = db_console;
+		addbootarg(BOOTARG_DDB, sizeof(ddb), &ddb);
+	}
 
 	/* Pass memory map to the kernel */
 	mem_pass();
