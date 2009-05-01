@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.505 2009/05/01 01:06:17 krw Exp $
+#	$OpenBSD: install.sub,v 1.506 2009/05/01 15:52:15 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -81,10 +81,10 @@ set_term() {
 	[[ -x /sbin/kbd ]] || return
 	_tables=$(bsort $(kbd -l | egrep -v "^(user|tables|encoding)"))
 	while :; do
-		ask "kbd(8) mapping? ('?' for list)" "none"
+		ask "Choose your keyboard type if it is nationalized? ('?' for list)" "default"
 		case $resp in
 		"?")	echo "Major tables: $_tables" ;;
-		none)	return ;;
+		default) return ;;
 		*)	kbd $resp && { echo $resp >/tmp/kbdtype ; return ; } ;;
 		esac
 	done
