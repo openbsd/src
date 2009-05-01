@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.128 2009/05/01 02:45:30 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.129 2009/05/01 03:40:01 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1395,7 +1395,7 @@ int
 azalia_codec_select_micadc(codec_t *this)
 {
 	widget_t *w;
-	int i, j, err;
+	int i, j, conv, err;
 
 	for (i = 0; i < this->na_adcs; i++) {
 		if (azalia_codec_fnode(this, this->mic,
@@ -1404,9 +1404,13 @@ azalia_codec_select_micadc(codec_t *this)
 	}
 	if (i >= this->na_adcs)
 		return(-1);
-	w = &this->w[this->a_adcs[i]];
+	conv = this->a_adcs[i];
+
+	w = &this->w[conv];
 	for (j = 0; j < 10; j++) {
 		for (i = 0; i < w->nconnections; i++) {
+			if (!azalia_widget_enabled(this, w->connections[i]))
+				continue;
 			if (azalia_codec_fnode(this, this->mic,
 			    w->connections[i], j + 1) >= 0) {
 				break;
@@ -1419,8 +1423,10 @@ azalia_codec_select_micadc(codec_t *this)
 		if (err)
 			return(err);
 		w->selected = i;
-		if (w->connections[i] == this->mic)
+		if (w->connections[i] == this->mic) {
+			this->mic_adc = conv;
 			return(0);
+		}
 		w = &this->w[w->connections[i]];
 	}
 	return(-1);
