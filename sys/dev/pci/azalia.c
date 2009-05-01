@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.126 2009/04/27 23:49:04 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.127 2009/05/01 02:04:20 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2325,7 +2325,7 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 int
 azalia_widget_sole_conn(codec_t *this, nid_t nid)
 {
-	int i, j, target;
+	int i, j, target, nconn, has_target;
 
 	/* connected to ADC */
 	for (i = 0; i < this->adcs.ngroups; i++) {
@@ -2348,18 +2348,39 @@ azalia_widget_sole_conn(codec_t *this, nid_t nid)
 		}
 	}
 	/* connected to pin complex */
-	j = -1;
+	target = -1;
 	FOR_EACH_WIDGET(this, i) {
-		if (this->w[i].type == COP_AWTYPE_PIN_COMPLEX &&
-		    this->w[i].nconnections == 1 &&
+		if (this->w[i].type != COP_AWTYPE_PIN_COMPLEX)
+			continue;
+		if (this->w[i].nconnections == 1 &&
 		    this->w[i].connections[0] == nid) {
-			if (j != -1)
+			if (target != -1)
 				return -1;
-			j = i;
+			target = i;
+		} else {
+			nconn = 0;
+			has_target = 0;
+			for (j = 0; j < this->w[i].nconnections; j++) {
+				if (!this->w[this->w[i].connections[j]].enable)
+					continue;
+				nconn++;
+				if (this->w[i].connections[j] == nid)
+					has_target = 1;
+			}
+			if (has_target == 1) {
+				if (nconn == 1) {
+					if (target != -1)
+						return -1;
+					target = i;
+				} else {
+					/* not sole connection at least once */
+					return -1;
+				}
+			}
 		}
 	}
-	if (j != -1)
-		return j;
+	if (target != -1)
+		return target;
 
 	return -1;
 }
