@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.121 2009/05/01 02:55:16 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.122 2009/05/01 03:45:17 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -153,11 +153,41 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->name = "Realtek ALC888";
 		this->init_widget = azalia_alc88x_init_widget;
 		break;
+	case 0x111d7603:
+		this->name = "IDT 92HD75B3/4";
+		break;
+	case 0x111d7604:
+		this->name = "IDT 92HD83C1X";
+		break;
+	case 0x111d7605:
+		this->name = "IDT 92HD81B1X";
+		break;
+	case 0x111d7608:
+		this->name = "IDT 92HD75B1/2";
+		break;
+	case 0x111d7674:
+		this->name = "IDT 92HD73D1";
+		break;
+	case 0x111d7675:
+		this->name = "IDT 92HD73C1";	/* aka 92HDW74C1 */
+		break;
+	case 0x111d7676:
+		this->name = "IDT 92HD73E1";	/* aka 92HDW74E1 */
+		break;
+	case 0x111d76b0:
+		this->name = "IDT 92HD71B8";
+		break;
 	case 0x111d76b2:
 		this->name = "IDT 92HD71B7";
 		break;
 	case 0x111d76b6:
 		this->name = "IDT 92HD71B5";
+		break;
+	case 0x111d76d4:
+		this->name = "IDT 92HD83C1C";
+		break;
+	case 0x111d76d5:
+		this->name = "IDT 92HD81B1C";
 		break;
 	case 0x11d41884:
 		this->name = "Analog Devices AD1884";
@@ -192,6 +222,18 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x434d4980:
 		this->name = "CMedia CMI9880";
 		break;
+	case 0x83847612:
+		this->name = "Sigmatel STAC9230X";
+		break;
+	case 0x83847613:
+		this->name = "Sigmatel STAC9230D";
+		break;
+	case 0x83847614:
+		this->name = "Sigmatel STAC9229X";
+		break;
+	case 0x83847615:
+		this->name = "Sigmatel STAC9229D";
+		break;
 	case 0x83847616:
 		this->name = "Sigmatel STAC9228X";
 		break;
@@ -200,6 +242,9 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x83847618:
 		this->name = "Sigmatel STAC9227X";
+		break;
+	case 0x83847619:
+		this->name = "Sigmatel STAC9227D";
 		break;
 	case 0x83847620:
 		this->name = "Sigmatel STAC9274";
@@ -222,6 +267,18 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x83847636:
 		this->name = "Sigmatel STAC9251";
 		break;
+	case 0x83847638:
+		this->name = "IDT 92HD700X";
+		break;
+	case 0x83847639:
+		this->name = "IDT 92HD700D";
+		break;
+	case 0x83847645:
+		this->name = "IDT 92HD206X";
+		break;
+	case 0x83847646:
+		this->name = "IDT 92HD206D";
+		break;
 	case 0x83847661:
 		/* FALLTHROUGH */
 	case 0x83847662:
@@ -229,16 +286,24 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->mixer_init = azalia_stac7661_mixer_init;
 		break;
 	case 0x83847680:
-		this->name = "Sigmatel STAC9221";
+		this->name = "Sigmatel STAC9220/1";
 		break;
+	case 0x83847682:
+		/* FALLTHROUGH */
 	case 0x83847683:
-		this->name = "Sigmatel STAC9221D";
+		this->name = "Sigmatel STAC9221D";	/* aka IDT 92HD202 */
 		break;
 	case 0x83847690:
-		this->name = "Sigmatel STAC9200";
+		this->name = "Sigmatel STAC9200";	/* aka IDT 92HD001 */
 		break;
 	case 0x83847691:
 		this->name = "Sigmatel STAC9200D";
+		break;
+	case 0x83847698:
+		this->name = "IDT 92HD005";
+		break;
+	case 0x83847699:
+		this->name = "IDT 92HD005D";
 		break;
 	case 0x838476a0:
 		this->name = "Sigmatel STAC9205X";
