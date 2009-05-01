@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.507 2009/05/01 16:14:12 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.508 2009/05/01 16:36:07 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -97,29 +97,23 @@ welcome() {
 
 Welcome to the $OBSD $MODE program.
 
-This program will help you $MODE OpenBSD. At any prompt except password
-prompts you can escape to a shell by typing '!'. Default answers are shown
-in []'s and are selected by pressing RETURN.  At any time you can exit this
-program by pressing Control-C, but exiting during an $MODE can leave your
-system in an inconsistent state.
-
-__EOT
-
-	# Configure the terminal and keyboard.
-	set_term
-
-	cat <<__EOT
-
-IS YOUR DATA BACKED UP? As with anything that modifies disk contents, this
-program can cause SIGNIFICANT data loss.
+This program will $MODE OpenBSD. At any prompt except password prompts you
+can escape to a shell by typing '!'. Default answers are shown in []'s and
+are selected by pressing RETURN.  At any time you can exit this program by
+pressing Control-C, but exiting during an $MODE can leave your system in an
+inconsistent state.
 
 __EOT
 
 	case $MODE in
 	upgrade)
 		cat <<__EOT
-NOTE: once your system has been upgraded, you must manually merge any changes
-to files in the 'etc' set into the files already on your system.
+IS YOUR DATA BACKED UP?  Upgrades are never as simple as they seem.  While
+carefully designed, this process could lead to SIGNIFICANT data loss.
+
+NOTE: Once your system has been upgraded, you must manually merge any
+changes to files in the 'etc' set into the files already on your system,
+perhaps using the sysmerge(8) command.
 
 __EOT
 		_q="Proceed with upgrade?"
@@ -134,22 +128,28 @@ the disk preparation steps and continue, or you can reboot and start over.
 __EOT
 			_q="Skip disk initialization?"
 		else
-			_q="Proceed with install?"
+		cat <<__EOT
+If you change your mind and do not want to install, type Control-C now
+and then type 'reboot' or 'halt' at the command prompt.
+
+__EOT
+			return
 		fi
 		;;
 	esac
 
-	ask_yn "$_q"
+	[[ -n $_q ]] && ask_yn "$_q"
 	if [[ $resp == n ]]; then
 		cat <<__EOT
 
-Enter 'halt' at the prompt to gracefully exit OpenBSD. You can then
-power cycle the machine and boot your original OS.
+Remove your install media (if any), and enter 'reboot' at the command
+prompt to return to your original OS.
 __EOT
 		exit
 	fi
 
 	echo "Cool! Let's get to it."
+	echo
 }
 
 # Echo the file $1 to standard output, skipping any lines that begin with a
@@ -1819,6 +1819,9 @@ umount -v /mnt 1>/dev/null 2>&1
 
 # Introduce ourselves.
 welcome
+
+# Configure the terminal and keyboard.
+set_term
 
 # Get ROOTDISK, ROOTDEV and SWAPDEV.
 if [[ $MODE == install && ! -f /etc/fstab ]]; then
