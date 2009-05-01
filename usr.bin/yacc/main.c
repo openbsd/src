@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2008/05/17 23:31:52 sobrado Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2009/05/01 10:41:05 chl Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.21 2008/05/17 23:31:52 sobrado Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.22 2009/05/01 10:41:05 chl Exp $";
 #endif
 #endif /* not lint */
 
@@ -322,22 +322,6 @@ create_file_names(void)
     }
 }
 
-
-FILE *
-fsopen(char *name, char *mode)
-{
-    FILE *fp = NULL;
-    int fd, mod = O_RDONLY;
-
-    if (strchr(mode, 'w'))
-	mod = O_RDWR;
-    if ((fd = open(name, mod | O_EXCL|O_CREAT, 0666)) == -1 ||
-	(fp = fdopen(fd, mode)) == NULL) {
-	if (fd != -1)
-	    close(fd);
-    }
-    return (fp);
-}
 
 void
 open_files(void)
