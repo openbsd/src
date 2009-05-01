@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.441 2009/04/27 21:52:26 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.442 2009/05/01 09:01:26 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 27 2009 $
+.Dd $Mdocdate: May 1 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1853,8 +1853,8 @@ anchor in the path evaluation at that point will become the new current
 anchor.
 As an example, consider the following:
 .Bd -literal -offset indent
-# echo 'anchor "spam/allowed"' | pfctl -f -
-# echo 'anchor "../banned"\enpass' | pfctl -a spam/allowed -f -
+# printf 'anchor "spam/allowed"\en' | pfctl -f -
+# printf 'anchor "../banned"\enpass\en' | pfctl -a spam/allowed -f -
 .Ed
 .Pp
 Evaluation of the main ruleset will lead into the
