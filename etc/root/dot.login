@@ -1,15 +1,15 @@
-# $OpenBSD: dot.login,v 1.11 2005/03/30 19:50:07 deraadt Exp $
+# $OpenBSD: dot.login,v 1.12 2009/05/01 18:08:42 millert Exp $
 #
 # csh login file
 
-set tterm='?'$TERM
-set noglob
-onintr finish
-eval `tset -s -Q $tterm`
-finish:
-unset noglob
-unset tterm
-onintr
+if ( -x /usr/bin/tset ) then
+	set noglob histchars=""
+	onintr finish
+	eval `tset -sQ '-munknown:?vt220' $TERM`
+	finish:
+	unset noglob histchars
+	onintr
+endif
 
 if ( `logname` == `whoami` ) then
 	echo "Read the afterboot(8) man page for administration advice."
