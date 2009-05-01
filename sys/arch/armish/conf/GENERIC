@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.25 2009/02/10 18:35:44 damien Exp $ 
+# $OpenBSD: GENERIC,v 1.26 2009/05/01 22:03:00 miod Exp $ 
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -26,6 +26,7 @@ options	CACHE_CLEAN_BLOCK_INTR
 #options	PERFCTRS	# performance counters
 
 option		PCIVERBOSE
+option		USER_PCICONF		# user-space PCI configuration
 
 config	bsd	swap generic
 

@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.21 2009/02/10 18:35:44 damien Exp $
+# $OpenBSD: GENERIC,v 1.22 2009/05/01 22:03:02 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -22,6 +22,7 @@ option	 	DONT_INIT_BSC
 #option	 	DONT_INIT_PCIBSC
 
 option		PCIVERBOSE
+option		USER_PCICONF		# user-space PCI configuration
 option		USBVERBOSE
 
 #config		bsd	swap generic
