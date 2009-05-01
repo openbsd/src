@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.43 2009/04/28 23:11:25 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.44 2009/05/01 21:44:19 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -368,7 +368,7 @@ lka_dispatch_mta(int sig, short event, void *p)
 			int mxcnt;
 			int error;
 			struct mxhost mxhost;
-			char *secret;
+			char *secret = NULL;
 
 			mxreq = imsg.data;
 			mxrep.id = mxreq->id;
