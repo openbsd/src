@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.43 2009/04/24 16:05:06 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.44 2009/05/01 02:55:16 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -670,6 +670,11 @@ typedef struct codec_t {
 	nid_t spkr_dac;
 
 	int spkr_muters;
+	int spkr_mute_method;
+#define	AZ_SPKR_MUTE_NONE	0
+#define	AZ_SPKR_MUTE_SPKR_MUTE	1
+#define	AZ_SPKR_MUTE_SPKR_DIR	2
+#define	AZ_SPKR_MUTE_DAC_MUTE	3
 
 	volgroup_t playvols;
 	volgroup_t recvols;

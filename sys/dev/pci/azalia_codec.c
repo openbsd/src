@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.120 2009/04/27 23:49:04 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.121 2009/05/01 02:55:16 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -445,15 +445,22 @@ azalia_generic_unsol(codec_t *this, int tag)
 		}
 		if (err)
 			break;
-		if ((this->w[this->speaker].widgetcap & COP_AWCAP_OUTAMP) &&
-		    (this->w[this->speaker].outamp_cap & COP_AMPCAP_MUTE)) {
+		switch(this->spkr_mute_method) {
+		case AZ_SPKR_MUTE_SPKR_MUTE:
 			mc.un.ord = vol;
 			err = azalia_generic_mixer_set(this, this->speaker,
 			    MI_TARGET_OUTAMP, &mc);
-		} else {
+			break;
+		case AZ_SPKR_MUTE_SPKR_DIR:
 			mc.un.ord = vol ? 0 : 1;
 			err = azalia_generic_mixer_set(this, this->speaker,
 			    MI_TARGET_PINDIR, &mc);
+			break;
+		case AZ_SPKR_MUTE_DAC_MUTE:
+			mc.un.ord = vol;
+			err = azalia_generic_mixer_set(this, this->spkr_dac,
+			    MI_TARGET_OUTAMP, &mc);
+			break;
 		}
 		break;
 
@@ -893,12 +900,25 @@ azalia_generic_mixer_init(codec_t *this)
 	}
 
 	/* spkr mute by jack sense */
-	w = &this->w[this->speaker];
-	if (this->nsense_pins > 0 && this->speaker != -1 &&
-	    (((w->widgetcap & COP_AWCAP_OUTAMP) &&
-	    (w->outamp_cap & COP_AMPCAP_MUTE)) ||
-	    ((w->d.pin.cap & COP_PINCAP_OUTPUT) &&
-	    (w->d.pin.cap & COP_PINCAP_INPUT)))) {
+	this->spkr_mute_method = AZ_SPKR_MUTE_NONE;
+	if (this->speaker != -1 && this->spkr_dac != -1 && this->nsense_pins > 0) {
+		w = &this->w[this->speaker];
+		if ((w->widgetcap & COP_AWCAP_OUTAMP) &&
+		    (w->outamp_cap & COP_AMPCAP_MUTE))
+			this->spkr_mute_method = AZ_SPKR_MUTE_SPKR_MUTE;
+		else if ((w->d.pin.cap & COP_PINCAP_OUTPUT) &&
+		    (w->d.pin.cap & COP_PINCAP_INPUT))
+			this->spkr_mute_method = AZ_SPKR_MUTE_SPKR_DIR;
+		else {
+			w = &this->w[this->spkr_dac];
+			if (w->nid != this->dacs.groups[0].conv[0] &&
+			    (w->widgetcap & COP_AWCAP_OUTAMP) &&
+			    (w->outamp_cap & COP_AMPCAP_MUTE))
+				this->spkr_mute_method = AZ_SPKR_MUTE_DAC_MUTE;
+		}
+	}
+	if (this->spkr_mute_method != AZ_SPKR_MUTE_NONE) {
+		w = &this->w[this->speaker];
 		MIXER_REG_PROLOG;
 		m->nid = w->nid;
 		snprintf(d->label.name, sizeof(d->label.name),
