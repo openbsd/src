@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.2 2006/12/12 11:43:50 reyk Exp $	*/
+/*	$OpenBSD: misc.c,v 1.3 2009/05/01 22:27:23 sthen Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@vantronix.net>
@@ -90,7 +90,7 @@ void
 lg_sig_alarm(int sig)
 {
 	if (child != -1) {
-		/* Forceibly kill the child, no excuse... */
+		/* Forcibly kill the child, no excuse... */
 		kill(child, SIGKILL);
 	}
 }
