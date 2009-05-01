@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.129 2009/05/01 03:40:01 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.130 2009/05/01 04:00:40 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1279,7 +1279,7 @@ azalia_codec_init(codec_t *this)
 
 	this->na_dacs = this->na_dacs_d = 0;
 	this->na_adcs = this->na_adcs_d = 0;
-	this->speaker = this->spkr_dac = this->mic = -1;
+	this->speaker = this->spkr_dac = this->mic = this->mic_adc = -1;
 	this->nsense_pins = 0;
 	FOR_EACH_WIDGET(this, i) {
 		if (!this->w[i].enable)
@@ -1344,8 +1344,6 @@ azalia_codec_init(codec_t *this)
 			break;
 		}
 	}
-
-	this->mic_adc = -1;
 
 	/* make sure built-in mic is connected to an adc */
 	if (this->mic != -1 && this->mic_adc == -1) {
