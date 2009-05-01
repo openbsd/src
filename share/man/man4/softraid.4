@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.20 2009/04/29 07:02:02 jmc Exp $
+.\"	$OpenBSD: softraid.4,v 1.21 2009/05/01 19:00:40 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 29 2009 $
+.Dd $Mdocdate: May 1 2009 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -57,13 +57,7 @@ A
 is a partition or storage area of fstype
 .Dq RAID .
 .Xr disklabel 8
-can be used to alter the fstype,
-though some platforms,
-such as SUN,
-are not capable of using this
-and should use fstype
-.Dq 4.2BSD
-instead.
+is used to alter the fstype.
 .Pp
 Currently
 .Nm
@@ -162,6 +156,11 @@ There is no point in wasting a lot of time syncing random data.
 Currently there is no automated mechanism to recover from failed disks.
 .Pp
 There is no boot support at this time for any disciplines.
+.Pp
+Sparc hardware needs to use fstype
+.Dq 4.2BSD
+instead of
+.Dq RAID .
 .Pp
 Certain RAID levels can protect against some data loss
 due to component failure.
