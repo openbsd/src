@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.76 2009/04/28 16:06:07 miod Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.77 2009/05/01 20:44:22 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -651,7 +651,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 		/* XXXCDC: need some sort of lockout for this case */
 		paddr_t paddr;
 		npages = end - start;  /* # of pages */
-		pgs = (vm_page *)uvm_km_alloc(kernel_map,
+		pgs = (vm_page *)uvm_km_zalloc(kernel_map,
 		    sizeof(struct vm_page) * npages);
 		if (pgs == NULL) {
 			printf("uvm_page_physload: can not malloc vm_page "
@@ -659,8 +659,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 			printf("\tignoring 0x%lx -> 0x%lx\n", start, end);
 			return;
 		}
-		/* zero data, init phys_addr and free_list, and free pages */
-		memset(pgs, 0, sizeof(struct vm_page) * npages);
+		/* init phys_addr and free_list, and free pages */
 		for (lcv = 0, paddr = ptoa(start) ;
 				 lcv < npages ; lcv++, paddr += PAGE_SIZE) {
 			pgs[lcv].phys_addr = paddr;
