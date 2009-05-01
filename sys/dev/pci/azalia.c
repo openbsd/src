@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.127 2009/05/01 02:04:20 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.128 2009/05/01 02:45:30 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -212,6 +212,7 @@ int	azalia_codec_find_defadc_sub(codec_t *, nid_t, int, int);
 int	azalia_codec_init_volgroups(codec_t *);
 int	azalia_codec_sort_pins(codec_t *);
 int	azalia_codec_select_micadc(codec_t *);
+int	azalia_codec_select_spkrdac(codec_t *);
 
 int	azalia_widget_init(widget_t *, const codec_t *, int);
 int	azalia_widget_label_widgets(codec_t *);
@@ -1357,6 +1358,10 @@ azalia_codec_init(codec_t *this)
 	if (err)
 		return err;
 
+	err = azalia_codec_select_spkrdac(this);
+	if (err)
+		return err;
+
 	err = this->init_dacgroup(this);
 	if (err)
 		return err;
@@ -1633,6 +1638,84 @@ azalia_codec_sort_pins(codec_t *this)
 
 	return 0;
 #undef MAX_PINS
+}
+
+/* Connect the speaker to a DAC that no other output pin is connected
+ * to by default.  If that is not possible, connect to a DAC other
+ * than the one the first output pin is connected to. 
+ */
+int
+azalia_codec_select_spkrdac(codec_t *this)
+{
+	widget_t *w;
+	nid_t convs[HDA_MAX_CHANNELS];
+	int nconv, conv;
+	int i, j, err, fspkr, conn;
+
+	nconv = fspkr = 0;
+	for (i = 0; i < this->nopins; i++) {
+		conv = this->opins[i].conv;
+		for (j = 0; j < nconv; j++) {
+			if (conv == convs[j])
+				break;
+		}
+		if (j == nconv) {
+			if (conv == this->spkr_dac)
+				fspkr = 1;
+			convs[nconv++] = conv;
+			if (nconv == this->na_dacs)
+				break;
+		}
+	}
+
+	if (fspkr) {
+		conn = conv = -1;
+		w = &this->w[this->speaker];
+		for (i = 0; i < w->nconnections; i++) {
+			conv = azalia_codec_find_defdac(this,
+			    w->connections[i], 1);
+			for (j = 0; j < nconv; j++)
+				if (conv == convs[j])
+					break;
+			if (j == nconv)
+				break;
+		}
+		if (i < w->nconnections) {
+			conn = i;
+		} else {
+			/* Couldn't get a unique DAC.  Try to get a diferent
+			 * DAC than the first pin's DAC.
+			 */
+			if (this->spkr_dac == this->opins[0].conv) {
+				/* If the speaker connection can't be changed,
+				 * change the first pin's connection.
+				 */
+				if (w->nconnections == 1)
+					w = &this->w[this->opins[0].nid];
+				for (j = 0; j < w->nconnections; j++) {
+					conv = azalia_codec_find_defdac(this,
+					    w->connections[j], 1);
+					if (conv != this->opins[0].conv) {
+						conn = j;
+						break;
+					}
+				}
+			}
+		}
+		if (conn != -1) {
+			err = this->comresp(this, w->nid,
+			    CORB_SET_CONNECTION_SELECT_CONTROL, conn, 0);
+			if (err)
+				return(err);
+			w->selected = conn;
+			if (w->nid == this->speaker)
+				this->spkr_dac = conv;
+			else
+				this->opins[0].conv = conv;
+		}
+	}
+
+	return(0);
 }
 
 int
