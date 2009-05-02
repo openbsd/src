@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.48 2009/04/19 17:56:13 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.49 2009/05/02 14:32:27 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -83,13 +83,16 @@
  * Per-CPU data structure
  */
 
+struct pmap;
+
 struct cpu_info {
 	u_int		 ci_flags;
 #define	CIF_ALIVE		0x01		/* cpu initialized */
 #define	CIF_PRIMARY		0x02		/* primary cpu */
 
 	struct proc	*ci_curproc;		/* current process... */
-	struct pcb	*ci_curpcb;		/* ...and its pcb */
+	struct pcb	*ci_curpcb;		/* ...its pcb... */
+	struct pmap	*ci_curpmap;		/* ...and its pmap */
 
 	u_int		 ci_cpuid;		/* cpu number */
 

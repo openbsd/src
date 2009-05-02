@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.23 2009/02/13 23:28:55 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.24 2009/05/02 14:32:29 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -55,9 +55,9 @@ ENTRY(cpu_switchto)
 	bsr	_ASM_LABEL(__savectx)
 	/* note that we don't need to recover r1 at this point */
 
+	/* inline pmap_deactivate(oldproc) */
 	ldcr	r11, CPU
-	bsr.n	_C_LABEL(pmap_deactivate)	/* pmap_deactivate(oldproc) */
-	 ld	r2,  r11, CI_CURPROC
+	st	r0,  r11, CI_CURPMAP
 
 1:
 	ldcr	r2, PSR

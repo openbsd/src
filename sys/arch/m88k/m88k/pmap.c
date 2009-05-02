@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.47 2009/04/19 17:56:13 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.48 2009/05/02 14:32:29 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -70,12 +70,6 @@
 extern vaddr_t	avail_start;
 extern vaddr_t	virtual_avail, virtual_end;
 extern vaddr_t	last_addr;
-
-/*
- * Macros to operate pm_cpus field
- */
-#define SETBIT_CPUSET(cpu_number, cpuset) (*(cpuset)) |= (1 << (cpu_number));
-#define CLRBIT_CPUSET(cpu_number, cpuset) (*(cpuset)) &= ~(1 << (cpu_number));
 
 #ifdef	PMAPDEBUG
 /*
@@ -198,24 +192,19 @@ boolean_t pmap_testbit(struct vm_page *, int);
 void
 flush_atc_entry(pmap_t pmap, vaddr_t va)
 {
-	u_int32_t users;
-	boolean_t kernel;
+	struct cpu_info *ci;
+	boolean_t kernel = pmap == kernel_pmap;
 
-	if ((users = pmap->pm_cpus) == 0)
-		return;
+#ifdef MULTIPROCESSOR	/* { */
+	CPU_INFO_ITERATOR cpu;
 
-	kernel = pmap == kernel_pmap;
-
-#ifdef MULTIPROCESSOR
 	/*
 	 * On 88100, we take action immediately.
 	 */
 	if (CPU_IS88100) {
-		int cpu;
-
-		while ((cpu = ff1(users)) != 32) {
-			cmmu_flush_tlb(cpu, kernel, va, 1);
-			users ^= 1 << cpu;
+		CPU_INFO_FOREACH(cpu, ci) {
+			if (kernel || pmap == ci->ci_curpmap)
+				cmmu_flush_tlb(ci->ci_cpuid, kernel, va, 1);
 		}
 	}
 
@@ -224,23 +213,24 @@ flush_atc_entry(pmap_t pmap, vaddr_t va)
 	 * and wait for pmap_update() to do it.
 	 */
 	if (CPU_IS88110) {
-		struct cpu_info *ci;
-		CPU_INFO_ITERATOR cpu;
-
 		CPU_INFO_FOREACH(cpu, ci) {
-			if (ISSET(users, 1 << ci->ci_cpuid))
-				ci->ci_pmap_ipi |= kernel ?
-				    CI_IPI_TLB_FLUSH_KERNEL :
-				    CI_IPI_TLB_FLUSH_USER;
+			if (kernel)
+				ci->ci_pmap_ipi |= CI_IPI_TLB_FLUSH_KERNEL;
+			else if (pmap == ci->ci_curpmap)
+				ci->ci_pmap_ipi |= CI_IPI_TLB_FLUSH_USER;
 		}
 	}
-#else	/* MULTIPROCESSOR */
-	if (CPU_IS88100)
-		cmmu_flush_tlb(cpu_number(), kernel, va, 1);
-	if (CPU_IS88110)
-		curcpu()->ci_pmap_ipi |= kernel ?
-		    CI_IPI_TLB_FLUSH_KERNEL : CI_IPI_TLB_FLUSH_USER;
-#endif	/* MULTIPROCESSOR */
+#else	/* MULTIPROCESSOR */	/* } { */
+	ci = curcpu();
+
+	if (kernel || pmap == ci->ci_curpmap) {
+		if (CPU_IS88100)
+			cmmu_flush_tlb(ci->ci_cpuid, kernel, va, 1);
+		if (CPU_IS88110)
+			ci->ci_pmap_ipi |= kernel ?
+			    CI_IPI_TLB_FLUSH_KERNEL : CI_IPI_TLB_FLUSH_USER;
+	}
+#endif	/* MULTIPROCESSOR */	/* } */
 }
 
 #ifdef M88110
@@ -612,7 +602,6 @@ pmap_bootstrap(vaddr_t load_start)
 	 * Initialize kernel_pmap structure
 	 */
 	kernel_pmap->pm_count = 1;
-	kernel_pmap->pm_cpus = 0;
 	kmap = (sdt_entry_t *)(avail_start);
 	kernel_pmap->pm_stab = (sdt_entry_t *)virtual_avail;
 	kmapva = virtual_avail;
@@ -788,7 +777,7 @@ pmap_bootstrap_cpu(cpuid_t cpu)
 #ifdef PMAPDEBUG
 	printf("cpu%d: running virtual\n", cpu);
 #endif
-	SETBIT_CPUSET(cpu, &kernel_pmap->pm_cpus);
+	curcpu()->ci_curpmap = NULL;
 }
 
 /*
@@ -936,7 +925,6 @@ pmap_create(void)
 #ifdef MULTIPROCESSOR
 	__cpu_simple_lock_init(&pmap->pm_lock);
 #endif
-	pmap->pm_cpus = 0;
 
 	return pmap;
 }
@@ -2023,28 +2011,21 @@ void
 pmap_activate(struct proc *p)
 {
 	pmap_t pmap = vm_map_pmap(&p->p_vmspace->vm_map);
-	int cpu = cpu_number();
+	struct cpu_info *ci = curcpu();
 
 #ifdef PMAPDEBUG
 	if (pmap_debug & CD_ACTIVATE)
 		printf("pmap_activate(%p) pmap %p\n", p, pmap);
 #endif
 
-	if (pmap != kernel_pmap) {
-		/*
-		 * Lock the pmap to put this cpu in its active set.
-		 */
-		PMAP_LOCK(pmap);
-
-		cmmu_set_uapr(pmap->pm_apr);
-		cmmu_flush_tlb(cpu, FALSE, 0, -1);
-
-		/*
-		 * Mark that this cpu is using the pmap.
-		 */
-		SETBIT_CPUSET(cpu, &(pmap->pm_cpus));
-
-		PMAP_UNLOCK(pmap);
+	if (pmap == kernel_pmap) {
+		ci->ci_curpmap = NULL;
+	} else {
+		if (pmap != ci->ci_curpmap) {
+			cmmu_set_uapr(pmap->pm_apr);
+			cmmu_flush_tlb(ci->ci_cpuid, FALSE, 0, -1);
+			ci->ci_curpmap = pmap;
+		}
 	}
 }
 
@@ -2060,17 +2041,9 @@ pmap_activate(struct proc *p)
 void
 pmap_deactivate(struct proc *p)
 {
-	pmap_t pmap = vm_map_pmap(&p->p_vmspace->vm_map);
-	int cpu = cpu_number();
+	struct cpu_info *ci = curcpu();
 
-	if (pmap != kernel_pmap) {
-		/*
-		 * We expect the spl to already have been raised to sched level.
-		 */
-		PMAP_LOCK(pmap);
-		CLRBIT_CPUSET(cpu, &(pmap->pm_cpus));
-		PMAP_UNLOCK(pmap);
-	}
+	ci->ci_curpmap = NULL;
 }
 
 /*
@@ -2607,16 +2580,22 @@ pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
 	pmap_t pmap = vm_map_pmap(&p->p_vmspace->vm_map);
 	paddr_t pa;
 	vsize_t count;
-	u_int32_t users;
-	int cpu;
+	struct cpu_info *ci;
 
 	while (len != 0) {
 		count = min(len, PAGE_SIZE - (va & PAGE_MASK));
 		if (pmap_extract(pmap, va, &pa)) {
-			users = pmap->pm_cpus;
-			while ((cpu = ff1(users)) != 32) {
-				cmmu_flush_inst_cache(cpu, pa, count);
-				users &= ~(1 << cpu);
+#ifdef MULTIPROCESSOR
+			CPU_INFO_ITERATOR cpu;
+
+			CPU_INFO_FOREACH(cpu, ci)
+#else
+			ci = curcpu();
+#endif
+			/* CPU_INFO_FOREACH(cpu, ci) */ {
+				if (ci->ci_curpmap == pmap)
+					cmmu_flush_inst_cache(ci->ci_cpuid,
+					    pa, count);
 			}
 		}
 		va += count;
