@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.11 2009/04/25 20:37:30 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.12 2009/05/02 21:31:21 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -49,6 +49,7 @@
 
 int	ioc_match(struct device *, void *, void *);
 void	ioc_attach(struct device *, struct device *, void *);
+void	ioc_attach_child(struct device *, const char *, bus_addr_t, int);
 int	ioc_search_onewire(struct device *, void *, void *);
 int	ioc_search_mundane(struct device *, void *, void *);
 int	ioc_print(void *, const char *);
@@ -123,10 +124,8 @@ ioc_print(void *aux, const char *iocname)
 	if (iocname != NULL)
 		printf("%s at %s", iaa->iaa_name, iocname);
 
-	if (iaa->iaa_base != 0)
+	if ((int)iaa->iaa_base > 0)
 		printf(" base 0x%08x", iaa->iaa_base);
-	if (iaa->iaa_dev != 0)
-		printf(" dev %d", iaa->iaa_dev);
 
 	return (UNCONF);
 }
@@ -290,15 +289,18 @@ unknown:
 	}
 
 	/*
-	 * The second vector source seems to be the next unused PCI
+	 * The second vector source seems to be the first unused PCI
 	 * slot.
+	 *
 	 * On Octane systems, the on-board IOC3 is device #2 and
 	 * immediately followed by the RAD1 audio, device #3, thus
 	 * the next empty slot is #4.
 	 * XXX Is this still true with the Octane PCI cardcage?
-	 * On Origin systems, there is no RAD1 audio, slot #3 is
+	 *
+	 * On Origin200 systems, there is no RAD1 audio, slot #3 is
 	 * empty (available PCI slots are #5-#7).
-	 * And on Fuel systems, the on-board IOC3 is device #4,
+	 *
+	 * On Fuel systems, the on-board IOC3 is device #4,
 	 * with the USB controller being device #5, and slot #6
 	 * is empty (available PCI slots are on a different bridge).
 	 */
@@ -382,8 +384,16 @@ establish:
 	 * Attach other sub-devices.
 	 */
 
-	/* XXX need to limit search depending upon has_xxx values */
-	config_search(ioc_search_mundane, self, aux);
+	if (has_serial) {
+		ioc_attach_child(self, "com", 0x20178, IOCDEV_SERIAL_A);
+		ioc_attach_child(self, "com", 0x20170, IOCDEV_SERIAL_B);
+	}
+	if (has_ps2)
+		ioc_attach_child(self, "iockbc", -1, IOCDEV_KEYBOARD);
+	if (has_ethernet)
+		ioc_attach_child(self, "ef", -1, IOCDEV_EF);
+	/* XXX what about the parallel port? */
+	ioc_attach_child(self, "dsrtc", -1, IOCDEV_RTC);
 
 	return;
 
@@ -396,38 +406,50 @@ unmap:
 	bus_space_unmap(memt, memh, memsize);
 }
 
-int
-ioc_search_mundane(struct device *parent, void *vcf, void *args)
+void
+ioc_attach_child(struct device *ioc, const char *name, bus_addr_t base, int dev)
 {
-	struct ioc_softc *sc = (struct ioc_softc *)parent;
-	struct cfdata *cf = vcf;
+	struct ioc_softc *sc = (struct ioc_softc *)ioc;
 	struct ioc_attach_args iaa;
 
-	if (strcmp(cf->cf_driver->cd_name, "onewire") == 0)
-		return 0;
-
-	iaa.iaa_name = cf->cf_driver->cd_name;
+	iaa.iaa_name = name;
 	iaa.iaa_memt = sc->sc_memt;
 	iaa.iaa_dmat = sc->sc_dmat;
-
-	if (cf->cf_loc[0] == -1)
-		iaa.iaa_base = 0;
-	else
-		iaa.iaa_base = cf->cf_loc[0];
-	if (cf->cf_loc[1] == -1)
-		iaa.iaa_dev = 0;
-	else
-		iaa.iaa_dev = cf->cf_loc[1];
+	iaa.iaa_base = base;
+	iaa.iaa_dev = dev;
 
 	if (sc->sc_owmac != NULL)
 		memcpy(iaa.iaa_enaddr, sc->sc_owmac->sc_enaddr, 6);
-	else
+	else {
+		/*
+		 * XXX On IP35, there is no Number-In-a-Can attached to
+		 * XXX the onboard IOC3; instead, the Ethernet address
+		 * XXX is stored in the machine eeprom and can be
+		 * XXX queried by sending the appropriate L1 command
+		 * XXX to the L1 UART. This L1 code is not written yet.
+		 */
 		bzero(iaa.iaa_enaddr, 6);
+	}
 
-        if ((*cf->cf_attach->ca_match)(parent, cf, &iaa) == 0)
+	config_search(ioc_search_mundane, ioc, &iaa);
+}
+
+int
+ioc_search_mundane(struct device *parent, void *vcf, void *args)
+{
+	struct cfdata *cf = vcf;
+	struct ioc_attach_args *iaa = (struct ioc_attach_args *)args;
+
+	if (strcmp(cf->cf_driver->cd_name, iaa->iaa_name) != 0)
+		return 0;
+
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != (int)iaa->iaa_base)
+		return 0;
+
+        if ((*cf->cf_attach->ca_match)(parent, cf, iaa) == 0)
                 return 0;
 
-	config_attach(parent, cf, &iaa, ioc_print);
+	config_attach(parent, cf, iaa, ioc_print);
 	return 1;
 }
 
@@ -614,7 +636,6 @@ ioc_intr_establish(void *cookie, u_long dev, int level, int (*func)(void *),
         struct ioc_softc *sc = cookie;
 	struct ioc_intr *ii;
 
-	dev--;
 	if (dev < 0 || dev >= IOC_NDEVS)
 		return NULL;
 
