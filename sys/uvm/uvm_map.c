@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.109 2009/03/25 20:00:18 oga Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.110 2009/05/02 12:54:42 oga Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3191,7 +3191,7 @@ uvmspace_alloc(vaddr_t min, vaddr_t max, boolean_t pageable,
 	struct vmspace *vm;
 	UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
 
-	vm = pool_get(&uvm_vmspace_pool, PR_WAITOK);
+	vm = pool_get(&uvm_vmspace_pool, PR_WAITOK | PR_ZERO);
 	uvmspace_init(vm, NULL, min, max, pageable, remove_holes);
 	UVMHIST_LOG(maphist,"<- done (vm=%p)", vm,0,0,0);
 	return (vm);
@@ -3208,8 +3208,6 @@ uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t min, vaddr_t max,
     boolean_t pageable, boolean_t remove_holes)
 {
 	UVMHIST_FUNC("uvmspace_init"); UVMHIST_CALLED(maphist);
-
-	memset(vm, 0, sizeof(*vm));
 
 	uvm_map_setup(&vm->vm_map, min, max, pageable ? VM_MAP_PAGEABLE : 0);
 

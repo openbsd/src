@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.36 2009/03/20 15:19:04 oga Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.37 2009/05/02 12:54:42 oga Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -249,11 +249,9 @@ uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, boolean_t create)
 	/*
 	 * allocate a new entry for the bucket and init/insert it in
 	 */
-	elt = pool_get(&uao_swhash_elt_pool, PR_WAITOK);
+	elt = pool_get(&uao_swhash_elt_pool, PR_WAITOK | PR_ZERO);
 	LIST_INSERT_HEAD(swhash, elt, list);
 	elt->tag = page_tag;
-	elt->count = 0;
-	memset(elt->slots, 0, sizeof(elt->slots));
 
 	return(elt);
 }
