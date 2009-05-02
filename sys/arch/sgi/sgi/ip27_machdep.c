@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.2 2009/04/15 18:46:40 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.3 2009/05/02 21:28:08 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -125,8 +125,15 @@ ip27_setup()
 paddr_t
 ip27_widget_short(int16_t nasid, u_int widget)
 {
+	/*
+	 * A hardware bug on the PI side of the Hub chip (at least in
+	 * earlier versions) causes accesses to the short window #0
+	 * to be unreliable.
+	 * The PROM implements a workaround by remapping it to
+	 * big window #6 (the last programmable big window).
+	 */
 	if (widget == 0)
-		return ip27_widget_long(nasid, 6);	/* ??? */
+		return ip27_widget_long(nasid, 6);
 
 	return ((uint64_t)(widget) << 24) | ((uint64_t)(nasid) << 32) | io_base;
 }
