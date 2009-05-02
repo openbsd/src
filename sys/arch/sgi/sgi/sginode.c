@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.2 2009/04/15 18:47:15 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.3 2009/05/02 21:26:05 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -110,12 +110,13 @@ kl_do_boardinfo(lboard_t *boardinfo)
 	klhub_t *hubcomp;
 	klmembnk_m_t *memcomp_m;
 	klmembnk_n_t *memcomp_n;
+	klxbow_t *xbowcomp;
 	struct cpuinfo *cpu;
 	int i, j;
 
-	DB_PRF(("board type %x slot %x nasid %x components %d\n",
+	DB_PRF(("board type %x slot %x nasid %x nic %p components %d\n",
 	    boardinfo->brd_type, boardinfo->brd_slot, boardinfo->brd_nasid,
-	    boardinfo->brd_numcompts));
+	    boardinfo->brd_nic, boardinfo->brd_numcompts));
 
 	for (i = 0; i < boardinfo->brd_numcompts; i++) {
 		comp = IP27_UNCAC_ADDR(klinfo_t *, 0, boardinfo->brd_compts[i]);
@@ -123,8 +124,9 @@ kl_do_boardinfo(lboard_t *boardinfo)
 		switch(comp->struct_type) {
 		case KLSTRUCT_CPU:
 			cpucomp = (klcpu_t *)comp;
-			DB_PRF(("\tcpu type %x %dMhz cache %dMB speed %dMhz\n",
-			    cpucomp->cpu_prid, cpucomp->cpu_speed,
+			DB_PRF(("\tcpu type %x/%x %dMhz cache %dMB speed %dMhz\n",
+			    cpucomp->cpu_prid, cpucomp->cpu_fpirr,
+			    cpucomp->cpu_speed,
 			    cpucomp->cpu_scachesz, cpucomp->cpu_scachespeed));
 
 			if (nextcpu < MAX_CPUS) {
@@ -179,6 +181,20 @@ kl_do_boardinfo(lboard_t *boardinfo)
 			kl_add_memory(memcomp_m->membnk_bnksz,
 			     kl_n_mode ? MD_MEM_BANKS_N : MD_MEM_BANKS_M);
 
+			break;
+
+		case KLSTRUCT_XBOW:
+			xbowcomp = (klxbow_t *)comp;
+			DB_PRF(("\txbow hub master link %d\n",
+			    xbowcomp->xbow_hub_master_link));
+			for (j = 0; j < MAX_XBOW_LINKS; j++) {
+				if (xbowcomp->xbow_port_info[j].port_flag &
+				    XBOW_PORT_ENABLE)
+					DB_PRF(("\t\twidget %d nasid %d flg %u\n",
+					    j,
+					    xbowcomp->xbow_port_info[j].port_nasid,
+					    xbowcomp->xbow_port_info[j].port_flag));
+			}
 			break;
 
 		default:

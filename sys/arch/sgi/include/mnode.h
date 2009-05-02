@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.1 2009/04/13 21:17:54 miod Exp $ */
+/*	$OpenBSD: mnode.h,v 1.2 2009/05/02 21:26:00 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -291,6 +291,19 @@ typedef struct klmembnk_n_s {
 	int16_t		membnk_bnksz[MD_MEM_BANKS_N]; /* Memory bank sizes */
         int16_t		membnk_attr;
 } klmembnk_n_t;
+
+/* KLSTRUCT_XBOW: Xbow */
+#define	MAX_XBOW_LINKS	16
+typedef struct klxbow_s {
+	klinfo_t	xbow_info;
+	klport_t	xbow_port_info[MAX_XBOW_LINKS];	/* Module number */
+	int		xbow_hub_master_link;
+} klxbow_t;
+
+/* xbow_port_info.port_flag bits */
+#define	XBOW_PORT_IO		0x01
+#define	XBOW_PORT_HUB		0x02
+#define	XBOW_PORT_ENABLE	0x04
 
 /* KLSTRUCT_IOC3: Basic I/O Controller */
 typedef struct klioc3_s {
