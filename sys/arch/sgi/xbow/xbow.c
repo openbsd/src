@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.5 2009/04/19 12:52:33 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.6 2009/05/02 21:30:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -307,7 +307,7 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 	 */
 	xbow_intr_widget_register = (1UL << 47) /* XIO I/O space */ |
 	    ((paddr_t)IP27_RHUB_ADDR(nasid, HUB_IR_CHANGE) -
-	     IP27_NODE_IO_BASE(nasid)) /* HUB register offset */;
+	     IP27_NODE_IO_BASE(0)) /* HUB register offset */;
 
 	/*
 	 * If widget 0 reports itself as a bridge, this is not a
@@ -316,8 +316,8 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (vendor == XBOW_VENDOR_SGI4 && product == XBOW_PRODUCT_SGI4_BRIDGE) {
 		/*
-		 * Interrupt widget is #a (this is another facet of this
-		 * bridge).
+		 * Interrupt widget is hardwired to #a (this is another
+		 * facet of this bridge).
 		 */
 		xbow_intr_widget = 0x0a;
 
@@ -325,13 +325,26 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 		    xbowsubmatch_pass2, xbowprint_pass2);
 	} else {
 		/*
+		 * XXX This widget number is actually the Hub part of the
+		 * XXX crossbow, and is where memory and interrupt logic
+		 * XXX resources are connected to.
+		 * XXX The exact widget number ought to be computed from
+		 * XXX the KL configuration graph; I'm hardcoding it for
+		 * XXX now because I am lazy and we only care about the
+		 * XXX first node at the moment. -- miod
+		 */
+		if (sys_config.system_type != SGI_OCTANE)
+			xbow_intr_widget = 0x0a;
+
+		/*
 		 * Enumerate the other widgets.
 		 * We'll do two passes - one to give the first Heart or a Hub a
 		 * chance to setup interrupt routing, and one to attach all
 		 * other widgets.
 		 */
-		xbow_enumerate(self, nasid, 0,
-		    xbowsubmatch_pass1, xbowprint_pass1);
+		if (xbow_intr_widget == 0)
+			xbow_enumerate(self, nasid, 0,
+			    xbowsubmatch_pass1, xbowprint_pass1);
 		xbow_enumerate(self, nasid, xbow_intr_widget,
 		    xbowsubmatch_pass2, xbowprint_pass2);
 	}
