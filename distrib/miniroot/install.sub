@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.508 2009/05/01 16:36:07 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.509 2009/05/02 17:01:26 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -74,20 +74,24 @@
 set_term() {
 	local _tables
 
-	TERM=${TERM:-${MDTERM:-vt220}}
-	ask "Terminal type?" $TERM
-	export TERM=$resp
-
-	[[ -x /sbin/kbd ]] || return
-	_tables=$(bsort $(kbd -l | egrep -v "^(user|tables|encoding)"))
-	while :; do
-		ask "Choose your keyboard type if it is nationalized? ('?' for list)" "default"
-		case $resp in
-		"?")	echo "Major tables: $_tables" ;;
-		default) return ;;
-		*)	kbd $resp && { echo $resp >/tmp/kbdtype ; return ; } ;;
-		esac
-	done
+	export TERM=${TERM:-${MDTERM:-vt220}}
+	if [[ -n $CONSOLE ]]; then
+		echo
+		ask "Terminal type?" $TERM
+		export TERM=$resp
+	else
+		[[ -x /sbin/kbd ]] || return
+		_tables=$(bsort $(kbd -l | egrep -v "^(user|tables|encoding)"))
+		echo
+		while :; do
+			ask "Choose your keyboard type if it is nationalized? ('?' for list)" "default"
+			case $resp in
+			"?")	echo "Major tables: $_tables" ;;
+			default) return ;;
+			*)	kbd $resp && { echo $resp >/tmp/kbdtype ; return ; } ;;
+			esac
+		done
+	fi
 }
 
 welcome() {
@@ -131,7 +135,6 @@ __EOT
 		cat <<__EOT
 If you change your mind and do not want to install, type Control-C now
 and then type 'reboot' or 'halt' at the command prompt.
-
 __EOT
 			return
 		fi
@@ -149,7 +152,6 @@ __EOT
 	fi
 
 	echo "Cool! Let's get to it."
-	echo
 }
 
 # Echo the file $1 to standard output, skipping any lines that begin with a
