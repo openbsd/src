@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.511 2009/05/03 03:35:17 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.512 2009/05/03 06:19:14 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1134,6 +1134,35 @@ ftp_error() {
 	return 1
 }
 
+startftplist() {
+	# If no networks are configured, we do not need the ftplist file
+	# XXX does this work on upgrades?
+	[[ -z $(ls /tmp/hostname.* /mnt/etc/hostname.*) ]] && return
+
+	# ftp.openbsd.org == 129.128.5.191 and will remain at
+	# that address for the foreseeable future.
+	ftp $FTPOPTS -a -o - http://129.128.5.191/cgi-bin/ftplist.cgi \
+		2>/tmp/ftplisterr > $SERVERLISTALL & ftppid=$!
+
+	# If the ftp process takes more than 9 seconds, kill it
+	# XXX We are relyong on the pid space not randomly biting us --
+	# XXX ftp could terminate early, and the pid could be reused
+	(sleep 9; kill -INT $ftppid >/devnull 2>&1) &
+}
+
+# Wait for the ftp process to finish, or be killed after the timeout
+# XXX contains a bit of debug code for now
+waitftplist() {
+	local _dot						# XXX
+
+	while [[ -n $(jobs $ftppid) ]]; do
+		echo -n .					# XXX
+		_dot=.						# XXX
+		sleep 0.2					# XXX
+	done
+	[[ -n $_dot ]] && echo					# XXX
+}
+
 # Get several parameters from the user, and xfer
 # files from the server.
 # $1 = url type (ftp or http)
@@ -1142,32 +1171,23 @@ ftp_error() {
 install_url() {
 	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd _setdir
 
+	waitftplist
 	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" \
 		"${ftp_proxy:-none}"
 	unset ftp_proxy http_proxy
 	[[ $resp == none ]] || export ftp_proxy=$resp http_proxy=$resp
 
-	rm -f $SERVERLIST
-	ask_yn "Display the list of known $_url_type servers?"
-	if [[ $resp == y ]]; then
-		# ftp.openbsd.org == 129.128.5.191 and will remain at
-		# that address for the foreseeable future.
-		echo -n "Getting the list from 129.128.5.191 (ftp.openbsd.org)..."
-		ftp $FTPOPTS -a -o - \
-			ftp://129.128.5.191/$FTPDIR/ftplist 2>/tmp/ftplisterr \
-			| sed -ne "/^${_url_type}:\/\//s///p" >$SERVERLIST
-		if [[ -s $SERVERLIST ]]; then
-			echo "done."
-			_prompt="Server? (IP address, hostname, list#, 'done' or '?')"
-			cat -n $SERVERLIST | less -XE
-		else
-			echo "FAILED."
-			cat /tmp/ftplisterr
-		fi
+	if [[ -s $SERVERLISTALL ]]; then
+		_prompt="Server? (IP address, hostname, list#, 'done' or '?')"
+		sed -ne "/^${_url_type}:\/\//s///p" < $SERVERLISTALL > $SERVERLIST
+		set -- $(sed -ne "1p" $SERVERLIST)
+		eval _${_url_type}_server_ip=${1%%/*}
+	else
+		echo "(Was not able to get ftplist from ftp.openbsd.org, but that is OK)"
+		_prompt="Server? (IP address, hostname or 'done')"
 	fi
 
 	# Get server IP address or hostname
-	: ${_prompt:="Server? (IP address, hostname or 'done')"}
 	while :; do
 		eval resp=\$_${_url_type}_server_ip
 		ask_until "$_prompt" "$resp"
@@ -1243,6 +1263,14 @@ install_url() {
 	fi
 
 	install_files "$_url_base" "$_file_list"
+
+	# Tell the FTP server what location we used... so it can perform magic
+	if [[ -s $SERVERLIST ]]; then
+		eval _url_base=$_url_type://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
+		ftp $FTPOPTS -a -o - \
+			"http://129.128.5.191/cgi-bin/ftpinstall.cgi?install=$_url_base" \
+			>/dev/null 2>&1 &
+	fi
 }
 
 install_mounted_fs() {
@@ -1413,6 +1441,8 @@ sane_install() {
 # needs to get all desired sets.
 install_sets() {
 	local _d=disk _locs="disk ftp http"
+
+	startftplist
 
 	[[ -n $CDDEVS ]] && { _locs="cd $_locs" ; _d=cd ; }
 	ifconfig netboot > /dev/null 2>&1 && _d=ftp
@@ -1757,6 +1787,7 @@ SETDIR="$VNAME/$ARCH"
 FTPDIR="pub/OpenBSD/$VNAME"
 FTPOPTS="-V"
 OBSD="OpenBSD/$ARCH $VNAME"
+SERVERLISTALL=/tmp/serverlistall
 SERVERLIST=/tmp/serverlist
 
 # Do not limit ourselves during installs or upgrades.
