@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.202 2009/05/03 16:49:16 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.203 2009/05/03 22:01:46 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.202 2009/05/03 16:49:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.203 2009/05/03 22:01:46 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2121,8 +2121,9 @@ get_fstype(struct disklabel *lp, int partno)
 int
 get_mp(struct disklabel *lp, int partno)
 {
-	char *p;
 	struct partition *pp = &lp->d_partitions[partno];
+	char *p;
+	int i;
 
 	if (fstabfile && pp->p_fstype != FS_UNUSED &&
 	    pp->p_fstype != FS_SWAP && pp->p_fstype != FS_BOOT &&
@@ -2138,6 +2139,14 @@ get_mp(struct disklabel *lp, int partno)
 			if (strcasecmp(p, "none") == 0) {
 				free(mountpoints[partno]);
 				mountpoints[partno] = NULL;
+				break;
+			}
+			for (i = 0; i < MAXPARTITIONS; i++)
+				if (mountpoints[i] != NULL &&
+				    strcmp(p, mountpoints[i]) == 0)
+					break;
+			if (i < MAXPARTITIONS) {
+				fprintf(stderr, "'%c' already being mounted at '%s'\n", 'a'+i, p);
 				break;
 			}
 			if (*p == '/') {
