@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.179 2009/05/03 14:02:07 krw Exp $
+#	$OpenBSD: install.sh,v 1.180 2009/05/03 15:03:05 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -67,15 +67,14 @@ MODE=install
 . install.sub
 
 # If /etc/fstab already exists, skip disk initialization.
-if [ ! -f /etc/fstab ]; then
+if [[ ! -f /etc/fstab ]]; then
 	DISK=
 	_DKDEVS=$DKDEVS
 
 	while :; do
-		_DKDEVS=`rmel "$DISK" $_DKDEVS`
+		_DKDEVS=$(rmel $DISK $_DKDEVS)
 
-		# Always do ROOTDISK first, and repeat until
-		# it is configured acceptably.
+		# Always do ROOTDISK first, and repeat until it is configured.
 		if isin $ROOTDISK $_DKDEVS; then
 			resp=$ROOTDISK
 			rm -f /tmp/fstab
@@ -105,7 +104,7 @@ if [ ! -f /etc/fstab ]; then
 		_i=0
 		disklabel $DISK 2>&1 | sed -ne '/^ *[a-p]: /p' >/tmp/disklabel.$DISK
 		while read _dev _size _offset _type _rest; do
-			_pp=${DISK}${_dev%:}
+			_pp=$DISK${_dev%:}
 
 			if [[ $_pp == $ROOTDEV ]]; then
 				echo "$ROOTDEV /" >$FILESYSTEMS
@@ -146,7 +145,7 @@ if [ ! -f /etc/fstab ]; then
 		fi
 
 		# If there are no BSD partitions go on to next disk.
-		[[ ${#_partitions[*]} -gt 0 ]] || continue
+		(( ${#_partitions[*]} > 0 )) || continue
 
 		# Now prompt the user for the mount points.
 		_i=0
