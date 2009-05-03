@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.38 2009/03/29 22:58:31 kettenis Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.39 2009/05/03 21:30:09 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -88,6 +88,9 @@ struct cfdriver mpcpcibr_cd = {
 
 static int      mpcpcibrprint(void *, const char *pnp);
 
+void	mpcpcibus_find_ranges_32(struct pcibr_softc *, u_int32_t *, int);
+void	mpcpcibus_find_ranges_64(struct pcibr_softc *, u_int32_t *, int);
+
 struct pcibr_config mpc_config;
 
 /*
@@ -147,34 +150,26 @@ mpcpcibrmatch(struct device *parent, void *match, void *aux)
 	return found;
 }
 
-int pci_map_a = 0;
-
 struct ranges_32 {
-	u_int32_t flags;
-	u_int32_t pad1;
-	u_int32_t pad2;
-	u_int32_t base;
-	u_int32_t pad3;
-	u_int32_t size;
+	u_int32_t cspace;
+	u_int32_t child_hi;
+	u_int32_t child_lo;
+	u_int32_t phys;
+	u_int32_t size_hi;
+	u_int32_t size_lo;
 };
+
 void
-mpcpcibus_find_ranges_32 (struct pcibr_softc *sc, u_int32_t *range_store,
-    int rangesize);
-void
-mpcpcibus_find_ranges_64 (struct pcibr_softc *sc, u_int32_t *range_store,
-    int rangesize);
-void
-mpcpcibus_find_ranges_32 (struct pcibr_softc *sc, u_int32_t *range_store,
+mpcpcibus_find_ranges_32(struct pcibr_softc *sc, u_int32_t *range_store,
     int rangesize)
 {
-	int found;
+	int i, found;
 	unsigned int base = 0;
 	unsigned int size = 0;
 	struct ranges_32 *prange = (void *)range_store;
 	int rangelen;
-	int i;
 
-	rangelen = rangesize / sizeof (struct ranges_32);
+	rangelen = rangesize / sizeof(struct ranges_32);
 
 	/* mac configs */
 	sc->sc_membus_space.bus_base = 0;
@@ -184,18 +179,20 @@ mpcpcibus_find_ranges_32 (struct pcibr_softc *sc, u_int32_t *range_store,
 
 	/* find io(config) base, flag == 0x01000000 */
 	found = 0;
-	for (i = 0; i < rangelen ; i++) {
-		if (prange[i].flags == 0x01000000) {
+	for (i = 0; i < rangelen; i++) {
+		if (prange[i].cspace == 0x01000000) {
 			/* find last? */
 			found = i;
+
+			if (sc->sc_ioex)
+				extent_free(sc->sc_ioex, prange[i].child_lo,
+				    prange[i].size_lo, EX_NOWAIT);
 		}
 	}
 	/* found the io space ranges */
-	if (prange[found].flags == 0x01000000) {
-		sc->sc_iobus_space.bus_base =
-		    prange[found].base;
-		sc->sc_iobus_space.bus_size =
-		    prange[found].size;
+	if (prange[found].cspace == 0x01000000) {
+		sc->sc_iobus_space.bus_base = prange[found].phys;
+		sc->sc_iobus_space.bus_size = prange[found].size_lo;
 	}
 
 	/* the mem space ranges 
@@ -206,26 +203,29 @@ mpcpcibus_find_ranges_32 (struct pcibr_softc *sc, u_int32_t *range_store,
 	 * and all IO and device memory will be in
 	 * upper 2G of address space, set to
 	 * 0x80000000
-	 * start with segment 1 not 0, 0 is config.
 	 */
-	for (i = 0; i < rangelen ; i++) {
-		if (prange[i].flags == 0x02000000) {
+	for (i = 0; i < rangelen; i++) {
+		if (prange[i].cspace == 0x02000000) {
 #ifdef DEBUG_PCI
 			printf("\nfound mem %x %x",
-				prange[i].base,
-				prange[i].size);
+				prange[i].phys,
+				prange[i].size_lo);
 #endif
 			if (base != 0) {
-				if ((base + size) == prange[i].base)   
-					size += prange[i].size;
+				if ((base + size) == prange[i].phys)   
+					size += prange[i].size_lo;
 				else {
-					size = prange[i].size;
-					base = prange[i].base;
+					base = prange[i].phys;
+					size = prange[i].size_lo;
 				} 
 			} else {
-				base = prange[i].base;
-				size = prange[i].size;
+				base = prange[i].phys;
+				size = prange[i].size_lo;
 			}
+
+			if (sc->sc_memex)
+				extent_free(sc->sc_memex, prange[i].child_lo,
+				    prange[i].size_lo, EX_NOWAIT);
 		}
 	}
 	sc->sc_membus_space.bus_base = base;
@@ -233,55 +233,61 @@ mpcpcibus_find_ranges_32 (struct pcibr_softc *sc, u_int32_t *range_store,
 }
 
 struct ranges_64 {
-	u_int32_t flags;
-	u_int32_t pad1;
-	u_int32_t pad2;
-	u_int32_t pad3;
-	u_int32_t base;
-	u_int32_t pad4;
-	u_int32_t size;
+	u_int32_t cspace;
+	u_int32_t child_hi;
+	u_int32_t child_lo;
+	u_int32_t phys_hi;
+	u_int32_t phys_lo;
+	u_int32_t size_hi;
+	u_int32_t size_lo;
 };
+
 void
-mpcpcibus_find_ranges_64 (struct pcibr_softc *sc, u_int32_t *range_store,
+mpcpcibus_find_ranges_64(struct pcibr_softc *sc, u_int32_t *range_store,
     int rangesize)
 {
 	int i, found;
 	unsigned int base = 0;
 	unsigned int size = 0;
-	int rangelen;
 	struct ranges_64 *prange = (void *)range_store;
+	int rangelen;
 
-	rangelen = rangesize / sizeof (struct ranges_64);
+	rangelen = rangesize / sizeof(struct ranges_64);
 
 	/* mac configs */
-
 	sc->sc_membus_space.bus_base = 0;
 	sc->sc_membus_space.bus_io = 0;
 	sc->sc_iobus_space.bus_base = 0;
 	sc->sc_iobus_space.bus_io = 1;
 
-	if (prange[0].flags == 0xabb10113) { /* appl U3; */
-		prange[0].flags = 0x01000000;
-		prange[0].base = 0xf8070000;
-		prange[0].size = 0x00001000;
-		prange[1].flags = 0x02000000;
-		prange[1].base = 0xf2000000;
-		prange[1].size = 0x02800000;      
+	if (prange[0].cspace == 0xabb10113) { /* appl U3; */
+		prange[0].cspace = 0x01000000;
+		prange[0].child_lo = 0x00000000;
+		prange[0].phys_lo = 0xf8070000;
+		prange[0].size_lo = 0x00001000;
+		prange[1].cspace = 0x02000000;
+		prange[1].child_lo = 0xf2000000;
+		prange[1].phys_lo = 0xf2000000;
+		prange[1].size_lo = 0x02800000;
 		rangelen = 2;
 	}
 
 	/* find io(config) base, flag == 0x01000000 */
 	found = 0;
-	for (i = 0; i < rangelen ; i++) {
-		if (prange[i].flags == 0x01000000) {
+	for (i = 0; i < rangelen; i++) {
+		if (prange[i].cspace == 0x01000000) {
 			/* find last? */
 			found = i;
+
+			if (sc->sc_ioex)
+				extent_free(sc->sc_ioex, prange[i].child_lo,
+				    prange[i].size_lo, EX_NOWAIT);
 		}
 	}
 	/* found the io space ranges */
-	if (prange[found].flags == 0x01000000) {
-		sc->sc_iobus_space.bus_base = prange[found].base;
-		sc->sc_iobus_space.bus_size = prange[found].size;
+	if (prange[found].cspace == 0x01000000) {
+		sc->sc_iobus_space.bus_base = prange[found].phys_lo;
+		sc->sc_iobus_space.bus_size = prange[found].size_lo;
 	}
 
 	/* the mem space ranges 
@@ -292,27 +298,30 @@ mpcpcibus_find_ranges_64 (struct pcibr_softc *sc, u_int32_t *range_store,
 	 * and all IO and device memory will be in
 	 * upper 2G of address space, set to
 	 * 0x80000000
-	 * start with segment 1 not 0, 0 is config.
 	 */
-	for (i = 0; i < rangelen ; i++) {
-		if (prange[i].flags == 0x02000000) {
+	for (i = 0; i < rangelen; i++) {
+		if (prange[i].cspace == 0x02000000) {
 #ifdef DEBUG_PCI
 			printf("\nfound mem %x %x",
-				prange[i].base,
-				prange[i].size);
+				prange[i].phys_lo,
+				prange[i].size_lo);
 #endif
 				
 			if (base != 0) {
-				if ((base + size) == prange[i].base) {
-					size += prange[i].size;
+				if ((base + size) == prange[i].phys_lo) {
+					size += prange[i].size_lo;
 				} else {
-					base = prange[i].base;
-					size = prange[i].size;
+					base = prange[i].phys_lo;
+					size = prange[i].size_lo;
 				}
 			} else {
-				base = prange[i].base;
-				size = prange[i].size;
+				base = prange[i].phys_lo;
+				size = prange[i].size_lo;
 			}
+
+			if (sc->sc_memex)
+				extent_free(sc->sc_memex, prange[i].child_lo,
+				    prange[i].size_lo, EX_NOWAIT);
 		}
 	}
 	sc->sc_membus_space.bus_base = base;
@@ -372,6 +381,15 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	/* translate byte(s) into item count*/
 
 	lcp = sc->sc_pcibr = &sc->pcibr_config;
+
+	snprintf(sc->sc_ioex_name, sizeof(sc->sc_ioex_name),
+	    "%s pciio", sc->sc_dev.dv_xname);
+	sc->sc_ioex = extent_create(sc->sc_ioex_name, 0x00000000, 0xffffffff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
+	snprintf(sc->sc_memex_name, sizeof(sc->sc_memex_name),
+	    "%s pcimem", sc->sc_dev.dv_xname);
+	sc->sc_memex = extent_create(sc->sc_memex_name, 0x00000000, 0xffffffff,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
 
 	if (ppc_proc_is_64b)
 		mpcpcibus_find_ranges_64 (sc, range_store, rangesize);
@@ -435,15 +453,14 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	printf(": %s, Revision 0x%x\n", compat, 
 	    mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
 
-	if ((strcmp(compat, "bandit")) != 0)
-		pci_addr_fixup(sc, &lcp->lc_pc, 32);
-
 	bzero(&pba, sizeof(pba));
 	pba.pba_dmat = &pci_bus_dma_tag;
 
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_iobus_space;
 	pba.pba_memt = &sc->sc_membus_space;
+	pba.pba_ioex = sc->sc_ioex;
+	pba.pba_memex = sc->sc_memex;
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;

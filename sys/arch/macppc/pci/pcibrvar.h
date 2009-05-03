@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibrvar.h,v 1.6 2003/06/09 16:10:04 deraadt Exp $ */
+/*	$OpenBSD: pcibrvar.h,v 1.7 2009/05/03 21:30:09 kettenis Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -49,24 +49,8 @@ struct pcibr_softc {
 	struct ppc_bus_space sc_iobus_space;
 	struct powerpc_bus_dma_tag sc_dmatag;
 	struct pcibr_config	pcibr_config;
-	struct extent *extent_mem;
-	struct extent *extent_port;
-	u_int32_t mem_alloc_start;
-	u_int32_t port_alloc_start;
-	int nbogus;
+	struct extent *sc_ioex;
+	struct extent *sc_memex;
+	char sc_ioex_name[32];
+	char sc_memex_name[32];
 };
-
-struct pci_reserve_mem {
-	bus_addr_t start;
-	bus_size_t size;
-	char *name;
-};
-
-void pci_addr_fixup(struct pcibr_softc *, pci_chipset_tag_t, int);
-
-#define PCIADDR_SEARCH_IO  0
-#define PCIADDR_SEARCH_MEM 1
-
-
-struct extent * pciaddr_search(int mem_port, struct device *,
-    bus_addr_t *startp, bus_size_t size);

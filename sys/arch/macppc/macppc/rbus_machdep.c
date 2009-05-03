@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.7 2007/12/09 17:02:56 kettenis Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.8 2009/05/03 21:30:09 kettenis Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -49,59 +49,21 @@
 
 void macppc_cardbus_init(pci_chipset_tag_t pc, pcitag_t tag);
 
-/**********************************************************************
- * rbus_tag_t rbus_fakeparent_mem(struct pci_attach_args *pa)
- *
- *   This function makes an rbus tag for memory space.  This rbus tag
- *   shares the all memory region of ex_iomem.
- **********************************************************************/
-#define RBUS_MEM_SIZE	0x10000000
-
 rbus_tag_t
 rbus_pccbb_parent_mem(struct device *self, struct pci_attach_args *pa)
 {
-	bus_addr_t start;
-	bus_size_t size;
-	struct extent *ex;
-
 	macppc_cardbus_init(pa->pa_pc, pa->pa_tag);
 
-	size = RBUS_MEM_SIZE;
-	if ((ex = pciaddr_search(PCIADDR_SEARCH_MEM, self, &start, size)) ==
-	    NULL)
-	{
-		/* XXX */
-		printf("failed\n");
-	}
-
-	return rbus_new_root_share(pa->pa_memt, ex, start, size, 0);
+	return (rbus_new_root_share(pa->pa_memt, pa->pa_memex,
+	    0x00000000, 0xffffffff, 0));
 }
-
-
-/**********************************************************************
- * rbus_tag_t rbus_pccbb_parent_io(struct pci_attach_args *pa)
- **********************************************************************/
-#define RBUS_IO_SIZE	0x1000
 
 rbus_tag_t
 rbus_pccbb_parent_io(struct device *self, struct pci_attach_args *pa)
 {
-	struct extent *ex;
-	bus_addr_t start;
-	bus_size_t size;
-
-
-	size = RBUS_IO_SIZE;
-	if ((ex = pciaddr_search(PCIADDR_SEARCH_IO, self, &start, size)) ==
-	    NULL)
-	{
-		/* XXX */
-		printf("failed\n");
-	}
-
-	return rbus_new_root_share(pa->pa_iot, ex, start, size, 0);
+	return (rbus_new_root_share(pa->pa_iot, pa->pa_ioex,
+	    0x0000, 0xffff, 0));
 }
-
 
 /*
  * Big ugly hack to enable bridge/fix interrupts

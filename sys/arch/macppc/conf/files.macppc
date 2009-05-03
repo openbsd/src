@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.59 2008/03/21 18:44:14 deraadt Exp $
+#	$OpenBSD: files.macppc,v 1.60 2009/05/03 21:30:09 kettenis Exp $
 
 #
 # macppc-specific configuration info
@@ -70,7 +70,6 @@ include "dev/puc/files.puc"
 device	mpcpcibr {} : pcibus
 attach	mpcpcibr at mainbus
 file	arch/macppc/pci/mpcpcibus.c			mpcpcibr
-file	arch/macppc/pci/pci_addr_fixup.c		mpcpcibr
 
 device  ht {} : pcibus
 attach	ht at mainbus
