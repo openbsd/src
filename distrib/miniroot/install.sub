@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.512 2009/05/03 06:19:14 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.513 2009/05/03 21:20:47 sthen Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1137,7 +1137,7 @@ ftp_error() {
 startftplist() {
 	# If no networks are configured, we do not need the ftplist file
 	# XXX does this work on upgrades?
-	[[ -z $(ls /tmp/hostname.* /mnt/etc/hostname.*) ]] && return
+	ls /tmp/hostname.* /mnt/etc/hostname.* >/dev/null 2>&1 && return
 
 	# ftp.openbsd.org == 129.128.5.191 and will remain at
 	# that address for the foreseeable future.
@@ -1145,9 +1145,9 @@ startftplist() {
 		2>/tmp/ftplisterr > $SERVERLISTALL & ftppid=$!
 
 	# If the ftp process takes more than 9 seconds, kill it
-	# XXX We are relyong on the pid space not randomly biting us --
+	# XXX We are relying on the pid space not randomly biting us --
 	# XXX ftp could terminate early, and the pid could be reused
-	(sleep 9; kill -INT $ftppid >/devnull 2>&1) &
+	(sleep 9; kill -INT $ftppid >/dev/null 2>&1) &
 }
 
 # Wait for the ftp process to finish, or be killed after the timeout
