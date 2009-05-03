@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.58 2009/05/02 18:39:27 kettenis Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.59 2009/05/03 13:44:05 kettenis Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -1315,8 +1315,7 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map)
 	map->dm_nsegs = 0;
 
 	mtx_enter(&is->is_mtx);
-	error = extent_free(is->is_dvmamap, dvmaddr, 
-		sgsize, EX_NOWAIT);
+	error = extent_free(is->is_dvmamap, dvmaddr, sgsize, EX_NOWAIT);
 	map->_dm_dvmastart = 0;
 	map->_dm_dvmasize = 0;
 	mtx_leave(&is->is_mtx);
