@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.16 2008/11/21 14:38:03 robert Exp $ */
+/* $OpenBSD: pckbd.c,v 1.17 2009/05/03 13:02:35 miod Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -778,7 +778,7 @@ pckbd_scancode_translate(struct pckbd_internal *id, int datain)
 		return 0xff;
 	}
 
-	return datain;
+	return datain | id->t_releasing;
 }
 
 static int
