@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.85 2009/03/28 14:58:10 dlg Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.86 2009/05/03 06:45:58 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -495,6 +495,7 @@ donot:
 					part_blkno = 0;
 				}
 				wander = 1;
+				continue;
 				break;
 			default:
 				fstype = FS_OTHER;
@@ -503,11 +504,11 @@ donot:
 			}
 
 			/*
-			 * Don't set fstype/offset/size when wandering or just
-			 * looking for the offset of the OpenBSD partition. It
-			 * would invalidate the disklabel checksum!
+			 * Don't set fstype/offset/size when just looking for
+			 * the offset of the OpenBSD partition. It would
+			 * invalidate the disklabel checksum!
 			 */
-			if (wander || partoffp)
+			if (partoffp)
 				continue;
 
 			pp->p_fstype = fstype;
