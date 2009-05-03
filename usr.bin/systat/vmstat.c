@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.68 2009/03/30 05:35:22 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.69 2009/05/03 05:01:54 drahn Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.68 2009/03/30 05:35:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.69 2009/05/03 05:01:54 drahn Exp $";
 #endif /* not lint */
 
 /*
@@ -536,9 +536,9 @@ putintmk(int n, int l, int c, int w)
 			addch(' ');
 		return;
 	}
-	if (n > 1024 * 1024)
+	if (n > 9999 * 1024)
 		snprintf(b, sizeof b, "%*dG", w - 1, n / 1024 / 1024);
-	else if (n > 1024)
+	else if (n > 9999)
 		snprintf(b, sizeof b, "%*dM", w - 1, n / 1024);
 	else
 		snprintf(b, sizeof b, "%*dK", w - 1, n);
