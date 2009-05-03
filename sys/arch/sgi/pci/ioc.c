@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.12 2009/05/02 21:31:21 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.13 2009/05/03 19:42:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -389,11 +389,11 @@ establish:
 		ioc_attach_child(self, "com", 0x20170, IOCDEV_SERIAL_B);
 	}
 	if (has_ps2)
-		ioc_attach_child(self, "iockbc", -1, IOCDEV_KEYBOARD);
+		ioc_attach_child(self, "iockbc", 0, IOCDEV_KEYBOARD);
 	if (has_ethernet)
-		ioc_attach_child(self, "ef", -1, IOCDEV_EF);
+		ioc_attach_child(self, "ef", 0, IOCDEV_EF);
 	/* XXX what about the parallel port? */
-	ioc_attach_child(self, "dsrtc", -1, IOCDEV_RTC);
+	ioc_attach_child(self, "dsrtc", 0, IOCDEV_RTC);
 
 	return;
 
