@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridgereg.h,v 1.2 2009/05/02 21:30:13 miod Exp $	*/
+/*	$OpenBSD: xbridgereg.h,v 1.3 2009/05/03 19:44:28 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -90,7 +90,7 @@
 #define	BRIDGE_DEVICE_COHERENT			0x00010000
 #define	BRIDGE_DEVICE_BARRIER			0x00008000
 #define	BRIDGE_DEVICE_SWAP			0x00002000
-#define	BRIDGE_DEVICE_IO			0x00001000
+#define	BRIDGE_DEVICE_IO_MEM			0x00001000 /* clear if I/O */
 #define	BRIDGE_DEVICE_BASE_MASK			0x00000fff
 #define	BRIDGE_DEVICE_BASE_SHIFT		20
 
@@ -102,6 +102,8 @@
 	(BRIDGE_DEVIO_BASE + \
 	 BRIDGE_DEVIO_LARGE * ((d) < 2 ? (d) : 2) + \
 	 BRIDGE_DEVIO_SHORT * ((d) < 2 ? 0 : (d) - 2))
+#define	BRIDGE_DEVIO_SIZE(d) \
+	((d) < 2 ? BRIDGE_DEVIO_LARGE : BRIDGE_DEVIO_SHORT)
 
 /*
  * Read Response Buffer configuration registers
