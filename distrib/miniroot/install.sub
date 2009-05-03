@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.509 2009/05/02 17:01:26 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.510 2009/05/03 00:27:28 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1621,8 +1621,6 @@ xquestions() {
 		fi
 	done
 
-	# XXX if any of the X sets are not installed, we should
-	# not ask these questions
 	if [[ -n $MDXAPERTURE ]]; then
 		ask_yn "Do you expect to run the X Window System?"
 		if [[ $resp == y ]]; then
