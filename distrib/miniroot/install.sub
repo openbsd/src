@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.510 2009/05/03 00:27:28 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.511 2009/05/03 03:35:17 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -293,7 +293,7 @@ ask() {
 
 # Ask for a password twice, saving the input in $_password
 askpassword() {
-	_oifs=$IFS
+	local _oifs=$IFS
 	IFS=
 	while :; do
 		askpass "Password for $1 account? (will not echo)"
@@ -590,7 +590,7 @@ __EOT
 }
 
 configure_ifs() {
-	local _IFDEVS=$IFDEVS _ifs _name _hn _vl _vli _vd _vi _p
+	local _IFDEVS=$IFDEVS _oifs _ifs _name _hn _vl _vli _vd _vi _p
 
 	# Check if the kernel supports vlans, and if so, offer it up
 	ifconfig $vlan99 destroy >/dev/null 2>&1
