@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.177 2009/04/30 01:03:19 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.178 2009/05/03 05:13:38 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -60,9 +60,6 @@
 # The name of the file holding the list of configured filesystems.
 FILESYSTEMS=/tmp/filesystems
 
-# The name of the file holding the list of non-default configured swap devices.
-SWAPLIST=/tmp/swaplist
-
 # install.sub needs to know the MODE
 MODE=install
 
@@ -85,7 +82,6 @@ if [ ! -f /etc/fstab ]; then
 			# Make sure empty files exist so we don't have to
 			# keep checking for their existence before grep'ing.
 			cat /dev/null >$FILESYSTEMS
-			cat /dev/null >$SWAPLIST
 		else
 			# Force the user to think and type in a disk name by
 			# making 'done' the default choice.
@@ -114,8 +110,10 @@ if [ ! -f /etc/fstab ]; then
 			if [[ $_pp == $ROOTDEV ]]; then
 				echo "$ROOTDEV /" >$FILESYSTEMS
 				continue
-			elif [[ $_pp == $SWAPDEV || $_type == swap ]]; then
-				echo "$_pp" >>$SWAPLIST
+			elif [[ $_pp == $SWAPDEV ]]; then
+				continue
+			elif [[ $_type == swap ]]; then
+				echo "/dev/$_pp none swap sw 0 0" >>/tmp/fstab
 				continue
 			elif [[ $_type != *BSD ]]; then
 				continue
@@ -297,12 +295,6 @@ __EOT
 			: $(( _i += 1 ))
 		done
 	done >>/tmp/fstab
-
-	# Append all non-default swap devices to fstab.
-	while read _dev; do
-		[[ $_dev == $SWAPDEV ]] || \
-			echo "/dev/$_dev none swap sw 0 0" >>/tmp/fstab
-	done <$SWAPLIST
 
 	munge_fstab
 fi
