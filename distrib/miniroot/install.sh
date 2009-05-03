@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.178 2009/05/03 05:13:38 krw Exp $
+#	$OpenBSD: install.sh,v 1.179 2009/05/03 14:02:07 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -234,66 +234,54 @@ __EOT
 		_OPT=
 		[[ $_mp == / ]] && _OPT=$MDROOTFSOPT
 		newfs -q $_OPT /dev/r$_pp
-
-		_partitions[$_i]=$_pp
-		_mount_points[$_i]=$_mp
+		# N.B.: '!' is lexically < '/'. That is required for correct
+		#       sorting of mount points.
+		_mount_points[$_i]="$_mp!$_pp"
 		: $(( _i += 1 ))
 	done <$FILESYSTEMS
 
-	# Write fstab entries to /tmp/fstab in mount point alphabetic
-	# order to enforce a rational mount order.
-	for _mp in `bsort ${_mount_points[*]}`; do
-		_i=0
-		for _pp in ${_partitions[*]}; do
-			if [ "$_mp" = "${_mount_points[$_i]}" ]; then
-				echo -n "/dev/$_pp $_mp ffs rw"
-				# Only '/' is neither nodev nor nosuid. i.e.
-				# it can obviously *always* contain devices or
-				# setuid programs.
-				#
-				# Every other mounted filesystem is nodev. If
-				# the user chooses to mount /dev as a separate
-				# filesystem, then on the user's head be it.
-				#
-				# The only directories that install puts suid
-				# binaries into (as of 3.2) are:
-				#
-				# /sbin
-				# /usr/bin
-				# /usr/sbin
-				# /usr/libexec
-				# /usr/libexec/auth
-				# /usr/X11R6/bin
-				#
-				# and ports and users can do who knows what
-				# to /usr/local and sub directories thereof.
-				#
-				# So try to ensure that only filesystems that
-				# are mounted at or above these directories
-				# can contain suid programs. In the case of
-				# /usr/libexec, give blanket permission for
-				# subdirectories.
-				if [[ $_mp == / ]]; then
-					# / can hold devices and suid programs.
-					echo " 1 1"
-				else
-					# No devices anywhere but /.
-					echo -n ",nodev"
-					case $_mp in
-					# A few directories are allowed suid.
-					/sbin|/usr)			;;
-					/usr/bin|/usr/sbin)		;;
-					/usr/libexec|/usr/libexec/*)	;;
-					/usr/local|/usr/local/*)	;;
-					/usr/X11R6|/usr/X11R6/bin)	;;
-					# But all others are not.
-					*)	echo -n ",nosuid"	;;
-					esac
-					echo " 1 2"
-				fi
-			fi
-			: $(( _i += 1 ))
-		done
+	# Write fstab entries to /tmp/fstab in mount point alphabetic  order
+	# to enforce a rational mount order.
+	for _mp in $(bsort ${_mount_points[*]}); do
+		_pp=${_mp##*!}
+		_mp=${_mp%!*}
+		echo -n "/dev/$_pp $_mp ffs rw"
+
+		# Only '/' is neither nodev nor nosuid. i.e. it can obviously
+		# *always* contain devices or setuid programs.
+		[[ $_mp == / ]] && { echo " 1 1" ; continue ; }
+
+		# Every other mounted filesystem is nodev. If the user chooses
+		# to mount /dev as a separate filesystem, then on the user's
+		# head be it.
+		echo -n ",nodev"
+
+		# The only directories that the install puts suid binaries into
+		# (as of 3.2) are:
+		#
+		# /sbin
+		# /usr/bin
+		# /usr/sbin
+		# /usr/libexec
+		# /usr/libexec/auth
+		# /usr/X11R6/bin
+		#
+		# and ports and users can do who knows what to /usr/local and
+		# sub directories thereof.
+		#
+		# So try to ensure that only filesystems that are mounted at
+		# or above these directories can contain suid programs. In the
+		# case of /usr/libexec, give blanket permission for
+		# subdirectories.
+		case $_mp in
+		/sbin|/usr)			;;
+		/usr/bin|/usr/sbin)		;;
+		/usr/libexec|/usr/libexec/*)	;;
+		/usr/local|/usr/local/*)	;;
+		/usr/X11R6|/usr/X11R6/bin)	;;
+		*)	echo -n ",nosuid"	;;
+		esac
+		echo " 1 2"
 	done >>/tmp/fstab
 
 	munge_fstab
