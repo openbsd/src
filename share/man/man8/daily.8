@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.8 2007/05/31 19:19:59 jmc Exp $
+.\"	$OpenBSD: daily.8,v 1.9 2009/05/03 17:16:12 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 3 2009 $
 .Dt DAILY 8
 .Os
 .Sh NAME
@@ -80,8 +80,6 @@ and
 Removes stale files from the
 .Xr rwhod 8
 database.
-.It
-Checks for core dumps.
 .It
 Removes system messages older than 21 days for the
 .Xr msgs 1
@@ -252,6 +250,7 @@ Root
 .Xr rwho 1 ,
 .Xr whatis 1 ,
 .Xr crontab 5 ,
+.Xr ac 8 ,
 .Xr accton 8 ,
 .Xr cron 8 ,
 .Xr dump 8 ,
