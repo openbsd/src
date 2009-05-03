@@ -1,4 +1,4 @@
-/*	$OpenBSD: memcmp.S,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
+/*	$OpenBSD: memcmp.S,v 1.3 2009/05/03 05:09:40 drahn Exp $	*/
 /*      $NetBSD: memcmp.S,v 1.2 2003/04/05 23:08:52 bjh21 Exp $ */
 
 /*
@@ -34,10 +34,13 @@
 RCSID("$NetBSD: memcmp.S,v 1.2 2003/04/05 23:08:52 bjh21 Exp $")
 
 ENTRY(memcmp)
-/* if ((len - 1) < 0) return 0 */
-	subs	r2, r2, #1
-	movmi	r0, #0
-	movmi	pc, lr
+/* if (len == 0) return 0 */
+	cmp	r2, #0
+	moveq	r0, #0
+	moveq	pc, lr
+
+/* subtract one to have the index of the last character to check */
+	sub	r2, r2, #1
 
 /* ip == last src address to compare */
 	add	ip, r0, r2
