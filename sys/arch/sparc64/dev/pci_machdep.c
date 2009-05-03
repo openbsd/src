@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.36 2008/03/24 21:24:30 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.37 2009/05/03 21:23:04 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -344,38 +344,47 @@ pci_intr_map(pa, ihp)
 	pci_intr_handle_t *ihp;
 {
 	pcitag_t tag = pa->pa_tag;
-	int interrupts;
+	int interrupts[4], ninterrupts;
 	int len, node = PCITAG_NODE(tag);
 	char devtype[30];
 
 	len = OF_getproplen(node, "interrupts");
-	if (len < 0 || len < sizeof(interrupts)) {
+	if (len < 0 || len < sizeof(interrupts[0])) {
 		DPRINTF(SPDB_INTMAP,
 			("pci_intr_map: interrupts len %d too small\n", len));
 		return (ENODEV);
 	}
-	if (OF_getprop(node, "interrupts", (void *)&interrupts, 
-		sizeof(interrupts)) != len) {
+	if (OF_getprop(node, "interrupts", interrupts,
+	    sizeof(interrupts)) != len) {
 		DPRINTF(SPDB_INTMAP,
 			("pci_intr_map: could not read interrupts\n"));
 		return (ENODEV);
 	}
 
-	if (OF_mapintr(node, &interrupts, sizeof(interrupts), 
-		sizeof(interrupts)) < 0) {
-		interrupts = -1;
+	/*
+	 * If we have multiple interrupts for a device, choose the one
+	 * that corresponds to the PCI function.  This makes the
+	 * second PC Card slot on the UltraBook get the right interrupt.
+	 */
+	ninterrupts = len / sizeof(interrupts[0]);
+	if (PCITAG_FUN(pa->pa_tag) < ninterrupts)
+		interrupts[0] = interrupts[PCITAG_FUN(pa->pa_tag)];
+
+	if (OF_mapintr(node, &interrupts[0], sizeof(interrupts[0]), 
+	    sizeof(interrupts)) < 0) {
+		interrupts[0] = -1;
 	}
 	/* Try to find an IPL for this type of device. */
 	if (OF_getprop(node, "device_type", &devtype, sizeof(devtype)) > 0) {
 		for (len = 0;  intrmap[len].in_class; len++)
 			if (strcmp(intrmap[len].in_class, devtype) == 0) {
-				interrupts |= INTLEVENCODE(intrmap[len].in_lev);
+				interrupts[0] |= INTLEVENCODE(intrmap[len].in_lev);
 				break;
 			}
 	}
 
 	/* XXXX -- we use the ino.  What if there is a valid IGN? */
-	*ihp = interrupts;
+	*ihp = interrupts[0];
 
 	if (pa->pa_pc->intr_map)
 		return ((*pa->pa_pc->intr_map)(pa, ihp));
