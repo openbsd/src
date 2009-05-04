@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.9 2009/05/03 17:16:12 schwarze Exp $
+.\"	$OpenBSD: daily.8,v 1.10 2009/05/04 17:08:19 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 3 2009 $
+.Dd $Mdocdate: May 4 2009 $
 .Dt DAILY 8
 .Os
 .Sh NAME
@@ -62,7 +62,8 @@ respectively.
 The
 .Pa *.local
 files are executed first, which makes it convenient to do any necessary
-cleanup and backup before the script is run.
+cleanup and backup and to define any required shell variables before the
+script is run.
 .Ss /etc/daily
 This script is run daily.
 It currently does the following:
@@ -100,8 +101,8 @@ This only happens if the following conditions are met:
 The environment variable
 .Ev ROOTBACKUP
 must be set.
-For example, the following can be added to root's
-.Xr crontab 5 :
+For example, the following can be added to
+.Pa /etc/daily.local :
 .Pp
 .Dl ROOTBACKUP=1
 .It
@@ -138,16 +139,16 @@ Runs the
 .Xr calendar 1
 utility unless the environment variable
 .Ev CALENDAR
-is set to 0 in root's
-.Xr crontab 5
+is set to 0 in
+.Pa /etc/daily.local
 or the host is a
 .Xr yp 8
 client.
 .It
 If
 .Ev CHECKFILESYSTEMS
-is set to 1 in root's
-.Xr crontab 5 ,
+is set to 1 in
+.Pa /etc/daily.local ,
 runs
 .Xr fsck 8
 with the no-write flag
@@ -187,8 +188,8 @@ database(s) via
 .It
 If
 .Ev LOGINACCOUNTING
-is set to 1 in root's
-.Xr crontab 5
+is set to 1 in
+.Pa /etc/weekly.local
 and the
 .Pa /var/log/wtmp
 file exists, show individual users' login via the
@@ -205,6 +206,9 @@ Runs the script
 if it exists.
 .El
 .Sh ENVIRONMENT
+The following variables can be set in
+.Pa /etc/daily.local :
+.Pp
 .Bl -tag -width "CHECKFILESYSTEMS" -compact
 .It Ev CALENDAR
 Determines whether to run
@@ -213,12 +217,18 @@ Determines whether to run
 Determines whether to run
 .Xr fsck 8
 with the no-write flag.
+.It Ev ROOTBACKUP
+Determines whether to make a backup of the root file system.
+.El
+.Pp
+The following variables can be set in
+.Pa /etc/weekly.local :
+.Pp
+.Bl -tag -width "CHECKFILESYSTEMS" -compact
 .It Ev LOGINACCOUNTING
 Determines whether to run
 .Xr ac 8
 to report login accounting.
-.It Ev ROOTBACKUP
-Determines whether to make a backup of the root file system.
 .El
 .Sh FILES
 .Bl -tag -width "/var/cron/tabs/root" -compact
