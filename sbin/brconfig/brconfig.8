@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.70 2009/01/31 19:37:12 sobrado Exp $
+.\"	$OpenBSD: brconfig.8,v 1.71 2009/05/04 18:05:01 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 31 2009 $
+.Dd $Mdocdate: May 4 2009 $
 .Dt BRCONFIG 8
 .Os
 .Sh NAME
@@ -370,10 +370,13 @@ both bridges have fxp1 on their internal network (network1 and network2,
 respectively), the following configuration can be used to bridge
 network1 and network2.
 .Pp
-Add the encapsulation interface and internal Ethernet interface to the bridge
-interface:
-.Pp
-.Dl # brconfig bridge0 add gif0 add fxp1
+First create the bridge interface,
+then add the encapsulation interface and internal Ethernet interface
+to the bridge interface:
+.Bd -literal -offset indent
+# ifconfig bridge0 create
+# brconfig bridge0 add gif0 add fxp1
+.Ed
 .Pp
 Create and configure the gif0 interface:
 .Bd -literal -offset indent
@@ -438,7 +441,7 @@ interface:
 Finally, bring the bridge interface up and allow it to start processing
 frames:
 .Pp
-.Dl # brconfig bridge0 up
+.Dl # brconfig bridge0 up link2
 .Pp
 The internal interface on each bridge need not have an IP
 address: the bridge can function without it.
