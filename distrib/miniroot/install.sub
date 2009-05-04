@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.518 2009/05/04 06:21:58 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.519 2009/05/04 21:45:11 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1140,7 +1140,7 @@ startftplist() {
 
 	# ftp.openbsd.org == 129.128.5.191 and will remain at
 	# that address for the foreseeable future.
-	ftp $FTPOPTS -a -o - http://129.128.5.191/cgi-bin/ftplist.cgi \
+	ftp $FTPOPTS -a -o - "http://129.128.5.191/cgi-bin/ftplist.cgi?path=$FTPSETDIR" \
 		2>/tmp/ftplisterr > $SERVERLISTALL & ftppid=$!
 
 	# If the ftp process takes more than 9 seconds, kill it
@@ -1168,7 +1168,7 @@ waitftplist() {
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
 #	and FTPOPTS must be global.
 install_url() {
-	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd _setdir
+	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd
 
 	waitftplist
 	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" \
@@ -1213,10 +1213,8 @@ install_url() {
 	done
 
 	# Get server directory
-	_setdir=$SETDIR
-	[[ $_url_type == ftp || $_url_type == http ]] && _setdir=$FTPSETDIR
 	eval resp=\$_${_url_type}_server_dir
-	ask_until "Server directory?" "${resp:-pub/OpenBSD/$_setdir}"
+	ask_until "Server directory?" "${resp:-pub/OpenBSD/$FTPSETDIR}"
 	eval _${_url_type}_server_dir=$resp
 
 	if [[ $_url_type == ftp ]]; then
