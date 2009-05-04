@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.516 2009/05/04 03:16:11 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.517 2009/05/04 03:30:00 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1154,7 +1154,7 @@ startftplist() {
 waitftplist() {
 	local _dot						# XXX
 
-	while [[ -n $(jobs $ftppid) ]]; do
+	while [[ -n $(jobs $ftppid 2>/dev/null) ]]; do
 		echo -n .					# XXX
 		_dot=.						# XXX
 		sleep 0.2					# XXX
