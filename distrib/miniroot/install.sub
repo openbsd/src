@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.519 2009/05/04 21:45:11 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.520 2009/05/04 22:07:28 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1256,7 +1256,8 @@ install_url() {
 	else
 		# Assumes index file is "index.txt" for http (or proxy)
 		# We can't use index.html since the format is server-dependent
-		_file_list=$(ftp $FTPOPTS -o - "$_url_base/index.txt" | sed 's///')
+		_file_list=$(ftp $FTPOPTS -o - "$_url_base/index.txt" | \
+			sed -e 's/^.* //' | sed -e 's///')
 	fi
 
 	install_files "$_url_base" "$_file_list"
