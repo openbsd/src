@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pglist.c,v 1.28 2009/04/30 09:06:01 oga Exp $	*/
+/*	$OpenBSD: uvm_pglist.c,v 1.29 2009/05/04 18:08:06 oga Exp $	*/
 /*	$NetBSD: uvm_pglist.c,v 1.13 2001/02/18 21:19:08 chs Exp $	*/
 
 /*-
@@ -151,7 +151,7 @@ out:
 	if (!error && (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
 	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
 	    uvmexp.inactive < uvmexp.inactarg))) {
-		wakeup(&uvm.pagedaemon);
+		wakeup(&uvm.pagedaemon_proc);
 	}
 
 	uvm_unlock_fpageq();
@@ -358,7 +358,7 @@ out:
 	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
 	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
 	     uvmexp.inactive < uvmexp.inactarg)) {
-		wakeup(&uvm.pagedaemon);
+		wakeup(&uvm.pagedaemon_proc);
 	}
 
 	uvm_unlock_fpageq();

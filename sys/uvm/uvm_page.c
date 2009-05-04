@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.77 2009/05/01 20:44:22 oga Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.78 2009/05/04 18:08:06 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -911,7 +911,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freemin ||
 	    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg &&
 	     uvmexp.inactive < uvmexp.inactarg))
-		wakeup(&uvm.pagedaemon);
+		wakeup(&uvm.pagedaemon_proc);
 
 	/*
 	 * fail if any of these conditions is true:

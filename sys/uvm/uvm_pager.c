@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.49 2009/04/06 12:02:52 oga Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.50 2009/05/04 18:08:06 oga Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -856,7 +856,7 @@ uvm_aio_biodone(struct buf *bp)
 
 	mtx_enter(&uvm.aiodoned_lock);	/* locks uvm.aio_done */
 	TAILQ_INSERT_TAIL(&uvm.aio_done, bp, b_freelist);
-	wakeup(&uvm.aiodoned);
+	wakeup(&uvm.aiodoned_proc);
 	mtx_leave(&uvm.aiodoned_lock);
 }
 

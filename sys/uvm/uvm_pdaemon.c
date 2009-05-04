@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.42 2009/04/17 07:14:04 oga Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.43 2009/05/04 18:08:06 oga Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -143,7 +143,7 @@ uvm_wait(const char *wmsg)
 	}
 
 	uvm_lock_fpageq();
-	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
+	wakeup(&uvm.pagedaemon_proc);		/* wake the daemon! */
 	msleep(&uvmexp.free, &uvm.fpageqlock, PVM | PNORELOCK, wmsg, timo);
 }
 
@@ -214,7 +214,7 @@ uvm_pageout(void *arg)
 	for (;;) {
 		uvm_lock_fpageq();
 		UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
-		msleep(&uvm.pagedaemon, &uvm.fpageqlock, PVM | PNORELOCK,
+		msleep(&uvm.pagedaemon_proc, &uvm.fpageqlock, PVM | PNORELOCK,
 		    "pgdaemon", 0);
 		uvmexp.pdwoke++;
 		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
@@ -288,7 +288,7 @@ uvm_aiodone_daemon(void *arg)
 		 */
 		mtx_enter(&uvm.aiodoned_lock);
 		while ((bp = TAILQ_FIRST(&uvm.aio_done)) == NULL)
-			msleep(&uvm.aiodoned, &uvm.aiodoned_lock,
+			msleep(&uvm.aiodoned_proc, &uvm.aiodoned_lock,
 			    PVM, "aiodoned", 0);
 		/* Take the list for ourselves. */
 		TAILQ_INIT(&uvm.aio_done);
@@ -310,8 +310,8 @@ uvm_aiodone_daemon(void *arg)
 			bp = nbp;
 		}
 		uvm_lock_fpageq();
-		wakeup(free <= uvmexp.reserve_kernel ? &uvm.pagedaemon :
-		    &uvmexp.free);
+		wakeup(free <= uvmexp.reserve_kernel ?
+		    (void *)&uvm.pagedaemon_proc : (void *)&uvmexp.free);
 		uvm_unlock_fpageq();
 	}
 }
