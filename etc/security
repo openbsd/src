@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.82 2009/03/23 15:14:50 ajacoutot Exp $
+#	$OpenBSD: security,v 1.83 2009/05/04 00:37:03 schwarze Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -112,8 +112,8 @@ awk -F: '{
 		printf("Group %s has non-alphanumeric characters.\n", $1);
 	if (length($1) > 31)
 		printf("Group %s has more than 31 characters.\n", $1);
-	if ($3 !~ /[0-9]*/)
-		printf("Login %s has a negative group ID.\n", $1);
+	if ($3 !~ /^[0-9]*$/)
+		printf("Group %s has an invalid group ID.\n", $1);
 }' < $GRP > $OUTPUT
 if [ -s $OUTPUT ] ; then
 	echo "\nChecking the ${GRP} file:"
