@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommuvar.h,v 1.14 2009/01/02 20:01:45 kettenis Exp $	*/
+/*	$OpenBSD: iommuvar.h,v 1.15 2009/05/04 16:48:37 oga Exp $	*/
 /*	$NetBSD: iommuvar.h,v 1.9 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -74,8 +74,8 @@ struct strbuf_flush {
  */
 struct iommu_page_entry {
 	SPLAY_ENTRY(iommu_page_entry) ipe_node;
-	paddr_t	ipe_pa;
-	vaddr_t	ipe_va;
+	paddr_t		ipe_pa;
+	bus_addr_t	ipe_va;
 };
 struct iommu_page_map {
 	SPLAY_HEAD(iommu_page_tree, iommu_page_entry) ipm_tree;
@@ -124,8 +124,8 @@ struct iommu_state {
 /* interfaces for PCI/SBus code */
 void	iommu_init(char *, struct iommu_state *, int, u_int32_t);
 void	iommu_reset(struct iommu_state *);
-paddr_t iommu_extract(struct iommu_state *, vaddr_t);
-int64_t iommu_lookup_tte(struct iommu_state *, vaddr_t);
+paddr_t iommu_extract(struct iommu_state *, bus_addr_t);
+int64_t iommu_lookup_tte(struct iommu_state *, bus_addr_t);
 int64_t iommu_fetch_tte(struct iommu_state *, paddr_t);
 /* bus_dma_tag_t implementation functions */
 int	iommu_dvmamap_create(bus_dma_tag_t, bus_dma_tag_t, struct strbuf_ctl *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.59 2009/05/03 13:44:05 kettenis Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.60 2009/05/04 16:48:37 oga Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -71,10 +71,10 @@ int iommudebug = IDB_INFO;
 #define DPRINTF(l, s)
 #endif
 
-void iommu_enter(struct iommu_state *, struct strbuf_ctl *, vaddr_t, paddr_t,
-    int);
-void iommu_remove(struct iommu_state *, struct strbuf_ctl *, vaddr_t);
-int iommu_dvmamap_sync_range(struct strbuf_ctl*, vaddr_t, bus_size_t);
+void iommu_enter(struct iommu_state *, struct strbuf_ctl *, bus_addr_t,
+    paddr_t, int);
+void iommu_remove(struct iommu_state *, struct strbuf_ctl *, bus_addr_t);
+int iommu_dvmamap_sync_range(struct strbuf_ctl*, bus_addr_t, bus_size_t);
 int iommu_strbuf_flush_done(struct iommu_map_state *);
 int iommu_dvmamap_load_seg(bus_dma_tag_t, struct iommu_state *,
     bus_dmamap_t, bus_dma_segment_t *, int, int, bus_size_t, bus_size_t);
@@ -86,12 +86,12 @@ void iommu_dvmamap_print_map(bus_dma_tag_t, struct iommu_state *,
     bus_dmamap_t);
 int iommu_dvmamap_append_range(bus_dma_tag_t, bus_dmamap_t, paddr_t,
     bus_size_t, int, bus_size_t);
-int64_t iommu_tsb_entry(struct iommu_state *, vaddr_t);
+int64_t iommu_tsb_entry(struct iommu_state *, bus_addr_t);
 void strbuf_reset(struct strbuf_ctl *);
 int iommu_iomap_insert_page(struct iommu_map_state *, paddr_t);
-vaddr_t iommu_iomap_translate(struct iommu_map_state *, paddr_t);
+bus_addr_t iommu_iomap_translate(struct iommu_map_state *, paddr_t);
 void iommu_iomap_load_map(struct iommu_state *, struct iommu_map_state *,
-    vaddr_t, int);
+    bus_addr_t, int);
 void iommu_iomap_unload_map(struct iommu_state *, struct iommu_map_state *);
 struct iommu_map_state *iommu_iomap_create(int);
 void iommu_iomap_destroy(struct iommu_map_state *);
@@ -103,7 +103,7 @@ void _iommu_dvmamap_sync(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t,
  * Initiate an STC entry flush.
  */
 static inline void
-iommu_strbuf_flush(struct strbuf_ctl *sb, vaddr_t va)
+iommu_strbuf_flush(struct strbuf_ctl *sb, bus_addr_t va)
 {
 #ifdef DEBUG
 	if (sb->sb_flush == NULL) {
@@ -306,7 +306,7 @@ strbuf_reset(struct strbuf_ctl *sb)
  * the BUS_DMA_STREAMING flag is set.
  */
 void
-iommu_enter(struct iommu_state *is, struct strbuf_ctl *sb, vaddr_t va,
+iommu_enter(struct iommu_state *is, struct strbuf_ctl *sb, bus_addr_t va,
     paddr_t pa, int flags)
 {
 	int64_t tte;
@@ -365,7 +365,7 @@ iommu_enter(struct iommu_state *is, struct strbuf_ctl *sb, vaddr_t va,
  * as an STC entry exists.)
  */
 void
-iommu_remove(struct iommu_state *is, struct strbuf_ctl *sb, vaddr_t va)
+iommu_remove(struct iommu_state *is, struct strbuf_ctl *sb, bus_addr_t va)
 {
 	int64_t *tte_ptr = &is->is_tsb[IOTSBSLOT(va, is->is_tsbsize)];
 	int64_t tte;
@@ -412,7 +412,7 @@ iommu_remove(struct iommu_state *is, struct strbuf_ctl *sb, vaddr_t va)
  * Find the physical address of a DVMA address (debug routine).
  */
 paddr_t
-iommu_extract(struct iommu_state *is, vaddr_t dva)
+iommu_extract(struct iommu_state *is, bus_addr_t dva)
 {
 	int64_t tte = 0;
 	
@@ -426,7 +426,7 @@ iommu_extract(struct iommu_state *is, vaddr_t dva)
  * Lookup a TSB entry for a given DVMA (debug routine).
  */
 int64_t
-iommu_lookup_tte(struct iommu_state *is, vaddr_t dva)
+iommu_lookup_tte(struct iommu_state *is, bus_addr_t dva)
 {
 	int64_t tte = 0;
 	
@@ -455,7 +455,7 @@ iommu_fetch_tte(struct iommu_state *is, paddr_t pa)
  * Fetch a TSB entry with some sanity checking.
  */
 int64_t
-iommu_tsb_entry(struct iommu_state *is, vaddr_t dva)
+iommu_tsb_entry(struct iommu_state *is, bus_addr_t dva)
 {
 	int64_t tte;
 
@@ -705,7 +705,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 	iommu_iomap_clear_pages(ims);
 	{ /* Scope */
 		bus_addr_t a, aend;
-		bus_addr_t addr = (vaddr_t)buf;
+		bus_addr_t addr = (bus_addr_t)buf;
 		int seg_len = buflen;
 
 		aend = round_page(addr + seg_len);
@@ -777,7 +777,7 @@ iommu_dvmamap_load(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
 
 	{ /* Scope */
 		bus_addr_t a, aend;
-		bus_addr_t addr = (vaddr_t)buf;
+		bus_addr_t addr = (bus_addr_t)buf;
 		int seg_len = buflen;
 
 		aend = round_page(addr + seg_len);
@@ -1546,9 +1546,9 @@ iommu_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
  * need flushing afterwards.
  */
 int
-iommu_dvmamap_sync_range(struct strbuf_ctl *sb, vaddr_t va, bus_size_t len)
+iommu_dvmamap_sync_range(struct strbuf_ctl *sb, bus_addr_t va, bus_size_t len)
 {
-	vaddr_t vaend;
+	bus_addr_t vaend;
 #ifdef DIAGNOSTIC
 	struct iommu_state *is = sb->sb_iommu;
 
@@ -1713,7 +1713,7 @@ iommu_iomap_insert_page(struct iommu_map_state *ims, paddr_t pa)
  */
 void
 iommu_iomap_load_map(struct iommu_state *is, struct iommu_map_state *ims,
-    vaddr_t vmaddr, int flags)
+    bus_addr_t vmaddr, int flags)
 {
 	struct iommu_page_map *ipm = &ims->ims_map;
 	struct iommu_page_entry *e;
@@ -1769,7 +1769,7 @@ iommu_iomap_unload_map(struct iommu_state *is, struct iommu_map_state *ims)
 /*
  * Translate a physical address (pa) into a DVMA address.
  */
-vaddr_t
+bus_addr_t
 iommu_iomap_translate(struct iommu_map_state *ims, paddr_t pa)
 {
 	struct iommu_page_map *ipm = &ims->ims_map;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sg_dma.c,v 1.1 2009/04/21 17:05:29 oga Exp $	*/
+/*	$OpenBSD: sg_dma.c,v 1.2 2009/05/04 16:48:37 oga Exp $	*/
 /*
  * Copyright (c) 2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -72,7 +72,7 @@
 struct sg_page_entry {
 	SPLAY_ENTRY(sg_page_entry)	spe_node;
 	paddr_t				spe_pa;
-	vaddr_t				spe_va;
+	bus_addr_t			spe_va;
 };
 
 /* this should be in the map's dm_cookie. */
@@ -85,23 +85,24 @@ struct sg_page_map {
 	struct sg_page_entry	 spm_map[1];
 };
 
-int	sg_dmamap_load_seg(bus_dma_tag_t, struct sg_cookie *, bus_dmamap_t,
-	    bus_dma_segment_t *, int, int, bus_size_t, bus_size_t);
+int		sg_dmamap_load_seg(bus_dma_tag_t, struct sg_cookie *,
+		    bus_dmamap_t, bus_dma_segment_t *, int, int, bus_size_t,
+		    bus_size_t);
 struct sg_page_map *sg_iomap_create(int);
-int	sg_dmamap_append_range(bus_dma_tag_t, bus_dmamap_t, paddr_t,
-	    bus_size_t, int, bus_size_t);
-int	sg_iomap_insert_page(struct sg_page_map *, paddr_t);
-vaddr_t	sg_iomap_translate(struct sg_page_map *, paddr_t);
-void	sg_iomap_load_map(struct sg_cookie *, struct sg_page_map *,
-	    vaddr_t, int);
-void	sg_iomap_unload_map(struct sg_cookie *, struct sg_page_map *);
-void	sg_iomap_destroy(struct sg_page_map *);
-void	sg_iomap_clear_pages(struct sg_page_map *);
+int		sg_dmamap_append_range(bus_dma_tag_t, bus_dmamap_t, paddr_t,
+		    bus_size_t, int, bus_size_t);
+int		sg_iomap_insert_page(struct sg_page_map *, paddr_t);
+bus_addr_t	sg_iomap_translate(struct sg_page_map *, paddr_t);
+void		sg_iomap_load_map(struct sg_cookie *, struct sg_page_map *,
+		    bus_addr_t, int);
+void		sg_iomap_unload_map(struct sg_cookie *, struct sg_page_map *);
+void		sg_iomap_destroy(struct sg_page_map *);
+void		sg_iomap_clear_pages(struct sg_page_map *);
 
 struct sg_cookie *
 sg_dmatag_init(char *name, void *hdl, bus_addr_t start, bus_size_t size,
-    void bind(void *, vaddr_t, paddr_t, int),
-    void unbind(void *, vaddr_t), void flush_tlb(void *))
+    void bind(void *, bus_addr_t, paddr_t, int),
+    void unbind(void *, bus_addr_t), void flush_tlb(void *))
 {
 	struct sg_cookie	*cookie;
 
@@ -235,7 +236,7 @@ sg_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	sg_iomap_clear_pages(spm);
 	{ /* Scope */
 		bus_addr_t a, aend;
-		bus_addr_t addr = (vaddr_t)buf;
+		bus_addr_t addr = (bus_addr_t)buf;
 		int seg_len = buflen;
 
 		aend = round_page(addr + seg_len);
@@ -291,7 +292,7 @@ sg_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	{ /* Scope */
 		bus_addr_t a, aend;
-		bus_addr_t addr = (vaddr_t)buf;
+		bus_addr_t addr = (bus_addr_t)buf;
 		int seg_len = buflen;
 
 		aend = round_page(addr + seg_len);
@@ -899,7 +900,7 @@ sg_iomap_insert_page(struct sg_page_map *spm, paddr_t pa)
  */
 void
 sg_iomap_load_map(struct sg_cookie *sc, struct sg_page_map *spm,
-    vaddr_t vmaddr, int flags)
+    bus_addr_t vmaddr, int flags)
 {
 	struct sg_page_entry	*e;
 	int			 i;
@@ -930,7 +931,7 @@ sg_iomap_unload_map(struct sg_cookie *sc, struct sg_page_map *spm)
 /*
  * Translate a physical address (pa) into a DVMA address.
  */
-vaddr_t
+bus_addr_t
 sg_iomap_translate(struct sg_page_map *spm, paddr_t pa)
 {
 	struct sg_page_entry	*e, pe;
