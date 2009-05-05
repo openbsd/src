@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.523 2009/05/05 19:36:31 sthen Exp $
+#	$OpenBSD: install.sub,v 1.524 2009/05/05 21:09:54 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -313,9 +313,12 @@ user_setup() {
 	local _u _n _encr
 
 	ask "Setup a user? (enter a lower-case loginname, or 'no')" no
-
 	case $resp in
 	n|no)	return ;;
+	y|yes)  ask "No really, what is the lower-case loginname, or 'no'?"
+		case $resp in
+		n|no)	return ;;
+		esac
 	esac
 
 	_u=$resp
