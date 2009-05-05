@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.525 2009/05/05 21:11:57 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.526 2009/05/05 21:14:46 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -484,7 +484,7 @@ makedev() {
 		return 1
 	fi
 
-	cd /dev ; sh MAKEDEV $_dev || return 1 ; cd - >/dev/null
+	(cd /dev ; sh MAKEDEV $_dev || return 1 ; cd - >/dev/null)
 }
 
 # Create an entry in the hosts file. If an entry with the
@@ -1726,17 +1726,17 @@ finish_up() {
 	fi
 
 	echo -n "Making all device nodes..."
-	cd /mnt/dev
+	(cd /mnt/dev
 	sh MAKEDEV all
 	# Make sure any devices we found during probe are created in the
 	# installed system.
 	for _dev in $DKDEVS $CDDEVS $MTDEVS; do
 		sh MAKEDEV $_dev
 	done
+	)
 	echo "done."
-	cd /
 
-	md_installboot $ROOTDISK
+	(cd /; md_installboot $ROOTDISK)
 	cd /
 
 	populateusrlocal
