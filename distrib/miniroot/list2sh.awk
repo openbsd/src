@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.13 2009/04/17 03:50:53 deraadt Exp $
+#	$OpenBSD: list2sh.awk,v 1.14 2009/05/05 05:46:31 deraadt Exp $
 #	$NetBSD: list2sh.awk,v 1.2 1996/05/04 15:45:31 pk Exp $
 
 BEGIN {
@@ -62,6 +62,11 @@ $1 == "CRUNCHSPECIAL" {
 $1 == "HASH" {
 	printf("echo '%s' from RELEASEDIR=$RELEASEDIR for REV=$REV\n", $0);
 	printf("(cd ${TARGDIR}; sh $UTILS/makehash.sh var/hash $REV $RELEASEDIR)\n");
+	next;
+}
+$1 == "TZ" {
+	printf("echo '%s'\n", $0);
+	printf("(cd ${TARGDIR}; sh $UTILS/maketz.sh $DESTDIR)\n");
 	next;
 }
 $1 == "COPYDIR" {
