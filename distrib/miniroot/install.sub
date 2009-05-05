@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.521 2009/05/05 00:37:09 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.522 2009/05/05 18:54:40 todd Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -892,7 +892,7 @@ enable_network() {
 		if=${hn#/mnt/etc/hostname.}
 
 		# Check for ifconfig'able interface.
-		ifconfig $if >/dev/null 2>&1 || continue
+		(ifconfig $if||ifconfig $if create)> /dev/null 2>&1 || continue
 
 		# Now parse the hostname.* file
 		while :; do
