@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.31 2009/04/24 20:03:55 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.32 2009/05/05 14:16:17 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -51,12 +51,14 @@ struct ppb_softc {
 	void *sc_intrhand;
 	struct extent *sc_ioex;
 	struct extent *sc_memex;
+	struct extent *sc_pmemex;
 	struct device *sc_psc;
 	int sc_cap_off;
 	struct timeout sc_to;
 
 	bus_addr_t sc_iobase, sc_iolimit;
 	bus_addr_t sc_membase, sc_memlimit;
+	bus_addr_t sc_pmembase, sc_pmemlimit;
 };
 
 int	ppbmatch(struct device *, void *, void *);
@@ -209,6 +211,22 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
+	/* Figure out the prefetchable MMI/O address range of the bridge. */
+	blr = pci_conf_read(pc, pa->pa_tag, PPB_REG_PREFMEM);
+	sc->sc_pmembase = (blr & 0x0000fff0) << 16;
+	sc->sc_pmemlimit = (blr & 0xfff00000) | 0x000fffff;
+	if (sc->sc_pmemlimit > sc->sc_pmembase) {
+		name = malloc(32, M_DEVBUF, M_NOWAIT);
+		if (name) {
+			snprintf(name, 32, "%s pcipmem", sc->sc_dev.dv_xname);
+			sc->sc_pmemex = extent_create(name, 0, 0xffffffff,
+			    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
+			extent_free(sc->sc_pmemex, sc->sc_pmembase,
+			    sc->sc_pmemlimit - sc->sc_pmembase + 1,
+			    EX_NOWAIT);
+		}
+	}
+
  attach:
 	/*
 	 * Attach the PCI bus that hangs off of it.
@@ -224,6 +242,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_pc = pc;
 	pba.pba_ioex = sc->sc_ioex;
 	pba.pba_memex = sc->sc_memex;
+	pba.pba_pmemex = sc->sc_pmemex;
 #if 0
 	pba.pba_flags = pa->pa_flags & ~PCI_FLAGS_MRM_OKAY;
 #endif
@@ -258,6 +277,12 @@ ppbdetach(struct device *self, int flags)
 	if (sc->sc_memex) {
 		name = sc->sc_memex->ex_name;
 		extent_destroy(sc->sc_memex);
+		free(name, M_DEVBUF);
+	}
+
+	if (sc->sc_pmemex) {
+		name = sc->sc_pmemex->ex_name;
+		extent_destroy(sc->sc_pmemex);
 		free(name, M_DEVBUF);
 	}
 
@@ -455,6 +480,12 @@ ppb_hotplug_remove(void *arg1, void *arg2)
 		    EX_NOWAIT | EX_CONFLICTOK);
 		extent_free(sc->sc_memex, sc->sc_membase,
 		    sc->sc_memlimit - sc->sc_membase + 1, EX_NOWAIT);
+
+		extent_alloc_region(sc->sc_pmemex, sc->sc_pmembase,
+		    sc->sc_pmemlimit - sc->sc_pmembase + 1,
+		    EX_NOWAIT | EX_CONFLICTOK);
+		extent_free(sc->sc_pmemex, sc->sc_pmembase,
+		    sc->sc_pmemlimit - sc->sc_pmembase + 1, EX_NOWAIT);
 	}
 }
 
