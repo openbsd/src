@@ -1,4 +1,4 @@
-/*	$OpenBSD: domacro.c,v 1.16 2009/04/27 22:51:51 martynas Exp $	*/
+/*	$OpenBSD: domacro.c,v 1.17 2009/05/05 19:35:30 martynas Exp $	*/
 /*	$NetBSD: domacro.c,v 1.10 1997/07/20 09:45:45 lukem Exp $	*/
 
 /*
@@ -146,3 +146,4 @@ TOP:
 }
 
 #endif /* !SMALL */
+

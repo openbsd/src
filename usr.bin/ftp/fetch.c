@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.85 2009/04/27 21:37:13 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.86 2009/05/05 19:35:30 martynas Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -68,6 +68,7 @@
 #endif /* !SMALL */
 
 #include "ftp_var.h"
+#include "cmds.h"
 
 static int	url_get(const char *, const char *, const char *);
 void		aborthttp(int);
@@ -1045,7 +1046,12 @@ bad_ftp_url:
 		}
 
 		if (EMPTYSTRING(file)) {
+#ifndef SMALL
 			rval = -1;
+#else /* !SMALL */
+			recvrequest("NLST", "-", NULL, "w", 0, 0);
+			rval = 0;
+#endif /* !SMALL */
 			continue;
 		}
 

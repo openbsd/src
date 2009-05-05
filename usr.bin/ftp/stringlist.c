@@ -1,4 +1,4 @@
-/*	$OpenBSD: stringlist.c,v 1.9 2009/04/27 21:37:13 deraadt Exp $	*/
+/*	$OpenBSD: stringlist.c,v 1.10 2009/05/05 19:35:30 martynas Exp $	*/
 /*	$NetBSD: stringlist.c,v 1.2 1997/01/17 07:26:20 lukem Exp $	*/
 
 /*
@@ -31,6 +31,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef SMALL
 
 #include <stdio.h>
 #include <string.h>
@@ -94,3 +96,6 @@ sl_free(StringList *sl, int all)
 	}
 	free(sl);
 }
+
+#endif /* !SMALL */
+

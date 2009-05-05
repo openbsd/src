@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.25 2009/04/27 22:51:51 martynas Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.26 2009/05/05 19:35:30 martynas Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.17 1997/08/18 10:20:17 lukem Exp $	*/
 
 /*
@@ -30,14 +30,16 @@
  * SUCH DAMAGE.
  */
 
+#ifndef SMALL
+
 #include <stdio.h>
 #include "ftp_var.h"
+#include "cmds.h"
 
 /*
  * User FTP -- Command Tables.
  */
 
-#ifndef SMALL
 char	accounthelp[] =	"send account command to remote server";
 char	appendhelp[] =	"append to a file";
 char	asciihelp[] =	"set ascii transfer type";
@@ -115,29 +117,18 @@ char	typehelp[] =	"set file transfer type";
 char	umaskhelp[] =	"get (set) umask on remote side";
 char	userhelp[] =	"send new user information";
 char	verbosehelp[] =	"toggle verbose mode";
-#endif /* !SMALL */
 
 char	empty[] = "";
 
-#ifdef SMALL
-#define CMPL(x)
-#define CMPL0
-#define H(x)	empty
-#else  /* SMALL */
 #define CMPL(x)	__STRING(x), 
 #define CMPL0	"",
 #define H(x)	x
-#endif /* SMALL */
 
 struct cmd cmdtab[] = {
 	{ "!",		H(shellhelp),	0, 0, 0, CMPL0		shell },
-#ifndef SMALL
 	{ "$",		H(domachelp),	1, 0, 0, CMPL0		domacro },
-#endif /* !SMALL */
 	{ "account",	H(accounthelp),	0, 1, 1, CMPL0		account},
-#ifndef SMALL
 	{ "append",	H(appendhelp),	1, 1, 1, CMPL(lr)	put },
-#endif /* !SMALL */
 	{ "ascii",	H(asciihelp),	0, 1, 1, CMPL0		setascii },
 	{ "bell",	H(beephelp),	0, 0, 0, CMPL0		setbell },
 	{ "binary",	H(binaryhelp),	0, 1, 1, CMPL0		setbinary },
@@ -148,15 +139,11 @@ struct cmd cmdtab[] = {
 	{ "chmod",	H(chmodhelp),	0, 1, 1, CMPL(nr)	do_chmod },
 	{ "close",	H(disconhelp),	0, 1, 1, CMPL0		disconnect },
 	{ "cr",		H(crhelp),	0, 0, 0, CMPL0		setcr },
-#ifndef SMALL
 	{ "debug",	H(debughelp),	0, 0, 0, CMPL0		setdebug },
-#endif /* !SMALL */
 	{ "delete",	H(deletehelp),	0, 1, 1, CMPL(r)	deletecmd },
 	{ "dir",	H(dirhelp),	1, 1, 1, CMPL(rl)	ls },
 	{ "disconnect",	H(disconhelp),	0, 1, 1, CMPL0		disconnect },
-#ifndef SMALL
 	{ "edit",	H(edithelp),	0, 0, 0, CMPL0		setedit },
-#endif /* !SMALL */
 	{ "epsv4",	H(epsv4help),	0, 0, 0, CMPL0		setepsv4 },
 	{ "exit",	H(quithelp),	0, 0, 0, CMPL0		quit },
 	{ "form",	H(formhelp),	0, 1, 1, CMPL0		setform },
@@ -172,9 +159,7 @@ struct cmd cmdtab[] = {
 	{ "less",	H(pagehelp),	1, 1, 1, CMPL(r)	page },
 	{ "lpwd",	H(lpwdhelp),	0, 0, 0, CMPL0		lpwd },
 	{ "ls",		H(lshelp),	1, 1, 1, CMPL(rl)	ls },
-#ifndef SMALL
 	{ "macdef",	H(macdefhelp),	0, 0, 0, CMPL0		macdef },
-#endif /* !SMALL */
 	{ "mdelete",	H(mdeletehelp),	1, 1, 1, CMPL(R)	mdelete },
 	{ "mdir",	H(mdirhelp),	1, 1, 1, CMPL(R)	mls },
 	{ "mget",	H(mgethelp),	1, 1, 1, CMPL(R)	mget },
@@ -183,10 +168,8 @@ struct cmd cmdtab[] = {
 	{ "mode",	H(modehelp),	0, 1, 1, CMPL0		setftmode },
 	{ "modtime",	H(modtimehelp),	0, 1, 1, CMPL(r)	modtime },
 	{ "more",	H(pagehelp),	1, 1, 1, CMPL(r)	page },
-#ifndef SMALL
 	{ "mput",	H(mputhelp),	1, 1, 1, CMPL(L)	mput },
 	{ "msend",	H(mputhelp),	1, 1, 1, CMPL(L)	mput },
-#endif /* !SMALL */
 	{ "newer",	H(newerhelp),	1, 1, 1, CMPL(r)	newer },
 	{ "nlist",	H(nlisthelp),	1, 1, 1, CMPL(rl)	ls },
 	{ "nmap",	H(nmaphelp),	0, 0, 1, CMPL0		setnmap },
@@ -198,29 +181,21 @@ struct cmd cmdtab[] = {
 	{ "progress",	H(progresshelp),0, 0, 0, CMPL0		setprogress },
 	{ "prompt",	H(prompthelp),	0, 0, 0, CMPL0		setprompt },
 	{ "proxy",	H(proxyhelp),	0, 0, 1, CMPL(c)	doproxy },
-#ifndef SMALL
 	{ "put",	H(sendhelp),	1, 1, 1, CMPL(lr)	put },
-#endif /* !SMALL */
 	{ "pwd",	H(pwdhelp),	0, 1, 1, CMPL0		pwd },
 	{ "quit",	H(quithelp),	0, 0, 0, CMPL0		quit },
 	{ "quote",	H(quotehelp),	1, 1, 1, CMPL0		quote },
 	{ "recv",	H(receivehelp),	1, 1, 1, CMPL(rl)	get },
-#ifndef SMALL
 	{ "reget",	H(regethelp),	1, 1, 1, CMPL(rl)	reget },
-#endif /* !SMALL */
 	{ "rename",	H(renamehelp),	0, 1, 1, CMPL(rr)	renamefile },
-#ifndef SMALL
 	{ "reput",	H(reputhelp),	1, 1, 1, CMPL(lr)	reput },
-#endif /* !SMALL */
 	{ "reset",	H(resethelp),	0, 1, 1, CMPL0		reset },
 	{ "restart",	H(restarthelp),	1, 1, 1, CMPL0		restart },
 	{ "rhelp",	H(remotehelp),	0, 1, 1, CMPL0		rmthelp },
 	{ "rmdir",	H(rmdirhelp),	0, 1, 1, CMPL(r)	removedir },
 	{ "rstatus",	H(rmtstatushelp),0, 1, 1, CMPL(r)	rmtstatus },
 	{ "runique",	H(runiquehelp),	0, 0, 1, CMPL0		setrunique },
-#ifndef SMALL
 	{ "send",	H(sendhelp),	1, 1, 1, CMPL(lr)	put },
-#endif /* !SMALL */
 	{ "sendport",	H(porthelp),	0, 0, 0, CMPL0		setport },
 	{ "site",	H(sitehelp),	0, 1, 1, CMPL0		site },
 	{ "size",	H(sizecmdhelp),	1, 1, 1, CMPL(r)	sizecmd },
@@ -239,3 +214,6 @@ struct cmd cmdtab[] = {
 };
 
 int	NCMDS = (sizeof(cmdtab) / sizeof(cmdtab[0])) - 1;
+
+#endif /* !SMALL */
+

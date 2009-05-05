@@ -1,4 +1,5 @@
-/*	$OpenBSD: list.c,v 1.2 2008/10/21 17:54:00 martynas Exp $	*/
+/*	$OpenBSD: list.c,v 1.3 2009/05/05 19:35:30 martynas Exp $	*/
+
 /*
  * Copyright (c) 2008 Martynas Venckus <martynas@openbsd.org>
  *
@@ -16,6 +17,7 @@
  */
 
 #ifndef SMALL
+
 #include <string.h>
 
 void
@@ -75,3 +77,4 @@ parse_list(char **line, char *type)
 }
 
 #endif /* !SMALL */
+

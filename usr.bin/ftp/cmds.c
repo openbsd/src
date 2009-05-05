@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.69 2009/04/27 22:51:51 martynas Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.70 2009/05/05 19:35:30 martynas Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -59,6 +59,8 @@
  * SUCH DAMAGE.
  */
 
+#ifndef SMALL
+
 /*
  * FTP User Program -- Command Routines.
  */
@@ -70,9 +72,7 @@
 
 #include <ctype.h>
 #include <err.h>
-#ifndef SMALL
 #include <fnmatch.h>
-#endif /* !SMALL */
 #include <glob.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -82,124 +82,7 @@
 
 #include "ftp_var.h"
 #include "pathnames.h"
-
-jmp_buf	jabort;
-char   *mname;
-char   *home = "/";
-
-struct	types {
-	char	*t_name;
-	char	*t_mode;
-	int	t_type;
-	char	*t_arg;
-} types[] = {
-	{ "ascii",	"A",	TYPE_A,	0 },
-	{ "binary",	"I",	TYPE_I,	0 },
-	{ "image",	"I",	TYPE_I,	0 },
-	{ "ebcdic",	"E",	TYPE_E,	0 },
-	{ "tenex",	"L",	TYPE_L,	bytename },
-	{ NULL }
-};
-
-/*
- * Set transfer type.
- */
-void
-settype(int argc, char *argv[])
-{
-	struct types *p;
-	int comret;
-
-	if (argc > 2) {
-		char *sep;
-
-		fprintf(ttyout, "usage: %s [", argv[0]);
-		sep = "";
-		for (p = types; p->t_name; p++) {
-			fprintf(ttyout, "%s%s", sep, p->t_name);
-			sep = " | ";
-		}
-		fputs("]\n", ttyout);
-		code = -1;
-		return;
-	}
-	if (argc < 2) {
-		fprintf(ttyout, "Using %s mode to transfer files.\n", typename);
-		code = 0;
-		return;
-	}
-	for (p = types; p->t_name; p++)
-		if (strcmp(argv[1], p->t_name) == 0)
-			break;
-	if (p->t_name == 0) {
-		fprintf(ttyout, "%s: unknown mode.\n", argv[1]);
-		code = -1;
-		return;
-	}
-	if ((p->t_arg != NULL) && (*(p->t_arg) != '\0'))
-		comret = command("TYPE %s %s", p->t_mode, p->t_arg);
-	else
-		comret = command("TYPE %s", p->t_mode);
-	if (comret == COMPLETE) {
-		(void)strlcpy(typename, p->t_name, sizeof typename);
-		curtype = type = p->t_type;
-	}
-}
-
-/*
- * Internal form of settype; changes current type in use with server
- * without changing our notion of the type for data transfers.
- * Used to change to and from ascii for listings.
- */
-void
-changetype(int newtype, int show)
-{
-	struct types *p;
-	int comret, oldverbose = verbose;
-
-	if (newtype == 0)
-		newtype = TYPE_I;
-	if (newtype == curtype)
-		return;
-	if (
-#ifndef SMALL
-	    !debug &&
-#endif /* !SMALL */
-	    show == 0)
-		verbose = 0;
-	for (p = types; p->t_name; p++)
-		if (newtype == p->t_type)
-			break;
-	if (p->t_name == 0) {
-		warnx("internal error: unknown type %d.", newtype);
-		return;
-	}
-	if (newtype == TYPE_L && bytename[0] != '\0')
-		comret = command("TYPE %s %s", p->t_mode, bytename);
-	else
-		comret = command("TYPE %s", p->t_mode);
-	if (comret == COMPLETE)
-		curtype = newtype;
-	verbose = oldverbose;
-}
-
-char *stype[] = {
-	"type",
-	"",
-	0
-};
-
-/*
- * Set binary transfer type.
- */
-/*ARGSUSED*/
-void
-setbinary(int argc, char *argv[])
-{
-
-	stype[1] = "binary";
-	settype(2, stype);
-}
+#include "cmds.h"
 
 /*
  * Set ascii transfer type.
@@ -261,28 +144,23 @@ setstruct(int argc, char *argv[])
 	code = -1;
 }
 
-#ifndef SMALL
 void
 reput(int argc, char *argv[])
 {
 
 	(void)putit(argc, argv, 1);
 }
-#endif /* !SMALL */
 
-#ifndef SMALL
 void
 put(int argc, char *argv[])
 {
  
 	(void)putit(argc, argv, 0);
 }
-#endif /* !SMALL */
 
 /*
  * Send a single file.
  */
-#ifndef SMALL
 void
 putit(int argc, char *argv[], int restartit)
 {
@@ -317,7 +195,6 @@ usage:
 	if (argv[1] != oldargv1 && argv[2] == oldargv1) {
 		argv[2] = argv[1];
 	}
-#ifndef SMALL
 	if (restartit == 1) {
 		if (curtype != type)
 			changetype(type, 0);
@@ -328,7 +205,6 @@ usage:
 			return;
 		}
 	}
-#endif /* !SMALL */
 	if (strcmp(argv[0], "append") == 0) {
 		restartit = 1;
 	}
@@ -345,12 +221,10 @@ usage:
 	if (oldargv1 != argv[1])	/* free up after globulize() */
 		free(argv[1]);
 }
-#endif /* !SMALL */
 
 /*
  * Send multiple files.
  */
-#ifndef SMALL
 void
 mput(int argc, char *argv[])
 {
@@ -361,7 +235,6 @@ mput(int argc, char *argv[])
 
 	optind = optreset = 1;
 
-#ifndef SMALL
 	while ((ch = getopt(argc, argv, "c")) != -1) {
 		switch(ch) {
 		case 'c':
@@ -371,7 +244,6 @@ mput(int argc, char *argv[])
 			goto usage;
 		}
 	}
-#endif /* !SMALL */
 
 	if (argc - optind < 1 && !another(&argc, &argv, "local-files")) {
 usage:
@@ -380,11 +252,9 @@ usage:
 		return;
 	}
 
-#ifndef SMALL
 	argv[optind - 1] = argv[0];
 	argc -= optind - 1;
 	argv += optind - 1;
-#endif /* !SMALL */
 
 	mname = argv[0];
 	mflag = 1;
@@ -425,7 +295,6 @@ usage:
 				if (mapflag) {
 					tp = domap(tp);
 				}
-#ifndef SMALL
 				if (restartit == 1) {
 					off_t ret;
 
@@ -434,7 +303,6 @@ usage:
 					ret = remotesize(tp, 0);
 					restart_point = (ret < 0) ? 0 : ret;
 				}
-#endif /* !SMALL */
 				cmd = restartit ? "APPE" : ((sunique) ?
 				    "STOU" : "STOR");
 				sendrequest(cmd, cp, tp,
@@ -459,7 +327,6 @@ usage:
 			if (mflag && confirm(argv[0], argv[i])) {
 				tp = (ntflag) ? dotrans(argv[i]) : argv[i];
 				tp = (mapflag) ? domap(tp) : tp;
-#ifndef SMALL
 				if (restartit == 1) {
 					off_t ret;
 
@@ -468,7 +335,6 @@ usage:
 					ret = remotesize(tp, 0);
 					restart_point = (ret < 0) ? 0 : ret;
 				}
-#endif /* !SMALL */
 				cmd = restartit ? "APPE" : ((sunique) ?
 				    "STOU" : "STOR");
 				sendrequest(cmd, argv[i], tp,
@@ -493,7 +359,6 @@ usage:
 			if (mflag && confirm(argv[0], *cpp)) {
 				tp = (ntflag) ? dotrans(*cpp) : *cpp;
 				tp = (mapflag) ? domap(tp) : tp;
-#ifndef SMALL
 				if (restartit == 1) {
 					off_t ret;
 
@@ -502,7 +367,6 @@ usage:
 					ret = remotesize(tp, 0);
 					restart_point = (ret < 0) ? 0 : ret;
 				}
-#endif /* !SMALL */
 				cmd = restartit ? "APPE" : ((sunique) ?
 				    "STOU" : "STOR");
 				sendrequest(cmd, *cpp, tp,
@@ -519,285 +383,12 @@ usage:
 	(void)signal(SIGINT, oldintr);
 	mflag = 0;
 }
-#endif /* !SMALL */
 
-#ifndef SMALL
 void
 reget(int argc, char *argv[])
 {
 
 	(void)getit(argc, argv, 1, "a+w");
-}
-#endif /* !SMALL */
-
-void
-get(int argc, char *argv[])
-{
-
-	(void)getit(argc, argv, 0, restart_point ? "a+w" : "w" );
-}
-
-/*
- * Receive one file.
- */
-int
-getit(int argc, char *argv[], int restartit, const char *mode)
-{
-	int loc = 0;
-	int rval = 0;
-	char *oldargv1, *oldargv2, *globargv2;
-
-	if (argc == 2) {
-		argc++;
-		argv[2] = argv[1];
-		loc++;
-	}
-	if (argc < 2 && !another(&argc, &argv, "remote-file"))
-		goto usage;
-	if ((argc < 3 && !another(&argc, &argv, "local-file")) || argc > 3) {
-usage:
-		fprintf(ttyout, "usage: %s remote-file [local-file]\n",
-		    argv[0]);
-		code = -1;
-		return (0);
-	}
-	oldargv1 = argv[1];
-	oldargv2 = argv[2];
-	if (!globulize(&argv[2])) {
-		code = -1;
-		return (0);
-	}
-	globargv2 = argv[2];
-	if (loc && mcase) {
-		char *tp = argv[1], *tp2, tmpbuf[MAXPATHLEN];
-
-		while (*tp && !islower(*tp)) {
-			tp++;
-		}
-		if (!*tp) {
-			tp = argv[2];
-			tp2 = tmpbuf;
-			while ((*tp2 = *tp) != '\0') {
-				if (isupper(*tp2)) {
-					*tp2 = tolower(*tp2);
-				}
-				tp++;
-				tp2++;
-			}
-			argv[2] = tmpbuf;
-		}
-	}
-	if (loc && ntflag)
-		argv[2] = dotrans(argv[2]);
-	if (loc && mapflag)
-		argv[2] = domap(argv[2]);
-#ifndef SMALL
-	if (restartit) {
-		struct stat stbuf;
-		int ret;
-
-		ret = stat(argv[2], &stbuf);
-		if (restartit == 1) {
-			restart_point = (ret < 0) ? 0 : stbuf.st_size;
-		} else {
-			if (ret == 0) {
-				time_t mtime;
-
-				mtime = remotemodtime(argv[1], 0);
-				if (mtime == -1)
-					goto freegetit;
-				if (stbuf.st_mtime >= mtime) {
-					rval = 1;
-					goto freegetit;
-				}
-			}
-		}
-	}
-#endif /* !SMALL */
-
-	recvrequest("RETR", argv[2], argv[1], mode,
-	    argv[1] != oldargv1 || argv[2] != oldargv2 || !interactive, loc);
-	restart_point = 0;
-freegetit:
-	if (oldargv2 != globargv2)	/* free up after globulize() */
-		free(globargv2);
-	return (rval);
-}
-
-/* XXX - Signal race. */
-/* ARGSUSED */
-void
-mabort(int signo)
-{
-	alarmtimer(0);
-	putc('\n', ttyout);
-	(void)fflush(ttyout);
-	if (mflag && fromatty)
-		if (confirm(mname, NULL))
-			longjmp(jabort, 1);
-	mflag = 0;
-	longjmp(jabort, 1);
-}
-
-/*
- * Get multiple files.
- */
-void
-mget(int argc, char *argv[])
-{
-	extern int optind, optreset;
-	sig_t oldintr;
-	int ch, xargc = 2;
-	char *cp, localcwd[MAXPATHLEN], *xargv[] = {argv[0], NULL, NULL};
-	static int restartit = 0;
-#ifndef SMALL
-	extern char *optarg;
-	const char *errstr;
-	int i = 1;
-	char type = NULL, *dummyargv[] = {argv[0], ".", NULL};
-	FILE *ftemp = NULL;
-	static int depth = 0, max_depth = 0;
-#endif /* !SMALL */
-
-	optind = optreset = 1;
-
-#ifndef SMALL
-
-	if (depth)
-		depth++;
-
-	while ((ch = getopt(argc, argv, "cd:nr")) != -1) {
-		switch(ch) {
-		case 'c':
-			restartit = 1;
-			break;
-		case 'd':
-			max_depth = strtonum(optarg, 0, INT_MAX, &errstr);
-			if (errstr != NULL) {
-				fprintf(ttyout, "bad depth value, %s: %s\n",
-				    errstr, optarg);
-				code = -1;
-				return;
-			}
-			break;
-		case 'n':
-			restartit = -1;
-			break;
-		case 'r':
-			depth = 1;
-			break;
-		default:
-			goto usage;
-		}
-	}
-#endif /* !SMALL */
-
-	if (argc - optind < 1 && !another(&argc, &argv, "remote-files")) {
-usage:
-		fprintf(ttyout, "usage: %s [-cnr] [-d depth] remote-files\n",
-		    argv[0]);
-		code = -1;
-		return;
-	}
-
-#ifndef SMALL
-	argv[optind - 1] = argv[0];
-	argc -= optind - 1;
-	argv += optind - 1;
-#endif /* !SMALL */
-
-	mname = argv[0];
-	mflag = 1;
-	if (getcwd(localcwd, sizeof(localcwd)) == NULL)
-		err(1, "can't get cwd");
-
-	oldintr = signal(SIGINT, mabort);
-	(void)setjmp(jabort);
-	while ((cp =
-#ifndef SMALL
-	    depth ? remglob2(dummyargv, proxy, NULL, &ftemp, &type) :
-#endif /* !SMALL */
-	    remglob(argv, proxy, NULL)) != NULL
-#ifndef SMALL
-	    || (mflag && depth && ++i < argc)
-#endif /* !SMALL */
-	    ) {
-#ifndef SMALL
-		if (cp == NULL)
-			continue;
-#endif /* !SMALL */
-		if (*cp == '\0') {
-			mflag = 0;
-			continue;
-		}
-		if (!mflag)
-			continue;
-#ifndef SMALL
-		if (depth && fnmatch(argv[i], cp, FNM_PATHNAME) != 0)
-			continue;
-#endif /* !SMALL */
-		if (!fileindir(cp, localcwd)) {
-			fprintf(ttyout, "Skipping non-relative filename `%s'\n",
-			    cp);
-			continue;
-		}
-#ifndef SMALL
-		if (type == 'd' && depth == max_depth)
-			continue;
-#endif /* !SMALL */
-		if (confirm(argv[0], cp)) {
-#ifndef SMALL
-			if (type == 'd') {
-				mkdir(cp, 0755);
-				if (chdir(cp) != 0) {
-					warn("local: %s", cp);
-					continue;
-				}
-
-				xargv[1] = cp;
-				cd(xargc, xargv);
-				if (dirchange != 1)
-					goto out;
-
-				xargv[1] = "*";
-				mget(xargc, xargv);
-
-				xargv[1] = "..";
-				cd(xargc, xargv);
-				if (dirchange != 1) {
-					mflag = 0;
-					goto out;
-				}
-
-out:
-				if (chdir("..") != 0) {
-					warn("local: %s", cp);
-					mflag = 0;
-				}
-				continue;
-			}
-			if (type == 's')
-				/* Currently ignored. */
-				continue;
-#endif /* !SMALL */
-			xargv[1] = cp;
-			(void)getit(xargc, xargv, restartit,
-			    (restartit == 1 || restart_point) ? "a+w" : "w");
-			if (!mflag && fromatty) {
-				if (confirm(argv[0], NULL))
-					mflag = 1;
-			}
-		}
-	}
-	(void)signal(SIGINT, oldintr);
-#ifndef SMALL
-	if (depth)
-		depth--;
-	if (depth == 0 || mflag == 0)
-		depth = max_depth = mflag = restartit = 0;
-#else /* !SMALL */
-	mflag = 0;
-#endif /* !SMALL */
 }
 
 char *
@@ -861,7 +452,6 @@ status(int argc, char *argv[])
 	fprintf(ttyout, "Use of PORT/LPRT cmds: %s.\n", onoff(sendport));
 	fprintf(ttyout, "Use of EPSV/EPRT cmds for IPv4: %s%s.\n", onoff(epsv4),
 	    epsv4bad ? " (disabled for this connection)" : "");
-#ifndef SMALL
 	fprintf(ttyout, "Command line editing: %s.\n", onoff(editing));
 	if (macnum > 0) {
 		fputs("Macros:\n", ttyout);
@@ -869,7 +459,6 @@ status(int argc, char *argv[])
 			fprintf(ttyout, "\t%s\n", macros[i].mac_name);
 		}
 	}
-#endif /* !SMALL */
 	code = 0;
 }
 
@@ -908,7 +497,6 @@ setbell(int argc, char *argv[])
 /*
  * Set command line editing
  */
-#ifndef SMALL
 /*ARGSUSED*/
 void
 setedit(int argc, char *argv[])
@@ -917,7 +505,6 @@ setedit(int argc, char *argv[])
 	code = togglevar(argc, argv, &editing, "Editing mode");
 	controlediting();
 }
-#endif /* !SMALL */
 
 /*
  * Toggle use of IPv4 EPSV/EPRT
@@ -1093,7 +680,6 @@ setpreserve(int argc, char *argv[])
 /*
  * Set debugging mode on/off and/or set level of debugging.
  */
-#ifndef SMALL
 /*ARGSUSED*/
 void
 setdebug(int argc, char *argv[])
@@ -1128,35 +714,6 @@ setdebug(int argc, char *argv[])
 		options &= ~SO_DEBUG;
 	fprintf(ttyout, "Debugging %s (debug=%d).\n", onoff(debug), debug);
 	code = debug > 0;
-}
-#endif /* !SMALL */
-
-/*
- * Set current working directory on remote machine.
- */
-void
-cd(int argc, char *argv[])
-{
-	int r;
-
-	if ((argc < 2 && !another(&argc, &argv, "remote-directory")) ||
-	    argc > 2) {
-		fprintf(ttyout, "usage: %s remote-directory\n", argv[0]);
-		code = -1;
-		return;
-	}
-	r = command("CWD %s", argv[1]);
-	if (r == ERROR && code == 500) {
-		if (verbose)
-			fputs("CWD command not recognized, trying XCWD.\n", ttyout);
-		r = command("XCWD %s", argv[1]);
-	}
-	if (r == ERROR && code == 550) {
-		dirchange = 0;
-		return;
-	}
-	if (r == COMPLETE)
-		dirchange = 1;
 }
 
 /*
@@ -1378,13 +935,11 @@ shell(int argc, char *argv[])
 		(void)strlcpy(shellnam + 1, ++namep, sizeof(shellnam) - 1);
 		if (strcmp(namep, "sh") != 0)
 			shellnam[0] = '+';
-#ifndef SMALL
 		if (debug) {
 			fputs(shellp, ttyout);
 			fputc('\n', ttyout);
 			(void)fflush(ttyout);
 		}
-#endif /* !SMALL */
 		if (argc > 1) {
 			execl(shellp, shellnam, "-c", altarg, (char *)0);
 		}
@@ -1671,30 +1226,6 @@ quit(int argc, char *argv[])
 	exit(0);
 }
 
-/*
- * Terminate session, but don't exit.
- */
-/* ARGSUSED */
-void
-disconnect(int argc, char *argv[])
-{
-
-	if (!connected)
-		return;
-	(void)command("QUIT");
-	if (cout) {
-		(void)fclose(cout);
-	}
-	cout = NULL;
-	connected = 0;
-	data = -1;
-#ifndef SMALL
-	if (!proxy) {
-		macnum = 0;
-	}
-#endif /* !SMALL */
-}
-
 void
 account(int argc, char *argv[])
 {
@@ -1825,34 +1356,6 @@ setntrans(int argc, char *argv[])
 	(void)strlcpy(ntout, argv[2], sizeof(ntout));
 }
 
-char *
-dotrans(char *name)
-{
-	static char new[MAXPATHLEN];
-	char *cp1, *cp2 = new;
-	int i, ostop, found;
-
-	for (ostop = 0; *(ntout + ostop) && ostop < 16; ostop++)
-		continue;
-	for (cp1 = name; *cp1; cp1++) {
-		found = 0;
-		for (i = 0; *(ntin + i) && i < 16; i++) {
-			if (*cp1 == *(ntin + i)) {
-				found++;
-				if (i < ostop) {
-					*cp2++ = *(ntout + i);
-				}
-				break;
-			}
-		}
-		if (!found) {
-			*cp2++ = *cp1;
-		}
-	}
-	*cp2 = '\0';
-	return (new);
-}
-
 void
 setnmap(int argc, char *argv[])
 {
@@ -1883,177 +1386,6 @@ setnmap(int argc, char *argv[])
 	while (*++cp == ' ')
 		continue;
 	(void)strncpy(mapout, cp, MAXPATHLEN - 1);
-}
-
-char *
-domap(char *name)
-{
-	static char new[MAXPATHLEN];
-	char *cp1 = name, *cp2 = mapin;
-	char *tp[9], *te[9];
-	int i, toks[9], toknum = 0, match = 1;
-
-	for (i=0; i < 9; ++i) {
-		toks[i] = 0;
-	}
-	while (match && *cp1 && *cp2) {
-		switch (*cp2) {
-			case '\\':
-				if (*++cp2 != *cp1) {
-					match = 0;
-				}
-				break;
-			case '$':
-				if (*(cp2+1) >= '1' && (*cp2+1) <= '9') {
-					if (*cp1 != *(++cp2+1)) {
-						toks[toknum = *cp2 - '1']++;
-						tp[toknum] = cp1;
-						while (*++cp1 && *(cp2+1)
-							!= *cp1);
-						te[toknum] = cp1;
-					}
-					cp2++;
-					break;
-				}
-				/* FALLTHROUGH */
-			default:
-				if (*cp2 != *cp1) {
-					match = 0;
-				}
-				break;
-		}
-		if (match && *cp1) {
-			cp1++;
-		}
-		if (match && *cp2) {
-			cp2++;
-		}
-	}
-	if (!match && *cp1) /* last token mismatch */
-	{
-		toks[toknum] = 0;
-	}
-	cp1 = new;
-	*cp1 = '\0';
-	cp2 = mapout;
-	while (*cp2) {
-		match = 0;
-		switch (*cp2) {
-			case '\\':
-				if (*(cp2 + 1)) {
-					*cp1++ = *++cp2;
-				}
-				break;
-			case '[':
-LOOP:
-				if (*++cp2 == '$' && isdigit(*(cp2+1))) {
-					if (*++cp2 == '0') {
-						char *cp3 = name;
-
-						while (*cp3) {
-							*cp1++ = *cp3++;
-						}
-						match = 1;
-					}
-					else if (toks[toknum = *cp2 - '1']) {
-						char *cp3 = tp[toknum];
-
-						while (cp3 != te[toknum]) {
-							*cp1++ = *cp3++;
-						}
-						match = 1;
-					}
-				}
-				else {
-					while (*cp2 && *cp2 != ',' &&
-					    *cp2 != ']') {
-						if (*cp2 == '\\') {
-							cp2++;
-						}
-						else if (*cp2 == '$' &&
-   						        isdigit(*(cp2+1))) {
-							if (*++cp2 == '0') {
-							   char *cp3 = name;
-
-							   while (*cp3) {
-								*cp1++ = *cp3++;
-							   }
-							}
-							else if (toks[toknum =
-							    *cp2 - '1']) {
-							   char *cp3=tp[toknum];
-
-							   while (cp3 !=
-								  te[toknum]) {
-								*cp1++ = *cp3++;
-							   }
-							}
-						}
-						else if (*cp2) {
-							*cp1++ = *cp2++;
-						}
-					}
-					if (!*cp2) {
-						fputs(
-"nmap: unbalanced brackets.\n", ttyout);
-						return (name);
-					}
-					match = 1;
-					cp2--;
-				}
-				if (match) {
-					while (*++cp2 && *cp2 != ']') {
-					      if (*cp2 == '\\' && *(cp2 + 1)) {
-							cp2++;
-					      }
-					}
-					if (!*cp2) {
-						fputs(
-"nmap: unbalanced brackets.\n", ttyout);
-						return (name);
-					}
-					break;
-				}
-				switch (*++cp2) {
-					case ',':
-						goto LOOP;
-					case ']':
-						break;
-					default:
-						cp2--;
-						goto LOOP;
-				}
-				break;
-			case '$':
-				if (isdigit(*(cp2 + 1))) {
-					if (*++cp2 == '0') {
-						char *cp3 = name;
-
-						while (*cp3) {
-							*cp1++ = *cp3++;
-						}
-					}
-					else if (toks[toknum = *cp2 - '1']) {
-						char *cp3 = tp[toknum];
-
-						while (cp3 != te[toknum]) {
-							*cp1++ = *cp3++;
-						}
-					}
-					break;
-				}
-				/* FALLTHROUGH */
-			default:
-				*cp1++ = *cp2;
-				break;
-		}
-		cp2++;
-	}
-	*cp1 = '\0';
-	if (!*new) {
-		return (name);
-	}
-	return (new);
 }
 
 void
@@ -2130,7 +1462,6 @@ syst(int argc, char *argv[])
 	(void)command("SYST");
 }
 
-#ifndef SMALL
 void
 macdef(int argc, char *argv[])
 {
@@ -2188,7 +1519,6 @@ macdef(int argc, char *argv[])
 		}
 	}
 }
-#endif /* !SMALL */
 
 /*
  * Get size of file on remote machine
@@ -2287,3 +1617,6 @@ page(int argc, char *argv[])
 	if (oldargv1 != argv[1])	/* free up after globulize() */
 		free(argv[1]);
 }
+
+#endif /* !SMALL */
+

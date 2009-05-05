@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.76 2009/04/27 22:51:51 martynas Exp $	*/
+/*	$OpenBSD: main.c,v 1.77 2009/05/05 19:35:30 martynas Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -76,6 +76,7 @@
 #include <unistd.h>
 
 #include "ftp_var.h"
+#include "cmds.h"
 
 int family = PF_UNSPEC;
 
@@ -112,9 +113,9 @@ main(volatile int argc, char *argv[])
 	hist = NULL;
 	cookiefile = NULL;
 	resume = 0;
+	marg_sl = sl_init();
 #endif /* !SMALL */
 	mark = HASHBYTES;
-	marg_sl = sl_init();
 #ifdef INET6
 	epsv4 = 1;
 #else
@@ -318,6 +319,7 @@ main(volatile int argc, char *argv[])
 			if (rval >= 0)		/* -1 == connected and cd-ed */
 				exit(rval);
 		} else {
+#ifndef SMALL
 			char *xargv[5];
 
 			if (setjmp(toplevel))
@@ -334,19 +336,17 @@ main(volatile int argc, char *argv[])
 				if (!retry_connect)
 					break;
 				if (!connected) {
-#ifndef SMALL
 					macnum = 0;
-#endif /* !SMALL */
 					fputs("Retrying...\n", ttyout);
 					sleep(retry_connect);
 				}
 			} while (!connected);
 			retry_connect = 0; /* connected, stop hiding msgs */
+#endif /* !SMALL */
 		}
 	}
 #ifndef SMALL
 	controlediting();
-#endif /* !SMALL */
 	top = setjmp(toplevel) == 0;
 	if (top) {
 		(void)signal(SIGINT, (sig_t)intr);
@@ -356,6 +356,9 @@ main(volatile int argc, char *argv[])
 		cmdscanner(top);
 		top = 1;
 	}
+#else /* !SMALL */
+	usage();
+#endif /* !SMALL */
 }
 
 void
@@ -399,6 +402,7 @@ lostpeer(void)
 	errno = save_errno;
 }
 
+#ifndef SMALL
 /*
  * Generate a prompt
  */
@@ -416,20 +420,12 @@ cmdscanner(int top)
 {
 	struct cmd *c;
 	int num;
-#ifndef SMALL
 	HistEvent hev;
-#endif /* !SMALL */
 
-	if (!top 
-#ifndef SMALL
-	    && !editing
-#endif /* !SMALL */
-	    )
+	if (!top && !editing)
 		(void)putc('\n', ttyout);
 	for (;;) {
-#ifndef SMALL
 		if (!editing) {
-#endif /* !SMALL */
 			if (fromatty) {
 				fputs(prompt(), ttyout);
 				(void)fflush(ttyout);
@@ -449,7 +445,6 @@ cmdscanner(int top)
 					/* void */;
 				break;
 			} /* else it was a line without a newline */
-#ifndef SMALL
 		} else {
 			const char *buf;
 			cursor_pos = NULL;
@@ -468,7 +463,6 @@ cmdscanner(int top)
 			line[num] = '\0';
 			history(hist, &hev, H_ENTER, buf);
 		}
-#endif /* !SMALL */
 
 		makeargv();
 		if (margc == 0)
@@ -479,7 +473,6 @@ cmdscanner(int top)
 			continue;
 		}
 		if (c == 0) {
-#ifndef SMALL
 			/*
 			 * Give editline(3) a shot at unknown commands.
 			 * XXX - bogus commands with a colon in
@@ -487,7 +480,6 @@ cmdscanner(int top)
 			 */
 			if (editing &&
 			    el_parse(el, margc, (const char **)margv) != 0)
-#endif /* !SMALL */
 				fputs("?Invalid command.\n", ttyout);
 			continue;
 		}
@@ -558,7 +550,6 @@ makeargv(void)
 		if (argp == NULL)
 			break;
 	}
-#ifndef SMALL
 	if (cursor_pos == line) {
 		cursor_argc = 0;
 		cursor_argo = 0;
@@ -566,20 +557,14 @@ makeargv(void)
 		cursor_argc = margc;
 		cursor_argo = strlen(margv[margc-1]);
 	}
-#endif /* !SMALL */
 }
 
-#ifdef SMALL
-#define INC_CHKCURSOR(x)	(x)++
-#else  /* SMALL */
 #define INC_CHKCURSOR(x)	{ (x)++ ; \
 				if (x == cursor_pos) { \
 					cursor_argc = margc; \
 					cursor_argo = ap-argbase; \
 					cursor_pos = NULL; \
 				} }
-						
-#endif /* SMALL */
 
 /*
  * Parse string into argbuf;
@@ -753,19 +738,16 @@ help(int argc, char *argv[])
 				c->c_name, c->c_help);
 	}
 }
+#endif /* !SMALL */
 
 void
 usage(void)
 {
-	(void)fprintf(stderr,
-	    "usage: %s [-46Aa"
+	(void)fprintf(stderr, "usage: %s "
 #ifndef SMALL
-	    "d"
-#endif /* !SMALL */
-	    "EegimnptVv] [-k seconds] [-P port] [-r seconds] [host [port]]\n"
-	    "       %s "
-#ifndef SMALL
-	    "[-C] "
+	    "[-46AadEegimnptVv] [-k seconds] [-P port] "
+	    "[-r seconds] [host [port]]\n"
+	    "       %s [-C] "
 #endif /* !SMALL */
 	    "[-o output] "
 	    "ftp://[user:password@]host[:port]/file[/]\n"
@@ -787,7 +769,8 @@ usage(void)
 #ifndef SMALL
 	    __progname, __progname, __progname, __progname, __progname);
 #else /* !SMALL */
-	    __progname, __progname, __progname, __progname);
+	    __progname, __progname, __progname);
 #endif /* !SMALL */
 	exit(1);
 }
+

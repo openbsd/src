@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.38 2009/04/27 22:51:51 martynas Exp $	*/
+/*	$OpenBSD: extern.h,v 1.39 2009/05/05 19:35:30 martynas Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -63,160 +63,68 @@
 
 #include <sys/types.h>
 
-void    abort_remote(FILE *);
-void    abortpt(int);
-void    abortrecv(int);
-#ifndef SMALL
-void    abortsend(int);
-#endif /* !SMALL */
-void	account(int, char **);
+void	abort_remote(FILE *);
+void	abortpt(int);
+void	abortrecv(int);
 void	alarmtimer(int);
 int	another(int *, char ***, const char *);
 int	auto_fetch(int, char **, char *);
 void	blkfree(char **);
-void	cd(int, char **);
 void	cdup(int, char **);
-void	changetype(int, int);
 void	cmdabort(int);
 void	cmdscanner(int);
 int	command(const char *, ...);
-#ifndef SMALL
-unsigned char complete(EditLine *, int);
-void	controlediting(void);
-#endif /* !SMALL */
 int	confirm(const char *, const char *);
 FILE   *dataconn(const char *);
-void	deletecmd(int, char **);
-void	disconnect(int, char **);
-void	do_chmod(int, char **);
-void	do_umask(int, char **);
-#ifndef SMALL
-void	domacro(int, char **);
-#endif /* !SMALL */
-char   *domap(char *);
-void	doproxy(int, char **);
-char   *dotrans(char *);
 int	foregroundproc(void);
 int	fileindir(const char *, const char *);
-void	get(int, char **);
 struct cmd *getcmd(const char *);
-int	getit(int, char **, int, const char *);
 int	getreply(int);
 int	globulize(char **);
 char   *gunique(const char *);
 void	help(int, char **);
 char   *hookup(char *, char *);
-void	idle(int, char **);
-int     initconn(void);
+int	initconn(void);
 void	intr(void);
 int	isurl(const char *);
-void	list_vertical(StringList *);
-void	lcd(int, char **);
 int	ftp_login(const char *, char *, char *);
 void	lostpeer(void);
-void	lpwd(int, char **);
-void	ls(int, char **);
-void	mabort(int);
-#ifndef SMALL
-void	macdef(int, char **);
-#endif /* !SMALL */
 void	makeargv(void);
-void	makedir(int, char **);
-void	mdelete(int, char **);
-void	mget(int, char **);
-void	mls(int, char **);
-void	modtime(int, char **);
-#ifndef SMALL
-void	mput(int, char **);
-#endif /* !SMALL */
-char   *onoff(int);
-void	newer(int, char **);
-void	page(int, char **);
-void    progressmeter(int, const char *);
+void	progressmeter(int, const char *);
 char   *prompt(void);
-void	proxabort(int);
-void    proxtrans(const char *, const char *, const char *);
-void    psabort(int);
+void	proxtrans(const char *, const char *, const char *);
+void	psabort(int);
 void	psummary(int);
-void    pswitch(int);
-void    ptransfer(int);
-#ifndef SMALL
-void	put(int, char **);
-void	putit(int, char **, int);
-#endif /* !SMALL */
-void	pwd(int, char **);
-void	quit(int, char **);
-void	quote(int, char **);
-void	quote1(const char *, int, char **);
-void    recvrequest(const char *, const char *, const char *,
+void	pswitch(int);
+void	ptransfer(int);
+void	recvrequest(const char *, const char *, const char *,
 	    const char *, int, int);
-void	reget(int, char **);
 char   *remglob(char **, int, char **);
 #ifndef SMALL
-char   *remglob2(char **, int, char **, FILE **ftemp, char *type);
 #endif /* !SMALL */
 off_t	remotesize(const char *, int);
 time_t	remotemodtime(const char *, int);
-void	removedir(int, char **);
-void	renamefile(int, char **);
-#ifndef SMALL
-void	reput(int, char **);
-#endif /* !SMALL */
-void    reset(int, char **);
-void	restart(int, char **);
+void	reset(int, char **);
 void	rmthelp(int, char **);
-void	rmtstatus(int, char **);
-#ifndef SMALL
-void    sendrequest(const char *, const char *, const char *, int);
-#endif /* !SMALL */
-void	setascii(int, char **);
-void	setbell(int, char **);
-void	setbinary(int, char **);
-void	setcase(int, char **);
-void	setcr(int, char **);
-#ifndef SMALL
-void	setdebug(int, char **);
-#endif /* !SMALL */
-void	setedit(int, char **);
-void	setepsv4(int, char **);
-void	setform(int, char **);
-void	setftmode(int, char **);
-void	setgate(int, char **);
-void	setglob(int, char **);
 void	sethash(int, char **);
-void	setnmap(int, char **);
-void	setntrans(int, char **);
-void	setpassive(int, char **);
 void	setpeer(int, char **);
-void	setport(int, char **);
-void	setpreserve(int, char **);
-void	setprogress(int, char **);
-void	setprompt(int, char **);
-void	setrunique(int, char **);
-void	setstruct(int, char **);
-void	setsunique(int, char **);
-void	settenex(int, char **);
-void	settrace(int, char **);
 void	setttywidth(int);
-void	settype(int, char **);
-void	setverbose(int, char **);
-void	shell(int, char **);
-void	site(int, char **);
-void	sizecmd(int, char **);
 char   *slurpstring(void);
-void	status(int, char **);
-void	syst(int, char **);
-int	togglevar(int, char **, int *, const char *);
 void	usage(void);
-void	user(int, char **);
 
 #ifndef SMALL
-int	ruserpass(const char *, char **, char **, char **);
-void	cookie_load(void);
+void	abortsend(int);
+unsigned char complete(EditLine *, int);
+void	controlediting(void);
 void	cookie_get(const char *, const char *, int, char **);
+void	cookie_load(void);
+void	domacro(int, char **);
+void	list_vertical(StringList *);
 void	parse_list(char **, char *);
+char   *remglob2(char **, int, char **, FILE **ftemp, char *type);
+int	ruserpass(const char *, char **, char **, char **);
+void	sendrequest(const char *, const char *, const char *, int);
 #endif /* !SMALL */
-
 
 extern jmp_buf	abortprox;
 extern int	abrtflag;
@@ -229,8 +137,11 @@ extern int	family;
 extern int	proxy;
 extern char	reply_string[];
 extern off_t	restart_point;
-extern int	NCMDS;
 extern int	keep_alive_timeout;
+
+#ifndef SMALL
+extern int	NCMDS;
+#endif /* !SMALL */
 
 extern char *__progname;		/* from crt0.o */
 

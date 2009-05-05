@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.61 2009/04/27 22:51:51 martynas Exp $	*/
+/*	$OpenBSD: util.c,v 1.62 2009/05/05 19:35:30 martynas Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -106,6 +106,7 @@ setpeer(int argc, char *argv[])
 		code = -1;
 		return;
 	}
+#ifndef SMALL
 	if (argc < 2)
 		(void)another(&argc, &argv, "to");
 	if (argc < 2 || argc > 3) {
@@ -113,6 +114,7 @@ setpeer(int argc, char *argv[])
 		code = -1;
 		return;
 	}
+#endif /* !SMALL */
 	if (gatemode)
 		port = gateport;
 	else
@@ -335,6 +337,7 @@ tryagain:
  *
  * Returns false if no new arguments have been added.
  */
+#ifndef SMALL
 int
 another(int *pargc, char ***pargv, const char *prompt)
 {
@@ -359,6 +362,7 @@ another(int *pargc, char ***pargv, const char *prompt)
 	*pargv = margv;
 	return (ret);
 }
+#endif /* !SMALL */
 
 /*
  * glob files given in argv[] from the remote server.
@@ -478,6 +482,7 @@ remglob(char *argv[], int doswitch, char **errbuf)
 	return remglob2(argv, doswitch, errbuf, &ftemp, NULL);
 }
 
+#ifndef SMALL
 int
 confirm(const char *cmd, const char *file)
 {
@@ -530,6 +535,7 @@ quit:
 	}
 	return (1);
 }
+#endif /* !SMALL */
 
 /*
  * Glob a local file name specification with
@@ -937,6 +943,7 @@ ptransfer(int siginfo)
 /*
  * List words in stringlist, vertically arranged
  */
+#ifndef SMALL
 void
 list_vertical(StringList *sl)
 {
@@ -974,6 +981,7 @@ list_vertical(StringList *sl)
 		}
 	}
 }
+#endif /* !SMALL */
 
 /*
  * Update the global ttywidth value, using TIOCGWINSZ.
@@ -1044,3 +1052,4 @@ controlediting(void)
 	}
 }
 #endif /* !SMALL */
+
