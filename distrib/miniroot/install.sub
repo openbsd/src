@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.527 2009/05/05 21:16:34 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.528 2009/05/05 21:22:14 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -819,6 +819,9 @@ v4_defroute() {
 	# Get/Confirm an IPv4 default route if an IPv4 address was configured.
 	[[ -n $(ifconfig | sed -ne '/[ 	]inet .* broadcast /p') ]] || return
 
+	# If only one interface, and it is running dhclient, ask nothing
+	[[ -f /tmp/dhclient.conf && $nifs == 1 ]] && return
+
 	[[ -x /sbin/dhclient ]] && _prompt=", 'dhcp'$_prompt"
 	_prompt="Default IPv4 route? (IPv4 address$_prompt)"
 
@@ -1611,11 +1614,19 @@ donetconfig() {
 	fi
 
 	# Get & apply fully qualified domain name to hostname.
-	ask "DNS domain name? (e.g. 'bar.com')" "${_dn:=$(get_fqdn)}"
+	resp="${_dn:=$(get_fqdn)}"
+	if [[ ! -f /tmp/dhclient.conf || $nifs != 1 ]]; then
+		ask "DNS domain name? (e.g. 'bar.com')" "$resp"
+	fi
 	hostname "$(hostname -s).$resp"
 
-	# Get/Confirm nameservers, and construct appropriate resolv.conf.
-	ask "DNS nameservers? (IP address list or 'none')" "${_ns:=none}"
+	# If only one interface, and it is running dhclient, ask nothing
+	# else Get/Confirm nameservers
+	resp="${_ns:=none}"
+	if [[ ! -f /tmp/dhclient.conf || $nifs != 1 || $resp == none ]]; then
+		ask "DNS nameservers? (IP address list or 'none')" "${_ns:=none}"
+	fi
+	# Construct appropriate resolv.conf.
 	if [[ $resp != none ]]; then
 		echo "lookup file bind" >/tmp/resolv.conf
 		for _ns in $resp; do
