@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.60 2008/05/11 01:08:05 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.61 2009/05/05 20:09:19 sthen Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -394,6 +394,13 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 					 * try our best.
 					 */
 					control_result(c, CTL_RES_NOCAP);
+					break;
+				}
+				if ((imsg.hdr.type == IMSG_CTL_SHOW_RIB_PREFIX)
+				    && (ribreq->prefix.af != AF_INET)
+				    && (ribreq->prefix.af != AF_INET6)) {
+					/* malformed request, must specify af */
+					control_result(c, CTL_RES_PARSE_ERROR);
 					break;
 				}
 				c->ibuf.pid = imsg.hdr.pid;
