@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.526 2009/05/05 21:14:46 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.527 2009/05/05 21:16:34 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -600,6 +600,7 @@ configure_ifs() {
 		_p=$1
 	fi
 
+	nifs=0
 	while [[ -n $_IFDEVS ]]; do
 		ask_which "network interface" "do you wish to configure" \
 			"$_IFDEVS $_vl" "$_p"
@@ -662,6 +663,7 @@ configure_ifs() {
 		v6_config $_ifs $_name $_hn
 
 		[[ -f $_hn ]] && chmod 640 $_hn && _IFDEVS=$(rmel $_ifs $_IFDEVS)
+		let nifs=nifs+1
 		_p=done
 	done
 }
