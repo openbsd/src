@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.520 2009/05/04 22:07:28 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.521 2009/05/05 00:37:09 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1050,10 +1050,10 @@ __EOT
 		rm -f /tmp/h
 		case $_f in
 		*.tgz)	ftp $FTPOPTS -o - -m "$_src/$_f" | \
-			    $shacmd | tar zxphf - -C /mnt
+				$shacmd | tar zxphf - -C /mnt
 			;;
 		*)	ftp $FTPOPTS -o - -m "$_src/$_f" | \
-			    $shacmd > "/mnt/$_f"
+				$shacmd > "/mnt/$_f"
 			;;
 		esac
 		if [ $? -ne 0 ]; then
@@ -1468,7 +1468,7 @@ install_sets() {
 # Create a skeletal but useful /etc/fstab from /tmp/fstab by stripping all
 # comment lines and dropping all filesystems which
 #
-#       1) can't be mounted (no mount_* command is found),
+#	1) can't be mounted (no mount_* command is found),
 #	2) have 'xx' in the option field (usually /altroot),
 #	3) have 'noauto' in the option field,
 #	4) are nfs (since name resolution may not be present),

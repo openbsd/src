@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.181 2009/05/03 20:20:38 krw Exp $
+#	$OpenBSD: install.sh,v 1.182 2009/05/05 00:38:02 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -234,7 +234,7 @@ __EOT
 		[[ $_mp == / ]] && _OPT=$MDROOTFSOPT
 		newfs -q $_OPT /dev/r$_pp
 		# N.B.: '!' is lexically < '/'. That is required for correct
-		#       sorting of mount points.
+		#	sorting of mount points.
 		_mount_points[$_i]="$_mp!$_pp"
 		: $(( _i += 1 ))
 	done <$FILESYSTEMS
@@ -325,10 +325,10 @@ sed -e "/^console.*on.*secure.*$/s/std\.[0-9]*/std.$(stty speed)/" \
 mv /tmp/ttys /mnt/etc/ttys
 
 while :; do
-    askpassword root
-    _rootpass="$_password"
-    [[ -n "$_password" ]] && break
-    echo "The root password must be set."
+	askpassword root
+	_rootpass="$_password"
+	[[ -n "$_password" ]] && break
+	echo "The root password must be set."
 done
 
 questions
@@ -381,8 +381,8 @@ chmod 600 host.random >/dev/null 2>&1 )
 echo "done."
 
 if [[ -n "$_rootpass" ]]; then
-    _encr=`/mnt/usr/bin/encrypt -b 8 -- "$_rootpass"`
-    echo "1,s@^root::@root:${_encr}:@
+	_encr=`/mnt/usr/bin/encrypt -b 8 -- "$_rootpass"`
+	echo "1,s@^root::@root:${_encr}:@
 w
 q" | /mnt/bin/ed /mnt/etc/master.passwd 2>/dev/null
 fi
