@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.522 2009/05/05 18:54:40 todd Exp $
+#	$OpenBSD: install.sub,v 1.523 2009/05/05 19:36:31 sthen Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -468,17 +468,6 @@ manual_net_cfg() {
 	ask_yn "Do you want to do any manual network configuration?"
 
 	[[ $resp == y ]] && { echo "Type 'exit' to return to $MODE." ; sh ; }
-}
-
-# log in via ftp to host $1 as user $2 with password $3
-# and return a list of all files in the directory $4 on stdout
-ftp_list_files() {
-	ftp $FTPOPTS -n "$1" <<__EOT
-user "$2" "$3"
-cd "$4"
-ls
-quit
-__EOT
 }
 
 # Create a device.
@@ -1250,7 +1239,7 @@ install_url() {
 
 	# Get list of files from the server.
 	if [[ $_url_type == ftp && -z $ftp_proxy ]] ; then
-		_file_list=$(ftp_list_files "$_ftp_server_ip" "$_ftp_server_login" "$_passwd" "$_ftp_server_dir")
+		_file_list=$(ftp $FTPOPTS "$_url_base/")
 		ftp_error "Login failed." "$_file_list" && return
 		ftp_error "No such file or directory." "$_file_list" && return
 	else
