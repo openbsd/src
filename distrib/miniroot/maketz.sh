@@ -6,10 +6,6 @@ if [ $# -lt 1 ]; then
 	echo usage: maketz.sh DESTDIR
 	exit 0
 fi
-echo maketz args $destdir
-
-#ls -1dF `find . -print` | \
-#   sed -e 's/^.\///' | grep -v '^zone.tab$' | grep -v '^$') > var/tzlist
 
 mkdir -p var/tzdir
 cd var/tzdir
