@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.528 2009/05/05 21:22:14 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.529 2009/05/05 21:23:58 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1624,7 +1624,7 @@ donetconfig() {
 	# else Get/Confirm nameservers
 	resp="${_ns:=none}"
 	if [[ ! -f /tmp/dhclient.conf || $nifs != 1 || $resp == none ]]; then
-		ask "DNS nameservers? (IP address list or 'none')" "${_ns:=none}"
+		ask "DNS nameservers? (IP address list or 'none')" "$resp"
 	fi
 	# Construct appropriate resolv.conf.
 	if [[ $resp != none ]]; then
