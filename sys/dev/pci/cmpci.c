@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.23 2009/05/06 22:25:57 jakemsr Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.24 2009/05/06 23:13:29 jakemsr Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -901,9 +901,8 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 			    CMPCI_REG_ADC_FS_MASK, md_divide);
 			sc->sc_ch1.md_divide = md_divide;
 		}
-		cmpci_set_out_ports(sc);
-		cmpci_set_in_ports(sc);
 	}
+
 	return 0;
 }
 
@@ -1926,6 +1925,8 @@ cmpci_trigger_output(void *handle, void *start, void *end, int blksize,
 	uint32_t length;
 	int bps;
 
+	cmpci_set_out_ports(sc);
+
 	if (sc->sc_play_channel == 1) {
 		chan = &sc->sc_ch1;
 		reg_dma_base = CMPCI_REG_DMA1_BASE;
@@ -1981,6 +1982,8 @@ cmpci_trigger_input(void *handle, void *start, void *end, int blksize,
 	struct cmpci_softc *sc = handle;
 	struct cmpci_dmanode *p;
 	int bps;
+
+	cmpci_set_in_ports(sc);
 
 	sc->sc_ch1.intr = intr;
 	sc->sc_ch1.intr_arg = arg;
