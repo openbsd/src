@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kbd.8,v 1.11 2007/05/31 19:19:45 jmc Exp $
+.\"	$OpenBSD: kbd.8,v 1.12 2009/05/06 19:13:26 jmc Exp $
 .\"
 .\" Copyright (c) 1996 Juergen Hannken-Illjes
 .\" All rights reserved.
@@ -30,12 +30,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 6 2009 $
 .Dt KBD 8
 .Os
 .Sh NAME
 .Nm kbd
-.Nd "set national keyboard translation"
+.Nd set national keyboard translation
 .Sh SYNOPSIS
 .Nm kbd
 .Fl l
@@ -45,25 +45,27 @@
 .Sh DESCRIPTION
 .Nm
 is used to change the keyboard encoding.
+The encoding is set to national keyboard layout
+.Ar name ,
+and a short message is printed to stdout.
+.Pp
 The execution of
 .Nm
 normally occurs in the system multi-user initialization file
 .Pa /etc/rc
-to set a national keyboard layout.
+using the encoding defined in
+.Pa /etc/kbdtype .
 .Pp
-If called as
-.Nm
-.Fl l ,
-all available keyboard encodings are listed.
-.Pp
-If called as
-.Nm
-.Ar name ,
-the keyboard encoding will be set to
-.Ar name
-and a short message will be printed to stdout.
-If the
-.Fl q
-flag is present,
-.Nm
-will be quiet unless an error occurs.
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl l
+List all available keyboard encodings.
+.It Fl q
+Quiet mode.
+No message is printed unless an error occurs.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/kbdtypeXXX"
+.It /etc/kbdtype
+Default national encoding.
+.El
