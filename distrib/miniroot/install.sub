@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.534 2009/05/06 20:41:38 todd Exp $
+#	$OpenBSD: install.sub,v 1.535 2009/05/06 22:48:03 sthen Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1157,7 +1157,7 @@ install_url() {
 			[[ $# -lt 1 ]] && { echo "There is no line $resp." ; continue ; }
 			echo "Using	$*"
 			eval _${_url_type}_server_ip=${1%%/*}
-			eval _${_url_type}_server_dir=${1#*/}/$SETDIR
+			eval _${_url_type}_server_dir=${1#*/}/$FTPSETDIR
 			# Repeat loop to get user to confirm server address.
 			;;
 		*)	eval _${_url_type}_server_ip=$resp
