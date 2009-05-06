@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.22 2009/04/30 07:15:45 deraadt Exp $
+# $OpenBSD: list.local,v 1.23 2009/05/06 01:30:39 deraadt Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					bin/sha256
@@ -44,3 +44,4 @@ COPY	${DESTDIR}/etc/firmware/zd1211b		etc/firmware/zd1211b
 #COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-int etc/firmware/atu-rfmd2958smc-int
 
 HASH	var/hash
+TZ

@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.9 2009/04/28 22:35:05 sthen Exp $
+# $OpenBSD: list.local,v 1.10 2009/05/06 01:30:39 deraadt Exp $
 
 # firmwares that might need loading
 #COPY	${DESTDIR}/etc/firmware/ral-rt2561	etc/firmware/ral-rt2561
@@ -7,3 +7,4 @@
 #COPY	${DESTDIR}/etc/firmware/ral-rt2860	etc/firmware/ral-rt2860
 #COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
 #COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
+TZ

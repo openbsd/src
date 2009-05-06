@@ -16,3 +16,4 @@ SCRIPT	${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
 SPECIAL	chmod 755 sbin/dhclient-script
 
 HASH	var/hash
+TZ

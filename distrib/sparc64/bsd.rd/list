@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.31 2009/05/03 00:25:30 deraadt Exp $
+#	$OpenBSD: list,v 1.32 2009/05/06 01:30:39 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -84,3 +84,4 @@ COPY	${DESTDIR}/etc/firmware/ral-rt2661	etc/firmware/ral-rt2661
 COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
 
 HASH	var/hash
+TZ
