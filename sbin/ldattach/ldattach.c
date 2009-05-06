@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldattach.c,v 1.11 2008/06/12 03:52:48 mbalmer Exp $	*/
+/*	$OpenBSD: ldattach.c,v 1.12 2009/05/06 18:21:23 stevesk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -206,6 +206,8 @@ main(int argc, char *argv[])
 			speed = B4800;	/* default is 4800 baud for nmea */
 	} else if (!strcmp(disc, "msts")) {
 		ldisc = MSTSDISC;
+	} else if (!strcmp(disc, "endrun")) {
+		ldisc = ENDRUNDISC;
 	} else {
 		syslog(LOG_ERR, "unknown line discipline %s", disc);
 		goto bail_out;
@@ -270,6 +272,7 @@ main(int argc, char *argv[])
 	/* line discpline specific setup */
 	switch (ldisc) {
 	case NMEADISC:
+	case ENDRUNDISC:
 		if (ioctl(fd, TIOCSTSTAMP, &tstamps) < 0) {
 			warnx("TIOCSTSTAMP");
 			goto bail_out;

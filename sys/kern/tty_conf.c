@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_conf.c,v 1.12 2008/01/05 17:33:28 mbalmer Exp $	*/
+/*	$OpenBSD: tty_conf.c,v 1.13 2009/05/06 18:21:23 stevesk Exp $	*/
 /*	$NetBSD: tty_conf.c,v 1.18 1996/05/19 17:17:55 jonathan Exp $	*/
 
 /*-
@@ -98,6 +98,13 @@ int	mstsclose(struct tty *, int);
 int	mstsinput(int, struct tty *);
 #endif
 
+#include "endrun.h"
+#if NENDRUN > 0
+int	endrunopen(dev_t, struct tty *);
+int	endrunclose(struct tty *, int);
+int	endruninput(int, struct tty *);
+#endif
+
 struct	linesw linesw[] =
 {
 	{ ttyopen, ttylclose, ttread, ttwrite, nullioctl,
@@ -153,6 +160,14 @@ struct	linesw linesw[] =
 #if NMSTS > 0
 	{ mstsopen, mstsclose, ttread, ttwrite, nullioctl,
 	  mstsinput, ttstart, ttymodem },		/* 8- MSTSDISC */
+#else
+	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
+	  ttyerrinput, ttyerrstart, nullmodem },
+#endif
+
+#if NENDRUN > 0
+	{ endrunopen, endrunclose, ttread, ttwrite, nullioctl,
+	  endruninput, ttstart, ttymodem },		/* 9- ENDRUNDISC */
 #else
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },

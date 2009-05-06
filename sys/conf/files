@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.454 2009/01/29 15:12:28 pyr Exp $
+#	$OpenBSD: files,v 1.455 2009/05/06 18:21:23 stevesk Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -468,6 +468,7 @@ file	dev/ramdisk.c			rd needs-flag
 pseudo-device pty: tty
 pseudo-device nmea: tty
 pseudo-device msts: tty
+pseudo-device endrun: tty
 
 pseudo-device loop: ifnet
 pseudo-device sl: ifnet
@@ -709,6 +710,7 @@ file kern/tty_conf.c
 file kern/tty_pty.c			pty			needs-count
 file kern/tty_nmea.c			nmea			needs-flag
 file kern/tty_msts.c			msts			needs-flag
+file kern/tty_endrun.c			endrun			needs-flag
 file kern/tty_subr.c
 file kern/tty_tty.c
 file kern/uipc_domain.c

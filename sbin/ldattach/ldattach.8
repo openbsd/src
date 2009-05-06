@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldattach.8,v 1.12 2008/06/09 22:57:49 jmc Exp $
+.\"	$OpenBSD: ldattach.8,v 1.13 2009/05/06 18:21:23 stevesk Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 9 2008 $
+.Dd $Mdocdate: May 6 2009 $
 .Dt LDATTACH 8
 .Os
 .Sh NAME
@@ -72,15 +72,17 @@ If not specified, the default of 9600 baud is used
 (4800 baud for
 .Xr nmea 4 ) .
 .It Fl t Ar cond
-.Xr nmea 4
-and
+.Xr nmea 4 ,
 .Xr msts 4
+and
+.Xr endrun 4
 line disciplines only.
 Chooses the condition which will cause the current system time to be
 immediately copied to the terminal timestamp storage for subsequent use by
-.Xr nmea 4
+.Xr nmea 4 ,
+.Xr msts 4
 or
-.Xr msts 4 .
+.Xr endrun 4 .
 Only one can be used.
 .Pp
 .Bl -tag -width DCDXX -offset indent -compact
@@ -103,6 +105,10 @@ character of each block of NMEA sentences.
 Specifies the name of the line discipline to be attached.
 .Pp
 .Bl -tag -width nmeaXX -offset -indet -compact
+.It endrun
+Attach the
+.Xr endrun 4
+line discipline.
 .It msts
 Attach the
 .Xr msts 4
