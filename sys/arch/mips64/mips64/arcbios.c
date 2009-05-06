@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.16 2009/04/19 12:52:33 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.17 2009/05/06 20:07:10 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -208,10 +208,9 @@ bios_printf(const char *fmt, ...)
 /*
  * Get memory descriptor for the memory configuration and
  * create a layout database used by pmap init to set up
- * the memory system. Note that kernel option "MACHINE_NONCONTIG"
- * must be set for systems with non contigous physical memory.
+ * the memory system.
  *
- * Concatenate obvious adjecent segments.
+ * Concatenate obvious adjacent segments.
  */
 void
 bios_configure_memory()
@@ -270,7 +269,7 @@ bios_configure_memory()
 			 * On IP27 and IP35 systems, data after the first
 			 * FirmwarePermanent entry is not reliable
 			 * (entries conflict with each other), and memory
-			 * after 32MB is not listed anyway.
+			 * after 32MB (or 64MB on IP35) is not listed anyway.
 			 * So, break from the loop as soon as a
 			 * FirmwarePermanent entry is found, after
 			 * making it span the end of the first 32MB
@@ -287,6 +286,7 @@ bios_configure_memory()
 				descr = NULL;
 				count = ((sys_config.system_type == SGI_O200 ?
 				    32 : 64) << (20 - 12)) - start;
+				rsvdmem = start;
 			}
 #endif
 		}
@@ -425,7 +425,6 @@ bios_get_system_type()
 
 	bios_printf("UNRECOGNIZED SYSTEM '%s' VENDOR '%8.8s' PRODUCT '%8.8s'\n",
 	    cf == NULL ? "??" : sysid, sid->vendor, sid->prodid);
-	bios_printf("See the www.openbsd.org for further information.\n");
 	bios_printf("Halting system!\n");
 	Bios_Halt();
 	bios_printf("Halting failed, use manual reset!\n");
