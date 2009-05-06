@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpcireg.h,v 1.3 2008/01/09 02:17:52 jakemsr Exp $	*/
+/*	$OpenBSD: cmpcireg.h,v 1.4 2009/05/06 22:25:57 jakemsr Exp $	*/
 /*	$NetBSD: cmpcireg.h,v 1.7 2005/12/11 12:22:48 christos Exp $	*/
 
 /*
@@ -85,8 +85,11 @@
 #  define CMPCI_REG_FORMAT_STEREO	0x00000001
 #  define CMPCI_REG_FORMAT_8BIT		0x00000000
 #  define CMPCI_REG_FORMAT_16BIT	0x00000002
-#  define CMPCI_REG_CHIP_MASK1		0x1f000000
+#  define CMPCI_REG_DBL_SPD_RATE	0x00000040
+#  define CMPCI_REG_SPDIF_24		0x00020000 /* 24-bit spdif, model 37 */
+#  define CMPCI_REG_AC3EN1		0x00100000 /* enable AC3, model 37 */
 #  define CMCPI_REG_CHIP_037		0x01000000
+#  define CMPCI_REG_CHIP_MASK1		0x1f000000
 #  define CMPCI_REG_CHB3D		0x20000000
 #  define CMPCI_REG_CHB3D5C		0x80000000
 
@@ -133,6 +136,7 @@
 #  define CMPCI_REG_ENCENTER		0x00000080
 #  define CMPCI_REG_2ND_SPDIFIN		0x00000100
 #  define CMPCI_REG_SPDIFOUT_48K	0x00008000
+#  define CMPCI_REG_AC3EN2		0x00040000 /* enable AC3, model 39 */
 #  define CMPCI_REG_FM_ENABLE		0x00080000
 #  define CMPCI_REG_SPDFLOOPI		0x00100000
 #  define CMPCI_REG_SPD32SEL		0x00200000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.22 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.23 2009/05/06 22:25:57 jakemsr Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -1567,26 +1567,44 @@ cmpci_set_out_ports(struct cmpci_softc *sc)
 	else
 		chan = &sc->sc_ch0;
 
+	/* disable ac3 and 24 and 32 bit s/pdif modes */
+	cmpci_reg_clear_4(sc, CMPCI_REG_CHANNEL_FORMAT, CMPCI_REG_AC3EN1);
+	cmpci_reg_clear_reg_misc(sc, CMPCI_REG_AC3EN2);
+	cmpci_reg_clear_reg_misc(sc, CMPCI_REG_SPD32SEL);
+	cmpci_reg_clear_4(sc, CMPCI_REG_CHANNEL_FORMAT, CMPCI_REG_SPDIF_24);
+
 	/* playback to ... */
 	if (CMPCI_ISCAP(sc, SPDOUT) &&
 	    sc->sc_gain[CMPCI_PLAYBACK_MODE][CMPCI_LR]
 		== CMPCI_PLAYBACK_MODE_SPDIF &&
 	    (chan->md_divide == CMPCI_REG_RATE_44100 ||
 		(CMPCI_ISCAP(sc, SPDOUT_48K) &&
-		    chan->md_divide==CMPCI_REG_RATE_48000))) {
+		    chan->md_divide == CMPCI_REG_RATE_48000))) {
 		/* playback to SPDIF */
-		cmpci_reg_set_4(sc, CMPCI_REG_FUNC_1, CMPCI_REG_SPDIF0_ENABLE);
+		if (sc->sc_play_channel == 0)
+			cmpci_reg_set_4(sc, CMPCI_REG_FUNC_1,
+			    CMPCI_REG_SPDIF0_ENABLE);
+		else
+			cmpci_reg_set_4(sc, CMPCI_REG_FUNC_1,
+			    CMPCI_REG_SPDIF1_ENABLE);
 		enspdout = 1;
-		if (chan->md_divide==CMPCI_REG_RATE_48000)
+		if (chan->md_divide == CMPCI_REG_RATE_48000)
 			cmpci_reg_set_reg_misc(sc,
 				CMPCI_REG_SPDIFOUT_48K | CMPCI_REG_SPDIF48K);
 		else
 			cmpci_reg_clear_reg_misc(sc,
 				CMPCI_REG_SPDIFOUT_48K | CMPCI_REG_SPDIF48K);
+		/* XXX assume sample rate <= 48kHz */
+		cmpci_reg_clear_4(sc, CMPCI_REG_CHANNEL_FORMAT,
+		    CMPCI_REG_DBL_SPD_RATE);
 	} else {
 		/* playback to DAC */
-		cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_1,
-				  CMPCI_REG_SPDIF0_ENABLE);
+		if (sc->sc_play_channel == 0)
+			cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_1,
+			    CMPCI_REG_SPDIF0_ENABLE);
+		else
+			cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_1,
+			    CMPCI_REG_SPDIF1_ENABLE);
 		if (CMPCI_ISCAP(sc, SPDOUT_48K))
 			cmpci_reg_clear_reg_misc(sc,
 				CMPCI_REG_SPDIFOUT_48K | CMPCI_REG_SPDIF48K);
