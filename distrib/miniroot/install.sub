@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.531 2009/05/06 01:00:14 krw Exp $
+#	$OpenBSD: install.sub,v 1.532 2009/05/06 01:29:48 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -282,8 +282,6 @@ askpassword() {
 }
 
 user_setup() {
-	local _u _n _encr
-
 	ask "Setup a user? (enter a lower-case loginname, or 'no')" no
 	case $resp in
 	n|no)	return ;;
@@ -293,23 +291,12 @@ user_setup() {
 		esac ;;
 	esac
 
-	_u=$resp
-	ask "Full user name for $_u?" $_u
-	_n=$resp
+	user=$resp
+	ask "Full user name for $user?" $user
+	username=$resp
 
-	askpassword $_u
-	_encr="*"
-	[[ -n "$_password" ]] && _encr=`/mnt/usr/bin/encrypt -b 8 -- "$_password"`
-	echo "${_u}:${_encr}:1000:10::0:0:${_n}:/home/${_u}:/bin/ksh" \
-		>> /mnt/etc/master.passwd
-
-	mkdir -p /mnt/home/$_u
-	(cd /mnt/etc/skel; cp -pR . /mnt/home/$_u)
-	cp -p /mnt/var/mail/root /mnt/var/mail/$_u
-	chown -R 1000.10 /mnt/home/$_u /mnt/var/mail/$_u
-	echo "1,s@wheel:.:0:root\$@wheel:\*:0:root,${_u}@
-w
-q" | /mnt/bin/ed /mnt/etc/group 2>/dev/null
+	askpassword $user
+	userpass=$_password
 }
 
 # Ask for user input until a non-empty reply is entered.
@@ -1123,6 +1110,7 @@ startftplist() {
 waitftplist() {
 	local _dot						# XXX
 
+	[[ -z $ftppid ]] && return
 	while [[ -n $(jobs $ftppid 2>/dev/null) ]]; do
 		echo -n .					# XXX
 		_dot=.						# XXX
@@ -1343,12 +1331,15 @@ install_tape() {
 }
 
 set_timezone() {
-	local _zoneroot=/mnt/usr/share/zoneinfo/ _zonepath
+	local _zoneroot=$1 _zonepath _tz
 
 	# If the timezone directory structure is not
 	# available, return immediately.
 
 	[[ ! -d $_zoneroot ]] && return
+
+	# If configured in a previous call, return immediately
+	[[ -n $TZ ]] && return
 
 	if [[ -L /mnt/etc/localtime ]]; then
 		TZ=$(ls -l /mnt/etc/localtime 2>/dev/null)
@@ -1363,6 +1354,7 @@ set_timezone() {
 
 	: ${TZ:=GMT}
 
+	echo
 	while :; do
 		_zonepath=$_zoneroot
 
@@ -1386,7 +1378,6 @@ set_timezone() {
 
 		if [[ -f $_zonepath ]]; then
 			TZ=${_zonepath#$_zoneroot}
-			ln -sf /usr/share/zoneinfo/$TZ /mnt/etc/localtime
 			return
 		fi
 
@@ -1415,14 +1406,14 @@ sane_install() {
 install_sets() {
 	local _d=disk _locs="disk ftp http"
 
-	startftplist
+	echo
 
 	[[ -n $CDDEVS ]] && { _locs="cd $_locs" ; _d=cd ; }
 	ifconfig netboot > /dev/null 2>&1 && _d=ftp
 	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
 	[[ -n $MTDEVS && -x /bin/mt ]] && _locs="$_locs tape"
 
-	echo "\nLet's $MODE the sets!"
+	echo "Let's $MODE the sets!"
 	while :; do
 		umount -f /mnt2 >/dev/null 2>&1
 		[[ -z $DEFAULTSETS ]] && _d=done
@@ -1595,6 +1586,8 @@ donetconfig() {
 	resp="${_dn:=$(get_fqdn)}"
 	if [[ ! -f /tmp/dhclient.conf || $nifs != 1 ]]; then
 		ask "DNS domain name? (e.g. 'bar.com')" "$resp"
+	else
+		echo "Using DNS domainname $resp"
 	fi
 	hostname "$(hostname -s).$resp"
 
@@ -1603,6 +1596,8 @@ donetconfig() {
 	resp="${_ns:=none}"
 	if [[ ! -f /tmp/dhclient.conf || $nifs != 1 || $resp == none ]]; then
 		ask "DNS nameservers? (IP address list or 'none')" "$resp"
+	else
+		echo "Using DNS nameservers at $resp"
 	fi
 	# Construct appropriate resolv.conf.
 	if [[ $resp != none ]]; then
@@ -1622,75 +1617,88 @@ populateusrlocal() {
 	fi
 }
 
-xquestions() {
-	local _xdmask=y
-
-	# If any of the X11 sets are missing, then no need to enable X
-	for i in xbase xetc xshare xfont xserv; do
-		if ! isin $i${VERSION}.tgz $GOTSETS; then
-			return
-		fi
-	done
-
-	if [[ -n $MDXAPERTURE ]]; then
-		ask_yn "Do you expect to run the X Window System?"
-		if [[ $resp == y ]]; then
-			sed -e "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
-				/mnt/etc/sysctl.conf >/tmp/sysctl.conf
-			cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
-		fi
-		_xdmask=$resp	# if aperture was n, do not ask for xdm
-	fi
-
-	if [[ -n $MDXDM && $_xdmask == y ]]; then
-		ask_yn "Do you want the X Window System to be started by xdm(1)?"
-		if [[ $resp == y ]]; then
-			echo "xdm_flags=		# enabled during install" \
-				>>/mnt/etc/rc.conf.local
-		fi
-	fi
-}
-
-questions() {
-	local _d
-
-	ask_yn "Start sshd(8) by default?" yes
-	if [[ $resp == n ]]; then
+apply()
+{
+	if [[ $sshd == n ]]; then
 		echo "sshd_flags=NO		# disabled during install" \
 			>>/mnt/etc/rc.conf.local
 	fi
-
-	ask_yn "Start ntpd(8) by default?" no
-	if [[ $resp == y ]]; then
+	if [[ $ntpd == y ]]; then
 		echo "ntpd_flags=		# enabled during install" \
 			>>/mnt/etc/rc.conf.local
-		ask "NTP server? (hostname or 'default')" default
-		if [[ $resp != default ]]; then
+		if [[ $ntpd_server != default ]]; then
 			# Comment out the default 'servers' line, and add a
 			# 'server' line with the first token in $resp as the
 			# server.
-			set -- $resp
+			set -- $ntpd_server
 			sed -e "s/^servers /#&/;/#server /a\\
 server $1
 " /mnt/etc/ntpd.conf >/tmp/ntpd.conf
 		fi
 	fi
 
-	xquestions
+	if [[ $x11 == y ]]; then
+		sed -e "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
+			/mnt/etc/sysctl.conf >/tmp/sysctl.conf
+		cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
+	fi
 
-	[[ -n $CDEV ]] || return
-	_d=${CPROM:-$CDEV}
-	ask_yn "Change the default console to $_d?"
-	[[ $resp == n ]] && return
-	ask_which "speed" "should $_d use" "9600 19200 38400 57600 115200" \
-		$CSPEED
-	[[ $resp == done ]] && return
-	sed	-e "/^$CTTY/s/std.9600/std.${resp}/" \
-		-e "/^$CTTY/s/unknown/vt220	/" \
-		-e "/$CTTY/s/off.*/on secure/" /mnt/etc/ttys >/tmp/ttys
+	if [[ $xdm == y ]]; then
+		echo "xdm_flags=		# enabled during install" \
+			>>/mnt/etc/rc.conf.local
+	fi
 
-	[[ -n $CPROM ]] && \
-		echo "stty $CPROM $resp\nset tty $CPROM" >>/mnt/etc/boot.conf
+	if [[ $defcons == y ]]; then
+		cp /mnt/etc/ttys /tmp/ttys
+		sed	-e "/^$CTTY/s/std.9600/std.${CSPEED}/" \
+			-e "/^$CTTY/s/unknown/vt220	/" \
+			-e "/$CTTY/s/off.*/on secure/" /tmp/ttys >/mnt/etc/ttys
+		[[ -n $CPROM ]] && \
+			echo "stty $CPROM $CSPEED\nset tty $CPROM" >>/mnt/etc/boot.conf
+	fi
+
+	ln -sf /usr/share/zoneinfo/$TZ /mnt/etc/localtime
+}
+
+questions() {
+	local _d _xdmask=y _def
+
+	ask_yn "Start sshd(8) by default?" yes
+	sshd=$resp
+
+	ask_yn "Start ntpd(8) by default?" no
+	ntpd=$resp
+	if [[ $resp == y ]]; then
+		ask "NTP server? (hostname or 'default')" default
+		ntpd_server=$resp
+	fi
+
+	def=no
+	[[ -n $DISPLAY ]] && def=yes
+	if [[ -n $MDXAPERTURE ]]; then
+		ask_yn "Do you expect to run the X Window System?" $def
+		x11=$resp
+		_xdmask=$resp	# if aperture was n, do not ask for xdm
+	fi
+
+	if [[ -n $MDXDM && $_xdmask == y ]]; then
+		ask_yn "Do you want the X Window System to be started by xdm(1)?"
+		xdm=$resp
+	fi
+
+	if [[ -n $CDEV ]]; then
+		_d=${CPROM:-$CDEV}
+		ask_yn "Change the default console to $_d?"
+		defcons=$resp
+		if [[ $resp == y ]]; then
+			ask_which "speed" "should $_d use" \
+			    "9600 19200 38400 57600 115200" $CSPEED
+			case $resp in
+			done)	defcons=n ;;
+			*)	CSPEED=$resp ;;
+			esac
+		fi
+	fi
 }
 
 finish_up() {
@@ -1834,6 +1842,31 @@ welcome
 
 # Configure the terminal and keyboard.
 set_term
+
+if [[ $MODE == install ]]; then
+	ask_until "System hostname? (short form, e.g. 'foo')" "$(hostname -s)"
+	[[ ${resp%%.*} != $(hostname -s) ]] && hostname $resp
+	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
+
+	while :; do
+		askpassword root
+		_rootpass="$_password"
+		[[ -n "$_password" ]] && break
+		echo "The root password must be set."
+	done
+
+	questions
+	user_setup
+
+	echo
+	donetconfig
+
+	if [[ $nifs == 0 ]]; then
+		set_timezone /var/tzdir/
+	else
+		startftplist
+	fi
+fi
 
 # Get ROOTDISK, ROOTDEV and SWAPDEV.
 if [[ $MODE == install && ! -f /etc/fstab ]]; then

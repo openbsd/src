@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.183 2009/05/06 01:00:14 krw Exp $
+#	$OpenBSD: install.sh,v 1.184 2009/05/06 01:29:48 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -215,28 +215,11 @@ fi
 
 mount_fs "-o async"
 
-# Set hostname.
-#
-# Use existing hostname (short form) as the default value because we could
-# be restarting an install.
-#
-# Don't ask for, but don't discard, domain information provided by the user.
-#
-# Only apply the new value if the new short form name differs from the existing
-# one. This preserves any existing domain information in the hostname.
-ask_until "\nSystem hostname? (short form, e.g. 'foo')" "$(hostname -s)"
-[[ ${resp%%.*} != $(hostname -s) ]] && hostname $resp
-THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
-
-# Remove existing network configuration files in /tmp to ensure they don't leak
-# onto the installed system in the case of a restarted install. Any information
-# contained within them should be accessible via ifconfig, hostname, route,
-# etc, or from resolv.conf.shadow.
-( cd /tmp; rm -f host* my* resolv.conf resolv.conf.tail dhclient.* )
-
-donetconfig
+[[ $MODE == install ]] && set_timezone /var/tzdir/
 
 install_sets
+
+[[ $MODE == install ]] && set_timezone /mnt/usr/share/zoneinfo/
 
 # Remount all filesystems in /etc/fstab with the options from /etc/fstab, i.e.
 # without any options such as async which may have been used in the first
@@ -250,19 +233,6 @@ sed -e "/^console.*on.*secure.*$/s/std\.[0-9]*/std.$(stty speed)/" \
 	/mnt/etc/ttys >/tmp/ttys
 # Move ttys back in case questions() needs to massage it more.
 mv /tmp/ttys /mnt/etc/ttys
-
-while :; do
-	askpassword root
-	_rootpass="$_password"
-	[[ -n "$_password" ]] && break
-	echo "The root password must be set."
-done
-
-questions
-
-user_setup
-
-set_timezone
 
 echo -n "Saving configuration files..."
 
@@ -306,6 +276,23 @@ echo -n "done.\nGenerating initial host.random file..."
 /mnt/bin/dd if=/mnt/dev/urandom of=host.random bs=1024 count=64 >/dev/null 2>&1
 chmod 600 host.random >/dev/null 2>&1 )
 echo "done."
+
+apply
+
+if [[ -n $user ]]; then
+	_encr="*"
+	[[ -n "$_password" ]] && _encr=`/mnt/usr/bin/encrypt -b 8 -- "$_password"`
+	userline="${user}:${_encr}:1000:10::0:0:${username}:/home/${user}:/bin/ksh"
+	echo "$userline" >> /mnt/etc/master.passwd
+
+	mkdir -p /mnt/home/$user
+	(cd /mnt/etc/skel; cp -pR . /mnt/home/$user)
+	cp -p /mnt/var/mail/root /mnt/var/mail/$user
+	chown -R 1000.10 /mnt/home/$user /mnt/var/mail/$user
+	echo "1,s@wheel:.:0:root\$@wheel:\*:0:root,${user}@
+w
+q" | /mnt/bin/ed /mnt/etc/group 2>/dev/null
+fi
 
 if [[ -n "$_rootpass" ]]; then
 	_encr=`/mnt/usr/bin/encrypt -b 8 -- "$_rootpass"`
