@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.23 2007/11/27 16:37:27 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.24 2009/05/06 20:00:57 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -629,6 +629,8 @@ wsemul_sun_jump_scroll(struct wsemul_sun_emuldata *edp, const u_char *data,
 			pos = (pos + 7) & ~7;
 			if (pos >= edp->ncols)
 				pos = edp->ncols - 1;
+			break;
+		case ASCII_LF:
 			break;
 		default:
 			if (++pos >= edp->ncols) {
