@@ -1,9 +1,9 @@
-.\"	$OpenBSD: motd.5,v 1.8 2007/05/31 19:19:58 jmc Exp $
+.\"	$OpenBSD: motd.5,v 1.9 2009/05/06 18:39:02 jmc Exp $
 .\"	$NetBSD: motd.5,v 1.2 1994/12/28 18:58:53 glass Exp $
 .\"
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 6 2009 $
 .Dt MOTD 5
 .Os
 .Sh NAME
@@ -19,6 +19,8 @@ It is generally used for important system-wide announcements.
 During system startup, a line containing the kernel version string
 replaces all lines up to (but not including) the first blank line of
 this file.
+To keep any custom message intact, ensure that you leave two blank lines
+at the top, or your message will be overwritten.
 .Pp
 Individual users may suppress the display of this file by creating a file named
 .Pa .hushlogin
