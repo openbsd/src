@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.33 2008/12/30 15:37:30 otto Exp $	*/
+/*	$OpenBSD: ls.c,v 1.34 2009/05/06 18:47:32 todd Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.33 2008/12/30 15:37:30 otto Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.34 2009/05/06 18:47:32 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,8 +124,12 @@ ls_main(int argc, char *argv[])
 		    win.ws_col > 0)
 			termwidth = win.ws_col;
 		f_column = f_nonprint = 1;
-	} else
+	} else {
 		f_singlecol = 1;
+		/* retrieve environment variable, in case of explicit -C */
+		if ((p = getenv("COLUMNS")) != NULL)
+			termwidth = atoi(p);
+	}
 
 	/* Root is -A automatically. */
 	if (!getuid())
