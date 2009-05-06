@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.2 2009/05/02 21:26:00 miod Exp $ */
+/*	$OpenBSD: mnode.h,v 1.3 2009/05/06 20:08:44 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -363,8 +363,8 @@ typedef struct klttydev_s {
 #define	IP27_LHUB_S(r, d)		*(IP27_LHUB_ADDR(r)) = (d)
 #define	IP27_RHUB_L(n, r)		*(IP27_RHUB_ADDR((n), (r))
 #define	IP27_RHUB_S(n, r, d)		*(IP27_RHUB_ADDR((n), (r)) = (d)
-#define IP27_RHUB_PI_L(n, s, r)		*(IP27_RHUB_PI_ADDR((n), (s), (r))
-#define	IP27_RHUB_PI_S(n, s, r, d)	*(IP27_RHUB_PI_ADDR((n), (s), (r)) = (d)
+#define IP27_RHUB_PI_L(n, s, r)		*(IP27_RHUB_PI_ADDR((n), (s), (r)))
+#define	IP27_RHUB_PI_S(n, s, r, d)	*(IP27_RHUB_PI_ADDR((n), (s), (r))) = (d)
 
 
 /* HUB I/O registers */

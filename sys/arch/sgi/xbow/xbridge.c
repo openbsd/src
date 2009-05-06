@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.14 2009/05/03 19:44:28 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.15 2009/05/06 20:08:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -33,12 +33,14 @@
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/mnode.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
 #include <mips64/archtype.h>
+#include <sgi/xbow/hub.h>
 #include <sgi/xbow/xbow.h>
 #include <sgi/xbow/xbowdevs.h>
 
@@ -495,7 +497,8 @@ xbridge_conf_write(void *cookie, pcitag_t tag, int offset, pcireg_t data)
 
 struct xbridge_intr {
 	struct	xbridge_softc	*xi_bridge;
-	int	xi_intrsrc;
+	int	xi_intrsrc;	/* interrupt source on interrupt widget */
+	int	xi_intrbit;	/* interrupt source on BRIDGE */
 
 	int	(*xi_func)(void *);
 	void	*xi_arg;
@@ -588,6 +591,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 
 	xi->xi_bridge = sc;
 	xi->xi_intrsrc = intrsrc;
+	xi->xi_intrbit = intrbit;
 	xi->xi_func = func;
 	xi->xi_arg = arg;
 	xi->xi_level = level;
@@ -648,6 +652,7 @@ xbridge_intr_handler(void *v)
 {
 	struct xbridge_intr *xi = v;
 	struct xbridge_softc *sc = xi->xi_bridge;
+	uint16_t nasid = 0;	/* XXX */
 	int rc;
 
 	if (xi == NULL) {
@@ -658,6 +663,27 @@ xbridge_intr_handler(void *v)
 
 	if ((rc = (*xi->xi_func)(xi->xi_arg)) != 0)
 		xi->xi_count.ec_count++;
+
+	/*
+	 * There is a known BRIDGE race in which, if two interrupts
+	 * on two different pins occur within 60nS of each other,
+	 * further interrupts on the first pin do not cause an interrupt
+	 * to be sent.
+	 *
+	 * The workaround against this is to check if our interrupt source
+	 * is still active (i.e. another interrupt is pending), in which
+	 * case we force an interrupt anyway.
+	 *
+	 * The XBridge even has a nice facility to do this, where we do not
+	 * even have to check if our interrupt is pending.
+	 */
+
+	if (ISSET(sc->sc_flags, XBRIDGE_FLAGS_XBRIDGE)) {
+		bus_space_write_4(sc->sc_iot, sc->sc_regh,
+		    BRIDGE_INT_FORCE_PIN(xi->xi_intrbit), 1);
+	} else {
+		IP27_RHUB_PI_S(nasid, 0, HUB_IR_CHANGE, xi->xi_intrsrc);
+	}
 
 	return rc;
 }
