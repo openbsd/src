@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.184 2009/05/06 01:29:48 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.185 2009/05/06 08:35:24 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -281,7 +281,7 @@ apply
 
 if [[ -n $user ]]; then
 	_encr="*"
-	[[ -n "$_password" ]] && _encr=`/mnt/usr/bin/encrypt -b 8 -- "$_password"`
+	[[ -n "$userpass" ]] && _encr=`/mnt/usr/bin/encrypt -b 8 -- "$userpass"`
 	userline="${user}:${_encr}:1000:10::0:0:${username}:/home/${user}:/bin/ksh"
 	echo "$userline" >> /mnt/etc/master.passwd
 
