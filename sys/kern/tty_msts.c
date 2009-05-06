@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.13 2009/04/26 02:25:36 cnst Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.14 2009/05/06 16:05:20 stevesk Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -281,8 +281,7 @@ msts_decode(struct msts *np, struct tty *tp, char *fld[], int fldcnt)
 	if (np->time.status == SENSOR_S_UNKNOWN) {
 		np->time.status = SENSOR_S_OK;
 		np->time.flags &= ~SENSOR_FINVALID;
-		if (fldcnt != 13)
-			strlcpy(np->time.desc, "MSTS", sizeof(np->time.desc));
+		strlcpy(np->time.desc, "MSTS", sizeof(np->time.desc));
 	}
 	/*
 	 * only update the timeout if the clock reports the time a valid,
