@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.532 2009/05/06 01:29:48 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.533 2009/05/06 02:07:19 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -338,15 +338,13 @@ ask_yn() {
 # $2 = question to ask
 # $3 = list of valid choices
 # $4 = default choice, if it is not specified use the first item in $3
-# $5 = error message if no items in $3, defaults to 'No $1s found.'
 #
 # At exit $resp holds selected item, or 'done'
 ask_which() {
-	local _name=$1 _query=$2 _list=$3 _def=$4 _err=$5
+	local _name=$1 _query=$2 _list=$3 _def=$4
 
 	set -- $_list
 	if (( $# < 1 )); then
-		echo "${_err:=No ${_name}s found}."
 		resp=done
 		return
 	fi
@@ -1880,7 +1878,8 @@ __EOT
 fi
 
 set -- $DKDEVS
-[[ $# -gt 1 ]] && _defdsk=done
+(( $# == 0 )) && { echo "No disks found." ; exit ; }
+(( $# > 1 )) && _defdsk=done
 
 ask_which "disk" "is the root disk" "$DKDEVS" "$_defdsk"
 [[ $resp == done ]] && exit
