@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.533 2009/05/06 02:07:19 krw Exp $
+#	$OpenBSD: install.sub,v 1.534 2009/05/06 20:41:38 todd Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -557,7 +557,6 @@ configure_ifs() {
 		_p=$1
 	fi
 
-	nifs=0
 	while [[ -n $_IFDEVS ]]; do
 		ask_which "network interface" "do you wish to configure" \
 			"$_IFDEVS $_vl" "$_p"
@@ -1796,6 +1795,7 @@ DKDEVS=$(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
 CDDEVS=$(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
 MTDEVS=$(scan_dmesg "${MDMTDEVS:-/^[cms]t[0-9][0-9]* /s/ .*//p}")
 IFDEVS=$(get_ifdevs)
+nifs=0
 DISPLAY=$(scan_dmesg '/^wsdisplay[0-9]* /s/ .*//p')
 
 CONSOLE=$(scan_dmesg '/^\([^ ]*\).*: console$/s//\1/p')
