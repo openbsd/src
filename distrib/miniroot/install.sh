@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.182 2009/05/05 00:38:02 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.183 2009/05/06 01:00:14 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -84,7 +84,7 @@ if [[ ! -f /etc/fstab ]]; then
 		else
 			# Force the user to think and type in a disk name by
 			# making 'done' the default choice.
-			ask_which "disk" "do you wish to initialize" "$_DKDEVS" done "No more disks to initialize"
+			ask_which "disk" "do you wish to initialize" "$_DKDEVS" done
 			[[ $resp == done ]] && break
 		fi
 
@@ -100,7 +100,7 @@ if [[ ! -f /etc/fstab ]]; then
 		md_prep_disklabel $DISK
 
 		# Get the lists of BSD and swap partitions.
-		unset _partitions _psizes _mount_points
+		unset _partitions _mount_points
 		_i=0
 		disklabel $DISK 2>&1 | sed -ne '/^ *[a-p]: /p' >/tmp/disklabel.$DISK
 		while read _dev _size _offset _type _rest; do
@@ -119,22 +119,12 @@ if [[ ! -f /etc/fstab ]]; then
 			fi
 
 			_partitions[$_i]=$_pp
-			_psizes[$_i]=$_size
 
 			# Set _mount_points[$_i].
-			if [[ -f /tmp/fstab.$DISK ]]; then
-				while read _pp _mp _rest; do
-					[[ $_pp == "/dev/${_partitions[$_i]}" ]] || continue
-					# Ignore mount points that have already been specified.
-					[[ -n $(grep " $_mp\$" $FILESYSTEMS) ]] && break
-					isin $_mp ${_mount_points[*]} && break
-					# Ignore '/' for any partition but ROOTDEV. Check just
-					# in case ROOTDEV isn't first partition processed.
-					[[ $_mp == '/' ]] && break
-					# Otherwise, record user specified mount point.
-					_mount_points[$_i]=$_mp
-				done </tmp/fstab.$DISK
-			fi
+			while read _pp _mp _rest; do
+				[[ $_pp == /dev/${_partitions[$_i]} ]] && \
+				       { _mount_points[$_i]=$_mp ; break ; }
+			done </tmp/fstab.$DISK
 			: $(( _i += 1 ))
 		done </tmp/disklabel.$DISK
 
@@ -147,82 +137,19 @@ if [[ ! -f /etc/fstab ]]; then
 		# If there are no BSD partitions go on to next disk.
 		(( ${#_partitions[*]} > 0 )) || continue
 
-		# Now prompt the user for the mount points.
+		# Ignore mount points that have already been specified.
 		_i=0
-		while :; do
-			_pp=${_partitions[$_i]}
+		while (( _i < ${#_mount_points[*]} )); do
 			_mp=${_mount_points[$_i]}
-			_size=$(stdsize ${_psizes[$_i]})
+			grep -q " $_mp$" $FILESYSTEMS && continue
 
-			if [[ $AUTOROOT == y ]]; then
-				# No need to disturb the user.
-				resp=""
-			else
-				# Get the mount point from the user.
-				ask "Mount point for $_pp ($_size)? (or 'none' or 'done')" "$_mp"
-			fi
-
-			case $resp in
-			"")	;;
-			none)	_mp=
-				;;
-			done)	break
-				;;
-			/*)	set -- $(grep " $resp\$" $FILESYSTEMS)
-				_pp=$1
-				if [[ -z $_pp ]]; then
-					# Mount point wasn't specified on a
-					# previous disk. Has it been specified
-					# on this one?
-					_j=0
-					for _pp in ${_partitions[*]} ""; do
-						if [[ $_i -ne $_j ]]; then
-							[[ $resp == ${_mount_points[$_j]} ]] && break
-						fi
-						: $(( _j += 1 ))
-					done
-				fi
-				if [[ -n $_pp ]]; then
-					echo "Invalid response: $_pp is already being mounted at $resp."
-					continue
-				fi
-				_mp=$resp
-				;;
-			*)	echo "Invalid response: mount point must be an absolute path!"
-				continue
-				;;
-			esac
-
-			_mount_points[$_i]=$_mp
+			# Append mount information to $FILESYSTEMS
+			_pp=${_partitions[$_i]}
+			echo "$_pp $_mp" >>$FILESYSTEMS
 
 			: $(( _i += 1))
-			if [[ $_i -ge ${#_partitions[*]} ]]; then
-				[[ $AUTOROOT == y ]] && break
-				_i=0
-			fi
-		done
-
-		# Append mount information to $FILESYSTEMS
-		_i=0
-		for _pp in ${_partitions[*]}; do
-			_mp=${_mount_points[$_i]}
-			[ "$_mp" ] && echo "$_pp $_mp" >>$FILESYSTEMS
-			: $(( _i += 1 ))
 		done
 	done
-
-	if [[ $AUTOROOT == n ]]; then
-		cat <<__EOT
-
-OpenBSD filesystems:
-$(<$FILESYSTEMS)
-
-The next step *DESTROYS* all existing data on these partitions!
-__EOT
-
-		ask_yn "Are you really sure that you're ready to proceed?"
-		[[ $resp == n ]] && { echo "Ok, try again later." ; exit ; }
-	fi
 
 	# Read $FILESYSTEMS, creating a new filesystem on each listed
 	# partition and saving the partition and mount point information
@@ -239,7 +166,7 @@ __EOT
 		: $(( _i += 1 ))
 	done <$FILESYSTEMS
 
-	# Write fstab entries to /tmp/fstab in mount point alphabetic  order
+	# Write fstab entries to /tmp/fstab in mount point alphabetic order
 	# to enforce a rational mount order.
 	for _mp in $(bsort ${_mount_points[*]}); do
 		_pp=${_mp##*!}
