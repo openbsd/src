@@ -1,4 +1,5 @@
-/*	$OpenBSD: sginode.c,v 1.3 2009/05/02 21:26:05 miod Exp $	*/
+#define	DEBUG
+/*	$OpenBSD: sginode.c,v 1.4 2009/05/06 20:08:00 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -56,7 +57,8 @@
 int nextcpu = 0;
 
 void	kl_do_boardinfo(lboard_t *);
-void	kl_add_memory(int16_t *, unsigned int);
+void	kl_add_memory_ip27(int16_t *, unsigned int);
+void	kl_add_memory_ip35(int16_t *, unsigned int);
 
 #ifdef DEBUG
 #define	DB_PRF(x)	bios_printf x 
@@ -156,9 +158,11 @@ kl_do_boardinfo(lboard_t *boardinfo)
 		case KLSTRUCT_MEMBNK:
 			memcomp_m = (klmembnk_m_t *)comp;
 			memcomp_n = (klmembnk_n_t *)comp;
-			DB_PRF(("\tmemory %dMB, select %x\n",
+			DB_PRF(("\tmemory %dMB, select %x flags %x\n",
 			    memcomp_m->membnk_memsz,
-			    memcomp_m->membnk_dimm_select));
+			    memcomp_m->membnk_dimm_select,
+			    kl_n_mode ?
+			      memcomp_n->membnk_attr : memcomp_m->membnk_attr));
 
 			if (kl_n_mode) {
 				for (j = 0; j < MD_MEM_BANKS_N; j++) {
@@ -178,8 +182,14 @@ kl_do_boardinfo(lboard_t *boardinfo)
 				}
 			}
 
-			kl_add_memory(memcomp_m->membnk_bnksz,
-			     kl_n_mode ? MD_MEM_BANKS_N : MD_MEM_BANKS_M);
+			if (sys_config.system_type == SGI_O200)
+				kl_add_memory_ip27(memcomp_m->membnk_bnksz,
+				    kl_n_mode ?
+				      MD_MEM_BANKS_N : MD_MEM_BANKS_M);
+			else
+				kl_add_memory_ip35(memcomp_m->membnk_bnksz,
+				    kl_n_mode ?
+				      MD_MEM_BANKS_N : MD_MEM_BANKS_M);
 
 			break;
 
@@ -218,9 +228,12 @@ kl_get_console_base()
 
 /*
  * Process memory bank information.
+ * There are two different routines, because IP27 and IP35 do not
+ * layout memory the same way.
  */
+
 void
-kl_add_memory(int16_t *sizes, unsigned int cnt)
+kl_add_memory_ip27(int16_t *sizes, unsigned int cnt)
 {
 	int16_t nasid = 0;	/* XXX */
 	paddr_t basepa;
@@ -229,8 +242,8 @@ kl_add_memory(int16_t *sizes, unsigned int cnt)
 	struct phys_mem_desc *md;
 
 	/*
-	 * Access to each DIMM is interleaved, which cause it to map
-	 * to four banks on 128MB boundaries.
+	 * On IP27, access to each DIMM is interleaved, which cause it to
+	 * map to four banks on 128MB boundaries.
 	 * DIMMs of 128MB or smaller map everything in the first bank,
 	 * though.
 	 */
@@ -253,8 +266,8 @@ kl_add_memory(int16_t *sizes, unsigned int cnt)
 			lp = fp + np;
 
 			/*
-			 * ARCBios provided us with information on the
-			 * first 32MB, so skip them here if necessary.
+			 * We do not manage the first 32MB, so skip them here
+			 * if necessary.
 			 */
 			if (fp < atop(32 << 20)) {
 				fp = atop(32 << 20);
@@ -310,5 +323,92 @@ kl_add_memory(int16_t *sizes, unsigned int cnt)
 				    atop(np) >> 20);
 			}
 		}
+	}
+}
+
+void
+kl_add_memory_ip35(int16_t *sizes, unsigned int cnt)
+{
+	int16_t nasid = 0;	/* XXX */
+	paddr_t basepa;
+	uint32_t fp, lp, np;
+	unsigned int descno;
+	struct phys_mem_desc *md;
+
+	/*
+	 * On IP35, the smallest memory DIMMs are 256MB, and the
+	 * largest is 1GB. Memory is reported at 1GB intervals.
+	 */
+
+	basepa = nasid << (32 - kl_n_mode);
+	while (cnt-- != 0) {
+		np = *sizes++;
+		if (np != 0) {
+			DB_PRF(("memory from %p to %p (%u MB)\n",
+			    basepa, basepa + (np << 20), np));
+
+			fp = atop(basepa);
+			np = atop(np << 20);	/* MB to pages */
+			lp = fp + np;
+
+			/*
+			 * We do not manage the first 64MB, so skip them here
+			 * if necessary.
+			 */
+			if (fp < atop(64 << 20)) {
+				fp = atop(64 << 20);
+				if (fp >= lp)
+					continue;
+				np = lp - fp;
+				physmem += atop(64 << 20);
+			}
+
+			/*
+			 * Walk the existing segment list to find if we
+			 * are adjacent to an existing segment, or the
+			 * next free segment to use if not.
+			 *
+			 * Note that since we do not know in which order
+			 * we'll find our nodes, we have to check for
+			 * both boundaries, despite adding a given node's
+			 * memory in increasing pa order.
+			 */
+			for (descno = 0, md = mem_layout; descno < MAXMEMSEGS;
+			    descno++, md++) {
+				if (md->mem_first_page == 0)
+					break;
+
+				if (md->mem_first_page == lp) {
+					md->mem_first_page = fp;
+					physmem += np;
+					md = NULL;
+					break;
+				}
+
+				if (md->mem_last_page == fp) {
+					md->mem_last_page = lp;
+					physmem += np;
+					md = NULL;
+					break;
+				}
+			}
+			if (descno != MAXMEMSEGS && md != NULL) {
+				md->mem_first_page = fp;
+				md->mem_last_page = lp;
+				physmem += np;
+				md = NULL;
+			}
+
+			if (md != NULL) {
+				/*
+				 * We could hijack the smallest segment here.
+				 * But is it really worth doing?
+				 */
+				bios_printf("%u MB of memory could not be "
+				    "managed, increase MAXMEMSEGS\n",
+				    atop(np) >> 20);
+			}
+		}
+		basepa += 1 << 30;	/* 1 GB */
 	}
 }
