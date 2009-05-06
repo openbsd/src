@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.45 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.46 2009/05/06 19:03:09 jacekm Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 6 2009 $
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -138,6 +138,13 @@ bit is set, it indicates that
 .Fa hostname
 should be treated as a numeric string defining an IPv4 or IPv6 address
 and no name resolution should be attempted.
+.It Dv AI_NUMERICSERV
+If the
+.Dv AI_NUMERICSERV
+bit is set, it indicates that
+.Fa servname
+should be treated as a numeric port string
+and no service name resolution should be attempted.
 .It Dv AI_PASSIVE
 If the
 .Dv AI_PASSIVE
