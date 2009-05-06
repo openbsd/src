@@ -1,4 +1,4 @@
-/*	$OpenBSD: tset.c,v 1.32 2007/10/15 02:16:35 deraadt Exp $	*/
+/*	$OpenBSD: tset.c,v 1.33 2009/05/06 21:07:01 sobrado Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -1029,8 +1029,9 @@ obsolete(char **argv)
 static void
 usage(const char *pname)
 {
-    (void) fprintf(stderr,
-		   "usage: %s [-IQVrs] [-] [-e ch] [-i ch] [-k ch] [-m mapping] [terminal]\n", pname);
+    (void) fprintf(stderr, "usage: %s [-IQqrSsV] [-] "
+		   "[-e ch] [-i ch] [-k ch] [-m mapping] [terminal]\n",
+		   pname);
     exit(EXIT_FAILURE);
 }
 
