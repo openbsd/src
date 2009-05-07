@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.46 2009/04/21 17:05:29 oga Exp $
+#	$OpenBSD: files.amd64,v 1.47 2009/05/07 11:30:16 ariane Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -116,7 +116,7 @@ file	arch/amd64/pci/pchb.c			pchb
 # AMAS AMD memory address switch
 device	amas
 attach	amas at pci
-file	arch/amd64/pci/amas.c			amas
+file	dev/pci/amas.c				amas
 
 # AGP bridge support. most attach at pchb
 include "dev/pci/files.agp"

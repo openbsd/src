@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.656 2009/04/24 21:28:41 mk Exp $
+#	$OpenBSD: GENERIC,v 1.657 2009/05/07 11:30:26 ariane Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -92,6 +92,7 @@ glxpcib* at pci?		# AMD CS5536 PCI-ISA bridge
 gpio*	at glxpcib?
 kate*	at pci?			# AMD K8 temperature sensor
 km*	at pci?			# AMD K10 temperature sensor
+amas*	at pci? disable		# AMD memory configuration
 
 # power management and other environmental stuff
 elansc*	at pci?			# AMD Elan SC520 System Controller

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amas.c,v 1.2 2009/04/20 20:29:11 ariane Exp $	*/
+/*	$OpenBSD: amas.c,v 1.1 2009/05/07 11:30:27 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -24,7 +24,7 @@
  * and contains mappings for memory to processor nodes.
  */
 
-#include <machine/amas.h>
+#include <dev/pci/amas.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>

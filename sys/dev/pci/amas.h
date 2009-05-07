@@ -1,4 +1,4 @@
-/*	$OpenBSD: amas.h,v 1.1 2009/04/20 13:26:20 ariane Exp $	*/
+/*	$OpenBSD: amas.h,v 1.1 2009/05/07 11:30:27 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>

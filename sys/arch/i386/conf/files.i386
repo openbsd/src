@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.188 2009/01/20 20:21:03 mlarkin Exp $
+#	$OpenBSD: files.i386,v 1.189 2009/05/07 11:30:26 ariane Exp $
 #
 # new style config file for i386 architecture
 #
@@ -105,6 +105,11 @@ file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 device  pchb: pcibus, agpbus
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb
+
+# AMAS AMD memory address switch
+device  amas
+attach  amas at pci
+file    dev/pci/amas.c			amas
 
 # AGP bridge support. most attach at pchb
 include "dev/pci/files.agp"
