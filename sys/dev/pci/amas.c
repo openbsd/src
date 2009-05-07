@@ -1,4 +1,4 @@
-/*	$OpenBSD: amas.c,v 1.1 2009/05/07 11:30:27 ariane Exp $	*/
+/*	$OpenBSD: amas.c,v 1.2 2009/05/07 20:19:46 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -268,7 +268,8 @@ amas_get_pagerange(struct amas_softc *amas, int node,
 	}
 #endif /* 0 */
 
-	if (base_addr == limit_addr && ebase_addr == elimit_addr) {
+	if (ebase_addr > elimit_addr ||
+	    (ebase_addr == elimit_addr && base_addr >= limit_addr)) {
 		/* no memory present */
 		*start_pg_idx = 0;
 		*end_pg_idx = 0;
