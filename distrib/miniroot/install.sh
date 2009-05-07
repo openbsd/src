@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.185 2009/05/06 08:35:24 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.186 2009/05/07 03:43:02 todd Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -215,11 +215,13 @@ fi
 
 mount_fs "-o async"
 
-[[ $MODE == install ]] && set_timezone /var/tzdir/
+[[ $MODE == install ]] && set_timezone /var/tzlist
 
 install_sets
 
-[[ $MODE == install ]] && set_timezone /mnt/usr/share/zoneinfo/
+[[ $MODE == install && ! -n $TZ ]] &&
+	(cd /mnt/usr/share/zoneinfo&&ls -1dF `tar cvf /dev/null [A-Za-y]*`)>/tmp/tzlist && \
+	set_timezone /tmp/tzlist
 
 # Remount all filesystems in /etc/fstab with the options from /etc/fstab, i.e.
 # without any options such as async which may have been used in the first

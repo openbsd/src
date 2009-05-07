@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.535 2009/05/06 22:48:03 sthen Exp $
+#	$OpenBSD: install.sub,v 1.536 2009/05/07 03:43:02 todd Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -422,6 +422,21 @@ bsort() {
 	bsort $_l
 }
 
+# show a list (passed via ordered arguments) in column output using ls
+showcols() {
+	local _l _cdir=/tmp/cdir
+	set -A _clist
+	mkdir -p $_cdir
+	rm -rf -- $_cdir/*
+	while read _l; do
+		[ "$_l" ] || continue
+		mkdir -p /tmp/cdir/"$_l"
+		_clist[${#_clist[*]}]="$_l"
+	done
+	(cd $_cdir; ls -Cdf "${_clist[@]}")
+	rm -rf -- $_cdir
+}
+
 # Offer to shell out for manual network configuration, and do so if
 # the user accepts the offer.
 manual_net_cfg() {
@@ -467,8 +482,9 @@ addhostent() {
 #
 # Set $resp to list of selected sets.
 select_sets() {
-	local _avail=$1 _selected=$2 _f _action _col _p
-	typeset -L18 _l
+	local _avail=$1 _selected=$2 _f _action _col=$COLUMNS
+	# account for 4 spaces added to the sets list
+	let COLUMNS=_col-8
 
 	cat <<__EOT
 
@@ -478,37 +494,9 @@ sets are labelled '[X]'.
 __EOT
 	while :; do
 		_action=
-		_col=0
 		for _f in $_avail; do
-			if isin $_f $_selected; then
-				_p="[X] $_f"
-			else
-				_p="[ ] $_f"
-			fi
-			if (( _col == 0 )); then
-				echo -n '    '
-			fi
-			if (( ${#_p} > 18 )); then
-				# probably site##-hostname.tgz, so print the
-				# long version and force a newline
-				print -n "$_p"
-				_col=2
-			else
-				_l="$_p"
-				print -n "$_l"
-			fi
-			let _col=_col+1
-			if (( _col == 3 )); then
-				# end of a column
-				echo
-				_col=0
-			fi
-		done
-		if (( _col % 3 )); then
-			# complete a partial column
-			echo
-		fi
-
+			isin $_f $_selected && echo "[X] $_f" || echo "[ ] $_f"
+		done|showcols|sed 's/^/    /'
 		ask "Set name? (or 'abort' or 'done')" done
 		case $resp in
 		abort)	_selected=
@@ -534,6 +522,7 @@ __EOT
 			esac"
 		done
 	done
+	COLUMNS=$_col
 
 	resp=$_selected
 }
@@ -1328,12 +1317,12 @@ install_tape() {
 }
 
 set_timezone() {
-	local _zoneroot=$1 _zonepath _tz
+	local _zonefile=$1 _zonepath _zsed _tz _zoneroot=/usr/share/zoneinfo
 
-	# If the timezone directory structure is not
-	# available, return immediately.
+	# If the timezone file is not available,
+	# return immediately.
 
-	[[ ! -d $_zoneroot ]] && return
+	[[ ! -f $_zonefile ]] && return
 
 	# If configured in a previous call, return immediately
 	[[ -n $TZ ]] && return
@@ -1353,32 +1342,32 @@ set_timezone() {
 
 	echo
 	while :; do
-		_zonepath=$_zoneroot
+		_zonepath=""
 
 		ask "What timezone are you in? ('?' for list)" "$TZ"
 
-		if [[ $resp == "?" ]]; then
-			ls -F ${_zonepath}
-			continue;
+		if [[ $resp = "?" ]]; then
+			sed -n "/^$_zonepath/{s,^$_zonepath/,,;/\/.*\//d;/\/./d;/./p;}" $_zonefile|showcols
+			continue
 		fi
+		_zonepath=$_zonepath$resp
 
-		_zonepath=${_zonepath}${resp}
-
-		while [[ -d $_zonepath ]]; do
-			ask "What sub-timezone of '${_zonepath#$_zoneroot}' are you in? ('?' for list)"
+		while isin $_zonepath/ $(cat $_zonefile); do
+			ask "What sub-timezone of '$_zonepath' are you in? ('?' for list)"
+			_zsed=$(echo $_zonepath|sed 's/\//\\\//g')
 			case $resp in
 			"")	;;
-			"?")	ls -F $_zonepath ;;
+			"?")	sed -n "/^$_zsed/{s,^$_zsed/,,;/\/.*\//d;/\/./d;/./p;}" $_zonefile|showcols;;
 			*)	_zonepath=$_zonepath/$resp ;;
 			esac
 		done
-
-		if [[ -f $_zonepath ]]; then
+		
+		if isin $_zonepath $(cat $_zonefile); then
 			TZ=${_zonepath#$_zoneroot}
 			return
 		fi
 
-		echo -n "'${_zonepath#$_zoneroot}'"
+		echo -n "'${_zonepath}'"
 		echo " is not a valid timezone on this system."
 	done
 }
@@ -1826,10 +1815,14 @@ done
 # in SANESETS.
 SANESETS="${SANESETS:-bsd} base${VERSION}.tgz etc${VERSION}.tgz"
 
+# prepare COLUMNS sanely
+COLUMNS=$(stty -a | sed -n '/columns/{s/^.* \([0-9]*\) columns.*$/\1/;p;}')
+[ COLUMNS -eq 0 ] && COLUMNS=80
+
 # decide upon an editor
 : ${EDITOR:=ed}
 [[ -x /usr/bin/vi ]] && EDITOR=vi
-export EDITOR
+export EDITOR COLUMNS
 
 # umount all filesystems, just in case we are re-running install or upgrade.
 [[ -f /etc/fstab ]] && umount -av 1>/dev/null 2>&1
@@ -1860,7 +1853,7 @@ if [[ $MODE == install ]]; then
 	donetconfig
 
 	if [[ $nifs == 0 ]]; then
-		set_timezone /var/tzdir/
+		set_timezone /var/tzlist
 	else
 		startftplist
 	fi
