@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.10 2009/04/27 21:01:27 mk Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.11 2009/05/07 18:31:20 mk Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -475,8 +475,7 @@ schsio_wdt_init(struct schsio_softc *sc)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh_rr, SCHSIO_WDT_VAL, 0);
 
 	/* Clear triggered status */
-	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh_rr,
-	    SCHSIO_WDT_CTRL);
+	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh_rr, SCHSIO_WDT_CTRL);
 	if (reg & SCHSIO_WDT_CTRL_TRIGGERED) {
 		printf(", warning: watchdog triggered");
 		reg &= ~SCHSIO_WDT_CTRL_TRIGGERED;
