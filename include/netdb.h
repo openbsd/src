@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.25 2005/12/13 00:35:22 millert Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.26 2009/05/07 16:32:53 jacekm Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -147,7 +147,7 @@ struct	protoent {
 #define	TRY_AGAIN	2 /* Non-Authoritive Host not found, or SERVERFAIL */
 #define	NO_RECOVERY	3 /* Non recoverable errors, FORMERR, REFUSED, NOTIMP */
 #define	NO_DATA		4 /* Valid name, no data record of requested type */
-#define	NO_ADDRESS	NO_DATA		/* no address, look for MX record */
+#define	NO_ADDRESS	NO_DATA		/* no address */
 
 /* Values for getaddrinfo() and getnameinfo() */
 #define AI_PASSIVE	1	/* socket address is intended for bind() */
