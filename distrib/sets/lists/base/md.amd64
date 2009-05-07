@@ -691,7 +691,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/altq/if_altq.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/_types.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/amas.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/apicvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/apmvar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/asm.ph
@@ -1204,6 +1203,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/agpreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/agpvar.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/amas.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/auacerreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/auixpreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/pci/auixpvar.ph

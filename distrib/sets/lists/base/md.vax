@@ -465,6 +465,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/agpreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/agpvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/amas.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/auacerreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/auixpreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/auixpvar.ph

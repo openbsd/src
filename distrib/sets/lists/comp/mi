@@ -484,6 +484,7 @@
 ./usr/include/dev/pci
 ./usr/include/dev/pci/agpreg.h
 ./usr/include/dev/pci/agpvar.h
+./usr/include/dev/pci/amas.h
 ./usr/include/dev/pci/auacerreg.h
 ./usr/include/dev/pci/auixpreg.h
 ./usr/include/dev/pci/auixpvar.h

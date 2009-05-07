@@ -3,7 +3,6 @@
 ./usr/bin/readelf
 ./usr/include/amd64
 ./usr/include/amd64/_types.h
-./usr/include/amd64/amas.h
 ./usr/include/amd64/apicvar.h
 ./usr/include/amd64/apmvar.h
 ./usr/include/amd64/asm.h
