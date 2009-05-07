@@ -1,4 +1,4 @@
-/*	$OpenBSD: amas.c,v 1.2 2009/05/07 20:19:46 ariane Exp $	*/
+/*	$OpenBSD: amas.c,v 1.3 2009/05/07 22:08:59 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -177,14 +177,12 @@ amas_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(":");
 	if (nodes != 0) {
-		printf(" interleaved across %d nodes", nodes);
+		printf(" interleaved", nodes);
 	} else {
 		for (i = 0; i < AMAS_MAX_NODES; i++) {
 			amas_get_pagerange(amas, i, &start_pg, &end_pg);
 
-			if (start_pg == 0 && end_pg == 0)
-				printf(" []");
-			else
+			if (!(start_pg == 0 && end_pg == 0))
 				printf(" [%p, %p]", start_pg, end_pg);
 		}
 	}
