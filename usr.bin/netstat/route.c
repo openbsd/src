@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.84 2009/01/28 17:19:47 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.85 2009/05/07 15:51:53 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -93,7 +93,8 @@ static void encap_print(struct rtentry *);
  * Print routing tables.
  */
 void
-routepr(u_long rtree, u_long mtree, u_long af2idx, u_long rtbl_id_max)
+routepr(u_long rtree, u_long mtree, u_long af2idx, u_long rtbl_id_max,
+    u_int tableid)
 {
 	struct radix_node_head *rnh, head;
 	int i, idxmax = 0;
@@ -121,7 +122,11 @@ routepr(u_long rtree, u_long mtree, u_long af2idx, u_long rtbl_id_max)
 
 	kread((u_long)rt_head, rnt, (rtidxmax + 1) *
 	    sizeof(struct radix_node_head **));
-	kread((u_long)rnt[0], rt_tables, (idxmax + 1) * sizeof(rnh));
+	if (tableid > rtidxmax || rnt[tableid] == NULL) {
+		printf("Bad table %u\n", tableid);
+		return;
+	}
+	kread((u_long)rnt[tableid], rt_tables, (idxmax + 1) * sizeof(rnh));
 
 	for (i = 0; i <= AF_MAX; i++) {
 		if (i == AF_UNSPEC) {
