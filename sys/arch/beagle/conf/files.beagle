@@ -1,0 +1,126 @@
+#	$OpenBSD: files.beagle,v 1.1 2009/05/08 03:13:26 drahn Exp $
+#
+# First try for arm-specific configuration info
+#
+
+maxpartitions	16
+maxusers	2 8 64
+
+major	{wd = 16}
+major	{sd = 24}
+major	{cd = 26}
+major	{rd = 18}
+
+file	arch/arm/arm/conf.c
+
+file	arch/beagle/beagle/beagle_machdep.c
+
+# ARM11
+define  ahb {[addr=-1], [size=0], [intr=-1]}
+device ahb
+attach ahb at mainbus
+file	arch/beagle/beagle/ahb.c	ahb
+file	arch/arm/armv7/armv7_space.c	ahb
+file	arch/arm/armv7/armv7_a4x_space.c	ahb	# XXX
+file	arch/arm/armv7/armv7_a4x_io.S		ahb	# XXX
+file	arch/arm/armv7/armv7_mutex.c
+
+# note that the order of the devices in _this_ file
+# affects the order that the devices will configure.
+
+device prcm
+attach prcm at ahb
+file	arch/beagle/dev/prcm.c			prcm
+
+device omgpio
+attach omgpio at ahb
+file	arch/beagle/dev/omgpio.c			omgpio needs-count
+
+device intc
+attach intc at ahb
+file	arch/beagle/dev/intc.c			intc
+
+device gptimer
+attach gptimer at ahb
+file	arch/beagle/dev/gptimer.c			gptimer
+
+device omdog
+attach omdog at ahb
+file	arch/beagle/dev/omdog.c			omdog
+
+attach sm at ahb with sm_ahb
+file	arch/beagle/dev/if_sm_ahb.c			sm_ahb
+
+attach ohci at ahb with omohci
+file	arch/beagle/dev/omohci.c			omohci
+
+# NS16550 compatible serial ports
+attach	com at ahb with com_ahb
+file	arch/beagle/dev/omap_com.c		com_ahb
+
+device omkbd: wskbddev
+attach omkbd at ahb
+file	arch/beagle/dev/omkbd.c		omkbd
+
+# LCD frame buffer
+device omdisplay: wsemuldisplaydev, rasops16
+attach omdisplay at ahb
+file arch/beagle/dev/omdisplay.c		omdisplay
+
+
+#
+# Machine-independent SCSI drivers
+#
+include "../../../scsi/files.scsi"
+include "../../../dev/atapiscsi/files.atapiscsi"
+
+# CPU support and integrated peripherals
+file	arch/arm/arm/irq_dispatch.S
+file	arch/arm/arm/softintr.c                         
+
+# MCSPI - spi connection to atlas 
+device mcspi 
+attach mcspi at ahb
+file	arch/beagle/dev/mcspi.c		mcspi
+
+# ATLAS (spi) driver
+device atlas: wskbddev
+attach atlas at ahb				# create a spi bus for this?
+file arch/beagle/dev/atlas.c			atlas
+
+# pseudo-Audio Device Driver
+device oaudio: audio
+attach oaudio at ahb				# configure after Atlas Driver
+file arch/beagle/dev/beagle_audio.c			oaudio
+
+#
+# Machine-independent ATA drivers
+#
+include "dev/ata/files.ata"
+
+# Generic MD files
+file	arch/beagle/beagle/autoconf.c
+
+file	arch/arm/arm/disksubr.c			disk
+
+
+# ARM FPE
+file	arch/arm/fpe-arm/armfpe_glue.S		armfpe
+file	arch/arm/fpe-arm/armfpe_init.c		armfpe
+file	arch/arm/fpe-arm/armfpe.s		armfpe
+
+
+# Machine-independent I2O drivers.
+include "dev/i2o/files.i2o"
+
+# Include WSCONS stuff
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+include "dev/pckbc/files.pckbc"
+
+# Include USB stuff
+include "dev/usb/files.usb"
+
+# Media Independent Interface (mii)
+include "dev/mii/files.mii"
