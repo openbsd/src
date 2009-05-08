@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.13 2009/05/03 19:42:45 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.14 2009/05/08 18:36:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -385,13 +385,13 @@ establish:
 	 */
 
 	if (has_serial) {
-		ioc_attach_child(self, "com", 0x20178, IOCDEV_SERIAL_A);
-		ioc_attach_child(self, "com", 0x20170, IOCDEV_SERIAL_B);
+		ioc_attach_child(self, "com", IOC3_UARTA_BASE, IOCDEV_SERIAL_A);
+		ioc_attach_child(self, "com", IOC3_UARTB_BASE, IOCDEV_SERIAL_B);
 	}
 	if (has_ps2)
 		ioc_attach_child(self, "iockbc", 0, IOCDEV_KEYBOARD);
 	if (has_ethernet)
-		ioc_attach_child(self, "ef", 0, IOCDEV_EF);
+		ioc_attach_child(self, "ef", IOC3_EF_BASE, IOCDEV_EF);
 	/* XXX what about the parallel port? */
 	ioc_attach_child(self, "dsrtc", 0, IOCDEV_RTC);
 
@@ -431,7 +431,7 @@ ioc_attach_child(struct device *ioc, const char *name, bus_addr_t base, int dev)
 		bzero(iaa.iaa_enaddr, 6);
 	}
 
-	config_search(ioc_search_mundane, ioc, &iaa);
+	config_found_sm(ioc, &iaa, ioc_print, ioc_search_mundane);
 }
 
 int
@@ -446,11 +446,7 @@ ioc_search_mundane(struct device *parent, void *vcf, void *args)
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != (int)iaa->iaa_base)
 		return 0;
 
-        if ((*cf->cf_attach->ca_match)(parent, cf, iaa) == 0)
-                return 0;
-
-	config_attach(parent, cf, iaa, ioc_print);
-	return 1;
+        return (*cf->cf_attach->ca_match)(parent, cf, iaa);
 }
 
 /*
