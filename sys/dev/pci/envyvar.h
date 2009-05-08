@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyvar.h,v 1.9 2009/05/04 04:49:50 ratchov Exp $	*/
+/*	$OpenBSD: envyvar.h,v 1.10 2009/05/08 14:56:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -33,7 +33,7 @@ struct envy_buf {
 
 struct envy_codec {
 	char *name;
-	int ndev;
+	int (*ndev)(struct envy_softc *);
 	void (*devinfo)(struct envy_softc *, struct mixer_devinfo *, int);
 	void (*get)(struct envy_softc *, struct mixer_ctrl *, int);
 	int (*set)(struct envy_softc *, struct mixer_ctrl *, int);
@@ -42,9 +42,9 @@ struct envy_codec {
 struct envy_card {
 	int subid;
 	char *name;
-	int nadc;
+	int nich;
 	struct envy_codec *adc;
-	int ndac;
+	int noch;
 	struct envy_codec *dac;
 	void (*init)(struct envy_softc *);
 	void (*ak_write)(struct envy_softc *, int, int, int);

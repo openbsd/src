@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.20 2009/05/08 13:35:55 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.21 2009/05/08 14:56:03 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -110,9 +110,11 @@ void julia_ak_write(struct envy_softc *, int, int, int);
 void unkenvy_init(struct envy_softc *);
 void unkenvy_ak_write(struct envy_softc *, int, int, int);
 
+int ak4524_dac_ndev(struct envy_softc *);
 void ak4524_dac_devinfo(struct envy_softc *, struct mixer_devinfo *, int);
 void ak4524_dac_get(struct envy_softc *, struct mixer_ctrl *, int);
 int ak4524_dac_set(struct envy_softc *, struct mixer_ctrl *, int);
+int ak4524_adc_ndev(struct envy_softc *);
 void ak4524_adc_devinfo(struct envy_softc *, struct mixer_devinfo *, int);
 void ak4524_adc_get(struct envy_softc *, struct mixer_ctrl *, int);
 int ak4524_adc_set(struct envy_softc *, struct mixer_ctrl *, int);
@@ -185,9 +187,9 @@ static unsigned char julia_eeprom[ENVY_EEPROM_MAXSZ] = {
 };
 
 struct envy_codec ak4524_dac = {
-	"ak4524 dac", 3, ak4524_dac_devinfo, ak4524_dac_get, ak4524_dac_set
+	"ak4524 dac", ak4524_dac_ndev, ak4524_dac_devinfo, ak4524_dac_get, ak4524_dac_set
 }, ak4524_adc = {
-	"ak4524 adc", 2, ak4524_adc_devinfo, ak4524_adc_get, ak4524_adc_set
+	"ak4524 adc", ak4524_adc_ndev, ak4524_adc_devinfo, ak4524_adc_get, ak4524_adc_set
 }, unkenvy_codec = {
 	"unknown codec", 0, NULL, NULL, NULL
 };
@@ -199,14 +201,14 @@ struct envy_card envy_cards[] = {
 	{
 		PCI_ID_CODE(0x1412, 0xd63b),
 		"delta",
-		4, &ak4524_adc, 4, &ak4524_dac,
+		8, &ak4524_adc, 8, &ak4524_dac,
 		delta_init,
 		delta_ak_write,
 		NULL
 	}, {
 		0,
 		"unkenvy",
-		4, &unkenvy_codec, 4, &unkenvy_codec,
+		8, &unkenvy_codec, 8, &unkenvy_codec,
 		unkenvy_init,
 		unkenvy_ak_write
 	}
@@ -214,14 +216,14 @@ struct envy_card envy_cards[] = {
 	{
 		PCI_ID_CODE(0x3031, 0x4553),
 		"julia",
-		1, &unkenvy_codec, 1, &unkenvy_codec,
+		2, &unkenvy_codec, 2, &unkenvy_codec,
 		julia_init,
 		julia_ak_write,
 		julia_eeprom
 	}, {
 		0,
 		"unkenvy",
-		1, &unkenvy_codec, 4, &unkenvy_codec,
+		2, &unkenvy_codec, 8, &unkenvy_codec,
 		unkenvy_init,
 		unkenvy_ak_write
 	}
@@ -317,12 +319,20 @@ unkenvy_ak_write(struct envy_softc *sc, int dev, int addr, int data)
 /*
  * AK 4524 DAC specific code
  */
+int
+ak4524_dac_ndev(struct envy_softc *sc)
+{
+	/* 1 mute + 2 volume knobs per channel pair */
+	return 3 * (sc->card->noch / 2);
+}
+
+
 void
 ak4524_dac_devinfo(struct envy_softc *sc, struct mixer_devinfo *dev, int idx)
 {
 	int ndev;
 
-	ndev = sc->card->ndac * 2;
+	ndev = sc->card->noch;
 	if (idx < ndev) {
 		dev->type = AUDIO_MIXER_VALUE;
 		dev->mixer_class = ENVY_MIX_CLASSOUT;
@@ -353,7 +363,7 @@ ak4524_dac_get(struct envy_softc *sc, struct mixer_ctrl *ctl, int idx)
 {
 	int val, ndev;
 
-	ndev = sc->card->ndac * 2;
+	ndev = sc->card->noch;
 	if (idx < ndev) {
 		val = envy_ak_read(sc, idx / 2, (idx % 2) + AK_DAC_GAIN0);
 		ctl->un.value.num_channels = 1;
@@ -370,7 +380,7 @@ ak4524_dac_set(struct envy_softc *sc, struct mixer_ctrl *ctl, int idx)
 {
 	int val, ndev;
 
-	ndev = sc->card->ndac * 2;
+	ndev = sc->card->noch;
 	if (idx < ndev) {
 		if (ctl->un.value.num_channels != 1)
 			return EINVAL;
@@ -389,6 +399,13 @@ ak4524_dac_set(struct envy_softc *sc, struct mixer_ctrl *ctl, int idx)
 /*
  * AK 4524 ADC specific code
  */
+int
+ak4524_adc_ndev(struct envy_softc *sc)
+{
+	/* one volume per channel */
+	return sc->card->nich;
+}
+
 void
 ak4524_adc_devinfo(struct envy_softc *sc, struct mixer_devinfo *dev, int idx)
 {
@@ -647,7 +664,7 @@ envy_reset(struct envy_softc *sc)
 	envy_ccs_write(sc, ENVY_CCS_INTMASK, ~ENVY_CCS_INT_MT);
 	if (sc->isht) {
 		bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_NSTREAM,
-		    4 - sc->card->ndac);
+		    4 - sc->card->noch / 2);
 		bus_space_write_1(sc->mt_iot, sc->mt_ioh, ENVY_MT_IMASK,
 		    ~(ENVY_MT_IMASK_PDMA0 | ENVY_MT_IMASK_RDMA0));
 	}
@@ -1049,12 +1066,12 @@ envy_set_params(void *self, int setmode, int usemode,
 	if (setmode & AUMODE_PLAY) {
 		p->encoding = AUDIO_ENCODING_SLINEAR;
 		p->precision = 24;
-		p->channels = sc->isht ? 2 * sc->card->ndac : ENVY_PCHANS;
+		p->channels = sc->isht ? sc->card->noch : ENVY_PCHANS;
 	}
 	if (setmode & AUMODE_RECORD) {
 		r->encoding = AUDIO_ENCODING_SLINEAR;
 		r->precision = 24;
-		r->channels = sc->isht ? 2 * sc->card->nadc : ENVY_RCHANS;
+		r->channels = sc->isht ? sc->card->nich : ENVY_RCHANS;
 	}
 	return 0;
 }
@@ -1070,10 +1087,10 @@ envy_round_blocksize(void *self, int blksz)
 	 * until it's fixed, roll our own rounding
 	 */
 
-	pmult = (sc->isht ? sc->card->ndac : ENVY_PCHANS / 2);
+	pmult = (sc->isht ? sc->card->noch / 2 : ENVY_PCHANS / 2);
 	if (pmult == 0)
 		pmult = 1;
-	rmult = (sc->isht ? sc->card->nadc : ENVY_RCHANS / 2);
+	rmult = (sc->isht ? sc->card->nich / 2 : ENVY_RCHANS / 2);
 	if (rmult == 0)
 		rmult = 1;
 	mul = pmult * rmult;
@@ -1105,7 +1122,7 @@ envy_trigger_output(void *self, void *start, void *end, int blksz,
 
 	bufsz = end - start;
 #ifdef ENVY_DEBUG
-	if (blksz % (sc->isht ? sc->card->ndac * 8 : ENVY_PFRAME_SIZE) != 0) {
+	if (blksz % (sc->isht ? sc->card->noch * 4 : ENVY_PFRAME_SIZE) != 0) {
 		printf("%s: %d: bad output blksz\n", DEVNAME(sc), blksz);
 		return EINVAL;
 	}
@@ -1141,7 +1158,7 @@ envy_trigger_input(void *self, void *start, void *end, int blksz,
 	
 	bufsz = end - start;
 #ifdef ENVY_DEBUG
-	if (blksz % (sc->isht ? sc->card->nadc * 8 : ENVY_RFRAME_SIZE) != 0) {
+	if (blksz % (sc->isht ? sc->card->nich * 4 : ENVY_RFRAME_SIZE) != 0) {
 		printf("%s: %d: bad input blksz\n", DEVNAME(sc), blksz);
 		return EINVAL;
 	}
@@ -1234,12 +1251,12 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 	/*
 	 * output.lineX_source
 	 */
-	ndev = sc->card->ndac * 2;
+	ndev = sc->card->noch;
 	if (idx < ndev) {
 		n = 0;
 		dev->type = AUDIO_MIXER_ENUM;
 		dev->mixer_class = ENVY_MIX_CLASSOUT;
-		for (i = 0; i < sc->card->nadc * 2; i++) {
+		for (i = 0; i < sc->card->nich; i++) {
 			dev->un.e.member[n].ord = n;
 			snprintf(dev->un.e.member[n++].label.name,
 			    MAX_AUDIO_DEV_LEN, AudioNline "%d", i);
@@ -1278,7 +1295,7 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 	/*
 	 * inputs.xxx
 	 */
-	ndev = sc->card->nadc * sc->card->adc->ndev;
+	ndev = sc->card->adc->ndev(sc);
 	if (idx < ndev) {
 		sc->card->adc->devinfo(sc, dev, idx);
 		return 0;
@@ -1288,7 +1305,7 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 	/*
 	 * outputs.xxx
 	 */
-	ndev = sc->card->ndac * sc->card->dac->ndev;
+	ndev = sc->card->dac->ndev(sc);
 	if (idx < ndev) {
 		sc->card->dac->devinfo(sc, dev, idx);
 		return 0;
@@ -1309,11 +1326,11 @@ envy_get_port(void *self, struct mixer_ctrl *ctl)
 	}
 
 	idx = ctl->dev - ENVY_MIX_NCLASS;
-	ndev = sc->card->ndac * 2;
+	ndev = sc->card->noch;
 	if (idx < ndev) {
 		ctl->un.ord = envy_lineout_getsrc(sc, idx);
 		if (ctl->un.ord >= ENVY_MIX_NOUTSRC)
-			ctl->un.ord -= ENVY_MIX_NOUTSRC - sc->card->nadc * 2;
+			ctl->un.ord -= ENVY_MIX_NOUTSRC - sc->card->nich;
 		return 0;
 	}
 	idx -= ndev;
@@ -1325,13 +1342,13 @@ envy_get_port(void *self, struct mixer_ctrl *ctl)
 		return 0;
 	}
 	idx -= ndev;
-	ndev = sc->card->nadc * sc->card->adc->ndev;
+	ndev = sc->card->adc->ndev(sc);
 	if (idx < ndev) {
 		sc->card->adc->get(sc, ctl, idx);
 		return 0;
 	}
 	idx -= ndev;
-	ndev = sc->card->ndac * sc->card->dac->ndev;
+	ndev = sc->card->dac->ndev(sc);
 	if (idx < ndev) {
 		sc->card->dac->get(sc, ctl, idx);
 		return 0;
@@ -1352,15 +1369,15 @@ envy_set_port(void *self, struct mixer_ctrl *ctl)
 	}
 	
 	idx = ctl->dev - ENVY_MIX_NCLASS;
-	ndev = sc->card->ndac * 2;
+	ndev = sc->card->noch;
 	if (idx < ndev) {
-		maxsrc = sc->card->nadc * 2 + 1;
+		maxsrc = sc->card->nich + 1;
 		if (idx < 2) 
 			maxsrc++;
 		if (ctl->un.ord < 0 || ctl->un.ord >= maxsrc)
 			return EINVAL;
-		if (ctl->un.ord >= sc->card->nadc * 2)
-			ctl->un.ord += ENVY_MIX_NOUTSRC - sc->card->nadc * 2;
+		if (ctl->un.ord >= sc->card->nich)
+			ctl->un.ord += ENVY_MIX_NOUTSRC - sc->card->nich;
 		envy_lineout_setsrc(sc, idx, ctl->un.ord);
 		return 0;
 	}
@@ -1375,11 +1392,11 @@ envy_set_port(void *self, struct mixer_ctrl *ctl)
 		return 0;
 	}
 	idx -= ndev;
-	ndev = sc->card->nadc * sc->card->adc->ndev;
+	ndev = sc->card->adc->ndev(sc);
 	if (idx < ndev)
 		return sc->card->adc->set(sc, ctl, idx);
 	idx -= ndev;
-	ndev = sc->card->ndac * sc->card->dac->ndev;
+	ndev = sc->card->dac->ndev(sc);
 	if (idx < ndev)
 		return sc->card->dac->set(sc, ctl, idx);
 	return ENXIO;
