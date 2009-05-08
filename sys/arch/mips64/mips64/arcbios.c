@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.17 2009/05/06 20:07:10 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.18 2009/05/08 18:34:37 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -220,10 +220,11 @@ bios_configure_memory()
 	uint64_t start, count;
 	MEMORYTYPE type;
 	vaddr_t seg_start, seg_end;
-	int seen_free;
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+	int seen_free = 0;
+#endif
 	int i;
 
-	seen_free = 0;
 	descr = (arc_mem_t *)Bios_GetMemoryDescriptor(descr);
 	while (descr != NULL) {
 		if (bios_is_32bit) {
@@ -247,9 +248,10 @@ bios_configure_memory()
 				type = FreeMemory;
 #endif
 
-			if (type == FreeMemory && seen_free == 0) {
-				seen_free = 1;
 #if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+			if ((sys_config.system_type == SGI_O200 ||
+			     sys_config.system_type == SGI_O300)) {
+
 				/*
 				 * For the lack of a better way to tell
 				 * IP27 apart from IP35, look at the
@@ -259,37 +261,49 @@ bios_configure_memory()
 				 * kernels at 0xa800000000020000).
 				 * On IP35, it starts at 0x40000.
 				 */
-				if (start >= 0x20)	/* IP35 */
-					sys_config.system_type = SGI_O300;
-#endif
-			}
+				if (type == FreeMemory && seen_free == 0) {
+					seen_free = 1;
+					if (start >= 0x20)	/* IP35 */
+						sys_config.system_type =
+						    SGI_O300;
+				}
 
-#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
-			/*
-			 * On IP27 and IP35 systems, data after the first
-			 * FirmwarePermanent entry is not reliable
-			 * (entries conflict with each other), and memory
-			 * after 32MB (or 64MB on IP35) is not listed anyway.
-			 * So, break from the loop as soon as a
-			 * FirmwarePermanent entry is found, after
-			 * making it span the end of the first 32MB
-			 * (64MB on IP35).
-			 *
-			 * The rest of the memory is gathered from the
-			 * node structures.  This probably loses some of
-			 * the first few MB, but at least we're safe to
-			 * use ARCBios after going virtual.
-			 */
-			if (type == FirmwarePermanent &&
-			    (sys_config.system_type == SGI_O200 ||
-			     sys_config.system_type == SGI_O300)) {
-				descr = NULL;
-				count = ((sys_config.system_type == SGI_O200 ?
-				    32 : 64) << (20 - 12)) - start;
-				rsvdmem = start;
+				/*
+				 * On IP27 and IP35 systems, data after the
+				 * first FirmwarePermanent entry is not
+				 * reliable (entries conflict with each other),
+				 * and memory after 32MB (or 64MB on IP35) is
+				 * not listed anyway.
+				 * So, break from the loop as soon as a
+				 * FirmwarePermanent entry is found, after
+				 * making it span the end of the first 32MB
+				 * (64MB on IP35).
+				 *
+				 * The rest of the memory will be gathered
+				 * from the node structures.  This loses some
+				 * of the first few MB (well... all of them
+				 * but the kernel image), but at least we're
+				 * safe to use ARCBios after going virtual.
+				 */
+				switch (type) {
+				case FirmwarePermanent:
+					descr = NULL; /* abort loop */
+					count = ((sys_config.system_type ==
+					    SGI_O200 ?  32 : 64) << (20 - 12)) -
+					    start;
+					rsvdmem = start;
+					break;
+				case FreeMemory:
+				case FreeContigous:
+					type = BadMemory; /* do not count */
+					break;
+				default:
+					break;
+				}
 			}
-#endif
+#endif	/* O200 || O300 */
 		}
+
 		seg_start = start;
 		seg_end = seg_start + count;
 
