@@ -1,4 +1,4 @@
-.\" $OpenBSD: envy.4,v 1.4 2008/02/22 07:55:02 ratchov Exp $
+.\" $OpenBSD: envy.4,v 1.5 2009/05/08 18:47:51 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 22 2008 $
+.Dd $Mdocdate: May 8 2009 $
 .Dt ENVY 4
 .Os
 .Sh NAME
@@ -37,46 +37,27 @@ The chip features a digital mixer that routes and mixes the
 streams below as follows:
 .Bl -tag -width playback
 .It Dv inputs
-There are 10 streams corresponding to data received by the
+There are 8 streams corresponding to data received by the
 device from the codecs.
 They are labelled
 .Va line0
 \(en
-.Va line9
+.Va line7
 in the
 .Xr mixer 4
 interface.
-Streams
-.Va line0
-to
-.Va line7
-correspond to analog inputs and
-.Va line8
-to
-.Va line9
-correspond to
-digital inputs.
 .It Dv outputs
-There are 10 streams corresponding to data sent by the device to the codecs.
+There are 8 streams corresponding to data sent by the device to the codecs.
 They are labelled
 .Va line0
 \(en
-.Va line9 .
-Streams
-.Va line0
-to
-.Va line7
-correspond to analog outputs and
-.Va line8
-to
-.Va line9
-correspond to digital outputs.
+.Va line7 .
 Each of them can be individually configured to use any of
 the external inputs or its corresponding playback stream as source.
 Additionally, outputs
-.Va line0 , line1 , line8 ,
+.Va line0
 and
-.Va line9
+.Va line1
 can be configured to use
 .Va mon0
 or
@@ -104,10 +85,10 @@ so they are usable as sources of output streams.
 There are 12 streams corresponding to samples transferred
 from the device to the host.
 They are not controllable by the mixer.
-Streams 0 to 9 are hardwired to external inputs
+Streams 0 to 7 are hardwired to external inputs
 .Va line0
 \(en
-.Va line9
+.Va line7
 and streams 10 and 11 are hardwired to
 .Va mon0
 and
