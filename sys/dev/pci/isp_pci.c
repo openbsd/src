@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.44 2008/06/01 15:49:25 kettenis Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.45 2009/05/08 18:39:01 miod Exp $	*/
 /*
  * PCI specific probe and attach routines for QLogic ISP SCSI adapters.
  *
@@ -42,6 +42,10 @@
 
 #ifdef __sparc64__
 #include <dev/ofw/openfirm.h>
+#endif
+#ifdef __sgi__
+#include <machine/autoconf.h>
+#include <mips64/archtype.h>
 #endif
 
 static u_int16_t isp_pci_rd_reg(struct ispsoftc *, int);
@@ -425,6 +429,18 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 
 		node = OF_parent(node);
 	}
+#endif
+#ifdef __sgi__
+	/*
+	 * The on-board isp controllers found on Octane, Origin 200 and
+	 * Origin 300 families use id #0.
+	 * XXX We'll need to be able to tell apart onboard isp from
+	 * XXX other isp...
+	 */
+	if (sys_config.system_type == SGI_OCTANE ||
+	    sys_config.system_type == SGI_O200 ||
+	    sys_config.system_type == SGI_O300)
+		DEFAULT_IID(isp) = 0;
 #endif
 
 	ioh_valid = memh_valid = 0;
