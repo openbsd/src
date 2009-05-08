@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.539 2009/05/08 14:32:52 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.540 2009/05/08 18:39:57 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -302,6 +302,12 @@ user_setup() {
 
 	askpassword $user
 	userpass=$_password
+
+	if [[ $sshd == y ]]; then
+		ask_yn "Since you setup a user, disable sshd(8) logins to root?" yes
+		sshd_disableroot=$resp
+	fi
+
 }
 
 # Ask for user input until a non-empty reply is entered.
@@ -1613,6 +1619,11 @@ apply()
 	if [[ $sshd == n ]]; then
 		echo "sshd_flags=NO		# disabled during install" \
 			>>/mnt/etc/rc.conf.local
+	fi
+	if [[ $sshd_disableroot == y ]]; then
+		sed -e "/^#\(PermitRootLogin\) yes/s//\1 no/" \
+			< /mnt/etc/ssh/sshd_config > /tmp/sshd_config
+		cp /tmp/sshd_config /mnt/etc/ssh/sshd_config
 	fi
 	if [[ $ntpd == y ]]; then
 		echo "ntpd_flags=		# enabled during install" \
