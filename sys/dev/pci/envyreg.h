@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.8 2009/05/08 16:53:45 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.9 2009/05/08 17:52:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -144,6 +144,14 @@
 #define   ENVY_MT_INSEL_BITS	0x4
 #define   ENVY_MT_INSEL_MASK	((1 << ENVY_MT_INSEL_BITS) - 1)
 
+/*
+ * HT routing control
+ */
+#define ENVY_MT_HTSRC		0x2c
+#define   ENVY_MT_HTSRC_DMA	0x00
+#define   ENVY_MT_HTSRC_LINE	0x02
+#define   ENVY_MT_HTSRC_SPD	0x04
+#define   ENVY_MT_HTSRC_MASK	0x07
 /*
  * AK4524 control registers
  */

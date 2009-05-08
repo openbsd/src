@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.26 2009/05/08 16:53:45 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.27 2009/05/08 17:52:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -788,6 +788,19 @@ envy_lineout_getsrc(struct envy_softc *sc, int out)
 {
 	int reg, shift, src;
 
+	if (sc->isht) {
+		reg = bus_space_read_4(sc->mt_iot, sc->mt_ioh, ENVY_MT_HTSRC);
+		DPRINTF("%s: outsrc=%x\n", DEVNAME(sc), reg);
+		shift = 3 * (out / 2) + ((out & 1) ? 20 : 8);
+		src = (reg >> shift) & ENVY_MT_HTSRC_MASK;
+		if (src == ENVY_MT_HTSRC_DMA) {
+			return ENVY_MIX_OUTSRC_DMA;
+		} else {
+			src -= ENVY_MT_HTSRC_LINE;
+			return ENVY_MIX_OUTSRC_LINEIN + src;
+		}
+	}
+
 	reg = bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_OUTSRC);
 	DPRINTF("%s: outsrc=%x\n", DEVNAME(sc), reg);
 	shift = (out  & 1) ? (out & ~1) + 8 : out;
@@ -811,6 +824,25 @@ envy_lineout_setsrc(struct envy_softc *sc, int out, int src)
 {
 	int reg, shift, mask, sel;
 	
+	if (sc->isht) {
+		if (src < ENVY_MIX_OUTSRC_SPDIN) {
+			sel = ENVY_MT_HTSRC_LINE;
+			sel += src;
+		} else if (src < ENVY_MIX_OUTSRC_DMA) {
+			sel = ENVY_MT_HTSRC_SPD;
+			sel += src - ENVY_MIX_OUTSRC_SPDIN;
+		} else {
+			sel = ENVY_MT_HTSRC_DMA;
+		}
+		shift = 3 * (out / 2) + ((out & 1) ? 20 : 8);
+		mask = ENVY_MT_HTSRC_MASK << shift;
+		reg = bus_space_read_4(sc->mt_iot, sc->mt_ioh, ENVY_MT_HTSRC);
+		reg = (reg & ~mask) | (sel << shift);
+		bus_space_write_4(sc->mt_iot, sc->mt_ioh, ENVY_MT_HTSRC, reg);
+		DPRINTF("%s: outsrc <- %x\n", DEVNAME(sc), reg);
+		return;
+	}
+
 	if (src < ENVY_MIX_OUTSRC_DMA) {
 		/* 
 		 * linein and spdin are used as output source so we
@@ -1344,7 +1376,7 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 	/*
 	 * output.lineX_source
 	 */
-	ndev = sc->isht ? 0 : sc->card->noch;
+	ndev = sc->card->noch;
 	if (idx < ndev) {
 		n = 0;
 		dev->type = AUDIO_MIXER_ENUM;
@@ -1357,7 +1389,7 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 		dev->un.e.member[n].ord = n;
 		snprintf(dev->un.e.member[n++].label.name, 
 			 MAX_AUDIO_DEV_LEN, "play%d", idx);
-		if (idx < 2) {
+		if (!sc->isht && idx < 2) {
 			dev->un.e.member[n].ord = n;
 			snprintf(dev->un.e.member[n++].label.name, 
 			    MAX_AUDIO_DEV_LEN, "mon%d", idx);
@@ -1417,7 +1449,7 @@ envy_get_port(void *self, struct mixer_ctrl *ctl)
 	}
 
 	idx = ctl->dev - ENVY_MIX_NCLASS;
-	ndev = sc->isht ? 0 : sc->card->noch;
+	ndev = sc->card->noch;
 	if (idx < ndev) {
 		ctl->un.ord = envy_lineout_getsrc(sc, idx);
 		if (ctl->un.ord >= ENVY_MIX_NOUTSRC)
@@ -1458,7 +1490,7 @@ envy_set_port(void *self, struct mixer_ctrl *ctl)
 	}
 	
 	idx = ctl->dev - ENVY_MIX_NCLASS;
-	ndev = sc->isht ? 0 : sc->card->noch;
+	ndev = sc->card->noch;
 	if (idx < ndev) {
 		maxsrc = sc->card->nich + 1;
 		if (idx < 2) 
