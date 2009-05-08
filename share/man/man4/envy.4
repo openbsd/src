@@ -1,4 +1,4 @@
-.\" $OpenBSD: envy.4,v 1.5 2009/05/08 18:47:51 ratchov Exp $
+.\" $OpenBSD: envy.4,v 1.6 2009/05/08 19:03:55 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -26,12 +26,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports sound cards based on VIA Envy24 PCI chips,
-such as the M-Audio Delta-1010LT PCI card.
-The Envy24 chip, formerly known as the ICE1712, is a versatile digital
-PCI chip that can be attached to
-up to 4x2 external analog converters and 1x2 S/PDIF transmitter/receivers.
-Currently only Asahi Kasei AK4524 codecs are supported.
+driver supports sound cards based on VIA Envy24 and Envy24HT PCI chips.
+The following sound cards are currently supported:
+.Pp
+.Bl -bullet -compact -offset indent
+.It
+M-Audio Delta 1010, 1010LT, 66 and 44
+.It
+ESI Julia
+.El
 .Ss Mixer device
 The chip features a digital mixer that routes and mixes the
 streams below as follows:
@@ -72,6 +75,7 @@ and
 .Va mon1 .
 From the mixer's point of view they are input streams,
 so they can be used as sources of output streams.
+This feature is specific to Envy24 based cards.
 .It Dv playback
 There are 10 streams corresponding to samples transferred
 from the host to the device.
@@ -98,7 +102,9 @@ and
 Both playback and record use linear encoding.
 Samples are represented by 32-bit signed numbers in little endian order.
 Only the first 24 most significant bits are used.
-Playback uses 10 channels and record uses 12 channels.
+On Envy24-based cards, playback uses 10 channels and record uses 12 channels,
+while on Envy24HT-based cards the number of streams depend on the
+number of codecs physically present on the card.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr intro 4 ,
