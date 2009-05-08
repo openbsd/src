@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsrtc.c,v 1.3 2009/04/20 20:31:06 miod Exp $ */
+/*	$OpenBSD: dsrtc.c,v 1.4 2009/05/08 18:35:13 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -79,17 +79,17 @@ void	ip30_dsrtc_write(struct dsrtc_softc *, int, int);
 void	ds1687_get(void *, time_t, struct tod_time *);
 void	ds1687_set(void *, struct tod_time *);
 
-static inline int frombcd(int);
-static inline int tobcd(int);
+static inline int frombcd(int, int);
+static inline int tobcd(int, int);
 static inline int
-frombcd(int x)
+frombcd(int x, int binary)
 {
-	return (x >> 4) * 10 + (x & 0xf);
+	return binary ? x : (x >> 4) * 10 + (x & 0xf);
 }
 static inline int
-tobcd(int x)
+tobcd(int x, int binary)
 {
-	return (x / 10 * 16) + (x % 10);
+	return binary ? x : (x / 10 * 16) + (x % 10);
 }
 
 int
@@ -248,24 +248,27 @@ void
 ds1687_get(void *v, time_t base, struct tod_time *ct)
 {
 	struct dsrtc_softc *sc = v;
-	int ctrl, century;
+	int ctrl, century, dm;
 
 	/* Select bank 1. */
 	ctrl = (*sc->read)(sc, DS1687_CTRL_A);
 	(*sc->write)(sc, DS1687_CTRL_A, ctrl | DS1687_BANK_1);
+
+	/* Figure out which data mode to use. */
+	dm = (*sc->read)(sc, DS1687_CTRL_B) & DS1687_DM_1;
 
 	/* Wait for no update in progress. */
 	while ((*sc->read)(sc, DS1687_CTRL_A) & DS1687_UIP)
 		/* Do nothing. */;
 
 	/* Read the RTC. */
-	ct->sec = frombcd((*sc->read)(sc, DS1687_SEC));
-	ct->min = frombcd((*sc->read)(sc, DS1687_MIN));
-	ct->hour = frombcd((*sc->read)(sc, DS1687_HOUR));
-	ct->day = frombcd((*sc->read)(sc, DS1687_DAY));
-	ct->mon = frombcd((*sc->read)(sc, DS1687_MONTH));
-	ct->year = frombcd((*sc->read)(sc, DS1687_YEAR));
-	century = frombcd((*sc->read)(sc, DS1687_CENTURY));
+	ct->sec = frombcd((*sc->read)(sc, DS1687_SEC), dm);
+	ct->min = frombcd((*sc->read)(sc, DS1687_MIN), dm);
+	ct->hour = frombcd((*sc->read)(sc, DS1687_HOUR), dm);
+	ct->day = frombcd((*sc->read)(sc, DS1687_DAY), dm);
+	ct->mon = frombcd((*sc->read)(sc, DS1687_MONTH), dm);
+	ct->year = frombcd((*sc->read)(sc, DS1687_YEAR), dm);
+	century = frombcd((*sc->read)(sc, DS1687_CENTURY), dm);
 
 	ct->year += 100 * (century - 19);
 }
@@ -274,7 +277,7 @@ void
 ds1687_set(void *v, struct tod_time *ct)
 {
 	struct dsrtc_softc *sc = v;
-	int year, century, ctrl;
+	int year, century, ctrl, dm;
 
 	century = ct->year / 100 + 19;
 	year = ct->year % 100;
@@ -283,24 +286,24 @@ ds1687_set(void *v, struct tod_time *ct)
 	ctrl = (*sc->read)(sc, DS1687_CTRL_A);
 	(*sc->write)(sc, DS1687_CTRL_A, ctrl | DS1687_BANK_1);
 
-	/* Select data mode 0 (BCD) and 24 hour time. */
+	/* Figure out which data mode to use, and select 24 hour time. */
 	ctrl = (*sc->read)(sc, DS1687_CTRL_B);
-	(*sc->write)(sc, DS1687_CTRL_B,
-	    (ctrl & ~DS1687_DM_1) | DS1687_24_HR);
+	dm = ctrl & DS1687_DM_1;
+	(*sc->write)(sc, DS1687_CTRL_B, ctrl | DS1687_24_HR);
 
 	/* Prevent updates. */
 	ctrl = (*sc->read)(sc, DS1687_CTRL_B);
 	(*sc->write)(sc, DS1687_CTRL_B, ctrl | DS1687_SET_CLOCK);
 
 	/* Update the RTC. */
-	(*sc->write)(sc, DS1687_SEC, tobcd(ct->sec));
-	(*sc->write)(sc, DS1687_MIN, tobcd(ct->min));
-	(*sc->write)(sc, DS1687_HOUR, tobcd(ct->hour));
-	(*sc->write)(sc, DS1687_DOW, tobcd(ct->dow));
-	(*sc->write)(sc, DS1687_DAY, tobcd(ct->day));
-	(*sc->write)(sc, DS1687_MONTH, tobcd(ct->mon));
-	(*sc->write)(sc, DS1687_YEAR, tobcd(year));
-	(*sc->write)(sc, DS1687_CENTURY, tobcd(century));
+	(*sc->write)(sc, DS1687_SEC, tobcd(ct->sec, dm));
+	(*sc->write)(sc, DS1687_MIN, tobcd(ct->min, dm));
+	(*sc->write)(sc, DS1687_HOUR, tobcd(ct->hour, dm));
+	(*sc->write)(sc, DS1687_DOW, tobcd(ct->dow, dm));
+	(*sc->write)(sc, DS1687_DAY, tobcd(ct->day, dm));
+	(*sc->write)(sc, DS1687_MONTH, tobcd(ct->mon, dm));
+	(*sc->write)(sc, DS1687_YEAR, tobcd(year, dm));
+	(*sc->write)(sc, DS1687_CENTURY, tobcd(century, dm));
 
 	/* Enable updates. */
 	(*sc->write)(sc, DS1687_CTRL_B, ctrl);
