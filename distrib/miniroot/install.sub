@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.538 2009/05/08 05:47:38 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.539 2009/05/08 14:32:52 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -282,15 +282,20 @@ askpassword() {
 }
 
 user_setup() {
-	ask "Setup a user? (enter a lower-case loginname, or 'no')" no
-	case $resp in
-	n|no)	return ;;
-	y|yes)	ask "No really, what is the lower-case loginname, or 'no'?"
+	local _q="Setup a user? (enter a lower-case loginname, or 'no')"
+
+	while :; do
+		ask "$_q" no
 		case $resp in
 		n|no)	return ;;
-		esac ;;
-	esac
-
+		y|yes)	_q="No really, what is the lower-case loginname, or 'no'?"
+			continue ;;
+		root|daemon|operator|bin|smmsp|popa3d) ;;
+		sshd|uucp|www|named|proxy|nobody|ftp) ;;
+		[a-z]*([a-z0-9])) break ;;
+		esac
+		echo "$resp is not a useable loginname."
+	done
 	user=$resp
 	ask "Full user name for $user?" $user
 	username=$resp
