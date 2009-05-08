@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.19 2009/05/04 04:49:50 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.20 2009/05/08 13:35:55 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -18,10 +18,7 @@
 /*
  * TODO:
  *
- * - add ndac, nadc, nspdin, nspdout, to struct envy_card
- *
- * - split mixer in 3 parts: envy-specific, codec-specific, and card-specific
- * (gpio knobs) and put codec/card specific parts into envy_card structure
+ * - add nspdin, nspdout, to struct envy_card
  *
  * - use eeprom version rather isht flag
  *
@@ -1235,14 +1232,14 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 	idx -= ndev;
 
 	/*
-	 * envy output source
+	 * output.lineX_source
 	 */
-	ndev = ENVY_MIX_NOUTSRC;
+	ndev = sc->card->ndac * 2;
 	if (idx < ndev) {
 		n = 0;
 		dev->type = AUDIO_MIXER_ENUM;
 		dev->mixer_class = ENVY_MIX_CLASSOUT;
-		for (i = 0; i < 10; i++) {
+		for (i = 0; i < sc->card->nadc * 2; i++) {
 			dev->un.e.member[n].ord = n;
 			snprintf(dev->un.e.member[n++].label.name,
 			    MAX_AUDIO_DEV_LEN, AudioNline "%d", i);
@@ -1312,15 +1309,11 @@ envy_get_port(void *self, struct mixer_ctrl *ctl)
 	}
 
 	idx = ctl->dev - ENVY_MIX_NCLASS;
-	ndev = 8; /* XXX: use ndacs */
+	ndev = sc->card->ndac * 2;
 	if (idx < ndev) {
 		ctl->un.ord = envy_lineout_getsrc(sc, idx);
-		return 0;
-	}
-	idx -= ndev;
-	ndev = ENVY_MIX_NOUTSRC - 8;
-	if (idx < ndev) {
-		ctl->un.ord = envy_spdout_getsrc(sc, idx);
+		if (ctl->un.ord >= ENVY_MIX_NOUTSRC)
+			ctl->un.ord -= ENVY_MIX_NOUTSRC - sc->card->nadc * 2;
 		return 0;
 	}
 	idx -= ndev;
@@ -1359,20 +1352,16 @@ envy_set_port(void *self, struct mixer_ctrl *ctl)
 	}
 	
 	idx = ctl->dev - ENVY_MIX_NCLASS;
-	ndev = 8; /* XXX: use ndacs */
+	ndev = sc->card->ndac * 2;
 	if (idx < ndev) {
-		maxsrc = (idx < 2 || idx >= 8) ? 12 : 11;
+		maxsrc = sc->card->nadc * 2 + 1;
+		if (idx < 2) 
+			maxsrc++;
 		if (ctl->un.ord < 0 || ctl->un.ord >= maxsrc)
 			return EINVAL;
+		if (ctl->un.ord >= sc->card->nadc * 2)
+			ctl->un.ord += ENVY_MIX_NOUTSRC - sc->card->nadc * 2;
 		envy_lineout_setsrc(sc, idx, ctl->un.ord);
-		return 0;
-	}
-	idx -= ndev;
-	ndev = ENVY_MIX_NOUTSRC - 8;
-	if (idx < ndev) {
-		if (ctl->un.ord < 0 || ctl->un.ord >= 12)
-			return EINVAL;
-		envy_spdout_setsrc(sc, idx, ctl->un.ord);
 		return 0;
 	}
 	idx -= ndev;
