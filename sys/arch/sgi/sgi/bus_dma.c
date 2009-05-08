@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.11 2009/05/08 18:42:06 miod Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.12 2009/05/08 20:55:20 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -670,7 +670,7 @@ _dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	m = TAILQ_NEXT(m, pageq);
 
 	for (; m != TAILQ_END(&mlist); m = TAILQ_NEXT(m, pageq)) {
-		curaddr = (*t->_pa_to_device)(VM_PAGE_TO_PHYS(m));
+		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
 			printf("vm_page_alloc_memory returned non-sensical"
@@ -678,6 +678,7 @@ _dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 			panic("_dmamem_alloc_range");
 		}
 #endif
+		curaddr = (*t->_pa_to_device)(curaddr);
 		if (curaddr == (lastaddr + PAGE_SIZE))
 			segs[curseg].ds_len += PAGE_SIZE;
 		else {
