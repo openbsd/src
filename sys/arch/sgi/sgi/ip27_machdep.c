@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.3 2009/05/02 21:28:08 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.4 2009/05/08 18:36:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -232,7 +232,9 @@ ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
 	ih->ih_arg = arg;
 	ih->ih_level = level;
 	ih->ih_irq = intrbit;
-	evcount_attach(&ih->ih_count, name, &ih->ih_level, &evcount_intr);
+	if (name != NULL)
+		evcount_attach(&ih->ih_count, name, &ih->ih_level,
+		    &evcount_intr);
 	intrhand[intrbit] = ih;
 
 	ip27_hub_intrmask |= 1UL << intrbit;
@@ -346,9 +348,11 @@ intrmask_t
 ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 {
 	uint64_t imr, isr;
+	int icpl;
 	int bit;
 	intrmask_t mask;
 	struct intrhand *ih;
+	int rc;
 
 	/* XXX this assumes we run on cpu0 */
 	isr = IP27_LHUB_L(HUB_IR0);
@@ -359,36 +363,59 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 		return 0;	/* not for us */
 
 	/*
-	 * If interrupts are spl-masked, mark them as pending and mask
-	 * them in hardware.
+	 * Mask all pending interrupts.
+	 */
+	IP27_LHUB_S(HUB_CPU0_IMR0, imr & ~isr);
+	(void)IP27_LHUB_L(HUB_IR0);
+
+	/*
+	 * If interrupts are spl-masked, mark them as pending only.
 	 */
 	if ((mask = isr & frame->cpl) != 0) {
 		atomic_setbits_int(&ipending, mask);
-		/* XXX this assumes we run on cpu0 */
-		IP27_LHUB_S(HUB_CPU0_IMR0, imr & ~mask);
-		(void)IP27_LHUB_L(HUB_IR0);
 		isr &= ~mask;
 	}
 
 	/*
 	 * Now process unmasked interrupts.
 	 */
-	mask = isr & ~frame->cpl;
-	atomic_clearbits_int(&ipending, mask);
 	if (isr != 0) {
+		atomic_clearbits_int(&ipending, isr);
+
+		__asm__ (" .set noreorder\n");
+		icpl = cpl;
+		__asm__ (" sync\n .set reorder\n");
+
+		/* XXX Rework this to dispatch in decreasing levels */
 		for (bit = SPL_CLOCK - 1, mask = 1 << bit; bit >= 7;
 		    bit--, mask >>= 1) {
 			if ((isr & mask) == 0)
 				continue;
 
+			rc = 0;
 			for (ih = intrhand[bit]; ih != NULL; ih = ih->ih_next) {
-				if ((*ih->ih_fun)(ih->ih_arg) != 0)
+				splraise(imask[ih->ih_level]);
+				ih->frame = frame;
+				if ((*ih->ih_fun)(ih->ih_arg) != 0) {
+					rc = 1;
 					ih->ih_count.ec_count++;
+				}
 			}
+			if (rc == 0)
+				printf("spurious interrupt, source %d\n", bit);
 
 			IP27_LHUB_S(HUB_IR_CHANGE, HUB_IR_CLR | bit);
 			(void)IP27_LHUB_L(HUB_IR0);
 		}
+
+		/*
+		 * Reenable interrupts which have been serviced.
+		 */
+		IP27_LHUB_S(HUB_CPU0_IMR0, imr);
+		
+		__asm__ (" .set noreorder\n");
+		cpl = icpl;
+		__asm__ (" sync\n .set reorder\n");
 	}
 
 	return CR_INT_0;
