@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.24 2009/05/08 16:07:26 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.25 2009/05/08 16:12:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -930,13 +930,12 @@ envyattach(struct device *parent, struct device *self, void *aux)
 	subid = pci_conf_read(sc->pci_pc, sc->pci_tag, PCI_SUBVEND_0);
 	sc->card = sc->isht ? envy_cards_ht : envy_cards;
 	while (sc->card->subid != subid) {
-		if (sc->card->subid == 0) {
-			printf("%s: unknown card\n", DEVNAME(sc));
+		if (sc->card->subid == 0)
 			break;
-		}
 		sc->card++;
 	}
-	DPRINTF("%s: type=%s\n", DEVNAME(sc), sc->card->name);
+	printf("%s: %s, %u inputs, %u outputs\n", DEVNAME(sc),
+	    sc->card->name, sc->card->nich, sc->card->noch);
 	envy_reset(sc);
 	sc->audio = audio_attach_mi(&envy_hw_if, sc, &sc->dev);
 }
