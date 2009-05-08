@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.25 2009/05/08 16:12:23 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.26 2009/05/08 16:53:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -119,6 +119,11 @@ void ak4524_adc_devinfo(struct envy_softc *, struct mixer_devinfo *, int);
 void ak4524_adc_get(struct envy_softc *, struct mixer_ctrl *, int);
 int ak4524_adc_set(struct envy_softc *, struct mixer_ctrl *, int);
 
+int ak4358_dac_ndev(struct envy_softc *);
+void ak4358_dac_devinfo(struct envy_softc *, struct mixer_devinfo *, int);
+void ak4358_dac_get(struct envy_softc *, struct mixer_ctrl *, int);
+int ak4358_dac_set(struct envy_softc *, struct mixer_ctrl *, int);
+
 struct cfattach envy_ca = {
 	sizeof(struct envy_softc), envymatch, envyattach, envydetach
 };
@@ -190,6 +195,8 @@ struct envy_codec ak4524_dac = {
 	"ak4524 dac", ak4524_dac_ndev, ak4524_dac_devinfo, ak4524_dac_get, ak4524_dac_set
 }, ak4524_adc = {
 	"ak4524 adc", ak4524_adc_ndev, ak4524_adc_devinfo, ak4524_adc_get, ak4524_adc_set
+}, ak4358_dac = {
+	"ak4358 dac", ak4358_dac_ndev, ak4358_dac_devinfo, ak4358_dac_get, ak4358_dac_set
 }, unkenvy_codec = {
 	"unknown codec", unkenvy_codec_ndev, NULL, NULL, NULL
 };
@@ -237,7 +244,7 @@ struct envy_card envy_cards[] = {
 	{
 		PCI_ID_CODE(0x3031, 0x4553),
 		"ESI Julia",
-		2, &unkenvy_codec, 2, &unkenvy_codec,
+		2, &unkenvy_codec, 2, &ak4358_dac,
 		julia_init,
 		julia_codec_write,
 		julia_eeprom
@@ -267,11 +274,11 @@ delta_init(struct envy_softc *sc)
 		    AK4524_RST_AD | AK4524_RST_DA);
 		envy_codec_write(sc, dev, AK4524_FMT,
 		    AK4524_FMT_IIS24);
-		sc->ak[dev].reg[AK4524_DEEMVOL] = AK4524_DEEM_OFF;
-		sc->ak[dev].reg[AK4524_ADC_GAIN0] = 0x7f;
-		sc->ak[dev].reg[AK4524_ADC_GAIN1] = 0x7f;
-		sc->ak[dev].reg[AK4524_DAC_GAIN0] = 0x7f;
-		sc->ak[dev].reg[AK4524_DAC_GAIN1] = 0x7f;
+		sc->shadow[dev][AK4524_DEEMVOL] = AK4524_DEEM_OFF;
+		sc->shadow[dev][AK4524_ADC_GAIN0] = 0x7f;
+		sc->shadow[dev][AK4524_ADC_GAIN1] = 0x7f;
+		sc->shadow[dev][AK4524_DAC_GAIN0] = 0x7f;
+		sc->shadow[dev][AK4524_DAC_GAIN1] = 0x7f;
 	}
 }
 
@@ -312,9 +319,14 @@ delta_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 void
 julia_init(struct envy_softc *sc)
 {
+	int i;
+
 	envy_codec_write(sc, 0, 0, 0);	/* reset */
 	delay(300);
 	envy_codec_write(sc, 0, 0, 0x87);	/* i2s mode */
+	for (i = 0; i < sc->card->noch; i++) {
+		sc->shadow[0][AK4358_ATT(i)] = 0xff;
+	}
 }
 
 void
@@ -342,6 +354,52 @@ unkenvy_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 int
 unkenvy_codec_ndev(struct envy_softc *sc)
 {
+	return 0;
+}
+
+/*
+ * AK 4358 DAC specific code
+ */
+int
+ak4358_dac_ndev(struct envy_softc *sc)
+{
+	/* 1 volume knob per channel */
+	return sc->card->noch;
+}
+
+
+void
+ak4358_dac_devinfo(struct envy_softc *sc, struct mixer_devinfo *dev, int idx)
+{
+	dev->type = AUDIO_MIXER_VALUE;
+	dev->mixer_class = ENVY_MIX_CLASSOUT;
+	dev->un.v.delta = 2;
+	dev->un.v.num_channels = 1;
+	snprintf(dev->label.name, MAX_AUDIO_DEV_LEN,
+	    AudioNline "%d", idx);
+	strlcpy(dev->un.v.units.name, AudioNvolume,
+	    MAX_AUDIO_DEV_LEN);
+}
+
+void
+ak4358_dac_get(struct envy_softc *sc, struct mixer_ctrl *ctl, int idx)
+{
+	int val;
+
+	val = envy_codec_read(sc, 0, AK4358_ATT(idx)) & ~AK4358_ATT_EN;
+	ctl->un.value.num_channels = 1;
+	ctl->un.value.level[0] = 2 * val;
+}
+
+int
+ak4358_dac_set(struct envy_softc *sc, struct mixer_ctrl *ctl, int idx)
+{
+	int val;
+
+	if (ctl->un.value.num_channels != 1)
+		return EINVAL;
+	val = ctl->un.value.level[0] / 2;
+	envy_codec_write(sc, 0, AK4358_ATT(idx), val | AK4358_ATT_EN);
 	return 0;
 }
 
@@ -614,14 +672,14 @@ envy_i2c_write(struct envy_softc *sc, int dev, int addr, int data)
 
 int
 envy_codec_read(struct envy_softc *sc, int dev, int addr) {
-	return sc->ak[dev].reg[addr];
+	return sc->shadow[dev][addr];
 }
 
 void
 envy_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 {
 	DPRINTFN(2, "envy_codec_write: %d, %d, 0x%x\n", dev, addr, data);
-	sc->ak[dev].reg[addr] = data;
+	sc->shadow[dev][addr] = data;
 	sc->card->codec_write(sc, dev, addr, data);
 }
 

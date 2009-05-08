@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.7 2009/05/08 15:31:16 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.8 2009/05/08 16:53:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -184,7 +184,7 @@
  * AK4358 control registers
  */
 #define AK4358_ATT(chan)	((chan) <= 5 ? 0x4 + (chan) : 0xb - 6 + (chan))
-
+#define   AK4358_ATT_EN		0x80
 
 /*
  * default formats

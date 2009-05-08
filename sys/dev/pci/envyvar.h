@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyvar.h,v 1.11 2009/05/08 15:31:16 ratchov Exp $	*/
+/*	$OpenBSD: envyvar.h,v 1.12 2009/05/08 16:53:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -51,10 +51,6 @@ struct envy_card {
 	unsigned char *eeprom;
 };
 
-struct envy_ak {
-	unsigned char reg[16];
-};
-
 struct envy_softc {
 	struct device		dev;
 	struct device	       *audio;
@@ -71,7 +67,7 @@ struct envy_softc {
 	bus_space_handle_t      mt_ioh;
 	bus_size_t		mt_iosz;
 	struct envy_card       *card;
-	struct envy_ak		ak[4];
+	unsigned char 		shadow[4][16];
 #define ENVY_EEPROM_MAXSZ 32
 	unsigned char		eeprom[ENVY_EEPROM_MAXSZ];
 	void (*iintr)(void *);
