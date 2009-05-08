@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.536 2009/05/07 03:43:02 todd Exp $
+#	$OpenBSD: install.sub,v 1.537 2009/05/08 03:01:42 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1085,10 +1085,10 @@ startftplist() {
 	ftp $FTPOPTS -a -o - "http://129.128.5.191/cgi-bin/ftplist.cgi?path=$FTPSETDIR" \
 		2>/tmp/ftplisterr > $SERVERLISTALL & ftppid=$!
 
-	# If the ftp process takes more than 9 seconds, kill it
+	# If the ftp process takes more than 12 seconds, kill it
 	# XXX We are relying on the pid space not randomly biting us --
 	# XXX ftp could terminate early, and the pid could be reused
-	(sleep 9; kill -INT $ftppid >/dev/null 2>&1) &
+	(sleep 12; kill -INT $ftppid >/dev/null 2>&1) &
 }
 
 # Wait for the ftp process to finish, or be killed after the timeout
