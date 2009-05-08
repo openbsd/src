@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.23 2009/05/08 15:31:16 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.24 2009/05/08 16:07:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -199,15 +199,36 @@ struct envy_codec ak4524_dac = {
  */
 struct envy_card envy_cards[] = {
 	{
+		PCI_ID_CODE(0x1412, 0xd630),
+		"M-Audio Delta 1010",
+		8, &ak4524_adc, 8, &ak4524_dac,
+		delta_init,
+		delta_codec_write,
+		NULL
+	}, {
+		PCI_ID_CODE(0x1412, 0xd632),
+		"M-Audio Delta 66",
+		4, &ak4524_adc, 4, &ak4524_dac,
+		delta_init,
+		delta_codec_write,
+		NULL
+	}, {
+		PCI_ID_CODE(0x1412, 0xd633),
+		"M-Audio Delta 44",
+		4, &ak4524_adc, 4, &ak4524_dac,
+		delta_init,
+		delta_codec_write,
+		NULL
+	}, {
 		PCI_ID_CODE(0x1412, 0xd63b),
-		"delta",
+		"M-Audio Delta 1010LT",
 		8, &ak4524_adc, 8, &ak4524_dac,
 		delta_init,
 		delta_codec_write,
 		NULL
 	}, {
 		0,
-		"unkenvy",
+		"unknown 1712-based card",
 		8, &unkenvy_codec, 8, &unkenvy_codec,
 		unkenvy_init,
 		unkenvy_codec_write
@@ -215,14 +236,14 @@ struct envy_card envy_cards[] = {
 }, envy_cards_ht[] = {
 	{
 		PCI_ID_CODE(0x3031, 0x4553),
-		"julia",
+		"ESI Julia",
 		2, &unkenvy_codec, 2, &unkenvy_codec,
 		julia_init,
 		julia_codec_write,
 		julia_eeprom
 	}, {
 		0,
-		"unkenvy",
+		"unknown 1724-based card",
 		2, &unkenvy_codec, 8, &unkenvy_codec,
 		unkenvy_init,
 		unkenvy_codec_write
@@ -239,7 +260,7 @@ delta_init(struct envy_softc *sc)
 {
 	int dev;
 
-	for (dev = 0; dev < 4 /* XXX */; dev++) {
+	for (dev = 0; dev < sc->card->noch / 2; dev++) {
 		envy_codec_write(sc, dev, AK4524_RST, 0x0);
 		delay(300);
 		envy_codec_write(sc, dev, AK4524_RST,
