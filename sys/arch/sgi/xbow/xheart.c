@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.6 2009/04/18 14:48:09 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.7 2009/05/08 18:42:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -287,7 +287,9 @@ xheart_intr_establish(int (*func)(void *), void *arg, int intrbit,
 	ih->ih_arg = arg;
 	ih->ih_level = level;
 	ih->ih_irq = intrbit;
-	evcount_attach(&ih->ih_count, name, &ih->ih_level, &evcount_intr);
+	if (name != NULL)
+		evcount_attach(&ih->ih_count, name, &ih->ih_level,
+		    &evcount_intr);
 	intrhand[intrbit] = ih;
 
 	sc->sc_intrmask |= 1UL << intrbit;

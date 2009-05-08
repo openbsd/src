@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.10 2009/04/20 00:42:06 oga Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.11 2009/05/08 18:42:06 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -40,6 +40,7 @@
 #include <machine/autoconf.h>
 
 #include <machine/bus.h>
+#include <sgi/sgi/ip30.h>
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -439,8 +440,36 @@ _dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	return (_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, (paddr_t)0, (paddr_t)-1));
+	vaddr_t low;
+	vaddr_t high;
+
+	/*
+	 * Limit bus_dma'able memory to the first 2GB of physical memory.
+	 * XXX This should be lifted if flags & BUS_DMA_64BIT for
+	 * XXX drivers which do not need 32 bit DMA on IP27/30/35.
+	 */
+	switch (sys_config.system_type) {
+#if defined(TGT_OCTANE)
+	case SGI_OCTANE:
+		low = IP30_MEMORY_BASE;
+		high = (2U << 30) - 1 + IP30_MEMORY_BASE;
+		break;
+#endif
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+	case SGI_O200:
+	case SGI_O300:
+		low = 0;
+		high = (2U << 30) - 1;
+		break;
+#endif
+	default:
+		low = 0;
+		high = (vaddr_t)-1;
+		break;
+	}
+
+	return _dmamem_alloc_range(t, size, alignment, boundary,
+	    segs, nsegs, rsegs, flags, low, high);
 }
 
 /*

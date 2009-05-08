@@ -1,5 +1,4 @@
-#define	DEBUG
-/*	$OpenBSD: sginode.c,v 1.4 2009/05/06 20:08:00 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.5 2009/05/08 18:42:07 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -280,7 +279,9 @@ kl_add_memory_ip27(int16_t *sizes, unsigned int cnt)
 			/*
 			 * Walk the existing segment list to find if we
 			 * are adjacent to an existing segment, or the
-			 * next free segment to use if not.
+			 * next free segment to use if not (unless doing
+			 * this would cross the 2GB boundary we need for
+			 * 32 bit DMA memory).
 			 *
 			 * Note that since we do not know in which order
 			 * we'll find our nodes, we have to check for
@@ -292,14 +293,16 @@ kl_add_memory_ip27(int16_t *sizes, unsigned int cnt)
 				if (md->mem_first_page == 0)
 					break;
 
-				if (md->mem_first_page == lp) {
+				if (md->mem_first_page == lp &&
+				    lp != atop(2 << 30)) {
 					md->mem_first_page = fp;
 					physmem += np;
 					md = NULL;
 					break;
 				}
 
-				if (md->mem_last_page == fp) {
+				if (md->mem_last_page == fp &&
+				    fp != atop(2 << 30)) {
 					md->mem_last_page = lp;
 					physmem += np;
 					md = NULL;
@@ -309,6 +312,8 @@ kl_add_memory_ip27(int16_t *sizes, unsigned int cnt)
 			if (descno != MAXMEMSEGS && md != NULL) {
 				md->mem_first_page = fp;
 				md->mem_last_page = lp;
+				md->mem_freelist = lp <= atop(2 << 30) ?
+				    VM_FREELIST_DMA32 : VM_FREELIST_DEFAULT;
 				physmem += np;
 				md = NULL;
 			}
@@ -366,7 +371,9 @@ kl_add_memory_ip35(int16_t *sizes, unsigned int cnt)
 			/*
 			 * Walk the existing segment list to find if we
 			 * are adjacent to an existing segment, or the
-			 * next free segment to use if not.
+			 * next free segment to use if not (unless doing
+			 * this would cross the 2GB boundary we need for
+			 * 32 bit DMA memory).
 			 *
 			 * Note that since we do not know in which order
 			 * we'll find our nodes, we have to check for
@@ -378,14 +385,16 @@ kl_add_memory_ip35(int16_t *sizes, unsigned int cnt)
 				if (md->mem_first_page == 0)
 					break;
 
-				if (md->mem_first_page == lp) {
+				if (md->mem_first_page == lp &&
+				    lp != atop(2 << 30)) {
 					md->mem_first_page = fp;
 					physmem += np;
 					md = NULL;
 					break;
 				}
 
-				if (md->mem_last_page == fp) {
+				if (md->mem_last_page == fp &&
+				    fp != atop(2 << 30)) {
 					md->mem_last_page = lp;
 					physmem += np;
 					md = NULL;
@@ -395,6 +404,8 @@ kl_add_memory_ip35(int16_t *sizes, unsigned int cnt)
 			if (descno != MAXMEMSEGS && md != NULL) {
 				md->mem_first_page = fp;
 				md->mem_last_page = lp;
+				md->mem_freelist = lp <= atop(2 << 30) ?
+				    VM_FREELIST_DMA32 : VM_FREELIST_DEFAULT;
 				physmem += np;
 				md = NULL;
 			}
