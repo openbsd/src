@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.21 2009/05/08 14:56:03 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.22 2009/05/08 15:17:41 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -109,6 +109,7 @@ void julia_ak_write(struct envy_softc *, int, int, int);
 
 void unkenvy_init(struct envy_softc *);
 void unkenvy_ak_write(struct envy_softc *, int, int, int);
+int unkenvy_codec_ndev(struct envy_softc *);
 
 int ak4524_dac_ndev(struct envy_softc *);
 void ak4524_dac_devinfo(struct envy_softc *, struct mixer_devinfo *, int);
@@ -191,7 +192,7 @@ struct envy_codec ak4524_dac = {
 }, ak4524_adc = {
 	"ak4524 adc", ak4524_adc_ndev, ak4524_adc_devinfo, ak4524_adc_get, ak4524_adc_set
 }, unkenvy_codec = {
-	"unknown codec", 0, NULL, NULL, NULL
+	"unknown codec", unkenvy_codec_ndev, NULL, NULL, NULL
 };
 
 /*
@@ -314,6 +315,12 @@ unkenvy_init(struct envy_softc *sc)
 void
 unkenvy_ak_write(struct envy_softc *sc, int dev, int addr, int data)
 {
+}
+
+int
+unkenvy_codec_ndev(struct envy_softc *sc)
+{
+	return 0;
 }
 
 /*
@@ -1228,8 +1235,6 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 		AudioCinputs, AudioCoutputs, AudioCmonitor 
 	};
 
-	if (sc->isht)		/* no mixer yet */
-		return ENXIO;
 	if (dev->index < 0)
 		return ENXIO;
 
@@ -1251,7 +1256,7 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 	/*
 	 * output.lineX_source
 	 */
-	ndev = sc->card->noch;
+	ndev = sc->isht ? 0 : sc->card->noch;
 	if (idx < ndev) {
 		n = 0;
 		dev->type = AUDIO_MIXER_ENUM;
@@ -1279,7 +1284,7 @@ envy_query_devinfo(void *self, struct mixer_devinfo *dev)
 	/*
 	 * envy monitor level
 	 */
-	ndev = ENVY_MIX_NMONITOR;
+	ndev = sc->isht ? 0 : ENVY_MIX_NMONITOR;
 	if (idx < ndev) {
 		dev->type = AUDIO_MIXER_VALUE;
 		dev->mixer_class = ENVY_MIX_CLASSMON;
@@ -1319,14 +1324,12 @@ envy_get_port(void *self, struct mixer_ctrl *ctl)
 	struct envy_softc *sc = (struct envy_softc *)self;
 	int val, idx, ndev;
 
-	if (sc->isht)	/* no mixer yet */
-		return EINVAL;
 	if (ctl->dev < ENVY_MIX_NCLASS) {
 		return EINVAL;
 	}
 
 	idx = ctl->dev - ENVY_MIX_NCLASS;
-	ndev = sc->card->noch;
+	ndev = sc->isht ? 0 : sc->card->noch;
 	if (idx < ndev) {
 		ctl->un.ord = envy_lineout_getsrc(sc, idx);
 		if (ctl->un.ord >= ENVY_MIX_NOUTSRC)
@@ -1334,7 +1337,7 @@ envy_get_port(void *self, struct mixer_ctrl *ctl)
 		return 0;
 	}
 	idx -= ndev;
-	ndev = ENVY_MIX_NMONITOR;
+	ndev = sc->isht ? 0 : ENVY_MIX_NMONITOR;
 	if (idx < ndev) {
 		envy_mon_getvol(sc, idx / 2, idx % 2, &val);
 		ctl->un.value.num_channels = 1;
@@ -1362,14 +1365,12 @@ envy_set_port(void *self, struct mixer_ctrl *ctl)
 	struct envy_softc *sc = (struct envy_softc *)self;
 	int maxsrc, val, idx, ndev;
 
-	if (sc->isht)	/* no mixer yet */
-		return EINVAL;
 	if (ctl->dev < ENVY_MIX_NCLASS) {
 		return EINVAL;
 	}
 	
 	idx = ctl->dev - ENVY_MIX_NCLASS;
-	ndev = sc->card->noch;
+	ndev = sc->isht ? 0 : sc->card->noch;
 	if (idx < ndev) {
 		maxsrc = sc->card->nich + 1;
 		if (idx < 2) 
@@ -1382,7 +1383,7 @@ envy_set_port(void *self, struct mixer_ctrl *ctl)
 		return 0;
 	}
 	idx -= ndev;
-	ndev = ENVY_MIX_NMONITOR;
+	ndev = sc->isht ? 0 : ENVY_MIX_NMONITOR;
 	if (idx < ndev) {
 		if (ctl->un.value.num_channels != 1) {
 			return EINVAL;
