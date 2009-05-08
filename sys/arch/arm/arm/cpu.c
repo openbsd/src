@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.9 2008/09/11 02:38:14 kevlo Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.10 2009/05/08 02:57:32 drahn Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -168,7 +168,9 @@ enum cpu_class {
 	CPU_CLASS_ARM9EJS,
 	CPU_CLASS_ARM10E,
 	CPU_CLASS_SA1,
-	CPU_CLASS_XSCALE
+	CPU_CLASS_XSCALE,
+	CPU_CLASS_ARM11J,
+	CPU_CLASS_ARMv7
 };
 
 static const char * const generic_steppings[16] = {
@@ -223,10 +225,10 @@ static const char * const i80321_steppings[16] = {
 };
 
 static const char * const i80219_steppings[16] = {
-        "step A-0",     "rev 1",        "rev 2",        "rev 3",
-        "rev 4",        "rev 5",        "rev 6",        "rev 7",
-        "rev 8",        "rev 9",        "rev 10",       "rev 11",
-        "rev 12",       "rev 13",       "rev 14",       "rev 15",
+	"step A-0",	"rev 1",	"rev 2",	"rev 3",
+	"rev 4",	"rev 5",	"rev 6",	"rev 7",
+	"rev 8",	"rev 9",	"rev 10",	"rev 11",
+	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
 /* Steppings for PXA2[15]0 */
@@ -351,9 +353,9 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_80321_600_B0,	CPU_CLASS_XSCALE,	"i80321 600MHz",
 	  i80321_steppings },
 
-	{ CPU_ID_80219_400,     CPU_CLASS_XSCALE,       "i80219 400MHz",
+	{ CPU_ID_80219_400,	CPU_CLASS_XSCALE,	"i80219 400MHz",
 	  i80219_steppings },
-	{ CPU_ID_80219_600,     CPU_CLASS_XSCALE,       "i80219 600MHz",
+	{ CPU_ID_80219_600,	CPU_CLASS_XSCALE,	"i80219 600MHz",
 	  i80219_steppings },
 
 	{ CPU_ID_PXA250A,	CPU_CLASS_XSCALE,	"PXA250",
@@ -366,7 +368,7 @@ const struct cpuidtab cpuids[] = {
 	  pxa2x0_steppings },
 	{ CPU_ID_PXA250C, 	CPU_CLASS_XSCALE,	"PXA250",
 	  pxa2x0_steppings },
-	{ CPU_ID_PXA27X,        CPU_CLASS_XSCALE,       "PXA27x",
+	{ CPU_ID_PXA27X,	CPU_CLASS_XSCALE,	"PXA27x",
 	  pxa27x_steppings },
 	{ CPU_ID_PXA210C, 	CPU_CLASS_XSCALE,	"PXA210",
 	  pxa2x0_steppings },
@@ -377,6 +379,17 @@ const struct cpuidtab cpuids[] = {
 	  ixp425_steppings },
 	{ CPU_ID_IXP425_266,	CPU_CLASS_XSCALE,	"IXP425 266MHz",
 	  ixp425_steppings },
+
+	{ CPU_ID_ARM1136JS,	CPU_CLASS_ARM11J,	"ARM1136J-S",
+	  generic_steppings },
+	{ CPU_ID_ARM1136JSR1,	CPU_CLASS_ARM11J,	"ARM1136J-S R1",
+	  generic_steppings },
+
+	{ CPU_ID_OMAP3430,	CPU_CLASS_ARMv7,	"ARM OMAP3430",
+	  generic_steppings },
+	{ CPU_ID_OMAP3530,	CPU_CLASS_ARMv7,	"ARM OMAP3530",
+	  generic_steppings },
+
 
 	{ 0, CPU_CLASS_NONE, NULL, NULL }
 };
@@ -400,7 +413,10 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM9EJ-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9EJS */
 	{ "ARM10E",	"CPU_ARM10" },		/* CPU_CLASS_ARM10E */
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
-	{ "XScale",	"CPU_XSCALE_..." }	/* CPU_CLASS_XSCALE */
+	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
+	{ "ARM11J",	"CPU_ARM11" },		/* CPU_CLASS_ARM11J */
+	{ "ARMv7",	"CPU_ARMv7" }		/* CPU_CLASS_ARMv7 */
+
 };
 
 /*
@@ -477,6 +493,8 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	case CPU_CLASS_ARM10E:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
+	case CPU_CLASS_ARM11J:
+	case CPU_CLASS_ARMv7:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
 			printf(" DC disabled");
 		else
@@ -555,6 +573,13 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #ifdef CPU_ARM10
 	case CPU_CLASS_ARM10E:
 #endif
+#ifdef CPU_ARM11
+	case CPU_CLASS_ARM11J:
+#endif
+#ifdef CPU_ARMv7
+	case CPU_CLASS_ARMv7:
+#endif
+
 #if defined(CPU_SA110) || defined(CPU_SA1100) || \
     defined(CPU_SA1110) || defined(CPU_IXP12X0)
 	case CPU_CLASS_SA1:

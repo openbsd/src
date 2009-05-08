@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.4 2008/09/11 02:38:14 kevlo Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.5 2009/05/08 02:57:32 drahn Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  *      +-+-+-+-+-+-------------------------------------+-+-+-+---------+
  */
 
-#define	PSR_FLAGS 0xf0000000	/* flags */
+#define PSR_FLAGS 0xf0000000	/* flags */
 #define PSR_N_bit (1 << 31)	/* negative */
 #define PSR_Z_bit (1 << 30)	/* zero */
 #define PSR_C_bit (1 << 29)	/* carry */
@@ -118,7 +118,7 @@
 #define CPU_ID_ARM_LTD		0x41000000 /* 'A' */
 #define CPU_ID_DEC		0x44000000 /* 'D' */
 #define CPU_ID_INTEL		0x69000000 /* 'i' */
-#define	CPU_ID_TI		0x54000000 /* 'T' */
+#define CPU_ID_TI		0x54000000 /* 'T' */
 
 /* How to decide what format the CPUID is in. */
 #define CPU_ID_ISOLD(x)		(((x) & 0x0000f000) == 0x00000000)
@@ -143,6 +143,8 @@
 #define CPU_ID_ARCH_V5		0x00030000
 #define CPU_ID_ARCH_V5T		0x00040000
 #define CPU_ID_ARCH_V5TE	0x00050000
+#define CPU_ID_ARCH_V6		0x00070000
+#define CPU_ID_ARCH_V7		0x00080000
 #define CPU_ID_VARIANT_MASK	0x00f00000
 
 /* Next three nybbles are part number */
@@ -187,13 +189,16 @@
 #define CPU_ID_ARM926EJS	0x41069260
 #define CPU_ID_ARM940T		0x41029400 /* XXX no MMU */
 #define CPU_ID_ARM946ES		0x41049460 /* XXX no MMU */
-#define	CPU_ID_ARM966ES		0x41049660 /* XXX no MMU */
-#define	CPU_ID_ARM966ESR1	0x41059660 /* XXX no MMU */
+#define CPU_ID_ARM966ES		0x41049660 /* XXX no MMU */
+#define CPU_ID_ARM966ESR1	0x41059660 /* XXX no MMU */
 #define CPU_ID_ARM1020E		0x4115a200 /* (AKA arm10 rev 1) */
 #define CPU_ID_ARM1022ES	0x4105a220
+#define CPU_ID_ARM1022EJS	0x4106a260
+#define CPU_ID_ARM1136JS	0x4107b360
+#define CPU_ID_ARM1136JSR1	0x4117b360
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
-#define	CPU_ID_TI925T		0x54029250
+#define CPU_ID_TI925T		0x54029250
 #define CPU_ID_SA1110		0x6901b110
 #define CPU_ID_IXP1200		0x6901c120
 #define CPU_ID_80200		0x69052000
@@ -208,13 +213,16 @@
 #define CPU_ID_80219_400        0x69052e20
 #define CPU_ID_80219_600        0x69052e30
 #define CPU_ID_PXA27X		0x69054110
-#define	CPU_ID_80321_400	0x69052420
-#define	CPU_ID_80321_600	0x69052430
-#define	CPU_ID_80321_400_B0	0x69052c20
-#define	CPU_ID_80321_600_B0	0x69052c30
-#define	CPU_ID_IXP425_533	0x690541c0
-#define	CPU_ID_IXP425_400	0x690541d0
-#define	CPU_ID_IXP425_266	0x690541f0
+#define CPU_ID_80321_400	0x69052420
+#define CPU_ID_80321_600	0x69052430
+#define CPU_ID_80321_400_B0	0x69052c20
+#define CPU_ID_80321_600_B0	0x69052c30
+#define CPU_ID_IXP425_533	0x690541c0
+#define CPU_ID_IXP425_400	0x690541d0
+#define CPU_ID_IXP425_266	0x690541f0
+#define CPU_ID_OMAP3430		0x411fc080
+#define CPU_ID_OMAP3530		0x411fc090	/* XXX */
+
 
 /* ARM3-specific coprocessor 15 registers */
 #define ARM3_CP15_FLUSH		1
@@ -285,29 +293,29 @@
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
 
 /* XScale Auxillary Control Register (CP15 register 1, opcode2 1) */
-#define	XSCALE_AUXCTL_K		0x00000001 /* dis. write buffer coalescing */
-#define	XSCALE_AUXCTL_P		0x00000002 /* ECC protect page table access */
-#define	XSCALE_AUXCTL_MD_WB_RA	0x00000000 /* mini-D$ wb, read-allocate */
-#define	XSCALE_AUXCTL_MD_WB_RWA	0x00000010 /* mini-D$ wb, read/write-allocate */
-#define	XSCALE_AUXCTL_MD_WT	0x00000020 /* mini-D$ wt, read-allocate */
-#define	XSCALE_AUXCTL_MD_MASK	0x00000030
+#define XSCALE_AUXCTL_K		0x00000001 /* dis. write buffer coalescing */
+#define XSCALE_AUXCTL_P		0x00000002 /* ECC protect page table access */
+#define XSCALE_AUXCTL_MD_WB_RA	0x00000000 /* mini-D$ wb, read-allocate */
+#define XSCALE_AUXCTL_MD_WB_RWA	0x00000010 /* mini-D$ wb, read/write-allocate */
+#define XSCALE_AUXCTL_MD_WT	0x00000020 /* mini-D$ wt, read-allocate */
+#define XSCALE_AUXCTL_MD_MASK	0x00000030
 
 /* Cache type register definitions */
-#define	CPU_CT_ISIZE(x)		((x) & 0xfff)		/* I$ info */
-#define	CPU_CT_DSIZE(x)		(((x) >> 12) & 0xfff)	/* D$ info */
-#define	CPU_CT_S		(1U << 24)		/* split cache */
-#define	CPU_CT_CTYPE(x)		(((x) >> 25) & 0xf)	/* cache type */
+#define CPU_CT_ISIZE(x)		((x) & 0xfff)		/* I$ info */
+#define CPU_CT_DSIZE(x)		(((x) >> 12) & 0xfff)	/* D$ info */
+#define CPU_CT_S		(1U << 24)		/* split cache */
+#define CPU_CT_CTYPE(x)		(((x) >> 25) & 0xf)	/* cache type */
 
-#define	CPU_CT_CTYPE_WT		0	/* write-through */
-#define	CPU_CT_CTYPE_WB1	1	/* write-back, clean w/ read */
-#define	CPU_CT_CTYPE_WB2	2	/* w/b, clean w/ cp15,7 */
-#define	CPU_CT_CTYPE_WB6	6	/* w/b, cp15,7, lockdown fmt A */
-#define	CPU_CT_CTYPE_WB7	7	/* w/b, cp15,7, lockdown fmt B */
+#define CPU_CT_CTYPE_WT		0	/* write-through */
+#define CPU_CT_CTYPE_WB1	1	/* write-back, clean w/ read */
+#define CPU_CT_CTYPE_WB2	2	/* w/b, clean w/ cp15,7 */
+#define CPU_CT_CTYPE_WB6	6	/* w/b, cp15,7, lockdown fmt A */
+#define CPU_CT_CTYPE_WB7	7	/* w/b, cp15,7, lockdown fmt B */
 
-#define	CPU_CT_xSIZE_LEN(x)	((x) & 0x3)		/* line size */
-#define	CPU_CT_xSIZE_M		(1U << 2)		/* multiplier */
-#define	CPU_CT_xSIZE_ASSOC(x)	(((x) >> 3) & 0x7)	/* associativity */
-#define	CPU_CT_xSIZE_SIZE(x)	(((x) >> 6) & 0x7)	/* size */
+#define CPU_CT_xSIZE_LEN(x)	((x) & 0x3)		/* line size */
+#define CPU_CT_xSIZE_M		(1U << 2)		/* multiplier */
+#define CPU_CT_xSIZE_ASSOC(x)	(((x) >> 3) & 0x7)	/* associativity */
+#define CPU_CT_xSIZE_SIZE(x)	(((x) >> 6) & 0x7)	/* size */
 
 /* Fault status register definitions */
 
@@ -331,13 +339,13 @@
 #define FAULT_PERM_S    0x0d /* Permission -- Section */
 #define FAULT_PERM_P    0x0f /* Permission -- Page */
 
-#define	FAULT_IMPRECISE	0x400	/* Imprecise exception (XSCALE) */
+#define FAULT_IMPRECISE	0x400	/* Imprecise exception (XSCALE) */
 
 /*
  * Address of the vector page, low and high versions.
  */
-#define	ARM_VECTORS_LOW		0x00000000U
-#define	ARM_VECTORS_HIGH	0xffff0000U
+#define ARM_VECTORS_LOW		0x00000000U
+#define ARM_VECTORS_HIGH	0xffff0000U
 
 /*
  * ARM Instructions

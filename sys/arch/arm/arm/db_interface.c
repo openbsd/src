@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.5 2006/05/26 17:06:39 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.6 2009/05/08 02:57:32 drahn Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /* 
@@ -43,6 +43,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <arm/db_machdep.h>
+#include <machine/pmap.h>
 #include <arm/undefined.h>
 #include <ddb/db_access.h>
 #include <ddb/db_command.h>

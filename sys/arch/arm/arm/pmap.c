@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.21 2009/04/14 16:01:04 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.22 2009/05/08 02:57:32 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -2441,6 +2441,30 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 }
 
 void
+pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable)
+{
+	struct vm_page *pg;
+	struct pv_entry *pv;
+	pt_entry_t *pte;
+
+	pmap_kenter_pa(va, pa, prot);
+
+	if (cacheable == 0) {
+		if ((pg = PHYS_TO_VM_PAGE(pa)) != NULL) {
+			simple_lock(&pg->mdpage.pvh_slock);
+			pv = pmap_find_pv(pg, pmap_kernel(), va);
+			if (pv != NULL)
+				pv->pv_flags |= PVF_NC;
+			simple_unlock(&pg->mdpage.pvh_slock);
+		}
+
+		pte = vtopte(va);
+		*pte &= ~L2_S_CACHE_MASK;
+		PTE_SYNC(pte);
+	}
+}
+
+void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
 	struct l2_bucket *l2b;
@@ -4688,6 +4712,52 @@ pmap_pte_init_arm10(void)
 
 }
 #endif /* CPU_ARM10 */
+
+#if defined(CPU_ARM11)
+void
+pmap_pte_init_arm11(void)
+{
+
+	/*
+	 * XXX 
+	 * ARM11 is compatible with generic, but we want to use
+	 * write-through caching for now.
+	 */
+	pmap_pte_init_generic();
+
+	pte_l1_s_cache_mode = L1_S_B | L1_S_C;
+	pte_l2_l_cache_mode = L2_B | L2_C;
+	pte_l2_s_cache_mode = L2_B | L2_C;
+
+	pte_l1_s_cache_mode_pt = L1_S_C;
+	pte_l2_l_cache_mode_pt = L2_C;
+	pte_l2_s_cache_mode_pt = L2_C;
+
+}
+#endif /* CPU_ARM11 */
+
+#if defined(CPU_ARMv7)
+void
+pmap_pte_init_armv7(void)
+{
+
+	/*
+	 * XXX 
+	 * ARMv7 is compatible with generic, but we to use proper TEX settings
+	 * - not yet however...
+	 */
+	pmap_pte_init_generic();
+
+	pte_l1_s_cache_mode = L1_S_B | L1_S_C;
+	pte_l2_l_cache_mode = L2_B | L2_C;
+	pte_l2_s_cache_mode = L2_B | L2_C;
+
+	pte_l1_s_cache_mode_pt = L1_S_C;
+	pte_l2_l_cache_mode_pt = L2_C;
+	pte_l2_s_cache_mode_pt = L2_C;
+
+}
+#endif /* CPU_ARMv7 */
 
 #if ARM_MMU_SA1 == 1
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.9 2007/10/10 15:53:51 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.10 2009/05/08 02:57:32 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -273,6 +273,9 @@ void	pmap_postinit(void);
 
 void	vector_page_setprot(int);
 
+/* XXX */
+void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
+
 const struct pmap_devmap *pmap_devmap_find_pa(paddr_t, psize_t);
 const struct pmap_devmap *pmap_devmap_find_va(vaddr_t, vsize_t);
 
@@ -400,6 +403,12 @@ void	pmap_pte_init_arm9(void);
 #if defined(CPU_ARM10)
 void	pmap_pte_init_arm10(void);
 #endif /* CPU_ARM10 */
+#if defined(CPU_ARM11)
+void	pmap_pte_init_arm11(void);
+#endif /* CPU_ARM11 */
+#if defined(CPU_ARMv7)
+void	pmap_pte_init_armv7(void);
+#endif /* CPU_ARMv7 */
 #endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
 
 #if ARM_MMU_SA1 == 1

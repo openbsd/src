@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.4 2008/09/11 02:38:14 kevlo Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.5 2009/05/08 02:57:32 drahn Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -76,6 +76,18 @@
 #define	ARM_ARCH_5	0
 #endif
 
+#if defined(CPU_ARM11)
+#define ARM_ARCH_6     1
+#else 
+#define ARM_ARCH_6     0
+#endif
+
+#if defined(CPU_ARMv7)
+#define ARM_ARCH_7     1
+#else 
+#define ARM_ARCH_7     0
+#endif
+
 /*
  * Define which MMU classes are configured:
  *
@@ -99,7 +111,7 @@
 
 #if (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
      defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM9E) ||	\
-     defined(CPU_ARM10))
+     defined(CPU_ARM10) || defined(CPU_ARM11) || defined(CPU_ARMv7) )
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0
@@ -119,8 +131,14 @@
 #define	ARM_MMU_XSCALE		0
 #endif
 
+#if defined(CPU_ARMv7)
+#define ARM_MMU_v7		1
+#else
+#define ARM_MMU_v7		0
+#endif
+
 #define	ARM_NMMUS		(ARM_MMU_MEMC + ARM_MMU_GENERIC +	\
-				 ARM_MMU_SA1 + ARM_MMU_XSCALE)
+				 ARM_MMU_SA1 + ARM_MMU_XSCALE + ARM_MMU_v7)
 
 /*
  * Define features that may be present on a subset of CPUs

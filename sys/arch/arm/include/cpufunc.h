@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.5 2008/09/11 02:38:14 kevlo Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.6 2009/05/08 02:57:32 drahn Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -360,7 +360,26 @@ void	armv5_ec_idcache_wbinv_all	(void);
 void	armv5_ec_idcache_wbinv_range	(vaddr_t, vsize_t);
 #endif
 
-#if defined (CPU_ARM10)
+#ifdef CPU_ARM11
+void	arm11_setttb		(u_int);
+
+void	arm11_tlb_flushID_SE	(u_int);
+void	arm11_tlb_flushI_SE	(u_int);
+
+void	arm11_context_switch	(u_int);
+
+void	arm11_setup		(char	*string);
+void	arm11_tlb_flushID	(void);
+void	arm11_tlb_flushI	(void);
+void	arm11_tlb_flushD	(void);
+void	arm11_tlb_flushD_SE	(u_int	va);
+
+void	arm11_drain_writebuf	(void);
+void	arm11_cpu_sleep		(int	mode);
+#endif
+
+
+#if defined (CPU_ARM10) || defined(CPU_ARM11)
 void	armv5_setttb			(u_int);
 
 void	armv5_icache_sync_all		(void);
@@ -379,6 +398,44 @@ extern unsigned armv5_dcache_sets_inc;
 extern unsigned armv5_dcache_index_max;
 extern unsigned armv5_dcache_index_inc;
 #endif
+
+#ifdef CPU_ARMv7
+void	armv7_setttb		(u_int);
+
+void	armv7_tlb_flushID_SE	(u_int);
+void	armv7_tlb_flushI_SE	(u_int);
+
+void	armv7_context_switch	(u_int);
+void	armv7_context_switch	(u_int);
+
+void	armv7_setup		(char *string);
+void	armv7_tlb_flushID	(void);
+void	armv7_tlb_flushI	(void);
+void	armv7_tlb_flushD	(void);
+void	armv7_tlb_flushD_SE	(u_int va);
+
+void	armv7_drain_writebuf	(void);
+void	armv7_cpu_sleep		(int mode);
+
+void	armv7_setttb			(u_int);
+
+void	armv7_icache_sync_all		(void);
+void	armv7_icache_sync_range		(vaddr_t, vsize_t);
+
+void	armv7_dcache_wbinv_all		(void);
+void	armv7_dcache_wbinv_range	(vaddr_t, vsize_t);
+void	armv7_dcache_inv_range		(vaddr_t, vsize_t);
+void	armv7_dcache_wb_range		(vaddr_t, vsize_t);
+
+void	armv7_idcache_wbinv_all		(void);
+void	armv7_idcache_wbinv_range	(vaddr_t, vsize_t);
+
+extern unsigned armv7_dcache_sets_max;
+extern unsigned armv7_dcache_sets_inc;
+extern unsigned armv7_dcache_index_max;
+extern unsigned armv7_dcache_index_inc;
+#endif
+
 
 #if defined(CPU_ARM9) || defined(CPU_ARM9E) || defined(CPU_ARM10) || \
     defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
@@ -459,10 +516,10 @@ __set_cpsr_c(u_int bic, u_int eor)
 	u_int32_t	tmp, ret;
 
 	__asm __volatile(
-		"mrs     %0, cpsr\n"	/* Get the CPSR */
+		"mrs	%0, cpsr\n"	/* Get the CPSR */
 		"bic	 %1, %0, %2\n"	/* Clear bits */
 		"eor	 %1, %1, %3\n"	/* XOR bits */
-		"msr     cpsr_c, %1\n"	/* Set the control field of CPSR */
+		"msr	cpsr_c, %1\n"	/* Set the control field of CPSR */
 	: "=&r" (ret), "=&r" (tmp)
 	: "r" (bic), "r" (eor));
 
