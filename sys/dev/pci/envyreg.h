@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.6 2009/04/25 12:15:10 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.7 2009/05/08 15:31:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -147,38 +147,44 @@
 /*
  * AK4524 control registers
  */
-#define AK_PWR			0x00
-#define   AK_PWR_DA		0x01
-#define   AK_PWR_AD		0x02
-#define   AK_PWR_VREF		0x04
-#define AK_RST			0x01
-#define   AK_RST_DA		0x01
-#define   AK_RST_AD		0x02
-#define AK_FMT			0x02
-#define   AK_FMT_NORM		0
-#define   AK_FMT_DBL	       	0x01
-#define   AK_FMT_QUAD		0x02
-#define   AK_FMT_QAUDFILT	0x04
-#define   AK_FMT_256		0
-#define   AK_FMT_512		0x04
-#define   AK_FMT_1024		0x08
-#define   AK_FMT_384		0x10
-#define   AK_FMT_768		0x14
-#define   AK_FMT_LSB16		0
-#define   AK_FMT_LSB20		0x20
-#define   AK_FMT_MSB24		0x40
-#define   AK_FMT_IIS24		0x60
-#define   AK_FMT_LSB24		0x80
-#define AK_DEEMVOL		0x03
-#define   AK_DEEM_44K1		0x00
-#define   AK_DEEM_OFF		0x01
-#define   AK_DEEM_48K		0x02
-#define   AK_DEEM_32K		0x03
-#define   AK_MUTE		0x80
-#define AK_ADC_GAIN0		0x04
-#define	AK_ADC_GAIN1		0x05
-#define AK_DAC_GAIN0		0x06
-#define AK_DAC_GAIN1		0x07
+#define AK4524_PWR		0x00
+#define   AK4524_PWR_DA		0x01
+#define   AK4524_PWR_AD		0x02
+#define   AK4524_PWR_VREF	0x04
+#define AK4524_RST		0x01
+#define   AK4524_RST_DA		0x01
+#define   AK4524_RST_AD		0x02
+#define AK4524_FMT		0x02
+#define   AK4524_FMT_NORM	0
+#define   AK4524_FMT_DBL       	0x01
+#define   AK4524_FMT_QUA	0x02
+#define   AK4524_FMT_QAUDFILT	0x04
+#define   AK4524_FMT_256	0
+#define   AK4524_FMT_512	0x04
+#define   AK4524_FMT_1024	0x08
+#define   AK4524_FMT_384	0x10
+#define   AK4524_FMT_768	0x14
+#define   AK4524_FMT_LSB16	0
+#define   AK4524_FMT_LSB20	0x20
+#define   AK4524_FMT_MSB24	0x40
+#define   AK4524_FMT_IIS24	0x60
+#define   AK4524_FMT_LSB24	0x80
+#define AK4524_DEEMVOL		0x03
+#define   AK4524_DEEM_44K1	0x00
+#define   AK4524_DEEM_OFF	0x01
+#define   AK4524_DEEM_48K	0x02
+#define   AK4524_DEEM_32K	0x03
+#define   AK4524_MUTE		0x80
+#define AK4524_ADC_GAIN0	0x04
+#define	AK4524_ADC_GAIN1	0x05
+#define AK4524_DAC_GAIN0	0x06
+#define AK4524_DAC_GAIN1	0x07
+
+/*
+ * AK4358 control registers
+ */
+#define AK4358_ATT(chan)	((chan) <= 5 ? 0x4 + (chan) : 0xb - 6 + (chan))
+
 
 /*
  * default formats

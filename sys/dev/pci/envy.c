@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.22 2009/05/08 15:17:41 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.23 2009/05/08 15:31:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,7 +24,6 @@
  *
  * - implement HT mixer, midi uart, spdif, init ADC/DACs for >48kHz modes
  *
- * - rename s/ak/spi/g
  */
 
 #include <sys/param.h>
@@ -69,8 +68,8 @@ int  envy_gpio_getdir(struct envy_softc *);
 void envy_gpio_setdir(struct envy_softc *, int);
 int  envy_eeprom_gpioxxx(struct envy_softc *, int);
 void envy_reset(struct envy_softc *);
-int  envy_ak_read(struct envy_softc *, int, int);
-void envy_ak_write(struct envy_softc *, int, int, int);
+int  envy_codec_read(struct envy_softc *, int, int);
+void envy_codec_write(struct envy_softc *, int, int, int);
 int  envy_intr(void *);
 
 int envy_lineout_getsrc(struct envy_softc *, int);
@@ -102,13 +101,13 @@ int envy_set_port(void *, struct mixer_ctrl *);
 int envy_get_props(void *);
 
 void delta_init(struct envy_softc *);
-void delta_ak_write(struct envy_softc *, int, int, int);
+void delta_codec_write(struct envy_softc *, int, int, int);
 
 void julia_init(struct envy_softc *);
-void julia_ak_write(struct envy_softc *, int, int, int);
+void julia_codec_write(struct envy_softc *, int, int, int);
 
 void unkenvy_init(struct envy_softc *);
-void unkenvy_ak_write(struct envy_softc *, int, int, int);
+void unkenvy_codec_write(struct envy_softc *, int, int, int);
 int unkenvy_codec_ndev(struct envy_softc *);
 
 int ak4524_dac_ndev(struct envy_softc *);
@@ -204,14 +203,14 @@ struct envy_card envy_cards[] = {
 		"delta",
 		8, &ak4524_adc, 8, &ak4524_dac,
 		delta_init,
-		delta_ak_write,
+		delta_codec_write,
 		NULL
 	}, {
 		0,
 		"unkenvy",
 		8, &unkenvy_codec, 8, &unkenvy_codec,
 		unkenvy_init,
-		unkenvy_ak_write
+		unkenvy_codec_write
 	}
 }, envy_cards_ht[] = {
 	{
@@ -219,14 +218,14 @@ struct envy_card envy_cards[] = {
 		"julia",
 		2, &unkenvy_codec, 2, &unkenvy_codec,
 		julia_init,
-		julia_ak_write,
+		julia_codec_write,
 		julia_eeprom
 	}, {
 		0,
 		"unkenvy",
 		2, &unkenvy_codec, 8, &unkenvy_codec,
 		unkenvy_init,
-		unkenvy_ak_write
+		unkenvy_codec_write
 	}
 };
 
@@ -241,20 +240,22 @@ delta_init(struct envy_softc *sc)
 	int dev;
 
 	for (dev = 0; dev < 4 /* XXX */; dev++) {
-		envy_ak_write(sc, dev, AK_RST, 0x0);
+		envy_codec_write(sc, dev, AK4524_RST, 0x0);
 		delay(300);
-		envy_ak_write(sc, dev, AK_RST, AK_RST_AD | AK_RST_DA);
-		envy_ak_write(sc, dev, AK_FMT, AK_FMT_IIS24);
-		sc->ak[dev].reg[AK_DEEMVOL] = AK_DEEM_OFF;
-		sc->ak[dev].reg[AK_ADC_GAIN0] = 0x7f;
-		sc->ak[dev].reg[AK_ADC_GAIN1] = 0x7f;
-		sc->ak[dev].reg[AK_DAC_GAIN0] = 0x7f;
-		sc->ak[dev].reg[AK_DAC_GAIN1] = 0x7f;
+		envy_codec_write(sc, dev, AK4524_RST,
+		    AK4524_RST_AD | AK4524_RST_DA);
+		envy_codec_write(sc, dev, AK4524_FMT,
+		    AK4524_FMT_IIS24);
+		sc->ak[dev].reg[AK4524_DEEMVOL] = AK4524_DEEM_OFF;
+		sc->ak[dev].reg[AK4524_ADC_GAIN0] = 0x7f;
+		sc->ak[dev].reg[AK4524_ADC_GAIN1] = 0x7f;
+		sc->ak[dev].reg[AK4524_DAC_GAIN0] = 0x7f;
+		sc->ak[dev].reg[AK4524_DAC_GAIN1] = 0x7f;
 	}
 }
 
 void
-delta_ak_write(struct envy_softc *sc, int dev, int addr, int data)
+delta_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 {
 	int bits, i, reg;
 
@@ -290,13 +291,13 @@ delta_ak_write(struct envy_softc *sc, int dev, int addr, int data)
 void
 julia_init(struct envy_softc *sc)
 {
-	envy_ak_write(sc, 0, 0, 0);	/* reset */
+	envy_codec_write(sc, 0, 0, 0);	/* reset */
 	delay(300);
-	envy_ak_write(sc, 0, 0, 0x87);	/* i2s mode */
+	envy_codec_write(sc, 0, 0, 0x87);	/* i2s mode */
 }
 
 void
-julia_ak_write(struct envy_softc *sc, int dev, int addr, int data)
+julia_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 {
 #define JULIA_AK4358_ADDR	0x11
 	envy_i2c_write(sc, JULIA_AK4358_ADDR, addr, data);
@@ -313,7 +314,7 @@ unkenvy_init(struct envy_softc *sc)
 }
 
 void
-unkenvy_ak_write(struct envy_softc *sc, int dev, int addr, int data)
+unkenvy_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 {
 }
 
@@ -372,13 +373,14 @@ ak4524_dac_get(struct envy_softc *sc, struct mixer_ctrl *ctl, int idx)
 
 	ndev = sc->card->noch;
 	if (idx < ndev) {
-		val = envy_ak_read(sc, idx / 2, (idx % 2) + AK_DAC_GAIN0);
+		val = envy_codec_read(sc, idx / 2,
+		    (idx % 2) + AK4524_DAC_GAIN0);
 		ctl->un.value.num_channels = 1;
 		ctl->un.value.level[0] = 2 * val;
 	} else {
 		idx -= ndev;
-		val = envy_ak_read(sc, idx, AK_DEEMVOL);
-		ctl->un.ord = (val & AK_MUTE) ? 1 : 0;
+		val = envy_codec_read(sc, idx, AK4524_DEEMVOL);
+		ctl->un.ord = (val & AK4524_MUTE) ? 1 : 0;
 	}
 }
 
@@ -392,13 +394,14 @@ ak4524_dac_set(struct envy_softc *sc, struct mixer_ctrl *ctl, int idx)
 		if (ctl->un.value.num_channels != 1)
 			return EINVAL;
 		val = ctl->un.value.level[0] / 2;
-		envy_ak_write(sc, idx / 2, (idx % 2) + AK_DAC_GAIN0, val);
+		envy_codec_write(sc, idx / 2,
+		    (idx % 2) + AK4524_DAC_GAIN0, val);
 	} else {
 		idx -= ndev;
 		if (ctl->un.ord >= 2)
 			return EINVAL;
-		val = AK_DEEM_OFF | (ctl->un.ord ? AK_MUTE : 0);
-		envy_ak_write(sc, idx, AK_DEEMVOL, val);
+		val = AK4524_DEEM_OFF | (ctl->un.ord ? AK4524_MUTE : 0);
+		envy_codec_write(sc, idx, AK4524_DEEMVOL, val);
 	}
 	return 0;
 }
@@ -429,7 +432,7 @@ ak4524_adc_get(struct envy_softc *sc, struct mixer_ctrl *ctl, int idx)
 {
 	int val;
 
-	val = envy_ak_read(sc, idx / 2, (idx % 2) + AK_ADC_GAIN0);
+	val = envy_codec_read(sc, idx / 2, (idx % 2) + AK4524_ADC_GAIN0);
 	ctl->un.value.num_channels = 1;
 	ctl->un.value.level[0] = 2 * val;
 }
@@ -442,7 +445,7 @@ ak4524_adc_set(struct envy_softc *sc, struct mixer_ctrl *ctl, int idx)
 	if (ctl->un.value.num_channels != 1)
 		return EINVAL;
 	val = ctl->un.value.level[0] / 2;
-	envy_ak_write(sc, idx / 2, (idx % 2) + AK_ADC_GAIN0, val);
+	envy_codec_write(sc, idx / 2, (idx % 2) + AK4524_ADC_GAIN0, val);
 	return 0;
 }
 
@@ -589,16 +592,16 @@ envy_i2c_write(struct envy_softc *sc, int dev, int addr, int data)
 }
 
 int
-envy_ak_read(struct envy_softc *sc, int dev, int addr) {
+envy_codec_read(struct envy_softc *sc, int dev, int addr) {
 	return sc->ak[dev].reg[addr];
 }
 
 void
-envy_ak_write(struct envy_softc *sc, int dev, int addr, int data)
+envy_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 {
-	DPRINTFN(2, "envy_ak_write: %d, %d, 0x%x\n", dev, addr, data);
+	DPRINTFN(2, "envy_codec_write: %d, %d, 0x%x\n", dev, addr, data);
 	sc->ak[dev].reg[addr] = data;
-	sc->card->ak_write(sc, dev, addr, data);
+	sc->card->codec_write(sc, dev, addr, data);
 }
 
 int
@@ -702,7 +705,8 @@ envy_intr(void *self)
 }
 
 int
-envy_lineout_getsrc(struct envy_softc *sc, int out) {
+envy_lineout_getsrc(struct envy_softc *sc, int out)
+{
 	int reg, shift, src;
 
 	reg = bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_OUTSRC);
@@ -724,7 +728,8 @@ envy_lineout_getsrc(struct envy_softc *sc, int out) {
 }
 
 void
-envy_lineout_setsrc(struct envy_softc *sc, int out, int src) {
+envy_lineout_setsrc(struct envy_softc *sc, int out, int src)
+{
 	int reg, shift, mask, sel;
 	
 	if (src < ENVY_MIX_OUTSRC_DMA) {
@@ -767,7 +772,8 @@ envy_lineout_setsrc(struct envy_softc *sc, int out, int src) {
 
 
 int
-envy_spdout_getsrc(struct envy_softc *sc, int out) {
+envy_spdout_getsrc(struct envy_softc *sc, int out)
+{
 	int reg, src, sel;
 
 	reg = bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_SPDROUTE);
@@ -789,7 +795,8 @@ envy_spdout_getsrc(struct envy_softc *sc, int out) {
 }
 
 void
-envy_spdout_setsrc(struct envy_softc *sc, int out, int src) {
+envy_spdout_setsrc(struct envy_softc *sc, int out, int src)
+{
 	int reg, shift, mask, sel;
 	
 	reg = bus_space_read_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_SPDROUTE);
@@ -828,7 +835,8 @@ envy_spdout_setsrc(struct envy_softc *sc, int out, int src) {
 }
 
 void
-envy_mon_getvol(struct envy_softc *sc, int idx, int ch, int *val) {
+envy_mon_getvol(struct envy_softc *sc, int idx, int ch, int *val)
+{
 	int reg;
 
 	bus_space_write_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONIDX, idx);
@@ -837,7 +845,8 @@ envy_mon_getvol(struct envy_softc *sc, int idx, int ch, int *val) {
 }
 
 void
-envy_mon_setvol(struct envy_softc *sc, int idx, int ch, int val) {
+envy_mon_setvol(struct envy_softc *sc, int idx, int ch, int val)
+{
 	int reg;
 
 	bus_space_write_2(sc->mt_iot, sc->mt_ioh, ENVY_MT_MONIDX, idx);
@@ -847,7 +856,8 @@ envy_mon_setvol(struct envy_softc *sc, int idx, int ch, int val) {
 }
 
 int
-envymatch(struct device *parent, void *match, void *aux) {
+envymatch(struct device *parent, void *match, void *aux)
+{
 	return pci_matchbyid((struct pci_attach_args *)aux, envy_matchids,
 	    sizeof(envy_matchids) / sizeof(envy_matchids[0]));
 }
