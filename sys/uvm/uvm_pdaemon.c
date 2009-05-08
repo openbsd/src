@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.43 2009/05/04 18:08:06 oga Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.44 2009/05/08 13:50:15 ariane Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -96,9 +96,9 @@
  * local prototypes
  */
 
-static void		uvmpd_scan(void);
-static boolean_t	uvmpd_scan_inactive(struct pglist *);
-static void		uvmpd_tune(void);
+void		uvmpd_scan(void);
+boolean_t	uvmpd_scan_inactive(struct pglist *);
+void		uvmpd_tune(void);
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -155,7 +155,7 @@ uvm_wait(const char *wmsg)
  * => caller must call with page queues locked
  */
 
-static void
+void
 uvmpd_tune(void)
 {
 	UVMHIST_FUNC("uvmpd_tune"); UVMHIST_CALLED(pdhist);
@@ -328,7 +328,7 @@ uvm_aiodone_daemon(void *arg)
  * => we return TRUE if we are exiting because we met our target
  */
 
-static boolean_t
+boolean_t
 uvmpd_scan_inactive(struct pglist *pglst)
 {
 	boolean_t retval = FALSE;	/* assume we haven't hit target */

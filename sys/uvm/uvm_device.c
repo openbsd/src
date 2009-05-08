@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.30 2009/03/23 19:23:43 oga Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.31 2009/05/08 13:50:15 ariane Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -63,14 +63,13 @@ static simple_lock_data_t udv_lock;
  * functions
  */
 
-static void		udv_init(void);
-static void             udv_reference(struct uvm_object *);
-static void             udv_detach(struct uvm_object *);
-static int		udv_fault(struct uvm_faultinfo *, vaddr_t,
+void		udv_init(void);
+void		udv_reference(struct uvm_object *);
+void		udv_detach(struct uvm_object *);
+int		udv_fault(struct uvm_faultinfo *, vaddr_t,
 				       vm_page_t *, int, int, vm_fault_t,
 				       vm_prot_t, int);
-static boolean_t        udv_flush(struct uvm_object *, voff_t, voff_t,
-				       int);
+boolean_t	udv_flush(struct uvm_object *, voff_t, voff_t, int);
 
 /*
  * master pager structure
@@ -267,7 +266,7 @@ udv_attach(void *arg, vm_prot_t accessprot, voff_t off, vsize_t size)
  * => caller must call with object unlocked.
  */
 
-static void
+void
 udv_reference(struct uvm_object *uobj)
 {
 	UVMHIST_FUNC("udv_reference"); UVMHIST_CALLED(maphist);
@@ -287,7 +286,7 @@ udv_reference(struct uvm_object *uobj)
  * => caller must call with object unlocked and map locked.
  */
 
-static void
+void
 udv_detach(struct uvm_object *uobj)
 {
 	struct uvm_device *udv = (struct uvm_device *)uobj;
@@ -339,7 +338,7 @@ again:
  * flush pages out of a uvm object.   a no-op for devices.
  */
 
-static boolean_t
+boolean_t
 udv_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 {
 
@@ -362,7 +361,7 @@ udv_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
  * => NOTE: vaddr is the VA of pps[0] in ufi->entry, _NOT_ pps[centeridx]
  */
 
-static int
+int
 udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps, int npages,
     int centeridx, vm_fault_t fault_type, vm_prot_t access_type, int flags)
 {

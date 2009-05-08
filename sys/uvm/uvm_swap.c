@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.87 2009/03/23 22:07:41 oga Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.88 2009/05/08 13:50:15 ariane Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -229,24 +229,23 @@ struct rwlock swap_syscall_lock = RWLOCK_INITIALIZER("swplk");
 /*
  * prototypes
  */
-static void		 swapdrum_add(struct swapdev *, int);
-static struct swapdev	*swapdrum_getsdp(int);
+void		 swapdrum_add(struct swapdev *, int);
+struct swapdev	*swapdrum_getsdp(int);
 
-static struct swapdev	*swaplist_find(struct vnode *, int);
-static void		 swaplist_insert(struct swapdev *, 
-					     struct swappri *, int);
-static void		 swaplist_trim(void);
+struct swapdev	*swaplist_find(struct vnode *, int);
+void		 swaplist_insert(struct swapdev *, struct swappri *, int);
+void		 swaplist_trim(void);
 
-static int swap_on(struct proc *, struct swapdev *);
-static int swap_off(struct proc *, struct swapdev *);
+int swap_on(struct proc *, struct swapdev *);
+int swap_off(struct proc *, struct swapdev *);
 
-static void sw_reg_strategy(struct swapdev *, struct buf *, int);
-static void sw_reg_iodone(struct buf *);
-static void sw_reg_start(struct swapdev *);
+void sw_reg_strategy(struct swapdev *, struct buf *, int);
+void sw_reg_iodone(struct buf *);
+void sw_reg_start(struct swapdev *);
 
-static int uvm_swap_io(struct vm_page **, int, int, int);
+int uvm_swap_io(struct vm_page **, int, int, int);
 
-static void swapmount(void);
+void swapmount(void);
 
 #ifdef UVM_SWAP_ENCRYPT
 /* for swap encrypt */
@@ -476,7 +475,7 @@ uvm_swap_finicrypt_all(void)
  *	FREE it if we don't need it... this it to prevent malloc blocking
  *	here while adding swap)
  */
-static void
+void
 swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
 {
 	struct swappri *spp, *pspp;
@@ -528,7 +527,7 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
  * => caller must hold both swap_syscall_lock and uvm.swap_data_lock
  * => we return the swapdev we found (and removed)
  */
-static struct swapdev *
+struct swapdev *
 swaplist_find(struct vnode *vp, boolean_t remove)
 {
 	struct swapdev *sdp;
@@ -561,7 +560,7 @@ swaplist_find(struct vnode *vp, boolean_t remove)
  *
  * => caller must hold both swap_syscall_lock and uvm.swap_data_lock
  */
-static void
+void
 swaplist_trim(void)
 {
 	struct swappri *spp, *nextspp;
@@ -582,7 +581,7 @@ swaplist_trim(void)
  * => caller must hold swap_syscall_lock
  * => uvm.swap_data_lock should be unlocked (we may sleep)
  */
-static void
+void
 swapdrum_add(struct swapdev *sdp, int npages)
 {
 	u_long result;
@@ -602,7 +601,7 @@ swapdrum_add(struct swapdev *sdp, int npages)
  * => each swapdev takes one big contig chunk of the drum
  * => caller must hold uvm.swap_data_lock
  */
-static struct swapdev *
+struct swapdev *
 swapdrum_getsdp(int pgno)
 {
 	struct swapdev *sdp;
@@ -890,7 +889,7 @@ out:
  * => caller should leave uvm.swap_data_lock unlocked, we may lock it
  *	if needed.
  */
-static int
+int
 swap_on(struct proc *p, struct swapdev *sdp)
 {
 	static int count = 0;	/* static */
@@ -1088,7 +1087,7 @@ bad:
  *
  * => swap data should be locked, we will unlock.
  */
-static int
+int
 swap_off(struct proc *p, struct swapdev *sdp)
 {
 	int error = 0;
@@ -1237,7 +1236,7 @@ swstrategy(struct buf *bp)
 /*
  * sw_reg_strategy: handle swap i/o to regular files
  */
-static void
+void
 sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 {
 	struct vnode	*vp;
@@ -1414,7 +1413,7 @@ out: /* Arrive here at splbio */
  *
  * => reqs are sorted by disksort (above)
  */
-static void
+void
 sw_reg_start(struct swapdev *sdp)
 {
 	struct buf	*bp;
@@ -1449,7 +1448,7 @@ sw_reg_start(struct swapdev *sdp)
  *
  * => note that we can recover the vndbuf struct by casting the buf ptr
  */
-static void
+void
 sw_reg_iodone(struct buf *bp)
 {
 	struct vndbuf *vbp = (struct vndbuf *) bp;
@@ -1743,7 +1742,7 @@ uvm_swap_get(struct vm_page *page, int swslot, int flags)
  * uvm_swap_io: do an i/o operation to swap
  */
 
-static int
+int
 uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 {
 	daddr64_t startblk;
@@ -2018,7 +2017,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	return (result);
 }
 
-static void
+void
 swapmount(void)
 {
 	struct swapdev *sdp;

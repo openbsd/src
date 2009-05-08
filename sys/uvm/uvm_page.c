@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.78 2009/05/04 18:08:06 oga Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.79 2009/05/08 13:50:15 ariane Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -483,9 +483,9 @@ uvm_pageboot_alloc(vsize_t size)
  */
 
 /* subroutine: try to allocate from memory chunks on the specified freelist */
-static boolean_t uvm_page_physget_freelist(paddr_t *, int);
+boolean_t uvm_page_physget_freelist(paddr_t *, int);
 
-static boolean_t
+boolean_t
 uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 {
 	int lcv, x;

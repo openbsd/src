@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.52 2009/03/25 20:00:18 oga Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.53 2009/05/08 13:50:15 ariane Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ static struct uvm_advice uvmadvice[] = {
  * private prototypes
  */
 
-static void uvmfault_amapcopy(struct uvm_faultinfo *);
+void uvmfault_amapcopy(struct uvm_faultinfo *);
 static __inline void uvmfault_anonflush(struct vm_anon **, int);
 void	uvmfault_unlockmaps(struct uvm_faultinfo *, boolean_t);
 
@@ -228,7 +228,7 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
  * => if we are out of RAM we sleep (waiting for more)
  */
 
-static void
+void
 uvmfault_amapcopy(struct uvm_faultinfo *ufi)
 {
 

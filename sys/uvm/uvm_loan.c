@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_loan.c,v 1.29 2009/03/20 15:19:04 oga Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.30 2009/05/08 13:50:15 ariane Exp $	*/
 /*	$NetBSD: uvm_loan.c,v 1.22 2000/06/27 17:29:25 mrg Exp $	*/
 
 /*
@@ -105,12 +105,12 @@
  * local prototypes
  */
 
-static int	uvm_loananon(struct uvm_faultinfo *, void ***, 
+int		uvm_loananon(struct uvm_faultinfo *, void ***, 
 				int, struct vm_anon *);
 static int	uvm_loanentry(struct uvm_faultinfo *, void ***, int);
-static int	uvm_loanuobj(struct uvm_faultinfo *, void ***, 
+int		uvm_loanuobj(struct uvm_faultinfo *, void ***, 
 				int, vaddr_t);
-static int	uvm_loanzero(struct uvm_faultinfo *, void ***, int);
+int		uvm_loanzero(struct uvm_faultinfo *, void ***, int);
 
 /*
  * inlines
