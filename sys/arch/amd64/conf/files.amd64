@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.47 2009/05/07 11:30:16 ariane Exp $
+#	$OpenBSD: files.amd64,v 1.48 2009/05/09 19:23:07 mglocker Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -58,6 +58,9 @@ file	arch/amd64/isa/clock.c
 
 file	arch/amd64/amd64/powernow-k8.c		!small_kernel
 file	arch/amd64/amd64/est.c			!small_kernel
+
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
 include	"dev/mii/files.mii"
 
