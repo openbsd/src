@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.19 2009/04/30 00:03:08 deraadt Exp $
+#	$OpenBSD: install.md,v 1.20 2009/05/09 21:37:26 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,6 @@ ARCH=ARCH
 md_installboot() {
 	# $1 is the root disk
 
-	echo -n "Installing boot block..."
 	disklabel -B ${1}
 
 	# use extracted mdec if it exists (may be newer)
@@ -46,8 +45,6 @@ md_installboot() {
 	elif [ -d /usr/mdec ]; then
 		cp /usr/mdec/boot /mnt/boot
 	fi
-
-	echo "done."
 }
 
 md_prep_fdisk() {

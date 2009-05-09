@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.34 2009/04/12 12:56:02 krw Exp $
+#       $OpenBSD: install.md,v 1.35 2009/05/09 21:37:26 deraadt Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -35,7 +35,6 @@ MDTERM=vt100
 ARCH=ARCH
 
 md_installboot() {
-	echo "Installing boot block..."
 	cp /mnt/usr/mdec/bootsd /mnt/boot
 	/mnt/usr/mdec/installboot -v /mnt/boot /mnt/usr/mdec/bootxx /dev/r${1}a
 }

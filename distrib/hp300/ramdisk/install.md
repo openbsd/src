@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.49 2009/04/12 12:56:01 krw Exp $
+#	$OpenBSD: install.md,v 1.50 2009/05/09 21:37:26 deraadt Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,9 +38,7 @@ MDDKDEVS="/^[hs]d[0-9][0-9]* /s/ .*//p"
 md_installboot() {
 	# $1 is the root disk
 
-	echo -n "Installing boot block..."
 	disklabel -B ${1}
-	echo "done."
 }
 
 md_prep_disklabel() {

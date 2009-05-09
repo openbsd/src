@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.31 2009/04/12 12:56:02 krw Exp $
+#	$OpenBSD: install.md,v 1.32 2009/05/09 21:37:26 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -40,7 +40,6 @@ MDMTDEVS='/^[cms]t[0-9][0-9]* /s/ .*//p;/^ts[0-9]0-9]* /s/ .*//p'
 ARCH=ARCH
 
 md_installboot() {
-	echo "Installing boot block..."
 	cp /mnt/usr/mdec/boot /mnt/boot
 	/sbin/disklabel -B $1
 }

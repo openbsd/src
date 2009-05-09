@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.59 2009/04/25 03:21:51 deraadt Exp $
+#	$OpenBSD: install.md,v 1.60 2009/05/09 21:37:26 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -51,9 +51,8 @@ md_installboot() {
 		return
 	fi
 
-	echo Installing boot block...
 	cp ${_prefix}/boot /mnt/boot
-	sync; sync; sync
+	sync
 	installboot -v /mnt/boot ${_prefix}/bootxx ${_rawdev}
 }
 

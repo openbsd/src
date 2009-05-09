@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.40 2009/04/30 00:03:08 deraadt Exp $
+#	$OpenBSD: install.md,v 1.41 2009/05/09 21:37:26 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,12 +47,10 @@ md_installboot() {
 		mv bsd.mp bsd
 	fi
 
-	echo Installing boot block...
 	# LBA biosboot uses /boot's i-node number. Using 'cat' preserves that
 	# number, so multiboot setups (NTLDR) can work across upgrades.
 	cat /usr/mdec/boot >/mnt/boot
 	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot ${1}
-	echo "done."
 }
 
 md_prep_fdisk() {

@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.32 2009/04/24 01:43:27 krw Exp $
+#       $OpenBSD: install.md,v 1.33 2009/05/09 21:37:26 deraadt Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -45,7 +45,6 @@ md_installboot() {
 		mv bsd.mp bsd
 	fi
 
-	echo "Installing boot block..."
 	cp /mnt/usr/mdec/bootsd /mnt/boot
 	/mnt/usr/mdec/installboot -v /mnt/boot /mnt/usr/mdec/bootxx /dev/r${1}a
 }
