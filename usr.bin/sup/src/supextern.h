@@ -1,4 +1,4 @@
-/*     $OpenBSD: supextern.h,v 1.8 2003/04/15 07:21:09 deraadt Exp $  */
+/*     $OpenBSD: supextern.h,v 1.9 2009/05/09 12:02:17 chl Exp $  */
 
 /* atoo.c */
 unsigned int atoo(char *);
@@ -112,7 +112,9 @@ TREE *Tsearch(TREE *, char *);
 TREE *Tlookup(TREE *, char *);
 int Trprocess(TREE *, int (*)(TREE *, void *), void *);
 int Tprocess(TREE *, int (*)(TREE *, void *), void *);
+#ifdef DEBUG
 void Tprint(TREE *, char *);
+#endif
 
 /* supcmeat.c */
 int getonehost(TREE *, void *);

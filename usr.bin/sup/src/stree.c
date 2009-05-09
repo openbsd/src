@@ -1,4 +1,4 @@
-/*	$OpenBSD: stree.c,v 1.10 2002/02/17 19:42:33 millert Exp $	*/
+/*	$OpenBSD: stree.c,v 1.11 2009/05/09 12:02:17 chl Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -68,7 +68,9 @@ Static TREE *Trothh(TREE *, TREE *);
 Static void Tbalance(TREE **);
 Static TREE *Tinsertavl(TREE **, char *, int, int *);
 Static int Tsubprocess(TREE *, int, int (*f )(TREE *, void *), void *);
+#ifdef DEBUG
 Static int Tprintone(TREE *, void *);
+#endif
 
 
 /*************************************************************
@@ -368,6 +370,7 @@ Tprocess(t, f, args)
 	return (Tsubprocess(t, FALSE, f, args));
 }
 
+#if DEBUG
 Static int
 Tprintone(t, v)
 	TREE *t;
@@ -392,3 +395,4 @@ Tprint(t, p)		/* print tree -- for debugging */
 	printf("End of tree\n");
 	(void) fflush(stdout);
 }
+#endif
