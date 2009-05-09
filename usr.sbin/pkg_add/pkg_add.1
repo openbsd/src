@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.77 2009/05/09 11:17:32 sthen Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.78 2009/05/09 13:30:09 jmc Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -73,11 +73,11 @@ Details of packing-list internals are documented in
 .Pp
 If a package is digitally signed:
 .Bl -bullet
-.It 
+.It
 .Nm
 checks that its packing-list is not corrupted and matches the cryptographic
 signature stored within.
-.It 
+.It
 .Nm
 verifies that the signature was emitted by a valid user certificate, signed
 by one of the authorities in
