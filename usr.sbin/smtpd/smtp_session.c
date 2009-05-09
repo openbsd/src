@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.81 2009/05/09 20:03:07 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.82 2009/05/09 23:23:38 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -59,7 +59,7 @@ int		session_rfc1652_mail_handler(struct session *, char *);
 int		session_rfc3207_stls_handler(struct session *, char *);
 
 int		session_rfc4954_auth_handler(struct session *, char *);
-int		session_rfc4954_auth_plain(struct session *, char *, size_t);
+int		session_rfc4616_auth_plain(struct session *, char *, size_t);
 int		session_rfc4954_auth_login(struct session *, char *, size_t);
 void		session_auth_pickup(struct session *, char *, size_t);
 
@@ -150,7 +150,7 @@ session_rfc4954_auth_handler(struct session *s, char *args)
 		*eom++ = '\0';
 
 	if (strcasecmp(method, "PLAIN") == 0)
-		return session_rfc4954_auth_plain(s, eom, eom ? strlen(eom) : 0);
+		return session_rfc4616_auth_plain(s, eom, eom ? strlen(eom) : 0);
 	else if (strcasecmp(method, "LOGIN") == 0)
 		return session_rfc4954_auth_login(s, eom, eom ? strlen(eom) : 0);
 
@@ -160,7 +160,7 @@ session_rfc4954_auth_handler(struct session *s, char *args)
 }
 
 int
-session_rfc4954_auth_plain(struct session *s, char *arg, size_t nr)
+session_rfc4616_auth_plain(struct session *s, char *arg, size_t nr)
 {
 	if (arg == NULL) {
 		session_respond(s, "334");
@@ -546,7 +546,7 @@ session_auth_pickup(struct session *s, char *arg, size_t nr)
 
 	switch (s->s_state) {
 	case S_AUTH_INIT:
-		session_rfc4954_auth_plain(s, arg, nr);
+		session_rfc4616_auth_plain(s, arg, nr);
 		break;
 	case S_AUTH_USERNAME:
 		session_rfc4954_auth_login(s, arg, nr);
