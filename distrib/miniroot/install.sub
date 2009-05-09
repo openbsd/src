@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.540 2009/05/08 18:39:57 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.541 2009/05/09 19:11:11 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -955,7 +955,7 @@ enable_network() {
 # named in $1. Display an error message for failed installs so the
 # user will know to try again.
 install_files() {
-	local _src=$1 _files=$2 _f _sets _get_sets
+	local _src=$1 _files=$2 _f _sets _get_sets _oifs _n
 
 	# Initialize _sets to the list of sets found in _src, and initialize
 	# _get_sets to the intersection of _sets and DEFAULTSETS.
@@ -972,13 +972,13 @@ install_files() {
 
 	if [[ -z $_sets ]]; then
 		# Show $_src, but delete any ftp password.
-		cat <<__EOT
-No $OBSD sets were found at
-
-	$(echo $_src | sed -e 's/\(^ftp:\/\/[^/]*\)\(:[^/]*\)\(@.*\)/\1\3/')
-
-Set names are: $THESETS
-__EOT
+		echo -n "Looked at "
+		echo $_src | sed -e 's/\(^ftp:\/\/[^/]*\)\(:[^/]*\)\(@.*\)/\1\3/'
+		echo "and found no $OBSD sets.  The set names looked for were:"
+		_oifs=$IFS; IFS=" "
+		for _n in $THESETS; do echo $_n; done | showcols
+		IFS=$_oifs
+		echo
 		return
 	fi
 
