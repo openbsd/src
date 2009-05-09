@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.105 2009/04/28 23:11:25 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.106 2009/05/09 17:04:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -66,7 +66,6 @@
 #define PATH_OFFLINE		"/offline"
 
 /* number of MX records to lookup */
-#define MXARRAYSIZE	5
 #define MAX_MX_COUNT	10
 
 /* rfc5321 limits */
@@ -93,9 +92,7 @@ struct relayhost {
 
 struct mxhost {
 	TAILQ_ENTRY(mxhost)	 entry;
-	u_int8_t flags;
 	struct sockaddr_storage ss;
-	char credentials[MAX_LINE_SIZE];
 };
 
 /* buffer specific headers */
@@ -171,9 +168,7 @@ enum imsg_type {
 	IMSG_CONF_RELOAD,
 	IMSG_LKA_MAIL,
 	IMSG_LKA_RCPT,
-	IMSG_LKA_MX,
-	IMSG_LKA_MX_END,
-	IMSG_LKA_HOST,
+	IMSG_LKA_SECRET,
 	IMSG_MDA_MAILBOX_FILE,
 	IMSG_MDA_MESSAGE_FILE,
 	IMSG_MFA_RCPT,
@@ -221,7 +216,12 @@ enum imsg_type {
 
 	IMSG_STATS,
 
-	IMSG_SMTP_ENQUEUE
+	IMSG_SMTP_ENQUEUE,
+
+	IMSG_DNS_A,
+	IMSG_DNS_A_END,
+	IMSG_DNS_MX,
+	IMSG_DNS_PTR
 };
 
 #define IMSG_HEADER_SIZE	 sizeof(struct imsg_hdr)
@@ -614,6 +614,8 @@ struct session {
 
 	struct session_auth_req		 s_auth;
 
+	char				 credentials[MAX_LINE_SIZE];
+
 	struct batch			*batch;
 	TAILQ_HEAD(mxhostlist, mxhost) mxhosts;
 
@@ -717,16 +719,20 @@ struct forward_req {
 	char				 pw_name[MAXLOGNAME];
 };
 
-struct mxreq {
-	u_int64_t id;
-	char hostname[MAXHOSTNAMELEN];
-	struct rule rule;
+struct dns {
+	u_int64_t		 id;
+	char			 host[MAXHOSTNAMELEN];
+	int			 port;
+	int			 error;
+	struct sockaddr_storage	 ss;
+	struct smtpd		*env;
+	struct dns		*next;
 };
 
-struct mxrep {
-	u_int64_t id;
-	int getaddrinfo_error;
-	struct mxhost mxhost;
+struct secret {
+	u_int64_t		 id;
+	char			 host[MAXHOSTNAMELEN];
+	char			 secret[MAX_LINE_SIZE];
 };
 
 enum lkasession_flags {
@@ -781,7 +787,12 @@ int		 msgbuf_write(struct msgbuf *);
 
 
 /* dns.c */
-int		 getmxbyname(char *, char ***);
+void		 dns_query_a(struct smtpd *, char *, int, u_int64_t);
+void		 dns_query_mx(struct smtpd *, char *, int, u_int64_t);
+void		 dns_query_ptr(struct smtpd *, struct sockaddr_storage *,
+		     u_int64_t);
+void		 dns_async(struct smtpd *, struct imsgbuf *, int,
+		     struct dns *);
 
 
 /* forward.c */

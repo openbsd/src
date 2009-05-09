@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.44 2009/04/28 21:56:36 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.45 2009/05/09 17:04:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -152,14 +152,13 @@ mta_dispatch_lka(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_LKA_MX: {
+		case IMSG_DNS_A: {
 			struct session key;
-			struct mxrep *mxrep;
+			struct dns *reply = imsg.data;
 			struct session *s;
 			struct mxhost *mxhost;
 
-			mxrep = imsg.data;
-			key.s_id = mxrep->id;
+			key.s_id = reply->id;
 
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
 			if (s == NULL)
@@ -169,19 +168,20 @@ mta_dispatch_lka(int sig, short event, void *p)
 			if (mxhost == NULL)
 				fatal("mta_dispatch_lka: calloc");
 
-			*mxhost = mxrep->mxhost;
+			mxhost->ss = reply->ss;
+
  			TAILQ_INSERT_TAIL(&s->mxhosts, mxhost, entry);
 
 			break;
 		}
-		case IMSG_LKA_MX_END: {
+
+		case IMSG_DNS_A_END: {
 			struct session key;
-			struct mxrep *mxrep;
+			struct dns *reply = imsg.data;
 			struct session *s;
 			int ret;
 
-			mxrep = imsg.data;
-			key.s_id = mxrep->id;
+			key.s_id = reply->id;
 
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
 			if (s == NULL)
@@ -192,7 +192,7 @@ mta_dispatch_lka(int sig, short event, void *p)
 			do {
 				ret = mta_connect(s);
 			} while (ret == 0);
-			
+
 			if (ret < 0) {
 				mta_batch_update_queue(s->batch);
 				session_destroy(s);
@@ -200,6 +200,25 @@ mta_dispatch_lka(int sig, short event, void *p)
 
 			break;
 		}
+
+		case IMSG_LKA_SECRET: {
+			struct secret	*reply = imsg.data;
+			struct session	 key, *s;
+
+			key.s_id = reply->id;
+
+			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
+			if (s == NULL)
+				fatal("smtp_dispatch_parent: session is gone");
+
+			strlcpy(s->credentials, reply->secret,
+			    sizeof(s->credentials));
+
+			mta_mxlookup(env, s, s->batch->hostname,
+			    &s->batch->rule);
+			break;
+		}
+
 		default:
 			log_warnx("mta_dispatch_parent: got imsg %d",
 			    imsg.hdr.type);
@@ -386,8 +405,21 @@ mta_dispatch_runner(int sig, short event, void *p)
 
 			s = batchp->sessionp;
 
-			mta_mxlookup(env, s, batchp->hostname, &batchp->rule);
+			if (batchp->rule.r_value.relayhost.flags & F_AUTH) {
+				struct secret	query;
 
+				bzero(&query, sizeof(query));
+				query.id = s->s_id;
+				strlcpy(query.host,
+				    batchp->rule.r_value.relayhost.hostname,
+				    sizeof(query.host));
+
+				imsg_compose(env->sc_ibufs[PROC_LKA],
+				    IMSG_LKA_SECRET, 0, 0, -1, &query,
+				    sizeof(query));
+			} else
+				mta_mxlookup(env, s, batchp->hostname,
+				    &batchp->rule);
 			break;
 		}
 		default:
@@ -488,13 +520,28 @@ mta(struct smtpd *env)
 void
 mta_mxlookup(struct smtpd *env, struct session *sessionp, char *hostname, struct rule *rule)
 {
-	struct mxreq mxreq;
+	int	 port;
 
-	mxreq.id = sessionp->s_id;
-	mxreq.rule = *rule;
-	(void)strlcpy(mxreq.hostname, hostname, MAXHOSTNAMELEN);
-	imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_MX, 0, 0, -1,
-	    &mxreq, sizeof(struct mxreq));
+	switch (rule->r_value.relayhost.flags & F_SSL) {
+	case F_SMTPS:
+		port = 465;
+		break;
+	case F_SSL:
+		port = 465;
+		rule->r_value.relayhost.flags &= ~F_STARTTLS;
+		break;
+	default:
+		port = 25;
+	}
+	
+	if (rule->r_value.relayhost.port)
+		port = ntohs(rule->r_value.relayhost.port);
+
+	if (rule->r_action == A_RELAYVIA)
+		dns_query_a(env, rule->r_value.relayhost.hostname, port,
+		    sessionp->s_id);
+	else
+		dns_query_mx(env, hostname, port, sessionp->s_id);
 }
 
 /* shamelessly ripped usr.sbin/relayd/check_tcp.c ;) */
@@ -504,8 +551,6 @@ mta_connect(struct session *sessionp)
 	int s;
 	int type;
 	struct linger lng;
-	struct sockaddr_in ssin;
-	struct sockaddr_in6 ssin6;
 	struct mxhost *mxhost;
 
 	mxhost = TAILQ_FIRST(&sessionp->mxhosts);
@@ -525,19 +570,9 @@ mta_connect(struct session *sessionp)
 
 	session_socket_blockmode(s, BM_NONBLOCK);
 
-	if (mxhost->ss.ss_family == PF_INET) {
-		ssin = *(struct sockaddr_in *)&mxhost->ss;
-		if (connect(s, (struct sockaddr *)&ssin, sizeof(struct sockaddr_in)) == -1)
-			if (errno != EINPROGRESS)
-				goto bad;
-	}
-
-	if (mxhost->ss.ss_family == PF_INET6) {
-		ssin6 = *(struct sockaddr_in6 *)&mxhost->ss;
-		if (connect(s, (struct sockaddr *)&ssin6, sizeof(struct sockaddr_in6)) == -1)
-			if (errno != EINPROGRESS)
-				goto bad;
-	}
+	if (connect(s, (struct sockaddr *)&mxhost->ss, mxhost->ss.ss_len) == -1)
+		if (errno != EINPROGRESS)
+			goto bad;
 
 	sessionp->s_tv.tv_sec = SMTPD_CONNECT_TIMEOUT;
 	sessionp->s_tv.tv_usec = 0;
@@ -602,7 +637,8 @@ mta_write(int s, short event, void *arg)
 		return;
 	}
 
-	if (mxhost && mxhost->flags & F_SMTPS) {
+	if (sessionp->batch->rule.r_value.relayhost.flags & F_SMTPS) {
+		log_debug("mta_write: initializing ssl");
 		ssl_client_init(sessionp);
 		return;
 	}
@@ -631,7 +667,6 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	char codebuf[4];
 	const char *errstr;
 	int flags = 0;
-	struct mxhost *mxhost = TAILQ_FIRST(&sessionp->mxhosts);
 
 	line = evbuffer_readline(bev->input);
 	if (line == NULL)
@@ -679,18 +714,18 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 		if (sessionp->s_state == S_GREETED &&
 		    (sessionp->s_flags & F_PEERHASAUTH) &&
 		    (sessionp->s_flags & F_SECURE) &&
-		    (mxhost->flags & F_AUTH) &&
-		    (mxhost->credentials[0] != '\0')) {
-			log_debug("AUTH PLAIN %s", mxhost->credentials);
+		    (sessionp->batch->rule.r_value.relayhost.flags & F_AUTH) &&
+		    (sessionp->credentials[0] != '\0')) {
+			log_debug("AUTH PLAIN %s", sessionp->credentials);
 			session_respond(sessionp, "AUTH PLAIN %s",
-			    mxhost->credentials);
+			    sessionp->credentials);
 			sessionp->s_state = S_AUTH_INIT;
 			return 0;
 		}
 
 		if (sessionp->s_state == S_GREETED &&
 		    !(sessionp->s_flags & F_PEERHASTLS) &&
-		    mxhost->flags & F_STARTTLS) {
+		    (sessionp->batch->rule.r_value.relayhost.flags&F_STARTTLS)){
 			/* PERM - we want TLS but it is not advertised */
 			batchp->status = S_BATCH_PERMFAILURE;
 			mta_batch_update_queue(batchp);
@@ -700,7 +735,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 
 		if (sessionp->s_state == S_GREETED &&
 		    !(sessionp->s_flags & F_PEERHASAUTH) &&
-		    mxhost->flags & F_AUTH) {
+		    (sessionp->batch->rule.r_value.relayhost.flags & F_AUTH)) {
 			/* PERM - we want AUTH but it is not advertised */
 			batchp->status = S_BATCH_PERMFAILURE;
 			mta_batch_update_queue(batchp);

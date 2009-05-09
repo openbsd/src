@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.44 2009/05/01 21:44:19 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.45 2009/05/09 17:04:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -22,11 +22,13 @@
 #include <sys/tree.h>
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <event.h>
 #include <netdb.h>
 #include <pwd.h>
@@ -69,15 +71,22 @@ int		lka_expand_rcpt_iteration(struct smtpd *, struct aliaseslist *, struct lkas
 void		lka_rcpt_action(struct smtpd *, struct path *);
 void		lka_clear_aliaseslist(struct aliaseslist *);
 int		lka_encode_credentials(char *, char *);
-void		lka_dns_reverse(struct session *s);
 
 void
 lka_sig_handler(int sig, short event, void *p)
 {
+	int status;
+	pid_t pid;
+
 	switch (sig) {
 	case SIGINT:
 	case SIGTERM:
 		lka_shutdown();
+		break;
+	case SIGCHLD:
+		do {
+			pid = waitpid(-1, &status, WNOHANG);
+		} while (pid > 0 || (pid == -1 && errno == EINTR));
 		break;
 	default:
 		fatalx("lka_sig_handler: unexpected signal");
@@ -358,172 +367,30 @@ lka_dispatch_mta(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_LKA_MX: {
-			struct mxreq *mxreq;
-			struct mxrep mxrep;
-			struct addrinfo hints, *res, *resp;
-			char **mx = NULL;
-			char *lmx[1];
-			int len, i;
-			int mxcnt;
-			int error;
-			struct mxhost mxhost;
-			char *secret = NULL;
+		case IMSG_LKA_SECRET: {
+			struct secret	*query = imsg.data;
+			char		*secret = NULL;
 
-			mxreq = imsg.data;
-			mxrep.id = mxreq->id;
-			mxrep.getaddrinfo_error = 0;
+			secret = map_dblookup(env, "secrets", query->host);
 
-			if (mxreq->rule.r_action == A_RELAY) {
-				log_debug("attempting to resolve %s", mxreq->hostname);
-				len = getmxbyname(mxreq->hostname, &mx);
-				if (len < 0) {
-					mxrep.getaddrinfo_error = len;
-					imsg_compose(ibuf, IMSG_LKA_MX_END, 0, 0, -1,
-					    &mxrep, sizeof(struct mxrep));
-					break;
-				}
-				if (len == 0) {
-					lmx[0] = mxreq->hostname;
-					mx = lmx;
-					len = 1;
-				}
-			}
-			else if (mxreq->rule.r_action == A_RELAYVIA) {
-				lmx[0] = mxreq->rule.r_value.relayhost.hostname;
-				log_debug("attempting to resolve %s:%d (forced)", lmx[0],
-				    ntohs(mxreq->rule.r_value.relayhost.port));
-				mx = lmx;
-				len = 1;
+			log_debug("secret for %s %s", query->host,
+			    secret ? "found" : "not found");
 
-			}
-			memset(&hints, 0, sizeof(hints));
-			hints.ai_family = PF_UNSPEC;
-			hints.ai_protocol = IPPROTO_TCP;
+			if (secret)
+				lka_encode_credentials(query->secret, secret);
+			else
+				query->secret[0] = '\0';
 
-			for (i = 0; i < len; ++i) {
-
-				error = getaddrinfo(mx[i], NULL, &hints, &res);
-				if (error) {
-					mxrep.getaddrinfo_error = error;
-					imsg_compose(ibuf, IMSG_LKA_MX_END, 0, 0, -1,
-					    &mxrep, sizeof(struct mxrep));
-				}
-
-				if (mxreq->rule.r_action == A_RELAYVIA)
-					mxhost.flags = mxreq->rule.r_value.relayhost.flags;
-
-				if (mxhost.flags & F_AUTH) {
-					secret = map_dblookup(env, "secrets", mx[i]);
-					if (secret == NULL) {
-						log_warnx("no credentials for relay through \"%s\"", mx[i]);
-						freeaddrinfo(res);
-						continue;
-					}
-				}
-				if (secret)
-					lka_encode_credentials(mxhost.credentials, secret);
-
-				for (resp = res; resp != NULL && mxcnt < MAX_MX_COUNT; resp = resp->ai_next) {
-
-					if (resp->ai_family == PF_INET) {
-						struct sockaddr_in *ssin;
-						
-						mxhost.ss = *(struct sockaddr_storage *)resp->ai_addr;
-						
-						ssin = (struct sockaddr_in *)&mxhost.ss;
-						if (mxreq->rule.r_value.relayhost.port != 0) {
-							ssin->sin_port = mxreq->rule.r_value.relayhost.port;
-							mxrep.mxhost = mxhost;
-							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
-							    sizeof(struct mxrep));
-							continue;
-						}
-
-						switch (mxhost.flags & F_SSL) {
-						case F_SMTPS:
-							ssin->sin_port = htons(465);
-							mxrep.mxhost = mxhost;
-							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
-							    sizeof(struct mxrep));
-							break;
-						case F_SSL:
-							ssin->sin_port = htons(465);
-							mxrep.mxhost = mxhost;
-							mxrep.mxhost.flags &= ~F_STARTTLS;
-							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
-							    sizeof(struct mxrep));
-						case F_STARTTLS:
-							ssin->sin_port = htons(25);
-							mxrep.mxhost = mxhost;
-							mxrep.mxhost.flags &= ~F_SMTPS;
-							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
-							    sizeof(struct mxrep));
-							break;
-						default:
-							ssin->sin_port = htons(25);
-							mxrep.mxhost = mxhost;
-							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
-							    sizeof(struct mxrep));
-						}
-					}
-					
-					if (resp->ai_family == PF_INET6) {
-						struct sockaddr_in6 *ssin6;
-						
-						mxhost.ss = *(struct sockaddr_storage *)resp->ai_addr;
-						ssin6 = (struct sockaddr_in6 *)&mxhost.ss;
-						if (mxreq->rule.r_value.relayhost.port != 0) {
-							ssin6->sin6_port = mxreq->rule.r_value.relayhost.port;
-							mxrep.mxhost = mxhost;
-							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
-							    sizeof(struct mxrep));
-							continue;
-						}
-						
-						switch (mxhost.flags & F_SSL) {
-						case F_SMTPS:
-							ssin6->sin6_port = htons(465);
-							mxrep.mxhost = mxhost;
-							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
-							    sizeof(struct mxrep));
-							break;
-						case F_SSL:
-							ssin6->sin6_port = htons(465);
-							mxrep.mxhost = mxhost;
-							mxrep.mxhost.flags &= ~F_STARTTLS;
-							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
-							    sizeof(struct mxrep));
-						case F_STARTTLS:
-							ssin6->sin6_port = htons(25);
-							mxrep.mxhost = mxhost;
-							mxrep.mxhost.flags &= ~F_SMTPS;
-							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
-							    sizeof(struct mxrep));
-							break;
-						default:
-							ssin6->sin6_port = htons(25);
-							mxrep.mxhost = mxhost;
-							imsg_compose(ibuf, IMSG_LKA_MX, 0, 0, -1, &mxrep,
-							    sizeof(struct mxrep));
-						}
-					}
-				}
-				freeaddrinfo(res);
-				free(secret);
-				bzero(&mxhost.credentials, MAX_LINE_SIZE);
-			}
-
-			mxrep.getaddrinfo_error = error;
-
-			imsg_compose(ibuf, IMSG_LKA_MX_END, 0, 0, -1,
-			    &mxrep, sizeof(struct mxrep));
-
-			if (mx != lmx)
-				free(mx);
-
+			imsg_compose(ibuf, IMSG_LKA_SECRET, 0, 0, -1, query,
+			    sizeof(*query));
+			free(secret);
 			break;
 		}
+
+		case IMSG_DNS_A:
+		case IMSG_DNS_MX:
+			dns_async(env, ibuf, imsg.hdr.type, imsg.data);
+			break;
 
 		default:
 			log_warnx("lka_dispatch_mta: got imsg %d",
@@ -571,10 +438,8 @@ lka_dispatch_smtp(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_LKA_HOST:
-			lka_dns_reverse(imsg.data);
-			imsg_compose(ibuf, IMSG_LKA_HOST, 0, 0, -1, imsg.data,
-			    sizeof(struct session));
+		case IMSG_DNS_PTR:
+			dns_async(env, ibuf, IMSG_DNS_PTR, imsg.data);
 			break;
 		default:
 			log_warnx("lka_dispatch_smtp: got imsg %d",
@@ -703,6 +568,7 @@ lka(struct smtpd *env)
 
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
+	struct event	 ev_sigchld;
 
 	struct peer peers[] = {
 		{ PROC_PARENT,	lka_dispatch_parent },
@@ -741,8 +607,10 @@ lka(struct smtpd *env)
 
 	signal_set(&ev_sigint, SIGINT, lka_sig_handler, env);
 	signal_set(&ev_sigterm, SIGTERM, lka_sig_handler, env);
+	signal_set(&ev_sigchld, SIGCHLD, lka_sig_handler, env);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
+	signal_add(&ev_sigchld, NULL);
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
@@ -1236,32 +1104,6 @@ lka_encode_credentials(char *dest, char *src)
 	if (kn_encode_base64(buffer, len, dest, MAX_LINE_SIZE - 1) == -1)
 		return 0;
 	return 1;
-}
-
-void
-lka_dns_reverse(struct session *s)
-{
-	char		 addr[NI_MAXHOST];
-	struct addrinfo	 hints, *res;
-	struct sockaddr	*sa;
-
-	strlcpy(s->s_hostname, "<unknown>", sizeof(s->s_hostname));
-
-	sa = (struct sockaddr *)&s->s_ss;
-	if (getnameinfo(sa, sa->sa_len, addr, sizeof(addr),
-	    NULL, 0, NI_NAMEREQD))
-		return;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_NUMERICHOST;
-
-	if (getaddrinfo(addr, NULL, &hints, &res))
-		return; /* malicious PTR record. */
-
-	freeaddrinfo(res);
-
-	strlcpy(s->s_hostname, addr, sizeof(s->s_hostname));
 }
 
 SPLAY_GENERATE(lkatree, lkasession, nodes, lkasession_cmp);

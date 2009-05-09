@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.41 2009/04/28 22:38:22 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.42 2009/05/09 17:04:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -283,21 +283,22 @@ smtp_dispatch_lka(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_LKA_HOST: {
-			struct session		 key;
+		case IMSG_DNS_PTR: {
+			struct dns		*reply = imsg.data;
 			struct session		*s;
-			struct session		*ss;
+			struct session		 key;
 
-			ss = imsg.data;
-			key.s_id = ss->s_id;
+			key.s_id = reply->id;
 
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
 			if (s == NULL)
 				fatal("smtp_dispatch_lka: session is gone");
 
-			strlcpy(s->s_hostname, ss->s_hostname,
+			strlcpy(s->s_hostname,
+			    reply->error ? "<unknown>" : reply->host,
 			    sizeof(s->s_hostname));
-			strlcpy(s->s_msg.session_hostname, ss->s_hostname,
+
+			strlcpy(s->s_msg.session_hostname, s->s_hostname,
 			    sizeof(s->s_msg.session_hostname));
 
 			session_init(s->s_l, s);
@@ -716,8 +717,7 @@ smtp_accept(int fd, short event, void *p)
 	if (s_smtp.sessions_active == s->s_env->sc_maxconn)
 		event_del(&l->ev);
 
-	imsg_compose(s->s_env->sc_ibufs[PROC_LKA], IMSG_LKA_HOST, 0, 0, -1, s,
-	    sizeof(struct session));
+	dns_query_ptr(l->env, &s->s_ss, s->s_id);
 
 	SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
 }
