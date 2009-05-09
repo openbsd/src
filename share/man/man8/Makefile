@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.63 2008/05/14 20:55:48 miod Exp $
+#	$OpenBSD: Makefile,v 1.64 2009/05/09 14:21:24 schwarze Exp $
 #	$NetBSD: Makefile,v 1.13 1996/03/28 21:36:40 mark Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
@@ -11,7 +11,7 @@ MAN=	afterboot.8 boot_config.8 compat_aout.8 compat_bsdos.8 \
 	starttls.8 sticky.8 update.8 yp.8
 
 MLINKS+=boot_config.8 UKC.8
-MLINKS+=daily.8 weekly.8 daily.8 monthly.8
+MLINKS+=daily.8 weekly.8
 MLINKS+=rc.8 rc.local.8 rc.8 rc.securelevel.8
 MLINKS+=rc.conf.8 rc.conf.local.8
 

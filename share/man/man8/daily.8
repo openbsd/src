@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.10 2009/05/04 17:08:19 schwarze Exp $
+.\"	$OpenBSD: daily.8,v 1.11 2009/05/09 14:21:24 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,22 +14,20 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 4 2009 $
+.Dd $Mdocdate: May 9 2009 $
 .Dt DAILY 8
 .Os
 .Sh NAME
-.Nm daily , weekly , monthly
+.Nm daily , weekly
 .Nd periodic system maintenance
 .Sh SYNOPSIS
 .Nm /etc/daily
 .Nm /etc/weekly
-.Nm /etc/monthly
 .Sh DESCRIPTION
-The three files
-.Pa /etc/daily ,
-.Pa /etc/weekly ,
+The files
+.Pa /etc/daily
 and
-.Pa /etc/monthly
+.Pa /etc/weekly
 are shell scripts run on a periodic basis by the clock daemon,
 .Xr cron 8 .
 They take care of some basic administrative tasks.
@@ -49,15 +47,13 @@ for further details.
 .Pp
 These scripts should not be altered.
 Local additions should be made to the files
-.Pa /etc/daily.local ,
+.Pa /etc/daily.local
+and
 .Pa /etc/weekly.local ,
-and
-.Pa /etc/monthly.local ,
 which will be executed by
-.Pa /etc/daily ,
-.Pa /etc/weekly ,
+.Pa /etc/daily
 and
-.Pa /etc/monthly ,
+.Pa /etc/weekly ,
 respectively.
 The
 .Pa *.local
@@ -196,15 +192,6 @@ file exists, show individual users' login via the
 .Xr ac 8
 utility.
 .El
-.Ss /etc/monthly
-This script is run monthly.
-It currently does the following:
-.Bl -dash
-.It
-Runs the script
-.Pa /etc/monthly.local ,
-if it exists.
-.El
 .Sh ENVIRONMENT
 The following variables can be set in
 .Pa /etc/daily.local :
@@ -240,10 +227,6 @@ Site specific daily maintenance script.
 Weekly maintenance script.
 .It Pa /etc/weekly.local
 Site specific weekly maintenance script.
-.It Pa /etc/monthly
-Monthly maintenance script.
-.It Pa /etc/monthly.local
-Site specific monthly maintenance script.
 .It Pa /var/cron/tabs/root
 Root
 .Xr crontab 5 .
