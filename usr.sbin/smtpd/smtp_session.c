@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.79 2009/04/28 21:56:45 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.80 2009/05/09 18:59:09 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -376,7 +376,7 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 	s->s_msg.session_id = s->s_id;
 	s->s_msg.session_ss = s->s_ss;
 
-	log_debug("session_mail_handler: sending notification to mfa");
+	log_debug("session_rfc5321_mail_handler: sending notification to mfa");
 
 	session_imsg(s, PROC_MFA, IMSG_MFA_MAIL, 0, 0, -1, &s->s_msg,
 	    sizeof(s->s_msg));

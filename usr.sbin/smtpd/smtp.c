@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.42 2009/05/09 17:04:55 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.43 2009/05/09 18:59:09 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -667,7 +667,7 @@ smtp_disable_events(struct smtpd *env)
 void
 smtp_pause(struct smtpd *env)
 {
-	log_debug("smtp_pause_listeners: pausing listening sockets");
+	log_debug("smtp_pause: pausing listening sockets");
 	smtp_disable_events(env);
 	env->sc_opts |= SMTPD_SMTP_PAUSED;
 }
@@ -675,7 +675,7 @@ smtp_pause(struct smtpd *env)
 void
 smtp_resume(struct smtpd *env)
 {
-	log_debug("smtp_pause_listeners: resuming listening sockets");
+	log_debug("smtp_resume: resuming listening sockets");
 	imsg_compose(env->sc_ibufs[PROC_PARENT], IMSG_PARENT_SEND_CONFIG,
 	    0, 0, -1, NULL, 0);
 	env->sc_opts &= ~SMTPD_SMTP_PAUSED;
