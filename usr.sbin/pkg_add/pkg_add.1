@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.76 2009/04/14 17:53:58 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.77 2009/05/09 11:17:32 sthen Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: April 14 2009 $
+.Dd $Mdocdate: May 9 2009 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -250,6 +250,8 @@ Still displays a very prominent message if a signature is found.
 with
 .Fl u ,
 do not check the pkgpath matches if only one candidate is found.
+.It Ar repair
+attempt to repair installed packages with missing registration data.
 .It Ar scripts
 external scripts may fail.
 .It Ar update
