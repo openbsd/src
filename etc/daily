@@ -1,30 +1,53 @@
 #
-#	$OpenBSD: daily,v 1.57 2009/05/03 17:16:12 schwarze Exp $
+#	$OpenBSD: daily,v 1.58 2009/05/09 17:15:49 schwarze Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 umask 022
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
 
+PARTOUT=/var/log/daily.part
+MAINOUT=/var/log/daily.out
+install -o 0 -g 0 -m 600    /dev/null $PARTOUT
+install -o 0 -g 0 -m 600 -b /dev/null $MAINOUT
+
+exec > $MAINOUT 2>&1
 sysctl -n kern.version
 uptime
 
-if [ -f /etc/daily.local ]; then
-	echo ""
-	echo "Running daily.local:"
-	. /etc/daily.local
-fi
-
-TMP=`mktemp /tmp/_daily.XXXXXXXXXX` || exit 1
-OUT=`mktemp /tmp/_security.XXXXXXXXXX` || {
-	rm -f ${TMP}
-	exit 1
+start_part() {
+	TITLE=$1
+	exec > $PARTOUT 2>&1
 }
 
-trap 'rm -f $TMP $OUT; exit 1' 0 1 15
+end_part() {
+	exec >> $MAINOUT 2>&1
+	test -s $PARTOUT || return
+	echo ""
+	echo "$TITLE"
+	cat $PARTOUT
+}
 
-echo ""
-echo "Removing scratch and junk files:"
+next_part() {
+	end_part
+	start_part "$1"
+}
+
+run_script() {
+	f=/etc/$1
+	test -e $f || return
+	if [ `stat -f '%Sp%u' $f | cut -b1,6,9,11-` != '---0' ]; then
+		echo "$f has insecure permissions, skipping:"
+		ls -l $f
+		return
+	fi
+	. $f
+}
+
+start_part "Running /etc/daily.local:"
+run_script "daily.local"
+
+next_part "Removing scratch and junk files:"
 if [ -d /tmp -a ! -L /tmp ]; then
 	cd /tmp && {
 	find -x . \
@@ -60,9 +83,8 @@ if [ -d /var/msgs -a ! -L /var/msgs ]; then
 	msgs -c
 fi
 
+next_part "Purging accounting records:"
 if [ -f /var/account/acct ]; then
-	echo ""
-	echo "Purging accounting records:"
 	mv -f /var/account/acct.2 /var/account/acct.3
 	mv -f /var/account/acct.1 /var/account/acct.2
 	mv -f /var/account/acct.0 /var/account/acct.1
@@ -73,44 +95,35 @@ fi
 # If ROOTBACKUP is set to 1 in the environment, and
 # if filesystem named /altroot is type ffs, on /dev/* and mounted "xx",
 # use it as a backup root filesystem to be updated daily.
+next_part "Backing up root filesystem:"
 [ "X$ROOTBACKUP" = X1 ] && {
 	rootdev=`df -n / | awk '/^\/dev\// { print substr($1, 6) }'`
 	rootbak=`awk '$2 == "/altroot" && $1 ~ /^\/dev\// && $3 == "ffs" && \
 	    $4 ~ /xx/ \
 		{ print substr($1, 6) }' < /etc/fstab`
 	[ X$rootdev != X -a X$rootbak != X -a X$rootdev != X$rootbak ] && {
+		next_part "Backing up root=/dev/r$rootdev to /dev/r$rootbak:"
 		sync
-		echo ""
-		echo "Backing up root filesystem:"
-		echo "copying /dev/r$rootdev to /dev/r$rootbak"
 		dd if=/dev/r$rootdev of=/dev/r$rootbak bs=16b seek=1 skip=1 \
 			conv=noerror
 		fsck -y /dev/r$rootbak
 	}
 }
 
-# Rotation of mail log now handled automatically by cron and 'newsyslog'
-
-echo ""
-echo "Checking subsystem status:"
-echo ""
-echo "disks:"
+next_part "Disk status:"
 df -kl
 echo ""
 dump W
-echo ""
 
-mailq > $TMP
-if ! grep -q "^/var/spool/mqueue is empty$" $TMP; then
-	echo ""
-	echo "mail:"
-	cat $TMP
-fi
+# The first two regular expressions handle sendmail, the third postfix.
+# When the queue is empty, exim -bp keeps silent.
+next_part "Mail queue:"
+mailq | grep -v -e "^/var/spool/mqueue is empty$" \
+		-e "^[[:blank:]]*Total requests: 0$" \
+		-e "^Mail queue is empty$"
 
-echo ""
-echo "network:"
+next_part "Network status:"
 netstat -ivn
-echo ""
 
 t=/var/rwho/*
 if [ "$t" != '/var/rwho/*' ]; then
@@ -118,30 +131,21 @@ if [ "$t" != '/var/rwho/*' ]; then
 	ruptime
 fi
 
-echo ""
-if [ -d /var/yp/binding -a ! -d /var/yp/`domainname` -o "X$CALENDAR" = X0 ]
-then
-	if [ "X$CALENDAR" = X0 ]; then
-		echo "Not running calendar, (disabled)."
-	else
-		echo "Not running calendar, (yp client)."
-	fi
-else
-	echo "Running calendar in the background."
+next_part "Running calendar in the background:"
+if [ "X$CALENDAR" != X0 -a \
+     \( -d /var/yp/`domainname` -o ! -d /var/yp/binding \) ]; then
 	calendar -a &
 fi
 
 # If CHECKFILESYSTEMS is set to 1 in the environment, run fsck
 # with the no-write flag.
+next_part "Checking filesystems:"
 [ "X$CHECKFILESYSTEMS" = X1 ] && {
-	echo ""
-	echo "Checking filesystems:"
 	fsck -n | grep -v '^\*\* Phase'
 }
 
+next_part "Running rdist:"
 if [ -f /etc/Distfile ]; then
-	echo ""
-	echo "Running rdist:"
 	if [ -d /var/log/rdist ]; then
 		logf=`date +%Y.%b.%e`
 		rdist -f /etc/Distfile 2>&1 | tee /var/log/rdist/$logf
@@ -150,7 +154,16 @@ if [ -f /etc/Distfile ]; then
 	fi
 fi
 
-sh /etc/security 2>&1 > $OUT
-if [ -s $OUT ]; then
-    mail -s "`hostname` daily insecurity output" root < $OUT
-fi
+end_part
+[ -s $MAINOUT ] && mail -s "`hostname` daily output" root < $MAINOUT
+
+
+MAINOUT=/var/log/security.out
+install -o 0 -g 0 -m 600 -b /dev/null $MAINOUT
+
+start_part "Running /etc/security:"
+run_script "security"
+end_part
+rm -f $PARTOUT
+
+[ -s $MAINOUT ] && mail -s "`hostname` daily insecurity output" root < $MAINOUT

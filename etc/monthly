@@ -1,11 +1,46 @@
-#!/bin/sh -
-#	$OpenBSD: monthly,v 1.9 2009/05/09 16:29:54 schwarze Exp $
+#
+#	$OpenBSD: monthly,v 1.10 2009/05/09 17:15:49 schwarze Exp $
+#
 umask 022
 
-if [ -f /etc/monthly.local ];then
+PARTOUT=/var/log/monthly.part
+MAINOUT=/var/log/monthly.out
+install -o 0 -g 0 -m 600    /dev/null $PARTOUT
+install -o 0 -g 0 -m 600 -b /dev/null $MAINOUT
+
+start_part() {
+	TITLE=$1
+	exec > $PARTOUT 2>&1
+}
+
+end_part() {
+	exec >> $MAINOUT 2>&1
+	test -s $PARTOUT || return
 	echo ""
-	echo "Running monthly.local:"
-	. /etc/monthly.local
-else
-	echo "Nothing to do!"
-fi
+	echo "$TITLE"
+	cat $PARTOUT
+}
+
+next_part() {
+	end_part
+	start_part "$1"
+}
+
+run_script() {
+	f=/etc/$1
+	test -e $f || return
+	if [ `stat -f '%Sp%u' $f | cut -b1,6,9,11-` != '---0' ]; then
+		echo "$f has insecure permissions, skipping:"
+		ls -l $f
+		return
+	fi
+	. $f
+}
+
+start_part "Running /etc/monthly.local:"
+run_script "monthly.local"
+
+end_part
+rm -f $PARTOUT
+                        
+[ -s $MAINOUT ] && mail -s "`hostname` monthly output" root < $MAINOUT
