@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.106 2009/05/09 17:04:55 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.107 2009/05/09 20:03:07 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -536,12 +536,13 @@ enum session_state {
 	S_AUTH_PASSWORD,
 	S_AUTH_FINALIZE,
 	S_HELO,
-	S_MAILREQUEST,
+	S_MAIL_MFA,
+	S_MAIL_QUEUE,
 	S_MAIL,
-	S_RCPTREQUEST,
+	S_RCPT_MFA,
 	S_RCPT,
-	S_DATAREQUEST,
 	S_DATA,
+	S_DATA_QUEUE,
 	S_DATACONTENT,
 	S_DONE,
 	S_QUIT

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.80 2009/05/09 18:59:09 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.81 2009/05/09 20:03:07 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -371,7 +371,7 @@ session_rfc5321_mail_handler(struct session *s, char *args)
 	}
 
 	s->rcptcount = 0;
-	s->s_state = S_MAILREQUEST;
+	s->s_state = S_MAIL_MFA;
 	s->s_msg.id = s->s_id;
 	s->s_msg.session_id = s->s_id;
 	s->s_msg.session_ss = s->s_ss;
@@ -402,7 +402,7 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	s->s_state = S_RCPTREQUEST;
+	s->s_state = S_RCPT_MFA;
 
 	if (s->s_flags & F_AUTHENTICATED) {
 		s->s_msg.flags |= F_MESSAGE_AUTHENTICATED;
@@ -442,7 +442,7 @@ session_rfc5321_data_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	s->s_state = S_DATAREQUEST;
+	s->s_state = S_DATA_QUEUE;
 
 	session_imsg(s, PROC_QUEUE, IMSG_QUEUE_MESSAGE_FILE, 0, 0, -1,
 	    &s->s_msg, sizeof(s->s_msg));
@@ -601,32 +601,32 @@ session_pickup(struct session *s, struct submit_status *ss)
 		ssl_session_init(s);
 		break;
 
-	case S_MAILREQUEST:
+	case S_MAIL_MFA:
 		if (ss == NULL)
-			fatalx("bad ss at S_MAILREQUEST");
-		/* sender was not accepted, downgrade state */
+			fatalx("bad ss at S_MAIL_MFA");
 		if (ss->code != 250) {
 			s->s_state = S_HELO;
 			session_respond(s, "%d Sender rejected", ss->code);
 			return;
 		}
 
-		s->s_state = S_MAIL;
+		s->s_state = S_MAIL_QUEUE;
 		s->s_msg.sender = ss->u.path;
 
 		session_imsg(s, PROC_QUEUE, IMSG_QUEUE_CREATE_MESSAGE, 0, 0, -1,
 		    &s->s_msg, sizeof(s->s_msg));
 		break;
 
-	case S_MAIL:
+	case S_MAIL_QUEUE:
 		if (ss == NULL)
-			fatalx("bad ss at S_MAIL");
+			fatalx("bad ss at S_MAIL_QUEUE");
+		s->s_state = S_MAIL;
 		session_respond(s, "%d Sender ok", ss->code);
 		break;
 
-	case S_RCPTREQUEST:
+	case S_RCPT_MFA:
 		if (ss == NULL)
-			fatalx("bad ss at S_RCPTREQUEST");
+			fatalx("bad ss at S_RCPT_MFA");
 		/* recipient was not accepted */
 		if (ss->code != 250) {
 			/* We do not have a valid recipient, downgrade state */
@@ -645,7 +645,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		session_respond(s, "%d Recipient ok", ss->code);
 		break;
 
-	case S_DATAREQUEST:
+	case S_DATA_QUEUE:
 		s->s_state = S_DATACONTENT;
 		session_respond(s, "354 Enter mail, end with \".\" on a line by"
 		    " itself");
