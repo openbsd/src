@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.542 2009/05/09 19:33:35 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.543 2009/05/09 21:34:23 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -690,6 +690,16 @@ __EOT
 	return 1
 }
 
+# Convert a hex value to dotted decimal format
+hextodec() {
+	local _d _b
+
+	for _b in $(echo $1 | sed -e 's/0x\(..\)\(..\)\(..\)\(..\)/\1 \2 \3 \4/'); do
+		_d=${_d}.$((16#$_b))
+	done
+	echo $_d | sed -e 's/^\.//'
+}
+
 v4_config() {
 	local _ifs=$1 _name=$2 _hn=$3 _prompt _addr _mask
 
@@ -698,7 +708,7 @@ v4_config() {
 	else
 		set -- $(v4_info $_ifs)
 		if [[ -n $2 ]]; then
-			_addr=$2; _mask=$3
+			_addr=$2; _mask=$(hextodec $3)
 			ifconfig $_ifs inet $_addr delete
 		fi
 	fi
