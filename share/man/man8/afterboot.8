@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.123 2009/05/09 14:21:24 schwarze Exp $
+.\"	$OpenBSD: afterboot.8,v 1.124 2009/05/09 16:29:55 schwarze Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -483,16 +483,16 @@ option in your sendmail .mc file.
 See
 .Pa /usr/share/sendmail/README
 for more information.
-.Ss Daily and weekly scripts
-Look at the
-.Pa /etc/daily
+.Ss Daily, weekly, monthly scripts
+Look at and possibly edit the
+.Pa /etc/daily , /etc/weekly ,
 and
-.Pa /etc/weekly
+.Pa /etc/monthly
 scripts.
 Your site specific things should go into
-.Pa /etc/daily.local
+.Pa /etc/daily.local , /etc/weekly.local ,
 and
-.Pa /etc/weekly.local .
+.Pa /etc/monthly.local .
 .Pp
 These scripts have been limited so as to keep the system running without
 filling up disk space from normal running processes and database updates.
@@ -540,6 +540,7 @@ and change some of the lines to read:
 .Bd -literal -offset indent
 30  1  *  *  *   /bin/sh /etc/daily 2>&1 > /var/log/daily.out
 30  3  *  *  6   /bin/sh /etc/weekly 2>&1 > /var/log/weekly.out
+30  5  1  *  *   /bin/sh /etc/monthly 2>&1 > /var/log/monthly.out
 .Ed
 .Pp
 See

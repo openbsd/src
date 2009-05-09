@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.83 2009/05/09 14:21:24 schwarze Exp $
+#	$OpenBSD: special,v 1.84 2009/05/09 16:29:54 schwarze Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -47,6 +47,8 @@ login.conf	type=file mode=0644 uname=root gname=wheel
 mail.rc		type=file mode=0644 uname=root gname=wheel
 mailer.conf	type=file mode=0644 uname=root gname=wheel
 master.passwd	type=file mode=0600 uname=root gname=wheel
+monthly		type=file mode=0644 uname=root gname=wheel
+monthly.local	type=file mode=0644 uname=root gname=wheel optional
 mail		type=dir mode=0755 uname=root gname=wheel
 aliases		type=file mode=0644 uname=root gname=wheel optional
 aliases.db	type=file mode=0644 uname=root gname=wheel optional
