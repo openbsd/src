@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.27 2009/04/24 01:43:27 krw Exp $
+#	$OpenBSD: install.md,v 1.28 2009/05/09 21:38:10 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -60,9 +60,8 @@ md_installboot() {
 		return
 	fi
 
-	echo Installing boot block...
 	${_prefix}/installboot -v ${_prefix}/bootblk ${_rawdev}
-	sync; sync; sync
+	sync
 
 	if [ -e /mnt/usr/mdec/ofwboot ]; then
 		_prefix=/mnt/usr/mdec
@@ -72,7 +71,6 @@ md_installboot() {
 		echo No ofwboot found!
 		return
 	fi
-	echo Copying ofwboot...
 	cp ${_prefix}/ofwboot /mnt/ofwboot
 }
 
