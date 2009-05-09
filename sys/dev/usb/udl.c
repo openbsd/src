@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.1 2009/05/09 19:23:07 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.2 2009/05/09 20:06:38 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -361,7 +361,7 @@ udl_mmap(void *v, off_t off, int prot)
 
 	DPRINTF(1, "%s: %s\n", DN(sc), FUNC);
 
-	return (NULL);
+	return (-1);
 }
 
 int
