@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.18 2009/05/08 18:34:37 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.19 2009/05/09 18:08:59 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -41,7 +41,7 @@
 #include <machine/mnode.h>
 #endif
 
-int bios_is_32bit = 1;
+int bios_is_32bit;
 /*
  * If we cannot get the onboard Ethernet address to override this bogus
  * value, ether_ifattach() will pick a valid address.
@@ -155,7 +155,7 @@ int
 bios_getchar()
 {
 	char buf[4];
-	int  cnt;
+	long  cnt;
 
 	if (Bios_Read(0, &buf[0], 1, &cnt) != 0)
 		return(-1);
@@ -167,7 +167,7 @@ bios_putchar(c)
 char c;
 {
 	char buf[4];
-	int  cnt;
+	long  cnt;
 
 	if (c == '\n') {
 		buf[0] = '\r';
@@ -382,7 +382,8 @@ bios_get_system_type()
 	int		i;
 
 	/*
-	 *  Figure out if this is an ARC Bios machine and if its 32 or 64 bits.
+	 * Figure out if this is an ARC Bios machine and if it is, see if we're
+	 * dealing with a 32 or 64 bit version.
 	 */
 	if ((ArcBiosBase32->magic == ARC_PARAM_BLK_MAGIC) ||
 	    (ArcBiosBase32->magic == ARC_PARAM_BLK_MAGIC_BUG)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.11 2009/04/19 12:52:31 miod Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.12 2009/05/09 18:08:57 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -201,24 +201,34 @@ typedef u_int32_t arc_open_mode_t; /* XXX */
 typedef u_int32_t arc_seek_mode_t; /* XXX */
 typedef u_int32_t arc_mount_t; /* XXX */
 
+typedef struct arc_quad {
+#ifdef __MIPSEB__
+	long	hi;
+	u_long	lo;
+#else
+	u_long	lo;
+	long	hi;
+#endif
+} arc_quad_t;
+
 typedef struct arc_calls
 {
 	arc_status_t (*load)(		/* Load 1 */
 		char *,			/* Image to load */
-		u_int32_t,		/* top address */
-		u_int32_t *,		/* Entry address */
-		u_int32_t *);		/* Low address */
+		u_long,			/* top address */
+		u_long *,		/* Entry address */
+		u_long *);		/* Low address */
 
 	arc_status_t (*invoke)(		/* Invoke 2 */
-		u_int32_t,		/* Entry Address */
-		u_int32_t,		/* Stack Address */
-		u_int32_t,		/* Argc */
+		u_long,			/* Entry Address */
+		u_long,			/* Stack Address */
+		u_long,			/* Argc */
 		char **,		/* argv */
 		char **);		/* envp */
 
 	arc_status_t (*execute)(	/* Execute 3 */
 		char *,			/* Image path */
-		u_int32_t,		/* Argc */
+		u_long,			/* Argc */
 		char **,		/* argv */
 		char **);		/* envp */
 
@@ -274,40 +284,40 @@ typedef struct arc_calls
 
 	arc_time_t *(*get_time)(void);	/* GetTime 21 */
 
-	u_int32_t (*get_relative_time)(void); /* GetRelativeTime 22 */
+	u_long (*get_relative_time)(void); /* GetRelativeTime 22 */
 
 	arc_status_t (*get_dir_entry)(	/* GetDirectoryEntry 23 */
-		u_int32_t,		/* FileId */
+		u_long,			/* FileId */
 		arc_dirent_t *,		/* Directory entry */
-		u_int32_t,		/* Length */
-		u_int32_t *);		/* Count */
+		u_long,			/* Length */
+		u_long *);		/* Count */
 
 	arc_status_t (*open)(		/* Open 24 */
 		char *,			/* Path */
 		arc_open_mode_t,	/* Open mode */
-		u_int32_t *);		/* FileId */
+		u_long *);		/* FileId */
 
 	arc_status_t (*close)(		/* Close 25 */
-		u_int32_t);		/* FileId */
+		u_long);		/* FileId */
 
 	arc_status_t (*read)(		/* Read 26 */
-		u_int32_t,		/* FileId */
+		u_long,			/* FileId */
 		caddr_t,		/* Buffer */
-		u_int32_t,		/* Length */
-		u_int32_t *);		/* Count */
+		u_long,			/* Length */
+		u_long *);		/* Count */
 
 	arc_status_t (*get_read_status)( /* GetReadStatus 27 */
-		u_int32_t);		/* FileId */
+		u_long);		/* FileId */
 
 	arc_status_t (*write)(		/* Write 28 */
-		u_int32_t,		/* FileId */
+		u_long,			/* FileId */
 		caddr_t,		/* Buffer */
-		u_int32_t,		/* Length */
-		u_int32_t *);		/* Count */
+		u_long,			/* Length */
+		u_long *);		/* Count */
 
 	arc_status_t (*seek)(		/* Seek 29 */
-		u_int32_t,		/* FileId */
-		int64_t *,		/* Offset */
+		u_long,			/* FileId */
+		arc_quad_t *,		/* Offset */
 		arc_seek_mode_t);	/* Mode */
 
 	arc_status_t (*mount)(		/* Mount 30 */
@@ -403,39 +413,39 @@ void bios_display_info(int *, int *, int *, int *);
 /*
  * Direct ARC-BIOS calls.
  */
-int Bios_Load(char *, u_int32_t, u_int32_t, u_int32_t *);
-int Bios_Invoke(uint32_t, uint32_t, uint32_t, char **, char **);
-int Bios_Execute(char *, u_int32_t, char **, char **);
+long Bios_Load(char *, u_long, u_long, u_long *);
+long Bios_Invoke(u_long, u_long, u_long, char **, char **);
+long Bios_Execute(char *, u_long, char **, char **);
 void Bios_Halt(void);
 void Bios_PowerDown(void);
 void Bios_Restart(void);
 void Bios_Reboot(void);
 void Bios_EnterInteractiveMode(void);
-int Bios_GetPeer(void *);
+long Bios_GetPeer(void *);
 arc_config_t *Bios_GetChild(void *);
-int Bios_GetParent(void *);
-int Bios_GetConfigurationData(void *, void *);
-int Bios_AddChild(void *, void *);
-int Bios_DeleteComponent(void *);
-int Bios_GetComponent(char *);
-int Bios_SaveConfiguration(void);
+long Bios_GetParent(void *);
+long Bios_GetConfigurationData(void *, void *);
+long Bios_AddChild(void *, void *);
+long Bios_DeleteComponent(void *);
+long Bios_GetComponent(char *);
+long Bios_SaveConfiguration(void);
 arc_sid_t *Bios_GetSystemId(void);
 arc_mem_t *Bios_GetMemoryDescriptor(void *);
-int Bios_GetTime(void);
-int Bios_GetRelativeTime(void);
-int Bios_GetDirectoryEntry(u_int32_t, void *, u_int32_t, u_int32_t *);
-int Bios_Open(char *, int, u_int *);
-int Bios_Close(u_int);
-int Bios_Read(int, char *, int, int *);
-int Bios_GetReadStatus(u_int);
-int Bios_Write(int, char *, int, int *);
-int Bios_Seek(int, int64_t *, int);
-int Bios_Mount(char *, void *);
+long Bios_GetTime(void);
+long Bios_GetRelativeTime(void);
+long Bios_GetDirectoryEntry(u_long, void *, u_long, u_long *);
+long Bios_Open(char *, int, long *);
+long Bios_Close(long);
+long Bios_Read(long, char *, long, long *);
+long Bios_GetReadStatus(u_long);
+long Bios_Write(long, char *, long, long *);
+long Bios_Seek(long, arc_quad_t *, int);
+long Bios_Mount(char *, void *);
 char *Bios_GetEnvironmentVariable(const char *);
-int Bios_SetEnvironmentVariable(char *, char *);
-int Bios_GetFileInformation(u_int32_t, u_int32_t, u_int32_t);
-int Bios_SetFileInformation(u_int32_t, u_int32_t, u_int32_t);
+long Bios_SetEnvironmentVariable(char *, char *);
+long Bios_GetFileInformation(u_long, u_long, u_long);
+long Bios_SetFileInformation(u_long, u_long, u_long);
 void Bios_FlushAllCaches(void);
-int Bios_TestUnicodeCharacter(u_int32_t, u_int16_t);
-arc_dsp_stat_t *Bios_GetDisplayStatus(u_int32_t);
+long Bios_TestUnicodeCharacter(u_long, u_int16_t);
+arc_dsp_stat_t *Bios_GetDisplayStatus(u_long);
 

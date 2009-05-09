@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskio.c,v 1.3 2008/03/08 16:52:28 jsing Exp $ */
+/*	$OpenBSD: diskio.c,v 1.4 2009/05/09 18:08:59 miod Exp $ */
 
 /*
  * Copyright (c) 2000 Opsycon AB  (www.opsycon.se)
@@ -45,15 +45,16 @@ struct	dio_softc {
 };
 
 int
-diostrategy(void *devdata, int rw, daddr_t bn, u_int reqcnt, char *addr,
-    u_int *cnt)
+diostrategy(void *devdata, int rw, daddr_t bn, u_int reqcnt, void *addr,
+    size_t *cnt)
 {
 	struct dio_softc *sc = (struct dio_softc *)devdata;
 	struct partition *pp = &sc->sc_label.d_partitions[sc->sc_part];
-	int64_t offset;
-	int result;
+	arc_quad_t offset;
+	long result;
 
-	offset = (pp->p_offset + bn) * DEV_BSIZE;
+	offset.hi = 0;
+	offset.lo = (pp->p_offset + bn) * DEV_BSIZE;
 
 	if ((Bios_Seek(sc->sc_fd, &offset, 0) < 0) ||
 	    (Bios_Read(sc->sc_fd, addr, reqcnt, &result) < 0))
@@ -71,7 +72,7 @@ dioopen(struct open_file *f, ...)
 
 	struct dio_softc *sc;
 	struct disklabel *lp;
-	int fd;
+	long fd;
 	daddr_t labelsector;
 	va_list ap;
 

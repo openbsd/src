@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.7 2008/03/27 15:11:37 jsing Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.8 2009/05/09 18:08:59 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -128,7 +128,7 @@ int
 getchar()
 {
 	char buf[4];
-	int cnt;
+	long cnt;
 
 	if (Bios_Read(0, &buf[0], 1, &cnt) != 0)
 		return (-1);
@@ -140,7 +140,7 @@ void
 putchar(int c)
 {
 	char buf[4];
-	int cnt;
+	long cnt;
 
 	if (c == '\n') {
 		buf[0] = '\r';
