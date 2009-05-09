@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.23 2009/04/21 14:37:32 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.24 2009/05/09 20:04:36 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -661,6 +661,7 @@ control_dispatch_queue(int sig, short event, void *p)
 			s = imsg.data;
 			if ((c = control_connbyfd(s->fd)) == NULL) {
 				log_warn("control_dispatch_queue: fd %d not found", s->fd);
+				imsg_free(&imsg);
 				return;
 			}
 
@@ -722,6 +723,7 @@ control_dispatch_runner(int sig, short event, void *p)
 			s = imsg.data;
 			if ((c = control_connbyfd(s->fd)) == NULL) {
 				log_warn("control_dispatch_runner: fd %d not found", s->fd);
+				imsg_free(&imsg);
 				return;
 			}
 
@@ -737,6 +739,7 @@ control_dispatch_runner(int sig, short event, void *p)
 			s = imsg.data;
 			if ((c = control_connbyfd(s->fd)) == NULL) {
 				log_warn("control_dispatch_runner: fd %d not found", s->fd);
+				imsg_free(&imsg);
 				return;
 			}
 
@@ -799,6 +802,7 @@ control_dispatch_smtp(int sig, short event, void *p)
 			s = imsg.data;
 			if ((c = control_connbyfd(s->fd)) == NULL) {
 				log_warn("control_dispatch_queue: fd %d not found", s->fd);
+				imsg_free(&imsg);
 				return;
 			}
 
@@ -815,6 +819,7 @@ control_dispatch_smtp(int sig, short event, void *p)
 
 			if ((c = control_connbyfd(client_fd)) == NULL) {
 				log_warn("control_dispatch_smtp: fd %d not found", client_fd);
+				imsg_free(&imsg);
 				return;
 			}
 
