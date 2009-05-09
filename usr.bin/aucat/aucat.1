@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.52 2009/04/11 10:24:21 jakemsr Exp $
+.\"	$OpenBSD: aucat.1,v 1.53 2009/05/09 09:50:40 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 11 2009 $
+.Dd $Mdocdate: May 9 2009 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -212,19 +212,14 @@ is applied to
 .Pp
 If no audio device
 .Pq Fl f
-is specified but
-.Fl u
-is given anyway,
-any
-.Fl Ccer
-options specified before
-.Fl ios
-options are applied both to the corresponding file
-and the default audio device;
-if they are specified after
-.Fl ios
-options,
-they will be applied only to the default audio device.
+is specified,
+settings are applied as if
+the default device is specified as the last argument.
+If no sockets
+.Pq Fl s
+are specified
+settings are applied as if
+the default socket is specified as the last argument.
 .Pp
 File formats are specified using the
 .Fl h
