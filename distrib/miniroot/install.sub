@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.543 2009/05/09 21:34:23 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.544 2009/05/09 22:41:01 martynas Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1380,7 +1380,7 @@ set_timezone() {
 			*)	_zonepath=$_zonepath/$resp ;;
 			esac
 		done
-		
+
 		if isin $_zonepath $(cat $_zonefile); then
 			TZ=${_zonepath#$_zoneroot}
 			return
@@ -1676,7 +1676,7 @@ questions() {
 	ask_yn "Start sshd(8) by default?" yes
 	sshd=$resp
 
-	ask_yn "Start ntpd(8) by default?" no
+	ask_yn "Start ntpd(8) by default?"
 	ntpd=$resp
 	if [[ $resp == y ]]; then
 		ask "NTP server? (hostname or 'default')" default
