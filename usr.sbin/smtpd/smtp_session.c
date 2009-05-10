@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.82 2009/05/09 23:23:38 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.83 2009/05/10 11:23:04 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -163,7 +163,7 @@ int
 session_rfc4616_auth_plain(struct session *s, char *arg, size_t nr)
 {
 	if (arg == NULL) {
-		session_respond(s, "334");
+		session_respond(s, "334 ");
 		s->s_state = S_AUTH_INIT;
 		return 1;
 	}
