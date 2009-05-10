@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.2 2009/04/17 21:31:38 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.3 2009/05/10 12:37:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -114,7 +114,7 @@ mdesc_get_prop_val(int idx, const char *name)
 }
 
 const char *
-mdesc_get_prop_string(int idx, const char *name)
+mdesc_get_prop_str(int idx, const char *name)
 {
 	struct md_header *hdr;
 	struct md_element *elem;
@@ -150,7 +150,7 @@ mdesc_find(const char *name, uint64_t cfg_handle)
 	elem = (struct md_element *)(mdesc + sizeof(struct md_header));
 
 	for (idx = 0; elem[idx].tag == 'N'; idx = elem[idx].d.val) {
-		str = mdesc_get_prop_string(idx, "name");
+		str = mdesc_get_prop_str(idx, "name");
 		val = mdesc_get_prop_val(idx, "cfg-handle");
 		if (str && strcmp(str, name) == 0 && val == cfg_handle)
 			return (idx);
@@ -179,7 +179,7 @@ mdesc_find_child(int idx, const char *name, uint64_t cfg_handle)
 			continue;
 
 		arc = elem[idx].d.val;
-		str = mdesc_get_prop_string(arc, "name");
+		str = mdesc_get_prop_str(arc, "name");
 		val = mdesc_get_prop_val(arc, "cfg-handle");
 		if (str && strcmp(str, name) == 0 && val == cfg_handle)
 			return (arc);
