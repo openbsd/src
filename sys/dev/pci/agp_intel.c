@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.13 2009/05/10 14:44:42 oga Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.14 2009/05/10 15:28:45 oga Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -71,8 +71,8 @@ void	agp_intel_attach(struct device *, struct device *, void *);
 int	agp_intel_probe(struct device *, void *, void *);
 bus_size_t agp_intel_get_aperture(void *);
 int	agp_intel_set_aperture(void *, bus_size_t);
-int	agp_intel_bind_page(void *, off_t, bus_addr_t);
-int	agp_intel_unbind_page(void *, off_t);
+void	agp_intel_bind_page(void *, bus_addr_t, paddr_t, int);
+void	agp_intel_unbind_page(void *, bus_addr_t);
 void	agp_intel_flush_tlb(void *);
 
 struct cfattach intelagp_ca = {
@@ -326,28 +326,21 @@ agp_intel_set_aperture(void *sc, bus_size_t aperture)
 	return (0);
 }
 
-int
-agp_intel_bind_page(void *sc, off_t offset, bus_addr_t physical)
+void
+agp_intel_bind_page(void *sc, bus_addr_t offset, paddr_t physical, int flags)
 {
 	struct agp_intel_softc *isc = sc;
 
-	if (offset < 0 || offset >= (isc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return (EINVAL);
-
-	isc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = physical | 0x17;
-	return (0);
+	isc->gatt->ag_virtual[(offset - isc->isc_apaddr) >> AGP_PAGE_SHIFT] =
+	    physical | 0x17;
 }
 
-int
-agp_intel_unbind_page(void *sc, off_t offset)
+void
+agp_intel_unbind_page(void *sc, bus_size_t offset)
 {
 	struct agp_intel_softc *isc = sc;
 
-	if (offset < 0 || offset >= (isc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return (EINVAL);
-
-	isc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = 0;
-	return (0);
+	isc->gatt->ag_virtual[(offset - isc->isc_apaddr) >> AGP_PAGE_SHIFT] = 0;
 }
 
 void

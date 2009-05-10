@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_amd.c,v 1.11 2009/05/10 14:44:42 oga Exp $	*/
+/*	$OpenBSD: agp_amd.c,v 1.12 2009/05/10 15:28:45 oga Exp $	*/
 /*	$NetBSD: agp_amd.c,v 1.6 2001/10/06 02:48:50 thorpej Exp $	*/
 
 /*-
@@ -81,8 +81,8 @@ int	agp_amd_probe(struct device *, void *, void *);
 bus_size_t agp_amd_get_aperture(void *);
 struct agp_amd_gatt *agp_amd_alloc_gatt(bus_dma_tag_t, bus_size_t);
 int	agp_amd_set_aperture(void *, bus_size_t);
-int	agp_amd_bind_page(void *, off_t, bus_addr_t);
-int	agp_amd_unbind_page(void *, off_t);
+void	agp_amd_bind_page(void *, bus_size_t, paddr_t, int);
+void	agp_amd_unbind_page(void *, bus_size_t);
 void	agp_amd_flush_tlb(void *);
 
 struct cfattach amdagp_ca = {
@@ -313,28 +313,21 @@ agp_amd_set_aperture(void *sc, bus_size_t aperture)
 	return (0);
 }
 
-int
-agp_amd_bind_page(void *sc, off_t offset, bus_addr_t physical)
+void
+agp_amd_bind_page(void *sc, bus_size_t offset, paddr_t physical, int flags)
 {
 	struct agp_amd_softc	*asc = sc;
 
-	if (offset < 0 || offset >= (asc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return (EINVAL);
-
-	asc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = physical | 1;
-	return (0);
+	asc->gatt->ag_virtual[(offset - asc->asc_apaddr) >> AGP_PAGE_SHIFT] =
+	    physical | 1;
 }
 
-int
-agp_amd_unbind_page(void *sc, off_t offset)
+void
+agp_amd_unbind_page(void *sc, bus_size_t offset)
 {
 	struct agp_amd_softc	*asc = sc;
 
-	if (offset < 0 || offset >= (asc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return (EINVAL);
-
-	asc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = 0;
-	return (0);
+	asc->gatt->ag_virtual[(offset - asc->asc_apaddr) >> AGP_PAGE_SHIFT] = 0;
 }
 
 void

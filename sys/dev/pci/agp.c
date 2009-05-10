@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.30 2009/05/10 14:44:42 oga Exp $ */
+/* $OpenBSD: agp.c,v 1.31 2009/05/10 15:28:45 oga Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -460,13 +460,12 @@ agp_generic_free_memory(struct agp_softc *sc, struct agp_memory *mem)
 
 int
 agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
-			off_t offset)
+    bus_size_t offset)
 {
-	bus_dma_segment_t *segs, *seg;
-	bus_size_t done, j;
-	bus_addr_t pa;
-	off_t i, k;
-	int nseg, error;
+	bus_dma_segment_t	*segs, *seg;
+	bus_addr_t		 apaddr = sc->sc_apaddr + offset;
+	bus_size_t		 done, i, j;
+	int			 nseg, error;
 
 	rw_enter_write(&sc->sc_lock);
 
@@ -512,43 +511,21 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	mem->am_dmaseg = segs;
 
 	/*
-	 * Bind the individual pages and flush the chipset's
-	 * TLB.
+	 * Install entries in the GATT, making sure that if
+	 * AGP_PAGE_SIZE < PAGE_SIZE and mem->am_size is not
+	 * aligned to PAGE_SIZE, we don't modify too many GATT
+	 * entries. Flush chipset tlb when done.
 	 */
 	done = 0;
 	for (i = 0; i < mem->am_dmamap->dm_nsegs; i++) {
 		seg = &mem->am_dmamap->dm_segs[i];
-		/*
-		 * Install entries in the GATT, making sure that if
-		 * AGP_PAGE_SIZE < PAGE_SIZE and mem->am_size is not
-		 * aligned to PAGE_SIZE, we don't modify too many GATT
-		 * entries.
-		 */
 		for (j = 0; j < seg->ds_len && (done + j) < mem->am_size;
 		    j += AGP_PAGE_SIZE) {
-			pa = seg->ds_addr + j;
 			AGP_DPF("binding offset %#lx to pa %#lx\n",
 			    (unsigned long)(offset + done + j),
-			    (unsigned long)pa);
-			error = sc->sc_methods->bind_page(sc->sc_chipc,
-			    offset + done + j, pa);
-			if (error) {
-				/*
-				 * Bail out. Reverse all the mappings
-				 * and unwire the pages.
-				 */
-				for (k = 0; k < done + j; k += AGP_PAGE_SIZE)
-					sc->sc_methods->unbind_page(
-					    sc->sc_chipc, offset + k);
-
-				bus_dmamap_unload(sc->sc_dmat, mem->am_dmamap);
-				bus_dmamem_free(sc->sc_dmat, mem->am_dmaseg,
-				    mem->am_nseg);
-				free(mem->am_dmaseg, M_AGP);
-				rw_exit_write(&sc->sc_lock);
-				AGP_DPF("AGP_BIND_PAGE failed %d\n", error);
-				return (error);
-			}
+			    (unsigned long)seg->ds_addr + j);
+			sc->sc_methods->bind_page(sc->sc_chipc,
+			    apaddr + done + j, seg->ds_addr + j, 0);
 		}
 		done += seg->ds_len;
 	}
@@ -575,7 +552,8 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 int
 agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 {
-	int i;
+	bus_addr_t	apaddr = sc->sc_apaddr + mem->am_offset;
+	bus_size_t	i;
 
 	rw_enter_write(&sc->sc_lock);
 
@@ -591,7 +569,7 @@ agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	 * TLB. Unwire the pages so they can be swapped.
 	 */
 	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-		sc->sc_methods->unbind_page(sc->sc_chipc, mem->am_offset + i);
+		sc->sc_methods->unbind_page(sc->sc_chipc, apaddr + i);
 
 	agp_flush_cache();
 	sc->sc_methods->flush_tlb(sc->sc_chipc);

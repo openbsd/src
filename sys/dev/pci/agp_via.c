@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_via.c,v 1.12 2009/05/10 14:44:42 oga Exp $	*/
+/*	$OpenBSD: agp_via.c,v 1.13 2009/05/10 15:28:45 oga Exp $	*/
 /*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -52,8 +52,8 @@ void	agp_via_attach(struct device *, struct device *, void *);
 int	agp_via_probe(struct device *, void *, void *);
 bus_size_t agp_via_get_aperture(void *);
 int	agp_via_set_aperture(void *, bus_size_t);
-int	agp_via_bind_page(void *, off_t, bus_addr_t);
-int	agp_via_unbind_page(void *, off_t);
+void	agp_via_bind_page(void *, bus_addr_t, paddr_t, int);
+void	agp_via_unbind_page(void *, bus_addr_t);
 void	agp_via_flush_tlb(void *);
 
 const struct agp_methods agp_via_methods = {
@@ -250,28 +250,21 @@ agp_via_set_aperture(void *sc, bus_size_t aperture)
 	return (0);
 }
 
-int
-agp_via_bind_page(void *sc, off_t offset, bus_addr_t physical)
+void
+agp_via_bind_page(void *sc, bus_addr_t offset, paddr_t physical, int flags)
 {
 	struct agp_via_softc *vsc = sc;
 
-	if (offset < 0 || offset >= (vsc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return (EINVAL);
-
-	vsc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = physical;
-	return (0);
+	vsc->gatt->ag_virtual[(offset - vsc->vsc_apaddr) >> AGP_PAGE_SHIFT] =
+	    physical;
 }
 
-int
-agp_via_unbind_page(void *sc, off_t offset)
+void
+agp_via_unbind_page(void *sc, bus_addr_t offset)
 {
 	struct agp_via_softc *vsc = sc;
 
-	if (offset < 0 || offset >= (vsc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return (EINVAL);
-
-	vsc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = 0;
-	return (0);
+	vsc->gatt->ag_virtual[(offset - vsc->vsc_apaddr) >> AGP_PAGE_SHIFT] = 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.17 2009/05/10 14:44:42 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.18 2009/05/10 15:28:45 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -66,16 +66,16 @@ enum agp_acquire_state {
  */
 TAILQ_HEAD(agp_memory_list, agp_memory);
 struct agp_memory {
-	TAILQ_ENTRY(agp_memory) am_link;	/* wiring for the tailq */
-	int		am_id;			/* unique id for block */
-	vsize_t		am_size;		/* number of bytes allocated */
-	int		am_type;		/* chipset specific type */
-	off_t		am_offset;		/* page offset if bound */
-	int		am_is_bound;		/* non-zero if bound */
-	bus_addr_t	am_physical;
-	bus_dmamap_t	am_dmamap;
-	int		am_nseg;
-	bus_dma_segment_t *am_dmaseg;
+	TAILQ_ENTRY(agp_memory)	 am_link;	/* wiring for the tailq */
+	bus_dmamap_t		 am_dmamap;
+	bus_dma_segment_t	*am_dmaseg;
+	bus_size_t		 am_size;	/* number of bytes allocated */
+	bus_size_t		 am_offset;	/* page offset if bound */
+	paddr_t			 am_physical;
+	int			 am_id;		/* unique id for block */
+	int			 am_is_bound;	/* non-zero if bound */
+	int			 am_nseg;
+	int			 am_type;	/* chipset specific type */
 };
 
 /*
@@ -99,14 +99,14 @@ struct agp_memory_info {
 
 struct agp_methods {
 	bus_size_t (*get_aperture)(void *);
-	int	(*bind_page)(void *, off_t, bus_addr_t);
-	int	(*unbind_page)(void *, off_t);
+	void	(*bind_page)(void *, bus_addr_t, paddr_t, int);
+	void	(*unbind_page)(void *, bus_addr_t);
 	void	(*flush_tlb)(void *);
 	int	(*enable)(void *, u_int32_t mode);
 	struct agp_memory *
 		(*alloc_memory)(void *, int, vsize_t);
 	int	(*free_memory)(void *, struct agp_memory *);
-	int	(*bind_memory)(void *, struct agp_memory *, off_t);
+	int	(*bind_memory)(void *, struct agp_memory *, bus_size_t);
 	int	(*unbind_memory)(void *, struct agp_memory *);
 };
 
@@ -151,13 +151,12 @@ struct agp_gatt {
 struct device	*agp_attach_bus(struct pci_attach_args *,
 		     const struct agp_methods *, bus_addr_t,
 		     struct device *);
-int	agp_map_aperture(struct pci_attach_args *, 
-	    struct agp_softc *, u_int32_t, u_int32_t);
 struct agp_gatt *
 	agp_alloc_gatt(bus_dma_tag_t, u_int32_t);
 void	agp_free_gatt(bus_dma_tag_t, struct agp_gatt *);
 void	agp_flush_cache(void);
-int	agp_generic_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
+int	agp_generic_bind_memory(struct agp_softc *, struct agp_memory *,
+	    bus_size_t);
 int	agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
 
 int	agp_alloc_dmamem(bus_dma_tag_t, size_t, bus_dmamap_t *,

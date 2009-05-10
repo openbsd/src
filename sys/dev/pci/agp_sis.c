@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_sis.c,v 1.11 2009/05/10 14:44:42 oga Exp $	*/
+/*	$OpenBSD: agp_sis.c,v 1.12 2009/05/10 15:28:45 oga Exp $	*/
 /*	$NetBSD: agp_sis.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -62,8 +62,8 @@ void	agp_sis_attach(struct device *, struct device *, void *);
 int	agp_sis_probe(struct device *, void *, void *);
 bus_size_t agp_sis_get_aperture(void *);
 int	agp_sis_set_aperture(void *, bus_size_t);
-int	agp_sis_bind_page(void *, off_t, bus_addr_t);
-int	agp_sis_unbind_page(void *, off_t);
+void	agp_sis_bind_page(void *, bus_addr_t, paddr_t, int);
+void	agp_sis_unbind_page(void *, bus_addr_t);
 void	agp_sis_flush_tlb(void *);
 
 struct cfattach sisagp_ca = {
@@ -211,28 +211,21 @@ agp_sis_set_aperture(void *sc, bus_size_t aperture)
 	return (0);
 }
 
-int
-agp_sis_bind_page(void *sc, off_t offset, bus_addr_t physical)
+void
+agp_sis_bind_page(void *sc, bus_addr_t offset, paddr_t physical, int flags)
 {
 	struct agp_sis_softc	*ssc = sc;
 
-	if (offset < 0 || offset >= (ssc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return (EINVAL);
-
-	ssc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = physical;
-	return (0);
+	ssc->gatt->ag_virtual[(offset - ssc->ssc_apaddr) >> AGP_PAGE_SHIFT] =
+	    physical;
 }
 
-int
-agp_sis_unbind_page(void *sc, off_t offset)
+void
+agp_sis_unbind_page(void *sc, bus_addr_t offset)
 {
 	struct agp_sis_softc	*ssc = sc;
 
-	if (offset < 0 || offset >= (ssc->gatt->ag_entries << AGP_PAGE_SHIFT))
-		return (EINVAL);
-
-	ssc->gatt->ag_virtual[offset >> AGP_PAGE_SHIFT] = 0;
-	return (0);
+	ssc->gatt->ag_virtual[(offset - ssc->ssc_apaddr) >> AGP_PAGE_SHIFT] = 0;
 }
 
 void
