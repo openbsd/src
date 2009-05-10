@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.84 2009/05/10 12:09:46 sthen Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.85 2009/05/10 12:31:58 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -146,6 +146,7 @@ int vr_alloc_mbuf(struct vr_softc *, struct vr_chain_onefrag *, struct mbuf *);
 #define	VR_Q_NEEDALIGN		(1<<0)
 #define	VR_Q_CSUM		(1<<1)
 #define	VR_Q_CAM		(1<<2)
+#define	VR_Q_HWTAG		(1<<3)
 
 struct vr_type {
 	pci_vendor_id_t		vr_vid;
@@ -161,7 +162,7 @@ struct vr_type {
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105,
 	    0 },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M,
-	    VR_Q_CSUM | VR_Q_CAM },
+	    VR_Q_CSUM | VR_Q_CAM | VR_Q_HWTAG },
 	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII,
 	    VR_Q_NEEDALIGN },
 	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII,
@@ -457,7 +458,7 @@ vr_probe(struct device *parent, void *match, void *aux)
 {
 	const struct vr_type *vr;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	int i, nent = sizeof(vr_devices)/sizeof(vr_devices[0]);
+	int i, nent = nitems(vr_devices);
 
 	for (i = 0, vr = vr_devices; i < nent; i++, vr++)
 		if (PCI_VENDOR(pa->pa_id) == vr->vr_vid &&
@@ -471,7 +472,7 @@ int
 vr_quirks(struct pci_attach_args *pa)
 {
 	const struct vr_type *vr;
-	int i, nent = sizeof(vr_devices)/sizeof(vr_devices[0]);
+	int i, nent = nitems(vr_devices);
 
 	for (i = 0, vr = vr_devices; i < nent; i++, vr++)
 		if (PCI_VENDOR(pa->pa_id) == vr->vr_vid &&
