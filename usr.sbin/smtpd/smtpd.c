@@ -1,8 +1,9 @@
-/*	$OpenBSD: smtpd.c,v 1.56 2009/04/21 18:39:00 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.57 2009/05/10 11:29:40 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
+ * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

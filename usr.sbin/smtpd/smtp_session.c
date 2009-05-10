@@ -1,8 +1,9 @@
-/*	$OpenBSD: smtp_session.c,v 1.83 2009/05/10 11:23:04 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.84 2009/05/10 11:29:40 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
+ * Copyright (c) 2008-2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -122,6 +123,8 @@ session_rfc3207_stls_handler(struct session *s, char *args)
 	session_respond(s, "220 Ready to start TLS");
 
 	s->s_state = S_TLS;
+	bufferevent_disable(s->s_bev, EV_READ);
+	ssl_session_init(s);
 
 	return 1;
 }
@@ -595,10 +598,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_TLS:
-		s->s_flags |= F_EVLOCKED;
-		bufferevent_disable(s->s_bev, EV_READ|EV_WRITE);
 		s->s_state = S_GREETED;
-		ssl_session_init(s);
 		break;
 
 	case S_MAIL_MFA:
@@ -819,15 +819,8 @@ session_write(struct bufferevent *bev, void *p)
 {
 	struct session	*s = p;
 
-	if (!(s->s_flags & F_QUIT)) {
-		
-		if (s->s_state == S_TLS)
-			session_pickup(s, NULL);
-
-		return;
-	}
-
-	session_destroy(s);
+	if (s->s_flags & F_QUIT)
+		session_destroy(s);
 }
 
 void
