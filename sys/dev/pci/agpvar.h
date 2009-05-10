@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.18 2009/05/10 15:28:45 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.19 2009/05/10 16:57:44 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -53,6 +53,7 @@ struct agpbus_attach_args {
         struct pci_attach_args		*aa_pa;
 	const struct agp_methods	*aa_methods;
 	bus_addr_t			 aa_apaddr;
+	bus_size_t			 aa_apsize;
 };
 
 enum agp_acquire_state {
@@ -98,7 +99,6 @@ struct agp_memory_info {
 };
 
 struct agp_methods {
-	bus_size_t (*get_aperture)(void *);
 	void	(*bind_page)(void *, bus_addr_t, paddr_t, int);
 	void	(*unbind_page)(void *, bus_addr_t);
 	void	(*flush_tlb)(void *);
@@ -122,9 +122,10 @@ struct agp_softc {
 	void				*sc_chipc;	/* chipset softc */
 
 	bus_dma_tag_t			 sc_dmat;
-	bus_addr_t			 sc_apaddr;
 	pci_chipset_tag_t		 sc_pc;
 	pcitag_t			 sc_pcitag;
+	bus_addr_t			 sc_apaddr;
+	bus_size_t			 sc_apsize;
 	pcireg_t			 sc_id;
 
 	int				 sc_opened;
@@ -149,7 +150,7 @@ struct agp_gatt {
  * Functions private to the AGP code.
  */
 struct device	*agp_attach_bus(struct pci_attach_args *,
-		     const struct agp_methods *, bus_addr_t,
+		     const struct agp_methods *, bus_addr_t, bus_size_t,
 		     struct device *);
 struct agp_gatt *
 	agp_alloc_gatt(bus_dma_tag_t, u_int32_t);

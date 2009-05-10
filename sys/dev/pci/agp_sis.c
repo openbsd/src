@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_sis.c,v 1.12 2009/05/10 15:28:45 oga Exp $	*/
+/*	$OpenBSD: agp_sis.c,v 1.13 2009/05/10 16:57:44 oga Exp $	*/
 /*	$NetBSD: agp_sis.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -55,7 +55,7 @@ struct agp_sis_softc {
 	pci_chipset_tag_t	 ssc_pc;
 	pcitag_t		 ssc_tag;
 	bus_addr_t		 ssc_apaddr;
-	bus_size_t		 initial_aperture;
+	bus_size_t		 ssc_apsize;
 };
 
 void	agp_sis_attach(struct device *, struct device *, void *);
@@ -75,7 +75,6 @@ struct cfdriver sisagp_cd = {
 };
 
 const struct agp_methods agp_sis_methods = {
-	agp_sis_get_aperture,
 	agp_sis_bind_page,
 	agp_sis_unbind_page,
 	agp_sis_flush_tlb,
@@ -113,11 +112,10 @@ agp_sis_attach(struct device *parent, struct device *self, void *aux)
 
 	ssc->ssc_pc = pa->pa_pc;
 	ssc->ssc_tag = pa->pa_tag;
-	ssc->initial_aperture = agp_sis_get_aperture(ssc);
+	ssc->ssc_apsize = agp_sis_get_aperture(ssc);
 
 	for (;;) {
-		bus_size_t size = agp_sis_get_aperture(ssc);
-		gatt = agp_alloc_gatt(pa->pa_dmat, size);
+		gatt = agp_alloc_gatt(pa->pa_dmat, ssc->ssc_apsize);
 		if (gatt != NULL)
 			break;
 
@@ -125,7 +123,8 @@ agp_sis_attach(struct device *parent, struct device *self, void *aux)
 		 * Probably failed to alloc congigious memory. Try reducing the
 		 * aperture so that the gatt size reduces.
 		 */
-		if (agp_sis_set_aperture(ssc, size / 2)) {
+		ssc->ssc_apsize /= 2;
+		if (agp_sis_set_aperture(ssc, ssc->ssc_apsize)) {
 			printf("can't set aperture size\n");
 			return;
 		}
@@ -142,7 +141,7 @@ agp_sis_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(ssc->ssc_pc, ssc->ssc_tag, AGP_SIS_WINCTRL, reg);
 
 	ssc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_sis_methods,
-	    ssc->ssc_apaddr, &ssc->dev);
+	    ssc->ssc_apaddr, ssc->ssc_apsize, &ssc->dev);
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.14 2009/05/10 15:28:45 oga Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.15 2009/05/10 16:57:44 oga Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@ struct agp_intel_softc {
 	pci_chipset_tag_t	 isc_pc;
 	pcitag_t		 isc_tag;
 	bus_addr_t		 isc_apaddr;
+	bus_size_t		 isc_apsize;
 	u_int			 aperture_mask;
 	enum {
 		CHIP_INTEL,
@@ -63,7 +64,6 @@ struct agp_intel_softc {
 		CHIP_I850,
 		CHIP_I865
 	}			 chiptype; 
-	bus_size_t		 initial_aperture; /* startup aperture size */
 };
 
 
@@ -84,7 +84,6 @@ struct cfdriver intelagp_cd = {
 };
 
 const struct agp_methods agp_intel_methods = {
-	agp_intel_get_aperture,
 	agp_intel_bind_page,
 	agp_intel_unbind_page,
 	agp_intel_flush_tlb,
@@ -176,11 +175,10 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	isc->aperture_mask = pci_conf_read(pa->pa_pc, pa->pa_tag,
 		AGP_INTEL_APSIZE) & APSIZE_MASK;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, AGP_INTEL_APSIZE, value);
-	isc->initial_aperture = agp_intel_get_aperture(isc);
+	isc->isc_apsize = agp_intel_get_aperture(isc);
 
 	for (;;) {
-		bus_size_t size = agp_intel_get_aperture(isc);
-		gatt = agp_alloc_gatt(pa->pa_dmat, size);
+		gatt = agp_alloc_gatt(pa->pa_dmat, isc->isc_apsize);
 		if (gatt != NULL)
 			break;
 
@@ -188,7 +186,8 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 		 * almost certainly error allocating contigious dma memory
 		 * so reduce aperture so that the gatt size reduces.
 		 */
-		if (agp_intel_set_aperture(isc, size / 2)) {
+		isc->isc_apsize /= 2;
+		if (agp_intel_set_aperture(isc, isc->isc_apsize)) {
 			printf(": failed to set aperture\n");
 			return;
 		}
@@ -255,7 +254,7 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	}
 	
 	isc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_intel_methods,
-	    isc->isc_apaddr, &isc->dev);
+	    isc->isc_apaddr, isc->isc_apsize, &isc->dev);
 	return;
 }
 

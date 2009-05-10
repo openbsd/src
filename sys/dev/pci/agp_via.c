@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_via.c,v 1.13 2009/05/10 15:28:45 oga Exp $	*/
+/*	$OpenBSD: agp_via.c,v 1.14 2009/05/10 16:57:44 oga Exp $	*/
 /*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -57,7 +57,6 @@ void	agp_via_unbind_page(void *, bus_addr_t);
 void	agp_via_flush_tlb(void *);
 
 const struct agp_methods agp_via_methods = {
-	agp_via_get_aperture,
 	agp_via_bind_page,
 	agp_via_unbind_page,
 	agp_via_flush_tlb,
@@ -71,7 +70,7 @@ struct agp_via_softc {
 	pci_chipset_tag_t	 vsc_pc;
 	pcitag_t		 vsc_tag;
 	bus_addr_t		 vsc_apaddr;
-	bus_size_t		 initial_aperture;
+	bus_size_t		 vsc_apsize;
 };
 
 struct cfattach viaagp_ca = {
@@ -142,11 +141,10 @@ agp_via_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 
-	vsc->initial_aperture = agp_via_get_aperture(vsc);
+	vsc->vsc_apsize = agp_via_get_aperture(vsc);
 
 	for (;;) {
-		bus_size_t size = agp_via_get_aperture(vsc);
-		gatt = agp_alloc_gatt(pa->pa_dmat, size);
+		gatt = agp_alloc_gatt(pa->pa_dmat, vsc->vsc_apsize);
 		if (gatt != NULL)
 			break;
 
@@ -154,7 +152,8 @@ agp_via_attach(struct device *parent, struct device *self, void *aux)
 		 * Probably failed to alloc congigious memory. Try reducing the
 		 * aperture so that the gatt size reduces.
 		 */
-		if (agp_via_set_aperture(vsc, size / 2)) {
+		vsc->vsc_apsize /= 2;
+		if (agp_via_set_aperture(vsc, vsc->vsc_apsize)) {
 			printf(", can't set aperture size\n");
 			return;
 		}
@@ -180,7 +179,7 @@ agp_via_attach(struct device *parent, struct device *self, void *aux)
 		    gartctrl | (3 << 7));
 	}
 	vsc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_via_methods,
-	    vsc->vsc_apaddr, &vsc->dev);
+	    vsc->vsc_apaddr, vsc->vsc_apsize, &vsc->dev);
 
 	return;
 }

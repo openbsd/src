@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.51 2009/05/10 15:28:45 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.52 2009/05/10 16:57:44 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -69,7 +69,7 @@ struct agp_i810_softc {
 	struct vga_pci_bar	*map;
 	struct vga_pci_bar	*gtt_map;
 	bus_addr_t		 isc_apaddr;
-	bus_size_t		 aperture;	/* current aperture size */
+	bus_size_t		 isc_apsize;	/* current aperture size */
 	int			 chiptype;	/* i810-like or i830 */
 	u_int32_t		 dcache_size;	/* i810 only */
 	u_int32_t		 stolen;	/* number of i830/845 gtt
@@ -79,7 +79,6 @@ struct agp_i810_softc {
 void	agp_i810_attach(struct device *, struct device *, void *);
 int	agp_i810_probe(struct device *, void *, void *);
 int	agp_i810_get_chiptype(struct pci_attach_args *);
-bus_size_t agp_i810_get_aperture(void *);
 void	agp_i810_bind_page(void *, bus_size_t, paddr_t, int);
 void	agp_i810_unbind_page(void *, bus_size_t);
 void	agp_i810_flush_tlb(void *);
@@ -100,7 +99,6 @@ struct cfdriver intagp_cd = {
 };
 
 struct agp_methods agp_i810_methods = {
-	agp_i810_get_aperture,
 	agp_i810_bind_page,
 	agp_i810_unbind_page,
 	agp_i810_flush_tlb,
@@ -231,8 +229,8 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, gmaddr, memtype,
-	    &isc->isc_apaddr, &isc->aperture, NULL) != 0) {
-		printf("can't get aperture size\n");
+	    &isc->isc_apaddr, &isc->isc_apsize, NULL) != 0) {
+		printf("can't get aperture info\n");
 		return;
 	}
 
@@ -258,7 +256,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	}
 	isc->gatt = gatt;
 
-	gatt->ag_entries = isc->aperture >> AGP_PAGE_SHIFT;
+	gatt->ag_entries = isc->isc_apsize >> AGP_PAGE_SHIFT;
 
 	/*
 	 * Find the GMCH, some of the registers we need to read for
@@ -459,7 +457,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	agp_flush_cache();
 
 	isc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_i810_methods,
-	    isc->isc_apaddr, &isc->dev);
+	    isc->isc_apaddr, isc->isc_apsize, &isc->dev);
 	return;
 out:
 
@@ -506,14 +504,6 @@ agp_i810_detach(struct agp_softc *sc)
 	return (0);
 }
 #endif
-
-bus_size_t
-agp_i810_get_aperture(void *sc)
-{
-	struct agp_i810_softc	*isc = sc;
-
-	return (isc->aperture);
-}
 
 void
 agp_i810_bind_page(void *sc, bus_addr_t offset, paddr_t physical, int flags)
