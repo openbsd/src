@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.86 2009/05/05 19:35:30 martynas Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.87 2009/05/10 21:45:52 martynas Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1013,8 +1013,9 @@ bad_ftp_url:
 			autologin = 0;
 		setpeer(xargc, xargv);
 		autologin = oautologin;
-		if ((connected == 0) ||
-		    ((connected == 1) && !ftp_login(host, username, pass))) {
+		if (connected == 0 ||
+		    (connected == 1 && autologin && (username == NULL ||
+		    !ftp_login(host, username, pass)))) {
 			warnx("Can't connect or login to host `%s'", host);
 			rval = argpos + 1;
 			continue;
