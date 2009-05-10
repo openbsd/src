@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.4 2009/05/10 14:53:27 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.5 2009/05/10 19:42:54 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -338,7 +338,8 @@ udl_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	sc = v;
 
-	DPRINTF(1, "%s: %s\n", DN(sc), FUNC);
+	DPRINTF(1, "%s: %s: ('%c', %d, %d)\n",
+	    DN(sc), FUNC, IOCGROUP(cmd), cmd & 0xff, IOCPARM_LEN(cmd));
 
 	/* TODO */
 	switch (cmd) {
