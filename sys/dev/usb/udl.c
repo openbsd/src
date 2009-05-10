@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.3 2009/05/10 09:28:58 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.4 2009/05/10 14:53:27 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -458,16 +458,16 @@ udl_burner(void *v, u_int on, u_int flags)
 
 	sc = v;
 
-	DPRINTF(1, "%s: %s: %s\n", DN(sc), FUNC, on ? "on" : "off");
+	DPRINTF(1, "%s: %s: screen %s\n", DN(sc), FUNC, on ? "ON" : "OFF");
 
 	if (on)
-		udl_cmd_write_reg_1(sc, UDL_REG_BLANK_SCREEN, 0x01);
+		udl_cmd_write_reg_1(sc, UDL_REG_SCREEN, UDL_REG_SCREEN_ON);
 	else
-		udl_cmd_write_reg_1(sc, UDL_REG_BLANK_SCREEN, 0x00);
+		udl_cmd_write_reg_1(sc, UDL_REG_SCREEN, UDL_REG_SCREEN_OFF);
 
 	udl_cmd_write_reg_1(sc, UDL_REG_SYNC, 0xff);
 
-	(void)udl_cmd_send(sc);
+	(void)udl_cmd_send_async(sc);
 }
 
 /* ---------- */
@@ -1151,7 +1151,7 @@ udl_init_resolution(struct udl_softc *sc, uint8_t *buf, uint8_t len)
 		return (error);
 
 	/* show framebuffer content */
-	udl_cmd_write_reg_1(sc, UDL_REG_BLANK_SCREEN, 0x00);
+	udl_cmd_write_reg_1(sc, UDL_REG_SCREEN, UDL_REG_SCREEN_ON);
 	udl_cmd_write_reg_1(sc, UDL_REG_SYNC, 0xff);
 	error = udl_cmd_send(sc);
 	if (error != USBD_NORMAL_COMPLETION)
