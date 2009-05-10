@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.83 2009/04/30 18:28:29 mpf Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.84 2009/05/10 12:09:46 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -54,7 +54,7 @@
  * multicast filter. Transmit and receive descriptors are similar
  * to the tulip.
  *
- * The Rhine has a serious flaw in its transmit DMA mechanism:
+ * Early Rhine has a serious flaw in its transmit DMA mechanism:
  * transmit buffers must be longword aligned. Unfortunately,
  * FreeBSD doesn't guarantee that mbufs will be filled in starting
  * at longword boundaries, so we have to do a buffer copy before
@@ -101,6 +101,7 @@
 #include <dev/pci/if_vrreg.h>
 
 int vr_probe(struct device *, void *, void *);
+int vr_quirks(struct pci_attach_args *);
 void vr_attach(struct device *, struct device *, void *);
 
 struct cfattach vr_ca = {
@@ -139,14 +140,32 @@ int vr_list_tx_init(struct vr_softc *);
 
 int vr_alloc_mbuf(struct vr_softc *, struct vr_chain_onefrag *, struct mbuf *);
 
-const struct pci_matchid vr_devices[] = {
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII_2 },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105 },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M },
-	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII },
-	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII }
+/*
+ * Supported devices & quirks
+ */
+#define	VR_Q_NEEDALIGN		(1<<0)
+#define	VR_Q_CSUM		(1<<1)
+#define	VR_Q_CAM		(1<<2)
+
+struct vr_type {
+	pci_vendor_id_t		vr_vid;
+	pci_product_id_t	vr_pid;
+	int			vr_quirks;
+} vr_devices[] = {
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE,
+	    VR_Q_NEEDALIGN },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII,
+	    VR_Q_NEEDALIGN },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII_2,
+	    0 },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105,
+	    0 },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M,
+	    VR_Q_CSUM | VR_Q_CAM },
+	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII,
+	    VR_Q_NEEDALIGN },
+	{ PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII,
+	    VR_Q_NEEDALIGN }
 };
 
 #define VR_SETBIT(sc, reg, x)				\
@@ -433,11 +452,33 @@ vr_reset(struct vr_softc *sc)
 /*
  * Probe for a VIA Rhine chip.
  */
-int
+int                
 vr_probe(struct device *parent, void *match, void *aux)
 {
-	return (pci_matchbyid((struct pci_attach_args *)aux, vr_devices,
-	    sizeof(vr_devices)/sizeof(vr_devices[0])));
+	const struct vr_type *vr;
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	int i, nent = sizeof(vr_devices)/sizeof(vr_devices[0]);
+
+	for (i = 0, vr = vr_devices; i < nent; i++, vr++)
+		if (PCI_VENDOR(pa->pa_id) == vr->vr_vid &&
+		   PCI_PRODUCT(pa->pa_id) == vr->vr_pid)
+			return(1);
+
+	return(0);
+}
+
+int
+vr_quirks(struct pci_attach_args *pa)
+{
+	const struct vr_type *vr;
+	int i, nent = sizeof(vr_devices)/sizeof(vr_devices[0]);
+
+	for (i = 0, vr = vr_devices; i < nent; i++, vr++)
+		if (PCI_VENDOR(pa->pa_id) == vr->vr_vid &&
+		   PCI_PRODUCT(pa->pa_id) == vr->vr_pid)
+			return(vr->vr_quirks);
+
+	return(0);
 }
 
 /*
@@ -592,6 +633,7 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->vr_ldata = (struct vr_list_data *)kva;
 	bzero(sc->vr_ldata, sizeof(struct vr_list_data));
+	sc->vr_quirks = vr_quirks(pa);
 
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
@@ -1086,43 +1128,54 @@ vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
 	struct vr_desc		*f = NULL;
 	struct mbuf		*m_new = NULL;
 
-	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-	if (m_new == NULL)
-		return (1);
-	if (m_head->m_pkthdr.len > MHLEN) {
-		MCLGET(m_new, M_DONTWAIT);
-		if (!(m_new->m_flags & M_EXT)) {
+	if (sc->vr_quirks & VR_Q_NEEDALIGN ||
+	    m_head->m_pkthdr.len < VR_MIN_FRAMELEN ||
+	    bus_dmamap_load_mbuf(sc->sc_dmat, c->vr_map, m_head,
+				 BUS_DMA_NOWAIT | BUS_DMA_WRITE)) {
+		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
+		if (m_new == NULL)
+			return (1);
+		if (m_head->m_pkthdr.len > MHLEN) {
+			MCLGET(m_new, M_DONTWAIT);
+			if (!(m_new->m_flags & M_EXT)) {
+				m_freem(m_new);
+				return (1);
+			}
+		}
+		m_copydata(m_head, 0, m_head->m_pkthdr.len,
+		    mtod(m_new, caddr_t));
+		m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
+
+		/*
+		 * The Rhine chip doesn't auto-pad, so we have to make
+		 * sure to pad short frames out to the minimum frame length
+		 * ourselves.
+		 */
+		if (m_head->m_pkthdr.len < VR_MIN_FRAMELEN) {
+			/* data field should be padded with octets of zero */
+			bzero(&m_new->m_data[m_new->m_len],
+			    VR_MIN_FRAMELEN-m_new->m_len);
+			m_new->m_pkthdr.len += VR_MIN_FRAMELEN - m_new->m_len;
+			m_new->m_len = m_new->m_pkthdr.len;
+		}
+
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, c->vr_map, m_new,
+		    BUS_DMA_NOWAIT | BUS_DMA_WRITE)) {
 			m_freem(m_new);
 			return (1);
 		}
+		bus_dmamap_sync(sc->sc_dmat, c->vr_map, 0, c->vr_map->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+		m_freem(m_head);
+
+		c->vr_mbuf = m_new;
+	} else {
+		bus_dmamap_sync(sc->sc_dmat, c->vr_map, 0, c->vr_map->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+                c->vr_mbuf = m_head;
 	}
-	m_copydata(m_head, 0, m_head->m_pkthdr.len, mtod(m_new, caddr_t));
-	m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
-
-	/*
-	 * The Rhine chip doesn't auto-pad, so we have to make
-	 * sure to pad short frames out to the minimum frame length
-	 * ourselves.
-	 */
-	if (m_new->m_len < VR_MIN_FRAMELEN) {
-		/* data field should be padded with octets of zero */
-		bzero(&m_new->m_data[m_new->m_len],
-		    VR_MIN_FRAMELEN-m_new->m_len);
-		m_new->m_pkthdr.len += VR_MIN_FRAMELEN - m_new->m_len;
-		m_new->m_len = m_new->m_pkthdr.len;
-	}
-
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, c->vr_map, m_new,
-	    BUS_DMA_NOWAIT | BUS_DMA_WRITE)) {
-		m_freem(m_new);
-		return (1);
-	}
-	bus_dmamap_sync(sc->sc_dmat, c->vr_map, 0, c->vr_map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-
-	m_freem(m_head);
-
-	c->vr_mbuf = m_new;
 
 	f = c->vr_ptr;
 	f->vr_data = htole32(c->vr_map->dm_segs[0].ds_addr);

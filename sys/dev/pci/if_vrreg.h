@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.22 2009/04/28 12:54:31 mpf Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.23 2009/05/10 12:09:46 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -425,12 +425,6 @@ struct vr_chain_data {
 	struct vr_chain		*vr_tx_prod;
 };
 
-struct vr_type {
-	u_int16_t		vr_vid;
-	u_int16_t		vr_did;
-	char			*vr_name;
-};
-
 struct vr_mii_frame {
 	u_int8_t		mii_stdelim;
 	u_int8_t		mii_opcode;
@@ -471,6 +465,7 @@ struct vr_softc {
 	int			sc_if_flags;
 	int			sc_rxbufs;
 	int			vr_link;
+	int			vr_quirks;
 };
 
 #define VR_F_RESTART		0x01		/* Restart unit on next tick */
