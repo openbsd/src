@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.85 2009/05/10 13:06:23 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.86 2009/05/10 14:24:19 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -682,7 +682,8 @@ session_init(struct listener *l, struct session *s)
 	    session_error, s)) == NULL)
 		fatalx("session_init: bufferevent_new failed");
 
-	bufferevent_settimeout(s->s_bev, SMTPD_SESSION_TIMEOUT, 0);
+	bufferevent_settimeout(s->s_bev, SMTPD_SESSION_TIMEOUT,
+	    SMTPD_SESSION_TIMEOUT);
 
 	if (l->flags & F_SMTPS) {
 		log_debug("session_init: initializing ssl");
