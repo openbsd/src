@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.58 2008/11/04 07:22:36 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.59 2009/05/10 11:07:37 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -374,7 +374,7 @@ MakeStartJobs(void)
 {
 	GNode	*gn;
 
-	while (!Job_Full() && (gn = Array_Pop(&toBeMade)) != NULL) {
+	while (can_start_job() && (gn = Array_Pop(&toBeMade)) != NULL) {
 		if (try_to_make_node(gn))
 			return true;
 	}

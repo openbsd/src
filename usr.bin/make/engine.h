@@ -1,6 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-/*	$OpenBSD: engine.h,v 1.7 2009/04/26 09:25:49 espie Exp $	*/
+/*	$OpenBSD: engine.h,v 1.8 2009/05/10 11:07:37 espie Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -69,13 +69,16 @@ extern void Make_DoAllVar(GNode *);
 extern volatile sig_atomic_t got_signal;
 
 extern volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT,
-    got_SIGTERM, got_SIGTSTP, got_SIGTTOU, got_SIGTTIN, got_SIGWINCH;
+    got_SIGTERM, got_SIGTSTP, got_SIGTTOU, got_SIGTTIN, got_SIGWINCH,
+    got_SIGCONT;
 
 extern void SigHandler(int);
 extern int run_gnode(GNode *);
 extern void run_gnode_parallel(GNode *);
 extern void expand_commands(GNode *);
 
-extern void setup_engine(void);
+extern void setup_engine(int);
+typedef void (*psighandler)(int);
+extern void setup_all_signals(psighandler, psighandler);
 
 #endif

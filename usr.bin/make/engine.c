@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.23 2009/04/26 09:25:49 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.24 2009/05/10 11:07:37 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -62,11 +62,12 @@
 #include "str.h"
 #include "memory.h"
 #include "buf.h"
+#include "job.h"
 
+void setup_all_signals(psighandler, psighandler);
 static void MakeTimeStamp(void *, void *);
 static int rewrite_time(const char *);
-static void setup_signal(int);
-static void setup_all_signals(void);
+static void setup_signal(int, psighandler);
 static void setup_meta(void);
 static char **recheck_command_for_shell(char **);
 
@@ -456,40 +457,32 @@ Make_OODate(GNode *gn)
 
 volatile sig_atomic_t got_signal;
 
-volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT,
-    got_SIGTERM, got_SIGTSTP, got_SIGTTOU, got_SIGTTIN, got_SIGWINCH;
+volatile sig_atomic_t got_SIGINT, got_SIGHUP, got_SIGQUIT, got_SIGTERM;
 
 static void
-setup_signal(int sig)
+setup_signal(int sig, psighandler h)
 {
-	if (signal(sig, SIG_IGN) != SIG_IGN) {
-		(void)signal(sig, SigHandler);
-	}
+	if (signal(sig, SIG_IGN) != SIG_IGN)
+		(void)signal(sig, h);
 }
 
-static void
-setup_all_signals()
+void
+setup_all_signals(psighandler interrupt, psighandler jc)
 {
 	/*
 	 * Catch the four signals that POSIX specifies if they aren't ignored.
 	 * handle_signal will take care of calling JobInterrupt if appropriate.
 	 */
-	setup_signal(SIGINT);
-	setup_signal(SIGHUP);
-	setup_signal(SIGQUIT);
-	setup_signal(SIGTERM);
-	/*
-	 * There are additional signals that need to be caught and passed if
-	 * either the export system wants to be told directly of signals or if
-	 * we're giving each job its own process group (since then it won't get
-	 * signals from the terminal driver as we own the terminal)
-	 */
-#if defined(USE_PGRP)
-	setup_signal(SIGTSTP);
-	setup_signal(SIGTTOU);
-	setup_signal(SIGTTIN);
-	setup_signal(SIGWINCH);
-#endif
+	setup_signal(SIGINT, interrupt);
+	setup_signal(SIGHUP, interrupt);
+	setup_signal(SIGQUIT, interrupt);
+	setup_signal(SIGTERM, interrupt);
+	setup_signal(SIGTSTP, jc);
+	setup_signal(SIGTTOU, jc);
+	setup_signal(SIGTTIN, jc);
+	setup_signal(SIGWINCH, jc);
+	setup_signal(SIGCONT, jc);
+	got_signal = 0;
 }
 
 void
@@ -512,24 +505,6 @@ SigHandler(int sig)
 		got_SIGTERM++;
 		got_signal = 1;
 		break;
-#ifdef USE_PGRP
-	case SIGTSTP:
-		got_SIGTSTP++;
-		got_signal = 1;
-		break;
-	case SIGTTOU:
-		got_SIGTTOU++;
-		got_signal = 1;
-		break;
-	case SIGTTIN:
-		got_SIGTTIN++;
-		got_signal = 1;
-		break;
-	case SIGWINCH:
-		got_SIGWINCH++;
-		got_signal = 1;
-		break;
-#endif
 	}
 }
 
@@ -695,7 +670,7 @@ setup_and_run_command(char *cmd, GNode *gn, int dont_fork)
 	/* The child is off and running. Now all we can do is wait...  */
 	while (1) {
 
-		while ((stat = wait(&reason)) != cpid) {
+		while ((stat = waitpid(cpid, &reason, 0)) != cpid) {
 			if (stat == -1 && errno != EINTR)
 				break;
 		}
@@ -704,12 +679,10 @@ setup_and_run_command(char *cmd, GNode *gn, int dont_fork)
 			break;
 
 		if (stat != -1) {
-			if (WIFSTOPPED(reason))
-				status = WSTOPSIG(reason);	/* stopped */
-			else if (WIFEXITED(reason)) {
+			if (WIFEXITED(reason)) {
 				status = WEXITSTATUS(reason);	/* exited */
 				if (status != 0)
-				    printf("*** Error code %d", status);
+					printf("*** Error code %d", status);
 			} else {
 				status = WTERMSIG(reason);	/* signaled */
 				printf("*** Signal %d", status);
@@ -830,13 +803,16 @@ run_gnode_parallel(GNode *gn)
 }
 
 void
-setup_engine()
+setup_engine(int parallel)
 {
 	static int already_setup = 0;
 
 	if (!already_setup) {
 		setup_meta();
-		setup_all_signals();
+		if (parallel)
+			setup_all_signals(parallel_handler, parallel_handler);
+		else
+			setup_all_signals(SigHandler, SIG_DFL);
 		already_setup = 1;
 	}
 }

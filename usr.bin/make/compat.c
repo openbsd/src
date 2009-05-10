@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: compat.c,v 1.70 2008/11/04 07:22:35 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.71 2009/05/10 11:07:37 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -273,7 +273,7 @@ Compat_Run(Lst targs)		/* List of target nodes to re-create */
 	GNode	  *gn = NULL;	/* Current root target */
 	int 	  errors;   	/* Number of targets not remade due to errors */
 
-	setup_engine();
+	setup_engine(0);
 	/* If the user has defined a .BEGIN target, execute the commands
 	 * attached to it.  */
 	if (!queryFlag) {

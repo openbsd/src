@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.116 2009/04/26 09:25:49 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.117 2009/05/10 11:07:37 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
  *
  *	Job_End 		Cleanup any memory used.
  *
- *	Job_Full		Return true if the job table is filled.
+ *	can_start_job		Return true if we can start job
  *
  *	Job_Empty		Return true if the job table is completely
  *				empty.
@@ -62,12 +62,12 @@
  *				target. It should only be called when the
  *				job table is empty.
  *
- *	Job_AbortAll		Abort all currently running jobs. It doesn't
+ *	Job_AbortAll		Abort all current jobs. It doesn't
  *				handle output or do anything for the jobs,
  *				just kills them. It should only be called in
  *				an emergency, as it were.
  *
- *	Job_Wait		Wait for all currently-running jobs to finish.
+ *	Job_Wait		Wait for all running jobs to finish.
  */
 
 #include <sys/types.h>
@@ -139,17 +139,16 @@ typedef struct Job_ {
     pid_t 	pid;	    /* The child's process ID */
     GNode	*node;	    /* The target the child is making */
     short	flags;	    /* Flags to control treatment of job */
-#define JOB_SPECIAL	0x004	/* Target is a special one. */
-#define JOB_RESTART	0x080	/* Job needs to be completely restarted */
-#define JOB_RESUME	0x100	/* Job needs to be resumed b/c it stopped,
-				 * for some reason */
-#define JOB_CONTINUING	0x200	/* We are in the process of resuming this job.
-				 * Used to avoid infinite recursion between
-				 * JobFinish and JobRestart */
+    LstNode	p;
 #define JOB_DIDOUTPUT	0x001
+#define JOB_IS_SPECIAL	0x004	/* Target is a special one. */
+#define JOB_IS_EXPENSIVE 0x002
     struct job_pipe in[2];
 } Job;
 
+struct job_pid {
+	pid_t pid;
+};
 
 static int	aborting = 0;	    /* why is the make aborting? */
 #define ABORT_ERROR	1	    /* Because of an error */
@@ -157,12 +156,12 @@ static int	aborting = 0;	    /* why is the make aborting? */
 #define ABORT_WAIT	3	    /* Waiting for jobs to finish */
 
 static int	maxJobs;	/* The most children we can run at once */
-static int	nJobs;		/* The number of children currently running */
+static int	nJobs;		/* The number of current children */
+static bool	expensive_job;
 static LIST	runningJobs;	/* The structures that describe them */
-static bool	jobFull;	/* Flag to tell when the job table is full. It
-				 * is set true when nJobs equals maxJobs */
 static GNode	*lastNode;	/* The node for which output was most recently
 				 * produced. */
+static LIST	job_pids;	/* a simple list that doesn't move that much */
 
 /* data structure linked to job handling through select */
 static fd_set *output_mask = NULL;	/* File descriptors to look for */
@@ -171,13 +170,9 @@ static fd_set *actual_mask = NULL;	/* actual select argument */
 static int largest_fd = -1;
 static size_t mask_size = 0;
 
-static LIST	stoppedJobs;	
-
 /* wait possibilities */
 #define JOB_EXITED 0
 #define JOB_SIGNALED 1
-#define JOB_CONTINUED 2
-#define JOB_STOPPED 3
 #define JOB_UNKNOWN 4
 
 static LIST	errorsList;
@@ -188,32 +183,22 @@ struct error_info {
 	GNode *n;
 };
 
+/* for blocking/unblocking */
+static sigset_t oset, set;
+static void block_signals(void);
+static void unblock_signals(void);
 
-#if defined(USE_PGRP) && defined(SYSV)
-# define KILL(pid, sig) 	killpg(-(pid), (sig))
-#else
-# if defined(USE_PGRP)
-#  define KILL(pid, sig)	killpg((pid), (sig))
-# else
-#  define KILL(pid, sig)	kill((pid), (sig))
-# endif
-#endif
-
-static void signal_running_jobs(int);
 static void handle_all_signals(void);
 static void handle_signal(int);
 static int JobCmpPid(void *, void *);
-static void JobFinish(Job *, int);
-static void finish_job(Job *, int, int);
+static void process_job_status(Job *, int);
 static void JobExec(Job *);
-static void JobRestart(Job *);
 static void JobStart(GNode *, int);
-static void JobInterrupt(int, int);
-static void JobRestartJobs(void);
+static void JobInterrupt(bool, int);
 static void debug_printf(const char *, ...);
 static Job *prepare_job(GNode *, int);
-static void start_queued_job(Job *);
 static void banner(Job *, FILE *);
+static bool Job_Full(void);
 
 /***
  ***  Input/output from jobs
@@ -277,12 +262,6 @@ print_errors()
 		case JOB_SIGNALED:
 			type = "Received signal";
 			break;
-		case JOB_STOPPED:
-			type = "Stopped";
-			break;
-		case JOB_CONTINUED:
-			type = "Continued";
-			break;
 		default:
 			type = "Should not happen";
 			break;
@@ -305,85 +284,123 @@ banner(Job *job, FILE *out)
 	}
 }
 
+volatile sig_atomic_t got_SIGTSTP, got_SIGTTOU, got_SIGTTIN, got_SIGWINCH,
+    got_SIGCONT;
 static void
 handle_all_signals()
 {
-	if (got_signal)
+	while (got_signal) {
 		got_signal = 0;
-	else
-		return;
 
-	if (got_SIGINT) {
-		got_SIGINT=0;
-		handle_signal(SIGINT);
-	}
-	if (got_SIGHUP) {
-		got_SIGHUP=0;
-		handle_signal(SIGHUP);
-	}
-	if (got_SIGQUIT) {
-		got_SIGQUIT=0;
-		handle_signal(SIGQUIT);
-	}
-	if (got_SIGTERM) {
-		got_SIGTERM=0;
-		handle_signal(SIGTERM);
-	}
-	if (got_SIGTSTP) {
-		got_SIGTSTP=0;
-		handle_signal(SIGTSTP);
-	}
-	if (got_SIGTTOU) {
-		got_SIGTTOU=0;
-		handle_signal(SIGTTOU);
-	}
-	if (got_SIGTTIN) {
-		got_SIGTTIN=0;
-		handle_signal(SIGTTIN);
-	}
-	if (got_SIGWINCH) {
-		got_SIGWINCH=0;
-		handle_signal(SIGWINCH);
+		if (got_SIGINT) {
+			got_SIGINT=0;
+			handle_signal(SIGINT);
+		}
+		if (got_SIGHUP) {
+			got_SIGHUP=0;
+			handle_signal(SIGHUP);
+		}
+		if (got_SIGQUIT) {
+			got_SIGQUIT=0;
+			handle_signal(SIGQUIT);
+		}
+		if (got_SIGTERM) {
+			got_SIGTERM=0;
+			handle_signal(SIGTERM);
+		}
+		if (got_SIGTSTP) {
+			got_SIGTSTP=0;
+			signal(SIGTSTP, parallel_handler);
+		}
+		if (got_SIGTTOU) {
+			got_SIGTTOU=0;
+			signal(SIGTTOU, parallel_handler);
+		}
+		if (got_SIGTTIN) {
+			got_SIGTTIN=0;
+			signal(SIGTTIN, parallel_handler);
+		}
+		if (got_SIGWINCH) {
+			got_SIGWINCH=0;
+			signal(SIGWINCH, parallel_handler);
+		}
+		if (got_SIGCONT) {
+			got_SIGCONT = 0;
+			signal(SIGCONT, parallel_handler);
+		}
 	}
 }
 
-static void
-signal_running_jobs(int signo)
+/* this is safe from interrupts, actually */
+void
+parallel_handler(int signo)
 {
+	int save_errno = errno;
 	LstNode ln;
-	for (ln = Lst_First(&runningJobs); ln != NULL; ln = Lst_Adv(ln)) {
-	    	Job *job = Lst_Datum(ln);
-		if (DEBUG(JOB)) {
-			(void)fprintf(stdout,
-			    "signal %d to child %ld.\n",
-			    signo, (long)job->pid);
-			(void)fflush(stdout);
-		}
-		KILL(job->pid, signo);
+	for (ln = Lst_First(&job_pids); ln != NULL; ln = Lst_Adv(ln)) {
+	    	struct job_pid *p = Lst_Datum(ln);
+		killpg(p->pid, signo);
 	}
+	errno = save_errno;
+
+	switch(signo) {
+	case SIGINT:
+		got_SIGINT++;
+		got_signal = 1;
+		return;
+	case SIGHUP:
+		got_SIGHUP++;
+		got_signal = 1;
+		return;
+	case SIGQUIT:
+		got_SIGQUIT++;
+		got_signal = 1;
+		return;
+	case SIGTERM:
+		got_SIGTERM++;
+		got_signal = 1;
+		return;
+	case SIGTSTP:
+		got_SIGTSTP++;
+		got_signal = 1;
+		break;
+	case SIGTTOU:
+		got_SIGTTOU++;
+		got_signal = 1;
+		break;
+	case SIGTTIN:
+		got_SIGTTIN++;
+		got_signal = 1;
+		break;
+	case SIGWINCH:
+		got_SIGWINCH++;
+		got_signal = 1;
+		break;
+	case SIGCONT:
+		got_SIGCONT++;
+		got_signal = 1;
+		break;
+	}
+	(void)killpg(getpid(), signo);
+
+	(void)signal(signo, SIG_DFL);
+	errno = save_errno;
 }
 
 /*-
  *-----------------------------------------------------------------------
  * handle_signal --
- *	Pass a signal to all local jobs if USE_PGRP is defined,
- *	then die ourselves.
+ *	handle a signal for ourselves
  *
- * Side Effects:
- *	We die by the same signal.
  *-----------------------------------------------------------------------
  */
 static void
-handle_signal(int signo) /* The signal number we've received */
+handle_signal(int signo)
 {
-	sigset_t nmask, omask;
-	struct sigaction act;
-
 	if (DEBUG(JOB)) {
 		(void)fprintf(stdout, "handle_signal(%d) called.\n", signo);
 		(void)fflush(stdout);
 	}
-	signal_running_jobs(signo);
 
 	/*
 	 * Deal with proper cleanup based on the signal received. We only run
@@ -391,50 +408,16 @@ handle_signal(int signo) /* The signal number we've received */
 	 * other three termination signals are more of a "get out *now*"
 	 * command.
 	 */
-	if (signo == SIGINT) {
+	if (signo == SIGINT)
 		JobInterrupt(true, signo);
-	} else if (signo == SIGHUP || signo == SIGTERM || signo == SIGQUIT) {
+	else if (signo == SIGHUP || signo == SIGTERM || signo == SIGQUIT)
 		JobInterrupt(false, signo);
-	}
 
 	/*
 	 * Leave gracefully if SIGQUIT, rather than core dumping.
 	 */
-	if (signo == SIGQUIT) {
+	if (signo == SIGQUIT)
 		Finish(0);
-	}
-
-	/*
-	 * Send ourselves the signal now we've given the message to everyone
-	 * else.  Note we block everything else possible while we're getting
-	 * the signal.  This ensures that all our jobs get continued when we
-	 * wake up before we take any other signal.
-	 */
-	sigemptyset(&nmask);
-	sigaddset(&nmask, signo);
-	sigprocmask(SIG_SETMASK, &nmask, &omask);
-	memset(&act, 0, sizeof act);
-	act.sa_handler = SIG_DFL;
-	sigemptyset(&act.sa_mask);
-	act.sa_flags = 0;
-	sigaction(signo, &act, NULL);
-
-	if (DEBUG(JOB)) {
-		(void)fprintf(stdout,
-		    "handle_signal passing signal to self, mask = %x.\n",
-		    ~0 & ~(1 << (signo-1)));
-		(void)fflush(stdout);
-	}
-	(void)signal(signo, SIG_DFL);
-
-	(void)KILL(getpid(), signo);
-
-	signal_running_jobs(SIGCONT);
-
-	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
-	sigprocmask(SIG_SETMASK, &omask, NULL);
-	act.sa_handler = SigHandler;
-	sigaction(signo, &act, NULL);
 }
 
 /*-
@@ -482,8 +465,8 @@ close_job_pipes(Job *job)
 
 /*-
  *-----------------------------------------------------------------------
- * JobFinish  --
- *	Do final processing for the given job including updating
+ * process_job_status  --
+ *	Do processing for the given job including updating
  *	parents and starting new jobs as available/necessary. 
  *
  * Side Effects:
@@ -499,9 +482,13 @@ close_job_pipes(Job *job)
 /*ARGSUSED*/
 
 static void
-JobFinish(Job *job, int status)
+process_job_status(Job *job, int status)
 {
 	int reason, code;
+	bool	 done;
+
+	debug_printf("Process %ld (%s) exited with status %d.\n", 
+	    (long)job->pid, job->node->name, status);
 	/* parse status */
 	if (WIFEXITED(status)) {
 		reason = JOB_EXITED;
@@ -509,29 +496,15 @@ JobFinish(Job *job, int status)
 	} else if (WIFSIGNALED(status)) {
 		reason = JOB_SIGNALED;
 		code = WTERMSIG(status);
-	} else if (WIFCONTINUED(status)) {
-		reason = JOB_CONTINUED;
-		code = 0;
-    	} else if (WIFSTOPPED(status)) {
-		reason = JOB_STOPPED;
-		code = WSTOPSIG(status);
 	} else {
 		/* can't happen, set things to be bad. */
 		reason = UNKNOWN;
 		code = status;
 	}
-	finish_job(job, reason, code);
-}
-
-
-static void
-finish_job(Job *job, int reason, int code)
-{
-	bool	 done;
 
 	if ((reason == JOB_EXITED &&
 	     code != 0 && !(job->node->type & OP_IGNORE)) ||
-	    (reason == JOB_SIGNALED && code != SIGCONT)) {
+	    reason == JOB_SIGNALED) {
 		/*
 		 * If it exited non-zero and either we're doing things our
 		 * way or we're not ignoring errors, the job is finished.
@@ -544,11 +517,10 @@ finish_job(Job *job, int reason, int code)
 		done = true;
 	} else if (reason == JOB_EXITED) {
 		/*
-		 * Deal with ignored errors in -B mode. We need to print a
-		 * message telling of the ignored error as well as setting
-		 * status.w_status to 0 so the next command gets run. To do
-		 * this, we set done to be true if in -B mode and the job
-		 * exited non-zero.
+		 * Deal with ignored errors. We need to print a message telling
+		 * of the ignored error as well as setting status.w_status to 0
+		 * so the next command gets run. To do this, we set done to be
+		 * true and the job exited non-zero.
 		 */
 		done = code != 0;
 		close_job_pipes(job);
@@ -559,49 +531,10 @@ finish_job(Job *job, int reason, int code)
 		done = false;
 	}
 
-	if (reason == JOB_STOPPED) {
-		debug_printf("Process %ld stopped.\n", (long)job->pid);
-		banner(job, stdout);
-		(void)fprintf(stdout, "*** Stopped -- signal %d\n",
-		    code);
-		job->flags |= JOB_RESUME;
-		Lst_AtEnd(&stoppedJobs, job);
-		(void)fflush(stdout);
-		return;
-	}
-	if (reason == JOB_SIGNALED && code == SIGCONT) {
-		/*
-		 * If the beastie has continued, shift the Job from the
-		 * stopped list to the running one (or re-stop it if
-		 * concurrency is exceeded) and go and get another
-		 * child.
-		 */
-		if (job->flags & (JOB_RESUME|JOB_RESTART)) {
-			banner(job, stdout);
-			(void)fprintf(stdout, "*** Continued\n");
-		}
-		if (!(job->flags & JOB_CONTINUING)) {
-			debug_printf(
-			    "Warning: "
-			    "process %ld was not continuing.\n",
-			    (long)job->pid);
-		}
-		job->flags &= ~JOB_CONTINUING;
-		Lst_AtEnd(&runningJobs, job);
-		nJobs++;
-		debug_printf("Process %ld is continuing locally.\n",
-		    (long)job->pid);
-		if (nJobs == maxJobs) {
-			jobFull = true;
-			debug_printf("Job queue is full.\n");
-		}
-		(void)fflush(stdout);
-		return;
-	}
-
 	if (done || DEBUG(JOB)) {
 		if (reason == JOB_EXITED) {
-			debug_printf("Process %ld exited.\n", (long)job->pid);
+			debug_printf("Process %ld (%s) exited.\n", 
+			    (long)job->pid, job->node->name);
 			if (code != 0) {
 				banner(job, stdout);
 				(void)fprintf(stdout, "*** Error code %d %s\n",
@@ -614,9 +547,9 @@ finish_job(Job *job, int reason, int code)
 					code = 0;
 				}
 			} else if (DEBUG(JOB)) {
-				banner(job, stdout);
 				(void)fprintf(stdout,
-				    "*** Completed successfully\n");
+				    "*** %ld (%s) Completed successfully\n", 
+				    (long)job->pid, job->node->name);
 			}
 		} else {
 			banner(job, stdout);
@@ -637,34 +570,17 @@ finish_job(Job *job, int reason, int code)
 		 * Make_Update to update the parents. */
 		job->node->built_status = MADE;
 		Make_Update(job->node);
-		free(job);
 	} else if (!(reason == JOB_EXITED && code == 0)) {
 		register_error(reason, code, job);
-		free(job);
 	}
+	free(job);
 
-	/*
-	 * Set aborting if any error.
-	 */
 	if (errors && !keepgoing && 
-	    aborting != ABORT_INTERRUPT) {
-		/*
-		 * If we found any errors in this batch of children and the -k
-		 * flag wasn't given, we set the aborting flag so no more jobs
-		 * get started.
-		 */
+	    aborting != ABORT_INTERRUPT)
 		aborting = ABORT_ERROR;
-	}
 
-	if (aborting != ABORT_ERROR)
-		JobRestartJobs();
-
-	if (aborting == ABORT_ERROR && Job_Empty()) {
-		/*
-		 * If we are aborting and the job table is now empty, we finish.
-		 */
+	if (aborting == ABORT_ERROR && Job_Empty())
 		Finish(errors);
-	}
 }
 
 static void 
@@ -699,8 +615,7 @@ prepare_pipe(struct job_pipe *p, int *fd)
 /*-
  *-----------------------------------------------------------------------
  * JobExec --
- *	Execute the shell for the given job. Called from JobStart and
- *	JobRestart.
+ *	Execute the shell for the given job. Called from JobStart 
  *
  * Side Effects:
  *	A shell is executed, outputs is altered and the Job structure added
@@ -711,30 +626,15 @@ static void
 JobExec(Job *job)
 {
 	pid_t cpid; 	/* ID of new child */
+	struct job_pid *p;
 	int fds[4];
 	int *fdout = fds;
 	int *fderr = fds+2;
 	int i;
 
-	if (DEBUG(JOB)) {
-		LstNode ln;
-
-		(void)fprintf(stdout, "Running %s\n", job->node->name);
-		for (ln = Lst_First(&job->node->commands); ln != NULL ; 
-		    ln = Lst_Adv(ln))
-		    	fprintf(stdout, "\t%s\n", (char *)Lst_Datum(ln));
-		(void)fflush(stdout);
-	}
-
-	/*
-	 * Some jobs produce no output and it's disconcerting to have
-	 * no feedback of their running (since they produce no output, the
-	 * banner with their name in it never appears). This is an attempt to
-	 * provide that feedback, even if nothing follows it.
-	 */
 	banner(job, stdout);
 
-	setup_engine();
+	setup_engine(1);
 
 	/* Create the pipe by which we'll get the shell's output. 
 	 */
@@ -744,8 +644,10 @@ JobExec(Job *job)
 	if (pipe(fderr) == -1)
 		Punt("Cannot create pipe: %s", strerror(errno));
 
+	block_signals();
 	if ((cpid = fork()) == -1) {
 		Punt("Cannot fork");
+		unblock_signals();
 	} else if (cpid == 0) {
 		supervise_jobs = false;
 		/* standard pipe code to route stdout and stderr */
@@ -760,23 +662,19 @@ JobExec(Job *job)
 		if (fderr[1] != 2)
 			close(fderr[1]);
 
-#ifdef USE_PGRP
 		/*
 		 * We want to switch the child into a different process family
 		 * so we can kill it and all its descendants in one fell swoop,
 		 * by killing its process family, but not commit suicide.
 		 */
-# if defined(SYSV)
-		(void)setsid();
-# else
 		(void)setpgid(0, getpid());
-# endif
-#endif /* USE_PGRP */
 
 		if (random_delay)
 			if (!(nJobs == 1 && no_jobs_left()))
 				usleep(random() % random_delay);
 
+		setup_all_signals(SigHandler, SIG_DFL);
+		unblock_signals();
 		/* this exits directly */
 		run_gnode_parallel(job->node);
 		/*NOTREACHED*/
@@ -790,102 +688,87 @@ JobExec(Job *job)
 		for (i = 0; i < 2; i++)
 			prepare_pipe(&job->in[i], fds+2*i);
 	}
-
 	/*
 	 * Now the job is actually running, add it to the table.
 	 */
 	nJobs++;
 	Lst_AtEnd(&runningJobs, job);
-	if (nJobs == maxJobs) {
-		jobFull = true;
-	}
-}
+	if (job->flags & JOB_IS_EXPENSIVE)
+		expensive_job = true;
+	p = emalloc(sizeof(struct job_pid));
+	p->pid = cpid;
+	Lst_AtEnd(&job_pids, p);
+	job->p = Lst_Last(&job_pids);
 
-static void
-start_queued_job(Job *job)
-{
+	unblock_signals();
 	if (DEBUG(JOB)) {
-		(void)fprintf(stdout, "Restarting %s...",
+		LstNode ln;
+
+		(void)fprintf(stdout, "Running %ld (%s)\n", (long)cpid,
 		    job->node->name);
+		for (ln = Lst_First(&job->node->commands); ln != NULL ; 
+		    ln = Lst_Adv(ln))
+		    	fprintf(stdout, "\t%s\n", (char *)Lst_Datum(ln));
 		(void)fflush(stdout);
 	}
-	if (nJobs >= maxJobs && !(job->flags & JOB_SPECIAL)) {
-		/*
-		 * Can't be exported and not allowed to run locally --
-		 * put it back on the hold queue and mark the table
-		 * full
-		 */
-		debug_printf("holding\n");
-		Lst_AtFront(&stoppedJobs, job);
-		jobFull = true;
-		debug_printf("Job queue is full.\n");
-		return;
-	} else {
-		/*
-		 * Job may be run locally.
-		 */
-		debug_printf("running locally\n");
-	}
-	JobExec(job);
+
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobRestart --
- *	Restart a job that stopped for some reason.
- *
- * Side Effects:
- *	jobFull will be set if the job couldn't be run.
- *-----------------------------------------------------------------------
- */
-static void
-JobRestart(Job *job)
+static bool
+expensive_command(const char *s)
 {
-	if (job->flags & JOB_RESTART) {
-		start_queued_job(job);
-	} else {
-		/*
-		 * The job has stopped and needs to be restarted. Why it
-		 * stopped, we don't know...
-		 */
-		debug_printf("Resuming %s...", job->node->name);
-		if ((nJobs < maxJobs || ((job->flags & JOB_SPECIAL) &&
-		    maxJobs == 0)) && nJobs != maxJobs) {
-			/*
-			 * If we haven't reached the concurrency limit already
-			 * (or maxJobs is 0), it's ok to resume the job.
-			 */
-			bool error;
+	const char *p;
+	bool include = false;
+	bool expensive = false;
 
-			error = KILL(job->pid, SIGCONT) != 0;
+	/* okay, comments are cheap, always */
+	if (*s == '#')
+		return false;
 
-			if (!error) {
-				/*
-				 * Make sure the user knows we've continued the
-				 * beast and actually put the thing in the job
-				 * table.
-				 */
-				job->flags |= JOB_CONTINUING;
-				finish_job(job, JOB_SIGNALED, SIGCONT);
-
-				job->flags &= ~(JOB_RESUME|JOB_CONTINUING);
-				debug_printf("done\n");
-			} else {
-				Error("couldn't resume %s: %s",
-				    job->node->name, strerror(errno));
-				finish_job(job, JOB_EXITED, 1);
-			}
-		} else {
-			/*
-			 * Job cannot be restarted. Mark the table as full and
-			 * place the job back on the list of stopped jobs.
-			 */
-			debug_printf("table full\n");
-			Lst_AtFront(&stoppedJobs, job);
-			jobFull = true;
-			debug_printf("Job queue is full.\n");
+	for (p = s; *p != '\0'; p++) {
+		if (*p == ' ' || *p == '\t') {
+			include = false;
+			if (p[1] == '-' && p[2] == 'I')
+				include = true;
 		}
+		if (include)
+			continue;
+		/* KMP variant, avoid looking twice at the same
+		 * letter.
+		 */
+		if (*p != 'm')
+			continue;
+		if (p[1] != 'a')
+			continue;
+		p++;
+		if (p[1] != 'k')
+			continue;
+		p++;
+		if (p[1] != 'e')
+			continue;
+		p++;
+		expensive = true;
+		while (p[1] != '\0' && p[1] != ' ' && p[1] != '\t') {
+			if (p[1] == '.') {
+				expensive = false;
+				break;
+			}
+		    	p++;
+		}
+		if (expensive)
+			return true;
 	}
+	return false;
+}
+
+static bool
+expensive_commands(Lst l)
+{
+	LstNode ln;
+	for (ln = Lst_First(l); ln != NULL; ln = Lst_Adv(ln))
+		if (expensive_command(Lst_Datum(ln)))
+			return true;
+	return false;
 }
 
 static Job *
@@ -957,6 +840,9 @@ prepare_job(GNode *gn, int flags)
 		 * by the caller are also added to the field.
 		 */
 		job->flags = flags;
+		if (expensive_commands(&gn->expanded)) {
+			job->flags |= JOB_IS_EXPENSIVE;
+		}
 
 		return job;
 	}
@@ -976,39 +862,13 @@ prepare_job(GNode *gn, int flags)
 static void
 JobStart(GNode *gn,	      	/* target to create */
     int flags)      		/* flags for the job to override normal ones.
-			       	 * e.g. JOB_SPECIAL */
+			       	 * e.g. JOB_IS_SPECIAL */
 {
 	Job *job;
 	job = prepare_job(gn, flags);
 	if (!job)
 		return;
-	if (nJobs >= maxJobs && !(job->flags & JOB_SPECIAL) &&
-	    maxJobs != 0) {
-		/*
-		 * The job can only be run locally, but we've hit the limit of
-		 * local concurrency, so put the job on hold until some other
-		 * job finishes. Note that the special jobs (.BEGIN, .INTERRUPT
-		 * and .END) may be run locally even when the local limit has
-		 * been reached (e.g. when maxJobs == 0), though they will be
-		 * exported if at all possible. In addition, any target marked
-		 * with .NOEXPORT will be run locally if maxJobs is 0.
-		 */
-		jobFull = true;
-
-		debug_printf("Can only run job locally.\n");
-		job->flags |= JOB_RESTART;
-		Lst_AtEnd(&stoppedJobs, job);
-	} else {
-		if (nJobs >= maxJobs) {
-			/*
-			 * If we're running this job locally as a special case
-			 * (see above), at least say the table is full.
-			 */
-			jobFull = true;
-			debug_printf("Local job queue is full.\n");
-		}
-		JobExec(job);
-	}
+	JobExec(job);
 }
 
 /* Helper functions for JobDoOutput */
@@ -1115,6 +975,23 @@ handle_job_output(Job *job, int i, bool finish)
 	handle_pipe(&job->in[i], job, i == 0 ? stdout : stderr, finish);
 }
 
+static void
+remove_job(LstNode ln, int status)
+{
+	Job *job;
+
+	job = (Job *)Lst_Datum(ln);
+	Lst_Remove(&runningJobs, ln);
+	block_signals();
+	free(Lst_Datum(job->p));
+	Lst_Remove(&job_pids, job->p);
+	unblock_signals();
+	nJobs--;
+	if (job->flags & JOB_IS_EXPENSIVE)
+		expensive_job = false;
+	process_job_status(job, status);
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Job_CatchChildren --
@@ -1126,15 +1003,13 @@ handle_job_output(Job *job, int i, bool finish)
  * Notes:
  *	We do waits, blocking or not, according to the wisdom of our
  *	caller, until there are no more children to report. For each
- *	job, call JobFinish to finish things off. This will take care of
- *	putting jobs on the stoppedJobs queue.
+ *	job, call process_job_status to finish things off. 
  *-----------------------------------------------------------------------
  */
 void
 Job_CatchChildren()
 {
 	pid_t pid;	/* pid of dead child */
-	Job *job; 	/* job descriptor for dead child */
 	LstNode jnode;	/* list element for finding job */
 	int status;	/* Exit/termination status */
 
@@ -1144,36 +1019,16 @@ Job_CatchChildren()
 	if (nJobs == 0)
 		return;
 
-	while ((pid = waitpid((pid_t) -1, &status, WNOHANG|WUNTRACED)) > 0) {
+	while ((pid = waitpid(WAIT_ANY, &status, WNOHANG)) > 0) {
 		handle_all_signals();
-		debug_printf("Process %ld exited or stopped.\n", (long)pid);
 
 		jnode = Lst_Find(&runningJobs, JobCmpPid, &pid);
 
 		if (jnode == NULL) {
-			if (WIFSIGNALED(status) &&
-			    (WTERMSIG(status) == SIGCONT)) {
-				jnode = Lst_Find(&stoppedJobs, JobCmpPid, &pid);
-				if (jnode == NULL) {
-					Error("Resumed child (%ld) not in table", (long)pid);
-					continue;
-				}
-				job = (Job *)Lst_Datum(jnode);
-				Lst_Remove(&stoppedJobs, jnode);
-			} else {
-				Error("Child (%ld) not in table?", (long)pid);
-				continue;
-			}
+			Error("Child (%ld) not in table?", (long)pid);
 		} else {
-			job = (Job *)Lst_Datum(jnode);
-			Lst_Remove(&runningJobs, jnode);
-			nJobs--;
-			if (jobFull)
-				debug_printf("Job queue is no longer full.\n");
-			jobFull = false;
+			remove_job(jnode, status);
 		}
-
-		JobFinish(job, status);
 	}
 }
 
@@ -1211,12 +1066,8 @@ handle_all_jobs_output(void)
 			}
 		}
 		if (job->flags & JOB_DIDOUTPUT) {
-			if (wait4(job->pid, &status, WNOHANG|WUNTRACED, NULL) ==
-			    job->pid) {
-			    	Lst_Remove(&runningJobs, ln);
-			    	nJobs--;
-				jobFull = false;
-				JobFinish(job, status);
+			if (waitpid(job->pid, &status, WNOHANG) == job->pid) {
+				remove_job(ln, status);
 			} else {
 				Lst_Requeue(&runningJobs, ln);
 			}
@@ -1253,6 +1104,19 @@ Job_Make(GNode *gn)
 	(void)JobStart(gn, 0);
 }
 
+
+static void
+block_signals()
+{
+	sigprocmask(SIG_BLOCK, &set, &oset);
+}
+
+static void
+unblock_signals()
+{
+	sigprocmask(SIG_SETMASK, &oset, NULL);
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Job_Init --
@@ -1266,48 +1130,58 @@ void
 Job_Init(int maxproc)
 {
 	Static_Lst_Init(&runningJobs);
-	Static_Lst_Init(&stoppedJobs);
 	Static_Lst_Init(&errorsList);
-	maxJobs =	  maxproc;
-	nJobs =	  	  0;
-	jobFull =	  false;
+	maxJobs = maxproc;
+	nJobs = 0;
 	errors = 0;
+	sigemptyset(&set);
+	sigaddset(&set, SIGINT);
+	sigaddset(&set, SIGHUP);
+	sigaddset(&set, SIGQUIT);
+	sigaddset(&set, SIGTERM);
+	sigaddset(&set, SIGTSTP);
+	sigaddset(&set, SIGTTOU);
+	sigaddset(&set, SIGTTIN);
 
-	aborting =	  0;
+	aborting = 0;
 
-	lastNode =	  NULL;
+	lastNode = NULL;
 
 	if ((begin_node->type & OP_DUMMY) == 0) {
-		JobStart(begin_node, JOB_SPECIAL);
+		JobStart(begin_node, JOB_IS_SPECIAL);
 		loop_handle_running_jobs();
 	}
 }
 
+static bool
+Job_Full()
+{
+	return aborting || (nJobs >= maxJobs);
+}
 /*-
  *-----------------------------------------------------------------------
  * Job_Full --
- *	See if the job table is full. It is considered full if it is OR
+ *	See if the job table is full. It is considered full
  *	if we are in the process of aborting OR if we have
- *	reached/exceeded our local quota. This prevents any more jobs
- *	from starting up.
+ *	reached/exceeded our quota. 
  *
  * Results:
  *	true if the job table is full, false otherwise
  *-----------------------------------------------------------------------
  */
 bool
-Job_Full(void)
+can_start_job(void)
 {
-	return aborting || jobFull;
+	if (Job_Full() || expensive_job)
+		return false;
+	else 
+		return true;
 }
 
 /*-
  *-----------------------------------------------------------------------
  * Job_Empty --
- *	See if the job table is empty.	Because the local concurrency may
- *	be set to 0, it is possible for the job table to become empty,
- *	while the list of stoppedJobs remains non-empty. In such a case,
- *	we want to restart as many jobs as we can.
+ *	See if the job table is empty.	
  *
  * Results:
  *	true if it is. false if it ain't.
@@ -1316,21 +1190,10 @@ Job_Full(void)
 bool
 Job_Empty(void)
 {
-	if (nJobs == 0) {
-		if (!Lst_IsEmpty(&stoppedJobs) && !aborting) {
-			/*
-			 * The job table is obviously not full if it has no
-			 * jobs in it...Try and restart the stopped jobs.
-			 */
-			jobFull = false;
-			JobRestartJobs();
-			return false;
-		} else {
-			return true;
-		}
-	} else {
+	if (nJobs == 0)
+		return true;
+	else
 		return false;
-	}
 }
 
 /*-
@@ -1344,7 +1207,7 @@ Job_Empty(void)
  *-----------------------------------------------------------------------
  */
 static void
-JobInterrupt(int runINTERRUPT,	/* Non-zero if commands for the .INTERRUPT
+JobInterrupt(bool runINTERRUPT,	/* true if commands for the .INTERRUPT
 				 * target should be executed */
     int signo)			/* signal received */
 {
@@ -1366,7 +1229,7 @@ JobInterrupt(int runINTERRUPT,	/* Non-zero if commands for the .INTERRUPT
 		if (job->pid) {
 			debug_printf("JobInterrupt passing signal to "
 			    "child %ld.\n", (long)job->pid);
-			KILL(job->pid, signo);
+			killpg(job->pid, signo);
 		}
 	}
 
@@ -1399,7 +1262,7 @@ Job_Finish(void)
 		if (errors) {
 			Error("Errors reported so .END ignored");
 		} else {
-			JobStart(end_node, JOB_SPECIAL);
+			JobStart(end_node, JOB_IS_SPECIAL);
 			loop_handle_running_jobs();
 		}
 	}
@@ -1461,38 +1324,15 @@ Job_AbortAll(void)
 			 * kill the child process with increasingly drastic
 			 * signals to make darn sure it's dead.
 			 */
-			KILL(job->pid, SIGINT);
-			KILL(job->pid, SIGKILL);
+			killpg(job->pid, SIGINT);
+			killpg(job->pid, SIGKILL);
 		}
 	}
 
 	/*
 	 * Catch as many children as want to report in at first, then give up
 	 */
-	while (waitpid(-1, &foo, WNOHANG) > 0)
+	while (waitpid(WAIT_ANY, &foo, WNOHANG) > 0)
 		continue;
 }
 
-/*-
- *-----------------------------------------------------------------------
- * JobRestartJobs --
- *	Tries to restart stopped jobs if there are slots available.
- *	Note that this tries to restart them regardless of pending errors.
- *	It's not good to leave stopped jobs lying around!
- *
- * Side Effects:
- *	Resumes(and possibly migrates) jobs.
- *-----------------------------------------------------------------------
- */
-static void
-JobRestartJobs(void)
-{
-	Job *job;
-
-	while (!Job_Full() && 
-	    (job = (Job *)Lst_DeQueue(&stoppedJobs)) != NULL) {
-		debug_printf("Job queue is not full. "
-		    "Restarting a stopped job.\n");
-		JobRestart(job);
-	}
-}
