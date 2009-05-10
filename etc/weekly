@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: weekly,v 1.20 2009/05/09 17:15:49 schwarze Exp $
+#	$OpenBSD: weekly,v 1.21 2009/05/10 19:27:25 schwarze Exp $
 #
 umask 022
 
@@ -40,7 +40,7 @@ run_script() {
 	. $f
 }
 
-start_part "Running /etc/weekly.local:"
+start_part "Running weekly.local:"
 run_script "weekly.local"
 
 next_part "Rebuilding locate database:"

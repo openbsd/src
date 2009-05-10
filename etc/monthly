@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: monthly,v 1.10 2009/05/09 17:15:49 schwarze Exp $
+#	$OpenBSD: monthly,v 1.11 2009/05/10 19:27:25 schwarze Exp $
 #
 umask 022
 
@@ -37,7 +37,7 @@ run_script() {
 	. $f
 }
 
-start_part "Running /etc/monthly.local:"
+start_part "Running monthly.local:"
 run_script "monthly.local"
 
 end_part

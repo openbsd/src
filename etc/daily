@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.58 2009/05/09 17:15:49 schwarze Exp $
+#	$OpenBSD: daily,v 1.59 2009/05/10 19:27:25 schwarze Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 umask 022
@@ -44,7 +44,7 @@ run_script() {
 	. $f
 }
 
-start_part "Running /etc/daily.local:"
+start_part "Running daily.local:"
 run_script "daily.local"
 
 next_part "Removing scratch and junk files:"
@@ -110,19 +110,21 @@ next_part "Backing up root filesystem:"
 	}
 }
 
-next_part "Disk status:"
+next_part "Checking subsystem status:"
+echo ""
+echo "disks:"
 df -kl
 echo ""
 dump W
 
 # The first two regular expressions handle sendmail, the third postfix.
 # When the queue is empty, exim -bp keeps silent.
-next_part "Mail queue:"
+next_part "mail:"
 mailq | grep -v -e "^/var/spool/mqueue is empty$" \
 		-e "^[[:blank:]]*Total requests: 0$" \
 		-e "^Mail queue is empty$"
 
-next_part "Network status:"
+next_part "network:"
 netstat -ivn
 
 t=/var/rwho/*
