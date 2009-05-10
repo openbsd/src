@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbus.c,v 1.5 2009/04/12 14:53:15 kettenis Exp $	*/
+/*	$OpenBSD: cbus.c,v 1.6 2009/05/10 12:48:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -180,7 +180,7 @@ cbus_intr_ack(struct intrhand *ih)
 	uint64_t devhandle = INTIGN(ih->ih_number);
 	uint64_t devino = INTINO(ih->ih_number);
 
-	hv_vintr_setstate(devhandle, devino,  INTR_IDLE);
+	hv_vintr_setstate(devhandle, devino, INTR_IDLE);
 }
 
 bus_space_tag_t
@@ -221,6 +221,16 @@ cbus_get_channel_endpoint(struct cbus_softc *sc, struct cbus_attach_args *ca)
 	elem = (struct md_element *)(mdesc + sizeof(struct md_header));
 	name_blk = mdesc + sizeof(struct md_header) + hdr->node_blk_sz;
 
+	ca->ca_idx = idx;
+
+	ca->ca_id = -1;
+	ca->ca_tx_ino = -1;
+	ca->ca_rx_ino = -1;
+
+	if (strcmp(ca->ca_name, "disk") != 0 &&
+	    strcmp(ca->ca_name, "network") != 0)
+		return (0);
+
 	for (; elem[idx].tag != 'E'; idx++) {
 		str = name_blk + elem[idx].name_offset;
 		if (elem[idx].tag != 'a' || strcmp(str, "fwd") != 0)
@@ -241,8 +251,5 @@ cbus_get_channel_endpoint(struct cbus_softc *sc, struct cbus_attach_args *ca)
 		}
 	}
 
-	ca->ca_id = -1;
-	ca->ca_tx_ino = -1;
-	ca->ca_rx_ino = -1;
 	return (0);
 }

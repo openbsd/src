@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbusvar.h,v 1.2 2009/01/01 23:24:59 kettenis Exp $	*/
+/*	$OpenBSD: cbusvar.h,v 1.3 2009/05/10 12:48:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -19,8 +19,9 @@
 #define _SPARC64_DEV_CBUSVAR_H_
 
 struct cbus_attach_args {
-	char		*ca_name;
+	const char	*ca_name;
 	int		ca_node;
+	int		ca_idx;
 
 	bus_space_tag_t	ca_bustag;
 	bus_dma_tag_t	ca_dmatag;
@@ -33,6 +34,7 @@ struct cbus_attach_args {
 	u_int64_t	ca_rx_ino;
 };
 
-int cbus_intr_map(int, int, uint64_t *);
+int	cbus_print(void *, const char *);
+int	cbus_intr_map(int, int, uint64_t *);
 
 #endif
