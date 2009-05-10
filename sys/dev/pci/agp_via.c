@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_via.c,v 1.11 2009/01/04 20:47:35 grange Exp $	*/
+/*	$OpenBSD: agp_via.c,v 1.12 2009/05/10 14:44:42 oga Exp $	*/
 /*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -70,6 +70,7 @@ struct agp_via_softc {
 	int			*regs;
 	pci_chipset_tag_t	 vsc_pc;
 	pcitag_t		 vsc_tag;
+	bus_addr_t		 vsc_apaddr;
 	bus_size_t		 initial_aperture;
 };
 
@@ -110,35 +111,41 @@ agp_via_probe(struct device *parent, void *match, void *aux)
 void
 agp_via_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct agp_via_softc	*asc = (struct agp_via_softc *)self;
+	struct agp_via_softc	*vsc = (struct agp_via_softc *)self;
 	struct agp_attach_args	*aa = aux;
 	struct pci_attach_args	*pa = aa->aa_pa;
 	struct agp_gatt		*gatt;
 	pcireg_t		 agpsel, capval;
 
-	asc->vsc_pc = pa->pa_pc;
-	asc->vsc_tag = pa->pa_tag;
+	vsc->vsc_pc = pa->pa_pc;
+	vsc->vsc_tag = pa->pa_tag;
 	pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, NULL, &capval);
+
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, AGP_APBASE,
+	    PCI_MAPREG_TYPE_MEM, &vsc->vsc_apaddr, NULL, NULL) != 0) {
+		printf(": can't get aperture info\n");
+		return;
+	}
 
 	if (AGP_CAPID_GET_MAJOR(capval) >= 3) {
 		agpsel = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_VIA_AGPSEL);
 		if ((agpsel & (1 << 1)) == 0) {
-			asc->regs = via_v3_regs;
+			vsc->regs = via_v3_regs;
 			printf(": v3");
 		} else {
-			asc->regs = via_v2_regs;
+			vsc->regs = via_v2_regs;
 			printf(": v2 compat mode");
 		}
 	} else {
-		asc->regs = via_v2_regs;
+		vsc->regs = via_v2_regs;
 		printf(": v2");
 	}
 
 
-	asc->initial_aperture = agp_via_get_aperture(asc);
+	vsc->initial_aperture = agp_via_get_aperture(vsc);
 
 	for (;;) {
-		bus_size_t size = agp_via_get_aperture(asc);
+		bus_size_t size = agp_via_get_aperture(vsc);
 		gatt = agp_alloc_gatt(pa->pa_dmat, size);
 		if (gatt != NULL)
 			break;
@@ -147,33 +154,33 @@ agp_via_attach(struct device *parent, struct device *self, void *aux)
 		 * Probably failed to alloc congigious memory. Try reducing the
 		 * aperture so that the gatt size reduces.
 		 */
-		if (agp_via_set_aperture(asc, size / 2)) {
+		if (agp_via_set_aperture(vsc, size / 2)) {
 			printf(", can't set aperture size\n");
 			return;
 		}
 	}
-	asc->gatt = gatt;
+	vsc->gatt = gatt;
 
-	if (asc->regs == via_v2_regs) {
+	if (vsc->regs == via_v2_regs) {
 		/* Install the gatt. */
-		pci_conf_write(pa->pa_pc, pa->pa_tag, asc->regs[REG_ATTBASE],
+		pci_conf_write(pa->pa_pc, pa->pa_tag, vsc->regs[REG_ATTBASE],
 		    gatt->ag_physical | 3);
 		/* Enable the aperture. */
-		pci_conf_write(pa->pa_pc, pa->pa_tag, asc->regs[REG_GARTCTRL],
+		pci_conf_write(pa->pa_pc, pa->pa_tag, vsc->regs[REG_GARTCTRL],
 		    0x0000000f);
 	} else {
 		pcireg_t gartctrl;
 		/* Install the gatt. */
-		pci_conf_write(pa->pa_pc, pa->pa_tag, asc->regs[REG_ATTBASE],
+		pci_conf_write(pa->pa_pc, pa->pa_tag, vsc->regs[REG_ATTBASE],
 		    gatt->ag_physical);
 		/* Enable the aperture. */
 		gartctrl = pci_conf_read(pa->pa_pc, pa->pa_tag,
-		    asc->regs[REG_ATTBASE]);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, asc->regs[REG_GARTCTRL],
+		    vsc->regs[REG_ATTBASE]);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, vsc->regs[REG_GARTCTRL],
 		    gartctrl | (3 << 7));
 	}
-	asc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_via_methods,
-	    AGP_APBASE, PCI_MAPREG_TYPE_MEM, &asc->dev);
+	vsc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_via_methods,
+	    vsc->vsc_apaddr, &vsc->dev);
 
 	return;
 }
@@ -182,17 +189,17 @@ agp_via_attach(struct device *parent, struct device *self, void *aux)
 int
 agp_via_detach(struct agp_softc *sc)
 {
-	struct agp_via_softc *asc = sc->sc_chipc;
+	struct agp_via_softc *vsc = sc->sc_chipc;
 	int error;
 
 	error = agp_generic_detach(sc);
 	if (error)
 		return (error);
 
-	pci_conf_write(sc->as_pc, sc->as_tag, asc->regs[REG_GARTCTRL], 0);
-	pci_conf_write(sc->as_pc, sc->as_tag, asc->regs[REG_ATTBASE], 0);
-	AGP_SET_APERTURE(sc, asc->initial_aperture);
-	agp_free_gatt(sc, asc->gatt);
+	pci_conf_write(sc->as_pc, sc->as_tag, vsc->regs[REG_GARTCTRL], 0);
+	pci_conf_write(sc->as_pc, sc->as_tag, vsc->regs[REG_ATTBASE], 0);
+	AGP_SET_APERTURE(sc, vsc->initial_aperture);
+	agp_free_gatt(sc, vsc->gatt);
 
 	return (0);
 }

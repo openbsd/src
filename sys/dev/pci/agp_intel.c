@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.12 2008/11/09 15:11:19 oga Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.13 2009/05/10 14:44:42 oga Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -53,6 +53,7 @@ struct agp_intel_softc {
 	struct agp_gatt 	*gatt;
 	pci_chipset_tag_t	 isc_pc;
 	pcitag_t		 isc_tag;
+	bus_addr_t		 isc_apaddr;
 	u_int			 aperture_mask;
 	enum {
 		CHIP_INTEL,
@@ -163,6 +164,12 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 		isc->chiptype = CHIP_INTEL;
 	}
 
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, AGP_APBASE,
+	    PCI_MAPREG_TYPE_MEM, &isc->isc_apaddr, NULL, NULL) != 0) {
+		printf(": can't get aperture info\n");
+		return;
+	}
+
 	/* Determine maximum supported aperture size. */
 	value = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_INTEL_APSIZE);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, AGP_INTEL_APSIZE, APSIZE_MASK);
@@ -248,7 +255,7 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	}
 	
 	isc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_intel_methods,
-	    AGP_APBASE, PCI_MAPREG_TYPE_MEM, &isc->dev);
+	    isc->isc_apaddr, &isc->dev);
 	return;
 }
 

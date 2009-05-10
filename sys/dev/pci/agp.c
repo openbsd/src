@@ -1,4 +1,4 @@
-/* $OpenBSD: agp.c,v 1.29 2009/04/20 01:28:45 oga Exp $ */
+/* $OpenBSD: agp.c,v 1.30 2009/05/10 14:44:42 oga Exp $ */
 /*-
  * Copyright (c) 2000 Doug Rabson
  * All rights reserved.
@@ -115,14 +115,13 @@ agpvga_match(struct pci_attach_args *pa)
 
 struct device *
 agp_attach_bus(struct pci_attach_args *pa, const struct agp_methods *methods,
-    int bar, pcireg_t type, struct device *dev)
+    bus_addr_t apaddr, struct device *dev)
 {
 	struct agpbus_attach_args arg;
 
 	arg.aa_methods = methods;
 	arg.aa_pa = pa;
-	arg.aa_bar = bar;
-	arg.aa_type = type;
+	arg.aa_apaddr = apaddr;
 
 	printf("\n"); /* newline from the driver that called us */
 	return (config_found(dev, &arg, agpdev_print));
@@ -149,6 +148,7 @@ agp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_chipc = parent;
 	sc->sc_methods = aa->aa_methods;
+	sc->sc_apaddr = aa->aa_apaddr;
 
 	static const int agp_max[][2] = {
 		{0,		0},
@@ -191,14 +191,7 @@ agp_attach(struct device *parent, struct device *self, void *aux)
 	pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_AGP,
 	    &sc->sc_capoff, NULL);
 
-	printf(": ");
-	if (agp_map_aperture(pa, sc, aa->aa_bar, aa->aa_type) != 0) {
-		printf("can't map aperture\n");
-		sc->sc_chipc = NULL;
-		return;
-	}
-
-	printf("aperture at 0x%lx, size 0x%lx\n", (u_long)sc->sc_apaddr,
+	printf(": aperture at 0x%lx, size 0x%lx\n", (u_long)sc->sc_apaddr,
 	    (u_long)sc->sc_methods->get_aperture(sc->sc_chipc));
 }
 
@@ -326,17 +319,6 @@ agp_find_memory(struct agp_softc *sc, int id)
 		if (mem->am_id == id)
 			return (mem);
 	}
-	return (0);
-}
-
-int
-agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc, u_int32_t bar, u_int32_t memtype)
-{
-	/* Find the aperture. Don't map it (yet), this would eat KVA */
-	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar, memtype,
-	    &sc->sc_apaddr, NULL, NULL) != 0)
-		return (ENXIO);
-
 	return (0);
 }
 

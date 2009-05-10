@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_sis.c,v 1.10 2008/11/09 22:54:01 oga Exp $	*/
+/*	$OpenBSD: agp_sis.c,v 1.11 2009/05/10 14:44:42 oga Exp $	*/
 /*	$NetBSD: agp_sis.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@ struct agp_sis_softc {
 	struct agp_gatt		*gatt;
 	pci_chipset_tag_t	 ssc_pc;
 	pcitag_t		 ssc_tag;
+	bus_addr_t		 ssc_apaddr;
 	bus_size_t		 initial_aperture;
 };
 
@@ -104,6 +105,12 @@ agp_sis_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_gatt		*gatt;
 	pcireg_t		 reg;
 
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, AGP_APBASE,
+	    PCI_MAPREG_TYPE_MEM, &ssc->ssc_apaddr, NULL, NULL) != 0) {
+		printf(": can't get aperture info\n");
+		return;
+	}
+
 	ssc->ssc_pc = pa->pa_pc;
 	ssc->ssc_tag = pa->pa_tag;
 	ssc->initial_aperture = agp_sis_get_aperture(ssc);
@@ -135,7 +142,7 @@ agp_sis_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(ssc->ssc_pc, ssc->ssc_tag, AGP_SIS_WINCTRL, reg);
 
 	ssc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_sis_methods,
-	    AGP_APBASE, PCI_MAPREG_TYPE_MEM, &ssc->dev);
+	    ssc->ssc_apaddr, &ssc->dev);
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.16 2009/04/20 01:28:45 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.17 2009/05/10 14:44:42 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -52,8 +52,7 @@ struct agpbus_attach_args {
 	char				*aa_busname; /*so pci doesn't conflict*/
         struct pci_attach_args		*aa_pa;
 	const struct agp_methods	*aa_methods;
-	int				 aa_bar;
-	pcireg_t			 aa_type;
+	bus_addr_t			 aa_apaddr;
 };
 
 enum agp_acquire_state {
@@ -150,7 +149,7 @@ struct agp_gatt {
  * Functions private to the AGP code.
  */
 struct device	*agp_attach_bus(struct pci_attach_args *,
-		     const struct agp_methods *, int, pcireg_t,
+		     const struct agp_methods *, bus_addr_t,
 		     struct device *);
 int	agp_map_aperture(struct pci_attach_args *, 
 	    struct agp_softc *, u_int32_t, u_int32_t);

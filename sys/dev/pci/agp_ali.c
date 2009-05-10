@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_ali.c,v 1.7 2008/11/09 22:47:54 oga Exp $	*/
+/*	$OpenBSD: agp_ali.c,v 1.8 2009/05/10 14:44:42 oga Exp $	*/
 /*	$NetBSD: agp_ali.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 
@@ -55,6 +55,7 @@ struct agp_ali_softc {
 	struct agp_gatt		*gatt;
 	pci_chipset_tag_t	 asc_pc;
 	pcitag_t		 asc_tag;
+	bus_addr_t		 asc_apaddr;
 	bus_size_t		 initial_aperture;
 };
 
@@ -107,6 +108,12 @@ agp_ali_attach(struct device *parent, struct device *self, void *aux)
 	asc->asc_pc = pa->pa_pc;
 	asc->initial_aperture = agp_ali_get_aperture(asc);
 
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, AGP_APBASE,
+	    PCI_MAPREG_TYPE_MEM, &asc->asc_apaddr, NULL, NULL) != 0) {
+		printf(": can't get aperture info\n");
+		return;
+	}
+
 	for (;;) {
 		bus_size_t size = agp_ali_get_aperture(asc);
 		gatt = agp_alloc_gatt(pa->pa_dmat, size);
@@ -134,7 +141,7 @@ agp_ali_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(asc->asc_pc, asc->asc_tag, AGP_ALI_TLBCTRL, reg);
 
 	asc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_ali_methods,
-	    AGP_APBASE, PCI_MAPREG_TYPE_MEM, &asc->dev);
+	    asc->asc_apaddr, &asc->dev);
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.49 2009/04/29 22:03:09 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.50 2009/05/10 14:44:42 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -68,8 +68,9 @@ struct agp_i810_softc {
 	struct agp_gatt		*gatt;
 	struct vga_pci_bar	*map;
 	struct vga_pci_bar	*gtt_map;
-	int			 chiptype;	/* i810-like or i830 */
+	bus_addr_t		 isc_apaddr;
 	bus_size_t		 aperture;	/* current aperture size */
+	int			 chiptype;	/* i810-like or i830 */
 	u_int32_t		 dcache_size;	/* i810 only */
 	u_int32_t		 stolen;	/* number of i830/845 gtt
 						   entries for stolen memory */
@@ -230,7 +231,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, gmaddr, memtype,
-	    NULL, &isc->aperture, NULL) != 0) {
+	    &isc->isc_apaddr, &isc->aperture, NULL) != 0) {
 		printf("can't get aperture size\n");
 		return;
 	}
@@ -458,7 +459,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	agp_flush_cache();
 
 	isc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_i810_methods,
-	    gmaddr, memtype, &isc->dev);
+	    isc->isc_apaddr, &isc->dev);
 	return;
 out:
 

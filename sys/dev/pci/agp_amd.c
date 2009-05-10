@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_amd.c,v 1.10 2009/04/20 01:28:45 oga Exp $	*/
+/*	$OpenBSD: agp_amd.c,v 1.11 2009/05/10 14:44:42 oga Exp $	*/
 /*	$NetBSD: agp_amd.c,v 1.6 2001/10/06 02:48:50 thorpej Exp $	*/
 
 /*-
@@ -72,6 +72,7 @@ struct agp_amd_softc {
 	pcitag_t		 asc_tag;
 	bus_space_handle_t	 ioh;
 	bus_space_tag_t		 iot;
+	bus_addr_t		 asc_apaddr;
 	bus_size_t		 initial_aperture;
 };
 
@@ -192,6 +193,12 @@ agp_amd_attach(struct device *parent, struct device *self, void *aux)
 	asc->asc_pc = pa->pa_pc;
 	asc->asc_tag = pa->pa_tag;
 
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, AGP_APBASE,
+	    PCI_MAPREG_TYPE_MEM, &asc->asc_apaddr, NULL, NULL) != 0) {
+		printf(": can't get aperture info\n");
+		return;
+	}
+
 	error = pci_mapreg_map(pa, AGP_AMD751_REGISTERS,
 	     PCI_MAPREG_TYPE_MEM, 0, &asc->iot, &asc->ioh, NULL, NULL, 0);
 	if (error != 0) {
@@ -232,7 +239,7 @@ agp_amd_attach(struct device *parent, struct device *self, void *aux)
 	agp_amd_flush_tlb(asc);
 
 	asc->agpdev = (struct agp_softc *)agp_attach_bus(pa, &agp_amd_methods,
-	    AGP_APBASE, PCI_MAPREG_TYPE_MEM, &asc->dev);
+	    asc->asc_apaddr, &asc->dev);
 	return;
 }
 
