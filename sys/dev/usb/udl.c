@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.2 2009/05/09 20:06:38 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.3 2009/05/10 09:28:58 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -989,7 +989,7 @@ udl_cmd_send_async(struct udl_softc *sc)
 
 	/* if the ring buffer is full, wait until it's flushed completely */
 	if (sc->sc_cmd_xfer_cnt == UDL_CMD_XFER_COUNT) {
-		DPRINTF(1, "%s: %s: ring buffer full, wait until flushed\n",
+		DPRINTF(2, "%s: %s: ring buffer full, wait until flushed\n",
 		    DN(sc), FUNC);
 		/*
 		 * XXX
@@ -1025,7 +1025,7 @@ udl_cmd_send_async(struct udl_softc *sc)
 		printf("%s: %s: %s!\n", DN(sc), FUNC, usbd_errstr(error));
 		return (error);
 	}
-	DPRINTF(1, "%s: %s: sending %d bytes from buffer no. %d\n",
+	DPRINTF(2, "%s: %s: sending %d bytes from buffer no. %d\n",
 	    DN(sc), FUNC, cb->off, i);
 
 	/* free command buffer, lock xfer buffer */
@@ -1057,7 +1057,7 @@ udl_cmd_send_async_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	}
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
 
-	DPRINTF(1, "%s: %s: sent %d bytes\n", DN(sc), FUNC, len);
+	DPRINTF(2, "%s: %s: sent %d bytes\n", DN(sc), FUNC, len);
 skip:
 	/* free xfer buffer */
 	cx->busy = 0;
