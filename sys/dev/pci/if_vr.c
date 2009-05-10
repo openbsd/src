@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.85 2009/05/10 12:31:58 sthen Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.86 2009/05/10 12:35:46 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -56,7 +56,7 @@
  *
  * Early Rhine has a serious flaw in its transmit DMA mechanism:
  * transmit buffers must be longword aligned. Unfortunately,
- * FreeBSD doesn't guarantee that mbufs will be filled in starting
+ * OpenBSD doesn't guarantee that mbufs will be filled in starting
  * at longword boundaries, so we have to do a buffer copy before
  * transmission.
  */
@@ -237,7 +237,7 @@ vr_mii_readreg(struct vr_softc *sc, struct vr_mii_frame *frame)
  */
 int
 vr_mii_writereg(struct vr_softc *sc, struct vr_mii_frame *frame)
-{      
+{
 	int			s, i;
 
 	s = splnet();
@@ -255,7 +255,7 @@ vr_mii_writereg(struct vr_softc *sc, struct vr_mii_frame *frame)
 	for (i = 0; i < 10000; i++) {
 		if ((CSR_READ_1(sc, VR_MIICMD) & VR_MIICMD_WRITE_ENB) == 0)
 			break;
-		DELAY(1); 
+		DELAY(1);
 	}
 
 	splx(s);
@@ -444,7 +444,7 @@ vr_reset(struct vr_softc *sc)
 #endif
 			VR_SETBIT(sc, VR_MISC_CR1, VR_MISCCR1_FORSRST);
 		}
-	}       
+	}
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
@@ -453,7 +453,7 @@ vr_reset(struct vr_softc *sc)
 /*
  * Probe for a VIA Rhine chip.
  */
-int                
+int
 vr_probe(struct device *parent, void *match, void *aux)
 {
 	const struct vr_type *vr;
@@ -492,7 +492,7 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	int			i;
 	pcireg_t		command;
 	struct vr_softc		*sc = (struct vr_softc *)self;
-	struct pci_attach_args 	*pa = aux;
+	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
@@ -713,7 +713,7 @@ vr_list_tx_init(struct vr_softc *sc)
 			return (ENOBUFS);
 
 		if (i == (VR_TX_LIST_CNT - 1))
-			cd->vr_tx_chain[i].vr_nextdesc = 
+			cd->vr_tx_chain[i].vr_nextdesc =
 				&cd->vr_tx_chain[0];
 		else
 			cd->vr_tx_chain[i].vr_nextdesc =
@@ -743,7 +743,7 @@ vr_list_rx_init(struct vr_softc *sc)
 	ld = sc->vr_ldata;
 
 	for (i = 0; i < VR_RX_LIST_CNT; i++) {
-		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
 		    0, BUS_DMA_NOWAIT | BUS_DMA_READ,
 		    &cd->vr_rx_chain[i].vr_map))
 			return (ENOBUFS);
@@ -759,7 +759,7 @@ vr_list_rx_init(struct vr_softc *sc)
 
 		if (i == (VR_RX_LIST_CNT - 1))
 			nexti = 0;
-		else 
+		else
 			nexti = i + 1;
 
 		cd->vr_rx_chain[i].vr_nextdesc = &cd->vr_rx_chain[nexti];
@@ -805,7 +805,7 @@ vr_rxeof(struct vr_softc *sc)
 		 * If an error occurs, update stats, clear the
 		 * status word and leave the mbuf cluster in place:
 		 * it should simply get re-used next time this descriptor
-	 	 * comes up in the ring.
+		 * comes up in the ring.
 		 */
 		if (rxstat & VR_RXSTAT_RXERR) {
 			ifp->if_ierrors++;
@@ -841,14 +841,14 @@ vr_rxeof(struct vr_softc *sc)
 			continue;
 		}
 
-		/* No errors; receive the packet. */	
+		/* No errors; receive the packet. */
 		total_len = VR_RXBYTES(letoh32(cur_rx->vr_ptr->vr_status));
 
 		/*
 		 * XXX The VIA Rhine chip includes the CRC with every
 		 * received frame, and there's no way to turn this
 		 * behavior off (at least, I can't find anything in
-	 	 * the manual that explains how to do it) so we have
+		 * the manual that explains how to do it) so we have
 		 * to trim off the CRC manually.
 		 */
 		total_len -= ETHER_CRC_LEN;
@@ -903,20 +903,20 @@ vr_rxeoc(struct vr_softc *sc)
 
 	ifp = &sc->arpcom.ac_if;
 
-	ifp->if_ierrors++;      
+	ifp->if_ierrors++;
 
-	VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_RX_ON);      
-	DELAY(10000);  
+	VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_RX_ON);
+	DELAY(10000);
 
-	for (i = 0x400; 
+	for (i = 0x400;
 	    i && (CSR_READ_2(sc, VR_COMMAND) & VR_CMD_RX_ON);
-	    i--)  
+	    i--)
 		;       /* Wait for receiver to stop */
 
-	if (!i) {       
+	if (!i) {
 		printf("%s: rx shutdown error!\n", sc->sc_dev.dv_xname);
 		sc->vr_flags |= VR_F_RESTART;
-		return; 
+		return;
 	}
 
 	vr_rxeof(sc);
@@ -993,7 +993,7 @@ vr_txeof(struct vr_softc *sc)
 
 	sc->vr_cdata.vr_tx_cons = cur_tx;
 	if (cur_tx->vr_mbuf == NULL)
- 		ifp->if_timer = 0;
+		ifp->if_timer = 0;
 }
 
 void
@@ -1006,10 +1006,10 @@ vr_tick(void *xsc)
 	if (sc->vr_flags & VR_F_RESTART) {
 		printf("%s: restarting\n", sc->sc_dev.dv_xname);
 		vr_stop(sc);
-		vr_reset(sc);   
+		vr_reset(sc);
 		vr_init(sc);
 		sc->vr_flags &= ~VR_F_RESTART;
-	}           
+	}
 
 	mii_tick(&sc->sc_mii);
 	timeout_add_sec(&sc->sc_to, 1);
@@ -1055,7 +1055,7 @@ vr_intr(void *arg)
 			printf("%s: rx packet lost\n", sc->sc_dev.dv_xname);
 #endif
 			ifp->if_ierrors++;
-		}       
+		}
 
 		if ((status & VR_ISR_RX_ERR) || (status & VR_ISR_RX_NOBUF) ||
 		    (status & VR_ISR_RX_OFLOW)) {
@@ -1104,7 +1104,7 @@ vr_intr(void *arg)
 					VR_SETBIT16(sc, VR_COMMAND,
 					    VR_CMD_TX_ON);
 					VR_SETBIT16(sc, VR_COMMAND,
-					    VR_CMD_TX_GO); 
+					    VR_CMD_TX_GO);
 				}
 			}
 		}
