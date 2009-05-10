@@ -1479,6 +1479,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uaudioreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ucomvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/udl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ueaglereg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ueaglevar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uftdireg.ph

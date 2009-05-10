@@ -838,6 +838,7 @@
 ./usr/include/dev/usb/ohcivar.h
 ./usr/include/dev/usb/uaudioreg.h
 ./usr/include/dev/usb/ucomvar.h
+./usr/include/dev/usb/udl.h
 ./usr/include/dev/usb/ueaglereg.h
 ./usr/include/dev/usb/ueaglevar.h
 ./usr/include/dev/usb/uftdireg.h
