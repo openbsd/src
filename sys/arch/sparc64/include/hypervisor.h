@@ -1,4 +1,4 @@
-/*	$OpenBSD: hypervisor.h,v 1.10 2009/01/02 15:35:54 kettenis Exp $	*/
+/*	$OpenBSD: hypervisor.h,v 1.11 2009/05/10 12:18:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -133,6 +133,9 @@ int64_t	hv_tod_set(uint64_t tod);
 int64_t	hv_cons_getchar(int64_t *ch);
 int64_t	hv_cons_putchar(int64_t ch);
 int64_t	hv_api_putchar(int64_t ch);
+
+#define CONS_BREAK	-1
+#define CONS_HUP	-2
 
 /*
  * Domain state services
