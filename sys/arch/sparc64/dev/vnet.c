@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.13 2009/02/20 17:50:22 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.14 2009/05/10 12:59:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -308,7 +308,6 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 
 free_txqueue:
 	ldc_queue_free(sc->sc_dmatag, lc->lc_txq);
-	return;
 }
 
 int

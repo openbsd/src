@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.10 2009/02/20 17:55:28 kettenis Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.11 2009/05/10 12:59:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -365,7 +365,6 @@ free_rxqueue:
 	ldc_queue_free(sc->sc_dmatag, lc->lc_rxq);
 free_txqueue:
 	ldc_queue_free(sc->sc_dmatag, lc->lc_txq);
-	return;
 }
 
 int
@@ -401,7 +400,6 @@ vdsk_rx_intr(void *arg)
 	struct ldc_conn *lc = &sc->sc_lc;
 	uint64_t rx_head, rx_tail, rx_state;
 	struct ldc_pkt *lp;
-	uint64_t *msg;
 	int err;
 
 	err = hv_ldc_rx_get_state(lc->lc_id, &rx_head, &rx_tail, &rx_state);
@@ -437,7 +435,6 @@ vdsk_rx_intr(void *arg)
 	if (rx_head == rx_tail)
 		return (0);
 
-	msg = (uint64_t *)(lc->lc_rxq->lq_va + rx_head);
 	lp = (struct ldc_pkt *)(lc->lc_rxq->lq_va + rx_head);
 	switch (lp->type) {
 	case LDC_CTRL:
