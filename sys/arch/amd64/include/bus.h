@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.17 2009/04/21 17:05:29 oga Exp $	*/
+/*	$OpenBSD: bus.h,v 1.18 2009/05/10 15:04:48 oga Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -621,8 +621,8 @@ struct sg_cookie {
 	struct mutex	 sg_mtx;
 	struct extent	*sg_ex;
 	void		*sg_hdl;
-	void		(*bind_page)(void *, vaddr_t, paddr_t, int);
-	void		(*unbind_page)(void *, vaddr_t);
+	void		(*bind_page)(void *, bus_addr_t, paddr_t, int);
+	void		(*unbind_page)(void *, bus_addr_t);
 	void		(*flush_tlb)(void *);
 };
 
