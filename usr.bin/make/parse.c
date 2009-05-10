@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.95 2007/09/23 09:47:56 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.96 2009/05/10 11:52:09 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -640,7 +640,15 @@ parse_do_targets(Lst paths, int *op, const char *line)
 		if (*cp == '\0') {
 			/* Ending a dependency line without an operator is a
 			 * Bozo no-no */
-			Parse_Error(PARSE_FATAL, "Need an operator");
+			/* Deeper check for cvs conflicts */
+			if (gtargets.n > 0 &&
+			    (strcmp(gtargets.a[0]->name, "<<<<<<<") == 0 ||
+			    strcmp(gtargets.a[0]->name, ">>>>>>>") == 0)) {
+			    	Parse_Error(PARSE_FATAL, 
+    "Need an operator (likely from a cvs update conflict)");
+			} else {
+				Parse_Error(PARSE_FATAL, "Need an operator");
+			}
 			return NULL;
 		}
 		/*
