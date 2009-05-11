@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.9 2009/05/08 02:57:32 drahn Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.10 2009/05/11 12:51:24 drahn Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -2284,12 +2284,6 @@ arm11_setup(args)
 
 #ifdef CPU_ARMv7
 struct cpu_option armv7_options[] = {
-	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
-	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
-	{ "armv7.cache",	BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
-	{ "armv7.icache",	BIC, OR,  CPU_CONTROL_IC_ENABLE },
-	{ "armv7.dcache",	BIC, OR,  CPU_CONTROL_DC_ENABLE },
-	{ NULL,			IGN, IGN, 0 }
 };
 
 void
@@ -2300,22 +2294,22 @@ armv7_setup(args)
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
-	    /* | CPU_CONTROL_BPRD_ENABLE */;
+	    | CPU_CONTROL_BPRD_ENABLE ;
 	cpuctrlmask = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
 	    | CPU_CONTROL_ROM_ENABLE | CPU_CONTROL_BPRD_ENABLE
 	    | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
-	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK;
+	    | CPU_CONTROL_ROUNDROBIN | CPU_CONTROL_CPCLK
+	    | CPU_CONTROL_VECRELOC | CPU_CONTROL_FI | CPU_CONTROL_VE;
 
 #ifndef ARM32_DISABLE_ALIGNMENT_FAULTS
 	cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
 #endif
 
-	cpuctrl = parse_cpu_options(args, armv7_options, cpuctrl);
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
 
-#ifdef __ARMEB__
-	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
-#endif
+	cpuctrl = parse_cpu_options(args, armv7_options, cpuctrl);
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
