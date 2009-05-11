@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.203 2009/05/03 22:01:46 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.204 2009/05/11 23:09:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.203 2009/05/03 22:01:46 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.204 2009/05/11 23:09:28 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1860,23 +1860,19 @@ mpequal(char **mp1, char **mp2)
 int
 mpsave(struct disklabel *lp)
 {
-	int i, j, mpset;
+	int i, j;
 	char bdev[MAXPATHLEN], *p;
 	struct mountinfo mi[MAXPARTITIONS];
 	FILE *fp;
 
 	memset(&mi, 0, sizeof(mi));
 
-	for (i = 0, mpset = 0; i < MAXPARTITIONS; i++) {
+	for (i = 0; i < MAXPARTITIONS; i++) {
 		if (mountpoints[i] != NULL) {
 			mi[i].mountpoint = mountpoints[i];
 			mi[i].partno = i;
-			mpset = 1;
 		}
 	}
-	/* Exit if there is nothing to do... */
-	if (!mpset)
-		return(0);
 
 	/* Convert specname to bdev */
 	if (strncmp(_PATH_DEV, specname, sizeof(_PATH_DEV) - 1) == 0 &&
