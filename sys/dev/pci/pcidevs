@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1472 2009/05/11 19:33:06 damien Exp $
+$OpenBSD: pcidevs,v 1.1473 2009/05/11 19:46:46 damien Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -239,6 +239,7 @@ vendor	ICENSEMBLE	0x1412	IC Ensemble
 vendor	MICROSOFT	0x1414	Microsoft
 vendor	OXFORD2		0x1415	Oxford
 vendor	CHELSIO		0x1425	Chelsio
+vendor	EDIMAX		0x1432	Edimax
 vendor	TAMARACK	0x143d	Tamarack
 vendor	ASKEY		0x144f	Askey
 vendor	AVERMEDIA	0x1461	Avermedia
@@ -1833,6 +1834,15 @@ product DTCTECH DMX3194U	0x0002	DMX3194U
 
 /* Dynalink products */
 product DYNALINK IS64PH		0x1702	IS64PH ISDN
+
+/* Edimax products */
+product EDIMAX RT2860_1		0x7708	RT2860
+product EDIMAX RT2860_2		0x7728	RT2860
+product EDIMAX RT2860_3		0x7758	RT2860
+product EDIMAX RT2860_4		0x7727	RT2860
+product EDIMAX RT2860_5		0x7738	RT2860
+product EDIMAX RT2860_6		0x7748	RT2860
+product EDIMAX RT2860_7		0x7768	RT2860
 
 /* Efficient Networks products */
 product EFFICIENTNETS ENI155PF	0x0000	155P-MF1 ATM (FPGA)
