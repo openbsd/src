@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.50 2009/04/26 02:20:58 cnst Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.51 2009/05/11 19:28:02 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -1203,7 +1203,7 @@ iwn_read_eeprom(struct iwn_softc *sc)
 	uint16_t val;
 	int error;
 
-	if ((IWN_READ(sc, IWN_EEPROM_GP) & 0x6) == 0) {
+	if ((IWN_READ(sc, IWN_EEPROM_GP) & 0x7) == 0) {
 		printf("%s: bad EEPROM signature\n", sc->sc_dev.dv_xname);
 		return EIO;
 	}
