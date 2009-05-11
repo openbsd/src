@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.204 2009/05/11 23:09:28 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.205 2009/05/11 23:09:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.204 2009/05/11 23:09:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.205 2009/05/11 23:09:44 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -344,10 +344,11 @@ editor(struct disklabel *lp, int f)
 			if (fstabfile)
 				mpsave(&label);
 			/*
-			 * If we haven't changed the label we started with, and it was not
-			 * a default label or an auto-allocated label, there is no
-			 * need to do anything before exiting. Note that 'w' will reset
-			 * dflag and aflag to allow 'q' to exit with further questions.
+			 * If we haven't changed the label we started with, and
+			 * it was not a default label or an auto-allocated
+			 * label, there is no need to do anything before
+			 * exiting. Note that 'w' will reset dflag and aflag to
+			 * allow 'q' to exit with further questions.
 			 */
 			if (!dflag && !aflag &&
 			    memcmp(lp, &label, sizeof(label)) == 0) {
