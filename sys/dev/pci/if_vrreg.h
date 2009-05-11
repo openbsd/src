@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.24 2009/05/10 12:23:56 sthen Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.25 2009/05/11 07:41:52 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -504,43 +504,6 @@ struct vr_softc {
 	bus_space_read_1(sc->vr_btag, sc->vr_bhandle, reg)
 
 #define VR_TIMEOUT		1000
-
-/*
- * General constants that are fun to know.
- *
- * VIA vendor ID
- */
-#define	VIA_VENDORID			0x1106
-
-/*
- * VIA Rhine device IDs.
- */
-#define	VIA_DEVICEID_RHINE		0x3043
-#define VIA_DEVICEID_RHINE_II		0x6100
-#define VIA_DEVICEID_RHINE_II_2		0x3065
-#define VIA_DEVICEID_RHINE_III		0x3106
-#define VIA_DEVICEID_RHINE_III_M	0x3053
-
-/*
- * Delta Electronics device ID.
- */
-#define DELTA_VENDORID			0x1500
-
-/*
- * Delta device IDs.
- */
-#define DELTA_DEVICEID_RHINE_II		0x1320
-
-/*
- * Addtron vendor ID.
- */
-#define ADDTRON_VENDORID		0x4033
-
-/*
- * Addtron device IDs.
- */
-#define ADDTRON_DEVICEID_RHINE_II	0x1320
-
 
 /*
  * VIA Rhine revision IDs
