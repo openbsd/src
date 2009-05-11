@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.100 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.101 2009/05/11 19:24:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -2148,7 +2148,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
 	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
 		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
-	if (ic->ic_flags & IEEE80211_F_SHSLOT)
+	if (ic->ic_caps & IEEE80211_C_SHSLOT)
 		capinfo |= IEEE80211_CAPINFO_SHORT_SLOTTIME;
 	assoc.capinfo = htole16(capinfo);
 
