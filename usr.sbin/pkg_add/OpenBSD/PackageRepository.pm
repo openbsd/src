@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.65 2009/04/24 23:22:20 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.66 2009/05/11 19:51:27 sthen Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -396,7 +396,7 @@ sub baseurl
 {
 	my $self = shift;
 
-	return "//$self->{host}/$self->{path}";
+	return "//$self->{host}$self->{path}";
 }
 
 sub parse_url
