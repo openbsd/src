@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.19 2009/05/11 20:11:54 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.20 2009/05/11 20:42:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -92,6 +92,8 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(RALINK,			RT3070),
 	USB_ID(RALINK,			RT3071),
 	USB_ID(RALINK,			RT3072),
+	USB_ID(ABOCOM,			RT2870),
+	USB_ID(ABOCOM,			RT2770),
 	USB_ID(ASUS,			RT2870_1),
 	USB_ID(ASUS,			RT2870_2),
 	USB_ID(ASUS,			RT2870_3),
@@ -133,6 +135,8 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(SENAO,			RT2870_1),
 	USB_ID(SENAO,			RT2870_2),
 	USB_ID(SENAO,			RT3070),
+	USB_ID(SENAO,			RT3071),
+	USB_ID(SENAO,			RT3072),
 	USB_ID(PHILIPS,			RT2870),
 	USB_ID(CONCEPTRONIC2,		RT2870_4),
 	USB_ID(AZUREWAVE,		RT2870_1),
@@ -158,6 +162,8 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(LOGITEC,			RT2870_2),
 	USB_ID(LOGITEC,			RT2870_3),
 	USB_ID(AIRTIES,			RT3070),
+	USB_ID(DLINK2,			RT3072),
+	USB_ID(PEGATRON,		RT3070),
 
 	/* Entries not in the Ralink Linux driver. */
 	USB_ID(AMIT,			CGWLUSB2GNR),
@@ -179,7 +185,6 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(MELCO,			WLIUCGN),
 	USB_ID(PLANEX2,			GWUS300MINIS),
 	USB_ID(PLANEX2,			GWUSMICRON),
-	USB_ID(PEGASUS,			RT3070),
 	USB_ID(SWEEX2,			LW303),
 	USB_ID(SWEEX2,			LW313)
 };
