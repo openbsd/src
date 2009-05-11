@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.88 2009/05/11 08:03:57 sthen Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.89 2009/05/11 10:25:07 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -899,7 +899,7 @@ vr_rxeof(struct vr_softc *sc)
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_IN);
+			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 		/* pass it on. */
 		ether_input_mbuf(ifp, m);
@@ -1143,7 +1143,7 @@ vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
 {
 	struct vr_desc		*f = NULL;
 	struct mbuf		*m_new = NULL;
-	u_int32_t		vr_flags = 0;
+	u_int32_t		vr_flags = 0, vr_status = 0;
 
 	if (sc->vr_quirks & VR_Q_NEEDALIGN ||
 	    m_head->m_pkthdr.len < VR_MIN_FRAMELEN ||
@@ -1207,7 +1207,7 @@ vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
 	f->vr_data = htole32(c->vr_map->dm_segs[0].ds_addr);
 	f->vr_ctl = htole32(c->vr_map->dm_mapsize);
 	f->vr_ctl |= htole32(vr_flags|VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG);
-	f->vr_status = htole32(0);
+	f->vr_status = htole32(vr_status);
 
 	f->vr_ctl |= htole32(VR_TXCTL_LASTFRAG|VR_TXCTL_FINT);
 	f->vr_next = htole32(c->vr_nextdesc->vr_paddr);
@@ -1258,7 +1258,7 @@ vr_start(struct ifnet *ifp)
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, cur_tx->vr_mbuf,
+			bpf_mtap_ether(ifp->if_bpf, cur_tx->vr_mbuf,
 			BPF_DIRECTION_OUT);
 #endif
 		cur_tx = cur_tx->vr_nextdesc;
