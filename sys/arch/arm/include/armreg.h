@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.5 2009/05/08 02:57:32 drahn Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.6 2009/05/11 12:50:23 drahn Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -289,6 +289,19 @@
 #define CPU_CONTROL_VECRELOC	0x00002000 /* V: Vector relocation */
 #define CPU_CONTROL_ROUNDROBIN	0x00004000 /* RR: Predictable replacement */
 #define CPU_CONTROL_V4COMPAT	0x00008000 /* L4: ARMv4 compat LDR R15 etc */
+
+/* below were added by V6 */
+#define CPU_CONTROL_FI		(1<<21) /* FI: fast interrupts */
+#define CPU_CONTROL_U		(1<<22) /* U: Unaligned */
+#define CPU_CONTROL_VE		(1<<24) /* VE: Vector enable */
+#define CPU_CONTROL_EE		(1<<25) /* EE: Exception Endianness */
+#define CPU_CONTROL_L2		(1<<25) /* L2: L2 cache enable */
+
+/* added with v7 */
+#define CPU_CONTROL_NMFI	(1<<27) /* NMFI: Non Maskable fast interrupt */ 
+#define CPU_CONTROL_TRE		(1<<28) /* TRE: TEX Remap Enable */
+#define CPU_CONTROL_AFE		(1<<29) /* AFE: Access Flag Enable */
+#define CPU_CONTROL_TE		(1<<30) /* TE: Thumb Exception Enable */
 
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
 
