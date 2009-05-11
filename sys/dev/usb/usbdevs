@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.428 2009/05/11 20:06:53 damien Exp $
+$OpenBSD: usbdevs,v 1.429 2009/05/11 20:39:51 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -527,7 +527,7 @@ vendor QUALCOMM3	0x19d2	Qualcomm Inc.
 vendor QUANTA		0x1a32	Quanta
 vendor WCH2		0x1a86	QinHeng Electronics
 vendor LONGCHEER	0x1c9e	Longcheer Technology
-vendor PEGASUS		0x1d4d	Pegasus
+vendor PEGATRON		0x1d4d	Pegatron
 vendor AIRTIES		0x1eda	AirTies
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
@@ -1213,6 +1213,7 @@ product DLINK2 WUA1340		0x3c04	WUA-1340
 product DLINK2 DWA111		0x3c06	DWA-111
 product DLINK2 DWA110		0x3c07	DWA-110
 product DLINK2 RT2870_1		0x3c09	RT2870
+product DLINK2 RT3072		0x3c0a	RT3072
 product DLINK2 DWA160A		0x3c10	DWA-160A
 product DLINK2 RT2870_2		0x3c11	RT2870
 product DLINK2 DWA130		0x3c13	DWA-130
@@ -2314,8 +2315,8 @@ product PAPOUCH AD4USB		0x8003	AD4USB
 product PAPOUCH GOLIATH_MUX	0x8004	GOLIATH MUX
 product PAPOUCH GOLIATH_MSR	0x8005	GOLIATH MSR
 
-/* Pegasus products */
-product PEGASUS RT3070		0x000c	RT3070
+/* Pegatron products */
+product PEGATRON RT3070		0x000c	RT3070
 
 /* Pen Driver */
 product PEN USBREADER		0x0240	6 in 1
@@ -2621,6 +2622,8 @@ product SENAO NUB862		0x6100	NUB-862
 product SENAO RT2870_1		0x9701	RT2870
 product SENAO RT2870_2		0x9702	RT2870
 product SENAO RT3070		0x9703	RT3070
+product SENAO RT3071		0x9705	RT3071
+product SENAO RT3072		0x9706	RT3072
 
 /* Serverworks */
 product SERVERWORKS HUB		0x0000	Root Hub
