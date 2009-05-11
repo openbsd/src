@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1470 2009/04/29 09:21:49 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1471 2009/05/11 16:31:37 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1396,6 +1396,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RS780 PCIE",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_PCIE_8,
+	    "RS780 PCIE",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RS780_PCIE_7,
 	    "RS780 PCIE",
 	},
@@ -2764,6 +2768,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X550XTX",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X550XTX_S,
+	    "Radeon X550XTX Sec",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_100_HB,
 	    "RS300_100 Host",
 	},
@@ -3192,6 +3200,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X1600 Sec",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_X1550_S,
+	    "Radeon X1300/X1550 Sec",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300X1550,
 	    "Radeon X1300/X1550",
 	},
@@ -3516,6 +3528,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 2100",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4870,
+	    "Radeon HD 4870",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4850,
 	    "Radeon HD 4850",
 	},
@@ -3622,6 +3638,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD48xx_HDA,
 	    "Radeon HD 48xx HD Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4000_HDA,
+	    "Radeon HD 4000 HD Audio",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS100_AGP,
@@ -8264,6 +8284,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82801IB LPC",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IBM_LPC,
+	    "82801IBM LPC",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_1,
 	    "82801I SATA",
 	},
@@ -8648,6 +8672,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GM965 KT",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM965_PT_IDER,
+	    "GM965 PT IDER",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GME965_HB,
 	    "GME965 Host",
 	},
@@ -8722,6 +8750,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_IGD_2,
 	    "Q45 Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_PT_IDER,
+	    "Q45 PT IDER",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G45_HB,
@@ -8978,6 +9010,26 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_HB,
 	    "E7525 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3100_HB,
+	    "3100 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3100_ERR,
+	    "3100 Error Reporting",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3100_EDMA,
+	    "3100 EDMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3100_PCIE_1,
+	    "3100 PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3100_PCIE_2,
+	    "3100 PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_7300_HB,
@@ -12052,6 +12104,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GeForce 6100",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEGO6150,
+	    "GeForce Go 6150",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEGO6100,
 	    "GeForce Go 6100",
 	},
@@ -12946,6 +13002,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_PPB_3,
 	    "MCP73 PCIE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_9800_GTX,
+	    "GeForce 9800 GTX",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_9300_GE_1,
