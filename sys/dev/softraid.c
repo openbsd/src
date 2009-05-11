@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.132 2009/05/11 14:06:21 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.133 2009/05/11 14:17:55 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -752,8 +752,13 @@ sr_meta_validate(struct sr_discipline *sd, dev_t dev, struct sr_metadata *sm,
 	 * format and will be treated just like the native format
 	 */
 
+	if (sm->ssdi.ssd_magic != SR_MAGIC) {
+		printf("%s: not valid softraid metadata\n", DEVNAME(sc));
+		goto done;
+	}
+
 	if (sm->ssdi.ssd_version != SR_META_VERSION) {
-		printf("%s: %s can not read metadata version %d, expected %d\n",
+		printf("%s: %s can not read metadata version %u, expected %u\n",
 		    DEVNAME(sc), devname, sm->ssdi.ssd_version,
 		    SR_META_VERSION);
 		goto done;
@@ -876,6 +881,8 @@ sr_meta_native_bootprobe(struct sr_softc *sc, struct device *dv,
 		}
 
 		/* are we a softraid partition? */
+		if (md->ssdi.ssd_magic != SR_MAGIC)
+			continue;
 		sr_meta_getdevname(sc, devr, devname, sizeof(devname));
 		if (sr_meta_validate(fake_sd, devr, md, NULL) == 0) {
 			if (md->ssdi.ssd_flags & BIOC_SCNOAUTOASSEMBLE) {
