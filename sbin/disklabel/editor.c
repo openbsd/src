@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.205 2009/05/11 23:09:44 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.206 2009/05/11 23:15:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.205 2009/05/11 23:09:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.206 2009/05/11 23:15:42 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -582,18 +582,26 @@ again:
 				secs = ap->maxsz;
 			else
 				secs = totsecs;
+#ifdef SUN_CYLCHECK
+			goto cylinderalign;
+#endif
 		} else {
 			secs = ap->minsz;
 			if (xtrasecs > 0)
 				secs += (xtrasecs / 100) * ap->rate;
 			if (secs > ap->maxsz)
 				secs = ap->maxsz;
+#ifdef SUN_CYLCHECK
+cylinderalign:
 			secs = ((secs + cylsecs - 1) / cylsecs) * cylsecs;
+#endif
 			totsecs -= secs;
+#ifdef SUN_CYLCHECK
 			while (totsecs < 0) {
 				secs -= cylsecs;
 				totsecs += cylsecs;
 			}
+#endif
 		}
 
 		/* Find largest chunk of free space. */
