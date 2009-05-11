@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.241 2009/04/23 19:23:27 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.242 2009/05/11 19:16:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1962,8 +1962,11 @@ rde_dump_runner(void)
 		default:
 			fatalx("rde_dump_runner: unsupported imsg type");
 		}
-		if (ctx->ptc.done && ctx->req.af == AF_UNSPEC)
+		if (ctx->ptc.done && ctx->req.af == AF_UNSPEC &&
+		    ctx->af == AF_INET) {
+			ctx->ptc.done = 0;
 			ctx->af = AF_INET6;
+		}
 	}
 }
 
