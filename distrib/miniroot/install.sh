@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.186 2009/05/07 03:43:02 todd Exp $
+#	$OpenBSD: install.sh,v 1.187 2009/05/11 02:07:47 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -57,9 +57,6 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-# The name of the file holding the list of configured filesystems.
-FILESYSTEMS=/tmp/filesystems
-
 # install.sub needs to know the MODE
 MODE=install
 
@@ -67,6 +64,7 @@ MODE=install
 . install.sub
 
 # If /etc/fstab already exists, skip disk initialization.
+cd /tmp
 if [[ ! -f /etc/fstab ]]; then
 	DISK=
 	_DKDEVS=$DKDEVS
@@ -77,10 +75,9 @@ if [[ ! -f /etc/fstab ]]; then
 		# Always do ROOTDISK first, and repeat until it is configured.
 		if isin $ROOTDISK $_DKDEVS; then
 			resp=$ROOTDISK
-			rm -f /tmp/fstab
+			rm -f fstab
 			# Make sure empty files exist so we don't have to
 			# keep checking for their existence before grep'ing.
-			cat /dev/null >$FILESYSTEMS
 		else
 			# Force the user to think and type in a disk name by
 			# making 'done' the default choice.
@@ -94,84 +91,56 @@ if [[ ! -f /etc/fstab ]]; then
 		# Deal with disklabels, including editing the root disklabel
 		# and labeling additional disks. This is machine-dependent since
 		# some platforms may not be able to provide this functionality.
-		# /tmp/fstab.$DISK is created here with 'disklabel -f'.
-		rm -f /tmp/*.$DISK
+		# fstab.$DISK is created here with 'disklabel -f'.
+		rm -f *.$DISK
 		AUTOROOT=n
 		md_prep_disklabel $DISK
 
-		# Get the lists of BSD and swap partitions.
-		unset _partitions _mount_points
-		_i=0
-		disklabel $DISK 2>&1 | sed -ne '/^ *[a-p]: /p' >/tmp/disklabel.$DISK
-		while read _dev _size _offset _type _rest; do
-			_pp=$DISK${_dev%:}
+		# Make sure there is a '/' mount point.
+		grep -q " / ffs " fstab.$ROOTDISK || \
+			{ DISK= ; echo "'/' must be configured!" ; continue ; }
 
-			if [[ $_pp == $ROOTDEV ]]; then
-				echo "$ROOTDEV /" >$FILESYSTEMS
-				continue
-			elif [[ $_pp == $SWAPDEV ]]; then
-				continue
-			elif [[ $_type == swap ]]; then
-				echo "/dev/$_pp none swap sw 0 0" >>/tmp/fstab
-				continue
-			elif [[ $_type != *BSD ]]; then
-				continue
-			fi
-
-			_partitions[$_i]=$_pp
-
-			# Set _mount_points[$_i].
-			while read _pp _mp _rest; do
-				[[ $_pp == /dev/${_partitions[$_i]} ]] && \
-				       { _mount_points[$_i]=$_mp ; break ; }
-			done </tmp/fstab.$DISK
-			: $(( _i += 1 ))
-		done </tmp/disklabel.$DISK
-
-		if [[ $DISK == $ROOTDISK && -z $(grep "^$ROOTDEV /$" $FILESYSTEMS) ]]; then
-			echo "ERROR: No root partition ($ROOTDEV)."
-			DISK=
+		# Avoid duplicate mount points on different disks.
+		while read _pp _mp _rest; do
+			[[ fstab.$DISK == $(grep -l " $_mp " fstab.*) ]] || \
+				{ _rest=$DISK ; DISK= ; break ; }
+		done <fstab.$DISK
+		if [[ -z $DISK ]]; then
+			cat fstab.$_rest >/etc/fstab
+			rm fstab.$_rest
+			set -- $(grep " $_mp " fstab.*[0-9])
+			echo "$_pp and $1 can't both be mounted at $_mp."
+			# Allow disklabel(8) to read mountpoint info.
 			continue
 		fi
 
-		# If there are no BSD partitions go on to next disk.
-		(( ${#_partitions[*]} > 0 )) || continue
+		# newfs 'ffs' filesystems and add them to the list.
+		_i=${#_fsent[*]}
+		while read _pp _mp _rest; do
+			_OPT=
+			[[ $_mp == / ]] && _OPT=$MDROOTFSOPT
+			newfs -q $_OPT ${_pp##/dev/}
+			# N.B.: '!' is lexically < '/'. That is required for
+			#	correct sorting of mount points.
+			_fsent[$_i]="$_mp!$_pp"
+			: $(( _i += 1 ))
+		done <fstab.$DISK
 
-		# Ignore mount points that have already been specified.
-		_i=0
-		while (( _i < ${#_mount_points[*]} )); do
-			_mp=${_mount_points[$_i]}
-			grep -q " $_mp$" $FILESYSTEMS && continue
-
-			# Append mount information to $FILESYSTEMS
-			_pp=${_partitions[$_i]}
-			echo "$_pp $_mp" >>$FILESYSTEMS
-
-			: $(( _i += 1))
-		done
+		# New swap partitions?
+		disklabel $DISK 2>&1 | grep " swap " >swap.$DISK
+		while read _dev _rest; do
+			_pp=$DISK${_dev%:}
+			[[ $_pp != $SWAPDEV ]] && \
+				echo "/dev/$_pp none swap sw 0 0" >>fstab
+		done <swap.$DISK
 	done
 
-	# Read $FILESYSTEMS, creating a new filesystem on each listed
-	# partition and saving the partition and mount point information
-	# for subsequent sorting by mount point.
-	_i=0
-	unset _partitions _mount_points
-	while read _pp _mp; do
-		_OPT=
-		[[ $_mp == / ]] && _OPT=$MDROOTFSOPT
-		newfs -q $_OPT /dev/r$_pp
-		# N.B.: '!' is lexically < '/'. That is required for correct
-		#	sorting of mount points.
-		_mount_points[$_i]="$_mp!$_pp"
-		: $(( _i += 1 ))
-	done <$FILESYSTEMS
-
-	# Write fstab entries to /tmp/fstab in mount point alphabetic order
+	# Write fstab entries to fstab in mount point alphabetic order
 	# to enforce a rational mount order.
-	for _mp in $(bsort ${_mount_points[*]}); do
+	for _mp in $(bsort ${_fsent[*]}); do
 		_pp=${_mp##*!}
 		_mp=${_mp%!*}
-		echo -n "/dev/$_pp $_mp ffs rw"
+		echo -n "$_pp $_mp ffs rw"
 
 		# Only '/' is neither nodev nor nosuid. i.e. it can obviously
 		# *always* contain devices or setuid programs.
@@ -208,10 +177,11 @@ if [[ ! -f /etc/fstab ]]; then
 		*)	echo -n ",nosuid"	;;
 		esac
 		echo " 1 2"
-	done >>/tmp/fstab
+	done >>fstab
 
 	munge_fstab
 fi
+cd /
 
 mount_fs "-o async"
 
@@ -222,13 +192,6 @@ install_sets
 [[ $MODE == install && ! -n $TZ ]] &&
 	(cd /mnt/usr/share/zoneinfo&&ls -1dF `tar cvf /dev/null [A-Za-y]*`)>/tmp/tzlist && \
 	set_timezone /tmp/tzlist
-
-# Remount all filesystems in /etc/fstab with the options from /etc/fstab, i.e.
-# without any options such as async which may have been used in the first
-# mount.
-while read _dev _mp _fstype _opt _rest; do
-	mount -u -o $_opt $_dev $_mp ||	exit
-done </etc/fstab
 
 # Ensure an enabled console has the correct speed in /etc/ttys.
 sed -e "/^console.*on.*secure.*$/s/std\.[0-9]*/std.$(stty speed)/" \
