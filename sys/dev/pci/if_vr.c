@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.87 2009/05/11 07:56:52 sthen Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.88 2009/05/11 08:03:57 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -643,10 +643,14 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = vr_start;
 	ifp->if_watchdog = vr_watchdog;
 	ifp->if_baudrate = 10000000;
+	ifp->if_capabilities = 0;
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+	if (sc->vr_quirks & VR_Q_CSUM)
+		ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
+					IFCAP_CSUM_UDPv4;
 
 	/*
 	 * Do MII setup.
@@ -784,7 +788,7 @@ vr_rxeof(struct vr_softc *sc)
 	struct ifnet		*ifp;
 	struct vr_chain_onefrag	*cur_rx;
 	int			total_len = 0;
-	u_int32_t		rxstat;
+	u_int32_t		rxstat, rxctl;
 
 	ifp = &sc->arpcom.ac_if;
 
@@ -796,6 +800,8 @@ vr_rxeof(struct vr_softc *sc)
 		rxstat = letoh32(sc->vr_cdata.vr_rx_head->vr_ptr->vr_status);
 		if (rxstat & VR_RXSTAT_OWN)
 			break;
+
+		rxctl = letoh32(sc->vr_cdata.vr_rx_head->vr_ptr->vr_ctl);
 
 		m0 = NULL;
 		cur_rx = sc->vr_cdata.vr_rx_head;
@@ -844,21 +850,19 @@ vr_rxeof(struct vr_softc *sc)
 		/* No errors; receive the packet. */
 		total_len = VR_RXBYTES(letoh32(cur_rx->vr_ptr->vr_status));
 
-		/*
-		 * XXX The VIA Rhine chip includes the CRC with every
-		 * received frame, and there's no way to turn this
-		 * behavior off (at least, I can't find anything in
-		 * the manual that explains how to do it) so we have
-		 * to trim off the CRC manually.
-		 */
-		total_len -= ETHER_CRC_LEN;
-
 		m = cur_rx->vr_mbuf;
 		cur_rx->vr_mbuf = NULL;
 
 		bus_dmamap_sync(sc->sc_dmat, cur_rx->vr_map, 0,
 		    cur_rx->vr_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, cur_rx->vr_map);
+
+		/*
+		 * The VIA Rhine chip includes the CRC with every
+		 * received frame, and there's no way to turn this
+		 * behavior off so trim the CRC manually.
+		 */
+		total_len -= ETHER_CRC_LEN;
 
 #ifndef __STRICT_ALIGNMENT
 		if (vr_alloc_mbuf(sc, cur_rx, NULL) == 0) {
@@ -878,6 +882,17 @@ vr_rxeof(struct vr_softc *sc)
 		}
 
 		ifp->if_ipackets++;
+		if (sc->vr_quirks & VR_Q_CSUM &&
+		    (rxstat & VR_RXSTAT_FRAG) == 0 &&
+		    (rxctl & VR_RXCTL_IP) != 0) {
+			/* Checksum is valid for non-fragmented IP packets. */
+			if ((rxctl & VR_RXCTL_IPOK) == VR_RXCTL_IPOK)
+				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+			if (rxctl & (VR_RXCTL_TCP | VR_RXCTL_UDP) &&
+			    ((rxctl & VR_RXCTL_TCPUDPOK) != 0))
+				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK |
+				    M_UDP_CSUM_IN_OK;
+		}
 
 #if NBPFILTER > 0
 		/*
@@ -1128,6 +1143,7 @@ vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
 {
 	struct vr_desc		*f = NULL;
 	struct mbuf		*m_new = NULL;
+	u_int32_t		vr_flags = 0;
 
 	if (sc->vr_quirks & VR_Q_NEEDALIGN ||
 	    m_head->m_pkthdr.len < VR_MIN_FRAMELEN ||
@@ -1178,10 +1194,19 @@ vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
                 c->vr_mbuf = m_head;
 	}
 
+	if (sc->vr_quirks & VR_Q_CSUM) {
+		if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+			vr_flags |= VR_TXCTL_IPCSUM;
+		if (m_head->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+			vr_flags |= VR_TXCTL_TCPCSUM;
+		if (m_head->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+			vr_flags |= VR_TXCTL_UDPCSUM;
+	}
+
 	f = c->vr_ptr;
 	f->vr_data = htole32(c->vr_map->dm_segs[0].ds_addr);
 	f->vr_ctl = htole32(c->vr_map->dm_mapsize);
-	f->vr_ctl |= htole32(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG);
+	f->vr_ctl |= htole32(vr_flags|VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG);
 	f->vr_status = htole32(0);
 
 	f->vr_ctl |= htole32(VR_TXCTL_LASTFRAG|VR_TXCTL_FINT);
