@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.131 2009/04/29 00:52:30 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.132 2009/05/11 14:06:21 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2272,114 +2272,24 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 
 	switch (level) {
 	case 0:
-		/* fill out discipline members */
-		sd->sd_type = SR_MD_RAID0;
-		sd->sd_max_ccb_per_wu =
-		    (MAXPHYS / sd->sd_meta->ssdi.ssd_strip_size + 1) *
-		    SR_RAID0_NOWU * sd->sd_meta->ssdi.ssd_chunk_no;
-		sd->sd_max_wu = SR_RAID0_NOWU;
-
-		/* setup discipline pointers */
-		sd->sd_alloc_resources = sr_raid0_alloc_resources;
-		sd->sd_free_resources = sr_raid0_free_resources;
-		sd->sd_start_discipline = NULL;
-		sd->sd_scsi_inquiry = sr_raid_inquiry;
-		sd->sd_scsi_read_cap = sr_raid_read_cap;
-		sd->sd_scsi_tur = sr_raid_tur;
-		sd->sd_scsi_req_sense = sr_raid_request_sense;
-		sd->sd_scsi_start_stop = sr_raid_start_stop;
-		sd->sd_scsi_sync = sr_raid_sync;
-		sd->sd_scsi_rw = sr_raid0_rw;
-		sd->sd_set_chunk_state = sr_raid0_set_chunk_state;
-		sd->sd_set_vol_state = sr_raid0_set_vol_state;
+		sr_raid0_discipline_init(sd);
 		break;
 	case 1:
-		/* fill out discipline members */
-		sd->sd_type = SR_MD_RAID1;
-		sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
-		sd->sd_max_wu = SR_RAID1_NOWU;
-
-		/* setup discipline pointers */
-		sd->sd_alloc_resources = sr_raid1_alloc_resources;
-		sd->sd_free_resources = sr_raid1_free_resources;
-		sd->sd_start_discipline = NULL;
-		sd->sd_scsi_inquiry = sr_raid_inquiry;
-		sd->sd_scsi_read_cap = sr_raid_read_cap;
-		sd->sd_scsi_tur = sr_raid_tur;
-		sd->sd_scsi_req_sense = sr_raid_request_sense;
-		sd->sd_scsi_start_stop = sr_raid_start_stop;
-		sd->sd_scsi_sync = sr_raid_sync;
-		sd->sd_scsi_rw = sr_raid1_rw;
-		sd->sd_set_chunk_state = sr_raid1_set_chunk_state;
-		sd->sd_set_vol_state = sr_raid1_set_vol_state;
+		sr_raid1_discipline_init(sd);
 		break;
 #ifdef AOE
-	/* target */
+	/* AOE target. */
 	case 'A':
-		/* fill out discipline members */
-		sd->sd_type = SR_MD_AOE_TARG;
-		sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
-		sd->sd_max_wu = SR_RAIDAOE_NOWU;
-
-		/* setup discipline pointers */
-		sd->sd_alloc_resources = sr_aoe_server_alloc_resources;
-		sd->sd_free_resources = sr_aoe_server_free_resources;
-		sd->sd_start_discipline = sr_aoe_server_start;
-		sd->sd_scsi_inquiry = NULL;
-		sd->sd_scsi_read_cap = NULL;
-		sd->sd_scsi_tur = NULL;
-		sd->sd_scsi_req_sense = NULL;
-		sd->sd_scsi_start_stop = NULL;
-		sd->sd_scsi_sync = NULL;
-		sd->sd_scsi_rw = NULL;
-		sd->sd_set_chunk_state = NULL;
-		sd->sd_set_vol_state = NULL;
-		disk = 0; /* we are not a disk */
+		sr_aoe_server_discipline_init(sd);
 		break;
+	/* AOE initiator. */
 	case 'a':
-		/* initiator */
-		/* fill out discipline members */
-		sd->sd_type = SR_MD_AOE_INIT;
-		sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
-		sd->sd_max_wu = SR_RAIDAOE_NOWU;
-
-		/* setup discipline pointers */
-		sd->sd_alloc_resources = sr_aoe_alloc_resources;
-		sd->sd_free_resources = sr_aoe_free_resources;
-		sd->sd_start_discipline = NULL;
-		sd->sd_scsi_inquiry = sr_raid_inquiry;
-		sd->sd_scsi_read_cap = sr_raid_read_cap;
-		sd->sd_scsi_tur = sr_raid_tur;
-		sd->sd_scsi_req_sense = sr_raid_request_sense;
-		sd->sd_scsi_start_stop = sr_raid_start_stop;
-		sd->sd_scsi_sync = sr_raid_sync;
-		sd->sd_scsi_rw = sr_aoe_rw;
-		/* XXX reuse raid 1 functions for now FIXME */
-		sd->sd_set_chunk_state = sr_raid1_set_chunk_state;
-		sd->sd_set_vol_state = sr_raid1_set_vol_state;
+		sr_aoe_discipline_init(sd);
 		break;
 #endif
 #ifdef CRYPTO
 	case 'C':
-		/* fill out discipline members */
-		sd->sd_type = SR_MD_CRYPTO;
-		sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
-		sd->sd_max_wu = SR_CRYPTO_NOWU;
-
-		/* setup discipline pointers */
-		sd->sd_alloc_resources = sr_crypto_alloc_resources;
-		sd->sd_free_resources = sr_crypto_free_resources;
-		sd->sd_start_discipline = NULL;
-		sd->sd_scsi_inquiry = sr_raid_inquiry;
-		sd->sd_scsi_read_cap = sr_raid_read_cap;
-		sd->sd_scsi_tur = sr_raid_tur;
-		sd->sd_scsi_req_sense = sr_raid_request_sense;
-		sd->sd_scsi_start_stop = sr_raid_start_stop;
-		sd->sd_scsi_sync = sr_raid_sync;
-		sd->sd_scsi_rw = sr_crypto_rw;
-		/* XXX reuse raid 1 functions for now FIXME */
-		sd->sd_set_chunk_state = sr_raid1_set_chunk_state;
-		sd->sd_set_vol_state = sr_raid1_set_vol_state;
+		sr_crypto_discipline_init(sd);
 		break;
 #endif
 	default:

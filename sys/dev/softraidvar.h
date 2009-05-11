@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.66 2008/12/24 19:32:02 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.67 2009/05/11 14:06:21 jsing Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -477,41 +477,23 @@ int			sr_raid_start_stop(struct sr_workunit *);
 int			sr_raid_sync(struct sr_workunit *);
 void			sr_raid_startwu(struct sr_workunit *);
 
-/* raid 0 */
-int			sr_raid0_alloc_resources(struct sr_discipline *);
-int			sr_raid0_free_resources(struct sr_discipline *);
-int			sr_raid0_rw(struct sr_workunit *);
-void			sr_raid0_intr(struct buf *);
-void			sr_raid0_set_chunk_state(struct sr_discipline *,
-			    int, int);
-void			sr_raid0_set_vol_state(struct sr_discipline *);
+/* Discipline specific initialisation. */
+void			sr_raid0_discipline_init(struct sr_discipline *);
+void			sr_raid1_discipline_init(struct sr_discipline *);
+void			sr_crypto_discipline_init(struct sr_discipline *);
+void			sr_aoe_discipline_init(struct sr_discipline *);
+void			sr_aoe_server_discipline_init(struct sr_discipline *);
 
 /* raid 1 */
-int			sr_raid1_alloc_resources(struct sr_discipline *);
-int			sr_raid1_free_resources(struct sr_discipline *);
-int			sr_raid1_rw(struct sr_workunit *);
-void			sr_raid1_intr(struct buf *);
-void			sr_raid1_recreate_wu(struct sr_workunit *);
+/* XXX - currently (ab)used by AOE and CRYPTO. */
 void			sr_raid1_set_chunk_state(struct sr_discipline *,
 			    int, int);
 void			sr_raid1_set_vol_state(struct sr_discipline *);
 
-/* crypto discipline */
-int			sr_crypto_alloc_resources(struct sr_discipline *);
-int			sr_crypto_free_resources(struct sr_discipline *);
-int			sr_crypto_rw(struct sr_workunit *);
+/* Crypto discipline hooks. */
 int			sr_crypto_get_kdf(struct bioc_createraid *,
 			    struct sr_discipline *);
 int			sr_crypto_create_keys(struct sr_discipline *);
-
-/* aoe discipline */
-int			sr_aoe_alloc_resources(struct sr_discipline *);
-int			sr_aoe_free_resources(struct sr_discipline *);
-int			sr_aoe_rw(struct sr_workunit *);
-/* aoe target */
-int			sr_aoe_server_alloc_resources(struct sr_discipline *);
-int			sr_aoe_server_free_resources(struct sr_discipline *);
-int			sr_aoe_server_start(struct sr_discipline *);
 
 #ifdef SR_DEBUG
 void			sr_dump_mem(u_int8_t *, int);

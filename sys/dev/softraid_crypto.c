@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.32 2008/11/25 23:05:17 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.33 2009/05/11 14:06:21 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -74,6 +74,32 @@ void		 sr_crypto_calculate_check_hmac_sha1(struct sr_discipline *,
 #ifdef SR_DEBUG0
 void		 sr_crypto_dumpkeys(struct sr_discipline *);
 #endif
+
+/* Discipline initialisation. */
+void
+sr_crypto_discipline_init(struct sr_discipline *sd)
+{
+
+	/* Fill out discipline members. */
+	sd->sd_type = SR_MD_CRYPTO;
+	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
+	sd->sd_max_wu = SR_CRYPTO_NOWU;
+
+	/* Setup discipline pointers. */
+	sd->sd_alloc_resources = sr_crypto_alloc_resources;
+	sd->sd_free_resources = sr_crypto_free_resources;
+	sd->sd_start_discipline = NULL;
+	sd->sd_scsi_inquiry = sr_raid_inquiry;
+	sd->sd_scsi_read_cap = sr_raid_read_cap;
+	sd->sd_scsi_tur = sr_raid_tur;
+	sd->sd_scsi_req_sense = sr_raid_request_sense;
+	sd->sd_scsi_start_stop = sr_raid_start_stop;
+	sd->sd_scsi_sync = sr_raid_sync;
+	sd->sd_scsi_rw = sr_crypto_rw;
+	/* XXX reuse raid 1 functions for now FIXME */
+	sd->sd_set_chunk_state = sr_raid1_set_chunk_state;
+	sd->sd_set_vol_state = sr_raid1_set_vol_state;
+}
 
 struct cryptop *
 sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)

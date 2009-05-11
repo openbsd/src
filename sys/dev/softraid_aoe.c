@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.4 2009/01/04 20:36:23 thib Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.5 2009/05/11 14:06:21 jsing Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -54,9 +54,70 @@
 #include <netinet/if_ether.h>
 #include <net/if_aoe.h>
 
-void			sr_aoe_input(struct aoe_handler *, struct mbuf *);
-void			sr_aoe_setup(struct aoe_handler *, struct mbuf *);
-void			sr_aoe_timeout(void *);
+/* AOE initiator functions. */
+int	sr_aoe_alloc_resources(struct sr_discipline *);
+int	sr_aoe_free_resources(struct sr_discipline *);
+int	sr_aoe_rw(struct sr_workunit *);
+
+/* AOE target functions. */
+int	sr_aoe_server_alloc_resources(struct sr_discipline *);
+int	sr_aoe_server_free_resources(struct sr_discipline *);
+int	sr_aoe_server_start(struct sr_discipline *);
+
+void	sr_aoe_input(struct aoe_handler *, struct mbuf *);
+void	sr_aoe_setup(struct aoe_handler *, struct mbuf *);
+void	sr_aoe_timeout(void *);
+
+/* Discipline initialisation. */
+void
+sr_aoe_discipline_init(struct sr_discipline *sd)
+{
+
+	/* Fill out discipline members. */
+	sd->sd_type = SR_MD_AOE_INIT;
+	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
+	sd->sd_max_wu = SR_RAIDAOE_NOWU;
+
+	/* Setup discipline pointers. */
+	sd->sd_alloc_resources = sr_aoe_alloc_resources;
+	sd->sd_free_resources = sr_aoe_free_resources;
+	sd->sd_start_discipline = NULL;
+	sd->sd_scsi_inquiry = sr_raid_inquiry;
+	sd->sd_scsi_read_cap = sr_raid_read_cap;
+	sd->sd_scsi_tur = sr_raid_tur;
+	sd->sd_scsi_req_sense = sr_raid_request_sense;
+	sd->sd_scsi_start_stop = sr_raid_start_stop;
+	sd->sd_scsi_sync = sr_raid_sync;
+	sd->sd_scsi_rw = sr_aoe_rw;
+	/* XXX reuse raid 1 functions for now FIXME */
+	sd->sd_set_chunk_state = sr_raid1_set_chunk_state;
+	sd->sd_set_vol_state = sr_raid1_set_vol_state;
+}
+
+void
+sr_aoe_server_discipline_init(struct sr_dscipline *sd)
+{
+
+	/* Fill out discipline members. */
+	sd->sd_type = SR_MD_AOE_TARG;
+	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
+	sd->sd_max_wu = SR_RAIDAOE_NOWU;
+
+	/* Setup discipline pointers. */
+	sd->sd_alloc_resources = sr_aoe_server_alloc_resources;
+	sd->sd_free_resources = sr_aoe_server_free_resources;
+	sd->sd_start_discipline = sr_aoe_server_start;
+	sd->sd_scsi_inquiry = NULL;
+	sd->sd_scsi_read_cap = NULL;
+	sd->sd_scsi_tur = NULL;
+	sd->sd_scsi_req_sense = NULL;
+	sd->sd_scsi_start_stop = NULL;
+	sd->sd_scsi_sync = NULL;
+	sd->sd_scsi_rw = NULL;
+	sd->sd_set_chunk_state = NULL;
+	sd->sd_set_vol_state = NULL;
+	disk = 0; /* we are not a disk */
+}
 
 /* AOE initiator */
 void

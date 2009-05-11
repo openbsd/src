@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.12 2009/04/28 02:54:53 marco Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.13 2009/05/11 14:06:21 jsing Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -43,7 +43,41 @@
 #include <dev/softraidvar.h>
 #include <dev/rndvar.h>
 
-/* RAID 0 functions */
+/* RAID 0 functions. */
+int	sr_raid0_alloc_resources(struct sr_discipline *);
+int	sr_raid0_free_resources(struct sr_discipline *);
+int	sr_raid0_rw(struct sr_workunit *);
+void	sr_raid0_intr(struct buf *);
+void	sr_raid0_set_chunk_state(struct sr_discipline *, int, int);
+void	sr_raid0_set_vol_state(struct sr_discipline *);
+
+/* Discipline initialisation. */
+void
+sr_raid0_discipline_init(struct sr_discipline *sd)
+{
+
+	/* Fill out discipline members. */
+	sd->sd_type = SR_MD_RAID0;
+	sd->sd_max_ccb_per_wu =
+	    (MAXPHYS / sd->sd_meta->ssdi.ssd_strip_size + 1) *
+	    SR_RAID0_NOWU * sd->sd_meta->ssdi.ssd_chunk_no;
+	sd->sd_max_wu = SR_RAID0_NOWU;
+
+	/* Setup discipline pointers. */
+	sd->sd_alloc_resources = sr_raid0_alloc_resources;
+	sd->sd_free_resources = sr_raid0_free_resources;
+	sd->sd_start_discipline = NULL;
+	sd->sd_scsi_inquiry = sr_raid_inquiry;
+	sd->sd_scsi_read_cap = sr_raid_read_cap;
+	sd->sd_scsi_tur = sr_raid_tur;
+	sd->sd_scsi_req_sense = sr_raid_request_sense;
+	sd->sd_scsi_start_stop = sr_raid_start_stop;
+	sd->sd_scsi_sync = sr_raid_sync;
+	sd->sd_scsi_rw = sr_raid0_rw;
+	sd->sd_set_chunk_state = sr_raid0_set_chunk_state;
+	sd->sd_set_vol_state = sr_raid0_set_vol_state;
+}
+
 int
 sr_raid0_alloc_resources(struct sr_discipline *sd)
 {
