@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.86 2009/05/10 12:35:46 sthen Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.87 2009/05/11 07:56:52 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -807,7 +807,7 @@ vr_rxeof(struct vr_softc *sc)
 		 * it should simply get re-used next time this descriptor
 		 * comes up in the ring.
 		 */
-		if (rxstat & VR_RXSTAT_RXERR) {
+		if ((rxstat & VR_RXSTAT_RX_OK) == 0) {
 			ifp->if_ierrors++;
 #ifdef VR_DEBUG
 			printf("%s: rx error (%02x):",
