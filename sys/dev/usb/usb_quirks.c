@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.51 2009/04/22 18:56:56 deraadt Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.52 2009/05/11 08:07:42 yuo Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.45 2003/05/10 17:47:14 hamajima Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
@@ -156,6 +156,9 @@ const struct usbd_quirk_entry {
  { USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_SISPM_OLD,	    ANY,   { UQ_BAD_HID }},
  { USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_SISPM,	    ANY,   { UQ_BAD_HID }},
  { USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_SISPM_FLASH,	    ANY,   { UQ_BAD_HID }},
+
+ /* HUAWEI devices */
+ { USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E220,	ANY,	{ UQ_NO_STRINGS }},
 
  { 0, 0, 0, { 0 } }
 };
