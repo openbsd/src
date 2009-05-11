@@ -69,6 +69,7 @@ void	radeon_test_writeback(drm_radeon_private_t *);
 void	radeon_set_igpgart(drm_radeon_private_t *, int);
 void	radeon_set_pciegart(drm_radeon_private_t *, int);
 void	radeon_set_pcigart(drm_radeon_private_t *, int);
+int	radeondrm_setup_pcigart(struct drm_radeon_private *);
 
 
 u32
@@ -751,6 +752,62 @@ radeon_test_writeback(drm_radeon_private_t *dev_priv)
 	}
 }
 
+/*
+ * Set up the addresses for a pcigart table, then fill it.
+ */
+int
+radeondrm_setup_pcigart(struct drm_radeon_private *dev_priv)
+{
+	struct drm_ati_pcigart_info	*agi = &dev_priv->gart_info;
+	struct drm_device		*dev;
+	bus_addr_t			 gartaddr;
+	int				 ret;
+
+	dev = (struct drm_device *)dev_priv->drmdev;
+
+	agi->table_mask = DMA_BIT_MASK(32);
+
+	/* if we have an offset set from userspace */
+	if (dev_priv->pcigart_offset_set) {
+		gartaddr = dev_priv->fb_aper_offset + dev_priv->pcigart_offset;
+
+		agi->tbl.fb.bst = dev_priv->bst;
+		/* XXX write combining */
+		if (bus_space_map(agi->tbl.fb.bst, gartaddr, agi->table_size,
+		    0, &agi->tbl.fb.bsh) != 0)
+			return (ret);
+
+		/* this is a radeon virtual address */
+		agi->bus_addr = dev_priv->fb_location +
+		    dev_priv->pcigart_offset;
+		agi->gart_reg_if = dev_priv->flags & RADEON_IS_PCIE ?
+		    DRM_ATI_GART_PCIE : DRM_ATI_GART_PCI;
+		agi->gart_table_location = DRM_ATI_GART_FB;
+	} else {
+		if (dev_priv->flags & RADEON_IS_PCIE) {
+			DRM_ERROR("Cannot use PCI Express without GART "
+			    "in FB memory\n");
+			return (EINVAL);
+		}
+		agi->gart_reg_if = dev_priv->flags & RADEON_IS_IGPGART ?
+		    DRM_ATI_GART_IGP : DRM_ATI_GART_PCI;
+		agi->gart_table_location = DRM_ATI_GART_MAIN;
+
+		/* pcigart_init will allocate dma memory for us */
+		agi->bus_addr = 0;
+	}
+
+	if (drm_ati_pcigart_init(dev, agi)) {
+		DRM_ERROR("failed to init PCI GART!\n");
+		return (ENOMEM);
+	}
+
+	/* Turn on PCI GART */
+	radeon_set_pcigart(dev_priv, 1);
+
+	return (0);
+}
+
 /* Enable or disable IGP GART on the chip */
 void
 radeon_set_igpgart(drm_radeon_private_t *dev_priv, int on)
@@ -1173,55 +1230,10 @@ radeon_do_init_cp(struct drm_device *dev, drm_radeon_init_t *init)
 	} else
 #endif
 	{
-		dev_priv->gart_info.table_mask = DMA_BIT_MASK(32);
-		/* if we have an offset set from userspace */
-		if (dev_priv->pcigart_offset_set) {
-			dev_priv->gart_info.bus_addr =
-			    dev_priv->pcigart_offset + dev_priv->fb_location;
-			dev_priv->gart_info.mapping.offset =
-			    dev_priv->pcigart_offset + dev_priv->fb_aper_offset;
-			dev_priv->gart_info.mapping.size =
-			    dev_priv->gart_info.table_size;
-
-			drm_core_ioremap_wc(&dev_priv->gart_info.mapping, dev);
-			dev_priv->gart_info.addr =
-			    dev_priv->gart_info.mapping.handle;
-
-			if (dev_priv->flags & RADEON_IS_PCIE)
-				dev_priv->gart_info.gart_reg_if = DRM_ATI_GART_PCIE;
-			else
-				dev_priv->gart_info.gart_reg_if = DRM_ATI_GART_PCI;
-			dev_priv->gart_info.gart_table_location =
-			    DRM_ATI_GART_FB;
-
-			DRM_DEBUG("Setting phys_pci_gart to %p %08lX\n",
-				  dev_priv->gart_info.addr,
-				  dev_priv->pcigart_offset);
-		} else {
-			if (dev_priv->flags & RADEON_IS_IGPGART)
-				dev_priv->gart_info.gart_reg_if = DRM_ATI_GART_IGP;
-			else
-				dev_priv->gart_info.gart_reg_if = DRM_ATI_GART_PCI;
-			dev_priv->gart_info.gart_table_location =
-			    DRM_ATI_GART_MAIN;
-			dev_priv->gart_info.addr = NULL;
-			dev_priv->gart_info.bus_addr = 0;
-			if (dev_priv->flags & RADEON_IS_PCIE) {
-				DRM_ERROR
-				    ("Cannot use PCI Express without GART in FB memory\n");
-				radeon_do_cleanup_cp(dev);
-				return EINVAL;
-			}
-		}
-
-		if (drm_ati_pcigart_init(dev, &dev_priv->gart_info)) {
-			DRM_ERROR("failed to init PCI GART!\n");
+		if (radeondrm_setup_pcigart(dev_priv) != 0) {
 			radeon_do_cleanup_cp(dev);
-			return ENOMEM;
+			return EINVAL;
 		}
-
-		/* Turn on PCI GART */
-		radeon_set_pcigart(dev_priv, 1);
 	}
 
 	/* Start with assuming that writeback doesn't work */
@@ -1263,12 +1275,13 @@ radeon_do_cleanup_cp(struct drm_device *dev)
 				DRM_ERROR("failed to cleanup PCI GART!\n");
 		}
 
-		if (dev_priv->gart_info.gart_table_location == DRM_ATI_GART_FB)
-		{
-			drm_core_ioremapfree(&dev_priv->gart_info.mapping);
-			dev_priv->gart_info.addr = 0;
-			dev_priv->gart_info.gart_table_location = 0;
-		}
+		if (dev_priv->gart_info.gart_table_location ==
+		    DRM_ATI_GART_FB && dev_priv->gart_info.tbl.fb.bst != 0)
+			bus_space_unmap(dev_priv->gart_info.tbl.fb.bst,
+			    dev_priv->gart_info.tbl.fb.bsh,
+			    dev_priv->gart_info.table_size);
+		memset(&dev_priv->gart_info.tbl, 0,
+		    sizeof(dev_priv->gart_info.tbl));
 	}
 	dev_priv->cp_ring = NULL;
 	dev_priv->ring_rptr = NULL;

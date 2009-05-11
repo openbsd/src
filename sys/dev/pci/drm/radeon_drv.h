@@ -212,6 +212,7 @@ typedef struct drm_radeon_private {
 
 	pci_chipset_tag_t	 pc;
 	pci_intr_handle_t	 ih;
+	bus_space_tag_t		 bst;
 	void			*irqh;
 
 	struct vga_pci_bar	*regs;

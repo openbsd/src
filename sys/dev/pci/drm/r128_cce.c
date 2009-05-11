@@ -541,7 +541,6 @@ static int r128_do_init_cce(struct drm_device * dev, drm_r128_init_t * init)
 		dev_priv->gart_info.table_mask = DMA_BIT_MASK(32);
 		dev_priv->gart_info.gart_table_location = DRM_ATI_GART_MAIN;
 		dev_priv->gart_info.table_size = R128_PCIGART_TABLE_SIZE;
-		dev_priv->gart_info.addr = NULL;
 		dev_priv->gart_info.bus_addr = 0;
 		dev_priv->gart_info.gart_reg_if = DRM_ATI_GART_PCI;
 		if (drm_ati_pcigart_init(dev, &dev_priv->gart_info)) {

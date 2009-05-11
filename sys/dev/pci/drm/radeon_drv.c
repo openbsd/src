@@ -528,6 +528,7 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_PRODUCT(pa->pa_id), radeondrm_pciidlist);
 	dev_priv->flags = id_entry->driver_private;
 	dev_priv->pc = pa->pa_pc;
+	dev_priv->bst = pa->pa_memt;
 
 	bar = vga_pci_bar_info((struct vga_pci_softc *)parent, 0);
 	if (bar == NULL) {

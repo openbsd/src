@@ -332,14 +332,21 @@ struct drm_mem {
 #define upper_32_bits(_val) ((u_int32_t)(((_val) >> 16) >> 16))
 
 struct drm_ati_pcigart_info {
-	struct drm_local_map	 mapping;
-	struct drm_dmamem	*mem;
-	void			*addr;
+	union pcigart_table {
+		struct fb_gart {
+			bus_space_tag_t		 bst;
+			bus_space_handle_t	 bsh;
+		}	fb;
+		struct mem_gart {
+			struct drm_dmamem	*mem;
+			u_int32_t		*addr;
+		}	dma;
+	}			 tbl;
 	bus_addr_t		 bus_addr;
 	bus_addr_t		 table_mask;
+	bus_size_t		 table_size;
 	int			 gart_table_location;
 	int			 gart_reg_if;
-	int			 table_size;
 };
 
 struct drm_driver_info {
