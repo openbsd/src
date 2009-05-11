@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
+/*	$OpenBSD: if_otusreg.h,v 1.7 2009/05/11 18:06:25 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -40,6 +40,8 @@
 #define AR_MAC_REG_BASE			0x1c3000
 #define AR_MAC_REG_MAC_ADDR_L		(AR_MAC_REG_BASE + 0x610)
 #define AR_MAC_REG_MAC_ADDR_H		(AR_MAC_REG_BASE + 0x614)
+#define AR_MAC_REG_BSSID_L		(AR_MAC_REG_BASE + 0x618)
+#define AR_MAC_REG_BSSID_H		(AR_MAC_REG_BASE + 0x61c)
 #define AR_MAC_REG_GROUP_HASH_TBL_L	(AR_MAC_REG_BASE + 0x624)
 #define AR_MAC_REG_GROUP_HASH_TBL_H	(AR_MAC_REG_BASE + 0x628)
 #define AR_MAC_REG_BASIC_RATE		(AR_MAC_REG_BASE + 0x630)
@@ -239,17 +241,22 @@ struct ar_cmd_frequency {
 	uint32_t	freq;
 	uint32_t	dynht2040;
 	uint32_t	htena;
-	uint32_t	delta_slope_coeff_exp;
-	uint32_t	delta_slope_coeff_man;
-	uint32_t	delta_slope_coeff_exp_shgi;
-	uint32_t	delta_slope_coeff_man_shgi;
+	uint32_t	dsc_exp;
+	uint32_t	dsc_man;
+	uint32_t	dsc_shgi_exp;
+	uint32_t	dsc_shgi_man;
 	uint32_t	check_loop_count;
 } __packed;
 
 /* Firmware reply for command AR_CMD_FREQUENCY. */
 struct ar_rsp_frequency {
 	uint32_t	status;
-	int32_t		noisefloor[6];
+#define AR_CAL_ERR_AGC		(1 << 0)	/* AGC cal unfinished. */
+#define AR_CAL_ERR_NF		(1 << 1)	/* Noise cal unfinished. */
+#define AR_CAL_ERR_NF_VAL	(1 << 2)	/* NF value unexpected. */
+
+	uint32_t	nf[3];		/* Noisefloor. */
+	uint32_t	nf_ext[3];	/* Noisefloor ext. */
 } __packed;
 
 /* Structure for command AR_CMD_EKEY. */
@@ -921,6 +928,7 @@ struct otus_softc {
 	usbd_interface_handle		sc_iface;
 
 	struct ar5416eeprom		eeprom;
+	uint8_t				capflags;
 	uint8_t				rxmask;
 	uint8_t				txmask;
 
@@ -933,6 +941,7 @@ struct otus_softc {
 	int				sc_if_flags;
 	int				sc_tx_timer;
 	int				fixed_ridx;
+	int				bb_reset;
 
 	struct ieee80211_channel	*sc_curchan;
 

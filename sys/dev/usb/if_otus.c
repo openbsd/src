@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.7 2009/04/06 18:17:01 damien Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.8 2009/05/11 18:06:25 damien Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -146,8 +146,11 @@ int		otus_set_board_values(struct otus_softc *,
 		    struct ieee80211_channel *);
 int		otus_program_phy(struct otus_softc *,
 		    struct ieee80211_channel *);
+int		otus_set_rf_bank4(struct otus_softc *,
+		    struct ieee80211_channel *);
 void		otus_get_delta_slope(uint32_t, uint32_t *, uint32_t *);
-int		otus_set_chan(struct otus_softc *, struct ieee80211_channel *);
+int		otus_set_chan(struct otus_softc *, struct ieee80211_channel *,
+		    int);
 int		otus_set_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
 void		otus_set_key_cb(struct otus_softc *, void *);
@@ -315,11 +318,14 @@ otus_attachhook(void *xsc)
 
 	sc->txmask = sc->eeprom.baseEepHeader.txMask;
 	sc->rxmask = sc->eeprom.baseEepHeader.rxMask;
+	sc->capflags = sc->eeprom.baseEepHeader.opCapFlags;
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, sc->eeprom.baseEepHeader.macAddr);
 	sc->sc_led_newstate = otus_led_newstate_type3;	/* XXX */
 
-	printf("%s: MIMO %dT%dR, address %s\n", sc->sc_dev.dv_xname,
-	    (sc->txmask == 1) ? 1 : 2, (sc->rxmask == 1) ? 1 : 2,
+	printf("%s: MAC/BBP AR9170, RF AR%X, MIMO %dT%dR, address %s\n",
+	    sc->sc_dev.dv_xname, (sc->capflags & AR5416_OPFLAGS_11A) ?
+	        0x9104 : ((sc->txmask == 0x5) ? 0x9102 : 0x9101),
+	    (sc->txmask == 0x5) ? 2 : 1, (sc->rxmask == 0x5) ? 2 : 1,
 	    ether_sprintf(ic->ic_myaddr));
 
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
@@ -774,17 +780,17 @@ otus_newstate_cb(struct otus_softc *sc, void *arg)
 		break;
 
 	case IEEE80211_S_SCAN:
-		(void)otus_set_chan(sc, ic->ic_bss->ni_chan);
+		(void)otus_set_chan(sc, ic->ic_bss->ni_chan, 0);
 		timeout_add_msec(&sc->scan_to, 200);
 		break;
 
 	case IEEE80211_S_AUTH:
 	case IEEE80211_S_ASSOC:
-		(void)otus_set_chan(sc, ic->ic_bss->ni_chan);
+		(void)otus_set_chan(sc, ic->ic_bss->ni_chan, 0);
 		break;
 
 	case IEEE80211_S_RUN:
-		(void)otus_set_chan(sc, ic->ic_bss->ni_chan);
+		(void)otus_set_chan(sc, ic->ic_bss->ni_chan, 1);
 
 		ni = ic->ic_bss;
 
@@ -1502,7 +1508,7 @@ otus_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    ic->ic_opmode == IEEE80211_M_MONITOR) {
 			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 			    (IFF_UP | IFF_RUNNING))
-				otus_set_chan(sc, ic->ic_ibss_chan);
+				otus_set_chan(sc, ic->ic_ibss_chan, 0);
 			error = 0;
 		}
 		break;
@@ -1856,6 +1862,44 @@ otus_reverse_bits(uint8_t v)
 	return v;
 }
 
+int
+otus_set_rf_bank4(struct otus_softc *sc, struct ieee80211_channel *c)
+{
+	uint8_t chansel, d0, d1;
+	uint16_t data;
+	int error;
+
+	d0 = 0;
+	if (IEEE80211_IS_CHAN_5GHZ(c)) {
+		chansel = (c->ic_freq - 4800) / 5;
+		if (chansel & 1)
+			d0 |= AR_BANK4_AMODE_REFSEL(2);
+		else
+			d0 |= AR_BANK4_AMODE_REFSEL(1);
+	} else {
+		d0 |= AR_BANK4_AMODE_REFSEL(2);
+		if (c->ic_freq == 2484) {	/* CH 14 */
+			d0 |= AR_BANK4_BMODE_LF_SYNTH_FREQ;
+			chansel = 10 + (c->ic_freq - 2274) / 5;
+		} else
+			chansel = 16 + (c->ic_freq - 2272) / 5;
+		chansel <<= 2;
+	}
+	d0 |= AR_BANK4_ADDR(1) | AR_BANK4_CHUP;
+	d1 = otus_reverse_bits(chansel);
+
+	/* Write bits 0-4 of d0 and d1. */
+	data = (d1 & 0x1f) << 5 | (d0 & 0x1f);
+	otus_write(sc, AR_PHY(44), data);
+	/* Write bits 5-7 of d0 and d1. */
+	data = (d1 >> 5) << 5 | (d0 >> 5);
+	otus_write(sc, AR_PHY(58), data);
+
+	if ((error = otus_write_barrier(sc)) == 0)
+		usbd_delay_ms(sc->sc_udev, 10);
+	return error;
+}
+
 void
 otus_get_delta_slope(uint32_t coeff, uint32_t *exponent, uint32_t *mantissa)
 {
@@ -1878,41 +1922,46 @@ otus_get_delta_slope(uint32_t coeff, uint32_t *exponent, uint32_t *mantissa)
 }
 
 int
-otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c)
+otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c, int assoc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ar_cmd_frequency cmd;
 	struct ar_rsp_frequency rsp;
 	const uint32_t *vals;
 	uint32_t coeff, exp, man, tmp;
-	uint16_t data;
-	uint8_t code, chansel, d0, d1;
+	uint8_t code;
 	int error, chan, i;
 
 	chan = ieee80211_chan2ieee(ic, c);
-	DPRINTF(("setting channel %d\n", chan));
+	DPRINTF(("setting channel %d (%dMHz)\n", chan, c->ic_freq));
 
 	tmp = IEEE80211_IS_CHAN_2GHZ(c) ? 0x105 : 0x104;
 	otus_write(sc, AR_MAC_REG_DYNAMIC_SIFS_ACK, tmp);
-	(void)otus_write_barrier(sc);
+	if ((error = otus_write_barrier(sc)) != 0)
+		return error;
 
 	/* Disable BB Heavy Clip. */
 	otus_write(sc, AR_PHY_HEAVY_CLIP_ENABLE, 0x200);
-	(void)otus_write_barrier(sc);
+	if ((error = otus_write_barrier(sc)) != 0)
+		return error;
 
+	/* XXX Is that FREQ_START ? */
 	error = otus_cmd(sc, AR_CMD_FREQ_STRAT, NULL, 0, NULL);
 	if (error != 0)
 		return error;
 
 	/* Reprogram PHY and RF on channel band or bandwidth changes. */
-	if (1 || c->ic_flags != sc->sc_curchan->ic_flags) {
+	if (sc->bb_reset || c->ic_flags != sc->sc_curchan->ic_flags) {
 		DPRINTF(("band switch\n"));
 
-		/* Reset BB/ADDA. */
-		otus_write(sc, 0x1d4004, 0x400);	/* XXX cold/warm */
-		(void)otus_write_barrier(sc);
+		/* Cold/Warm reset BB/ADDA. */
+		otus_write(sc, 0x1d4004, sc->bb_reset ? 0x800 : 0x400);
+		if ((error = otus_write_barrier(sc)) != 0)
+			return error;
 		otus_write(sc, 0x1d4004, 0);
-		(void)otus_write_barrier(sc);
+		if ((error = otus_write_barrier(sc)) != 0)
+			return error;
+		sc->bb_reset = 0;
 
 		if ((error = otus_program_phy(sc, c)) != 0) {
 			printf("%s: could not program PHY\n",
@@ -1927,47 +1976,23 @@ otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c)
 			vals = ar5416_banks_vals_2ghz;
 		for (i = 0; i < nitems(ar5416_banks_regs); i++)
 			otus_write(sc, AR_PHY(ar5416_banks_regs[i]), vals[i]);
-		if ((error = otus_write_barrier(sc)) != 0)
+		if ((error = otus_write_barrier(sc)) != 0) {
+			printf("%s: could not program RF\n",
+			    sc->sc_dev.dv_xname);
 			return error;
-
+		}
 		code = AR_CMD_RF_INIT;
 	} else {
 		code = AR_CMD_FREQUENCY;
 	}
 
-	d0 = 0;
-	if (IEEE80211_IS_CHAN_5GHZ(c)) {
-		chansel = (c->ic_freq - 4800) / 5;
-		if (chansel & 1)
-			d0 |= AR_BANK4_AMODE_REFSEL(2);
-		else
-			d0 |= AR_BANK4_AMODE_REFSEL(1);
-	} else {
-		d0 |= AR_BANK4_AMODE_REFSEL(2);
-		if (chan == 14) {
-			d0 |= AR_BANK4_BMODE_LF_SYNTH_FREQ;
-			chansel = 10 + (c->ic_freq - 2274) / 5;
-		} else
-			chansel = 16 + (c->ic_freq - 2272) / 5;
-		chansel <<= 2;
-	}
-	d0 |= AR_BANK4_ADDR(1) | AR_BANK4_CHUP;
-	d1 = otus_reverse_bits(chansel);
-
-	/* Write bits 0-4 of d0 and d1. */
-	data = (d1 & 0x1f) << 5 | (d0 & 0x1f);
-	otus_write(sc, AR_PHY(44), data);
-	/* Write bits 5-7 of d0 and d1. */
-	data = (d1 >> 5) << 5 | (d0 >> 5);
-	otus_write(sc, AR_PHY(58), data);
-
-	if ((error = otus_write_barrier(sc)) != 0)
+	if ((error = otus_set_rf_bank4(sc, c)) != 0)
 		return error;
-	usbd_delay_ms(sc->sc_udev, 10);
 
 	tmp = (sc->txmask == 0x5) ? 0x340 : 0x240;
 	otus_write(sc, AR_PHY_TURBO, tmp);
-	(void)otus_write_barrier(sc);
+	if ((error = otus_write_barrier(sc)) != 0)
+		return error;
 
 	/* Send firmware command to set channel. */
 	cmd.freq = htole32((uint32_t)c->ic_freq * 1000);
@@ -1976,25 +2001,39 @@ otus_set_chan(struct otus_softc *sc, struct ieee80211_channel *c)
 	/* Set Delta Slope (exponent and mantissa). */
 	coeff = (100 << 24) / c->ic_freq;
 	otus_get_delta_slope(coeff, &exp, &man);
-	cmd.delta_slope_coeff_exp = htole32(exp);
-	cmd.delta_slope_coeff_man = htole32(man);
-	DPRINTF(("delta slope exp=%u man=%u\n", exp, man));
-	/* For Short GI, coeff is 9/10 of normal coeff. */
+	cmd.dsc_exp = htole32(exp);
+	cmd.dsc_man = htole32(man);
+	DPRINTF(("ds coeff=%u exp=%u man=%u\n", coeff, exp, man));
+	/* For Short GI, coeff is 9/10 that of normal coeff. */
 	coeff = (9 * coeff) / 10;
 	otus_get_delta_slope(coeff, &exp, &man);
-	cmd.delta_slope_coeff_exp_shgi = htole32(exp);
-	cmd.delta_slope_coeff_man_shgi = htole32(man);
-	DPRINTF(("delta slope shgi exp=%u man=%u\n", exp, man));
-	/* Set wait time for AGC and noise calibration (100ms). */
-	cmd.check_loop_count = htole32(1000);
+	cmd.dsc_shgi_exp = htole32(exp);
+	cmd.dsc_shgi_man = htole32(man);
+	DPRINTF(("ds shgi coeff=%u exp=%u man=%u\n", coeff, exp, man));
+	/* Set wait time for AGC and noise calibration (100 or 200ms). */
+	cmd.check_loop_count = assoc ? htole32(2000) : htole32(1000);
 	DPRINTF(("%s\n", (code == AR_CMD_RF_INIT) ? "RF_INIT" : "FREQUENCY"));
-	error = otus_cmd(sc, code, &cmd, sizeof (cmd), &rsp);
+	error = otus_cmd(sc, code, &cmd, sizeof cmd, &rsp);
 	if (error != 0)
 		return error;
-
-	DPRINTF(("status=0x%x\n", letoh32(rsp.status)));
+	if ((rsp.status & htole32(AR_CAL_ERR_AGC | AR_CAL_ERR_NF_VAL)) != 0) {
+		DPRINTF(("status=0x%x\n", letoh32(rsp.status)));
+		/* Force cold reset on next channel. */
+		sc->bb_reset = 1;
+	}
+#ifdef OTUS_DEBUG
+	if (otus_debug) {
+		printf("calibration status=0x%x\n", letoh32(rsp.status));
+		for (i = 0; i < 2; i++) {	/* 2 Rx chains */
+			/* Sign-extend 9-bit NF values. */
+			printf("noisefloor chain %d=%d\n", i,
+			    (((int32_t)letoh32(rsp.nf[i])) << 4) >> 23);
+			printf("noisefloor ext chain %d=%d\n", i,
+			    ((int32_t)letoh32(rsp.nf_ext[i])) >> 23);
+		}
+	}
+#endif
 	sc->sc_curchan = c;
-
 	return 0;
 }
 
@@ -2112,9 +2151,9 @@ otus_calibrate_to(void *arg)
 int
 otus_set_bssid(struct otus_softc *sc, const uint8_t *bssid)
 {
-	otus_write(sc, 0x1c3618,
+	otus_write(sc, AR_MAC_REG_BSSID_L,
 	    bssid[0] | bssid[1] << 8 | bssid[2] << 16 | bssid[3] << 24);
-	otus_write(sc, 0x1c361c,
+	otus_write(sc, AR_MAC_REG_BSSID_H,
 	    bssid[4] | bssid[5] << 8);
 	return otus_write_barrier(sc);
 }
@@ -2215,9 +2254,9 @@ otus_init(struct ifnet *ifp)
 	    (ic->ic_opmode == IEEE80211_M_MONITOR) ? 0x2000001 : 0x2000000);
 	(void)otus_write_barrier(sc);
 
+	sc->bb_reset = 1;	/* Force cold reset. */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
-	sc->sc_curchan = &ic->ic_channels[0];	/* Force band switch. */
-	if ((error = otus_set_chan(sc, ic->ic_ibss_chan)) != 0) {
+	if ((error = otus_set_chan(sc, ic->ic_ibss_chan, 0)) != 0) {
 		printf("%s: could not set channel\n", sc->sc_dev.dv_xname);
 		return error;
 	}
