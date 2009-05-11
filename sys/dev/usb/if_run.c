@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.18 2009/05/11 19:14:50 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.19 2009/05/11 20:11:54 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -164,6 +164,7 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(ASUS2,			USBN11),
 	USB_ID(BELKIN,			F5D8053V3),
 	USB_ID(BELKIN,			F5D8055),
+	USB_ID(BELKIN,			F6D4050V1),
 	USB_ID(CONCEPTRONIC2,		VIGORN61),
 	USB_ID(COREGA,			CGWLUSB300GNM),
 	USB_ID(DLINK2,			DWA130),
@@ -178,6 +179,7 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(MELCO,			WLIUCGN),
 	USB_ID(PLANEX2,			GWUS300MINIS),
 	USB_ID(PLANEX2,			GWUSMICRON),
+	USB_ID(PEGASUS,			RT3070),
 	USB_ID(SWEEX2,			LW303),
 	USB_ID(SWEEX2,			LW313)
 };
