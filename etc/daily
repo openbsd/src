@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.59 2009/05/10 19:27:25 schwarze Exp $
+#	$OpenBSD: daily,v 1.60 2009/05/11 22:27:22 schwarze Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 umask 022
@@ -10,10 +10,6 @@ PARTOUT=/var/log/daily.part
 MAINOUT=/var/log/daily.out
 install -o 0 -g 0 -m 600    /dev/null $PARTOUT
 install -o 0 -g 0 -m 600 -b /dev/null $MAINOUT
-
-exec > $MAINOUT 2>&1
-sysctl -n kern.version
-uptime
 
 start_part() {
 	TITLE=$1
@@ -110,12 +106,17 @@ next_part "Backing up root filesystem:"
 	}
 }
 
-next_part "Checking subsystem status:"
-echo ""
-echo "disks:"
-df -kl
-echo ""
-dump W
+next_part "Checking system status:"
+if [ "X$VERBOSESTATUS" != X0 ]; then
+	sysctl -n kern.version
+	uptime
+
+	echo ""
+	echo "disks:"
+	df -kl
+	echo ""
+	dump W
+fi
 
 # The first two regular expressions handle sendmail, the third postfix.
 # When the queue is empty, exim -bp keeps silent.
@@ -125,12 +126,14 @@ mailq | grep -v -e "^/var/spool/mqueue is empty$" \
 		-e "^Mail queue is empty$"
 
 next_part "network:"
-netstat -ivn
+if [ "X$VERBOSESTATUS" != X0 ]; then
+	netstat -ivn
 
-t=/var/rwho/*
-if [ "$t" != '/var/rwho/*' ]; then
-	echo ""
-	ruptime
+	t=/var/rwho/*
+	if [ "$t" != '/var/rwho/*' ]; then
+		echo ""
+		ruptime
+	fi
 fi
 
 next_part "Running calendar in the background:"
