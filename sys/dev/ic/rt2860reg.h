@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.16 2009/01/06 18:56:07 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.17 2009/05/11 19:14:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -270,8 +270,8 @@
 #define RT2860_USB_TX_CLEAR		(1 << 19)
 #define RT2860_USB_PHY_WD_EN		(1 << 16)
 #define RT2860_USB_PHY_MAN_RST		(1 << 15)
-#define RT2860_USB_RX_AGG_LMT_SHIFT	8
-#define RT2860_USB_RX_AGG_TO_SHIFT	0
+#define RT2860_USB_RX_AGG_LMT(x)	((x) << 8)	/* in unit of 1KB */
+#define RT2860_USB_RX_AGG_TO(x)		((x) << 0)	/* in unit of 33ns */
 
 /* possible flags for register US_CYC_CNT */
 #define RT2860_TEST_EN		(1 << 24)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.17 2009/04/02 17:47:15 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.18 2009/05/11 19:14:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1768,7 +1768,7 @@ run_rx_frame(struct run_softc *sc, uint8_t *buf, int dmalen)
 		wh = (struct ieee80211_frame *)((caddr_t)wh + 2);
 	}
 
-	/* could use m_devget buf net80211 wants contig mgmt frames */
+	/* could use m_devget but net80211 wants contig mgmt frames */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (__predict_false(m == NULL)) {
 		ifp->if_ierrors++;
@@ -1874,7 +1874,6 @@ run_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 
 	/* HW can aggregate multiple 802.11 frames in a single USB xfer */
-	/* NB: can't happen yet because we disable USB RX aggregation */
 	buf = data->buf;
 	while (xferlen > 8) {
 		dmalen = letoh32(*(uint32_t *)buf) & 0xffff;
@@ -2504,7 +2503,7 @@ run_set_macaddr(struct run_softc *sc, const uint8_t *addr)
 	run_write(sc, RT2860_MAC_ADDR_DW0,
 	    addr[0] | addr[1] << 8 | addr[2] << 16 | addr[3] << 24);
 	run_write(sc, RT2860_MAC_ADDR_DW1,
-	    addr[4] | addr[5] << 8);
+	    addr[4] | addr[5] << 8 | 0xff << 16);
 }
 
 void
@@ -2774,12 +2773,9 @@ run_txrx_enable(struct run_softc *sc)
 	tmp |= RT2860_RX_DMA_EN | RT2860_TX_DMA_EN | RT2860_TX_WB_DDONE;
 	run_write(sc, RT2860_WPDMA_GLO_CFG, tmp);
 
-	tmp = RT2860_USB_TX_EN | RT2860_USB_RX_EN;
-#ifdef notyet
-	/* enable bulk aggregation */
-	tmp |= RT2860_USB_RX_AGG_EN | 0x80 << RT2860_USB_RX_AGG_TO_SHIFT |
-	    ((RUN_MAX_RXSZ / 1024) - 3) << RT2860_USB_RX_AGG_LMT_SHIFT;
-#endif
+	/* enable Rx bulk aggregation (set timeout and limit) */
+	tmp = RT2860_USB_TX_EN | RT2860_USB_RX_EN | RT2860_USB_RX_AGG_EN |
+	    RT2860_USB_RX_AGG_TO(128) | RT2860_USB_RX_AGG_LMT(2);
 	run_write(sc, RT2860_USB_DMA_CFG, tmp);
 
 	/* set Rx filter */
