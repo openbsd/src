@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.21 2009/04/12 07:43:17 ajacoutot Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.22 2009/05/11 20:25:55 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 12 2009 $
+.Dd $Mdocdate: May 11 2009 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -24,9 +24,7 @@
 .Nm
 .Bk -words
 .Op Fl ab
-.Op Fl S Ar etcXX.tgz
 .Op Fl s Ar src \*(Ba etcXX.tgz
-.Op Fl X Ar xetcXX.tgz
 .Op Fl x Ar xetcXX.tgz
 .Ek
 .Sh DESCRIPTION
@@ -103,7 +101,10 @@ The options are as follows:
 Automatic mode.
 If this option is specified,
 .Nm
-will automatically install missing files
+will only compare files which reference sources have changed since
+the last run and will attempt to automatically upgrade them to the
+newest version provided that they have no local changes.
+It will automatically install missing files
 and files differing only by CVS Id,
 and will disable strict file comparison when possible (using CVS Id).
 .Pa /etc/fbtab ,
@@ -122,36 +123,10 @@ If this option is specified,
 .Nm
 will run unattended (non-interactively), saving differing files for
 later manual processing.
-.It Fl S Ar etcXX.tgz
-Specify a path to an
-etcXX.tgz tarball,
-where XX represents the version to be upgraded from.
-.Nm
-will attempt to automatically upgrade files from this version
-to the one specified by
-.Fl s ,
-provided that the file has no local changes.
-Files that have not been modified between the supplied tarballs will
-not be offered for comparison.
-A tarball path specified as an FTP or HTTP URL will be passed
-to ${FETCH_CMD}.
 .It Fl s Ar src \*(Ba etcXX.tgz
 Specify a path to an
 .Ox
 top src directory or an etcXX.tgz tarball.
-A tarball path specified as an FTP or HTTP URL will be passed
-to ${FETCH_CMD}.
-.It Fl X Ar xetcXX.tgz
-Specify a path to an
-xetcXX.tgz tarball,
-where XX represents the version to be upgraded from.
-.Nm
-will attempt to automatically upgrade files from this version
-to the one specified by
-.Fl x ,
-provided that the file has no local changes.
-Files that have not been modified between the supplied tarballs will
-not be offered for comparison.
 A tarball path specified as an FTP or HTTP URL will be passed
 to ${FETCH_CMD}.
 .It Fl x Ar xetcXX.tgz
@@ -185,6 +160,10 @@ A special test was added to handle this
 and they are offered for comparison only if they really differ.
 .Sh ENVIRONMENT
 .Bl -tag -width "DESTDIRXXX"
+.It Ev DBDIR
+Directory in which checksum files are stored.
+If unset, this defaults to
+.Pa /var/db/sysmerge .
 .It Ev DESTDIR
 Directory in which to merge and install files.
 If unset, this defaults to

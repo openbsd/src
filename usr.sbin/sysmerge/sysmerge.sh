@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.39 2009/04/28 08:25:27 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.40 2009/05/11 20:25:55 ajacoutot Exp $
 #
 # This script is based on the FreeBSD mergemaster script, written by
 # Douglas Barton <DougB@FreeBSD.org>
@@ -30,6 +30,7 @@ WRKDIR=`mktemp -d -p /var/tmp sysmerge.XXXXX` || exit 1
 SWIDTH=`stty size | awk '{w=$2} END {if (w==0) {w=80} print w}'`
 MERGE_CMD="${MERGE_CMD:=sdiff -as -w ${SWIDTH} -o}"
 REPORT="${REPORT:=${WRKDIR}/sysmerge.log}"
+DBDIR="${DBDIR:=/var/db/sysmerge}"
 
 EDITOR="${EDITOR:=/usr/bin/vi}"
 PAGER="${PAGER:=/usr/bin/more}"
@@ -39,6 +40,14 @@ clean_src() {
 	if [ "${SRCDIR}" ]; then
 		cd ${SRCDIR}/gnu/usr.sbin/sendmail/cf/cf && make cleandir > /dev/null
 	fi
+}
+
+# restore files from backups
+restore_bak() {
+	for i in ${DBDIR}/.*.bak; do
+		_i=`basename ${i} .bak`
+		mv ${i} ${DBDIR}/${_i#.}
+	done
 }
 
 # remove newly created work directory and exit with status 1
@@ -51,7 +60,7 @@ usage() {
 	echo "usage: ${0##*/} [-ab] [-S etcXX.tgz] [-s src | etcXX.tgz] [-X xetcXX.tgz] [-x xetcXX.tgz]" >&2
 }
 
-trap "clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
+trap "restore_bak; clean_src; rm -rf ${WRKDIR}; exit 1" 1 2 3 13 15
 
 if [ "`id -u`" -ne 0 ]; then
 	echo " *** Error: need root privileges to run this script"
@@ -77,36 +86,6 @@ do_pre() {
 		fi
 	fi
 
-	if [ "${OTGZ}" ]; then
-		TGZV=`echo ${TGZ} | sed -e 's,^.*/,,' -e 's,etc,,' -e 's,.tgz,,'`
-		OTGZV=`echo ${OTGZ} | sed -e 's,^.*/,,' -e 's,etc,,' -e 's,.tgz,,'`
-		if [ -z "${TGZ}" ]; then
-			echo " *** Error: please specify a valid path to the new etcXX.tgz"
-			error_rm_wrkdir
-		elif cmp -s ${OTGZ} ${TGZ}; then
-			echo " *** Error: old and new etcXX.tgz are identical"
-			error_rm_wrkdir
-		elif [ "${OTGZV}" -gt "${TGZV}" ]; then
-			echo " *** Error: old etc${OTGZV}.tgz version is higher than new etc${TGZV}.tgz"
-			error_rm_wrkdir
-		fi
-	fi
-	
-	if [ "${OXTGZ}" ]; then
-		XTGZV=`echo ${XTGZ} | sed -e 's,^.*/,,' -e 's,etc,,' -e 's,.tgz,,'`
-		OXTGZV=`echo ${OXTGZ} | sed -e 's,^.*/,,' -e 's,etc,,' -e 's,.tgz,,'`
-		if [ -z "${XTGZ}" ]; then
-			echo " *** Error: please specify a valid path to the new xetcXX.tgz"
-			error_rm_wrkdir
-		elif cmp -s ${OXTGZ} ${XTGZ}; then
-			echo " *** Error: old and new xetcXX.tgz are identical"
-			error_rm_wrkdir
-		elif [ "${OXTGZV}" -gt "${XTGZV}" ]; then
-			echo " *** Error: old xetc${OXTGZV}.tgz version is higher than new xetc${XTGZV}.tgz"
-			error_rm_wrkdir
-		fi
-	fi
-
 	TEMPROOT="${WRKDIR}/temproot"
 	BKPDIR="${WRKDIR}/backups"
 
@@ -120,24 +99,11 @@ do_pre() {
 		elif [ "${SRCDIR}" ]; then
 			echo " etc source:          ${SRCDIR}"
 		fi
-		if [ "${OTGZURL}" ]; then
-			echo " old etc source:      ${OTGZURL}"
-			echo "                      (fetched in ${OTGZ})"
-		else
-			[ "${OTGZ}" ] && echo " old etc source:      ${OTGZ}"
-		fi
-		if [ "${OTGZ}" -o "${OXTGZ}" ]; then echo ""; fi
 		if [ "${XTGZURL}" ]; then
 			echo " xetc source:         ${XTGZURL}"
 			echo "                      (fetched in ${XTGZ})"
 		else
 			[ "${XTGZ}" ] && echo " xetc source:         ${XTGZ}"
-		fi
-		if [ "${OXTGZURL}" ]; then
-			echo " old xetc source:     ${OXTGZURL}"
-			echo "                      (fetched in ${OXTGZ})"
-		else
-			[ "${OXTGZ}" ] && echo " old xetc source:     ${OXTGZ}"
 		fi
 		echo ""
 		echo " base work directory: ${WRKDIR}"
@@ -159,33 +125,67 @@ do_pre() {
 
 
 do_populate() {
+	mkdir -p ${DBDIR} || error_rm_wrkdir
 	echo "===> Creating and populating temporary root under"
 	echo "     ${TEMPROOT}"
 	mkdir -p ${TEMPROOT}
 	if [ "${SRCDIR}" ]; then
+		local SRCSUM=srcsum
 		cd ${SRCDIR}/etc
 		make DESTDIR=${TEMPROOT} distribution-etc-root-var > /dev/null 2>&1
+		(cd ${TEMPROOT} && find . -type f | xargs cksum >> ${WRKDIR}/${SRCSUM})
 	fi
 
 	if [ "${TGZ}" -o "${XTGZ}" ]; then
 		for i in ${TGZ} ${XTGZ}; do
 			tar -xzphf ${i} -C ${TEMPROOT};
 		done
+		if [ "${TGZ}" ]; then
+			local ETCSUM=etcsum
+			_E=$(cd `dirname ${TGZ}` && pwd)/`basename ${TGZ}`
+			(cd ${TEMPROOT} && tar -tzf ${_E} | xargs cksum >> ${WRKDIR}/${ETCSUM})
+		fi
+		if [ "${XTGZ}" ]; then
+			local XETCSUM=xetcsum
+			_X=$(cd `dirname ${XTGZ}` && pwd)/`basename ${XTGZ}`
+			(cd ${TEMPROOT} && tar -tzf ${_X} | xargs cksum >> ${WRKDIR}/${XETCSUM})
+		fi
 	fi
 
-	if [ "${OTGZ}" -o "${OXTGZ}" ]; then
-		OTEMPROOT="${WRKDIR}/.otemproot"
-		mkdir -p ${OTEMPROOT}
-		for i in ${OTGZ} ${OXTGZ}; do
-			tar -xzphf ${i} -C ${OTEMPROOT};
-			tar -tzf ${i} >> ${WRKDIR}/olist;
-		done
-		for i in ${TGZ} ${XTGZ}; do
-			tar -tzf ${i} >> ${WRKDIR}/nlist;
-		done
-		OBSOLETE_FILES=`diff -C 0 ${WRKDIR}/olist ${WRKDIR}/nlist | grep -E '^- .' | sed -e 's,^- .,,g'`
-		rm -f ${WRKDIR}/olist ${WRKDIR}/nlist
-	fi
+	for i in ${SRCSUM} ${ETCSUM} ${XETCSUM}; do
+		if [ -f ${DBDIR}/${i} ]; then
+			# delete file in temproot if it has not changed since last release
+			# and is present in current installation
+			if [ "${AUTOMODE}" ]; then
+				_R=$(cd ${TEMPROOT} && cksum -c ${DBDIR}/${i} 2> /dev/null | grep OK | awk '{ print $2 }' | sed 's/[:]//')
+				for _r in ${_R}; do
+					if [ -f ${DESTDIR}/${_r} -a -f ${TEMPROOT}/${_r} ]; then
+						rm -f ${TEMPROOT}/${_r}
+					fi
+				done
+			fi
+
+			# set auto-upgradable files
+			_D=`diff -u ${WRKDIR}/${i} ${DBDIR}/${i} | grep -E '^\+' | sed '1d' | awk '{print $3}'`
+			for _d in ${_D}; do
+				CURSUM=$(cd ${DESTDIR:=/} && cksum ${_d} 2> /dev/null)
+				if [ -n "`grep "${CURSUM}" ${DBDIR}/${i}`" -a -z "`grep "${CURSUM}" ${WRKDIR}/${i}`" ]; then
+					set -A AUTO_UPG -- ${_d}
+				fi
+			done
+
+			# check for obsolete files
+			awk '{ print $3 }' ${DBDIR}/${i} > ${WRKDIR}/new
+			awk '{ print $3 }' ${WRKDIR}/${i} > ${WRKDIR}/old
+			if [ -n "`diff -q ${WRKDIR}/old ${WRKDIR}/new`" ]; then
+				OBSOLETE_FILES="${OBSOLETE_FILES} `diff -C 0 ${WRKDIR}/new ${WRKDIR}/old | grep -E '^- .' | sed -e 's,^- .,,g'`"
+			fi
+			rm ${WRKDIR}/new ${WRKDIR}/old
+			
+			mv ${DBDIR}/${i} ${DBDIR}/.${i}.bak
+		fi
+		mv ${WRKDIR}/${i} ${DBDIR}/${i}
+	done
 
 	# files we don't want/need to deal with
 	IGNORE_FILES="/etc/*.db /etc/mail/*.db /etc/passwd /etc/motd /etc/myname /var/mail/root"
@@ -369,29 +369,22 @@ diff_loop() {
 
 	unset NO_INSTALLED
 	unset CAN_INSTALL
+	unset FORCE_UPG
 
 	while [ "${HANDLE_COMPFILE}" = "v" -o "${HANDLE_COMPFILE}" = "todo" ]; do
 		if [ "${HANDLE_COMPFILE}" = "v" ]; then
 			echo "\n========================================================================\n"
 		fi
 		if [ -f "${DESTDIR}${COMPFILE#.}" -a -f "${COMPFILE}" ]; then
-			# automatically install files which differ only by CVS Id
 			if [ "${AUTOMODE}" ]; then
-				if diff -q -I'[$]OpenBSD:.*$' "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" > /dev/null 2>&1; then
-					if mm_install "${COMPFILE}"; then
-						echo "===> ${COMPFILE} installed successfully"
-						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
-					else
-						echo " *** Warning: problem installing ${COMPFILE}, it will remain to merge by hand"
+				# automatically install files if current != new and current = old
+				for i in "${AUTO_UPG[@]}"; do
+					if [ "${i}" = "${COMPFILE}" ]; then
+						FORCE_UPG=1
 					fi
-					return
-				fi
-			fi
-			if [ "${OTGZ}" -o "${OXTGZ}" ]; then
-				# if current != new and current = old, auto-install new
-				if diff -q "${DESTDIR}${COMPFILE#.}" "${OTEMPROOT}${COMPFILE#.}" > /dev/null 2>&1; then
-					echo "===> ${COMPFILE} has not been modified since previous release/snapshot,"
-					echo "     automatically installing new version"
+				done
+				# automatically install files which differ only by CVS Id
+				if [ -z "`diff -q -I'[$]OpenBSD:.*$' "${DESTDIR}${COMPFILE#.}" "${COMPFILE}"`" -o -n "${FORCE_UPG}" ]; then
 					if mm_install "${COMPFILE}"; then
 						echo "===> ${COMPFILE} installed successfully"
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
@@ -521,9 +514,6 @@ do_compare() {
 			# make sure files are different; if not, delete the one in temproot
 			if diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" > /dev/null 2>&1; then
 				rm "${COMPFILE}"
-			# delete file in temproot if it has not changed since last release
-			elif [ "${OTGZ}" -o "${OXTGZ}" ] && diff -q "${COMPFILE}" "${OTEMPROOT}${COMPFILE#.}" > /dev/null 2>&1; then
-				rm "${COMPFILE}"
 			# xetcXX.tgz contains binary files; set IS_BINFILE to disable sdiff
 			elif diff -q "${DESTDIR}${COMPFILE#.}" "${COMPFILE}" | grep "Binary" > /dev/null 2>&1; then
 				IS_BINFILE=1
@@ -540,9 +530,6 @@ do_compare() {
 
 
 do_post() {
-	clean_src
-	rm -rf ${OTEMPROOT}
-
 	echo "===> Making sure your directory hierarchy has correct perms, running mtree"
 	mtree -qdef ${DESTDIR}/etc/mtree/4.4BSD.dist -p ${DESTDIR:=/} -U > /dev/null
 
@@ -564,7 +551,7 @@ do_post() {
 		echo "${BKPDIR}\n" >> ${REPORT}
 	fi
 	if [ "${OBSOLETE_FILES}" ]; then
-		echo "===> File(s) removed from previous set (maybe obsolete)" >> ${REPORT}
+		echo "===> File(s) removed from previous source (maybe obsolete)" >> ${REPORT}
 		echo "${OBSOLETE_FILES}" >> ${REPORT}
 	fi
 	if [ "${FILES_IN_TEMPROOT}" ]; then
@@ -583,6 +570,9 @@ do_post() {
 		echo "===> Removing ${WRKDIR}"
 		rm -rf "${WRKDIR}"
 	fi
+
+	clean_src
+	rm -f ${DBDIR}/.*.bak
 }
 
 
@@ -625,42 +615,6 @@ while getopts abs:x:S:X: arg; do
 			XTGZURL=${OPTARG}
 			if ! ${FETCH_CMD} -o ${XTGZ} ${XTGZURL}; then
 				echo " *** Error: could not retrieve ${XTGZURL}"
-				error_rm_wrkdir
-			fi
-		else
-			echo " *** Error: ${OPTARG} is not a path to xetcXX.tgz"
-			error_rm_wrkdir
-		fi
-		;;
-	S)
-		if [ -f "${OPTARG}" ] && echo -n ${OPTARG} | \
-		    awk -F/ '{print $NF}' | \
-		    grep '^etc[0-9][0-9]\.tgz$' > /dev/null 2>&1 ; then
-			OTGZ=${OPTARG}
-		elif echo ${OPTARG} | \
-		    grep -qE '^(http|ftp)://.*/etc[0-9][0-9]\.tgz$'; then
-			OTGZ=${WRKDIR}/etc.tgz
-			OTGZURL=${OPTARG}
-			if ! ${FETCH_CMD} -o ${OTGZ} ${OTGZURL}; then
-				echo " *** Error: could not retrieve ${OTGZURL}"
-				error_rm_wrkdir
-			fi
-		else
-			echo " *** Error: ${OPTARG} is not a path to etcXX.tgz"
-			error_rm_wrkdir
-		fi
-		;;
-	X)
-		if [ -f "${OPTARG}" ] && echo -n ${OPTARG} | \
-		    awk -F/ '{print $NF}' | \
-		    grep '^xetc[0-9][0-9]\.tgz$' > /dev/null 2>&1 ; then
-			OXTGZ=${OPTARG}
-		elif echo ${OPTARG} | \
-		    grep -qE '^(http|ftp)://.*/xetc[0-9][0-9]\.tgz$'; then
-			OXTGZ=${WRKDIR}/xetc.tgz
-			OXTGZURL=${OPTARG}
-			if ! ${FETCH_CMD} -o ${OXTGZ} ${OXTGZURL}; then
-				echo " *** Error: could not retrieve ${OXTGZURL}"
 				error_rm_wrkdir
 			fi
 		else
