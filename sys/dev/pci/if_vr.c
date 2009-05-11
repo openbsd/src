@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.89 2009/05/11 10:25:07 sthen Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.90 2009/05/11 16:23:03 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1145,6 +1145,15 @@ vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
 	struct mbuf		*m_new = NULL;
 	u_int32_t		vr_flags = 0, vr_status = 0;
 
+	if (sc->vr_quirks & VR_Q_CSUM) {
+		if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+			vr_flags |= VR_TXCTL_IPCSUM;
+		if (m_head->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+			vr_flags |= VR_TXCTL_TCPCSUM;
+		if (m_head->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+			vr_flags |= VR_TXCTL_UDPCSUM;
+	}
+
 	if (sc->vr_quirks & VR_Q_NEEDALIGN ||
 	    m_head->m_pkthdr.len < VR_MIN_FRAMELEN ||
 	    bus_dmamap_load_mbuf(sc->sc_dmat, c->vr_map, m_head,
@@ -1192,15 +1201,6 @@ vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
 		    BUS_DMASYNC_PREWRITE);
 
                 c->vr_mbuf = m_head;
-	}
-
-	if (sc->vr_quirks & VR_Q_CSUM) {
-		if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
-			vr_flags |= VR_TXCTL_IPCSUM;
-		if (m_head->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
-			vr_flags |= VR_TXCTL_TCPCSUM;
-		if (m_head->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
-			vr_flags |= VR_TXCTL_UDPCSUM;
 	}
 
 	f = c->vr_ptr;
