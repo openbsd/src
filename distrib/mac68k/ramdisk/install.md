@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.32 2009/04/12 12:56:02 krw Exp $
+#       $OpenBSD: install.md,v 1.33 2009/05/11 17:13:07 deraadt Exp $
 #
 # Copyright (c) 2002, Miodrag Vallat.
 # All rights reserved.
@@ -97,6 +97,13 @@ __EOT
 			return
 		done
  	fi
+	cat <<__EOT
+You will now create a OpenBSD disklabel on the disk.  The disklabel defines
+how OpenBSD splits up the disk into OpenBSD partitions in which filesystems
+and swap space are created.  You must provide each filesystem's mountpoint
+in this program.
+
+__EOT
 	disklabel -f $_f -E $_disk
 }
 

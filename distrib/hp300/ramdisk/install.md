@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.50 2009/05/09 21:37:26 deraadt Exp $
+#	$OpenBSD: install.md,v 1.51 2009/05/11 17:13:07 deraadt Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,6 +61,14 @@ md_prep_disklabel() {
 			return
 		done
 	fi
+	cat <<__EOT
+You will now create a OpenBSD disklabel on the disk.  The disklabel defines
+how OpenBSD splits up the disk into OpenBSD partitions in which filesystems
+and swap space are created.  You must provide each filesystem's mountpoint
+in this program.
+
+__EOT
+
 	disklabel -f $_f -E $_disk
 }
 
