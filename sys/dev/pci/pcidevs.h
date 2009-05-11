@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1472 2009/05/11 19:33:06 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1473 2009/05/11 19:46:46 damien Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -244,6 +244,7 @@
 #define	PCI_VENDOR_MICROSOFT	0x1414		/* Microsoft */
 #define	PCI_VENDOR_OXFORD2	0x1415		/* Oxford */
 #define	PCI_VENDOR_CHELSIO	0x1425		/* Chelsio */
+#define	PCI_VENDOR_EDIMAX	0x1432		/* Edimax */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia */
@@ -1838,6 +1839,15 @@
 
 /* Dynalink products */
 #define	PCI_PRODUCT_DYNALINK_IS64PH	0x1702		/* IS64PH ISDN */
+
+/* Edimax products */
+#define	PCI_PRODUCT_EDIMAX_RT2860_1	0x7708		/* RT2860 */
+#define	PCI_PRODUCT_EDIMAX_RT2860_2	0x7728		/* RT2860 */
+#define	PCI_PRODUCT_EDIMAX_RT2860_3	0x7758		/* RT2860 */
+#define	PCI_PRODUCT_EDIMAX_RT2860_4	0x7727		/* RT2860 */
+#define	PCI_PRODUCT_EDIMAX_RT2860_5	0x7738		/* RT2860 */
+#define	PCI_PRODUCT_EDIMAX_RT2860_6	0x7748		/* RT2860 */
+#define	PCI_PRODUCT_EDIMAX_RT2860_7	0x7768		/* RT2860 */
 
 /* Efficient Networks products */
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI155PF	0x0000		/* 155P-MF1 ATM (FPGA) */
