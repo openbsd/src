@@ -32,6 +32,7 @@
 #include "i915_drv.h"
 
 int	inteldrm_intr(void *);
+int	i915_pipe_enabled(struct drm_device *, int);
 void	i915_enable_irq(drm_i915_private_t *, u_int32_t);
 void	i915_disable_irq(drm_i915_private_t *, u_int32_t);
 void	i915_enable_pipestat(drm_i915_private_t *, int, u_int32_t);
@@ -84,7 +85,7 @@ i915_enable_pipestat(drm_i915_private_t *dev_priv, int pipe, u_int32_t mask)
 		bus_size_t reg = pipe == 0 ? PIPEASTAT : PIPEBSTAT;
 
 		dev_priv->pipestat[pipe] |= mask;
-		/* Enabble the interrupt, clear and pending status */
+		/* Enable the interrupt, clear and pending status */
 		I915_WRITE(reg, dev_priv->pipestat[pipe] | (mask >> 16));
 		(void)I915_READ(reg);
 	}
@@ -114,8 +115,8 @@ i915_disable_pipestat(drm_i915_private_t *dev_priv, int pipe, u_int32_t mask)
 static int
 i915_get_pipe(struct drm_device *dev, int plane)
 {
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
-	u32 dspcntr;
+	drm_i915_private_t	*dev_priv = dev->dev_private;
+	u_int32_t		 dspcntr;
 
 	dspcntr = plane ? I915_READ(DSPBCNTR) : I915_READ(DSPACNTR);
 
@@ -148,16 +149,13 @@ i915_get_plane(struct drm_device *dev, int pipe)
  * Use this routine to make sure the PLL is running and the pipe is active
  * before reading such registers if unsure.
  */
-static int
+int
 i915_pipe_enabled(struct drm_device *dev, int pipe)
 {
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
-	unsigned long pipeconf = pipe ? PIPEBCONF : PIPEACONF;
+	drm_i915_private_t	*dev_priv = dev->dev_private;
+	bus_size_t		 pipeconf = pipe ? PIPEBCONF : PIPEACONF;
 
-	if (I915_READ(pipeconf) & PIPEACONF_ENABLE)
-		return 1;
-
-	return 0;
+	return ((I915_READ(pipeconf) & PIPEACONF_ENABLE) == PIPEACONF_ENABLE);
 }
 
 u_int32_t
@@ -204,9 +202,9 @@ i915_get_vblank_counter(struct drm_device *dev, int plane)
 int
 inteldrm_intr(void *arg)
 {
-	struct drm_device *dev = (struct drm_device *)arg;
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *)dev->dev_private;
-	u_int32_t iir, pipea_stats = 0, pipeb_stats = 0;
+	struct drm_device	*dev = arg;
+	drm_i915_private_t	*dev_priv = dev->dev_private;
+	u_int32_t		 iir, pipea_stats = 0, pipeb_stats = 0;
 
 	/*
 	 * lock is to protect from writes to PIPESTAT and IMR from other cores.
@@ -250,9 +248,10 @@ inteldrm_intr(void *arg)
 	return (1);
 }
 
-int i915_emit_irq(struct drm_device *dev)
+int
+i915_emit_irq(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
+	drm_i915_private_t	*dev_priv = dev->dev_private;
 
 	inteldrm_update_ring(dev_priv);
 
@@ -265,12 +264,13 @@ int i915_emit_irq(struct drm_device *dev)
 	OUT_RING(MI_USER_INTERRUPT);
 	ADVANCE_LP_RING();
 
-	return dev_priv->counter;
+	return (dev_priv->counter);
 }
 
-void i915_user_irq_get(struct drm_device *dev)
+void
+i915_user_irq_get(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *)dev->dev_private;
+	drm_i915_private_t	*dev_priv = dev->dev_private;
 
 	mtx_enter(&dev_priv->user_irq_lock);
 	if (dev->irq_enabled && (++dev_priv->user_irq_refcount == 1))
@@ -278,9 +278,10 @@ void i915_user_irq_get(struct drm_device *dev)
 	mtx_leave(&dev_priv->user_irq_lock);
 }
 
-void i915_user_irq_put(struct drm_device *dev)
+void
+i915_user_irq_put(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *)dev->dev_private;
+	drm_i915_private_t	*dev_priv = dev->dev_private;
 
 	mtx_enter(&dev_priv->user_irq_lock);
 	if (dev->irq_enabled && (--dev_priv->user_irq_refcount == 0))
@@ -310,12 +311,12 @@ i915_wait_irq(struct drm_device *dev, int irq_nr)
 
 /* Needs the lock as it touches the ring.
  */
-int i915_irq_emit(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv)
+int
+i915_irq_emit(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
-	drm_i915_irq_emit_t *emit = data;
-	int result;
+	drm_i915_private_t	*dev_priv = dev->dev_private;
+	drm_i915_irq_emit_t	*emit = data;
+	int			 result;
 
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
@@ -328,34 +329,30 @@ int i915_irq_emit(struct drm_device *dev, void *data,
 	result = i915_emit_irq(dev);
 	DRM_UNLOCK();
 
-	if (DRM_COPY_TO_USER(emit->irq_seq, &result, sizeof(int))) {
-		DRM_ERROR("copy_to_user\n");
-		return EFAULT;
-	}
-
-	return 0;
+	return (copyout(&result, emit->irq_seq, sizeof(result)));
 }
 
 /* Doesn't need the hardware lock.
  */
-int i915_irq_wait(struct drm_device *dev, void *data,
-		  struct drm_file *file_priv)
+int
+i915_irq_wait(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
-	drm_i915_irq_wait_t *irqwait = data;
+	drm_i915_private_t	*dev_priv = dev->dev_private;
+	drm_i915_irq_wait_t	*irqwait = data;
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return EINVAL;
+		return (EINVAL);
 	}
 
-	return i915_wait_irq(dev, irqwait->irq_seq);
+	return (i915_wait_irq(dev, irqwait->irq_seq));
 }
 
-int i915_enable_vblank(struct drm_device *dev, int plane)
+int
+i915_enable_vblank(struct drm_device *dev, int plane)
 {
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
-	int pipe = i915_get_pipe(dev, plane);
+	drm_i915_private_t	*dev_priv = dev->dev_private;
+	int			 pipe = i915_get_pipe(dev, plane);
 
 	if (i915_pipe_enabled(dev, pipe) == 0)
 		return (EINVAL);
@@ -365,13 +362,14 @@ int i915_enable_vblank(struct drm_device *dev, int plane)
 	    PIPE_START_VBLANK_INTERRUPT_ENABLE : PIPE_VBLANK_INTERRUPT_ENABLE));
 	mtx_leave(&dev_priv->user_irq_lock);
 
-	return 0;
+	return (0);
 }
 
-void i915_disable_vblank(struct drm_device *dev, int plane)
+void
+i915_disable_vblank(struct drm_device *dev, int plane)
 {
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
-	int pipe = i915_get_pipe(dev, plane);
+	drm_i915_private_t	*dev_priv = dev->dev_private;
+	int			 pipe = i915_get_pipe(dev, plane);
 
 	mtx_enter(&dev_priv->user_irq_lock);
 	i915_disable_pipestat(dev_priv, pipe, 
@@ -379,20 +377,21 @@ void i915_disable_vblank(struct drm_device *dev, int plane)
 	mtx_leave(&dev_priv->user_irq_lock);
 }
 
-int i915_vblank_pipe_get(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv)
+int
+i915_vblank_pipe_get(struct drm_device *dev, void *data,
+    struct drm_file *file_priv)
 {
-	drm_i915_private_t *dev_priv = dev->dev_private;
-	drm_i915_vblank_pipe_t *pipe = data;
+	drm_i915_private_t	*dev_priv = dev->dev_private;
+	drm_i915_vblank_pipe_t	*pipe = data;
 
 	if (!dev_priv) {
 		DRM_ERROR("called with no initialization\n");
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	pipe->pipe = DRM_I915_VBLANK_PIPE_A | DRM_I915_VBLANK_PIPE_B;
 
-	return 0;
+	return (0);
 }
 
 /* drm_dma.h hooks
@@ -400,7 +399,7 @@ int i915_vblank_pipe_get(struct drm_device *dev, void *data,
 int
 i915_driver_irq_install(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
+	drm_i915_private_t	*dev_priv = dev->dev_private;
 
 	I915_WRITE(HWSTAM, 0xeffe);
 	I915_WRITE(PIPEASTAT, 0);
@@ -431,12 +430,13 @@ i915_driver_irq_install(struct drm_device *dev)
 	I915_WRITE(IMR, dev_priv->irq_mask_reg);
 	(void)I915_READ(IER);
 
-	return 0;
+	return (0);
 }
 
-void i915_driver_irq_uninstall(struct drm_device * dev)
+void
+i915_driver_irq_uninstall(struct drm_device *dev)
 {
-	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
+	drm_i915_private_t	*dev_priv = dev->dev_private;
 
 	if (!dev_priv)
 		return;
