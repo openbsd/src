@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldc.c,v 1.5 2009/05/12 21:20:33 kettenis Exp $	*/
+/*	$OpenBSD: ldc.c,v 1.6 2009/05/12 22:31:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -77,6 +77,7 @@ ldc_rx_ctrl_vers(struct ldc_conn *lc, struct ldc_pkt *lp)
 			ldc_send_ack(lc);
 		else
 			/* XXX do nothing for now. */
+			;
 		break;
 
 	case LDC_ACK:
