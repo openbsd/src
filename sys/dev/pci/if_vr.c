@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.91 2009/05/12 08:38:56 sthen Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.92 2009/05/12 13:30:56 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -133,7 +133,7 @@ void vr_miibus_writereg(struct device *, int, int, int);
 void vr_miibus_statchg(struct device *);
 
 void vr_setcfg(struct vr_softc *, int);
-void vr_setmulti(struct vr_softc *);
+void vr_iff(struct vr_softc *);
 void vr_reset(struct vr_softc *);
 int vr_list_rx_init(struct vr_softc *);
 int vr_list_tx_init(struct vr_softc *);
@@ -319,59 +319,52 @@ vr_miibus_statchg(struct device *dev)
 	vr_setcfg(sc, sc->sc_mii.mii_media_active);
 }
 
-/*
- * Program the 64-bit multicast hash filter.
- */
 void
-vr_setmulti(struct vr_softc *sc)
+vr_iff(struct vr_softc *sc)
 {
-	struct ifnet		*ifp;
+	struct arpcom		*ac = &sc->arpcom;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	int			h = 0;
-	u_int32_t		hashes[2] = { 0, 0 };
-	struct arpcom *ac = &sc->arpcom;
-	struct ether_multi *enm;
-	struct ether_multistep step;
+	u_int32_t		hashes[2];
+	struct ether_multi	*enm;
+	struct ether_multistep	step;
 	u_int8_t		rxfilt;
-	int			mcnt = 0;
-
-	ifp = &sc->arpcom.ac_if;
 
 	rxfilt = CSR_READ_1(sc, VR_RXCFG);
+	rxfilt &= ~(VR_RXCFG_RX_BROAD | VR_RXCFG_RX_MULTI |
+	    VR_RXCFG_RX_PROMISC);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-allmulti:
-		rxfilt |= VR_RXCFG_RX_MULTI;
-		CSR_WRITE_1(sc, VR_RXCFG, rxfilt);
-		CSR_WRITE_4(sc, VR_MAR0, 0xFFFFFFFF);
-		CSR_WRITE_4(sc, VR_MAR1, 0xFFFFFFFF);
-		return;
-	}
+	/*
+	 * Always accept broadcast frames.
+	 */
+	rxfilt |= VR_RXCFG_RX_BROAD;
 
-	/* first, zot all the existing hash bits */
-	CSR_WRITE_4(sc, VR_MAR0, 0);
-	CSR_WRITE_4(sc, VR_MAR1, 0);
-
-	/* now program new ones */
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
-		}
-		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
-		if (h < 32)
-			hashes[0] |= (1 << h);
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			rxfilt |= VR_RXCFG_RX_PROMISC;
 		else
-			hashes[1] |= (1 << (h - 32));
-		mcnt++;
-
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
-	if (mcnt)
+			rxfilt |= VR_RXCFG_RX_MULTI;
+		hashes[0] = hashes[1] = 0xFFFFFFFF;
+	} else {
+		/* Program new filter. */
 		rxfilt |= VR_RXCFG_RX_MULTI;
-	else
-		rxfilt &= ~VR_RXCFG_RX_MULTI;
+		bzero(hashes, sizeof(hashes));
+
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 26;
+
+			if (h < 32)
+				hashes[0] |= (1 << h);
+			else
+				hashes[1] |= (1 << (h - 32));
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
+	}
 
 	CSR_WRITE_4(sc, VR_MAR0, hashes[0]);
 	CSR_WRITE_4(sc, VR_MAR1, hashes[1]);
@@ -1343,22 +1336,10 @@ vr_init(void *xsc)
 		return;
 	}
 
-	/* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC)
-		VR_SETBIT(sc, VR_RXCFG, VR_RXCFG_RX_PROMISC);
-	else
-		VR_CLRBIT(sc, VR_RXCFG, VR_RXCFG_RX_PROMISC);
-
-	/* Set capture broadcast bit to capture broadcast frames. */
-	if (ifp->if_flags & IFF_BROADCAST)
-		VR_SETBIT(sc, VR_RXCFG, VR_RXCFG_RX_BROAD);
-	else
-		VR_CLRBIT(sc, VR_RXCFG, VR_RXCFG_RX_BROAD);
-
 	/*
-	 * Program the multicast filter, if necessary.
+	 * Program promiscuous mode and multicast filters.
 	 */
-	vr_setmulti(sc);
+	vr_iff(sc);
 
 	/*
 	 * Load the address of the RX list.
@@ -1443,30 +1424,14 @@ vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->sc_if_flags & IFF_PROMISC)) {
-				VR_SETBIT(sc, VR_RXCFG,
-				    VR_RXCFG_RX_PROMISC);
-				vr_setmulti(sc);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->sc_if_flags & IFF_PROMISC) {
-				VR_CLRBIT(sc, VR_RXCFG,
-				    VR_RXCFG_RX_PROMISC);
-				vr_setmulti(sc);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    (ifp->if_flags ^ sc->sc_if_flags) & IFF_ALLMULTI) {
-				vr_setmulti(sc);
-			} else {
-				if (!(ifp->if_flags & IFF_RUNNING))
-					vr_init(sc);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				vr_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				vr_stop(sc);
 		}
-		sc->sc_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCGIFMEDIA:
@@ -1480,7 +1445,7 @@ vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			vr_setmulti(sc);
+			vr_iff(sc);
 		error = 0;
 	}
 
