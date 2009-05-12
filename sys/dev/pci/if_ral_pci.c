@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_pci.c,v 1.16 2009/05/11 19:49:14 damien Exp $  */
+/*	$OpenBSD: if_ral_pci.c,v 1.17 2009/05/12 17:43:16 damien Exp $  */
 
 /*-
  * Copyright (c) 2005-2007
@@ -140,24 +140,27 @@ ral_pci_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t memtype;
 	int error;
 
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_RALINK_RT2560:
-		psc->sc_opns = &ral_rt2560_opns;
-		break;
-	case PCI_PRODUCT_RALINK_RT2561:
-	case PCI_PRODUCT_RALINK_RT2561S:
-	case PCI_PRODUCT_RALINK_RT2661:
-		psc->sc_opns = &ral_rt2661_opns;
-		break;
-	case PCI_PRODUCT_RALINK_RT2860:
-	case PCI_PRODUCT_RALINK_RT2890:
-	case PCI_PRODUCT_RALINK_RT2760:
-	case PCI_PRODUCT_RALINK_RT2790:
-	case PCI_PRODUCT_AWT_RT2890:
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_RALINK) {
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_RALINK_RT2560:
+			psc->sc_opns = &ral_rt2560_opns;
+			break;
+		case PCI_PRODUCT_RALINK_RT2561:
+		case PCI_PRODUCT_RALINK_RT2561S:
+		case PCI_PRODUCT_RALINK_RT2661:
+			psc->sc_opns = &ral_rt2661_opns;
+			break;
+		case PCI_PRODUCT_RALINK_RT2860:
+		case PCI_PRODUCT_RALINK_RT2890:
+		case PCI_PRODUCT_RALINK_RT2760:
+		case PCI_PRODUCT_RALINK_RT2790:
+			psc->sc_opns = &ral_rt2860_opns;
+			break;
+		}
+	} else {
+		/* all other vendors are RT2860 only */
 		psc->sc_opns = &ral_rt2860_opns;
-		break;
 	}
-
 	sc->sc_dmat = pa->pa_dmat;
 	psc->sc_pc = pa->pa_pc;
 
