@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.15 2009/05/12 21:13:37 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.16 2009/05/12 21:33:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -373,7 +373,6 @@ vnet_rx_intr(void *arg)
 			break;
 		}
 		lc->lc_rx_state = rx_state;
-		hv_ldc_rx_set_qhead(lc->lc_id, rx_tail);
 		return (1);
 	}
 
