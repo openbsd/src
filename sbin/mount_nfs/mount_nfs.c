@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.47 2006/11/10 17:30:34 grunk Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.48 2009/05/12 23:25:08 thib Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -60,9 +60,7 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl 
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
-#define _KERNEL
 #include <nfs/nfs.h>
-#undef _KERNEL
 
 #include <arpa/inet.h>
 
