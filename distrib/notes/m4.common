@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.84 2009/05/12 21:06:48 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.85 2009/05/12 21:41:24 deraadt Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -288,7 +288,7 @@ The installation procedure is designed to gather as many information about
 your system setup as possible at the beginning, so that no human interaction
 is required as soon as the questions are over.
 
-The order of these questions might be quite deconcerting if you are used to
+The order of these questions might be quite disconcerting if you are used to
 other installation procedures, including older OpenBSD versions.
 
 If any question has a default answer, it will be displayed in brackets ("[]")
@@ -410,7 +410,7 @@ dnl install.sub (install) user_setup()
 	use a strong password here as well, different from the root
 	password.
 
-	If you have choosen to setup a user account, and you had choosen
+	If you have chosen to setup a user account, and you had chosen
 	to start sshd(8) on boot, you will be given the possibility to
 	disable sshd(8) logins as root.
 
@@ -445,8 +445,8 @@ dnl XXX add a MDVLAN feature and document vlan setup
 	setup, and it is configured with DHCP.
 
 	The install program will also ask you for your DNS domain name,
-	and the domain name servers, unless these informations have
-	been obtained from a DHCP server during interface setup.
+	and the domain name servers, unless this information has
+	already been obtained from a DHCP server during interface setup.
 
 	You will also be presented with an opportunity to do more
 	manual configuration.  If you accept, you will be dropped
@@ -459,7 +459,7 @@ ifelse(MDTZ,,,
 	now be given the opportunity to configure the time zone
 	your system will be using (this depends on the installation
 	media you are using).
-	If the installation program skips this test, do not be
+	If the installation program skips this question, do not be
 	alarmed, the time zone will be configured at the end
 	of the installation.
 -:})dnl
