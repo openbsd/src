@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.22 2009/02/08 17:15:09 jmc Exp $
+.\"	$OpenBSD: dd.1,v 1.23 2009/05/12 20:39:51 schwarze Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd $Mdocdate: February 8 2009 $
+.Dd $Mdocdate: May 12 2009 $
 .Dt DD 1
 .Os
 .Sh NAME
@@ -356,13 +356,26 @@ utility is compliant with the
 .St -p1003.1-2008
 specification.
 .Pp
+The conversions
+.Cm ascii ,
+.Cm ebcdic ,
+and
+.Cm ibm
+are compliant with the
+.St -xpg4
+specification.
+.Pp
 The
 .Cm files
-operand as well as the
+operand,
+the conversions
 .Cm oldascii ,
 .Cm oldebcdic ,
-.Cm osync ,
+.Cm oldibm ,
 and
-.Cm oldibm
-values
-are extensions to that specification.
+.Cm osync ,
+and the size multipliers
+.Sq m
+and
+.Sq w
+are all extensions to those specifications.
