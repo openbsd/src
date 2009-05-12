@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.25 2009/02/15 13:32:47 miod Exp $
+dnl	$OpenBSD: install,v 1.26 2009/05/12 21:06:50 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -224,27 +224,17 @@ OpenBSDInstallPart2
 	diskless setup isn't correct, or you may have a hardware or
 	configuration problem.
 
-OpenBSDBootMsgs(,"sd0")
-
-	You will next be asked for your terminal type.  If you are
-	installing from a non-serial console, the default of "vt220"
-	is correct.  If you are installing from a serial console
-	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt220.)
-
-OpenBSDInstallPart3
+OpenBSDInstallPart3(,"sd0")
 
 OpenBSDInstallPart4
 
-OpenBSDInstallPart5(sd0)
+OpenBSDInstallPart5
 
-OpenBSDInstallNet({:-CD-ROM, NFS, -:})
+OpenBSDInstallPart6({:-CD-ROM, NFS, -:})
 
 OpenBSDFTPInstall
 
 OpenBSDHTTPInstall
-
-OpenBSDTAPEInstall(3)
 
 OpenBSDCDROMInstall
 		
@@ -252,13 +242,11 @@ OpenBSDNFSInstall
 
 OpenBSDDISKInstall(,{:-only -:})
 
-OpenBSDCommonFS(NFS)
-		
-OpenBSDCommonURL
+OpenBSDTAPEInstall(3)
+
+OpenBSDCommonInstall
 
 OpenBSDInstallWrapup
-
-OpenBSDInstallWrapupPart2
 
 OpenBSDCongratulations
 

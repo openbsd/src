@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.24 2009/02/28 20:53:00 miod Exp $
+dnl	$OpenBSD: contents,v 1.25 2009/05/12 21:06:50 miod Exp $
 TopPart
 
 OpenBSDfloppy
@@ -47,9 +47,9 @@ dnl useful for the installation.
 
 DistributionDescription(eleven)
 
-OpenBSDbase(52573257,162742420,shared)
+OpenBSDbase(52573257,162742420)
 
-OpenBSDcomp(103205981,357455630,shared)
+OpenBSDcomp(103205981,357455630)
 
 OpenBSDetc(511845,1524576)
 

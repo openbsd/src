@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.34 2008/08/05 22:58:01 miod Exp $
+dnl	$OpenBSD: install,v 1.35 2009/05/12 21:06:50 miod Exp $
 OpenBSDInstallPrelude({:-HP-IB disks-:})
 
 The ramdisk kernel may be loaded from the network, from CD-ROM, or other
@@ -89,18 +89,12 @@ OpenBSDInstallPart2
 	either your boot media is bad, your diskless setup is incorrect,
 	or you may have a hardware or configuration problem.
 
-OpenBSDBootMsgs(warn,{:-"sd0" for SCSI drives-:},{:-or "hd0" for HP-IB
+OpenBSDInstallPart3(warn,{:-"sd0" for SCSI drives-:},{:-or "hd0" for HP-IB
 	drives-:})
 
-	You will next be asked for your terminal type.  If you are
-	installing from a non-serial console, the default of "vt220"
-	is correct.  If you are installing from a serial console
-	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt220.)
-	
-OpenBSDInstallPart3
-
 OpenBSDInstallPart4
+
+OpenBSDInstallPart5
 
 	Since the target disk will become the boot disk for your new
 	OpenBSD/MACHINE installation, the disklabel program will restrict
@@ -109,15 +103,11 @@ OpenBSDInstallPart4
 	plan to install a bootblock on this disk, you can reclaim this
 	space with the 'b' command.
 
-OpenBSDInstallPart5(sd0)
-
-OpenBSDInstallNet({:-CD-ROM, NFS, -:})
+OpenBSDInstallPart6({:-CD-ROM, NFS, -:})
 
 OpenBSDFTPInstall
 
 OpenBSDHTTPInstall
-
-OpenBSDTAPEInstall
 
 OpenBSDCDROMInstall
 
@@ -125,12 +115,10 @@ OpenBSDNFSInstall
 
 OpenBSDDISKInstall({:-"hdN" or -:},{:-only -:})
 
-OpenBSDCommonFS(NFS)
+OpenBSDCommonInstall
 
-OpenBSDCommonURL
+OpenBSDTAPEInstall
 
 OpenBSDInstallWrapup
-
-OpenBSDInstallWrapupPart2
 
 OpenBSDCongratulations

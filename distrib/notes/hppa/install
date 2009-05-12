@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.16 2008/08/05 22:58:01 miod Exp $
+dnl	$OpenBSD: install,v 1.17 2009/05/12 21:06:50 miod Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -118,17 +118,11 @@ OpenBSDInstallPart2
 	media is bad, your diskless setup is incorrect, or you may have
 	a hardware or configuration problem.
 
-OpenBSDBootMsgs(,"sd0")
-
-	You will next be asked for your terminal type.  If you are
-	installing from a non-serial console, the default of "vt220"
-	is correct.  If you are installing from a serial console
-	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt220.)
-
-OpenBSDInstallPart3
+OpenBSDInstallPart3(,"sd0")
 
 OpenBSDInstallPart4
+
+OpenBSDInstallPart5
 
 	Since the target disk will become the boot disk for your new
 	OpenBSD/MACHINE installation, the disklabel program will restrict
@@ -137,15 +131,11 @@ OpenBSDInstallPart4
 	plan to install a bootblock on this disk, you can reclaim this
 	space with the 'b' command.
 
-OpenBSDInstallPart5(sd0)
-
-OpenBSDInstallNet({:-CD-ROM, -:},nofloppy)
+OpenBSDInstallPart6({:-CD-ROM, -:})
 
 OpenBSDFTPInstall
 
 OpenBSDHTTPInstall
-
-OpenBSDTAPEInstall
 
 OpenBSDCDROMInstall
 
@@ -153,12 +143,10 @@ OpenBSDNFSInstall
 
 OpenBSDDISKInstall(,{:-only -:})
 
-OpenBSDCommonFS
+OpenBSDCommonInstall
 
-OpenBSDCommonURL
+OpenBSDTAPEInstall
 
 OpenBSDInstallWrapup
-
-OpenBSDInstallWrapupPart2
 
 OpenBSDCongratulations

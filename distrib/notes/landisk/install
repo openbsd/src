@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.5 2008/08/05 22:58:01 miod Exp $
+dnl	$OpenBSD: install,v 1.6 2009/05/12 21:06:50 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -6,15 +6,9 @@ OpenBSDInstallPart2
 	If you have copied the miniroot image to the disk, it will
 	boot automatically upon power-up.
 
-OpenBSDBootMsgs(,"wd0")
+OpenBSDInstallPart3(,"wd0")
 
-	You will next be asked for your terminal type.  If you are
-	installing from a non-serial console, the default of "vt220"
-	is correct.  If you are installing from a serial console
-	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt220.)
-
-OpenBSDInstallPart3({:-"wd0" for IDE drives-:})
+OpenBSDInstallPart4({:-"wd0" for IDE drives-:})
 
 	Next you will have to edit or create a disk label for the disk
 	OpenBSD is being installed on.  You will first be given an
@@ -27,11 +21,9 @@ OpenBSDInstallPart3({:-"wd0" for IDE drives-:})
 	necessary to correct this.  Note that you should make OpenBSD be
 	the active partition at least until the install has been completed.
 
-OpenBSDInstallPart4
+OpenBSDInstallPart5
 
-OpenBSDInstallPart5(wd0)
-
-OpenBSDInstallNet({:-CD-ROM, -:},nofloppy)
+OpenBSDInstallPart6({:-CD-ROM, -:})
 
 OpenBSDFTPInstall
 
@@ -41,12 +33,8 @@ OpenBSDCDROMInstall
 
 OpenBSDDISKInstall({:-"wdN" or -:},{:-only-:})
 
-OpenBSDCommonFS
-
-OpenBSDCommonURL
+OpenBSDCommonInstall
 
 OpenBSDInstallWrapup
-
-OpenBSDInstallWrapupPart2
 
 OpenBSDCongratulations

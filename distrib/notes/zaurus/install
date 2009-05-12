@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.23 2008/10/16 00:05:09 krw Exp $
+dnl	$OpenBSD: install,v 1.24 2009/05/12 21:06:51 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -80,15 +80,9 @@ partition on the C3x00 hard drive, you can instead use
 
 OpenBSDInstallPart2
 
-OpenBSDBootMsgs(,"wd0")
+OpenBSDInstallPart3(,"wd0")
 
-	You will next be asked for your terminal type.  If you are
-	installing from a non-serial console, the default of "vt220"
-	is correct.  If you are installing from a serial console
-	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt220.)
-
-OpenBSDInstallPart3
+OpenBSDInstallPart4
 
 	Next you will have to create an OpenBSD partition with fdisk,
 	and then create a disk label within it.
@@ -101,9 +95,9 @@ OpenBSDInstallPart3
 	correct this.  Note that you do not need to make OpenBSD be
 	the active partition.
 
-OpenBSDInstallPart4({:- If you have Linux partitions
-	defined on the disk, these will usually show up as partition
-	'i', 'j' and so on.-:})
+OpenBSDInstallPart5({:-
+	If you have Linux partitions defined on the disk, these will
+	usually show up as partition 'i', 'j' and so on.-:})
 
 	One of the three partitions on the Zaurus C3x00 hard drive is
 	a 3GB or 5GB MS-DOS filesystem.  This partition has application
@@ -120,23 +114,21 @@ OpenBSDInstallPart4({:- If you have Linux partitions
 	reformat it from Linux or OpenBSD once OpenBSD is installed.
 	(You will be reminded of this later in this document)
 
-OpenBSDInstallPart5(wd0)
-
-OpenBSDInstallNet({:-CD-ROM, -:},nofloppy)
+OpenBSDInstallPart6({:-CD-ROM, -:})
 
 OpenBSDFTPInstall
 
 OpenBSDHTTPInstall
 
-OpenBSDTAPEInstall
-
 OpenBSDCDROMInstall
 
 OpenBSDDISKInstall({:-"wdN" or -:},,{:-, Linux (ext2) or MS-DOS-:})
 
-OpenBSDCommonFS
+OpenBSDCommonInstall
 
-OpenBSDCommonURL
+OpenBSDTAPEInstall
+
+OpenBSDWrapup
 
 OpenBSDCongratulations
 

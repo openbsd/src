@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.42 2009/02/28 20:53:00 miod Exp $
+dnl	$OpenBSD: contents,v 1.43 2009/05/12 21:06:51 miod Exp $
 TopPart
 
 OpenBSDminiroot
@@ -48,9 +48,9 @@ OpenBSDfloppydesc(two,Each,s)
 
 DistributionDescription(eleven)
 
-OpenBSDbase(52866597,169494547,shared)
+OpenBSDbase(52866597,169494547)
 
-OpenBSDcomp(105724146,353743431,shared)
+OpenBSDcomp(105724146,353743431)
 
 OpenBSDetc(517020,1544285)
 

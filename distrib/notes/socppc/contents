@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.5 2009/02/28 20:53:00 miod Exp $
+dnl	$OpenBSD: contents,v 1.6 2009/05/12 21:06:51 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -14,9 +14,9 @@ OpenBSDrd
 
 DistributionDescription(eleven)
 
-OpenBSDbase(61568543,179178806,shared)
+OpenBSDbase(61568543,179178806)
 
-OpenBSDcomp(111476336,281757131,shared)
+OpenBSDcomp(111476336,281757131)
 
 OpenBSDetc(516077,1538641)
 

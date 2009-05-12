@@ -1,17 +1,11 @@
-dnl	$OpenBSD: install,v 1.3 2008/10/16 00:05:09 krw Exp $
+dnl	$OpenBSD: install,v 1.4 2009/05/12 21:06:51 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
 
-OpenBSDBootMsgs(,"wd0")
+OpenBSDInstallPart3(,"wd0")
 
-	You will next be asked for your terminal type.  If you are
-	installing from a non-serial console, the default of "vt220"
-	is correct.  If you are installing from a serial console
-	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt220.)
-
-OpenBSDInstallPart3
+OpenBSDInstallPart4
 
 	Next you will have to edit or create a disk label for the disk
 	OpenBSD is being installed on.  If there are any existing
@@ -27,13 +21,11 @@ OpenBSDInstallPart3
 	correct this.  Note that you should make OpenBSD be the active
 	partition at least until the install has been completed.
 
-OpenBSDInstallPart4({:- If you have Linux partitions
-	defined on the disk, these will usually show up as partition
-	'h', 'i' and so on.-:})
+OpenBSDInstallPart5({:-
+	If you have Linux partitions defined on the disk, these will
+	usually show up as partition 'i', 'j' and so on.-:})
 
-OpenBSDInstallPart5(wd0)
-
-OpenBSDInstallNet({:-CD-ROM, -:},nofloppy)
+OpenBSDInstallPart6({:-CD-ROM, -:})
 
 OpenBSDFTPInstall
 
@@ -43,12 +35,8 @@ OpenBSDCDROMInstall
 
 OpenBSDDISKInstall({:-"wdN" or -:},,{:-, Linux (ext2) or MS-DOS-:})
 
-OpenBSDCommonFS
-
-OpenBSDCommonURL
+OpenBSDCommonInstall
 
 OpenBSDInstallWrapup
-
-OpenBSDInstallWrapupPart2
 
 OpenBSDCongratulations

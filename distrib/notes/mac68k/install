@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.37 2008/08/06 20:30:08 miod Exp $
+dnl	$OpenBSD: install,v 1.38 2009/05/12 21:06:50 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -10,15 +10,9 @@ OpenBSDInstallPart2
 	Performa 476 models it is also necessary to activate the video address
 	hack. Now boot the kernel.
 
-OpenBSDBootMsgs(,"sd0")
+OpenBSDInstallPart3(,"sd0")
 
-	You will next be asked for your terminal type.  If you are
-	installing from a non-serial console, the default of "vt220"
-	is correct.  If you are installing from a serial console
-	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt220.)
-
-OpenBSDInstallPart3
+OpenBSDInstallPart4
 
 	Next you will have to edit or create a disk label for the disk
 	OpenBSD is being installed on.  You will first be given an
@@ -76,22 +70,18 @@ OpenBSDInstallPart3
 	OpenBSD_Swap 'b'.  For any other slice do not set any bzb value ('c')
 	except for OpenBSD_Usr, which can be set to 'g'.
 
-OpenBSDInstallPart4
+OpenBSDInstallPart5
 
 	OpenBSD/MACHINE can share a disk with Mac OS by using
 	an HFS partitioned disk. For proper layout, the disk should be
 	partitioned with Mac OS first with unused space where OpenBSD can
 	be installed.
 
-OpenBSDInstallPart5(sd0)
-
-OpenBSDInstallNet({:­CD-ROM, NFS, -:})
+OpenBSDInstallPart6({:­CD-ROM, NFS, -:})
 
 OpenBSDFTPInstall
 
 OpenBSDHTTPInstall
-
-OpenBSDTAPEInstall
 
 OpenBSDCDROMInstall
 
@@ -99,13 +89,11 @@ OpenBSDNFSInstall
 dnl Not supported
 dnl OpenBSDDISKInstall(,{:-only -:})
 
-OpenBSDCommonFS(NFS)
+OpenBSDCommonInstall
 
-OpenBSDCommonURL
+OpenBSDTAPEInstall
 
 OpenBSDInstallWrapup
-
-OpenBSDInstallWrapupPart2
 
 Once the installation is complete, reboot into Mac OS, and start the
 BSD/Mac68k Booter again. This time, point to the OpenBSD kernel location

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.28 2008/10/16 00:05:09 krw Exp $
+dnl	$OpenBSD: install,v 1.29 2009/05/12 21:06:50 miod Exp $
 OpenBSDInstallPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -33,15 +33,9 @@ OpenBSDInstallPart2
 	(Refer to "Preparing your System for OpenBSD Installation" above
 	 for information on how to access and boot from Open Firmware.)
 
-OpenBSDBootMsgs(,"wd0")
+OpenBSDInstallPart3(,"wd0")
 
-	You will next be asked for your terminal type.  If you are
-	installing from a non-serial console, the default of "vt220"
-	is correct.  If you are installing from a serial console
-	you should choose the terminal type from amongst those listed.
-	(If your terminal type is xterm, just use vt220.)
-
-OpenBSDInstallPart3
+OpenBSDInstallPart4
 
 	Next you will have to edit or create a disk label for the disk
 	OpenBSD is being installed on.  If there are any existing
@@ -109,9 +103,9 @@ OpenBSDInstallPart3
 	correct this.  Note that you should make OpenBSD be the active
 	partition at least until the install has been completed.
 
-OpenBSDInstallPart4({:- If you have DOS or Linux
-	partitions defined on the disk, these will usually show up as
-	partition 'i', 'j' and so on.
+OpenBSDInstallPart5({:-
+	If you have DOS or Linux partitions defined on the disk, these
+	will usually show up as partition 'i', 'j' and so on.-:})
 
 	OpenBSD/MACHINE can share a disk with Mac OS or Mac OS X by using
 	an HFS partitioned disk. For proper layout, the disk should be
@@ -125,32 +119,22 @@ OpenBSDInstallPart4({:- If you have DOS or Linux
 	If the disk is partitioned using MBR, the bootloader is
 	automatically installed. However because fdisk is not LBA
 	knowledgeable it may be necessary to run the 'b' command in
-	disklabel to allow OpenBSD to use the entire disk.-:})
+	disklabel to allow OpenBSD to use the entire disk.
 
-OpenBSDInstallPart5(wd0)
-
-OpenBSDInstallNet({:-CD-ROM, -:})
+OpenBSDInstallPart6({:-CD-ROM, -:})
 
 OpenBSDFTPInstall
 
 OpenBSDHTTPInstall
 
-OpenBSDTAPEInstall
-
 OpenBSDCDROMInstall
 		
 OpenBSDDISKInstall(,,{:- or MS-DOS-:})
 		
-OpenBSDCommonFS
+OpenBSDCommonInstall
 
-OpenBSDCommonURL
+OpenBSDTAPEInstall
 
 OpenBSDInstallWrapup
-
-OpenBSDInstallAperture
-
-OpenBSDInstallConsole
-
-OpenBSDInstallWrapupPart2
 
 OpenBSDCongratulations
