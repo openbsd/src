@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.90 2009/05/11 16:23:03 sthen Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.91 2009/05/12 08:38:56 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -39,7 +39,7 @@
  *
  * Supports various network adapters based on the VIA Rhine
  * and Rhine II PCI controllers, including the D-Link DFE530TX.
- * Datasheets are available at http://www.via.com.tw.
+ * Datasheets are available at ftp://ftp.vtbridge.org/Docs/LAN/.
  *
  * Written by Bill Paul <wpaul@ctr.columbia.edu>
  * Electrical Engineering Department
