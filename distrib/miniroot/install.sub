@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.544 2009/05/09 22:41:01 martynas Exp $
+#	$OpenBSD: install.sub,v 1.545 2009/05/12 09:05:54 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -694,10 +694,10 @@ __EOT
 hextodec() {
 	local _d _b
 
-	for _b in $(echo $1 | sed -e 's/0x\(..\)\(..\)\(..\)\(..\)/\1 \2 \3 \4/'); do
-		_d=${_d}.$((16#$_b))
+	for _b in $(echo ${1#0x} | sed 's/\(..\)/\1 /g'); do
+		_d=$_d.$((0x$_b))
 	done
-	echo $_d | sed -e 's/^\.//'
+	echo ${_d#.}
 }
 
 v4_config() {
