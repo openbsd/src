@@ -298,7 +298,6 @@ struct drm_local_map {
 struct drm_vblank_info {
 	struct mutex		 vb_lock;		/* VBLANK data lock */
 	struct timeout		 vb_disable_timer;	/* timer for disable */
-	int			 vb_disable_allowed;
 	int			 vb_num;		/* number of crtcs */
 	u_int32_t		 vb_max;		/* counter reg size */
 	struct drm_vblank {

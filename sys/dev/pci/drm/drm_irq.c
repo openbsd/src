@@ -159,9 +159,6 @@ vblank_disable(void *arg)
 	int			 i;
 
 	mtx_enter(&vbl->vb_lock);
-	if (!vbl->vb_disable_allowed)
-		goto out;
-
 	for (i = 0; i < vbl->vb_num; i++) {
 		crtc = &vbl->vb_crtcs[i];
 
@@ -173,7 +170,6 @@ vblank_disable(void *arg)
 			crtc->vbl_enabled = 0;
 		}
 	}
-out:
 	mtx_leave(&vbl->vb_lock);
 }
 
@@ -307,9 +303,6 @@ drm_modeset_ctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	case _DRM_POST_MODESET:
 		DPRINTF("%s: post modeset on %d\n", __func__, crtc);
 		if (vbl->vbl_inmodeset) {
-			mtx_enter(&dev->vblank->vb_lock);
-			dev->vblank->vb_disable_allowed = 1;
-			mtx_leave(&dev->vblank->vb_lock);
 			if (vbl->vbl_inmodeset & 0x2)
 				drm_vblank_put(dev, crtc);
 			vbl->vbl_inmodeset = 0;
