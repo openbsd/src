@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.9 2009/02/15 08:58:22 damien Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.10 2009/05/12 19:10:57 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -79,30 +79,19 @@ struct iwn_tx_ring {
 	int			cur;
 };
 
-#define IWN_RBUF_COUNT	(IWN_RX_RING_COUNT + 32)
-
 struct iwn_softc;
-
-struct iwn_rbuf {
-	struct iwn_softc	*sc;
-	caddr_t			vaddr;
-	bus_addr_t		paddr;
-	SLIST_ENTRY(iwn_rbuf)	next;
-};
 
 struct iwn_rx_data {
 	struct mbuf	*m;
+	bus_dmamap_t	map;
 };
 
 struct iwn_rx_ring {
 	struct iwn_dma_info	desc_dma;
 	struct iwn_dma_info	stat_dma;
-	struct iwn_dma_info	buf_dma;
 	uint32_t		*desc;
 	struct iwn_rx_status	*stat;
 	struct iwn_rx_data	data[IWN_RX_RING_COUNT];
-	struct iwn_rbuf		rbuf[IWN_RBUF_COUNT];
-	SLIST_HEAD(, iwn_rbuf)	freelist;
 	int			cur;
 };
 
@@ -181,7 +170,8 @@ struct iwn_hal {
 	int		(*set_gains)(struct iwn_softc *);
 	int		(*add_node)(struct iwn_softc *, struct iwn_node_info *,
 			    int);
-	void		(*tx_done)(struct iwn_softc *, struct iwn_rx_desc *);
+	void		(*tx_done)(struct iwn_softc *, struct iwn_rx_desc *,
+			    struct iwn_rx_data *);
 #ifndef IEEE80211_NO_HT
 	void		(*ampdu_tx_start)(struct iwn_softc *,
 			    struct ieee80211_node *, uint8_t, uint16_t);
