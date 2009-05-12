@@ -4722,6 +4722,7 @@
 ./var/db
 ./var/db/ns
 ./var/db/pkg
+./var/db/sysmerge
 ./var/empty
 ./var/empty/dev
 ./var/games
