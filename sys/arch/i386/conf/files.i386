@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.189 2009/05/07 11:30:26 ariane Exp $
+#	$OpenBSD: files.i386,v 1.190 2009/05/12 19:49:36 mglocker Exp $
 #
 # new style config file for i386 architecture
 #
@@ -51,6 +51,9 @@ file	arch/i386/i386/ipifuncs.c	multiprocessor
 file	arch/i386/i386/db_mp.c		multiprocessor & ddb
 file	arch/i386/i386/wscons_machdep.c	wsdisplay
 major	{vnd = 14}
+
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
 #
 # Media Independent Interface (mii)
