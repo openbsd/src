@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.23 2009/05/12 13:04:18 jmc Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.24 2009/05/12 20:58:15 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -99,30 +99,27 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Automatic mode.
-If this option is specified,
 .Nm
-will only compare files whose reference sources have changed since
-the last run and will attempt to automatically upgrade them to the
-newest version provided that they have no local changes.
-It will automatically install missing files
-and files differing only by CVS Id,
-and will disable strict file comparison when possible (using CVS Id).
+only compares files whose reference sources have changed since the last run
+and attempts to automatically upgrade them to the newest version,
+provided that they have no local changes.
+It automatically installs missing files
+and updates files differing only by CVS Id.
+.Pp
+Files whose reference sources have matching CVS Id are skipped from comparison.
 .Pa /etc/fbtab ,
 .Pa /etc/login.conf ,
 .Pa /etc/sysctl.conf ,
 and
 .Pa /etc/ttys
-are created using helper scripts and will
+are created using helper scripts and are
 .Sy always
-be strictly compared, even when
-.Fl a
-is specified.
+compared.
 .It Fl b
 Batch mode.
-If this option is specified,
 .Nm
-will run unattended (non-interactively), saving differing files for
-later manual processing.
+runs non-interactively,
+saving differing files for later manual processing.
 .It Fl s Ar src \*(Ba etcXX.tgz
 Specify a path to an
 .Ox
