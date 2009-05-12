@@ -368,6 +368,12 @@ drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_priv)
 void
 drm_handle_vblank(struct drm_device *dev, int crtc)
 {
+	/*
+	 * XXX if we had proper atomic operations this mutex wouldn't
+	 * XXX need to be held.
+	 */
+	mtx_enter(&dev->vblank->vb_lock);
 	dev->vblank->vb_crtcs[crtc].vbl_count++;
 	wakeup(&dev->vblank->vb_crtcs[crtc]);
+	mtx_leave(&dev->vblank->vb_lock);
 }
