@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.24 2009/05/10 11:07:37 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.25 2009/05/12 09:46:39 espie Exp $ */
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
  * Copyright (c) 1988, 1989 by Adam de Boor
@@ -64,7 +64,6 @@
 #include "buf.h"
 #include "job.h"
 
-void setup_all_signals(psighandler, psighandler);
 static void MakeTimeStamp(void *, void *);
 static int rewrite_time(const char *);
 static void setup_signal(int, psighandler);
