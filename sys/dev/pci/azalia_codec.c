@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.122 2009/05/01 03:45:17 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.123 2009/05/12 09:32:28 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -1277,6 +1277,9 @@ azalia_generic_mixer_default(codec_t *this)
 		w = &this->w[m->nid];
 		for (j = 0; j < w->nconnections; j++) {
 			if (!azalia_widget_enabled(this, w->connections[j]))
+				continue;
+			if (w->nid == this->input_mixer &&
+			    w->connections[j] == this->mic)
 				continue;
 			mc.un.mask |= 1 << j;
 		}

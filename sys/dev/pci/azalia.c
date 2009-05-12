@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.130 2009/05/01 04:00:40 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.131 2009/05/12 09:32:28 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -213,6 +213,7 @@ int	azalia_codec_init_volgroups(codec_t *);
 int	azalia_codec_sort_pins(codec_t *);
 int	azalia_codec_select_micadc(codec_t *);
 int	azalia_codec_select_spkrdac(codec_t *);
+int	azalia_codec_find_inputmixer(codec_t *);
 
 int	azalia_widget_init(widget_t *, const codec_t *, int);
 int	azalia_widget_label_widgets(codec_t *);
@@ -1356,6 +1357,10 @@ azalia_codec_init(codec_t *this)
 	if (err)
 		return err;
 
+	err = azalia_codec_find_inputmixer(this);
+	if (err)
+		return err;
+
 	err = azalia_codec_select_spkrdac(this);
 	if (err)
 		return err;
@@ -1387,6 +1392,52 @@ azalia_codec_init(codec_t *this)
 		return err;
 
 	return 0;
+}
+
+int
+azalia_codec_find_inputmixer(codec_t *this)
+{
+	widget_t *w;
+	int i, j;
+
+	this->input_mixer = -1;
+
+	FOR_EACH_WIDGET(this, i) {
+		w = &this->w[i];
+		if (w->type != COP_AWTYPE_AUDIO_MIXER)
+			continue;
+
+		/* can input from a pin */
+		for (j = 0; j < this->nipins; j++) {
+			if (azalia_codec_fnode(this, this->ipins[j].nid,
+			    w->nid, 0) != -1)
+				break;
+		}
+		if (j == this->nipins)
+			continue;
+
+		/* can output to a pin */
+		for (j = 0; j < this->nopins; j++) {
+			if (azalia_codec_fnode(this, w->nid,
+			    this->opins[j].nid, 0) != -1)
+				break;
+		}
+		if (j == this->nopins)
+			continue;
+
+		/* can output to an ADC */
+		for (j = 0; j < this->na_adcs; j++) {
+			if (azalia_codec_fnode(this, w->nid,
+			    this->a_adcs[j], 0) != -1)
+				break;
+		}
+		if (j == this->na_adcs)
+			continue;
+
+		this->input_mixer = i;
+		break;
+	}
+	return(0);
 }
 
 int
