@@ -1,4 +1,4 @@
-.\"     $OpenBSD: cbus.4,v 1.2 2009/01/13 07:42:51 jmc Exp $
+.\"     $OpenBSD: cbus.4,v 1.3 2009/05/12 19:53:34 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 13 2009 $
+.Dd $Mdocdate: May 12 2009 $
 .Dt CBUS 4 sparc64
 .Os
 .Sh NAME
@@ -32,7 +32,9 @@ UltraSPARC Hypervisor as found on sun4v logical domains.
 provides support for the following devices:
 .Pp
 .Bl -tag -width "vdisk(4)XX" -offset 3n -compact
-.It Xr vdisk 4
+.It Xr vcc 4
+virtual console concentrator
+.It Xr vdsk 4
 virtual disk
 .It Xr vnet 4
 virtual network interface
