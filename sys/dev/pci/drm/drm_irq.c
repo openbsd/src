@@ -38,6 +38,12 @@
 void		drm_update_vblank_count(struct drm_device *, int);
 void		vblank_disable(void *);
 
+#ifdef DRM_VBLANK_DEBUG
+#define DPRINTF(x...)	do { printf(x); } while(/* CONSTCOND */ 0)
+#else
+#define DPRINTF(x...)	do { } while(/* CONSTCOND */ 0)
+#endif
+
 int
 drm_irq_by_busid(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
@@ -160,6 +166,7 @@ vblank_disable(void *arg)
 		crtc = &vbl->vb_crtcs[i];
 
 		if (crtc->vbl_refs == 0 && crtc->vbl_enabled) {
+			DPRINTF("%s: disabling crtc %d\n", __func__, i);
 			crtc->vbl_last =
 			    dev->driver->get_vblank_counter(dev, i);
 			dev->driver->disable_vblank(dev, i);
@@ -233,6 +240,8 @@ drm_vblank_get(struct drm_device *dev, int crtc)
 		return (EINVAL);
 
 	mtx_enter(&vbl->vb_lock);
+	DPRINTF("%s: %d refs = %d\n", __func__, crtc,
+	    vbl->vb_crtcs[crtc].vbl_refs);
 	vbl->vb_crtcs[crtc].vbl_refs++;
 	if (vbl->vb_crtcs[crtc].vbl_refs == 1 &&
 	    vbl->vb_crtcs[crtc].vbl_enabled == 0) {
@@ -254,6 +263,9 @@ drm_vblank_put(struct drm_device *dev, int crtc)
 {
 	mtx_enter(&dev->vblank->vb_lock);
 	/* Last user schedules disable */
+	DPRINTF("%s: %d  refs = %d\n", __func__, crtc,
+	    dev->vblank->vb_crtcs[crtc].vbl_refs);
+	KASSERT(dev->vblank->vb_crtcs[crtc].vbl_refs > 0);
 	if (--dev->vblank->vb_crtcs[crtc].vbl_refs == 0)
 		timeout_add_sec(&dev->vblank->vb_disable_timer, 5);
 	mtx_leave(&dev->vblank->vb_lock);
@@ -263,18 +275,16 @@ int
 drm_modeset_ctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	struct drm_modeset_ctl	*modeset = data;
-	int			 crtc, ret = 0;
 	struct drm_vblank	*vbl;
+	int			 crtc, ret = 0;
 
 	/* not initialised yet, just noop */
 	if (dev->vblank == NULL)
-		goto out;
+		return (0);
 
 	crtc = modeset->crtc;
-	if (crtc >= dev->vblank->vb_num) {
-		ret = EINVAL;
-		goto out;
-	}
+	if (crtc >= dev->vblank->vb_num)
+		return (EINVAL);
 
 	vbl = &dev->vblank->vb_crtcs[crtc];
 
@@ -285,6 +295,7 @@ drm_modeset_ctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	 */
 	switch (modeset->cmd) {
 	case _DRM_PRE_MODESET:
+		DPRINTF("%s: pre modeset on %d\n", __func__, crtc);
 		if (vbl->vbl_inmodeset == 0) {
 			mtx_enter(&dev->vblank->vb_lock);
 			vbl->vbl_inmodeset = 0x1;
@@ -294,6 +305,7 @@ drm_modeset_ctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		}
 		break;
 	case _DRM_POST_MODESET:
+		DPRINTF("%s: post modeset on %d\n", __func__, crtc);
 		if (vbl->vbl_inmodeset) {
 			mtx_enter(&dev->vblank->vb_lock);
 			dev->vblank->vb_disable_allowed = 1;
@@ -308,7 +320,6 @@ drm_modeset_ctl(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		break;
 	}
 
-out:
 	return (ret);
 }
 
@@ -344,6 +355,8 @@ drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		vblwait->request.sequence = seq + 1;
 	}
 
+	DPRINTF("%s: %d waiting on %d, current %d\n", __func__, crtc,
+	     vblwait->request.sequence, drm_vblank_count(dev, crtc));
 	DRM_WAIT_ON(ret, &dev->vblank->vb_crtcs[crtc], &dev->vblank->vb_lock,
 	    3 * hz, "drmvblq", ((drm_vblank_count(dev, crtc) -
 	    vblwait->request.sequence) <= (1 << 23)) || dev->irq_enabled == 0);
@@ -352,6 +365,8 @@ drm_wait_vblank(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	vblwait->reply.tval_sec = now.tv_sec;
 	vblwait->reply.tval_usec = now.tv_usec;
 	vblwait->reply.sequence = drm_vblank_count(dev, crtc);
+	DPRINTF("%s: %d done waiting, seq = %d\n", __func__, crtc,
+	    vblwait->reply.sequence);
 
 	drm_vblank_put(dev, crtc);
 	return (ret);
