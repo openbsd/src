@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.14 2009/05/10 12:59:12 kettenis Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.15 2009/05/12 21:13:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -64,9 +64,10 @@ struct vnet_attr_info {
 	uint8_t			xfer_mode;
 	uint8_t			addr_type;
 	uint16_t		ack_freq;
-	uint32_t		_reserved;
+	uint32_t		_reserved1;
 	uint64_t		addr;
 	uint64_t		mtu;
+	uint64_t		_reserved2[3];
 };
 
 /* Address types. */
