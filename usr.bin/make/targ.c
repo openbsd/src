@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.57 2008/11/04 07:22:36 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.58 2009/05/12 09:24:16 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -298,7 +298,7 @@ Targ_Silent(GNode *gn)
 bool
 Targ_Precious(GNode *gn)
 {
-	if (allPrecious || (gn->type & (OP_PRECIOUS|OP_DOUBLEDEP)))
+	if (allPrecious || (gn->type & (OP_PRECIOUS|OP_DOUBLEDEP|OP_PHONY)))
 		return true;
 	else
 		return false;
