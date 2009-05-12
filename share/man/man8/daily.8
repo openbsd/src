@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.13 2009/05/11 22:27:22 schwarze Exp $
+.\"	$OpenBSD: daily.8,v 1.14 2009/05/12 21:10:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 11 2009 $
+.Dd $Mdocdate: May 12 2009 $
 .Dt DAILY 8
 .Os
 .Sh NAME
@@ -211,14 +211,14 @@ The following variables can be set in
 .Pp
 .Bl -tag -width "CHECKFILESYSTEMS" -compact
 .It Ev CALENDAR
-Determines whether to run
+If set to 1, run
 .Xr calendar 1 .
 .It Ev CHECKFILESYSTEMS
-Determines whether to run
+If set to 1, run
 .Xr fsck 8
 with the no-write flag.
 .It Ev ROOTBACKUP
-Determines whether to make a backup of the root file system.
+If set to 1, make a backup of the root file system.
 .It Ev VERBOSESTATUS
 If set to 0,
 .Xr df 1 ,
@@ -236,7 +236,7 @@ The following variables can be set in
 .Pp
 .Bl -tag -width "CHECKFILESYSTEMS" -compact
 .It Ev LOGINACCOUNTING
-Determines whether to run
+If set to 1, run
 .Xr ac 8
 to report login accounting.
 .El
