@@ -1,43 +1,98 @@
-# -*-perl-*-
-use strict;
-use Test qw($TESTOUT $TESTERR $ntest plan ok skip); 
-plan tests => 6;
+#!perl -w
 
-open F, ">skips" or die "open skips: $!";
-$TESTOUT = *F{IO};
-$TESTERR = *F{IO};
-
-skip(1, 0);  #should skip
-
-my $skipped=1;
-skip('hop', sub { $skipped = 0 });
-skip(sub {'jump'}, sub { $skipped = 0 });
-skip('skipping stones is more fun', sub { $skipped = 0 });
-
-close F;
-
-$TESTOUT = *STDOUT{IO};
-$TESTERR = *STDERR{IO};
-$ntest = 1;
-open F, "skips" or die "open skips: $!";
-
-ok $skipped, 1, 'not skipped?';
-
-my @T = <F>;
-chop @T;
-my @expect = split /\n+/, join('',<DATA>);
-ok @T, 4;
-for (my $x=0; $x < @T; $x++) {
-    ok $T[$x], $expect[$x];
+BEGIN {
+    if( $ENV{PERL_CORE} ) {
+        chdir 't';
+        @INC = '../lib';
+    }
 }
 
-END { close F; unlink "skips" }
+use Test::More tests => 17;
 
-__DATA__
-ok 1 # skip
+# If we skip with the same name, Test::Harness will report it back and
+# we won't get lots of false bug reports.
+my $Why = "Just testing the skip interface.";
 
-ok 2 # skip hop
+SKIP: {
+    skip $Why, 2 
+      unless Pigs->can('fly');
 
-ok 3 # skip jump
+    my $pig = Pigs->new;
+    $pig->takeoff;
 
-ok 4 # skip skipping stones is more fun
+    ok( $pig->altitude > 0,         'Pig is airborne' );
+    ok( $pig->airspeed > 0,         '  and moving'    );
+}
+
+
+SKIP: {
+    skip "We're not skipping", 2 if 0;
+
+    pass("Inside skip block");
+    pass("Another inside");
+}
+
+
+SKIP: {
+    skip "Again, not skipping", 2 if 0;
+
+    my($pack, $file, $line) = caller;
+    is( $pack || '', '',      'calling package not interfered with' );
+    is( $file || '', '',      '  or file' );
+    is( $line || '', '',      '  or line' );
+}
+
+
+SKIP: {
+    skip $Why, 2 if 1;
+
+    die "A horrible death";
+    fail("Deliberate failure");
+    fail("And again");
+}
+
+
+{
+    my $warning;
+    local $SIG{__WARN__} = sub { $warning = join "", @_ };
+    SKIP: {
+        # perl gets the line number a little wrong on the first
+        # statement inside a block.
+        1 == 1;
+#line 56
+        skip $Why;
+        fail("So very failed");
+    }
+    is( $warning, "skip() needs to know \$how_many tests are in the ".
+                  "block at $0 line 56\n",
+        'skip without $how_many warning' );
+}
+
+
+SKIP: {
+    skip "Not skipping here.", 4 if 0;
+
+    pass("This is supposed to run");
+
+    # Testing out nested skips.
+    SKIP: {
+        skip $Why, 2;
+        fail("AHHH!");
+        fail("You're a failure");
+    }
+
+    pass("This is supposed to run, too");
+}
+
+{
+    my $warning = '';
+    local $SIG{__WARN__} = sub { $warning .= join "", @_ };
+
+    SKIP: {
+        skip 1, "This is backwards" if 1;
+
+        pass "This does not run";
+    }
+
+    like $warning, '/^skip\(\) was passed a non-numeric number of tests/';
+}

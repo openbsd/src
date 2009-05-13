@@ -1,4 +1,4 @@
-#!perl -w
+#!/usr/bin/perl -w
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -33,40 +33,30 @@ sub ok ($;$) {
     $ok .= "\n";
     print $ok;
     $test_num++;
+
+    return $test ? 1 : 0;
 }
 
 
 package main;
 
 require Test::Simple;
-Test::Simple->import(tests => 5);
+Test::Simple->import(tests => 1);
 
-#line 35
-ok( 1, 'passing' );
-ok( 2, 'passing still' );
-ok( 3, 'still passing' );
-ok( 0, 'oh no!' );
-ok( 0, 'damnit' );
-
+#line 45
+ok(0);
 
 END {
     My::Test::ok($$out eq <<OUT);
-1..5
-ok 1 - passing
-ok 2 - passing still
-ok 3 - still passing
-not ok 4 - oh no!
-not ok 5 - damnit
+1..1
+not ok 1
 OUT
 
-    My::Test::ok($$err eq <<ERR);
-#   Failed test 'oh no!'
-#   at $0 line 38.
-#   Failed test 'damnit'
-#   at $0 line 39.
-# Looks like you failed 2 tests of 5.
+    My::Test::ok($$err eq <<ERR) || print $$err;
+#   Failed test at $0 line 45.
+# Looks like you failed 1 test of 1.
 ERR
 
-    # Prevent Test::Simple from exiting with non zero
+    # Prevent Test::Simple from existing with non-zero
     exit 0;
 }

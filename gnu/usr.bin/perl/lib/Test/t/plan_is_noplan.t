@@ -1,5 +1,3 @@
-#!perl -w
-
 BEGIN {
     if( $ENV{PERL_CORE} ) {
         chdir 't';
@@ -9,13 +7,6 @@ BEGIN {
         unshift @INC, 't/lib';
     }
 }
-
-use strict;
-
-require Test::Simple::Catch;
-my($out, $err) = Test::Simple::Catch::caught();
-local $ENV{HARNESS_ACTIVE} = 0;
-
 
 # Can't use Test.pm, that's a 5.005 thing.
 package My::Test;
@@ -39,32 +30,23 @@ sub ok ($;$) {
 package main;
 
 require Test::Simple;
-Test::Simple->import(tests => 5);
 
-#line 35
-ok( 1, 'passing' );
-ok( 2, 'passing still' );
-ok( 3, 'still passing' );
-ok( 0, 'oh no!' );
-ok( 0, 'damnit' );
+require Test::Simple::Catch;
+my($out, $err) = Test::Simple::Catch::caught();
+
+
+Test::Simple->import('no_plan');
+
+ok(1, 'foo');
 
 
 END {
     My::Test::ok($$out eq <<OUT);
-1..5
-ok 1 - passing
-ok 2 - passing still
-ok 3 - still passing
-not ok 4 - oh no!
-not ok 5 - damnit
+ok 1 - foo
+1..1
 OUT
 
     My::Test::ok($$err eq <<ERR);
-#   Failed test 'oh no!'
-#   at $0 line 38.
-#   Failed test 'damnit'
-#   at $0 line 39.
-# Looks like you failed 2 tests of 5.
 ERR
 
     # Prevent Test::Simple from exiting with non zero
