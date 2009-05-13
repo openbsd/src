@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1473 2009/05/11 19:46:46 damien Exp 
+ *	OpenBSD: pcidevs,v 1.1474 2009/05/13 08:31:22 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1591,6 +1591,7 @@
 #define	PCI_PRODUCT_CMDTECH_AAR_1210SA	0x0240		/* AAR-1210SA */
 /* Adaptec 1220SA is really a 3132 also */
 #define	PCI_PRODUCT_CMDTECH_AAR_1220SA	0x0242		/* AAR-1220SA */
+#define	PCI_PRODUCT_CMDTECH_AAR_1225SA	0x0244		/* AAR-1225SA */
 #define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI0640 */
 #define	PCI_PRODUCT_CMDTECH_642	0x0642		/* PCI0642 */
 #define	PCI_PRODUCT_CMDTECH_643	0x0643		/* PCI0643 */

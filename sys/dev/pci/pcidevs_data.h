@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1471 2009/05/11 16:31:37 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1474 2009/05/13 08:31:22 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4556,6 +4556,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AAR-1220SA",
 	},
 	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_AAR_1225SA,
+	    "AAR-1225SA",
+	},
+	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,
 	    "PCI0640",
 	},
@@ -5350,6 +5354,34 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_DYNALINK, PCI_PRODUCT_DYNALINK_IS64PH,
 	    "IS64PH ISDN",
+	},
+	{
+	    PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_1,
+	    "RT2860",
+	},
+	{
+	    PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_2,
+	    "RT2860",
+	},
+	{
+	    PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_3,
+	    "RT2860",
+	},
+	{
+	    PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_4,
+	    "RT2860",
+	},
+	{
+	    PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_5,
+	    "RT2860",
+	},
+	{
+	    PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_6,
+	    "RT2860",
+	},
+	{
+	    PCI_VENDOR_EDIMAX, PCI_PRODUCT_EDIMAX_RT2860_7,
+	    "RT2860",
 	},
 	{
 	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI155PF,
@@ -9384,6 +9416,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "WiFi Link 6000",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_5,
+	    "WiFi Link 6000",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_4965_2,
 	    "Wireless WiFi Link 4965",
 	},
@@ -9405,6 +9441,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_4,
+	    "WiFi Link 6000",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WIFI_LINK_6000_6,
 	    "WiFi Link 6000",
 	},
 	{
@@ -18386,6 +18426,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_CHELSIO,
 	    "Chelsio",
+	},
+	{
+	    PCI_VENDOR_EDIMAX,
+	    "Edimax",
 	},
 	{
 	    PCI_VENDOR_TAMARACK,
