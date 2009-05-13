@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.51 2008/03/24 16:11:05 deraadt Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.52 2009/05/13 16:14:57 deraadt Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.51 2008/03/24 16:11:05 deraadt Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.52 2009/05/13 16:14:57 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -57,11 +57,7 @@ static char _rcsid[] = "$OpenBSD: route6d.c,v 1.51 2008/03/24 16:11:05 deraadt E
 #include <sys/sysctl.h>
 #include <sys/uio.h>
 #include <net/if.h>
-#define	KERNEL	1
-#define	_KERNEL	1
 #include <net/route.h>
-#undef KERNEL
-#undef _KERNEL
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
@@ -181,8 +177,6 @@ int	nfilter = 0;
 pid_t	pid;
 
 struct	sockaddr_storage ripsin;
-
-struct	rtentry rtentry;
 
 int	interval = 1;
 time_t	nextalarm = 0;
