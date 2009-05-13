@@ -1,12 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.41 2009/05/12 13:04:18 jmc Exp $
-#
-# This script is based on the FreeBSD mergemaster script, written by
-# Douglas Barton <DougB@FreeBSD.org>
-#
-# Some ideas came from the NetBSD etcupdate script, written by
-# Martti Kuparinen <martti@NetBSD.org>
+# $OpenBSD: sysmerge.sh,v 1.42 2009/05/13 22:27:48 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -576,7 +570,7 @@ do_post() {
 }
 
 
-while getopts abs:x:S:X: arg; do
+while getopts abs:x: arg; do
 	case ${arg} in
 	a)
 		AUTOMODE=1
