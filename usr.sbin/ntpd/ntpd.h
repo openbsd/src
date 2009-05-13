@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.99 2009/02/11 01:00:10 stevesk Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.100 2009/05/13 15:08:10 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -63,9 +63,10 @@
 #define MAX_SEND_ERRORS		3	/* max send errors before reconnect */
 
 
-#define	SENSOR_DATA_MAXAGE	(15*60)
-#define	SENSOR_QUERY_INTERVAL	30
-#define	SENSOR_SCAN_INTERVAL	(5*60)
+#define	SENSOR_DATA_MAXAGE		(15*60)
+#define	SENSOR_QUERY_INTERVAL		30
+#define	SENSOR_QUERY_INTERVAL_SETTIME	(SETTIME_TIMEOUT/3)
+#define	SENSOR_SCAN_INTERVAL		(5*60)
 
 enum client_state {
 	STATE_NONE,

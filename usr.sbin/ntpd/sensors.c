@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.43 2009/02/08 23:57:08 stevesk Exp $ */
+/*	$OpenBSD: sensors.c,v 1.44 2009/05/13 15:08:10 stevesk Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -154,7 +154,10 @@ sensor_query(struct ntp_sensor *s)
 	char		 dxname[MAXDEVNAMLEN];
 	struct sensor	 sensor;
 
-	s->next = getmonotime() + SENSOR_QUERY_INTERVAL;
+	if (conf->settime)
+		s->next = getmonotime() + SENSOR_QUERY_INTERVAL_SETTIME;
+	else
+		s->next = getmonotime() + SENSOR_QUERY_INTERVAL;
 
 	/* rcvd is walltime here, monotime in client.c. not used elsewhere */
 	if (s->update.rcvd < time(NULL) - SENSOR_DATA_MAXAGE)
