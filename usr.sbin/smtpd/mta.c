@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.45 2009/05/09 17:04:55 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.46 2009/05/13 21:29:16 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -538,7 +538,7 @@ mta_mxlookup(struct smtpd *env, struct session *sessionp, char *hostname, struct
 		port = ntohs(rule->r_value.relayhost.port);
 
 	if (rule->r_action == A_RELAYVIA)
-		dns_query_a(env, rule->r_value.relayhost.hostname, port,
+		dns_query_mx(env, rule->r_value.relayhost.hostname, port,
 		    sessionp->s_id);
 	else
 		dns_query_mx(env, hostname, port, sessionp->s_id);
