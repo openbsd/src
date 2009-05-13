@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.12 2009/05/12 21:06:50 miod Exp $
+dnl	$OpenBSD: install,v 1.13 2009/05/13 18:38:29 miod Exp $
 OpenBSDInstallPrelude
 
 If OpenBSD will be sharing the disk with another operating system,
@@ -46,19 +46,9 @@ OpenBSDInstallPart3
 
 OpenBSDInstallPart4
 
-	Next you will have to edit or create a disk label for the disk
-	OpenBSD is being installed on.  If there are any existing
-	partitions defined (for any operating system), and a disk label
-	is not found, you will first be given an opportunity to run
-	fdisk and create an OpenBSD partition.
+OpenBSDInstallMBRPart1
 
-	If fdisk is being invoked on your behalf, it will start by
-	displaying the current partitions defined and then allow you
-	to modify this information, add new partitions, and change
-	which partition to boot from by default.  If you make a mistake,
-	you will be allowed to repeat this procedure as necessary to
-	correct this.  Note that you should make OpenBSD be the active
-	partition at least until the install has been completed.
+OpenBSDInstallMBRPart2(yup)
 
 OpenBSDInstallPart5({:-
 	If you have DOS or Linux partitions defined on the disk, these
@@ -66,9 +56,7 @@ OpenBSDInstallPart5({:-
 
 OpenBSDInstallPart6({:-CD-ROM, -:})
 
-OpenBSDFTPInstall
-
-OpenBSDHTTPInstall
+OpenBSDURLInstall
 
 OpenBSDCDROMInstall
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.35 2009/05/12 21:06:50 miod Exp $
+dnl	$OpenBSD: install,v 1.36 2009/05/13 18:38:29 miod Exp $
 OpenBSDInstallPrelude({:-HP-IB disks-:})
 
 The ramdisk kernel may be loaded from the network, from CD-ROM, or other
@@ -105,9 +105,7 @@ OpenBSDInstallPart5
 
 OpenBSDInstallPart6({:-CD-ROM, NFS, -:})
 
-OpenBSDFTPInstall
-
-OpenBSDHTTPInstall
+OpenBSDURLInstall
 
 OpenBSDCDROMInstall
 

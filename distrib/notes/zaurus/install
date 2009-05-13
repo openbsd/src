@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.24 2009/05/12 21:06:51 miod Exp $
+dnl	$OpenBSD: install,v 1.25 2009/05/13 18:38:29 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -84,20 +84,7 @@ OpenBSDInstallPart3(,"wd0")
 
 OpenBSDInstallPart4
 
-	Next you will have to create an OpenBSD partition with fdisk,
-	and then create a disk label within it.
-
-	When fdisk is being invoked on your behalf, it will start by
-	displaying the current partitions defined and then allow you
-	to modify this information, add new partitions and change
-	which partition to boot from by default.  If you make a mistake,
-	you will be allowed to repeat this procedure as necessary to
-	correct this.  Note that you do not need to make OpenBSD be
-	the active partition.
-
-OpenBSDInstallPart5({:-
-	If you have Linux partitions defined on the disk, these will
-	usually show up as partition 'i', 'j' and so on.-:})
+OpenBSDInstallMBRPart1
 
 	One of the three partitions on the Zaurus C3x00 hard drive is
 	a 3GB or 5GB MS-DOS filesystem.  This partition has application
@@ -105,20 +92,24 @@ OpenBSDInstallPart5({:-
 	recommended that you cut most of the space off this large MS-DOS
 	partition, and create a new A6 partition afterwards, like this:
 
-	 0: 83    0   3 13 - 1511   7 17 [          63:      205569 ] Linux files*
-	 1: 83 1512   0  1 - 7559   7 17 [      205632:      822528 ] Linux files*
-	 2: 0C 7560   0  1 - 9065   7  1 [     1028160:      204800 ] Win95 FAT32L
-	 3: A6 9065   7  2 - 67885   5  3 [     1232960:     7999488 ] OpenBSD     
+ 0: 83    0   3 13 - 1511   7 17 [          63:      205569 ] Linux files*
+ 1: 83 1512   0  1 - 7559   7 17 [      205632:      822528 ] Linux files*
+ 2: 0C 7560   0  1 - 9065   7  1 [     1028160:      204800 ] Win95 FAT32L
+ 3: A6 9065   7  2 - 67885  5  3 [     1232960:     7999488 ] OpenBSD     
 
 	After shrinking the MS-DOS partition, you will need to
 	reformat it from Linux or OpenBSD once OpenBSD is installed.
 	(You will be reminded of this later in this document)
 
+OpenBSDInstallMBRPart2
+
+OpenBSDInstallPart5({:-
+	If you have Linux partitions defined on the disk, these will
+	usually show up as partition 'i', 'j' and so on.-:})
+
 OpenBSDInstallPart6({:-CD-ROM, -:})
 
-OpenBSDFTPInstall
-
-OpenBSDHTTPInstall
+OpenBSDURLInstall
 
 OpenBSDCDROMInstall
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.27 2008/08/22 21:05:04 miod Exp $
+dnl	$OpenBSD: hardware,v 1.28 2009/05/13 18:38:29 miod Exp $
 OpenBSD/MACHINE OSREV runs on a wide variety of VAX hardware.
 The following systems have been tested:
 	- VAXstation 2000
@@ -42,7 +42,7 @@ Supported devices {:-include-:}:
 
     * SCSI controllers:
 	- NCR 5380 (asc) or NCR 53C9x (ncr) on-board SCSI
-	  (this {:-include-:}s most 3100s and VAXstation 4000s, as well
+	  (this includes most 3100s and VAXstation 4000s, as well
 	   as the VAX 4000 10x series)
 	- SII (sii) SCSI on VAXstation 35x0 I/O module
 

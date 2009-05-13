@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.85 2009/05/12 21:41:24 deraadt Exp $
+dnl	$OpenBSD: m4.common,v 1.86 2009/05/13 18:38:27 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -364,7 +364,7 @@ dnl install.sub (install) questions(): sshd/ntpd
 	default, as well as ntpd(8).  If you choose to start ntpd(8),
 	you will be asked for your ntp server; if you don't have any
 	preferred ntp server, press enter to confirm the default
-	setting of picking one of the pool.ntp.org servers.
+	setting of using the pool.ntp.org servers.
 dnl
 dnl install.sub (install) questions(): MDXAPERTURE
 ifelse(MDXAPERTURE,,,{:-
@@ -401,14 +401,13 @@ dnl install.sub (install) user_setup()
 	add a user account at this point.  Valid login names are
 	sequences of digits and lowercase letters, and must start
 	with a lowercase letter.  If the login name matches this
-	criteria, and doesn't conflict with one of the administrative
+	criteria, and doesn't conflict with any of the administrative
 	user accounts (such as `root', `daemon' or `ftp'), you
 	will be prompted with the users descriptive name, as well
 	as its password, twice.
 	As for the root password earlier, the install program will only
 	check that the two passwords match, but you should make sure to
-	use a strong password here as well, different from the root
-	password.
+	use a strong password here as well.
 
 	If you have chosen to setup a user account, and you had chosen
 	to start sshd(8) on boot, you will be given the possibility to
@@ -464,9 +463,44 @@ ifelse(MDTZ,,,
 	of the installation.
 -:})dnl
 
+dnl install.sh md_prep_disklabel loop
 	The installation program will now tell you which disks
 	it can install on, and ask you which it should use.
 	Reply with the name of your root disk.-:})dnl
+dnl
+dnl OpenBSDInstallMBRPart1
+dnl Describes MBR partitioning. So much to save four lines of text
+dnl duplicated 5 times.
+dnl
+define({:-OpenBSDInstallMBRPart1-:},
+{:-	Disks on OpenBSD/MACHINE are partitioned using the so-called
+	``MBR'' partitioning scheme.  You will need to create one
+	MBR partition, in which all the real OpenBSD partitions will
+	be created.-:})dnl
+dnl
+dnl OpenBSDInstallMBRPart2(needs OpenBSD partition active)
+dnl Describes fdisk invocation
+dnl
+define({:-OpenBSDInstallMBRPart2-:},
+dnl install.md md_prep_fdisk
+{:-	The installation program will ask you if you want to use the
+	whole disk for OpenBSD.  If you don't need to or don't intend
+	to share the disk with other operating systems, answer `y'
+	here.  The installation program will then create a single
+	MBR partition spanning the whole disk, dedicated to OpenBSD.
+
+	Otherwise, fdisk(8) will be invoked to let you to edit your MBR
+	partitioning.  The current MBR partitions defined will be
+	displayed and you will be allowed to modify them, add new
+	partitions, and change which partition to boot from by default.
+
+ifelse(X$1,X,,
+{:-	Note that you should make the OpenBSD partition the active
+	partition at least until the install has been completed.
+
+-:})dnl
+	After your OpenBSD MBR partition has been setup, the real
+	partition setup can follow.-:})dnl
 dnl
 dnl OpenBSDInstallPart5(mention about other OS partitions)
 dnl Describes the disklabel operation
@@ -476,38 +510,41 @@ define({:-OpenBSDInstallPart5-:},
 	partitions must be set up.  Each file system you want will
 	require a separate partition.
 
-dnl install.sh md_prep_disklabel loop
-	For the first disk (which will be the boot disk, hosting the
-	root partition), you will be proposed a default layout, trying
+	You will be proposed a default partition layout, trying
 	to set up separate partitions, disk size permitting.
 
 	You will be given the possibility to either accept the proposed
-	layout, or edit it, or do your own custom layout.  These last
-	two choices will invoke an interactive editor allowing you to
-	create your desired layout.
+	layout, or edit it, or create your own custom layout.  These last
+	two choices will invoke the disklabel(8) interactive editor,
+	allowing you to create your desired layout.
 
 	Within the editor, you will probably start out with only the
 	'c' partition of fstype 'unused' that represents the whole disk.
-	This partition can not be modified.  You must create partition 'a'
-	as a native OpenBSD partition, i.e. one with "4.2BSD" as the
-	fstype, to hold the root file system.
+	This partition can not be modified.$1
+
+	You must create partition 'a' as a native OpenBSD partition, i.e.
+	one with "4.2BSD" as the fstype, to hold the root file system.
 
 	In addition to partition 'a' you should create partition 'b' with
 	fstype "swap", and native OpenBSD partitions to hold separate file
-	systems such as /usr, /tmp, /var, and /home.$1
+	systems such as /usr, /tmp, /var, and /home.
 
 	You will need to provide a mount point for all partitions you
 	{:-define-:}.  Partitions without mount points, or not of 4.2BSD fstype,
-	will not be formatted during the installation.
+	will neither be formatted nor mounted during the installation.
 
-dnl XXX Write a real disklabel-in-a-nutshell introduction here.
-dnl XXX If only to mention disk sizes can be specified with suffixes,
-dnl XXX not enough people know this!
 	For quick help while in the interactive editor, enter '?'.  The
 	`z' command (which deletes all partitions and starts with a
 	clean label), the `A' command (which performs the automatic
 	partition layout) and the `n' command (to change mount points)
 	are of particular interest.
+
+	Although the partitions position and size are written in exact
+	sector values, you do not need a calculator to create your
+	partitions!  Human-friendly units can be specified by adding `k',
+	`m' or `g' after any numbers to have them converted to kilobytes,
+	megabytes or gigabytes. Or you may specify a percentage of the
+	disk size using `%' as the suffix.
 
 	Enter 'M' to view the entire manual page (see the info on the
 	``-E'' flag).  To exit the editor enter 'q'.-:})dnl
@@ -518,6 +555,17 @@ define({:-OpenBSDInstallPart6-:},
 {:-	After the layout has been saved, new filesystems will be
 	created on all partitions with mount points.
 	This will DESTROY ALL EXISTING DATA on those partitions.
+
+	After configuring your root disk, the installer will
+	return to the list of available disks to configure.
+
+	You can choose the other disks to use with OpenBSD in
+	any order, and will get to setup their layout similarly
+	to the root disk above. However, for non-root disks,
+	you will not be proposed a default partition layout.
+
+	When all your disks are configured, simply hit return
+	at the disk prompt.
 ifelse(MDTZ,,,
 {:-
 	You may now be given the opportunity to configure the time zone
@@ -535,57 +583,31 @@ ifelse(MDTZ,,,
 dnl
 dnl Notes for various installation methods.
 dnl
-define({:-OpenBSDFTPInstall-:},
-{:-	To install via FTP:
-		To begin an FTP install you will need the following
+define({:-OpenBSDURLInstall-:},
+{:-	To install via FTP or HTTP:
+		To begin an FTP or HTTP install you will need the following
 		pieces of information:
-		1) Proxy server URL if you are using a URL-based
-		   FTP proxy (squid, CERN FTP, Apache 1.2 or higher).
-		   You need to {:-define-:} a proxy if you are behind a
-		   firewall that blocks outgoing FTP (assuming you
-		   have a proxy available to use).
-		2) The IP address (or hostname if you configured
-		   DNS servers earlier in the install) of an FTP server
-		   carrying the OpenBSD OSREV distribution.
-		   The installation program will try to fetch a list
-		   of FTP servers; depending on your network settings,
-		   this might fail.  If the list could be fetched, it
-		   will be displayed, and you can choose an entry from
-		   the list (the first entries are expected to be the
-		   closest mirrors to your location).
-		3) The FTP directory holding the distribution sets.
-		   The default value of pub/OpenBSD/OSREV/MACHINE
-		   is almost always correct.
-		4) The login and password for the FTP account.
-		   You will only be asked for a password for
-		   non-anonymous FTP.
-
-		Then refer to the section named "installation set selection"
-		below.-:})dnl
-dnl
-define({:-OpenBSDHTTPInstall-:},
-{:-	To install via HTTP:
-		To begin an HTTP install you will need the following
-		pieces of information:
-		1) Proxy server URL if you are using a URL-based
+		1) Proxy server URL if you are using a URL-based FTP or
 		   HTTP proxy (squid, CERN FTP, Apache 1.2 or higher).
 		   You need to {:-define-:} a proxy if you are behind a
-		   firewall that blocks outgoing HTTP connections
+		   firewall that blocks outgoing FTP or HTTP connections
 		   (assuming you have a proxy available to use).
 		2) The IP address (or hostname if you configured
-		   DNS servers earlier in the install) of an FTP server
-		   carrying the OpenBSD OSREV distribution.
+		   DNS servers earlier in the install) of an FTP or HTTP
+		   server carrying the OpenBSD OSREV distribution.
 		   The installation program will try to fetch a list
-		   of HTTP servers; depending on your network settings,
+		   of such servers; depending on your network settings,
 		   this might fail.  If the list could be fetched, it
 		   will be displayed, and you can choose an entry from
 		   the list (the first entries are expected to be the
 		   closest mirrors to your location).
 		3) The directory holding the distribution sets.
-		   There is no standard location for this;
-		   You should use the directory specified
-		   along with the server in the list of official
-		   HTTP mirror sites that you received in step 2.
+		   The default value of pub/OpenBSD/OSREV/MACHINE
+		   is almost always correct on FTP servers; for HTTP
+		   servers there is no standard location for this.
+		4) For FTP installs only, the login and password for the
+		   FTP account.  You will only be asked for a password for
+		   non-anonymous FTP.
 
 		Then refer to the section named "installation set selection"
 		below.-:})dnl
@@ -745,14 +767,12 @@ ifelse(MDTZ,,dnl
 
 	The installation program will then proceed to save the system
 	configuration, create all the device nodes needed by the installed
-	system, and will install bootblocks on the root disk.
-ifelse(MDSMP,,,{:-
+	system, and will install bootblocks on the root disk.ifelse(MDSMP,,,{:-
 
 	On multiprocessor systems, if the bsd.mp kernel has been installed,
 	it will be renamed to `bsd', which is the default kernel the boot
 	blocks look for.  The single processor kernel, `bsd', will be
-	available as `bsd.sp'.-:})dnl
--:})dnl
+	available as `bsd.sp'.-:})-:})dnl
 dnl
 define({:-OpenBSDCongratulations-:},{:-
 Congratulations, you have successfully installed OpenBSD OSREV.  When you
@@ -855,7 +875,7 @@ define({:-OpenBSDXferFloppyFromDOS-:},
 	directory.  Otherwise, you will have to download them from one of
 	the OpenBSD FTP or HTTP mirror sites, using an FTP client or a web
 	browser.  In either case, take care to do "binary" transfers, since
-	these are images files and any DOS cr/lf translations or control/z
+	these are images files and any DOS cr/lf translations or Control-z
 	EOF interpretations will result in corrupted transfers.
 	
 	You will also need to go to the "tools" directory and grab a
