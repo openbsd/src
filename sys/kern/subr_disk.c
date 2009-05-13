@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.86 2009/05/03 06:45:58 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.87 2009/05/13 01:14:19 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ initdisklabel(struct disklabel *lp)
 		DL_SETDSIZE(lp, MAXDISKSIZE);
 	if (lp->d_secpercyl == 0)
 		return ("invalid geometry");
-	lp->d_npartitions = RAW_PART + 1;
+	lp->d_npartitions = MAXPARTITIONS;
 	for (i = 0; i < RAW_PART; i++) {
 		DL_SETPSIZE(&lp->d_partitions[i], 0);
 		DL_SETPOFFSET(&lp->d_partitions[i], 0);
