@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.122 2009/05/13 01:01:34 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.123 2009/05/13 01:09:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1354,6 +1354,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFDSTADDR:
 #endif
 	case SIOCSIFFLAGS:
+		s = splnet();
 		if (ifp->if_flags & IFF_UP)
 			ifp->if_flags |= IFF_RUNNING;
 		else {
@@ -1368,8 +1369,10 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			sc->sc_bulk_next = NULL;
 			sc->sc_bulk_last = NULL;
 		}
+		splx(s);
 		break;
 	case SIOCSIFMTU:
+		s = splnet();
 		if (ifr->ifr_mtu <= PFSYNC_MINPKT)
 			return (EINVAL);
 		if (ifr->ifr_mtu > MCLBYTES) /* XXX could be bigger */
@@ -1377,6 +1380,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifr->ifr_mtu < ifp->if_mtu)
 			pfsync_sendout();
 		ifp->if_mtu = ifr->ifr_mtu;
+		splx(s);
 		break;
 	case SIOCGETPFSYNC:
 		bzero(&pfsyncr, sizeof(pfsyncr));
@@ -1394,14 +1398,18 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = copyin(ifr->ifr_data, &pfsyncr, sizeof(pfsyncr))))
 			return (error);
 
+		s = splnet();
+
 		if (pfsyncr.pfsyncr_syncpeer.s_addr == 0)
 			sc->sc_sync_peer.s_addr = INADDR_PFSYNC_GROUP;
 		else
 			sc->sc_sync_peer.s_addr =
 			    pfsyncr.pfsyncr_syncpeer.s_addr;
 
-		if (pfsyncr.pfsyncr_maxupdates > 255)
+		if (pfsyncr.pfsyncr_maxupdates > 255) {
+			splx(s);
 			return (EINVAL);
+		}
 		sc->sc_maxupdates = pfsyncr.pfsyncr_maxupdates;
 
 		if (pfsyncr.pfsyncr_syncdev[0] == 0) {
@@ -1411,11 +1419,14 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				    --imo->imo_num_memberships]);
 				imo->imo_multicast_ifp = NULL;
 			}
+			splx(s);
 			break;
 		}
 
-		if ((sifp = ifunit(pfsyncr.pfsyncr_syncdev)) == NULL)
+		if ((sifp = ifunit(pfsyncr.pfsyncr_syncdev)) == NULL) {
+			splx(s);
 			return (EINVAL);
+		}
 
 		if (sifp->if_mtu < sc->sc_if.if_mtu ||
 		    (sc->sc_sync_if != NULL &&
@@ -1481,6 +1492,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			    sizeof(struct pfsync_state)));
 			pfsync_request_update(0, 0);
 		}
+		splx(s);
 
 		break;
 
