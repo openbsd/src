@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.91 2008/11/28 02:44:18 brad Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.92 2009/05/13 16:46:55 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -1242,6 +1242,11 @@ axe_init(void *xsc)
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
 	axe_reset(sc);
+
+	/* set MAC address */
+	if (sc->axe_flags & AX178 || sc->axe_flags & AX772)
+		axe_cmd(sc, AXE_178_CMD_WRITE_NODEID, 0, 0,
+		    &sc->arpcom.ac_enaddr);
 
 	/* Enable RX logic. */
 
