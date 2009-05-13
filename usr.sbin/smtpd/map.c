@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.5 2009/03/06 23:38:18 gilles Exp $	*/
+/*	$OpenBSD: map.c,v 1.6 2009/05/13 21:20:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -76,13 +76,16 @@ map_dblookup(struct smtpd *env, char *mapname, char *keyname)
 	}
 
 	db = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
-	if (db == NULL)
+	if (db == NULL) {
+		log_warn("map_dblookup: can't open %s", map->m_config);
 		return NULL;
+	}
 
 	key.data = keyname;
 	key.size = strlen(key.data) + 1;
 
 	if ((ret = db->get(db, &key, &val, 0)) == -1) {
+		log_warn("map_dblookup: map '%s'", mapname);
 		db->close(db);
 		return NULL;
 	}

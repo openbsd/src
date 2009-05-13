@@ -1,4 +1,4 @@
-/*	$OpenBSD: aliases.c,v 1.17 2009/04/24 10:02:35 jacekm Exp $	*/
+/*	$OpenBSD: aliases.c,v 1.18 2009/05/13 21:20:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -56,21 +56,22 @@ aliases_exist(struct smtpd *env, char *username)
 		return 0;
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
-	if (aliasesdb == NULL)
+	if (aliasesdb == NULL) {
+		log_warn("aliases_exist: dbopen");
 		return 0;
+	}
 
 	lowercase(buf, username, sizeof(buf));
 
 	key.data = buf;
 	key.size = strlen(key.data) + 1;
 
-	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) == -1) {
-		aliasesdb->close(aliasesdb);
-		return 0;
-	}
+	ret = aliasesdb->get(aliasesdb, &key, &val, 0);
+	if (ret == -1)
+		log_warn("aliases_exist");
 	aliasesdb->close(aliasesdb);
 
-	return ret == 0 ? 1 : 0;
+	return (ret == 0);
 }
 
 int
@@ -92,8 +93,10 @@ aliases_get(struct smtpd *env, struct aliaseslist *aliases, char *username)
 		return 0;
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
-	if (aliasesdb == NULL)
+	if (aliasesdb == NULL) {
+		log_warn("aliases_get: dbopen");
 		return 0;
+	}
 
 	lowercase(buf, username, sizeof(buf));
 
@@ -101,6 +104,8 @@ aliases_get(struct smtpd *env, struct aliaseslist *aliases, char *username)
 	key.size = strlen(key.data) + 1;
 
 	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
+		if (ret == -1)
+			log_warn("aliases_get");
 		aliasesdb->close(aliasesdb);
 		return 0;
 	}
@@ -145,8 +150,10 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 		return 0;
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
-	if (aliasesdb == NULL)
+	if (aliasesdb == NULL) {
+		log_warn("aliases_virtual_exist: dbopen");
 		return 0;
+	}
 
 	if (! bsnprintf(strkey, sizeof(strkey), "%s@%s", path->user,
 		path->domain)) {
@@ -160,6 +167,8 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 	key.size = strlen(key.data) + 1;
 
 	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
+		if (ret == -1)
+			log_warn("aliases_virtual_exist");
 
 		if (! bsnprintf(strkey, sizeof(strkey), "@%s", path->domain)) {
 			aliasesdb->close(aliasesdb);
@@ -171,14 +180,13 @@ aliases_virtual_exist(struct smtpd *env, struct path *path)
 		key.data = strkey;
 		key.size = strlen(key.data) + 1;
 
-		if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
-			aliasesdb->close(aliasesdb);
-			return 0;
-		}
+		ret = aliasesdb->get(aliasesdb, &key, &val, 0);
 	}
+	if (ret == -1)
+		log_warn("aliases_virtual_exist");
 	aliasesdb->close(aliasesdb);
 
-	return ret == 0 ? 1 : 0;
+	return (ret == 0);
 }
 
 int
@@ -201,8 +209,10 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 		return 0;
 
 	aliasesdb = dbopen(map->m_config, O_RDONLY, 0600, DB_HASH, NULL);
-	if (aliasesdb == NULL)
+	if (aliasesdb == NULL) {
+		log_warn("aliases_virtual_get: dbopen");
 		return 0;
+	}
 
 	if (! bsnprintf(strkey, sizeof(strkey), "%s@%s", path->user,
 		path->domain)) {
@@ -216,6 +226,8 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 	key.size = strlen(key.data) + 1;
 
 	if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
+		if (ret == -1)
+			log_warn("aliases_virtual_get");
 
 		if (! bsnprintf(strkey, sizeof(strkey), "@%s", path->domain)) {
 			aliasesdb->close(aliasesdb);
@@ -228,6 +240,8 @@ aliases_virtual_get(struct smtpd *env, struct aliaseslist *aliases,
 		key.size = strlen(key.data) + 1;
 
 		if ((ret = aliasesdb->get(aliasesdb, &key, &val, 0)) != 0) {
+			if (ret == -1)
+				log_warn("aliases_virtual_get");
 			aliasesdb->close(aliasesdb);
 			return 0;
 		}
@@ -271,7 +285,7 @@ aliases_expand_include(struct aliaseslist *aliases, char *filename)
 
 	fp = fopen(filename, "r");
 	if (fp == NULL) {
-		log_warnx("failed to open include file \"%s\".", filename);
+		log_warn("failed to open include file \"%s\".", filename);
 		return 0;
 	}
 
