@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.14 2009/05/12 21:10:40 schwarze Exp $
+.\"	$OpenBSD: daily.8,v 1.15 2009/05/13 21:06:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 12 2009 $
+.Dd $Mdocdate: May 13 2009 $
 .Dt DAILY 8
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@ and
 are shell scripts run on a periodic basis by the clock daemon,
 .Xr cron 8 .
 They take care of some basic administrative tasks.
-The results are mailed to root.
+Their output, if any, is mailed to root.
 .Pp
 .Sy Note :
 The scripts are all run as part of root's
