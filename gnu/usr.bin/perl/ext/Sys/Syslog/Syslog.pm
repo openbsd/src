@@ -1,16 +1,17 @@
 package Sys::Syslog;
 use strict;
+use warnings;
 use warnings::register;
 use Carp;
+use Exporter ();
 use Fcntl qw(O_WRONLY);
 use File::Basename;
 use POSIX qw(strftime setlocale LC_TIME);
 use Socket ':all';
 require 5.005;
-require Exporter;
 
 {   no strict 'vars';
-    $VERSION = '0.22';
+    $VERSION = '0.27';
     @ISA = qw(Exporter);
 
     %EXPORT_TAGS = (
@@ -76,6 +77,11 @@ require Exporter;
 # 
 use vars qw($host);             # host to send syslog messages to (see notes at end)
 
+#
+# Prototypes
+#
+sub silent_eval (&);
+
 # 
 # Global variables
 # 
@@ -85,6 +91,7 @@ my $syslog_send;                # coderef of the function used to send messages
 my $syslog_path = undef;        # syslog path for "stream" and "unix" mechanisms
 my $syslog_xobj = undef;        # if defined, holds the external object used to send messages
 my $transmit_ok = 0;            # flag to indicate if the last message was transmited
+my $sock_timeout  = 0;          # socket timeout, see below
 my $current_proto = undef;      # current mechanism used to transmit messages
 my $ident = '';                 # identifiant prepended to each message
 $facility = '';                 # current facility
@@ -105,15 +112,12 @@ if ($^O =~ /^(freebsd|linux)$/) {
     @connectMethods = grep { $_ ne 'udp' } @connectMethods;
 }
 
+# And on Win32 systems, we try to use the native mechanism for this 
+# platform, the events logger, available through Win32::EventLog.
 EVENTLOG: {
-    # use EventLog on Win32
     my $is_Win32 = $^O =~ /Win32/i;
 
-    # some applications are trying to be too smart
-    # yes I'm speaking of YOU, SpamAssassin, grr..
-    local($SIG{__DIE__}, $SIG{__WARN__}, $@);
-
-    if (eval "use Sys::Syslog::Win32; 1") {
+    if (can_load("Sys::Syslog::Win32")) {
         unshift @connectMethods, 'eventlog';
     }
     elsif ($is_Win32) {
@@ -123,6 +127,18 @@ EVENTLOG: {
 
 my @defaultMethods = @connectMethods;
 my @fallbackMethods = ();
+
+# The timeout in connection_ok() was pushed up to 0.25 sec in 
+# Sys::Syslog v0.19 in order to address a heisenbug on MacOSX:
+# http://london.pm.org/pipermail/london.pm/Week-of-Mon-20061211/005961.html
+# 
+# However, this also had the effect of slowing this test for 
+# all other operating systems, which apparently impacted some 
+# users (cf. CPAN-RT #34753). So, in order to make everybody 
+# happy, the timeout is now zero by default on all systems 
+# except on OSX where it is set to 250 msec, and can be set 
+# with the infamous setlogsock() function.
+$sock_timeout = 0.25 if $^O =~ /darwin/;
 
 # coderef for a nicer handling of errors
 my $err_sub = $options{nofatal} ? \&warnings::warnif : \&croak;
@@ -155,7 +171,7 @@ sub openlog {
         $options{$opt} = 1 if exists $options{$opt}
     }
 
-    $err_sub = $options{nofatal} ? \&warnings::warnif : \&croak;
+    $err_sub = delete $options{nofatal} ? \&warnings::warnif : \&croak;
     return 1 unless $options{ndelay};
     connect_log();
 } 
@@ -172,8 +188,18 @@ sub setlogmask {
 }
  
 sub setlogsock {
-    my $setsock = shift;
-    $syslog_path = shift;
+    my ($setsock, $setpath, $settime) = @_;
+
+    # check arguments
+    my $diag_invalid_arg
+        = "Invalid argument passed to setlogsock; must be 'stream', 'pipe', "
+        . "'unix', 'native', 'eventlog', 'tcp', 'udp' or 'inet'";
+    croak $diag_invalid_arg unless defined $setsock;
+    croak "Invalid number of arguments" unless @_ >= 1 and @_ <= 3;
+
+    $syslog_path  = $setpath if defined $setpath;
+    $sock_timeout = $settime if defined $settime;
+
     disconnect_log() if $connected;
     $transmit_ok = 0;
     @fallbackMethods = ();
@@ -221,7 +247,7 @@ sub setlogsock {
 
     } elsif (lc $setsock eq 'pipe') {
         for my $path ($syslog_path, &_PATH_LOG, "/dev/log") {
-            next unless defined $path and length $path and -w $path;
+            next unless defined $path and length $path and -p $path and -w _;
             $syslog_path = $path;
             last
         }
@@ -237,7 +263,7 @@ sub setlogsock {
         @connectMethods = qw(native);
 
     } elsif (lc $setsock eq 'eventlog') {
-        if (eval "use Win32::EventLog; 1") {
+        if (can_load("Win32::EventLog")) {
             @connectMethods = qw(eventlog);
         } else {
             warnings::warnif "eventlog passed to setlogsock, but no Win32 API available";
@@ -248,6 +274,7 @@ sub setlogsock {
     } elsif (lc $setsock eq 'tcp') {
 	if (getservbyname('syslog', 'tcp') || getservbyname('syslogng', 'tcp')) {
             @connectMethods = qw(tcp);
+            $host = $syslog_path;
 	} else {
             warnings::warnif "tcp passed to setlogsock, but tcp service unavailable";
 	    return undef;
@@ -256,6 +283,7 @@ sub setlogsock {
     } elsif (lc $setsock eq 'udp') {
 	if (getservbyname('syslog', 'udp')) {
             @connectMethods = qw(udp);
+            $host = $syslog_path;
 	} else {
             warnings::warnif "udp passed to setlogsock, but udp service unavailable";
 	    return undef;
@@ -268,8 +296,7 @@ sub setlogsock {
 	@connectMethods = qw(console);
 
     } else {
-        croak "Invalid argument passed to setlogsock; must be 'stream', 'pipe', ",
-              "'unix', 'native', 'eventlog', 'tcp', 'udp' or 'inet'"
+        croak $diag_invalid_arg
     }
 
     return 1;
@@ -293,25 +320,29 @@ sub syslog {
     croak "syslog: expecting argument \$priority" unless defined $priority;
     croak "syslog: expecting argument \$format"   unless defined $mask;
 
+    croak "syslog: invalid level/facility: $priority" if $priority =~ /^-\d+$/;
     @words = split(/\W+/, $priority, 2);    # Allow "level" or "level|facility".
     undef $numpri;
     undef $numfac;
 
-    foreach (@words) {
-	$num = xlate($_);		    # Translate word to number.
-	if ($num < 0) {
-	    croak "syslog: invalid level/facility: $_"
-	}
-	elsif ($num <= &LOG_PRIMASK) {
-	    croak "syslog: too many levels given: $_" if defined $numpri;
-	    $numpri = $num;
-	    return 0 unless LOG_MASK($numpri) & $maskpri;
-	}
-	else {
-	    croak "syslog: too many facilities given: $_" if defined $numfac;
-	    $facility = $_;
-	    $numfac = $num;
-	}
+    for my $word (@words) {
+        next if length $word == 0;
+
+        $num = xlate($word);        # Translate word to number.
+
+        if ($num < 0) {
+            croak "syslog: invalid level/facility: $word"
+        }
+        elsif ($num <= &LOG_PRIMASK) {
+            croak "syslog: too many levels given: $word" if defined $numpri;
+            $numpri = $num;
+            return 0 unless LOG_MASK($numpri) & $maskpri;
+        }
+        else {
+            croak "syslog: too many facilities given: $word" if defined $numfac;
+            $facility = $word;
+            $numfac = $num;
+        }
     }
 
     croak "syslog: level must be given" unless defined $numpri;
@@ -464,14 +495,28 @@ sub _syslog_send_native {
 # private function to translate names to numeric values
 # 
 sub xlate {
-    my($name) = @_;
+    my ($name) = @_;
+
     return $name+0 if $name =~ /^\s*\d+\s*$/;
     $name = uc $name;
     $name = "LOG_$name" unless $name =~ /^LOG_/;
-    $name = "Sys::Syslog::$name";
-    # Can't have just eval { &$name } || -1 because some LOG_XXX may be zero.
-    my $value = eval { no strict 'refs'; &$name };
-    $@ = "";
+
+    # ExtUtils::Constant 0.20 introduced a new way to implement
+    # constants, called ProxySubs.  When it was used to generate
+    # the C code, the constant() function no longer returns the 
+    # correct value.  Therefore, we first try a direct call to 
+    # constant(), and if the value is an error we try to call the 
+    # constant by its full name. 
+    my $value = constant($name);
+
+    if (index($value, "not a valid") >= 0) {
+        $name = "Sys::Syslog::$name";
+        $value = eval { no strict "refs"; &$name };
+        $value = $@ unless defined $value;
+    }
+
+    $value = -1 if index($value, "not a valid") >= 0;
+
     return defined $value ? $value : -1;
 }
 
@@ -546,11 +591,10 @@ sub connect_tcp {
     }
 
     setsockopt(SYSLOG, SOL_SOCKET, SO_KEEPALIVE, 1);
-    if (eval { IPPROTO_TCP() }) {
+    if (silent_eval { IPPROTO_TCP() }) {
         # These constants don't exist in 5.005. They were added in 1999
         setsockopt(SYSLOG, IPPROTO_TCP(), TCP_NODELAY(), 1);
     }
-    $@ = "";
     if (!connect(SYSLOG, $addr)) {
 	push @$errs, "tcp connect: $!";
 	return 0;
@@ -619,7 +663,7 @@ sub connect_stream {
 	push @$errs, "stream $syslog_path is not writable";
 	return 0;
     }
-    if (!sysopen(SYSLOG, $syslog_path, 0400, O_WRONLY)) {
+    if (!sysopen(SYSLOG, $syslog_path, O_WRONLY, 0400)) {
 	push @$errs, "stream can't open $syslog_path: $!";
 	return 0;
     }
@@ -697,12 +741,7 @@ sub connect_native {
         $logopt += xlate($opt) if $options{$opt}
     }
 
-    eval { openlog_xs($ident, $logopt, xlate($facility)) };
-    if ($@) {
-        push @$errs, $@;
-        return 0;
-    }
-
+    openlog_xs($ident, $logopt, xlate($facility));
     $syslog_send = \&_syslog_send_native;
 
     return 1;
@@ -741,7 +780,7 @@ sub connection_ok {
 
     my $rin = '';
     vec($rin, fileno(SYSLOG), 1) = 1;
-    my $ret = select $rin, undef, $rin, 0.25;
+    my $ret = select $rin, undef, $rin, $sock_timeout;
     return ($ret ? 0 : 1);
 }
 
@@ -761,7 +800,26 @@ sub disconnect_log {
     return close SYSLOG;
 }
 
-1;
+
+#
+# Wrappers around eval() that makes sure that nobody, and I say NOBODY, 
+# ever knows that I wanted to test if something was here or not. 
+# It is needed because some applications are trying to be too smart,
+# do it wrong, and it ends up in EPIC FAIL. 
+# Yes I'm speaking of YOU, SpamAssassin.
+#
+sub silent_eval (&) {
+    local($SIG{__DIE__}, $SIG{__WARN__}, $@);
+    return eval { $_[0]->() }
+}
+
+sub can_load {
+    local($SIG{__DIE__}, $SIG{__WARN__}, $@);
+    return eval "use $_[0]; 1"
+}
+
+
+"Eighth Rule: read the documentation."
 
 __END__
 
@@ -771,7 +829,7 @@ Sys::Syslog - Perl interface to the UNIX syslog(3) calls
 
 =head1 VERSION
 
-Version 0.22
+Version 0.27
 
 =head1 SYNOPSIS
 
@@ -965,6 +1023,8 @@ Log all messages up to debug:
 
 =item B<setlogsock($sock_type, $stream_location)> (added in Perl 5.004_02)
 
+=item B<setlogsock($sock_type, $stream_location, $sock_timeout)> (added in 0.25)
+
 Sets the socket type to be used for the next call to
 C<openlog()> or C<syslog()> and returns true on success,
 C<undef> on failure. The available mechanisms are: 
@@ -984,15 +1044,18 @@ added in C<Sys::Syslog> 0.19).
 =item *
 
 C<"tcp"> - connect to a TCP socket, on the C<syslog/tcp> or C<syslogng/tcp> 
-service. 
+service. If defined, the second parameter is used as a hostname to connect to.
 
 =item *
 
 C<"udp"> - connect to a UDP socket, on the C<syslog/udp> service.
+If defined, the second parameter is used as a hostname to connect to, 
+and the third parameter as the timeout used to check for UDP response. 
 
 =item *
 
-C<"inet"> - connect to an INET socket, either TCP or UDP, tried in that order. 
+C<"inet"> - connect to an INET socket, either TCP or UDP, tried in that 
+order.  If defined, the second parameter is used as a hostname to connect to.
 
 =item *
 
@@ -1026,7 +1089,8 @@ A reference to an array can also be passed as the first parameter.
 When this calling method is used, the array should contain a list of
 mechanisms which are attempted in order.
 
-The default is to try C<native>, C<tcp>, C<udp>, C<unix>, C<stream>, C<console>.
+The default is to try C<native>, C<tcp>, C<udp>, C<unix>, C<pipe>, C<stream>, 
+C<console>.
 Under systems with the Win32 API, C<eventlog> will be added as the first 
 mechanism to try if C<Win32::EventLog> is available.
 
@@ -1113,8 +1177,7 @@ Example of use of C<%m>:
 
 Log to UDP port on C<$remotehost> instead of logging locally:
 
-    setlogsock('udp');
-    $Sys::Syslog::host = $remotehost;
+    setlogsock("udp", $remotehost);
     openlog($program, 'ndelay', 'user');
     syslog('info', 'something happened over here');
 
@@ -1342,16 +1405,19 @@ GNU C Library documentation on syslog,
 L<http://www.gnu.org/software/libc/manual/html_node/Syslog.html>
 
 Solaris 10 documentation on syslog, 
-L<http://docs.sun.com/app/docs/doc/816-5168/6mbb3hruo?a=view>
+L<http://docs.sun.com/app/docs/doc/816-5168/syslog-3c?a=view>
 
-IRIX 6.4 documentation on syslog,
-L<http://techpubs.sgi.com/library/tpl/cgi-bin/getdoc.cgi?coll=0640&db=man&fname=3c+syslog>
+Mac OS X documentation on syslog,
+L<http://developer.apple.com/documentation/Darwin/Reference/ManPages/man3/syslog.3.html>
+
+IRIX 6.5 documentation on syslog,
+L<http://techpubs.sgi.com/library/tpl/cgi-bin/getdoc.cgi?coll=0650&db=man&fname=3c+syslog>
 
 AIX 5L 5.3 documentation on syslog, 
 L<http://publib.boulder.ibm.com/infocenter/pseries/v5r3/index.jsp?topic=/com.ibm.aix.basetechref/doc/basetrf2/syslog.htm>
 
 HP-UX 11i documentation on syslog, 
-L<http://docs.hp.com/en/B9106-90010/syslog.3C.html>
+L<http://docs.hp.com/en/B2355-60130/syslog.3C.html>
 
 Tru64 5.1 documentation on syslog, 
 L<http://h30097.www3.hp.com/docs/base_doc/DOCUMENTATION/V51_HTML/MAN/MAN3/0193____.HTM>
@@ -1455,7 +1521,7 @@ L<http://perldoc.perl.org/Sys/Syslog.html>
 
 =head1 COPYRIGHT
 
-Copyright (C) 1990-2007 by Larry Wall and others.
+Copyright (C) 1990-2008 by Larry Wall and others.
 
 
 =head1 LICENSE
@@ -1518,6 +1584,9 @@ of a bug in Sys::Syslog back then?
 
 Links
 -----
+Linux Fast-STREAMS
+- L<http://www.openss7.org/streams.html>
+
 II12021: SYSLOGD HOWTO TCPIPINFO (z/OS, OS/390, MVS)
 - L<http://www-1.ibm.com/support/docview.wss?uid=isg1II12021>
 

@@ -1080,8 +1080,10 @@ ext/Sys/Hostname/Hostname.xs	Sys::Hostname extension external subroutines
 ext/Sys/Hostname/Makefile.PL	Sys::Hostname extension makefile writer
 ext/Sys/Hostname/t/Hostname.t	See if Sys::Hostname works
 ext/Sys/Syslog/Changes		Changlog for Sys::Syslog
+ext/Sys/Syslog/eg/syslog.pl	Example for Sys::Syslog usage
 ext/Sys/Syslog/fallback/const-c.inc	Sys::Syslog constants fallback file
 ext/Sys/Syslog/fallback/const-xs.inc	Sys::Syslog constants fallback file
+ext/Sys/Syslog/fallback/syslog.h	Sys::Syslog constants fallback file
 ext/Sys/Syslog/Makefile.PL	Sys::Syslog extension makefile writer
 ext/Sys/Syslog/README		README for Sys::Syslog
 ext/Sys/Syslog/README.win32	README for Sys::Syslog on Windows
@@ -1089,6 +1091,7 @@ ext/Sys/Syslog/Syslog.pm	Sys::Syslog extension Perl module
 ext/Sys/Syslog/Syslog.xs	Sys::Syslog extension external subroutines
 ext/Sys/Syslog/t/00-load.t	test for Sys::Syslog
 ext/Sys/Syslog/t/constants.t	test for Sys::Syslog
+ext/Sys/Syslog/t/portfs.t	test for Sys::Syslog
 ext/Sys/Syslog/t/syslog.t	See if Sys::Syslog works
 ext/Sys/Syslog/win32/compile.pl	Sys::Syslog extension Win32 related file
 ext/Sys/Syslog/win32/PerlLog_dll.uu	Sys::Syslog extension Win32 related file

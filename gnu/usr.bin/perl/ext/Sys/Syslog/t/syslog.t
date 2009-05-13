@@ -19,6 +19,10 @@ use warnings qw(closure deprecated exiting glob io misc numeric once overflow
                 pack portable recursion redefine regexp severe signal substr
                 syntax taint uninitialized unpack untie utf8 void);
 
+# if someone is using warnings::compat, the previous trick won't work, so we
+# must manually disable warnings
+$^W = 0 if $] < 5.006;
+
 my $is_Win32  = $^O =~ /win32/i;
 my $is_Cygwin = $^O =~ /cygwin/i;
 
@@ -111,41 +115,46 @@ SKIP: {
 }
 
 
-BEGIN { $tests += 20 * 8 }
+BEGIN { $tests += 22 * 8 }
 # try to open a syslog using all the available connection methods
 my @passed = ();
 for my $sock_type (qw(native eventlog unix pipe stream inet tcp udp)) {
     SKIP: {
-        skip "the 'stream' mechanism because a previous mechanism with similar interface succeeded", 20 
+        skip "the 'stream' mechanism because a previous mechanism with similar interface succeeded", 22 
             if $sock_type eq 'stream' and grep {/pipe|unix/} @passed;
 
         # setlogsock() called with an arrayref
         $r = eval { setlogsock([$sock_type]) } || 0;
-        skip "can't use '$sock_type' socket", 20 unless $r;
+        skip "can't use '$sock_type' socket", 22 unless $r;
         is( $@, '', "[$sock_type] setlogsock() called with ['$sock_type']" );
         ok( $r, "[$sock_type] setlogsock() should return true: '$r'" );
 
         # setlogsock() called with a single argument
         $r = eval { setlogsock($sock_type) } || 0;
-        skip "can't use '$sock_type' socket", 18 unless $r;
+        skip "can't use '$sock_type' socket", 20 unless $r;
         is( $@, '', "[$sock_type] setlogsock() called with '$sock_type'" );
         ok( $r, "[$sock_type] setlogsock() should return true: '$r'" );
 
         # openlog() without option NDELAY
         $r = eval { openlog('perl', '', 'local0') } || 0;
-        skip "can't connect to syslog", 16 if $@ =~ /^no connection to syslog available/;
+        skip "can't connect to syslog", 18 if $@ =~ /^no connection to syslog available/;
         is( $@, '', "[$sock_type] openlog() called with facility 'local0' and without option 'ndelay'" );
         ok( $r, "[$sock_type] openlog() should return true: '$r'" );
 
         # openlog() with the option NDELAY
         $r = eval { openlog('perl', 'ndelay', 'local0') } || 0;
-        skip "can't connect to syslog", 14 if $@ =~ /^no connection to syslog available/;
+        skip "can't connect to syslog", 16 if $@ =~ /^no connection to syslog available/;
         is( $@, '', "[$sock_type] openlog() called with facility 'local0' with option 'ndelay'" );
         ok( $r, "[$sock_type] openlog() should return true: '$r'" );
 
         # syslog() with negative level, should fail
         $r = eval { syslog(-1, "$test_string by connecting to a $sock_type socket") } || 0;
         like( $@, '/^syslog: invalid level\/facility: /', "[$sock_type] syslog() called with level -1" );
+        ok( !$r, "[$sock_type] syslog() should return false: '$r'" );
+
+        # syslog() with invalid level, should fail
+        $r = eval { syslog("plonk", "$test_string by connecting to a $sock_type socket") } || 0;
+        like( $@, '/^syslog: invalid level\/facility: /', "[$sock_type] syslog() called with level plonk" );
         ok( !$r, "[$sock_type] syslog() should return false: '$r'" );
 
         # syslog() with levels "info" and "notice" (as a strings), should fail
@@ -188,6 +197,9 @@ SKIP: {
     skip "not testing setlogsock('stream') on Win32", 10 if $is_Win32;
     skip "the 'unix' mechanism works, so the tests will likely fail with the 'stream' mechanism", 10 
         if grep {/unix/} @passed;
+
+    skip "not testing setlogsock('stream'): _PATH_LOG unavailable", 10
+        unless -e Sys::Syslog::_PATH_LOG();
 
     # setlogsock() with "stream" and an undef path
     $r = eval { setlogsock("stream", undef ) } || '';

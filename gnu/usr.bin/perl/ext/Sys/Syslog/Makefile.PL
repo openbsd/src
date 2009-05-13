@@ -29,10 +29,13 @@ if ($use_eventlog) {
     print " * Win32::EventLog detected.\n";
     my $name = "PerlLog";
 
-    push @extra_prereqs, "Win32::TieRegistry" => 0, "Win32::EventLog" => 0;
+    push @extra_prereqs, 
+        Win32 => 0,  "Win32::TieRegistry" => 0,  "Win32::EventLog" => 0;
 
     $virtual_path{'win32/Win32.pm'   } = '$(INST_LIBDIR)/Syslog/Win32.pm';
     $virtual_path{'win32/PerlLog.dll'} = '$(INST_ARCHAUTODIR)/PerlLog.dll';
+
+    push @extra_params, CCFLAGS => "-Ifallback";
 
     # recreate the DLL from its uuencoded form if it's not here
     if (! -f File::Spec->catfile("win32", "$name.dll")) {
@@ -70,22 +73,37 @@ else {
         DEFINE      => '-DUSE_PPPORT_H';
 }
 
+# on pre-5.6 Perls, add warnings::compat to the prereq modules
+push @extra_prereqs, "warnings::compat" => "0.06"  if $] < 5.006;
+
 WriteMakefile(
     NAME            => 'Sys::Syslog',
     LICENSE         => 'perl',
+    AUTHOR          => 'Sebastien Aperghis-Tramoni <sebastien@aperghis.net>',
     VERSION_FROM    => 'Syslog.pm', 
     ABSTRACT_FROM   => 'Syslog.pm', 
     INSTALLDIRS     => 'perl',
     XSPROTOARG      => '-noprototypes',
     PM              => \%virtual_path, 
     PREREQ_PM       => {
-        'Test::More' => 0,
-        'XSLoader'   => 0,
+        # run prereqs
+        'Carp'              => 0,
+        'Fcntl'             => 0,
+        'File::Basename'    => 0,
+        'File::Spec'        => 0,
+        'POSIX'             => 0,
+        'Socket'            => 0,
+        'XSLoader'          => 0,
         @extra_prereqs,
+
+        # build/test prereqs
+        'Test::More'        => 0,
     },
+    PL_FILES        => {},
     dist            => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean           => { FILES => 'Sys-Syslog-*' }, 
-    realclean       => { FILES => 'lib const-c.inc const-xs.inc macros.all PerlLog.h *.bak *.bin *.rc' },
+    realclean       => { FILES => 'lib const-c.inc const-xs.inc macros.all '
+        .'PerlLog.h typemap *.bak *.bin *.rc win32/PerlLog_dll' },
     @extra_params
 );
 
@@ -160,9 +178,9 @@ if(eval {require ExtUtils::Constant; 1}) {
     );
 
     ExtUtils::Constant::WriteConstants(
-        ($] > 5.009002 ? (PROXYSUBS => 1) : ()),
         NAME => 'Sys::Syslog',
         NAMES => [ @levels, @facilities, @options, @others_macros ],
+        ($] > 5.009002 ? (PROXYSUBS => 1) : ()),
     );
 
     my @names = map { ref $_ ? $_->{name} : $_ } @levels, @facilities, @options;
