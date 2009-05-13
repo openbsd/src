@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.207 2009/05/12 00:54:48 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.208 2009/05/13 01:31:58 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.207 2009/05/12 00:54:48 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.208 2009/05/13 01:31:58 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -610,9 +610,9 @@ cylinderalign:
 #ifdef SUN_CYLCHECK
 		if (lp->d_flags & D_VENDOR) {
 			/* Align chunk to cylinder boundaries. */
-			chunksize -= cylsecs - chunkstart % cylsecs;
 			chunksize -= chunksize % cylsecs;
-			chunkstart += cylsecs - chunkstart % cylsecs;
+			chunkstart = ((chunkstart + cylsecs - 1) / cylsecs) *
+			    cylsecs;
 		}
 #endif
 		/* See if partition can fit into chunk. */
