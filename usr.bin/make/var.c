@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: var.c,v 1.84 2008/11/09 12:34:47 tobias Exp $	*/
+/*	$OpenBSD: var.c,v 1.85 2009/05/13 10:47:54 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1091,6 +1091,12 @@ Var_NewLoopVar(const char *name, const char *ename)
 	l->old = *(l->me);
 	l->me->flags = VAR_SEEN_ENV | VAR_DUMMY;
 	return l;
+}
+
+char *
+Var_LoopVarName(struct LoopVar *v)
+{
+	return v->me->name;
 }
 
 void

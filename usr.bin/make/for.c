@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: for.c,v 1.39 2007/09/17 09:28:36 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.40 2009/05/13 10:47:54 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -176,7 +176,8 @@ For_Eval(const char *line)
 		LstNode ln;
 		(void)fprintf(stderr, "For: Iterator ");
 		for (ln = Lst_First(&arg->vars); ln != NULL; ln = Lst_Adv(ln))
-			(void)fprintf(stderr, "%s ", (char *)Lst_Datum(ln));
+			(void)fprintf(stderr, "%s ", 
+			    Var_LoopVarName(Lst_Datum(ln)));
 		(void)fprintf(stderr, "List %s\n", sub);
 	}
 
@@ -248,7 +249,7 @@ ForExec(void *valuep, void *argp)
 
 	if (DEBUG(FOR))
 		(void)fprintf(stderr, "--- %s = %s\n",
-		    (char *)Lst_Datum(arg->var), value);
+		    Var_LoopVarName(Lst_Datum(arg->var)), value);
 	Buf_Init(&buf, arg->guess);
 	Var_SubstVar(&buf, arg->text, Lst_Datum(arg->var), value);
 	if (arg->freeold)

@@ -134,6 +134,7 @@ struct LoopVar;	/* opaque handle */
 struct LoopVar *Var_NewLoopVar(const char *, const char *);
 void Var_DeleteLoopVar(struct LoopVar *);
 extern void Var_SubstVar(Buffer, const char *, struct LoopVar *, const char *);
+char *Var_LoopVarName(struct LoopVar *);
 
 
 /* Var_Dump();
