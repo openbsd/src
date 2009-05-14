@@ -1,4 +1,6 @@
-#	$OpenBSD: GENERIC-IP32,v 1.1 2009/05/14 21:16:40 miod Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.2 2009/05/14 21:27:02 miod Exp $
+#
+# THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -25,7 +27,7 @@ option		PCIVERBOSE
 option		USER_PCICONF	# User-space PCI configuration
 
 # Define what targets to support
-option		TGT_O2
+option		TGT_O2		# O2, O2+
 
 # Specify storage configuration (it's a joke..)
 config		bsd	swap generic

@@ -1,6 +1,6 @@
-#	$OpenBSD: RAMDISK-IP32,v 1.2 2009/05/14 21:27:02 miod Exp $
+#	$OpenBSD: RAMDISK-IP30,v 1.1 2009/05/14 21:27:02 miod Exp $
 #
-# THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
+# THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 
 machine		sgi mips64
 
@@ -9,7 +9,7 @@ option		TIMEZONE=0	# minutes west of GMT (for)
 option		DST=0		# use daylight savings rules
 
 # Make options
-makeoption	LINK_ADDRESS="0xffffffff80100000"
+makeoption	LINK_ADDRESS="0xa800000020020000"
 
 option		ARCBIOS		# Systems uses ARC firmware.
 
@@ -20,8 +20,8 @@ option		DDB
 
 # Filesystem options
 option		CD9660		# ISO 9660 + Rock Ridge file system
+option		FIFO		# POSIX fifo support (in all filesystems)
 option		FFS		# fast filesystem
-option		FFS2		# fast filesystem 2
 #option		MSDOSFS		# Ability to read write MS-Dos filesystem
 option		NFSCLIENT	# Sun NFS-compatible filesystem (client)
 
@@ -34,7 +34,8 @@ option		MINIROOTSIZE=8192
 option		RAMDISK_HOOKS
 
 # Define what targets to support
-option		TGT_O2		# O2, O2+
+option		TGT_OCTANE	# Octane, Octane 2
+option		TGT_COHERENT
 
 # Specify storage configuration using ramdisk
 config		bsd	root on rd0a swap on rd0b
@@ -47,24 +48,27 @@ cpu*		at mainbus0
 clock0		at mainbus0
 
 #### Main local buses
-macebus0	at mainbus0	# MACE controller localbus.
+xbow0		at mainbus0
 
-# GBE Framebuffer
-gbe0		at mainbus0
+# XBow devices
+xheart*		at xbow?
+onewire*	at xheart?
+xbridge*	at xbow?
+pci*		at xbridge?
 
-#### Localbus devices
-mec0		at macebus0 base 0x00280000 irq 4
-mkbc0		at macebus0 base 0x00320000 irq 6
-com0		at macebus0 base 0x00390000 irq 5
-com1		at macebus0 base 0x00398000 irq 5
-dsrtc0		at macebus0
+# IOC3
+ioc*		at pci?
+com0		at ioc? base 0x00020178
+com1		at ioc? base 0x00020170
+dsrtc0		at ioc?
 
-#### PCI Bus
-macepcibr0	at macebus0	# MACE controller PCI Bus bridge.
-pci*		at macepcibr?	# PCI is on pci bridge
+onewire*	at ioc?
+option ONEWIREVERBOSE
+owmac*		at onewire?
+owserial*	at onewire?
 
 #### SCSI controllers
-ahc*		at pci?
+isp*		at pci?
 siop*		at pci?
 
 # USB Controllers
@@ -133,15 +137,8 @@ urlphy*		at mii?		# Realtek RTL8150L internal PHY
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
 ukphy*		at mii?		# "unknown" PHYs
 
-#### WS console
-wsdisplay*	at gbe?
-
-#### Keyboard and Mouse
-pckbd*		at mkbc?
-wskbd*		at pckbd? console ?
-
 #### SCSI Bus devices
-scsibus*	at ahc?
+scsibus*	at isp?
 scsibus*	at siop?
 
 sd*		at scsibus?
