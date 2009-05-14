@@ -1,3 +1,4 @@
+set require-order yes
 set optimization aggressive
 set timeout tcp.closing 6, tcp.opening 6
 pass in all

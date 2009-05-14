@@ -1,1 +1,2 @@
-stdin:5: Rules must be in order: options, normalization, queueing, translation, filtering
+stdin:6: Rules must be in order: options, normalization, queueing, translation, filtering
+set require-order yes

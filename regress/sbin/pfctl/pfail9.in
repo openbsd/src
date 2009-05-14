@@ -1,4 +1,5 @@
 # Test rule order processing: should fail unless nat -> filter
+set require-order yes
 match in on lo0 all
 pass in on lo1000000 all
 # bork
