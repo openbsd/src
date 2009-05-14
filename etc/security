@@ -1,6 +1,5 @@
-#!/bin/sh -
 #
-#	$OpenBSD: security,v 1.83 2009/05/04 00:37:03 schwarze Exp $
+#	$OpenBSD: security,v 1.84 2009/05/14 21:24:33 schwarze Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -9,17 +8,15 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin
 umask 077
 
 DIR=`mktemp -d /tmp/_secure.XXXXXXXXXX` || exit 1
-ERR=$DIR/_secure1
 TMP1=$DIR/_secure2
 TMP2=$DIR/_secure3
-TMP3=$DIR/_secure4
 LIST=$DIR/_secure5
-OUTPUT=$DIR/_secure6
 
 trap 'rm -rf $DIR; exit 1' 0 1 2 3 13 15
 
 # Check the master password file syntax.
 MP=/etc/master.passwd
+next_part "Checking the ${MP} file:"
 awk -F: '{
 	if ($0 ~ /^[	 ]*$/) {
 		printf("Line %d is a blank line.\n", NR);
@@ -54,22 +51,15 @@ awk -F: '{
 		printf("Login %s has a negative group ID.\n", $1);
 	if (int($7) != 0 && system("test "$7" -lt `date +%s`") == 0)
 		printf("Login %s has expired.\n", $1);
-}' < $MP > $OUTPUT
-if [ -s $OUTPUT ] ; then
-	echo "\nChecking the ${MP} file:"
-	cat $OUTPUT
-fi
+}' < $MP
 
-awk -F: '{ print $1 }' $MP | sort | uniq -d > $OUTPUT
-if [ -s $OUTPUT ] ; then
-	echo "\n${MP} has duplicate user names."
-	column $OUTPUT
-fi
+next_part "${MP} has duplicate user names."
+awk -F: '{ print $1 }' $MP | sort | uniq -d | column
 
+next_part "${MP} has duplicate user IDs."
 awk -F: '/^[^\+]/ { print $1 " " $3 }' $MP | sort -n +1 | tee $TMP1 |
 uniq -d -f 1 | awk '{ print $2 }' > $TMP2
 if [ -s $TMP2 ] ; then
-	echo "\n${MP} has duplicate user IDs."
 	while read uid; do
 		grep -w $uid $TMP1
 	done < $TMP2 | column
@@ -99,6 +89,7 @@ fi
 
 # Check the group file syntax.
 GRP=/etc/group
+next_part "Checking the ${GRP} file:"
 awk -F: '{
 	if ($0 ~ /^[	 ]*$/) {
 		printf("Line %d is a blank line.\n", NR);
@@ -114,26 +105,19 @@ awk -F: '{
 		printf("Group %s has more than 31 characters.\n", $1);
 	if ($3 !~ /^[0-9]*$/)
 		printf("Group %s has an invalid group ID.\n", $1);
-}' < $GRP > $OUTPUT
-if [ -s $OUTPUT ] ; then
-	echo "\nChecking the ${GRP} file:"
-	cat $OUTPUT
-fi
+}' < $GRP
 
-awk -F: '{ print $1 }' $GRP | sort | uniq -d > $OUTPUT
-if [ -s $OUTPUT ] ; then
-	echo "\n${GRP} has duplicate group names."
-	column $OUTPUT
-fi
+next_part "${GRP} has duplicate group names."
+awk -F: '{ print $1 }' $GRP | sort | uniq -d | column
 
 # Check for root paths, umask values in startup files.
 # The check for the root paths is problematical -- it's likely to fail
 # in other environments.  Once the shells have been modified to warn
 # of '.' in the path, the path tests should go away.
-> $OUTPUT
 rhome=/root
 umaskset=no
 list="/etc/csh.cshrc /etc/csh.login ${rhome}/.cshrc ${rhome}/.login"
+next_part "Checking root csh paths, umask values:\n${list}"
 for i in $list ; do
 	if [ -s $i ] ; then
 		if egrep -aq '[[:space:]]*umask[[:space:]]' $i ; then
@@ -146,7 +130,7 @@ for i in $list ; do
 			 if ($2 % 10 ~ /^[0145]/)
 			    print "Root umask is other writable";
 		    }
-		}' < $i >> $OUTPUT
+		}' < $i
 		SAVE_PATH=$PATH
 		unset PATH
 		/bin/csh -f -s << end-of-csh > /dev/null 2>&1
@@ -168,24 +152,18 @@ end-of-csh
 	{ print "Root path directory " $10 " is group writable." } \
 		     $1 ~ /^d.......w/ \
 	{ print "Root path directory " $10 " is other writable." }' \
-		< $TMP1 >> $OUTPUT
+		< $TMP1
 	fi
 done
-if [ $umaskset = "no" -o -s $OUTPUT ] ; then
-	echo "\nChecking root csh paths, umask values:\n${list}"
-	if [ -s $OUTPUT ] ; then
-		cat $OUTPUT
-	fi
-	if [ $umaskset = "no" ] ; then
-		echo "\nRoot csh startup files do not set the umask."
-	fi
+if [ $umaskset = "no" ] ; then
+	echo "\nRoot csh startup files do not set the umask."
 fi
 
-> $OUTPUT
 > $TMP2
 rhome=/root
 umaskset=no
 list="/etc/profile ${rhome}/.profile"
+next_part "Checking root sh paths, umask values:\n${list}"
 for i in $list; do
 	if [ -s $i ] ; then
 		if egrep -a umask $i > /dev/null ; then
@@ -195,7 +173,7 @@ for i in $list; do
 		awk '$2 % 100 < 20 \
 			{ print "Root umask is group writable" } \
 		     $2 % 10 < 2 \
-			{ print "Root umask is other writable" }' >> $OUTPUT
+			{ print "Root umask is other writable" }'
 		SAVE_PATH=$PATH
 		SAVE_ENV=$ENV
 		unset PATH ENV
@@ -221,25 +199,19 @@ end-of-sh
 	{ print "Root path directory " $10 " is group writable." } \
 		     $1 ~ /^d.......w/ \
 	{ print "Root path directory " $10 " is other writable." }' \
-		< $TMP1 >> $OUTPUT
+		< $TMP1
 
 	fi
 done
-if [ $umaskset = "no" -o -s $OUTPUT ] ; then
-	echo "\nChecking root sh paths, umask values:\n${list}"
-	if [ -s $OUTPUT ] ; then
-		cat $OUTPUT
-	fi
-	if [ $umaskset = "no" ] ; then
-		echo "\nRoot sh startup files do not set the umask."
-	fi
+if [ $umaskset = "no" ] ; then
+	echo "\nRoot sh startup files do not set the umask."
 fi
 
 # A good .kshrc will not have a umask or path, that being set in .profile
 # check anyway.
-> $OUTPUT
 rhome=/root
 list="/etc/ksh.kshrc `cat $TMP2`"
+next_part "Checking root ksh paths, umask values:\n${list}"
 (cd $rhome
  for i in $list; do
 	if [ -s $i ] ; then
@@ -247,7 +219,7 @@ list="/etc/ksh.kshrc `cat $TMP2`"
 		awk '$2 % 100 < 20 \
 			{ print "Root umask is group writable" } \
 		     $2 % 10 < 2 \
-			{ print "Root umask is other writable" }' >> $OUTPUT
+			{ print "Root umask is other writable" }'
 		if egrep -a PATH= $i > /dev/null ; then
 			SAVE_PATH=$PATH
 			unset PATH
@@ -271,32 +243,29 @@ end-of-sh
 		{ print "Root path directory " $10 " is group writable." } \
 			    $1 ~ /^d.......w/ \
 		{ print "Root path directory " $10 " is other writable." }' \
-			< $TMP1 >> $OUTPUT
+			< $TMP1
 		fi
 
 	fi
  done
 )
-if [ -s $OUTPUT ] ; then
-	echo "\nChecking root ksh paths, umask values:\n${list}"
-	cat $OUTPUT
-fi
 
+next_part "Checking configuration files:"
 # Root and uucp should both be in /etc/ftpusers.
 if egrep root /etc/ftpusers > /dev/null ; then
 	:
 else
-	echo "\nRoot not listed in /etc/ftpusers file."
+	echo "Root not listed in /etc/ftpusers file."
 fi
 if egrep uucp /etc/ftpusers > /dev/null ; then
 	:
 else
-	echo "\nUucp not listed in /etc/ftpusers file."
+	echo "Uucp not listed in /etc/ftpusers file."
 fi
 
 # Uudecode should not be in the /etc/mail/aliases file.
 if egrep 'uudecode|decode' /etc/mail/aliases; then
-	echo "\nThere is an entry for uudecode in the /etc/mail/aliases file."
+	echo "There is an entry for uudecode in the /etc/mail/aliases file."
 fi
 
 # hostname.if files may contain secrets and should not be
@@ -307,7 +276,7 @@ for f in /etc/hostname.* ; do
 		continue
 	fi
 	if [ "$(stat -Lf "%SLp" $f)" != "---" ]; then
-		echo "\n$f is world readable."
+		echo "$f is world readable."
 	fi
 done
 
@@ -319,7 +288,7 @@ for f in $list ; do
 			if ($0 ~ /^\+@.*$/)
 				next;
 			if ($0 ~ /^\+.*$/)
-				printf("\nPlus sign in %s file.\n", FILENAME);
+				printf("Plus sign in %s file.\n", FILENAME);
 		}' $f
 	fi
 done
@@ -327,6 +296,7 @@ done
 # Check for special users with .rhosts/.shosts files.  Only root
 # should have .rhosts/.shosts files.  Also, .rhosts/.shosts
 # files should not have plus signs.
+next_part "Checking for special users with .rhosts/.shosts files."
 awk -F: '$1 != "root" && $1 !~ /^[+-]/ && \
 	($3 < 100 || $1 == "ftp" || $1 == "uucp") \
 		{ print $1 " " $6 }' /etc/passwd |
@@ -338,12 +308,9 @@ while read uid homedir; do
 			echo "${uid}: ${rhost}"
 		fi
 	done
-done > $OUTPUT
-if [ -s $OUTPUT ] ; then
-	echo "\nChecking for special users with .rhosts/.shosts files."
-	cat $OUTPUT
-fi
+done
 
+next_part "Checking .rhosts/.shosts files syntax."
 awk -F: '/^[^+-]/ { print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	for j in .rhosts .shosts; do
@@ -357,14 +324,11 @@ while read uid homedir; do
 			}' ${homedir}/$j
 		fi
 	done
-done > $OUTPUT
-if [ -s $OUTPUT ] ; then
-	echo "\nChecking .rhosts/.shosts files syntax."
-	cat $OUTPUT
-fi
+done
 
 # Check home directories.  Directories should not be owned by someone else
 # or writeable.
+next_part "Checking home directories."
 awk -F: '/^[^+-]/ { print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	if [ -d ${homedir}/ ] ; then
@@ -377,15 +341,12 @@ awk '$1 != $4 && $4 != "root" \
      $2 ~ /^-....w/ \
 	{ print "user " $1 " home directory is group writable" }
      $2 ~ /^-.......w/ \
-	{ print "user " $1 " home directory is other writable" }' > $OUTPUT
-if [ -s $OUTPUT ] ; then
-	echo "\nChecking home directories."
-	cat $OUTPUT
-fi
+	{ print "user " $1 " home directory is other writable" }'
 
 # Files that should not be owned by someone else or readable.
 list=".netrc .rhosts .gnupg/secring.gpg .gnupg/random_seed \
 	.pgp/secring.pgp .shosts .ssh/identity .ssh/id_dsa .ssh/id_rsa"
+next_part "Checking dot files."
 awk -F: '/^[^+-]/ { print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	for f in $list ; do
@@ -404,7 +365,7 @@ awk '$1 != $5 && $5 != "root" \
      $3 ~ /^-....w/ \
 	{ print "user " $1 " " $2 " file is group writable" }
      $3 ~ /^-.......w/ \
-	{ print "user " $1 " " $2 " file is other writable" }' > $OUTPUT
+	{ print "user " $1 " " $2 " file is other writable" }'
 
 # Files that should not be owned by someone else or writeable.
 list=".bashrc .bash_profile .bash_login .bash_logout .cshrc \
@@ -427,24 +388,18 @@ awk '$1 != $5 && $5 != "root" \
      $3 ~ /^-....w/ \
 	{ print "user " $1 " " $2 " file is group writable" }
      $3 ~ /^-.......w/ \
-	{ print "user " $1 " " $2 " file is other writable" }' >> $OUTPUT
-if [ -s $OUTPUT ] ; then
-	echo "\nChecking dot files."
-	cat $OUTPUT
-fi
+	{ print "user " $1 " " $2 " file is other writable" }'
 
 # Mailboxes should be owned by user and unreadable.
+next_part "Checking mailbox ownership."
 ls -l /var/mail | sed 1d | \
 awk '$3 != $9 \
 	{ print "user " $9 " mailbox is owned by " $3 }
      $1 != "-rw-------" \
-	{ print "user " $9 " mailbox is " $1 ", group " $4 }' > $OUTPUT
-if [ -s $OUTPUT ] ; then
-	echo "\nChecking mailbox ownership."
-	cat $OUTPUT
-fi
+	{ print "user " $9 " mailbox is " $1 ", group " $4 }'
 
 # File systems should not be globally exported.
+next_part "Checking for globally exported file systems."
 if [ -s /etc/exports ] ; then
 	awk '{
 		if (($1 ~ /^#/) || ($1 ~ /^$/))
@@ -460,38 +415,26 @@ if [ -s /etc/exports ] ; then
 			print "File system " $1 " globally exported, read-only."
 		else
 			print "File system " $1 " globally exported, read-write."
-	}' < /etc/exports > $OUTPUT
-	if [ -s $OUTPUT ] ; then
-		echo "\nChecking for globally exported file systems."
-		cat $OUTPUT
-	fi
+	}' < /etc/exports
 fi
 
 # Display any changes in setuid/setgid files and devices.
-pending="\nChecking setuid/setgid files and devices:\n"
-(find / \( ! -fstype local \
+next_part "Setuid/device find errors:"
+find / \( ! -fstype local \
 	-o -fstype procfs -o -fstype afs -o -fstype xfs \) -a -prune -o \
 	-type f -a \( -perm -u+s -o -perm -g+s \) -print0 -o \
 	! -type d -a ! -type f -a ! -type l -a ! -type s -a ! -type p \
-	-print0 | xargs -0 ls -ldgT | sort +9 > $LIST) 2> $OUTPUT
-
-# Display any errors that occurred during system file walk.
-if [ -s $OUTPUT ] ; then
-	echo "${pending}Setuid/device find errors:"
-	pending=
-	cat $OUTPUT
-	echo ""
-fi
+	-print0 | xargs -0 ls -ldgT | sort +9 > $LIST
 
 # Display any changes in the setuid/setgid file list.
+next_part "Checking setuid/setgid files and devices:"
 FIELDS1=1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,0
 FIELDS2=2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,0
 egrep -av '^[bc]' $LIST | join -o $FIELDS2 -110 -210 -v2 /dev/null - > $TMP1
 if [ -s $TMP1 ] ; then
 	# Check to make sure uudecode isn't setuid.
 	if grep -aw uudecode $TMP1 > /dev/null ; then
-		echo "${pending}\nUudecode is setuid."
-		pending=
+		echo "Uudecode is setuid."
 	fi
 
 	CUR=/var/backups/setuid.current
@@ -501,46 +444,31 @@ if [ -s $TMP1 ] ; then
 		if cmp -s $CUR $TMP1 ; then
 			:
 		else
-			> $TMP2
-			join -o $FIELDS2 -110 -210 -v2 $CUR $TMP1 > $OUTPUT
-			if [ -s $OUTPUT ] ; then
-				echo "${pending}Setuid additions:"
-				pending=
-				tee -a $TMP2 < $OUTPUT | column -t
-				echo ""
-			fi
+			next_part "Setuid additions:"
+			join -o $FIELDS2 -110 -210 -v2 $CUR $TMP1 | \
+				tee $TMP2 | column -t
 
-			join -o $FIELDS1 -110 -210 -v1 $CUR $TMP1 > $OUTPUT
-			if [ -s $OUTPUT ] ; then
-				echo "${pending}Setuid deletions:"
-				pending=
-				tee -a $TMP2 < $OUTPUT | column -t
-				echo ""
-			fi
+			next_part "Setuid deletions:"
+			join -o $FIELDS1 -110 -210 -v1 $CUR $TMP1 | \
+				tee -a $TMP2 | column -t
 
+			next_part "Setuid changes:"
 			sort +9 $TMP2 $CUR $TMP1 | \
-			    sed -e 's/[	 ][	 ]*/ /g' | uniq -u > $OUTPUT
-			if [ -s $OUTPUT ] ; then
-				echo "${pending}Setuid changes:"
-				pending=
-				column -t $OUTPUT
-				echo ""
-			fi
+			    sed -e 's/[	 ][	 ]*/ /g' | uniq -u | column -t
 
 			cp $CUR $BACK
 			cp $TMP1 $CUR
 		fi
 	else
-		echo "${pending}Setuid additions:"
-		pending=
+		echo "Setuid additions:"
 		column -t $TMP1
-		echo ""
 		cp $TMP1 $CUR
 	fi
 fi
 
 # Check for block and character disk devices that are readable or writeable
 # or not owned by root.operator.
+next_part "Checking disk ownership and permissions."
 >$TMP1
 DISKLIST="ccd dk fd hd hk hp jb kra ra rb rd rl rx rz sd up vnd wd xd"
 for i in $DISKLIST; do
@@ -550,12 +478,7 @@ done
 
 awk '$3 != "root" || $4 != "operator" || $1 !~ /.rw-r-----/ \
 	{ printf("Disk %s is user %s, group %s, permissions %s.\n", \
-	    $11, $3, $4, $1); }' < $TMP1 > $OUTPUT
-if [ -s $OUTPUT ] ; then
-	echo "\nChecking disk ownership and permissions."
-	cat $OUTPUT
-	echo ""
-fi
+	    $11, $3, $4, $1); }' < $TMP1
 
 FIELDS1=1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,1.10,0
 FIELDS2=2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,2.10,0
@@ -570,33 +493,23 @@ if [ -s $TMP1 ] ; then
 		if cmp -s $CUR $TMP1 ; then
 			:
 		else
-			> $TMP2
-			join -o $FIELDS2 -111 -211 -v2 $CUR $TMP1 > $OUTPUT
-			if [ -s $OUTPUT ] ; then
-				echo "Device additions:"
-				tee -a $TMP2 < $OUTPUT | column -t
-				echo ""
-			fi
+			next_part "Device additions:"
+			join -o $FIELDS2 -111 -211 -v2 $CUR $TMP1 | \
+				tee $TMP2 | column -t
 
-			join -o $FIELDS1 -111 -211 -v1 $CUR $TMP1 > $OUTPUT
-			if [ -s $OUTPUT ] ; then
-				echo "Device deletions:"
-				tee -a $TMP2 < $OUTPUT | column -t
-				echo ""
-			fi
+			next_part "Device deletions:"
+			join -o $FIELDS1 -111 -211 -v1 $CUR $TMP1 | \
+				tee -a $TMP2 | column -t
 
 			# Report any block device change.  Ignore character
 			# devices, only the name is significant.
+			next_part "Block device changes:"
 			cat $TMP2 $CUR $TMP1 | \
 			sed -e '/^c/d' | \
 			sort +10 | \
 			sed -e 's/[	 ][	 ]*/ /g' | \
-			uniq -u > $OUTPUT
-			if [ -s $OUTPUT ] ; then
-				echo "Block device changes:"
-				column -t $OUTPUT
-				echo ""
-			fi
+			uniq -u | \
+			column -t
 
 			cp $CUR $BACK
 			cp $TMP1 $CUR
@@ -622,30 +535,17 @@ fi
 # the hacker can modify the tree specification to match the replaced binary.
 # For details on really protecting yourself against modified binaries, see
 # the mtree(8) manual page.
+next_part "Checking special files and directories.
+Output format is:\n\tfilename:\n\t\tcriteria (shouldbe, reallyis)"
 if [ -d /etc/mtree ] ; then
 	cd /etc/mtree
-	mtree -e -l -p / -f /etc/mtree/special > $OUTPUT
-	if [ -s $OUTPUT ] ; then
-		echo "\nChecking special files and directories."
-		echo "Output format is:\n\tfilename:"
-		echo "\t\tcriteria (shouldbe, reallyis)"
-		cat $OUTPUT
-	fi
-
-	> $OUTPUT
+	mtree -e -l -p / -f /etc/mtree/special
 	for file in *.secure; do
 		[ $file = '*.secure' ] && continue
 		tree=`sed -n -e '3s/.* //p' -e 3q $file`
-		mtree -f $file -p $tree > $TMP1
-		if [ -s $TMP1 ] ; then
-			echo "\nChecking ${tree}:" >> $OUTPUT
-			cat $TMP1 >> $OUTPUT
-		fi
+		next_part "Checking system binaries in ${tree}:"
+		mtree -f $file -p $tree
 	done
-	if [ -s $OUTPUT ] ; then
-		echo "\nChecking system binaries:"
-		cat $OUTPUT
-	fi
 else
 	echo /etc/mtree is missing
 fi
@@ -660,25 +560,22 @@ if [ -s /etc/changelist ] ; then
 	for file in `egrep -v "^(#|\+|$MP)" /etc/changelist`; do
 		CUR=/var/backups/$(_fnchg  "$file").current
 		BACK=/var/backups/$(_fnchg "$file").backup
+		next_part "======\n${file} diffs (-OLD  +NEW)\n======"
 		if [ -s $file -a ! -d $file ] ; then
 			if [ -s $CUR ] ; then
-				diff -ua $CUR $file > $OUTPUT
-				if [ -s $OUTPUT ] ; then
-		echo "\n======\n${file} diffs (-OLD  +NEW)\n======"
-					cat $OUTPUT
+				diff -ua $CUR $file
+				if [ -s $PARTOUT ] ; then
 					cp -p $CUR $BACK
 					cp -p $file $CUR
 					chown root:wheel $CUR $BACK
 				fi
 			else
-		echo "\n======\n${file} diffs (-OLD  +NEW)\n======"
 				diff -u /dev/null $file
 				cp -p $file $CUR
 				chown root:wheel $CUR
 			fi
 		fi
 		if [ ! -s $file -a -s $CUR ]; then
-		echo "\n======\n${file} diffs (-OLD  +NEW)\n======"
 			diff -u $CUR /dev/null
 			cp -p $CUR $BACK
 			rm -f $CUR
@@ -727,12 +624,11 @@ for d in `df -ln | sed -n 's:^/dev/\([a-z]*[0-9]*\)[a-p].*$:\1:p' | sort -u`; do
 	file=/var/backups/disklabel.$d
 	CUR=$file.current
 	BACK=$file.backup
+	next_part "======\n${d} diffs (-OLD  +NEW)\n======"
 	if disklabel $d > $file 2>&1 ; then
 		if [ -s $CUR ] ; then
-			diff -u $CUR $file > $OUTPUT
-			if [ -s $OUTPUT ] ; then
-	echo "\n======\n${d} diffs (-OLD  +NEW)\n======"
-				cat $OUTPUT
+			diff -u $CUR $file
+			if [ -s $PARTOUT ] ; then
 				cp -p $CUR $BACK
 				cp -p $file $CUR
 				chown root:wheel $CUR $BACK
@@ -746,15 +642,14 @@ for d in `df -ln | sed -n 's:^/dev/\([a-z]*[0-9]*\)[a-p].*$:\1:p' | sort -u`; do
 done
 
 # Backup the list of installed packages and produce diffs when it changes.
+next_part "======\nPackage list changes (-OLD  +NEW)\n======"
 file=/var/backups/pkglist
 CUR=$file.current
 BACK=$file.backup
 if pkg_info > $file 2>&1 ; then
 	if [ -s $CUR ] ; then
-		diff -u $CUR $file > $OUTPUT
-		if [ -s $OUTPUT ] ; then
-			echo "\n======\nPackage list changes (-OLD  +NEW)\n======"
-			cat $OUTPUT
+		diff -u $CUR $file
+		if [ -s $PARTOUT ] ; then
 			cp -p $CUR $BACK
 			cp -p $file $CUR
 			chown root:wheel $CUR $BACK
