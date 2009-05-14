@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2009/05/14 21:16:38 miod Exp $
 
 REV=		${OSrev}
 
@@ -44,10 +44,10 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 bsd:
-	cd ${.TOP}/../../sys/arch/sgi/conf && config RAMDISK
-	cd ${.TOP}/../../sys/arch/sgi/compile/RAMDISK && \
+	cd ${.TOP}/../../sys/arch/sgi/conf && config RAMDISK-IP32
+	cd ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP32 && \
 	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
-	cp ${.TOP}/../../sys/arch/sgi/compile/RAMDISK/bsd bsd
+	cp ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP32/bsd bsd
 
 rd_setup: 
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}

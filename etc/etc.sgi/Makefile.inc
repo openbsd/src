@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2009/04/21 09:12:27 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2009/05/14 21:16:40 miod Exp $
 
 kernels: bsd
-	cp ${.CURDIR}/../sys/arch/sgi/compile/GENERIC/bsd \
+	cp ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP32/bsd \
 	    ${RELEASEDIR}/bsd
 
 bsd:
-	cd ${.CURDIR}/../sys/arch/sgi/conf && config GENERIC
-	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC && \
+	cd ${.CURDIR}/../sys/arch/sgi/conf && config GENERIC-IP32
+	cd ${.CURDIR}/../sys/arch/sgi/compile/GENERIC-IP32 && \
 	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 MDEXT=	bsd bsd.rd cd${OSrev}.iso
