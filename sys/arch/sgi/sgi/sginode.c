@@ -1,4 +1,5 @@
-/*	$OpenBSD: sginode.c,v 1.5 2009/05/08 18:42:07 miod Exp $	*/
+#define	DEBUG
+/*	$OpenBSD: sginode.c,v 1.6 2009/05/14 21:08:49 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -136,7 +137,11 @@ kl_do_boardinfo(lboard_t *boardinfo)
 				cpu->type = (cpucomp->cpu_prid >> 8) & 0xff;
 				cpu->vers_maj = (cpucomp->cpu_prid >> 4) & 0x0f;
 				cpu->vers_min = cpucomp->cpu_prid & 0x0f;
+#if 0
 				cpu->fptype = (cpucomp->cpu_fpirr >> 8) & 0xff;
+#else
+				cpu->fptype = cpu->type;
+#endif
 				cpu->fpvers_maj =
 				    (cpucomp->cpu_fpirr >> 4) & 0x0f;
 				cpu->fpvers_min = cpucomp->cpu_fpirr & 0x0f;
