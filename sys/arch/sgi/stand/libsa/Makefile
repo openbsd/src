@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2007/11/26 10:26:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2009/05/14 18:57:43 miod Exp $
 
 LIB=	sa
 
@@ -6,14 +6,14 @@ LIB=	sa
 
 CLEANFILES += machine mips64
 
-CFLAGS= ${CEXTRAFLAGS} -O2 ${SAABI} -nostdinc -mno-abicalls -D_NO_ABICALLS \
+CFLAGS+= ${CEXTRAFLAGS} ${SAABI} -nostdinc -mno-abicalls -D_NO_ABICALLS \
 	-I${.CURDIR} -I${.CURDIR}/../include -I${.CURDIR}/../.. \
 	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../.. \
 	-I${.CURDIR}/../../../../lib/libsa \
 	-I${.OBJDIR}
 
 CPPFLAGS+= -D__INTERNAL_LIBSA_CREAD ${STANDALONE}
-CPPFLAGS+= -DLIBSA_LONGLONG_PRINTF
+CPPFLAGS+= ${LIBSA_CPPFLAGS}
 
 # stand routines
 SRCS=	alloc.c exit.c exec.c getfile.c gets.c globals.c \

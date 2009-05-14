@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.11 2008/05/20 18:12:19 jsing Exp $ */
+/*	$OpenBSD: boot.c,v 1.12 2009/05/14 18:57:43 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -28,8 +28,6 @@
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/exec.h>
-#include <sys/exec_elf.h>
 #include <stand.h>
 
 #include <mips64/arcbios.h>
@@ -62,6 +60,9 @@ main(int argc, char *argv[])
 	char line[1024];
 	u_long entry;
 	int fd, i;
+	extern void arcbios_init(void);
+
+	arcbios_init();
 
 	dobootopts(argc, argv);
 	if (OSLoadPartition != NULL) {
@@ -101,7 +102,12 @@ main(int argc, char *argv[])
 	}
 
 	/* We failed to load the kernel. */
-	printf("Boot FAILED!\n");
+	panic("Boot FAILED!");
+}
+
+__dead void
+_rtt()
+{
 	Bios_EnterInteractiveMode();
 }
 
@@ -145,12 +151,20 @@ dobootopts(int argc, char **argv)
 		char *p;
 
 		strlcpy(loadpart, argv[0], sizeof loadpart);
-		p = strstr(loadpart, "partition(8)");
-		if (p) {
+		if ((p = strstr(loadpart, "partition(8)")) != NULL) {
 			p += strlen("partition(");
-			p[0] = '0'; p[2] = 0;
+			p[0] = '0';
+			p[2] = '\0';
 			OSLoadPartition = loadpart;
 			OSLoadFilename = "/bsd.rd";
+		} else if (strncmp(loadpart, "dksc(", 5) == 0) {
+			p = strstr(loadpart, ",8)");
+			if (p != NULL) {
+				p[1] = '0';
+				p[3] = '\0';
+				OSLoadPartition = loadpart;
+				OSLoadFilename = "/bsd.rd";
+			}
 		}
 	}
 }

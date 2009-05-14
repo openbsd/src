@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.2 2008/03/08 16:52:28 jsing Exp $ */
+/*	$OpenBSD: start.S,v 1.3 2009/05/14 18:57:43 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Opsycon AB (www.opsycon.se)
@@ -44,7 +44,9 @@
 
 	.globl	__start
 __start:
-	la	gp, _gp
+#ifndef __LP64__	/* LP64 code is compiled without gp support */
+	LA	gp, _gp
+#endif
 
 	jal	main
 

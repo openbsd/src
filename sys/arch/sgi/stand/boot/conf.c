@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 2008/03/08 16:52:28 jsing Exp $ */
+/*	$OpenBSD: conf.c,v 1.3 2009/05/14 18:57:43 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -26,8 +26,6 @@
  *
  */
 #include <stand.h>
-
-int	errno;
 
 extern void	nullsys();
 extern int	nodev();
