@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgivol.c,v 1.13 2009/02/10 03:13:20 jsing Exp $	*/
+/*	$OpenBSD: sgivol.c,v 1.14 2009/05/14 18:55:41 miod Exp $	*/
 /*	$NetBSD: sgivol.c,v 1.8 2003/11/08 04:59:00 sekiya Exp $	*/
 
 /*-
@@ -514,8 +514,6 @@ modify_partition(void)
 void
 write_volhdr(void)
 {
-	int i;
-
 	checksum_vol();
 
 	if (!quiet)
