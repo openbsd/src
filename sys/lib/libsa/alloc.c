@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.9 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.10 2009/05/14 18:54:03 miod Exp $	*/
 /*	$NetBSD: alloc.c,v 1.6 1997/02/04 18:36:33 thorpej Exp $	*/
 
 /*
@@ -78,6 +78,12 @@
  *
  *	HEAP_START	start address of heap (defaults to '&end').
  *
+ *	NEEDS_HEAP_H	needs to #include "heap.h" to declare things
+ *			needed by HEAP_LIMIT and/or HEAP_START.
+ *
+ *	NEEDS_HEAP_INIT	needs to invoke heap_init() to initialize
+ *			heap boundaries.
+ *
  *	DEBUG		enable debugging sanity checks.
  */
 
@@ -111,11 +117,16 @@ struct fl {
 	struct fl	*next;
 } *freelist = (struct fl *)0;
 
+#ifdef NEEDS_HEAP_H
+#include "heap.h"
+#endif
+#ifndef NEEDS_HEAP_INIT
 #ifdef HEAP_START
 static char *top = (char *)HEAP_START;
 #else
 extern char end[];
 static char *top = end;
+#endif
 #endif
 
 void *
@@ -127,6 +138,10 @@ alloc(unsigned int size)
 #endif
 	char *help;
 	int failed;
+
+#ifdef NEEDS_HEAP_INIT
+	heap_init();
+#endif
 
 #ifdef ALLOC_TRACE
 	printf("alloc(%u)", size);
