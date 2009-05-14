@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridgereg.h,v 1.4 2009/05/06 20:08:47 miod Exp $	*/
+/*	$OpenBSD: xbridgereg.h,v 1.5 2009/05/14 21:10:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -107,6 +107,9 @@
 	 BRIDGE_DEVIO_SHORT * ((d) < 2 ? 0 : (d) - 2))
 #define	BRIDGE_DEVIO_SIZE(d) \
 	((d) < 2 ? BRIDGE_DEVIO_LARGE : BRIDGE_DEVIO_SHORT)
+
+
+#define	BRIDGE_DEVICE_WBFLUSH(d)	(0x00000244 + 8 * (d))
 
 /*
  * Read Response Buffer configuration registers
