@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.44 2009/05/10 11:29:40 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.45 2009/05/14 15:05:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -501,8 +501,8 @@ runner(struct smtpd *env)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	config_pipes(env, peers, 6);
-	config_peers(env, peers, 6);
+	config_pipes(env, peers, nitems(peers));
+	config_peers(env, peers, nitems(peers));
 
 	unlink(PATH_QUEUE "/envelope.tmp");
 	runner_reset_flags();

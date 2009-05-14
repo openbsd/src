@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.57 2009/05/10 11:29:40 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.58 2009/05/14 15:05:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -115,7 +115,7 @@ parent_shutdown(void)
 		runner_pid
 	};
 
-	for (i = 0; i < sizeof(pids) / sizeof(pid); i++)
+	for (i = 0; i < nitems(pids); i++)
 		if (pids[i])
 			kill(pids[i], SIGTERM);
 
@@ -150,7 +150,7 @@ parent_send_config(int fd, short event, void *p)
 		iov[2].iov_len = s->ssl_key_len;
 
 		imsg_composev(env->sc_ibufs[PROC_SMTP], IMSG_CONF_SSL, 0, 0, -1,
-		    iov, sizeof(iov)/sizeof(iov[0]));
+		    iov, nitems(iov));
 	}
 
 	TAILQ_FOREACH(l, &env->sc_listeners, entry) {
@@ -328,10 +328,10 @@ parent_dispatch_mda(int fd, short event, void *p)
 				path = &batchp->message.sender;
 			}
 			
-			for (i = 0; i < sizeof(action_hdl_table) / sizeof(struct action_handler); ++i)
+			for (i = 0; i < nitems(action_hdl_table); ++i)
 				if (action_hdl_table[i].action == path->rule.r_action)
 					break;
-			if (i == sizeof(action_hdl_table) / sizeof(struct action_handler))
+			if (i == nitems(action_hdl_table))
 				fatalx("parent_dispatch_mda: unknown action");
 
 			file = path->rule.r_value.path;
@@ -840,8 +840,8 @@ main(int argc, char *argv[])
 	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
 
-	config_pipes(&env, peers, 6);
-	config_peers(&env, peers, 6);
+	config_pipes(&env, peers, nitems(peers));
+	config_peers(&env, peers, nitems(peers));
 
 	evtimer_set(&env.sc_ev, parent_send_config, &env);
 	bzero(&tv, sizeof(tv));
@@ -929,7 +929,7 @@ setup_spool(uid_t uid, gid_t gid)
 	}
 
 	ret = 1;
-	for (n = 0; n < sizeof(paths)/sizeof(paths[0]); n++) {
+	for (n = 0; n < nitems(paths); n++) {
 		mode_t	mode;
 		uid_t	owner;
 		gid_t	group;
@@ -1149,7 +1149,7 @@ parent_maildir_init(struct passwd *pw, char *root)
 	char pathname[MAXPATHLEN];
 	char *subdir[] = { "/", "/tmp", "/cur", "/new" };
 
-	for (i = 0; i < sizeof (subdir) / sizeof (char *); ++i) {
+	for (i = 0; i < nitems(subdir); ++i) {
 		if (! bsnprintf(pathname, sizeof(pathname), "%s%s", root,
 			subdir[i]))
 			return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.15 2009/04/28 21:27:25 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.16 2009/05/14 15:05:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -429,8 +429,8 @@ mda(struct smtpd *env)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	config_pipes(env, peers, 3);
-	config_peers(env, peers, 3);
+	config_pipes(env, peers, nitems(peers));
+	config_peers(env, peers, nitems(peers));
 
 	mda_setup_events(env);
 	event_dispatch();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.61 2009/04/21 14:37:32 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.62 2009/05/14 15:05:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -584,8 +584,8 @@ queue(struct smtpd *env)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGHUP, SIG_IGN);
 
-	config_pipes(env, peers, 6);
-	config_peers(env, peers, 6);
+	config_pipes(env, peers, nitems(peers));
+	config_peers(env, peers, nitems(peers));
 
 	queue_purge(PATH_INCOMING);
 	queue_purge(PATH_ENQUEUE);

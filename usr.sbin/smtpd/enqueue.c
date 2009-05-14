@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.14 2009/04/21 18:12:05 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.15 2009/05/14 15:05:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -325,7 +325,7 @@ parse_message(FILE *fin, int get_from, int tflag)
 		}
 
 		for (i = 0; !header_done && cur == HDR_NONE &&
-		    i < (sizeof(keywords) / sizeof(keywords[0])); i++)
+		    i < nitems(keywords); i++)
 			if (len > strlen(keywords[i].word) &&
 			    !strncasecmp(buf, keywords[i].word,
 			    strlen(keywords[i].word)))

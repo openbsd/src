@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.87 2009/05/14 08:29:37 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.88 2009/05/14 15:05:12 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -492,35 +492,35 @@ session_rfc5321_help_handler(struct session *s, char *args)
 void
 session_command(struct session *s, char *cmd, char *args)
 {
-	int	i;
+	unsigned int	i;
 
 	if (!(s->s_flags & F_EHLO))
 		goto rfc5321;
 
 	/* RFC 1652 - 8BITMIME */
-	for (i = 0; i < (int)(sizeof(rfc1652_cmdtab) / sizeof(struct session_cmd)); ++i)
+	for (i = 0; i < nitems(rfc1652_cmdtab); ++i)
 		if (strcasecmp(rfc1652_cmdtab[i].name, cmd) == 0)
 			break;
-	if (i < (int)(sizeof(rfc1652_cmdtab) / sizeof(struct session_cmd))) {
+	if (i < nitems(rfc1652_cmdtab)) {
 		if (rfc1652_cmdtab[i].func(s, args))
 			return;
 	}
 
 	/* RFC 3207 - STARTTLS */
-	for (i = 0; i < (int)(sizeof(rfc3207_cmdtab) / sizeof(struct session_cmd)); ++i)
+	for (i = 0; i < nitems(rfc3207_cmdtab); ++i)
 		if (strcasecmp(rfc3207_cmdtab[i].name, cmd) == 0)
 			break;
-	if (i < (int)(sizeof(rfc3207_cmdtab) / sizeof(struct session_cmd))) {
+	if (i < nitems(rfc3207_cmdtab)) {
 		if (rfc3207_cmdtab[i].func(s, args))
 			return;
 	}
 
 	/* RFC 4954 - AUTH */
 	if ((s->s_l->flags & F_AUTH) && (s->s_flags & F_SECURE)) {
-		for (i = 0; i < (int)(sizeof(rfc4954_cmdtab) / sizeof(struct session_cmd)); ++i)
+		for (i = 0; i < nitems(rfc4954_cmdtab); ++i)
 			if (strcasecmp(rfc4954_cmdtab[i].name, cmd) == 0)
 				break;
-		if (i < (int)(sizeof(rfc4954_cmdtab) / sizeof(struct session_cmd))) {
+		if (i < nitems(rfc4954_cmdtab)) {
 			if (rfc4954_cmdtab[i].func(s, args))
 				return;
 		}
@@ -528,10 +528,10 @@ session_command(struct session *s, char *cmd, char *args)
 
 rfc5321:
 	/* RFC 5321 - SMTP */
-	for (i = 0; i < (int)(sizeof(rfc5321_cmdtab) / sizeof(struct session_cmd)); ++i)
+	for (i = 0; i < nitems(rfc5321_cmdtab); ++i)
 		if (strcasecmp(rfc5321_cmdtab[i].name, cmd) == 0)
 			break;
-	if (i < (int)(sizeof(rfc5321_cmdtab) / sizeof(struct session_cmd))) {
+	if (i < nitems(rfc5321_cmdtab)) {
 		if (rfc5321_cmdtab[i].func(s, args))
 			return;
 	}
