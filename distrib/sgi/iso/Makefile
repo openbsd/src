@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2009/04/17 03:58:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2009/05/14 18:58:17 miod Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -24,17 +24,20 @@ ${CDROM}:
 	-rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/
 
-	objcopy -Sg -R .comment ${DESTDIR}/usr/mdec/boot ${.OBJDIR}/boot
-	strip ${.OBJDIR}/boot
+	cp ${DESTDIR}/usr/mdec/boot32 ${.OBJDIR}/boot32
+	cp ${DESTDIR}/usr/mdec/boot64 ${.OBJDIR}/boot64
 	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD} > ${.OBJDIR}/bsd
 
 	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=2048b count=224
 	vnconfig -v -c -t cdroot svnd0 ${.OBJDIR}/${CDROM}
 
-	# 22 * 2048 byte sectors = 44KB
-	/usr/mdec/sgivol -i -h 22 svnd0
-	/usr/mdec/sgivol -w boot ${.OBJDIR}/boot svnd0
-	/usr/mdec/sgivol -l boot sashARCS svnd0
+	# boot32 needs 20 2048 byte sectors, boot64 needs 44,
+	# and add some room for growth
+	/usr/mdec/sgivol -i -h 80 svnd0
+	/usr/mdec/sgivol -w boot32 ${.OBJDIR}/boot32 svnd0
+	/usr/mdec/sgivol -l boot32 sashARCS svnd0
+	/usr/mdec/sgivol -w boot64 ${.OBJDIR}/boot64 svnd0
+	/usr/mdec/sgivol -l boot64 sash64 svnd0
 
 	disklabel -w svnd0 cdroot "OpenBSD/sgi     "
 	newfs /dev/rsvnd0a
@@ -43,7 +46,11 @@ ${CDROM}:
 
 	cp ${.OBJDIR}/bsd ${.OBJDIR}/cd-dir/bsd
 	ln ${.OBJDIR}/cd-dir/bsd ${.OBJDIR}/cd-dir/bsd.rd
-	cp ${.OBJDIR}/boot ${.OBJDIR}/cd-dir/boot
+	cp ${.OBJDIR}/boot32 ${.OBJDIR}/cd-dir/boot32
+	ln ${.OBJDIR}/boot32 ${.OBJDIR}/cd-dir/boot-IP32
+	cp ${.OBJDIR}/boot64 ${.OBJDIR}/cd-dir/boot64
+	ln ${.OBJDIR}/boot64 ${.OBJDIR}/cd-dir/boot-IP27
+	ln ${.OBJDIR}/boot64 ${.OBJDIR}/cd-dir/boot-IP30
 
 	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
@@ -65,7 +72,7 @@ unconfig:
 	-vnconfig -u svnd0
 
 clean cleandir:
-	/bin/rm -f ${CDROM} bsd boot
+	/bin/rm -f ${CDROM} bsd boot32 boot64 boot-IP27 boot-IP30 boot-IP32
 	rm -rf cd-dir
 
 .include <bsd.obj.mk>

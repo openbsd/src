@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.15 2009/04/12 12:56:02 krw Exp $
+#	$OpenBSD: install.md,v 1.16 2009/05/14 18:58:17 miod Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ __EOT
 	esac
 
 	echo "Installing boot loader in volume header."
-	/usr/mdec/sgivol -w boot /usr/mdec/boot $_disk
+	/usr/mdec/sgivol -w boot /usr/mdec/boot-`sysctl hw.model` $_disk
 	case $? in
 	0)
 		;;
