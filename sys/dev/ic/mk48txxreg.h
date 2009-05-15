@@ -1,4 +1,4 @@
-/*	$OpenBSD: mk48txxreg.h,v 1.4 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: mk48txxreg.h,v 1.5 2009/05/15 23:02:25 miod Exp $	*/
 /*	$NetBSD: mk48txxreg.h,v 1.4 2000/11/11 11:59:42 pk Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@
 
 #define MK48T59_CLKSZ		8192
 #define MK48T59_CLKOFF		0x1ff0
+
+#define	MK48T35_CLKSZ		0x8000
+#define	MK48T35_CLKOFF		0x7ff0
 
 /* Chip attach function */
 todr_chip_handle_t mk48txx_attach(bus_space_tag_t, bus_space_handle_t,
