@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio_priv.h,v 1.6 2009/05/15 13:04:52 ratchov Exp $	*/
+/*	$OpenBSD: sndio_priv.h,v 1.7 2009/05/15 13:06:40 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,6 +19,22 @@
 
 #include <sys/param.h>
 #include "sndio.h"
+
+#ifdef DEBUG
+#define DPRINTF(...)						\
+	do {							\
+		if (sio_debug > 0)				\
+			fprintf(stderr, __VA_ARGS__);		\
+	} while(0)
+#define DPERROR(s)						\
+	do {							\
+		if (sio_debug > 0)				\
+			perror(s);				\
+	} while(0)
+#else
+#define DPRINTF(...) do {} while(0)
+#define DPERROR(s) do {} while(0)
+#endif
 
 /*
  * private ``handle'' structure
@@ -70,20 +86,6 @@ void sio_onvol_cb(struct sio_hdl *, unsigned);
 
 #ifdef DEBUG
 extern int sio_debug;
-
-#define DPRINTF(...)						\
-	do {							\
-		if (sio_debug > 0)				\
-			fprintf(stderr, __VA_ARGS__);		\
-	} while(0)
-#define DPERROR(s)						\
-	do {							\
-		if (sio_debug > 0)				\
-			perror(s);				\
-	} while(0)
-#else
-#define DPRINTF(...) do {} while(0)
-#define DPERROR(s) do {} while(0)
 #endif
 
 #endif /* !defined(SNDIO_PRIV_H) */
