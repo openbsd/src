@@ -1,4 +1,4 @@
-# $OpenBSD: list.local,v 1.12 2009/04/17 03:55:20 deraadt Exp $
+# $OpenBSD: list.local,v 1.13 2009/05/15 16:15:46 damien Exp $
 
 # add local links; use bin/sh since instbin has already been unlinked
 LINK	instbin					bin/sha256
@@ -19,6 +19,7 @@ COPY	${DESTDIR}/etc/firmware/ral-rt2561s	etc/firmware/ral-rt2561s
 COPY	${DESTDIR}/etc/firmware/ral-rt2661	etc/firmware/ral-rt2661
 COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
 COPY	${DESTDIR}/etc/firmware/run-rt2870	etc/firmware/run-rt2870
+COPY	${DESTDIR}/etc/firmware/run-rt3071	etc/firmware/run-rt3071
 
 COPY	${DESTDIR}/etc/firmware/zd1211		etc/firmware/zd1211
 COPY	${DESTDIR}/etc/firmware/zd1211b		etc/firmware/zd1211b

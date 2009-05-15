@@ -38,6 +38,7 @@
 ./etc/firmware/rum-rt2573
 ./etc/firmware/run-license
 ./etc/firmware/run-rt2870
+./etc/firmware/run-rt3071
 ./etc/firmware/tht
 ./etc/firmware/tht-license
 ./etc/firmware/tusb3410
