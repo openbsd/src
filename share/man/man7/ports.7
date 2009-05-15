@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.74 2009/03/25 11:42:21 sthen Exp $
+.\" $OpenBSD: ports.7,v 1.75 2009/05/15 22:30:03 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: March 25 2009 $
+.Dd $Mdocdate: May 15 2009 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -226,9 +226,7 @@ or
 .It Ar fetch
 Fetch all of the files needed to build this port from the site(s)
 listed in
-.Ev MASTER_SITES
-and
-.Ev PATCH_SITES .
+.Ev MASTER_SITES .
 See
 .Ev FETCH_CMD
 and
@@ -616,9 +614,6 @@ usually
 .Pc
 .It Ev MASTER_SITES
 Primary sites for distribution files if not found locally.
-.It Ev PATCH_SITES
-Primary location(s) for distribution patch files if not found
-locally.
 .It Ev CLEANDEPENDS
 If set to
 .Dv Yes ,
