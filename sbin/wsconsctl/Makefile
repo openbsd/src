@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2007/08/01 21:35:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.31 2009/05/15 21:45:44 deraadt Exp $
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
    ${MACHINE} == "hp300" || ${MACHINE} == "hppa" || \
@@ -6,7 +6,8 @@
    ${MACHINE} == "mac68k" || ${MACHINE} == "macppc" || \
    ${MACHINE} == "sgi" || ${MACHINE} == "sparc" || \
    ${MACHINE} == "sparc64" || ${MACHINE} == "vax" || \
-   ${MACHINE} == "zaurus"
+   ${MACHINE} == "zaurus" || ${MACHINE} == "landisk" ||
+   ${MACHINE} == "socppc"
 
 PROG=	wsconsctl
 SRCS=	display.c keyboard.c keysym.c map_parse.y map_scan.l \
@@ -27,7 +28,5 @@ NOPROG=yes
 .endif
 
 MAN=	wsconsctl.8
-MANSUBDIR=	alpha amd64 hp300 hppa i386 luna88k mac68k macppc \
-		sgi sparc sparc64 vax zaurus
 
 .include <bsd.prog.mk>
