@@ -1,4 +1,4 @@
-#	$OpenBSD: files.landisk,v 1.6 2007/06/08 22:57:43 jasper Exp $
+#	$OpenBSD: files.landisk,v 1.7 2009/05/15 16:20:48 deraadt Exp $
 #	$NetBSD: files.landisk,v 1.2 2006/09/07 01:55:02 uwe Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
@@ -50,10 +50,6 @@ include "dev/atapiscsi/files.atapiscsi"
 #
 include "dev/i2o/files.i2o"
 
-#include "dev/wscons/files.wscons"
-#include "dev/wsfont/files.wsfont"
-#include "dev/rasops/files.rasops"
-
 #
 # PCI bus
 #
@@ -66,6 +62,8 @@ file	arch/landisk/landisk/shpcic_machdep.c	shpcic
 # WSCONS bits for wskbd.h
 #
 include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
+include "dev/rasops/files.rasops"
 
 #
 # USB drivers
