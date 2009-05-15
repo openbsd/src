@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.18 2009/05/15 06:29:39 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.19 2009/05/15 17:18:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -727,21 +727,6 @@ xbridge_intr_handler(void *v)
 	}
 
 	return 1;
-}
-
-/*
- * Bridge (not XBridge) ugly workaround for the interrupt deadlock
- * problem mentioned above.
- */
-void
-xbridge_timeout(void *v)
-{
-	struct xbridge_intr *xi = v;
-	struct xbridge_softc *sc = xi->xi_bridge;
-
-	if ((bus_space_read_4(sc->sc_iot, sc->sc_regh, BRIDGE_ISR) &
-	    (1 << xi->xi_intrbit)) != 0)
-		xbridge_intr_handler(v);
 }
 
 /*
