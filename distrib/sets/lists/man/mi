@@ -2266,9 +2266,6 @@
 ./usr/share/man/cat8/alpha/installboot.0
 ./usr/share/man/cat8/alpha/kbd.0
 ./usr/share/man/cat8/alpha/setnetbootinfo.0
-./usr/share/man/cat8/alpha/wsconscfg.0
-./usr/share/man/cat8/alpha/wsconsctl.0
-./usr/share/man/cat8/alpha/wsfontload.0
 ./usr/share/man/cat8/alpha/wsmoused.0
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amd64
@@ -2284,9 +2281,6 @@
 ./usr/share/man/cat8/amd64/kbd.0
 ./usr/share/man/cat8/amd64/memconfig.0
 ./usr/share/man/cat8/amd64/pxeboot.0
-./usr/share/man/cat8/amd64/wsconscfg.0
-./usr/share/man/cat8/amd64/wsconsctl.0
-./usr/share/man/cat8/amd64/wsfontload.0
 ./usr/share/man/cat8/amd64/wsmoused.0
 ./usr/share/man/cat8/amd64/zzz.0
 ./usr/share/man/cat8/amq.0
@@ -2380,8 +2374,6 @@
 ./usr/share/man/cat8/hp300/MAKEDEV.0
 ./usr/share/man/cat8/hp300/boot_hp300.0
 ./usr/share/man/cat8/hp300/kbd.0
-./usr/share/man/cat8/hp300/wsconscfg.0
-./usr/share/man/cat8/hp300/wsconsctl.0
 ./usr/share/man/cat8/hppa
 ./usr/share/man/cat8/hppa/MAKEDEV.0
 ./usr/share/man/cat8/hppa/boot.0
@@ -2389,9 +2381,6 @@
 ./usr/share/man/cat8/hppa/hotplugd.0
 ./usr/share/man/cat8/hppa/kbd.0
 ./usr/share/man/cat8/hppa/mkboot.0
-./usr/share/man/cat8/hppa/wsconscfg.0
-./usr/share/man/cat8/hppa/wsconsctl.0
-./usr/share/man/cat8/hppa/wsfontload.0
 ./usr/share/man/cat8/hppa64
 ./usr/share/man/cat8/hppa64/MAKEDEV.0
 ./usr/share/man/cat8/hppa64/boot.0
@@ -2414,9 +2403,6 @@
 ./usr/share/man/cat8/i386/kbd.0
 ./usr/share/man/cat8/i386/memconfig.0
 ./usr/share/man/cat8/i386/pxeboot.0
-./usr/share/man/cat8/i386/wsconscfg.0
-./usr/share/man/cat8/i386/wsconsctl.0
-./usr/share/man/cat8/i386/wsfontload.0
 ./usr/share/man/cat8/i386/wsmoused.0
 ./usr/share/man/cat8/i386/zzz.0
 ./usr/share/man/cat8/identd.0
@@ -2471,15 +2457,11 @@
 ./usr/share/man/cat8/luna88k/MAKEDEV.0
 ./usr/share/man/cat8/luna88k/boot_luna88k.0
 ./usr/share/man/cat8/luna88k/kbd.0
-./usr/share/man/cat8/luna88k/wsconscfg.0
-./usr/share/man/cat8/luna88k/wsconsctl.0
 ./usr/share/man/cat8/mac68k
 ./usr/share/man/cat8/mac68k/MAKEDEV.0
 ./usr/share/man/cat8/mac68k/boot_mac68k.0
 ./usr/share/man/cat8/mac68k/kbd.0
 ./usr/share/man/cat8/mac68k/pdisk.0
-./usr/share/man/cat8/mac68k/wsconscfg.0
-./usr/share/man/cat8/mac68k/wsconsctl.0
 ./usr/share/man/cat8/macppc
 ./usr/share/man/cat8/macppc/MAKEDEV.0
 ./usr/share/man/cat8/macppc/apm.0
@@ -2490,8 +2472,6 @@
 ./usr/share/man/cat8/macppc/hotplugd.0
 ./usr/share/man/cat8/macppc/kbd.0
 ./usr/share/man/cat8/macppc/pdisk.0
-./usr/share/man/cat8/macppc/wsconscfg.0
-./usr/share/man/cat8/macppc/wsconsctl.0
 ./usr/share/man/cat8/macppc/zzz.0
 ./usr/share/man/cat8/mail.local.0
 ./usr/share/man/cat8/mailq.0
@@ -2640,8 +2620,6 @@
 ./usr/share/man/cat8/sgi/MAKEDEV.0
 ./usr/share/man/cat8/sgi/kbd.0
 ./usr/share/man/cat8/sgi/sgivol.0
-./usr/share/man/cat8/sgi/wsconscfg.0
-./usr/share/man/cat8/sgi/wsconsctl.0
 ./usr/share/man/cat8/showmount.0
 ./usr/share/man/cat8/shutdown.0
 ./usr/share/man/cat8/skeyprune.0
@@ -2673,8 +2651,6 @@
 ./usr/share/man/cat8/sparc/eeprom.0
 ./usr/share/man/cat8/sparc/installboot.0
 ./usr/share/man/cat8/sparc/kbd.0
-./usr/share/man/cat8/sparc/wsconscfg.0
-./usr/share/man/cat8/sparc/wsconsctl.0
 ./usr/share/man/cat8/sparc/zzz.0
 ./usr/share/man/cat8/sparc64
 ./usr/share/man/cat8/sparc64/MAKEDEV.0
@@ -2685,8 +2661,6 @@
 ./usr/share/man/cat8/sparc64/hotplugd.0
 ./usr/share/man/cat8/sparc64/installboot.0
 ./usr/share/man/cat8/sparc64/kbd.0
-./usr/share/man/cat8/sparc64/wsconscfg.0
-./usr/share/man/cat8/sparc64/wsconsctl.0
 ./usr/share/man/cat8/sparc64/zzz.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
@@ -2738,8 +2712,6 @@
 ./usr/share/man/cat8/vax/boot_vax.0
 ./usr/share/man/cat8/vax/format.0
 ./usr/share/man/cat8/vax/kbd.0
-./usr/share/man/cat8/vax/wsconscfg.0
-./usr/share/man/cat8/vax/wsconsctl.0
 ./usr/share/man/cat8/verify_krb5_conf.0
 ./usr/share/man/cat8/vipw.0
 ./usr/share/man/cat8/visudo.0
@@ -2749,6 +2721,9 @@
 ./usr/share/man/cat8/watchdogd.0
 ./usr/share/man/cat8/weekly.0
 ./usr/share/man/cat8/wpa-psk.0
+./usr/share/man/cat8/wsconscfg.0
+./usr/share/man/cat8/wsconsctl.0
+./usr/share/man/cat8/wsfontload.0
 ./usr/share/man/cat8/yp.0
 ./usr/share/man/cat8/ypbind.0
 ./usr/share/man/cat8/ypinit.0
@@ -2771,9 +2746,6 @@
 ./usr/share/man/cat8/zaurus/boot_zaurus.0
 ./usr/share/man/cat8/zaurus/hotplugd.0
 ./usr/share/man/cat8/zaurus/kbd.0
-./usr/share/man/cat8/zaurus/wsconscfg.0
-./usr/share/man/cat8/zaurus/wsconsctl.0
-./usr/share/man/cat8/zaurus/wsfontload.0
 ./usr/share/man/cat8/zaurus/ztsscale.0
 ./usr/share/man/cat8/zaurus/zzz.0
 ./usr/share/man/cat8/zdump.0
