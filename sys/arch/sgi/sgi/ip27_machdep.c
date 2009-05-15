@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.5 2009/05/15 06:29:37 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.6 2009/05/15 22:59:07 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -403,12 +403,16 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 			}
 			if (rc == 0)
 				printf("spurious interrupt, source %d\n", bit);
+
+			if ((isr ^= mask) == 0)
+				break;
 		}
 
 		/*
 		 * Reenable interrupts which have been serviced.
 		 */
 		IP27_LHUB_S(HUB_CPU0_IMR0, imr);
+		(void)IP27_LHUB_L(HUB_IR0);
 		
 		__asm__ (" .set noreorder\n");
 		cpl = icpl;
