@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.87 2009/05/13 01:14:19 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.88 2009/05/15 01:57:16 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -415,6 +415,16 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 
 		bcopy(bp->b_data + offset, dp, sizeof(dp));
 
+		if (n == 0 && part_blkno == DOSBBSECTOR) {
+			u_int16_t fattest;
+
+			/* Check the end of sector marker. */
+			fattest = ((bp->b_data[510] << 8) & 0xff00) |
+			    (bp->b_data[511] & 0xff);
+			if (fattest != 0x55aa)
+				goto notfat;
+		}
+
 		if (ourpart == -1) {
 			/* Search for our MBR partition */
 			for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
@@ -552,12 +562,6 @@ donot:
 		fattest = ((bp->b_data[12] << 8) & 0xff00) |
 		    (bp->b_data[11] & 0xff);
 		if (fattest < 512 || fattest > 4096 || (fattest % 512 != 0))
-			goto notfat;
-
-		/* Check the end of sector marker. */
-		fattest = ((bp->b_data[510] << 8) & 0xff00) |
-		    (bp->b_data[511] & 0xff);
-		if (fattest != 0x55aa)
 			goto notfat;
 
 		/* Looks like a FAT filesystem. Spoof 'i'. */
