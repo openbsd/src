@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.17 2009/05/11 19:14:50 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.18 2009/05/15 16:00:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -271,7 +271,7 @@
 #define RT2860_USB_PHY_WD_EN		(1 << 16)
 #define RT2860_USB_PHY_MAN_RST		(1 << 15)
 #define RT2860_USB_RX_AGG_LMT(x)	((x) << 8)	/* in unit of 1KB */
-#define RT2860_USB_RX_AGG_TO(x)		((x) << 0)	/* in unit of 33ns */
+#define RT2860_USB_RX_AGG_TO(x)		((x) & 0xff)	/* in unit of 33ns */
 
 /* possible flags for register US_CYC_CNT */
 #define RT2860_TEST_EN		(1 << 24)
@@ -835,6 +835,7 @@ struct rt2860_rxwi {
 #define RT3070_RF_2020	6	/* b/g */
 #define RT3070_RF_3021	7	/* 1T2R */
 #define RT3070_RF_3022	8	/* 2T2R */
+#define RT3070_RF_3052	9	/* dual-band 2T2R */
 
 /* USB commands for RT2870 only */
 #define RT2870_RESET		1

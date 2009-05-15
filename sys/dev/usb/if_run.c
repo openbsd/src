@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.23 2009/05/15 15:53:55 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.24 2009/05/15 16:00:12 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1046,6 +1046,7 @@ run_get_rf(int rev)
 	case RT3070_RF_2020:	return "RT2020";
 	case RT3070_RF_3021:	return "RT3021";
 	case RT3070_RF_3022:	return "RT3022";
+	case RT3070_RF_3052:	return "RT3052";
 	}
 	return "unknown";
 }
