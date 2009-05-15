@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 2009/01/25 17:30:48 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 2009/05/15 16:21:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -135,7 +135,6 @@ cdev_decl(pci);
 /*
  * WSCONS devices
  */
-#if 0
 #include "wsdisplay.h"
 /*
 #include "wsfont.h"
@@ -143,12 +142,6 @@ cdev_decl(pci);
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
-#else
-#define	NWSDISPLAY	0
-#define	NWSMOUSE	0
-#define	NWSKBD	0
-#define	NWSMUX	0
-#endif
 cdev_decl(wskbd);
 cdev_decl(wsmouse);
 
