@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.545 2009/05/12 09:05:54 halex Exp $
+#	$OpenBSD: install.sub,v 1.546 2009/05/15 01:31:01 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1896,7 +1896,7 @@ fi
 
 set -- $DKDEVS
 (( $# == 0 )) && { echo "No disks found." ; exit ; }
-(( $# > 1 )) && _defdsk=done
+(( $# > 1 )) && _defdsk=
 
 ask_which "disk" "is the root disk" "$DKDEVS" "$_defdsk"
 [[ $resp == done ]] && exit
