@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.18 2009/02/04 21:39:09 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.19 2009/05/15 11:07:41 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 4 2009 $
+.Dd $Mdocdate: May 15 2009 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -713,9 +713,12 @@ on failure.
 The
 .Fn sio_setpar ,
 .Fn sio_getpar ,
+.Fn sio_getcap ,
 .Fn sio_start ,
-and
 .Fn sio_stop ,
+.Fn sio_pollfd
+and
+.Fn sio_setvol
 functions return 1 on success and 0 on failure.
 The
 .Fn sio_read
@@ -779,6 +782,7 @@ The
 .Fn sio_open ,
 .Fn sio_setpar ,
 .Fn sio_getpar ,
+.Fn sio_getcap ,
 .Fn sio_start
 and
 .Fn sio_stop
