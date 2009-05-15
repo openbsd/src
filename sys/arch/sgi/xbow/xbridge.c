@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.17 2009/05/14 21:10:33 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.18 2009/05/15 06:29:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -27,7 +27,6 @@
 #include <sys/evcount.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>
-#include <sys/timeout.h>
 
 #include <machine/atomic.h>
 #include <machine/autoconf.h>
@@ -207,6 +206,7 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 		goto fail2;
 
 	if (sys_config.system_type == SGI_OCTANE) {
+		/* Unrestricted memory mappings in the large window */
 		bcopy(xaa->xaa_long_tag, sc->sc_mem_bus_space,
 		    sizeof(*sc->sc_mem_bus_space));
 		sc->sc_mem_bus_space->bus_base += BRIDGE_PCI_MEM_SPACE_BASE;
@@ -507,11 +507,7 @@ struct xbridge_intr {
 
 	struct evcount	xi_count;
 	int	 xi_level;
-
-	struct timeout xi_tmo;	/* XXX deadlock bad workaround */
 };
-
-void	xbridge_timeout(void *);	/* XXX */
 
 /* how our pci_intr_handle_t are constructed... */
 #define	XBRIDGE_INTR_HANDLE(d,b)	(0x100 | ((d) << 3) | (b))
@@ -609,7 +605,6 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 	xi->xi_arg = arg;
 	xi->xi_level = level;
 	evcount_attach(&xi->xi_count, name, &xi->xi_level, &evcount_intr);
-	timeout_set(&xi->xi_tmo, xbridge_timeout, xi);
 	sc->sc_intr[intrbit] = xi;
 
 	int_addr = ((xbow_intr_widget_register >> 30) & 0x0003ff00) | intrsrc;
@@ -623,15 +618,12 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 	 * INT_MODE register controls which interrupt pins cause
 	 * ``interrupt clear'' packets to be sent for high->low
 	 * transition.
-	 * We do not want such packets to be sent because we clear
-	 * interrupts ourselves and this would cause interrupts to
-	 * be missed.
+	 * We enable such packets to be sent in order not to have to
+	 * clear interrupts ourselves.
 	 */
-#if 0
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, BRIDGE_INT_MODE,
 	    bus_space_read_4(sc->sc_iot, sc->sc_regh, BRIDGE_INT_MODE) |
 	    (1 << intrbit));
-#endif
 	bus_space_write_4(sc->sc_iot, sc->sc_regh, BRIDGE_INT_DEV,
 	    bus_space_read_4(sc->sc_iot, sc->sc_regh, BRIDGE_INT_DEV) |
 	    (device << (intrbit * 3)));
@@ -677,9 +669,7 @@ xbridge_intr_handler(void *v)
 {
 	struct xbridge_intr *xi = v;
 	struct xbridge_softc *sc = xi->xi_bridge;
-#if 0
 	uint16_t nasid = 0;	/* XXX */
-#endif
 	int rc;
 	int spurious;
 
@@ -688,9 +678,6 @@ xbridge_intr_handler(void *v)
 		    sc->sc_dev.dv_xname, xi->xi_intrbit);
 		return 0;
 	}
-
-	if (!ISSET(sc->sc_flags, XBRIDGE_FLAGS_XBRIDGE))
-		timeout_del(&xi->xi_tmo);
 
 	/*
 	 * Flush PCI write buffers before servicing the interrupt.
@@ -734,15 +721,9 @@ xbridge_intr_handler(void *v)
 		    BRIDGE_INT_FORCE_PIN(xi->xi_intrbit), 1);
 	} else {
 		if (bus_space_read_4(sc->sc_iot, sc->sc_regh,
-		    BRIDGE_ISR) & (1 << xi->xi_intrbit)) {
-#if 0
-			/* XXX This doesn't appear to work */
+		    BRIDGE_ISR) & (1 << xi->xi_intrbit))
 			IP27_RHUB_PI_S(nasid, 0, HUB_IR_CHANGE,
 			    HUB_IR_SET | xi->xi_intrsrc);
-#else
-			timeout_add(&xi->xi_tmo, 1);
-#endif
-		}
 	}
 
 	return 1;
