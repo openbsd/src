@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.24 2009/04/28 18:37:13 kettenis Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.25 2009/05/15 21:47:40 kettenis Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -82,11 +82,12 @@ rbus_pccbb_parent_io(struct device *self, struct pci_attach_args *pa)
 		return &rbus_null;
 
 	start = ex->ex_start;
-	if (pa->pa_bridgetag == NULL) {
+	if (ex == pciio_ex) {
 		/*
-		 * If we're not behind a PCI-PCI bridge, we must be on
-		 * the root bus.  To avoid conflicts with onboard
-		 * legacy devices, we only make a subregion available.
+		 * We're on the root bus, or behind a subtractive
+		 * decode PCI-PCI bridge.  To avoid conflicts with
+		 * onboard legacy devices, we only make a subregion
+		 * available.
 		 */
 		start = max(start, RBUS_IO_START);
 	}
