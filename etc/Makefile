@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.276 2009/05/09 16:29:54 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.277 2009/05/15 16:26:53 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -21,9 +21,8 @@ BIN1=	changelist ccd.conf csh.cshrc csh.login csh.logout daily dhcpd.conf \
 	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf \
 	moduli pf.os sensorsd.conf ifstated.conf
 
-.if ${MACHINE} != "aviion" && ${MACHINE} != "landisk" && \
-    ${MACHINE} != "mvme68k" && ${MACHINE} != "mvme88k" && \
-    ${MACHINE} != "socppc"
+.if ${MACHINE} != "aviion" && ${MACHINE} != "mvme68k" && \
+    ${MACHINE} != "mvme88k"
 BIN1+=	wsconsctl.conf
 .endif
 
