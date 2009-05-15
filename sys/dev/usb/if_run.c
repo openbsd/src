@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.22 2009/05/15 15:42:27 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.23 2009/05/15 15:53:55 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -630,33 +630,35 @@ int
 run_load_microcode(struct run_softc *sc)
 {
 	usb_device_request_t req;
-	u_char *ucode, *base;
+	const char *fwname;
+	u_char *ucode;
 	size_t size;
 	uint32_t tmp;
 	int ntries, error;
 
-	if ((error = loadfirmware("run-rt2870", &ucode, &size)) != 0) {
+	/* RT3071/RT3072 use a different firmware */
+	if ((sc->mac_rev >> 16) != 0x2860 &&
+	    (sc->mac_rev >> 16) != 0x2872 &&
+	    (sc->mac_rev >> 16) != 0x3070)
+		fwname = "run-rt3071";
+	else
+		fwname = "run-rt2870";
+
+	if ((error = loadfirmware(fwname, &ucode, &size)) != 0) {
 		printf("%s: failed loadfirmware of file %s (error %d)\n",
-		    sc->sc_dev.dv_xname, "run-rt2870", error);
+		    sc->sc_dev.dv_xname, fwname, error);
 		return error;
 	}
-	if (size != 8192) {
-		printf("%s: invalid firmware size (should be 8KB)\n",
+	if (size != 4096) {
+		printf("%s: invalid firmware size (should be 4KB)\n",
 		    sc->sc_dev.dv_xname);
 		free(ucode, M_DEVBUF);
 		return EINVAL;
 	}
 
-	base = ucode;
-	/* RT3071/RT3072 use a different firmware */
-	if ((sc->mac_rev >> 16) != 0x2860 &&
-	    (sc->mac_rev >> 16) != 0x2872 &&
-	    (sc->mac_rev >> 16) != 0x3070)
-		base += 4096;
-
 	run_read(sc, RT2860_ASIC_VER_ID, &tmp);
 	/* write microcode image */
-	run_write_region_1(sc, RT2870_FW_BASE, base, 4096);
+	run_write_region_1(sc, RT2870_FW_BASE, ucode, size);
 	free(ucode, M_DEVBUF);
 	run_write(sc, RT2860_H2M_MAILBOX_CID, 0xffffffff);
 	run_write(sc, RT2860_H2M_MAILBOX_STATUS, 0xffffffff);

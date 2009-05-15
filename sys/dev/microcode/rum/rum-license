@@ -1,4 +1,4 @@
-Copyright (c) 2005-2008, Ralink Technology Corp.
+Copyright (c) 2005-2009, Ralink Technology Corp.
 	Paul Lin <paul_lin@ralinktech.com.tw>
 
 Permission to use, copy, modify, and distribute this software for any
@@ -15,4 +15,4 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 The following files are under the above license:
 
-	rum-rt2573 run-rt2870
+	rum-rt2573 run-rt2870 run-rt3071
