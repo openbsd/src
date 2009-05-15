@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun.c,v 1.16 2009/05/15 13:10:39 ratchov Exp $	*/
+/*	$OpenBSD: sun.c,v 1.17 2009/05/15 13:16:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -84,7 +84,7 @@ static struct sio_ops sun_ops = {
 /*
  * convert sun encoding to sio_par encoding
  */
-static void
+static int
 sun_infotoenc(struct sun_hdl *hdl, struct audio_prinfo *ai, struct sio_par *par)
 {
 	par->msb = 1;
@@ -117,8 +117,10 @@ sun_infotoenc(struct sun_hdl *hdl, struct audio_prinfo *ai, struct sio_par *par)
 		break;
 	default:
 		DPRINTF("sun_infotoenc: unsupported encoding\n");
-		exit(1);
+		hdl->sio.eof = 1;
+		return 0;
 	}
+	return 1;
 }
 
 /*
@@ -631,10 +633,12 @@ sun_getpar(struct sio_hdl *sh, struct sio_par *par)
 	}
 	if (hdl->sio.mode & SIO_PLAY) {
 		par->rate = aui.play.sample_rate;
-		sun_infotoenc(hdl, &aui.play, par);
+		if (!sun_infotoenc(hdl, &aui.play, par))
+			return 0;
 	} else if (hdl->sio.mode & SIO_REC) {
 		par->rate = aui.record.sample_rate;
-		sun_infotoenc(hdl, &aui.record, par);
+		if (!sun_infotoenc(hdl, &aui.record, par))
+			return 0;
 	} else
 		return 0;
 	par->pchan = (hdl->sio.mode & SIO_PLAY) ?
@@ -796,7 +800,8 @@ sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	if (hdl->sio.mode & SIO_PLAY) {
 		if (ioctl(hdl->fd, AUDIO_PERROR, &xrun) < 0) {
 			DPERROR("sun_revents: PERROR");
-			exit(1);
+			hdl->sio.eof = 1;
+			return POLLHUP;
 		}
 		doerr = xrun - hdl->oerr;
 		hdl->oerr = xrun;
@@ -805,8 +810,8 @@ sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	}
 	if (hdl->sio.mode & SIO_REC) {
 		if (ioctl(hdl->fd, AUDIO_RERROR, &xrun) < 0) {
-			DPERROR("sun_revents: RERROR");
-			exit(1);
+			hdl->sio.eof = 1;
+			return POLLHUP;
 		}
 		dierr = xrun - hdl->ierr;
 		hdl->ierr = xrun;
@@ -821,7 +826,8 @@ sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	if ((revents & POLLOUT) && !(hdl->sio.mode & SIO_REC)) {
 		if (ioctl(hdl->fd, AUDIO_GETOOFFS, &ao) < 0) {
 			DPERROR("sun_revents: GETOOFFS");
-			exit(1);
+			hdl->sio.eof = 1;
+			return POLLHUP;
 		}
 		hdl->odelta += (ao.samples - hdl->obytes) / hdl->obpf;
 		hdl->obytes = ao.samples;
@@ -833,7 +839,8 @@ sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 	if ((revents & POLLIN) && (hdl->sio.mode & SIO_REC)) {
 		if (ioctl(hdl->fd, AUDIO_GETIOFFS, &ao) < 0) {
 			DPERROR("sun_revents: GETIOFFS");
-			exit(1);
+			hdl->sio.eof = 1;
+			return POLLHUP;
 		}
 		hdl->idelta += (ao.samples - hdl->ibytes) / hdl->ibpf;
 		hdl->ibytes = ao.samples;
