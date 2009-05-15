@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.32 2009/05/05 14:16:17 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.33 2009/05/15 21:51:58 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -225,6 +225,19 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_pmemlimit - sc->sc_pmembase + 1,
 			    EX_NOWAIT);
 		}
+	}
+
+	/*
+	 * The Intel 82801BAM Hub-to-PCI can decode subtractively.
+	 * XXX We probably should handle subtractive decode bridges
+	 * in general.
+	 */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801BAM_HPB) {
+		if (sc->sc_ioex == NULL)
+			sc->sc_ioex = pa->pa_ioex;
+		if (sc->sc_memex == NULL)
+			sc->sc_memex = pa->pa_memex;
 	}
 
  attach:
