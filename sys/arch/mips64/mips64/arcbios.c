@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.19 2009/05/09 18:08:59 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.20 2009/05/15 22:56:08 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -76,10 +76,8 @@ static struct systypes {
     { NULL,		"SGI-IP22",			SGI_INDY },
     { NULL,		"SGI-IP25",			SGI_POWER10 },
     { NULL,		"SGI-IP26",			SGI_POWERI },
-    { NULL,		"SGI-IP27",			SGI_O200 },
     { NULL,		"SGI-IP30",			SGI_OCTANE },
-    { NULL,		"SGI-IP32",			SGI_O2 },
-    { NULL,		"SGI-IP35",			SGI_O300 },
+    { NULL,		"SGI-IP32",			SGI_O2 }
 };
 
 #define KNOWNSYSTEMS (sizeof(sys_types) / sizeof(struct systypes))
@@ -285,20 +283,11 @@ bios_configure_memory()
 				 * but the kernel image), but at least we're
 				 * safe to use ARCBios after going virtual.
 				 */
-				switch (type) {
-				case FirmwarePermanent:
+				if (type == FirmwarePermanent) {
 					descr = NULL; /* abort loop */
 					count = ((sys_config.system_type ==
 					    SGI_O200 ?  32 : 64) << (20 - 12)) -
 					    start;
-					rsvdmem = start;
-					break;
-				case FreeMemory:
-				case FreeContigous:
-					type = BadMemory; /* do not count */
-					break;
-				default:
-					break;
 				}
 			}
 #endif	/* O200 || O300 */
