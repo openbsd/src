@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.64 2009/04/07 14:57:33 reyk Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.65 2009/05/15 15:55:07 mpf Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -570,9 +570,10 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 
 			if (r->addr.s_addr == INADDR_ANY &&
 			    r->mask.s_addr == INADDR_ANY) {
-				if (is_default)
+				if (is_default) {
+					*metric = r->metric;
 					return (r->type & REDIST_NO? 0 : 1);
-				else
+				} else
 					return (0);
 			}
 
@@ -584,8 +585,10 @@ ospf_redistribute(struct kroute *kr, u_int32_t *metric)
 			}
 			break;
 		case REDIST_DEFAULT:
-			if (is_default)
+			if (is_default) {
+				*metric = r->metric;
 				return (r->type & REDIST_NO ? 0 : 1);
+			}
 			break;
 		}
 	}
