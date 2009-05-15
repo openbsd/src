@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.78 2009/02/22 07:47:22 otto Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.79 2009/05/15 12:07:18 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -316,7 +316,7 @@ nfs_reconnect(rep)
 	while ((error = nfs_connect(nmp, rep)) != 0) {
 		if (error == EINTR || error == ERESTART)
 			return (EINTR);
-		(void) tsleep((caddr_t)&lbolt, PSOCK, "nfscon", 0);
+		(void) tsleep((caddr_t)&lbolt, PSOCK, "nfsrecon", 0);
 	}
 
 	/*
