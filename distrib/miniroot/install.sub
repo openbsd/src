@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.546 2009/05/15 01:31:01 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.547 2009/05/15 01:40:42 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1884,16 +1884,6 @@ if [[ $MODE == install ]]; then
 fi
 
 # Get ROOTDISK, ROOTDEV and SWAPDEV.
-if [[ $MODE == install && ! -f /etc/fstab ]]; then
-	cat <<__EOT
-
-You will now initialize the disk(s) that OpenBSD will use. To enable all
-available security features you should configure the disk(s) to allow the
-creation of separate filesystems for /, /tmp, /var, /usr, and /home.
-
-__EOT
-fi
-
 set -- $DKDEVS
 (( $# == 0 )) && { echo "No disks found." ; exit ; }
 (( $# > 1 )) && _defdsk=
