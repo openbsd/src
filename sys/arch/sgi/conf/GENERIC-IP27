@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.1 2009/05/14 21:27:02 miod Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.2 2009/05/15 17:19:10 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -140,6 +140,9 @@ urlphy*		at mii?		# Realtek RTL8150L internal PHY
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
 ukphy*		at mii?		# "unknown" PHYs
 
+#### Wireless
+wi*		at pci?
+
 #### Audio
 emu*		at pci?
 audio*		at emu?
@@ -155,6 +158,6 @@ ses*		at scsibus?
 uk*		at scsibus?
 
 #### Crypto devices
-#hifn*		at pci?		# Hi/fn 7751 crypto card
+hifn*		at pci?		# Hi/fn 7751 crypto card
 
 pseudo-device	crypto	1
