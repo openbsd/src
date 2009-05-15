@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio.c,v 1.14 2009/02/09 07:00:27 ratchov Exp $	*/
+/*	$OpenBSD: sndio.c,v 1.15 2009/05/15 13:04:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -29,7 +29,12 @@
 
 #define SIO_PAR_MAGIC	0x83b905a4
 
-int sio_debug_level = 0;
+#ifdef DEBUG
+/*
+ * debug level, -1 means uninitialized
+ */
+int sio_debug = -1;
+#endif
 
 void
 sio_initpar(struct sio_par *par)
@@ -163,7 +168,15 @@ struct sio_hdl *
 sio_open(char *str, unsigned mode, int nbio)
 {
 	struct sio_hdl *hdl;
+#ifdef DEBUG
+	char *dbg;
 
+	if (sio_debug < 0) {
+		dbg = issetugid() ? NULL : getenv("SIO_DEBUG");
+		if (!dbg || sscanf(dbg, "%u", &sio_debug) != 1)
+			sio_debug = 0;
+	}
+#endif	
 	if ((mode & (SIO_PLAY | SIO_REC)) == 0)
 		return NULL;
 	if (str == NULL && !issetugid())
@@ -180,13 +193,6 @@ sio_open(char *str, unsigned mode, int nbio)
 void
 sio_create(struct sio_hdl *hdl, struct sio_ops *ops, unsigned mode, int nbio)
 {
-#ifdef DEBUG
-	char *dbg;
-
-	dbg = issetugid() ? NULL : getenv("SIO_DEBUG");
-	if (!dbg || sscanf(dbg, "%u", &hdl->debug) != 1)
-		hdl->debug = 0;
-#endif	
 	hdl->ops = ops;
 	hdl->mode = mode;
 	hdl->nbio = nbio;
@@ -206,11 +212,11 @@ int
 sio_start(struct sio_hdl *hdl)
 {
 	if (hdl->eof) {
-		DPRINTF(hdl, "sio_start: eof\n");
+		DPRINTF("sio_start: eof\n");
 		return 0;
 	}
 	if (hdl->started) {
-		DPRINTF(hdl, "sio_start: already started\n");
+		DPRINTF("sio_start: already started\n");
 		hdl->eof = 1;
 		return 0;
 	}
@@ -230,19 +236,18 @@ int
 sio_stop(struct sio_hdl *hdl)
 {
 	if (hdl->eof) {
-		DPRINTF(hdl, "sio_stop: eof\n");
+		DPRINTF("sio_stop: eof\n");
 		return 0;
 	}
 	if (!hdl->started) {
-		DPRINTF(hdl, "sio_stop: not started\n");
+		DPRINTF("sio_stop: not started\n");
 		hdl->eof = 1;
 		return 0;
 	}
 	if (!hdl->ops->stop(hdl))
 		return 0;
 #ifdef DEBUG
-	DPRINTF(hdl,
-	    "libsndio: polls: %llu, written = %llu, read: %llu\n",
+	DPRINTF("libsndio: polls: %llu, written = %llu, read: %llu\n",
 	    hdl->pollcnt, hdl->wcnt, hdl->rcnt);
 #endif
 	hdl->started = 0;
@@ -253,22 +258,21 @@ int
 sio_setpar(struct sio_hdl *hdl, struct sio_par *par)
 {
 	if (hdl->eof) {
-		DPRINTF(hdl, "sio_setpar: eof\n");
+		DPRINTF("sio_setpar: eof\n");
 		return 0;
 	}
 	if (par->__magic != SIO_PAR_MAGIC) {
-		DPRINTF(hdl,
-		    "sio_setpar: use of uninitialized sio_par structure\n");
+		DPRINTF("sio_setpar: use of uninitialized sio_par structure\n");
 		hdl->eof = 1;
 		return 0;
 	}
 	if (hdl->started) {
-		DPRINTF(hdl, "sio_setpar: already started\n");
+		DPRINTF("sio_setpar: already started\n");
 		hdl->eof = 1;
 		return 0;
 	}
 	if (par->bufsz != (unsigned)~0) {
-		DPRINTF(hdl, "sio_setpar: setting bufsz is deprecated\n");
+		DPRINTF("sio_setpar: setting bufsz is deprecated\n");
 		par->appbufsz = par->bufsz;
 	}
 	if (par->rate != (unsigned)~0 && par->appbufsz == (unsigned)~0)
@@ -280,11 +284,11 @@ int
 sio_getpar(struct sio_hdl *hdl, struct sio_par *par)
 {
 	if (hdl->eof) {
-		DPRINTF(hdl, "sio_getpar: eof\n");
+		DPRINTF("sio_getpar: eof\n");
 		return 0;
 	}
 	if (hdl->started) {
-		DPRINTF(hdl, "sio_getpar: already started\n");
+		DPRINTF("sio_getpar: already started\n");
 		hdl->eof = 1;
 		return 0;
 	}
@@ -300,11 +304,11 @@ int
 sio_getcap(struct sio_hdl *hdl, struct sio_cap *cap)
 {
 	if (hdl->eof) {
-		DPRINTF(hdl, "sio_getcap: eof\n");
+		DPRINTF("sio_getcap: eof\n");
 		return 0;
 	}
 	if (hdl->started) {
-		DPRINTF(hdl, "sio_getcap: already started\n");
+		DPRINTF("sio_getcap: already started\n");
 		hdl->eof = 1;
 		return 0;
 	}
@@ -322,13 +326,13 @@ sio_psleep(struct sio_hdl *hdl, int event)
 		while (poll(&pfd, 1, -1) < 0) {
 			if (errno == EINTR)
 				continue;
-			DPERROR(hdl, "sio_psleep: poll");
+			DPERROR("sio_psleep: poll");
 			hdl->eof = 1;
 			return 0;
 		}
 		revents = sio_revents(hdl, &pfd);
 		if (revents & POLLHUP) {
-			DPRINTF(hdl, "sio_psleep: hang-up\n");
+			DPRINTF("sio_psleep: hang-up\n");
 			return 0;
 		}
 		if (revents & event)
@@ -345,16 +349,16 @@ sio_read(struct sio_hdl *hdl, void *buf, size_t len)
 	size_t todo = len;
 
 	if (hdl->eof) {
-		DPRINTF(hdl, "sio_read: eof\n");
+		DPRINTF("sio_read: eof\n");
 		return 0;
 	}
 	if (!hdl->started || !(hdl->mode & SIO_REC)) {
-		DPRINTF(hdl, "sio_read: recording not started\n");
+		DPRINTF("sio_read: recording not started\n");
 		hdl->eof = 1;
 		return 0;
 	}
 	if (todo == 0) {
-		DPRINTF(hdl, "sio_read: zero length read ignored\n");
+		DPRINTF("sio_read: zero length read ignored\n");
 		return 0;
 	}
 	while (todo > 0) {
@@ -385,21 +389,21 @@ sio_write(struct sio_hdl *hdl, void *buf, size_t len)
 	struct timeval tv0, tv1, dtv;
 	unsigned us;
 
-	if (hdl->debug >= 2)
+	if (sio_debug >= 2)
 		gettimeofday(&tv0, NULL);
 #endif
 
 	if (hdl->eof) {
-		DPRINTF(hdl, "sio_write: eof\n");
+		DPRINTF("sio_write: eof\n");
 		return 0;
 	}
 	if (!hdl->started || !(hdl->mode & SIO_PLAY)) {
-		DPRINTF(hdl, "sio_write: playback not started\n");
+		DPRINTF("sio_write: playback not started\n");
 		hdl->eof = 1;
 		return 0;
 	}
 	if (todo == 0) {
-		DPRINTF(hdl, "sio_write: zero length write ignored\n");
+		DPRINTF("sio_write: zero length write ignored\n");
 		return 0;
 	}
 	while (todo > 0) {
@@ -418,14 +422,14 @@ sio_write(struct sio_hdl *hdl, void *buf, size_t len)
 #endif
 	}
 #ifdef DEBUG
-	if (hdl->debug >= 2) {
+	if (sio_debug >= 2) {
 		gettimeofday(&tv1, NULL);
 		timersub(&tv0, &hdl->tv, &dtv);
-		DPRINTF(hdl, "%ld.%06ld: ", dtv.tv_sec, dtv.tv_usec);
+		DPRINTF("%ld.%06ld: ", dtv.tv_sec, dtv.tv_usec);
 
 		timersub(&tv1, &tv0, &dtv);
 		us = dtv.tv_sec * 1000000 + dtv.tv_usec; 
-		DPRINTF(hdl, 
+		DPRINTF(
 		    "sio_write: wrote %d bytes of %d in %uus\n",
 		    (int)(len - todo), (int)len, us);
 	}
@@ -460,7 +464,7 @@ sio_revents(struct sio_hdl *hdl, struct pollfd *pfd)
 	struct timeval tv0, tv1, dtv;
 	unsigned us;
 
-	if (hdl->debug >= 2)
+	if (sio_debug >= 2)
 		gettimeofday(&tv0, NULL);
 #endif
 	if (hdl->eof)
@@ -472,15 +476,14 @@ sio_revents(struct sio_hdl *hdl, struct pollfd *pfd)
 	if (!hdl->started)
 		return revents & POLLHUP;
 #ifdef DEBUG
-	if (hdl->debug >= 2) {
+	if (sio_debug >= 2) {
 		gettimeofday(&tv1, NULL);
 		timersub(&tv0, &hdl->tv, &dtv);
-		DPRINTF(hdl, "%ld.%06ld: ", dtv.tv_sec, dtv.tv_usec);
+		DPRINTF("%ld.%06ld: ", dtv.tv_sec, dtv.tv_usec);
 
 		timersub(&tv1, &tv0, &dtv);
 		us = dtv.tv_sec * 1000000 + dtv.tv_usec; 
-		DPRINTF(hdl, 
-		    "sio_revents: revents = 0x%x, complete in %uus\n",
+		DPRINTF("sio_revents: revents = 0x%x, complete in %uus\n",
 		    revents, us);
 	}
 #endif
@@ -497,7 +500,7 @@ void
 sio_onmove(struct sio_hdl *hdl, void (*cb)(void *, int), void *addr)
 {
 	if (hdl->started) {
-		DPRINTF(hdl, "sio_onmove: already started\n");
+		DPRINTF("sio_onmove: already started\n");
 		hdl->eof = 1;
 		return;
 	}
@@ -512,14 +515,13 @@ sio_onmove_cb(struct sio_hdl *hdl, int delta)
 	struct timeval tv0, dtv;
 	long long playpos;
 
-	if (hdl->debug >= 2 && (hdl->mode & SIO_PLAY)) {
+	if (sio_debug >= 2 && (hdl->mode & SIO_PLAY)) {
 		gettimeofday(&tv0, NULL);
 		timersub(&tv0, &hdl->tv, &dtv);
-		DPRINTF(hdl, "%ld.%06ld: ", dtv.tv_sec, dtv.tv_usec);
+		DPRINTF("%ld.%06ld: ", dtv.tv_sec, dtv.tv_usec);
 		hdl->realpos += delta;
 		playpos = hdl->wcnt / (hdl->par.bps * hdl->par.pchan);
-		DPRINTF(hdl,
-		    "sio_onmove_cb: delta = %+7d, "
+		DPRINTF("sio_onmove_cb: delta = %+7d, "
 		    "plat = %+7lld, "
 		    "realpos = %+7lld, "
 		    "bufused = %+7lld\n",
@@ -548,7 +550,7 @@ void
 sio_onvol(struct sio_hdl *hdl, void (*cb)(void *, unsigned), void *addr)
 {
 	if (hdl->started) {
-		DPRINTF(hdl, "sio_onvol: already started\n");
+		DPRINTF("sio_onvol: already started\n");
 		hdl->eof = 1;
 		return;
 	}

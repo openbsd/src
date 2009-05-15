@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndio_priv.h,v 1.5 2009/01/17 10:39:53 ratchov Exp $	*/
+/*	$OpenBSD: sndio_priv.h,v 1.6 2009/05/15 13:04:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -34,7 +34,6 @@ struct sio_hdl {
 	int nbio;			/* true if non-blocking io */
 	int eof;			/* true if error occured */
 #ifdef DEBUG
-	int debug;			/* debug flag */	
 	unsigned long long pollcnt;	/* times sio_revents was called */
 	unsigned long long wcnt;	/* bytes written with sio_write() */
 	unsigned long long rcnt;	/* bytes read with sio_read() */
@@ -70,19 +69,21 @@ void sio_onmove_cb(struct sio_hdl *, int);
 void sio_onvol_cb(struct sio_hdl *, unsigned);
 
 #ifdef DEBUG
-#define DPRINTF(hdl,...)					\
+extern int sio_debug;
+
+#define DPRINTF(...)						\
 	do {							\
-		if ((hdl)->debug)				\
+		if (sio_debug > 0)				\
 			fprintf(stderr, __VA_ARGS__);		\
 	} while(0)
-#define DPERROR(hdl,s)						\
+#define DPERROR(s)						\
 	do {							\
-		if ((hdl)->debug)				\
+		if (sio_debug > 0)				\
 			perror(s);				\
 	} while(0)
 #else
-#define DPRINTF(hdl,...) do {} while(0)
-#define DPERROR(hdl,s) do {} while(0)
+#define DPRINTF(...) do {} while(0)
+#define DPERROR(s) do {} while(0)
 #endif
 
 #endif /* !defined(SNDIO_PRIV_H) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.15 2009/02/25 23:31:59 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.16 2009/05/15 13:04:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -104,7 +104,7 @@ sio_open_aucat(char *path, unsigned mode, int nbio)
 		goto bad_connect;
 	}
 	if (fcntl(s, F_SETFD, FD_CLOEXEC) < 0) {
-		DPERROR(&hdl->sa, "FD_CLOEXEC");
+		DPERROR("FD_CLOEXEC");
 		goto bad_connect;
 	}
 	hdl->fd = s;
@@ -145,12 +145,12 @@ aucat_rmsg(struct aucat_hdl *hdl)
 				continue;
 			if (errno != EAGAIN) {
 				hdl->sa.eof = 1;
-				DPERROR(&hdl->sa, "aucat_rmsg: read");
+				DPERROR("aucat_rmsg: read");
 			}
 			return 0;
 		}
 		if (n == 0) {
-			DPRINTF(&hdl->sa, "aucat_rmsg: eof\n");
+			DPRINTF("aucat_rmsg: eof\n");
 			hdl->sa.eof = 1;
 			return 0;
 		}
@@ -176,7 +176,7 @@ aucat_wmsg(struct aucat_hdl *hdl)
 				continue;
 			if (errno != EAGAIN) {
 				hdl->sa.eof = 1;
-				DPERROR(&hdl->sa, "aucat_wmsg: write");
+				DPERROR("aucat_wmsg: write");
 			}
 			return 0;
 		}
@@ -197,7 +197,7 @@ aucat_runmsg(struct aucat_hdl *hdl)
 	case AMSG_DATA:
 		if (hdl->rmsg.u.data.size == 0 ||
 		    hdl->rmsg.u.data.size % hdl->rbpf) {
-			DPRINTF(&hdl->sa, "aucat_runmsg: bad data message\n");
+			DPRINTF("aucat_runmsg: bad data message\n");
 			hdl->sa.eof = 1;
 			return 0;
 		}
@@ -216,7 +216,7 @@ aucat_runmsg(struct aucat_hdl *hdl)
 		hdl->rtodo = 0xdeadbeef;
 		break;
 	default:
-		DPRINTF(&hdl->sa, "aucat_runmsg: unknown message\n");
+		DPRINTF("aucat_runmsg: unknown message\n");
 		hdl->sa.eof = 1;
 		return 0;
 	}
@@ -256,7 +256,7 @@ aucat_start(struct sio_hdl *sh)
 	hdl->rstate = STATE_MSG;
 	hdl->rtodo = sizeof(struct amsg);
 	if (fcntl(hdl->fd, F_SETFL, O_NONBLOCK) < 0) {
-		DPERROR(&hdl->sa, "aucat_start: fcntl(0)");
+		DPERROR("aucat_start: fcntl(0)");
 		hdl->sa.eof = 1;
 		return 0;
 	}
@@ -272,7 +272,7 @@ aucat_stop(struct sio_hdl *sh)
 	unsigned n, count, todo;
 
 	if (fcntl(hdl->fd, F_SETFL, 0) < 0) {
-		DPERROR(&hdl->sa, "aucat_stop: fcntl(0)");
+		DPERROR("aucat_stop: fcntl(0)");
 		hdl->sa.eof = 1;
 		return 0;
 	}
@@ -367,7 +367,7 @@ aucat_getpar(struct sio_hdl *sh, struct sio_par *par)
 	if (!aucat_rmsg(hdl))
 		return 0;
 	if (hdl->rmsg.cmd != AMSG_GETPAR) {
-		DPRINTF(&hdl->sa, "aucat_getpar: protocol err\n");
+		DPRINTF("aucat_getpar: protocol err\n");
 		hdl->sa.eof = 1;
 		return 0;
 	}
@@ -402,7 +402,7 @@ aucat_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 	if (!aucat_rmsg(hdl))
 		return 0;
 	if (hdl->rmsg.cmd != AMSG_GETCAP) {
-		DPRINTF(&hdl->sa, "aucat_getcap: protocol err\n");
+		DPRINTF("aucat_getcap: protocol err\n");
 		hdl->sa.eof = 1;
 		return 0;
 	}
@@ -435,7 +435,7 @@ aucat_read(struct sio_hdl *sh, void *buf, size_t len)
 				return 0;
 			break;
 		case STATE_IDLE:
-			DPRINTF(&hdl->sa, "aucat_read: unexpected idle\n");
+			DPRINTF("aucat_read: unexpected idle\n");
 			break;
 		}
 	}
@@ -446,12 +446,12 @@ aucat_read(struct sio_hdl *sh, void *buf, size_t len)
 			continue;
 		if (errno != EAGAIN) {
 			hdl->sa.eof = 1;
-			DPERROR(&hdl->sa, "aucat_read: read");
+			DPERROR("aucat_read: read");
 		}
 		return 0;
 	}
 	if (n == 0) {
-		DPRINTF(&hdl->sa, "aucat_read: eof\n");
+		DPRINTF("aucat_read: eof\n");
 		hdl->sa.eof = 1;
 		return 0;
 	}
@@ -511,7 +511,7 @@ aucat_write(struct sio_hdl *sh, void *buf, size_t len)
 				hdl->wstate = STATE_IDLE;
 			break;
 		default:
-			DPRINTF(&hdl->sa, "aucat_write: bad state\n");
+			DPRINTF("aucat_write: bad state\n");
 			abort();
 		}
 	}
@@ -522,7 +522,7 @@ aucat_write(struct sio_hdl *sh, void *buf, size_t len)
 	if (len > hdl->wtodo)
 		len = hdl->wtodo;
 	if (len == 0) {
-		DPRINTF(&hdl->sa, "aucat_write: len == 0\n");
+		DPRINTF("aucat_write: len == 0\n");
 		abort();
 	}
 	while ((n = write(hdl->fd, buf, len)) < 0) {
@@ -530,7 +530,7 @@ aucat_write(struct sio_hdl *sh, void *buf, size_t len)
 			continue;
 		if (errno != EAGAIN) {
 			hdl->sa.eof = 1;
-			DPERROR(&hdl->sa, "aucat_write: write");
+			DPERROR("aucat_write: write");
 		}
 		return 0;
 	}
