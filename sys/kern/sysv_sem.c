@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.38 2009/04/03 04:22:49 guenther Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.39 2009/05/16 23:00:45 thib Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ semu_alloc(struct process *pr)
 	 * with un_proc == pr has not been allocated in the meantime.
 	 */
 	semutot++;
-	if ((suptr = pool_get(&semu_pool, 0)) == NULL) {
+	if ((suptr = pool_get(&semu_pool, PR_NOWAIT)) == NULL) {
 		sutmp = pool_get(&semu_pool, PR_WAITOK);
 		SLIST_FOREACH(suptr, &semu_list, un_next) {
 			if (suptr->un_proc == pr) {
