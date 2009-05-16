@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.189 2009/05/14 16:35:05 mglocker Exp $g
+#	$OpenBSD: GENERIC,v 1.190 2009/05/16 06:10:09 mglocker Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -296,8 +296,8 @@ onewire* at uow?
 uvideo* at uhub?
 video*  at uvideo?
 
-#udl*		at uhub?
-#wsdisplay*	at udl?
+udl*		at uhub?
+wsdisplay*	at udl?
 
 # Bluetooth controllers
 ubt*	at uhub?		# USB Bluetooth

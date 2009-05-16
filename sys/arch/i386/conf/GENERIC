@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.658 2009/05/12 19:49:36 mglocker Exp $
+#	$OpenBSD: GENERIC,v 1.659 2009/05/16 06:10:09 mglocker Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -302,8 +302,8 @@ puc*	at pci?			# PCI "universal" communication device
 uvideo* at uhub?
 video*  at uvideo?
 
-#udl*		at uhub?
-#wsdisplay*	at udl?
+udl*		at uhub?
+wsdisplay*	at udl?
 
 sdhc*	at pci?			# SD Host Controller
 sdmmc*	at sdhc?		# SD/MMC bus
