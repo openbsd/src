@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.121 2009/05/10 12:24:04 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.122 2009/05/16 10:53:06 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -403,9 +403,14 @@ device	vdsk: ldc, scsi
 attach	vdsk at cbus
 file	arch/sparc64/dev/vdsk.c			vdsk
 
+# Virtual network switch
+device	vsw {}
+attach	vsw at cbus
+file	arch/sparc64/dev/vsw.c			vsw
+
 # Virtual network
 device	vnet: ldc
-attach	vnet at cbus
+attach	vnet at cbus, vsw
 file	arch/sparc64/dev/vnet.c			vnet
 
 # Virtual console concentrator
