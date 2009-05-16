@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.8 2009/05/15 23:02:23 miod Exp $	*/
+/*	$OpenBSD: power.c,v 1.9 2009/05/16 16:04:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -25,6 +25,7 @@
 #include <dev/ic/ds1687reg.h>
 
 #include <machine/autoconf.h>
+#include <sgi/dev/dsrtcvar.h>
 
 #include <sgi/localbus/macebus.h>
 
