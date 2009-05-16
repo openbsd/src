@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.281 2009/04/09 16:02:24 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.282 2009/05/16 23:51:43 sthen Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -1223,12 +1223,3 @@ ACPI notice:
 	details as possible, including the dmesg(8) output for both ACPI
 	and ACPI-disabled kernels, as well as the output from acpidump(8)
 	and pcidump(8).
-
-	On a few machines as well (usually with broken BIOSes), the
-	monoprocessor kernel (bsd) and the multiprocessor kernel (bsd.mp)
-	will behave differently, due to differences in the interrupt
-	routing mechanism.  Trying the multiprocessor kernel, even on a
-	single processor machine, or the other way around, might solve
-	interrupt problems as well. As with the potential ACPI problems
-	above, please report any such problems, so that the developers
-	have a chance to fix them.
