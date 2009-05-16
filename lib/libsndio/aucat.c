@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.20 2009/05/16 11:15:26 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.21 2009/05/16 12:10:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -362,7 +362,6 @@ aucat_setpar(struct sio_hdl *sh, struct sio_par *par)
 	hdl->wmsg.u.par.rate = par->rate;
 	hdl->wmsg.u.par.appbufsz = par->appbufsz;
 	hdl->wmsg.u.par.xrun = par->xrun;
-	hdl->wmsg.u.par.mode = hdl->sio.mode;
 	if (hdl->sio.mode & SIO_REC)
 		hdl->wmsg.u.par.rchan = par->rchan;
 	if (hdl->sio.mode & SIO_PLAY)
