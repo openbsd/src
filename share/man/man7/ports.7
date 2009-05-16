@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.75 2009/05/15 22:30:03 espie Exp $
+.\" $OpenBSD: ports.7,v 1.76 2009/05/16 19:46:25 jmc Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: May 15 2009 $
+.Dd $Mdocdate: May 16 2009 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -578,10 +578,8 @@ should not be changed by the user, and are liable to change without notice.
 .Bl -tag -width MASTER_SITES
 .It Ev PORTSDIR
 Location of the ports tree
-.Po
-usually
-.Pa /usr/ports
-.Pc
+(usually
+.Pa /usr/ports ) .
 .It Ev DISTDIR
 Where to find/put distfiles, normally
 .Pa distfiles/
@@ -608,10 +606,8 @@ under
 If set to empty, it will revert to a file under ${WRKDIR}.
 .It Ev LOCALBASE
 Where to install things in general
-.Po
-usually
-.Pa /usr/local
-.Pc
+(usually
+.Pa /usr/local ) .
 .It Ev MASTER_SITES
 Primary sites for distribution files if not found locally.
 .It Ev CLEANDEPENDS
