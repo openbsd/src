@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.h,v 1.5 2009/02/06 08:29:35 ratchov Exp $	*/
+/*	$OpenBSD: sock.h,v 1.6 2009/05/16 12:20:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -38,9 +38,10 @@ struct sock {
 #define SOCK_WMSG	1		/* amsg being written */
 #define SOCK_WDATA	2		/* data chunk being written */
 	unsigned wstate;		/* state of the write-end FSM */
-#define SOCK_INIT	0		/* parameter negotiation */
-#define SOCK_START	1		/* filling play buffers */
-#define SOCK_RUN	2		/* attached to the mix / sub */
+#define SOCK_HELLO	0		/* waiting for HELLO message */
+#define SOCK_INIT	1		/* parameter negotiation */
+#define SOCK_START	2		/* filling play buffers */
+#define SOCK_RUN	3		/* attached to the mix / sub */
 	unsigned pstate;		/* one of the above */
 	unsigned mode;			/* a set of AMSG_PLAY, AMSG_REC */
 	struct aparams rpar;		/* read (ie play) parameters */

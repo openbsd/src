@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.17 2009/05/16 11:15:26 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.18 2009/05/16 12:20:31 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -269,7 +269,7 @@ struct aproc_ops wsock_ops = {
 };
 
 /*
- * initialise socket in the SOCK_INIT state with default
+ * initialise socket in the SOCK_HELLO state with default
  * parameters
  */
 struct sock *
@@ -282,17 +282,15 @@ sock_new(struct fileops *ops, int fd, char *name,
 	f = (struct sock *)pipe_new(ops, fd, name);
 	if (f == NULL)
 		return NULL;
-	f->pstate = SOCK_INIT;
+	f->pstate = SOCK_HELLO;
 	f->mode = 0;
 	if (dev_rec) {
 		f->templ_wpar = *wpar;
 		f->wpar = f->templ_wpar;
-		f->mode |= AMSG_REC;
 	}
 	if (dev_play) {
 		f->templ_rpar = *rpar;
 		f->rpar = f->templ_rpar;
-		f->mode |= AMSG_PLAY;
 	}
 	f->xrun = AMSG_IGNORE;
 	f->bufsz = dev_bufsz;
@@ -581,15 +579,20 @@ sock_setpar(struct sock *f)
 	struct amsg_par *p = &f->rmsg.u.par;
 	unsigned min, max, rate;
 
-	if (AMSG_ISSET(p->mode)) {
-		if ((p->mode & ~(AMSG_PLAY | AMSG_REC)) || p->mode == 0) {
-			DPRINTF("sock_setpar: bad mode %x\n", p->mode);
+	if (AMSG_ISSET(p->legacy_mode)) {
+		/*
+		 * XXX: allow old clients that don't support HELLO
+		 * to work
+		 */
+		if ((p->legacy_mode & ~(AMSG_PLAY | AMSG_REC)) ||
+		    (p->legacy_mode == 0)) {
+			DPRINTF("sock_setpar: bad mode %x\n", p->legacy_mode);
 			return 0;
 		}
 		f->mode = 0;
-		if ((p->mode & AMSG_PLAY) && dev_mix)
+		if ((p->legacy_mode & AMSG_PLAY) && dev_mix)
 			f->mode |= AMSG_PLAY;
-		if ((p->mode & AMSG_REC) && dev_sub)
+		if ((p->legacy_mode & AMSG_REC) && dev_sub)
 			f->mode |= AMSG_REC;
 		DPRINTF("sock_setpar: mode -> %x\n", f->mode);
 	}
@@ -707,18 +710,27 @@ sock_hello(struct sock *f)
 	struct amsg_hello *p = &f->rmsg.u.hello;
 
 	DPRINTF("sock_hello: from <%s>\n", p->who);
-	if ((p->proto & AMSG_PLAY) && dev_mix == NULL) {
-		DPRINTF("sock_hello: playback not supported\n");
-		return 0;
-	}
-	if ((p->proto & AMSG_REC) && dev_sub == NULL) {
-		DPRINTF("sock_hello: recording not supported\n");
-		return 0;
-	}
-	if ((p->proto & ~(AMSG_PLAY | AMSG_REC)) != 0) {
+	if ((p->proto & ~(AMSG_PLAY | AMSG_REC)) != 0 ||
+	    (p->proto &  (AMSG_PLAY | AMSG_REC)) == 0) {
 		DPRINTF("sock_hello: %x: unsupported proto\n", p->proto);
 		return 0;
 	}
+	f->mode = 0;
+	if (p->proto & AMSG_PLAY) {
+		if (!dev_mix) {
+			DPRINTF("sock_hello: playback not supported\n");
+			return 0;
+		}
+		f->mode |= AMSG_PLAY;
+	}
+	if (p->proto & AMSG_REC) {
+		if (!dev_sub) {
+			DPRINTF("sock_hello: recording not supported\n");
+			return 0;
+		}
+		f->mode |= AMSG_REC;
+	}
+	f->pstate = SOCK_INIT;
 	return 1;
 }
 
@@ -730,6 +742,14 @@ int
 sock_execmsg(struct sock *f)
 {
 	struct amsg *m = &f->rmsg;
+
+	/*
+	 * XXX: allow old clients to work without hello
+	 */
+	if (f->pstate == SOCK_HELLO && m->cmd != AMSG_HELLO) {
+		DPRINTF("sock_execmsg: legacy client\n");
+		f->pstate = SOCK_INIT;
+	}
 
 	switch (m->cmd) {
 	case AMSG_DATA:
@@ -801,7 +821,7 @@ sock_execmsg(struct sock *f)
 		}
 		AMSG_INIT(m);
 		m->cmd = AMSG_GETPAR;
-		m->u.par.mode = f->mode;
+		m->u.par.legacy_mode = f->mode;
 		m->u.par.bits = f->rpar.bits;
 		m->u.par.bps = f->rpar.bps;
 		m->u.par.sig = f->rpar.sig;
@@ -856,7 +876,7 @@ sock_execmsg(struct sock *f)
 		break;
 	case AMSG_HELLO:
 		DPRINTFN(2, "sock_execmsg: %p: HELLO\n", f);
-		if (f->pstate != SOCK_INIT) {
+		if (f->pstate != SOCK_HELLO) {
 			DPRINTF("sock_execmsg: %p: HELLO, bad state\n", f);
 			aproc_del(f->pipe.file.rproc);
 			return 0;
