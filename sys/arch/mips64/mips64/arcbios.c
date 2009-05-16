@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.20 2009/05/15 22:56:08 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.21 2009/05/16 16:40:31 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -300,6 +300,16 @@ bios_configure_memory()
 		case BadMemory:		/* Have no use for these */
 			break;
 
+		case LoadedProgram:
+			/*
+			 * LoadedProgram areas are either the boot loader,
+			 * if the kernel has not been directly loaded by
+			 * ARCBios, or the kernel image itself.
+			 * Since we will move the kernel image out of the
+			 * memory segments later anyway, it makes sense to
+			 * claim this memory as free.
+			 */
+			/* FALLTHROUGH */
 		case FreeMemory:
 		case FreeContigous:
 			physmem += count;
@@ -330,10 +340,6 @@ bios_configure_memory()
 		case FirmwareTemporary:
 		case FirmwarePermanent:
 			rsvdmem += count;
-			physmem += count;
-			break;
-
-		case LoadedProgram:	/* Count this into total memory */
 			physmem += count;
 			break;
 
