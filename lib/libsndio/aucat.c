@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.17 2009/05/15 13:10:39 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.18 2009/05/16 09:01:56 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -358,7 +358,7 @@ aucat_getpar(struct sio_hdl *sh, struct sio_par *par)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 
-	AMSG_INIT(&hdl->rmsg);
+	AMSG_INIT(&hdl->wmsg);
 	hdl->wmsg.cmd = AMSG_GETPAR;
 	hdl->wtodo = sizeof(struct amsg);
 	if (!aucat_wmsg(hdl))
@@ -393,7 +393,7 @@ aucat_getcap(struct sio_hdl *sh, struct sio_cap *cap)
 {
 	struct aucat_hdl *hdl = (struct aucat_hdl *)sh;
 
-	AMSG_INIT(&hdl->rmsg);
+	AMSG_INIT(&hdl->wmsg);
 	hdl->wmsg.cmd = AMSG_GETCAP;
 	hdl->wtodo = sizeof(struct amsg);
 	if (!aucat_wmsg(hdl))
