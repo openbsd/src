@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.5 2009/02/13 20:48:49 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.6 2009/05/16 11:15:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,6 +24,9 @@
  * binaries or by different versions of a shared library, we are not
  * allowed to change the packet binary representation in a backward
  * incompatible way.
+ *
+ * Especially, make sure the amsg_xxx structures are not larger
+ * than 32 bytes.
  */
 struct amsg {
 #define AMSG_ACK	0	/* ack for START/STOP */
@@ -35,13 +38,12 @@ struct amsg {
 #define AMSG_MOVE	6	/* position changed */
 #define AMSG_GETCAP	7	/* get capabilities */
 #define AMSG_SETVOL	8	/* set volume */
+#define AMSG_HELLO	9	/* say hello, check versions and so ... */
 	uint32_t cmd;
 	uint32_t __pad;
 	union {
 		struct amsg_par {
-#define AMSG_PLAY	1			/* will play */
-#define AMSG_REC	2			/* will record */
-			uint8_t mode;		/* a bitmap of above */
+			uint8_t mode;		/* AMSG_PLAY or AMSG_REC */
 #define AMSG_IGNORE	0			/* loose sync */
 #define AMSG_SYNC	1			/* resync after xrun */
 #define AMSG_ERROR	2			/* kill the stream */
@@ -79,6 +81,16 @@ struct amsg {
 		struct amsg_vol {
 			uint32_t ctl;
 		} vol;
+		struct amsg_hello {
+#define AMSG_PLAY	0x1			/* audio playback */
+#define AMSG_REC	0x2			/* audio recording */
+#define AMSG_MIDIIN	0x4			/* MIDI thru input */
+#define AMSG_MIDIOUT	0x8			/* MIDI thru output */
+#define AMSG_MIXER	0x10			/* MIDI mixer */
+			uint16_t proto;		/* protocol type */
+			uint8_t reserved1[18];	/* for future use */
+			char who[12];		/* hint for leases */
+		} hello;
 	} u;
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.16 2009/03/15 10:31:37 jakemsr Exp $	*/
+/*	$OpenBSD: sock.c,v 1.17 2009/05/16 11:15:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -701,6 +701,27 @@ sock_setpar(struct sock *f)
 	return 1;
 }
 
+int
+sock_hello(struct sock *f)
+{
+	struct amsg_hello *p = &f->rmsg.u.hello;
+
+	DPRINTF("sock_hello: from <%s>\n", p->who);
+	if ((p->proto & AMSG_PLAY) && dev_mix == NULL) {
+		DPRINTF("sock_hello: playback not supported\n");
+		return 0;
+	}
+	if ((p->proto & AMSG_REC) && dev_sub == NULL) {
+		DPRINTF("sock_hello: recording not supported\n");
+		return 0;
+	}
+	if ((p->proto & ~(AMSG_PLAY | AMSG_REC)) != 0) {
+		DPRINTF("sock_hello: %x: unsupported proto\n", p->proto);
+		return 0;
+	}
+	return 1;
+}
+
 /*
  * execute message in f->rmsg and change the state accordingly; return 1
  * on success, and 0 on failure, in which case the socket is destroyed.
@@ -832,6 +853,22 @@ sock_execmsg(struct sock *f)
 		sock_setvol(f, MIDI_TO_ADATA(m->u.vol.ctl));
 		f->rtodo = sizeof(struct amsg);
 		f->rstate = SOCK_RMSG;
+		break;
+	case AMSG_HELLO:
+		DPRINTFN(2, "sock_execmsg: %p: HELLO\n", f);
+		if (f->pstate != SOCK_INIT) {
+			DPRINTF("sock_execmsg: %p: HELLO, bad state\n", f);
+			aproc_del(f->pipe.file.rproc);
+			return 0;
+		}
+		if (!sock_hello(f)) {
+			aproc_del(f->pipe.file.rproc);
+			return 0;
+		}
+		AMSG_INIT(m);
+		m->cmd = AMSG_ACK;
+		f->rstate = SOCK_RRET;
+		f->rtodo = sizeof(struct amsg);
 		break;
 	default:
 		DPRINTF("sock_execmsg: %p bogus command\n", f);

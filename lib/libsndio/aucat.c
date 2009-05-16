@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.19 2009/05/16 09:04:45 ratchov Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.20 2009/05/16 11:15:26 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -169,8 +169,8 @@ aucat_runmsg(struct aucat_hdl *hdl)
 struct sio_hdl *
 sio_open_aucat(char *path, unsigned mode, int nbio)
 {
+	extern char *__progname;
 	int s;
-	struct sio_cap cap;
 	struct aucat_hdl *hdl;
 	struct sockaddr_un ca;	
 	socklen_t len = sizeof(struct sockaddr_un);
@@ -209,11 +209,31 @@ sio_open_aucat(char *path, unsigned mode, int nbio)
 	hdl->wtodo = 0xdeadbeef;
 	hdl->curvol = SIO_MAXVOL;
 	hdl->reqvol = SIO_MAXVOL;
-	if (!sio_getcap(&hdl->sio, &cap))
+
+	/*
+	 * say hello to server
+	 */
+	AMSG_INIT(&hdl->wmsg);
+	hdl->wmsg.cmd = AMSG_HELLO;
+	hdl->wmsg.u.hello.proto = 0;
+	if (mode & SIO_PLAY)
+		hdl->wmsg.u.hello.proto |= AMSG_PLAY;
+	if (mode & SIO_REC)
+		hdl->wmsg.u.hello.proto |= AMSG_REC;
+	strlcpy(hdl->wmsg.u.hello.who, __progname,
+	    sizeof(hdl->wmsg.u.hello.who));
+	hdl->wtodo = sizeof(struct amsg);
+	if (!aucat_wmsg(hdl))
 		goto bad_connect;
-	if (((mode & SIO_PLAY) && cap.confs[0].pchan == 0) ||
-	    ((mode & SIO_REC)  && cap.confs[0].rchan == 0))
+	hdl->rtodo = sizeof(struct amsg);
+	if (!aucat_rmsg(hdl)) {
+		DPRINTF("sio_open_aucat: mode refused\n");
 		goto bad_connect;
+	}
+	if (hdl->rmsg.cmd != AMSG_ACK) {
+		DPRINTF("sio_open_aucat: protocol err\n");
+		goto bad_connect;
+	}
 	return (struct sio_hdl *)hdl;
  bad_connect:
 	while (close(s) < 0 && errno == EINTR)
