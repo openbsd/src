@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP30,v 1.1 2009/05/14 21:27:02 miod Exp $
+#	$OpenBSD: RAMDISK-IP30,v 1.2 2009/05/16 16:41:13 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 
@@ -69,6 +69,7 @@ owserial*	at onewire?
 
 #### SCSI controllers
 isp*		at pci?
+option		ISP_COMPILE_FW
 siop*		at pci?
 
 # USB Controllers
