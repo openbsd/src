@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# $Id: plan_bad.t,v 1.2 2009/05/16 21:42:57 simon Exp $
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -8,7 +9,7 @@ BEGIN {
 }
 
 
-use Test::More tests => 10;
+use Test::More tests => 12;
 use Test::Builder;
 my $tb = Test::Builder->create;
 $tb->level(0);
@@ -20,6 +21,9 @@ my $foo = [];
 my @foo = ($foo, 2, 3);
 ok !eval { $tb->plan( tests => @foo ) };
 is $@, sprintf "Number of tests must be a positive integer.  You gave it '$foo' at %s line %d.\n", $0, __LINE__ - 1;
+
+ok !eval { $tb->plan( tests => 9.99 ) };
+is $@, sprintf "Number of tests must be a positive integer.  You gave it '9.99' at %s line %d.\n", $0, __LINE__ - 1;
 
 #line 25
 ok !eval { $tb->plan( tests => -1 ) };

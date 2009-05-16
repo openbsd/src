@@ -1,11 +1,5 @@
-# qr// was introduced in 5.004-devel.  Skip this test if we're not
-# of high enough version.
-BEGIN { 
-    if( $] < 5.005 ) {
-        print "1..0 # Skipped Test requires qr//\n";
-        exit(0);
-    }
-}
+#!/usr/bin/perl -w
+# $Id$
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -30,7 +24,7 @@ package My::Test;
 # Test::Builder's own and the ending diagnostics don't come out right.
 require Test::Builder;
 my $TB = Test::Builder->create;
-$TB->plan(tests => 2);
+$TB->plan(tests => 4);
 
 
 require Test::Simple::Catch;
@@ -43,11 +37,10 @@ package main;
 require Test::More;
 Test::More->import(tests => 1);
 
-eval q{ like( "foo", qr/that/, 'is foo like that' ); };
+{
+    eval q{ like( "foo", qr/that/, 'is foo like that' ); };
 
-
-END {
-    $TB->is_eq($$out, <<OUT, 'failing output');
+    $TB->is_eq($out->read, <<OUT, 'failing output');
 1..1
 not ok 1 - is foo like that
 OUT
@@ -57,11 +50,26 @@ OUT
 #   at .* line 1\.
 #                   'foo'
 #     doesn't match '\\(\\?-xism:that\\)'
-# Looks like you failed 1 test of 1\\.
 ERR
 
+    $TB->like($err->read, qr/^$err_re$/, 'failing errors');
+}
 
-    $TB->like($$err, qr/^$err_re$/, 'failing errors');
+{
+    # line 60
+    like("foo", "not a regex");
+    $TB->is_eq($out->read, <<OUT);
+not ok 2
+OUT
 
-    exit(0);
+    $TB->is_eq($err->read, <<OUT);
+#   Failed test at $0 line 60.
+#     'not a regex' doesn't look much like a regex to me.
+OUT
+
+}
+
+END {
+    # Test::More thinks it failed.  Override that.
+    exit(scalar grep { !$_ } $TB->summary);
 }

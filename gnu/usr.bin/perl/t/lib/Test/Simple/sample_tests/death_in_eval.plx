@@ -1,4 +1,5 @@
 require Test::Simple;
+# $Id$
 use Carp;
 
 push @INC, 't/lib';

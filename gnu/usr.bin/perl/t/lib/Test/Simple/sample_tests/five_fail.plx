@@ -1,4 +1,5 @@
 require Test::Simple;
+# $Id$
 
 use lib 't/lib';
 require Test::Simple::Catch;

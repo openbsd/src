@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# $Id$
 
 # test for rt.cpan.org 20768
 #
@@ -16,16 +17,7 @@ BEGIN {
 }
 
 use strict;
-use Test::More;
-
-BEGIN {
-    if( !eval "require overload" ) {
-        plan skip_all => "needs overload.pm";
-    }
-    else {
-        plan tests => 2;
-    }
-}
+use Test::More tests => 2;
 
 {
     package Foo;

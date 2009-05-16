@@ -1,3 +1,4 @@
+# $Id$
 BEGIN {
     if( $ENV{PERL_CORE} ) {
         chdir 't';

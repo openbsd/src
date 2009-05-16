@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# $Id: circular_data.t,v 1.2 2009/05/16 21:42:57 simon Exp $
 
 # Test is_deeply and friends with circular data structures [rt.cpan.org 7289]
 

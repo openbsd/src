@@ -1,4 +1,5 @@
 #!perl -w
+# $Id$
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
@@ -24,49 +25,66 @@ BEGIN {
 
 use strict;
 
-use Test::More tests => 5;
+use Test::More tests => 7;
 
-my $Test = Test::More->builder;
+my $test = Test::Builder->create;
 
 # now make a filehandle where we can send data
 use TieOut;
 my $output = tie *FAKEOUT, 'TieOut';
 
-# force diagnostic output to a filehandle, glad I added this to
-# Test::Builder :)
-my $ret;
+
+# Test diag() goes to todo_output() in a todo test.
 {
-    local $TODO = 1;
-    $Test->todo_output(\*FAKEOUT);
+    $test->todo_start();
+    $test->todo_output(\*FAKEOUT);
 
-    diag("a single line");
-
-    $ret = diag("multiple\n", "lines");
-}
-
-is( $output->read, <<'DIAG',   'diag() with todo_output set' );
+    $test->diag("a single line");
+    is( $output->read, <<'DIAG',   'diag() with todo_output set' );
 # a single line
+DIAG
+
+    my $ret = $test->diag("multiple\n", "lines");
+    is( $output->read, <<'DIAG',   '  multi line' );
 # multiple
 # lines
 DIAG
+    ok( !$ret, 'diag returns false' );
 
-ok( !$ret, 'diag returns false' );
-
-{
-    $Test->failure_output(\*FAKEOUT);
-    $ret = diag("# foo");
+    $test->todo_end();
 }
-$Test->failure_output(\*STDERR);
-is( $output->read, "# # foo\n", "diag() adds # even if there's one already" );
-ok( !$ret,  'diag returns false' );
+
+$test->reset_outputs();
+
+
+# Test diagnostic formatting
+$test->failure_output(\*FAKEOUT);
+{
+    $test->diag("# foo");
+    is( $output->read, "# # foo\n", "diag() adds # even if there's one already" );
+
+    $test->diag("foo\n\nbar");
+    is( $output->read, <<'DIAG', "  blank lines get escaped" );
+# foo
+# 
+# bar
+DIAG
+
+
+    $test->diag("foo\n\nbar\n\n");
+    is( $output->read, <<'DIAG', "  even at the end" );
+# foo
+# 
+# bar
+# 
+DIAG
+}
 
 
 # [rt.cpan.org 8392]
 {
-    $Test->failure_output(\*FAKEOUT);
-    diag(qw(one two));
+    $test->diag(qw(one two));
 }
-$Test->failure_output(\*STDERR);
 is( $output->read, <<'DIAG' );
 # onetwo
 DIAG

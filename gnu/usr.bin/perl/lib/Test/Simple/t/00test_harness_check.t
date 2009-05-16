@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# $Id: 00test_harness_check.t,v 1.2 2009/05/16 21:42:57 simon Exp $
 
 # A test to make sure the new Test::Harness was installed properly.
 

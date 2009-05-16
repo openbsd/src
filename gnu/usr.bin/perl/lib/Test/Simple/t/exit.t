@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+# $Id$
 
 # Can't use Test.pm, that's a 5.005 thing.
 package My::Test;
@@ -25,18 +26,9 @@ if( $^O eq 'MacOS' ) {
     exit 0;
 }
 
-my $test_num = 1;
-# Utility testing functions.
-sub ok ($;$) {
-    my($test, $name) = @_;
-    my $ok = '';
-    $ok .= "not " unless $test;
-    $ok .= "ok $test_num";
-    $ok .= " - $name" if defined $name;
-    $ok .= "\n";
-    print $ok;
-    $test_num++;
-}
+require Test::Builder;
+my $TB = Test::Builder->create();
+$TB->level(0);
 
 
 package main;
@@ -59,10 +51,11 @@ my %Tests = (
              'pre_plan_death.plx'       => ['not zero',    'not zero'],
              'death_in_eval.plx'        => [0,      0],
              'require.plx'              => [0,      0],
-	     'exit.plx'                 => [1,      4],
+             'death_with_handler.plx'   => [255,    4],
+             'exit.plx'                 => [1,      4],
             );
 
-print "1..".keys(%Tests)."\n";
+$TB->plan( tests => scalar keys(%Tests) );
 
 eval { require POSIX; &POSIX::WEXITSTATUS(0) };
 if( $@ ) {
@@ -72,12 +65,12 @@ else {
     *exitstatus = sub { POSIX::WEXITSTATUS($_[0]) }
 }
 
+my $Perl = File::Spec->rel2abs($^X);
+
 chdir 't';
 my $lib = File::Spec->catdir(qw(lib Test Simple sample_tests));
 while( my($test_name, $exit_codes) = each %Tests ) {
     my($exit_code) = $exit_codes->[$IsVMS ? 1 : 0];
-
-    my $Perl = $^X;
 
     if( $^O eq 'VMS' ) {
         # VMS can't use its own $^X in a system call until almost 5.8
@@ -93,12 +86,12 @@ while( my($test_name, $exit_codes) = each %Tests ) {
     my $actual_exit = exitstatus($wait_stat);
 
     if( $exit_code eq 'not zero' ) {
-        My::Test::ok( $actual_exit != 0,
+        $TB->isnt_num( $actual_exit, 0,
                       "$test_name exited with $actual_exit ".
                       "(expected $exit_code)");
     }
     else {
-        My::Test::ok( $actual_exit == $exit_code, 
+        $TB->is_num( $actual_exit, $exit_code, 
                       "$test_name exited with $actual_exit ".
                       "(expected $exit_code)");
     }

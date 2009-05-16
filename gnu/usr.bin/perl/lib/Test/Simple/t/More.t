@@ -1,9 +1,10 @@
 #!perl -w
+# $Id$
 
 BEGIN {
     if( $ENV{PERL_CORE} ) {
         chdir 't';
-        @INC = qw(../lib lib);
+        @INC = qw(../lib ../lib/Test/Simple/t/lib);
     }
 }
 
@@ -17,7 +18,7 @@ $@ = $Err;
 $! = $Errno;
 
 use_ok('Dummy');
-is( $Dummy::VERSION, '5.562', 'use_ok() loads a module' );
+is( $Dummy::VERSION, '0.01', 'use_ok() loads a module' );
 require_ok('Test::More');
 
 
