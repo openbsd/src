@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: security,v 1.84 2009/05/14 21:24:33 schwarze Exp $
+#	$OpenBSD: security,v 1.85 2009/05/16 23:40:13 schwarze Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -460,7 +460,7 @@ if [ -s $TMP1 ] ; then
 			cp $TMP1 $CUR
 		fi
 	else
-		echo "Setuid additions:"
+		next_part "Setuid additions:"
 		column -t $TMP1
 		cp $TMP1 $CUR
 	fi
@@ -515,9 +515,8 @@ if [ -s $TMP1 ] ; then
 			cp $TMP1 $CUR
 		fi
 	else
-		echo "Device additions:"
+		next_part "Device additions:"
 		column -t $TMP1
-		echo ""
 		cp $TMP1 $CUR
 	fi
 fi
@@ -591,7 +590,7 @@ if [ -s /etc/changelist ] ; then
 			if [ -s $CUR ] ; then
 				MD5_OLD="`cat $CUR`"
 				if [ "$MD5_NEW" != "$MD5_OLD" ]; then
-		echo "\n======\n${file} MD5 checksums\n======"
+		next_part "======\n${file} MD5 checksums\n======"
 					echo "OLD: $MD5_OLD"
 					echo "NEW: $MD5_NEW"
 					cp -p $CUR $BACK
@@ -600,7 +599,7 @@ if [ -s /etc/changelist ] ; then
 					chmod 600 $CUR
 				fi
 			else
-			echo "\n======\n${file} new MD5 checksum\n======"
+		next_part "======\n${file} new MD5 checksum\n======"
 				echo "NEW: $MD5_NEW"
 				echo $MD5_NEW > $CUR
 				chown root:wheel $CUR
@@ -609,7 +608,7 @@ if [ -s /etc/changelist ] ; then
 		fi
 		if [ ! -s $file -a -s $CUR ]; then
 			MD5_OLD="`cat $CUR`"
-		echo "\n======\n${file} removed MD5 checksum\n======"
+		next_part "======\n${file} removed MD5 checksum\n======"
 			echo "OLD: $MD5_OLD"
 			cp -p $CUR $BACK
 			rm $CUR
