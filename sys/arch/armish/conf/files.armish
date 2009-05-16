@@ -1,4 +1,4 @@
-#	$OpenBSD: files.armish,v 1.12 2007/10/11 17:28:31 sthen Exp $
+#	$OpenBSD: files.armish,v 1.13 2009/05/16 05:47:25 deraadt Exp $
 
 maxpartitions   16
 maxusers	2 8 64
@@ -54,6 +54,8 @@ include "dev/ata/files.ata"
 
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
+include "dev/rasops/files.rasops"
 
 # Include USB stuff
 include "dev/usb/files.usb"
