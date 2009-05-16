@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.226 2009/01/24 11:41:26 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.227 2009/05/16 22:19:06 simon Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 24 2009 $
+.Dd $Mdocdate: May 16 2009 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1596,7 +1596,9 @@ Empty by default.
 .It Ev REGRESS_IS_INTERACTIVE
 Set to
 .Sq Yes
-if port needs human interaction to run its tests.
+if port needs human interaction to run its tests, or set to
+.Sq X11
+if the tests need an active X11 display to work.
 .It Ev REGRESS_LOG
 Command used to log the results of regression tests to REGRESS_LOGFILE.
 .It Ev REGRESS_LOGFILE
