@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.244 2009/05/17 13:22:10 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.245 2009/05/17 14:45:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -850,8 +850,8 @@ rde_update_dispatch(struct imsg *imsg)
 
 		peer->prefix_rcvd_withdraw++;
 		rde_update_log("withdraw", peer, NULL, &prefix, prefixlen);
-		prefix_remove(&ribs[1], peer, &prefix, prefixlen, F_LOCAL);
-		prefix_remove(&ribs[0], peer, &prefix, prefixlen, F_ORIGINAL);
+		prefix_remove(&ribs[1], peer, &prefix, prefixlen, 0);
+		prefix_remove(&ribs[0], peer, &prefix, prefixlen, 0);
 	}
 
 	if (attrpath_len == 0) {
@@ -910,9 +910,9 @@ rde_update_dispatch(struct imsg *imsg)
 				rde_update_log("withdraw", peer, NULL,
 				    &prefix, prefixlen);
 				prefix_remove(&ribs[1], peer, &prefix,
-				    prefixlen, F_LOCAL);
+				    prefixlen, 0);
 				prefix_remove(&ribs[0], peer, &prefix,
-				    prefixlen, F_ORIGINAL);
+				    prefixlen, 0);
 			}
 			break;
 		default:
@@ -2206,7 +2206,7 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 		}
 		if (oa == ACTION_ALLOW && na == ACTION_DENY) {
 			/* remove from Local-RIB */
-			prefix_remove(&ribs[1], peer, &addr, pt->prefixlen, F_LOCAL);
+			prefix_remove(&ribs[1], peer, &addr, pt->prefixlen, 0);
 			goto done;
 		}
 		if (oa == ACTION_ALLOW && na == ACTION_ALLOW) {
@@ -2731,9 +2731,9 @@ network_delete(struct network_config *nc, int flagstatic)
 		flags |= F_ANN_DYNAMIC;
 
 	prefix_remove(&ribs[0], peerself, &nc->prefix, nc->prefixlen,
-	    flags | F_LOCAL);
+	    flags);
 	prefix_remove(&ribs[1], peerself, &nc->prefix, nc->prefixlen,
-	    flags | F_ORIGINAL);
+	    flags);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.100 2009/05/17 13:20:12 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.101 2009/05/17 14:45:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -339,13 +339,10 @@ path_update(struct rib *rib, struct rde_peer *peer, struct rde_aspath *nasp,
 	struct rde_aspath	*asp;
 	struct prefix		*p;
 
-#if 0
-	/* XXX NEEDS SOMETHING BETTER HERE */
-	if (flags & F_LOCAL) {
+	if (nasp->pftableid) {
 		rde_send_pftable(nasp->pftableid, prefix, prefixlen, 0);
 		rde_send_pftable_commit();
 	}
-#endif
 
 	/*
 	 * First try to find a prefix in the specified RIB.
@@ -442,16 +439,14 @@ path_remove(struct rde_aspath *asp)
 	struct prefix	*p;
 
 	while ((p = LIST_FIRST(&asp->prefix_h)) != NULL) {
-#if 0
-		/* Commit is done in peer_down() */
-		/* XXX AGAIN NEEDS A BETTER SOLUTION */
-		struct bgpd_addr addr;
+		if (asp->pftableid) {
+			struct bgpd_addr addr;
 
-		pt_getaddr(p->prefix, &addr);
-		if (p->flags & F_LOCAL)
+			pt_getaddr(p->prefix, &addr);
+			/* Commit is done in peer_down() */
 			rde_send_pftable(p->aspath->pftableid, &addr,
 			    p->prefix->prefixlen, 1);
-#endif
+		}
 
 		prefix_destroy(p);
 	}
@@ -745,14 +740,11 @@ prefix_remove(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
 
 	asp = p->aspath;
 
-#if 0
-	/* XXX AGAIN THIS NEEDS A BETTER SOLUTION */
-	if (p->flags & F_LOCAL) {
+	if (asp->pftableid) {
 		/* only prefixes in the local RIB were pushed into pf */
 		rde_send_pftable(asp->pftableid, prefix, prefixlen, 1);
 		rde_send_pftable_commit();
 	}
-#endif
 
 	prefix_unlink(p);
 	prefix_free(p);
@@ -817,7 +809,7 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 		/*
 		 * XXX THIS IS MISSING AT THE MOMENT
 		 * skip non local-RIB nodes, only local-RIB prefixes are
-		 * eligible. Both F_LOCAL and F_ORIGINAL may be set.
+		 * eligible.
 		 */
 
 		if (oldstate == state && state == NEXTHOP_REACH) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.107 2009/05/17 12:25:15 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.108 2009/05/17 14:45:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -157,16 +157,13 @@ LIST_HEAD(prefix_head, prefix);
 #define	F_ATTR_MP_UNREACH	0x00080
 #define	F_ATTR_AS4BYTE_NEW	0x00100	/* AS4_PATH or AS4_AGGREGATOR */
 #define	F_ATTR_LOOP		0x00200 /* path would cause a route loop */
-#define	F_PREFIX_ANNOUNCED	0x01000
+#define	F_PREFIX_ANNOUNCED	0x00400
+#define	F_ANN_DYNAMIC		0x00800
+#define	F_NEXTHOP_SELF		0x01000
 #define	F_NEXTHOP_REJECT	0x02000
 #define	F_NEXTHOP_BLACKHOLE	0x04000
 #define	F_NEXTHOP_NOMODIFY	0x08000
-#define	F_NEXTHOP_SELF		0x10000
 #define	F_ATTR_LINKED		0x20000
-#define	F_LOCAL			0x40000	/* Local-RIB */
-#define	F_ORIGINAL		0x80000	/* Adj-RIB-In */
-#define	F_RIB_MASK		(F_LOCAL | F_ORIGINAL)
-#define	F_ANN_DYNAMIC		0x100000
 
 
 #define ORIGIN_IGP		0
