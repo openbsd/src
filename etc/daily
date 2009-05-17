@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.60 2009/05/11 22:27:22 schwarze Exp $
+#	$OpenBSD: daily,v 1.61 2009/05/17 00:25:34 schwarze Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 umask 022
@@ -106,11 +106,8 @@ next_part "Backing up root filesystem:"
 	}
 }
 
-next_part "Checking system status:"
+next_part "Checking subsystem status:"
 if [ "X$VERBOSESTATUS" != X0 ]; then
-	sysctl -n kern.version
-	uptime
-
 	echo ""
 	echo "disks:"
 	df -kl
@@ -160,7 +157,11 @@ if [ -f /etc/Distfile ]; then
 fi
 
 end_part
-[ -s $MAINOUT ] && mail -s "`hostname` daily output" root < $MAINOUT
+[ -s $MAINOUT ] && {
+	sysctl -n kern.version
+	uptime
+	cat $MAINOUT
+} 2>&1 | mail -s "`hostname` daily output" root
 
 
 MAINOUT=/var/log/security.out
