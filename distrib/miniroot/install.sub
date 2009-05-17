@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.551 2009/05/17 04:41:46 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.552 2009/05/17 04:59:43 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -198,7 +198,7 @@ mount_mnt2() {
 
 	_parts=$(sed -e 's/^  \(.\): .*/\1/' $_file)
 	set -- $_parts
-	[[ $# == 0 ]] && { echo "No filesystems found on $_dev" ; return 1 ; }
+	[[ $# == 0 ]] && { echo "No filesystems found on $_dev." ; return 1 ; }
 
 	if isin "c" $_parts; then
 		# Don't ask questions if 'c' contains a filesystem.
