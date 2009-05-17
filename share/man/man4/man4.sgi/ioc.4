@@ -1,0 +1,80 @@
+.\"	$OpenBSD: ioc.4,v 1.1 2009/05/17 22:08:34 miod Exp $
+.\"
+.\" Copyright (c) 2009 Miodrag Vallat.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 17 2009 $
+.Dt IOC 4 sgi
+.Os
+.Sh NAME
+.Nm ioc
+.Nd Generic workstation I/O device
+.Sh SYNOPSIS
+.Cd "ioc* at pci?"
+.Cd "com0 at ioc? base 0x00020178"
+.Cd "com1 at ioc? base 0x00020170"
+.Cd "dsrtc0 at ioc?"
+.Cd "onewire* at ioc?"
+.\" .Cd "ef* at ioc? base 0x000000f0"
+.\" .Cd "iockbc* at ioc?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the various SGI IOC3 flavours on Octane and Origin
+family systems.
+.Pp
+Depending on their particular configuration, the IOC3 boards may provide:
+.Bl -bullet -compact -offset indent
+.It
+Two
+.Xr com 4
+serial ports
+.It
+.Xr dsrtc 4
+time-of-day chip.
+.It
+an 10/100 Mbit/s Ethernet interface
+.It
+a PS/2 keyboard and mouse interface
+.El
+.Pp
+In order to tell these configurations apart, all IOC3 boards, except those
+on-board Origin family systems, contain a factory-setup
+.Xr onewire 4
+bus with
+.Xr owserial 4
+components identifying the IOC3 flavour, as well as
+.Xr owmac 4
+components storing the Ethernet address, for IOC3 devices with Ethernet
+interfaces.
+.Sh SEE ALSO
+.Xr com 4 ,
+.Xr dsrtc 4 ,
+.\" .Xr ef 4 ,
+.Xr intro 4 ,
+.\" .Xr iockbc 4 ,
+.Xr onewire 4 ,
+.Xr owmac 4 ,
+.Xr owserial 4 ,
+.Xr pci 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.4 .
+.\" .Sh AUTHORS
+.\" The
+.\" .Nm
+.\" driver was written by
+.\" .An Miod Vallat .

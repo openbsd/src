@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.18 2009/04/22 11:22:47 jmc Exp $
+.\"	$OpenBSD: intro.4,v 1.19 2009/05/17 22:08:34 miod Exp $
 .\"     $NetBSD: intro.4,v 1.8 2004/02/10 16:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 22 2009 $
+.Dd $Mdocdate: May 17 2009 $
 .Dt INTRO 4 sgi
 .Os
 .Sh NAME
@@ -84,15 +84,24 @@ A list of the supported devices is given below.
 .Sh HARDWARE
 The following systems are supported:
 .Pp
-.Bl -tag -width 8n -offset indent -compact
-.It O2
-IP32
-.Pq Dq Moosehead
+.Bl -column "Family" "Model"
+.It Li Family Ta Model
+.It Li " " " "
+.It Li IP27 Ta Origin 200
+.It Li IP27 Ta Origin 2000, Onyx 2
+.It Li IP30 Ta "Octane, Octane 2 (Speedracer)"
+.It Li IP32 Ta "O2, O2+ (Moosehead)"
+.It Li IP35 Ta Fuel
+.It Li IP35 Ta Origin 300, Onyx 300
+.It Li IP35 Ta Origin 350, Onyx 350
+.It Li IP35 Ta Origin 3000, Onyx 3000
+.It Li IP35 Ta Onyx 4
+.It Li IP35 Ta Tezro
 .El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of the
 system.
-Devices are indicated by their functional interface.
+.\" Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
 .Bl -tag -width 10n -offset 3n -compact
@@ -112,6 +121,8 @@ Moosehead A/V Board audio device
 MAC-110 10/100 Ethernet device
 .It Xr power 4
 power button
+.It Xr xbow 4
+Octane and Origin family XIO bus
 .El
 .Pp
 A further list of available devices is contained within the pages

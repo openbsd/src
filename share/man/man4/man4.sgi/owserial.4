@@ -1,0 +1,46 @@
+.\"	$OpenBSD: owserial.4,v 1.1 2009/05/17 22:08:34 miod Exp $
+.\"
+.\" Copyright (c) 2009 Miodrag Vallat.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 17 2009 $
+.Dt OWSERIAL 4 sgi
+.Os
+.Sh NAME
+.Nm owserial
+.Nd 1-Wire Serial Number
+.Sh SYNOPSIS
+.Cd "owserial* at onewire?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the Dallas DS2505 and DS2506
+Add-only memory devices, found on various SGI devices.
+.Pp
+These devices are used to store the various serial numbers of the
+system components.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr ioc 4 ,
+.Xr onewire 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.4 .
+.\" .Sh AUTHORS
+.\" The
+.\" .Nm
+.\" driver was written by
+.\" .An Miod Vallat .

@@ -1,0 +1,69 @@
+.\"	$OpenBSD: xbow.4,v 1.1 2009/05/17 22:08:34 miod Exp $
+.\"
+.\" Copyright (c) 2009 Miodrag Vallat.
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 17 2009 $
+.Dt XBOW 4 sgi
+.Os
+.Sh NAME
+.Nm xbow
+.Nd Octane and Origin family XIO bus
+.Sh SYNOPSIS
+.Cd "xbow0 at mainbus0"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the XIO bus found on SGI
+.Sq ccNUMA
+designs, such as the Octane
+.Pq IP30
+and Origin
+.Pq IP27 and IP35
+families, as well as related systems such as Onyx and Tezro.
+.Pp
+XIO components are called
+.Sq widgets
+and contain either I/O devices, processors, or memory.
+.Pp
+A XIO bus supports up to 16 widgets, but the existing designs only use
+up to 8.
+.Pp
+Special
+.Sq hub
+widgets allow several XIO buses to be interconnected, expanding the
+capacity of a given system, and allowing complex multi-node systems to be built.
+.Pp
+The widgets currently supported under
+.Ox
+are:
+.Bl -tag -width 10n -compact -offset indent
+.It Xr xbridge 4
+XIO-PCI bridge
+.It Xr xheart 4
+Octane core system widget
+.El
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr mainbus 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.4 .
+.\" .Sh AUTHORS
+.\" The
+.\" .Nm
+.\" driver was written by
+.\" .An Miod Vallat .
