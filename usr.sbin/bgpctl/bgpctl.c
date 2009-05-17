@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.138 2009/02/01 17:21:21 sobrado Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.139 2009/05/17 12:27:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1249,6 +1249,9 @@ show_rib_memory_msg(struct imsg *imsg)
 			printf("%10lld IPv6 network entries using "
 			    "%s of memory\n", (long long)stats.pt6_cnt,
 			    fmt_mem(stats.pt6_cnt * sizeof(struct pt_entry6)));
+		printf("%10lld rib entries using %s of memory\n",
+		    (long long)stats.rib_cnt, fmt_mem(stats.rib_cnt *
+		    sizeof(struct rib_entry)));
 		printf("%10lld prefix entries using %s of memory\n",
 		    (long long)stats.prefix_cnt, fmt_mem(stats.prefix_cnt *
 		    sizeof(struct prefix)));
@@ -1270,6 +1273,7 @@ show_rib_memory_msg(struct imsg *imsg)
 		    stats.pt4_cnt * sizeof(struct pt_entry4) +
 		    stats.pt6_cnt * sizeof(struct pt_entry6) +
 		    stats.prefix_cnt * sizeof(struct prefix) +
+		    stats.rib_cnt * sizeof(struct rib_entry) +
 		    stats.path_cnt * sizeof(struct rde_aspath) +
 		    stats.aspath_size + stats.attr_cnt * sizeof(struct attr) +
 		    stats.attr_data));
