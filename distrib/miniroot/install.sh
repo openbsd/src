@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.188 2009/05/17 12:45:00 krw Exp $
+#	$OpenBSD: install.sh,v 1.189 2009/05/17 15:00:51 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -96,46 +96,43 @@ if [[ ! -f /etc/fstab ]]; then
 		AUTOROOT=n
 		md_prep_disklabel $DISK
 
-		# Make sure fstab.$DISK was created.
-		[[ -f fstab.$DISK ]] || { DISK= ; continue ; }
-
 		# Make sure there is a '/' mount point.
 		grep -qs " / ffs " fstab.$ROOTDISK || \
 			{ DISK= ; echo "'/' must be configured!" ; continue ; }
 
-		# Avoid duplicate mount points on different disks.
-		while read _pp _mp _rest; do
-			[[ fstab.$DISK == $(grep -l " $_mp " fstab.*) ]] || \
-				{ _rest=$DISK ; DISK= ; break ; }
-		done <fstab.$DISK
-		if [[ -z $DISK ]]; then
-			# Allow disklabel(8) to read mountpoint info.
-			cat fstab.$_rest >/etc/fstab
-			rm fstab.$_rest
-			set -- $(grep " $_mp " fstab.*[0-9])
-			echo "$_pp and $1 can't both be mounted at $_mp."
-			continue
+		if [[ -f fstab.$DISK ]]; then
+			# Avoid duplicate mount points on different disks.
+			while read _pp _mp _rest; do
+				[[ fstab.$DISK == $(grep -l " $_mp " fstab.*) ]] || \
+					{ _rest=$DISK ; DISK= ; break ; }
+			done <fstab.$DISK
+			if [[ -z $DISK ]]; then
+				# Allow disklabel(8) to read mountpoint info.
+				cat fstab.$_rest >/etc/fstab
+				rm fstab.$_rest
+				set -- $(grep " $_mp " fstab.*[0-9])
+				echo "$_pp and $1 can't both be mounted at $_mp."
+				continue
+			fi
+
+			# newfs 'ffs' filesystems and add them to the list.
+			_i=${#_fsent[*]}
+			while read _pp _mp _rest; do
+				_OPT=
+				[[ $_mp == / ]] && _OPT=$MDROOTFSOPT
+				newfs -q $_OPT ${_pp##/dev/}
+				# N.B.: '!' is lexically < '/'. That is
+				#	required for correct sorting of
+				#	mount points.
+				_fsent[$_i]="$_mp!$_pp"
+				: $(( _i += 1 ))
+			done <fstab.$DISK
 		fi
 
-		# newfs 'ffs' filesystems and add them to the list.
-		_i=${#_fsent[*]}
-		while read _pp _mp _rest; do
-			_OPT=
-			[[ $_mp == / ]] && _OPT=$MDROOTFSOPT
-			newfs -q $_OPT ${_pp##/dev/}
-			# N.B.: '!' is lexically < '/'. That is required for
-			#	correct sorting of mount points.
-			_fsent[$_i]="$_mp!$_pp"
-			: $(( _i += 1 ))
-		done <fstab.$DISK
-
 		# New swap partitions?
-		disklabel $DISK 2>&1 | grep " swap " >swap.$DISK
-		while read _dev _rest; do
-			_pp=$DISK${_dev%:}
-			[[ $_pp != $SWAPDEV ]] && \
-				echo "/dev/$_pp none swap sw 0 0" >>fstab
-		done <swap.$DISK
+		disklabel $DISK 2>&1 | sed -ne \
+		    "/^ *\([a-p]\): .* swap /s,,/dev/$DISK\1 none swap sw 0 0,p" | \
+		    grep -v "^/dev/$SWAPDEV " >>fstab
 	done
 
 	# Write fstab entries to fstab in mount point alphabetic order
