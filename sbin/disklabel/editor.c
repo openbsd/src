@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.209 2009/05/13 17:02:46 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.210 2009/05/17 01:06:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.209 2009/05/13 17:02:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.210 2009/05/17 01:06:56 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -530,6 +530,10 @@ editor_allocspace(struct disklabel *lp_org)
 	cylsecs = lp_org->d_secpercyl;
 again:
 	lp = &label;
+	for (i=0; i<MAXPARTITIONS; i++) {
+		free(mountpoints[i]);
+		mountpoints[i] = NULL;
+	}
 	memcpy(lp, lp_org, sizeof(struct disklabel));
 	lp->d_npartitions = MAXPARTITIONS;
 	lastalloc = alloc_table[index].sz;
