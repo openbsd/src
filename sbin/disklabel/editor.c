@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.210 2009/05/17 01:06:56 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.211 2009/05/17 01:17:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.210 2009/05/17 01:06:56 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.211 2009/05/17 01:17:12 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -657,8 +657,6 @@ cylinderalign:
 
 	free(alloc);
 	memcpy(lp_org, lp, sizeof(struct disklabel));
-	/* Save mountpoint info if there is any. */
-	mpsave(lp);
 }
 
 /*

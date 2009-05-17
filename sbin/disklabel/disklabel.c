@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.153 2009/05/05 12:24:19 otto Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.154 2009/05/17 01:17:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.153 2009/05/05 12:24:19 otto Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.154 2009/05/17 01:17:12 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -508,6 +508,10 @@ writelabel(int f, char *boot, struct disklabel *lp)
 		}
 	}
 #endif
+	/* Finally, write out any mount point information. */
+	if (!donothing)
+		mpsave(lp);
+
 	return (0);
 }
 
