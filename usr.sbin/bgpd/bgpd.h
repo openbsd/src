@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.230 2009/05/05 20:12:04 sthen Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.231 2009/05/17 12:25:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -521,7 +521,7 @@ struct ctl_show_rib {
 	u_int32_t		med;
 	u_int32_t		prefix_cnt;
 	u_int32_t		active_cnt;
-	u_int32_t		adjrib_cnt;
+	u_int32_t		rib_cnt;
 	u_int16_t		aspath_len;
 	u_int16_t		flags;
 	u_int8_t		prefixlen;
@@ -708,6 +708,7 @@ struct rrefresh {
 struct rde_memstats {
 	int64_t		path_cnt;
 	int64_t		prefix_cnt;
+	int64_t		rib_cnt;
 	int64_t		pt4_cnt;
 	int64_t		pt6_cnt;
 	int64_t		nexthop_cnt;
@@ -820,6 +821,10 @@ int	pftable_addr_remove(struct pftable_msg *);
 int	pftable_commit(void);
 
 /* name2id.c */
+u_int16_t	 rib_name2id(const char *);
+const char	*rib_id2name(u_int16_t);
+void		 rib_unref(u_int16_t);
+void		 rib_ref(u_int16_t);
 u_int16_t	 rtlabel_name2id(const char *);
 const char	*rtlabel_id2name(u_int16_t);
 void		 rtlabel_unref(u_int16_t);

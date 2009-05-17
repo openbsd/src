@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.98 2009/04/23 19:23:27 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.99 2009/05/17 12:25:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -33,14 +33,260 @@
  * Therefore one thing needs to be absolutely avoided, long table walks.
  * This is achieved by heavily linking the different parts together.
  */
+u_int16_t rib_size;
+struct rib *ribs;
+
+struct rib_entry *rib_add(struct rib *, struct bgpd_addr *, int);
+int rib_compare(const struct rib_entry *, const struct rib_entry *);
+void rib_remove(struct rib_entry *);
+int rib_empty(struct rib_entry *);
+struct rib_entry *rib_restart(struct rib_context *);
+
+RB_PROTOTYPE(rib_tree, rib_entry, rib_e, rib_compare);
+RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
+
+
+/* RIB specific functions */
+void
+rib_init(void)
+{
+	if ((ribs = calloc(1, sizeof(struct rib))) == NULL)
+		fatal("rib_init");
+	rib_new("DEFAULT");
+}
+
+u_int16_t
+rib_new(char *name)
+{
+	struct rib	*xribs;
+	size_t		newsize;
+	u_int16_t	id;
+
+	id = rib_name2id(name);
+
+	if (id >= rib_size) {
+		newsize = sizeof(struct rib) * (id + 1);
+		if ((xribs = realloc(ribs, newsize)) == NULL) {
+			/* XXX this is not clever */
+			fatal("rib_add");
+		}
+		ribs = xribs;
+		rib_size = id + 1;
+	}
+
+	bzero(&ribs[id], sizeof(struct rib));
+	strlcpy(ribs[id].name, name, sizeof(ribs[id].name));
+	RB_INIT(&ribs[id].rib);
+	ribs[id].state = RIB_ACTIVE;
+	ribs[id].id = id;
+
+	return (id);
+}
+
+void
+rib_free(struct rib *rib)
+{
+	/* XXX */
+	//bzero(rib, sizeof(struct rib));
+}
+
+int
+rib_compare(const struct rib_entry *a, const struct rib_entry *b)
+{
+	return (pt_prefix_cmp(a->prefix, b->prefix));
+}
+
+struct rib_entry *
+rib_get(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
+{
+	struct rib_entry xre;
+	struct pt_entry	*pte;
+
+	pte = pt_fill(prefix, prefixlen);
+	bzero(&xre, sizeof(xre));
+	xre.prefix = pte;
+
+	return (RB_FIND(rib_tree, &rib->rib, &xre));
+}
+
+struct rib_entry *
+rib_lookup(struct rib *rib, struct bgpd_addr *addr)
+{
+	struct rib_entry *re;
+	int		 i;
+
+	switch (addr->af) {
+	case AF_INET:
+		for (i = 32; i >= 0; i--) {
+			re = rib_get(rib, addr, i);
+			if (re != NULL)
+				return (re);
+		}
+		break;
+	case AF_INET6:
+		for (i = 128; i >= 0; i--) {
+			re = rib_get(rib, addr, i);
+			if (re != NULL)
+				return (re);
+		}
+		break;
+	default:
+		fatalx("rib_lookup: unknown af");
+	}
+	return (NULL);
+}
+
+
+struct rib_entry *
+rib_add(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
+{
+	struct pt_entry	*pte;
+	struct rib_entry *re;
+
+	pte = pt_get(prefix, prefixlen);
+	if (pte == NULL)
+		pte = pt_add(prefix, prefixlen);
+
+	if ((re = calloc(1, sizeof(*re))) == NULL)
+		fatal("rib_add");
+
+	LIST_INIT(&re->prefix_h);
+	re->prefix = pte;
+	re->rib = rib;
+
+        if (RB_INSERT(rib_tree, &rib->rib, re) != NULL) {
+		log_warnx("rib_add: insert failed");
+		return (NULL);
+	}
+
+	pt_ref(pte);
+
+	rdemem.rib_cnt++;
+
+	return (re);
+}
+
+void
+rib_remove(struct rib_entry *re)
+{
+	if (!rib_empty(re))
+		fatalx("rib_remove: entry not empty");
+
+	pt_unref(re->prefix);
+	if (pt_empty(re->prefix))
+		pt_remove(re->prefix);
+
+	if (RB_REMOVE(rib_tree, &re->rib->rib, re) == NULL)
+		log_warnx("rib_remove: remove failed.");
+
+	free(re);
+	rdemem.rib_cnt--;
+}
+
+int
+rib_empty(struct rib_entry *re)
+{
+	return LIST_EMPTY(&re->prefix_h);
+}
+
+void
+rib_dump(struct rib *rib, void (*upcall)(struct rib_entry *, void *),
+    void *arg, sa_family_t af)
+{
+	struct rib_context	ctx;
+
+	bzero(&ctx, sizeof(ctx));
+	ctx.ctx_rib = rib;
+	ctx.ctx_upcall = upcall;
+	ctx.ctx_arg = arg;
+	ctx.ctx_af = af;
+	rib_dump_r(&ctx);
+}
+
+void
+rib_dump_r(struct rib_context *ctx)
+{
+	struct rib_entry	*re;
+	unsigned int		 i;
+
+	if (ctx->ctx_p == NULL) {
+		re = RB_MIN(rib_tree, &ctx->ctx_rib->rib);
+		LIST_INSERT_HEAD(&ctx->ctx_rib->ctxts, ctx, entry);
+	} else
+		re = rib_restart(ctx);
+
+	for (i = 0; re != NULL; re = RB_NEXT(rib_tree, unused, re)) {
+		if (ctx->ctx_count && i++ >= ctx->ctx_count) {
+			/* store next start point */
+			ctx->ctx_p = re->prefix;
+			pt_ref(ctx->ctx_p);
+			return;
+		}
+		ctx->ctx_upcall(re, ctx->ctx_arg);
+	}
+
+	LIST_REMOVE(ctx, entry);
+	if (ctx->ctx_done)
+		ctx->ctx_done(ctx->ctx_arg);
+}
+
+struct rib_entry *
+rib_restart(struct rib_context *ctx)
+{
+	struct rib_entry *tmp, *prev = NULL;
+	int comp;
+
+	/* first unref the pt_entry and check if the table is still around */
+	pt_unref(ctx->ctx_p);
+	if (pt_empty(ctx->ctx_p))
+		pt_remove(ctx->ctx_p);
+
+	if (ctx->ctx_rib == NULL)
+		return NULL;
+
+	/* then try to find the element */
+	tmp = RB_ROOT(&ctx->ctx_rib->rib);
+	while (tmp) {
+		prev = tmp;
+		comp = pt_prefix_cmp(ctx->ctx_p, tmp->prefix);
+		if (comp < 0)
+			tmp = RB_LEFT(tmp, rib_e);
+		else if (comp > 0)
+			tmp = RB_RIGHT(tmp, rib_e);
+		else
+			return (tmp);
+	}
+
+	/* no match, empty tree */
+	if (prev == NULL)
+		return (NULL);
+
+	/*
+	 * no perfect match
+	 * if last element was bigger use that as new start point
+	 */
+	if (comp < 0)
+		return (prev);
+
+	/* backtrack until parent is bigger */
+	do {
+		prev = RB_PARENT(prev, rib_e);
+		if (prev == NULL)
+			/* all elements in the tree are smaler */
+			return (NULL);
+		comp = pt_prefix_cmp(ctx->ctx_p, prev->prefix);
+	} while (comp > 0);
+
+	return (prev);
+}
 
 /* used to bump correct prefix counters */
-#define PREFIX_COUNT(x, f, op)				\
+#define PREFIX_COUNT(x, id, op)				\
 	do {						\
-		if (f & F_LOCAL)			\
+		if (id == 1)				\
 			(x)->prefix_cnt += (op);	\
-		if (f & F_ORIGINAL)			\
-			(x)->adjrib_cnt += (op);	\
+		else					\
+			(x)->rib_cnt += (op);		\
 	} while (0)
 
 /* path specific functions */
@@ -84,60 +330,30 @@ path_shutdown(void)
 }
 
 void
-path_update(struct rde_peer *peer, struct rde_aspath *nasp,
-    struct bgpd_addr *prefix, int prefixlen, u_int32_t flags)
+path_update(struct rib *rib, struct rde_peer *peer, struct rde_aspath *nasp,
+    struct bgpd_addr *prefix, int prefixlen)
 {
 	struct rde_aspath	*asp;
-	struct prefix		*p, *oldp = NULL;
+	struct prefix		*p;
 
+#if 0
+	/* XXX NEEDS SOMETHING BETTER HERE */
 	if (flags & F_LOCAL) {
 		rde_send_pftable(nasp->pftableid, prefix, prefixlen, 0);
 		rde_send_pftable_commit();
 	}
+#endif
 
 	/*
-	 * First try to find a prefix in the specified RIB or in the
-	 * Adj-RIB-In. This works because Local-RIB has precedence over the
-	 * Adj-RIB-In. In the end this saves use some additional lookups.
+	 * First try to find a prefix in the specified RIB.
 	 */
-	if ((p = prefix_get(peer, prefix, prefixlen, flags | F_ORIGINAL)) !=
-	    NULL) {
-		do {
-			if (path_compare(nasp, p->aspath) == 0) {
-				if ((p->flags & flags & F_RIB_MASK) == 0) {
-					if (oldp != NULL) {
-						asp = oldp->aspath;
-						prefix_destroy(oldp);
-						if (path_empty(asp))
-							path_destroy(asp);
-					}
-					p->flags |= flags & F_RIB_MASK;
-					PREFIX_COUNT(p->aspath, flags, 1);
-					PREFIX_COUNT(peer, flags, 1);
-
-					/* re-evaluate prefix */
-					LIST_REMOVE(p, prefix_l);
-					prefix_evaluate(p, p->prefix);
-				}
-				/* update last change */
-				p->lastchange = time(NULL);
-				return;
-			}
-			/*
-			 * If the prefix is not already part of the Adj-RIB-In
-			 * do a lookup in there. But keep the original prefix
-			 * around so that it can be removed later.
-			 */
-			if (p->flags & F_ORIGINAL)
-				break;
-			oldp = p;
-			p = prefix_get(peer, prefix, prefixlen, F_ORIGINAL);
-		} while (p != NULL);
+	if ((p = prefix_get(rib, peer, prefix, prefixlen, 0)) != NULL) {
+		if (path_compare(nasp, p->aspath) == 0) {
+			/* no change, update last change */
+			p->lastchange = time(NULL);
+			return;
+		}
 	}
-
-	/* Do not try to move a prefix that is in the wrong RIB. */
-	if (p == NULL || (p->flags & flags & F_RIB_MASK) == 0)
-		p = oldp;
 
 	/*
 	 * Either the prefix does not exist or the path changed.
@@ -152,9 +368,9 @@ path_update(struct rde_peer *peer, struct rde_aspath *nasp,
 
 	/* If the prefix was found move it else add it to the aspath. */
 	if (p != NULL)
-		prefix_move(asp, p, flags);
+		prefix_move(asp, p);
 	else
-		prefix_add(asp, prefix, prefixlen, flags);
+		prefix_add(rib, asp, prefix, prefixlen);
 }
 
 int
@@ -221,14 +437,18 @@ void
 path_remove(struct rde_aspath *asp)
 {
 	struct prefix	*p;
-	struct bgpd_addr addr;
 
 	while ((p = LIST_FIRST(&asp->prefix_h)) != NULL) {
+#if 0
 		/* Commit is done in peer_down() */
+		/* XXX AGAIN NEEDS A BETTER SOLUTION */
+		struct bgpd_addr addr;
+
 		pt_getaddr(p->prefix, &addr);
 		if (p->flags & F_LOCAL)
 			rde_send_pftable(p->aspath->pftableid, &addr,
 			    p->prefix->prefixlen, 1);
+#endif
 
 		prefix_destroy(p);
 	}
@@ -241,7 +461,7 @@ path_destroy(struct rde_aspath *asp)
 {
 	/* path_destroy can only unlink and free empty rde_aspath */
 	if (asp->prefix_cnt != 0 || asp->active_cnt != 0 ||
-	    asp->adjrib_cnt != 0)
+	    asp->rib_cnt != 0)
 		log_warnx("path_destroy: prefix count out of sync");
 
 	nexthop_unlink(asp);
@@ -354,8 +574,8 @@ path_put(struct rde_aspath *asp)
 
 static struct prefix	*prefix_alloc(void);
 static void		 prefix_free(struct prefix *);
-static void		 prefix_link(struct prefix *, struct pt_entry *,
-			     struct rde_aspath *, u_int32_t);
+static void		 prefix_link(struct prefix *, struct rib_entry *,
+			     struct rde_aspath *);
 static void		 prefix_unlink(struct prefix *);
 
 int
@@ -404,51 +624,51 @@ prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
  * search for specified prefix of a peer. Returns NULL if not found.
  */
 struct prefix *
-prefix_get(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen,
-    u_int32_t flags)
+prefix_get(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
+    int prefixlen, u_int32_t flags)
 {
-	struct pt_entry	*pte;
+	struct rib_entry	*re;
 
-	pte = pt_get(prefix, prefixlen);
-	if (pte == NULL)
+	re = rib_get(rib, prefix, prefixlen);
+	if (re == NULL)
 		return (NULL);
-	return (prefix_bypeer(pte, peer, flags));
+	return (prefix_bypeer(re, peer, flags));
 }
 
 /*
  * Adds or updates a prefix.
  */
-struct pt_entry *
-prefix_add(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen,
-    u_int32_t flags)
+void
+prefix_add(struct rib *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
+    int prefixlen)
 
 {
-	struct prefix	*p;
-	struct pt_entry	*pte;
+	struct prefix		*p;
+	struct rib_entry	*re;
 
-	pte = pt_get(prefix, prefixlen);
-	if (pte == NULL)
-		pte = pt_add(prefix, prefixlen);
+	re = rib_get(rib, prefix, prefixlen);
+	if (re == NULL)
+		re = rib_add(rib, prefix, prefixlen);
 
-	p = prefix_bypeer(pte, asp->peer, flags);
+	p = prefix_bypeer(re, asp->peer, asp->flags);
 	if (p == NULL) {
 		p = prefix_alloc();
-		prefix_link(p, pte, asp, flags);
+		prefix_link(p, re, asp);
 	} else {
-		if (p->aspath != asp)
+		if (p->aspath != asp) {
 			/* prefix belongs to a different aspath so move */
-			return (prefix_move(asp, p, flags));
+			prefix_move(asp, p);
+			return;
+		}
 		p->lastchange = time(NULL);
 	}
-
-	return (pte);
 }
 
 /*
  * Move the prefix to the specified as path, removes the old asp if needed.
  */
-struct pt_entry *
-prefix_move(struct rde_aspath *asp, struct prefix *p, u_int32_t flags)
+void
+prefix_move(struct rde_aspath *asp, struct prefix *p)
 {
 	struct prefix		*np;
 	struct rde_aspath	*oasp;
@@ -461,43 +681,16 @@ prefix_move(struct rde_aspath *asp, struct prefix *p, u_int32_t flags)
 	np->aspath = asp;
 	/* peer and prefix pointers are still equal */
 	np->prefix = p->prefix;
+	np->rib = p->rib;
 	np->lastchange = time(NULL);
-	np->flags = flags;
 
 	/* add to new as path */
 	LIST_INSERT_HEAD(&asp->prefix_h, np, path_l);
-	PREFIX_COUNT(asp, flags, 1);
+	PREFIX_COUNT(asp, p->rib->rib->id, 1);
 	/*
 	 * no need to update the peer prefix count because we are only moving
 	 * the prefix without changing the peer.
 	 */
-
-	/*
-	 * fiddle around with the flags. If the p->flags is not equal
-	 * to flags the old prefix p may not be removed but instead p->flags
-	 * needs to be adjusted.
-	 */
-	if ((p->flags & F_RIB_MASK) != (flags & F_RIB_MASK)) {
-		if ((p->flags & flags & F_RIB_MASK) == 0)
-			fatalx("prefix_move: "
-			    "prefix is not part of desired RIB");
-
-		p->flags &= ~(flags & F_RIB_MASK);
-		PREFIX_COUNT(p->aspath, flags, -1);
-		/* as before peer count needs no update because of move */
-
-		/* redo the route decision for p */
-		LIST_REMOVE(p, prefix_l);
-		/* If the prefix is the active one remove it first. */
-		if (p == p->prefix->active)
-			prefix_evaluate(NULL, p->prefix);
-		prefix_evaluate(p, p->prefix);
-
-		/* and now for np */
-		prefix_evaluate(np, np->prefix);
-
-		return (np->prefix);
-	}
 
 	/*
 	 * First kick the old prefix node out of the prefix list,
@@ -507,25 +700,24 @@ prefix_move(struct rde_aspath *asp, struct prefix *p, u_int32_t flags)
 	 * This is save because we create a new prefix and so the change
 	 * is noticed by prefix_evaluate().
 	 */
-	LIST_REMOVE(p, prefix_l);
-	prefix_evaluate(np, np->prefix);
+	LIST_REMOVE(p, rib_l);
+	prefix_evaluate(np, np->rib);
 
 	/* remove old prefix node */
 	oasp = p->aspath;
 	LIST_REMOVE(p, path_l);
-	PREFIX_COUNT(oasp, flags, -1);
+	PREFIX_COUNT(oasp, p->rib->rib->id, -1);
 	/* as before peer count needs no update because of move */
 
 	/* destroy all references to other objects and free the old prefix */
 	p->aspath = NULL;
 	p->prefix = NULL;
+	p->rib = NULL;
 	prefix_free(p);
 
 	/* destroy old path if empty */
 	if (path_empty(oasp))
 		path_destroy(oasp);
-
-	return (np->prefix);
 }
 
 /*
@@ -533,50 +725,37 @@ prefix_move(struct rde_aspath *asp, struct prefix *p, u_int32_t flags)
  * pt_entry -- become empty remove them too.
  */
 void
-prefix_remove(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen,
-    u_int32_t flags)
+prefix_remove(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
+    int prefixlen, u_int32_t flags)
 {
 	struct prefix		*p;
-	struct pt_entry		*pte;
+	struct rib_entry	*re;
 	struct rde_aspath	*asp;
 
-	pte = pt_get(prefix, prefixlen);
-	if (pte == NULL)	/* Got a dummy withdrawn request */
+	re = rib_get(rib, prefix, prefixlen);
+	if (re == NULL)	/* Got a dummy withdrawn request */
 		return;
 
-	p = prefix_bypeer(pte, peer, flags);
+	p = prefix_bypeer(re, peer, flags);
 	if (p == NULL)		/* Got a dummy withdrawn request. */
 		return;
 
 	asp = p->aspath;
 
+#if 0
+	/* XXX AGAIN THIS NEEDS A BETTER SOLUTION */
 	if (p->flags & F_LOCAL) {
 		/* only prefixes in the local RIB were pushed into pf */
 		rde_send_pftable(asp->pftableid, prefix, prefixlen, 1);
 		rde_send_pftable_commit();
 	}
-
-	/* if prefix belongs to more than one RIB just remove one instance */
-	if ((p->flags & F_RIB_MASK) != (flags & F_RIB_MASK)) {
-		p->flags &= ~(flags & F_RIB_MASK);
-
-		PREFIX_COUNT(p->aspath, flags, -1);
-		PREFIX_COUNT(peer, flags, -1);
-
-		/* redo the route decision for p */
-		LIST_REMOVE(p, prefix_l);
-		/* If the prefix is the active one remove it first. */
-		if (p == p->prefix->active)
-			prefix_evaluate(NULL, p->prefix);
-		prefix_evaluate(p, p->prefix);
-		return;
-	}
+#endif
 
 	prefix_unlink(p);
 	prefix_free(p);
 
-	if (pt_empty(pte))
-		pt_remove(pte);
+	if (rib_empty(re))
+		rib_remove(re);
 	if (path_empty(asp))
 		path_destroy(asp);
 }
@@ -604,22 +783,23 @@ prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen)
  * belonging to the peer peer. Returns NULL if no match found.
  */
 struct prefix *
-prefix_bypeer(struct pt_entry *pte, struct rde_peer *peer, u_int32_t flags)
+prefix_bypeer(struct rib_entry *re, struct rde_peer *peer, u_int32_t flags)
 {
 	struct prefix	*p;
 
-	LIST_FOREACH(p, &pte->prefix_h, prefix_l) {
-		if (p->aspath->peer != peer ||
-		    (p->flags & flags & F_RIB_MASK) == 0)
+	LIST_FOREACH(p, &re->prefix_h, rib_l) {
+		if (p->aspath->peer != peer)
 			continue;
-		if (flags & F_PREFIX_ANNOUNCED &&
-		    (flags & F_ANN_DYNAMIC) != (p->flags & F_ANN_DYNAMIC))
+		if (p->aspath->flags & flags &&
+		    (flags & F_ANN_DYNAMIC) !=
+		    (p->aspath->flags & F_ANN_DYNAMIC))
 			continue;
 		return (p);
 	}
 	return (NULL);
 }
 
+/* XXX this completely wrong somewhat */
 void
 prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
     enum nexthop_state oldstate)
@@ -632,11 +812,10 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 
 	LIST_FOREACH(p, &asp->prefix_h, path_l) {
 		/*
+		 * XXX THIS IS MISSING AT THE MOMENT
 		 * skip non local-RIB nodes, only local-RIB prefixes are
 		 * eligible. Both F_LOCAL and F_ORIGINAL may be set.
 		 */
-		if (!(p->flags & F_LOCAL))
-			continue;
 
 		if (oldstate == state && state == NEXTHOP_REACH) {
 			/*
@@ -645,13 +824,13 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 			 * or other internal infos. This will not change
 			 * the routing decision so shortcut here.
 			 */
-			if (p == p->prefix->active)
+			if (p == p->rib->active)
 				rde_send_kroute(p, NULL);
 			continue;
 		}
 
 		/* redo the route decision */
-		LIST_REMOVE(p, prefix_l);
+		LIST_REMOVE(p, rib_l);
 		/*
 		 * If the prefix is the active one remove it first,
 		 * this has to be done because we can not detect when
@@ -660,9 +839,9 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 		 * prefix_evaluate() will generate no update because
 		 * the nexthop is unreachable or ineligible.
 		 */
-		if (p == p->prefix->active)
-			prefix_evaluate(NULL, p->prefix);
-		prefix_evaluate(p, p->prefix);
+		if (p == p->rib->active)
+			prefix_evaluate(NULL, p->rib);
+		prefix_evaluate(p, p->rib);
 	}
 }
 
@@ -670,14 +849,14 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 void
 prefix_destroy(struct prefix *p)
 {
-	struct pt_entry		*pte;
+	struct rib_entry	*re;
 
-	pte = p->prefix;
+	re = p->rib;
 	prefix_unlink(p);
 	prefix_free(p);
 
-	if (pt_empty(pte))
-		pt_remove(pte);
+	if (rib_empty(re))
+		rib_remove(re);
 }
 
 /*
@@ -692,10 +871,11 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime, u_int32_t flags)
 
 	for (asp = LIST_FIRST(&peer->path_h); asp != NULL; asp = xasp) {
 		xasp = LIST_NEXT(asp, peer_l);
+		if ((asp->flags & F_ANN_DYNAMIC) == flags)
+			continue;
 		for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = xp) {
 			xp = LIST_NEXT(p, path_l);
-			if (reloadtime > p->lastchange &&
-			    (p->flags & F_ANN_DYNAMIC) == flags) {
+			if (reloadtime > p->lastchange) {
 				pte = p->prefix;
 				prefix_unlink(p);
 				prefix_free(p);
@@ -713,20 +893,20 @@ prefix_network_clean(struct rde_peer *peer, time_t reloadtime, u_int32_t flags)
  * Link a prefix into the different parent objects.
  */
 static void
-prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp,
-    u_int32_t flags)
+prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_aspath *asp)
 {
 	LIST_INSERT_HEAD(&asp->prefix_h, pref, path_l);
-	PREFIX_COUNT(asp, flags, 1);
-	PREFIX_COUNT(asp->peer, flags, 1);
+	PREFIX_COUNT(asp, re->rib->id, 1);
+	PREFIX_COUNT(asp->peer, re->rib->id, 1);
 
 	pref->aspath = asp;
-	pref->prefix = pte;
+	pref->rib = re;
+	pref->prefix = re->prefix;
+	pt_ref(pref->prefix);
 	pref->lastchange = time(NULL);
-	pref->flags = flags;
 
 	/* make route decision */
-	prefix_evaluate(pref, pte);
+	prefix_evaluate(pref, re);
 }
 
 /*
@@ -735,17 +915,24 @@ prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp,
 static void
 prefix_unlink(struct prefix *pref)
 {
-	/* make route decision */
-	LIST_REMOVE(pref, prefix_l);
-	prefix_evaluate(NULL, pref->prefix);
+	if (pref->rib) {
+		/* make route decision */
+		LIST_REMOVE(pref, rib_l);
+		prefix_evaluate(NULL, pref->rib);
+	}
 
 	LIST_REMOVE(pref, path_l);
-	PREFIX_COUNT(pref->aspath, pref->flags, -1);
-	PREFIX_COUNT(pref->aspath->peer, pref->flags, -1);
+	PREFIX_COUNT(pref->aspath, pref->rib->rib->id, -1);
+	PREFIX_COUNT(pref->aspath->peer, pref->rib->rib->id, -1);
+
+	pt_unref(pref->prefix);
+	if (pt_empty(pref->prefix))
+		pt_remove(pref->prefix);
 
 	/* destroy all references to other objects */
 	pref->aspath = NULL;
 	pref->prefix = NULL;
+	pref->rib = NULL;
 
 	/*
 	 * It's the caller's duty to remove empty aspath respectively pt_entry

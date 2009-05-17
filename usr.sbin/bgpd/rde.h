@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.106 2009/04/23 19:23:27 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.107 2009/05/17 12:25:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -42,6 +42,7 @@ LIST_HEAD(rde_peer_head, rde_peer);
 LIST_HEAD(aspath_head, rde_aspath);
 RB_HEAD(uptree_prefix, update_prefix);
 RB_HEAD(uptree_attr, update_attr);
+RB_HEAD(rib_tree, rib_entry);
 TAILQ_HEAD(uplist_prefix, update_prefix);
 TAILQ_HEAD(uplist_attr, update_attr);
 
@@ -66,7 +67,7 @@ struct rde_peer {
 	u_int64_t			 prefix_sent_update;
 	u_int64_t			 prefix_sent_withdraw;
 	u_int32_t			 prefix_cnt; /* # of prefixes */
-	u_int32_t			 adjrib_cnt; /* # of p. in Adj-RIB-In */
+	u_int32_t			 rib_cnt;    /* # of p. in Adj-RIB-In */
 	u_int32_t			 remote_bgpid; /* host byte order! */
 	u_int32_t			 up_pcnt;
 	u_int32_t			 up_acnt;
@@ -186,7 +187,7 @@ struct rde_aspath {
 	u_int32_t			 weight;	/* low prio lpref */
 	u_int32_t			 prefix_cnt; /* # of prefixes */
 	u_int32_t			 active_cnt; /* # of active prefixes */
-	u_int32_t			 adjrib_cnt; /* # of p. in Adj-RIB-In */
+	u_int32_t			 rib_cnt;    /* # of p. in Adj-RIB-In */
 	u_int32_t			 flags;		/* internally used */
 	u_int16_t			 rtlabelid;	/* route label id */
 	u_int16_t			 pftableid;	/* pf table id */
@@ -225,53 +226,64 @@ struct pt_entry {
 	RB_ENTRY(pt_entry)		 pt_e;
 	sa_family_t			 af;
 	u_int8_t			 prefixlen;
-	struct prefix_head		 prefix_h;
-	struct prefix			*active; /* for fast access */
+	u_int16_t			 refcnt;
 };
 
 struct pt_entry4 {
 	RB_ENTRY(pt_entry)		 pt_e;
 	sa_family_t			 af;
 	u_int8_t			 prefixlen;
-	struct prefix_head		 prefix_h;
-	struct prefix			*active; /* for fast access */
+	u_int16_t			 refcnt;
 	struct in_addr			 prefix4;
-	/*
-	 * Route Flap Damping structures
-	 * Currently I think they belong into the prefix but for the moment
-	 * we just ignore the dampening at all.
-	 */
 };
 
 struct pt_entry6 {
 	RB_ENTRY(pt_entry)		 pt_e;
 	sa_family_t			 af;
 	u_int8_t			 prefixlen;
-	struct prefix_head		 prefix_h;
-	struct prefix			*active; /* for fast access */
+	u_int16_t			 refcnt;
 	struct in6_addr			 prefix6;
 };
 
-struct pt_context {
-	union {
-		struct pt_entry		p;
-		struct pt_entry4	p4;
-		struct pt_entry6	p6;
-	}			pu;
-#define ctx_p			pu.p
-#define ctx_p4			pu.p4
-#define ctx_p6			pu.p6
-	/* only count and done should be accessed by callers */
-	unsigned int		count;
-	int			done;
+struct rib_context {
+	LIST_ENTRY(rib_context)	 entry;
+	struct pt_entry		*ctx_p;
+	struct rib		*ctx_rib;
+	void		(*ctx_upcall)(struct rib_entry *, void *);
+	void		(*ctx_done)(void *);
+	void			*ctx_arg;
+	unsigned int		 ctx_count;
+	sa_family_t		 ctx_af;
+};
+
+struct rib_entry {
+	RB_ENTRY(rib_entry)	 rib_e;
+	struct prefix_head	 prefix_h;
+	struct prefix		*active; /* for fast access */
+	struct pt_entry		*prefix;
+	struct rib		*rib;
+};
+
+enum rib_state {
+	RIB_NONE,
+	RIB_ACTIVE,
+	RIB_DELETE
+};
+
+struct rib {
+	char			name[PEER_DESCR_LEN];
+	struct rib_tree		rib;
+	LIST_HEAD(, rib_context)	ctxts;
+	enum rib_state		state;
+	u_int16_t		id;
 };
 
 struct prefix {
-	LIST_ENTRY(prefix)		 prefix_l, path_l;
+	LIST_ENTRY(prefix)		 rib_l, path_l;
 	struct rde_aspath		*aspath;
 	struct pt_entry			*prefix;
+	struct rib_entry		*rib;	/* NULL for Adj-RIB-In */
 	time_t				 lastchange;
-	u_int32_t			 flags;
 };
 
 extern struct rde_memstats rdemem;
@@ -331,10 +343,22 @@ int		 community_set(struct rde_aspath *, int, int);
 void		 community_delete(struct rde_aspath *, int, int);
 
 /* rde_rib.c */
+extern u_int16_t	 rib_size;
+extern struct rib	*ribs;
+
+void		 rib_init(void);
+u_int16_t	 rib_new(char *);
+void		 rib_free(struct rib *);
+struct rib_entry *rib_get(struct rib *, struct bgpd_addr *, int);
+struct rib_entry *rib_lookup(struct rib *, struct bgpd_addr *);
+void		 rib_dump(struct rib *, void (*)(struct rib_entry *, void *),
+		     void *, sa_family_t);
+void		 rib_dump_r(struct rib_context *);
+
 void		 path_init(u_int32_t);
 void		 path_shutdown(void);
-void		 path_update(struct rde_peer *, struct rde_aspath *,
-		     struct bgpd_addr *, int, u_int32_t);
+void		 path_update(struct rib *, struct rde_peer *,
+		     struct rde_aspath *, struct bgpd_addr *, int);
 int		 path_compare(struct rde_aspath *, struct rde_aspath *);
 struct rde_aspath *path_lookup(struct rde_aspath *, struct rde_peer *);
 void		 path_remove(struct rde_aspath *);
@@ -347,15 +371,16 @@ void		 path_put(struct rde_aspath *);
 #define	PREFIX_SIZE(x)	(((x) + 7) / 8 + 1)
 int		 prefix_compare(const struct bgpd_addr *,
 		    const struct bgpd_addr *, int);
-struct prefix	*prefix_get(struct rde_peer *, struct bgpd_addr *, int,
-		    u_int32_t);
-struct pt_entry	*prefix_add(struct rde_aspath *, struct bgpd_addr *, int,
-		    u_int32_t);
-struct pt_entry	*prefix_move(struct rde_aspath *, struct prefix *, u_int32_t);
-void		 prefix_remove(struct rde_peer *, struct bgpd_addr *, int,
-		    u_int32_t);
+struct prefix	*prefix_get(struct rib *, struct rde_peer *,
+		    struct bgpd_addr *, int, u_int32_t);
+void		 prefix_add(struct rib *, struct rde_aspath *,
+		    struct bgpd_addr *, int);
+void		 prefix_move(struct rde_aspath *, struct prefix *);
+void		 prefix_remove(struct rib *, struct rde_peer *,
+		    struct bgpd_addr *, int, u_int32_t);
 int		 prefix_write(u_char *, int, struct bgpd_addr *, u_int8_t);
-struct prefix	*prefix_bypeer(struct pt_entry *, struct rde_peer *, u_int32_t);
+struct prefix	*prefix_bypeer(struct rib_entry *, struct rde_peer *,
+		     u_int32_t);
 void		 prefix_updateall(struct rde_aspath *, enum nexthop_state,
 		     enum nexthop_state);
 void		 prefix_destroy(struct prefix *);
@@ -373,7 +398,7 @@ struct nexthop	*nexthop_get(struct bgpd_addr *);
 int		 nexthop_compare(struct nexthop *, struct nexthop *);
 
 /* rde_decide.c */
-void		 prefix_evaluate(struct prefix *, struct pt_entry *);
+void		 prefix_evaluate(struct prefix *, struct rib_entry *);
 
 /* rde_update.c */
 void		 up_init(struct rde_peer *);
@@ -392,18 +417,28 @@ u_char		*up_dump_mp_unreach(u_char *, u_int16_t *, struct rde_peer *);
 u_char		*up_dump_mp_reach(u_char *, u_int16_t *, struct rde_peer *);
 
 /* rde_prefix.c */
-void		 pt_init(void);
-void		 pt_shutdown(void);
-int		 pt_empty(struct pt_entry *);
-void		 pt_getaddr(struct pt_entry *, struct bgpd_addr *);
+#define pt_empty(pt)	((pt)->refcnt == 0)
+#define pt_ref(pt)	do {				\
+	++(pt)->refcnt;					\
+	if ((pt)->refcnt == 0)				\
+		fatalx("pt_ref: overflow");		\
+} while(0)
+#define pt_unref(pt)	do {				\
+	if ((pt)->refcnt == 0)				\
+		fatalx("pt_unref: underflow");		\
+	--(pt)->refcnt;					\
+} while(0)
+
+void	 pt_init(void);
+void	 pt_shutdown(void);
+void	 pt_getaddr(struct pt_entry *, struct bgpd_addr *);
+struct pt_entry	*pt_fill(struct bgpd_addr *, int);
 struct pt_entry	*pt_get(struct bgpd_addr *, int);
 struct pt_entry *pt_add(struct bgpd_addr *, int);
-void		 pt_remove(struct pt_entry *);
+void	 pt_remove(struct pt_entry *);
 struct pt_entry	*pt_lookup(struct bgpd_addr *);
-void		 pt_dump(void (*)(struct pt_entry *, void *), void *,
-		     sa_family_t);
-void		 pt_dump_r(void (*)(struct pt_entry *, void *), void *,
-		     sa_family_t, struct pt_context *);
+int	 pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);
+
 
 /* rde_filter.c */
 enum filter_actions rde_filter(struct rde_aspath **, struct filter_head *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.19 2009/03/19 07:00:07 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.20 2009/05/17 12:25:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -292,7 +292,7 @@ struct mrt_config {
 
 struct peer;
 struct prefix;
-struct pt_entry;
+struct rib_entry;
 
 /* prototypes */
 void		 mrt_dump_bgp_msg(struct mrt *, void *, u_int16_t,
@@ -300,7 +300,7 @@ void		 mrt_dump_bgp_msg(struct mrt *, void *, u_int16_t,
 void		 mrt_dump_state(struct mrt *, u_int16_t, u_int16_t,
 		     struct peer *);
 void		 mrt_clear_seq(void);
-void		 mrt_dump_upcall(struct pt_entry *, void *);
+void		 mrt_dump_upcall(struct rib_entry *, void *);
 void		 mrt_write(struct mrt *);
 void		 mrt_clean(struct mrt *);
 void		 mrt_init(struct imsgbuf *, struct imsgbuf *);
