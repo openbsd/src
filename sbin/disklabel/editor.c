@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.211 2009/05/17 01:17:12 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.212 2009/05/17 02:49:45 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.211 2009/05/17 01:17:12 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.212 2009/05/17 02:49:45 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -437,8 +437,6 @@ editor(struct disklabel *lp, int f)
 				puts("In no change mode, not writing label.");
 				break;
 			}
-			/* Save mountpoint info if there is any. */
-			mpsave(&label);
 
 			/* Write label to disk. */
 			if (writelabel(f, bootarea, &label) != 0)
