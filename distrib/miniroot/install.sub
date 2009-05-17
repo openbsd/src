@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.550 2009/05/17 00:43:13 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.551 2009/05/17 04:41:46 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -134,7 +134,7 @@ __EOT
 		else
 		cat <<__EOT
 If you change your mind and do not want to install, type Control-C now
-and then type 'reboot' or 'halt' at the command prompt.
+and then type 'reboot' at the command prompt.
 __EOT
 			return
 		fi
@@ -1756,11 +1756,11 @@ finish_up() {
 	cat <<__EOT
 
 CONGRATULATIONS! Your OpenBSD $MODE has been successfully completed!
-To boot the new system, enter "reboot" or "halt" at the command prompt.
+To boot the new system, enter 'reboot' at the command prompt.
 __EOT
 	[[ $MODE == install ]] && cat <<__EOT
 When you login to your new system the first time, please read your mail
-using the "mail" command.
+using the 'mail' command.
 __EOT
 
 	md_congrats
