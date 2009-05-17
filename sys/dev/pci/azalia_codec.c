@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.123 2009/05/12 09:32:28 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.124 2009/05/17 02:28:26 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -189,6 +189,15 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x111d76d5:
 		this->name = "IDT 92HD81B1C";
 		break;
+	case 0x11d4184a:
+		this->name = "Analog Devices AD1884A";
+		break;
+	case 0x11d41882:
+		this->name = "Analog Devices AD1882";
+		break;
+	case 0x11d41883:
+		this->name = "Analog Devices AD1883";
+		break;
 	case 0x11d41884:
 		this->name = "Analog Devices AD1884";
 		break;
@@ -209,6 +218,15 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x11d4198b:
 		this->name = "Analog Devices AD1988B";
+		break;
+	case 0x11d4882a:
+		this->name = "Analog Devices AD1882A";
+		break;
+	case 0x11d4989a:
+		this->name = "Analog Devices AD1989A";
+		break;
+	case 0x11d4989b:
+		this->name = "Analog Devices AD1989B";
 		break;
 	case 0x14f15045:
 		this->name = "Conexant CX20549";  /* Venice */
