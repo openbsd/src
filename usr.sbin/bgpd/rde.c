@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.243 2009/05/17 12:25:15 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.244 2009/05/17 13:22:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -345,7 +345,6 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	struct filter_set	*s;
 	struct nexthop		*nh;
 	int			 n;
-	sa_family_t		 af = AF_UNSPEC;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		fatal("rde_dispatch_imsg_session: imsg_read error");
@@ -464,14 +463,6 @@ badnet:
 			}
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(af)) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
-			bzero(&req, sizeof(req));
-			memcpy(&req.af, imsg.data, sizeof(af));
-			rde_dump_ctx_new(&req, imsg.hdr.pid, imsg.hdr.type);
-			break;
 		case IMSG_CTL_SHOW_RIB:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
 				log_warnx("rde_dispatch: wrong imsg len");
@@ -2752,9 +2743,7 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 	struct kroute		 k;
 	struct kroute6		 k6;
 	struct bgpd_addr	 addr;
-	pid_t			 pid;
-
-	memcpy(&pid, ptr, sizeof(pid));
+	struct rde_dump_ctx	*ctx = ptr;
 
 	LIST_FOREACH(p, &re->prefix_h, rib_l) {
 		if (!(p->aspath->flags & F_PREFIX_ANNOUNCED))
@@ -2767,7 +2756,7 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 			if (p->aspath->peer == peerself)
 				k.flags = F_KERNEL;
 			if (imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NETWORK, 0,
-			    pid, -1, &k, sizeof(k)) == -1)
+			    ctx->req.pid, -1, &k, sizeof(k)) == -1)
 				log_warnx("network_dump_upcall: "
 				    "imsg_compose error");
 		}
@@ -2779,7 +2768,7 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 			if (p->aspath->peer == peerself)
 				k6.flags = F_KERNEL;
 			if (imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NETWORK6, 0,
-			    pid, -1, &k6, sizeof(k6)) == -1)
+			    ctx->req.pid, -1, &k6, sizeof(k6)) == -1)
 				log_warnx("network_dump_upcall: "
 				    "imsg_compose error");
 		}
