@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.86 2009/05/13 18:38:27 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.87 2009/05/17 00:11:34 sthen Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -485,7 +485,7 @@ define({:-OpenBSDInstallMBRPart2-:},
 dnl install.md md_prep_fdisk
 {:-	The installation program will ask you if you want to use the
 	whole disk for OpenBSD.  If you don't need to or don't intend
-	to share the disk with other operating systems, answer `y'
+	to share the disk with other operating systems, answer `w'
 	here.  The installation program will then create a single
 	MBR partition spanning the whole disk, dedicated to OpenBSD.
 
