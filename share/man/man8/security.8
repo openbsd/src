@@ -1,8 +1,8 @@
-.\" $OpenBSD: security.8,v 1.14 2008/04/17 19:49:16 sthen Exp $
+.\" $OpenBSD: security.8,v 1.15 2009/05/17 21:50:02 schwarze Exp $
 .\"
 .\" David Leonard, 2001. Public Domain.
 .\"
-.Dd $Mdocdate: April 17 2008 $
+.Dd $Mdocdate: May 17 2009 $
 .Dt SECURITY 8
 .Os
 .Sh NAME
@@ -17,11 +17,11 @@ weaknesses.
 It is only a security aid and does not offer complete protection.
 The
 .Nm
-script is normally run from the
+script must be run from the
 .Pa /etc/daily
 script (see
 .Xr daily 8
-for further details), which sends mails to root on a daily basis.
+for further details), which mails any output to root on a daily basis.
 .Pp
 The
 .Nm
