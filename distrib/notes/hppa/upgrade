@@ -1,4 +1,4 @@
-dnl	$OpenBSD: upgrade,v 1.6 2008/08/05 16:41:10 miod Exp $
+dnl	$OpenBSD: upgrade,v 1.7 2009/05/17 00:31:51 sthen Exp $
 dnl Replace with this (removing the mention about the bootblocks update)
 dnl for 4.5 or 4.6, maybe...
 Warning! Upgrades to OpenBSD OSREV are currently only supported from the
@@ -39,6 +39,6 @@ preserve your files in `/etc' which you are likely to have customized
 since a previous installation.
 
 However, it is strongly advised that you unpack the etc{:--:}OSrev.tgz set in
-a temporary directory and merge changes by hand, since all components of
+a temporary directory and merge changes by hand, since some components of
 your system may not function correctly until your files in `/etc' are
 updated.
