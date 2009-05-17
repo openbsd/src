@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.99 2009/05/17 12:25:15 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.100 2009/05/17 13:20:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -216,6 +216,8 @@ rib_dump_r(struct rib_context *ctx)
 		re = rib_restart(ctx);
 
 	for (i = 0; re != NULL; re = RB_NEXT(rib_tree, unused, re)) {
+		if (ctx->ctx_af != AF_UNSPEC && ctx->ctx_af != re->prefix->af)
+			continue;
 		if (ctx->ctx_count && i++ >= ctx->ctx_count) {
 			/* store next start point */
 			ctx->ctx_p = re->prefix;
@@ -236,13 +238,9 @@ rib_restart(struct rib_context *ctx)
 	struct rib_entry *tmp, *prev = NULL;
 	int comp;
 
-	/* first unref the pt_entry and check if the table is still around */
-	pt_unref(ctx->ctx_p);
-	if (pt_empty(ctx->ctx_p))
-		pt_remove(ctx->ctx_p);
-
+	/* frist check if the table is still around */
 	if (ctx->ctx_rib == NULL)
-		return NULL;
+		goto done;
 
 	/* then try to find the element */
 	tmp = RB_ROOT(&ctx->ctx_rib->rib);
@@ -254,29 +252,34 @@ rib_restart(struct rib_context *ctx)
 		else if (comp > 0)
 			tmp = RB_RIGHT(tmp, rib_e);
 		else
-			return (tmp);
+			goto done;
 	}
 
 	/* no match, empty tree */
 	if (prev == NULL)
-		return (NULL);
+		goto done;
 
 	/*
 	 * no perfect match
 	 * if last element was bigger use that as new start point
 	 */
 	if (comp < 0)
-		return (prev);
+		goto done;
 
 	/* backtrack until parent is bigger */
 	do {
 		prev = RB_PARENT(prev, rib_e);
 		if (prev == NULL)
-			/* all elements in the tree are smaler */
-			return (NULL);
+			/* all elements in the tree are smaller */
+			goto done;
 		comp = pt_prefix_cmp(ctx->ctx_p, prev->prefix);
 	} while (comp > 0);
 
+done:
+	/* unref the prefix and cleanup if needed. */
+	pt_unref(ctx->ctx_p);
+	if (pt_empty(ctx->ctx_p))
+		pt_remove(ctx->ctx_p);
 	return (prev);
 }
 
