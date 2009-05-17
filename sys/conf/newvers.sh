@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.96 2009/05/16 22:24:11 miod Exp $
+#	$OpenBSD: newvers.sh,v 1.97 2009/05/17 02:02:30 deraadt Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -53,7 +53,6 @@ id=`basename ${d}`
 #		OSMINOR
 #	distrib/miniroot/install.sub
 #		VERSION
-#		CURRENT
 #	etc/root/root.mail
 #		VERSION and other bits
 #	sys/arch/macppc/stand/tbxidata/bsd.tbxi
