@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.139 2009/05/17 12:27:16 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.140 2009/05/17 13:23:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -289,8 +289,10 @@ main(int argc, char *argv[])
 		done = 1;
 		break;
 	case NETWORK_SHOW:
+		bzero(&ribreq, sizeof(ribreq));
+		ribreq.af = res->af;
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NETWORK, 0, 0, -1,
-		    &res->af, sizeof(res->af));
+		    &ribreq, sizeof(ribreq));
 		show_network_head();
 		break;
 	}
