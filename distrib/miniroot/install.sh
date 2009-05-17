@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.187 2009/05/11 02:07:47 krw Exp $
+#	$OpenBSD: install.sh,v 1.188 2009/05/17 12:45:00 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -96,8 +96,11 @@ if [[ ! -f /etc/fstab ]]; then
 		AUTOROOT=n
 		md_prep_disklabel $DISK
 
+		# Make sure fstab.$DISK was created.
+		[[ -f fstab.$DISK ]] || { DISK= ; continue ; }
+
 		# Make sure there is a '/' mount point.
-		grep -q " / ffs " fstab.$ROOTDISK || \
+		grep -qs " / ffs " fstab.$ROOTDISK || \
 			{ DISK= ; echo "'/' must be configured!" ; continue ; }
 
 		# Avoid duplicate mount points on different disks.
@@ -106,11 +109,11 @@ if [[ ! -f /etc/fstab ]]; then
 				{ _rest=$DISK ; DISK= ; break ; }
 		done <fstab.$DISK
 		if [[ -z $DISK ]]; then
+			# Allow disklabel(8) to read mountpoint info.
 			cat fstab.$_rest >/etc/fstab
 			rm fstab.$_rest
 			set -- $(grep " $_mp " fstab.*[0-9])
 			echo "$_pp and $1 can't both be mounted at $_mp."
-			# Allow disklabel(8) to read mountpoint info.
 			continue
 		fi
 
