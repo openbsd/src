@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.17 2009/02/16 08:15:22 jmc Exp $
+.\" $OpenBSD: iwn.4,v 1.18 2009/05/18 16:16:39 damien Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2009 $
+.Dd $Mdocdate: May 18 2009 $
 .Os
 .Dt IWN 4
 .Sh NAME
@@ -88,12 +88,13 @@ driver can be configured at runtime with
 or on boot with
 .Xr hostname.if 5 .
 .Sh FILES
-The driver needs at least version 5.1 of the following firmware files,
+The driver needs at least version 5.1p0 of the following firmware files,
 which are loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Pa /etc/firmware/iwn-4965
 .It Pa /etc/firmware/iwn-5000
+.It Pa /etc/firmware/iwn-5150
 .El
 .Pp
 These firmware files are not free because Intel refuses to grant
@@ -107,7 +108,7 @@ A prepackaged version of the firmware, designed to be used with
 .Xr pkg_add 1 ,
 can be found at:
 .Bd -literal
-http://damien.bergamini.free.fr/packages/openbsd/iwn-firmware-5.1.tgz
+http://damien.bergamini.free.fr/packages/openbsd/iwn-firmware-5.1p0.tgz
 .Ed
 .Sh EXAMPLES
 The following
