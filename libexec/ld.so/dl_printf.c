@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_printf.c,v 1.13 2003/07/06 20:03:57 deraadt Exp $	*/
+/*	$OpenBSD: dl_printf.c,v 1.14 2009/05/18 20:27:19 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,8 +60,14 @@
 #include "syscall.h"
 #include "util.h"
 
+int lastfd = -1;
+#define OUTBUFSIZE 128
+static char outbuf[OUTBUFSIZE];
+static char *outptr = outbuf;
+
 static void kprintn(void (*)(int,int), int, u_long, int);
 static void kdoprnt(void (*)(int,int), int, const char *, va_list);
+static void _dl_flushbuf(void);
 
 static void putcharfd(int, int );
 
@@ -69,8 +75,27 @@ static void
 putcharfd(int c, int fd)
 {
 	char b = c;
+	int len;
 
-	_dl_write(fd, &b, 1);
+	if (fd != lastfd) {
+		_dl_flushbuf();
+		lastfd = fd;
+	}
+	*outptr++ = b;
+	len = outptr - outbuf;
+	if ((len >= OUTBUFSIZE) || (b == '\n') || (b == '\r')) {
+		_dl_flushbuf();
+	}
+}
+
+static void
+_dl_flushbuf()
+{
+	int len = outptr - outbuf;
+	if (len != 0) {
+		_dl_write(lastfd, outbuf, len);
+		outptr = outbuf;
+	}
 }
 
 void
@@ -198,6 +223,7 @@ reswitch:
 		}
 	}
 	va_end(ap);
+	_dl_flushbuf();
 }
 
 static void
