@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.5 2009/05/10 19:42:54 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.6 2009/05/18 20:21:40 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -185,7 +185,8 @@ struct wsdisplay_accessops udl_accessops = {
  * Matching devices.
  */
 static const struct usb_devno udl_devs[] = {
-	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_DL120 }
+	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_DL120 },
+	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_DL160 }
 };
 
 int
