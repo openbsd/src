@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ioc.4,v 1.1 2009/05/17 22:08:34 miod Exp $
+.\"	$OpenBSD: ioc.4,v 1.2 2009/05/18 06:55:33 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Miodrag Vallat.
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 17 2009 $
+.Dd $Mdocdate: May 18 2009 $
 .Dt IOC 4 sgi
 .Os
 .Sh NAME
 .Nm ioc
-.Nd Generic workstation I/O device
+.Nd generic workstation I/O device
 .Sh SYNOPSIS
 .Cd "ioc* at pci?"
 .Cd "com0 at ioc? base 0x00020178"
@@ -39,14 +39,15 @@ Depending on their particular configuration, the IOC3 boards may provide:
 .It
 Two
 .Xr com 4
-serial ports
+serial ports.
 .It
+A
 .Xr dsrtc 4
 time-of-day chip.
 .It
-an 10/100 Mbit/s Ethernet interface
+A 10/100 Mbit/s Ethernet interface.
 .It
-a PS/2 keyboard and mouse interface
+A PS/2 keyboard and mouse interface.
 .El
 .Pp
 In order to tell these configurations apart, all IOC3 boards, except those
