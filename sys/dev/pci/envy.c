@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.27 2009/05/08 17:52:18 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.28 2009/05/18 20:10:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1214,18 +1214,14 @@ envy_round_blocksize(void *self, int blksz)
 	 * until it's fixed, roll our own rounding
 	 */
 
-	pmult = (sc->isht ? sc->card->noch / 2 : ENVY_PCHANS / 2);
+	pmult = (sc->isht ? sc->card->noch : ENVY_PCHANS);
 	if (pmult == 0)
 		pmult = 1;
-	rmult = (sc->isht ? sc->card->nich / 2 : ENVY_RCHANS / 2);
+	rmult = (sc->isht ? sc->card->nich : ENVY_RCHANS);
 	if (rmult == 0)
 		rmult = 1;
 	mul = pmult * rmult;
-	if ((mul & 1) != 0)
-		mul <<= 1;
-	if ((mul & 3) != 0)
-		mul <<= 1;
-	if ((mul & 7) != 0)
+	while ((mul & 0x1f) != 0)
 		mul <<= 1;
 	blksz -= blksz % mul;
 	if (blksz == 0)
@@ -1247,7 +1243,7 @@ envy_trigger_output(void *self, void *start, void *end, int blksz,
 	size_t bufsz;
 	int st;
 
-	bufsz = end - start;
+	bufsz = (char *)end - (char *)start;
 #ifdef ENVY_DEBUG
 	if (blksz % (sc->isht ? sc->card->noch * 4 : ENVY_PFRAME_SIZE) != 0) {
 		printf("%s: %d: bad output blksz\n", DEVNAME(sc), blksz);
@@ -1283,7 +1279,7 @@ envy_trigger_input(void *self, void *start, void *end, int blksz,
 	size_t bufsz;
 	int st;
 	
-	bufsz = end - start;
+	bufsz = (char *)end - (char *)start;
 #ifdef ENVY_DEBUG
 	if (blksz % (sc->isht ? sc->card->nich * 4 : ENVY_RFRAME_SIZE) != 0) {
 		printf("%s: %d: bad input blksz\n", DEVNAME(sc), blksz);
