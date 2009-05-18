@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.18 2008/11/28 02:44:17 brad Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.19 2009/05/18 15:21:31 jsing Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -340,7 +340,7 @@ void	mec_watchdog(struct ifnet *);
 void	mec_tick(void *);
 int	mec_ioctl(struct ifnet *, u_long, caddr_t);
 void	mec_reset(struct mec_softc *);
-void	mec_setfilter(struct mec_softc *);
+void	mec_iff(struct mec_softc *);
 int	mec_intr(void *arg);
 void	mec_stop(struct ifnet *);
 void	mec_rxintr(struct mec_softc *, uint32_t);
@@ -646,7 +646,7 @@ mec_init(struct ifnet *ifp)
 	mec_reset(sc);
 
 	/* Setup filter for multicast or promisc mode. */
-	mec_setfilter(sc);
+	mec_iff(sc);
 
 	/* Set the TX ring pointer to the base address. */
 	bus_space_write_8(st, sh, MEC_TX_RING_BASE, MEC_CDTXADDR(sc, 0));
@@ -1047,31 +1047,24 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
+		if (!(ifp->if_flags & IFF_RUNNING))
+			mec_init(ifp);
 #ifdef INET
-		case AF_INET:
-			mec_init(ifp);
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&sc->sc_ac, ifa);
-			break;
 #endif
-		default:
-			mec_init(ifp);
-			break;
-		}
 		break;
 
 	case SIOCSIFFLAGS:
-		/*
-		 * If interface is marked up and not running, then start it.
-		 * If it is marked down and running, stop it.
-		 * XXX If it's up then re-initialize it. This is so flags
-		 * such as IFF_PROMISC are handled.
-		 */
-		if (ifp->if_flags & IFF_UP)
-			mec_init(ifp);
-		else if (ifp->if_flags & IFF_RUNNING)
-			mec_stop(ifp);
+		if (ifp->if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				mec_init(ifp);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				mec_stop(ifp);
+		}
 		break;
 
 	case SIOCSIFMEDIA:
@@ -1085,7 +1078,7 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			mec_init(ifp);
+			mec_iff(sc);
 		error = 0;
 	}
 
@@ -1118,53 +1111,42 @@ mec_tick(void *arg)
 }
 
 void
-mec_setfilter(struct mec_softc *sc)
+mec_iff(struct mec_softc *sc)
 {
-	struct arpcom *ec = &sc->sc_ac;
+	struct arpcom *ac = &sc->sc_ac;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	uint64_t mchash;
+	uint64_t mchash = 0;
 	uint32_t control, hash;
-	int mcnt;
+	int mcnt = 0;
 
 	control = bus_space_read_8(st, sh, MEC_MAC_CONTROL);
 	control &= ~MEC_MAC_FILTER_MASK;
-
-	if (ifp->if_flags & IFF_PROMISC) {
-		control |= MEC_MAC_FILTER_PROMISC;
-		bus_space_write_8(st, sh, MEC_MULTICAST, 0xffffffffffffffffULL);
-		bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
-		return;
-	}
-
-	mcnt = 0;
-	mchash = 0;
-	ETHER_FIRST_MULTI(step, ec, enm);
-	while (enm != NULL) {
-		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			/* Set allmulti for a range of multicast addresses. */
-			control |= MEC_MAC_FILTER_ALLMULTI;
-			bus_space_write_8(st, sh, MEC_MULTICAST,
-			    0xffffffffffffffffULL);
-			bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
-			return;
-		}
-
-#define mec_calchash(addr)	(ether_crc32_be((addr), ETHER_ADDR_LEN) >> 26)
-
-		hash = mec_calchash(enm->enm_addrlo);
-		mchash |= 1 << hash;
-		mcnt++;
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (mcnt > 0)
-		control |= MEC_MAC_FILTER_MATCHMULTI;
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			control |= MEC_MAC_FILTER_PROMISC;
+		else
+			control |= MEC_MAC_FILTER_ALLMULTI;
+		mchash = 0xffffffffffffffffULL;
+	} else {
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			hash = ether_crc32_be(enm->enm_addrlo,
+			    ETHER_ADDR_LEN) >> 26;
+			mchash |= 1 << hash;
+			mcnt++;
+			ETHER_NEXT_MULTI(step, enm);
+		}
+
+		if (mcnt > 0)
+			control |= MEC_MAC_FILTER_MATCHMULTI;
+	}
 
 	bus_space_write_8(st, sh, MEC_MULTICAST, mchash);
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
