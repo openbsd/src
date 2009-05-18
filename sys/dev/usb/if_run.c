@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.24 2009/05/15 16:00:12 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.25 2009/05/18 19:25:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -812,7 +812,7 @@ run_efuse_read_2(struct run_softc *sc, uint16_t addr, uint16_t *val)
 	 * DATA2: 7 6 5 4
 	 * DATA3: 3 2 1 0
 	 */
-	tmp &= ~RT3070_EFSROM_MODE_MASK;
+	tmp &= ~(RT3070_EFSROM_MODE_MASK | RT3070_EFSROM_AIN_MASK);
 	tmp |= (addr & ~0xf) << RT3070_EFSROM_AIN_SHIFT | RT3070_EFSROM_KICK;
 	run_write(sc, RT3070_EFUSE_CTRL, tmp);
 	for (ntries = 0; ntries < 100; ntries++) {
@@ -1064,11 +1064,12 @@ run_read_eeprom(struct run_softc *sc)
 	sc->sc_srom_read = run_eeprom_read_2;
 	if ((sc->mac_rev & 0xfff00000) >= 0x30700000) {
 		run_read(sc, RT3070_EFUSE_CTRL, &tmp);
+		DPRINTF(("EFUSE_CTRL=0x%08x\n", tmp));
 		if (tmp & RT3070_SEL_EFUSE)
 			sc->sc_srom_read = run_efuse_read_2;
 	}
 
-	/* read SROM version */
+	/* read ROM version */
 	run_srom_read(sc, RT2860_EEPROM_VERSION, &val);
 	DPRINTF(("EEPROM rev=%d, FAE=%d\n", val & 0xff, val >> 8));
 

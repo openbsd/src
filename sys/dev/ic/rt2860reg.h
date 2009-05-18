@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860reg.h,v 1.18 2009/05/15 16:00:12 damien Exp $	*/
+/*	$OpenBSD: rt2860reg.h,v 1.19 2009/05/18 19:25:07 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -372,8 +372,9 @@
 /* possible flags for register EFUSE_CTRL */
 #define RT3070_SEL_EFUSE	(1 << 31)
 #define RT3070_EFSROM_KICK	(1 << 30)
+#define RT3070_EFSROM_AIN_MASK	0x03ff0000
 #define RT3070_EFSROM_AIN_SHIFT	16
-#define RT3070_EFSROM_MODE_MASK	(3 <<  6)
+#define RT3070_EFSROM_MODE_MASK	0x000000c0
 #define RT3070_EFUSE_AOUT_MASK	0x0000003f
 
 /* possible flags for register MAC_SYS_CTRL */
