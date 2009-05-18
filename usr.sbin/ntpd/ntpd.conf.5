@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.21 2008/10/10 12:17:09 sthen Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.22 2009/05/18 20:08:24 stevesk Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 10 2008 $
+.Dd $Mdocdate: May 18 2009 $
 .Dt NTPD.CONF 5
 .Os
 .Sh NAME
@@ -24,17 +24,6 @@
 This manual page describes the format of the
 .Xr ntpd 8
 configuration file.
-.Pp
-The optional
-.Ic weight
-keyword permits finer control over the relative importance
-of time sources (servers or sensor devices).
-Weights are specified in the range 1 to 10;
-if no weight is given,
-the default is 1.
-A server with a weight of 5, for example,
-will have five times more influence on time offset calculation
-than a server with a weight of 1.
 .Pp
 .Nm
 has the following format:
@@ -103,6 +92,17 @@ actual time:
 .Bd -literal -offset indent
 sensor udcf0 correction 70000
 .Ed
+.Pp
+The optional
+.Ic weight
+keyword permits finer control over the relative importance
+of time sources (servers or sensor devices).
+Weights are specified in the range 1 to 10;
+if no weight is given,
+the default is 1.
+A server with a weight of 5, for example,
+will have five times more influence on time offset calculation
+than a server with a weight of 1.
 .Pp
 An optional reference ID string - up to 4 ASCII characters - can be
 given to publish the sensor type to clients.
