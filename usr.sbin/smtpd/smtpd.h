@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.107 2009/05/09 20:03:07 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.108 2009/05/18 20:23:35 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -547,7 +547,6 @@ enum session_state {
 	S_DONE,
 	S_QUIT
 };
-#define	IS_AUTH(x)	((x) == S_AUTH_INIT || (x) == S_AUTH_USERNAME || (x) == S_AUTH_PASSWORD || (x) == S_AUTH_FINALIZE)
 
 struct ssl {
 	SPLAY_ENTRY(ssl)	 ssl_nodes;
@@ -590,7 +589,7 @@ enum session_flags {
 	F_AUTHENTICATED	= 0x10,
 	F_PEERHASTLS	= 0x20,
 	F_PEERHASAUTH	= 0x40,
-	F_EVLOCKED	= 0x80
+	F_WRITEONLY	= 0x80
 };
 
 struct session {
@@ -680,8 +679,15 @@ struct s_session {
 	size_t		starttls;
 	size_t		starttls_active;
 
-	size_t		aborted;
-	size_t		timeout;
+	size_t		read_error;
+	size_t		read_timeout;
+	size_t		read_eof;
+	size_t		write_error;
+	size_t		write_timeout;
+	size_t		write_eof;
+	size_t		toofast;
+	size_t		tempfail;
+	size_t		linetoolong;
 };
 
 struct stats {
@@ -907,6 +913,7 @@ void		 session_pickup(struct session *, struct submit_status *);
 void		 session_destroy(struct session *);
 void		 session_respond(struct session *, char *, ...)
 		    __attribute__ ((format (printf, 2, 3)));
+void		 session_bufferevent_new(struct session *);
 
 SPLAY_PROTOTYPE(sessiontree, session, s_nodes, session_cmp);
 

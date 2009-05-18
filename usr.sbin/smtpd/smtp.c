@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.45 2009/05/14 15:05:12 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.46 2009/05/18 20:23:35 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -397,22 +397,18 @@ smtp_dispatch_queue(int sig, short event, void *p)
 
 			log_debug("smtp_dispatch_queue: tempfail in queue");
 
-			/*
-			 * IMSG_QUEUE_TEMPFAIL is not the final reply to
-			 * IMSG_MFA_RCPT - IMSG_QUEUE_COMMIT_ENVELOPES is.
-			 * Therefore, nothing more but updating the flags
-			 * is allowed here. If session_lookup were to be
-			 * called, then subsequent session_lookup in the
-			 * IMSG_QUEUE_COMMIT_ENVELOPES handler would fatal for
-			 * either of two reasons: missing session, or missing
-			 * EVLOCKED flag.
-			 */
 			key.s_id = ss->id;
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
 			if (s == NULL)
 				fatalx("smtp_dispatch_queue: session is gone");
 
-			s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
+			if (s->s_flags & F_WRITEONLY) {
+				/*
+				 * Session is write-only, can't destroy it.
+				 */
+				s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
+			} else
+				fatalx("smtp_dispatch_queue: corrupt session");
 			break;
 		}
 
@@ -752,9 +748,9 @@ session_lookup(struct smtpd *env, u_int64_t id)
 	if (s == NULL)
 		fatalx("session_lookup: session is gone");
 
-	if (!(s->s_flags & F_EVLOCKED))
+	if (!(s->s_flags & F_WRITEONLY))
 		fatalx("session_lookup: corrupt session");
-	s->s_flags &= ~F_EVLOCKED;
+	s->s_flags &= ~F_WRITEONLY;
 
 	if (s->s_flags & F_QUIT) {
 		session_destroy(s);

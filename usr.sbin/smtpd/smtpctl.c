@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.24 2009/04/23 08:28:45 jacekm Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.25 2009/05/18 20:23:35 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -294,10 +294,22 @@ show_stats_output(struct imsg *imsg)
 
 	printf("runner.active=%zd\n", s_runner.active);
 
+	printf("smtp.errors.linetoolong=%zd\n", s_smtp.linetoolong);
+	printf("smtp.errors.read_eof=%zd\n", s_smtp.read_eof);
+	printf("smtp.errors.read_system=%zd\n", s_smtp.read_error);
+	printf("smtp.errors.read_timeout=%zd\n", s_smtp.read_timeout);
+	printf("smtp.errors.tempfail=%zd\n", s_smtp.tempfail);
+	printf("smtp.errors.toofast=%zd\n", s_smtp.toofast);
+	printf("smtp.errors.write_eof=%zd\n", s_smtp.write_eof);
+	printf("smtp.errors.write_system=%zd\n", s_smtp.write_error);
+	printf("smtp.errors.write_timeout=%zd\n", s_smtp.write_timeout);
+
 	printf("smtp.sessions=%zd\n", s_smtp.sessions);
-	printf("smtp.sessions.aborted=%zd\n", s_smtp.aborted);
+	printf("smtp.sessions.aborted=%zd\n", s_smtp.read_eof +
+	    s_smtp.read_error + s_smtp.write_eof + s_smtp.write_error);
 	printf("smtp.sessions.active=%zd\n", s_smtp.sessions_active);
-	printf("smtp.sessions.timeout=%zd\n", s_smtp.timeout);
+	printf("smtp.sessions.timeout=%zd\n", s_smtp.read_timeout +
+	    s_smtp.write_timeout);
 	printf("smtp.sessions.smtps=%zd\n", s_smtp.smtps);
 	printf("smtp.sessions.smtps.active=%zd\n", s_smtp.smtps_active);
 	printf("smtp.sessions.starttls=%zd\n", s_smtp.starttls);
