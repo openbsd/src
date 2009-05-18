@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcib.c,v 1.21 2008/06/26 05:42:11 ray Exp $	*/
+/*	$OpenBSD: pcib.c,v 1.22 2009/05/18 17:50:24 jsg Exp $	*/
 /*	$NetBSD: pcib.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*-
@@ -76,18 +76,21 @@ pcibmatch(struct device *parent, void *match, void *aux)
 			/* The above bridges mis-identify themselves */
 			return (1);
 		}
+		break;
 	case PCI_VENDOR_SIS:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_SIS_85C503:
 			/* mis-identifies itself as a miscellaneous prehistoric */
 			return (1);
 		}
+		break;
 	case PCI_VENDOR_VIATECH:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_VIATECH_VT82C686A_SMB:
 			/* mis-identifies itself as a ISA bridge */
 			return (0);
 		}
+		break;
 	}
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
