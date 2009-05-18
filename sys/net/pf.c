@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.647 2009/04/30 12:54:32 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.648 2009/05/18 20:37:13 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -154,9 +154,9 @@ void			 pf_send_tcp(const struct pf_rule *, sa_family_t,
 			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,
 			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int,
 			    u_int16_t, struct ether_header *, struct ifnet *,
-			    u_int);
+			    int);
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t,
-			    sa_family_t, struct pf_rule *, u_int);
+			    sa_family_t, struct pf_rule *, int);
 void			 pf_detach_state(struct pf_state *);
 void			 pf_state_key_detach(struct pf_state *, int);
 u_int32_t		 pf_tcp_iss(struct pf_pdesc *);
@@ -1878,7 +1878,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
     const struct pf_addr *saddr, const struct pf_addr *daddr,
     u_int16_t sport, u_int16_t dport, u_int32_t seq, u_int32_t ack,
     u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl, int tag,
-    u_int16_t rtag, struct ether_header *eh, struct ifnet *ifp, u_int rtableid)
+    u_int16_t rtag, struct ether_header *eh, struct ifnet *ifp, int rtableid)
 {
 	struct mbuf	*m;
 	int		 len, tlen;
@@ -2032,7 +2032,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 
 void
 pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
-    struct pf_rule *r, u_int rtableid)
+    struct pf_rule *r, int rtableid)
 {
 	struct mbuf	*m0;
 

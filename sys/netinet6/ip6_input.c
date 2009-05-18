@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.90 2008/11/25 12:11:45 markus Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.91 2009/05/18 20:37:13 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ ip6intr()
 }
 
 extern struct	route_in6 ip6_forward_rt;
-extern int	ip6_forward_rtableid;
+extern u_int	ip6_forward_rtableid;
 
 void
 ip6_input(struct mbuf *m)
@@ -210,7 +210,8 @@ ip6_input(struct mbuf *m)
 #if NPF > 0
 	struct in6_addr odst;
 #endif
-	int srcrt = 0, rtableid = 0, isanycast = 0;
+	int srcrt = 0, isanycast = 0;
+	u_int rtableid = 0;
 
 	/*
 	 * mbuf statistics by kazu

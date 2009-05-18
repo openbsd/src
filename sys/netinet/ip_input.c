@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.161 2008/12/24 07:41:59 dlg Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.162 2009/05/18 20:37:13 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ ip_init()
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
 struct	route ipforward_rt;
-int	ipforward_rtableid;
+u_int	ipforward_rtableid;
 
 void
 ipintr()
@@ -1400,7 +1400,8 @@ ip_forward(m, srcrt)
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in *sin;
 	struct rtentry *rt;
-	int error, type = 0, code = 0, destmtu = 0, rtableid = 0;
+	int error, type = 0, code = 0, destmtu = 0;
+	u_int rtableid = 0;
 	struct mbuf *mcopy;
 	n_long dest;
 

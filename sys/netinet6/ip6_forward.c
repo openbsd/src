@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.42 2008/11/23 13:30:59 claudio Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.43 2009/05/18 20:37:13 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #endif
 
 struct	route_in6 ip6_forward_rt;
-int	ip6_forward_rtableid;
+u_int	ip6_forward_rtableid;
 
 /*
  * Forward a packet.  If some error occurs return the sender
@@ -103,7 +103,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	struct tdb *tdb;
 	int s;
 #endif /* IPSEC */
-	int rtableid = 0;
+	u_int rtableid = 0;
 
 	/*
 	 * Do not forward packets to multicast destination (should be handled

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.105 2009/03/15 19:40:41 miod Exp $	*/
+/*	$OpenBSD: route.c,v 1.106 2009/05/18 20:37:13 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1300,7 +1300,7 @@ rt_gettable(sa_family_t af, u_int id)
 }
 
 struct radix_node *
-rt_lookup(struct sockaddr *dst, struct sockaddr *mask, int tableid)
+rt_lookup(struct sockaddr *dst, struct sockaddr *mask, u_int tableid)
 {
 	struct radix_node_head	*rnh;
 
