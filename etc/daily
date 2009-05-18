@@ -1,10 +1,8 @@
 #
-#	$OpenBSD: daily,v 1.61 2009/05/17 00:25:34 schwarze Exp $
+#	$OpenBSD: daily,v 1.62 2009/05/18 20:07:35 schwarze Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 umask 022
-
-PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
 
 PARTOUT=/var/log/daily.part
 MAINOUT=/var/log/daily.out
