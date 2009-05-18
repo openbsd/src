@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: security,v 1.85 2009/05/16 23:40:13 schwarze Exp $
+#	$OpenBSD: security,v 1.86 2009/05/18 19:37:47 schwarze Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -581,8 +581,7 @@ if [ -s /etc/changelist ] ; then
 			chown root:wheel $BACK
 		fi
 	done
-	for file in `egrep "^\+" /etc/changelist`; do
-		file="${file#+}"
+	for file in `sed -n 's/^+//p' /etc/changelist`; do
 		CUR=/var/backups/$(_fnchg  "$file").current.md5
 		BACK=/var/backups/$(_fnchg "$file").backup.md5
 		if [ -s $file -a ! -d $file ] ; then

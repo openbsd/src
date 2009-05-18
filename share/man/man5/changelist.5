@@ -1,4 +1,4 @@
-.\"	$OpenBSD: changelist.5,v 1.4 2007/09/06 07:01:34 jmc Exp $
+.\"	$OpenBSD: changelist.5,v 1.5 2009/05/18 19:37:47 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 6 2007 $
+.Dd $Mdocdate: May 18 2009 $
 .Dt CHANGELIST 5
 .Os
 .Sh NAME
@@ -45,6 +45,7 @@ and
 .Pa /var
 are added during system install.
 Administrators may add additional files at their discretion.
+Shell globbing is supported in pathnames.
 .Pp
 Backup files are held in the directory
 .Pa /var/backups .
@@ -140,6 +141,8 @@ cannot warn about files being added to the system, although
 will pick up on any files listed in
 .Pa /etc/changelist
 being added or deleted.
+Removals are only noticed for files listed explicitly,
+but not for files matched by globbing.
 .Pp
 If you hose your system configuration files,
 you just might be able to find the information you need in
