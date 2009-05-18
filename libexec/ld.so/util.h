@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.20 2007/02/09 14:51:13 drahn Exp $	*/
+/*	$OpenBSD: util.h,v 1.21 2009/05/18 20:20:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -54,10 +54,12 @@ long _dl_strtol(const char *nptr, char **endptr, int base);
 static inline void
 _dl_wrstderr(const char *s)
 {
-	while (*s) {
-		_dl_write(2, s, 1);
-		s++;
-	}
+	const char *p = s;
+	size_t n = 0;
+
+	while (*p++)
+		n++;
+	_dl_write(2, s, n);
 }
 
 static inline void *
