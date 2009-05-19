@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.59 2009/05/19 11:24:24 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.60 2009/05/19 11:37:44 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1385,7 +1385,7 @@ parent_enqueue_offline(struct smtpd *env, char *runner_path)
 			_exit(1);
 		p[len - 1] = '\0';
 
-		addargs(&args, "%s", _PATH_SENDMAIL);
+		addargs(&args, "%s", "sendmail");
 
 		while ((tmp = strsep(&p, "|")) != NULL)
 			addargs(&args, "%s", tmp);
@@ -1397,7 +1397,7 @@ parent_enqueue_offline(struct smtpd *env, char *runner_path)
 		envp[1] = (char *)NULL;
 		environ = envp;
 
-		execvp(args.list[0], args.list);
+		execvp(PATH_SMTPCTL, args.list);
 		_exit(1);
 	}
 

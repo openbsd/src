@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.109 2009/05/19 11:24:24 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.110 2009/05/19 11:37:44 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -46,6 +46,7 @@
 #define SMTPD_BACKLOG		 5
 
 #define	PATH_MAILLOCAL		"/usr/libexec/mail.local"
+#define	PATH_SMTPCTL		"/usr/sbin/smtpctl"
 
 #define	DIRHASH_BUCKETS		 4096
 
