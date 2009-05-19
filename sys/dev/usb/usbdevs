@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.431 2009/05/18 20:21:40 mglocker Exp $
+$OpenBSD: usbdevs,v 1.432 2009/05/19 15:53:06 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1579,6 +1579,7 @@ product GUILLEMOT DALEADER	0xa300	DA Leader
 product GUILLEMOT HWGUSB254	0xe000	HWGUSB2-54 WLAN
 product GUILLEMOT HWGUSB254LB	0xe010	HWGUSB2-54-LB
 product GUILLEMOT HWGUSB254V2AP	0xe020	HWGUSB2-54V2-AP
+product GUILLEMOT HWNU300	0xe030	HWNU-300
 
 /* Gunze Gunze Electronics USA */
 product GUNZE TOUCHPANEL	0x0001	Gunze USB Touch Panel
