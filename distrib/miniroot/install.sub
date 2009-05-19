@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.552 2009/05/17 04:59:43 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.553 2009/05/19 02:56:45 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1139,13 +1139,13 @@ install_url() {
 	[[ $resp == none ]] || export ftp_proxy=$resp http_proxy=$resp
 
 	if [[ -s $SERVERLISTALL ]]; then
-		_prompt="Server? (IP address, hostname, list#, 'done' or '?')"
+		_prompt="Server? (hostname, list#, 'done' or '?')"
 		sed -ne "/^${_url_type}:\/\//s///p" < $SERVERLISTALL > $SERVERLIST
 		set -- $(sed -ne "1p" $SERVERLIST)
 		eval _${_url_type}_server_ip=${1%%/*}
 	else
 		echo "(Was not able to get ftplist from ftp.openbsd.org, but that is OK)"
-		_prompt="Server? (IP address, hostname or 'done')"
+		_prompt="Server? (hostname or 'done')"
 	fi
 
 	# Get server IP address or hostname
