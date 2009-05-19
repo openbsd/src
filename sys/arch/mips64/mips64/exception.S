@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.16 2008/03/20 22:54:49 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.17 2009/05/19 16:16:43 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -244,6 +244,7 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	jal	interrupt
 	PTR_S	a3, CF_RA_OFFS(sp)		# for debugging
 
+0:
 	lw	v0, astpending		# any pending interrupts?
 	beq	v0, zero, 4f
 	nop
@@ -299,6 +300,9 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 #endif
 	PTR_L	t0, curprocpaddr
 	RESTORE_CPU_SREG(t0, 0)
+
+	b	0b
+	nop
 
 4:
 	mfc0	t0, COP_0_STATUS_REG	# dis int preserve settings.
@@ -421,8 +425,9 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	jal	trap
 	PTR_S	a3, CF_RA_OFFS(sp)		# for debugging
 
+0:
 	lw	v0, astpending
-	beq	v0, zero, 4f
+	beqz	v0, 4f
 	nop
 
 	PTR_L	t0, curprocpaddr
@@ -433,6 +438,9 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 
 	PTR_L	t0, curprocpaddr
 	RESTORE_CPU_SREG(t0, 0)
+
+	b	0b
+	nop
 
 4:
 #ifdef PERFCNTRS
