@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.59 2009/03/26 20:38:29 damien Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.60 2009/05/19 16:09:02 damien Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -365,6 +365,7 @@ extern struct ieee80211com_head ieee80211com_head;
 #define IEEE80211_C_QOS		0x00000800	/* CAPABILITY: QoS avail */
 #define IEEE80211_C_RSN		0x00001000	/* CAPABILITY: RSN avail */
 #define IEEE80211_C_MFP		0x00002000	/* CAPABILITY: MFP avail */
+#define IEEE80211_C_RAWCTL	0x00004000	/* CAPABILITY: raw ctl */
 
 /* flags for ieee80211_fix_rate() */
 #define	IEEE80211_F_DOSORT	0x00000001	/* sort rate list */
