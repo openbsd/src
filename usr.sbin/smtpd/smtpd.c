@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.60 2009/05/19 11:37:44 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.61 2009/05/19 22:54:46 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -61,7 +61,6 @@ void		parent_dispatch_runner(int, short, void *);
 void		parent_dispatch_control(int, short, void *);
 void		parent_sig_handler(int, short, void *);
 int		parent_open_message_file(struct batch *);
-int		parent_mailbox_init(struct passwd *, char *);
 int		parent_mailbox_open(char *, struct passwd *, struct batch *);
 int		parent_filename_open(char *, struct passwd *, struct batch *);
 int		parent_mailfile_rename(struct batch *, struct path *);
@@ -1048,37 +1047,6 @@ parent_open_message_file(struct batch *batchp)
 }
 
 int
-parent_mailbox_init(struct passwd *pw, char *pathname)
-{
-	int fd;
-	int ret = 1;
-	int mode = O_CREAT|O_EXCL;
-
-	/* user cannot create mailbox */
-	if (seteuid(0) == -1)
-		fatal("privraise failed");
-
-	errno = 0;
-	fd = open(pathname, mode, 0600);
-
-	if (fd == -1) {
-		if (errno != EEXIST)
-			ret = 0;
-	}
-
-	if (fd != -1) {
-		if (fchown(fd, pw->pw_uid, 0) == -1)
-			fatal("fchown");
-		close(fd);
-	}
-
-	if (seteuid(pw->pw_uid) == -1)
-		fatal("privdropfailed");
-		
-	return ret;
-}
-
-int
 parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 {
 	pid_t pid;
@@ -1094,13 +1062,7 @@ parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 		return -1;
 	}
 
-	if (! parent_mailbox_init(pw, path)) {
-		batchp->message.status |= S_MESSAGE_TEMPFAILURE;
-		return -1;
-	}
-
 	log_debug("executing mail.local");
-
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pipefd) == -1) {
 		batchp->message.status |= S_MESSAGE_PERMFAILURE;
 		return -1;
