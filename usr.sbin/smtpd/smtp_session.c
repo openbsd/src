@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.89 2009/05/18 20:23:35 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.90 2009/05/19 11:42:52 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -111,6 +111,9 @@ struct session_cmd rfc4954_cmdtab[] = {
 int
 session_rfc3207_stls_handler(struct session *s, char *args)
 {
+	if (! ADVERTISE_TLS(s))
+		return 0;
+
 	if (s->s_state == S_GREETED) {
 		session_respond(s, "503 Polite people say HELO first");
 		return 1;
@@ -133,6 +136,9 @@ session_rfc4954_auth_handler(struct session *s, char *args)
 {
 	char	*method;
 	char	*eom;
+
+	if (! ADVERTISE_AUTH(s))
+		return 0;
 
 	if (s->s_state == S_GREETED) {
 		session_respond(s, "503 Polite people say HELO first");
@@ -323,12 +329,10 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 	    s->s_env->sc_hostname, args, ss_to_text(&s->s_ss));
 	session_respond(s, "250-8BITMIME");
 
-	/* only advertise starttls if listener can support it */
-	if (s->s_l->flags & F_STARTTLS)
+	if (ADVERTISE_TLS(s))
 		session_respond(s, "250-STARTTLS");
 
-	/* only advertise auth if session is secure */
-	if ((s->s_l->flags & F_AUTH) && (s->s_flags & F_SECURE))
+	if (ADVERTISE_AUTH(s))
 		session_respond(s, "250-AUTH PLAIN LOGIN");
 
 	session_respond(s, "250 HELP");
@@ -532,14 +536,12 @@ session_command(struct session *s, char *cmd, size_t nr)
 	}
 
 	/* RFC 4954 - AUTH */
-	if ((s->s_l->flags & F_AUTH) && (s->s_flags & F_SECURE)) {
-		for (i = 0; i < nitems(rfc4954_cmdtab); ++i)
-			if (strcasecmp(rfc4954_cmdtab[i].name, cmd) == 0)
-				break;
-		if (i < nitems(rfc4954_cmdtab)) {
-			if (rfc4954_cmdtab[i].func(s, args))
-				return;
-		}
+	for (i = 0; i < nitems(rfc4954_cmdtab); ++i)
+		if (strcasecmp(rfc4954_cmdtab[i].name, cmd) == 0)
+			break;
+	if (i < nitems(rfc4954_cmdtab)) {
+		if (rfc4954_cmdtab[i].func(s, args))
+			return;
 	}
 
 rfc5321:

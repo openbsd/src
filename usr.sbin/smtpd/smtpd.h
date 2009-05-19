@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.110 2009/05/19 11:37:44 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.111 2009/05/19 11:42:52 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -79,6 +79,11 @@
 #define F_AUTH			 0x04
 #define F_SSL			(F_SMTPS|F_STARTTLS)
 
+#define ADVERTISE_TLS(s) \
+	((s)->s_l->flags & F_STARTTLS && !((s)->s_flags & F_SECURE))
+
+#define ADVERTISE_AUTH(s) \
+	((s)->s_l->flags & F_AUTH && ((s)->s_flags & F_SECURE))
 
 struct netaddr {
 	struct sockaddr_storage ss;
