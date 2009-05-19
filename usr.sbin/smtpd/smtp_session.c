@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.90 2009/05/19 11:42:52 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.91 2009/05/19 12:33:53 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -116,6 +116,11 @@ session_rfc3207_stls_handler(struct session *s, char *args)
 
 	if (s->s_state == S_GREETED) {
 		session_respond(s, "503 Polite people say HELO first");
+		return 1;
+	}
+
+	if (s->s_state != S_HELO) {
+		session_respond(s, "503 TLS not allowed at this stage");
 		return 1;
 	}
 
