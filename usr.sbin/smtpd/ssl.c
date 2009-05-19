@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.14 2009/05/18 20:23:35 jacekm Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.15 2009/05/19 22:41:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -383,9 +383,6 @@ ssl_load_certfile(struct smtpd *env, const char *name)
 		free(s);
 		return (-1);
 	}
-
-	if (s->ssl_cert == NULL || s->ssl_key == NULL)
-		fatal("invalid certificates");
 
 	SPLAY_INSERT(ssltree, &env->sc_ssl, s);
 
