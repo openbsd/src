@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.58 2009/05/14 15:05:12 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.59 2009/05/19 11:24:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -199,10 +199,11 @@ parent_dispatch_lka(int fd, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_PARENT_FORWARD_OPEN: {
+			struct forward_req *fwreq = imsg.data;
 			int ret;
-			struct forward_req *fwreq;
 
-			fwreq = imsg.data;
+			IMSG_SIZE_CHECK(fwreq);
+
 			ret = parent_forward_open(fwreq->pw_name);
 			fwreq->status = 0;
 			if (ret == -1) {
@@ -305,7 +306,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_PARENT_MAILBOX_OPEN: {
-			struct batch *batchp;
+			struct batch *batchp = imsg.data;
 			struct path *path;
 			struct passwd *pw;
 			char *pw_name;
@@ -322,7 +323,8 @@ parent_dispatch_mda(int fd, short event, void *p)
 				{ A_FILENAME,	parent_filename_open }
 			};
 
-			batchp = imsg.data;
+			IMSG_SIZE_CHECK(batchp);
+
 			path = &batchp->message.recipient;
 			if (batchp->type & T_DAEMON_BATCH) {
 				path = &batchp->message.sender;
@@ -366,10 +368,11 @@ parent_dispatch_mda(int fd, short event, void *p)
 			break;
 		}
 		case IMSG_PARENT_MESSAGE_OPEN: {
-			struct batch *batchp;
+			struct batch *batchp = imsg.data;
 			int desc;
 
-			batchp = imsg.data;
+			IMSG_SIZE_CHECK(batchp);
+
 			desc = parent_open_message_file(batchp);
 
 			imsg_compose(ibuf, IMSG_MDA_MESSAGE_FILE, 0, 0,
@@ -378,11 +381,12 @@ parent_dispatch_mda(int fd, short event, void *p)
 			break;
 		}
 		case IMSG_PARENT_MAILBOX_RENAME: {
-			struct batch *batchp;
+			struct batch *batchp = imsg.data;
 			struct path *path;
 			struct passwd *pw;
 
-			batchp = imsg.data;
+			IMSG_SIZE_CHECK(batchp);
+
 			path = &batchp->message.recipient;
 			if (batchp->type & T_DAEMON_BATCH) {
 				path = &batchp->message.sender;
@@ -453,14 +457,14 @@ parent_dispatch_smtp(int fd, short event, void *p)
 			break;
 		}
 		case IMSG_PARENT_AUTHENTICATE: {
-			struct session_auth_req *req;
+			struct session_auth_req *req = imsg.data;
 			struct session_auth_reply reply;
 			char buf[1024];
 			char *user;
 			char *pass;
 			int len;
 
-			req = (struct session_auth_req *)imsg.data;
+			IMSG_SIZE_CHECK(req);
 
 			reply.session_id = req->session_id;
 			reply.value = 0;
@@ -592,9 +596,10 @@ parent_dispatch_control(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_STATS: {
-			struct stats *s;
+			struct stats *s = imsg.data;
 
-			s = imsg.data;
+			IMSG_SIZE_CHECK(s);
+
 			s->u.parent = s_parent;
 			imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, s, sizeof(*s));
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.108 2009/05/18 20:23:35 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.109 2009/05/19 11:24:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -225,7 +225,13 @@ enum imsg_type {
 };
 
 #define IMSG_HEADER_SIZE	 sizeof(struct imsg_hdr)
+#define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
 #define	MAX_IMSGSIZE		 16384
+
+#define IMSG_SIZE_CHECK(p) do {						\
+	if (IMSG_DATA_SIZE(&imsg) != sizeof(*p))			\
+		fatalx("bad length imsg received");			\
+} while (0)
 
 enum blockmodes {
 	BM_NORMAL,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.45 2009/05/14 15:05:12 eric Exp $	*/
+/*	$OpenBSD: runner.c,v 1.46 2009/05/19 11:24:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -195,17 +195,18 @@ runner_dispatch_control(int sig, short event, void *p)
 			env->sc_opts &= ~SMTPD_MTA_PAUSED;
 			break;
 		case IMSG_STATS: {
-			struct stats *s;
+			struct stats *s = imsg.data;
 
-			s = imsg.data;
+			IMSG_SIZE_CHECK(s);
+
 			s->u.runner = s_runner;
 			imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, s, sizeof(*s));
 			break;
 		}
 		case IMSG_RUNNER_SCHEDULE: {
-			struct sched *s;
+			struct sched *s = imsg.data;
 
-			s = imsg.data;
+			IMSG_SIZE_CHECK(s);
 
 			s->ret = 0;
 			if (valid_message_uid(s->mid))
@@ -263,8 +264,12 @@ runner_dispatch_queue(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_RUNNER_UPDATE_ENVELOPE: {
+			struct message	*m = imsg.data;
+
+			IMSG_SIZE_CHECK(m);
+
 			s_runner.active--;
-			queue_message_update(imsg.data);
+			queue_message_update(m);
 			break;
 		}
 		default:

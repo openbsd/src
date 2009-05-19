@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.46 2009/05/14 15:05:12 eric Exp $	*/
+/*	$OpenBSD: lka.c,v 1.47 2009/05/19 11:24:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -131,11 +131,11 @@ lka_dispatch_parent(int sig, short event, void *p)
 		switch (imsg.hdr.type) {
 		case IMSG_PARENT_FORWARD_OPEN: {
 			int fd;
-			struct forward_req	*fwreq;
+			struct forward_req	*fwreq = imsg.data;
 			struct lkasession	key;
 			struct lkasession	*lkasession;
 
-			fwreq = imsg.data;
+			IMSG_SIZE_CHECK(fwreq);
 
 			key.id = fwreq->id;
 			lkasession = SPLAY_FIND(lkatree, &env->lka_sessions, &key);
@@ -232,9 +232,10 @@ lka_dispatch_mfa(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_LKA_MAIL: {
-			struct submit_status	 *ss;
+			struct submit_status	 *ss = imsg.data;
 
-			ss = imsg.data;
+			IMSG_SIZE_CHECK(ss);
+
 			ss->code = 530;
 
 			if (ss->u.path.user[0] == '\0' && ss->u.path.domain[0] == '\0')
@@ -249,13 +250,14 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			break;
 		}
 		case IMSG_LKA_RCPT: {
-			struct submit_status	*ss;
+			struct submit_status	*ss = imsg.data;
 			struct message		message;
 			struct lkasession	*lkasession;
 			struct forward_req	 fwreq;
 			int ret;
 
-			ss = imsg.data;
+			IMSG_SIZE_CHECK(ss);
+
 			ss->code = 530;
 			
 			if (IS_RELAY(ss->u.path.rule.r_action)) {
@@ -371,6 +373,8 @@ lka_dispatch_mta(int sig, short event, void *p)
 			struct secret	*query = imsg.data;
 			char		*secret = NULL;
 
+			IMSG_SIZE_CHECK(query);
+
 			secret = map_dblookup(env, "secrets", query->host);
 
 			log_debug("secret for %s %s", query->host,
@@ -388,9 +392,13 @@ lka_dispatch_mta(int sig, short event, void *p)
 		}
 
 		case IMSG_DNS_A:
-		case IMSG_DNS_MX:
-			dns_async(env, ibuf, imsg.hdr.type, imsg.data);
+		case IMSG_DNS_MX: {
+			struct dns	*query = imsg.data;
+
+			IMSG_SIZE_CHECK(query);
+			dns_async(env, ibuf, imsg.hdr.type, query);
 			break;
+		}
 
 		default:
 			log_warnx("lka_dispatch_mta: got imsg %d",
@@ -438,9 +446,13 @@ lka_dispatch_smtp(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_DNS_PTR:
-			dns_async(env, ibuf, IMSG_DNS_PTR, imsg.data);
+		case IMSG_DNS_PTR: {
+			struct dns	*query = imsg.data;
+
+			IMSG_SIZE_CHECK(query);
+			dns_async(env, ibuf, IMSG_DNS_PTR, query);
 			break;
+		}
 		default:
 			log_warnx("lka_dispatch_smtp: got imsg %d",
 			    imsg.hdr.type);

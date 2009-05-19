@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.47 2009/05/14 15:05:12 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.48 2009/05/19 11:24:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -158,6 +158,8 @@ mta_dispatch_lka(int sig, short event, void *p)
 			struct session *s;
 			struct mxhost *mxhost;
 
+			IMSG_SIZE_CHECK(reply);
+
 			key.s_id = reply->id;
 
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
@@ -180,6 +182,8 @@ mta_dispatch_lka(int sig, short event, void *p)
 			struct dns *reply = imsg.data;
 			struct session *s;
 			int ret;
+
+			IMSG_SIZE_CHECK(reply);
 
 			key.s_id = reply->id;
 
@@ -204,6 +208,8 @@ mta_dispatch_lka(int sig, short event, void *p)
 		case IMSG_LKA_SECRET: {
 			struct secret	*reply = imsg.data;
 			struct session	 key, *s;
+
+			IMSG_SIZE_CHECK(reply);
 
 			key.s_id = reply->id;
 
@@ -266,16 +272,17 @@ mta_dispatch_queue(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_QUEUE_MESSAGE_FD: {
-			struct batch	*batchp;
+			struct batch	*batchp = imsg.data;
 			struct session	*sessionp;
 			int fd;
+
+			IMSG_SIZE_CHECK(batchp);
 
 			if ((fd = imsg_get_fd(ibuf, &imsg)) == -1) {
 				/* NEEDS_FIX - unsure yet how it must be handled */
 				fatalx("mta_dispatch_queue: imsg_get_fd");
 			}
 
-			batchp = (struct batch *)imsg.data;
 			batchp = batch_by_id(env, batchp->id);
 			sessionp = batchp->sessionp;
 
@@ -333,8 +340,11 @@ mta_dispatch_runner(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_BATCH_CREATE: {
-			struct session *s;
+			struct batch *request = imsg.data;
 			struct batch *batchp;
+			struct session *s;
+
+			IMSG_SIZE_CHECK(request);
 
 			/* create a client session */
 			if ((s = calloc(1, sizeof(*s))) == NULL)
@@ -350,7 +360,7 @@ mta_dispatch_runner(int sig, short event, void *p)
 			if (batchp == NULL)
 				fatal("mta_dispatch_runner: calloc");
 
-			*batchp = *(struct batch *)imsg.data;
+			*batchp = *request;
 			batchp->session_id = s->s_id;
 			batchp->env = env;
 			batchp->flags = 0;
@@ -364,14 +374,17 @@ mta_dispatch_runner(int sig, short event, void *p)
 			break;
 		}
 		case IMSG_BATCH_APPEND: {
-			struct batch	*batchp;
+			struct message	*append = imsg.data;
 			struct message	*messagep;
+			struct batch	*batchp;
+
+			IMSG_SIZE_CHECK(append);
 
 			messagep = calloc(1, sizeof (struct message));
 			if (messagep == NULL)
 				fatal("mta_dispatch_runner: calloc");
 
-			*messagep = *(struct message *)imsg.data;
+			*messagep = *append;
 
 			batchp = batch_by_id(env, messagep->batch_id);
 			if (batchp == NULL)
@@ -388,10 +401,11 @@ mta_dispatch_runner(int sig, short event, void *p)
 			break;
 		}
 		case IMSG_BATCH_CLOSE: {
-			struct batch		*batchp;
+			struct batch		*batchp = imsg.data;
 			struct session		*s;
 
-			batchp = (struct batch *)imsg.data;
+			IMSG_SIZE_CHECK(batchp);
+
 			batchp = batch_by_id(env, batchp->id);
 			if (batchp == NULL)
 				fatalx("mta_dispatch_runner: internal inconsistency.");

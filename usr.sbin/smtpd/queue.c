@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.62 2009/05/14 15:05:12 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.63 2009/05/19 11:24:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -108,9 +108,10 @@ queue_dispatch_control(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_STATS: {
-			struct stats *s;
+			struct stats *s = imsg.data;
 
-			s = imsg.data;
+			IMSG_SIZE_CHECK(s);
+
 			s->u.queue = s_queue;
 			imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, s, sizeof(*s));
 			break;
@@ -162,12 +163,14 @@ queue_dispatch_smtp(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_QUEUE_CREATE_MESSAGE: {
-			struct message		*messagep;
+			struct message		*messagep = imsg.data;
 			struct submit_status	 ss;
 			int			(*f)(char *);
 
 			log_debug("queue_dispatch_smtp: creating message file");
-			messagep = imsg.data;
+
+			IMSG_SIZE_CHECK(messagep);
+
 			ss.id = messagep->session_id;
 			ss.code = 250;
 			bzero(ss.u.msgid, MAX_ID_SIZE);
@@ -185,10 +188,11 @@ queue_dispatch_smtp(int sig, short event, void *p)
 			break;
 		}
 		case IMSG_QUEUE_REMOVE_MESSAGE: {
-			struct message		*messagep;
+			struct message		*messagep = imsg.data;
 			void			(*f)(char *);
 
-			messagep = imsg.data;
+			IMSG_SIZE_CHECK(messagep);
+
 			if (messagep->flags & F_MESSAGE_ENQUEUED)
 				f = enqueue_delete_message;
 			else
@@ -199,12 +203,13 @@ queue_dispatch_smtp(int sig, short event, void *p)
 			break;
 		}
 		case IMSG_QUEUE_COMMIT_MESSAGE: {
-			struct message		*messagep;
+			struct message		*messagep = imsg.data;
 			struct submit_status	 ss;
 			size_t			*counter;
 			int			(*f)(struct message *);
 
-			messagep = imsg.data;
+			IMSG_SIZE_CHECK(messagep);
+
 			ss.id = messagep->session_id;
 
 			if (messagep->flags & F_MESSAGE_ENQUEUED) {
@@ -226,12 +231,13 @@ queue_dispatch_smtp(int sig, short event, void *p)
 			break;
 		}
 		case IMSG_QUEUE_MESSAGE_FILE: {
-			struct message		*messagep;
+			struct message		*messagep = imsg.data;
 			struct submit_status	 ss;
 			int fd;
 			int			(*f)(struct message *);
 
-			messagep = imsg.data;
+			IMSG_SIZE_CHECK(messagep);
+
 			ss.id = messagep->session_id;
 
 			if (messagep->flags & F_MESSAGE_ENQUEUED)
@@ -347,10 +353,11 @@ queue_dispatch_mta(int sig, short event, void *p)
 		switch (imsg.hdr.type) {
 
 		case IMSG_QUEUE_MESSAGE_FD: {
+			struct batch *batchp = imsg.data;
 			int fd;
-			struct batch *batchp;
 
-			batchp = imsg.data;
+			IMSG_SIZE_CHECK(batchp);
+
 			fd = queue_open_message_file(batchp->message_id);
 			imsg_compose(ibuf,  IMSG_QUEUE_MESSAGE_FD, 0, 0, fd, batchp,
 			    sizeof(*batchp));
@@ -410,11 +417,12 @@ queue_dispatch_lka(int sig, short event, void *p)
 		switch (imsg.hdr.type) {
 
 		case IMSG_QUEUE_SUBMIT_ENVELOPE: {
-			struct message		*messagep;
+			struct message		*messagep = imsg.data;
 			struct submit_status	 ss;
 			int (*f)(struct message *);
 
-			messagep = imsg.data;
+			IMSG_SIZE_CHECK(messagep);
+
 			messagep->id = queue_generate_id();
 			ss.id = messagep->session_id;
 
@@ -441,10 +449,11 @@ queue_dispatch_lka(int sig, short event, void *p)
 		}
 
 		case IMSG_QUEUE_COMMIT_ENVELOPES: {
-			struct message		*messagep;
+			struct message		*messagep = imsg.data;
 			struct submit_status	 ss;
 
-			messagep = imsg.data;
+			IMSG_SIZE_CHECK(messagep);
+
 			ss.id = messagep->session_id;
 			ss.code = 250;
 

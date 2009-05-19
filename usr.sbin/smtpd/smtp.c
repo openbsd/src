@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.46 2009/05/18 20:23:35 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.47 2009/05/19 11:24:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -169,6 +169,8 @@ smtp_dispatch_parent(int sig, short event, void *p)
 
 			log_debug("smtp_dispatch_parent: parent handled authentication");
 
+			IMSG_SIZE_CHECK(reply);
+
 			if ((s = session_lookup(env, reply->session_id)) == NULL)
 				break;
 
@@ -232,6 +234,8 @@ smtp_dispatch_mfa(int sig, short event, void *p)
 
 			log_debug("smtp_dispatch_mfa: mfa handled return path");
 
+			IMSG_SIZE_CHECK(ss);
+
 			if ((s = session_lookup(env, ss->id)) == NULL)
 				break;
 
@@ -288,6 +292,8 @@ smtp_dispatch_lka(int sig, short event, void *p)
 			struct dns		*reply = imsg.data;
 			struct session		*s;
 			struct session		 key;
+
+			IMSG_SIZE_CHECK(reply);
 
 			key.s_id = reply->id;
 
@@ -358,6 +364,8 @@ smtp_dispatch_queue(int sig, short event, void *p)
 
 			log_debug("smtp_dispatch_queue: queue handled message creation");
 
+			IMSG_SIZE_CHECK(ss);
+
 			if ((s = session_lookup(env, ss->id)) == NULL)
 				break;
 
@@ -372,6 +380,8 @@ smtp_dispatch_queue(int sig, short event, void *p)
 			int			 fd;
 
 			log_debug("smtp_dispatch_queue: queue handled message creation");
+
+			IMSG_SIZE_CHECK(ss);
 
 			fd = imsg_get_fd(ibuf, &imsg);
 
@@ -397,6 +407,8 @@ smtp_dispatch_queue(int sig, short event, void *p)
 
 			log_debug("smtp_dispatch_queue: tempfail in queue");
 
+			IMSG_SIZE_CHECK(ss);
+
 			key.s_id = ss->id;
 			s = SPLAY_FIND(sessiontree, &env->sc_sessions, &key);
 			if (s == NULL)
@@ -418,6 +430,8 @@ smtp_dispatch_queue(int sig, short event, void *p)
 			struct session		*s;
 
 			log_debug("smtp_dispatch_queue: queue acknowledged message submission");
+
+			IMSG_SIZE_CHECK(ss);
 
 			if ((s = session_lookup(env, ss->id)) == NULL)
 				break;
@@ -536,6 +550,7 @@ smtp_dispatch_control(int sig, short event, void *p)
 			struct stats *s;
 
 			s = imsg.data;
+			IMSG_SIZE_CHECK(s);
 			s->u.smtp = s_smtp;
 			imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, s, sizeof(*s));
 			break;

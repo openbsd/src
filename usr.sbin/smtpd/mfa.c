@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.25 2009/05/14 15:05:12 eric Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.26 2009/05/19 11:24:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -149,12 +149,24 @@ mfa_dispatch_smtp(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_MFA_MAIL:
-			mfa_test_mail(env, imsg.data);
+		case IMSG_MFA_MAIL: {
+			struct message	*m = imsg.data;
+
+			IMSG_SIZE_CHECK(m);
+
+			mfa_test_mail(env, m);
 			break;
-		case IMSG_MFA_RCPT:
-			mfa_test_rcpt(env, imsg.data);
+		}
+
+		case IMSG_MFA_RCPT: {
+			struct message	*m = imsg.data;
+
+			IMSG_SIZE_CHECK(m);
+
+			mfa_test_rcpt(env, m);
 			break;
+		}
+
 		default:
 			log_warnx("mfa_dispatch_smtp: got imsg %d",
 			    imsg.hdr.type);
@@ -202,17 +214,19 @@ mfa_dispatch_lka(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_LKA_MAIL: {
-			struct submit_status	 *ss;
+			struct submit_status	 *ss = imsg.data;
 
-			ss = imsg.data;
+			IMSG_SIZE_CHECK(ss);
+
 			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_MAIL,
 			    0, 0, -1, ss, sizeof(*ss));
 			break;
 		}
 		case IMSG_LKA_RCPT: {
-			struct submit_status	 *ss;
+			struct submit_status	 *ss = imsg.data;
 
-			ss = imsg.data;
+			IMSG_SIZE_CHECK(ss);
+
 			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT,
 			    0, 0, -1, ss, sizeof(*ss));
 			break;

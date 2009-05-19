@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.16 2009/05/14 15:05:12 eric Exp $	*/
+/*	$OpenBSD: mda.c,v 1.17 2009/05/19 11:24:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -92,12 +92,13 @@ mda_dispatch_parent(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_MDA_MAILBOX_FILE: {
+			struct batch	*batchp = imsg.data;
 			struct session	*s;
-			struct batch	*batchp;
 			struct message	*messagep;
 			enum message_status status;
 
-			batchp = (struct batch *)imsg.data;
+			IMSG_SIZE_CHECK(batchp);
+
 			messagep = &batchp->message;
 			status = messagep->status;
 
@@ -125,13 +126,14 @@ mda_dispatch_parent(int sig, short event, void *p)
 		}
 
 		case IMSG_MDA_MESSAGE_FILE: {
+			struct batch	*batchp = imsg.data;
 			struct session	*s;
-			struct batch	*batchp;
 			struct message	*messagep;
 			enum message_status status;
 			int (*store)(struct batch *, struct message *) = store_write_message;
 
-			batchp = (struct batch *)imsg.data;
+			IMSG_SIZE_CHECK(batchp);
+
 			messagep = &batchp->message;
 			status = messagep->status;
 
@@ -266,8 +268,11 @@ mda_dispatch_runner(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_BATCH_CREATE: {
-			struct session *s;
+			struct batch *request = imsg.data;
 			struct batch *batchp;
+			struct session *s;
+
+			IMSG_SIZE_CHECK(request);
 
 			/* create a client session */
 			if ((s = calloc(1, sizeof(*s))) == NULL)
@@ -282,7 +287,7 @@ mda_dispatch_runner(int sig, short event, void *p)
 			if (batchp == NULL)
 				fatal("mda_dispatch_runner: calloc");
 
-			*batchp = *(struct batch *)imsg.data;
+			*batchp = *request;
 			batchp->session_id = s->s_id;
 			batchp->env = env;
 			batchp->flags = 0;
@@ -296,14 +301,17 @@ mda_dispatch_runner(int sig, short event, void *p)
 		}
 
 		case IMSG_BATCH_APPEND: {
-			struct batch	*batchp;
+			struct message	*append = imsg.data;
 			struct message	*messagep;
+			struct batch	*batchp;
+
+			IMSG_SIZE_CHECK(append);
 
 			messagep = calloc(1, sizeof (struct message));
 			if (messagep == NULL)
 				fatal("mda_dispatch_runner: calloc");
 
-			*messagep = *(struct message *)imsg.data;
+			*messagep = *append;
 
 			batchp = batch_by_id(env, messagep->batch_id);
 			if (batchp == NULL)
@@ -321,12 +329,13 @@ mda_dispatch_runner(int sig, short event, void *p)
 		}
 
 		case IMSG_BATCH_CLOSE: {
-			struct batch		*batchp;
-			struct session		*s;
-			struct batch	lookup;
+			struct batch	*batchp = imsg.data;
+			struct session	*s;
+			struct batch	 lookup;
 			struct message	*messagep;
 
-			batchp = (struct batch *)imsg.data;
+			IMSG_SIZE_CHECK(batchp);
+
 			batchp = batch_by_id(env, batchp->id);
 			if (batchp == NULL)
 				fatalx("mda_dispatch_runner: internal inconsistency.");
