@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.53 2009/05/12 19:10:57 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.54 2009/05/20 16:31:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -102,6 +102,7 @@ void		iwn_radiotap_attach(struct iwn_softc *);
 void		iwn_power(int, void *);
 int		iwn_nic_lock(struct iwn_softc *);
 int		iwn_eeprom_lock(struct iwn_softc *);
+int		iwn_init_otprom(struct iwn_softc *);
 int		iwn_read_prom_data(struct iwn_softc *, uint32_t, void *, int);
 int		iwn_dma_contig_alloc(bus_dma_tag_t, struct iwn_dma_info *,
 		    void **, bus_size_t, bus_size_t);
@@ -783,6 +784,33 @@ iwn_eeprom_unlock(struct iwn_softc *sc)
 	IWN_CLRBITS(sc, IWN_HW_IF_CONFIG, IWN_HW_IF_CONFIG_EEPROM_LOCKED);
 }
 
+/*
+ * Initialize access by host to One Time Programmable ROM.
+ * NB: This kind of ROM can be found on 1000 or 6000 Series only.
+ */
+int
+iwn_init_otprom(struct iwn_softc *sc)
+{
+	int error;
+
+	if ((error = iwn_clock_wait(sc)) != 0)
+		return error;
+
+	if ((error = iwn_nic_lock(sc)) != 0)
+		return error;
+	iwn_prph_setbits(sc, IWN_APMG_PS, IWN_APMG_PS_RESET_REQ);
+	DELAY(5);
+	iwn_prph_clrbits(sc, IWN_APMG_PS, IWN_APMG_PS_RESET_REQ);
+	iwn_nic_unlock(sc);
+
+	IWN_CLRBITS(sc, IWN_EEPROM_GP, IWN_EEPROM_GP_IF_OWNER);
+	/* Clear ECC status. */
+	IWN_SETBITS(sc, IWN_OTP_GP,
+	    IWN_OTP_GP_ECC_CORR_STTS | IWN_OTP_GP_ECC_UNCORR_STTS);
+
+	return 0;
+}
+
 int
 iwn_read_prom_data(struct iwn_softc *sc, uint32_t addr, void *data, int count)
 {
@@ -792,8 +820,6 @@ iwn_read_prom_data(struct iwn_softc *sc, uint32_t addr, void *data, int count)
 
 	for (; count > 0; count -= 2, addr++) {
 		IWN_WRITE(sc, IWN_EEPROM, addr << 2);
-		IWN_CLRBITS(sc, IWN_EEPROM, IWN_EEPROM_CMD);
-
 		for (ntries = 0; ntries < 10; ntries++) {
 			val = IWN_READ(sc, IWN_EEPROM);
 			if (val & IWN_EEPROM_READ_VALID)
@@ -801,9 +827,23 @@ iwn_read_prom_data(struct iwn_softc *sc, uint32_t addr, void *data, int count)
 			DELAY(5);
 		}
 		if (ntries == 10) {
-			printf("%s: could not read EEPROM\n",
-			    sc->sc_dev.dv_xname);
+			printf("%s: timeout reading ROM at 0x%x\n",
+			    sc->sc_dev.dv_xname, addr);
 			return ETIMEDOUT;
+		}
+		if (sc->sc_flags & IWN_FLAG_HAS_OTPROM) {
+			/* OTPROM, check for ECC errors. */
+			uint32_t tmp = IWN_READ(sc, IWN_OTP_GP);
+			if (tmp & IWN_OTP_GP_ECC_UNCORR_STTS) {
+				printf("%s: OTPROM ECC error at 0x%x\n",
+				    sc->sc_dev.dv_xname, addr);
+				return EIO;
+			}
+			if (tmp & IWN_OTP_GP_ECC_CORR_STTS) {
+				/* Correctable ECC error, clear bit. */
+				IWN_SETBITS(sc, IWN_OTP_GP,
+				    IWN_OTP_GP_ECC_CORR_STTS);
+			}
 		}
 		*out++ = val >> 16;
 		if (count > 1)
@@ -1158,12 +1198,25 @@ iwn_read_eeprom(struct iwn_softc *sc)
 	uint16_t val;
 	int error;
 
+	/* Check whether adapter has an EEPROM or an OTPROM. */
+	if (IWN_READ(sc, IWN_OTP_GP) & IWN_OTP_GP_DEV_SEL_OTP)
+		sc->sc_flags |= IWN_FLAG_HAS_OTPROM;
+	DPRINTF(("%s found\n", (sc->sc_flags & IWN_FLAG_HAS_OTPROM) ?
+	    "OTPROM" : "EEPROM"));
+
 	if ((IWN_READ(sc, IWN_EEPROM_GP) & 0x7) == 0) {
-		printf("%s: bad EEPROM signature\n", sc->sc_dev.dv_xname);
+		printf("%s: bad ROM signature\n", sc->sc_dev.dv_xname);
 		return EIO;
 	}
 	if ((error = iwn_eeprom_lock(sc)) != 0) {
-		printf("%s: could not lock EEPROM (error=%d)\n",
+		printf("%s: could not lock ROM (error=%d)\n",
+		    sc->sc_dev.dv_xname, error);
+		return error;
+	}
+
+	if ((sc->sc_flags & IWN_FLAG_HAS_OTPROM) &&
+	    ((error = iwn_init_otprom(sc)) != 0)) {
+		printf("%s: could not initialize OTPROM (error=%d)\n",
 		    sc->sc_dev.dv_xname, error);
 		return error;
 	}

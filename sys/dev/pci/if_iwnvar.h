@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.10 2009/05/12 19:10:57 damien Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.11 2009/05/20 16:31:50 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -203,7 +203,8 @@ struct iwn_softc {
 
 	u_int			sc_flags;
 #define IWN_FLAG_HAS_5GHZ	(1 << 0)
-#define IWN_FLAG_FIRST_BOOT	(1 << 1)
+#define IWN_FLAG_HAS_OTPROM	(1 << 1)
+#define IWN_FLAG_FIRST_BOOT	(1 << 2)
 
 	uint8_t 		hw_type;
 	const struct iwn_hal	*sc_hal;
