@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.27 2009/05/20 14:29:44 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.28 2009/05/20 16:07:26 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -352,7 +352,9 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_SCHEDULE, 0, 0, -1, s, sizeof(*s));
 			break;
 		}
-		case IMSG_CONF_RELOAD:
+		case IMSG_CONF_RELOAD: {
+			struct reload r;
+
 			log_debug("received reload request");
 
 			if (euid)
@@ -365,10 +367,10 @@ control_dispatch_ext(int fd, short event, void *arg)
 			}
 			env->sc_flags |= SMTPD_CONFIGURING;
 
-			imsg_compose(env->sc_ibufs[PROC_PARENT], IMSG_CONF_RELOAD, 0, 0, -1, NULL, 0);
-
-			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			r.fd = fd;
+			imsg_compose(env->sc_ibufs[PROC_PARENT], IMSG_CONF_RELOAD, 0, 0, -1, &r, sizeof(r));
 			break;
+		}
 		case IMSG_CTL_SHUTDOWN:
 			/* NEEDS_FIX */
 			log_debug("received shutdown request");
@@ -521,7 +523,21 @@ control_dispatch_parent(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_CONF_RELOAD: {
+			struct reload *r = imsg.data;
+			struct ctl_conn	*c;
+
+			IMSG_SIZE_CHECK(r);
+
 			env->sc_flags &= ~SMTPD_CONFIGURING;
+			if ((c = control_connbyfd(r->fd)) == NULL) {
+				log_warn("control_dispatch_parent: fd %d not found", r->fd);
+				return;
+			}
+
+			if (r->ret)
+				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			else
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
 			break;
 		}
 		case IMSG_STATS: {
