@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4,v 1.35 2006/12/10 16:14:20 miod Exp $
+#	$OpenBSD: SUN4,v 1.36 2009/05/20 18:22:32 miod Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -17,6 +17,7 @@ option		PROCFS		# /proc
 
 option		WSEMUL_SUN	# provide sun terminal emulation; required
 option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation
+option		WSDISPLAY_COMPAT_RAWKBD # provide raw scancodes; needed for X11
 
 maxusers	16		# estimated number of users
 
@@ -67,6 +68,8 @@ zs2	at obio0 addr 0xe0000000 level 12		# sun4/300
 zstty* at zs?
 zskbd* at zs?
 wskbd* at zskbd?
+zsms*  at zs?
+wsmouse* at zsms?
 
 #
 # Note the flags on the esp entries below, that work around
@@ -172,3 +175,5 @@ cd*	at scsibus?		# SCSI CD-ROMs
 ch*	at scsibus?		# SCSI changer devices
 ss*	at scsibus?		# SCSI scanners
 uk*	at scsibus?		# unknown SCSI devices
+
+pseudo-device	wsmux	2	# mouse & keyboard multiplexor

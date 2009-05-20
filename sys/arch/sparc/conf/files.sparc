@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.82 2009/04/15 06:54:44 oga Exp $
+#	$OpenBSD: files.sparc,v 1.83 2009/05/20 18:22:33 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -90,7 +90,7 @@ attach	zstty at zs
 file	arch/sparc/dev/z8530tty.c		zstty needs-flag
 file	arch/sparc/dev/zs_kgdb.c		kgdb
 
-device	zskbd: tty, wskbddev, sunkbd
+device	zskbd: wskbddev, sunkbd
 attach	zskbd at zs
 file	arch/sparc/dev/z8530kbd.c		zskbd needs-flag
 

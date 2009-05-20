@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.235 2009/05/10 13:33:32 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.236 2009/05/20 18:22:33 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -283,6 +283,8 @@ sabtty* at sab?
 com*	at ebus?
 comkbd*	at ebus?
 wskbd* at comkbd? mux 1
+comms*	at ebus?
+wsmouse* at comms? mux 0
 
 # Z8530 based serial ports
 zs*	at sbus?
@@ -290,6 +292,8 @@ zs*	at fhc?
 zstty*	at zs?
 zskbd*	at zs?
 wskbd*	at zskbd? mux 1
+zsms*	at zs?
+wsmouse* at zsms? mux 0
 
 # i8042 based serial ports (PS/2 ports)
 pckbc*	at ebus?			# controller

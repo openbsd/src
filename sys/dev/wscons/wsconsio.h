@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.51 2009/05/09 19:23:07 mglocker Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.52 2009/05/20 18:22:33 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -205,6 +205,7 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_LUNA	11	/* OMRON Luna */
 #define		WSMOUSE_TYPE_DOMAIN	12	/* Apollo Domain */
 #define		WSMOUSE_TYPE_BLUETOOTH	13	/* Bluetooth mouse */
+#define		WSMOUSE_TYPE_SUN	14	/* SUN serial mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)

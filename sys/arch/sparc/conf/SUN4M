@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.73 2007/05/29 09:54:03 sobrado Exp $
+#	$OpenBSD: SUN4M,v 1.74 2009/05/20 18:22:33 miod Exp $
 #	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -22,6 +22,7 @@ option		PROCFS		# /proc
 
 option		WSEMUL_SUN	# provide sun terminal emulation; required
 option		WSEMUL_NO_VT100	# do not provide vt100 terminal emulation
+option		WSDISPLAY_COMPAT_RAWKBD # provide raw scancodes; needed for X11
 
 maxusers	32		# estimated number of users
 
@@ -69,6 +70,8 @@ zs1	at obio0					# sun4m
 zstty* at zs?
 zskbd* at zs?
 wskbd* at zskbd?
+zsms*  at zs?
+wsmouse* at zsms?
 
 # Magma serial/parallel port devices
 magma*	at sbus?					# magma serial cards
@@ -243,3 +246,5 @@ uk*	at scsibus?		# unknown SCSI devices
 # Floppy controller and drive found on SPARCstations.
 fdc0	at obio0		# sun4m controller
 fd*	at fdc0			# the drive itself
+
+pseudo-device	wsmux	2	# mouse & keyboard multiplexor
