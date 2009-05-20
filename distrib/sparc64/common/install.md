@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.29 2009/05/11 17:13:07 deraadt Exp $
+#	$OpenBSD: install.md,v 1.30 2009/05/20 18:42:05 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -35,6 +35,7 @@
 
 MDTERM=sun
 MDXAPERTURE=1
+MDXDM=y
 ARCH=ARCH
 NCPU=$(sysctl -n hw.ncpufound)
 
