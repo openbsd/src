@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstatd.c,v 1.21 2005/09/16 23:50:33 deraadt Exp $	*/
+/*	$OpenBSD: rstatd.c,v 1.22 2009/05/20 20:37:43 thib Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rstatd.c,v 1.21 2005/09/16 23:50:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstatd.c,v 1.22 2009/05/20 20:37:43 thib Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,9 +77,10 @@ main(int argc, char *argv[])
 
 	openlog("rpc.rstatd", LOG_NDELAY|LOG_CONS|LOG_PID, LOG_DAEMON);
 
-	pw = getpwnam("_rstatd");
-	if (!pw)
-		pw = getpwnam("nobody");
+	if ((pw = getpwnam("_rstatd")) == NULL) {
+		syslog(LOG_ERR, "no such user _rstatd");
+		exit(1);
+	}
 	if (chroot("/var/empty") == -1) {
 		syslog(LOG_ERR, "cannot chdir to /var/empty.");
 		exit(1);

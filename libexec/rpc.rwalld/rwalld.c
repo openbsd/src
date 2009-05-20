@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwalld.c,v 1.12 2004/06/02 02:21:15 brad Exp $	*/
+/*	$OpenBSD: rwalld.c,v 1.13 2009/05/20 20:37:43 thib Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rwalld.c,v 1.12 2004/06/02 02:21:15 brad Exp $";
+static char rcsid[] = "$OpenBSD: rwalld.c,v 1.13 2009/05/20 20:37:43 thib Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,20 +72,17 @@ main(int argc, char *argv[])
 	struct sockaddr_storage from;
 	SVCXPRT *transp;
 
-	if (geteuid() == 0) {
-		struct passwd *pw = getpwnam("nobody");
-
-		if (pw) {
-			setgroups(1, &pw->pw_gid);
-			setegid(pw->pw_gid);
-			setgid(pw->pw_gid);
-			seteuid(pw->pw_uid);
-			setuid(pw->pw_uid);
-		} else {
-			seteuid(getuid());
-			setuid(getuid());
-		}
+	struct passwd *pw = getpwnam("_rwalld");
+	if (pw == NULL) {
+		syslog(LOG_ERR, "no such user _rwalld");
+		exit(1);
 	}
+
+	setgroups(1, &pw->pw_gid);
+	setegid(pw->pw_gid);
+	setgid(pw->pw_gid);
+	seteuid(pw->pw_uid);
+	setuid(pw->pw_uid);
 
 	/*
 	 * See if inetd started us

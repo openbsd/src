@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.105 2009/04/20 17:42:21 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.106 2009/05/20 20:37:43 thib Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Bob Beck.  All rights reserved.
@@ -1228,9 +1228,8 @@ main(int argc, char *argv[])
 			err(1, "sync init");
 	}
 
-	pw = getpwnam("_spamd");
-	if (!pw)
-		pw = getpwnam("nobody");
+	if ((pw = getpwnam("_spamd")) == NULL)
+		errx(1, "no such user _spamd");
 
 	if (debug == 0) {
 		if (daemon(1, 1) == -1)

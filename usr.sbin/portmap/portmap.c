@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.36 2006/03/18 00:40:14 dhill Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.37 2009/05/20 20:37:43 thib Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.36 2006/03/18 00:40:14 dhill Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.37 2009/05/20 20:37:43 thib Exp $";
 #endif
 #endif /* not lint */
 
@@ -243,13 +243,16 @@ main(int argc, char *argv[])
 	pml->pml_next = pmaplist;
 	pmaplist = pml;
 
-	pw = getpwnam("_portmap");
-	if (!pw)
-		pw = getpwnam("nobody");
+
+	if ((pw = getpwnam("_portmap")) == NULL) {
+		syslog(LOG_ERR, "no such user _portmap");
+		exit(1);
+	}
 	if (chroot("/var/empty") == -1) {
 		syslog(LOG_ERR, "cannot chdir to /var/empty.");
 		exit(1);
 	}
+
 	chdir("/");
 	if (pw) {
 		if (setgroups(1, &pw->pw_gid) == -1 ||
