@@ -1788,6 +1788,7 @@
 ./usr/share/man/cat4/sparc/xy.0
 ./usr/share/man/cat4/sparc/zs.0
 ./usr/share/man/cat4/sparc/zskbd.0
+./usr/share/man/cat4/sparc/zsms.0
 ./usr/share/man/cat4/sparc/zstty.0
 ./usr/share/man/cat4/sparc/zx.0
 ./usr/share/man/cat4/sparc64
@@ -1813,6 +1814,7 @@
 ./usr/share/man/cat4/sparc64/clock.0
 ./usr/share/man/cat4/sparc64/cmp.0
 ./usr/share/man/cat4/sparc64/comkbd.0
+./usr/share/man/cat4/sparc64/comms.0
 ./usr/share/man/cat4/sparc64/core.0
 ./usr/share/man/cat4/sparc64/creator.0
 ./usr/share/man/cat4/sparc64/ebus.0
@@ -1867,6 +1869,7 @@
 ./usr/share/man/cat4/sparc64/xbox.0
 ./usr/share/man/cat4/sparc64/zs.0
 ./usr/share/man/cat4/sparc64/zskbd.0
+./usr/share/man/cat4/sparc64/zsms.0
 ./usr/share/man/cat4/sparc64/zstty.0
 ./usr/share/man/cat4/sparc64/zx.0
 ./usr/share/man/cat4/spdmem.0
