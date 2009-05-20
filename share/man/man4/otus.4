@@ -1,4 +1,4 @@
-.\" $OpenBSD: otus.4,v 1.4 2009/05/11 20:11:54 damien Exp $
+.\" $OpenBSD: otus.4,v 1.5 2009/05/20 17:35:17 damien Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 11 2009 $
+.Dd $Mdocdate: May 20 2009 $
 .Os
 .Dt OTUS 4
 .Sh NAME
@@ -88,7 +88,7 @@ The following adapters should work:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Arcadyan WN7512
-.It AVM FRITZ!WLAN USB Stick N
+.\" .It AVM FRITZ!WLAN USB Stick N
 .It CACE AirPcap Nx
 .It D-Link DWA-160A
 .It IO-Data WN-GDN/US2
@@ -169,6 +169,8 @@ driver was written by
 based on source code licensed under the ISC released in 2008 by Atheros
 Communications for Linux.
 .Sh CAVEATS
+The AVM FRITZ!WLAN USB Stick N adapter is currently not supported.
+.Pp
 The
 .Nm
 driver does not support any of the 802.11n capabilities offered by the
