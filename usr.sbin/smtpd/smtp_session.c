@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.92 2009/05/20 14:29:44 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.93 2009/05/20 16:12:11 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -617,6 +617,9 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_TLS:
+		if (s->s_flags & F_WRITEONLY)
+			fatalx("session_pickup: corrupt session");
+		bufferevent_enable(s->s_bev, EV_READ);
 		s->s_state = S_GREETED;
 		break;
 
@@ -723,8 +726,6 @@ session_bufferevent_new(struct session *s)
 
 	bufferevent_settimeout(s->s_bev, SMTPD_SESSION_TIMEOUT,
 	    SMTPD_SESSION_TIMEOUT);
-	
-	bufferevent_enable(s->s_bev, EV_READ);
 }
 
 void
