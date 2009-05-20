@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.228 2009/05/19 19:43:17 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.229 2009/05/20 17:30:39 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 19 2009 $
+.Dd $Mdocdate: May 20 2009 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2436,9 +2436,9 @@ FLAVORS and MULTI_PACKAGES.
 The current MULTI_PACKAGES mechanism was introduced after
 .Ox 4.0 .
 .Pp
-If a port can be compiled with several options, these options 
+If a port can be compiled with several options, these options
 should be turned into FLAVORS.
-The port maintainer will set FLAVORS to be the list of possible options in 
+The port maintainer will set FLAVORS to be the list of possible options in
 the Makefile.
 When building the port, the package builder will set
 .Li "FLAVOR='option1 option2...'"
@@ -2456,7 +2456,7 @@ FLAVOR?=
 .Pp
 .Pa bsd.port.mk
 takes care of a few details, such as generating a distinct work directory for
-each flavor, or creating a FULLPKGNAME by adding a dash separated list of 
+each flavor, or creating a FULLPKGNAME by adding a dash separated list of
 flavors to the base package name.
 The order in which FLAVOR is specified does not matter: this dash separated
 list will be reordered to match the ordering of FLAVORS.
