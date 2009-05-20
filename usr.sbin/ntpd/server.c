@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.34 2008/11/10 17:55:36 deraadt Exp $ */
+/*	$OpenBSD: server.c,v 1.35 2009/05/20 14:55:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -161,8 +161,10 @@ server_dispatch(int fd, struct ntpd_conf *lconf)
 	reply.status |= (query.status & VERSIONMASK);
 	if ((query.status & MODEMASK) == MODE_CLIENT)
 		reply.status |= MODE_SERVER;
-	else
+	else if ((query.status & MODEMASK) == MODE_SYM_ACT)
 		reply.status |= MODE_SYM_PAS;
+	else /* ignore packets of different type (e.g. bcast) */
+		return (0);
 
 	reply.stratum =	lconf->status.stratum;
 	reply.ppoll = query.ppoll;
