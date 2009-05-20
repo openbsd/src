@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.47 2009/05/19 11:24:24 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.48 2009/05/20 14:29:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -103,11 +103,27 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_CONF_RELOAD: {
+			struct session *s;
+
+			/* reloading may invalidate various pointers our
+			 * sessions rely upon, we better tell clients we
+			 * want them to retry.
+			 */
+			SPLAY_FOREACH(s, sessiontree, &env->sc_sessions) {
+				s->s_l = NULL;
+				s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
+			}
+
+			smtp_disable_events(env);
+			imsg_compose(ibuf, IMSG_PARENT_SEND_CONFIG, 0, 0, -1,
+			    NULL, 0);
+			break;
+		}
 		case IMSG_CONF_START:
 			if (env->sc_flags & SMTPD_CONFIGURING)
 				break;
 			env->sc_flags |= SMTPD_CONFIGURING;
-			smtp_disable_events(env);
 			break;
 		case IMSG_CONF_SSL: {
 			struct ssl	*s;
@@ -143,6 +159,7 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			if ((l = calloc(1, sizeof(*l))) == NULL)
 				fatal(NULL);
 			memcpy(l, imsg.data, sizeof(*l));
+
 			if ((l->fd = imsg_get_fd(ibuf, &imsg)) == -1)
 				fatal("cannot get fd");
 

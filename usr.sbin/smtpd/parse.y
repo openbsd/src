@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.32 2009/04/12 16:03:01 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.33 2009/05/20 14:29:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -1588,6 +1588,7 @@ interface(const char *s, const char *cert, struct listenerlist *al, int max, in_
 			sain->sin_len = sizeof(struct sockaddr_in);
 			sain->sin_port = port;
 
+			h->fd = -1;
 			h->port = port;
 			h->flags = flags;
 			h->ssl = NULL;
@@ -1608,6 +1609,7 @@ interface(const char *s, const char *cert, struct listenerlist *al, int max, in_
 			sin6->sin6_len = sizeof(struct sockaddr_in6);
 			sin6->sin6_port = port;
 
+			h->fd = -1;
 			h->port = port;
 			h->flags = flags;
 			h->ssl = NULL;

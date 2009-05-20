@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.91 2009/05/19 12:33:53 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.92 2009/05/20 14:29:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -756,6 +756,10 @@ session_read(struct bufferevent *bev, void *p)
 		case S_AUTH_USERNAME:
 		case S_AUTH_PASSWORD:
 		case S_AUTH_FINALIZE:
+			if (s->s_msg.status & S_MESSAGE_TEMPFAILURE) {
+				free(line);
+				goto tempfail;
+			}
 			session_auth_pickup(s, line, nr);
 			break;
 
@@ -763,6 +767,10 @@ session_read(struct bufferevent *bev, void *p)
 		case S_HELO:
 		case S_MAIL:
 		case S_RCPT:
+			if (s->s_msg.status & S_MESSAGE_TEMPFAILURE) {
+				free(line);
+				goto tempfail;
+			}
 			session_command(s, line, nr);
 			break;
 
@@ -778,6 +786,12 @@ session_read(struct bufferevent *bev, void *p)
 
 		free(line);
 	}
+	return;
+
+tempfail:
+	session_respond(s, "421 Service temporarily unavailable");
+	s_smtp.tempfail++;
+	s->s_flags |= F_QUIT;
 }
 
 void
@@ -951,8 +965,14 @@ session_destroy(struct session *s)
 
 	s_smtp.sessions_active--;
 	if (s_smtp.sessions_active < s->s_env->sc_maxconn &&
-	    !(s->s_msg.flags & F_MESSAGE_ENQUEUED))
-		event_add(&s->s_l->ev, NULL);
+	    !(s->s_msg.flags & F_MESSAGE_ENQUEUED)) {
+		/*
+		 * if our session_destroy occurs because of a configuration
+		 * reload, our listener no longer exist and s->s_l is NULL.
+		 */
+		if (s->s_l != NULL)
+			event_add(&s->s_l->ev, NULL);
+	}
 
 	SPLAY_REMOVE(sessiontree, &s->s_env->sc_sessions, s);
 	bzero(s, sizeof(*s));

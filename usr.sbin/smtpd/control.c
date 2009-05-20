@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.26 2009/05/19 11:24:24 jacekm Exp $	*/
+/*	$OpenBSD: control.c,v 1.27 2009/05/20 14:29:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -352,6 +352,23 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_SCHEDULE, 0, 0, -1, s, sizeof(*s));
 			break;
 		}
+		case IMSG_CONF_RELOAD:
+			log_debug("received reload request");
+
+			if (euid)
+				goto badcred;
+
+			if (env->sc_flags & SMTPD_CONFIGURING) {
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+					NULL, 0);
+				break;
+			}
+			env->sc_flags |= SMTPD_CONFIGURING;
+
+			imsg_compose(env->sc_ibufs[PROC_PARENT], IMSG_CONF_RELOAD, 0, 0, -1, NULL, 0);
+
+			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			break;
 		case IMSG_CTL_SHUTDOWN:
 			/* NEEDS_FIX */
 			log_debug("received shutdown request");
@@ -503,6 +520,10 @@ control_dispatch_parent(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_CONF_RELOAD: {
+			env->sc_flags &= ~SMTPD_CONFIGURING;
+			break;
+		}
 		case IMSG_STATS: {
 			struct stats	*s = imsg.data;
 			struct ctl_conn	*c;

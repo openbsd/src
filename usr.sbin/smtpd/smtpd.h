@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.111 2009/05/19 11:42:52 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.112 2009/05/20 14:29:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -167,7 +167,9 @@ enum imsg_type {
 	IMSG_CONF_SSL_KEY,
 	IMSG_CONF_LISTENER,
 	IMSG_CONF_MAP,
+	IMSG_CONF_MAP_CONTENT,
 	IMSG_CONF_RULE,
+	IMSG_CONF_RULE_SOURCE,
 	IMSG_CONF_CONDITION,
 	IMSG_CONF_OPTION,
 	IMSG_CONF_END,
@@ -637,6 +639,8 @@ struct session {
 };
 
 struct smtpd {
+	char					 sc_config[MAXPATHLEN];
+
 #define SMTPD_OPT_VERBOSE			 0x00000001
 #define SMTPD_OPT_NOACTION			 0x00000002
 	u_int32_t				 sc_opts;
@@ -657,8 +661,8 @@ struct smtpd {
 	struct passwd				*sc_pw;
 	char					 sc_hostname[MAXHOSTNAMELEN];
 	TAILQ_HEAD(listenerlist, listener)	 sc_listeners;
-	TAILQ_HEAD(maplist, map)		*sc_maps;
-	TAILQ_HEAD(rulelist, rule)		*sc_rules;
+	TAILQ_HEAD(maplist, map)		*sc_maps, *sc_maps_reload;
+	TAILQ_HEAD(rulelist, rule)		*sc_rules, *sc_rules_reload;
 	SPLAY_HEAD(sessiontree, session)	 sc_sessions;
 	SPLAY_HEAD(msgtree, message)		 sc_messages;
 	SPLAY_HEAD(ssltree, ssl)		 sc_ssl;
@@ -716,6 +720,11 @@ struct stats {
 struct sched {
 	int			fd;
 	char			mid[MAX_ID_SIZE];
+	int			ret;
+};
+
+struct reload {
+	int			fd;
 	int			ret;
 };
 

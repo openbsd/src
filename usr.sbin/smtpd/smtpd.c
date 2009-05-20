@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.61 2009/05/19 22:54:46 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.62 2009/05/20 14:29:44 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -53,6 +53,8 @@
 __dead void	usage(void);
 void		parent_shutdown(void);
 void		parent_send_config(int, short, void *);
+void		parent_send_config_listeners(struct smtpd *);
+void		parent_send_config_ruleset(struct smtpd *, int);
 void		parent_dispatch_lka(int, short, void *);
 void		parent_dispatch_mda(int, short, void *);
 void		parent_dispatch_mfa(int, short, void *);
@@ -131,10 +133,17 @@ parent_shutdown(void)
 void
 parent_send_config(int fd, short event, void *p)
 {
-	struct smtpd		*env = p;
-	struct iovec		iov[3];
+	parent_send_config_listeners(p);
+	parent_send_config_ruleset(p, PROC_MFA);
+	parent_send_config_ruleset(p, PROC_LKA);
+}
+
+void
+parent_send_config_listeners(struct smtpd *env)
+{
 	struct listener		*l;
 	struct ssl		*s;
+	struct iovec		 iov[3];
 
 	log_debug("parent_send_config: configuring smtp");
 	imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_CONF_START,
@@ -158,6 +167,35 @@ parent_send_config(int fd, short event, void *p)
 		    0, 0, l->fd, l, sizeof(*l));
 	}
 	imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_CONF_END,
+	    0, 0, -1, NULL, 0);
+}
+
+void
+parent_send_config_ruleset(struct smtpd *env, int proc)
+{
+	struct rule		*r;
+	struct cond		*cond;
+	struct map		*m;
+
+	log_debug("parent_send_config_ruleset: reloading rules and maps");
+	imsg_compose(env->sc_ibufs[proc], IMSG_CONF_START,
+	    0, 0, -1, NULL, 0);
+
+	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
+		imsg_compose(env->sc_ibufs[proc], IMSG_CONF_RULE,
+		    0, 0, -1, r, sizeof(*r));
+		TAILQ_FOREACH(cond, &r->r_conditions, c_entry) {
+			imsg_compose(env->sc_ibufs[proc], IMSG_CONF_CONDITION,
+			    0, 0, -1, cond, sizeof(*cond));
+		}
+	}
+
+	TAILQ_FOREACH(m, env->sc_maps, m_entry) {
+		imsg_compose(env->sc_ibufs[proc], IMSG_CONF_MAP,
+		    0, 0, -1, m, sizeof(*m));
+	}
+
+	imsg_compose(env->sc_ibufs[proc], IMSG_CONF_END,
 	    0, 0, -1, NULL, 0);
 }
 
@@ -452,7 +490,7 @@ parent_dispatch_smtp(int fd, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_PARENT_SEND_CONFIG: {
-			parent_send_config(-1, -1, env);
+			parent_send_config_listeners(env);
 			break;
 		}
 		case IMSG_PARENT_AUTHENTICATE: {
@@ -594,6 +632,14 @@ parent_dispatch_control(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_CONF_RELOAD: {
+			parent_send_config_ruleset(env, PROC_MFA);
+			parent_send_config_ruleset(env, PROC_LKA);
+			imsg_compose(env->sc_ibufs[PROC_SMTP],
+			    IMSG_CONF_RELOAD, 0, 0, -1, NULL, 0);
+			imsg_compose(ibuf, IMSG_CONF_RELOAD, 0, 0, -1, NULL, 0);
+			break;
+		}
 		case IMSG_STATS: {
 			struct stats *s = imsg.data;
 
