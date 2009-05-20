@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.15 2009/04/16 20:11:12 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.16 2009/05/20 16:10:04 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -274,7 +274,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_GROUP_ADD:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(mfc))
-				fatalx("invalid size of OE request"); 
+				fatalx("invalid size of OE request");
 			memcpy(&mfc, imsg.data, sizeof(mfc));
 
 			iface = if_find_index(mfc.ifindex);
@@ -287,7 +287,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_GROUP_DEL:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(mfc))
-				fatalx("invalid size of OE request"); 
+				fatalx("invalid size of OE request");
 			memcpy(&mfc, imsg.data, sizeof(mfc));
 
 			iface = if_find_index(mfc.ifindex);
@@ -300,7 +300,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_NBR_DEL:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(nm))
-				fatalx("invalid size of OE request"); 
+				fatalx("invalid size of OE request");
 
 			memcpy(&nm, imsg.data, sizeof(nm));
 			srt_expire_nbr(nm.address, nm.ifindex);
@@ -407,7 +407,7 @@ rde_group_list_remove(struct iface *iface, struct in_addr group)
 	if (TAILQ_EMPTY(&iface->rde_group_list))
 		fatalx("rde_group_list_remove: group does not exist");
 
-	for(rg = TAILQ_FIRST(&iface->rde_group_list); rg != NULL;
+	for (rg = TAILQ_FIRST(&iface->rde_group_list); rg != NULL;
 	    rg = TAILQ_NEXT(rg, entry)) {
 		if (rg->rde_group.s_addr == group.s_addr) {
 			log_debug("group_list_remove: interface %s, group %s",
