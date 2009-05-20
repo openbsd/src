@@ -795,6 +795,7 @@
 ./usr/include/dev/sun/disklabel.h
 ./usr/include/dev/sun/sunkbdreg.h
 ./usr/include/dev/sun/sunkbdvar.h
+./usr/include/dev/sun/sunmsvar.h
 ./usr/include/dev/sun/uperfio.h
 ./usr/include/dev/systrace.h
 ./usr/include/dev/tc

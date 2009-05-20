@@ -839,6 +839,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/disklabel.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/sunkbdreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/sunkbdvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/sunmsvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/sun/uperfio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/systrace.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc
