@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.48 2009/05/20 14:29:44 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.49 2009/05/20 14:36:55 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -190,9 +190,10 @@ lka_dispatch_parent(int sig, short event, void *p)
 			temp = env->sc_maps;
 			env->sc_maps = env->sc_maps_reload;
 			env->sc_maps_reload = temp;
-
+			
 			if (env->sc_rules_reload) {
-				TAILQ_FOREACH(r, env->sc_rules_reload, r_entry) {
+				while ((r = TAILQ_FIRST(env->sc_rules_reload))) {
+					TAILQ_REMOVE(env->sc_rules_reload, r, r_entry);
 					free(r);
 				}
 				free(env->sc_rules_reload);
@@ -200,7 +201,8 @@ lka_dispatch_parent(int sig, short event, void *p)
 			}
 
 			if (env->sc_maps_reload) {
-				TAILQ_FOREACH(m, env->sc_maps_reload, m_entry) {
+				while ((m = TAILQ_FIRST(env->sc_maps_reload))) {
+					TAILQ_REMOVE(env->sc_maps_reload, m, m_entry);
 					free(m);
 				}
 				free(env->sc_maps_reload);
