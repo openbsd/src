@@ -1,4 +1,4 @@
-dnl	$OpenBSD: features,v 1.1 2009/05/12 21:06:51 miod Exp $
+dnl	$OpenBSD: features,v 1.2 2009/05/20 19:03:45 deraadt Exp $
 dnl
 dnl This file lists almost all the conditional features of this port,
 dnl which are used to provide accurate installation notes.
@@ -37,4 +37,4 @@ dnl define if the X server can-:}t start until machdep.allow_aperture is set
 define({:-MDXAPERTURE-:},1)dnl
 dnl
 dnl define if the X server can start without a configuration file
-define({:-MDXDM-:},)dnl
+define({:-MDXDM-:},1)dnl
