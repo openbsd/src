@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.36 2009/05/21 16:08:04 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.37 2009/05/21 16:08:56 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -276,7 +276,17 @@ dummy_do_pending_int(int newcpl)
 void
 splinit()
 {
+	struct proc *p = curproc;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	u_int32_t sr;
+
+	/*
+	 * Update proc0 pcb to contain proper values.
+	 */
+	pcb->pcb_context.val[13] = 0;	/* IPL_NONE */
+	pcb->pcb_context.val[12] = (idle_mask << 8) & IC_INT_MASK;
+	pcb->pcb_context.val[11] = (pcb->pcb_regs.sr & ~SR_INT_MASK) |
+	    (idle_mask & SR_INT_MASK);
 
 	spl0();
 	sr = updateimask(0);
