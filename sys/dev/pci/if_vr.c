@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.92 2009/05/12 13:30:56 sthen Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.93 2009/05/21 14:34:35 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -342,10 +342,9 @@ vr_iff(struct vr_softc *sc)
 
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
+		rxfilt |= VR_RXCFG_RX_MULTI;
 		if (ifp->if_flags & IFF_PROMISC)
 			rxfilt |= VR_RXCFG_RX_PROMISC;
-		else
-			rxfilt |= VR_RXCFG_RX_MULTI;
 		hashes[0] = hashes[1] = 0xFFFFFFFF;
 	} else {
 		/* Program new filter. */
