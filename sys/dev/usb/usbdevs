@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.432 2009/05/19 15:53:06 damien Exp $
+$OpenBSD: usbdevs,v 1.433 2009/05/21 12:24:37 maja Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1232,6 +1232,7 @@ product DLINK3 KVM221		0x020f	KVM-221
 /* DisplayLink products */
 product DISPLAYLINK DL120	0x01bb	DL-120
 product DISPLAYLINK DL160	0x0141	DL-160
+product DISPLAYLINK EC008	0x019b	EasyCAP008 DVI
 
 /* DMI products */
 product DMI SA2_0		0xb001	Storage Adapter
