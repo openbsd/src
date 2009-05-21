@@ -1,4 +1,19 @@
-/*	$OpenBSD: autoconf.c,v 1.19 2009/03/20 18:41:07 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.20 2009/05/21 16:28:12 miod Exp $	*/
+/*
+ * Copyright (c) 2009 Miodrag Vallat.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -50,33 +65,24 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/disklabel.h>
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <dev/cons.h>
 #include <machine/autoconf.h>
 #include <mips64/archtype.h>
 
-extern void dumpconf(void);
-struct device *getdevunit(char *, int);
-const struct devmap *boot_findtype(char *);
-int makebootdev(const char *, int);
-const char *boot_get_path_component(const char *, char *, int *);
-const char *boot_getnr(const char *, int *);
+#include <sgi/xbow/xbow.h>
+#include <dev/pci/pcivar.h>
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
 
-/* Struct translating from ARCS to bsd. */
-struct devmap {
-	const char	*att;
-	const char	*dev;
-	int		what;
-};
-#define	DEVMAP_TYPE	0x01
-#define	DEVMAP_UNIT	0x02
-#define	DEVMAP_PART	0x04
+extern void dumpconf(void);
+
+void	bootpath_convert(void);
+const char *bootpath_get(int *);
+void	bootpath_init(void);
+void	bootpath_next(void);
 
 /*
  * The following several variables are related to
@@ -84,8 +90,9 @@ struct devmap {
  * the machine.
  */
 int	cold = 1;			/* if 1, still working on cold-start */
-char	bootdev[16] = "unknown";	/* to hold boot dev name */
 struct device *bootdv = NULL;
+
+char	osloadpartition[256];
 
 /*
  *  Configure all devices found that we know about.
@@ -107,20 +114,10 @@ cpu_configure(void)
 }
 
 void
-device_register(struct device *dev, void *aux)
-{
-}
-
-void
 diskconf(void)
 {
-	dev_t tmpdev;
-
-	/* Lookup boot device from boot if not set by configuration */
 	if (bootdv == NULL)
-		bootdv = parsedisk(bootdev, strlen(bootdev), 0, &tmpdev);
-	if (bootdv == NULL)
-		printf("boot device: lookup '%s' failed.\n", bootdev);
+		printf("boot device: '%s' unrecognized.\n", osloadpartition);
 	else
 		printf("boot device: %s\n", bootdv->dv_xname);
 
@@ -128,150 +125,273 @@ diskconf(void)
 	dumpconf();
 }
 
+static char bootpath_store[sizeof osloadpartition];
+static char *bootpath_curpos;
+static char *bootpath_lastpos;
+static int bootpath_lastunit;
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+static int dksc_ctrl, dksc_mode;
+#endif
+
 /*
- * find a device matching "name" and unit number
+ * Initialize bootpath analysis.
  */
-struct device *
-getdevunit(name, unit)
-	char *name;
-	int unit;
+void
+bootpath_init()
 {
-	struct device *dev = TAILQ_FIRST(&alldevs);
-	char num[10], fullname[16];
-	int lunit;
+	strlcpy(bootpath_store, osloadpartition, sizeof bootpath_store);
+	bootpath_curpos = bootpath_store;
 
-	/* compute length of name and decimal expansion of unit number */
-	snprintf(num, sizeof(num), "%d", unit);
-	lunit = strlen(num);
-	if (strlen(name) + lunit >= sizeof(fullname) - 1)
-		panic("config_attach: device name too long");
-
-	strlcpy(fullname, name, sizeof(fullname));
-	strlcat(fullname, num, sizeof(fullname));
-
-	while (strcmp(dev->dv_xname, fullname) != 0) {
-		if ((dev = TAILQ_NEXT(dev, dv_list)) == NULL)
-			return NULL;
-	}
-	return dev;
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+	/*
+	 * If this is the first time we're ever invoked,
+	 * check for a dksc() syntax and rewrite it as
+	 * something more friendly to us.
+	 */
+	if (strncmp(bootpath_store, "dksc(", 5) == 0)
+		bootpath_convert();
+#endif
 }
 
-const struct devmap *
-boot_findtype(char *s)
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+/*
+ * Convert a `dksc()' bootpath into an ARC-friendly bootpath.
+ */
+void
+bootpath_convert()
 {
-	const struct devmap devmap[] = {
-		{ "scsi",	"sd",	DEVMAP_TYPE },
-		{ "disk",	"",	DEVMAP_UNIT },
-		{ "part",	"",	DEVMAP_PART },
-		{ "partition",	"",	DEVMAP_PART },
-		{ NULL, NULL }
-	};
-	const struct devmap *dp = &devmap[0];
+	int val[3], idx;
+	char *c;
 
-	while (dp->att) {
-		if (strcmp (s, dp->att) == 0) {
+	val[0] = val[1] = val[2] = 0;
+	idx = 0;
+
+	for (c = bootpath_store + 5; *c != '\0'; c++) {
+		if (*c == ')')
 			break;
-		}
-		dp++;
+		else if (*c == ',') {
+			if (++idx == 3)
+				break;
+		} else if (*c >= '0' && *c <= '9')
+			val[idx] = 10 * val[idx] + (*c - '0');
 	}
-	if (dp->att)
-		return dp;
-	else
-		return NULL;
+
+	/*
+	 * We can not convert the dksc() bootpath to an exact ARCS bootpath
+	 * without knowing our device tree already.  This is because
+	 * the controller number is not an absolute locator, but rather an
+	 * occurence number.
+	 *
+	 * So we convert to an incomplete ARCS bootpath and have explicit
+	 * dksc handling in device_register().  This relies on our device
+	 * probe order matching ARCS.
+	 */
+
+	dksc_ctrl = val[0];
+	dksc_mode = 1;
+	snprintf(bootpath_store, sizeof bootpath_store,
+	    "scsi(%d)disk(%d)rdisk(0)partition(%d)",
+	    val[0], val[1], val[2]);
+#ifdef DEBUG
+	printf("%s: converting %s to %s\n",
+	    __func__, osloadpartition, bootpath_store);
+#endif
+}
+#endif
+
+/*
+ * Extract a component of the boot path, and return its name and unit
+ * value.
+ */
+const char *
+bootpath_get(int *u)
+{
+	char *c;
+	int unit;
+
+	/*
+	 * If we don't have a value in cache, compute it.
+	 */
+	if (bootpath_lastpos == NULL) {
+		if (bootpath_curpos == NULL)
+			bootpath_init();
+
+		unit = 0;
+		c = strchr(bootpath_curpos, '(');
+		if (c != NULL) {
+			for (*c++ = '\0'; *c >= '0' && *c <= '9'; c++)
+				unit = 10 * unit + (*c - '0');
+			while (*c != ')' && *c != '\0')
+				c++;
+			if (*c == ')')
+				c++;
+		} else {
+			c = bootpath_curpos + strlen(bootpath_curpos);
+		}
+
+		bootpath_lastpos = bootpath_curpos;
+		bootpath_lastunit = unit;
+		bootpath_curpos = c;
+#ifdef DEBUG
+		printf("%s: new component %s unit %d remainder %s\n", __func__,
+		    bootpath_lastpos, bootpath_lastunit, bootpath_curpos);
+#endif
+	}
+
+	*u = bootpath_lastunit;
+	return bootpath_lastpos;
 }
 
 /*
- * Look at the string 'bp' and decode the boot device.
- * Boot devices look like: 'scsi()disk(n)rdisk()partition(0)'
- *	 		  or
- *			   'dksc(0,1,0)'
+ * Consume the current component of the bootpath, and switch to the next.
  */
-int
-makebootdev(const char *bp, int offs)
+void
+bootpath_next()
 {
-	char namebuf[256];
-	const char *cp, *ncp, *ecp, *devname;
-	int	i, unit, partition;
-	const struct devmap *dp;
-
-	if (bp == NULL)
-		return -1;
-
-	ecp = cp = bp;
-	unit = partition = 0;
-	devname = NULL;
-
-	if (strncmp(cp, "dksc(", 5) == 0) {
-		devname = "sd";
-		cp += 5;
-		cp = boot_getnr(cp, &i);
-		if (*cp++ == ',') {
-			cp = boot_getnr(cp, &i);
-			unit = i - 1;
-			if (*cp++ == ',') {
-				cp = boot_getnr(cp, &i);
-				partition = i;
-			}
-		}
-	} else {
-		ncp = boot_get_path_component(cp, namebuf, &i);
-		while (ncp != NULL) {
-			if ((dp = boot_findtype(namebuf)) != NULL) {
-				switch(dp->what) {
-				case DEVMAP_TYPE:
-					devname = dp->dev;
-					break;
-				case DEVMAP_UNIT:
-					unit = i - 1 + offs;
-					break;
-			case DEVMAP_PART:
-					partition = i;
-					break;
-				}
-			}
-			cp = ncp;
-			ncp = boot_get_path_component(cp, namebuf, &i);
-		}
-	}
-
-	if (devname == NULL) {
-		return -1;
-	}
-
-	snprintf(bootdev, sizeof(bootdev), "%s%d%c", devname, unit,
-	    'a' + partition);
-	return 0;
+	/* force bootpath_get to go forward */
+	bootpath_lastpos = NULL;
+#ifdef DEBUG
+	printf("%s\n", __func__);
+#endif
 }
 
-const char *
-boot_get_path_component(const char *p, char *comp, int *no)
+void
+device_register(struct device *dev, void *aux)
 {
-	while (*p && *p != '(') {
-		*comp++ = *p++;
+	static struct device *lastparent = NULL;
+	static struct device *pciparent = NULL;
+
+	struct device *parent = dev->dv_parent;
+	struct cfdata *cf = dev->dv_cfdata;
+	struct cfdriver *cd = cf->cf_driver;
+
+	const char *component;
+	int unit;
+
+	if (bootdv != NULL)
+		return;
+
+	component = bootpath_get(&unit);
+	if (*component == '\0')
+		return;		/* exhausted path */
+
+	/*
+	 * The matching rules are as follows:
+	 * xio() matches xbow (we ignore nasid so far).
+	 * pci() matches any pci controller (macepcibr, xbridge), with the
+	 *   unit number being ignored on O2 and the widget number of the
+	 *   controller elsewhere.
+	 * scsi() matches any pci scsi controller, with the unit number
+	 *   being the pci device number (minus one on the O2, grr),
+	 *   or the scsibus number in dksc mode.
+	 * disk() and cdrom() match sd and cd, respectively, with the
+	 *   unit number being the target number.
+	 *
+	 * When a disk is found, we stop the parsing; rdisk() and
+	 * partition() components are ignored.
+	 */
+
+	if (strcmp(component, "xio") == 0) {
+		if (strcmp(cd->cd_name, "xbow") == 0)
+			goto found_advance;
 	}
-	*comp = '\0';
 
-	if (*p == NULL)
-		return NULL;
+	if (strcmp(component, "pci") == 0) {
+		/*
+		 * We'll work in two steps. The controller itself will be
+		 * recognized with its parent device and attachment
+		 * arguments (if necessary).
+		 *
+		 * Then we'll only advance the bootpath when matching the
+		 * pci device.
+		 */
+		if (strcmp(cd->cd_name, "pci") == 0 &&
+		    parent == lastparent) {
+			pciparent = dev;
+			goto found_advance;
+		}
 
-	*no = 0;
-	p++;
-	while (*p && *p != ')') {
-		if (*p >= '0' && *p <= '9')
-			*no = *no * 10 + *p++ - '0';
-		else
-			return NULL;
+		if (strcmp(cd->cd_name, "macepcibr") == 0)
+			goto found;
+		if (strcmp(cd->cd_name, "xbridge") == 0 &&
+		    parent == lastparent) {
+			struct xbow_attach_args *xaa = aux;
+
+			if (unit == xaa->xaa_widget)
+				goto found;
+		}
 	}
-	return ++p;
-}
 
-const char *
-boot_getnr(const char *p, int *no)
-{
-	*no = 0;
-	while (*p >= '0' && *p <= '9')
-		*no = *no * 10 + *p++ - '0';
-	return p;
+	if (strcmp(component, "scsi") == 0) {
+		/*
+		 * We'll work in two steps. The controller itself will be
+		 * recognized with its parent device and pci_attach_args
+		 * need to match the scsi() unit number.
+		 *
+		 * Then we'll only advance the bootpath when matching the
+		 * scsibus device.
+		 *
+		 * With a dksc bootpath, things are a little different:
+		 * we need to count scsi controllers, until we find ours.
+		 */
+
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+		if (dksc_mode) {
+			if (strcmp(cd->cd_name, "scsibus") == 0 &&
+			    dev->dv_unit == dksc_ctrl)
+				goto found_advance;
+
+			return;
+		}
+#endif
+
+		if (strcmp(cd->cd_name, "scsibus") == 0 &&
+		    parent == lastparent)
+			goto found_advance;
+
+		if (parent == lastparent) {
+			if (parent == pciparent) {
+				struct pci_attach_args *paa = aux;
+
+				if (unit == paa->pa_device -
+				    (sys_config.system_type == SGI_O2 ? 1 : 0))
+					goto found;
+			}
+			/*
+			 * in case scsi() can follow something else then
+			 * pci(), write code to handle this here...
+			 */
+		}
+	}
+
+	if ((strcmp(component, "disk") == 0 &&
+	     strcmp(cd->cd_name, "sd") == 0) ||
+	    (strcmp(component, "cdrom") == 0 &&
+	     strcmp(cd->cd_name, "cd") == 0)) {
+		if (parent == lastparent) {
+			struct scsi_attach_args *saa = aux;
+
+			if (unit == saa->sa_sc_link->target) {
+				/*
+				 * We found our boot device.
+				 * Now get the partition number.
+				 */
+				bootdv = dev;
+#ifdef DEBUG
+				printf("%s: boot device is %s\n",
+				    __func__, dev->dv_xname);
+#endif
+				return;
+			}
+		}
+	}
+
+	return;
+
+found_advance:
+	bootpath_next();
+found:
+	lastparent = dev;
 }
 
 struct nam2blk nam2blk[] = {

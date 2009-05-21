@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.65 2009/05/08 18:42:07 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.66 2009/05/21 16:28:12 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -80,8 +80,6 @@
 #include <machine/bus.h>
 
 extern char kernel_text[];
-extern int makebootdev(const char *, int);
-extern void stacktrace(void);
 extern bus_addr_t comconsaddr;
 
 #ifdef DEBUG
@@ -119,7 +117,6 @@ int	ncpu = 1;		/* At least one CPU in the system. */
 struct	user *proc0paddr;
 struct	user *curprocpaddr;
 int	console_ok;		/* Set when console initialized. */
-int	bootdriveoffs = 0;
 int	kbd_reset;
 
 int32_t *environment;
@@ -132,15 +129,11 @@ caddr_t	ekern;
 
 struct phys_mem_desc mem_layout[MAXMEMSEGS];
 
-void crime_configure_memory(void);
-
-caddr_t mips_init(int, void *, caddr_t);
-void initcpu(void);
-void dumpsys(void);
-void dumpconf(void);
-caddr_t allocsys(caddr_t);
-
-void db_command_loop(void);
+caddr_t	mips_init(int, void *, caddr_t);
+void	initcpu(void);
+void	dumpsys(void);
+void	dumpconf(void);
+caddr_t	allocsys(caddr_t);
 
 static void dobootopts(int, void *);
 static int atoi(const char *, int, const char **);
@@ -302,13 +295,15 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	dobootopts(argc, argv);
 
 	/*
-	 * Figure out where we booted from.
+	 * Figure out where we supposedly booted from.
 	 */
 	cp = Bios_GetEnvironmentVariable("OSLoadPartition");
 	if (cp == NULL)
 		cp = "unknown";
-	if (makebootdev(cp, bootdriveoffs))
-		bios_printf("Boot device unrecognized: '%s'\n", cp);
+	if (strlcpy(osloadpartition, cp, sizeof osloadpartition) >=
+	    sizeof osloadpartition)
+		bios_printf("Value of `OSLoadPartition' is too large.\n"
+		 "The kernel might not be able to find out its root device.\n");
 
 	/*
 	 * Read platform-specific environment variables.
@@ -478,8 +473,7 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 
 	/*
 	 * Last chance to call the BIOS. Wiping the TLB means the BIOS' data
-	 * areas are demapped on most systems. O2s are okay as they do not have 
-	 * mapped BIOS text or data.
+	 * areas are demapped on most systems.
 	 */
 	delay(20*1000);		/* Let any UART FIFO drain... */
 
@@ -585,7 +579,6 @@ allocsys(caddr_t v)
 
 	return(v);
 }
-
 
 /*
  * Decode boot options.
@@ -830,11 +823,6 @@ boot(int howto)
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
 		savectx(curproc->p_addr, 0);
-
-#ifdef DEBUG
-	if (panicstr)
-		stacktrace();
-#endif
 
 	if (cold) {
 		/*

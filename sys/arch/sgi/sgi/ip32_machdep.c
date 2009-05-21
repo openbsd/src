@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.5 2009/05/08 18:42:07 miod Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.6 2009/05/21 16:28:12 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -49,8 +49,6 @@
 #include <dev/ic/comvar.h>
 
 void crime_configure_memory(void);
-
-extern int bootdriveoffs;
 
 void
 crime_configure_memory(void)
@@ -137,13 +135,6 @@ ip32_setup()
 
 	crime_configure_memory();
 
-	/* R1xK O2s are one disk slot machines. Offset slotno. */
-	switch ((cp0_get_prid() >> 8) & 0xff) {
-	case MIPS_R10000:
-	case MIPS_R12000:
-		bootdriveoffs = -1;
-		break;
-	}
 	/* R12K O2s must run with DSD on. */
 	switch ((cp0_get_prid() >> 8) & 0xff) {
 	case MIPS_R12000:
