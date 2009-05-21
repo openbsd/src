@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.262 2009/04/23 19:15:07 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.263 2009/05/21 23:04:20 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -240,6 +240,7 @@ const struct pci_matchid bge_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5720 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5721 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5722 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5723 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750M },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5751 },
@@ -255,10 +256,17 @@ const struct pci_matchid bge_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5755 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5755M },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5756 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5761 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5761E },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5761S },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5761SE },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5764 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5780 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5780S },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5781 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5782 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5784 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5785 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5786 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5787 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5787F },
@@ -270,6 +278,10 @@ const struct pci_matchid bge_devices[] = {
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5903M },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5906 },
 	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5906M },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57720 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57760 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57780 },
+	{ PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57790 },
 
 	{ PCI_VENDOR_FUJITSU, PCI_PRODUCT_FUJITSU_PW008GE4 },
 	{ PCI_VENDOR_FUJITSU, PCI_PRODUCT_FUJITSU_PW008GE5 },
@@ -288,8 +300,12 @@ const struct pci_matchid bge_devices[] = {
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
 
 #define BGE_IS_575X_PLUS(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750    || \
@@ -298,8 +314,12 @@ const struct pci_matchid bge_devices[] = {
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
 
 #define BGE_IS_5714_FAMILY(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
@@ -364,6 +384,10 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5755_A1, "BCM5755 A1" },
 	{ BGE_CHIPID_BCM5755_A2, "BCM5755 A2" },
 	{ BGE_CHIPID_BCM5755_C0, "BCM5755 C0" },
+	{ BGE_CHIPID_BCM5761_A0, "BCM5761 A0" },
+	{ BGE_CHIPID_BCM5761_A1, "BCM5761 A1" },
+	{ BGE_CHIPID_BCM5784_A0, "BCM5784 A0" },
+	{ BGE_CHIPID_BCM5784_A1, "BCM5784 A1" },
 	/* the 5754 and 5787 share the same ASIC ID */
 	{ BGE_CHIPID_BCM5787_A0, "BCM5754/5787 A0" },
 	{ BGE_CHIPID_BCM5787_A1, "BCM5754/5787 A1" },
@@ -391,9 +415,13 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5780, "unknown BCM5780" },
 	{ BGE_ASICREV_BCM5714, "unknown BCM5714" },
 	{ BGE_ASICREV_BCM5755, "unknown BCM5755" },
+	{ BGE_ASICREV_BCM5761, "unknown BCM5761" },
+	{ BGE_ASICREV_BCM5784, "unknown BCM5784" },
+	{ BGE_ASICREV_BCM5785, "unknown BCM5785" },
 	/* 5754 and 5787 share the same ASIC ID */
 	{ BGE_ASICREV_BCM5787, "unknown BCM5754/5787" },
 	{ BGE_ASICREV_BCM5906, "unknown BCM5906" },
+	{ BGE_ASICREV_BCM57780, "unknown BCM57780" },
 
 	{ 0, NULL }
 };
@@ -1638,13 +1666,24 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Enable host coalescing bug fix. */
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
 		val |= (1 << 29);
 
 	/* Turn on write DMA state machine */
 	CSR_WRITE_4(sc, BGE_WDMA_MODE, val);
 
 	val = BGE_RDMAMODE_ENABLE|BGE_RDMAMODE_ALL_ATTNS;
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
+		val |= BGE_RDMAMODE_BD_SBD_CRPT_ATTN |
+		       BGE_RDMAMODE_MBUF_RBD_CRPT_ATTN |
+		       BGE_RDMAMODE_MBUF_SBD_CRPT_ATTN;
 
 	if (sc->bge_flags & BGE_PCIE)
 		val |= BGE_RDMAMODE_FIFO_LONG_BURST;
@@ -1668,8 +1707,13 @@ bge_blockinit(struct bge_softc *sc)
 	/* Turn on send BD completion state machine */
 	CSR_WRITE_4(sc, BGE_SBDC_MODE, BGE_SBDCMODE_ENABLE);
 
+	val = BGE_SDCMODE_ENABLE;
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761)
+		val |= BGE_SDCMODE_CDELAY;
+
 	/* Turn on send data completion state machine */
-	CSR_WRITE_4(sc, BGE_SDC_MODE, BGE_SDCMODE_ENABLE);
+	CSR_WRITE_4(sc, BGE_SDC_MODE, val);
 
 	/* Turn on send data initiator state machine */
 	CSR_WRITE_4(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE);
@@ -1813,17 +1857,21 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Save ASIC rev.
 	 */
-
 	sc->bge_chipid =
-            pci_conf_read(pc, pa->pa_tag, BGE_PCI_MISC_CTL) &
-            BGE_PCIMISCCTL_ASICREV;
+	     (pci_conf_read(pc, pa->pa_tag, BGE_PCI_MISC_CTL)
+	      >> BGE_PCIMISCCTL_ASICREV_SHIFT);
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_USE_PRODID_REG) {
+		sc->bge_chipid = pci_conf_read(pc, pa->pa_tag,
+		    BGE_PCI_PRODID_ASICREV);
+	}
 
 	printf(", ");
 	br = bge_lookup_rev(sc->bge_chipid);
 	if (br == NULL)
-		printf("unknown ASIC (0x%04x)", sc->bge_chipid >> 16);
+		printf("unknown ASIC (0x%x)", sc->bge_chipid);
 	else
-		printf("%s (0x%04x)", br->br_name, sc->bge_chipid >> 16);
+		printf("%s (0x%x)", br->br_name, sc->bge_chipid);
 
 	/*
 	 * PCI Express check.
@@ -1895,6 +1943,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5751F ||
 	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5753F ||
 	      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5787F)) ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57790 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906)
 		sc->bge_flags |= BGE_10_100_ONLY;
 
@@ -1914,15 +1963,20 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->bge_chipid == BGE_CHIPID_BCM5704_A0)
 		sc->bge_flags |= BGE_PHY_5704_A0_BUG;
 
-	if (BGE_IS_5705_OR_BEYOND(sc)) {
+	if ((BGE_IS_5705_OR_BEYOND(sc)) &&
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906 &&
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785 &&
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57780) {
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761 ||
+		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
 		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787) {
 			if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BROADCOM_BCM5722 &&
 			    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BROADCOM_BCM5756)
 				sc->bge_flags |= BGE_PHY_JITTER_BUG;
 			if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM5755M)
 				sc->bge_flags |= BGE_PHY_ADJUST_TRIM;
-		} else if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906)
+		} else
 			sc->bge_flags |= BGE_PHY_BER_BUG;
 	}
 
@@ -2199,7 +2253,11 @@ bge_reset(struct bge_softc *sc)
 	/* Disable fastboot on controllers that support it. */
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
 		CSR_WRITE_4(sc, BGE_FASTBOOT_PC, 0);
 
 	reset = BGE_MISCCFG_RESET_CORE_CLOCKS|(65<<1);
