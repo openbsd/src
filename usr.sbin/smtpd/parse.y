@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.33 2009/05/20 14:29:44 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.34 2009/05/21 01:27:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -98,6 +98,7 @@ int		 host(const char *, const char *, struct listenerlist *,
 		    int, in_port_t, u_int8_t);
 int		 interface(const char *, const char *, struct listenerlist *,
 		    int, in_port_t, u_int8_t);
+void		 set_localaddrs(void);
 
 typedef struct {
 	union {
@@ -814,51 +815,8 @@ from		: FROM mapref			{
 		}
 		| /* empty */			{
 			struct map	*m;
-			struct mapel	*me;
-			struct sockaddr_in *ssin;
-			struct sockaddr_in6 *ssin6;
 
-			if ((m = calloc(1, sizeof(*m))) == NULL)
-				fatal("out of memory");
-			m->m_id = last_map_id++;
-			if (m->m_id == INT_MAX) {
-				yyerror("too many maps defined");
-				free(m);
-				YYERROR;
-			}
-			if (! bsnprintf(m->m_name, sizeof(m->m_name),
-				"<dynamic(%u)>", m->m_id))
-				fatal("snprintf");
-			m->m_flags |= F_DYNAMIC|F_USED;
-			m->m_type = T_SINGLE;
-
-			TAILQ_INIT(&m->m_contents);
-
-			if ((me = calloc(1, sizeof(*me))) == NULL)
-				fatal("out of memory");
-			me->me_key.med_addr.bits = 0;
-			ssin = (struct sockaddr_in *)&me->me_key.med_addr.ss;
-			ssin->sin_family = AF_INET;
-			if (inet_pton(AF_INET, "127.0.0.1", &ssin->sin_addr) != 1) {
-				free(me);
-				free(m);
-				YYERROR;
-			}
-			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
-
-			if ((me = calloc(1, sizeof(*me))) == NULL)
-				fatal("out of memory");
-			me->me_key.med_addr.bits = 0;
-			ssin6 = (struct sockaddr_in6 *)&me->me_key.med_addr.ss;
-			ssin6->sin6_family = AF_INET6;
-			if (inet_pton(AF_INET6, "::1", &ssin6->sin6_addr) != 1) {
-				free(me);
-				free(m);
-				YYERROR;
-			}
-			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
-
-			TAILQ_INSERT_TAIL(conf->sc_maps, m, m_entry);
+			m = map_findbyname(conf, "localhost");
 			$$ = m->m_id;
 		}
 		;
@@ -1275,6 +1233,7 @@ int
 parse_config(struct smtpd *x_conf, const char *filename, int opts)
 {
 	struct sym	*sym, *next;
+	struct map	*m;
 
 	conf = x_conf;
 	bzero(conf, sizeof(*conf));
@@ -1285,6 +1244,12 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	if ((conf->sc_rules = calloc(1, sizeof(*conf->sc_rules))) == NULL) {
 		log_warn("cannot allocate memory");
 		free(conf->sc_maps);
+		return 0;
+	}
+	if ((m = calloc(1, sizeof(*m))) == NULL) {
+		log_warn("cannot allocate memory");
+		free(conf->sc_maps);
+		free(conf->sc_rules);
 		return 0;
 	}
 
@@ -1309,6 +1274,18 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 		return (-1);
 	}
 	topfile = file;
+
+	/*
+	 * declare special "local" map
+	 */
+	m->m_id = last_map_id++;
+	if (strlcpy(m->m_name, "localhost", sizeof(m->m_name))
+	    >= sizeof(m->m_name))
+		fatal("strlcpy");
+	m->m_type = T_LIST;
+	TAILQ_INIT(&m->m_contents);
+	TAILQ_INSERT_TAIL(conf->sc_maps, m, m_entry);
+	set_localaddrs();
 
 	/*
 	 * parse configuration
@@ -1627,4 +1604,52 @@ interface(const char *s, const char *cert, struct listenerlist *al, int max, in_
 	freeifaddrs(ifap);
 
 	return ret;
+}
+
+void
+set_localaddrs(void)
+{
+	struct ifaddrs *ifap, *p;
+	struct sockaddr_storage ss;
+	struct sockaddr_in	*sain;
+	struct sockaddr_in6	*sin6;
+	struct map		*m;
+	struct mapel		*me;
+
+	if (getifaddrs(&ifap) == -1)
+		fatal("getifaddrs");
+
+	m = map_findbyname(conf, "localhost");
+
+	for (p = ifap; p != NULL; p = p->ifa_next) {
+		switch (p->ifa_addr->sa_family) {
+		case AF_INET:
+			sain = (struct sockaddr_in *)&ss;
+			*sain = *(struct sockaddr_in *)p->ifa_addr;
+			sain->sin_len = sizeof(struct sockaddr_in);
+
+			if ((me = calloc(1, sizeof(*me))) == NULL)
+				fatal("out of memory");
+			me->me_key.med_addr.bits = 0;
+			me->me_key.med_addr.ss = *(struct sockaddr_storage *)sain;
+			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
+
+			break;
+
+		case AF_INET6:
+			sin6 = (struct sockaddr_in6 *)&ss;
+			*sin6 = *(struct sockaddr_in6 *)p->ifa_addr;
+			sin6->sin6_len = sizeof(struct sockaddr_in6);
+
+			if ((me = calloc(1, sizeof(*me))) == NULL)
+				fatal("out of memory");
+			me->me_key.med_addr.bits = 0;
+			me->me_key.med_addr.ss = *(struct sockaddr_storage *)sin6;
+			TAILQ_INSERT_TAIL(&m->m_contents, me, me_entry);
+
+			break;
+		}
+	}
+
+	freeifaddrs(ifap);
 }
