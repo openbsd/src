@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.19 2009/05/15 17:18:16 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.20 2009/05/21 16:26:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -214,7 +214,7 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 		    0, BRIDGE_PCI_MEM_SPACE_LENGTH - 1,
 		    M_DEVBUF, NULL, 0, EX_NOWAIT);
 
-		if (!ISSET(sc->sc_flags, XBRIDGE_FLAGS_XBRIDGE) &&
+		if (ISSET(sc->sc_flags, XBRIDGE_FLAGS_XBRIDGE) ||
 		    xaa->xaa_revision >= 4) {
 			/* Unrestricted I/O mappings in the large window */
 			bcopy(xaa->xaa_long_tag, sc->sc_io_bus_space,
@@ -721,9 +721,14 @@ xbridge_intr_handler(void *v)
 		    BRIDGE_INT_FORCE_PIN(xi->xi_intrbit), 1);
 	} else {
 		if (bus_space_read_4(sc->sc_iot, sc->sc_regh,
-		    BRIDGE_ISR) & (1 << xi->xi_intrbit))
-			IP27_RHUB_PI_S(nasid, 0, HUB_IR_CHANGE,
-			    HUB_IR_SET | xi->xi_intrsrc);
+		    BRIDGE_ISR) & (1 << xi->xi_intrbit)) {
+			if (sys_config.system_type == SGI_OCTANE) {
+				/* XXX what to do there? */
+			} else {
+				IP27_RHUB_PI_S(nasid, 0, HUB_IR_CHANGE,
+				    HUB_IR_SET | xi->xi_intrsrc);
+			}
+		}
 	}
 
 	return 1;
