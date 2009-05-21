@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.21 2009/05/14 18:58:17 miod Exp $
+#	$OpenBSD: list,v 1.22 2009/05/21 13:21:33 miod Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -60,10 +60,10 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 
 # we need the contents of /usr/mdec
 COPY	${DESTDIR}/usr/mdec/boot32		usr/mdec/boot32
-SYMLINK	${DESTDIR}/usr/mdec/boot32		usr/mdec/boot-IP32
+SYMLINK	/usr/mdec/boot32			usr/mdec/boot-IP32
 COPY	${DESTDIR}/usr/mdec/boot64		usr/mdec/boot64
-SYMLINK	${DESTDIR}/usr/mdec/boot64		usr/mdec/boot-IP27
-SYMLINK	${DESTDIR}/usr/mdec/boot64		usr/mdec/boot-IP30
+SYMLINK	/usr/mdec/boot64			usr/mdec/boot-IP27
+SYMLINK	/usr/mdec/boot64			usr/mdec/boot-IP30
 COPY	${DESTDIR}/usr/mdec/sgivol		usr/mdec/sgivol
 
 # various files that we need in /etc for the install
