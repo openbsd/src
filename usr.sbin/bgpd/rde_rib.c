@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.101 2009/05/17 14:45:25 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.102 2009/05/21 15:47:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -53,6 +53,14 @@ rib_init(void)
 	if ((ribs = calloc(1, sizeof(struct rib))) == NULL)
 		fatal("rib_init");
 	rib_new("DEFAULT");
+
+	/* XXX we need to create Adj-RIB-In by hand */
+	bzero(&ribs[0], sizeof(struct rib));
+	RB_INIT(&ribs[0].rib);
+	ribs[0].state = RIB_ACTIVE;
+	ribs[0].id = 0;
+	strlcpy(ribs[0].name, "Adj-RIB-In", sizeof("Adj-RIB-In"));
+	ribs[0].noevaluate = 1;
 }
 
 u_int16_t
@@ -801,16 +809,12 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 {
 	struct prefix	*p;
 
-	if (rde_noevaluate())
-		/* if the decision process is turned off this is a no-op */
-		return;
-
 	LIST_FOREACH(p, &asp->prefix_h, path_l) {
 		/*
-		 * XXX THIS IS MISSING AT THE MOMENT
-		 * skip non local-RIB nodes, only local-RIB prefixes are
-		 * eligible.
+		 * skip non local-RIBs or RIBs that are flagged as noeval.
 		 */
+		if (p->rib->rib->noevaluate)
+			continue;
 
 		if (oldstate == state && state == NEXTHOP_REACH) {
 			/*
