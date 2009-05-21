@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.20 2007/05/31 19:20:00 jmc Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.21 2009/05/21 12:24:22 thib Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: May 21 2009 $
 .Dt VOP_LOOKUP 9
 .Os
 .Sh NAME
@@ -834,8 +834,6 @@ may contain the following flags:
 .Bl -tag -width IO_APPEND -offset indent -compact
 .It Dv IO_APPEND
 Perform write at the end of file.
-.\" .It Dv IO_METASYNC
-.\" Ensure all metadata is written synchronously.
 .It Dv IO_NDELAY
 Non-blocking I/O.
 .It Dv IO_SYNC

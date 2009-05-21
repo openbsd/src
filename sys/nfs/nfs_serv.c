@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.66 2009/04/13 17:51:57 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.67 2009/05/21 12:24:22 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -798,19 +798,12 @@ nfsrv_write(nfsd, slp, procp, mrq)
 		mp = mp->m_next;
 	    }
 
-	    /*
-	     * XXX
-	     * The IO_METASYNC flag indicates that all metadata (and not just
-	     * enough to ensure data integrity) mus be written to stable storage
-	     * synchronously.
-	     * (IO_METASYNC is not yet implemented in 4.4BSD-Lite.)
-	     */
 	    if (stable == NFSV3WRITE_UNSTABLE)
 		ioflags = IO_NODELOCKED;
 	    else if (stable == NFSV3WRITE_DATASYNC)
 		ioflags = (IO_SYNC | IO_NODELOCKED);
 	    else
-		ioflags = (IO_METASYNC | IO_SYNC | IO_NODELOCKED);
+		ioflags = (IO_SYNC | IO_NODELOCKED);
 	    uiop->uio_resid = len;
 	    uiop->uio_rw = UIO_WRITE;
 	    uiop->uio_segflg = UIO_SYSSPACE;
@@ -1047,7 +1040,7 @@ loop1:
 		else if (nfsd->nd_stable == NFSV3WRITE_DATASYNC)
 		    ioflags = (IO_SYNC | IO_NODELOCKED);
 		else
-		    ioflags = (IO_METASYNC | IO_SYNC | IO_NODELOCKED);
+		    ioflags = (IO_SYNC | IO_NODELOCKED);
 		uiop->uio_rw = UIO_WRITE;
 		uiop->uio_segflg = UIO_SYSSPACE;
 		uiop->uio_procp = (struct proc *)0;
