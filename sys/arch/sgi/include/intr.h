@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.22 2009/03/20 18:41:07 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.23 2009/05/21 16:08:05 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -169,10 +169,8 @@ extern intrmask_t imask[NIPLS];
 
 /* Inlines */
 static __inline void register_pending_int_handler(void (*)(int));
-static __inline void splx(int newcpl);
-static __inline int spllower(int newcpl);
 
-typedef void  (int_f) (int);
+typedef void (int_f) (int);
 extern int_f *pending_hand;
 
 static __inline void
@@ -181,46 +179,9 @@ register_pending_int_handler(void(*pending)(int))
 	pending_hand = pending;
 }
 
-/*
- */
-#ifdef INLINE_SPLRAISE
-static __inline int splraise(int newcpl);
-static __inline int
-splraise(int newcpl)
-{
-	int oldcpl;
-
-	__asm__ (" .set noreorder\n");
-	oldcpl = cpl;
-	cpl = oldcpl | newcpl;
-	__asm__ (" sync\n .set reorder\n");
-	return (oldcpl);
-}
-#else
-int splraise(int newcpl);
-#endif
-
-static __inline void
-splx(int newcpl)
-{
-	if (ipending & ~newcpl)
-		(*pending_hand)(newcpl);
-	else
-		cpl = newcpl;
-}
-
-static __inline int
-spllower(int newcpl)
-{
-	int oldcpl;
-
-	oldcpl = cpl;
-	if (ipending & ~newcpl)
-		(*pending_hand)(newcpl);
-	else
-		cpl = newcpl;
-	return (oldcpl);
-}
+int	splraise(int);
+void	splx(int);
+int	spllower(int);
 
 /*
  * Interrupt control struct used by interrupt dispatchers
@@ -237,7 +198,7 @@ struct intrhand {
 	int	ih_irq;
 	char	*ih_what;
 	void	*frame;
-	struct evcount  ih_count;
+	struct evcount ih_count;
 };
 
 extern struct intrhand *intrhand[INTMASKSIZE];

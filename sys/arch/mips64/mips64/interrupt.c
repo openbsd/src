@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.35 2009/04/25 20:35:06 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.36 2009/05/21 16:08:04 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -287,7 +287,6 @@ splinit()
 #endif
 }
 
-#ifndef INLINE_SPLRAISE
 int
 splraise(int newcpl)
 {
@@ -299,4 +298,29 @@ splraise(int newcpl)
 	__asm__ (" sync\n .set reorder\n");
 	return (oldcpl);
 }
+
+void
+splx(int newcpl)
+{
+	if (ipending & ~newcpl)
+		(*pending_hand)(newcpl);
+	else {
+		__asm__ (" .set noreorder\n");
+		cpl = newcpl;
+		__asm__ (" sync\n .set reorder\n");
+#ifdef IMASK_EXTERNAL
+		hw_setintrmask(newcpl);
 #endif
+	}
+}
+
+int
+spllower(int newcpl)
+{
+	int oldcpl;
+
+	oldcpl = cpl;
+	splx(newcpl);
+	return (oldcpl);
+}
+
