@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.62 2009/05/18 20:07:35 schwarze Exp $
+#	$OpenBSD: daily,v 1.63 2009/05/21 01:27:52 schwarze Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 umask 022
@@ -95,7 +95,8 @@ next_part "Backing up root filesystem:"
 	rootbak=`awk '$2 == "/altroot" && $1 ~ /^\/dev\// && $3 == "ffs" && \
 	    $4 ~ /xx/ \
 		{ print substr($1, 6) }' < /etc/fstab`
-	[ X$rootdev != X -a X$rootbak != X -a X$rootdev != X$rootbak ] && {
+	[ X$rootdev != X -a X$rootbak != X -a X$rootdev != X$rootbak ] && \
+	    sysctl -n hw.disknames | grep -Fqw ${rootbak%[a-p]} && {
 		next_part "Backing up root=/dev/r$rootdev to /dev/r$rootbak:"
 		sync
 		dd if=/dev/r$rootdev of=/dev/r$rootbak bs=16b seek=1 skip=1 \

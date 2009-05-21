@@ -1,4 +1,4 @@
-.\"	$OpenBSD: daily.8,v 1.15 2009/05/13 21:06:48 schwarze Exp $
+.\"	$OpenBSD: daily.8,v 1.16 2009/05/21 01:27:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 13 2009 $
+.Dd $Mdocdate: May 21 2009 $
 .Dt DAILY 8
 .Os
 .Sh NAME
@@ -110,7 +110,9 @@ The mount directory
 .Pa /altroot
 must exist, and there must be an
 .Pa /etc/fstab
-entry specifying
+entry specifying a configured disk device, the file system type
+.Sq ffs ,
+and
 .Sq xx
 for the mount options, e.g.
 .Pp
