@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.6 2009/05/15 22:59:07 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.7 2009/05/21 16:25:26 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -80,7 +80,8 @@ ip27_setup()
 	/*
 	 * Initialize the early console parameters.
 	 * This assumes BRIDGE is on widget 8 and IOC3 is mapped in
-	 * memory space at address 0x600000.
+	 * memory space at address 0x600000. Although on IP35 it is
+	 * actually widget 15...
 	 *
 	 * XXX And that 0x600000 should be computed from the first BAR
 	 * XXX of the IOC3 in pci configuration space. Joy. I'll get there
@@ -374,6 +375,7 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 	if ((mask = isr & frame->cpl) != 0) {
 		atomic_setbits_int(&ipending, mask);
 		isr &= ~mask;
+		imr &= ~mask;
 	}
 
 	/*
