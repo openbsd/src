@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.9 2007/05/29 06:28:15 otto Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.10 2009/05/21 23:45:48 krw Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -285,7 +285,7 @@ disklabel_sun_to_bsd(cp, lp)
 	lp->d_rpm          = sl->sl_rpm;
 	lp->d_interleave   = sl->sl_interleave;
 
-	lp->d_npartitions = 8;
+	lp->d_npartitions = MAXPARTITIONS;
 	/* These are as defined in <ufs/ffs/fs.h> */
 	lp->d_bbsize = 8192;	/* XXX */
 	lp->d_sbsize = 8192;	/* XXX */
@@ -346,7 +346,7 @@ search_label(devp, off, buf, lp, off0)
 	/* minimal requirements for archetypal disk label */
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
-	lp->d_npartitions = 1;
+	lp->d_npartitions = MAXPARTITIONS;
 	if (lp->d_partitions[0].p_size == 0)
 		lp->d_partitions[0].p_size = 0x1fffffff;
 	lp->d_partitions[0].p_offset = 0;

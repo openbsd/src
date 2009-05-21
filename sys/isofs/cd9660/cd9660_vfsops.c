@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.48 2008/07/23 16:24:43 beck Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.49 2009/05/21 23:45:48 krw Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -522,7 +522,7 @@ iso_disklabelspoof(dev, strat, lp)
 	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
 	DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
 	lp->d_partitions[RAW_PART].p_fstype = FS_ISO9660;
-	lp->d_npartitions = RAW_PART + 1;
+	lp->d_npartitions = MAXPARTITIONS;
 	lp->d_bbsize = 8192;		/* fake */
 	lp->d_sbsize = 64*1024;		/* fake */
 	lp->d_version = 1;
