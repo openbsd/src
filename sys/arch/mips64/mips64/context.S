@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.20 2008/07/28 19:08:46 miod Exp $ */
+/*	$OpenBSD: context.S,v 1.21 2009/05/21 16:10:38 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -279,6 +279,7 @@ ctx3:
 #ifndef IMASK_EXTERNAL
 	ctc0	v1, COP_0_ICR		# XXX RM7000
 #endif
+	ori	v0, v0, SR_INT_ENAB
 	mtc0	v0, COP_0_STATUS_REG
 	ITLBNOPFIX
 	j	ra
