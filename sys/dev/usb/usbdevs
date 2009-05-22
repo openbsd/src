@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.434 2009/05/21 16:21:18 maja Exp $
+$OpenBSD: usbdevs,v 1.435 2009/05/22 16:01:37 maja Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1233,6 +1233,7 @@ product DLINK3 KVM221		0x020f	KVM-221
 product DISPLAYLINK DL120	0x01bb	DL-120
 product DISPLAYLINK DL160	0x0141	DL-160
 product DISPLAYLINK VGA10	0x015a	CMP-USBVGA10
+product DISPLAYLINK WSDVI	0x0198	WS Tech DVI
 product DISPLAYLINK EC008	0x019b	EasyCAP008 DVI
 
 /* DMI products */
