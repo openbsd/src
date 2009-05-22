@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.76 2009/01/28 12:02:00 bluhm Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.77 2009/05/22 00:19:25 thib Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -70,12 +70,10 @@
 #include <nfs/nfsrvcache.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nfsnode.h>
-#include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
 /* Global defs. */
 extern int nfs_numasync;
-extern int nfsrtton;
 extern struct nfsstats nfsstats;
 extern int nfsrvw_procrastinate;
 extern struct timeval nfsrvw_procrastinate_tv;
@@ -84,7 +82,6 @@ int nfsd_waiting = 0;
 
 #ifdef NFSSERVER
 static int nfs_numnfsd = 0;
-static struct nfsdrt nfsdrt;
 int (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
     struct nfssvc_sock *, struct proc *, struct mbuf **) = {
 	nfsrv_null,
@@ -125,10 +122,6 @@ int nfsd_head_flag;
 #ifdef NFSCLIENT
 struct proc *nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 int nfs_niothreads = -1;
-#endif
-
-#ifdef NFSSERVER
-static void nfsd_rt(int, struct nfsrv_descript *, int);
 #endif
 
 /*
@@ -400,7 +393,6 @@ nfssvc_nfsd(nsd, argp, p)
 		else
 			solockp = (int *)0;
 		if (nd) {
-		    getmicrotime(&nd->nd_starttime);
 		    if (nd->nd_nam2)
 			nd->nd_nam = nd->nd_nam2;
 		    else
@@ -473,8 +465,6 @@ nfssvc_nfsd(nsd, argp, p)
 			    error = EPIPE;
 			    m_freem(m);
 			}
-			if (nfsrtton)
-				nfsd_rt(sotype, nd, cacherep);
 			if (nd->nd_nam2)
 				m_freem(nd->nd_nam2);
 			if (nd->nd_mrep)
@@ -491,8 +481,6 @@ nfssvc_nfsd(nsd, argp, p)
 			}
 			break;
 		    case RC_DROPIT:
-			if (nfsrtton)
-				nfsd_rt(sotype, nd, cacherep);
 			m_freem(nd->nd_mrep);
 			m_freem(nd->nd_nam2);
 			break;
@@ -632,40 +620,6 @@ nfsrv_init(terminating)
 	nfs_udpsock =  malloc(sizeof(struct nfssvc_sock), M_NFSSVC,
 	    M_WAITOK|M_ZERO);
 	TAILQ_INSERT_HEAD(&nfssvc_sockhead, nfs_udpsock, ns_chain);
-}
-
-/*
- * Add entries to the server monitor log.
- */
-static void
-nfsd_rt(sotype, nd, cacherep)
-	int sotype;
-	struct nfsrv_descript *nd;
-	int cacherep;
-{
-	struct drt *rt;
-
-	rt = &nfsdrt.drt[nfsdrt.pos];
-	if (cacherep == RC_DOIT)
-		rt->flag = 0;
-	else if (cacherep == RC_REPLY)
-		rt->flag = DRT_CACHEREPLY;
-	else
-		rt->flag = DRT_CACHEDROP;
-	if (sotype == SOCK_STREAM)
-		rt->flag |= DRT_TCP;
-	else if (nd->nd_flag & ND_NFSV3)
-		rt->flag |= DRT_NFSV3;
-	rt->proc = nd->nd_procnum;
-	if (mtod(nd->nd_nam, struct sockaddr *)->sa_family == AF_INET)
-		rt->ipadr = mtod(nd->nd_nam, struct sockaddr_in *)->sin_addr.s_addr;
-	else
-		rt->ipadr = INADDR_ANY;
-	getmicrotime(&rt->tstamp);
-	rt->resptime =
-	    ((rt->tstamp.tv_sec - nd->nd_starttime.tv_sec) * 1000000) +
-		(rt->tstamp.tv_usec - nd->nd_starttime.tv_usec);
-	nfsdrt.pos = (nfsdrt.pos + 1) % NFSRTTLOGSIZ;
 }
 #endif /* NFSSERVER */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.39 2009/05/21 12:24:22 thib Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.40 2009/05/22 00:19:25 thib Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -345,7 +345,6 @@ struct nfsrv_descript {
 	int			nd_len;		/* Length of this write */
 	int			nd_repstat;	/* Reply status */
 	u_int32_t		nd_retxid;	/* Reply xid */
-	struct timeval		nd_starttime;	/* Time RPC initiated */
 	fhandle_t		nd_fh;		/* File handle */
 	struct ucred		nd_cr;		/* Credentials */
 };

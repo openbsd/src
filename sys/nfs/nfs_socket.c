@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.79 2009/05/15 12:07:18 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.80 2009/05/22 00:19:25 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -66,7 +66,6 @@
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nfsnode.h>
-#include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
 /*
@@ -127,8 +126,6 @@ static int proct[NFS_NPROCS] = {
 #define	NFS_CWNDSCALE	256
 #define	NFS_MAXCWND	(NFS_CWNDSCALE * 32)
 static int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256, };
-int nfsrtton = 0;
-struct nfsrtt nfsrtt;
 
 void nfs_realign(struct mbuf **, int);
 void nfs_realign_fixup(struct mbuf *, struct mbuf *, unsigned int *);
@@ -727,24 +724,7 @@ nfsmout:
 				rep->r_mrep = mrep;
 				rep->r_md = md;
 				rep->r_dpos = dpos;
-				if (nfsrtton) {
-					struct rttl *rt;
 
-					rt = &nfsrtt.rttl[nfsrtt.pos];
-					rt->proc = rep->r_procnum;
-					rt->rto = NFS_RTO(nmp, proct[rep->r_procnum]);
-					rt->sent = nmp->nm_sent;
-					rt->cwnd = nmp->nm_cwnd;
-					rt->srtt = nmp->nm_srtt[proct[rep->r_procnum] - 1];
-					rt->sdrtt = nmp->nm_sdrtt[proct[rep->r_procnum] - 1];
-					rt->fsid = nmp->nm_mountp->mnt_stat.f_fsid;
-					getmicrotime(&rt->tstamp);
-					if (rep->r_flags & R_TIMING)
-						rt->rtt = rep->r_rtt;
-					else
-						rt->rtt = 1000000;
-					nfsrtt.pos = (nfsrtt.pos + 1) % NFSRTTLOGSIZ;
-				}
 				/*
 				 * Update congestion window.
 				 * Do the additive increase of

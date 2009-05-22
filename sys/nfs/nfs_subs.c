@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.94 2009/04/13 17:51:57 blambert Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.95 2009/05/22 00:19:25 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -64,7 +64,6 @@
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsmount.h>
-#include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -514,8 +513,6 @@ static short *nfsrv_v3errmap[] = {
 	nfsv3err_commit,
 };
 
-extern struct nfsrtt nfsrtt;
-
 struct pool nfsreqpl;
 
 /*
@@ -913,7 +910,6 @@ nfs_init()
 {
 	static struct timeout nfs_timer_to;
 
-	nfsrtt.pos = 0;
 	rpc_vers = txdr_unsigned(RPC_VER2);
 	rpc_call = txdr_unsigned(RPC_CALL);
 	rpc_reply = txdr_unsigned(RPC_REPLY);
