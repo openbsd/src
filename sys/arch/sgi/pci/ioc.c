@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.14 2009/05/08 18:36:11 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.15 2009/05/22 21:21:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -221,11 +221,8 @@ ioc_attach(struct device *parent, struct device *self, void *aux)
 		} else
 		if (strncmp(sc->sc_owserial->sc_product, "030-1155-", 9) == 0) {
 			/* CADDuo board */
-			has_ps2 = 1;
-			/*
-			 * XXX This card supposedly has the Ethernet part, too.
-			 */
-			/* has_ethernet = 1; shared_handler = 1; */
+			has_ps2 = has_ethernet = 1;
+			shared_handler = 1;
 		} else
 		if (strncmp(sc->sc_owserial->sc_product, "030-1657-", 9) == 0 ||
 		    strncmp(sc->sc_owserial->sc_product, "030-1664-", 9) == 0) {
