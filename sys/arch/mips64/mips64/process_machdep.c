@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.9 2008/07/28 18:48:25 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.10 2009/05/22 20:37:53 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -40,7 +40,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.9 2008/07/28 18:48:25 miod Exp $
+ *	$Id: process_machdep.c,v 1.10 2009/05/22 20:37:53 miod Exp $
  */
 
 /*
@@ -73,7 +73,6 @@
 #include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
-#include <machine/psl.h>
 #include <machine/frame.h>
 
 #define	REGSIZE sizeof(struct trap_frame)

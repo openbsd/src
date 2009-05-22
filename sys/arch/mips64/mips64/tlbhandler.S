@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.16 2007/05/25 20:58:39 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.17 2009/05/22 20:37:53 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -31,7 +31,6 @@
  */
 
 #include <machine/param.h>
-#include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/asm.h>
 #include <machine/cpu.h>

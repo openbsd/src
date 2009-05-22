@@ -2170,7 +2170,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/pmap.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/proc.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/profile.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/psl.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/pte.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/ptrace.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/sgi/reg.ph

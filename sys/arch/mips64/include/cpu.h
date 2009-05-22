@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.30 2009/03/26 17:24:33 oga Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.31 2009/05/22 20:37:53 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,8 +44,6 @@
 
 #ifndef _MIPS_CPU_H_
 #define _MIPS_CPU_H_
-
-#include <machine/psl.h>
 
 /*
  * MIPS32-style segment definitions.
@@ -386,6 +384,8 @@ extern struct cpu_info cpu_info_primary;
 #define cpu_number()	0
 
 #include <machine/frame.h>
+#include <machine/intr.h>
+
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.
@@ -563,7 +563,6 @@ void	setsoftintr1(void);
 void	clearsoftintr1(void);
 u_int32_t enableintr(void);
 u_int32_t disableintr(void);
-u_int32_t updateimask(intrmask_t);
 void	setsr(u_int32_t);
 u_int32_t getsr(void);
 

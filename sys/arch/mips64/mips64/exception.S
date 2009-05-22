@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.17 2009/05/19 16:16:43 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.18 2009/05/22 20:37:53 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -40,7 +40,6 @@
  */
 
 #include <machine/param.h>
-#include <machine/psl.h>
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/regnum.h>
@@ -491,119 +490,6 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	eret
 	.set	at
 END(u_general)
-
-#ifdef notyet
-/*---------------------------------------------------------------- u_syscall
- *	Syscall exceptions are special such that they can be
- *	optimized by not saving more than what is really needed.
- *	Syscalls are actually 'function calls' from the user
- *	programs point of view and thus it does not expect us to
- *	save away all temporary registers etc. Just save state and
- *	args to avoid a lot of overhead.
- */
-NNON_LEAF(u_syscall, FRAMESZ(CF_SZ), ra)
-	.set	noat
-	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
-
-	REG_S	a0, UADDR+PCB_REGS+(A0 * REGSZ)
-	REG_S	a1, UADDR+PCB_REGS+(A1 * REGSZ)
-	REG_S	a2, UADDR+PCB_REGS+(A2 * REGSZ)
-	REG_S	a3, UADDR+PCB_REGS+(A3 * REGSZ)
-	mfc0	a0, COP_0_STATUS_REG	# First arg is the status reg.
-	mfc0	a1, COP_0_CAUSE_REG	# Second arg is the cause reg.
-	dmfc0	a3, COP_0_EXC_PC		# Fourth arg is the pc.
-	REG_S	sp, UADDR+PCB_REGS+(SP * REGSZ)
-	LA	sp, KERNELSTACK - FRAMESZ(CF_SZ)	# switch to kernel SP
-	REG_S	ra, UADDR+PCB_REGS+(RA * REGSZ)
-	REG_S	a0, UADDR+PCB_REGS+(SR * REGSZ)
-	REG_S	a1, UADDR+PCB_REGS+(CAUSE * REGSZ)
-	REG_S	a3, UADDR+PCB_REGS+(PC * REGSZ)
-	REG_S	a3, CF_RA_OFFS(sp)		# for debugging
-	LA	gp, _gp				# switch to kernel GP
-	lw	a3, cpl
-	sw	a3, UADDR+PCB_REGS+(CPL * REGSZ)
-	.set	at
-# Turn off fpu and enter kernel mode
-	and	t0, a0, ~(SR_COP_1_BIT | SR_EXL | SR_KSU_MASK | SR_INT_ENAB)
-	mtc0	t0, COP_0_STATUS_REG
-	li	a0, UADDR+PCB_REGS
-	ITLBNOPFIX
-/*
- *  If CPU is a RM7000 save away performance stuff.
- */
-#if 0
-	lw	t0, cpu_is_rm7k
-	beqz	t0, 1f			# not an RM7K. Don't do perf save.
-	mfc0	v0, COP_0_PC_CTRL
-	lw      t0, curproc
-	sw	v0, P_PC_CTRL(t0)
-	dmfc0	v0, COP_0_WATCH_1
-	dmfc0	v1, COP_0_WATCH_2
-	sd	v0, P_WATCH_1(t0)
-	sd	v1, P_WATCH_2(t0)
-	mfc0	v0, COP_0_WATCH_M
-	mfc0	v1, COP_0_PC_COUNT
-	sw	v0, P_WATCH_M(t0)
-	sw	v1, P_PC_COUNT(t0)
-	mtc0	zero, COP_0_PC_CTRL
-	dmtc0	zero, COP_0_WATCH_1
-	dmtc0	zero, COP_0_WATCH_2
-1:
-#endif
-
-	jal	trap
-	nop
-
-	mfc0	t0, COP_0_STATUS_REG	# dis int preserve settings.
-	li	t1, ~SR_INT_ENAB
-	and	t0, t0, t1
-	mtc0	t0, COP_0_STATUS_REG
-	ITLBNOPFIX
-
-	ori	t0, SR_EXL
-	mtc0	t0, COP_0_STATUS_REG	# set exception level
-	ITLBNOPFIX
-
-#if 0
-	lw	t0, cpu_is_rm7k
-	beqz	t0, 1f			# not an RM7K. Don't do perf setup.
-
-	PTR_L	t0, curproc		# set up rm7k.
-	ld	v0, P_WATCH_1(t0)
-	dmtc0	v0, COP_0_WATCH_1
-	ld	v0, P_WATCH_2(t0)
-	dmtc0	v0, COP_0_WATCH_2
-	lw	v0, P_WATCH_M(t0)
-	mtc0	v0, COP_0_WATCH_M
-	lw	v0, P_PC_CTRL(t0)
-	lw	v1, P_PC_COUNT(t0)
-	nop;nop
-	mtc0	v0, COP_0_PC_CTRL
-	nop;nop;nop;nop
-	mtc0	v1, COP_0_PC_COUNT
-	nop;nop;nop;nop
-1:
-#endif
-	lw	a3, UADDR+PCB_REGS+(CPL * REGSZ)
-	sw	a3, cpl
-
-	.set	noat
-
-	REG_L	a0, UADDR+PCB_REGS+(SR * REGSZ)
-	mtc0	a0, COP_0_STATUS_REG	# still exception level
-	REG_L	a0, UADDR+PCB_REGS+(PC * REGSZ)
-	REG_L	v0, UADDR+PCB_REGS+(V0 * REGSZ)
-	dmtc0	a0, COP_0_EXC_PC		# set return address
-	REG_L	v1, UADDR+PCB_REGS+(V1 * REGSZ)
-	REG_L	gp, UADDR+PCB_REGS+(GP * REGSZ)
-	REG_L	sp, UADDR+PCB_REGS+(SP * REGSZ)
-	REG_L	ra, UADDR+PCB_REGS+(RA * REGSZ)
-	sync
-	eret
-	.set	at
-END(u_syscall)
-#endif
-
 
 /*-------------------------------------------------------------- proc_trampoline
  *	Setup for and return to user.

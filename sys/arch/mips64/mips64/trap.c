@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.41 2008/02/20 19:13:38 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.42 2009/05/22 20:37:53 miod Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -68,7 +68,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/trap.h>
-#include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/autoconf.h>
@@ -86,11 +85,12 @@
 #include <ddb/db_sym.h>
 #endif
 
-#include <sys/cdefs.h>
 #include <sys/syslog.h>
 
 #include "systrace.h"
 #include <dev/systrace.h>
+
+#define	USERMODE(ps)	(((ps) & SR_KSU_MASK) == SR_KSU_USER)
 
 int	want_resched;	/* resched() was called */
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */

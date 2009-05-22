@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.23 2009/05/21 16:08:05 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.24 2009/05/22 20:37:53 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -220,6 +220,7 @@ void hw_setintrmask(intrmask_t);
 extern void *hwmask_addr;
 #endif
 
+u_int32_t updateimask(intrmask_t);
 void	dosoftint(intrmask_t);
 
 #endif /* _LOCORE */

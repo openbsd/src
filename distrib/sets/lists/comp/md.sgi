@@ -222,7 +222,6 @@
 ./usr/include/sgi/pmap.h
 ./usr/include/sgi/proc.h
 ./usr/include/sgi/profile.h
-./usr/include/sgi/psl.h
 ./usr/include/sgi/pte.h
 ./usr/include/sgi/ptrace.h
 ./usr/include/sgi/reg.h

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macectrl.S,v 1.5 2004/09/27 18:52:01 pefo Exp $ */
+/*	$OpenBSD: macectrl.S,v 1.6 2009/05/22 20:37:54 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -26,7 +26,6 @@
  *
  */
 #include <machine/param.h>
-#include <machine/psl.h>
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/regnum.h>
