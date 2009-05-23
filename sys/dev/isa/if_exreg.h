@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_exreg.h,v 1.3 2007/10/21 02:25:27 brad Exp $	*/
+/*	$OpenBSD: if_exreg.h,v 1.4 2009/05/23 15:35:10 jsg Exp $	*/
 /*
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
  * All rights reserved.
@@ -34,8 +34,6 @@
  * Several constants.
  */
 
-/* Length of an ethernet address. */
-#define ETHER_ADDR_LEN 6
 /* Default RAM size in board. */
 #define CARD_RAM_SIZE 0x8000
 /* Number of I/O ports used. */
