@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem.c,v 1.31 2009/02/22 13:45:11 jsg Exp $	*/
+/*	$OpenBSD: spdmem.c,v 1.32 2009/05/23 09:14:39 jsg Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -204,6 +204,7 @@
 /* Dual Data Rate 3 SDRAM */
 #define SPDMEM_DDR3_MODTYPE		0x00
 #define SPDMEM_DDR3_DENSITY		0x01
+#define SPDMEM_DDR3_MOD_ORG		0x04
 #define SPDMEM_DDR3_DATAWIDTH		0x05
 #define SPDMEM_DDR3_MTB_DIVIDEND	0x07
 #define SPDMEM_DDR3_MTB_DIVISOR		0x08
@@ -211,6 +212,9 @@
 #define SPDMEM_DDR3_THERMAL		0x1d
 
 #define SPDMEM_DDR3_DENSITY_CAPMASK		0x0f
+#define SPDMEM_DDR3_MOD_ORG_CHIPWIDTH_MASK	0x07
+#define SPDMEM_DDR3_MOD_ORG_BANKS_SHIFT		3
+#define SPDMEM_DDR3_MOD_ORG_BANKS_MASK		0x07
 #define SPDMEM_DDR3_DATAWIDTH_ECCMASK		(1 << 3)
 #define SPDMEM_DDR3_DATAWIDTH_PRIMASK		0x07
 #define SPDMEM_DDR3_THERMAL_PRESENT		(1 << 7)
@@ -687,14 +691,23 @@ spdmem_ddr3_decode(struct spdmem_softc *sc, struct spdmem *s)
 {
 	const char *type;
 	int dimm_size, cycle_time, d_clk, p_clk, bits;
-	uint8_t mtype, capacity, dividend, divisor;
+	uint8_t mtype, chipsize, dividend, divisor;
+	uint8_t datawidth, chipwidth, physbanks;
 
 	type = spdmem_basic_types[s->sm_type];
 
-	capacity = s->sm_data[SPDMEM_DDR3_DENSITY] &
+	chipsize = s->sm_data[SPDMEM_DDR3_DENSITY] &
 	    SPDMEM_DDR3_DENSITY_CAPMASK;
-	/* capacity in MB is 2^(x+8) which we can get by shifting */
-	dimm_size = 2 << (capacity + 7);
+	datawidth = s->sm_data[SPDMEM_DDR3_DATAWIDTH] &
+	    SPDMEM_DDR3_DATAWIDTH_PRIMASK;
+	chipwidth = s->sm_data[SPDMEM_DDR3_MOD_ORG] &
+	    SPDMEM_DDR3_MOD_ORG_CHIPWIDTH_MASK;
+	physbanks = (s->sm_data[SPDMEM_DDR3_MOD_ORG] >> 
+	    SPDMEM_DDR3_MOD_ORG_BANKS_SHIFT) & SPDMEM_DDR3_MOD_ORG_BANKS_MASK;
+
+	dimm_size = (chipsize + 28 - 20) - 3 + (datawidth + 3) -
+	    (chipwidth + 2);
+	dimm_size = (1 << dimm_size) * (physbanks + 1);
 
 	if (dimm_size < 1024)
 		printf(" %dMB", dimm_size);
