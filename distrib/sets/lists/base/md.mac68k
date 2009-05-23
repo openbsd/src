@@ -1927,7 +1927,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/nfs/nfsmount.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/nfs/nfsnode.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/nfs/nfsproto.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/nfs/nfsrtt.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/nfs/nfsrvcache.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/nfs/rpcv2.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/nfs/xdr_subs.ph

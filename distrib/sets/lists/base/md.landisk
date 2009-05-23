@@ -1924,7 +1924,6 @@
 ./usr/libdata/perl5/site_perl/sh-openbsd/nfs/nfsmount.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/nfs/nfsnode.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/nfs/nfsproto.ph
-./usr/libdata/perl5/site_perl/sh-openbsd/nfs/nfsrtt.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/nfs/nfsrvcache.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/nfs/rpcv2.ph
 ./usr/libdata/perl5/site_perl/sh-openbsd/nfs/xdr_subs.ph

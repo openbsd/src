@@ -1194,7 +1194,6 @@
 ./usr/include/nfs/nfsmount.h
 ./usr/include/nfs/nfsnode.h
 ./usr/include/nfs/nfsproto.h
-./usr/include/nfs/nfsrtt.h
 ./usr/include/nfs/nfsrvcache.h
 ./usr/include/nfs/rpcv2.h
 ./usr/include/nfs/xdr_subs.h

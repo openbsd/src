@@ -1956,7 +1956,6 @@
 ./usr/libdata/perl5/site_perl/mips64-openbsd/nfs/nfsmount.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/nfs/nfsnode.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/nfs/nfsproto.ph
-./usr/libdata/perl5/site_perl/mips64-openbsd/nfs/nfsrtt.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/nfs/nfsrvcache.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/nfs/rpcv2.ph
 ./usr/libdata/perl5/site_perl/mips64-openbsd/nfs/xdr_subs.ph

@@ -1232,7 +1232,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/nfs/nfsmount.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/nfs/nfsnode.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/nfs/nfsproto.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/nfs/nfsrtt.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/nfs/nfsrvcache.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/nfs/rpcv2.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/nfs/xdr_subs.ph

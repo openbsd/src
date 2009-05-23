@@ -1964,7 +1964,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/nfs/nfsmount.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/nfs/nfsnode.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/nfs/nfsproto.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/nfs/nfsrtt.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/nfs/nfsrvcache.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/nfs/rpcv2.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/nfs/xdr_subs.ph
