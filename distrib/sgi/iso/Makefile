@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2009/05/14 18:58:17 miod Exp $
+#	$OpenBSD: Makefile,v 1.11 2009/05/23 18:20:37 miod Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -20,6 +20,11 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
 BSDRD=	bsd.rd
 all: ${CDROM}
 
+# Note regarding sgivol -h value:
+# boot32 currently needs 20 2048 byte sectors, boot64 currently needs 44,
+# and there is some room for growth.
+# IF THIS VALUE IS EVER CHANGED, make sure it is consistent with the cdroot
+# layout in /etc/disktab!
 ${CDROM}:
 	-rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/
@@ -31,8 +36,6 @@ ${CDROM}:
 	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=2048b count=224
 	vnconfig -v -c -t cdroot svnd0 ${.OBJDIR}/${CDROM}
 
-	# boot32 needs 20 2048 byte sectors, boot64 needs 44,
-	# and add some room for growth
 	/usr/mdec/sgivol -i -h 80 svnd0
 	/usr/mdec/sgivol -w boot32 ${.OBJDIR}/boot32 svnd0
 	/usr/mdec/sgivol -l boot32 sashARCS svnd0
