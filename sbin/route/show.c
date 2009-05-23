@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.77 2009/04/28 12:09:35 michele Exp $	*/
+/*	$OpenBSD: show.c,v 1.78 2009/05/23 16:44:12 chris Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ void
 p_rtentry(struct rt_msghdr *rtm)
 {
 	static int	 old_af = -1;
-	struct sockaddr	*sa = (struct sockaddr *)(rtm + 1);
+	struct sockaddr	*sa = (struct sockaddr *)((char *)rtm + rtm->rtm_hdrlen);
 	struct sockaddr	*mask, *rti_info[RTAX_MAX];
 	char		 ifbuf[IF_NAMESIZE];
 
