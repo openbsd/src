@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.53 2009/05/24 01:40:58 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.54 2009/05/24 02:06:15 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -519,6 +519,13 @@ void
 agp_i810_bind_page(void *sc, bus_addr_t offset, paddr_t physical, int flags)
 {
 	struct agp_i810_softc *isc = sc;
+
+	/*
+	 * COHERENT mappings mean set the snoop bit. this should never be
+	 * accessed by the gpu through the gtt.
+	 */
+	if (flags & BUS_DMA_COHERENT)
+		physical |= INTEL_COHERENT;
 
 	intagp_write_gtt(isc, offset - isc->isc_apaddr, physical);
 }
