@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.436 2009/05/23 18:00:46 jsg Exp $
+$OpenBSD: usbdevs,v 1.437 2009/05/24 08:12:49 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -532,6 +532,7 @@ vendor PEGATRON		0x1d4d	Pegatron
 vendor AIRTIES		0x1eda	AirTies
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
+vendor ENCORE		0x203d	Encore
 vendor DLINK3		0x2101	D-Link
 vendor MOTOROLA2	0x22b8	Motorola
 vendor TRIPPLITE	0x2478	Tripp-Lite
@@ -1223,6 +1224,9 @@ product DLINK2 DWA111		0x3c06	DWA-111
 product DLINK2 DWA110		0x3c07	DWA-110
 product DLINK2 RT2870_1		0x3c09	RT2870
 product DLINK2 RT3072		0x3c0a	RT3072
+product DLINK2 RT3070_1		0x3c0d	RT3070
+product DLINK2 RT3070_2		0x3c0e	RT3070
+product DLINK2 RT3070_3		0x3c0f	RT3070
 product DLINK2 DWA160A		0x3c10	DWA-160A
 product DLINK2 RT2870_2		0x3c11	RT2870
 product DLINK2 DWA130		0x3c13	DWA-130
@@ -1290,6 +1294,9 @@ product ELSA USB2ETHERNET	0x3000	Microlink USB2Ethernet
 
 /* eMPIA products */
 product EMPIA EEEPC701_VIDEO	0x2761	EeePC701 camera
+
+/* Encore products */
+product ENCORE RT3070		0x1480	RT3070
 
 /* Entrega products */
 product ENTREGA 1S		0x0001	1S serial
@@ -1768,6 +1775,7 @@ product IODATA USBWNG54US_NF	0x0929	USB WN-G54/US
 product IODATA ETGUS2		0x0930	ETG-US2
 product IODATA FT232R		0x093c	FT232R
 product IODATA WNGDNUS2		0x093f	WN-GDN/US2
+product IODATA RT3072		0x0945	RT3072
 product IODATA USBRSAQ		0x0a03	RSAQ1 Serial
 product IODATA2 USB2SC		0x0a09	USB2.0-SCSI Bridge USB2-SC
 product IODATA USBRSAQ5		0x0a0e	RSAQ5 Serial
@@ -2040,6 +2048,7 @@ product MGE UPS2		0xffff	Protection Center 2 UPS
 /* Micro Star International products */
 product MSI WLAN		0x1020	WLAN
 product MSI BLUETOOTH		0x1967	Bluetooth
+product MSI RT3070		0x3820	RT3070
 product MSI RT2570		0x6861	RT2570
 product MSI RT2570_2		0x6865	RT2570
 product MSI RT2570_3		0x6869	RT2570
@@ -2333,6 +2342,7 @@ product PAPOUCH GOLIATH_MSR	0x8005	GOLIATH MSR
 /* Pegatron products */
 product PEGATRON RT2870		0x0002	RT2870
 product PEGATRON RT3070		0x000c	RT3070
+product PEGATRON RT3070_2	0x000e	RT3070
 
 /* Pen Driver */
 product PEN USBREADER		0x0240	6 in 1
@@ -2787,6 +2797,7 @@ product SITECOMEU RT3070_2	0x003b	RT3070
 product SITECOMEU RT3070_3	0x003c	RT3070
 product SITECOMEU RT3070_4	0x003d	RT3070
 product SITECOMEU RT3070	0x003e	RT3070
+product SITECOMEU RT3072	0x0042	RT3072
 product SITECOMEU LN028		0x061c	LN-028
 product SITECOMEU LN030		0x0021	LN-030
 product SITECOMEU WL113		0x9071	WL-113
@@ -3150,6 +3161,8 @@ product ZCOM UB82		0x0026	UB82
 product ZINWELL RT2570		0x0260	RT2570
 product ZINWELL RT2870_1	0x0280	RT2870
 product ZINWELL RT2870_2	0x0282	RT2870
+product ZINWELL RT3072		0x0283	RT3072
+product ZINWELL RT3070		0x5257	RT3070
 
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax Modem
