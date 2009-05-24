@@ -1,4 +1,4 @@
-/* $OpenBSD: prcmvar.h,v 1.1 2009/05/08 03:13:26 drahn Exp $ */
+/* $OpenBSD: prcmvar.h,v 1.2 2009/05/24 00:36:41 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -18,44 +18,38 @@
 void prcm_setclock(int clock, int speed);
 #define PRCM_CLK_SPEED_32	0
 #define PRCM_CLK_SPEED_SYS	1
-#define PRCM_CLK_SPEED_EXT	2
 
 void prcm_enableclock(int bit);
 
-#define  	PRCM_CLK_EN_DSS1	0
-#define  	PRCM_CLK_EN_DSS2	1
-#define  	PRCM_CLK_EN_TV		2
-#define  	PRCM_CLK_EN_VLYNQ	3
-#define  	PRCM_CLK_EN_GP2		4
-#define  	PRCM_CLK_EN_GP		5
-#define  	PRCM_CLK_EN_GP4		6
-#define  	PRCM_CLK_EN_GP5		7
-#define  	PRCM_CLK_EN_GP6		8
-#define  	PRCM_CLK_EN_GP7		9
-#define  	PRCM_CLK_EN_GP8		10
-#define  	PRCM_CLK_EN_GP9		11
-#define  	PRCM_CLK_EN_GP10	12
-#define  	PRCM_CLK_EN_GP11	13
-#define  	PRCM_CLK_EN_GP12	14
-#define  	PRCM_CLK_EN_MCBSP1	15
-#define  	PRCM_CLK_EN_MCBSP2	16
-#define  	PRCM_CLK_EN_MCSPI1	17
-#define  	PRCM_CLK_EN_MCSPI2	18
-#define  	PRCM_CLK_EN_I2C1	19
-#define  	PRCM_CLK_EN_I2C2	20
-#define  	PRCM_CLK_EN_UART1	21
-#define  	PRCM_CLK_EN_UART2	22
-#define  	PRCM_CLK_EN_HDQ		23
-#define  	PRCM_CLK_EN_EAC		24
-#define  	PRCM_CLK_EN_FAC		25
-#define  	PRCM_CLK_EN_MMC		26
-#define  	PRCM_CLK_EN_MSPR0	27
-#define  	PRCM_CLK_EN_WDT3	28
-#define  	PRCM_CLK_EN_WDT4	29
-#define  	PRCM_CLK_EN_MAILBOX	30
-#define  	PRCM_CLK_EN_CAM		31
-#define  	PRCM_CLK_EN_USB		32
-#define  	PRCM_CLK_EN_SSI		33
-#define  	PRCM_CLK_EN_UART3	34
+#define		PRCM_CLK_EN_MMC3		(30)
+#define		PRCM_CLK_EN_ICR		(29)
+#define		PRCM_CLK_EN_AES2 	(28)
+#define		PRCM_CLK_EN_SHA12 	(27)
+#define		PRCM_CLK_EN_DES2 	(26)
+#define		PRCM_CLK_EN_MMC2		(25)
+#define		PRCM_CLK_EN_MMC1		(24)
+#define		PRCM_CLK_EN_MSPRO	(23)
+#define		PRCM_CLK_EN_HDQ		(22)
+#define		PRCM_CLK_EN_MCSPI4	(21)
+#define		PRCM_CLK_EN_MCSPI3	(20)
+#define		PRCM_CLK_EN_MCSPI2	(19)
+#define		PRCM_CLK_EN_MCSPI1	(18)
+#define		PRCM_CLK_EN_I2C3		(17)
+#define		PRCM_CLK_EN_I2C2		(16)
+#define		PRCM_CLK_EN_I2C1		(15)
+#define		PRCM_CLK_EN_UART2	(14)
+#define		PRCM_CLK_EN_UART1	(13)
+#define		PRCM_CLK_EN_GPT11	(12)
+#define		PRCM_CLK_EN_GPT10	(11)
+#define		PRCM_CLK_EN_MCBSP5	(10)
+#define		PRCM_CLK_EN_MCBSP1	(9)
+#define		PRCM_CLK_EN_MAILBOXES 	(7)
+#define		PRCM_CLK_EN_OMAPCTRL 	(6)
+#define		PRCM_CLK_EN_HSOTGUSB 	(4)
+#define		PRCM_CLK_EN_SDRC 	(1)
+
+#define		CM_CORE_EN_USBTLL	(2+64)
+#define		CM_CORE_EN_TS		(1+64)
+#define		CM_CORE_EN_CPEFUSE	(0+64)
 
 /* need interface for CM_AUTOIDLE */
