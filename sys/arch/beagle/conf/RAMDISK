@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.2 2009/05/11 12:49:24 drahn Exp $
+# $OpenBSD: RAMDISK,v 1.3 2009/05/24 21:02:48 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -64,17 +64,19 @@ mainbus0	at root
 cpu0		at mainbus?
 ahb0		at mainbus?
 
-prcm0		at ahb? addr 0x48004800	# power/clock controller
+prcm0		at ahb? addr 0x48004000	# power/clock controller
 intc0		at ahb? addr 0x48200000	# interrupt controller
 gptimer0	at ahb? addr 0x49032000	intr 38 # timer GPTIMER2
 gptimer1	at ahb? addr 0x48318000	intr 37 # timer GPTIMER1
 
 #sm0		at ahb?	addr 0x0C000300 intr 188 #ethernet
 
-#omgpio0		at ahb? addr 0x48018000 intr 29
-#omgpio1		at ahb? addr 0x4801a000 intr 30
-#omgpio2		at ahb? addr 0x4801c000 intr 31
-#omgpio3		at ahb? addr 0x4801e000 intr 32
+omgpio0		at ahb? addr 0x48310000 intr 29
+omgpio1		at ahb? addr 0x49050000 intr 30
+omgpio2		at ahb? addr 0x49052000 intr 31
+omgpio3		at ahb? addr 0x49054000 intr 32
+omgpio4		at ahb? addr 0x49056000 intr 33
+omgpio5		at ahb? addr 0x49058000 intr 34
 
 omdog0		at ahb? addr 0x48314000 		# watchdog timer
 
