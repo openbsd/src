@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: security,v 1.86 2009/05/18 19:37:47 schwarze Exp $
+#	$OpenBSD: security,v 1.87 2009/05/24 22:25:12 schwarze Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -420,11 +420,15 @@ fi
 
 # Display any changes in setuid/setgid files and devices.
 next_part "Setuid/device find errors:"
-find / \( ! -fstype local \
-	-o -fstype procfs -o -fstype afs -o -fstype xfs \) -a -prune -o \
+( set -o noglob
+  find / \
+	\( ! -fstype local -o -fstype procfs -o -fstype afs -o -fstype xfs \
+	   `for f in $SUIDSKIP; do echo -o -path $f; done` \
+	\) -a -prune -o \
 	-type f -a \( -perm -u+s -o -perm -g+s \) -print0 -o \
 	! -type d -a ! -type f -a ! -type l -a ! -type s -a ! -type p \
-	-print0 | xargs -0 ls -ldgT | sort +9 > $LIST
+	-print0 | xargs -0 -r ls -ldgT | sort +9 > $LIST
+)
 
 # Display any changes in the setuid/setgid file list.
 next_part "Checking setuid/setgid files and devices:"

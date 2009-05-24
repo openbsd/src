@@ -1,8 +1,8 @@
-.\" $OpenBSD: security.8,v 1.16 2009/05/20 22:46:48 schwarze Exp $
+.\" $OpenBSD: security.8,v 1.17 2009/05/24 22:25:12 schwarze Exp $
 .\"
 .\" David Leonard, 2001. Public Domain.
 .\"
-.Dd $Mdocdate: May 20 2009 $
+.Dd $Mdocdate: May 24 2009 $
 .Dt SECURITY 8
 .Os
 .Sh NAME
@@ -116,6 +116,15 @@ file permissions.
 The intent of the
 .Nm
 script is to point out some obvious holes to the system administrator.
+.Sh ENVIRONMENT
+The following variables can be set in
+.Pa /etc/daily.local :
+.Pp
+.Bl -tag -width "SUIDSKIP" -compact
+.It Ev SUIDSKIP
+A whitespace-separated list of absolute paths to be skipped
+in setuid/setgid file checks and in device special file checks.
+.El
 .Sh FILES
 .Bl -tag -width /dev/changelist -compact
 .It Pa /etc/changelist
