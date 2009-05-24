@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.554 2009/05/19 07:46:03 halex Exp $
+#	$OpenBSD: install.sub,v 1.555 2009/05/24 00:17:37 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -514,35 +514,29 @@ sets by prepending a '-' to the set name, file name pattern or 'all'. Selected
 sets are labelled '[X]'.
 __EOT
 	while :; do
-		_action=
 		for _f in $_avail; do
 			isin $_f $_selected && echo "[X] $_f" || echo "[ ] $_f"
 		done|showcols|sed 's/^/    /'
-		ask "Set name? (or 'abort' or 'done')" done
-		case $resp in
-		abort)	_selected=
-			break ;;
-		done)	break ;;
-		-*)	_action=rmel ;;
-		esac
+		ask "Set name(s)? (or 'abort' or 'done')" done
 
-		: ${_action:=addel}
-		resp=${resp#+|-}
+		set -o noglob
+		for resp in $resp; do
+			case $resp in
+			abort)	_selected=; break 2 ;;
+			done)	break 2 ;;
+			-*)	_action=rmel ;;
+			*)	_action=addel ;;
+			esac
+			resp=${resp#[+-]}
+			[[ $resp = all ]] && resp=*
 
-		case $resp in
-		"")	continue ;;
-		all)	resp=* ;;
-		esac
-
-		# Use @($resp) rather than just $resp to protect
-		# against silly user input that might cause syntax
-		# errors.
-		for _f in $_avail; do
-			eval "case $_f in
-			@($resp)) _selected=\`$_action $_f \$_selected\` ;;
-			esac"
+			for _f in $_avail; do
+				[[ $_f = $resp ]] && _selected=$($_action $_f $_selected)
+			done
 		done
 	done
+
+	set +o noglob
 	COLUMNS=$_col
 
 	resp=$_selected
