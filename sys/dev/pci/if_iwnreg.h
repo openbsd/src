@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.23 2009/05/20 16:31:50 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.24 2009/05/24 18:51:11 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -20,7 +20,7 @@
 #define IWN_TX_RING_COUNT	256
 #define IWN_TX_RING_LOMARK	192
 #define IWN_TX_RING_HIMARK	224
-#define IWN_RX_RING_COUNT_LOG	8
+#define IWN_RX_RING_COUNT_LOG	6
 #define IWN_RX_RING_COUNT	(1 << IWN_RX_RING_COUNT_LOG)
 
 #define IWN4965_NTXQUEUES	16
@@ -433,7 +433,7 @@ struct iwn_rxon {
 	uint8_t		cck_mask;
 	uint16_t	associd;
 	uint32_t	flags;
-#define IWN_RXON_24GHZ	(1 <<  0)
+#define IWN_RXON_24GHZ		(1 <<  0)
 #define IWN_RXON_CCK		(1 <<  1)
 #define IWN_RXON_AUTO		(1 <<  2)
 #define IWN_RXON_SHSLOT		(1 <<  4)
