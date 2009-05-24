@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.18 2009/04/21 19:36:17 mk Exp $	*/
+/*	$OpenBSD: aps.c,v 1.19 2009/05/24 16:40:18 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
@@ -239,7 +239,7 @@ aps_match(struct device *parent, void *match, void *aux)
 	int iobase;
 	u_int8_t cr;
 
-	char iobuf[16];
+	unsigned char iobuf[16];
 
 	iot = ia->ia_iot;
 	iobase = ia->ipa_io[0].base;
