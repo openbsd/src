@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.52 2009/05/10 16:57:44 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.53 2009/05/24 01:40:58 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -50,6 +50,16 @@
 #define READ1(off)	bus_space_read_1(isc->map->bst, isc->map->bsh, off)
 #define READ4(off)	bus_space_read_4(isc->map->bst, isc->map->bsh, off)
 #define WRITE4(off,v)	bus_space_write_4(isc->map->bst, isc->map->bsh, off, v)
+
+/*
+ * Intel IGP gtt bits.
+ */
+/* PTE is enabled */
+#define	INTEL_ENABLED	0x1
+/* I810/I815 only, memory is in dcache */
+#define	INTEL_LOCAL	0x2
+/* Memory is snooped, must not be accessed through gtt from the cpu. */
+#define	INTEL_COHERENT	0x6	
 
 enum {
 	CHIP_NONE	= 0,	/* not integrated graphics */
@@ -653,7 +663,8 @@ agp_i810_bind_memory(void *sc, struct agp_memory *mem, bus_size_t offset)
 	if (regval != (isc->gatt->ag_physical | 1)) {
 		printf("agp_i810_bind_memory: PGTBL_CTL is 0x%x - fixing\n",
 		    regval);
-		WRITE4(AGP_I810_PGTBL_CTL, isc->gatt->ag_physical | 1);
+		WRITE4(AGP_I810_PGTBL_CTL, isc->gatt->ag_physical |
+		    INTEL_ENABLED);
 	}
 
 	if (mem->am_type == 2) {
@@ -671,7 +682,7 @@ agp_i810_bind_memory(void *sc, struct agp_memory *mem, bus_size_t offset)
 		return (EINVAL);
 
 	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-		intagp_write_gtt(isc, i, i | 3);
+		intagp_write_gtt(isc, i, i | INTEL_ENABLED | INTEL_LOCAL);
 	mem->am_is_bound = 1;
 	return (0);
 }
@@ -712,7 +723,7 @@ intagp_write_gtt(struct agp_i810_softc *isc, bus_size_t off, paddr_t v)
 	bus_size_t	baseoff, wroff;
 
 	if (v != 0) {
-		pte = v | 1;
+		pte = v | INTEL_ENABLED;
 		/* 965+ can do 36-bit addressing, add in the extra bits */
 		if (isc->chiptype == CHIP_I965 || isc->chiptype == CHIP_G4X)
 			pte |= (v & 0x0000000f00000000ULL) >> 28;
