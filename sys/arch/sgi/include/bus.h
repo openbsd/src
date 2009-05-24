@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.13 2009/04/20 00:42:06 oga Exp $	*/
+/*	$OpenBSD: bus.h,v 1.14 2009/05/24 17:31:05 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -341,8 +341,9 @@ typedef struct machine_bus_dmamap	*bus_dmamap_t;
  */
 struct machine_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
-	bus_addr_t	ds_vaddr;	/* CPU address */
 	bus_size_t	ds_len;		/* length of transfer */
+
+	bus_addr_t	_ds_vaddr;	/* CPU address */
 };
 typedef struct machine_bus_dma_segment	bus_dma_segment_t;
 
