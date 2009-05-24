@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.63 2009/05/21 01:27:52 schwarze Exp $
+#	$OpenBSD: daily,v 1.64 2009/05/24 21:58:06 schwarze Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 umask 022
@@ -90,20 +90,44 @@ fi
 # if filesystem named /altroot is type ffs, on /dev/* and mounted "xx",
 # use it as a backup root filesystem to be updated daily.
 next_part "Backing up root filesystem:"
-[ "X$ROOTBACKUP" = X1 ] && {
-	rootdev=`df -n / | awk '/^\/dev\// { print substr($1, 6) }'`
+while [ "X$ROOTBACKUP" = X1 ]; do
 	rootbak=`awk '$2 == "/altroot" && $1 ~ /^\/dev\// && $3 == "ffs" && \
 	    $4 ~ /xx/ \
 		{ print substr($1, 6) }' < /etc/fstab`
-	[ X$rootdev != X -a X$rootbak != X -a X$rootdev != X$rootbak ] && \
-	    sysctl -n hw.disknames | grep -Fqw ${rootbak%[a-p]} && {
-		next_part "Backing up root=/dev/r$rootdev to /dev/r$rootbak:"
-		sync
-		dd if=/dev/r$rootdev of=/dev/r$rootbak bs=16b seek=1 skip=1 \
-			conv=noerror
-		fsck -y /dev/r$rootbak
-	}
-}
+	if [ -z "$rootbak" ]; then
+		echo "No xx ffs /altroot device found in the fstab(5)."
+		break
+	fi
+	bakdisk=${rootbak%[a-p]}
+	sysctl -n hw.disknames | grep -Fqw $bakdisk || break
+	bakpart=${rootbak#$bakdisk}
+	baksize=`disklabel $bakdisk 2>/dev/null | \
+		awk -v "part=$bakpart:" '$1 == part { print $2 }'`
+	rootdev=`mount | awk '$3 == "/" && $1 ~ /^\/dev\// && $5 == "ffs" \
+		{ print substr($1, 6) }'`
+	if [ -z "$rootdev" ]; then
+		echo "The root filesystem is not local or not ffs."
+		break
+	fi
+	if [ X$rootdev = X$rootbak ]; then
+		echo "The device $rootdev holds both root and /altroot."
+		break
+	fi
+	rootdisk=${rootdev%[a-p]}
+	rootpart=${rootdev#$rootdisk}
+	rootsize=`disklabel $rootdisk 2>/dev/null | \
+		awk -v "part=$rootpart:" '$1 == part { print $2 }'`
+	if [ $rootsize -gt $baksize ]; then
+		echo "Root ($rootsize) is larger than /altroot ($baksize)."
+		break
+	fi
+	next_part "Backing up root=/dev/r$rootdev to /dev/r$rootbak:"
+	sync
+	dd if=/dev/r$rootdev of=/dev/r$rootbak bs=16b seek=1 skip=1 \
+		conv=noerror
+	fsck -y /dev/r$rootbak
+	break
+done
 
 next_part "Checking subsystem status:"
 if [ "X$VERBOSESTATUS" != X0 ]; then
