@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.437 2009/05/24 08:12:49 damien Exp $
+$OpenBSD: usbdevs,v 1.438 2009/05/24 08:30:32 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -442,7 +442,7 @@ vendor THURLBY		0x103e	Thurlby Thandar Instruments
 vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
-vendor AUDIOVOX		0x106c	Audiovox
+vendor HYUNDAI		0x106c	Hyundai
 vendor SILABS2		0x10a6	SILABS2
 vendor USI		0x10ab	USI
 vendor PLX		0x10b5	PLX
@@ -886,8 +886,6 @@ product ATMEL AT76C505AS	0x7617	AT76C505AS (RFMD 2958 Radio)
 /* Audio-Technica products */
 product AUDIOTECHNICA ATCHA4USB	0x0009	ATC-HA4USB USB headphone
 
-/* Audiovox products */
-product AUDIOVOX PC5740		0x3701	PC5740 EVDO
 
 /* Avance Logic products */
 product AVANCELOGIC USBAUDIO	0x0100	USB Audio Speaker
@@ -1680,6 +1678,10 @@ product HUAWEI E510		0x1411	HUAWEI Mobile E510
 
 /* HUMAX products */
 product HUMAX PVRSMART		0x138c	PVR-SMART
+
+/* Hyundai CuriTel (Audiovox, Pantech) products */
+product HYUNDAI PC5740		0x3701	PC5740 EVDO
+product HYUNDAI UM175		0x3714	UM175 EVDO
 
 /* IBM Corporation */
 product IBM OPTTRAVELMOUSE	0x3107	Optical
