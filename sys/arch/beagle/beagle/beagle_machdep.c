@@ -1,4 +1,4 @@
-/*	$OpenBSD: beagle_machdep.c,v 1.1 2009/05/08 03:13:26 drahn Exp $ */
+/*	$OpenBSD: beagle_machdep.c,v 1.2 2009/05/24 21:05:30 drahn Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -376,7 +376,7 @@ read_ttb(void)
  * before pmap is initialized.
  * size and cacheability are ignored and map one section with nocache.
  */
-static vaddr_t section_free = 0xfd400000; /* XXX - huh */
+static vaddr_t section_free = 0xfd000000; /* XXX - huh */
 
 int bootstrap_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
     int cacheable, bus_space_handle_t *bshp);
@@ -416,7 +416,7 @@ copy_io_area_map(pd_entry_t *new_pd)
 	     va += L1_S_SIZE) {
 
 		new_pd[va>>L1_S_SHIFT] = cur_pd[va>>L1_S_SHIFT];
-		if (va == (0 - L1_S_SIZE))
+		if (va == (ARM_VECTORS_HIGH & ~(0x00400000 - 1)))
 			break; /* STUPID */
 
 	}
@@ -496,24 +496,83 @@ initarm(void *arg)
         boothowto |= RB_DFLTROOT;
 #endif /* RAMDISK_HOOKS */
 
+#define DEBUG
+#ifdef DEBUG
+	printf("probing memory\n");
+	printf("sdrc_mcfg_0 %08x\n", *(uint32_t *)0x6d000080);
+	printf("sdrc_mcfg_1 %08x\n", *(uint32_t *)0x6d0000b0);
+#endif /* DEBUG */
 
 	{
+		uint32_t sdrc_mcfg_0, sdrc_mcfg_1, memsize0, memsize1;
+		sdrc_mcfg_0 = *(uint32_t *)0x6d000080;
+		sdrc_mcfg_1 = *(uint32_t *)0x6d0000b0;
+		memsize0 = (((sdrc_mcfg_0 >> 8))&0x3ff) * (2 * 1024 * 1024);
+		memsize1 = (((sdrc_mcfg_1 >> 8))&0x3ff) * (2 * 1024 * 1024);
+		memsize = memsize0 + memsize1;
+
 		/* XXX - scma11 for now, fix memory sizing */
 		memstart = SDRAM_START;
 		memsize =  0x02000000; /* 32MB */
+		/* Fake bootconfig structure for the benefit of pmap.c */
+		/* XXX must make the memory description h/w independant */
+		bootconfig.dram[0].address = memstart;
+		bootconfig.dram[0].pages = memsize0 / PAGE_SIZE;
+		bootconfig.dramblocks = 1;
+		if (memsize1 != 0) {
+			bootconfig.dram[1].address = bootconfig.dram[0].address
+			    + memsize0; /* XXX */
+			bootconfig.dram[1].pages = memsize1 / PAGE_SIZE;
+			bootconfig.dramblocks++; /* both banks populated */
+		}
 	}
 
 
-#define DEBUG
 #ifdef DEBUG
 	printf("initarm: Configuring system ...\n");
-#endif
+	{
+		uint32_t reg;
+		asm volatile ("MRC p15, 0, %0, c0, c1, 0\n": "=r" (reg));
+		printf("ID_PFR0  0x%08x\n", reg);
+		asm volatile ("MRC p15, 0, %0, c0, c1, 1\n": "=r" (reg));
+		printf("ID_PFR1  0x%08x\n", reg);
+		asm volatile ("MRC p15, 0, %0, c0, c1, 2\n": "=r" (reg));
+		printf("ID_DFR0  0x%08x\n", reg);
+		asm volatile ("MRC p15, 0, %0, c0, c1, 3\n": "=r" (reg));
+		printf("ID_AFR0  0x%08x\n", reg);
+		asm volatile ("MRC p15, 0, %0, c0, c1, 4\n": "=r" (reg));
+		printf("ID_MMFR0 0x%08x\n", reg);
+		asm volatile ("MRC p15, 0, %0, c0, c1, 5\n": "=r" (reg));
+		printf("ID_MMFR1 0x%08x\n", reg);
+		asm volatile ("MRC p15, 0, %0, c0, c1, 6\n": "=r" (reg));
+		printf("ID_MMFR2 0x%08x\n", reg);
+		asm volatile ("MRC p15, 0, %0, c0, c1, 7\n": "=r" (reg));
+		printf("ID_MMFR3 0x%08x\n", reg);
 
-	/* Fake bootconfig structure for the benefit of pmap.c */
-	/* XXX must make the memory description h/w independant */
-	bootconfig.dramblocks = 1;
-	bootconfig.dram[0].address = memstart;
-	bootconfig.dram[0].pages = memsize / PAGE_SIZE;
+		asm volatile ("MRC p15, 0, %0, c0, c2, 0\n": "=r" (reg));
+		printf("ID_ISAR0 0x%08x\n", reg);
+		asm volatile ("MRC p15, 0, %0, c0, c2, 1\n": "=r" (reg));
+		printf("ID_ISAR1 0x%08x\n", reg);
+		asm volatile ("MRC p15, 0, %0, c0, c2, 2\n": "=r" (reg));
+		printf("ID_ISAR2 0x%08x\n", reg);
+		asm volatile ("MRC p15, 0, %0, c0, c2, 3\n": "=r" (reg));
+		printf("ID_ISAR3 0x%08x\n", reg);
+		asm volatile ("MRC p15, 0, %0, c0, c2, 4\n": "=r" (reg));
+		printf("ID_ISAR4 0x%08x\n", reg);
+		asm volatile ("MRC p15, 0, %0, c0, c2, 5\n": "=r" (reg));
+		printf("ID_ISAR5 0x%08x\n", reg);
+
+
+	}
+#endif
+	{
+		static int foo = 0;
+		int tmp=1;
+		printf("about to SWP 0x1234 -> 0 \n");
+		asm volatile (" SWP %0, %2, [%1]": "=&r"(tmp): "r"(&foo), "r"(0x1234));
+		printf("mem %x reg %x\n", foo, tmp);
+	}
+
 
 	/*
 	 * Set up the variables that define the availablilty of
@@ -609,7 +668,9 @@ initarm(void *arg)
 	 * This page will just contain the system vectors and can be
 	 * shared by all processes.
 	 */
+	vector_page = ARM_VECTORS_HIGH;
 	alloc_pages(systempage.pv_pa, 1);
+	systempage.pv_va = vector_page;
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
@@ -653,7 +714,7 @@ initarm(void *arg)
 	l1pagetable = kernel_l1pt.pv_pa;
 
 	/* Map the L2 pages tables in the L1 page table */
-	pmap_link_l2pt(l1pagetable, 0x00000000,
+	pmap_link_l2pt(l1pagetable, vector_page & ~(0x00400000 - 1),
 	    &kernel_pt_table[KERNEL_PT_SYS]);
 
 	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++)
@@ -718,14 +779,14 @@ initarm(void *arg)
 	/* Map the Mini-Data cache clean area. */
 
 	/* Map the vector page. */
-#if 1
+#if 0
 	/* MULTI-ICE requires that page 0 is NC/NB so that it can download the
 	 * cache-clean code there.  */
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 #else
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
-	    VM_PROT_EXEC|VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    VM_PROT_EXECUTE|VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #endif
 
 	/*
@@ -759,11 +820,6 @@ initarm(void *arg)
 	/* be a client to all domains */
 	cpu_domains(0x55555555);
 	/* Switch tables */
-#ifdef VERBOSE_INIT_ARM
-	printf("freestart = 0x%08lx, free_pages = %d (0x%x)\n",
-	       physical_freestart, free_pages, free_pages);
-	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
-#endif
 
 	/* set new intc register address so that splfoo() doesn't
 	   touch illegal address.  */
@@ -781,11 +837,7 @@ initarm(void *arg)
 	proc0paddr = (struct user *)kernelstack.pv_va;
 	proc0.p_addr = proc0paddr;
 
-#ifdef VERBOSE_INIT_ARM
-	printf("bootstrap done.\n");
-#endif
-
-	arm32_vector_init(ARM_VECTORS_LOW, ARM_VEC_ALL);
+	arm32_vector_init(vector_page, ARM_VEC_ALL);
 
 	/*
 	 * Pages were allocated during the secondary bootstrap for the
@@ -795,9 +847,6 @@ initarm(void *arg)
 	 * Since the ARM stacks use STMFD etc. we must set r13 to the top end
 	 * of the stack memory.
 	 */
-#ifdef VERBOSE_INIT_ARM
-	printf("init subsystems: stacks ");
-#endif
 
 	set_stackptr(PSR_IRQ32_MODE,
 	    irqstack.pv_va + IRQ_STACK_SIZE * PAGE_SIZE);
@@ -815,9 +864,7 @@ initarm(void *arg)
 	 * Initialisation of the vectors will just panic on a data abort.
 	 * This just fills in a slighly better one.
 	 */
-#ifdef VERBOSE_INIT_ARM
-	printf("vectors ");
-#endif
+
 	data_abort_handler_address = (u_int)data_abort_handler;
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
@@ -976,9 +1023,7 @@ consinit(void)
 
 #if NCOM > 0
 	paddr = 0x49020000; /* XXX - addr */
-#if defined(CPU_ARMv7) 
 	comcnattach(&armv7_a4x_bs_tag, paddr, comcnspeed, 48000000, comcnmode);
-#endif
 	comdefaultrate = comcnspeed;
 #endif /* NCOM */
 }
