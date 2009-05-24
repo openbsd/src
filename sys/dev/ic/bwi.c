@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.85 2009/01/21 21:53:59 grange Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.86 2009/05/24 11:27:32 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -7649,10 +7649,11 @@ bwi_dma_alloc(struct bwi_softc *sc)
 void
 bwi_dma_free(struct bwi_softc *sc)
 {
+	struct bwi_ring_data *rd;
 	int i;
 
 	for (i = 0; i < BWI_TX_NRING; ++i) {
-		struct bwi_ring_data *rd = &sc->sc_tx_rdata[i];
+		rd = &sc->sc_tx_rdata[i];
 
 		if (rd->rdata_desc != NULL) {
 			bus_dmamap_unload(sc->sc_dmat,
@@ -7662,7 +7663,7 @@ bwi_dma_free(struct bwi_softc *sc)
 		}
 	}
 
-	struct bwi_ring_data *rd = &sc->sc_rx_rdata;
+	rd = &sc->sc_rx_rdata;
 
 	if (rd->rdata_desc != NULL) {
 		bus_dmamap_unload(sc->sc_dmat, rd->rdata_dmap);
