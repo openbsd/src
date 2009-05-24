@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.22 2009/05/08 02:57:32 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.23 2009/05/24 04:56:19 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -289,7 +289,7 @@ static paddr_t pmap_kernel_l2ptp_phys;
 /*
  * pmap copy/zero page, and mem(5) hook point
  */
-static pt_entry_t *csrc_pte, *cdst_pte;
+pt_entry_t *csrc_pte, *cdst_pte;
 static vaddr_t csrcp, cdstp;
 char *memhook;
 extern caddr_t msgbufaddr;
@@ -3468,6 +3468,50 @@ pmap_copy_page_xscale(struct vm_page *src_pg, struct vm_page *dst_pg)
 }
 #endif /* ARM_MMU_XSCALE == 1 */
 
+#if defined(CPU_ARMv7)
+void pmap_copy_page_v7(struct vm_page *src_pg, struct vm_page *dst_pg);
+void
+pmap_copy_page_v7(struct vm_page *src_pg, struct vm_page *dst_pg)
+{
+	paddr_t src = VM_PAGE_TO_PHYS(src_pg);
+	paddr_t dst = VM_PAGE_TO_PHYS(dst_pg);
+#ifdef DEBUG
+	if (dst_pg->mdpage.pvh_list != NULL)
+		panic("pmap_copy_page: dst page has mappings");
+#endif
+
+	KDASSERT((src & PGOFSET) == 0);
+	KDASSERT((dst & PGOFSET) == 0);
+
+	/*
+	 * Clean the source page.  Hold the source page's lock for
+	 * the duration of the copy so that no other mappings can
+	 * be created while we have a potentially aliased mapping.
+	 */
+	simple_lock(&src_pg->mdpage.pvh_slock);
+	(void) pmap_clean_page(src_pg->mdpage.pvh_list, TRUE);
+
+	/*
+	 * Map the pages into the page hook points, copy them, and purge
+	 * the cache for the appropriate page. Invalidate the TLB
+	 * as required.
+	 */
+	*csrc_pte = L2_S_PROTO | src |
+	    L2_V7_AP(0x5) | pte_l2_s_cache_mode;
+	PTE_SYNC(csrc_pte);
+	*cdst_pte = L2_S_PROTO | dst |
+	    L2_S_PROT(PTE_KERNEL, VM_PROT_WRITE) | pte_l2_s_cache_mode;
+	PTE_SYNC(cdst_pte);
+	cpu_tlb_flushD_SE(csrcp);
+	cpu_tlb_flushD_SE(cdstp);
+	cpu_cpwait();
+	bcopy_page(csrcp, cdstp);
+	cpu_dcache_inv_range(csrcp, PAGE_SIZE);
+	simple_unlock(&src_pg->mdpage.pvh_slock); /* cache is safe again */
+	cpu_dcache_wbinv_range(cdstp, PAGE_SIZE);
+}
+#endif /* CPU_ARMv7 */
+
 /*
  * void pmap_virtual_space(vaddr_t *start, vaddr_t *end)
  *
@@ -4648,7 +4692,7 @@ pmap_pte_init_generic(void)
 	pte_l1_c_proto = L1_C_PROTO_generic;
 	pte_l2_s_proto = L2_S_PROTO_generic;
 
-	pmap_copy_page_func = pmap_copy_page_generic;
+	pmap_copy_page_func = pmap_copy_page_v7;
 	pmap_zero_page_func = pmap_zero_page_generic;
 }
 
@@ -4755,6 +4799,14 @@ pmap_pte_init_armv7(void)
 	pte_l1_s_cache_mode_pt = L1_S_C;
 	pte_l2_l_cache_mode_pt = L2_C;
 	pte_l2_s_cache_mode_pt = L2_C;
+
+	pte_l2_s_prot_u = L2_S_PROT_U_v7;
+	pte_l2_s_prot_w = L2_S_PROT_W_v7;
+	pte_l2_s_prot_mask = L2_S_PROT_MASK_v7;
+
+	pte_l1_s_proto = L1_S_PROTO_v7;
+	pte_l1_c_proto = L1_C_PROTO_v7;
+	pte_l2_s_proto = L2_S_PROTO_v7;
 
 }
 #endif /* CPU_ARMv7 */

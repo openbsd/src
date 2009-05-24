@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.c,v 1.10 2009/05/11 12:51:24 drahn Exp $	*/
+/*	$OpenBSD: cpufunc.c,v 1.11 2009/05/24 04:56:19 drahn Exp $	*/
 /*	$NetBSD: cpufunc.c,v 1.65 2003/11/05 12:53:15 scw Exp $	*/
 
 /*
@@ -1283,7 +1283,7 @@ set_cpufuncs()
 	}
 #endif /* CPU_ARM11 */
 #ifdef CPU_ARMv7
-	if (cputype == CPU_ID_OMAP3430 || cputype == CPU_ID_OMAP3530) {
+	if ((cputype & CPU_ID_CORTEX_A8_MASK) == CPU_ID_CORTEX_A8) {
 		cpufuncs = armv7_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		arm_get_cachetype_cp15v7();

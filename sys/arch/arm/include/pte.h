@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.1 2004/02/01 05:09:49 drahn Exp $	*/
+/*	$OpenBSD: pte.h,v 1.2 2009/05/24 04:56:19 drahn Exp $	*/
 /*	$NetBSD: pte.h,v 1.6 2003/04/18 11:08:28 scw Exp $	*/
 
 /*
@@ -149,6 +149,14 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L1_S_XSCALE_P	0x00000200	/* ECC enable for this section */
 #define	L1_S_XSCALE_TEX(x) ((x) << 12)	/* Type Extension */
 
+#define	L1_S_V7_TEX(x)	((x) << 12)	/* Type Extension */
+#define	L1_S_V7_NS(x)	((x) << 12)	/* */
+#define	L1_S_V7_nG(x)	((x) << 12)	/* */
+#define	L1_S_V7_S(x)	((x) << 12)	/* */
+#define	L1_S_V7_S(x)	((x) << 12)	/* */
+#define	L1_S_V7_AP(x)	(((x << 13) & 0x4) | ((x) << 10 & 3))	/* AP*/
+#define	L1_S_V7_XN(x)	((x) << 4)	/* */
+
 /* L1 Coarse Descriptor */
 #define	L1_C_IMP0	0x00000004	/* implementation defined */
 #define	L1_C_IMP1	0x00000008	/* implementation defined */
@@ -197,6 +205,15 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 
 #define	L2_XSCALE_L_TEX(x) ((x) << 12)	/* Type Extension */
 #define	L2_XSCALE_T_TEX(x) ((x) << 6)	/* Type Extension */
+
+#define	L2_V7_L_TEX(x) ((x) << 12)	/* Type Extension */
+#define	L2_V7_L_XN(x)	((x) << 15)	/* eXecute Never */
+#define	L2_V7_T_TEX(x) ((x) << 6)	/* Type Extension */
+#define	L2_V7_T_XN(x)	((x) << 0)	/* eXecute Never */
+
+#define	L2_V7_AP(x)	((((x)& 4) << 7) | (((x) & 3) << 4))	/* AP */
+#define	L2_V7_S(x)	((x) << 10)	/* Shared */
+#define	L2_V7_nG(x)	((x) << 10)	/* not Global */
 
 /*
  * Access Permissions for L1 and L2 Descriptors.

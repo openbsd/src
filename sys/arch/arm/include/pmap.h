@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.10 2009/05/08 02:57:32 drahn Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.11 2009/05/24 04:56:19 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -415,6 +415,13 @@ void	pmap_pte_init_armv7(void);
 void	pmap_pte_init_sa1(void);
 #endif /* ARM_MMU_SA1 == 1 */
 
+#if ARM_MMU_V7 == 1
+void	pmap_copy_page_v7(struct vm_page *, struct vm_page *);
+void	pmap_zero_page_v7(struct vm_page *);
+
+void	pmap_pte_init_v7(void);
+#endif /* ARM_MMU_V7 == 1 */
+
 #if ARM_MMU_XSCALE == 1
 void	pmap_copy_page_xscale(struct vm_page *, struct vm_page *);
 void	pmap_zero_page_xscale(struct vm_page *);
@@ -478,6 +485,7 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #define	L1_S_CACHE_MASK_generic	(L1_S_B|L1_S_C)
 #define	L1_S_CACHE_MASK_xscale	(L1_S_B|L1_S_C|L1_S_XSCALE_TEX(TEX_XSCALE_X))
+#define	L1_S_CACHE_MASK_v7	(L1_S_B|L1_S_C|L1_S_V7_TEX(TEX_V7_X))
 
 #define	L2_L_PROT_U		(L2_AP(AP_U))
 #define	L2_L_PROT_W		(L2_AP(AP_W))
@@ -485,6 +493,7 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #define	L2_L_CACHE_MASK_generic	(L2_B|L2_C)
 #define	L2_L_CACHE_MASK_xscale	(L2_B|L2_C|L2_XSCALE_L_TEX(TEX_XSCALE_X))
+#define	L2_L_CACHE_MASK_v7	(L2_B|L2_C|L2_V7_L_TEX(TEX_V7_X))
 
 #define	L2_S_PROT_U_generic	(L2_AP(AP_U))
 #define	L2_S_PROT_W_generic	(L2_AP(AP_W))
@@ -494,19 +503,27 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 #define	L2_S_PROT_W_xscale	(L2_AP0(AP_W))
 #define	L2_S_PROT_MASK_xscale	(L2_S_PROT_U|L2_S_PROT_W)
 
+#define	L2_S_PROT_U_v7		(L2_AP0(AP_U))
+#define	L2_S_PROT_W_v7		(L2_AP0(AP_W))
+#define	L2_S_PROT_MASK_v7	(L2_S_PROT_U|L2_S_PROT_W)
+
 #define	L2_S_CACHE_MASK_generic	(L2_B|L2_C)
 #define	L2_S_CACHE_MASK_xscale	(L2_B|L2_C|L2_XSCALE_T_TEX(TEX_XSCALE_X))
+#define	L2_S_CACHE_MASK_v7	(L2_B|L2_C)
 
 #define	L1_S_PROTO_generic	(L1_TYPE_S | L1_S_IMP)
 #define	L1_S_PROTO_xscale	(L1_TYPE_S)
+#define	L1_S_PROTO_v7		(L1_TYPE_S)
 
 #define	L1_C_PROTO_generic	(L1_TYPE_C | L1_C_IMP2)
 #define	L1_C_PROTO_xscale	(L1_TYPE_C)
+#define	L1_C_PROTO_v7		(L1_TYPE_C)
 
 #define	L2_L_PROTO		(L2_TYPE_L)
 
 #define	L2_S_PROTO_generic	(L2_TYPE_S)
 #define	L2_S_PROTO_xscale	(L2_TYPE_XSCALE_XS)
+#define	L2_S_PROTO_v7		(L2_TYPE_S)
 
 /*
  * User-visible names for the ones that vary with MMU class.
@@ -558,6 +575,21 @@ extern void (*pmap_zero_page_func)(struct vm_page *);
 
 #define	pmap_copy_page(s, d)	pmap_copy_page_xscale((s), (d))
 #define	pmap_zero_page(d)	pmap_zero_page_xscale((d))
+#elif ARM_MMU_V7 == 1
+#define	L2_S_PROT_U		L2_S_PROT_U_v7
+#define	L2_S_PROT_W		L2_S_PROT_W_v7
+#define	L2_S_PROT_MASK		L2_S_PROT_MASK_v7
+
+#define	L1_S_CACHE_MASK		L1_S_CACHE_MASK_v7
+#define	L2_L_CACHE_MASK		L2_L_CACHE_MASK_v7
+#define	L2_S_CACHE_MASK		L2_S_CACHE_MASK_v7
+
+#define	L1_S_PROTO		L1_S_PROTO_v7
+#define	L1_C_PROTO		L1_C_PROTO_v7
+#define	L2_S_PROTO		L2_S_PROTO_v7
+
+#define	pmap_copy_page(s, d)	pmap_copy_page_v7((s), (d))
+#define	pmap_zero_page(d)	pmap_zero_page_v7((d))
 #endif /* ARM_NMMUS > 1 */
 
 /*

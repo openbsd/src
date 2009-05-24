@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.5 2009/05/08 02:57:32 drahn Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.6 2009/05/24 04:56:19 drahn Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.7 2003/05/23 00:57:24 ichiro Exp $	*/
 
 /*
@@ -102,6 +102,8 @@
  *	ARM_MMU_XSCALE		XScale MMU.  Compatible with generic ARM
  *				MMU, but also has several extensions which
  *				require different PTE layout to use.
+ *      ARM_MMU_V7		v6/v7 MMU with XP bit enabled subpage
+ *				protection is not used, TEX/AP is used instead.
  */
 #if (defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3))
 #define	ARM_MMU_MEMC		1
@@ -132,13 +134,13 @@
 #endif
 
 #if defined(CPU_ARMv7)
-#define ARM_MMU_v7		1
+#define ARM_MMU_V7		1
 #else
-#define ARM_MMU_v7		0
+#define ARM_MMU_V7		0
 #endif
 
 #define	ARM_NMMUS		(ARM_MMU_MEMC + ARM_MMU_GENERIC +	\
-				 ARM_MMU_SA1 + ARM_MMU_XSCALE + ARM_MMU_v7)
+				 ARM_MMU_SA1 + ARM_MMU_XSCALE + ARM_MMU_V7)
 
 /*
  * Define features that may be present on a subset of CPUs

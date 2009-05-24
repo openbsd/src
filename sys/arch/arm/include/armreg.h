@@ -1,4 +1,4 @@
-/*	$OpenBSD: armreg.h,v 1.6 2009/05/11 12:50:23 drahn Exp $	*/
+/*	$OpenBSD: armreg.h,v 1.7 2009/05/24 04:56:19 drahn Exp $	*/
 /*	$NetBSD: armreg.h,v 1.27 2003/09/06 08:43:02 rearnsha Exp $	*/
 
 /*
@@ -220,8 +220,11 @@
 #define CPU_ID_IXP425_533	0x690541c0
 #define CPU_ID_IXP425_400	0x690541d0
 #define CPU_ID_IXP425_266	0x690541f0
+#define CPU_ID_CORTEX_A8	0x410fc080
+#define CPU_ID_CORTEX_A8_MASK	0xff0fffe0
 #define CPU_ID_OMAP3430		0x411fc080
-#define CPU_ID_OMAP3530		0x411fc090	/* XXX */
+#define CPU_ID_OMAP3530		0x411fc090      /* XXX */
+
 
 
 /* ARM3-specific coprocessor 15 registers */
