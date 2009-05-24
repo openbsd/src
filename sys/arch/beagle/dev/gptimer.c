@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.1 2009/05/08 03:13:26 drahn Exp $ */
+/* $OpenBSD: gptimer.c,v 1.2 2009/05/24 00:36:09 drahn Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -196,7 +196,6 @@ gptimer_intr(void *frame)
 	u_int32_t now, r;
 	u_int32_t nextevent, duration;
 
-	printf("T\n");
 	/* clear interrupt */
 	now = bus_space_read_4(gptimer_iot, gptimer_ioh1, GP_TCRR);
 
