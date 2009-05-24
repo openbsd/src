@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.25 2008/10/15 23:23:51 deraadt Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.26 2009/05/24 10:50:34 jsg Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -55,57 +55,48 @@ LIBKERN_INLINE int abs(int);
 
 #ifdef LIBKERN_BODY
 LIBKERN_INLINE int
-imax(a, b)
-	int a, b;
+imax(int a, int b)
 {
 	return (a > b ? a : b);
 }
 LIBKERN_INLINE int
-imin(a, b)
-	int a, b;
+imin(int a, int b)
 {
 	return (a < b ? a : b);
 }
 LIBKERN_INLINE long
-lmax(a, b)
-	long a, b;
+lmax(long a, long b)
 {
 	return (a > b ? a : b);
 }
 LIBKERN_INLINE long
-lmin(a, b)
-	long a, b;
+lmin(long a, long b)
 {
 	return (a < b ? a : b);
 }
 LIBKERN_INLINE u_int
-max(a, b)
-	u_int a, b;
+max(u_int a, u_int b)
 {
 	return (a > b ? a : b);
 }
 LIBKERN_INLINE u_int
-min(a, b)
-	u_int a, b;
+min(u_int a, u_int b)
 {
 	return (a < b ? a : b);
 }
 LIBKERN_INLINE u_long
-ulmax(a, b)
-	u_long a, b;
+ulmax(u_long a, u_long b)
 {
 	return (a > b ? a : b);
 }
 LIBKERN_INLINE u_long
-ulmin(a, b)
-	u_long a, b;
+ulmin(u_long a, u_long b)
 {
 	return (a < b ? a : b);
 }
 
 LIBKERN_INLINE int
-abs(j)
-	int j;
+abs(int j)
 {
 	return(j < 0 ? -j : j);
 }
