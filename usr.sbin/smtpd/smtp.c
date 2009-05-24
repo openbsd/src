@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.49 2009/05/24 14:22:23 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.50 2009/05/24 14:38:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -619,8 +619,8 @@ smtp(struct smtpd *env)
 #warning disabling privilege revocation and chroot in DEBUG MODE
 #endif
 
-	setproctitle("smtp server");
 	smtpd_process = PROC_SMTP;
+	setproctitle("%s", env->sc_title[smtpd_process]);
 
 #ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||

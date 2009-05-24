@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.17 2009/05/19 11:24:24 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.18 2009/05/24 14:38:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -417,8 +417,8 @@ mda(struct smtpd *env)
 #warning disabling privilege revocation and chroot in DEBUG MODE
 #endif
 
-	setproctitle("mail delivery agent");
 	smtpd_process = PROC_MDA;
+	setproctitle("%s", env->sc_title[smtpd_process]);
 
 #ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||

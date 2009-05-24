@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.64 2009/05/24 14:22:24 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.65 2009/05/24 14:38:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -51,41 +51,37 @@
 
 #include "smtpd.h"
 
-__dead void	usage(void);
-void		parent_shutdown(void);
-void		parent_send_config(int, short, void *);
-void		parent_send_config_listeners(struct smtpd *);
-void		parent_send_config_ruleset(struct smtpd *, int);
-void		parent_dispatch_lka(int, short, void *);
-void		parent_dispatch_mda(int, short, void *);
-void		parent_dispatch_mfa(int, short, void *);
-void		parent_dispatch_smtp(int, short, void *);
-void		parent_dispatch_runner(int, short, void *);
-void		parent_dispatch_control(int, short, void *);
-void		parent_sig_handler(int, short, void *);
-int		parent_open_message_file(struct batch *);
-int		parent_mailbox_open(char *, struct passwd *, struct batch *);
-int		parent_filename_open(char *, struct passwd *, struct batch *);
-int		parent_mailfile_rename(struct batch *, struct path *);
-int		parent_maildir_open(char *, struct passwd *, struct batch *);
-int		parent_maildir_init(struct passwd *, char *);
-int		parent_external_mda(char *, struct passwd *, struct batch *);
-int		parent_enqueue_offline(struct smtpd *, char *);
-int		parent_forward_open(char *);
-int		check_child(pid_t, const char *);
-int		setup_spool(uid_t, gid_t);
-int		path_starts_with(char *, char *);
+__dead void	 usage(void);
+void		 parent_shutdown(struct smtpd *);
+void		 parent_send_config(int, short, void *);
+void		 parent_send_config_listeners(struct smtpd *);
+void		 parent_send_config_ruleset(struct smtpd *, int);
+void		 parent_dispatch_lka(int, short, void *);
+void		 parent_dispatch_mda(int, short, void *);
+void		 parent_dispatch_mfa(int, short, void *);
+void		 parent_dispatch_smtp(int, short, void *);
+void		 parent_dispatch_runner(int, short, void *);
+void		 parent_dispatch_control(int, short, void *);
+void		 parent_sig_handler(int, short, void *);
+int		 parent_open_message_file(struct batch *);
+int		 parent_mailbox_open(char *, struct passwd *, struct batch *);
+int		 parent_filename_open(char *, struct passwd *, struct batch *);
+int		 parent_mailfile_rename(struct batch *, struct path *);
+int		 parent_maildir_open(char *, struct passwd *, struct batch *);
+int		 parent_maildir_init(struct passwd *, char *);
+int		 parent_external_mda(char *, struct passwd *, struct batch *);
+int		 parent_enqueue_offline(struct smtpd *, char *);
+int		 parent_forward_open(char *);
+int		 setup_spool(uid_t, gid_t);
+int		 path_starts_with(char *, char *);
+
+void		 fork_peers(struct smtpd *);
+
+void		 child_add(struct smtpd *, pid_t, int, int);
+void		 child_del(struct smtpd *, pid_t);
+struct child	*child_lookup(struct smtpd *, pid_t);
 
 extern char	**environ;
-
-pid_t	lka_pid = 0;
-pid_t	mfa_pid = 0;
-pid_t	queue_pid = 0;
-pid_t	mda_pid = 0;
-pid_t	mta_pid = 0;
-pid_t	control_pid = 0;
-pid_t	smtp_pid = 0;
-pid_t	runner_pid = 0;
 
 int __b64_pton(char const *, unsigned char *, size_t);
 
@@ -100,32 +96,20 @@ usage(void)
 }
 
 void
-parent_shutdown(void)
+parent_shutdown(struct smtpd *env)
 {
-	u_int		i;
-	pid_t		pid;
-	pid_t		pids[] = {
-		lka_pid,
-		mfa_pid,
-		queue_pid,
-		mda_pid,
-		mta_pid,
-		control_pid,
-		smtp_pid,
-		runner_pid
-	};
+	struct child	*child;
+	pid_t		 pid;
 
-	for (i = 0; i < nitems(pids); i++)
-		if (pids[i])
-			kill(pids[i], SIGTERM);
+	SPLAY_FOREACH(child, childtree, &env->children)
+		if (child->type == CHILD_DAEMON)
+			kill(child->pid, SIGTERM);
 
 	do {
-		if ((pid = wait(NULL)) == -1 &&
-		    errno != EINTR && errno != ECHILD)
-			fatal("wait");
+		pid = waitpid(WAIT_MYPGRP, NULL, 0);
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
-	log_info("terminating");
+	log_warnx("parent terminating");
 	exit(0);
 }
 
@@ -675,23 +659,11 @@ parent_dispatch_control(int sig, short event, void *p)
 void
 parent_sig_handler(int sig, short event, void *p)
 {
-	int					 i;
-	int					 die = 0;
-	pid_t					 pid;
-	struct mdaproc				*mdaproc;
-	struct mdaproc				 lookup;
-	struct smtpd				*env = p;
-	struct { pid_t p; const char *s; }	 procs[] = {
-		{ lka_pid,	"lookup agent" },
-		{ mfa_pid,	"mail filter agent" },
-		{ queue_pid,	"mail queue" },
-		{ mda_pid,	"mail delivery agent" },
-		{ mta_pid,	"mail transfer agent" },
-		{ control_pid,	"control process" },
-		{ smtp_pid,	"smtp server" },
-		{ runner_pid,	"runner" },
-		{ 0,		NULL },
-	};
+	struct smtpd	*env = p;
+	struct child	*child;
+	int		 die = 0, status, fail;
+	pid_t		 pid;
+	char		*cause;
 
 	switch (sig) {
 	case SIGTERM:
@@ -699,67 +671,66 @@ parent_sig_handler(int sig, short event, void *p)
 		die = 1;
 		/* FALLTHROUGH */
 	case SIGCHLD:
-		for (i = 0; procs[i].s != NULL; i++)
-			if (check_child(procs[i].p, procs[i].s)) {
-				procs[i].p = 0;
-				die = 1;
-			}
-		if (die)
-			parent_shutdown();
-
 		do {
-			int status;
-
 			pid = waitpid(-1, &status, WNOHANG);
-			if (pid > 0) {
-				lookup.pid = pid;
-				mdaproc = SPLAY_FIND(mdaproctree, &env->mdaproc_queue, &lookup);
-				if (mdaproc == NULL)
-					fatalx("unexpected SIGCHLD");
+			if (pid <= 0)
+				continue;
 
-				if (WIFEXITED(status) && !WIFSIGNALED(status)) {
-					switch (mdaproc->type) {
-					case CHILD_ENQUEUE_OFFLINE:
-						if (WEXITSTATUS(status) == 0)
-							log_debug("offline enqueue was successful");
-						else
-							log_debug("offline enqueue failed");
-						imsg_compose(env->sc_ibufs[PROC_RUNNER],
-						    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1,
-						    NULL, 0);
-						break;
-					case CHILD_MDA:
-						if (WEXITSTATUS(status) == EX_OK)
-							log_debug("DEBUG: external mda reported success");
-						else if (WEXITSTATUS(status) == EX_TEMPFAIL)
-							log_debug("DEBUG: external mda reported temporary failure");
-						else
-							log_warnx("external mda returned %d", WEXITSTATUS(status));
-						break;
-					default:
-						fatalx("invalid child type");
-						break;
-					}
-				} else {
-					switch (mdaproc->type) {
-					case CHILD_ENQUEUE_OFFLINE:
-						log_warnx("offline enqueue terminated abnormally");
-						break;
-					case CHILD_MDA:
-						log_warnx("external mda terminated abnormally");
-						break;
-					default:
-						fatalx("invalid child type");
-						break;
-					}
-				}
+			child = child_lookup(env, pid);
+			if (child == NULL)
+				fatalx("unexpected SIGCHLD");
 
-				SPLAY_REMOVE(mdaproctree, &env->mdaproc_queue,
-				    mdaproc);
-				free(mdaproc);
+			fail = 0;
+			if (WIFSIGNALED(status)) {
+				fail = 1;
+				asprintf(&cause, "terminated; signal %d",
+				    WTERMSIG(status));
+			} else if (WIFEXITED(status)) {
+				if (WEXITSTATUS(status) != 0) {
+					fail = 1;
+					asprintf(&cause, "exited abnormally");
+				} else
+					asprintf(&cause, "exited okay");
+			} else
+				fatalx("unexpected cause of SIGCHLD");
+
+			switch (child->type) {
+			case CHILD_DAEMON:
+				die = 1;
+				if (fail)
+					log_warnx("lost child: %s %s",
+					    env->sc_title[child->title], cause);
+				break;
+
+			case CHILD_MDA:
+				if (fail)
+					log_warnx("external mda %s", cause);
+				else
+					log_debug("external mda %s", cause);
+				break;
+
+			case CHILD_ENQUEUE_OFFLINE:
+				if (fail)
+					log_warnx("couldn't enqueue offline "
+					    "message; smtpctl %s", cause);
+				else
+					log_debug("offline message enqueued");
+				imsg_compose(env->sc_ibufs[PROC_RUNNER],
+				    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1,
+				    NULL, 0);
+				break;
+
+			default:
+				fatalx("unexpected child type");
 			}
+
+			child_del(env, child->pid);
+
+			free(cause);
 		} while (pid > 0 || (pid == -1 && errno == EINTR));
 
+		if (die)
+			parent_shutdown(env);
 		break;
 	default:
 		fatalx("unexpected signal");
@@ -877,29 +848,7 @@ main(int argc, char *argv[])
 	env.sc_maxconn = (rl.rlim_cur / 4) * 3;
 	log_debug("smtpd: will accept at most %d clients", env.sc_maxconn);
 
-	env.sc_instances[PROC_PARENT] = 1;
-	env.sc_instances[PROC_LKA] = 1;
-	env.sc_instances[PROC_MFA] = 1;
-	env.sc_instances[PROC_QUEUE] = 1;
-	env.sc_instances[PROC_MDA] = 1;
-	env.sc_instances[PROC_MTA] = 1;
-	env.sc_instances[PROC_SMTP] = 1;
-	env.sc_instances[PROC_CONTROL] = 1;
-	env.sc_instances[PROC_RUNNER] = 1;
-
-	init_peers(&env);
-
-	/* start subprocesses */
-	lka_pid = lka(&env);
-	mfa_pid = mfa(&env);
-	queue_pid = queue(&env);
-	mda_pid = mda(&env);
-	mta_pid = mta(&env);
-	smtp_pid = smtp(&env);
-	control_pid = control(&env);
-	runner_pid = runner(&env);
-
-	SPLAY_INIT(&env.mdaproc_queue);
+	fork_peers(&env);
 
 	event_init();
 
@@ -925,25 +874,79 @@ main(int argc, char *argv[])
 	return (0);
 }
 
-
-int
-check_child(pid_t pid, const char *pname)
+void
+fork_peers(struct smtpd *env)
 {
-	int	status;
+	SPLAY_INIT(&env->children);
 
-	if (waitpid(pid, &status, WNOHANG) > 0) {
-		if (WIFEXITED(status)) {
-			log_warnx("check_child: lost child: %s exited", pname);
-			return (1);
-		}
-		if (WIFSIGNALED(status)) {
-			log_warnx("check_child: lost child: %s terminated; "
-			    "signal %d", pname, WTERMSIG(status));
-			return (1);
-		}
-	}
+	env->sc_instances[PROC_CONTROL] = 1;
+	env->sc_instances[PROC_LKA] = 1;
+	env->sc_instances[PROC_MDA] = 1;
+	env->sc_instances[PROC_MFA] = 1;
+	env->sc_instances[PROC_MTA] = 1;
+	env->sc_instances[PROC_PARENT] = 1;
+	env->sc_instances[PROC_QUEUE] = 1;
+	env->sc_instances[PROC_RUNNER] = 1;
+	env->sc_instances[PROC_SMTP] = 1;
 
-	return (0);
+	init_pipes(env);
+
+	env->sc_title[PROC_CONTROL] = "control";
+	env->sc_title[PROC_LKA] = "lookup agent";
+	env->sc_title[PROC_MDA] = "mail delivery agent";
+	env->sc_title[PROC_MFA] = "mail filter agent";
+	env->sc_title[PROC_MTA] = "mail transfer agent";
+	env->sc_title[PROC_QUEUE] = "queue";
+	env->sc_title[PROC_RUNNER] = "runner";
+	env->sc_title[PROC_SMTP] = "smtp server";
+
+	child_add(env, control(env), CHILD_DAEMON, PROC_CONTROL);
+	child_add(env, lka(env), CHILD_DAEMON, PROC_LKA);
+	child_add(env, mda(env), CHILD_DAEMON, PROC_MDA);
+	child_add(env, mfa(env), CHILD_DAEMON, PROC_MFA);
+	child_add(env, mta(env), CHILD_DAEMON, PROC_MTA);
+	child_add(env, queue(env), CHILD_DAEMON, PROC_QUEUE);
+	child_add(env, runner(env), CHILD_DAEMON, PROC_RUNNER);
+	child_add(env, smtp(env), CHILD_DAEMON, PROC_SMTP);
+}
+
+void
+child_add(struct smtpd *env, pid_t pid, int type, int title)
+{
+	struct child	*child;
+
+	if ((child = calloc(1, sizeof(*child))) == NULL)
+		fatal(NULL);
+
+	child->pid = pid;
+	child->type = type;
+	child->title = title;
+
+	if (SPLAY_INSERT(childtree, &env->children, child) != NULL)
+		fatalx("child_add: double insert");
+}
+
+void
+child_del(struct smtpd *env, pid_t pid)
+{
+	struct child	*p;
+
+	p = child_lookup(env, pid);
+	if (p == NULL)
+		fatalx("child_del: unknown child");
+
+	if (SPLAY_REMOVE(childtree, &env->children, p) == NULL)
+		fatalx("child_del: tree remove failed");
+	free(p);
+}
+
+struct child *
+child_lookup(struct smtpd *env, pid_t pid)
+{
+	struct child	 key;
+
+	key.pid = pid;
+	return SPLAY_FIND(childtree, &env->children, &key);
 }
 
 int
@@ -1120,7 +1123,6 @@ parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 {
 	pid_t pid;
 	int pipefd[2];
-	struct mdaproc *mdaproc;
 	char sender[MAX_PATH_SIZE];
 
 	/* This can never happen, but better safe than sorry. */
@@ -1152,8 +1154,6 @@ parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 	}
 
 	if (pid == 0) {
-		setproctitle("mail.local");
-
 		close(pipefd[0]);
 		close(STDOUT_FILENO);
 		close(STDERR_FILENO);
@@ -1166,13 +1166,7 @@ parent_mailbox_open(char *path, struct passwd *pw, struct batch *batchp)
 	if (seteuid(pw->pw_uid) == -1)
 		fatal("privdrop failed");
 
-	mdaproc = calloc(1, sizeof (struct mdaproc));
-	if (mdaproc == NULL)
-		fatal("calloc");
-	mdaproc->pid = pid;
-	mdaproc->type = CHILD_MDA;
-
-	SPLAY_INSERT(mdaproctree, &batchp->env->mdaproc_queue, mdaproc);
+	child_add(batchp->env, pid, CHILD_MDA, -1);
 
 	close(pipefd[1]);
 	return pipefd[0];
@@ -1253,7 +1247,6 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 	int pipefd[2];
 	arglist args;
 	char *word;
-	struct mdaproc *mdaproc;
 	char *envp[2];
 
 	log_debug("executing filter as user: %s", pw->pw_name);
@@ -1277,8 +1270,6 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 	}
 
 	if (pid == 0) {
-		setproctitle("external MDA");
-
 		if (seteuid(0) == -1)
 			fatal("privraise failed");
 		if (setgroups(1, &pw->pw_gid) ||
@@ -1314,13 +1305,7 @@ parent_external_mda(char *path, struct passwd *pw, struct batch *batchp)
 		_exit(1);
 	}
 
-	mdaproc = calloc(1, sizeof (struct mdaproc));
-	if (mdaproc == NULL)
-		fatal("calloc");
-	mdaproc->pid = pid;
-	mdaproc->type = CHILD_MDA;
-
-	SPLAY_INSERT(mdaproctree, &batchp->env->mdaproc_queue, mdaproc);
+	child_add(batchp->env, pid, CHILD_MDA, -1);
 
 	close(pipefd[0]);
 	return pipefd[1];
@@ -1331,7 +1316,6 @@ parent_enqueue_offline(struct smtpd *env, char *runner_path)
 {
 	char		 path[MAXPATHLEN];
 	struct passwd	*pw;
-	struct mdaproc	*mdaproc;
 	struct stat	 sb;
 	pid_t		 pid;
 
@@ -1432,13 +1416,7 @@ parent_enqueue_offline(struct smtpd *env, char *runner_path)
 		_exit(1);
 	}
 
-	mdaproc = calloc(1, sizeof (struct mdaproc));
-	if (mdaproc == NULL)
-		fatal("calloc");
-	mdaproc->pid = pid;
-	mdaproc->type = CHILD_ENQUEUE_OFFLINE;
-
-	SPLAY_INSERT(mdaproctree, &env->mdaproc_queue, mdaproc);
+	child_add(env, pid, CHILD_ENQUEUE_OFFLINE, -1);
 
 	return (1);
 }
@@ -1548,15 +1526,15 @@ path_starts_with(char *file, char *prefix)
 }
 
 int
-mdaproc_cmp(struct mdaproc *s1, struct mdaproc *s2)
+child_cmp(struct child *c1, struct child *c2)
 {
-	if (s1->pid < s2->pid)
+	if (c1->pid < c2->pid)
 		return (-1);
 
-	if (s1->pid > s2->pid)
+	if (c1->pid > c2->pid)
 		return (1);
 
 	return (0);
 }
 
-SPLAY_GENERATE(mdaproctree, mdaproc, mdaproc_nodes, mdaproc_cmp);
+SPLAY_GENERATE(childtree, child, entry, child_cmp);

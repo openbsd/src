@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.30 2009/05/21 01:07:13 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.31 2009/05/24 14:38:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -463,8 +463,8 @@ mfa(struct smtpd *env)
 #warning disabling privilege revocation and chroot in DEBUG MODE
 #endif
 
-	setproctitle("mail filter agent");
 	smtpd_process = PROC_MFA;
+	setproctitle("%s", env->sc_title[smtpd_process]);
 
 #ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||

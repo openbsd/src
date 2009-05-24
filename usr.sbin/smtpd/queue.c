@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.64 2009/05/24 14:22:23 jacekm Exp $	*/
+/*	$OpenBSD: queue.c,v 1.65 2009/05/24 14:38:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -563,8 +563,8 @@ queue(struct smtpd *env)
 #warning disabling privilege revocation and chroot in DEBUG MODE
 #endif
 
-	setproctitle("queue handler");
 	smtpd_process = PROC_QUEUE;
+	setproctitle("%s", env->sc_title[smtpd_process]);
 
 #ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||

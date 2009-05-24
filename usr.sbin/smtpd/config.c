@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.5 2009/02/16 12:10:25 jacekm Exp $	*/
+/*	$OpenBSD: config.c,v 1.6 2009/05/24 14:38:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -104,7 +104,7 @@ purge_config(struct smtpd *env, u_int8_t what)
 }
 
 void
-init_peers(struct smtpd *env)
+init_pipes(struct smtpd *env)
 {
 	int	 i;
 	int	 j;

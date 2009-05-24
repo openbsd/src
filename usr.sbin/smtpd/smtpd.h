@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.113 2009/05/24 14:22:24 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.114 2009/05/24 14:38:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -496,15 +496,17 @@ enum batch_flags {
 
 enum child_type {
 	CHILD_INVALID,
+	CHILD_DAEMON,
 	CHILD_MDA,
 	CHILD_ENQUEUE_OFFLINE
 };
 
-struct mdaproc {
-	SPLAY_ENTRY(mdaproc)	mdaproc_nodes;
+struct child {
+	SPLAY_ENTRY(child)	entry;
 
 	pid_t			pid;
 	enum child_type		type;
+	enum smtp_proc_type	title;
 };
 
 struct batch {
@@ -658,6 +660,7 @@ struct smtpd {
 	struct imsgbuf				*sc_ibufs[PROC_COUNT];
 	int					 sc_instances[PROC_COUNT];
 	int					 sc_instance;
+	char					*sc_title[PROC_COUNT];
 	struct passwd				*sc_pw;
 	char					 sc_hostname[MAXHOSTNAMELEN];
 	TAILQ_HEAD(listenerlist, listener)	 sc_listeners;
@@ -667,9 +670,9 @@ struct smtpd {
 	SPLAY_HEAD(msgtree, message)		 sc_messages;
 	SPLAY_HEAD(ssltree, ssl)		 sc_ssl;
 
-	SPLAY_HEAD(batchtree, batch)		batch_queue;
-	SPLAY_HEAD(mdaproctree, mdaproc)	mdaproc_queue;
-	SPLAY_HEAD(lkatree, lkasession)		lka_sessions;
+	SPLAY_HEAD(batchtree, batch)		 batch_queue;
+	SPLAY_HEAD(childtree, child)		 children;
+	SPLAY_HEAD(lkatree, lkasession)		 lka_sessions;
 
 	struct stats				*stats;
 };
@@ -847,6 +850,10 @@ int	 imsg_get_fd(struct imsgbuf *, struct imsg *);
 int	 imsg_flush(struct imsgbuf *);
 void	 imsg_clear(struct imsgbuf *);
 
+/* smtpd.c */
+int	 child_cmp(struct child *, struct child *);
+SPLAY_PROTOTYPE(childtree, child, entry, child_cmp);
+
 /* lka.c */
 pid_t		 lka(struct smtpd *);
 int		 lkasession_cmp(struct lkasession *, struct lkasession *);
@@ -903,8 +910,6 @@ char		*map_dblookup(struct smtpd *, char *, char *);
 
 /* mda.c */
 pid_t		 mda(struct smtpd *);
-int		 mdaproc_cmp(struct mdaproc *, struct mdaproc *);
-SPLAY_PROTOTYPE(mdaproctree, mdaproc, mdaproc_nodes, mdaproc_cmp);
 
 /* mta.c */
 pid_t		 mta(struct smtpd *);
@@ -953,7 +958,7 @@ int store_message(struct batch *, struct message *,
 void		 purge_config(struct smtpd *, u_int8_t);
 void		 unconfigure(struct smtpd *);
 void		 configure(struct smtpd *);
-void		 init_peers(struct smtpd *);
+void		 init_pipes(struct smtpd *);
 void		 config_pipes(struct smtpd *, struct peer *, u_int);
 void		 config_peers(struct smtpd *, struct peer *, u_int);
 
@@ -976,7 +981,7 @@ SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);
 int	 ssl_ctx_use_private_key(void *, char *, off_t);
 int	 ssl_ctx_use_certificate_chain(void *, char *, off_t);
 
-/* smtpd.c */
+/* map.c */
 struct map	*map_find(struct smtpd *, objid_t);
 struct map	*map_findbyname(struct smtpd *, const char *);
 

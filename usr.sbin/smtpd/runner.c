@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.47 2009/05/24 14:22:23 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.48 2009/05/24 14:38:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -474,8 +474,8 @@ runner(struct smtpd *env)
 #warning disabling privilege revocation and chroot in DEBUG MODE
 #endif
 
-	setproctitle("runner");
 	smtpd_process = PROC_RUNNER;
+	setproctitle("%s", env->sc_title[smtpd_process]);
 
 #ifndef DEBUG
 	if (setgroups(1, &pw->pw_gid) ||
