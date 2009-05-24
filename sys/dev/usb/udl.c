@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.10 2009/05/24 11:05:16 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.11 2009/05/24 11:11:03 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -615,6 +615,14 @@ udl_do_cursor(struct rasops_info *ri)
 {
 	struct udl_softc *sc = ri->ri_hw;
 	uint32_t x, y;
+
+	/*
+	 * XXX
+	 * We can't draw a transparent cursor yet because the chip
+	 * doesn't offer an XOR command nor a read command for screen
+	 * regions.  Maybe this gets fixed once when wscons(4) is able
+	 * to remember the on-screen characters.
+	 */
 
 	DPRINTF(2, "%s: %s: ccol=%d, crow=%d\n",
 	    DN(sc), FUNC, ri->ri_ccol, ri->ri_crow);
