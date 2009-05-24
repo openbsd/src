@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.86 2009/05/19 16:09:02 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.87 2009/05/24 07:46:04 damien Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -143,7 +143,7 @@ ieee80211_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		if ((wh->i_fc[0] & IEEE80211_FC0_VERSION_MASK) !=
 		    IEEE80211_FC0_VERSION_0)
 			return (EINVAL);
-		if (!(ic->ic_flags & IEEE80211_C_RAWCTL) &&
+		if (!(ic->ic_caps & IEEE80211_C_RAWCTL) &&
 		    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
 		    IEEE80211_FC0_TYPE_CTL)
 			return (EINVAL);
