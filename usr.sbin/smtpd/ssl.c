@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.15 2009/05/19 22:41:35 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.16 2009/05/24 14:22:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -54,8 +54,6 @@ void	 ssl_client_init(struct session *);
 
 extern void	bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 		    size_t, void *);
-
-extern struct s_session	s_smtp;
 
 void
 ssl_connect(int fd, short event, void *p)
@@ -505,12 +503,12 @@ ssl_session_accept(int fd, short event, void *p)
 	s->s_flags |= F_SECURE;
 
 	if (s->s_l->flags & F_SMTPS) {
-		s_smtp.smtps++;
-		s_smtp.smtps_active++;
+		s->s_env->stats->smtp.smtps++;
+		s->s_env->stats->smtp.smtps_active++;
 	}
 	if (s->s_l->flags & F_STARTTLS) {
-		s_smtp.starttls++;
-		s_smtp.starttls_active++;
+		s->s_env->stats->smtp.starttls++;
+		s->s_env->stats->smtp.starttls_active++;
 	}
 
 	session_bufferevent_new(s);
@@ -602,10 +600,10 @@ ssl_session_destroy(struct session *s)
 
 	if (s->s_l->flags & F_SMTPS) {
 		if (s->s_flags & F_SECURE)
-			s_smtp.smtps_active--;
+			s->s_env->stats->smtp.smtps_active--;
 	}
 	if (s->s_l->flags & F_STARTTLS) {
 		if (s->s_flags & F_SECURE)
-			s_smtp.starttls_active--;
+			s->s_env->stats->smtp.starttls_active--;
 	}
 }

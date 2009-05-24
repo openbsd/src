@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.112 2009/05/20 14:29:44 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.113 2009/05/24 14:22:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -670,6 +670,8 @@ struct smtpd {
 	SPLAY_HEAD(batchtree, batch)		batch_queue;
 	SPLAY_HEAD(mdaproctree, mdaproc)	mdaproc_queue;
 	SPLAY_HEAD(lkatree, lkasession)		lka_sessions;
+
+	struct stats				*stats;
 };
 
 struct s_parent {
@@ -707,14 +709,11 @@ struct s_session {
 };
 
 struct stats {
-	int			fd;
-	union u_stats {
-		struct s_parent	parent;
-		struct s_queue	queue;
-		struct s_runner	runner;
-		struct s_session smtp;
-		struct s_session mta;
-	}			u;
+	struct s_parent		 parent;
+	struct s_queue		 queue;
+	struct s_runner		 runner;
+	struct s_session	 mta;
+	struct s_session	 smtp;
 };
 
 struct sched {

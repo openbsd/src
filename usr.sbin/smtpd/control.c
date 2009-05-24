@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.28 2009/05/20 16:07:26 gilles Exp $	*/
+/*	$OpenBSD: control.c,v 1.29 2009/05/24 14:22:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -319,19 +319,12 @@ control_dispatch_ext(int fd, short event, void *arg)
 			imsg_compose(env->sc_ibufs[PROC_SMTP],
 			    IMSG_SMTP_ENQUEUE, 0, 0, -1, &fd, sizeof(fd));
 			break;
-		case IMSG_STATS: {
-			struct stats	s;
-
+		case IMSG_STATS:
 			if (euid)
 				goto badcred;
-
-			s.fd = fd;
-			imsg_compose(env->sc_ibufs[PROC_PARENT], IMSG_STATS, 0, 0, -1, &s, sizeof(s));
-			imsg_compose(env->sc_ibufs[PROC_QUEUE], IMSG_STATS, 0, 0, -1, &s, sizeof(s));
-			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_STATS, 0, 0, -1, &s, sizeof(s));
-			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_STATS, 0, 0, -1, &s, sizeof(s));
+			imsg_compose(&c->ibuf, IMSG_STATS, 0, 0, -1,
+			    env->stats, sizeof(struct stats));
 			break;
-		}
 		case IMSG_RUNNER_SCHEDULE: {
 			struct sched *s = imsg.data;
 
@@ -540,22 +533,6 @@ control_dispatch_parent(int sig, short event, void *p)
 				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
 			break;
 		}
-		case IMSG_STATS: {
-			struct stats	*s = imsg.data;
-			struct ctl_conn	*c;
-
-			IMSG_SIZE_CHECK(s);
-
-			if ((c = control_connbyfd(s->fd)) == NULL) {
-				log_warn("control_dispatch_parent: fd %d not found", s->fd);
-				return;
-			}
-
-			imsg_compose(&c->ibuf, IMSG_PARENT_STATS, 0, 0, -1,
-			    &s->u.parent, sizeof(s->u.parent));
-
-			break;
-		}
 		default:
 			log_warnx("control_dispatch_parent: got imsg %d",
 			    imsg.hdr.type);
@@ -694,23 +671,6 @@ control_dispatch_queue(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_STATS: {
-			struct stats	*s = imsg.data;
-			struct ctl_conn	*c;
-
-			IMSG_SIZE_CHECK(s);
-
-			if ((c = control_connbyfd(s->fd)) == NULL) {
-				log_warn("control_dispatch_queue: fd %d not found", s->fd);
-				imsg_free(&imsg);
-				return;
-			}
-
-			imsg_compose(&c->ibuf, IMSG_QUEUE_STATS, 0, 0, -1,
-			    &s->u.queue, sizeof(s->u.queue));
-
-			break;
-		}
 		default:
 			log_warnx("control_dispatch_queue: got imsg %d",
 			    imsg.hdr.type);
@@ -757,23 +717,6 @@ control_dispatch_runner(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_STATS: {
-			struct stats	*s = imsg.data;
-			struct ctl_conn	*c;
-
-			IMSG_SIZE_CHECK(s);
-
-			if ((c = control_connbyfd(s->fd)) == NULL) {
-				log_warn("control_dispatch_runner: fd %d not found", s->fd);
-				imsg_free(&imsg);
-				return;
-			}
-
-			imsg_compose(&c->ibuf, IMSG_RUNNER_STATS, 0, 0, -1,
-			    &s->u.runner, sizeof(s->u.runner));
-
-			break;
-		}
 		case IMSG_RUNNER_SCHEDULE: {
 			struct sched	*s = imsg.data;
 			struct ctl_conn	*c;
@@ -838,23 +781,6 @@ control_dispatch_smtp(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_STATS: {
-			struct stats	*s = imsg.data;
-			struct ctl_conn	*c;
-
-			IMSG_SIZE_CHECK(s);
-
-			if ((c = control_connbyfd(s->fd)) == NULL) {
-				log_warn("control_dispatch_queue: fd %d not found", s->fd);
-				imsg_free(&imsg);
-				return;
-			}
-
-			imsg_compose(&c->ibuf, IMSG_SMTP_STATS, 0, 0, -1,
-			    &s->u.smtp, sizeof(s->u.smtp));
-
-			break;
-		}
 		case IMSG_SMTP_ENQUEUE: {
 			int		*fd = imsg.data;
 			struct ctl_conn	*c;

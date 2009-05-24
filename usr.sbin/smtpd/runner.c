@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.46 2009/05/19 11:24:24 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.47 2009/05/24 14:22:23 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -81,8 +81,6 @@ struct batch	*batch_lookup(struct smtpd *, struct message *);
 
 int		runner_force_envelope_schedule(char *);
 int		runner_force_message_schedule(char *);
-
-struct s_runner	 s_runner;
 
 void
 runner_sig_handler(int sig, short event, void *p)
@@ -194,15 +192,6 @@ runner_dispatch_control(int sig, short event, void *p)
 		case IMSG_MTA_RESUME:
 			env->sc_opts &= ~SMTPD_MTA_PAUSED;
 			break;
-		case IMSG_STATS: {
-			struct stats *s = imsg.data;
-
-			IMSG_SIZE_CHECK(s);
-
-			s->u.runner = s_runner;
-			imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, s, sizeof(*s));
-			break;
-		}
 		case IMSG_RUNNER_SCHEDULE: {
 			struct sched *s = imsg.data;
 
@@ -268,7 +257,7 @@ runner_dispatch_queue(int sig, short event, void *p)
 
 			IMSG_SIZE_CHECK(m);
 
-			s_runner.active--;
+			env->stats->runner.active--;
 			queue_message_update(m);
 			break;
 		}
@@ -936,7 +925,7 @@ batch_record(struct smtpd *env, struct message *messagep)
 	}
 
 	TAILQ_INSERT_TAIL(&batchp->messages, messagep, entry);
-	s_runner.active++;
+	env->stats->runner.active++;
 	return batchp;
 }
 

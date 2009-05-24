@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.26 2009/05/20 11:58:06 gilles Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.27 2009/05/24 14:22:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -260,60 +260,45 @@ show_command_output(struct imsg *imsg)
 int
 show_stats_output(struct imsg *imsg)
 {
-	static int	 	left = 4;
-	static struct s_parent	s_parent;
-	static struct s_queue	s_queue;
-	static struct s_runner	s_runner;
-	static struct s_session	s_smtp;
+	struct stats	*stats;
 
-	switch (imsg->hdr.type) {
-	case IMSG_PARENT_STATS:
-		s_parent = *(struct s_parent *)imsg->data;
-		break;
-	case IMSG_QUEUE_STATS:
-		s_queue = *(struct s_queue *)imsg->data;
-		break;
-	case IMSG_RUNNER_STATS:
-		s_runner = *(struct s_runner *)imsg->data;
-		break;
-	case IMSG_SMTP_STATS:
-		s_smtp = *(struct s_session *)imsg->data;
-		break;
-	default:
+	if (imsg->hdr.type != IMSG_STATS)
 		errx(1, "show_stats_output: bad hdr type (%d)", imsg->hdr.type);
-	}
+	
+	if (IMSG_DATA_SIZE(imsg) != sizeof(*stats))
+		errx(1, "show_stats_output: bad data size");
 
-	left--;
-	if (left > 0)
-		return (0);
+	stats = imsg->data;
 
-	printf("parent.uptime=%d\n", time(NULL) - s_parent.start);
+	printf("parent.uptime=%d\n", time(NULL) - stats->parent.start);
 
-	printf("queue.inserts.local=%zd\n", s_queue.inserts_local);
-	printf("queue.inserts.remote=%zd\n", s_queue.inserts_remote);
+	printf("queue.inserts.local=%zd\n", stats->queue.inserts_local);
+	printf("queue.inserts.remote=%zd\n", stats->queue.inserts_remote);
 
-	printf("runner.active=%zd\n", s_runner.active);
+	printf("runner.active=%zd\n", stats->runner.active);
 
-	printf("smtp.errors.linetoolong=%zd\n", s_smtp.linetoolong);
-	printf("smtp.errors.read_eof=%zd\n", s_smtp.read_eof);
-	printf("smtp.errors.read_system=%zd\n", s_smtp.read_error);
-	printf("smtp.errors.read_timeout=%zd\n", s_smtp.read_timeout);
-	printf("smtp.errors.tempfail=%zd\n", s_smtp.tempfail);
-	printf("smtp.errors.toofast=%zd\n", s_smtp.toofast);
-	printf("smtp.errors.write_eof=%zd\n", s_smtp.write_eof);
-	printf("smtp.errors.write_system=%zd\n", s_smtp.write_error);
-	printf("smtp.errors.write_timeout=%zd\n", s_smtp.write_timeout);
+	printf("smtp.errors.linetoolong=%zd\n", stats->smtp.linetoolong);
+	printf("smtp.errors.read_eof=%zd\n", stats->smtp.read_eof);
+	printf("smtp.errors.read_system=%zd\n", stats->smtp.read_error);
+	printf("smtp.errors.read_timeout=%zd\n", stats->smtp.read_timeout);
+	printf("smtp.errors.tempfail=%zd\n", stats->smtp.tempfail);
+	printf("smtp.errors.toofast=%zd\n", stats->smtp.toofast);
+	printf("smtp.errors.write_eof=%zd\n", stats->smtp.write_eof);
+	printf("smtp.errors.write_system=%zd\n", stats->smtp.write_error);
+	printf("smtp.errors.write_timeout=%zd\n", stats->smtp.write_timeout);
 
-	printf("smtp.sessions=%zd\n", s_smtp.sessions);
-	printf("smtp.sessions.aborted=%zd\n", s_smtp.read_eof +
-	    s_smtp.read_error + s_smtp.write_eof + s_smtp.write_error);
-	printf("smtp.sessions.active=%zd\n", s_smtp.sessions_active);
-	printf("smtp.sessions.timeout=%zd\n", s_smtp.read_timeout +
-	    s_smtp.write_timeout);
-	printf("smtp.sessions.smtps=%zd\n", s_smtp.smtps);
-	printf("smtp.sessions.smtps.active=%zd\n", s_smtp.smtps_active);
-	printf("smtp.sessions.starttls=%zd\n", s_smtp.starttls);
-	printf("smtp.sessions.starttls.active=%zd\n", s_smtp.starttls_active);
+	printf("smtp.sessions=%zd\n", stats->smtp.sessions);
+	printf("smtp.sessions.aborted=%zd\n", stats->smtp.read_eof +
+	    stats->smtp.read_error + stats->smtp.write_eof +
+	    stats->smtp.write_error);
+	printf("smtp.sessions.active=%zd\n", stats->smtp.sessions_active);
+	printf("smtp.sessions.timeout=%zd\n", stats->smtp.read_timeout +
+	    stats->smtp.write_timeout);
+	printf("smtp.sessions.smtps=%zd\n", stats->smtp.smtps);
+	printf("smtp.sessions.smtps.active=%zd\n", stats->smtp.smtps_active);
+	printf("smtp.sessions.starttls=%zd\n", stats->smtp.starttls);
+	printf("smtp.sessions.starttls.active=%zd\n",
+	    stats->smtp.starttls_active);
 
 	return (1);
 }

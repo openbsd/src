@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.93 2009/05/20 16:12:11 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.94 2009/05/24 14:22:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -73,8 +73,6 @@ char		*session_readline(struct session *, size_t *);
 int		 session_set_path(struct path *, char *);
 void		 session_imsg(struct session *, enum smtp_proc_type,
 		     enum imsg_type, u_int32_t, pid_t, int, void *, u_int16_t);
-
-extern struct s_session	s_smtp;
 
 struct session_cmd {
 	char	 *name;
@@ -600,7 +598,7 @@ session_pickup(struct session *s, struct submit_status *ss)
 	if ((ss != NULL && ss->code == 421) ||
 	    (s->s_msg.status & S_MESSAGE_TEMPFAILURE)) {
 		session_respond(s, "421 Service temporarily unavailable");
-		s_smtp.tempfail++;
+		s->s_env->stats->smtp.tempfail++;
 		s->s_flags |= F_QUIT;
 		return;
 	}
@@ -743,7 +741,7 @@ session_read(struct bufferevent *bev, void *p)
 
 		if (! expect_lines) {
 			session_respond(s, "500 Pipelining unsupported");
-			s_smtp.toofast++;
+			s->s_env->stats->smtp.toofast++;
 			s->s_flags |= F_QUIT;
 			return;
 		}
@@ -791,7 +789,7 @@ session_read(struct bufferevent *bev, void *p)
 
 tempfail:
 	session_respond(s, "421 Service temporarily unavailable");
-	s_smtp.tempfail++;
+	s->s_env->stats->smtp.tempfail++;
 	s->s_flags |= F_QUIT;
 }
 
@@ -812,7 +810,7 @@ session_read_data(struct session *s, char *line, size_t nread)
 		} else if (s->s_msg.status & S_MESSAGE_TEMPFAILURE) {
 			session_respond(s, "421 Temporary failure");
 			s->s_flags |= F_QUIT;
-			s_smtp.tempfail++;
+			s->s_env->stats->smtp.tempfail++;
 		} else {
 			session_imsg(s, PROC_QUEUE, IMSG_QUEUE_COMMIT_MESSAGE,
 			    0, 0, -1, &s->s_msg, sizeof(s->s_msg));
@@ -907,12 +905,12 @@ session_error(struct bufferevent *bev, short event, void *p)
 	if (event & EVBUFFER_READ) {
 		if (event & EVBUFFER_TIMEOUT) {
 			log_warnx("client %s read timeout", ip);
-			s_smtp.read_timeout++;
+			s->s_env->stats->smtp.read_timeout++;
 		} else if (event & EVBUFFER_EOF)
-			s_smtp.read_eof++;
+			s->s_env->stats->smtp.read_eof++;
 		else if (event & EVBUFFER_ERROR) {
 			log_warn("client %s read error", ip);
-			s_smtp.read_error++;
+			s->s_env->stats->smtp.read_error++;
 		}
 
 		session_destroy(s);
@@ -922,12 +920,12 @@ session_error(struct bufferevent *bev, short event, void *p)
 	if (event & EVBUFFER_WRITE) {
 		if (event & EVBUFFER_TIMEOUT) {
 			log_warnx("client %s write timeout", ip);
-			s_smtp.write_timeout++;
+			s->s_env->stats->smtp.write_timeout++;
 		} else if (event & EVBUFFER_EOF)
-			s_smtp.write_eof++;
+			s->s_env->stats->smtp.write_eof++;
 		else if (event & EVBUFFER_ERROR) {
 			log_warn("client %s write error", ip);
-			s_smtp.write_error++;
+			s->s_env->stats->smtp.write_error++;
 		}
 
 		if (s->s_flags & F_WRITEONLY)
@@ -964,8 +962,8 @@ session_destroy(struct session *s)
 	if (close(s->s_fd) == -1)
 		fatal("session_destroy: close");
 
-	s_smtp.sessions_active--;
-	if (s_smtp.sessions_active < s->s_env->sc_maxconn &&
+	s->s_env->stats->smtp.sessions_active--;
+	if (s->s_env->stats->smtp.sessions_active < s->s_env->sc_maxconn &&
 	    !(s->s_msg.flags & F_MESSAGE_ENQUEUED)) {
 		/*
 		 * if our session_destroy occurs because of a configuration
@@ -990,7 +988,7 @@ session_readline(struct session *s, size_t *nr)
 	if (line == NULL) {
 		if (EVBUFFER_LENGTH(s->s_bev->input) > SMTP_ANYLINE_MAX) {
 			session_respond(s, "500 Line too long");
-			s_smtp.linetoolong++;
+			s->s_env->stats->smtp.linetoolong++;
 			s->s_flags |= F_QUIT;
 		}
 		return NULL;

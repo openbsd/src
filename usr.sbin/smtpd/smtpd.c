@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.63 2009/05/20 16:07:26 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.64 2009/05/24 14:22:24 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <sys/uio.h>
 #include <sys/resource.h>
+#include <sys/mman.h>
 
 #include <bsd_auth.h>
 #include <err.h>
@@ -85,8 +86,6 @@ pid_t	mta_pid = 0;
 pid_t	control_pid = 0;
 pid_t	smtp_pid = 0;
 pid_t	runner_pid = 0;
-
-struct s_parent	s_parent;
 
 int __b64_pton(char const *, unsigned char *, size_t);
 
@@ -663,15 +662,6 @@ parent_dispatch_control(int sig, short event, void *p)
 			imsg_compose(ibuf, IMSG_CONF_RELOAD, 0, 0, -1, r, sizeof(*r));
 			break;
 		}
-		case IMSG_STATS: {
-			struct stats *s = imsg.data;
-
-			IMSG_SIZE_CHECK(s);
-
-			s->u.parent = s_parent;
-			imsg_compose(ibuf, IMSG_STATS, 0, 0, -1, s, sizeof(*s));
-			break;
-		}
 		default:
 			log_warnx("parent_dispatch_control: got imsg %d",
 			    imsg.hdr.type);
@@ -863,6 +853,14 @@ main(int argc, char *argv[])
 
 	log_info("startup%s", (debug > 1)?" [debug mode]":"");
 
+	env.stats = mmap(NULL, sizeof(struct stats), PROT_WRITE|PROT_READ,
+	    MAP_ANON|MAP_SHARED, -1, (off_t)0);
+	if (env.stats == MAP_FAILED)
+		fatal("mmap");
+	bzero(env.stats, sizeof(struct stats));
+
+	env.stats->parent.start = time(NULL);
+
 	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
 		fatal("smtpd: failed to get resource limit");
 
@@ -902,8 +900,6 @@ main(int argc, char *argv[])
 	runner_pid = runner(&env);
 
 	SPLAY_INIT(&env.mdaproc_queue);
-
-	s_parent.start = time(NULL);
 
 	event_init();
 
