@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.263 2009/05/21 23:04:20 sthen Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.264 2009/05/24 14:11:35 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -122,6 +122,8 @@
 
 #include <dev/pci/if_bgereg.h>
 
+#define ETHER_MIN_NOPAD		(ETHER_MIN_LEN - ETHER_CRC_LEN) /* i.e., 60 */
+
 const struct bge_revision * bge_lookup_rev(u_int32_t);
 int bge_probe(struct device *, void *, void *);
 void bge_attach(struct device *, struct device *, void *);
@@ -140,8 +142,9 @@ void bge_rxeof(struct bge_softc *);
 void bge_tick(void *);
 void bge_stats_update(struct bge_softc *);
 void bge_stats_update_regs(struct bge_softc *);
+int bge_cksum_pad(struct mbuf *);
 int bge_encap(struct bge_softc *, struct mbuf *, u_int32_t *);
-int bge_compact_dma_runt(struct mbuf *pkt);
+int bge_compact_dma_runt(struct mbuf *);
 
 int bge_intr(void *);
 void bge_start(struct ifnet *);
@@ -1297,14 +1300,9 @@ bge_chipinit(struct bge_softc *sc)
 	/*
 	 * Set up general mode register.
 	 */
-#ifndef BGE_CHECKSUM
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS|
 		    BGE_MODECTL_MAC_ATTN_INTR|BGE_MODECTL_HOST_SEND_BDS|
-		    BGE_MODECTL_TX_NO_PHDR_CSUM|BGE_MODECTL_RX_NO_PHDR_CSUM);
-#else
-	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS|
-		    BGE_MODECTL_MAC_ATTN_INTR|BGE_MODECTL_HOST_SEND_BDS);
-#endif
+		    BGE_MODECTL_TX_NO_PHDR_CSUM);
 
 	/*
 	 * Disable memory write invalidate.  Apparently it is not supported
@@ -2111,6 +2109,16 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
+	/*
+	 * 5700 B0 chips do not support checksumming correctly due
+	 * to hardware bugs.
+	 */
+	if (sc->bge_chipid != BGE_CHIPID_BCM5700_B0)
+		ifp->if_capabilities |= IFCAP_CSUM_IPv4;
+#if 0	/* TCP/UDP checksum offload breaks with pf(4) */
+		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
+#endif
+
 	if (BGE_IS_JUMBO_CAPABLE(sc))
 		ifp->if_hardmtu = BGE_JUMBO_MTU;
 
@@ -2477,9 +2485,6 @@ bge_rxeof(struct bge_softc *sc)
 		struct bge_rx_bd	*cur_rx;
 		u_int32_t		rxidx;
 		struct mbuf		*m = NULL;
-#ifdef BGE_CHECKSUM
-		u_int16_t		sumflags = 0;
-#endif
 
 		cur_rx = &sc->bge_rdata->
 			bge_rx_return_ring[sc->bge_rx_saved_considx];
@@ -2538,6 +2543,27 @@ bge_rxeof(struct bge_softc *sc)
 		m->m_pkthdr.len = m->m_len = cur_rx->bge_len - ETHER_CRC_LEN; 
 		m->m_pkthdr.rcvif = ifp;
 
+		/*
+		 * 5700 B0 chips do not support checksumming correctly due
+		 * to hardware bugs.
+		 */
+		if (sc->bge_chipid != BGE_CHIPID_BCM5700_B0) {
+			if (cur_rx->bge_flags & BGE_RXBDFLAG_IP_CSUM) {
+				if (cur_rx->bge_ip_csum == 0xFFFF)
+					m->m_pkthdr.csum_flags |=
+					    M_IPV4_CSUM_IN_OK;
+				else
+					m->m_pkthdr.csum_flags |=
+					    M_IPV4_CSUM_IN_BAD;
+			}
+			if (cur_rx->bge_flags & BGE_RXBDFLAG_TCP_UDP_CSUM &&
+			    m->m_pkthdr.len >= ETHER_MIN_NOPAD) {
+				if (cur_rx->bge_tcp_udp_csum == 0xFFFF)
+					m->m_pkthdr.csum_flags |=
+					    M_TCP_CSUM_IN_OK|M_UDP_CSUM_IN_OK;
+			}
+		}
+
 #if NVLAN > 0
 		if (cur_rx->bge_flags & BGE_RXBDFLAG_VLAN_TAG) {
 			m->m_pkthdr.ether_vtag = cur_rx->bge_vlan_tag;
@@ -2553,21 +2579,6 @@ bge_rxeof(struct bge_softc *sc)
 			bpf_mtap_ether(ifp->if_bpf, m, BPF_DIRECTION_IN);
 #endif
 
-#ifdef BGE_CHECKSUM
-		if ((cur_rx->bge_ip_csum ^ 0xffff) == 0)
-			sumflags |= M_IPV4_CSUM_IN_OK;
-		else
-			sumflags |= M_IPV4_CSUM_IN_BAD;
-
-		if (cur_rx->bge_flags & BGE_RXBDFLAG_TCP_UDP_CSUM) {
-			m->m_pkthdr.csum_data =
-				cur_rx->bge_tcp_udp_csum;
-			m->m_pkthdr.csum_flags |= CSUM_DATA_VALID;
-		}
-
-		m->m_pkthdr.csum_flags = sumflags;
-		sumflags = 0;
-#endif
 		ether_input_mbuf(ifp, m);
 	}
 
@@ -2889,6 +2900,50 @@ bge_compact_dma_runt(struct mbuf *pkt)
 }
 
 /*
+ * Pad outbound frame to ETHER_MIN_NOPAD for an unusual reason.
+ * The bge hardware will pad out Tx runts to ETHER_MIN_NOPAD,
+ * but when such padded frames employ the bge IP/TCP checksum offload,
+ * the hardware checksum assist gives incorrect results (possibly
+ * from incorporating its own padding into the UDP/TCP checksum; who knows).
+ * If we pad such runts with zeros, the onboard checksum comes out correct.
+ */
+int
+bge_cksum_pad(struct mbuf *m)
+{
+	int padlen = ETHER_MIN_NOPAD - m->m_pkthdr.len;
+	struct mbuf *last;
+
+	/* If there's only the packet-header and we can pad there, use it. */
+	if (m->m_pkthdr.len == m->m_len && M_TRAILINGSPACE(m) >= padlen) {
+		last = m;
+	} else {
+		/*
+		 * Walk packet chain to find last mbuf. We will either
+		 * pad there, or append a new mbuf and pad it.
+		 */
+		for (last = m; last->m_next != NULL; last = last->m_next);
+		if (M_TRAILINGSPACE(last) < padlen) {
+			/* Allocate new empty mbuf, pad it. Compact later. */
+			struct mbuf *n;
+
+			MGET(n, M_DONTWAIT, MT_DATA);
+			if (n == NULL)
+				return (ENOBUFS);
+			n->m_len = 0;
+			last->m_next = n;
+			last = n;
+		}
+	}
+	
+	/* Now zero the pad area, to avoid the bge cksum-assist bug. */
+	memset(mtod(last, caddr_t) + last->m_len, 0, padlen);
+	last->m_len += padlen;
+	m->m_pkthdr.len += padlen;
+
+	return (0);
+}
+
+/*
  * Encapsulate an mbuf chain in the tx ring by coupling the mbuf data
  * pointers to descriptors.
  */
@@ -2904,21 +2959,18 @@ bge_encap(struct bge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 
 	cur = frag = *txidx;
 
-#ifdef BGE_CHECKSUM
 	if (m_head->m_pkthdr.csum_flags) {
 		if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 			csum_flags |= BGE_TXBDFLAG_IP_CSUM;
 		if (m_head->m_pkthdr.csum_flags & (M_TCPV4_CSUM_OUT |
-					     M_UDPV4_CSUM_OUT))
+		    M_UDPV4_CSUM_OUT)) {
 			csum_flags |= BGE_TXBDFLAG_TCP_UDP_CSUM;
-#ifdef fake
-		if (m_head->m_flags & M_LASTFRAG)
-			csum_flags |= BGE_TXBDFLAG_IP_FRAG_END;
-		else if (m_head->m_flags & M_FRAG)
-			csum_flags |= BGE_TXBDFLAG_IP_FRAG;
-#endif
+			if (m_head->m_pkthdr.len < ETHER_MIN_NOPAD &&
+			    bge_cksum_pad(m_head) != 0)
+				return (ENOBUFS);
+		}
 	}
-#endif
+
 	if (!(BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5700_BX))
 		goto doit;
 
