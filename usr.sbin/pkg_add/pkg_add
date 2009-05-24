@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.335 2009/04/20 08:29:02 espie Exp $
+# $OpenBSD: pkg_add,v 1.336 2009/05/24 11:05:24 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -509,12 +509,18 @@ sub find_truelocations
 		    	print "Can't resolve $pkgname\n";
 			$bad = 1;
 		    } elsif (@$l > 1) {
-		    	my %h = map {($_->name, $_)} @$l;
-			$h{'<None>'} = undef;
-		    	my $result = OpenBSD::Interactive::ask_list("Ambiguous choose package for $pkgname", $state->{interactive}, sort keys %h);
-			if (defined $h{$result}) {
-				push(@$new, OpenBSD::UpdateSet->from_location($h{$result}));
+			my %h = map {($_->name, $_)} @$l;
+		    	if ($state->{interactive}) {
+				$h{'<None>'} = undef;
+				my $result = OpenBSD::Interactive::ask_list("Ambiguous: choose package for $pkgname", $state->{interactive}, sort keys %h);
+				if (defined $h{$result}) {
+					push(@$new, OpenBSD::UpdateSet->from_location($h{$result}));
+				} else {
+					$bad = 1;
+				}
 			} else {
+				print "Ambiguous: $pkgname could be ", 
+				    join(' ', keys %h), "\n";
 				$bad = 1;
 			}
 		    } else {
