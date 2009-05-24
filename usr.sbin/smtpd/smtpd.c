@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.65 2009/05/24 14:38:56 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.66 2009/05/24 15:47:31 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -484,45 +484,15 @@ parent_dispatch_smtp(int fd, short event, void *p)
 			break;
 		}
 		case IMSG_PARENT_AUTHENTICATE: {
-			struct session_auth_req *req = imsg.data;
-			struct session_auth_reply reply;
-			char buf[1024];
-			char *user;
-			char *pass;
-			int len;
+			struct auth	*req = imsg.data;
 
 			IMSG_SIZE_CHECK(req);
 
-			reply.session_id = req->session_id;
-			reply.value = 0;
+			req->success = auth_userokay(req->user, NULL,
+			    "auth-smtp", req->pass);
 
-			/* String is not NUL terminated, leave room. */
-			if ((len = kn_decode_base64(req->buffer, buf,
-			    sizeof(buf) - 1)) == -1)
-				goto out;
-			/* buf is a byte string, NUL terminate. */
-			buf[len] = '\0';
-
-			/*
-			 * Skip "foo" in "foo\0user\0pass", if present.
-			 */
-			user = memchr(buf, '\0', len);
-			if (user == NULL || user >= buf + len - 2)
-				goto out;
-			user++; /* skip NUL */
-
-			pass = memchr(user, '\0', len - (user - buf));
-			if (pass == NULL || pass >= buf + len - 2)
-				goto out;
-			pass++; /* skip NUL */
-
-			if (auth_userokay(user, NULL, "auth-smtp", pass))
-				reply.value = 1;
-
-out:
 			imsg_compose(ibuf, IMSG_PARENT_AUTHENTICATE, 0, 0,
-			    -1, &reply, sizeof(reply));
-
+			    -1, req, sizeof(*req));
 			break;
 		}
 		default:

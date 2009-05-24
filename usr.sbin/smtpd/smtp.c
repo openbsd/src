@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.50 2009/05/24 14:38:56 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.51 2009/05/24 15:47:31 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -179,21 +179,25 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			env->sc_flags &= ~SMTPD_CONFIGURING;
 			break;
 		case IMSG_PARENT_AUTHENTICATE: {
-			struct session			*s;
-			struct session_auth_reply	*reply = imsg.data;
+			struct auth	*reply = imsg.data;
+			struct session	*s;
 
-			log_debug("smtp_dispatch_parent: parent handled authentication");
+			log_debug("smtp_dispatch_parent: got auth reply");
 
 			IMSG_SIZE_CHECK(reply);
 
-			if ((s = session_lookup(env, reply->session_id)) == NULL)
+			if ((s = session_lookup(env, reply->id)) == NULL)
 				break;
 
-			if (reply->value)
+			if (reply->success) {
 				s->s_flags |= F_AUTHENTICATED;
+				s->s_msg.flags |= F_MESSAGE_AUTHENTICATED;
+			} else {
+				s->s_flags &= ~F_AUTHENTICATED;
+				s->s_msg.flags &= ~F_MESSAGE_AUTHENTICATED;
+			}
 
-			session_auth_pickup(s, NULL, 0);
-
+			session_pickup(s, NULL);
 			break;
 		}
 		default:

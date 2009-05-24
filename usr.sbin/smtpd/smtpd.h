@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.114 2009/05/24 14:38:56 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.115 2009/05/24 15:47:31 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -587,14 +587,11 @@ struct listener {
 	TAILQ_ENTRY(listener)	 entry;
 };
 
-struct session_auth_req {
-	u_int64_t	session_id;
-	char		buffer[MAX_LINE_SIZE];
-};
-
-struct session_auth_reply {
-	u_int64_t	session_id;
-	u_int8_t	value;
+struct auth {
+	u_int64_t	 id;
+	char		 user[MAXLOGNAME];
+	char		 pass[MAX_LINE_SIZE];
+	int		 success;
 };
 
 enum session_flags {
@@ -628,7 +625,7 @@ struct session {
 	struct message			 s_msg;
 	size_t				 rcptcount;
 
-	struct session_auth_req		 s_auth;
+	struct auth			 s_auth;
 
 	char				 credentials[MAX_LINE_SIZE];
 

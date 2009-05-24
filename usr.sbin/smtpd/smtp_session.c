@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.95 2009/05/24 14:58:43 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.96 2009/05/24 15:47:31 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -60,9 +60,8 @@ int		 session_rfc1652_mail_handler(struct session *, char *);
 int		 session_rfc3207_stls_handler(struct session *, char *);
 
 int		 session_rfc4954_auth_handler(struct session *, char *);
-int		 session_rfc4954_auth_plain(struct session *, char *, size_t);
-int		 session_rfc4954_auth_login(struct session *, char *, size_t);
-void		 session_auth_pickup(struct session *, char *, size_t);
+void		 session_rfc4954_auth_plain(struct session *, char *);
+void		 session_rfc4954_auth_login(struct session *, char *);
 
 void		 session_read(struct bufferevent *, void *);
 void		 session_read_data(struct session *, char *, size_t);
@@ -161,100 +160,116 @@ session_rfc4954_auth_handler(struct session *s, char *args)
 		*eom++ = '\0';
 
 	if (strcasecmp(method, "PLAIN") == 0)
-		return session_rfc4954_auth_plain(s, eom, eom ? strlen(eom) : 0);
+		session_rfc4954_auth_plain(s, eom);
 	else if (strcasecmp(method, "LOGIN") == 0)
-		return session_rfc4954_auth_login(s, eom, eom ? strlen(eom) : 0);
+		session_rfc4954_auth_login(s, eom);
+	else
+		session_respond(s, "504 AUTH method '%s' unsupported", method);
 
+	return 1;
+}
+
+void
+session_rfc4954_auth_plain(struct session *s, char *arg)
+{
+	struct auth	*a = &s->s_auth;
+	char		 buf[1024], *user, *pass;
+	int		 len;
+
+	switch (s->s_state) {
+	case S_HELO:
+		if (arg == NULL) {
+			session_respond(s, "334 ");
+			s->s_state = S_AUTH_INIT;
+			return;
+		}
+		/* FALLTHROUGH */
+
+	case S_AUTH_INIT:
+		/* String is not NUL terminated, leave room. */
+		if ((len = kn_decode_base64(arg, buf, sizeof(buf) - 1)) == -1)
+			goto abort;
+		/* buf is a byte string, NUL terminate. */
+		buf[len] = '\0';
+
+		/*
+		 * Skip "foo" in "foo\0user\0pass", if present.
+		 */
+		user = memchr(buf, '\0', len);
+		if (user == NULL || user >= buf + len - 2)
+			goto abort;
+		user++; /* skip NUL */
+		if (strlcpy(a->user, user, sizeof(a->user)) >= sizeof(a->user))
+			goto abort;
+
+		pass = memchr(user, '\0', len - (user - buf));
+		if (pass == NULL || pass >= buf + len - 2)
+			goto abort;
+		pass++; /* skip NUL */
+		if (strlcpy(a->pass, pass, sizeof(a->pass)) >= sizeof(a->pass))
+			goto abort;
+
+		s->s_state = S_AUTH_FINALIZE;
+
+		a->id = s->s_id;
+		session_imsg(s, PROC_PARENT, IMSG_PARENT_AUTHENTICATE, 0, 0, -1,
+		    a, sizeof(*a));
+
+		bzero(a->pass, sizeof(a->pass));
+		return;
+
+	default:
+		fatal("session_rfc4954_auth_plain: unknown state");
+	}
+
+abort:
 	session_respond(s, "501 Syntax error");
-	return 1;
-
+	s->s_state = S_HELO;
 }
 
-int
-session_rfc4954_auth_plain(struct session *s, char *arg, size_t nr)
+void
+session_rfc4954_auth_login(struct session *s, char *arg)
 {
-	if (arg == NULL) {
-		session_respond(s, "334 ");
-		s->s_state = S_AUTH_INIT;
-		return 1;
-	}
-
-	s->s_auth.session_id = s->s_id;
-	if (strlcpy(s->s_auth.buffer, arg, sizeof(s->s_auth.buffer)) >=
-	    sizeof(s->s_auth.buffer)) {
-		session_respond(s, "501 Syntax error");
-		return 1;
-	}
-
-	s->s_state = S_AUTH_FINALIZE;
-
-	session_imsg(s, PROC_PARENT, IMSG_PARENT_AUTHENTICATE, 0, 0, -1,
-	    &s->s_auth, sizeof(s->s_auth));
-
-	return 1;
-}
-
-int
-session_rfc4954_auth_login(struct session *s, char *arg, size_t nr)
-{
-	struct session_auth_req req;
-	int blen = 0;
-	size_t len = 0;
+	struct auth	*a = &s->s_auth;
 
 	switch (s->s_state) {
 	case S_HELO:
 		/* "Username:" base64 encoded is "VXNlcm5hbWU6" */
 		session_respond(s, "334 VXNlcm5hbWU6");
-		s->s_auth.session_id = s->s_id;
 		s->s_state = S_AUTH_USERNAME;
-		return 1;
+		return;
 
 	case S_AUTH_USERNAME:
-		bzero(s->s_auth.buffer, sizeof(s->s_auth.buffer));
-		if ((blen = kn_decode_base64(arg, req.buffer, sizeof(req.buffer) - 1)) == -1)
-			goto err;
-		/* req.buffer is a byte string, NUL terminate */
-		req.buffer[blen] = '\0';
-		if (! bsnprintf(s->s_auth.buffer + 1, sizeof(s->s_auth.buffer) - 1, "%s", req.buffer))
-			goto err;
+		bzero(a->user, sizeof(a->user));
+		if (kn_decode_base64(arg, a->user, sizeof(a->user) - 1) == -1)
+			goto abort;
 
 		/* "Password:" base64 encoded is "UGFzc3dvcmQ6" */
 		session_respond(s, "334 UGFzc3dvcmQ6");
 		s->s_state = S_AUTH_PASSWORD;
+		return;
 
-		return 1;
+	case S_AUTH_PASSWORD:
+		bzero(a->pass, sizeof(a->pass));
+		if (kn_decode_base64(arg, a->pass, sizeof(a->pass) - 1) == -1)
+			goto abort;
 
-	case S_AUTH_PASSWORD: {
-		if ((blen = kn_decode_base64(arg, req.buffer, sizeof(req.buffer) - 1)) == -1)
-			goto err;
-		/* req.buffer is a byte string, NUL terminate */
-		req.buffer[blen] = '\0';
+		s->s_state = S_AUTH_FINALIZE;
 
-		len = strlen(s->s_auth.buffer + 1);
-		if (! bsnprintf(s->s_auth.buffer + len + 2, sizeof(s->s_auth.buffer) - len - 2, "%s", req.buffer))
-			goto err;
+		a->id = s->s_id;
+		session_imsg(s, PROC_PARENT, IMSG_PARENT_AUTHENTICATE, 0, 0, -1,
+		    a, sizeof(*a));
 
-		break;
-	}
+		bzero(a->pass, sizeof(a->pass));
+		return;
+	
 	default:
 		fatal("session_rfc4954_auth_login: unknown state");
 	}
 
-	s->s_state = S_AUTH_FINALIZE;
-
-	req = s->s_auth;
-	len = strlen(s->s_auth.buffer + 1) + strlen(arg) + 2;
-	if (kn_encode_base64(req.buffer, len, s->s_auth.buffer, sizeof(s->s_auth.buffer)) == -1)
-		goto err;
-
-	session_imsg(s, PROC_PARENT, IMSG_PARENT_AUTHENTICATE, 0, 0, -1,
-	    &s->s_auth, sizeof(s->s_auth));
-
-	return 1;
-err:
+abort:
+	session_respond(s, "501 Syntax error");
 	s->s_state = S_HELO;
-	session_respond(s, "535 Authentication failed");
-	return 1;
 }
 
 int
@@ -413,10 +428,6 @@ session_rfc5321_rcpt_handler(struct session *s, char *args)
 
 	s->s_state = S_RCPT_MFA;
 
-	if (s->s_flags & F_AUTHENTICATED) {
-		s->s_msg.flags |= F_MESSAGE_AUTHENTICATED;
-	}
-
 	session_imsg(s, PROC_MFA, IMSG_MFA_RCPT, 0, 0, -1, &s->s_msg,
 	    sizeof(s->s_msg));
 	return 1;
@@ -561,35 +572,6 @@ rfc5321:
 }
 
 void
-session_auth_pickup(struct session *s, char *arg, size_t nr)
-{
-	if (s == NULL)
-		fatal("session_auth_pickup: desynchronized");
-
-	switch (s->s_state) {
-	case S_AUTH_INIT:
-		session_rfc4954_auth_plain(s, arg, nr);
-		break;
-	case S_AUTH_USERNAME:
-		session_rfc4954_auth_login(s, arg, nr);
-		break;
-	case S_AUTH_PASSWORD:
-		session_rfc4954_auth_login(s, arg, nr);
-		break;
-	case S_AUTH_FINALIZE:
-		if (s->s_flags & F_AUTHENTICATED)
-			session_respond(s, "235 Authentication succeeded");
-		else
-			session_respond(s, "535 Authentication failed");
-		s->s_state = S_HELO;
-		break;
-	default:
-		fatal("session_auth_pickup: unknown state");
-	}
-	return;
-}
-
-void
 session_pickup(struct session *s, struct submit_status *ss)
 {
 	if (s == NULL)
@@ -619,6 +601,14 @@ session_pickup(struct session *s, struct submit_status *ss)
 			fatalx("session_pickup: corrupt session");
 		bufferevent_enable(s->s_bev, EV_READ);
 		s->s_state = S_GREETED;
+		break;
+
+	case S_AUTH_FINALIZE:
+		if (s->s_flags & F_AUTHENTICATED)
+			session_respond(s, "235 Authentication succeeded");
+		else
+			session_respond(s, "535 Authentication failed");
+		s->s_state = S_HELO;
 		break;
 
 	case S_MAIL_MFA:
@@ -740,24 +730,24 @@ session_read(struct bufferevent *bev, void *p)
 
 		switch (s->s_state) {
 		case S_AUTH_INIT:
+			if (s->s_msg.status & S_MESSAGE_TEMPFAILURE)
+				goto tempfail;
+			session_rfc4954_auth_plain(s, line);
+			break;
+
 		case S_AUTH_USERNAME:
 		case S_AUTH_PASSWORD:
-		case S_AUTH_FINALIZE:
-			if (s->s_msg.status & S_MESSAGE_TEMPFAILURE) {
-				free(line);
+			if (s->s_msg.status & S_MESSAGE_TEMPFAILURE)
 				goto tempfail;
-			}
-			session_auth_pickup(s, line, nr);
+			session_rfc4954_auth_login(s, line);
 			break;
 
 		case S_GREETED:
 		case S_HELO:
 		case S_MAIL:
 		case S_RCPT:
-			if (s->s_msg.status & S_MESSAGE_TEMPFAILURE) {
-				free(line);
+			if (s->s_msg.status & S_MESSAGE_TEMPFAILURE)
 				goto tempfail;
-			}
 			session_command(s, line, nr);
 			break;
 
@@ -777,6 +767,7 @@ tempfail:
 	session_respond(s, "421 Service temporarily unavailable");
 	s->s_env->stats->smtp.tempfail++;
 	s->s_flags |= F_QUIT;
+	free(line);
 }
 
 void
