@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridgereg.h,v 1.5 2009/05/14 21:10:33 miod Exp $	*/
+/*	$OpenBSD: xbridgereg.h,v 1.6 2009/05/24 17:33:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -133,6 +133,34 @@
 #define	RRB_SHIFT			4
 
 /*
+ * Address Translation Entries
+ */
+
+#define	BRIDGE_INTERNAL_ATE		128
+#define	XBRIDGE_INTERNAL_ATE		1024
+
+#define	BRIDGE_ATE_SSHIFT		12	/* 4KB */
+#define	BRIDGE_ATE_LSHIFT		14	/* 16KB */
+#define	BRIDGE_ATE_SSIZE		(1ULL << BRIDGE_ATE_SSHIFT)
+#define	BRIDGE_ATE_LSIZE		(1ULL << BRIDGE_ATE_LSHIFT)
+#define	BRIDGE_ATE_SMASK		(BRIDGE_ATE_SSIZE - 1)
+#define	BRIDGE_ATE_LMASK		(BRIDGE_ATE_LSIZE - 1)
+
+#define	BRIDGE_ATE(a)			(0x00010000 + (a) * 8)
+
+#define	ATE_NV				0x0000000000000000ULL
+#define	ATE_V				0x0000000000000001ULL
+#define	ATE_COH				0x0000000000000002ULL
+#define	ATE_PRECISE			0x0000000000000004ULL
+#define	ATE_PREFETCH			0x0000000000000008ULL
+#define	ATE_BARRIER			0x0000000000000010ULL
+#define	ATE_BSWAP			0x0000000000000020ULL	/* XBridge */
+#define	ATE_WIDGET_MASK			0x0000000000000f00ULL
+#define	ATE_WIDGET_SHIFT		8
+#define	ATE_ADDRESS_MASK		0x0000fffffffff000ULL
+#define	ATE_RMF_MASK			0x00ff000000000000ULL	/* Bridge */
+
+/*
  * Configuration space
  *
  * Access to the first bus is done in the first area, sorted by
@@ -149,6 +177,13 @@
  * The Bridge can do DMA either through a direct 2GB window, or through
  * a 1GB translated window, using its ATE memory.
  */
+
+#define	BRIDGE_DMA_TRANSLATED_BASE	0x40000000ULL
+#define	XBRIDGE_DMA_TRANSLATED_SWAP	0x20000000ULL
+#define	ATE_ADDRESS(a,s) \
+		(BRIDGE_DMA_TRANSLATED_BASE + ((a) << (s)))
+#define	ATE_INDEX(a,s) \
+		(((a) - BRIDGE_DMA_TRANSLATED_BASE) >> (s))
 
 #define	BRIDGE_DMA_DIRECT_BASE		0x80000000ULL
 #define	BRIDGE_DMA_DIRECT_LENGTH	0x80000000ULL
