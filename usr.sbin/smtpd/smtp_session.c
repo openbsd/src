@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.94 2009/05/24 14:22:24 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.95 2009/05/24 14:58:43 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -732,23 +732,11 @@ session_read(struct bufferevent *bev, void *p)
 	struct session	*s = p;
 	char		*line;
 	size_t		 nr;
-	int		 expect_lines = 1;
 
 	for (;;) {
 		line = session_readline(s, &nr);
 		if (line == NULL)
 			return;
-
-		if (! expect_lines) {
-			session_respond(s, "500 Pipelining unsupported");
-			s->s_env->stats->smtp.toofast++;
-			s->s_flags |= F_QUIT;
-			return;
-		}
-		expect_lines = 0;
-
-		if (s->s_flags & F_WRITEONLY)
-			fatalx("session_read: corrupt session");
 
 		switch (s->s_state) {
 		case S_AUTH_INIT:
@@ -774,8 +762,6 @@ session_read(struct bufferevent *bev, void *p)
 			break;
 
 		case S_DATACONTENT:
-			if (strcmp(line, ".") != 0)
-				expect_lines = 1;
 			session_read_data(s, line, nr);
 			break;
 
@@ -981,7 +967,7 @@ session_destroy(struct session *s)
 char *
 session_readline(struct session *s, size_t *nr)
 {
-	char *line;
+	char	*line, *line2;
 
 	*nr = EVBUFFER_LENGTH(s->s_bev->input);
 	line = evbuffer_readline(s->s_bev->input);
@@ -994,6 +980,20 @@ session_readline(struct session *s, size_t *nr)
 		return NULL;
 	}
 	*nr -= EVBUFFER_LENGTH(s->s_bev->input);
+
+	if (s->s_flags & F_WRITEONLY)
+		fatalx("session_readline: corrupt session");
+	
+	if ((s->s_state != S_DATACONTENT || strcmp(line, ".") == 0) &&
+	    (line2 = evbuffer_readline(s->s_bev->input)) != NULL) {
+		session_respond(s, "500 Pipelining unsupported");
+		s->s_env->stats->smtp.toofast++;
+		s->s_flags |= F_QUIT;
+		free(line);
+		free(line2);
+
+		return NULL;
+	}
 
 	return line;
 }
