@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.126 2009/05/20 20:37:43 thib Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.127 2009/05/25 00:17:40 stevesk Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -165,6 +165,7 @@ routehandler(void)
 	struct sockaddr *sa;
 	struct iaddr a;
 	ssize_t n;
+	char *errmsg, buf[64];
 
 	do {
 		n = read(routefd, &msg, sizeof(msg));
@@ -185,8 +186,10 @@ routehandler(void)
 			break;
 		sa = get_ifa((char *)ifam + ifam->ifam_hdrlen,
 		    ifam->ifam_addrs);
-		if (sa == NULL)
+		if (sa == NULL) {
+			errmsg = "sa == NULL";
 			goto die;
+		}
 
 		if ((a.len = sizeof(struct in_addr)) > sizeof(a.iabuf))
 			error("king bula sez: len mismatch");
@@ -203,6 +206,9 @@ routehandler(void)
 			/* new addr is the one we set */
 			break;
 
+		snprintf(buf, sizeof(buf), "%s: %s",
+		    "new address not one we set", piaddr(a));
+		errmsg = buf;
 		goto die;
 	case RTM_DELADDR:
 		ifam = (struct ifa_msghdr *)rtm;
@@ -213,13 +219,16 @@ routehandler(void)
 			break;
 		if (scripttime == 0 || t < scripttime + 10)
 			break;
+		errmsg = "interface address deleted";
 		goto die;
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
 		if (ifm->ifm_index != ifi->index)
 			break;
-		if ((rtm->rtm_flags & RTF_UP) == 0)
+		if ((rtm->rtm_flags & RTF_UP) == 0) {
+			errmsg = "interface down";
 			goto die;
+		}
 
 		linkstat =
 		    LINK_STATE_IS_UP(ifm->ifm_data.ifi_link_state) ? 1 : 0;
@@ -237,8 +246,10 @@ routehandler(void)
 	case RTM_IFANNOUNCE:
 		ifan = (struct if_announcemsghdr *)rtm;
 		if (ifan->ifan_what == IFAN_DEPARTURE &&
-		    ifan->ifan_index == ifi->index)
+		    ifan->ifan_index == ifi->index) {
+			errmsg = "interface departure";
 			goto die;
+		}
 		break;
 	default:
 		break;
@@ -250,7 +261,7 @@ die:
 	if (client->alias)
 		script_write_params("alias_", client->alias);
 	script_go();
-	exit(1);
+	error("routehandler: %s", errmsg);
 }
 
 int
