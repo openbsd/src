@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.96 2009/05/24 15:47:31 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.97 2009/05/25 13:29:47 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -590,10 +590,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		s->s_state = S_GREETED;
 		log_debug("session_pickup: greeting client");
 		session_respond(s, SMTPD_BANNER, s->s_env->sc_hostname);
-		break;
-
-	case S_GREETED:
-	case S_HELO:
 		break;
 
 	case S_TLS:
