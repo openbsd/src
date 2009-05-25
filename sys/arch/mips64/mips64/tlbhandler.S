@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.17 2009/05/22 20:37:53 miod Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.18 2009/05/25 17:10:38 miod Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -37,8 +37,6 @@
 #include <machine/regnum.h>
 #include <machine/cpustate.h>
 
-#define	HAIRY_R5000_ERRATA
-
 #include "assym.h"
 
 	.set	mips3
@@ -53,12 +51,11 @@
  *	available storage. If the startup code finds out that it
  *	is larger, the trampoline code is copied instead of panicing.
  */
-/*****************************  Start of code copied to exception vector */
-	.globl	tlb_miss	/* 0xffffffff80000000 */
 	.set	noat
-	.ent	tlb_miss, 0
-tlb_miss:
-#ifdef HAIRY_R5000_ERRATA
+
+	.globl	tlb_miss_err_r5k
+	.ent	tlb_miss_err_r5k, 0
+tlb_miss_err_r5k:
 	/*
 	 * R5000 errata: edge cases can trigger a TLB miss exception
 	 * instead of an invalid TLB exception. Servicing the TLB miss
@@ -75,12 +72,15 @@ tlb_miss:
 	 */
 	tlbp
 	mfc0	k1, COP_0_TLB_INDEX
-	bltz	k1, 1f			# missing!
+	bltz	k1, tlb_miss		# missing!
 	 nop
 	j	k_tlb_inv
 	 nop
-1:
-#endif
+	.end	tlb_miss_err_r5k
+
+	.globl	tlb_miss
+	.ent	tlb_miss, 0
+tlb_miss:
 	PTR_L	k1, curprocpaddr
 	dmfc0	k0, COP_0_BAD_VADDR
 	bltz	k0, _k_miss		# kernel address space
@@ -115,26 +115,24 @@ tlb_load:
 	eret				# RM7000 need 4 for JTLB usage.
 	.end	tlb_miss
 
-	.globl	e_tlb_miss
-e_tlb_miss:
-
 /*---------------------------------------------------------------- xtlb_miss
  *	Low level XTLB exception handler.
  */
-	.globl	xtlb_miss	/* 0xffffffff80000080 */
-	.set	noat
-	.ent	xtlb_miss, 0
-xtlb_miss:
-#ifdef HAIRY_R5000_ERRATA
+	.globl	xtlb_miss_err_r5k
+	.ent	xtlb_miss_err_r5k, 0
+xtlb_miss_err_r5k:
 	/* See errata comments in tlb_miss above */
 	tlbp
 	mfc0	k1, COP_0_TLB_INDEX
-	bltz	k1, 1f			# missing!
+	bltz	k1, xtlb_miss		# missing!
 	 nop
 	j	k_tlb_inv
 	 nop
-1:
-#endif
+	.end	xtlb_miss_err_r5k
+
+	.globl	xtlb_miss
+	.ent	xtlb_miss, 0
+xtlb_miss:
 	dmfc0	k0, COP_0_BAD_VADDR
 	bltz	k0, _k_miss		# kernel address space
 	PTR_SRL	k0, k0, SEGSHIFT
@@ -162,15 +160,9 @@ _k_miss:
 	dmfc0	k0, COP_0_BAD_VADDR	# must reload.
 	.end	xtlb_miss
 
-	.globl	e_xtlb_miss
-e_xtlb_miss:
-	.set	at
-/*****************************  End of code copied to exception vector */
-
 	.globl	tlb_miss_nopt
 	.ent	tlb_miss_nopt, 0
 tlb_miss_nopt:
-	.set	noat
 	mfc0	k0, COP_0_STATUS_REG
 	andi	k0, SR_KSU_USER
 	bne	k0, zero, go_u_general
@@ -178,35 +170,8 @@ tlb_miss_nopt:
 	j	k_general
 	nop
 	.end	tlb_miss_nopt
-	.set	at
 
-/*
- * Trampolines copied to exception vectors when code is too big.
- */
-	.globl	tlb_miss_tramp
-	.ent	tlb_miss_tramp, 0
-tlb_miss_tramp:
-	.set	noat
-	LA	k0, tlb_miss
-	jr	k0
-	nop
-	.end	tlb_miss_tramp
 	.set	at
-	.globl	e_tlb_miss_tramp
-e_tlb_miss_tramp:
-
-	.globl	xtlb_miss_tramp
-	.ent	xtlb_miss_tramp, 0
-xtlb_miss_tramp:
-	.set	noat
-	LA	k0, xtlb_miss
-	jr	k0
-	nop
-	.end	xtlb_miss_tramp
-	.set	at
-	.globl	e_xtlb_miss_tramp
-e_xtlb_miss_tramp:
-
 
 /*---------------------------------------------------------------- k_tlb_inv
  *	Handle a TLB invalid exception from kernel mode in kernel
