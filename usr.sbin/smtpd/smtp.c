@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.51 2009/05/24 15:47:31 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.52 2009/05/25 14:00:36 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -743,21 +743,6 @@ smtp_accept(int fd, short event, void *p)
 	dns_query_ptr(l->env, &s->s_ss, s->s_id);
 
 	SPLAY_INSERT(sessiontree, &s->s_env->sc_sessions, s);
-}
-
-void
-smtp_listener_setup(struct smtpd *env, struct listener *l)
-{
-	int opt;
-
-	if ((l->fd = socket(l->ss.ss_family, SOCK_STREAM, 0)) == -1)
-		fatal("socket");
-
-	opt = 1;
-	setsockopt(l->fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-
-	if (bind(l->fd, (struct sockaddr *)&l->ss, l->ss.ss_len) == -1)
-		fatal("bind");
 }
 
 /*

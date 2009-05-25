@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.115 2009/05/24 15:47:31 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.116 2009/05/25 14:00:36 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -926,7 +926,6 @@ SPLAY_PROTOTYPE(batchtree, batch, b_nodes, batch_cmp);
 
 /* smtp.c */
 pid_t		 smtp(struct smtpd *);
-void		 smtp_listener_setup(struct smtpd *, struct listener *);
 
 /* smtp_session.c */
 void		 session_init(struct listener *, struct session *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.66 2009/05/24 15:47:31 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.67 2009/05/25 14:00:36 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -127,6 +127,7 @@ parent_send_config_listeners(struct smtpd *env)
 	struct listener		*l;
 	struct ssl		*s;
 	struct iovec		 iov[3];
+	int			 opt;
 
 	log_debug("parent_send_config: configuring smtp");
 	imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_CONF_START,
@@ -145,10 +146,16 @@ parent_send_config_listeners(struct smtpd *env)
 	}
 
 	TAILQ_FOREACH(l, &env->sc_listeners, entry) {
-		smtp_listener_setup(env, l);
+		if ((l->fd = socket(l->ss.ss_family, SOCK_STREAM, 0)) == -1)
+			fatal("socket");
+		opt = 1;
+		setsockopt(l->fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+		if (bind(l->fd, (struct sockaddr *)&l->ss, l->ss.ss_len) == -1)
+			fatal("bind");
 		imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_CONF_LISTENER,
 		    0, 0, l->fd, l, sizeof(*l));
 	}
+
 	imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_CONF_END,
 	    0, 0, -1, NULL, 0);
 }
