@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.30 2009/05/24 14:38:56 jacekm Exp $	*/
+/*	$OpenBSD: control.c,v 1.31 2009/05/25 11:17:32 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -316,6 +316,12 @@ control_dispatch_ext(int fd, short event, void *arg)
 
 		switch (imsg.hdr.type) {
 		case IMSG_SMTP_ENQUEUE:
+			if (env->sc_flags & (SMTPD_SMTP_PAUSED |
+			    SMTPD_CONFIGURING | SMTPD_EXITING)) {
+				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+					NULL, 0);
+				break;
+			}
 			imsg_compose(env->sc_ibufs[PROC_SMTP],
 			    IMSG_SMTP_ENQUEUE, 0, 0, -1, &fd, sizeof(fd));
 			break;

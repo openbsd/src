@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.15 2009/05/14 15:05:12 eric Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.16 2009/05/25 11:17:32 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -530,6 +530,15 @@ open_connection(void)
 			errx(1, "imsg_get error");
 		if (n == 0)
 			continue;
+
+		switch (imsg.hdr.type) {
+		case IMSG_CTL_OK:
+			break;
+		case IMSG_CTL_FAIL:
+			errx(1, "server disallowed submission request");
+		default:
+			errx(1, "unexpected imsg reply type");
+		}
 
 		fd = imsg_get_fd(ibuf, &imsg);
 		imsg_free(&imsg);
