@@ -1,6 +1,9 @@
 #
-#	$OpenBSD: daily,v 1.64 2009/05/24 21:58:06 schwarze Exp $
+#	$OpenBSD: daily,v 1.65 2009/05/25 21:31:24 schwarze Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
+#
+# For local additions, create the file /etc/daily.local.
+# To get section headers, use the function next_part in daily.local.
 #
 umask 022
 
@@ -139,7 +142,7 @@ if [ "X$VERBOSESTATUS" != X0 ]; then
 fi
 
 # The first two regular expressions handle sendmail, the third postfix.
-# When the queue is empty, exim -bp keeps silent.
+# When the queue is empty, smtpd(8) and exim -bp keep silent.
 next_part "mail:"
 mailq | grep -v -e "^/var/spool/mqueue is empty$" \
 		-e "^[[:blank:]]*Total requests: 0$" \

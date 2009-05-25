@@ -1,5 +1,8 @@
 #
-#	$OpenBSD: weekly,v 1.22 2009/05/18 19:57:56 schwarze Exp $
+#	$OpenBSD: weekly,v 1.23 2009/05/25 21:31:24 schwarze Exp $
+#
+# For local additions, create the file /etc/weekly.local.
+# To get section headers, use the function next_part in weekly.local.
 #
 umask 022
 
@@ -63,8 +66,6 @@ fi
 next_part "Rebuilding whatis databases:"
 /usr/libexec/makewhatis
 
-# If LOGINACCOUNTING is set to 1 in the environment, report user
-# accounting information
 next_part "Doing login accounting:"
 [ "X$LOGINACCOUNTING" = X1 ] && {
 	ac -p | sort -nr -k 2

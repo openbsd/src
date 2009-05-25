@@ -1,5 +1,8 @@
 #
-#	$OpenBSD: monthly,v 1.11 2009/05/10 19:27:25 schwarze Exp $
+#	$OpenBSD: monthly,v 1.12 2009/05/25 21:31:24 schwarze Exp $
+#
+# For local additions, create the file /etc/monthly.local.
+# To get section headers, use the function next_part in monthly.local.
 #
 umask 022
 
