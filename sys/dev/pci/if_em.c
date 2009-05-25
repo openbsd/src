@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.207 2009/01/27 09:17:51 dlg Exp $ */
+/* $OpenBSD: if_em.c,v 1.208 2009/05/25 10:17:55 sthen Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2752,7 +2752,7 @@ em_rxeof(struct em_softc *sc, int count)
 #if NVLAN > 0
 				if (desc->status & E1000_RXD_STAT_VP) {
 					m->m_pkthdr.ether_vtag =
-					    (desc->special &
+					    (letoh16(desc->special) &
 					     E1000_RXD_SPC_VLAN_MASK);
 					m->m_flags |= M_VLANTAG;
 				}
