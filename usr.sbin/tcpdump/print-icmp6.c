@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.5 2009/01/29 09:46:32 bluhm Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.6 2009/05/25 10:53:35 sthen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -125,6 +125,7 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 			TCHECK(oip->ip6_nxt);
 			hlen = sizeof(struct ip6_hdr);
 			ouh = (struct udphdr *)(((u_char *)oip) + hlen);
+			TCHECK(ouh->uh_dport);
 			dport = ntohs(ouh->uh_dport);
 			switch (oip->ip6_nxt) {
 			case IPPROTO_TCP:

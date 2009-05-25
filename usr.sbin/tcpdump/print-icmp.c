@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp.c,v 1.18 2007/10/07 16:41:05 deraadt Exp $	*/
+/*	$OpenBSD: print-icmp.c,v 1.19 2009/05/25 10:53:35 sthen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Id: print-icmp.c,v 1.18 2007/10/07 16:41:05 deraadt Exp $ (LBL)";
+    "@(#) $Id: print-icmp.c,v 1.19 2009/05/25 10:53:35 sthen Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -226,6 +226,7 @@ icmp_print(const u_char *bp, const u_char *bp2)
 			oip = &dp->icmp_ip;
 			hlen = oip->ip_hl * 4;
 			ouh = (struct udphdr *)(((u_char *)oip) + hlen);
+			TCHECK(ouh->uh_dport);
 			dport = ntohs(ouh->uh_dport);
 			switch (oip->ip_p) {
 
