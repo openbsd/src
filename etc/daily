@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: daily,v 1.65 2009/05/25 21:31:24 schwarze Exp $
+#	$OpenBSD: daily,v 1.66 2009/05/26 22:59:15 schwarze Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 # For local additions, create the file /etc/daily.local.
@@ -175,8 +175,7 @@ next_part "Checking filesystems:"
 next_part "Running rdist:"
 if [ -f /etc/Distfile ]; then
 	if [ -d /var/log/rdist ]; then
-		logf=`date +%Y.%b.%e`
-		rdist -f /etc/Distfile 2>&1 | tee /var/log/rdist/$logf
+		rdist -f /etc/Distfile 2>&1 | tee /var/log/rdist/`date +%F`
 	else
 		rdist -f /etc/Distfile
 	fi
