@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.135 2008/09/29 18:46:03 deraadt Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.136 2009/05/26 19:37:35 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.132 2008/09/29 18:45:58 deraadt Exp 
+ *		OpenBSD: pcmciadevs,v 1.133 2009/05/26 19:37:22 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -477,6 +477,8 @@
 /* Quatech */
 #define	PCMCIA_CIS_QUATECH_DSP_225	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_QUATECH_DSP_225	0x0008
+#define	PCMCIA_CIS_QUATECH_SSP_100	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_QUATECH_SSP_100	0x004b
 
 /* Raylink/WebGear */
 #define	PCMCIA_CIS_RAYTHEON_WLAN	{ NULL, NULL, NULL, NULL }
