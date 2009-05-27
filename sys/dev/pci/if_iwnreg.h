@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.24 2009/05/24 18:51:11 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.25 2009/05/27 09:50:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -150,7 +150,10 @@
 #define IWN_HW_IF_CONFIG_MAC_SI		(1 <<  8)
 #define IWN_HW_IF_CONFIG_RADIO_SI	(1 <<  9)
 #define IWN_HW_IF_CONFIG_EEPROM_LOCKED	(1 << 21)
+#define IWN_HW_IF_CONFIG_NIC_READY	(1 << 22)
 #define IWN_HW_IF_CONFIG_HAP_WAKE_L1A	(1 << 23)
+#define IWN_HW_IF_CONFIG_PREPARE_DONE	(1 << 25)
+#define IWN_HW_IF_CONFIG_PREPARE	(1 << 27)
 
 /* Possible flags for registers IWN_PRPH_RADDR/IWN_PRPH_WADDR. */
 #define IWN_PRPH_DWORD	((sizeof (uint32_t) - 1) << 24)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.54 2009/05/20 16:31:50 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.55 2009/05/27 09:50:31 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -238,6 +238,7 @@ void		iwn_apm_stop_master(struct iwn_softc *);
 void		iwn_apm_stop(struct iwn_softc *);
 int		iwn4965_nic_config(struct iwn_softc *);
 int		iwn5000_nic_config(struct iwn_softc *);
+int		iwn_hw_prepare(struct iwn_softc *);
 int		iwn_hw_init(struct iwn_softc *);
 void		iwn_hw_stop(struct iwn_softc *);
 int		iwn_init(struct ifnet *);
@@ -386,6 +387,11 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	/* Attach Hardware Abstraction Layer. */
 	if ((hal = iwn_hal_attach(sc)) == NULL)
 		return;
+
+	if ((error = iwn_hw_prepare(sc)) != 0) {
+		printf(": hardware not ready\n");
+		return;
+	}
 
 	/* Power ON adapter. */
 	if ((error = hal->apm_init(sc)) != 0) {
@@ -815,7 +821,7 @@ int
 iwn_read_prom_data(struct iwn_softc *sc, uint32_t addr, void *data, int count)
 {
 	uint8_t *out = data;
-	uint32_t val;
+	uint32_t val, tmp;
 	int ntries;
 
 	for (; count > 0; count -= 2, addr++) {
@@ -833,7 +839,7 @@ iwn_read_prom_data(struct iwn_softc *sc, uint32_t addr, void *data, int count)
 		}
 		if (sc->sc_flags & IWN_FLAG_HAS_OTPROM) {
 			/* OTPROM, check for ECC errors. */
-			uint32_t tmp = IWN_READ(sc, IWN_OTP_GP);
+			tmp = IWN_READ(sc, IWN_OTP_GP);
 			if (tmp & IWN_OTP_GP_ECC_UNCORR_STTS) {
 				printf("%s: OTPROM ECC error at 0x%x\n",
 				    sc->sc_dev.dv_xname, addr);
@@ -1199,7 +1205,8 @@ iwn_read_eeprom(struct iwn_softc *sc)
 	int error;
 
 	/* Check whether adapter has an EEPROM or an OTPROM. */
-	if (IWN_READ(sc, IWN_OTP_GP) & IWN_OTP_GP_DEV_SEL_OTP)
+	if (sc->hw_type >= IWN_HW_REV_TYPE_1000 &&
+	    (IWN_READ(sc, IWN_OTP_GP) & IWN_OTP_GP_DEV_SEL_OTP))
 		sc->sc_flags |= IWN_FLAG_HAS_OTPROM;
 	DPRINTF(("%s found\n", (sc->sc_flags & IWN_FLAG_HAS_OTPROM) ?
 	    "OTPROM" : "EEPROM"));
@@ -5053,6 +5060,34 @@ iwn5000_nic_config(struct iwn_softc *sc)
 	return 0;
 }
 
+/*
+ * Take NIC ownership over Intel Active Management Technology (AMT).
+ */
+int
+iwn_hw_prepare(struct iwn_softc *sc)
+{
+	int ntries;
+
+	IWN_SETBITS(sc, IWN_HW_IF_CONFIG, IWN_HW_IF_CONFIG_PREPARE);
+	for (ntries = 0; ntries < 15000; ntries++) {
+		if (!(IWN_READ(sc, IWN_HW_IF_CONFIG) &
+		    IWN_HW_IF_CONFIG_PREPARE_DONE))
+			break;
+		DELAY(10);
+	}
+	if (ntries == 15000)
+		return ETIMEDOUT;
+
+	IWN_SETBITS(sc, IWN_HW_IF_CONFIG, IWN_HW_IF_CONFIG_NIC_READY);
+	for (ntries = 0; ntries < 5; ntries++) {
+		if (IWN_READ(sc, IWN_HW_IF_CONFIG) &
+		    IWN_HW_IF_CONFIG_NIC_READY)
+			return 0;
+		DELAY(10);
+	}
+	return ETIMEDOUT;
+}
+
 int
 iwn_hw_init(struct iwn_softc *sc)
 {
@@ -5191,6 +5226,11 @@ iwn_init(struct ifnet *ifp)
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	int error;
+
+	if ((error = iwn_hw_prepare(sc)) != 0) {
+		printf("%s: hardware not ready\n", sc->sc_dev.dv_xname);
+		goto fail;
+	}
 
 	/* Check that the radio is not disabled by hardware switch. */
 	if (!(IWN_READ(sc, IWN_GP_CNTRL) & IWN_GP_CNTRL_RFKILL)) {
