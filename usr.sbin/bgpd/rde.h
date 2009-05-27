@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.109 2009/05/21 15:47:03 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.110 2009/05/27 06:58:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -67,7 +67,6 @@ struct rde_peer {
 	u_int64_t			 prefix_sent_update;
 	u_int64_t			 prefix_sent_withdraw;
 	u_int32_t			 prefix_cnt; /* # of prefixes */
-	u_int32_t			 rib_cnt;    /* # of p. in Adj-RIB-In */
 	u_int32_t			 remote_bgpid; /* host byte order! */
 	u_int32_t			 up_pcnt;
 	u_int32_t			 up_acnt;
@@ -184,7 +183,6 @@ struct rde_aspath {
 	u_int32_t			 weight;	/* low prio lpref */
 	u_int32_t			 prefix_cnt; /* # of prefixes */
 	u_int32_t			 active_cnt; /* # of active prefixes */
-	u_int32_t			 rib_cnt;    /* # of p. in Adj-RIB-In */
 	u_int32_t			 flags;		/* internally used */
 	u_int16_t			 rtlabelid;	/* route label id */
 	u_int16_t			 pftableid;	/* pf table id */
@@ -355,7 +353,7 @@ void		 rib_dump_r(struct rib_context *);
 
 void		 path_init(u_int32_t);
 void		 path_shutdown(void);
-void		 path_update(struct rib *, struct rde_peer *,
+int		 path_update(struct rib *, struct rde_peer *,
 		     struct rde_aspath *, struct bgpd_addr *, int);
 int		 path_compare(struct rde_aspath *, struct rde_aspath *);
 struct rde_aspath *path_lookup(struct rde_aspath *, struct rde_peer *);
@@ -371,10 +369,10 @@ int		 prefix_compare(const struct bgpd_addr *,
 		    const struct bgpd_addr *, int);
 struct prefix	*prefix_get(struct rib *, struct rde_peer *,
 		    struct bgpd_addr *, int, u_int32_t);
-void		 prefix_add(struct rib *, struct rde_aspath *,
+int		 prefix_add(struct rib *, struct rde_aspath *,
 		    struct bgpd_addr *, int);
 void		 prefix_move(struct rde_aspath *, struct prefix *);
-void		 prefix_remove(struct rib *, struct rde_peer *,
+int		 prefix_remove(struct rib *, struct rde_peer *,
 		    struct bgpd_addr *, int, u_int32_t);
 int		 prefix_write(u_char *, int, struct bgpd_addr *, u_int8_t);
 struct prefix	*prefix_bypeer(struct rib_entry *, struct rde_peer *,

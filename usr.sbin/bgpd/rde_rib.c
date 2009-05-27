@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.102 2009/05/21 15:47:03 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.103 2009/05/27 06:58:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -292,12 +292,9 @@ done:
 }
 
 /* used to bump correct prefix counters */
-#define PREFIX_COUNT(x, id, op)				\
-	do {						\
-		if (id == 1)				\
-			(x)->prefix_cnt += (op);	\
-		else					\
-			(x)->rib_cnt += (op);		\
+#define PREFIX_COUNT(x, op)			\
+	do {					\
+		(x)->prefix_cnt += (op);	\
 	} while (0)
 
 /* path specific functions */
@@ -340,7 +337,7 @@ path_shutdown(void)
 	free(pathtable.path_hashtbl);
 }
 
-void
+int
 path_update(struct rib *rib, struct rde_peer *peer, struct rde_aspath *nasp,
     struct bgpd_addr *prefix, int prefixlen)
 {
@@ -359,7 +356,7 @@ path_update(struct rib *rib, struct rde_peer *peer, struct rde_aspath *nasp,
 		if (path_compare(nasp, p->aspath) == 0) {
 			/* no change, update last change */
 			p->lastchange = time(NULL);
-			return;
+			return (0);
 		}
 	}
 
@@ -378,7 +375,8 @@ path_update(struct rib *rib, struct rde_peer *peer, struct rde_aspath *nasp,
 	if (p != NULL)
 		prefix_move(asp, p);
 	else
-		prefix_add(rib, asp, prefix, prefixlen);
+		return (prefix_add(rib, asp, prefix, prefixlen));
+	return (0);
 }
 
 int
@@ -466,8 +464,7 @@ void
 path_destroy(struct rde_aspath *asp)
 {
 	/* path_destroy can only unlink and free empty rde_aspath */
-	if (asp->prefix_cnt != 0 || asp->active_cnt != 0 ||
-	    asp->rib_cnt != 0)
+	if (asp->prefix_cnt != 0 || asp->active_cnt != 0)
 		log_warnx("path_destroy: prefix count out of sync");
 
 	nexthop_unlink(asp);
@@ -644,7 +641,7 @@ prefix_get(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
 /*
  * Adds or updates a prefix.
  */
-void
+int
 prefix_add(struct rib *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
     int prefixlen)
 
@@ -660,13 +657,14 @@ prefix_add(struct rib *rib, struct rde_aspath *asp, struct bgpd_addr *prefix,
 	if (p == NULL) {
 		p = prefix_alloc();
 		prefix_link(p, re, asp);
+		return (1);
 	} else {
 		if (p->aspath != asp) {
 			/* prefix belongs to a different aspath so move */
 			prefix_move(asp, p);
-			return;
-		}
-		p->lastchange = time(NULL);
+		} else
+			p->lastchange = time(NULL);
+		return (0);
 	}
 }
 
@@ -692,7 +690,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 
 	/* add to new as path */
 	LIST_INSERT_HEAD(&asp->prefix_h, np, path_l);
-	PREFIX_COUNT(asp, p->rib->rib->id, 1);
+	PREFIX_COUNT(asp, 1);
 	/*
 	 * no need to update the peer prefix count because we are only moving
 	 * the prefix without changing the peer.
@@ -712,7 +710,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	/* remove old prefix node */
 	oasp = p->aspath;
 	LIST_REMOVE(p, path_l);
-	PREFIX_COUNT(oasp, p->rib->rib->id, -1);
+	PREFIX_COUNT(oasp, -1);
 	/* as before peer count needs no update because of move */
 
 	/* destroy all references to other objects and free the old prefix */
@@ -730,7 +728,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
  * Removes a prefix from all lists. If the parent objects -- path or
  * pt_entry -- become empty remove them too.
  */
-void
+int
 prefix_remove(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
     int prefixlen, u_int32_t flags)
 {
@@ -740,11 +738,11 @@ prefix_remove(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
 
 	re = rib_get(rib, prefix, prefixlen);
 	if (re == NULL)	/* Got a dummy withdrawn request */
-		return;
+		return (0);
 
 	p = prefix_bypeer(re, peer, flags);
 	if (p == NULL)		/* Got a dummy withdrawn request. */
-		return;
+		return (0);
 
 	asp = p->aspath;
 
@@ -761,6 +759,8 @@ prefix_remove(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
 		rib_remove(re);
 	if (path_empty(asp))
 		path_destroy(asp);
+
+	return (1);
 }
 
 /* dump a prefix into specified buffer */
@@ -895,8 +895,7 @@ static void
 prefix_link(struct prefix *pref, struct rib_entry *re, struct rde_aspath *asp)
 {
 	LIST_INSERT_HEAD(&asp->prefix_h, pref, path_l);
-	PREFIX_COUNT(asp, re->rib->id, 1);
-	PREFIX_COUNT(asp->peer, re->rib->id, 1);
+	PREFIX_COUNT(asp, 1);
 
 	pref->aspath = asp;
 	pref->rib = re;
@@ -921,8 +920,7 @@ prefix_unlink(struct prefix *pref)
 	}
 
 	LIST_REMOVE(pref, path_l);
-	PREFIX_COUNT(pref->aspath, pref->rib->rib->id, -1);
-	PREFIX_COUNT(pref->aspath->peer, pref->rib->rib->id, -1);
+	PREFIX_COUNT(pref->aspath, -1);
 
 	pt_unref(pref->prefix);
 	if (pt_empty(pref->prefix))

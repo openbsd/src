@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.245 2009/05/17 14:45:25 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.246 2009/05/27 06:58:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -44,6 +44,10 @@ void		 rde_sighdlr(int);
 void		 rde_dispatch_imsg_session(struct imsgbuf *);
 void		 rde_dispatch_imsg_parent(struct imsgbuf *);
 int		 rde_update_dispatch(struct imsg *);
+void		 rde_update_update(struct rde_peer *, struct rde_aspath *,
+		     struct bgpd_addr *, u_int8_t);
+void		 rde_update_withdraw(struct rde_peer *, struct bgpd_addr *,
+		     u_int8_t);
 int		 rde_attr_parse(u_char *, u_int16_t, struct rde_peer *,
 		     struct rde_aspath *, struct mpattr *);
 u_int8_t	 rde_attr_missing(struct rde_aspath *, int, u_int16_t);
@@ -727,7 +731,7 @@ int
 rde_update_dispatch(struct imsg *imsg)
 {
 	struct rde_peer		*peer;
-	struct rde_aspath	*asp = NULL, *fasp;
+	struct rde_aspath	*asp = NULL;
 	u_char			*p, *mpp = NULL;
 	int			 error = -1, pos = 0;
 	u_int16_t		 afi, len, mplen;
@@ -848,10 +852,7 @@ rde_update_dispatch(struct imsg *imsg)
 			goto done;
 		}
 
-		peer->prefix_rcvd_withdraw++;
-		rde_update_log("withdraw", peer, NULL, &prefix, prefixlen);
-		prefix_remove(&ribs[1], peer, &prefix, prefixlen, 0);
-		prefix_remove(&ribs[0], peer, &prefix, prefixlen, 0);
+		rde_update_withdraw(peer, &prefix, prefixlen);
 	}
 
 	if (attrpath_len == 0) {
@@ -906,13 +907,7 @@ rde_update_dispatch(struct imsg *imsg)
 				mpp += pos;
 				mplen -= pos;
 
-				peer->prefix_rcvd_withdraw++;
-				rde_update_log("withdraw", peer, NULL,
-				    &prefix, prefixlen);
-				prefix_remove(&ribs[1], peer, &prefix,
-				    prefixlen, 0);
-				prefix_remove(&ribs[0], peer, &prefix,
-				    prefixlen, 0);
+				rde_update_withdraw(peer, &prefix, prefixlen);
 			}
 			break;
 		default:
@@ -960,17 +955,7 @@ rde_update_dispatch(struct imsg *imsg)
 			goto done;
 		}
 
-		peer->prefix_rcvd_update++;
-		/* add original path to the Adj-RIB-In */
-		if (peer->conf.softreconfig_in)
-			path_update(&ribs[0], peer, asp, &prefix, prefixlen);
-
-		/* input filter */
-		if (rde_filter(&fasp, rules_l, peer, asp, &prefix, prefixlen,
-		    peer, DIR_IN) == ACTION_DENY) {
-			path_put(fasp);
-			continue;
-		}
+		rde_update_update(peer, asp, &prefix, prefixlen);
 
 		/* max prefix checker */
 		if (peer->conf.max_prefix &&
@@ -978,20 +963,9 @@ rde_update_dispatch(struct imsg *imsg)
 			log_peer_warnx(&peer->conf, "prefix limit reached");
 			rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX,
 			    NULL, 0);
-			path_put(fasp);
 			goto done;
 		}
 
-		if (fasp == NULL)
-			fasp = asp;
-
-		rde_update_log("update", peer, &fasp->nexthop->exit_nexthop,
-		    &prefix, prefixlen);
-		path_update(&ribs[1], peer, fasp, &prefix, prefixlen);
-
-		/* free modified aspath */
-		if (fasp != asp)
-			path_put(fasp);
 	}
 
 	/* add MP_REACH_NLRI if available */
@@ -1053,19 +1027,8 @@ rde_update_dispatch(struct imsg *imsg)
 				mpp += pos;
 				mplen -= pos;
 
-				peer->prefix_rcvd_update++;
-				/* add original path to the Adj-RIB-In */
-				if (peer->conf.softreconfig_in)
-					path_update(&ribs[0], peer, asp,
-					    &prefix, prefixlen);
-
-				/* input filter */
-				if (rde_filter(&fasp, rules_l, peer, asp,
-				    &prefix, prefixlen, peer, DIR_IN) ==
-				    ACTION_DENY) {
-					path_put(fasp);
-					continue;
-				}
+				rde_update_update(peer, asp, &prefix,
+				    prefixlen);
 
 				/* max prefix checker */
 				if (peer->conf.max_prefix &&
@@ -1074,22 +1037,9 @@ rde_update_dispatch(struct imsg *imsg)
 					    "prefix limit reached");
 					rde_update_err(peer, ERR_CEASE,
 					    ERR_CEASE_MAX_PREFIX, NULL, 0);
-					path_put(fasp);
 					goto done;
 				}
 
-				if (fasp == NULL)
-					fasp = asp;
-
-				rde_update_log("update", peer,
-				    &asp->nexthop->exit_nexthop,
-				    &prefix, prefixlen);
-				path_update(&ribs[1], peer, fasp, &prefix,
-				    prefixlen);
-
-				/* free modified aspath */
-				if (fasp != asp)
-					path_put(fasp);
 			}
 			break;
 		default:
@@ -1110,6 +1060,55 @@ done:
 	}
 
 	return (error);
+}
+
+void
+rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
+    struct bgpd_addr *prefix, u_int8_t prefixlen)
+{
+	struct rde_aspath	*fasp;
+	int			 r = 0;
+
+	peer->prefix_rcvd_update++;
+	/* add original path to the Adj-RIB-In */
+	if (peer->conf.softreconfig_in)
+		r += path_update(&ribs[0], peer, asp, prefix, prefixlen);
+
+	/* input filter */
+	if (rde_filter(&fasp, rules_l, peer, asp, prefix, prefixlen,
+	    peer, DIR_IN) == ACTION_DENY)
+		goto done;
+
+	if (fasp == NULL)
+		fasp = asp;
+
+	rde_update_log("update", peer, &fasp->nexthop->exit_nexthop,
+	    prefix, prefixlen);
+	r += path_update(&ribs[1], peer, fasp, prefix, prefixlen);
+
+done:
+	/* free modified aspath */
+	if (fasp != asp)
+		path_put(fasp);
+
+	if (r)
+		peer->prefix_cnt++;
+}
+
+void
+rde_update_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
+    u_int8_t prefixlen)
+{
+	int r = 0;
+
+	peer->prefix_rcvd_withdraw++;
+	rde_update_log("withdraw", peer, NULL, prefix, prefixlen);
+
+	r += prefix_remove(&ribs[1], peer, prefix, prefixlen, 0);
+	r += prefix_remove(&ribs[0], peer, prefix, prefixlen, 0);
+
+	if (r)
+		peer->prefix_cnt--;
 }
 
 /*
@@ -1709,7 +1708,6 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	rib.med = asp->med;
 	rib.prefix_cnt = asp->prefix_cnt;
 	rib.active_cnt = asp->active_cnt;
-	rib.rib_cnt = asp->rib_cnt;
 	strlcpy(rib.descr, asp->peer->conf.descr, sizeof(rib.descr));
 	memcpy(&rib.remote_addr, &asp->peer->remote_addr,
 	    sizeof(rib.remote_addr));
@@ -2609,6 +2607,7 @@ peer_down(u_int32_t id)
 		path_remove(asp);
 	}
 	LIST_INIT(&peer->path_h);
+	peer->prefix_cnt = 0;
 
 	/* Deletions are performed in path_remove() */
 	rde_send_pftable_commit();
