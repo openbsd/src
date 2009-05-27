@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.21 2009/05/24 17:33:12 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.22 2009/05/27 18:58:52 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -1733,14 +1733,6 @@ xbridge_resource_setup(struct xbridge_softc *sc)
 	int need_setup;
 	struct extent *ioex;
 
-	/*
-	 * On Octane, the firmware will setup the I/O registers
-	 * correctly for the on-board devices. Other PCI buses,
-	 * and other systems, need more attention.
-	 */
-	if (sys_config.system_type == SGI_OCTANE && sc->sc_widget == WIDGET_MAX)
-		return;
-
 	for (dev = 0; dev < BRIDGE_NSLOTS; dev++) {
 		id = sc->sc_devices[dev];
 
@@ -1757,6 +1749,15 @@ xbridge_resource_setup(struct xbridge_softc *sc)
 		    BRIDGE_DEVICE(dev));
 		need_setup = ((devio & BRIDGE_DEVICE_BASE_MASK) >>
 		    (24 - BRIDGE_DEVICE_BASE_SHIFT)) != sc->sc_widget;
+
+		/*
+		 * On Octane, the firmware will setup the I/O registers
+		 * correctly for the on-board devices, except for byteswap.
+		 * Other PCI buses, and other systems, need more attention.
+		 */
+		if (sys_config.system_type == SGI_OCTANE &&
+		    sc->sc_widget == WIDGET_MAX)
+			need_setup = 0;
 
 		if (need_setup) {
 			basewin =
