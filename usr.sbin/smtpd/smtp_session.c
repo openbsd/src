@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.97 2009/05/25 13:29:47 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.98 2009/05/27 13:09:07 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -69,6 +69,7 @@ void		 session_write(struct bufferevent *, void *);
 void		 session_error(struct bufferevent *, short event, void *);
 void		 session_command(struct session *, char *, size_t);
 char		*session_readline(struct session *, size_t *);
+void		 session_respond_delayed(int, short, void *);
 int		 session_set_path(struct path *, char *);
 void		 session_imsg(struct session *, enum smtp_proc_type,
 		     enum imsg_type, u_int32_t, pid_t, int, void *, u_int16_t);
@@ -126,9 +127,8 @@ session_rfc3207_stls_handler(struct session *s, char *args)
 		return 1;
 	}
 
-	session_respond(s, "220 Ready to start TLS");
-
 	s->s_state = S_TLS;
+	session_respond(s, "220 Ready to start TLS");
 
 	return 1;
 }
@@ -179,10 +179,11 @@ session_rfc4954_auth_plain(struct session *s, char *arg)
 	switch (s->s_state) {
 	case S_HELO:
 		if (arg == NULL) {
-			session_respond(s, "334 ");
 			s->s_state = S_AUTH_INIT;
+			session_respond(s, "334 ");
 			return;
 		}
+		s->s_state = S_AUTH_INIT;
 		/* FALLTHROUGH */
 
 	case S_AUTH_INIT:
@@ -234,9 +235,8 @@ session_rfc4954_auth_login(struct session *s, char *arg)
 
 	switch (s->s_state) {
 	case S_HELO:
-		/* "Username:" base64 encoded is "VXNlcm5hbWU6" */
-		session_respond(s, "334 VXNlcm5hbWU6");
 		s->s_state = S_AUTH_USERNAME;
+		session_respond(s, "334 VXNlcm5hbWU6");
 		return;
 
 	case S_AUTH_USERNAME:
@@ -244,9 +244,8 @@ session_rfc4954_auth_login(struct session *s, char *arg)
 		if (kn_decode_base64(arg, a->user, sizeof(a->user) - 1) == -1)
 			goto abort;
 
-		/* "Password:" base64 encoded is "UGFzc3dvcmQ6" */
-		session_respond(s, "334 UGFzc3dvcmQ6");
 		s->s_state = S_AUTH_PASSWORD;
+		session_respond(s, "334 UGFzc3dvcmQ6");
 		return;
 
 	case S_AUTH_PASSWORD:
@@ -658,7 +657,6 @@ session_pickup(struct session *s, struct submit_status *ss)
 		break;
 
 	case S_DONE:
-		s->s_state = S_HELO;
 		session_respond(s, "250 %s Message accepted for delivery",
 		    s->s_msg.message_id);
 		log_info("%s: from=<%s@%s>, nrcpts=%zd, proto=%s, relay=%s [%s]",
@@ -670,8 +668,10 @@ session_pickup(struct session *s, struct submit_status *ss)
 		    s->s_hostname,
 		    ss_to_text(&s->s_ss));
 
+		s->s_state = S_HELO;
 		s->s_msg.message_id[0] = '\0';
 		s->s_msg.message_uid[0] = '\0';
+		bzero(&s->s_nresp, sizeof(s->s_nresp));
 		break;
 
 	default:
@@ -1016,7 +1016,10 @@ session_set_path(struct path *path, char *line)
 void
 session_respond(struct session *s, char *fmt, ...)
 {
-	va_list ap;
+	va_list	 ap;
+	int	 n, delay;
+
+	n = EVBUFFER_LENGTH(EVBUFFER_OUTPUT(s->s_bev));
 
 	va_start(ap, fmt);
 	if (evbuffer_add_vprintf(EVBUFFER_OUTPUT(s->s_bev), fmt, ap) == -1 ||
@@ -1024,8 +1027,53 @@ session_respond(struct session *s, char *fmt, ...)
 		fatal("session_respond: evbuffer_add_vprintf failed");
 	va_end(ap);
 
-	if (smtpd_process == PROC_SMTP)
-		bufferevent_disable(s->s_bev, EV_READ);
+	if (smtpd_process == PROC_MTA) {
+		bufferevent_enable(s->s_bev, EV_WRITE);
+		return;
+	}
+
+	bufferevent_disable(s->s_bev, EV_READ);
+
+	/* Detect multi-line response. */
+	if (EVBUFFER_LENGTH(EVBUFFER_OUTPUT(s->s_bev)) - n < 4)
+		fatalx("session_respond: invalid response length");
+	switch (EVBUFFER_DATA(EVBUFFER_OUTPUT(s->s_bev))[n + 3]) {
+	case '-':
+		return;
+	case ' ':
+		break;
+	default:
+		fatalx("session_respond: invalid response");
+	}
+
+	/*
+	 * Deal with request flooding; avoid letting response rate keep up
+	 * with incoming request rate.
+	 */
+	s->s_nresp[s->s_state]++;
+
+	if (s->s_state == S_RCPT)
+		delay = 0;
+	else if ((n = s->s_nresp[s->s_state] - FAST_RESPONSES) > 0)
+		delay = MIN(1 << (n - 1), MAX_RESPONSE_DELAY);
+	else
+		delay = 0;
+
+	if (delay > 0) {
+		struct timeval tv = { delay, 0 };
+
+		s->s_env->stats->smtp.delays++;
+		evtimer_set(&s->s_ev, session_respond_delayed, s);
+		evtimer_add(&s->s_ev, &tv);
+	} else
+		bufferevent_enable(s->s_bev, EV_WRITE);
+}
+
+void
+session_respond_delayed(int fd, short event, void *p)
+{
+	struct session	*s = p;
+
 	bufferevent_enable(s->s_bev, EV_WRITE);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.116 2009/05/25 14:00:36 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.117 2009/05/27 13:09:07 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -67,7 +67,13 @@
 #define PATH_OFFLINE		"/offline"
 
 /* number of MX records to lookup */
-#define MAX_MX_COUNT	10
+#define MAX_MX_COUNT		10
+
+/* max response delay under flood conditions */
+#define MAX_RESPONSE_DELAY	60
+
+/* how many responses per state are undelayed */
+#define FAST_RESPONSES		2
 
 /* rfc5321 limits */
 #define	SMTP_TEXTLINE_MAX	1000
@@ -563,6 +569,7 @@ enum session_state {
 	S_DONE,
 	S_QUIT
 };
+#define STATE_COUNT	18
 
 struct ssl {
 	SPLAY_ENTRY(ssl)	 ssl_nodes;
@@ -623,6 +630,7 @@ struct session {
 	int				 s_buflen;
 	struct timeval			 s_tv;
 	struct message			 s_msg;
+	short				 s_nresp[STATE_COUNT];
 	size_t				 rcptcount;
 
 	struct auth			 s_auth;
@@ -706,6 +714,7 @@ struct s_session {
 	size_t		toofast;
 	size_t		tempfail;
 	size_t		linetoolong;
+	size_t		delays;
 };
 
 struct stats {
