@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.34 2009/05/21 01:27:48 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.35 2009/05/27 16:51:26 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -429,6 +429,7 @@ stringel	: STRING			{
 					ssin.sin_family = AF_INET;
 					me->me_key.med_addr.bits = bits;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin;
+					me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in);
 				}
 				else {
 					bzero(&ssin6, sizeof(struct sockaddr_in6));
@@ -438,6 +439,7 @@ stringel	: STRING			{
 					ssin6.sin6_family = AF_INET6;
 					me->me_key.med_addr.bits = bits;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin6;
+					me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in6);
 				}
 			}
 			else {
@@ -446,11 +448,13 @@ stringel	: STRING			{
 					ssin.sin_family = AF_INET;
 					me->me_key.med_addr.bits = 0;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin;
+					me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in);
 				}
 				else if (inet_pton(AF_INET6, $1, &ssin6.sin6_addr) == 1) {
 					ssin6.sin6_family = AF_INET6;
 					me->me_key.med_addr.bits = 0;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin6;
+					me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in6);
 				}
 				else {
 					/* either a hostname or a value unrelated to network */
@@ -508,6 +512,7 @@ mapref		: STRING			{
 					ssin.sin_family = AF_INET;
 					me->me_key.med_addr.bits = bits;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin;
+					me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in);
 				}
 				else {
 					bzero(&ssin6, sizeof(struct sockaddr_in6));
@@ -517,6 +522,7 @@ mapref		: STRING			{
 					ssin6.sin6_family = AF_INET6;
 					me->me_key.med_addr.bits = bits;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin6;
+					me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in6);
 				}
 			}
 			else {
@@ -525,11 +531,13 @@ mapref		: STRING			{
 					ssin.sin_family = AF_INET;
 					me->me_key.med_addr.bits = 0;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin;
+					me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in);
 				}
 				else if (inet_pton(AF_INET6, $1, &ssin6.sin6_addr) == 1) {
 					ssin6.sin6_family = AF_INET6;
 					me->me_key.med_addr.bits = 0;
 					me->me_key.med_addr.ss = *(struct sockaddr_storage *)&ssin6;
+					me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in6);
 				}
 				else {
 					/* either a hostname or a value unrelated to network */
@@ -789,6 +797,7 @@ from		: FROM mapref			{
 			if ((me = calloc(1, sizeof(*me))) == NULL)
 				fatal("out of memory");
 			me->me_key.med_addr.bits = 32;
+			me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in);
 			ssin = (struct sockaddr_in *)&me->me_key.med_addr.ss;
 			ssin->sin_family = AF_INET;
 			if (inet_pton(AF_INET, "0.0.0.0", &ssin->sin_addr) != 1) {
@@ -801,6 +810,7 @@ from		: FROM mapref			{
 			if ((me = calloc(1, sizeof(*me))) == NULL)
 				fatal("out of memory");
 			me->me_key.med_addr.bits = 128;
+			me->me_key.med_addr.ss.ss_len = sizeof(struct sockaddr_in6);
 			ssin6 = (struct sockaddr_in6 *)&me->me_key.med_addr.ss;
 			ssin6->sin6_family = AF_INET6;
 			if (inet_pton(AF_INET6, "::", &ssin6->sin6_addr) != 1) {
