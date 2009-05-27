@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.67 2009/03/26 13:59:30 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.68 2009/05/27 04:18:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -185,6 +185,8 @@ print_mainconf(struct bgpd_config *conf)
 		printf("holdtime %u\n", conf->holdtime);
 	if (conf->min_holdtime)
 		printf("holdtime min %u\n", conf->min_holdtime);
+	if (conf->connectretry)
+		printf("connect-retry %u\n", conf->connectretry);
 
 	if (conf->flags & BGPD_FLAG_NO_FIB_UPDATE)
 		printf("fib-update no\n");

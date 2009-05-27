@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.289 2009/03/19 07:00:07 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.290 2009/05/27 04:18:21 reyk Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -589,6 +589,8 @@ init_conf(struct bgpd_config *c)
 {
 	if (!c->holdtime)
 		c->holdtime = INTERVAL_HOLD;
+	if (!c->connectretry)
+		c->connectretry = INTERVAL_CONNECTRETRY;
 }
 
 void
@@ -663,7 +665,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			} else {
 				change_state(peer, STATE_CONNECT, event);
 				timer_set(peer, Timer_ConnectRetry,
-				    INTERVAL_CONNECTRETRY);
+				    conf->connectretry);
 				session_connect(peer);
 			}
 			peer->passive = 0;
@@ -688,13 +690,13 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			break;
 		case EVNT_CON_OPENFAIL:
 			timer_set(peer, Timer_ConnectRetry,
-			    INTERVAL_CONNECTRETRY);
+			    conf->connectretry);
 			session_close_connection(peer);
 			change_state(peer, STATE_ACTIVE, event);
 			break;
 		case EVNT_TIMER_CONNRETRY:
 			timer_set(peer, Timer_ConnectRetry,
-			    INTERVAL_CONNECTRETRY);
+			    conf->connectretry);
 			session_connect(peer);
 			break;
 		default:
@@ -717,7 +719,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			break;
 		case EVNT_CON_OPENFAIL:
 			timer_set(peer, Timer_ConnectRetry,
-			    INTERVAL_CONNECTRETRY);
+			    conf->connectretry);
 			session_close_connection(peer);
 			change_state(peer, STATE_ACTIVE, event);
 			break;
@@ -744,7 +746,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 		case EVNT_CON_CLOSED:
 			session_close_connection(peer);
 			timer_set(peer, Timer_ConnectRetry,
-			    INTERVAL_CONNECTRETRY);
+			    conf->connectretry);
 			change_state(peer, STATE_ACTIVE, event);
 			break;
 		case EVNT_CON_FATAL:

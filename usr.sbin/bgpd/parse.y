@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.224 2009/04/23 16:20:39 sthen Exp $ */
+/*	$OpenBSD: parse.y,v 1.225 2009/05/27 04:18:21 reyk Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -158,7 +158,7 @@ typedef struct {
 %token	RDE EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
-%token	ANNOUNCE DEMOTE
+%token	ANNOUNCE DEMOTE CONNECTRETRY
 %token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR DEPEND DOWN SOFTRECONFIG
 %token	DUMP IN OUT
 %token	LOG ROUTECOLL TRANSPARENT
@@ -528,6 +528,13 @@ conf_main	: AS as4number		{
 				YYERROR;
 			}
 			conf->rtableid = $2;
+		}
+		| CONNECTRETRY NUMBER {
+			if ($2 > USHRT_MAX || $2 < 1) {
+				yyerror("invalid connect-retry");
+				YYERROR;
+			}
+			conf->connectretry = $2;
 		}
 		;
 
@@ -1777,6 +1784,7 @@ lookup(char *s)
 		{ "capabilities",	CAPABILITIES},
 		{ "community",		COMMUNITY},
 		{ "compare",		COMPARE},
+		{ "connect-retry",	CONNECTRETRY},
 		{ "connected",		CONNECTED},
 		{ "delete",		DELETE},
 		{ "demote",		DEMOTE},
