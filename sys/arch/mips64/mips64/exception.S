@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.18 2009/05/22 20:37:53 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.19 2009/05/27 18:58:15 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -182,6 +182,7 @@ NNON_LEAF(k_intr, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 	LA	gp, _gp
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	mtc0	t0, COP_0_STATUS_REG
+	ITLBNOPFIX
 	LA	t1, int_nest_cntr
 	lw	t2, (t1)
 	addiu	t2, 1
@@ -190,11 +191,6 @@ NNON_LEAF(k_intr, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 	PTR_S	a0, 0(sp)
 	jal	interrupt
 	PTR_S	a3, CF_RA_OFFS + KERN_REG_SIZE(sp)
-
-	mfc0	t0, COP_0_STATUS_REG	# dis int preserve settings.
-	li	t1, ~SR_INT_ENAB
-	and	t0, t0, t1
-	mtc0	t0, COP_0_STATUS_REG
 
 	LA	t1, int_nest_cntr
 	lw	t2, (t1)
@@ -234,6 +230,7 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	.set	at
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	mtc0	t0, COP_0_STATUS_REG
+	ITLBNOPFIX
 	LA	t1, int_nest_cntr
 	lw	t2, (t1)
 	addiu	t2, 1
@@ -242,6 +239,11 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	PTR_S	a0, 0(sp)
 	jal	interrupt
 	PTR_S	a3, CF_RA_OFFS(sp)		# for debugging
+
+	mfc0	t0, COP_0_STATUS_REG	# enable interrupts before checking
+	ori	t0, SR_INT_ENAB		# for ast.
+	mtc0	t0, COP_0_STATUS_REG
+	ITLBNOPFIX
 
 0:
 	lw	v0, astpending		# any pending interrupts?
@@ -272,8 +274,9 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	nop;nop;nop;nop
 1:
 #endif
-	jal	softintr
+	jal	ast
 	nop
+
 /*
  * Restore user registers and return. NOTE: interrupts are enabled.
  */
@@ -304,10 +307,11 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	nop
 
 4:
-	mfc0	t0, COP_0_STATUS_REG	# dis int preserve settings.
+	mfc0	t0, COP_0_STATUS_REG	# disable interrupts
 	li	t1, ~SR_INT_ENAB
 	and	t0, t0, t1
 	mtc0	t0, COP_0_STATUS_REG
+	ITLBNOPFIX
 
 	LA	t1, int_nest_cntr
 	lw	t2, (t1)
@@ -316,6 +320,7 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 
 	ori	t0, SR_EXL		# restoring to user mode.
 	mtc0	t0, COP_0_STATUS_REG	# must set exception level bit.
+	ITLBNOPFIX
 
 	PTR_L	k0, curprocpaddr
 	RESTORE_REG(a3, CPL, k0, 0)
@@ -362,10 +367,11 @@ NNON_LEAF(k_general, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 	jal	trap
 	PTR_S	a3, CF_RA_OFFS + KERN_REG_SIZE(sp)
 
-	mfc0	t0, COP_0_STATUS_REG	# dis int preserve settings.
+	mfc0	t0, COP_0_STATUS_REG	# disable interrupts
 	li	t1, ~SR_INT_ENAB
 	and	t0, t0, t1
 	mtc0	t0, COP_0_STATUS_REG
+	ITLBNOPFIX
 
 	.set	noat
 #if 0
@@ -432,7 +438,7 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	PTR_L	t0, curprocpaddr
 	SAVE_CPU_SREG(t0, 0)
 
-	jal	softintr
+	jal	ast
 	nop
 
 	PTR_L	t0, curprocpaddr
@@ -462,7 +468,7 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	nop;nop;nop;nop
 1:
 #endif
-	mfc0	t0, COP_0_STATUS_REG	# dis int preserve settings.
+	mfc0	t0, COP_0_STATUS_REG	# disable interrupts
 	li	t1, ~SR_INT_ENAB
 	and	t0, t0, t1
 	mtc0	t0, COP_0_STATUS_REG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.38 2009/05/22 20:37:53 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.39 2009/05/27 18:58:15 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -121,7 +121,7 @@ int_f *pending_hand = &dummy_do_pending_int;
  */
 
 void interrupt(struct trap_frame *);
-void softintr(void);
+void ast(void);
 
 /*
  * Handle an interrupt. Both kernel and user mode is handled here.
@@ -236,7 +236,7 @@ set_intr(int pri, intrmask_t mask,
  * This is called from MipsUserIntr() if astpending is set.
  */
 void
-softintr()
+ast()
 {
 	struct proc *p = curproc;
 	int sig;
