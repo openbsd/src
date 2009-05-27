@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1474 2009/05/13 08:31:22 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1475 2009/05/27 19:13:25 sthen Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2320,6 +2320,7 @@
 #define	PCI_PRODUCT_INTEL_82598_DA_DUAL	0x10f1		/* 10GbE DA Dual (82598) */
 #define	PCI_PRODUCT_INTEL_82598EB_XF_LR	0x10f4		/* 10GbE LR (82598EB) */
 #define	PCI_PRODUCT_INTEL_ICH9_IGP_M_AMT	0x10f5		/* ICH9 IGP M AMT */
+#define	PCI_PRODUCT_INTEL_82552	0x10fe		/* 82552 */
 #define	PCI_PRODUCT_INTEL_82815_HB	0x1130		/* 82815 Host */
 #define	PCI_PRODUCT_INTEL_82815_AGP	0x1131		/* 82815 AGP */
 #define	PCI_PRODUCT_INTEL_82815_IGD	0x1132		/* 82815 Video */
@@ -4224,6 +4225,7 @@
 #define	PCI_PRODUCT_RCC_FRODO8_SATA	0x0242		/* Frodo8 SATA */
 #define	PCI_PRODUCT_RCC_HT_1000_SATA_1	0x024a		/* HT-1000 SATA */
 #define	PCI_PRODUCT_RCC_HT_1000_SATA_2	0x024b		/* HT-1000 SATA */
+#define	PCI_PRODUCT_RCC_HT_1100	0x0408		/* HT-1100 */
 
 /* Rendition products */
 #define	PCI_PRODUCT_RENDITION_V1000	0x0001		/* Verite 1000 */
