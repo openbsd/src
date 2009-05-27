@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.22 2009/05/27 18:58:52 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.23 2009/05/27 19:04:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -80,6 +80,7 @@ struct xbridge_softc {
 	struct xbridge_intr	*sc_intr[BRIDGE_NINTRS];
 
 	pcireg_t	sc_devices[BRIDGE_NSLOTS];
+	pcireg_t	sc_ier_ignore;
 
 	struct mutex	sc_atemtx;
 	uint		sc_atecnt;
@@ -411,6 +412,7 @@ xbridge_conf_read(void *cookie, pcitag_t tag, int offset)
 {
 	struct xbridge_softc *sc = cookie;
 	pcireg_t data;
+	uint32_t ier;
 	int bus, dev, fn;
 	paddr_t pa;
 	int skip;
@@ -453,7 +455,44 @@ xbridge_conf_read(void *cookie, pcitag_t tag, int offset)
 			break;
 		case PCI_INTERRUPT_REG:
 			/* This register is not implemented. Fake it. */
-			data = PCI_INTERRUPT_PIN_A << PCI_INTERRUPT_PIN_SHIFT;
+			data = (PCI_INTERRUPT_PIN_A <<
+			    PCI_INTERRUPT_PIN_SHIFT) |
+			    (dev << PCI_INTERRUPT_LINE_SHIFT);
+			skip = 1;
+			break;
+		case PCI_INTERRUPT_REG + 4:
+			/*
+			 * This is a kluge to help the IOC driver figure
+			 * out which second interrupt line it uses.
+			 *
+			 * The ioc driver will attempt to trigger that
+			 * interrupt, and then read that sort-of second
+			 * interrupt register.  Here we check the pending
+			 * interrupts, and see if a bit has changed.
+			 *
+			 * Unfortunately, this does not work on all
+			 * platforms (e.g. IP30).  The ioc driver falls
+			 * back to heuristics in that case.
+			 */
+
+			ier = bus_space_read_4(sc->sc_iot, sc->sc_regh,
+			    BRIDGE_IER) & 0xff;
+			ier &= ~sc->sc_ier_ignore;
+			sc->sc_ier_ignore |= ier;
+
+			/* we expect only one bit to trigger */
+			if (ier != 0 && (ier & (ier - 1)) != 0)
+				ier = 0;
+
+			if (ier != 0) {
+				/* compute interrupt line */
+				for (data = 0; ier != 1; ier >>= 1, data++) ;
+
+				data = (PCI_INTERRUPT_PIN_A <<
+				    PCI_INTERRUPT_PIN_SHIFT) |
+				    (data << PCI_INTERRUPT_LINE_SHIFT);
+			} else
+				data = 0;
 			skip = 1;
 			break;
 		default:
@@ -568,6 +607,7 @@ struct xbridge_intr {
 int
 xbridge_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
+	struct xbridge_softc *sc = pa->pa_pc->pc_conf_v;
 	int bus, device, intr;
 
 	*ihp = -1;
@@ -585,10 +625,19 @@ xbridge_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 #endif
 
 	xbridge_decompose_tag(pa->pa_pc, pa->pa_tag, &bus, &device, NULL);
-	if (pa->pa_intrpin & 1)
-		intr = device;
-	else
-		intr = device ^ 4;
+
+	/*
+	 * For IOC devices, the real information is in pa_intrline.
+	 */
+	if (sc->sc_devices[device] ==
+	    PCI_ID_CODE(PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3)) {
+		intr = pa->pa_intrline;
+	} else {
+		if (pa->pa_intrpin & 1)
+			intr = device;
+		else
+			intr = device ^ 4;
+	}
 
 	*ihp = XBRIDGE_INTR_HANDLE(device, intr);
 
@@ -1627,6 +1676,9 @@ xbridge_setup(struct xbridge_softc *sc)
 
 	for (i = 0; i < BRIDGE_NINTRS; i++)
 		sc->sc_intrbit[i] = -1;
+
+	sc->sc_ier_ignore = bus_space_read_4(sc->sc_iot, sc->sc_regh,
+	    BRIDGE_IER) & 0xff;
 }
 
 /*

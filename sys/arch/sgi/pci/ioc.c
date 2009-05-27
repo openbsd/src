@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioc.c,v 1.15 2009/05/22 21:21:19 miod Exp $	*/
+/*	$OpenBSD: ioc.c,v 1.16 2009/05/27 19:04:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Joel Sing.
@@ -110,7 +110,7 @@ ioc_match(struct device *parent, void *match, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SGI &&
-            PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SGI_IOC3)
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SGI_IOC3)
 		return (1);
 
 	return (0);
@@ -266,9 +266,9 @@ unknown:
 	 * it actually needs to use two interrupts, one for the superio
 	 * chip, and the other for the Ethernet chip.
 	 *
-	 * Since our pci layer doesn't handle this, we cheat and compute
-	 * the superio interrupt cookie ourselves. This is ugly, and
-	 * depends on xbridge knowledge.
+	 * Since our pci layer doesn't handle this, we have to compute
+	 * the superio interrupt cookie ourselves, with the help of the
+	 * pci bridge driver. This is ugly, and depends on xbridge knowledge.
 	 *
 	 * (What the above means is that you should wear peril-sensitive
 	 * sunglasses from now on).
@@ -288,41 +288,77 @@ unknown:
 	/*
 	 * The second vector source seems to be the first unused PCI
 	 * slot.
-	 *
-	 * On Octane systems, the on-board IOC3 is device #2 and
-	 * immediately followed by the RAD1 audio, device #3, thus
-	 * the next empty slot is #4.
-	 * XXX Is this still true with the Octane PCI cardcage?
-	 *
-	 * On Origin200 systems, there is no RAD1 audio, slot #3 is
-	 * empty (available PCI slots are #5-#7).
-	 *
-	 * On Fuel systems, the on-board IOC3 is device #4,
-	 * with the USB controller being device #5, and slot #6
-	 * is empty (available PCI slots are on a different bridge).
 	 */
 	if (dual_irq) {
+		/*
+		 * First, try to get reliable interrupt information
+		 * from the pci bridge.
+		 *
+		 * In order to do this, we trigger the superio interrupt
+		 * and read a magic register in configuration space.
+		 * See the xbridge code for details.
+		 */
+
+		/* enable TX empty interrupt */
+		delay(20 * 1000);	/* let console output drain */
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IEC, ~0x0);
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IES,
+		    0x0201);
+
+		/* read pseudo interrupt register */
+		data = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_INTERRUPT_REG + 4);
+
+		/* disable interrupt again */
+		bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IEC,
+		    0x0201);
+
+		if (data != 0) {
+			/*
+			 * If the interrupt has been received as the
+			 * regular PCI interrupt, then we probably don't
+			 * have separate interrupts.
+			 */
+			if (PCI_INTERRUPT_LINE(data) == pa->pa_intrline)
+				goto single;
+
+			pa->pa_intrline = PCI_INTERRUPT_LINE(data);
+			pa->pa_rawintrpin = pa->pa_intrpin =
+			    PCI_INTERRUPT_PIN(data);
+
+			if (pci_intr_map(pa, &ih2) == 0)
+				goto establish;
+		}
+
+		/*
+		 * If there was no bridge hint or it did not work, use the
+		 * heuristic of picking the lowest free slot.
+		 */
+
 		for (dev = 0;
 		    dev < pci_bus_maxdevs(pa->pa_pc, pa->pa_bus); dev++) {
 			pcitag_t tag;
+			int line, rc;
 
 			if (dev == pa->pa_device)
 				continue;
 
 			tag = pci_make_tag(pa->pa_pc, pa->pa_bus, dev, 0);
-			if (pci_conf_read(pa->pa_pc, tag, PCI_ID_REG) ==
-			    0xffffffff) {
-				pa->pa_tag = tag;
-				if (pci_intr_map(pa, &ih2) != 0) {
-					printf(": failed to map superio"
-					    " interrupt!\n");
-					goto unmap;
-				}
-				pa->pa_tag = pci_make_tag(pa->pa_pc, pa->pa_bus,
-				    pa->pa_device, pa->pa_function);
+			if (pci_conf_read(pa->pa_pc, tag, PCI_ID_REG) !=
+			    0xffffffff)
+				continue;	/* slot in use... */
 
-				goto establish;
+			line = pa->pa_intrline;
+			pa->pa_intrline = dev;
+			rc = pci_intr_map(pa, &ih2);
+			pa->pa_intrline = line;
+
+			if (rc != 0) {
+				printf(": failed to map superio interrupt!\n");
+				goto unmap;
 			}
+
+			goto establish;
 		}
 
 		/*
@@ -331,6 +367,7 @@ unknown:
 		 * situation, but it's probably safe to revert to
 		 * a shared, single interrupt.
 		 */
+single:
 		shared_handler = 1;
 		dual_irq = 0;
 	}
@@ -340,10 +377,12 @@ establish:
 		/*
 		 * Register the second (superio) interrupt.
 		 */
+
 		sc->sc_ih2 = pci_intr_establish(sc->sc_pc, ih2, IPL_TTY,
 		    ioc_intr_superio, sc, self->dv_xname);
 		if (sc->sc_ih2 == NULL) {
-			printf("failed to establish superio interrupt!\n");
+			printf("failed to establish superio interrupt at %s\n",
+			    pci_intr_string(sc->sc_pc, ih2));
 			goto unmap;
 		}
 
@@ -354,6 +393,7 @@ establish:
 	 * Register the main (Ethernet if available, superio otherwise)
 	 * interrupt.
 	 */
+
 	sc->sc_ih1 = pci_intr_establish(sc->sc_pc, ih1, IPL_NET,
 	    shared_handler ? ioc_intr_shared : ioc_intr_ethernet,
 	    sc, self->dv_xname);
@@ -372,6 +412,7 @@ establish:
 	/*
 	 * Acknowledge all pending interrupts, and disable them.
 	 */
+
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IEC, ~0x0);
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IES, 0x0);
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, IOC3_SIO_IR,
@@ -388,7 +429,7 @@ establish:
 	if (has_ps2)
 		ioc_attach_child(self, "iockbc", 0, IOCDEV_KEYBOARD);
 	if (has_ethernet)
-		ioc_attach_child(self, "ef", IOC3_EF_BASE, IOCDEV_EF);
+		ioc_attach_child(self, "iec", IOC3_EF_BASE, IOCDEV_EF);
 	/* XXX what about the parallel port? */
 	ioc_attach_child(self, "dsrtc", 0, IOCDEV_RTC);
 
@@ -443,7 +484,7 @@ ioc_search_mundane(struct device *parent, void *vcf, void *args)
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != (int)iaa->iaa_base)
 		return 0;
 
-        return (*cf->cf_attach->ca_match)(parent, cf, iaa);
+	return (*cf->cf_attach->ca_match)(parent, cf, iaa);
 }
 
 /*
@@ -479,8 +520,8 @@ ioc_search_onewire(struct device *parent, void *vcf, void *args)
 	oba.oba_flags = ONEWIRE_SCAN_NOW | ONEWIRE_NO_PERIODIC_SCAN;
 
 	/* In case onewire is disabled in UKC... */
-        if ((*cf->cf_attach->ca_match)(parent, cf, &oba) == 0)
-                return 0;
+	if ((*cf->cf_attach->ca_match)(parent, cf, &oba) == 0)
+		return 0;
 
 	owdev = config_attach(parent, cf, &oba, onewirebus_print);
 
@@ -626,7 +667,7 @@ void *
 ioc_intr_establish(void *cookie, u_long dev, int level, int (*func)(void *),
     void *arg, char *name)
 {
-        struct ioc_softc *sc = cookie;
+	struct ioc_softc *sc = cookie;
 	struct ioc_intr *ii;
 
 	if (dev < 0 || dev >= IOC_NDEVS)
@@ -707,7 +748,7 @@ ioc_intr_dispatch(struct ioc_softc *sc, int dev)
 	if ((ii = sc->sc_intr[dev]) != NULL && ii->ii_func != NULL) {
 		rc = (*ii->ii_func)(ii->ii_arg);
 		if (rc != 0)
-               		ii->ii_count.ec_count++;
+			ii->ii_count.ec_count++;
 	}
 
 	return rc;
