@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.6 2009/05/02 21:30:13 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.7 2009/05/27 19:06:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -75,14 +75,13 @@
 
 int	xbowmatch(struct device *, void *, void *);
 void	xbowattach(struct device *, struct device *, void *);
-int	xbowprint_pass1(void *, const char *);
-int	xbowprint_pass2(void *, const char *);
-int	xbowsubmatch_pass1(struct device *, void *, void *);
-int	xbowsubmatch_pass2(struct device *, void *, void *);
+int	xbowprint(void *, const char *);
+int	xbowsubmatch(struct device *, void *, void *);
 int	xbow_attach_widget(struct device *, int16_t, int,
 	    int (*)(struct device *, void *, void *), cfprint_t);
-void	xbow_enumerate(struct device *, int16_t, int,
-	    int (*)(struct device *, void *, void *), cfprint_t);
+
+int	xbow_kl_search_brd(lboard_t *, void *);
+int	xbow_kl_search_mplane(klinfo_t *, void *);
 
 uint32_t xbow_read_4(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 uint64_t xbow_read_8(bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -210,24 +209,7 @@ xbow_identify(uint32_t vendor, uint32_t product)
 }
 
 int
-xbowprint_pass1(void *aux, const char *pnp)
-{
-	struct xbow_attach_args *xaa = aux;
-	const struct xbow_product *p;
-
-	p = xbow_identify(xaa->xaa_vendor, xaa->xaa_product);
-
-	if (pnp == NULL) {
-		printf(" widget %d", xaa->xaa_widget);
-		if (p != NULL)
-			printf(": %s", p->productname);
-	}
-
-	return (QUIET);
-}
-
-int
-xbowprint_pass2(void *aux, const char *pnp)
+xbowprint(void *aux, const char *pnp)
 {
 	struct xbow_attach_args *xaa = aux;
 	const struct xbow_product *p;
@@ -253,22 +235,7 @@ xbowprint_pass2(void *aux, const char *pnp)
 }
 
 int
-xbowsubmatch_pass1(struct device *parent, void *vcf, void *aux)
-{
-	int rc;
-
-	if (xbow_intr_widget != 0)
-		return 0;
-
-	rc = xbowsubmatch_pass2(parent, vcf, aux);
-	if (rc < 20)
-		rc = 0;
-
-	return rc;
-}
-
-int
-xbowsubmatch_pass2(struct device *parent, void *vcf, void *aux)
+xbowsubmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct xbow_attach_args *xaa = aux;
 	struct cfdata *cf = vcf;
@@ -281,12 +248,53 @@ xbowsubmatch_pass2(struct device *parent, void *vcf, void *aux)
 	return (*cf->cf_attach->ca_match)(parent, vcf, aux);
 }
 
+/*
+ * Widget probe order for various components
+ */
+
+/* Octane: probe Heart first, then onboard devices, then other slots */
+const uint8_t xbow_probe_octane[] =
+	{ 0x08, 0x0f, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0 };
+/* Origin 200: probe onboard devices, and there is nothing more */
+const uint8_t xbow_probe_singlebridge[] =
+	{ 0x08 };
+/* Base I/O board: probe in ascending order */
+const uint8_t xbow_probe_baseio[] =
+	{ 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0 };
+/* I-Brick: probe PCI buses first (starting with the onboard devices) */
+const uint8_t xbow_probe_ibrick[] =
+	{ 0x0f, 0x0e, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0 };
+/* P-Brick: all widgets are PCI buses, probe in recommended order */
+const uint8_t xbow_probe_pbrick[] =
+	{ 0x09, 0x08, 0x0f, 0x0e, 0x0d, 0x0c, 0x0a, 0x0b, 0 };
+/* X-Brick: all widgets are XIO devices, probe in recommended order */
+const uint8_t xbow_probe_xbrick[] =
+	{ 0x08, 0x09, 0x0c, 0x0d, 0x0a, 0x0b, 0x0e, 0x0f, 0 };
+
+/*
+ * Structures used to carry information between KL and atatchment code.
+ */
+
+struct xbow_config {
+	int	valid;
+	int	master;
+	int	widgets[WIDGET_MAX + 1 - WIDGET_MIN];
+};
+
+struct xbow_kl_config {
+	const uint8_t *probe_order;
+	struct xbow_config *cfg;
+};
+
 void
 xbowattach(struct device *parent, struct device *self, void *aux)
 {
 	int16_t nasid = 0;	/* XXX for now... */
 	uint32_t wid, vendor, product;
 	const struct xbow_product *p;
+	struct xbow_config cfg;
+	struct xbow_kl_config klcfg;
+	uint widget;
 
 	/*
 	 * This assumes widget 0 is the XBow itself (or an XXBow).
@@ -301,66 +309,66 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 	    p != NULL ? p->productname : "unknown xbow",
 	    (wid & WIDGET_ID_REV_MASK) >> WIDGET_ID_REV_SHIFT);
 
-	/*
-	 * Default value for the interrupt register. If this system
-	 * has a Heart widget, the Heart code will take care of changing it.
-	 */
-	xbow_intr_widget_register = (1UL << 47) /* XIO I/O space */ |
-	    ((paddr_t)IP27_RHUB_ADDR(nasid, HUB_IR_CHANGE) -
-	     IP27_NODE_IO_BASE(0)) /* HUB register offset */;
-
-	/*
-	 * If widget 0 reports itself as a bridge, this is not a
-	 * complete XBow, but only a limited topology. This is
-	 * found on at least the Origin 200.
-	 */
-	if (vendor == XBOW_VENDOR_SGI4 && product == XBOW_PRODUCT_SGI4_BRIDGE) {
+	memset(&cfg, 0, sizeof cfg);
+	switch (sys_config.system_type) {
+	case SGI_OCTANE:
+		klcfg.probe_order = xbow_probe_octane;
+		break;
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+	default:
 		/*
-		 * Interrupt widget is hardwired to #a (this is another
-		 * facet of this bridge).
+		 * Default value for the interrupt register.
 		 */
-		xbow_intr_widget = 0x0a;
+		xbow_intr_widget_register = (1UL << 47) /* XIO I/O space */ |
+		    ((paddr_t)IP27_RHUB_ADDR(nasid, HUB_IR_CHANGE) -
+		     IP27_NODE_IO_BASE(0)) /* HUB register offset */;
 
-		xbow_attach_widget(self, nasid, WIDGET_MIN,
-		    xbowsubmatch_pass2, xbowprint_pass2);
-	} else {
+		klcfg.cfg = &cfg;
+		klcfg.probe_order = NULL;
+
 		/*
-		 * XXX This widget number is actually the Hub part of the
-		 * XXX crossbow, and is where memory and interrupt logic
-		 * XXX resources are connected to.
-		 * XXX The exact widget number ought to be computed from
-		 * XXX the KL configuration graph; I'm hardcoding it for
-		 * XXX now because I am lazy and we only care about the
-		 * XXX first node at the moment. -- miod
+		 * If widget 0 reports itself as a bridge, this is not a
+		 * complete XBow, but only a limited topology. This is
+		 * found on at least the Origin 200.
 		 */
-		if (sys_config.system_type != SGI_OCTANE)
+		if (vendor == XBOW_VENDOR_SGI4 &&
+		    product == XBOW_PRODUCT_SGI4_BRIDGE) {
+			/*
+			 * Interrupt widget is hardwired to #a (this is another
+			 * facet of this bridge).
+			 */
 			xbow_intr_widget = 0x0a;
+			klcfg.probe_order = xbow_probe_singlebridge;
+		} else {
+			/*
+			 * Get crossbow information from the KL configuration.
+			 */
+			kl_scan_node(nasid, KLBRD_ANY, xbow_kl_search_brd,
+			    &klcfg);
 
-		/*
-		 * Enumerate the other widgets.
-		 * We'll do two passes - one to give the first Heart or a Hub a
-		 * chance to setup interrupt routing, and one to attach all
-		 * other widgets.
-		 */
-		if (xbow_intr_widget == 0)
-			xbow_enumerate(self, nasid, 0,
-			    xbowsubmatch_pass1, xbowprint_pass1);
-		xbow_enumerate(self, nasid, xbow_intr_widget,
-		    xbowsubmatch_pass2, xbowprint_pass2);
+			if (cfg.valid == 0)
+				panic("no hub");
+
+			/*
+			 * This widget number is actually the Hub part of the
+			 * crossbow, and is where memory and interrupt logic
+			 * resources are connected to.
+			 */
+			xbow_intr_widget = cfg.master;
+		}
+		break;
+#endif
 	}
-}
 
-void
-xbow_enumerate(struct device *self, int16_t nasid, int skip,
-    int (*sm)(struct device *, void *, void *), cfprint_t print)
-{
-	int widget;
-
-	for (widget = WIDGET_MIN; widget <= WIDGET_MAX; widget++) {
-		if (widget == skip)
+	if (klcfg.probe_order == NULL)
+		klcfg.probe_order = xbow_probe_baseio;
+	for (; *klcfg.probe_order != 0; klcfg.probe_order++) {
+		widget = *klcfg.probe_order;
+		if (cfg.valid != 0 &&
+		    !ISSET(cfg.widgets[widget - WIDGET_MIN], XBOW_PORT_ENABLE))
 			continue;
-
-		(void)xbow_attach_widget(self, nasid, widget, sm, print);
+		(void)xbow_attach_widget(self, nasid, widget, xbowsubmatch,
+		    xbowprint);
 	}
 }
 
@@ -411,6 +419,81 @@ xbow_attach_widget(struct device *self, int16_t nasid, int widget,
 	return 0;
 }
 
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+
+/*
+ * These two functions try to figure out the configuration of the XBow
+ * on this node.
+ *
+ * We are looking for two pieces of information:
+ * - the Hub widget, to which memory is attached and interrupts are routed.
+ * - what kind of Brick we are.
+ *
+ * The first information can be obtained easily by looking for a MPLANE type
+ * board. However there is no easy way to figure the second part, except for
+ * checking what kind of boards are reported.
+ *
+ * A BaseIO board will report itself once, as a single widget. Bricks, on the
+ * other hand, appear for each of the widgets they provide.
+ */
+
+int
+xbow_kl_search_brd(lboard_t *brd, void *arg)
+{
+	struct xbow_kl_config *cfg = arg;
+
+	switch (brd->brd_type & IP27_BC_MASK) {
+	case IP27_BC_MPLANE:
+		if (cfg->cfg->valid == 0)
+			kl_scan_board(brd, KLSTRUCT_XBOW, xbow_kl_search_mplane,
+			    cfg->cfg);
+		break;
+	case IP27_BC_IO:
+		if (cfg->probe_order == NULL)
+			cfg->probe_order = xbow_probe_baseio;
+		break;
+	case IP27_BC_BRICK:
+		if (cfg->probe_order == NULL)
+			switch (brd->brd_type) {
+			case IP27_BRD_IBRICK:
+				cfg->probe_order = xbow_probe_ibrick;
+				break;
+			case IP27_BRD_PBRICK:
+				cfg->probe_order = xbow_probe_pbrick;
+				break;
+			case IP27_BRD_XBRICK:
+				cfg->probe_order = xbow_probe_xbrick;
+				break;
+			default:
+				/* unknown brick */
+				break;
+			}
+		break;
+	}
+
+	if (cfg->cfg->valid != 0 && cfg->probe_order != NULL)
+		return 1;	/* stop enumeration */
+
+	return 0;
+}
+
+int
+xbow_kl_search_mplane(klinfo_t *c, void *arg)
+{
+	klxbow_t *xbow = (klxbow_t *)c;
+	struct xbow_config *cfg = arg;
+	uint w;
+
+	cfg->valid = 1;
+	cfg->master = xbow->xbow_hub_master_link;
+	for (w = WIDGET_MIN; w <= WIDGET_MAX; w++)
+		cfg->widgets[w - WIDGET_MIN] =
+		    xbow->xbow_port_info[w - WIDGET_MIN].port_flag;
+
+	return 1;
+}
+
+#endif
 
 /*
  * Bus access primitives.

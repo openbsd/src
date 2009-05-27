@@ -1,4 +1,4 @@
-/*	$OpenBSD: xheart.c,v 1.7 2009/05/08 18:42:07 miod Exp $	*/
+/*	$OpenBSD: xheart.c,v 1.8 2009/05/27 19:06:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -78,13 +78,8 @@ xheart_match(struct device *parent, void *match, void *aux)
 	struct xbow_attach_args *xaa = aux;
 
 	if (xaa->xaa_vendor == XBOW_VENDOR_SGI4 &&
-	    xaa->xaa_product == XBOW_PRODUCT_SGI4_HEART) {
-		/*
-		 * Only match if no interrupt widget has registered yet.
-		 * There should be only one Heart in a system anyway.
-		 */
-		return xbow_intr_widget == 0 ? 20 : 0;
-	}
+	    xaa->xaa_product == XBOW_PRODUCT_SGI4_HEART)
+		return 1;
 
 	return 0;
 }
