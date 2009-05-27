@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.7 2009/05/21 16:25:26 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.8 2009/05/27 19:00:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -68,27 +68,24 @@ ip27_setup()
 	xbow_widget_long = ip27_widget_long;
 	xbow_widget_id = ip27_widget_id;
 
-	/*
-	 * Scan this node's configuration to find out CPU and memory
-	 * information.
-	 */
-	kl_scan_config(0);
-
+	kl_init();
 	if (kl_n_mode != 0)
 		xbow_long_shift = 28;
 
 	/*
-	 * Initialize the early console parameters.
-	 * This assumes BRIDGE is on widget 8 and IOC3 is mapped in
-	 * memory space at address 0x600000. Although on IP35 it is
-	 * actually widget 15...
-	 *
-	 * XXX And that 0x600000 should be computed from the first BAR
-	 * XXX of the IOC3 in pci configuration space. Joy. I'll get there
-	 * XXX eventually.
+	 * Scan this node's configuration to find out CPU and memory
+	 * information.
 	 */
-	xbow_build_bus_space(&sys_config.console_io, 0, 8, 0);
 
+	kl_scan_config(0);
+	kl_scan_done();
+
+	/*
+	 * Initialize the early console parameters.
+	 * This assumes IOC3 is accessible through a widget small window.
+	 */
+
+	xbow_build_bus_space(&sys_config.console_io, 0, 8 /* whatever */, 0);
 	/* Constrain to a short window */
 	sys_config.console_io.bus_base =
 	    kl_get_console_base() & 0xffffffffff000000UL;
@@ -101,6 +98,7 @@ ip27_setup()
 	 * Force widget interrupts to run through us, unless a
 	 * better interrupt master widget is found.
 	 */
+
 	xbow_intr_widget_intr_register = ip27_hub_intr_register;
 	xbow_intr_widget_intr_establish = ip27_hub_intr_establish;
 	xbow_intr_widget_intr_disestablish = ip27_hub_intr_disestablish;
@@ -111,12 +109,14 @@ ip27_setup()
 	/*
 	 * Disable all hardware interrupts.
 	 */
+
 	IP27_LHUB_S(HUB_CPU0_IMR0, 0);
 	IP27_LHUB_S(HUB_CPU0_IMR1, 0);
 	IP27_LHUB_S(HUB_CPU1_IMR0, 0);
 	IP27_LHUB_S(HUB_CPU1_IMR1, 0);
 	(void)IP27_LHUB_L(HUB_IR0);
 	(void)IP27_LHUB_L(HUB_IR1);
+	/* XXX do the other two cpus on IP35 */
 }
 
 /*

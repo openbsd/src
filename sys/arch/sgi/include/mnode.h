@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.3 2009/05/06 20:08:44 miod Exp $ */
+/*	$OpenBSD: mnode.h,v 1.4 2009/05/27 19:00:15 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -145,6 +145,7 @@ typedef struct kl_config_hdr {
 #define IP27_KLNEXT_BOARD(n, board) \
 	IP27_UNCAC_ADDR(lboard_t *, n, board->brd_next)
 #define	MAX_COMPTS_PER_BRD	24
+
 typedef struct lboard_s {
 	klconf_off_t	brd_next;	/* Next BOARD */
 	uint8_t		struct_type;	/* type, local or remote */
@@ -173,6 +174,9 @@ typedef struct lboard_s {
 	char		brd_name[32];
 } lboard_t;
 
+#define	LBOARD	0x01
+#define	RBOARD	0x02
+
 /* Definitions of board type and class */
 #define	IP27_BC_MASK	0xf0
 #define	IP27_BC_NODE	0x10
@@ -187,6 +191,11 @@ typedef struct lboard_s {
 #define	IP27_BT_CPU	0x01
 #define	IP27_BT_BASEIO	0x01
 #define	IP27_BT_MPLANE8	0x01
+
+#define	IP27_BRD_BASEIO		(IP27_BC_IO | IP27_BT_BASEIO)
+#define	IP27_BRD_IBRICK		(IP27_BC_BRICK | 0x01)
+#define	IP27_BRD_PBRICK		(IP27_BC_BRICK | 0x02)
+#define	IP27_BRD_XBRICK		(IP27_BC_BRICK | 0x03)
 
 
 /* Component info. Common info about a component. */
@@ -211,15 +220,11 @@ typedef struct klinfo_s {                  /* Generic info */
 	unsigned short  pad4;             /* klbri_t */
 } klinfo_t;
 
-#define KLCONFIG_INFO_ENABLED(_i)       ((_i)->flags & KLINFO_ENABLE)
+#define	KLINFO_ENABLED	0x01
+#define	KLINFO_FAILED	0x02
+
 /*
- * Component structures.
- * Following are the currently identified components:
- *  CPU, HUB, MEM_BANK,
- *  XBOW(consists of 16 WIDGETs, each of which can be HUB or GRAPHICS or BRIDGE)
- *  BRIDGE, IOC3, SuperIO, SCSI, FDDI
- *  ROUTER
- *  GRAPHICS
+ * Component structure types.
  */
 #define	KLSTRUCT_UNKNOWN	0
 #define	KLSTRUCT_CPU		1
@@ -241,11 +246,28 @@ typedef struct klinfo_s {                  /* Generic info */
 #define	KLSTRUCT_HUB_UART	17
 #define	KLSTRUCT_IOC3ENET	18
 #define	KLSTRUCT_IOC3UART	19
-#define	KLSTRUCT_UNUSED		20 /* XXX UNUSED */
+#define	KLSTRUCT_UNUSED		20
 #define	KLSTRUCT_IOC3PCKM	21
 #define	KLSTRUCT_RAD		22
 #define	KLSTRUCT_HUB_TTY	23
 #define	KLSTRUCT_IOC3_TTY	24
+/* new IP35 values */
+#define	KLSTRUCT_FIBERCHANNEL	25
+#define	KLSTRUCT_MOD_SERIAL_NUM	26
+#define	KLSTRUCT_IOC3MS		27
+#define	KLSTRUCT_TPU		28
+#define	KLSTRUCT_GSN_A		29
+#define	KLSTRUCT_GSN_B		30
+#define	KLSTRUCT_XTHD		31
+#define	KLSTRUCT_QLFIBRE	32
+#define	KLSTRUCT_FIREWIRE	33
+#define	KLSTRUCT_USB		34
+#define	KLSTRUCT_USBKBD		35
+#define	KLSTRUCT_USBMS		36
+#define	KLSTRUCT_SCSI2		37
+#define	KLSTRUCT_PEBRICK	38
+#define	KLSTRUCT_GIGENET	39
+#define	KLSTRUCT_IDE		40
 
 typedef struct klport_s {
 	int16_t		port_nasid;
@@ -382,8 +404,14 @@ typedef struct klttydev_s {
  *  Functions.
  */
 
-void	kl_scan_config(int);
 vaddr_t	kl_get_console_base(void);
+void	kl_init(void);
+void	kl_scan_config(int);
+void	kl_scan_done(void);
+int	kl_scan_node(int, uint, int (*)(lboard_t *, void *), void *);
+#define	KLBRD_ANY	0
+int	kl_scan_board(lboard_t *, uint, int (*)(klinfo_t *, void *), void *);
+#define	KLSTRUCT_ANY	((uint)~0)
 
 int	kl_n_mode;
 
