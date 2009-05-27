@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.17 2009/03/15 19:15:25 gilles Exp $	*/
+/*	$OpenBSD: store.c,v 1.18 2009/05/27 13:14:18 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -119,17 +119,10 @@ store_write_header(struct batch *batchp, struct message *messagep, FILE *fp,
 				return 0;
 		}
 	}
-	
-	if (fprintf(fp, "Received: from %s (%s [%s%s])\n"
-	    "\tby %s with ESMTP id %s\n"
-	    "\tfor <%s@%s>; %s\n%s",
-	    messagep->session_helo, messagep->session_hostname,
-	    messagep->session_ss.ss_family == PF_INET ? "" : "IPv6:", addrbuf,
-	    batchp->env->sc_hostname, messagep->message_id,
-	    messagep->sender.user, messagep->sender.domain, time_to_text(messagep->creation),
-	    finalize ? "\n" : "") == -1) {
+
+	if (finalize && fprintf(fp, "\n") == -1)
 		return 0;
-	}
+		
 	return 1;
 }
 

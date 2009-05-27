@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.49 2009/05/24 14:38:56 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.50 2009/05/27 13:14:18 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -913,15 +913,6 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 	}
 
 	case S_DATA: {
-		session_respond(sessionp, "Received: from %s (%s [%s])",
-		    batchp->session_helo, batchp->session_hostname,
-		    ss_to_text(&batchp->session_ss));
-
-		session_respond(sessionp, "\tby %s with ESMTP id %s;",
-		    batchp->env->sc_hostname, batchp->message_id);
-
-		session_respond(sessionp, "\t%s", time_to_text(batchp->creation));
-
 		if (sessionp->s_flags & F_SECURE) {
 			log_info("%s: version=%s cipher=%s bits=%d",
 			batchp->message_id,

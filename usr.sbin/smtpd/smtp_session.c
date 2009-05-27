@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.99 2009/05/27 13:11:39 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.100 2009/05/27 13:14:18 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -659,6 +659,12 @@ session_pickup(struct session *s, struct submit_status *ss)
 		s->s_state = S_DATACONTENT;
 		session_respond(s, "354 Enter mail, end with \".\" on a line by"
 		    " itself");
+		fprintf(s->datafp, "Received: from %s (%s [%s])\n",
+		    s->s_msg.session_helo, s->s_hostname, ss_to_text(&s->s_ss));
+		fprintf(s->datafp, "\tby %s with %sSMTP id %s;\n",
+		    s->s_env->sc_hostname, s->s_flags & F_EHLO ? "E" : "",
+		    s->s_msg.message_id);
+		fprintf(s->datafp, "\t%s\n", time_to_text(time(NULL)));
 		break;
 
 	case S_DONE:
