@@ -1,7 +1,9 @@
-# $OpenBSD: iso3166.tab,v 1.18 2007/12/29 13:41:05 millert Exp $
+# $OpenBSD: iso3166.tab,v 1.19 2009/05/27 13:07:46 millert Exp $
+# <pre>
+# @(#)iso3166.tab	8.6
+# This file is in the public domain, so clarified as of
+# 2009-05-17 by Arthur David Olson.
 # ISO 3166 alpha-2 country codes
-#
-# @(#)iso3166.tab	8.5
 #
 # From Paul Eggert (2006-09-27):
 #

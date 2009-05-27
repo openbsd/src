@@ -1,6 +1,8 @@
-# $OpenBSD: europe,v 1.33 2009/01/21 15:51:45 millert Exp $
-# @(#)europe	8.20
+# $OpenBSD: europe,v 1.34 2009/05/27 13:07:46 millert Exp $
 # <pre>
+# @(#)europe	8.21
+# This file is in the public domain, so clarified as of
+# 2009-05-17 by Arthur David Olson.
 
 # This data is by no means authoritative; if you think you know better,
 # go ahead and edit the file (and please send any changes to

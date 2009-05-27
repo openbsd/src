@@ -1,5 +1,8 @@
-# $OpenBSD: systemv,v 1.8 2006/10/05 18:09:03 millert Exp $
-# @(#)systemv	8.1
+# $OpenBSD: systemv,v 1.9 2009/05/27 13:07:46 millert Exp $
+# <pre>
+# @(#)systemv	8.2
+# This file is in the public domain, so clarified as of
+# 2009-05-17 by Arthur David Olson.
 
 # Old rules, should the need arise.
 # No attempt is made to handle Newfoundland, since it cannot be expressed

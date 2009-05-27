@@ -1,6 +1,8 @@
-# $OpenBSD: northamerica,v 1.34 2009/03/16 14:20:03 millert Exp $
-# @(#)northamerica	8.27
+# $OpenBSD: northamerica,v 1.35 2009/05/27 13:07:46 millert Exp $
 # <pre>
+# @(#)northamerica	8.28
+# This file is in the public domain, so clarified as of
+# 2009-05-17 by Arthur David Olson.
 
 # also includes Central America and the Caribbean
 
