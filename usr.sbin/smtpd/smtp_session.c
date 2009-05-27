@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.98 2009/05/27 13:09:07 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.99 2009/05/27 13:11:39 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -139,8 +139,13 @@ session_rfc4954_auth_handler(struct session *s, char *args)
 	char	*method;
 	char	*eom;
 
-	if (! ADVERTISE_AUTH(s))
-		return 0;
+	if (! ADVERTISE_AUTH(s)) {
+		if (s->s_flags & F_AUTHENTICATED) {
+			session_respond(s, "503 Already authenticated");
+			return 1;
+		} else
+			return 0;
+	}
 
 	if (s->s_state == S_GREETED) {
 		session_respond(s, "503 Polite people say HELO first");
@@ -315,7 +320,7 @@ session_rfc5321_helo_handler(struct session *s, char *args)
 	}
 
 	s->s_state = S_HELO;
-	s->s_flags &= F_SECURE;
+	s->s_flags &= F_SECURE|F_AUTHENTICATED;
 
 	session_respond(s, "250 %s Hello %s [%s], pleased to meet you",
 	    s->s_env->sc_hostname, args, ss_to_text(&s->s_ss));
@@ -338,7 +343,7 @@ session_rfc5321_ehlo_handler(struct session *s, char *args)
 	}
 
 	s->s_state = S_HELO;
-	s->s_flags &= F_SECURE;
+	s->s_flags &= F_SECURE|F_AUTHENTICATED;
 	s->s_flags |= F_EHLO;
 	s->s_flags |= F_8BITMIME;
 
