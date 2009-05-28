@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.555 2009/05/24 00:17:37 halex Exp $
+#	$OpenBSD: install.sub,v 1.556 2009/05/28 02:34:56 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -175,6 +175,14 @@ scan_disknames() {
 	IFS=","
 	bsort $(for _n in $(sysctl -n hw.disknames); do echo "$_n "; done | sed -ne "$1")
 	IFS=$_oifs
+}
+
+get_dkdevs () {
+	echo $(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
+}
+
+get_cddevs () {
+	echo $(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
 }
 
 get_ifdevs() {
@@ -1255,7 +1263,7 @@ install_mounted_fs() {
 }
 
 install_cdrom() {
-	get_drive "CD-ROM" "$CDDEVS" || return
+	get_drive "CD-ROM" "$(get_cddevs)" || return
 	mount_mnt2 $resp || return
 
 	install_mounted_fs
@@ -1264,7 +1272,7 @@ install_cdrom() {
 install_disk() {
 	ask_yn "Is the disk partition already mounted?"
 	if [[ $resp == n ]]; then
-		get_drive "disk" "$DKDEVS" || return
+		get_drive "disk" "$(get_dkdevs)" || return
 		mount_mnt2 $resp || return
 	fi
 
@@ -1417,7 +1425,7 @@ install_sets() {
 
 	echo
 
-	[[ -n $CDDEVS ]] && { _locs="cd $_locs" ; _d=cd ; }
+	[[ -n $(get_cddevs) ]] && { _locs="cd $_locs" ; _d=cd ; }
 	ifconfig netboot > /dev/null 2>&1 && _d=ftp
 	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
 	[[ -n $MTDEVS && -x /bin/mt ]] && _locs="$_locs tape"
@@ -1743,7 +1751,7 @@ finish_up() {
 	sh MAKEDEV all
 	# Make sure any devices we found during probe are created in the
 	# installed system.
-	for _dev in $DKDEVS $CDDEVS $MTDEVS; do
+	for _dev in $(get_dkdevs) $(get_cddevs) $MTDEVS ; do
 		sh MAKEDEV $_dev
 	done
 	)
@@ -1808,8 +1816,6 @@ CURRENT=$(scan_dmesg "/^OpenBSD $VNAME\([^ ]*\).*$/s//\1/p")
 [[ -n $CURRENT ]] && FTPSETDIR=snapshots/$ARCH
 
 # Scan /var/run/dmesg.boot for interesting devices.
-DKDEVS=$(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
-CDDEVS=$(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
 MTDEVS=$(scan_dmesg "${MDMTDEVS:-/^[cms]t[0-9][0-9]* /s/ .*//p}")
 IFDEVS=$(get_ifdevs)
 nifs=0
@@ -1888,10 +1894,9 @@ if [[ $MODE == install ]]; then
 fi
 
 # Get ROOTDISK, ROOTDEV and SWAPDEV.
-set -- $DKDEVS
-(( $# == 0 )) && { echo "No disks found." ; exit ; }
+[[ -n $(get_dkdevs) ]] || { echo "No disks found." ; exit ; }
 
-ask_which "disk" "is the root disk" "$DKDEVS"
+ask_which "disk" "is the root disk" "$(get_dkdevs)"
 [[ $resp == done ]] && exit
 makedev $resp || exit
 

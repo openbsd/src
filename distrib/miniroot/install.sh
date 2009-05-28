@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.189 2009/05/17 15:00:51 krw Exp $
+#	$OpenBSD: install.sh,v 1.190 2009/05/28 02:34:56 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -67,7 +67,7 @@ MODE=install
 cd /tmp
 if [[ ! -f /etc/fstab ]]; then
 	DISK=
-	_DKDEVS=$DKDEVS
+	_DKDEVS=$(get_dkdevs)
 
 	while :; do
 		_DKDEVS=$(rmel "$DISK" $_DKDEVS)
