@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.55 2009/05/27 09:50:31 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.56 2009/05/28 16:03:23 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -345,7 +345,7 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Get the offset of the PCI Express Capability Structure in PCI
-	 * Configuration Space (the vendor driver hard-codes it as E0h.)
+	 * Configuration Space.
 	 */
 	error = pci_get_capability(sc->sc_pct, sc->sc_pcitag,
 	    PCI_CAP_PCIEXPRESS, &sc->sc_cap_off, NULL);
@@ -358,6 +358,15 @@ iwn_attach(struct device *parent, struct device *self, void *aux)
 	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
 	reg &= ~0xff00;
 	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, reg);
+
+	/* Hardware bug workaround. */
+	reg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
+	if (reg & PCI_COMMAND_INTERRUPT_DISABLE) {
+		DPRINTF(("PCIe INTx Disable set\n"));
+		reg &= ~PCI_COMMAND_INTERRUPT_DISABLE;
+		pci_conf_write(sc->sc_pct, sc->sc_pcitag,
+		    PCI_COMMAND_STATUS_REG, reg);
+	}
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, IWN_PCI_BAR0);
 	error = pci_mapreg_map(pa, IWN_PCI_BAR0, memtype, 0, &sc->sc_st,
