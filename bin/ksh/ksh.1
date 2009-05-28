@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.128 2009/03/06 12:28:36 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.129 2009/05/28 06:09:06 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: March 6 2009 $
+.Dd $Mdocdate: May 28 2009 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -5151,16 +5151,16 @@ appended
 .Ql *
 if the word contains no file globbing characters) \- the big-word is replaced
 with the resulting words.
-If the current big-word is the first on the line (or
-follows one of the following characters:
+If the current big-word is the first on the line
+or follows one of the characters
 .Ql \&; ,
 .Ql | ,
 .Ql & ,
 .Ql ( ,
 or
-.Ql \&)
+.Ql \&) ,
 and does not contain a slash
-.Pq Sq /
+.Pq Sq / ,
 then command expansion is done; otherwise file name expansion is done.
 Command expansion will match the big-word against all aliases, functions, and
 built-in commands as well as any executable files found by searching the
