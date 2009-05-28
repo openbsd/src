@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.43 2009/04/27 17:48:25 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.44 2009/05/28 09:05:33 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -69,8 +69,6 @@ struct cpu_info {
 	struct simplelock ci_slock;
 	u_int ci_cpuid;
 	u_int ci_apicid;
-	u_long ci_spin_locks;
-	u_long ci_simple_locks;
 	u_int32_t ci_randseed;
 
 	u_int64_t ci_scratch;
@@ -78,11 +76,11 @@ struct cpu_info {
 	struct proc *ci_fpcurproc;
 	int ci_fpsaving;
 
-	volatile u_int32_t ci_tlb_ipi_mask;
-
 	struct pcb *ci_curpcb;
 	struct pcb *ci_idle_pcb;
 	int ci_idle_tss_sel;
+
+	struct pmap *ci_curpmap;
 
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 	u_int32_t	ci_ipending;
@@ -91,7 +89,6 @@ struct cpu_info {
 	u_int32_t	ci_imask[NIPL];
 	u_int32_t	ci_iunmask[NIPL];
 
-	paddr_t 	ci_idle_pcb_paddr;
 	u_int		ci_flags;
 	u_int32_t	ci_ipis;
 
@@ -109,11 +106,6 @@ struct cpu_info {
 	int		ci_want_resched;
 
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
-
-	struct timeval 	ci_cc_time;
-	int64_t		ci_cc_cc;
-	int64_t		ci_cc_ms_delta;
-	int64_t		ci_cc_denom;
 
 	char		*ci_gdt;
 

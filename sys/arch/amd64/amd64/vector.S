@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.18 2009/04/27 17:48:22 deraadt Exp $	*/
+/*	$OpenBSD: vector.S,v 1.19 2009/05/28 09:05:33 art Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -344,6 +344,23 @@ IDTVEC(ipi_invlrange)
 	decq	tlb_shoot_wait
 
 	popq	%rdx
+	popq	%rax
+	iretq
+
+IDTVEC(ipi_reloadcr3)
+	pushq	%rax
+
+	ioapic_asm_ack()
+
+	movq	CPUVAR(CURPCB), %rax
+	movq	PCB_PMAP(%rax), %rax
+	movq	%rax, CPUVAR(CURPMAP)
+	movq	PM_PDIRPA(%rax), %rax
+	movq	%rax, %cr3
+
+	lock
+	decq	tlb_shoot_wait
+
 	popq	%rax
 	iretq
 
