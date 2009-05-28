@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.35 2008/11/25 18:49:49 damien Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.36 2009/05/28 15:41:48 damien Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ typedef u_int16_t pci_product_id_t;
 #define	PCI_COMMAND_STEPPING_ENABLE		0x00000080
 #define	PCI_COMMAND_SERR_ENABLE			0x00000100
 #define	PCI_COMMAND_BACKTOBACK_ENABLE		0x00000200
+#define PCI_COMMAND_INTERRUPT_DISABLE		0x00000400
 
 #define	PCI_STATUS_CAPLIST_SUPPORT		0x00100000
 #define	PCI_STATUS_66MHZ_SUPPORT		0x00200000
