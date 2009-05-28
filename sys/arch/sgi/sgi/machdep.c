@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.69 2009/05/28 18:02:43 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.70 2009/05/28 18:03:55 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -137,7 +137,10 @@ caddr_t	allocsys(caddr_t);
 static void dobootopts(int, void *);
 static int atoi(const char *, int, const char **);
 
+void	arcbios_halt(int);
 void	build_trampoline(vaddr_t, vaddr_t);
+
+void	(*md_halt)(int) = arcbios_halt;
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -951,24 +954,31 @@ haltsys:
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {
-		if (howto & RB_POWERDOWN) {
+		if (howto & RB_POWERDOWN)
 			printf("System Power Down.\n");
-			delay(1000000);
-			Bios_PowerDown();
-		} else {
+		else
 			printf("System Halt.\n");
-			delay(1000000);
-			Bios_EnterInteractiveMode();
-		}
-		printf("Didn't want to die!!! Reset manually.\n");
-	} else {
+	} else
 		printf("System restart.\n");
-		delay(1000000);
-		Bios_Reboot();
-		printf("Restart failed!!! Reset manually.\n");
-	}
+
+	delay(1000000);
+	md_halt(howto);
+
+	printf("Failed!!! Please reset manually.\n");
 	for (;;) ;
 	/*NOTREACHED*/
+}
+
+void
+arcbios_halt(int howto)
+{
+	if (howto & RB_HALT) {
+		if (howto & RB_POWERDOWN)
+			Bios_PowerDown();
+		else
+			Bios_EnterInteractiveMode();
+	} else
+		Bios_Reboot();
 }
 
 u_long	dumpmag = 0x8fca0101;	/* Magic number for savecore. */

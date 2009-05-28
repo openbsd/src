@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.9 2009/05/28 18:02:43 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.10 2009/05/28 18:03:55 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -45,9 +45,13 @@
 
 #include <dev/ic/comvar.h>
 
+extern void (*md_halt)(int);
+
 paddr_t	ip27_widget_short(int16_t, u_int);
 paddr_t	ip27_widget_long(int16_t, u_int);
 int	ip27_widget_id(int16_t, u_int, uint32_t *);
+
+void	ip27_halt(int);
 
 static paddr_t io_base;
 static int ip35 = 0;
@@ -75,6 +79,8 @@ ip27_setup()
 	xbow_widget_short = ip27_widget_short;
 	xbow_widget_long = ip27_widget_long;
 	xbow_widget_id = ip27_widget_id;
+
+	md_halt = ip27_halt;
 
 	kl_init();
 	if (kl_n_mode != 0)
@@ -193,6 +199,38 @@ ip27_widget_id(int16_t nasid, u_int widget, uint32_t *wid)
 		*wid = id;
 
 	return 0;
+}
+
+/*
+ * Reboot code
+ */
+
+void
+ip27_halt(int howto)
+{
+	/*
+	 * Even if ARCBios TLB and exception vectors are restored,
+	 * returning to ARCBios doesn't work.
+	 *
+	 * So, instead, send a reset through the network interface
+	 * of the Hub space.  Unfortunately there is no known way
+	 * to tell the PROM which action we want it to take afterwards.
+	 */
+
+	if (howto & RB_HALT) {
+		if (howto & RB_POWERDOWN)
+			return;	/* caller will spin */
+	}
+
+	if (ip35) {
+		IP27_LHUB_S(HUB_NI_IP35 + HUB_NI_RESET_ENABLE, RESET_ENABLE);
+		IP27_LHUB_S(HUB_NI_IP35 + HUB_NI_RESET,
+		    RESET_LOCAL | RESET_ACTION);
+	} else {
+		IP27_LHUB_S(HUB_NI_IP27 + HUB_NI_RESET_ENABLE, RESET_ENABLE);
+		IP27_LHUB_S(HUB_NI_IP27 + HUB_NI_RESET,
+		    RESET_LOCAL | RESET_ACTION);
+	}
 }
 
 /*
