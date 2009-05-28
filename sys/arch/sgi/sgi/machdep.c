@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.68 2009/05/25 17:10:40 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.69 2009/05/28 18:02:43 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -485,17 +485,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	tlb_set_wired(0);
 	tlb_flush(sys_config.cpu[0].tlbsize);
 	tlb_set_wired(sys_config.cpu[0].tlbwired);
-
-#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
-	/*
-	 * If an IP27 or IP35 system set up Node 0's HUB.
-	 */
-	if (sys_config.system_type == SGI_O200 ||
-	    sys_config.system_type == SGI_O300) {
-		IP27_LHUB_S(PI_REGION_PRESENT, 1);
-		IP27_LHUB_S(PI_CALIAS_SIZE, PI_CALIAS_SIZE_0);
-	}
-#endif
 
 	/*
 	 * Get a console, very early but after initial mapping setup.

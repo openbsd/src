@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.8 2009/05/27 19:00:19 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.9 2009/05/28 18:02:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -24,9 +24,11 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/reboot.h>
 #include <sys/tty.h>
 
 #include <mips64/arcbios.h>
+#include <mips64/archtype.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -36,11 +38,10 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <sgi/sgi/ip27.h>
 #include <sgi/xbow/hub.h>
 #include <sgi/xbow/xbow.h>
 #include <sgi/xbow/xbridgereg.h>
-
-#include <sgi/pci/iocreg.h>
 
 #include <dev/ic/comvar.h>
 
@@ -49,6 +50,7 @@ paddr_t	ip27_widget_long(int16_t, u_int);
 int	ip27_widget_id(int16_t, u_int, uint32_t *);
 
 static paddr_t io_base;
+static int ip35 = 0;
 
 int	ip27_hub_intr_register(int, int, int *);
 int	ip27_hub_intr_establish(int (*)(void *), void *, int, int,
@@ -58,11 +60,17 @@ intrmask_t ip27_hub_intr_handler(intrmask_t, struct trap_frame *);
 void	ip27_hub_intr_makemasks(void);
 void	ip27_hub_do_pending_int(int);
 
+void	ip27_nmi(void *);
+
 void
 ip27_setup()
 {
+	kl_nmi_t *nmi;
+
 	uncached_base = PHYS_TO_XKPHYS_UNCACHED(0, SP_NC);
 	io_base = PHYS_TO_XKPHYS_UNCACHED(0, SP_IO);
+
+	ip35 = sys_config.system_type == SGI_O300;
 
 	xbow_widget_short = ip27_widget_short;
 	xbow_widget_long = ip27_widget_long;
@@ -117,6 +125,21 @@ ip27_setup()
 	(void)IP27_LHUB_L(HUB_IR0);
 	(void)IP27_LHUB_L(HUB_IR1);
 	/* XXX do the other two cpus on IP35 */
+
+	/*
+	 * Setup NMI handler.
+	 */
+	nmi = IP27_KLNMI_HDR(0);
+	nmi->magic = NMI_MAGIC;
+	nmi->cb = (vaddr_t)ip27_nmi;
+	nmi->cb_complement = ~nmi->cb;
+	nmi->cb_arg = 0;
+
+	/*
+	 * Set up Node 0's HUB.
+	 */
+	IP27_LHUB_S(PI_REGION_PRESENT, 1);
+	IP27_LHUB_S(PI_CALIAS_SIZE, PI_CALIAS_SIZE_0);
 }
 
 /*
@@ -429,4 +452,48 @@ hw_setintrmask(intrmask_t m)
 {
 	IP27_LHUB_S(HUB_CPU0_IMR0, ip27_hub_intrmask & ~((uint64_t)m));
 	(void)IP27_LHUB_L(HUB_IR0);
+}
+
+void
+ip27_nmi(void *arg)
+{
+	vaddr_t regs_offs;
+	register_t *regs, epc;
+	struct trap_frame nmi_frame;
+	extern int kdb_trap(int, struct trap_frame *);
+
+	/*
+	 * Build a ddb frame from the registers saved in the NMI KREGS
+	 * area.
+	 */
+
+	if (ip35)
+		regs_offs = IP35_NMI_KREGS_BASE;	/* XXX assumes cpu0 */
+	else
+		regs_offs = IP27_NMI_KREGS_BASE;	/* XXX assumes cpu0 */
+	regs = IP27_UNCAC_ADDR(register_t *, 0, regs_offs);
+
+	memset(&nmi_frame, 0xff, sizeof nmi_frame);
+	
+	/* general registers */
+	memcpy(&nmi_frame.zero, regs, 32 * sizeof(register_t));
+	regs += 32;
+	nmi_frame.sr = *regs++;		/* COP_0_STATUS_REG */
+	nmi_frame.cause = *regs++;	/* COP_0_CAUSE_REG */
+	nmi_frame.pc = *regs++;
+	nmi_frame.badvaddr = *regs++;	/* COP_0_BAD_VADDR */
+	epc = *regs++;			/* COP_0_EXC_PC */
+	regs++;				/* COP_0_CACHE_ERR */
+	regs++;				/* NMI COP_0_STATUS_REG */
+
+	setsr(getsr() & ~SR_BOOT_EXC_VEC);
+#ifdef DDB
+	printf("NMI\n");
+	(void)kdb_trap(-1, &nmi_frame);
+#else
+	printf("NMI, PC = %p RA = %p SR = %08x EPC = %p\n",
+	    nmi_frame.pc, nmi_frame.ra, nmi_frame.sr, epc);
+#endif
+	printf("Resetting system...\n");
+	boot(RB_USERREQ);
 }

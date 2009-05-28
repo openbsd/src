@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.4 2009/05/27 19:00:15 miod Exp $ */
+/*	$OpenBSD: mnode.h,v 1.5 2009/05/28 18:02:41 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -344,6 +344,21 @@ typedef struct klttydev_s {
 	klinfo_t        ttydev_info;
 	struct terminal_data *ttydev_cfg;	/* driver fills up this */
 } klttydev_t;
+
+/*  KLNMI header addressed by IP27_KLNMI_HDR(node) */
+#define IP27_KLNMI_HDR(n) \
+	IP27_UNCAC_ADDR(kl_nmi_t *, n, IP27_KLD_NMI(n)->offset)
+
+#define	NMI_MAGIC	0x0048414d4d455201	/* \x00HAMMER\x01 */
+
+typedef struct kl_nmi {
+	uint64_t	magic;			/* NMI_MAGIC */
+	uint64_t	flags;
+	uint64_t	cb;			/* callback function */
+	uint64_t	cb_complement;		/* two's complement of above */
+	uint64_t	cb_arg;			/* callback arg */
+	uint64_t	master;			/* nonzero if master node */
+} kl_nmi_t;
 
 
 /*                            H U B                    */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hub.h,v 1.1 2009/04/15 18:45:41 miod Exp $	*/
+/*	$OpenBSD: hub.h,v 1.2 2009/05/28 18:02:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -24,6 +24,10 @@
  * HUB space (very incomplete)
  */
 
+/*
+ * HUB PI
+ */
+
 #define	HUB_CPU_NUMBER			0x00000020
 
 #define	HUB_CPU0_PRESENT		0x00000040
@@ -40,3 +44,19 @@
 #define	HUB_CPU0_IMR1			0x000000b0
 #define	HUB_CPU1_IMR0			0x000000b8
 #define	HUB_CPU1_IMR1			0x000000c0
+
+
+/*
+ * HUB NI
+ */
+
+#define	HUB_NI_IP27			0x00600000
+#define	HUB_NI_IP35			0x00680000
+
+#define	HUB_NI_STATUS			0x00000000
+#define	HUB_NI_RESET			0x00000008
+#define	RESET_ACTION				0x01
+#define	RESET_PORT				0x02
+#define	RESET_LOCAL				0x04
+#define	HUB_NI_RESET_ENABLE		0x00000010
+#define	RESET_ENABLE				0x01
