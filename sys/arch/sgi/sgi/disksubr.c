@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.12 2009/05/13 01:31:58 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.13 2009/05/28 17:05:50 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -172,13 +172,17 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 
 	for (i = 0; i < 16; i++) {
 		int bsd = maptab[i].m;
+		int type = maptab[i].b;
+
+		if (spoofonly && type != FS_UNUSED && type != FS_OTHER)
+			continue;
 
 		DL_SETPOFFSET(&lp->d_partitions[bsd],
 		    dlp->partitions[i].first);
 		DL_SETPSIZE(&lp->d_partitions[bsd],
 		    dlp->partitions[i].blocks);
-		lp->d_partitions[bsd].p_fstype = maptab[i].b;
-		if (lp->d_partitions[bsd].p_fstype == FS_BSDFFS) {
+		lp->d_partitions[bsd].p_fstype = type;
+		if (type == FS_BSDFFS) {
 			lp->d_partitions[bsd].p_fragblock =
 			    DISKLABELV1_FFS_FRAGBLOCK(1024, 8);
 			lp->d_partitions[bsd].p_cpg = 16;
