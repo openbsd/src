@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.118 2009/05/27 13:11:39 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.119 2009/05/28 08:50:08 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -633,6 +633,7 @@ struct session {
 	struct message			 s_msg;
 	short				 s_nresp[STATE_COUNT];
 	size_t				 rcptcount;
+	long				 s_datalen;
 
 	struct auth			 s_auth;
 

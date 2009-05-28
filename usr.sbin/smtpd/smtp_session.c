@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.101 2009/05/28 08:48:46 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.102 2009/05/28 08:50:08 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -679,10 +679,12 @@ session_pickup(struct session *s, struct submit_status *ss)
 	case S_DONE:
 		session_respond(s, "250 %s Message accepted for delivery",
 		    s->s_msg.message_id);
-		log_info("%s: from=<%s@%s>, nrcpts=%zd, proto=%s, relay=%s [%s]",
+		log_info("%s: from=<%s@%s>, size=%ld, nrcpts=%zd, proto=%s, "
+		    "relay=%s [%s]",
 		    s->s_msg.message_id,
 		    s->s_msg.sender.user,
 		    s->s_msg.sender.domain,
+		    s->s_datalen,
 		    s->rcptcount,
 		    s->s_flags & F_EHLO ? "ESMTP" : "SMTP",
 		    s->s_hostname,
@@ -793,6 +795,7 @@ session_read_data(struct session *s, char *line, size_t nread)
 	size_t i;
 
 	if (strcmp(line, ".") == 0) {
+		s->s_datalen = ftell(s->datafp);
 		if (! safe_fclose(s->datafp))
 			s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
 		s->datafp = NULL;
