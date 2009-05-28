@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.23 2009/05/27 19:04:47 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.24 2009/05/28 19:20:06 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -699,6 +699,7 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 		}
 
 		sc->sc_intrbit[intrbit] = intrsrc;
+		sc->sc_ier_ignore |= 1 << intrbit;
 	}
 
 	xi->xi_bridge = sc;
