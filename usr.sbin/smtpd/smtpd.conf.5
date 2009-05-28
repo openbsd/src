@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.10 2009/05/10 11:29:40 jacekm Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.11 2009/05/28 08:43:45 jacekm Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 10 2009 $
+.Dd $Mdocdate: May 28 2009 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -112,9 +112,10 @@ Creation of certificates is documented in
 If the
 .Ic enable auth
 parameter is used,
-sender that passed SMTPAUTH is allowed to relay mail using
-standard DNS-based routing,
-unless a filter rule was matched that dictated different action.
+any remote sender that passed SMTPAUTH is treated as if
+it was the server's local user that was sending the mail.
+This means that filter rules using "from local" source specification
+will be matched.
 .El
 .Sh MAPS
 Maps provide generic interface for associating textual key to a value.
