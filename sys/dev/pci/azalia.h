@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.45 2009/05/12 09:32:28 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.46 2009/05/29 02:38:01 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -531,6 +531,7 @@ typedef struct {
 	int enable;
 	uint32_t widgetcap;
 	int type;		/* = bit20-24 of widgetcap */
+	nid_t parent;
 	int mixer_class;
 	int nconnections;
 	nid_t *connections;

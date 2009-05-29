@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.131 2009/05/12 09:32:28 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.132 2009/05/29 02:38:01 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2421,6 +2421,9 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 	}
 
 	this->enable = 1;
+	this->mixer_class = -1;
+	this->parent = codec->audiofunc;
+
 	switch (this->type) {
 	case COP_AWTYPE_AUDIO_OUTPUT:
 		/* FALLTHROUGH */
@@ -2536,7 +2539,6 @@ azalia_widget_label_widgets(codec_t *codec)
 
 	FOR_EACH_WIDGET(codec, i) {
 		w = &codec->w[i];
-		w->mixer_class = -1;
 		/* default for disabled/unused widgets */
 		snprintf(w->name, sizeof(w->name), "u-wid%2.2x", w->nid);
 		if (w->enable == 0)
@@ -2671,6 +2673,7 @@ azalia_widget_label_widgets(codec_t *codec)
 			    "%s", codec->w[j].name);
 			if (codec->w[j].mixer_class == AZ_CLASS_RECORD)
 				codec->w[i].mixer_class = AZ_CLASS_RECORD;
+			codec->w[i].parent = j;
 		}
 	}
 
