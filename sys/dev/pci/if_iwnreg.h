@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.25 2009/05/27 09:50:31 damien Exp $	*/
+/*	$OpenBSD: if_iwnreg.h,v 1.26 2009/05/29 08:25:45 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -25,7 +25,11 @@
 
 #define IWN4965_NTXQUEUES	16
 #define IWN5000_NTXQUEUES	20
-#define IWN_SRVC_CHNL		9
+
+#define IWN4965_NDMACHNLS	7
+#define IWN5000_NDMACHNLS	8
+
+#define IWN_SRVC_DMACHNL	9
 
 /* Maximum number of DMA segments for TX. */
 #define IWN_MAX_SCATTER	20

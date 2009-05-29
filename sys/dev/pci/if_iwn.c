@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.56 2009/05/28 16:03:23 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.57 2009/05/29 08:25:45 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -273,6 +273,7 @@ static const struct iwn_hal iwn4965_hal = {
 #endif
 	&iwn4965_sensitivity_limits,
 	IWN4965_NTXQUEUES,
+	IWN4965_NDMACHNLS,
 	IWN4965_ID_BROADCAST,
 	IWN4965_RXONSZ,
 	IWN4965_SCHEDSZ,
@@ -302,6 +303,7 @@ static const struct iwn_hal iwn5000_hal = {
 #endif
 	&iwn5000_sensitivity_limits,
 	IWN5000_NTXQUEUES,
+	IWN5000_NDMACHNLS,
 	IWN5000_ID_BROADCAST,
 	IWN5000_RXONSZ,
 	IWN5000_SCHEDSZ,
@@ -1149,20 +1151,8 @@ fail:	iwn_free_tx_ring(sc, ring);
 void
 iwn_reset_tx_ring(struct iwn_softc *sc, struct iwn_tx_ring *ring)
 {
-	uint32_t tmp;
-	int i, ntries;
+	int i;
 
-	if (iwn_nic_lock(sc) == 0) {
-		IWN_WRITE(sc, IWN_FH_TX_CONFIG(ring->qid), 0);
-		for (ntries = 0; ntries < 200; ntries++) {
-			tmp = IWN_READ(sc, IWN_FH_TX_STATUS);
-			if ((tmp & IWN_FH_TX_STATUS_IDLE(ring->qid)) ==
-			    IWN_FH_TX_STATUS_IDLE(ring->qid))
-				break;
-			DELAY(10);
-		}
-		iwn_nic_unlock(sc);
-	}
 	for (i = 0; i < IWN_TX_RING_COUNT; i++) {
 		struct iwn_tx_data *data = &ring->data[i];
 
@@ -4793,21 +4783,21 @@ iwn5000_load_firmware_section(struct iwn_softc *sc, uint32_t dst,
 	if ((error = iwn_nic_lock(sc)) != 0)
 		return error;
 
-	IWN_WRITE(sc, IWN_FH_TX_CONFIG(IWN_SRVC_CHNL),
+	IWN_WRITE(sc, IWN_FH_TX_CONFIG(IWN_SRVC_DMACHNL),
 	    IWN_FH_TX_CONFIG_DMA_PAUSE);
 
-	IWN_WRITE(sc, IWN_FH_SRAM_ADDR(IWN_SRVC_CHNL), dst);
-	IWN_WRITE(sc, IWN_FH_TFBD_CTRL0(IWN_SRVC_CHNL),
+	IWN_WRITE(sc, IWN_FH_SRAM_ADDR(IWN_SRVC_DMACHNL), dst);
+	IWN_WRITE(sc, IWN_FH_TFBD_CTRL0(IWN_SRVC_DMACHNL),
 	    IWN_LOADDR(dma->paddr));
-	IWN_WRITE(sc, IWN_FH_TFBD_CTRL1(IWN_SRVC_CHNL),
+	IWN_WRITE(sc, IWN_FH_TFBD_CTRL1(IWN_SRVC_DMACHNL),
 	    IWN_HIADDR(dma->paddr) << 28 | size);
-	IWN_WRITE(sc, IWN_FH_TXBUF_STATUS(IWN_SRVC_CHNL),
+	IWN_WRITE(sc, IWN_FH_TXBUF_STATUS(IWN_SRVC_DMACHNL),
 	    IWN_FH_TXBUF_STATUS_TBNUM(1) |
 	    IWN_FH_TXBUF_STATUS_TBIDX(1) |
 	    IWN_FH_TXBUF_STATUS_TFBD_VALID);
 
 	/* Kick Flow Handler to start DMA transfer. */
-	IWN_WRITE(sc, IWN_FH_TX_CONFIG(IWN_SRVC_CHNL),
+	IWN_WRITE(sc, IWN_FH_TX_CONFIG(IWN_SRVC_DMACHNL),
 	    IWN_FH_TX_CONFIG_DMA_ENA | IWN_FH_TX_CONFIG_CIRQ_HOST_ENDTFD);
 
 	iwn_nic_unlock(sc);
@@ -5101,7 +5091,7 @@ int
 iwn_hw_init(struct iwn_softc *sc)
 {
 	const struct iwn_hal *hal = sc->sc_hal;
-	int error, qid;
+	int error, chnl, qid;
 
 	/* Clear pending interrupts. */
 	IWN_WRITE(sc, IWN_INT, 0xffffffff);
@@ -5158,12 +5148,15 @@ iwn_hw_init(struct iwn_softc *sc)
 		/* Set physical address of TX ring (256-byte aligned.) */
 		IWN_WRITE(sc, IWN_FH_CBBC_QUEUE(qid),
 		    txq->desc_dma.paddr >> 8);
-		/* Enable TX for this ring. */
-		IWN_WRITE(sc, IWN_FH_TX_CONFIG(qid),
+	}
+	iwn_nic_unlock(sc);
+
+	/* Enable DMA channels. */
+	for (chnl = 0; chnl < hal->ndmachnls; chnl++) {
+		IWN_WRITE(sc, IWN_FH_TX_CONFIG(chnl),
 		    IWN_FH_TX_CONFIG_DMA_ENA |
 		    IWN_FH_TX_CONFIG_DMA_CREDIT_ENA);
 	}
-	iwn_nic_unlock(sc);
 
 	/* Clear "radio off" and "commands blocked" bits. */
 	IWN_WRITE(sc, IWN_UCODE_GP1_CLR, IWN_UCODE_GP1_RFKILL);
@@ -5198,7 +5191,8 @@ void
 iwn_hw_stop(struct iwn_softc *sc)
 {
 	const struct iwn_hal *hal = sc->sc_hal;
-	int qid;
+	int chnl, qid, ntries;
+	uint32_t tmp;
 
 	IWN_WRITE(sc, IWN_RESET, IWN_RESET_NEVO);
 
@@ -5213,12 +5207,27 @@ iwn_hw_stop(struct iwn_softc *sc)
 	/* Stop TX scheduler. */
 	iwn_prph_write(sc, hal->sched_txfact_addr, 0);
 
-	/* Stop all TX rings. */
-	for (qid = 0; qid < hal->ntxqs; qid++)
-		iwn_reset_tx_ring(sc, &sc->txq[qid]);
+	/* Stop all DMA channels. */
+	if (iwn_nic_lock(sc) == 0) {
+		for (chnl = 0; chnl < hal->ndmachnls; chnl++) {
+			IWN_WRITE(sc, IWN_FH_TX_CONFIG(chnl), 0);
+			for (ntries = 0; ntries < 200; ntries++) {
+				tmp = IWN_READ(sc, IWN_FH_TX_STATUS);
+				if ((tmp & IWN_FH_TX_STATUS_IDLE(chnl)) ==
+				    IWN_FH_TX_STATUS_IDLE(chnl))
+					break;
+				DELAY(10);
+			}
+		}
+		iwn_nic_unlock(sc);
+	}
 
 	/* Stop RX ring. */
 	iwn_reset_rx_ring(sc, &sc->rxq);
+
+	/* Reset all TX rings. */
+	for (qid = 0; qid < hal->ntxqs; qid++)
+		iwn_reset_tx_ring(sc, &sc->txq[qid]);
 
 	if (iwn_nic_lock(sc) == 0) {
 		iwn_prph_write(sc, IWN_APMG_CLK_DIS, IWN_APMG_CLK_DMA_RQT);

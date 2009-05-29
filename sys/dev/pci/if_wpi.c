@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.86 2009/05/12 19:10:57 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.87 2009/05/29 08:25:45 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -785,20 +785,8 @@ fail:	wpi_free_tx_ring(sc, ring);
 void
 wpi_reset_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring)
 {
-	uint32_t tmp;
-	int i, ntries;
+	int i;
 
-	if (wpi_nic_lock(sc) == 0) {
-		WPI_WRITE(sc, WPI_FH_TX_CONFIG(ring->qid), 0);
-		for (ntries = 0; ntries < 100; ntries++) {
-			tmp = WPI_READ(sc, WPI_FH_TX_STATUS);
-			if ((tmp & WPI_FH_TX_STATUS_IDLE(ring->qid)) ==
-			    WPI_FH_TX_STATUS_IDLE(ring->qid))
-				break;
-			DELAY(10);
-		}
-		wpi_nic_unlock(sc);
-	}
 	for (i = 0; i < WPI_TX_RING_COUNT; i++) {
 		struct wpi_tx_data *data = &ring->data[i];
 
@@ -3120,7 +3108,7 @@ wpi_nic_config(struct wpi_softc *sc)
 int
 wpi_hw_init(struct wpi_softc *sc)
 {
-	int qid, ntries, error;
+	int chnl, ntries, error;
 
 	/* Clear pending interrupts. */
 	WPI_WRITE(sc, WPI_INT, 0xffffffff);
@@ -3188,11 +3176,11 @@ wpi_hw_init(struct wpi_softc *sc)
 	WPI_WRITE(sc, WPI_FH_TX_BASE, sc->shared_dma.paddr);
 	WPI_WRITE(sc, WPI_FH_MSG_CONFIG, 0xffff05a5);
 
-	for (qid = 0; qid < 6; qid++) {
-		WPI_WRITE(sc, WPI_FH_CBBC_CTRL(qid), 0);
-		WPI_WRITE(sc, WPI_FH_CBBC_BASE(qid), 0);
-		/* Enable TX for this ring. */
-		WPI_WRITE(sc, WPI_FH_TX_CONFIG(qid), 0x80200008);
+	/* Enable all DMA channels. */
+	for (chnl = 0; chnl < WPI_NDMACHNLS; chnl++) {
+		WPI_WRITE(sc, WPI_FH_CBBC_CTRL(chnl), 0);
+		WPI_WRITE(sc, WPI_FH_CBBC_BASE(chnl), 0);
+		WPI_WRITE(sc, WPI_FH_TX_CONFIG(chnl), 0x80200008);
 	}
 	wpi_nic_unlock(sc);
 	(void)WPI_READ(sc, WPI_FH_TX_BASE);	/* barrier */
@@ -3227,7 +3215,8 @@ wpi_hw_init(struct wpi_softc *sc)
 void
 wpi_hw_stop(struct wpi_softc *sc)
 {
-	int qid;
+	int chnl, qid, ntries;
+	uint32_t tmp;
 
 	WPI_WRITE(sc, WPI_RESET, WPI_RESET_NEVO);
 
@@ -3239,18 +3228,30 @@ wpi_hw_stop(struct wpi_softc *sc)
 	/* Make sure we no longer hold the NIC lock. */
 	wpi_nic_unlock(sc);
 
-	/* Stop TX scheduler. */
 	if (wpi_nic_lock(sc) == 0) {
+		/* Stop TX scheduler. */
 		wpi_prph_write(sc, WPI_ALM_SCHED_MODE, 0);
+
+		/* Stop all DMA channels. */
+		for (chnl = 0; chnl < WPI_NDMACHNLS; chnl++) {
+			WPI_WRITE(sc, WPI_FH_TX_CONFIG(chnl), 0);
+			for (ntries = 0; ntries < 100; ntries++) {
+				tmp = WPI_READ(sc, WPI_FH_TX_STATUS);
+				if ((tmp & WPI_FH_TX_STATUS_IDLE(chnl)) ==
+				    WPI_FH_TX_STATUS_IDLE(chnl))
+					break;
+				DELAY(10);
+			}
+		}
 		wpi_nic_unlock(sc);
 	}
 
-	/* Stop all TX rings. */
-	for (qid = 0; qid < WPI_NTXQUEUES; qid++)
-		wpi_reset_tx_ring(sc, &sc->txq[qid]);
-
 	/* Stop RX ring. */
 	wpi_reset_rx_ring(sc, &sc->rxq);
+
+	/* Reset all TX rings. */
+	for (qid = 0; qid < WPI_NTXQUEUES; qid++)
+		wpi_reset_tx_ring(sc, &sc->txq[qid]);
 
 	if (wpi_nic_lock(sc) == 0) {
 		wpi_prph_write(sc, WPI_APMG_CLK_DIS, WPI_APMG_CLK_DMA_CLK_RQT);
