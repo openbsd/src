@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.212 2009/05/17 02:49:45 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.213 2009/05/29 01:49:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.212 2009/05/17 02:49:45 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.213 2009/05/29 01:49:56 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -340,7 +340,7 @@ editor(struct disklabel *lp, int f)
 		case 'q':
 			if (donothing) {
 				puts("In no change mode, not writing label.");
-				return(1);
+				return(0);
 			}
 			/* Save mountpoint info if there is any. */
 			mpsave(&label);
@@ -355,7 +355,7 @@ editor(struct disklabel *lp, int f)
 			if (!dflag && !aflag &&
 			    memcmp(lp, &label, sizeof(label)) == 0) {
 				puts("No label changes.");
-				return(1);
+				return(0);
 			}
 			do {
 				arg = getstring("Write new label?",
@@ -454,7 +454,7 @@ editor(struct disklabel *lp, int f)
 			break;
 
 		case 'x':
-			return(1);
+			return(0);
 			break;
 
 		case 'z':
