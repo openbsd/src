@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.556 2009/05/28 02:34:56 krw Exp $
+#	$OpenBSD: install.sub,v 1.557 2009/05/29 00:46:41 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1656,6 +1656,7 @@ apply()
 			sed -e "s/^servers /#&/;/#server /a\\
 server $1
 " /mnt/etc/ntpd.conf >/tmp/ntpd.conf
+			cp /tmp/ntpd.conf /mnt/etc/ntpd.conf
 		fi
 	fi
 
