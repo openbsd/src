@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.125 2009/05/25 05:51:19 robert Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.126 2009/05/29 05:04:45 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -2050,6 +2050,15 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 				w = &this->w[this->playvols.slaves[i]];
 				if (!(COP_AMPCAP_NUMSTEPS(w->outamp_cap)))
 					continue;
+
+				/* don't change volume if muted */
+				if (w->outamp_cap & COP_AMPCAP_MUTE) {
+					mc2.type = AUDIO_MIXER_ENUM;
+					azalia_generic_mixer_get(this, w->nid,
+					    MI_TARGET_OUTAMP, &mc2);
+					if (mc2.un.ord)
+						continue;
+				}
 				mc2.type = AUDIO_MIXER_VALUE;
 				mc2.un.value.num_channels = WIDGET_CHANNELS(w);
 				mc2.un.value.level[0] = this->playvols.vol_l;
