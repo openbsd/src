@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.132 2009/05/29 02:38:01 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.133 2009/05/29 02:49:30 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1911,7 +1911,9 @@ azalia_codec_init_volgroups(codec_t *this)
 	this->playvols.cur = 0;
 	for (i = 0; i < this->playvols.nslaves; i++) {
 		w = &this->w[this->playvols.slaves[i]];
-		cap = w->outamp_cap;
+		if (w->nid == this->input_mixer ||
+		    w->parent == this->input_mixer)
+			continue;
 		j = 0;
 		/* azalia_codec_find_defdac only goes 10 connections deep.
 		 * Start the connection depth at 7 so it doesn't go more
@@ -1926,6 +1928,7 @@ azalia_codec_init_volgroups(codec_t *this)
 		if (dac != this->dacs.groups[this->dacs.cur].conv[0] &&
 		    dac != this->spkr_dac)
 			continue;
+		cap = w->outamp_cap;
 		if ((cap & COP_AMPCAP_MUTE) && COP_AMPCAP_NUMSTEPS(cap)) {
 			if (w->type == COP_AWTYPE_BEEP_GENERATOR) {
 				continue;
@@ -2641,9 +2644,10 @@ azalia_widget_label_widgets(codec_t *codec)
 		j = azalia_widget_sole_conn(codec, i);
 		if (j == -1) {
 			/* Special case.  A selector with outamp capabilities
-			 * and is connected to a single widget that has no
-			 * inamp capabilities.  This widget serves only to act
-			 * as the input amp for the widget it is connected to.
+			 * and is connected to a single widget that has either
+			 * no input or no output capabilities.  This widget
+			 * serves as the input or output amp for the widget
+			 * it is connected to.
 			 */
 			if (codec->w[i].type == COP_AWTYPE_AUDIO_SELECTOR &&
 			    (codec->w[i].widgetcap & COP_AWCAP_OUTAMP) &&
@@ -2654,6 +2658,9 @@ azalia_widget_label_widgets(codec_t *codec)
 				if (!(codec->w[j].widgetcap & COP_AWCAP_INAMP))
 					codec->w[i].mixer_class =
 					    AZ_CLASS_INPUT;
+				else if (!(codec->w[j].widgetcap & COP_AWCAP_OUTAMP))
+					codec->w[i].mixer_class =
+					    AZ_CLASS_OUTPUT;
 				else
 					continue;
 			}
