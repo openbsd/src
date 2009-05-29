@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.126 2009/05/29 05:04:45 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.127 2009/05/29 21:16:37 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -40,32 +40,6 @@
 #define XNAME(co)	(((struct device *)co->az)->dv_xname)
 #define MIXER_DELTA(n)	(AUDIO_MAX_GAIN / (n))
 
-#define REALTEK_ALC660		0x10ec0660
-#define ALC660_ASUS_G2K		0x13391043
-#define REALTEK_ALC880		0x10ec0880
-#define ALC880_ASUS_M5200	0x19931043
-#define ALC880_ASUS_A7M		0x13231043
-#define ALC880_MEDION_MD95257	0x203d161f
-#define REALTEK_ALC882		0x10ec0882
-#define ALC882_ASUS_A7T		0x13c21043
-#define ALC882_ASUS_W2J		0x19711043
-#define REALTEK_ALC883		0x10ec0883
-#define ALC883_ACER_ID		0x00981025
-#define REALTEK_ALC885		0x10ec0885
-#define ALC885_APPLE_MB3	0x00a1106b
-#define ALC885_APPLE_MB4	0x00a3106b
-#define SIGMATEL_STAC9221	0x83847680
-#define STAC9221_APPLE_ID	0x76808384
-#define SIGMATEL_STAC9205	0x838476a0
-#define STAC9205_DELL_D630	0x01f91028
-#define STAC9205_DELL_V1500	0x02281028
-#define IDT_92HD71B7		0x111d76b2
-#define IDT92HD71B7_DELL_E5500	0x02631028
-#define IDT92HD71B7_DELL_E6400	0x02331028
-#define IDT92HD71B7_DELL_E6500	0x024f1028
-#define SIGMATEL_STAC9228X	0x83847616
-#define STAC9228X_DELL_V1400	0x02271028
-
 int	azalia_generic_codec_init_dacgroup(codec_t *);
 int	azalia_generic_codec_add_convgroup(codec_t *, convgroupset_t *,
     struct io_pin *, int, nid_t *, int, uint32_t, uint32_t);
@@ -90,7 +64,6 @@ void	azalia_devinfo_offon(mixer_devinfo_t *);
 void	azalia_pin_config_ov(widget_t *, int, int);
 int	azalia_gpio_unmute(codec_t *, int);
 
-int	azalia_alc88x_init_widget(const codec_t *, widget_t *, nid_t);
 int	azalia_stac7661_mixer_init(codec_t *);
 
 int
@@ -106,17 +79,18 @@ azalia_codec_init_vtbl(codec_t *this)
 	this->set_port = azalia_generic_set_port;
 	this->get_port = azalia_generic_get_port;
 	this->unsol_event = azalia_generic_unsol;
+	this->qrks = AZ_QRK_NONE;
 	switch (this->vid) {
 	case 0x10ec0260:
 		this->name = "Realtek ALC260";
 		break;
 	case 0x10ec0262:
 		this->name = "Realtek ALC262";
-		this->init_widget = azalia_alc88x_init_widget;
+		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
 		break;
 	case 0x10ec0268:
 		this->name = "Realtek ALC268";
-		this->init_widget = azalia_alc88x_init_widget;
+		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
 		break;
 	case 0x10ec0269:
 		this->name = "Realtek ALC269";
@@ -124,9 +98,15 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10ec0272:
 		this->name = "Realtek ALC272";
 		break;
+	case 0x10ec0660:
+		this->name = "Realtek ALC660";
+		if (this->subid == 0x13391043) {	/* ASUS_G2K */
+			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
+		}
+		break;
 	case 0x10ec0662:
 		this->name = "Realtek ALC662";
-		this->init_widget = azalia_alc88x_init_widget;
+		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
 		break;
 	case 0x10ec0663:
 		this->name = "Realtek ALC663";
@@ -136,23 +116,42 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x10ec0880:
 		this->name = "Realtek ALC880";
-		this->init_widget = azalia_alc88x_init_widget;
+		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
+		if (this->subid == 0x19931043 ||	/* ASUS_M5200 */
+		    this->subid == 0x13231043) {	/* ASUS_A7M */
+			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
+		}
+		if (this->subid == 0x203d161f) {	/* MEDION_MD95257 */
+			this->qrks |= AZ_QRK_GPIO_UNMUTE_1;
+		}
 		break;
 	case 0x10ec0882:
 		this->name = "Realtek ALC882";
-		this->init_widget = azalia_alc88x_init_widget;
+		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
+		if (this->subid == 0x13c21043 ||	/* ASUS_A7T */
+		    this->subid == 0x19711043) {	/* ASUS_W2J */
+			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
+		}
 		break;
 	case 0x10ec0883:
 		this->name = "Realtek ALC883";
-		this->init_widget = azalia_alc88x_init_widget;
+		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
+		if (this->subid == 0x00981025) {	/* ACER_ID */
+			this->qrks |= AZ_QRK_GPIO_UNMUTE_0 |
+			    AZ_QRK_GPIO_UNMUTE_1;
+		}
 		break;
 	case 0x10ec0885:
 		this->name = "Realtek ALC885";
-		this->init_widget = azalia_alc88x_init_widget;
+		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
+		if (this->subid == 0x00a1106b ||	/* APPLE_MB3 */
+		    this->subid == 0x00a3106b) {	/* APPLE_MB4 */
+			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
+		}
 		break;
 	case 0x10ec0888:
 		this->name = "Realtek ALC888";
-		this->init_widget = azalia_alc88x_init_widget;
+		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
 		break;
 	case 0x111d7603:
 		this->name = "IDT 92HD75B3/4";
@@ -180,6 +179,11 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x111d76b2:
 		this->name = "IDT 92HD71B7";
+		if (this->subid == 0x02631028 ||	/* DELL_E5500 */
+		    this->subid == 0x02331028 ||	/* DELL_E6400 */
+		    this->subid == 0x024f1028) {	/* DELL_E6500 */
+			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
+		}
 		break;
 	case 0x111d76b6:
 		this->name = "IDT 92HD71B5";
@@ -255,6 +259,9 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x83847616:
 		this->name = "Sigmatel STAC9228X";
+		if (this->subid == 0x02271028) {	/* DELL_V1400 */
+			this->qrks |= AZ_QRK_GPIO_UNMUTE_2;
+	 	}
 		break;
 	case 0x83847617:
 		this->name = "Sigmatel STAC9228D";
@@ -306,6 +313,10 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x83847680:
 		this->name = "Sigmatel STAC9220/1";
+		if (this->subid == 0x76808384) {	/* APPLE_ID */
+			this->qrks |= AZ_QRK_GPIO_POL_0 | AZ_QRK_GPIO_UNMUTE_0 |
+			     AZ_QRK_GPIO_UNMUTE_1;
+		}
 		break;
 	case 0x83847682:
 		/* FALLTHROUGH */
@@ -326,6 +337,10 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x838476a0:
 		this->name = "Sigmatel STAC9205X";
+		if (this->subid == 0x01f91028 ||	/* DELL_D630 */
+		    this->subid == 0x02281028) {	/* DELL_V1500 */
+			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
+		}
 		break;
 	case 0x838476a1:
 		this->name = "Sigmatel STAC9205D";
@@ -2303,59 +2318,51 @@ azalia_pin_config_ov(widget_t *w, int mask, int val)
 int
 azalia_codec_gpio_quirks(codec_t *this)
 {
-	if (this->vid == SIGMATEL_STAC9221 && this->subid == STAC9221_APPLE_ID) {
-		this->comresp(this, this->audiofunc, CORB_SET_GPIO_POLARITY, 0, NULL);
-		azalia_gpio_unmute(this, 0);
-		azalia_gpio_unmute(this, 1);
+	if (this->qrks & AZ_QRK_GPIO_POL_0) {
+		this->comresp(this, this->audiofunc,
+		    CORB_SET_GPIO_POLARITY, 0, NULL);
 	}
-	if (this->vid == REALTEK_ALC883 && this->subid == ALC883_ACER_ID) {
-		azalia_gpio_unmute(this, 0);
-		azalia_gpio_unmute(this, 1);
-	}
-	if ((this->vid == REALTEK_ALC660 && this->subid == ALC660_ASUS_G2K) ||
-	    (this->vid == REALTEK_ALC880 && this->subid == ALC880_ASUS_M5200) ||
-	    (this->vid == REALTEK_ALC880 && this->subid == ALC880_ASUS_A7M) ||
-	    (this->vid == REALTEK_ALC882 && this->subid == ALC882_ASUS_A7T) ||
-	    (this->vid == REALTEK_ALC882 && this->subid == ALC882_ASUS_W2J) ||
-	    (this->vid == REALTEK_ALC885 && this->subid == ALC885_APPLE_MB3) ||
-	    (this->vid == REALTEK_ALC885 && this->subid == ALC885_APPLE_MB4) ||
-	    (this->vid == IDT_92HD71B7 && this->subid == IDT92HD71B7_DELL_E5500) ||
-	    (this->vid == IDT_92HD71B7 && this->subid == IDT92HD71B7_DELL_E6400) ||
-	    (this->vid == IDT_92HD71B7 && this->subid == IDT92HD71B7_DELL_E6500) ||
-	    (this->vid == SIGMATEL_STAC9205 && this->subid == STAC9205_DELL_D630) ||
-	    (this->vid == SIGMATEL_STAC9205 && this->subid == STAC9205_DELL_V1500)) {
+	if (this->qrks & AZ_QRK_GPIO_UNMUTE_0) {
 		azalia_gpio_unmute(this, 0);
 	}
-	if (this->vid == REALTEK_ALC880 && this->subid == ALC880_MEDION_MD95257) {
+	if (this->qrks & AZ_QRK_GPIO_UNMUTE_1) {
 		azalia_gpio_unmute(this, 1);
 	}
-	if (this->vid == SIGMATEL_STAC9228X && this->subid == STAC9228X_DELL_V1400) {
+	if (this->qrks & AZ_QRK_GPIO_UNMUTE_2) {
 		azalia_gpio_unmute(this, 2);
- 	}
-	return 0;
+	}
+
+	return(0);
 }
 
-/* ----------------------------------------------------------------
- * codec specific functions
- * ---------------------------------------------------------------- */
-
-/* Realtek ALC88x */
 int
-azalia_alc88x_init_widget(const codec_t *this, widget_t *w, nid_t nid)
+azalia_codec_widget_quirks(codec_t *this, nid_t nid)
 {
-	if (nid == 0x1c && w->enable == 0 && w->d.pin.device == CORB_CD_CD) {
-		azalia_pin_config_ov(w, CORB_CD_PORT_MASK, CORB_CD_FIXED);
-		w->widgetcap |= COP_AWCAP_STEREO;
-		w->enable = 1;
-	}
-	if (nid == 0x1d && w->enable == 0) {
+	widget_t *w;
+
+	w = &this->w[nid];
+
+	if (this->qrks & AZ_QRK_WID_BEEP_1D &&
+	    nid == 0x1d && w->enable == 0) {
 		azalia_pin_config_ov(w, CORB_CD_DEVICE_MASK, CORB_CD_BEEP);
 		azalia_pin_config_ov(w, CORB_CD_PORT_MASK, CORB_CD_FIXED);
 		w->widgetcap |= COP_AWCAP_STEREO;
 		w->enable = 1;
 	}
- 	return 0;
+
+	if (this->qrks & AZ_QRK_WID_CDIN_1C &&
+	    nid == 0x1c && w->enable == 0 && w->d.pin.device == CORB_CD_CD) {
+		azalia_pin_config_ov(w, CORB_CD_PORT_MASK, CORB_CD_FIXED);
+		w->widgetcap |= COP_AWCAP_STEREO;
+		w->enable = 1;
+	}
+
+	return(0);
 }
+
+/* ----------------------------------------------------------------
+ * codec specific functions
+ * ---------------------------------------------------------------- */
 
 /* Sigmatel STAC9225 */
 int

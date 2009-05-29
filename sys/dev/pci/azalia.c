@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.134 2009/05/29 17:54:08 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.135 2009/05/29 21:16:37 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1275,8 +1275,9 @@ azalia_codec_init(codec_t *this)
 
 		azalia_widget_print_widget(&this->w[i], this);
 
-		if (this->init_widget != NULL)
-			this->init_widget(this, &this->w[i], this->w[i].nid);
+		if (this->qrks & AZ_QRK_WID_MASK) {
+			azalia_codec_widget_quirks(this, i);
+		}
 	}
 
 	this->na_dacs = this->na_dacs_d = 0;
@@ -1398,9 +1399,11 @@ azalia_codec_init(codec_t *this)
 	if (err)
 		return err;
 
-	err = azalia_codec_gpio_quirks(this);
-	if (err)
-		return err;
+	if (this->qrks & AZ_QRK_GPIO_MASK) {
+		err = azalia_codec_gpio_quirks(this);
+		if (err)
+			return err;
+	}
 
 	err = this->mixer_init(this);
 	if (err)

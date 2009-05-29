@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.47 2009/05/29 17:54:08 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.48 2009/05/29 21:16:37 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -491,6 +491,21 @@
 #define AZ_CLASS_OUTPUT	1
 #define AZ_CLASS_RECORD	2
 
+#define AZ_QRK_NONE		0x00000000
+#define AZ_QRK_GPIO_MASK	0x00000fff
+#define AZ_QRK_GPIO_UNMUTE_0	0x00000001
+#define AZ_QRK_GPIO_UNMUTE_1	0x00000002
+#define AZ_QRK_GPIO_UNMUTE_2	0x00000004
+#define AZ_QRK_GPIO_UNMUTE_3	0x00000008
+#define AZ_QRK_GPIO_UNMUTE_4	0x00000010
+#define AZ_QRK_GPIO_UNMUTE_5	0x00000020
+#define AZ_QRK_GPIO_UNMUTE_6	0x00000040
+#define AZ_QRK_GPIO_UNMUTE_7	0x00000080
+#define AZ_QRK_GPIO_POL_0	0x00000100
+#define AZ_QRK_WID_MASK		0x000ff000
+#define AZ_QRK_WID_CDIN_1C	0x00001000
+#define AZ_QRK_WID_BEEP_1D	0x00002000
+
 /* memory-mapped types */
 typedef struct {
 	uint32_t low;
@@ -619,7 +634,6 @@ struct io_pin {
 typedef struct codec_t {
 	int (*comresp)(const struct codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
 	int (*init_dacgroup)(struct codec_t *);
-	int (*init_widget)(const struct codec_t *, widget_t *, nid_t);
 	int (*mixer_init)(struct codec_t *);
 	int (*mixer_delete)(struct codec_t *);
 	int (*set_port)(struct codec_t *, mixer_ctrl_t *);
@@ -638,6 +652,8 @@ typedef struct codec_t {
 	widget_t *w;		/* widgets in the audio function.
 				 * w[0] to w[wstart-1] are unused. */
 #define FOR_EACH_WIDGET(this, i)	for (i = (this)->wstart; i < (this)->wend; i++)
+
+	int qrks;
 
 	convgroupset_t dacs;
 	convgroupset_t adcs;
@@ -694,4 +710,5 @@ int	azalia_codec_init_vtbl(codec_t *);
 int	azalia_codec_construct_format(codec_t *, int, int);
 int	azalia_widget_enabled(const codec_t *, nid_t);
 int	azalia_codec_gpio_quirks(codec_t *);
+int	azalia_codec_widget_quirks(codec_t *, nid_t);
 int	azalia_codec_fnode(codec_t *, nid_t, int, int);
