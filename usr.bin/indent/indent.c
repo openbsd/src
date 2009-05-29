@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.18 2004/11/29 06:20:03 jsg Exp $	*/
+/*	$OpenBSD: indent.c,v 1.19 2009/05/29 09:07:29 sobrado Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";*/
-static char rcsid[] = "$OpenBSD: indent.c,v 1.18 2004/11/29 06:20:03 jsg Exp $";
+static char rcsid[] = "$OpenBSD: indent.c,v 1.19 2009/05/29 09:07:29 sobrado Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -211,7 +211,7 @@ main(int argc, char **argv)
 	    set_option(argv[i]);
     }				/* end of for */
     if (input == NULL) {
-	fprintf(stderr, "usage: indent file [ outfile ] [ options ]\n");
+	fprintf(stderr, "usage: indent input-file [output-file] [options]\n");
 	exit(1);
     }
     if (output == NULL) {
