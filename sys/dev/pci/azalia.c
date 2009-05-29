@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.133 2009/05/29 02:49:30 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.134 2009/05/29 17:54:08 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -212,6 +212,7 @@ int	azalia_codec_find_defadc_sub(codec_t *, nid_t, int, int);
 int	azalia_codec_init_volgroups(codec_t *);
 int	azalia_codec_sort_pins(codec_t *);
 int	azalia_codec_select_micadc(codec_t *);
+int	azalia_codec_select_dacs(codec_t *);
 int	azalia_codec_select_spkrdac(codec_t *);
 int	azalia_codec_find_inputmixer(codec_t *);
 
@@ -1282,6 +1283,7 @@ azalia_codec_init(codec_t *this)
 	this->na_adcs = this->na_adcs_d = 0;
 	this->speaker = this->spkr_dac = this->mic = this->mic_adc = -1;
 	this->nsense_pins = 0;
+	this->nout_jacks = 0;
 	FOR_EACH_WIDGET(this, i) {
 		if (!this->w[i].enable)
 			continue;
@@ -1329,6 +1331,8 @@ azalia_codec_init(codec_t *this)
 				}
 				break;
 			case CORB_CD_JACK:
+				if (this->w[i].d.pin.device == CORB_CD_LINEOUT)
+					this->nout_jacks++;
 				if (this->nsense_pins >= HDA_MAX_SENSE_PINS ||
 				    !(this->w[i].d.pin.cap & COP_PINCAP_PRESENCE))
 					break;
@@ -1360,6 +1364,17 @@ azalia_codec_init(codec_t *this)
 	err = azalia_codec_find_inputmixer(this);
 	if (err)
 		return err;
+
+	/* If the codec can do multichannel, select different DACs for
+	 * the multichannel jack group.  Also select a unique DAC for
+	 * the front headphone jack, if one exists.
+	 */
+	this->fhp_dac = -1;
+	if (this->na_dacs >= 3 && this->nopins >= 3) {
+		err = azalia_codec_select_dacs(this);
+		if (err)
+			return err;
+	}
 
 	err = azalia_codec_select_spkrdac(this);
 	if (err)
@@ -1489,7 +1504,7 @@ azalia_codec_sort_pins(codec_t *this)
 	struct io_pin opins[MAX_PINS], opins_d[MAX_PINS];
 	struct io_pin ipins[MAX_PINS], ipins_d[MAX_PINS];
 	int nopins, nopins_d, nipins, nipins_d;
-	int prio, add, nd, conv;
+	int prio, loc, add, nd, conv;
 	int i, j, k;
 
 	nopins = nopins_d = nipins = nipins_d = 0;
@@ -1498,6 +1513,10 @@ azalia_codec_sort_pins(codec_t *this)
 		w = &this->w[i];
 		if (!w->enable || w->type != COP_AWTYPE_PIN_COMPLEX)
 			continue;
+
+		loc = 0;
+		if (this->na_dacs >= 3 && this->nout_jacks < 3)
+			loc = CORB_CD_LOC_GEO(w->d.pin.config);
 
 		prio = w->d.pin.association << 4 | w->d.pin.sequence;
 		conv = -1;
@@ -1529,7 +1548,8 @@ azalia_codec_sort_pins(codec_t *this)
 			if (add && nopins < MAX_PINS) {
 				opins[nopins].nid = w->nid;
 				opins[nopins].conv = conv;
-				opins[nopins].prio = prio | (nd << 8);
+				prio |= (nd << 8) | (loc << 9);
+				opins[nopins].prio = prio;
 				nopins++;
 			}
 		}
@@ -1693,6 +1713,80 @@ azalia_codec_sort_pins(codec_t *this)
 
 	return 0;
 #undef MAX_PINS
+}
+
+int
+azalia_codec_select_dacs(codec_t *this)
+{
+	widget_t *w;
+	nid_t *convs;
+	int nconv, conv;
+	int i, j, k, err, isfhp;
+
+	convs = malloc(this->na_dacs * sizeof(nid_t), M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
+	if (convs == NULL)
+		return(ENOMEM);
+
+	nconv = 0;
+	for (i = 0; i < this->nopins; i++) {
+		isfhp = 0;
+		w = &this->w[this->opins[i].nid];
+
+		if (w->d.pin.device == CORB_CD_HEADPHONE &&
+		    CORB_CD_LOC_GEO(w->d.pin.config) == CORB_CD_FRONT) {
+			isfhp = 1;
+		}
+
+		conv = this->opins[i].conv;
+		for (j = 0; j < nconv; j++) {
+			if (conv == convs[j])
+				break;
+		}
+		if (j == nconv) {
+			convs[nconv++] = conv;
+			if (isfhp)
+				this->fhp_dac = conv;
+			if (nconv >= this->na_dacs) {
+				return(0);
+			}
+		} else {
+			/* find a different dac */
+			conv = -1;
+			for (j = 0; j < w->nconnections; j++) {
+				if (!azalia_widget_enabled(this,
+				    w->connections[j]))
+					continue;
+				conv = azalia_codec_find_defdac(this,
+				    w->connections[j], 1);
+				if (conv == -1)
+					continue;
+				for (k = 0; k < nconv; k++) {
+					if (conv == convs[k])
+						break;
+				}
+				if (k == nconv)
+					break;
+			}
+			if (j < w->nconnections && conv != -1) {
+				err = this->comresp(this, w->nid,
+				    CORB_SET_CONNECTION_SELECT_CONTROL, j, 0);
+				if (err)
+					return(err);
+				w->selected = j;
+				this->opins[i].conv = conv;
+				if (isfhp)
+					this->fhp_dac = conv;
+				convs[nconv++] = conv;
+				if (nconv >= this->na_dacs)
+					return(0);
+			}
+		}
+	}
+
+	free(convs, M_DEVBUF);
+
+	return(0);
 }
 
 /* Connect the speaker to a DAC that no other output pin is connected
@@ -2324,7 +2418,8 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 		stream_chan = (number << 4);
 		if (curchan < nchan) {
 			stream_chan |= curchan;
-		} else if (w->nid == this->spkr_dac) {
+		} else if (w->nid == this->spkr_dac ||
+		    w->nid == this->fhp_dac) {
 			stream_chan |= 0;	/* first channel(s) */
 		} else
 			stream_chan = 0;	/* idle stream */
