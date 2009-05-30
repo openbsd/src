@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.77 2009/05/22 00:19:25 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.78 2009/05/30 17:20:29 thib Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -106,9 +106,6 @@ int (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
 	nfsrv_fsinfo,
 	nfsrv_pathconf,
 	nfsrv_commit,
-	nfsrv_noop,
-	nfsrv_noop,
-	nfsrv_noop,
 	nfsrv_noop
 };
 #endif

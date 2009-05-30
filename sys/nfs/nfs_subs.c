@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.95 2009/05/22 00:19:25 thib Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.96 2009/05/30 17:20:29 thib Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -120,9 +120,6 @@ int nfsv3_procid[NFS_NPROCS] = {
 	NFSPROC_NOOP,
 	NFSPROC_NOOP,
 	NFSPROC_NOOP,
-	NFSPROC_NOOP,
-	NFSPROC_NOOP,
-	NFSPROC_NOOP,
 	NFSPROC_NOOP
 };
 
@@ -152,10 +149,7 @@ int nfsv2_procid[NFS_NPROCS] = {
 	NFSV2PROC_NOOP,
 	NFSV2PROC_NOOP,
 	NFSV2PROC_NOOP,
-	NFSV2PROC_NOOP,
-	NFSV2PROC_NOOP,
-	NFSV2PROC_NOOP,
-	NFSV2PROC_NOOP,
+	NFSV2PROC_NOOP
 };
 
 /*

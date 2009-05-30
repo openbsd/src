@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.80 2009/05/22 00:19:25 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.81 2009/05/30 17:20:29 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -107,7 +107,6 @@ extern int nfs_ticks;
  */
 static int proct[NFS_NPROCS] = {
 	0, 1, 0, 2, 1, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0,
-	0, 0, 0,
 };
 
 /*

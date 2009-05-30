@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsproto.h,v 1.8 2008/08/08 21:44:44 thib Exp $	*/
+/*	$OpenBSD: nfsproto.h,v 1.9 2009/05/30 17:20:29 thib Exp $	*/
 /*	$NetBSD: nfsproto.h,v 1.1 1996/02/18 11:54:06 fvdl Exp $	*/
 
 /*
@@ -169,9 +169,8 @@
 #define	NFSPROC_FSINFO		19
 #define	NFSPROC_PATHCONF	20
 #define	NFSPROC_COMMIT		21
-
-#define NFSPROC_NOOP		25
-#define	NFS_NPROCS		26
+#define NFSPROC_NOOP		22
+#define	NFS_NPROCS		23
 
 /* Actual Version 2 procedure numbers */
 #define	NFSV2PROC_NULL		0

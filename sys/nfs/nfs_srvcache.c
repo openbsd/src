@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.21 2008/12/24 02:43:52 thib Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.22 2009/05/30 17:20:29 thib Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -76,8 +76,7 @@ u_long nfsrvhash;
 int nonidempotent[NFS_NPROCS] = {
 	0, 0, 1, 0, 0, 0, 0, 1,
 	1, 1, 1, 1, 1, 1, 1, 1,
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0
+	0, 0, 0, 0, 0, 0, 0
 };
 
 /* True iff the rpc reply is an nfs status ONLY! */
