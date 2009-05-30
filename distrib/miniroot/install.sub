@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.559 2009/05/30 19:32:20 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.560 2009/05/30 20:40:59 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1236,13 +1236,8 @@ install_url() {
 
 	install_files "$_url_base" "$_file_list"
 
-	# Tell the FTP server what location we used... so it can perform magic
-	if [[ -s $SERVERLIST ]]; then
-		eval _url_base=$_url_type://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
-		ftp $FTPOPTS -a -o - \
-			"http://129.128.5.191/cgi-bin/ftpinstall.cgi?install=$_url_base" \
-			>/dev/null 2>&1 &
-	fi
+	# Remember where we installed from
+	eval installedfrom=$_url_type://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
 }
 
 install_mounted_fs() {

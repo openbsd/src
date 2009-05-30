@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.193 2009/05/30 19:34:39 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.194 2009/05/30 20:40:59 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -189,9 +189,24 @@ set_timezone /var/tzlist
 
 install_sets
 
-[[ ! -n $TZ ]] &&
-	(cd /mnt/usr/share/zoneinfo&&ls -1dF `tar cvf /dev/null [A-Za-y]*`)>/tmp/tzlist && \
+# If we did not succeed at setting TZ yet, we try again
+# using the timezone names extracted from the base set
+if [[ -z $TZ ]]; then
+	( cd /mnt/usr/share/zoneinfo
+	ls -1dF `tar cvf /dev/null [A-Za-y]*` >/tmp/tzlist )
 	set_timezone /tmp/tzlist
+fi
+
+# If we managed to talk to the ftplist server before, tell it what
+# location we used... so it can perform magic next time
+if [[ -s $SERVERLIST ]]; then
+	_i=
+	[[ -n $installedfrom ]] && _i="install=$installedfrom"
+	[[ -n $TZ ]] && _i="$_i&TZ=$TZ"
+
+	[[ -n $_i ]] && ftp $FTPOPTS -a -o - \
+		"http://129.128.5.191/cgi-bin/ftpinstall.cgi?$_i" >/dev/null 2>&1 &
+fi
 
 # Ensure an enabled console has the correct speed in /etc/ttys.
 sed -e "/^console.*on.*secure.*$/s/std\.[0-9]*/std.$(stty speed)/" \
