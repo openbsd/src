@@ -1,6 +1,34 @@
-dnl	$OpenBSD: prep,v 1.12 2008/08/06 18:23:56 miod Exp $
-Before you install your system, you should familiarize yourself with the
-ARCBios setup and how to run programs from the Command monitor prompt.
+dnl	$OpenBSD: prep,v 1.13 2009/05/30 05:00:37 miod Exp $
+Before you install your system, you should identify your system family and
+familiarize yourself with the ARCBios setup and how to run programs from
+the Command monitor prompt.
+
+Identifying your system:
+
+    Due to significant design differences in SGI systems, OpenBSD
+    needs to use different kernels, depending on the system family.
+
+    There are currently four system families supported by OpenBSD:
+
+    IP27 family:
+	Origin 200, Onyx 2
+	Origin 2000
+
+    IP30 family:
+	Octane, Octane 2
+
+    IP32 family:
+	O2, O2+
+
+    IP35 family:
+	Origin 300, Origin 3000, Onyx 300
+dnl	Origin 350, Onyx 350, Onyx 4
+	Fuel
+dnl	Tezro
+
+    You should use the kernels (bsd and bsd.rd) with the IP suffix
+    matching your family number, except for IP35 systems which use
+    IP27 kernels.
 
 Accessing the Maintenance Console:
 
@@ -34,6 +62,10 @@ Switching from serial to graphics console and vice versa:
 
     will select the graphics console.
 
+    Only IP32 family systems are supported with a graphis console
+    under OpenBSD at the moment. On all other non-headless systems,
+    you need to change the console to serial.
+
 Setting the environment:
 
     When setting up the system to boot from disk, the ``OSLoader''
@@ -44,22 +76,4 @@ Setting the environment:
 
     Also, by default it tries to boot a kernel named ``/unix''. To
     make it boot OpenBSD, set ``OSLoadFilename'' to ``/bsd''.
-
-Disk numbering
-
-    SGI numbers their disks 1-n depending on their position in the
-    backplane. For example, on the O2, the slot closest to the CPU
-    is numbered 1 and the next 2 if the CPU is a R5000. On R1x000
-    models, slot 1 is lost due to the larger heatsink on the CPU.
-    Normally the kernel translates the slot numbers to disk numbers
-    by subtracting 1 from the slot number, eg slot 1 becomes sd0.
-    However on an O2 with a R1x000 cpu, 2 is subtracted from the
-    slot number to compensate for the lost slot.
-
-    When the kernel searches for the boot device it uses the ARCBios
-    environment variable OSLoadPartition. Since the disk number in
-    the variable is the absolute number, in contrast to the kernels
-    relative numbers, the kernel will not be able to find the boot
-    device if the disk slots are not filled from the lowest and up.
-    An empty slot before the boot device will confuse the lookup.
 

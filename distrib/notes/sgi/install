@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.16 2009/05/13 18:38:29 miod Exp $
+dnl	$OpenBSD: install,v 1.17 2009/05/30 05:00:37 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -14,18 +14,24 @@ dhcpd(8) manual page on your server should provide detailed information
 on how to set up the server.
 
 The bootp or dhcp server needs to know the ethernet address of the
-system. This address can be found by using the ``printenv'' command
-in the Maintenance Console, looking for the ``eaddr'' variable.
+system. On O2 systems, this address can be found by using the ``printenv''
+command in the Maintenance Console, looking for the ``eaddr'' variable.
+On other systems, this address is ususally written on a factory sticker
+on the back of the machine.
 
-The server should also provide a tftp location, where the bsd.rd file
-should be available.
+The server should also provide a tftp location, where the proper bsd.rd
+file should be available.
 
 Once the server is set up, boot with the following command in the
 Maintenance Console:
 
-> bootp()/bsd.rd
+> bootp()/bsd.rd.IP32
+
+(replacing `IP32' by the family name suitable for your machine).
 
 Booting from CD-ROM installation media:
+
+(Note: this boot method only works on IP32 systems at the moment).
 
 From the System Maintenance Menu, select '2' (or click on the
 appropriate icon if in graphics console) to Install System Software.

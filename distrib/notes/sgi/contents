@@ -1,11 +1,36 @@
-dnl	$OpenBSD: contents,v 1.10 2009/05/12 21:06:50 miod Exp $
+dnl	$OpenBSD: contents,v 1.11 2009/05/30 05:00:37 miod Exp $
 TopPart
 
 OpenBSDdistsets
 
-OpenBSDbsd
+dnl three flavours of OpenBSDbsd
+	bsd.IP27	A stock GENERIC.IP27 MACHINE kernel for IP27 and IP35
+			class machines, which will be installed on such systems
+			during the install.
 
-OpenBSDrd
+	bsd.IP30	A stock GENERIC.IP30 MACHINE kernel for IP30 class
+			machines, which will be installed on such systems
+			during the install.
+
+	bsd.IP32	A stock GENERIC.IP32 MACHINE kernel for IP32 class
+			machines, which will be installed on such systems
+			during the install.
+
+dnl three flavours of OpenBSDrd
+	bsd.rd.IP27	A compressed RAMDISK.IP27 kernel; the embedded
+			filesystem contains the installation tools.
+			Used for simple installation from a pre-existing
+			system.
+
+	bsd.rd.IP30	A compressed RAMDISK.IP30 kernel; the embedded
+			filesystem contains the installation tools.
+			Used for simple installation from a pre-existing
+			system.
+
+	bsd.rd.IP32	A compressed RAMDISK.IP32 kernel; the embedded
+			filesystem contains the installation tools.
+			Used for simple installation from a pre-existing
+			system.
 
 OpenBSDcd
 

@@ -1,16 +1,25 @@
-dnl	$OpenBSD: hardware,v 1.5 2008/08/25 18:22:41 jasper Exp $
+dnl	$OpenBSD: hardware,v 1.6 2009/05/30 05:00:37 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following machines:
-	O2 with the following CPU configurations:
-		R5000, R52xx and RM7000 with any secondary/tertiary caches.
-		R10000 and R12000 with secondary caches.
-
-	On O2's with R10000 CPUs the Speculative Dirty problem is not
-	handled in any special way. However, so far, we have not seen
-	any problems from this behaviour.
+	IP27 class machines:
+		Origin 200, Onyx 2
+		Origin 2000
+	IP30 class machines:
+		Octane
+		Octane 2
+	IP32 class machines:
+		O2
+		O2+
+		(both R50000/RM52xx/RM70000 and R10000/R12000 configurations
+		 are supported)
+	IP35 class machines:
+		Origin 300, Origin 3000, Onyx 300
+dnl		Origin 350, Onyx 350, Onyx 4
+		Fuel
+dnl		Tezro
 
 Supported devices {:-include-:}:
 - Ethernet Controllers
-        built-in Mace Ethernet Controller (mec)
+        built-in O2 Mace Ethernet Controller (mec)
         Intel/DEC 21443 "Tulip" clones (dc)
         Intel i8255x-based (fxp) including:
                 Intel EtherExpress PRO/10+
@@ -19,7 +28,8 @@ Supported devices {:-include-:}:
                 Intel EtherExpress PRO/100 Dual Port
                 Intel PRO/100 VE, PRO/100 VM, and PRO/100 S
 - SCSI controllers
-        built-in Adaptec AIC-7880 (ahc)
+        O2 built-in Adaptec AIC-7880 (ahc)
+	IP27/IP30/IP32 built-in QLogic ISP (isp)
         53C8xx-based SCSI (siop)
         LSI Logic Fusion-MPT Message Passing Interface (mpi)
 - RS-232 devices:
@@ -40,12 +50,11 @@ Supported devices {:-include-:}:
 - Miscellaneous devices:
         battery-backed real time clock
         ``soft'' power button as available on SGI O2 (power)
-        Moosehead A/V Board audio (mavb)
-        built-in SGI Graphics Back End framebuffer (gbe)
-        built-in PS/2 Controller (mkbc)
+        O2 Moosehead A/V Board audio (mavb)
+        O2 built-in Graphics Back End framebuffer (gbe)
+        O2 built-in PS/2 Controller (mkbc)
                 PS/2 mice (pms)
                 PS/2 keyboards (pckbd)
 
 If your hardware is not listed above, there is currently no support for it
 in this release.
-
