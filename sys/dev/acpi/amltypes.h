@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.31 2009/04/27 23:39:14 jordan Exp $ */
+/* $OpenBSD: amltypes.h,v 1.32 2009/05/30 22:49:56 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -157,8 +157,6 @@
 #define AML_MATCH_GE		4
 #define AML_MATCH_GT		5
 
-#define AML_STATIC		0x8000
-
 /* Defined types for ObjectType() */
 enum aml_objecttype {
 	AML_OBJTYPE_UNINITIALIZED = 0,
@@ -183,7 +181,6 @@ enum aml_objecttype {
 	AML_OBJTYPE_OBJREF,
 	AML_OBJTYPE_SCOPE,
 	AML_OBJTYPE_NOTARGET,
-	AML_OBJTYPE_STATICINT = AML_OBJTYPE_INTEGER|AML_STATIC,
 	AML_OBJTYPE_HEXSTRING,
 	AML_OBJTYPE_DECSTRING,
 };

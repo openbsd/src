@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.148 2009/05/30 22:42:02 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.149 2009/05/30 22:49:56 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -781,7 +781,6 @@ aml_showvalue(struct aml_value *val, int lvl)
 		printf(" [%s]", aml_nodename(val->node));
 	printf(" %p cnt:%.2x stk:%.2x", val, val->refcnt, val->stack);
 	switch (val->type) {
-	case AML_OBJTYPE_STATICINT:
 	case AML_OBJTYPE_INTEGER:
 		printf(" integer: %llx\n", val->v_integer);
 		break;
@@ -866,7 +865,6 @@ aml_val2int(struct aml_value *rval)
 	}
 	switch (rval->type) {
 	case AML_OBJTYPE_INTEGER:
-	case AML_OBJTYPE_STATICINT:
 		ival = rval->v_integer;
 		break;
 	case AML_OBJTYPE_BUFFER:
@@ -889,7 +887,6 @@ _aml_setvalue(struct aml_value *lhs, int type, int64_t ival, const void *bval)
 	lhs->type = type;
 	switch (lhs->type) {
 	case AML_OBJTYPE_INTEGER:
-	case AML_OBJTYPE_STATICINT:
 		lhs->length = aml_intlen>>3;
 		lhs->v_integer = ival;
 		break;
@@ -936,11 +933,10 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 {
 	int idx;
 
-	lhs->type = rhs->type  & ~AML_STATIC;
+	lhs->type = rhs->type;
 	switch (lhs->type) {
 	case AML_OBJTYPE_UNINITIALIZED:
 		break;
-	case AML_OBJTYPE_STATICINT:
 	case AML_OBJTYPE_INTEGER:
 		lhs->length = aml_intlen>>3;
 		lhs->v_integer = rhs->v_integer;
@@ -1700,12 +1696,15 @@ aml_val_to_string(const struct aml_value *val)
 /*
  * XXX: NEW PARSER CODE GOES HERE 
  */
+int aml_error;
+
 struct aml_value *aml_gettgt(struct aml_value *, int);
 struct aml_value *aml_xeval(struct aml_scope *, struct aml_value *, int, int,
     struct aml_value *);
 struct aml_value *aml_xparsesimple(struct aml_scope *, char, 
     struct aml_value *);
 struct aml_value *aml_xparse(struct aml_scope *, int, const char *);
+struct aml_value *aml_seterror(struct aml_scope *, const char *, ...);
 
 struct aml_scope *aml_xfindscope(struct aml_scope *, int, int);
 struct aml_scope *aml_xpushscope(struct aml_scope *, struct aml_value *, 
@@ -3154,6 +3153,10 @@ aml_xeval(struct aml_scope *scope, struct aml_value *my_ret, int ret_type,
 	int idx;
 
 	switch (tmp->type) {
+	case AML_OBJTYPE_NAMEREF:
+		my_ret = aml_seterror(scope, "Undefined name: %s",
+		    aml_getname(my_ret->v_nameref));
+		break;
 	case AML_OBJTYPE_METHOD:
 		dnprintf(10,"\n--== Eval Method [%s, %d args] to %c ==--\n", 
 		    aml_nodename(tmp->node), 
@@ -3395,9 +3398,27 @@ aml_gettgt(struct aml_value *val, int opcode)
 }
 
 struct aml_value *
+aml_seterror(struct aml_scope *scope, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	printf("### AML PARSE ERROR (0x%x): ", aml_pc(scope->pos));
+	vprintf(fmt, ap);
+	printf("\n");
+
+	while (scope) {
+		scope->pos = scope->end;
+		scope = scope->parent;
+	}
+	aml_error++;
+	return aml_allocvalue(AML_OBJTYPE_INTEGER, 0, 0);
+}
+
+struct aml_value *
 aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 {
-	int    opcode, idx, pc, optype[8];
+	int    opcode, idx, pc;
 	struct aml_opcode *htab;
 	struct aml_value *opargs[8], *my_ret, *rv;
 	struct aml_scope *mscope, *iscope;
@@ -3430,7 +3451,6 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 
 	/* --== Stage 1: Process opcode arguments ==-- */
 	memset(opargs, 0, sizeof(opargs));
-	memset(optype, 0, sizeof(optype));
 	idx = 0;
 	for (ch = htab->args; *ch; ch++) {
 		uint8_t *end;
@@ -3459,8 +3479,8 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 			}
 			else {
 				rv = aml_xparse(scope, *ch, htab->mnem);
-				if (rv == NULL)
-					aml_die("NULL RESULT");
+				if (rv == NULL || aml_error)
+					goto parse_error;
 			}
 			break;
 
@@ -3485,6 +3505,7 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 				dnprintf(10, "%s value already exists %s\n",
 				    aml_nodename(rv->node),
 				    htab->mnem);
+			aml_xaddref(rv, "Create Name");
 			break;
 		case AML_ARG_SEARCHNAME:
 			rv = aml_xparsesimple(scope, *ch, NULL);
@@ -3508,11 +3529,9 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 			aml_die("Unknown arg type: %c\n", *ch);
 			break;
 		}
-		if (rv != NULL) {
-			optype[idx] = *ch;
+		if (rv != NULL)
 			opargs[idx++] = rv;
 		}
-	}
 
 	/* --== Stage 2: Process opcode ==-- */
 	ival = 0;
@@ -3543,6 +3562,16 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_NAMECHAR:
 		/* opargs[0] = named object (node != NULL), or nameref */
 		my_ret = opargs[0];
+		if (scope->type == AMLOP_PACKAGE) {
+			/* Special case for package */
+			if (my_ret->type == AML_OBJTYPE_NAMEREF)
+				my_ret = aml_allocvalue(AML_OBJTYPE_STRING, -1, 
+				    aml_getname(my_ret->v_nameref));
+			else if (my_ret->node)
+				my_ret = aml_allocvalue(AML_OBJTYPE_STRING, -1, 
+				    aml_nodename(my_ret->node));
+			break;
+		}
 		if (my_ret->type == AML_OBJTYPE_OBJREF) {
 			my_ret = my_ret->v_objref.ref;
 			aml_xaddref(my_ret, "de-alias");
@@ -3586,29 +3615,13 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		mscope = aml_xpushscope(scope, opargs[1], scope->node, 
 		    AMLOP_PACKAGE);
 
+		/* Recursively parse package contents */
 		for (idx=0; idx<my_ret->length; idx++) {
-			const char *nn;
-
 			rv = aml_xparse(mscope, 'o', "Package");
-			if (rv == NULL) {
-				continue;
-			}
-			nn = NULL;
-			if (rv->node)
-				/* Object is a named node: store as string */
-				nn = aml_nodename(rv->node);
-			else if (rv->type == AML_OBJTYPE_NAMEREF)
-				/* Object is nameref: store as string */
-				nn = aml_getname(rv->v_nameref);
-			if (nn != NULL) {
-				aml_xdelref(&rv, "pkg.node");
-				rv = aml_allocvalue(AML_OBJTYPE_STRING, 
-				    -1, nn);
-			}
-			/* Package value already allocated; delete it
-			 * and replace with pointer to return value */
-			aml_xdelref(&my_ret->v_package[idx], "pkg/init");
+			if (rv != NULL) {
+				aml_xdelref(&my_ret->v_package[idx], "pkginit");
 			my_ret->v_package[idx] = rv;
+		}
 		}
 		aml_xpopscope(mscope);
 		mscope = NULL;
@@ -3633,6 +3646,10 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 		break;
 	case AMLOP_DIVIDE:
 		/* Divide: iirr => I */
+		if (opargs[1]->v_integer == 0) {
+			my_ret = aml_seterror(scope, "Divide by Zero!");		
+			break;
+		}
 		ival = aml_evalexpr(opargs[0]->v_integer, 
 		    opargs[1]->v_integer, AMLOP_MOD);
 		aml_xstore(scope, opargs[2], ival, NULL);
@@ -4141,8 +4158,9 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	}
 
 	/* End opcode: display/free arguments */
-	for (idx=0; optype[idx] != 0; idx++) {
-		if (opargs[idx] == my_ret || optype[idx] == 'N')
+parse_error:
+	for (idx=0; idx<8; idx++) {
+		if (opargs[idx] == my_ret)
 			opargs[idx] = NULL;
 		aml_xdelref(&opargs[idx], "oparg");
 	}
@@ -4180,12 +4198,17 @@ acpi_parse_aml(struct acpi_softc *sc, u_int8_t *start, u_int32_t length)
 	res.v_buffer = start;
 	
 	/* Push toplevel scope, parse AML */
+	aml_error = 0;
 	scope = aml_xpushscope(NULL, &res, &aml_root, AMLOP_SCOPE);
 	aml_busy++;
 	aml_xparse(scope, 'T', "TopLevel");
 	aml_busy--;
 	aml_xpopscope(scope);
 
+	if (aml_error) {
+		printf("error in acpi_parse_aml\n");
+		return -1;
+	}
 	return 0;
 }
 
@@ -4200,41 +4223,23 @@ aml_evalnode(struct acpi_softc *sc, struct aml_node *node,
     int argc, struct aml_value *argv, struct aml_value *res)
 {
 	struct aml_value *xres;
-#ifdef ACPI_MEMDEBUG
-	static int wmstate;
-#endif
 	
 	if (res)
 		memset(res, 0, sizeof(*res));
 	if (node == NULL || node->value == NULL)
 		return (ACPI_E_BADVALUE);
 	dnprintf(12,"EVALNODE: %s %d\n", aml_nodename(node), acpi_nalloc);
-	switch (node->value->type) {
-	case AML_OBJTYPE_INTEGER:
-	case AML_OBJTYPE_PACKAGE:
-	case AML_OBJTYPE_STRING:
-	case AML_OBJTYPE_BUFFER:
-	case AML_OBJTYPE_PROCESSOR:
-	case AML_OBJTYPE_THERMZONE:
-	case AML_OBJTYPE_POWERRSRC:
-		if (res)
-			aml_copyvalue(res, node->value);
-		break;
-	case AML_OBJTYPE_BUFFERFIELD:
-	case AML_OBJTYPE_FIELDUNIT:
-	case AML_OBJTYPE_METHOD:
-		aml_busy++;
-#ifdef ACPI_MEMDEBUG
-		wmstate = acpi_walkmem(wmstate, aml_nodename(node));	
-#endif
+
+	aml_error = 0;
 		xres = aml_xeval(NULL, node->value, 't', argc, argv);
-		aml_busy--;
-		if (res && xres)
+	if (xres) {
+		if (res)
 			aml_copyvalue(res, xres);
 		if (xres != node->value)
-			aml_xdelref(&xres, "EvalNode");
-		break;
-	default:
+			aml_xdelref(&xres, "evalnode");
+	}
+	if (aml_error) {
+		printf("error evaluating: %s\n", aml_nodename(node));
 		return (-1);
 	}
 	return (0);
