@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.102 2009/05/28 08:50:08 jacekm Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.103 2009/05/30 16:22:07 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -958,15 +958,24 @@ session_destroy(struct session *s)
 	if (close(s->s_fd) == -1)
 		fatal("session_destroy: close");
 
-	s->s_env->stats->smtp.sessions_active--;
-	if (s->s_env->stats->smtp.sessions_active < s->s_env->sc_maxconn &&
-	    !(s->s_msg.flags & F_MESSAGE_ENQUEUED)) {
-		/*
-		 * if our session_destroy occurs because of a configuration
-		 * reload, our listener no longer exist and s->s_l is NULL.
-		 */
-		if (s->s_l != NULL)
-			event_add(&s->s_l->ev, NULL);
+	switch (smtpd_process) {
+	case PROC_MTA:
+		s->s_env->stats->mta.sessions_active--;
+		break;
+	case PROC_SMTP:
+		s->s_env->stats->smtp.sessions_active--;
+		if (s->s_env->stats->smtp.sessions_active < s->s_env->sc_maxconn &&
+		    !(s->s_msg.flags & F_MESSAGE_ENQUEUED)) {
+			/*
+			 * if our session_destroy occurs because of a configuration
+			 * reload, our listener no longer exist and s->s_l is NULL.
+			 */
+			if (s->s_l != NULL)
+				event_add(&s->s_l->ev, NULL);
+		}
+		break;
+	default:
+		fatalx("session_destroy: cannot be called from this process");
 	}
 
 	SPLAY_REMOVE(sessiontree, &s->s_env->sc_sessions, s);
