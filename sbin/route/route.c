@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.128 2009/04/28 12:09:35 michele Exp $	*/
+/*	$OpenBSD: route.c,v 1.129 2009/05/30 19:50:28 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -210,18 +210,20 @@ main(int argc, char **argv)
 void
 flushroutes(int argc, char **argv)
 {
+	const char *errstr;
 	size_t needed;
 	int mib[7], rlen, seqno;
 	char *buf = NULL, *next, *lim = NULL;
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
+	u_short prio = 0;
+	unsigned int ifindex;
 
 	if (uid)
 		errx(1, "must be root to alter routing table");
 	shutdown(s, 0); /* Don't want to read back our messages */
-	if (argc > 1) {
-		argv++;
-		if (argc == 2 && **argv == '-')
+	while (--argc > 0) {
+		if (**(++argv) == '-')
 			switch (keyword(*argv + 1)) {
 			case K_INET:
 				af = AF_INET;
@@ -234,6 +236,22 @@ flushroutes(int argc, char **argv)
 				break;
 			case K_MPLS:
 				af = AF_MPLS;
+				break;
+			case K_IFACE:
+			case K_INTERFACE:
+				if (!--argc)
+					usage(1+*argv);
+				ifindex = if_nametoindex(*++argv);
+				if (ifindex == 0)
+					errx(1, "no such interface %s", *argv);
+				break;
+			case K_PRIORITY:
+				if (!--argc)
+					usage(1+*argv);
+				prio = strtonum(*++argv, 0, RTP_MAX, &errstr);
+				if (errstr)
+					errx(1, "priority is %s: %s", errstr,
+					    *argv);
 				break;
 			default:
 				usage(*argv);
@@ -277,6 +295,10 @@ flushroutes(int argc, char **argv)
 			continue;
 		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 		if (af && sa->sa_family != af)
+			continue;
+		if (ifindex && rtm->rtm_index != ifindex)
+			continue;
+		if (prio && rtm->rtm_priority != prio)
 			continue;
 		if (sa->sa_family == AF_KEY)
 			continue;  /* Don't flush SPD */

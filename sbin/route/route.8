@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.56 2008/05/07 06:29:48 claudio Exp $
+.\"	$OpenBSD: route.8,v 1.57 2009/05/30 19:50:28 claudio Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: May 7 2008 $
+.Dd $Mdocdate: May 30 2009 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -134,7 +134,7 @@ command has the syntax:
 .Bd -filled -offset indent
 .Nm route Op Fl dnqtv
 .Cm flush
-.Op Ar family
+.Op Ar modifiers
 .Ed
 .Pp
 If the
@@ -149,6 +149,12 @@ When the address family is specified by any one of the
 modifiers (listed below), only routes having destinations with addresses
 in the
 delineated family will be deleted.
+Also, only routes matching a specific interface or priority can be flushed
+by using the
+.Fl iface
+or
+.Fl priority
+modifiers.
 .Pp
 The
 .Cm monitor
