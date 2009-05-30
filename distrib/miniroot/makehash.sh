@@ -12,14 +12,21 @@ rel=$3
 
 #echo makehash args $dir $rev $rel
 
-cat $rel/bsd | sum -a sha256 > $dir/bsd
-#ls -alF $rel/bsd
-#echo bsd `cat $dir/bsd`
+for i in bsd bsd.mp; do
+	if [ -f $rel/$i ]; then
+		cat $rel/$i | sum -a sha256 > $dir/$i
+		#ls -alF $rel/$i
+		#echo $i `cat $dir/$i`
+	fi
+done
 
-if [ -f $rel/bsd.mp ]; then
-	cat $rel/bsd.mp | sum -a sha256 > $dir/bsd.mp
-	#ls -alF $rel/bsd.mp
-	#echo bsd.mp `cat $dir/bsd.mp`
+if [ $# -gt 3 ]; then
+	shift; shift; shift;
+	for i in $*; do
+		cat $rel/$i | sum -a sha256 > $dir/$i
+		#ls -alF $rel/$i
+		#echo $i `cat $dir/$i`
+	done
 fi
 
 for i in base comp etc misc man game ; do
