@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.67 2009/05/25 14:00:36 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.68 2009/05/30 23:28:52 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -149,7 +149,8 @@ parent_send_config_listeners(struct smtpd *env)
 		if ((l->fd = socket(l->ss.ss_family, SOCK_STREAM, 0)) == -1)
 			fatal("socket");
 		opt = 1;
-		setsockopt(l->fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+		if (setsockopt(l->fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+			fatal("setsockopt");
 		if (bind(l->fd, (struct sockaddr *)&l->ss, l->ss.ss_len) == -1)
 			fatal("bind");
 		imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_CONF_LISTENER,
