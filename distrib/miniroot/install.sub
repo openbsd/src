@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.557 2009/05/29 00:46:41 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.558 2009/05/30 18:17:16 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1357,11 +1357,6 @@ set_timezone() {
 
 	# If configured in a previous call, return immediately
 	[[ -n $TZ ]] && return
-
-	if [[ -L /mnt/etc/localtime ]]; then
-		TZ=$(ls -l /mnt/etc/localtime 2>/dev/null)
-		TZ=${TZ#*${_zoneroot#/mnt}}
-	fi
 
 	waitftplist
 	if [[ -s $SERVERLISTALL ]]; then
