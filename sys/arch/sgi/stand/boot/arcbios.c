@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.9 2009/05/14 18:57:43 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.10 2009/05/30 03:59:27 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -27,16 +27,29 @@
 
 #include <sys/param.h>
 #include <lib/libkern/libkern.h>
-#include <machine/autoconf.h>
+
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
+#include <machine/autoconf.h>
+#include <machine/mnode.h>
+
 #include <stand.h>
 
 static int	bios_is_32bit;
 
-void	arcbios_init(void);
+int	arcbios_init(void);
 const char *boot_get_path_component(const char *, char *, int *);
 const char *boot_getnr(const char *, int *);
+
+static const struct systypes {
+	char *sys_name;
+	int  sys_ip;
+} sys_types[] = {
+    { "SGI-IP30", 30 },
+    { "SGI-IP32", 32 }
+};
+
+#define KNOWNSYSTEMS (nitems(sys_types))
 
 /*
  * ARCBios trampoline code.
@@ -138,9 +151,15 @@ putchar(int c)
 /*
  * Identify ARCBios type.
  */
-void
+int
 arcbios_init()
 {
+	arc_config_t *cf;
+	arc_sid_t *sid;
+	char *sysid = NULL;
+	int sysid_len;
+	int i;
+
 	/*
 	 * Figure out if this is an ARCBios machine and if it is, see if we're
 	 * dealing with a 32 or 64 bit version.
@@ -152,6 +171,51 @@ arcbios_init()
 	    (ArcBiosBase64->magic == ARC_PARAM_BLK_MAGIC_BUG)) {
 		bios_is_32bit = 0;
 	}
+
+	/*
+	 * Minimal system identification.
+	 */
+	sid = (arc_sid_t *)Bios_GetSystemId();
+	cf = (arc_config_t *)Bios_GetChild(NULL);
+	if (cf != NULL) {
+		if (bios_is_32bit) {
+			sysid = (char *)(long)cf->id;
+			sysid_len = cf->id_len;
+		} else {
+			sysid = (char *)((arc_config64_t *)cf)->id;
+			sysid_len = ((arc_config64_t *)cf)->id_len;
+		}
+
+		if (sysid_len > 0 && sysid != NULL) {
+			sysid_len--;
+			for (i = 0; i < KNOWNSYSTEMS; i++) {
+				if (strlen(sys_types[i].sys_name) != sysid_len)
+					continue;
+				if (strncmp(sys_types[i].sys_name, sysid,
+				    sysid_len) != 0)
+					continue;
+				return sys_types[i].sys_ip;	/* Found it. */
+			}
+		}
+	} else {
+#ifdef __LP64__
+		if (IP27_KLD_KLCONFIG(0)->magic == IP27_KLDIR_MAGIC) {
+			/*
+			 * If we find a kldir assume IP27. Boot blocks
+			 * do not need to tell IP27 and IP35 apart.
+			 */
+			return 27;
+		}
+#endif
+	}
+
+	printf("UNRECOGNIZED SYSTEM '%s' VENDOR '%8.8s' PRODUCT '%8.8s'\n",
+	    cf == NULL || sysid == NULL ? "(null)" : sysid,
+	    sid->vendor, sid->prodid);
+	printf("Halting system!\n");
+	Bios_Halt();
+	printf("Halting failed, use manual reset!\n");
+	for (;;) ;
 }
 
 /*

@@ -31,12 +31,13 @@
  */
 
 #include <sys/param.h>
+#include <lib/libkern/libkern.h>
 
 /*
  * Find the first occurrence of find in s.
  */
 char *
-strstr(const char *s, const char *find)
+strstr(char *s, const char *find)
 {
         char c, sc;
         size_t len;
@@ -51,5 +52,5 @@ strstr(const char *s, const char *find)
                 } while (strncmp(s, find, len) != 0);
                 s--;
         }
-        return ((char *)s);
+        return s;
 }
