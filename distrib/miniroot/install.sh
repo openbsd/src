@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.192 2009/05/30 19:32:20 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.193 2009/05/30 19:34:39 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -196,7 +196,6 @@ install_sets
 # Ensure an enabled console has the correct speed in /etc/ttys.
 sed -e "/^console.*on.*secure.*$/s/std\.[0-9]*/std.$(stty speed)/" \
 	/mnt/etc/ttys >/tmp/ttys
-# Move ttys back in case questions() needs to massage it more.
 mv /tmp/ttys /mnt/etc/ttys
 
 echo -n "Saving configuration files..."
