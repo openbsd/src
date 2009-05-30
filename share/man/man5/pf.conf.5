@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.442 2009/05/01 09:01:26 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.443 2009/05/30 16:56:17 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 1 2009 $
+.Dd $Mdocdate: May 30 2009 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -955,6 +955,9 @@ can be overridden by specifying a message as a code or number.
 .It Ar return-rst
 This applies only to TCP packets,
 and issues a TCP RST which closes the connection.
+An optional parameter,
+.Ar ttl ,
+may be given with a TTL value.
 .El
 .Pp
 Options returning ICMP packets currently have no effect if
@@ -2695,7 +2698,8 @@ schedulers     = ( cbq-def | priq-def | hfsc-def )
 bandwidth-spec = "number" ( "b" | "Kb" | "Mb" | "Gb" | "%" )
 
 action         = "pass" | "match" | "block" [ return ]
-return         = "drop" | "return" | "return-rst" [ "( ttl" number ")" ] |
+return         = "drop" | "return" |
+                 "return-rst" [ "(" "ttl" number ")" ] |
                  "return-icmp" [ "(" icmpcode [ [ "," ] icmp6code ] ")" ] |
                  "return-icmp6" [ "(" icmp6code ")" ]
 icmpcode       = ( icmp-code-name | icmp-code-number )
