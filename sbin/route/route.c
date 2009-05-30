@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.130 2009/05/30 20:03:31 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.131 2009/05/30 21:06:34 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ void	 flushroutes(int, char **);
 int	 newroute(int, char **);
 void	 show(int, char *[]);
 int	 keyword(char *);
-void	 monitor(void);
+void	 monitor(int, char *[]);
 int	 prefixlen(char *);
 void	 sockaddr(char *, struct sockaddr *);
 void	 sodump(sup, char *);
@@ -169,14 +169,17 @@ main(int argc, char **argv)
 
 	pid = getpid();
 	uid = geteuid();
+	if (*argv == NULL)
+		usage(NULL);
+	if (keyword(*argv) == K_MONITOR)
+		monitor(argc, argv);
+
 	if (tflag)
 		s = open(_PATH_DEVNULL, O_WRONLY);
 	else
 		s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s == -1)
 		err(1, "socket");
-	if (*argv == NULL)
-		usage(NULL);
 	switch (keyword(*argv)) {
 	case K_GET:
 		uid = 0;
@@ -191,7 +194,7 @@ main(int argc, char **argv)
 		show(argc, argv);
 		break;
 	case K_MONITOR:
-		monitor();
+		/* handled above */
 		break;
 	case K_FLUSH:
 		flushroutes(argc, argv);
@@ -1010,11 +1013,42 @@ interfaces(void)
 }
 
 void
-monitor(void)
+monitor(int argc, char *argv[])
 {
+	int af = 0;
+	unsigned int filter = 0;
 	int n;
 	char msg[2048];
 	time_t now;
+
+	while (--argc > 0) {
+		if (**(++argv)== '-')
+			switch (keyword(*argv + 1)) {
+			case K_INET:
+				af = AF_INET;
+				break;
+			case K_INET6:
+				af = AF_INET6;
+				break;
+			case K_IFACE:
+				filter = ROUTE_FILTER(RTM_IFINFO) |
+				    ROUTE_FILTER(RTM_IFANNOUNCE);
+				break;
+			default:
+				usage(*argv);
+				/* NOTREACHED */
+			}
+		else
+			usage(*argv);
+	}
+
+	s = socket(PF_ROUTE, SOCK_RAW, af);
+	if (s == -1)
+		err(1, "socket");
+
+	if (setsockopt(s, AF_ROUTE, ROUTE_MSGFILTER, &filter,
+	    sizeof(filter)) == -1)
+		err(1, "setsockopt");
 
 	verbose = 1;
 	if (debugonly) {

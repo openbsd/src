@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.57 2009/05/30 19:50:28 claudio Exp $
+.\"	$OpenBSD: route.8,v 1.58 2009/05/30 21:06:34 claudio Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -147,8 +147,7 @@ the routing tables of all gateway entries.
 When the address family is specified by any one of the
 .Ar family
 modifiers (listed below), only routes having destinations with addresses
-in the
-delineated family will be deleted.
+in the delineated family will be deleted.
 Also, only routes matching a specific interface or priority can be flushed
 by using the
 .Fl iface
@@ -162,7 +161,17 @@ command has the syntax:
 .Bd -filled -offset indent
 .Nm route Op Fl \&dn
 .Cm monitor
+.Op Ar modifiers
 .Ed
+.Pp
+When the address family is specified by any one of the
+.Ar family
+modifiers (listed below), only routes having destinations with addresses
+in the delineated family will be shown.
+If the
+.Fl iface
+modifier is used only interface specific messages (link state changes)
+are shown.
 .Pp
 The
 .Cm show
