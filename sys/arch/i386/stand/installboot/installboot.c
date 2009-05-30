@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.54 2009/04/23 16:39:18 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.55 2009/05/30 23:13:18 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -237,17 +237,19 @@ findopenbsd(int devfd, struct disklabel *dl, off_t mbroff, int *n)
 		if (!dp->dp_size)
 			continue;
 		if (dp->dp_typ == DOSPTYP_OPENBSD) {
-			fprintf(stderr,
-			    "using MBR partition %ld: type 0x%02X offset %d\n",
-			    (long)(dp - mbr.dmbr_parts),
-			    dp->dp_typ, dp->dp_start);
+			if (verbose)
+				fprintf(stderr,
+				    "using MBR partition %ld: type 0x%02X offset %d\n",
+				    (long)(dp - mbr.dmbr_parts),
+				    dp->dp_typ, dp->dp_start);
 			return (dp->dp_start + mbroff);
 		} else if (dp->dp_typ == DOSPTYP_EXTEND ||
 		    dp->dp_typ == DOSPTYP_EXTENDL) {
-			fprintf(stderr,
-			    "extended partition %ld: type 0x%02X offset %d\n",
-			    (long)(dp - mbr.dmbr_parts),
-			    dp->dp_typ, dp->dp_start);
+			if (verbose)
+				fprintf(stderr,
+				    "extended partition %ld: type 0x%02X offset %d\n",
+				    (long)(dp - mbr.dmbr_parts),
+				    dp->dp_typ, dp->dp_start);
 			startoff = (off_t)dp->dp_start + mbroff;
 			start = findopenbsd(devfd, dl, startoff, n);
 			if (start != -1)
