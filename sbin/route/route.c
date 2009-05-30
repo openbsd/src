@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.129 2009/05/30 19:50:28 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.130 2009/05/30 20:03:31 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ void	 mask_addr(union sockunion *, union sockunion *, int);
 int	 inet6_makenetandmask(struct sockaddr_in6 *);
 int	 getaddr(int, char *, struct hostent **);
 void	 getmplslabel(char *, int);
-int	 rtmsg(int, int, int, u_short);
+int	 rtmsg(int, int, int, u_char);
 __dead void usage(char *);
 void	 set_metric(char *, int);
 void	 inet_makenetandmask(u_int32_t, struct sockaddr_in *, int);
@@ -216,7 +216,7 @@ flushroutes(int argc, char **argv)
 	char *buf = NULL, *next, *lim = NULL;
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
-	u_short prio = 0;
+	u_char prio = 0;
 	unsigned int ifindex;
 
 	if (uid)
@@ -375,7 +375,7 @@ newroute(int argc, char **argv)
 	int ishost = 0, ret = 0, attempts, oerrno, flags = RTF_STATIC;
 	int fmask = 0;
 	int key;
-	u_short prio = 0;
+	u_char prio = 0;
 	struct hostent *hp = NULL;
 
 	if (uid)
@@ -1039,7 +1039,7 @@ struct {
 } m_rtmsg;
 
 int
-rtmsg(int cmd, int flags, int fmask, u_short prio)
+rtmsg(int cmd, int flags, int fmask, u_char prio)
 {
 	static int seq;
 	char *cp = m_rtmsg.m_space;
