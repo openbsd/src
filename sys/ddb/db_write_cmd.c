@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_write_cmd.c,v 1.10 2007/11/05 19:23:24 miod Exp $	*/
+/*	$OpenBSD: db_write_cmd.c,v 1.11 2009/05/30 20:58:49 miod Exp $	*/
 /*	$NetBSD: db_write_cmd.c,v 1.6 1996/02/05 01:57:25 christos Exp $	*/
 
 /* 
@@ -62,38 +62,43 @@ db_write_cmd(db_expr_t	address, boolean_t have_addr, db_expr_t count,
 	addr = (db_addr_t) address;
 
 	switch (modif[0]) {
-	    case 'b':
+	case 'b':
 		size = 1;
 		break;
-	    case 'h':
+	case 'h':
 		size = 2;
 		break;
-	    case 'l':
-	    case '\0':
+	case 'l':
+	case '\0':
 		size = 4;
 		break;
-	    default:
+#ifdef __LP64__
+	case 'q':
+		size = 8;
+		break;
+#endif
+	default:
 		size = -1;
 		db_error("Unknown size\n");
 		/*NOTREACHED*/
 	}
 
 	while (db_expression(&new_value)) {
-	    old_value = db_get_value(addr, size, FALSE);
-	    db_printsym(addr, DB_STGY_ANY, db_printf);
-	    db_printf("\t\t%s\t", db_format(tmpfmt, sizeof tmpfmt,
-	      old_value, DB_FORMAT_N, 0, 8));
-	    db_printf("=\t%s\n",  db_format(tmpfmt, sizeof tmpfmt,
-	      new_value, DB_FORMAT_N, 0, 8));
-	    db_put_value(addr, size, new_value);
-	    addr += size;
+		old_value = db_get_value(addr, size, FALSE);
+		db_printsym(addr, DB_STGY_ANY, db_printf);
+		db_printf("\t\t%s\t", db_format(tmpfmt, sizeof tmpfmt,
+		    old_value, DB_FORMAT_N, 0, 8));
+		db_printf("=\t%s\n",  db_format(tmpfmt, sizeof tmpfmt,
+		    new_value, DB_FORMAT_N, 0, 8));
+		db_put_value(addr, size, new_value);
+		addr += size;
 
-	    wrote_one = TRUE;
+		wrote_one = TRUE;
 	}
 
 	if (!wrote_one) {
-	    db_error("Nothing written.\n");
-	    /*NOTREACHED*/
+		db_error("Nothing written.\n");
+		/*NOTREACHED*/
 	}
 
 	db_next = addr;
@@ -101,4 +106,3 @@ db_write_cmd(db_expr_t	address, boolean_t have_addr, db_expr_t count,
 
 	db_skip_to_eol();
 }
-
