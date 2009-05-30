@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.147 2009/04/27 23:39:14 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.148 2009/05/30 22:42:02 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -205,7 +205,7 @@ struct aml_opcode aml_table[] = {
 	{ AMLOP_MUTEX,		"Mutex",	"Nb",	},
 	{ AMLOP_DATAREGION,	"DataRegion",	"Nttt",	},
 	{ AMLOP_OPREGION,	"OpRegion",	"Nbii",	},
-	{ AMLOP_SCOPE,		"Scope",	"pNT",	},
+	{ AMLOP_SCOPE,		"Scope",	"pnT",	},
 	{ AMLOP_DEVICE,		"Device",	"pNT",	},
 	{ AMLOP_POWERRSRC,	"Power Resource", "pNbwT",},
 	{ AMLOP_THERMALZONE,	"ThermalZone",	"pNT",	},
@@ -1439,6 +1439,14 @@ struct aml_defval {
 	{ "_REV", AML_OBJTYPE_INTEGER, 2, NULL },
 	{ "_GL", AML_OBJTYPE_MUTEX, 1, NULL, &aml_global_lock },
 	{ "_OSI", AML_OBJTYPE_METHOD, 1, aml_callosi },
+	
+	/* Create default scopes */
+	{ "_GPE" },
+	{ "_PR_" },
+	{ "_SB_" },
+	{ "_TZ_" },
+	{ "_SI_" },
+
 	{ NULL }
 };
 
@@ -3895,6 +3903,10 @@ aml_xparse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_SCOPE:
 		/* Scope: NT */
 		rv = opargs[0];
+		if (rv->type == AML_OBJTYPE_NAMEREF) {
+			printf("Undefined scope: %s\n", aml_getname(rv->v_nameref));
+			break;
+		}
 		mscope = aml_xpushscope(scope, opargs[1], rv->node, opcode);
 		break;
 	case AMLOP_DEVICE:
