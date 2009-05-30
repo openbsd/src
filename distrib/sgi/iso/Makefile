@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2009/05/23 18:20:37 miod Exp $
+#	$OpenBSD: Makefile,v 1.12 2009/05/30 04:01:29 miod Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -11,7 +11,9 @@ RELDIR?=	/home/rel-${MACHINE}
 BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 		${RELDIR}/etc${OSrev}.tgz ${RELDIR}/game${OSrev}.tgz \
 		${RELDIR}/man${OSrev}.tgz ${RELDIR}/misc${OSrev}.tgz \
-		${RELDIR}/bsd ${RELDIR}/bsd.rd \
+		${RELDIR}/bsd.IP27 ${RELDIR}/bsd.rd.IP27 \
+		${RELDIR}/bsd.IP30 ${RELDIR}/bsd.rd.IP30 \
+		${RELDIR}/bsd.IP32 ${RELDIR}/bsd.rd.IP32 \
 		${RELDIR}/INSTALL.${MACHINE}
 XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xetc${OSrev}.tgz \
 		${RELXDIR}/xfont${OSrev}.tgz ${RELXDIR}/xshare${OSrev}.tgz \
@@ -29,17 +31,13 @@ ${CDROM}:
 	-rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/
 
-	cp ${DESTDIR}/usr/mdec/boot32 ${.OBJDIR}/boot32
-	cp ${DESTDIR}/usr/mdec/boot64 ${.OBJDIR}/boot64
-	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD} > ${.OBJDIR}/bsd
-
 	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=2048b count=224
 	vnconfig -v -c -t cdroot svnd0 ${.OBJDIR}/${CDROM}
 
 	/usr/mdec/sgivol -i -h 80 svnd0
-	/usr/mdec/sgivol -w boot32 ${.OBJDIR}/boot32 svnd0
+	/usr/mdec/sgivol -w boot32 ${DESTDIR}/usr/mdec/boot32 svnd0
 	/usr/mdec/sgivol -l boot32 sashARCS svnd0
-	/usr/mdec/sgivol -w boot64 ${.OBJDIR}/boot64 svnd0
+	/usr/mdec/sgivol -w boot64 ${DESTDIR}/usr/mdec/boot64 svnd0
 	/usr/mdec/sgivol -l boot64 sash64 svnd0
 
 	disklabel -w svnd0 cdroot "OpenBSD/sgi     "
@@ -47,13 +45,17 @@ ${CDROM}:
 	mount /dev/svnd0a ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
-	cp ${.OBJDIR}/bsd ${.OBJDIR}/cd-dir/bsd
-	ln ${.OBJDIR}/cd-dir/bsd ${.OBJDIR}/cd-dir/bsd.rd
-	cp ${.OBJDIR}/boot32 ${.OBJDIR}/cd-dir/boot32
-	ln ${.OBJDIR}/boot32 ${.OBJDIR}/cd-dir/boot-IP32
-	cp ${.OBJDIR}/boot64 ${.OBJDIR}/cd-dir/boot64
-	ln ${.OBJDIR}/boot64 ${.OBJDIR}/cd-dir/boot-IP27
-	ln ${.OBJDIR}/boot64 ${.OBJDIR}/cd-dir/boot-IP30
+	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD}.IP27> \
+	    ${.OBJDIR}/cd-dir/bsd.rd.IP27
+	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD}.IP30> \
+	    ${.OBJDIR}/cd-dir/bsd.rd.IP30
+	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD}.IP32> \
+	    ${.OBJDIR}/cd-dir/bsd.rd.IP32
+	cp ${DESTDIR}/usr/mdec/boot32 ${.OBJDIR}/cd-dir/boot32
+	cp ${DESTDIR}/usr/mdec/boot64 ${.OBJDIR}/cd-dir/boot64
+	ln ${.OBJDIR}/cd-dir/boot64 ${.OBJDIR}/cd-dir/boot-IP27
+	ln ${.OBJDIR}/cd-dir/boot64 ${.OBJDIR}/cd-dir/boot-IP30
+	ln ${.OBJDIR}/cd-dir/boot32 ${.OBJDIR}/cd-dir/boot-IP32
 
 	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
@@ -75,7 +77,7 @@ unconfig:
 	-vnconfig -u svnd0
 
 clean cleandir:
-	/bin/rm -f ${CDROM} bsd boot32 boot64 boot-IP27 boot-IP30 boot-IP32
+	/bin/rm -f ${CDROM}
 	rm -rf cd-dir
 
 .include <bsd.obj.mk>

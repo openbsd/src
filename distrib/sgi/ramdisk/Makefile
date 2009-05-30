@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2009/05/14 21:16:38 miod Exp $
+#	$OpenBSD: Makefile,v 1.11 2009/05/30 04:01:29 miod Exp $
 
 REV=		${OSrev}
 
@@ -33,21 +33,47 @@ all ${IMAGE}:
 	@false
 .else
 
-all:	${BSD_RD}
+all:	${BSD_RD}.IP27 ${BSD_RD}.IP30 ${BSD_RD}.IP32
 
-${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
-	cp bsd bsd.rd
-	${.OBJDIR}/rdsetroot ${BSD_RD} ${IMAGE}
+${BSD_RD}.IP27: ${CBIN} ${IMAGE} bsd.IP27 rdsetroot
+	cp bsd.IP27 ${BSD_RD}.IP27
+	${.OBJDIR}/rdsetroot ${BSD_RD}.IP27 ${IMAGE}
+
+${BSD_RD}.IP30: ${CBIN} ${IMAGE} bsd.IP30 rdsetroot
+	cp bsd.IP30 ${BSD_RD}.IP30
+	${.OBJDIR}/rdsetroot ${BSD_RD}.IP30 ${IMAGE}
+
+${BSD_RD}.IP32: ${CBIN} ${IMAGE} bsd.IP32 rdsetroot
+	cp bsd.IP32 ${BSD_RD}.IP32
+	${.OBJDIR}/rdsetroot ${BSD_RD}.IP32 ${IMAGE}
 
 ${IMAGE}: rd_setup do_files rd_teardown
 
 .endif
 
-bsd:
+bsd.IP27:
+.ifndef NOBUILD
+	cd ${.TOP}/../../sys/arch/sgi/conf && config RAMDISK-IP27
+	cd ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP27 && \
+	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
+.endif
+	cp ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP27/bsd bsd.IP27
+
+bsd.IP30:
+.ifndef NOBUILD
+	cd ${.TOP}/../../sys/arch/sgi/conf && config RAMDISK-IP30
+	cd ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP30 && \
+	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
+.endif
+	cp ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP30/bsd bsd.IP30
+
+bsd.IP32:
+.ifndef NOBUILD
 	cd ${.TOP}/../../sys/arch/sgi/conf && config RAMDISK-IP32
 	cd ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP32 && \
 	    ${MAKE} clean && ${MAKE} depend && ${MAKE}
-	cp ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP32/bsd bsd
+.endif
+	cp ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP32/bsd bsd.IP32
 
 rd_setup: 
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
@@ -89,11 +115,14 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	*.o *.lo *.c bsd ${BSD_RD} rdsetroot
+	    bsd.IP27 ${BSD_RD}.IP27 \
+	    bsd.IP30 ${BSD_RD}.IP30 \
+	    bsd.IP32 ${BSD_RD}.IP32 \
+	    *.o *.lo *.c rdsetroot
 
 .ifdef RELEASEDIR
 install:
-	cp ${BSD_RD} ${RELEASEDIR}
+	cp ${BSD_RD}.IP27 ${BSD_RD}.IP30 ${BSD_RD}.IP32 ${RELEASEDIR}
 .endif
 
 .include <bsd.obj.mk>

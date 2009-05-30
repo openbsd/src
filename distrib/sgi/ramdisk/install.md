@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.17 2009/05/18 20:57:27 miod Exp $
+#	$OpenBSD: install.md,v 1.18 2009/05/30 04:01:29 miod Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,8 +33,20 @@
 #
 
 ARCH=ARCH
+IPARCH=`sysctl -n hw.model`
+
+MDSETS="bsd.${IPARCH} bsd.rd.${IPARCH}"
+DEFAULTSETS=${MDSETS}
+SANESETS="bsd.${IPARCH}"
 
 md_installboot() {
+	cd /mnt
+	if [[ -f bsd.${IPARCH} ]]; then
+		mv bsd.${IPARCH} bsd
+	fi
+	if [[ -f bsd.rd.${IPARCH} ]]; then
+		mv bsd.rd.${IPARCH} bsd.rd
+	fi
 }
 
 md_prep_disklabel()
