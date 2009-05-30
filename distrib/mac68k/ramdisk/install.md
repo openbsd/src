@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.33 2009/05/11 17:13:07 deraadt Exp $
+#       $OpenBSD: install.md,v 1.34 2009/05/30 22:12:42 krw Exp $
 #
 # Copyright (c) 2002, Miodrag Vallat.
 # All rights reserved.
@@ -72,13 +72,6 @@ This disk has been setup under MacOS. You will now edit a MacOS partition
 table. Be careful not to remove the MacOS partitions in use.
 __EOT
 		pdisk /dev/${_disk}c
-		return
-	fi
-
-	cat <<__EOT
-This disk is not shared with MacOS. You will now edit a regular OpenBSD
-disklabel.
-__EOT
 	fi
 
 	_f=/tmp/fstab.$_disk
