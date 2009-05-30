@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.33 2009/05/15 21:51:58 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.34 2009/05/30 18:46:06 jsg Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -482,23 +482,29 @@ ppb_hotplug_remove(void *arg1, void *arg2)
 		 * XXX Allocate the entire window with EX_CONFLICTOK
 		 * such that we can easily free it.
 		 */
-		extent_alloc_region(sc->sc_ioex, sc->sc_iobase,
-		    sc->sc_iolimit - sc->sc_iobase + 1,
-		    EX_NOWAIT | EX_CONFLICTOK);
-		extent_free(sc->sc_ioex, sc->sc_iobase,
-		    sc->sc_iolimit - sc->sc_iobase + 1, EX_NOWAIT);
+		if (sc->sc_ioex != NULL) {
+			extent_alloc_region(sc->sc_ioex, sc->sc_iobase,
+			    sc->sc_iolimit - sc->sc_iobase + 1,
+			    EX_NOWAIT | EX_CONFLICTOK);
+			extent_free(sc->sc_ioex, sc->sc_iobase,
+			    sc->sc_iolimit - sc->sc_iobase + 1, EX_NOWAIT);
+		}
 
-		extent_alloc_region(sc->sc_memex, sc->sc_membase,
-		    sc->sc_memlimit - sc->sc_membase + 1,
-		    EX_NOWAIT | EX_CONFLICTOK);
-		extent_free(sc->sc_memex, sc->sc_membase,
-		    sc->sc_memlimit - sc->sc_membase + 1, EX_NOWAIT);
+		if (sc->sc_memex != NULL) {
+			extent_alloc_region(sc->sc_memex, sc->sc_membase,
+			    sc->sc_memlimit - sc->sc_membase + 1,
+			    EX_NOWAIT | EX_CONFLICTOK);
+			extent_free(sc->sc_memex, sc->sc_membase,
+			    sc->sc_memlimit - sc->sc_membase + 1, EX_NOWAIT);
+		}
 
-		extent_alloc_region(sc->sc_pmemex, sc->sc_pmembase,
-		    sc->sc_pmemlimit - sc->sc_pmembase + 1,
-		    EX_NOWAIT | EX_CONFLICTOK);
-		extent_free(sc->sc_pmemex, sc->sc_pmembase,
-		    sc->sc_pmemlimit - sc->sc_pmembase + 1, EX_NOWAIT);
+		if (sc->sc_pmemex != NULL) {
+			extent_alloc_region(sc->sc_pmemex, sc->sc_pmembase,
+			    sc->sc_pmemlimit - sc->sc_pmembase + 1,
+			    EX_NOWAIT | EX_CONFLICTOK);
+			extent_free(sc->sc_pmemex, sc->sc_pmembase,
+			    sc->sc_pmemlimit - sc->sc_pmembase + 1, EX_NOWAIT);
+		}
 	}
 }
 
