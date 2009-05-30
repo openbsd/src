@@ -1,4 +1,4 @@
-/* $OpenBSD: prebind.c,v 1.10 2008/04/09 21:45:26 kurt Exp $ */
+/* $OpenBSD: prebind.c,v 1.11 2009/05/30 23:37:03 drahn Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@dalerahn.com>
  *
@@ -495,8 +495,6 @@ elf_load_object(void *pexe, const char *name)
 	Elf_Dyn *dynp = NULL, *odynp;
 	Elf_Ehdr *ehdr;
 	Elf_Phdr *phdr;
-	const Elf_Sym	*symt;
-	const char	*strt;
 	Elf_Addr lbase;
 	Elf_Word *needed_list;
 	int needed_cnt = 0, i;
@@ -583,9 +581,6 @@ elf_load_object(void *pexe, const char *name)
 	if (object->Dyn.info[DT_JMPREL])
 		map_to_virt(phdr, ehdr, lbase, &object->Dyn.info[DT_JMPREL]);
 
-	symt = object->dyn.symtab;
-	strt = object->dyn.strtab;
-
 	{
 		Elf_Sym *sym;
 		char *str;
@@ -623,7 +618,6 @@ elf_load_object(void *pexe, const char *name)
 		}
 		bcopy(object->dyn.strtab, str, object->dyn.strsz);
 		object->dyn.strtab = str;
-		strt = str;
 
 		sym = calloc(object->nchains, sizeof(Elf_Sym));
 		if (sym == NULL) {
@@ -634,7 +628,6 @@ elf_load_object(void *pexe, const char *name)
 		bcopy(object->dyn.symtab, sym,
 		    object->nchains * sizeof(Elf_Sym));
 		object->dyn.symtab = sym;
-		symt = sym;
 
 		if (object->dyn.relsz != 0) {
 			rel = malloc(object->dyn.relsz);
@@ -1097,7 +1090,12 @@ elf_find_symbol_rel(const char *name, struct elf_object *object,
 			symcache[idx].sym = ref_sym;
 		}
 	} else {
-		printf("symbol not found %s\n", name);
+		/* It is not an error to have an undefined weak symbol */
+		const Elf_Sym *sym;
+		sym = object->dyn.symtab + ELF_R_SYM(rel->r_info);
+		if (ELF_ST_BIND(sym->st_info) != STB_WEAK) {
+			printf("symbol not found %s\n", name);
+		}
 	}
 }
 
@@ -1161,7 +1159,12 @@ elf_find_symbol_rela(const char *name, struct elf_object *object,
 			symcache[idx].sym = ref_sym;
 		}
 	} else {
-		printf("symbol not found %s\n", name);
+		/* It is not an error to have an undefined weak symbol */
+		const Elf_Sym *sym;
+		sym = object->dyn.symtab + ELF_R_SYM(rela->r_info);
+		if (ELF_ST_BIND(sym->st_info) != STB_WEAK) {
+			printf("symbol not found %s\n", name);
+		}
 	}
 }
 
