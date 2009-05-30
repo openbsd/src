@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.51 2009/05/30 16:30:33 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.52 2009/05/30 16:32:59 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -371,6 +371,7 @@ mta_dispatch_runner(int sig, short event, void *p)
 			TAILQ_INIT(&batchp->messages);
 			SPLAY_INSERT(batchtree, &env->batch_queue, batchp);
 
+			env->stats->mta.sessions++;
 			env->stats->mta.sessions_active++;
 
 			break;
