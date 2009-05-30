@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.133 2009/05/11 14:17:55 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.134 2009/05/30 21:20:34 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -257,22 +257,6 @@ sr_meta_probe(struct sr_discipline *sd, dev_t *dt, int no_chunk)
 	cl = &sd->sd_vol.sv_chunk_list;
 
 	for (d = 0, prevf = SR_META_F_INVALID; d < no_chunk; d++) {
-		dev = dt[d];
-		sr_meta_getdevname(sc, dev, devname, sizeof(devname));
-		bdsw = bdevsw_lookup(dev);
-
-		/*
-		 * XXX leaving dev open for now; move this to attach and figure
-		 * out the open/close dance for unwind.
-		 */
-		error = bdsw->d_open(dev, FREAD | FWRITE , S_IFBLK, curproc);
-		if (error) {
-			DNPRINTF(SR_D_META,"%s: sr_meta_probe can't open %s\n",
-			    DEVNAME(sc), devname);
-			/* XXX device isn't open but will be closed anyway */
-			goto unwind;
-		}
-
 		ch_entry = malloc(sizeof(struct sr_chunk), M_DEVBUF,
 		    M_WAITOK | M_ZERO);
 		/* keep disks in user supplied order */
@@ -281,9 +265,32 @@ sr_meta_probe(struct sr_discipline *sd, dev_t *dt, int no_chunk)
 		else
 			SLIST_INSERT_HEAD(cl, ch_entry, src_link);
 		ch_prev = ch_entry;
-		strlcpy(ch_entry->src_devname, devname,
-		   sizeof(ch_entry->src_devname));
+		dev = dt[d];
 		ch_entry->src_dev_mm = dev;
+
+		if (dev == NODEV) {
+			ch_entry->src_meta.scm_status = BIOC_SDOFFLINE;
+			continue;
+		} else {
+			sr_meta_getdevname(sc, dev, devname, sizeof(devname));
+			bdsw = bdevsw_lookup(dev);
+
+			/*
+			 * XXX leaving dev open for now; move this to attach
+			 * and figure out the open/close dance for unwind.
+			 */
+			error = bdsw->d_open(dev, FREAD | FWRITE , S_IFBLK,
+			    curproc);
+			if (error) {
+				DNPRINTF(SR_D_META,"%s: sr_meta_probe can't "
+				    "open %s\n", DEVNAME(sc), devname);
+				/* dev isn't open but will be closed anyway */
+				goto unwind;
+			}
+
+			strlcpy(ch_entry->src_devname, devname,
+			   sizeof(ch_entry->src_devname));
+		}
 
 		/* determine if this is a device we understand */
 		for (i = 0, found = SR_META_F_INVALID; smd[i].smd_probe; i++) {
@@ -295,6 +302,7 @@ sr_meta_probe(struct sr_discipline *sd, dev_t *dt, int no_chunk)
 				break;
 			}
 		}
+
 		if (found == SR_META_F_INVALID)
 			goto unwind;
 		if (prevf == SR_META_F_INVALID)
@@ -924,7 +932,7 @@ sr_boot_assembly(struct sr_softc *sc)
 	struct sr_metadata_list *mle, *mle2;
 	struct sr_metadata	*m1, *m2;
 	struct bioc_createraid	bc;
-	int			rv = 0, no_dev;
+	int			rv = 0, no_dev, i;
 	dev_t			*dt = NULL;
 
 	DNPRINTF(SR_D_META, "%s: sr_boot_assembly\n", DEVNAME(sc));
@@ -953,7 +961,9 @@ sr_boot_assembly(struct sr_softc *sc)
 	 * roam disks correctly.  replace this with something smarter that
 	 * orders disks by volid, chunkid and uuid.
 	 */
-	dt = malloc(BIOC_CRMAXLEN, M_DEVBUF, M_WAITOK);
+	dt = malloc(BIOC_CRMAXLEN * sizeof(dev_t), M_DEVBUF, M_WAITOK);
+	for (i = 0; i < BIOC_CRMAXLEN; i++)
+		dt[i] = NODEV; /* mark device as illegal */
 	SLIST_FOREACH(mle, &mlh, sml_link) {
 		/* chunk used already? */
 		if (mle->sml_used)
@@ -961,7 +971,6 @@ sr_boot_assembly(struct sr_softc *sc)
 
 		no_dev = 0;
 		m1 = (struct sr_metadata *)&mle->sml_metadata;
-		bzero(dt, BIOC_CRMAXLEN);
 		SLIST_FOREACH(mle2, &mlh, sml_link) {
 			/* chunk used already? */
 			if (mle2->sml_used)
@@ -979,7 +988,7 @@ sr_boot_assembly(struct sr_softc *sc)
 				continue;
 
 			/* sanity */
-			if (dt[m2->ssdi.ssd_chunk_id]) {
+			if (dt[m2->ssdi.ssd_chunk_id] != NODEV) {
 				printf("%s: chunk id already in use; can not "
 				    "assemble volume\n", DEVNAME(sc));
 				goto unwind;
@@ -989,10 +998,10 @@ sr_boot_assembly(struct sr_softc *sc)
 			mle2->sml_used = 1;
 		}
 		if (m1->ssdi.ssd_chunk_no != no_dev) {
-			printf("%s: not assembling partial disk that used to "
-			    "be volume %d\n", DEVNAME(sc),
-			    m1->ssdi.ssd_volid);
-			continue;
+			printf("%s: not all chunks were provided; "
+			    "attempting to bring volume %d online\n",
+			    DEVNAME(sc), m1->ssdi.ssd_volid);
+			no_dev = m1->ssdi.ssd_chunk_no;
 		}
 
 		bzero(&bc, sizeof(bc));
@@ -1096,6 +1105,9 @@ sr_meta_native_attach(struct sr_discipline *sd, int force)
 
 	sr = not_sr = d = 0;
 	SLIST_FOREACH(ch_entry, cl, src_link) {
+		if (ch_entry->src_dev_mm == NODEV)
+			continue;
+
 		if (sr_meta_native_read(sd, ch_entry->src_dev_mm, md, NULL)) {
 			printf("%s: could not read native metadata\n",
 			    DEVNAME(sc));
@@ -1149,9 +1161,8 @@ sr_meta_native_attach(struct sr_discipline *sd, int force)
 	}
 
 	if (expected != sr && !force && expected != -1) {
-		/* XXX make this smart so that we can bring up degraded disks */
-		printf("%s: not all chunks were provided\n", DEVNAME(sc));
-		goto bad;
+		DNPRINTF(SR_D_META, "%s: not all chunks were provided, trying "
+		    "anyway\n", DEVNAME(sc));
 	}
 
 	rv = 0;
@@ -2050,6 +2061,11 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	if (disk) {
 		/* set volume status */
 		sd->sd_set_vol_state(sd);
+		if (sd->sd_vol_status == BIOC_SVOFFLINE) {
+			printf("%s: %s offline, will not be brought online\n",
+			    DEVNAME(sc), sd->sd_meta->ssd_devname);
+			goto unwind;
+		}
 
 		/* setup scsi midlayer */
 		sd->sd_link.openings = sd->sd_max_wu;
