@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2009/05/27 16:51:26 jacekm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.36 2009/05/30 23:53:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -266,7 +266,7 @@ main		: QUEUE INTERVAL interval	{
 			if ($7)
 				flags |= F_AUTH;
 
-			if (ssl_load_certfile(conf, cert) < 0) {
+			if (ssl_load_certfile(conf, cert, F_SCERT) < 0) {
 				log_warnx("warning: could not load cert: %s, "
 				    "no SSL/TLS/AUTH support", cert);
 				if ($5) {
@@ -745,11 +745,12 @@ action		: DELIVER TO MAILDIR STRING	{
 		| RELAY				{
 			rule->r_action = A_RELAY;
 		}
-		| RELAY VIA STRING port ssl auth {
+		| RELAY VIA STRING port ssl certname auth {
 			rule->r_action = A_RELAYVIA;
 
-			if ($5 == 0 && $6) {
-				yyerror("error: auth over insecure channel");
+			if ($5 == 0 && ($6 != NULL || $7)) {
+				yyerror("error: must specify tls, smtps, or ssl");
+				free($6);
 				free($3);
 				YYERROR;
 			}
@@ -762,10 +763,25 @@ action		: DELIVER TO MAILDIR STRING	{
 			rule->r_value.relayhost.port = $4;
 			rule->r_value.relayhost.flags |= $5;
 
-			if ($6)
+			if ($7)
 				rule->r_value.relayhost.flags |= F_AUTH;
 
+			if ($6 != NULL) {
+				if (ssl_load_certfile(conf, $6, F_CCERT) < 0) {
+					yyerror("cannot load certificate: %s",
+					    $6);
+					free($6);
+					free($3);
+					YYERROR;
+				}
+				if (strlcpy(rule->r_value.relayhost.cert, $6,
+					sizeof(rule->r_value.relayhost.cert))
+				    >= sizeof(rule->r_value.relayhost.cert))
+					fatal("certificate path too long");
+			}
+
 			free($3);
+			free($6);
 		}
 		;
 

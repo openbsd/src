@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.52 2009/05/30 16:32:59 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.53 2009/05/30 23:53:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -106,6 +106,40 @@ mta_dispatch_parent(int sig, short event, void *p)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_CONF_START:
+			if (env->sc_flags & SMTPD_CONFIGURING)
+				break;
+			env->sc_flags |= SMTPD_CONFIGURING;
+			break;
+		case IMSG_CONF_SSL: {
+			struct ssl	*s;
+			struct ssl	*x_ssl;
+
+			if (!(env->sc_flags & SMTPD_CONFIGURING))
+				break;
+
+			if ((s = calloc(1, sizeof(*s))) == NULL)
+				fatal(NULL);
+			x_ssl = imsg.data;
+			(void)strlcpy(s->ssl_name, x_ssl->ssl_name,
+			    sizeof(s->ssl_name));
+			s->ssl_cert_len = x_ssl->ssl_cert_len;
+			if ((s->ssl_cert =
+			    strdup((char *)imsg.data + sizeof(*s))) == NULL)
+				fatal(NULL);
+			s->ssl_key_len = x_ssl->ssl_key_len;
+			if ((s->ssl_key = strdup((char *)imsg.data +
+			    (sizeof(*s) + s->ssl_cert_len))) == NULL)
+				fatal(NULL);
+
+			SPLAY_INSERT(ssltree, &env->sc_ssl, s);
+			break;
+		}
+		case IMSG_CONF_END:
+			if (!(env->sc_flags & SMTPD_CONFIGURING))
+				break;
+			env->sc_flags &= ~SMTPD_CONFIGURING;
+			break;
 		default:
 			log_warnx("mta_dispatch_parent: got imsg %d",
 			    imsg.hdr.type);
@@ -476,6 +510,7 @@ mta(struct smtpd *env)
 	struct event	 ev_sigterm;
 
 	struct peer peers[] = {
+		{ PROC_PARENT,	mta_dispatch_parent },
 		{ PROC_QUEUE,	mta_dispatch_queue },
 		{ PROC_RUNNER,	mta_dispatch_runner },
 		{ PROC_LKA,	mta_dispatch_lka }
@@ -816,6 +851,8 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 
 	case 535:
 		/* Authentication failed*/
+	case 554:
+		/* Relaying denied */
 	case 552:
 	case 553:
 		flags |= F_ISPROTOERROR;

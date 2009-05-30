@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.11 2009/05/28 08:43:45 jacekm Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.12 2009/05/30 23:53:41 gilles Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 28 2009 $
+.Dd $Mdocdate: May 30 2009 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -245,6 +245,7 @@ The routing decision is based on the DNS system.
 .Ar host
 .Op Ic port Ar port
 .Op Ic tls | smtps | ssl
+.Op Ic certificate Ar name
 .Op Ic enable auth
 .Xc
 Message is relayed through the specified
@@ -261,6 +262,14 @@ Special keyword,
 .Ic ssl ,
 means any of the two is acceptable:
 SMTPS is tried first, STARTTLS second.
+If a certificate
+.Ar name
+is specified and exists in the
+.Pa /etc/mail/certs
+directory with a .crt extension, it will be used if the remote server
+requests a client certificate.
+Creation of certificates is documented in
+.Xr starttls 8 .
 .Pp
 If SMTPAUTH session with
 .Ar host

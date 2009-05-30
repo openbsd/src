@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.16 2009/05/24 14:22:24 jacekm Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.17 2009/05/30 23:53:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -337,7 +337,7 @@ ssl_ctx_create(void)
 }
 
 int
-ssl_load_certfile(struct smtpd *env, const char *name)
+ssl_load_certfile(struct smtpd *env, const char *name, u_int8_t flags)
 {
 	struct ssl	*s;
 	struct ssl	 key;
@@ -350,12 +350,15 @@ ssl_load_certfile(struct smtpd *env, const char *name)
 	}
 
 	s = SPLAY_FIND(ssltree, &env->sc_ssl, &key);
-	if (s != NULL)
+	if (s != NULL) {
+		s->flags |= flags;
 		return 0;
+	}
 
 	if ((s = calloc(1, sizeof(*s))) == NULL)
 		fatal(NULL);
 
+	s->flags = flags;
 	(void)strlcpy(s->ssl_name, key.ssl_name, sizeof(s->ssl_name));
 
 	if (! bsnprintf(certfile, sizeof(certfile),
@@ -561,9 +564,31 @@ void
 ssl_client_init(struct session *s)
 {
 	SSL_CTX		*ctx;
+	struct ssl	 key;
+	struct ssl	*ssl;
 
 	log_debug("ssl_client_init: preparing SSL");
 	ctx = ssl_ctx_create();
+
+	if (s->batch->rule.r_value.relayhost.cert[0] != '\0') {
+		if (strlcpy(key.ssl_name,
+			s->batch->rule.r_value.relayhost.cert,
+			sizeof(key.ssl_name)) >= sizeof(key.ssl_name))
+			log_warnx("warning: certificate name too long: %s",
+			    s->batch->rule.r_value.relayhost.cert);
+		else if ((ssl = SPLAY_FIND(ssltree, &s->s_env->sc_ssl,
+			    &key)) == NULL)
+			log_warnx("warning: failed to find client "
+			    "certificate: %s", key.ssl_name);
+		else if (!ssl_ctx_use_certificate_chain(ctx, ssl->ssl_cert,
+			ssl->ssl_cert_len))
+			ssl_error("ssl_client_init");
+		else if (!ssl_ctx_use_private_key(ctx, ssl->ssl_key,
+			ssl->ssl_key_len))
+			ssl_error("ssl_client_init");
+		else if (!SSL_CTX_check_private_key(ctx))
+			ssl_error("ssl_client_init");
+	}
 
 	s->s_ssl = SSL_new(ctx);
 	if (s->s_ssl == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.119 2009/05/28 08:50:08 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.120 2009/05/30 23:53:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -85,6 +85,9 @@
 #define F_AUTH			 0x04
 #define F_SSL			(F_SMTPS|F_STARTTLS)
 
+#define F_SCERT			0x01
+#define F_CCERT			0x02
+
 #define ADVERTISE_TLS(s) \
 	((s)->s_l->flags & F_STARTTLS && !((s)->s_flags & F_SECURE))
 
@@ -101,6 +104,7 @@ struct relayhost {
 	u_int8_t flags;
 	char hostname[MAXHOSTNAMELEN];
 	u_int16_t port;
+	char cert[PATH_MAX];
 };
 
 struct mxhost {
@@ -579,6 +583,7 @@ struct ssl {
 	off_t			 ssl_cert_len;
 	char			*ssl_key;
 	off_t			 ssl_key_len;
+	u_int8_t		 flags;
 };
 
 struct listener {
@@ -979,7 +984,7 @@ void	 ssl_transaction(struct session *);
 
 void	 ssl_session_init(struct session *);
 void	 ssl_session_destroy(struct session *);
-int	 ssl_load_certfile(struct smtpd *, const char *);
+int	 ssl_load_certfile(struct smtpd *, const char *, u_int8_t);
 void	 ssl_setup(struct smtpd *, struct listener *);
 int	 ssl_cmp(struct ssl *, struct ssl *);
 SPLAY_PROTOTYPE(ssltree, ssl, ssl_nodes, ssl_cmp);

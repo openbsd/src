@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.68 2009/05/30 23:28:52 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.69 2009/05/30 23:53:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -55,10 +55,12 @@ __dead void	 usage(void);
 void		 parent_shutdown(struct smtpd *);
 void		 parent_send_config(int, short, void *);
 void		 parent_send_config_listeners(struct smtpd *);
+void		 parent_send_config_client_certs(struct smtpd *);
 void		 parent_send_config_ruleset(struct smtpd *, int);
 void		 parent_dispatch_lka(int, short, void *);
 void		 parent_dispatch_mda(int, short, void *);
 void		 parent_dispatch_mfa(int, short, void *);
+void		 parent_dispatch_mta(int, short, void *);
 void		 parent_dispatch_smtp(int, short, void *);
 void		 parent_dispatch_runner(int, short, void *);
 void		 parent_dispatch_control(int, short, void *);
@@ -117,6 +119,7 @@ void
 parent_send_config(int fd, short event, void *p)
 {
 	parent_send_config_listeners(p);
+	parent_send_config_client_certs(p);
 	parent_send_config_ruleset(p, PROC_MFA);
 	parent_send_config_ruleset(p, PROC_LKA);
 }
@@ -134,6 +137,9 @@ parent_send_config_listeners(struct smtpd *env)
 	    0, 0, -1, NULL, 0);
 
 	SPLAY_FOREACH(s, ssltree, &env->sc_ssl) {
+		if (!(s->flags & F_SCERT))
+			continue;
+
 		iov[0].iov_base = s;
 		iov[0].iov_len = sizeof(*s);
 		iov[1].iov_base = s->ssl_cert;
@@ -158,6 +164,35 @@ parent_send_config_listeners(struct smtpd *env)
 	}
 
 	imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_CONF_END,
+	    0, 0, -1, NULL, 0);
+}
+
+void
+parent_send_config_client_certs(struct smtpd *env)
+{
+	struct ssl		*s;
+	struct iovec		 iov[3];
+
+	log_debug("parent_send_config_client_certs: configuring smtp");
+	imsg_compose(env->sc_ibufs[PROC_MTA], IMSG_CONF_START,
+	    0, 0, -1, NULL, 0);
+
+	SPLAY_FOREACH(s, ssltree, &env->sc_ssl) {
+		if (!(s->flags & F_CCERT))
+			continue;
+
+		iov[0].iov_base = s;
+		iov[0].iov_len = sizeof(*s);
+		iov[1].iov_base = s->ssl_cert;
+		iov[1].iov_len = s->ssl_cert_len;
+		iov[2].iov_base = s->ssl_key;
+		iov[2].iov_len = s->ssl_key_len;
+
+		imsg_composev(env->sc_ibufs[PROC_MTA], IMSG_CONF_SSL, 0, 0, -1,
+		    iov, nitems(iov));
+	}
+
+	imsg_compose(env->sc_ibufs[PROC_MTA], IMSG_CONF_END,
 	    0, 0, -1, NULL, 0);
 }
 
@@ -298,6 +333,52 @@ parent_dispatch_mfa(int fd, short event, void *p)
 			log_warnx("parent_dispatch_mfa: got imsg %d",
 			    imsg.hdr.type);
 			fatalx("parent_dispatch_mfa: unexpected imsg");
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(ibuf);
+}
+
+void
+parent_dispatch_mta(int fd, short event, void *p)
+{
+	struct smtpd		*env = p;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	ssize_t			 n;
+
+	ibuf = env->sc_ibufs[PROC_MTA];
+	switch (event) {
+	case EV_READ:
+		if ((n = imsg_read(ibuf)) == -1)
+			fatal("imsg_read_error");
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			event_del(&ibuf->ev);
+			event_loopexit(NULL);
+			return;
+		}
+		break;
+	case EV_WRITE:
+		if (msgbuf_write(&ibuf->w) == -1)
+			fatal("msgbuf_write");
+		imsg_event_add(ibuf);
+		return;
+	default:
+		fatalx("unknown event");
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatalx("parent_dispatch_mta: imsg_get error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		default:
+			log_warnx("parent_dispatch_mta: got imsg %d",
+			    imsg.hdr.type);
+			fatalx("parent_dispatch_mta: unexpected imsg");
 		}
 		imsg_free(&imsg);
 	}
@@ -615,6 +696,7 @@ parent_dispatch_control(int sig, short event, void *p)
 				env->sc_rules = newenv.sc_rules;
 				env->sc_ssl = newenv.sc_ssl;
 				
+				parent_send_config_client_certs(env);
 				parent_send_config_ruleset(env, PROC_MFA);
 				parent_send_config_ruleset(env, PROC_LKA);
 				imsg_compose(env->sc_ibufs[PROC_SMTP],
@@ -734,6 +816,7 @@ main(int argc, char *argv[])
 		{ PROC_LKA,	parent_dispatch_lka },
 		{ PROC_MDA,	parent_dispatch_mda },
 		{ PROC_MFA,	parent_dispatch_mfa },
+		{ PROC_MTA,	parent_dispatch_mta },
 		{ PROC_SMTP,	parent_dispatch_smtp },
 		{ PROC_RUNNER,	parent_dispatch_runner }
 	};
