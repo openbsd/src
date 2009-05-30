@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.28 2009/05/17 12:25:15 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.29 2009/05/30 18:27:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -51,23 +51,19 @@ RB_HEAD(pt_tree, pt_entry);
 RB_PROTOTYPE(pt_tree, pt_entry, pt_e, pt_prefix_cmp);
 RB_GENERATE(pt_tree, pt_entry, pt_e, pt_prefix_cmp);
 
-struct pt_tree	pttable4;
-struct pt_tree	pttable6;
+struct pt_tree	pttable;
 
 void
 pt_init(void)
 {
-	RB_INIT(&pttable4);
-	RB_INIT(&pttable6);
+	RB_INIT(&pttable);
 }
 
 void
 pt_shutdown(void)
 {
-	if (!RB_EMPTY(&pttable4))
-		log_debug("pt_shutdown: IPv4 tree is not empty.");
-	if (!RB_EMPTY(&pttable6))
-		log_debug("pt_shutdown: IPv6 tree is not empty.");
+	if (!RB_EMPTY(&pttable))
+		log_debug("pt_shutdown: tree is not empty.");
 }
 
 void
@@ -128,21 +124,12 @@ pt_get(struct bgpd_addr *prefix, int prefixlen)
 	struct pt_entry	*pte;
 
 	pte = pt_fill(prefix, prefixlen);
-	switch (prefix->af) {
-	case AF_INET:
-		return RB_FIND(pt_tree, &pttable4, pte);
-	case AF_INET6:
-		return RB_FIND(pt_tree, &pttable6, pte);
-	default:
-		log_warnx("pt_get: unknown af");
-	}
-	return (NULL);
+	return RB_FIND(pt_tree, &pttable, pte);
 }
 
 struct pt_entry *
 pt_add(struct bgpd_addr *prefix, int prefixlen)
 {
-	struct pt_tree		*tree = NULL;
 	struct pt_entry		*p = NULL;
 	struct pt_entry4	*p4;
 	struct pt_entry6	*p6;
@@ -159,7 +146,6 @@ pt_add(struct bgpd_addr *prefix, int prefixlen)
 		p4->prefix4.s_addr = htonl(addr_hbo &
 		    prefixlen2mask(prefixlen));
 		p = (struct pt_entry *)p4;
-		tree = &pttable4;
 		break;
 	case AF_INET6:
 		p6 = pt_alloc6();
@@ -169,13 +155,12 @@ pt_add(struct bgpd_addr *prefix, int prefixlen)
 		p6->prefixlen = prefixlen;
 		inet6applymask(&p6->prefix6, &prefix->v6, prefixlen);
 		p = (struct pt_entry *)p6;
-		tree = &pttable6;
 		break;
 	default:
 		fatalx("pt_add: unknown af");
 	}
 
-	if (RB_INSERT(pt_tree, tree, p) != NULL) {
+	if (RB_INSERT(pt_tree, &pttable, p) != NULL) {
 		log_warnx("pt_add: insert failed");
 		return (NULL);
 	}
@@ -189,19 +174,8 @@ pt_remove(struct pt_entry *pte)
 	if (!pt_empty(pte))
 		fatalx("pt_remove: entry still holds references");
 
-	switch (pte->af) {
-	case AF_INET:
-		if (RB_REMOVE(pt_tree, &pttable4, pte) == NULL)
-			log_warnx("pt_remove: remove failed.");
-		break;
-	case AF_INET6:
-		if (RB_REMOVE(pt_tree, &pttable6, pte) == NULL)
-			log_warnx("pt_remove: remove failed.");
-		break;
-	default:
-		fatalx("pt_remove: unknown af");
-	}
-
+	if (RB_REMOVE(pt_tree, &pttable, pte) == NULL)
+		log_warnx("pt_remove: remove failed.");
 	pt_free(pte);
 }
 
@@ -213,21 +187,18 @@ pt_lookup(struct bgpd_addr *addr)
 
 	switch (addr->af) {
 	case AF_INET:
-		for (i = 32; i >= 0; i--) {
-			p = pt_get(addr, i);
-			if (p != NULL)
-				return (p);
-		}
+		i = 32;
 		break;
 	case AF_INET6:
-		for (i = 128; i >= 0; i--) {
-			p = pt_get(addr, i);
-			if (p != NULL)
-				return (p);
-		}
+		i = 128;
 		break;
 	default:
 		fatalx("pt_lookup: unknown af");
+	}
+	for (; i >= 0; i--) {
+		p = pt_get(addr, i);
+		if (p != NULL)
+			return (p);
 	}
 	return (NULL);
 }
