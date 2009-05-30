@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.191 2009/05/30 18:11:03 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.192 2009/05/30 19:32:20 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -131,8 +131,8 @@ if [[ ! -f /etc/fstab ]]; then
 
 		# New swap partitions?
 		disklabel $DISK 2>&1 | sed -ne \
-		    "/^ *\([a-p]\): .* swap /s,,/dev/$DISK\1 none swap sw 0 0,p" | \
-		    grep -v "^/dev/$SWAPDEV " >>fstab
+			"/^ *\([a-p]\): .* swap /s,,/dev/$DISK\1 none swap sw 0 0,p" | \
+			grep -v "^/dev/$SWAPDEV " >>fstab
 	done
 
 	# Write fstab entries to fstab in mount point alphabetic order

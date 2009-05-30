@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.558 2009/05/30 18:17:16 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.559 2009/05/30 19:32:20 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1710,7 +1710,7 @@ questions() {
 		defcons=$resp
 		if [[ $resp == y ]]; then
 			ask_which "speed" "should $_d use" \
-			    "9600 19200 38400 57600 115200" $CSPEED
+				"9600 19200 38400 57600 115200" $CSPEED
 			case $resp in
 			done)	defcons=n ;;
 			*)	CSPEED=$resp ;;
