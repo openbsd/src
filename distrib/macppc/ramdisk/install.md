@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.40 2009/04/24 01:43:27 krw Exp $
+#	$OpenBSD: install.md,v 1.41 2009/05/30 21:57:17 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -153,12 +153,8 @@ md_prep_disklabel() {
 	md_prep_disk $_disk
 
 	case $disklabeltype in
-	HFS)	return ;;
-	MBR)	;;
-	*)	echo "$_disk has no HFS or MBR partition table." ; exit ;;
-	esac
-
-	cat <<__EOT
+	HFS)	;;
+	MBR)	cat <<__EOT
 
 You *MUST* setup the OpenBSD disklabel to include the MSDOS-formatted boot
 partition as the 'i' partition. If the 'i' partition is missing or not the
@@ -166,6 +162,9 @@ MSDOS-formatted boot partition, then the 'ofwboot' file required to boot
 OpenBSD cannot be installed.
 
 __EOT
+		;;
+	*)	echo "$_disk has no HFS or MBR partition table." ; exit ;;
+	esac
 
 	disklabel -W $_disk >/dev/null 2>&1
 	_f=/tmp/fstab.$_disk
