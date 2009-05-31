@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.103 2009/05/30 16:22:07 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.104 2009/05/31 18:34:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -955,7 +955,7 @@ session_destroy(struct session *s)
 	if (s->s_bev != NULL)
 		bufferevent_free(s->s_bev);
 
-	if (close(s->s_fd) == -1)
+	if (s->s_fd != -1 && close(s->s_fd) == -1)
 		fatal("session_destroy: close");
 
 	switch (smtpd_process) {

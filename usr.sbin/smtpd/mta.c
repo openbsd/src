@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.53 2009/05/30 23:53:41 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.54 2009/05/31 18:34:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -605,6 +605,8 @@ mta_connect(struct session *sessionp)
 	struct linger lng;
 	struct mxhost *mxhost;
 
+	sessionp->s_fd = -1;
+
 	mxhost = TAILQ_FIRST(&sessionp->mxhosts);
 	if (mxhost == NULL)
 		return -1;
@@ -660,6 +662,7 @@ mta_write(int s, short event, void *arg)
 			free(mxhost);
 		}
 		close(s);
+		sessionp->s_fd = -1;
 
 		if (sessionp->s_bev) {
 			bufferevent_free(sessionp->s_bev);
