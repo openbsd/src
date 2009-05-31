@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.12 2009/05/11 17:13:05 deraadt Exp $
+#	$OpenBSD: install.md,v 1.13 2009/05/31 17:49:53 deraadt Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
@@ -7,9 +7,7 @@ MDTERM=vt100
 ARCH=ARCH
 
 md_installboot() {
-	echo -n "Installing boot block..."
 	/sbin/disklabel -B $1
-	echo "done."
 }
 
 md_prep_disklabel() {

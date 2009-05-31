@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.61 2009/05/11 17:13:07 deraadt Exp $
+#	$OpenBSD: install.md,v 1.62 2009/05/31 17:49:53 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -39,7 +39,7 @@ MDDKDEVS='/^sd[0-9] /s/ .*//p;/^x[dy][0-9] /s/ .*//p'
 ARCH=ARCH
 
 md_installboot() {
-	local _rawdev=/dev/r${1}c _prefix
+	local _prefix
 
 	# use extracted mdec if it exists (may be newer)
 	if [ -e /mnt/usr/mdec/boot ]; then
@@ -53,7 +53,7 @@ md_installboot() {
 
 	cp ${_prefix}/boot /mnt/boot
 	sync
-	installboot -v /mnt/boot ${_prefix}/bootxx ${_rawdev}
+	installboot /mnt/boot ${_prefix}/bootxx /dev/r${1}c
 }
 
 md_prep_disklabel() {

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.19 2009/05/11 17:13:07 deraadt Exp $
+#	$OpenBSD: install.md,v 1.20 2009/05/31 17:49:53 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ md_installboot() {
 	fi
 
 	cp /usr/mdec/boot /mnt/boot
-	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot ${1}
+	/usr/mdec/installboot /mnt/boot /usr/mdec/biosboot ${1}
 }
 
 md_prep_fdisk() {

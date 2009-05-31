@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.30 2009/05/20 18:42:05 deraadt Exp $
+#	$OpenBSD: install.md,v 1.31 2009/05/31 17:49:53 deraadt Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -42,7 +42,7 @@ NCPU=$(sysctl -n hw.ncpufound)
 ((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp" ; SANESETS="bsd bsd.mp" ; }
 
 md_installboot() {
-	local _rawdev=/dev/r${1}c _prefix
+	local _prefix
 
 	cd /mnt
 	if [[ -f bsd.mp ]] && ((NCPU > 1)); then
@@ -51,28 +51,19 @@ md_installboot() {
 		mv bsd.mp bsd
 	fi
 
-	# use extracted mdec if it exists (may be newer)
-	if [ -e /mnt/usr/mdec/bootblk ]; then
+	# Figure out which /usr/mdec directory to use
+	if [ -e /mnt/usr/mdec/ofwboot ]; then
 		_prefix=/mnt/usr/mdec
-	elif [ -e /usr/mdec/bootblk ]; then
+	elif [ -e /usr/mdec/ofwboot ]; then
 		_prefix=/usr/mdec
 	else
 		echo No boot block prototypes found, you must run installboot manually.
 		return
 	fi
 
-	${_prefix}/installboot -v ${_prefix}/bootblk ${_rawdev}
-	sync
-
-	if [ -e /mnt/usr/mdec/ofwboot ]; then
-		_prefix=/mnt/usr/mdec
-	elif [ -e /usr/mdec/ofwboot ]; then
-		_prefix=/usr/mdec
-	else
-		echo No ofwboot found!
-		return
-	fi
 	cp ${_prefix}/ofwboot /mnt/ofwboot
+	sync
+	${_prefix}/installboot ${_prefix}/bootblk /dev/r${1}c
 }
 
 md_prep_disklabel() {

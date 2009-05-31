@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.41 2009/05/30 21:57:17 krw Exp $
+#	$OpenBSD: install.md,v 1.42 2009/05/31 17:49:53 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,16 +50,15 @@ md_installboot() {
 
 	[[ $disklabeltype == MBR ]] || return
 
-	echo -n "Copying 'ofwboot' to the boot partition (${_disk}i)..."
 	if mount -t msdos /dev/${_disk}i /mnt2 ; then
 		if cp /usr/mdec/ofwboot /mnt2; then
 			umount /mnt2
-			echo "done."
 			return
 		fi
 	fi
 
-	echo "FAILED.\nYou will not be able to boot OpenBSD from $_disk."
+	echo "Failed to install bootblocks."
+	echo "You will not be able to boot OpenBSD from $_disk."
 	exit
 }
 

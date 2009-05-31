@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.21 2009/05/11 17:13:07 deraadt Exp $
+#	$OpenBSD: install.md,v 1.22 2009/05/31 17:49:53 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,8 +35,6 @@
 ARCH=ARCH
 
 md_installboot() {
-	# $1 is the root disk
-
 	disklabel -B ${1}
 
 	# use extracted mdec if it exists (may be newer)
