@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.89 2009/01/10 23:02:47 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.90 2009/05/31 16:56:10 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -2039,7 +2039,7 @@ wsdisplay_kbdholdscreen(struct device *dev, int hold)
 	struct wsscreen *scr;
 
 	scr = sc->sc_focus;
-	if (scr != NULL)
+	if (scr != NULL && WSSCREEN_HAS_TTY(scr))
 		wsdisplay_kbdholdscr(scr, hold);
 }
 
