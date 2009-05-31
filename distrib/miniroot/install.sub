@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.560 2009/05/30 20:40:59 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.561 2009/05/31 00:02:50 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1361,7 +1361,6 @@ set_timezone() {
 
 	: ${TZ:=GMT}
 
-	echo
 	while :; do
 		_zonepath=""
 
@@ -1864,6 +1863,14 @@ if [[ $MODE == install ]]; then
 	[[ ${resp%%.*} != $(hostname -s) ]] && hostname $resp
 	THESETS="$THESETS site$VERSION-$(hostname -s).tgz"
 
+	echo
+	donetconfig
+
+	if [[ $nifs != 0 ]]; then
+		startftplist
+	fi
+
+	echo
 	while :; do
 		askpassword root
 		_rootpass="$_password"
@@ -1874,14 +1881,8 @@ if [[ $MODE == install ]]; then
 	questions
 	user_setup
 
+	set_timezone /var/tzlist
 	echo
-	donetconfig
-
-	if [[ $nifs == 0 ]]; then
-		set_timezone /var/tzlist
-	else
-		startftplist
-	fi
 fi
 
 # Get ROOTDISK, ROOTDEV and SWAPDEV.

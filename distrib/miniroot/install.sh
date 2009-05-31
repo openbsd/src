@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.194 2009/05/30 20:40:59 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.195 2009/05/31 00:02:50 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -185,8 +185,6 @@ cd /
 
 mount_fs "-o async"
 
-set_timezone /var/tzlist
-
 install_sets
 
 # If we did not succeed at setting TZ yet, we try again
@@ -194,6 +192,7 @@ install_sets
 if [[ -z $TZ ]]; then
 	( cd /mnt/usr/share/zoneinfo
 	ls -1dF `tar cvf /dev/null [A-Za-y]*` >/tmp/tzlist )
+	echo
 	set_timezone /tmp/tzlist
 fi
 
