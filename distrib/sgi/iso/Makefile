@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2009/05/30 04:01:29 miod Exp $
+#	$OpenBSD: Makefile,v 1.13 2009/05/31 18:39:33 miod Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -31,7 +31,7 @@ ${CDROM}:
 	-rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/
 
-	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=2048b count=224
+	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=2048b count=240
 	vnconfig -v -c -t cdroot svnd0 ${.OBJDIR}/${CDROM}
 
 	/usr/mdec/sgivol -i -h 80 svnd0
