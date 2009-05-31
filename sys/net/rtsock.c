@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.85 2009/04/18 10:45:47 michele Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.86 2009/05/31 03:27:17 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -501,8 +501,10 @@ route_output(struct mbuf *m, ...)
 			/* first find correct priority bucket */
 			rn = rn_mpath_prio(rn, prio);
 			rt = (struct rtentry *)rn;
-			if (prio != RTP_ANY && rt->rt_priority != prio) {
+			if (prio != RTP_ANY &&
+			    (rt->rt_priority & RTP_MASK) != prio) {
 				error = ESRCH;
+				rt->rt_refcnt++;
 				goto flush;
 			}
 
