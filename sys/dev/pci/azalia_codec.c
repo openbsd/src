@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.127 2009/05/29 21:16:37 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.128 2009/05/31 02:12:54 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -64,7 +64,6 @@ void	azalia_devinfo_offon(mixer_devinfo_t *);
 void	azalia_pin_config_ov(widget_t *, int, int);
 int	azalia_gpio_unmute(codec_t *, int);
 
-int	azalia_stac7661_mixer_init(codec_t *);
 
 int
 azalia_codec_init_vtbl(codec_t *this)
@@ -309,7 +308,6 @@ azalia_codec_init_vtbl(codec_t *this)
 		/* FALLTHROUGH */
 	case 0x83847662:
 		this->name = "Sigmatel STAC9225";
-		this->mixer_init = azalia_stac7661_mixer_init;
 		break;
 	case 0x83847680:
 		this->name = "Sigmatel STAC9220/1";
@@ -2358,27 +2356,4 @@ azalia_codec_widget_quirks(codec_t *this, nid_t nid)
 	}
 
 	return(0);
-}
-
-/* ----------------------------------------------------------------
- * codec specific functions
- * ---------------------------------------------------------------- */
-
-/* Sigmatel STAC9225 */
-int
-azalia_stac7661_mixer_init(codec_t *this)
-{
-	mixer_ctrl_t mc;
-
-	azalia_generic_mixer_init(this);
-
-	mc.dev = -1;
-	mc.type = AUDIO_MIXER_ENUM;
-	mc.un.ord = 1;
-	/* mute ADC input (why?) */
-	azalia_generic_mixer_set(this, 0x09, MI_TARGET_INAMP(0), &mc);
-	/* select internal mic for recording */
-	mc.un.ord = 2;
-	azalia_generic_mixer_set(this, 0x15, MI_TARGET_CONNLIST, &mc);
-	return 0;
 }
