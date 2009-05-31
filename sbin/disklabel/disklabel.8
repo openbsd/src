@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.83 2009/04/10 20:54:08 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.84 2009/05/31 00:14:55 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 10 2009 $
+.Dd $Mdocdate: May 31 2009 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -149,9 +149,7 @@ Use the
 label.
 This ignores any existing
 .Ox
-partitions on the disk.
-Note that this option will only work for disks
-that are capable of reporting their geometry, such as SCSI, IDE, and ESDI.
+disk label on the disk.
 .It Fl E
 Use the built-in command-driven label editor described below.
 .It Fl e
