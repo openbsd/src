@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.85 2009/04/22 07:42:17 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.86 2009/05/31 01:27:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -123,7 +123,7 @@ client_nextaddr(struct ntp_peer *p)
 int
 client_query(struct ntp_peer *p)
 {
-	int	tos = IPTOS_LOWDELAY;
+	int	val;
 
 	if (p->addr == NULL && client_nextaddr(p) == -1) {
 		set_next(p, MAX(SETTIME_TIMEOUT,
@@ -150,9 +150,14 @@ client_query(struct ntp_peer *p)
 			} else
 				fatal("client_query connect");
 		}
+		val = IPTOS_LOWDELAY;
 		if (p->addr->ss.ss_family == AF_INET && setsockopt(p->query->fd,
-		    IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) == -1)
+		    IPPROTO_IP, IP_TOS, &val, sizeof(val)) == -1)
 			log_warn("setsockopt IPTOS_LOWDELAY");
+		val = 1;
+		if (setsockopt(p->query->fd, SOL_SOCKET, SO_TIMESTAMP,
+		    &val, sizeof(val)) == -1)
+			fatal("setsockopt SO_TIMESTAMP");
 	}
 
 	/*
@@ -191,25 +196,67 @@ client_query(struct ntp_peer *p)
 int
 client_dispatch(struct ntp_peer *p, u_int8_t settime)
 {
-	char			 buf[NTP_MSGSIZE];
-	ssize_t			 size;
 	struct ntp_msg		 msg;
+	struct msghdr		 somsg;
+	struct iovec		 iov[1];
+	struct timeval		 tv;
+	char			 buf[NTP_MSGSIZE];
+	union {
+		struct cmsghdr	hdr;
+		char		buf[CMSG_SPACE(sizeof(tv))];
+	} cmsgbuf;
+	struct cmsghdr		*cmsg;
+	ssize_t			 size;
 	double			 T1, T2, T3, T4;
 	time_t			 interval;
 
-	if ((size = recvfrom(p->query->fd, &buf, sizeof(buf), 0,
-	    NULL, NULL)) == -1) {
+	bzero(&somsg, sizeof(somsg));
+	iov[0].iov_base = buf;
+	iov[0].iov_len = sizeof(buf);
+	somsg.msg_iov = iov;
+	somsg.msg_iovlen = 1;
+	somsg.msg_control = cmsgbuf.buf;
+	somsg.msg_controllen = sizeof(cmsgbuf.buf);
+
+	T4 = getoffset();
+	if ((size = recvmsg(p->query->fd, &somsg, 0)) == -1) {
 		if (errno == EHOSTUNREACH || errno == EHOSTDOWN ||
 		    errno == ENETUNREACH || errno == ENETDOWN ||
 		    errno == ECONNREFUSED || errno == EADDRNOTAVAIL) {
-			client_log_error(p, "recvfrom", errno);
+			client_log_error(p, "recvmsg", errno);
 			set_next(p, error_interval());
 			return (0);
 		} else
 			fatal("recvfrom");
 	}
 
-	T4 = gettime_corrected();
+	if (somsg.msg_flags & MSG_TRUNC) {
+		client_log_error(p, "recvmsg packet", EMSGSIZE);
+		set_next(p, error_interval());
+		return (0);
+	}
+
+	if (somsg.msg_flags & MSG_CTRUNC) {
+		client_log_error(p, "recvmsg control data", E2BIG);
+		set_next(p, error_interval());
+		return (0);
+	}
+
+	for (cmsg = CMSG_FIRSTHDR(&somsg); cmsg != NULL;
+	    cmsg = CMSG_NXTHDR(&somsg, cmsg)) {
+		if (cmsg->cmsg_level == SOL_SOCKET &&
+		    cmsg->cmsg_type == SCM_TIMESTAMP) {
+			memcpy(&tv, CMSG_DATA(cmsg), sizeof(tv));
+			T4 += tv.tv_sec + JAN_1970 + 1.0e-6 * tv.tv_usec;
+			break;
+		}
+	}
+
+	if (T4 < JAN_1970) {
+		client_log_error(p, "recvmsg control format", EBADF);
+		set_next(p, error_interval());
+		return (0);
+	}
 
 	ntp_getmsg((struct sockaddr *)&p->addr->ss, buf, size, &msg);
 
