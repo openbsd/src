@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.18 2009/05/31 03:20:10 matthieu Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.19 2009/05/31 03:48:05 matthieu Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -48,7 +48,9 @@
 /* sysctl wants this. */
 char cpu_model[48];
 int cpuspeed;
+#ifdef CRYPTO
 int amd64_has_xcrypt;
+#endif
 
 const struct {
 	u_int32_t	bit;
@@ -161,7 +163,6 @@ via_nano_setup(struct cpu_info *ci)
 	u_int32_t regs[4], val;
 	u_int64_t msreg;
 	int model = (ci->ci_signature >> 4) & 15;
-	extern int amd64_has_xcrypt;
 	
 	if (model >= 9) { 
 		CPUID(0xC0000000, regs[0], regs[1], regs[2], regs[3]);
