@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.562 2009/05/31 00:03:29 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.563 2009/05/31 03:34:15 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1392,19 +1392,15 @@ set_timezone() {
 	done
 }
 
-# Check with the user that missing required sets were deliberately skipped.
+# Check that missing required sets were deliberately skipped.
 sane_install() {
-	local _s _m
+	local _q=$1 _s _m
 
 	for _s in $SANESETS; do
 		isin $_s $DEFAULTSETS || continue
-		# If sane_install has an argument, be quiet
-		if [[ -n $1 ]]; then
-			echo "'$_s' was not installed."
-			ask_yn "Are you *SURE* your $MODE is complete without '$_s'?"
-		else
-			resp=n
-		fi
+		# If sane_install has no argument, harass the user.
+		resp=n
+		[[ -z $_q ]] && ask_yn "Are you *SURE* your $MODE is complete without '$_s'?"
 		[[ $resp == n ]] && _m="$_m $_s"
 	done
 
@@ -1416,37 +1412,35 @@ sane_install() {
 # user selects from that location. Repeat as many times as the user
 # needs to get all desired sets.
 install_sets() {
-	local _d=disk _dd _locs="disk ftp http"
+	local _d _locs="disk ftp http"
 
 	echo
 
-	[[ -n $(get_cddevs) ]] && { _locs="cd $_locs" ; _d=cd ; }
-	ifconfig netboot > /dev/null 2>&1 && _d=ftp
+	[[ -s $SERVERLISTALL ]] && \
+		_d=$(sed -ne '/^method=/s/method=//p' $SERVERLISTALL)
+
+	ifconfig netboot >/dev/null 2>&1 && : ${_d:=ftp}
+	[[ -n $(get_cddevs) ]] && { _locs="cd $_locs" ; : ${_d:=cd} ; }
 	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
 	[[ -n $MTDEVS && -x /bin/mt ]] && _locs="$_locs tape"
-	if [[ -s $SERVERLISTALL ]]; then
-		_dd=$(sed -ne '/^method=/s/method=//p' <$SERVERLISTALL)
-		[[ -n $_dd ]] && _d=$_dd
-	fi
+	: ${_d:=disk}
 
 	echo "Let's $MODE the sets!"
 	while :; do
 		umount -f /mnt2 >/dev/null 2>&1
-		[[ -z $DEFAULTSETS ]] && _d=done
+		[[ -n $method ]] && _d=$method
+		sane_install quiet && _d=done
 
 		ask "Location of sets? ($_locs or 'done')" "$_d"
 		case $resp in
 		done)	sane_install && return ;;
-		c*|C*)	isin "cd" $_locs && install_cdrom && method=cdrom ;;
+		c*|C*)	isin cd $_locs && install_cdrom && method=cdrom ;;
 		d*|D*)	install_disk && method=disk ;;
-		f*|F*)	isin "ftp" $_locs && install_url ftp && method=ftp ;;
-		h*|H*)	isin "http" $_locs && install_url http && method=http ;;
-		n*|N*)	isin "nfs" $_locs && install_nfs && method=nfs ;;
-		t*|T*)	isin "tape" $_locs && install_tape && method=tape ;;
+		f*|F*)	isin ftp $_locs && install_url ftp && method=ftp ;;
+		h*|H*)	isin http $_locs && install_url http && method=http ;;
+		n*|N*)	isin nfs $_locs && install_nfs && method=nfs ;;
+		t*|T*)	isin tape $_locs && install_tape && method=tape ;;
 		esac
-
-		sane_install quiet
-		[ $? -eq 0 ] && _d=done
 	done
 }
 
