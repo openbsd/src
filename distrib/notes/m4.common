@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.87 2009/05/17 00:11:34 sthen Exp $
+dnl	$OpenBSD: m4.common,v 1.88 2009/05/31 18:18:39 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -349,9 +349,51 @@ dnl
 dnl Describes the beginning of the bsd.rd operation.
 dnl
 define({:-OpenBSDInstallPart4-:},dnl
-dnl install.sub (install) hostname/rootpwd
-{:-	The first question you will be asked is the system hostname
-	(without any domain part), followed by the initial root password
+dnl install.sub (install) hostname
+{:-	The first question you will be asked is the system hostname.
+	Reply with the name of the system, without any domain part.
+
+dnl install.sub (install) donetconfig
+	You will now be given an opportunity to configure the network.
+	The network configuration you enter (if any) can then be used to
+	do the install from another system using HTTP or FTP, and will
+	also be the configuration used by the system after the installation
+	is complete.
+
+dnl XXX add a MDVLAN feature and document vlan setup
+	The install program will give you a list of network interfaces you
+	can configure.  For each network interface you select to configure,
+	you will be asked for:
+
+	- the symbolic host name to use (except for the first
+	  interface setup, which will reuse the host name entered at the
+	  beginning of the installation).
+
+	- the IPv4 settings: address and netmask.  If the IP address
+	  should be obtained from a DHCP server, simply enter ``dhcp''
+	  when asked for the address.
+
+	- the IPv6 settings (address, prefix length, and default router).
+	  You may enter ``rtsol'' when asked for the address for the
+	  interface to configure automatically via router sollicitation
+	  messages.
+
+	After all interfaces have been configured, if there have been
+	any IPv4 interfaces setup, you will be asked for the IPv4 default
+	route.  This step is skipped if you only have one IPv4 interface
+	setup, and it is configured with DHCP.
+
+	The install program will also ask you for your DNS domain name,
+	and the domain name servers, unless this information has
+	already been obtained from a DHCP server during interface setup.
+
+	You will also be presented with an opportunity to do more
+	manual configuration.  If you accept, you will be dropped
+	to a shell; when you are done, enter `exit' to return to
+	the installation program.
+
+dnl install.sub (install) askpassword root
+	You will then be asked to enter the initial root password
 	of the system, twice.
 	Although the install program will only check that the two
 	passwords match, you should make sure to use a strong password.
@@ -412,50 +454,10 @@ dnl install.sub (install) user_setup()
 	If you have chosen to setup a user account, and you had chosen
 	to start sshd(8) on boot, you will be given the possibility to
 	disable sshd(8) logins as root.
-
-dnl install.sub (install) donetconfig
-	You will now be given an opportunity to configure the network.
-	The network configuration you enter (if any) can then be used to
-	do the install from another system using HTTP or FTP, and will
-	also be the configuration used by the system after the installation
-	is complete.
-
-dnl XXX add a MDVLAN feature and document vlan setup
-	The install program will give you a list of network interfaces you
-	can configure.  For each network interface you select to configure,
-	you will be asked for:
-
-	- the symbolic host name to use (except for the first
-	  interface setup, which will reuse the host name entered at the
-	  beginning of the installation).
-
-	- the IPv4 settings: address and netmask.  If the IP address
-	  should be obtained from a DHCP server, simply enter ``dhcp''
-	  when asked for the address.
-
-	- the IPv6 settings (address, prefix length, and default router).
-	  You may enter ``rtsol'' when asked for the address for the
-	  interface to configure automatically via router sollicitation
-	  messages.
-
-	After all interfaces have been configured, if there have been
-	any IPv4 interfaces setup, you will be asked for the IPv4 default
-	route.  This step is skipped if you only have one IPv4 interface
-	setup, and it is configured with DHCP.
-
-	The install program will also ask you for your DNS domain name,
-	and the domain name servers, unless this information has
-	already been obtained from a DHCP server during interface setup.
-
-	You will also be presented with an opportunity to do more
-	manual configuration.  If you accept, you will be dropped
-	to a shell; when you are done, enter `exit' to return to
-	the installation program.
-dnl install.sub (install nifs == 0) set_timezone
+dnl install.sub (install) set_timezone
 ifelse(MDTZ,,,
 {:-
-	If no network interfaces have been configured, you may
-	now be given the opportunity to configure the time zone
+	You may now be given the opportunity to configure the time zone
 	your system will be using (this depends on the installation
 	media you are using).
 	If the installation program skips this question, do not be
@@ -550,7 +552,6 @@ define({:-OpenBSDInstallPart5-:},
 	``-E'' flag).  To exit the editor enter 'q'.-:})dnl
 dnl
 dnl OpenBSDInstallPart6(other installation sources)
-dnl Setting up the network
 define({:-OpenBSDInstallPart6-:},
 {:-	After the layout has been saved, new filesystems will be
 	created on all partitions with mount points.
@@ -566,15 +567,6 @@ define({:-OpenBSDInstallPart6-:},
 
 	When all your disks are configured, simply hit return
 	at the disk prompt.
-ifelse(MDTZ,,,
-{:-
-	You may now be given the opportunity to configure the time zone
-	if it hasn't been configured yet (this depends on the installation
-	media you are using).
-	If the installation program skips this test, do not be
-	alarmed, the time zone will be configured at the end
-	of the installation.
--:})dnl
 
 	After these preparatory steps have been completed, you will be
         able to extract the distribution sets onto your system.  There
