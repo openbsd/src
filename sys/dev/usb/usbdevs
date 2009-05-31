@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.439 2009/05/24 11:05:16 mglocker Exp $
+$OpenBSD: usbdevs,v 1.440 2009/05/31 12:24:42 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1129,6 +1129,7 @@ product CYBERPOWER 1500		0x0501	1500
 /* CyberTAN Technology products */
 product CYBERTAN GIGASET108	0x160c	Siemens Gigaset 108
 product CYBERTAN TG54USB	0x1666	TG54USB
+product CYBERTAN ZD1211B	0x1667	ZD1211B
 product CYBERTAN RT2870		0x1828	RT2870
 
 /* Cypress Semiconductor products */
