@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.90 2009/05/31 16:56:10 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.91 2009/05/31 16:57:34 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1853,7 +1853,8 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 	 */
 
 	if (!(scr->scr_flags & SCR_GRAPHICS) &&
-	    (!(sc->sc_scr[no]->scr_flags & SCR_GRAPHICS))) {
+	    (no == WSDISPLAY_NULLSCREEN ||
+	     !(sc->sc_scr[no]->scr_flags & SCR_GRAPHICS))) {
 		/* switching from a text console to another text console */
 		/* XXX evaluated when the X-server starts or stops, see above */
 
@@ -1862,7 +1863,8 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 	}
 
 	if (!(scr->scr_flags & SCR_GRAPHICS) &&
-	    (sc->sc_scr[no]->scr_flags & SCR_GRAPHICS)) {
+	    (no != WSDISPLAY_NULLSCREEN &&
+	     (sc->sc_scr[no]->scr_flags & SCR_GRAPHICS))) {
 		/* switching from a text console to a graphic console */
 
 		/* remove a potential wsmoused(8) selection */
@@ -1871,7 +1873,8 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 	}
 
 	if ((scr->scr_flags & SCR_GRAPHICS) &&
-	    !(sc->sc_scr[no]->scr_flags & SCR_GRAPHICS)) {
+	    (no == WSDISPLAY_NULLSCREEN ||
+	     !(sc->sc_scr[no]->scr_flags & SCR_GRAPHICS))) {
 		/* switching from a graphic console to a text console */
 
 		wsmoused_wakeup(sc);
