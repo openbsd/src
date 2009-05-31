@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.213 2009/05/29 01:49:56 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.214 2009/05/31 19:39:45 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.213 2009/05/29 01:49:56 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.214 2009/05/31 19:39:45 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2305,9 +2305,9 @@ display_edit(struct disklabel *lp, char unit, u_int64_t fr)
 	unit = toupper(unit);
 
 	printf("OpenBSD area: ");
-	psize(starting_sector, unit, lp);
+	psize(starting_sector, 0, lp);
 	printf("-");
-	psize(ending_sector, unit, lp);
+	psize(ending_sector, 0, lp);
 	printf("; size: ");
 	psize(ending_sector - starting_sector, unit, lp);
 	printf("; free: ");
