@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.563 2009/05/31 03:34:15 krw Exp $
+#	$OpenBSD: install.sub,v 1.564 2009/05/31 17:57:27 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1662,7 +1662,7 @@ server $1
 		cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
 	fi
 
-	if [[ $xdm == y ]]; then
+	if [[ $xdm == y && -x /mnt/usr/X11R6/bin/xdm ]]; then
 		echo "xdm_flags=		# enabled during install" \
 			>>/mnt/etc/rc.conf.local
 	fi
