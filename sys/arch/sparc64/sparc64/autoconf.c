@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.105 2009/04/19 17:53:39 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.106 2009/05/31 21:23:28 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -860,6 +860,8 @@ extern bus_space_tag_t mainbus_space_tag;
 			hw_vendor = "Fujitsu";
 		if (strncmp(buf, "TAD,", 4) == 0)
 			hw_vendor = "Tadpole";
+		if (strncmp(buf, "NATE,", 5) == 0)
+			hw_vendor = "Naturetech";
 
 		/*
 		 * The Momentum Leopard-V advertises itself as
