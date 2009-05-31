@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.10 2009/02/18 12:29:18 jasper Exp $
+#	$OpenBSD: GENERIC,v 1.11 2009/05/31 20:43:44 maja Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -56,6 +56,12 @@ uhub*	at usb?			# USB Hubs
 uhub*	at uhub?		# USB Hubs
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
+uhidev*	at uhub?		# Human Interface Devices
+ums*	at uhidev?		# USB mouse
+wsmouse* at ums? mux 0
+ukbd*	at uhidev?		# USB keyboard
+wskbd*	at ukbd? mux 1
+uhid*	at uhidev?		# USB generic HID support
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 mos*	at uhub?		# MOSCHIP CS730/7830 10/100 Ethernet
 uath*	at uhub?		# Atheros AR5005UR/AR5005UX
@@ -63,6 +69,9 @@ ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
 zyd*	at uhub?		# Zydas ZD1211
+
+udl*		at uhub?
+wsdisplay*	at udl?
 
 sd*		at scsibus?
 
@@ -75,3 +84,6 @@ eephy*		at mii?		# Marvell 88E1000 series PHY
 rlphy*		at mii?		# RealTek 8139 internal PHYs
 gentbi*		at mii?		# Generic 1000BASE-X ten-bit PHY
 ukphy*		at mii?		# Generic unknown PHY
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
