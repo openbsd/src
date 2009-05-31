@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.25 2009/03/29 19:02:58 stsp Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.26 2009/05/31 17:00:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -253,20 +253,16 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 	int		 n, stub_changed, shut = 0;
 	unsigned int	 ifindex;
 
-	switch (event) {
-	case EV_READ:
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
-		break;
-	case EV_WRITE:
+	}
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
 		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -391,20 +387,16 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 	int			 n, noack = 0, shut = 0;
 	u_int16_t		 l, age;
 
-	switch (event) {
-	case EV_READ:
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			shut = 1;
-		break;
-	case EV_WRITE:
+	}
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
 		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
