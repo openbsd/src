@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.8 2009/05/31 17:06:01 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.9 2009/05/31 20:30:15 jacekm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -208,7 +208,6 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			control_close(fd);
 			return;
 		}
-		imsg_event_add(&c->ibuf);
 	}
 
 	for (;;) {

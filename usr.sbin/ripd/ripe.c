@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.10 2009/05/31 17:06:01 claudio Exp $ */
+/*	$OpenBSD: ripe.c,v 1.11 2009/05/31 20:30:15 jacekm Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -238,7 +238,6 @@ ripe_dispatch_main(int fd, short event, void *bula)
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
 	}
 
 	for (;;) {
@@ -318,7 +317,6 @@ ripe_dispatch_rde(int fd, short event, void *bula)
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
 	}
 
 	for (;;) {
