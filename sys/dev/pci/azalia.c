@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.136 2009/05/31 02:57:51 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.137 2009/05/31 03:22:05 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -3657,7 +3657,7 @@ azalia_set_port(void *v, mixer_ctrl_t *mc)
 	if (mc->type != m->devinfo.type)
 		return EINVAL;
 
-	return azalia_generic_mixer_set(co, m->nid, m->target, mc);
+	return azalia_mixer_set(co, m->nid, m->target, mc);
 }
 
 int
@@ -3678,7 +3678,7 @@ azalia_get_port(void *v, mixer_ctrl_t *mc)
 	m = &co->mixers[mc->dev];
 	mc->type = m->devinfo.type;
 
-	return azalia_generic_mixer_get(co, m->nid, m->target, mc);
+	return azalia_mixer_get(co, m->nid, m->target, mc);
 }
 
 int
