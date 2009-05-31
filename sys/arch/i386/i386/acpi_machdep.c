@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.17 2009/02/19 21:02:05 marco Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.18 2009/05/31 03:42:38 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -37,6 +37,15 @@
 #include <dev/acpi/acpidev.h>
 
 #include "apm.h"
+#include "ioapic.h"
+#include "lapic.h"
+
+#if NLAPIC > 0
+#include <machine/apicvar.h>
+#include <machine/i82489reg.h>
+#include <machine/i82489var.h>
+#endif
+
 
 #if NAPM > 0
 int haveacpibutusingapm;	
@@ -47,6 +56,8 @@ extern u_char acpi_real_mode_resume[], acpi_resume_end[];
 int acpi_savecpu(void);
 void intr_calculatemasks(void);
 void acpi_cpu_flush(struct acpi_softc *, int);
+void ioapic_enable(void);
+void lapic_enable(void);
 
 #define ACPI_BIOS_RSDP_WINDOW_BASE        0xe0000
 #define ACPI_BIOS_RSDP_WINDOW_SIZE        0x20000
@@ -198,7 +209,6 @@ int
 acpi_sleep_machdep(struct acpi_softc *sc, int state)
 {
 #ifdef ACPI_SLEEP_ENABLED
-	u_long ef;
 
 	if (sc->sc_facs == NULL) {
 		printf("%s: acpi_sleep_machdep: no FACS\n", DEVNAME(sc));
@@ -227,8 +237,6 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	if (sc->sc_facs->version == 1)
 		sc->sc_facs->x_wakeup_vector = 0;
 
-	ef = read_eflags();
-
 	/* Copy the current cpu registers into a safe place for resume. */
 	if (acpi_savecpu()) {
 		wbinvd();
@@ -248,12 +256,16 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	npxinit(&cpu_info_primary);
 	isa_defaultirq();
 	intr_calculatemasks();
+#if NLAPIC > 0
+	lapic_enable();
+	lapic_calibrate_timer(&cpu_info_primary);
+#endif
 #if NIOAPIC > 0
 	ioapic_enable();
 #endif
 	initrtclock();
 	enable_intr();
-	write_eflags(ef);
+
 #endif /* ACPI_SLEEP_ENABLED */
 	return (0);
 }

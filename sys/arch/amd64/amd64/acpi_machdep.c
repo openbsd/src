@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.16 2009/02/19 21:02:05 marco Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.17 2009/05/31 03:42:38 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -33,12 +33,21 @@
 #include <dev/acpi/acpidev.h>
 
 #include "ioapic.h"
+#include "lapic.h"
+
+#if NLAPIC > 0
+#include <machine/apicvar.h>
+#include <machine/i82489reg.h>
+#include <machine/i82489var.h>
+#endif
 
 extern u_char acpi_real_mode_resume[], acpi_resume_end[];
 extern u_int32_t acpi_pdirpa;
 extern paddr_t tramp_pdirpa;
 
 int acpi_savecpu(void);
+void ioapic_enable(void);
+void lapic_enable(void);
 
 #define ACPI_BIOS_RSDP_WINDOW_BASE        0xe0000
 #define ACPI_BIOS_RSDP_WINDOW_SIZE        0x20000
@@ -233,6 +242,13 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	 * last call instruction - after the call to acpi_savecpu.
 	 */
 
+#if NLAPIC > 0
+	lapic_enable();
+	lapic_calibrate_timer(&cpu_info_primary);
+#endif
+#if NIOAPIC > 0
+	ioapic_enable();
+#endif
 	initrtclock();
 	enable_intr();
 #endif /* ACPI_SLEEP_ENABLED */
