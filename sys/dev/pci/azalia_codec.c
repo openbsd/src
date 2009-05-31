@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.128 2009/05/31 02:12:54 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.129 2009/05/31 02:57:51 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -40,25 +40,16 @@
 #define XNAME(co)	(((struct device *)co->az)->dv_xname)
 #define MIXER_DELTA(n)	(AUDIO_MAX_GAIN / (n))
 
-int	azalia_generic_codec_init_dacgroup(codec_t *);
 int	azalia_generic_codec_add_convgroup(codec_t *, convgroupset_t *,
     struct io_pin *, int, nid_t *, int, uint32_t, uint32_t);
 
-int	azalia_generic_unsol(codec_t *, int);
-
-int	azalia_generic_mixer_init(codec_t *);
 int	azalia_generic_mixer_fix_indexes(codec_t *);
 int	azalia_generic_mixer_default(codec_t *);
-int	azalia_generic_mixer_delete(codec_t *);
 int	azalia_generic_mixer_ensure_capacity(codec_t *, size_t);
-int	azalia_generic_mixer_get(const codec_t *, nid_t, int, mixer_ctrl_t *);
-int	azalia_generic_mixer_set(codec_t *, nid_t, int, const mixer_ctrl_t *);
 u_char	azalia_generic_mixer_from_device_value
 	(const codec_t *, nid_t, int, uint32_t );
 uint32_t azalia_generic_mixer_to_device_value
 	(const codec_t *, nid_t, int, u_char);
-int	azalia_generic_set_port(codec_t *, mixer_ctrl_t *);
-int	azalia_generic_get_port(codec_t *, mixer_ctrl_t *);
 
 void	azalia_devinfo_offon(mixer_devinfo_t *);
 void	azalia_pin_config_ov(widget_t *, int, int);
@@ -72,12 +63,6 @@ azalia_codec_init_vtbl(codec_t *this)
 	 * We can refer this->vid and this->subid.
 	 */
 	this->name = NULL;
-	this->init_dacgroup = azalia_generic_codec_init_dacgroup;
-	this->mixer_init = azalia_generic_mixer_init;
-	this->mixer_delete = azalia_generic_mixer_delete;
-	this->set_port = azalia_generic_set_port;
-	this->get_port = azalia_generic_get_port;
-	this->unsol_event = azalia_generic_unsol;
 	this->qrks = AZ_QRK_NONE;
 	switch (this->vid) {
 	case 0x10ec0260:
@@ -366,7 +351,7 @@ azalia_widget_enabled(const codec_t *this, nid_t nid)
 }
 
 int
-azalia_generic_codec_init_dacgroup(codec_t *this)
+azalia_init_dacgroup(codec_t *this)
 {
 	this->dacs.ngroups = 0;
 	if (this->na_dacs > 0)
@@ -516,7 +501,7 @@ azalia_codec_fnode(codec_t *this, nid_t node, int index, int depth)
 }
 
 int
-azalia_generic_unsol(codec_t *this, int tag)
+azalia_unsol_event(codec_t *this, int tag)
 {
 	mixer_ctrl_t mc;
 	uint32_t result;
@@ -531,11 +516,11 @@ azalia_generic_unsol(codec_t *this, int tag)
 		for (i = 0; err == 0 && i < this->nsense_pins; i++) {
 			if (!(this->spkr_muters & (1 << i)))
 				continue;
-			err = this->comresp(this, this->sense_pins[i],
+			err = azalia_comresp(this, this->sense_pins[i],
 			    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
 			if (err || !(result & CORB_PWC_OUTPUT))
 				continue;
-			err = this->comresp(this, this->sense_pins[i],
+			err = azalia_comresp(this, this->sense_pins[i],
 			    CORB_GET_PIN_SENSE, 0, &result);
 			if (!err && (result & CORB_PS_PRESENCE))
 				vol = 1;
@@ -564,7 +549,7 @@ azalia_generic_unsol(codec_t *this, int tag)
 	case AZ_TAG_PLAYVOL:
 		if (this->playvols.master == this->audiofunc)
 			return EINVAL;
-		err = this->comresp(this, this->playvols.master,
+		err = azalia_comresp(this, this->playvols.master,
 		    CORB_GET_VOLUME_KNOB, 0, &result);
 		if (err)
 			return err;
@@ -609,7 +594,7 @@ azalia_generic_unsol(codec_t *this, int tag)
  * ---------------------------------------------------------------- */
 
 int
-azalia_generic_mixer_init(codec_t *this)
+azalia_mixer_init(codec_t *this)
 {
 	/*
 	 * pin		"<color>%2.2x"
@@ -1321,13 +1306,13 @@ azalia_generic_mixer_default(codec_t *this)
 	/* turn on jack sense unsolicited responses */
 	for (i = 0; i < this->nsense_pins; i++) {
 		if (this->spkr_muters & (1 << i)) {
-			this->comresp(this, this->sense_pins[i],
+			azalia_comresp(this, this->sense_pins[i],
 			    CORB_SET_UNSOLICITED_RESPONSE,
 			    CORB_UNSOL_ENABLE | AZ_TAG_SPKR, NULL);
 		}
 	}
-	if (this->spkr_muters != 0 && this->unsol_event != NULL)
-		this->unsol_event(this, AZ_TAG_SPKR);
+	if (this->spkr_muters != 0)
+		azalia_unsol_event(this, AZ_TAG_SPKR);
 
 	/* get default value for play group master */
 	for (i = 0; i < this->playvols.nslaves; i++) {
@@ -1371,7 +1356,7 @@ azalia_generic_mixer_default(codec_t *this)
 	if (this->playvols.master != this->audiofunc) {
 
 		w = &this->w[this->playvols.master];
-		err = this->comresp(this, w->nid, CORB_GET_VOLUME_KNOB,
+		err = azalia_comresp(this, w->nid, CORB_GET_VOLUME_KNOB,
 		    0, &result);
 		if (err)
 			return err;
@@ -1382,14 +1367,14 @@ azalia_generic_mixer_default(codec_t *this)
 
 		/* indirect mode */
 		result &= ~(CORB_VKNOB_DIRECT);
-		err = this->comresp(this, w->nid, CORB_SET_VOLUME_KNOB,
+		err = azalia_comresp(this, w->nid, CORB_SET_VOLUME_KNOB,
 		    result, NULL);
 		if (err)
 			return err;
 
 		/* enable unsolicited responses */
 		result = CORB_UNSOL_ENABLE | AZ_TAG_PLAYVOL;
-		err = this->comresp(this, w->nid,
+		err = azalia_comresp(this, w->nid,
 		    CORB_SET_UNSOLICITED_RESPONSE, result, NULL);
 		if (err)
 			return err;
@@ -1399,7 +1384,7 @@ azalia_generic_mixer_default(codec_t *this)
 }
 
 int
-azalia_generic_mixer_delete(codec_t *this)
+azalia_mixer_delete(codec_t *this)
 {
 	if (this->mixers != NULL) {
 		free(this->mixers, M_DEVBUF);
@@ -1421,7 +1406,7 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 
 	/* inamp mute */
 	if (IS_MI_TARGET_INAMP(target) && mc->type == AUDIO_MIXER_ENUM) {
-		err = this->comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
+		err = azalia_comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
 		    CORB_GAGM_INPUT | CORB_GAGM_LEFT |
 		    MI_TARGET_INAMP(target), &result);
 		if (err)
@@ -1431,7 +1416,7 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 
 	/* inamp gain */
 	else if (IS_MI_TARGET_INAMP(target) && mc->type == AUDIO_MIXER_VALUE) {
-		err = this->comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
+		err = azalia_comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
 		      CORB_GAGM_INPUT | CORB_GAGM_LEFT |
 		      MI_TARGET_INAMP(target), &result);
 		if (err)
@@ -1450,7 +1435,7 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 			n = nid;
 		mc->un.value.num_channels = WIDGET_CHANNELS(&this->w[n]);
 		if (mc->un.value.num_channels == 2) {
-			err = this->comresp(this, nid,
+			err = azalia_comresp(this, nid,
 			    CORB_GET_AMPLIFIER_GAIN_MUTE, CORB_GAGM_INPUT |
 			    CORB_GAGM_RIGHT | MI_TARGET_INAMP(target),
 			    &result);
@@ -1463,7 +1448,7 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 
 	/* outamp mute */
 	else if (target == MI_TARGET_OUTAMP && mc->type == AUDIO_MIXER_ENUM) {
-		err = this->comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
+		err = azalia_comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
 		    CORB_GAGM_OUTPUT | CORB_GAGM_LEFT | 0, &result);
 		if (err)
 			return err;
@@ -1472,7 +1457,7 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 
 	/* outamp gain */
 	else if (target == MI_TARGET_OUTAMP && mc->type == AUDIO_MIXER_VALUE) {
-		err = this->comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
+		err = azalia_comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
 		      CORB_GAGM_OUTPUT | CORB_GAGM_LEFT | 0, &result);
 		if (err)
 			return err;
@@ -1480,7 +1465,7 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 		    nid, target, CORB_GAGM_GAIN(result));
 		mc->un.value.num_channels = WIDGET_CHANNELS(&this->w[nid]);
 		if (mc->un.value.num_channels == 2) {
-			err = this->comresp(this, nid,
+			err = azalia_comresp(this, nid,
 			    CORB_GET_AMPLIFIER_GAIN_MUTE,
 			    CORB_GAGM_OUTPUT | CORB_GAGM_RIGHT | 0, &result);
 			if (err)
@@ -1492,7 +1477,7 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 
 	/* selection */
 	else if (target == MI_TARGET_CONNLIST) {
-		err = this->comresp(this, nid,
+		err = azalia_comresp(this, nid,
 		    CORB_GET_CONNECTION_SELECT_CONTROL, 0, &result);
 		if (err)
 			return err;
@@ -1506,7 +1491,7 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 
 	/* pin I/O */
 	else if (target == MI_TARGET_PINDIR) {
-		err = this->comresp(this, nid,
+		err = azalia_comresp(this, nid,
 		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
 		if (err)
 			return err;
@@ -1534,7 +1519,7 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 
 	/* pin headphone-boost */
 	else if (target == MI_TARGET_PINBOOST) {
-		err = this->comresp(this, nid,
+		err = azalia_comresp(this, nid,
 		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
 		if (err)
 			return err;
@@ -1553,13 +1538,13 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 
 	/* S/PDIF */
 	else if (target == MI_TARGET_SPDIF) {
-		err = this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
+		err = azalia_comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
 		    0, &result);
 		if (err)
 			return err;
 		mc->un.mask = result & 0xff & ~(CORB_DCC_DIGEN | CORB_DCC_NAUDIO);
 	} else if (target == MI_TARGET_SPDIF_CC) {
-		err = this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
+		err = azalia_comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
 		    0, &result);
 		if (err)
 			return err;
@@ -1569,8 +1554,8 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 
 	/* EAPD */
 	else if (target == MI_TARGET_EAPD) {
-		err = this->comresp(this, nid,
-		    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
+		err = azalia_comresp(this, nid, CORB_GET_EAPD_BTL_ENABLE,
+		    0, &result);
 		if (err)
 			return err;
 		mc->un.ord = result & CORB_EAPD_EAPD ? 1 : 0;
@@ -1578,7 +1563,7 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 
 	/* sense pin */
 	else if (target == MI_TARGET_PINSENSE) {
-		err = this->comresp(this, nid, CORB_GET_PIN_SENSE,
+		err = azalia_comresp(this, nid, CORB_GET_PIN_SENSE,
 		    0, &result);
 		if (err)
 			return err;
@@ -1598,7 +1583,7 @@ azalia_generic_mixer_get(const codec_t *this, nid_t nid, int target,
 		for (i = 0; i < w->nconnections; i++) {
 			if (!azalia_widget_enabled(this, w->connections[i]))
 				continue;
-			err = this->comresp(this, nid,
+			err = azalia_comresp(this, nid,
 			    CORB_GET_AMPLIFIER_GAIN_MUTE,
 			    CORB_GAGM_INPUT | CORB_GAGM_LEFT |
 			    MI_TARGET_INAMP(i), &result);
@@ -1691,7 +1676,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 	/* inamp mute */
 	if (IS_MI_TARGET_INAMP(target) && mc->type == AUDIO_MIXER_ENUM) {
 		/* We have to set stereo mute separately to keep each gain value. */
-		err = this->comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
+		err = azalia_comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
 		    CORB_GAGM_INPUT | CORB_GAGM_LEFT |
 		    MI_TARGET_INAMP(target), &result);
 		if (err)
@@ -1701,12 +1686,12 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 		    CORB_GAGM_GAIN(result);
 		if (mc->un.ord)
 			value |= CORB_AGM_MUTE;
-		err = this->comresp(this, nid, CORB_SET_AMPLIFIER_GAIN_MUTE,
+		err = azalia_comresp(this, nid, CORB_SET_AMPLIFIER_GAIN_MUTE,
 		    value, &result);
 		if (err)
 			return err;
 		if (WIDGET_CHANNELS(&this->w[nid]) == 2) {
-			err = this->comresp(this, nid,
+			err = azalia_comresp(this, nid,
 			    CORB_GET_AMPLIFIER_GAIN_MUTE, CORB_GAGM_INPUT |
 			    CORB_GAGM_RIGHT | MI_TARGET_INAMP(target),
 			    &result);
@@ -1717,7 +1702,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 			    CORB_GAGM_GAIN(result);
 			if (mc->un.ord)
 				value |= CORB_AGM_MUTE;
-			err = this->comresp(this, nid,
+			err = azalia_comresp(this, nid,
 			    CORB_SET_AMPLIFIER_GAIN_MUTE, value, &result);
 			if (err)
 				return err;
@@ -1728,7 +1713,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 	else if (IS_MI_TARGET_INAMP(target) && mc->type == AUDIO_MIXER_VALUE) {
 		if (mc->un.value.num_channels < 1)
 			return EINVAL;
-		err = this->comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
+		err = azalia_comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
 		      CORB_GAGM_INPUT | CORB_GAGM_LEFT |
 		      MI_TARGET_INAMP(target), &result);
 		if (err)
@@ -1739,13 +1724,13 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 		    (target << CORB_AGM_INDEX_SHIFT) |
 		    (result & CORB_GAGM_MUTE ? CORB_AGM_MUTE : 0) |
 		    (value & CORB_AGM_GAIN_MASK);
-		err = this->comresp(this, nid, CORB_SET_AMPLIFIER_GAIN_MUTE,
+		err = azalia_comresp(this, nid, CORB_SET_AMPLIFIER_GAIN_MUTE,
 		    value, &result);
 		if (err)
 			return err;
 		if (mc->un.value.num_channels >= 2 &&
 		    WIDGET_CHANNELS(&this->w[nid]) == 2) {
-			err = this->comresp(this, nid,
+			err = azalia_comresp(this, nid,
 			      CORB_GET_AMPLIFIER_GAIN_MUTE, CORB_GAGM_INPUT |
 			      CORB_GAGM_RIGHT | MI_TARGET_INAMP(target),
 			      &result);
@@ -1757,7 +1742,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 			    (target << CORB_AGM_INDEX_SHIFT) |
 			    (result & CORB_GAGM_MUTE ? CORB_AGM_MUTE : 0) |
 			    (value & CORB_AGM_GAIN_MASK);
-			err = this->comresp(this, nid,
+			err = azalia_comresp(this, nid,
 			    CORB_SET_AMPLIFIER_GAIN_MUTE, value, &result);
 			if (err)
 				return err;
@@ -1766,19 +1751,19 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 
 	/* outamp mute */
 	else if (target == MI_TARGET_OUTAMP && mc->type == AUDIO_MIXER_ENUM) {
-		err = this->comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
+		err = azalia_comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
 		    CORB_GAGM_OUTPUT | CORB_GAGM_LEFT, &result);
 		if (err)
 			return err;
 		value = CORB_AGM_OUTPUT | CORB_AGM_LEFT | CORB_GAGM_GAIN(result);
 		if (mc->un.ord)
 			value |= CORB_AGM_MUTE;
-		err = this->comresp(this, nid, CORB_SET_AMPLIFIER_GAIN_MUTE,
+		err = azalia_comresp(this, nid, CORB_SET_AMPLIFIER_GAIN_MUTE,
 		    value, &result);
 		if (err)
 			return err;
 		if (WIDGET_CHANNELS(&this->w[nid]) == 2) {
-			err = this->comresp(this, nid,
+			err = azalia_comresp(this, nid,
 			    CORB_GET_AMPLIFIER_GAIN_MUTE,
 			    CORB_GAGM_OUTPUT | CORB_GAGM_RIGHT, &result);
 			if (err)
@@ -1787,7 +1772,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 			    CORB_GAGM_GAIN(result);
 			if (mc->un.ord)
 				value |= CORB_AGM_MUTE;
-			err = this->comresp(this, nid,
+			err = azalia_comresp(this, nid,
 			    CORB_SET_AMPLIFIER_GAIN_MUTE, value, &result);
 			if (err)
 				return err;
@@ -1798,7 +1783,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 	else if (target == MI_TARGET_OUTAMP && mc->type == AUDIO_MIXER_VALUE) {
 		if (mc->un.value.num_channels < 1)
 			return EINVAL;
-		err = this->comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
+		err = azalia_comresp(this, nid, CORB_GET_AMPLIFIER_GAIN_MUTE,
 		      CORB_GAGM_OUTPUT | CORB_GAGM_LEFT, &result);
 		if (err)
 			return err;
@@ -1807,13 +1792,13 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 		value = CORB_AGM_OUTPUT | CORB_AGM_LEFT |
 		    (result & CORB_GAGM_MUTE ? CORB_AGM_MUTE : 0) |
 		    (value & CORB_AGM_GAIN_MASK);
-		err = this->comresp(this, nid, CORB_SET_AMPLIFIER_GAIN_MUTE,
+		err = azalia_comresp(this, nid, CORB_SET_AMPLIFIER_GAIN_MUTE,
 		    value, &result);
 		if (err)
 			return err;
 		if (mc->un.value.num_channels >= 2 &&
 		    WIDGET_CHANNELS(&this->w[nid]) == 2) {
-			err = this->comresp(this, nid,
+			err = azalia_comresp(this, nid,
 			      CORB_GET_AMPLIFIER_GAIN_MUTE, CORB_GAGM_OUTPUT |
 			      CORB_GAGM_RIGHT, &result);
 			if (err)
@@ -1823,7 +1808,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 			value = CORB_AGM_OUTPUT | CORB_AGM_RIGHT |
 			    (result & CORB_GAGM_MUTE ? CORB_AGM_MUTE : 0) |
 			    (value & CORB_AGM_GAIN_MASK);
-			err = this->comresp(this, nid,
+			err = azalia_comresp(this, nid,
 			    CORB_SET_AMPLIFIER_GAIN_MUTE, value, &result);
 			if (err)
 				return err;
@@ -1837,7 +1822,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 		    !azalia_widget_enabled(this,
 		    this->w[nid].connections[mc->un.ord]))
 			return EINVAL;
-		err = this->comresp(this, nid,
+		err = azalia_comresp(this, nid,
 		    CORB_SET_CONNECTION_SELECT_CONTROL, mc->un.ord, &result);
 		if (err)
 			return err;
@@ -1846,7 +1831,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 	/* pin I/O */
 	else if (target == MI_TARGET_PINDIR) {
 
-		err = this->comresp(this, nid,
+		err = azalia_comresp(this, nid,
 		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
 		if (err)
 			return err;
@@ -1871,7 +1856,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 			if (mc->un.ord == 6)
 				value |= CORB_PWC_VREF_100;
 		}
-		err = this->comresp(this, nid,
+		err = azalia_comresp(this, nid,
 		    CORB_SET_PIN_WIDGET_CONTROL, value, &result);
 		if (err)
 			return err;
@@ -1884,8 +1869,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 				break;
 		}
 		if (i < this->nsense_pins) {
-			if (this->unsol_event != NULL)
-				this->unsol_event(this, AZ_TAG_SPKR);
+			azalia_unsol_event(this, AZ_TAG_SPKR);
 		}
 	}
 
@@ -1893,7 +1877,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 	else if (target == MI_TARGET_PINBOOST) {
 		if (mc->un.ord >= 2)
 			return EINVAL;
-		err = this->comresp(this, nid,
+		err = azalia_comresp(this, nid,
 		    CORB_GET_PIN_WIDGET_CONTROL, 0, &result);
 		if (err)
 			return err;
@@ -1902,7 +1886,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 		} else {
 			result |= CORB_PWC_HEADPHONE;
 		}
-		err = this->comresp(this, nid,
+		err = azalia_comresp(this, nid,
 		    CORB_SET_PIN_WIDGET_CONTROL, result, &result);
 		if (err)
 			return err;
@@ -1936,11 +1920,11 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 
 	/* S/PDIF */
 	else if (target == MI_TARGET_SPDIF) {
-		err = this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
+		err = azalia_comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
 		    0, &result);
 		result &= CORB_DCC_DIGEN | CORB_DCC_NAUDIO;
 		result |= mc->un.mask & 0xff & ~CORB_DCC_DIGEN;
-		err = this->comresp(this, nid, CORB_SET_DIGITAL_CONTROL_L,
+		err = azalia_comresp(this, nid, CORB_SET_DIGITAL_CONTROL_L,
 		    result, NULL);
 		if (err)
 			return err;
@@ -1949,7 +1933,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 			return EINVAL;
 		if (mc->un.value.level[0] > 127)
 			return EINVAL;
-		err = this->comresp(this, nid, CORB_SET_DIGITAL_CONTROL_H,
+		err = azalia_comresp(this, nid, CORB_SET_DIGITAL_CONTROL_H,
 		    mc->un.value.level[0], NULL);
 		if (err)
 			return err;
@@ -1959,7 +1943,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 	else if (target == MI_TARGET_EAPD) {
 		if (mc->un.ord >= 2)
 			return EINVAL;
-		err = this->comresp(this, nid,
+		err = azalia_comresp(this, nid,
 		    CORB_GET_EAPD_BTL_ENABLE, 0, &result);
 		if (err)
 			return err;
@@ -1969,7 +1953,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 		} else {
 			result |= CORB_EAPD_EAPD;
 		}
-		err = this->comresp(this, nid,
+		err = azalia_comresp(this, nid,
 		    CORB_SET_EAPD_BTL_ENABLE, result, &result);
 		if (err)
 			return err;
@@ -1994,7 +1978,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 			/* We have to set stereo mute separately
 			 * to keep each gain value.
 			 */
-			err = this->comresp(this, nid,
+			err = azalia_comresp(this, nid,
 			    CORB_GET_AMPLIFIER_GAIN_MUTE,
 			    CORB_GAGM_INPUT | CORB_GAGM_LEFT |
 			    MI_TARGET_INAMP(i), &result);
@@ -2005,13 +1989,13 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 			    CORB_GAGM_GAIN(result);
 			if ((mc->un.mask & (1 << i)) == 0)
 				value |= CORB_AGM_MUTE;
-			err = this->comresp(this, nid,
+			err = azalia_comresp(this, nid,
 			    CORB_SET_AMPLIFIER_GAIN_MUTE, value, &result);
 			if (err)
 				return err;
 
 			if (WIDGET_CHANNELS(w) == 2) {
-				err = this->comresp(this, nid,
+				err = azalia_comresp(this, nid,
 				    CORB_GET_AMPLIFIER_GAIN_MUTE,
 				    CORB_GAGM_INPUT | CORB_GAGM_RIGHT |
 				    MI_TARGET_INAMP(i), &result);
@@ -2022,7 +2006,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 				    CORB_GAGM_GAIN(result);
 				if ((mc->un.mask & (1 << i)) == 0)
 					value |= CORB_AGM_MUTE;
-				err = this->comresp(this, nid,
+				err = azalia_comresp(this, nid,
 				    CORB_SET_AMPLIFIER_GAIN_MUTE,
 				    value, &result);
 				if (err)
@@ -2039,8 +2023,7 @@ azalia_generic_mixer_set(codec_t *this, nid_t nid, int target,
 
 		if (nid == this->speaker) {
 			this->spkr_muters = mc->un.mask;
-			if (this->unsol_event != NULL)
-				this->unsol_event(this, AZ_TAG_SPKR);
+			azalia_unsol_event(this, AZ_TAG_SPKR);
 		} else {
 			DPRINTF(("%s: invalid senseset nid\n"));
 			return EINVAL;
@@ -2240,51 +2223,22 @@ azalia_generic_mixer_to_device_value(const codec_t *this, nid_t nid, int target,
 }
 
 int
-azalia_generic_set_port(codec_t *this, mixer_ctrl_t *mc)
-{
-	const mixer_item_t *m;
-
-	if (mc->dev >= this->nmixers)
-		return ENXIO;
-	m = &this->mixers[mc->dev];
-	if (mc->type != m->devinfo.type)
-		return EINVAL;
-	if (mc->type == AUDIO_MIXER_CLASS)
-		return 0;	/* nothing to do */
-	return azalia_generic_mixer_set(this, m->nid, m->target, mc);
-}
-
-int
-azalia_generic_get_port(codec_t *this, mixer_ctrl_t *mc)
-{
-	const mixer_item_t *m;
-
-	if (mc->dev >= this->nmixers)
-		return ENXIO;
-	m = &this->mixers[mc->dev];
-	mc->type = m->devinfo.type;
-	if (mc->type == AUDIO_MIXER_CLASS)
-		return 0;	/* nothing to do */
-	return azalia_generic_mixer_get(this, m->nid, m->target, mc);
-}
-
-int
 azalia_gpio_unmute(codec_t *this, int pin)
 {
 	uint32_t data, mask, dir;
 
-	this->comresp(this, this->audiofunc, CORB_GET_GPIO_DATA, 0, &data);
-	this->comresp(this, this->audiofunc, CORB_GET_GPIO_ENABLE_MASK, 0, &mask);
-	this->comresp(this, this->audiofunc, CORB_GET_GPIO_DIRECTION, 0, &dir);
+	azalia_comresp(this, this->audiofunc, CORB_GET_GPIO_DATA, 0, &data);
+	azalia_comresp(this, this->audiofunc, CORB_GET_GPIO_ENABLE_MASK, 0, &mask);
+	azalia_comresp(this, this->audiofunc, CORB_GET_GPIO_DIRECTION, 0, &dir);
 
 	data |= 1 << pin;
 	mask |= 1 << pin;
 	dir |= 1 << pin;
 
-	this->comresp(this, this->audiofunc, CORB_SET_GPIO_ENABLE_MASK, mask, NULL);
-	this->comresp(this, this->audiofunc, CORB_SET_GPIO_DIRECTION, dir, NULL);
+	azalia_comresp(this, this->audiofunc, CORB_SET_GPIO_ENABLE_MASK, mask, NULL);
+	azalia_comresp(this, this->audiofunc, CORB_SET_GPIO_DIRECTION, dir, NULL);
 	DELAY(1000);
-	this->comresp(this, this->audiofunc, CORB_SET_GPIO_DATA, data, NULL);
+	azalia_comresp(this, this->audiofunc, CORB_SET_GPIO_DATA, data, NULL);
 
 	return 0;
 }
@@ -2317,7 +2271,7 @@ int
 azalia_codec_gpio_quirks(codec_t *this)
 {
 	if (this->qrks & AZ_QRK_GPIO_POL_0) {
-		this->comresp(this, this->audiofunc,
+		azalia_comresp(this, this->audiofunc,
 		    CORB_SET_GPIO_POLARITY, 0, NULL);
 	}
 	if (this->qrks & AZ_QRK_GPIO_UNMUTE_0) {

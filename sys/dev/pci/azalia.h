@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.48 2009/05/29 21:16:37 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.49 2009/05/31 02:57:51 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -633,12 +633,6 @@ struct io_pin {
 
 typedef struct codec_t {
 	int (*comresp)(const struct codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
-	int (*init_dacgroup)(struct codec_t *);
-	int (*mixer_init)(struct codec_t *);
-	int (*mixer_delete)(struct codec_t *);
-	int (*set_port)(struct codec_t *, mixer_ctrl_t *);
-	int (*get_port)(struct codec_t *, mixer_ctrl_t *);
-	int (*unsol_event)(struct codec_t *, int);
 
 	struct azalia_t *az;
 	uint32_t vid;		/* codec vendor/device ID */
@@ -712,3 +706,11 @@ int	azalia_widget_enabled(const codec_t *, nid_t);
 int	azalia_codec_gpio_quirks(codec_t *);
 int	azalia_codec_widget_quirks(codec_t *, nid_t);
 int	azalia_codec_fnode(codec_t *, nid_t, int, int);
+
+int	azalia_init_dacgroup(codec_t *);
+int	azalia_mixer_init(codec_t *);
+int	azalia_mixer_delete(codec_t *);
+int	azalia_unsol_event(codec_t *, int);
+int	azalia_comresp(const codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
+int	azalia_generic_mixer_get(const codec_t *, nid_t, int, mixer_ctrl_t *);
+int	azalia_generic_mixer_set(codec_t *, nid_t, int, const mixer_ctrl_t *);
