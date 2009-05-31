@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.29 2008/08/19 02:02:02 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.30 2009/05/31 03:20:10 matthieu Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*-
@@ -91,6 +91,16 @@
 int	cold = 1;	/* if 1, still working on cold-start */
 extern dev_t bootdev;
 
+/* Support for VIA C3 RNG */
+extern struct timeout viac3_rnd_tmo;
+extern int	viac3_rnd_present;
+void		viac3_rnd(void *);
+
+#ifdef CRYPTO
+void		viac3_crypto_setup(void);
+extern int	amd64_has_xcrypt;
+#endif
+
 /*
  * Determine i/o configuration for a machine.
  */
@@ -122,6 +132,22 @@ cpu_configure(void)
 	lcr8(0);
 	spl0();
 	cold = 0;
+
+	/*
+	 * At this point the RNG is running, and if FSXR is set we can
+	 * use it.  Here we setup a periodic timeout to collect the data.
+	 */
+	if (viac3_rnd_present) {
+		timeout_set(&viac3_rnd_tmo, viac3_rnd, &viac3_rnd_tmo);
+		viac3_rnd(&viac3_rnd_tmo);
+	}
+#ifdef CRYPTO
+	/*
+	 * Also, if the chip has crypto available, enable it.
+	 */
+	if (amd64_has_xcrypt)
+		viac3_crypto_setup();
+#endif
 }
 
 void

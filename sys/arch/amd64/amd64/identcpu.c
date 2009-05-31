@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.17 2009/02/16 17:24:21 krw Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.18 2009/05/31 03:20:10 matthieu Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 /* sysctl wants this. */
 char cpu_model[48];
 int cpuspeed;
+int amd64_has_xcrypt;
 
 const struct {
 	u_int32_t	bit;
@@ -151,6 +152,97 @@ intelcore_update_sensor(void *args)
 #endif
 
 void (*setperf_setup)(struct cpu_info *);
+
+void via_nano_setup(struct cpu_info *ci);
+
+void
+via_nano_setup(struct cpu_info *ci)
+{
+	u_int32_t regs[4], val;
+	u_int64_t msreg;
+	int model = (ci->ci_signature >> 4) & 15;
+	extern int amd64_has_xcrypt;
+	
+	if (model >= 9) { 
+		CPUID(0xC0000000, regs[0], regs[1], regs[2], regs[3]);
+		val = regs[0];
+		if (val >= 0xC0000001) {
+			CPUID(0xC0000001, regs[0], regs[1], regs[2], regs[3]);
+			val = regs[3];
+		} else
+			val = 0;
+		
+		if (val & (C3_CPUID_HAS_RNG | C3_CPUID_HAS_ACE))
+			printf("%s:", ci->ci_dev->dv_xname);
+		
+		/* Enable RNG if present and disabled */
+		if (val & C3_CPUID_HAS_RNG) {
+			extern int viac3_rnd_present;
+			
+			if (!(val & C3_CPUID_DO_RNG)) {
+				msreg = rdmsr(0x110B);
+				msreg |= 0x40;
+				wrmsr(0x110B, msreg);
+			}
+			viac3_rnd_present = 1;
+			printf(" RNG");
+		}
+		
+		/* Enable AES engine if present and disabled */
+		if (val & C3_CPUID_HAS_ACE) {
+#ifdef CRYPTO
+			if (!(val & C3_CPUID_DO_ACE)) {
+				msreg = rdmsr(0x1107);
+				msreg |= (0x01 << 28);
+				wrmsr(0x1107, msreg);
+			}
+			amd64_has_xcrypt |= C3_HAS_AES;
+#endif /* CRYPTO */
+			printf(" AES");
+		}
+		
+		/* Enable ACE2 engine if present and disabled */
+		if (val & C3_CPUID_HAS_ACE2) {
+#ifdef CRYPTO
+			if (!(val & C3_CPUID_DO_ACE2)) {
+				msreg = rdmsr(0x1107);
+				msreg |= (0x01 << 28);
+				wrmsr(0x1107, msreg);
+			}
+			amd64_has_xcrypt |= C3_HAS_AESCTR;
+#endif /* CRYPTO */
+			printf(" AES-CTR");
+		}
+		
+		/* Enable SHA engine if present and disabled */
+		if (val & C3_CPUID_HAS_PHE) {
+#ifdef CRYPTO
+			if (!(val & C3_CPUID_DO_PHE)) {
+				msreg = rdmsr(0x1107);
+				msreg |= (0x01 << 28/**/);
+				wrmsr(0x1107, msreg);
+			}
+			amd64_has_xcrypt |= C3_HAS_SHA;
+#endif /* CRYPTO */
+			printf(" SHA1 SHA256");
+		}
+		
+		/* Enable MM engine if present and disabled */
+		if (val & C3_CPUID_HAS_PMM) {
+#ifdef CRYPTO
+			if (!(val & C3_CPUID_DO_PMM)) {
+				msreg = rdmsr(0x1107);
+				msreg |= (0x01 << 28/**/);
+				wrmsr(0x1107, msreg);
+			}
+			amd64_has_xcrypt |= C3_HAS_MM;
+#endif /* CRYPTO */
+			printf(" RSA");
+		}
+		
+		printf("\n");
+	}
+}
 
 void
 identifycpu(struct cpu_info *ci)
@@ -263,6 +355,9 @@ identifycpu(struct cpu_info *ci)
 	if (vendor[0] == 0x68747541 && vendor[1] == 0x69746e65 &&
 	    vendor[2] == 0x444d4163)	/* DMAc */
 		amd64_errata(ci);
+
+	if (strncmp(cpu_model, "VIA Nano processor", 18) == 0)
+		ci->cpu_setup = via_nano_setup;
 }
 
 void

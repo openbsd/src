@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.13 2008/08/13 15:44:44 art Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.14 2009/05/31 03:20:10 matthieu Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -638,3 +638,36 @@
 #define	K7_BP1_MATCH			0xdd
 #define	K7_BP2_MATCH			0xde
 #define	K7_BP3_MATCH			0xdf
+
+/* VIA C3 crypto featureset: for i386_has_xcrypt */
+#define C3_HAS_AES			1	/* cpu has AES */
+#define C3_HAS_SHA			2	/* cpu has SHA1 & SHA256 */
+#define C3_HAS_MM			4	/* cpu has RSA instructions */
+#define C3_HAS_AESCTR			8	/* cpu has AES-CTR instructions */
+
+/* Centaur Extended Feature flags */
+#define C3_CPUID_HAS_RNG		0x000004
+#define C3_CPUID_DO_RNG			0x000008
+#define C3_CPUID_HAS_ACE		0x000040
+#define C3_CPUID_DO_ACE			0x000080
+#define C3_CPUID_HAS_ACE2		0x000100
+#define C3_CPUID_DO_ACE2		0x000200
+#define C3_CPUID_HAS_PHE		0x000400
+#define C3_CPUID_DO_PHE			0x000800
+#define C3_CPUID_HAS_PMM		0x001000
+#define C3_CPUID_DO_PMM			0x002000
+
+/* VIA C3 xcrypt-* instruction context control options */
+#define	C3_CRYPT_CWLO_ROUND_M		0x0000000f
+#define	C3_CRYPT_CWLO_ALG_M		0x00000070
+#define	C3_CRYPT_CWLO_ALG_AES		0x00000000
+#define	C3_CRYPT_CWLO_KEYGEN_M		0x00000080
+#define	C3_CRYPT_CWLO_KEYGEN_HW		0x00000000
+#define	C3_CRYPT_CWLO_KEYGEN_SW		0x00000080
+#define	C3_CRYPT_CWLO_NORMAL		0x00000000
+#define	C3_CRYPT_CWLO_INTERMEDIATE	0x00000100
+#define	C3_CRYPT_CWLO_ENCRYPT		0x00000000
+#define	C3_CRYPT_CWLO_DECRYPT		0x00000200
+#define	C3_CRYPT_CWLO_KEY128		0x0000000a	/* 128bit, 10 rds */
+#define	C3_CRYPT_CWLO_KEY192		0x0000040c	/* 192bit, 12 rds */
+#define	C3_CRYPT_CWLO_KEY256		0x0000080e	/* 256bit, 15 rds */
