@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.78 2009/05/31 16:58:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.79 2009/05/31 18:46:01 jacekm Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -248,7 +248,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
 	}
 
 	clock_gettime(CLOCK_MONOTONIC, &tp);
@@ -597,7 +596,6 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
 	}
 
 	for (;;) {
