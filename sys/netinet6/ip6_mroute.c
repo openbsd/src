@@ -80,12 +80,6 @@
  * MROUTING Revision: 3.5.1.2 + PIM-SMv2 (pimd) Support
  */
 
-#ifndef _KERNEL
-# ifdef KERNEL
-#  define _KERNEL
-# endif
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>
