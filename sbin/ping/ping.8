@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.36 2008/05/07 11:57:20 claudio Exp $
+.\"	$OpenBSD: ping.8,v 1.37 2009/05/31 17:33:39 ckuethe Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 7 2008 $
+.Dd $Mdocdate: May 31 2009 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm ping
 .Bk -words
-.Op Fl DdfLnqRrv
+.Op Fl DdEefLnqRrv
 .Op Fl c Ar count
 .Op Fl I Ar ifaddr
 .Op Fl i Ar wait
@@ -82,6 +82,18 @@ bit.
 Set the
 .Dv SO_DEBUG
 option on the socket being used.
+.It Fl E
+Emit an audible beep (by sending an ascii BEL character to the
+standard error output) when no packet is received before the next
+packet is transmitted.
+To cater for round-trip times that are longer than the interval between
+transmissions, further missing packets cause a bell only if the maximum
+number of unreceived packets has increased.
+This is disabled for flood pings.
+.It Fl e
+Emit an audible beep (by sending an ascii BEL character to the
+standard error output) after each non-duplicate response is received.
+This is disabled for flood pings.
 .It Fl f
 Flood ping.
 Outputs packets as fast as they come back or one hundred times per second,

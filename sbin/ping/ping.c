@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.79 2009/04/23 23:18:35 sthen Exp $	*/
+/*	$OpenBSD: ping.c,v 1.80 2009/05/31 17:33:39 ckuethe Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.79 2009/04/23 23:18:35 sthen Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.80 2009/05/31 17:33:39 ckuethe Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,8 @@ int options;
 #define	F_HDRINCL	0x0400
 #define	F_TTL		0x0800
 #define	F_SO_JUMBO	0x1000
+#define	F_AUD_RECV	0x2000
+#define	F_AUD_MISS	0x4000
 
 /* multicast options */
 int moptions;
@@ -152,6 +154,7 @@ unsigned long npackets;		/* max packets to transmit */
 unsigned long nreceived;	/* # of packets we got back */
 unsigned long nrepeats;		/* number of duplicates */
 unsigned long ntransmitted;	/* sequence # for outbound packets = #sent */
+unsigned long nmissedmax = 1;	/* max value of ntransmitted - nreceived - 1 */
 double interval = 1;		/* interval between packets */
 struct itimerval interstr;	/* interval structure for use with setitimer */
 
@@ -211,7 +214,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[8 + sizeof(struct tvi)];
 	while ((ch = getopt(argc, argv,
-	    "DI:LRS:c:dfi:jl:np:qrs:T:t:vw:")) != -1)
+	    "DEI:LRS:c:defi:jl:np:qrs:T:t:vw:")) != -1)
 		switch(ch) {
 		case 'c':
 			npackets = (unsigned long)strtonum(optarg, 1, INT_MAX, &errstr);
@@ -226,6 +229,12 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			options |= F_SO_DEBUG;
+			break;
+		case 'E':
+			options |= F_AUD_MISS;
+			break;
+		case 'e':
+			options |= F_AUD_RECV;
 			break;
 		case 'f':
 			if (getuid())
@@ -352,6 +361,9 @@ main(int argc, char *argv[])
 
 	if (options & F_FLOOD && options & F_INTERVAL)
 		errx(1, "-f and -i options are incompatible");
+
+	if ((options & F_FLOOD) && (options & (F_AUD_RECV | F_AUD_MISS)))
+		warnx("No audible output for flood pings");
 
 	if (datalen >= sizeof(struct tvi))	/* can we time transfer */
 		timing = 1;
@@ -566,6 +578,11 @@ catcher(int signo)
 			waittime = maxwait;
 		(void)signal(SIGALRM, finish);
 		(void)alarm(waittime);
+	}
+	if (ntransmitted - nreceived - 1 > nmissedmax) {
+		nmissedmax = ntransmitted - nreceived - 1;
+		if (!(options & F_FLOOD) && (options & F_AUD_MISS))
+			(void)fputc('\a', stderr);
 	}
 	errno = save_errno;
 }
@@ -866,6 +883,8 @@ pr_pack(char *buf, int cc, struct sockaddr_in *from)
 	if (!(options & F_FLOOD)) {
 		(void)putchar('\n');
 		(void)fflush(stdout);
+		if (options & F_AUD_RECV)
+			(void)fputc('\a', stderr);
 	}
 }
 
@@ -1341,7 +1360,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: ping [-DdfLnqRrv] [-c count] [-I ifaddr] [-i wait]\n"
+	    "usage: ping [-AaDdfLnqRrv] [-c count] [-I ifaddr] [-i wait]\n"
 	    "\t[-l preload] [-p pattern] [-s packetsize] [-T tos] [-t ttl]\n"
 	    "\t[-w maxwait] host\n");
 	exit(1);

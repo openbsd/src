@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.73 2008/03/24 16:11:08 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.74 2009/05/31 17:33:39 ckuethe Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -162,6 +162,8 @@ struct tv32 {
 #define F_NIGROUP	0x40000
 #define F_SUPTYPES	0x80000
 #define F_NOMINMTU	0x100000
+#define F_AUD_RECV	0x200000
+#define F_AUD_MISS	0x400000
 #define F_NOUSERDATA	(F_NODEADDR | F_FQDN | F_FQDNOLD | F_SUPTYPES)
 u_int options;
 
@@ -199,6 +201,7 @@ long npackets;			/* max packets to transmit */
 long nreceived;			/* # of packets we got back */
 long nrepeats;			/* number of duplicates */
 long ntransmitted;		/* sequence # for outbound packets = #sent */
+unsigned long nmissedmax = 1;	/* max value of ntransmitted - nreceived - 1 */
 struct timeval interval = {1, 0}; /* interval between packets */
 
 /* timing */
@@ -285,7 +288,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
 	while ((ch = getopt(argc, argv,
-	    "a:b:c:dfHg:h:I:i:l:mnNp:qRS:s:tvwW")) != -1) {
+	    "a:b:c:dEefHg:h:I:i:l:mnNp:qRS:s:tvwW")) != -1) {
 		switch (ch) {
 		case 'a':
 		{
@@ -352,6 +355,12 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			options |= F_SO_DEBUG;
+			break;
+		case 'E':
+			options |= F_AUD_MISS;
+			break;
+		case 'e':
+			options |= F_AUD_RECV;
 			break;
 		case 'f':
 			if (getuid()) {
@@ -588,6 +597,10 @@ main(int argc, char *argv[])
 
 	if ((options & F_FLOOD) && (options & F_INTERVAL))
 		errx(1, "-f and -i incompatible options");
+
+	if ((options & F_FLOOD) && (options & (F_AUD_RECV | F_AUD_MISS)))
+		warnx("No audible output for flood pings");
+
 
 	if ((options & F_NOUSERDATA) == 0) {
 		if (datalen >= sizeof(struct tv32)) {
@@ -954,6 +967,12 @@ main(int argc, char *argv[])
 		}
 		if (npackets && nreceived >= npackets)
 			break;
+		if (ntransmitted - nreceived - 1 > nmissedmax) {
+			nmissedmax = ntransmitted - nreceived - 1;
+			if (!(options & F_FLOOD) && (options & F_AUD_MISS))
+				(void)fputc('\a', stderr);
+		}
+
 	}
 	summary(0);
 	exit(nreceived == 0);
@@ -1342,6 +1361,8 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 				(void)printf(" time=%g ms", triptime);
 			if (dupflag)
 				(void)printf("(DUP!)");
+			if (options & F_AUD_RECV)
+				(void)fputc('\a', stderr);
 			/* check the data */
 			cp = buf + off + ICMP6ECHOLEN + ICMP6ECHOTMLEN;
 			dp = outpack + ICMP6ECHOLEN + ICMP6ECHOTMLEN;
@@ -2433,14 +2454,14 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: ping6 [-dfH"
+	    "usage: ping6 [-dEefH"
 	    "m"
 	    "NnqtvWw"
 #ifdef IPV6_REACHCONF
 	    "R"
 #endif
 	    "] [-a addrtype] [-b bufsiz] [-c count] [-g gateway]\n\t"
-            "[-h hoplimit] [-I interface] [-i wait] [-l preload] [-p pattern]"
+	    "[-h hoplimit] [-I interface] [-i wait] [-l preload] [-p pattern]"
 	    "\n\t[-S sourceaddr] [-s packetsize] [hops ...] host\n");
 	exit(1);
 }
