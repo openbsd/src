@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.208 2009/05/25 10:17:55 sthen Exp $ */
+/* $OpenBSD: if_em.c,v 1.209 2009/05/31 04:47:50 deraadt Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -293,11 +293,8 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->hw.report_tx_early = 1;
 
-	if (em_allocate_pci_resources(sc)) {
-		printf("%s: Allocation of PCI resources failed\n",
-		    sc->sc_dv.dv_xname);
+	if (em_allocate_pci_resources(sc))
 		goto err_pci;
-	}
 
 	/* Initialize eeprom parameters */
 	em_init_eeprom_params(&sc->hw);
