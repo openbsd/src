@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.324 2009/04/17 17:17:03 henning Exp $
+#	$OpenBSD: rc,v 1.325 2009/05/31 20:57:12 halex Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -809,7 +809,7 @@ if [ X"${wsmoused_flags}" != X"NO" -a -x /usr/sbin/wsmoused ]; then
 fi
 
 # Alternatively, on some architectures, xdm may be started in /etc/ttys.
-if [ X"${xdm_flags}" != X"NO" ]; then
+if [ X"${xdm_flags}" != X"NO" -a -x /usr/X11R6/bin/xdm ]; then
 	echo 'starting xdm...';		/usr/X11R6/bin/xdm ${xdm_flags}
 fi
 
