@@ -1,13 +1,13 @@
 <!DOCTYPE html PUBLIC "-//IETF//DTD HTML 3.0//EN">
 <html>
 <head>
-<title>Lynx Users Guide v2.8.5</title>
-<link rev="made" href="mailto:lynx-dev@sig.net">
+<title>Lynx Users Guide v2.8.6</title>
+<link rev="made" href="mailto:lynx-dev@nongnu.org">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </head>
 
 <body>
-<h1>Lynx Users Guide v2.8.5</h1>
+<h1>Lynx Users Guide v2.8.6</h1>
 
 Lynx is a fully-featured <em>World Wide Web</em> (<em>WWW</em>) client
 for users running cursor-addressable, character-cell display devices (e.g.,
@@ -491,7 +491,7 @@ The form-based menu shown below is an HTML file generated at runtime,
 in which the user fills in choices as in any ordinary HTML form.
 <pre>
 
-                    Options Menu (Lynx Version 2.8.5dev.15)
+                    Options Menu (Lynx Version 2.8.6rel.2)
 
       Accept Changes - Reset Changes Left Arrow cancels changes <A
 HREF="keystrokes/option_help.html">HELP!</A>
@@ -535,6 +535,9 @@ HREF="keystrokes/option_help.html">HELP!</A>
 
   Headers Transferred to Remote Servers
   Personal mail address            : __________________________________________
+  Password for anonymous ftp       : __________________________________________
+  Preferred media type (!)         : [Accept lynx's internal types]
+  Preferred encoding (!)           : [All_____]
   Preferred document character set : _________________________________
   Preferred document language      : _________________________________
   User-Agent header (!)            : __________________________________________
@@ -563,7 +566,7 @@ and is accessed by setting FORMS_OPTIONS to TRUE in
 <A HREF="#lynx.cfg">lynx.cfg</A>.
 <pre>
 
-             Options Menu (Lynx Version 2.8.5rel.1)
+             Options Menu (Lynx Version 2.8.6rel.2)
 
      (E)ditor                     : emacs
      (D)ISPLAY variable           : aixtest.cc.ukans.edu:0.0
@@ -785,6 +788,16 @@ return to Lynx or the '<em>&gt;</em>' command to save the options to a
             file, but can enter '<em>=</em>' to invoke the STANDARD selection
             menu, or <em>RETURN</em> for the default bookmark file.
 
+   <dt>Password for anonymous ftp
+        <dd>If this is blank, Lynx will use your personal mail address
+            as the anonymous ftp password.  Though that is the convention,
+            some users prefer to use some other string which provides
+            less information.  If the given value lacks a "@", Lynx also
+            will use your computer's hostname as part of the password.
+            If both this field and the personal mail address are blank,
+            Lynx will use your $USER environment variable, or "WWWuser"
+            if even the environment variable is unset.
+
    <dt>Personal mail address
         <dd>This mail address will be used to help you send files to
             yourself and will be included as the From: address in any mail
@@ -825,6 +838,38 @@ return to Lynx or the '<em>&gt;</em>' command to save the options to a
             of preference explicit by using q factors as defined by the
             HTTP protocol, for servers which understand it, for example:
             iso-8859-5,&nbsp;utf-8;q=0.8
+
+   <dt>Preferred Encoding
+        <dd>When doing a GET, lynx tells what types of compressed data it can
+            decompress (the "Accept-Encoding:" string).  This is determined by
+            compiled-in support for decompression or external decompression
+            programs.  Use this option to select none, one or all of the
+            supported decompression types.
+
+   <dt>Preferred Media Type
+        <dd>When doing a GET, lynx lists the MIME types which it knows how
+            to present (the "Accept:" string).  Depending on your system
+            configuration, the mime.types or other data given by the
+            GLOBAL_EXTENSION_MAP may include many entries that lynx really does
+            not handle.  Use this option to select one of the built-in subsets
+            of the MIME types that lynx could list in the Accept.
+            <dl>
+               <dt>Accept lynx's internal types
+                   <dd>list only the types that are compiled into lynx.
+               <dt>Also accept lynx.cfg's types
+                   <dd>lists types defined in lynx.cfg, e.g., the VIEWER and
+                       Cern RULE or RULESFILE settings.
+               <dt>Also accept user's types
+                   <dd>lists types from the PERSONAL_EXTENSION_MAP setting in
+                       lynx.cfg
+               <dt>Also accept system's types
+                   <dd>lists types from the GLOBAL_EXTENSION_MAP setting in
+                       lynx.cfg
+               <dt>Accept all types
+                   <dd>adds the types that are in lynx's built-in tables for
+                       external programs that may be used to present a
+                       document.
+            </dl>
 
    <dt>Raw 8-bit or CJK Mode
         <dd>Whether 8-bit characters are assumed to correspond with the
@@ -915,7 +960,7 @@ return to Lynx or the '<em>&gt;</em>' command to save the options to a
         <dd>The header string which Lynx sends to HTTP servers to indicate the
             User-Agent is displayed here.  Changes may be disallowed via
             the <em>-restrictions</em> switch.  Otherwise, the header can be
-            changed temporarily to a string such as <em>L_y_n_x/2.8.5</em>
+            changed temporarily to a string such as <em>L_y_n_x/2.8.6</em>
             for access to sites which discriminate against Lynx based on
             checks for the presence of &quot;Lynx&quot; in the header.  If
             the User-Agent header has been changed, it can
@@ -1326,9 +1371,9 @@ commands.
             ability to create a log can be toggled on with
             the <em>-tlog</em> switch.   Note that this ability is
             probably disabled in anonymous or validation accounts.
-   <dt><A NAME="*-key"><em>*</em></A>
+   <dt><A NAME="asterisk-key"><em>*</em></A>
         <dd>The '<em>*</em>' command toggles image_links mode on and off.
-            When on, links will be created for all images, including inlines.
+            When on, links will be created for all images, including inline images.
             If you have an image viewer mapped to the image's MIME type, you
             can activate such links to view an inline image.  You should
             normally have this mode toggled off.
@@ -1337,7 +1382,7 @@ commands.
             When on, the charset is assumed to match the selected character
             set and 8-bit characters are not reverse translated with respect
             to the ISO-8859-1 conversion tables.
-   <dt><A NAME="[-key"><em>[</em></A>
+   <dt><A NAME="lbracket-key"><em>[</em></A>
         <dd>The '<em>[</em>' command toggles pseudo_inlines mode on and off.
             When on, inline images which have no ALT string specified will
             have an <em>[INLINE]</em> pseudo-ALT string inserted in the Lynx
@@ -1661,7 +1706,7 @@ to keep track of information across a series of related form submissions,
 but have the potential for including information about the user that might
 be considered to represent an invasion of privacy.  NOTE, in this regard,
 that Lynx has implemented the <a
-href="http://www.w3.org/MarkUp/html3/Contents.html">HTML 3.0</a>
+href="http://www.w3.org/Markup/html3/">HTML 3.0</a>
 <em>DISABLED</em> attribute for <em>all</em> of its form fields.  These
 can be used to keep track of information across submissions, and to cast
 it unmodifiable in the current form, but keep the user aware that it will
@@ -2285,17 +2330,44 @@ where
              <li>If a URL is specified, the file will be retrieved,
                  and only the server base directory will be relevant
                  to further accesses.
+             <li>If more than one local file or remote URL is listed on the
+                 command line, Lynx will open only the last interactively.  All
+                 of the names (local files and remote URLs) are added to the
+                 G)oto history.
           </ul>
    <dt><code>options</code>
-        <dd>can be selected from the following list, where items in all-caps
-            indicate that a substitution must be made.  Many options are
-            "toggles", meaning that they will change the default action,
-            however it was specified.  To always set the option on, use the
-            syntax "-option+", "-option=on", or "-option:on".  To always set
-            the option off, use the syntax "-option-", "-option=off", or
-            "-option:off".  The syntax with the "=" may not work under DOS
-            because of operating system constraints.  Use one of the other
-            forms in that case.
+        <dd>Lynx uses only long option names.  Option names can begin with
+            double dash as well, underscores and dashes can be intermixed in
+            option names (in the reference below options are with one dash
+            before them and with underscores).
+            <p>
+            Lynx provides many command-line options.  Some options require a
+            value (string, number or keyword).  These are noted in the
+            reference below.  The other options set boolean values in the
+            program.  There are three types of boolean options:  set, unset and
+            toggle.  If no option value is given, these have the obvious
+            meaning:  set (to true), unset (to false), or toggle (between
+            true/false).  For any of these, an explicit value can be given in
+            different forms to allow for operating system constraints, e.g.,
+            <pre><code>
+              -center:off
+              -center=off
+              -center-</code></pre>
+            Lynx recognizes "1", "+", "on" and "true" for true values, and "0",
+            "-", "off" and "false" for false values. Other  option-values  are
+            ignored.
+            <p>
+            The default boolean, number and string option values that are
+            compiled into lynx are displayed in the help-message provided by
+            lynx -help.  Some of those may differ according to how lynx was
+            built; see the help message itself for these values.  The -help
+            option is processed before any option, including those that control
+            reading from the lynx.cfg file.  Therefore runtime configuration
+            values are not reflected in the help-message.
+            <p>
+            Capitalized items in the option summary
+            indicate that a substitution must be made.
+            These are the options:
            <dl>
              <dt><code>-</code>
                 <dd>If the argument is only '<code>-</code>' (dash), then Lynx
@@ -2322,7 +2394,9 @@ where
              <dt><code>-assume_charset=MIMENAME</code>
                 <dd>charset for documents that don't specify it.
              <dt><code>-assume_local_charset=MIMENAME</code>
-                <dd>charset assumed for local files.
+                <dd>charset assumed for local files,
+                    i.e., files which lynx creates such as internal pages for
+                    the options menu.
              <dt><code>-assume_unrec_charset=MIMENAME</code>
                 <dd>use this instead of unrecognized charsets.
              <dt><code>-auth=ID:PW</code>
@@ -2558,6 +2632,8 @@ where
                 <dd>disable the link list feature in dumps.
              <dt><code>-nolog</code>
                 <dd>disable mailing of error messages to document owners.
+             <dt><code>-nomargins</code>
+                <dd>disable left/right margins in the default style sheet.
              <dt><code>-nonrestarting_sigwinch</code>
                 <dd>make window size change handler non-restarting.
                 This flag is not available on all systems,
@@ -2579,6 +2655,8 @@ where
                 <dd>disable SOCKS proxy usage by a SOCKSified Lynx.
              <dt><code>-nostatus</code>
                 <dd>disable the retrieval status messages.
+             <dt><code>-notitle</code>
+                <dd>disable title and blank line from top of page.
              <dt><code>-nounderline</code>
                 <dd>disable underline video-attribute.
              <dt><code>-number_fields</code>
@@ -2618,7 +2696,7 @@ where
              <dt><code>-print</code>
                 <dd>enable print functions. (default)
              <dt><code>-pseudo_inlines</code>
-                <dd>toggles pseudo-ALTs for inlines with no ALT string.
+                <dd>toggles pseudo-ALTs for inline images with no ALT string.
              <dt><code>-raw</code>
                 <dd>toggles default setting of 8-bit character translations
                     or CJK mode for the startup character set.
@@ -2806,17 +2884,35 @@ where
                     double-quotes and tags.
              <dt><code>-source</code>
                 <dd>works the same as dump but outputs HTML source instead of
-                    formatted text.
+                    formatted text.  For example
+                    <pre><tt>
+                    lynx -source . >foo.html
+                    </tt></pre>
+                    generates HTML source listing the  files  in  the  current
+                    directory. Each file is marked by an HREF relative to  the
+                    parent directory. Add a trailing slash  to make the HREF's
+                    relative to the current directory:
+                    <pre><tt>
+                    lynx -source ./ >foo.html
+                    </tt></pre>
              <dt><code>-stack_dump</code>
                 <dd>disable SIGINT cleanup handler.
              <dt><code>-startfile_ok</code>
                 <dd>allow non-http startfile and homepage with
                     <em>-validate</em>.
+             <dt><code>-stderr</code>
+                <dd>When dumping a document using <code>-dump</code> or
+                    <code>-source</code>, Lynx normally does not display alert
+                    (error) messages that you see on the screen in the status
+                    line.  Use the <code>-stderr</code> option to tell Lynx to
+                    write these messages to the standard error.
              <dt><code>-stdin</code>
                 <dd>read the startfile from standard input
                     (UNIX only).
              <dt><code>-syslog=<em>text</em></code>
                 <dd>information for syslog call.
+             <dt><code>-syslog-urls</code>
+                <dd>log requested URLs with syslog.
              <dt><code>-tagsoup</code>
                 <dd>initialize DTD with "TagSoup" tables,
                     <A HREF="keystrokes/option_help.html#tagsoup">more details</A>.
@@ -3030,6 +3126,7 @@ The 2.8.1 development set was released as v2.8.2 in June 1999.<br>
 The 2.8.2 development set was released as v2.8.3 in April 2000.<br>
 The 2.8.3 development set was released as v2.8.4 in July 2001.<br>
 The 2.8.4 development set was released as v2.8.5 in February 2004.<br>
+The 2.8.5 development set was released as v2.8.6 in October 2006.<br>
 
 <p>Since early 1997, the Lynx code has expanded into autoconfigure and
 PC versions.  The branching of the Lynx source base from a single

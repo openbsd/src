@@ -7,13 +7,13 @@
  *     The only call to this structure is via HTMLGetEntityUCValue().
  *
 
-Unlike the numeric entities &#234 which may be for any Unicode character,
-the character references should be defined within HTML standards
-to get a compatibility between browsers.
+Unlike the numeric entities &#234 which may be for any Unicode character, the
+character references should be defined within HTML standards to get a
+compatibility between browsers.
 
-Now we have a choice: use clean HTML4.0 entities list
-(and reject everithing others), or use a relaxed list
-with lots of synonyms and new symbols found at
+Now we have a choice:  use clean HTML4.0 entities list (and reject everithing
+others), or use a relaxed list with lots of synonyms and new symbols found at
+
 ftp://ftp.unicode.org/MAPPINGS/VENDORS/MISC/SGML.TXT
 
 We hold both: #define ENTITIES_HTML40_ONLY for strict version,
@@ -21,15 +21,14 @@ otherwise relaxed.
 
  */
 
-#include <UCkd.h> /* typedef u16 */
+#include <UCkd.h>		/* typedef u16 */
 typedef struct {
-    char* name; /* sorted alphabetically (case-sensitive) */
+    const char *name;		/* sorted alphabetically (case-sensitive) */
     u16 code;
 } UC_entity_info;
 
-static CONST UC_entity_info unicode_entities[] =
-
-
+static const UC_entity_info unicode_entities[] =
+/* *INDENT-OFF* */
 #ifdef ENTITIES_HTML40_ONLY
 /*********************************************************************
 
@@ -1409,3 +1408,4 @@ display them.
 };
 
 #endif /* not ENTITIES_HTML40_ONLY */
+/* *INDENT-ON* */

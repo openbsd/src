@@ -19,18 +19,28 @@
 #	fi
 #		turn justification back on
 #
+use strict;
 
-require "getopts.pl";
+use Getopt::Std;
+
+use vars qw($opt_a $opt_m $opt_s);
+
+use vars qw(@cats);
+use vars qw(%cats);
+
+use vars qw(@settings_avail);
+use vars qw(%settings_avail);
 
 # Options:
 #	-a	show all options, not only those that are available.
 #	-m	mark unavailable options with an '*'.  Data for this is read
 #		from standard input.
 #	-s	sort entries in body.html
-&Getopts('ams');
+&getopts('ams');
 
 if ( defined $opt_m ) {
-	@settings_ = <STDIN>;
+	my $l;
+	my @settings_ = <STDIN>;
 	%settings_avail = ();
 	foreach $l (@settings_) {
 		chop $l;
@@ -45,8 +55,8 @@ if ( defined $opt_m ) {
 # This sub tells whether the support for the given setting was enabled at
 # compile time.
 sub ok {
-	local ($name) = @_;
-	local ($ret) = defined $opt_a || defined($settings_avail{uc $name})+0;
+	my ($name) = @_;
+	my $ret = defined $opt_a || defined($settings_avail{uc $name})+0;
 	$ret;
 }
 
@@ -63,7 +73,8 @@ exit (0);
 
 # process a Lynx configuration-file
 sub doit {
-	local ($name) = @_;
+	my ($name) = @_;
+	my $n;
 
 	# Ignore our own backup files
 	if ( $name =~ ".*~" ) {
@@ -75,7 +86,7 @@ sub doit {
 		print STDERR "Can't open $name: $!\n";
 		return;
 	};
-	local(@input) = <FP>;
+	my (@input) = <FP>;
 	close(FP);
 
 	for $n (0..$#input) {
@@ -90,10 +101,10 @@ sub doit {
 }
 
 sub gen_alphatoc {
-	local(@input) = @_;
-	local (@minor);
-	local ($n, $m, $c, $d);
-	local ($output="alphatoc.html");
+	my (@input) = @_;
+	my @minor;
+	my ($n, $m, $c, $d);
+	my $output = "alphatoc.html";
 	open(FP,">$output") || do {
 		print STDERR "Can't open $output: $!\n";
 		return;
@@ -102,7 +113,7 @@ sub gen_alphatoc {
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html>
 <head>
-<link rev="made" href="mailto:lynx-dev@sig.net">
+<link rev="made" href="mailto:lynx-dev@nongnu.org">
 <title>Settings by name</title>
 </head>
 <body>
@@ -134,13 +145,13 @@ EOF
 			printf FP "<h2><a name=%s>%s</a></h2>\n", $d, $d;
 			$c=$d;
 		}
-		local ($avail = ok($minor[$n]));
-		local ($mark = !$avail && defined $opt_m ? "*" : "");
+		my $avail = ok($minor[$n]);
+		my $mark = (!$avail && defined $opt_m) ? "*" : "";
 		if (defined $opt_a || $avail) {
 		    printf FP "<a href=\"body.html#%s\">%s</a>&nbsp;&nbsp;\n", $minor[$n], $minor[$n] . $mark;
 		};
 	}
-	$str = <<'EOF'
+	my $str = <<'EOF'
 <p>
 <a href=cattoc.html>To list of settings by category</a>
 EOF
@@ -160,9 +171,10 @@ EOF
 # We could generate this file in alphabetic order as well, but choose to use
 # the order of entries in lynx.cfg, since some people expect that arrangement.
 sub gen_body {
-	local(@input) = @_;
-	local ($n, $m, $c, $p, $h1, $h2, $any);
-	local ($output="body.html");
+	my @input = @_;
+	my ($n, $c);
+	my @h2;
+	my $output = "body.html";
 	open(FP,">$output") || do {
 		print STDERR "Can't open $output: $!\n";
 		return;
@@ -171,28 +183,32 @@ sub gen_body {
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html>
 <head>
-<link rev="made" href="mailto:lynx-dev@sig.net">
+<link rev="made" href="mailto:lynx-dev@nongnu.org">
 <title>Description of settings in lynx configuration file</title>
 </head>
 <body>
 EOF
-	$d = -1;
-	$p = 0;
-	$m = 0;
-	$h1 = "";
-	$sp = ' ';
-	$ex = 0;
-	$nf = 0;
-	$any = 0;
-	$next = 0;
-	$left = 0;
+	my $l;
+	my $t;
+	my $d = -1;
+	my $p = 0;
+	my $m = 0;
+	my $h1 = "";
+	my $sp = ' ';
+	my $ex = 0;
+	my $nf = 0;
+	my $any = 0;
+	my $first = 0;
+	my $next = 0;
+	my $left = 0;
+	my %keys;
 	undef %keys;
 
-	local (@optnames);
-	local (%optname_to_fname);#this maps optname to fname - will be used
-	    #for alphabetical output of the content
-	local ($curfilename = "tmp000");#will be incremented each time
-	local ($tmpdir = "./");#temp files will be created there
+	my @optnames;
+	my %optname_to_fname;	#this maps optname to fname - will be used
+	    			#for alphabetical output of the content
+	my $curfilename = "tmp000";	#will be incremented each time
+	my $tmpdir = "./";	#temp files will be created there
 	close(FP);
 
 	for $n (0..$#input) {
@@ -201,8 +217,8 @@ EOF
 			next;
 		}
 		$c = $input[$n];
-		$count = $#input;
-		$once = 1;
+		my $count = $#input;
+		my $once = 1;
 		if ( $c =~ /^\.h1\s/ ) {
 			$h1 = 1;
 			$h1 = $c;
@@ -218,7 +234,7 @@ EOF
 			$m++;
 			next;
 		} elsif ( $c =~ /^\./ ) {
-			$s = $c;
+			my $s = $c;
 			$s =~ s/^\.[a-z]+\s//;
 			if ( $s =~ /^[0-9]+$/ ) {
 				$count = $s;
@@ -236,6 +252,7 @@ EOF
 			$nf = 0;
 		} elsif ( $c =~ /^$/ ) {
 			if ( $m > 1 ) {
+				my $j;
 				for $j (1..$#h2) {
 					close(FP);++$curfilename;
 					push @optnames,$h2[$j];
@@ -311,7 +328,7 @@ EOF
 				}
 			}
 
-			$k = 0;
+			my $k = 0;
 			if ( $c =~ /^[a-zA-Z_]+:/ ) {
 				$t = $c;
 				$t =~ s/:.*//;
@@ -366,21 +383,21 @@ EOF
 		return;
 	};
 	{
-	    local (@ordered = (defined $opt_s ? (sort keys(%optname_to_fname)) : @optnames));
+	    my @ordered = (defined $opt_s ? (sort keys(%optname_to_fname)) : @optnames);
 	    if (defined $opt_s) {
 		print FP "Options are sorted by name.\n";
 	    } else {
 		print FP "Options are in the same order as lynx.cfg.\n";
 	    }
 	    foreach $l (@ordered) {
-		local ($fnm = $tmpdir . $optname_to_fname{$l});
+		my $fnm = $tmpdir . $optname_to_fname{$l};
 		open(FP1,"<$fnm") || do {
 		    print STDERR "Can't open $fnm: $!\n";
 		    return;
 		};
-		local ($avail = ok($l));
+		my $avail = ok($l);
 		if (defined $opt_a || $avail) {
-		    local(@lines) = <FP1>;
+		    my @lines = <FP1>;
 		    print FP @lines;
 		    if (!$avail && defined $opt_m) {
 			print FP <<'EOF';
@@ -403,12 +420,12 @@ EOF
 }
 
 sub gen_cattoc {
-	local(@input) = @_;
-	local (@major);
-	local (@descs);
-	local (@index);
-	local ($n, $m, $c, $d, $found, $h1);
-	local ($output="cattoc.html");
+	my @input = @_;
+	my @major;
+	my %descs;
+	my %index;
+	my ($n, $m, $c, $d, $found, $h1);
+	my $output = "cattoc.html";
 
 	open(FP,">$output") || do {
 		print STDERR "Can't open $output: $!\n";
@@ -418,7 +435,7 @@ sub gen_cattoc {
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html>
 <head>
-<link rev="made" href="mailto:lynx-dev@sig.net">
+<link rev="made" href="mailto:lynx-dev@nongnu.org">
 <title>Settings by category</title>
 </head>
 <body>
@@ -478,19 +495,19 @@ EOF
 		}
 		$c = $index{$major[$n]};
 		if ( $c ne "" ) {
-			@c = split(/\n/, $c);
+			my @c = split(/\n/, $c);
 			@c = sort @c;
 			printf FP "<p>Here is a list of settings that belong to this category\n";
 			printf FP "<ul>\n";
 			for $m (0..$#c) {
-				local($avail = ok($c[$m]));
-				local($mark = !$avail && defined $opt_m ? "*" : "");
+				my $avail = ok($c[$m]);
+				my $mark = (!$avail && defined $opt_m) ? "*" : "";
 				printf FP "<li><a href=\"body.html#%s\">%s</a>\n", $c[$m], $c[$m] . $mark;
 			}
 			printf FP "</ul>\n";
 		}
 	}
-	$str = <<'EOF'
+	my $str = <<'EOF'
 <p>
 <a href=alphatoc.html>To list of settings by name</a>
 EOF

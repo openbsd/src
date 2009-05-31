@@ -1,8 +1,11 @@
-$ v = 'f$verify(0)'
+$ v0 = 0
+$ v = f$verify(v0)
 $!			LIBMAKE.COM
 $!
 $!   Command file to build the WWWLibrary on VMS systems.
 $!
+$!   23-Oct-2004	T.Dickey
+$!	cleanup, remove duplication, etc.
 $!   08-Oct-1997	F.Macrides		macrides@sci.wfeb.edu
 $!	Added comments and minor tweaks for convenient addition of
 $!	compiler definitions and compiler and linker options.
@@ -35,7 +38,14 @@ $!	Compiler definitions can be added here as a comma separated
 $!	list with a lead comma, e.g., ",HAVE_FOO_H,DO_BLAH".  They
 $!	will apply only to the libwww-FM modules. - FM
 $!
-$ extra = ""
+$ extra_defs = ",ACCESS_AUTH"
+$!
+$!	Include-paths can be added here as a comma separated
+$!	list with a lead comma, e.g., ",foo".
+$!
+$ extra_incs = ""
+$!
+$ extra_libs = ""
 $!
 $!	If no TCP/IP agent is specified (as the first argument),
 $!	prompt for a number from the list.   Note that the agent
@@ -64,15 +74,50 @@ $ if agent .eq. 5 .or. p1 .eqs. "SOCKETSHR_TCP" then transport = "SOCKETSHR_TCP"
 $ if agent .eq. 6 .or. p1 .eqs. "TCPWARE" then transport = "TCPWARE"
 $ if agent .eq. 7 .or. p1 .eqs. "DECNET" then transport = "DECNET"
 $!
-$ if transport .eqs. "SOCKETSHR_TCP" then extra = extra + ",_DECC_V4_SOURCE"
-$ if transport .eqs. "TCPWARE" then extra = extra + ",UCX"
+$ if transport .eqs. "SOCKETSHR_TCP" then extra_defs = extra_defs + ",_DECC_V4_SOURCE"
+$ if transport .eqs. "TCPWARE" then extra_defs = extra_defs + ",UCX"
 $!
-$ if p2 .nes. ""
+$ if P2 .nes. ""
 $ then
-$   ssl_arg = "openssl"
-$   extra = extra + ",USE_SSL,USE_OPENSSL_INCL"
-$ else
-$   ssl_arg = ""
+$   count_parm = 0
+$ parse_p2:
+$   value_parm = f$element('count_parm, ",", "''p2'")
+$   if value_parm .nes. ","
+$   then
+$      if value_parm .eqs. "BZLIB"
+$      then
+$         write sys$output "** adding BZlib to build."
+$         extra_defs = extra_defs + ",USE_BZLIB"
+$         extra_incs = extra_incs + "," + BZLIB_INC
+$         extra_libs = extra_libs + "," + BZLIB_LIB + "libbz2/LIB"
+$      endif
+$      if value_parm .eqs. "SLANG"
+$      then
+$         write sys$output "** adding SLang to build."
+$         extra_defs = extra_defs + ",USE_SLANG"
+$         extra_incs = extra_incs + "," + SLANG_INC
+$         extra_libs = extra_libs + "," + SLANG_LIB + "slang.olb/lib"
+$      endif
+$      if value_parm .eqs. "SSL"
+$      then
+$         write sys$output "** adding SSL to build."
+$         extra_defs = extra_defs + ",USE_SSL,USE_OPENSSL_INCL"
+$         extra_libs = extra_libs + "," + SSL_LIB + "libssl/LIB," + SSL_LIB + "libcrypto/LIB"
+$!
+$!	The "#include <openssl/ssl.h>" requires a logical variable "openssl".
+$!
+$         define/nolog openssl 'SSL_INC
+$      endif
+$      if value_parm .eqs. "ZLIB"
+$      then
+$         write sys$output "** adding Zlib to build."
+$         extra_defs = extra_defs + ",USE_ZLIB"
+$         extra_incs = extra_incs + "," + ZLIB_INC
+$         extra_libs = extra_libs + "," + ZLIB_LIB + "libz/LIB"
+$      endif
+$      count_parm = count_parm + 1
+$      goto parse_p2
+$   endif
 $ endif
 $!
 $!	Compiler options can be specified here.  If there was
@@ -82,76 +127,43 @@ $!
 $ cc_opts = ""
 $ if p3 .nes. "" then cc_opts = cc_opts + "/DEBUG/NOOPT"
 $!
-$ IF f$trnlnm("VAXCMSG") .eqs. "DECC$MSG" .or. -
+$ all_defs = transport + extra_defs
+$ all_incs = "[-.Implementation],[---.src],[---.src.chrtrans],[---]" + extra_incs
+$!
+$ IF f$getsyi("ARCH_NAME") .eqs. "Alpha" .or. -
+     f$getsyi("ARCH_NAME") .eqs. "IA64" .or. -
+     f$trnlnm("VAXCMSG") .eqs. "DECC$MSG" .or. -
      f$trnlnm("DECC$CC_DEFAULT") .eqs. "/DECC" .or. -
      f$trnlnm("DECC$CC_DEFAULT") .eqs. "/VAXC"
 $ THEN
-$  v1 = f$verify(1)
 $! DECC:
-$  v1 = 'f$verify(0)'
 $  If transport .eqs. "UCX" .or. transport .eqs. "TCPWARE"
 $  Then
-$  v1 = f$verify(1)
-$!
-$ cc/decc/prefix=all /nomember 'cc_opts'-
-    /warning=(disable=implicitfunc)-
-    /DEFINE=(ACCESS_AUTH,'transport''extra',VC="""2.14""")-
-    /INCLUDE=([-.Implementation],[---.src],[---.src.chrtrans],[---]) -
-    [-.Implementation]HTString.c
-$!
-$ cc := cc/decc/prefix=all /nomember 'cc_opts'-
+$    cc := cc/decc/prefix=all /nomember 'cc_opts'-
 	  /warning=(disable=implicitfunc)-
-	  /DEFINE=(ACCESS_AUTH,'transport''extra')-
-	  /INCLUDE=([-.Implementation],[---.src],[---.src.chrtrans],[---])
-$!
-$  v1 = 'f$verify(0)'
+	  /DEFINE=('all_defs) -
+	  /INCLUDE=('all_incs)
 $  Else
-$  if transport .eqs. "MULTINET" then -
-	extra = extra + ",_DECC_V4_SOURCE,__SOCKET_TYPEDEFS"
-$  v1 = f$verify(1)
-$!
-$ cc/decc/prefix=all /nomember 'cc_opts'-
-    /warning=(disable=implicitfunc)-
-    /DEFINE=(ACCESS_AUTH,'transport''extra',VC="""2.14""")-
-    /INCLUDE=([-.Implementation],[---.src],[---.src.chrtrans],[---]) -
-    [-.Implementation]HTString.c
-$!
-$ cc := cc/decc/prefix=all /nomember 'cc_opts'-
+$    if transport .eqs. "MULTINET" then -
+	extra_defs = extra_defs + ",_DECC_V4_SOURCE,__SOCKET_TYPEDEFS"
+$    cc := cc/decc/prefix=all /nomember 'cc_opts'-
 	  /warning=(disable=implicitfunc)-
-	  /DEFINE=(ACCESS_AUTH,'transport''extra')-
-	  /INCLUDE=([-.Implementation],[---.src],[---.src.chrtrans],[---])
-$!
-$  v1 = 'f$verify(0)'
+	  /DEFINE=('all_defs) -
+	  /INCLUDE=('all_incs)
 $  EndIf
 $ ELSE
 $  IF f$search("gnu_cc:[000000]gcclib.olb") .nes. ""
 $  THEN
-$   v1 = f$verify(1)
 $! GNUC:
-$!
-$   gcc/DEFINE=(ACCESS_AUTH,'transport''extra',VC="""2.14""") 'cc_opts'-
-       /INCLUDE=([-.Implementation],[---.src],[---.src.chrtrans],[---]) -
-       [-.Implementation]HTString.c
-$!
-$   cc := gcc/DEFINE=(ACCESS_AUTH,'transport''extra') 'cc_opts'-
-	     /INCLUDE=([-.Implementation],[---.src],[---.src.chrtrans],[---])
-$!
-$   v1 = 'f$verify(0)'
+$    cc := gcc/DEFINE=('all_defs) 'cc_opts' /INCLUDE=('all_incs)
 $  ELSE
-$   v1 = f$verify(1)
 $! VAXC:
-$!
-$   cc/DEFINE=(ACCESS_AUTH,'transport''extra',VC="""2.14""") 'cc_opts'-
-      /INCLUDE=([-.Implementation],[---.src],[---.src.chrtrans],[---]) -
-      [-.Implementation]HTString.c
-$!
-$   cc := cc/DEFINE=(ACCESS_AUTH,'transport''extra') 'cc_opts'-
-	    /INCLUDE=([-.Implementation],[---.src],[---.src.chrtrans],[---])
-$!
-$   v1 = 'f$verify(0)'
+$    cc := cc/DEFINE=('all_defs) 'cc_opts' /INCLUDE=('all_incs)
 $  ENDIF
 $ ENDIF
 $ v1 = f$verify(1)
+$ show sym cc
+$ cc [-.Implementation]HTString.c
 $ cc [-.Implementation]HTParse.c
 $ cc [-.Implementation]HTAccess.c
 $ cc [-.Implementation]HTTP.c
@@ -188,12 +200,13 @@ $ cc [-.Implementation]HTWAIS.c
 $ cc [-.Implementation]HTVMS_WaisUI.c
 $ cc [-.Implementation]HTVMS_WaisProt.c
 $!
-$ If f$search("[-.Implementation]WWWLib_''transport'.olb") .eqs. "" Then -
-    LIBRARY/Create [-.Implementation]WWWLib_'transport'.olb
-$ LIBRARY/Replace [-.Implementation]WWWLib_'transport'.olb *.obj
+$ result = "[-.Implementation]WWWLib_''transport'.olb"
+$ If f$search("''result'") .eqs. "" Then -
+    LIBRARY/Create 'result
+$ LIBRARY/Replace 'result *.obj
 $ Delete/nolog/noconf *.obj;*
 $!
-$ v1 = 'f$verify(0)'
+$ v1 = f$verify(v0)
 $ CLEANUP:
 $    v1 = f$verify(v)
 $exit

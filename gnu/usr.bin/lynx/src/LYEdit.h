@@ -5,8 +5,14 @@
 #include <HTUtils.h>
 #endif
 
-extern BOOLEAN editor_can_position NOPARAMS;
-extern int edit_current_file PARAMS((char *newfile, int cur, int lineno));
-extern void edit_temporary_file PARAMS((char * filename, char * position, char * message));
+#ifdef __cplusplus
+extern "C" {
+#endif
+    extern BOOLEAN editor_can_position(void);
+    extern int edit_current_file(char *newfile, int cur, int lineno);
+    extern void edit_temporary_file(char *filename, const char *position, const char *message);
 
-#endif /* LYEDIT_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* LYEDIT_H */

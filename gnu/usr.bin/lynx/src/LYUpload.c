@@ -1,18 +1,18 @@
 /*
-**  Routines to upload files to the local filesystem.
-**  Created by: Rick Mallett, Carleton University
-**  Report problems to rmallett@ccs.carleton.ca
-**  Modified 15-Dec-95 George Lindholm (lindholm@ucs.ubc.ca):
-**	Reread the upload menu page every time, in case the "upload" directory
-**	  has changed (make the current directory that for the upload process).
-**	Prompt for the upload file name if there is no "%s" in the command
-**	  string.  Most protocols allow the user to specify the file name
-**	  from the client side.  Xmodem appears to be the only that can't
-**	  figure out the filename from the transfer data so it needs the
-**	  information from lynx (or an upload script which prompts for it).
-**	  On the other hand, zmodem aborts when you give it a filename on
-**	  the command line (great way of bypassing the nodotfile code :=( ).
-*/
+ *  Routines to upload files to the local filesystem.
+ *  Created by: Rick Mallett, Carleton University
+ *  Report problems to rmallett@ccs.carleton.ca
+ *  Modified 15-Dec-95 George Lindholm (lindholm@ucs.ubc.ca):
+ *	Reread the upload menu page every time, in case the "upload" directory
+ *	  has changed (make the current directory that for the upload process).
+ *	Prompt for the upload file name if there is no "%s" in the command
+ *	  string.  Most protocols allow the user to specify the file name
+ *	  from the client side.  Xmodem appears to be the only that can't
+ *	  figure out the filename from the transfer data so it needs the
+ *	  information from lynx (or an upload script which prompts for it).
+ *	  On the other hand, zmodem aborts when you give it a filename on
+ *	  the command line (great way of bypassing the nodotfile code :=( ).
+ */
 
 #include <HTUtils.h>
 #include <HTFile.h>
@@ -33,13 +33,11 @@
 #define SUBDIR_COMMAND "cd %s ; "
 
 /*
- *  LYUpload uploads a file to a given location using a
- *  specified upload method.  It parses an incoming link
- *  that looks like:
+ * LYUpload uploads a file to a given location using a specified upload method. 
+ * It parses an incoming link that looks like:
  *	LYNXDIRED://UPLOAD=<#>/TO=<STRING>
  */
-PUBLIC int LYUpload ARGS1(
-	char *, 	line)
+int LYUpload(char *line)
 {
     char *method, *directory;
     int method_number;
@@ -51,28 +49,27 @@ PUBLIC int LYUpload ARGS1(
     char *the_command = 0;
 
     /*
-     *	Use configured upload commands.
+     * Use configured upload commands.
      */
-    if((directory = strstr(line, "TO=")) == NULL)
+    if ((directory = strstr(line, "TO=")) == NULL)
 	goto failed;
     *(directory - 1) = '\0';
     /* go past "Directory=" */
     directory += 3;
 
-    if((method = strstr(line, "UPLOAD=")) == NULL)
+    if ((method = strstr(line, "UPLOAD=")) == NULL)
 	goto failed;
     /*
-     *	Go past "Method=".
+     * Go past "Method=".
      */
     method += 7;
     method_number = atoi(method);
 
     for (count = 0, upload_command = uploaders; count < method_number;
-	count++, upload_command = upload_command->next)
-      ; /* null body */
+	 count++, upload_command = upload_command->next) ;	/* null body */
 
     /*
-     *	Parsed out the Method and the Location?
+     * Parsed out the Method and the Location?
      */
     if (upload_command->command == NULL) {
 	HTAlert(gettext("ERROR! - upload command is misconfigured"));
@@ -80,15 +77,14 @@ PUBLIC int LYUpload ARGS1(
     }
 
     /*
-     *	Care about the local name?
+     * Care about the local name?
      */
-    if (HTCountCommandArgs (upload_command->command)) {
+    if (HTCountCommandArgs(upload_command->command)) {
 	/*
-	 *  Commands have the form "command %s [etc]"
-	 *  where %s is the filename.
+	 * Commands have the form "command %s [etc]" where %s is the filename.
 	 */
 	_statusline(FILENAME_PROMPT);
-retry:
+      retry:
 	*tmpbuf = '\0';
 	if (LYgetstr(tmpbuf, VISIBLE, sizeof(tmpbuf), NORECALL) < 0)
 	    goto cancelled;
@@ -125,11 +121,11 @@ retry:
 	}
 
 	/*
-	 *  See if we can write to it.
+	 * See if we can write to it.
 	 */
 	CTRACE((tfp, "LYUpload: filename is %s", filename));
 
-	if (! LYCanWriteFile(filename)) {
+	if (!LYCanWriteFile(filename)) {
 	    goto retry;
 	}
 
@@ -159,24 +155,23 @@ retry:
 
     return 1;
 
-failed:
+  failed:
     HTAlert(gettext("Unable to upload file."));
     return 0;
 
-cancelled:
+  cancelled:
     HTInfoMsg(CANCELLING);
     return 0;
 }
 
 /*
- *  LYUpload_options writes out the current upload choices to a
- *  file so that the user can select printers in the same way that
- *  they select all other links.  Upload links look like:
+ * LYUpload_options writes out the current upload choices to a file so that the
+ * user can select printers in the same way that they select all other links. 
+ * Upload links look like:
  *	LYNXDIRED://UPLOAD=<#>/TO=<STRING>
  */
-PUBLIC int LYUpload_options ARGS2(
-	char **,	newfile,
-	char *, 	directory)
+int LYUpload_options(char **newfile,
+		     char *directory)
 {
     static char tempfile[LY_MAXPATH];
     FILE *fp0;
@@ -186,13 +181,13 @@ PUBLIC int LYUpload_options ARGS2(
     char *cp;
 
     if ((fp0 = InternalPageFP(tempfile, TRUE)) == 0)
-	return(-1);
+	return (-1);
 
 #ifdef VMS
     strcpy(curloc, "/sys$login");
 #else
     cp = HTfullURL_toFile(directory);
-    strcpy(curloc,cp);
+    strcpy(curloc, cp);
     LYTrimPathSep(curloc);
     FREE(cp);
 #endif /* VMS */
@@ -211,9 +206,9 @@ PUBLIC int LYUpload_options ARGS2(
 	     cur_upload != NULL;
 	     cur_upload = cur_upload->next, count++) {
 	    fprintf(fp0, "   <a href=\"LYNXDIRED://UPLOAD=%d/TO=%s\">",
-			 count, curloc);
+		    count, curloc);
 	    fprintf(fp0, "%s", (cur_upload->name ?
-			  cur_upload->name : gettext("No Name Given")));
+				cur_upload->name : gettext("No Name Given")));
 	    fprintf(fp0, "</a>\n");
 	}
     } else {
@@ -226,5 +221,5 @@ PUBLIC int LYUpload_options ARGS2(
 
     LYforce_no_cache = TRUE;
 
-    return(0);
+    return (0);
 }

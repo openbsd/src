@@ -1,20 +1,21 @@
 /*			MIME Message Parse			HTMIME.c
-**			==================
-**
-**	This is RFC 1341-specific code.
-**	The input stream pushed into this parser is assumed to be
-**	stripped on CRs, ie lines end with LF, not CR LF.
-**	(It is easy to change this except for the body part where
-**	conversion can be slow.)
-**
-** History:
-**	   Feb 92	Written Tim Berners-Lee, CERN
-**
-*/
+ *			==================
+ *
+ *	This is RFC 1341-specific code.
+ *	The input stream pushed into this parser is assumed to be
+ *	stripped on CRs, ie lines end with LF, not CR LF.
+ *	(It is easy to change this except for the body part where
+ *	conversion can be slow.)
+ *
+ * History:
+ *	   Feb 92	Written Tim Berners-Lee, CERN
+ *
+ */
 #include <HTUtils.h>
 #include <HTMIME.h>		/* Implemented here */
 #include <HTTP.h>		/* for redirecting_url */
 #include <HTAlert.h>
+#include <HTFile.h>
 #include <HTCJK.h>
 #include <UCMap.h>
 #include <UCDefs.h>
@@ -28,174 +29,176 @@
 #include <LYLeaks.h>
 
 /*		MIME Object
-**		-----------
-*/
+ *		-----------
+ */
 
 typedef enum {
-	MIME_TRANSPARENT,	/* put straight through to target ASAP! */
-	miBEGINNING_OF_LINE,	/* first character and not a continuation */
-	miA,
-	miACCEPT_RANGES,
-	miAGE,
-	miAL,
-	miALLOW,
-	miALTERNATES,
-	miC,
-	miCACHE_CONTROL,
-	miCO,
-	miCOOKIE,
-	miCON,
-	miCONNECTION,
-	miCONTENT_,
-	miCONTENT_BASE,
-	miCONTENT_DISPOSITION,
-	miCONTENT_ENCODING,
-	miCONTENT_FEATURES,
-	miCONTENT_L,
-	miCONTENT_LANGUAGE,
-	miCONTENT_LENGTH,
-	miCONTENT_LOCATION,
-	miCONTENT_MD5,
-	miCONTENT_RANGE,
-	miCONTENT_T,
-	miCONTENT_TRANSFER_ENCODING,
-	miCONTENT_TYPE,
-	miDATE,
-	miE,
-	miETAG,
-	miEXPIRES,
-	miKEEP_ALIVE,
-	miL,
-	miLAST_MODIFIED,
-	miLINK,
-	miLOCATION,
-	miP,
-	miPR,
-	miPRAGMA,
-	miPROXY_AUTHENTICATE,
-	miPUBLIC,
-	miR,
-	miRE,
-	miREFRESH,
-	miRETRY_AFTER,
-	miS,
-	miSAFE,
-	miSE,
-	miSERVER,
-	miSET_COOKIE,
-	miSET_COOKIE1,
-	miSET_COOKIE2,
-	miT,
-	miTITLE,
-	miTRANSFER_ENCODING,
-	miU,
-	miUPGRADE,
-	miURI,
-	miV,
-	miVARY,
-	miVIA,
-	miW,
-	miWARNING,
-	miWWW_AUTHENTICATE,
-	miSKIP_GET_VALUE,	/* Skip space then get value */
-	miGET_VALUE,		/* Get value till white space */
-	miJUNK_LINE,		/* Ignore the rest of this folded line */
-	miNEWLINE,		/* Just found a LF .. maybe continuation */
-	miCHECK,		/* check against check_pointer */
-	MIME_NET_ASCII,		/* Translate from net ascii */
-	MIME_IGNORE		/* Ignore entire file */
-	/* TRANSPARENT and IGNORE are defined as stg else in _WINDOWS */
+    MIME_TRANSPARENT,		/* put straight through to target ASAP! */
+    miBEGINNING_OF_LINE,	/* first character and not a continuation */
+    miA,
+    miACCEPT_RANGES,
+    miAGE,
+    miAL,
+    miALLOW,
+    miALTERNATES,
+    miC,
+    miCACHE_CONTROL,
+    miCO,
+    miCOOKIE,
+    miCON,
+    miCONNECTION,
+    miCONTENT_,
+    miCONTENT_BASE,
+    miCONTENT_DISPOSITION,
+    miCONTENT_ENCODING,
+    miCONTENT_FEATURES,
+    miCONTENT_L,
+    miCONTENT_LANGUAGE,
+    miCONTENT_LENGTH,
+    miCONTENT_LOCATION,
+    miCONTENT_MD5,
+    miCONTENT_RANGE,
+    miCONTENT_T,
+    miCONTENT_TRANSFER_ENCODING,
+    miCONTENT_TYPE,
+    miDATE,
+    miE,
+    miETAG,
+    miEXPIRES,
+    miKEEP_ALIVE,
+    miL,
+    miLAST_MODIFIED,
+    miLINK,
+    miLOCATION,
+    miP,
+    miPR,
+    miPRAGMA,
+    miPROXY_AUTHENTICATE,
+    miPUBLIC,
+    miR,
+    miRE,
+    miREFRESH,
+    miRETRY_AFTER,
+    miS,
+    miSAFE,
+    miSE,
+    miSERVER,
+    miSET_COOKIE,
+    miSET_COOKIE1,
+    miSET_COOKIE2,
+    miT,
+    miTITLE,
+    miTRANSFER_ENCODING,
+    miU,
+    miUPGRADE,
+    miURI,
+    miV,
+    miVARY,
+    miVIA,
+    miW,
+    miWARNING,
+    miWWW_AUTHENTICATE,
+    miSKIP_GET_VALUE,		/* Skip space then get value */
+    miGET_VALUE,		/* Get value till white space */
+    miJUNK_LINE,		/* Ignore the rest of this folded line */
+    miNEWLINE,			/* Just found a LF .. maybe continuation */
+    miCHECK,			/* check against check_pointer */
+    MIME_NET_ASCII,		/* Translate from net ascii */
+    MIME_IGNORE			/* Ignore entire file */
+    /* TRANSPARENT and IGNORE are defined as stg else in _WINDOWS */
 } MIME_state;
 
 #define VALUE_SIZE 5120		/* @@@@@@@ Arbitrary? */
 struct _HTStream {
-	CONST HTStreamClass *	isa;
+    const HTStreamClass *isa;
 
-	BOOL			net_ascii;	/* Is input net ascii? */
-	MIME_state		state;		/* current state */
-	MIME_state		if_ok;		/* got this state if match */
-	MIME_state		field;		/* remember which field */
-	MIME_state		fold_state;	/* state on a fold */
-	BOOL			head_only;	/* only parsing header */
-	BOOL			pickup_redirection; /* parsing for location */
-	BOOL			no_streamstack; /* use sink directly */
-	CONST char *		check_pointer;	/* checking input */
+    BOOL net_ascii;		/* Is input net ascii? */
+    MIME_state state;		/* current state */
+    MIME_state if_ok;		/* got this state if match */
+    MIME_state field;		/* remember which field */
+    MIME_state fold_state;	/* state on a fold */
+    BOOL head_only;		/* only parsing header */
+    BOOL pickup_redirection;	/* parsing for location */
+    BOOL no_streamstack;	/* use sink directly */
+    const char *check_pointer;	/* checking input */
 
-	char *			value_pointer;	/* storing values */
-	char			value[VALUE_SIZE];
+    char *value_pointer;	/* storing values */
+    char value[VALUE_SIZE];
 
-	HTParentAnchor *	anchor;		/* Given on creation */
-	HTStream *		sink;		/* Given on creation */
+    HTParentAnchor *anchor;	/* Given on creation */
+    HTStream *sink;		/* Given on creation */
 
-	char *			boundary;	/* For multipart */
-	char *			set_cookie;	/* Set-Cookie */
-	char *			set_cookie2;	/* Set-Cookie2 */
-	char *			location;	/* Location */
+    char *boundary;		/* For multipart */
+    char *set_cookie;		/* Set-Cookie */
+    char *set_cookie2;		/* Set-Cookie2 */
+    char *location;		/* Location */
 
-	char *			refresh_url;	/* "Refresh:" URL */
+    char *refresh_url;		/* "Refresh:" URL */
 
-	HTFormat		encoding;	/* Content-Transfer-Encoding */
-	char *			compression_encoding;
-	HTFormat		format;		/* Content-Type */
-	HTStream *		target;		/* While writing out */
-	HTStreamClass		targetClass;
+    HTFormat encoding;		/* Content-Transfer-Encoding */
+    char *compression_encoding;
+    HTFormat format;		/* Content-Type */
+    HTStream *target;		/* While writing out */
+    HTStreamClass targetClass;
 
-	HTAtom *		targetRep;	/* Converting into? */
+    HTAtom *targetRep;		/* Converting into? */
 };
 
 /*
-**  This function is for trimming off any paired
-**  open- and close-double quotes from header values.
-**  It does not parse the string for embedded quotes,
-**  and will not modify the string unless both the
-**  first and last characters are double-quotes. - FM
-*/
-PUBLIC void HTMIME_TrimDoubleQuotes ARGS1(
-	char *,		value)
+ *  This function is for trimming off any paired
+ *  open- and close-double quotes from header values.
+ *  It does not parse the string for embedded quotes,
+ *  and will not modify the string unless both the
+ *  first and last characters are double-quotes. - FM
+ */
+void HTMIME_TrimDoubleQuotes(char *value)
 {
     int i;
     char *cp = value;
 
-    if (!(cp && *cp) || *cp != '\"')
+    if (!(cp && *cp) || *cp != '"')
 	return;
 
     i = strlen(cp);
-    if (cp[(i - 1)] != '\"')
+    if (cp[(i - 1)] != '"')
 	return;
     else
 	cp[(i - 1)] = '\0';
 
     for (i = 0; value[i]; i++)
-	value[i] = cp[(i +1)];
+	value[i] = cp[(i + 1)];
 }
 
-PRIVATE BOOL content_is_compressed ARGS1(HTStream *, me)
+/*
+ * Check if the token from "Content-Encoding" corresponds to a compression
+ * type.
+ */
+static BOOL content_is_compressed(HTStream *me)
 {
     char *encoding = me->anchor->content_encoding;
+    BOOL result = (HTEncodingToCompressType(encoding) != cftNone);
 
-    return encoding != 0
-        && strcmp(encoding, "8bit") != 0
-	&& strcmp(encoding, "7bit") != 0
-	&& strcmp(encoding, "binary") != 0;
+    CTRACE((tfp, "content is%s compressed\n", result ? "" : " NOT"));
+    return result;
 }
 
 /*
  * Strip quotes from a refresh-URL.
  */
-PRIVATE void dequote ARGS1(char *, url)
+static void dequote(char *url)
 {
     int len;
 
     len = strlen(url);
-    if (*url == '\'' && len > 1 && url[len-1] == url[0]) {
-	url[len-1] = '\0';
+    if (*url == '\'' && len > 1 && url[len - 1] == url[0]) {
+	url[len - 1] = '\0';
 	while ((url[0] = url[1]) != '\0') {
 	    ++url;
 	}
     }
 }
 
-PRIVATE int pumpData ARGS1(HTStream *, me)
+static int pumpData(HTStream *me)
 {
     if (strchr(HTAtom_name(me->format), ';') != NULL) {
 	char *cp = NULL, *cp1, *cp2, *cp3 = NULL, *cp4;
@@ -204,28 +207,28 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 		HTAtom_name(me->format)));
 	StrAllocCopy(cp, HTAtom_name(me->format));
 	/*
-	** Note that the Content-Type value was converted
-	** to lower case when we loaded into me->format,
-	** but there may have been a mixed or upper-case
-	** atom, so we'll force lower-casing again.  We
-	** also stripped spaces and double-quotes, but
-	** we'll make sure they're still gone from any
-	** charset parameter we check.  - FM
-	*/
+	 * Note that the Content-Type value was converted
+	 * to lower case when we loaded into me->format,
+	 * but there may have been a mixed or upper-case
+	 * atom, so we'll force lower-casing again.  We
+	 * also stripped spaces and double-quotes, but
+	 * we'll make sure they're still gone from any
+	 * charset parameter we check.  - FM
+	 */
 	LYLowerCase(cp);
 	if ((cp1 = strchr(cp, ';')) != NULL) {
 	    BOOL chartrans_ok = NO;
+
 	    if ((cp2 = strstr(cp1, "charset")) != NULL) {
 		int chndl;
 
 		cp2 += 7;
-		while (*cp2 == ' ' || *cp2 == '=' || *cp2 == '\"')
+		while (*cp2 == ' ' || *cp2 == '=' || *cp2 == '"')
 		    cp2++;
-		StrAllocCopy(cp3, cp2); /* copy to mutilate more */
-		for (cp4 = cp3; (*cp4 != '\0' && *cp4 != '\"' &&
-				 *cp4 != ';'  && *cp4 != ':' &&
-				 !WHITE(*cp4));	cp4++)
-		    ; /* do nothing */
+		StrAllocCopy(cp3, cp2);		/* copy to mutilate more */
+		for (cp4 = cp3; (*cp4 != '\0' && *cp4 != '"' &&
+				 *cp4 != ';' && *cp4 != ':' &&
+				 !WHITE(*cp4)); cp4++) ;	/* do nothing */
 		*cp4 = '\0';
 		cp4 = cp3;
 		chndl = UCGetLYhndl_byMIME(cp3);
@@ -238,17 +241,15 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 		    HTAnchor_setUCInfoStage(me->anchor, chndl,
 					    UCT_STAGE_MIME,
 					    UCT_SETBY_MIME);
-		}
-		else if (chndl < 0) {/* got something but we don't
-					recognize it */
+		} else if (chndl < 0) {		/* got something but we don't
+						   recognize it */
 		    chndl = UCLYhndl_for_unrec;
 		    if (chndl < 0)
 			/*
-			**  UCLYhndl_for_unrec not defined :-(
-			**  fallback to UCLYhndl_for_unspec
-			**  which always valid.
-			*/
-			chndl = UCLYhndl_for_unspec;  /* always >= 0 */
+			 * UCLYhndl_for_unrec not defined :-( fallback to
+			 * UCLYhndl_for_unspec which always valid.
+			 */
+			chndl = UCLYhndl_for_unspec;	/* always >= 0 */
 		    if (UCCanTranslateFromTo(chndl,
 					     current_char_set)) {
 			chartrans_ok = YES;
@@ -258,20 +259,32 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 						UCT_STAGE_MIME,
 						UCT_SETBY_DEFAULT);
 		    }
+		} else {
+		    /*
+		     * Something like 'big5' - we cannot translate it, but
+		     * the user may still be able to navigate the links.
+		     */
+		    *cp1 = '\0';
+		    me->format = HTAtom_for(cp);
+		    StrAllocCopy(me->anchor->charset, cp4);
+		    HTAnchor_setUCInfoStage(me->anchor, chndl,
+					    UCT_STAGE_MIME,
+					    UCT_SETBY_MIME);
 		}
 		if (chartrans_ok) {
-		    LYUCcharset * p_in =
-			HTAnchor_getUCInfoStage(me->anchor,
-						UCT_STAGE_MIME);
-		    LYUCcharset * p_out =
-			HTAnchor_setUCInfoStage(me->anchor,
-						current_char_set,
-						UCT_STAGE_HTEXT,
-						UCT_SETBY_DEFAULT);
+		    LYUCcharset *p_in =
+		    HTAnchor_getUCInfoStage(me->anchor,
+					    UCT_STAGE_MIME);
+		    LYUCcharset *p_out =
+		    HTAnchor_setUCInfoStage(me->anchor,
+					    current_char_set,
+					    UCT_STAGE_HTEXT,
+					    UCT_SETBY_DEFAULT);
+
 		    if (!p_out)
 			/*
-			**	Try again.
-			*/
+			 * Try again.
+			 */
 			p_out =
 			    HTAnchor_getUCInfoStage(me->anchor,
 						    UCT_STAGE_HTEXT);
@@ -294,7 +307,12 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 						UCT_STAGE_HTEXT,
 						UCT_SETBY_DEFAULT);
 		    }
-		    if (p_in->enc != UCT_ENC_CJK) {
+		    if ((p_in->enc != UCT_ENC_CJK)
+#ifdef EXP_JAPANESEUTF8_SUPPORT
+			&& ((p_in->enc != UCT_ENC_UTF8)
+			    || (p_out->enc != UCT_ENC_CJK))
+#endif
+			) {
 			HTCJK = NOCJK;
 			if (!(p_in->codepoints &
 			      UCT_CP_SUBSETOF_LAT1) &&
@@ -306,27 +324,25 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 		    }
 		} else {
 		    /*
-		    **  Cannot translate.
-		    **  If according to some heuristic the given
-		    **  charset and the current display character
-		    **  both are likely to be like ISO-8859 in
-		    **  structure, pretend we have some kind
-		    **  of match.
-		    */
-		    BOOL given_is_8859
-			= (BOOL) (!strncmp(cp4, "iso-8859-", 9) &&
-				  isdigit(UCH(cp4[9])));
-		    BOOL given_is_8859like
-			= (BOOL) (given_is_8859 ||
-				  !strncmp(cp4, "windows-", 8) ||
-				  !strncmp(cp4, "cp12", 4) ||
-				  !strncmp(cp4, "cp-12", 5));
-		    BOOL given_and_display_8859like
-			= (BOOL) (given_is_8859like &&
-				  (strstr(LYchar_set_names[current_char_set],
-					  "ISO-8859") ||
-				   strstr(LYchar_set_names[current_char_set],
-					  "windows-")));
+		     * Cannot translate.  If according to some heuristic the
+		     * given charset and the current display character both are
+		     * likely to be like ISO-8859 in structure, pretend we have
+		     * some kind of match.
+		     */
+		    BOOL given_is_8859 =
+		    (BOOL) (!strncmp(cp4, "iso-8859-", 9) &&
+			    isdigit(UCH(cp4[9])));
+		    BOOL given_is_8859like =
+		    (BOOL) (given_is_8859 ||
+			    !strncmp(cp4, "windows-", 8) ||
+			    !strncmp(cp4, "cp12", 4) ||
+			    !strncmp(cp4, "cp-12", 5));
+		    BOOL given_and_display_8859like =
+		    (BOOL) (given_is_8859like &&
+			    (strstr(LYchar_set_names[current_char_set],
+				    "ISO-8859") ||
+			     strstr(LYchar_set_names[current_char_set],
+				    "windows-")));
 
 		    if (given_and_display_8859like) {
 			*cp1 = '\0';
@@ -348,10 +364,9 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 		FREE(cp3);
 	    } else {
 		/*
-		**	No charset parameter is present.
-		**	Ignore all other parameters, as
-		**	we do when charset is present. - FM
-		*/
+		 * No charset parameter is present.  Ignore all other
+		 * parameters, as we do when charset is present.  - FM
+		 */
 		*cp1 = '\0';
 		me->format = HTAtom_for(cp);
 	    }
@@ -359,34 +374,32 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 	FREE(cp);
     }
     /*
-    **  If we have an Expires header and haven't
-    **  already set the no_cache element for the
-    **  anchor, check if we should set it based
-    **  on that header. - FM
-    */
+     * If we have an Expires header and haven't already set the no_cache
+     * element for the anchor, check if we should set it based on that header. 
+     * - FM
+     */
     if (me->anchor->no_cache == FALSE &&
 	me->anchor->expires != NULL) {
 	if (!strcmp(me->anchor->expires, "0")) {
 	    /*
-	     *  The value is zero, which we treat as
-	     *  an absolute no-cache directive. - FM
+	     * The value is zero, which we treat as an absolute no-cache
+	     * directive.  - FM
 	     */
 	    me->anchor->no_cache = TRUE;
 	} else if (me->anchor->date != NULL) {
 	    /*
-	    **  We have a Date header, so check if
-	    **  the value is less than or equal to
-	    **  that. - FM
-	    */
+	     * We have a Date header, so check if the value is less than or
+	     * equal to that.  - FM
+	     */
 	    if (LYmktime(me->anchor->expires, TRUE) <=
 		LYmktime(me->anchor->date, TRUE)) {
 		me->anchor->no_cache = TRUE;
 	    }
 	} else if (LYmktime(me->anchor->expires, FALSE) == 0) {
 	    /*
-	    **  We don't have a Date header, and
-	    **  the value is in past for us. - FM
-	    */
+	     * We don't have a Date header, and the value is in past for us.  -
+	     * FM
+	     */
 	    me->anchor->no_cache = TRUE;
 	}
     }
@@ -431,13 +444,14 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 	me->target = me->sink;
     } else {
 	if (!me->compression_encoding) {
-	    CTRACE((tfp, "HTMIME: MIME Content-Type is '%s', converting to '%s'\n",
+	    CTRACE((tfp,
+		    "HTMIME: MIME Content-Type is '%s', converting to '%s'\n",
 		    HTAtom_name(me->format), HTAtom_name(me->targetRep)));
 	} else {
 	    /*
-	    **	Change the format to that for "www/compressed"
-	    **	and set up a stream to deal with it. - FM
-	    */
+	     * Change the format to that for "www/compressed" and set up a
+	     * stream to deal with it.  - FM
+	     */
 	    CTRACE((tfp, "HTMIME: MIME Content-Type is '%s',\n", HTAtom_name(me->format)));
 	    me->format = HTAtom_for("www/compressed");
 	    CTRACE((tfp, "        Treating as '%s'.  Converting to '%s'\n",
@@ -445,7 +459,7 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 	    FREE(me->compression_encoding);
 	}
 	me->target = HTStreamStack(me->format, me->targetRep,
-				   me->sink , me->anchor);
+				   me->sink, me->anchor);
 	if (!me->target) {
 	    CTRACE((tfp, "HTMIME: Can't translate! ** \n"));
 	    me->target = me->sink;	/* Cheat */
@@ -454,10 +468,9 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
     if (me->target) {
 	me->targetClass = *me->target->isa;
 	/*
-	**	Check for encoding and select state from there,
-	**	someday, but until we have the relevant code,
-	**	from now push straight through. - FM
-	*/
+	 * Check for encoding and select state from there, someday, but until
+	 * we have the relevant code, from now push straight through.  - FM
+	 */
 	me->state = MIME_TRANSPARENT;	/* Pump rest of data right through */
     } else {
 	me->state = MIME_IGNORE;	/* What else to do? */
@@ -466,7 +479,7 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 	char *url = NULL;
 	char *num = NULL;
 	char *txt = NULL;
-	char *base = "";	/* FIXME: refresh_url may be relative to doc */
+	const char *base = "";	/* FIXME: refresh_url may be relative to doc */
 
 	LYParseRefreshURL(me->refresh_url, &num, &url);
 	if (url != NULL && me->format == WWW_HTML) {
@@ -476,7 +489,7 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
 	    dequote(url);
 	    HTSprintf(&txt, "<a href=\"%s%s\">%s</a><br>", base, url, url);
 	    CTRACE((tfp, "URL %s%s\n", base, url));
-	    (me->isa->put_string)(me, txt);
+	    (me->isa->put_string) (me, txt);
 	    free(txt);
 	}
 	FREE(num);
@@ -485,17 +498,18 @@ PRIVATE int pumpData ARGS1(HTStream *, me)
     return HT_OK;
 }
 
-PRIVATE int dispatchField ARGS1(HTStream *, me)
+static int dispatchField(HTStream *me)
 {
     int i, j;
     char *cp;
 
     *me->value_pointer = '\0';
+
     cp = me->value_pointer;
-    while ((cp > me->value) && *(--cp) == ' ')  /* S/390 -- gil -- 0146 */
+    while ((cp > me->value) && *(--cp) == ' ')	/* S/390 -- gil -- 0146 */
 	/*
-	**  Trim trailing spaces.
-	*/
+	 * Trim trailing spaces.
+	 */
 	*cp = '\0';
 
     switch (me->field) {
@@ -526,13 +540,13 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Convert to lowercase and indicate in anchor. - FM
-	*/
+	 * Convert to lowercase and indicate in anchor.  - FM
+	 */
 	LYLowerCase(me->value);
 	StrAllocCopy(me->anchor->cache_control, me->value);
 	/*
-	**  Check whether to set no_cache for the anchor. - FM
-	*/
+	 * Check whether to set no_cache for the anchor.  - FM
+	 */
 	{
 	    char *cp1, *cp0 = me->value;
 
@@ -588,8 +602,8 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Indicate in anchor. - FM
-	*/
+	 * Indicate in anchor.  - FM
+	 */
 	StrAllocCopy(me->anchor->content_base, me->value);
 	break;
     case miCONTENT_DISPOSITION:
@@ -599,17 +613,16 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Indicate in anchor. - FM
-	*/
+	 * Indicate in anchor.  - FM
+	 */
 	StrAllocCopy(me->anchor->content_disposition, me->value);
 	/*
-	**  It's not clear yet from existing RFCs and IDs
-	**  whether we should be looking for file;, attachment;,
-	**  and/or inline; before the filename=value, so we'll
-	**  just search for "filename" followed by '=' and just
-	**  hope we get the intended value.  It is purely a
-	**  suggested name, anyway. - FM
-	*/
+	 * It's not clear yet from existing RFCs and IDs whether we should be
+	 * looking for file;, attachment;, and/or inline; before the
+	 * filename=value, so we'll just search for "filename" followed by '='
+	 * and just hope we get the intended value.  It is purely a suggested
+	 * name, anyway.  - FM
+	 */
 	cp = me->anchor->content_disposition;
 	while (*cp != '\0' && strncasecomp(cp, "filename", 8))
 	    cp++;
@@ -625,9 +638,9 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (*cp == '\0')
 	    break;
 	StrAllocCopy(me->anchor->SugFname, cp);
-	if (*me->anchor->SugFname == '\"') {
+	if (*me->anchor->SugFname == '"') {
 	    if ((cp = strchr((me->anchor->SugFname + 1),
-			     '\"')) != NULL) {
+			     '"')) != NULL) {
 		*(cp + 1) = '\0';
 		HTMIME_TrimDoubleQuotes(me->anchor->SugFname);
 	    } else {
@@ -650,22 +663,22 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	    !strcasecomp(me->value, "identity"))
 	    break;
 	/*
-	**  Convert to lowercase and indicate in anchor. - FM
-	*/
+	 * Convert to lowercase and indicate in anchor.  - FM
+	 */
 	LYLowerCase(me->value);
 	StrAllocCopy(me->anchor->content_encoding, me->value);
 	FREE(me->compression_encoding);
 	if (content_is_compressed(me)) {
 	    /*
-	    **	Save it to use as a flag for setting
-	    **	up a "www/compressed" target. - FM
-	    */
+	     * Save it to use as a flag for setting up a "www/compressed"
+	     * target.  - FM
+	     */
 	    StrAllocCopy(me->compression_encoding, me->value);
 	} else {
 	    /*
-	    **	Some server indicated "8bit", "7bit" or "binary"
-	    **	inappropriately.  We'll ignore it. - FM
-	    */
+	     * Some server indicated "8bit", "7bit" or "binary"
+	     * inappropriately.  We'll ignore it.  - FM
+	     */
 	    CTRACE((tfp, "                Ignoring it!\n"));
 	}
 	break;
@@ -681,8 +694,8 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Convert to lowercase and indicate in anchor. - FM
-	*/
+	 * Convert to lowercase and indicate in anchor.  - FM
+	 */
 	LYLowerCase(me->value);
 	StrAllocCopy(me->anchor->content_language, me->value);
 	break;
@@ -693,8 +706,8 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Convert to integer and indicate in anchor. - FM
-	*/
+	 * Convert to integer and indicate in anchor.  - FM
+	 */
 	me->anchor->content_length = atoi(me->value);
 	if (me->anchor->content_length < 0)
 	    me->anchor->content_length = 0;
@@ -708,8 +721,8 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Indicate in anchor. - FM
-	*/
+	 * Indicate in anchor.  - FM
+	 */
 	StrAllocCopy(me->anchor->content_location, me->value);
 	break;
     case miCONTENT_MD5:
@@ -719,8 +732,8 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Indicate in anchor. - FM
-	*/
+	 * Indicate in anchor.  - FM
+	 */
 	StrAllocCopy(me->anchor->content_md5, me->value);
 	break;
     case miCONTENT_RANGE:
@@ -735,9 +748,8 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Force the Content-Transfer-Encoding value
-	**  to all lower case. - FM
-	*/
+	 * Force the Content-Transfer-Encoding value to all lower case.  - FM
+	 */
 	LYLowerCase(me->value);
 	me->encoding = HTAtom_for(me->value);
 	break;
@@ -748,16 +760,17 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Force the Content-Type value to all lower case
-	**  and strip spaces and double-quotes. - FM
-	*/
+	 * Force the Content-Type value to all lower case and strip spaces and
+	 * double-quotes.  - FM
+	 */
 	for (i = 0, j = 0; me->value[i]; i++) {
-	    if (me->value[i] != ' ' && me->value[i] != '\"') {
+	    if (me->value[i] != ' ' && me->value[i] != '"') {
 		me->value[j++] = (char) TOLOWER(me->value[i]);
 	    }
 	}
 	me->value[j] = '\0';
 	me->format = HTAtom_for(me->value);
+	StrAllocCopy(me->anchor->content_type_params, me->value);
 	break;
     case miDATE:
 	HTMIME_TrimDoubleQuotes(me->value);
@@ -766,22 +779,21 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Indicate in anchor. - FM
-	*/
+	 * Indicate in anchor.  - FM
+	 */
 	StrAllocCopy(me->anchor->date, me->value);
 	break;
     case miETAG:
-	/*  Do not trim double quotes:
-	 *  an entity tag consists of an opaque quoted string,
-	 *  possibly prefixed by a weakness indicator.
+	/* Do not trim double quotes:  an entity tag consists of an opaque
+	 * quoted string, possibly prefixed by a weakness indicator.
 	 */
 	CTRACE((tfp, "HTMIME: PICKED UP ETag: %s\n",
 		me->value));
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Indicate in anchor. - FM
-	*/
+	 * Indicate in anchor.  - FM
+	 */
 	StrAllocCopy(me->anchor->ETag, me->value);
 	break;
     case miEXPIRES:
@@ -791,8 +803,8 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Indicate in anchor. - FM
-	*/
+	 * Indicate in anchor.  - FM
+	 */
 	StrAllocCopy(me->anchor->expires, me->value);
 	break;
     case miKEEP_ALIVE:
@@ -807,8 +819,8 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Indicate in anchor. - FM
-	*/
+	 * Indicate in anchor.  - FM
+	 */
 	StrAllocCopy(me->anchor->last_modified, me->value);
 	break;
     case miLINK:
@@ -833,8 +845,8 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Check whether to set no_cache for the anchor. - FM
-	*/
+	 * Check whether to set no_cache for the anchor.  - FM
+	 */
 	if (!strcmp(me->value, "no-cache"))
 	    me->anchor->no_cache = TRUE;
 	break;
@@ -866,17 +878,17 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Indicate in anchor if "YES" or "TRUE". - FM
-	*/
+	 * Indicate in anchor if "YES" or "TRUE".  - FM
+	 */
 	if (!strcasecomp(me->value, "YES") ||
 	    !strcasecomp(me->value, "TRUE")) {
 	    me->anchor->safe = TRUE;
 	} else if (!strcasecomp(me->value, "NO") ||
 		   !strcasecomp(me->value, "FALSE")) {
 	    /*
-	    **  If server explicitly tells us that it has changed
-	    **  its mind, reset flag in anchor. - kw
-	    */
+	     * If server explicitly tells us that it has changed its mind,
+	     * reset flag in anchor.  - kw
+	     */
 	    me->anchor->safe = FALSE;
 	}
 	break;
@@ -887,8 +899,8 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	if (!(me->value && *me->value))
 	    break;
 	/*
-	**  Indicate in anchor. - FM
-	*/
+	 * Indicate in anchor.  - FM
+	 */
 	StrAllocCopy(me->anchor->server, me->value);
 	break;
     case miSET_COOKIE1:
@@ -953,49 +965,48 @@ PRIVATE int dispatchField ARGS1(HTStream *, me)
 	CTRACE((tfp, "HTMIME: PICKED UP WWW-Authenticate: '%s'\n",
 		me->value));
 	break;
-    default:		/* Should never get here */
+    default:			/* Should never get here */
 	return HT_ERROR;
     }
     return HT_OK;
 }
 
-
 /*_________________________________________________________________________
-**
-**			A C T I O N	R O U T I N E S
-*/
+ *
+ *			A C T I O N	R O U T I N E S
+ */
 
 /*	Character handling
-**	------------------
-**
-**	This is a FSM parser. It ignores field names it does not understand.
-**	Folded header fields are recognized.  Lines without a fieldname at
-**	the beginning (that are not folded continuation lines) are ignored
-**	as unknown field names.  Fields with empty values are not picked up.
-*/
-PRIVATE void HTMIME_put_character ARGS2(
-	HTStream *,	me,
-	char,		c)
+ *	------------------
+ *
+ *	This is a FSM parser. It ignores field names it does not understand.
+ *	Folded header fields are recognized.  Lines without a fieldname at
+ *	the beginning (that are not folded continuation lines) are ignored
+ *	as unknown field names.  Fields with empty values are not picked up.
+ */
+static void HTMIME_put_character(HTStream *me,
+				 char c)
 {
     if (me->state == MIME_TRANSPARENT) {
-	(*me->targetClass.put_character)(me->target, c);/* MUST BE FAST */
+	(*me->targetClass.put_character) (me->target, c);	/* MUST BE FAST */
 	return;
     }
 
     /*
-    **	This slightly simple conversion just strips CR and turns LF to
-    **	newline.  On unix LF is \n but on Mac \n is CR for example.
-    **	See NetToText for an implementation which preserves single CR or LF.
-    */
+     * This slightly simple conversion just strips CR and turns LF to newline. 
+     * On unix LF is \n but on Mac \n is CR for example.  See NetToText for an
+     * implementation which preserves single CR or LF.
+     */
     if (me->net_ascii) {
 	/*
-	** <sigh> This is evidence that at one time, this code supported
-	** local character sets other than ASCII.  But there is so much
-	** code in HTTP.c that depends on line_buffer's having been
-	** translated to local character set that I needed to put the
-	** FROMASCII translation there, leaving this translation purely
-	** destructive.  -- gil
-	*/  /* S/390 -- gil -- 0118 */
+	 * <sigh> This is evidence that at one time, this code supported
+	 * local character sets other than ASCII.  But there is so much
+	 * code in HTTP.c that depends on line_buffer's having been
+	 * translated to local character set that I needed to put the
+	 * FROMASCII translation there, leaving this translation purely
+	 * destructive.  -- gil
+	 */
+	/* S/390 -- gil -- 0118 */
 #ifndef   NOT_ASCII
 	c = FROMASCII(c);
 #endif /* NOT_ASCII */
@@ -1005,25 +1016,25 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    c = '\n';
     }
 
-    switch(me->state) {
+    switch (me->state) {
 
     case MIME_IGNORE:
 	return;
 
-    case MIME_TRANSPARENT:		/* Not reached see above */
-	(*me->targetClass.put_character)(me->target, c);
+    case MIME_TRANSPARENT:	/* Not reached see above */
+	(*me->targetClass.put_character) (me->target, c);
 	return;
 
     case MIME_NET_ASCII:
-	(*me->targetClass.put_character)(me->target, c); /* MUST BE FAST */
+	(*me->targetClass.put_character) (me->target, c);	/* MUST BE FAST */
 	return;
 
     case miNEWLINE:
-	if (c != '\n' && WHITE(c)) {		/* Folded line */
-	    me->state = me->fold_state; /* pop state before newline */
+	if (c != '\n' && WHITE(c)) {	/* Folded line */
+	    me->state = me->fold_state;		/* pop state before newline */
 	    if (me->state == miGET_VALUE &&
 		me->value_pointer && me->value_pointer != me->value &&
-		!WHITE(*(me->value_pointer-1))) {
+		!WHITE(*(me->value_pointer - 1))) {
 		c = ' ';
 		goto GET_VALUE;	/* will add space to value if it fits - kw */
 	    }
@@ -1055,7 +1066,8 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    me->check_pointer = "ate:";
 	    me->if_ok = miDATE;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Got 'D' at beginning of line, checking for 'ate:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Got 'D' at beginning of line, checking for 'ate:'\n"));
 	    break;
 
 	case 'e':
@@ -1069,7 +1081,8 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    me->check_pointer = "eep-alive:";
 	    me->if_ok = miKEEP_ALIVE;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Got 'K' at beginning of line, checking for 'eep-alive:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Got 'K' at beginning of line, checking for 'eep-alive:'\n"));
 	    break;
 
 	case 'l':
@@ -1120,7 +1133,7 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    CTRACE((tfp, "HTMIME: Got 'W' at beginning of line, state now W\n"));
 	    break;
 
-	case '\n':			/* Blank line: End of Header! */
+	case '\n':		/* Blank line: End of Header! */
 	    {
 		me->net_ascii = NO;
 		pumpData(me);
@@ -1128,19 +1141,20 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	   goto bad_field_name;
+	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miA:				/* Check for 'c','g' or 'l' */
+    case miA:			/* Check for 'c','g' or 'l' */
 	switch (c) {
 	case 'c':
 	case 'C':
 	    me->check_pointer = "cept-ranges:";
 	    me->if_ok = miACCEPT_RANGES;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was A, found C, checking for 'cept-ranges:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was A, found C, checking for 'cept-ranges:'\n"));
 	    break;
 
 	case 'g':
@@ -1158,14 +1172,15 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'g' or 'l'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'g' or 'l'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miAL:				/* Check for 'l' or 't' */
+    case miAL:			/* Check for 'l' or 't' */
 	switch (c) {
 	case 'l':
 	case 'L':
@@ -1184,21 +1199,23 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'l' or 't'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'l' or 't'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miC:				/* Check for 'a' or 'o' */
+    case miC:			/* Check for 'a' or 'o' */
 	switch (c) {
 	case 'a':
 	case 'A':
 	    me->check_pointer = "che-control:";
 	    me->if_ok = miCACHE_CONTROL;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was C, found A, checking for 'che-control:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was C, found A, checking for 'che-control:'\n"));
 	    break;
 
 	case 'o':
@@ -1208,14 +1225,15 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'a' or 'o'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'a' or 'o'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miCO:				/* Check for 'n' or 'o' */
+    case miCO:			/* Check for 'n' or 'o' */
 	switch (c) {
 	case 'n':
 	case 'N':
@@ -1232,14 +1250,15 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'n' or 'o'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'n' or 'o'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miCON:				/* Check for 'n' or 't' */
+    case miCON:		/* Check for 'n' or 't' */
 	switch (c) {
 	case 'n':
 	case 'N':
@@ -1258,14 +1277,15 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'n' or 't'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'n' or 't'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miE:				/* Check for 't' or 'x' */
+    case miE:			/* Check for 't' or 'x' */
 	switch (c) {
 	case 't':
 	case 'T':
@@ -1284,21 +1304,23 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'t' or 'x'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'t' or 'x'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miL:				/* Check for 'a', 'i' or 'o' */
+    case miL:			/* Check for 'a', 'i' or 'o' */
 	switch (c) {
 	case 'a':
 	case 'A':
 	    me->check_pointer = "st-modified:";
 	    me->if_ok = miLAST_MODIFIED;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was L, found A, checking for 'st-modified:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was L, found A, checking for 'st-modified:'\n"));
 	    break;
 
 	case 'i':
@@ -1318,14 +1340,15 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'a', 'i' or 'o'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'a', 'i' or 'o'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miP:				/* Check for 'r' or 'u' */
+    case miP:			/* Check for 'r' or 'u' */
 	switch (c) {
 	case 'r':
 	case 'R':
@@ -1342,14 +1365,15 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'r' or 'u'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'r' or 'u'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miPR:				/* Check for 'a' or 'o' */
+    case miPR:			/* Check for 'a' or 'o' */
 	switch (c) {
 	case 'a':
 	case 'A':
@@ -1364,18 +1388,20 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    me->check_pointer = "xy-authenticate:";
 	    me->if_ok = miPROXY_AUTHENTICATE;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was PR, found O, checking for 'xy-authenticate'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was PR, found O, checking for 'xy-authenticate'\n"));
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'a' or 'o'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'a' or 'o'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miR:				/* Check for 'e' */
+    case miR:			/* Check for 'e' */
 	switch (c) {
 	case 'e':
 	case 'E':
@@ -1383,17 +1409,18 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    CTRACE((tfp, "HTMIME: Was R, found E\n"));
 	    break;
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'e'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'e'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miRE:				/* Check for 'a' or 'o' */
+    case miRE:			/* Check for 'a' or 'o' */
 	switch (c) {
 	case 'f':
-	case 'F':			/* nonstandard: Netscape */
+	case 'F':		/* nonstandard: Netscape */
 	    me->check_pointer = "resh:";
 	    me->if_ok = miREFRESH;
 	    me->state = miCHECK;
@@ -1409,14 +1436,15 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'f' or 't'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'f' or 't'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miS:				/* Check for 'a' or 'e' */
+    case miS:			/* Check for 'a' or 'e' */
 	switch (c) {
 	case 'a':
 	case 'A':
@@ -1433,14 +1461,15 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'a' or 'e'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'a' or 'e'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miSE:				/* Check for 'r' or 't' */
+    case miSE:			/* Check for 'r' or 't' */
 	switch (c) {
 	case 'r':
 	case 'R':
@@ -1459,17 +1488,18 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'r' or 't'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'r' or 't'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miSET_COOKIE:			/* Check for ':' or '2' */
+    case miSET_COOKIE:		/* Check for ':' or '2' */
 	switch (c) {
 	case ':':
-	    me->field = miSET_COOKIE1;		/* remember it */
+	    me->field = miSET_COOKIE1;	/* remember it */
 	    me->state = miSKIP_GET_VALUE;
 	    CTRACE((tfp, "HTMIME: Was SET_COOKIE, found :, processing\n"));
 	    break;
@@ -1482,14 +1512,15 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "':' or '2'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "':' or '2'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miT:				/* Check for 'i' or 'r' */
+    case miT:			/* Check for 'i' or 'r' */
 	switch (c) {
 	case 'i':
 	case 'I':
@@ -1504,18 +1535,20 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    me->check_pointer = "ansfer-encoding:";
 	    me->if_ok = miTRANSFER_ENCODING;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was T, found R, checking for 'ansfer-encoding'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was T, found R, checking for 'ansfer-encoding'\n"));
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'i' or 'r'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'i' or 'r'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miU:				/* Check for 'p' or 'r' */
+    case miU:			/* Check for 'p' or 'r' */
 	switch (c) {
 	case 'p':
 	case 'P':
@@ -1534,14 +1567,15 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'p' or 'r'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'p' or 'r'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miV:				/* Check for 'a' or 'i' */
+    case miV:			/* Check for 'a' or 'i' */
 	switch (c) {
 	case 'a':
 	case 'A':
@@ -1560,14 +1594,15 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'a' or 'i'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'a' or 'i'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miW:				/* Check for 'a' or 'w' */
+    case miW:			/* Check for 'a' or 'w' */
 	switch (c) {
 	case 'a':
 	case 'A':
@@ -1582,24 +1617,27 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    me->check_pointer = "w-authenticate:";
 	    me->if_ok = miWWW_AUTHENTICATE;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was W, found W, checking for 'w-authenticate:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was W, found W, checking for 'w-authenticate:'\n"));
 	    break;
 
 	default:
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, "'a' or 'w'"));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, "'a' or 'w'"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
-    case miCHECK:			/* Check against string */
+    case miCHECK:		/* Check against string */
 	if (TOLOWER(c) == *(me->check_pointer)++) {
 	    if (!*me->check_pointer)
 		me->state = me->if_ok;
 	} else {		/* Error */
-	    CTRACE((tfp, "HTMIME: Bad character `%c' found where `%s' expected\n",
-			c, me->check_pointer - 1));
+	    CTRACE((tfp,
+		    "HTMIME: Bad character `%c' found where `%s' expected\n",
+		    c, me->check_pointer - 1));
 	    goto bad_field_name;
 	}
 	break;
@@ -1607,13 +1645,14 @@ PRIVATE void HTMIME_put_character ARGS2(
     case miCONTENT_:
 	CTRACE((tfp, "HTMIME: in case CONTENT_\n"));
 
-	switch(c) {
+	switch (c) {
 	case 'b':
 	case 'B':
 	    me->check_pointer = "ase:";
 	    me->if_ok = miCONTENT_BASE;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was CONTENT_, found B, checking for 'ase:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was CONTENT_, found B, checking for 'ase:'\n"));
 	    break;
 
 	case 'd':
@@ -1621,7 +1660,8 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    me->check_pointer = "isposition:";
 	    me->if_ok = miCONTENT_DISPOSITION;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was CONTENT_, found D, checking for 'isposition:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was CONTENT_, found D, checking for 'isposition:'\n"));
 	    break;
 
 	case 'e':
@@ -1629,7 +1669,8 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    me->check_pointer = "ncoding:";
 	    me->if_ok = miCONTENT_ENCODING;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was CONTENT_, found E, checking for 'ncoding:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was CONTENT_, found E, checking for 'ncoding:'\n"));
 	    break;
 
 	case 'f':
@@ -1637,13 +1678,15 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    me->check_pointer = "eatures:";
 	    me->if_ok = miCONTENT_FEATURES;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was CONTENT_, found F, checking for 'eatures:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was CONTENT_, found F, checking for 'eatures:'\n"));
 	    break;
 
 	case 'l':
 	case 'L':
 	    me->state = miCONTENT_L;
-	    CTRACE((tfp, "HTMIME: Was CONTENT_, found L, state now CONTENT_L\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was CONTENT_, found L, state now CONTENT_L\n"));
 	    break;
 
 	case 'm':
@@ -1659,32 +1702,35 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    me->check_pointer = "ange:";
 	    me->if_ok = miCONTENT_RANGE;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was CONTENT_, found R, checking for 'ange:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was CONTENT_, found R, checking for 'ange:'\n"));
 	    break;
 
 	case 't':
 	case 'T':
 	    me->state = miCONTENT_T;
-	    CTRACE((tfp, "HTMIME: Was CONTENT_, found T, state now CONTENT_T\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was CONTENT_, found T, state now CONTENT_T\n"));
 	    break;
 
 	default:
 	    CTRACE((tfp, "HTMIME: Was CONTENT_, found nothing; bleah\n"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
     case miCONTENT_L:
 	CTRACE((tfp, "HTMIME: in case CONTENT_L\n"));
 
-      switch(c) {
+	switch (c) {
 	case 'a':
 	case 'A':
 	    me->check_pointer = "nguage:";
 	    me->if_ok = miCONTENT_LANGUAGE;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was CONTENT_L, found A, checking for 'nguage:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was CONTENT_L, found A, checking for 'nguage:'\n"));
 	    break;
 
 	case 'e':
@@ -1692,7 +1738,8 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    me->check_pointer = "ngth:";
 	    me->if_ok = miCONTENT_LENGTH;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was CONTENT_L, found E, checking for 'ngth:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was CONTENT_L, found E, checking for 'ngth:'\n"));
 	    break;
 
 	case 'o':
@@ -1700,26 +1747,28 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    me->check_pointer = "cation:";
 	    me->if_ok = miCONTENT_LOCATION;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was CONTENT_L, found O, checking for 'cation:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was CONTENT_L, found O, checking for 'cation:'\n"));
 	    break;
 
 	default:
 	    CTRACE((tfp, "HTMIME: Was CONTENT_L, found nothing; bleah\n"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
     case miCONTENT_T:
 	CTRACE((tfp, "HTMIME: in case CONTENT_T\n"));
 
-      switch(c) {
+	switch (c) {
 	case 'r':
 	case 'R':
 	    me->check_pointer = "ansfer-encoding:";
 	    me->if_ok = miCONTENT_TRANSFER_ENCODING;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was CONTENT_T, found R, checking for 'ansfer-encoding:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was CONTENT_T, found R, checking for 'ansfer-encoding:'\n"));
 	    break;
 
 	case 'y':
@@ -1727,14 +1776,15 @@ PRIVATE void HTMIME_put_character ARGS2(
 	    me->check_pointer = "pe:";
 	    me->if_ok = miCONTENT_TYPE;
 	    me->state = miCHECK;
-	    CTRACE((tfp, "HTMIME: Was CONTENT_T, found Y, checking for 'pe:'\n"));
+	    CTRACE((tfp,
+		    "HTMIME: Was CONTENT_T, found Y, checking for 'pe:'\n"));
 	    break;
 
 	default:
 	    CTRACE((tfp, "HTMIME: Was CONTENT_T, found nothing; bleah\n"));
 	    goto bad_field_name;
 
-	} /* switch on character */
+	}			/* switch on character */
 	break;
 
     case miACCEPT_RANGES:
@@ -1779,7 +1829,7 @@ PRIVATE void HTMIME_put_character ARGS2(
     case miVIA:
     case miWARNING:
     case miWWW_AUTHENTICATE:
-	me->field = me->state;		/* remember it */
+	me->field = me->state;	/* remember it */
 	me->state = miSKIP_GET_VALUE;
 	/* Fall through! */
 
@@ -1791,8 +1841,8 @@ PRIVATE void HTMIME_put_character ARGS2(
 	}
 	if (WHITE(c))
 	    /*
-	    **	Skip white space.
-	    */
+	     * Skip white space.
+	     */
 	    break;
 
 	me->value_pointer = me->value;
@@ -1800,8 +1850,8 @@ PRIVATE void HTMIME_put_character ARGS2(
 	/* Fall through to store first character */
 
     case miGET_VALUE:
-    GET_VALUE:
-	if (c != '\n') {			/* Not end of line */
+      GET_VALUE:
+	if (c != '\n') {	/* Not end of line */
 	    if (me->value_pointer < me->value + VALUE_SIZE - 1) {
 		*me->value_pointer++ = c;
 		break;
@@ -1818,134 +1868,144 @@ PRIVATE void HTMIME_put_character ARGS2(
 	}
 	break;
 
+    }				/* switch on state */
 
-    } /* switch on state*/
-
+#ifdef EXP_HTTP_HEADERS
+    HTChunkPutc(&me->anchor->http_headers, c);
+    if (me->state == MIME_TRANSPARENT) {
+	HTChunkTerminate(&me->anchor->http_headers);
+	CTRACE((tfp, "Server Headers:\n%.*s\n",
+		me->anchor->http_headers.size,
+		me->anchor->http_headers.data));
+	CTRACE((tfp, "Server Content-Type:%s\n",
+		me->anchor->content_type_params));
+    }
+#endif
     return;
 
-value_too_long:
+  value_too_long:
     CTRACE((tfp, "HTMIME: *** Syntax error. (string too long)\n"));
 
-bad_field_name:				/* Ignore it */
+  bad_field_name:		/* Ignore it */
     me->state = miJUNK_LINE;
+
+#ifdef EXP_HTTP_HEADERS
+    HTChunkPutc(&me->anchor->http_headers, c);
+#endif
+
     return;
 
 }
 
-
-
 /*	String handling
-**	---------------
-**
-**	Strings must be smaller than this buffer size.
-*/
-PRIVATE void HTMIME_put_string ARGS2(
-	HTStream *,	me,
-	CONST char *,	s)
+ *	---------------
+ *
+ *	Strings must be smaller than this buffer size.
+ */
+static void HTMIME_put_string(HTStream *me,
+			      const char *s)
 {
-    CONST char * p;
+    const char *p;
 
     if (me->state == MIME_TRANSPARENT) {	/* Optimisation */
-	(*me->targetClass.put_string)(me->target,s);
+	(*me->targetClass.put_string) (me->target, s);
 
     } else if (me->state != MIME_IGNORE) {
 	CTRACE((tfp, "HTMIME:  %s\n", s));
 
-	for (p=s; *p; p++)
+	for (p = s; *p; p++)
 	    HTMIME_put_character(me, *p);
     }
 }
 
-
 /*	Buffer write.  Buffers can (and should!) be big.
-**	------------
-*/
-PRIVATE void HTMIME_write ARGS3(
-	HTStream *,	me,
-	CONST char *,	s,
-	int,		l)
+ *	------------
+ */
+static void HTMIME_write(HTStream *me,
+			 const char *s,
+			 int l)
 {
-    CONST char * p;
+    const char *p;
 
     if (me->state == MIME_TRANSPARENT) {	/* Optimisation */
-	(*me->targetClass.put_block)(me->target, s, l);
+	(*me->targetClass.put_block) (me->target, s, l);
 
     } else {
 	CTRACE((tfp, "HTMIME:  %.*s\n", l, s));
 
-	for (p = s; p < s+l; p++)
+	for (p = s; p < s + l; p++)
 	    HTMIME_put_character(me, *p);
     }
 }
 
-
 /*	Free an HTML object
-**	-------------------
-**
-*/
-PRIVATE void HTMIME_free ARGS1(
-	HTStream *,	me)
+ *	-------------------
+ *
+ */
+static void HTMIME_free(HTStream *me)
 {
     if (me) {
 	FREE(me->location);
 	FREE(me->compression_encoding);
 	if (me->target)
-	    (*me->targetClass._free)(me->target);
+	    (*me->targetClass._free) (me->target);
 	FREE(me);
     }
 }
 
 /*	End writing
 */
-PRIVATE void HTMIME_abort ARGS2(
-	HTStream *,	me,
-	HTError,	e)
+static void HTMIME_abort(HTStream *me,
+			 HTError e)
 {
     if (me) {
 	FREE(me->location);
 	FREE(me->compression_encoding);
 	if (me->target)
-	    (*me->targetClass._abort)(me->target, e);
+	    (*me->targetClass._abort) (me->target, e);
 	FREE(me);
     }
 }
 
-
 /*	Structured Object Class
-**	-----------------------
-*/
-PRIVATE CONST HTStreamClass HTMIME =
+ *	-----------------------
+ */
+static const HTStreamClass HTMIME =
 {
-	"MIMEParser",
-	HTMIME_free,
-	HTMIME_abort,
-	HTMIME_put_character,
-	HTMIME_put_string,
-	HTMIME_write
+    "MIMEParser",
+    HTMIME_free,
+    HTMIME_abort,
+    HTMIME_put_character,
+    HTMIME_put_string,
+    HTMIME_write
 };
 
-
 /*	Subclass-specific Methods
-**	-------------------------
-*/
-PUBLIC HTStream* HTMIMEConvert ARGS3(
-	HTPresentation *,	pres,
-	HTParentAnchor *,	anchor,
-	HTStream *,		sink)
+ *	-------------------------
+ */
+HTStream *HTMIMEConvert(HTPresentation *pres,
+			HTParentAnchor *anchor,
+			HTStream *sink)
 {
-    HTStream* me;
+    HTStream *me;
 
     me = typecalloc(HTStream);
+
     if (me == NULL)
 	outofmem(__FILE__, "HTMIMEConvert");
-    me->isa	=	&HTMIME;
-    me->sink	=	sink;
-    me->anchor	=	anchor;
+    me->isa = &HTMIME;
+    me->sink = sink;
+    me->anchor = anchor;
     me->anchor->safe = FALSE;
     me->anchor->no_cache = FALSE;
     FREE(me->anchor->cache_control);
     FREE(me->anchor->SugFname);
     FREE(me->anchor->charset);
+#ifdef EXP_HTTP_HEADERS
+    HTChunkClear(&me->anchor->http_headers);
+    HTChunkInit(&me->anchor->http_headers, 128);
+#endif
+    FREE(me->anchor->content_type_params);
     FREE(me->anchor->content_language);
     FREE(me->anchor->content_encoding);
     FREE(me->anchor->content_base);
@@ -1958,37 +2018,37 @@ PUBLIC HTStream* HTMIMEConvert ARGS3(
     FREE(me->anchor->last_modified);
     FREE(me->anchor->ETag);
     FREE(me->anchor->server);
-    me->target	=	NULL;
-    me->state	=	miBEGINNING_OF_LINE;
+    me->target = NULL;
+    me->state = miBEGINNING_OF_LINE;
     /*
-     *	Sadly enough, change this to always default to WWW_HTML
-     *	to parse all text as HTML for the users.
-     *	GAB 06-30-94
-     *	Thanks to Robert Rowland robert@cyclops.pei.edu
+     * Sadly enough, change this to always default to WWW_HTML to parse all
+     * text as HTML for the users.
+     * GAB 06-30-94
+     * Thanks to Robert Rowland robert@cyclops.pei.edu
      *
-     *	After discussion of the correct handline, should be application/octet-
-     *		stream or unknown; causing servers to send a correct content
-     *		type.
+     * After discussion of the correct handline, should be application/octet-
+     * stream or unknown; causing servers to send a correct content type.
      *
-     *	The consequence of using WWW_UNKNOWN is that you end up downloading
-     *	as a binary file what 99.9% of the time is an HTML file, which should
-     *	have been rendered or displayed.  So sadly enough, I'm changing it
-     *	back to WWW_HTML, and it will handle the situation like Mosaic does,
-     *	and as Robert Rowland suggested, because being functionally correct
-     *	99.9% of the time is better than being technically correct but
-     *	functionally nonsensical. - FM
-     *//***
+     * The consequence of using WWW_UNKNOWN is that you end up downloading as a
+     * binary file what 99.9% of the time is an HTML file, which should have
+     * been rendered or displayed.  So sadly enough, I'm changing it back to
+     * WWW_HTML, and it will handle the situation like Mosaic does, and as
+     * Robert Rowland suggested, because being functionally correct 99.9% of
+     * the time is better than being technically correct but functionally
+     * nonsensical.  - FM
+     */
+    /***
     me->format	  =	WWW_UNKNOWN;
-	***/
-    me->format	  =	WWW_HTML;
-    me->targetRep =	pres->rep_out;
-    me->boundary  =	NULL;		/* Not set yet */
-    me->set_cookie =	NULL;		/* Not set yet */
-    me->set_cookie2 =	NULL;		/* Not set yet */
-    me->refresh_url =	NULL;		/* Not set yet */
-    me->encoding  =	0;		/* Not set yet */
+    ***/
+    me->format = WWW_HTML;
+    me->targetRep = pres->rep_out;
+    me->boundary = NULL;	/* Not set yet */
+    me->set_cookie = NULL;	/* Not set yet */
+    me->set_cookie2 = NULL;	/* Not set yet */
+    me->refresh_url = NULL;	/* Not set yet */
+    me->encoding = 0;		/* Not set yet */
     me->compression_encoding = NULL;	/* Not set yet */
-    me->net_ascii =	NO;		/* Local character set */
+    me->net_ascii = NO;		/* Local character set */
     HTAnchor_setUCInfoStage(me->anchor, current_char_set,
 			    UCT_STAGE_STRUCTURED,
 			    UCT_SETBY_DEFAULT);
@@ -1998,12 +2058,12 @@ PUBLIC HTStream* HTMIMEConvert ARGS3(
     return me;
 }
 
-PUBLIC HTStream* HTNetMIME ARGS3(
-	HTPresentation *,	pres,
-	HTParentAnchor *,	anchor,
-	HTStream *,		sink)
+HTStream *HTNetMIME(HTPresentation *pres,
+		    HTParentAnchor *anchor,
+		    HTStream *sink)
 {
-    HTStream* me = HTMIMEConvert(pres,anchor, sink);
+    HTStream *me = HTMIMEConvert(pres, anchor, sink);
+
     if (!me)
 	return NULL;
 
@@ -2011,12 +2071,12 @@ PUBLIC HTStream* HTNetMIME ARGS3(
     return me;
 }
 
-PUBLIC HTStream* HTMIMERedirect ARGS3(
-	HTPresentation *,	pres,
-	HTParentAnchor *,	anchor,
-	HTStream *,		sink)
+HTStream *HTMIMERedirect(HTPresentation *pres,
+			 HTParentAnchor *anchor,
+			 HTStream *sink)
 {
-    HTStream* me = HTMIMEConvert(pres,anchor, sink);
+    HTStream *me = HTMIMEConvert(pres, anchor, sink);
+
     if (!me)
 	return NULL;
 
@@ -2027,54 +2087,54 @@ PUBLIC HTStream* HTMIMERedirect ARGS3(
 }
 
 /*		Japanese header handling functions
-**		==================================
-**
-**	K&Rized and added 07-Jun-96 by FM, based on:
-**
+ *		==================================
+ *
+ *	K&Rized and added 07-Jun-96 by FM, based on:
+ *
 ////////////////////////////////////////////////////////////////////////
-**
-**	ISO-2022-JP handling routines
-**			&
-**	MIME decode routines (quick hack just for ISO-2022-JP)
-**
-**		Thu Jan 25 10:11:42 JST 1996
-**
-**  Copyright (C) 1994, 1995, 1996
-**  Shuichi Ichikawa (ichikawa@nuee.nagoya-u.ac.jp)
-**
-**  This program is free software; you can redistribute it and/or modify
-**  it under the terms of the GNU General Public License as published by
-**  the Free Software Foundation; either versions 2, or (at your option)
-**  any later version.
-**
-**  This program is distributed in the hope that it will be useful
-**  but WITHOUT ANY WARRANTY; without even the implied warranty of
-**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-**  GNU General Public License for more details.
-**
-**  You should have received a copy of the GNU General Public License
-**  along with SKK, see the file COPYING.  If not, write to the Free
-**  Software Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*/
+ *
+ *	ISO-2022-JP handling routines
+ *			&
+ *	MIME decode routines (quick hack just for ISO-2022-JP)
+ *
+ *		Thu Jan 25 10:11:42 JST 1996
+ *
+ *  Copyright (C) 1994, 1995, 1996
+ *  Shuichi Ichikawa (ichikawa@nuee.nagoya-u.ac.jp)
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either versions 2, or (at your option)
+ *  any later version.
+ *
+ *  This program is distributed in the hope that it will be useful
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with SKK, see the file COPYING.  If not, write to the Free
+ *  Software Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 
 /*
-**  MIME decoding routines
-**
-**	Written by S. Ichikawa,
-**	partially inspired by encdec.c of <jh@efd.lth.se>.
-*/
-#include <LYCharVals.h>  /* S/390 -- gil -- 0163 */
+ *  MIME decoding routines
+ *
+ *	Written by S. Ichikawa,
+ *	partially inspired by encdec.c of <jh@efd.lth.se>.
+ *	Caller's buffers decode to no longer than the input strings.
+ */
+#include <LYCharVals.h>		/* S/390 -- gil -- 0163 */
 
-PRIVATE char HTmm64[] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=" ;
-PRIVATE char HTmmquote[] = "0123456789ABCDEF";
-PRIVATE int HTmmcont = 0;
+static char HTmm64[] =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+static char HTmmquote[] = "0123456789ABCDEF";
+static int HTmmcont = 0;
 
-PRIVATE void HTmmdec_base64 ARGS2(
-	char **,	t,
-	char *,		s)
+static void HTmmdec_base64(char **t,
+			   char *s)
 {
-    int   d, count, j, val;
+    int d, count, j, val;
     char *buf, *bp, nw[4], *p;
 
     if ((buf = malloc(strlen(s) * 3 + 1)) == 0)
@@ -2090,16 +2150,16 @@ PRIVATE void HTmmdec_base64 ARGS2(
 	    count = 3;
 
 	for (j = 0; j <= count; j++) {
-		if (!(p = strchr(HTmm64, s[j]))) {
-			return;
-		}
-		d = p - HTmm64;
-		d <<= (3-j)*6;
-		val += d;
+	    if (!(p = strchr(HTmm64, s[j]))) {
+		return;
+	    }
+	    d = p - HTmm64;
+	    d <<= (3 - j) * 6;
+	    val += d;
 	}
 	for (j = 2; j >= 0; j--) {
-		nw[j] = (char) (val & 255);
-		val >>= 8;
+	    nw[j] = (char) (val & 255);
+	    val >>= 8;
 	}
 	if (count--)
 	    *bp++ = nw[0];
@@ -2113,16 +2173,15 @@ PRIVATE void HTmmdec_base64 ARGS2(
     FREE(buf);
 }
 
-PRIVATE void HTmmdec_quote ARGS2(
-	char **,	t,
-	char *,		s)
+static void HTmmdec_quote(char **t,
+			  char *s)
 {
     char *buf, cval, *bp, *p;
 
     if ((buf = malloc(strlen(s) + 1)) == 0)
 	outofmem(__FILE__, "HTmmdec_quote");
 
-    for (bp = buf; *s; ) {
+    for (bp = buf; *s;) {
 	if (*s == '=') {
 	    cval = 0;
 	    if (s[1] && (p = strchr(HTmmquote, s[1]))) {
@@ -2152,21 +2211,20 @@ PRIVATE void HTmmdec_quote ARGS2(
 }
 
 /*
-**	HTmmdecode for ISO-2022-JP - FM
-*/
-PUBLIC void HTmmdecode ARGS2(
-	char **,	target,
-	char *,		source)
+ *	HTmmdecode for ISO-2022-JP - FM
+ */
+void HTmmdecode(char **target,
+		char *source)
 {
     char *buf;
     char *mmbuf = NULL;
     char *m2buf = NULL;
     char *s, *t, *u;
-    int  base64, quote;
+    int base64, quote;
 
     if ((buf = malloc(strlen(source) + 1)) == 0)
 	outofmem(__FILE__, "HTmmdecode");
-  
+
     for (s = source, u = buf; *s;) {
 	if (!strncasecomp(s, "=?ISO-2022-JP?B?", 16)) {
 	    base64 = 1;
@@ -2181,13 +2239,13 @@ PUBLIC void HTmmdecode ARGS2(
 	if (base64 || quote) {
 	    if (HTmmcont) {
 		for (t = s - 1;
-		    t >= source && (*t == ' ' || *t == '\t'); t--) {
-			u--;
+		     t >= source && (*t == ' ' || *t == '\t'); t--) {
+		    u--;
 		}
 	    }
 	    if (mmbuf == 0)	/* allocate buffer big enough for source */
 		StrAllocCopy(mmbuf, source);
-	    for (s += 16, t = mmbuf; *s; ) {
+	    for (s += 16, t = mmbuf; *s;) {
 		if (s[0] == '?' && s[1] == '=') {
 		    break;
 		} else {
@@ -2205,7 +2263,7 @@ PUBLIC void HTmmdecode ARGS2(
 		HTmmdec_base64(&m2buf, mmbuf);
 	    if (quote)
 		HTmmdec_quote(&m2buf, mmbuf);
-	    for (t = m2buf; *t; )
+	    for (t = m2buf; *t;)
 		*u++ = *t++;
 	    HTmmcont = 1;
 	} else {
@@ -2215,7 +2273,7 @@ PUBLIC void HTmmdecode ARGS2(
 	}
     }
     *u = '\0';
-end:
+  end:
     StrAllocCopy(*target, buf);
     FREE(m2buf);
     FREE(mmbuf);
@@ -2223,12 +2281,11 @@ end:
 }
 
 /*
-**  Insert ESC where it seems lost.
-**  (The author of this function "rjis" is S. Ichikawa.)
-*/
-PUBLIC int HTrjis ARGS2(
-	char **,	t,
-	char *,		s)
+ *  Insert ESC where it seems lost.
+ *  (The author of this function "rjis" is S. Ichikawa.)
+ */
+int HTrjis(char **t,
+	   char *s)
 {
     char *p;
     char *buf = NULL;
@@ -2243,9 +2300,9 @@ PUBLIC int HTrjis ARGS2(
     if ((buf = malloc(strlen(s) * 2 + 1)) == 0)
 	outofmem(__FILE__, "HTrjis");
 
-    for (p = buf; *s; ) {
+    for (p = buf; *s;) {
 	if (!kanji && s[0] == '$' && (s[1] == '@' || s[1] == 'B')) {
-	    if (HTmaybekanji((int)s[2], (int)s[3])) {
+	    if (HTmaybekanji((int) s[2], (int) s[3])) {
 		kanji = 1;
 		*p++ = CH_ESC;
 		*p++ = *s++;
@@ -2266,7 +2323,7 @@ PUBLIC int HTrjis ARGS2(
 	}
 	*p++ = *s++;
     }
-    *p = *s;	/* terminate string */
+    *p = *s;			/* terminate string */
 
     StrAllocCopy(*t, buf);
     FREE(buf);
@@ -2274,14 +2331,14 @@ PUBLIC int HTrjis ARGS2(
 }
 
 /*
-**  The following function "maybekanji" is derived from
-**  RJIS-1.0 by Mr. Hironobu Takahashi.
-**  Maybekanji() is included here under the courtesy of the author.
-**  The original comment of rjis.c is also included here.
-*/
+ *  The following function "maybekanji" is derived from
+ *  RJIS-1.0 by Mr. Hironobu Takahashi.
+ *  Maybekanji() is included here under the courtesy of the author.
+ *  The original comment of rjis.c is also included here.
+ */
 /*
  * RJIS ( Recover JIS code from broken file )
- * $Header: /home/cvs/src/gnu/usr.bin/lynx/WWW/Library/Implementation/Attic/HTMIME.c,v 1.5 2005/11/04 04:24:03 fgsch Exp $
+ * $Header: /home/cvs/src/gnu/usr.bin/lynx/WWW/Library/Implementation/Attic/HTMIME.c,v 1.6 2009/05/31 09:16:51 avsm Exp $
  * Copyright (C) 1992 1994
  * Hironobu Takahashi (takahasi@tiny.or.jp)
  *
@@ -2300,9 +2357,8 @@ PUBLIC int HTrjis ARGS2(
  * Software Foundation Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-PUBLIC int HTmaybekanji ARGS2(
-	int,		c1,
-	int,		c2)
+int HTmaybekanji(int c1,
+		 int c2)
 {
 
     if ((c2 < 33) || (c2 > 126))
@@ -2310,58 +2366,58 @@ PUBLIC int HTmaybekanji ARGS2(
     if ((c1 < 33) || ((40 < c1) && (c1 < 48)) || (116 < c1))
 	return 0;
     c2 -= 32;
-    switch(c1-32) {
-      case 2:
-	if ((14 < c2) && ( c2 < 26))
+    switch (c1 - 32) {
+    case 2:
+	if ((14 < c2) && (c2 < 26))
 	    return 0;
-	if ((33 < c2) && ( c2 < 42))
+	if ((33 < c2) && (c2 < 42))
 	    return 0;
-	if ((48 < c2) && ( c2 < 60))
+	if ((48 < c2) && (c2 < 60))
 	    return 0;
-	if ((74 < c2) && ( c2 < 82))
+	if ((74 < c2) && (c2 < 82))
 	    return 0;
-	if ((89 < c2) && ( c2 < 94))
+	if ((89 < c2) && (c2 < 94))
 	    return 0;
 	break;
-      case 3:
+    case 3:
 	if (c2 < 16)
 	    return 0;
-	if ((25 < c2) && ( c2 < 33))
+	if ((25 < c2) && (c2 < 33))
 	    return 0;
-	if ((58 < c2) && ( c2 < 65))
+	if ((58 < c2) && (c2 < 65))
 	    return 0;
 	if (90 < c2)
 	    return 0;
 	break;
-      case 4:
+    case 4:
 	if (83 < c2)
 	    return 0;
 	break;
-      case 5:
+    case 5:
 	if (86 < c2)
 	    return 0;
 	break;
-      case 6:
-	if ((24 < c2) && ( c2 < 33))
+    case 6:
+	if ((24 < c2) && (c2 < 33))
 	    return 0;
 	if (56 < c2)
 	    return 0;
 	break;
-      case 7:
-	if ((33 < c2) && ( c2 < 49))
+    case 7:
+	if ((33 < c2) && (c2 < 49))
 	    return 0;
 	if (81 < c2)
 	    return 0;
 	break;
-      case 8:
+    case 8:
 	if (32 < c2)
 	    return 0;
 	break;
-      case 47:
+    case 47:
 	if (51 < c2)
 	    return 0;
 	break;
-      case 84:
+    case 84:
 	if (6 < c2)
 	    return 0;
 	break;

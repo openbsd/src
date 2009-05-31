@@ -20,8 +20,8 @@
 
 #define MSG_ENABLE_LYNXRC N_("Normally disabled.  See ENABLE_LYNXRC in lynx.cfg\n")
 #define putBool(value) ((value) ? "on" : "off")
-
-PUBLIC Config_Enum tbl_DTD_recovery[] = {
+/* *INDENT-OFF* */
+static Config_Enum tbl_DTD_recovery[] = {
     { "true",		TRUE },
     { "false",		FALSE },
     { "on",		TRUE },
@@ -32,14 +32,14 @@ PUBLIC Config_Enum tbl_DTD_recovery[] = {
 };
 
 #ifdef DIRED_SUPPORT
-PRIVATE Config_Enum tbl_dir_list_style[] = {
+static Config_Enum tbl_dir_list_style[] = {
     { "FILES_FIRST",	FILES_FIRST },
     { "DIRECTORIES_FIRST", DIRS_FIRST },
     { "MIXED_STYLE",	MIXED_STYLE },
     { NULL,		MIXED_STYLE },
 };
 #ifdef LONG_LIST
-PRIVATE Config_Enum tbl_dir_list_order[] = {
+static Config_Enum tbl_dir_list_order[] = {
     { "ORDER_BY_NAME",	ORDER_BY_NAME },
     { "ORDER_BY_TYPE",	ORDER_BY_TYPE },
     { "ORDER_BY_SIZE",  ORDER_BY_SIZE },
@@ -54,7 +54,7 @@ PRIVATE Config_Enum tbl_dir_list_order[] = {
 #endif /* LONG_LIST */
 #endif /* DIRED_SUPPORT */
 
-PRIVATE Config_Enum tbl_file_sort[] = {
+static Config_Enum tbl_file_sort[] = {
     { "BY_FILENAME",	FILE_BY_NAME },
     { "BY_TYPE",	FILE_BY_TYPE },
     { "BY_SIZE",	FILE_BY_SIZE },
@@ -62,7 +62,7 @@ PRIVATE Config_Enum tbl_file_sort[] = {
     { NULL,		-1 },
 };
 
-PUBLIC Config_Enum tbl_keypad_mode[] = {
+Config_Enum tbl_keypad_mode[] = {
     { "FIELDS_ARE_NUMBERED", FIELDS_ARE_NUMBERED },
     { "LINKS_AND_FIELDS_ARE_NUMBERED", LINKS_AND_FIELDS_ARE_NUMBERED },
     { "LINKS_ARE_NUMBERED", LINKS_ARE_NUMBERED },
@@ -73,7 +73,7 @@ PUBLIC Config_Enum tbl_keypad_mode[] = {
     { NULL,		DEFAULT_KEYPAD_MODE }
 };
 
-PUBLIC Config_Enum tbl_multi_bookmarks[] = {
+Config_Enum tbl_multi_bookmarks[] = {
     { "OFF",		MBM_OFF },
     { "STANDARD",	MBM_STANDARD },
     { "ON",		MBM_STANDARD },
@@ -81,7 +81,33 @@ PUBLIC Config_Enum tbl_multi_bookmarks[] = {
     { NULL,		-1 }
 };
 
-PRIVATE Config_Enum tbl_show_colors[] = {
+/* the names in this table are used as lowercase in HTTP.c */
+Config_Enum tbl_preferred_encoding[] = {
+    { "none",		encodingNONE },
+#if defined(USE_ZLIB) || defined(GZIP_PATH)
+    { "gzip",		encodingGZIP },
+    { "deflate",	encodingDEFLATE },
+#endif
+#if defined(USE_ZLIB) || defined(COMPRESS_PATH)
+    { "compress",	encodingCOMPRESS },
+#endif
+#if defined(USE_BZLIB) || defined(BZIP2_PATH)
+    { "bzip2",		encodingBZIP2 },
+#endif
+    { "all",		encodingALL },
+    { NULL,		-1 }
+};
+
+Config_Enum tbl_preferred_media[] = {
+    { "INTERNAL",	mediaOpt1 },
+    { "CONFIGFILE",	mediaOpt2 },
+    { "USER",		mediaOpt3 },
+    { "SYSTEM",		mediaOpt4 },
+    { "ALL",		mediaALL },
+    { NULL,		-1 }
+};
+
+static Config_Enum tbl_show_colors[] = {
     { "default",	SHOW_COLOR_UNKNOWN },
     { "default",	SHOW_COLOR_OFF },
     { "default",	SHOW_COLOR_ON },
@@ -92,7 +118,7 @@ PRIVATE Config_Enum tbl_show_colors[] = {
     { NULL,		SHOW_COLOR_UNKNOWN }
 };
 
-PUBLIC Config_Enum tbl_transfer_rate[] = {
+Config_Enum tbl_transfer_rate[] = {
     { "NONE",		rateOFF },
     { "KB",		rateKB },
     { "TRUE",		rateKB },
@@ -105,14 +131,14 @@ PUBLIC Config_Enum tbl_transfer_rate[] = {
     { NULL,		-1 },
 };
 
-PUBLIC Config_Enum tbl_user_mode[] = {
+Config_Enum tbl_user_mode[] = {
     { "ADVANCED",	ADVANCED_MODE },
     { "INTERMEDIATE",	INTERMEDIATE_MODE },
     { "NOVICE",		NOVICE_MODE },
     { NULL,		NOVICE_MODE }
 };
 
-PRIVATE Config_Enum tbl_visited_links[] = {
+static Config_Enum tbl_visited_links[] = {
     { "FIRST_REVERSED",	VISITED_LINKS_AS_FIRST_V | VISITED_LINKS_REVERSE },
     { "FIRST",		VISITED_LINKS_AS_FIRST_V },
     { "TREE",		VISITED_LINKS_AS_TREE    },
@@ -121,21 +147,20 @@ PRIVATE Config_Enum tbl_visited_links[] = {
     { NULL,		DEFAULT_VISITED_LINKS }
 };
 
-PUBLIC Config_Enum tbl_force_prompt[] = {
+Config_Enum tbl_force_prompt[] = {
     { "prompt",		FORCE_PROMPT_DFT	},
     { "yes",		FORCE_PROMPT_YES	},
     { "no",		FORCE_PROMPT_NO		},
     { NULL,		-1			}
 };
+/* *INDENT-ON* */
 
-PRIVATE BOOL getBool ARGS1(char *, src)
+static BOOL getBool(char *src)
 {
     return (BOOL) (!strncasecomp(src, "on", 2) || !strncasecomp(src, "true", 4));
 }
 
-PUBLIC CONST char *LYputEnum ARGS2(
-    Config_Enum *,	table,
-    int,		value)
+const char *LYputEnum(Config_Enum * table, int value)
 {
     while (table->name != 0) {
 	if (table->value == value) {
@@ -146,10 +171,8 @@ PUBLIC CONST char *LYputEnum ARGS2(
     return "?";
 }
 
-PUBLIC BOOL LYgetEnum ARGS3(
-    Config_Enum *,	table,
-    char *,		name,
-    int *,		result)
+BOOL LYgetEnum(Config_Enum * table, char *name,
+	       int *result)
 {
     Config_Enum *found = 0;
     unsigned len = strlen(name);
@@ -193,10 +216,10 @@ PUBLIC BOOL LYgetEnum ARGS3(
 #define MAYBE_FUN(n,v,w,h) {n,    0, CONF_FUN,   UNION_FUN(v), 0, 0, w, h}
 #define MAYBE_MBM(n,h)     {n,    0, CONF_MBM,   UNION_DEF(0), 0, 0, 0, h}
 
-#define PARSE_NIL          {NULL, 1, 0,          UNION_DEF(0), 0, 0, 0, 0}
+#define PARSE_NIL          {NULL, 1, CONF_NIL,   UNION_DEF(0), 0, 0, 0, 0}
 
 typedef enum {
-    CONF_UNSPECIFIED = 0
+    CONF_NIL = 0
     ,CONF_ARRAY
     ,CONF_BOOL
     ,CONF_FUN
@@ -207,24 +230,23 @@ typedef enum {
     ,CONF_STR
 } Conf_Types;
 
-typedef struct config_type
-{
-    CONST char *name;
+typedef struct config_type {
+    const char *name;
     int enabled;		/* see lynx.cfg ENABLE_LYNXRC "off" lines */
     Conf_Types type;
-    ParseData;
-    char **strings;
+      ParseData;
+    const char **strings;
     Config_Enum *table;
-    void (*write_it) PARAMS((FILE * fp, struct config_type *));
-    char *note;
+    void (*write_it) (FILE *fp, struct config_type *);
+    const char *note;
 } Config_Type;
 
-PRIVATE int get_assume_charset ARGS1(char *, value)
+static int get_assume_charset(char *value)
 {
     int i;
 
     for (i = 0; i < LYNumCharsets; ++i) {
-    	if (!strcasecomp(value, LYCharSet_UC[i].MIMEname)) {
+	if (!strcasecomp(value, LYCharSet_UC[i].MIMEname)) {
 	    UCLYhndl_for_unspec = i;
 	    break;
 	}
@@ -232,7 +254,7 @@ PRIVATE int get_assume_charset ARGS1(char *, value)
     return 0;
 }
 
-PRIVATE void put_assume_charset ARGS2(FILE *, fp, struct config_type *, tbl)
+static void put_assume_charset(FILE *fp, struct config_type *tbl)
 {
     int i;
 
@@ -241,17 +263,17 @@ PRIVATE void put_assume_charset ARGS2(FILE *, fp, struct config_type *, tbl)
     fprintf(fp, "%s=%s\n\n", tbl->name, LYCharSet_UC[UCLYhndl_for_unspec].MIMEname);
 }
 
-PRIVATE int get_display_charset ARGS1(char *, value)
+static int get_display_charset(char *value)
 {
     int i = 0;
 
-    i = UCGetLYhndl_byAnyName(value); /* by MIME or full name */
+    i = UCGetLYhndl_byAnyName(value);	/* by MIME or full name */
     if (i >= 0)
 	current_char_set = i;
     return 0;
 }
 
-PRIVATE void put_display_charset ARGS2(FILE *, fp, struct config_type *, tbl)
+static void put_display_charset(FILE *fp, struct config_type *tbl)
 {
     int i;
 
@@ -260,36 +282,37 @@ PRIVATE void put_display_charset ARGS2(FILE *, fp, struct config_type *, tbl)
     fprintf(fp, "%s=%s\n\n", tbl->name, LYchar_set_names[current_char_set]);
 }
 
-PRIVATE int get_editor ARGS1(char *, value)
+static int get_editor(char *value)
 {
     if (!system_editor)
 	StrAllocCopy(editor, value);
     return 0;
 }
 
-PRIVATE void put_editor ARGS2(FILE *, fp, struct config_type *, tbl)
+static void put_editor(FILE *fp, struct config_type *tbl)
 {
     fprintf(fp, "%s=%s\n\n", tbl->name, NonNull(editor));
 }
 
-PUBLIC int get_tagsoup ARGS1(char *, value)
+int get_tagsoup(char *value)
 {
     int found = Old_DTD;
 
     if (LYgetEnum(tbl_DTD_recovery, value, &found)
-     && Old_DTD != found) {
+	&& Old_DTD != found) {
 	Old_DTD = found;
 	HTSwitchDTD(!Old_DTD);
     }
     return 0;
 }
 
-PRIVATE void put_tagsoup ARGS2(FILE *, fp, struct config_type *, tbl)
+static void put_tagsoup(FILE *fp, struct config_type *tbl)
 {
     fprintf(fp, "%s=%s\n\n", tbl->name, LYputEnum(tbl_DTD_recovery, Old_DTD));
 }
 
 /* This table is searched ignoring case */
+/* *INDENT-OFF* */
 static Config_Type Config_Table [] =
 {
     PARSE_SET(RC_ACCEPT_ALL_COOKIES,    LYAcceptAllCookies, N_("\
@@ -299,6 +322,12 @@ prompt for each cookie.  Set accept_all_cookies to \"TRUE\" to accept\n\
 all cookies.\n\
 ")),
     MAYBE_FUN(RC_ASSUME_CHARSET,        get_assume_charset, put_assume_charset, MSG_ENABLE_LYNXRC),
+    PARSE_STR(RC_ANONFTP_PASSWORD,      anonftp_password, N_("\
+anonftp_password allows the user to tell Lynx to use the personal\n\
+email address as the password for anonymous ftp.  If no value is given,\n\
+Lynx will use the personal email address.  Set anonftp_password\n\
+to a different value if you choose.\n\
+")),
     PARSE_STR(RC_BOOKMARK_FILE,         bookmark_page,     N_("\
 bookmark_file specifies the name and location of the default bookmark\n\
 file into which the user can paste links for easy access at a later\n\
@@ -433,6 +462,8 @@ according to the Accept-Charset header, then the server SHOULD send\n\
 an error response, though the sending of an unacceptable response\n\
 is also allowed.\n\
 ")),
+    MAYBE_ENU(RC_PREFERRED_ENCODING,    LYAcceptEncoding,   tbl_preferred_encoding,
+	      MSG_ENABLE_LYNXRC),
     PARSE_STR(RC_PREFERRED_LANGUAGE,    language, N_("\
 preferred_language specifies the language in MIME notation (e.g., en,\n\
 fr, may be a comma-separated list in decreasing preference)\n\
@@ -440,6 +471,8 @@ which Lynx will indicate you prefer in requests to http servers.\n\
 If a file in that language is available, the server will send it.\n\
 Otherwise, the server will send the file in its default language.\n\
 ")),
+    MAYBE_ENU(RC_PREFERRED_MEDIA_TYPES, LYAcceptMedia,      tbl_preferred_media,
+	      MSG_ENABLE_LYNXRC),
     MAYBE_SET(RC_RAW_MODE,              LYRawMode,          MSG_ENABLE_LYNXRC),
 #if defined(ENABLE_OPTS_CHANGE_EXEC) && (defined(EXEC_LINKS) || defined(EXEC_SCRIPTS))
     PARSE_SET(RC_RUN_ALL_EXECUTION_LINKS, local_exec, N_("\
@@ -563,9 +596,9 @@ in the Visited Links Page.\n\
 
     PARSE_NIL
 };
+/* *INDENT-ON* */
 
-PRIVATE Config_Type *lookup_config ARGS1(
-	char *,		name)
+static Config_Type *lookup_config(const char *name)
 {
     Config_Type *tbl = Config_Table;
     char ch = (char) TOUPPER(*name);
@@ -575,7 +608,7 @@ PRIVATE Config_Type *lookup_config ARGS1(
 	    char ch1 = tbl->name[0];
 
 	    if ((ch == TOUPPER(ch1))
-		&& (0 == strcasecomp (name, tbl->name)))
+		&& (0 == strcasecomp(name, tbl->name)))
 		break;
 	}
 
@@ -584,21 +617,20 @@ PRIVATE Config_Type *lookup_config ARGS1(
     return tbl;
 }
 
-/*  Read and process user options.
- *  If the passed-in fp is NULL, open the regular user defaults file
- *  for reading, otherwise use fp which has to be a file open for
- *  reading. - kw
+/* Read and process user options.  If the passed-in fp is NULL, open the
+ * regular user defaults file for reading, otherwise use fp which has to be a
+ * file open for reading.  - kw
  */
-PUBLIC void read_rc ARGS1(FILE *, fp)
+void read_rc(FILE *fp)
 {
     char *buffer = NULL;
     char rcfile[LY_MAXPATH];
     char MBM_line[256];
-    int  n;
+    int n;
 
     if (!fp) {
 	/*
-	 *  Make an RC file name, open it for reading.
+	 * Make an RC file name, open it for reading.
 	 */
 	LYAddPathToHome(rcfile, sizeof(rcfile), FNAME_LYNXRC);
 	if ((fp = fopen(rcfile, TXT_R)) == NULL) {
@@ -610,7 +642,7 @@ PUBLIC void read_rc ARGS1(FILE *, fp)
     }
 
     /*
-     *  Process the entries.
+     * Process the entries.
      */
     while (LYSafeGets(&buffer, fp) != NULL) {
 	char *name, *value, *notes;
@@ -639,7 +671,8 @@ PUBLIC void read_rc ARGS1(FILE *, fp)
 
 	tbl = lookup_config(name);
 	if (tbl->name == 0) {
-	    char *special = RC_MULTI_BOOKMARK;
+	    const char *special = RC_MULTI_BOOKMARK;
+
 	    if (!strncasecomp(name, special, strlen(special))) {
 		tbl = lookup_config(special);
 	    }
@@ -654,7 +687,7 @@ PUBLIC void read_rc ARGS1(FILE *, fp)
 	switch (tbl->type) {
 	case CONF_BOOL:
 	    if (q->set_value != 0)
-		*(q->set_value) = getBool (value);
+		*(q->set_value) = getBool(value);
 	    break;
 
 	case CONF_FUN:
@@ -679,7 +712,8 @@ PUBLIC void read_rc ARGS1(FILE *, fp)
 	case CONF_INT:
 	    if (q->int_value != 0) {
 		int ival;
-		if (1 == sscanf (value, "%d", &ival))
+
+		if (1 == sscanf(value, "%d", &ival))
 		    *(q->int_value) = ival;
 	    }
 	    break;
@@ -716,13 +750,13 @@ PUBLIC void read_rc ARGS1(FILE *, fp)
 		StrAllocCopy(*(q->str_value), value);
 	    break;
 
-	case CONF_UNSPECIFIED:
+	case CONF_NIL:
 	    break;
 	}
     }
 
     LYCloseInput(fp);
-    LYConfigCookies();	/* update cookie settings, if any */
+    LYConfigCookies();		/* update cookie settings, if any */
 
 #if defined(USE_SLANG) || defined(COLOR_CURSES)
     /*
@@ -749,13 +783,13 @@ PUBLIC void read_rc ARGS1(FILE *, fp)
  * Write a set of comments.  Doing it this way avoids preprocessor problems
  * with the leading '#', makes it simpler to use gettext.
  */
-PRIVATE void write_list ARGS2(
-    	FILE *,		fp,
-	char *,		list)
+static void write_list(FILE *fp, const char *list)
 {
     int first = TRUE;
+
     while (*list != 0) {
 	int ch = *list++;
+
 	if (ch == '\n') {
 	    first = TRUE;
 	} else {
@@ -771,7 +805,7 @@ PRIVATE void write_list ARGS2(
 /*
  * This is too long for some compilers.
  */
-PRIVATE void explain_keypad_mode ARGS1(FILE *, fp)
+static void explain_keypad_mode(FILE *fp)
 {
     write_list(fp, gettext("\
 If keypad_mode is set to \"NUMBERS_AS_ARROWS\", then the numbers on\n\
@@ -802,12 +836,11 @@ enabled.\n\
 "));
 }
 
-/*  Save user options.
- *  If the passed-in fp is NULL, open the regular user defaults file
- *  for writing, otherwise use fp which has to be a temp file open for
- *  writing. - kw
+/* Save user options.  If the passed-in fp is NULL, open the regular user
+ * defaults file for writing, otherwise use fp which has to be a temp file open
+ * for writing.  - kw
  */
-PUBLIC int save_rc ARGS1(FILE *, fp)
+int save_rc(FILE *fp)
 {
     Config_Type *tbl = Config_Table;
     char rcfile[LY_MAXPATH];
@@ -816,12 +849,12 @@ PUBLIC int save_rc ARGS1(FILE *, fp)
 
     if (!fp) {
 	/*
-	 *  Make a name.
+	 * Make a name.
 	 */
 	LYAddPathToHome(rcfile, sizeof(rcfile), FNAME_LYNXRC);
 
 	/*
-	 *  Open the file for write.
+	 * Open the file for write.
 	 */
 	if ((fp = LYNewTxtFile(rcfile)) == NULL) {
 	    return FALSE;
@@ -848,7 +881,8 @@ It is not this file.\n\
 	if (!tbl->enabled) {
 	    tbl++;
 	    continue;
-	} if (tbl->note != NULL) {
+	}
+	if (tbl->note != NULL) {
 	    write_list(fp, gettext(tbl->note));
 	} else if (tbl->table == tbl_keypad_mode) {
 	    explain_keypad_mode(fp);
@@ -886,7 +920,7 @@ It is not this file.\n\
 
 		fprintf(fp, "%s", NonNull(MBM_A_subbookmark[n]));
 		if (MBM_A_subdescript[n] != 0
-		 && *MBM_A_subdescript[n] != 0)
+		    && *MBM_A_subdescript[n] != 0)
 		    fprintf(fp, ",%s", MBM_A_subdescript[n]);
 		fprintf(fp, "\n");
 	    }
@@ -897,19 +931,19 @@ It is not this file.\n\
 	    /* FALLTHRU */
 	case CONF_STR:
 	    fprintf(fp, "%s=%s\n\n", tbl->name,
-			(q->str_value != 0 && *(q->str_value) != 0)
-			    ? *(q->str_value)
-			    : "");
+		    (q->str_value != 0 && *(q->str_value) != 0)
+		    ? *(q->str_value)
+		    : "");
 	    break;
 
-	case CONF_UNSPECIFIED:
+	case CONF_NIL:
 	    break;
 	}
 	tbl++;
     }
 
     /*
-     *  Close the RC file.
+     * Close the RC file.
      */
     if (is_tempfile) {
 	LYCloseTempFP(fp);
@@ -924,14 +958,14 @@ It is not this file.\n\
 /*
  * Returns true if the given name would be saved in .lynxrc
  */
-PUBLIC BOOL will_save_rc ARGS1(char *, name)
+BOOL will_save_rc(const char *name)
 {
     Config_Type *tbl = lookup_config(name);
+
     return tbl->name != 0;
 }
 
-PUBLIC int enable_lynxrc ARGS1(
-	char *,		value)
+int enable_lynxrc(char *value)
 {
     Config_Type *tbl;
     char *colon = strchr(value, ':');

@@ -14,7 +14,13 @@ VPATH		= $(srcdir)
 
 top_builddir	= ../..
 
-LIBS		= @LIBS@ $(SITE_LIBS)
+CC		= @CC@
+CPP		= @CPP@
+CFLAGS		= @CFLAGS@
+EXTRA_CPPFLAGS	= @EXTRA_CPPFLAGS@
+CPPFLAGS	= @CPPFLAGS@
+
+LIBS		= @LIBS@
 LDFLAGS		= @LDFLAGS@
 
 INTLLIB		= @INTLDIR_MAKE@@INTLLIBS@
@@ -24,21 +30,26 @@ INTLDIR_CPPFLAGS= @INTLDIR_CPPFLAGS@-I$(top_srcdir)/intl
 
 SITE_DEFS	= # FIXME: set in parent makefile
 
-CC		= @CC@
-CPP		= @CPP@
-CFLAGS		= @CFLAGS@
+BUILD_CC	= @BUILD_CC@
+BUILD_CPP	= @BUILD_CPP@
+BUILD_CFLAGS	= @BUILD_CFLAGS@
+BUILD_CPPFLAGS	= @BUILD_CPPFLAGS@ @DEFS@
+
+BUILD_LIBS	= @BUILD_LIBS@ #$(SITE_LIBS)
+BUILD_LDFLAGS	= @BUILD_LDFLAGS@
 
 x		= @EXEEXT@
-o		= .@OBJEXT@
+o		= .@BUILD_OBJEXT@
+BUILD_EXEEXT	= @BUILD_EXEEXT@
 
-CPP_OPTS	= @DEFS@ @CPPFLAGS@ \
+CPP_OPTS	= $(BUILD_CPPFLAGS) \
 		-I$(top_builddir) \
 		-I$(top_srcdir)/src \
 		-I$(top_srcdir)/src/chrtrans \
 		-I$(top_srcdir)/$(WWWINC) \
 		-I$(top_srcdir)/ \
 		$(INTLDIR_CPPFLAGS) $(SITE_DEFS)
-CC_OPTS		= $(CPP_OPTS) $(CFLAGS)
+CC_OPTS		= $(CPP_OPTS) $(BUILD_CFLAGS)
 
 #
 # This file contains the font map for the default (hardware) font
@@ -47,6 +58,8 @@ CC_OPTS		= $(CPP_OPTS) $(CFLAGS)
 FONTMAP_INC = iso01_uni.h# default, if not set by recursive call
 
 ### fastdep: $(FONTMAP_INC)
+
+MAKEUCTB = makeuctb$(BUILD_EXEEXT)
 
 TABLES= \
  cp1250_uni.h \
@@ -61,6 +74,7 @@ TABLES= \
  cp775_uni.h \
  cp850_uni.h \
  cp852_uni.h \
+ cp857_uni.h \
  cp862_uni.h \
  cp864_uni.h \
  cp866_uni.h \
@@ -80,6 +94,7 @@ TABLES= \
  iso09_uni.h \
  iso10_uni.h \
  iso13_uni.h \
+ iso14_uni.h \
  iso15_uni.h \
  koi8r_uni.h \
  koi8u_uni.h \
@@ -97,71 +112,73 @@ default: $(FONTMAP_INC)
 
 tables: $(TABLES)
 
-makeuctb$x: makeuctb$o
-	$(CC) $(CC_OPTS) $(LDFLAGS) -o $@ makeuctb$o $(INTLLIB) $(LIBS)
+$(MAKEUCTB) : makeuctb$o
+	$(BUILD_CC) $(CC_OPTS) $(BUILD_LDFLAGS) -o $@ makeuctb$o $(INTLLIB) $(BUILD_LIBS)
 
-makeuctb$o: $(srcdir)/UCkd.h $(srcdir)/makeuctb.c
+makeuctb$o : $(srcdir)/UCkd.h $(srcdir)/makeuctb.c
 
-.SUFFIXES : $o .tbl .i
+.SUFFIXES : $o .tbl .i .h
 
 .c$o:
 @RULE_CC@
-	@ECHO_CC@$(CC) $(CC_OPTS) -c $(srcdir)/$*.c
+	@ECHO_CC@$(BUILD_CC) $(CC_OPTS) -c $(srcdir)/$*.c
 
 .c.i:
 @RULE_CC@
-	@ECHO_CC@$(CPP) -C $(CPP_OPTS) $(srcdir)/$*.c >$@
+	@ECHO_CC@$(BUILD_CPP) -C $(CPP_OPTS) $(srcdir)/$*.c >$@
 
 .tbl.h:
-	./makeuctb$x $(srcdir)/$*.tbl $*.h
+	./$(MAKEUCTB) $(srcdir)/$*.tbl $*.h
 
 # table files listed here once again to get the make dependencies
 # right, in case makeuctb was recompiled.
-cp1250_uni.h:		$(srcdir)/cp1250_uni.tbl	makeuctb$x
-cp1251_uni.h:		$(srcdir)/cp1251_uni.tbl	makeuctb$x
-cp1252_uni.h:		$(srcdir)/cp1252_uni.tbl	makeuctb$x
-cp1253_uni.h:		$(srcdir)/cp1253_uni.tbl	makeuctb$x
-cp1255_uni.h:		$(srcdir)/cp1255_uni.tbl	makeuctb$x
-cp1256_uni.h:		$(srcdir)/cp1256_uni.tbl	makeuctb$x
-cp1257_uni.h:		$(srcdir)/cp1257_uni.tbl	makeuctb$x
-cp437_uni.h:		$(srcdir)/cp437_uni.tbl		makeuctb$x
-cp737_uni.h:		$(srcdir)/cp737_uni.tbl		makeuctb$x
-cp775_uni.h:		$(srcdir)/cp775_uni.tbl		makeuctb$x
-cp850_uni.h:		$(srcdir)/cp850_uni.tbl		makeuctb$x
-cp852_uni.h:		$(srcdir)/cp852_uni.tbl		makeuctb$x
-cp862_uni.h:		$(srcdir)/cp862_uni.tbl		makeuctb$x
-cp864_uni.h:		$(srcdir)/cp864_uni.tbl		makeuctb$x
-cp866_uni.h:		$(srcdir)/cp866_uni.tbl		makeuctb$x
-cp866u_uni.h:		$(srcdir)/cp866u_uni.tbl	makeuctb$x
-cp869_uni.h:		$(srcdir)/cp869_uni.tbl		makeuctb$x
-def7_uni.h:		$(srcdir)/def7_uni.tbl		makeuctb$x
-dmcs_uni.h:		$(srcdir)/dmcs_uni.tbl		makeuctb$x
-hp_uni.h:		$(srcdir)/hp_uni.tbl		makeuctb$x
-iso01_uni.h:		$(srcdir)/iso01_uni.tbl		makeuctb$x
-iso02_uni.h:		$(srcdir)/iso02_uni.tbl		makeuctb$x
-iso03_uni.h:		$(srcdir)/iso03_uni.tbl		makeuctb$x
-iso04_uni.h:		$(srcdir)/iso04_uni.tbl		makeuctb$x
-iso05_uni.h:		$(srcdir)/iso05_uni.tbl		makeuctb$x
-iso06_uni.h:		$(srcdir)/iso06_uni.tbl		makeuctb$x
-iso07_uni.h:		$(srcdir)/iso07_uni.tbl		makeuctb$x
-iso08_uni.h:		$(srcdir)/iso08_uni.tbl		makeuctb$x
-iso09_uni.h:		$(srcdir)/iso09_uni.tbl		makeuctb$x
-iso10_uni.h:		$(srcdir)/iso10_uni.tbl		makeuctb$x
-iso13_uni.h:		$(srcdir)/iso13_uni.tbl		makeuctb$x
-iso15_uni.h:		$(srcdir)/iso15_uni.tbl		makeuctb$x
-koi8r_uni.h:		$(srcdir)/koi8r_uni.tbl		makeuctb$x
-koi8u_uni.h:		$(srcdir)/koi8u_uni.tbl		makeuctb$x
-mac_uni.h:		$(srcdir)/mac_uni.tbl		makeuctb$x
-mnem2_suni.h:		$(srcdir)/mnem2_suni.tbl	makeuctb$x
-mnem_suni.h:		$(srcdir)/mnem_suni.tbl		makeuctb$x
-next_uni.h:		$(srcdir)/next_uni.tbl		makeuctb$x
-pt154_uni.h:		$(srcdir)/pt154_uni.tbl 	makeuctb$x
-rfc_suni.h:		$(srcdir)/rfc_suni.tbl		makeuctb$x
-utf8_uni.h:		$(srcdir)/utf8_uni.tbl		makeuctb$x
-viscii_uni.h:		$(srcdir)/viscii_uni.tbl	makeuctb$x
+cp1250_uni.h:		$(srcdir)/cp1250_uni.tbl	$(MAKEUCTB)
+cp1251_uni.h:		$(srcdir)/cp1251_uni.tbl	$(MAKEUCTB)
+cp1252_uni.h:		$(srcdir)/cp1252_uni.tbl	$(MAKEUCTB)
+cp1253_uni.h:		$(srcdir)/cp1253_uni.tbl	$(MAKEUCTB)
+cp1255_uni.h:		$(srcdir)/cp1255_uni.tbl	$(MAKEUCTB)
+cp1256_uni.h:		$(srcdir)/cp1256_uni.tbl	$(MAKEUCTB)
+cp1257_uni.h:		$(srcdir)/cp1257_uni.tbl	$(MAKEUCTB)
+cp437_uni.h:		$(srcdir)/cp437_uni.tbl		$(MAKEUCTB)
+cp737_uni.h:		$(srcdir)/cp737_uni.tbl		$(MAKEUCTB)
+cp775_uni.h:		$(srcdir)/cp775_uni.tbl		$(MAKEUCTB)
+cp850_uni.h:		$(srcdir)/cp850_uni.tbl		$(MAKEUCTB)
+cp852_uni.h:		$(srcdir)/cp852_uni.tbl		$(MAKEUCTB)
+cp857_uni.h:		$(srcdir)/cp857_uni.tbl		$(MAKEUCTB)
+cp862_uni.h:		$(srcdir)/cp862_uni.tbl		$(MAKEUCTB)
+cp864_uni.h:		$(srcdir)/cp864_uni.tbl		$(MAKEUCTB)
+cp866_uni.h:		$(srcdir)/cp866_uni.tbl		$(MAKEUCTB)
+cp866u_uni.h:		$(srcdir)/cp866u_uni.tbl	$(MAKEUCTB)
+cp869_uni.h:		$(srcdir)/cp869_uni.tbl		$(MAKEUCTB)
+def7_uni.h:		$(srcdir)/def7_uni.tbl		$(MAKEUCTB)
+dmcs_uni.h:		$(srcdir)/dmcs_uni.tbl		$(MAKEUCTB)
+hp_uni.h:		$(srcdir)/hp_uni.tbl		$(MAKEUCTB)
+iso01_uni.h:		$(srcdir)/iso01_uni.tbl		$(MAKEUCTB)
+iso02_uni.h:		$(srcdir)/iso02_uni.tbl		$(MAKEUCTB)
+iso03_uni.h:		$(srcdir)/iso03_uni.tbl		$(MAKEUCTB)
+iso04_uni.h:		$(srcdir)/iso04_uni.tbl		$(MAKEUCTB)
+iso05_uni.h:		$(srcdir)/iso05_uni.tbl		$(MAKEUCTB)
+iso06_uni.h:		$(srcdir)/iso06_uni.tbl		$(MAKEUCTB)
+iso07_uni.h:		$(srcdir)/iso07_uni.tbl		$(MAKEUCTB)
+iso08_uni.h:		$(srcdir)/iso08_uni.tbl		$(MAKEUCTB)
+iso09_uni.h:		$(srcdir)/iso09_uni.tbl		$(MAKEUCTB)
+iso10_uni.h:		$(srcdir)/iso10_uni.tbl		$(MAKEUCTB)
+iso13_uni.h:		$(srcdir)/iso13_uni.tbl		$(MAKEUCTB)
+iso14_uni.h:		$(srcdir)/iso14_uni.tbl		$(MAKEUCTB)
+iso15_uni.h:		$(srcdir)/iso15_uni.tbl		$(MAKEUCTB)
+koi8r_uni.h:		$(srcdir)/koi8r_uni.tbl		$(MAKEUCTB)
+koi8u_uni.h:		$(srcdir)/koi8u_uni.tbl		$(MAKEUCTB)
+mac_uni.h:		$(srcdir)/mac_uni.tbl		$(MAKEUCTB)
+mnem2_suni.h:		$(srcdir)/mnem2_suni.tbl	$(MAKEUCTB)
+mnem_suni.h:		$(srcdir)/mnem_suni.tbl		$(MAKEUCTB)
+next_uni.h:		$(srcdir)/next_uni.tbl		$(MAKEUCTB)
+pt154_uni.h:		$(srcdir)/pt154_uni.tbl 	$(MAKEUCTB)
+rfc_suni.h:		$(srcdir)/rfc_suni.tbl		$(MAKEUCTB)
+utf8_uni.h:		$(srcdir)/utf8_uni.tbl		$(MAKEUCTB)
+viscii_uni.h:		$(srcdir)/viscii_uni.tbl	$(MAKEUCTB)
 
 clean:
-	rm -f makeuctb$x *$o *uni.h *uni2.h *.i
+	rm -f $(MAKEUCTB) *$o *uni.h *uni2.h *.i
 
 distclean: clean
 	-rm -rf obsolete

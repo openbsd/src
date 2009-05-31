@@ -6,6 +6,22 @@ for some of the RFC 1345 Mnemonic codes are out of date,
 a cleanup and update would be needed for serious use.
 [See also http://czyborra.com/charsets/iso8859.html for codepages survey.]
 
+These changes were made to all of the files used from ftp.unicode.org:
+
+	a) add the MIME name of the charset.
+	b) add a name for the display charset (used on Options screen)
+	c) add the codepage number
+	d) remove lines for control characters 0x00 to 0x1f, 0x7f to 0x9f.
+	e) comment-out ASCII lines 0x20 to 0x7f
+	f) use idem to represent the commented-out lines
+	g) change C-style 0xNNNN constants to Unicode-style U+NNNN.
+
+Other changes include
+
+	h) add code-points to several lines to provide Unicode equivalents
+	i) add extra mappings at the end of the files
+	j) comment-out other one-one mappings in the 0xa0-0xff range.
+
 More translation files can be easily provided (and new character entities
 added to entities.h), this set is just to test whether the system works
 in principle (and also how it behaves with incomplete data...)

@@ -1,6 +1,6 @@
 /*		Our Static DTD for HTML
-**		-----------------------
-*/
+ *		-----------------------
+ */
 
 /* Implements:
 */
@@ -11,141 +11,141 @@
 #include <LYJustify.h>
 
 /*
- *     Character entities like &nbsp now excluded from our DTD tables,
- *     they are mapped to Unicode and handled by chartrans code directly
- *     the similar way the numeric entities like &#123 does.
- *     See  src/chrtrans/entities.h  for real mapping.
+ * Character entities like &nbsp now excluded from our DTD tables, they are
+ * mapped to Unicode and handled by chartrans code directly the similar way the
+ * numeric entities like &#123 does.  See src/chrtrans/entities.h for real
+ * mapping.
  */
 
 /*	Entity Names
-**	------------
-**
-**	This table must be matched exactly with ALL the translation tables
-**		(this is an obsolete translation mechanism, probably unused,
-**		currently replaced with Unicode chartrans in most cases...)
-*/
-static CONST char* entities[] = {
-  "AElig",	/* capital AE diphthong (ligature) */
-  "Aacute",	/* capital A, acute accent */
-  "Acirc",	/* capital A, circumflex accent */
-  "Agrave",	/* capital A, grave accent */
-  "Aring",	/* capital A, ring */
-  "Atilde",	/* capital A, tilde */
-  "Auml",	/* capital A, dieresis or umlaut mark */
-  "Ccedil",	/* capital C, cedilla */
-  "Dstrok",	/* capital Eth, Icelandic */
-  "ETH",	/* capital Eth, Icelandic */
-  "Eacute",	/* capital E, acute accent */
-  "Ecirc",	/* capital E, circumflex accent */
-  "Egrave",	/* capital E, grave accent */
-  "Euml",	/* capital E, dieresis or umlaut mark */
-  "Iacute",	/* capital I, acute accent */
-  "Icirc",	/* capital I, circumflex accent */
-  "Igrave",	/* capital I, grave accent */
-  "Iuml",	/* capital I, dieresis or umlaut mark */
-  "Ntilde",	/* capital N, tilde */
-  "Oacute",	/* capital O, acute accent */
-  "Ocirc",	/* capital O, circumflex accent */
-  "Ograve",	/* capital O, grave accent */
-  "Oslash",	/* capital O, slash */
-  "Otilde",	/* capital O, tilde */
-  "Ouml",	/* capital O, dieresis or umlaut mark */
-  "THORN",	/* capital THORN, Icelandic */
-  "Uacute",	/* capital U, acute accent */
-  "Ucirc",	/* capital U, circumflex accent */
-  "Ugrave",	/* capital U, grave accent */
-  "Uuml",	/* capital U, dieresis or umlaut mark */
-  "Yacute",	/* capital Y, acute accent */
-  "aacute",	/* small a, acute accent */
-  "acirc",	/* small a, circumflex accent */
-  "acute",	/* spacing acute */
-  "aelig",	/* small ae diphthong (ligature) */
-  "agrave",	/* small a, grave accent */
-  "amp",	/* ampersand */
-  "aring",	/* small a, ring */
-  "atilde",	/* small a, tilde */
-  "auml",	/* small a, dieresis or umlaut mark */
-  "brkbar",	/* broken vertical bar */
-  "brvbar",	/* broken vertical bar */
-  "ccedil",	/* small c, cedilla */
-  "cedil",	/* spacing cedilla */
-  "cent",	/* cent sign */
-  "copy",	/* copyright sign */
-  "curren",	/* currency sign */
-  "deg",	/* degree sign */
-  "die",	/* spacing dieresis */
-  "divide",	/* division sign */
-  "eacute",	/* small e, acute accent */
-  "ecirc",	/* small e, circumflex accent */
-  "egrave",	/* small e, grave accent */
-  "emdash",	/* dash the width of emsp */
-  "emsp",	/* em space - not collapsed */
-  "endash",	/* dash the width of ensp */
-  "ensp",	/* en space - not collapsed */
-  "eth",	/* small eth, Icelandic */
-  "euml",	/* small e, dieresis or umlaut mark */
-  "frac12",	/* fraction 1/2 */
-  "frac14",	/* fraction 1/4 */
-  "frac34",	/* fraction 3/4 */
-  "gt",		/* greater than */
-  "hibar",	/* spacing macron */
-  "iacute",	/* small i, acute accent */
-  "icirc",	/* small i, circumflex accent */
-  "iexcl",	/* inverted exclamation mark */
-  "igrave",	/* small i, grave accent */
-  "iquest",	/* inverted question mark */
-  "iuml",	/* small i, dieresis or umlaut mark */
-  "laquo",	/* angle quotation mark, left */
-  "lt",		/* less than */
-  "macr",	/* spacing macron */
-  "mdash",	/* dash the width of emsp */
-  "micro",	/* micro sign */
-  "middot",	/* middle dot */
-  "nbsp",	/* non breaking space */
-  "ndash",	/* dash the width of ensp */
-  "not",	/* negation sign */
-  "ntilde",	/* small n, tilde */
-  "oacute",	/* small o, acute accent */
-  "ocirc",	/* small o, circumflex accent */
-  "ograve",	/* small o, grave accent */
-  "ordf",	/* feminine ordinal indicator */
-  "ordm",	/* masculine ordinal indicator */
-  "oslash",	/* small o, slash */
-  "otilde",	/* small o, tilde */
-  "ouml",	/* small o, dieresis or umlaut mark */
-  "para",	/* paragraph sign */
-  "plusmn",	/* plus-or-minus sign */
-  "pound",	/* pound sign */
-  "quot",	/* quote '"' */
-  "raquo",	/* angle quotation mark, right */
-  "reg",	/* circled R registered sign */
-  "sect",	/* section sign */
-  "shy",	/* soft hyphen */
-  "sup1",	/* superscript 1 */
-  "sup2",	/* superscript 2 */
-  "sup3",	/* superscript 3 */
-  "szlig",	/* small sharp s, German (sz ligature) */
-  "thinsp",	/* thin space (not collapsed) */
-  "thorn",	/* small thorn, Icelandic */
-  "times",	/* multiplication sign */
-  "trade",	/* trade mark sign (U+2122) */
-  "uacute",	/* small u, acute accent */
-  "ucirc",	/* small u, circumflex accent */
-  "ugrave",	/* small u, grave accent */
-  "uml",	/* spacing dieresis */
-  "uuml",	/* small u, dieresis or umlaut mark */
-  "yacute",	/* small y, acute accent */
-  "yen",	/* yen sign */
-  "yuml",	/* small y, dieresis or umlaut mark */
+ *	------------
+ *
+ *	This table must be matched exactly with ALL the translation tables
+ *		(this is an obsolete translation mechanism, probably unused,
+ *		currently replaced with Unicode chartrans in most cases...)
+ */
+static const char *entities[] =
+{
+    "AElig",			/* capital AE diphthong (ligature) */
+    "Aacute",			/* capital A, acute accent */
+    "Acirc",			/* capital A, circumflex accent */
+    "Agrave",			/* capital A, grave accent */
+    "Aring",			/* capital A, ring */
+    "Atilde",			/* capital A, tilde */
+    "Auml",			/* capital A, dieresis or umlaut mark */
+    "Ccedil",			/* capital C, cedilla */
+    "Dstrok",			/* capital Eth, Icelandic */
+    "ETH",			/* capital Eth, Icelandic */
+    "Eacute",			/* capital E, acute accent */
+    "Ecirc",			/* capital E, circumflex accent */
+    "Egrave",			/* capital E, grave accent */
+    "Euml",			/* capital E, dieresis or umlaut mark */
+    "Iacute",			/* capital I, acute accent */
+    "Icirc",			/* capital I, circumflex accent */
+    "Igrave",			/* capital I, grave accent */
+    "Iuml",			/* capital I, dieresis or umlaut mark */
+    "Ntilde",			/* capital N, tilde */
+    "Oacute",			/* capital O, acute accent */
+    "Ocirc",			/* capital O, circumflex accent */
+    "Ograve",			/* capital O, grave accent */
+    "Oslash",			/* capital O, slash */
+    "Otilde",			/* capital O, tilde */
+    "Ouml",			/* capital O, dieresis or umlaut mark */
+    "THORN",			/* capital THORN, Icelandic */
+    "Uacute",			/* capital U, acute accent */
+    "Ucirc",			/* capital U, circumflex accent */
+    "Ugrave",			/* capital U, grave accent */
+    "Uuml",			/* capital U, dieresis or umlaut mark */
+    "Yacute",			/* capital Y, acute accent */
+    "aacute",			/* small a, acute accent */
+    "acirc",			/* small a, circumflex accent */
+    "acute",			/* spacing acute */
+    "aelig",			/* small ae diphthong (ligature) */
+    "agrave",			/* small a, grave accent */
+    "amp",			/* ampersand */
+    "aring",			/* small a, ring */
+    "atilde",			/* small a, tilde */
+    "auml",			/* small a, dieresis or umlaut mark */
+    "brkbar",			/* broken vertical bar */
+    "brvbar",			/* broken vertical bar */
+    "ccedil",			/* small c, cedilla */
+    "cedil",			/* spacing cedilla */
+    "cent",			/* cent sign */
+    "copy",			/* copyright sign */
+    "curren",			/* currency sign */
+    "deg",			/* degree sign */
+    "die",			/* spacing dieresis */
+    "divide",			/* division sign */
+    "eacute",			/* small e, acute accent */
+    "ecirc",			/* small e, circumflex accent */
+    "egrave",			/* small e, grave accent */
+    "emdash",			/* dash the width of emsp */
+    "emsp",			/* em space - not collapsed */
+    "endash",			/* dash the width of ensp */
+    "ensp",			/* en space - not collapsed */
+    "eth",			/* small eth, Icelandic */
+    "euml",			/* small e, dieresis or umlaut mark */
+    "frac12",			/* fraction 1/2 */
+    "frac14",			/* fraction 1/4 */
+    "frac34",			/* fraction 3/4 */
+    "gt",			/* greater than */
+    "hibar",			/* spacing macron */
+    "iacute",			/* small i, acute accent */
+    "icirc",			/* small i, circumflex accent */
+    "iexcl",			/* inverted exclamation mark */
+    "igrave",			/* small i, grave accent */
+    "iquest",			/* inverted question mark */
+    "iuml",			/* small i, dieresis or umlaut mark */
+    "laquo",			/* angle quotation mark, left */
+    "lt",			/* less than */
+    "macr",			/* spacing macron */
+    "mdash",			/* dash the width of emsp */
+    "micro",			/* micro sign */
+    "middot",			/* middle dot */
+    "nbsp",			/* non breaking space */
+    "ndash",			/* dash the width of ensp */
+    "not",			/* negation sign */
+    "ntilde",			/* small n, tilde */
+    "oacute",			/* small o, acute accent */
+    "ocirc",			/* small o, circumflex accent */
+    "ograve",			/* small o, grave accent */
+    "ordf",			/* feminine ordinal indicator */
+    "ordm",			/* masculine ordinal indicator */
+    "oslash",			/* small o, slash */
+    "otilde",			/* small o, tilde */
+    "ouml",			/* small o, dieresis or umlaut mark */
+    "para",			/* paragraph sign */
+    "plusmn",			/* plus-or-minus sign */
+    "pound",			/* pound sign */
+    "quot",			/* quote '"' */
+    "raquo",			/* angle quotation mark, right */
+    "reg",			/* circled R registered sign */
+    "sect",			/* section sign */
+    "shy",			/* soft hyphen */
+    "sup1",			/* superscript 1 */
+    "sup2",			/* superscript 2 */
+    "sup3",			/* superscript 3 */
+    "szlig",			/* small sharp s, German (sz ligature) */
+    "thinsp",			/* thin space (not collapsed) */
+    "thorn",			/* small thorn, Icelandic */
+    "times",			/* multiplication sign */
+    "trade",			/* trade mark sign (U+2122) */
+    "uacute",			/* small u, acute accent */
+    "ucirc",			/* small u, circumflex accent */
+    "ugrave",			/* small u, grave accent */
+    "uml",			/* spacing dieresis */
+    "uuml",			/* small u, dieresis or umlaut mark */
+    "yacute",			/* small y, acute accent */
+    "yen",			/* yen sign */
+    "yuml",			/* small y, dieresis or umlaut mark */
 };
 
-
 /*		Attribute Lists
-**		---------------
-**
-**	Lists must be in alphabetical order by attribute name
-**	The tag elements contain the number of attributes
-*/
+ *		---------------
+ *
+ *	Lists must be in alphabetical order by attribute name
+ *	The tag elements contain the number of attributes
+ */
 #ifdef USE_PRETTYSRC
 # define N HTMLA_NORMAL
 # define i HTMLA_ANAME
@@ -154,9 +154,9 @@ static CONST char* entities[] = {
 # define x HTMLA_AUXCLASS
 # define T(t) , t
 #else
-# define T(t) /*nothing*/
+# define T(t)			/*nothing */
 #endif
-
+/* *INDENT-OFF* */
 static attr a_attr[] = {		/* Anchor attributes */
 	{ "ACCESSKEY"     T(N) },
 	{ "CHARSET"       T(N) },
@@ -1052,6 +1052,7 @@ static attr ulist_attr[] = {		/* UL attributes */
 	{ "WRAP"          T(N) },
 	{ 0               T(N) }	/* Terminate list */
 };
+/* *INDENT-ON* */
 
 #undef N
 #undef i
@@ -1101,22 +1102,22 @@ static attr ulist_attr[] = {		/* UL attributes */
  */
 
 /*	Extra element info
-**	------------------
-**
-**	Order and number of tags should match the tags_* tables
-**	further below and definitions in HTMLDTD.html.
-**
-**	The interspersed comments give the original Lynx tags[] entries
-**	for orientation, so they do not necessarily reflect what will
-**	be used with the T_* info (which is in tags_new[]).
-**
-**	An important design goal was that info for each tag should fit on
-**	one 80 character screen line :).  The price to pay is that it's
-**	a bit cryptic, to say the least...  - kw
-*/
+ *	------------------
+ *
+ *	Order and number of tags should match the tags_* tables
+ *	further below and definitions in HTMLDTD.html.
+ *
+ *	The interspersed comments give the original Lynx tags[] entries
+ *	for orientation, so they do not necessarily reflect what will
+ *	be used with the T_* info (which is in tags_new[]).
+ *
+ *	An important design goal was that info for each tag should fit on
+ *	one 80 character screen line :).  The price to pay is that it's
+ *	a bit cryptic, to say the least...  - kw
+ */
 /*	 1	   2	     3	       4	 5	   6	     7	       8 */
 /*345678901234567890123456789012345678901234567890123456789012345678901234567890 */
-
+/* *INDENT-OFF* */
 /*			self	contain icont'n contn'd icont'd canclos flags*/
  /* { "A"	, a_attr,	HTML_A_ATTRIBUTES,	SGML_MIXED }, */
 #define T_A		0x0008, 0x0B007,0x0FF17,0x37787,0x77BA7,0x8604F,0x00014
@@ -1351,20 +1352,21 @@ static attr ulist_attr[] = {		/* UL attributes */
 #define T_XMP		0x0800, 0x00000,0x00000,0x367E0,0x36FFF,0x0875F,0x00001
 
 #define T__UNREC_	0x0000, 0x00000,0x00000,0x00000,0x00000,0x00000,0x00000
+/* *INDENT-ON* */
 
 /*	Elements
-**	--------
-**
-**	Must match definitions in HTMLDTD.html!
-**	Must be in alphabetical order.
-**
-**  The T_* extra info is listed here, even though most fields are not used
-**  in SGML.c if Old_DTD is set (with the exception of some Tgf_* flags).
-**  This simplifies comparison of the tags_old[] table (otherwise unchanged
-**  from original Lynx treatment) with the tags_new[] table below. - kw
-**
-**    Name*,	Attributes,	No. of attributes,     content,   extra info...
-*/
+ *	--------
+ *
+ *	Must match definitions in HTMLDTD.html!
+ *	Must be in alphabetical order.
+ *
+ *  The T_* extra info is listed here, even though most fields are not used
+ *  in SGML.c if Old_DTD is set (with the exception of some Tgf_* flags).
+ *  This simplifies comparison of the tags_old[] table (otherwise unchanged
+ *  from original Lynx treatment) with the tags_new[] table below. - kw
+ *
+ *    Name*,	Attributes,	No. of attributes,     content,   extra info...
+ */
 #undef P
 #undef P
 #undef P_
@@ -1385,8 +1387,8 @@ static attr ulist_attr[] = {		/* UL attributes */
 #define P0(x) P_(x)
 #define NULL_HTTag NULL_HTTag_
 #endif
-
-static CONST HTTag tags_old[HTML_ALL_ELEMENTS] = {
+/* *INDENT-OFF* */
+static const HTTag tags_old[HTML_ALL_ELEMENTS] = {
  { P("A")	, a_attr,	HTML_A_ATTRIBUTES,	SGML_EMPTY,T_A},
  { P("ABBREV")	, gen_attr,	HTML_GEN_ATTRIBUTES,	SGML_MIXED,T_ABBREV},
  { P("ACRONYM") , gen_attr,	HTML_GEN_ATTRIBUTES,	SGML_MIXED,T_ACRONYM},
@@ -1511,7 +1513,7 @@ static CONST HTTag tags_old[HTML_ALL_ELEMENTS] = {
  { P("OBJECT")	, object_attr,	HTML_OBJECT_ATTRIBUTES, SGML_MIXED,T_OBJECT_PCDATA},
 };
 
-static CONST HTTag tags_new[HTML_ALL_ELEMENTS] = {
+static const HTTag tags_new[HTML_ALL_ELEMENTS] = {
  { P("A")	, a_attr,	HTML_A_ATTRIBUTES,	SGML_MIXED,T_A},
  { P("ABBREV")	, gen_attr,	HTML_GEN_ATTRIBUTES,	SGML_MIXED,T_ABBREV},
  { P("ACRONYM") , gen_attr,	HTML_GEN_ATTRIBUTES,	SGML_MIXED,T_ACRONYM},
@@ -1635,6 +1637,7 @@ static CONST HTTag tags_new[HTML_ALL_ELEMENTS] = {
    it has been signalled to parse OBJECT content as MIXED. - kw */
  { P("OBJECT")	, object_attr,	HTML_OBJECT_ATTRIBUTES, SGML_MIXED,T_OBJECT_PCDATA},
 };
+/* *INDENT-ON* */
 
 #undef P
 #undef P0
@@ -1645,11 +1648,12 @@ static CONST HTTag tags_new[HTML_ALL_ELEMENTS] = {
 
 static HTTag tags[HTML_ALL_ELEMENTS];
 
-PUBLIC CONST SGML_dtd HTML_dtd = {
-	tags,
-	HTML_ELEMENTS,
-	entities, /* probably unused */
-	TABLESIZE(entities),
+const SGML_dtd HTML_dtd =
+{
+    tags,
+    HTML_ELEMENTS,
+    entities,			/* probably unused */
+    TABLESIZE(entities),
 };
 
 /* This function fills the "tags" part of the HTML_dtd structure with
@@ -1659,11 +1663,11 @@ PUBLIC CONST SGML_dtd HTML_dtd = {
    that would make an initialisation call unnecessary, but my C knowledge
    is limited and I didn't want to list the whole tags_new table
    twice... - kw */
-PUBLIC void HTSwitchDTD ARGS1(
-    int,		new_flag)
+void HTSwitchDTD(int new_flag)
 {
     if (TRACE)
-	CTRACE((tfp,"HTMLDTD: Copying %s DTD element info of size %d, %d * %d\n",
+	CTRACE((tfp,
+		"HTMLDTD: Copying %s DTD element info of size %d, %d * %d\n",
 		new_flag ? "strict" : "tagsoup",
 		(int) (new_flag ? sizeof(tags_new) : sizeof(tags_old)),
 		HTML_ALL_ELEMENTS,
@@ -1674,89 +1678,81 @@ PUBLIC void HTSwitchDTD ARGS1(
 	memcpy(tags, tags_old, HTML_ALL_ELEMENTS * sizeof(HTTag));
 }
 
-PUBLIC HTTag HTTag_unrecognized =
+HTTag HTTag_unrecognized =
 
-    { NULL_HTTag,    NULL,	0,	SGML_EMPTY,T__UNREC_};
-
+{NULL_HTTag, NULL, 0, SGML_EMPTY, T__UNREC_};
 
 /*
-**	Utility Routine:  Useful for people building HTML objects.
-*/
+ *	Utility Routine:  Useful for people building HTML objects.
+ */
 
 /*	Start anchor element
-**	--------------------
-**
-**	It is kinda convenient to have a particulr routine for
-**	starting an anchor element, as everything else for HTML is
-**	simple anyway.
-*/
+ *	--------------------
+ *
+ *	It is kinda convenient to have a particulr routine for
+ *	starting an anchor element, as everything else for HTML is
+ *	simple anyway.
+ */
 struct _HTStructured {
-    HTStructuredClass * isa;
-	/* ... */
+    HTStructuredClass *isa;
+    /* ... */
 };
 
-PUBLIC void HTStartAnchor ARGS3(
-	HTStructured *,		obj,
-	CONST char *,		name,
-	CONST char *,		href)
+void HTStartAnchor(HTStructured * obj, const char *name,
+		   const char *href)
 {
-    BOOL		present[HTML_A_ATTRIBUTES];
-    CONST char *	value[HTML_A_ATTRIBUTES];
+    BOOL present[HTML_A_ATTRIBUTES];
+    const char *value[HTML_A_ATTRIBUTES];
     int i;
 
     for (i = 0; i < HTML_A_ATTRIBUTES; i++)
-	 present[i] = NO;
+	present[i] = NO;
 
     if (name && *name) {
 	present[HTML_A_NAME] = YES;
-	value[HTML_A_NAME] = (CONST char *)name;
+	value[HTML_A_NAME] = (const char *) name;
     }
     if (href) {
 	present[HTML_A_HREF] = YES;
-	value[HTML_A_HREF] = (CONST char *)href;
+	value[HTML_A_HREF] = (const char *) href;
     }
 
-    (*obj->isa->start_element)(obj, HTML_A, present, value, -1, 0);
+    (*obj->isa->start_element) (obj, HTML_A, present, value, -1, 0);
 }
 
-
-PUBLIC void HTStartAnchor5 ARGS5(
-	HTStructured *,		obj,
-	CONST char *,		name,
-	CONST char *,		href,
-	CONST char *,		linktype,
-	int,			tag_charset)
+void HTStartAnchor5(HTStructured * obj, const char *name,
+		    const char *href,
+		    const char *linktype,
+		    int tag_charset)
 {
-    BOOL		present[HTML_A_ATTRIBUTES];
-    CONST char *	value[HTML_A_ATTRIBUTES];
+    BOOL present[HTML_A_ATTRIBUTES];
+    const char *value[HTML_A_ATTRIBUTES];
     int i;
 
     for (i = 0; i < HTML_A_ATTRIBUTES; i++)
-	 present[i] = NO;
+	present[i] = NO;
 
     if (name && *name) {
 	present[HTML_A_NAME] = YES;
 	value[HTML_A_NAME] = name;
     }
-    if (href) {
+    if (href && *href) {
 	present[HTML_A_HREF] = YES;
 	value[HTML_A_HREF] = href;
     }
-    if (linktype) {
+    if (linktype && *linktype) {
 	present[HTML_A_TYPE] = YES;
 	value[HTML_A_TYPE] = linktype;
     }
 
-    (*obj->isa->start_element)(obj, HTML_A, present, value, tag_charset, 0);
+    (*obj->isa->start_element) (obj, HTML_A, present, value, tag_charset, 0);
 }
 
-PUBLIC void HTStartIsIndex ARGS3(
-	HTStructured *,		obj,
-	CONST char *,		prompt,
-	CONST char *,		href)
+void HTStartIsIndex(HTStructured * obj, const char *prompt,
+		    const char *href)
 {
-    BOOL		present[HTML_ISINDEX_ATTRIBUTES];
-    CONST char *	value[HTML_ISINDEX_ATTRIBUTES];
+    BOOL present[HTML_ISINDEX_ATTRIBUTES];
+    const char *value[HTML_ISINDEX_ATTRIBUTES];
     int i;
 
     for (i = 0; i < HTML_ISINDEX_ATTRIBUTES; i++)
@@ -1764,12 +1760,12 @@ PUBLIC void HTStartIsIndex ARGS3(
 
     if (prompt && *prompt) {
 	present[HTML_ISINDEX_PROMPT] = YES;
-	value[HTML_ISINDEX_PROMPT] = (CONST char *)prompt;
+	value[HTML_ISINDEX_PROMPT] = (const char *) prompt;
     }
     if (href) {
 	present[HTML_ISINDEX_HREF] = YES;
-	value[HTML_ISINDEX_HREF] = (CONST char *)href;
+	value[HTML_ISINDEX_HREF] = (const char *) href;
     }
 
-    (*obj->isa->start_element)(obj, HTML_ISINDEX , present, value, -1, 0);
+    (*obj->isa->start_element) (obj, HTML_ISINDEX, present, value, -1, 0);
 }

@@ -22,19 +22,17 @@
 #if defined(VMS) && !defined(USE_SLANG)
 #define CTRL_W_HACK DO_NOTHING
 #else
-#define CTRL_W_HACK 23  /* CTRL-W refresh without clearok */
+#define CTRL_W_HACK 23		/* CTRL-W refresh without clearok */
 #endif /* VMS && !USE_SLANG */
 
-PRIVATE int form_getstr PARAMS((
-	int		cur,
-	BOOLEAN		use_last_tfpos,
-	BOOLEAN		redraw_only));
+static int form_getstr(int cur,
+		       BOOLEAN use_last_tfpos,
+		       BOOLEAN redraw_only);
 
 /*
  * Returns an array of pointers to the given list
  */
-PRIVATE char ** options_list ARGS1(
-	OptionType *,	opt_ptr)
+static char **options_list(OptionType * opt_ptr)
 {
     char **result = 0;
     size_t len;
@@ -58,13 +56,12 @@ PRIVATE char ** options_list ARGS1(
     return result;
 }
 
-PUBLIC int change_form_link_ex ARGS6(
-	int,		cur,
-	DocInfo *,	newdoc,
-	BOOLEAN *,	refresh_screen,
-	BOOLEAN,	use_last_tfpos,
-	BOOLEAN,	immediate_submit,
-	BOOLEAN,	redraw_only)
+int change_form_link_ex(int cur,
+			DocInfo *newdoc,
+			BOOLEAN *refresh_screen,
+			BOOLEAN use_last_tfpos,
+			BOOLEAN immediate_submit,
+			BOOLEAN redraw_only)
 {
     FormInfo *form = links[cur].l_form;
     char *link_name = form->name;
@@ -72,258 +69,262 @@ PUBLIC int change_form_link_ex ARGS6(
     int newdoc_changed = 0;
     int c = DO_NOTHING;
     int OrigNumValue;
+    int title_adjust = (no_title ? -TITLE_LINES : 0);
     char **my_data = 0;
 
     /*
-     *  If there is no form to perform action on, don't do anything.
+     * If there is no form to perform action on, don't do anything.
      */
     if (form == NULL) {
-	return(c);
+	return (c);
     }
     my_data = options_list(form->select_list);
 
     /*
-     *  Move to the link position.
+     * Move to the link position.
      */
-    LYmove(links[cur].ly, links[cur].lx);
+    LYmove(links[cur].ly + title_adjust, links[cur].lx);
 
-    switch(form->type) {
-	case F_CHECKBOX_TYPE:
-	    if (form->disabled == YES)
-		break;
-	    LYSetHilite(cur, form->num_value ? unchecked_box : checked_box);
-	    form->num_value = ! form->num_value;
+    switch (form->type) {
+    case F_CHECKBOX_TYPE:
+	if (form->disabled == YES)
 	    break;
+	LYSetHilite(cur, form->num_value ? unchecked_box : checked_box);
+	form->num_value = !form->num_value;
+	break;
 
-	case F_OPTION_LIST_TYPE:
-	    if (form->select_list == 0) {
-		HTAlert(BAD_HTML_NO_POPUP);
-		c = DO_NOTHING;
-		break;
-	    }
+    case F_OPTION_LIST_TYPE:
+	if (form->select_list == 0) {
+	    HTAlert(BAD_HTML_NO_POPUP);
+	    c = DO_NOTHING;
+	    break;
+	}
 
-	    if (form->disabled == YES) {
-		int dummy;
-		dummy = LYhandlePopupList(form->num_value,
-					  links[cur].ly,
-					  links[cur].lx,
-					  (CONST char **)my_data,
-					  form->size,
-					  form->size_l,
-					  form->disabled,
-					  FALSE,
-					  FALSE);
-#if CTRL_W_HACK != DO_NOTHING
-		if (!enable_scrollback)
-		    c = CTRL_W_HACK;  /* CTRL-W refresh without clearok */
-		else
-#endif
-		    c = 12;  /* CTRL-L for repaint */
-		break;
-	    }
-	    OrigNumValue = form->num_value;
-	    form->num_value = LYhandlePopupList(form->num_value,
-						links[cur].ly,
-						links[cur].lx,
-						(CONST char **)my_data,
-						form->size,
-						form->size_l,
-						form->disabled,
-						FALSE,
-						FALSE);
-	    {
-		OptionType * opt_ptr = form->select_list;
-		int i;
-		for (i = 0; i < form->num_value; i++, opt_ptr = opt_ptr->next)
-		    ; /* null body */
-		/*
-		 *  Set the name.
-		 */
-		form->value = opt_ptr->name;
-		/*
-		 *  Set the value.
-		 */
-		form->cp_submit_value = opt_ptr->cp_submit_value;
-		 /*
-		  *  Set charset in which we have the submit value. - kw
-		  */
-		form->value_cs = opt_ptr->value_cs;
-	    }
+	if (form->disabled == YES) {
+	    int dummy;
+
+	    dummy = LYhandlePopupList(form->num_value,
+				      links[cur].ly,
+				      links[cur].lx,
+				      (const char **) my_data,
+				      form->size,
+				      form->size_l,
+				      form->disabled,
+				      FALSE,
+				      FALSE);
 #if CTRL_W_HACK != DO_NOTHING
 	    if (!enable_scrollback)
-		c = CTRL_W_HACK;	 /* CTRL-W refresh without clearok */
+		c = CTRL_W_HACK;	/* CTRL-W refresh without clearok */
 	    else
 #endif
-		c = 12;	 /* CTRL-L for repaint */
+		c = 12;		/* CTRL-L for repaint */
 	    break;
+	}
+	OrigNumValue = form->num_value;
+	form->num_value = LYhandlePopupList(form->num_value,
+					    links[cur].ly,
+					    links[cur].lx,
+					    (const char **) my_data,
+					    form->size,
+					    form->size_l,
+					    form->disabled,
+					    FALSE,
+					    FALSE);
+	{
+	    OptionType *opt_ptr = form->select_list;
+	    int i;
 
-	case F_RADIO_TYPE:
-	    if (form->disabled == YES)
-		break;
-		/*
-		 *  Radio buttons must have one and
-		 *  only one down at a time!
-		 */
-	    if (form->num_value) {
-		HTUserMsg(NEED_CHECKED_RADIO_BUTTON);
-	    } else {
-		int i;
-		/*
-		 *  Run though list of the links on the screen and
-		 *  unselect any that are selected. :)
-		 */
-		lynx_start_radio_color ();
-		for (i = 0; i < nlinks; i++) {
-		    if (links[i].type == WWW_FORM_LINK_TYPE
-		     && links[i].l_form->type == F_RADIO_TYPE
-		     && links[i].l_form->number == form->number
-			/*
-			 *  If it has the same name and its on...
-			 */
-		     && !strcmp(links[i].l_form->name, form->name)
-		     && links[i].l_form->num_value) {
-			LYmove(links[i].ly, links[i].lx);
-			LYaddstr(unchecked_radio);
-			LYSetHilite(i, unchecked_radio);
-		    }
-		}
-		lynx_stop_radio_color ();
-		/*
-		 *  Will unselect other button and select this one.
-		 */
-		HText_activateRadioButton(form);
-		/*
-		 *  Now highlight this one.
-		 */
-		LYSetHilite(cur, checked_radio);
-	    }
-	    break;
-
-	case F_FILE_TYPE:
-	case F_TEXT_TYPE:
-	case F_TEXTAREA_TYPE:
-	case F_PASSWORD_TYPE:
-	    c = form_getstr(cur, use_last_tfpos, redraw_only);
-	    LYSetHilite(cur, (form->type == F_PASSWORD_TYPE)
-			? STARS(strlen(form->value))
-			: form->value);
-	    break;
-
-	case F_RESET_TYPE:
-	    if (form->disabled == YES)
-		break;
-	    HText_ResetForm(form);
-	    *refresh_screen = TRUE;
-	    break;
-
-	case F_TEXT_SUBMIT_TYPE:
-	    if (redraw_only) {
-		c = form_getstr(cur, use_last_tfpos, TRUE);
-		break;
-	    }
-	    if (!immediate_submit)
-		c = form_getstr(cur, use_last_tfpos, FALSE);
-	    if (form->disabled == YES &&
-		(c == '\r' || c == '\n' || immediate_submit)) {
-		if (peek_mouse_link() >= 0)
-		    c = LAC_TO_LKC0(LYK_ACTIVATE);
-		else
-		    c = '\t';
-		break;
-	    }
+	    for (i = 0; i < form->num_value; i++, opt_ptr = opt_ptr->next) ;	/* null body */
 	    /*
-	     *  If immediate_submit is set, we didn't enter the line editor
-	     *  above, and will now try to call HText_SubmitForm() directly.
-	     *  If immediate_submit is not set, c is the lynxkeycode returned
-	     *  from line editing.   Then if c indicates that a key was pressed
-	     *  that means we should submit, but with some extra considerations
-	     *  (i.e. NOCACHE, DOWNLOAD, different from simple Enter), or if
-	     *  we should act on some *other* link selected with the mouse,
-	     *  we'll just return c and leave it to mainloop() to do the
-	     *  right thing; if everything checks out, it should call this
-	     *  function again, with immediate_submit set.
-	     *  If c indicates that line editing ended with Enter, we still
-	     *  defer to mainloop() for further checking if the submit
-	     *  action URL could require more checks than we do here.
-	     *  Only in the remaining cases do we proceed to call
-	     *  HText_SubmitForm() directly before returning. - kw
+	     * Set the name.
 	     */
-	    if (immediate_submit ||
-		((c == '\r' || c == '\n' || c == LAC_TO_LKC0(LYK_SUBMIT)) &&
-		 peek_mouse_link() == -1)) {
-		LYSetHilite(cur, form->value);
-#ifdef TEXT_SUBMIT_CONFIRM_WANTED
-		if (!immediate_submit && (c == '\r' || c == '\n') &&
-		    !HTConfirmDefault(NO_SUBMIT_BUTTON_QUERY), YES) {
-		    /* User was prompted and declined; if canceled with ^G
-		     * let mainloop stay on this field, otherwise move on to
-		     * the next field or link. - kw
-		     */
-		    if (HTLastConfirmCancelled())
-			c = DO_NOTHING;
-		    else
-			c = LAC_TO_LKC(LYK_NEXT_LINK);
-		    break;
-		}
+	    form->value = opt_ptr->name;
+	    /*
+	     * Set the value.
+	     */
+	    form->cp_submit_value = opt_ptr->cp_submit_value;
+	    /*
+	     * Set charset in which we have the submit value.  - kw
+	     */
+	    form->value_cs = opt_ptr->value_cs;
+	}
+#if CTRL_W_HACK != DO_NOTHING
+	if (!enable_scrollback)
+	    c = CTRL_W_HACK;	/* CTRL-W refresh without clearok */
+	else
 #endif
-		if (!form->submit_action || *form->submit_action == '\0') {
-		    HTUserMsg(NO_FORM_ACTION);
-		    c = DO_NOTHING;
-		    break;
-		} else if (form->submit_method == URL_MAIL_METHOD && no_mail) {
-		    HTAlert(FORM_MAILTO_DISALLOWED);
-		    c = DO_NOTHING;
-		    break;
-		} else if (!immediate_submit &&
-			   ((no_file_url &&
-			     isFILE_URL(form->submit_action)) ||
-			    !strncasecomp(form->submit_action, "lynx", 4))) {
-		    c = LAC_TO_LKC0(LYK_SUBMIT);
-		    break;
-		} else {
-		    if (form->no_cache &&
-			form->submit_method != URL_MAIL_METHOD) {
-			LYforce_no_cache = TRUE;
-			reloading = TRUE;
-		    }
-		    newdoc_changed =
-			HText_SubmitForm(form, newdoc, link_name, form->value);
+	    c = 12;		/* CTRL-L for repaint */
+	break;
+
+    case F_RADIO_TYPE:
+	if (form->disabled == YES)
+	    break;
+	/*
+	 * Radio buttons must have one and only one down at a time!
+	 */
+	if (form->num_value) {
+	    if (user_mode == NOVICE_MODE) {
+		HTUserMsg(NEED_CHECKED_RADIO_BUTTON);
+	    }
+	} else {
+	    int i;
+
+	    /*
+	     * Run though list of the links on the screen and unselect any that
+	     * are selected.  :)
+	     */
+	    lynx_start_radio_color();
+	    for (i = 0; i < nlinks; i++) {
+		if (links[i].type == WWW_FORM_LINK_TYPE
+		    && links[i].l_form->type == F_RADIO_TYPE
+		    && links[i].l_form->number == form->number
+		/*
+		 * If it has the same name and its on...
+		 */
+		    && !strcmp(links[i].l_form->name, form->name)
+		    && links[i].l_form->num_value) {
+		    LYmove(links[i].ly, links[i].lx);
+		    LYaddstr(unchecked_radio);
+		    LYSetHilite(i, unchecked_radio);
 		}
-		if (form->submit_method == URL_MAIL_METHOD) {
-		    *refresh_screen = TRUE;
-		} else {
-		    /*
-		     *  Returns new document URL.
-		     */
-		    newdoc->link = 0;
-		    newdoc->internal_link = FALSE;
-		}
+	    }
+	    lynx_stop_radio_color();
+	    /*
+	     * Will unselect other button and select this one.
+	     */
+	    HText_activateRadioButton(form);
+	    /*
+	     * Now highlight this one.
+	     */
+	    LYSetHilite(cur, checked_radio);
+	}
+	break;
+
+    case F_FILE_TYPE:
+    case F_TEXT_TYPE:
+    case F_TEXTAREA_TYPE:
+    case F_PASSWORD_TYPE:
+	c = form_getstr(cur, use_last_tfpos, redraw_only);
+	LYSetHilite(cur, (form->type == F_PASSWORD_TYPE)
+		    ? STARS(strlen(form->value))
+		    : form->value);
+	break;
+
+    case F_RESET_TYPE:
+	if (form->disabled == YES)
+	    break;
+	HText_ResetForm(form);
+	*refresh_screen = TRUE;
+	break;
+
+    case F_TEXT_SUBMIT_TYPE:
+	if (redraw_only) {
+	    c = form_getstr(cur, use_last_tfpos, TRUE);
+	    break;
+	}
+	if (!immediate_submit)
+	    c = form_getstr(cur, use_last_tfpos, FALSE);
+	if (form->disabled == YES &&
+	    (c == '\r' || c == '\n' || immediate_submit)) {
+	    if (peek_mouse_link() >= 0)
+		c = LAC_TO_LKC0(LYK_ACTIVATE);
+	    else
+		c = '\t';
+	    break;
+	}
+	/*
+	 * If immediate_submit is set, we didn't enter the line editor above,
+	 * and will now try to call HText_SubmitForm() directly.  If
+	 * immediate_submit is not set, c is the lynxkeycode returned from line
+	 * editing.  Then if c indicates that a key was pressed that means we
+	 * should submit, but with some extra considerations (i.e.  NOCACHE,
+	 * DOWNLOAD, different from simple Enter), or if we should act on some
+	 * *other* link selected with the mouse, we'll just return c and leave
+	 * it to mainloop() to do the right thing; if everything checks out, it
+	 * should call this function again, with immediate_submit set.
+	 *
+	 * If c indicates that line editing ended with Enter, we still defer to
+	 * mainloop() for further checking if the submit action URL could
+	 * require more checks than we do here.  Only in the remaining cases do
+	 * we proceed to call HText_SubmitForm() directly before returning.  -
+	 * kw
+	 */
+	if (immediate_submit ||
+	    ((c == '\r' || c == '\n' || c == LAC_TO_LKC0(LYK_SUBMIT)) &&
+	     peek_mouse_link() == -1)) {
+	    LYSetHilite(cur, form->value);
+#ifdef TEXT_SUBMIT_CONFIRM_WANTED
+	    if (!immediate_submit && (c == '\r' || c == '\n') &&
+		!HTConfirmDefault(NO_SUBMIT_BUTTON_QUERY), YES) {
+		/* User was prompted and declined; if canceled with ^G
+		 * let mainloop stay on this field, otherwise move on to
+		 * the next field or link. - kw
+		 */
+		if (HTLastConfirmCancelled())
+		    c = DO_NOTHING;
+		else
+		    c = LAC_TO_LKC(LYK_NEXT_LINK);
+		break;
+	    }
+#endif
+	    if (!form->submit_action || *form->submit_action == '\0') {
+		HTUserMsg(NO_FORM_ACTION);
 		c = DO_NOTHING;
 		break;
-	    } else {
-		LYSetHilite(cur, form->value);
-	    }
-	    break;
-
-	case F_SUBMIT_TYPE:
-	case F_IMAGE_SUBMIT_TYPE:
-	    if (form->disabled == YES)
+	    } else if (form->submit_method == URL_MAIL_METHOD && no_mail) {
+		HTAlert(FORM_MAILTO_DISALLOWED);
+		c = DO_NOTHING;
 		break;
-	    if (form->no_cache &&
-		form->submit_method != URL_MAIL_METHOD) {
-		LYforce_no_cache = TRUE;
-		reloading = TRUE;
+	    } else if (!immediate_submit &&
+		       ((no_file_url &&
+			 isFILE_URL(form->submit_action)) ||
+			!strncasecomp(form->submit_action, "lynx", 4))) {
+		c = LAC_TO_LKC0(LYK_SUBMIT);
+		break;
+	    } else {
+		if (form->no_cache &&
+		    form->submit_method != URL_MAIL_METHOD) {
+		    LYforce_no_cache = TRUE;
+		    reloading = TRUE;
+		}
+		newdoc_changed =
+		    HText_SubmitForm(form, newdoc, link_name, form->value);
 	    }
-	    newdoc_changed =
-		HText_SubmitForm(form, newdoc, link_name, link_value);
-	    if (form->submit_method == URL_MAIL_METHOD)
+	    if (form->submit_method == URL_MAIL_METHOD) {
 		*refresh_screen = TRUE;
-	    else {
-		/* returns new document URL */
+	    } else {
+		/*
+		 * Returns new document URL.
+		 */
 		newdoc->link = 0;
 		newdoc->internal_link = FALSE;
 	    }
+	    c = DO_NOTHING;
 	    break;
+	} else {
+	    LYSetHilite(cur, form->value);
+	}
+	break;
+
+    case F_SUBMIT_TYPE:
+    case F_IMAGE_SUBMIT_TYPE:
+	if (form->disabled == YES)
+	    break;
+	if (form->no_cache &&
+	    form->submit_method != URL_MAIL_METHOD) {
+	    LYforce_no_cache = TRUE;
+	    reloading = TRUE;
+	}
+	newdoc_changed =
+	    HText_SubmitForm(form, newdoc, link_name, link_value);
+	if (form->submit_method == URL_MAIL_METHOD)
+	    *refresh_screen = TRUE;
+	else {
+	    /* returns new document URL */
+	    newdoc->link = 0;
+	    newdoc->internal_link = FALSE;
+	}
+	break;
 
     }
 
@@ -331,45 +332,42 @@ PUBLIC int change_form_link_ex ARGS6(
 	c = LKC_DONE;
     } else {
 	/*
-	 *  These flags may have been set in mainloop, anticipating that
-	 *  a request will be submitted.  But if we haven't filled in
-	 *  newdoc, that won't actually be the case, so unset them. - kw
+	 * These flags may have been set in mainloop, anticipating that a
+	 * request will be submitted.  But if we haven't filled in newdoc, that
+	 * won't actually be the case, so unset them.  - kw
 	 */
 	LYforce_no_cache = FALSE;
 	reloading = FALSE;
     }
     FREE(my_data);
-    return(c);
+    return (c);
 }
 
-PUBLIC int change_form_link ARGS5(
-	int,		cur,
-	DocInfo *,	newdoc,
-	BOOLEAN *,	refresh_screen,
-	BOOLEAN,	use_last_tfpos,
-	BOOLEAN,	immediate_submit)
+int change_form_link(int cur,
+		     DocInfo *newdoc,
+		     BOOLEAN *refresh_screen,
+		     BOOLEAN use_last_tfpos,
+		     BOOLEAN immediate_submit)
 {
-    /*pass all our args and FALSE as last arg*/
+    /*pass all our args and FALSE as last arg */
     return change_form_link_ex(cur,
 			       newdoc,
 			       refresh_screen,
 			       use_last_tfpos,
 			       immediate_submit,
-			       FALSE /*redraw_only*/ );
+			       FALSE /*redraw_only */ );
 }
 
-PRIVATE int LastTFPos = -1;	/* remember last text field position */
+static int LastTFPos = -1;	/* remember last text field position */
 
-PRIVATE void LYSetLastTFPos ARGS1(
-    int,	pos)
+static void LYSetLastTFPos(int pos)
 {
     LastTFPos = pos;
 }
 
-PRIVATE int form_getstr ARGS3(
-	int,		cur,
-	BOOLEAN,	use_last_tfpos,
-	BOOLEAN,	redraw_only)
+static int form_getstr(int cur,
+		       BOOLEAN use_last_tfpos,
+		       BOOLEAN redraw_only)
 {
     FormInfo *form = links[cur].l_form;
     char *value = form->value;
@@ -380,48 +378,49 @@ PRIVATE int form_getstr ARGS3(
     BOOL HaveMaxlength = FALSE;
     int action, repeat;
     int last_xlkc = -1;
+
 #ifdef SUPPORT_MULTIBYTE_EDIT
     BOOL refresh_mb = TRUE;
 #endif
 
     EditFieldData MyEdit;
-    BOOLEAN Edited = FALSE;		/* Value might be updated? */
+    BOOLEAN Edited = FALSE;	/* Value might be updated? */
 
     /*
-     *  Get the initial position of the cursor.
+     * Get the initial position of the cursor.
      */
     LYGetYX(startline, startcol);
-    if ((startcol + form->size) > (LYcols - 1))
-	far_col = (LYcols - 1);
+    if ((startcol + form->size) > LYcolLimit)
+	far_col = LYcolLimit;
     else
 	far_col = (startcol + form->size);
 
     /*
-     *  Make sure the form field value does not exceed our buffer. - FM
+     * Make sure the form field value does not exceed our buffer.  - FM
      */
     max_length = ((form->maxlength > 0 &&
 		   form->maxlength < sizeof(MyEdit.buffer)) ?
-					    form->maxlength :
-					    (sizeof(MyEdit.buffer) - 1));
-    if (strlen(form->value) > (size_t)max_length) {
+		  form->maxlength :
+		  (sizeof(MyEdit.buffer) - 1));
+    if (strlen(form->value) > (size_t) max_length) {
 	/*
-	 *  We can't fit the entire value into the editing buffer,
-	 *  so enter as much of the tail as fits. - FM
+	 * We can't fit the entire value into the editing buffer, so enter as
+	 * much of the tail as fits.  - FM
 	 */
 	value += (strlen(form->value) - max_length);
 	if (!form->disabled &&
 	    !(form->submit_method == URL_MAIL_METHOD && no_mail)) {
 	    /*
-	     *  If we can edit it, report that we are using the tail. - FM
+	     * If we can edit it, report that we are using the tail.  - FM
 	     */
 	    HTUserMsg(FORM_VALUE_TOO_LONG);
-	    show_formlink_statusline(form, redraw_only? FOR_PANEL : FOR_INPUT);
+	    show_formlink_statusline(form, redraw_only ? FOR_PANEL : FOR_INPUT);
 	    LYmove(startline, startcol);
 	}
     }
 
     /*
-     *  Print panned line
+     * Print panned line
      */
     LYSetupEdit(&MyEdit, value, max_length, (far_col - startcol));
     MyEdit.pad = '_';
@@ -461,22 +460,22 @@ PRIVATE int form_getstr ARGS3(
 #endif /* TEXTFIELDS_MAY_NEED_ACTIVATION && INACTIVE_INPUT_STYLE_VH */
     LYRefreshEdit(&MyEdit);
     if (redraw_only)
-	return 0;		/*return value won't be analysed*/
+	return 0;		/*return value won't be analysed */
 
     /*
-     *  And go for it!
+     * And go for it!
      */
     for (;;) {
-again:
+      again:
 	repeat = -1;
 	get_mouse_link();	/* Reset mouse_link. */
 
 	ch = LYgetch_input();
 #ifdef SUPPORT_MULTIBYTE_EDIT
 	if (!refresh_mb
-	 && (EditBinding(ch) != LYE_CHAR)
+	    && (EditBinding(ch) != LYE_CHAR)
 #ifndef WIN_EX
-	 && (EditBinding(ch) != LYE_AIX)
+	    && (EditBinding(ch) != LYE_AIX)
 #endif
 	    )
 	    goto again;
@@ -491,9 +490,9 @@ again:
 	action = 0;
 #ifdef USE_MOUSE
 #  if defined(NCURSES) || defined(PDCURSES)
-	if (ch != -1 && (ch & LKC_ISLAC) && !(ch & LKC_ISLECLAC)) /* already lynxactioncode? */
-	    break;	/* @@@ maybe move these 2 lines outside ifdef -kw */
-	if (ch == MOUSE_KEY) {		/* Need to process ourselves */
+	if (ch != -1 && (ch & LKC_ISLAC) && !(ch & LKC_ISLECLAC))	/* already lynxactioncode? */
+	    break;		/* @@@ maybe move these 2 lines outside ifdef -kw */
+	if (ch == MOUSE_KEY) {	/* Need to process ourselves */
 #if defined(PDCURSES)
 	    int curx, cury;
 
@@ -503,12 +502,12 @@ again:
 		repeat = MOUSE_X_POS - curx;
 		if (repeat < 0) {
 		    action = LYE_BACK;
-		    repeat = - repeat;
+		    repeat = -repeat;
 		} else
 		    action = LYE_FORW;
 	    }
 #else
-	    MEVENT	event;
+	    MEVENT event;
 	    int curx, cury;
 
 	    getmouse(&event);
@@ -517,24 +516,24 @@ again:
 		repeat = event.x - curx;
 		if (repeat < 0) {
 		    action = LYE_BACK;
-		    repeat = - repeat;
+		    repeat = -repeat;
 		} else
 		    action = LYE_FORW;
 	    }
 #endif /* PDCURSES */
 	    else {
-		/*  Mouse event passed to us as MOUSE_KEY, and apparently
-		 *  not on this field's line?  Something is not as it
-		 *  should be...
-		 *  A call to statusline() may have happened, possibly from
-		 *  within a mouse menu.  Let's at least make sure here
-		 *  that the cursor position gets restored.  - kw
+		/* Mouse event passed to us as MOUSE_KEY, and apparently not on
+		 * this field's line?  Something is not as it should be...
+		 *
+		 * A call to statusline() may have happened, possibly from
+		 * within a mouse menu.  Let's at least make sure here that the
+		 * cursor position gets restored.  - kw
 		 */
 		MyEdit.dirty = TRUE;
 	    }
 	    last_xlkc = -1;
 	} else
-#  endif     /* NCURSES || PDCURSES */
+#  endif			/* NCURSES || PDCURSES */
 #endif /* USE_MOUSE */
 
 	{
@@ -561,21 +560,21 @@ again:
 
 	if (action == LYE_SETM1) {
 	    /*
-	     *  Set flag for modifier 1.
+	     * Set flag for modifier 1.
 	     */
 	    MyEdit.current_modifiers |= LKC_MOD1;
 	    continue;
 	}
 	if (action == LYE_SETM2) {
 	    /*
-	     *  Set flag for modifier 2.
+	     * Set flag for modifier 2.
 	     */
 	    MyEdit.current_modifiers |= LKC_MOD2;
 	    continue;
 	}
 	/*
-	 *  Filter out global navigation keys that should not be passed
-	 *  to line editor, and LYK_REFRESH.
+	 * Filter out global navigation keys that should not be passed to line
+	 * editor, and LYK_REFRESH.
 	 */
 	if (action == LYE_ENTER)
 	    break;
@@ -596,7 +595,6 @@ again:
 #endif /* VMS */
 	    break;
 	}
-
 #ifdef CAN_CUT_AND_PASTE	/* 1998/10/01 (Thu) 19:19:22 */
 	if (action == LYE_PASTE) {
 	    unsigned char *s = (unsigned char *) get_clip_grab(), *e;
@@ -612,12 +610,13 @@ again:
 		unsigned char *e1 = s;
 
 		while (e1 < e) {
-		    if (*e1 < ' ') { /* Stop here? */
+		    if (*e1 < ' ') {	/* Stop here? */
 			if (e1 > s)
 			    LYEditInsert(&MyEdit, s, e1 - s, -1, TRUE);
 			s = e1;
-			if (*e1 == '\t') { /* Replace by space */
-			    LYEditInsert(&MyEdit, (unsigned char *) " ", 1, -1, TRUE);
+			if (*e1 == '\t') {	/* Replace by space */
+			    LYEditInsert(&MyEdit, (unsigned char *) " ", 1,
+					 -1, TRUE);
 			    s = ++e1;
 			} else
 			    break;
@@ -629,7 +628,7 @@ again:
 		while (e1 < e && *e1 == '\r')
 		    e1++;
 		if (e1 + 1 < e && *e1 == '\n')
-		    StrAllocCopy(buf, (char *) e1 + 1);	/* Survive _release() */
+		    StrAllocCopy(buf, (char *) e1 + 1);		/* Survive _release() */
 		get_clip_release();
 		if (MyEdit.strlen >= max_length) {
 		    HaveMaxlength = TRUE;
@@ -644,7 +643,7 @@ again:
 		if (buf) {
 		    put_clip(buf);
 		    FREE(buf);
-		    ch = '\n';		/* Sometimes moves to the next line */
+		    ch = '\n';	/* Sometimes moves to the next line */
 		    break;
 		}
 		LYRefreshEdit(&MyEdit);
@@ -660,11 +659,11 @@ again:
 	    break;
 #endif
 	if (action == LYE_TAB) {
-	    ch = (int)('\t');
+	    ch = (int) ('\t');
 	    break;
 	}
 	if (action == LYE_ABORT) {
-	    return(DO_NOTHING);
+	    return (DO_NOTHING);
 	}
 	if (action == LYE_STOP) {
 #ifdef TEXTFIELDS_MAY_NEED_ACTIVATION
@@ -677,7 +676,7 @@ again:
 #endif
 #endif
 	}
-	if (action == LYE_NOP && LKC_TO_LAC(keymap,ch) == LYK_REFRESH)
+	if (action == LYE_NOP && LKC_TO_LAC(keymap, ch) == LYK_REFRESH)
 	    break;
 #ifdef SH_EX
 /* ASATAKU emacskey hack 1997/08/26 (Tue) 09:19:23 */
@@ -687,133 +686,134 @@ again:
 /* ASATAKU emacskey hack */
 #endif
 	switch (ch) {
-	    default:
-	    /*	[ 1999/04/14 (Wed) 15:01:33 ]
-	     *  Left arrrow in column 0 deserves special treatment here,
-	     *  else you can get trapped in a form without submit button!
+	default:
+	    /* [ 1999/04/14 (Wed) 15:01:33 ]
+	     * Left arrrow in column 0 deserves special treatment here, else
+	     * you can get trapped in a form without submit button!
 	     */
-		if (action == LYE_BACK && MyEdit.pos == 0 && repeat == -1) {
-		    int c = YES;    /* Go back immediately if no changes */
-		    if (textfield_prompt_at_left_edge) {
-			c = HTConfirmDefault(PREV_DOC_QUERY, NO);
-		    } else if (strcmp(MyEdit.buffer, value)) {
-			c = HTConfirmDefault(PREV_DOC_QUERY, NO);
-		    }
-		    if (c == YES) {
-			return(ch);
-		    } else {
-			if (form->disabled == YES)
-			    _statusline(ARROWS_OR_TAB_TO_MOVE);
-			else
-			    _statusline(ENTER_TEXT_ARROWS_OR_TAB);
-		    }
+	    if (action == LYE_BACK && MyEdit.pos == 0 && repeat == -1) {
+		int c = YES;	/* Go back immediately if no changes */
+
+		if (textfield_prompt_at_left_edge) {
+		    c = HTConfirmDefault(PREV_DOC_QUERY, NO);
+		} else if (strcmp(MyEdit.buffer, value)) {
+		    c = HTConfirmDefault(PREV_DOC_QUERY, NO);
 		}
-		if (form->disabled == YES) {
-		    /*
-		     *  Allow actions that don't modify the contents even
-		     *  in disabled form fields, so the user can scroll
-		     *  through the line for reading if necessary. - kw
-		     */
-		    switch(action) {
-		    case LYE_BOL:
-		    case LYE_EOL:
-		    case LYE_FORW:
-		    case LYE_FORW_RL:
-		    case LYE_BACK:
-		    case LYE_BACK_LL:
-		    case LYE_FORWW:
-		    case LYE_BACKW:
+		if (c == YES) {
+		    return (ch);
+		} else {
+		    if (form->disabled == YES)
+			_statusline(ARROWS_OR_TAB_TO_MOVE);
+		    else
+			_statusline(ENTER_TEXT_ARROWS_OR_TAB);
+		}
+	    }
+	    if (form->disabled == YES) {
+		/*
+		 * Allow actions that don't modify the contents even in
+		 * disabled form fields, so the user can scroll through the
+		 * line for reading if necessary.  - kw
+		 */
+		switch (action) {
+		case LYE_BOL:
+		case LYE_EOL:
+		case LYE_FORW:
+		case LYE_FORW_RL:
+		case LYE_BACK:
+		case LYE_BACK_LL:
+		case LYE_FORWW:
+		case LYE_BACKW:
 #ifdef EXP_KEYBOARD_LAYOUT
-		    case LYE_SWMAP:
+		case LYE_SWMAP:
 #endif
 #ifdef ENHANCED_LINEEDIT
-		    case LYE_SETMARK:
-		    case LYE_XPMARK:
+		case LYE_SETMARK:
+		case LYE_XPMARK:
 #endif
-			break;
-		    default:
-			goto again;
-		    }
+		    break;
+		default:
+		    goto again;
 		}
-		/*
-		 *  Make sure the statusline uses editmode help.
-		 */
-		if (repeat < 0)
-		    repeat = 1;
-		while (repeat--) {
-		    int rc = LYEdit1(&MyEdit, ch, action & ~LYE_DF, TRUE);
+	    }
+	    /*
+	     * Make sure the statusline uses editmode help.
+	     */
+	    if (repeat < 0)
+		repeat = 1;
+	    while (repeat--) {
+		int rc = LYEdit1(&MyEdit, ch, action & ~LYE_DF, TRUE);
 
-		    if (rc < 0) {
-			ch = -rc;
-			/* FORW_RL and BACK_LL may require special attention.
-			   BACK_LL wanted to switch to the previous link on
-			   the same line.  However, if there is no such link,
-			   then we would either disactivate the form
-			   (with -tna), or will reenter the form, thus we jump
-			   to the end of the line; both are counterintuitive.
-			   Unfortunately, we do not have access to curdoc.link,
-			   so we deduce it ourselves.  We don't have the info
-			   to do it inside LYLineEdit().
-			   This should work for prompts too.  */
-			if ( (action != LYE_BACK_LL && action != LYE_FORW_RL)
-			     || (cur >= 0
-				&& cur < nlinks
-				&& (action==LYE_FORW_RL
-				    ? cur < nlinks - 1
-				    : cur > 0)
-				&& links[cur + ((action==LYE_FORW_RL)
-						? 1
-						: -1)].ly
-				   == links[cur].ly))
-			    goto breakfor;
-		    }
+		if (rc < 0) {
+		    ch = -rc;
+		    /* FORW_RL and BACK_LL may require special attention.
+		       BACK_LL wanted to switch to the previous link on
+		       the same line.  However, if there is no such link,
+		       then we would either disactivate the form
+		       (with -tna), or will reenter the form, thus we jump
+		       to the end of the line; both are counterintuitive.
+		       Unfortunately, we do not have access to curdoc.link,
+		       so we deduce it ourselves.  We don't have the info
+		       to do it inside LYLineEdit().
+		       This should work for prompts too.  */
+		    if ((action != LYE_BACK_LL && action != LYE_FORW_RL)
+			|| (cur >= 0
+			    && cur < nlinks
+			    && (action == LYE_FORW_RL
+				? cur < nlinks - 1
+				: cur > 0)
+			    && links[cur + ((action == LYE_FORW_RL)
+					    ? 1
+					    : -1)].ly
+			    == links[cur].ly))
+			goto breakfor;
+		}
 #ifdef SUPPORT_MULTIBYTE_EDIT
-		    if (rc == 0) {
-			if (HTCJK != NOCJK && (0x80 <= ch)
+		if (rc == 0) {
+		    if (HTCJK != NOCJK && (0x80 <= ch)
 			&& (ch <= 0xfe) && refresh_mb)
-			    refresh_mb = FALSE;
-			else
-			    refresh_mb = TRUE;
-		    } else {
-			if (!refresh_mb) {
-			    LYEdit1(&MyEdit, 0, LYE_DELP, TRUE);
-			}
+			refresh_mb = FALSE;
+		    else
+			refresh_mb = TRUE;
+		} else {
+		    if (!refresh_mb) {
+			LYEdit1(&MyEdit, 0, LYE_DELP, TRUE);
 		    }
+		}
 #endif /* SUPPORT_MULTIBYTE_EDIT */
-		}
-		if (MyEdit.strlen >= max_length) {
-		    HaveMaxlength = TRUE;
-		} else if (HaveMaxlength &&
-			   MyEdit.strlen < max_length) {
-		    HaveMaxlength = FALSE;
-		    _statusline(ENTER_TEXT_ARROWS_OR_TAB);
-		}
-		if (strcmp(value, MyEdit.buffer)) {
-		    Edited = TRUE;
-		}
+	    }
+	    if (MyEdit.strlen >= max_length) {
+		HaveMaxlength = TRUE;
+	    } else if (HaveMaxlength &&
+		       MyEdit.strlen < max_length) {
+		HaveMaxlength = FALSE;
+		_statusline(ENTER_TEXT_ARROWS_OR_TAB);
+	    }
+	    if (strcmp(value, MyEdit.buffer)) {
+		Edited = TRUE;
+	    }
 #ifdef SUPPORT_MULTIBYTE_EDIT
-		if (refresh_mb)
+	    if (refresh_mb)
 #endif
 		LYRefreshEdit(&MyEdit);
-		LYSetLastTFPos(MyEdit.pos);
+	    LYSetLastTFPos(MyEdit.pos);
 	}
     }
   breakfor:
     if (Edited) {
-	char  *p;
+	char *p;
 
 	/*
-	 *  Load the new value.
+	 * Load the new value.
 	 */
 	if (value == form->value) {
 	    /*
-	     *  The previous value did fit in the line buffer,
-	     *  so replace it with the new value. - FM
+	     * The previous value did fit in the line buffer, so replace it
+	     * with the new value.  - FM
 	     */
 	    StrAllocCopy(form->value, MyEdit.buffer);
 	} else {
 	    /*
-	     *  Combine the modified tail with the unmodified head. - FM
+	     * Combine the modified tail with the unmodified head.  - FM
 	     */
 	    form->value[(strlen(form->value) - strlen(value))] = '\0';
 	    StrAllocCat(form->value, MyEdit.buffer);
@@ -822,12 +822,12 @@ again:
 
 	/* 2.8.4pre.3 - most browsers appear to preserve trailing spaces -VH */
 	/*
-	 *  Remove trailing spaces
+	 * Remove trailing spaces
 	 *
-	 *  Do we really need to do that here?  Trailing spaces will only
-	 *  be there if user keyed them in.  Rather rude to throw away
-	 *  their hard earned spaces.  Better deal with trailing spaces
-	 *  when submitting the form????
+	 * Do we really need to do that here?  Trailing spaces will only be
+	 * there if user keyed them in.  Rather rude to throw away their hard
+	 * earned spaces.  Better deal with trailing spaces when submitting the
+	 * form????
 	 */
 	if (LYtrimInputFields) {
 	    p = &(form->value[strlen(form->value)]);
@@ -837,36 +837,34 @@ again:
 	}
 
 	/*
-	 *  If the field has been changed, assume that it is now in
-	 *  current display character set, even if for some reason
-	 *  it wasn't!  Hopefully a user will only submit the form
-	 *  if the non-ASCII characters are displayed correctly, which
-	 *  means (assuming that the display character set has been set
-	 *  truthfully) the user confirms by changing the field that
-	 *  the character encoding is right. - kw
+	 * If the field has been changed, assume that it is now in current
+	 * display character set, even if for some reason it wasn't!  Hopefully
+	 * a user will only submit the form if the non-ASCII characters are
+	 * displayed correctly, which means (assuming that the display
+	 * character set has been set truthfully) the user confirms by changing
+	 * the field that the character encoding is right.  - kw
 	 */
-	if (form->value && *form->value)
+	if (non_empty(form->value))
 	    form->value_cs = current_char_set;
     }
-    return(ch);
+    return (ch);
 }
 
 /*
- *  Display statusline info tailored for the current form field.
+ * Display statusline info tailored for the current form field.
  */
-PUBLIC void show_formlink_statusline ARGS2(
-    CONST FormInfo *,	form,
-    int,		for_what)
+void show_formlink_statusline(const FormInfo * form,
+			      int for_what)
 {
-    switch(form->type) {
+    switch (form->type) {
     case F_PASSWORD_TYPE:
 	if (form->disabled == YES)
 	    statusline(FORM_LINK_PASSWORD_UNM_MSG);
 	else
 #ifdef TEXTFIELDS_MAY_NEED_ACTIVATION
-	    if (for_what == FOR_PANEL)
-		statusline(FORM_LINK_PASSWORD_MESSAGE_INA);
-	    else
+	if (for_what == FOR_PANEL)
+	    statusline(FORM_LINK_PASSWORD_MESSAGE_INA);
+	else
 #endif
 	    statusline(FORM_LINK_PASSWORD_MESSAGE);
 	break;
@@ -897,9 +895,9 @@ PUBLIC void show_formlink_statusline ARGS2(
 		statusline(FORM_LINK_TEXT_SUBMIT_MAILTO_DIS_MSG);
 	    else
 #ifdef TEXTFIELDS_MAY_NEED_ACTIVATION
-		if (for_what == FOR_PANEL)
-		    statusline(FORM_TEXT_SUBMIT_MAILTO_MSG_INA);
-		else
+	    if (for_what == FOR_PANEL)
+		statusline(FORM_TEXT_SUBMIT_MAILTO_MSG_INA);
+	    else
 #endif
 		statusline(FORM_LINK_TEXT_SUBMIT_MAILTO_MSG);
 	} else if (form->no_cache) {
@@ -908,11 +906,12 @@ PUBLIC void show_formlink_statusline ARGS2(
 		statusline(FORM_TEXT_RESUBMIT_MESSAGE_INA);
 	    else
 #endif
-	    statusline(FORM_LINK_TEXT_RESUBMIT_MESSAGE);
+		statusline(FORM_LINK_TEXT_RESUBMIT_MESSAGE);
 	} else {
 	    char *submit_str = NULL;
 	    char *xkey_info = key_for_func_ext(LYK_NOCACHE, for_what);
-	    if (xkey_info && *xkey_info) {
+
+	    if (non_empty(xkey_info)) {
 #ifdef TEXTFIELDS_MAY_NEED_ACTIVATION
 		if (for_what == FOR_PANEL)
 		    HTSprintf0(&submit_str, FORM_TEXT_SUBMIT_MESSAGE_INA_X,
@@ -929,7 +928,7 @@ PUBLIC void show_formlink_statusline ARGS2(
 		    statusline(FORM_LINK_TEXT_SUBMIT_MESSAGE_INA);
 		else
 #endif
-		statusline(FORM_LINK_TEXT_SUBMIT_MESSAGE);
+		    statusline(FORM_LINK_TEXT_SUBMIT_MESSAGE);
 	    }
 	    FREE(xkey_info);
 	}
@@ -943,7 +942,7 @@ PUBLIC void show_formlink_statusline ARGS2(
 	    if (no_mail) {
 		statusline(FORM_LINK_SUBMIT_MAILTO_DIS_MSG);
 	    } else {
-		if(user_mode == ADVANCED_MODE) {
+		if (user_mode == ADVANCED_MODE) {
 		    char *submit_str = NULL;
 
 		    StrAllocCopy(submit_str, FORM_LINK_SUBMIT_MAILTO_PREFIX);
@@ -955,7 +954,7 @@ PUBLIC void show_formlink_statusline ARGS2(
 		}
 	    }
 	} else if (form->no_cache) {
-	    if(user_mode == ADVANCED_MODE) {
+	    if (user_mode == ADVANCED_MODE) {
 		char *submit_str = NULL;
 
 		StrAllocCopy(submit_str, FORM_LINK_RESUBMIT_PREFIX);
@@ -966,7 +965,7 @@ PUBLIC void show_formlink_statusline ARGS2(
 		statusline(FORM_LINK_RESUBMIT_MESSAGE);
 	    }
 	} else {
-	    if(user_mode == ADVANCED_MODE) {
+	    if (user_mode == ADVANCED_MODE) {
 		char *submit_str = NULL;
 
 		StrAllocCopy(submit_str, FORM_LINK_SUBMIT_PREFIX);
@@ -995,9 +994,9 @@ PUBLIC void show_formlink_statusline ARGS2(
 	    statusline(FORM_LINK_TEXT_UNM_MSG);
 	else
 #ifdef TEXTFIELDS_MAY_NEED_ACTIVATION
-	    if (for_what == FOR_PANEL)
-		statusline(FORM_LINK_TEXT_MESSAGE_INA);
-	    else
+	if (for_what == FOR_PANEL)
+	    statusline(FORM_LINK_TEXT_MESSAGE_INA);
+	else
 #endif
 	    statusline(FORM_LINK_TEXT_MESSAGE);
 	break;
@@ -1007,6 +1006,7 @@ PUBLIC void show_formlink_statusline ARGS2(
 	} else {
 	    char *submit_str = NULL;
 	    char *xkey_info = NULL;
+
 	    if (!no_editor && editor && editor) {
 		xkey_info = key_for_func_ext(LYK_EDIT_TEXTAREA, for_what);
 #ifdef TEXTAREA_AUTOEXTEDIT
@@ -1014,7 +1014,7 @@ PUBLIC void show_formlink_statusline ARGS2(
 		    xkey_info = key_for_func_ext(LYK_DWIMEDIT, for_what);
 #endif
 	    }
-	    if (xkey_info && *xkey_info) {
+	    if (non_empty(xkey_info)) {
 #ifdef TEXTFIELDS_MAY_NEED_ACTIVATION
 		if (for_what == FOR_PANEL)
 		    HTSprintf0(&submit_str, FORM_LINK_TEXTAREA_MESSAGE_INA_E,

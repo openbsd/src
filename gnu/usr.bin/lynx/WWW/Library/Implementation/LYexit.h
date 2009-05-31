@@ -19,40 +19,41 @@
 /*
  *	Required includes
  */
+#ifdef _WINDOWS
+#include <process.h>		/* declares exit() */
+#endif
 
 #ifndef HTUTILS_H
 #include <HTUtils.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /*
  *	Constant defines
  */
 #ifdef exit
 #undef exit
-#endif /* _WINDOWS */
-
+#endif
 #define exit(code) LYexit(code)
-
 #define atexit LYatexit
 #define ATEXITSIZE 50
-
 /*
  *	Data structures
- */
+ *//*
+   * Global variable declarations
+ *//*
+   * Macros
+ *//*
+   * Function declarations
+ */ extern void outofmem(const char *fname, const char *func);
+    extern void reset_signals(void);
+    extern void exit_immediately(int status) GCC_NORETURN;
+    extern void LYexit(int status) GCC_NORETURN;
+    extern int LYatexit(void (*function) (void));
 
-/*
- *	Global variable declarations
- */
-
-/*
- *	Macros
- */
-
-/*
- *	Function declarations
- */
-extern void exit_immediately PARAMS((int status)) GCC_NORETURN;
-extern void LYexit PARAMS((int status)) GCC_NORETURN;
-extern int LYatexit PARAMS((void (*function)(void)));
-
-#endif /* __LYEXIT_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* __LYEXIT_H */

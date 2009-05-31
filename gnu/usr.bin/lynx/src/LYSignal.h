@@ -1,23 +1,31 @@
-
 #ifndef LYSIGNAL_H
 #define LYSIGNAL_H
 
 #include <signal.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #ifdef VMS
-extern void VMSsignal PARAMS((int sig, void (*func)()));
+    extern void VMSsignal(int sig, void (*func) ());
+
 #ifdef signal
 #undef signal
-#endif /* signal */
-#define signal(a,b) VMSsignal(a,b) /* use LYCurses.c routines for interrupts */
-#endif /* VMS */
+#endif				/* signal */
+#define signal(a,b) VMSsignal(a,b)	/* use LYCurses.c routines for interrupts */
+#endif				/* VMS */
 
 #ifdef HAVE_SIGACTION
-typedef void LYSigHandlerFunc_t PARAMS((int));
+    typedef void LYSigHandlerFunc_t(int);
+
 /* implementation in LYUtils.c */
-extern void LYExtSignal PARAMS((int sig, LYSigHandlerFunc_t * handler));
+    extern void LYExtSignal(int sig, LYSigHandlerFunc_t * handler);
+
 #else
 #define LYExtSignal(sig,h) signal(sig, h)
 #endif
 
-#endif /* LYSIGNAL_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* LYSIGNAL_H */

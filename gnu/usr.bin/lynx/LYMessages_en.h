@@ -4,6 +4,7 @@
  *   (c) Copyright 1992, 1993, 1994 University of Kansas
  *	 1995-1999: GNU General Public License
  */
+
 #ifndef LYMESSAGES_EN_H
 #define LYMESSAGES_EN_H
 
@@ -206,7 +207,6 @@
 /* textarea */
 #define NOT_IN_TEXTAREA_NOEDIT gettext("Not in a TEXTAREA; cannot use external editor.")
 #define NOT_IN_TEXTAREA gettext("Not in a TEXTAREA; cannot use command.")
-
 
 #define FILE_ACTIONS_DISALLOWED gettext("file: ACTIONs are disallowed!")
 #define FILE_SERVED_LINKS_DISALLOWED \
@@ -793,6 +793,7 @@
 #define FAILED_RETRY_WITH_AUTH  gettext("Can't retry with authorization!  Contact the server's WebMaster.")
 #define FAILED_RETRY_WITH_PROXY gettext("Can't retry with proxy authorization!  Contact the server's WebMaster.")
 #define HTTP_RETRY_WITH_PROXY   gettext("Retrying with proxy authorization information.")
+#define SSL_FORCED_PROMPT	gettext("SSL error:%s-Continue?")
 
 /* HTWAIS.c */
 #define HTWAIS_MESSAGE_TOO_BIG  gettext("HTWAIS: Return message too large.")

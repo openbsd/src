@@ -18,10 +18,18 @@ if test -f "$DST" ; then
 	trap "rm -f $OLD $NEW $TST $TMP; exit 9" 1 2 5 15
 	rm -f $OLD $NEW $TST $TMP
 
+	# avoid propagating obsolete URLs into new installs
+	echo lynx.browser.org >$TMP
+	echo www.trill-home.com >>$TMP
+	echo www.cc.ukans.edu >>$TMP
+	echo www.ukans.edu >>$TMP
+	echo www.slcc.edu >>$TMP
+	echo sol.slcc.edu >>$TMP
+
 	# Make a list of the settings which are in the original lynx.cfg
 	# Do not keep the user's HELPFILE setting since we modify that in
 	# a different makefile rule.
-	egrep '^[ 	]*[A-Za-z]' $SRC |sed -e 's/^[ 	]*HELPFILE:.*/HELPFILE:/' >$TMP
+	egrep '^[ 	]*[A-Za-z]' $SRC |sed -e 's/^[ 	]*HELPFILE:.*/HELPFILE:/' >>$TMP
 	egrep '^[ 	]*[A-Za-z]' $SRC |fgrep -v -f $TMP >$OLD
 	egrep '^[ 	]*[A-Za-z]' $DST |fgrep -v -f $TMP >$TST
 

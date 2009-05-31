@@ -1,32 +1,32 @@
 /*							HTVMS_WAISProt.h
-**
-**	Adaptation for Lynx by F.Macrides (macrides@sci.wfeb.edu)
-**
-**	31-May-1994 FM	Initial version.
-**
-**----------------------------------------------------------------------*/
+ *
+ *	Adaptation for Lynx by F.Macrides (macrides@sci.wfeb.edu)
+ *
+ *	31-May-1994 FM	Initial version.
+ *
+ *----------------------------------------------------------------------*/
 
 /*
-**	Routines originally from WProt.h -- FM
-**
-**----------------------------------------------------------------------*/
+ *	Routines originally from WProt.h -- FM
+ *
+ *----------------------------------------------------------------------*/
 /* WIDE AREA INFORMATION SERVER SOFTWARE:
-   No guarantees or restrictions.  See the readme file for the full standard
-   disclaimer.
-
-   3.26.90	Harry Morris, morris@think.com
-   3.30.90  Harry Morris
-			-	removed chunk code from WAISSearchAPDU,
-			-	added makeWAISQueryType1Query() and readWAISType1Query() which
-				replace makeWAISQueryTerms() and makeWAISQueryDocs().
-   4.11.90  HWM - added definitions of wais element set names
-   4.14.90  HWM - changed symbol for relevance feedback query from QT_3 to
-				  QT_RelevanceFeedbackQuery added QT_TextRetrievalQuery as a
-				  synonym for QT_BooleanQuery
-				- renamed makeWAISType1Query() to makeWAISTextQuery()
-				  renamed readWAISType1Query() to readWAISTextQuery()
-   5.29.90  TS - added CSTFreeWAISFoo functions
-*/
+ * No guarantees or restrictions.  See the readme file for the full standard
+ * disclaimer.
+ *
+ *  3.26.90	Harry Morris, morris@think.com
+ *  3.30.90  Harry Morris
+ *			-	removed chunk code from WAISSearchAPDU,
+ *			-	added makeWAISQueryType1Query() and readWAISType1Query() which
+ *				replace makeWAISQueryTerms() and makeWAISQueryDocs().
+ *  4.11.90  HWM - added definitions of wais element set names
+ *  4.14.90  HWM - changed symbol for relevance feedback query from QT_3 to
+ *				  QT_RelevanceFeedbackQuery added QT_TextRetrievalQuery as a
+ *				  synonym for QT_BooleanQuery
+ *				- renamed makeWAISType1Query() to makeWAISTextQuery()
+ *				  renamed readWAISType1Query() to readWAISTextQuery()
+ *  5.29.90  TS - added CSTFreeWAISFoo functions
+ */
 
 #ifndef _H_WAIS_protocol_
 #define _H_WAIS_protocol_
@@ -109,226 +109,256 @@
 #define ES_DocumentHeadline		"Document Headline"
 #define ES_DocumentCodes		"Document Codes"
 
-typedef struct DocObj { /* specifies a section of a document */
-	any*	DocumentID;
-	char*   Type;
-	long	ChunkCode;
-	union {
-		long	Pos;
-		any*	ID;
-	} ChunkStart;
-	union {
-		long	Pos;
-		any*	ID;
-	} ChunkEnd;
-	} DocObj;
+typedef struct DocObj {		/* specifies a section of a document */
+    any *DocumentID;
+    char *Type;
+    long ChunkCode;
+    union {
+	long Pos;
+	any *ID;
+    } ChunkStart;
+    union {
+	long Pos;
+	any *ID;
+    } ChunkEnd;
+} DocObj;
 
 /*----------------------------------------------------------------------*/
 /* WAIS APDU extensions */
 
 typedef struct WAISInitResponse {
-	long				ChunkCode;
-	long				ChunkIDLength;
-	char*				ChunkMarker;
-	char*				HighlightMarker;
-	char*				DeHighlightMarker;
-	char*				NewlineCharacters;
-	/* XXX  need to add UpdateFrequency and Update Time */
-	} WAISInitResponse;
+    long ChunkCode;
+    long ChunkIDLength;
+    char *ChunkMarker;
+    char *HighlightMarker;
+    char *DeHighlightMarker;
+    char *NewlineCharacters;
+    /* XXX  need to add UpdateFrequency and Update Time */
+} WAISInitResponse;
 
 typedef struct WAISSearch {
-	char*				SeedWords;
-	DocObj**			Docs;
-	char**				TextList;
-	long				DateFactor;
-	char*				BeginDateRange;
-	char*				EndDateRange;
-	long				MaxDocumentsRetrieved;
-	} WAISSearch;
+    char *SeedWords;
+    DocObj **Docs;
+    char **TextList;
+    long DateFactor;
+    char *BeginDateRange;
+    char *EndDateRange;
+    long MaxDocumentsRetrieved;
+} WAISSearch;
 
 typedef struct WAISDocumentHeader {
-	any*				DocumentID;
-	long				VersionNumber;
-	long				Score;
-	long				BestMatch;
-	long				DocumentLength;
-	long				Lines;
-	char**				Types;
-	char*				Source;
-	char*				Date;
-	char*				Headline;
-	char*				OriginCity;
-	} WAISDocumentHeader;
+    any *DocumentID;
+    long VersionNumber;
+    long Score;
+    long BestMatch;
+    long DocumentLength;
+    long Lines;
+    char **Types;
+    char *Source;
+    char *Date;
+    char *Headline;
+    char *OriginCity;
+} WAISDocumentHeader;
 
 typedef struct WAISDocumentShortHeader {
-	any*				DocumentID;
-	long				VersionNumber;
-	long				Score;
-	long				BestMatch;
-	long				DocumentLength;
-	long				Lines;
-	} WAISDocumentShortHeader;
+    any *DocumentID;
+    long VersionNumber;
+    long Score;
+    long BestMatch;
+    long DocumentLength;
+    long Lines;
+} WAISDocumentShortHeader;
 
 typedef struct WAISDocumentLongHeader {
-	any*				DocumentID;
-	long				VersionNumber;
-	long				Score;
-	long				BestMatch;
-	long				DocumentLength;
-	long				Lines;
-	char**				Types;
-	char*				Source;
-	char*				Date;
-	char*				Headline;
-	char*				OriginCity;
-	char*				StockCodes;
-	char*				CompanyCodes;
-	char*				IndustryCodes;
-	} WAISDocumentLongHeader;
+    any *DocumentID;
+    long VersionNumber;
+    long Score;
+    long BestMatch;
+    long DocumentLength;
+    long Lines;
+    char **Types;
+    char *Source;
+    char *Date;
+    char *Headline;
+    char *OriginCity;
+    char *StockCodes;
+    char *CompanyCodes;
+    char *IndustryCodes;
+} WAISDocumentLongHeader;
 
 typedef struct WAISDocumentText {
-	any*				DocumentID;
-	long				VersionNumber;
-	any*				DocumentText;
-	} WAISDocumentText;
+    any *DocumentID;
+    long VersionNumber;
+    any *DocumentText;
+} WAISDocumentText;
 
 typedef struct WAISDocumentHeadlines {
-	any*				DocumentID;
-	long				VersionNumber;
-	char*				Source;
-	char*				Date;
-	char*				Headline;
-	char*				OriginCity;
-	} WAISDocumentHeadlines;
+    any *DocumentID;
+    long VersionNumber;
+    char *Source;
+    char *Date;
+    char *Headline;
+    char *OriginCity;
+} WAISDocumentHeadlines;
 
 typedef struct WAISDocumentCodes {
-	any*				DocumentID;
-	long				VersionNumber;
-	char*				StockCodes;
-	char*				CompanyCodes;
-	char*				IndustryCodes;
-	} WAISDocumentCodes;
+    any *DocumentID;
+    long VersionNumber;
+    char *StockCodes;
+    char *CompanyCodes;
+    char *IndustryCodes;
+} WAISDocumentCodes;
 
 typedef struct WAISSearchResponse {
-	char*					SeedWordsUsed;
-	WAISDocumentHeader**		DocHeaders;
-	WAISDocumentShortHeader**	ShortHeaders;
-	WAISDocumentLongHeader**	LongHeaders;
-	WAISDocumentText**			Text;
-	WAISDocumentHeadlines**		Headlines;
-	WAISDocumentCodes**			Codes;
-	diagnosticRecord**			Diagnostics;
-	} WAISSearchResponse;
+    char *SeedWordsUsed;
+    WAISDocumentHeader **DocHeaders;
+    WAISDocumentShortHeader **ShortHeaders;
+    WAISDocumentLongHeader **LongHeaders;
+    WAISDocumentText **Text;
+    WAISDocumentHeadlines **Headlines;
+    WAISDocumentCodes **Codes;
+    diagnosticRecord **Diagnostics;
+} WAISSearchResponse;
 
 /*----------------------------------------------------------------------*/
 /* Functions */
 
-char *
-generate_search_apdu PARAMS((char* buff,  /* buffer to hold the apdu */
-			  long *buff_len, /* number of bytes written to the buffer */
-			  char *seed_words, /* string of the seed words */
-			  char *database_name,
-			  DocObj** docobjs,
-			  long maxDocsRetrieved
-			  ));
+char *generate_search_apdu(char *buff,	/* buffer to hold the apdu */
+			   long *buff_len,	/* number of bytes written to the buffer */
+			   char *seed_words,	/* string of the seed words */
+			   char *database_name,
+			   DocObj **docobjs,
+			   long maxDocsRetrieved);
 
-DocObj* makeDocObjUsingWholeDocument PARAMS((any* aDocID,char* type));
-DocObj* makeDocObjUsingBytes PARAMS((any* aDocID,char* type,long start,long end));
-DocObj* makeDocObjUsingLines PARAMS((any* aDocID,char* type,long start,long end));
-DocObj* makeDocObjUsingParagraphs PARAMS((any* aDocID,char* type,any* start,any* end));
-void freeDocObj PARAMS((DocObj* doc));
+DocObj *makeDocObjUsingWholeDocument(any *aDocID, char *type);
+DocObj *makeDocObjUsingBytes(any *aDocID, char *type, long start, long end);
+DocObj *makeDocObjUsingLines(any *aDocID, char *type, long start, long end);
+DocObj *makeDocObjUsingParagraphs(any *aDocID, char *type, any *start, any *end);
+void freeDocObj(DocObj *doc);
 
-WAISInitResponse* makeWAISInitResponse PARAMS((long chunkCode,long chunkIDLen,
-					    char* chunkMarker,char* highlightMarker,
-					    char* deHighlightMarker,char* newLineChars));
-void freeWAISInitResponse PARAMS((WAISInitResponse* init));
+WAISInitResponse *makeWAISInitResponse(long chunkCode, long chunkIDLen,
+				       char *chunkMarker, char *highlightMarker,
+				       char *deHighlightMarker, char *newLineChars);
+void freeWAISInitResponse(WAISInitResponse *init);
 
-WAISSearch* makeWAISSearch PARAMS((
-	char* seedWords,DocObj** docs,char** textList,
-	long dateFactor,char* beginDateRange,char* endDateRange,
-	long maxDocsRetrieved));
-void freeWAISSearch PARAMS((WAISSearch* query));
+WAISSearch *makeWAISSearch(char *seedWords,
+			   DocObj **docs,
+			   char **textList,
+			   long dateFactor,
+			   char *beginDateRange,
+			   char *endDateRange,
+			   long maxDocsRetrieved);
+void freeWAISSearch(WAISSearch *query);
 
-WAISDocumentHeader* makeWAISDocumentHeader PARAMS((
-	any* aDocID,long versionNumber,long score,long bestMatch,long docLen,
-	long lines,char** types,char* source,char* date,char* headline,char* originCity));
-void freeWAISDocumentHeader PARAMS((WAISDocumentHeader* header));
-char* writeWAISDocumentHeader PARAMS((WAISDocumentHeader* header,char* buffer,long* len));
-char* readWAISDocumentHeader PARAMS((WAISDocumentHeader** header,char* buffer));
+WAISDocumentHeader *makeWAISDocumentHeader(any *aDocID,
+					   long versionNumber,
+					   long score,
+					   long bestMatch,
+					   long docLen,
+					   long lines,
+					   char **types,
+					   char *source,
+					   char *date,
+					   char *headline,
+					   char *originCity);
+void freeWAISDocumentHeader(WAISDocumentHeader *header);
+char *writeWAISDocumentHeader(WAISDocumentHeader *header, char *buffer, long *len);
+char *readWAISDocumentHeader(WAISDocumentHeader **header, char *buffer);
 
-WAISDocumentShortHeader* makeWAISDocumentShortHeader PARAMS((
-	any* aDocID,long versionNumber,long score,long bestMatch,long docLen,long lines));
-void freeWAISDocumentShortHeader PARAMS((WAISDocumentShortHeader* header));
-char* writeWAISDocumentShortHeader PARAMS((WAISDocumentShortHeader* header,
-                                   char* buffer,long* len));
-char* readWAISDocumentShortHeader PARAMS((WAISDocumentShortHeader** header,char* buffer));
+WAISDocumentShortHeader *makeWAISDocumentShortHeader(any *aDocID,
+						     long versionNumber,
+						     long score,
+						     long bestMatch,
+						     long docLen,
+						     long lines);
+void freeWAISDocumentShortHeader(WAISDocumentShortHeader *header);
+char *writeWAISDocumentShortHeader(WAISDocumentShortHeader *header,
+				   char *buffer, long *len);
+char *readWAISDocumentShortHeader(WAISDocumentShortHeader **header, char *buffer);
 
-WAISDocumentLongHeader* makeWAISDocumentLongHeader PARAMS((
-	any* aDocID,long versionNumber,long score,long bestMatch,long docLen,
-	long lines,char** types,char* source,char* date, char* headline,char* originCity,
-	char* stockCodes,char* companyCodes,char* industryCodes));
-void freeWAISDocumentLongHeader PARAMS((WAISDocumentLongHeader* header));
-char* writeWAISDocumentLongHeader PARAMS((WAISDocumentLongHeader* header,char* buffer,long* len));
-char* readWAISDocumentLongHeader PARAMS((WAISDocumentLongHeader** header,char* buffer));
+WAISDocumentLongHeader *makeWAISDocumentLongHeader(any *aDocID,
+						   long versionNumber,
+						   long score,
+						   long bestMatch,
+						   long docLen,
+						   long lines,
+						   char **types,
+						   char *source,
+						   char *date, char *headline,
+						   char *originCity,
+						   char *stockCodes,
+						   char *companyCodes,
+						   char *industryCodes);
+void freeWAISDocumentLongHeader(WAISDocumentLongHeader *header);
+char *writeWAISDocumentLongHeader(WAISDocumentLongHeader *header,
+				  char *buffer,
+				  long *len);
+char *readWAISDocumentLongHeader(WAISDocumentLongHeader **header, char *buffer);
 
-WAISSearchResponse* makeWAISSearchResponse PARAMS((
-	char* seedWordsUsed,WAISDocumentHeader** docHeaders,
-	WAISDocumentShortHeader** shortHeaders,
-	WAISDocumentLongHeader** longHeaders,
-	WAISDocumentText** text,WAISDocumentHeadlines** headlines,
-	WAISDocumentCodes** codes,
-	diagnosticRecord** diagnostics));
-void freeWAISSearchResponse PARAMS((WAISSearchResponse* response));
+WAISSearchResponse *makeWAISSearchResponse(char *seedWordsUsed,
+					   WAISDocumentHeader **docHeaders,
+					   WAISDocumentShortHeader **shortHeaders,
+					   WAISDocumentLongHeader **longHeaders,
+					   WAISDocumentText **text, WAISDocumentHeadlines **headlines,
+					   WAISDocumentCodes **codes,
+					   diagnosticRecord ** diagnostics);
+void freeWAISSearchResponse(WAISSearchResponse * response);
 
-WAISDocumentText* makeWAISDocumentText PARAMS((any* aDocID,long versionNumber,
-				       any* documentText));
-void freeWAISDocumentText PARAMS((WAISDocumentText* docText));
-char* writeWAISDocumentText PARAMS((WAISDocumentText* docText,char* buffer,long* len));
-char* readWAISDocumentText PARAMS((WAISDocumentText** docText,char* buffer));
+WAISDocumentText *makeWAISDocumentText(any *aDocID, long versionNumber,
+				       any *documentText);
+void freeWAISDocumentText(WAISDocumentText *docText);
+char *writeWAISDocumentText(WAISDocumentText *docText, char *buffer, long *len);
+char *readWAISDocumentText(WAISDocumentText **docText, char *buffer);
 
-WAISDocumentHeadlines* makeWAISDocumentHeadlines PARAMS((
-	any* aDocID,long versionNumber,char* source,char* date,char* headline,
-	char* originCity));
-void freeWAISDocumentHeadlines PARAMS((WAISDocumentHeadlines* docHeadline));
-char* writeWAISDocumentHeadlines PARAMS((WAISDocumentHeadlines* docHeadline,char* buffer,long* len));
-char* readWAISDocumentHeadlines PARAMS((WAISDocumentHeadlines** docHeadline,char* buffer));
+WAISDocumentHeadlines *makeWAISDocumentHeadlines(any *aDocID,
+						 long versionNumber,
+						 char *source,
+						 char *date,
+						 char *headline,
+						 char *originCity);
+void freeWAISDocumentHeadlines(WAISDocumentHeadlines *docHeadline);
+char *writeWAISDocumentHeadlines(WAISDocumentHeadlines *docHeadline,
+				 char *buffer,
+				 long *len);
+char *readWAISDocumentHeadlines(WAISDocumentHeadlines **docHeadline, char *buffer);
 
-WAISDocumentCodes* makeWAISDocumentCodes PARAMS((
-	any* aDocID,long versionNumber,char* stockCodes,char* companyCodes,
-	char* industryCodes));
-void freeWAISDocumentCodes PARAMS((WAISDocumentCodes* docCodes));
-char* writeWAISDocumentCodes PARAMS((WAISDocumentCodes* docCodes,char* buffer,long* len));
-char* readWAISDocumentCodes PARAMS((WAISDocumentCodes** docCodes,char* buffer));
+WAISDocumentCodes *makeWAISDocumentCodes(any *aDocID,
+					 long versionNumber,
+					 char *stockCodes,
+					 char *companyCodes,
+					 char *industryCodes);
+void freeWAISDocumentCodes(WAISDocumentCodes *docCodes);
+char *writeWAISDocumentCodes(WAISDocumentCodes *docCodes, char *buffer, long *len);
+char *readWAISDocumentCodes(WAISDocumentCodes **docCodes, char *buffer);
 
-any* makeWAISTextQuery PARAMS((DocObj** docs));
-DocObj** readWAISTextQuery PARAMS((any* terms));
+any *makeWAISTextQuery(DocObj **docs);
+DocObj **readWAISTextQuery(any *terms);
 
-void CSTFreeWAISInitResponse PARAMS((WAISInitResponse* init));
-void CSTFreeWAISSearch PARAMS((WAISSearch* query));
-void CSTFreeDocObj PARAMS((DocObj* doc));
-void CSTFreeWAISDocumentHeader PARAMS((WAISDocumentHeader* header));
-void CSTFreeWAISDocumentShortHeader PARAMS((WAISDocumentShortHeader* header));
-void CSTFreeWAISDocumentLongHeader PARAMS((WAISDocumentLongHeader* header));
-void CSTFreeWAISSearchResponse PARAMS((WAISSearchResponse* response));
-void CSTFreeWAISDocumentText PARAMS((WAISDocumentText* docText));
-void CSTFreeWAISDocHeadlines PARAMS((WAISDocumentHeadlines* docHeadline));
-void CSTFreeWAISDocumentCodes PARAMS((WAISDocumentCodes* docCodes));
-void CSTFreeWAISTextQuery PARAMS(( any* query));
+void CSTFreeWAISInitResponse(WAISInitResponse *init);
+void CSTFreeWAISSearch(WAISSearch *query);
+void CSTFreeDocObj(DocObj *doc);
+void CSTFreeWAISDocumentHeader(WAISDocumentHeader *header);
+void CSTFreeWAISDocumentShortHeader(WAISDocumentShortHeader *header);
+void CSTFreeWAISDocumentLongHeader(WAISDocumentLongHeader *header);
+void CSTFreeWAISSearchResponse(WAISSearchResponse * response);
+void CSTFreeWAISDocumentText(WAISDocumentText *docText);
+void CSTFreeWAISDocHeadlines(WAISDocumentHeadlines *docHeadline);
+void CSTFreeWAISDocumentCodes(WAISDocumentCodes *docCodes);
+void CSTFreeWAISTextQuery(any *query);
 
 /*----------------------------------------------------------------------*/
 
 #endif /* ndef _H_WAIS_protocol_ */
 
-
 /*
-**	Routines originally from WMessage.h -- FM
-**
-**----------------------------------------------------------------------*/
+ *	Routines originally from WMessage.h -- FM
+ *
+ *----------------------------------------------------------------------*/
 /* WIDE AREA INFORMATION SERVER SOFTWARE
-   No guarantees or restrictions.  See the readme file for the full standard
-   disclaimer.
-   3.26.90
-*/
+ * No guarantees or restrictions.  See the readme file for the full standard
+ * disclaimer.
+ * 3.26.90
+ */
 
 /* wais-message.h
  *
@@ -355,16 +385,16 @@ void CSTFreeWAISTextQuery PARAMS(( any* query));
 #include <HTVMS_WaisUI.h>
 
 typedef struct wais_header {
-        char    msg_len[10];    /* length in bytes of following message */
-        char    msg_type;       /* type of message: 'z'=Z39.50 APDU,
-                                   'a'=ACK, 'n'=NACK */
-        char    hdr_vers;       /* version of this header, currently = '2' */
-        char    server[10];     /* name or address of server */
-        char    compression;    /* <sp>=no compression, 'u'=unix compress */
-        char    encoding;       /* <sp>=no encoding, 'h'=hexize,
+    char msg_len[10];		/* length in bytes of following message */
+    char msg_type;		/* type of message: 'z'=Z39.50 APDU,
+				   'a'=ACK, 'n'=NACK */
+    char hdr_vers;		/* version of this header, currently = '2' */
+    char server[10];		/* name or address of server */
+    char compression;		/* <sp>=no compression, 'u'=unix compress */
+    char encoding;		/* <sp>=no encoding, 'h'=hexize,
 				   'u'=uuencode */
-        char    msg_checksum;   /* XOR of every byte of message */
-        } WAISMessage;
+    char msg_checksum;		/* XOR of every byte of message */
+} WAISMessage;
 
 #define HEADER_LENGTH	25	/* number of bytes needed to write a
 				   wais-header (not sizeof(wais_header)) */
@@ -382,15 +412,14 @@ typedef struct wais_header {
 
 /* encoding */
 #define NO_ENCODING		' '
-#define HEX_ENCODING		'h'  /* Swartz 4/3 encoding */
-#define IBM_HEXCODING		'i'  /* same as h but uses characters acceptable for IBM mainframes */
+#define HEX_ENCODING		'h'	/* Swartz 4/3 encoding */
+#define IBM_HEXCODING		'i'	/* same as h but uses characters acceptable for IBM mainframes */
 #define UUENCODE		'u'
 
-
-void readWAISPacketHeader PARAMS((char* msgBuffer,WAISMessage *header_struct));
-long getWAISPacketLength PARAMS((WAISMessage* header));
-void writeWAISPacketHeader PARAMS((char* header,long dataLen,long type,
-				char* server,long compression,
-				long encoding,long version));
+void readWAISPacketHeader(char *msgBuffer, WAISMessage * header_struct);
+long getWAISPacketLength(WAISMessage * header);
+void writeWAISPacketHeader(char *header, long dataLen, long type,
+			   char *server, long compression,
+			   long encoding, long version);
 
 #endif /* ndef WMESSAGE_H */

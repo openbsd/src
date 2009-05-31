@@ -1,7 +1,7 @@
 
                              Lynx README file
 
-Lynx Version 2.8.5 is the latest release (February 2004).
+Lynx Version 2.8.6 is the latest release (October 2006).
 See the CHANGES file for a complete record of all changes and bug fixes.
 New releases are announced on the lynx-dev mailing list (see below).
 
@@ -123,31 +123,16 @@ PROBLEMS
 
 LYNX-DEV MAILING LIST
 
-   To subscribe to lynx-dev, send email to <URL: mailto:majordomo@sig.net>
-   with only the following message in the body:
-
-      SUBSCRIBE LYNX-DEV address
-
-   where inclusion of your email address is optional if it can be obtained,
-   correctly, from the mail headers of your subscription request.
+   To subscribe to lynx-dev, send email to
+   <URL: mailto:lynx-dev-request@nongnu.org>
+   with "subscribe" for a subject line.
 
    If you wish to unsubscribe from lynx-dev, send email to
-   <URL: mailto:majordomo@sig.net> with only the following message in the body:
-
-      UNSUBSCRIBE LYNX-DEV address
-
-   where inclusion of your email address is optional if it can be obtained,
-   correctly, from the mail headers of your request.
-
-   Also, to get a list of useful majordomo commands, send email to
-   <URL: mailto:majordomo@sig.net> with the following command:
-                ^^^^^^^^^
-      HELP
-
-   PLEASE!!! do not send commands to the lynx-dev mailing list itself.
+   <URL: mailto:lynx-dev-request@nongnu.org> 
+   with "unsubscribe" for a subject line.
 
    Any messages you wish to post should be sent to
-   <URL: mailto:lynx-dev@sig.net>.
+   <URL: mailto:lynx-dev@nongnu.org>.
    PLEASE use the lynx-dev list, NOT private email to the developers,
    for questions or discussion about Lynx, or contributions of patches.
    Patches should use the unified diff format (diff -u), which can be
@@ -160,4 +145,4 @@ LYNX-DEV MAILING LIST
    will send a carbon copy to you.  View the archives at:
 
 		    "lynx-dev Mailing list archives"
-		<URL:http://www.flora.org/lynx-dev/html/>
+		<URL:http://mail.gnu.org/mailman/listinfo/lynx-dev/>

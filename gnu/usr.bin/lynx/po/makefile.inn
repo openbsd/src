@@ -65,7 +65,7 @@ INSTOBJEXT = @INSTOBJEXT@
 
 .po.pox:
 	$(MAKE) $(PACKAGE).pot
-	$(MSGMERGE) $< $(srcdir)/$(PACKAGE).pot -o $*.pox
+	$(MSGMERGE) -w 132 $< $(srcdir)/$(PACKAGE).pot -o $*.pox
 
 .po.mo:
 	$(MSGFMT) -o $@ $<
@@ -193,7 +193,7 @@ mostlyclean:
 clean: mostlyclean
 
 distclean: clean
-	rm -f cat-id-tbl.c stamp-cat-id *.gmo
+	rm -f cat-id-tbl.c stamp-cat-id *.gmo *.mo
 	rm -f makefile makefile.in POTFILES *.mo *.msg *.cat *.cat.m
 
 maintainer-clean: distclean
@@ -219,7 +219,7 @@ update-po: makefile
 	  lang=`echo $$cat | sed 's/\$(CATOBJEXT)$$//'`; \
 	  mv $$lang.po $$lang.old.po; \
 	  echo "$$lang:"; \
-	  if $(MSGMERGE) $$lang.old.po $(PACKAGE).pot -o $$lang.po; then \
+	  if $(MSGMERGE) -w 132 $$lang.old.po $(PACKAGE).pot -o $$lang.po; then \
 	    rm -f $$lang.old.po; \
 	  else \
 	    echo "msgmerge for $$cat failed!"; \

@@ -5,80 +5,72 @@
 #include <stdio.h>
 #include <smgdef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #define	reg	register
-
 #ifndef	TRUE
 #define	TRUE	(1)
 #define	FALSE	(0)
 #endif
 #define	ERR	(0)
 #define	OK	(1)
-
 #define	_SUBWIN		0001
 #define	_ENDLINE	0002
 #define	_FULLWIN	0004
 #define	_SCROLLWIN	0010
 #define	_FLUSH		0020
 #define	_STANDOUT	0200
-
 #define	_NOECHO		001
 #define	_NONL		002
 #define	_NOCRMODE	004
 #define	_NORAW		010
-
 #define	_BLINK		SMG$M_BLINK
 #define	_BOLD		SMG$M_BOLD
 #define	_REVERSE	SMG$M_REVERSE
 #define	_UNDERLINE	SMG$M_UNDERLINE
+    struct _win_st {
+	int _cur_y, _cur_x;
+	int _max_y, _max_x;
+	int _beg_y, _beg_x;
+	short _flags;
+	char _clear, _leave, _scroll, _wrap;
+	char **_y;
+	short *_firstch, *_lastch;
+	struct _win_st *_next, *_parent, *_child;
+	int _id;
+    };
 
-struct	_win_st
-{
-	int	_cur_y, _cur_x;
-	int	_max_y, _max_x;
-	int	_beg_y, _beg_x;
-	short	_flags;
-	char	_clear, _leave, _scroll, _wrap;
-	char	**_y;
-	short	*_firstch, *_lastch;
-	struct _win_st	*_next, *_parent, *_child;
-	int	_id;
-};
+    struct _kb_st {
+	int _id;
+	unsigned char _flags;
+	struct {
+	    unsigned short length;
+	    unsigned char type;
+	    unsigned char pclass;
+	    char *address;
+	} _buffer_desc;
+	int _count;
+	char *_ptr;
+    };
 
-
-struct	_kb_st
-{
-	int	_id;
-	unsigned char	_flags;
-	struct
-	{
-		unsigned short	length;
-		unsigned char	type;
-		unsigned char	class;
-		char		*address;
-	}	_buffer_desc;
-	int	_count;
-	char	*_ptr;
-};
-
-struct	_pb_st
-{
-	int	_id;
-	int	_rows, _cols;
-	union	SMGDEF	*_attr;
-	int	_attr_size;
-};
+    struct _pb_st {
+	int _id;
+	int _rows, _cols;
+	union SMGDEF *_attr;
+	int _attr_size;
+    };
 
 #define	_KEYBOARD	struct _kb_st
 #define	WINDOW		struct _win_st
 #define	_PASTEBOARD	struct _pb_st
 
-
-extern int LINES __asm("_$$PsectAttributes_NOSHR$$LINES");
-extern int COLS __asm("_$$PsectAttributes_NOSHR$$COLS");
-extern WINDOW *stdscr __asm("_$$PsectAttributes_NOSHR$$stdscr");
-extern WINDOW *curscr __asm("_$$PsectAttributes_NOSHR$$curscr");
-extern _KEYBOARD *stdkb __asm("_$$PsectAttributes_NOSHR$$stdkb");
-extern _PASTEBOARD *stdpb __asm("_$$PsectAttributes_NOSHR$$stdpb");
+    extern int LINES __asm("_$$PsectAttributes_NOSHR$$LINES");
+    extern int COLS __asm("_$$PsectAttributes_NOSHR$$COLS");
+    extern WINDOW *stdscr __asm("_$$PsectAttributes_NOSHR$$stdscr");
+    extern WINDOW *curscr __asm("_$$PsectAttributes_NOSHR$$curscr");
+    extern _KEYBOARD *stdkb __asm("_$$PsectAttributes_NOSHR$$stdkb");
+    extern _PASTEBOARD *stdpb __asm("_$$PsectAttributes_NOSHR$$stdpb");
 
 #define	getch()		wgetch	(stdscr)
 #define	addch(ch)	waddch	(stdscr, ch)
@@ -145,55 +137,55 @@ extern _PASTEBOARD *stdpb __asm("_$$PsectAttributes_NOSHR$$stdpb");
 
 #define bool int
 
-int waddch (WINDOW *win, char ch);
+    int waddch(WINDOW * win, char ch);
 
-int waddstr (WINDOW *win, char *str);
+    int waddstr(WINDOW * win, char *str);
 
-int box (WINDOW *win, char vert, char hor);
+    int box(WINDOW * win, char vert, char hor);
 
-int wclear (WINDOW *win);
+    int wclear(WINDOW * win);
 
-int wclrattr (WINDOW *win, int attr);
+    int wclrattr(WINDOW * win, int attr);
 
-int wclrtobot (WINDOW *win);
+    int wclrtobot(WINDOW * win);
 
-int wclrtoeol (WINDOW *win);
+    int wclrtoeol(WINDOW * win);
 
-int wdelch (WINDOW *win);
+    int wdelch(WINDOW * win);
 
-int wdeleteln (WINDOW *win);
+    int wdeleteln(WINDOW * win);
 
-int delwin (WINDOW *win);
+    int delwin(WINDOW * win);
 
-int endwin (void);
+    int endwin(void);
 
-int werase (WINDOW *win);
+    int werase(WINDOW * win);
 
-int wgetch (WINDOW *win);
+    int wgetch(WINDOW * win);
 
-int wgetstr (WINDOW *win, char *str);
+    int wgetstr(WINDOW * win, char *str);
 
-char winch (WINDOW *win);
+    char winch(WINDOW * win);
 
-WINDOW *initscr (void);
+    WINDOW *initscr(void);
 
-int winsch (WINDOW *win, char ch);
+    int winsch(WINDOW * win, char ch);
 
-int winsertln (WINDOW *win);
+    int winsertln(WINDOW * win);
 
-int winsstr (WINDOW *win, char *str);
+    int winsstr(WINDOW * win, char *str);
 
-int longname (char *termbuf, char *name);
+    int longname(char *termbuf, char *name);
 
-int mvwin (WINDOW *win, int st_row, int st_col);
+    int mvwin(WINDOW * win, int st_row, int st_col);
 
-int wmove (WINDOW *win, int y, int x);
+    int wmove(WINDOW * win, int y, int x);
 
-WINDOW *newwin (int numlines, int numcols, int begin_y, int begin_x);
+    WINDOW *newwin(int numlines, int numcols, int begin_y, int begin_x);
 
-int overlay (WINDOW *win1, WINDOW *win2);
+    int overlay(WINDOW * win1, WINDOW * win2);
 
-int overwrite (WINDOW *win1, WINDOW *win2);
+    int overwrite(WINDOW * win1, WINDOW * win2);
 
 #pragma NOSTANDARD
 #undef printw
@@ -202,28 +194,28 @@ int overwrite (WINDOW *win1, WINDOW *win2);
 #undef scanw
 #pragma STANDARD
 
-int printw (char *format_spec, ...);
+    int printw(char *format_spec,...);
 
-int wprintw (WINDOW *win, char *format_spec, ...);
+    int wprintw(WINDOW * win, char *format_spec,...);
 
-int wrefresh (WINDOW *win);
+    int wrefresh(WINDOW * win);
 
-int wscanw (WINDOW *win, char *format_spec, ...);
+    int wscanw(WINDOW * win, char *format_spec,...);
 
-int	scanw (char *fmt, int arg1);
+    int scanw(char *fmt, int arg1);
 
-int scroll (WINDOW *win);
+    int scroll(WINDOW * win);
 
-int wsetattr (WINDOW *win, int attr);
+    int wsetattr(WINDOW * win, int attr);
 
-WINDOW *subwin (WINDOW *win, int numlines, int numcols,
-			int begin_y, int begin_x);
+    WINDOW *subwin(WINDOW * win, int numlines, int numcols,
+		   int begin_y, int begin_x);
 
-int wstandend (WINDOW *win);
+    int wstandend(WINDOW * win);
 
-int wstandout (WINDOW *win);
+    int wstandout(WINDOW * win);
 
-int touchwin (WINDOW *win);
+    int touchwin(WINDOW * win);
 
 #if defined(CC$mixed_float) || defined(CC$VAXCSHR)
 
@@ -248,4 +240,7 @@ int touchwin (WINDOW *win);
 #endif
 #endif
 
-#endif					/* __CURSES_LOADED */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* __CURSES_LOADED */

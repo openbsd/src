@@ -34,24 +34,3 @@ TEST_DISPLAY=test_display.html
 VISITED_HELP=visited_help.html
 XTERM_HELP=xterm_help.html
 LYNX_DEV=lynx-dev.html
-#
-# Frequently used or configurable links used in help files.
-# Each link has to contain 'http:' or 'ftp:' otherwise install-help will fail.
-#
-LYNX_DEV_ARCHIVE=http://www.flora.org/lynx-dev/html/
-LYNX_DIST=http://lynx.isc.org/current/index.html
-LYNX_FAQ=http://lynx.isc.org/cgi-bin/fom
-LYNX_FAQ_O_MATIC=http://lynx.isc.org/cgi-bin/fom
-LYNX_HOME=http://lynx.isc.org/
-LYNX_SPEECH=http://leb.net/blinux/blynx/
-LYNX_SUBIR=http://www.subir.com/lynx.html
-WWW_NEWS=http://www.w3.org/History/
-WWW_HTML2=http://www.w3.org/MarkUp/html-spec/html-spec_toc.html
-WWW_HTML3=http://www.w3.org/MarkUp/html3/Contents.html
-#
-# E-mail addresses used in help files.
-# Each e-mail address has to contain a '@' otherwise install-help will fail.
-#
-LYNX_DEV_MAIL=lynx-dev@sig.net
-LYNX_LIST_HOST=majordomo@sig.net
-LYNX_LIST_OWNER=majordomo-owner@sig.net

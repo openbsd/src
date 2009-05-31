@@ -17,7 +17,7 @@
 * newer CF_FIND_LIBRARY autoconf macro, to allow ncurses library in /lib
   only, needed for SUSE Linux. - TD
 * add casts to UPPER8 function's comparison for equality of parameters, and
-  to TOUPPER macro to guard against sign-extension due to prototype. - AC
+  to TOUPPER macro to guard against sign-extension due to prototype. - AAC
 * correct spelling of -lcur_colr library in aclocal.m4, change order of
   tests to put -lHcurses second on HP-UX (patch by Jonathan Sergent).
 * restore simple zmodem downloader script, displaced by recent undocumented
@@ -41,7 +41,7 @@
   added to chrtrans/README.format. - LP
 * few comments corrected. - LP
 1998-02-28
-* create new PRCS revision (2.8pre) for pre-release testing of Lynx 2.8
+* create new PRCS revision (2.8pre) for pre-release testing of Lynx 2.8 -TD
 * remove RELEASE_STATEMENT, merging it into README as per HN's
   recommendation - TD
 * comments/minor changes to HTDOS.c, HTDOS.h, LYUtils.c - LP
@@ -71,7 +71,7 @@
   (7bit).  The cost of this assumption is that several differently accented
   letters may be interpreted as equal but this is negligible if the search
   string is more than one character long.  (LYStrings.c, also HTString.c
-  and LYMainLoop.c).  - LP & TD
+  and LYMainLoop.c).  - LP, TD
 * add SunOS 4.x-specific ifdef to quiet redefinition warnings for sys/ioctl.h
   vs sys/termios.h - TD
 * convert usage/options messages into arrays to simplify maintenance. - TD
@@ -85,9 +85,10 @@
 * correct lengths in several strncasecmp calls for command-line options
   (though -w is still an abbreviation for -width). - TD
 * test-build with BSD curses on OS/2 EMX (does not display properly), and
-  with ncurses.
-* add configure check CF_FUNC_LSTAT.
-* modify CF_CHECK_ERRNO so that configure script on OS/2 EMX finds sys_errlist.
+  with ncurses -TD
+* add configure check CF_FUNC_LSTAT -TD
+* modify CF_CHECK_ERRNO so that configure script on OS/2 EMX finds
+  sys_errlist[] -TD
 * reset styles[] and styleSheet list in DefaultStyle.c, HTML.c so that when
   a user reloads a page with ^R, we undo changes to those data structures
   (reported by Larry Virden). - TD
@@ -96,8 +97,7 @@
   parameter warnings (and later, to support prototypes for logging). - TD
 * rename 'extra_entities' to 'unicode_entities' (recommended by LP) - TD
 * add configure option --use-default-colors, to allow background color to use
-  default value (request by SUNAGAWA Keiki <Keiki_Sunagawa@yokogawa.co.jp>) -
-  TD
+  default value (request by SUNAGAWA Keiki <Keiki_Sunagawa@yokogawa.co.jp>) -TD
 * change default for --disable-internal-links so it is normally-off - TD
 1998-02-19
 * add configure test CF_FIONBIO, some ifdef's (e.g., S_IFLNK) to support
@@ -173,13 +173,13 @@
   See also new files in test/ directory:  sgml.html and unicode.html.
   Tweak a few typos in test/*.html according to sgml.html.
   Add a few new entries in def7_uni.tbl according to sgml.html - LP
-* Cleanup iso01-iso09, cp866 tables against ones found at ftp.unicode.org
+* Cleanup iso01-iso09, cp866 tables against ones found at ftp.unicode.org -LP
 * Strip the fat from LYCharSets.c - unnecessary obsoleted tables removed
   and redirected to SevenBitApproximation table (ones which have unicode tables
   override it anyway, those for CJK had exactly the same tables as
   SevenBit..). - LP
 * Remove obsolete "Other ISO Latin" charset, which works _exactly_ the same
-  as "7 bit approximation" (See the note on 06-14-96 where it comes from).
+  as "7 bit approximation" (See the note on 06-14-96 where it comes from) -LP
 * Sort the list of charsets in Options according to 2.7.2 for 1997-10-15,
   see the comments in UCinit at the bottom of UCDomap.c - LP
 * add ifdef to HTFile.c to workaround conflicting S_IFIFO vs S_IFSOCK
@@ -201,13 +201,13 @@
 * revert HTML.c to use LYHandleSELECT() - TD
 * align cases for function keys in LYStrings.c with 2.7.2 - TD
 * remove EXP_CHARTRANS ifdef's - TD
-* remove symbol USE_SIZECHANGEHACK
+* remove symbol USE_SIZECHANGEHACK -TD
 * adjust formatting, comments & some messages in most remaining ./src files to
   simplify comparison with 2.7.2 version.  - TD
 1998-01-25
 * Changed the utf-8 Display Character Set string to "UNICODE UTF-8"
   (i.e., added the hyphen between UTF and 8), and fixed typos in
-  the comments about iso-8859-5. LP & FM
+  the comments about iso-8859-5. -LP, FM
 * Modified HTML.c to add collapsible spaces before and after IMG ALT
   strings or pseudo-ALTs whether or not the IMG element is within
   Anchor content.  The occasional absence of such spaces due to poor
@@ -368,7 +368,7 @@ from the lynx code.  I think the following patch does this.
   column less than the screen width, i.e., at 79 by default). - FM
 * Tweak of get_connection() in HTFTP.c to re-initialize the elements of
   the connection structure when using a previously allocated connection
-  object. - DW & FM
+  object. -DW, FM
 * Mods of LYexit.c, LYClean.c, LYMain.c and LYMainLoop.c to fflush() all
   standard file descriptors in conjunction with all fopen() and fclose()
   operations on the TRACE log and redirections of stderr via equality
@@ -534,7 +534,7 @@ from the lynx code.  I think the following patch does this.
 * reverse ifdef for NO_SIZECHANGEHACK to USE_SIZECHANGEHACK, which is
   normally off, since this code did not work with BSD 4.4 curses, SVr4
   curses, or ncurses 4.1 with xterm. (Will make a configure test if anyone
-  can identify a configuration that works). - TD.
+  can identify a configuration that works). - TD
 1997-11-21
 * Changed LYE_LINKN to LYE_LKCMD (still mapped by default to Ctrl-V; may
   need to be entered twice for some systems) for invoking a prompt to
@@ -552,7 +552,7 @@ from the lynx code.  I think the following patch does this.
   ('z'apped) on the first socket read. - FM
 1997-11-18
 * Mods to use the explicit label "Bad HTML:" in trace messages corresponding
-  to BAD_HTML_USE_TRACE messages. - FM & KW
+  to BAD_HTML_USE_TRACE messages. - FM, KW
 * Tweak of the restored TABLE-in-PRE block handling to deal with the
   case when it's encased in a CENTER or DIV with ALIGN="center". - FM
 * Changed docs/README.defines to refer to INSTALLATION file - HN
@@ -564,7 +564,7 @@ from the lynx code.  I think the following patch does this.
   vertical and horizontal lines. - KW
 * Mods in HTTP.c to trim any "LYNXIMGMAP:" leader from Referer header
   values and strip the #fragment when making http(s) requests via links
-  in the pseudo-documents constructed for MAP elements. - FM & KW
+  in the pseudo-documents constructed for MAP elements. - FM, KW
 * Mods of SGML parsing to better handle SELECT blocks with invalid markup,
   in effect for both TagSoup and SortaSGML parsing (for the latter just
   in case it doesn't already prevent invalid markup from being passed on).
@@ -591,7 +591,7 @@ from the lynx code.  I think the following patch does this.
   new HText structure based on the current screen size. - FM
   (The new code can be disabled by defining NO_SIZECHANGEHACK, in case
   some curses version or terminal cannot deal with it. - KW)
-* Tweaks of the chartrans code. - FM & KW
+* Tweaks of the chartrans code. - FM, KW
 * Change in HTNews.c to ignore very long bogus newsgroup names when listing
   available groups. - KW
 * Tweaks in code for highlighting search text in anchors, to better deal with
@@ -611,7 +611,7 @@ from the lynx code.  I think the following patch does this.
   which stopped working in conjunction with the 1997-05-21 mods (see below)
   for treating TABLEs as DIVisions to support ALIGNment attributes in TABLE
   markup.  The PRE-in-TABLE-block HTML kludge was not affected by those mods
-  but works only with the TagSoup parsing mode. - FM & KW
+  but works only with the TagSoup parsing mode. - FM, KW
 1997-11-12
 * Made handling of the 'x' in hexadecimal character references (&#xH;)
   case insensitive, as for the "alphabetic digits" (a-f, A-F). - FM
@@ -630,7 +630,7 @@ from the lynx code.  I think the following patch does this.
   have no code for taking DIR attributes, or directionality in general,
   into account. - FM
 * Mods to handle "cp-#" charset names as synonyms for "cp#", and some
-  cp# names as synonyms for "windows-#". FM & KW
+  cp# names as synonyms for "windows-#". -FM, KW
 1997-11-07
 * Change of LY_SLrefresh() in LYCurses.c as suggested by JED - FM
 * add logic to make install-directories as needed. - TD
@@ -668,7 +668,7 @@ from the lynx code.  I think the following patch does this.
 * Mods to avoid va_start redefinition warnings when building with slang. - FM
 1997-11-05
 * Change in LYForms.c to avoid full screen repaint after popup is retracted
-  for slang. - KW & FM
+  for slang. - KW, FM
 1997-11-03
 * Internal links code revised.  Some details follow, but first a summary
   of the basic premises.  Links in a document given as href="#fragment" or
@@ -881,7 +881,7 @@ from the lynx code.  I think the following patch does this.
   as specified in the -07 to -09 Fielding URL drafts. - FM
 1997-10-23
 * Fixed a few typos and glued together a few URLs to make it easier for
-  folk to cut and paste them, in the new INSTALLATION file. - LVW
+  folk to cut and paste them, in the new INSTALLATION file. - LV
 1997-10-22
 * Many locations of files changed, about_lynx/ directory and references to
   aboutfilepath removed, userdefs.h reorganized, changed README, new
@@ -921,7 +921,7 @@ from the lynx code.  I think the following patch does this.
   parsing --with-cfg-file and --with-lss-file options.  - TD
 * add uninstall target to top-level makefile. - TD
 * remove redundant install options from $(INSTALL_DATA). - TD
-* add configure --with-lss-file option.
+* add configure --with-lss-file option - TD
 * minor cleanup of gcc warnings, ifdefs. - TD
 1997-10-20
 * Mods in the CSO/PH gateway to set the anchor's safe flag to TRUE so the
@@ -1079,7 +1079,7 @@ from the lynx code.  I think the following patch does this.
   more.  Regard #ifdef EXP_CHARTRANS as some strange kind of comment for
   now, until it goes away. - KW
 * Write comment at top of .lynxrc file to make clear that it is different
-  from lynx.cfg, suggested by LWV. - KW
+  from lynx.cfg, suggested by LV. - KW
 1997-09-30
 * Changed order of display character sets on options screen a bit, and
   corrected charset listings in lynx.cfg and userdefs.h files - KW
@@ -1117,8 +1117,7 @@ from the lynx code.  I think the following patch does this.
   (draft-masinter-url-i18n-00.txt, draft-duerst-query-i18n-00.txt,
   draft-ietf-ftpext-intl-ftp-02.txt).
   For character values < 256 (but > 127) this isn't currently consistently
-  done, we may still be URL-escaping the byte value without UTF-8 encoding.
-  - KW
+  done, we may still be URL-escaping the byte value without UTF-8 encoding -KW
 1997-09-25
 * Integrated the attribute and form field translation stuff from separate
   code line.  This is still a rough attempt.  Needs testing and refinement,
@@ -1174,7 +1173,7 @@ from the lynx code.  I think the following patch does this.
   that some CGI scripts may still be doing plus-to-space restorations only
   for value fields, and only hex unescaping for name fields, while others
   may not be hex unescaping the name fields, so we may as well follow the
-  specs fully (and cross our fingers :). - KW & FM
+  specs fully (and cross our fingers :). - KW, FM
 * merge symbols 'has_color' and 'lynx_has_color' to simplify ifdef's,
   and correct a problem building color-style configuration. - TD
 * add configure symbol for ifdef'ing presence of waitpid, which
@@ -1190,38 +1189,38 @@ from the lynx code.  I think the following patch does this.
 * Minor adjustments to names of configure-script variables, to make
   them the same as other programs (e.g., tin-unoff). - TD
 1997-09-16
-* Added code to JKT's and KW's mods in LYPrint.c to also handle VMS:
+* Added code to JKT's and KW's mods in LYPrint.c to also handle VMS, i.e.,
   set the document's title as a logical on VMS (can be accessed via
   f$trnlnm("LYNX_PRINT_TITLE") in scripts). - FM
-* Smaller cleanups here and there - FM & KW
-97-09-15
+* Smaller cleanups here and there - FM, KW
+1997-09-15
 * Recover from bad sequence "<=" in SGML.c by outputting those characters
   literally. - KW
 * Try again after interrupted waitpid() in LYExecv(). - JED
 * Some tweaks in new DTD, some doc typo corrections. - KW
-97-09-13
+1997-09-13
 * Changes in LYConvertToURL() for better handling of the case when the
   pathname of the current directory (when Lynx is invoked) contains
   unusual, URL-reserved characters (especially '#') and we test for
   a relative but URL-encoded path. (no change for VMS) - KW
-97-09-13
+1997-09-13
 * Changes in LYStrings.c to enable keypad() processing for non-NCURSES
   if HAVE_KEYPAD is defined. - KW
-97-09-12
+1997-09-12
 * Correct mismatch/omission of HAVE_TYPE_UNIONWAIT symbol from
   change for wait vs waitpid. - TD
-97-09-11
+1997-09-11
 * Tweaks in HTMLGen.c for display of special characters and line breaking
   with -preparsed. - KW
 * Got rid of use of underlining together with reverse for non-current
   links for (n)curses if color is not used. - KW
 * Small HTMLDTD.c changes for new parsing. - KW
 * Change in SGML.c to always recognize SOFT HYPHEN when given as &#173. - KW
-97-09-10
+1997-09-10
 * Modify CF_WITH_PATH to allow substitution of --libdir and other
   configure options pathnames, e.g., for --with-cfg-file. - TD
 * Include lynx_cfg.h in userdefs.h to resolve redefinition reported by
-  AC. - TD
+  AAC. - TD
 * Remove Ultrix/sony_news -specific ifdef's for curses headers,
   replace with configure-tests. - TD
 * Remove AIX/NeXT/sony_news -specific ifdef's for wait vs waitpid,
@@ -1276,7 +1275,7 @@ from the lynx code.  I think the following patch does this.
   PATH_INFO in addition to QUERY_STRINGS in URLs.  DOCUMENT_ROOT
   may be set by the user in lynx.cfg and is then passed as well.
   If DOCUMENT_ROOT is set, then PATH_TRANSLATED is calculated and
-  passed as well. - J. Kevin Ternes <jkternes@mindspring.com>
+  passed as well. - JKT (J Kevin Ternes <jkternes@mindspring.com>)
 * Changes to LYPrint.c to put the variable LYNX_PRINT_TITLE
   into the system()'ed environment for use by post-Lynx, pre-lp
   formatting scripts.  LYNX_PRINT_TITLE is simply generated by
@@ -1295,14 +1294,14 @@ from the lynx code.  I think the following patch does this.
   before so that they are still regarded as part of the query or search
   string.  If PATHINFO is present, unescaped '#' characters in it will
   still be rejected by exec_ok(). - KW
-* added a bit of text about running ./configure to INSTALLATION file.
-  - David Combs <dkcombs@netcom.com> & KW
+* added a bit of text about running ./configure to INSTALLATION
+  file - David Combs (<dkcombs@netcom.com>), KW
 * Added a translation table for Vietnamese (VISCII), and associated code
   changes.  See the file viscii_uni.tbl. - KW
 1997-09-05
 * Mods in LYGetFile.c to retain a fragment on redirection if the redirection
   URL does not include a fragment. - FM
-97-09-04
+1997-09-04
 * Correct ifdef'ing for getbkgd function calls. - TD
 * Correct ifdef'ing for remaining inline chmod calls. - TD
 * Consolidate various logic for opening secure files into utility
@@ -1333,7 +1332,7 @@ from the lynx code.  I think the following patch does this.
 1997-09-02
 * Mods to include "ISO 8859-6 Arabic" and "ISO 8859-8 Hebrew" in the display
   character set options (Note, though, that Lynx presently has no code to
-  deal overtly with non-Latin directionalities.). - DK & FM
+  deal overtly with non-Latin directionalities.). - DK, FM
 1997-08-31
 * Mod of HTMIME.c to ignore any Content-Encoding header with a value of
   "identity" (case insensitive).  Shouldn't happen, but better safe than
@@ -1346,7 +1345,7 @@ from the lynx code.  I think the following patch does this.
 * Rename #define for NCURSESHEADER to HAVE_NCURSES_H, for consistency. - TD
 * Add-back test for -lm to support slang shared libraries. - TD
 * Modify test for disentangling ncurses library from mytinfo on FreeBSD
-  to workaround linker limitation. - AC
+  to workaround linker limitation. - AAC
 1997-08-22
 * Fixed typo in LYReadCFG.c when checking for a NOVICE mode default. - JN
   (Note that this and other lynx.cfg defaults which have 'o'ptions settings
@@ -1478,7 +1477,7 @@ from the lynx code.  I think the following patch does this.
   cancels, when servers return non-success statuses with bodies which
   should be displayed to interactive users. - FM
 * Added the "DosCyrillic (cp866)" display character set to the chartrans
-  support, and tweaked the other Cyrillic charset tables. - AAC & KW
+  support, and tweaked the other Cyrillic charset tables. - AAC, KW
 * Tweaked MULTI_SUFFIX support in HTFile.c, so that it now somewhat
   works.  Dunno whether it's useful for anybody. - KW
 1997-08-07
@@ -1524,7 +1523,7 @@ from the lynx code.  I think the following patch does this.
   Reference statusline message. - FM
 * Tweaks of title handling in LYMainLoop.c and LYShowInfo.c so that the
   known title, or link name associated with ACTIVATE-ion, form submission,
-  or a HEAD request, will be used in the INFO ('=') display. - FM & KW
+  or a HEAD request, will be used in the INFO ('=') display. - FM, KW
 1997-08-04
 * Fixed header parsing in HTMIME.c so that "Safe:" is recognized. - KW
 * Changed confirmation prompts for HEAD (']') commands acting on a POST
@@ -1562,7 +1561,7 @@ from the lynx code.  I think the following patch does this.
   for page formatting (e.g., for optimum handling by speech synthesizers
   and braille interfaces), beyond the current emphasis on colorizing. - FM
 1997-08-02
-* The cookie pre-draft has been adopted as an IETF ID:
+* The cookie pre-draft has been adopted as an IETF ID, see
   ftp://ds.internic.net/internet-drafts/draft-ietf-http-state-man-mec-03.txt
   so the code for combining Set-Cookie and Set-Cookie2 headers has been
   eliminated in LYCookie.c (see mods for 1997-07-31). - FM
@@ -1732,7 +1731,7 @@ from the lynx code.  I think the following patch does this.
   inappropriate; see the 1997-05-26 mods). - FM
 1997-07-18
 * Mods in LYexit.c and LYCurses.c to ensure restoration of stderr (if it
-  was changed for output to the trace log) on all exits. - BRL & FM
+  was changed for output to the trace log) on all exits. - BL, FM
 * Include an unsigned char typecast in the HASH_FUNCTION definition for
   HTAtom.c - CK
 * Modified change to is_url() of 1997-07-13 to check for the slash after
@@ -1818,7 +1817,7 @@ from the lynx code.  I think the following patch does this.
 * Synchronized the development code against the fotemods patches up to
   1997-07-06 (relevant changes listed below, as usual).  Note that FM
   has now included the chartrans code, but has eliminated conditional
-  compilation of it; however, in this code set setting -DEXP_CHARTRANS
+  compilation of it; however, in this code set setting "-DEXP_CHARTRANS"
   at compile time is still necessary (but compilation without it has not
   been tested). - KW
 * Fixed character counting logic in display_line() for lines where
@@ -1862,7 +1861,7 @@ from the lynx code.  I think the following patch does this.
   been introduced into the development code. - KW
 1997-07-08
 * Synchronized the development code against the fotemods patches up to
-  1997-06-24 - TD & KW
+  1997-06-24 - TD, KW
 1997-07-06
 * Implemented popup windows for the 'o'ptions menu, homologous to those
   for SELECT blocks in forms.  They are implemented when select_popups
@@ -1951,7 +1950,7 @@ from the lynx code.  I think the following patch does this.
   mod is not dependent on it. - FM
 1997-06-23
 * remove "Styles" identifier from Lynx version string in userdefs.h
-  since it causes "patch-o-matic" to choke. -- JES
+  since it causes "patch-o-matic" to choke. - JES
 1997-06-20
 * Now that we add or subtract attributes for Unix FANCY_CURSES, as for VMS
   curses and slang, the 1997-05-30 mods based on LE's patch for keeping track
@@ -1965,7 +1964,7 @@ from the lynx code.  I think the following patch does this.
   long ago in SGML.c has not actually been used before. - FM
 * Modified the hack in LYPrint.c for mailing HTML source so that it never
   appends a charset parameter to the "text/html" value of the Content-Type
-  header if compiled without chartrans enabled. - FM & KW
+  header if compiled without chartrans enabled. - FM, KW
 1997-06-18
 * Added a check for nonsense LINES and COLS values in setup() of LYCurses.c,
   homologous to the check in size_change() of LYUtils.c, and set LYlines and
@@ -2251,7 +2250,7 @@ from the lynx code.  I think the following patch does this.
   those or "user (A)gent" are changed and the current document has an
   http, https or lynxcgi scheme, but not force a proxy cache refresh if
   we're reloading due to an INLINE_TOGGLE, IMAGE_TOGGLE, or RAW_TOGGLE
-  command. - KW & FM
+  command. - KW, FM
 1997-05-25
 * Mods in LYMain.c to convert $USER if present in the TEMP_SPACE
   definition or LYNX_TEMP_SPACE environment variable to the string
@@ -2306,7 +2305,7 @@ from the lynx code.  I think the following patch does this.
 * Change in LYForms.c to prevent forced screen refresh after selection
   from a popup box. - KW
 1997-05-19
-* Recognize Linux console F1 key in LYgetch() (applies if -DNO_KEYPAD
+* Recognize Linux console F1 key in LYgetch() (applies if "-DNO_KEYPAD"
   is in effect, as for all binaries built with slang). - KW
 * Protect LYgetch() against returning raw values of keypad() symbols
   which are invalid when used later as an index into keymap[],
@@ -2511,7 +2510,7 @@ from the lynx code.  I think the following patch does this.
   in SGML.c (try a bit more to close containing element if it's the
   same tag) - KW
 1997-05-12
-* Added support for proxy authentication. - AJL & FM
+* Added support for proxy authentication. - AJL, FM
 * Updated follow_help.html to indicate that 0 is the universal
   F_LINK_NUM mapping for invoking the "Follow link (or ...) number:"
   prompt. - FM
@@ -2533,7 +2532,7 @@ from the lynx code.  I think the following patch does this.
 * Changed the behavior of boolean_choice() in LYOptions.c so that the
   cursor is positioned immediately at the option display line instead
   of staying at the statusline instructions until an initial entry is
-  made, and modified the statusline instructions accordingly. - LE & FM
+  made, and modified the statusline instructions accordingly. - LE, FM
 * Added a check for a NULL pointer in the LYCookie.c code for blocking
   sharing of SSL encrypted cookies with http servers, based on a patch
   from RT, and added a comment on why code for a block based on the
@@ -2738,7 +2737,7 @@ from the lynx code.  I think the following patch does this.
   will be issued, in contrast to the 'p' suffix for which an out of range
   number is treated as a request to display the first or last actual page in
   the current document. - FM
-* Fixed some typos in lynx.man. - LWV
+* Fixed some typos in lynx.man. - LV
 * More modifications of the anchor counting code for HTGetLinkInfo() in
   GridText.c so that it properly skips hidden form fields and anchors
   without selectable text. - KW
@@ -2782,7 +2781,7 @@ from the lynx code.  I think the following patch does this.
   LYForms.c.  They were being sought improperly as command keys rather
   than as raw keyboard entries.  Note that only Control-G should be
   used as "cancel" within popup windows on Unix, because Control-C
-  is not being trapped to a handler as on VMS. - LE & FM
+  is not being trapped to a handler as on VMS. - LE, FM
 * Tweak of the anchor counting code for HTGetLinkInfo() in GridText.c
   so that it takes form fields into account when making a link current
   based on a "Follow link number" entry with the 'g' suffix.
@@ -2853,7 +2852,7 @@ from the lynx code.  I think the following patch does this.
 * add check to allow use of broken ncurses 1.9.9e's color - TD
 * add check for NGROUPS, TRUE, FALSE macro definitions - TD
 * remove top-level makefile.in targets that can be combined with the generic
-  target (more work required on the remaining ones) - TD.
+  target (more work required on the remaining ones) - TD
 * Plugged memory leak in deleteLinks() of HTAnchor.c. - KW
 * When dumping or outputting a rendered document via the 'p'rint menu,
   Lynx would use the underscore placeholders for submit/image/reset
@@ -2863,7 +2862,7 @@ from the lynx code.  I think the following patch does this.
   via the 'p'rint menu.  See the comments under case HTML_INPUT: in
   HTML.c for the still less than optimal things that happen if a
   wrap occurs within the INPUT value or placeholder strings, as might
-  happen in PRE blocks, or for strings wider than the screen. - LE & FM
+  happen in PRE blocks, or for strings wider than the screen. - LE, FM
 * SGML_abort() did not free memory used by the SGML.c parser stack.
   Now it does, but still doesn't call HTML_end_element() for the
   stacked elements (it's an abort after all...) - KW
@@ -2927,7 +2926,7 @@ from the lynx code.  I think the following patch does this.
   CENTER nesting levels, and for an HTML stack underrun. - KW
 * Plugged a memory leak under case HTML_IMG: of HTML_start_element() in
   HTML.c, and removed an inappropriate if(){} in HText_endAnchor() of
-  GridText.c. - FM & KW
+  GridText.c. - FM, KW
 * Modified the lead text created for bookmark files in LYBookmark.c so
   that it indicates that an editor can be used to delete or reorder
   the links, but that the format within lines should not be changed,
@@ -2957,7 +2956,7 @@ from the lynx code.  I think the following patch does this.
   on following an internal link in a POST response, as they are
   present for example in WebTechs validation results. - KW
 * A "Goto numbered link" feature.  The user interface could be improved...
-  Start typing the link number, then add 'g' before hitting enter.
+  Start typing the link number, then add 'g' before hitting enter - KW
 * Some improvements to WHEREIS search.  Will not always position
   found string on first line (details depend on whether anchors are
   present, usually will position in top third of screen), and avoid
@@ -2995,7 +2994,7 @@ from the lynx code.  I think the following patch does this.
 * corrected autoconf'd compiler flags for Ultrix - TD
 * add config.guess & config.sub to allow specialized host-type checks - TD
 * guard against redefinition of NO_FILIO_H - TD
-* use new autoconf macro CF_SYSTEM_MAIL_FLAGS /jes
+* use new autoconf macro CF_SYSTEM_MAIL_FLAGS -JES
 1997-04-14
 * Tweaked LYAddImageMap() in LYMap.c so that it removes all pre-existing
   AREA element entries when updating MAP element content, and set the
@@ -3056,13 +3055,12 @@ from the lynx code.  I think the following patch does this.
   with LYNoISMAPifUSEMAP in LINKS_ARE_NUMBERS mode. - KW
 * Extended the disk_save restriction to the print menu as well as
   the download menu, and accordingly updated lynx.hlp, lynx.man, and
-  Lynx_users_guide.html. -  HN & FM
+  Lynx_users_guide.html. - HN, FM
 1997-04-09
 * Many changes to further the Win32 and 386 ports.  An emulation of
   the HTVMS_ calls was used to try and cover all the DOS'izms.
   A specialized ifdef for pdcurses color mapping added.  Some keypad
-  tweaks.  More generalized process spawning.  .lynxrc is lynx.rc for 386.
-  - WB
+  tweaks.  More generalized process spawning.  .lynxrc is lynx.rc for 386 - WB
 * Tweak to ensure that a newline isn't inserted by virtue of a
   FORM start tag if it's in the first line of a list element and
   no text precedes it other than a UL's bullet or OL's number
@@ -3070,7 +3068,7 @@ from the lynx code.  I think the following patch does this.
 * Added pauses for the "Bad HTML" statusline messages under cases
   HTML_HTML and HTML_BODY in HTML_end_element(), and eliminated
   their checks for an unclosed FORM because we no longer expect
-  that to cause a serious problem. - LE & FM
+  that to cause a serious problem. - LE, FM
 * Added a NO_ISMAP_IF_USEMAP configuration symbol and -ismap
   command line toggle for suppressing inclusion of a link for the
   server-side-image-map if an IMG or OBJECT element has both ISMAP
@@ -3082,9 +3080,9 @@ from the lynx code.  I think the following patch does this.
   content was handled in a manner which caused it to become zero
   length. - FM
 * Moved handling for NEWS_POSTING in LYReadCFG.c to the right place,
-  so that it can actually have an effect. - LWV
+  so that it can actually have an effect. - LV
 * Typo fixes for the comment concerning NO_ANONYMOUS_EMAIL in
-  userdefs.h - HN & FM
+  userdefs.h - HN, FM
 1997-04-08
 * New translation table koi8r_uni for KOI8-R charset.  Lynx can now
   translate between iso-8859-5 and KOI8-R, at least for the Cyrillic
@@ -3142,7 +3140,7 @@ from the lynx code.  I think the following patch does this.
 1997-04-02
 * add Andrew Kuchling's patch to support mouse-clicks with ncurses. - TD
 * refine tests that address porting problems to SCO (detecting struct winsize,
-  workaround for misdefinition of 'remove')
+  workaround for misdefinition of 'remove') - TD
 * refine CF_COLOR_CURSES test to avoid ncurses 1.9.9e bugs. - TD
 * refine CF_PATH_PROG to allow for machines that haven't the given programs,
   by using only the program name and added configure option
@@ -3248,7 +3246,7 @@ from the lynx code.  I think the following patch does this.
   messages. - FM
 * Made the installation mode 755 in the top-level Makefile.  The
   distributed code used 555, and some install commands were unable
-  to do the strip. - LWV
+  to do the strip. - LV
 1997-03-14
 * Corrected typos and expanded the comments concerning lynxcgi symbols
   in userdefs.h and lynx.cfg. - FM
@@ -3291,7 +3289,7 @@ from the lynx code.  I think the following patch does this.
   recycle the terminator if not a semi-colon. - FM
 1997-03-09
 * Integrated (simple) color, auto-configure patches with 2.7 following
-  chrtrans patch - T.Dickey, J.Spath.
+  chrtrans patch - TD (T.Dickey), JES (J.Spath)
 1997-03-08
 * Fixed error in the switch positioning of checks for XLOADIMAGE_COMMAND
   and wais_proxy in LYReadCFG.c.  The distributed code had them reversed
@@ -3302,7 +3300,7 @@ from the lynx code.  I think the following patch does this.
 * Corrected the offset computation in textsearch() of LYSearch.c so that
   WHEREIS searches repeated on a page with no links seek the target
   starting at the line immediately following the last displayed.  The
-  distributed code was setting a greater offset. - JS
+  distributed code was setting a greater offset. - JES
 1997-03-02
 * Don't entify post content for the showinfo display, now that we are
   making it an XMP block in that display to handle all of the supported
@@ -3362,12 +3360,11 @@ from the lynx code.  I think the following patch does this.
   tags.  New directory src/chrtrans with table files.  Compilation flags
   -DEXP_CHARTRANS, -DEXP_CHARTRANS_AUTOSWITCH (for Linux),
   -DSLANG_MBCS_HACK (for raw unicode console).
-  New command line options when compiled with -DEXP_CHARTRANS:
-  -assume_charset, -assume_local_charset, -assume_unrec_charset.
+  New command line options when compiled with -DEXP_CHARTRANS, i.e.,
+  "-assume_charset", "-assume_local_charset", "-assume_unrec_charset".
   See README.chartrans and README files in src/chrtrans for more info.
   INFO screen shows of effective charset even if not given explicitly.
-  Translation routines in LYCharUtils.c not chartrans-ified at this point.
-  - KW
+  Translation routines in LYCharUtils.c not chartrans-ified at this point - KW
 * No showing of &trade; or &#8482; as (R) any more, use (TM) instead. - KW
 * Prefer HTTP-EQUIV over NAME in META tags. - KW
 1997-02-22
@@ -3381,7 +3378,7 @@ from the lynx code.  I think the following patch does this.
   patch from KW. - FM
 * Fixed two typos in the checks for HTPassHighCtrlRaw in LYExpandString()
   of LYCharUtils.c. - KW
-* Fixed typo in the equality check on line 1553 in HTGopher.c. - AM
+* Fixed typo in the equality check on line 1553 in HTGopher.c. - FM
 1997-02-19
 * Reset the host string after an '@', if present, when trimming default
   ":port" fields in the new code aimed at compliance with the Masinter

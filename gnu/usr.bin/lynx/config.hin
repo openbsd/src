@@ -37,6 +37,7 @@
 #undef EXP_ALT_BINDINGS		/* CF_ARG_ENABLE(alt-bindings) */
 #undef EXP_CHARSET_CHOICE	/* CF_ARG_ENABLE(charset-choice) */
 #undef EXP_CHARTRANS_AUTOSWITCH	/* CF_ARG_ENABLE(font-switch) */
+#undef EXP_JAPANESEUTF8_SUPPORT	/* CF_ARG_ENABLE(japanese-utf8) */
 #undef EXP_JUSTIFY_ELTS		/* CF_ARG_ENABLE(justify-elts) */
 #undef EXP_KEYBOARD_LAYOUT	/* CF_ARG_ENABLE(kbd-layout) */
 #undef EXP_LOCALE_CHARSET	/* CF_ARG_ENABLE(locale-charset) */
@@ -56,7 +57,9 @@
 #undef HAVE_BSD_TOUCHLINE	/* CF_CURS_TOUCHLINE */
 #undef HAVE_CATGETS		/* defined if you want to use non-GNU catgets */
 #undef HAVE_CBREAK
+#undef HAVE_CTERMID
 #undef HAVE_CURSESX_H
+#undef HAVE_CURSES_VERSION	/* CF_FUNC_CURSES_VERSION */
 #undef HAVE_CUSERID
 #undef HAVE_DCGETTEXT		/* AM_GNU_GETTEXT */
 #undef HAVE_DEFINE_KEY
@@ -144,6 +147,8 @@
 #undef HAVE_UNISTD_H		/* have <unistd.h> */
 #undef HAVE_UNSETENV
 #undef HAVE_USE_DEFAULT_COLORS	/* ncurses extension */
+#undef HAVE_USE_LEGACY_CODING	/* ncurses extension */
+#undef HAVE_USLEEP
 #undef HAVE_UTMP		/* CF_UTMP */
 #undef HAVE_UTMP_UT_HOST	/* CF_UTMP_UT_HOST */
 #undef HAVE_UTMP_UT_SESSION	/* CF_UTMP_UT_SESSION */
@@ -159,6 +164,7 @@
 #undef HAVE_WREDRAWLN
 #undef HAVE_WRESIZE
 #undef HAVE_XCURSES		/* CF_PDCURSES_X11 */
+#undef HAVE_ZERROR
 #undef HAVE___ARGZ_COUNT	/* AM_GNU_GETTEXT */
 #undef HAVE___ARGZ_NEXT		/* AM_GNU_GETTEXT */
 #undef HAVE___ARGZ_STRINGIFY	/* AM_GNU_GETTEXT */
@@ -170,8 +176,8 @@
 #undef LOCALE			/* for locale support */
 #undef LONG_LIST		/* CF_ARG_DISABLE(long-list) */
 #undef LYNXCGI_LINKS		/* CF_ARG_ENABLE(cgi-links) */
-#undef LYNX_CFG_FILE		/* $libdir/lynx.cfg */
-#undef LYNX_LSS_FILE		/* $libdir/lynx.lss */
+#undef LYNX_CFG_FILE		/* $sysconfdir/lynx.cfg */
+#undef LYNX_LSS_FILE		/* $sysconfdir/lynx.lss */
 #undef LYNX_RAND_MAX		/* CF_SRAND */
 #undef LY_FIND_LEAKS		/* CF_ARG_ENABLE(find-leaks) */
 #undef LY_TRACELINE		/* CF_ARG_ENABLE(vertrace) */
@@ -197,6 +203,7 @@
 #undef REAL_UNIX_SYSTEM		/* CF_SLANG_UNIX_DEFS */
 #undef RLOGIN_PATH		/* CF_PATH_PROG(rlogin) */
 #undef RM_PATH			/* CF_PATH_PROG(rm) */
+#undef SETFONT_PATH		/* CF_PATH_PROG(setfont) */
 #undef SOCKS			/* CF_SOCKS, CF_SOCKS5 */
 #undef STDC_HEADERS
 #undef SYSTEM_MAIL		/* CF_DEFINE_PROG */
@@ -254,6 +261,7 @@
 #undef mode_t			/* AC_TYPE_MODE_T */
 #undef off_t			/* AC_TYPE_OFF_T */
 #undef pid_t			/* AC_TYPE_PID_T */
+#undef socklen_t		/* CF_CHECK_TYPE(socklen_t,...) */
 #undef uid_t			/* AC_TYPE_UID_T */
 #undef ut_name			/* CF_UTMP */
 #undef ut_xstatus		/* CF_UTMP_UT_XSTATUS */

@@ -6,7 +6,7 @@
 #
 # Note: there are a few rare replacement strings with trailing spaces
 # which should be enclosed as C strings like "... " to make things obvious
-# (and doing that we should escape \ as \134 and  escape " as \" or \042
+# (and doing that we should escape \ as \134 and escape " as \" or \042
 # but this is really rare).
 #
 
@@ -1375,6 +1375,7 @@ U+202d:
 
 U+202f ""
 U+2030: 0/00
+U+2031: 0/000
 U+2032:'
 U+2033:''
 U+2034:'''
@@ -1386,9 +1387,16 @@ U+2039:<
 U+203a:>
 U+203b::X
 U+203c:!!
+U+203d:?!
 U+203e:'-
+U+2042:***
+U+2051:**
+U+2052:./.
+U+2057:''''
+U+205a " : "
 0x2d   U+2043  # HYPHEN BULLET ?
 U+2044:/
+U+2047:??
 U+2048:?!
 U+2049:!?
 # end of General punctuation.
@@ -1431,6 +1439,7 @@ U+20AC:EUR
 U+2100:a/c
 U+2101:a/s
 U+2103:oC
+U+2104:CL
 U+2105:c/o
 U+2106:c/u
 U+2109:oF
@@ -1440,7 +1449,7 @@ U+210f "\134hbar "
 U+2111:Im
 U+2113:l
 U+2116:No.
-U+2117:PO
+U+2117:(P)
 U+2118:P
 U+211C:Re
 U+211e:Rx
@@ -1448,6 +1457,7 @@ U+2120:(SM)
 U+2121:TEL
 # TRADE MARK SIGN:
 U+2122:(TM)
+U+2125:oz.
 U+2126:Ohm
 0x4b	U+212A	# Kelvin sign - K
 U+212b:Ang.
@@ -1457,6 +1467,7 @@ U+2135 "Aleph "
 U+2136 "Bet "
 U+2137 "Gimel "
 U+2138 "Dalet "
+U+213B: FAX
 U+2153: 1/3
 U+2154: 2/3
 U+2155: 1/5
@@ -1524,8 +1535,10 @@ U+21d2:=>
 U+21d3:vv
 U+21d4:<=>
 U+2200:FA
+U+2201:C
 U+2202:\partial
 U+2203:TE
+U+2204:TDNE
 U+2205:{}
 U+2206:Delta
 U+2207:Nabla
@@ -1560,27 +1573,38 @@ U+2228:OR
 U+2229:(U
 U+222a:)U
 U+222b "\134int "
-U+222c:DI
+U+222c "\134int\134int "
+U+222d "\134int\134int\134int "
 U+222e:Io
 U+2234:.:
 U+2235::.
 U+2236::R
 U+2237:::
-U+223c:?1
+U+2238:.-
+U+2239:-:
+U+223c "?1"	# Why not use "~" in this and following tilde-like characters?  I'll assume someone more math-literate than I did this, and leave them alone.
 U+223e:CG
+U+2241:!~
+U+2242:-~
 U+2243:?-
+U+2244:!~-
 U+2245:?=
+U+2246:~!=
+U+2247:!~=
 # ALMOST EQUAL TO:
 U+2248:~=
 U+2249 " !~= "
+U+224b:~3
 U+224c:=?
+U+2250:=...
 U+2253:HI
 U+2254::=
 U+2255:=:
 U+2260:!=
 U+2261:=3
 U+2262 " !=3 "
-U+2264:=<
+U+2263:=4
+U+2264:<=
 U+2265:>=
 U+2266:.LE.
 U+2267:.GE.
@@ -1590,14 +1614,30 @@ U+226a:<<
 U+226b:>>
 U+226e:!<
 U+226f:!>
+U+2270:!<=
+U+2271:!>=
+U+2272:<~
+U+2273:>~
+U+2274:!<~
+U+2275:!>~
 U+2276 " <> "
 U+2277 " >< "
+U+2278 " !<> "
+U+2279 " !>< "
 U+2282:(C
 U+2283:)C
 U+2284 " !(C "
 U+2285 " !)C "
 U+2286:(_
 U+2287:)_
+U+2288:!(_
+U+2289:!)_
+U+228a:(!_
+U+228b:)!_
+U+228f:[
+U+2290:]
+U+2291:[_
+U+2292:]_
 U+2295 "(+)"		# CIRCLED PLUS
 U+2296 "(-)"		# CIRCLED MINUS
 U+2297 "(x)"		# CIRCLED TIMES
@@ -1627,13 +1667,26 @@ U+22BA " INTERCALATE "		# INTERCALATE
 U+22BB " XOR "		# XOR
 U+22BC " NAND "		# NAND
 U+22C5 " DOT "		# DOT OPERATOR
+U+22c6 " STAR "
 U+22d6:<.
 U+22d7:>.
 U+22d8:<<<
 U+22d9:>>>
+U+22da:<=|>
+U+22db:>=|<
+U+22dc:=<
+U+22dd:=>
+U+22e2:![_
+U+22e3:!]_
+U+22e4:[!_
+U+22e5:]!_
+U+22e6:<!~
+U+22e7:>!~
 U+22ee::3
 U+22ef:.3
 U+2302:Eh
+U+2303:^
+U+2304:v
 U+2307:~~
 U+2308:<7
 U+2309:>7
@@ -1643,14 +1696,28 @@ U+2310:NI
 U+2312:(A
 U+2315:TR
 U+2318:88
+U+231a:(-/)
+U+231b " >i< "
 U+2320:Iu
 U+2321:Il
 U+2322::(
 U+2323::)
 U+2324:|^|
+U+2325 " OPT "
+U+2326:[X>
 U+2327:[X]
+U+2328:[kbd]
 U+2329:</
 U+232a:/>
+U+232b:<X]
+U+2387 " ALT "
+U+2397:<-pp
+U+2398:pp->
+U+2399:[PrSc]
+U+239a:[ClSc]
+U+23ce " CR "
+U+23cf:_^_
+U+23da:GROUND
 U+2423:Vs
 U+2440:1h
 U+2441:3h
@@ -1858,20 +1925,68 @@ U+25d9:Ic
 U+25e2:Fd
 U+25e3:Bd
 U+25ef:Ci
+U+2600 "SU"	# cf. U+263c
 U+2605:*2
 U+2606:*1
+U+2609 "Sol"	# cf. astronomical symbols U+263d - U+2647 vs star-like depictions U+2600 and U+263c
+U+260c:Conj.
+U+260d:Opp.
 U+260e:TEL
 U+260f:tel
+0x58    U+2611  U+2612  # checked ballot boxes -> x
+U+2613:X
+U+261a:<==
+U+261b:==>
 U+261c:<--
 U+261e:-->
-U+2621 "CAUTION "
+U+2620 "!X!"	# or "POISON ", cf. U+2621
+U+2621 "!C!"	# previously "CAUTION " - or is it better to leave it spelled out in English?
+U+2622 "!R!"	# or "RADIOACTIVE ", cf. U+2621
+U+2623 "!B!"	# or "BIOHAZARD ", cf. U+2621
+U+2624 "2TS"	# cf. U+2695
 U+2627:XP
+U+262a:(*
+U+262e:(PEACE)
+U+262f:Pd
 U+2639::-(
 U+263a::-)
 U+263b:(-:
-U+263c:SU
-U+2640:f.
-U+2642:m.
+U+263c "su"	# previously "SU" - cf. U+2600, typical to have "dark" character in uppercase, eg. U+260e, U+260f
+U+263d "Lun1"	# Luna, 1st quarter
+U+263e "Lun3"	# Luna, 3rd quarter
+U+263f:Mer
+U+2640 "Ven"	# previously "f." - this section labeled as astrological symbols
+U+2641 "Ter"	# Terra, to go with other Latin names
+U+2642 "Mar"	# previously "m." - this section labeled as astrological symbols
+U+2643:Jup
+U+2644:Sat
+U+2645:Ura
+U+2646:Nep
+U+2647:Plu
+U+2648 "Ari"	# Standard astronomical abbreviation
+U+2649 "Tau"	# Standard astronomical abbreviation
+U+264a "Gem"	# Standard astronomical abbreviation
+U+264b "Cnc"	# Standard astronomical abbreviation
+U+264c "Leo"	# Standard astronomical abbreviation
+U+264d "Vir"	# Standard astronomical abbreviation
+U+264e "Lib"	# Standard astronomical abbreviation
+U+264f "Sco"	# Standard astronomical abbreviation
+U+2650 "Sgr"	# Standard astronomical abbreviation
+U+2651 "Cap"	# Standard astronomical abbreviation
+U+2652 "Aqr"	# Standard astronomical abbreviation
+U+2653 "Psc"	# Standard astronomical abbreviation
+U+2654 "k"	# white pieces lowercase
+U+2655:q
+U+2656:r
+U+2657:b
+U+2658:n
+U+2659:p
+U+265a "K"	# black pieces uppercase
+U+265b:Q
+U+265c:R
+U+265d:B
+U+265e:N
+U+265f:P
 U+2660:cS
 U+2661:cH
 U+2662:cD
@@ -1887,8 +2002,66 @@ U+266c:M16
 U+266d:b
 U+266e:Mx
 U+266f:#
+U+2672:recyc
+U+2673:Recy1
+U+2674:Recy2
+U+2675:Recy3
+U+2676:Recy4
+U+2677:Recy5
+U+2678:Recy6
+U+2679:Recy7
+U+267a:Recy
+U+267b:Recyc
+U+267c:oRecy
+U+267d:orecy
+U+267f "oL"	# wheelchair symbol
+U+2680:d1
+U+2681:d2
+U+2682:d3
+U+2683:d4
+U+2684:d5
+U+2685:d6
+U+2695 "$"	# cf. U+2624
+U+2696 "^T^"	# scales of justice
+U+269a "}T{"	# staff of Hermes
+U+269c "}|{"	# fleur-de-lis
+U+26a0 "!W!"	# or "WARNING ", cf. U+2621
+U+26a1 "!V!"	# or "VOLTAGE ", cf. U+2621
+U+26a2 "f.f."	# two females, lesbian
+U+26a3 "m.m."	# two males, homosexual
+U+26a4 "m.f."	# male and female, bisexual
+U+26a5 "mf."	# cf. U+26A4
+U+26a6 "xm."	# transgendered male
+U+26a7 "xmf."	# transgendered male/female
+U+26ac "  o  "	# engaged, betrothed
+U+26ad "oMARo"	# marriage
+U+26ae " D|V "	# divorce
+U+26b0 "/b/"	# buried/coffin
+U+26b1 "/c/"	# cremated/urn
+U+2706:(TEL)
+U+2709 "[v]"	# envelope
 0x58	U+2713	U+2717	# check marks -> x
 U+2720:-X
+U+2a00 "(.)"
+U+2a01 "(+)"
+U+2a02 "(x)"
+U+2a09: *
+U+2a0c "\134int\134int\134int\134int "
+U+2a2f:x
+U+2a30:.x
+U+2a31:x_
+U+2a33:xx
+U+2a34:(x
+U+2a35:x)
+U+2a37:((x))
+U+2a38:(/)
+U+2a39:/+\
+U+2a3a:/-\
+U+2a3b:/x\
+U+2a74:::=
+U+2a75:==
+U+2a76:===
+U+2a77::=:
 #  CJK area:
 0x20	U+3000	# ideographic space
 U+3001:,_

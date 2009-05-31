@@ -1,4 +1,3 @@
-
 #ifndef LYBOOKMARK_H
 #define LYBOOKMARK_H
 
@@ -6,15 +5,21 @@
 #include <LYStructs.h>
 #endif /* LYSTRUCTS_H */
 
-extern BOOLEAN LYHaveSubBookmarks NOPARAMS;
-extern char * get_bookmark_filename PARAMS((char **name));
-extern int LYMBM2index PARAMS((int ch));
-extern int LYindex2MBM PARAMS((int n));
-extern int select_menu_multi_bookmarks NOPARAMS;
-extern int select_multi_bookmarks NOPARAMS;
-extern void LYMBM_statusline PARAMS((char *text));
-extern void remove_bookmark_link PARAMS((int cur, char *cur_bookmark_page));
-extern void save_bookmark_link PARAMS((char *address, char *title));
-extern void set_default_bookmark_page PARAMS((char * value));
+#ifdef __cplusplus
+extern "C" {
+#endif
+    extern BOOLEAN LYHaveSubBookmarks(void);
+    extern const char *get_bookmark_filename(char **name);
+    extern int LYMBM2index(int ch);
+    extern int LYindex2MBM(int n);
+    extern int select_menu_multi_bookmarks(void);
+    extern int select_multi_bookmarks(void);
+    extern void LYMBM_statusline(const char *text);
+    extern void remove_bookmark_link(int cur, char *cur_bookmark_page);
+    extern void save_bookmark_link(const char *address, const char *title);
+    extern void set_default_bookmark_page(char *value);
 
-#endif /* LYBOOKMARK_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* LYBOOKMARK_H */

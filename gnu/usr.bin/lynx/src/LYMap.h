@@ -8,14 +8,21 @@
 #include <HTList.h>
 #include <HTAnchor.h>
 
-extern BOOL LYMapsOnly;
+#ifdef __cplusplus
+extern "C" {
+#endif
+    extern BOOL LYMapsOnly;
 
-extern void ImageMapList_free PARAMS((HTList * list));
-extern BOOL LYAddImageMap PARAMS((char *address, char *title,
-				  HTParentAnchor *node_anchor));
-extern BOOL LYAddMapElement PARAMS((char *map, char *address, char *title,
-				    HTParentAnchor *node_anchor,
-				    BOOL intern_flag));
-extern BOOL LYHaveImageMap PARAMS((char *address));
+    extern void ImageMapList_free(HTList *list);
+    extern void LYPrintImgMaps(FILE *fp);
+    extern BOOL LYAddImageMap(char *address, char *title,
+			      HTParentAnchor *node_anchor);
+    extern BOOL LYAddMapElement(char *map, char *address, char *title,
+				HTParentAnchor *node_anchor,
+				BOOL intern_flag);
+    extern BOOL LYHaveImageMap(char *address);
 
-#endif /* LYMAP_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* LYMAP_H */

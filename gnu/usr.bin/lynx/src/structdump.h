@@ -42,7 +42,6 @@ CTRACE((tfp, "\n" \
 } \
 CTRACE_FLUSH(tfp);
 
-
 /* usage: DUMPSTRUCT_ANCHOR(anchor_ptr, "message"); */
 #define   DUMPSTRUCT_ANCHOR(A,X) \
 if ((A)) { \
@@ -79,7 +78,6 @@ CTRACE((tfp, "\n" \
             "KED:   anchor_ptr=0x00000000  (NULL)     ["X"]\n")); \
 } \
 CTRACE_FLUSH(tfp);
-
 
 /* usage: DUMPSTRUCT_FORM(forminfo_ptr, "message"); */
 #define   DUMPSTRUCT_FORMINFO(F,X) \
@@ -129,7 +127,6 @@ CTRACE((tfp, "\n" \
             "KED: forminfo_ptr=0x00000000  (NULL)     ["X"]\n")); \
 } \
 CTRACE_FLUSH(tfp);
-
 
 /* usage: DUMPSTRUCT_LINE(htline_ptr, "message"); */
 #define   DUMPSTRUCT_LINE(L,X) \

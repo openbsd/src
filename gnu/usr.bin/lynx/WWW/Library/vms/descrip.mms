@@ -18,6 +18,7 @@
 !  03 May 95 (FM)	Include /NoMember for DECC (not the default on AXP,
 !			and the code assumes byte alignment).
 !  07 Jul 95 (FM)	Added GNUC support.
+!  15 Sep 06 (TD)	Cleanup...
 !
 ! Bugs:
 !	The dependencies are anything but complete - they were
@@ -81,83 +82,40 @@ INCLUDES = /Include=([-.Implementation],[---.src],[---])
 ! defines valid for all compilations
 EXTRADEFINES = ACCESS_AUTH, VC="""$(VC)"""
 
+.ifdef WIN_TCP
+NETWORK_DEF = WIN_TCP
+.else
+.ifdef CMU_TCP
+NETWORK_DEF = CMU_TCP
+.else
+.ifdef SOCKETSHR_TCP
+NETWORK_DEF = SOCKETSHR_TCP
+.else
+.ifdef UCX
+NETWORK_DEF = UCX
+.else
+.ifdef TCPWARE
+NETWORK_DEF = TCPWARE,UCX
+.else
+.ifdef DECnet
+NETWORK_DEF = DECNET
+.else !  Default to MultiNet
+NETWORK_DEF = MULTINET
+.endif !  DECnet
+.endif !  TCPWARE
+.endif !  UCX
+.endif !  SOCKETSHR_TCP
+.endif !  CMU_TCP
+.endif !  WIN_TCP
+
 ! DECC flags for all compilations
 .ifdef DEC_C
-DCFLAGS = /NoMember /Warning=(disable=implicitfunc)  $(INCLUDES)
+MY_CFLAGS = /decc/Prefix=All /NoMember /Warning=(disable=implicitfunc) $(INCLUDES)
+.else
+MY_CFLAGS = $(INCLUDES)
 .endif
 
-.ifdef UCX
-TCP = UCX
-.ifdef DEC_C
-CFLAGS = /decc/Prefix=All $(DEBUGFLAGS) $(DCFLAGS) /Define=($(EXTRADEFINES), UCX)
-.else
-CFLAGS = $(DEBUGFLAGS) /Define=($(EXTRADEFINES), UCX) $(INCLUDES)
-.endif
-.endif
-
-.ifdef TCPWARE
-TCP = TCPWARE
-.ifdef DEC_C
-CFLAGS = /decc/Prefix=All $(DEBUGFLAGS) $(DCFLAGS) /Define=($(EXTRADEFINES), UCX, TCPWARE)
-.else
-CFLAGS = $(DEBUGFLAGS) /Define = ($(EXTRADEFINES), UCX, TCPWARE) $(INCLUDES)
-.endif
-.endif
-
-.ifdef MULTINET
-TCP = MULTINET
-.ifdef DEC_C
-CFLAGS = /decc/Prefix=All $(DEBUGFLAGS) $(DCFLAGS) /Define=(_DECC_V4_SOURCE, __SOCKET_TYPEDEFS, $(EXTRADEFINES), MULTINET)
-.else
-CFLAGS = $(DEBUGFLAGS) /Define = ($(EXTRADEFINES), MULTINET) $(INCLUDES)
-.endif
-.endif
-
-.ifdef WIN_TCP
-TCP = WIN_TCP
-.ifdef DEC_C
-CFLAGS = /decc/Prefix=All $(DEBUGFLAGS) $(DCFLAGS) /Define=($(EXTRADEFINES), WIN_TCP)
-.else
-CFLAGS = $(DEBUGFLAGS) /Define = ($(EXTRADEFINES), WIN_TCP) $(INCLUDES)
-.endif
-.endif
-
-.ifdef CMU_TCP
-TCP = CMU_TCP
-.ifdef DEC_C
-CFLAGS = /decc/Prefix=All $(DEBUGFLAGS) $(DCFLAGS) /Define=($(EXTRADEFINES), CMU_TCP)
-.else
-CFLAGS = $(DEBUGFLAGS) /Define = ($(EXTRADEFINES), CMU_TCP) $(INCLUDES)
-.endif
-.endif
-
-.ifdef SOCKETSHR_TCP
-TCP = SOCKETSHR_TCP
-.ifdef DEC_C
-CFLAGS = /decc/Prefix=All $(DEBUGFLAGS) $(DCFLAGS) /Define=($(EXTRADEFINES), _DECC_V4_SOURCE, SOCKETSHR_TCP)
-.else
-CFLAGS = $(DEBUGFLAGS) /Define = ($(EXTRADEFINES), SOCKETSHR_TCP) $(INCLUDES)
-.endif
-.endif
-
-.ifdef DECNET
-TCP = DECNET
-.ifdef DEC_C
-CFLAGS = /decc/Prefix=All $(DEBUGFLAGS) $(DCFLAGS) /Define=($(EXTRADEFINES), DECNET)
-.else
-CFLAGS = $(DEBUGFLAGS) /Define = ($(EXTRADEFINES), DECNET) $(INCLUDES)
-.endif
-.endif
-
-.ifdef TCP
-.else
-TCP = MULTINET			! (Default to MULTINET)
-.ifdef DEC_C
-CFLAGS = /decc/Prefix=All $(DEBUGFLAGS) $(DCFLAGS) /Define=(_DECC_V4_SOURCE, __SOCKET_TYPEDEFS, $(EXTRADEFINES), MULTINET)
-.else
-CFLAGS = $(DEBUGFLAGS) /Define = ($(EXTRADEFINES), MULTINET) $(INCLUDES)
-.endif
-.endif
+CFLAGS = $(DEBUGFLAGS) $(MY_CFLAGS) /Define=($(EXTRADEFINES), $(NETWORK_DEF))
 
 .ifdef GNU_C
 CC = gcc
@@ -196,12 +154,12 @@ MODULES = HTParse, HTAccess, HTTP, HTFile, HTBTree, HTFTP, HTTCP, HTString, -
 !___________________________________________________________________
 ! WWW Library
 
-!library : $(HEADERS)  wwwlib_$(TCP)($(MODULES))
-library : wwwlib_$(TCP)($(MODULES))
+!library : $(HEADERS)  wwwlib($(MODULES))
+library : wwwlib($(MODULES))
  	@ Continue
 
-build_$(TCP).com : descrip.mms
-	$(MMS) /NoAction /From_Sources /Output = Build_$(TCP).com /Macro = ($(TCP)=1)
+build_www.com : descrip.mms
+	$(MMS) /NoAction /From_Sources /Output = build_www.com /Macro = ($(NETWORK_DEF)=1)
 
 clean :
 	- Set Protection = (Owner:RWED) *.*;-1

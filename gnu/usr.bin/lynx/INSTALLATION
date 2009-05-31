@@ -33,7 +33,7 @@ Step 1.  Compile-time Variables.
   and there are others you may want to change.
 
   Lynx MUST be able to find lynx.cfg at start-up: using configure
-  (e.g. with UNIX or Cygwin), its location is best set with --libdir ;
+  (e.g. with UNIX or Cygwin), its location is best set with --sysconfdir ;
   you can check in lynx_cfg.h after configure has run, if you wish.
   otherwise, you can use LYNX_CFG_FILE in userdefs.h ,
   environment variable LYNX_CFG or the -cfg command-line option.
@@ -172,12 +172,28 @@ II. Compile instructions -- UNIX
     order shown by the -help option is different.  See "docs/README.defines"
     for information on defines for which there are no option switches.
 
+  --datadir
+	Defines the location where you want the documentation files installed. 
+	The configure script constructs makefile actions to install lynx.cfg
+	modified to reflect this in the HELPFILE setting.  (For platforms which
+	do not support a configure script, such as MS-DOS, Win32 and VMS, you
+	must edit lynx.cfg).
+
   --disable-alt-bindings 		(prevent defining EXP_ALT_BINDINGS)
 	Compiles-in an alternative set of line-edit bindings, in addition
 	to the default bindings.
 
   --disable-bibp-urls			(define DISABLE_BIBP)
 	Disable (do not compile code) support for bibp: URLs.
+
+  --disable-color-style			(define USE_COLOR_STYLE)
+	Use this option to disable optional color style.  This is implemented
+	for modern curses implementations, e.g., those that support color.
+
+	Before lynx 2.8.6dev.18, this option was disabled by default.
+	You can achieve a similar color effect to match the non-color-style
+	(but still allowing users to use color-style) by using the
+	--without-lss-file option.
 
   --disable-config-info			(define NO_CONFIG_INFO)
   	Use this option to disable extended browsable configuration information
@@ -251,17 +267,14 @@ II. Compile instructions -- UNIX
   --disable-finger			(define DISABLE_FINGER)
 	Do not compile-in code used to connect to "finger" URLs.
 
-  --disable-ftp				(define DISABLE_FTP)
-	Do not compile-in code used to connect to FTP servers.
-
   --disable-forms-options		(define NO_OPTION_FORMS)
 	Disable the Form-based Options Menu (see --disable-menu-options).
 	The default is to compile key-based & form-based Options Menu code,
 	allowing users the final choice via FORMS_OPTIONS in lynx.cfg
 	or the -forms_options command-line switch.
 
-  --disable-gopher			(define DISABLE_GOPHER)
-	Do not compile-in code used to connect to GOPHER servers.
+  --disable-ftp				(define DISABLE_FTP)
+	Do not compile-in code used to connect to FTP servers.
 
   --disable-full-paths
   	Use this option to control whether full pathnames are compiled in for
@@ -280,10 +293,21 @@ II. Compile instructions -- UNIX
 
 		setenv TELNET /bin/false
 
+  --disable-gopher			(define DISABLE_GOPHER)
+	Do not compile-in code used to connect to GOPHER servers.
+
   --disable-included-msgs
 	Do not use included messages, for i18n support.  If NLS support is
 	requested, the configure script will otherwise use the messages in the
 	./po subdirectory.
+
+  --disable-justify-elts		(define EXP_JUSTIFY_ELTS)
+	Do not use element-justification logic.
+
+  --disable-largefiles			(prevent defining LONG_LIST)
+
+	Use this option to disable the compiler and linker options that
+	provide largefile interfaces.
 
   --disable-long-list			(prevent defining LONG_LIST)
 	Use this option to disable long "ls -l" directory listings (when
@@ -335,13 +359,13 @@ II. Compile instructions -- UNIX
 	Compiles-in an alternative list-page, bound to 'A' rather than 'l',
 	which always lists URLs rather than titles.
 
-  --enable-change-exec			(define ENABLE_OPTS_CHANGE_EXEC)
-  	Allow users to change the execution status within the options screen.
-	See EXEC_LINKS and EXEC_SCRIPTS.
-
   --enable-cgi-links			(define LYNXCGI_LINKS)
 	Allows lynx to access a cgi script directly without the need for
 	a http daemon.
+
+  --enable-change-exec			(define ENABLE_OPTS_CHANGE_EXEC)
+  	Allow users to change the execution status within the options screen.
+	See EXEC_LINKS and EXEC_SCRIPTS.
 
   --enable-charset-choice		(define EXP_CHARSET_CHOICE)
 	Add logic for ASSUMED_DOC_CHARSET_CHOICE and DISPLAY_CHARSET_CHOICE in
@@ -351,11 +375,6 @@ II. Compile instructions -- UNIX
   --enable-cjk				(define CJK_EX)
 	Add experimental logic for supporting CJK documents.  (This is not
 	necessary for CJK support and may go away in a future release.)
-
-  --enable-color-style			(define USE_COLOR_STYLE)
-  	Use this option to enable optional and *experimental* color style.
-	This is implemented for curses (if it supports color), ncurses and
-	PDCurses, but not slang.
 
   --enable-debug			(The symbol DEBUG is always defined.)
         Use this option to compile-in support for debugging.
@@ -397,12 +416,6 @@ II. Compile instructions -- UNIX
 	generate an HTMLized copy of lynx.cfg which will be installed with
 	the other help files.
 
-  --enable-ipv6         		(define ENABLE_IPV6)
-	use experimental IPV6 (with IPV4) logic.
-
-  --enable-justify-elts			(define EXP_JUSTIFY_ELTS)
-	use experimental element-justification logic.
-
   --enable-internal-links		(prevent defining DONT_TRACK_INTERNAL_LINKS)
         With `internal links' (links within a document to a location within
         the same document) enabled, Lynx will distinguish between, for example,
@@ -414,6 +427,12 @@ II. Compile instructions -- UNIX
         mistaken resubmissions of form content with the POST method.  An
         alternate opinion asserts that the feature could actually result in
         inappropriate resubmission of form content.
+
+  --enable-ipv6         		(define ENABLE_IPV6)
+	use experimental IPV6 (with IPV4) logic.
+
+  --enable-japanese-utf8		(define EXP_JAPANESEUTF8_SUPPORT)
+	use experimental Japanese UTF-8 logic.
 
   --enable-kbd-layout			(define EXP_KEYBOARD_LAYOUT)
 	Disabled by default, this option allows you to use translation
@@ -459,16 +478,36 @@ II. Compile instructions -- UNIX
   --enable-warnings
 	Use this option to turn on GCC compiler warnings.
 
-  --libdir				(affect LYNX_CFG_FILE)
+  --enable-widec
+	Use this option to allow the configure script to look for wide-curses
+	features.  If you do not specify the option, the configure script
+	will look for these features if --with-screen=ncursesw is given.
+	For this release of Lynx, we recommend the ncursew library built from
+	ncurses 5.5.
+
+  --sysconfdir				(affect LYNX_CFG_FILE)
 	Defines the location where you want the lynx.cfg file installed.
 	The configure script defines the symbol LYNX_CFG_FILE to correspond
-	with the $libdir environment variable.  (For platforms which do not
+	with the $sysconfdir environment variable.  (For platforms which do not
 	support a configure script, such as MS-DOS, Win32 and VMS, you must
 	edit userdefs.h if you wish to specify the location of lynx.cfg).
+
+  --with-Xaw3d
+	This option allows you to specify the X libraries used if you
+	are configuring lynx to use PDCurses on a Unix platform.
+
+  --with-XawPlus
+	This option allows you to specify the X libraries used if you
+	are configuring lynx to use PDCurses on a Unix platform.
 
   --with-charsets=list			(define ALL_CHARSETS)
  	Limit the number of charsets that are compiled-in to the specified
 	list of comma-separated MIME names.
+
+  --with-cfg-file			(define LYNX_CFG_FILE)
+	Specify the default configuration file's name.  Use --without-cfg-file
+	to force the user to specify the configuration file on the command
+	line.
 
   --with-curses-dir
 	Specify directory under which curses/ncurses is installed.  This
@@ -499,6 +538,15 @@ II. Compile instructions -- UNIX
   --with-libiconv-prefix=DIR
 	search for libiconv in DIR/include and DIR/lib
 
+  --with-lss-file{=path}		(define LYNX_LSS_FILE)
+	Specify the default style-sheet file's name.  Use --without-lss-file
+	to make the default behavior match the non-color-style (if no --lss
+	option is given, and no COLOR_STYLE setting is in lynx.cfg).
+
+  --with-neXtaw
+	This option allows you to specify the X libraries used if you
+	are configuring lynx to use PDCurses on a Unix platform.
+
   --with-nls-datadir=DIR
 	Use this option to override the configure script's NLS data directory,
 	under which the locale (i.e., language) files are installed.  The
@@ -520,7 +568,7 @@ II. Compile instructions -- UNIX
 	Note that some systems may have a default curses library which
 	does not support color, while on others, ncurses is installed as
 	the curses library.  The variant ncursesw is the wide-character
-	version of ncurses.
+	version of ncurses.  See also the --enable-widec option.
 
 	The pdcurses selection supported by the configure script is a UNIX-only
 	library which uses X11.  If you are configuring with DJGPP, the likely
@@ -559,6 +607,34 @@ II. Compile instructions -- UNIX
 	can be found, and may be either the path of the "lib" directory,
 	or one level above.  In either case, the corresponding header files
 	are assumed to be in the parallel "include" directory.
+
+    --with-build-cc=XXX
+	If cross-compiling, specify a host C compiler, which is needed to
+	compile a utility which generates tables for lynx.
+	If you do not give this option, the configure script checks if the
+	$BUILD_CC variable is set, and otherwise defaults to gcc or cc.
+
+    --with-build-cpp=XXX
+	This is unused by lynx.
+
+    --with-build-cflags=XXX
+	If cross-compiling, specify the host C compiler-flags.  You might need
+	to do this if the target compiler has unusual flags which confuse the
+	host compiler.
+
+    --with-build-cppflags=XXX
+	If cross-compiling, specify the host C preprocessor-flags.  You might
+	need to do this if the target compiler has unusual flags which confuse
+	the host compiler.
+
+    --with-build-ldflags=XXX
+	If cross-compiling, specify the host linker-flags.  You might need to
+	do this if the target linker has unusual flags which confuse the host
+	compiler.
+
+    --with-build-libs=XXX
+	If cross-compiling, the host libraries.  You might need to do this if
+	the target environment requires unusual libraries.
 
   --with-bzlib				(define USE_BZLIB)
 	Use libbz2 for decompression of some bzip2 files.
@@ -620,7 +696,7 @@ II. Compile instructions -- UNIX
 	setenv CPPFLAGS "-I$HOME/slang -I$HOME/.usr/include"
 	setenv LIBS "-L$HOME/.slang/lib -L$HOME/.usr/lib"
 	./configure --exec-prefix=$HOME --bindir=$HOME/.lynx \
-		--mandir=$HOME/.usr/man --libdir=$HOME/.usr/lib \
+		--mandir=$HOME/.usr/man --sysconfdir=$HOME/.usr/lib \
 		--with-screen=slang --with-zlib
 
     CPPFLAGS in this example defines the full path to the slang and zlib header
@@ -628,7 +704,7 @@ II. Compile instructions -- UNIX
     the nonstandard locations of libslang.a and libz.a.  Setting the option
     --bindir tells the configure script where I want to install the lynx
     binary; setting --mandir tells it where to put the lynx.1 man page, and
-    setting --libdir tells it (while at the same time defining LYNX_CFG_FILE)
+    setting --sysconfdir tells it (while at the same time defining LYNX_CFG_FILE)
     where to put the configuration file "lynx.cfg", when I type "make install".
     The --with-screen=slang and --with-zlib options are explained above.
 
@@ -1106,7 +1182,7 @@ V. Compile instructions -- 386 DOS
     --enable-file-upload \
     --enable-nested-tables \
     --enable-nls \
-    --libdir=d:/djgpp/lynx-rel/lynx-cnf \
+    --sysconfdir=d:/djgpp/lynx-rel/lynx-cnf \
     --with-bzlib \
     --with-zlib \
     --with-ssl

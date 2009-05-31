@@ -16,19 +16,24 @@
 
 #include <UCMap.h>
 
-typedef struct {
-	int	size;		/* In bytes			*/
-	int	growby;		/* Allocation unit in bytes	*/
-	int	allocated;	/* Current size of *data	*/
-	char *	data;		/* Pointer to malloced area or 0 */
-	int	failok;		/* allowed to fail without exiting program? */
-} HTChunk;
+#ifdef __cplusplus
+extern "C" {
+#endif
+    typedef struct _HTChunk HTChunk;
 
+    struct _HTChunk {
+	int size;		/* In bytes                     */
+	int growby;		/* Allocation unit in bytes     */
+	int allocated;		/* Current size of *data        */
+	char *data;		/* Pointer to malloc'd area or 0 */
+	int failok;		/* allowed to fail without exiting program? */
+	HTChunk *next;		/* pointer to the next chunk */
+    };
 
 /*
  * Initialize a chunk's allocation data and allocation-increment.
  */
-extern void HTChunkInit PARAMS((HTChunk * ch, int grow));
+    extern void HTChunkInit(HTChunk *ch, int grow);
 
 /*
  *
@@ -46,7 +51,7 @@ extern void HTChunkInit PARAMS((HTChunk * ch, int grow));
  *
  */
 
-extern HTChunk * HTChunkCreate PARAMS((int growby));
+    extern HTChunk *HTChunkCreate(int growby);
 
 /*
  *  Create a chunk for which an allocation error is not a fatal application
@@ -55,14 +60,13 @@ extern HTChunk * HTChunkCreate PARAMS((int growby));
  *  are ok each time after data have been appended.
  *  The create call may also fail and will reurn NULL in that case. - kw
  */
-extern HTChunk * HTChunkCreateMayFail PARAMS((int growby, int failok));
+    extern HTChunk *HTChunkCreateMayFail(int growby, int failok);
 
 /*
  *  Like HTChunkCreate but with initial allocation - kw
  *
  */
-extern HTChunk * HTChunkCreate2 PARAMS((int growby, size_t needed));
-
+    extern HTChunk *HTChunkCreate2(int growby, size_t needed);
 
 /*
  *
@@ -78,8 +82,7 @@ extern HTChunk * HTChunkCreate2 PARAMS((int growby, size_t needed));
  *
  */
 
-extern void HTChunkFree PARAMS((HTChunk * ch));
-
+    extern void HTChunkFree(HTChunk *ch);
 
 /*
  *
@@ -95,8 +98,7 @@ extern void HTChunkFree PARAMS((HTChunk * ch));
  *
  */
 
-extern void HTChunkClear PARAMS((HTChunk * ch));
-
+    extern void HTChunkClear(HTChunk *ch);
 
 /*
  *
@@ -114,8 +116,7 @@ extern void HTChunkClear PARAMS((HTChunk * ch));
  *
  */
 
-extern BOOL HTChunkRealloc PARAMS((HTChunk * ch, int growby));
-
+    extern BOOL HTChunkRealloc(HTChunk *ch, int growby);
 
 /*
  *
@@ -133,8 +134,7 @@ extern BOOL HTChunkRealloc PARAMS((HTChunk * ch, int growby));
  *
  */
 
-extern void HTChunkEnsure PARAMS((HTChunk * ch, int s));
-
+    extern void HTChunkEnsure(HTChunk *ch, int s);
 
 /*
  *
@@ -151,11 +151,11 @@ extern void HTChunkEnsure PARAMS((HTChunk * ch, int s));
  *   *ch		Is one character bigger
  *
  */
-extern void HTChunkPutc PARAMS((HTChunk * ch, char c));
+    extern void HTChunkPutc(HTChunk *ch, char c);
 
-extern void HTChunkPutb PARAMS((HTChunk * ch, CONST char *b, int l));
+    extern void HTChunkPutb(HTChunk *ch, const char *b, int l);
 
-extern void HTChunkPutUtf8Char PARAMS((HTChunk * ch, UCode_t code));
+    extern void HTChunkPutUtf8Char(HTChunk *ch, UCode_t code);
 
 /*
  * Append a string to a  chunk
@@ -172,9 +172,7 @@ extern void HTChunkPutUtf8Char PARAMS((HTChunk * ch, UCode_t code));
  *
  */
 
-
-extern void HTChunkPuts PARAMS((HTChunk * ch, CONST char *str));
-
+    extern void HTChunkPuts(HTChunk *ch, const char *str);
 
 /*
  *
@@ -194,7 +192,34 @@ extern void HTChunkPuts PARAMS((HTChunk * ch, CONST char *str));
  *
  */
 
+    extern void HTChunkTerminate(HTChunk *ch);
 
-extern void HTChunkTerminate PARAMS((HTChunk * ch));
+/* like the above but no realloc: extend to another chunk if necessary */
+/*
+ *
+ * Append a character (string, data) to a chunk
+ *
+ *   ON ENTRY,
+ *
+ *   ch                        A valid chunk pointer made by HTChunkCreate()
+ *
+ *   c                 The character to be appended
+ *
+ *   ON EXIT,
+ *
+ *   returns           original chunk or a pointer to the new chunk
+ *                     (orginal chunk is referenced to the new one
+ *                     by the field 'next')
+ *
+ */
+    extern HTChunk *HTChunkPutc2(HTChunk *ch, char c);
+    extern HTChunk *HTChunkPuts2(HTChunk *ch, const char *str);
+    extern HTChunk *HTChunkPutb2(HTChunk *ch, const char *b, int l);
 
-#endif /* HTCHUNK_H */
+/* New pool infrastructure: UNlike the above, store data using alignment */
+    extern HTChunk *HTChunkPutb0(HTChunk *ch, const char *b, int l);
+
+#ifdef __cplusplus
+}
+#endif
+#endif				/* HTCHUNK_H */

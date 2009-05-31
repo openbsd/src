@@ -27,10 +27,17 @@
 
 #include <HTAccess.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #ifdef GLOBALREF_IS_MACRO
-extern GLOBALREF(HTProtocol, HTWAIS);
-#else
-GLOBALREF HTProtocol HTWAIS;
-#endif /* GLOBALDEF_IS_MACRO */
+    extern GLOBALREF (HTProtocol, HTWAIS);
 
-#endif /* HTWAIS_H */
+#else
+    GLOBALREF HTProtocol HTWAIS;
+#endif				/* GLOBALDEF_IS_MACRO */
+
+#ifdef __cplusplus
+}
+#endif
+#endif				/* HTWAIS_H */

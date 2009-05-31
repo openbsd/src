@@ -5,10 +5,17 @@
 #include <LYStructs.h>
 #endif /* LYSTRUCTS_H */
 
-extern BOOL LYVersionIsRelease NOPARAMS;
-extern char *LYVersionStatus NOPARAMS;
-extern char *LYVersionDate NOPARAMS;
-extern int LYShowInfo PARAMS((DocInfo *doc, int size_of_file, DocInfo *newdoc,
-							char *owner_address));
+#ifdef __cplusplus
+extern "C" {
+#endif
+    extern BOOL LYVersionIsRelease(void);
+    extern const char *LYVersionStatus(void);
+    extern const char *LYVersionDate(void);
+    extern int LYShowInfo(DocInfo *doc,
+			  DocInfo *newdoc,
+			  char *owner_address);
 
-#endif /* LYSHOWINFO_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* LYSHOWINFO_H */

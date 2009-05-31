@@ -11,91 +11,91 @@
 
 #include <HTAnchor.h>
 
-extern BOOL HTVMSFileVersions;	/* Include version numbers in listing? */
+#ifdef __cplusplus
+extern "C" {
+#endif
+    extern BOOL HTVMSFileVersions;	/* Include version numbers in listing? */
 
 /* PUBLIC							HTVMS_authSysPrv()
-**		CHECKS IF THIS PROCESS IS AUTHORIZED TO ENABLE SYSPRV
-** ON ENTRY:
-**	No arguments.
-**
-** ON EXIT:
-**	returns	YES if SYSPRV is authorized
-*/
-PUBLIC BOOL HTVMS_authSysPrv NOPARAMS;
-
+ *		CHECKS IF THIS PROCESS IS AUTHORIZED TO ENABLE SYSPRV
+ * ON ENTRY:
+ *	No arguments.
+ *
+ * ON EXIT:
+ *	returns	YES if SYSPRV is authorized
+ */
+    extern BOOL HTVMS_authSysPrv(void);
 
 /* PUBLIC							HTVMS_enableSysPrv()
-**		ENABLES SYSPRV
-** ON ENTRY:
-**	No arguments.
-**
-** ON EXIT:
-**
-*/
-PUBLIC void HTVMS_enableSysPrv NOPARAMS;
-
+ *		ENABLES SYSPRV
+ * ON ENTRY:
+ *	No arguments.
+ *
+ * ON EXIT:
+ *
+ */
+    extern void HTVMS_enableSysPrv(void);
 
 /* PUBLIC							HTVMS_disableSysPrv()
-**		DISABLES SYSPRV
-** ON ENTRY:
-**	No arguments.
-**
-** ON EXIT:
-**
-*/
-PUBLIC void HTVMS_disableSysPrv NOPARAMS;
+ *		DISABLES SYSPRV
+ * ON ENTRY:
+ *	No arguments.
+ *
+ * ON EXIT:
+ *
+ */
+    extern void HTVMS_disableSysPrv(void);
 
 /* PUBLIC							HTVMS_checkAccess()
-**		CHECKS ACCESS TO FILE FOR CERTAIN USER
-** ON ENTRY:
-**	FileName	The file to be accessed
-**	UserName	Name of the user to check access for
-**
-** ON EXIT:
-**	returns YES if access is allowed
-**
-*/
-PUBLIC BOOL HTVMS_checkAccess PARAMS((
-	CONST char * FileName,
-	CONST char * UserName,
-	CONST char * Method));
-
+ *		CHECKS ACCESS TO FILE FOR CERTAIN USER
+ * ON ENTRY:
+ *	FileName	The file to be accessed
+ *	UserName	Name of the user to check access for
+ *
+ * ON EXIT:
+ *	returns YES if access is allowed
+ *
+ */
+    extern BOOL HTVMS_checkAccess(const char *FileName,
+				  const char *UserName,
+				  const char *Method);
 
 /* PUBLIC							HTVMS_wwwName()
-**		CONVERTS VMS Name into WWW Name
-** ON ENTRY:
-**	vmsname		VMS file specification (NO NODE)
-**
-** ON EXIT:
-**	returns		www file specification
-**
-** EXAMPLES:
-**	vmsname				wwwname
-**	DISK$USER			disk$user
-**	DISK$USER:			/disk$user/
-**	DISK$USER:[DUNS]		/disk$user/duns
-**	DISK$USER:[DUNS.ECHO]		/disk$user/duns/echo
-**	[DUNS]				duns
-**	[DUNS.ECHO]			duns/echo
-**	[DUNS.ECHO.-.TRANS]		duns/echo/../trans
-**	[DUNS.ECHO.--.TRANS]		duns/echo/../../trans
-**	[.DUNS]				duns
-**	[.DUNS.ECHO]			duns/echo
-**	[.DUNS.ECHO]TEST.COM		duns/echo/test.com
-**	TEST.COM			test.com
-**
-**
-*/
-PUBLIC char * HTVMS_wwwName PARAMS((
-	CONST char *	vmsname));
+ *		CONVERTS VMS Name into WWW Name
+ * ON ENTRY:
+ *	vmsname		VMS file specification (NO NODE)
+ *
+ * ON EXIT:
+ *	returns		www file specification
+ *
+ * EXAMPLES:
+ *	vmsname				wwwname
+ *	DISK$USER			disk$user
+ *	DISK$USER:			/disk$user/
+ *	DISK$USER:[DUNS]		/disk$user/duns
+ *	DISK$USER:[DUNS.ECHO]		/disk$user/duns/echo
+ *	[DUNS]				duns
+ *	[DUNS.ECHO]			duns/echo
+ *	[DUNS.ECHO.-.TRANS]		duns/echo/../trans
+ *	[DUNS.ECHO.--.TRANS]		duns/echo/../../trans
+ *	[.DUNS]				duns
+ *	[.DUNS.ECHO]			duns/echo
+ *	[.DUNS.ECHO]TEST.COM		duns/echo/test.com
+ *	TEST.COM			test.com
+ *
+ *
+ */
+    const extern char *HTVMS_wwwName(const char *vmsname);
 
-PUBLIC int HTVMSBrowseDir PARAMS((
-	CONST char * address,
-	HTParentAnchor * anchor,
-	HTFormat format_out,
-	HTStream * sink));
+    extern int HTVMSBrowseDir(const char *address,
+			      HTParentAnchor *anchor,
+			      HTFormat format_out,
+			      HTStream *sink);
 
-extern int HTVMS_remove(char *filename);
-extern void HTVMS_purge(char *filename);
+    extern int HTVMS_remove(char *filename);
+    extern void HTVMS_purge(char *filename);
 
-#endif /* not HTVMSUTIL_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* not HTVMSUTIL_H */

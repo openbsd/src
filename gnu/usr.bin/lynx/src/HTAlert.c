@@ -1,13 +1,13 @@
 /*	Displaying messages and getting input for Lynx Browser
-**	==========================================================
-**
-**	REPLACE THIS MODULE with a GUI version in a GUI environment!
-**
-** History:
-**	   Jun 92 Created May 1992 By C.T. Barker
-**	   Feb 93 Simplified, portablised TBL
-**
-*/
+ *	==========================================================
+ *
+ *	REPLACE THIS MODULE with a GUI version in a GUI environment!
+ *
+ * History:
+ *	   Jun 92 Created May 1992 By C.T. Barker
+ *	   Feb 93 Simplified, portablised TBL
+ *
+ */
 
 #include <HTUtils.h>
 #include <HTAlert.h>
@@ -18,13 +18,13 @@
 #include <LYClean.h>
 #include <GridText.h>
 #include <LYCookie.h>
-#include <LYHistory.h> /* store statusline messages */
+#include <LYHistory.h>		/* store statusline messages */
 
 #include <LYLeaks.h>
 
 #include <HTParse.h>
 
-#undef timezone	/* U/Win defines this in time.h, hides implementation detail */
+#undef timezone			/* U/Win defines this in time.h, hides implementation detail */
 
 #if defined(HAVE_FTIME) && defined(HAVE_SYS_TIMEB_H)
 #include <sys/timeb.h>
@@ -41,22 +41,27 @@
 #endif
 
 /*	Issue a message about a problem.		HTAlert()
-**	--------------------------------
-*/
-PUBLIC void HTAlert ARGS1(
-	CONST char *,	Msg)
+ *	--------------------------------
+ */
+void HTAlert(const char *Msg)
 {
     CTRACE((tfp, "\nAlert!: %s\n\n", Msg));
     CTRACE_FLUSH(tfp);
     _user_message(ALERT_FORMAT, Msg);
     LYstore_message2(ALERT_FORMAT, Msg);
 
+    if (dump_output_immediately && dump_to_stderr) {
+	fflush(stdout);
+	fprintf(stderr, ALERT_FORMAT, Msg);
+	fputc('\n', stderr);
+	fflush(stderr);
+    }
+
     LYSleepAlert();
 }
 
-PUBLIC void HTAlwaysAlert ARGS2(
-	CONST char *,	extra_prefix,
-	CONST char *,	Msg)
+void HTAlwaysAlert(const char *extra_prefix,
+		   const char *Msg)
 {
     if (!dump_output_immediately && LYCursesON) {
 	HTAlert(Msg);
@@ -81,13 +86,12 @@ PUBLIC void HTAlwaysAlert ARGS2(
 }
 
 /*	Issue an informational message.			HTInfoMsg()
-**	--------------------------------
-*/
-PUBLIC void HTInfoMsg ARGS1(
-	CONST char *,	Msg)
+ *	--------------------------------
+ */
+void HTInfoMsg(const char *Msg)
 {
     _statusline(Msg);
-    if (Msg && *Msg) {
+    if (non_empty(Msg)) {
 	CTRACE((tfp, "Info message: %s\n", Msg));
 	LYstore_message(Msg);
 	LYSleepInfo();
@@ -95,13 +99,12 @@ PUBLIC void HTInfoMsg ARGS1(
 }
 
 /*	Issue an important message.			HTUserMsg()
-**	--------------------------------
-*/
-PUBLIC void HTUserMsg ARGS1(
-	CONST char *,	Msg)
+ *	--------------------------------
+ */
+void HTUserMsg(const char *Msg)
 {
     _statusline(Msg);
-    if (Msg && *Msg) {
+    if (non_empty(Msg)) {
 	CTRACE((tfp, "User message: %s\n", Msg));
 	LYstore_message(Msg);
 #if !(defined(USE_SLANG) || defined(WIDEC_CURSES))
@@ -114,12 +117,10 @@ PUBLIC void HTUserMsg ARGS1(
     }
 }
 
-PUBLIC void HTUserMsg2 ARGS2(
-	CONST char *,	Msg2,
-	CONST char *,	Arg)
+void HTUserMsg2(const char *Msg2, const char *Arg)
 {
     _user_message(Msg2, Arg);
-    if (Msg2 && *Msg2) {
+    if (non_empty(Msg2)) {
 	CTRACE((tfp, "User message: "));
 	CTRACE((tfp, Msg2, Arg));
 	CTRACE((tfp, "\n"));
@@ -129,10 +130,9 @@ PUBLIC void HTUserMsg2 ARGS2(
 }
 
 /*	Issue a progress message.			HTProgress()
-**	-------------------------
-*/
-PUBLIC void HTProgress ARGS1(
-	CONST char *,	Msg)
+ *	-------------------------
+ */
+void HTProgress(const char *Msg)
 {
     statusline(Msg);
     LYstore_message(Msg);
@@ -140,11 +140,10 @@ PUBLIC void HTProgress ARGS1(
     LYSleepDebug();
 }
 
-PUBLIC CONST char *HTProgressUnits ARGS1(
-	int,		rate)
+const char *HTProgressUnits(int rate)
 {
-    static CONST char *bunits = 0;
-    static CONST char *kbunits = 0;
+    static const char *bunits = 0;
+    static const char *kbunits = 0;
 
     if (!bunits) {
 	bunits = gettext("bytes");
@@ -152,24 +151,21 @@ PUBLIC CONST char *HTProgressUnits ARGS1(
     }
     return ((rate == rateKB)
 #ifdef USE_READPROGRESS
-    	    || (rate == rateEtaKB)
+	    || (rate == rateEtaKB)
 #endif
-	    ) ? kbunits : bunits;
+	)? kbunits : bunits;
 }
 
-PRIVATE CONST char *sprint_bytes ARGS3(
-	char *,		s,
-	long,		n,
-	CONST char *, 	was_units)
+static const char *sprint_bytes(char *s, long n, const char *was_units)
 {
     static long kb_units = 1024;
-    CONST char *u = HTProgressUnits(LYTransferRate);
+    const char *u = HTProgressUnits(LYTransferRate);
 
     if (LYTransferRate == rateKB || LYTransferRate == rateEtaKB_maybe) {
 	if (n >= 10 * kb_units) {
-	    sprintf(s, "%ld", n/kb_units);
+	    sprintf(s, "%ld", n / kb_units);
 	} else if (n > 999) {	/* Avoid switching between 1016b/s and 1K/s */
-	    sprintf(s, "%.2g", ((double)n)/kb_units);
+	    sprintf(s, "%.2g", ((double) n) / kb_units);
 	} else {
 	    sprintf(s, "%ld", n);
 	    u = HTProgressUnits(rateBYTES);
@@ -185,49 +181,46 @@ PRIVATE CONST char *sprint_bytes ARGS3(
 
 #ifdef USE_READPROGRESS
 #define TIME_HMS_LENGTH (16)
-PRIVATE char *sprint_tbuf ARGS2(
-	char *,	       s,
-	long,	       t)
+static char *sprint_tbuf(char *s, long t)
 {
     if (t > 3600)
-	sprintf (s, "%ldh%ldm%lds", t / 3600, (t / 60) % 60, t % 60);
+	sprintf(s, "%ldh%ldm%lds", t / 3600, (t / 60) % 60, t % 60);
     else if (t > 60)
-	sprintf (s, "%ldm%lds", t / 60, t % 60);
+	sprintf(s, "%ldm%lds", t / 60, t % 60);
     else
-	sprintf (s, "%ld sec", t);
+	sprintf(s, "%ld sec", t);
     return s;
 }
 #endif /* USE_READPROGRESS */
 
 /*	Issue a read-progress message.			HTReadProgress()
-**	------------------------------
-*/
-PUBLIC void HTReadProgress ARGS2(
-	long,		bytes,
-	long,		total)
+ *	------------------------------
+ */
+void HTReadProgress(long bytes, long total)
 {
     static long bytes_last, total_last;
     static long transfer_rate = 0;
     static char *line = NULL;
     char bytesp[80], totalp[80], transferp[80];
     int renew = 0;
-    CONST char *was_units;
+    const char *was_units;
 
 #ifdef HAVE_GETTIMEOFDAY
     struct timeval tv;
     double now;
     static double first, last, last_active;
-    gettimeofday(&tv, (struct timezone *)0);
-    now = tv.tv_sec + tv.tv_usec/1000000. ;
+
+    gettimeofday(&tv, (struct timezone *) 0);
+    now = tv.tv_sec + tv.tv_usec / 1000000.;
 #else
 #if defined(HAVE_FTIME) && defined(HAVE_SYS_TIMEB_H)
     static double now, first, last, last_active;
     struct timeb tb;
 
     ftime(&tb);
-    now = tb.time + (double)tb.millitm / 1000;
+    now = tb.time + (double) tb.millitm / 1000;
 #else
-    time_t now = time((time_t *)0);  /* once per second */
+    time_t now = time((time_t *) 0);	/* once per second */
     static time_t first, last, last_active;
 #endif
 #endif
@@ -243,10 +236,10 @@ PUBLIC void HTReadProgress ARGS2(
 	total = total_last;
     }
     if ((bytes > 0) &&
-	       (now != first))
-		/* 1 sec delay for transfer_rate calculation without g-t-o-d */ {
-	if (transfer_rate <= 0)    /* the very first time */
-	    transfer_rate = (long)((bytes) / (now - first));   /* bytes/sec */
+	(now != first))
+	/* 1 sec delay for transfer_rate calculation without g-t-o-d */  {
+	if (transfer_rate <= 0)	/* the very first time */
+	    transfer_rate = (long) ((bytes) / (now - first));	/* bytes/sec */
 	total_last = total;
 
 	/*
@@ -272,7 +265,7 @@ PUBLIC void HTReadProgress ARGS2(
 		if (bytes_last != bytes)
 		    last_active = now;
 		bytes_last = bytes;
-		transfer_rate = (long)(bytes / (now - first)); /* more accurate value */
+		transfer_rate = (long) (bytes / (now - first));		/* more accurate value */
 	    }
 
 	    if (total > 0)
@@ -282,32 +275,32 @@ PUBLIC void HTReadProgress ARGS2(
 	    sprint_bytes(bytesp, bytes, was_units);
 
 	    if (total > 0)
-		HTSprintf0 (&line, gettext("Read %s of %s of data"), bytesp, totalp);
+		HTSprintf0(&line, gettext("Read %s of %s of data"), bytesp, totalp);
 	    else
-		HTSprintf0 (&line, gettext("Read %s of data"), bytesp);
+		HTSprintf0(&line, gettext("Read %s of data"), bytesp);
 
 	    if (LYTransferRate != rateOFF
-	     && transfer_rate > 0) {
+		&& transfer_rate > 0) {
 		sprint_bytes(transferp, transfer_rate, 0);
-		HTSprintf (&line, gettext(", %s/sec"), transferp);
+		HTSprintf(&line, gettext(", %s/sec"), transferp);
 	    }
-
 #ifdef USE_READPROGRESS
 	    if (LYTransferRate == rateEtaBYTES
-	     || LYTransferRate == rateEtaKB) {
+		|| LYTransferRate == rateEtaKB) {
 		char tbuf[TIME_HMS_LENGTH];
+
 		if (now - last_active >= 5)
-		    HTSprintf (&line,
-			       gettext(" (stalled for %s)"),
-			       sprint_tbuf (tbuf, (long)(now - last_active)));
+		    HTSprintf(&line,
+			      gettext(" (stalled for %s)"),
+			      sprint_tbuf(tbuf, (long) (now - last_active)));
 		if (total > 0 && transfer_rate)
-		    HTSprintf (&line,
-			       gettext(", ETA %s"),
-			       sprint_tbuf (tbuf, (long)((total - bytes)/transfer_rate)));
+		    HTSprintf(&line,
+			      gettext(", ETA %s"),
+			      sprint_tbuf(tbuf, (long) ((total - bytes) / transfer_rate)));
 	    }
 #endif
 
-	    StrAllocCat (line, ".");
+	    StrAllocCat(line, ".");
 	    if (total < -1)
 		StrAllocCat(line, gettext(" (Press 'z' to abort)"));
 
@@ -315,21 +308,21 @@ PUBLIC void HTReadProgress ARGS2(
 	    statusline(line);
 	    CTRACE((tfp, "%s\n", line));
 	}
-    }
+	}
 #ifdef LY_FIND_LEAKS
     FREE(line);
 #endif
 }
 
-PRIVATE BOOL conf_cancelled = NO; /* used by HTConfirm only - kw */
+static BOOL conf_cancelled = NO;	/* used by HTConfirm only - kw */
 
-PUBLIC BOOL HTLastConfirmCancelled NOARGS
+BOOL HTLastConfirmCancelled(void)
 {
     if (conf_cancelled) {
 	conf_cancelled = NO;	/* reset */
-	return(YES);
+	return (YES);
     } else {
-	return(NO);
+	return (NO);
     }
 }
 
@@ -337,13 +330,10 @@ PUBLIC BOOL HTLastConfirmCancelled NOARGS
  * Prompt for yes/no response, but let a configuration variable override
  * the prompt entirely.
  */
-PUBLIC int HTForcedPrompt ARGS3(
-	int,		option,
-	CONST char *,	msg,
-	int,		dft)
+int HTForcedPrompt(int option, const char *msg, int dft)
 {
     int result = FALSE;
-    char *show = NULL;
+    const char *show = NULL;
     char *msg2 = NULL;
 
     if (option == FORCE_PROMPT_DFT) {
@@ -368,38 +358,38 @@ PUBLIC int HTForcedPrompt ARGS3(
 #define DFT_CONFIRM ~(YES|NO)
 
 /*	Seek confirmation with default answer.		HTConfirmDefault()
-**	--------------------------------------
-*/
-PUBLIC int HTConfirmDefault ARGS2(CONST char *, Msg, int, Dft)
+ *	--------------------------------------
+ */
+int HTConfirmDefault(const char *Msg, int Dft)
 {
 /* Meta-note: don't move the following note from its place right
    in front of the first gettext().  As it is now, it should
    automatically appear in generated lynx.pot files. - kw
  */
 
-/*  NOTE TO TRANSLATORS:  If you provide a translation for "yes", lynx
- *  will take the first byte of the translation as a positive response
- *  to Yes/No questions.  If you provide a translation for "no", lynx
- *  will take the first byte of the translation as a negative response
- *  to Yes/No questions.  For both, lynx will also try to show the
- *  first byte in the prompt as a character, instead of (y) or (n),
- *  respectively.  This will not work right for multibyte charsets!
- *  Don't translate "yes" and "no" for CJK character sets (or translate
- *  them to "yes" and "no").  For a translation using UTF-8, don't
- *  translate if the translation would begin with anything but a 7-bit
- *  (US_ASCII) character.  That also means do not translate if the
- *  translation would begin with anything but a 7-bit character, if
- *  you use a single-byte character encoding (a charset like ISO-8859-n)
- *  but anticipate that the message catalog may be used re-encoded in
- *  UTF-8 form.
- *  For translations using other character sets, you may also wish to
- *  leave "yes" and "no" untranslated, if using (y) and (n) is the
- *  preferred behavior.
- *  Lynx will also accept y Y n N as responses unless there is a conflict
- *  with the first letter of the "yes" or "no" translation.
+/* NOTE TO TRANSLATORS:  If you provide a translation for "yes", lynx
+ * will take the first byte of the translation as a positive response
+ * to Yes/No questions.  If you provide a translation for "no", lynx
+ * will take the first byte of the translation as a negative response
+ * to Yes/No questions.  For both, lynx will also try to show the
+ * first byte in the prompt as a character, instead of (y) or (n),
+ * respectively.  This will not work right for multibyte charsets!
+ * Don't translate "yes" and "no" for CJK character sets (or translate
+ * them to "yes" and "no").  For a translation using UTF-8, don't
+ * translate if the translation would begin with anything but a 7-bit
+ * (US_ASCII) character.  That also means do not translate if the
+ * translation would begin with anything but a 7-bit character, if
+ * you use a single-byte character encoding (a charset like ISO-8859-n)
+ * but anticipate that the message catalog may be used re-encoded in
+ * UTF-8 form.
+ * For translations using other character sets, you may also wish to
+ * leave "yes" and "no" untranslated, if using (y) and (n) is the
+ * preferred behavior.
+ * Lynx will also accept y Y n N as responses unless there is a conflict
+ * with the first letter of the "yes" or "no" translation.
  */
-    char *msg_yes = gettext("yes");
-    char *msg_no  = gettext("no");
+    const char *msg_yes = gettext("yes");
+    const char *msg_no = gettext("no");
     int result = -1;
 
     /* If they're not really distinct in the first letter, revert to English */
@@ -409,7 +399,7 @@ PUBLIC int HTConfirmDefault ARGS2(CONST char *, Msg, int, Dft)
     }
 
     conf_cancelled = NO;
-    if (dump_output_immediately) { /* Non-interactive, can't respond */
+    if (dump_output_immediately) {	/* Non-interactive, can't respond */
 	if (Dft == DFT_CONFIRM) {
 	    CTRACE((tfp, "Confirm: %s (%c/%c) ", Msg, *msg_yes, *msg_no));
 	} else {
@@ -439,6 +429,7 @@ PUBLIC int HTConfirmDefault ARGS2(CONST char *, Msg, int, Dft)
 
 	while (result < 0) {
 	    int c = LYgetch_single();
+
 #ifdef VMS
 	    if (HadVMSInterrupt) {
 		HadVMSInterrupt = FALSE;
@@ -453,7 +444,7 @@ PUBLIC int HTConfirmDefault ARGS2(CONST char *, Msg, int, Dft)
 		result = YES;
 	    } else if (fallback_n && c == fallback_n) {
 		result = NO;
-	    } else if (LYCharIsINTERRUPT(c)) { /* remember we had ^G or ^C */
+	    } else if (LYCharIsINTERRUPT(c)) {	/* remember we had ^G or ^C */
 		conf_cancelled = YES;
 		result = NO;
 	    } else if (Dft != DFT_CONFIRM) {
@@ -462,61 +453,61 @@ PUBLIC int HTConfirmDefault ARGS2(CONST char *, Msg, int, Dft)
 	    }
 	}
 	CTRACE((tfp, "- %s%s.\n",
-	       (result != NO) ? "YES" : "NO",
-	       conf_cancelled ? ", cancelled" : ""));
+		(result != NO) ? "YES" : "NO",
+		conf_cancelled ? ", cancelled" : ""));
     }
     return (result);
 }
 
 /*	Seek confirmation.				HTConfirm()
-**	------------------
-*/
-PUBLIC BOOL HTConfirm ARGS1(CONST char *, Msg)
+ *	------------------
+ */
+BOOL HTConfirm(const char *Msg)
 {
     return (BOOL) HTConfirmDefault(Msg, DFT_CONFIRM);
 }
 
 /*
- *  Ask a post resubmission prompt with some indication of what would
- *  be resubmitted, useful especially for going backward in history.
- *  Try to use parts of the address or, if given, the title, depending
- *  on how much fits on the statusline.
- *  if_imgmap and if_file indicate how to handle an address that is
- *  a "LYNXIMGMAP:", or a "file:" URL (presumably the List Page file),
- *  respectively: 0: auto-deny, 1: auto-confirm, 2: prompt.
- *  - kw
+ * Ask a post resubmission prompt with some indication of what would
+ * be resubmitted, useful especially for going backward in history.
+ * Try to use parts of the address or, if given, the title, depending
+ * on how much fits on the statusline.
+ * if_imgmap and if_file indicate how to handle an address that is
+ * a "LYNXIMGMAP:", or a "file:" URL (presumably the List Page file),
+ * respectively:  0:  auto-deny, 1:  auto-confirm, 2:  prompt.
+ * - kw
  */
 
-PUBLIC BOOL confirm_post_resub ARGS4(
-    CONST char*,	address,
-    CONST char*,	title,
-    int,		if_imgmap,
-    int,		if_file)
+BOOL confirm_post_resub(const char *address,
+			const char *title,
+			int if_imgmap,
+			int if_file)
 {
     size_t len1;
-    CONST char *msg = CONFIRM_POST_RESUBMISSION_TO;
+    const char *msg = CONFIRM_POST_RESUBMISSION_TO;
     char buf[240];
     char *temp = NULL;
     BOOL res;
-    size_t maxlen = LYcols - 6;
+    size_t maxlen = LYcolLimit - 5;
+
     if (!address) {
-	return(NO);
+	return (NO);
     } else if (isLYNXIMGMAP(address)) {
 	if (if_imgmap <= 0)
-	    return(NO);
+	    return (NO);
 	else if (if_imgmap == 1)
-	    return(YES);
+	    return (YES);
 	else
 	    msg = CONFIRM_POST_LIST_RELOAD;
     } else if (isFILE_URL(address)) {
 	if (if_file <= 0)
-	    return(NO);
+	    return (NO);
 	else if (if_file == 1)
-	    return(YES);
+	    return (YES);
 	else
 	    msg = CONFIRM_POST_LIST_RELOAD;
     } else if (dump_output_immediately) {
-	return(NO);
+	return (NO);
     }
     if (maxlen >= sizeof(buf))
 	maxlen = sizeof(buf) - 1;
@@ -526,12 +517,12 @@ PUBLIC BOOL confirm_post_resub ARGS4(
 	return HTConfirm(buf);
     }
     if (len1 + strlen(temp = HTParse(address, "",
-				     PARSE_ACCESS+PARSE_HOST+PARSE_PATH
-				     +PARSE_PUNCTUATION)) <= maxlen) {
+				     PARSE_ACCESS + PARSE_HOST + PARSE_PATH
+				     + PARSE_PUNCTUATION)) <= maxlen) {
 	sprintf(buf, msg, temp);
 	res = HTConfirm(buf);
 	FREE(temp);
-	return(res);
+	return (res);
     }
     FREE(temp);
     if (title && (len1 + strlen(title) <= maxlen)) {
@@ -539,12 +530,12 @@ PUBLIC BOOL confirm_post_resub ARGS4(
 	return HTConfirm(buf);
     }
     if (len1 + strlen(temp = HTParse(address, "",
-				     PARSE_ACCESS+PARSE_HOST
-				     +PARSE_PUNCTUATION)) <= maxlen) {
+				     PARSE_ACCESS + PARSE_HOST
+				     + PARSE_PUNCTUATION)) <= maxlen) {
 	sprintf(buf, msg, temp);
 	res = HTConfirm(buf);
 	FREE(temp);
-	return(res);
+	return (res);
     }
     FREE(temp);
     if ((temp = HTParse(address, "", PARSE_HOST)) && *temp &&
@@ -552,28 +543,26 @@ PUBLIC BOOL confirm_post_resub ARGS4(
 	sprintf(buf, msg, temp);
 	res = HTConfirm(buf);
 	FREE(temp);
-	return(res);
+	return (res);
     }
     FREE(temp);
     return HTConfirm(CONFIRM_POST_RESUBMISSION);
 }
 
 /*	Prompt for answer and get text back.		HTPrompt()
-**	------------------------------------
-*/
-PUBLIC char * HTPrompt ARGS2(
-	CONST char *,	Msg,
-	CONST char *,	deflt)
+ *	------------------------------------
+ */
+char *HTPrompt(const char *Msg, const char *deflt)
 {
-    char * rep = NULL;
+    char *rep = NULL;
     char Tmp[200];
 
     Tmp[0] = '\0';
-    Tmp[sizeof(Tmp)-1] = '\0';
+    Tmp[sizeof(Tmp) - 1] = '\0';
 
     _statusline(Msg);
     if (deflt)
-	strncpy(Tmp, deflt, sizeof(Tmp)-1);
+	strncpy(Tmp, deflt, sizeof(Tmp) - 1);
 
     if (!dump_output_immediately)
 	LYgetstr(Tmp, VISIBLE, sizeof(Tmp), NORECALL);
@@ -584,11 +573,10 @@ PUBLIC char * HTPrompt ARGS2(
 }
 
 /*
-**	Prompt for password without echoing the reply.	HTPromptPassword()
-**	----------------------------------------------
-*/
-PUBLIC char * HTPromptPassword ARGS1(
-	CONST char *,	Msg)
+ *	Prompt for password without echoing the reply.	HTPromptPassword()
+ *	----------------------------------------------
+ */
+char *HTPromptPassword(const char *Msg)
 {
     char *result = NULL;
     char pw[120];
@@ -597,7 +585,7 @@ PUBLIC char * HTPromptPassword ARGS1(
 
     if (!dump_output_immediately) {
 	_statusline(Msg ? Msg : PASSWORD_PROMPT);
-	LYgetstr(pw, HIDDEN, sizeof(pw), NORECALL); /* hidden */
+	LYgetstr(pw, HIDDEN, sizeof(pw), NORECALL);	/* hidden */
 	StrAllocCopy(result, pw);
     } else {
 	printf("\n%s\n", PASSWORD_REQUIRED);
@@ -607,52 +595,51 @@ PUBLIC char * HTPromptPassword ARGS1(
 }
 
 /*	Prompt both username and password.	 HTPromptUsernameAndPassword()
-**	----------------------------------
-**
-**  On entry,
-**	Msg		is the prompting message.
-**	*username and
-**	*password	are char pointers which contain default
-**			or zero-length strings; they are changed
-**			to point to result strings.
-**	IsProxy 	should be TRUE if this is for
-**			proxy authentication.
-**
-**			If *username is not NULL, it is taken
-**			to point to a default value.
-**			Initial value of *password is
-**			completely discarded.
-**
-**  On exit,
-**	*username and *password point to newly allocated
-**	strings -- original strings pointed to by them
-**	are NOT freed.
-**
-*/
-PUBLIC void HTPromptUsernameAndPassword ARGS4(
-	CONST char *,	Msg,
-	char **,	username,
-	char **,	password,
-	BOOL,		IsProxy)
+ *	----------------------------------
+ *
+ *  On entry,
+ *	Msg		is the prompting message.
+ *	*username and
+ *	*password	are char pointers which contain default
+ *			or zero-length strings; they are changed
+ *			to point to result strings.
+ *	IsProxy 	should be TRUE if this is for
+ *			proxy authentication.
+ *
+ *			If *username is not NULL, it is taken
+ *			to point to a default value.
+ *			Initial value of *password is
+ *			completely discarded.
+ *
+ *  On exit,
+ *	*username and *password point to newly allocated
+ *	strings -- original strings pointed to by them
+ *	are NOT freed.
+ *
+ */
+void HTPromptUsernameAndPassword(const char *Msg,
+				 char **username,
+				 char **password,
+				 BOOL IsProxy)
 {
     if ((IsProxy == FALSE &&
 	 authentication_info[0] && authentication_info[1]) ||
 	(IsProxy == TRUE &&
 	 proxyauth_info[0] && proxyauth_info[1])) {
 	/*
-	**  The -auth or -pauth parameter gave us both the username
-	**  and password to use for the first realm or proxy server,
-	**  respectively, so just use them without any prompting. - FM
-	*/
+	 * The -auth or -pauth parameter gave us both the username
+	 * and password to use for the first realm or proxy server,
+	 * respectively, so just use them without any prompting.  - FM
+	 */
 	StrAllocCopy(*username, (IsProxy ?
-		       proxyauth_info[0] : authentication_info[0]));
+				 proxyauth_info[0] : authentication_info[0]));
 	if (IsProxy) {
 	    FREE(proxyauth_info[0]);
 	} else {
 	    FREE(authentication_info[0]);
 	}
 	StrAllocCopy(*password, (IsProxy ?
-		       proxyauth_info[1] : authentication_info[1]));
+				 proxyauth_info[1] : authentication_info[1]));
 	if (IsProxy) {
 	    FREE(proxyauth_info[1]);
 	} else {
@@ -660,17 +647,17 @@ PUBLIC void HTPromptUsernameAndPassword ARGS4(
 	}
     } else if (dump_output_immediately) {
 	/*
-	 *  We are not interactive and don't have both the
-	 *  username and password from the command line,
-	 *  but might have one or the other. - FM
+	 * We are not interactive and don't have both the
+	 * username and password from the command line,
+	 * but might have one or the other.  - FM
 	 */
 	if ((IsProxy == FALSE && authentication_info[0]) ||
 	    (IsProxy == TRUE && proxyauth_info[0])) {
 	    /*
-	    **	Use the command line username. - FM
-	    */
+	     * Use the command line username.  - FM
+	     */
 	    StrAllocCopy(*username, (IsProxy ?
-			   proxyauth_info[0] : authentication_info[0]));
+				     proxyauth_info[0] : authentication_info[0]));
 	    if (IsProxy) {
 		FREE(proxyauth_info[0]);
 	    } else {
@@ -678,17 +665,17 @@ PUBLIC void HTPromptUsernameAndPassword ARGS4(
 	    }
 	} else {
 	    /*
-	    **	Default to "WWWuser". - FM
-	    */
+	     * Default to "WWWuser".  - FM
+	     */
 	    StrAllocCopy(*username, "WWWuser");
 	}
 	if ((IsProxy == FALSE && authentication_info[1]) ||
 	    (IsProxy == TRUE && proxyauth_info[1])) {
 	    /*
-	    **	Use the command line password. - FM
-	    */
+	     * Use the command line password.  - FM
+	     */
 	    StrAllocCopy(*password, (IsProxy ?
-			   proxyauth_info[1] : authentication_info[1]));
+				     proxyauth_info[1] : authentication_info[1]));
 	    if (IsProxy) {
 		FREE(proxyauth_info[1]);
 	    } else {
@@ -696,26 +683,26 @@ PUBLIC void HTPromptUsernameAndPassword ARGS4(
 	    }
 	} else {
 	    /*
-	    **	Default to a zero-length string. - FM
-	    */
+	     * Default to a zero-length string.  - FM
+	     */
 	    StrAllocCopy(*password, "");
 	}
 	printf("\n%s\n", USERNAME_PASSWORD_REQUIRED);
 
     } else {
 	/*
-	 *  We are interactive and don't have both the
-	 *  username and password from the command line,
-	 *  but might have one or the other. - FM
+	 * We are interactive and don't have both the
+	 * username and password from the command line,
+	 * but might have one or the other.  - FM
 	 */
 	if ((IsProxy == FALSE && authentication_info[0]) ||
 	    (IsProxy == TRUE && proxyauth_info[0])) {
 	    /*
-	    **	Offer the command line username in the
-	    **	prompt for the first realm. - FM
-	    */
+	     * Offer the command line username in the
+	     * prompt for the first realm.  - FM
+	     */
 	    StrAllocCopy(*username, (IsProxy ?
-			   proxyauth_info[0] : authentication_info[0]));
+				     proxyauth_info[0] : authentication_info[0]));
 	    if (IsProxy) {
 		FREE(proxyauth_info[0]);
 	    } else {
@@ -723,7 +710,7 @@ PUBLIC void HTPromptUsernameAndPassword ARGS4(
 	    }
 	}
 	/*
-	 *  Prompt for confirmation or entry of the username. - FM
+	 * Prompt for confirmation or entry of the username.  - FM
 	 */
 	if (Msg != NULL) {
 	    *username = HTPrompt(Msg, *username);
@@ -733,65 +720,63 @@ PUBLIC void HTPromptUsernameAndPassword ARGS4(
 	if ((IsProxy == FALSE && authentication_info[1]) ||
 	    (IsProxy == TRUE && proxyauth_info[1])) {
 	    /*
-	    **	Use the command line password for the first realm. - FM
-	    */
+	     * Use the command line password for the first realm.  - FM
+	     */
 	    StrAllocCopy(*password, (IsProxy ?
-			   proxyauth_info[1] : authentication_info[1]));
+				     proxyauth_info[1] : authentication_info[1]));
 	    if (IsProxy) {
 		FREE(proxyauth_info[1]);
 	    } else {
 		FREE(authentication_info[1]);
 	    }
-	} else if (*username != NULL && *username[0] != '\0') {
+	} else if (non_empty(*username)) {
 	    /*
-	    **	We have a non-zero length username,
-	    **	so prompt for the password. - FM
-	    */
+	     * We have a non-zero length username,
+	     * so prompt for the password.  - FM
+	     */
 	    *password = HTPromptPassword(PASSWORD_PROMPT);
 	} else {
 	    /*
-	    **	Return a zero-length password. - FM
-	    */
+	     * Return a zero-length password.  - FM
+	     */
 	    StrAllocCopy(*password, "");
 	}
     }
 }
 
 /*	Confirm a cookie operation.			HTConfirmCookie()
-**	---------------------------
-**
-**  On entry,
-**	server			is the server sending the Set-Cookie.
-**	domain			is the domain of the cookie.
-**	path			is the path of the cookie.
-**	name			is the name of the cookie.
-**	value			is the value of the cookie.
-**
-**  On exit,
-**	Returns FALSE on cancel,
-**		TRUE if the cookie should be set.
-*/
-PUBLIC BOOL HTConfirmCookie ARGS4(
-	domain_entry *, de,
-	CONST char *,	server,
-	CONST char *,	name,
-	CONST char *,	value)
+ *	---------------------------
+ *
+ *  On entry,
+ *	server			is the server sending the Set-Cookie.
+ *	domain			is the domain of the cookie.
+ *	path			is the path of the cookie.
+ *	name			is the name of the cookie.
+ *	value			is the value of the cookie.
+ *
+ *  On exit,
+ *	Returns FALSE on cancel,
+ *		TRUE if the cookie should be set.
+ */
+BOOL HTConfirmCookie(domain_entry * de, const char *server,
+		     const char *name,
+		     const char *value)
 {
     int ch;
-    char *prompt = ADVANCED_COOKIE_CONFIRMATION;
+    const char *prompt = ADVANCED_COOKIE_CONFIRMATION;
 
     if (de == NULL)
 	return FALSE;
 
-    /*	If the user has specified a list of domains to allow or deny
-    **	from the config file, then they'll already have de->bv set to
-    **	ACCEPT_ALWAYS or REJECT_ALWAYS so we can relax and let the
-    **	default cookie handling code cope with this fine.
-    */
+    /* If the user has specified a list of domains to allow or deny
+     * from the config file, then they'll already have de->bv set to
+     * ACCEPT_ALWAYS or REJECT_ALWAYS so we can relax and let the
+     * default cookie handling code cope with this fine.
+     */
 
     /*
-    **	If the user has specified a constant action, don't prompt at all.
-    */
+     * If the user has specified a constant action, don't prompt at all.
+     */
     if (de->bv == ACCEPT_ALWAYS)
 	return TRUE;
     if (de->bv == REJECT_ALWAYS)
@@ -799,34 +784,34 @@ PUBLIC BOOL HTConfirmCookie ARGS4(
 
     if (dump_output_immediately) {
 	/*
-	**  Non-interactive, can't respond.  Use the LYSetCookies value
-	*   based on its compilation or configuration setting, or on the
-	**  command line toggle. - FM
-	*/
+	 * Non-interactive, can't respond.  Use the LYSetCookies value
+	 * based on its compilation or configuration setting, or on the
+	 * command line toggle.  - FM
+	 */
 	return LYSetCookies;
     }
 
     /*
-    **	Estimate how much of the cookie we can show.
-    */
-    if(!LYAcceptAllCookies) {
+     * Estimate how much of the cookie we can show.
+     */
+    if (!LYAcceptAllCookies) {
 	int namelen, valuelen, space_free, percentage;
 	char *message = 0;
 
-	space_free = ((LYcols - 1)
-		      - (strlen(prompt)
-			 - 10)		/* %s and %.*s and %.*s chars */
-		      - strlen(server));
+	space_free = (LYcolLimit
+		      - (LYstrCells(prompt)
+			 - 10)	/* %s and %.*s and %.*s chars */
+		      -strlen(server));
 	if (space_free < 0)
 	    space_free = 0;
 	namelen = strlen(name);
 	valuelen = strlen(value);
 	if ((namelen + valuelen) > space_free) {
 	    /*
-	    **  Argh... there isn't enough space on our single line for
-	    **  the whole cookie.  Reduce them both by a percentage.
-	    **  This should be smarter.
-	    */
+	     * Argh...  there isn't enough space on our single line for
+	     * the whole cookie.  Reduce them both by a percentage.
+	     * This should be smarter.
+	     */
 	    percentage = (100 * space_free) / (namelen + valuelen);
 	    namelen = (percentage * namelen) / 100;
 	    valuelen = (percentage * valuelen) / 100;
@@ -836,36 +821,36 @@ PUBLIC BOOL HTConfirmCookie ARGS4(
 	FREE(message);
     }
     for (;;) {
-	if(LYAcceptAllCookies) {
+	if (LYAcceptAllCookies) {
 	    ch = 'A';
 	} else {
 	    ch = LYgetch_single();
-#if defined(LOCALE) && defined(HAVE_GETTEXT) && !defined(gettext)
-	    /*
-	     * Special-purpose workaround for gettext support (we should do
-	     * this in a more general way -- after 2.8.3).
-	     *
-	     * NOTE TO TRANSLATORS:  If the prompt has been rendered into
-	     * another language, and if yes/no are distinct, assume the
-	     * translator can make an ordered list in parentheses with one
-	     * capital letter for each as we assumed in HTConfirmDefault().
-	     * The list has to be in the same order as in the original message,
-	     * and the four capital letters chosen to not match those in the
-	     * original unless they have the same position.
-	     *
-	     * Example:
-	     *	(Y/N/Always/neVer)		- English (original)
-	     *	(O/N/Toujours/Jamais)		- French
-	     */
+#if defined(LOCALE) && defined(HAVE_GETTEXT)
 	    {
 #define L_PAREN '('
 #define R_PAREN ')'
-		char *p;
-		char *s = "YNAV\007\003"; /* see ADVANCED_COOKIE_CONFIRMATION */
+		/*
+		 * Special-purpose workaround for gettext support (we should do
+		 * this in a more general way) -TD
+		 *
+		 * NOTE TO TRANSLATORS:  If the prompt has been rendered into
+		 * another language, and if yes/no are distinct, assume the
+		 * translator can make an ordered list in parentheses with one
+		 * capital letter for each as we assumed in HTConfirmDefault().
+		 * The list has to be in the same order as in the original message,
+		 * and the four capital letters chosen to not match those in the
+		 * original unless they have the same position.
+		 *
+		 * Example:
+		 * (Y/N/Always/neVer)              - English (original)
+		 * (O/N/Toujours/Jamais)           - French
+		 */
+		char *p = gettext("Y/N/A/V");	/* placeholder for comment */
+		char *s = "YNAV\007\003";	/* see ADVANCED_COOKIE_CONFIRMATION */
 
 		if (strchr(s, ch) == 0
-		 && isalpha(ch)
-		 && (p = strrchr(prompt, L_PAREN)) != 0) {
+		    && isalpha(ch)
+		    && (p = strrchr(prompt, L_PAREN)) != 0) {
 
 		    CTRACE((tfp, "Looking for %c in %s\n", ch, p));
 		    while (*p != R_PAREN && *p != 0 && isalpha(UCH(*s))) {
@@ -889,76 +874,75 @@ PUBLIC BOOL HTConfirmCookie ARGS4(
 	    ch = 'N';
 	}
 #endif /* VMS */
-	switch(ch) {
-	    case 'A':
-		/*
-		**  Set to accept all cookies for this domain.
-		*/
-		de->bv = ACCEPT_ALWAYS;
-		HTUserMsg2(ALWAYS_ALLOWING_COOKIES, de->domain);
-		return TRUE;
+	switch (ch) {
+	case 'A':
+	    /*
+	     * Set to accept all cookies for this domain.
+	     */
+	    de->bv = ACCEPT_ALWAYS;
+	    HTUserMsg2(ALWAYS_ALLOWING_COOKIES, de->domain);
+	    return TRUE;
 
-	    case 'N':
-		/*
-		**  Reject the cookie.
-		*/
-	      reject:
-		HTUserMsg(REJECTING_COOKIE);
-		return FALSE;
+	case 'N':
+	    /*
+	     * Reject the cookie.
+	     */
+	  reject:
+	    HTUserMsg(REJECTING_COOKIE);
+	    return FALSE;
 
-	    case 'V':
-		/*
-		**  Set to reject all cookies from this domain.
-		*/
-		de->bv = REJECT_ALWAYS;
-		HTUserMsg2(NEVER_ALLOWING_COOKIES, de->domain);
-		return FALSE;
+	case 'V':
+	    /*
+	     * Set to reject all cookies from this domain.
+	     */
+	    de->bv = REJECT_ALWAYS;
+	    HTUserMsg2(NEVER_ALLOWING_COOKIES, de->domain);
+	    return FALSE;
 
-	    case 'Y':
-		/*
-		**  Accept the cookie.
-		*/
-		HTInfoMsg(ALLOWING_COOKIE);
-		return TRUE;
+	case 'Y':
+	    /*
+	     * Accept the cookie.
+	     */
+	    HTInfoMsg(ALLOWING_COOKIE);
+	    return TRUE;
 
-	    default:
-		if (LYCharIsINTERRUPT(ch))
-		    goto reject;
-		continue;
+	default:
+	    if (LYCharIsINTERRUPT(ch))
+		goto reject;
+	    continue;
 	}
     }
 }
 
 /*	Confirm redirection of POST.		HTConfirmPostRedirect()
-**	----------------------------
-**
-**  On entry,
-**	Redirecting_url 	    is the Location.
-**	server_status		    is the server status code.
-**
-**  On exit,
-**	Returns 0 on cancel,
-**	  1 for redirect of POST with content,
-**	303 for redirect as GET without content
-*/
-PUBLIC int HTConfirmPostRedirect ARGS2(
-	CONST char *,	Redirecting_url,
-	int,		server_status)
+ *	----------------------------
+ *
+ *  On entry,
+ *	Redirecting_url 	    is the Location.
+ *	server_status		    is the server status code.
+ *
+ *  On exit,
+ *	Returns 0 on cancel,
+ *	  1 for redirect of POST with content,
+ *	303 for redirect as GET without content
+ */
+int HTConfirmPostRedirect(const char *Redirecting_url, int server_status)
 {
     int result = -1;
     char *show_POST_url = NULL;
     char *StatusInfo = 0;
     char *url = 0;
-    int on_screen = 0;	/* 0 - show menu
-			 * 1 - show url
-			 * 2 - menu is already on screen */
+    int on_screen = 0;		/* 0 - show menu
+
+				 * 1 - show url
+				 * 2 - menu is already on screen */
 
     if (server_status == 303 ||
 	server_status == 302) {
 	/*
-	 *  HTTP.c should not have called us for either of
-	 *  these because we're treating 302 as historical,
-	 *  so just return 303. - FM
+	 * HTTP.c should not have called us for either of
+	 * these because we're treating 302 as historical,
+	 * so just return 303.  - FM
 	 */
 	return 303;
     }
@@ -966,29 +950,29 @@ PUBLIC int HTConfirmPostRedirect ARGS2(
     if (dump_output_immediately) {
 	if (server_status == 301) {
 	    /*
-	    **	Treat 301 as historical, i.e., like 303 (GET
-	    **	without content), when not interactive. - FM
-	    */
+	     * Treat 301 as historical, i.e., like 303 (GET
+	     * without content), when not interactive.  - FM
+	     */
 	    return 303;
 	} else {
 	    /*
-	    **	Treat anything else (e.g., 305, 306 or 307) as too
-	    **	dangerous to redirect without confirmation, and thus
-	    **	cancel when not interactive. - FM
-	    */
+	     * Treat anything else (e.g., 305, 306 or 307) as too
+	     * dangerous to redirect without confirmation, and thus
+	     * cancel when not interactive.  - FM
+	     */
 	    return 0;
 	}
     }
 
     if (user_mode == NOVICE_MODE) {
 	on_screen = 2;
-	LYmove(LYlines-2, 0);
+	LYmove(LYlines - 2, 0);
 	HTSprintf0(&StatusInfo, SERVER_ASKED_FOR_REDIRECTION, server_status);
 	LYaddstr(StatusInfo);
 	LYclrtoeol();
-	LYmove(LYlines-1, 0);
+	LYmove(LYlines - 1, 0);
 	HTSprintf0(&url, "URL: %.*s",
-		    (LYcols < 250 ? LYcols-6 : 250), Redirecting_url);
+		   (LYcols < 250 ? LYcolLimit - 5 : 250), Redirecting_url);
 	LYaddstr(url);
 	LYclrtoeol();
 	if (server_status == 301) {
@@ -998,11 +982,11 @@ PUBLIC int HTConfirmPostRedirect ARGS2(
 	}
     } else {
 	HTSprintf0(&StatusInfo, "%d %.*s",
-			    server_status,
-			    251,
-			    ((server_status == 301) ?
-			 ADVANCED_POST_GET_REDIRECT :
-			 ADVANCED_POST_REDIRECT));
+		   server_status,
+		   251,
+		   ((server_status == 301) ?
+		    ADVANCED_POST_GET_REDIRECT :
+		    ADVANCED_POST_REDIRECT));
 	StrAllocCopy(show_POST_url, LOCATION_HEADER);
 	StrAllocCat(show_POST_url, Redirecting_url);
     }
@@ -1010,65 +994,65 @@ PUBLIC int HTConfirmPostRedirect ARGS2(
 	int c;
 
 	switch (on_screen) {
-	    case 0:
-		_statusline(StatusInfo);
-		break;
-	    case 1:
-		_statusline(show_POST_url);
+	case 0:
+	    _statusline(StatusInfo);
+	    break;
+	case 1:
+	    _statusline(show_POST_url);
 	}
 	c = LYgetch_single();
 	switch (c) {
-	    case 'P':
-		/*
-		**  Proceed with 301 or 307 redirect of POST
-		**  with same method and POST content. - FM
-		*/
-		FREE(show_POST_url);
-		result = 1;
-		break;
+	case 'P':
+	    /*
+	     * Proceed with 301 or 307 redirect of POST
+	     * with same method and POST content.  - FM
+	     */
+	    FREE(show_POST_url);
+	    result = 1;
+	    break;
 
-	    case 7:
-	    case 'C':
-		/*
-		**  Cancel request.
-		*/
-		FREE(show_POST_url);
-		result = 0;
-		break;
+	case 7:
+	case 'C':
+	    /*
+	     * Cancel request.
+	     */
+	    FREE(show_POST_url);
+	    result = 0;
+	    break;
 
-	    case 'U':
-		/*
-		**  Show URL for intermediate or advanced mode.
-		*/
-		if (user_mode != NOVICE_MODE) {
-		    if (on_screen == 1) {
-			on_screen = 0;
-		    } else {
-			on_screen = 1;
-		    }
-		}
-		break;
-
-	    case 'G':
-		if (server_status == 301) {
-		    /*
-		    **	Treat as 303 (GET without content).
-		    */
-		    FREE(show_POST_url);
-		    result = 303;
-		    break;
-		}
-		/* fall through to default */
-
-	    default:
-		/*
-		**  Get another character.
-		*/
+	case 'U':
+	    /*
+	     * Show URL for intermediate or advanced mode.
+	     */
+	    if (user_mode != NOVICE_MODE) {
 		if (on_screen == 1) {
 		    on_screen = 0;
 		} else {
-		    on_screen = 2;
+		    on_screen = 1;
 		}
+	    }
+	    break;
+
+	case 'G':
+	    if (server_status == 301) {
+		/*
+		 * Treat as 303 (GET without content).
+		 */
+		FREE(show_POST_url);
+		result = 303;
+		break;
+	    }
+	    /* fall through to default */
+
+	default:
+	    /*
+	     * Get another character.
+	     */
+	    if (on_screen == 1) {
+		on_screen = 0;
+	    } else {
+		on_screen = 2;
+	    }
 	}
     }
     FREE(StatusInfo);
@@ -1081,32 +1065,32 @@ PUBLIC int HTConfirmPostRedirect ARGS2(
 /*
  * Sleep for the given message class's time.
  */
-PUBLIC void LYSleepAlert NOARGS
+void LYSleepAlert(void)
 {
     if (okToSleep())
 	LYSleep(AlertSecs);
 }
 
-PUBLIC void LYSleepDebug NOARGS
+void LYSleepDebug(void)
 {
     if (okToSleep())
 	LYSleep(DebugSecs);
 }
 
-PUBLIC void LYSleepInfo NOARGS
+void LYSleepInfo(void)
 {
     if (okToSleep())
 	LYSleep(InfoSecs);
 }
 
-PUBLIC void LYSleepMsg NOARGS
+void LYSleepMsg(void)
 {
     if (okToSleep())
 	LYSleep(MessageSecs);
 }
 
 #ifdef EXP_CMD_LOGGING
-PUBLIC void LYSleepReplay NOARGS
+void LYSleepReplay(void)
 {
     if (okToSleep())
 	LYSleep(ReplaySecs);
@@ -1114,14 +1098,13 @@ PUBLIC void LYSleepReplay NOARGS
 #endif /* EXP_CMD_LOGGING */
 
 /*
- *  LYstrerror emulates the ANSI strerror() function.
+ * LYstrerror emulates the ANSI strerror() function.
  */
-#ifdef LYStrerror
-    /* defined as macro in .h file. */
-#else
-PUBLIC char *LYStrerror ARGS1(int, code)
+#ifndef LYStrerror
+char *LYStrerror(int code)
 {
     static char temp[80];
+
     sprintf(temp, "System errno is %d.\r\n", code);
     return temp;
 }

@@ -5,6 +5,12 @@
 #include <HTUtils.h>
 #endif
 
-extern void add_lynxcgi_environment PARAMS((CONST char *variable_name));
+#ifdef __cplusplus
+extern "C" {
+#endif
+    extern void add_lynxcgi_environment(const char *variable_name);
 
-#endif /* LYGETFILE_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* LYGETFILE_H */

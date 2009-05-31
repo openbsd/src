@@ -1,16 +1,16 @@
 /*		HTML Generator
-**		==============
-**
-**	This version of the HTML object sends HTML markup to the output stream.
-**
-** Bugs:	Line wrapping is not done at all.
-**		All data handled as PCDATA.
-**		Should convert old XMP, LISTING and PLAINTEXT to PRE.
-**
-**	It is not obvious to me right now whether the HEAD should be generated
-**	from the incomming data or the anchor.	Currently it is from the former
-**	which is cleanest.
-*/
+ *		==============
+ *
+ *	This version of the HTML object sends HTML markup to the output stream.
+ *
+ * Bugs:	Line wrapping is not done at all.
+ *		All data handled as PCDATA.
+ *		Should convert old XMP, LISTING and PLAINTEXT to PRE.
+ *
+ *	It is not obvious to me right now whether the HEAD should be generated
+ *	from the incomming data or the anchor.	Currently it is from the former
+ *	which is cleanest.
+ */
 
 #include <HTUtils.h>
 
@@ -34,6 +34,7 @@
 #endif
 
 #include <LYGlobalDefs.h>
+#include <LYCurses.h>
 #include <LYLeaks.h>
 
 #define PUTC(c) (*me->targetClass.put_character)(me->target, c)
@@ -41,7 +42,7 @@
 #define PUTB(s,l) (*me->targetClass.put_block)(me->target, s, l)
 
 #ifdef USE_COLOR_STYLE
-PUBLIC char class_string[TEMPSTRINGSIZE];
+char class_string[TEMPSTRINGSIZE];
 
 static char *Style_className = NULL;
 static char myHash[128];
@@ -49,53 +50,52 @@ static int hcode;
 #endif
 
 /*		HTML Object
-**		-----------
-*/
+ *		-----------
+ */
 struct _HTStream {
-	CONST HTStreamClass *		isa;
-	HTStream *			target;
-	HTStreamClass			targetClass;	/* COPY for speed */
+    const HTStreamClass *isa;
+    HTStream *target;
+    HTStreamClass targetClass;	/* COPY for speed */
 };
 
 struct _HTStructured {
-	CONST HTStructuredClass *	isa;
-	HTStream *			target;
-	HTStreamClass			targetClass;	/* COPY for speed */
+    const HTStructuredClass *isa;
+    HTStream *target;
+    HTStreamClass targetClass;	/* COPY for speed */
 
-	char				buffer[BUFFER_SIZE+1]; /* 1for NL */
-	int				buffer_maxchars;
-	char *				write_pointer;
-	char *				line_break [MAX_CLEANNESS+1];
-	int				cleanness;
-	BOOL				overflowed;
-	BOOL				delete_line_break_char[MAX_CLEANNESS+1];
-	BOOL				preformatted;
-	BOOL				escape_specials;
-	BOOL				in_attrval;
+    char buffer[BUFFER_SIZE + 1];	/* 1for NL */
+    int buffer_maxchars;
+    char *write_pointer;
+    char *line_break[MAX_CLEANNESS + 1];
+    int cleanness;
+    BOOL overflowed;
+    BOOL delete_line_break_char[MAX_CLEANNESS + 1];
+    BOOL preformatted;
+    BOOL escape_specials;
+    BOOL in_attrval;
 #ifdef USE_COLOR_STYLE
-	HText *				text;
+    HText *text;
 #endif
 };
 
 /*	Flush Buffer
-**	------------
-*/
+ *	------------
+ */
 
-PRIVATE void flush_breaks ARGS1(
-	HTStructured *,		me)
+static void flush_breaks(HTStructured * me)
 {
     int i;
-    for (i=0; i<= MAX_CLEANNESS; i++) {
+
+    for (i = 0; i <= MAX_CLEANNESS; i++) {
 	me->line_break[i] = NULL;
     }
 }
 
-PRIVATE void HTMLGen_flush ARGS1(
-	HTStructured *,		me)
+static void HTMLGen_flush(HTStructured * me)
 {
-    (*me->targetClass.put_block)(me->target,
-				 me->buffer,
-				 me->write_pointer - me->buffer);
+    (*me->targetClass.put_block) (me->target,
+				  me->buffer,
+				  me->write_pointer - me->buffer);
     me->write_pointer = me->buffer;
     flush_breaks(me);
     me->cleanness = 0;
@@ -104,34 +104,30 @@ PRIVATE void HTMLGen_flush ARGS1(
 
 #ifdef USE_COLOR_STYLE
 /*
- *  We need to flush our buffer each time before we effect a color style
- *  change, this also relies on the subsequent stage not doing any
- *  buffering - this is currently true, in cases where it matters the
- *  target stream should be the HTPlain converter.
- *  The flushing currently prevents reasonable line breaking in lines
- *  with tags.  Since color styles help visual scanning of displayed
- *  source lines, and long lines are wrapped in GridText anyway, this
- *  is probably acceptable (or even A Good Thing - more to see in one
- *  screenful).
- *  The pointer to the HText structure is initialized here before
- *  we effect the first style change.  Getting it from the global
- *  HTMainText variable isn't very clean, since it relies on the fact
- *  that HText_new() has already been called for the current stream
- *  stack's document by the time we start processing the first element;
- *  we rely on HTMLGenerator's callers (HTMLParsedPresent in particular)
- *  to guarantee this when it matters.  Normally the target stream will
- *  have been setup by HTPlainPresent, which does what we need in this
- *  respect.  (A check whether we have the right output stream could be
- *  done by checking that targetClass.name is "PlainPresenter" or similar.)
+ * We need to flush our buffer each time before we effect a color style change,
+ * this also relies on the subsequent stage not doing any buffering - this is
+ * currently true, in cases where it matters the target stream should be the
+ * HTPlain converter.  The flushing currently prevents reasonable line breaking
+ * in lines with tags.  Since color styles help visual scanning of displayed
+ * source lines, and long lines are wrapped in GridText anyway, this is
+ * probably acceptable (or even A Good Thing - more to see in one screenful). 
+ * The pointer to the HText structure is initialized here before we effect the
+ * first style change.  Getting it from the global HTMainText variable isn't
+ * very clean, since it relies on the fact that HText_new() has already been
+ * called for the current stream stack's document by the time we start
+ * processing the first element; we rely on HTMLGenerator's callers
+ * (HTMLParsedPresent in particular) to guarantee this when it matters. 
+ * Normally the target stream will have been setup by HTPlainPresent, which
+ * does what we need in this respect.  (A check whether we have the right
+ * output stream could be done by checking that targetClass.name is
+ * "PlainPresenter" or similar.)
  *
- *  All special color style handling is only done if LYPreparsedSource
- *  is set.  We could always do it for displaying source generated by
- *  an internal gateway, but this makes the rule more simple for the
- *  user: color styles are applied to html source only with the
- *  -preparsed flag. - kw
+ * All special color style handling is only done if LYPreparsedSource is set. 
+ * We could always do it for displaying source generated by an internal
+ * gateway, but this makes the rule more simple for the user:  color styles are
+ * applied to html source only with the -preparsed flag.  - kw
  */
-PRIVATE void do_cstyle_flush ARGS1(
-	HTStructured *,		me)
+static void do_cstyle_flush(HTStructured * me)
 {
     if (!me->text && LYPreparsedSource) {
 	me->text = HTMainText;
@@ -143,19 +139,18 @@ PRIVATE void do_cstyle_flush ARGS1(
 #endif /* COLOR_STYLE */
 
 /*	Weighted optional line break
-**
-**	We keep track of all the breaks for when we chop the line
-*/
+ *
+ *	We keep track of all the breaks for when we chop the line
+ */
 
-PRIVATE void allow_break ARGS3(
-	HTStructured *, me,
-	int,		new_cleanness,
-	BOOL,		dlbc)
+static void allow_break(HTStructured * me, int new_cleanness,
+			BOOL dlbc)
 {
-    if (dlbc && me->write_pointer == me->buffer) dlbc = NO;
+    if (dlbc && me->write_pointer == me->buffer)
+	dlbc = NO;
     me->line_break[new_cleanness] =
-			 dlbc ? me->write_pointer - 1 /* Point to space */
-			      : me->write_pointer ;   /* point to gap */
+	dlbc ? me->write_pointer - 1	/* Point to space */
+	: me->write_pointer;	/* point to gap */
     me->delete_line_break_char[new_cleanness] = dlbc;
     if (new_cleanness >= me->cleanness &&
 	(me->overflowed || me->line_break[new_cleanness] > me->buffer))
@@ -163,40 +158,38 @@ PRIVATE void allow_break ARGS3(
 }
 
 /*	Character handling
-**	------------------
-**
-**	The tricky bits are the line break handling.  This attempts
-**	to synchrononise line breaks on sentence or phrase ends.  This
-**	is important if one stores SGML files in a line-oriented code
-**	repository, so that if a small change is made, line ends don't
-**	shift in a ripple-through to apparently change a large part of the
-**	file.  We give extra "cleanness" to spaces appearing directly
-**	after periods (full stops), [semi]colons and commas.
-**	   This should make the source files easier to read and modify
-**	by hand, too, though this is not a primary design consideration. TBL
-*/
-PRIVATE void HTMLGen_put_character ARGS2(
-	HTStructured *,		me,
-	char,			c)
+ *	------------------
+ *
+ *	The tricky bits are the line break handling.  This attempts
+ *	to synchrononise line breaks on sentence or phrase ends.  This
+ *	is important if one stores SGML files in a line-oriented code
+ *	repository, so that if a small change is made, line ends don't
+ *	shift in a ripple-through to apparently change a large part of the
+ *	file.  We give extra "cleanness" to spaces appearing directly
+ *	after periods (full stops), [semi]colons and commas.
+ *	   This should make the source files easier to read and modify
+ *	by hand, too, though this is not a primary design consideration. TBL
+ */
+static void HTMLGen_put_character(HTStructured * me, char c)
 {
     if (me->escape_specials && UCH(c) < 32) {
 	if (c == HT_NON_BREAK_SPACE || c == HT_EN_SPACE ||
-	    c == LY_SOFT_HYPHEN) { /* recursion... */
+	    c == LY_SOFT_HYPHEN) {	/* recursion... */
 	    HTMLGen_put_character(me, '&');
 	    HTMLGen_put_character(me, '#');
 	    HTMLGen_put_character(me, 'x');
-	    switch(c) {
-	    case HT_NON_BREAK_SPACE: /* &#xA0; */
+	    switch (c) {
+	    case HT_NON_BREAK_SPACE:	/* &#xA0; */
 		HTMLGen_put_character(me, 'A');
 		HTMLGen_put_character(me, '0');
 		break;
-	    case HT_EN_SPACE: /* &#x2002; */
+	    case HT_EN_SPACE:	/* &#x2002; */
 		HTMLGen_put_character(me, '2');
 		HTMLGen_put_character(me, '0');
 		HTMLGen_put_character(me, '0');
 		HTMLGen_put_character(me, '2');
 		break;
-	    case LY_SOFT_HYPHEN: /* &#xAD; */
+	    case LY_SOFT_HYPHEN:	/* &#xAD; */
 		HTMLGen_put_character(me, 'A');
 		HTMLGen_put_character(me, 'D');
 		break;
@@ -213,54 +206,62 @@ PRIVATE void HTMLGen_put_character ARGS2(
     }
 
     /* Figure our whether we can break at this point
-    */
+     */
     if ((!me->preformatted && (c == ' ' || c == '\t'))) {
 	int new_cleanness = 3;
+
 	if (me->write_pointer > (me->buffer + 1)) {
 	    char delims[5];
-	    char * p;
-	    strcpy(delims, ",;:.");		/* @@ english bias */
+	    char *p;
+
+	    strcpy(delims, ",;:.");	/* @@ english bias */
 	    p = strchr(delims, me->write_pointer[-2]);
-	    if (p) new_cleanness = p - delims + 6;
-	    if (!me->in_attrval) new_cleanness += 10;
+	    if (p)
+		new_cleanness = p - delims + 6;
+	    if (!me->in_attrval)
+		new_cleanness += 10;
 	}
 	allow_break(me, new_cleanness, YES);
     }
 
     /*
-     *	Flush buffer out when full, or whenever the line is over
-     *	the nominal maximum and we can break at all
+     * Flush buffer out when full, or whenever the line is over the nominal
+     * maximum and we can break at all
      */
     if (me->write_pointer >= me->buffer + me->buffer_maxchars ||
 	(me->overflowed && me->cleanness)) {
 	if (me->cleanness) {
 	    char line_break_char = me->line_break[me->cleanness][0];
-	    char * saved = me->line_break[me->cleanness];
+	    char *saved = me->line_break[me->cleanness];
 
-	    if (me->delete_line_break_char[me->cleanness]) saved++;
+	    if (me->delete_line_break_char[me->cleanness])
+		saved++;
 	    me->line_break[me->cleanness][0] = '\n';
-	    (*me->targetClass.put_block)(me->target,
-					 me->buffer,
-			       me->line_break[me->cleanness] - me->buffer + 1);
+	    (*me->targetClass.put_block) (me->target,
+					  me->buffer,
+					  me->line_break[me->cleanness] -
+					  me->buffer + 1);
 	    me->line_break[me->cleanness][0] = line_break_char;
-	    {  /* move next line in */
-		char * p = saved;
+	    {			/* move next line in */
+		char *p = saved;
 		char *q;
-		for (q = me->buffer; p < me->write_pointer; )
+
+		for (q = me->buffer; p < me->write_pointer;)
 		    *q++ = *p++;
 	    }
 	    me->cleanness = 0;
 	    /* Now we have to check whether ther are any perfectly good breaks
-	    ** which weren't good enough for the last line but may be
-	    **	good enough for the next
-	    */
+	     * which weren't good enough for the last line but may be good
+	     * enough for the next
+	     */
 	    {
 		int i;
-		for(i=0; i <= MAX_CLEANNESS; i++) {
+
+		for (i = 0; i <= MAX_CLEANNESS; i++) {
 		    if (me->line_break[i] != NULL &&
 			me->line_break[i] > saved) {
 			me->line_break[i] = me->line_break[i] -
-						(saved-me->buffer);
+			    (saved - me->buffer);
 			me->cleanness = i;
 		    } else {
 			me->line_break[i] = NULL;
@@ -269,13 +270,13 @@ PRIVATE void HTMLGen_put_character ARGS2(
 	    }
 
 	    me->delete_line_break_char[0] = 0;
-	    me->write_pointer = me->write_pointer - (saved-me->buffer);
+	    me->write_pointer = me->write_pointer - (saved - me->buffer);
 	    me->overflowed = NO;
 
 	} else {
-	    (*me->targetClass.put_block)(me->target,
-					 me->buffer,
-					 me->buffer_maxchars);
+	    (*me->targetClass.put_block) (me->target,
+					  me->buffer,
+					  me->buffer_maxchars);
 	    me->write_pointer = me->buffer;
 	    flush_breaks(me);
 	    me->overflowed = YES;
@@ -284,46 +285,40 @@ PRIVATE void HTMLGen_put_character ARGS2(
 }
 
 /*	String handling
-**	---------------
-*/
-PRIVATE void HTMLGen_put_string ARGS2(
-	HTStructured *,		me,
-	CONST char *,		s)
+ *	---------------
+ */
+static void HTMLGen_put_string(HTStructured * me, const char *s)
 {
-    CONST char * p;
+    const char *p;
 
     for (p = s; *p; p++)
 	HTMLGen_put_character(me, *p);
 }
 
-PRIVATE void HTMLGen_write ARGS3(
-	HTStructured *,		me,
-	CONST char *,		s,
-	int,			l)
+static void HTMLGen_write(HTStructured * me, const char *s,
+			  int l)
 {
-    CONST char * p;
+    const char *p;
 
     for (p = s; p < (s + l); p++)
 	HTMLGen_put_character(me, *p);
 }
 
 /*	Start Element
-**	-------------
-**
-**	Within the opening tag, there may be spaces
-**	and the line may be broken at these spaces.
-*/
-PRIVATE int HTMLGen_start_element ARGS6(
-	HTStructured *,		me,
-	int,			element_number,
-	CONST BOOL*,		present,
-	CONST char **,		value,
-	int,			charset GCC_UNUSED,
-	char **,		insert GCC_UNUSED)
+ *	-------------
+ *
+ * Within the opening tag, there may be spaces and the line may be broken at
+ * these spaces.
+ */
+static int HTMLGen_start_element(HTStructured * me, int element_number,
+				 const BOOL *present,
+				 const char **value,
+				 int charset GCC_UNUSED,
+				 char **insert GCC_UNUSED)
 {
     int i;
     BOOL was_preformatted = me->preformatted;
-    HTTag * tag = &HTML_dtd.tags[element_number];
+    HTTag *tag = &HTML_dtd.tags[element_number];
 
 #if defined(USE_COLOR_STYLE)
     char *title = NULL;
@@ -331,49 +326,46 @@ PRIVATE int HTMLGen_start_element ARGS6(
 
     if (LYPreparsedSource) {
 	/*
-	 *  Same logic as in HTML_start_element, copied from there. - kw
+	 * Same logic as in HTML_start_element, copied from there.  - kw
 	 */
-	HTSprintf (&Style_className, ";%s", HTML_dtd.tags[element_number].name);
-	strcpy (myHash, HTML_dtd.tags[element_number].name);
-	if (class_string[0])
-	{
+	HTSprintf(&Style_className, ";%s", HTML_dtd.tags[element_number].name);
+	strcpy(myHash, HTML_dtd.tags[element_number].name);
+	if (class_string[0]) {
 	    int len = strlen(myHash);
-	    sprintf (myHash + len, ".%.*s", (int) sizeof(myHash) - len - 2, class_string);
-	    HTSprintf (&Style_className, ".%s", class_string);
+
+	    sprintf(myHash + len, ".%.*s", (int) sizeof(myHash) - len - 2, class_string);
+	    HTSprintf(&Style_className, ".%s", class_string);
 	}
 	class_string[0] = '\0';
 	strtolower(myHash);
 	hcode = hash_code(myHash);
 	strtolower(Style_className);
 
-	if (TRACE_STYLE)
-	{
+	if (TRACE_STYLE) {
 	    fprintf(tfp, "CSSTRIM:%s -> %d", myHash, hcode);
-	    if (hashStyles[hcode].code!=hcode)
-	    {
+	    if (hashStyles[hcode].code != hcode) {
 		char *rp = strrchr(myHash, '.');
+
 		fprintf(tfp, " (undefined) %s\n", myHash);
-		if (rp)
-		{
+		if (rp) {
 		    int hcd;
-		    *rp = '\0'; /* trim the class */
+
+		    *rp = '\0';	/* trim the class */
 		    hcd = hash_code(myHash);
 		    fprintf(tfp, "CSS:%s -> %d", myHash, hcd);
-		    if (hashStyles[hcd].code!=hcd)
+		    if (hashStyles[hcd].code != hcd)
 			fprintf(tfp, " (undefined) %s\n", myHash);
 		    else
 			fprintf(tfp, " ca=%d\n", hashStyles[hcd].color);
 		}
-	    }
-	    else
+	    } else
 		fprintf(tfp, " ca=%d\n", hashStyles[hcode].color);
 	}
 
-	if (displayStyles[element_number + STARTAT].color > -2) /* actually set */
-	{
+	if (displayStyles[element_number + STARTAT].color > -2) {
 	    CTRACE2(TRACE_STYLE,
 		    (tfp, "CSSTRIM: start_element: top <%s>\n",
-			  HTML_dtd.tags[element_number].name));
+		     HTML_dtd.tags[element_number].name));
 	    do_cstyle_flush(me);
 	    HText_characterStyle(me->text, hcode, 1);
 	}
@@ -384,6 +376,7 @@ PRIVATE int HTMLGen_start_element ARGS6(
     HTMLGen_put_string(me, tag->name);
     if (present) {
 	BOOL had_attr = NO;
+
 	for (i = 0; i < tag->number_of_attributes; i++) {
 	    if (present[i]) {
 		had_attr = YES;
@@ -391,14 +384,14 @@ PRIVATE int HTMLGen_start_element ARGS6(
 		allow_break(me, 11, YES);
 #ifdef USE_COLOR_STYLE
 		/*
-		 *  Try to mimic HTML_start_element's special handling
-		 *  for HTML_LINK.  If applicable, color the displayed
-		 *  attribute / value pairs differently. - kw
+		 * Try to mimic HTML_start_element's special handling for
+		 * HTML_LINK.  If applicable, color the displayed attribute /
+		 * value pairs differently.  - kw
 		 */
 		if (LYPreparsedSource &&
 		    element_number == HTML_LINK && !title &&
 		    present[HTML_LINK_CLASS] &&
-		    value && *value[HTML_LINK_CLASS]!='\0' &&
+		    value && *value[HTML_LINK_CLASS] != '\0' &&
 		    !present[HTML_LINK_REV] &&
 		    (present[HTML_LINK_REL] || present[HTML_LINK_HREF])) {
 		    if (present[HTML_LINK_TITLE] && *value[HTML_LINK_TITLE]) {
@@ -406,7 +399,7 @@ PRIVATE int HTMLGen_start_element ARGS6(
 			LYTrimHead(title);
 			LYTrimTail(title);
 		    }
-		    if ((!title || *title=='\0') && present[HTML_LINK_REL]) {
+		    if ((!title || *title == '\0') && present[HTML_LINK_REL]) {
 			StrAllocCopy(title, value[HTML_LINK_REL]);
 		    }
 		    if (title && *title) {
@@ -432,8 +425,9 @@ PRIVATE int HTMLGen_start_element ARGS6(
 			HTMLGen_put_string(me, "='");
 			HTMLGen_put_string(me, value[i]);
 			HTMLGen_put_character(me, '\'');
-		    } else {  /* attribute value has both kinds of quotes */
-			CONST char *p;
+		    } else {	/* attribute value has both kinds of quotes */
+			const char *p;
+
 			HTMLGen_put_string(me, "=\"");
 			for (p = value[i]; *p; p++) {
 			    if (*p != '"') {
@@ -452,7 +446,7 @@ PRIVATE int HTMLGen_start_element ARGS6(
 #ifdef USE_COLOR_STYLE
 	if (had_attr && LYPreparsedSource && element_number == HTML_LINK) {
 	    /*
-	     *  Clean up after special HTML_LINK handling - kw
+	     * Clean up after special HTML_LINK handling - kw
 	     */
 	    if (title && *title) {
 		do_cstyle_flush(me);
@@ -465,15 +459,15 @@ PRIVATE int HTMLGen_start_element ARGS6(
 	if (had_attr)
 	    allow_break(me, 12, NO);
     }
-    HTMLGen_put_string(me, ">"); /* got rid of \n LJM */
+    HTMLGen_put_string(me, ">");	/* got rid of \n LJM */
 
     /*
-     *	Make very specific HTML assumption that PRE can't be nested!
+     * Make very specific HTML assumption that PRE can't be nested!
      */
-    me->preformatted = (element_number == HTML_PRE)  ? YES : was_preformatted;
+    me->preformatted = (element_number == HTML_PRE) ? YES : was_preformatted;
 
     /*
-     *	Can break after element start.
+     * Can break after element start.
      */
     if (!me->preformatted && tag->contents != SGML_EMPTY) {
 	if (HTML_dtd.tags[element_number].contents == SGML_ELEMENT)
@@ -481,15 +475,13 @@ PRIVATE int HTMLGen_start_element ARGS6(
 	else
 	    allow_break(me, 2, NO);
     }
-
 #if defined(USE_COLOR_STYLE)
     /*
-     *  Same logic as in HTML_start_element, copied from there. - kw
+     * Same logic as in HTML_start_element, copied from there.  - kw
      */
 
     /* end really empty tags straight away */
-    if (LYPreparsedSource && ReallyEmptyTagNum(element_number))
-    {
+    if (LYPreparsedSource && ReallyEmptyTagNum(element_number)) {
 	CTRACE2(TRACE_STYLE,
 		(tfp, "STYLE:begin_element:ending EMPTY element style\n"));
 	do_cstyle_flush(me);
@@ -500,14 +492,14 @@ PRIVATE int HTMLGen_start_element ARGS6(
 #endif /* USE_COLOR_STYLE */
     if (element_number == HTML_OBJECT && tag->contents == SGML_LITTERAL) {
 	/*
-	 *  These conditions only approximate the ones used in HTML.c.
-	 *  Let our SGML parser know that further content is to be parsed
-	 *  normally not literally. - kw
+	 * These conditions only approximate the ones used in HTML.c.  Let our
+	 * SGML parser know that further content is to be parsed normally not
+	 * literally.  - kw
 	 */
 	if (!present) {
 	    return HT_PARSER_OTHER_CONTENT;
 	} else if (!present[HTML_OBJECT_DECLARE] &&
-		   !(present[HTML_OBJECT_NAME]  &&
+		   !(present[HTML_OBJECT_NAME] &&
 		     value[HTML_OBJECT_NAME] && *value[HTML_OBJECT_NAME])) {
 	    if (present[HTML_OBJECT_SHAPES] ||
 		!(present[HTML_OBJECT_USEMAP] &&
@@ -519,25 +511,21 @@ PRIVATE int HTMLGen_start_element ARGS6(
 }
 
 /*		End Element
-**		-----------
-**
-*/
-/*	When we end an element, the style must be returned to that
-**	in effect before that element.	Note that anchors (etc?)
-**	don't have an associated style, so that we must scan down the
-**	stack for an element with a defined style. (In fact, the styles
-**	should be linked to the whole stack not just the top one.)
-**	TBL 921119
-*/
-PRIVATE int HTMLGen_end_element ARGS3(
-	HTStructured *,		me,
-	int,			element_number,
-	char **,		insert GCC_UNUSED)
+ *		-----------
+ *
+ * When we end an element, the style must be returned to that in effect before
+ * that element.  Note that anchors (etc?) don't have an associated style, so
+ * that we must scan down the stack for an element with a defined style.  (In
+ * fact, the styles should be linked to the whole stack not just the top one.)
+ * TBL 921119
+ */
+static int HTMLGen_end_element(HTStructured * me, int element_number,
+			       char **insert GCC_UNUSED)
 {
     if (!me->preformatted &&
 	HTML_dtd.tags[element_number].contents != SGML_EMPTY) {
 	/*
-	 *  Can break before element end.
+	 * Can break before element end.
 	 */
 	if (HTML_dtd.tags[element_number].contents == SGML_ELEMENT)
 	    allow_break(me, 14, NO);
@@ -552,7 +540,7 @@ PRIVATE int HTMLGen_end_element ARGS3(
     }
 #ifdef USE_COLOR_STYLE
     /*
-     *  Same logic as in HTML_end_element, copied from there. - kw
+     * Same logic as in HTML_end_element, copied from there.  - kw
      */
     TrimColorClass(HTML_dtd.tags[element_number].name,
 		   Style_className, &hcode);
@@ -568,49 +556,43 @@ PRIVATE int HTMLGen_end_element ARGS3(
 }
 
 /*		Expanding entities
-**		------------------
-**
-*/
-PRIVATE int HTMLGen_put_entity ARGS2(
-	HTStructured *,		me,
-	int,			entity_number)
+ *		------------------
+ *
+ */
+static int HTMLGen_put_entity(HTStructured * me, int entity_number)
 {
     int nent = HTML_dtd.number_of_entities;
 
     HTMLGen_put_character(me, '&');
     if (entity_number < nent) {
-      HTMLGen_put_string(me, HTML_dtd.entity_names[entity_number]);
+	HTMLGen_put_string(me, HTML_dtd.entity_names[entity_number]);
     }
     HTMLGen_put_character(me, ';');
     return HT_OK;
 }
 
 /*	Free an HTML object
-**	-------------------
-**
-*/
-PRIVATE void HTMLGen_free ARGS1(
-	HTStructured *,		me)
+ *	-------------------
+ *
+ */
+static void HTMLGen_free(HTStructured * me)
 {
-    (*me->targetClass.put_character)(me->target, '\n');
+    (*me->targetClass.put_character) (me->target, '\n');
     HTMLGen_flush(me);
-    (*me->targetClass._free)(me->target);	/* ripple through */
+    (*me->targetClass._free) (me->target);	/* ripple through */
 #ifdef USE_COLOR_STYLE
     FREE(Style_className);
 #endif
     FREE(me);
 }
 
-PRIVATE void PlainToHTML_free ARGS1(
-	HTStructured *,		me)
+static void PlainToHTML_free(HTStructured * me)
 {
     HTMLGen_end_element(me, HTML_PRE, 0);
     HTMLGen_free(me);
 }
 
-PRIVATE void HTMLGen_abort ARGS2(
-	HTStructured *,		me,
-	HTError,		e GCC_UNUSED)
+static void HTMLGen_abort(HTStructured * me, HTError e GCC_UNUSED)
 {
     HTMLGen_free(me);
 #ifdef USE_COLOR_STYLE
@@ -618,82 +600,77 @@ PRIVATE void HTMLGen_abort ARGS2(
 #endif
 }
 
-PRIVATE void PlainToHTML_abort ARGS2(
-	HTStructured *,		me,
-	HTError,		e GCC_UNUSED)
+static void PlainToHTML_abort(HTStructured * me, HTError e GCC_UNUSED)
 {
     PlainToHTML_free(me);
 }
 
 /*	Structured Object Class
-**	-----------------------
-*/
-PRIVATE CONST HTStructuredClass HTMLGeneration = /* As opposed to print etc */
+ *	-----------------------
+ */
+static const HTStructuredClass HTMLGeneration =		/* As opposed to print etc */
 {
-	"HTMLGen",
-	HTMLGen_free,
-	HTMLGen_abort,
-	HTMLGen_put_character,	HTMLGen_put_string, HTMLGen_write,
-	HTMLGen_start_element,	HTMLGen_end_element,
-	HTMLGen_put_entity
+    "HTMLGen",
+    HTMLGen_free,
+    HTMLGen_abort,
+    HTMLGen_put_character, HTMLGen_put_string, HTMLGen_write,
+    HTMLGen_start_element, HTMLGen_end_element,
+    HTMLGen_put_entity
 };
 
 /*	Subclass-specific Methods
-**	-------------------------
-*/
-extern int LYcols;			/* LYCurses.h, set in LYMain.c	*/
-
-PUBLIC HTStructured * HTMLGenerator ARGS1(
-	HTStream *,		output)
+ *	-------------------------
+ */
+HTStructured *HTMLGenerator(HTStream *output)
 {
-    HTStructured* me = (HTStructured*)malloc(sizeof(*me));
+    HTStructured *me = (HTStructured *) malloc(sizeof(*me));
+
     if (me == NULL)
 	outofmem(__FILE__, "HTMLGenerator");
     me->isa = &HTMLGeneration;
 
     me->target = output;
-    me->targetClass = *me->target->isa; /* Copy pointers to routines for speed*/
+    me->targetClass = *me->target->isa;		/* Copy pointers to routines for speed */
 
     me->write_pointer = me->buffer;
     flush_breaks(me);
     me->line_break[0] = me->buffer;
-    me->cleanness =	0;
+    me->cleanness = 0;
     me->overflowed = NO;
     me->delete_line_break_char[0] = NO;
-    me->preformatted =	NO;
+    me->preformatted = NO;
     me->in_attrval = NO;
 
     /*
-     *	For what line length should we attempt to wrap ? - kw
+     * For what line length should we attempt to wrap ?  - kw
      */
     if (!LYPreparsedSource) {
-	me->buffer_maxchars = 80; /* work as before - kw */
+	me->buffer_maxchars = 80;	/* work as before - kw */
     } else if (dump_output_width > 1) {
-	me->buffer_maxchars = dump_output_width; /* try to honor -width - kw */
+	me->buffer_maxchars = dump_output_width;	/* try to honor -width - kw */
     } else if (dump_output_immediately) {
-	me->buffer_maxchars = 80; /* try to honor -width - kw */
+	me->buffer_maxchars = 80;	/* try to honor -width - kw */
     } else {
-	me->buffer_maxchars = LYcols - 2;
-	if (me->buffer_maxchars < 38) /* too narrow, let GridText deal */
+	me->buffer_maxchars = (LYcolLimit - 1);
+	if (me->buffer_maxchars < 38)	/* too narrow, let GridText deal */
 	    me->buffer_maxchars = 40;
     }
-    if (me->buffer_maxchars > 900) /* likely not true - kw */
+    if (me->buffer_maxchars > 900)	/* likely not true - kw */
 	me->buffer_maxchars = 78;
-    if (me->buffer_maxchars > BUFFER_SIZE) /* must not be larger! */
+    if (me->buffer_maxchars > BUFFER_SIZE)	/* must not be larger! */
 	me->buffer_maxchars = BUFFER_SIZE - 2;
 
     /*
-     *	If dump_output_immediately is set, there likely isn't anything
-     *	after this stream to interpret the Lynx special chars.	Also
-     *	if they get displayed via HTPlain, that will probably make
-     *	non-breaking space chars etc. invisible.  So let's translate
-     *	them to numerical character references.  For debugging
-     *	purposes we'll use the new hex format.
+     * If dump_output_immediately is set, there likely isn't anything after
+     * this stream to interpret the Lynx special chars.  Also if they get
+     * displayed via HTPlain, that will probably make non-breaking space chars
+     * etc.  invisible.  So let's translate them to numerical character
+     * references.  For debugging purposes we'll use the new hex format.
      */
     me->escape_specials = LYPreparsedSource;
 
 #ifdef USE_COLOR_STYLE
-    me->text = NULL;	/* Will be initialized when first needed. - kw */
+    me->text = NULL;		/* Will be initialized when first needed. - kw */
     FREE(Style_className);
     class_string[0] = '\0';
 #endif /* COLOR_STYLE */
@@ -702,46 +679,46 @@ PUBLIC HTStructured * HTMLGenerator ARGS1(
 }
 
 /*	Stream Object Class
-**	-------------------
-**
-**	This object just converts a plain text stream into HTML
-**	It is officially a structured strem but only the stream bits exist.
-**	This is just the easiest way of typecasting all the routines.
-*/
-PRIVATE CONST HTStructuredClass PlainToHTMLConversion =
+ *	-------------------
+ *
+ *	This object just converts a plain text stream into HTML
+ *	It is officially a structured strem but only the stream bits exist.
+ *	This is just the easiest way of typecasting all the routines.
+ */
+static const HTStructuredClass PlainToHTMLConversion =
 {
-	"plaintexttoHTML",
-	HTMLGen_free,
-	PlainToHTML_abort,
-	HTMLGen_put_character,
-	HTMLGen_put_string,
-	HTMLGen_write,
-	NULL,		/* Structured stuff */
-	NULL,
-	NULL
+    "plaintexttoHTML",
+    HTMLGen_free,
+    PlainToHTML_abort,
+    HTMLGen_put_character,
+    HTMLGen_put_string,
+    HTMLGen_write,
+    NULL,			/* Structured stuff */
+    NULL,
+    NULL
 };
 
 /*	HTConverter from plain text to HTML Stream
-**	------------------------------------------
-*/
-PUBLIC HTStream* HTPlainToHTML ARGS3(
-	HTPresentation *,	pres GCC_UNUSED,
-	HTParentAnchor *,	anchor GCC_UNUSED,
-	HTStream *,		sink)
+ *	------------------------------------------
+ */
+HTStream *HTPlainToHTML(HTPresentation *pres GCC_UNUSED,
+			HTParentAnchor *anchor GCC_UNUSED,
+			HTStream *sink)
 {
-    HTStructured *me = (HTStructured *)malloc(sizeof(*me));
+    HTStructured *me = (HTStructured *) malloc(sizeof(*me));
+
     if (me == NULL)
 	outofmem(__FILE__, "PlainToHTML");
-    me->isa = (CONST HTStructuredClass *)&PlainToHTMLConversion;
+    me->isa = (const HTStructuredClass *) &PlainToHTMLConversion;
 
     /*
-     *	Copy pointers to routines for speed.
+     * Copy pointers to routines for speed.
      */
     me->target = sink;
     me->targetClass = *me->target->isa;
     me->write_pointer = me->buffer;
     flush_breaks(me);
-    me->cleanness =	0;
+    me->cleanness = 0;
     me->overflowed = NO;
     me->delete_line_break_char[0] = NO;
     /* try to honor -width - kw */
@@ -752,5 +729,5 @@ PUBLIC HTStream* HTPlainToHTML ARGS3(
     me->preformatted = YES;
     me->escape_specials = NO;
     me->in_attrval = NO;
-    return (HTStream*) me;
+    return (HTStream *) me;
 }

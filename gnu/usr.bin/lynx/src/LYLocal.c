@@ -1,32 +1,32 @@
 /*
-**  Routines to manipulate the local filesystem.
-**  Written by: Rick Mallett, Carleton University
-**  Report problems to rmallett@ccs.carleton.ca
-**  Modified 18-Dec-95 David Trueman (david@cs.dal.ca):
-**	Added OK_PERMIT compilation option.
-**	Support replacement of compiled-in f)ull menu configuration via
-**	  DIRED_MENU definitions in lynx.cfg, so that more than one menu
-**	  can be driven by the same executable.
-**  Modified Oct-96 Klaus Weide (kweide@tezcat.com):
-**	Changed to use the library's HTList_* functions and macros for
-**	  managing the list of tagged file URLs.
-**	Keep track of proper level of URL escaping, so that unusual filenames
-**	  which contain #% etc. are handled properly (some HTUnEscapeSome()'s
-**	  left in to be conservative, and to document where superfluous
-**	  unescaping took place before).
-**	Dynamic memory instead of fixed length buffers in a few cases.
-**	Other minor changes to make things work as intended.
-**  Modified Jun-97 Klaus Weide (kweide@tezcat.com) & FM:
-**	Modified the code handling DIRED_MENU to do more careful
-**	  checking of the selected file.  In addition to "TAG", "FILE", and
-**	  "DIR", DIRED_MENU definitions in lynx.cfg now also recognize LINK as
-**	  a type.  DIRED_MENU definitions with a type field of "LINK" are only
-**	  used if the current selection is a symbolic link ("FILE" and "DIR"
-**	  definitions are not used in that case).  The default menu
-**	  definitions have been updated to reflect this change, and to avoid
-**	  the showing of menu items whose action would always fail - KW
-**	Cast all code into the Lynx programming style. - FM
-*/
+ *  Routines to manipulate the local filesystem.
+ *  Written by: Rick Mallett, Carleton University
+ *  Report problems to rmallett@ccs.carleton.ca
+ *  Modified 18-Dec-95 David Trueman (david@cs.dal.ca):
+ *	Added OK_PERMIT compilation option.
+ *	Support replacement of compiled-in f)ull menu configuration via
+ *	  DIRED_MENU definitions in lynx.cfg, so that more than one menu
+ *	  can be driven by the same executable.
+ *  Modified Oct-96 Klaus Weide (kweide@tezcat.com):
+ *	Changed to use the library's HTList_* functions and macros for
+ *	  managing the list of tagged file URLs.
+ *	Keep track of proper level of URL escaping, so that unusual filenames
+ *	  which contain #% etc. are handled properly (some HTUnEscapeSome()'s
+ *	  left in to be conservative, and to document where superfluous
+ *	  unescaping took place before).
+ *	Dynamic memory instead of fixed length buffers in a few cases.
+ *	Other minor changes to make things work as intended.
+ *  Modified Jun-97 Klaus Weide (kweide@tezcat.com) & FM:
+ *	Modified the code handling DIRED_MENU to do more careful
+ *	  checking of the selected file.  In addition to "TAG", "FILE", and
+ *	  "DIR", DIRED_MENU definitions in lynx.cfg now also recognize LINK as
+ *	  a type.  DIRED_MENU definitions with a type field of "LINK" are only
+ *	  used if the current selection is a symbolic link ("FILE" and "DIR"
+ *	  definitions are not used in that case).  The default menu
+ *	  definitions have been updated to reflect this change, and to avoid
+ *	  the showing of menu items whose action would always fail - KW
+ *	Cast all code into the Lynx programming style. - FM
+ */
 
 #include <HTUtils.h>
 #include <HTAAProt.h>
@@ -77,27 +77,23 @@
 #endif /* FNAMES_8_3 */
 #endif /* OK_INSTALL */
 
-PRIVATE char *get_filename PARAMS((
-	char *		prompt,
-	char *		buf,
-	size_t		bufsize));
+static char *get_filename(const char *prompt,
+			  char *buf,
+			  size_t bufsize);
 
 #ifdef OK_PERMIT
-PRIVATE int permit_location PARAMS((
-	char *		destpath,
-	char *		srcpath,
-	char **		newpath));
+static int permit_location(char *destpath,
+			   char *srcpath,
+			   char **newpath);
 #endif /* OK_PERMIT */
-
-PRIVATE char *render_item PARAMS((
-	CONST char *	s,
-	CONST char *	path,
-	CONST char *	dir,
+/* *INDENT-OFF* */
+static char *render_item ( const char *	s,
+	const char *	path,
+	const char *	dir,
 	char *		buf,
 	int		bufsize,
-	BOOLEAN		url_syntax));
+	BOOLEAN		url_syntax);
 
-PRIVATE struct dired_menu *menu_head = NULL;
 struct dired_menu {
     int cond;
 #define DE_TAG     1
@@ -109,13 +105,16 @@ struct dired_menu {
     char *rest;
     char *href;
     struct dired_menu *next;
-} defmenu[] = {
+};
+
+static struct dired_menu *menu_head = NULL;
+static struct dired_menu defmenu[] = {
 
 /*
- *  The following initializations determine the contents of the f)ull menu
- *  selection when in dired mode.  If any menu entries are defined in the
- *  configuration file via DIRED_MENU lines, then these default entries
- *  are discarded entirely.
+ * The following initializations determine the contents of the f)ull menu
+ * selection when in dired mode.  If any menu entries are defined in the
+ * configuration file via DIRED_MENU lines, then these default entries are
+ * discarded entirely.
  */
 #ifdef SUPPORT_CHDIR
 { 0,		      "", "Change directory",
@@ -261,10 +260,12 @@ struct dired_menu {
 { 0,		    NULL, NULL,
 		    NULL, NULL,					NULL }
 };
+/* *INDENT-ON* */
 
-PRIVATE BOOLEAN cannot_stat ARGS1(CONST char *, name)
+static BOOLEAN cannot_stat(const char *name)
 {
     char *tmpbuf = 0;
+
     HTSprintf0(&tmpbuf, gettext("Unable to get status of '%s'."), name);
     HTAlert(tmpbuf);
     FREE(tmpbuf);
@@ -273,7 +274,7 @@ PRIVATE BOOLEAN cannot_stat ARGS1(CONST char *, name)
 
 #define OK_STAT(name, sb) (stat(name, sb) == 0)
 
-PRIVATE BOOLEAN ok_stat ARGS2(CONST char *, name, struct stat*, sb)
+static BOOLEAN ok_stat(const char *name, struct stat *sb)
 {
     CTRACE((tfp, "testing ok_stat(%s)\n", name));
     if (!OK_STAT(name, sb)) {
@@ -283,7 +284,7 @@ PRIVATE BOOLEAN ok_stat ARGS2(CONST char *, name, struct stat*, sb)
 }
 
 #ifdef HAVE_LSTAT
-PRIVATE BOOLEAN ok_lstat ARGS2(char *, name, struct stat*, sb)
+static BOOLEAN ok_lstat(char *name, struct stat *sb)
 {
     CTRACE((tfp, "testing ok_lstat(%s)\n", name));
     if (lstat(name, sb) < 0) {
@@ -295,10 +296,10 @@ PRIVATE BOOLEAN ok_lstat ARGS2(char *, name, struct stat*, sb)
 #define ok_lstat(name,sb) ok_stat(name,sb)
 #endif
 
-PRIVATE BOOLEAN ok_file_or_dir ARGS1(struct stat*, sb)
+static BOOLEAN ok_file_or_dir(struct stat *sb)
 {
     if (!S_ISDIR(sb->st_mode)
-     && !S_ISREG(sb->st_mode)) {
+	&& !S_ISREG(sb->st_mode)) {
 	HTAlert(gettext("The selected item is not a file or a directory!  Request ignored."));
 	return FALSE;
     }
@@ -306,12 +307,12 @@ PRIVATE BOOLEAN ok_file_or_dir ARGS1(struct stat*, sb)
 }
 
 #ifdef OK_INSTALL		/* currently only used in local_install */
-PRIVATE BOOLEAN ok_localname ARGS2(char*, dst, CONST char*, src)
+static BOOLEAN ok_localname(char *dst, const char *src)
 {
     struct stat dir_info;
 
     if (!ok_stat(src, &dir_info)
-     || !ok_file_or_dir(&dir_info)) {
+	|| !ok_file_or_dir(&dir_info)) {
 	return FALSE;
     }
     if (strlen(src) >= DIRED_MAXBUF) {
@@ -324,19 +325,20 @@ PRIVATE BOOLEAN ok_localname ARGS2(char*, dst, CONST char*, src)
 #endif /* OK_INSTALL */
 
 /*
- *  Execute DIRED command, return -1 or 0 on failure, 1 success.
+ * Execute DIRED command, return -1 or 0 on failure, 1 success.
  */
-PRIVATE int LYExecv ARGS3(
-	CONST char *,	path,
-	char **,	argv,
-	char *,		msg)
+static int LYExecv(const char *path,
+		   char **argv,
+		   char *msg)
 {
     int rc = 0;
+
 #if defined(VMS) || defined(_WINDOWS)
     CTRACE((tfp, "LYExecv:  Called inappropriately! (path=%s)\n", path));
 #else
     int n;
     char *tmpbuf = 0;
+
 #ifdef __DJGPP__
     stop_curses();
     HTSprintf0(&tmpbuf, "%s", path);
@@ -346,8 +348,10 @@ PRIVATE int LYExecv ARGS3(
     rc = LYSystem(tmpbuf) ? 0 : 1;
 #else
     int pid;
+
 #ifdef HAVE_TYPE_UNIONWAIT
     union wait wstatus;
+
 #else
     int wstatus;
 #endif
@@ -358,57 +362,57 @@ PRIVATE int LYExecv ARGS3(
 	    CTRACE((tfp, "argv[%d] = '%s'\n", n, argv[n]));
     }
 
-    rc = 1;		/* It will work */
+    rc = 1;			/* It will work */
     stop_curses();
-    pid = fork();	/* fork and execute command */
+    pid = fork();		/* fork and execute command */
 
     switch (pid) {
-	case -1:
-	    HTSprintf0(&tmpbuf, gettext("Unable to %s due to system error!"), msg);
-	    rc = 0;
-	    break;	/* don't fall thru! - KW */
+    case -1:
+	HTSprintf0(&tmpbuf, gettext("Unable to %s due to system error!"), msg);
+	rc = 0;
+	break;			/* don't fall thru! - KW */
 
-	case 0:  /* child */
+    case 0:			/* child */
 #ifdef USE_EXECVP
-	    execvp(path, argv);	/* this uses our $PATH */
+	execvp(path, argv);	/* this uses our $PATH */
 #else
-	    execv(path, argv);
+	execv(path, argv);
 #endif
-	    exit(EXIT_FAILURE);	/* execv failed, give wait() something to look at */
-	    /*NOTREACHED*/
+	exit(EXIT_FAILURE);	/* execv failed, give wait() something to look at */
+	/*NOTREACHED */
 
-	default:  /* parent */
+    default:			/* parent */
 #if !HAVE_WAITPID
-	    while (wait(&wstatus) != pid)
-		; /* do nothing */
+	while (wait(&wstatus) != pid) ;		/* do nothing */
 #else
-	    while (-1 == waitpid(pid, &wstatus, 0)) { /* wait for child */
+	while (-1 == waitpid(pid, &wstatus, 0)) {	/* wait for child */
 #ifdef EINTR
-		if (errno == EINTR)
-		    continue;
+	    if (errno == EINTR)
+		continue;
 #endif /* EINTR */
 #ifdef ERESTARTSYS
-		if (errno == ERESTARTSYS)
-		    continue;
+	    if (errno == ERESTARTSYS)
+		continue;
 #endif /* ERESTARTSYS */
-		break;
-	    }
+	    break;
+	}
 #endif /* !HAVE_WAITPID */
-	    if ((WIFEXITED(wstatus)
-	      && (WEXITSTATUS(wstatus) != 0))
-	     || (WIFSIGNALED(wstatus)
-	      && (WTERMSIG(wstatus) > 0)))	{ /* error return */
-		HTSprintf0(&tmpbuf, gettext("Probable failure to %s due to system error!"),
-				   msg);
-		rc = 0;
-	    }
+	if ((WIFEXITED(wstatus)
+	     && (WEXITSTATUS(wstatus) != 0))
+	    || (WIFSIGNALED(wstatus)
+		&& (WTERMSIG(wstatus) > 0))) {	/* error return */
+	    HTSprintf0(&tmpbuf,
+		       gettext("Probable failure to %s due to system error!"),
+		       msg);
+	    rc = 0;
+	}
     }
 #endif /* __DJGPP__ */
 
     if (rc == 0) {
 	/*
-	 *  Screen may have message from the failed execv'd command.
-	 *  Give user time to look at it before screen refresh.
+	 * Screen may have message from the failed execv'd command.  Give user
+	 * time to look at it before screen refresh.
 	 */
 	LYSleepAlert();
     }
@@ -418,21 +422,20 @@ PRIVATE int LYExecv ARGS3(
 	    HTAlert(tmpbuf);
 	FREE(tmpbuf);
     }
-
 #endif /* VMS || _WINDOWS */
-    return(rc);
+    return (rc);
 }
 
-PRIVATE int make_directory ARGS1(char *, path)
+static int make_directory(char *path)
 {
     int code;
-    CONST char *program;
+    const char *program;
 
     if ((program = HTGetProgramPath(ppMKDIR)) != NULL) {
 	char *args[5];
 	char *msg = 0;
 
-	HTSprintf0(&msg,"make directory %s", path);
+	HTSprintf0(&msg, "make directory %s", path);
 	args[0] = "mkdir";
 	args[1] = path;
 	args[2] = (char *) 0;
@@ -448,10 +451,10 @@ PRIVATE int make_directory ARGS1(char *, path)
     return (code);
 }
 
-PRIVATE int remove_file ARGS1(char *, path)
+static int remove_file(char *path)
 {
     int code;
-    CONST char *program;
+    const char *program;
 
     if ((program = HTGetProgramPath(ppRM)) != NULL) {
 	char *args[5];
@@ -470,10 +473,10 @@ PRIVATE int remove_file ARGS1(char *, path)
     return (code);
 }
 
-PRIVATE int remove_directory ARGS1(char *, path)
+static int remove_directory(char *path)
 {
     int code;
-    CONST char *program;
+    const char *program;
 
     if ((program = HTGetProgramPath(ppRMDIR)) != NULL) {
 	char *args[5];
@@ -491,10 +494,10 @@ PRIVATE int remove_directory ARGS1(char *, path)
     return (code);
 }
 
-PRIVATE int touch_file ARGS1(char *, path)
+static int touch_file(char *path)
 {
     int code;
-    CONST char *program;
+    const char *program;
 
     if ((program = HTGetProgramPath(ppTOUCH)) != NULL) {
 	char *args[5];
@@ -508,6 +511,7 @@ PRIVATE int touch_file ARGS1(char *, path)
 	FREE(msg);
     } else {
 	FILE *fp;
+
 	if ((fp = fopen(path, "w")) != 0) {
 	    fclose(fp);
 	    code = 1;
@@ -518,10 +522,10 @@ PRIVATE int touch_file ARGS1(char *, path)
     return (code);
 }
 
-PRIVATE int move_file ARGS2(char *, source, char *, target)
+static int move_file(char *source, char *target)
 {
     int code;
-    CONST char *program;
+    const char *program;
 
     if ((program = HTGetProgramPath(ppMV)) != NULL) {
 	char *msg = 0;
@@ -537,9 +541,10 @@ PRIVATE int move_file ARGS2(char *, source, char *, target)
     } else {
 	struct stat sb;
 	char *actual = 0;
+
 	/* the caller sets up a target directory; we need a file path */
 	if (stat(target, &sb) == 0
-	 && S_ISDIR(sb.st_mode)) {
+	    && S_ISDIR(sb.st_mode)) {
 	    HTSprintf0(&actual, "%s/%s", target, LYPathLeaf(source));
 	    CTRACE((tfp, "move_file source=%s, target=%s\n", source, target));
 	    target = actual;
@@ -556,7 +561,7 @@ PRIVATE int move_file ARGS2(char *, source, char *, target)
     return code;
 }
 
-PRIVATE BOOLEAN not_already_exists ARGS1(char *, name)
+static BOOLEAN not_already_exists(char *name)
 {
     struct stat dir_info;
 
@@ -576,7 +581,7 @@ PRIVATE BOOLEAN not_already_exists ARGS1(char *, name)
     return FALSE;
 }
 
-PRIVATE BOOLEAN dir_has_same_owner ARGS2(struct stat *, info, int, owner)
+static BOOLEAN dir_has_same_owner(struct stat *info, int owner)
 {
     if (S_ISDIR(info->st_mode)) {
 	if ((int) info->st_uid == owner) {
@@ -591,9 +596,9 @@ PRIVATE BOOLEAN dir_has_same_owner ARGS2(struct stat *, info, int, owner)
 }
 
 /*
- *  Remove all tagged files and directories.
+ * Remove all tagged files and directories.
  */
-PRIVATE int remove_tagged NOARGS
+static int remove_tagged(void)
 {
     int ans;
     BOOL will_clear = TRUE;
@@ -604,28 +609,29 @@ PRIVATE int remove_tagged NOARGS
     int count;
     HTList *tag;
 
-    if (HTList_isEmpty(tagged))  /* should never happen */
+    if (HTList_isEmpty(tagged))	/* should never happen */
 	return 0;
 
     ans = HTConfirm(gettext("Remove all tagged files and directories?"));
 
     count = 0;
     tag = tagged;
-    while (ans == YES && (cp = (char *)HTList_nextObject(tag)) != NULL) {
-	if (is_url(cp) == FILE_URL_TYPE) { /* unnecessary check */
+    while (ans == YES && (cp = (char *) HTList_nextObject(tag)) != NULL) {
+	if (is_url(cp) == FILE_URL_TYPE) {	/* unnecessary check */
 	    testpath = HTfullURL_toFile(cp);
 	    LYTrimPathSep(testpath);
 	    will_clear = TRUE;
 
 	    /*
-	     *	Check the current status of the path to be deleted.
+	     * Check the current status of the path to be deleted.
 	     */
 	    if (!ok_stat(testpath, &dir_info)) {
 		will_clear = FALSE;
 		break;
 	    } else {
 		if (remove_file(testpath) <= 0) {
-		    if (count == 0) count = -1;
+		    if (count == 0)
+			count = -1;
 		    will_clear = FALSE;
 		    break;
 		}
@@ -642,15 +648,13 @@ PRIVATE int remove_tagged NOARGS
 }
 
 /*
- *  Move all tagged files and directories to a new location.
- *  Input is current directory.
- *  The tests in this function can, at best, prevent some user mistakes -
- *   anybody who relies on them for security is seriously misguided.
- *  If a user has enough permissions to move a file somewhere, the same
- *   uid with Lynx & dired can do the same thing.
+ * Move all tagged files and directories to a new location.  Input is current
+ * directory.  The tests in this function can, at best, prevent some user
+ * mistakes - anybody who relies on them for security is seriously misguided. 
+ * If a user has enough permissions to move a file somewhere, the same uid with
+ * Lynx & dired can do the same thing.
  */
-PRIVATE int modify_tagged ARGS1(
-	char *,		testpath)
+static int modify_tagged(char *testpath)
 {
     char *cp;
     dev_t dev;
@@ -663,7 +667,7 @@ PRIVATE int modify_tagged ARGS1(
     int count = 0;
     HTList *tag;
 
-    if (HTList_isEmpty(tagged))  /* should never happen */
+    if (HTList_isEmpty(tagged))	/* should never happen */
 	return 0;
 
     _statusline(gettext("Enter new location for tagged items: "));
@@ -671,38 +675,38 @@ PRIVATE int modify_tagged ARGS1(
     tmpbuf[0] = '\0';
     LYgetstr(tmpbuf, VISIBLE, sizeof(tmpbuf), NORECALL);
     if (strlen(tmpbuf)) {
-    /*
-     *	Determine the ownership of the current location.
-     */
 	/*
-	 *  This test used to always fail from the dired menu...
-	 *  changed to something that hopefully makes more sense - KW
+	 * Determine the ownership of the current location.
 	 */
-	if (testpath && *testpath && 0!=strcmp(testpath,"/")) {
+	/*
+	 * This test used to always fail from the dired menu...  changed to
+	 * something that hopefully makes more sense - KW
+	 */
+	if (non_empty(testpath) && 0 != strcmp(testpath, "/")) {
 	    /*
-	     *	testpath passed in and is not empty and not a single "/"
-	     *	(which would probably be bogus) - use it.
+	     * testpath passed in and is not empty and not a single "/" (which
+	     * would probably be bogus) - use it.
 	     */
 	    cp = testpath;
 	} else {
 	    /*
-	     *	Prepare to get directory path from one of the tagged files.
+	     * Prepare to get directory path from one of the tagged files.
 	     */
-	    cp = HTList_lastObject(tagged);
+	    cp = (char *) HTList_lastObject(tagged);
 	    testpath = NULL;	/* Won't be needed any more in this function,
 				   set to NULL as a flag. */
 	}
 
 	if (testpath == NULL) {
 	    /*
-	     *	Get the directory containing the file or subdir.
+	     * Get the directory containing the file or subdir.
 	     */
 	    if (cp) {
 		cp = strip_trailing_slash(cp);
-		cp = HTParse(".", cp, PARSE_PATH+PARSE_PUNCTUATION);
+		cp = HTParse(".", cp, PARSE_PATH + PARSE_PUNCTUATION);
 		savepath = HTURLPath_toFile(cp, TRUE, FALSE);
 		FREE(cp);
-	    } else {	/* Last resort, should never happen. */
+	    } else {		/* Last resort, should never happen. */
 		savepath = HTURLPath_toFile(".", TRUE, FALSE);
 	    }
 	} else {
@@ -720,18 +724,19 @@ PRIVATE int modify_tagged ARGS1(
 	}
 
 	/*
-	 *  Save the owner of the current location for later use.
-	 *  Also save the device and inode for location checking/
+	 * Save the owner of the current location for later use.  Also save the
+	 * device and inode for location checking/
 	 */
 	dev = dir_info.st_dev;
 	inode = dir_info.st_ino;
 	owner = dir_info.st_uid;
 
 	/*
-	 *  Replace ~/ references to the home directory.
+	 * Replace ~/ references to the home directory.
 	 */
 	if (!strncmp(tmpbuf, "~/", 2)) {
 	    char *cp1 = NULL;
+
 	    StrAllocCopy(cp1, Home_Dir());
 	    StrAllocCat(cp1, (tmpbuf + 1));
 	    if (strlen(cp1) > (sizeof(tmpbuf) - 1)) {
@@ -740,22 +745,22 @@ PRIVATE int modify_tagged ARGS1(
 		FREE(cp1);
 		return 0;
 	    }
-	    LYstrncpy(tmpbuf, cp1, sizeof(tmpbuf)-1);
+	    LYstrncpy(tmpbuf, cp1, sizeof(tmpbuf) - 1);
 	    FREE(cp1);
 	}
 
 	/*
-	 *  If path is relative, prefix it with current location.
+	 * If path is relative, prefix it with current location.
 	 */
 	if (!LYIsPathSep(tmpbuf[0])) {
 	    LYAddPathSep(&savepath);
-	    StrAllocCat(savepath,tmpbuf);
+	    StrAllocCat(savepath, tmpbuf);
 	} else {
-	    StrAllocCopy(savepath,tmpbuf);
+	    StrAllocCopy(savepath, tmpbuf);
 	}
 
 	/*
-	 *  stat() the target location to determine type and ownership.
+	 * stat() the target location to determine type and ownership.
 	 */
 	if (!ok_stat(savepath, &dir_info)) {
 	    FREE(savepath);
@@ -763,7 +768,7 @@ PRIVATE int modify_tagged ARGS1(
 	}
 
 	/*
-	 *  Make sure the source and target locations are not the same place.
+	 * Make sure the source and target locations are not the same place.
 	 */
 	if (dev == dir_info.st_dev && inode == dir_info.st_ino) {
 	    HTAlert(gettext("Source and destination are the same location - request ignored!"));
@@ -772,17 +777,17 @@ PRIVATE int modify_tagged ARGS1(
 	}
 
 	/*
-	 *  Make sure the target location is a directory which is owned
-	 *  by the same uid as the owner of the current location.
+	 * Make sure the target location is a directory which is owned by the
+	 * same uid as the owner of the current location.
 	 */
 	if (dir_has_same_owner(&dir_info, owner)) {
 	    count = 0;
 	    tag = tagged;
 
 	    /*
-	     *  Move all tagged items to the target location.
+	     * Move all tagged items to the target location.
 	     */
-	    while ((cp = (char *)HTList_nextObject(tag)) != NULL) {
+	    while ((cp = (char *) HTList_nextObject(tag)) != NULL) {
 		srcpath = HTfullURL_toFile(cp);
 
 		if (move_file(srcpath, savepath) < 0) {
@@ -803,50 +808,50 @@ PRIVATE int modify_tagged ARGS1(
 }
 
 /*
- *  Modify the name of the specified item.
+ * Modify the name of the specified item.
  */
-PRIVATE int modify_name ARGS1(
-	char *,		testpath)
+static int modify_name(char *testpath)
 {
-    char *cp;
+    const char *cp;
     char tmpbuf[DIRED_MAXBUF];
     char *newpath = NULL;
     struct stat dir_info;
     int code = 0;
 
     /*
-     *	Determine the status of the selected item.
+     * Determine the status of the selected item.
      */
     testpath = strip_trailing_slash(testpath);
 
     if (ok_stat(testpath, &dir_info)) {
 	/*
-	 *  Change the name of the file or directory.
+	 * Change the name of the file or directory.
 	 */
 	if (S_ISDIR(dir_info.st_mode)) {
-	     cp = gettext("Enter new name for directory: ");
+	    cp = gettext("Enter new name for directory: ");
 	} else if (S_ISREG(dir_info.st_mode)) {
-	     cp = gettext("Enter new name for file: ");
+	    cp = gettext("Enter new name for file: ");
 	} else {
-	     return ok_file_or_dir(&dir_info);
+	    return ok_file_or_dir(&dir_info);
 	}
-	LYstrncpy(tmpbuf, LYPathLeaf(testpath), sizeof(tmpbuf)-1);
+	LYstrncpy(tmpbuf, LYPathLeaf(testpath), sizeof(tmpbuf) - 1);
 	if (get_filename(cp, tmpbuf, sizeof(tmpbuf)) == NULL)
 	    return 0;
 
 	/*
-	 *  Do not allow the user to also change the location at this time.
+	 * Do not allow the user to also change the location at this time.
 	 */
 	if (LYLastPathSep(tmpbuf) != 0) {
 	    HTAlert(gettext("Illegal character (path-separator) found! Request ignored."));
 	} else if (strlen(tmpbuf)) {
 	    if ((cp = LYLastPathSep(testpath)) != NULL)
-		HTSprintf0(&newpath, "%.*s%s", (cp - testpath + 1), testpath, tmpbuf);
+		HTSprintf0(&newpath, "%.*s%s",
+			   (int) (cp - testpath + 1), testpath, tmpbuf);
 	    else
 		StrAllocCopy(newpath, tmpbuf);
 
 	    /*
-	     *	Make sure the destination does not already exist.
+	     * Make sure the destination does not already exist.
 	     */
 	    if (not_already_exists(newpath)) {
 		code = move_file(testpath, newpath);
@@ -859,12 +864,12 @@ PRIVATE int modify_name ARGS1(
 }
 
 /*
- *  Change the location of a file or directory.
+ * Change the location of a file or directory.
  */
-PRIVATE int modify_location ARGS1(
-	char *,		testpath)
+static int modify_location(char *testpath)
 {
-    char *cp;
+    const char *cp;
+    char *sp;
     dev_t dev;
     ino_t inode;
     int owner;
@@ -875,7 +880,7 @@ PRIVATE int modify_location ARGS1(
     int code = 0;
 
     /*
-     *	Determine the status of the selected item.
+     * Determine the status of the selected item.
      */
     testpath = strip_trailing_slash(testpath);
     if (!ok_stat(testpath, &dir_info)) {
@@ -883,7 +888,7 @@ PRIVATE int modify_location ARGS1(
     }
 
     /*
-     *	Change the location of the file or directory.
+     * Change the location of the file or directory.
      */
     if (S_ISDIR(dir_info.st_mode)) {
 	if (HTGetProgramPath(ppMV) != NULL) {
@@ -897,7 +902,7 @@ PRIVATE int modify_location ARGS1(
     } else {
 	return ok_file_or_dir(&dir_info);
     }
-    LYstrncpy(tmpbuf, testpath, sizeof(tmpbuf)-1);
+    LYstrncpy(tmpbuf, testpath, sizeof(tmpbuf) - 1);
     *LYPathLeaf(tmpbuf) = '\0';
     if (get_filename(cp, tmpbuf, sizeof(tmpbuf)) == NULL)
 	return 0;
@@ -906,18 +911,18 @@ PRIVATE int modify_location ARGS1(
 	StrAllocCopy(newpath, testpath);
 
 	/*
-	 *  Allow ~/ references to the home directory.
+	 * Allow ~/ references to the home directory.
 	 */
 	if (!strncmp(tmpbuf, "~/", 2)
-	 || !strcmp(tmpbuf,"~")) {
+	    || !strcmp(tmpbuf, "~")) {
 	    StrAllocCopy(newpath, Home_Dir());
 	    StrAllocCat(newpath, (tmpbuf + 1));
-	    LYstrncpy(tmpbuf, newpath, sizeof(tmpbuf)-1);
+	    LYstrncpy(tmpbuf, newpath, sizeof(tmpbuf) - 1);
 	}
 	if (LYisAbsPath(tmpbuf)) {
 	    StrAllocCopy(newpath, tmpbuf);
-	} else if ((cp = LYLastPathSep(newpath)) != NULL) {
-	    *++cp = '\0';
+	} else if ((sp = LYLastPathSep(newpath)) != NULL) {
+	    *++sp = '\0';
 	    StrAllocCat(newpath, tmpbuf);
 	} else {
 	    HTAlert(gettext("Unexpected failure - unable to find trailing path separator"));
@@ -927,7 +932,7 @@ PRIVATE int modify_location ARGS1(
 	}
 
 	/*
-	 *  Make sure the source and target have the same owner (uid).
+	 * Make sure the source and target have the same owner (uid).
 	 */
 	dev = dir_info.st_dev;
 	inode = dir_info.st_ino;
@@ -937,7 +942,7 @@ PRIVATE int modify_location ARGS1(
 	}
 #ifdef UNIX
 	/*
-	 *  Make sure the source and target are not the same location.
+	 * Make sure the source and target are not the same location.
 	 */
 	else if (dev == dir_info.st_dev && inode == dir_info.st_ino) {
 	    HTAlert(gettext("Source and destination are the same location!  Request ignored!"));
@@ -945,7 +950,7 @@ PRIVATE int modify_location ARGS1(
 	}
 #endif
 	else if (dir_has_same_owner(&dir_info, owner)) {
-	    code = move_file(savepath,newpath);
+	    code = move_file(savepath, newpath);
 	}
 	FREE(newpath);
 	FREE(savepath);
@@ -954,15 +959,13 @@ PRIVATE int modify_location ARGS1(
 }
 
 /*
- *  Modify name or location of a file or directory on localhost.
+ * Modify name or location of a file or directory on localhost.
  */
-PUBLIC int local_modify ARGS2(
-	DocInfo *,	doc,
-	char **,	newpath)
+int local_modify(DocInfo *doc, char **newpath)
 {
     int ans;
     char *cp;
-    char testpath[DIRED_MAXBUF]; /* a bit ridiculous */
+    char testpath[DIRED_MAXBUF];	/* a bit ridiculous */
     int count;
 
     if (!HTList_isEmpty(tagged)) {
@@ -971,22 +974,22 @@ PUBLIC int local_modify ARGS2(
 	count = modify_tagged(cp);
 	FREE(cp);
 
-	if (doc->link > (nlinks-count - 1))
-	    doc->link = (nlinks-count - 1);
+	if (doc->link > (nlinks - count - 1))
+	    doc->link = (nlinks - count - 1);
 	doc->link = (doc->link < 0) ?
-				  0 : doc->link;
+	    0 : doc->link;
 
 	return count;
     } else if (doc->link < 0 || doc->link > nlinks) {
 	/*
-	 *  Added protection.
+	 * Added protection.
 	 */
 	return 0;
     }
 
     /*
-     *	Do not allow simultaneous change of name and location as in Unix.
-     *	This reduces functionality but reduces difficulty for the novice.
+     * Do not allow simultaneous change of name and location as in Unix.  This
+     * reduces functionality but reduces difficulty for the novice.
      */
 #ifdef OK_PERMIT
     _statusline(gettext("Modify name, location, or permission (n, l, or p): "));
@@ -1001,24 +1004,24 @@ PUBLIC int local_modify ARGS2(
 	    FREE(cp);
 	    return 0;
 	}
-	LYstrncpy(testpath, cp, sizeof(testpath)-1);
+	LYstrncpy(testpath, cp, sizeof(testpath) - 1);
 	FREE(cp);
 
 	if (ans == 'N') {
-	    return(modify_name(testpath));
+	    return (modify_name(testpath));
 	} else if (ans == 'L') {
 	    if (modify_location(testpath)) {
-		if (doc->link == (nlinks-1))
+		if (doc->link == (nlinks - 1))
 		    --doc->link;
 		return 1;
 	    }
 #ifdef OK_PERMIT
 	} else if (ans == 'P') {
-	    return(permit_location(NULL, testpath, newpath));
+	    return (permit_location(NULL, testpath, newpath));
 #endif /* OK_PERMIT */
 	} else {
 	    /*
-	     *	Code for changing ownership needed here.
+	     * Code for changing ownership needed here.
 	     */
 	    HTAlert(gettext("This feature not yet implemented!"));
 	}
@@ -1027,15 +1030,14 @@ PUBLIC int local_modify ARGS2(
 }
 
 /*
- *  Create a new empty file in the current directory.
+ * Create a new empty file in the current directory.
  */
-PRIVATE int create_file ARGS1(
-	char *,		current_location)
+static int create_file(char *current_location)
 {
     int code = FALSE;
     char tmpbuf[DIRED_MAXBUF];
     char *testpath = NULL;
-    char *bad_chars = ".~/";
+    const char *bad_chars = ".~/";
 
     tmpbuf[0] = '\0';
     if (get_filename(gettext("Enter name of file to create: "),
@@ -1052,12 +1054,12 @@ PRIVATE int create_file ARGS1(
 	    LYAddPathSep(&testpath);
 
 	    /*
-	     *  Append the target filename to the current location.
+	     * Append the target filename to the current location.
 	     */
 	    StrAllocCat(testpath, tmpbuf);
 
 	    /*
-	     *  Make sure the target does not already exist
+	     * Make sure the target does not already exist
 	     */
 	    if (not_already_exists(testpath)) {
 		code = touch_file(testpath);
@@ -1069,15 +1071,14 @@ PRIVATE int create_file ARGS1(
 }
 
 /*
- *  Create a new directory in the current directory.
+ * Create a new directory in the current directory.
  */
-PRIVATE int create_directory ARGS1(
-	char *,		current_location)
+static int create_directory(char *current_location)
 {
     int code = FALSE;
     char tmpbuf[DIRED_MAXBUF];
     char *testpath = NULL;
-    char *bad_chars = ".~/";
+    const char *bad_chars = ".~/";
 
     tmpbuf[0] = '\0';
     if (get_filename(gettext("Enter name for new directory: "),
@@ -1096,7 +1097,7 @@ PRIVATE int create_directory ARGS1(
 	    StrAllocCat(testpath, tmpbuf);
 
 	    /*
-	     *  Make sure the target does not already exist.
+	     * Make sure the target does not already exist.
 	     */
 	    if (not_already_exists(testpath)) {
 		code = make_directory(testpath);
@@ -1108,10 +1109,9 @@ PRIVATE int create_directory ARGS1(
 }
 
 /*
- *  Create a file or a directory at the current location.
+ * Create a file or a directory at the current location.
  */
-PUBLIC int local_create ARGS1(
-	DocInfo *,	doc)
+int local_create(DocInfo *doc)
 {
     int ans;
     char *cp;
@@ -1122,26 +1122,25 @@ PUBLIC int local_create ARGS1(
 	FREE(cp);
 	return 0;
     }
-    strcpy(testpath,cp);
+    strcpy(testpath, cp);
     FREE(cp);
 
     _statusline(gettext("Create file or directory (f or d): "));
     ans = LYgetch_single();
 
     if (ans == 'F') {
-	return(create_file(testpath));
+	return (create_file(testpath));
     } else if (ans == 'D') {
-	return(create_directory(testpath));
+	return (create_directory(testpath));
     } else {
 	return 0;
     }
 }
 
 /*
- *  Remove a single file or directory.
+ * Remove a single file or directory.
  */
-PRIVATE int remove_single ARGS1(
-	char *,		testpath)
+static int remove_single(char *testpath)
 {
     int code = 0;
     char *cp;
@@ -1154,7 +1153,7 @@ PRIVATE int remove_single ARGS1(
     }
 
     /*
-     *	Locate the filename portion of the path.
+     * Locate the filename portion of the path.
      */
     if ((cp = LYLastPathSep(testpath)) != NULL) {
 	++cp;
@@ -1162,8 +1161,10 @@ PRIVATE int remove_single ARGS1(
 	cp = testpath;
     }
     if (S_ISDIR(dir_info.st_mode)) {
-	/*** This strlen stuff will probably screw up intl translations /jes ***/
-	/*** Course, it's probably broken for screen sizes other 80, too     ***/
+	/*
+	 * This strlen stuff will probably screw up intl translations.  Course,
+	 * it's probably broken for screen sizes other 80, too -jes
+	 */
 	if (strlen(cp) < 37) {
 	    HTSprintf0(&tmpbuf,
 		       gettext("Remove directory '%s'?"), cp);
@@ -1194,18 +1195,17 @@ PRIVATE int remove_single ARGS1(
 
     if (HTConfirm(tmpbuf) == YES) {
 	code = is_directory
-	     ? remove_directory(testpath)
-	     : remove_file(testpath);
+	    ? remove_directory(testpath)
+	    : remove_file(testpath);
     }
     FREE(tmpbuf);
     return code;
 }
 
 /*
- *  Remove a file or a directory.
+ * Remove a file or a directory.
  */
-PUBLIC int local_remove ARGS1(
-	DocInfo *,	doc)
+int local_remove(DocInfo *doc)
 {
     char *cp, *tp;
     char testpath[DIRED_MAXBUF];
@@ -1213,10 +1213,10 @@ PUBLIC int local_remove ARGS1(
 
     if (!HTList_isEmpty(tagged)) {
 	count = remove_tagged();
-	if (doc->link > (nlinks-count - 1))
-	    doc->link = (nlinks-count - 1);
+	if (doc->link > (nlinks - count - 1))
+	    doc->link = (nlinks - count - 1);
 	doc->link = (doc->link < 0) ?
-				  0 : doc->link;
+	    0 : doc->link;
 	return count;
     } else if (doc->link < 0 || doc->link > nlinks) {
 	return 0;
@@ -1245,56 +1245,64 @@ PUBLIC int local_remove ARGS1(
 
 #ifdef OK_PERMIT
 
-PRIVATE char LYValidPermitFile[LY_MAXPATH] = "\0";
+static char LYValidPermitFile[LY_MAXPATH] = "\0";
 
-PRIVATE long permit_bits ARGS1(char *, string_mode)
+static long permit_bits(char *string_mode)
 {
-    if (!strcmp(string_mode, "IRUSR")) return S_IRUSR;
-    if (!strcmp(string_mode, "IWUSR")) return S_IWUSR;
-    if (!strcmp(string_mode, "IXUSR")) return S_IXUSR;
-    if (!strcmp(string_mode, "IRGRP")) return S_IRGRP;
-    if (!strcmp(string_mode, "IWGRP")) return S_IWGRP;
-    if (!strcmp(string_mode, "IXGRP")) return S_IXGRP;
-    if (!strcmp(string_mode, "IROTH")) return S_IROTH;
-    if (!strcmp(string_mode, "IWOTH")) return S_IWOTH;
-    if (!strcmp(string_mode, "IXOTH")) return S_IXOTH;
+    if (!strcmp(string_mode, "IRUSR"))
+	return S_IRUSR;
+    if (!strcmp(string_mode, "IWUSR"))
+	return S_IWUSR;
+    if (!strcmp(string_mode, "IXUSR"))
+	return S_IXUSR;
+    if (!strcmp(string_mode, "IRGRP"))
+	return S_IRGRP;
+    if (!strcmp(string_mode, "IWGRP"))
+	return S_IWGRP;
+    if (!strcmp(string_mode, "IXGRP"))
+	return S_IXGRP;
+    if (!strcmp(string_mode, "IROTH"))
+	return S_IROTH;
+    if (!strcmp(string_mode, "IWOTH"))
+	return S_IWOTH;
+    if (!strcmp(string_mode, "IXOTH"))
+	return S_IXOTH;
     /* Don't include setuid and friends; use shell access for that. */
     return 0;
 }
 
 /*
- *  Handle DIRED permissions.
+ * Handle DIRED permissions.
  */
-PRIVATE int permit_location ARGS3(
-	char *,		destpath,
-	char *,		srcpath,
-	char **,	newpath)
+static int permit_location(char *destpath,
+			   char *srcpath,
+			   char **newpath)
 {
 #ifndef UNIX
     HTAlert(gettext("Sorry, don't know how to permit non-UNIX files yet."));
-    return(0);
+    return (0);
 #else
     static char tempfile[LY_MAXPATH] = "\0";
     char *cp;
     char tmpdst[LY_MAXPATH];
     struct stat dir_info;
-    CONST char *program;
+    const char *program;
 
     if (srcpath) {
 	/*
-	 *  Create form.
+	 * Create form.
 	 */
 	FILE *fp0;
-	char * user_filename;
-	char * group_name;
+	char *user_filename;
+	const char *group_name;
 
 	srcpath = strip_trailing_slash(srcpath);
 
 	/*
-	 *  A couple of sanity tests.
+	 * A couple of sanity tests.
 	 */
 	if (!ok_lstat(srcpath, &dir_info)
-	 || !ok_file_or_dir(&dir_info))
+	    || !ok_file_or_dir(&dir_info))
 	    return 0;
 
 	user_filename = LYPathLeaf(srcpath);
@@ -1302,7 +1310,7 @@ PRIVATE int permit_location ARGS3(
 	LYRemoveTemp(tempfile);
 	if ((fp0 = LYOpenTemp(tempfile, HTML_SUFFIX, "w")) == NULL) {
 	    HTAlert(gettext("Unable to open permit options file"));
-	    return(0);
+	    return (0);
 	}
 
 	/*
@@ -1311,74 +1319,77 @@ PRIVATE int permit_location ARGS3(
 	LYLocalFileToURL(newpath, tempfile);
 	LYRegisterUIPage(*newpath, UIP_PERMIT_OPTIONS);
 
-	group_name = HTAA_GidToName (dir_info.st_gid);
+	group_name = HTAA_GidToName(dir_info.st_gid);
 	LYstrncpy(LYValidPermitFile,
 		  srcpath,
 		  (sizeof(LYValidPermitFile) - 1));
 
 	fprintf(fp0, "<Html><Head>\n<Title>%s</Title>\n</Head>\n<Body>\n",
 		PERMIT_OPTIONS_TITLE);
-      fprintf(fp0,"<H1>%s%s</H1>\n", PERMISSIONS_SEGMENT, user_filename);
-	{   /*
-	     *	Prevent filenames which include '#' or '?' from messing it up.
+	fprintf(fp0, "<H1>%s%s</H1>\n", PERMISSIONS_SEGMENT, user_filename);
+	{
+	    /*
+	     * Prevent filenames which include '#' or '?' from messing it up.
 	     */
-	    char * srcpath_url = HTEscape(srcpath, URL_PATH);
+	    char *srcpath_url = HTEscape(srcpath, URL_PATH);
+
 	    fprintf(fp0, "<Form Action=\"%s//PERMIT_LOCATION%s\">\n",
 		    STR_LYNXDIRED, srcpath_url);
 	    FREE(srcpath_url);
 	}
 
-	fprintf(fp0, "<Ol><Li>%s<Br><Br>\n", gettext("Specify permissions below:"));
+	fprintf(fp0, "<Ol><Li>%s<Br><Br>\n",
+		gettext("Specify permissions below:"));
 	fprintf(fp0, "%s:<Br>\n", gettext("Owner:"));
 	fprintf(fp0,
-     "<Input Type=\"checkbox\" Name=\"mode\" Value=\"IRUSR\" %s> Read<Br>\n",
+		"<Input Type=\"checkbox\" Name=\"mode\" Value=\"IRUSR\" %s> Read<Br>\n",
 		(dir_info.st_mode & S_IRUSR) ? "checked" : "");
 	fprintf(fp0,
-    "<Input Type=\"checkbox\" Name=\"mode\" Value=\"IWUSR\" %s> Write<Br>\n",
+		"<Input Type=\"checkbox\" Name=\"mode\" Value=\"IWUSR\" %s> Write<Br>\n",
 		(dir_info.st_mode & S_IWUSR) ? "checked" : "");
 	/*
-	 *  If restricted, only change eXecute permissions on directories.
+	 * If restricted, only change eXecute permissions on directories.
 	 */
 	if (!no_change_exec_perms || S_ISDIR(dir_info.st_mode))
 	    fprintf(fp0,
-       "<Input Type=\"checkbox\" Name=\"mode\" Value=\"IXUSR\" %s> %s<Br>\n",
-		(dir_info.st_mode & S_IXUSR) ? "checked" : "",
-		S_ISDIR(dir_info.st_mode) ? "Search" : "Execute");
+		    "<Input Type=\"checkbox\" Name=\"mode\" Value=\"IXUSR\" %s> %s<Br>\n",
+		    (dir_info.st_mode & S_IXUSR) ? "checked" : "",
+		    S_ISDIR(dir_info.st_mode) ? "Search" : "Execute");
 
 	fprintf(fp0, "%s %s:<Br>\n", gettext("Group"), group_name);
 	fprintf(fp0,
-     "<Input Type=\"checkbox\" Name=\"mode\" Value=\"IRGRP\" %s> Read<Br>\n",
+		"<Input Type=\"checkbox\" Name=\"mode\" Value=\"IRGRP\" %s> Read<Br>\n",
 		(dir_info.st_mode & S_IRGRP) ? "checked" : "");
 	fprintf(fp0,
-    "<Input Type=\"checkbox\" Name=\"mode\" Value=\"IWGRP\" %s> Write<Br>\n",
+		"<Input Type=\"checkbox\" Name=\"mode\" Value=\"IWGRP\" %s> Write<Br>\n",
 		(dir_info.st_mode & S_IWGRP) ? "checked" : "");
 	/*
-	 *  If restricted, only change eXecute permissions on directories.
+	 * If restricted, only change eXecute permissions on directories.
 	 */
 	if (!no_change_exec_perms || S_ISDIR(dir_info.st_mode))
 	    fprintf(fp0,
-       "<Input Type=\"checkbox\" Name=\"mode\" Value=\"IXGRP\" %s> %s<Br>\n",
-		(dir_info.st_mode & S_IXGRP) ? "checked" : "",
-		S_ISDIR(dir_info.st_mode) ? "Search" : "Execute");
+		    "<Input Type=\"checkbox\" Name=\"mode\" Value=\"IXGRP\" %s> %s<Br>\n",
+		    (dir_info.st_mode & S_IXGRP) ? "checked" : "",
+		    S_ISDIR(dir_info.st_mode) ? "Search" : "Execute");
 
 	fprintf(fp0, "%s<Br>\n", gettext("Others:"));
 	fprintf(fp0,
-     "<Input Type=\"checkbox\" Name=\"mode\" Value=\"IROTH\" %s> Read<Br>\n",
+		"<Input Type=\"checkbox\" Name=\"mode\" Value=\"IROTH\" %s> Read<Br>\n",
 		(dir_info.st_mode & S_IROTH) ? "checked" : "");
 	fprintf(fp0,
-    "<Input Type=\"checkbox\" Name=\"mode\" Value=\"IWOTH\" %s> Write<Br>\n",
+		"<Input Type=\"checkbox\" Name=\"mode\" Value=\"IWOTH\" %s> Write<Br>\n",
 		(dir_info.st_mode & S_IWOTH) ? "checked" : "");
 	/*
-	 *  If restricted, only change eXecute permissions on directories.
+	 * If restricted, only change eXecute permissions on directories.
 	 */
 	if (!no_change_exec_perms || S_ISDIR(dir_info.st_mode))
 	    fprintf(fp0,
-       "<Input Type=\"checkbox\" Name=\"mode\" Value=\"IXOTH\" %s> %s<Br>\n",
-		(dir_info.st_mode & S_IXOTH) ? "checked" : "",
-		S_ISDIR(dir_info.st_mode) ? "Search" : "Execute");
+		    "<Input Type=\"checkbox\" Name=\"mode\" Value=\"IXOTH\" %s> %s<Br>\n",
+		    (dir_info.st_mode & S_IXOTH) ? "checked" : "",
+		    S_ISDIR(dir_info.st_mode) ? "Search" : "Execute");
 
-      fprintf(fp0,
-"<Br>\n<Li><Input Type=\"submit\" Value=\"Submit\">  %s %s %s.\n</Ol>\n</Form>\n",
+	fprintf(fp0,
+		"<Br>\n<Li><Input Type=\"submit\" Value=\"Submit\">  %s %s %s.\n</Ol>\n</Form>\n",
 		gettext("form to permit"),
 		S_ISDIR(dir_info.st_mode) ? "directory" : "file",
 		user_filename);
@@ -1386,15 +1397,14 @@ PRIVATE int permit_location ARGS3(
 	LYCloseTempFP(fp0);
 
 	LYforce_no_cache = TRUE;
-	return(PERMIT_FORM_RESULT);	 /* Special flag for LYMainLoop */
+	return (PERMIT_FORM_RESULT);	/* Special flag for LYMainLoop */
 
-    } else {				 /* The form being activated. */
+    } else {			/* The form being activated. */
 	mode_t new_mode = 0;
 
 	/*
-	 *  Make sure we have a valid set-permission
-	 *  file comparison string loaded via a previous
-	 *  call with srcpath != NULL. - KW
+	 * Make sure we have a valid set-permission file comparison string
+	 * loaded via a previous call with srcpath != NULL.  - KW
 	 */
 	if (LYValidPermitFile[0] == '\0') {
 	    if (LYCursesON)
@@ -1402,34 +1412,34 @@ PRIVATE int permit_location ARGS3(
 	    else
 		fprintf(stderr, "%s\n", INVALID_PERMIT_URL);
 	    CTRACE((tfp, "permit_location: called for <%s>.\n",
-			(destpath ?
-			 destpath : "NULL URL pointer")));
+		    (destpath ?
+		     destpath : "NULL URL pointer")));
 	    return 0;
 	}
 	cp = destpath;
-	while (*cp != '\0' && *cp != '?') { /* Find filename */
+	while (*cp != '\0' && *cp != '?') {	/* Find filename */
 	    cp++;
 	}
 	if (*cp == '\0') {
-	    return(0);	/* Nothing to permit. */
+	    return (0);		/* Nothing to permit. */
 	}
-	*cp++ = '\0';	/* Null terminate file name and
-			   start working on the masks. */
+	*cp++ = '\0';		/* Null terminate file name and
+				   start working on the masks. */
 
 	/* Will now operate only on filename part. */
 	if ((destpath = HTURLPath_toFile(destpath, TRUE, FALSE)) == 0)
-		return(0);
+	    return (0);
 	if (strlen(destpath) >= LY_MAXPATH) {
 	    FREE(destpath);
-	    return(0);
+	    return (0);
 	}
 	strcpy(tmpdst, destpath);
 	FREE(destpath);
 	destpath = tmpdst;
 
 	/*
-	 *  Make sure that the file string is the one from
-	 *  the last displayed File Permissions menu. - KW
+	 * Make sure that the file string is the one from the last displayed
+	 * File Permissions menu.  - KW
 	 */
 	if (strcmp(destpath, LYValidPermitFile)) {
 	    if (LYCursesON)
@@ -1437,42 +1447,42 @@ PRIVATE int permit_location ARGS3(
 	    else
 		fprintf(stderr, "%s\n", INVALID_PERMIT_URL);
 	    CTRACE((tfp, "permit_location: called for file '%s'.\n",
-			destpath));
+		    destpath));
 	    return 0;
 	}
 
 	/*
-	 *  A couple of sanity tests.
+	 * A couple of sanity tests.
 	 */
 	destpath = strip_trailing_slash(destpath);
 	if (!ok_stat(destpath, &dir_info)
-	 || !ok_file_or_dir(&dir_info)) {
+	    || !ok_file_or_dir(&dir_info)) {
 	    return 0;
 	}
 
 	/*
-	 *  Cycle over permission strings.
+	 * Cycle over permission strings.
 	 */
-	while(*cp != '\0') {
+	while (*cp != '\0') {
 	    char *cr = cp;
 
-	    while(*cr != '\0' && *cr != '&') { /* GET data split by '&'. */
+	    while (*cr != '\0' && *cr != '&') {		/* GET data split by '&'. */
 		cr++;
 	    }
 	    if (*cr != '\0') {
 		*cr++ = '\0';
 	    }
-	    if (strncmp(cp, "mode=", 5) == 0) { /* Magic string. */
+	    if (strncmp(cp, "mode=", 5) == 0) {		/* Magic string. */
 		long mask = permit_bits(cp + 5);
 
 		if (mask != 0) {
 		    /*
-		     *  If restricted, only change eXecute
-		     *  permissions on directories.
+		     * If restricted, only change eXecute permissions on
+		     * directories.
 		     */
 		    if (!no_change_exec_perms
-		     || strchr(cp+5, 'X') == NULL
-		     || S_ISDIR(dir_info.st_mode))
+			|| strchr(cp + 5, 'X') == NULL
+			|| S_ISDIR(dir_info.st_mode))
 			new_mode |= mask;
 		} else {
 		    HTAlert(gettext("Invalid mode format."));
@@ -1487,15 +1497,15 @@ PRIVATE int permit_location ARGS3(
 	}
 
 	/*
-	 *  Call chmod().
+	 * Call chmod().
 	 */
 	if ((program = HTGetProgramPath(ppCHMOD)) != NULL) {
 	    char *args[5];
 	    char amode[10];
 	    char *tmpbuf = NULL;
 
-	    HTSprintf0(&tmpbuf, "chmod %.4o %s", (unsigned int)new_mode, destpath);
-	    sprintf(amode, "%.4o", (unsigned int)new_mode);
+	    HTSprintf0(&tmpbuf, "chmod %.4o %s", (unsigned int) new_mode, destpath);
+	    sprintf(amode, "%.4o", (unsigned int) new_mode);
 	    args[0] = "chmod";
 	    args[1] = amode;
 	    args[2] = destpath;
@@ -1517,11 +1527,10 @@ PRIVATE int permit_location ARGS3(
 #endif /* OK_PERMIT */
 
 /*
- *  Display or remove a tag from a given link.
+ * Display or remove a tag from a given link.
  */
-PUBLIC void tagflag ARGS2(
-	int,		flag,
-	int,		cur)
+void tagflag(int flag,
+	     int cur)
 {
     if (nlinks > 0) {
 	LYmove(links[cur].ly, 2);
@@ -1534,11 +1543,11 @@ PUBLIC void tagflag ARGS2(
 
 #if defined(FANCY_CURSES) || defined(USE_SLANG)
 	if (!LYShowCursor)
-	    LYHideCursor(); /* get cursor out of the way */
+	    LYHideCursor();	/* get cursor out of the way */
 	else
 #endif /* FANCY CURSES || USE_SLANG */
 	    /*
-	     *	Never hide the cursor if there's no FANCY CURSES.
+	     * Never hide the cursor if there's no FANCY CURSES.
 	     */
 	    LYmove(links[cur].ly, links[cur].lx);
 
@@ -1547,10 +1556,9 @@ PUBLIC void tagflag ARGS2(
 }
 
 /*
- *  Handle DIRED tags.
+ * Handle DIRED tags.
  */
-PUBLIC void showtags ARGS1(
-	HTList *,	t)
+void showtags(HTList *t)
 {
     int i;
     HTList *s;
@@ -1558,7 +1566,7 @@ PUBLIC void showtags ARGS1(
 
     for (i = 0; i < nlinks; i++) {
 	s = t;
-	while ((name = HTList_nextObject(s)) != NULL) {
+	while ((name = (char *) HTList_nextObject(s)) != NULL) {
 	    if (!strcmp(links[i].lname, name)) {
 		tagflag(ON, i);
 		break;
@@ -1567,8 +1575,7 @@ PUBLIC void showtags ARGS1(
     }
 }
 
-PRIVATE char * DirectoryOf ARGS1(
-	char *,		pathname)
+static char *DirectoryOf(char *pathname)
 {
     char *result = 0;
     char *leaf;
@@ -1577,13 +1584,13 @@ PRIVATE char * DirectoryOf ARGS1(
     leaf = LYPathLeaf(result);
 
     if (leaf != result) {
-	CONST char *result1 = 0;
+	const char *result1 = 0;
 
 	*leaf = '\0';
 	if (!LYisRootPath(result))
 	    LYTrimPathSep(result);
 	result1 = wwwName(result);
-	StrAllocCopy (result, result1);
+	StrAllocCopy(result, result1);
     }
     return result;
 }
@@ -1593,17 +1600,16 @@ PRIVATE char * DirectoryOf ARGS1(
  * Convert filenames to acceptable 8+3 names when necessary.  Make a copy of
  * the parameter if we must modify it.
  */
-PRIVATE char * LYonedot ARGS1(
-	char *,		line)
+static char *LYonedot(char *line)
 {
     char *dot;
     static char line1[LY_MAXPATH];
 
-    if (pathconf (line, _PC_NAME_MAX) <= 12) {
-	LYstrncpy(line1, line, sizeof(line1)-1);
+    if (pathconf(line, _PC_NAME_MAX) <= 12) {
+	LYstrncpy(line1, line, sizeof(line1) - 1);
 	for (;;) {
 	    if ((dot = strrchr(line1, '.')) == 0
-	     || LYLastPathSep(dot) != 0) {
+		|| LYLastPathSep(dot) != 0) {
 		break;
 	    } else if (strlen(dot) == 1) {
 		*dot = 0;
@@ -1611,22 +1617,21 @@ PRIVATE char * LYonedot ARGS1(
 		*dot = '_';
 	    }
 	}
-	return(line1);
+	return (line1);
     }
-    return(line);
+    return (line);
 }
 #else
 #define LYonedot(path) path
 #endif /*  __DJGPP__ */
 
-PRIVATE char * match_op ARGS2(
-	CONST char *,	prefix,
-	char *,		data)
+static char *match_op(const char *prefix,
+		      char *data)
 {
     int len = strlen(prefix);
 
     if (!strncmp("LYNXDIRED://", data, 12)
-     && !strncmp(prefix, data + 12, (unsigned)len)) {
+	&& !strncmp(prefix, data + 12, (unsigned) len)) {
 	len += 12;
 #if defined(USE_DOS_DRIVES)
 	if (data[len] == '/') {	/* this is normal */
@@ -1639,17 +1644,16 @@ PRIVATE char * match_op ARGS2(
 }
 
 /*
- *  Construct the appropriate system command taking care to
- *  escape all path references to avoid spoofing the shell.
+ * Construct the appropriate system command taking care to escape all path
+ * references to avoid spoofing the shell.
  */
-PRIVATE char *build_command ARGS3(
-	char *,		line,
-	char *,		dirname,
-	char *,		arg)
+static char *build_command(char *line,
+			   char *dirname,
+			   char *arg)
 {
     char *buffer = NULL;
-    CONST char *program;
-    CONST char *tar_path = HTGetProgramPath(ppTAR);
+    const char *program;
+    const char *tar_path = HTGetProgramPath(ppTAR);
 
     if ((arg = match_op("DECOMPRESS", line)) != 0) {
 #define FMT_UNCOMPRESS "%s %s"
@@ -1660,7 +1664,6 @@ PRIVATE char *build_command ARGS3(
 	}
 	return buffer;
     }
-
 #if defined(OK_UUDECODE) && !defined(ARCHIVE_ONLY)
     if ((arg = match_op("UUDECODE", line)) != 0) {
 #define FMT_UUDECODE "%s %s"
@@ -1692,7 +1695,7 @@ PRIVATE char *build_command ARGS3(
 	    }
 	    return buffer;
 	}
-#  endif /* OK_GZIP */
+#  endif			/* OK_GZIP */
 	if ((arg = match_op("UNTAR_Z", line)) != 0) {
 #define FMT_UNTAR_Z "cd %s; %s %s |  %s %s %s"
 	    if ((program = HTGetProgramPath(ppZCAT)) != NULL) {
@@ -1717,7 +1720,7 @@ PRIVATE char *build_command ARGS3(
 	    HTEndParam(&buffer, FMT_UNTAR, 4);
 	    return buffer;
 	}
-# endif /* !ARCHIVE_ONLY */
+# endif				/* !ARCHIVE_ONLY */
 
 # ifdef OK_GZIP
 	if ((arg = match_op("TAR_GZ", line)) != 0) {
@@ -1736,7 +1739,7 @@ PRIVATE char *build_command ARGS3(
 	    }
 	    return buffer;
 	}
-# endif /* OK_GZIP */
+# endif				/* OK_GZIP */
 
 	if ((arg = match_op("TAR_Z", line)) != 0) {
 #define FMT_TAR_Z "cd %s; %s %s %s %s | %s >%s%s"
@@ -1818,7 +1821,7 @@ PRIVATE char *build_command ARGS3(
 	}
 	return buffer;
     }
-# endif /* !ARCHIVE_ONLY */
+# endif				/* !ARCHIVE_ONLY */
 #endif /* OK_ZIP */
 
     if ((arg = match_op("COMPRESS", line)) != 0) {
@@ -1835,21 +1838,19 @@ PRIVATE char *build_command ARGS3(
 }
 
 /*
- *  Perform file management operations for LYNXDIRED URL's.
- *  Attempt to be consistent.  These are (pseudo) URLs - i.e., they should
- *  be in URL syntax: some bytes will be URL-escaped with '%'.	This is
- *  necessary because these (pseudo) URLs will go through some of the same
- *  kinds of interpretations and mutilations as real ones: HTParse, stripping
- *  off #fragments etc.  (Some access schemes currently have special rules
- *  about not escaping parsing '#' "the URL way" built into HTParse, but that
- *  doesn't look like a clean way.)
+ * Perform file management operations for LYNXDIRED URL's.  Attempt to be
+ * consistent.  These are (pseudo) URLs - i.e., they should be in URL syntax: 
+ * some bytes will be URL-escaped with '%'.  This is necessary because these
+ * (pseudo) URLs will go through some of the same kinds of interpretations and
+ * mutilations as real ones:  HTParse, stripping off #fragments etc.  (Some
+ * access schemes currently have special rules about not escaping parsing '#'
+ * "the URL way" built into HTParse, but that doesn't look like a clean way.)
  */
-PUBLIC int local_dired ARGS1(
-	DocInfo *,	doc)
+int local_dired(DocInfo *doc)
 {
-    char *line_url;    /* will point to doc's address, which is a URL */
-    char *line = NULL; /* same as line_url, but HTUnEscaped, will be alloced */
-    char *arg = NULL; /* ...will point into line[] */
+    char *line_url;		/* will point to doc's address, which is a URL */
+    char *line = NULL;		/* same as line_url, but HTUnEscaped, will be alloced */
+    char *arg = NULL;		/* ...will point into line[] */
     char *tp = NULL;
     char *tmpbuf = NULL;
     char *buffer = NULL;
@@ -1858,19 +1859,20 @@ PUBLIC int local_dired ARGS1(
 
     line_url = doc->address;
     CTRACE((tfp, "local_dired: called for <%s>.\n",
-		(line_url ?
-		 line_url : gettext("NULL URL pointer"))));
+	    (line_url
+	     ? line_url
+	     : gettext("NULL URL pointer"))));
     HTUnEscapeSome(line_url, "/");	/* don't mess too much with *doc */
 
     StrAllocCopy(line, line_url);
-    HTUnEscape(line);	/* _file_ (not URL) syntax, for those functions
-			   that need it.  Don't forget to FREE it. */
+    HTUnEscape(line);		/* _file_ (not URL) syntax, for those functions
+				   that need it.  Don't forget to FREE it. */
     if ((arg = match_op("CHDIR", line)) != 0) {
 #ifdef SUPPORT_CHDIR
 	handle_LYK_CHDIR();
 	do_pop_doc = FALSE;
 #endif
-	arg = "blah";	/* do something to avoid cc's complaints */
+	arg = "blah";		/* do something to avoid cc's complaints */
     } else if ((arg = match_op("NEW_FILE", line)) != 0) {
 	if (create_file(arg) > 0)
 	    LYforce_no_cache = TRUE;
@@ -1904,7 +1906,7 @@ PUBLIC int local_dired ARGS1(
 	permit_location(NULL, arg, &tp);
 	if (tp) {
 	    /*
-	     *	One of the checks may have failed.
+	     * One of the checks may have failed.
 	     */
 	    FREE(doc->address);
 	    doc->address = tp;
@@ -1924,10 +1926,9 @@ PUBLIC int local_dired ARGS1(
 	clear_tags();
     } else if ((arg = match_op("UPLOAD", line)) != 0) {
 	/*
-	 *  They're written by LYUpload_options() HTUnEscaped;
-	 *  don't want to change that for now... so pass through
-	 *  without more unescaping.  Directory names containing
-	 *  '#' will probably fail.
+	 * They're written by LYUpload_options() HTUnEscaped; don't want to
+	 * change that for now...  so pass through without more unescaping. 
+	 * Directory names containing '#' will probably fail.
 	 */
 	if (LYUpload(line_url))
 	    LYforce_no_cache = TRUE;
@@ -1941,7 +1942,7 @@ PUBLIC int local_dired ARGS1(
 	buffer = build_command(line, dirname, arg);
 
 	if (buffer != 0) {
-	    if ((int) strlen(buffer) < LYcols - 15) {
+	    if ((int) strlen(buffer) < LYcolLimit - 14) {
 		HTSprintf0(&tmpbuf, gettext("Executing %s "), buffer);
 	    } else {
 		HTSprintf0(&tmpbuf,
@@ -1970,11 +1971,9 @@ PUBLIC int local_dired ARGS1(
 }
 
 /*
- *  Provide a menu of file management options.
+ * Provide a menu of file management options.
  */
-PUBLIC int dired_options ARGS2(
-	DocInfo *,	doc,
-	char **,	newfile)
+int dired_options(DocInfo *doc, char **newfile)
 {
     static char tempfile[LY_MAXPATH];
     char *path;
@@ -1990,15 +1989,15 @@ PUBLIC int dired_options ARGS2(
     char buf[2048];
 
     if ((fp0 = InternalPageFP(tempfile, FALSE)) == 0)
-	return(0);
+	return (0);
 
     /*
-     *  Make the tempfile a URL.
+     * Make the tempfile a URL.
      */
     LYLocalFileToURL(newfile, tempfile);
     LYRegisterUIPage(*newfile, UIP_DIRED_MENU);
 
-    if (doc->link > -1 && doc->link < (nlinks+1)) {
+    if (doc->link > -1 && doc->link < (nlinks + 1)) {
 	path = HTfullURL_toFile(links[doc->link].lname);
 	LYTrimPathSep(path);
 
@@ -2030,40 +2029,42 @@ PUBLIC int dired_options ARGS2(
 	}
     } else {
 	/*
-	 *  Write out number of tagged items, and names of first
-	 *  few of them relative to current (in the DIRED sense)
-	 *  directory.
+	 * Write out number of tagged items, and names of first few of them
+	 * relative to current (in the DIRED sense) directory.
 	 */
 	int n = HTList_count(tagged);
 	char *cp1 = NULL;
 	char *cd = NULL;
 	int i, m;
+
 #define NUM_TAGS_TO_WRITE 10
 	fprintf(fp0, "<em>%s</em> %d %s",
 		gettext("Current selection:"),
-		n, ((n == 1) ? gettext("tagged item:") : gettext("tagged items:")));
+		n, ((n == 1)
+		    ? gettext("tagged item:")
+		    : gettext("tagged items:")));
 	StrAllocCopy(cd, doc->address);
 	HTUnEscapeSome(cd, "/");
 	LYAddHtmlSep(&cd);
 	m = (n < NUM_TAGS_TO_WRITE) ? n : NUM_TAGS_TO_WRITE;
 	for (i = 1; i <= m; i++) {
-	    cp1 = HTRelative(HTList_objectAt(tagged, i-1),
+	    cp1 = HTRelative((char *) HTList_objectAt(tagged, i - 1),
 			     (*cd ? cd : "file://localhost"));
 	    HTUnEscape(cp1);
-	    LYEntify(&cp1, TRUE); /* _should_ do this everywhere... */
+	    LYEntify(&cp1, TRUE);	/* _should_ do this everywhere... */
 	    fprintf(fp0, "%s<br>\n&nbsp;&nbsp;&nbsp;%s",
-			 (i == 1 ? "" : " ,"), cp1);
+		    (i == 1 ? "" : " ,"), cp1);
 	    FREE(cp1);
 	}
 	if (n > m) {
-	    fprintf(fp0," , ...");
+	    fprintf(fp0, " , ...");
 	}
 	fprintf(fp0, "<p>\n");
 	FREE(cd);
     }
 
     /*
-     *	If menu_head is NULL then use defaults and link them together now.
+     * If menu_head is NULL then use defaults and link them together now.
      */
     if (menu_head == NULL) {
 	for (mp = defmenu; mp->href != NULL; mp++)
@@ -2092,14 +2093,14 @@ PUBLIC int dired_options ARGS2(
 	    (strlen(path) < strlen(mp->sfx) ||
 	     strcmp(mp->sfx, &path[(strlen(path) - strlen(mp->sfx))]) != 0))
 	    continue;
-	dir_url  = HTEscape(dir, URL_PATH);
+	dir_url = HTEscape(dir, URL_PATH);
 	path_url = HTEscape(path, URL_PATH);
 	fprintf(fp0, "<a href=\"%s",
-		render_item(mp->href, path_url, dir_url, buf,sizeof(buf), YES));
+		render_item(mp->href, path_url, dir_url, buf, sizeof(buf), YES));
 	fprintf(fp0, "\">%s</a> ",
-		render_item(mp->link, path, dir, buf,sizeof(buf), NO));
+		render_item(mp->link, path, dir, buf, sizeof(buf), NO));
 	fprintf(fp0, "%s<br>\n",
-		render_item(mp->rest, path, dir, buf,sizeof(buf), NO));
+		render_item(mp->rest, path, dir, buf, sizeof(buf), NO));
 	FREE(dir_url);
 	FREE(path_url);
     }
@@ -2111,7 +2112,7 @@ PUBLIC int dired_options ARGS2(
 	     nxt != NULL;
 	     nxt = nxt->next, count++) {
 	    fprintf(fp0,
-		"<a href=\"LYNXDIRED://UPLOAD=%d/TO=%s\"> %s </a><br>\n",
+		    "<a href=\"LYNXDIRED://UPLOAD=%d/TO=%s\"> %s </a><br>\n",
 		    count, dir, nxt->name);
 	}
     }
@@ -2122,16 +2123,15 @@ PUBLIC int dired_options ARGS2(
 
     LYforce_no_cache = TRUE;
 
-    return(0);
+    return (0);
 }
 
 /*
- *  Check DIRED filename.
+ * Check DIRED filename.
  */
-PRIVATE char *get_filename ARGS3(
-	char *,		prompt,
-	char *,		buf,
-	size_t,		bufsize)
+static char *get_filename(const char *prompt,
+			  char *buf,
+			  size_t bufsize)
 {
     char *cp;
 
@@ -2144,7 +2144,7 @@ PRIVATE char *get_filename ARGS3(
     }
 
     if (no_dotfiles || !show_dotfiles) {
-	cp = LYLastPathSep(buf); /* find last slash */
+	cp = LYLastPathSep(buf);	/* find last slash */
 	if (cp)
 	    cp += 1;
 	else
@@ -2161,10 +2161,11 @@ PRIVATE char *get_filename ARGS3(
 
 #define LYEXECV_MAX_ARGC 15
 /* these are quasi-constant once they have been allocated: */
-static char ** install_argp = NULL;	/* args for execv install */
-static char * install_path = NULL;	/* auxiliary */
+static char **install_argp = NULL;	/* args for execv install */
+static char *install_path = NULL;	/* auxiliary */
+
 #ifdef LY_FIND_LEAKS
-PRIVATE void clear_install_path NOARGS
+static void clear_install_path(void)
 {
     FREE(install_argp);
     FREE(install_path);
@@ -2172,32 +2173,32 @@ PRIVATE void clear_install_path NOARGS
 #endif /* LY_FIND_LEAKS */
 
 /*
- *  Fill in args array for execv (or execvp etc.) call, after first
- *  allocating it if necessary.  No fancy parsing, cmd_args is just
- *  split at spaces.  Leave room for reserve additional args to be
- *  added by caller.
- *  On success *argvp points to new args vector, *pathp is auxiliary.
- *  On success returns index of next argument, else -1.
- *  This is generic enough that it could be used for other calls than
- *  install, except the atexit call.  Go through this trouble for install
- *  because INSTALL_ARGS may be significant, and someone may configure it
- *  with more than one significant flags. - kw
+ * Fill in args array for execv (or execvp etc.) call, after first allocating
+ * it if necessary.  No fancy parsing, cmd_args is just split at spaces.  Leave
+ * room for reserve additional args to be added by caller.
+ *
+ * On success *argvp points to new args vector, *pathp is auxiliary.  On
+ * success returns index of next argument, else -1.  This is generic enough
+ * that it could be used for other calls than install, except the atexit call. 
+ * Go through this trouble for install because INSTALL_ARGS may be significant,
+ * and someone may configure it with more than one significant flags.  - kw
  */
-PRIVATE int fill_argv_for_execv ARGS5(
-    char ***,		argvp,
-    char **,		pathp,
-    char *,		cmd_path,
-    CONST char *,	cmd_args,
-    int,		reserve)
+static int fill_argv_for_execv(char ***argvp,
+			       char **pathp,
+			       char *cmd_path,
+			       const char *cmd_args,
+			       int reserve)
 {
     int n = 0;
 
     char **args;
     char *cp;
+
     if (*argvp == NULL) {
-	*argvp = typecallocn(char *, LYEXECV_MAX_ARGC+1);
+	*argvp = typecallocn(char *, LYEXECV_MAX_ARGC + 1);
+
 	if (!*argvp)
-	    return(-1);
+	    return (-1);
 #ifdef LY_FIND_LEAKS
 	atexit(clear_install_path);
 #endif
@@ -2214,37 +2215,37 @@ PRIVATE int fill_argv_for_execv ARGS5(
 	    }
 	    if (cp && (n >= LYEXECV_MAX_ARGC - reserve)) {
 		CTRACE((tfp, "Too many args for '%s' in '%s'!\n",
-		       NONNULL(cmd_path), cmd_args));
-		return(-1);
+			NONNULL(cmd_path), cmd_args));
+		return (-1);
 	    }
 	} else {
 	    args[n++] = *pathp;
 	}
     }
-    args[n] = (char *)0;
-    return(n);
+    args[n] = (char *) 0;
+    return (n);
 }
 
 /*
- *  Install the specified file or directory.
+ * Install the specified file or directory.
  */
-PUBLIC BOOLEAN local_install ARGS3(
-	char *,		destpath,
-	char *,		srcpath,
-	char **,	newpath)
+BOOLEAN local_install(char *destpath,
+		      char *srcpath,
+		      char **newpath)
 {
     char *tmpbuf = NULL;
-    static char savepath[DIRED_MAXBUF]; /* This will be the link that
-					   is to be installed. */
+    static char savepath[DIRED_MAXBUF];		/* This will be the link that
+
+						   is to be installed. */
     struct stat dir_info;
     char **args;
     HTList *tag;
     char *cp = NULL;
     char *tmpdest = NULL;
     int count = 0;
-    int n = 0;		/* indices into 'args[]' */
+    int n = 0;			/* indices into 'args[]' */
     static int src = -1;
-    CONST char *program;
+    const char *program;
 
     if ((program = HTGetProgramPath(ppINSTALL)) == NULL) {
 	HTAlert(gettext("Install in the selected directory not permitted."));
@@ -2252,12 +2253,13 @@ PUBLIC BOOLEAN local_install ARGS3(
     }
 
     /*
-     *	Determine the status of the selected item.
+     * Determine the status of the selected item.
      */
     if (srcpath) {
 	srcpath = strip_trailing_slash(srcpath);
 	if (is_url(srcpath)) {
 	    char *local_src = HTfullURL_toFile(srcpath);
+
 	    if (!ok_localname(savepath, local_src)) {
 		FREE(local_src);
 		return 0;
@@ -2304,7 +2306,7 @@ PUBLIC BOOLEAN local_install ARGS3(
 	HTAlert(gettext("The selected item is not a directory!  Request ignored."));
 	FREE(tmpdest);
 	return 0;
-    } else if (0 /*directory not writable*/) {
+    } else if (0 /*directory not writable */ ) {
 	HTAlert(gettext("Install in the selected directory not permitted."));
 	FREE(tmpdest);
 	return 0;
@@ -2327,7 +2329,7 @@ PUBLIC BOOLEAN local_install ARGS3(
 				2);
 	if (n <= 0) {
 	    src = 0;
-	    HTAlert(gettext("Error buiding install args"));
+	    HTAlert(gettext("Error building install args"));
 	    FREE(tmpdest);
 	    return 0;
 	}
@@ -2336,7 +2338,7 @@ PUBLIC BOOLEAN local_install ARGS3(
     args = install_argp;
 
     args[n++] = destpath;
-    args[n] = (char *)0;
+    args[n] = (char *) 0;
     tag = tagged;
 
     if (HTList_isEmpty(tagged)) {
@@ -2345,7 +2347,7 @@ PUBLIC BOOLEAN local_install ARGS3(
 	    HTUserMsg2(gettext("Source and target are the same: %s"),
 		       savepath);
 	    FREE(tmpdest);
-	    return(-1);		/* don't do it */
+	    return (-1);	/* don't do it */
 	} else if (!strncmp(savepath, destpath, strlen(destpath)) &&
 		   LYIsPathSep(savepath[strlen(destpath)]) &&
 		   LYLastPathSep(savepath + strlen(destpath) + 1) == 0) {
@@ -2364,9 +2366,11 @@ PUBLIC BOOLEAN local_install ARGS3(
 	count++;
     } else {
 	char *name;
+
 	HTSprintf0(&tmpbuf, "install in %s", destpath);
-	while ((name = (char *)HTList_nextObject(tag))) {
+	while ((name = (char *) HTList_nextObject(tag))) {
 	    int err;
+
 	    args[src] = HTfullURL_toFile(name);
 
 	    /* simplistic detection of identical src and dest - kw */
@@ -2402,13 +2406,13 @@ PUBLIC BOOLEAN local_install ARGS3(
 #endif /* OK_INSTALL */
 
 /*
- *  Clear DIRED tags.
+ * Clear DIRED tags.
  */
-PUBLIC void clear_tags NOARGS
+void clear_tags(void)
 {
     char *cp = NULL;
 
-    while ((cp = HTList_removeLastObject(tagged)) != NULL) {
+    while ((cp = (char *) HTList_removeLastObject(tagged)) != NULL) {
 	FREE(cp);
     }
     if (HTList_isEmpty(tagged))
@@ -2416,74 +2420,73 @@ PUBLIC void clear_tags NOARGS
 }
 
 /*
- *  Handle DIRED menu item.
+ * Handle DIRED menu item.
  */
-PUBLIC void add_menu_item ARGS1(
-	char *,		str)
+void add_menu_item(char *str)
 {
-    struct dired_menu *new, *mp;
+    struct dired_menu *tmp, *mp;
     char *cp;
 
     /*
-     *	First custom menu definition causes entire default menu to be
-     *	discarded.
+     * First custom menu definition causes entire default menu to be discarded.
      */
     if (menu_head == defmenu)
 	menu_head = NULL;
 
-    new = typecalloc(struct dired_menu);
-    if (new == NULL)
+    tmp = typecalloc(struct dired_menu);
+
+    if (tmp == NULL)
 	outofmem(__FILE__, "add_menu_item");
 
     /*
-     *	Conditional on tagged != NULL ?
+     * Conditional on tagged != NULL ?
      */
     cp = strchr(str, ':');
     *cp++ = '\0';
     if (strcasecomp(str, "tag") == 0) {
-	new->cond = DE_TAG;
+	tmp->cond = DE_TAG;
     } else if (strcasecomp(str, "dir") == 0) {
-	new->cond = DE_DIR;
+	tmp->cond = DE_DIR;
     } else if (strcasecomp(str, "file") == 0) {
-	new->cond = DE_FILE;
+	tmp->cond = DE_FILE;
 #ifdef S_IFLNK
     } else if (strcasecomp(str, "link") == 0) {
-	new->cond = DE_SYMLINK;
+	tmp->cond = DE_SYMLINK;
 #endif /* S_IFLNK */
     }
 
     /*
-     *	Conditional on matching suffix.
+     * Conditional on matching suffix.
      */
     str = cp;
     cp = strchr(str, ':');
     *cp++ = '\0';
-    StrAllocCopy(new->sfx, str);
+    StrAllocCopy(tmp->sfx, str);
 
     str = cp;
     cp = strchr(str, ':');
     *cp++ = '\0';
-    StrAllocCopy(new->link, str);
+    StrAllocCopy(tmp->link, str);
 
     str = cp;
     cp = strchr(str, ':');
     *cp++ = '\0';
-    StrAllocCopy(new->rest, str);
+    StrAllocCopy(tmp->rest, str);
 
-    StrAllocCopy(new->href, cp);
+    StrAllocCopy(tmp->href, cp);
 
     if (menu_head) {
-	for (mp = menu_head; mp && mp->next != NULL; mp = mp->next)
-	    ;
-	mp->next = new;
+	for (mp = menu_head; mp && mp->next != NULL; mp = mp->next) ;
+	mp->next = tmp;
     } else
-	menu_head = new;
+	menu_head = tmp;
 }
 
-PUBLIC void reset_dired_menu NOARGS
+void reset_dired_menu(void)
 {
     if (menu_head != defmenu) {
 	struct dired_menu *mp, *mp_next = NULL;
+
 	for (mp = menu_head; mp != NULL; mp = mp_next) {
 	    FREE(mp->sfx);
 	    FREE(mp->link);
@@ -2497,96 +2500,95 @@ PUBLIC void reset_dired_menu NOARGS
 }
 
 /*
- *  Create URL for DIRED HREF value.
+ * Create URL for DIRED HREF value.
  */
-PRIVATE char * render_item ARGS6(
-	CONST char *,	s,
-	CONST char *,	path,
-	CONST char *,	dir,
-	char *,		buf,
-	int,		bufsize,
-	BOOLEAN,	url_syntax)
+static char *render_item(const char *s,
+			 const char *path,
+			 const char *dir,
+			 char *buf,
+			 int bufsize,
+			 BOOLEAN url_syntax)
 {
-    CONST char *cp;
+    const char *cp;
     char *bp;
     char overrun = '\0';
     char *taglist = NULL;
+
 #define BP_INC (bp>buf+bufsize-2 ?  &overrun : bp++)
-				/* Buffer overrun could happen for very long
-				   tag list, if %l or %t are used */
+    /* Buffer overrun could happen for very long
+       tag list, if %l or %t are used */
     bp = buf;
     while (*s && !overrun) {
 	if (*s == '%') {
 	    s++;
 	    switch (*s) {
-		case '%':
-		    *BP_INC = '%';
-		    break;
-		case 'p':
+	    case '%':
+		*BP_INC = '%';
+		break;
+	    case 'p':
+		cp = path;
+		if (!LYIsHtmlSep(*cp))
+		    *BP_INC = '/';
+		while (*cp)
+		    *BP_INC = *cp++;
+		break;
+	    case 'd':
+		cp = dir;
+		if (!LYIsHtmlSep(*cp))
+		    *BP_INC = '/';
+		while (*cp)
+		    *BP_INC = *cp++;
+		break;
+	    case 'f':
+		cp = LYLastPathSep(path);
+		if (cp)
+		    cp++;
+		else
 		    cp = path;
-		    if (!LYIsHtmlSep(*cp))
-			*BP_INC = '/';
-		    while (*cp)
-			*BP_INC = *cp++;
-		    break;
-		case 'd':
-		    cp = dir;
-		    if (!LYIsHtmlSep(*cp))
-			*BP_INC = '/';
-		    while (*cp)
-			*BP_INC = *cp++;
-		    break;
-		case 'f':
-		    cp = LYLastPathSep(path);
-		    if (cp)
-			cp++;
-		    else
-			cp = path;
-		    while (*cp)
-			*BP_INC = *cp++;
-		    break;
-		case 'l':
-		case 't':
-		    if (!HTList_isEmpty(tagged)) {
-			HTList *cur = tagged;
-			char *name;
+		while (*cp)
+		    *BP_INC = *cp++;
+		break;
+	    case 'l':
+	    case 't':
+		if (!HTList_isEmpty(tagged)) {
+		    HTList *cur = tagged;
+		    char *name;
 
-			while (!overrun &&
-			       (name = (char *)HTList_nextObject(cur))!=NULL) {
-			    if (*s == 'l' && (cp = strrchr(name, '/')))
-				cp++;
-			    else
-				cp = name;
-			    StrAllocCat(taglist, cp);
-			    StrAllocCat(taglist, " "); /* should this be %20?*/
-			}
+		    while (!overrun &&
+			   (name = (char *) HTList_nextObject(cur)) != NULL) {
+			if (*s == 'l' && (cp = strrchr(name, '/')))
+			    cp++;
+			else
+			    cp = name;
+			StrAllocCat(taglist, cp);
+			StrAllocCat(taglist, " ");	/* should this be %20? */
 		    }
-		    if (taglist) {
-			/* could HTUnescape here... */
-			cp = taglist;
-			while (*cp)
-			    *BP_INC = *cp++;
-			FREE(taglist);
-		    }
-		    break;
-		default:
-		    *BP_INC = '%';
-		    *BP_INC = *s;
-		    break;
+		}
+		if (taglist) {
+		    /* could HTUnescape here... */
+		    cp = taglist;
+		    while (*cp)
+			*BP_INC = *cp++;
+		    FREE(taglist);
+		}
+		break;
+	    default:
+		*BP_INC = '%';
+		*BP_INC = *s;
+		break;
 	    }
 	} else {
 	    /*
-	     *	Other chars come from the lynx.cfg or
-	     *	the default.  Let's assume there isn't
-	     *	anything weird there that needs escaping.
+	     * Other chars come from the lynx.cfg or the default.  Let's assume
+	     * there isn't anything weird there that needs escaping.
 	     */
-	    *BP_INC =*s;
+	    *BP_INC = *s;
 	}
 	s++;
     }
     if (overrun & url_syntax) {
 	HTAlert(gettext("Temporary URL or list would be too long."));
-	bp = buf;	/* set to start, will return empty string as URL */
+	bp = buf;		/* set to start, will return empty string as URL */
     }
     *bp = '\0';
     return buf;

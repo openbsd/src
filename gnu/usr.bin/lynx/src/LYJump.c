@@ -19,10 +19,10 @@
 
 struct JumpTable *JThead = NULL;
 
-PRIVATE int LYCompare PARAMS((CONST void *e1, CONST void *e2));
-PRIVATE unsigned LYRead_Jumpfile PARAMS((struct JumpTable * jtp));
+static int LYCompare(const void *e1, const void *e2);
+static unsigned LYRead_Jumpfile(struct JumpTable *jtp);
 
-PUBLIC void LYJumpTable_free NOARGS
+void LYJumpTable_free(void)
 {
     struct JumpTable *cur = JThead;
     struct JumpTable *next;
@@ -33,14 +33,7 @@ PUBLIC void LYJumpTable_free NOARGS
 	FREE(cur->file);
 	FREE(cur->shortcut);
 	if (cur->history) {
-	    char *shortcut;
-	    HTList *current = cur->history;
-
-	    while (NULL != (shortcut = (char *) HTList_nextObject(current))) {
-		FREE(shortcut);
-	    };
-
-	    HTList_delete(cur->history);
+	    LYFreeStringList(cur->history);
 	    cur->history = NULL;
 	}
 	FREE(cur->table);
@@ -56,30 +49,30 @@ PUBLIC void LYJumpTable_free NOARGS
  * Utility for listing shortcuts, making any repeated
  * shortcut the most current in the list. - FM
  */
-PUBLIC void LYAddJumpShortcut ARGS2(HTList *, historyp, char *, shortcut)
+void LYAddJumpShortcut(HTList *historyp, char *shortcut)
 {
-    char *new = NULL;
+    char *tmp = NULL;
     char *old;
     HTList *cur = historyp;
 
-    if (!historyp || !(shortcut && *shortcut))
+    if (!historyp || isEmpty(shortcut))
 	return;
 
-    StrAllocCopy(new, shortcut);
+    StrAllocCopy(tmp, shortcut);
 
     while (NULL != (old = (char *) HTList_nextObject(cur))) {
-	if (!strcmp(old, new)) {
+	if (!strcmp(old, tmp)) {
 	    HTList_removeObject(historyp, old);
 	    FREE(old);
 	    break;
 	}
     }
-    HTList_addObject(historyp, new);
+    HTList_addObject(historyp, tmp);
 
     return;
 }
 
-PUBLIC BOOL LYJumpInit ARGS1(char *, config)
+BOOL LYJumpInit(char *config)
 {
     struct JumpTable *jtp;
     char *cp;
@@ -163,8 +156,8 @@ PUBLIC BOOL LYJumpInit ARGS1(char *, config)
     if (cp) {
 	jtp->key = remap(cp, "JUMP", FALSE);	/* key is present, (re)map it */
 	cp = strtok(NULL, "\n");	/* get prompt, if present */
-	if (cp && *cp)
-	    StrAllocCopy(jtp->msg, cp);	/* prompt is present, load it */
+	if (non_empty(cp))
+	    StrAllocCopy(jtp->msg, cp);		/* prompt is present, load it */
 	else
 	    cp = NULL;
     }
@@ -178,14 +171,15 @@ PUBLIC BOOL LYJumpInit ARGS1(char *, config)
     return TRUE;
 }
 
-PUBLIC char *LYJump ARGS1(int, key)
+char *LYJump(int key)
 {
     JumpDatum seeking;
     JumpDatum *found;
     static char buf[124];
     char *bp, *cp;
     struct JumpTable *jtp;
-    int ch, recall;
+    int ch;
+    RecallType recall;
     int ShortcutTotal;
     int ShortcutNum;
     BOOLEAN FirstShortcutRecall = TRUE;
@@ -208,9 +202,9 @@ PUBLIC char *LYJump ARGS1(int, key)
     if (jtp->nel == 0)
 	return NULL;
 
-    if (!jump_buffer || !(jtp->shortcut && *jtp->shortcut))
+    if (!jump_buffer || isEmpty(jtp->shortcut))
 	*buf = '\0';
-    else if (jtp->shortcut && *jtp->shortcut) {
+    else if (non_empty(jtp->shortcut)) {
 	if (strlen(jtp->shortcut) > 119)
 	    jtp->shortcut[119] = '\0';
 	strcpy(buf, jtp->shortcut);
@@ -361,7 +355,7 @@ PUBLIC char *LYJump ARGS1(int, key)
     return found ? found->url : NULL;
 }
 
-PRIVATE unsigned LYRead_Jumpfile ARGS1(struct JumpTable *, jtp)
+static unsigned LYRead_Jumpfile(struct JumpTable *jtp)
 {
     struct stat st;
     unsigned int nel;
@@ -449,7 +443,7 @@ PRIVATE unsigned LYRead_Jumpfile ARGS1(struct JumpTable *, jtp)
     }
 
     cp = jtp->mp = mp;
-    for (i = 0; i < nel; ) {
+    for (i = 0; i < nel;) {
 	if (strncmp(cp, "<!--", 4) == 0 || strncmp(cp, "<dl>", 4) == 0) {
 	    cp = strchr(cp, '\n');
 	    if (cp == NULL)
@@ -481,7 +475,7 @@ PRIVATE unsigned LYRead_Jumpfile ARGS1(struct JumpTable *, jtp)
 	if (cp == NULL)
 	    break;
 	cp++;
-	CTRACE((tfp, "Read jumpfile[%d] key='%s', url='%s'\n",
+	CTRACE((tfp, "Read jumpfile[%u] key='%s', url='%s'\n",
 		i, jtp->table[i].key, jtp->table[i].url));
 	i++;
 	if (!cp)
@@ -491,8 +485,8 @@ PRIVATE unsigned LYRead_Jumpfile ARGS1(struct JumpTable *, jtp)
     return i;
 }
 
-PRIVATE int LYCompare ARGS2(CONST void *, e1, CONST void *, e2)
+static int LYCompare(const void *e1, const void *e2)
 {
-    return strcasecomp(((CONST JumpDatum *) e1)->key,
-		       ((CONST JumpDatum *) e2)->key);
+    return strcasecomp(((const JumpDatum *) e1)->key,
+		       ((const JumpDatum *) e2)->key);
 }

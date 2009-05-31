@@ -164,7 +164,7 @@ they will be outlined in this file.
     video attributes but then the arrow keys are messed up. - Donald S.
     Teiser (dsteis01@homer.louisville.edu)
     NOTE: If HP fixes the problem or you come up with a better workaround,
-          notify the lynx-dev@sig.net list.
+          notify the lynx-dev@nongnu.org list.
     Updated NOTE (1996-09-02):  A patch reportedly is available from HP to
           fix the select() problem, so that "-lc" is no longer needed, but
 	  the curses glitch is not yet fixed, and you should still include

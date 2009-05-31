@@ -1,0 +1,162 @@
+This is a short summary of code metrics showing how lynx has grown from
+release to release.  It also shows how the original codebase has
+been almost completely replaced by contributors after the release of
+lynx 2.4.2 in 1996.  The numbers shown are for lines of text, to keep
+the presentation simple.
+
+Release         Current                 Original
+-------------------------------------------------------------------------------
+                Text    C-code          Text    C-code  % Text  % Code
+-------------------------------------------------------------------------------
+2.4.2            77210   63463          77210   63463   100     100
+2.6             112970   92869          58859   49665    52      53
+2.7.1           125723  103489          54121   45111    43      43
+2.7.2           162228  123130          48979   40655    30      33
+2.8.1           191738  133778          37286   33582    19      25
+2.8.2           227160  147485          32227   29004    14      19
+2.8.3           248646  166833          29035   26346    11      15
+2.8.4           310436  168108          28364   25751     9      15
+2.8.5           362834  167358          26900   24355     7      14
+2.8.6           395237  169885          23380   20801     5      12
+
+Beginning with 2.8.6, the fraction of remaining original codebase is an
+estimate, since all C source code is automatically indented using the
+indent.sh script.  That added 7216 lines of change since it was not possible
+to completely match the hand-edited indention scheme.  Note that the actual
+fraction of remaining original codebase is more likely at the lower bound,
+e.g., about 8% rather than 12%.
+
+Current lynx releases contain a large amount of text other than C code.
+That includes plain text, html, message libraries, custom and generated
+scripts.
+
+-------------------------------------------------------------------------------
+
+Here is a count of contributions (from CHANGES and docs/CHANGES2.8) since the
+start of the 2.8 series:
+
+    0.5	AJL
+    3  	Al Gilman
+    1  	Alexei Anatski
+    2  	Alexey Dobriyan
+    1  	Alois Maier
+    2  	Andrew Belov
+    3.5	Andrey A Chernov
+    1  	Arkadiusz Miskiewicz
+    1  	Arnaud Giersch
+    1  	Atsuhito Kohda
+   23.5	Bela Lubkin
+    1  	Bill Nottingham
+    3.5	Bill Schiavo
+    2  	Binh Do
+    1  	Brett Lymn
+   46.3	Brian J Pardy
+    1  	Carlton Anderson
+    1  	Charles Karney
+    1  	Chris Adams
+    1  	Christian Hudon
+    1  	Christian Jensen
+    2.5	Christian Weisgerber
+    1  	Crouton
+    1  	Dan Jacobson
+    1  	David Combs
+    1  	David Henderson
+    0.5	David Woolley
+    1  	Dick Wesseling
+  121.7	Doug Kaufman
+    1  	Duncan Simpson
+    2.5	Eduardo Chappa
+    2  	Emanuele Giaquinta
+    1  	Eric Brun
+   25  	External
+  280.5	Foteos Macrides
+    1  	Frank Heckenbach
+    4.3	Frederic L W Meunier
+    1  	Frederick P Herrmann
+    1  	Georg Drenkhahn
+    1  	George Lindholm
+   19  	Gisle Vanem
+    1  	Glenn Nielsen
+   26  	Hataguchi Takeshi
+    1  	Heikki Kantola
+    0.5	Helen Sommer
+   23  	Henry Nelson
+    1  	Hiram Lester Jr
+    8.5	Hiroyuki Senshu
+    3  	Hynek Med
+    0.3	Igor B Poretsky
+   84.8	Ilya Zakharevich
+    6.5	Ismael Cordeiro
+    2  	J Kevin Ternes
+    1  	Jacob Poon
+   27.5	James E Spath
+    1  	Jan Hlavacek
+    2.5	Jason F McBrayer
+    1  	Jean-Yves Levesque
+    1  	Jeffrey C Honig
+    1  	Jens Schmalzing
+    1  	Jens Seidel
+    1  	Jerome Lauret
+    0.3	Johannes Hromadka
+   35  	John Bley
+    2  	John Davis
+    4  	John E Davis
+    1  	John Hawkinson
+    1  	John Nowlin
+    2  	Jonathan Sergent
+    2  	Julian Coleman
+    3  	Karl Eichwalder
+    1  	Karl-Andre Skevik
+   29.3	Kim DeVaughn
+  707.3	Klaus Weide
+    1  	Lalo Martins
+    1  	Larry Virden
+   15.8	Larry W Virden
+   11  	Laura Eaves
+  344.3	Leonid Pauzner
+    1  	Liam Davis
+    1  	Marc Huber
+    0.3	Marek Kubita
+    2  	Masashi Fujita
+    1  	Masayasu Ishikawa
+    1  	Masayuki Hatta
+    1  	Matt Kraal
+    1  	Michael Sobolev
+    6.5	Michael Warner
+    2  	Michel Such
+    2  	Mike Castle
+    2  	Munechika Sumikawa
+    1  	Nigel Horne
+    3  	OOPS
+    1  	Pat Walsh
+    1  	Paul D Smith
+   50.5	Paul Gilmartin
+    1  	Peter Canning
+   26.3	Philip Webb
+   14  	Philippe De Muyter
+    1  	Rado Smiljanic
+    1  	Randall
+    1  	Risto Widenius
+    1  	Rob Cameron
+    1  	Ryan Nielsen
+    2  	Scott Bigham
+    6  	Sergey Svishchev
+    1  	Serhii Hlodin
+   15  	Sinan Kaan Yerli
+    4.8	Stef Caunter
+    1  	Stepan Kasal
+    1  	Tadayoshi Okuma
+    1  	Thomas Braun
+ 1613.8	Thomas E Dickey
+    5.5	Thorsten Glaser
+    2  	Tim Larson
+    1  	Timur Birsh
+    2  	Tomas Vanhala
+    1.5	Ulf Harnhammar
+    6.5	Victor Schneider
+    2  	Ville Herva
+   86  	Vlad Harchev
+   37.5	Wayne Buttles
+    1  	Wesley Morgan
+    0.5	nsh@horae.dti.ne.jp
+ 3838  	Total

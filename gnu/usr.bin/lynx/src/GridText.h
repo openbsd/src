@@ -1,4 +1,3 @@
-
 /*	Specialities of GridText as subclass of HText
 */
 #ifndef LYGRIDTEXT_H
@@ -12,13 +11,16 @@
 
 #include <HTFont.h>
 
-#define TABSTOP 8
-#define SPACES  "        "  /* must be at least TABSTOP spaces long */
-#define SPLAT   '.'
+#include <HTCJK.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#define TABSTOP 8
+#define SPACES  "        "	/* must be at least TABSTOP spaces long */
+#define SPLAT   '.'
 #define NOCHOP 0
 #define CHOP   1
-
 /* just for information:
 US-ASCII control characters <32 which are not defined in Unicode standard
 =00	U+0000	NULL
@@ -54,249 +56,235 @@ US-ASCII control characters <32 which are not defined in Unicode standard
 =1E	U+001E	RECORD SEPARATOR
 =1F	U+001F	UNIT SEPARATOR
 =7F	U+007F	DELETE
-*/
-
-extern int HTCurSelectGroupType;
-extern char * HTCurSelectGroupSize;
+*/ extern int HTCurSelectGroupType;
+    extern char *HTCurSelectGroupSize;
 
 #if defined(VMS) && defined(VAXC) && !defined(__DECC)
-extern int HTVirtualMemorySize;
-#endif /* VMS && VAXC && !__DECC */
+    extern int HTVirtualMemorySize;
+#endif				/* VMS && VAXC && !__DECC */
 
-extern HTChildAnchor * HText_childNextNumber PARAMS((int n, void** prev));
-extern void HText_FormDescNumber PARAMS((int n, char **desc));
+    extern HTChildAnchor *HText_childNextNumber(int n, void **prev);
+    extern void HText_FormDescNumber(int n, const char **desc);
 
 /*	Is there any file left?
 */
-extern BOOL HText_canScrollUp PARAMS((HText * text));
-extern BOOL HText_canScrollDown NOPARAMS;
+    extern BOOL HText_canScrollUp(HText *text);
+    extern BOOL HText_canScrollDown(void);
 
 /*	Move display within window
 */
-extern void HText_scrollUp PARAMS((HText * text));	/* One page */
-extern void HText_scrollDown PARAMS((HText * text));	/* One page */
-extern void HText_scrollTop PARAMS((HText * text));
-extern void HText_scrollBottom PARAMS((HText * text));
-extern void HText_pageDisplay PARAMS((int line_num, char *target));
-extern BOOL HText_pageHasPrevTarget NOPARAMS;
+    extern void HText_scrollUp(HText *text);	/* One page */
+    extern void HText_scrollDown(HText *text);	/* One page */
+    extern void HText_scrollTop(HText *text);
+    extern void HText_scrollBottom(HText *text);
+    extern void HText_pageDisplay(int line_num, char *target);
+    extern BOOL HText_pageHasPrevTarget(void);
 
-extern int HText_LinksInLines PARAMS((HText *text, int line_num, int Lines));
+    extern int HText_LinksInLines(HText *text, int line_num, int Lines);
 
-extern void HText_setLastChar PARAMS((HText *text, char ch));
-extern char HText_getLastChar PARAMS((HText *text));
-extern void HText_setIgnoreExcess PARAMS((HText *text, BOOL ignore));
+    extern int HText_getAbsLineNumber(HText *text, int anchor_number);
+    extern int HText_closestAnchor(HText *text, int offset);
+    extern int HText_locateAnchor(HText *text, int anchor_number);
+    extern int HText_anchorRelativeTo(HText *text, int top_lineno, int anchor_num);
 
-extern int HText_sourceAnchors PARAMS((HText * text));
-extern void HText_setStale PARAMS((HText * text));
-extern void HText_refresh PARAMS((HText * text));
-extern CONST char * HText_getTitle NOPARAMS;
-extern CONST char * HText_getSugFname NOPARAMS;
-extern void HTCheckFnameForCompression PARAMS((
-	char **			fname,
-	HTParentAnchor *	anchor,
-	BOOLEAN			strip_ok));
-extern CONST char * HText_getLastModified NOPARAMS;
-extern CONST char * HText_getDate NOPARAMS;
-extern CONST char * HText_getServer NOPARAMS;
-extern CONST char * HText_getOwner NOPARAMS;
-extern CONST char * HText_getContentBase NOPARAMS;
-extern CONST char * HText_getContentLocation NOPARAMS;
-extern CONST char * HText_getMessageID NOPARAMS;
-extern CONST char * HText_getRevTitle NOPARAMS;
+    extern void HText_setLastChar(HText *text, char ch);
+    extern char HText_getLastChar(HText *text);
+    extern void HText_setIgnoreExcess(HText *text, BOOL ignore);
+
+    extern int HText_sourceAnchors(HText *text);
+    extern void HText_setStale(HText *text);
+    extern void HText_refresh(HText *text);
+    extern const char *HText_getTitle(void);
+    extern const char *HText_getSugFname(void);
+    extern void HTCheckFnameForCompression(char **fname,
+					   HTParentAnchor *anchor,
+					   BOOLEAN strip_ok);
+    extern const char *HText_getLastModified(void);
+    extern const char *HText_getDate(void);
+    extern const char *HText_getHttpHeaders(void);
+    extern const char *HText_getServer(void);
+    extern const char *HText_getOwner(void);
+    extern const char *HText_getContentBase(void);
+    extern const char *HText_getContentLocation(void);
+    extern const char *HText_getMessageID(void);
+    extern const char *HText_getRevTitle(void);
+
 #ifdef USE_COLOR_STYLE
-extern CONST char * HText_getStyle NOPARAMS;
+    extern const char *HText_getStyle(void);
 #endif
-extern void HText_setMainTextOwner PARAMS((CONST char * owner));
-extern void print_wwwfile_to_fd PARAMS((FILE * fp, BOOLEAN is_reply));
-extern BOOL HText_select PARAMS((HText *text));
-extern BOOL HText_POSTReplyLoaded PARAMS((DocInfo *doc));
-extern BOOL HTFindPoundSelector PARAMS((CONST char *selector));
-extern int HTGetRelLinkNum PARAMS((int num, int rel, int cur));
-extern int HTGetLinkInfo PARAMS((
-	int		number,
-	int		want_go,
-	int *		go_line,
-	int *		linknum,
-	char **		hightext,
-	char **		lname));
-extern BOOL HText_TAHasMoreLines PARAMS((
-	int		curlink,
-	int		direction));
-extern int HTGetLinkOrFieldStart PARAMS((
-	int		curlink,
-	int *		go_line,
-	int *		linknum,
-	int		direction,
-	BOOLEAN		ta_skip));
-extern BOOL HText_getFirstTargetInLine PARAMS((
-	HText *		text,
-	int		line_num,
-	BOOL		utf_flag,
-	int *		offset,
-	int *		tLen,
-	char **		data,
-	CONST char *	target));
-extern int HTisDocumentSource NOPARAMS;
-extern void HTuncache_current_document NOPARAMS;
+    extern void HText_setMainTextOwner(const char *owner);
+    extern void print_wwwfile_to_fd(FILE *fp, BOOLEAN is_email, BOOLEAN is_reply);
+    extern BOOL HText_select(HText *text);
+    extern BOOL HText_POSTReplyLoaded(DocInfo *doc);
+    extern BOOL HTFindPoundSelector(const char *selector);
+    extern int HTGetRelLinkNum(int num, int rel, int cur);
+    extern int HTGetLinkInfo(int number,
+			     int want_go,
+			     int *go_line,
+			     int *linknum,
+			     char **hightext,
+			     char **lname);
+    extern BOOL HText_TAHasMoreLines(int curlink,
+				     int direction);
+    extern int HTGetLinkOrFieldStart(int curlink,
+				     int *go_line,
+				     int *linknum,
+				     int direction,
+				     BOOLEAN ta_skip);
+    extern BOOL HText_getFirstTargetInLine(HText *text,
+					   int line_num,
+					   BOOL utf_flag,
+					   int *offset,
+					   int *tLen,
+					   char **data,
+					   const char *target);
+    extern int HTisDocumentSource(void);
+    extern void HTuncache_current_document(void);
 
 #ifdef USE_SOURCE_CACHE
-extern BOOLEAN HTreparse_document NOPARAMS;
-extern BOOLEAN HTcan_reparse_document NOPARAMS;
-extern BOOLEAN HTdocument_settings_changed NOPARAMS;
+    extern BOOLEAN HTreparse_document(void);
+    extern BOOLEAN HTcan_reparse_document(void);
+    extern BOOLEAN HTdocument_settings_changed(void);
 #endif
 
-extern BOOL HTLoadedDocumentEightbit NOPARAMS;
-extern BOOL HText_LastLineEmpty PARAMS((HText *me, BOOL IgnoreSpaces));
-extern BOOL HText_PreviousLineEmpty PARAMS((HText *me, BOOL IgnoreSpaces));
-extern BOOL HText_inLineOne PARAMS((HText *text));
-extern BOOLEAN HTLoadedDocumentIsHEAD NOPARAMS;
-extern BOOLEAN HTLoadedDocumentIsSafe NOPARAMS;
-extern bstring * HTLoadedDocumentPost_data NOPARAMS;
-extern char * HTLoadedDocumentBookmark NOPARAMS;
-extern char * HTLoadedDocumentCharset NOPARAMS;
-extern char * HTLoadedDocumentTitle NOPARAMS;
-extern char * HTLoadedDocumentURL NOPARAMS;
-extern char * HText_HiddenLinkAt PARAMS((HText *text, int number));
-extern int HText_HiddenLinkCount PARAMS((HText *text));
-extern int HText_LastLineOffset PARAMS((HText *me));
-extern int HText_LastLineSize PARAMS((HText *me, BOOL IgnoreSpaces));
-extern int HText_PreviousLineSize PARAMS((HText *me, BOOL IgnoreSpaces));
-extern int HText_getCurrentColumn PARAMS((HText *text));
-extern int HText_getLines PARAMS((HText * text));
-extern int HText_getMaximumColumn PARAMS((HText *text));
-extern int HText_getNumOfLines NOPARAMS;
-extern int HText_getTabIDColumn PARAMS((HText *text, CONST char *name));
-extern int HText_getTopOfScreen NOPARAMS;
-extern int do_www_search PARAMS((DocInfo *doc));
-extern void HText_NegateLineOne PARAMS((HText *text));
-extern void HText_RemovePreviousLine PARAMS((HText *text));
-extern void HText_setNodeAnchorBookmark PARAMS((CONST char *bookmark));
-extern void HText_setTabID PARAMS((HText *text, CONST char *name));
-extern void* HText_pool_calloc PARAMS((HText * text, unsigned size));
+    extern BOOL HTLoadedDocumentEightbit(void);
+    extern BOOL HText_LastLineEmpty(HText *me, BOOL IgnoreSpaces);
+    extern BOOL HText_PreviousLineEmpty(HText *me, BOOL IgnoreSpaces);
+    extern BOOL HText_inLineOne(HText *text);
+    extern BOOLEAN HTLoadedDocumentIsHEAD(void);
+    extern BOOLEAN HTLoadedDocumentIsSafe(void);
+    extern bstring *HTLoadedDocumentPost_data(void);
+    extern const char *HTLoadedDocumentBookmark(void);
+    extern const char *HTLoadedDocumentCharset(void);
+    extern const char *HTLoadedDocumentTitle(void);
+    extern const char *HTLoadedDocumentURL(void);
+    extern const char *HText_HiddenLinkAt(HText *text, int number);
+    extern int HText_HiddenLinkCount(HText *text);
+    extern int HText_LastLineOffset(HText *me);
+    extern int HText_LastLineSize(HText *me, BOOL IgnoreSpaces);
+    extern int HText_PreviousLineSize(HText *me, BOOL IgnoreSpaces);
+    extern int HText_getCurrentColumn(HText *text);
+    extern int HText_getLines(HText *text);
+    extern int HText_getMaximumColumn(HText *text);
+    extern int HText_getNumOfBytes(void);
+    extern int HText_getNumOfLines(void);
+    extern int HText_getPreferredTopLine(HText *text, int line_number);
+    extern int HText_getTabIDColumn(HText *text, const char *name);
+    extern int HText_getTopOfScreen(void);
+    extern int do_www_search(DocInfo *doc);
+    extern void HText_NegateLineOne(HText *text);
+    extern void HText_RemovePreviousLine(HText *text);
+    extern void HText_setNodeAnchorBookmark(const char *bookmark);
+    extern void HText_setTabID(HText *text, const char *name);
+    extern void *HText_pool_calloc(HText *text, unsigned size);
 
 /* "simple table" stuff */
-extern int HText_endStblTABLE PARAMS((HText *));
-extern int HText_trimCellLines PARAMS((HText * text));
-extern void HText_cancelStbl PARAMS((HText *));
-extern void HText_endStblCOLGROUP PARAMS((HText *));
-extern void HText_endStblTD PARAMS((HText *));
-extern void HText_endStblTR PARAMS((HText *));
-extern void HText_startStblCOL PARAMS((HText *, int, short, BOOL));
-extern void HText_startStblRowGroup PARAMS((HText *, short));
-extern void HText_startStblTABLE PARAMS((HText *, short));
-extern void HText_startStblTD PARAMS((HText *, int, int, short, BOOL));
-extern void HText_startStblTR PARAMS((HText *, short));
+    extern int HText_endStblTABLE(HText *);
+    extern int HText_trimCellLines(HText *text);
+    extern void HText_cancelStbl(HText *);
+    extern void HText_endStblCOLGROUP(HText *);
+    extern void HText_endStblTD(HText *);
+    extern void HText_endStblTR(HText *);
+    extern void HText_startStblCOL(HText *, int, short, BOOL);
+    extern void HText_startStblRowGroup(HText *, short);
+    extern void HText_startStblTABLE(HText *, short);
+    extern void HText_startStblTD(HText *, int, int, short, BOOL);
+    extern void HText_startStblTR(HText *, short);
 
 /* forms stuff */
-extern void HText_beginForm PARAMS((
-	char *		action,
-	char *		method,
-	char *		enctype,
-	char *		title,
-	CONST char *	accept_cs));
-extern void HText_endForm PARAMS((HText *text));
-extern void HText_beginSelect PARAMS((char *name,
-				      int name_cs,
-				      BOOLEAN multiple,
-				      char *len));
-extern int HText_getOptionNum PARAMS((HText *text));
-extern char * HText_setLastOptionValue PARAMS((
-	HText *		text,
-	char *		value,
-	char *		submit_value,
-	int		order,
-	BOOLEAN		checked,
-	int		val_cs,
-	int		submit_val_cs));
-extern int HText_beginInput PARAMS((
-	HText *		text,
-	BOOL		underline,
-	InputFieldData *I));
-extern void HText_endInput PARAMS((
-	HText *		text));
-extern int HText_SubmitForm PARAMS((
-	FormInfo *	submit_item,
-	DocInfo *	doc,
-	char *		link_name,
-	char *		link_value));
-extern void HText_DisableCurrentForm NOPARAMS;
-extern void HText_ResetForm PARAMS((FormInfo *form));
-extern void HText_activateRadioButton PARAMS((FormInfo *form));
-extern BOOLEAN HText_HaveUserChangedForms PARAMS((HText *text));
+    extern void HText_beginForm(char *action,
+				char *method,
+				char *enctype,
+				char *title,
+				const char *accept_cs);
+    extern void HText_endForm(HText *text);
+    extern void HText_beginSelect(char *name,
+				  int name_cs,
+				  BOOLEAN multiple,
+				  char *len);
+    extern int HText_getOptionNum(HText *text);
+    extern char *HText_setLastOptionValue(HText *text,
+					  char *value,
+					  char *submit_value,
+					  int order,
+					  BOOLEAN checked,
+					  int val_cs,
+					  int submit_val_cs);
+    extern int HText_beginInput(HText *text,
+				BOOL underline,
+				InputFieldData * I);
+    extern void HText_endInput(HText *text);
+    extern int HText_SubmitForm(FormInfo * submit_item, DocInfo *doc,
+				char *link_name,
+				char *link_value);
+    extern void HText_DisableCurrentForm(void);
+    extern void HText_ResetForm(FormInfo * form);
+    extern void HText_activateRadioButton(FormInfo * form);
+    extern BOOLEAN HText_HaveUserChangedForms(HText *text);
 
-extern HTList * search_queries; /* Previous isindex and whereis queries */
-extern void HTSearchQueries_free NOPARAMS;
-extern void HTAddSearchQuery PARAMS((char *query));
+    extern HTList *search_queries;	/* Previous isindex and whereis queries */
+    extern void HTSearchQueries_free(void);
+    extern void HTAddSearchQuery(char *query);
 
-extern void user_message PARAMS((
-	CONST char *	message,
-	CONST char *	argument));
+    extern void user_message(const char *message,
+			     const char *argument);
 
 #define _user_message(msg, arg)	mustshow = TRUE, user_message(msg, arg)
 
-extern void www_user_search PARAMS((
-	int		start_line,
-	DocInfo *	doc,
-	char *		target,
-	int		direction));
+    extern void www_user_search(int start_line,
+				DocInfo *doc,
+				char *target,
+				int direction);
 
-extern void print_crawl_to_fd PARAMS((
-	FILE *		fp,
-	char *		thelink,
-	char *		thetitle));
-extern char * stub_HTAnchor_address PARAMS((HTAnchor *me));
+    extern void print_crawl_to_fd(FILE *fp,
+				  char *thelink,
+				  char *thetitle);
+    extern char *stub_HTAnchor_address(HTAnchor * me);
 
-extern void HText_setToolbar PARAMS((HText *text));
-extern BOOL HText_hasToolbar PARAMS((HText *text));
+    extern void HText_setToolbar(HText *text);
+    extern BOOL HText_hasToolbar(HText *text);
 
-extern void HText_setNoCache PARAMS((HText *text));
-extern BOOL HText_hasNoCacheSet PARAMS((HText *text));
+    extern void HText_setNoCache(HText *text);
+    extern BOOL HText_hasNoCacheSet(HText *text);
 
-extern BOOL HText_hasUTF8OutputSet PARAMS((HText *text));
-extern void HText_setKcode PARAMS((
-	HText *		text,
-	CONST char *	charset,
-	LYUCcharset *	p_in));
+    extern BOOL HText_hasUTF8OutputSet(HText *text);
+    extern void HText_setKcode(HText *text,
+			       const char *charset,
+			       LYUCcharset *p_in);
 
-extern void HText_setBreakPoint PARAMS((HText *text));
+    extern void HText_setBreakPoint(HText *text);
 
-extern BOOL HText_AreDifferent PARAMS((
-	HTParentAnchor *	anchor,
-	CONST char *		full_address));
+    extern BOOL HText_AreDifferent(HTParentAnchor *anchor,
+				   const char *full_address);
 
-extern int HText_ExtEditForm PARAMS((
-	LinkInfo *	form_link));
-extern void HText_ExpandTextarea PARAMS((
-	LinkInfo *	form_link,
-	int             newlines));
-extern int HText_InsertFile PARAMS((
-	LinkInfo *	form_link));
+    extern int HText_ExtEditForm(LinkInfo * form_link);
+    extern void HText_ExpandTextarea(LinkInfo * form_link, int newlines);
+    extern int HText_InsertFile(LinkInfo * form_link);
 
-extern void redraw_lines_of_link PARAMS((int cur));
-extern void LYMoveToLink PARAMS((
-	int		cur,
-	CONST char *	target,
-	char *		hightext,
-	int		flag,
-	BOOL		inU,
-	BOOL		utf_flag));
-
+    extern void redraw_lines_of_link(int cur);
+    extern void LYMoveToLink(int cur,
+			     const char *target,
+			     const char *hightext,
+			     int flag,
+			     BOOL inU,
+			     BOOL utf_flag);
 
 #ifdef USE_PRETTYSRC
-extern void HTMark_asSource NOPARAMS;
+    extern void HTMark_asSource(void);
 #endif
 
-extern int HTMainText_Get_UCLYhndl NOPARAMS;
-
-#include <HTCJK.h>
+    extern int HTMainText_Get_UCLYhndl(void);
 
 #ifdef KANJI_CODE_OVERRIDE
-extern HTkcode last_kcode;
+    extern HTkcode last_kcode;
 #endif
 
-extern HTkcode HText_getKcode PARAMS((HText * text));
-extern void HText_updateKcode PARAMS((HText * text, HTkcode kcode));
-extern HTkcode HText_getSpecifiedKcode PARAMS((HText * text));
-extern void HText_updateSpecifiedKcode PARAMS((HText * text, HTkcode kcode));
+    extern HTkcode HText_getKcode(HText *text);
+    extern void HText_updateKcode(HText *text, HTkcode kcode);
+    extern HTkcode HText_getSpecifiedKcode(HText *text);
+    extern void HText_updateSpecifiedKcode(HText *text, HTkcode kcode);
 
-#endif /* LYGRIDTEXT_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* LYGRIDTEXT_H */

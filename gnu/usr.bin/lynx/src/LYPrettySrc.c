@@ -14,22 +14,26 @@
 
 #ifdef USE_PRETTYSRC
 BOOL psrc_convert_string = FALSE;
-PUBLIC BOOL psrc_view = FALSE;/* this is read by SGML_put_character - TRUE
-	when viewing pretty source */
-PUBLIC BOOL LYpsrc = FALSE; /* this tells what will be shown on '\':
-  if TRUE, then pretty source, normal source view otherwise. Toggled by
-  -prettysrc commandline option.  */
-PUBLIC BOOL sgml_in_psrc_was_initialized;
-PUBLIC BOOL psrc_nested_call;
-PUBLIC BOOL psrc_first_tag;
-PUBLIC BOOL mark_htext_as_source=FALSE;
+BOOL psrc_view = FALSE;		/* this is read by SGML_put_character - TRUE
+
+				   when viewing pretty source */
+BOOL LYpsrc = FALSE;		/* this tells what will be shown on '\':
+
+				   if TRUE, then pretty source, normal source view otherwise. Toggled by
+				   -prettysrc commandline option.  */
+BOOL sgml_in_psrc_was_initialized;
+BOOL psrc_nested_call;
+BOOL psrc_first_tag;
+BOOL mark_htext_as_source = FALSE;
+
   /* tagspecs from lynx.cfg are read here. After .lss file is read (is with lss
      support), the style cache and markup are created before entering the
      mainloop. */
-PUBLIC BOOL psrcview_no_anchor_numbering = FALSE;
-PRIVATE char* HTL_tagspecs_defaults[HTL_num_lexemes] = {
+BOOL psrcview_no_anchor_numbering = FALSE;
+static const char *HTL_tagspecs_defaults[HTL_num_lexemes] =
+{
  /* these values are defaults. They are also listed in comments of distibution's
-     lynx.cfg.*/
+    lynx.cfg. */
 #ifdef USE_COLOR_STYLE
     "span.htmlsrc_comment:!span",
     "span.htmlsrc_tag:!span",
@@ -44,37 +48,36 @@ PRIVATE char* HTL_tagspecs_defaults[HTL_num_lexemes] = {
     "span.htmlsrc_badattr:!span",
     "span.htmlsrc_sgmlspecial:!span"
 #else
-    "b:!b",	/*	comment	*/
-    "b:!b",	/*	tag	*/
-    "b:!b",	/*	attrib	*/
-    ":",	/*	attrval	*/
-    "b:!b",	/*	abracket*/
-    "b:!b",	/*	entity	*/
-    ":",	/*	href	*/
-    ":",	/*	entire	*/
-    "b:!b",	/*	badseq	*/
-    ":",	/*	badtag	*/
-    ":",	/*	badattr	*/
-    "b:!b"	/*	sgmlspec*/
+    "b:!b",			/* comment */
+    "b:!b",			/* tag     */
+    "b:!b",			/* attrib  */
+    ":",			/* attrval */
+    "b:!b",			/* abracket */
+    "b:!b",			/* entity  */
+    ":",			/* href    */
+    ":",			/* entire  */
+    "b:!b",			/* badseq  */
+    ":",			/* badtag  */
+    ":",			/* badattr */
+    "b:!b"			/* sgmlspec */
 #endif
 };
 
-PUBLIC char* HTL_tagspecs[HTL_num_lexemes];
+char *HTL_tagspecs[HTL_num_lexemes];
 
  /* these are pointers since tagspec can be empty (the pointer will be NULL
     in that case) */
-PUBLIC HT_tagspec* lexeme_start[HTL_num_lexemes];
-PUBLIC HT_tagspec* lexeme_end[HTL_num_lexemes];
+HT_tagspec *lexeme_start[HTL_num_lexemes];
+HT_tagspec *lexeme_end[HTL_num_lexemes];
 
-PUBLIC int tagname_transform = 2;
-PUBLIC int attrname_transform = 2;
+int tagname_transform = 2;
+int attrname_transform = 2;
 
-
-PRIVATE int html_src_tag_index ARGS1(
-	    char*, tagname)
+static int html_src_tag_index(char *tagname)
 {
-    HTTag* tag = SGMLFindTag(&HTML_dtd, tagname);
-    return (tag && tag != &HTTag_unrecognized ) ? tag - HTML_dtd.tags : -1;
+    HTTag *tag = SGMLFindTag(&HTML_dtd, tagname);
+
+    return (tag && tag != &HTTag_unrecognized) ? tag - HTML_dtd.tags : -1;
 }
 
 typedef enum {
@@ -84,56 +87,58 @@ typedef enum {
     HTSRC_CK_seen_dot
 } html_src_check_state;
 
-PRIVATE void append_close_tag ARGS3(
-	    char*,	  tagname,
-	    HT_tagspec**, head,
-	    HT_tagspec**, tail)
+static void append_close_tag(char *tagname,
+			     HT_tagspec ** head,
+			     HT_tagspec ** tail)
 {
     int idx, nattr;
-    HTTag* tag;
-    HT_tagspec* subj;
+    HTTag *tag;
+    HT_tagspec *subj;
 
     idx = html_src_tag_index(tagname);
-    tag = HTML_dtd.tags+idx;
+    tag = HTML_dtd.tags + idx;
     nattr = tag->number_of_attributes;
 
     if (idx == -1) {
 	fprintf(stderr,
-	"internal error: previous check didn't find bad HTML tag %s", tagname);
+		"internal error: previous check didn't find bad HTML tag %s", tagname);
 	exit_immediately(EXIT_FAILURE);
     }
 
     subj = typecalloc(HT_tagspec);
-    subj->element = idx;
+    subj->element = (HTMLElement) idx;
     subj->present = typecallocn(BOOL, nattr);
     subj->value = typecallocn(char *, nattr);
+
     subj->start = FALSE;
 #ifdef USE_COLOR_STYLE
     subj->class_name = NULL;
 #endif
 
     if (!*head) {
-	*head = subj; *tail = subj;
+	*head = subj;
+	*tail = subj;
     } else {
-	(*tail)->next = subj; *tail = subj;
+	(*tail)->next = subj;
+	*tail = subj;
     }
 }
 
 /* this will allocate node, initialize all members, and node
    append to the list, possibly modifying head and modifying tail */
-PRIVATE void append_open_tag ARGS4(
-	    char*,	  tagname,
-	    char*,	  classname GCC_UNUSED,
-	    HT_tagspec**, head,
-	    HT_tagspec**, tail)
+static void append_open_tag(char *tagname,
+			    char *classname GCC_UNUSED,
+			    HT_tagspec ** head,
+			    HT_tagspec ** tail)
 {
-    HT_tagspec* subj;
-    HTTag* tag;
+    HT_tagspec *subj;
+    HTTag *tag;
+
 #ifdef USE_COLOR_STYLE
     int hcode;
 #endif
 
-    append_close_tag(tagname, head, tail); /* initialize common members*/
+    append_close_tag(tagname, head, tail);	/* initialize common members */
     subj = *tail;
     subj->start = TRUE;
 
@@ -141,161 +146,210 @@ PRIVATE void append_open_tag ARGS4(
 
 #ifdef USE_COLOR_STYLE
     hcode = hash_code_lowercase_on_fly(tagname);
-    if (classname && *classname) {
+    if (non_empty(classname)) {
 
 #  if 0
 	/*
-	 * we don't provide a classname as attribute of that tag, since for plain
-	 * formatting tags they are not used directly for anything except style -
-	 * and we provide style value directly.
+	 * we don't provide a classname as attribute of that tag, since for
+	 * plain formatting tags they are not used directly for anything except
+	 * style - and we provide style value directly.
 	 */
 	int class_attr_idx = 0;
 	int n = tag->number_of_attributes;
-	attr* attrs = tag->attributes;
-	 /*.... */ /* this is not implemented though it's easy */
+	attr *attrs = tag->attributes;
+
+/*.... *//* this is not implemented though it's easy */
 #  endif
 
 	hcode = hash_code_aggregate_char('.', hcode);
 	hcode = hash_code_aggregate_lower_str(classname, hcode);
 	StrAllocCopy(subj->class_name, classname);
     } else {
-	StrAllocCopy(subj->class_name,"");
+	StrAllocCopy(subj->class_name, "");
     }
     subj->style = hcode;
 #endif
 }
 
-/* returns 1 if incorrect */
-PUBLIC int html_src_parse_tagspec ARGS4(
-	char*,		ts,
-	HTlexeme,	lexeme,
-	BOOL,		checkonly,
-	BOOL,		isstart)
+#define isLeadP(p) ((isalpha(UCH(*p)) || *p == '_'))
+#define isNextP(p) ((isalnum(UCH(*p)) || *p == '_'))
+
+#define FMT_AT " at column %d:\n\t%s\n"
+#define TXT_AT (int) (1 + p - ts), ts
+
+/* returns FALSE if incorrect */
+int html_src_parse_tagspec(char *ts,
+			   HTlexeme lexeme,
+			   BOOL checkonly,
+			   BOOL isstart)
 {
+    BOOL stop = FALSE;
+    BOOL code = FALSE;
     char *p = ts;
     char *tagstart = 0;
     char *tagend = 0;
     char *classstart;
     char *classend;
-    char stop = FALSE, after_excl = FALSE;
+    char save, save1;
+    char after_excl = FALSE;
     html_src_check_state state = HTSRC_CK_normal;
-    HT_tagspec* head = NULL, *tail = NULL;
-    HT_tagspec** slot = ( isstart ? lexeme_start : lexeme_end ) + lexeme;
+    HT_tagspec *head = NULL;
+    HT_tagspec *tail = NULL;
+    HT_tagspec **slot = (isstart ? lexeme_start : lexeme_end) + lexeme;
 
     while (!stop) {
 	switch (state) {
-	    case HTSRC_CK_normal:
-	    case HTSRC_CK_seen_excl:
-		switch (*p) {
-		    case '\0': stop = TRUE; break;
-		    case ' ': case '\t': break;
-		    case '!':
-			if (state == HTSRC_CK_seen_excl)
-			    return 1;	/*second '!'*/
-			state = HTSRC_CK_seen_excl;
-			after_excl = TRUE;
-			break;
-		    default:
-			if (isalpha(UCH(*p)) || *p == '_') {
-			    tagstart = p;
-			    while (*p && ( isalnum(UCH(*p)) || *p == '_') )
-				 ++p;
-			    tagend = p;
-			    state = HTSRC_CK_after_tagname;
-			} else
-			    return 1;
-			continue;
-		    }
+	case HTSRC_CK_normal:
+	case HTSRC_CK_seen_excl:
+	    switch (*p) {
+	    case '\0':
+		stop = TRUE;
+		code = TRUE;
 		break;
-	    case HTSRC_CK_after_tagname:
-		switch (*p) {
-		    case '\0': stop = TRUE;
-			/* FALLTHRU */
-		    case ' ':
-			/* FALLTHRU */
-		    case '\t':
-			{
-			    char save = *tagend;
-			    *tagend = '\0';
-			    classstart = 0;
-			    if (checkonly) {
-				int idx = html_src_tag_index(tagstart);
-				*tagend = save;
-				if (idx == -1)
-				    return 1;
-			    } else {
-				if (after_excl)
-				    append_close_tag(tagstart, &head, &tail);
-				else
-				    append_open_tag(tagstart, NULL, &head, &tail);
-			    }
-			    state = HTSRC_CK_normal;
-			    after_excl = FALSE;
-			}
-			break;
-		    case '.':
-			if (after_excl)
-			    return 1;
-			state = HTSRC_CK_seen_dot;
-			break;
-		    default:
-			return 1;
+	    case ' ':
+	    case '\t':
+		break;
+	    case '!':
+		if (state == HTSRC_CK_seen_excl) {
+		    CTRACE2(TRACE_CFG,
+			    (tfp, "second '!'" FMT_AT,
+			     TXT_AT));
+		    stop = TRUE;
+		    break;
 		}
+		state = HTSRC_CK_seen_excl;
+		after_excl = TRUE;
 		break;
-	    case HTSRC_CK_seen_dot: {
-		switch (*p) {
-		    case ' ':
-		    case '\t':
+	    default:
+		if (!isLeadP(p)) {
+		    CTRACE2(TRACE_CFG,
+			    (tfp, "no name starting" FMT_AT,
+			     TXT_AT));
+		    stop = TRUE;
+		    break;
+		}
+		tagstart = p;
+		while (*p && isNextP(p))
+		    ++p;
+		tagend = p--;
+		state = HTSRC_CK_after_tagname;
+	    }
+	    break;
+	case HTSRC_CK_after_tagname:
+	    switch (*p) {
+	    case '\0':
+		stop = TRUE;
+		code = TRUE;
+		/* FALLTHRU */
+	    case ' ':
+		/* FALLTHRU */
+	    case '\t':
+		save = *tagend;
+
+		*tagend = '\0';
+		classstart = 0;
+		if (checkonly) {
+		    int idx = html_src_tag_index(tagstart);
+
+		    CTRACE2(TRACE_CFG,
+			    (tfp, "tag index(%s) = %d\n",
+			     tagstart, idx));
+
+		    *tagend = save;
+		    if (idx == -1) {
+			stop = TRUE;
 			break;
-		    case '\0':
-			return 1;
-		    default: {
-			char save, save1;
-			if ( isalpha(UCH(*p)) || *p == '_' ) {
-			    classstart = p;
-			    while (*p && ( isalnum(UCH(*p)) || *p == '_') ) ++p;
-			    classend = p;
-			    save = *classend;
-			    *classend = '\0';
-			    save1 = *tagend;
-			    *tagend = '\0';
-			    if (checkonly) {
-				int idx = html_src_tag_index(tagstart);
-				*tagend = save1; *classend = save;
-				if (idx == -1)
-				return 1;
-			    } else {
-				append_open_tag(tagstart, classstart, &head, &tail);
-			    }
-			    state = HTSRC_CK_normal;after_excl = FALSE;
-			    continue;
-			} else
-			    return 1;
 		    }
-		}/*of switch(*p)*/
+		} else {
+		    if (after_excl)
+			append_close_tag(tagstart, &head, &tail);
+		    else
+			append_open_tag(tagstart, NULL, &head, &tail);
+		}
+		state = HTSRC_CK_normal;
+		after_excl = FALSE;
 		break;
-	    } /* of case HTSRC_CK_seen_dot: */
-	}/* of switch */
+	    case '.':
+		if (after_excl) {
+		    CTRACE2(TRACE_CFG,
+			    (tfp, "dot after '!'" FMT_AT,
+			     TXT_AT));
+		    stop = TRUE;
+		    break;
+		}
+		state = HTSRC_CK_seen_dot;
+		break;
+	    default:
+		CTRACE2(TRACE_CFG,
+			(tfp, "unexpected char '%c' after tagname" FMT_AT,
+			 *p, TXT_AT));
+		stop = TRUE;
+		break;
+	    }
+	    break;
+	case HTSRC_CK_seen_dot:
+	    switch (*p) {
+	    case ' ':
+	    case '\t':
+		break;
+	    case '\0':
+		CTRACE2(TRACE_CFG,
+			(tfp, "expected text after dot" FMT_AT,
+			 TXT_AT));
+		stop = TRUE;
+		break;
+	    default:
+		if (!isLeadP(p)) {
+		    CTRACE2(TRACE_CFG,
+			    (tfp, "no name starting" FMT_AT,
+			     TXT_AT));
+		    stop = TRUE;
+		    break;
+		}
+		classstart = p;
+		while (*p && isNextP(p))
+		    ++p;
+		classend = p--;
+		save = *classend;
+		*classend = '\0';
+		save1 = *tagend;
+		*tagend = '\0';
+		if (checkonly) {
+		    int idx = html_src_tag_index(tagstart);
+
+		    *tagend = save1;
+		    *classend = save;
+		    if (idx == -1)
+			return FALSE;
+		} else {
+		    append_open_tag(tagstart, classstart, &head, &tail);
+		}
+		state = HTSRC_CK_normal;
+		after_excl = FALSE;
+		break;
+	    }			/* of switch(*p) */
+	    break;
+	}			/* of switch */
 	++p;
     }
 
-    if (!checkonly)
+    if (code && !checkonly)
 	*slot = head;
-    return 0;
+
+    return code;
 }
 
 /*this will clean the data associated with lexeme 'l' */
-PUBLIC void html_src_clean_item ARGS1(
-	HTlexeme, l)
+void html_src_clean_item(HTlexeme l)
 {
     int i;
 
     if (HTL_tagspecs[l])
 	FREE(HTL_tagspecs[l]);
-    for(i = 0; i < 2; ++i) {
-	HT_tagspec*	cur;
-	HT_tagspec**	pts = ( i ?  lexeme_start :  lexeme_end) + l;
-	HT_tagspec*	ts = *pts;
+    for (i = 0; i < 2; ++i) {
+	HT_tagspec *cur;
+	HT_tagspec **pts = (i ? lexeme_start : lexeme_end) + l;
+	HT_tagspec *ts = *pts;
 
 	*pts = NULL;
 	while (ts) {
@@ -314,28 +368,39 @@ PUBLIC void html_src_clean_item ARGS1(
 }
 
 /*this will be registered with atexit*/
-PUBLIC void html_src_clean_data NOARGS
+void html_src_clean_data(void)
 {
     int i;
+
     for (i = 0; i < HTL_num_lexemes; ++i)
-	html_src_clean_item(i);
+	html_src_clean_item((HTlexeme) i);
 }
 
-PUBLIC void html_src_on_lynxcfg_reload NOARGS
+void html_src_on_lynxcfg_reload(void)
 {
     html_src_clean_data();
     HTMLSRC_init_caches(TRUE);
 }
 
-PUBLIC void HTMLSRC_init_caches ARGS1(
-	BOOL,	dont_exit)
+static void failed_init(const char *tag, int lexeme)
+{
+    fprintf(stderr,
+	    gettext("parse-error while caching %s tagspec of lexeme %d\n"),
+	    tag, lexeme);
+    fprintf(stderr,
+	    gettext("Use -trace -trace-mask=8 to see details in log.\n"));
+    exit_immediately(EXIT_FAILURE);
+}
+
+void HTMLSRC_init_caches(BOOL dont_exit)
 {
     int i;
-    char* p;
+    char *p;
     char buf[1000];
 
+    CTRACE2(TRACE_CFG, (tfp, "HTMLSRC_init_caches(%d tagspecs)\n", HTL_num_lexemes));
     for (i = 0; i < HTL_num_lexemes; ++i) {
-	/*we assume that HT_tagspecs was NULLs at when program started*/
+	/*we assume that HT_tagspecs was NULLs at when program started */
 	LYstrncpy(buf,
 		  HTL_tagspecs[i]
 		  ? HTL_tagspecs[i]
@@ -343,15 +408,21 @@ PUBLIC void HTMLSRC_init_caches ARGS1(
 		  sizeof(buf) - 1);
 	StrAllocCopy(HTL_tagspecs[i], buf);
 
+	CTRACE2(TRACE_CFG, (tfp, "parsing lexeme %d: %s\n", i + 1, buf));
+
 	if ((p = strchr(buf, ':')) != 0)
 	    *p = '\0';
-	if (html_src_parse_tagspec(buf, i, FALSE, TRUE) && !dont_exit ) {
-	    fprintf(stderr, "internal error while caching 1st tagspec of %d lexeme", i);
-	    exit_immediately(EXIT_FAILURE);
+	if (!html_src_parse_tagspec(buf,
+				    (HTlexeme) i,
+				    FALSE,
+				    TRUE) && !dont_exit) {
+	    failed_init("1st", i);
 	}
-	if (html_src_parse_tagspec( p ? p+1 : NULL , i, FALSE, FALSE) && !dont_exit) {
-	    fprintf(stderr, "internal error while caching 2nd tagspec of %d lexeme", i);
-	    exit_immediately(EXIT_FAILURE);
+	if (!html_src_parse_tagspec(p ? p + 1 : NULL,
+				    (HTlexeme) i,
+				    FALSE,
+				    FALSE) && !dont_exit) {
+	    failed_init("2nd", i);
 	}
     }
 }

@@ -10,40 +10,32 @@
 #define u16 unsigned short
 #endif /* u16 */
 
-
 #ifndef u8
 #define u8 unsigned char
 #endif /* u8 */
 
-#ifdef NOTDEFINED
-struct consolefontdesc {
-	u_short charcount;	/* characters in font (256 or 512) */
-	u_short charheight;	/* scan lines per character (1-32) */
-	char *chardata;		/* font data in expanded form */
-};
-#endif /* NOTDEFINED */
 typedef char scrnmap_t;
+
 #define		E_TABSZ		256
 
 struct unipair {
-	u16 unicode;
-	u16 fontpos;
+    u16 unicode;
+    u16 fontpos;
 };
 struct unipair_str {
-	u16 unicode;
-	CONST char * replace_str;
+    u16 unicode;
+    const char *replace_str;
 };
 struct unimapdesc {
-	u16 entry_ct;
-	struct unipair *entries;
+    u16 entry_ct;
+    struct unipair *entries;
 };
 struct unimapdesc_str {
-	u16 entry_ct;
-	struct unipair_str *entries;
-        int isdefault;
-        int trydefault;
+    u16 entry_ct;
+    struct unipair_str *entries;
+    int isdefault;
+    int trydefault;
 };
-
 
 #define UNI_DIRECT_BASE 0xF000	/* start of Direct Font Region */
 #define UNI_DIRECT_MASK 0x01FF	/* Direct Font Region bitmask */

@@ -11,21 +11,20 @@
 #include <LYLeaks.h>
 
 /*
- *  LYDownload takes a URL and downloads it using a user selected
- *  download program
+ * LYDownload takes a URL and downloads it using a user selected download
+ * program
  *
- *  It parses an incoming link that looks like
+ * It parses an incoming link that looks like
  *
- *  LYNXDOWNLOAD://Method=<#>/File=<STRING>/SugFile=<STRING>
+ * LYNXDOWNLOAD://Method=<#>/File=<STRING>/SugFile=<STRING>
  */
 #ifdef VMS
-PUBLIC BOOLEAN LYDidRename = FALSE;
+BOOLEAN LYDidRename = FALSE;
 #endif /* VMS */
 
-PRIVATE char LYValidDownloadFile[LY_MAXPATH] = "\0";
+static char LYValidDownloadFile[LY_MAXPATH] = "\0";
 
-PUBLIC void LYDownload ARGS1(
-	char *,		line)
+void LYDownload(char *line)
 {
     char *Line = NULL, *method, *file, *sug_file = NULL;
     int method_number;
@@ -35,58 +34,57 @@ PUBLIC void LYDownload ARGS1(
     char command[LY_MAXPATH];
     char *cp;
     lynx_list_item_type *download_command = 0;
-    int ch, recall;
+    int ch;
+    RecallType recall;
     int FnameTotal;
     int FnameNum;
     BOOLEAN FirstRecall = TRUE;
     BOOLEAN SecondS = FALSE;
+
 #ifdef VMS
     LYDidRename = FALSE;
 #endif /* VMS */
 
     /*
-     *	Make sure we have a valid download
-     *	file comparison string loaded via
-     *	the download options menu. - FM
+     * Make sure we have a valid download file comparison string loaded via the
+     * download options menu.  - FM
      */
     if (LYValidDownloadFile[0] == '\0') {
 	goto failed;
     }
 
     /*
-     *	Make a copy of the LYNXDOWNLOAD
-     *	internal URL for parsing. - FM
+     * Make a copy of the LYNXDOWNLOAD internal URL for parsing.  - FM
      */
     StrAllocCopy(Line, line);
 
     /*
-     *	Parse out the File, sug_file, and the Method.
+     * Parse out the File, sug_file, and the Method.
      */
     if ((file = strstr(Line, "/File=")) == NULL)
 	goto failed;
     *file = '\0';
     /*
-     *	Go past "File=".
+     * Go past "File=".
      */
     file += 6;
 
     if ((sug_file = strstr(file + 1, "/SugFile=")) != NULL) {
 	*sug_file = '\0';
 	/*
-	 *  Go past "SugFile=".
+	 * Go past "SugFile=".
 	 */
 	sug_file += 9;
 	HTUnEscape(sug_file);
     }
 
     /*
-     *	Make sure that the file string is the one from
-     *	the last displayed download options menu. - FM
+     * Make sure that the file string is the one from the last displayed
+     * download options menu.  - FM
      */
     if (strcmp(file, LYValidDownloadFile)) {
 	goto failed;
     }
-
 #if defined(DIRED_SUPPORT)
     /* FIXME: use HTLocalName */
     if (!strncmp(file, "file://localhost", 16)) {
@@ -100,12 +98,11 @@ PUBLIC void LYDownload ARGS1(
 #else
 	file += 16;
 #endif /* __DJGPP__ */
-    }
-    else if (isFILE_URL(file))
+    } else if (isFILE_URL(file))
 	file += LEN_FILE_URL;
     HTUnEscape(file);
 #else
-#if defined(_WINDOWS)	/* 1997/10/15 (Wed) 16:27:38 */
+#if defined(_WINDOWS)		/* 1997/10/15 (Wed) 16:27:38 */
     if (!strncmp(file, "file://localhost/", 17))
 	file += 17;
     else if (!strncmp(file, "file:/", 6))
@@ -117,13 +114,13 @@ PUBLIC void LYDownload ARGS1(
     if ((method = strstr(Line, "Method=")) == NULL)
 	goto failed;
     /*
-     *	Go past "Method=".
+     * Go past "Method=".
      */
     method += 7;
     method_number = atoi(method);
 
     /*
-     *	Set up the sug_filenames recall buffer.
+     * Set up the sug_filenames recall buffer.
      */
     FnameTotal = (sug_filenames ? HTList_count(sug_filenames) : 0);
     recall = ((FnameTotal >= 1) ? RECALL_URL : NORECALL);
@@ -131,44 +128,43 @@ PUBLIC void LYDownload ARGS1(
 
     if (method_number < 0) {
 	/*
-	 *  Write to local file.
+	 * Write to local file.
 	 */
 	_statusline(FILENAME_PROMPT);
-retry:
+      retry:
 	if (sug_file)
-	    LYstrncpy(buffer, sug_file, ((sizeof(buffer)/2) - 1));
+	    LYstrncpy(buffer, sug_file, ((sizeof(buffer) / 2) - 1));
 	else
 	    *buffer = '\0';
-check_recall:
+      check_recall:
 	if ((ch = LYgetstr(buffer,
-			   VISIBLE, (sizeof(buffer)/2), recall)) < 0 ||
+			   VISIBLE, (sizeof(buffer) / 2), recall)) < 0 ||
 	    *buffer == '\0' || ch == UPARROW || ch == DNARROW) {
 	    if (recall && ch == UPARROW) {
 		if (FirstRecall) {
 		    FirstRecall = FALSE;
 		    /*
-		     *	Use the last Fname in the list. - FM
+		     * Use the last Fname in the list.  - FM
 		     */
 		    FnameNum = 0;
 		} else {
 		    /*
-		     *	Go back to the previous Fname in the list. - FM
+		     * Go back to the previous Fname in the list.  - FM
 		     */
 		    FnameNum++;
 		}
 		if (FnameNum >= FnameTotal) {
 		    /*
-		     *	Reset the FirstRecall flag,
-		     *	and use sug_file or a blank. - FM
+		     * Reset the FirstRecall flag, and use sug_file or a blank. 
+		     * - FM
 		     */
 		    FirstRecall = TRUE;
 		    FnameNum = FnameTotal;
 		    _statusline(FILENAME_PROMPT);
 		    goto retry;
-		} else if ((cp = (char *)HTList_objectAt(
-						sug_filenames,
-						FnameNum)) != NULL) {
-		    LYstrncpy(buffer, cp, sizeof(buffer)-1);
+		} else if ((cp = (char *) HTList_objectAt(sug_filenames,
+							  FnameNum)) != NULL) {
+		    LYstrncpy(buffer, cp, sizeof(buffer) - 1);
 		    if (FnameTotal == 1) {
 			_statusline(EDIT_THE_PREV_FILENAME);
 		    } else {
@@ -180,28 +176,27 @@ check_recall:
 		if (FirstRecall) {
 		    FirstRecall = FALSE;
 		    /*
-		     *	Use the first Fname in the list. - FM
+		     * Use the first Fname in the list.  - FM
 		     */
 		    FnameNum = FnameTotal - 1;
 		} else {
 		    /*
-		     *	Advance to the next Fname in the list. - FM
+		     * Advance to the next Fname in the list.  - FM
 		     */
 		    FnameNum--;
 		}
 		if (FnameNum < 0) {
 		    /*
-		     *	Set the FirstRecall flag,
-		     *	and use sug_file or a blank. - FM
+		     * Set the FirstRecall flag, and use sug_file or a blank. 
+		     * - FM
 		     */
 		    FirstRecall = TRUE;
 		    FnameNum = FnameTotal;
 		    _statusline(FILENAME_PROMPT);
 		    goto retry;
-		} else if ((cp = (char *)HTList_objectAt(
-						sug_filenames,
-						FnameNum)) != NULL) {
-		    LYstrncpy(buffer, cp, sizeof(buffer)-1);
+		} else if ((cp = (char *) HTList_objectAt(sug_filenames,
+							  FnameNum)) != NULL) {
+		    LYstrncpy(buffer, cp, sizeof(buffer) - 1);
 		    if (FnameTotal == 1) {
 			_statusline(EDIT_THE_PREV_FILENAME);
 		    } else {
@@ -212,7 +207,7 @@ check_recall:
 	    }
 
 	    /*
-	     *	Save cancelled.
+	     * Save cancelled.
 	     */
 	    goto cancelled;
 	}
@@ -232,7 +227,7 @@ check_recall:
 #endif
 
 	/*
-	 *  See if it already exists.
+	 * See if it already exists.
 	 */
 	switch (LYValidateOutput(buffer)) {
 	case 'Y':
@@ -248,11 +243,11 @@ check_recall:
 	}
 
 	/*
-	 *  See if we can write to it.
+	 * See if we can write to it.
 	 */
 	CTRACE((tfp, "LYDownload: filename is %s\n", buffer));
 
-	if (! LYCanWriteFile(buffer)) {
+	if (!LYCanWriteFile(buffer)) {
 	    FirstRecall = TRUE;
 	    FnameNum = FnameTotal;
 	    goto retry;
@@ -262,20 +257,19 @@ check_recall:
 	HTInfoMsg(SAVING);
 #ifdef VMS
 	/*
-	 *  Try rename() first. - FM
+	 * Try rename() first.  - FM
 	 */
 	CTRACE((tfp, "command: rename(%s, %s)\n", file, buffer));
 	if (rename(file, buffer)) {
 	    /*
-	     *	Failed.  Use spawned COPY_COMMAND. - FM
+	     * Failed.  Use spawned COPY_COMMAND.  - FM
 	     */
 	    CTRACE((tfp, "         FAILED!\n"));
 	    LYCopyFile(file, buffer);
 	} else {
 	    /*
-	     *	We don't have the temporary file (it was renamed to
-	     *	a permanent file), so set a flag to pop out of the
-	     *	download menu. - FM
+	     * We don't have the temporary file (it was renamed to a permanent
+	     * file), so set a flag to pop out of the download menu.  - FM
 	     */
 	    LYDidRename = TRUE;
 	}
@@ -288,30 +282,27 @@ check_recall:
 
     } else {
 	/*
-	 *  Use configured download commands.
+	 * Use configured download commands.
 	 */
 	buffer[0] = '\0';
-	for (count = 0, download_command=downloaders;
+	for (count = 0, download_command = downloaders;
 	     count < method_number;
-	     count++, download_command = download_command->next)
-	    ; /* null body */
+	     count++, download_command = download_command->next) ;	/* null body */
 
 	/*
-	 *  Commands have the form "command %s [etc]"
-	 *  where %s is the filename.
+	 * Commands have the form "command %s [etc]" where %s is the filename.
 	 */
 	if (download_command->command != NULL) {
 	    /*
-	     *	Check for two '%s' and ask for the local filename if
-	     *	there is.
+	     * Check for two '%s' and ask for the local filename if there is.
 	     */
 	    if (HTCountCommandArgs(download_command->command) >= 2) {
 		_statusline(FILENAME_PROMPT);
-	again:	if (sug_file)
-		    strncpy(buffer, sug_file, (sizeof(buffer)/2) - 1);
+	      again:if (sug_file)
+		    strncpy(buffer, sug_file, (sizeof(buffer) / 2) - 1);
 		else
 		    *buffer = '\0';
-	check_again:
+	      check_again:
 		if ((ch = LYgetstr(buffer, VISIBLE,
 				   sizeof(buffer), recall)) < 0 ||
 		    *buffer == '\0' || ch == UPARROW || ch == DNARROW) {
@@ -319,29 +310,28 @@ check_recall:
 			if (FirstRecall) {
 			    FirstRecall = FALSE;
 			    /*
-			     *	Use the last Fname in the list. - FM
+			     * Use the last Fname in the list.  - FM
 			     */
 			    FnameNum = 0;
 			} else {
 			    /*
-			     *	Go back to the previous Fname
-			     *	in the list. - FM
+			     * Go back to the previous Fname in the list.  - FM
 			     */
 			    FnameNum++;
 			}
 			if (FnameNum >= FnameTotal) {
 			    /*
-			     *	Reset the FirstRecall flag,
-			     *	and use sug_file or a blank. - FM
+			     * Reset the FirstRecall flag, and use sug_file or
+			     * a blank.  - FM
 			     */
 			    FirstRecall = TRUE;
 			    FnameNum = FnameTotal;
 			    _statusline(FILENAME_PROMPT);
 			    goto again;
-			} else if ((cp = (char *)HTList_objectAt(
-							sug_filenames,
-							FnameNum)) != NULL) {
-			    LYstrncpy(buffer, cp, sizeof(buffer)-1);
+			} else if ((cp = (char *) HTList_objectAt(sug_filenames,
+								  FnameNum))
+				   != NULL) {
+			    LYstrncpy(buffer, cp, sizeof(buffer) - 1);
 			    if (FnameTotal == 1) {
 				_statusline(EDIT_THE_PREV_FILENAME);
 			    } else {
@@ -353,28 +343,28 @@ check_recall:
 			if (FirstRecall) {
 			    FirstRecall = FALSE;
 			    /*
-			     *	Use the first Fname in the list. - FM
+			     * Use the first Fname in the list.  - FM
 			     */
 			    FnameNum = FnameTotal - 1;
 			} else {
 			    /*
-			     *	Advance to the next Fname in the list. - FM
+			     * Advance to the next Fname in the list.  - FM
 			     */
 			    FnameNum--;
 			}
 			if (FnameNum < 0) {
 			    /*
-			     *	Set the FirstRecall flag,
-			     *	and use sug_file or a blank. - FM
+			     * Set the FirstRecall flag, and use sug_file or a
+			     * blank.  - FM
 			     */
 			    FirstRecall = TRUE;
 			    FnameNum = FnameTotal;
 			    _statusline(FILENAME_PROMPT);
 			    goto again;
-			} else if ((cp = (char *)HTList_objectAt(
-							sug_filenames,
-							FnameNum)) != NULL) {
-			    LYstrncpy(buffer, cp, sizeof(buffer)-1);
+			} else if ((cp = (char *) HTList_objectAt(sug_filenames,
+								  FnameNum))
+				   != NULL) {
+			    LYstrncpy(buffer, cp, sizeof(buffer) - 1);
 			    if (FnameTotal == 1) {
 				_statusline(EDIT_THE_PREV_FILENAME);
 			    } else {
@@ -398,8 +388,8 @@ check_recall:
 		    }
 		}
 		/*
-		 *  Cancel if the user entered "/dev/null" on Unix,
-		 *  or an "nl:" path on VMS. - FM
+		 * Cancel if the user entered "/dev/null" on Unix, or an "nl:"
+		 * path on VMS.  - FM
 		 */
 		if (LYIsNullDevice(buffer)) {
 		    goto cancelled;
@@ -408,11 +398,11 @@ check_recall:
 	    }
 
 	    /*
-	     *	The following is considered a bug by the community.
-	     *	If the command only takes one argument on the command
-	     *	line, then the suggested file name is not used.
-	     *	It actually is not a bug at all and does as it should,
-	     *	putting both names on the command line.
+	     * The following is considered a bug by the community.  If the
+	     * command only takes one argument on the command line, then the
+	     * suggested file name is not used.  It actually is not a bug at
+	     * all and does as it should, putting both names on the command
+	     * line.
 	     */
 	    count = 1;
 	    HTAddParam(&the_command, download_command->command, count, file);
@@ -436,10 +426,10 @@ check_recall:
     if (SecondS == TRUE) {
 #ifdef VMS
 	if (0 == strncasecomp(buffer, "sys$disk:", 9)) {
-	    if (0 == strncmp((buffer+9), "[]", 2)) {
-		HTAddSugFilename(buffer+11);
+	    if (0 == strncmp((buffer + 9), "[]", 2)) {
+		HTAddSugFilename(buffer + 11);
 	    } else {
-		HTAddSugFilename(buffer+9);
+		HTAddSugFilename(buffer + 9);
 	    }
 	} else {
 	    HTAddSugFilename(buffer);
@@ -451,12 +441,12 @@ check_recall:
     FREE(Line);
     return;
 
-failed:
+  failed:
     HTAlert(CANNOT_DOWNLOAD_FILE);
     FREE(Line);
     return;
 
-cancelled:
+  cancelled:
     HTInfoMsg(CANCELLING);
     FREE(Line);
     return;
@@ -466,24 +456,21 @@ cancelled:
  * Compare a filename with a given suffix, which we have set to give a rough
  * idea of its content.
  */
-PRIVATE int SuffixIs ARGS2(
-	char *,		filename,
-	char *,		suffix)
+static int SuffixIs(char *filename, const char *suffix)
 {
     size_t have = strlen(filename);
     size_t need = strlen(suffix);
+
     return have > need && !strcmp(filename + have - need, suffix);
 }
 
 /*
- *  LYdownload_options writes out the current download choices to
- *  a file so that the user can select downloaders in the same way that
- *  they select all other links.  Download links look like:
- *  LYNXDOWNLOAD://Method=<#>/File=<STRING>/SugFile=<STRING>
+ * LYdownload_options writes out the current download choices to a file so that
+ * the user can select downloaders in the same way that they select all other
+ * links.  Download links look like: 
+ * LYNXDOWNLOAD://Method=<#>/File=<STRING>/SugFile=<STRING>
  */
-PUBLIC int LYdownload_options ARGS2(
-	char **,	newfile,
-	char *,		data_file)
+int LYdownload_options(char **newfile, char *data_file)
 {
     static char tempfile[LY_MAXPATH] = "\0";
     char *downloaded_url = NULL;
@@ -493,13 +480,13 @@ PUBLIC int LYdownload_options ARGS2(
     int count;
 
     /*
-     *	Get a suggested filename.
+     * Get a suggested filename.
      */
     StrAllocCopy(sug_filename, *newfile);
     change_sug_filename(sug_filename);
 
     if ((fp0 = InternalPageFP(tempfile, TRUE)) == 0)
-	return(-1);
+	return (-1);
 
     StrAllocCopy(downloaded_url, *newfile);
     LYLocalFileToURL(newfile, tempfile);
@@ -507,8 +494,7 @@ PUBLIC int LYdownload_options ARGS2(
     LYstrncpy(LYValidDownloadFile,
 	      data_file,
 	      (sizeof(LYValidDownloadFile) - 1));
-    LYforce_no_cache = TRUE;  /* don't cache this doc */
-
+    LYforce_no_cache = TRUE;	/* don't cache this doc */
 
     BeginInternalPage(fp0, DOWNLOAD_OPTIONS_TITLE, DOWNLOAD_OPTIONS_HELP);
 
@@ -530,7 +516,7 @@ PUBLIC int LYdownload_options ARGS2(
     if (!no_disk_save && !child_lynx) {
 #if defined(DIRED_SUPPORT)
 	/*
-	 *  Disable save to disk option for local files.
+	 * Disable save to disk option for local files.
 	 */
 	if (!lynx_edit_mode)
 #endif /* DIRED_SUPPORT */
@@ -547,7 +533,7 @@ PUBLIC int LYdownload_options ARGS2(
 	     * downloaded temporary file (see HTSaveToFile).
 	     */
 	    if (SuffixIs(data_file, HTML_SUFFIX)
-	     || SuffixIs(data_file, TEXT_SUFFIX)) {
+		|| SuffixIs(data_file, TEXT_SUFFIX)) {
 		char *target = NULL;
 		char *source = LYAddPathToSave(data_file);
 
@@ -570,13 +556,15 @@ PUBLIC int LYdownload_options ARGS2(
 
     if (downloaders != NULL) {
 	for (count = 0, cur_download = downloaders; cur_download != NULL;
-			cur_download = cur_download->next, count++) {
+	     cur_download = cur_download->next, count++) {
 	    if (!no_download || cur_download->always_enabled) {
-		fprintf(fp0, "   <a href=\"%s//Method=%d/File=%s/SugFile=%s\">",
-			STR_LYNXDOWNLOAD, count,data_file, sug_filename);
-		fprintf(fp0, "%s", (cur_download->name ?
-			cur_download->name : gettext("No Name Given")));
-		fprintf(fp0,"</a>\n");
+		fprintf(fp0,
+			"   <a href=\"%s//Method=%d/File=%s/SugFile=%s\">",
+			STR_LYNXDOWNLOAD, count, data_file, sug_filename);
+		fprintf(fp0, "%s", (cur_download->name
+				    ? cur_download->name
+				    : gettext("No Name Given")));
+		fprintf(fp0, "</a>\n");
 	    }
 	}
     }
@@ -587,9 +575,9 @@ PUBLIC int LYdownload_options ARGS2(
     LYRegisterUIPage(*newfile, UIP_DOWNLOAD_OPTIONS);
 
     /*
-     *	Free off temp copy.
+     * Free off temp copy.
      */
     FREE(sug_filename);
 
-    return(0);
+    return (0);
 }

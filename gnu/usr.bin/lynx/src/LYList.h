@@ -3,7 +3,13 @@
 
 #include <LYStructs.h>
 
-extern int showlist PARAMS((DocInfo *newdoc, BOOLEAN titles));
-extern void printlist PARAMS((FILE *fp, BOOLEAN titles));
+#ifdef __cplusplus
+extern "C" {
+#endif
+    extern int showlist(DocInfo *newdoc, BOOLEAN titles);
+    extern void printlist(FILE *fp, BOOLEAN titles);
 
-#endif /* LYLIST_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* LYLIST_H */

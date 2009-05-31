@@ -1,3 +1,5 @@
+# This file has been modified for lynx (see README.tables)
+
 #The MIME name of this charset.
 Miso-8859-8
 
@@ -8,43 +10,53 @@ OHebrew (ISO-8859-8)
 C916
 
 #
-#	Name:             ISO 8859-8 (1988) to Unicode
-#	Unicode version:  1.1
-#	Table version:    0.1
+#	Name:             ISO/IEC 8859-8:1999 to Unicode
+#	Unicode version:  3.0
+#	Table version:    1.1
 #	Table format:     Format A
-#	Date:             16 January 1995
-#	Authors:          Tim Greenwood <greenwood@r2me2.enet.dec.com>
-#                     John H. Jenkins <John_Jenkins@taligent.com>
+#	Date:             2000-Jan-03
+#	Authors:          Ken Whistler <kenw@sybase.com>
 #
-#	Copyright (c) 1991-1995 Unicode, Inc.  All Rights reserved.
+#	Copyright (c) 1991-1999 Unicode, Inc.  All Rights reserved.
 #
 #	This file is provided as-is by Unicode, Inc. (The Unicode Consortium).
 #	No claims are made as to fitness for any particular purpose.  No
 #	warranties of any kind are expressed or implied.  The recipient
 #	agrees to determine applicability of information provided.  If this
-#	file has been provided on magnetic media by Unicode, Inc., the sole
+#	file has been provided on optical media by Unicode, Inc., the sole
 #	remedy for any claim will be exchange of defective media within 90
 #	days of receipt.
 #
-#	Recipient is granted the right to make copies in any form for
-#	internal distribution and to freely use the information supplied
-#	in the creation of products supporting Unicode.  Unicode, Inc.
-#	specifically excludes the right to re-distribute this file directly
-#	to third parties or other organizations whether for profit or not.
+#	Unicode, Inc. hereby grants the right to freely use the information
+#	supplied in this file in the creation of products supporting the
+#	Unicode Standard, and to make copies of this file in any form for
+#	internal or external distribution as long as this notice remains
+#	attached.
 #
 #	General notes:
 #
 #	This table contains the data the Unicode Consortium has on how
-#       ISO 8859-8 (1988) characters map into Unicode.
+#	ISO/IEC 8859-8:1999 characters map into Unicode.
 #
 #	Format:  Three tab-separated columns
-#		 Column #1 is the ISO 8859-8 code (in hex as 0xXX)
+#		 Column #1 is the ISO/IEC 8859-8 code (in hex as 0xXX)
 #		 Column #2 is the Unicode (in hex as 0xXXXX)
 #		 Column #3 the Unicode name (follows a comment sign, '#')
 #
-#	The entries are in ISO 8859-8 order
+#	The entries are in ISO/IEC 8859-8 order.
 #
-#	Any comments or problems, contact <John_Jenkins@taligent.com>
+#	Version history
+#	1.0 version updates 0.1 version by adding mappings for all
+#	control characters.
+#       1.1 version updates to the published 8859-8:1999, correcting
+#          the mapping of 0xAF and adding mappings for LRM and RLM.
+#
+#	Updated versions of this file may be found in:
+#		<ftp://ftp.unicode.org/Public/MAPPINGS/>
+#
+#	Any comments or problems, contact <errata@unicode.org>
+#	Please note that <errata@unicode.org> is an archival address;
+#	notices will be checked, but do not expect an immediate response.
 #
 0x20-0x7e idem
 #
@@ -157,7 +169,7 @@ C916
 0xAC	U+00AC	#	NOT SIGN
 0xAD	U+00AD	#	SOFT HYPHEN
 0xAE	U+00AE	#	REGISTERED SIGN
-0xAF	U+203E	#	OVERLINE
+0xAF	U+00AF	#	MACRON
 0xB0	U+00B0	#	DEGREE SIGN
 0xB1	U+00B1	#	PLUS-MINUS SIGN
 0xB2	U+00B2	#	SUPERSCRIPT TWO
@@ -201,6 +213,8 @@ C916
 0xF8	U+05E8	#	HEBREW LETTER RESH
 0xF9	U+05E9	#	HEBREW LETTER SHIN
 0xFA	U+05EA	#	HEBREW LETTER TAV
+0xFD	U+200E	#	LEFT-TO-RIGHT MARK
+0xFE	U+200F	#	RIGHT-TO-LEFT MARK
 
 
 #Hebrew points - map to empty string

@@ -10,6 +10,7 @@
 #define RC_ALERTSECS                    "alertsecs"
 #define RC_ALWAYS_RESUBMIT_POSTS        "always_resubmit_posts"
 #define RC_ALWAYS_TRUSTED_EXEC          "always_trusted_exec"
+#define RC_ANONFTP_PASSWORD             "anonftp_password"
 #define RC_ASSUMED_COLOR                "assumed_color"
 #define RC_ASSUMED_DOC_CHARSET_CHOICE   "assumed_doc_charset_choice"
 #define RC_ASSUME_CHARSET               "assume_charset"
@@ -33,6 +34,7 @@
 #define RC_CHMOD_PATH                   "chmod_path"
 #define RC_COLLAPSE_BR_TAGS             "collapse_br_tags"
 #define RC_COLOR                        "color"
+#define RC_COLOR_STYLE                  "color_style"
 #define RC_COMPRESS_PATH                "compress_path"
 #define RC_CONNECT_TIMEOUT              "connect_timeout"
 #define RC_COOKIE_ACCEPT_DOMAINS        "cookie_accept_domains"
@@ -47,6 +49,7 @@
 #define RC_CSWING_PATH                  "cswing_path"
 #define RC_DEFAULT_BOOKMARK_FILE        "default_bookmark_file"
 #define RC_DEFAULT_CACHE_SIZE           "default_cache_size"
+#define RC_DEFAULT_COLORS               "default_colors"
 #define RC_DEFAULT_EDITOR               "default_editor"
 #define RC_DEFAULT_INDEX_FILE           "default_index_file"
 #define RC_DEFAULT_KEYPAD_MODE          "default_keypad_mode"
@@ -91,6 +94,7 @@
 #define RC_HTTPS_PROXY                  "https_proxy"
 #define RC_HTTP_PROXY                   "http_proxy"
 #define RC_INCLUDE                      "include"
+#define RC_INFLATE_PATH                 "inflate_path"
 #define RC_INFOSECS                     "infosecs"
 #define RC_INSTALL_PATH                 "install_path"
 #define RC_JUMPBUFFER                   "jumpbuffer"
@@ -120,6 +124,9 @@
 #define RC_MAIL_SYSTEM_ERROR_LOGGING    "mail_system_error_logging"
 #define RC_MAKE_LINKS_FOR_ALL_IMAGES    "make_links_for_all_images"
 #define RC_MAKE_PSEUDO_ALTS_FOR_INLINES "make_pseudo_alts_for_inlines"
+#define RC_MAX_COOKIES_BUFFER		"max_cookies_buffer"
+#define RC_MAX_COOKIES_DOMAIN		"max_cookies_domain"
+#define RC_MAX_COOKIES_GLOBAL		"max_cookies_global"
 #define RC_MESSAGESECS                  "messagesecs"
 #define RC_MINIMAL_COMMENTS             "minimal_comments"
 #define RC_MKDIR_PATH                   "mkdir_path"
@@ -127,6 +134,7 @@
 #define RC_MULTI_BOOKMARK_SUPPORT       "multi_bookmark_support"
 #define RC_MV_PATH                      "mv_path"
 #define RC_NCR_IN_BOOKMARKS             "ncr_in_bookmarks"
+#define RC_NESTED_TABLES                "nested_tables"
 #define RC_NEWSPOST_PROXY               "newspost_proxy"
 #define RC_NEWSREPLY_PROXY              "newsreply_proxy"
 #define RC_NEWS_CHUNK_SIZE              "news_chunk_size"
@@ -141,9 +149,11 @@
 #define RC_NO_FORCED_CORE_DUMP          "no_forced_core_dump"
 #define RC_NO_FROM_HEADER               "no_from_header"
 #define RC_NO_ISMAP_IF_USEMAP           "no_ismap_if_usemap"
+#define RC_NO_MARGINS                   "no_margins"
 #define RC_NO_PROXY                     "no_proxy"
 #define RC_NO_REFERER_HEADER            "no_referer_header"
 #define RC_NO_TABLE_CENTER              "no_table_center"
+#define RC_NO_TITLE                     "no_title"
 #define RC_NUMBER_FIELDS_ON_LEFT        "number_fields_on_left"
 #define RC_NUMBER_LINKS_ON_LEFT         "number_links_on_left"
 #define RC_OUTGOING_MAIL_CHARSET        "outgoing_mail_charset"
@@ -154,6 +164,8 @@
 #define RC_PERSONAL_MAILCAP             "personal_mailcap"
 #define RC_PERSONAL_MAIL_ADDRESS        "personal_mail_address"
 #define RC_PREFERRED_CHARSET            "preferred_charset"
+#define RC_PREFERRED_MEDIA_TYPES        "preferred_media_types"
+#define RC_PREFERRED_ENCODING           "preferred_encoding"
 #define RC_PREFERRED_LANGUAGE           "preferred_language"
 #define RC_PREPEND_BASE_TO_SOURCE       "prepend_base_to_source"
 #define RC_PREPEND_CHARSET_TO_SOURCE    "prepend_charset_to_source"
@@ -198,6 +210,8 @@
 #define RC_SUB_BOOKMARKS                "sub_bookmarks"
 #define RC_SUFFIX                       "suffix"
 #define RC_SUFFIX_ORDER                 "suffix_order"
+#define RC_SYSLOG_REQUESTED_URLS        "syslog_requested_urls"
+#define RC_SYSLOG_TEXT                  "syslog_text"
 #define RC_SYSTEM_EDITOR                "system_editor"
 #define RC_SYSTEM_MAIL                  "system_mail"
 #define RC_SYSTEM_MAIL_FLAGS            "system_mail_flags"
@@ -233,19 +247,20 @@
 #define RC_ZCAT_PATH                    "zcat_path"
 #define RC_ZIP_PATH                     "zip_path"
 
-extern Config_Enum tbl_DTD_recovery[];
 extern Config_Enum tbl_force_prompt[];
 extern Config_Enum tbl_keypad_mode[];
 extern Config_Enum tbl_multi_bookmarks[];
+extern Config_Enum tbl_preferred_encoding[];
+extern Config_Enum tbl_preferred_media[];
 extern Config_Enum tbl_transfer_rate[];
 extern Config_Enum tbl_user_mode[];
 
-extern BOOL LYgetEnum PARAMS((Config_Enum * table, char * name, int * result));
-extern BOOL will_save_rc PARAMS((char * name));
-extern CONST char *LYputEnum PARAMS((Config_Enum * table, int value));
-extern int enable_lynxrc PARAMS((char * value));
-extern int get_tagsoup PARAMS((char * value));
-extern int save_rc PARAMS((FILE *));
-extern void read_rc PARAMS((FILE *));
+extern BOOL LYgetEnum(Config_Enum * table, char *name, int *result);
+extern BOOL will_save_rc(const char *name);
+extern const char *LYputEnum(Config_Enum * table, int value);
+extern int enable_lynxrc(char *value);
+extern int get_tagsoup(char *value);
+extern int save_rc(FILE *);
+extern void read_rc(FILE *);
 
 #endif /* LYRCFILE_H */

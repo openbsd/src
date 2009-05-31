@@ -5,13 +5,13 @@
 #include <HTUtils.h>
 #include <LYGlobalDefs.h>
 #include <LYStrings.h>
-#include <LYKeymap.h>	/* KEYMAP_SIZE, LKC_*, LYK_* - kw */
+#include <LYKeymap.h>		/* KEYMAP_SIZE, LKC_*, LYK_* - kw */
 
-/* * * * *  LynxEditactionCodes  * * * * */
+/* * * * * LynxEditactionCodes * * * * */
 #ifdef EXP_ALT_BINDINGS
 
-/*  Last valid index for the (lynxkeycode+modifier -> lynxeditactioncode)
- *  tables.  Currently all three tables are the same. - kw
+/* Last valid index for the (lynxkeycode+modifier -> lynxeditactioncode)
+ * tables.  Currently all three tables are the same.  - kw
  */
 #define LAST_MOD1_LKC	0x111
 #define LAST_MOD2_LKC	0x111
@@ -19,20 +19,21 @@
 
 /*  Get (lynxkeycode+modifier -> lynxeditactioncode) mapping, intermediate.
  */
-#define LKC_TO_LEC_M1(c) ((c)>LAST_MOD1_LKC? LYE_UNMOD: Mod1Binding[c])
-#define LKC_TO_LEC_M2(c) ((c)>LAST_MOD2_LKC? LYE_UNMOD: Mod2Binding[c])
-#define LKC_TO_LEC_M3(c) ((c)>LAST_MOD3_LKC? LYE_UNMOD: Mod3Binding[c])
+#define LKC_TO_LEC_M1(c) ((c)>LAST_MOD1_LKC? (int)LYE_UNMOD: Mod1Binding[c])
+#define LKC_TO_LEC_M2(c) ((c)>LAST_MOD2_LKC? (int)LYE_UNMOD: Mod2Binding[c])
+#define LKC_TO_LEC_M3(c) ((c)>LAST_MOD3_LKC? (int)LYE_UNMOD: Mod3Binding[c])
 
-#endif  /* EXP_ALT_BINDINGS */
+#endif /* EXP_ALT_BINDINGS */
 
-PUBLIC int current_lineedit = 0;  /* Index into LYLineEditors[]   */
+int current_lineedit = 0;	/* Index into LYLineEditors[]   */
 
-PUBLIC int escape_bound = 0;      /* User wanted Escape to perform actions?  */
+int escape_bound = 0;		/* User wanted Escape to perform actions?  */
 
 /*
  * See LYStrings.h for the LYE definitions.
  */
-PRIVATE LYEditCode DefaultEditBinding[KEYMAP_SIZE-1]={
+/* *INDENT-OFF* */
+static LYEditCode DefaultEditBinding[KEYMAP_SIZE - 1] = {
 
 LYE_NOP,        LYE_BOL,        LYE_DELPW,      LYE_ABORT,
 /* nul          ^A              ^B              ^C      */
@@ -278,7 +279,7 @@ LYE_NOP,        LYE_NOP,        LYE_NOP,        LYE_NOP,
 /* Why the difference for tab? - kw */
 
 #ifdef EXP_ALT_BINDINGS
-PRIVATE LYEditCode BetterEditBinding[KEYMAP_SIZE-1]={
+static LYEditCode BetterEditBinding[KEYMAP_SIZE-1]={
 
 LYE_NOP,        LYE_BOL,        LYE_BACK,       LYE_ABORT,
 /* nul          ^A              ^B              ^C      */
@@ -536,7 +537,7 @@ LYE_NOP,        LYE_NOP,        LYE_NOP,        LYE_NOP,
              /*         M-bs,M-del=delete-prev-word, M-d=delete-next-word, */
              /*                M-b=BACKW,            M-f=FORWW,            */
 
-PRIVATE LYEditCode BashlikeEditBinding[KEYMAP_SIZE-1]={
+static LYEditCode BashlikeEditBinding[KEYMAP_SIZE-1]={
 
 LYE_SETMARK,    LYE_BOL,        LYE_BACK,       LYE_ABORT,
 /* nul          ^A              ^B              ^C      */
@@ -763,23 +764,21 @@ LYE_NOP,        LYE_NOP,        LYE_NOP,        LYE_NOP,
 LYE_NOP,        LYE_NOP,        LYE_NOP,        LYE_NOP,
 };
 
-/*  Oh no, not another one of those tables...
+/* Oh no, not another one of those tables...
  *
- *  If modifier bit is set in a lynxkeycode, it is first looked up
- *  here.  Note the type different from the previous tables (short
- *  vs. char), since we want to hold larger values.  OTOH we can
- *  keep the size shorter, everything beyond the end is effectively
- *  LYE_UNMOD (ignore modifier) by virtue of the LKC_TO_LEC_M1
- *  macro.
+ * If modifier bit is set in a lynxkeycode, it is first looked up here.  Note
+ * the type different from the previous tables (short vs.  char), since we want
+ * to hold larger values.  OTOH we can keep the size shorter, everything beyond
+ * the end is effectively LYE_UNMOD (ignore modifier) by virtue of the
+ * LKC_TO_LEC_M1 macro.
  *
- *  Currently this table isn't specific to the current_lineedit value,
- *  it is shared by all alternative "Bindings" to save space.
- *  However, if the modifier flag is set only by a LYE_SETMn
- *  lynxeditaction, this table can have effect only for those Bindings
- *  that map a lynxkeycode to LYE_SETMn.  ( This doesn't apply if
- *  the modifier is already being set in LYgetch(). ) - kw
+ * Currently this table isn't specific to the current_lineedit value, it is
+ * shared by all alternative "Bindings" to save space.  However, if the
+ * modifier flag is set only by a LYE_SETMn lynxeditaction, this table can have
+ * effect only for those Bindings that map a lynxkeycode to LYE_SETMn.  ( This
+ * doesn't apply if the modifier is already being set in LYgetch().  ) - kw
  */
-PRIVATE short Mod1Binding[LAST_MOD1_LKC+1]={
+static short Mod1Binding[LAST_MOD1_LKC+1]={
 
 LYE_NOP,        LYE_BOL,        LYE_BACKW,      LYE_UNMOD,
 /* nul          ^A              ^B              ^C      */
@@ -918,21 +917,22 @@ LYE_UNMOD,      LYE_UNMOD,
 /*  Two more tables here, but currently they are all the same.
     In other words, we are cheating to save space, until there
     is a need for different tables. - kw */
-PRIVATE short *Mod2Binding = Mod1Binding;
-PRIVATE short *Mod3Binding = Mod1Binding;
+static short *Mod2Binding = Mod1Binding;
+static short *Mod3Binding = Mod1Binding;
 
 #endif /* EXP_ALT_BINDINGS */
-
+/* *INDENT-ON* */
 
 /*
  * Add the array name to LYLineEditors
  */
 
-PUBLIC LYEditCode * LYLineEditors[]={
-        DefaultEditBinding,     /* You can't please everyone, so you ... DW */
+LYEditCode *LYLineEditors[] =
+{
+    DefaultEditBinding,		/* You can't please everyone, so you ... DW */
 #ifdef EXP_ALT_BINDINGS
-	BetterEditBinding,      /* No, you certainly can't ... /ked 10/27/98*/
-	BashlikeEditBinding,      /* and one more... - kw 1999-02-15 */
+    BetterEditBinding,		/* No, you certainly can't ... /ked 10/27/98 */
+    BashlikeEditBinding,	/* and one more... - kw 1999-02-15 */
 #endif
 };
 
@@ -940,13 +940,14 @@ PUBLIC LYEditCode * LYLineEditors[]={
  * Add the name that the user will see below.
  * The order of LYLineEditors and LYLineditNames MUST be the same.
  */
-PUBLIC char * LYLineeditNames[]={
-	"Default Binding",
+const char *LYLineeditNames[] =
+{
+    "Default Binding",
 #ifdef EXP_ALT_BINDINGS
-	"Alternate Bindings",
-	"Bash-like Bindings",
+    "Alternate Bindings",
+    "Bash-like Bindings",
 #endif
-	(char *) 0
+    (char *) 0
 };
 
 /*
@@ -955,23 +956,23 @@ PUBLIC char * LYLineeditNames[]={
  *
  * The order must correspond to that of LYLineditNames.
  */
-PUBLIC CONST char * LYLineeditHelpURLs[]={
-	EDIT_HELP,
+const char *LYLineeditHelpURLs[] =
+{
+    EDIT_HELP,
 #ifdef EXP_ALT_BINDINGS
-	ALT_EDIT_HELP,
-	BASHLIKE_EDIT_HELP,
+    ALT_EDIT_HELP,
+    BASHLIKE_EDIT_HELP,
 #endif
-	(char *) 0
+    (char *) 0
 };
 
-PUBLIC int EditBinding ARGS1(
-    int,	xlkc)
+int EditBinding(int xlkc)
 {
     int editaction, xleac = LYE_UNMOD;
     int c = xlkc & LKC_MASK;
 
     if (xlkc == -1)
-	return LYE_NOP;	/* maybe LYE_ABORT? or LYE_FORM_LAC|LYK_UNKNOWN? */
+	return LYE_NOP;		/* maybe LYE_ABORT? or LYE_FORM_LAC|LYK_UNKNOWN? */
 #ifdef NOT_ASCII
     if (c < 256) {
 	c = TOASCII(c);
@@ -979,11 +980,9 @@ PUBLIC int EditBinding ARGS1(
 #endif
 #ifdef EXP_ALT_BINDINGS
     /*
-     *  Get intermediate code from one of the lynxkeycode+modifier
-     *  tables if applicable, otherwise get the lynxeditactioncode
-     *  directly.
-     *  If we have more than one modifier bits, the first currently
-     *  wins. - kw
+     * Get intermediate code from one of the lynxkeycode+modifier tables if
+     * applicable, otherwise get the lynxeditactioncode directly.  If we have
+     * more than one modifier bits, the first currently wins.  - kw
      */
     if (xlkc & LKC_ISLECLAC) {
 	return LKC2_TO_LEC(xlkc);
@@ -998,8 +997,8 @@ PUBLIC int EditBinding ARGS1(
     }
 #endif
     /*
-     *  If we have an intermediate code that says "same as without
-     *  modifier", look that up now; otherwise we are already done. - kw
+     * If we have an intermediate code that says "same as without modifier",
+     * look that up now; otherwise we are already done.  - kw
      */
     if (xleac == LYE_UNMOD) {
 	editaction = LYLineEditors[current_lineedit][c];
@@ -1010,28 +1009,26 @@ PUBLIC int EditBinding ARGS1(
 }
 
 /*
- *  Install lec as the lynxeditaction for lynxkeycode xlkc.
- *  func must be present in the revmap table.
- *  For normal (non-modifier) lynxkeycodes, select_edi selects which
- *  of the alternative line-editor binding tables is modified. If
- *  select_edi is positive, only the table given by it is modified
- *  (the DefaultEditBinding table is numbered 1).  If select_edi is 0,
- *  all tables are modified.  If select_edi is negative, all tables
- *  except the one given by abs(select_edi) are modified.
- *  returns TRUE if the mapping was made, FALSE if not.
- *  Note that this remapping cannot be undone (as might be desirable
- *  as a result of re-parsing lynx.cfg), we don't remember the
- *  original editaction from the Bindings tables anywhere. - kw
+ * Install lec as the lynxeditaction for lynxkeycode xlkc.  func must be
+ * present in the revmap table.  For normal (non-modifier) lynxkeycodes,
+ * select_edi selects which of the alternative line-editor binding tables is
+ * modified.  If select_edi is positive, only the table given by it is modified
+ * (the DefaultEditBinding table is numbered 1).  If select_edi is 0, all
+ * tables are modified.  If select_edi is negative, all tables except the one
+ * given by abs(select_edi) are modified.  returns TRUE if the mapping was
+ * made, FALSE if not.  Note that this remapping cannot be undone (as might be
+ * desirable as a result of re-parsing lynx.cfg), we don't remember the
+ * original editaction from the Bindings tables anywhere.  - kw
  */
-PUBLIC BOOL LYRemapEditBinding ARGS3(
-    int,	xlkc,
-    int,	lec,
-    int,	select_edi)
+BOOL LYRemapEditBinding(int xlkc,
+			int lec,
+			int select_edi)
 {
     int j;
     int c = xlkc & LKC_MASK;
     BOOLEAN success = FALSE;
-    if (xlkc < 0 || (xlkc&LKC_ISLAC) || c >= KEYMAP_SIZE + 1)
+
+    if (xlkc < 0 || (xlkc & LKC_ISLAC) || c >= KEYMAP_SIZE + 1)
 	return FALSE;
 #ifdef EXP_ALT_BINDINGS
     if (xlkc & LKC_MOD1) {
@@ -1058,10 +1055,10 @@ PUBLIC BOOL LYRemapEditBinding ARGS3(
 #ifndef UCHAR_MAX
 #define UCHAR_MAX 255
 #endif
-	if ((unsigned int)lec > UCHAR_MAX)
+	if ((unsigned int) lec > UCHAR_MAX)
 	    return FALSE;	/* cannot do, doesn't fit in a char - kw */
 	if (select_edi > 0) {
-	    if ((unsigned int)select_edi < TABLESIZE(LYLineEditors)) {
+	    if ((unsigned int) select_edi < TABLESIZE(LYLineEditors)) {
 		LYLineEditors[select_edi - 1][c] = (LYEditCode) lec;
 		success = TRUE;
 	    }
@@ -1078,7 +1075,7 @@ PUBLIC BOOL LYRemapEditBinding ARGS3(
 }
 
 /*
- *  Macro to walk through lkc-indexed tables up to imax, in the (ASCII) order
+ * Macro to walk through lkc-indexed tables up to imax, in the (ASCII) order
  *     97 - 122  ('a' - 'z'),
  *     32 -  96  (' ' - '`', includes 'A' - 'Z'),
  *    123 - 126  ('{' - '~'),
@@ -1091,12 +1088,12 @@ PUBLIC BOOL LYRemapEditBinding ARGS3(
 			(i==255) ? (-1) :i+1)
 #define FIRST_I 97
 
-PUBLIC int LYKeyForEditAction ARGS1(
-    int,		lec)
+int LYKeyForEditAction(int lec)
 {
     int editaction, i;
-    for (i = FIRST_I; i >= 0; i = NEXT_I(i,KEYMAP_SIZE-2)) {
-        editaction = LYLineEditors[current_lineedit][i];
+
+    for (i = FIRST_I; i >= 0; i = NEXT_I(i, KEYMAP_SIZE - 2)) {
+	editaction = LYLineEditors[current_lineedit][i];
 	if (editaction == lec) {
 #ifdef NOT_ASCII
 	    if (i < 256) {
@@ -1110,29 +1107,28 @@ PUBLIC int LYKeyForEditAction ARGS1(
 }
 
 /*
- *  Given a lynxactioncode, return a key (lynxkeycode) or sequence
- *  of two keys that results in the given action while forms-editing.
- *  The main keycode is returned as function value, possibly with modifier
- *  bits set; in addition, if applicable, a key that sets the required
- *  modifier flag is returned in *pmodkey if (pmodkey!=NULL).
- *  Non-lineediting bindings that would require typing LYE_LKCMD (default ^V)
- *  to activate are not checked here, the caller should do that separately if
- *  required.  If no key is bound by current line-editor bindings to the
- *  action, -1 is returned.
- *  This is all a bit long - it is general enough to continue to work
- *  should the three Mod<N>Binding[] become different tables. - kw
+ * Given a lynxactioncode, return a key (lynxkeycode) or sequence of two keys
+ * that results in the given action while forms-editing.  The main keycode is
+ * returned as function value, possibly with modifier bits set; in addition, if
+ * applicable, a key that sets the required modifier flag is returned in
+ * *pmodkey if (pmodkey!=NULL).  Non-lineediting bindings that would require
+ * typing LYE_LKCMD (default ^V) to activate are not checked here, the caller
+ * should do that separately if required.  If no key is bound by current
+ * line-editor bindings to the action, -1 is returned.
+ *
+ * This is all a bit long - it is general enough to continue to work should the
+ * three Mod<N>Binding[] become different tables.  - kw
  */
-PUBLIC int LYEditKeyForAction ARGS2(
-    int,		lac,
-    int *,		pmodkey)
+int LYEditKeyForAction(int lac,
+		       int *pmodkey)
 {
     int editaction, i, c;
     int mod1found = -1, mod2found = -1, mod3found = -1;
 
     if (pmodkey)
 	*pmodkey = -1;
-    for (i = FIRST_I; i >= 0; i = NEXT_I(i,KEYMAP_SIZE-2)) {
-        editaction = LYLineEditors[current_lineedit][i];
+    for (i = FIRST_I; i >= 0; i = NEXT_I(i, KEYMAP_SIZE - 2)) {
+	editaction = LYLineEditors[current_lineedit][i];
 #ifdef NOT_ASCII
 	if (i < 256) {
 	    c = FROMASCII(i);
@@ -1144,19 +1140,19 @@ PUBLIC int LYEditKeyForAction ARGS2(
 	if (editaction == LYE_FORM_PASS) {
 #if defined(DIRED_SUPPORT) && defined(OK_OVERRIDE)
 	    if (lynx_edit_mode && !no_dired_support && lac &&
-		LKC_TO_LAC(key_override,c) == lac)
+		LKC_TO_LAC(key_override, c) == lac)
 		return c;
 #endif /* DIRED_SUPPORT && OK_OVERRIDE */
-	    if (LKC_TO_LAC(keymap,c) == lac)
+	    if (LKC_TO_LAC(keymap, c) == lac)
 		return c;
 	}
 	if (editaction == LYE_TAB) {
 #if defined(DIRED_SUPPORT) && defined(OK_OVERRIDE)
 	    if (lynx_edit_mode && !no_dired_support && lac &&
-		LKC_TO_LAC(key_override,'\t') == lac)
+		LKC_TO_LAC(key_override, '\t') == lac)
 		return c;
 #endif /* DIRED_SUPPORT && OK_OVERRIDE */
-	    if (LKC_TO_LAC(keymap,'\t') == lac)
+	    if (LKC_TO_LAC(keymap, '\t') == lac)
 		return c;
 	}
 	if (editaction == LYE_SETM1 && mod1found < 0)
@@ -1168,7 +1164,7 @@ PUBLIC int LYEditKeyForAction ARGS2(
     }
 #ifdef EXP_ALT_BINDINGS
     if (mod3found >= 0) {
-	for (i = mod3found; i >= 0; i = NEXT_I(i,LAST_MOD3_LKC)) {
+	for (i = mod3found; i >= 0; i = NEXT_I(i, LAST_MOD3_LKC)) {
 	    editaction = LYLineEditors[current_lineedit][i];
 	    if (!(editaction & LYE_DF))
 		continue;
@@ -1182,24 +1178,24 @@ PUBLIC int LYEditKeyForAction ARGS2(
 	    if (pmodkey)
 		*pmodkey = c;
 	    if (editaction == (lac | LYE_FORM_LAC))
-		return (c|LKC_MOD3);
+		return (c | LKC_MOD3);
 	    if (editaction == LYE_FORM_PASS) {
 #if defined(DIRED_SUPPORT) && defined(OK_OVERRIDE)
 		if (lynx_edit_mode && !no_dired_support && lac &&
-		    LKC_TO_LAC(key_override,c) == lac)
-		    return (c|LKC_MOD3);
+		    LKC_TO_LAC(key_override, c) == lac)
+		    return (c | LKC_MOD3);
 #endif /* DIRED_SUPPORT && OK_OVERRIDE */
-		if (LKC_TO_LAC(keymap,c) == lac)
-		    return (c|LKC_MOD3);
+		if (LKC_TO_LAC(keymap, c) == lac)
+		    return (c | LKC_MOD3);
 	    }
 	    if (editaction == LYE_TAB) {
 #if defined(DIRED_SUPPORT) && defined(OK_OVERRIDE)
 		if (lynx_edit_mode && !no_dired_support && lac &&
-		    LKC_TO_LAC(key_override,'\t') == lac)
-		    return (c|LKC_MOD3);
+		    LKC_TO_LAC(key_override, '\t') == lac)
+		    return (c | LKC_MOD3);
 #endif /* DIRED_SUPPORT && OK_OVERRIDE */
-		if (LKC_TO_LAC(keymap,'\t') == lac)
-		    return (c|LKC_MOD3);
+		if (LKC_TO_LAC(keymap, '\t') == lac)
+		    return (c | LKC_MOD3);
 	    }
 	}
     }
@@ -1212,7 +1208,7 @@ PUBLIC int LYEditKeyForAction ARGS2(
 #endif
 		*pmodkey = mod1found;
 	}
-	for (i = FIRST_I; i >= 0; i = NEXT_I(i,LAST_MOD1_LKC)) {
+	for (i = FIRST_I; i >= 0; i = NEXT_I(i, LAST_MOD1_LKC)) {
 	    editaction = Mod1Binding[i];
 #ifdef NOT_ASCII
 	    if (i < 256) {
@@ -1221,24 +1217,24 @@ PUBLIC int LYEditKeyForAction ARGS2(
 #endif
 		c = i;
 	    if (editaction == (lac | LYE_FORM_LAC))
-		return (c|LKC_MOD1);
+		return (c | LKC_MOD1);
 	    if (editaction == LYE_FORM_PASS) {
 #if defined(DIRED_SUPPORT) && defined(OK_OVERRIDE)
 		if (lynx_edit_mode && !no_dired_support && lac &&
-		    LKC_TO_LAC(key_override,c) == lac)
-		    return (c|LKC_MOD1);
+		    LKC_TO_LAC(key_override, c) == lac)
+		    return (c | LKC_MOD1);
 #endif /* DIRED_SUPPORT && OK_OVERRIDE */
-		if (LKC_TO_LAC(keymap,c) == lac)
-		    return (c|LKC_MOD1);
+		if (LKC_TO_LAC(keymap, c) == lac)
+		    return (c | LKC_MOD1);
 	    }
 	    if (editaction == LYE_TAB) {
 #if defined(DIRED_SUPPORT) && defined(OK_OVERRIDE)
 		if (lynx_edit_mode && !no_dired_support && lac &&
-		    LKC_TO_LAC(key_override,'\t') == lac)
-		    return (c|LKC_MOD1);
+		    LKC_TO_LAC(key_override, '\t') == lac)
+		    return (c | LKC_MOD1);
 #endif /* DIRED_SUPPORT && OK_OVERRIDE */
-		if (LKC_TO_LAC(keymap,'\t') == lac)
-		    return (c|LKC_MOD1);
+		if (LKC_TO_LAC(keymap, '\t') == lac)
+		    return (c | LKC_MOD1);
 	    }
 	}
     }
@@ -1251,7 +1247,7 @@ PUBLIC int LYEditKeyForAction ARGS2(
 #endif
 		*pmodkey = mod1found;
 	}
-	for (i = FIRST_I; i >= 0; i = NEXT_I(i,LAST_MOD2_LKC)) {
+	for (i = FIRST_I; i >= 0; i = NEXT_I(i, LAST_MOD2_LKC)) {
 	    editaction = Mod2Binding[i];
 #ifdef NOT_ASCII
 	    if (i < 256) {
@@ -1260,28 +1256,28 @@ PUBLIC int LYEditKeyForAction ARGS2(
 #endif
 		c = i;
 	    if (editaction == (lac | LYE_FORM_LAC))
-		return (c|LKC_MOD2);
+		return (c | LKC_MOD2);
 	    if (editaction == LYE_FORM_PASS) {
 #if defined(DIRED_SUPPORT) && defined(OK_OVERRIDE)
 		if (lynx_edit_mode && !no_dired_support && lac &&
-		    LKC_TO_LAC(key_override,c) == lac)
-		    return (c|LKC_MOD2);
+		    LKC_TO_LAC(key_override, c) == lac)
+		    return (c | LKC_MOD2);
 #endif /* DIRED_SUPPORT && OK_OVERRIDE */
-		if (LKC_TO_LAC(keymap,c) == lac)
-		    return (c|LKC_MOD2);
+		if (LKC_TO_LAC(keymap, c) == lac)
+		    return (c | LKC_MOD2);
 	    }
 	    if (editaction == LYE_TAB) {
 #if defined(DIRED_SUPPORT) && defined(OK_OVERRIDE)
 		if (lynx_edit_mode && !no_dired_support && lac &&
-		    LKC_TO_LAC(key_override,'\t') == lac)
-		    return (c|LKC_MOD2);
+		    LKC_TO_LAC(key_override, '\t') == lac)
+		    return (c | LKC_MOD2);
 #endif /* DIRED_SUPPORT && OK_OVERRIDE */
-		if (LKC_TO_LAC(keymap,'\t') == lac)
-		    return (c|LKC_MOD2);
+		if (LKC_TO_LAC(keymap, '\t') == lac)
+		    return (c | LKC_MOD2);
 	    }
 	}
     }
-#endif  /* EXP_ALT_BINDINGS */
+#endif /* EXP_ALT_BINDINGS */
     if (pmodkey)
 	*pmodkey = -1;
     return (-1);
@@ -1292,10 +1288,9 @@ PUBLIC int LYEditKeyForAction ARGS2(
  * if the external model is common block, and the
  * module is ever placed in a library. - FM
  */
-PUBLIC int LYEditmapDeclared NOARGS
+int LYEditmapDeclared(void)
 {
     int status = 1;
 
     return status;
 }
-

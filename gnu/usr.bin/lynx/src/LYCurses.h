@@ -32,17 +32,19 @@
  */
 #undef USE_COLOR_TABLE
 
-#ifndef USE_COLOR_STYLE
+#ifdef USE_COLOR_STYLE
+#define USE_COLOR_TABLE 1	/* default color logic is used */
+#else
 #if defined(USE_SLANG) || defined(COLOR_CURSES)
 #define USE_COLOR_TABLE 1
 #endif
 #endif
 
 #ifdef TRUE
-#undef TRUE  /* to prevent parse error :( */
+#undef TRUE			/* to prevent parse error :( */
 #endif /* TRUE */
 #ifdef FALSE
-#undef FALSE  /* to prevent parse error :( */
+#undef FALSE			/* to prevent parse error :( */
 #endif /* FALSE */
 
 #ifdef USE_SLANG
@@ -50,7 +52,7 @@
 
 #undef WINDOW
 typedef struct {
-    int	top_y;
+    int top_y;
     int left_x;
     int height;
     int width;
@@ -122,12 +124,12 @@ typedef struct {
  *	06-09-94 Lynx 2-3-1 Garrett Arch Blythe
  */
 #ifdef CR
-#undef CR  /* to prevent parse error :( */
+#undef CR			/* to prevent parse error :( */
 #define REDEFINE_CR
 #endif /* CR */
 
 #ifdef HZ
-#undef HZ  /* to prevent parse error :( */
+#undef HZ			/* to prevent parse error :( */
 #endif /* HZ */
 
 /* SunOS 4.x has a redefinition between ioctl.h and termios.h */
@@ -154,7 +156,7 @@ typedef struct {
 #endif
 
 #if defined(_MSC_VER)
-#undef MOUSE_MOVED	/* conflict between PDCURSES and _WIN32 */
+#undef MOUSE_MOVED		/* conflict between PDCURSES and _WIN32 */
 #endif /* _MSC_VER */
 
 /*
@@ -215,7 +217,7 @@ typedef struct {
 #      include <ncurses/term.h>
 #    else
 #     if defined(HAVE_NCURSESW_NCURSES_H) || defined(HAVE_NCURSES_NCURSES_H) || defined(HAVE_XCURSES)
-#       undef HAVE_TERM_H			/* only use one in comparable path! */
+#       undef HAVE_TERM_H	/* only use one in comparable path! */
 #     endif
 #     if defined(HAVE_TERM_H)
 #      include <term.h>
@@ -232,8 +234,8 @@ typedef struct {
 # if defined(VMS) && defined(__GNUC__)
 #  include <LYGCurses.h>
 #  else
-#   include <curses.h>  /* everything else */
-# endif /* VMS && __GNUC__ */
+#   include <curses.h>		/* everything else */
+# endif				/* VMS && __GNUC__ */
 #endif /* HAVE_CONFIG_H */
 
 /*
@@ -248,6 +250,24 @@ typedef struct {
  */
 #if defined(NCURSES_MOUSE_VERSION)
 #define USE_MOUSE 1
+#endif
+
+/*
+ * For systems where select() does not work for TTY's, we can poll using
+ * curses.
+ */
+#if defined(_WINDOWS) || defined(__MINGW32__)
+#if defined(PDCURSES) && defined(PDC_BUILD) && PDC_BUILD >= 2401
+#define USE_CURSES_NODELAY 1
+#endif
+
+#if defined(NCURSES_VERSION)
+#define USE_CURSES_NODELAY 1
+#endif
+#endif	/* _WINDOWS || __MINGW32__ */
+
+#if defined(NCURSES_VERSION) && defined(__BEOS__)
+#define USE_CURSES_NODELAY 1
 #endif
 
 /*
@@ -284,17 +304,21 @@ typedef struct {
 
 #endif /* USE_SLANG */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 #ifdef USE_SLANG
-#define LYstopPopup() /* nothing */
+#define LYstopPopup()		/* nothing */
 #define LYtopwindow() LYwin
 #else
-extern void LYsubwindow PARAMS((WINDOW * param));
-extern WINDOW * LYtopwindow NOPARAMS;
-#define LYstopPopup() LYsubwindow(0)
-#endif /* NCURSES */
+    extern void LYsubwindow(WINDOW * param);
+    extern WINDOW *LYtopwindow(void);
 
-extern void LYbox PARAMS((WINDOW *win, BOOLEAN formfield));
-extern WINDOW *LYstartPopup PARAMS((int top_y, int left_x, int height, int width));
+#define LYstopPopup() LYsubwindow(0)
+#endif				/* NCURSES */
+
+    extern void LYbox(WINDOW * win, BOOLEAN formfield);
+    extern WINDOW *LYstartPopup(int *top_y, int *left_x, int *height, int *width);
 
 /*
  * Useful macros not in PDCurses or very old ncurses headers.
@@ -310,18 +334,23 @@ extern WINDOW *LYstartPopup PARAMS((int top_y, int left_x, int height, int width
 #endif
 
 #if defined(HAVE_WATTR_GET)
-extern long LYgetattrs PARAMS((WINDOW *win));
+    extern long LYgetattrs(WINDOW * win);
+
 #else
 #if defined(HAVE_GETATTRS) || defined(getattrs)
 #define LYgetattrs(win) getattrs(win)
 #else
 #define LYgetattrs(win) ((win)->_attrs)
 #endif
-#endif /* HAVE_WATTR_GET */
+#endif				/* HAVE_WATTR_GET */
 
 #if defined(PDCURSES)
-#define HAVE_GETBKGD 1	/* can use fallback definition */
-#define HAVE_NAPMS 1	/* can use millisecond-delays */
+#define HAVE_GETBKGD 1		/* can use fallback definition */
+#define HAVE_NAPMS 1		/* can use millisecond-delays */
+#  if defined(PDC_BUILD) && PDC_BUILD >= 2401
+    extern int saved_scrsize_x;
+    extern int saved_scrsize_y;
+#  endif
 #endif
 
 #ifdef HAVE_NAPMS
@@ -337,33 +366,55 @@ extern long LYgetattrs PARAMS((WINDOW *win));
 /* Both slang and curses: */
 #ifndef TRUE
 #define TRUE  1
-#endif /* !TRUE */
+#endif				/* !TRUE */
 #ifndef FALSE
 #define FALSE 0
-#endif /* !FALSE */
+#endif				/* !FALSE */
 
 #ifdef REDEFINE_CR
 #define CR FROMASCII('\015')
-#endif /* REDEFINE_CR */
+#endif				/* REDEFINE_CR */
 
 #ifdef ALT_CHAR_SET
-#define BOXVERT 0   /* use alt char set for popup window vertical borders */
-#define BOXHORI 0   /* use alt char set for popup window vertical borders */
+#define BOXVERT 0		/* use alt char set for popup window vertical borders */
+#define BOXHORI 0		/* use alt char set for popup window vertical borders */
 #endif
 
 #ifndef BOXVERT
-#define BOXVERT '*'	/* character for popup window vertical borders */
+#define BOXVERT '*'		/* character for popup window vertical borders */
 #endif
 #ifndef BOXHORI
-#define BOXHORI '*'	/* character for popup window horizontal borders */
+#define BOXHORI '*'		/* character for popup window horizontal borders */
 #endif
 
 #ifndef KEY_DOWN
-#undef HAVE_KEYPAD	/* avoid confusion with bogus 'keypad()' */
+#undef HAVE_KEYPAD		/* avoid confusion with bogus 'keypad()' */
 #endif
 
-extern int LYlines;	/* replaces LINES */
-extern int LYcols;	/* replaces COLS */
+    extern int LYlines;		/* replaces LINES */
+    extern int LYcols;		/* replaces COLS */
+
+/*
+ * The scrollbar, if used, occupies the rightmost column.
+ */
+#ifdef USE_SCROLLBAR
+#define LYbarWidth (LYShowScrollbar ? 1 : 0)
+#else
+#define LYbarWidth 0
+#endif
+
+/*
+ * Usable limits for display:
+ */
+#if defined(FANCY_CURSES) || defined(USE_SLANG)
+#if defined(PDCURSES)
+#define LYcolLimit (LYcols - LYbarWidth - 1)	/* PDCurses wrapping is buggy */
+#else
+#define LYcolLimit (LYcols - LYbarWidth)
+#endif
+#else
+#define LYcolLimit (LYcols - 1)
+#endif
 
 /*
  * The scrollbar, if used, occupies the rightmost column.
@@ -384,11 +435,12 @@ extern int LYcols;	/* replaces COLS */
 #endif
 
 #ifdef USE_CURSES_PADS
-extern WINDOW *LYwin;
-extern int LYshiftWin;
-extern int LYwideLines;
-extern int LYtableCols;
-extern BOOL LYuseCursesPads;
+    extern WINDOW *LYwin;
+    extern int LYshiftWin;
+    extern int LYwideLines;
+    extern int LYtableCols;
+    extern BOOL LYuseCursesPads;
+
 #else
 #define LYwin stdscr
 #define LYshiftWin	0
@@ -396,59 +448,61 @@ extern BOOL LYuseCursesPads;
 #define LYtableCols	0
 #endif
 
-#if defined(USE_COLOR_TABLE) || defined(USE_SLANG)
-extern int Current_Attr;
-extern int Masked_Attr;
-#endif
-
-extern BOOLEAN setup PARAMS((char *terminal));
-extern int LYscreenHeight NOPARAMS;
-extern int LYscreenWidth NOPARAMS;
-extern void LYclear NOPARAMS;
-extern void LYclrtoeol NOPARAMS;
-extern void LYerase NOPARAMS;
-extern void LYmove PARAMS((int y, int x));
-extern void LYnoVideo PARAMS((int mask));
-extern void LYpaddstr PARAMS((WINDOW *w, int width, CONST char *s));
-extern void LYrefresh NOPARAMS;
-extern void LYstartTargetEmphasis NOPARAMS;
-extern void LYstopTargetEmphasis NOPARAMS;
-extern void LYtouchline PARAMS((int row));
-extern void LYwaddnstr PARAMS((WINDOW *w, CONST char *s, size_t len));
-extern void start_curses NOPARAMS;
-extern void stop_curses NOPARAMS;
+    extern BOOLEAN setup(char *terminal);
+    extern int LYscreenHeight(void);
+    extern int LYscreenWidth(void);
+    extern int LYstrExtent(const char *string, int len, int maxCells);
+    extern int LYstrExtent2(const char *string, int len);
+    extern int LYstrCells(const char *string);
+    extern void LYclear(void);
+    extern void LYclrtoeol(void);
+    extern void LYerase(void);
+    extern void LYmove(int y, int x);
+    extern void LYnoVideo(int mask);
+    extern void LYnormalColor(void);
+    extern void LYpaddstr(WINDOW * w, int width, const char *s);
+    extern void LYrefresh(void);
+    extern void LYstartTargetEmphasis(void);
+    extern void LYstopTargetEmphasis(void);
+    extern void LYtouchline(int row);
+    extern void LYwaddnstr(WINDOW * w, const char *s, size_t len);
+    extern void start_curses(void);
+    extern void stop_curses(void);
 
 #define LYaddstr(s)      LYwaddnstr(LYwin, s, strlen(s))
-#define LYaddnstr(s,len) LYwaddnstr(LYwin, s, len)
-#define LYwaddstr(w,s)   LYwaddnstr(w, s, strlen(s))
 
 #ifdef VMS
-extern int DCLsystem (char *command);
-extern void VMSexit();
-extern int ttopen();
-extern int ttclose();
-extern int ttgetc();
-extern void VMSsignal PARAMS((int sig, void (*func)()));
-#endif /* VMS */
+    extern int DCLsystem(char *command);
+    extern void VMSexit();
+    extern int ttopen();
+    extern int ttclose();
+    extern int ttgetc();
+    extern void VMSsignal(int sig, void (*func) ());
+#endif				/* VMS */
 
 #if defined(USE_COLOR_STYLE)
-extern void curses_css PARAMS((char * name, int dir));
-extern void curses_style PARAMS((int style, int dir));
-extern void setHashStyle PARAMS((int style, int color, int cattr, int mono, char* element));
-extern void setStyle PARAMS((int style, int color, int cattr, int mono));
-extern void wcurses_css PARAMS((WINDOW * win, char* name, int dir));
-extern void curses_w_style PARAMS((WINDOW* win, int style, int	dir));
+    extern void curses_css(char *name, int dir);
+    extern void curses_style(int style, int dir);
+    extern void setHashStyle(int style, int color, int cattr, int mono, char *element);
+    extern void setStyle(int style, int color, int cattr, int mono);
+    extern void wcurses_css(WINDOW * win, char *name, int dir);
+    extern void curses_w_style(WINDOW * win, int style, int dir);
+
 #  define LynxChangeStyle(style,dir) curses_style(style,dir)
 #  define LynxWChangeStyle(win,style,dir) curses_w_style(win,style,dir)
 #else
 #  define LynxWChangeStyle(win,style,dir)	(void)1
-#endif /* USE_COLOR_STYLE */
+#endif				/* USE_COLOR_STYLE */
 
 #ifdef USE_COLOR_TABLE
-extern void LYaddAttr PARAMS((int a));
-extern void LYsubAttr PARAMS((int a));
-extern void lynx_setup_colors NOPARAMS;
-extern unsigned int Lynx_Color_Flags;
+    extern void LYaddAttr(int a);
+    extern void LYsubAttr(int a);
+    extern void lynx_setup_colors(void);
+    extern unsigned Lynx_Color_Flags;
+#endif
+
+#if defined(USE_COLOR_TABLE) || defined(USE_SLANG)
+    extern int Current_Attr;
 #endif
 
 #ifdef USE_SLANG
@@ -474,22 +528,24 @@ extern unsigned int Lynx_Color_Flags;
 
 #ifdef FANCY_CURSES
 #undef FANCY_CURSES
-#endif /* FANCY_CURSES */
+#endif				/* FANCY_CURSES */
 
 /*
  *  Map some curses functions to slang functions.
  */
 #define stdscr ((WINDOW *)0)
 #ifdef SLANG_MBCS_HACK
-extern int PHYSICAL_SLtt_Screen_Cols;
+    extern int PHYSICAL_SLtt_Screen_Cols;
+
 #define COLS PHYSICAL_SLtt_Screen_Cols
 #else
 #define COLS SLtt_Screen_Cols
-#endif /* SLANG_MBCS_HACK */
+#endif				/* SLANG_MBCS_HACK */
 #define LINES SLtt_Screen_Rows
 #define move SLsmg_gotorc
 #define addstr SLsmg_write_string
-extern void LY_SLerase NOPARAMS;
+    extern void LY_SLerase(void);
+
 #define erase LY_SLerase
 #define clear LY_SLerase
 #define standout SLsmg_reverse_video
@@ -504,34 +560,49 @@ extern void LY_SLerase NOPARAMS;
 #endif
 
 #define LYaddch(ch)   SLsmg_write_char(ch)
+
+#if SLANG_VERSION >= 20000
+#define addch_raw(ch) do {                                \
+                        SLsmg_Char_Type buf;              \
+                        buf.nchars = 1;                   \
+                        buf.wchars[0] = ch;               \
+                        buf.color = Current_Attr;         \
+                        SLsmg_write_raw (&buf, 1);        \
+                      } while (0)
+#else
 #define addch_raw(ch) do {                                \
                         SLsmg_Char_Type buf;              \
                         buf = (ch) | (Current_Attr << 4); \
                         SLsmg_write_raw (&buf, 1);        \
                       } while (0)
+#endif				/* SLANG_VERSION >= 20000 */
+
 #define echo()
 #define printw        SLsmg_printf
 
-extern int curscr;
-extern BOOLEAN FullRefresh;
+    extern int curscr;
+    extern BOOLEAN FullRefresh;
+
 #ifdef clearok
 #undef clearok
-#endif /* clearok */
+#endif				/* clearok */
 #define clearok(a,b) { FullRefresh = (BOOLEAN)b; }
-extern void LY_SLrefresh NOPARAMS;
+    extern void LY_SLrefresh(void);
+
 #ifdef refresh
 #undef refresh
-#endif /* refresh */
+#endif				/* refresh */
 #define refresh LY_SLrefresh
 
 #ifdef VMS
-extern void VTHome NOPARAMS;
+    extern void VTHome(void);
+
 #define endwin() LYclear(),refresh(),SLsmg_reset_smg(),VTHome()
 #else
 #define endwin SLsmg_reset_smg(),SLang_reset_tty
-#endif /* VMS */
+#endif				/* VMS */
 
-#else /* Define curses functions: */
+#else				/* Define curses functions: */
 
 #ifdef FANCY_CURSES
 #define SHOW_WHEREIS_TARGETS 1
@@ -551,23 +622,21 @@ extern void VTHome NOPARAMS;
 #define stop_reverse()		clrattr(_REVERSE)
 #define wstop_reverse(w)	wclrattr(w, _REVERSE)
 
-#else /* Not VMS: */
+#else				/* Not VMS: */
 
-extern int string_to_attr PARAMS((char *name));
+    extern int string_to_attr(char *name);
 
 /*
  *  For Unix FANCY_FANCY curses we interpose
  *  our own functions to add or subtract the
  *  A_foo attributes. - FM
  */
-#ifdef USE_COLOR_TABLE
-extern void LYaddWAttr PARAMS((WINDOW *win, int a));
-extern void LYsubWAttr PARAMS((WINDOW *win, int a));
-extern void LYaddWAttr PARAMS((WINDOW *win, int a));
-extern void LYsubWAttr PARAMS((WINDOW *win, int a));
-extern void lynx_set_color PARAMS((int a));
-extern void lynx_standout  PARAMS((int a));
-extern int  lynx_chg_color PARAMS((int, int, int));
+#if defined(USE_COLOR_TABLE) && !defined(USE_COLOR_STYLE)
+    extern void LYaddWAttr(WINDOW * win, int a);
+    extern void LYsubWAttr(WINDOW * win, int a);
+    extern void LYaddWAttr(WINDOW * win, int a);
+    extern void LYsubWAttr(WINDOW * win, int a);
+
 #undef  standout
 #define standout() 		lynx_standout(TRUE)
 #undef  standend
@@ -577,6 +646,14 @@ extern int  lynx_chg_color PARAMS((int, int, int));
 #define LYaddWAttr(win,attr)	wattron(win,attr)
 #define LYsubAttr(attr)		LYsubWAttr(LYwin,attr)
 #define LYsubWAttr(win,attr)	wattroff(win,attr)
+#endif
+
+#if defined(USE_COLOR_TABLE)
+    extern void lynx_set_color(int a);
+    extern void lynx_standout(int a);
+    extern char *LYgetTableString(int code);
+    extern int LYgetTableAttr(void);
+    extern int lynx_chg_color(int, int, int);
 #endif
 
 #define start_bold()		LYaddAttr(LYUnderlineLinks ? A_UNDERLINE : A_BOLD)
@@ -594,12 +671,12 @@ extern int  lynx_chg_color PARAMS((int, int, int));
 #define wstart_reverse(w)	LYaddWAttr(w, A_REVERSE)
 #define stop_reverse()		LYsubAttr(A_REVERSE)
 #define wstop_reverse(w)	LYsubWAttr(w, A_REVERSE)
-#endif /* SNAKE && HP_TERMINAL */
+#endif				/* SNAKE && HP_TERMINAL */
 
-#endif /* VMS */
+#endif				/* VMS */
 
-#else /* Not FANCY_CURSES: */
-
+#else				/* Not FANCY_CURSES: */
+/* *INDENT-OFF* */
 #ifdef COLOR_CURSES
 #undef COLOR_CURSES
 Error FANCY_CURSES
@@ -607,6 +684,7 @@ There is a problem with the configuration.  We expect to have FANCY_CURSES
 defined when COLOR_CURSES is defined, since we build on the attributes used in
 FANCY_CURSES.  Check your config.log to see why the FANCY_CURSES test failed.
 #endif
+/* *INDENT-ON* */
 
 /*
  *  We only have [w]standout() and [w]standin(),
@@ -622,7 +700,7 @@ FANCY_CURSES.  Check your config.log to see why the FANCY_CURSES test failed.
 #define stop_reverse()		standend()
 #define wstop_reverse(a)	wstandend(a)
 
-#endif /* FANCY_CURSES */
+#endif				/* FANCY_CURSES */
 
 #ifdef __hpux			/* FIXME: configure check */
 #undef ACS_UARROW
@@ -661,7 +739,7 @@ FANCY_CURSES.  Check your config.log to see why the FANCY_CURSES test failed.
 
 #define addch_raw(ch)           LYaddch(ch)
 
-#endif /* USE_SLANG */
+#endif				/* USE_SLANG */
 
 #ifdef USE_SLANG
 #define LYGetYX(y, x)   y = SLsmg_get_row(), x = SLsmg_get_column()
@@ -670,8 +748,8 @@ FANCY_CURSES.  Check your config.log to see why the FANCY_CURSES test failed.
 #define LYGetYX(y, x)   getyx(LYwin, y, x)
 #else
 #define LYGetYX(y, x)   y = LYwin->_cury, x = LYwin->_curx
-#endif /* getyx */
-#endif /* USE_SLANG */
+#endif				/* getyx */
+#endif				/* USE_SLANG */
 
 /*
  * If the screen library allows us to specify "default" color, allow user to
@@ -683,31 +761,31 @@ FANCY_CURSES.  Check your config.log to see why the FANCY_CURSES test failed.
 #endif
 #endif
 
-extern void lynx_enable_mouse PARAMS((int));
-extern void lynx_force_repaint NOPARAMS;
-extern void lynx_nl2crlf PARAMS((int normal));
-extern void lynx_start_title_color NOPARAMS;
-extern void lynx_stop_title_color NOPARAMS;
-extern void lynx_start_link_color PARAMS((int flag, int pending));
-extern void lynx_stop_link_color PARAMS((int flag, int pending));
-extern void lynx_stop_target_color NOPARAMS;
-extern void lynx_start_target_color NOPARAMS;
-extern void lynx_start_status_color NOPARAMS;
-extern void lynx_stop_status_color NOPARAMS;
-extern void lynx_start_h1_color NOPARAMS;
-extern void lynx_stop_h1_color NOPARAMS;
-extern void lynx_start_prompt_color NOPARAMS;
-extern void lynx_stop_prompt_color NOPARAMS;
-extern void lynx_start_radio_color NOPARAMS;
-extern void lynx_stop_radio_color NOPARAMS;
-extern void lynx_stop_all_colors NOPARAMS;
+    extern void lynx_enable_mouse(int);
+    extern void lynx_force_repaint(void);
+    extern void lynx_nl2crlf(int normal);
+    extern void lynx_start_title_color(void);
+    extern void lynx_stop_title_color(void);
+    extern void lynx_start_link_color(int flag, int pending);
+    extern void lynx_stop_link_color(int flag, int pending);
+    extern void lynx_stop_target_color(void);
+    extern void lynx_start_target_color(void);
+    extern void lynx_start_status_color(void);
+    extern void lynx_stop_status_color(void);
+    extern void lynx_start_h1_color(void);
+    extern void lynx_stop_h1_color(void);
+    extern void lynx_start_prompt_color(void);
+    extern void lynx_stop_prompt_color(void);
+    extern void lynx_start_radio_color(void);
+    extern void lynx_stop_radio_color(void);
+    extern void lynx_stop_all_colors(void);
 
-extern void lynx_start_bold NOPARAMS;
-extern void lynx_start_reverse NOPARAMS;
-extern void lynx_start_underline NOPARAMS;
-extern void lynx_stop_bold NOPARAMS;
-extern void lynx_stop_reverse NOPARAMS;
-extern void lynx_stop_underline NOPARAMS;
+    extern void lynx_start_bold(void);
+    extern void lynx_start_reverse(void);
+    extern void lynx_start_underline(void);
+    extern void lynx_stop_bold(void);
+    extern void lynx_stop_reverse(void);
+    extern void lynx_stop_underline(void);
 
 /*
  * To prevent corrupting binary data on DOS, MS-WINDOWS or OS/2 we open files
@@ -720,13 +798,13 @@ extern void lynx_stop_underline NOPARAMS;
 #if defined(_WINDOWS) || defined(DJGPP) || defined(__EMX__) || defined(WIN_EX)
 #define SetOutputMode(mode) fflush(stdout), setmode(fileno(stdout), mode)
 #else
-#define SetOutputMode(mode) /* nothing */
+#define SetOutputMode(mode)	/* nothing */
 #endif
 
 #if defined(_WINDOWS) || defined(DJGPP)
 #define SetDefaultMode(mode) _fmode = mode
 #else
-#define SetDefaultMode(mode) /* nothing */
+#define SetDefaultMode(mode)	/* nothing */
 #endif
 
 /*
@@ -734,11 +812,14 @@ extern void lynx_stop_underline NOPARAMS;
  * Adjust our "hidden" cursor position accordingly.
  */
 #if defined(FANCY_CURSES) || defined(USE_SLANG)
-#define LYHideCursor() LYmove((LYlines - 1), (LYcols - 1))
+#define LYHideCursor() LYmove((LYlines - 1), (LYcolLimit - 1))
 #else
-#define LYHideCursor() LYmove((LYlines - 1), (LYcols - 2))
+#define LYHideCursor() LYmove((LYlines - 1), (LYcolLimit - 2))
 #endif
 
-extern void LYstowCursor PARAMS((WINDOW * win, int row, int col));
+    extern void LYstowCursor(WINDOW * win, int row, int col);
 
-#endif /* LYCURSES_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* LYCURSES_H */

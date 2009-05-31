@@ -680,7 +680,6 @@
  *     Eastern European (windows-1250)    windows-1250
  *     Latin 3 (ISO-8859-3)               iso-8859-3
  *     Latin 4 (ISO-8859-4)               iso-8859-4
- *     Baltic Rim (ISO-8859-13)           iso-8859-13
  *     Baltic Rim (cp775)                 cp775
  *     Baltic Rim (windows-1257)          windows-1257
  *     Cyrillic (ISO-8859-5)              iso-8859-5
@@ -1361,16 +1360,15 @@
  * the version definition with the Project Version on checkout.  Just
  * ignore it. - kw */
 /* $Format: "#define LYNX_VERSION \"$ProjectVersion$\""$ */
-#define LYNX_VERSION "2.8.5rel.4"
+#define LYNX_VERSION "2.8.6rel.5"
 #define LYNX_WWW_HOME "http://lynx.isc.org/"
 #define LYNX_WWW_DIST "http://lynx.isc.org/current/"
 /* $Format: "#define LYNX_DATE \"$ProjectDate$\""$ */
-#define LYNX_DATE "Tue, 25 Oct 2005 17:40:26 -0700"
+#define LYNX_DATE "Wed, 09 May 2007 17:29:16 -0700"
 #define LYNX_DATE_OFF 5		/* truncate the automatically-generated date */
 #define LYNX_DATE_LEN 11	/* truncate the automatically-generated date */
 
 #define LINESIZE 1024		/* max length of line to read from file */
-#define MAXHIST  1024		/* max links we remember in history */
 #define MAXLINKS 1024		/* max links on one screen */
 
 #ifndef SEARCH_GOAL_LINE
@@ -1378,8 +1376,8 @@
 #endif
 
 #define MAXCHARSETS 60		/* max character sets supported */
-#define TRST_MAXROWSPAN 10000	/* max rowspan accepted by TRST code */
-#define TRST_MAXCOLSPAN 1000	/* max colspan and COL/COLGROUP span accepted */
+#define TRST_MAXROWSPAN 200	/* max rowspan accepted by TRST code */
+#define TRST_MAXCOLSPAN 200	/* max colspan and COL/COLGROUP span accepted */
 #define MAX_TABLE_ROWS  200	/* max rows for tables */
 #define MAX_TABLE_COLS  200	/* max cols for tables */
 #define SAVE_TIME_NOT_SPACE	/* minimize number of some malloc calls */

@@ -1,0 +1,5992 @@
+# translation of lynx-2.8.6-dev8.po to Vietnamese
+# translation of lynx-2.8.6-dev8 to Vietnamese
+# Copyright (C) 2005 Free Software Foundation, Inc.
+# This file is distributed under the same license as the PACKAGE package.
+# Phan Vinh Thinh <teppi82@gmail.com>, 2005.
+msgid ""
+msgstr ""
+"Project-Id-Version: lynx-2.8.6-dev8\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-08-31 18:50-0400\n"
+"PO-Revision-Date: 2005-05-07 01:43+0400\n"
+"Last-Translator: Phan Vinh Thinh <teppi82@gmail.com>\n"
+"Language-Team: Vietnamese <gnomevi-list@lists.sourceforge.net>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.9.1\n"
+
+#. ******************************************************************
+#. * The following definitions are for status line prompts, messages, or
+#. * warnings issued by Lynx during program execution.  You can modify
+#. * them to make them more appropriate for your site.  We recommend that
+#. * you extend these definitions to other languages using the gettext
+#. * library.  There are also scattered uses of 'gettext()' throughout the
+#. * Lynx source, covering all but those messages which (a) are used for
+#. * debugging (CTRACE) or (b) are constants used in interaction with
+#. * other programs.
+#. *
+#. * Links to collections of alternate definitions, developed by the Lynx
+#. * User Community, are maintained in Lynx links:
+#. *
+#. *    http://www.subir.com/lynx.html
+#. *
+#. * See ABOUT-NLS and po/readme for details and location of contributed
+#. * translations.  When no translation is available, the English default is
+#. * used.
+#.
+#: LYMessages.c:30
+#, c-format
+msgid "Alert!: %s"
+msgstr "Báo động!: %s"
+
+#: LYMessages.c:31
+msgid "Welcome"
+msgstr "Xin chào mừng"
+
+#: LYMessages.c:32
+msgid "Are you sure you want to quit?"
+msgstr "Thực sự muốn thoát?"
+
+#: LYMessages.c:34
+msgid "Really exit from Lynx?"
+msgstr "Thực sự thoát khỏi Lynx?"
+
+#: LYMessages.c:36
+msgid "Connection interrupted."
+msgstr "Kết nối bị gián đoạn."
+
+#: LYMessages.c:37
+msgid "Data transfer interrupted."
+msgstr "Truyền tải dữ liệu bị gián đoạn."
+
+#: LYMessages.c:38
+msgid "Cancelled!!!"
+msgstr "Đã hủy bỏ!!!"
+
+#: LYMessages.c:39
+msgid "Cancelling!"
+msgstr "Đang hủy bỏ!"
+
+#: LYMessages.c:40
+msgid "Excellent!!!"
+msgstr "Tuyệt vời!!!"
+
+#: LYMessages.c:41
+msgid "OK"
+msgstr "Đồng ý"
+
+#: LYMessages.c:42
+msgid "Done!"
+msgstr "Đã xong!"
+
+#: LYMessages.c:43
+msgid "Bad request!"
+msgstr "Yêu cầu xấu!"
+
+#: LYMessages.c:44
+msgid "previous"
+msgstr "trước"
+
+#: LYMessages.c:45
+msgid "next screen"
+msgstr "màn hình tiếp theo"
+
+#: LYMessages.c:46
+msgid "HELP!"
+msgstr "HÃY GIÚP!"
+
+#: LYMessages.c:47
+msgid ", help on "
+msgstr ", trợ giúp trên"
+
+#. #define HELP
+#: LYMessages.c:49
+msgid "Commands: Use arrow keys to move, '?' for help, 'q' to quit, '<-' to go back."
+msgstr "Lệnh: Mũi tên - di chuyển, '?' trợ giúp, 'q' thoát, '<-' quay lại."
+
+#. #define MOREHELP
+#: LYMessages.c:51
+msgid "-- press space for more, use arrow keys to move, '?' for help, 'q' to quit."
+msgstr "-- hãy nhấn phím trắng để xem tiếp, mũi tên - di chuyển, '?' - xem trợ giúp, 'q' - thoát."
+
+#: LYMessages.c:52
+msgid "-- press space for next page --"
+msgstr "-- nhấn phím trằng để xem trang tiếp theo --"
+
+#: LYMessages.c:53
+msgid "URL too long"
+msgstr "URL quá dài"
+
+#. Inactive input fields, messages used with -tna option - kw
+#. #define FORM_LINK_TEXT_MESSAGE_INA
+#: LYMessages.c:59
+msgid "(Text entry field) Inactive.  Press <return> to activate."
+msgstr "(Vùng văn bản) Không hoạt động.  Nhấn <return> để kích hoạt."
+
+#. #define FORM_LINK_TEXTAREA_MESSAGE_INA
+#: LYMessages.c:61
+msgid "(Textarea) Inactive.  Press <return> to activate."
+msgstr "(Vùng văn bản) Không hoạt động.  Hãy nhấn <return> để kích hoạt."
+
+#. #define FORM_LINK_TEXTAREA_MESSAGE_INA_E
+#: LYMessages.c:63
+#, c-format
+msgid "(Textarea) Inactive.  Press <return> to activate (%s for editor)."
+msgstr "(Vùng văn bản) Không hoạt động.  Hãy nhấn <return> để kích hoạt (%s cho trình soạn thảo)."
+
+#. #define FORM_LINK_TEXT_SUBMIT_MESSAGE_INA
+#: LYMessages.c:65
+msgid "(Form field) Inactive.  Use <return> to edit."
+msgstr "(Vùng biểu mẫu) Không hoạt động.  Hãy nhấn <return> để soạn thảo."
+
+#. #define FORM_TEXT_SUBMIT_MESSAGE_INA_X
+#: LYMessages.c:67
+#, c-format
+msgid "(Form field) Inactive.  Use <return> to edit (%s to submit with no cache)."
+msgstr "(Vùng biểu mẫu) Không hoạt động.  Hãy nhấn <return> để soạn thảo (%s để gửi đi không có cache)."
+
+#. #define FORM_TEXT_RESUBMIT_MESSAGE_INA
+#: LYMessages.c:69
+msgid "(Form field) Inactive. Press <return> to edit, press <return> twice to submit."
+msgstr "(Vùng biểu mẫu) Không hoạt động.  Hãy nhấn <return> để soạn thảo, nhấn <return> hai lần để gửi đi."
+
+#. #define FORM_TEXT_SUBMIT_MAILTO_MSG_INA
+#: LYMessages.c:71
+msgid "(mailto form field) Inactive.  Press <return> to change."
+msgstr "(Vùng biểu mẫu gửi thư) Không hoạt động.  Hãy nhấn <return> để thay đổi."
+
+#. #define FORM_LINK_PASSWORD_MESSAGE_INA
+#: LYMessages.c:73
+msgid "(Password entry field) Inactive.  Press <return> to activate."
+msgstr "(Vùng mục mật khẩu) Không hoạt động.  Hãy nhấn <return> để kích hoạt."
+
+#. #define FORM_LINK_FILE_UNM_MSG
+#: LYMessages.c:76
+msgid "UNMODIFIABLE file entry field.  Use UP or DOWN arrows or tab to move off."
+msgstr "Vùng mục UNMODIFIABLE (không thể sửa đổi).  Hãy dùng các phím mũi tên ĐI LÊN hoặc ĐI XUỐNG hoặc tab để đi tiếp."
+
+#. #define FORM_LINK_FILE_MESSAGE
+#: LYMessages.c:78
+msgid "(File entry field) Enter filename.  Use UP or DOWN arrows or tab to move off."
+msgstr "(Vùng mục tập tin) Hãy nhập tên tập tin.  Sử dụng các phím mũi tên ĐI LÊN hoặc ĐI XUỐNG hoặc tab để đi tiếp."
+
+#. #define FORM_LINK_TEXT_MESSAGE
+#: LYMessages.c:80
+msgid "(Text entry field) Enter text.  Use UP or DOWN arrows or tab to move off."
+msgstr "(Vùng văn bản) Hãy nhập.  Dùng các mũi tên LÊN hoặc XUỐNG hoặc tab để đi tiếp."
+
+#. #define FORM_LINK_TEXTAREA_MESSAGE
+#: LYMessages.c:82
+msgid "(Textarea) Enter text. Use UP/DOWN arrows or TAB to move off."
+msgstr "(Vùng văn bản) Hãy nhập.  Dùng mũi tên LÊN/XUỐNG hoặc tab để đi tiếp."
+
+#. #define FORM_LINK_TEXTAREA_MESSAGE_E
+#: LYMessages.c:84
+#, c-format
+msgid "(Textarea) Enter text. Use UP/DOWN arrows or TAB to move off (%s for editor)."
+msgstr "(Vùng văn bản) Hãy nhập văn bản.  Sử dụng mũi tên ĐI LÊN/ĐI XUỐNGhoặc tab để đi tiếp (%s để dùng trình soạn thảo)."
+
+#. #define FORM_LINK_TEXT_UNM_MSG
+#: LYMessages.c:86
+msgid "UNMODIFIABLE form text field.  Use UP or DOWN arrows or tab to move off."
+msgstr "Vùng mẫu văn bản UNMODIFIABLE (không thể sửa đổi).  Sử dụng mũi tênĐI LÊN/ĐI XUỐNG hoặc tab để đi tiếp."
+
+#. #define FORM_LINK_TEXT_SUBMIT_MESSAGE
+#: LYMessages.c:88
+msgid "(Form field) Enter text.  Use <return> to submit."
+msgstr "(Vùng biểu mẫu) Hãy nhập văn bản.  Sử dụng <return> để gửi đi."
+
+#. #define FORM_LINK_TEXT_SUBMIT_MESSAGE_X
+#: LYMessages.c:90
+#, c-format
+msgid "(Form field) Enter text.  Use <return> to submit (%s for no cache)."
+msgstr "(Vùng biểu mẫu) Hãy nhập văn bản.  Sử dụng <return> để gửi đi. (%s để không cache)."
+
+#. #define FORM_LINK_TEXT_RESUBMIT_MESSAGE
+#: LYMessages.c:92
+msgid "(Form field) Enter text.  Use <return> to submit, arrows or tab to move off."
+msgstr "(Vùng biểu mẫu) Hãy nhập văn bản.  Sử dụng <return> để gửi đi, phím mũi tên hoặc tab để đi tiếp."
+
+#. #define FORM_LINK_TEXT_SUBMIT_UNM_MSG
+#: LYMessages.c:94
+msgid "UNMODIFIABLE form field.  Use UP or DOWN arrows or tab to move off."
+msgstr "Vùng mẫu văn bản UNMODIFIABLE (không thể sửa đổi).  Sử dụng mũi tênĐI LÊN/ĐI XUỐNG hoặc tab để đi tiếp."
+
+#. #define FORM_LINK_TEXT_SUBMIT_MAILTO_MSG
+#: LYMessages.c:96
+msgid "(mailto form field) Enter text.  Use <return> to submit, arrows to move off."
+msgstr "(Vùng biểu mẫu gửi email) Hãy nhập văn bản.  Sử dụng <return> để gửi đi, phím mũi tên hoặc tab để đi tiếp."
+
+#. #define FORM_LINK_TEXT_SUBMIT_MAILTO_DIS_MSG
+#: LYMessages.c:98
+msgid "(mailto form field) Mail is disallowed so you cannot submit."
+msgstr "(Bỉểu mẫu gửi thư) Không cho phép gửi thư vì thế không thể gửi đi."
+
+#. #define FORM_LINK_PASSWORD_MESSAGE
+#: LYMessages.c:100
+msgid "(Password entry field) Enter text.  Use UP or DOWN arrows or tab to move off."
+msgstr "(Vùng mật khẩu) Hãy nhập văn bản.  Sử dụng mũi tên ĐI LÊN/ĐI XUỐNG hoặctab để đi tiếp."
+
+#. #define FORM_LINK_PASSWORD_UNM_MSG
+#: LYMessages.c:102
+msgid "UNMODIFIABLE form password.  Use UP or DOWN arrows or tab to move off."
+msgstr "Vùng mẫu điền mật khẩu UNMODIFIABLE (không thể sửa đổi).  Sử dụng mũi tênĐI LÊN/ĐI XUỐNG hoặc tab để đi tiếp."
+
+#. #define FORM_LINK_CHECKBOX_MESSAGE
+#: LYMessages.c:104
+msgid "(Checkbox Field)   Use right-arrow or <return> to toggle."
+msgstr "(Hộp lựa chọn)   Sử dụng mũi tên phải hoặc <return> để bật tắt."
+
+#. #define FORM_LINK_CHECKBOX_UNM_MSG
+#: LYMessages.c:106
+msgid "UNMODIFIABLE form checkbox.  Use UP or DOWN arrows or tab to move off."
+msgstr "Vùng hộp lựa chọn UNMODIFIABLE (không thể sửa đổi).  Sử dụng mũi tênĐI LÊN/ĐI XUỐNG hoặc tab để đi tiếp."
+
+#. #define FORM_LINK_RADIO_MESSAGE
+#: LYMessages.c:108
+msgid "(Radio Button)   Use right-arrow or <return> to toggle."
+msgstr "(Nút Radio)   Sử dụng mũi tên phải hoặc <return> để bật tắt."
+
+#. #define FORM_LINK_RADIO_UNM_MSG
+#: LYMessages.c:110
+msgid "UNMODIFIABLE form radio button.  Use UP or DOWN arrows or tab to move off."
+msgstr "Nút radio UNMODIFIABLE (không thể sửa đổi).  Sử dụng mũi tên ĐI LÊN/ĐI XUỐNGhoặc tab để đi tiếp."
+
+#. #define FORM_LINK_SUBMIT_PREFIX
+#: LYMessages.c:112
+msgid "Submit ('x' for no cache) to "
+msgstr "Gửi ('x' để không cache) tới "
+
+#. #define FORM_LINK_RESUBMIT_PREFIX
+#: LYMessages.c:114
+msgid "Submit to "
+msgstr "Gửi tới "
+
+#. #define FORM_LINK_SUBMIT_MESSAGE
+#: LYMessages.c:116
+msgid "(Form submit button) Use right-arrow or <return> to submit ('x' for no cache)."
+msgstr "(Nút gửi đi) Sử dụng mũi tên phải hoặc <return> để gửi ('x' để không cache)."
+
+#. #define FORM_LINK_RESUBMIT_MESSAGE
+#: LYMessages.c:118
+msgid "(Form submit button) Use right-arrow or <return> to submit."
+msgstr "(Nút gửi đi) Sử dụng mũi tên phải hoặc <return> để gửi đi."
+
+#. #define FORM_LINK_SUBMIT_DIS_MSG
+#: LYMessages.c:120
+msgid "DISABLED form submit button.  Use UP or DOWN arrows or tab to move off."
+msgstr "Nút gửi đi DISABLED (không dùng).  Sử dụng mũi tên ĐI LÊN/ĐI XUỐNGhoặc tab để đi tiếp."
+
+#. #define FORM_LINK_SUBMIT_MAILTO_PREFIX
+#: LYMessages.c:122
+msgid "Submit mailto form to "
+msgstr "Gửi mẫu mailto (thư) tới "
+
+#. #define FORM_LINK_SUBMIT_MAILTO_MSG
+#: LYMessages.c:124
+msgid "(mailto form submit button) Use right-arrow or <return> to submit."
+msgstr "(nút gửi thư) Sử dụng mũi tên phải hoặc <return> để gửi đi."
+
+#. #define FORM_LINK_SUBMIT_MAILTO_DIS_MSG
+#: LYMessages.c:126
+msgid "(mailto form submit button) Mail is disallowed so you cannot submit."
+msgstr "(nút gửi thư) Không cho phép gửi thư vì thế không thể gửi đi."
+
+#. #define FORM_LINK_RESET_MESSAGE
+#: LYMessages.c:128
+msgid "(Form reset button)   Use right-arrow or <return> to reset form to defaults."
+msgstr "(Đặt lại)   Dùng mũi tên phải hoặc <return> để đặt lại thành mặc định"
+
+#. #define FORM_LINK_RESET_DIS_MSG
+#: LYMessages.c:130
+msgid "DISABLED form reset button.  Use UP or DOWN arrows or tab to move off."
+msgstr "Nút đặt lại BỊ TẮT.  Hãy dùng mũi tên LÊN/XUỐNG hoặc tab để đi tiếp."
+
+#. #define FORM_LINK_OPTION_LIST_MESSAGE
+#: LYMessages.c:132
+msgid "(Option list) Hit return and use arrow keys and return to select option."
+msgstr "(Danh sách tùy chọn) Sử dụng các mũi tên và enter để chọn."
+
+#. #define CHOICE_LIST_MESSAGE
+#: LYMessages.c:134
+msgid "(Choice list) Hit return and use arrow keys and return to select option."
+msgstr "(Danh sách lựa chọn) Sử dụng các phím mũi tên và enter để chọn tùy chọn."
+
+#. #define FORM_LINK_OPTION_LIST_UNM_MSG
+#: LYMessages.c:136
+msgid "UNMODIFIABLE option list.  Use return or arrow keys to review or leave."
+msgstr "Danh sách tùy chọn KHÔNG THẾ SỬA ĐỔI.  Hãy dùng các mũi tên hoặc Enter để xem lại hoặc rời bỏ."
+
+#. #define CHOICE_LIST_UNM_MSG
+#: LYMessages.c:138
+msgid "UNMODIFIABLE choice list.  Use return or arrow keys to review or leave."
+msgstr "Danh sách lựa chọn KHÔNG THẾ SỬA ĐỔI.  Hãy dùng các mũi tên hoặc Enter để xem lại hoặc rời bỏ."
+
+#: LYMessages.c:139
+msgid "Submitting form..."
+msgstr "Đang gửi mẫu đơn đi..."
+
+#: LYMessages.c:140
+msgid "Resetting form..."
+msgstr "Đang đặt lại mẫu đơn..."
+
+#. #define RELOADING_FORM
+#: LYMessages.c:142
+msgid "Reloading document.  Any form entries will be lost!"
+msgstr "Đang nạp tài liệu.  Bất kỳ mục nào trong đơn cũng sẽ mất!"
+
+#: LYMessages.c:143
+#, c-format
+msgid "Warning: Cannot transcode form data to charset %s!"
+msgstr "Cảnh báo:  Không thể chuyển đổi bảng mã của dữ liệu trong đơn thành %s!"
+
+#. #define NORMAL_LINK_MESSAGE
+#: LYMessages.c:146
+msgid "(NORMAL LINK)   Use right-arrow or <return> to activate."
+msgstr "(LIÊN KẾT THÔNG THƯỜNG)  Hãy dùng mũi tên sang phải hoặc <return> để kích hoạt."
+
+#: LYMessages.c:147
+msgid "The resource requested is not available at this time."
+msgstr "Hiện thời không thể đáp ứng tài nguyên yêu cầu."
+
+#: LYMessages.c:148
+msgid "Enter Lynx keystroke command: "
+msgstr "Hãy nhập câu lệnh phím Lynx: "
+
+#: LYMessages.c:149
+msgid "Looking up "
+msgstr "Đang tìm "
+
+#: LYMessages.c:150
+#, c-format
+msgid "Getting %s"
+msgstr "Nhận %s"
+
+#: LYMessages.c:151
+#, c-format
+msgid "Skipping %s"
+msgstr "Nhảy qua %s"
+
+#: LYMessages.c:152
+#, c-format
+msgid "Using %s"
+msgstr "Sử dụng %s"
+
+#: LYMessages.c:153
+#, c-format
+msgid "Illegal URL: %s"
+msgstr "URL không đúng: %s"
+
+#: LYMessages.c:154
+#, c-format
+msgid "Badly formed address %s"
+msgstr "Địa chỉ xấu %s"
+
+#: LYMessages.c:155
+#, c-format
+msgid "URL: %s"
+msgstr "URL: %s"
+
+#: LYMessages.c:156
+msgid "Unable to access WWW file!!!"
+msgstr "Không truy cập được tập tin WWW!!!"
+
+#: LYMessages.c:157
+#, c-format
+msgid "This is a searchable index.  Use %s to search."
+msgstr "Đây là chỉ mục có thể tìm kiếm. Hãy dùng %s để tìm kiếm."
+
+#. #define WWW_INDEX_MORE_MESSAGE
+#: LYMessages.c:159
+#, c-format
+msgid "--More--  This is a searchable index.  Use %s to search."
+msgstr "--Còn nữa--  Đây là chỉ mục có thể tìm kiếm. Hãy dùng %s để tìm kiếm."
+
+#: LYMessages.c:160
+msgid "You have entered an invalid link number."
+msgstr "Số liên kết vừa nhập không đúng."
+
+#. #define SOURCE_HELP
+#: LYMessages.c:162
+msgid "Currently viewing document source.  Press '\\' to return to rendered version."
+msgstr "Hiện thời đang xem nguồn của tài liệu.  Nhấn '\\' để trở lại phiên bản đưa ra."
+
+#. #define NOVICE_LINE_ONE
+#: LYMessages.c:164
+msgid "  Arrow keys: Up and Down to move.  Right to follow a link; Left to go back.  \n"
+msgstr " Mũi tên: Lên/Xuống - di chuyển. Phải - mở liên kết; Trái - trang trước.  \n"
+
+#. #define NOVICE_LINE_TWO
+#: LYMessages.c:166
+msgid " H)elp O)ptions P)rint G)o M)ain screen Q)uit /=search [delete]=history list \n"
+msgstr " H)elp O)ptions P)rint G)o M)àn hình chính Q)uit /=tìm kiếm [delete]=lịch sử \n"
+
+#. #define NOVICE_LINE_TWO_A
+#: LYMessages.c:168
+msgid "  O)ther cmds  H)elp  K)eymap  G)oto  P)rint  M)ain screen  o)ptions  Q)uit  \n"
+msgstr "  O)ther cmds  H)elp  K)eymap  G)oto  P)rint  M)ain screen  o)ptions  Q)uit  \n"
+
+#. #define NOVICE_LINE_TWO_B
+#: LYMessages.c:170
+msgid "  O)ther cmds  B)ack  E)dit  D)ownload ^R)eload ^W)ipe screen  search doc: / \n"
+msgstr "  O)ther cmds  B)ack  E)dit  D)ownload ^R)eload ^W)ipe screen  tìm kiếm tài liệu: / \n"
+
+#. #define NOVICE_LINE_TWO_C
+#: LYMessages.c:172
+msgid "O)ther cmds  C)omment  History: <backspace>  Bookmarks: V)iew, A)dd, R)emove \n"
+msgstr "O)ther cmds  C)omment  History: <backspace>  Ưa thích: V)iew, A)dd, R)emove \n"
+
+#. #define FORM_NOVICELINE_ONE
+#: LYMessages.c:174
+msgid "            Enter text into the field by typing on the keyboard              "
+msgstr "            Hãy nhập văn bản vào vùng này              "
+
+#. #define FORM_NOVICELINE_TWO
+#: LYMessages.c:176
+msgid "    Ctrl-U to delete all text in field, [Backspace] to delete a character    "
+msgstr "    Ctrl-U để xóa tất cả văn bản trong vùng, [Backspace] để xóa 1 ký tự    "
+
+#. #define FORM_NOVICELINE_TWO_DELBL
+#: LYMessages.c:178
+msgid "      Ctrl-U to delete text in field, [Backspace] to delete a character    "
+msgstr "    Ctrl-U để xóa tất cả văn bản trong vùng, [Backspace] để xóa 1 ký tự    "
+
+#. #define FORM_NOVICELINE_TWO_VAR
+#: LYMessages.c:180
+#, c-format
+msgid "    %s to delete all text in field, [Backspace] to delete a character    "
+msgstr "    %s để xóa tất cả văn bản trong vùng, [Backspace] để xóa 1 ký tự    "
+
+#. #define FORM_NOVICELINE_TWO_DELBL_VAR
+#: LYMessages.c:182
+#, c-format
+msgid "      %s to delete text in field, [Backspace] to delete a character    "
+msgstr "    %s để xóa tất cả văn bản trong vùng, [Backspace] để xóa 1 ký tự    "
+
+#. mailto
+#: LYMessages.c:185
+msgid "Malformed mailto form submission!  Cancelled!"
+msgstr "Sự đệ trình đơn mailto (gửi thư) không đúng!  Hủy bỏ!"
+
+#: LYMessages.c:186
+msgid "Warning!  Control codes in mail address replaced by ?"
+msgstr "Cảnh báo!  Mã điều khiển trong địa chỉ thư thay thế bởi ?"
+
+#: LYMessages.c:187
+msgid "Mail disallowed!  Cannot submit."
+msgstr "Không cho phép gửi thư!  Không thể gửi đi."
+
+#: LYMessages.c:188
+msgid "Mailto form submission failed!"
+msgstr "Đệ trình đơn mailto (gửi thư) không thành công!"
+
+#: LYMessages.c:189
+msgid "Mailto form submission Cancelled!!!"
+msgstr "Đệ trình đơn mailto (gửi thư) bị Hủy bỏ!!!"
+
+#: LYMessages.c:190
+msgid "Sending form content..."
+msgstr "Đang gửi nội dung đơn..."
+
+#: LYMessages.c:191
+msgid "No email address is present in mailto URL!"
+msgstr "Không có địa chỉ email trong URL mailto!"
+
+#. #define MAILTO_URL_TEMPOPEN_FAILED
+#: LYMessages.c:193
+msgid "Unable to open temporary file for mailto URL!"
+msgstr "Không mở được tập tin tạm thời cho URL mailto!"
+
+#. #define INC_ORIG_MSG_PROMPT
+#: LYMessages.c:195
+msgid "Do you wish to include the original message?"
+msgstr "Thêm thư gốc vào thư mới?"
+
+#. #define INC_PREPARSED_MSG_PROMPT
+#: LYMessages.c:197
+msgid "Do you wish to include the preparsed source?"
+msgstr "Thêm nguồn đã phân tích vào?"
+
+#. #define SPAWNING_EDITOR_FOR_MAIL
+#: LYMessages.c:199
+msgid "Spawning your selected editor to edit mail message"
+msgstr "Đang gọi trình soạn thảo đã chọn để soạn thảo thư"
+
+#. #define ERROR_SPAWNING_EDITOR
+#: LYMessages.c:201
+msgid "Error spawning editor, check your editor definition in the options menu"
+msgstr "Lỗi gọi trình soạn thảo, hãy kiểm tra định nghĩa trình soạn thảo trong trình đơn tùy chọn"
+
+#: LYMessages.c:202
+msgid "Send this comment?"
+msgstr "Gửi trích dẫn này?"
+
+#: LYMessages.c:203
+msgid "Send this message?"
+msgstr "Gửi thư này?"
+
+#: LYMessages.c:204
+msgid "Sending your message..."
+msgstr "Đang gửi thư..."
+
+#: LYMessages.c:205
+msgid "Sending your comment:"
+msgstr "Đang gửi trích dẫn:"
+
+#. textarea
+#: LYMessages.c:208
+msgid "Not in a TEXTAREA; cannot use external editor."
+msgstr "Ở ngoài VÙNG VĂN BẢN, không thể dùng trình soạn thảo ngoại trú."
+
+#: LYMessages.c:209
+msgid "Not in a TEXTAREA; cannot use command."
+msgstr "Ở ngoài VÙNG VĂN BẢN, không thể dùng câu lệnh."
+
+#: LYMessages.c:211
+msgid "file: ACTIONs are disallowed!"
+msgstr "tập tin: HÀNH ĐỘNG không cho phép!"
+
+#. #define FILE_SERVED_LINKS_DISALLOWED
+#: LYMessages.c:213
+msgid "file: URLs via served links are disallowed!"
+msgstr "tập tin: URL qua liên kết đã đưa là không cho phép!"
+
+#: LYMessages.c:214
+msgid "Access to local files denied."
+msgstr "Truy cập tới các tập tin nội bộ bị cấm."
+
+#: LYMessages.c:215
+msgid "file: URLs via bookmarks are disallowed!"
+msgstr "tập tin: không cho phép URL qua bookmark!"
+
+#. #define SPECIAL_VIA_EXTERNAL_DISALLOWED
+#: LYMessages.c:217
+msgid "This special URL is not allowed in external documents!"
+msgstr "không cho phép URL đặc biệt này trong tài liệu ngoài!"
+
+#: LYMessages.c:218
+msgid "Press <return> to return to Lynx."
+msgstr "Nhấn <return> để quay lại Lynx."
+
+#. #define SPAWNING_MSG
+#: LYMessages.c:221
+msgid "Spawning DCL subprocess.  Use 'logout' to return to Lynx.\n"
+msgstr "Đang tạo ra tiến trình con DCL. Dùng 'logout' để quay lại Lynx.\n"
+
+#. #define SPAWNING_MSG
+#: LYMessages.c:225
+msgid "Type EXIT to return to Lynx.\n"
+msgstr "Gõ EXIT để quay lại Lynx.\n"
+
+#. #define SPAWNING_MSG
+#: LYMessages.c:228
+msgid "Spawning your default shell.  Use 'exit' to return to Lynx.\n"
+msgstr "Tạo ra shell mặc định.  Hãy dùng 'exit' để quay lại Lynx.\n"
+
+#: LYMessages.c:231
+msgid "Spawning is currently disabled."
+msgstr "Việc tạo ra bị tắt bỏ."
+
+#: LYMessages.c:232
+msgid "The 'd'ownload command is currently disabled."
+msgstr "Câu lệnh 'd'ownload (tải xuống) bị tắt."
+
+#: LYMessages.c:233
+msgid "You cannot download an input field."
+msgstr "Không thể tải xuống một vùng nhập dữ liệu."
+
+#: LYMessages.c:234
+msgid "Form has a mailto action!  Cannot download."
+msgstr "Biểu mẫu có hành động mailto (gửi thư)!  Không thể tải xuống."
+
+#: LYMessages.c:235
+msgid "You cannot download a mailto: link."
+msgstr "Không thể tải xuống một mailto: liên kết."
+
+#: LYMessages.c:236
+msgid "You cannot download cookies."
+msgstr "Không thể tải xuống cookies."
+
+#: LYMessages.c:237
+msgid "You cannot download a printing option."
+msgstr "Không thể tải xuống một tủy chọn in."
+
+#: LYMessages.c:238
+msgid "You cannot download an upload option."
+msgstr "Không thể tải xuống một tùy chọn tải lên (upload)."
+
+#: LYMessages.c:239
+msgid "You cannot download an permit option."
+msgstr "Không thể tải xuống một tùy chọn cho phép."
+
+#: LYMessages.c:240
+msgid "This special URL cannot be downloaded!"
+msgstr "Không tải xuống được URL đặc biệt này!"
+
+#: LYMessages.c:241
+msgid "Nothing to download."
+msgstr "Không có gì để tải xuống."
+
+#: LYMessages.c:242
+msgid "Trace ON!"
+msgstr "Trace (theo dấu vết) BẬT!"
+
+#: LYMessages.c:243
+msgid "Trace OFF!"
+msgstr "Trace (theo dấu vết) TẮT!"
+
+#. #define CLICKABLE_IMAGES_ON
+#: LYMessages.c:245
+msgid "Links will be included for all images!  Reloading..."
+msgstr "Sẽ thêm liên kết cho mọi hình ảnh!  Đang nạp lại..."
+
+#. #define CLICKABLE_IMAGES_OFF
+#: LYMessages.c:247
+msgid "Standard image handling restored!  Reloading..."
+msgstr "Đã phục hồi sự điều khiển hình ảnh tiêu chuẩn! Đang nạp lại..."
+
+#. #define PSEUDO_INLINE_ALTS_ON
+#: LYMessages.c:249
+msgid "Pseudo_ALTs will be inserted for inlines without ALT strings!  Reloading..."
+msgstr "Sẽ chèn Pseudo_ALTs cho những inline không có chuỗi ALT! Đang nạp lại..."
+
+#. #define PSEUDO_INLINE_ALTS_OFF
+#: LYMessages.c:251
+msgid "Inlines without an ALT string specified will be ignored!  Reloading..."
+msgstr "Những inline không có chuỗi ALT sẽ bị bỏ qua! Đang nạp lại..."
+
+#: LYMessages.c:252
+msgid "Raw 8-bit or CJK mode toggled OFF!  Reloading..."
+msgstr "Chế độ 8-bit thô sơ hoặc CJK TẮT! Đang nạp lại..."
+
+#: LYMessages.c:253
+msgid "Raw 8-bit or CJK mode toggled ON!  Reloading..."
+msgstr "Chế độ 8-bit thô sơ hoặc CJK BẬT! Đang nạp lại..."
+
+#. #define HEAD_D_L_OR_CANCEL
+#: LYMessages.c:255
+msgid "Send HEAD request for D)ocument or L)ink, or C)ancel? (d,l,c): "
+msgstr "Gửi yêu cầu HEAD cho D)tài liệu hoặc L)iên kết hoặc C)Không gửi (d,l,c): "
+
+#. #define HEAD_D_OR_CANCEL
+#: LYMessages.c:257
+msgid "Send HEAD request for D)ocument, or C)ancel? (d,c): "
+msgstr "Gửi yêu cầu HEAD cho D)tài liệu hoặc hoặc C)Không gửi (d,l,c): "
+
+#: LYMessages.c:258
+msgid "Sorry, the document is not an http URL."
+msgstr "Rất tiếc, tài liệu không phải là một URL http."
+
+#: LYMessages.c:259
+msgid "Sorry, the link is not an http URL."
+msgstr "Rất tiếc, liên kết không phải là một URL http."
+
+#: LYMessages.c:260
+msgid "Sorry, the ACTION for this form is disabled."
+msgstr "Rất tiếc, HÀNH ĐỘNG cho biểu mẫu này bị tắt bỏ."
+
+#. #define FORM_ACTION_NOT_HTTP_URL
+#: LYMessages.c:262
+msgid "Sorry, the ACTION for this form is not an http URL."
+msgstr "Rất tiếc, HÀNH ĐỘNG cho biểu mẫu này không phải là một URL http."
+
+#: LYMessages.c:263
+msgid "Not an http URL or form ACTION!"
+msgstr "Không phải là URL http hay biểu mẫu HÀNH ĐỘNG!"
+
+#: LYMessages.c:264
+msgid "This special URL cannot be a form ACTION!"
+msgstr "URL đặc biệt này không thể là một biểu mẫu HÀNH ĐỘNG!"
+
+#: LYMessages.c:265
+msgid "URL is not in starting realm!"
+msgstr "URL không nằm trong vùng bắt đầu!"
+
+#: LYMessages.c:266
+msgid "News posting is disabled!"
+msgstr "Gửi tin bị tắt!"
+
+#: LYMessages.c:267
+msgid "File management support is disabled!"
+msgstr "Hỗ trợ sự quản lý tập tin bị tắt!"
+
+#: LYMessages.c:268
+msgid "No jump file is currently available."
+msgstr "Không có tập tin nhảy (jump) nào."
+
+#: LYMessages.c:269
+msgid "Jump to (use '?' for list): "
+msgstr "Nhảy tới (dùng '?' để liệt kê): "
+
+#: LYMessages.c:270
+msgid "Jumping to a shortcut URL is disallowed!"
+msgstr "Không cho phép nhảy tới một đường tắt URL!"
+
+#: LYMessages.c:271
+msgid "Random URL is disallowed!  Use a shortcut."
+msgstr "Không cho phép URL ngẫu nhiên!  Hãy dùng một đường tắt."
+
+#: LYMessages.c:272
+msgid "No random URLs have been used thus far."
+msgstr "Không có URL ngẫu nhiên nào sử dụng."
+
+#: LYMessages.c:273
+msgid "Bookmark features are currently disabled."
+msgstr "Tính năng Ưa thích bị tắt."
+
+#: LYMessages.c:274
+msgid "Execution via bookmarks is disabled."
+msgstr "Thực hiện qua Ưa thích bị tắt."
+
+#. #define BOOKMARK_FILE_NOT_DEFINED
+#: LYMessages.c:276
+#, c-format
+msgid "Bookmark file is not defined. Use %s to see options."
+msgstr "Chưa xác định tập tin Ưa thích. Hãy dùng %s để xem tùy chọn."
+
+#. #define NO_TEMP_FOR_HOTLIST
+#: LYMessages.c:278
+msgid "Unable to open tempfile for X Mosaic hotlist conversion."
+msgstr "Không mở được tập tin tạm thời để chuyển đổi danh sách \"nóng\" X Mosaic."
+
+#: LYMessages.c:279
+msgid "ERROR - unable to open bookmark file."
+msgstr "LỖI - không mở được tập tin Ưa thích."
+
+#. #define BOOKMARK_OPEN_FAILED_FOR_DEL
+#: LYMessages.c:281
+msgid "Unable to open bookmark file for deletion of link."
+msgstr "Không mở được tập tin Ưa thích để xóa liên kết."
+
+#. #define BOOKSCRA_OPEN_FAILED_FOR_DEL
+#: LYMessages.c:283
+msgid "Unable to open scratch file for deletion of link."
+msgstr "Không mở được tập tin scratch để xóa liên kết."
+
+#: LYMessages.c:285
+msgid "Error renaming scratch file."
+msgstr "Lỗi thay đổi tên tập tin scratch."
+
+#: LYMessages.c:287
+msgid "Error renaming temporary file."
+msgstr "Lỗi thay đổi tên tập tin tạm thời."
+
+#. #define BOOKTEMP_COPY_FAIL
+#: LYMessages.c:289
+msgid "Unable to copy temporary file for deletion of link."
+msgstr "Không sao chép được tập tin tạm thời để xóa liên kết."
+
+#. #define BOOKTEMP_REOPEN_FAIL_FOR_DEL
+#: LYMessages.c:291
+msgid "Unable to reopen temporary file for deletion of link."
+msgstr "Không mở lại được tập tin tạm thời để xóa liên kết."
+
+#. #define BOOKMARK_LINK_NOT_ONE_LINE
+#: LYMessages.c:294
+msgid "Link is not by itself all on one line in bookmark file."
+msgstr "Liên kết không nằm trên một dòng trong tập tin Ưa thích."
+
+#: LYMessages.c:295
+msgid "Bookmark deletion failed."
+msgstr "Xóa ưa thích không thành công."
+
+#. #define BOOKMARKS_NOT_TRAVERSED
+#: LYMessages.c:297
+msgid "Bookmark files cannot be traversed (only http URLs)."
+msgstr "Không đi qua được tập tin Ưa thích (chỉ các URL http)."
+
+#. #define BOOKMARKS_NOT_OPEN
+#: LYMessages.c:299
+msgid "Unable to open bookmark file, use 'a' to save a link first"
+msgstr "Không mở được tập tin ưa thích, đầu tiên hãy dùng 'a' để ghi nhớ một liên kết"
+
+#: LYMessages.c:300
+msgid "There are no links in this bookmark file!"
+msgstr "Không có liên kết nào trong tập tin ưa thích!"
+
+#. #define BOOK_D_L_OR_CANCEL
+#: LYMessages.c:302
+msgid "Save D)ocument or L)ink to bookmark file or C)ancel? (d,l,c): "
+msgstr "Ghi nhớ D)Tài liệu hoặc L)iên kết vào tập tin ưa thích hay C)Không ghi? (d,l,c): "
+
+#: LYMessages.c:303
+msgid "Save D)ocument to bookmark file or C)ancel? (d,c): "
+msgstr "Ghi nhớ D)Tài liệu vào tập tin ưa thích hay C)Không ghi? (d,c): "
+
+#: LYMessages.c:304
+msgid "Save L)ink to bookmark file or C)ancel? (l,c): "
+msgstr "Ghi nhớ L)iên kết vào tập tin ưa thích hay C)Không ghi? (l,c): "
+
+#. #define NOBOOK_POST_FORM
+#: LYMessages.c:306
+msgid "Documents from forms with POST content cannot be saved as bookmarks."
+msgstr "Không thể ghi nhớ tài liệu từ biểu mẫu với nội dung POST thành ưa thích."
+
+#: LYMessages.c:307
+msgid "Cannot save form fields/links"
+msgstr "Không ghi nhớ được biểu mẫu vùng/liên kết"
+
+#. #define NOBOOK_HSML
+#: LYMessages.c:309
+msgid "History, showinfo, menu and list files cannot be saved as bookmarks."
+msgstr "Không thể ghi các tập tin lịch sử, hiển thị thông tin, trình đơn và danh sách thành ưa thích."
+
+#. #define CONFIRM_BOOKMARK_DELETE
+#: LYMessages.c:311
+msgid "Do you really want to delete this link from your bookmark file?"
+msgstr "Thực sự muốn xóa liên kết này tử tập tin ưa thích?"
+
+#: LYMessages.c:312
+msgid "Malformed address."
+msgstr "Địa chỉ không chuẩn."
+
+#. #define HISTORICAL_ON_MINIMAL_OFF
+#: LYMessages.c:314
+msgid "Historical comment parsing ON (Minimal is overridden)!"
+msgstr "Phân tích chú thích lịch sử BẬT (Tối thiểu bị ghi đè)!"
+
+#. #define HISTORICAL_OFF_MINIMAL_ON
+#: LYMessages.c:316
+msgid "Historical comment parsing OFF (Minimal is in effect)!"
+msgstr "Phân tích chú thích lịch sử TẮT (Tối thiểu được dùng)!"
+
+#. #define HISTORICAL_ON_VALID_OFF
+#: LYMessages.c:318
+msgid "Historical comment parsing ON (Valid is overridden)!"
+msgstr "Phân tích chú thích lịch sử BẬT (Hợp lệ bị ghi đè)!"
+
+#. #define HISTORICAL_OFF_VALID_ON
+#: LYMessages.c:320
+msgid "Historical comment parsing OFF (Valid is in effect)!"
+msgstr "Phân tích chú thích lịch sử TẮT (Hợp lệ được dùng)!"
+
+#. #define MINIMAL_ON_IN_EFFECT
+#: LYMessages.c:322
+msgid "Minimal comment parsing ON (and in effect)!"
+msgstr "Phân tích chú thích tối thiểu BẬT (và được dùng)!"
+
+#. #define MINIMAL_OFF_VALID_ON
+#: LYMessages.c:324
+msgid "Minimal comment parsing OFF (Valid is in effect)!"
+msgstr "Phân tích chú thích tối thiểu TẮT (Hợp lệ được dùng)!"
+
+#. #define MINIMAL_ON_BUT_HISTORICAL
+#: LYMessages.c:326
+msgid "Minimal comment parsing ON (but Historical is in effect)!"
+msgstr "Phân tích chú thích tối thiểu BẬT (nhưng Lịch sử được dùng)!"
+
+#. #define MINIMAL_OFF_HISTORICAL_ON
+#: LYMessages.c:328
+msgid "Minimal comment parsing OFF (Historical is in effect)!"
+msgstr "Phân tích chú thích tối thiểu TẮT (Lịch sử được dùng)!"
+
+#: LYMessages.c:329
+msgid "Soft double-quote parsing ON!"
+msgstr "Phân tích ngoặc kép mềm BẬT!"
+
+#: LYMessages.c:330
+msgid "Soft double-quote parsing OFF!"
+msgstr "Phân tích ngoặc kép mềm TẮT!"
+
+#: LYMessages.c:331
+msgid "Now using TagSoup parsing of HTML."
+msgstr "Đang dùng phân tích TagSoup của HTML."
+
+#: LYMessages.c:332
+msgid "Now using SortaSGML parsing of HTML!"
+msgstr "Đang dùng phân tích SortaSGML của HTML!"
+
+#: LYMessages.c:333
+msgid "You are already at the end of this document."
+msgstr "Đã ở cuối tài liệu này."
+
+#: LYMessages.c:334
+msgid "You are already at the beginning of this document."
+msgstr "Đã ở đầu tài liệu này."
+
+#: LYMessages.c:335
+#, c-format
+msgid "You are already at page %d of this document."
+msgstr "Đã năm trên trang %d của tài liệu này."
+
+#: LYMessages.c:336
+#, c-format
+msgid "Link number %d already is current."
+msgstr "Liên kết số %d đang là hiện thời."
+
+#: LYMessages.c:337
+msgid "You are already at the first document"
+msgstr "Đã ở đầu tài liệu"
+
+#: LYMessages.c:338
+msgid "There are no links above this line of the document."
+msgstr "Không có liên kết nào ở trên dòng này."
+
+#: LYMessages.c:339
+msgid "There are no links below this line of the document."
+msgstr "Không có liên kết nào ở dưới dòng này."
+
+#. #define MAXLEN_REACHED_DEL_OR_MOV
+#: LYMessages.c:341
+msgid "Maximum length reached!  Delete text or move off field."
+msgstr "Vượt quá chiều dài lớn nhất!  Hãy xóa văn bản hoặc bỏ qua."
+
+#. #define NOT_ON_SUBMIT_OR_LINK
+#: LYMessages.c:343
+msgid "You are not on a form submission button or normal link."
+msgstr "Không nằm trên một nút gửi biểu mẫu hay một liên kết thông thường."
+
+#. #define NEED_CHECKED_RADIO_BUTTON
+#: LYMessages.c:345
+msgid "One radio button must be checked at all times!"
+msgstr "Luôn luôn phải có ít nhất một nút radio được chọn!"
+
+#: LYMessages.c:346
+msgid "No submit button for this form, submit single text field?"
+msgstr "Không có nút gửi đi cho biểu mẫu này, gửi đi một vùng văn bản riêng?"
+
+#: LYMessages.c:347
+msgid "Do you want to go back to the previous document?"
+msgstr "Bạn có muốn quay lại tài liệu trước?"
+
+#: LYMessages.c:348
+msgid "Use arrows or tab to move off of field."
+msgstr "Sử dụng phím mũi tên hoặc tab để đi tiếp."
+
+#. #define ENTER_TEXT_ARROWS_OR_TAB
+#: LYMessages.c:350
+msgid "Enter text.  Use arrows or tab to move off of field."
+msgstr "Hãy nhập văn bản.  Sử dụng phím mũi tên hoặc tab để đi tiếp."
+
+#: LYMessages.c:351
+msgid "** Bad HTML!!  No form action defined. **"
+msgstr "** HTML xấu!! Không xác định hành động biểu mẫu nào. **"
+
+#: LYMessages.c:352
+msgid "Bad HTML!!  Unable to create popup window!"
+msgstr "HTML xấu!!  Không tạo được cửa sổ tự mở popup!"
+
+#: LYMessages.c:353
+msgid "Unable to create popup window!"
+msgstr "Không tạo được cửa sổ tự mở popup!"
+
+#: LYMessages.c:354
+msgid "Goto a random URL is disallowed!"
+msgstr "Không cho phép đi tới một URL ngẫu nhiên!"
+
+#: LYMessages.c:355
+msgid "Goto a non-http URL is disallowed!"
+msgstr "Không cho phép đi tới một URL không phải http!"
+
+#: LYMessages.c:356
+#, c-format
+msgid "You are not allowed to goto \"%s\" URLs"
+msgstr "Không cho phép người dùng đi tới \"%s\" URL"
+
+#: LYMessages.c:357
+msgid "URL to open: "
+msgstr "URL để mở: "
+
+#: LYMessages.c:358
+msgid "Edit the current Goto URL: "
+msgstr "Sửa URL Đi tới hiện thời: "
+
+#: LYMessages.c:359
+msgid "Edit the previous Goto URL: "
+msgstr "Sửa URL Đi tới trước: "
+
+#: LYMessages.c:360
+msgid "Edit a previous Goto URL: "
+msgstr "Sửa URL Đi tới trước: "
+
+#: LYMessages.c:361
+msgid "Current document has POST data."
+msgstr "Tài liệu hiện thời có dữ liệu GỬI."
+
+#: LYMessages.c:362
+msgid "Edit this document's URL: "
+msgstr "Sửa URL của tài liệu này: "
+
+#: LYMessages.c:363
+msgid "Edit the current link's URL: "
+msgstr "Sửa URL của liên kết hiện thời: "
+
+#: LYMessages.c:364
+msgid "You cannot edit File Management URLs"
+msgstr "Không thể sửa các URL Quản lý tập tin"
+
+#: LYMessages.c:365
+msgid "Enter a database query: "
+msgstr "Nhập truy vấn CSDL: "
+
+#: LYMessages.c:366
+msgid "Enter a whereis query: "
+msgstr "Nhập truy vấn whereis: "
+
+#: LYMessages.c:367
+msgid "Edit the current query: "
+msgstr "Sửa truy vấn hiện thời: "
+
+#: LYMessages.c:368
+msgid "Edit the previous query: "
+msgstr "Sửa truy vấn trước: "
+
+#: LYMessages.c:369
+msgid "Edit a previous query: "
+msgstr "Sửa một truy vấn trước: "
+
+#. #define USE_C_R_TO_RESUB_CUR_QUERY
+#: LYMessages.c:371
+msgid "Use Control-R to resubmit the current query."
+msgstr "Hãy dùng Control-R để gửi lại truy vấn hiện thời."
+
+#: LYMessages.c:372
+msgid "Edit the current shortcut: "
+msgstr "Sửa shortcut hiện thời: "
+
+#: LYMessages.c:373
+msgid "Edit the previous shortcut: "
+msgstr "Sửa shortcut trước: "
+
+#: LYMessages.c:374
+msgid "Edit a previous shortcut: "
+msgstr "Sửa một shortcut trước: "
+
+#: LYMessages.c:375
+#, c-format
+msgid "Key '%c' is not mapped to a jump file!"
+msgstr "Phím '%c' không ánh xạ tới một tập tin nhảy!"
+
+#: LYMessages.c:376
+msgid "Cannot locate jump file!"
+msgstr "Không tìm thấy vị trí tập tin nhảy!"
+
+#: LYMessages.c:377
+msgid "Cannot open jump file!"
+msgstr "Không mở được tập tin nhảy!"
+
+#: LYMessages.c:378
+msgid "Error reading jump file!"
+msgstr "Lỗi đọc tập tin nhảy!"
+
+#: LYMessages.c:379
+msgid "Out of memory reading jump file!"
+msgstr "Không đủ bộ nhớ để đọc tập tin nhảy!"
+
+#: LYMessages.c:380
+msgid "Out of memory reading jump table!"
+msgstr "Không đủ bộ nhớ để đọc bảng nhảy!"
+
+#: LYMessages.c:381
+msgid "No index is currently available."
+msgstr "Không có chỉ mục nào dùng được."
+
+#. #define CONFIRM_MAIN_SCREEN
+#: LYMessages.c:383
+msgid "Do you really want to go to the Main screen?"
+msgstr "Quay về Màn hình chính?"
+
+#: LYMessages.c:384
+msgid "You are already at main screen!"
+msgstr "Chúng ta đã ở trên màn hình chính!"
+
+#. #define NOT_ISINDEX
+#: LYMessages.c:386
+msgid "Not a searchable indexed document -- press '/' to search for a text string"
+msgstr "Không thể tìm kiếm tài liệu theo chỉ mục -- nhấn '/' để tìm chuỗi văn bản"
+
+#. #define NO_OWNER
+#: LYMessages.c:388
+msgid "No owner is defined for this file so you cannot send a comment"
+msgstr "Chưa xác định chủ sở hữu cho tập tin này vì thế bạn không gửi được bình luận"
+
+#: LYMessages.c:389
+#, c-format
+msgid "No owner is defined. Use %s?"
+msgstr "Chưa xác định chủ sở hữu. Dùng %s?"
+
+#: LYMessages.c:390
+msgid "Do you wish to send a comment?"
+msgstr "Gửi một bình luận?"
+
+#: LYMessages.c:391
+msgid "Mail is disallowed so you cannot send a comment"
+msgstr "Không cho phép dùng thư vì thế bạn không thể gửi bình luận"
+
+#: LYMessages.c:392
+msgid "The 'e'dit command is currently disabled."
+msgstr "Câu lệnh 'e'dit (soạn thảo) hiện thời bị tắt."
+
+#: LYMessages.c:393
+msgid "External editing is currently disabled."
+msgstr "Soạn thảo ngoài bị tắt."
+
+#: LYMessages.c:394
+msgid "System error - failure to get status."
+msgstr "Lỗi hệ thống - lấy trạng thái không thành công."
+
+#: LYMessages.c:395
+msgid "No editor is defined!"
+msgstr "Chưa xác định trình soạn thảo!"
+
+#: LYMessages.c:396
+msgid "The 'p'rint command is currently disabled."
+msgstr "Câu lệnh 'p'rint (in) hiện thời bị tắt."
+
+#: LYMessages.c:397
+msgid "Document has no Toolbar links or Banner."
+msgstr "Tài liệu không có liên kết Toolbar hoặc Banner."
+
+#: LYMessages.c:398
+msgid "Unable to open traversal file."
+msgstr "Không mở được tập tin đi qua."
+
+#: LYMessages.c:399
+msgid "Unable to open traversal found file."
+msgstr "Không mở được tập tin đi qua tìm thấy."
+
+#: LYMessages.c:400
+msgid "Unable to open reject file."
+msgstr "Không mở được tập tin nhả ra."
+
+#: LYMessages.c:401
+msgid "Unable to open traversal errors output file"
+msgstr "Không mở được tập tin ghi lỗi của đi qua"
+
+#: LYMessages.c:402
+msgid "TRAVERSAL WAS INTERRUPTED"
+msgstr "ĐÃ GIÁN ĐOẠN VIỆC ĐI QUA"
+
+#: LYMessages.c:403
+msgid "Follow link (or goto link or page) number: "
+msgstr "Đi theo liên kết (hoặc đi tới liên kết hay trang) số: "
+
+#: LYMessages.c:404
+msgid "Select option (or page) number: "
+msgstr "Tùy chọn số (hoặc trang): "
+
+#: LYMessages.c:405
+#, c-format
+msgid "Option number %d already is current."
+msgstr "Tùy chọn số %d đã là hiện thời."
+
+#. #define ALREADY_AT_OPTION_END
+#: LYMessages.c:407
+msgid "You are already at the end of this option list."
+msgstr "Chúng ta đã ở cuối danh sách tùy chọn này."
+
+#. #define ALREADY_AT_OPTION_BEGIN
+#: LYMessages.c:409
+msgid "You are already at the beginning of this option list."
+msgstr "Chúng ta đã ở đầu danh sách tùy chọn này."
+
+#. #define ALREADY_AT_OPTION_PAGE
+#: LYMessages.c:411
+#, c-format
+msgid "You are already at page %d of this option list."
+msgstr "Chúng ta đã ở trang %d của danh sách tùy chọn này."
+
+#: LYMessages.c:412
+msgid "You have entered an invalid option number."
+msgstr "Nhập một tùy chọn số không đúng."
+
+#: LYMessages.c:413
+msgid "** Bad HTML!!  Use -trace to diagnose. **"
+msgstr "** HTML xấu!  Dùng -trace để tìm nguyên nhân. **"
+
+#: LYMessages.c:414
+msgid "Give name of file to save in"
+msgstr "Đưa ra tên tập tin để ghi vào"
+
+#: LYMessages.c:415
+msgid "Can't save data to file -- please run WWW locally"
+msgstr "Không ghi được dữ liệu vào tập tin -- Xin hãy chạy WWW nội bộ"
+
+#: LYMessages.c:416
+msgid "Can't open temporary file!"
+msgstr "Không mở được tập tin tạm thời!"
+
+#: LYMessages.c:417
+msgid "Can't open output file!  Cancelling!"
+msgstr "Không mở được tập tin đầu ra!  Đang dừng!"
+
+#: LYMessages.c:418
+msgid "Execution is disabled."
+msgstr "Không cho phép thực hiện."
+
+#. #define EXECUTION_DISABLED_FOR_FILE
+#: LYMessages.c:420
+#, c-format
+msgid "Execution is not enabled for this file.  See the Options menu (use %s)."
+msgstr "Không cho phép thực hiện tập tin này.  Xem trình đơn Tùy chọn (dùng %s)."
+
+#. #define EXECUTION_NOT_COMPILED
+#: LYMessages.c:422
+msgid "Execution capabilities are not compiled into this version."
+msgstr "Biên dịch phiên bản này không có khả năng thực hiện."
+
+#: LYMessages.c:423
+msgid "This file cannot be displayed on this terminal."
+msgstr "Không hiển thị được tập tin lên terminal này."
+
+#. #define CANNOT_DISPLAY_FILE_D_OR_C
+#: LYMessages.c:425
+msgid "This file cannot be displayed on this terminal:  D)ownload, or C)ancel"
+msgstr "Không hiển thị được tập tin lên terminal này.  D)Tải xuống, hoặc C)Dừng"
+
+#: LYMessages.c:426
+#, c-format
+msgid "%s  D)ownload, or C)ancel"
+msgstr "%s D)Tải xuống, hoặc C)Dừng"
+
+#: LYMessages.c:427
+msgid "Cancelling file."
+msgstr "Đang dừng tập tin."
+
+#: LYMessages.c:428
+msgid "Retrieving file.  - PLEASE WAIT -"
+msgstr "Đang nhận tập tin.  - XIN HÃY CHỜ -"
+
+#: LYMessages.c:429
+msgid "Enter a filename: "
+msgstr "Nhập tên tập tin: "
+
+#: LYMessages.c:430
+msgid "Edit the previous filename: "
+msgstr "Sử tên tập tin trước: "
+
+#: LYMessages.c:431
+msgid "Edit a previous filename: "
+msgstr "Sử tên một tập tin trước: "
+
+#: LYMessages.c:432
+msgid "Enter a new filename: "
+msgstr "Nhập một tên tập tin mới: "
+
+#: LYMessages.c:433
+msgid "File name may not begin with a dot."
+msgstr "Tên tập tin không được bắt đầu với một dấu chấm."
+
+#: LYMessages.c:435
+msgid "File exists.  Create higher version?"
+msgstr "Tập tin tồn tại.  Tạo một phiên bản mới hơn?"
+
+#: LYMessages.c:437
+msgid "File exists.  Overwrite?"
+msgstr "Tập tin tồn tại.  Ghi chèn lên?"
+
+#: LYMessages.c:439
+msgid "Cannot write to file."
+msgstr "Không ghi nhớ được tập tin."
+
+#: LYMessages.c:440
+msgid "ERROR! - download command is misconfigured."
+msgstr "LỖI! - chưa cấu hình đúng câu lệnh để tải xuống."
+
+#: LYMessages.c:441
+msgid "Unable to download file."
+msgstr "Không tải được tập tin xuống."
+
+#: LYMessages.c:442
+msgid "Reading directory..."
+msgstr "Đang đọc thư mục..."
+
+#: LYMessages.c:443
+msgid "Building directory listing..."
+msgstr "Đang tạo danh sách thư mục..."
+
+#: LYMessages.c:444
+msgid "Saving..."
+msgstr "Đang ghi..."
+
+#: LYMessages.c:445
+#, c-format
+msgid "Could not edit file '%s'."
+msgstr "Không sửa được tập tin '%s'."
+
+#: LYMessages.c:446
+msgid "Unable to access document!"
+msgstr "Không truy cập được vào tài liệu!"
+
+#: LYMessages.c:447
+msgid "Could not access file."
+msgstr "Không truy cập được tập tin."
+
+#: LYMessages.c:448
+msgid "Could not access directory."
+msgstr "Không truy cập được thư mục."
+
+#: LYMessages.c:449
+msgid "Could not load data."
+msgstr "Không nạp được dữ liệu."
+
+#. #define CANNOT_EDIT_REMOTE_FILES
+#: LYMessages.c:451
+msgid "Lynx cannot currently (e)dit remote WWW files."
+msgstr "Hiện thời Lynx chưa thể (s)ửa tập tin WWW ở xa."
+
+#. #define CANNOT_EDIT_FIELD
+#: LYMessages.c:453
+msgid "This field cannot be (e)dited with an external editor."
+msgstr "Không (s)oạn thảo được vùng này với trình soạn ngoài."
+
+#: LYMessages.c:454
+msgid "Bad rule"
+msgstr "Luật xấu"
+
+#: LYMessages.c:455
+msgid "Insufficient operands:"
+msgstr "Operand không thỏa mãn:"
+
+#: LYMessages.c:456
+msgid "You are not authorized to edit this file."
+msgstr "Bạn chưa xác thực để sửa tập tin này."
+
+#: LYMessages.c:457
+msgid "Title: "
+msgstr "Tiêu đề: "
+
+#: LYMessages.c:458
+msgid "Subject: "
+msgstr "Tên: "
+
+#: LYMessages.c:459
+msgid "Username: "
+msgstr "Người dùng: "
+
+#: LYMessages.c:460
+msgid "Password: "
+msgstr "Mật khẩu: "
+
+#: LYMessages.c:461
+msgid "lynx: Username and Password required!!!"
+msgstr "lynx: Cần nhập tên Người dùng và Mật khẩu!!!"
+
+#: LYMessages.c:462
+msgid "lynx: Password required!!!"
+msgstr "lynx: Cần nhập Mật khẩu!!!"
+
+#: LYMessages.c:463
+msgid "Clear all authorization info for this session?"
+msgstr "Xóa mọi thông tin xác thực của buổi làm việc này?"
+
+#: LYMessages.c:464
+msgid "Authorization info cleared."
+msgstr "Đã xóa thông tin xác thực."
+
+#: LYMessages.c:465
+msgid "Authorization failed.  Retry?"
+msgstr "Xác thực không thành công.  Thử lại?"
+
+#: LYMessages.c:466
+msgid "cgi support has been disabled."
+msgstr "đã tắt hỗ trợ cgi."
+
+#. #define CGI_NOT_COMPILED
+#: LYMessages.c:468
+msgid "Lynxcgi capabilities are not compiled into this version."
+msgstr "Khả năng lynxcgi không được biên dịch vào phiên bản này."
+
+#: LYMessages.c:469
+#, c-format
+msgid "Sorry, no known way of converting %s to %s."
+msgstr "Rất tiếc, không có cách nào chuyển %s thành %s."
+
+#: LYMessages.c:470
+msgid "Unable to set up connection."
+msgstr "Không tạo được kết nối."
+
+#: LYMessages.c:471
+msgid "Unable to make connection"
+msgstr "Không tạo được kết nối"
+
+#. #define MALFORMED_EXEC_REQUEST
+#: LYMessages.c:473
+msgid "Executable link rejected due to malformed request."
+msgstr "Liên kết thực hiện bị nhả ra vì yêu cầu không chính xác."
+
+#. #define BADCHAR_IN_EXEC_LINK
+#: LYMessages.c:475
+#, c-format
+msgid "Executable link rejected due to `%c' character."
+msgstr "Liên kết thực hiện bị nhả ra vì có ký tự `%c'."
+
+#. #define RELPATH_IN_EXEC_LINK
+#: LYMessages.c:477
+msgid "Executable link rejected due to relative path string ('../')."
+msgstr "Liên kết thực hiện bị nhả ra vì chuỗi đường dẫn tương đối ('../')."
+
+#. #define BADLOCPATH_IN_EXEC_LINK
+#: LYMessages.c:479
+msgid "Executable link rejected due to location or path."
+msgstr "Liên kết thực hiện bị nhả ra vì vị trí hay đường dẫn."
+
+#: LYMessages.c:480
+msgid "Mail access is disabled!"
+msgstr "Truy cập thư bị tắt!"
+
+#. #define ACCESS_ONLY_LOCALHOST
+#: LYMessages.c:482
+msgid "Only files and servers on the local host can be accessed."
+msgstr "Chỉ truy cập được tới những tập tin và máy chủ trên máy nội bộ."
+
+#: LYMessages.c:483
+msgid "Telnet access is disabled!"
+msgstr "Truy cập telnet bị tắt!"
+
+#. #define TELNET_PORT_SPECS_DISABLED
+#: LYMessages.c:485
+msgid "Telnet port specifications are disabled."
+msgstr "Sự xác định cổng telnet bị tắt."
+
+#: LYMessages.c:486
+msgid "USENET news access is disabled!"
+msgstr "Truy cập tin tức USENET bị tắt!"
+
+#: LYMessages.c:487
+msgid "Rlogin access is disabled!"
+msgstr "Truy cập rlogin bị tắt!"
+
+#: LYMessages.c:488
+msgid "Ftp access is disabled!"
+msgstr "Truy cập ftp bị tắt!"
+
+#: LYMessages.c:489
+msgid "There are no references from this document."
+msgstr "Không có cấu hình từ tài liệu này."
+
+#: LYMessages.c:490
+msgid "There are only hidden links from this document."
+msgstr "Chỉ có liên kết ẩn từ tài liệu này."
+
+#: LYMessages.c:492
+msgid "Unable to open command file."
+msgstr "Không mở được tập tin lệnh."
+
+#: LYMessages.c:494
+msgid "News Post Cancelled!!!"
+msgstr "Đã dùng gửi tin tức!!!"
+
+#. #define SPAWNING_EDITOR_FOR_NEWS
+#: LYMessages.c:496
+msgid "Spawning your selected editor to edit news message"
+msgstr "Gọi trình soạn thảo đã chọn để tạo tin tức mới"
+
+#: LYMessages.c:497
+msgid "Post this message?"
+msgstr "Gửi tin này?"
+
+#: LYMessages.c:498
+#, c-format
+msgid "Append '%s'?"
+msgstr "Thêm '%s'?"
+
+#: LYMessages.c:499
+msgid "Posting to newsgroup(s)..."
+msgstr "Đang gửi vào (các) nhóm tin..."
+
+#: LYMessages.c:501
+msgid "*** You have unread mail. ***"
+msgstr "*** Bạn có thư chưa đọc. ***"
+
+#: LYMessages.c:503
+msgid "*** You have mail. ***"
+msgstr "*** Bạn có thư. ***"
+
+#: LYMessages.c:505
+msgid "*** You have new mail. ***"
+msgstr "*** Bạn có thư mới. ***"
+
+#: LYMessages.c:506
+msgid "File insert cancelled!!!"
+msgstr "Đã bỏ việc chèn tập tin!!!"
+
+#: LYMessages.c:507
+msgid "Not enough memory for file!"
+msgstr "Không có đủ bộ nhớ cho tập tin!"
+
+#: LYMessages.c:508
+msgid "Can't open file for reading."
+msgstr "Không mở được tập tin để đọc."
+
+#: LYMessages.c:509
+msgid "File does not exist."
+msgstr "Tập tin không tồn tại."
+
+#: LYMessages.c:510
+msgid "File does not exist - reenter or cancel:"
+msgstr "Tập tin không tồn tại - nhập lại hoặc dừng:"
+
+#: LYMessages.c:511
+msgid "File is not readable."
+msgstr "Tập tin không thể đọc."
+
+#: LYMessages.c:512
+msgid "File is not readable - reenter or cancel:"
+msgstr "Tập tin không thể đọc - nhập lại hoặc dừng:"
+
+#: LYMessages.c:513
+msgid "Nothing to insert - file is 0-length."
+msgstr "Không có gì để chèn - tập tin có độ dài 0."
+
+#: LYMessages.c:514
+msgid "Save request cancelled!!!"
+msgstr "Dừng gửi yêu cầu ghi nhớ!!!"
+
+#: LYMessages.c:515
+msgid "Mail request cancelled!!!"
+msgstr "Dừng gửi yêu cầu thư!!!"
+
+#. #define CONFIRM_MAIL_SOURCE_PREPARSED
+#: LYMessages.c:517
+msgid "Viewing preparsed source.  Are you sure you want to mail it?"
+msgstr "Đang xem nguồn phân tích trước.  Có chắc muốn gửi nó qua thư?"
+
+#: LYMessages.c:518
+msgid "Please wait..."
+msgstr "Xin hãy chờ..."
+
+#: LYMessages.c:519
+msgid "Mailing file.  Please wait..."
+msgstr "Đang gửi tập tin qua thư.  Xin hãy chờ..."
+
+#: LYMessages.c:520
+msgid "ERROR - Unable to mail file"
+msgstr "LỖI - Không gửi được tập tin qua thư"
+
+#. #define CONFIRM_LONG_SCREEN_PRINT
+#: LYMessages.c:522
+#, c-format
+msgid "File is %d screens long.  Are you sure you want to print?"
+msgstr "Tập tin dài %d màn hình.  Có chắc muốn in?"
+
+#: LYMessages.c:523
+msgid "Print request cancelled!!!"
+msgstr "Đã dừng yêu cầu in!!!"
+
+#: LYMessages.c:524
+msgid "Press <return> to begin: "
+msgstr "Hãy nhấn <return> để bắt đầu: "
+
+#: LYMessages.c:525
+msgid "Press <return> to finish: "
+msgstr "Hãy nhấn <return> để kết thúc: "
+
+#. #define CONFIRM_LONG_PAGE_PRINT
+#: LYMessages.c:527
+#, c-format
+msgid "File is %d pages long.  Are you sure you want to print?"
+msgstr "Tập tin dài %d màn hình.  Có chắc muốn in?"
+
+#. #define CHECK_PRINTER
+#: LYMessages.c:529
+msgid "Be sure your printer is on-line.  Press <return> to start printing:"
+msgstr "Cần chắc là máy in đang bật.  Hãy nhấn <return> để bắt đầu in:"
+
+#: LYMessages.c:530
+msgid "ERROR - Unable to allocate file space!!!"
+msgstr "LỖI - Không phân phối được không gian tập tin!!!"
+
+#: LYMessages.c:531
+msgid "Unable to open tempfile"
+msgstr "Không mở được tập tin tạm thời"
+
+#: LYMessages.c:532
+msgid "Unable to open print options file"
+msgstr "Không mở được tập tin tùy chọn in ấn"
+
+#: LYMessages.c:533
+msgid "Printing file.  Please wait..."
+msgstr "Đang in tập tin.  Xin hãy chờ..."
+
+#: LYMessages.c:534
+msgid "Please enter a valid internet mail address: "
+msgstr "Xin hãy nhập một địa chỉ thư internet đúng: "
+
+#: LYMessages.c:535
+msgid "ERROR! - printer is misconfigured!"
+msgstr "LỖI! - cấu hình máy in chưa đúng!"
+
+#: LYMessages.c:536
+msgid "Image map from POST response not available!"
+msgstr "Ánh xạ hình ảnh từ câu trả lời GỬI là không thể!"
+
+#: LYMessages.c:537
+msgid "Misdirected client-side image MAP request!"
+msgstr "Yêu cầu hình ảnh MAP phía máy khách sai hướng!"
+
+#: LYMessages.c:538
+msgid "Client-side image MAP is not accessible!"
+msgstr "Hình ảnh MAP phía máy khách không thể truy cập!"
+
+#: LYMessages.c:539
+msgid "No client-side image MAPs are available!"
+msgstr "Không có hình ảnh MAP phía máy khách nào!"
+
+#: LYMessages.c:540
+msgid "Client-side image MAP is not available!"
+msgstr "Không có hình ảnh MAP phía máy khách!"
+
+#. #define OPTION_SCREEN_NEEDS_24
+#: LYMessages.c:543
+msgid "Screen height must be at least 24 lines for the Options menu!"
+msgstr "Chiều cao màn hình phải ít nhất là 24 dòng cho trình đơn Tùy chọn!"
+
+#. #define OPTION_SCREEN_NEEDS_23
+#: LYMessages.c:545
+msgid "Screen height must be at least 23 lines for the Options menu!"
+msgstr "Chiều cao màn hình phải ít nhất là 23 dòng cho trình đơn Tùy chọn!"
+
+#. #define OPTION_SCREEN_NEEDS_22
+#: LYMessages.c:547
+msgid "Screen height must be at least 22 lines for the Options menu!"
+msgstr "Chiều cao màn hình phải ít nhất là 22 dòng cho trình đơn Tùy chọn!"
+
+#: LYMessages.c:549
+msgid "That key requires Advanced User mode."
+msgstr "Phím đó yêu cầu chế độ Người dùng có kỹ năng."
+
+#: LYMessages.c:550
+#, c-format
+msgid "Content-type: %s"
+msgstr "Loại nội dung: %s"
+
+#: LYMessages.c:551
+msgid "Command: "
+msgstr "Câu lệnh: "
+
+#: LYMessages.c:552
+msgid "Unknown or ambiguous command"
+msgstr "Câu lệnh không rõ hoặc không rõ ràng"
+
+#: LYMessages.c:553
+msgid " Version "
+msgstr " Phiên bản "
+
+#: LYMessages.c:554
+msgid " first"
+msgstr " đầu tiên"
+
+#: LYMessages.c:555
+msgid ", guessing..."
+msgstr ", đang đoán..."
+
+#: LYMessages.c:556
+msgid "Permissions for "
+msgstr "Quyền hạn cho "
+
+#: LYMessages.c:557
+msgid "Select "
+msgstr "Chọn "
+
+#: LYMessages.c:558
+msgid "capital letter"
+msgstr "chữ cái hoa"
+
+#: LYMessages.c:559
+msgid " of option line,"
+msgstr " của dòng tùy chọn,"
+
+#: LYMessages.c:560
+msgid " to save,"
+msgstr " để ghi,"
+
+#: LYMessages.c:561
+msgid " to "
+msgstr " để "
+
+#: LYMessages.c:562
+msgid " or "
+msgstr " hoặc "
+
+#: LYMessages.c:563
+msgid " index"
+msgstr " chỉ mục"
+
+#: LYMessages.c:564
+msgid " to return to Lynx."
+msgstr " để quay lại Lynx."
+
+#: LYMessages.c:565
+msgid "Accept Changes"
+msgstr "Chấp nhận Thay đổi"
+
+#: LYMessages.c:566
+msgid "Reset Changes"
+msgstr "Bỏ hết thay đổi"
+
+#: LYMessages.c:567
+msgid "Left Arrow cancels changes"
+msgstr "Mũi tên trái bỏ mọi thay đổi"
+
+#: LYMessages.c:568
+msgid "Save options to disk"
+msgstr "Ghi nhớ tùy chọn lên đĩa"
+
+#: LYMessages.c:569
+msgid "Hit RETURN to accept entered data."
+msgstr "Gõ RETURN để chấp nhận dữ liệu đã nhập."
+
+#. #define ACCEPT_DATA_OR_DEFAULT
+#: LYMessages.c:571
+msgid "Hit RETURN to accept entered data.  Delete data to invoke the default."
+msgstr "Gõ RETURN để chấp nhận dữ liệu đã nhập.  Xóa dữ liệu để gọi mặc định."
+
+#: LYMessages.c:572
+msgid "Value accepted!"
+msgstr "Đã chấp nhận giá trị!"
+
+#. #define VALUE_ACCEPTED_WARNING_X
+#: LYMessages.c:574
+msgid "Value accepted! -- WARNING: Lynx is configured for XWINDOWS!"
+msgstr "Đã chấp nhận giá trị! -- CẢNH BÁO: Lynx được cấu hình cho XWINDOWS!"
+
+#. #define VALUE_ACCEPTED_WARNING_NONX
+#: LYMessages.c:576
+msgid "Value accepted! -- WARNING: Lynx is NOT configured for XWINDOWS!"
+msgstr "Đã chấp nhận giá trị! -- CẢNH BÁO: Lynx không được cấu hình cho XWINDOWS!"
+
+#: LYMessages.c:577
+msgid "You are not allowed to change which editor to use!"
+msgstr "Bị cấm thay đổi trình soạn thảo!"
+
+#: LYMessages.c:578
+msgid "Failed to set DISPLAY variable!"
+msgstr "Đặt biến DISPLAY không thành công!"
+
+#: LYMessages.c:579
+msgid "Failed to clear DISPLAY variable!"
+msgstr "Xóa biến DISPLAY không thành công!"
+
+#. #define BOOKMARK_CHANGE_DISALLOWED
+#: LYMessages.c:581
+msgid "You are not allowed to change the bookmark file!"
+msgstr "Bị cấm thay đổi tập tin Ưa thích!"
+
+#: LYMessages.c:582
+msgid "Terminal does not support color"
+msgstr "Terminal không hỗ trợ màu sắc"
+
+#: LYMessages.c:583
+#, c-format
+msgid "Your '%s' terminal does not support color."
+msgstr "Terminal '%s' không hỗ trợ màu sắc."
+
+#: LYMessages.c:584
+msgid "Access to dot files is disabled!"
+msgstr "Truy cập tới các tập tin ẩn bị tắt!"
+
+#. #define UA_NO_LYNX_WARNING
+#: LYMessages.c:586
+msgid "User-Agent string does not contain \"Lynx\" or \"L_y_n_x\""
+msgstr "Chuỗi User-Agent không chứa \"Lynx\" hay \"L_y_n_x\""
+
+#. #define UA_PLEASE_USE_LYNX
+#: LYMessages.c:588
+msgid "Use \"L_y_n_x\" or \"Lynx\" in User-Agent, or it looks like intentional deception!"
+msgstr "Hãy dùng \"L_y_n_x\" hoặc \"Lynx\" trong User-Agent!"
+
+#. #define UA_CHANGE_DISABLED
+#: LYMessages.c:590
+msgid "Changing of the User-Agent string is disabled!"
+msgstr "thay đổi User-Agent bị tắt!"
+
+#. #define CHANGE_OF_SETTING_DISALLOWED
+#: LYMessages.c:592
+msgid "You are not allowed to change this setting."
+msgstr "Không được phép thay đổi thiết lập này."
+
+#: LYMessages.c:593
+msgid "Saving Options..."
+msgstr "Đang ghi nhớ Tùy chọn..."
+
+#: LYMessages.c:594
+msgid "Options saved!"
+msgstr "Đã ghi Tùy chọn!"
+
+#: LYMessages.c:595
+msgid "Unable to save Options!"
+msgstr "Không ghi nhớ được Tùy chọn!"
+
+#: LYMessages.c:596
+msgid " 'r' to return to Lynx "
+msgstr " 'r' để trở về Lynx "
+
+#: LYMessages.c:597
+msgid " '>' to save, or 'r' to return to Lynx "
+msgstr " '>' để ghi nhớ, hoặc 'r' để quay về Lynx "
+
+#. #define ANY_KEY_CHANGE_RET_ACCEPT
+#: LYMessages.c:599
+msgid "Hit any key to change value; RETURN to accept."
+msgstr "Gõ phím bất kỳ để thay đổi gián trị, RETURN để chấp nhận."
+
+#: LYMessages.c:600
+msgid "Error uncompressing temporary file!"
+msgstr "Lỗi giải nén tập tin tạm thời!"
+
+#: LYMessages.c:601
+msgid "Unsupported URL scheme!"
+msgstr "Hệ thống URL không được hỗ trợ!"
+
+#: LYMessages.c:602
+msgid "Unsupported data: URL!  Use SHOWINFO, for now."
+msgstr "Dữ liệu chưa hỗ trợ: URL!  Tạm thời hãy dùng SHOWINFO."
+
+#: LYMessages.c:603
+msgid "Redirection limit of 10 URL's reached."
+msgstr "Đã vượt quá giới hạn chuyển hướng 10 URL."
+
+#: LYMessages.c:604
+msgid "Illegal redirection URL received from server!"
+msgstr "Nhận được sự chuyển hướng không hợp pháp từ máy chủ!"
+
+#. #define SERVER_ASKED_FOR_REDIRECTION
+#: LYMessages.c:606
+#, c-format
+msgid "Server asked for %d redirection of POST content to"
+msgstr "Máy chủ hỏi về sự chuyển hướng %d của nội dung GỬI tới"
+
+#: LYMessages.c:609
+msgid "P)roceed, use G)ET or C)ancel "
+msgstr "P)Tiếp tục, hãy dùng G)LẤY hoặc C)Dừng"
+
+#: LYMessages.c:610
+msgid "P)roceed, or C)ancel "
+msgstr "P)Tiếp tục, hoặc C)Dừng"
+
+#. #define ADVANCED_POST_GET_REDIRECT
+#: LYMessages.c:612
+msgid "Redirection of POST content.  P)roceed, see U)RL, use G)ET or C)ancel"
+msgstr "Chuyển hướng nội dung GỬI. P)Tiếp tục, hãy dùng G)LẤY hoặc C)Dừng"
+
+#. #define ADVANCED_POST_REDIRECT
+#: LYMessages.c:614
+msgid "Redirection of POST content.  P)roceed, see U)RL, or C)ancel"
+msgstr "Chuyển hướng nội dung GỬI. P)Tiếp tục, hãy xem U)RL, hoặc C)Dừng"
+
+#. #define CONFIRM_POST_RESUBMISSION
+#: LYMessages.c:616
+msgid "Document from Form with POST content.  Resubmit?"
+msgstr "Tài liệu từ Biểu mẫu với nội dung GỬI.  Gửi lại?"
+
+#. #define CONFIRM_POST_RESUBMISSION_TO
+#: LYMessages.c:618
+#, c-format
+msgid "Resubmit POST content to %s ?"
+msgstr "Gửi lại nội dung GỬI tới %s ?"
+
+#. #define CONFIRM_POST_LIST_RELOAD
+#: LYMessages.c:620
+#, c-format
+msgid "List from document with POST data.  Reload %s ?"
+msgstr "Danh sách trong tài liệu với dữ liệu GỬI.  Nạp lại %s ?"
+
+#. #define CONFIRM_POST_DOC_HEAD
+#: LYMessages.c:622
+msgid "Document from POST action, HEAD may not be understood.  Proceed?"
+msgstr "Tài liệu từ hành động GỬI, có thể không hiểu PHẦN ĐẦU.  Tiếp tục?"
+
+#. #define CONFIRM_POST_LINK_HEAD
+#: LYMessages.c:624
+msgid "Form submit action is POST, HEAD may not be understood.  Proceed?"
+msgstr "Hành động gửi đi biểu mẫu là GỬI, có thể không hiểu PHẦN ĐẦU.  Tiếp tục?"
+
+#: LYMessages.c:625
+msgid "Proceed without a username and password?"
+msgstr "Tiếp tục mà không nhập tên người dùng và mật khẩu?"
+
+#: LYMessages.c:626
+#, c-format
+msgid "Proceed (%s)?"
+msgstr "Tiếp tục (%s)?"
+
+#: LYMessages.c:627
+msgid "Cannot POST to this host."
+msgstr "Không GỬI được tới máy này."
+
+#: LYMessages.c:628
+msgid "POST not supported for this URL - ignoring POST data!"
+msgstr "Không hỗ trợ GỬI cho URL này - lời đi dữ liệu GỬI!"
+
+#: LYMessages.c:629
+msgid "Discarding POST data..."
+msgstr "Đang loại bỏ dữ liệu GỬI..."
+
+#: LYMessages.c:630
+msgid "Document will not be reloaded!"
+msgstr "Tài liệu sẽ không được nạp lại!"
+
+#: LYMessages.c:631
+msgid "Location: "
+msgstr "Vị trí: "
+
+#: LYMessages.c:632
+#, c-format
+msgid "'%s' not found!"
+msgstr "Không tìm thấy '%s'!"
+
+#: LYMessages.c:633
+msgid "Default Bookmark File"
+msgstr "Tập tin Ưa thích mặc định"
+
+#: LYMessages.c:634
+msgid "Screen too small! (8x35 min)"
+msgstr "Màn hình quá nhỏ! (ít nhất 8x35)"
+
+#: LYMessages.c:635
+msgid "Select destination or ^G to Cancel: "
+msgstr "Chọn đích đến hoặc ^G để Dừng: "
+
+#. #define MULTIBOOKMARKS_SELECT
+#: LYMessages.c:637
+msgid "Select subbookmark, '=' for menu, or ^G to cancel: "
+msgstr "Chọn Ưa thích con, '=' trình đơn, hoặc ^G để dừng: "
+
+#. #define MULTIBOOKMARKS_SELF
+#: LYMessages.c:639
+msgid "Reproduce L)ink in this bookmark file or C)ancel? (l,c): "
+msgstr "Tạo lại L)iên kết trong tập tin Ưa thích này hoặc C)Dừng? (l,c): "
+
+#: LYMessages.c:640
+msgid "Multiple bookmark support is not available."
+msgstr "Không có hỗ trợ nhiều Ưa thích."
+
+#: LYMessages.c:641
+#, c-format
+msgid " Select Bookmark (screen %d of %d)"
+msgstr " Chọn Ưa thích (màn hình %d trong tổng số %d)"
+
+#: LYMessages.c:642
+msgid "       Select Bookmark"
+msgstr "       Chọn Ưa thích"
+
+#. #define MULTIBOOKMARKS_EHEAD_MASK
+#: LYMessages.c:644
+#, c-format
+msgid "Editing Bookmark DESCRIPTION and FILEPATH (%d of 2)"
+msgstr "Sửa MÔ TẢ và ĐƯỜNG DẪN của Ưa thích (%d từ 2)"
+
+#. #define MULTIBOOKMARKS_EHEAD
+#: LYMessages.c:646
+msgid "         Editing Bookmark DESCRIPTION and FILEPATH"
+msgstr "         Sửa MÔ TẢ và ĐƯỜNG DẪN của Ưa thích"
+
+#: LYMessages.c:647
+msgid "Letter: "
+msgstr "Chữ cái: "
+
+#. #define USE_PATH_OFF_HOME
+#: LYMessages.c:650
+msgid "Use a filepath off your login directory in SHELL syntax!"
+msgstr "Sử dụng một đường dẫn đến thư mục cá nhân với cú pháp SHELL!"
+
+#: LYMessages.c:652
+msgid "Use a filepath off your home directory!"
+msgstr "Hãy sử dụng một đường dẫn tới thư mục cá nhân!"
+
+#. #define MAXLINKS_REACHED
+#: LYMessages.c:655
+msgid "Maximum links per page exceeded!  Use half-page or two-line scrolling."
+msgstr "Vượt quá số liên kết cho phép mỗi trang!  Hãy sử dụng cuộn nửa trang hay hai dòng."
+
+#. #define MAXHIST_REACHED
+#: LYMessages.c:657
+msgid "History List maximum reached!  Document not pushed."
+msgstr "Đạt tới giới hạn Danh sách Lịch Sử!  Tài liệu không được thêm."
+
+#: LYMessages.c:658
+msgid "No previously visited links available!"
+msgstr "Không có liên kết vừa xem!"
+
+#: LYMessages.c:659
+msgid "Memory exhausted!  Program aborted!"
+msgstr "Cạn bộ nhớ!  Chương trình đang thoát!"
+
+#: LYMessages.c:660
+msgid "Memory exhausted!  Aborting..."
+msgstr "Cạn bộ nhớ!  Đang thoát..."
+
+#: LYMessages.c:661
+msgid "Not enough memory!"
+msgstr "Không đủ bộ nhớ!"
+
+#: LYMessages.c:662
+msgid "Directory/File Manager not available"
+msgstr "Không có trình quản lý Thư mục/Tập tin"
+
+#: LYMessages.c:663
+msgid "HREF in BASE tag is not an absolute URL."
+msgstr "HREF trong thẻ BASE không phải là một URL tuyệt đối."
+
+#: LYMessages.c:664
+msgid "Location URL is not absolute."
+msgstr "Vị trí URL không phải tuyệt đối."
+
+#: LYMessages.c:665
+msgid "Refresh URL is not absolute."
+msgstr "URL mới không phải là tuyệt đối."
+
+#. #define SENDING_MESSAGE_WITH_BODY_TO
+#: LYMessages.c:667
+msgid ""
+"You are sending a message with body to:\n"
+"  "
+msgstr ""
+"Chúng ta đang gửi một thư với nội dung tới:\n"
+"  "
+
+#: LYMessages.c:668
+msgid ""
+"You are sending a comment to:\n"
+"  "
+msgstr ""
+"Chúng ta đang gửi một bình luận tới:\n"
+"  "
+
+#: LYMessages.c:669
+msgid ""
+"\n"
+" With copy to:\n"
+"  "
+msgstr ""
+"\n"
+" Với bản sao tới:\n"
+"  "
+
+#: LYMessages.c:670
+msgid ""
+"\n"
+" With copies to:\n"
+"  "
+msgstr ""
+"\n"
+" Với bản sao tới:\n"
+"  "
+
+#. #define CTRL_G_TO_CANCEL_SEND
+#: LYMessages.c:672
+msgid ""
+"\n"
+"\n"
+"Use Ctrl-G to cancel if you do not want to send a message\n"
+msgstr ""
+"\n"
+"\n"
+"Hãy dùng Ctrl-G để dừng việc gửi thư\n"
+
+#. #define ENTER_NAME_OR_BLANK
+#: LYMessages.c:674
+msgid ""
+"\n"
+" Please enter your name, or leave it blank to remain anonymous\n"
+msgstr ""
+"\n"
+" Xin hãy nhập tên của bạn, hoặc để trống (nặc danh)\n"
+
+#. #define ENTER_MAIL_ADDRESS_OR_OTHER
+#: LYMessages.c:676
+msgid ""
+"\n"
+" Please enter a mail address or some other\n"
+msgstr ""
+"\n"
+" Xin hãy nhập một địa chỉ thư hoặc một số khác\n"
+
+#. #define MEANS_TO_CONTACT_FOR_RESPONSE
+#: LYMessages.c:678
+msgid " means to contact you, if you desire a response.\n"
+msgstr " để liên hệ với bạn, nếu mong muốn thư trả lời.\n"
+
+#: LYMessages.c:679
+msgid ""
+"\n"
+" Please enter a subject line.\n"
+msgstr ""
+"\n"
+" Xin hãy nhập một Tên.\n"
+
+#. #define ENTER_ADDRESS_FOR_CC
+#: LYMessages.c:681
+msgid ""
+"\n"
+" Enter a mail address for a CC of your message.\n"
+msgstr ""
+"\n"
+" Xin hãy nhập một địa chỉ cho CC của thư.\n"
+
+#: LYMessages.c:682
+msgid " (Leave blank if you don't want a copy.)\n"
+msgstr " (Để trống nếu không muốn một bản sao.)\n"
+
+#: LYMessages.c:683
+msgid ""
+"\n"
+" Please review the message body:\n"
+"\n"
+msgstr ""
+"\n"
+" Xin hãy xem lại nội dung thư:\n"
+"\n"
+
+#: LYMessages.c:684
+msgid ""
+"\n"
+"Press RETURN to continue: "
+msgstr ""
+"\n"
+"Hãy nhấn RETURN để tiếp tục: "
+
+#: LYMessages.c:685
+msgid ""
+"\n"
+"Press RETURN to clean up: "
+msgstr ""
+"\n"
+"Hãy nhấn RETURN để xóa nội dung: "
+
+#: LYMessages.c:686
+msgid " Use Control-U to erase the default.\n"
+msgstr " Sử dụng Control-U để xóa mặc định.\n"
+
+#: LYMessages.c:687
+msgid ""
+"\n"
+" Please enter your message below."
+msgstr ""
+"\n"
+" Xin hãy nhập thư vào dưới đây."
+
+#. #define ENTER_PERIOD_WHEN_DONE_A
+#: LYMessages.c:689 src/LYNews.c:357
+msgid ""
+"\n"
+" When you are done, press enter and put a single period (.)"
+msgstr ""
+"\n"
+" Khi hoàn thành, hãy nhấn enter và đặt một dấu chấm (.)"
+
+#. #define ENTER_PERIOD_WHEN_DONE_B
+#: LYMessages.c:691 src/LYNews.c:358
+msgid ""
+"\n"
+" on a line and press enter again."
+msgstr ""
+"\n"
+" trên một dòng và nhấn enter lại lần nữa."
+
+#. Cookies messages
+#. #define ADVANCED_COOKIE_CONFIRMATION
+#: LYMessages.c:695
+#, c-format
+msgid "%s cookie: %.*s=%.*s  Allow? (Y/N/Always/neVer)"
+msgstr "%s cookie: %.*s=%.*s  Cho phép? (Y/N/Always/neVer)"
+
+#. #define INVALID_COOKIE_DOMAIN_CONFIRMATION
+#: LYMessages.c:697
+#, c-format
+msgid "Accept invalid cookie domain=%s for '%s'?"
+msgstr "Chấp nhận cookie không thích hợp=%s cho '%s'?"
+
+#. #define INVALID_COOKIE_PATH_CONFIRMATION
+#: LYMessages.c:699
+#, c-format
+msgid "Accept invalid cookie path=%s as a prefix of '%s'?"
+msgstr "Chấp nhận đường dẫn cookie=%s là tiền tố cho '%s'?"
+
+#: LYMessages.c:700
+msgid "Allowing this cookie."
+msgstr "Đang cho phép cookie này."
+
+#: LYMessages.c:701
+msgid "Rejecting this cookie."
+msgstr "Đang loại bỏ cookie này."
+
+#: LYMessages.c:702
+msgid "The Cookie Jar is empty."
+msgstr "Giỏ Cookie rỗng."
+
+#. #define ACTIVATE_TO_GOBBLE
+#: LYMessages.c:704
+msgid "Activate links to gobble up cookies or entire domains,"
+msgstr "Kích hoạt liên kết để lấy cookie hoặc cả miền,"
+
+#: LYMessages.c:705
+msgid "or to change a domain's 'allow' setting."
+msgstr "hoặc thay đổi thiết lập 'cho phép' của một miền."
+
+#: LYMessages.c:706
+msgid "(Cookies never allowed.)"
+msgstr "(Không bao giờ cho phép Cookie.)"
+
+#: LYMessages.c:707
+msgid "(Cookies always allowed.)"
+msgstr "(Luôn luôn cho phép Cookie.)"
+
+#: LYMessages.c:708
+msgid "(Cookies allowed via prompt.)"
+msgstr "(Xác nhận cho phép Cookie.)"
+
+#: LYMessages.c:709
+msgid "(Persistent Cookies.)"
+msgstr "(Cookie cố định.)"
+
+#: LYMessages.c:710
+msgid "(No title.)"
+msgstr "(Không tiêu đề.)"
+
+#: LYMessages.c:711
+msgid "(No name.)"
+msgstr "(Không tên.)"
+
+#: LYMessages.c:712
+msgid "(No value.)"
+msgstr "(Không giá trị.)"
+
+#: LYMessages.c:713 src/LYOptions.c:2385
+msgid "None"
+msgstr "Không"
+
+#: LYMessages.c:714
+msgid "(End of session.)"
+msgstr "(Cuối buổi.)"
+
+#: LYMessages.c:715
+msgid "Delete this cookie?"
+msgstr "Xóa cookie này?"
+
+#: LYMessages.c:716
+msgid "The cookie has been eaten!"
+msgstr "Đã xơi xong cookie!"
+
+#: LYMessages.c:717
+msgid "Delete this empty domain?"
+msgstr "Xóa miền rỗng này?"
+
+#: LYMessages.c:718
+msgid "The domain has been eaten!"
+msgstr "Đã xơi xong miền!"
+
+#. #define DELETE_COOKIES_SET_ALLOW_OR_CANCEL
+#: LYMessages.c:720
+msgid "D)elete domain's cookies, set allow A)lways/P)rompt/neV)er, or C)ancel? "
+msgstr "D)Xóa cookie của miền, cho phép A)lways/P)rompt/neV)er, hoặc C)Dừng? "
+
+#. #define DELETE_DOMAIN_SET_ALLOW_OR_CANCEL
+#: LYMessages.c:722
+msgid "D)elete domain, set allow A)lways/P)rompt/neV)er, or C)ancel? "
+msgstr "D)Xóa miền, cho phép A)lways/P)rompt/neV)er, hoặc C)Dừng? "
+
+#: LYMessages.c:723
+msgid "All cookies in the domain have been eaten!"
+msgstr "Đã xơi xong mọi cookie của miền này!"
+
+#: LYMessages.c:724
+#, c-format
+msgid "'A'lways allowing from domain '%s'."
+msgstr "'A' Luôn luôn cho phép từ miền '%s'."
+
+#: LYMessages.c:725
+#, c-format
+msgid "ne'V'er allowing from domain '%s'."
+msgstr "'V' Không bao giờ cho phép từ miền '%s'."
+
+#: LYMessages.c:726
+#, c-format
+msgid "'P'rompting to allow from domain '%s'."
+msgstr "'P' Xác nhận cho phép từ miền '%s'."
+
+#: LYMessages.c:727
+msgid "Delete all cookies in this domain?"
+msgstr "Xóa mọi cookie trong miền này?"
+
+#: LYMessages.c:728
+msgid "All of the cookies in the jar have been eaten!"
+msgstr "Đã chén sạch cookie trong giỏ!"
+
+#: LYMessages.c:730
+msgid "Port 19 not permitted in URLs."
+msgstr "Không cho phép cổng 19 trong URL."
+
+#: LYMessages.c:731
+msgid "Port 25 not permitted in URLs."
+msgstr "Không cho phép cổng 25rong URL."
+
+#: LYMessages.c:732
+#, c-format
+msgid "Port %lu not permitted in URLs."
+msgstr "Không cho phép cổng %lu trong các URL."
+
+#: LYMessages.c:733
+msgid "URL has a bad port field."
+msgstr "URL có một cổng xấu."
+
+#: LYMessages.c:734
+msgid "Maximum nesting of HTML elements exceeded."
+msgstr "Đã vượt quá số phần tử HTML cho phép lồng vào nhau."
+
+#: LYMessages.c:735
+msgid "Bad partial reference!  Stripping lead dots."
+msgstr "Cấu hình các phần xấu!  Loại bỏ những dấu chấm ở đầu."
+
+#: LYMessages.c:736
+msgid "Trace Log open failed.  Trace off!"
+msgstr "Mở bản ghi Trace không thành công.  Tắt bỏ Trace!"
+
+#: LYMessages.c:737
+msgid "Lynx Trace Log"
+msgstr "Bản ghi Trace của Lynx"
+
+#: LYMessages.c:738
+msgid "No trace log has been started for this session."
+msgstr "Không có bản ghi trace cho buổi làm việc này."
+
+#. #define MAX_TEMPCOUNT_REACHED
+#: LYMessages.c:740
+msgid "The maximum temporary file count has been reached!"
+msgstr "Đã vượt quá số tập tin tạm thời lớn nhất!"
+
+#. #define FORM_VALUE_TOO_LONG
+#: LYMessages.c:742
+msgid "Form field value exceeds buffer length!  Trim the tail."
+msgstr "Giá trị của vùng biểu mẫu vượt quá kích thước bộ đệm!  Xén phần đuôi."
+
+#. #define FORM_TAIL_COMBINED_WITH_HEAD
+#: LYMessages.c:744
+msgid "Modified tail combined with head of form field value."
+msgstr "Phần đuôi đã sửa kết hợp với phần đầu của giá trị vùng biểu mẫu."
+
+#. HTFile.c
+#: LYMessages.c:747
+msgid "Directory"
+msgstr "Thư mục"
+
+#: LYMessages.c:748
+msgid "Directory browsing is not allowed."
+msgstr "Không cho phép duyệt thư mục."
+
+#: LYMessages.c:749
+msgid "Selective access is not enabled for this directory"
+msgstr "Không thể truy cập chọn lọc cho thư mục này"
+
+#: LYMessages.c:750
+msgid "Multiformat: directory scan failed."
+msgstr "Nhiều định dạng: quét thư mục không thành công."
+
+#: LYMessages.c:751
+msgid "This directory is not readable."
+msgstr "Thư mục là không thể đọc."
+
+#: LYMessages.c:752
+msgid "Can't access requested file."
+msgstr "Không truy cập được tập tin yêu cầu."
+
+#: LYMessages.c:753
+msgid "Could not find suitable representation for transmission."
+msgstr "Không tìm thấy sự biểu diễn thích hợp cho truyền tải."
+
+#: LYMessages.c:754
+msgid "Could not open file for decompression!"
+msgstr "Không mở được tập tin để giải nén!"
+
+#: LYMessages.c:755
+msgid "Files:"
+msgstr "Tập tin:"
+
+#: LYMessages.c:756
+msgid "Subdirectories:"
+msgstr "Thư mục con:"
+
+#: LYMessages.c:757
+msgid " directory"
+msgstr " thư mục"
+
+#: LYMessages.c:758
+msgid "Up to "
+msgstr "Lên"
+
+#: LYMessages.c:759
+msgid "Current directory is "
+msgstr "Thư mục hiện thời là "
+
+#. HTGopher.c
+#: LYMessages.c:762
+msgid "No response from server!"
+msgstr "Không có trả lời từ máy chủ!"
+
+#: LYMessages.c:763
+msgid "CSO index"
+msgstr "Chỉ mục CSO"
+
+#: LYMessages.c:764
+msgid ""
+"\n"
+"This is a searchable index of a CSO database.\n"
+msgstr ""
+"\n"
+"Đây là chỉ mục có thể tìm kiếm của cơ sở dữ liệu CSO.\n"
+
+#: LYMessages.c:765
+msgid "CSO Search Results"
+msgstr "Kết quả tìm kiếm CSO"
+
+#: LYMessages.c:766
+#, c-format
+msgid "Seek fail on %s\n"
+msgstr "Tìm kiếm không thành công trên %s\n"
+
+#: LYMessages.c:767
+msgid ""
+"\n"
+"Press the 's' key and enter search keywords.\n"
+msgstr ""
+"\n"
+"Nhấn phím 's' và enter để tìm từ khóa.\n"
+
+#: LYMessages.c:768
+msgid ""
+"\n"
+"This is a searchable Gopher index.\n"
+msgstr ""
+"\n"
+"Đây là chỉ mục có thể tìm kiếm Gopher.\n"
+
+#: LYMessages.c:769
+msgid "Gopher index"
+msgstr "Chỉ mục Gopher"
+
+#: LYMessages.c:770
+msgid "Gopher Menu"
+msgstr "Trình đơn Gopher"
+
+#: LYMessages.c:771
+msgid " Search Results"
+msgstr " Kết quả tìm kiếm"
+
+#: LYMessages.c:772
+msgid "Sending CSO/PH request."
+msgstr "Đang gửi yêu cầu CSO/PH."
+
+#: LYMessages.c:773
+msgid "Sending Gopher request."
+msgstr "Đang gửi yêu cầu Gopher."
+
+#: LYMessages.c:774
+msgid "CSO/PH request sent; waiting for response."
+msgstr "Đã gửi yêu cầu CSO/PH; đang chờ trả lời."
+
+#: LYMessages.c:775
+msgid "Gopher request sent; waiting for response."
+msgstr "Đã gửi yêu cầu Gopher; đang chờ trả lời."
+
+#: LYMessages.c:776
+msgid ""
+"\n"
+"Please enter search keywords.\n"
+msgstr ""
+"\n"
+"Xin hãy nhập từ khóa tìm kiếm.\n"
+
+#: LYMessages.c:777
+msgid ""
+"\n"
+"The keywords that you enter will allow you to search on a"
+msgstr ""
+"\n"
+"Từ khóa đã nhập sẽ cho phép tìm kiếm tên một"
+
+#: LYMessages.c:778
+msgid " person's name in the database.\n"
+msgstr " cá nhân trong cơ sở dữ liệu.\n"
+
+#. HTNews.c
+#: LYMessages.c:781
+msgid "Connection closed ???"
+msgstr "Đã đóng kết nối ???"
+
+#: LYMessages.c:782
+msgid "Cannot open temporary file for news POST."
+msgstr "Không mở được tập tin tạm thời để GỬI tin tức."
+
+#: LYMessages.c:783
+msgid "This client does not contain support for posting to news with SSL."
+msgstr "Client này không hỗ trợ gửi tin tức với SSL."
+
+#. HTStyle.c
+#: LYMessages.c:786
+#, c-format
+msgid "Style %d `%s' SGML:%s.  Font %s %.1f point.\n"
+msgstr "Kiểu %d `%s' SGML:%s.  Phông %s %.1f điểm.\n"
+
+#: LYMessages.c:787
+#, c-format
+msgid "\tIndents: first=%.0f others=%.0f, Height=%.1f Desc=%.1f\n"
+msgstr "\tThụt: đầu tiên=%.0f khác=%.0f, Cao=%.1f Mtả=%.1f\n"
+
+#: LYMessages.c:788
+#, c-format
+msgid "\tAlign=%d, %d tabs. (%.0f before, %.0f after)\n"
+msgstr "\tSắp=%d, %d tabs. (%.0f trước, %.0f sau)\n"
+
+#: LYMessages.c:789
+#, c-format
+msgid "\t\tTab kind=%d at %.0f\n"
+msgstr "\t\tKiểu Tab=%d tại %.0f\n"
+
+#. HTTP.c
+#: LYMessages.c:792
+msgid "Can't proceed without a username and password."
+msgstr "Không tiếp tục được khi thiếu tên người dùng và mật khẩu."
+
+#: LYMessages.c:793
+msgid "Can't retry with authorization!  Contact the server's WebMaster."
+msgstr "Không thử xác thực lại được!  Liên hệ với WebMaster của máy chủ."
+
+#: LYMessages.c:794
+msgid "Can't retry with proxy authorization!  Contact the server's WebMaster."
+msgstr "Không thử xác thực proxy lại được!  Liên hệ WebMaster của máy chủ."
+
+#: LYMessages.c:795
+msgid "Retrying with proxy authorization information."
+msgstr "Đang thử lại với thông tin xác thực proxy."
+
+#: LYMessages.c:796
+#, fuzzy, c-format
+msgid "SSL error:%s-Continue?"
+msgstr "Lỗi SSL:máy(%s)!=cert(%s)-Tiếp tục?"
+
+#. HTWAIS.c
+#: LYMessages.c:799
+msgid "HTWAIS: Return message too large."
+msgstr "HTWAIS: Thông báo gửi lại quá lớn."
+
+#: LYMessages.c:800
+msgid "Enter WAIS query: "
+msgstr "Nhập câu hỏi WAIS: "
+
+#. Miscellaneous status
+#: LYMessages.c:803
+msgid "Retrying as HTTP0 request."
+msgstr "Đang thử như một yêu cầu HTTP0."
+
+#: LYMessages.c:804
+#, c-format
+msgid "Transferred %d bytes"
+msgstr "Đã truyền %d byte"
+
+#: LYMessages.c:805
+msgid "Data transfer complete"
+msgstr "Hoàn thành truyền tải dữ liệu"
+
+#: LYMessages.c:806
+#, c-format
+msgid "Error processing line %d of %s\n"
+msgstr "Lỗi thực hiện dòng %d của %s\n"
+
+#. Lynx internal page titles
+#: LYMessages.c:809
+msgid "Address List Page"
+msgstr "Trang Danh sách địa chỉ"
+
+#: LYMessages.c:810
+msgid "Bookmark file"
+msgstr "Tập tin Ưa thích"
+
+#: LYMessages.c:811
+msgid "Configuration Definitions"
+msgstr "Xác định Cấu hình"
+
+#: LYMessages.c:812
+msgid "Cookie Jar"
+msgstr "Giỏ Cookie"
+
+#: LYMessages.c:813
+msgid "Current Key Map"
+msgstr "Ánh xạ phím hiện thời"
+
+#: LYMessages.c:814
+msgid "File Management Options"
+msgstr "Tùy chọn quản lý Tập tin"
+
+#: LYMessages.c:815
+msgid "Download Options"
+msgstr "Tùy chọn Tải xuống"
+
+#: LYMessages.c:816
+msgid "History Page"
+msgstr "Trang Lịch sử"
+
+#: LYMessages.c:817
+msgid "List Page"
+msgstr "Trang Danh sách"
+
+#: LYMessages.c:818
+msgid "Lynx.cfg Information"
+msgstr "Thông tin Lynx.cfg"
+
+#: LYMessages.c:819
+msgid "Converted Mosaic Hotlist"
+msgstr "Danh sách nóng Mosaic đã chuyển đổi"
+
+#: LYMessages.c:820
+msgid "Options Menu"
+msgstr "Trình đơn tùy chọn"
+
+#: LYMessages.c:821
+msgid "File Permission Options"
+msgstr "Tùy chọn Quyền trên tập tin"
+
+#: LYMessages.c:822
+msgid "Printing Options"
+msgstr "Tùy chọn in ấn"
+
+#: LYMessages.c:823
+msgid "Information about the current document"
+msgstr "Thông tin về tài liệu hiện thời"
+
+#: LYMessages.c:824
+msgid "Your recent statusline messages"
+msgstr "Thông báo dòng trạng thái hiện thời"
+
+#: LYMessages.c:825
+msgid "Upload Options"
+msgstr "Tùy chọn Tải lên"
+
+#: LYMessages.c:826
+msgid "Visited Links Page"
+msgstr "Trang Liên kết đã xem"
+
+#. CONFIG_DEF_TITLE subtitles
+#: LYMessages.c:829
+msgid "See also"
+msgstr "Đồng thời xem"
+
+#: LYMessages.c:830
+msgid "your"
+msgstr "của bạn"
+
+#: LYMessages.c:831
+msgid "for runtime options"
+msgstr "để tùy chọn runtime"
+
+#: LYMessages.c:832
+msgid "compile time options"
+msgstr "tùy chọn biên dịch"
+
+#: LYMessages.c:833
+msgid "color-style configuration"
+msgstr "cấu hình màu sắc"
+
+#: LYMessages.c:834
+msgid "latest release"
+msgstr "phát hành mới nhất"
+
+#: LYMessages.c:835
+msgid "pre-release version"
+msgstr "phiên bản trước phát hành"
+
+#: LYMessages.c:836
+msgid "development version"
+msgstr "phiên bản phát triển"
+
+#. #define AUTOCONF_CONFIG_CACHE
+#: LYMessages.c:838
+msgid ""
+"The following data were derived during the automatic configuration/build\n"
+"process of this copy of Lynx.  When reporting a bug, please include a copy\n"
+"of this page."
+msgstr ""
+"Đã lấy được dữ liệu sau trong khi tự động cấu hình/biên dịch tiến trình của\n"
+"bản Lynx này.  Khi báo cáo lỗi, xin hãy thêm nội dung của trang này."
+
+#. #define AUTOCONF_LYNXCFG_H
+#: LYMessages.c:842
+msgid ""
+"The following data were used as automatically-configured compile-time\n"
+"definitions when this copy of Lynx was built."
+msgstr ""
+"Đã sử dụng những dữ liệu sau làm sự xác định để cấu hình tự động\n"
+"trong khi biên dịch Lynx này."
+
+#. #define DIRED_NOVICELINE
+#: LYMessages.c:847
+msgid "  C)reate  D)ownload  E)dit  F)ull menu  M)odify  R)emove  T)ag  U)pload     \n"
+msgstr "  C)Tạo  D)Tải  E)Soạn  F)ull menu  M)Thay đổi  R)Xóa  T)ag  U)pload     \n"
+
+#: LYMessages.c:848
+msgid "Failed to obtain status of current link!"
+msgstr "Lấy trạng thái của liên kết hiện thời không thành công!"
+
+#. #define INVALID_PERMIT_URL
+#: LYMessages.c:851
+msgid "Special URL only valid from current File Permission menu!"
+msgstr "URL đó chỉ dùng được từ trình đơn Quyền hạn Tập tin hiện thời!"
+
+#: LYMessages.c:855
+msgid "External support is currently disabled."
+msgstr "Hiện thời đã tắt bỏ hỗ trợ ngoài."
+
+#. new with 2.8.4dev.21
+#: LYMessages.c:859
+msgid "Changing working-directory is currently disabled."
+msgstr "Hiện thời đã tắt bỏ việc thay đổi thư mục làm việc."
+
+#: LYMessages.c:860
+msgid "Linewrap OFF!"
+msgstr "Ngắt dòng TẮT!"
+
+#: LYMessages.c:861
+msgid "Linewrap ON!"
+msgstr "Ngắt dòng BẬT!"
+
+#: LYMessages.c:862
+msgid "Parsing nested-tables toggled OFF!  Reloading..."
+msgstr "Phân tích bảng lồng vào nhau TẮT!  Đang nạp lại..."
+
+#: LYMessages.c:863
+msgid "Parsing nested-tables toggled ON!  Reloading..."
+msgstr "Phân tích bảng lồng vào nhau BẬT!  Đang nạp lại..."
+
+#: LYMessages.c:864
+msgid "Shifting is disabled while line-wrap is in effect"
+msgstr "Dịch chuyển tắt trong khi ngắt dòng làm việc"
+
+#: LYMessages.c:865
+msgid "Trace not supported"
+msgstr "Không hỗ trợ trace"
+
+#: WWW/Library/Implementation/HTAABrow.c:626
+#, c-format
+msgid "Username for '%s' at %s '%s%s':"
+msgstr "Tên người dùng cho '%s' tại %s '%s%s':"
+
+#: WWW/Library/Implementation/HTAABrow.c:893
+msgid "This client doesn't know how to compose proxy authorization information for scheme"
+msgstr "Client này không biết cách dàn xếp thông tin xác thực proxy cho sơ đồ"
+
+#: WWW/Library/Implementation/HTAABrow.c:970
+msgid "This client doesn't know how to compose authorization information for scheme"
+msgstr "Client này không biết cách dàn xếp thông tin xác thực cho sơ đồ"
+
+#: WWW/Library/Implementation/HTAABrow.c:1078
+#, c-format
+msgid "Invalid header '%s%s%s%s%s'"
+msgstr "Phần đầu không đúng '%s%s%s%s%s'"
+
+#: WWW/Library/Implementation/HTAABrow.c:1180
+msgid "Proxy authorization required -- retrying"
+msgstr "Yêu cầu xác thực proxy -- đang thử lại"
+
+#: WWW/Library/Implementation/HTAABrow.c:1238
+msgid "Access without authorization denied -- retrying"
+msgstr "Truy cập chưa xác thực bị cấm -- đang thử lại"
+
+#: WWW/Library/Implementation/HTAccess.c:684
+msgid "Access forbidden by rule"
+msgstr "Truy cập bị ngăn cản theo quy định"
+
+#: WWW/Library/Implementation/HTAccess.c:781
+msgid "Document with POST content not found in cache.  Resubmit?"
+msgstr "Không tìm thấy tài liệu với nội dung GỬI trong cache.  Gửi lại?"
+
+#: WWW/Library/Implementation/HTAccess.c:935
+msgid "Loading failed, use a previous copy."
+msgstr "Nạp không thành công, hãy sử dụng bản sao trước đây."
+
+#: WWW/Library/Implementation/HTAccess.c:1044 src/GridText.c:8594
+msgid "Loading incomplete."
+msgstr "Nạp thành công."
+
+#: WWW/Library/Implementation/HTAccess.c:1075
+#, c-format
+msgid "**** HTAccess: socket or file number returned by obsolete load routine!\n"
+msgstr "**** HTAccess: socket hoặc số tập tin trả lại theo cách nạp tuyệt đối!\n"
+
+#: WWW/Library/Implementation/HTAccess.c:1077
+#, c-format
+msgid "**** HTAccess: Internal software error.  Please mail lynx-dev@nongnu.org!\n"
+msgstr "**** HTAccess: Lỗi trong của chương trình.  Xin hãy gửi thư lynx-dev@nongnu.org!\n"
+
+#: WWW/Library/Implementation/HTAccess.c:1078
+#, c-format
+msgid "**** HTAccess: Status returned was: %d\n"
+msgstr "**** HTAccess: Trạng thái trả lại là: %d\n"
+
+#.
+#. * hack: if we fail in HTAccess.c
+#. * avoid duplicating URL, oh.
+#.
+#: WWW/Library/Implementation/HTAccess.c:1084 src/LYMainLoop.c:7728
+msgid "Can't Access"
+msgstr "Không truy cập được"
+
+#: WWW/Library/Implementation/HTAccess.c:1092
+msgid "Unable to access document."
+msgstr "Không truy cập được tới tài liệu."
+
+#: WWW/Library/Implementation/HTFTP.c:823
+#, c-format
+msgid "Enter password for user %s@%s:"
+msgstr "Nhập mật khẩu cho người dùng %s@%s:"
+
+#: WWW/Library/Implementation/HTFTP.c:851
+msgid "Unable to connect to FTP host."
+msgstr "Không kết nối được tới máy FTP."
+
+#: WWW/Library/Implementation/HTFTP.c:1117
+msgid "close master socket"
+msgstr "đóng socket chính"
+
+#: WWW/Library/Implementation/HTFTP.c:1178
+msgid "socket for master socket"
+msgstr "socket cho socket chính"
+
+#.
+#. * It's a symbolic link, does the user care about knowing if it is
+#. * symbolic?  I think so since it might be a directory.
+#.
+#: WWW/Library/Implementation/HTFTP.c:1697 WWW/Library/Implementation/HTFTP.c:2314
+msgid "Symbolic Link"
+msgstr "Liên kết mềm"
+
+#: WWW/Library/Implementation/HTFTP.c:2671
+msgid "Receiving FTP directory."
+msgstr "Đang nhận thư mục FTP."
+
+#: WWW/Library/Implementation/HTFTP.c:2807
+#, c-format
+msgid "Transferred %d bytes (%5d)"
+msgstr "Đã truyền tải %d byte (%5d)"
+
+#: WWW/Library/Implementation/HTFTP.c:3155
+msgid "connect for data"
+msgstr "kết nối cho dữ liệu"
+
+#: WWW/Library/Implementation/HTFTP.c:3819
+msgid "Receiving FTP file."
+msgstr "Đang nhận tập tin FTP."
+
+#: WWW/Library/Implementation/HTFinger.c:273
+msgid "Could not set up finger connection."
+msgstr "Không tạo được kết nối finger."
+
+#: WWW/Library/Implementation/HTFinger.c:320
+msgid "Could not load data (no sitename in finger URL)"
+msgstr "Không nạp được dữ liệu (không có tên site trong URL finger)"
+
+#: WWW/Library/Implementation/HTFinger.c:326
+msgid "Invalid port number - will only use port 79!"
+msgstr "Sai số cổng - sẽ chỉ dùng cổng 79!"
+
+#: WWW/Library/Implementation/HTFinger.c:392
+msgid "Could not access finger host."
+msgstr "Không truy cập được máy finger."
+
+#: WWW/Library/Implementation/HTFinger.c:400
+msgid "No response from finger server."
+msgstr "Không có trả lời từ máy chủ finger."
+
+#: WWW/Library/Implementation/HTNews.c:423
+#, c-format
+msgid "Username for news host '%s':"
+msgstr "Tên người dùng cho máy tin tức '%s':"
+
+#: WWW/Library/Implementation/HTNews.c:476
+msgid "Change username?"
+msgstr "Thay đổi tên người dùng?"
+
+#: WWW/Library/Implementation/HTNews.c:480
+msgid "Username:"
+msgstr "Tên người dùng:"
+
+#: WWW/Library/Implementation/HTNews.c:505
+#, c-format
+msgid "Password for news host '%s':"
+msgstr "Mật khẩu cho máy tin tức '%s':"
+
+#: WWW/Library/Implementation/HTNews.c:588
+msgid "Change password?"
+msgstr "Thay đổi mật khẩu?"
+
+#: WWW/Library/Implementation/HTNews.c:1706
+#, c-format
+msgid "No matches for: %s"
+msgstr "Không có tương ứng cho: %s"
+
+#: WWW/Library/Implementation/HTNews.c:1756
+msgid ""
+"\n"
+"No articles in this group.\n"
+msgstr ""
+"\n"
+"Không có bài báo trong nhóm này.\n"
+
+#: WWW/Library/Implementation/HTNews.c:1768
+msgid ""
+"\n"
+"No articles in this range.\n"
+msgstr ""
+"\n"
+"Không có bài báo trong vùng này.\n"
+
+#.
+#. * Set window title.
+#.
+#: WWW/Library/Implementation/HTNews.c:1781
+#, c-format
+msgid "%s,  Articles %d-%d"
+msgstr "%s,  Bài báo %d-%d"
+
+#: WWW/Library/Implementation/HTNews.c:1804
+msgid "Earlier articles"
+msgstr "Bài báo trước"
+
+#: WWW/Library/Implementation/HTNews.c:1817
+#, c-format
+msgid ""
+"\n"
+"There are about %d articles currently available in %s, IDs as follows:\n"
+"\n"
+msgstr ""
+"\n"
+"Có khoảng %d bài báo trong %s, với ID là:\n"
+"\n"
+
+#: WWW/Library/Implementation/HTNews.c:1879
+msgid "All available articles in "
+msgstr "Tất cả bài báo trong "
+
+#: WWW/Library/Implementation/HTNews.c:2093
+msgid "Later articles"
+msgstr "Bài báo sau này"
+
+#: WWW/Library/Implementation/HTNews.c:2116
+msgid "Post to "
+msgstr "Gửi tới "
+
+#: WWW/Library/Implementation/HTNews.c:2337
+msgid "This client does not contain support for SNEWS URLs."
+msgstr "Client này không hỗ trợ các URL SNEWS."
+
+#: WWW/Library/Implementation/HTNews.c:2545
+msgid "No target for raw text!"
+msgstr "Không có đích đến cho văn bản thô!"
+
+#: WWW/Library/Implementation/HTNews.c:2576
+msgid "Connecting to NewsHost ..."
+msgstr "Đang kết nối tới NewsHost ..."
+
+#: WWW/Library/Implementation/HTNews.c:2628
+#, c-format
+msgid "Could not access %s."
+msgstr "Không truy cập được %s."
+
+#: WWW/Library/Implementation/HTNews.c:2734
+#, c-format
+msgid "Can't read news info.  News host %.20s responded: %.200s"
+msgstr "Không đọc được thông tin tin tức.  Máy tin tức %.20s đã trả lời: %.200s"
+
+#: WWW/Library/Implementation/HTNews.c:2738
+#, c-format
+msgid "Can't read news info, empty response from host %s"
+msgstr "Không đọc được thông tin tin tức, câu trả lời rỗng từ máy %s"
+
+#.
+#. * List available newsgroups.  - FM
+#.
+#: WWW/Library/Implementation/HTNews.c:2942
+msgid "Reading list of available newsgroups."
+msgstr "Đang đọc danh sách của những nhóm tin có."
+
+#: WWW/Library/Implementation/HTNews.c:2963
+msgid "Reading list of articles in newsgroup."
+msgstr "Đang đọc danh sách bài báo có trong nhóm tin."
+
+#.
+#. * Get an article from a news group.  - FM
+#.
+#: WWW/Library/Implementation/HTNews.c:2969
+msgid "Reading news article."
+msgstr "Đang đọc tin tức."
+
+#: WWW/Library/Implementation/HTNews.c:2999
+msgid "Sorry, could not load requested news."
+msgstr "Rất tiếc, không nạp được tin tức yêu cầu."
+
+#: WWW/Library/Implementation/HTTCP.c:1274
+msgid "Address has invalid port"
+msgstr "Địa chỉ có cổng sai"
+
+#: WWW/Library/Implementation/HTTCP.c:1350
+msgid "Address length looks invalid"
+msgstr "Chiều dài địa chỉ có vẻ không đúng"
+
+#: WWW/Library/Implementation/HTTCP.c:1581 WWW/Library/Implementation/HTTCP.c:1599
+#, c-format
+msgid "Unable to locate remote host %s."
+msgstr "Không định vị được máy ở xa %s."
+
+#. Not HTProgress, so warning won't be overwritten immediately;
+#. * but not HTAlert, because typically there will be other
+#. * alerts from the callers.  - kw
+#.
+#: WWW/Library/Implementation/HTTCP.c:1596 WWW/Library/Implementation/HTTelnet.c:108
+#, c-format
+msgid "Invalid hostname %s"
+msgstr "Tên máy không đúng %s"
+
+#: WWW/Library/Implementation/HTTCP.c:1610
+#, c-format
+msgid "Making %s connection to %s"
+msgstr "Đang tạo %s kết nối tới %s"
+
+#: WWW/Library/Implementation/HTTCP.c:1621
+msgid "socket failed."
+msgstr "lỗi socket."
+
+#: WWW/Library/Implementation/HTTCP.c:1634
+#, c-format
+msgid "socket failed: family %d addr %s port %s."
+msgstr "lỗi socket: family %d địa chỉ %s cổng %s."
+
+#: WWW/Library/Implementation/HTTCP.c:1658
+msgid "Could not make connection non-blocking."
+msgstr "Không tạo được kết nối không phải khối."
+
+#: WWW/Library/Implementation/HTTCP.c:1726
+msgid "Connection failed (too many retries)."
+msgstr "Kết nối không thành công (quá nhiều lần thử)."
+
+#: WWW/Library/Implementation/HTTCP.c:1925
+msgid "Could not restore socket to blocking."
+msgstr "Không phục hồi được socket thành khối."
+
+#: WWW/Library/Implementation/HTTCP.c:1991
+msgid "Socket read failed for 180,000 tries."
+msgstr "Đọc socket không thành công 180 000 lần."
+
+#: WWW/Library/Implementation/HTTP.c:376
+#, c-format
+msgid "Address contains a username: %s"
+msgstr "Địa chỉ chứa một tên người dùng: %s"
+
+#: WWW/Library/Implementation/HTTP.c:572
+msgid "This client does not contain support for HTTPS URLs."
+msgstr "Client này không hỗ trợ các URL HTTPS."
+
+#: WWW/Library/Implementation/HTTP.c:597
+msgid "Unable to connect to remote host."
+msgstr "Không kết nối được tới máy ở xa."
+
+#: WWW/Library/Implementation/HTTP.c:619
+msgid "Retrying connection without TLS."
+msgstr "Đang thử kết nối không có TLS."
+
+#: WWW/Library/Implementation/HTTP.c:664
+msgid "no issuer was found"
+msgstr ""
+
+#: WWW/Library/Implementation/HTTP.c:666
+msgid "issuer is not a CA"
+msgstr ""
+
+#: WWW/Library/Implementation/HTTP.c:668
+msgid "the certificate has no known issuer"
+msgstr ""
+
+#: WWW/Library/Implementation/HTTP.c:670
+#, fuzzy
+msgid "the certificate has been revoked"
+msgstr "Đã xơi xong cookie!"
+
+#: WWW/Library/Implementation/HTTP.c:672
+msgid "the certificate is not trusted"
+msgstr ""
+
+#: WWW/Library/Implementation/HTTP.c:747
+#, c-format
+msgid "Verified connection to %s (cert=%s)"
+msgstr ""
+
+#: WWW/Library/Implementation/HTTP.c:771
+#, fuzzy
+msgid "Can't find common name in certificate"
+msgstr "Lỗi SSL: Không tìm thấy tên công cộng trong xác thực-Tiếp tục?"
+
+#: WWW/Library/Implementation/HTTP.c:774
+#, c-format
+msgid "SSL error:host(%s)!=cert(%s)-Continue?"
+msgstr "Lỗi SSL:máy(%s)!=cert(%s)-Tiếp tục?"
+
+#: WWW/Library/Implementation/HTTP.c:789
+#, c-format
+msgid "Secure %d-bit %s (%s) HTTP connection"
+msgstr "Kết nối HTTP bảo mật %d-bit %s (%s)"
+
+#: WWW/Library/Implementation/HTTP.c:1259
+msgid "Sending HTTP request."
+msgstr "Đang gửi yêu cầu HTTP."
+
+#: WWW/Library/Implementation/HTTP.c:1298
+msgid "Unexpected network write error; connection aborted."
+msgstr "Lỗi ghi mạng không mong đợi; dừng kết nối."
+
+#: WWW/Library/Implementation/HTTP.c:1304
+msgid "HTTP request sent; waiting for response."
+msgstr "Đã gửi yêu cầu HTTP; đang chờ trả lời."
+
+#: WWW/Library/Implementation/HTTP.c:1372
+msgid "Unexpected network read error; connection aborted."
+msgstr "Lỗi đọc mạng không mong đợi; dừng kết nối."
+
+#.
+#. * HTTP/1.1 Informational statuses.
+#. * 100 Continue.
+#. * 101 Switching Protocols.
+#. * > 101 is unknown.
+#. * We should never get these, and they have only the status
+#. * line and possibly other headers, so we'll deal with them by
+#. * showing the full header to the user as text/plain.  - FM
+#.
+#: WWW/Library/Implementation/HTTP.c:1566
+msgid "Got unexpected Informational Status."
+msgstr "Nhận được Trạng thái Thông tin không mong đợi."
+
+#.
+#. * Reset Content.  The server has fulfilled the request but
+#. * nothing is returned and we should reset any form
+#. * content.  We'll instruct the user to do that, and
+#. * restore the current document.  - FM
+#.
+#: WWW/Library/Implementation/HTTP.c:1600
+msgid "Request fulfilled.  Reset Content."
+msgstr "Yêu cầu đã hoàn thành.  Đặt lại Nội dung."
+
+#. Not Modified
+#.
+#. * We didn't send an "If-Modified-Since" header, so this
+#. * status is inappropriate.  We'll deal with it by showing
+#. * the full header to the user as text/plain.  - FM
+#.
+#: WWW/Library/Implementation/HTTP.c:1717
+msgid "Got unexpected 304 Not Modified status."
+msgstr "Nhận được trạng thái 304 Chưa Thay đổi không mong đợi."
+
+#: WWW/Library/Implementation/HTTP.c:1780
+msgid "Redirection of POST content requires user approval."
+msgstr "Chuyển hướng nội dung GỬI cần sự đồng ý của người dùng."
+
+#: WWW/Library/Implementation/HTTP.c:1795
+msgid "Have POST content.  Treating Permanent Redirection as Temporary.\n"
+msgstr "Có nội dung GỬI.  Đang coi Sự chuyển hướng Lâu dài chỉ là Tạm thời.\n"
+
+#: WWW/Library/Implementation/HTTP.c:1837
+msgid "Retrying with access authorization information."
+msgstr "Đang thử với thông tin xác thực."
+
+#: WWW/Library/Implementation/HTTP.c:1849
+msgid "Show the 401 message body?"
+msgstr "Hiển thị nội dung thông báo 401?"
+
+#: WWW/Library/Implementation/HTTP.c:1892
+msgid "Show the 407 message body?"
+msgstr "Hiển thị nội dung thông báo 407?"
+
+#.
+#. * Bad or unknown server_status number.  Take a chance and hope
+#. * there is something to display.  - FM
+#.
+#: WWW/Library/Implementation/HTTP.c:1992
+msgid "Unknown status reply from server!"
+msgstr "Không rõ trạng thái trả lời từ máy chủ!"
+
+#: WWW/Library/Implementation/HTTelnet.c:106
+#, c-format
+msgid "remote %s session:"
+msgstr "buổi làm việc từ xa %s:"
+
+#: WWW/Library/Implementation/HTWAIS.c:159
+msgid "Could not connect to WAIS server."
+msgstr "Không kết nối được tới máy chủ WAIS."
+
+#: WWW/Library/Implementation/HTWAIS.c:167
+msgid "Could not open WAIS connection for reading."
+msgstr "Không mở được kết nối WAIS để đọc."
+
+#: WWW/Library/Implementation/HTWAIS.c:189
+msgid "Diagnostic code is "
+msgstr "Mã chuẩn đoán là "
+
+#: WWW/Library/Implementation/HTWAIS.c:461
+msgid "Index "
+msgstr "Chỉ mục "
+
+#: WWW/Library/Implementation/HTWAIS.c:465
+#, c-format
+msgid " contains the following %d item%s relevant to \""
+msgstr " chứa %d mục %s thích hợp với \""
+
+#: WWW/Library/Implementation/HTWAIS.c:473
+msgid "The first figure after each entry is its relative score, "
+msgstr "Số đầu tiên sau mỗi mục là điểm tương đối của nó, "
+
+#: WWW/Library/Implementation/HTWAIS.c:474
+msgid "the second is the number of lines in the item."
+msgstr "thứ hai là số dòng trong mỗi mục."
+
+#: WWW/Library/Implementation/HTWAIS.c:516
+msgid " (bad file name)"
+msgstr " (tên tập tin xấu)"
+
+#: WWW/Library/Implementation/HTWAIS.c:542
+msgid "(bad doc id)"
+msgstr "(id tài liệu xấu)"
+
+#: WWW/Library/Implementation/HTWAIS.c:558
+msgid "(Short Header record, can't display)"
+msgstr "(bản ghi Phần đầu Ngắn, không hiển thị được)"
+
+#: WWW/Library/Implementation/HTWAIS.c:565
+msgid ""
+"\n"
+"Long Header record, can't display\n"
+msgstr ""
+"\n"
+"Bản ghi Phần đầu Dài, không hiển thị được\n"
+
+#: WWW/Library/Implementation/HTWAIS.c:572
+msgid ""
+"\n"
+"Text record\n"
+msgstr ""
+"\n"
+"Bản ghi văn bản\n"
+
+#: WWW/Library/Implementation/HTWAIS.c:581
+msgid ""
+"\n"
+"Headline record, can't display\n"
+msgstr ""
+"\n"
+"Bản ghi Dòng đầu, không hiển thị được\n"
+
+#: WWW/Library/Implementation/HTWAIS.c:589
+msgid ""
+"\n"
+"Code record, can't display\n"
+msgstr ""
+"\n"
+"Bản ghi Mã, không hiển thị được\n"
+
+#: WWW/Library/Implementation/HTWAIS.c:693
+msgid "Syntax error in WAIS URL"
+msgstr "Lỗi cú pháp trong URL WAIS"
+
+#: WWW/Library/Implementation/HTWAIS.c:765
+msgid " (WAIS Index)"
+msgstr " (Chỉ mục WAIS)"
+
+#: WWW/Library/Implementation/HTWAIS.c:772
+msgid "WAIS Index: "
+msgstr "Chỉ mục WAIS: "
+
+#: WWW/Library/Implementation/HTWAIS.c:778
+msgid "This is a link for searching the "
+msgstr "Đây là liên kết để tìm kiếm "
+
+#: WWW/Library/Implementation/HTWAIS.c:782
+msgid " WAIS Index.\n"
+msgstr " Chỉ mục WAIS.\n"
+
+#: WWW/Library/Implementation/HTWAIS.c:811
+msgid ""
+"\n"
+"Enter the 's'earch command and then specify search words.\n"
+msgstr ""
+"\n"
+"Hãy nhập tên câu lệnh 's' tìm kiếm và rồi đưa ra từ khóa.\n"
+
+#: WWW/Library/Implementation/HTWAIS.c:833
+msgid " (in "
+msgstr " (trong "
+
+#: WWW/Library/Implementation/HTWAIS.c:842
+msgid "WAIS Search of \""
+msgstr "Tìm kiếm WAIS cho \""
+
+#: WWW/Library/Implementation/HTWAIS.c:846
+msgid "\" in: "
+msgstr "\" trong: "
+
+#: WWW/Library/Implementation/HTWAIS.c:861
+msgid "HTWAIS: Request too large."
+msgstr "HTWAIS: Yêu cầu quá lớn."
+
+#: WWW/Library/Implementation/HTWAIS.c:870
+msgid "Searching WAIS database..."
+msgstr "Đang tìm kiếm cơ sở dữ liệu WAIS..."
+
+#: WWW/Library/Implementation/HTWAIS.c:880
+msgid "Search interrupted."
+msgstr "Đã gián đoạn tìm kiếm."
+
+#: WWW/Library/Implementation/HTWAIS.c:931
+msgid "Can't convert format of WAIS document"
+msgstr "Không chuyển đổi được định dạng của tài liệu WAIS"
+
+#: WWW/Library/Implementation/HTWAIS.c:975
+msgid "HTWAIS: Request too long."
+msgstr "HTWAIS: Yêu cầu quá dài."
+
+#.
+#. * Actually do the transaction given by request_message.
+#.
+#: WWW/Library/Implementation/HTWAIS.c:989
+msgid "Fetching WAIS document..."
+msgstr "Đang lấy tài liệu WAIS..."
+
+#. display_search_response(target, retrieval_response,
+#. wais_database, keywords);
+#: WWW/Library/Implementation/HTWAIS.c:1028
+msgid "No text was returned!\n"
+msgstr "Không có văn bản nào được tải lại!\n"
+
+#: WWW/Library/Implementation/HTWSRC.c:296
+msgid " NOT GIVEN in source file; "
+msgstr " CHƯA ĐƯA RA trong tập tin nguồn; "
+
+#: WWW/Library/Implementation/HTWSRC.c:319
+msgid " WAIS source file"
+msgstr " tập tin nguồn WAIS"
+
+#: WWW/Library/Implementation/HTWSRC.c:326
+msgid " description"
+msgstr " mô tả"
+
+#: WWW/Library/Implementation/HTWSRC.c:336
+msgid "Access links"
+msgstr "Liên kết truy cập"
+
+#: WWW/Library/Implementation/HTWSRC.c:357
+msgid "Direct access"
+msgstr "Truy cập thẳng"
+
+#. * Proxy will be used if defined, so let user know that - FM *
+#: WWW/Library/Implementation/HTWSRC.c:360
+msgid " (or via proxy server, if defined)"
+msgstr " (hoặc qua máy chủ proxy, nếu xác định)"
+
+#: WWW/Library/Implementation/HTWSRC.c:375
+msgid "Maintainer"
+msgstr "Nhà duy trì"
+
+#: WWW/Library/Implementation/HTWSRC.c:383
+msgid "Host"
+msgstr "Máy"
+
+#: src/GridText.c:715
+msgid "Memory exhausted, display interrupted!"
+msgstr "Cạn bộ nhớ, đã gián đoạn hiển thị!"
+
+#: src/GridText.c:720
+msgid "Memory exhausted, will interrupt transfer!"
+msgstr "Cạn bộ nhớ, sẽ gián đoạn truyền tải!"
+
+#: src/GridText.c:3660
+msgid " *** MEMORY EXHAUSTED ***"
+msgstr " *** CẠN BỘ NHỚ ***"
+
+#: src/GridText.c:6095 src/GridText.c:6102 src/LYList.c:239
+msgid "unknown field or link"
+msgstr "không rõ vùng hay liên kết"
+
+#: src/GridText.c:6111
+msgid "text entry field"
+msgstr "vùng mục văn bản"
+
+#: src/GridText.c:6114
+msgid "password entry field"
+msgstr "vùng mục mật khẩu"
+
+#: src/GridText.c:6117
+msgid "checkbox"
+msgstr "hộp kiểm tra"
+
+#: src/GridText.c:6120
+msgid "radio button"
+msgstr "nút radio"
+
+#: src/GridText.c:6123
+msgid "submit button"
+msgstr "nút gửi đi"
+
+#: src/GridText.c:6126
+msgid "reset button"
+msgstr "nút đặt lại"
+
+#: src/GridText.c:6129
+msgid "popup menu"
+msgstr "trình đơn tự mở ra"
+
+#: src/GridText.c:6132
+msgid "hidden form field"
+msgstr "vùng biểu mẫu ẩn"
+
+#: src/GridText.c:6135
+msgid "text entry area"
+msgstr "phạm vi mục văn bản"
+
+#: src/GridText.c:6138
+msgid "range entry field"
+msgstr "vùng mục sắp xếp"
+
+#: src/GridText.c:6141
+msgid "file entry field"
+msgstr "vùng mục tập tin"
+
+#: src/GridText.c:6144
+msgid "text-submit field"
+msgstr "vùng gửi đi văn bản"
+
+#: src/GridText.c:6147
+msgid "image-submit button"
+msgstr "nút gửi đi hình ảnh"
+
+#: src/GridText.c:6150
+msgid "keygen field"
+msgstr "vùng keygen"
+
+#: src/GridText.c:6153
+msgid "unknown form field"
+msgstr "vùng biểu mẫu không rõ"
+
+#: src/GridText.c:10327
+msgid "Can't open file for uploading"
+msgstr "Không mở được tập tin để tải lên"
+
+#: src/GridText.c:11480
+#, c-format
+msgid "Submitting %s"
+msgstr "Đang gửi đi %s"
+
+#. ugliness has happened; inform user and do the best we can
+#: src/GridText.c:12629
+msgid "Hang Detect: TextAnchor struct corrupted - suggest aborting!"
+msgstr "Tìm ra Treo: cấu trúc TextAnchor bị lỗi - đề nghị thoát!"
+
+#. don't show previous state
+#: src/GridText.c:12834
+msgid "Wrap lines to fit displayed area?"
+msgstr "Ngắt dòng cho hợp với vùng hiển thị?"
+
+#: src/GridText.c:12886
+msgid "Very long lines have been wrapped!"
+msgstr "Những dòng rất dài đã bị ngắt!"
+
+#: src/GridText.c:13328
+msgid "Very long lines have been truncated!"
+msgstr "Những dòng rất dài đã bị xén bớt!"
+
+#: src/HTAlert.c:149 src/LYShowInfo.c:358 src/LYShowInfo.c:362
+msgid "bytes"
+msgstr "byte"
+
+#: src/HTAlert.c:278
+#, c-format
+msgid "Read %s of %s of data"
+msgstr "Đọc %s từ %s của dữ liệu"
+
+#: src/HTAlert.c:280
+#, c-format
+msgid "Read %s of data"
+msgstr "Đọc %s của dữ liệu"
+
+#: src/HTAlert.c:285
+#, c-format
+msgid ", %s/sec"
+msgstr ", %s/giây"
+
+#: src/HTAlert.c:294
+#, c-format
+msgid " (stalled for %s)"
+msgstr " (trì hoãn cho %s)"
+
+#: src/HTAlert.c:298
+#, c-format
+msgid ", ETA %s"
+msgstr ", CÒNLẠI %s"
+
+#: src/HTAlert.c:305
+msgid " (Press 'z' to abort)"
+msgstr " (Nhấn 'z' để thoát)"
+
+#. Meta-note: don't move the following note from its place right
+#. in front of the first gettext().  As it is now, it should
+#. automatically appear in generated lynx.pot files. - kw
+#.
+#. NOTE TO TRANSLATORS:  If you provide a translation for "yes", lynx
+#. * will take the first byte of the translation as a positive response
+#. * to Yes/No questions.  If you provide a translation for "no", lynx
+#. * will take the first byte of the translation as a negative response
+#. * to Yes/No questions.  For both, lynx will also try to show the
+#. * first byte in the prompt as a character, instead of (y) or (n),
+#. * respectively.  This will not work right for multibyte charsets!
+#. * Don't translate "yes" and "no" for CJK character sets (or translate
+#. * them to "yes" and "no").  For a translation using UTF-8, don't
+#. * translate if the translation would begin with anything but a 7-bit
+#. * (US_ASCII) character.  That also means do not translate if the
+#. * translation would begin with anything but a 7-bit character, if
+#. * you use a single-byte character encoding (a charset like ISO-8859-n)
+#. * but anticipate that the message catalog may be used re-encoded in
+#. * UTF-8 form.
+#. * For translations using other character sets, you may also wish to
+#. * leave "yes" and "no" untranslated, if using (y) and (n) is the
+#. * preferred behavior.
+#. * Lynx will also accept y Y n N as responses unless there is a conflict
+#. * with the first letter of the "yes" or "no" translation.
+#.
+#: src/HTAlert.c:343 src/HTAlert.c:391
+msgid "yes"
+msgstr "có"
+
+#: src/HTAlert.c:346 src/HTAlert.c:392
+msgid "no"
+msgstr "không"
+
+#.
+#. * Special-purpose workaround for gettext support (we should do
+#. * this in a more general way) -TD
+#. *
+#. * NOTE TO TRANSLATORS:  If the prompt has been rendered into
+#. * another language, and if yes/no are distinct, assume the
+#. * translator can make an ordered list in parentheses with one
+#. * capital letter for each as we assumed in HTConfirmDefault().
+#. * The list has to be in the same order as in the original message,
+#. * and the four capital letters chosen to not match those in the
+#. * original unless they have the same position.
+#. *
+#. * Example:
+#. * (Y/N/Always/neVer)              - English (original)
+#. * (O/N/Toujours/Jamais)           - French
+#.
+#: src/HTAlert.c:848
+msgid "Y/N/A/V"
+msgstr "Y/N/A/V"
+
+#: src/HTML.c:5918
+msgid "Description:"
+msgstr "Mô tả:"
+
+#: src/HTML.c:5923
+msgid "(none)"
+msgstr "(không)"
+
+#: src/HTML.c:5927
+msgid "Filepath:"
+msgstr "Đường dẫn tập tin:"
+
+#: src/HTML.c:5933
+msgid "(unknown)"
+msgstr "(không rõ)"
+
+#: src/HTML.c:7378
+msgid "Document has only hidden links.  Use the 'l'ist command."
+msgstr "Tài liệu chỉ có các liên kết ẩn.  Hãy dùng câu lệnh 'l'ist."
+
+#: src/HTML.c:7877
+msgid "Source cache error - disk full?"
+msgstr "Lỗi nguồn cache - đĩa đầy?"
+
+#: src/HTML.c:7890
+msgid "Source cache error - not enough memory!"
+msgstr "Lỗi nguồn cache - không đủ bộ nhớ!"
+
+#: src/LYBookmark.c:164
+msgid ""
+"     This file is an HTML representation of the X Mosaic hotlist file.\n"
+"     Outdated or invalid links may be removed by using the\n"
+"     remove bookmark command, it is usually the 'R' key but may have\n"
+"     been remapped by you or your system administrator."
+msgstr ""
+"     Tập tin này giống với tập tin HTML danh sách Ưa thích của Mosaic.\n"
+"     Có thể xóa các liên kết đã lỗi thời hoặc không đúng bằng câu lệnh\n"
+"     xóa bỏ ưa thích (thường là phím 'R' nhưng có thể thay đổi)."
+
+#: src/LYBookmark.c:371
+#, c-format
+msgid ""
+"     You can delete links by the 'R' key<br>\n"
+"<ol>\n"
+msgstr ""
+"     Có thể xóa bỏ liên kết bằng phím 'R'<br>\n"
+"<ol>\n"
+
+#: src/LYBookmark.c:374
+msgid ""
+"     You can delete links using the remove bookmark command.  It is usually\n"
+"     the 'R' key but may have been remapped by you or your system\n"
+"     administrator."
+msgstr ""
+"     Có thể xóa bỏ liên kết bằng câu lệnh xóa bỏ ưa thích.  Đó thường là phím\n"
+"     'R' những có thể thay đổi cho phù hợp."
+
+#: src/LYBookmark.c:378
+msgid ""
+"     This file also may be edited with a standard text editor to delete\n"
+"     outdated or invalid links, or to change their order."
+msgstr ""
+"     Đồng thời có thể sửa tập tin này bằng một trình soạn thảo văn bản\n"
+"     thông thường để xóa đi những liên kết đã lỗi thời hoặc sai, hoặc\n"
+"     thay đổi thứ tự của chúng."
+
+#: src/LYBookmark.c:381
+msgid ""
+"Note: if you edit this file manually\n"
+"      you should not change the format within the lines\n"
+"      or add other HTML markup.\n"
+"      Make sure any bookmark link is saved as a single line."
+msgstr ""
+"Chú ý: nếu sửa tập tin này thủ công\n"
+"      thì đừng thay đổi định dạng trong các dòng\n"
+"      hoặc thêm những thẻ HTML khác.\n"
+"      Cần ghi duy nhất một liên kết Ưa thích trên mỗi dòng."
+
+#: src/LYBookmark.c:677
+#, c-format
+msgid "File may be recoverable from %s during this session"
+msgstr "Có thể phục hồi tập tin từ %s trong buổi làm việc này"
+
+#: src/LYCgi.c:159
+#, c-format
+msgid "Do you want to execute \"%s\"?"
+msgstr ""
+
+#.
+#. * Neither the path as given nor any components examined by backing up
+#. * were stat()able.  - kw
+#.
+#: src/LYCgi.c:274
+msgid "Unable to access cgi script"
+msgstr "Không truy cập được script cgi"
+
+#: src/LYCgi.c:699 src/LYCgi.c:702
+msgid "Good Advice"
+msgstr "Lời khuyên Tốt"
+
+#: src/LYCgi.c:706
+msgid "An excellent http server for VMS is available via"
+msgstr "Một máy chủ http tuyệt với cho VMS có tại"
+
+#: src/LYCgi.c:713
+msgid "this link"
+msgstr "liên kết này"
+
+#: src/LYCgi.c:717
+msgid "It provides state of the art CGI script support.\n"
+msgstr "Nó cung cấp hỗ trợ cho trạng thái của script CGI.\n"
+
+#: src/LYClean.c:120
+msgid "Exiting via interrupt:"
+msgstr "Thoát qua sự gián đoạn:"
+
+#: src/LYCookie.c:2458
+msgid "(from a previous session)"
+msgstr "(từ một buổi làm việc trước)"
+
+#: src/LYCookie.c:2519
+msgid "Maximum Gobble Date:"
+msgstr "Ngày Gobble Lớn nhất:"
+
+#: src/LYCookie.c:2559
+msgid "Internal"
+msgstr "Nội bộ"
+
+#: src/LYCookie.c:2560
+msgid "cookie_domain_flag_set error, aborting program"
+msgstr "lỗi cookie_domain_flag_set, đang thoát chương trình"
+
+#: src/LYCurses.c:1096
+msgid "Terminal initialisation failed - unknown terminal type?"
+msgstr "Cấu hình terminal không thành công - không rõ dạng terminal?"
+
+#: src/LYCurses.c:1525
+msgid "Terminal ="
+msgstr "Terminal ="
+
+#: src/LYCurses.c:1529
+msgid "You must use a vt100, 200, etc. terminal with this program."
+msgstr "Cần sử dụng một terminal vt100, 200, v.v... với chương trình này."
+
+#: src/LYCurses.c:1578
+msgid "Your Terminal type is unknown!"
+msgstr "Dạng Terminal không biết đến!"
+
+#: src/LYCurses.c:1579
+msgid "Enter a terminal type:"
+msgstr "Hãy nhập một dạng terminal:"
+
+#: src/LYCurses.c:1593
+msgid "TERMINAL TYPE IS SET TO"
+msgstr "DẠNG TERMINAL ĐẶT THÀNH"
+
+#: src/LYCurses.c:2096
+#, c-format
+msgid ""
+"\n"
+"A Fatal error has occurred in %s Ver. %s\n"
+msgstr ""
+"\n"
+"Một lỗi Nặng xuất hiện trong %s Phiên bản %s\n"
+
+#: src/LYCurses.c:2099
+#, c-format
+msgid ""
+"\n"
+"Please notify your system administrator to confirm a bug, and if\n"
+"confirmed, to notify the lynx-dev list.  Bug reports should have concise\n"
+"descriptions of the command and/or URL which causes the problem, the\n"
+"operating system name with version number, the TCPIP implementation, the\n"
+"TRACEBACK if it can be captured, and any other relevant information.\n"
+msgstr ""
+"\n"
+"Hãy xin nhà quản trị hệ thống cho phép gửi báo cáo lỗi, và nếu\n"
+"đồng ý thì gửi thư lên danh sách lynx-dev.  Báo cáo lỗi cần có mô tả ngắn\n"
+"gọi câu lệnh và/hoặc URL gây ra vấn đề, tên hệ điều hành có kèm số phiên\n"
+"bản, phiên bản TCPIP, TRACEBACK nếu có thể lấy, và những thông tin\n"
+"thích hợp khác.\n"
+
+#: src/LYEdit.c:251
+msgid "Editor killed by signal"
+msgstr "Đã diệt trình soạn thảo qua tín hiệu"
+
+#: src/LYEdit.c:253
+#, c-format
+msgid "Editor returned with error status, %s"
+msgstr "Trình soạn thảo thoát ra với lỗi trạng thái, %s"
+
+#: src/LYEdit.c:256
+msgid "reason unknown."
+msgstr "không rõ nguyên nhân."
+
+#: src/LYDownload.c:503
+msgid "Downloaded link:"
+msgstr "Liên kết đã tải:"
+
+#: src/LYDownload.c:508
+msgid "Suggested file name:"
+msgstr "Tên tập tin đề nghị:"
+
+#: src/LYDownload.c:513
+msgid "Standard download options:"
+msgstr "Tùy chọn tải xuống cơ bản:"
+
+#: src/LYDownload.c:514
+msgid "Download options:"
+msgstr "Tùy chọn tải xuống:"
+
+#: src/LYDownload.c:530
+msgid "Save to disk"
+msgstr "Ghi nhớ lên đĩa"
+
+#: src/LYDownload.c:544
+msgid "View temporary file"
+msgstr "Xem tập tin tạm thời"
+
+#: src/LYDownload.c:551
+msgid "Save to disk disabled."
+msgstr "Ghi vào đĩa bị tắt bỏ."
+
+#: src/LYDownload.c:555 src/LYPrint.c:1309
+msgid "Local additions:"
+msgstr "Thêm nội bộ:"
+
+#: src/LYDownload.c:566 src/LYUpload.c:211
+msgid "No Name Given"
+msgstr "Chưa đưa ra Tên"
+
+#: src/LYHistory.c:660
+msgid "You selected:"
+msgstr "Đã chọn:"
+
+#: src/LYHistory.c:684 src/LYHistory.c:913
+msgid "(no address)"
+msgstr "(không địa chỉ)"
+
+#: src/LYHistory.c:688
+msgid " (internal)"
+msgstr " (nội bộ)"
+
+#: src/LYHistory.c:690
+msgid " (was internal)"
+msgstr " (đã là nội bộ)"
+
+#: src/LYHistory.c:788
+msgid " (From History)"
+msgstr " (Từ Lịch sử)"
+
+#: src/LYHistory.c:833
+msgid "You visited (POSTs, bookmark, menu and list files excluded):"
+msgstr "Đã thăm (gồm GỬI, Ưa thích, trình đơn và danh sách tập tin):"
+
+#: src/LYHistory.c:1123
+msgid "(No messages yet)"
+msgstr "(Không có tin nhắn nào)"
+
+#: src/LYLeaks.c:206
+msgid "Invalid pointer detected."
+msgstr "Nhận ra cái chỉ sai."
+
+#: src/LYLeaks.c:208 src/LYLeaks.c:246
+msgid "Sequence:"
+msgstr "Chuỗi:"
+
+#: src/LYLeaks.c:211 src/LYLeaks.c:249
+msgid "Pointer:"
+msgstr "Cái chỉ:"
+
+#: src/LYLeaks.c:220 src/LYLeaks.c:227 src/LYLeaks.c:268
+msgid "FileName:"
+msgstr "Têntậptin:"
+
+#: src/LYLeaks.c:223 src/LYLeaks.c:230 src/LYLeaks.c:271 src/LYLeaks.c:282
+msgid "LineCount:"
+msgstr "Đếmdòng:"
+
+#: src/LYLeaks.c:244
+msgid "Memory leak detected."
+msgstr "Nhận ra lỗ hổng bộ nhớ."
+
+#: src/LYLeaks.c:252
+msgid "Contains:"
+msgstr "Chứa:"
+
+#: src/LYLeaks.c:265
+msgid "ByteSize:"
+msgstr "Kíchthướcbyte:"
+
+#: src/LYLeaks.c:279
+msgid "realloced:"
+msgstr "phân phối lại:"
+
+#: src/LYLeaks.c:300
+msgid "Total memory leakage this run:"
+msgstr "Tổng số bộ nhớ rò rỉ lần chạy này:"
+
+#: src/LYLeaks.c:303
+msgid "Peak allocation"
+msgstr "Đỉnh điểm phân phối"
+
+#: src/LYLeaks.c:304
+msgid "Bytes allocated"
+msgstr "Byte đã phân phối"
+
+#: src/LYLeaks.c:305
+msgid "Total mallocs"
+msgstr "Tổng số phân phối"
+
+#: src/LYLeaks.c:306
+msgid "Total frees"
+msgstr "Tổng số còn dư"
+
+#: src/LYList.c:84
+msgid "References in "
+msgstr "Liên kết trong "
+
+#: src/LYList.c:87
+msgid "this document:"
+msgstr "tài liệu này:"
+
+#: src/LYList.c:93
+msgid "Visible links:"
+msgstr "Liên kết hiện:"
+
+#: src/LYList.c:194 src/LYList.c:293
+msgid "Hidden links:"
+msgstr "Liên kết ẩn:"
+
+#: src/LYList.c:326
+msgid "References"
+msgstr "Liên kết"
+
+#: src/LYList.c:330
+msgid "Visible links"
+msgstr "Liên kết hiện"
+
+#: src/LYLocal.c:269
+#, c-format
+msgid "Unable to get status of '%s'."
+msgstr "Không lấy được trạng thái của '%s'."
+
+#: src/LYLocal.c:303
+msgid "The selected item is not a file or a directory!  Request ignored."
+msgstr "Mục đã chọn không phải là tập tin hay thư mục!  Yêu cầu bị lờ đi."
+
+#: src/LYLocal.c:371
+#, c-format
+msgid "Unable to %s due to system error!"
+msgstr "Không thể %s vì lỗi hệ thống!"
+
+#: src/LYLocal.c:405
+#, c-format
+msgid "Probable failure to %s due to system error!"
+msgstr "%s thất bại vì lỗi hệ thống!"
+
+#: src/LYLocal.c:467 src/LYLocal.c:488
+#, c-format
+msgid "remove %s"
+msgstr "xóa bỏ %s"
+
+#: src/LYLocal.c:506
+#, c-format
+msgid "touch %s"
+msgstr "touch %s"
+
+#: src/LYLocal.c:534
+#, c-format
+msgid "move %s to %s"
+msgstr "di chuyển %s tới %s"
+
+#: src/LYLocal.c:575
+msgid "There is already a directory with that name!  Request ignored."
+msgstr "Đã có một thư mục với tên đó!  Yêu cầu bị lờ đi."
+
+#: src/LYLocal.c:577
+msgid "There is already a file with that name!  Request ignored."
+msgstr "Đã có một tập tin với tên đó!  Yêu cầu bị lờ đi."
+
+#: src/LYLocal.c:579
+msgid "The specified name is already in use!  Request ignored."
+msgstr "Tên chỉ ra đã được sử dụng!  Yêu cầu bị lờ đi."
+
+#: src/LYLocal.c:590
+msgid "Destination has different owner!  Request denied."
+msgstr "Đích đến có chủ sở hữu khác!  Yêu cầu bị lờ đi."
+
+#: src/LYLocal.c:593
+msgid "Destination is not a valid directory!  Request denied."
+msgstr "Đích đến không phải là một thư mục thích hợp!  Yêu cầu bị lờ đi."
+
+#: src/LYLocal.c:615
+msgid "Remove all tagged files and directories?"
+msgstr "Xóa bỏ tất cả các tập tin và thư mục đã chọn?"
+
+#: src/LYLocal.c:673
+msgid "Enter new location for tagged items: "
+msgstr "Nhập vị trí mới cho các mục đã chọn: "
+
+#: src/LYLocal.c:743
+msgid "Path too long"
+msgstr "Đường dẫn quá dài"
+
+#: src/LYLocal.c:774
+msgid "Source and destination are the same location - request ignored!"
+msgstr "Nguồn và đích cùng là một vị trí - yêu cầu bị lờ đi!"
+
+#: src/LYLocal.c:831
+msgid "Enter new name for directory: "
+msgstr "Nhập tên mới cho thư mục: "
+
+#: src/LYLocal.c:833
+msgid "Enter new name for file: "
+msgstr "Nhập tên mới cho tập tin: "
+
+#: src/LYLocal.c:845
+msgid "Illegal character (path-separator) found! Request ignored."
+msgstr "Ký tự (phân chia đường dẫn) không cho phép! Yêu cầu bị lờ đi."
+
+#: src/LYLocal.c:895
+msgid "Enter new location for directory: "
+msgstr "Nhập vị trí mới cho thư mục: "
+
+#: src/LYLocal.c:901
+msgid "Enter new location for file: "
+msgstr "Nhập vị trí mới cho tập tin: "
+
+#: src/LYLocal.c:928
+msgid "Unexpected failure - unable to find trailing path separator"
+msgstr "Lỗi không mong đợi - không tìm thấy ký tự phân chia đường dẫn"
+
+#: src/LYLocal.c:948
+msgid "Source and destination are the same location!  Request ignored!"
+msgstr "Nguồn và đích cùng là một vị trí - yêu cầu bị lờ đi!"
+
+#: src/LYLocal.c:995
+msgid "Modify name, location, or permission (n, l, or p): "
+msgstr "Sửa tên, vị trí, hoặc quyền hạn (n, l, hoặc p): "
+
+#: src/LYLocal.c:997
+msgid "Modify name or location (n or l): "
+msgstr "Sửa tên hoặc vị trí (n hoặc l): "
+
+#.
+#. * Code for changing ownership needed here.
+#.
+#: src/LYLocal.c:1026
+msgid "This feature not yet implemented!"
+msgstr "Tính năng này còn chưa được phát triển!"
+
+#: src/LYLocal.c:1043
+msgid "Enter name of file to create: "
+msgstr "Nhập tên tập tin cần tạo: "
+
+#: src/LYLocal.c:1051 src/LYLocal.c:1092
+msgid "Illegal redirection \"//\" found! Request ignored."
+msgstr "Sự chuyển hướng không cho phép! Lờ đi yêu cầu."
+
+#: src/LYLocal.c:1084
+msgid "Enter name for new directory: "
+msgstr "Nhập tên cho thư mục mới: "
+
+#: src/LYLocal.c:1128
+msgid "Create file or directory (f or d): "
+msgstr "Tạo tập tin hay thư mục (f hoặc d): "
+
+#: src/LYLocal.c:1170
+#, c-format
+msgid "Remove directory '%s'?"
+msgstr "Xóa bỏ thư mục '%s'?"
+
+#: src/LYLocal.c:1173
+msgid "Remove directory?"
+msgstr "Xóa bỏ thư mục?"
+
+#: src/LYLocal.c:1178
+#, c-format
+msgid "Remove file '%s'?"
+msgstr "Xóa bỏ tập tin '%s'?"
+
+#: src/LYLocal.c:1180
+msgid "Remove file?"
+msgstr "Xóa bỏ tập tin?"
+
+#: src/LYLocal.c:1185
+#, c-format
+msgid "Remove symbolic link '%s'?"
+msgstr "Xóa bỏ liên kết mềm '%s'?"
+
+#: src/LYLocal.c:1187
+msgid "Remove symbolic link?"
+msgstr "Xóa bỏ liên kết mềm?"
+
+#: src/LYLocal.c:1282
+msgid "Sorry, don't know how to permit non-UNIX files yet."
+msgstr "Rất tiếc, Lynx chưa biết cách cho phép các tập tin không phải UNIX."
+
+#: src/LYLocal.c:1312
+msgid "Unable to open permit options file"
+msgstr "Không mở được tập tin tùy chọn cho phép"
+
+#: src/LYLocal.c:1342
+msgid "Specify permissions below:"
+msgstr "Chỉ ra quyền hạn ở dưới:"
+
+#: src/LYLocal.c:1343 src/LYShowInfo.c:259
+msgid "Owner:"
+msgstr "Sở hữu:"
+
+#: src/LYLocal.c:1359
+msgid "Group"
+msgstr "Nhóm"
+
+#: src/LYLocal.c:1375
+msgid "Others:"
+msgstr "Khác:"
+
+#: src/LYLocal.c:1393
+msgid "form to permit"
+msgstr "mẫu để cho phép"
+
+#: src/LYLocal.c:1488
+msgid "Invalid mode format."
+msgstr "Định dạng chế độ sai."
+
+#: src/LYLocal.c:1492
+msgid "Invalid syntax format."
+msgstr "Định dạng cú pháp sai."
+
+#: src/LYLocal.c:1674
+msgid "Warning!  UUDecoded file will exist in the directory you started Lynx."
+msgstr "Cảnh báo!  Tập tin UUDecoded sẽ nằm trong thư mục đã chạy Lynx."
+
+#: src/LYLocal.c:1864
+msgid "NULL URL pointer"
+msgstr "Cái chỉ URL RỖNG"
+
+#: src/LYLocal.c:1946
+#, c-format
+msgid "Executing %s "
+msgstr "Đang chạy %s "
+
+#: src/LYLocal.c:1949
+msgid "Executing system command. This might take a while."
+msgstr "Đang chạy câu lệnh hệ thống. Có thể cần chờ một chút."
+
+#: src/LYLocal.c:2021
+msgid "Current directory:"
+msgstr "Thư mục hiện thời:"
+
+#: src/LYLocal.c:2024 src/LYLocal.c:2042
+msgid "Current selection:"
+msgstr "Lựa chọn hiện thời:"
+
+#: src/LYLocal.c:2028
+msgid "Nothing currently selected."
+msgstr "Hiện thời chưa lựa chọn gì."
+
+#: src/LYLocal.c:2044
+msgid "tagged item:"
+msgstr "mục đã chọn:"
+
+#: src/LYLocal.c:2045
+msgid "tagged items:"
+msgstr "các mục đã chọn:"
+
+#: src/LYLocal.c:2142 src/LYLocal.c:2153
+msgid "Illegal filename; request ignored."
+msgstr "Tên tập tin không cho phép; lờ đi yêu cầu."
+
+#. directory not writable
+#: src/LYLocal.c:2251 src/LYLocal.c:2310
+msgid "Install in the selected directory not permitted."
+msgstr "Không được phép cài đặt trong thư mục đã chọn."
+
+#: src/LYLocal.c:2306
+msgid "The selected item is not a directory!  Request ignored."
+msgstr "Mục đã chọn không phải là một thư mục!  Lờ đi yêu cầu."
+
+#: src/LYLocal.c:2315
+msgid "Just a moment, ..."
+msgstr "Chờ một giây, ..."
+
+#: src/LYLocal.c:2332
+msgid "Error building install args"
+msgstr "Lỗi xây dựng tham số cài đặt"
+
+#: src/LYLocal.c:2347 src/LYLocal.c:2378
+#, c-format
+msgid "Source and target are the same: %s"
+msgstr "Nguồn và đích là một: %s"
+
+#: src/LYLocal.c:2354 src/LYLocal.c:2385
+#, c-format
+msgid "Already in target directory: %s"
+msgstr "Đã trong thư mục đích: %s"
+
+#: src/LYLocal.c:2403
+msgid "Installation complete"
+msgstr "Cài đặt hoàn tất"
+
+#: src/LYLocal.c:2590
+msgid "Temporary URL or list would be too long."
+msgstr "URL tạm thời hoặc danh sách quá dài."
+
+#: src/LYMail.c:520
+msgid "Sending"
+msgstr "Đang gửi"
+
+#: src/LYMail.c:1006
+#, c-format
+msgid "The link   %s :?: %s \n"
+msgstr "Liên kết   %s :?: %s \n"
+
+#: src/LYMail.c:1008
+#, c-format
+msgid "called \"%s\"\n"
+msgstr "đã gọi \"%s\"\n"
+
+#: src/LYMail.c:1009
+#, c-format
+msgid "in the file \"%s\" called \"%s\"\n"
+msgstr "trong tập tin \"%s\" đã gọi \"%s\"\n"
+
+#: src/LYMail.c:1010
+msgid "was requested but was not available."
+msgstr "đã được yêu cầu nhưng không thể."
+
+#: src/LYMail.c:1011
+msgid "Thought you might want to know."
+msgstr "Ý kiến người dùng cần biết."
+
+#: src/LYMail.c:1013
+msgid "This message was automatically generated by"
+msgstr "Thông báo này tự động tạo ra bởi"
+
+#: src/LYMail.c:1728
+msgid "No system mailer configured"
+msgstr "Không có hệ thống thư nào được cấu hình"
+
+#: src/LYMain.c:1003
+msgid "No Winsock found, sorry."
+msgstr "Rất tiếc, không tìm thấy Winsock."
+
+#: src/LYMain.c:1196
+msgid "You MUST define a valid TMP or TEMP area!"
+msgstr "PHẢI chỉ ra một vùng TMP hoặc TEMP!"
+
+#: src/LYMain.c:1249 src/LYMainLoop.c:5026
+msgid "No such directory"
+msgstr "Không có thư mục đó"
+
+#: src/LYMain.c:1456
+#, c-format
+msgid ""
+"\n"
+"Configuration file \"%s\" is not available.\n"
+"\n"
+msgstr ""
+"\n"
+"Không có tập tin cấu hình %s.\n"
+"\n"
+
+#: src/LYMain.c:1466
+#, c-format
+msgid ""
+"\n"
+"Lynx character sets not declared.\n"
+"\n"
+msgstr ""
+"\n"
+"Chưa khai báo bộ ký tự Lynx.\n"
+"\n"
+
+#: src/LYMain.c:1495
+#, c-format
+msgid ""
+"\n"
+"Lynx edit map not declared.\n"
+"\n"
+msgstr ""
+"\n"
+"Chưa khai báo sơ đồ soạn thảo Lynx.\n"
+"\n"
+
+#: src/LYMain.c:1571
+#, c-format
+msgid ""
+"\n"
+"Lynx file \"%s\" is not available.\n"
+"\n"
+msgstr ""
+"\n"
+"Không có tập tin Lynx %s.\n"
+"\n"
+
+#: src/LYMain.c:1762
+msgid "Warning:"
+msgstr "Cảnh báo:"
+
+#: src/LYMain.c:2327
+msgid "persistent cookies state will be changed in next session only."
+msgstr "trạng thái của cookie cố định chỉ thay đổi trong buổi làm việc tiếp theo."
+
+#: src/LYMain.c:2564 src/LYMain.c:2609
+#, c-format
+msgid "Lynx: ignoring unrecognized charset=%s\n"
+msgstr "Lynx: lờ đi bảng mã không nhận ra %s\n"
+
+#: src/LYMain.c:3120
+#, c-format
+msgid "%s Version %s (%s)"
+msgstr "%s Phiên bản %s (%s)"
+
+#: src/LYMain.c:3155
+#, c-format
+msgid "Built on %s %s %s\n"
+msgstr "Xây dựng trên %s %s %s\n"
+
+#: src/LYMain.c:3177
+msgid "Copyrights held by the University of Kansas, CERN, and other contributors."
+msgstr "Đăng ký bản quyền bởi Đại học Kansas, CERN, và những người khác."
+
+#: src/LYMain.c:3178
+msgid "Distributed under the GNU General Public License."
+msgstr "Phân phối dưới GPL."
+
+#: src/LYMain.c:3179
+msgid "See http://lynx.isc.org/ and the online help for more information."
+msgstr "Hãy xem http://lynx.isc.org/ và trợ giúp trực tuyến để biết thêm thông tin."
+
+#: src/LYMain.c:3954
+#, c-format
+msgid "USAGE: %s [options] [file]\n"
+msgstr "SỬ DỤNG: %s [tùychọn] [tậptin]\n"
+
+#: src/LYMain.c:3955
+#, c-format
+msgid "Options are:\n"
+msgstr "Tùy chọn là:\n"
+
+#: src/LYMain.c:4254
+#, c-format
+msgid "%s: Invalid Option: %s\n"
+msgstr "%s: Tùy chọn sai: %s\n"
+
+#: src/LYMainLoop.c:583
+#, c-format
+msgid "Internal error: Invalid mouse link %d!"
+msgstr "Lỗi nội bộ: Liên kết chuột sai %d!"
+
+#: src/LYMainLoop.c:700 src/LYMainLoop.c:5048
+msgid "A URL specified by the user"
+msgstr "Một URL do người dùng chỉ ra"
+
+#: src/LYMainLoop.c:1156
+msgid "Enctype multipart/form-data not yet supported!  Cannot submit."
+msgstr "Chưa hỗ trợ dạng bảng mã multipart/form-data!  Không thể gửi đi."
+
+#.
+#. * Make a name for this help file.
+#.
+#: src/LYMainLoop.c:3052
+msgid "Help Screen"
+msgstr "Màn hình Trợ giúp"
+
+#: src/LYMainLoop.c:3173
+msgid "System Index"
+msgstr "Chỉ mục Hệ thống"
+
+#: src/LYMainLoop.c:3533 src/LYMainLoop.c:5273
+msgid "Entry into main screen"
+msgstr "Đi tới màn hình chính"
+
+#: src/LYMainLoop.c:3791
+msgid "No next document present"
+msgstr "Không có tài liệu tiếp theo"
+
+#: src/LYMainLoop.c:4089
+msgid "charset for this document specified explicitly, sorry..."
+msgstr "bảng mã của tài liệu này được chỉ ra rõ ràng, rất tiếc..."
+
+#: src/LYMainLoop.c:5002
+msgid "cd to:"
+msgstr "cd tới:"
+
+#: src/LYMainLoop.c:5029
+msgid "A component of path is not a directory"
+msgstr "Một thành phần của đường dẫn không phải là tập tin"
+
+#: src/LYMainLoop.c:5032
+msgid "failed to change directory"
+msgstr "thay đổi thư mục bị thất bại"
+
+#: src/LYMainLoop.c:6202
+msgid "Reparsing document under current settings..."
+msgstr "Phân tích lại tài liệu dưới thiết lập hiện thời..."
+
+#: src/LYMainLoop.c:6493
+#, c-format
+msgid "Fatal error - could not open output file %s\n"
+msgstr "Lỗi nặng - không mở được tập tin đầu ra %s\n"
+
+#: src/LYMainLoop.c:6836
+msgid "TABLE center enable."
+msgstr "BẢNG ở giữa bật."
+
+#: src/LYMainLoop.c:6839
+msgid "TABLE center disable."
+msgstr "BẢNG ở giữa tắt."
+
+#: src/LYMainLoop.c:6916
+msgid "Current URL is empty."
+msgstr "URL hiện thời là rỗng."
+
+#: src/LYMainLoop.c:6918 src/LYUtils.c:1793
+msgid "Copy to clipboard failed."
+msgstr "Sao chép tới clipboard không thành công."
+
+#: src/LYMainLoop.c:6920
+msgid "Document URL put to clipboard."
+msgstr "Đã đặt URL tài liệu vào clipboard."
+
+#: src/LYMainLoop.c:6922
+msgid "Link URL put to clipboard."
+msgstr "Đã đặt URL liên kết vào clipboard."
+
+#: src/LYMainLoop.c:6949
+msgid "No URL in the clipboard."
+msgstr "Không có URL trong clipboard."
+
+#: src/LYMainLoop.c:7613 src/LYMainLoop.c:7783
+msgid "-index-"
+msgstr "-chỉ mục-"
+
+#: src/LYMainLoop.c:7723
+msgid "lynx: Can't access startfile"
+msgstr "lynx: Không truy cập được tập tin bắt đầu"
+
+#: src/LYMainLoop.c:7735
+msgid "lynx: Start file could not be found or is not text/html or text/plain"
+msgstr "lynx: Không tìm thấy tập tin bắt đầu hoặc không phải là text/html hay text/plain"
+
+#: src/LYMainLoop.c:7736
+msgid "      Exiting..."
+msgstr "      Đang thoát..."
+
+#: src/LYMainLoop.c:7777
+msgid "-more-"
+msgstr "-còn nữa-"
+
+#. Enable scrolling.
+#: src/LYNews.c:183
+msgid "You will be posting to:"
+msgstr "Sẽ gửi tới:"
+
+#.
+#. * Get the mail address for the From header, offering personal_mail_address
+#. * as default.
+#.
+#: src/LYNews.c:192
+msgid ""
+"\n"
+"\n"
+" Please provide your mail address for the From: header\n"
+msgstr ""
+"\n"
+"\n"
+" Xin hãy ghi địa chỉ hộp thư của bạn vào dòng From:\n"
+
+#.
+#. * Get the Subject header, offering the current document's title as the
+#. * default if this is a followup rather than a new post.  - FM
+#.
+#: src/LYNews.c:209
+msgid ""
+"\n"
+"\n"
+" Please provide or edit the Subject: header\n"
+msgstr ""
+"\n"
+"\n"
+" Xin hãy thêm hoặc sửa Subject:\n"
+
+#: src/LYNews.c:299
+msgid ""
+"\n"
+"\n"
+" Please provide or edit the Organization: header\n"
+msgstr ""
+"\n"
+"\n"
+" Xin hãy thêm hoặc sửa tên cơ quan trong Organization:\n"
+
+#.
+#. * Use the built in line editior.
+#.
+#: src/LYNews.c:356
+msgid ""
+"\n"
+"\n"
+" Please enter your message below."
+msgstr ""
+"\n"
+"\n"
+" Xin hãy viết nội dung thư vào dưới."
+
+#: src/LYNews.c:402
+msgid "Message has no original text!"
+msgstr "Thư không có văn bản gốc!"
+
+#: src/LYOptions.c:761
+msgid "review/edit B)ookmarks files"
+msgstr "xem lại/sửa B)Tập tin Ưa thích"
+
+#: src/LYOptions.c:763
+msgid "B)ookmark file: "
+msgstr "B)Tập tin ưa thích: "
+
+#: src/LYOptions.c:2126 src/LYOptions.c:2133
+msgid "ON"
+msgstr "BẬT"
+
+#. verbose_img variable
+#: src/LYOptions.c:2127 src/LYOptions.c:2132 src/LYOptions.c:2280 src/LYOptions.c:2291
+msgid "OFF"
+msgstr "TẮT"
+
+#: src/LYOptions.c:2128
+msgid "NEVER"
+msgstr "KHÔNG BAO GIỜ"
+
+#: src/LYOptions.c:2129
+msgid "ALWAYS"
+msgstr "LUÔN LUÔN"
+
+#: src/LYOptions.c:2145 src/LYOptions.c:2272
+msgid "ignore"
+msgstr "lờ đi"
+
+#: src/LYOptions.c:2146
+msgid "ask user"
+msgstr "hỏi người dùng"
+
+#: src/LYOptions.c:2147
+msgid "accept all"
+msgstr "chấp nhận hết"
+
+#: src/LYOptions.c:2159
+msgid "ALWAYS OFF"
+msgstr "LUÔN LUÔN TẮT"
+
+#: src/LYOptions.c:2160
+msgid "FOR LOCAL FILES ONLY"
+msgstr "CHỈ CHO TẬP TIN NỘI BỘ"
+
+#: src/LYOptions.c:2162
+msgid "ALWAYS ON"
+msgstr "LUÔN LUÔN BẬT"
+
+#: src/LYOptions.c:2174
+msgid "Numbers act as arrows"
+msgstr "Các số làm việc như mũi tên"
+
+#: src/LYOptions.c:2176
+msgid "Links are numbered"
+msgstr "Đánh số liên kết"
+
+#: src/LYOptions.c:2179
+msgid "Links and form fields are numbered"
+msgstr "Đánh số liên kết và vùng biểu mẫu"
+
+#: src/LYOptions.c:2182
+msgid "Form fields are numbered"
+msgstr "Đánh số vùng biểu mẫu"
+
+#: src/LYOptions.c:2192
+msgid "Case insensitive"
+msgstr "Không tính đến kiểu chữ"
+
+#: src/LYOptions.c:2193
+msgid "Case sensitive"
+msgstr "Tính đến kiểu chữ"
+
+#: src/LYOptions.c:2217
+msgid "prompt normally"
+msgstr "hỏi lại như thông thường"
+
+#: src/LYOptions.c:2218
+msgid "force yes-response"
+msgstr "bắt buộc trả lời yes (có)"
+
+#: src/LYOptions.c:2219
+msgid "force no-response"
+msgstr "bắt buộc trả lời no (không)"
+
+#: src/LYOptions.c:2237
+msgid "Novice"
+msgstr "Người mới"
+
+#: src/LYOptions.c:2238
+msgid "Intermediate"
+msgstr "Trung bình"
+
+#: src/LYOptions.c:2239
+msgid "Advanced"
+msgstr "Có nghề"
+
+#: src/LYOptions.c:2248
+msgid "By First Visit"
+msgstr "Theo lần xem đầu tiên"
+
+#: src/LYOptions.c:2250
+msgid "By First Visit Reversed"
+msgstr "Theo lần xem đầu tiên nhưng Đảo ngược"
+
+#: src/LYOptions.c:2251
+msgid "As Visit Tree"
+msgstr "Như cây xem"
+
+#: src/LYOptions.c:2252
+msgid "By Last Visit"
+msgstr "Theo lần xem cuối"
+
+#: src/LYOptions.c:2254
+msgid "By Last Visit Reversed"
+msgstr "Theo lần xem cuối nhưng đảo ngược"
+
+#. Old_DTD variable
+#: src/LYOptions.c:2265
+msgid "relaxed (TagSoup mode)"
+msgstr "buông lỏng (chế độ TagSoup)"
+
+#: src/LYOptions.c:2266
+msgid "strict (SortaSGML mode)"
+msgstr "chặt chẽ (chế độ SortaSGML)"
+
+#: src/LYOptions.c:2273
+msgid "as labels"
+msgstr "như các nhãn"
+
+#: src/LYOptions.c:2274
+msgid "as links"
+msgstr "như liên kết"
+
+#: src/LYOptions.c:2281
+msgid "show filename"
+msgstr "hiện tên tập tin"
+
+#: src/LYOptions.c:2292
+msgid "STANDARD"
+msgstr "CƠ BẢN"
+
+#: src/LYOptions.c:2293
+msgid "ADVANCED"
+msgstr "NÂNG CAO"
+
+#: src/LYOptions.c:2319
+msgid "Directories first"
+msgstr "Thư mục trước"
+
+#: src/LYOptions.c:2320
+msgid "Files first"
+msgstr "Tập tin trước"
+
+#: src/LYOptions.c:2321
+msgid "Mixed style"
+msgstr "Kiểu pha trộn"
+
+#: src/LYOptions.c:2329 src/LYOptions.c:2346
+msgid "By Name"
+msgstr "Theo Tên"
+
+#: src/LYOptions.c:2330 src/LYOptions.c:2347
+msgid "By Type"
+msgstr "Theo Dạng"
+
+#: src/LYOptions.c:2331 src/LYOptions.c:2348
+msgid "By Size"
+msgstr "Theo Kích thước"
+
+#: src/LYOptions.c:2332 src/LYOptions.c:2349
+msgid "By Date"
+msgstr "Theo Ngày"
+
+#: src/LYOptions.c:2333
+msgid "By Mode"
+msgstr "Theo Chế độ"
+
+#: src/LYOptions.c:2335
+msgid "By User"
+msgstr "Theo người dùng"
+
+#: src/LYOptions.c:2336
+msgid "By Group"
+msgstr "Theo Nhóm"
+
+#: src/LYOptions.c:2357
+msgid "Do not show rate"
+msgstr "Không hiển thị tốc độ"
+
+#: src/LYOptions.c:2358 src/LYOptions.c:2359
+#, c-format
+msgid "Show %s/sec rate"
+msgstr "Hiển thị tốc độ %s/giây"
+
+#: src/LYOptions.c:2361 src/LYOptions.c:2362
+#, c-format
+msgid "Show %s/sec, ETA"
+msgstr "Hiển thị %s/giây, CÒNLẠI"
+
+#: src/LYOptions.c:2374
+msgid "Accept lynx's internal types"
+msgstr "Chấp nhận dạng nội bộ của lynx"
+
+#: src/LYOptions.c:2375
+msgid "Also accept lynx.cfg's types"
+msgstr "Đồng thời chấp nhận dạng của lynx.cfg"
+
+#: src/LYOptions.c:2376
+msgid "Also accept user's types"
+msgstr "Đồng thời chấp nhận dạng của người dùng"
+
+#: src/LYOptions.c:2377
+msgid "Also accept system's types"
+msgstr "Đồng thời chấp nhận dạng của hệ thống"
+
+#: src/LYOptions.c:2378
+msgid "Accept all types"
+msgstr "Chấp nhận tất cả các dạng"
+
+#: src/LYOptions.c:2387
+msgid "gzip"
+msgstr "nén gzip"
+
+#: src/LYOptions.c:2388
+msgid "deflate"
+msgstr "làm xẹp"
+
+#: src/LYOptions.c:2391
+msgid "compress"
+msgstr "nén"
+
+#: src/LYOptions.c:2394
+msgid "bzip2"
+msgstr "nén bzip2"
+
+#: src/LYOptions.c:2396
+msgid "All"
+msgstr "Tất cả"
+
+#: src/LYOptions.c:2664 src/LYOptions.c:2688
+#, c-format
+msgid "Use %s to invoke the Options menu!"
+msgstr "Hãy sử dụng %s để gọi trình đơn Tùy chọn!"
+
+#: src/LYOptions.c:3438
+msgid "(options marked with (!) will not be saved)"
+msgstr "(sẽ không ghi nhớ tùy chọn có dấu (!))"
+
+#: src/LYOptions.c:3446
+msgid "General Preferences"
+msgstr "Cấu hình chung"
+
+#. ***************************************************************
+#. User Mode: SELECT
+#: src/LYOptions.c:3450
+msgid "User mode"
+msgstr "Chế độ người dùng"
+
+#. Editor: INPUT
+#: src/LYOptions.c:3456
+msgid "Editor"
+msgstr "Trình soạn thảo"
+
+#. Search Type: SELECT
+#: src/LYOptions.c:3461
+msgid "Type of Search"
+msgstr "Dạng tìm kiếm"
+
+#: src/LYOptions.c:3466
+msgid "Security and Privacy"
+msgstr "Bảo mật và An toàn"
+
+#. ***************************************************************
+#. Cookies: SELECT
+#: src/LYOptions.c:3470
+msgid "Cookies"
+msgstr "Cookie"
+
+#. Cookie Prompting: SELECT
+#: src/LYOptions.c:3484
+msgid "Invalid-Cookie Prompting"
+msgstr "Câu hỏi khi Cookie lỗi"
+
+#. SSL Prompting: SELECT
+#: src/LYOptions.c:3491
+msgid "SSL Prompting"
+msgstr "Câu hỏi về SSL"
+
+#: src/LYOptions.c:3497
+msgid "Keyboard Input"
+msgstr "Nhập bàn phím"
+
+#. ***************************************************************
+#. Keypad Mode: SELECT
+#: src/LYOptions.c:3501
+msgid "Keypad mode"
+msgstr "Chế độ Keypad"
+
+#. Emacs keys: ON/OFF
+#: src/LYOptions.c:3507
+msgid "Emacs keys"
+msgstr "Phím Emacs"
+
+#. VI Keys: ON/OFF
+#: src/LYOptions.c:3513
+msgid "VI keys"
+msgstr "Phím VI"
+
+#. Line edit style: SELECT
+#. well, at least 2 line edit styles available
+#: src/LYOptions.c:3520
+msgid "Line edit style"
+msgstr "Kiểu soạn thảo theo dòng"
+
+#. Keyboard layout: SELECT
+#: src/LYOptions.c:3532
+msgid "Keyboard layout"
+msgstr "Bàn phím"
+
+#.
+#. * Display and Character Set
+#.
+#: src/LYOptions.c:3546
+msgid "Display and Character Set"
+msgstr "Hiển thị và Bảng mã"
+
+#. Use locale-based character set: ON/OFF
+#: src/LYOptions.c:3551
+msgid "Use locale-based character set"
+msgstr "Sử dụng bảng mã dựa trên locale"
+
+#. Display Character Set: SELECT
+#: src/LYOptions.c:3560
+msgid "Display character set"
+msgstr "Bảng mã hiển thị"
+
+#: src/LYOptions.c:3591
+msgid "Assumed document character set"
+msgstr "Bảng mã đề nghị cho tài liệu"
+
+#.
+#. * Since CJK people hardly mixed with other world
+#. * we split the header to make it more readable:
+#. * "CJK mode" for CJK display charsets, and "Raw 8-bit" for others.
+#.
+#: src/LYOptions.c:3611
+msgid "CJK mode"
+msgstr "Chế độ CJK"
+
+#: src/LYOptions.c:3613
+msgid "Raw 8-bit"
+msgstr "8-bit thô"
+
+#. X Display: INPUT
+#: src/LYOptions.c:3621
+msgid "X Display"
+msgstr "Màn hình X"
+
+#.
+#. * Document Appearance
+#.
+#: src/LYOptions.c:3627
+msgid "Document Appearance"
+msgstr "Trang trí tài liệu"
+
+#: src/LYOptions.c:3633
+msgid "Show color"
+msgstr "Hiển thị màu"
+
+#. Show cursor: ON/OFF
+#: src/LYOptions.c:3657
+msgid "Show cursor"
+msgstr "Hiển thị con trỏ"
+
+#. Underline links: ON/OFF
+#: src/LYOptions.c:3663
+msgid "Underline links"
+msgstr "Gạch dưới liên kết"
+
+#. Show scrollbar: ON/OFF
+#: src/LYOptions.c:3670
+msgid "Show scrollbar"
+msgstr "Hiển thị thanh cuộn"
+
+#. Select Popups: ON/OFF
+#: src/LYOptions.c:3677
+msgid "Popups for select fields"
+msgstr "Mở cửa sổ khác cho vùng chọn"
+
+#. HTML error recovery: SELECT
+#: src/LYOptions.c:3683
+msgid "HTML error recovery"
+msgstr "Phục hồi lỗi HTML"
+
+#. Show Images: SELECT
+#: src/LYOptions.c:3689
+msgid "Show images"
+msgstr "Hiển thị hình ảnh"
+
+#. Verbose Images: ON/OFF
+#: src/LYOptions.c:3703
+msgid "Verbose images"
+msgstr "Chi tiết về hình ảnh"
+
+#.
+#. * Headers Transferred to Remote Servers
+#.
+#: src/LYOptions.c:3711
+msgid "Headers Transferred to Remote Servers"
+msgstr "Phần đầu đã truyền tải tới máy chủ ở xa"
+
+#. ***************************************************************
+#. Mail Address: INPUT
+#: src/LYOptions.c:3715
+msgid "Personal mail address"
+msgstr "Địa chỉ thư cá nhân"
+
+#. Mail Address: INPUT
+#: src/LYOptions.c:3720
+#, fuzzy
+msgid "Password for anonymous ftp"
+msgstr "Mật khẩu cho máy tin tức '%s':"
+
+#. Preferred media type: SELECT
+#: src/LYOptions.c:3725
+msgid "Preferred media type"
+msgstr "Thiết bị ghi ưa chuộng"
+
+#. Preferred encoding: SELECT
+#: src/LYOptions.c:3731
+msgid "Preferred encoding"
+msgstr "Bảng mã ưa chuộng"
+
+#. Preferred Document Character Set: INPUT
+#: src/LYOptions.c:3737
+msgid "Preferred document character set"
+msgstr "Bảng mã tài liệu ưa chuộng"
+
+#. Preferred Document Language: INPUT
+#: src/LYOptions.c:3742
+msgid "Preferred document language"
+msgstr "Ngôn ngữ tài liệu ưa chuộng"
+
+#: src/LYOptions.c:3748
+msgid "User-Agent header"
+msgstr "Phân đầu User-Agent"
+
+#.
+#. * Listing and Accessing Files
+#.
+#: src/LYOptions.c:3756
+msgid "Listing and Accessing Files"
+msgstr "Tập tin Danh sách và Truy cập"
+
+#. ***************************************************************
+#. FTP sort: SELECT
+#: src/LYOptions.c:3760
+msgid "FTP sort criteria"
+msgstr "Tiêu chuẩn sắp xếp FTP"
+
+#. Local Directory Sort: SELECT
+#: src/LYOptions.c:3767
+msgid "Local directory sort criteria"
+msgstr "Tiêu chuẩn sắp xếp thư mục nội bộ"
+
+#. Local Directory Order: SELECT
+#: src/LYOptions.c:3773
+msgid "Local directory sort order"
+msgstr "Thứ tự sắp xếp thư mục nội bộ"
+
+#: src/LYOptions.c:3782
+msgid "Show dot files"
+msgstr "Hiển thị tập tin ẩn"
+
+#: src/LYOptions.c:3790
+msgid "Execution links"
+msgstr "Thực hiện Liên kết"
+
+#. Show transfer rate: SELECT
+#: src/LYOptions.c:3810
+msgid "Show transfer rate"
+msgstr "Hiển thị tốc độ truyền tải"
+
+#.
+#. * Special Files and Screens
+#.
+#: src/LYOptions.c:3830
+msgid "Special Files and Screens"
+msgstr "Màn hình và Tập tin đặc biệt"
+
+#: src/LYOptions.c:3835
+msgid "Multi-bookmarks"
+msgstr "Nhiều Ưa thích"
+
+#: src/LYOptions.c:3843
+msgid "Review/edit Bookmarks files"
+msgstr "Xem lại/sửa tập tin Ưa thích"
+
+#: src/LYOptions.c:3845
+msgid "Goto multi-bookmark menu"
+msgstr "Đi tới trình đơn nhiều ưa thích"
+
+#: src/LYOptions.c:3847
+msgid "Bookmarks file"
+msgstr "Tập tin Ưa thích"
+
+#. Visited Pages: SELECT
+#: src/LYOptions.c:3853
+msgid "Visited Pages"
+msgstr "Trang đã xem"
+
+#: src/LYOptions.c:3858
+msgid "View the file "
+msgstr "Xem tập tin"
+
+#: src/LYPrint.c:936
+#, c-format
+msgid " Print job complete.\n"
+msgstr " Hoàn thành công việc in.\n"
+
+#: src/LYPrint.c:1261
+msgid "Document:"
+msgstr "Tài liệu:"
+
+#: src/LYPrint.c:1262
+msgid "Number of lines:"
+msgstr "Số dòng:"
+
+#: src/LYPrint.c:1263
+msgid "Number of pages:"
+msgstr "Số trang:"
+
+#: src/LYPrint.c:1264
+msgid "pages"
+msgstr "trang"
+
+#: src/LYPrint.c:1264
+msgid "page"
+msgstr "trang"
+
+#: src/LYPrint.c:1265
+msgid "(approximately)"
+msgstr "(xấp xỉ)"
+
+#: src/LYPrint.c:1272
+msgid "Some print functions have been disabled!"
+msgstr "Một vài chức năng in đã bị tắt!"
+
+#: src/LYPrint.c:1276
+msgid "Standard print options:"
+msgstr "Tùy chọn in tiêu chuẩn:"
+
+#: src/LYPrint.c:1277
+msgid "Print options:"
+msgstr "Tùy chọn in:"
+
+#: src/LYPrint.c:1284
+msgid "Save to a local file"
+msgstr "Ghi nhớ tới tập tin nội bộ"
+
+#: src/LYPrint.c:1286
+msgid "Save to disk disabled"
+msgstr "Ghi nhớ lên đĩa bị tắt"
+
+#: src/LYPrint.c:1293
+msgid "Mail the file"
+msgstr "Gửi tập tin qua thư"
+
+#: src/LYPrint.c:1300
+msgid "Print to the screen"
+msgstr "In ra màn hình"
+
+#: src/LYPrint.c:1305
+msgid "Print out on a printer attached to your vt100 terminal"
+msgstr "In ra máy in gắn với terminal vt100"
+
+#: src/LYReadCFG.c:342
+#, c-format
+msgid ""
+"Syntax Error parsing COLOR in configuration file:\n"
+"The line must be of the form:\n"
+"COLOR:INTEGER:FOREGROUND:BACKGROUND\n"
+"\n"
+"Here FOREGROUND and BACKGROUND must be one of:\n"
+"The special strings 'nocolor' or 'default', or\n"
+msgstr ""
+"Lỗi Cú pháp COLOR (màu sắc) trong tập tin cấu hình:\n"
+"Dòng phải có dạng:\n"
+"COLOR:SỐNGUYÊN:VĂNBẢN:NỀN\n"
+"\n"
+"Trong đó VĂNBẢN và NỀN phải là một trong:\n"
+"Chuỗi đặc biệt 'nocolor' hoặc 'default', hoặc\n"
+
+#: src/LYReadCFG.c:355
+msgid "Offending line:"
+msgstr "Dòng vi phạm:"
+
+#: src/LYReadCFG.c:625
+#, c-format
+msgid "key remapping of %s to %s for %s failed\n"
+msgstr "đặt lại phím %s thành %s cho %s không thành công\n"
+
+#: src/LYReadCFG.c:632
+#, c-format
+msgid "key remapping of %s to %s failed\n"
+msgstr "đặt lại phím của %s thành %s không thành công\n"
+
+#: src/LYReadCFG.c:653
+#, c-format
+msgid "invalid line-editor selection %s for key %s, selecting all\n"
+msgstr "lựa chọn trình soạn thảo theo dòng %s cho phím %s sai, chọn tất cả\n"
+
+#: src/LYReadCFG.c:678 src/LYReadCFG.c:690
+#, c-format
+msgid "setting of line-editor binding for key %s (0x%x) to 0x%x for %s failed\n"
+msgstr ""
+"thiết lập trình soạn thảo theo dòng  cho phím %s (0x%x) thành 0x%x\n"
+"cho %s không thành công\n"
+
+#: src/LYReadCFG.c:694
+#, c-format
+msgid "setting of line-editor binding for key %s (0x%x) for %s failed\n"
+msgstr ""
+"thiết lập trình soạn thảo theo dòng  cho phím %s (0x%x) cho %s\n"
+"không thành công\n"
+
+#: src/LYReadCFG.c:792
+#, c-format
+msgid "Lynx: cannot start, CERN rules file %s is not available\n"
+msgstr "Lynx: không chạy được, không có tập tin quy tắc CERN %s\n"
+
+#: src/LYReadCFG.c:793
+msgid "(no name)"
+msgstr "(không tên)"
+
+#: src/LYReadCFG.c:1787
+#, c-format
+msgid "More than %d nested lynx.cfg includes -- perhaps there is a loop?!?\n"
+msgstr "Có nhiều hơn %d lynx.cfg lồng vào nhau -- có thể là vòng lặp?!?\n"
+
+#: src/LYReadCFG.c:1789
+#, c-format
+msgid "Last attempted include was '%s',\n"
+msgstr "Lần thử thêm vào cuối cùng là '%s',\n"
+
+#: src/LYReadCFG.c:1790
+#, c-format
+msgid "included from '%s'.\n"
+msgstr "đã thêm từ '%s'.\n"
+
+#: src/LYReadCFG.c:2197 src/LYReadCFG.c:2210 src/LYReadCFG.c:2268
+msgid "The following is read from your lynx.cfg file."
+msgstr "Những cái sau đọc từ tập tin lynx.cfg."
+
+#: src/LYReadCFG.c:2198 src/LYReadCFG.c:2211
+msgid "Please read the distribution"
+msgstr "Xin hãy đọc phân phối"
+
+#: src/LYReadCFG.c:2204 src/LYReadCFG.c:2214
+msgid "for more comments."
+msgstr "để biết thêm chi tiết."
+
+#: src/LYReadCFG.c:2250
+msgid "RELOAD THE CHANGES"
+msgstr "NẠP LẠI THAY ĐỔI"
+
+#: src/LYReadCFG.c:2258
+msgid "Your primary configuration"
+msgstr "Cấu hình chính"
+
+#: src/LYShowInfo.c:172
+msgid "Directory that you are currently viewing"
+msgstr "Thư mục người dùng đang xem"
+
+#: src/LYShowInfo.c:175
+msgid "Name:"
+msgstr "Tên:"
+
+#: src/LYShowInfo.c:178
+msgid "URL:"
+msgstr "URL:"
+
+#: src/LYShowInfo.c:192
+msgid "Directory that you have currently selected"
+msgstr "Thư mục người dùng đang chọn"
+
+#: src/LYShowInfo.c:194
+msgid "File that you have currently selected"
+msgstr "Tập tin người dùng đang chọn"
+
+#: src/LYShowInfo.c:197
+msgid "Symbolic link that you have currently selected"
+msgstr "Liên kết mềm người dùng đang chọn"
+
+#: src/LYShowInfo.c:200
+msgid "Item that you have currently selected"
+msgstr "Mục người dùng đang chọn"
+
+#: src/LYShowInfo.c:202
+msgid "Full name:"
+msgstr "Tên đầy đủ:"
+
+#: src/LYShowInfo.c:211
+msgid "Unable to follow link"
+msgstr "Không đi theo được liên kết"
+
+#: src/LYShowInfo.c:213
+msgid "Points to file:"
+msgstr "Chỉ tới tập tin:"
+
+#: src/LYShowInfo.c:218
+msgid "Name of owner:"
+msgstr "Tên chủ sở hữu:"
+
+#: src/LYShowInfo.c:221
+msgid "Group name:"
+msgstr "Tên nhóm:"
+
+#: src/LYShowInfo.c:223
+msgid "File size:"
+msgstr "Kích thước tập tin:"
+
+#: src/LYShowInfo.c:225
+msgid "(bytes)"
+msgstr "(byte)"
+
+#.
+#. * Include date and time information.
+#.
+#: src/LYShowInfo.c:230
+msgid "Creation date:"
+msgstr "Ngày tạo ra:"
+
+#: src/LYShowInfo.c:233
+msgid "Last modified:"
+msgstr "Lần sửa cuối:"
+
+#: src/LYShowInfo.c:236
+msgid "Last accessed:"
+msgstr "Truy cập cuối:"
+
+#: src/LYShowInfo.c:242
+msgid "Access Permissions"
+msgstr "Quyền truy cập"
+
+#: src/LYShowInfo.c:277
+msgid "Group:"
+msgstr "Nhóm:"
+
+#: src/LYShowInfo.c:297
+msgid "World:"
+msgstr "Thế giới:"
+
+#: src/LYShowInfo.c:304
+msgid "File that you are currently viewing"
+msgstr "Tập tin người dùng đang xem"
+
+#: src/LYShowInfo.c:312 src/LYShowInfo.c:416
+msgid "Linkname:"
+msgstr "Tên liên kết:"
+
+#: src/LYShowInfo.c:318 src/LYShowInfo.c:333
+msgid "Charset:"
+msgstr "Bảng mã:"
+
+#: src/LYShowInfo.c:332
+msgid "(assumed)"
+msgstr "(đã lấy)"
+
+#: src/LYShowInfo.c:339
+msgid "Server:"
+msgstr "Máy chủ:"
+
+#: src/LYShowInfo.c:342
+msgid "Date:"
+msgstr "Ngày:"
+
+#: src/LYShowInfo.c:345
+msgid "Last Mod:"
+msgstr "Sửa cuối:"
+
+#: src/LYShowInfo.c:350
+msgid "Expires:"
+msgstr "Hạn:"
+
+#: src/LYShowInfo.c:353
+msgid "Cache-Control:"
+msgstr "Điều khiển Cache:"
+
+#: src/LYShowInfo.c:356
+msgid "Content-Length:"
+msgstr "Kích cỡ nội dung:"
+
+#: src/LYShowInfo.c:360
+#, fuzzy
+msgid "Length:"
+msgstr "Kích cỡ nội dung:"
+
+#: src/LYShowInfo.c:365
+msgid "Language:"
+msgstr "Ngôn ngữ:"
+
+#: src/LYShowInfo.c:372
+msgid "Post Data:"
+msgstr "Ngày gửi:"
+
+#: src/LYShowInfo.c:375
+msgid "Post Content Type:"
+msgstr "Dạng nội dung gửi:"
+
+#: src/LYShowInfo.c:378
+msgid "Owner(s):"
+msgstr "Sở hữu:"
+
+#: src/LYShowInfo.c:383
+msgid "size:"
+msgstr "kích cỡ:"
+
+#: src/LYShowInfo.c:385
+msgid "lines"
+msgstr "dòng"
+
+#: src/LYShowInfo.c:389
+msgid "forms mode"
+msgstr "chế độ biểu mẫu"
+
+#: src/LYShowInfo.c:391
+msgid "source"
+msgstr "nguồn"
+
+#: src/LYShowInfo.c:392
+msgid "normal"
+msgstr "thông thường"
+
+#: src/LYShowInfo.c:394
+msgid ", safe"
+msgstr ", an toàn"
+
+#: src/LYShowInfo.c:396
+msgid ", via internal link"
+msgstr ", qua liên kết nội bộ"
+
+#: src/LYShowInfo.c:401
+msgid ", no-cache"
+msgstr ", không cache"
+
+#: src/LYShowInfo.c:403
+msgid ", ISMAP script"
+msgstr ", script ISMAP"
+
+#: src/LYShowInfo.c:405
+msgid ", bookmark file"
+msgstr ", tập tin ưa thích"
+
+#: src/LYShowInfo.c:409
+msgid "mode:"
+msgstr "chế độ:"
+
+#: src/LYShowInfo.c:415
+msgid "Link that you currently have selected"
+msgstr "Liên kết người dùng đã chọn"
+
+#: src/LYShowInfo.c:424
+msgid "Method:"
+msgstr "Phương pháp:"
+
+#: src/LYShowInfo.c:428
+msgid "Enctype:"
+msgstr "Dạng mã:"
+
+#: src/LYShowInfo.c:434
+msgid "Action:"
+msgstr "Hành động:"
+
+#: src/LYShowInfo.c:439
+msgid "(Form field)"
+msgstr "(vùng Biểu mẫu)"
+
+#: src/LYShowInfo.c:448
+msgid "No Links on the current page"
+msgstr "Không có liên kết trên trang này"
+
+#: src/LYShowInfo.c:453
+msgid "Server Headers:"
+msgstr "Phần đầu Máy chủ:"
+
+#: src/LYStyle.c:294
+#, c-format
+msgid ""
+"Syntax Error parsing style in lss file:\n"
+"[%s]\n"
+"The line must be of the form:\n"
+"OBJECT:MONO:COLOR (ie em:bold:brightblue:white)\n"
+"where OBJECT is one of EM,STRONG,B,I,U,BLINK etc.\n"
+"\n"
+msgstr ""
+"Lỗi Cú pháp trong tập tin phong cách lss:\n"
+"[%s]\n"
+"Dòng phải có dạng:\n"
+"VẬTTHỂ:ĐENTRẮNG:MÀU (ví dụ em:bold:brightblue:white)\n"
+"trong đó VẬTHỂ là một trong EM,STRONG,B,I,U,BLINK v.v...\n"
+"\n"
+
+#: src/LYTraversal.c:108
+msgid "here is a list of the history stack so that you may rebuild"
+msgstr "đây là danh sách những cụm lịch sử cần xây dựng lại"
+
+#: src/LYUpload.c:75
+msgid "ERROR! - upload command is misconfigured"
+msgstr "LỖI! - câu lệnh tải lên có cấu hình sai"
+
+#: src/LYUpload.c:96
+msgid "Illegal redirection \"../\" found! Request ignored."
+msgstr "Chuyển hướng \"../\" không cho phép! Lờ đi yêu cầu."
+
+#: src/LYUpload.c:99
+msgid "Illegal character \"/\" found! Request ignored."
+msgstr "Ký tự \"/\" không cho phép! Lờ đi yêu cầu."
+
+#: src/LYUpload.c:102
+msgid "Illegal redirection using \"~\" found! Request ignored."
+msgstr "Chuyển hướng sử dụng \"~\" không cho phép! Lờ đi yêu cầu."
+
+#: src/LYUpload.c:159
+msgid "Unable to upload file."
+msgstr "Không tải lên được tập tin."
+
+#: src/LYUpload.c:201
+msgid "Upload To:"
+msgstr "Tải lên:"
+
+#: src/LYUpload.c:202
+msgid "Upload options:"
+msgstr "Tùy chọn tải lên:"
+
+#: src/LYUtils.c:1795
+msgid "Download document URL put to clipboard."
+msgstr "URL của tài liệu tải xuống đặt vào clipboard."
+
+#: src/LYUtils.c:2572
+msgid "Unexpected access protocol for this URL scheme."
+msgstr "Giao thức truy cập không mong đợi cho sơ đồ URL này."
+
+#: src/LYUtils.c:3384
+msgid "Too many tempfiles"
+msgstr "Quá nhiều tập tin tạm thời"
+
+#: src/LYUtils.c:3688
+msgid "unknown restriction"
+msgstr "giới hạn không rõ"
+
+#: src/LYUtils.c:3718
+#, c-format
+msgid "No restrictions set.\n"
+msgstr "Không có bộ các giới hạn.\n"
+
+#: src/LYUtils.c:3721
+#, c-format
+msgid "Restrictions set:\n"
+msgstr "Bộ các giới hạn:\n"
+
+#: src/LYUtils.c:5099
+msgid "Cannot find HOME directory"
+msgstr "Không tìm thấy thư mục HOME"
+
+#: src/LYrcFile.c:21
+msgid "Normally disabled.  See ENABLE_LYNXRC in lynx.cfg\n"
+msgstr "Thường bị tắt.  Hãy xem ENABLE_LYNXRC trong lynx.cfg\n"
+
+#: src/LYrcFile.c:318
+msgid ""
+"accept_all_cookies allows the user to tell Lynx to automatically\n"
+"accept all cookies if desired.  The default is \"FALSE\" which will\n"
+"prompt for each cookie.  Set accept_all_cookies to \"TRUE\" to accept\n"
+"all cookies.\n"
+msgstr ""
+"accept_all_cookies cho phép người dùng cấu hình để Lynx tự động\n"
+"chấp nhận mọi cookies muốn.  Mặc định là \"FALSE\" tức là sẽ hỏi\n"
+"cho mỗi cookie.  Đặt accept_all_cookies thành \"TRUE\" để chấp nhận\n"
+"mọi cookie.\n"
+
+#: src/LYrcFile.c:325
+msgid ""
+"anonftp_password allows the user to tell Lynx to use the personal\n"
+"email address as the password for anonymous ftp.  If no value is given,\n"
+"Lynx will use the personal email address.  Set anonftp_password\n"
+"to a different value if you choose.\n"
+msgstr ""
+
+#: src/LYrcFile.c:331
+msgid ""
+"bookmark_file specifies the name and location of the default bookmark\n"
+"file into which the user can paste links for easy access at a later\n"
+"date.\n"
+msgstr ""
+"bookmark_file chỉ ra tên và vị trí của tập tin Ưa thích mặc định\n"
+"cho người dùng ghi liên kết vào để có thể truy cập nhanh và dễ dàng\n"
+"hơn sau này.\n"
+
+#: src/LYrcFile.c:336
+msgid ""
+"If case_sensitive_searching is \"on\" then when the user invokes a search\n"
+"using the 's' or '/' keys, the search performed will be case sensitive\n"
+"instead of case INsensitive.  The default is usually \"off\".\n"
+msgstr ""
+"Nếu case_sensitive_searching là \"on\", thì mỗi khi người dùng tìm\n"
+"kiếm bằng các phím 's' hay '/', những tìm kiếm này sẽ phụ thuộc vào\n"
+"kiểu chữ thay cho INsensitive.  Mặc định là \"off\".\n"
+
+#: src/LYrcFile.c:341
+msgid ""
+"The character_set definition controls the representation of 8 bit\n"
+"characters for your terminal.  If 8 bit characters do not show up\n"
+"correctly on your screen you may try changing to a different 8 bit\n"
+"set or using the 7 bit character approximations.\n"
+"Current valid characters sets are:\n"
+msgstr ""
+"character_set điều khiển việc hiển thị các ký tự 8 bit cho terminal.\n"
+"Nếu ký tự 8 bit không hiển thị đúng trên màn hình, thì có thể thử\n"
+"thay đổi thành bộ 8 bit khác hoặc sử dụng bộ 7 bit.\n"
+"Hiện thời, có các bộ ký tự sau:\n"
+
+#: src/LYrcFile.c:348
+msgid ""
+"cookie_accept_domains and cookie_reject_domains are comma-delimited\n"
+"lists of domains from which Lynx should automatically accept or reject\n"
+"all cookies.  If a domain is specified in both options, rejection will\n"
+"take precedence.  The accept_all_cookies parameter will override any\n"
+"settings made here.\n"
+msgstr ""
+"cookie_accept_domains và cookie_reject_domains là danh sách cách\n"
+"miền phân cách nhau bởi dấu phẩy Lynx sẽ tự động chấp nhận hoặc\n"
+"bỏ đi mọi cookie.  Nếu chỉ ra một miền trong cả hai tùy chọn, thì sự\n"
+"bỏ đi sẽ chiếm ưu thế.  Tham số accept_all_cookies sẽ ghi chèn mọi\n"
+"thiết lập này.\n"
+
+#: src/LYrcFile.c:356
+msgid ""
+"cookie_file specifies the file from which to read persistent cookies.\n"
+"The default is ~/.lynx_cookies.\n"
+msgstr ""
+"cookie_file chỉ ra tập tin để đọc các cookie cố định.\n"
+"Mặc định là ~/.lynx_cookies.\n"
+
+#: src/LYrcFile.c:361
+msgid ""
+"cookie_loose_invalid_domains, cookie_strict_invalid_domains, and\n"
+"cookie_query_invalid_domains are comma-delimited lists of which domains\n"
+"should be subjected to varying degrees of validity checking.  If a\n"
+"domain is set to strict checking, strict conformance to RFC2109 will\n"
+"be applied.  A domain with loose checking will be allowed to set cookies\n"
+"with an invalid path or domain attribute.  All domains will default to\n"
+"querying the user for an invalid path or domain.\n"
+msgstr ""
+"cookie_loose_invalid_domains, cookie_strict_invalid_domains, và\n"
+"cookie_query_invalid_domains là danh sách phân cách nhau bởi dấu phẩy\n"
+"của những miền cần kiểm tra sự đúng đắn.  Nếu thiết lập kiểm tra\n"
+"ngặt nghèo một miền, thì sẽ áp dụng giới hạn RFC2109 cho miền\n"
+"đó.  Một miền với kiểm tra buông lỏng sẽ được cho phép cookie\n"
+"với đường dẫn hoặc miền sai.  Mọi miền theo mặc định sẽ hỏi người\n"
+"dùing khi có đường dẫn hoặc miền sai.\n"
+
+#: src/LYrcFile.c:375
+msgid ""
+"dir_list_order specifies the directory list order under DIRED_SUPPORT\n"
+"(if implemented).  The default is \"ORDER_BY_NAME\"\n"
+msgstr ""
+"dir_list_order chỉ ra thứ tự danh sách thư mục dưới DIRED_SUPPORT\n"
+"(nếu có).  Mặc định là \"ORDER_BY_NAME\" (sắp xếp theo tên)\n"
+
+#: src/LYrcFile.c:380
+msgid ""
+"dir_list_styles specifies the directory list style under DIRED_SUPPORT\n"
+"(if implemented).  The default is \"MIXED_STYLE\", which sorts both\n"
+"files and directories together.  \"FILES_FIRST\" lists files first and\n"
+"\"DIRECTORIES_FIRST\" lists directories first.\n"
+msgstr ""
+"dir_list_styles chỉ ra dạng danh sách thư mục dưới DIRED_SUPPORT\n"
+"(nếu hỗ trợ).  Mặc định là \"MIXED_STYLE\", tức là đặt cả tập tin và\n"
+"thư mục lẫn với nhau.  \"FILES_FIRST\" liệt kê tập tin trước và\n"
+"\"DIRECTORIES_FIRST\" liệt kê thư mục trước.\n"
+
+#: src/LYrcFile.c:388
+msgid ""
+"If emacs_keys is to \"on\" then the normal EMACS movement keys:\n"
+"  ^N = down    ^P = up\n"
+"  ^B = left    ^F = right\n"
+"will be enabled.\n"
+msgstr ""
+"Nếu emacs_keys là \"on\" thì có thể dùng những phím di chuyển\n"
+"như trong EMACS:\n"
+"  ^N = xuống    ^P = lên\n"
+"  ^B = sang trái    ^F = sang phải\n"
+
+#: src/LYrcFile.c:394
+msgid ""
+"file_editor specifies the editor to be invoked when editing local files\n"
+"or sending mail.  If no editor is specified, then file editing is disabled\n"
+"unless it is activated from the command line, and the built-in line editor\n"
+"will be used for sending mail.\n"
+msgstr ""
+"file_editor chỉ ra trình soạn thảo sẽ gọi khi soạn thảo tập tin hoặc gửi\n"
+"thư.  Nếu không chỉ ra trình soạn thảo nào, thì sẽ tắt bỏ việc soạn thảo\n"
+"trừ khi kích hoạt từ dòng lệnh, khi đó sử dụng trình soạn thảo theo dòng\n"
+"tích hợp để gửi thư.\n"
+
+#: src/LYrcFile.c:400
+msgid ""
+"The file_sorting_method specifies which value to sort on when viewing\n"
+"file lists such as FTP directories.  The options are:\n"
+"   BY_FILENAME -- sorts on the name of the file\n"
+"   BY_TYPE     -- sorts on the type of the file\n"
+"   BY_SIZE     -- sorts on the size of the file\n"
+"   BY_DATE     -- sorts on the date of the file\n"
+msgstr ""
+"file_sorting_method chỉ ra giá trị để sắp xếp khi xem danh sách\n"
+"như các thư mục FTP.  Có các tùy chọn:\n"
+"   BY_FILENAME -- sắp xếp theo tên tập tin\n"
+"   BY_TYPE     -- sắp xếp theo byte của tập tin\n"
+"   BY_SIZE     -- sắp xếp theo kích thước của tập tin\n"
+"   BY_DATE     -- sắp xếp theo ngày của tập tin\n"
+
+#: src/LYrcFile.c:418
+msgid ""
+"lineedit_mode specifies the key binding used for inputting strings in\n"
+"prompts and forms.  If lineedit_mode is set to \"Default Binding\" then\n"
+"the following control characters are used for moving and deleting:\n"
+"\n"
+"             Prev  Next       Enter = Accept input\n"
+"   Move char: <-    ->        ^G    = Cancel input\n"
+"   Move word: ^P    ^N        ^U    = Erase line\n"
+" Delete char: ^H    ^R        ^A    = Beginning of line\n"
+" Delete word: ^B    ^F        ^E    = End of line\n"
+"\n"
+"Current lineedit modes are:\n"
+msgstr ""
+"lineedit_mode chỉ ra các tổ hợp phím dùng cho các chuỗi nhập vào\n"
+"trong dấu nhắc và biểu mẫu.  Nếu lineedit_mode đặt thành \"Default Binding\" thì những ký tự điều khiển sau dùng để di chuyển và "
+"xóa\n"
+"\n"
+"             Prev  Next       Enter = Chấp nhận nhập vào\n"
+"   Di chuyển ký tự: <-    ->        ^G    = Dừng nhập\n"
+"   Di chuyển từ: ^P    ^N        ^U    = Xóa dòng\n"
+" Xóa ký tự: ^H    ^R        ^A    = Đầu dòng\n"
+" Xóa từ: ^B    ^F        ^E    = Cuối dòng\n"
+"\n"
+"Current lineedit modes are:\n"
+
+#: src/LYrcFile.c:436
+msgid ""
+"The following allow you to define sub-bookmark files and descriptions.\n"
+"The format is multi_bookmark<capital_letter>=<filename>,<description>\n"
+"Up to 26 bookmark files (for the English capital letters) are allowed.\n"
+"We start with \"multi_bookmarkB\" since 'A' is the default (see above).\n"
+msgstr ""
+"Những cái sau cho phép xác định tập tin Ưa thích con và các mô tả.\n"
+"Định dạng là multi_bookmark<chữcáihoa>=<têntậptin>,<môtả>\n"
+"Cho phép 26 tập tin ưa thích (26 chữ cái hoa tiếng Anh).\n"
+"Chúng ta bắt đầu với \"multi_bookmarkB\" vì 'A' là mặc định (xem ở trên).\n"
+
+#: src/LYrcFile.c:442
+msgid ""
+"personal_mail_address specifies your personal mail address.  The\n"
+"address will be sent during HTTP file transfers for authorization and\n"
+"logging purposes, and for mailed comments.\n"
+"If you do not want this information given out, set the NO_FROM_HEADER\n"
+"to TRUE in lynx.cfg, or use the -nofrom command line switch.  You also\n"
+"could leave this field blank, but then you won't have it included in\n"
+"your mailed comments.\n"
+msgstr ""
+"personal_mail_address chỉ ra địa chỉ thư cá nhân của người dùng.\n"
+"Địa chỉ này dùng để xác thực trong khi truyền tải tập tin qua HTTP và\n"
+"dùng với mục mục đích ghi sự kiện, và cho các chú thích thư.\n"
+"Nếu không muốn đưa ra thông tin này thì đặt NO_FROM_HEADER\n"
+"thành TRUE trong lynx.cfg, hoặc dùng tùy chọn dòng lệnh -nofrom.\n"
+"Cũng có thể để trống, nhưng khi đó thì sẽ không có địa chỉ này trong\n"
+"chú thích thư.\n"
+
+#: src/LYrcFile.c:451
+msgid ""
+"preferred_charset specifies the character set in MIME notation (e.g.,\n"
+"ISO-8859-2, ISO-8859-5) which Lynx will indicate you prefer in requests\n"
+"to http servers using an Accept-Charset header.  The value should NOT\n"
+"include ISO-8859-1 or US-ASCII, since those values are always assumed\n"
+"by default.  May be a comma-separated list.\n"
+"If a file in that character set is available, the server will send it.\n"
+"If no Accept-Charset header is present, the default is that any\n"
+"character set is acceptable.  If an Accept-Charset header is present,\n"
+"and if the server cannot send a response which is acceptable\n"
+"according to the Accept-Charset header, then the server SHOULD send\n"
+"an error response, though the sending of an unacceptable response\n"
+"is also allowed.\n"
+msgstr ""
+"preferred_charset chỉ ra bảng mã theo ký hiệu MIME (ví dụ,\n"
+"ISO-8859-2, ISO-8859-5) Lynx sẽ chỉ ra trong yêu cầu gửi tới máy\n"
+"chủ http bằng phần đầu Accept-Charset.  Giá trị KHÔNG được là\n"
+"ISO-8859-1 hay US-ASCII, vì những giá trị này luôn luôn là mặc định.\n"
+"Cũng có thể dùng một danh sách phân cách nhau bởi dấu phẩy.\n"
+"Nếu có một tập tin với bảng mã đó thì máy chủ sẽ gửi nó. Nếu không\n"
+"có phần đầu Accept-Charset, thì mặc định là chấp nhận mọi bảng mã.\n"
+"Nếu có phần đầu Accept-Charset và máy chủ không gửi được câu trả,\n"
+"lời tương ứng với phần đầu, thì máy chủ PHẢI gửi một câu trả lời về\n"
+"lỗi, mặc dù có cho phép gửi một câu trả lời không tương ứng.\n"
+
+#: src/LYrcFile.c:467
+msgid ""
+"preferred_language specifies the language in MIME notation (e.g., en,\n"
+"fr, may be a comma-separated list in decreasing preference)\n"
+"which Lynx will indicate you prefer in requests to http servers.\n"
+"If a file in that language is available, the server will send it.\n"
+"Otherwise, the server will send the file in its default language.\n"
+msgstr ""
+"preferred_language chỉ ra ngôn ngữ ở dạng MIME (ví dụ, vi,\n"
+"ru, có thể là danh sách cách ngôn ngữ phân cách nhau bởi dấu\n"
+"phẩy, theo thứ tự ưu tiên giảm dần) Lynx sẽ chỉ ra trong yêu cầu\n"
+"tới máy chủ http. Nếu có tập tin với ngôn ngữ đó, thì máy chủ sẽ\n"
+"gửi nó. Nếu không máy chủ sẽ gửi tập tin với ngôn ngữ mặc định.\n"
+
+#: src/LYrcFile.c:478
+msgid ""
+"If run_all_execution_links is set \"on\" then all local execution links\n"
+"will be executed when they are selected.\n"
+"\n"
+"WARNING - This is potentially VERY dangerous.  Since you may view\n"
+"          information that is written by unknown and untrusted sources\n"
+"          there exists the possibility that Trojan horse links could be\n"
+"          written.  Trojan horse links could be written to erase files\n"
+"          or compromise security.  This should only be set to \"on\" if\n"
+"          you are viewing trusted source information.\n"
+msgstr ""
+"Nếu run_all_execution_links đặt thành \"on\" thì mọi liên kết thực\n"
+"hiện nội bộ sẽ thực hiện khi chúng được chọn.\n"
+"\n"
+"CẢNH BÁO - Có thể RẤT nguy hiểm.  Vì có thể sẽ xem thông tin từ\n"
+"          những nguồn không rõ hoặc không tin tưởng có chứa những\n"
+"          liên kết ngựa Troa.  Liên kết ngựa Troa có thể thực hiện việc\n"
+"          xóa tập tin hay ảnh hưởng việc bảo mật.  Chỉ nên đặt thành\n"
+"          \"on\" nếu đang xem nguồn thông tin tin tưởng.\n"
+
+#: src/LYrcFile.c:489
+msgid ""
+"If run_execution_links_on_local_files is set \"on\" then all local\n"
+"execution links that are found in LOCAL files will be executed when they\n"
+"are selected.  This is different from run_all_execution_links in that\n"
+"only files that reside on the local system will have execution link\n"
+"permissions.\n"
+"\n"
+"WARNING - This is potentially dangerous.  Since you may view\n"
+"          information that is written by unknown and untrusted sources\n"
+"          there exists the possibility that Trojan horse links could be\n"
+"          written.  Trojan horse links could be written to erase files\n"
+"          or compromise security.  This should only be set to \"on\" if\n"
+"          you are viewing trusted source information.\n"
+msgstr ""
+"Nếu run_execution_links_on_locale_files đặt thành \"on\" thì mọi liên\n"
+"thực hiện nội bộ tìm thấy trong các tập tin NỘI BỘ sẽ thực hiện khi\n"
+"chúng được chọn.  Khác với run_all_execution_links ở chỗ chỉ những\n"
+"tập tin nằm trên hệ thống nội bộ mới có quyền thực hiện liên kết.\n"
+"\n"
+"CẢNH BÁO - Có thể nguy hiểm.  Vì có thể sẽ xem thông tin từ\n"
+"          những nguồn không rõ hoặc không tin tưởng có chứa những\n"
+"          liên kết ngựa Troa.  Liên kết ngựa Troa có thể thực hiện việc\n"
+"          xóa tập tin hay ảnh hưởng việc bảo mật.  Chỉ nên đặt thành\n"
+"          \"on\" nếu đang xem nguồn thông tin tin tưởng.\n"
+
+#: src/LYrcFile.c:507
+msgid ""
+"select_popups specifies whether the OPTIONs in a SELECT block which\n"
+"lacks a MULTIPLE attribute are presented as a vertical list of radio\n"
+"buttons or via a popup menu.  Note that if the MULTIPLE attribute is\n"
+"present in the SELECT start tag, Lynx always will create a vertical list\n"
+"of checkboxes for the OPTIONs.  A value of \"on\" will set popup menus\n"
+"as the default while a value of \"off\" will set use of radio boxes.\n"
+"The default can be overridden via the -popup command line toggle.\n"
+msgstr ""
+"select_popups cho biết OPTION trong một khối SELECT không có thuộc\n"
+"tính MULTIPLE được hiển thị như một danh sách thẳng đứng của các nút\n"
+"radio hay qua một trình đơn popup.  Chú ý nếu có thuộc tính MULTIPLE\n"
+"trong thẻ bắt đầu của SELECT, Lynx sẽ luôn luôn tạo danh sách thẳng đứng\n"
+"các hộp kiểm tra cho OPTION.  Giá trị \"on\" sẽ đặt trình đơn popup\n"
+"làm mặc định còn \"off\" sẽ sử dụng các hộp radio.\n"
+"Có thể ghi chèn mặc định bằng tùy chọn dòng lệnh -popup.\n"
+
+#: src/LYrcFile.c:517
+msgid ""
+"show_color specifies how to set the color mode at startup.  A value of\n"
+"\"never\" will force color mode off (treat the terminal as monochrome)\n"
+"at startup even if the terminal appears to be color capable.  A value of\n"
+"\"always\" will force color mode on even if the terminal appears to be\n"
+"monochrome, if this is supported by the library used to build lynx.\n"
+"A value of \"default\" will yield the behavior of assuming\n"
+"a monochrome terminal unless color capability is inferred at startup\n"
+"based on the terminal type, or the -color command line switch is used, or\n"
+"the COLORTERM environment variable is set.  The default behavior always is\n"
+"used in anonymous accounts or if the \"option_save\" restriction is set.\n"
+"The effect of the saved value can be overridden via\n"
+"the -color and -nocolor command line switches.\n"
+"The mode set at startup can be changed via the \"show color\" option in\n"
+"the 'o'ptions menu.  If the option settings are saved, the \"on\" and\n"
+"\"off\" \"show color\" settings will be treated as \"default\".\n"
+msgstr ""
+"show_color chỉ ra cách đặt chế độ màu khi chạy.  Giá trị \"không bao\n"
+"giờ\" sẽ bắt buộc tắt dùng màu (coi như terminal đen trằng) khi chạy\n"
+"thậm chỉ cả khi terminal có khả năng dùng màu.  Giá trị \"luôn luôn\"\n"
+"sẽ bắt buộc chế độ màu thậm chi terminal là đen trắng, nếu được hỗ\n"
+"trợ bởi thư viện dùng để biên dịch lynx. Giá trị \"mặc định\" sẽ coi như\n"
+"terminal là đen trắng trừ khi suy ra khả năng có màu khi khởi động\n"
+"dựa trên dạng terminal, hoặc có tùy chọn dòng lệnh -color, hoặc đặt\n"
+"biến môi trường COLORTERM.  Mặc định luôn luôn được dùng cho tài\n"
+"khoản giấu tên hoặc nếu đặt giới hạn \"option_save\".\n"
+"Ảnh hưởng của giá trị đã ghi có thể ghi chèn qua các tùy chọn dòng lệnh\n"
+"-color và -nocolor.\n"
+"Có thể thay đổi chế độ lúc khởi động qua tùy chọn \"Hiển thị màu\" in\n"
+"trong trình đơn 'o'ptions.  Nếu đã ghi thiết lập tùy chọn, thì thiết lập \"bật\" và\n"
+"\"tắt\" \"hiển thị màu\" sẽ được coi là \"mặc định\".\n"
+
+#: src/LYrcFile.c:534
+msgid ""
+"show_cursor specifies whether to 'hide' the cursor to the right (and\n"
+"bottom, if possible) of the screen, or to place it to the left of the\n"
+"current link in documents, or current option in select popup windows.\n"
+"Positioning the cursor to the left of the current link or option is\n"
+"helpful for speech or braille interfaces, and when the terminal is\n"
+"one which does not distinguish the current link based on highlighting\n"
+"or color.  A value of \"on\" will set positioning to the left as the\n"
+"default while a value of \"off\" will set 'hiding' of the cursor.\n"
+"The default can be overridden via the -show_cursor command line toggle.\n"
+msgstr ""
+"show_cursor xác định 'ẩn' con trỏ vào bên phải (và đáy, nếu có\n"
+"thể) của màn hình, hay đặt nó vào bên trái của liên kết hiện thời\n"
+"trong tài liệu, hoặc tùy chọn hiện thời trong cửa sổ popup được chọn.\n"
+"Việc đặt con trỏ vào bên trái liên kết hay tùy chọn có ích cho các \n"
+"giao diện đọc và chữ nổi Bray cho những người có khuyết tật, và khi\n"
+"terminal không nhận ra liên kết hiện thời dựa trên chiếu sách hay màu\n"
+"sắc.  Giá trị \"on\" sẽ đặt vị trí tới bên trái làm mặc định còn giá trị\n"
+"\"off\" sẽ đặt 'ẩn' con trỏ.\n"
+"Có thể ghi chèn mặc định này bằng tùy chọn dòng lệnh -show_cursor.\n"
+
+#: src/LYrcFile.c:545
+msgid ""
+"show_dotfiles specifies that the directory listing should include\n"
+"\"hidden\" (dot) files/directories.  If set \"on\", this will be\n"
+"honored only if enabled via userdefs.h and/or lynx.cfg, and not\n"
+"restricted via a command line switch.  If display of hidden files\n"
+"is disabled, creation of such files via Lynx also is disabled.\n"
+msgstr ""
+"show_dotfiles cho biết danh sách thư mục có gồm các tập tin/thư mục\n"
+"\"ẩn\" (dot) không.  Nếu đặt \"on\", thì sẽ hiển thị những tập tin đó\n"
+"nếu cho phép qua userdefs.h và/hoặc lynx.cfg, và không\n"
+"hạn chế qua tùy chọn dòng lệnh.  Nếu tắt bỏ việc hiển thị các tập\n"
+"tin ẩn, thì việc tạo những tập tin như vậy bằng Lynx cũng bị tắt.\n"
+
+#: src/LYrcFile.c:556
+msgid ""
+"If sub_bookmarks is not turned \"off\", and multiple bookmarks have\n"
+"been defined (see below), then all bookmark operations will first\n"
+"prompt the user to select an active sub-bookmark file.  If the default\n"
+"Lynx bookmark_file is defined (see above), it will be used as the\n"
+"default selection.  When this option is set to \"advanced\", and the\n"
+"user mode is advanced, the 'v'iew bookmark command will invoke a\n"
+"statusline prompt instead of the menu seen in novice and intermediate\n"
+"user modes.  When this option is set to \"standard\", the menu will be\n"
+"presented regardless of user mode.\n"
+msgstr ""
+"Nếu sub_bookmarks không đặt thành \"off\", và có xác định dùng nhiều\n"
+"Ưa thích (xem dưới), thì mọi thao tác với ưa thích sẽ bắt đầu bằng việc\n"
+"hỏi người dùng chọn tập tin ưa thích con để dùng.  Nếu xác định tập tin\n"
+"bookmark_file mặc định của Lynx (xem trên), nó sẽ được dùng làm lựa\n"
+"chọn mặc định.  Khi tùy chọn này đặt thành \"advanced\", và chế độ\n"
+"người dùng là `có nghề', thì câu lệnh 'v'iew ưa thích sẽ gọi một dấu\n"
+"nhắc dòng trạng thái thay cho trình đơn trong chế độ người mới và\n"
+"trung bình.  Khi tùy chọn này đặt thành \"standard\", thì trình đơn sẽ\n"
+"hiển thị không phụ thuộc vào chế độ người dùng.\n"
+
+#: src/LYrcFile.c:570
+msgid ""
+"user_mode specifies the users level of knowledge with Lynx.  The\n"
+"default is \"NOVICE\" which displays two extra lines of help at the\n"
+"bottom of the screen to aid the user in learning the basic Lynx\n"
+"commands.  Set user_mode to \"INTERMEDIATE\" to turn off the extra info.\n"
+"Use \"ADVANCED\" to see the URL of the currently selected link at the\n"
+"bottom of the screen.\n"
+msgstr ""
+"user_mode chỉ ra mức độ thành thạo của người dùng Lynx.  Mặc định là\n"
+"\"NOVICE\" (người mới), khi đó sẽ hiển thị hai dòng trợ giúp mở rộng tại\n"
+"đáy màn hình để giúp người dùng học các câu lệnh cơ bản của Lynx.  Đặt\n"
+"user_mode thành \"INTERMEDIATE\" (trung bình) để bỏ những thông tin này.\n"
+"Dùng \"ADVANCED\" (có nghề) để xem URL của liên kết đã chọn tại đáy\n"
+"màn hình.\n"
+
+#: src/LYrcFile.c:579
+msgid ""
+"If verbose_images is \"on\", lynx will print the name of the image\n"
+"source file in place of [INLINE], [LINK] or [IMAGE]\n"
+"See also VERBOSE_IMAGES in lynx.cfg\n"
+msgstr ""
+"Nếu verbose_images là \"on\", lynx sẽ in ra tên của tập tin hình ảnh\n"
+"ở vị trí của [INLINE], [LINK] hoặc [IMAGE]\n"
+"Hãy xem thêm VERBOSE_IMAGES trong lynx.cfg\n"
+
+#: src/LYrcFile.c:584
+msgid ""
+"If vi_keys is set to \"on\", then the normal VI movement keys:\n"
+"  j = down    k = up\n"
+"  h = left    l = right\n"
+"will be enabled.  These keys are only lower case.\n"
+"Capital 'H', 'J' and 'K will still activate help, jump shortcuts,\n"
+"and the keymap display, respectively.\n"
+msgstr ""
+"Nếu vi_keys đặt thành \"on\", thì có thể dụng các phím di chuyển\n"
+"như trong VI:\n"
+"  j = xuống    k = lên\n"
+"  h = sang trái    l = sang phải\n"
+"Những phím này cần viết thường.\n"
+"'H', 'J' và 'K viết hoa sẽ gọi trợ giúp, nhảy shortcut,\n"
+"và hiển thị bàn phím một cách tương ứng.\n"
+
+#: src/LYrcFile.c:592
+msgid ""
+"The visited_links setting controls how Lynx organizes the information\n"
+"in the Visited Links Page.\n"
+msgstr ""
+"Thiết lập visited_links điều khiển cách Lynx tổ chức thông tin trên\n"
+"Trang Liên kết đã xem.\n"
+
+#: src/LYrcFile.c:810
+msgid ""
+"If keypad_mode is set to \"NUMBERS_AS_ARROWS\", then the numbers on\n"
+"your keypad when the numlock is on will act as arrow keys:\n"
+"            8 = Up Arrow\n"
+"  4 = Left Arrow    6 = Right Arrow\n"
+"            2 = Down Arrow\n"
+"and the corresponding keyboard numbers will act as arrow keys,\n"
+"regardless of whether numlock is on.\n"
+msgstr ""
+"Nếu keypad_mode là \"NUMBERS_AS_ARROWS\", thì các phím số trên\n"
+"bàn phím số khi đèn numlock bật sẽ làm việc như các mũi tên:\n"
+"            8 = Mũi tên lên\n"
+"  4 = Mũi tên trái    6 = Mũi tên phải\n"
+"            2 = Mũi tên xuống\n"
+"và các phím số tương ứng của bàn phím thông thường cũng làm việc,\n"
+"như các phím mũi tên dù đèn numlock có bật hay không.\n"
+
+#: src/LYrcFile.c:819
+msgid ""
+"If keypad_mode is set to \"LINKS_ARE_NUMBERED\", then numbers will\n"
+"appear next to each link and numbers are used to select links.\n"
+msgstr ""
+"Nếu keypad_mode đặt thành \"LINKS_ARE_NUMBERED\", thì các số\n"
+"sẽ xuất hiện bên cạnh mỗi liên kết và có thể dùng để chọn liên kết.\n"
+
+#: src/LYrcFile.c:823
+msgid ""
+"If keypad_mode is set to \"LINKS_AND_FORM_FIELDS_ARE_NUMBERED\", then\n"
+"numbers will appear next to each link and visible form input field.\n"
+"Numbers are used to select links, or to move the \"current link\" to a\n"
+"form input field or button.  In addition, options in popup menus are\n"
+"indexed so that the user may type an option number to select an option in\n"
+"a popup menu, even if the option isn't visible on the screen.  Reference\n"
+"lists and output from the list command also enumerate form inputs.\n"
+msgstr ""
+"Nếu keypad_mode đặt thành \"LINKS_AND_FORM_FIELDS_ARE_NUMBERED\", thì\n"
+"số sẽ nằm bên cạnh mỗi liên kết và hiển thị vùng nhập dữ liệu.\n"
+"Số dùng để chọn liên kết, hoặc di chuyển \"liên kết hiện thời\" tới một\n"
+"vùng nhập vào hay nút.  Thêm vào đó tùy chọn trong trình đơn popup\n"
+"cũng được đặt chỉ mục và người dùng có thể gõ số của tùy chọn để chọn\n"
+"tùy chọn đó trong trình đơn popup, thậm chí nếu không thấy tùy chọn\n"
+"trên màn hình.  Danh sách liên kết và kết quả từ câu lệnh liệt kê đồng\n"
+"thời đánh số biểu mẫu nhập vào.\n"
+
+#: src/LYrcFile.c:832
+msgid ""
+"NOTE: Some fixed format documents may look disfigured when\n"
+"\"LINKS_ARE_NUMBERED\" or \"LINKS_AND_FORM_FIELDS_ARE_NUMBERED\" are\n"
+"enabled.\n"
+msgstr ""
+"CHÚ Ý: Một vài tài liệu có định dạng cố định có vẻ hỗ loạn khi\n"
+"\"LINKS_ARE_NUMBERED\" hoặc \"LINKS_AND_FORM_FIELDS_ARE_NUMBERED\" là\n"
+"bật.\n"
+
+#: src/LYrcFile.c:864
+msgid ""
+"Lynx User Defaults File\n"
+"\n"
+"This file contains options saved from the Lynx Options Screen (normally\n"
+"with the '>' key).  There is normally no need to edit this file manually,\n"
+"since the defaults here can be controlled from the Options Screen, and the\n"
+"next time options are saved from the Options Screen this file will be\n"
+"completely rewritten.  You have been warned...\n"
+"If you are looking for the general configuration file - it is normally\n"
+"called lynx.cfg, and it has different content and a different format.\n"
+"It is not this file.\n"
+msgstr ""
+"Tập tin Người dùng Lynx Mặc định\n"
+"\n"
+"Tập tin này chứa những tùy chọn ghi nhớ từ Màn hình Tùy chọn Lynx (thông\n"
+"thường với phím '>').  Thông thường không cần soạn thảo tập tin này thủ\n"
+"công, vì những giá trị mặc định có thể điều khiển qua Màn hình Tùy chọn, và\n"
+"lần chạy tiếp theo tùy chọn ghi nhớ từ Màn hình Tùy chọn sẽ ghi chèn lên\n"
+"tập tin này.  Người dùng đã được cảnh báo trước...\n"
+"Tập tin cấu hình chung thường gọi là lynx.cfg, nó có nội dung cũng như\n"
+"định dạng khác. Đây không phải là tập tin như vậy.\n"

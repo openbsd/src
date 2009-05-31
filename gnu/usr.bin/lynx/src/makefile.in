@@ -21,10 +21,17 @@ CPP		= @CPP@
 CFLAGS		= @CFLAGS@
 DEFS		= @DEFS@
 CHARSET_DEFS	= @CHARSET_DEFS@
+EXTRA_CPPFLAGS	= @EXTRA_CPPFLAGS@
 CPPFLAGS	= @CPPFLAGS@
 
 x		= @EXEEXT@
 o		= .@OBJEXT@
+
+BUILD_CC	= @BUILD_CC@
+BUILD_CPP	= @BUILD_CPP@
+BUILD_CFLAGS	= @BUILD_CFLAGS@
+BUILD_CPPFLAGS	= @BUILD_CPPFLAGS@ @DEFS@
+BUILD_EXEEXT	= @BUILD_EXEEXT@
 
 LIBS		= @LIBS@ $(RESOLVLIB) $(WAISLIB) $(SITE_LIBS)
 LDFLAGS		= @LDFLAGS@
@@ -41,7 +48,7 @@ WWWLIB		= $(top_builddir)/WWW/Library/Implementation/libwww.a
 INTLLIB		= @INTLLIBS@
 INTLDIR_CPPFLAGS= @INTLDIR_CPPFLAGS@-I$(top_srcdir)/intl
 
-CPP_OPTS	= $(CPPFLAGS) $(DEFS) $(CHARSET_DEFS) \
+CPP_OPTS	= $(EXTRA_CPPFLAGS) $(CPPFLAGS) $(DEFS) $(CHARSET_DEFS) \
 		-DLOCALEDIR=\"$(localedir)\" \
 		-I. \
 		-I$(top_builddir) \
@@ -70,7 +77,7 @@ OBJS	= \
 	LYLeaks$o LYexit$o LYJump$o LYList$o LYCgi$o \
 	LYTraversal$o LYEditmap$o LYCharSets$o LYCharUtils$o \
 	LYMap$o LYCookie$o LYStyle$o LYHash$o LYPrettySrc$o \
-	TRSTable$o $(CHARTRANS_OBJS) @LIBOBJS@
+	TRSTable$o $(CHARTRANS_OBJS) @EXTRA_OBJS@ @LIBOBJS@
 
 C_SRC	= $(OBJS:$o=.c)
 
@@ -88,7 +95,7 @@ all: lynx$x
 
 lynx$x:   message do_chartrans_stuff $(top_builddir)/LYHelp.h $(OBJS) $(WWWLIB)
 	@echo "Linking and creating Lynx executable"
-	$(CC) $(CC_OPTS) $(LDFLAGS) -o $@  $(OBJS) $(WWWLIB) $(INTLLIB) $(LIBS)
+	$(CC) $(CC_OPTS) $(LDFLAGS) -o $@  $(OBJS) $(WWWLIB) $(INTLLIB) $(LDFLAGS) $(LIBS)
 	@echo "Copying Lynx executable into top-level directory"
 	rm -f $(top_builddir)/$@
 	cp $@ $(top_builddir)/
@@ -100,9 +107,11 @@ message:
 do_chartrans_stuff:
 	-cd chrtrans && $(MAKE) \
 		SITE_DEFS="$(SITE_DEFS)" \
-		CFLAGS="$(CFLAGS)" \
-		CPPFLAGS="$(CPPFLAGS)" \
-		CC="$(CC)" tables
+		BUILD_CFLAGS="$(BUILD_CFLAGS)" \
+		BUILD_CPPFLAGS="$(BUILD_CPPFLAGS)" \
+		BUILD_LDFLAGS="$(BUILD_LDFLAGS)" \
+		BUILD_LIBS="$(BUILD_LIBS)" \
+		BUILD_CC="$(BUILD_CC)" tables
 
 lint:
 	$(LINT) $(LINTOPTS) $(CPP_OPTS) *.c  > $(top_builddir)/lint.lynx
@@ -110,6 +119,9 @@ lint:
 clean:
 	rm -f lynx$x core *.core *.leaks *.i *$o *.bak tags TAGS
 	cd chrtrans && $(MAKE) clean
+
+tags:
+	ctags *.[ch]
 
 distclean: clean
 
@@ -163,7 +175,6 @@ TABLES= \
  $(CHRTR)iso08_uni.h \
  $(CHRTR)iso09_uni.h \
  $(CHRTR)iso10_uni.h \
- $(CHRTR)iso13_uni.h \
  $(CHRTR)iso15_uni.h \
  $(CHRTR)koi8r_uni.h \
  $(CHRTR)mac_uni.h \
@@ -177,14 +188,27 @@ TABLES= \
 $(TABLES): do_chartrans_stuff
 	-cd chrtrans && $(MAKE) tables
 
-UCdomap$o : UCdomap.c chrtrans/UCkd.h chrtrans/makeuctb$x chrtrans/makeuctb.c \
+UCdomap$o :	UCdomap.c \
+		chrtrans/UCkd.h \
+		chrtrans/makeuctb$(BUILD_EXEEXT) \
+		chrtrans/makeuctb.c \
 	UCdomap.h $(CMN)UCMap.h $(TABLES) $(top_srcdir)/userdefs.h
 
-chrtrans/makeuctb$x: do_chartrans_stuff
-	-cd chrtrans && ${MAKE} makeuctb$x
+chrtrans/makeuctb$(BUILD_EXEEXT):
+	cd chrtrans; make makeuctb$(BUILD_EXEEXT)
 
 UCAux$o : UCAux.c $(CMN)UCAux.h $(CMN)UCDefs.h
 LYCookie$o : $(top_srcdir)/userdefs.h
+
+.if ${MACHINE_ARCH} == "hppa"
+LYMainLoop.o: ${srcdir}/LYMainLoop.c
+@RULE_CC@
+	@ECHO_CC@$(CC) $(CC_OPTS) -O0 -c $<
+
+HTML.o: ${srcdir}/HTML.c
+@RULE_CC@
+	@ECHO_CC@$(CC) $(CC_OPTS) -O0 -c $<
+.endif
 
 depend : $(TABLES)
 	makedepend -fmakefile -- $(CC_OPTS) -- $(C_SRC)

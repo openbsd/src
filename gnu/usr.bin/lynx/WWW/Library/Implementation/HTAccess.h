@@ -11,22 +11,24 @@
 #ifndef HTACCESS_H
 #define HTACCESS_H
 
-extern char * use_this_url_instead;
-
-extern int redirection_attempts;
-
 /*      Definition uses:
 */
 #include <HTAnchor.h>
 #include <HTFormat.h>
 
-/*      Return codes from load routines:
-**
-**      These codes may be returned by the protocol modules,
-**      and by the HTLoad routines.
-**      In general, positive codes are OK and negative ones are bad.
-*/
+#ifdef __cplusplus
+extern "C" {
+#endif
+    extern char *use_this_url_instead;
 
+    extern int redirection_attempts;
+
+/*      Return codes from load routines:
+ *
+ *      These codes may be returned by the protocol modules,
+ *      and by the HTLoad routines.
+ *      In general, positive codes are OK and negative ones are bad.
+ */
 
 /*
 
@@ -36,10 +38,10 @@ Default Addresses
    for user confusion.
 
  */
-#define LOGICAL_DEFAULT "WWW_HOME"  /* Defined to be the home page */
+#define LOGICAL_DEFAULT "WWW_HOME"	/* Defined to be the home page */
 
 #ifndef PERSONAL_DEFAULT
-#define PERSONAL_DEFAULT "WWW/default.html"     /* in home directory */
+#define PERSONAL_DEFAULT "WWW/default.html"	/* in home directory */
 #endif
 #ifndef LOCAL_DEFAULT_FILE
 #define LOCAL_DEFAULT_FILE "/usr/local/lib/WWW/default.html"
@@ -47,11 +49,11 @@ Default Addresses
 /*  If one telnets to a www access point,
     it will look in this file for home page */
 #ifndef REMOTE_POINTER
-#define REMOTE_POINTER  "/etc/www-remote.url"  /* can't be file */
+#define REMOTE_POINTER  "/etc/www-remote.url"	/* can't be file */
 #endif
 /* and if that fails it will use this. */
 #ifndef REMOTE_ADDRESS
-#define REMOTE_ADDRESS  "http://www.w3.org/remote.html"  /* can't be file */
+#define REMOTE_ADDRESS  "http://www.w3.org/remote.html"		/* can't be file */
 #endif
 
 /* If run from telnet daemon and no -l specified, use this file:
@@ -66,39 +68,37 @@ Default Addresses
 #define LAST_RESORT     "http://www.w3.org/default.html"
 #endif
 
-
 /*
 
 Flags which may be set to control this module
 
  */
 #ifdef NOT
-extern int HTDiag;                      /* Flag: load source as plain text */
-#endif /* NOT */
-extern char * HTClientHost;             /* Name or number of telnetting host */
-extern FILE * HTlogfile;                /* File to output one-liners to */
-extern BOOL HTSecure;                   /* Disable security holes? */
-extern BOOL HTPermitRedir;              /* Special flag for getfile() */
-extern HTStream* HTOutputStream;        /* For non-interactive, set this */
-extern HTFormat HTOutputFormat;         /* To convert on load, set this */
+    extern int HTDiag;		/* Flag: load source as plain text */
+#endif				/* NOT */
+    extern char *HTClientHost;	/* Name or number of telnetting host */
+    extern FILE *HTlogfile;	/* File to output one-liners to */
+    extern BOOL HTSecure;	/* Disable security holes? */
+    extern BOOL HTPermitRedir;	/* Special flag for getfile() */
+    extern HTStream *HTOutputStream;	/* For non-interactive, set this */
+    extern HTFormat HTOutputFormat;	/* To convert on load, set this */
 
 /*	Check for proxy override.			override_proxy()
-**
-**	Check the no_proxy environment variable to get the list
-**	of hosts for which proxy server is not consulted.
-**
-**	no_proxy is a comma- or space-separated list of machine
-**	or domain names, with optional :port part.  If no :port
-**	part is present, it applies to all ports on that domain.
-**
-**  Example:
-**          no_proxy="cern.ch,some.domain:8001"
-**
-**  Use "*" to override all proxy service:
-**	     no_proxy="*"
-*/
-extern BOOL override_proxy PARAMS((
-	CONST char *	addr));
+ *
+ *	Check the no_proxy environment variable to get the list
+ *	of hosts for which proxy server is not consulted.
+ *
+ *	no_proxy is a comma- or space-separated list of machine
+ *	or domain names, with optional :port part.  If no :port
+ *	part is present, it applies to all ports on that domain.
+ *
+ *  Example:
+ *          no_proxy="cern.ch,some.domain:8001"
+ *
+ *  Use "*" to override all proxy service:
+ *	     no_proxy="*"
+ */
+    extern BOOL override_proxy(const char *addr);
 
 /*
 
@@ -113,10 +113,8 @@ Load a document from relative name
   NO                      Failure
 
  */
-extern  BOOL HTLoadRelative PARAMS((
-		CONST char *		relative_name,
-		HTParentAnchor *	here));
-
+    extern BOOL HTLoadRelative(const char *relative_name,
+			       HTParentAnchor *here);
 
 /*
 
@@ -131,8 +129,7 @@ Load a document from absolute name
   NO                      Failure
 
  */
-extern BOOL HTLoadAbsolute PARAMS((CONST DocAddress * addr));
-
+    extern BOOL HTLoadAbsolute(const DocAddress *addr);
 
 /*
 
@@ -149,9 +146,8 @@ Load a document from absolute name to a stream
    Note: This is equivalent to HTLoadDocument
 
  */
-extern BOOL HTLoadToStream PARAMS((CONST char * addr, BOOL filter_it,
-				HTStream * sink));
-
+    extern BOOL HTLoadToStream(const char *addr, BOOL filter_it,
+			       HTStream *sink);
 
 /*
 
@@ -165,8 +161,7 @@ Load if necessary, and select an anchor
   returns NO              Failure
 
  */
-extern BOOL HTLoadAnchor PARAMS((HTAnchor * destination));
-
+    extern BOOL HTLoadAnchor(HTAnchor * destination);
 
 /*
 
@@ -179,8 +174,7 @@ Make a stream for Saving object back
   returns                 0 if error else a stream to save the object to.
 
  */
-extern HTStream * HTSaveStream PARAMS((HTParentAnchor * anchor));
-
+    extern HTStream *HTSaveStream(HTParentAnchor *anchor);
 
 /*
 
@@ -194,8 +188,7 @@ Search
   here                    The anchor of the object being searched
 
  */
-extern BOOL HTSearch PARAMS((CONST char * keywords, HTParentAnchor* here));
-
+    extern BOOL HTSearch(const char *keywords, HTParentAnchor *here);
 
 /*
 
@@ -209,10 +202,8 @@ Search Given Indexname
   *indexname              is name of object search is to be done on.
 
  */
-extern BOOL HTSearchAbsolute PARAMS((
-	CONST char *	keywords,
-	char *		indexname));
-
+    extern BOOL HTSearchAbsolute(const char *keywords,
+				 char *indexname);
 
 /*
 
@@ -220,21 +211,19 @@ Register an access method
 
  */
 
-typedef struct _HTProtocol {
-	char * name;
+    typedef struct _HTProtocol {
+	const char *name;
 
-	int (*load)PARAMS((
-		CONST char *	full_address,
-		HTParentAnchor * anchor,
-		HTFormat	format_out,
-		HTStream*	sink));
+	int (*load) (const char *full_address,
+		     HTParentAnchor *anchor,
+		     HTFormat format_out,
+		     HTStream *sink);
 
-	HTStream* (*saveStream)PARAMS((HTParentAnchor * anchor));
+	HTStream *(*saveStream) (HTParentAnchor *anchor);
 
-} HTProtocol;
+    } HTProtocol;
 
-extern BOOL HTRegisterProtocol PARAMS((HTProtocol * protocol));
-
+    extern BOOL HTRegisterProtocol(HTProtocol * protocol);
 
 /*
 
@@ -248,26 +237,28 @@ Generate the anchor for the home page
    This is a default algorithm -- browser don't HAVE to use this.
 
  */
-extern HTParentAnchor * HTHomeAnchor NOPARAMS;
+    extern HTParentAnchor *HTHomeAnchor(void);
 
 /*
 
 Return Host Name
 
  */
-extern CONST char * HTHostName NOPARAMS;
+    extern const char *HTHostName(void);
 
 /*
 
 For registering protocols supported by Lynx
 
 */
-extern void LYRegisterLynxProtocols NOARGS;
+    extern void LYRegisterLynxProtocols(void);
 
-extern void LYUCPushAssumed PARAMS((
-    HTParentAnchor *	anchor));
-extern int LYUCPopAssumed NOPARAMS;
+    extern void LYUCPushAssumed(HTParentAnchor *anchor);
+    extern int LYUCPopAssumed(void);
 
-extern BOOL using_proxy;	/* Are we using an NNTP proxy? */
+    extern BOOL using_proxy;	/* Are we using an NNTP proxy? */
 
-#endif /* HTACCESS_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* HTACCESS_H */

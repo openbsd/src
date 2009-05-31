@@ -32,12 +32,10 @@
 #define ASC2HEXD(x) (((x) >= '0' && (x) <= '9') ?               \
 		     ((x) - '0') : (toupper(x) - 'A' + 10))
 
-
 /* Decodes the forms %xy in a URL to the character the hexadecimal
    code of which is xy. xy are hexadecimal digits from
    [0123456789ABCDEF] (case-insensitive). If x or y are not hex-digits
    or '%' is near '\0', the whole sequence is inserted literally. */
-
 
 static char *decode_string(char *s)
 {
@@ -56,38 +54,107 @@ static char *decode_string(char *s)
 		*p = *s;
 		continue;
 	    }
-	    *p = (char)((ASC2HEXD(*(s + 1)) << 4) + ASC2HEXD(*(s + 2)));
+	    *p = (char) ((ASC2HEXD(*(s + 1)) << 4) + ASC2HEXD(*(s + 2)));
 	    s += 2;
 	}
     }
     *p = '\0';
     return save_s;
 }
-#endif	/* WIN_EX */
+#endif /* WIN_EX */
 
 #ifdef WIN_EX
 /*
- *  Quote the path to make it safe for shell command processing.
+ * Quote the path to make it safe for shell command processing.
+ *  We always quote it not only includes spaces in it.
+ *  At least we should quote paths which include "&".
  */
-PUBLIC char * quote_pathname ARGS1(
-	char *, 	pathname)
+char *quote_pathname(char *pathname)
 {
-    char * result = NULL;
+    char *result = NULL;
 
-    if (strchr(pathname, ' ') != NULL) {
-	HTSprintf0(&result, "\"%s\"", pathname);
-    } else {
-	StrAllocCopy(result, pathname);
+    HTSprintf0(&result, "\"%s\"", pathname);
+    return result;
+}
+
+/*
+ *  Delete dangerous characters as local path.
+ *  We delete '<>|' and also '%"'.
+ *  '%' should be deleted because it's difficut to escape for all cases.
+ *  So we can't treat paths which include '%'.
+ *  '"' should be deleted because it's a obstacle to quote whole path.
+ */
+static void delete_danger_characters(char *src)
+{
+    char *dst;
+
+    for (dst = src; *src != '\0'; src++) {
+	if (strchr("<>|%\"", *src) == NULL) {
+	    *dst = *src;
+	    dst++;
+	}
     }
+    *dst = '\0';
+}
+
+static char *escapeParameter(CONST char *parameter)
+{
+    size_t i;
+    size_t last = strlen(parameter);
+    size_t n = 0;
+    size_t encoded = 0;
+    size_t escaped = 0;
+    char *result;
+    char *needs_encoded = "<>|";
+    char *needs_escaped = "%";
+    char *needs_escaped_NT = "%&^";
+
+    for (i = 0; i < last; ++i) {
+	if (strchr(needs_encoded, parameter[i]) != NULL) {
+	    ++encoded;
+	}
+	if (system_is_NT) {
+	    if (strchr(needs_escaped_NT, parameter[i]) != NULL) {
+		++escaped;
+	    }
+	} else if (strchr(needs_escaped, parameter[i]) != NULL) {
+	    ++escaped;
+	}
+    }
+
+    result = (char *) malloc(last + encoded * 2 + escaped + 1);
+    if (result == NULL)
+	outofmem(__FILE__, "escapeParameter");
+
+    n = 0;
+    for (i = 0; i < last; i++) {
+	if (strchr(needs_encoded, parameter[i]) != NULL) {
+	    sprintf(result + n, "%%%02X", (unsigned char) parameter[i]);
+	    n += 3;
+	    continue;
+	}
+	if (system_is_NT) {
+	    if (strchr(needs_escaped_NT, parameter[i]) != NULL) {
+		result[n++] = '^';
+		result[n++] = parameter[i];
+		continue;
+	    }
+	} else if (strchr(needs_escaped, parameter[i]) != NULL) {
+	    result[n++] = '%';	/* parameter[i] is '%' */
+	    result[n++] = parameter[i];
+	    continue;
+	}
+	result[n++] = parameter[i];
+    }
+    result[n] = '\0';
+
     return result;
 }
 #endif /* WIN_EX */
 
-
-PRIVATE void format ARGS3(
-    char **,	result,
-    char *,	fmt,
-    char *,	parm)
+static void format(char **result,
+		   char *fmt,
+		   char *parm)
 {
     *result = NULL;
     HTAddParam(result, fmt, 1, parm);
@@ -102,68 +169,72 @@ PRIVATE void format ARGS3(
  * Prevent spoofing of the shell.  Dunno how this needs to be modified for VMS
  * or DOS.  - kw
  */
-PRIVATE char *format_command ARGS2(
-    char *,	command,
-    char *,	param)
+static char *format_command(char *command,
+			    char *param)
 {
     char *cmdbuf = NULL;
 
 #if defined(WIN_EX)
-    if (*param != '\"' && strchr(param, ' ') != NULL) {
-	char *cp = quote_pathname(param);
-	format(&cmdbuf, command, cp);
-	FREE(cp);
-    } else {
-	char pram_string[LY_MAXPATH];
+    char pram_string[LY_MAXPATH];
+    char *escaped = NULL;
 
-	LYstrncpy(pram_string, param, sizeof(pram_string)-1);
+    if (strnicmp("file://localhost/", param, 17) == 0) {
+	/* decode local path parameter for programs to be
+	   able to interpret - TH */
+	LYstrncpy(pram_string, param, sizeof(pram_string) - 1);
 	decode_string(pram_string);
 	param = pram_string;
-
-	if (isMAILTO_URL(param)) {
-	    format(&cmdbuf, command, param + 7);
-	} else if (strnicmp("telnet://", param, 9) == 0) {
-	    char host[sizeof(pram_string)];
-	    int last_pos;
-
-	    strcpy(host, param + 9);
-	    last_pos = strlen(host) - 1;
-	    if (last_pos > 1 && host[last_pos] == '/')
-		host[last_pos] = '\0';
-
-	    format(&cmdbuf, command, host);
-	} else if (strnicmp("file://localhost/", param, 17) == 0) {
-	    char e_buff[LY_MAXPATH], *p;
-
-	    p = param + 17;
-	    *e_buff = 0;
-	    if (strchr(p, ':') == NULL) {
-		sprintf(e_buff, "%.3s/", windows_drive);
-	    }
-	    strncat(e_buff, p, sizeof(e_buff) - strlen(e_buff) - 1);
-	    p = strrchr(e_buff, '.');
-	    if (p) {
-		trimPoundSelector(p);
-	    }
-
-	    /* Less ==> short filename with backslashes,
-	     * less ==> long filename with forward slashes, may be quoted
-	     */
-	    if (ISUPPER(command[0])) {
-		format(&cmdbuf,
-			command, HTDOS_short_name(e_buff));
-	    } else {
-		if (*e_buff != '\"' && strchr(e_buff, ' ') != NULL) {
-		    p = quote_pathname(e_buff);
-		    LYstrncpy(e_buff, p, sizeof(e_buff)-1);
-		    FREE(p);
-		}
-		format(&cmdbuf, command, e_buff);
-	    }
-	} else {
-	    format(&cmdbuf, command, param);
-	}
+    } else {
+	/* encode or escape URL parameter - TH */
+	escaped = escapeParameter(param);
+	param = escaped;
     }
+
+    if (isMAILTO_URL(param)) {
+	format(&cmdbuf, command, param + 7);
+    } else if (strnicmp("telnet://", param, 9) == 0) {
+	char host[sizeof(pram_string)];
+	int last_pos;
+
+	LYstrncpy(host, param + 9, sizeof(host));
+	last_pos = strlen(host) - 1;
+	if (last_pos > 1 && host[last_pos] == '/')
+	    host[last_pos] = '\0';
+
+	format(&cmdbuf, command, host);
+    } else if (strnicmp("file://localhost/", param, 17) == 0) {
+	char e_buff[LY_MAXPATH], *p;
+
+	p = param + 17;
+	delete_danger_characters(p);
+	*e_buff = 0;
+	if (strchr(p, ':') == NULL) {
+	    sprintf(e_buff, "%.3s/", windows_drive);
+	}
+	strncat(e_buff, p, sizeof(e_buff) - strlen(e_buff) - 1);
+	p = strrchr(e_buff, '.');
+	if (p) {
+	    trimPoundSelector(p);
+	}
+
+	/* Less ==> short filename with backslashes,
+	 * less ==> long filename with forward slashes, may be quoted
+	 */
+	if (ISUPPER(command[0])) {
+	    char *short_name = HTDOS_short_name(e_buff);
+
+	    p = quote_pathname(short_name);
+	    format(&cmdbuf, command, p);
+	    FREE(p);
+	} else {
+	    p = quote_pathname(e_buff);
+	    format(&cmdbuf, command, p);
+	    FREE(p);
+	}
+    } else {
+	format(&cmdbuf, command, param);
+    }
+    FREE(escaped);
 #else
     format(&cmdbuf, command, param);
 #endif
@@ -175,9 +246,8 @@ PRIVATE char *format_command ARGS2(
  * more than one possibility, make a popup menu of the matching commands and
  * allow the user to select one.  Return the selected command.
  */
-PRIVATE char *lookup_external ARGS2(
-    char *, 	param,
-    BOOL,	only_overriders)
+static char *lookup_external(char *param,
+			     BOOL only_overriders)
 {
     int pass, num_disabled, num_matched, num_choices, cur_choice;
     int length = 0;
@@ -218,22 +288,21 @@ PRIVATE char *lookup_external ARGS2(
     }
 
     if (num_disabled != 0
-     && num_disabled == num_matched) {
+	&& num_disabled == num_matched) {
 	HTUserMsg(EXTERNALS_DISABLED);
     } else if (num_choices > 1) {
 	int old_y, old_x;
 
 	LYGetYX(old_y, old_x);
-	cur_choice = LYhandlePopupList(
-			-1,
-			0,
-			old_x,
-			(CONST char **)choices,
-			-1,
-			-1,
-			FALSE,
-			TRUE,
-			FALSE);
+	cur_choice = LYhandlePopupList(-1,
+				       0,
+				       old_x,
+				       (const char **) choices,
+				       -1,
+				       -1,
+				       FALSE,
+				       TRUE,
+				       FALSE);
 	wmove(LYwin, old_y, old_x);
 	CTRACE((tfp, "selected choice %d of %d\n", cur_choice, num_choices));
 	if (cur_choice < 0) {
@@ -252,9 +321,8 @@ PRIVATE char *lookup_external ARGS2(
     return cmdbuf;
 }
 
-BOOL run_external ARGS2(
-    char *, 	param,
-    BOOL,	only_overriders)
+BOOL run_external(char *param,
+		  BOOL only_overriders)
 {
 #ifdef WIN_EX
     int status;
@@ -275,7 +343,7 @@ BOOL run_external ARGS2(
 #endif
 
     cmdbuf = lookup_external(param, only_overriders);
-    if (cmdbuf != 0 && *cmdbuf != '\0') {
+    if (non_empty(cmdbuf)) {
 #ifdef WIN_EX			/* 1997/10/17 (Fri) 14:07:50 */
 	int len;
 	char buff[LY_MAXPATH];
@@ -285,7 +353,7 @@ BOOL run_external ARGS2(
 	confirmed = MessageBox(GetForegroundWindow(), cmdbuf,
 			       "Lynx (EXTERNAL COMMAND EXEC)",
 			       MB_ICONQUESTION | MB_SETFOREGROUND | MB_OKCANCEL)
-		    != IDCANCEL;
+	    != IDCANCEL;
 #else
 	confirmed = HTConfirm(LYElideString(cmdbuf, 40)) != NO;
 #endif
@@ -334,7 +402,7 @@ BOOL run_external ARGS2(
 			"'%s'",
 			status, (status / 256), (status & 0xff),
 			cmdbuf);
-#ifdef SH_EX	/* WIN_GUI for ERROR only */
+#ifdef SH_EX			/* WIN_GUI for ERROR only */
 		MessageBox(GetForegroundWindow(), buff,
 			   "Lynx (EXTERNAL COMMAND EXEC)",
 			   MB_ICONSTOP | MB_SETFOREGROUND | MB_OK);
@@ -342,9 +410,9 @@ BOOL run_external ARGS2(
 		HTConfirm(LYElideString(buff, 40));
 #endif /* 1 */
 	    }
-#else	/* Not WIN_EX */
+#else /* Not WIN_EX */
 	    LYSystem(cmdbuf);
-#endif	/* WIN_EX */
+#endif /* WIN_EX */
 
 #if defined(WIN_EX)
 	    SetConsoleTitle("Lynx for Win32");
@@ -359,4 +427,4 @@ BOOL run_external ARGS2(
     FREE(cmdbuf);
     return found;
 }
-#endif	/* USE_EXTERNALS */
+#endif /* USE_EXTERNALS */

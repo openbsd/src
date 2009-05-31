@@ -2,7 +2,7 @@
 <HTML>
 <HEAD>
 <TITLE>URL Schemes Supported in Lynx</TITLE>
-<LINK rev=made href="mailto:lynx-dev@sig.net">
+<LINK rev=made href="mailto:lynx-dev@nongnu.org">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 </HEAD>
 
@@ -94,11 +94,6 @@ ID attributes as NAME-ed anchors for all tags in the BODY of a document
 which can correspond to positions in the rendering of the document.
 
 <p>The https URL has the same format, but the default port is <em>:443</em>.
-Patches for support of https URLs and the CONNECT procedure are available
-for qualified recipients via <a
-href="http://www.subir.com/lynx.html">Lynx links</a>.  US Export laws
-and associated red tape pose severe impediments to inclusion of this support
-in the general distributions of freeware WWW clients such as Lynx.  Sorry.
 <HR>
 
 <H2><a name="telnet_url"
@@ -301,10 +296,17 @@ nntp and snews URLs.  If not included in news URLs, Lynx will use the nntp
 server pointed to by the NNTPSERVER environment variable or configuration
 symbol (see lynx.cfg), with default port <em>:119</em>.  A host field must
 be included in nntp URLs, and the port field is optional with the same
-default.  Patches for support of snews URLs are available to qualified
-recipients via <a href="http://www.subir.com/lynx.html">Lynx links</a>
-but cannot be included in the general distribution (sorry, see <a
-href="#http">http and https</a>).
+default.
+
+<p>If the URL requires authentication,
+lynx will prompt you for the username and password.
+These are cached during a session,
+for reuse on the same host.
+If $HOME/.newsauth exists,
+lynx initializes its cache from this file.
+The .newsauth file contents are one line per entry:
+hostname, password and username
+(in that order) separated by a space.
 
 <p>The formats are:<BR>
 <pre>
@@ -365,9 +367,7 @@ for posting to news groups.  Lynx has long supported newspost and
 newreply URL schemes for posting new messages or sending followups,
 respectively, to standard nntp servers, with default port <em>:119</em>.
 Lynx now also supports homologous snewspost and snewsreply URLs for use
-with SSL capable nntp servers, but the latter requires patches for built
-in SSL support, or use of a daemon which handles the secure communications
-on behalf of Lynx.
+with SSL capable nntp servers.
 
 <p>The formats are:
 <pre>

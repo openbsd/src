@@ -5,23 +5,30 @@
 #include <LYStructs.h>
 #endif /* LYSTRUCTS_H */
 
-extern BOOLEAN LYwouldPush PARAMS((CONST char *title, CONST char *docurl));
-extern BOOLEAN historytarget PARAMS((DocInfo *newdoc));
-extern int LYShowVisitedLinks PARAMS((char **newfile));
-extern int LYhist_next PARAMS((DocInfo *doc, DocInfo *newdoc));
-extern int LYpush PARAMS((DocInfo *doc, BOOLEAN force_push));
-extern int showhistory PARAMS((char **newfile));
-extern void LYAddVisitedLink PARAMS((DocInfo *doc));
-extern void LYFreePostData PARAMS((DocInfo * data));
-extern void LYFreeDocInfo PARAMS((DocInfo * data));
-extern void LYhist_prev PARAMS((DocInfo *doc));
-extern void LYhist_prev_register PARAMS((DocInfo *doc));
-extern void LYpop PARAMS((DocInfo *doc));
-extern void LYpop_num PARAMS((int number, DocInfo *doc));
-extern void LYstatusline_messages_on_exit PARAMS((char **buf));
-extern void LYstore_message PARAMS((CONST char *message));
-extern void LYstore_message2 PARAMS((CONST char *message, CONST char *argument));
+#ifdef __cplusplus
+extern "C" {
+#endif
+    extern BOOLEAN LYwouldPush(const char *title, const char *docurl);
+    extern BOOLEAN historytarget(DocInfo *newdoc);
+    extern int LYShowVisitedLinks(char **newfile);
+    extern int LYhist_next(DocInfo *doc, DocInfo *newdoc);
+    extern int LYpush(DocInfo *doc, BOOLEAN force_push);
+    extern int showhistory(char **newfile);
+    extern void LYAddVisitedLink(DocInfo *doc);
+    extern void LYAllocHistory(int entries);
+    extern void LYFreePostData(DocInfo *data);
+    extern void LYFreeDocInfo(DocInfo *data);
+    extern void LYhist_prev(DocInfo *doc);
+    extern void LYhist_prev_register(DocInfo *doc);
+    extern void LYpop(DocInfo *doc);
+    extern void LYpop_num(int number, DocInfo *doc);
+    extern void LYstatusline_messages_on_exit(char **buf);
+    extern void LYstore_message(const char *message);
+    extern void LYstore_message2(const char *message, const char *argument);
 
-extern int nhist_extra;
+    extern int nhist_extra;
 
-#endif /* LYHISTORY_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* LYHISTORY_H */

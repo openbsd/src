@@ -4,14 +4,20 @@
 #define TRAVERSAL_H
 
 #ifndef HTUTILS_H
-#include <HTUtils.h>            /* BOOL, PARAMS, ARGS */
+#include <HTUtils.h>		/* BOOL, ARGS */
 #endif
 
-extern BOOLEAN lookup PARAMS((char * target));
-extern void add_to_table PARAMS((char * target));
-extern void add_to_traverse_list PARAMS((char * fname, char * prev_link_name));
-extern void dump_traversal_history NOPARAMS;
-extern void add_to_reject_list PARAMS((char * target));
-extern BOOLEAN lookup_reject PARAMS((char * target));
+#ifdef __cplusplus
+extern "C" {
+#endif
+    extern BOOLEAN lookup_link(char *target);
+    extern void add_to_table(char *target);
+    extern void add_to_traverse_list(char *fname, char *prev_link_name);
+    extern void dump_traversal_history(void);
+    extern void add_to_reject_list(char *target);
+    extern BOOLEAN lookup_reject(char *target);
 
-#endif /* TRAVERSAL_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* TRAVERSAL_H */

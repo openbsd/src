@@ -36,10 +36,10 @@ TAR_DOWN	= $(TAR) @TAR_DOWN_OPTIONS@ @TAR_PIPE_OPTIONS@
 
 ## This is the version which we are developing (or, upon release, make this
 ## the same).  Use no dots in the name, since it must work on VMS and MS-DOS.
-VERSION		= 2-8-5
+VERSION		= 2-8-6
 
 ##this is the name of the directory the lynx source code is in.
-##(e.g., lynx2-8-5, not the full path)
+##(e.g., lynx2-8-6, not the full path)
 lynxdir= lynx$(VERSION)
 lynxname= lynx$(VERSION)
 
@@ -56,15 +56,15 @@ mandir= @mandir@/man1
 MANDIR= $(DESTDIR)$(mandir)
 
 ## Where you want the lynx.cfg file installed
-libdir= @libdir@
-LIBDIR= $(DESTDIR)$(libdir)
+sysconfdir= @sysconfdir@
+SYSCONFDIR= $(DESTDIR)$(sysconfdir)
 
 ## Where you want the doc-files installed
-docdir= @libdir@/lynx_doc
+docdir= @datadir@/lynx_doc
 DOCDIR= $(DESTDIR)$(docdir)
 
 ## Where you want the help-files installed
-helpdir= @libdir@/lynx_help
+helpdir= @datadir@/lynx_help
 HELPDIR= $(DESTDIR)$(helpdir)
 
 ##set the relative location of the WWW library Implementation directory,
@@ -77,6 +77,9 @@ WWWINC= WWW/Library/Implementation
 ## Leave *both* empty if you don't want to gzip help files.
 COMPRESS_PROG=@COMPRESS_PROG@
 COMPRESS_EXT=@COMPRESS_EXT@
+
+# Path of scripts directory
+scripts_dir=$(srcdir)/scripts
 
 # !!!!!!!!!!! SUN resolv LIBRARY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # To include resolv in the LIBS="" list for SUN 3, 4 or Solaris OS,
@@ -155,8 +158,7 @@ SITE_DEFS = # Your defines here
 # for installation of local execution links, please see the file userdefs.h
 
 all lynx$x: cfg_defs.h LYHelp.h
-@MSG_DIR_MAKE@	$(SHELL) $(srcdir)/fixtext.sh $(srcdir)/LYMessages_en.h >LYMessages.c
-@INTLDIR_MAKE@	cd intl && $(MAKE) CC="$(CC)"
+@MSG_DIR_MAKE@	$(SHELL) $(scripts_dir)/fixtext.sh $(srcdir)/LYMessages_en.h >LYMessages.c
 @MSG_DIR_MAKE@	cd po && $(MAKE) CC="$(CC)"
 	cd $(WWWINC) && $(MAKE) CC="$(CC)" \
 		LY_CFLAGS="$(CFLAGS)" \
@@ -200,7 +202,6 @@ clean:
 	rm -f WWW/Library/*/.created
 	cd src && $(MAKE) clean
 @MSG_DIR_MAKE@	rm -f LYMessages.c
-@INTLDIR_MAKE@	cd intl && $(MAKE) $@
 @MSG_DIR_MAKE@	cd po && $(MAKE) $@
 	rm -f *.b src/lynx$x *.leaks cfg_defs.h LYHelp.h lint.*
 @LYNXCFG_MAKE@	-rm -f alphatoc.html body.html cattoc.html tmp007
@@ -217,9 +218,6 @@ distclean: clean
 	-rm -rf src/obsolete
 	-cd src && $(MAKE) $@
 	-cd src/chrtrans && $(MAKE) $@
-@INTLDIR_MAKE@	cd intl && $(MAKE) $@
-	-rm -f intl/libintl.h
-@MSG_DIR_MAKE@	-rmdir intl
 @MSG_DIR_MAKE@	cd po && $(MAKE) $@
 @MSG_DIR_MAKE@	-rmdir po
 	-rm -f *~ *.bak *.sav tags TAGS
@@ -335,7 +333,7 @@ help_files.sed : makefile $(srcdir)/lynx_help/help_files.txt
 		-e 's%\(.*\)=\(.*\.html\)$$%s=\2=\2$(COMPRESS_EXT)=g%' \
 		-e 's%\.html=%\\.html=%' \
 		help_files.tmp | $(FIX_SED) >> $@
-	@ECHO_CC@if test -n "$(COMPRESS_EXT)"; then echo 's%\(\$(COMPRESS_EXT)\)*\$(COMPRESS_EXT)%$(COMPRESS_EXT)%g' >> $@; fi
+	@ECHO_CC@if test -n "$(COMPRESS_EXT)"; then echo 's%\$(COMPRESS_EXT)\$(COMPRESS_EXT)%$(COMPRESS_EXT)%g' >> $@; fi
 	@-rm -f help_files.tmp
 
 install-help : help_files.sed $(HELPDIR)
@@ -346,7 +344,7 @@ install-help : help_files.sed $(HELPDIR)
 @LYNXCFG_MAKE@	@-rm -f alphatoc.html body.html cattoc.html
 @LYNXCFG_MAKE@	sed -n -e '/Config_Type  *Config_Table/,/{0, *0, *0}/ p' src/LYReadCFG.i | \
 @LYNXCFG_MAKE@	sed  -e 's/ *{ *"\([^"]*\)".*/\1/' | \
-@LYNXCFG_MAKE@	perl $(srcdir)/scripts/cfg2html.pl -ms $(srcdir)/lynx.cfg
+@LYNXCFG_MAKE@	perl $(scripts_dir)/cfg2html.pl -ms $(srcdir)/lynx.cfg
 	@echo Translating/copying html files
 @LYNXCFG_MAKE@	@$(SHELL) -c 'for f in alphatoc.html body.html cattoc.html ; do \
 @LYNXCFG_MAKE@		sed -f help_files.sed $$f > $(HELPDIR)/$$f ; \
@@ -362,22 +360,23 @@ install-help : help_files.sed $(HELPDIR)
 		if test "$(COMPRESS_PROG)" != "" ; then \
 			(cd $(HELPDIR) && $(COMPRESS_PROG) $$files ) \
 		fi'
-	@echo Updating $(libdir)/lynx.cfg
-	@ECHO_CC@$(SHELL) -c 'if test -f $(LIBDIR)/lynx.cfg ; then \
-		mv $(LIBDIR)/lynx.cfg $(LIBDIR)/lynx.tmp ; \
+	@echo Updating $(sysconfdir)/lynx.cfg
+	@ECHO_CC@$(SHELL) -c 'if test -f $(SYSCONFDIR)/lynx.cfg ; then \
+		mv $(SYSCONFDIR)/lynx.cfg $(SYSCONFDIR)/lynx.tmp ; \
 	else \
-		cp $(srcdir)/lynx.cfg $(LIBDIR)/lynx.tmp ; \
+		cp $(srcdir)/lynx.cfg $(SYSCONFDIR)/lynx.tmp ; \
 	fi'
-	@echo Updating $(libdir)/lynx.cfg to point to installed help-files
+	@echo Updating $(sysconfdir)/lynx.cfg to point to installed help-files
 	@ECHO_CC@sed	-e '/^HELPFILE:http/s!^!#!' \
 		-e '/^#HELPFILE:file/s!#!!' \
-		-e '/^HELPFILE:file/s!/PATH_TO/lynx_help!$(helpdir)!' \
-		-e '/^[A-Z_]*:/s!/PATH_TO/lynx_doc!$(docdir)!' \
-		-e '/^HELPFILE:file/s!$$!$(COMPRESS_EXT)!' \
+		$(SYSCONFDIR)/lynx.tmp | \
+	$(SHELL) $(scripts_dir)/cfg_path.sh lynx_help $(helpdir) | \
+	$(SHELL) $(scripts_dir)/cfg_path.sh lynx_doc  $(helpdir) | \
+	sed	-e '/^HELPFILE:file/s!$$!$(COMPRESS_EXT)!' \
 		-e '/^HELPFILE:file/s!$(COMPRESS_EXT)$(COMPRESS_EXT)$$!$(COMPRESS_EXT)!' \
-		$(LIBDIR)/lynx.tmp >$(LIBDIR)/lynx.cfg
-	chmod 644 $(LIBDIR)/lynx.cfg
-	-rm -f $(LIBDIR)/lynx.tmp
+		>$(SYSCONFDIR)/lynx.cfg
+	chmod 644 $(SYSCONFDIR)/lynx.cfg
+	-rm -f $(SYSCONFDIR)/lynx.tmp
 
 LYHelp.h : help_files.sed LYHelp.hin
 	@echo Creating $@
@@ -394,23 +393,23 @@ LYHelp.h : help_files.sed LYHelp.hin
 	@echo
 	@echo '**********************************************'
 
-cfg_defs.h : $(srcdir)/cfg_defs.sh $(srcdir)/cfg_edit.sh config.cache lynx_cfg.h
+cfg_defs.h : $(scripts_dir)/cfg_defs.sh $(scripts_dir)/cfg_edit.sh config.cache lynx_cfg.h
 	@rm -f $@
-	$(SHELL) -c 'SHELL=$(SHELL) $(SHELL) $(srcdir)/cfg_defs.sh $(srcdir)'
+	$(SHELL) -c 'SHELL=$(SHELL) $(SHELL) $(scripts_dir)/cfg_defs.sh $(srcdir)'
 
-install-cfg : $(LIBDIR)
-	@$(SHELL) -c '$(srcdir)/scripts/install-cfg.sh "$(INSTALL_DATA)" $(srcdir)/lynx.cfg $(LIBDIR)/lynx.cfg'
+install-cfg : $(SYSCONFDIR)
+	@$(SHELL) $(scripts_dir)/install-cfg.sh "$(INSTALL_DATA)" $(srcdir)/lynx.cfg $(SYSCONFDIR)/lynx.cfg
 
-install-lss : $(LIBDIR)
-	-mv -f $(LIBDIR)/lynx.lss $(LIBDIR)/lynx.oldlss
-	$(INSTALL_DATA) $(srcdir)/samples/lynx.lss $(LIBDIR)/lynx.lss
+install-lss : $(SYSCONFDIR)
+	-mv -f $(SYSCONFDIR)/lynx.lss $(SYSCONFDIR)/lynx.oldlss
+	$(INSTALL_DATA) $(srcdir)/samples/lynx.lss $(SYSCONFDIR)/lynx.lss
 
 uninstall ::
 @MSG_DIR_MAKE@	cd po && $(MAKE) CC="$(CC)" uninstall
 	-rm -f $(BINDIR)/lynx$x
 	-rm -f $(MANDIR)/lynx.1
-	-rm -f $(LIBDIR)/lynx.cfg
-	-rm -f $(LIBDIR)/lynx.lss
+	-rm -f $(SYSCONFDIR)/lynx.cfg
+	-rm -f $(SYSCONFDIR)/lynx.lss
 
 uninstall \
 uninstall-help ::
@@ -423,7 +422,7 @@ uninstall-doc ::
 
 $(BINDIR) \
 $(MANDIR) \
-$(LIBDIR) \
+$(SYSCONFDIR) \
 $(HELPDIR) \
 $(DOCDIR) :
 	$(SHELL) $(MKINSTALLDIRS) $@

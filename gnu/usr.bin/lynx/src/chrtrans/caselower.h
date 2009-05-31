@@ -3,15 +3,13 @@
 
   This table is generated from Unicode Character Database, Version 2.1.5
   available from ftp.unicode.org, and looks as natural way to get case mapping
-  equivalents for unicodes.  (well, too much characters the cost of 3 Kb only).
+  equivalents for unicodes.  (well, too much characters the cost of 3 Kb only). 
   Few words from the original README.txt quoted:
-
 
 UNICODE 2.1 CHARACTER DATABASE
 
 Copyright (c) 1991-1998 Unicode, Inc.
 All Rights reserved.
-
 
 CASE MAPPINGS
 
@@ -21,14 +19,15 @@ default mappings listed in the Unicode Character Database.
 
  */
 
-#include <UCkd.h> /* typedef u16 */
+#include <UCkd.h>		/* typedef u16 */
 
 typedef struct {
-	u16 upper;
-	u16 lower;
-} unipair;
+    u16 upper;
+    u16 lower;
+} unipair_case;
 
-static CONST unipair unicode_to_lower_case[] =
+static const unipair_case unicode_to_lower_case[] =
+/* *INDENT-OFF* */
 {
   {0x0041, 0x0061},  /* LATIN CAPITAL LETTER A */
   {0x0042, 0x0062},  /* LATIN CAPITAL LETTER B */
@@ -736,3 +735,4 @@ static CONST unipair unicode_to_lower_case[] =
   {0xFF39, 0xFF59},  /* FULLWIDTH LATIN CAPITAL LETTER Y */
   {0xFF3A, 0xFF5A}   /* FULLWIDTH LATIN CAPITAL LETTER Z */
 };
+/* *INDENT-ON* */

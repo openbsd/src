@@ -9,22 +9,27 @@
 
 #include <HTList.h>
 
-typedef HTList HTAssocList;
+#ifdef __cplusplus
+extern "C" {
+#endif
+    typedef HTList HTAssocList;
 
-typedef struct {
-    char * name;
-    char * value;
-} HTAssoc;
+    typedef struct {
+	char *name;
+	char *value;
+    } HTAssoc;
 
+    extern HTAssocList *HTAssocList_new(void);
+    extern void HTAssocList_delete(HTAssocList *alist);
 
-PUBLIC HTAssocList *HTAssocList_new NOPARAMS;
-PUBLIC void HTAssocList_delete PARAMS((HTAssocList * alist));
+    extern void HTAssocList_add(HTAssocList *alist,
+				const char *name,
+				const char *value);
 
-PUBLIC void HTAssocList_add PARAMS((HTAssocList *       alist,
-                                    CONST char *        name,
-                                    CONST char *        value));
+    extern char *HTAssocList_lookup(HTAssocList *alist,
+				    const char *name);
 
-PUBLIC char *HTAssocList_lookup PARAMS((HTAssocList *   alist,
-                                        CONST char *    name));
-
-#endif /* not HTASSOC_H */
+#ifdef __cplusplus
+}
+#endif
+#endif				/* not HTASSOC_H */

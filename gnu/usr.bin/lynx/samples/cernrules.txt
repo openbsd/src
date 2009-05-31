@@ -6,7 +6,7 @@
 # Most users and most installations will not need this feature, it is here
 # in case you find it useful.  Note that this may change or go away in
 # future releases of Lynx; if you find it useful, consider describing your
-# use of it in a message to <lynx-dev@sig.net>.
+# use of it in a message to <lynx-dev@nongnu.org>.
 #
 # Syntax:
 # =======

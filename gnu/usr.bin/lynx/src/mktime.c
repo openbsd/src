@@ -22,56 +22,52 @@
 
 #include	<time.h>
 
-static time_t
-mkgmtime(t)
-register struct tm	*t;
+static time_t mkgmtime(register struct tm *t)
 {
-	register short	month, year;
-	register time_t	result;
-	static int	m_to_d[12] =
-		{0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+    register short month, year;
+    register time_t result;
+    static int m_to_d[12] =
+    {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
-	month = t->tm_mon;
-	year = t->tm_year + month / 12 + 1900;
-	month %= 12;
-	if (month < 0)
-	{
-		year -= 1;
-		month += 12;
-	}
-	result = (year - 1970) * 365 + (year - 1969) / 4 + m_to_d[month];
-	result = (year - 1970) * 365 + m_to_d[month];
-	if (month <= 1)
-		year -= 1;
-	result += (year - 1968) / 4;
-	result -= (year - 1900) / 100;
-	result += (year - 1600) / 400;
-	result += t->tm_mday;
-	result -= 1;
-	result *= 24;
-	result += t->tm_hour;
-	result *= 60;
-	result += t->tm_min;
-	result *= 60;
-	result += t->tm_sec;
-	return(result);
+    month = t->tm_mon;
+    year = t->tm_year + month / 12 + 1900;
+    month %= 12;
+    if (month < 0) {
+	year -= 1;
+	month += 12;
+    }
+    result = (year - 1970) * 365 + (year - 1969) / 4 + m_to_d[month];
+    result = (year - 1970) * 365 + m_to_d[month];
+    if (month <= 1)
+	year -= 1;
+    result += (year - 1968) / 4;
+    result -= (year - 1900) / 100;
+    result += (year - 1600) / 400;
+    result += t->tm_mday;
+    result -= 1;
+    result *= 24;
+    result += t->tm_hour;
+    result *= 60;
+    result += t->tm_min;
+    result *= 60;
+    result += t->tm_sec;
+    return (result);
 }
 
 /*
-**  mktime -- convert tm struct to time_t
-**		if tm_isdst >= 0 use it, else compute it
-*/
+ *  mktime -- convert tm struct to time_t
+ *		if tm_isdst >= 0 use it, else compute it
+ */
 
 time_t
-mktime(t)
-struct tm	*t;
+mktime(struct tm * t)
 {
-	time_t	result;
+    time_t result;
 
-	tzset();
-	result = mkgmtime(t) + timezone;
-	if (t->tm_isdst > 0
+    tzset();
+    result = mkgmtime(t) + timezone;
+    if (t->tm_isdst > 0
 	|| (t->tm_isdst < 0 && localtime(&result)->tm_isdst))
-		result -= 3600;
-	return(result);
+	result -= 3600;
+    return (result);
 }
