@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciidereg.h,v 1.7 2004/10/17 08:44:41 grange Exp $	*/
+/*	$OpenBSD: pciidereg.h,v 1.8 2009/05/31 04:42:16 jsg Exp $	*/
 /*	$NetBSD: pciidereg.h,v 1.6 2000/11/14 18:42:58 thorpej Exp $	*/
 
 /*
@@ -119,5 +119,15 @@ struct idedma_table {
 
 /* Number of idedma table needed */
 #define NIDEDMA_TABLES (MAXPHYS/PAGE_SIZE + 1)
+
+/* Intel SCH */
+#define SCH_D0TIM	0x80
+#define SCH_D1TIM	0x84
+#define SCH_TIM_UDMA	0x30000
+#define SCH_TIM_MDMA	0x00300
+#define SCH_TIM_PIO	0x00007
+#define SCH_TIM_SYNCDMA	(1 << 31)
+
+#define SCH_TIM_MASK	(SCH_TIM_UDMA | SCH_TIM_MDMA | SCH_TIM_PIO)
 
 #endif	/* !_DEV_PCI_PCIIDEREG_H_ */
