@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.107 2009/05/26 08:29:44 reyk Exp $	*/
+/*	$OpenBSD: route.c,v 1.108 2009/05/31 04:07:03 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -834,7 +834,6 @@ makeroute:
 		if (prio == 0)
 			prio = ifa->ifa_ifp->if_priority + RTP_STATIC;
 		rt->rt_priority = prio;	/* init routing priority */
-#if 0
 		if ((LINK_STATE_IS_UP(ifa->ifa_ifp->if_link_state) ||
 		    ifa->ifa_ifp->if_link_state == LINK_STATE_UNKNOWN) &&
 		    ifa->ifa_ifp->if_flags & IFF_UP)
@@ -843,7 +842,6 @@ makeroute:
 			rt->rt_flags &= ~RTF_UP;
 			rt->rt_priority |= RTP_DOWN;
 		}
-#endif
 		LIST_INIT(&rt->rt_timer);
 		if (rt_setgate(rt, info->rti_info[RTAX_DST],
 		    info->rti_info[RTAX_GATEWAY], tableid)) {
