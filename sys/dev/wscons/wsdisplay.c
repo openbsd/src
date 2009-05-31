@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.91 2009/05/31 16:57:34 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.92 2009/05/31 17:02:20 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -117,32 +117,33 @@ struct wsscreen {
 
 #ifdef WSMOUSED_SUPPORT
 	/* mouse console support via wsmoused(8) */
-	unsigned short mouse;		/* mouse cursor position */
-	unsigned short cursor;		/* selection cursor position (if
-					different from mouse cursor pos) */
-	unsigned short cpy_start;	/* position of the copy start mark*/
-	unsigned short cpy_end;		/* position of the copy end mark */
-	unsigned short orig_start;	/* position of the original sel. start*/
-	unsigned short orig_end;	/* position of the original sel. end */
-#define MOUSE_VISIBLE	(1 << 0)	/* flag, the mouse cursor is visible */
-#define SEL_EXISTS	(1 << 1)	/* flag, a selection exists */
-#define SEL_IN_PROGRESS (1 << 2)	/* flag, a selection is in progress */
-#define SEL_EXT_AFTER	(1 << 3)	/* flag, selection is extended after */
-#define BLANK_TO_EOL	(1 << 4)	/* flag, there are only blanks
-					   characters to eol */
-#define SEL_BY_CHAR	(1 << 5)	/* flag, select character by character*/
-#define SEL_BY_WORD	(1 << 6)	/* flag, select word by word */
-#define SEL_BY_LINE	(1 << 7)	/* flag, select line by line */
+	u_int mouse;		/* mouse cursor position */
+	u_int cursor;		/* selection cursor position (if
+				   different from mouse cursor pos) */
+	u_int cpy_start;	/* position of the copy start mark*/
+	u_int cpy_end;		/* position of the copy end mark */
+	u_int orig_start;	/* position of the original sel. start*/
+	u_int orig_end;		/* position of the original sel. end */
 
-#define IS_MOUSE_VISIBLE(ws) ((ws)->mouse_flags & MOUSE_VISIBLE)
-#define IS_SEL_EXISTS(ws) ((ws)->mouse_flags & SEL_EXISTS)
-#define IS_SEL_IN_PROGRESS(ws) ((ws)->mouse_flags & SEL_IN_PROGRESS)
-#define IS_SEL_EXT_AFTER(ws) ((ws)->mouse_flags & SEL_EXT_AFTER)
-#define IS_BLANK_TO_EOL(ws) ((ws)->mouse_flags & BLANK_TO_EOL)
-#define IS_SEL_BY_CHAR(ws) ((ws)->mouse_flags & SEL_BY_CHAR)
-#define IS_SEL_BY_WORD(ws) ((ws)->mouse_flags & SEL_BY_WORD)
-#define IS_SEL_BY_LINE(ws) ((ws)->mouse_flags & SEL_BY_LINE)
-	unsigned char mouse_flags;	/* flags, status of the mouse */
+	u_int mouse_flags;	/* flags, status of the mouse */
+#define MOUSE_VISIBLE	0x01	/* flag, the mouse cursor is visible */
+#define SEL_EXISTS	0x02	/* flag, a selection exists */
+#define SEL_IN_PROGRESS 0x04	/* flag, a selection is in progress */
+#define SEL_EXT_AFTER	0x08	/* flag, selection is extended after */
+#define BLANK_TO_EOL	0x10	/* flag, there are only blanks
+				   characters to eol */
+#define SEL_BY_CHAR	0x20	/* flag, select character by character*/
+#define SEL_BY_WORD	0x40	/* flag, select word by word */
+#define SEL_BY_LINE	0x80	/* flag, select line by line */
+
+#define IS_MOUSE_VISIBLE(scr)	((scr)->mouse_flags & MOUSE_VISIBLE)
+#define IS_SEL_EXISTS(scr)	((scr)->mouse_flags & SEL_EXISTS)
+#define IS_SEL_IN_PROGRESS(scr)	((scr)->mouse_flags & SEL_IN_PROGRESS)
+#define IS_SEL_EXT_AFTER(scr)	((scr)->mouse_flags & SEL_EXT_AFTER)
+#define IS_BLANK_TO_EOL(scr)	((scr)->mouse_flags & BLANK_TO_EOL)
+#define IS_SEL_BY_CHAR(scr)	((scr)->mouse_flags & SEL_BY_CHAR)
+#define IS_SEL_BY_WORD(scr)	((scr)->mouse_flags & SEL_BY_WORD)
+#define IS_SEL_BY_LINE(scr)	((scr)->mouse_flags & SEL_BY_LINE)
 #endif	/* WSMOUSED_SUPPORT */
 };
 
@@ -185,7 +186,8 @@ struct wsdisplay_softc {
 	int	sc_isconsole;
 
 	int sc_flags;
-#define SC_SWITCHPENDING 1
+#define SC_SWITCHPENDING	0x01
+#define	SC_PASTE_AVAIL		0x02
 	int sc_screenwanted, sc_oldscreen; /* valid with SC_SWITCHPENDING */
 
 #if NWSKBD > 0
@@ -198,6 +200,9 @@ struct wsdisplay_softc {
 #ifdef WSMOUSED_SUPPORT
 	dev_t wsmoused_dev; /* device opened by wsmoused(8), when active */
 	int wsmoused_sleep; /* true when wsmoused(8) is sleeping */
+
+	char *sc_copybuffer;
+	u_int sc_copybuffer_size;
 #endif
 };
 
@@ -265,12 +270,6 @@ int	wsdisplay_switch3(void *, int, int);
 
 int	wsdisplay_clearonclose;
 
-#ifdef WSMOUSED_SUPPORT
-char *Copybuffer;
-u_int Copybuffer_size;
-char Paste_avail;
-#endif
-
 struct wsscreen *
 wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
     const struct wsscreen_descr *type, void *cookie, int ccol, int crow,
@@ -279,7 +278,7 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 	struct wsscreen_internal *dconf;
 	struct wsscreen *scr;
 
-	scr = malloc(sizeof(struct wsscreen), M_DEVBUF, M_NOWAIT);
+	scr = malloc(sizeof(struct wsscreen), M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (!scr)
 		return (NULL);
 
@@ -308,22 +307,8 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 	}
 
 	scr->scr_dconf = dconf;
-
 	scr->scr_tty = ttymalloc();
-	scr->scr_hold_screen = 0;
-	scr->scr_flags = 0;
-
-#ifdef WSDISPLAY_COMPAT_USL
-	scr->scr_syncops = NULL;
-#endif
-
 	scr->sc = sc;
-#ifdef WSMOUSED_SUPPORT
-	scr->mouse_flags = 0;
-#endif
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	scr->scr_rawkbd = 0;
-#endif
 	return (scr);
 
 fail:
@@ -427,7 +412,7 @@ wsdisplay_addscreen(struct wsdisplay_softc *sc, int idx,
 	splx(s);
 
 #ifdef WSMOUSED_SUPPORT
-	allocate_copybuffer(sc); /* enlarge the copy buffer is necessary */
+	allocate_copybuffer(sc); /* enlarge the copy buffer if necessary */
 #endif
 	return (0);
 }
@@ -939,9 +924,9 @@ wsdisplayclose(dev_t dev, int flag, int mode, struct proc *p)
 
 #ifdef WSMOUSED_SUPPORT
 	/* remove the selection at logout */
-	if (Copybuffer)
-		bzero(Copybuffer, Copybuffer_size);
-	Paste_avail = 0;
+	if (sc->sc_copybuffer != NULL)
+		bzero(sc->sc_copybuffer, sc->sc_copybuffer_size);
+	CLR(sc->sc_flags, SC_PASTE_AVAIL);
 #endif
 
 	return (0);
@@ -1462,11 +1447,11 @@ wsdisplaystart(struct tty *tp)
 #endif
 #ifdef WSMOUSED_SUPPORT
 		if (scr == sc->sc_focus) {
-			if (IS_SEL_EXISTS(sc->sc_focus))
+			if (ISSET(scr->mouse_flags, SEL_EXISTS))
 				/* hide a potential selection */
-				remove_selection(sc);
+				remove_selection(scr);
 			/* hide a potential mouse cursor */
-			mouse_hide(sc);
+			mouse_hide(scr);
 		}
 #endif
 		(*scr->scr_dconf->wsemul->output)(scr->scr_dconf->wsemulcookie,
@@ -1642,7 +1627,7 @@ wsdisplay_switch3(void *arg, int error, int waitok)
 	struct wsscreen *scr;
 
 #ifdef WSDISPLAY_COMPAT_USL
-	if (!(sc->sc_flags & SC_SWITCHPENDING)) {
+	if (!ISSET(sc->sc_flags, SC_SWITCHPENDING)) {
 		printf("wsdisplay_switch3: not switching\n");
 		return (EINVAL);
 	}
@@ -1665,7 +1650,7 @@ wsdisplay_switch3(void *arg, int error, int waitok)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 			wsdisplay_update_rawkbd(sc, 0);
 #endif
-			sc->sc_flags &= ~SC_SWITCHPENDING;
+			CLR(sc->sc_flags, SC_SWITCHPENDING);
 			return (error);
 		}
 
@@ -1683,7 +1668,7 @@ wsdisplay_switch3(void *arg, int error, int waitok)
 	scr = sc->sc_scr[no];
 #endif
 
-	sc->sc_flags &= ~SC_SWITCHPENDING;
+	CLR(sc->sc_flags, SC_SWITCHPENDING);
 
 	if (!error && (scr->scr_flags & SCR_WAITACTIVE))
 		wakeup(scr);
@@ -1697,7 +1682,7 @@ wsdisplay_switch2(void *arg, int error, int waitok)
 	int no;
 	struct wsscreen *scr;
 
-	if (!(sc->sc_flags & SC_SWITCHPENDING)) {
+	if (!ISSET(sc->sc_flags, SC_SWITCHPENDING)) {
 		printf("wsdisplay_switch2: not switching\n");
 		return (EINVAL);
 	}
@@ -1717,7 +1702,7 @@ wsdisplay_switch2(void *arg, int error, int waitok)
 		if (sc->sc_oldscreen == WSDISPLAY_NULLSCREEN) {
 			printf("wsdisplay_switch2: giving up\n");
 			sc->sc_focus = 0;
-			sc->sc_flags &= ~SC_SWITCHPENDING;
+			CLR(sc->sc_flags, SC_SWITCHPENDING);
 			return (error);
 		}
 
@@ -1757,14 +1742,14 @@ wsdisplay_switch1(void *arg, int error, int waitok)
 	int no;
 	struct wsscreen *scr;
 
-	if (!(sc->sc_flags & SC_SWITCHPENDING)) {
+	if (!ISSET(sc->sc_flags, SC_SWITCHPENDING)) {
 		printf("wsdisplay_switch1: not switching\n");
 		return (EINVAL);
 	}
 
 	no = sc->sc_screenwanted;
 	if (no == WSDISPLAY_NULLSCREEN) {
-		sc->sc_flags &= ~SC_SWITCHPENDING;
+		CLR(sc->sc_flags, SC_SWITCHPENDING);
 		if (!error) {
 			sc->sc_focus = 0;
 		}
@@ -1780,7 +1765,7 @@ wsdisplay_switch1(void *arg, int error, int waitok)
 	}
 
 	if (error) {
-		sc->sc_flags &= ~SC_SWITCHPENDING;
+		CLR(sc->sc_flags, SC_SWITCHPENDING);
 		return (error);
 	}
 
@@ -1818,12 +1803,12 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 		return (0);
 	}
 
-	if (sc->sc_flags & SC_SWITCHPENDING) {
+	if (ISSET(sc->sc_flags, SC_SWITCHPENDING)) {
 		splx(s);
 		return (EBUSY);
 	}
 
-	sc->sc_flags |= SC_SWITCHPENDING;
+	SET(sc->sc_flags, SC_SWITCHPENDING);
 	sc->sc_screenwanted = no;
 
 	splx(s);
@@ -1859,7 +1844,7 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 		/* XXX evaluated when the X-server starts or stops, see above */
 
 		/* remove a potential wsmoused(8) selection */
-		mouse_remove(sc);
+		mouse_remove(scr);
 	}
 
 	if (!(scr->scr_flags & SCR_GRAPHICS) &&
@@ -1868,7 +1853,7 @@ wsdisplay_switch(struct device *dev, int no, int waitok)
 		/* switching from a text console to a graphic console */
 
 		/* remove a potential wsmoused(8) selection */
-		mouse_remove(sc);
+		mouse_remove(scr);
 		wsmoused_release(sc);
 	}
 
@@ -2242,64 +2227,62 @@ wsdisplay_shutdownhook(void *arg)
  * wsmoused(8) support functions
  */
 
-/* XXX pointer to the current screen wsdisplay_softc structure */
-static struct wsdisplay_softc *sc = NULL;
-
 /*
  * Main function, called from wsdisplay_cfg_ioctl.
  */
 int
-wsmoused(struct wsdisplay_softc *ws_sc, u_long cmd, caddr_t data,
+wsmoused(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
     int flag, struct proc *p)
 {
-	int error = -1;
 	struct wscons_event mouse_event = *(struct wscons_event *)data;
 
 	if (cmd == WSDISPLAYIO_WSMOUSED) {
 		if (IS_MOTION_EVENT(mouse_event.type)) {
-			if (ws_sc->sc_focus != NULL)
-				motion_event(mouse_event.type,
+			if (sc->sc_focus != NULL)
+				motion_event(sc->sc_focus, mouse_event.type,
 				    mouse_event.value);
-			return (0);
+			return 0;
 		}
 		if (IS_BUTTON_EVENT(mouse_event.type)) {
-			if (ws_sc->sc_focus != NULL) {
+			if (sc->sc_focus != NULL) {
 				/* XXX tv_sec contains the number of clicks */
 				if (mouse_event.type ==
 				    WSCONS_EVENT_MOUSE_DOWN) {
-					button_event(mouse_event.value,
+					button_event(sc->sc_focus,
+					    mouse_event.value,
 					    mouse_event.time.tv_sec);
 				} else
-					button_event(mouse_event.value, 0);
+					button_event(sc->sc_focus,
+					    mouse_event.value, 0);
 			}
 			return (0);
 		}
 		if (IS_CTRL_EVENT(mouse_event.type)) {
-			return (ctrl_event(mouse_event.type, mouse_event.value,
-			    ws_sc, p));
+			return ctrl_event(sc, mouse_event.type,
+			    mouse_event.value, p);
 		}
 	}
-	return (error);
+	return -1;
 }
 
 /*
  * Mouse motion events
  */
 void
-motion_event(u_int type, int value)
+motion_event(struct wsscreen *scr, u_int type, int value)
 {
 	switch (type) {
-		case WSCONS_EVENT_MOUSE_DELTA_X:
-			mouse_moverel(value, 0);
-			break;
-		case WSCONS_EVENT_MOUSE_DELTA_Y:
-			mouse_moverel(0, 0 - value);
-			break;
-		case WSCONS_EVENT_MOUSE_DELTA_Z:
-			mouse_zaxis(value);
-			break;
-		default:
-			break;
+	case WSCONS_EVENT_MOUSE_DELTA_X:
+		mouse_moverel(scr, value, 0);
+		break;
+	case WSCONS_EVENT_MOUSE_DELTA_Y:
+		mouse_moverel(scr, 0, -value);
+		break;
+	case WSCONS_EVENT_MOUSE_DELTA_Z:
+		mouse_zaxis(scr, value);
+		break;
+	default:
+		break;
 	}
 }
 
@@ -2307,52 +2290,37 @@ motion_event(u_int type, int value)
  * Button clicks events
  */
 void
-button_event(int button, int clicks)
+button_event(struct wsscreen *scr, int button, int clicks)
 {
 	switch (button) {
 	case MOUSE_COPY_BUTTON:
 		switch (clicks % 4) {
 		case 0: /* button is up */
-			mouse_copy_end();
-			mouse_copy_selection();
+			mouse_copy_end(scr);
+			mouse_copy_selection(scr);
 			break;
 		case 1: /* single click */
-			mouse_copy_start();
-			mouse_copy_selection();
+			mouse_copy_start(scr);
+			mouse_copy_selection(scr);
 			break;
 		case 2: /* double click */
-			mouse_copy_word();
-			mouse_copy_selection();
+			mouse_copy_word(scr);
+			mouse_copy_selection(scr);
 			break;
 		case 3: /* triple click */
-			mouse_copy_line();
-			mouse_copy_selection();
-			break;
-		default:
+			mouse_copy_line(scr);
+			mouse_copy_selection(scr);
 			break;
 		}
 		break;
-
 	case MOUSE_PASTE_BUTTON:
-		switch (clicks) {
-		case 0: /* button is up */
-			break;
-		default: /* paste */
-			mouse_paste();
-			break;
-		}
+		if (clicks != 0)
+			mouse_paste(scr);
 		break;
-
 	case MOUSE_EXTEND_BUTTON:
-		switch (clicks) {
-		case 0: /* button is up */
-			break;
-		default: /* extend the selection */
-			mouse_copy_extend_after();
-			break;
-		}
+		if (clicks != 0)
+			mouse_copy_extend_after(scr);
 		break;
-
 	default:
 		break;
 	}
@@ -2362,113 +2330,103 @@ button_event(int button, int clicks)
  * Control events
  */
 int
-ctrl_event(u_int type, int value, struct wsdisplay_softc *ws_sc, struct proc *p)
+ctrl_event(struct wsdisplay_softc *sc, u_int type, int value, struct proc *p)
 {
+	struct wsscreen *scr;
 	int i, error;
 
-	if (type == WSCONS_EVENT_WSMOUSED_ON) {
-		if (!ws_sc->sc_accessops->getchar)
-			/* no wsmoused(8) support in the display driver */
-			return (1);
-		/* initialization of globals */
-		sc = ws_sc;
-		allocate_copybuffer(sc);
-		Paste_avail = 0;
-		ws_sc->wsmoused_dev = value;
-	}
-	if (type == WSCONS_EVENT_WSMOUSED_OFF) {
-		Paste_avail = 0;
-		ws_sc->wsmoused_dev = 0;
+	switch (type) {
+	case WSCONS_EVENT_WSMOUSED_OFF:
+		CLR(sc->sc_flags, SC_PASTE_AVAIL);
+		sc->wsmoused_dev = 0;
 		return (0);
-	}
-	if (type == WSCONS_EVENT_WSMOUSED_SLEEP) {
+	case WSCONS_EVENT_WSMOUSED_SLEEP:
 		/* sleeping until next switch to text mode */
-		ws_sc->wsmoused_sleep = 1;
+		sc->wsmoused_sleep = 1;
 		error = 0;
-		while (ws_sc->wsmoused_sleep && error == 0)
-			error = tsleep(&ws_sc->wsmoused_sleep, PPAUSE,
+		while (sc->wsmoused_sleep && error == 0)
+			error = tsleep(&sc->wsmoused_sleep, PPAUSE,
 			    "wsmoused_sleep", 0);
 		return (error);
+	case WSCONS_EVENT_WSMOUSED_ON:
+		if (!sc->sc_accessops->getchar)
+			/* no wsmoused(8) support in the display driver */
+			return (1);
+		allocate_copybuffer(sc);
+		CLR(sc->sc_flags, SC_PASTE_AVAIL);
+		sc->wsmoused_dev = value;
+	
+		for (i = 0 ; i < WSDISPLAY_DEFAULTSCREENS ; i++)
+			if ((scr = sc->sc_scr[i]) != NULL) {
+				scr->mouse =
+				    (WS_NCOLS(scr) * WS_NROWS(scr)) / 2;
+				scr->cursor = scr->mouse;
+				scr->cpy_start = 0;
+				scr->cpy_end = 0;
+				scr->orig_start = 0;
+				scr->orig_end = 0;
+				scr->mouse_flags = 0;
+			}
+		return (0);
+	default:	/* can't happen, really */
+		return 0;
 	}
-	for (i = 0 ; i < WSDISPLAY_DEFAULTSCREENS ; i++)
-		if (sc->sc_scr[i]) {
-			sc->sc_scr[i]->mouse =
-				((WS_NCOLS(sc->sc_scr[i]) *
-				  WS_NROWS(sc->sc_scr[i])) / 2);
-			sc->sc_scr[i]->cursor = sc->sc_scr[i]->mouse;
-			sc->sc_scr[i]->cpy_start = 0;
-			sc->sc_scr[i]->cpy_end = 0;
-			sc->sc_scr[i]->orig_start = 0;
-			sc->sc_scr[i]->orig_end = 0;
-			sc->sc_scr[i]->mouse_flags = 0;
-		}
-	return (0);
 }
 
 void
-mouse_moverel(char dx, char dy)
+mouse_moverel(struct wsscreen *scr, int dx, int dy)
 {
-	unsigned short old_mouse = MOUSE;
-	unsigned char mouse_col = (MOUSE % N_COLS);
-	unsigned char mouse_row = (MOUSE / N_COLS);
-
-	/* wscons has support for screen saver via the WSDISPLAYIO_{G,S}VIDEO
-	   with WSDISPLAY_VIDEO_OFF and WSDISPLAY_VIDEO_ON values.
-	   However, none of the pc display driver (pcdisplay.c or vga.c)
-	   support this ioctl. Only the alpha display driver (tga.c) support it.
-
-	   When screen saver support is available, /usr/sbin/screenblank can be
-	   used with the -m option, so that mice movements stop the screen
-	   saver.
-	 */
+	struct wsscreen_internal *dconf = scr->scr_dconf;
+	u_int old_mouse = scr->mouse;
+	int mouse_col = scr->mouse % N_COLS(dconf);
+	int mouse_row = scr->mouse / N_COLS(dconf);
 
 	/* update position */
-
-	if (mouse_col + dx >= MAXCOL)
-		mouse_col = MAXCOL;
+	if (mouse_col + dx >= MAXCOL(dconf))
+		mouse_col = MAXCOL(dconf);
 	else {
 		if (mouse_col + dx <= 0)
 			mouse_col = 0;
 		else
 			mouse_col += dx;
 	}
-	if (mouse_row + dy >= MAXROW)
-		mouse_row = MAXROW;
+	if (mouse_row + dy >= MAXROW(dconf))
+		mouse_row = MAXROW(dconf);
 	else {
 		if (mouse_row + dy <= 0)
 			mouse_row = 0;
 		else
 			mouse_row += dy;
 	}
-	MOUSE = XY_TO_POS(mouse_col, mouse_row);
+	scr->mouse = mouse_row * N_COLS(dconf) + mouse_col;
+
 	/* if we have moved */
-	if (old_mouse != MOUSE) {
-		if (IS_SEL_IN_PROGRESS(sc->sc_focus)) {
+	if (old_mouse != scr->mouse) {
+		/* XXX unblank screen if display.ms_act */
+		if (ISSET(scr->mouse_flags, SEL_IN_PROGRESS)) {
 			/* selection in progress */
-			mouse_copy_extend();
+			mouse_copy_extend(scr);
 		} else {
-			inverse_char(MOUSE);
-			if (IS_MOUSE_VISIBLE(sc->sc_focus))
-				inverse_char(old_mouse);
+			inverse_char(scr, scr->mouse);
+			if (ISSET(scr->mouse_flags, MOUSE_VISIBLE))
+				inverse_char(scr, old_mouse);
 			else
-				MOUSE_FLAGS |= MOUSE_VISIBLE;
+				SET(scr->mouse_flags, MOUSE_VISIBLE);
 		}
 	}
 }
 
 void
-inverse_char(unsigned short pos)
+inverse_char(struct wsscreen *scr, u_int pos)
 {
-	struct wsscreen_internal *dconf;
+	struct wsscreen_internal *dconf = scr->scr_dconf;
 	struct wsdisplay_charcell cell;
 	int fg, bg, ul;
 	int flags;
 	int tmp;
 	long attr;
 
-	dconf = sc->sc_focus->scr_dconf;
-
-	GETCHAR(pos, &cell);
+	GETCHAR(scr, pos, &cell);
 
 	(*dconf->emulops->unpack_attr)(dconf->emulcookie, cell.attr, &fg,
 	    &bg, &ul);
@@ -2490,23 +2448,24 @@ inverse_char(unsigned short pos)
 	if ((*dconf->emulops->alloc_attr)(dconf->emulcookie, fg, bg, flags |
 	    (ul ? WSATTR_UNDERLINE : 0), &attr) == 0) {
 		cell.attr = attr;
-		PUTCHAR(pos, cell.uc, cell.attr);
+		PUTCHAR(dconf, pos, cell.uc, cell.attr);
 	}
 }
 
 void
-inverse_region(unsigned short start, unsigned short end)
+inverse_region(struct wsscreen *scr, u_int start, u_int end)
 {
-	unsigned short current_pos;
-	unsigned short abs_end;
+	struct wsscreen_internal *dconf = scr->scr_dconf;
+	u_int current_pos;
+	u_int abs_end;
 
-	/* sanity check, useful because 'end' can be (0 - 1) = 65535 */
-	abs_end = N_COLS * N_ROWS;
+	/* sanity check, useful because 'end' can be (u_int)-1 */
+	abs_end = N_COLS(dconf) * N_ROWS(dconf);
 	if (end > abs_end)
 		return;
 	current_pos = start;
 	while (current_pos <= end)
-		inverse_char(current_pos++);
+		inverse_char(scr, current_pos++);
 }
 
 /*
@@ -2514,16 +2473,17 @@ inverse_region(unsigned short start, unsigned short end)
  * if border == 1 or between the next non-blank character and the current mouse
  * cursor if border == 0
  */
-unsigned char
-skip_spc_right(char border)
+u_int
+skip_spc_right(struct wsscreen *scr, int border)
 {
+	struct wsscreen_internal *dconf = scr->scr_dconf;
 	struct wsdisplay_charcell cell;
-	unsigned short current = CPY_END;
-	unsigned short mouse_col = (CPY_END % N_COLS);
-	unsigned short limit = current + (N_COLS - mouse_col - 1);
-	unsigned char res = 0;
+	u_int current = scr->cpy_end;
+	u_int mouse_col = scr->cpy_end % N_COLS(dconf);
+	u_int limit = current + (N_COLS(dconf) - mouse_col - 1);
+	u_int res = 0;
 
-	while (GETCHAR(current, &cell) == 0 && cell.uc == ' ' &&
+	while (GETCHAR(scr, current, &cell) == 0 && cell.uc == ' ' &&
 	    current <= limit) {
 		current++;
 		res++;
@@ -2534,7 +2494,7 @@ skip_spc_right(char border)
 		else
 			return (0);
 	} else {
-		if (res)
+		if (res != 0)
 			return (res - 1);
 		else
 			return (res);
@@ -2545,21 +2505,22 @@ skip_spc_right(char border)
  * Return the number of contiguous blank characters between the first of the
  * contiguous blank characters and the current mouse cursor
  */
-unsigned char
-skip_spc_left(void)
+u_int
+skip_spc_left(struct wsscreen *scr)
 {
+	struct wsscreen_internal *dconf = scr->scr_dconf;
 	struct wsdisplay_charcell cell;
-	short current = CPY_START;
-	unsigned short mouse_col = (MOUSE % N_COLS);
-	unsigned short limit = current - mouse_col;
-	unsigned char res = 0;
+	u_int current = scr->cpy_start;
+	u_int mouse_col = scr->mouse % N_COLS(dconf);
+	u_int limit = current - mouse_col;
+	u_int res = 0;
 
-	while (GETCHAR(current, &cell) == 0 && cell.uc == ' ' &&
+	while (GETCHAR(scr, current, &cell) == 0 && cell.uc == ' ' &&
 	    current >= limit) {
 		current--;
 		res++;
 	}
-	if (res)
+	if (res != 0)
 		res--;
 	return (res);
 }
@@ -2639,23 +2600,25 @@ static const int charClass[256] = {
 /*
  * Find the first blank beginning after the current cursor position
  */
-unsigned char
-skip_char_right(unsigned short offset)
+u_int
+skip_char_right(struct wsscreen *scr, u_int offset)
 {
+	struct wsscreen_internal *dconf = scr->scr_dconf;
 	struct wsdisplay_charcell cell;
-	unsigned short current = offset;
-	unsigned short limit = current + (N_COLS - (MOUSE % N_COLS) - 1);
-	unsigned char class;
-	unsigned char res = 0;
+	u_int current = offset;
+	u_int limit = current +
+	    (N_COLS(dconf) - (scr->mouse % N_COLS(dconf)) - 1);
+	u_int class;
+	u_int res = 0;
 
-	GETCHAR(current, &cell);
+	GETCHAR(scr, current, &cell);
 	class = charClass[cell.uc & 0xff];
-	while (GETCHAR(current, &cell) == 0 &&
+	while (GETCHAR(scr, current, &cell) == 0 &&
 	    charClass[cell.uc & 0xff] == class && current <= limit) {
 		current++;
 		res++;
 	}
-	if (res)
+	if (res != 0)
 		res--;
 	return (res);
 }
@@ -2663,23 +2626,24 @@ skip_char_right(unsigned short offset)
 /*
  * Find the first non-blank character before the cursor position
  */
-unsigned char
-skip_char_left(unsigned short offset)
+u_int
+skip_char_left(struct wsscreen *scr, u_int offset)
 {
+	struct wsscreen_internal *dconf = scr->scr_dconf;
 	struct wsdisplay_charcell cell;
-	short current = offset;
-	unsigned short limit = current - (MOUSE % N_COLS);
-	unsigned char class;
-	unsigned char res = 0;
+	u_int current = offset;
+	u_int limit = current - (scr->mouse % N_COLS(dconf));
+	u_int class;
+	u_int res = 0;
 
-	GETCHAR(current, &cell);
+	GETCHAR(scr, current, &cell);
 	class = charClass[cell.uc & 0xff];
-	while (GETCHAR(current, &cell) == 0 &&
+	while (GETCHAR(scr, current, &cell) == 0 &&
 	    charClass[cell.uc & 0xff] == class && current >= limit) {
 		current--;
 		res++;
 	}
-	if (res)
+	if (res != 0)
 		res--;
 	return (res);
 }
@@ -2687,17 +2651,17 @@ skip_char_left(unsigned short offset)
 /*
  * Compare character classes
  */
-unsigned char
-class_cmp(unsigned short first, unsigned short second)
+u_int
+class_cmp(struct wsscreen *scr, u_int first, u_int second)
 {
 	struct wsdisplay_charcell cell;
-	unsigned char first_class;
-	unsigned char second_class;
+	u_int first_class;
+	u_int second_class;
 
-	if (GETCHAR(first, &cell) != 0)
+	if (GETCHAR(scr, first, &cell) != 0)
 		return (1);
 	first_class = charClass[cell.uc & 0xff];
-	if (GETCHAR(second, &cell) != 0)
+	if (GETCHAR(scr, second, &cell) != 0)
 		return (1);
 	second_class = charClass[cell.uc & 0xff];
 
@@ -2711,129 +2675,116 @@ class_cmp(unsigned short first, unsigned short second)
  * Beginning of a copy operation
  */
 void
-mouse_copy_start(void)
+mouse_copy_start(struct wsscreen *scr)
 {
-	unsigned char right;
-	/* if no selection, then that's the first one */
+	u_int right;
 
-	if (!Paste_avail)
-		Paste_avail = 1;
+	/* if no selection, then that's the first one */
+	SET(scr->sc->sc_flags, SC_PASTE_AVAIL);
 
 	/* remove the previous selection */
-
-	if (IS_SEL_EXISTS(sc->sc_focus))
-		remove_selection(sc);
+	if (ISSET(scr->mouse_flags, SEL_EXISTS))
+		remove_selection(scr);
 
 	/* initial show of the cursor */
-	if (!IS_MOUSE_VISIBLE(sc->sc_focus))
-		inverse_char(MOUSE);
+	if (!ISSET(scr->mouse_flags, MOUSE_VISIBLE))
+		inverse_char(scr, scr->mouse);
 
-	CPY_START = MOUSE;
-	CPY_END = MOUSE;
-	ORIG_START = CPY_START;
-	ORIG_END = CPY_END;
-	CURSOR = CPY_END + 1; /* init value */
+	scr->cpy_start = scr->cpy_end = scr->mouse;
+	scr->orig_start = scr->cpy_start;
+	scr->orig_end = scr->cpy_end;
+	scr->cursor = scr->cpy_end + 1; /* init value */
 
-	right = skip_spc_right(BORDER); /* useful later, in mouse_copy_extend */
+	/* useful later, in mouse_copy_extend */
+	right = skip_spc_right(scr, BORDER);
 	if (right)
-		MOUSE_FLAGS |= BLANK_TO_EOL;
+		SET(scr->mouse_flags, BLANK_TO_EOL);
 
-	MOUSE_FLAGS |= SEL_IN_PROGRESS;
-	MOUSE_FLAGS |= SEL_EXISTS;
-	MOUSE_FLAGS |= SEL_BY_CHAR; /* select by char */
-	MOUSE_FLAGS &= ~SEL_BY_WORD;
-	MOUSE_FLAGS &= ~SEL_BY_LINE;
-	MOUSE_FLAGS &= ~MOUSE_VISIBLE; /* cursor hidden in selection */
+	SET(scr->mouse_flags, SEL_IN_PROGRESS | SEL_EXISTS | SEL_BY_CHAR);
+	CLR(scr->mouse_flags, SEL_BY_WORD | SEL_BY_LINE);
+	CLR(scr->mouse_flags, MOUSE_VISIBLE); /* cursor hidden in selection */
 }
 
 /*
  * Copy of the word under the cursor
  */
 void
-mouse_copy_word()
+mouse_copy_word(struct wsscreen *scr)
 {
 	struct wsdisplay_charcell cell;
-	unsigned char right;
-	unsigned char left;
+	u_int right;
+	u_int left;
 
-	if (IS_SEL_EXISTS(sc->sc_focus))
-		remove_selection(sc);
+	if (ISSET(scr->mouse_flags, SEL_EXISTS))
+		remove_selection(scr);
 
-	if (IS_MOUSE_VISIBLE(sc->sc_focus))
-		inverse_char(MOUSE);
+	if (ISSET(scr->mouse_flags, MOUSE_VISIBLE))
+		inverse_char(scr, scr->mouse);
 
-	CPY_START = MOUSE;
-	CPY_END = MOUSE;
+	scr->cpy_start = scr->cpy_end = scr->mouse;
 
-	if (GETCHAR(MOUSE, &cell) == 0 && IS_ALPHANUM(cell.uc)) {
-		right = skip_char_right(CPY_END);
-		left = skip_char_left(CPY_START);
+	if (GETCHAR(scr, scr->mouse, &cell) == 0 &&
+	    IS_ALPHANUM(cell.uc)) {
+		right = skip_char_right(scr, scr->cpy_end);
+		left = skip_char_left(scr, scr->cpy_start);
 	} else {
-		right = skip_spc_right(NO_BORDER);
-		left = skip_spc_left();
+		right = skip_spc_right(scr, NO_BORDER);
+		left = skip_spc_left(scr);
 	}
 
-	CPY_START -= left;
-	CPY_END += right;
-	ORIG_START = CPY_START;
-	ORIG_END = CPY_END;
-	CURSOR = CPY_END + 1; /* init value, never happen */
-	inverse_region(CPY_START, CPY_END);
+	scr->cpy_start -= left;
+	scr->cpy_end += right;
+	scr->orig_start = scr->cpy_start;
+	scr->orig_end = scr->cpy_end;
+	scr->cursor = scr->cpy_end + 1; /* init value, never happen */
+	inverse_region(scr, scr->cpy_start, scr->cpy_end);
 
-	MOUSE_FLAGS |= SEL_IN_PROGRESS;
-	MOUSE_FLAGS |= SEL_EXISTS;
-	MOUSE_FLAGS &= ~SEL_BY_CHAR;
-	MOUSE_FLAGS |= SEL_BY_WORD;
-	MOUSE_FLAGS &= ~SEL_BY_LINE;
-
+	SET(scr->mouse_flags, SEL_IN_PROGRESS | SEL_EXISTS | SEL_BY_WORD);
+	CLR(scr->mouse_flags, SEL_BY_CHAR | SEL_BY_LINE);
 	/* mouse cursor hidden in the selection */
-	MOUSE_FLAGS &= ~BLANK_TO_EOL;
-	MOUSE_FLAGS &= ~MOUSE_VISIBLE;
+	CLR(scr->mouse_flags, BLANK_TO_EOL | MOUSE_VISIBLE);
 }
 
 /*
  * Copy of the current line
  */
 void
-mouse_copy_line(void)
+mouse_copy_line(struct wsscreen *scr)
 {
-	unsigned char row = MOUSE / N_COLS;
+	struct wsscreen_internal *dconf = scr->scr_dconf;
+	u_int row = scr->mouse / N_COLS(dconf);
 
-	if (IS_SEL_EXISTS(sc->sc_focus))
-		remove_selection(sc);
+	if (ISSET(scr->mouse_flags, SEL_EXISTS))
+		remove_selection(scr);
 
-	if (IS_MOUSE_VISIBLE(sc->sc_focus))
-		inverse_char(MOUSE);
+	if (ISSET(scr->mouse_flags, MOUSE_VISIBLE))
+		inverse_char(scr, scr->mouse);
 
-	CPY_START = row * N_COLS;
-	CPY_END = CPY_START + (N_COLS - 1);
-	ORIG_START = CPY_START;
-	ORIG_END = CPY_END;
-	CURSOR = CPY_END + 1;
-	inverse_region(CPY_START, CPY_END);
+	scr->cpy_start = row * N_COLS(dconf);
+	scr->cpy_end = scr->cpy_start + (N_COLS(dconf) - 1);
+	scr->orig_start = scr->cpy_start;
+	scr->orig_end = scr->cpy_end;
+	scr->cursor = scr->cpy_end + 1;
+	inverse_region(scr, scr->cpy_start, scr->cpy_end);
 
-	MOUSE_FLAGS |= SEL_IN_PROGRESS;
-	MOUSE_FLAGS |= SEL_EXISTS;
-	MOUSE_FLAGS &= ~SEL_BY_CHAR;
-	MOUSE_FLAGS &= ~SEL_BY_WORD;
-	MOUSE_FLAGS |= SEL_BY_LINE;
-
+	SET(scr->mouse_flags, SEL_IN_PROGRESS | SEL_EXISTS | SEL_BY_LINE);
+	CLR(scr->mouse_flags, SEL_BY_CHAR | SEL_BY_WORD);
 	/* mouse cursor hidden in the selection */
-	MOUSE_FLAGS &= ~BLANK_TO_EOL;
-	MOUSE_FLAGS &= ~MOUSE_VISIBLE;
+	CLR(scr->mouse_flags, BLANK_TO_EOL | MOUSE_VISIBLE);
 }
 
 /*
  * End of a copy operation
  */
 void
-mouse_copy_end(void)
+mouse_copy_end(struct wsscreen *scr)
 {
-	MOUSE_FLAGS &= ~(SEL_IN_PROGRESS);
-	if (IS_SEL_BY_WORD(sc->sc_focus) || IS_SEL_BY_LINE(sc->sc_focus)) {
-		if (CURSOR != (CPY_END + 1))
-			inverse_char(CURSOR);
-		CURSOR = CPY_END + 1;
+	CLR(scr->mouse_flags, SEL_IN_PROGRESS);
+	if (ISSET(scr->mouse_flags, SEL_BY_WORD) ||
+	    ISSET(scr->mouse_flags, SEL_BY_LINE)) {
+		if (scr->cursor != scr->cpy_end + 1)
+			inverse_char(scr, scr->cursor);
+		scr->cursor = scr->cpy_end + 1;
 	}
 }
 
@@ -2842,194 +2793,194 @@ mouse_copy_end(void)
  * Generic selection extend function
  */
 void
-mouse_copy_extend(void)
+mouse_copy_extend(struct wsscreen *scr)
 {
-	if (IS_SEL_BY_CHAR(sc->sc_focus))
-		mouse_copy_extend_char();
-	if (IS_SEL_BY_WORD(sc->sc_focus))
-		mouse_copy_extend_word();
-	if (IS_SEL_BY_LINE(sc->sc_focus))
-		mouse_copy_extend_line();
+	if (ISSET(scr->mouse_flags, SEL_BY_CHAR))
+		mouse_copy_extend_char(scr);
+	if (ISSET(scr->mouse_flags, SEL_BY_WORD))
+		mouse_copy_extend_word(scr);
+	if (ISSET(scr->mouse_flags, SEL_BY_LINE))
+		mouse_copy_extend_line(scr);
 }
 
 /*
  * Extend a selected region, character by character
  */
 void
-mouse_copy_extend_char()
+mouse_copy_extend_char(struct wsscreen *scr)
 {
-	unsigned char right;
+	u_int right;
 
-	if (!IS_SEL_EXT_AFTER(sc->sc_focus)) {
-
-		if (IS_BLANK_TO_EOL(sc->sc_focus)) {
+	if (!ISSET(scr->mouse_flags, SEL_EXT_AFTER)) {
+		if (ISSET(scr->mouse_flags, BLANK_TO_EOL)) {
 			/*
 			 * First extension of selection. We handle special
 			 * cases of blank characters to eol
 			 */
 
-			right = skip_spc_right(BORDER);
-			if (MOUSE > ORIG_START) {
+			right = skip_spc_right(scr, BORDER);
+			if (scr->mouse > scr->orig_start) {
 				/* the selection goes to the lower part of
 				   the screen */
 
 				/* remove the previous cursor, start of
 				   selection is now next line */
-				inverse_char(CPY_START);
-				CPY_START += (right + 1);
-				CPY_END = CPY_START;
-				ORIG_START = CPY_START;
+				inverse_char(scr, scr->cpy_start);
+				scr->cpy_start += (right + 1);
+				scr->cpy_end = scr->cpy_start;
+				scr->orig_start = scr->cpy_start;
 				/* simulate the initial mark */
-				inverse_char(CPY_START);
+				inverse_char(scr, scr->cpy_start);
 			} else {
 				/* the selection goes to the upper part
 				   of the screen */
 				/* remove the previous cursor, start of
 				   selection is now at the eol */
-				inverse_char(CPY_START);
-				ORIG_START += (right + 1);
-				CPY_START = ORIG_START - 1;
-				CPY_END = ORIG_START - 1;
+				inverse_char(scr, scr->cpy_start);
+				scr->orig_start += (right + 1);
+				scr->cpy_start = scr->orig_start - 1;
+				scr->cpy_end = scr->orig_start - 1;
 				/* simulate the initial mark */
-				inverse_char(CPY_START);
+				inverse_char(scr, scr->cpy_start);
 			}
-			MOUSE_FLAGS &= ~ BLANK_TO_EOL;
+			CLR(scr->mouse_flags, BLANK_TO_EOL);
 		}
 
-		if (MOUSE < ORIG_START && CPY_END >= ORIG_START) {
+		if (scr->mouse < scr->orig_start &&
+		    scr->cpy_end >= scr->orig_start) {
 			/* we go to the upper part of the screen */
 
 			/* reverse the old selection region */
-			remove_selection(sc);
-			CPY_END = ORIG_START - 1;
-			CPY_START = ORIG_START;
+			remove_selection(scr);
+			scr->cpy_end = scr->orig_start - 1;
+			scr->cpy_start = scr->orig_start;
 		}
-		if (CPY_START < ORIG_START && MOUSE >= ORIG_START) {
+		if (scr->cpy_start < scr->orig_start &&
+		    scr->mouse >= scr->orig_start) {
 			/* we go to the lower part of the screen */
 
 			/* reverse the old selection region */
 
-			remove_selection(sc);
-			CPY_START = ORIG_START;
-			CPY_END = ORIG_START - 1;
+			remove_selection(scr);
+			scr->cpy_start = scr->orig_start;
+			scr->cpy_end = scr->orig_start - 1;
 		}
 		/* restore flags cleared in remove_selection() */
-		MOUSE_FLAGS |= SEL_IN_PROGRESS;
-		MOUSE_FLAGS |= SEL_EXISTS;
+		SET(scr->mouse_flags, SEL_IN_PROGRESS | SEL_EXISTS);
 	}
-	/* beginning of common part */
 
-	if (MOUSE >= ORIG_START) {
-
+	if (scr->mouse >= scr->orig_start) {
 		/* lower part of the screen */
-		if (MOUSE > CPY_END) {
+		if (scr->mouse > scr->cpy_end) {
 			/* extending selection */
-			inverse_region(CPY_END + 1, MOUSE);
+			inverse_region(scr, scr->cpy_end + 1, scr->mouse);
 		} else {
 			/* reducing selection */
-			inverse_region(MOUSE + 1, CPY_END);
+			inverse_region(scr, scr->mouse + 1, scr->cpy_end);
 		}
-		CPY_END = MOUSE;
+		scr->cpy_end = scr->mouse;
 	} else {
 		/* upper part of the screen */
-		if (MOUSE < CPY_START) {
+		if (scr->mouse < scr->cpy_start) {
 			/* extending selection */
-			inverse_region(MOUSE,CPY_START - 1);
+			inverse_region(scr, scr->mouse, scr->cpy_start - 1);
 		} else {
 			/* reducing selection */
-			inverse_region(CPY_START,MOUSE - 1);
+			inverse_region(scr, scr->cpy_start, scr->mouse - 1);
 		}
-		CPY_START = MOUSE;
+		scr->cpy_start = scr->mouse;
 	}
-	/* end of common part */
 }
 
 /*
  * Extend a selected region, word by word
  */
 void
-mouse_copy_extend_word(void)
+mouse_copy_extend_word(struct wsscreen *scr)
 {
-	unsigned short old_cpy_end;
-	unsigned short old_cpy_start;
+	u_int old_cpy_end;
+	u_int old_cpy_start;
 
-	if (!IS_SEL_EXT_AFTER(sc->sc_focus)) {
-
+	if (!ISSET(scr->mouse_flags, SEL_EXT_AFTER)) {
 		/* remove cursor in selection (black one) */
-
-		if (CURSOR != (CPY_END + 1))
-			inverse_char(CURSOR);
+		if (scr->cursor != scr->cpy_end + 1)
+			inverse_char(scr, scr->cursor);
 
 		/* now, switch between lower and upper part of the screen */
-
-		if (MOUSE < ORIG_START && CPY_END >= ORIG_START) {
+		if (scr->mouse < scr->orig_start &&
+		    scr->cpy_end >= scr->orig_start) {
 			/* going to the upper part of the screen */
-			inverse_region(ORIG_END + 1, CPY_END);
-			CPY_END = ORIG_END;
+			inverse_region(scr, scr->orig_end + 1, scr->cpy_end);
+			scr->cpy_end = scr->orig_end;
 		}
 
-		if (MOUSE > ORIG_END && CPY_START <= ORIG_START) {
+		if (scr->mouse > scr->orig_end &&
+		    scr->cpy_start <= scr->orig_start) {
 			/* going to the lower part of the screen */
-			inverse_region(CPY_START, ORIG_START - 1);
-			CPY_START = ORIG_START;
+			inverse_region(scr, scr->cpy_start,
+			    scr->orig_start - 1);
+			scr->cpy_start = scr->orig_start;
 		}
 	}
 
-	if (MOUSE >= ORIG_START) {
+	if (scr->mouse >= scr->orig_start) {
 		/* lower part of the screen */
-
-		if (MOUSE > CPY_END) {
+		if (scr->mouse > scr->cpy_end) {
 			/* extending selection */
-
-			old_cpy_end = CPY_END;
-			CPY_END = MOUSE + skip_char_right(MOUSE);
-			inverse_region(old_cpy_end + 1, CPY_END);
+			old_cpy_end = scr->cpy_end;
+			scr->cpy_end = scr->mouse +
+			    skip_char_right(scr, scr->mouse);
+			inverse_region(scr, old_cpy_end + 1, scr->cpy_end);
 		} else {
-			if (class_cmp(MOUSE, MOUSE + 1)) {
+			if (class_cmp(scr, scr->mouse, scr->mouse + 1)) {
 				/* reducing selection (remove last word) */
-				old_cpy_end = CPY_END;
-				CPY_END = MOUSE;
-				inverse_region(CPY_END + 1, old_cpy_end);
+				old_cpy_end = scr->cpy_end;
+				scr->cpy_end = scr->mouse;
+				inverse_region(scr, scr->cpy_end + 1,
+				    old_cpy_end);
 			} else {
-				old_cpy_end = CPY_END;
-				CPY_END = MOUSE + skip_char_right(MOUSE);
-				if (CPY_END != old_cpy_end) {
+				old_cpy_end = scr->cpy_end;
+				scr->cpy_end = scr->mouse +
+				    skip_char_right(scr, scr->mouse);
+				if (scr->cpy_end != old_cpy_end) {
 					/* reducing selection, from the end of
 					 * next word */
-					inverse_region(CPY_END + 1,
+					inverse_region(scr, scr->cpy_end + 1,
 					    old_cpy_end);
 				}
 			}
 		}
 	} else {
 		/* upper part of the screen */
-		if (MOUSE < CPY_START) {
+		if (scr->mouse < scr->cpy_start) {
 			/* extending selection */
-			old_cpy_start = CPY_START;
-			CPY_START = MOUSE - skip_char_left(MOUSE);
-			inverse_region(CPY_START, old_cpy_start - 1);
+			old_cpy_start = scr->cpy_start;
+			scr->cpy_start = scr->mouse -
+			    skip_char_left(scr, scr->mouse);
+			inverse_region(scr, scr->cpy_start, old_cpy_start - 1);
 		} else {
-			if (class_cmp(MOUSE - 1, MOUSE)) {
+			if (class_cmp(scr, scr->mouse - 1, scr->mouse)) {
 				/* reducing selection (remove last word) */
-				old_cpy_start = CPY_START;
-				CPY_START = MOUSE;
-				inverse_region(old_cpy_start,
-				    CPY_START - 1);
+				old_cpy_start = scr->cpy_start;
+				scr->cpy_start = scr->mouse;
+				inverse_region(scr, old_cpy_start,
+				    scr->cpy_start - 1);
 			} else {
-				old_cpy_start = CPY_START;
-				CPY_START = MOUSE - skip_char_left(MOUSE);
-				if (CPY_START != old_cpy_start) {
-					inverse_region(old_cpy_start,
-					    CPY_START - 1);
+				old_cpy_start = scr->cpy_start;
+				scr->cpy_start = scr->mouse -
+				    skip_char_left(scr, scr->mouse);
+				if (scr->cpy_start != old_cpy_start) {
+					inverse_region(scr, old_cpy_start,
+					    scr->cpy_start - 1);
 				}
 			}
 		}
 	}
 
-	if (!IS_SEL_EXT_AFTER(sc->sc_focus)) {
+	if (!ISSET(scr->mouse_flags, SEL_EXT_AFTER)) {
 		/* display new cursor */
-		CURSOR = MOUSE;
-		inverse_char(CURSOR);
+		scr->cursor = scr->mouse;
+		inverse_char(scr, scr->cursor);
 	}
 }
 
@@ -3037,71 +2988,64 @@ mouse_copy_extend_word(void)
  * Extend a selected region, line by line
  */
 void
-mouse_copy_extend_line(void)
+mouse_copy_extend_line(struct wsscreen *scr)
 {
-	unsigned short old_row;
-	unsigned short new_row;
-	unsigned short old_cpy_start;
-	unsigned short old_cpy_end;
+	struct wsscreen_internal *dconf = scr->scr_dconf;
+	u_int old_row;
+	u_int new_row;
+	u_int old_cpy_start;
+	u_int old_cpy_end;
 
-	if (!IS_SEL_EXT_AFTER(sc->sc_focus)) {
+	if (!ISSET(scr->mouse_flags, SEL_EXT_AFTER)) {
 		/* remove cursor in selection (black one) */
-
-		if (CURSOR != (CPY_END + 1))
-			inverse_char(CURSOR);
+		if (scr->cursor != scr->cpy_end + 1)
+			inverse_char(scr, scr->cursor);
 
 		/* now, switch between lower and upper part of the screen */
-
-		if (MOUSE < ORIG_START && CPY_END >= ORIG_START) {
+		if (scr->mouse < scr->orig_start &&
+		    scr->cpy_end >= scr->orig_start) {
 			/* going to the upper part of the screen */
-			inverse_region(ORIG_END + 1, CPY_END);
-			CPY_END = ORIG_END;
+			inverse_region(scr, scr->orig_end + 1, scr->cpy_end);
+			scr->cpy_end = scr->orig_end;
 		}
 
-		if (MOUSE > ORIG_END && CPY_START <= ORIG_START) {
+		if (scr->mouse > scr->orig_end &&
+		    scr->cpy_start <= scr->orig_start) {
 			/* going to the lower part of the screen */
-			inverse_region(CPY_START, ORIG_START - 1);
-			CPY_START = ORIG_START;
+			inverse_region(scr, scr->cpy_start,
+			    scr->orig_start - 1);
+			scr->cpy_start = scr->orig_start;
 		}
 	}
 
-	if (MOUSE >= ORIG_START) {
+	if (scr->mouse >= scr->orig_start) {
 		/* lower part of the screen */
-		if (CURSOR == (CPY_END + 1))
-			CURSOR = CPY_END;
-		old_row = CURSOR / N_COLS;
-		new_row = MOUSE / N_COLS;
-		old_cpy_end = CPY_END;
-		CPY_END = (new_row * N_COLS) + MAXCOL;
+		if (scr->cursor == scr->cpy_end + 1)
+			scr->cursor = scr->cpy_end;
+		old_row = scr->cursor / N_COLS(dconf);
+		new_row = scr->mouse / N_COLS(dconf);
+		old_cpy_end = scr->cpy_end;
+		scr->cpy_end = new_row * N_COLS(dconf) + MAXCOL(dconf);
 		if (new_row > old_row)
-			inverse_region(old_cpy_end + 1, CPY_END);
+			inverse_region(scr, old_cpy_end + 1, scr->cpy_end);
 		else if (new_row < old_row)
-			inverse_region(CPY_END + 1, old_cpy_end);
+			inverse_region(scr, scr->cpy_end + 1, old_cpy_end);
 	} else {
 		/* upper part of the screen */
-		old_row = CURSOR / N_COLS;
-		new_row = MOUSE / N_COLS;
-		old_cpy_start = CPY_START;
-		CPY_START = new_row * N_COLS;
+		old_row = scr->cursor / N_COLS(dconf);
+		new_row = scr->mouse / N_COLS(dconf);
+		old_cpy_start = scr->cpy_start;
+		scr->cpy_start = new_row * N_COLS(dconf);
 		if (new_row < old_row)
-			inverse_region(CPY_START, old_cpy_start - 1);
+			inverse_region(scr, scr->cpy_start, old_cpy_start - 1);
 		else if (new_row > old_row)
-			inverse_region(old_cpy_start, CPY_START - 1);
+			inverse_region(scr, old_cpy_start, scr->cpy_start - 1);
 	}
 
-	if (!IS_SEL_EXT_AFTER(sc->sc_focus)) {
+	if (!ISSET(scr->mouse_flags, SEL_EXT_AFTER)) {
 		/* display new cursor */
-		CURSOR = MOUSE;
-		inverse_char(CURSOR);
-	}
-}
-
-void
-mouse_hide(struct wsdisplay_softc *sc)
-{
-	if (IS_MOUSE_VISIBLE(sc->sc_focus)) {
-		inverse_char(MOUSE);
-		MOUSE_FLAGS &= ~MOUSE_VISIBLE;
+		scr->cursor = scr->mouse;
+		inverse_char(scr, scr->cursor);
 	}
 }
 
@@ -3109,41 +3053,50 @@ mouse_hide(struct wsdisplay_softc *sc)
  * Add an extension to a selected region, word by word
  */
 void
-mouse_copy_extend_after(void)
+mouse_copy_extend_after(struct wsscreen *scr)
 {
-	unsigned short start_dist;
-	unsigned short end_dist;
+	u_int start_dist;
+	u_int end_dist;
 
-	if (IS_SEL_EXISTS(sc->sc_focus)) {
-		MOUSE_FLAGS |= SEL_EXT_AFTER;
-		mouse_hide(sc); /* hide current cursor */
+	if (ISSET(scr->mouse_flags, SEL_EXISTS)) {
+		SET(scr->mouse_flags, SEL_EXT_AFTER);
+		mouse_hide(scr); /* hide current cursor */
 
-		if (CPY_START > MOUSE)
-			start_dist = CPY_START - MOUSE;
+		if (scr->cpy_start > scr->mouse)
+			start_dist = scr->cpy_start - scr->mouse;
 		else
-			start_dist = MOUSE - CPY_START;
-		if (MOUSE > CPY_END)
-			end_dist = MOUSE - CPY_END;
+			start_dist = scr->mouse - scr->cpy_start;
+		if (scr->mouse > scr->cpy_end)
+			end_dist = scr->mouse - scr->cpy_end;
 		else
-			end_dist = CPY_END - MOUSE;
+			end_dist = scr->cpy_end - scr->mouse;
 		if (start_dist < end_dist) {
 			/* upper part of the screen*/
-			ORIG_START = MOUSE + 1;
+			scr->orig_start = scr->mouse + 1;
 			/* only used in mouse_copy_extend_line() */
-			CURSOR = CPY_START;
+			scr->cursor = scr->cpy_start;
 		} else {
 			/* lower part of the screen */
-			ORIG_START = MOUSE;
+			scr->orig_start = scr->mouse;
 			/* only used in mouse_copy_extend_line() */
-			CURSOR = CPY_END;
+			scr->cursor = scr->cpy_end;
 		}
-		if (IS_SEL_BY_CHAR(sc->sc_focus))
-			mouse_copy_extend_char();
-		if (IS_SEL_BY_WORD(sc->sc_focus))
-			mouse_copy_extend_word();
-		if (IS_SEL_BY_LINE(sc->sc_focus))
-			mouse_copy_extend_line();
-		mouse_copy_selection();
+		if (ISSET(scr->mouse_flags, SEL_BY_CHAR))
+			mouse_copy_extend_char(scr);
+		if (ISSET(scr->mouse_flags, SEL_BY_WORD))
+			mouse_copy_extend_word(scr);
+		if (ISSET(scr->mouse_flags, SEL_BY_LINE))
+			mouse_copy_extend_line(scr);
+		mouse_copy_selection(scr);
+	}
+}
+
+void
+mouse_hide(struct wsscreen *scr)
+{
+	if (ISSET(scr->mouse_flags, MOUSE_VISIBLE)) {
+		inverse_char(scr, scr->mouse);
+		CLR(scr->mouse_flags, MOUSE_VISIBLE);
 	}
 }
 
@@ -3151,67 +3104,71 @@ mouse_copy_extend_after(void)
  * Remove a previously selected region
  */
 void
-remove_selection(struct wsdisplay_softc *sc)
+remove_selection(struct wsscreen *scr)
 {
-	if (IS_SEL_EXT_AFTER(sc->sc_focus)) {
+	if (ISSET(scr->mouse_flags, SEL_EXT_AFTER)) {
 		/* reset the flag indicating an extension of selection */
-		MOUSE_FLAGS &= ~SEL_EXT_AFTER;
+		CLR(scr->mouse_flags, SEL_EXT_AFTER);
 	}
-	inverse_region(CPY_START, CPY_END);
-	MOUSE_FLAGS &= ~SEL_IN_PROGRESS;
-	MOUSE_FLAGS &= ~SEL_EXISTS;
+	inverse_region(scr, scr->cpy_start, scr->cpy_end);
+	CLR(scr->mouse_flags, SEL_IN_PROGRESS | SEL_EXISTS);
 }
 
 /*
  * Put the current visual selection in the selection buffer
  */
 void
-mouse_copy_selection(void)
+mouse_copy_selection(struct wsscreen *scr)
 {
+	struct wsscreen_internal *dconf = scr->scr_dconf;
 	struct wsdisplay_charcell cell;
-	unsigned short current = 0;
-	unsigned short blank = current;
-	unsigned short buf_end = ((N_COLS + 1) * N_ROWS);
-	unsigned short sel_cur;
-	unsigned short sel_end;
+	u_int current = 0;
+	u_int blank = current;
+	u_int buf_end = (N_COLS(dconf) + 1) * N_ROWS(dconf);
+	u_int sel_cur;
+	u_int sel_end;
 
-	sel_cur = CPY_START;
-	sel_end = CPY_END;
+	sel_cur = scr->cpy_start;
+	sel_end = scr->cpy_end;
 
 	while (sel_cur <= sel_end && current < buf_end - 1) {
-		if (GETCHAR(sel_cur, &cell) != 0)
+		if (GETCHAR(scr, sel_cur, &cell) != 0)
 			break;
-		Copybuffer[current] = cell.uc;
-		if (!IS_SPACE(Copybuffer[current]))
+		scr->sc->sc_copybuffer[current] = cell.uc;
+		if (!IS_SPACE(cell.uc))
 			blank = current + 1; /* first blank after non-blank */
 		current++;
-		if (POS_TO_X(sel_cur) == MAXCOL) {
-			/* we are on the last col of the screen */
-			Copybuffer[blank] = '\r'; /* carriage return */
-			current = blank + 1; /* restart just after the carriage
-					       return in the buffer */
-			blank = current;
+		if (sel_cur % N_COLS(dconf) == MAXCOL(dconf)) {
+			/*
+			 * If we are on the last column of the screen,
+			 * insert a carriage return.
+			 */
+			scr->sc->sc_copybuffer[blank] = '\r';
+			current = ++blank;
 		}
 		sel_cur++;
 	}
 
-	Copybuffer[current] = '\0';
+	scr->sc->sc_copybuffer[current] = '\0';
 }
 
 /*
  * Paste the current selection
  */
 void
-mouse_paste(void)
+mouse_paste(struct wsscreen *scr)
 {
-	unsigned short len;
-	unsigned char *current = Copybuffer;
+	char *current = scr->sc->sc_copybuffer;
+	struct tty *tp;
+	u_int len;
 
-	if (Paste_avail) {
-		for (len = strlen(Copybuffer) ; len > 0; len--) {
-			(*linesw[sc->sc_focus->scr_tty->t_line].l_rint)
-			    (*current++, sc->sc_focus->scr_tty);
-		}
+	if (ISSET(scr->sc->sc_flags, SC_PASTE_AVAIL)) {
+		if (!WSSCREEN_HAS_TTY(scr))
+			return;
+
+		tp = scr->scr_tty;
+		for (len = strlen(scr->sc->sc_copybuffer); len != 0; len--)
+			(*linesw[tp->t_line].l_rint)(*current++, tp);
 	}
 }
 
@@ -3220,12 +3177,12 @@ mouse_paste(void)
  * The z axis (roller or wheel) is mapped by default to scrollback.
  */
 void
-mouse_zaxis(int z)
+mouse_zaxis(struct wsscreen *scr, int z)
 {
 	if (z < 0)
-		wsscrollback(sc, WSDISPLAY_SCROLL_BACKWARD);
+		wsscrollback(scr->sc, WSDISPLAY_SCROLL_BACKWARD);
 	else
-		wsscrollback(sc, WSDISPLAY_SCROLL_FORWARD);
+		wsscrollback(scr->sc, WSDISPLAY_SCROLL_FORWARD);
 }
 
 /*
@@ -3238,39 +3195,40 @@ void
 allocate_copybuffer(struct wsdisplay_softc *sc)
 {
 	int nscreens = sc->sc_scrdata->nscreens;
-	int i,s;
+	int i, s;
 	const struct wsscreen_descr **screens_list = sc->sc_scrdata->screens;
 	const struct wsscreen_descr *current;
-	unsigned short size = Copybuffer_size;
+	u_int size = sc->sc_copybuffer_size;
 
 	s = spltty();
 	for (i = 0; i < nscreens; i++) {
 		current = *screens_list;
-		if (( (current->ncols + 1) * current->nrows) > size)
-			size = ((current->ncols + 1) * current->nrows);
+		if ((current->ncols + 1) * current->nrows > size)
+			size = (current->ncols + 1) * current->nrows;
 			screens_list++;
 	}
-	if ((size != Copybuffer_size) && (Copybuffer_size != 0)) {
-		bzero(Copybuffer, Copybuffer_size);
-		free(Copybuffer, M_DEVBUF);
+	if (size != sc->sc_copybuffer_size && sc->sc_copybuffer_size != 0) {
+		bzero(sc->sc_copybuffer, sc->sc_copybuffer_size);
+		free(sc->sc_copybuffer, M_DEVBUF);
 	}
-	if ((Copybuffer = (char *)malloc(size, M_DEVBUF, M_NOWAIT)) == NULL) {
-		printf("wscons: copybuffer memory malloc failed\n");
-		Copybuffer_size = 0;
+	if ((sc->sc_copybuffer = (char *)malloc(size, M_DEVBUF, M_NOWAIT)) ==
+	    NULL) {
+		printf("%s: couldn't allocate copy buffer\n",
+		    sc->sc_dv.dv_xname);
+		size = 0;
 	}
-	Copybuffer_size = size;
+	sc->sc_copybuffer_size = size;
 	splx(s);
 }
 
-
 /* Remove selection and cursor on current screen */
 void
-mouse_remove(struct wsdisplay_softc *sc)
+mouse_remove(struct wsscreen *scr)
 {
-	if (IS_SEL_EXISTS(sc->sc_focus))
-		remove_selection(sc);
+	if (ISSET(scr->mouse_flags, SEL_EXISTS))
+		remove_selection(scr);
 
-	mouse_hide(sc);
+	mouse_hide(scr);
 }
 
 /* Send a wscons event to notify wsmoused(8) to release the mouse device */

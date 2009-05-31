@@ -1,8 +1,8 @@
-/* $OpenBSD: wsmoused.h,v 1.7 2006/12/02 18:16:14 miod Exp $ */
+/* $OpenBSD: wsmoused.h,v 1.8 2009/05/31 17:02:20 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
- * 
+ *
  * All rights reserved.
  *
  * This code is for mouse console support under the wscons console driver.
@@ -33,86 +33,66 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *
  */
 
-struct wsdisplay_softc;
+int	wsmoused(struct wsdisplay_softc *, u_long, caddr_t, int, struct proc *);
 
-int wsmoused(struct wsdisplay_softc *, u_long, caddr_t, int,
-		  struct proc *p);
+void	motion_event(struct wsscreen *, u_int, int);
+void	button_event(struct wsscreen *, int, int);
+int	ctrl_event(struct wsdisplay_softc *, u_int, int, struct proc *);
 
-void motion_event(u_int, int);
-void button_event(int, int);
-int ctrl_event(u_int, int, struct wsdisplay_softc *, struct proc *);
+void	mouse_moverel(struct wsscreen *, int, int);
 
-void mouse_moverel(char, char);
+void	inverse_char(struct wsscreen *, u_int);
+void	inverse_region(struct wsscreen *, u_int, u_int);
 
-void inverse_char(unsigned short c);
-void inverse_region(unsigned short start, unsigned short end);
+u_int	skip_spc_right(struct wsscreen *, int);
+u_int	skip_spc_left(struct wsscreen *);
+u_int	skip_char_right(struct wsscreen *, u_int);
+u_int	skip_char_left(struct wsscreen *, u_int);
+u_int	class_cmp(struct wsscreen *, u_int, u_int);
 
-unsigned char skip_spc_right(char);
-unsigned char skip_spc_left(void);
-unsigned char skip_char_right(unsigned short);
-unsigned char skip_char_left(unsigned short);
-unsigned char class_cmp(unsigned short, unsigned short);
+void	mouse_copy_start(struct wsscreen *);
+void	mouse_copy_word(struct wsscreen *);
+void	mouse_copy_line(struct wsscreen *);
+void	mouse_copy_end(struct wsscreen *);
+void	mouse_copy_extend(struct wsscreen *);
+void	mouse_copy_extend_char(struct wsscreen *);
+void	mouse_copy_extend_word(struct wsscreen *);
+void	mouse_copy_extend_line(struct wsscreen *);
+void	mouse_copy_extend_after(struct wsscreen *);
+void	mouse_hide(struct wsscreen *);
+void	remove_selection(struct wsscreen *);
+void	mouse_copy_selection(struct wsscreen *);
+void	mouse_paste(struct wsscreen *);
 
-void mouse_copy_start(void);
-void mouse_copy_word(void);
-void mouse_copy_line(void);
-void mouse_copy_end(void);
-void mouse_copy_extend(void);
-void mouse_copy_extend_char(void);
-void mouse_copy_extend_word(void);
-void mouse_copy_extend_line(void);
-void mouse_hide(struct wsdisplay_softc *);
-void mouse_copy_extend_after(void);
-void remove_selection(struct wsdisplay_softc *);
-void mouse_copy_selection(void);
-void mouse_paste(void);
+void	mouse_zaxis(struct wsscreen *, int);
+void	allocate_copybuffer(struct wsdisplay_softc *);
+void	mouse_remove(struct wsscreen *);
+void	wsmoused_release(struct wsdisplay_softc *);
+void	wsmoused_wakeup(struct wsdisplay_softc *);
 
-void mouse_zaxis(int);
-void allocate_copybuffer(struct wsdisplay_softc *);
-void mouse_remove(struct wsdisplay_softc *);
-void wsmoused_release(struct wsdisplay_softc *);
-void wsmoused_wakeup(struct wsdisplay_softc *);
-
-extern char *Copybuffer; /* buffer that contains mouse selections */
-extern u_int Copybuffer_size;
-extern char Paste_avail; /* flag, to indicate whether a selection is in the
-			 Copy buffer */
-			      
 #define NO_BORDER 0
 #define BORDER 1
 
-#define WS_NCOLS(ws) ((ws)->scr_dconf->scrdata->ncols)
-#define WS_NROWS(ws) ((ws)->scr_dconf->scrdata->nrows)
+#define N_COLS(dconf) 	((dconf)->scrdata->ncols)
+#define N_ROWS(dconf) 	((dconf)->scrdata->nrows)
 
-#define MAXCOL (WS_NCOLS(sc->sc_focus) - 1)
-#define MAXROW (WS_NROWS(sc->sc_focus) - 1)
+#define WS_NCOLS(scr)	N_COLS((scr)->scr_dconf)
+#define WS_NROWS(scr)	N_ROWS((scr)->scr_dconf)
 
-#define N_COLS 		(WS_NCOLS(sc->sc_focus))
-#define N_ROWS 		(WS_NROWS(sc->sc_focus))
-#define MOUSE 		(sc->sc_focus->mouse)
-#define CURSOR 		(sc->sc_focus->cursor)
-#define CPY_START	(sc->sc_focus->cpy_start)
-#define CPY_END		(sc->sc_focus->cpy_end)
-#define ORIG_START	(sc->sc_focus->orig_start)
-#define ORIG_END	(sc->sc_focus->orig_end)
-#define MOUSE_FLAGS	(sc->sc_focus->mouse_flags)
-
-#define XY_TO_POS(col, row) (((row) * N_COLS) + (col))
-#define POS_TO_X(pos) ((pos) % (N_COLS))
-#define POS_TO_Y(pos) ((pos) / (N_COLS))
+#define MAXCOL(dconf)	(N_COLS(dconf) - 1)
+#define MAXROW(dconf)	(N_ROWS(dconf) - 1)
 
 /* Shortcuts to the various display operations */
-#define	GETCHAR(pos, cellp) \
-	((*sc->sc_accessops->getchar) \
-	    (sc->sc_accesscookie, (pos) / N_COLS, (pos) % N_COLS, cellp))
-#define PUTCHAR(pos, uc, attr) \
-	((*sc->sc_focus->scr_dconf->emulops->putchar) \
-	    (sc->sc_focus->scr_dconf->emulcookie, ((pos) / N_COLS), \
-	    ((pos) % N_COLS), (uc), (attr)))
+#define	GETCHAR(scr, pos, cellp) \
+	((*(scr)->sc->sc_accessops->getchar) \
+	    ((scr)->sc->sc_accesscookie, (pos) / N_COLS((scr)->scr_dconf), \
+	     (pos) % N_COLS((scr)->scr_dconf), cellp))
+#define PUTCHAR(dconf, pos, uc, attr) \
+	((*(dconf)->emulops->putchar) \
+	    ((dconf)->emulcookie, ((pos) / N_COLS(dconf)), \
+	    ((pos) % N_COLS(dconf)), (uc), (attr)))
 
 #define MOUSE_COPY_BUTTON 	0
 #define MOUSE_PASTE_BUTTON 	1
