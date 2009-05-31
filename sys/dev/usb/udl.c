@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.11 2009/05/24 11:11:03 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.12 2009/05/31 18:26:44 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -117,13 +117,13 @@ void		udl_init_fb_offsets(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t);
 usbd_status	udl_init_resolution(struct udl_softc *, uint8_t *, uint8_t);
 void		udl_fb_off_write(struct udl_softc *, uint16_t, uint32_t,
-		    uint8_t);
+		    uint16_t);
 void		udl_fb_pos_write(struct udl_softc *, uint16_t, uint32_t,
 		    uint32_t, uint32_t);
 void		udl_fb_blk_write(struct udl_softc *, uint16_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
 void		udl_fb_off_copy(struct udl_softc *, uint32_t, uint32_t,
-		    uint8_t);
+		    uint16_t);
 void		udl_fb_pos_copy(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
 void		udl_fb_blk_copy(struct udl_softc *, uint32_t, uint32_t,
@@ -1175,7 +1175,7 @@ udl_init_resolution(struct udl_softc *sc, uint8_t *buf, uint8_t len)
 
 void
 udl_fb_off_write(struct udl_softc *sc, uint16_t rgb16, uint32_t off,
-    uint8_t width)
+    uint16_t width)
 {
 	uint8_t buf[UDL_CMD_MAX_DATA_SIZE];
 	uint16_t lwidth, lrgb16;
@@ -1188,7 +1188,7 @@ udl_fb_off_write(struct udl_softc *sc, uint16_t rgb16, uint32_t off,
 	udl_cmd_insert_int_1(sc, UDL_BULK_SOC);
 	udl_cmd_insert_int_1(sc, UDL_BULK_CMD_FB_WRITE | UDL_BULK_CMD_FB_WORD);
 	udl_cmd_insert_int_3(sc, loff);
-	udl_cmd_insert_int_1(sc, width);
+	udl_cmd_insert_int_1(sc, width >= UDL_CMD_MAX_PIXEL_COUNT ? 0 : width);
 
 	for (i = 0; i < lwidth; i += 2) {
 		lrgb16 = htobe16(rgb16);
@@ -1231,7 +1231,7 @@ udl_fb_blk_write(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
 
 void
 udl_fb_off_copy(struct udl_softc *sc, uint32_t src_off, uint32_t dst_off,
-    uint8_t width)
+    uint16_t width)
 {
 	uint32_t ldst_off, lsrc_off;
 
@@ -1241,7 +1241,7 @@ udl_fb_off_copy(struct udl_softc *sc, uint32_t src_off, uint32_t dst_off,
 	udl_cmd_insert_int_1(sc, UDL_BULK_SOC);
 	udl_cmd_insert_int_1(sc, UDL_BULK_CMD_FB_COPY | UDL_BULK_CMD_FB_WORD);
 	udl_cmd_insert_int_3(sc, ldst_off);
-	udl_cmd_insert_int_1(sc, width);
+	udl_cmd_insert_int_1(sc, width >= UDL_CMD_MAX_PIXEL_COUNT ? 0 : width);
 	udl_cmd_insert_int_3(sc, lsrc_off);
 }
 
@@ -1336,7 +1336,7 @@ udl_init_test(struct udl_softc *sc)
 	uint16_t color;
 	uint16_t rgb24[3] = { 0xf800, 0x07e0, 0x001f };
 
-	loops = sc->sc_width * sc->sc_height / UDL_CMD_MAX_PIXEL_COUNT;
+	loops = (sc->sc_width * sc->sc_height) / UDL_CMD_MAX_PIXEL_COUNT;
 	parts = loops / 3;
 	color = rgb24[0];
 

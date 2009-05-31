@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.h,v 1.2 2009/05/10 14:53:27 mglocker Exp $ */
+/*	$OpenBSD: udl.h,v 1.3 2009/05/31 18:26:44 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -20,7 +20,7 @@
  * Bulk command xfer structure.
  */
 #define UDL_CMD_MAX_XFER_SIZE	1048576
-#define UDL_CMD_MAX_DATA_SIZE	256
+#define UDL_CMD_MAX_DATA_SIZE	512
 #define UDL_CMD_MAX_PIXEL_COUNT	(UDL_CMD_MAX_DATA_SIZE / 2)
 
 struct udl_cmd_xfer {
