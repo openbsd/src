@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.74 2009/05/31 12:29:21 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.75 2009/05/31 12:33:29 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1494,7 +1494,7 @@ zyd_rf_name(uint8_t type)
 	static const char * const zyd_rfs[] = {
 		"unknown", "unknown", "UW2451",   "UCHIP",     "AL2230",
 		"AL7230B", "THETA",   "AL2210",   "MAXIM_NEW", "GCT",
-		"PV2000",  "RALINK",  "INTERSIL", "RFMD",      "MAXIM_NEW2",
+		"AL2230S",  "RALINK",  "INTERSIL", "RFMD",      "MAXIM_NEW2",
 		"PHILIPS"
 	};
 	return zyd_rfs[(type > 15) ? 0 : type];
