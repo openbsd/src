@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.16 2009/05/20 16:10:04 michele Exp $ */
+/*	$OpenBSD: rde.c,v 1.17 2009/05/31 17:13:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -194,23 +194,20 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct route_report	 rr;
 	struct nbr_msg		 nm;
-	int			 i, n, connected = 0;
+	int			 i, connected = 0;
+	ssize_t			 n;
 	struct iface		*iface;
 
-	switch (event) {
-	case EV_READ:
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0)	/* connection closed */
 			fatalx("pipe closed");
-		break;
-	case EV_WRITE:
+	}
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
 		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
