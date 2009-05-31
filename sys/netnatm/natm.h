@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm.h,v 1.8 2009/01/28 15:12:03 claudio Exp $	*/
+/*	$OpenBSD: natm.h,v 1.9 2009/05/31 19:17:20 claudio Exp $	*/
 
 /*
  *
@@ -56,20 +56,6 @@ struct sockaddr_natm {
   u_int8_t	snatm_vpi;		/* vpi */
 };
 
-
-#if defined(__FreeBSD__) && defined(KERNEL)
-
-#ifndef _KERNEL
-#define _KERNEL
-#endif
-
-#define SPLSOFTNET() splnet()
-
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-
-#define SPLSOFTNET() splsoftnet()
-
-#endif
 
 #ifdef _KERNEL
 

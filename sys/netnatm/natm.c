@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm.c,v 1.10 2008/05/27 19:57:45 thib Exp $	*/
+/*	$OpenBSD: natm.c,v 1.11 2009/05/31 19:17:20 claudio Exp $	*/
 
 /*
  *
@@ -79,7 +79,7 @@ int natm_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
   struct ifnet *ifp;
   int proto = so->so_proto->pr_protocol;
 
-  s = SPLSOFTNET();
+  s = splsoftnet();
 
   npcb = (struct natmpcb *) so->so_pcb;
 
