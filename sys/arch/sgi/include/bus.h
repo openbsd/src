@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.14 2009/05/24 17:31:05 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.15 2009/05/31 17:42:13 miod Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
@@ -309,7 +309,6 @@ bus_space_copy_8(void *v, bus_space_handle_t h1, bus_size_t o1,
 #define	BUS_DMA_WAITOK		0x000
 #define	BUS_DMA_NOWAIT		0x001
 #define	BUS_DMA_ALLOCNOW	0x002
-#define	BUS_DMAMEM_NOSYNC	0x004
 #define	BUS_DMA_COHERENT	0x008
 #define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x020

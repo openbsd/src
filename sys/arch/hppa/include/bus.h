@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.26 2009/04/20 00:42:06 oga Exp $	*/
+/*	$OpenBSD: bus.h,v 1.27 2009/05/31 17:42:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -295,7 +295,6 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 #define	BUS_DMA_NOWAIT		0x0001	/* not safe to sleep */
 #define	BUS_DMA_ALLOCNOW	0x0002	/* perform resource allocation now */
 #define	BUS_DMA_COHERENT	0x0004	/* hint: map memory DMA coherent */
-#define	BUS_DMAMEM_NOSYNC	0x0010
 #define	BUS_DMA_BUS1		0x0020	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x0040
 #define	BUS_DMA_BUS3		0x0080

@@ -1,5 +1,5 @@
 /*	$NetBSD: bus.h,v 1.1 2001/06/06 17:37:37 matt Exp $	*/
-/*	$OpenBSD: bus_mi.h,v 1.10 2009/04/20 00:42:06 oga Exp $	*/
+/*	$OpenBSD: bus_mi.h,v 1.11 2009/05/31 17:42:13 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -961,7 +961,6 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
 #define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
 #define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
-#define	BUS_DMAMEM_NOSYNC	0x004
 #define	BUS_DMA_COHERENT	0x008	/* hint: map memory DMA coherent */
 #define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
 #define	BUS_DMA_BUS2		0x020
