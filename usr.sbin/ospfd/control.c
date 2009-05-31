@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.23 2009/04/07 14:57:33 reyk Exp $ */
+/*	$OpenBSD: control.c,v 1.24 2009/05/31 16:58:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -198,22 +198,18 @@ control_dispatch_imsg(int fd, short event, void *bula)
 		return;
 	}
 
-	switch (event) {
-	case EV_READ:
+	if (event & EV_READ) {
 		if ((n = imsg_read(&c->ibuf)) == -1 || n == 0) {
 			control_close(fd);
 			return;
 		}
-		break;
-	case EV_WRITE:
-		if (msgbuf_write(&c->ibuf.w) < 0) {
+	}
+	if (event & EV_WRITE) {
+		if (msgbuf_write(&c->ibuf.w) == -1) {
 			control_close(fd);
 			return;
 		}
 		imsg_event_add(&c->ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
