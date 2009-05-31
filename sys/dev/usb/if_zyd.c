@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.75 2009/05/31 12:33:29 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.76 2009/05/31 13:03:21 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -965,6 +965,7 @@ zyd_al2230_init(struct zyd_rf *rf)
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct zyd_softc *sc = rf->rf_sc;
 	static const struct zyd_phy_pair phyini[] = ZYD_AL2230_PHY;
+	static const struct zyd_phy_pair phy2230s[] = ZYD_AL2230S_PHY_INIT;
 	static const uint32_t rfini[] = ZYD_AL2230_RF;
 	int i, error;
 
@@ -973,6 +974,15 @@ zyd_al2230_init(struct zyd_rf *rf)
 		error = zyd_write16(sc, phyini[i].reg, phyini[i].val);
 		if (error != 0)
 			return error;
+	}
+
+	if (sc->rf_rev == ZYD_RF_AL2230S) {
+		for (i = 0; i < N(phy2230s); i++) {
+			error = zyd_write16(sc, phy2230s[i].reg,
+			    phy2230s[i].val);
+			if (error != 0)
+				return error;
+		}
 	}
 
 	/* init AL2230 radio */
@@ -1442,6 +1452,7 @@ zyd_rf_attach(struct zyd_softc *sc, uint8_t type)
 		rf->width        = 24;	/* 24-bit RF values */
 		break;
 	case ZYD_RF_AL2230:
+	case ZYD_RF_AL2230S:
 		if (sc->mac_rev == ZYD_ZD1211B)
 			rf->init = zyd_al2230_init_b;
 		else
