@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.13 2009/03/26 19:04:56 oga Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.14 2009/05/31 19:41:57 kettenis Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -81,7 +81,7 @@ x86_bus_space_init(void)
 	ioport_ex = extent_create("ioport", 0x0, 0xffff, M_DEVBUF,
 	    (caddr_t)ioport_ex_storage, sizeof(ioport_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
-	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffffffff, M_DEVBUF,
 	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 }
