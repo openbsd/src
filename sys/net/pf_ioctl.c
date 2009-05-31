@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.218 2009/04/16 04:40:19 david Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.219 2009/05/31 19:10:51 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -113,12 +113,26 @@ int			 pf_commit_rules(u_int32_t, int, char *);
 int			 pf_addr_setup(struct pf_ruleset *,
 			    struct pf_addr_wrap *, sa_family_t);
 void			 pf_addr_copyout(struct pf_addr_wrap *);
+void			 pf_trans_set_commit(void);
 
 struct pf_rule		 pf_default_rule, pf_default_rule_new;
 struct rwlock		 pf_consistency_lock = RWLOCK_INITIALIZER("pfcnslk");
 #ifdef ALTQ
 static int		 pf_altq_running;
 #endif
+
+struct {
+	char		statusif[IFNAMSIZ];
+	u_int32_t	debug;
+	u_int32_t	hostid;
+	u_int32_t	reass;
+	u_int32_t	mask;
+} pf_trans_set;
+
+#define	PF_TSET_STATUSIF	0x01
+#define	PF_TSET_DEBUG		0x02
+#define	PF_TSET_HOSTID		0x04
+#define	PF_TSET_REASS		0x08
 
 #define	TAGID_MAX	 50000
 TAILQ_HEAD(pf_tags, pf_tagname)	pf_tags = TAILQ_HEAD_INITIALIZER(pf_tags),
@@ -1652,7 +1666,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			bzero(pf_status.ifname, IFNAMSIZ);
 			break;
 		}
-		strlcpy(pf_status.ifname, pi->ifname, IFNAMSIZ);
+		strlcpy(pf_trans_set.statusif, pi->ifname, IFNAMSIZ);
+		pf_trans_set.mask |= PF_TSET_STATUSIF;
 		break;
 	}
 
@@ -1767,7 +1782,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCSETDEBUG: {
 		u_int32_t	*level = (u_int32_t *)addr;
 
-		pf_status.debug = *level;
+		pf_trans_set.debug = *level;
+		pf_trans_set.mask |= PF_TSET_DEBUG;
 		break;
 	}
 
@@ -2427,6 +2443,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		ioe = malloc(sizeof(*ioe), M_TEMP, M_WAITOK);
 		table = malloc(sizeof(*table), M_TEMP, M_WAITOK);
 		pf_default_rule_new = pf_default_rule;
+		bzero(&pf_trans_set, sizeof(pf_trans_set));
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
 				free(table, M_TEMP);
@@ -2683,6 +2700,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				wakeup(pf_purge_thread);
 		}
 		pfi_xcommit();
+		pf_trans_set_commit();
 		free(table, M_TEMP);
 		free(ioe, M_TEMP);
 		break;
@@ -2802,9 +2820,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int32_t	*hostid = (u_int32_t *)addr;
 
 		if (*hostid == 0)
-			pf_status.hostid = arc4random();
+			pf_trans_set.hostid = arc4random();
 		else
-			pf_status.hostid = *hostid;
+			pf_trans_set.hostid = *hostid;
+		pf_trans_set.mask |= PF_TSET_HOSTID;
 		break;
 	}
 
@@ -2841,7 +2860,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCSETREASS: {
 		u_int32_t	*reass = (u_int32_t *)addr;
 
-		pf_status.reass = *reass;
+		pf_trans_set.reass = *reass;
+		pf_trans_set.mask |= PF_TSET_REASS;
 		break;
 	}
 
@@ -2856,4 +2876,17 @@ fail:
 	else
 		rw_exit_read(&pf_consistency_lock);
 	return (error);
+}
+
+void
+pf_trans_set_commit(void)
+{
+	if (pf_trans_set.mask & PF_TSET_STATUSIF)
+		strlcpy(pf_status.ifname, pf_trans_set.statusif, IFNAMSIZ);
+	if (pf_trans_set.mask & PF_TSET_DEBUG)
+		pf_status.debug = pf_trans_set.debug;
+	if (pf_trans_set.mask & PF_TSET_HOSTID)
+		pf_status.hostid = pf_trans_set.hostid;
+	if (pf_trans_set.mask & PF_TSET_REASS)
+		pf_status.reass = pf_trans_set.reass;
 }
