@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.86 2009/05/31 03:27:17 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.87 2009/05/31 18:00:54 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -409,12 +409,9 @@ route_output(struct mbuf *m, ...)
 	} else if (rtm->rtm_type != RTM_ADD)
 		prio = RTP_ANY;
 	else if (rtm->rtm_flags & RTF_STATIC)
-		prio = RTP_STATIC;
+		prio = 0;
 	else
 		prio = RTP_DEFAULT;
-
-	/* write back the priority the kernel used */
-	 rtm->rtm_priority = prio;
 
 	bzero(&info, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
@@ -464,7 +461,9 @@ route_output(struct mbuf *m, ...)
 			    &saved_nrt->rt_rmx);
 			saved_nrt->rt_refcnt--;
 			saved_nrt->rt_genmask = genmask;
+			/* write back the priority the kernel used */
 			rtm->rtm_index = saved_nrt->rt_ifp->if_index;
+			rtm->rtm_priority = saved_nrt->rt_priority & RTP_MASK;
 		}
 		break;
 	case RTM_DELETE:
@@ -610,7 +609,7 @@ report:
 			    NULL);
 			rtm->rtm_flags = rt->rt_flags;
 			rtm->rtm_use = 0;
-			rtm->rtm_priority = rt->rt_priority;
+			rtm->rtm_priority = rt->rt_priority & RTP_MASK;
 			rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 			rtm->rtm_addrs = info.rti_addrs;
 			break;
@@ -657,6 +656,7 @@ report:
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &rt->rt_rmx);
 			rtm->rtm_index = rt->rt_ifp->if_index;
+			rtm->rtm_priority = rt->rt_priority & RTP_MASK;
 			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
 				rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, &info);
 			if (genmask)
@@ -713,6 +713,7 @@ report:
 			rt->rt_rmx.rmx_locks &= ~(rtm->rtm_inits);
 			rt->rt_rmx.rmx_locks |=
 			    (rtm->rtm_inits & rtm->rtm_rmx.rmx_locks);
+			rtm->rtm_priority = rt->rt_priority & RTP_MASK;
 			break;
 		}
 		break;
@@ -1168,7 +1169,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
 
 		rtm->rtm_flags = rt->rt_flags;
-		rtm->rtm_priority = rt->rt_priority;
+		rtm->rtm_priority = rt->rt_priority & RTP_MASK;
 		rt_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
 		rtm->rtm_rmx.rmx_refcnt = rt->rt_refcnt;
 		rtm->rtm_index = rt->rt_ifp->if_index;
