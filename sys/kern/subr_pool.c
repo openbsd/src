@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.79 2009/04/22 01:16:11 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.80 2009/05/31 17:11:14 miod Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -449,6 +449,11 @@ pool_get(struct pool *pp, int flags)
 {
 	void *v;
 
+#ifdef DIAGNOSTIC
+	if ((flags & PR_WAITOK) != 0)
+		splassert(IPL_NONE);
+#endif /* DIAGNOSTIC */
+
 	mtx_enter(&pp->pr_mtx);
 	v = pool_do_get(pp, flags);
 	mtx_leave(&pp->pr_mtx);
@@ -476,13 +481,6 @@ pool_do_get(struct pool *pp, int flags)
 #ifdef POOL_DEBUG
 	int i, *ip;
 #endif
-
-#ifdef DIAGNOSTIC
-	if ((flags & PR_WAITOK) != 0)
-		splassert(IPL_NONE);
-	if (pp->pr_ipl != -1)
-		splassert(pp->pr_ipl);
-#endif /* DIAGNOSTIC */
 
 #ifdef MALLOC_DEBUG
 	if (pp->pr_roflags & PR_DEBUG) {
