@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.53 2008/01/23 16:37:57 jsing Exp $ */
+/*	$OpenBSD: cl.c,v 1.54 2009/05/31 12:25:53 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -55,7 +55,7 @@
 
 /* min timeout 0xa, what is a good value */
 #define CL_TIMEOUT	0x10
-#define CL_FIFO_MAX	0x10
+#define CL_FIFO_MAX	0x20
 #define CL_FIFO_CNT	0xc
 #define	CL_RX_TIMEOUT	0x10
 
