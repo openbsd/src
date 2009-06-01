@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.104 2009/05/31 18:34:48 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.105 2009/06/01 14:53:18 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -26,6 +26,8 @@
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <ssl/ssl.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -666,6 +668,12 @@ session_pickup(struct session *s, struct submit_status *ss)
 		    s->s_env->sc_hostname, s->s_flags & F_EHLO ? "E" : "",
 		    s->s_msg.message_id);
 
+		if (s->s_flags & F_SECURE) {
+			fprintf(s->datafp, "\n\t(version=%s cipher=%s bits=%d)",
+			    SSL_get_cipher_version(s->s_ssl),
+			    SSL_get_cipher_name(s->s_ssl),
+			    SSL_get_cipher_bits(s->s_ssl, NULL));
+		}
 		if (s->rcptcount == 1)
 			fprintf(s->datafp, "\n\tfor <%s@%s>; ",
 			    s->s_msg.session_rcpt.user,
