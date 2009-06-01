@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.33 2009/06/01 22:51:47 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.34 2009/06/01 23:15:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -174,47 +174,13 @@ mfa_dispatch_parent(int sig, short event, void *p)
 			break;
 		}
 		case IMSG_CONF_END: {
-			void *temp;
-			struct rule *r;
-			struct cond *cond;
-			struct map *m;
-			struct mapel *mapel;
-			
 			/* switch and destroy old ruleset */
-			temp = env->sc_rules;
+			if (env->sc_rules)
+				purge_config(env, PURGE_RULES);
+			if (env->sc_maps)
+				purge_config(env, PURGE_MAPS);
 			env->sc_rules = env->sc_rules_reload;
-			env->sc_rules_reload = temp;
-
-			temp = env->sc_maps;
 			env->sc_maps = env->sc_maps_reload;
-			env->sc_maps_reload = temp;
-			
-			if (env->sc_rules_reload) {
-				while ((r = TAILQ_FIRST(env->sc_rules_reload))) {
-					TAILQ_REMOVE(env->sc_rules_reload, r, r_entry);
-					while ((cond = TAILQ_FIRST(&r->r_conditions))) {
-						TAILQ_REMOVE(&r->r_conditions, cond, c_entry);
-						free(cond);
-					}
-					free(r);
-				}
-				free(env->sc_rules_reload);
-				env->sc_rules_reload = NULL;
-			}
-
-			if (env->sc_maps_reload) {
-				while ((m = TAILQ_FIRST(env->sc_maps_reload))) {
-					TAILQ_REMOVE(env->sc_maps_reload, m, m_entry);
-					while ((mapel = TAILQ_FIRST(&m->m_contents))) {
-						TAILQ_REMOVE(&m->m_contents, mapel, me_entry);
-						free(mapel);
-					}
-					free(m);
-				}
-				free(env->sc_maps_reload);
-				env->sc_maps_reload = NULL;
-			}
-
 			break;
 		}
 		default:
