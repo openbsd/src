@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.104 2009/06/01 21:20:17 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.105 2009/06/01 22:49:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -181,6 +181,10 @@ rib_remove(struct rib_entry *re)
 	if (!rib_empty(re))
 		fatalx("rib_remove: entry not empty");
 
+	if (re->flags & F_RIB_ENTRYLOCK)
+		/* entry is locked, don't free it. */
+		return;
+
 	pt_unref(re->prefix);
 	if (pt_empty(re->prefix))
 		pt_remove(re->prefix);
@@ -218,7 +222,7 @@ rib_dump_r(struct rib_context *ctx)
 	struct rib_entry	*re;
 	unsigned int		 i;
 
-	if (ctx->ctx_p == NULL) {
+	if (ctx->ctx_re == NULL) {
 		re = RB_MIN(rib_tree, &ctx->ctx_rib->rib);
 		LIST_INSERT_HEAD(&ctx->ctx_rib->ctxts, ctx, entry);
 	} else
@@ -227,13 +231,14 @@ rib_dump_r(struct rib_context *ctx)
 	for (i = 0; re != NULL; re = RB_NEXT(rib_tree, unused, re)) {
 		if (ctx->ctx_af != AF_UNSPEC && ctx->ctx_af != re->prefix->af)
 			continue;
-		if (ctx->ctx_count && i++ >= ctx->ctx_count) {
-			/* store next start point */
-			ctx->ctx_p = re->prefix;
-			pt_ref(ctx->ctx_p);
+		ctx->ctx_upcall(re, ctx->ctx_arg);
+		if (ctx->ctx_count && i++ >= ctx->ctx_count &&
+		    (re->flags & F_RIB_ENTRYLOCK) == 0) {
+			/* store and lock last element */
+			ctx->ctx_re = re;
+			re->flags |= F_RIB_ENTRYLOCK;
 			return;
 		}
-		ctx->ctx_upcall(re, ctx->ctx_arg);
 	}
 
 	LIST_REMOVE(ctx, entry);
@@ -244,52 +249,20 @@ rib_dump_r(struct rib_context *ctx)
 struct rib_entry *
 rib_restart(struct rib_context *ctx)
 {
-	struct rib_entry *tmp, *prev = NULL;
-	int comp;
+	struct rib_entry *re;
 
-	/* frist check if the table is still around */
-	if (ctx->ctx_rib == NULL)
-		goto done;
+	re = ctx->ctx_re;
+	re->flags &= ~F_RIB_ENTRYLOCK;
 
-	/* then try to find the element */
-	tmp = RB_ROOT(&ctx->ctx_rib->rib);
-	while (tmp) {
-		prev = tmp;
-		comp = pt_prefix_cmp(ctx->ctx_p, tmp->prefix);
-		if (comp < 0)
-			tmp = RB_LEFT(tmp, rib_e);
-		else if (comp > 0)
-			tmp = RB_RIGHT(tmp, rib_e);
-		else
-			goto done;
-	}
+	/* find first non empty element */
+	while (rib_empty(re))
+		re = RB_NEXT(rib_tree, unused, re);
 
-	/* no match, empty tree */
-	if (prev == NULL)
-		goto done;
-
-	/*
-	 * no perfect match
-	 * if last element was bigger use that as new start point
-	 */
-	if (comp < 0)
-		goto done;
-
-	/* backtrack until parent is bigger */
-	do {
-		prev = RB_PARENT(prev, rib_e);
-		if (prev == NULL)
-			/* all elements in the tree are smaller */
-			goto done;
-		comp = pt_prefix_cmp(ctx->ctx_p, prev->prefix);
-	} while (comp > 0);
-
-done:
-	/* unref the prefix and cleanup if needed. */
-	pt_unref(ctx->ctx_p);
-	if (pt_empty(ctx->ctx_p))
-		pt_remove(ctx->ctx_p);
-	return (prev);
+	/* free the previously locked rib element if empty */
+	if (rib_empty(ctx->ctx_re))
+		rib_remove(ctx->ctx_re);
+	ctx->ctx_re = NULL;
+	return (re);
 }
 
 /* used to bump correct prefix counters */

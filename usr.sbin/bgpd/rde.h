@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.111 2009/06/01 21:20:17 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.112 2009/06/01 22:49:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -242,7 +242,7 @@ struct pt_entry6 {
 
 struct rib_context {
 	LIST_ENTRY(rib_context)	 entry;
-	struct pt_entry		*ctx_p;
+	struct rib_entry	*ctx_re;
 	struct rib		*ctx_rib;
 	void		(*ctx_upcall)(struct rib_entry *, void *);
 	void		(*ctx_done)(void *);
