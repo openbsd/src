@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pager.c,v 1.14 2007/09/14 14:29:20 chl Exp $	*/
+/*	$OpenBSD: hack.pager.c,v 1.15 2009/06/01 09:07:56 ray Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.pager.c,v 1.14 2007/09/14 14:29:20 chl Exp $";
+static const char rcsid[] = "$OpenBSD: hack.pager.c,v 1.15 2009/06/01 09:07:56 ray Exp $";
 #endif /* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -89,34 +89,35 @@ dowhatis()
 	char *buf = &bufr[6], *ep, q;
 	extern char readchar();
 
-	if(!(fp = fopen(DATAFILE, "r")))
+	if (!(fp = fopen(DATAFILE, "r")))
 		pline("Cannot open data file!");
 	else {
 		pline("Specify what? ");
 		q = readchar();
-		if(q != '\t')
-		while(fgets(buf,BUFSZ,fp))
-		    if(*buf == q) {
-			ep = strchr(buf, '\n');
-			if(ep) *ep = 0;
-			/* else: bad data file */
-			/* Expand tab 'by hand' */
-			if(buf[1] == '\t'){
-				buf = bufr;
-				buf[0] = q;
-				(void) strncpy(buf+1, "       ", 7);
-			}
-			pline(buf);
-			if(ep[-1] == ';') {
-				pline("More info? ");
-				if(readchar() == 'y') {
-					page_more(fp,1); /* does fclose() */
+		if (q != '\t')
+			while (fgets(buf,BUFSZ,fp))
+				if (*buf == q) {
+					ep = strchr(buf, '\n');
+					if (ep)
+						*ep = 0;
+					/* else: bad data file */
+					/* Expand tab 'by hand' */
+					if (buf[1] == '\t'){
+						buf = bufr;
+						buf[0] = q;
+						(void) strncpy(buf+1, "       ", 7);
+					}
+					pline(buf);
+					if (ep[-1] == ';') {
+						pline("More info? ");
+						if (readchar() == 'y') {
+							page_more(fp,1); /* does fclose() */
+							return(0);
+						}
+					}
+					(void) fclose(fp); 	/* kopper@psuvax1 */
 					return(0);
 				}
-			}
-			(void) fclose(fp); 	/* kopper@psuvax1 */
-			return(0);
-		    }
 		pline("I've never heard of such things.");
 		(void) fclose(fp);
 	}
