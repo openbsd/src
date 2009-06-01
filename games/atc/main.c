@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 2007/09/14 14:29:20 chl Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2009/06/01 13:04:59 ray Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.19 2007/09/14 14:29:20 chl Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.20 2009/06/01 13:04:59 ray Exp $";
 #endif
 #endif /* not lint */
 
@@ -338,7 +338,8 @@ list_games(void)
 	}
 	puts("available games:");
 	while (fgets(line, sizeof(line), fp) != NULL) {
-		printf("	%s", line);
+		line[strcspn(line, "\n")] = '\0';
+		printf("	%s\n", line);
 		num_games++;
 	}
 	fclose(fp);
