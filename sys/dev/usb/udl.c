@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.16 2009/06/01 17:41:27 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.17 2009/06/01 18:07:55 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -130,8 +130,8 @@ void		udl_fb_line_copy(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
 void		udl_fb_block_copy(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t, uint32_t);
-void		udl_draw_char(struct udl_softc *, uint32_t, uint32_t,
-		    uint16_t, uint16_t, u_int);
+void		udl_draw_char(struct udl_softc *, uint16_t, uint16_t, u_int,
+		    uint32_t, uint32_t);
 #ifdef UDL_DEBUG
 void		udl_hexdump(void *, int, int);
 usbd_status	udl_init_test(struct udl_softc *);
@@ -601,7 +601,7 @@ udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
 	} else {
 		/* render a character from font bits */
-		udl_draw_char(sc, x, y, fgc, bgc, uc);
+		udl_draw_char(sc, fgc, bgc, uc, x, y);
 	}
 
 	/*
@@ -1303,8 +1303,8 @@ udl_fb_block_copy(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
 }
 
 void
-udl_draw_char(struct udl_softc *sc, uint32_t x, uint32_t y,
-    uint16_t fg, uint16_t bg, u_int uc)
+udl_draw_char(struct udl_softc *sc, uint16_t fg, uint16_t bg, u_int uc,
+    uint32_t x, uint32_t y)
 {
 	int i, j, ly;
 	uint8_t *fontchar, fontbits, luc;
