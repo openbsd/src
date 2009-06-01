@@ -495,7 +495,6 @@
 ./usr/share/man/cat1/stty.0
 ./usr/share/man/cat1/su.0
 ./usr/share/man/cat1/sum.0
-./usr/share/man/cat1/sup.0
 ./usr/share/man/cat1/systat.0
 ./usr/share/man/cat1/systrace.0
 ./usr/share/man/cat1/tail.0
@@ -2684,9 +2683,6 @@
 ./usr/share/man/cat8/sudo.0
 ./usr/share/man/cat8/sudoedit.0
 ./usr/share/man/cat8/suexec.0
-./usr/share/man/cat8/supfilesrv.0
-./usr/share/man/cat8/supscan.0
-./usr/share/man/cat8/supservers.0
 ./usr/share/man/cat8/swapctl.0
 ./usr/share/man/cat8/swapon.0
 ./usr/share/man/cat8/sync.0

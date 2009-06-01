@@ -456,7 +456,6 @@
 ./usr/bin/su
 ./usr/bin/sudo
 ./usr/bin/sudoedit
-./usr/bin/sup
 ./usr/bin/systat
 ./usr/bin/tail
 ./usr/bin/talk
@@ -2097,8 +2096,6 @@
 ./usr/sbin/stdethers
 ./usr/sbin/stdhosts
 ./usr/sbin/suexec
-./usr/sbin/supfilesrv
-./usr/sbin/supscan
 ./usr/sbin/sysctl
 ./usr/sbin/syslogc
 ./usr/sbin/syslogd
