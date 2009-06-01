@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.54 2009/06/01 21:19:15 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.55 2009/06/01 22:51:47 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -71,6 +71,7 @@ int		lka_expand_rcpt_iteration(struct smtpd *, struct aliaseslist *, struct lkas
 void		lka_rcpt_action(struct smtpd *, struct path *);
 void		lka_clear_aliaseslist(struct aliaseslist *);
 int		lka_encode_credentials(char *, char *);
+struct rule    *ruleset_match(struct smtpd *, struct path *, struct sockaddr_storage *);
 
 void
 lka_sig_handler(int sig, short event, void *p)
@@ -278,11 +279,20 @@ lka_dispatch_parent(int sig, short event, void *p)
 					alias_parse(alias, fwreq->pw_name);
 
 					message = lkasession->message;
+
 					bzero(&message.recipient, sizeof(struct path));
 					strlcpy(message.recipient.domain, lkasession->path.domain,
 					    sizeof(message.recipient.domain));
+
 					lka_resolve_alias(env, &message.recipient, alias);
 					lka_rcpt_action(env, &message.recipient);
+
+					if (lka_expand(message.recipient.rule.r_value.path,
+						sizeof(message.recipient.rule.r_value.path),
+						&message.recipient) >=
+					    sizeof(message.recipient.rule.r_value.path)) {
+						log_debug("expansion failed...");
+					}
 
 					imsg_compose(env->sc_ibufs[PROC_QUEUE],
 					    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
@@ -745,42 +755,21 @@ int
 lka_verify_mail(struct smtpd *env, struct path *path)
 {
 	struct rule *r;
-	struct cond *cond;
-	struct map *map;
-	struct mapel *me;
 
-	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
-		TAILQ_FOREACH(cond, &r->r_conditions, c_entry) {
-			if (cond->c_type == C_ALL) {
-				path->rule = *r;
-				if (r->r_action == A_MBOX ||
-				    r->r_action == A_MAILDIR) {
-					return lka_resolve_mail(env, r, path);
-				}
-				return 1;
-			}
-
-			if (cond->c_type == C_DOM) {
-				cond->c_match = map_find(env, cond->c_map);
-				if (cond->c_match == NULL)
-					fatal("lka failed to lookup map.");
-
-				map = cond->c_match;
-				TAILQ_FOREACH(me, &map->m_contents, me_entry) {
-					if (hostname_match(path->domain, me->me_key.med_string)) {
-						path->rule = *r;
-						if (r->r_action == A_MBOX ||
-						    r->r_action == A_MAILDIR ||
-						    r->r_action == A_EXT) {
-							return lka_resolve_mail(env, r, path);
-						}
-						return 1;
-					}
-				}
-			}
-		}
+	r = ruleset_match(env, path, NULL);
+	if (r == NULL) {
+		path->rule.r_action = A_RELAY;
+		return 1;
 	}
-	path->rule.r_action = A_RELAY;
+
+	path->rule = *r;
+	if (r->r_action == A_MBOX ||
+	    r->r_action == A_MAILDIR ||
+	    r->r_action == A_EXT) {
+		lka_resolve_mail(env, r, path);
+		return 1;
+	}
+
 	return 1;
 }
 
@@ -1134,40 +1123,18 @@ void
 lka_rcpt_action(struct smtpd *env, struct path *path)
 {
 	struct rule *r;
-	struct cond *cond;
-	struct map *map;
-	struct mapel *me;
 
 	if (path->domain[0] == '\0')
-		(void)strlcpy(path->domain, "localhost", sizeof (path->domain));
+		(void)strlcpy(path->domain, env->sc_hostname,
+		    sizeof (path->domain));
 
-	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
-
-		TAILQ_FOREACH(cond, &r->r_conditions, c_entry) {
-			if (cond->c_type == C_ALL) {
-				path->rule = *r;
-				return;
-			}
-
-			if (cond->c_type == C_DOM) {
-				cond->c_match = map_find(env, cond->c_map);
-				if (cond->c_match == NULL)
-					fatal("mfa failed to lookup map.");
-
-				map = cond->c_match;
-				TAILQ_FOREACH(me, &map->m_contents, me_entry) {
-					log_debug("trying to match [%s] with [%s]",
-					    path->domain, me->me_key.med_string);
-					if (hostname_match(path->domain, me->me_key.med_string)) {
-						path->rule = *r;
-						return;
-					}
-				}
-			}
-		}
+	r = ruleset_match(env, path, NULL);
+	if (r == NULL) {
+		path->rule.r_action = A_RELAY;
+		return;
 	}
-	path->rule.r_action = A_RELAY;
-	return;
+
+	path->rule = *r;
 }
 
 int
