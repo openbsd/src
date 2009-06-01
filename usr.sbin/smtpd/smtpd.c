@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.70 2009/06/01 13:20:56 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.71 2009/06/01 18:24:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -448,7 +448,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 			}
 
 			errno = 0;
-			pw = safe_getpwnam(pw_name);
+			pw = getpwnam(pw_name);
 			if (pw == NULL) {
 				if (errno)
 					batchp->message.status |= S_MESSAGE_TEMPFAILURE;
@@ -496,7 +496,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 				path = &batchp->message.sender;
 			}
 
-			pw = safe_getpwnam(path->pw_name);
+			pw = getpwnam(path->pw_name);
 			if (pw == NULL)
 				break;			
 
@@ -851,7 +851,6 @@ main(int argc, char *argv[])
 
 	if ((env.sc_pw =  getpwnam(SMTPD_USER)) == NULL)
 		errx(1, "unknown user %s", SMTPD_USER);
-	endpwent();
 
 	if (!setup_spool(env.sc_pw->pw_uid, 0))
 		errx(1, "invalid directory permissions");
@@ -1384,7 +1383,7 @@ parent_enqueue_offline(struct smtpd *env, char *runner_path)
 	}
 
 	errno = 0;
-	if ((pw = safe_getpwuid(sb.st_uid)) == NULL) {
+	if ((pw = getpwuid(sb.st_uid)) == NULL) {
 		log_warn("parent_enqueue_offline: getpwuid for uid %d failed",
 		    sb.st_uid);
 		unlink(path);
@@ -1516,7 +1515,7 @@ parent_forward_open(char *username)
 	char pathname[MAXPATHLEN];
 	int fd;
 
-	pw = safe_getpwnam(username);
+	pw = getpwnam(username);
 	if (pw == NULL)
 		return -1;
 

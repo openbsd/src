@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.21 2009/05/10 11:29:40 jacekm Exp $	*/
+/*	$OpenBSD: util.c,v 1.22 2009/06/01 18:24:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -74,28 +74,6 @@ safe_fclose(FILE *fp)
 		fatal("safe_fclose: fclose");
 
 	return 1;
-}
-
-struct passwd *
-safe_getpwnam(const char *name)
-{
-	struct passwd *ret;
-
-	ret = getpwnam(name);
-	endpwent();
-
-	return ret;
-}
-
-struct passwd *
-safe_getpwuid(uid_t uid)
-{
-	struct passwd *ret;
-
-	ret = getpwuid(uid);
-	endpwent();
-
-	return ret;
 }
 
 int
