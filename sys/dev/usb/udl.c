@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.14 2009/06/01 15:28:16 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.15 2009/06/01 15:47:38 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -118,17 +118,17 @@ void		udl_init_fb_offsets(struct udl_softc *, uint32_t, uint32_t,
 usbd_status	udl_init_resolution(struct udl_softc *, uint8_t *, uint8_t);
 void		udl_fb_off_write(struct udl_softc *, uint16_t, uint32_t,
 		    uint16_t);
-void		udl_fb_pos_write(struct udl_softc *, uint16_t, uint32_t,
+void		udl_fb_line_write(struct udl_softc *, uint16_t, uint32_t,
 		    uint32_t, uint32_t);
-void		udl_fb_blk_write(struct udl_softc *, uint16_t, uint32_t,
+void		udl_fb_block_write(struct udl_softc *, uint16_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
 void		udl_fb_buf_write(struct udl_softc *, uint8_t *, uint32_t,
 		    uint32_t, uint16_t);
 void		udl_fb_off_copy(struct udl_softc *, uint32_t, uint32_t,
 		    uint16_t);
-void		udl_fb_pos_copy(struct udl_softc *, uint32_t, uint32_t,
+void		udl_fb_line_copy(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
-void		udl_fb_blk_copy(struct udl_softc *, uint32_t, uint32_t,
+void		udl_fb_block_copy(struct udl_softc *, uint32_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t, uint32_t);
 void		udl_draw_char(struct udl_softc *, uint32_t, uint32_t,
 		    uint16_t, uint16_t, u_int);
@@ -498,7 +498,7 @@ udl_copycols(void *cookie, int row, int src, int dst, int num)
 	cx = num * ri->ri_font->fontwidth;
 	cy = ri->ri_font->fontheight;
 
-	udl_fb_blk_copy(sc, sx, sy, dx, dy, cx, cy);
+	udl_fb_block_copy(sc, sx, sy, dx, dy, cx, cy);
 
 	(void)udl_cmd_send_async(sc);
 }
@@ -521,10 +521,10 @@ udl_copyrows(void *cookie, int src, int dst, int num)
 	cy = num * sc->sc_ri.ri_font->fontheight;
 
 	/* copy row block to off-screen first to fix overlay-copy problem */
-	udl_fb_blk_copy(sc, 0, sy, 0, sc->sc_ri.ri_emuheight, cx, cy);
+	udl_fb_block_copy(sc, 0, sy, 0, sc->sc_ri.ri_emuheight, cx, cy);
 
 	/* copy row block back from off-screen now */
-	udl_fb_blk_copy(sc, 0, sc->sc_ri.ri_emuheight, 0, dy, cx, cy);
+	udl_fb_block_copy(sc, 0, sc->sc_ri.ri_emuheight, 0, dy, cx, cy);
 
 	(void)udl_cmd_send_async(sc);
 }
@@ -549,7 +549,7 @@ udl_erasecols(void *cookie, int row, int col, int num, long attr)
 	cx = num * sc->sc_ri.ri_font->fontwidth;
 	cy = sc->sc_ri.ri_font->fontheight;
 
-	udl_fb_blk_write(sc, 0x0000, x, y, cx, cy);
+	udl_fb_block_write(sc, 0x0000, x, y, cx, cy);
 
 	(void)udl_cmd_send_async(sc);
 }
@@ -570,7 +570,7 @@ udl_eraserows(void *cookie, int row, int num, long attr)
 	cx = sc->sc_ri.ri_emuwidth;
 	cy = num * sc->sc_ri.ri_font->fontheight;
 
-	udl_fb_blk_write(sc, 0x0000, x, y, cx, cy);
+	udl_fb_block_write(sc, 0x0000, x, y, cx, cy);
 
 	(void)udl_cmd_send_async(sc);
 }
@@ -597,7 +597,7 @@ udl_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		 * Writting a block for the space character instead rendering
 		 * it from font bits is more slim.
 		 */
-		udl_fb_blk_write(sc, bgc, x, y,
+		udl_fb_block_write(sc, bgc, x, y,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
 	} else {
 		/* render a character from font bits */
@@ -634,17 +634,17 @@ udl_do_cursor(struct rasops_info *ri)
 
 	if (sc->sc_cursor_on == 0) {
 		/* safe the last character block to off-screen */
-		udl_fb_blk_copy(sc, x, y, 0, sc->sc_ri.ri_emuheight,
+		udl_fb_block_copy(sc, x, y, 0, sc->sc_ri.ri_emuheight,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
 
 		/* draw cursor */
-		udl_fb_blk_write(sc, 0xffff, x, y,
+		udl_fb_block_write(sc, 0xffff, x, y,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
 
 		sc->sc_cursor_on = 1;
 	} else {
 		/* restore the last safed character from off-screen */
-		udl_fb_blk_copy(sc, 0, sc->sc_ri.ri_emuheight, x, y,
+		udl_fb_block_copy(sc, 0, sc->sc_ri.ri_emuheight, x, y,
 		    ri->ri_font->fontwidth, ri->ri_font->fontheight);
 
 		sc->sc_cursor_on = 0;
@@ -1164,7 +1164,7 @@ udl_init_resolution(struct udl_softc *sc, uint8_t *buf, uint8_t len)
 		return (error);
 
 	/* clear screen */
-	udl_fb_blk_write(sc, 0x0000, 0, 0, sc->sc_width, sc->sc_height);
+	udl_fb_block_write(sc, 0x0000, 0, 0, sc->sc_width, sc->sc_height);
 	error = udl_cmd_send(sc);
 	if (error != USBD_NORMAL_COMPLETION)
 		return (error);
@@ -1205,7 +1205,7 @@ udl_fb_off_write(struct udl_softc *sc, uint16_t rgb16, uint32_t off,
 }
 
 void
-udl_fb_pos_write(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
+udl_fb_line_write(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
     uint32_t y, uint32_t width)
 {
 	uint32_t off, block;
@@ -1226,13 +1226,13 @@ udl_fb_pos_write(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
 }
 
 void
-udl_fb_blk_write(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
+udl_fb_block_write(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
     uint32_t y, uint32_t width, uint32_t height)
 {
 	uint32_t i;
 
 	for (i = 0; i < height; i++)
-		udl_fb_pos_write(sc, rgb16, x, y + i, width);
+		udl_fb_line_write(sc, rgb16, x, y + i, width);
 }
 
 void
@@ -1270,7 +1270,7 @@ udl_fb_off_copy(struct udl_softc *sc, uint32_t src_off, uint32_t dst_off,
 }
 
 void
-udl_fb_pos_copy(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
+udl_fb_line_copy(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
     uint32_t dst_x, uint32_t dst_y, uint32_t width)
 {
 	uint32_t src_off, dst_off, block;
@@ -1293,13 +1293,13 @@ udl_fb_pos_copy(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
 }
 
 void
-udl_fb_blk_copy(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
+udl_fb_block_copy(struct udl_softc *sc, uint32_t src_x, uint32_t src_y,
     uint32_t dst_x, uint32_t dst_y, uint32_t width, uint32_t height)
 {
 	int i;
 
 	for (i = 0; i < height; i++)
-		udl_fb_pos_copy(sc, src_x, src_y + i, dst_x, dst_y + i, width);
+		udl_fb_line_copy(sc, src_x, src_y + i, dst_x, dst_y + i, width);
 }
 
 void
