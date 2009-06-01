@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.19 2009/05/31 03:48:05 matthieu Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.20 2009/06/01 03:50:57 gwk Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -163,8 +163,8 @@ via_nano_setup(struct cpu_info *ci)
 	u_int32_t regs[4], val;
 	u_int64_t msreg;
 	int model = (ci->ci_signature >> 4) & 15;
-	
-	if (model >= 9) { 
+
+	if (model >= 9) {
 		CPUID(0xC0000000, regs[0], regs[1], regs[2], regs[3]);
 		val = regs[0];
 		if (val >= 0xC0000001) {
@@ -172,14 +172,14 @@ via_nano_setup(struct cpu_info *ci)
 			val = regs[3];
 		} else
 			val = 0;
-		
+
 		if (val & (C3_CPUID_HAS_RNG | C3_CPUID_HAS_ACE))
 			printf("%s:", ci->ci_dev->dv_xname);
-		
+
 		/* Enable RNG if present and disabled */
 		if (val & C3_CPUID_HAS_RNG) {
 			extern int viac3_rnd_present;
-			
+
 			if (!(val & C3_CPUID_DO_RNG)) {
 				msreg = rdmsr(0x110B);
 				msreg |= 0x40;
@@ -188,7 +188,7 @@ via_nano_setup(struct cpu_info *ci)
 			viac3_rnd_present = 1;
 			printf(" RNG");
 		}
-		
+
 		/* Enable AES engine if present and disabled */
 		if (val & C3_CPUID_HAS_ACE) {
 #ifdef CRYPTO
@@ -201,7 +201,7 @@ via_nano_setup(struct cpu_info *ci)
 #endif /* CRYPTO */
 			printf(" AES");
 		}
-		
+
 		/* Enable ACE2 engine if present and disabled */
 		if (val & C3_CPUID_HAS_ACE2) {
 #ifdef CRYPTO
@@ -214,7 +214,7 @@ via_nano_setup(struct cpu_info *ci)
 #endif /* CRYPTO */
 			printf(" AES-CTR");
 		}
-		
+
 		/* Enable SHA engine if present and disabled */
 		if (val & C3_CPUID_HAS_PHE) {
 #ifdef CRYPTO
@@ -227,7 +227,7 @@ via_nano_setup(struct cpu_info *ci)
 #endif /* CRYPTO */
 			printf(" SHA1 SHA256");
 		}
-		
+
 		/* Enable MM engine if present and disabled */
 		if (val & C3_CPUID_HAS_PMM) {
 #ifdef CRYPTO
@@ -240,7 +240,7 @@ via_nano_setup(struct cpu_info *ci)
 #endif /* CRYPTO */
 			printf(" RSA");
 		}
-		
+
 		printf("\n");
 	}
 }
@@ -334,12 +334,13 @@ identifycpu(struct cpu_info *ci)
 		}
 	}
 
+	if (cpu_ecxfeature & CPUIDECX_EST) {
+		setperf_setup = est_init;
+	}
+
 	if (!strncmp(cpu_model, "Intel", 5)) {
-		if (cpu_ecxfeature & CPUIDECX_EST) {
-			setperf_setup = est_init;
-		}
-	 	CPUID(0x06, val, dummy, dummy, dummy);
-	 	if (val & 0x1) {
+		CPUID(0x06, val, dummy, dummy, dummy);
+		if (val & 0x1) {
 			strlcpy(ci->ci_sensordev.xname, ci->ci_dev->dv_xname,
 			    sizeof(ci->ci_sensordev.xname));
 			ci->ci_sensor.type = SENSOR_TEMP;
