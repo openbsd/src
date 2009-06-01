@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.191 2009/05/31 20:22:18 blambert Exp $	*/
+/*	$OpenBSD: if.c,v 1.192 2009/06/01 17:49:11 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -204,7 +204,6 @@ struct ifnet *lo0ifp;
 void
 if_attachsetup(struct ifnet *ifp)
 {
-	struct ifaddr *ifa;
 	int wrapped = 0;
 
 	if (ifindex2ifnet == 0)
@@ -253,8 +252,8 @@ if_attachsetup(struct ifnet *ifp)
 			if_indexlim <<= 1;
 
 		/* grow ifnet_addrs */
-		m = oldlim * sizeof(ifa);
-		n = if_indexlim * sizeof(ifa);
+		m = oldlim * sizeof(struct ifaddr *);
+		n = if_indexlim * sizeof(struct ifaddr *);
 		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
 		if (ifnet_addrs) {
 			bcopy((caddr_t)ifnet_addrs, q, m);
