@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.86 2009/04/28 17:10:24 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.87 2009/06/01 15:53:46 jsg Exp $
 #
 # PPC GENERIC config file
 #
@@ -195,6 +195,7 @@ udav*		at uhub?		# Davicom DM9601 based Ethernet
 mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
 ural*		at uhub?		# Ralink RT2500
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
+zyd*		at uhub?		# Zydas ZD1211
 url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 #uscanner*	at uhub?		# USB Scanner driver
