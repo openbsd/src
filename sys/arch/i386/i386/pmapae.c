@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.15 2009/01/27 22:14:13 miod Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.16 2009/06/01 17:42:33 ariane Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -1453,14 +1453,15 @@ pmap_remove_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 				ptp->wire_count = 0;
 				/* Postpone free to after shootdown. */
 				uvm_pagerealloc(ptp, NULL, 0);
-				TAILQ_INSERT_TAIL(&empty_ptps, ptp, listq);
+				TAILQ_INSERT_TAIL(&empty_ptps, ptp,
+				    fq.queues.listq);
 			}
 		}
 		pmap_tlb_shootnow(cpumask);
 		pmap_unmap_ptes_pae(pmap);		/* unlock pmap */
 		PMAP_MAP_TO_HEAD_UNLOCK();
 		while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
-			TAILQ_REMOVE(&empty_ptps, ptp, listq);
+			TAILQ_REMOVE(&empty_ptps, ptp, fq.queues.listq);
 			uvm_pagefree(ptp);
 		}
 		return;
@@ -1546,7 +1547,7 @@ pmap_remove_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			ptp->wire_count = 0;
 			/* Postpone free to after shootdown. */
 			uvm_pagerealloc(ptp, NULL, 0);
-			TAILQ_INSERT_TAIL(&empty_ptps, ptp, listq);
+			TAILQ_INSERT_TAIL(&empty_ptps, ptp, fq.queues.listq);
 		}
 	}
 
@@ -1554,7 +1555,7 @@ pmap_remove_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	pmap_unmap_ptes_pae(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
-		TAILQ_REMOVE(&empty_ptps, ptp, listq);
+		TAILQ_REMOVE(&empty_ptps, ptp, fq.queues.listq);
 		uvm_pagefree(ptp);
 	}
 }
@@ -1665,7 +1666,7 @@ pmap_page_remove_pae(struct vm_page *pg)
 				/* Postpone free to after shootdown. */
 				uvm_pagerealloc(pve->pv_ptp, NULL, 0);
 				TAILQ_INSERT_TAIL(&empty_ptps, pve->pv_ptp,
-				    listq);
+				    fq.queues.listq);
 			}
 		}
 		pmap_unmap_ptes_pae(pve->pv_pmap);	/* unlocks pmap */
@@ -1676,7 +1677,7 @@ pmap_page_remove_pae(struct vm_page *pg)
 	PMAP_HEAD_TO_MAP_UNLOCK();
 	pmap_tlb_shootnow(cpumask);
 	while ((ptp = TAILQ_FIRST(&empty_ptps)) != NULL) {
-		TAILQ_REMOVE(&empty_ptps, ptp, listq);
+		TAILQ_REMOVE(&empty_ptps, ptp, fq.queues.listq);
 		uvm_pagefree(ptp);
 	}
 }

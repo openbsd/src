@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.32 2009/04/28 16:06:07 miod Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.33 2009/06/01 17:42:33 ariane Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -106,11 +106,22 @@
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pglist.h>
 
+union vm_page_fq {
+	struct {
+		TAILQ_ENTRY(vm_page)	hashq;	/* hash table links (O)*/
+		TAILQ_ENTRY(vm_page)	listq;	/* pages in same object (O)*/
+	}	queues;
+
+	struct {
+		RB_ENTRY(vm_page)	tree;	/* Free chunks, addr/size */
+		psize_t			pages;
+	}	free;
+};
+
 struct vm_page {
+	union vm_page_fq	fq;		/* free and queue management */
 	TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
 						 * queue or free list (P) */
-	TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
-	TAILQ_ENTRY(vm_page)	listq;		/* pages in same object (O)*/
 
 	struct vm_anon		*uanon;		/* anon (O,P) */
 	struct uvm_object	*uobject;	/* object (O,P) */

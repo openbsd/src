@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.58 2009/05/23 14:06:37 oga Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.59 2009/06/01 17:42:33 ariane Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -561,7 +561,7 @@ uvm_vnp_terminate(struct vnode *vp)
 	while (uvn->u_obj.uo_npages) {
 #ifdef DEBUG
 		struct vm_page *pp;
-		TAILQ_FOREACH(pp, &uvn->u_obj.memq, listq) {
+		TAILQ_FOREACH(pp, &uvn->u_obj.memq, fq.queues.listq) {
 			if ((pp->pg_flags & PG_BUSY) == 0)
 				panic("uvm_vnp_terminate: detected unbusy pg");
 		}
