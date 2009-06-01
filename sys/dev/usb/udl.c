@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.12 2009/05/31 18:26:44 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.13 2009/06/01 11:26:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -1026,6 +1026,10 @@ udl_cmd_send_async(struct udl_softc *sc)
 		panic("udl_cmd_send_async: buffer full");
 	}
 	cx = &sc->sc_cmd_xfer[i];
+
+	/* mark end of command stack */
+	udl_cmd_insert_int_1(sc, UDL_BULK_SOC);
+	udl_cmd_insert_int_1(sc, UDL_BULK_CMD_EOC);
 
 	/* copy command buffer to xfer buffer */
 	bcopy(cb->buf, cx->buf, cb->off);
