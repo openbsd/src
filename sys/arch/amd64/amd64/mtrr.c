@@ -1,4 +1,4 @@
-/* $OpenBSD: mtrr.c,v 1.1 2008/06/11 09:22:38 phessler Exp $ */
+/* $OpenBSD: mtrr.c,v 1.2 2009/06/01 20:46:50 phessler Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * Copyright (c) 1999 Brian Fundakowski Feldman
@@ -50,13 +50,14 @@ mtrrattach(int num)
 	step   = (cpu_id >> 0) & 0xf;
 
 	/* Try for i686 MTRRs */
-	if ((cpu_feature & CPUID_MTRR) &&
-		   (family == 0x6 || family == 0xf) &&
-		   ((strcmp(cpu_vendor, "GenuineIntel") == 0) ||
-		    (strcmp(cpu_vendor, "AuthenticAMD") == 0))) {
+	if (((strcmp(cpu_vendor, "GenuineIntel") == 0) ||
+	    (strcmp(cpu_vendor, "CentaurHauls") == 0) ||
+	    (strcmp(cpu_vendor, "AuthenticAMD") == 0)) && 
+	    (family == 0x6 || family == 0xf) &&
+	    cpu_feature & CPUID_MTRR) {
 		mem_range_softc.mr_op = &amd64_mrops;
-
 	}
+
 	/* Initialise memory range handling */
 	if (mem_range_softc.mr_op != NULL)
 		mem_range_softc.mr_op->init(&mem_range_softc);

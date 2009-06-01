@@ -1,4 +1,4 @@
-/* $OpenBSD: mtrr.c,v 1.10 2007/05/02 18:52:17 matthieu Exp $ */
+/* $OpenBSD: mtrr.c,v 1.11 2009/06/01 20:46:50 phessler Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * Copyright (c) 1999 Brian Fundakowski Feldman
@@ -58,10 +58,11 @@ mtrrattach(int num)
 		mem_range_softc.mr_op = &k6_mrops;
 		
 		/* Try for i686 MTRRs */
-	} else if ((cpu_feature & CPUID_MTRR) &&
-		   (family == 0x6 || family == 0xf) &&
-		   ((strcmp(cpu_vendor, "GenuineIntel") == 0) ||
-		    (strcmp(cpu_vendor, "AuthenticAMD") == 0))) {
+	} else if (((strcmp(cpu_vendor, "GenuineIntel") == 0) ||
+		    (strcmp(cpu_vendor, "CentaurHauls") == 0) ||
+		    (strcmp(cpu_vendor, "AuthenticAMD") == 0)) &&
+		    (family == 0x6 || family == 0xf) &&
+		    (cpu_feature & CPUID_MTRR)) {
 		mem_range_softc.mr_op = &i686_mrops;
 
 	}
