@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.78 2009/06/01 08:51:22 damien Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.79 2009/06/01 08:53:44 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1428,6 +1428,7 @@ zyd_rf_attach(struct zyd_softc *sc, uint8_t type)
 		rf->width        = 24;	/* 24-bit RF values */
 		break;
 	case ZYD_RF_AL2230:
+	case ZYD_RF_AL2230S:
 		if (sc->mac_rev == ZYD_ZD1211B)
 			rf->init = zyd_al2230_init_b;
 		else
