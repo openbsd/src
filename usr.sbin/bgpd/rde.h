@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.110 2009/05/27 06:58:15 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.111 2009/06/01 21:20:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -256,7 +256,8 @@ struct rib_entry {
 	struct prefix_head	 prefix_h;
 	struct prefix		*active; /* for fast access */
 	struct pt_entry		*prefix;
-	struct rib		*rib;
+	u_int16_t		 ribid;
+	u_int16_t		 flags;
 };
 
 enum rib_state {
@@ -270,9 +271,12 @@ struct rib {
 	struct rib_tree		rib;
 	LIST_HEAD(, rib_context)	ctxts;
 	enum rib_state		state;
+	u_int16_t		flags;
 	u_int16_t		id;
-	u_char			noevaluate;
 };
+
+#define F_RIB_ENTRYLOCK		0x0001
+#define F_RIB_NOEVALUATE	0x0002
 
 struct prefix {
 	LIST_ENTRY(prefix)		 rib_l, path_l;

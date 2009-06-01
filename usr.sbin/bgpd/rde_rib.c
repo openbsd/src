@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.103 2009/05/27 06:58:15 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.104 2009/06/01 21:20:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -60,7 +60,7 @@ rib_init(void)
 	ribs[0].state = RIB_ACTIVE;
 	ribs[0].id = 0;
 	strlcpy(ribs[0].name, "Adj-RIB-In", sizeof("Adj-RIB-In"));
-	ribs[0].noevaluate = 1;
+	ribs[0].flags = F_RIB_NOEVALUATE;
 }
 
 u_int16_t
@@ -160,7 +160,8 @@ rib_add(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
 
 	LIST_INIT(&re->prefix_h);
 	re->prefix = pte;
-	re->rib = rib;
+	re->flags = rib->flags;
+	re->ribid = rib->id;
 
         if (RB_INSERT(rib_tree, &rib->rib, re) != NULL) {
 		log_warnx("rib_add: insert failed");
@@ -184,7 +185,7 @@ rib_remove(struct rib_entry *re)
 	if (pt_empty(re->prefix))
 		pt_remove(re->prefix);
 
-	if (RB_REMOVE(rib_tree, &re->rib->rib, re) == NULL)
+	if (RB_REMOVE(rib_tree, &ribs[re->ribid].rib, re) == NULL)
 		log_warnx("rib_remove: remove failed.");
 
 	free(re);
@@ -813,7 +814,7 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 		/*
 		 * skip non local-RIBs or RIBs that are flagged as noeval.
 		 */
-		if (p->rib->rib->noevaluate)
+		if (p->rib->flags & F_RIB_NOEVALUATE)
 			continue;
 
 		if (oldstate == state && state == NEXTHOP_REACH) {
