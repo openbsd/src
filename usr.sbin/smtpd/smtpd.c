@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.69 2009/05/30 23:53:41 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.70 2009/06/01 13:20:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -241,8 +241,8 @@ parent_dispatch_lka(int fd, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = env->sc_ibufs[PROC_LKA];
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -251,14 +251,11 @@ parent_dispatch_lka(int fd, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -302,8 +299,8 @@ parent_dispatch_mfa(int fd, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = env->sc_ibufs[PROC_MFA];
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -312,14 +309,11 @@ parent_dispatch_mfa(int fd, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -348,8 +342,8 @@ parent_dispatch_mta(int fd, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = env->sc_ibufs[PROC_MTA];
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -358,14 +352,11 @@ parent_dispatch_mta(int fd, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -394,8 +385,8 @@ parent_dispatch_mda(int fd, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = env->sc_ibufs[PROC_MDA];
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -404,14 +395,11 @@ parent_dispatch_mda(int fd, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -541,8 +529,8 @@ parent_dispatch_smtp(int fd, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = env->sc_ibufs[PROC_SMTP];
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -551,14 +539,11 @@ parent_dispatch_smtp(int fd, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -603,8 +588,8 @@ parent_dispatch_runner(int sig, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = env->sc_ibufs[PROC_RUNNER];
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -613,14 +598,11 @@ parent_dispatch_runner(int sig, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -654,8 +636,8 @@ parent_dispatch_control(int sig, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = env->sc_ibufs[PROC_CONTROL];
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -664,14 +646,11 @@ parent_dispatch_control(int sig, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {

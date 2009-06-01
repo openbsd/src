@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.11 2009/05/09 17:04:55 jacekm Exp $	*/
+/*	$OpenBSD: dns.c,v 1.12 2009/06/01 13:20:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -137,20 +137,17 @@ parent_dispatch_dns(int sig, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = &rd->ibuf;
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0)
 			fatal("parent_dispatch_dns: pipe closed");
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("parent_dispatch_dns: msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -235,8 +232,7 @@ dns_dispatch_parent(int sig, short event, void *p)
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	switch (event) {
-	case EV_READ:
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -245,14 +241,11 @@ dns_dispatch_parent(int sig, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("dns_dispatch_parent: msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {

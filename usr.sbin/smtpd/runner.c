@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.48 2009/05/24 14:38:56 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.49 2009/06/01 13:20:56 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -104,8 +104,8 @@ runner_dispatch_parent(int sig, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = env->sc_ibufs[PROC_PARENT];
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -114,14 +114,11 @@ runner_dispatch_parent(int sig, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -153,8 +150,8 @@ runner_dispatch_control(int sig, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = env->sc_ibufs[PROC_CONTROL];
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -163,14 +160,11 @@ runner_dispatch_control(int sig, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -225,8 +219,8 @@ runner_dispatch_queue(int sig, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = env->sc_ibufs[PROC_QUEUE];
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -235,14 +229,11 @@ runner_dispatch_queue(int sig, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -280,8 +271,8 @@ runner_dispatch_mda(int sig, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = env->sc_ibufs[PROC_MDA];
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -290,14 +281,11 @@ runner_dispatch_mda(int sig, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -326,8 +314,8 @@ runner_dispatch_mta(int sig, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = env->sc_ibufs[PROC_MTA];
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -336,14 +324,11 @@ runner_dispatch_mta(int sig, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -373,8 +358,8 @@ runner_dispatch_lka(int sig, short event, void *p)
 	ssize_t			 n;
 
 	ibuf = env->sc_ibufs[PROC_LKA];
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -383,14 +368,11 @@ runner_dispatch_lka(int sig, short event, void *p)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
