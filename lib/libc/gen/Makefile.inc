@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.46 2009/04/21 09:34:51 martynas Exp $
+#	$OpenBSD: Makefile.inc,v 1.47 2009/06/01 21:52:03 millert Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -51,6 +51,7 @@ MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 confstr.3 \
 	getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
 	getfsent.3 getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 getpwent.3 \
+	getpwnam.3 \
 	getttyent.3 getusershell.3 glob.3 initgroups.3 isalnum.3 isalpha.3 \
 	isascii.3 isblank.3 iscntrl.3 isdigit.3 isfdtype.3 isgraph.3 \
 	isgreater.3 islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 \
@@ -107,9 +108,8 @@ MLINKS+=getgrent.3 endgrent.3 getgrent.3 setgroupent.3 getgrent.3 getgrgid.3 \
 MLINKS+=gethostname.3 sethostname.3
 MLINKS+=getnetgrent.3 endnetgrent.3 getnetgrent.3 innetgr.3 \
 	getnetgrent.3 setnetgrent.3
-MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpassent.3 getpwent.3 getpwnam.3 \
-	getpwent.3 getpwuid.3 getpwent.3 setpwent.3 getpwent.3 setpwfile.3
-MLINKS+=getpwent.3 getpwnam_r.3 getpwent.3 getpwuid_r.3
+MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpassent.3 getpwent.3 setpwent.3
+MLINKS+=getpwnam.3 getpwuid.3 getpwnam.3 getpwnam_r.3 getpwnam.3 getpwuid_r.3
 MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 getttyent.3 setttyent.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
