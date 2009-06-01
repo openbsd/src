@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.109 2008/06/04 21:12:49 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.110 2009/06/01 16:57:24 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,7 @@ SUBDIR= apply apropos ar arch asa asn1_compile at aucat audioctl awk banner \
 	top touch tput tr true tset tsort tty usbhidaction usbhidctl ul uname \
 	unexpand unifdef uniq units \
 	unvis users uudecode uuencode vacation vgrind vi vis vmstat w wall wc \
-	what whatis which who whois window write x99token xargs xinstall xlint \
+	what whatis which who whois write x99token xargs xinstall xlint \
 	xstr yacc yes
 
 .if (${YP:L} == "yes")
