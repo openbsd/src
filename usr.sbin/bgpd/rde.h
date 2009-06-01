@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.112 2009/06/01 22:49:06 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.113 2009/06/01 23:54:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -241,14 +241,14 @@ struct pt_entry6 {
 };
 
 struct rib_context {
-	LIST_ENTRY(rib_context)	 entry;
-	struct rib_entry	*ctx_re;
-	struct rib		*ctx_rib;
+	LIST_ENTRY(rib_context)		 entry;
+	struct rib_entry		*ctx_re;
+	struct rib			*ctx_rib;
 	void		(*ctx_upcall)(struct rib_entry *, void *);
 	void		(*ctx_done)(void *);
-	void			*ctx_arg;
-	unsigned int		 ctx_count;
-	sa_family_t		 ctx_af;
+	void				*ctx_arg;
+	unsigned int			 ctx_count;
+	sa_family_t			 ctx_af;
 };
 
 struct rib_entry {
@@ -269,7 +269,6 @@ enum rib_state {
 struct rib {
 	char			name[PEER_DESCR_LEN];
 	struct rib_tree		rib;
-	LIST_HEAD(, rib_context)	ctxts;
 	enum rib_state		state;
 	u_int16_t		flags;
 	u_int16_t		id;

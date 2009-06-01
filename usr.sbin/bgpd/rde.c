@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.246 2009/05/27 06:58:15 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.247 2009/06/01 23:54:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -119,13 +119,12 @@ struct mrt		*mrt;
 struct rde_memstats	 rdemem;
 
 struct rde_dump_ctx {
-	TAILQ_ENTRY(rde_dump_ctx)	entry;
 	struct rib_context		ribctx;
 	struct ctl_show_rib_request	req;
 	sa_family_t			af;
 };
 
-TAILQ_HEAD(, rde_dump_ctx) rde_dump_h = TAILQ_HEAD_INITIALIZER(rde_dump_h);
+LIST_HEAD(, rib_context) rde_dump_h = LIST_HEAD_INITIALIZER(rde_dump_h);
 
 void
 rde_sighdlr(int sig)
@@ -1940,7 +1939,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 	ctx->ribctx.ctx_arg = ctx;
 	ctx->ribctx.ctx_af = ctx->req.af;
 
-	TAILQ_INSERT_TAIL(&rde_dump_h, ctx, entry);
+	LIST_INSERT_HEAD(&rde_dump_h, &ctx->ribctx, entry);
 }
 
 void
@@ -1950,25 +1949,25 @@ rde_dump_done(void *arg)
 
 	imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid,
 	    -1, NULL, 0);
-	TAILQ_REMOVE(&rde_dump_h, ctx, entry);
+	LIST_REMOVE(&ctx->ribctx, entry);
 	free(ctx);
 }
 
 void
 rde_dump_runner(void)
 {
-	struct rde_dump_ctx	*ctx, *next;
+	struct rib_context	*ctx, *next;
 
-	for (ctx = TAILQ_FIRST(&rde_dump_h); ctx != NULL; ctx = next) {
-		next = TAILQ_NEXT(ctx, entry);
-		rib_dump_r(&ctx->ribctx);
+	for (ctx = LIST_FIRST(&rde_dump_h); ctx != NULL; ctx = next) {
+		next = LIST_NEXT(ctx, entry);
+		rib_dump_r(ctx);
 	}
 }
 
 int
 rde_dump_pending(void)
 {
-	return (!TAILQ_EMPTY(&rde_dump_h));
+	return (!LIST_EMPTY(&rde_dump_h));
 }
 
 /*

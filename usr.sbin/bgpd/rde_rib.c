@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.106 2009/06/01 22:54:02 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.107 2009/06/01 23:54:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -224,7 +224,6 @@ rib_dump_r(struct rib_context *ctx)
 
 	if (ctx->ctx_re == NULL) {
 		re = RB_MIN(rib_tree, &ctx->ctx_rib->rib);
-		LIST_INSERT_HEAD(&ctx->ctx_rib->ctxts, ctx, entry);
 	} else
 		re = rib_restart(ctx);
 
