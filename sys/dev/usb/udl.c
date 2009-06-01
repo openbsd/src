@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.13 2009/06/01 11:26:18 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.14 2009/06/01 15:28:16 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -122,6 +122,8 @@ void		udl_fb_pos_write(struct udl_softc *, uint16_t, uint32_t,
 		    uint32_t, uint32_t);
 void		udl_fb_blk_write(struct udl_softc *, uint16_t, uint32_t,
 		    uint32_t, uint32_t, uint32_t);
+void		udl_fb_buf_write(struct udl_softc *, uint8_t *, uint32_t,
+		    uint32_t, uint16_t);
 void		udl_fb_off_copy(struct udl_softc *, uint32_t, uint32_t,
 		    uint16_t);
 void		udl_fb_pos_copy(struct udl_softc *, uint32_t, uint32_t,
@@ -1234,6 +1236,24 @@ udl_fb_blk_write(struct udl_softc *sc, uint16_t rgb16, uint32_t x,
 }
 
 void
+udl_fb_buf_write(struct udl_softc *sc, uint8_t *buf, uint32_t x,
+    uint32_t y, uint16_t width)
+{
+	uint16_t lwidth;
+	uint32_t off;
+
+	off = ((y * sc->sc_width) + x) * 2;
+	lwidth = width * 2;
+
+	udl_cmd_insert_int_1(sc, UDL_BULK_SOC);
+	udl_cmd_insert_int_1(sc, UDL_BULK_CMD_FB_WRITE | UDL_BULK_CMD_FB_WORD);
+	udl_cmd_insert_int_3(sc, off);
+	udl_cmd_insert_int_1(sc, width >= UDL_CMD_MAX_PIXEL_COUNT ? 0 : width);
+
+	udl_cmd_insert_buf(sc, buf, lwidth);
+}
+
+void
 udl_fb_off_copy(struct udl_softc *sc, uint32_t src_off, uint32_t dst_off,
     uint16_t width)
 {
@@ -1286,28 +1306,30 @@ void
 udl_draw_char(struct udl_softc *sc, uint32_t x, uint32_t y,
     uint16_t fg, uint16_t bg, u_int uc)
 {
-	int i, j, lx, ly;
+	int i, j, ly;
 	uint8_t *fontchar, fontbits, luc;
+	uint8_t buf[UDL_CMD_MAX_DATA_SIZE];
+	uint16_t *line, lrgb16;
 	struct wsdisplay_font *font = sc->sc_ri.ri_font;
-
-	/* draw the characters background first */
-	udl_fb_blk_write(sc, bg, x, y, font->fontwidth, font->fontheight);
 
 	fontchar = (uint8_t *)(font->data + (uc - font->firstchar) *
 	    sc->sc_ri.ri_fontscale);
 
-	lx = x;
 	ly = y;
 	for (i = 0; i < font->fontheight; i++) {
 		fontbits = *fontchar;
+		line = (uint16_t *)buf;
 
 		for (j = 7; j != -1; j--) {
 			luc = 1 << j;
 			if (fontbits & luc)
-				udl_fb_pos_write(sc, fg, lx, ly, 1);
-			lx++;
+				lrgb16 = htobe16(fg);
+			else
+				lrgb16 = htobe16(bg);
+			bcopy(&lrgb16, line, 2);
+			line++;
 		}
-		lx = x;
+		udl_fb_buf_write(sc, buf, x, ly, font->fontwidth);
 		ly++;
 
 		fontchar += font->stride;
