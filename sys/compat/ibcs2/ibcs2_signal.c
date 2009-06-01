@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_signal.c,v 1.8 2008/05/01 11:53:26 miod Exp $	*/
+/*	$OpenBSD: ibcs2_signal.c,v 1.9 2009/06/01 20:11:38 weingart Exp $	*/
 /*	$NetBSD: ibcs2_signal.c,v 1.8 1996/05/03 17:05:27 christos Exp $	*/
 
 /*
@@ -503,4 +503,11 @@ ibcs2_sys_kill(p, v, retval)
 	SCARG(&ka, pid) = SCARG(uap, pid);
 	SCARG(&ka, signum) = ibcs2_to_bsd_sig[SCARG(uap, signo)];
 	return sys_kill(p, &ka, retval);
+}
+
+void
+ibcs2_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
+	union sigval val)
+{
+	sendsig(catcher, bsd_to_ibcs2_sig[sig], mask, code, type, val);
 }

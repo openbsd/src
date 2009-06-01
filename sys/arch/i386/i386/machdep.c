@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.449 2009/05/19 01:31:15 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.450 2009/06/01 20:11:38 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2134,19 +2134,6 @@ pentium_cpuspeed(int *freq)
 	return (0);
 }
 #endif	/* !SMALL_KERNEL */
-
-#ifdef COMPAT_IBCS2
-void ibcs2_sendsig(sig_t, int, int, u_long, int, union sigval);
-
-void
-ibcs2_sendsig(sig_t catcher, int sig, int mask, u_long code, int type,
-    union sigval val)
-{
-	extern int bsd_to_ibcs2_sig[];
-
-	sendsig(catcher, bsd_to_ibcs2_sig[sig], mask, code, type, val);
-}
-#endif
 
 /*
  * Send an interrupt to process.
