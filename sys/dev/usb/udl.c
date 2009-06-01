@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.15 2009/06/01 15:47:38 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.16 2009/06/01 17:41:27 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -1320,7 +1320,7 @@ udl_draw_char(struct udl_softc *sc, uint32_t x, uint32_t y,
 		fontbits = *fontchar;
 		line = (uint16_t *)buf;
 
-		for (j = 7; j != -1; j--) {
+		for (j = (font->fontwidth - 1); j != -1; j--) {
 			luc = 1 << j;
 			if (fontbits & luc)
 				lrgb16 = htobe16(fg);
