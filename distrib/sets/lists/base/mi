@@ -514,7 +514,6 @@
 ./usr/bin/who
 ./usr/bin/whoami
 ./usr/bin/whois
-./usr/bin/window
 ./usr/bin/write
 ./usr/bin/x99token
 ./usr/bin/xargs
