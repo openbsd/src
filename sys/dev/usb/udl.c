@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.17 2009/06/01 18:07:55 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.18 2009/06/01 18:21:51 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -534,6 +534,7 @@ udl_erasecols(void *cookie, int row, int col, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct udl_softc *sc = ri->ri_hw;
+	uint16_t bgc;
 	int fg, bg;
 	int x, y, cx, cy;
 
@@ -543,13 +544,14 @@ udl_erasecols(void *cookie, int row, int col, int num, long attr)
 	    DN(sc), FUNC, row, col, num);
 
 	sc->sc_ri.ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
+	bgc = (uint16_t)sc->sc_ri.ri_devcmap[bg];
 
 	x = col * sc->sc_ri.ri_font->fontwidth;
 	y = row * sc->sc_ri.ri_font->fontheight;
 	cx = num * sc->sc_ri.ri_font->fontwidth;
 	cy = sc->sc_ri.ri_font->fontheight;
 
-	udl_fb_block_write(sc, 0x0000, x, y, cx, cy);
+	udl_fb_block_write(sc, bgc, x, y, cx, cy);
 
 	(void)udl_cmd_send_async(sc);
 }
@@ -559,18 +561,23 @@ udl_eraserows(void *cookie, int row, int num, long attr)
 {
 	struct rasops_info *ri = cookie;
 	struct udl_softc *sc;
+	uint16_t bgc;
+	int fg, bg;
 	int x, y, cx, cy;
 
 	sc = ri->ri_hw;
 
 	DPRINTF(2, "%s: %s: row=%d, num=%d\n", DN(sc), FUNC, row, num);
 
+	sc->sc_ri.ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
+	bgc = (uint16_t)sc->sc_ri.ri_devcmap[bg];
+
 	x = 0;
 	y = row * sc->sc_ri.ri_font->fontheight;
 	cx = sc->sc_ri.ri_emuwidth;
 	cy = num * sc->sc_ri.ri_font->fontheight;
 
-	udl_fb_block_write(sc, 0x0000, x, y, cx, cy);
+	udl_fb_block_write(sc, bgc, x, y, cx, cy);
 
 	(void)udl_cmd_send_async(sc);
 }
