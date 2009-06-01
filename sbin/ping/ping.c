@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.80 2009/05/31 17:33:39 ckuethe Exp $	*/
+/*	$OpenBSD: ping.c,v 1.81 2009/06/01 14:16:02 jmc Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.80 2009/05/31 17:33:39 ckuethe Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.81 2009/06/01 14:16:02 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -1360,7 +1360,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: ping [-AaDdfLnqRrv] [-c count] [-I ifaddr] [-i wait]\n"
+	    "usage: ping [-DdEefLnqRrv] [-c count] [-I ifaddr] [-i wait]\n"
 	    "\t[-l preload] [-p pattern] [-s packetsize] [-T tos] [-t ttl]\n"
 	    "\t[-w maxwait] host\n");
 	exit(1);
