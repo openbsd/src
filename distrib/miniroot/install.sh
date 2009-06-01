@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.197 2009/05/31 18:38:42 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.198 2009/06/01 02:57:40 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -94,7 +94,7 @@ if [[ ! -f /etc/fstab ]]; then
 		# fstab.$DISK is created here with 'disklabel -f'.
 		rm -f *.$DISK
 		AUTOROOT=n
-		md_prep_disklabel $DISK
+		md_prep_disklabel $DISK || { DISK= ; continue ; }
 
 		# Make sure there is a '/' mount point.
 		grep -qs " / ffs " fstab.$ROOTDISK || \
