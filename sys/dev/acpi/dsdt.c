@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.149 2009/05/30 22:49:56 jordan Exp $ */
+/* $OpenBSD: dsdt.c,v 1.150 2009/06/01 22:36:12 jordan Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2277,13 +2277,11 @@ aml_xmid(struct aml_value *src, int index, int length)
 /*
  * Field I/O utility functions 
  */
-void  aml_xresolve(struct aml_scope *, struct aml_value *);
 void aml_xgasio(int, uint64_t, int, void *, int, int, const char *);
 void aml_xcreatefield(struct aml_value *, int, struct aml_value *, int, int,
     struct aml_value *, int, int);
 void aml_xparsefieldlist(struct aml_scope *, int, int,
     struct aml_value *, struct aml_value *, int);
-int aml_evalhid(struct aml_node *, struct aml_value *);
 
 #define GAS_PCI_CFG_SPACE_UNEVAL  0xCC
 
@@ -2299,59 +2297,8 @@ aml_evalhid(struct aml_node *node, struct aml_value *val)
 	return (0);
 }
 
-int
-aml_xgetpci(struct aml_node *node, int64_t *base)
-{
-	struct aml_node *pci_root;
-	struct aml_value hid;
-	int64_t v;
-
-	*base = 0;
-	dnprintf(10,"RESOLVE PCI: %s\n", aml_nodename(node));
-	for (pci_root=node->parent; pci_root; pci_root=pci_root->parent) {
-		/* PCI Root object will have _HID value */
-		if (aml_evalhid(pci_root, &hid) == 0) {
-			aml_freevalue(&hid);
-			break;
-		}
-	}
-	if (!aml_evalinteger(NULL, node->parent, "_ADR", 0, NULL, &v))
-		*base += (v << 16L);
-	if (!aml_evalinteger(NULL, pci_root, "_BBN", 0, NULL, &v))
-		*base += (v << 48L);
-	return 0;
-}
-
-void
-aml_xresolve(struct aml_scope *scope, struct aml_value *val)
-{
-	int64_t base;
-
-	if (val->type != AML_OBJTYPE_OPREGION || val->v_opregion.flag)
-		return;
-	if (val->v_opregion.iospace != GAS_PCI_CFG_SPACE)
-		return;
-
-	/* Evaluate PCI Address */
-	aml_xgetpci(val->node, &base);
-	val->v_opregion.iobase += base;
-	val->v_opregion.flag = 1;
-}
-
-union amlpci_t
-{
-	uint64_t addr;
-	struct {
-		uint16_t reg;
-		uint16_t fun;
-		uint16_t dev;
-		uint16_t bus;
-	};
-};
-
 void aml_rwfield(struct aml_value *, int, int, struct aml_value *, int);
 void aml_rwgas(struct aml_value *, int, int, struct aml_value *, int, int);
-int  aml_rdpciaddr(struct aml_node *pcidev, union amlpci_t *);
 
 /* Get PCI address for opregion objects */
 int
