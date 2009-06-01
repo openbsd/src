@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.17 2009/05/30 23:53:41 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.18 2009/06/01 18:02:41 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -64,7 +64,7 @@ ssl_connect(int fd, short event, void *p)
 	int		 ssl_err;
 
 	if (event == EV_TIMEOUT) {
-		log_debug("ssl_session_accept: session timed out");
+		log_debug("ssl_connect: session timed out");
 		session_destroy(s);
 		return;
 	}
