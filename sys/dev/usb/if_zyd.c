@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.76 2009/05/31 13:03:21 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.77 2009/06/01 08:43:20 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -2189,7 +2189,7 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		pktlen += totlen;
 	desc->pktlen = htole16(pktlen);
 
-	desc->plcp_length = (16 * totlen + rate - 1) / rate;
+	desc->plcp_length = htole16((16 * totlen + rate - 1) / rate);
 	desc->plcp_service = 0;
 	if (rate == 22) {
 		const int remainder = (16 * totlen) % 22;
