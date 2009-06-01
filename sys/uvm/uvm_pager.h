@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.h,v 1.23 2009/03/27 16:29:33 oga Exp $	*/
+/*	$OpenBSD: uvm_pager.h,v 1.24 2009/06/01 19:54:02 oga Exp $	*/
 /*	$NetBSD: uvm_pager.h,v 1.20 2000/11/27 08:40:05 chs Exp $	*/
 
 /*
@@ -109,8 +109,6 @@ struct uvm_pagerops {
 	struct vm_page **	(*pgo_mk_pcluster)(struct uvm_object *,
 				 struct vm_page **, int *, struct vm_page *,
 				 int, voff_t, voff_t);
-						/* release page */
-	boolean_t		(*pgo_releasepg)(struct vm_page *, struct vm_page **);
 };
 
 /* pager flags [mostly for flush] */

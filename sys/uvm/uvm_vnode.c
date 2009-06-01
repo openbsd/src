@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.59 2009/06/01 17:42:33 ariane Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.60 2009/06/01 19:54:02 oga Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -93,7 +93,6 @@ void		 uvn_init(void);
 int		 uvn_io(struct uvm_vnode *, vm_page_t *, int, int, int);
 int		 uvn_put(struct uvm_object *, vm_page_t *, int, boolean_t);
 void		 uvn_reference(struct uvm_object *);
-boolean_t	 uvn_releasepg(struct vm_page *, struct vm_page **);
 
 /*
  * master pager structure
@@ -109,7 +108,6 @@ struct uvm_pagerops uvm_vnodeops = {
 	uvn_put,
 	uvn_cluster,
 	uvm_mk_pcluster, /* use generic version of this: see uvm_pager.c */
-	uvn_releasepg,
 };
 
 /*
@@ -526,8 +524,8 @@ uvm_vnp_terminate(struct vnode *vp)
 
 	/*
 	 * it is possible that the uvn was detached and is in the relkill
-	 * state [i.e. waiting for async i/o to finish so that releasepg can
-	 * kill object].  we take over the vnode now and cancel the relkill.
+	 * state [i.e. waiting for async i/o to finish].
+	 * we take over the vnode now and cancel the relkill.
 	 * we want to know when the i/o is done so we can recycle right
 	 * away.   note that a uvn can only be in the RELKILL state if it
 	 * has a zero reference count.
@@ -621,41 +619,6 @@ uvm_vnp_terminate(struct vnode *vp)
 }
 
 /*
- * uvn_releasepg: handled a released page in a uvn
- *
- * => "pg" is a PG_BUSY [caller owns it], PG_RELEASED page that we need
- *	to dispose of.
- * => caller must handled PG_WANTED case
- * => called with page's object locked, pageq's unlocked
- * => returns TRUE if page's object is still alive, FALSE if we
- *	killed the page's object.    if we return TRUE, then we
- *	return with the object locked.
- * => if (nextpgp != NULL) => we return pageq.tqe_next here, and return
- *				with the page queues locked [for pagedaemon]
- * => if (nextpgp == NULL) => we return with page queues unlocked [normal case]
- * => we kill the uvn if it is not referenced and we are suppose to
- *	kill it ("relkill").
- */
-
-boolean_t
-uvn_releasepg(struct vm_page *pg, struct vm_page **nextpgp /* OUT */)
-{
-	KASSERT(pg->pg_flags & PG_RELEASED);
-
-	/*
-	 * dispose of the page [caller handles PG_WANTED]
-	 */
-	pmap_page_protect(pg, VM_PROT_NONE);
-	uvm_lock_pageq();
-	if (nextpgp)
-		*nextpgp = TAILQ_NEXT(pg, pageq); /* next page for daemon */
-	uvm_pagefree(pg);
-	if (!nextpgp)
-		uvm_unlock_pageq();
-	return (TRUE);
-}
-
-/*
  * NOTE: currently we have to use VOP_READ/VOP_WRITE because they go
  * through the buffer cache and allow I/O in any size.  These VOPs use
  * synchronous i/o.  [vs. VOP_STRATEGY which can be async, but doesn't
@@ -689,8 +652,6 @@ uvn_releasepg(struct vm_page *pg, struct vm_page **nextpgp /* OUT */)
  * - if (object->iosync && u_naio == 0) { wakeup &uvn->u_naio }
  * - get "page" structures (atop?).
  * - handle "wanted" pages
- * - handle "released" pages [using pgo_releasepg]
- *   >>> pgo_releasepg may kill the object
  * dont forget to look at "object" wanted flag in all cases.
  */
 

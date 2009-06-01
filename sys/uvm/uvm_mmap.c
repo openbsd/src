@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.72 2009/03/20 15:19:04 oga Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.73 2009/06/01 19:54:02 oga Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -298,8 +298,7 @@ sys_mincore(struct proc *p, void *v, register_t *retval)
 		 */
 		if (UVM_ET_ISOBJ(entry)) {
 			KASSERT(!UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj));
-			if (entry->object.uvm_obj->pgops->pgo_releasepg
-			    == NULL) {
+			if (entry->object.uvm_obj->pgops->pgo_fault != NULL) {
 				pgi = 1;
 				for (/* nothing */; start < lim;
 				     start += PAGE_SIZE, vec++)

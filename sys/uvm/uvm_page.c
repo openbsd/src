@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.81 2009/06/01 17:42:33 ariane Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.82 2009/06/01 19:54:02 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -1168,7 +1168,14 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			UVMHIST_LOG(pdhist, "releasing pg %p", pg,0,0,0);
 			uobj = pg->uobject;
 			if (uobj != NULL) {
-				uobj->pgops->pgo_releasepg(pg, NULL);
+				uvm_lock_pageq();
+				pmap_page_protect(pg, VM_PROT_NONE);
+				/* XXX won't happen right now */
+				if (pg->pg_flags & PQ_ANON)
+					uao_dropswap(uobj,
+					    pg->offset >> PAGE_SHIFT);
+				uvm_pagefree(pg);
+				uvm_unlock_pageq();
 			} else {
 				atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
 				UVM_PAGE_OWN(pg, NULL);
