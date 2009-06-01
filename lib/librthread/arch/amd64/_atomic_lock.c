@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.2 2006/01/05 22:33:23 marc Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.3 2009/06/01 22:52:38 guenther Exp $	*/
 
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
@@ -18,9 +18,9 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 	 * a local variable containing the locked state.
 	 */
 	old = _SPINLOCK_LOCKED;
-	__asm__("xchg %0,%1"
-		: "=r" (old), "=m" (*lock)
-		: "0"  (old), "1"  (*lock));
+	__asm__("xchg %0,(%2)"
+		: "=r" (old)
+		: "0"  (old), "r"  (lock));
 
 	return (old != _SPINLOCK_UNLOCKED);
 }
