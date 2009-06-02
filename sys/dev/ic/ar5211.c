@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.43 2009/06/02 12:09:26 guenther Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.44 2009/06/02 12:39:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -486,7 +486,7 @@ ar5k_ar5211_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	/*
 	 * Write initial mode settings
 	 */
-	for (i = 0; i < AR5K_ELEMENTS(ar5211_mode); i++) {
+	for (i = 0; i < nitems(ar5211_mode); i++) {
 		AR5K_REG_WAIT(i);
 		AR5K_REG_WRITE((u_int32_t)ar5211_mode[i].mode_register,
 		    ar5211_mode[i].mode_value[mode]);
@@ -495,7 +495,7 @@ ar5k_ar5211_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	/*
 	 * Write initial register settings
 	 */
-	for (i = 0; i < AR5K_ELEMENTS(ar5211_ini); i++) {
+	for (i = 0; i < nitems(ar5211_ini); i++) {
 		if (change_channel == AH_TRUE &&
 		    ar5211_ini[i].ini_register >= AR5K_AR5211_PCU_MIN &&
 		    ar5211_ini[i].ini_register <= AR5K_AR5211_PCU_MAX)
@@ -1992,7 +1992,7 @@ ar5k_ar5211_set_key(struct ath_hal *hal, u_int16_t entry,
 		return (AH_FALSE);
 	}
 
-	for (i = 0; i < AR5K_ELEMENTS(key_v); i++)
+	for (i = 0; i < nitems(key_v); i++)
 		AR5K_REG_WRITE(AR5K_AR5211_KEYTABLE_OFF(entry, i), key_v[i]);
 
 	return (ar5k_ar5211_set_key_lladdr(hal, entry, mac));
@@ -2562,7 +2562,7 @@ ar5k_ar5211_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int freq,
     u_int ee_mode)
 {
 	struct ar5k_eeprom_info *ee = &hal->ah_capabilities.cap_eeprom;
-	struct ar5k_ar5211_ini_rf rf[AR5K_ELEMENTS(ar5211_rf)];
+	struct ar5k_ar5211_ini_rf rf[nitems(ar5211_rf)];
 	u_int32_t ob, db, obdb, xpds, xpdp, x_gain;
 	u_int i;
 
@@ -2611,7 +2611,7 @@ ar5k_ar5211_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int freq,
 	rf[17].rf_value[freq] = (rf[17].rf_value[freq] & ~0x8) |
 		((xpds << 3) & 0x8);
 
-	for (i = 0; i < AR5K_ELEMENTS(rf); i++) {
+	for (i = 0; i < nitems(rf); i++) {
 		AR5K_REG_WAIT(i);
 		AR5K_REG_WRITE((u_int32_t)rf[i].rf_register,
 		    rf[i].rf_value[freq]);

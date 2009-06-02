@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.53 2009/06/02 12:09:26 guenther Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.54 2009/06/02 12:39:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -145,7 +145,7 @@ ath_hal_probe(u_int16_t vendor, u_int16_t device)
 	/*
 	 * Perform a linear search on the table of supported devices
 	 */
-	for (i = 0; i < AR5K_ELEMENTS(ar5k_known_products); i++) {
+	for (i = 0; i < nitems(ar5k_known_products); i++) {
 		if (vendor == ar5k_known_products[i].vendor &&
 		    device == ar5k_known_products[i].device)
 			return ("");
@@ -172,7 +172,7 @@ ath_hal_attach(u_int16_t device, void *arg, bus_space_tag_t st,
 	/*
 	 * Call the chipset-dependent attach routine by device id
 	 */
-	for (i = 0; i < AR5K_ELEMENTS(ar5k_known_products); i++) {
+	for (i = 0; i < nitems(ar5k_known_products); i++) {
 		if (device == ar5k_known_products[i].device &&
 		    ar5k_known_products[i].attach != NULL)
 			attach = ar5k_known_products[i].attach;
@@ -445,7 +445,7 @@ ath_hal_init_channels(struct ath_hal *hal, HAL_CHANNEL *channels,
 	 * and mode. 5GHz...
 	 */
 	for (i = 0; (hal->ah_capabilities.cap_range.range_5ghz_max > 0) &&
-		 (i < AR5K_ELEMENTS(ar5k_5ghz_channels)) &&
+		 (i < nitems(ar5k_5ghz_channels)) &&
 		 (c < max_channels); i++) {
 		/* Check if channel is supported by the chipset */
 		if (ar5k_check_channel(hal,
@@ -475,7 +475,7 @@ ath_hal_init_channels(struct ath_hal *hal, HAL_CHANNEL *channels,
 	 * ...and 2GHz.
 	 */
 	for (i = 0; (hal->ah_capabilities.cap_range.range_2ghz_max > 0) &&
-		 (i < AR5K_ELEMENTS(ar5k_2ghz_channels)) &&
+		 (i < nitems(ar5k_2ghz_channels)) &&
 		 (c < max_channels); i++) {
 		/* Check if channel is supported by the chipset */
 		if (ar5k_check_channel(hal,
@@ -525,7 +525,7 @@ ar5k_printver(enum ar5k_srev_type type, u_int32_t val)
 	const char *name = "xxxx";
 	int i;
 
-	for (i = 0; i < AR5K_ELEMENTS(names); i++) {
+	for (i = 0; i < nitems(names); i++) {
 		if (type == AR5K_VERSION_DEV) {
 			if (names[i].sr_type == type &&
 			    names[i].sr_val == val) {
@@ -1528,7 +1528,7 @@ HAL_BOOL
 ar5k_ar5111_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int mode)
 {
 	struct ar5k_eeprom_info *ee = &hal->ah_capabilities.cap_eeprom;
-	const u_int rf_size = AR5K_ELEMENTS(ar5111_rf);
+	const u_int rf_size = nitems(ar5111_rf);
 	u_int32_t *rf;
 	int i, obdb = -1, bank = -1;
 	u_int32_t ee_mode;
@@ -1636,10 +1636,10 @@ ar5k_ar5112_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int mode)
 
 	if (hal->ah_radio_5ghz_revision >= AR5K_SREV_RAD_5112A) {
 		rf_ini = ar5112a_rf;
-		rf_size = AR5K_ELEMENTS(ar5112a_rf);
+		rf_size = nitems(ar5112a_rf);
 	} else {
 		rf_ini = ar5112_rf;
-		rf_size = AR5K_ELEMENTS(ar5112_rf);
+		rf_size = nitems(ar5112_rf);
 	}
 
 	/* Copy values to modify them */
@@ -1731,17 +1731,17 @@ ar5k_arxxxx_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int mode)
 	switch (hal->ah_radio) {
 	case AR5K_AR5413:
 		rf_ini = ar5413_rf;
-		rf_size = AR5K_ELEMENTS(ar5413_rf);
+		rf_size = nitems(ar5413_rf);
 		break;
 	case AR5K_AR2413:
 		rf_ini = ar2413_rf;
-		rf_size = AR5K_ELEMENTS(ar2413_rf);
+		rf_size = nitems(ar2413_rf);
 		break;
 	case AR5K_AR2425:
 		if (mode == AR5K_INI_VAL_11B)
 			mode = AR5K_INI_VAL_11G;
 		rf_ini = ar2425_rf;
-		rf_size = AR5K_ELEMENTS(ar2425_rf);
+		rf_size = nitems(ar2425_rf);
 		break;
 	default:
 		return (AH_FALSE);
@@ -1779,22 +1779,22 @@ ar5k_rfgain(struct ath_hal *hal, u_int freq)
 	switch (hal->ah_radio) {
 	case AR5K_AR5111:
 		rfg = ar5111_rfg;
-		rfg_size = AR5K_ELEMENTS(ar5111_rfg);
+		rfg_size = nitems(ar5111_rfg);
 		break;
 	case AR5K_AR5112:
 		rfg = ar5112_rfg;
-		rfg_size = AR5K_ELEMENTS(ar5112_rfg);
+		rfg_size = nitems(ar5112_rfg);
 		break;
 	case AR5K_AR5413:
 		rfg = ar5413_rfg;
-		rfg_size = AR5K_ELEMENTS(ar5413_rfg);
+		rfg_size = nitems(ar5413_rfg);
 		break;
 	case AR5K_AR2413:
 	case AR5K_AR2425:
 		if (freq == AR5K_INI_RFGAIN_5GHZ)
 			return (AH_FALSE);
 		rfg = ar2413_rfg;
-		rfg_size = AR5K_ELEMENTS(ar2413_rfg);
+		rfg_size = nitems(ar2413_rfg);
 		break;
 	default:
 		return (AH_FALSE);
@@ -1844,7 +1844,7 @@ ar5k_txpower_table(struct ath_hal *hal, HAL_CHANNEL *channel, int16_t max_power)
 	hal->ah_txpower.txp_ofdm = rates[0];
 
 	/* Calculate the power table */
-	n = AR5K_ELEMENTS(hal->ah_txpower.txp_pcdac);
+	n = nitems(hal->ah_txpower.txp_pcdac);
 	min = AR5K_EEPROM_PCDAC_START;
 	max = AR5K_EEPROM_PCDAC_STOP;
 	for (i = 0; i < n; i += AR5K_EEPROM_PCDAC_STEP)

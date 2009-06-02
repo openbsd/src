@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.50 2009/02/06 17:06:45 grange Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.51 2009/06/02 12:39:02 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -264,7 +264,7 @@ ar5k_ar5212_attach(u_int16_t device, void *sc, bus_space_tag_t st,
 
 	if (hal->ah_pci_express == AH_TRUE) {
 		/* PCI-Express based devices need some extra initialization */
-		ar5k_write_ini(hal, ar5212_pcie, AR5K_ELEMENTS(ar5212_pcie), 0);
+		ar5k_write_ini(hal, ar5212_pcie, nitems(ar5212_pcie), 0);
 	}
 
 	bcopy(etherbroadcastaddr, mac, IEEE80211_ADDR_LEN);
@@ -550,33 +550,33 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 	/*
 	 * Write initial mode and register settings
 	 */
-	ar5k_write_mode(hal, ar5212_mode, AR5K_ELEMENTS(ar5212_mode), mode);
-	ar5k_write_ini(hal, ar5212_ini, AR5K_ELEMENTS(ar5212_ini), chanchange);
+	ar5k_write_mode(hal, ar5212_mode, nitems(ar5212_mode), mode);
+	ar5k_write_ini(hal, ar5212_ini, nitems(ar5212_ini), chanchange);
 
 	switch (hal->ah_radio) {
 	case AR5K_AR5111:
 		ar5k_write_mode(hal, ar5212_ar5111_mode,
-		    AR5K_ELEMENTS(ar5212_ar5111_mode), mode);
+		    nitems(ar5212_ar5111_mode), mode);
 		break;
 	case AR5K_AR5112:
 		ar5k_write_mode(hal, ar5212_ar5112_mode,
-		    AR5K_ELEMENTS(ar5212_ar5112_mode), mode);
+		    nitems(ar5212_ar5112_mode), mode);
 		break;
 	case AR5K_AR5413:
 		ar5k_write_mode(hal, ar5413_mode,
-		    AR5K_ELEMENTS(ar5413_mode), mode);
+		    nitems(ar5413_mode), mode);
 		break;
 	case AR5K_AR2413:
 		AR5K_REG_WRITE(AR5K_AR5212_PHY(648), 0x018830c6);
 		ar5k_write_mode(hal, ar2413_mode,
-		    AR5K_ELEMENTS(ar2413_mode), mode);
+		    nitems(ar2413_mode), mode);
 		break;
 	case AR5K_AR2425:
 		AR5K_REG_WRITE(AR5K_AR5212_PHY(648), 0x018830c6);
 		if (mode == AR5K_INI_VAL_11B)
 			mode = AR5K_INI_VAL_11G;
 		ar5k_write_mode(hal, ar2425_mode,
-		    AR5K_ELEMENTS(ar2425_mode), mode);
+		    nitems(ar2425_mode), mode);
 		break;
 	default:
 		AR5K_PRINTF("invalid radio: %d\n", hal->ah_radio);
@@ -585,10 +585,10 @@ ar5k_ar5212_reset(struct ath_hal *hal, HAL_OPMODE op_mode, HAL_CHANNEL *channel,
 
 	if (hal->ah_radio == AR5K_AR5111)
 		ar5k_write_ini(hal, ar5111_bbgain,
-		    AR5K_ELEMENTS(ar5111_bbgain), chanchange);
+		    nitems(ar5111_bbgain), chanchange);
 	else
 		ar5k_write_ini(hal, ar5112_bbgain,
-		    AR5K_ELEMENTS(ar5112_bbgain), chanchange);
+		    nitems(ar5112_bbgain), chanchange);
 
 	/*
 	 * Write initial RF gain settings
@@ -2368,7 +2368,7 @@ ar5k_ar5212_set_key(struct ath_hal *hal, u_int16_t entry,
 		return (AH_FALSE);
 	}
 
-	for (i = 0; i < AR5K_ELEMENTS(key_v); i++)
+	for (i = 0; i < nitems(key_v); i++)
 		AR5K_REG_WRITE(AR5K_AR5212_KEYTABLE_OFF(entry, i), key_v[i]);
 
 	return (ar5k_ar5212_set_key_lladdr(hal, entry, mac));
