@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.52 2008/07/30 07:43:01 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.53 2009/06/02 12:09:26 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1680,6 +1680,10 @@ ar5k_ar5112_rfregs(struct ath_hal *hal, HAL_CHANNEL *channel, u_int mode)
 		    (channel->c_channel >= 5500 ? 2 :
 			(channel->c_channel >= 5260 ? 1 :
 			    (channel->c_channel > 4000 ? 0 : -1)));
+
+		/* bogus channel: bad beacon? */
+		if (obdb < 0)
+			return (AH_FALSE);
 
 		if (!ar5k_rfregs_op(rf, hal->ah_offset[6],
 			ee->ee_ob[ee_mode][obdb], 3, 279, 0, AH_TRUE))
