@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.106 2009/06/02 17:10:22 pyr Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.107 2009/06/02 20:22:30 jmc Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -35,7 +35,7 @@ configuration file.
 .It Sy Global Configuration
 Global settings for
 .Xr relayd 8 .
-Do note that the config file allows you to add global settings after
+Do note that the config file allows global settings to be added after
 defining tables in the config file, but those tables will use the
 built-in defaults instead of the global settings below them.
 .It Sy Tables
@@ -102,8 +102,7 @@ table \*(Ltwebhosts\*(Gt {
 .Ed
 .Sh GLOBAL CONFIGURATION
 Here are the settings that can be set globally:
-.Pp
-.Bl -tag -width Ds -compact
+.Bl -tag -width Ds
 .It Ic demote Ar group
 Enable the global
 .Xr carp 4
@@ -115,13 +114,9 @@ see the
 .Ic group
 keyword in
 .Xr ifconfig 8 .
-.Pp
-.It Xo
-.Ic interval Ar number
-.Xc
+.It Ic interval Ar number
 Set the interval in seconds at which the hosts will be checked.
 The default interval is 10 seconds.
-.Pp
 .It Xo
 .Ic log
 .Pq Ic updates Ns \&| Ns Ic all
@@ -140,7 +135,6 @@ The host state can be
 or
 .Ar unknown
 (the host is disabled or has not been checked yet).
-.Pp
 .It Ic prefork Ar number
 When using relays, run the specified number of processes to handle
 relayed connections.
@@ -149,7 +143,6 @@ to a relay.
 .Xr relayd 8
 runs 5 relay processes by default and every process will handle
 all configured relays.
-.Pp
 .It Ic send trap
 Send an SNMP trap when the state of a host changes.
 .Xr relayd 8
@@ -159,10 +152,7 @@ and request it send a trap to the registered trap receivers;
 see
 .Xr snmpd.conf 5
 for more information about the configuration.
-.Pp
-.It Xo
-.Ic timeout Ar number
-.Xc
+.It Ic timeout Ar number
 Set the global timeout in milliseconds for checks.
 This can be overridden by the timeout value in the table definitions.
 The default interval is 200 milliseconds and it must not exceed the
@@ -170,7 +160,7 @@ global interval.
 Please note that the default value is optimized for checks within the
 same collision domain \(en use a higher timeout, such as 1000 milliseconds,
 for checks of hosts in other subnets.
-If this option is to be set, it should be before overrides in tables.
+If this option is to be set, it should be placed before overrides in tables.
 .El
 .Sh TABLES
 Tables are used to group a set of hosts as the target for redirections
