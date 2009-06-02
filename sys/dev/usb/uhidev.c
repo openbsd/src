@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.33 2008/06/26 05:42:18 ray Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.34 2009/06/02 21:43:41 miod Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -613,6 +613,13 @@ uhidev_set_report_async(struct uhidev *scd, int type, void *data, int len)
 	char buf[100];
 	if (scd->sc_report_id) {
 		buf[0] = scd->sc_report_id;
+		if ((uint)len > sizeof(buf) - 1) {
+#ifdef DIAGNOSTIC
+			printf("%s: report length too large (%d)\n",
+			    scd->sc_dev.dv_xname, len);
+#endif
+			return;
+		}
 		memcpy(buf+1, data, len);
 		len++;
 		data = buf;
