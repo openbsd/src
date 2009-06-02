@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscsioreg.h,v 1.2 2004/11/17 16:53:05 mickey Exp $	*/
+/*	$OpenBSD: gscsioreg.h,v 1.3 2009/06/02 12:12:35 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -29,6 +29,7 @@
 #define GSCSIO_LDN	0x07	/* logical device number */
 #define GSCSIO_LDN_ACB1		0x05	/* ACCESS.bus 1 */
 #define GSCSIO_LDN_ACB2		0x06	/* ACCESS.bus 2 */
+#define GSCSIO_LDN_LAST		0x08	/* last logical device number */
 #define GSCSIO_ID	0x20	/* SIO ID */
 #define GSCSIO_ID_SC1100	0xf5	/* Geode SC1100 ID */
 #define GSCSIO_CFG1	0x21	/* configuration 1 */
@@ -46,8 +47,6 @@
 #define GSCSIO_ITYPE	0x71	/* interrupt type */
 #define GSCSIO_DMA0	0x74	/* DMA channel 0 */
 #define GSCSIO_DMA1	0x75	/* DMA channel 1 */
-
-#define GSCSIO_LDNUM	6	/* total number of logical devices */
 
 /* ACB (ACCESS.bus) logical device registers */
 #define GSCSIO_ACB_SDA	0x00	/* serial data */

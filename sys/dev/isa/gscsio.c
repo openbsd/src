@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscsio.c,v 1.10 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: gscsio.c,v 1.11 2009/06/02 12:12:35 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -42,9 +42,9 @@ struct gscsio_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
-	int sc_ld_en[GSCSIO_LDNUM];
-	bus_space_handle_t sc_ld_ioh0[GSCSIO_LDNUM];
-	bus_space_handle_t sc_ld_ioh1[GSCSIO_LDNUM];
+	int sc_ld_en[GSCSIO_LDN_LAST + 1];
+	bus_space_handle_t sc_ld_ioh0[GSCSIO_LDN_LAST + 1];
+	bus_space_handle_t sc_ld_ioh1[GSCSIO_LDN_LAST + 1];
 
 	/* ACCESS.bus */
 	struct gscsio_acb {
