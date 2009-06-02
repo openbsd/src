@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.35 2009/05/28 09:05:33 art Exp $	*/
+/*	$OpenBSD: locore.S,v 1.36 2009/06/02 03:04:54 jordan Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -789,13 +789,30 @@ switch_exited:
 	ret
 
 ENTRY(cpu_idle_enter)
+	movq	_C_LABEL(cpu_idle_enter_fcn),%rax
+	cmpq	$0,%rax
+	je	1f
+	jmpq	*%rax
+1:
 	ret
 
 ENTRY(cpu_idle_cycle)
+	movq	_C_LABEL(cpu_idle_cycle_fcn),%rax
+	cmpq	$0,%rax
+	je	1f
+	call	*%rax
+	ret
+1:
+	sti
 	hlt
 	ret
 
 ENTRY(cpu_idle_leave)
+	movq	_C_LABEL(cpu_idle_leave_fcn),%rax
+	cmpq	$0,%rax
+	je	1f
+	jmpq	*%rax
+1:
 	ret
 
 	.globl	_C_LABEL(panic)
@@ -1049,3 +1066,4 @@ ENTRY(acpi_release_global_lock)
 	andl	$1, %eax
 	ret
 #endif
+

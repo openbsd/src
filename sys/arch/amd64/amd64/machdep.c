@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.91 2009/05/30 20:47:00 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.92 2009/06/02 03:04:54 jordan Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -147,6 +147,13 @@ extern int db_console;
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;
+
+/*
+ * switchto vectors
+ */
+void (*cpu_idle_leave_fcn)(void) = NULL;
+void (*cpu_idle_cycle_fcn)(void) = NULL;
+void (*cpu_idle_enter_fcn)(void) = NULL;
 
 /* the following is used externally for concurrent handlers */
 int setperf_prio = 0;
