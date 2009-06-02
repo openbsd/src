@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.68 2008/09/15 16:11:35 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.69 2009/06/02 18:52:42 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -111,7 +111,7 @@ poptobuffer(int f, int n)
  * Ask for the name. Look it up (don't get too
  * upset if it isn't there at all!). Clear the buffer (ask
  * if the buffer has been changed). Then free the header
- * line and the buffer header. Bound to "C-X K".
+ * line and the buffer header. Bound to "C-X k".
  */
 /* ARGSUSED */
 int
@@ -807,8 +807,10 @@ error:
 }
 
 /*
- * Ensures a buffer has not been modified elsewhere.
- * Returns TRUE if it has NOT. FALSE or ABORT otherwise
+ * Ensures a buffer has not been modified elsewhere; e.g. on disk.
+ * Prompt the user if it has.
+ * Returns TRUE if it has NOT (i.e. buffer is ok to edit).
+ * FALSE or ABORT otherwise
  */
 int
 checkdirty(struct buffer *bp)
