@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.87 2009/05/29 08:25:45 damien Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.88 2009/06/02 16:28:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1254,6 +1254,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		if ((flags & WPI_RX_CIPHER_MASK) != WPI_RX_CIPHER_CCMP) {
 			ic->ic_stats.is_ccmp_dec_errs++;
 			ifp->if_ierrors++;
+			m_freem(m);
 			return;
 		}
 		/* Check whether decryption was successful or not. */
@@ -1261,10 +1262,12 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 			DPRINTF(("CCMP decryption failed 0x%x\n", flags));
 			ic->ic_stats.is_ccmp_dec_errs++;
 			ifp->if_ierrors++;
+			m_freem(m);
 			return;
 		}
 		if (wpi_ccmp_decap(sc, m, &ni->ni_pairwise_key) != 0) {
 			ifp->if_ierrors++;
+			m_freem(m);
 			return;
 		}
 		rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
