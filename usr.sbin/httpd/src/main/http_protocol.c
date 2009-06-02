@@ -1,4 +1,4 @@
-/*	$OpenBSD: http_protocol.c,v 1.34 2008/05/23 08:41:48 mbalmer Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.35 2009/06/02 23:36:40 pyr Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -139,8 +139,9 @@ enum byterange_token {
 };
 
 static enum byterange_token
-    parse_byterange(request_rec *r, long *start, long *end)
+    parse_byterange(request_rec *r, off_t *start, off_t *end)
 {
+    const char *estr;
     /* parsing first, semantics later */
 
     while (ap_isspace(*r->range))
@@ -155,10 +156,12 @@ static enum byterange_token
 	return BYTERANGE_EMPTY;
     }
 
-    if (ap_isdigit(*r->range))
-	*start = ap_strtol(r->range, (char **)&r->range, 10);
-    else
-	*start = -1;
+    if (ap_isdigit(*r->range)) {
+        *start = strtonum(r->range, QUAD_MIN, QUAD_MAX, &estr);
+        if (estr)
+            return BYTERANGE_BADSYNTAX;
+    } else
+        *start = -1;
 
     while (ap_isspace(*r->range))
         ++r->range;
@@ -170,10 +173,12 @@ static enum byterange_token
     while (ap_isspace(*r->range))
         ++r->range;
 
-    if (ap_isdigit(*r->range))
-	*end = ap_strtol(r->range, (char **)&r->range, 10);
-    else
-	*end = -1;
+    if (ap_isdigit(*r->range)) {
+        *end = strtonum(r->range, QUAD_MIN, QUAD_MAX, &estr);
+        if (estr)
+            return BYTERANGE_BADSYNTAX;
+    } else
+        *end = -1;
 
     while (ap_isspace(*r->range))
         ++r->range;
@@ -219,7 +224,7 @@ static enum byterange_token
  * output. If start or end are less than 0 then it will do a byterange
  * chunk trailer instead of a header.
  */
-static int byterange_boundary(request_rec *r, long start, long end, int output)
+static int byterange_boundary(request_rec *r, off_t start , off_t end, int output)
 {
     int length = 0;
 
@@ -233,7 +238,7 @@ static int byterange_boundary(request_rec *r, long start, long end, int output)
 	const char *ct = make_content_type(r, r->content_type);
 	char ts[MAX_STRING_LEN];
 
-	ap_snprintf(ts, sizeof(ts), "%ld-%ld/%ld", start, end, r->clength);
+	ap_snprintf(ts, sizeof(ts), "%qd-%qd/%qd", start, end, r->clength);
 	if (output)
 	    ap_rvputs(r, CRLF "--", r->boundary, CRLF "Content-type: ",
 		      ct, CRLF "Content-range: bytes ", ts, CRLF CRLF,
@@ -251,7 +256,7 @@ API_EXPORT(int) ap_set_byterange(request_rec *r)
     const char *range, *if_range, *match;
     char *bbuf, *b;
     u_int32_t rbuf[12]; /* 48 bytes yields 64 base64 chars */
-    long length, start, end, one_start = 0, one_end = 0;
+    off_t length, start, end, one_start = 0, one_end = 0;
     size_t u;
     int ranges, empty;
     
@@ -348,7 +353,7 @@ API_EXPORT(int) ap_set_byterange(request_rec *r)
 	}
 	else {
 	    ap_table_setn(r->headers_out, "Content-Range",
-		ap_psprintf(r->pool, "bytes */%ld", r->clength));
+		ap_psprintf(r->pool, "bytes */%qd", r->clength));
 	    ap_set_content_length(r, 0);			  
 	    r->boundary = NULL;
 	    r->range = range;
@@ -360,10 +365,10 @@ API_EXPORT(int) ap_set_byterange(request_rec *r)
     else if (ranges == 1) {
 	/* simple handling of a single range -- no boundaries */
         ap_table_setn(r->headers_out, "Content-Range",
-	    ap_psprintf(r->pool, "bytes %ld-%ld/%ld",
+	    ap_psprintf(r->pool, "bytes %qd-%qd/%qd",
 		one_start, one_end, r->clength));
 	ap_table_setn(r->headers_out, "Content-Length",
-	    ap_psprintf(r->pool, "%ld", one_end - one_start + 1));
+	    ap_psprintf(r->pool, "%qd", one_end - one_start + 1LL));
 	r->boundary = NULL;
 	r->byterange = 1;
 	r->range = range;
@@ -374,7 +379,7 @@ API_EXPORT(int) ap_set_byterange(request_rec *r)
 	/* multiple ranges */
 	length += byterange_boundary(r, -1, -1, 0);
 	ap_table_setn(r->headers_out, "Content-Length",
-	    ap_psprintf(r->pool, "%ld", length));
+	    ap_psprintf(r->pool, "%qd", length));
 	r->byterange = 2;
 	r->range = range;
 	r->status = PARTIAL_CONTENT;
@@ -382,9 +387,9 @@ API_EXPORT(int) ap_set_byterange(request_rec *r)
     }
 }
 
-API_EXPORT(int) ap_each_byterange(request_rec *r, long *offset, long *length)
+API_EXPORT(int) ap_each_byterange(request_rec *r, off_t *offset, off_t *length)
 {
-    long start, end;
+    off_t start, end;
 
     do {
 	if (parse_byterange(r, &start, &end) == BYTERANGE_OK) {
@@ -400,10 +405,10 @@ API_EXPORT(int) ap_each_byterange(request_rec *r, long *offset, long *length)
     return 0;
 }
 
-API_EXPORT(int) ap_set_content_length(request_rec *r, long clength)
+API_EXPORT(int) ap_set_content_length(request_rec *r, off_t clength)
 {
     r->clength = clength;
-    ap_table_setn(r->headers_out, "Content-Length", ap_psprintf(r->pool, "%ld", clength));
+    ap_table_setn(r->headers_out, "Content-Length", ap_psprintf(r->pool, "%qd", clength));
     return 0;
 }
 

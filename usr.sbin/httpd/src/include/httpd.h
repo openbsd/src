@@ -1,4 +1,4 @@
-/* $OpenBSD: httpd.h,v 1.28 2008/05/09 08:06:28 mbalmer Exp $ */
+/* $OpenBSD: httpd.h,v 1.29 2009/06/02 23:36:40 pyr Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -744,7 +744,7 @@ struct request_rec {
 	int byterange;		/* number of byte ranges */
 	char *boundary;		/* multipart/byteranges boundary */
 	const char *range;		/* The Range: header */
-	long clength;		/* The "real" content length */
+	off_t clength;		/* The "real" content length */
 
 	long remaining;		/* bytes left to read */
 	long read_length;		/* bytes that have been read */

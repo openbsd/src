@@ -1,4 +1,4 @@
-/* $OpenBSD: http_protocol.h,v 1.11 2005/03/28 23:26:51 niallo Exp $ */
+/* $OpenBSD: http_protocol.h,v 1.12 2009/06/02 23:36:40 pyr Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -115,7 +115,7 @@ API_EXPORT(void) ap_send_error_response(request_rec *r, int recursive_error);
  * permit_cache argument is set to one).
  */
 
-API_EXPORT(int) ap_set_content_length(request_rec *r, long length);
+API_EXPORT(int) ap_set_content_length(request_rec *r, off_t length);
 API_EXPORT(int) ap_set_keepalive(request_rec *r);
 API_EXPORT(time_t) ap_rationalize_mtime(request_rec *r, time_t mtime);
 API_EXPORT(char *) ap_make_etag(request_rec *r, int force_weak);
@@ -173,7 +173,7 @@ API_EXPORT(int) ap_discard_request_body(request_rec *r);
 /* Sending a byterange */
 
 API_EXPORT(int) ap_set_byterange(request_rec *r);
-API_EXPORT(int) ap_each_byterange(request_rec *r, long *offset, long *length);
+API_EXPORT(int) ap_each_byterange(request_rec *r, off_t *offset, off_t *length);
 
 /* Support for the Basic authentication protocol.  Note that there's
  * nothing that prevents these from being in mod_auth.c, except that other
