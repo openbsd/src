@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.215 2009/06/02 16:23:45 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.216 2009/06/02 21:38:36 chl Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.215 2009/06/02 16:23:45 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.216 2009/06/02 21:38:36 chl Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2290,7 +2290,6 @@ psize(daddr64_t sz, char unit, struct disklabel *lp)
 void
 display_edit(struct disklabel *lp, char unit, u_int64_t fr)
 {
-	struct partition *pp;
 	int i;
 
 	unit = canonical_unit(lp, unit);
