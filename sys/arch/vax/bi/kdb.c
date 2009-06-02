@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdb.c,v 1.11 2007/05/11 10:06:55 pedro Exp $ */
+/*	$OpenBSD: kdb.c,v 1.12 2009/06/02 20:58:38 miod Exp $ */
 /*	$NetBSD: kdb.c,v 1.26 2001/11/13 12:51:34 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -70,7 +70,6 @@
 #define KDB_RL(adr) bus_space_read_4(sc->sc_iot, sc->sc_ioh, adr)
 #define KDB_RS(adr) bus_space_read_2(sc->sc_iot, sc->sc_ioh, adr)
 
-#define	    b_forw  b_hash.le_next
 /*
  * Software status, per controller.
  */
