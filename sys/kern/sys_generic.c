@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.61 2009/06/02 03:04:09 blambert Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.62 2009/06/02 04:13:37 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -161,8 +161,8 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iov,
 {
 	struct uio auio;
 	long i, cnt, error = 0;
-	u_int iovlen = iovcnt * sizeof(struct iovec);
 #ifdef KTRACE
+	u_int iovlen = iovcnt * sizeof(struct iovec);
 	struct iovec *ktriov = NULL;
 #endif
 
@@ -311,8 +311,8 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iov,
 {
 	struct uio auio;
 	long i, cnt, error = 0;
-	u_int iovlen;
 #ifdef KTRACE
+	u_int iovlen;
 	struct iovec *ktriov = NULL;
 #endif
 
