@@ -1,4 +1,4 @@
-/*	$OpenBSD: machfb.c,v 1.1 2009/06/02 04:12:11 kettenis Exp $	*/
+/*	$OpenBSD: machfb.c,v 1.2 2009/06/02 04:47:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -479,7 +479,7 @@ machfb_putcmap(struct machfb_softc *sc, struct wsdisplay_cmap *cm)
 	b = &sc->sc_cmap_blue[index];
 
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, M64_DAC_MASK, 0xff);
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, M64_DAC_WINDEX, 0);
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, M64_DAC_WINDEX, index);
 	for (i = 0; i < count; i++) {
 		bus_space_write_1(sc->sc_regt, sc->sc_regh,
 		    M64_DAC_DATA, *r);
@@ -487,7 +487,7 @@ machfb_putcmap(struct machfb_softc *sc, struct wsdisplay_cmap *cm)
 		    M64_DAC_DATA, *g);
 		bus_space_write_1(sc->sc_regt, sc->sc_regh,
 		    M64_DAC_DATA, *b);
-		r++, g++, b++, index++;
+		r++, g++, b++;
 	}
 	return (0);
 }
