@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.39 2008/11/22 21:26:48 oga Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.40 2009/06/02 11:22:45 deraadt Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -395,7 +395,7 @@ vga_pci_bar_init(struct vga_pci_softc *dev, struct pci_attach_args *pa)
 struct vga_pci_bar*
 vga_pci_bar_info(struct vga_pci_softc *dev, int no)
 {
-	if (dev == NULL || no > VGA_PCI_MAX_BARS)
+	if (dev == NULL || no >= VGA_PCI_MAX_BARS)
 		return (NULL);
 	return (dev->bars[no]);
 }
