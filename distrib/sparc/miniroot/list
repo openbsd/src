@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.35 2009/04/17 07:06:34 deraadt Exp $
+#	$OpenBSD: list,v 1.36 2009/06/02 06:17:47 todd Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -42,3 +42,4 @@ COPY	${DESTDIR}/usr/mdec/boot		boot
 SPECIAL sync; ${DESTDIR}/usr/mdec/binstall -v ffs ${TARGDIR}
 
 HASH	var/hash
+TZ

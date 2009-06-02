@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.29 2009/04/17 03:55:20 deraadt Exp $
+#	$OpenBSD: list,v 1.30 2009/06/02 06:17:47 todd Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -36,3 +36,4 @@ SCRIPT	${ARCHDIR}/../install.md		install.md
 REMOVE	sbin/mount_nfs
 
 HASH	var/hash
+TZ

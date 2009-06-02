@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.19 2009/05/03 00:25:30 deraadt Exp $
+#	$OpenBSD: list,v 1.20 2009/06/02 06:17:47 todd Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -72,3 +72,4 @@ COPY	${DESTDIR}/bsd				.
 COPY	${DESTDIR}/boot				.
 
 HASH	var/hash
+TZ

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.14 2009/05/03 00:25:30 deraadt Exp $
+#	$OpenBSD: list,v 1.15 2009/06/02 06:17:47 todd Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -85,3 +85,4 @@ SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
 SPECIAL	chmod 755 install upgrade sbin/dhclient-script
 
 HASH	var/hash
+TZ

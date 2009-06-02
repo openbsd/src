@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.11 2009/02/20 00:02:49 krw Exp $
+#	$OpenBSD: list,v 1.12 2009/06/02 06:17:47 todd Exp $
 
 # hppa extra's
 LINK	instbin					sbin/disklabel
@@ -25,3 +25,4 @@ TERMCAP	vt100,vt220,dumb,hp2392,hpansi,hpsub,hpex,hp700-wy,hp70092		usr/share/mi
 
 # and the installation tools (no upgrade from to 3.3)
 SCRIPT	${ARCHDIR}/install.md			install.md
+TZ
