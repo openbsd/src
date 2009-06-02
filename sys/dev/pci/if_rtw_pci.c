@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_pci.c,v 1.11 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: if_rtw_pci.c,v 1.12 2009/06/02 01:11:32 jsg Exp $	*/
 /*	$NetBSD: if_rtw_pci.c,v 1.1 2004/09/26 02:33:36 dyoung Exp $	*/
 
 /*-
@@ -76,6 +76,7 @@
 
 int rtw_pci_enable(struct rtw_softc *);
 void rtw_pci_disable(struct rtw_softc *);
+int rtw_pci_detach(struct device *, int);
 
 /*
  * PCI configuration space registers used by the RTL8180L.
@@ -91,13 +92,15 @@ struct rtw_pci_softc {
 
 	pci_chipset_tag_t	psc_pc;		/* our PCI chipset */
 	pcitag_t		psc_pcitag;	/* our PCI tag */
+	bus_size_t		psc_mapsize;
 };
 
 int	rtw_pci_match(struct device *, void *, void *);
 void	rtw_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach rtw_pci_ca = {
-	sizeof (struct rtw_pci_softc), rtw_pci_match, rtw_pci_attach
+	sizeof (struct rtw_pci_softc), rtw_pci_match, rtw_pci_attach,
+	    rtw_pci_detach
 };
 
 const struct pci_matchid rtw_pci_products[] = {
@@ -154,6 +157,7 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr = NULL;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
+	bus_size_t iosize, memsize;
 	int ioh_valid, memh_valid;
 	int state;
 
@@ -197,17 +201,19 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	ioh_valid = (pci_mapreg_map(pa, RTW_PCI_IOBA,
 	    PCI_MAPREG_TYPE_IO, 0,
-	    &iot, &ioh, NULL, NULL, 0) == 0);
+	    &iot, &ioh, NULL, &iosize, 0) == 0);
 	memh_valid = (pci_mapreg_map(pa, RTW_PCI_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &memt, &memh, NULL, NULL, 0) == 0);
+	    &memt, &memh, NULL, &memsize, 0) == 0);
 
 	if (memh_valid) {
 		regs->r_bt = memt;
 		regs->r_bh = memh;
+		psc->psc_mapsize = memsize;
 	} else if (ioh_valid) {
 		regs->r_bt = iot;
 		regs->r_bh = ioh;
+		psc->psc_mapsize = iosize;
 	} else {
 		printf(": unable to map device registers\n");
 		return;
@@ -242,4 +248,22 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Finish off the attach.
 	 */
 	rtw_attach(sc);
+}
+
+int
+rtw_pci_detach(struct device *self, int flags)
+{
+	struct rtw_pci_softc *psc = (void *)self;
+	struct rtw_softc *sc = &psc->psc_rtw;
+	struct rtw_regs *regs = &sc->sc_regs;
+	int rv;
+
+	rv = rtw_detach(sc);
+	if (rv)
+		return (rv);
+	if (psc->psc_intrcookie != NULL)
+		pci_intr_disestablish(psc->psc_pc, psc->psc_intrcookie);
+	bus_space_unmap(regs->r_bt, regs->r_bh, psc->psc_mapsize);
+
+	return (0);
 }
