@@ -1,4 +1,4 @@
-/* $OpenBSD: attributes.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: attributes.c,v 1.2 2009/06/02 11:14:08 ray Exp $ */
 
 /*
  * Copyright (c) 2009 Joshua Elsasser <josh@elsasser.org>
@@ -45,7 +45,8 @@ attributes_tostring(u_char ch)
 		strlcat(buf, "hidden,", sizeof (buf));
 	if (ch & GRID_ATTR_ITALICS)
 		strlcat(buf, "italics,", sizeof (buf));
-	*(strrchr(buf, ',')) = '\0';
+	if (*buf)
+		*(strrchr(buf, ',')) = '\0';
 
 	return (buf);
 }
