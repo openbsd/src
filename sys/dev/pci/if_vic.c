@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.70 2009/02/01 14:05:52 dlg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.71 2009/06/02 12:32:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -443,7 +443,7 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 		r = bus_space_read_4(sc->sc_iot, ioh, VIC_LANCE_SIZE);
 
 		if ((r & VIC_MORPH_MASK) != VIC_MORPH_VMXNET) {
-			printf(": unable to morph vlance chip\n", r);
+			printf(": unable to morph vlance chip\n");
 			goto unmap;
 		}
 

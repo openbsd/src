@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.136 2009/06/02 05:49:35 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.137 2009/06/02 12:32:08 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -377,7 +377,7 @@ sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, size_t sz,
 	biowait(&b);
 
 	if (b.b_flags & B_ERROR) {
-		printf("%s: 0x%x i/o error on block %lld while reading "
+		printf("%s: 0x%x i/o error on block %llu while reading "
 		    "metadata %d\n", DEVNAME(sc), dev, b.b_blkno, b.b_error);
 		goto done;
 	}

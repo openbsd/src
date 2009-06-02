@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.11 2008/06/26 05:42:14 ray Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.12 2009/06/02 12:32:08 deraadt Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ ohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, CARDBUS_CBMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
-		printf(": can't map mem space\n", devname);
+		printf(": can't map mem space\n");
 		return;
 	}
 
@@ -134,7 +134,7 @@ ohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
 					   IPL_USB, ohci_intr, sc, devname);
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt\n", devname);
+		printf(": couldn't establish interrupt\n");
 		return;
 	}
 	printf(": irq %d", ca->ca_intrline);
