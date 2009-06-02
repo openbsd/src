@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.175 2009/02/16 00:31:25 dlg Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.176 2009/06/02 11:05:09 oga Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -471,10 +471,12 @@ gettdbbysrc(union sockaddr_union *src, u_int8_t sproto,
 }
 
 #if DDB
+
+#define NBUCKETS 16
 void
 tdb_hashstats(void)
 {
-	int i, cnt, buckets[16];
+	int i, cnt, buckets[NBUCKETS];
 	struct tdb *tdbp;
 
 	if (tdbh == NULL) {
@@ -485,17 +487,17 @@ tdb_hashstats(void)
 	bzero (buckets, sizeof(buckets));
 	for (i = 0; i <= tdb_hashmask; i++) {
 		cnt = 0;
-		for (tdbp = tdbh[i]; cnt < 16 && tdbp != NULL;
+		for (tdbp = tdbh[i]; cnt < NBUCKETS - 1 && tdbp != NULL;
 		    tdbp = tdbp->tdb_hnext)
 			cnt++;
 		buckets[cnt]++;
 	}
 
 	db_printf("tdb cnt\t\tbucket cnt\n");
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < NBUCKETS; i++)
 		if (buckets[i] > 0)
-			db_printf("%d%c\t\t%d\n", i, i == 15 ? "+" : "",
-			    buckets[i]);
+			db_printf("%d%c\t\t%d\n", i, i == NBUCKETS - 1 ?
+			    "+" : "", buckets[i]);
 }
 #endif	/* DDB */
 
