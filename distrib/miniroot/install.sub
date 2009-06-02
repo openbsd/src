@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.566 2009/06/02 08:59:22 halex Exp $
+#	$OpenBSD: install.sub,v 1.567 2009/06/02 10:35:26 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1239,7 +1239,7 @@ install_url() {
 	install_files "$_url_base" "$_file_list"
 
 	# Remember where we installed from
-	eval installedfrom=$_url_type://\$$_server_ip_var/\$$_server_dir_var
+	eval installedfrom=$_url_type://\$$_server_ip_var/\${$_server_dir_var%\"/\$FTPSETDIR\"}
 }
 
 install_mounted_fs() {
