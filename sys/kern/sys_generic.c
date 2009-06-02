@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.62 2009/06/02 04:13:37 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.63 2009/06/02 05:20:41 thib Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -262,7 +262,7 @@ sys_writev(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	struct iovec *needfree;
+	struct iovec *needfree = NULL;
 	struct iovec *iov;
 	const struct iovec *iovp = SCARG(uap, iovp);
 	int fd = SCARG(uap, fd);
