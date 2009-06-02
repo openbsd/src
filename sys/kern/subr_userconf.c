@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.35 2008/03/24 21:35:03 maja Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.36 2009/06/02 12:46:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -601,7 +601,7 @@ userconf_disable(int devno)
 
 	if (devno > userconf_totdev &&
 	    devno <= userconf_totdev+pdevnames_size) {
-		printf("%3d %", devno, pdevnames[devno-userconf_totdev-1]);
+		printf("%3d %s", devno, pdevnames[devno-userconf_totdev-1]);
 		if (pdevinit[devno-userconf_totdev-1].pdev_count < 1) {
 			printf(" already ");
 		} else {
@@ -661,7 +661,7 @@ userconf_enable(int devno)
 
 	if (devno > userconf_totdev &&
 	    devno <= userconf_totdev+pdevnames_size) {
-		printf("%3d %", devno, pdevnames[devno-userconf_totdev-1]);
+		printf("%3d %s", devno, pdevnames[devno-userconf_totdev-1]);
 		if (pdevinit[devno-userconf_totdev-1].pdev_count > 0) {
 			printf(" already");
 		} else {
