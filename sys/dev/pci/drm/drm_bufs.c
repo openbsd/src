@@ -479,7 +479,7 @@ drm_dma(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	 */
 	if (d->request_count < 0 || d->request_count > dma->buf_count) {
 		DRM_ERROR("Process trying to get %d buffers (of %d max)\n",
-			  curproc->p_pid, d->request_count, dma->buf_count);
+			  d->request_count, dma->buf_count);
 		return (EINVAL);
 	}
 	d->granted_count = 0;
