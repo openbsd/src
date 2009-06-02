@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.567 2009/06/02 10:35:26 halex Exp $
+#	$OpenBSD: install.sub,v 1.568 2009/06/02 22:44:27 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -186,9 +186,9 @@ get_cddevs () {
 }
 
 get_ifdevs() {
-	ifconfig \
-		| egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun|vlan)[[:digit:]]+:' \
-		| sed -ne 's/^\(.*\):.*/\1/p'
+	bsort $(ifconfig \
+		| egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun)[[:digit:]]+:' \
+		| sed -ne 's/^\(.*\):.*/\1/p')
 }
 
 get_drive() {
@@ -551,27 +551,17 @@ __EOT
 }
 
 configure_ifs() {
-	local _IFDEVS=$IFDEVS _oifs _ifs _name _hn _vl _vli _vd _vi _p
+	local _first _ifdevs _ifs _name _hn _vl=0 _vd _vi _p _tags
 
-	# Check if the kernel supports vlans, and if so, offer it up
-	ifconfig $vlan99 destroy >/dev/null 2>&1
-	if ifconfig vlan99 create >/dev/null 2>&1; then
-		ifconfig vlan99 destroy
-		_vli=0
-		_vl="vlan$_vli"
-	fi
+	# Select the initial default interface.
+	_p=$(ifconfig netboot 2>/dev/null | sed -n '1s/:.*//p')
 
-	# Select the default interface
-	if ifconfig netboot >/dev/null 2>&1; then
-		_p=$(ifconfig netboot | sed -ne '1s/:.*//p')
-	else
-		set -- $IFDEVS
-		_p=$1
-	fi
-
-	while [[ -n $_IFDEVS ]]; do
+	while :; do
+		# Create new vlan if possible.
+		ifconfig vlan$_vl create >/dev/null 2>&1
+		_ifdevs=$(get_ifdevs)
 		ask_which "network interface" "do you wish to configure" \
-			"$_IFDEVS $_vl" "$_p"
+			"$_ifdevs" "$_p"
 		[[ $resp == done ]] && break
 
 		_ifs=$resp
@@ -580,59 +570,72 @@ configure_ifs() {
 
 		# If the offered vlan is chosen, ask the relevant
 		# questions and bring it up
-		if [[ $resp == $_vl ]]; then
-			_vi=$_vli
-			[[ $_vli == 0 ]] && _vi=1
-			set -- $IFDEVS
-			ask "Which interface:tag should $_vl be on?" ${1}:$_vi
-			_oifs=$IFS
-			IFS=: ; set -- $resp
-			_vd=$1
-			_vi=$2
-			IFS=$_oifs
+		if [[ $_ifs == vlan[0-9]* ]]; then
+			# Get existing tag for this vlan.
+			_vi=$(ifconfig $_ifs 2>/dev/null | \
+				sed -n 's/vlan: \([0-9]*\).*/\1/p')
+			# Get list of all in-use tags.
+			_tags=$(ifconfig vlan 2>/dev/null | \
+				sed -n 's/vlan: \([0-9]*\).*/\1/p')
+			# Current tag is a valid tag for this vlan.
+			[[ -n $_tags ]] && _tags=$(rmel "$_vi" $_tags)
+			if [[ -z $_vi ]]; then
+				_vi=0
+				while (( (_vi += 1) < 4096 )); do
+					! isin "$_vi" $_tags && break	
+				done
+			fi
+			set -- $_ifdevs
+			while [[ $1 == vlan[0-9]* ]]; do
+				shift
+			done
+			ask "Which interface:tag should $_ifs be on?" "${_vd:=$1}:$_vi"
+			_vd=${resp%%:*}
+			_vi=${resp##*:}
 
 			# Validate that $_vd is a real interface
-			if ! isin $_vd $IFDEVS; then
-				echo "Invalid interface choice $_vd"
+			if ! (isin "$_vd" $_ifdevs && [[ $_vd != vlan[0-9]* ]]); then
+				echo "Invalid interface choice '$_vd'"
+				_vd=
 				continue
 			fi
 
-			# Validate range of $_vi as 1-4095
-			if (( _vi < 1 || _vi > 4095 )); then
-				echo "Invalid vlan tag $_vi"
+			# Validate range of $_vi as 1-4095, and $_vi not in use.
+			if (( _vi < 1 || _vi > 4095 )) || isin "$_vi" $_tags; then
+				echo "Invalid or in-use vlan tag '$_vi'"
 				continue
 			fi
 
 			# hostname.$_vd must say something, anything, to
-			# make sure it is up
-			echo "up" >> /tmp/hostname.$_vd
+			# make sure it is up.
+			grep -qs "^up" /tmp/hostname.$_vd || \
+				echo "up" >>/tmp/hostname.$_vd
 			ifconfig $_vd up
 
-			# Make sure a hostname.$_vl is created with this info
-			ifconfig $_vl destroy >/dev/null 2>&1
-			ifconfig $_vl vlan $_vi vlandev $_vd
+			# Make sure a hostname.$_ifs is created with this info.
+			ifconfig $_ifs destroy >/dev/null 2>&1
+			ifconfig $_ifs vlan $_vi vlandev $_vd
 			echo "vlan $_vi vlandev $_vd" >>$_hn
-
-			# Now we can act like it is a real interface
-			IFDEVS="$IFDEVS $_vl"
-
-			# Next time around, offer up another vlan to modify
-			: $(( _vli += 1 ))
-			_vl="vlan$_vli"
+			# Create a new vlan if we just configured the highest.
+			[[ ${_ifs##vlan} == $_vl ]] && (( _vl += 1 ))
 		fi
 
 		# First interface configured will use the hostname without
 		# asking the user.
 		resp=$(hostname -s)
-		[[ $_IFDEVS != $IFDEVS ]] && ask "Symbolic (host) name for $_ifs?" $resp
+		[[ -n $_first && $_first != $_ifs ]] && \
+			ask "Symbolic (host) name for $_ifs?" $resp
 		_name=$resp
 
 		v4_config $_ifs $_name $_hn
 		v6_config $_ifs $_name $_hn
 
-		[[ -f $_hn ]] && chmod 640 $_hn && _IFDEVS=$(rmel $_ifs $_IFDEVS)
-		let nifs=nifs+1
-		_p=done
+		if [[ -f $_hn ]]; then
+			chmod 640 $_hn
+			(( nifs += 1 ))
+			: ${_first:=$_ifs}
+			_p=done
+		fi
 	done
 }
 
@@ -1816,7 +1819,6 @@ CURRENT=$(scan_dmesg "/^OpenBSD $VNAME\([^ ]*\).*$/s//\1/p")
 
 # Scan /var/run/dmesg.boot for interesting devices.
 MTDEVS=$(scan_dmesg "${MDMTDEVS:-/^[cms]t[0-9][0-9]* /s/ .*//p}")
-IFDEVS=$(get_ifdevs)
 nifs=0
 DISPLAY=$(scan_dmesg '/^wsdisplay[0-9]* /s/ .*//p')
 
@@ -1875,9 +1877,7 @@ if [[ $MODE == install ]]; then
 	echo
 	donetconfig
 
-	if [[ $nifs != 0 ]]; then
-		startftplist
-	fi
+	(( nifs != 0 )) && startftplist
 
 	echo
 	while :; do
