@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.57 2009/05/29 08:25:45 damien Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.58 2009/06/02 16:24:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007-2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -3212,6 +3212,8 @@ iwn4965_set_txpower(struct iwn_softc *sc, int async)
 		if (sc->bands[i].lo != 0 &&
 		    sc->bands[i].lo <= chan && chan <= sc->bands[i].hi)
 			break;
+	if (i == IWN_NBANDS)	/* Can't happen in real-life. */
+		return EINVAL;
 	chans = sc->bands[i].chans;
 	DPRINTF(("chan %d sub-band=%d\n", chan, i));
 
