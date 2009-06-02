@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.46 2006/04/02 17:18:58 kjell Exp $	*/
+/*	$OpenBSD: echo.c,v 1.47 2009/06/02 17:57:30 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -156,6 +156,8 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 	int	 cc, rr;		/* saved ttcol, ttrow */
 	char	*ret;			/* return value */
 
+	static char emptyval[] = "";	/* XXX hackish way to return err msg*/
+
 #ifndef NO_MACRO
 	if (inmacro) {
 		if (dynbuf) {
@@ -288,9 +290,13 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 					size_t newsize = epos + epos + 16;
 					if ((newp = realloc(buf, newsize))
 					    == NULL)
-						goto fail;
+						goto memfail;
 					buf = newp;
 					nbuf = newsize;
+				}
+				if (!dynbuf && epos + 1 >= nbuf) {
+					ewprintf("Line too long");
+					return (emptyval);
 				}
 				for (t = epos; t > cpos; t--)
 					buf[t] = buf[t - 1];
@@ -342,13 +348,8 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 			if (macrodef) {
 				struct line	*lp;
 
-				if ((lp = lalloc(cpos)) == NULL) {
-					static char falseval[] = "";
-					/* XXX hackish */
-					if (dynbuf && buf != NULL)
-						free(buf);
-					return (falseval);
-				}
+				if ((lp = lalloc(cpos)) == NULL)
+					goto memfail;
 				lp->l_fp = maclcur->l_fp;
 				maclcur->l_fp = lp;
 				lp->l_bp = maclcur;
@@ -446,9 +447,13 @@ veread(const char *fp, char *buf, size_t nbuf, int flag, va_list ap)
 				void *newp;
 				size_t newsize = epos + epos + 16;
 				if ((newp = realloc(buf, newsize)) == NULL)
-					goto fail;
+					goto memfail;
 				buf = newp;
 				nbuf = newsize;
+			}
+			if (!dynbuf && epos + 1 >= nbuf) {
+				ewprintf("Line too long");
+				return (emptyval);
 			}
 			for (i = epos; i > cpos; i--)
 				buf[i] = buf[i - 1];
@@ -473,10 +478,11 @@ done:
 		}
 	}
 	return (ret);
-fail:
+memfail:
+	if (dynbuf && buf)
+		free(buf);
 	ewprintf("Out of memory");
-	free(buf);
-	return (NULL);
+	return (emptyval);
 }
 
 /*
