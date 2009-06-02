@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.117 2009/04/17 15:17:27 blambert Exp $	*/
+/*	$OpenBSD: proc.h,v 1.118 2009/06/02 23:05:31 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -194,7 +194,7 @@ struct proc {
 	u_int	p_estcpu;	 /* Time averaged value of p_cpticks. */
 	int	p_cpticks;	 /* Ticks of cpu time. */
 	fixpt_t	p_pctcpu;	 /* %cpu for this process during p_swtime */
-	void	*p_wchan;	 /* Sleep address. */
+	const volatile void *p_wchan;/* Sleep address. */
 	struct	timeout p_sleep_to;/* timeout for tsleep() */
 	const char *p_wmesg;	 /* Reason for sleep. */
 	u_int	p_swtime;	 /* Time swapped in or out. */
@@ -426,8 +426,8 @@ void	procinit(void);
 void	resetpriority(struct proc *);
 void	setrunnable(struct proc *);
 void	unsleep(struct proc *);
-void    wakeup_n(void *chan, int);
-void    wakeup(void *chan);
+void    wakeup_n(const volatile void *, int);
+void    wakeup(const volatile void *);
 #define wakeup_one(c) wakeup_n((c), 1)
 void	reaper(void);
 void	exit1(struct proc *, int, int);
@@ -449,7 +449,8 @@ struct sleep_state {
 	int sls_sig;
 };
 
-void	sleep_setup(struct sleep_state *, void *, int, const char *);
+void	sleep_setup(struct sleep_state *, const volatile void *, int,
+	    const char *);
 void	sleep_setup_timeout(struct sleep_state *, int);
 void	sleep_setup_signal(struct sleep_state *, int);
 void	sleep_finish(struct sleep_state *, int);
@@ -457,8 +458,8 @@ int	sleep_finish_timeout(struct sleep_state *);
 int	sleep_finish_signal(struct sleep_state *);
 void	sleep_queue_init(void);
 
-int	tsleep(void *, int, const char *, int);
-int	msleep(void *, struct mutex *, int,  const char*, int);
+int	tsleep(const volatile void *, int, const char *, int);
+int	msleep(const volatile void *, struct mutex *, int,  const char*, int);
 
 #if defined(MULTIPROCESSOR)
 void	proc_trampoline_mp(void);	/* XXX */

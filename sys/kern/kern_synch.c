@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.89 2009/04/14 09:13:25 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.90 2009/06/02 23:05:31 guenther Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ int safepri;
  * call should be interrupted by the signal (return EINTR).
  */
 int
-tsleep(void *ident, int priority, const char *wmesg, int timo)
+tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 {
 	struct sleep_state sls;
 	int error, error1;
@@ -141,7 +141,8 @@ tsleep(void *ident, int priority, const char *wmesg, int timo)
  * entered the sleep queue we drop the mutex. After sleeping we re-lock.
  */
 int
-msleep(void *ident, struct mutex *mtx,  int priority, const char *wmesg, int timo)
+msleep(const volatile void *ident, struct mutex *mtx, int priority,
+    const char *wmesg, int timo)
 {
 	struct sleep_state sls;
 	int error, error1, spl;
@@ -176,7 +177,8 @@ msleep(void *ident, struct mutex *mtx,  int priority, const char *wmesg, int tim
 }
 
 void
-sleep_setup(struct sleep_state *sls, void *ident, int prio, const char *wmesg)
+sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
+    const char *wmesg)
 {
 	struct proc *p = curproc;
 
@@ -345,7 +347,7 @@ unsleep(struct proc *p)
  * Make a number of processes sleeping on the specified identifier runnable.
  */
 void
-wakeup_n(void *ident, int n)
+wakeup_n(const volatile void *ident, int n)
 {
 	struct slpque *qp;
 	struct proc *p;
@@ -385,7 +387,7 @@ wakeup_n(void *ident, int n)
  * Make all processes sleeping on the specified identifier runnable.
  */
 void
-wakeup(void *chan)
+wakeup(const volatile void *chan)
 {
 	wakeup_n(chan, -1);
 }
