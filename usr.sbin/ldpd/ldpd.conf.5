@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.1 2009/06/01 20:59:45 michele Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.2 2009/06/02 16:17:14 michele Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2009 $
+.Dd $Mdocdate: June 2 2009 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -66,83 +66,71 @@ Global settings concerns the main behaviour of the daemon.
 .Pp
 .Bl -tag -width Ds -compact
 .It Xo
-.Ic fib-update
+.Ic lfib-update
 .Pq Ic yes Ns \&| Ns Ic no
 .Xc
 If set to
 .Ic no ,
-do not update the Forwarding Information Base, a.k.a. the kernel routing
+do not update the Label Forwarding Information Base, a.k.a. the kernel routing
 table.
 The default is
 .Ic yes .
 .Pp
-.It Xo
-.Op Ic no
-.Ic redistribute
-.Sm off
-.Po Ic static Ns \&| Ns Ic connected Ns \&| Ns
-.Ic default Pc
-.Sm on
-.Xc
-.It Xo
-.Op Ic no
-.Ic redistribute Ar prefix
-.Xc
-.It Xo
-.Op Ic no
-.Ic redistribute rtlabel Ar label
-.Xc
-If set to
-.Ic connected ,
-routes to directly attached networks will be
-announced over RIP.
-If set to
-.Ic static ,
-static routes will be announced over RIP.
-If set to
-.Ic default ,
-a default route pointing to this router will be announced over RIP.
-It is possible to specify a network range with
-.Ar prefix ;
-networks need to be part of that range to be redistributed.
-Additionally it is possible to redistribute based on route labels
-using the
-.Ic rtlabel
-keyword.
-By default no additional routes will be announced over RIP.
+.It Ic router-id Ar address
+Set the router ID; in combination with labelspace it forms the LSR-ID.
 .Pp
-.Ic redistribute
-statements are evaluated in sequential order, from first to last.
-The first matching rule decides if a route should be redistributed or not.
-Matching rules starting with
-.Ic no
-will force the route to be not announced.
+.It Ic labelspace Ar number
+Set the label space advertised by
+.Xr ldpd 8 .
+.Pp
+.It Ic holdtime Ar seconds
+Set the hello holdtime in seconds.
+The maximum time
+.Xr ldpd 8
+will wait between two consecutive hello messages from a peer before it is
+marked as being down.
+The default value is 15.
+.Pp
+.It Ic hello-interval Ar seconds
+Set the hello interval in seconds.
+The default value is 5; valid range is 1\-65535.
+.Pp
+.It Ic keepalive Ar seconds
+Set the keepalive interval in seconds.
+The default value is 180; valid range is 1\-65535.
 .Pp
 .It Xo
-.Ic split-horizon
-.Sm off
-.Po Ic default Ns \&| Ns Ic poisoned Ns \&| Ns
-.Ic none Pc
-.Sm on
+.Ic distribution
+.Pq Ic independent Ns \&| Ns Ic ordered
 .Xc
-If set to
-.Ic default ,
-do not redistribute routes to the interface from which they were learned.
-If set to
-.Ic poisoned ,
-redistribute routes to the interface from which they were learned, by
-forcing the metric to infinity.
-Both these behaviours can resolve routing loops when a router goes down.
-The default is
-.Ic none .
+Select the distribution mode.
+.Ic independent
+distributes labels at any time;
+.Ic ordered
+forces
+.Xr ldpd 8
+to wait a mapping from nexthop before distributing it to peers.
 .Pp
 .It Xo
-.Ic triggered-updates
-.Pq Ic yes Ns \&| Ns Ic no
+.Ic retention
+.Pq Ic liberal Ns \&| Ns Ic conservative
 .Xc
-Immediately trigger responses when a route changes.
-The default is
-.Ic yes .
+Select the retention mode.
+.Ic conservative
+retains just the labels advertised from nexthop;
+.Ic liberal
+mode retains every label received, even those not advertised
+from nexthops.
+.Pp
+.It Xo
+.Ic advertisement
+.Pq Ic unsolicited Ns \&| Ns Ic ondemand
+.Xc
+Select the advertisement mode.
+.Ic unsolicited
+advertises labels according to the distribution mode;
+.Ic ondemand
+advertises labels solely upon explicit request from peers.
 .El
 .Sh INTERFACES
 Each interface can have several parameters configured individually, otherwise
@@ -154,56 +142,6 @@ interface em0 {
 .Pp
 Interface-specific parameters are listed below.
 .Bl -tag -width Ds
-.It Ic auth-key Ar key
-Set the authentication key for
-.Ic simple
-authentication.
-Up to 16 characters can be specified.
-.It Ic auth-md Ar key-id key
-Set the authentication
-.Ar key-id
-and
-.Ar key
-for
-.Ic crypt
-authentication.
-The valid range for
-.Ar key-id
-is 0\-255.
-Up to 16 characters can be specified for
-.Ar key .
-Multiple keys may be specified.
-.It Ic auth-md-keyid Ar key-id
-Configure the
-.Ar key-id
-to use for
-.Ic crypt
-authentication.
-The valid range for
-.Ar key-id
-is 0\-255.
-The default key-id is 1.
-.It Xo
-.Ic auth-type
-.Po Ic none Ns \&| Ns
-.Ic simple Ns \&| Ns Ic crypt Pc
-.Xc
-Set the authentication type.
-The default is
-.Ic none .
-Simple authentication uses a plaintext password, up to 16 characters.
-Crypt authentication uses an MD5 hash.
-.It Ic cost Ar number
-Cost of the network connected through this interface.
-Values must be between 1 and 16, inclusive.
-.It Ic demote Ar group
-Increase the
-.Xr carp 4
-demotion counter by 1 on the given interface group, usually
-.Ar carp ,
-when the interface state is going down.
-The demotion counter will be decreased when the interface
-state is active again.
 .It Ic passive
 Prevent transmission and reception of LDP packets on this interface.
 .El
