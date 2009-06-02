@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_pci.c,v 1.10 2008/06/26 05:42:17 ray Exp $	*/
+/*	$OpenBSD: if_atw_pci.c,v 1.11 2009/06/02 04:03:39 jsg Exp $	*/
 /*	$NetBSD: if_atw_pci.c,v 1.7 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -97,6 +97,7 @@ struct cfattach atw_pci_ca = {
 
 const struct pci_matchid atw_pci_devices[] = {
 	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_ADM8211 },
+	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3CRSHPW796 }
 };
 
 int
