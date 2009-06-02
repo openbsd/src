@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.55 2009/04/17 09:47:06 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.56 2009/06/02 11:33:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -229,8 +229,8 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 	struct ctl_status	 st;
 
 	ibuf = ptr;
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("pfe_dispatch_imsg: imsg_read_error");
 		if (n == 0) {
@@ -239,14 +239,13 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("pfe_dispatch_imsg: msgbuf_write");
 		imsg_event_add(ibuf);
 		return;
-	default:
-		fatalx("pfe_dispatch_imsg: unknown event");
 	}
 
 	for (;;) {
@@ -338,8 +337,8 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 	struct address		*virt;
 
 	ibuf = ptr;
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0) {
@@ -348,14 +347,14 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
 		imsg_event_add(ibuf);
 		return;
-	default:
-		fatalx("pfe_dispatch_parent: unknown event");
 	}
 
 	for (;;) {
@@ -461,8 +460,8 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 	struct relay		*rlay;
 
 	ibuf = ptr;
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0) {
@@ -471,14 +470,13 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
 		imsg_event_add(ibuf);
 		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {

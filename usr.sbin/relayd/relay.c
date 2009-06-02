@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.110 2009/04/24 13:22:01 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.111 2009/06/02 11:33:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2404,8 +2404,8 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 	objid_t			 id;
 
 	ibuf = ptr;
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("relay_dispatch_pfe: imsg_read_error");
 		if (n == 0) {
@@ -2414,14 +2414,13 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("relay_dispatch_pfe: msgbuf_write");
 		imsg_event_add(ibuf);
 		return;
-	default:
-		fatalx("relay_dispatch_pfe: unknown event");
 	}
 
 	for (;;) {
@@ -2526,8 +2525,8 @@ relay_dispatch_parent(int fd, short event, void * ptr)
 	objid_t			 id;
 
 	ibuf = ptr;
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("relay_dispatch_parent: imsg_read error");
 		if (n == 0) {
@@ -2536,14 +2535,13 @@ relay_dispatch_parent(int fd, short event, void * ptr)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("relay_dispatch_parent: msgbuf_write");
 		imsg_event_add(ibuf);
 		return;
-	default:
-		fatalx("relay_dispatch_parent: unknown event");
 	}
 
 	for (;;) {

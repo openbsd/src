@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.47 2009/04/17 09:47:06 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.48 2009/06/02 11:33:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -367,8 +367,8 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 	struct table		*table;
 
 	ibuf = ptr;
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("hce_dispatch_imsg: imsg_read_error");
 		if (n == 0) {
@@ -377,14 +377,13 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("hce_dispatch_imsg: msgbuf_write");
 		imsg_event_add(ibuf);
 		return;
-	default:
-		fatalx("hce_dispatch_imsg: unknown event");
 	}
 
 	for (;;) {
@@ -456,8 +455,8 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 	struct host		*host, *parent;
 
 	ibuf = ptr;
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("hce_dispatch_parent: imsg_read error");
 		if (n == 0) {
@@ -466,14 +465,13 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("hce_dispatch_parent: msgbuf_write");
 		imsg_event_add(ibuf);
 		return;
-	default:
-		fatalx("hce_dispatch_parent: unknown event");
 	}
 
 	for (;;) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.83 2008/09/29 15:12:22 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.84 2009/06/02 11:33:06 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -593,8 +593,8 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 	struct ctl_demote	 demote;
 
 	ibuf = ptr;
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
@@ -603,14 +603,13 @@ main_dispatch_pfe(int fd, short event, void *ptr)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
 		imsg_event_add(ibuf);
 		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -655,8 +654,8 @@ main_dispatch_hce(int fd, short event, void * ptr)
 
 	env = relayd_env;
 	ibuf = ptr;
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0) {
@@ -665,14 +664,13 @@ main_dispatch_hce(int fd, short event, void * ptr)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
 		imsg_event_add(ibuf);
 		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
@@ -716,8 +714,8 @@ main_dispatch_relay(int fd, short event, void * ptr)
 	int			 s;
 
 	ibuf = ptr;
-	switch (event) {
-	case EV_READ:
+
+	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0) {
@@ -726,14 +724,13 @@ main_dispatch_relay(int fd, short event, void * ptr)
 			event_loopexit(NULL);
 			return;
 		}
-		break;
-	case EV_WRITE:
+	}
+
+	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
 		imsg_event_add(ibuf);
 		return;
-	default:
-		fatalx("unknown event");
 	}
 
 	for (;;) {
