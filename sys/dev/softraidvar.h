@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.69 2009/06/02 05:49:35 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.70 2009/06/02 19:15:58 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -405,6 +405,8 @@ struct sr_discipline {
 	struct sr_workunit	*sd_wu;		/* all workunits */
 	u_int32_t		sd_max_wu;
 	int			sd_rebuild;	/* can we rebuild? */
+	int			sd_reb_active;	/* rebuild in progress */
+	int			sd_going_down;	/* dive dive dive */
 
 	struct sr_wu_list	sd_wu_freeq;	/* free wu queue */
 	struct sr_wu_list	sd_wu_pendq;	/* pending wu queue */
