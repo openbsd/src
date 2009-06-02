@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.247 2009/06/01 23:54:49 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.248 2009/06/02 00:09:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -79,8 +79,6 @@ void		 rde_dump_community(struct ctl_show_rib_request *);
 void		 rde_dump_ctx_new(struct ctl_show_rib_request *, pid_t,
 		     enum imsg_type);
 void		 rde_dump_done(void *);
-void		 rde_dump_runner(void);
-int		 rde_dump_pending(void);
 
 void		 rde_up_dump_upcall(struct rib_entry *, void *);
 void		 rde_softreconfig_out(struct rib_entry *, void *);
@@ -123,8 +121,6 @@ struct rde_dump_ctx {
 	struct ctl_show_rib_request	req;
 	sa_family_t			af;
 };
-
-LIST_HEAD(, rib_context) rde_dump_h = LIST_HEAD_INITIALIZER(rde_dump_h);
 
 void
 rde_sighdlr(int sig)
@@ -262,7 +258,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		pfd[PFD_PIPE_SESSION_CTL].events = POLLIN;
 		if (ibuf_se_ctl->w.queued > 0)
 			pfd[PFD_PIPE_SESSION_CTL].events |= POLLOUT;
-		else if (rde_dump_pending())
+		else if (rib_dump_pending())
 			timeout = 0;
 
 		i = 3;
@@ -314,7 +310,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		rde_update_queue_runner();
 		rde_update6_queue_runner();
 		if (ibuf_se_ctl->w.queued <= 0)
-			rde_dump_runner();
+			rib_dump_runner();
 	}
 
 	/* do not clean up on shutdown on production, it takes ages. */
@@ -1938,8 +1934,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 	ctx->ribctx.ctx_done = rde_dump_done;
 	ctx->ribctx.ctx_arg = ctx;
 	ctx->ribctx.ctx_af = ctx->req.af;
-
-	LIST_INSERT_HEAD(&rde_dump_h, &ctx->ribctx, entry);
+	rib_dump_r(&ctx->ribctx);
 }
 
 void
@@ -1949,25 +1944,7 @@ rde_dump_done(void *arg)
 
 	imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid,
 	    -1, NULL, 0);
-	LIST_REMOVE(&ctx->ribctx, entry);
 	free(ctx);
-}
-
-void
-rde_dump_runner(void)
-{
-	struct rib_context	*ctx, *next;
-
-	for (ctx = LIST_FIRST(&rde_dump_h); ctx != NULL; ctx = next) {
-		next = LIST_NEXT(ctx, entry);
-		rib_dump_r(ctx);
-	}
-}
-
-int
-rde_dump_pending(void)
-{
-	return (!LIST_EMPTY(&rde_dump_h));
 }
 
 /*

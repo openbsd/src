@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.113 2009/06/01 23:54:50 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.114 2009/06/02 00:09:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -353,6 +353,8 @@ struct rib_entry *rib_lookup(struct rib *, struct bgpd_addr *);
 void		 rib_dump(struct rib *, void (*)(struct rib_entry *, void *),
 		     void *, sa_family_t);
 void		 rib_dump_r(struct rib_context *);
+void		 rib_dump_runner(void);
+int		 rib_dump_pending(void);
 
 void		 path_init(u_int32_t);
 void		 path_shutdown(void);

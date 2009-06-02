@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.107 2009/06/01 23:54:50 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.108 2009/06/02 00:09:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -35,6 +35,8 @@
  */
 u_int16_t rib_size;
 struct rib *ribs;
+
+LIST_HEAD(, rib_context) rib_dump_h = LIST_HEAD_INITIALIZER(rib_dump_h);
 
 struct rib_entry *rib_add(struct rib *, struct bgpd_addr *, int);
 int rib_compare(const struct rib_entry *, const struct rib_entry *);
@@ -224,6 +226,7 @@ rib_dump_r(struct rib_context *ctx)
 
 	if (ctx->ctx_re == NULL) {
 		re = RB_MIN(rib_tree, &ctx->ctx_rib->rib);
+		LIST_INSERT_HEAD(&rib_dump_h, ctx, entry);
 	} else
 		re = rib_restart(ctx);
 
@@ -262,6 +265,23 @@ rib_restart(struct rib_context *ctx)
 		rib_remove(ctx->ctx_re);
 	ctx->ctx_re = NULL;
 	return (re);
+}
+
+void
+rib_dump_runner(void)
+{
+	struct rib_context	*ctx, *next;
+
+	for (ctx = LIST_FIRST(&rib_dump_h); ctx != NULL; ctx = next) {
+		next = LIST_NEXT(ctx, entry);
+		rib_dump_r(ctx);
+	}
+}
+
+int
+rib_dump_pending(void)
+{
+	return (!LIST_EMPTY(&rib_dump_h));
 }
 
 /* used to bump correct prefix counters */
