@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.138 2009/06/02 19:15:58 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.139 2009/06/02 19:21:49 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2914,7 +2914,6 @@ queued:
 		splx(s);
 
 		/* wait for read completion */
-
 		slept = 0;
 		while ((wu_w->swu_flags & SR_WUF_REBUILDIOCOMP) == 0) {
 			tsleep(wu_w, PRIBIO, "sr_rebuild", 0);
