@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.119 2009/03/02 23:52:18 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.120 2009/06/02 00:05:13 blambert Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -540,9 +540,7 @@ m_defrag(struct mbuf *m, int how)
  */
 
 /*
- * Lesser-used path for M_PREPEND:
- * allocate new mbuf to prepend to chain,
- * copy junk along.
+ * Ensure len bytes of contiguous space at the beginning of the mbuf chain
  */
 struct mbuf *
 m_prepend(struct mbuf *m, int len, int how)
@@ -552,17 +550,24 @@ m_prepend(struct mbuf *m, int len, int how)
 	if (len > MHLEN)
 		panic("mbuf prepend length too big");
 
-	MGET(mn, how, m->m_type);
-	if (mn == NULL) {
-		m_freem(m);
-		return (NULL);
+	if (M_LEADINGSPACE(m) >= len) {
+		m->m_data -= len;
+		m->m_len += len;
+	} else {
+		MGET(mn, how, m->m_type);
+		if (mn == NULL) {
+			m_freem(m);
+			return (NULL);
+		}
+		if (m->m_flags & M_PKTHDR)
+			M_MOVE_PKTHDR(mn, m);
+		mn->m_next = m;
+		m = mn;
+		MH_ALIGN(m, len);
+		m->m_len = len;
 	}
 	if (m->m_flags & M_PKTHDR)
-		M_MOVE_PKTHDR(mn, m);
-	mn->m_next = m;
-	m = mn;
-	MH_ALIGN(m, len);
-	m->m_len = len;
+		m->m_pkthdr.len += len;
 	return (m);
 }
 
