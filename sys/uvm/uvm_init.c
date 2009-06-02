@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.21 2009/05/02 12:54:42 oga Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.22 2009/06/02 23:00:19 oga Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -148,7 +148,6 @@ uvm_init(void)
 	 * of kernel objects.
 	 */
 
-	uvm_page_rehash();
 	uao_create(VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS,
 	    UAO_FLAG_KERNSWAP);
 

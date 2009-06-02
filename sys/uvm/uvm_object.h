@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.h,v 1.10 2007/04/11 12:10:42 art Exp $	*/
+/*	$OpenBSD: uvm_object.h,v 1.11 2009/06/02 23:00:19 oga Exp $	*/
 /*	$NetBSD: uvm_object.h,v 1.11 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -47,11 +47,11 @@
  */
 
 struct uvm_object {
-	simple_lock_data_t	vmobjlock;	/* lock on memq */
-	struct uvm_pagerops	*pgops;		/* pager ops */
-	struct pglist		memq;		/* pages in this object */
-	int			uo_npages;	/* # of pages in memq */
-	int			uo_refs;	/* reference count */
+	simple_lock_data_t		vmobjlock;	/* lock on memq */
+	struct uvm_pagerops		*pgops;		/* pager ops */
+	RB_HEAD(uobj_pgs, vm_page)	memt;		/* pages in obj */
+	int				uo_npages;	/* # of pages in memq */
+	int				uo_refs;	/* reference count */
 };
 
 /*
@@ -93,6 +93,8 @@ extern struct uvm_pagerops uvm_deviceops;
 	((uobj)->pgops == &uvm_vnodeops &&				\
 	 ((struct vnode *)uobj)->v_flag & VTEXT)
 
+int	uvm_pagecmp(struct vm_page *, struct vm_page *);
+RB_PROTOTYPE(uobj_pgs, vm_page, fq.queues.tree, uvm_pagecmp);
 
 #endif /* _KERNEL */
 

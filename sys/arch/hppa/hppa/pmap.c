@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.134 2008/10/01 19:13:01 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.135 2009/06/02 23:00:18 oga Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -232,7 +232,7 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 		pmap_pde_set(pmap, va, 0);
 		pmap->pm_stats.resident_count--;
 		if (pmap->pm_ptphint == ptp)
-			pmap->pm_ptphint = TAILQ_FIRST(&pmap->pm_obj.memq);
+			pmap->pm_ptphint = RB_ROOT(&pmap->pm_obj.memt);
 		ptp->wire_count = 0;
 #ifdef DIAGNOSTIC
 		if (ptp->pg_flags & PG_BUSY)
@@ -463,7 +463,7 @@ pmap_bootstrap(vstart)
 	bzero(kpm, sizeof(*kpm));
 	simple_lock_init(&kpm->pm_lock);
 	kpm->pm_obj.pgops = NULL;
-	TAILQ_INIT(&kpm->pm_obj.memq);
+	RB_INIT(&kpm->pm_obj.memt);
 	kpm->pm_obj.uo_npages = 0;
 	kpm->pm_obj.uo_refs = 1;
 	kpm->pm_space = HPPA_SID_KERNEL;
@@ -649,7 +649,7 @@ pmap_create()
 
 	simple_lock_init(&pmap->pm_lock);
 	pmap->pm_obj.pgops = NULL;	/* currently not a mappable object */
-	TAILQ_INIT(&pmap->pm_obj.memq);
+	RB_INIT(&pmap->pm_obj.memt);
 	pmap->pm_obj.uo_npages = 0;
 	pmap->pm_obj.uo_refs = 1;
 
@@ -690,7 +690,7 @@ pmap_destroy(pmap)
 		return;
 
 #ifdef DIAGNOSTIC
-	while ((pg = TAILQ_FIRST(&pmap->pm_obj.memq))) {
+	while ((pg = RB_ROOT(&pmap->pm_obj.memt))) {
 		pt_entry_t *pde, *epde;
 		struct vm_page *sheep;
 		struct pv_entry *haggis;

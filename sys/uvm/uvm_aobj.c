@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.40 2009/06/01 19:54:02 oga Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.41 2009/06/02 23:00:19 oga Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -521,7 +521,7 @@ uao_create(vsize_t size, int flags)
  	 */
 	simple_lock_init(&aobj->u_obj.vmobjlock);
 	aobj->u_obj.pgops = &aobj_pager;
-	TAILQ_INIT(&aobj->u_obj.memq);
+	RB_INIT(&aobj->u_obj.memt);
 	aobj->u_obj.uo_npages = 0;
 
 	/*
@@ -665,7 +665,7 @@ uao_detach_locked(struct uvm_object *uobj)
 	 * Release swap resources then free the page.
  	 */
 	uvm_lock_pageq();
-	while((pg = TAILQ_FIRST(&uobj->memq)) != NULL) {
+	while((pg = RB_ROOT(&uobj->memt)) != NULL) {
 		if (pg->pg_flags & PG_BUSY) {
 			atomic_setbits_int(&pg->pg_flags, PG_WANTED);
 			uvm_unlock_pageq();

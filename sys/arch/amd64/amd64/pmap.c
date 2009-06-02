@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.43 2009/06/01 17:42:33 ariane Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.44 2009/06/02 23:00:18 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -566,7 +566,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	kpm = pmap_kernel();
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
 		kpm->pm_obj[i].pgops = NULL;
-		TAILQ_INIT(&kpm->pm_obj[i].memq);
+		RB_INIT(&kpm->pm_obj[i].memt);
 		kpm->pm_obj[i].uo_npages = 0;
 		kpm->pm_obj[i].uo_refs = 1;
 		kpm->pm_ptphint[i] = NULL;
@@ -831,7 +831,7 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level,
 	obj = &pmap->pm_obj[lidx];
 	pmap->pm_stats.resident_count--;
 	if (pmap->pm_ptphint[lidx] == ptp)
-		pmap->pm_ptphint[lidx] = TAILQ_FIRST(&obj->memq);
+		pmap->pm_ptphint[lidx] = RB_ROOT(&obj->memt);
 	ptp->wire_count = 0;
 	uvm_pagerealloc(ptp, NULL, 0);
 	TAILQ_INSERT_TAIL(pagelist, ptp, fq.queues.listq);
@@ -1018,7 +1018,7 @@ pmap_create(void)
 	/* init uvm_object */
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
 		pmap->pm_obj[i].pgops = NULL;	/* not a mappable object */
-		TAILQ_INIT(&pmap->pm_obj[i].memq);
+		RB_INIT(&pmap->pm_obj[i].memt);
 		pmap->pm_obj[i].uo_npages = 0;
 		pmap->pm_obj[i].uo_refs = 1;
 		pmap->pm_ptphint[i] = NULL;
@@ -1092,7 +1092,7 @@ pmap_destroy(struct pmap *pmap)
 	 */
 
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		while ((pg = TAILQ_FIRST(&pmap->pm_obj[i].memq)) != NULL) {
+		while ((pg = RB_ROOT(&pmap->pm_obj[i].memt)) != NULL) {
 			KASSERT((pg->pg_flags & PG_BUSY) == 0);
 
 			pg->wire_count = 0;

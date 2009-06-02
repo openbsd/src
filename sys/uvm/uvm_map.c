@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.111 2009/06/01 17:42:33 ariane Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.112 2009/06/02 23:00:19 oga Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3820,9 +3820,8 @@ uvm_object_printit(uobj, full, pr)
 		return;
 	}
 	(*pr)("  PAGES <pg,offset>:\n  ");
-	for (pg = TAILQ_FIRST(&uobj->memq);
-	     pg != NULL;
-	     pg = TAILQ_NEXT(pg, fq.queues.listq), cnt++) {
+	RB_FOREACH(pg, uobj_pgs, &uobj->memt) {
+		cnt++;
 		(*pr)("<%p,0x%llx> ", pg, (long long)pg->offset);
 		if ((cnt % 3) == 2) {
 			(*pr)("\n  ");
@@ -3883,8 +3882,7 @@ uvm_page_printit(pg, full, pr)
 			uobj = pg->uobject;
 			if (uobj) {
 				(*pr)("  checking object list\n");
-				TAILQ_FOREACH(tpg, &uobj->memq,
-				    fq.queues.listq) {
+				RB_FOREACH(pg, uobj_pgs, &uobj->memt) {
 					if (tpg == pg) {
 						break;
 					}
