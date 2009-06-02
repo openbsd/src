@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.57 2009/03/01 10:48:54 kettenis Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.58 2009/06/02 18:51:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -224,6 +224,12 @@ vgafb_ioctl(v, cmd, data, flags, p)
 		wdf->width  = sc->sc_sunfb.sf_width;
 		wdf->depth  = sc->sc_sunfb.sf_depth;
 		wdf->cmsize = 256;
+		break;
+	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
+		if (sc->sc_sunfb.sf_depth == 32)
+			*(u_int *)data = WSDISPLAYIO_DEPTH_24_32;
+		else
+			return (-1);
 		break;
 	case WSDISPLAYIO_LINEBYTES:
 		*(u_int *)data = sc->sc_sunfb.sf_linebytes;
