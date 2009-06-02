@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.18 2008/10/22 08:38:06 blambert Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.19 2009/06/02 22:05:54 guenther Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -69,7 +69,8 @@ struct timeout {
  */
 #define TIMEOUT_ONQUEUE		2	/* timeout is on the todo queue */
 #define TIMEOUT_INITIALIZED	4	/* timeout is initialized */
-#define TIMEOUT_TRIGGERED       8       /* timeout is running or ran */
+#define TIMEOUT_TRIGGERED	8	/* timeout is running or ran */
+
 /*
  * special macros
  *
@@ -83,9 +84,9 @@ struct timeout {
 #ifdef _KERNEL
 void timeout_set(struct timeout *, void (*)(void *), void *);
 void timeout_add(struct timeout *, int);
-void timeout_add_tv(struct timeout *, struct timeval *);
-void timeout_add_ts(struct timeout *, struct timespec *);
-void timeout_add_bt(struct timeout *, struct bintime *);
+void timeout_add_tv(struct timeout *, const struct timeval *);
+void timeout_add_ts(struct timeout *, const struct timespec *);
+void timeout_add_bt(struct timeout *, const struct bintime *);
 void timeout_add_sec(struct timeout *, int);
 void timeout_add_msec(struct timeout *, int);
 void timeout_add_usec(struct timeout *, int);
