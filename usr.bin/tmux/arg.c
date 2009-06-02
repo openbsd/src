@@ -1,4 +1,4 @@
-/* $OpenBSD: arg.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: arg.c,v 1.2 2009/06/02 11:18:59 ray Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -76,7 +76,7 @@ arg_parse_client(const char *arg)
 
 		/* Trim a trailing : if any from the argument. */
 		n = strlen(arg2);
-		if (arg2[n - 1] == ':')
+		if (n && arg2[n - 1] == ':')
 			arg2[n - 1] = '\0';
 
 		/* Try and look up the client name. */
@@ -101,7 +101,7 @@ arg_parse_session(const char *arg)
 
 		/* Trim a trailing : if any from the argument. */
 		n = strlen(arg2);
-		if (arg2[n - 1] == ':')
+		if (n && arg2[n - 1] == ':')
 			arg2[n - 1] = '\0';
 
 		/* See if the argument matches a session. */
