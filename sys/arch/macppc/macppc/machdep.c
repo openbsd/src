@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.104 2009/01/22 22:41:42 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.105 2009/06/02 21:38:09 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -876,8 +876,6 @@ dumpsys()
 	delay(5000000);         /* 5 seconds */
 
 }
-
-int imask[IPL_NUM];
 
 /*
  * this is a hack interface to allow zs to work better until
