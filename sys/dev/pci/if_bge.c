@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.264 2009/05/24 14:11:35 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.265 2009/06/02 02:16:41 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -322,6 +322,15 @@ const struct pci_matchid bge_devices[] = {
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
+
+/* Intentionally exlcude BGE_ASICREV_BCM5906 */
+#define BGE_IS_5755_PLUS(sc)  \
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785    || \
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
 
 #define BGE_IS_5714_FAMILY(sc)  \
@@ -1663,12 +1672,7 @@ bge_blockinit(struct bge_softc *sc)
 	val = BGE_WDMAMODE_ENABLE|BGE_WDMAMODE_ALL_ATTNS;
 
 	/* Enable host coalescing bug fix. */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
+	if (BGE_IS_5755_PLUS(sc))
 		val |= (1 << 29);
 
 	/* Turn on write DMA state machine */
@@ -2260,12 +2264,7 @@ bge_reset(struct bge_softc *sc)
 
 	/* Disable fastboot on controllers that support it. */
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787 ||
-	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
+	    BGE_IS_5755_PLUS(sc))
 		CSR_WRITE_4(sc, BGE_FASTBOOT_PC, 0);
 
 	reset = BGE_MISCCFG_RESET_CORE_CLOCKS|(65<<1);
