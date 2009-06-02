@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.87 2009/06/01 15:53:46 jsg Exp $
+#	$OpenBSD: RAMDISK,v 1.88 2009/06/02 06:31:08 todd Exp $
 #
 # PPC GENERIC config file
 #
@@ -26,6 +26,7 @@ option		MSDOSFS		# MS-DOS file system
 option		INET		# IP + ICMP + TCP + UDP
 option		INET6		# IPv6 (needs INET)
 option		DDB		# kernel debugger
+option		CRYPTO		# Cryptographic framework
 
 config		bsd	root on rd0a swap on rd0b
 
