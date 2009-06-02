@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_pci.c,v 1.11 2009/06/02 04:03:39 jsg Exp $	*/
+/*	$OpenBSD: if_atw_pci.c,v 1.12 2009/06/02 15:13:58 jsg Exp $	*/
 /*	$NetBSD: if_atw_pci.c,v 1.7 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -90,9 +90,10 @@ struct atw_pci_softc {
 
 int	atw_pci_match(struct device *, void *, void *);
 void	atw_pci_attach(struct device *, struct device *, void *);
+int	atw_pci_detach(struct device *, int);
 
 struct cfattach atw_pci_ca = {
-    sizeof (struct atw_softc), atw_pci_match, atw_pci_attach
+    sizeof (struct atw_softc), atw_pci_match, atw_pci_attach, atw_pci_detach
 };
 
 const struct pci_matchid atw_pci_devices[] = {
@@ -144,6 +145,7 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr = NULL;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
+	bus_size_t iosize, memsize;
 	int ioh_valid, memh_valid;
 	int state;
 
@@ -187,17 +189,19 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	ioh_valid = (pci_mapreg_map(pa, ATW_PCI_IOBA,
 	    PCI_MAPREG_TYPE_IO, 0,
-	    &iot, &ioh, NULL, NULL, 0) == 0);
+	    &iot, &ioh, NULL, &iosize, 0) == 0);
 	memh_valid = (pci_mapreg_map(pa, ATW_PCI_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &memt, &memh, NULL, NULL, 0) == 0);
+	    &memt, &memh, NULL, &memsize, 0) == 0);
 
 	if (memh_valid) {
 		sc->sc_st = memt;
 		sc->sc_sh = memh;
+		sc->sc_mapsize = memsize;
 	} else if (ioh_valid) {
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
+		sc->sc_mapsize = iosize;
 	} else {
 		printf(": unable to map device registers\n");
 		return;
@@ -248,4 +252,23 @@ atw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Finish off the attach.
 	 */
 	atw_attach(sc);
+}
+
+int
+atw_pci_detach(struct device *self, int flags)
+{
+	struct atw_pci_softc *psc = (void *)self;
+	struct atw_softc *sc = &psc->psc_atw;
+	int rv;
+
+	rv = atw_detach(sc);
+	if (rv)
+		return (rv);
+
+	if (psc->psc_intrcookie != NULL)
+		pci_intr_disestablish(psc->psc_pc, psc->psc_intrcookie);
+
+	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_mapsize);
+
+	return (0);
 }
