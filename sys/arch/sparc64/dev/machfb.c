@@ -1,4 +1,4 @@
-/*	$OpenBSD: machfb.c,v 1.2 2009/06/02 04:47:04 kettenis Exp $	*/
+/*	$OpenBSD: machfb.c,v 1.3 2009/06/02 04:53:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -338,7 +338,7 @@ machfb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
+		*(u_int *)data = WSDISPLAY_TYPE_MACHFB;
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
