@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.69 2008/11/21 17:08:42 deraadt Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.70 2009/06/02 23:49:33 deraadt Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -144,7 +144,7 @@ void		uhci_exit_ctl_q(uhci_softc_t *, uhci_soft_qh_t *);
 void		uhci_free_std_chain(uhci_softc_t *,
 					    uhci_soft_td_t *, uhci_soft_td_t *);
 usbd_status	uhci_alloc_std_chain(struct uhci_pipe *,
-			    uhci_softc_t *, int, int, u_int16_t, usb_dma_t *,
+			    uhci_softc_t *, u_int, int, u_int16_t, usb_dma_t *,
 			    uhci_soft_td_t **, uhci_soft_td_t **);
 void		uhci_poll_hub(void *);
 void		uhci_waitintr(uhci_softc_t *, usbd_xfer_handle);
@@ -1678,7 +1678,7 @@ uhci_free_std_chain(uhci_softc_t *sc, uhci_soft_td_t *std,
 }
 
 usbd_status
-uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
+uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, u_int len,
 		     int rd, u_int16_t flags, usb_dma_t *dma,
 		     uhci_soft_td_t **sp, uhci_soft_td_t **ep)
 {
@@ -1689,7 +1689,7 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 	int addr = upipe->pipe.device->address;
 	int endpt = upipe->pipe.endpoint->edesc->bEndpointAddress;
 
-	DPRINTFN(8, ("uhci_alloc_std_chain: addr=%d endpt=%d len=%d speed=%d "
+	DPRINTFN(8, ("uhci_alloc_std_chain: addr=%d endpt=%d len=%u speed=%d "
 		      "flags=0x%x\n", addr, UE_GET_ADDR(endpt), len,
 		      upipe->pipe.device->speed, flags));
 	maxp = UGETW(upipe->pipe.endpoint->edesc->wMaxPacketSize);
@@ -1788,10 +1788,11 @@ uhci_device_bulk_start(usbd_xfer_handle xfer)
 	uhci_soft_td_t *data, *dataend;
 	uhci_soft_qh_t *sqh;
 	usbd_status err;
-	int len, isread, endpt;
+	u_int len;
+	int isread, endpt;
 	int s;
 
-	DPRINTFN(3, ("uhci_device_bulk_start: xfer=%p len=%d flags=%d ii=%p\n",
+	DPRINTFN(3, ("uhci_device_bulk_start: xfer=%p len=%u flags=%d ii=%p\n",
 		     xfer, xfer->length, xfer->flags, ii));
 
 	if (sc->sc_dying)
@@ -2029,7 +2030,7 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
 
-	DPRINTFN(3,("uhci_device_intr_start: xfer=%p len=%d flags=%d\n",
+	DPRINTFN(3,("uhci_device_intr_start: xfer=%p len=%u flags=%d\n",
 		    xfer, xfer->length, xfer->flags));
 
 #ifdef DIAGNOSTIC
@@ -2159,14 +2160,14 @@ uhci_device_request(usbd_xfer_handle xfer)
 	uhci_intr_info_t *ii = &UXFER(xfer)->iinfo;
 	uhci_soft_td_t *setup, *data, *stat, *next, *dataend;
 	uhci_soft_qh_t *sqh;
-	int len;
+	u_int len;
 	u_int32_t ls;
 	usbd_status err;
 	int isread;
 	int s;
 
 	DPRINTFN(3,("uhci_device_request type=0x%02x, request=0x%02x, "
-		    "wValue=0x%04x, wIndex=0x%04x len=%d, addr=%d, endpt=%d\n",
+		    "wValue=0x%04x, wIndex=0x%04x len=%u, addr=%d, endpt=%d\n",
 		    req->bmRequestType, req->bRequest, UGETW(req->wValue),
 		    UGETW(req->wIndex), UGETW(req->wLength),
 		    addr, endpt));
@@ -3471,7 +3472,7 @@ uhci_root_intr_start(usbd_xfer_handle xfer)
 	usbd_pipe_handle pipe = xfer->pipe;
 	uhci_softc_t *sc = (uhci_softc_t *)pipe->device->bus;
 
-	DPRINTFN(3, ("uhci_root_intr_start: xfer=%p len=%d flags=%d\n",
+	DPRINTFN(3, ("uhci_root_intr_start: xfer=%p len=%u flags=%d\n",
 		     xfer, xfer->length, xfer->flags));
 
 	if (sc->sc_dying)

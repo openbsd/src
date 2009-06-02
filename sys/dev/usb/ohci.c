@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.90 2009/02/14 20:05:09 chl Exp $ */
+/*	$OpenBSD: ohci.c,v 1.91 2009/06/02 23:49:33 deraadt Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -97,7 +97,7 @@ void		ohci_free_std_chain(ohci_softc_t *, ohci_soft_td_t *,
 					    ohci_soft_td_t *);
 #endif
 usbd_status	ohci_alloc_std_chain(struct ohci_pipe *,
-			    ohci_softc_t *, int, int, usbd_xfer_handle,
+			    ohci_softc_t *, u_int, int, usbd_xfer_handle,
 			    ohci_soft_td_t *, ohci_soft_td_t **);
 
 void		ohci_shutdown(void *v);
@@ -435,17 +435,17 @@ ohci_free_std(ohci_softc_t *sc, ohci_soft_td_t *std)
 
 usbd_status
 ohci_alloc_std_chain(struct ohci_pipe *opipe, ohci_softc_t *sc,
-		     int alen, int rd, usbd_xfer_handle xfer,
+		     u_int alen, int rd, usbd_xfer_handle xfer,
 		     ohci_soft_td_t *sp, ohci_soft_td_t **ep)
 {
 	ohci_soft_td_t *next, *cur;
 	ohci_physaddr_t dataphys, dataphysend;
 	u_int32_t tdflags;
-	int len, curlen;
+	u_int len, curlen;
 	usb_dma_t *dma = &xfer->dmabuf;
 	u_int16_t flags = xfer->flags;
 
-	DPRINTFN(alen < 4096,("ohci_alloc_std_chain: start len=%d\n", alen));
+	DPRINTFN(alen < 4096,("ohci_alloc_std_chain: start len=%u\n", alen));
 
 	len = alen;
 	cur = sp;
@@ -478,7 +478,7 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, ohci_softc_t *sc,
 #endif
 		}
 		DPRINTFN(4,("ohci_alloc_std_chain: dataphys=0x%08x "
-			    "dataphysend=0x%08x len=%d curlen=%d\n",
+			    "dataphysend=0x%08x len=%u curlen=%u\n",
 			    dataphys, dataphysend,
 			    len, curlen));
 		len -= curlen;
@@ -1648,7 +1648,7 @@ ohci_device_request(usbd_xfer_handle xfer)
 	ohci_soft_td_t *setup, *stat, *next, *tail;
 	ohci_soft_ed_t *sed;
 	int isread;
-	int len;
+	u_int len;
 	usbd_status err;
 	int s;
 
@@ -1656,7 +1656,7 @@ ohci_device_request(usbd_xfer_handle xfer)
 	len = UGETW(req->wLength);
 
 	DPRINTFN(3,("ohci_device_control type=0x%02x, request=0x%02x, "
-		    "wValue=0x%04x, wIndex=0x%04x len=%d, addr=%d, endpt=%d\n",
+		    "wValue=0x%04x, wIndex=0x%04x len=%u, addr=%d, endpt=%d\n",
 		    req->bmRequestType, req->bRequest, UGETW(req->wValue),
 		    UGETW(req->wIndex), len, addr,
 		    opipe->pipe.endpoint->edesc->bEndpointAddress));
@@ -2854,7 +2854,8 @@ ohci_device_bulk_start(usbd_xfer_handle xfer)
 	int addr = dev->address;
 	ohci_soft_td_t *data, *tail, *tdp;
 	ohci_soft_ed_t *sed;
-	int s, len, isread, endpt;
+	u_int len;
+	int s, isread, endpt;
 	usbd_status err;
 
 	if (sc->sc_dying)
@@ -2873,7 +2874,7 @@ ohci_device_bulk_start(usbd_xfer_handle xfer)
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 	sed = opipe->sed;
 
-	DPRINTFN(4,("ohci_device_bulk_start: xfer=%p len=%d isread=%d "
+	DPRINTFN(4,("ohci_device_bulk_start: xfer=%p len=%u isread=%d "
 		    "flags=%d endpt=%d\n", xfer, len, isread, xfer->flags,
 		    endpt));
 
@@ -2998,7 +2999,7 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
 
-	DPRINTFN(3, ("ohci_device_intr_transfer: xfer=%p len=%d "
+	DPRINTFN(3, ("ohci_device_intr_transfer: xfer=%p len=%u "
 		     "flags=%d priv=%p\n",
 		     xfer, xfer->length, xfer->flags, xfer->priv));
 
