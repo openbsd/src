@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_endrun.c,v 1.1 2009/05/06 18:21:23 stevesk Exp $ */
+/*	$OpenBSD: tty_endrun.c,v 1.2 2009/06/02 21:17:35 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -210,7 +210,7 @@ endruninput(int c, struct tty *tp)
 		np->ts.tv_sec = ts.tv_sec;
 		np->ts.tv_nsec = ts.tv_nsec;
 		np->gap = gap;
-	
+
 		/*
 		 * If a tty timestamp is available, make sure its value is
 		 * reasonable by comparing against the timestamp just taken.
@@ -286,6 +286,7 @@ endrun_decode(struct endrun *np, struct tty *tp, char *fld[], int fldcnt)
 {
 	int64_t date_nano, time_nano, offset_nano, endrun_now;
 	char tfom;
+	int jumped = 0;
 
 	if (fldcnt != NUMFLDS) {
 		DPRINTF(("endrun: field count mismatch, %d\n", fldcnt));
@@ -312,7 +313,7 @@ endrun_decode(struct endrun *np, struct tty *tp, char *fld[], int fldcnt)
 		DPRINTF(("endrun: time not monotonically increasing "
 		    "last %lld now %lld\n",
 		    (long long)np->last, (long long)endrun_now));
-		return;
+		jumped = 1;
 	}
 	np->last = endrun_now;
 	np->gap = 0LL;
@@ -350,7 +351,6 @@ endrun_decode(struct endrun *np, struct tty *tp, char *fld[], int fldcnt)
 	case '8':
 		np->time.status = SENSOR_S_OK;
 		np->signal.status = SENSOR_S_OK;
-		timeout_add_sec(&np->endrun_tout, TRUSTTIME);
 		break;
 	case '9':
 		np->signal.status = SENSOR_S_WARN;
@@ -368,6 +368,10 @@ endrun_decode(struct endrun *np, struct tty *tp, char *fld[], int fldcnt)
 		np->tfom = tfom;
 	}
 #endif
+	if (jumped)
+		np->time.status = SENSOR_S_WARN;
+	if (np->time.status == SENSOR_S_OK)
+		timeout_add_sec(&np->endrun_tout, TRUSTTIME);
 
 	/*
 	 * If tty timestamping is requested, but no PPS signal is present, set

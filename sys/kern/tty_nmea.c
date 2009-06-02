@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.34 2009/04/26 02:25:36 cnst Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.35 2009/06/02 21:17:35 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -178,7 +178,7 @@ nmeainput(int c, struct tty *tp)
 		}
 #endif
 		np->gap = gap;
-	
+
 		/*
 		 * If a tty timestamp is available, make sure its value is
 		 * reasonable by comparing against the timestamp just taken.
@@ -284,6 +284,7 @@ void
 nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 {
 	int64_t date_nano, time_nano, nmea_now;
+	int jumped = 0;
 
 	if (fldcnt != 12 && fldcnt != 13) {
 		DPRINTF(("gprmc: field count mismatch, %d\n", fldcnt));
@@ -300,7 +301,7 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	nmea_now = date_nano + time_nano;
 	if (nmea_now <= np->last) {
 		DPRINTF(("gprmc: time not monotonically increasing\n"));
-		return;
+		jumped = 1;
 	}
 	np->last = nmea_now;
 	np->gap = 0LL;
@@ -363,7 +364,6 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	case 'A':	/* The GPS has a fix, (re)arm the timeout. */
 		np->time.status = SENSOR_S_OK;
 		np->signal.status = SENSOR_S_OK;
-		timeout_add_sec(&np->nmea_tout, TRUSTTIME);
 		break;
 	case 'V':	/*
 			 * The GPS indicates a warning status, do not add to
@@ -375,6 +375,10 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 		break;
 	}
 
+	if (jumped)
+		np->time.status = SENSOR_S_WARN;
+	if (np->time.status == SENSOR_S_OK)
+		timeout_add_sec(&np->nmea_tout, TRUSTTIME);
 	/*
 	 * If tty timestamping is requested, but no PPS signal is present, set
 	 * the sensor state to CRITICAL.

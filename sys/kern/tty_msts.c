@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_msts.c,v 1.14 2009/05/06 16:05:20 stevesk Exp $ */
+/*	$OpenBSD: tty_msts.c,v 1.15 2009/06/02 21:17:35 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -169,7 +169,7 @@ mstsinput(int c, struct tty *tp)
 		np->ts.tv_sec = ts.tv_sec;
 		np->ts.tv_nsec = ts.tv_nsec;
 		np->gap = gap;
-	
+
 		/*
 		 * If a tty timestamp is available, make sure its value is
 		 * reasonable by comparing against the timestamp just taken.
@@ -243,6 +243,7 @@ void
 msts_decode(struct msts *np, struct tty *tp, char *fld[], int fldcnt)
 {
 	int64_t date_nano, time_nano, msts_now;
+	int jumped = 0;
 
 	if (fldcnt != MAXFLDS) {
 		DPRINTF(("msts: field count mismatch, %d\n", fldcnt));
@@ -263,7 +264,7 @@ msts_decode(struct msts *np, struct tty *tp, char *fld[], int fldcnt)
 		msts_now = msts_now - 2 * 3600 * 1000000000LL;
 	if (msts_now <= np->last) {
 		DPRINTF(("msts: time not monotonically increasing\n"));
-		return;
+		jumped = 1;
 	}
 	np->last = msts_now;
 	np->gap = 0LL;
@@ -293,9 +294,13 @@ msts_decode(struct msts *np, struct tty *tp, char *fld[], int fldcnt)
 	if (fld[3][0] == ' ' && fld[3][1] == ' ') {
 		np->time.status = SENSOR_S_OK;
 		np->signal.status = SENSOR_S_OK;
-		timeout_add_sec(&np->msts_tout, TRUSTTIME);
 	} else
 		np->signal.status = SENSOR_S_WARN;
+
+	if (jumped)
+		np->time.status = SENSOR_S_WARN;
+	if (np->time.status == SENSOR_S_OK)
+		timeout_add_sec(&np->msts_tout, TRUSTTIME);
 
 	/*
 	 * If tty timestamping is requested, but no PPS signal is present, set
