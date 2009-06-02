@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.131 2008/07/26 18:55:31 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.132 2009/06/02 06:33:04 yuo Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -358,9 +358,14 @@ scsi_inquire_vpd(struct scsi_link *sc_link, void *buf, u_int buflen,
 
 	bzero(buf, buflen);
 
-	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), buf, buflen, 2, 10000, NULL,
- 	    SCSI_DATA_IN | SCSI_SILENT | flags);
+	if (sc_link->flags & SDEV_UMASS) {
+		/* do nothing, just return */
+		error = EJUSTRETURN;
+	} else
+		error = scsi_scsi_cmd(sc_link,
+			(struct scsi_generic *)&scsi_cmd,
+	    		sizeof(scsi_cmd), buf, buflen, 2, 10000, NULL,
+ 	    		SCSI_DATA_IN | SCSI_SILENT | flags);
  
  	return (error);
 }
