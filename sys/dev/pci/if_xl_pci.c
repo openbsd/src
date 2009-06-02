@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.24 2009/06/02 05:07:00 jsg Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.25 2009/06/02 05:29:47 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -91,10 +91,17 @@
 
 int xl_pci_match(struct device *, void *, void *);
 void xl_pci_attach(struct device *, struct device *, void *);
+int xl_pci_detach(struct device *, int);
 void xl_pci_intr_ack(struct xl_softc *);
 
+struct xl_pci_softc {
+	struct xl_softc		psc_softc;
+	pci_chipset_tag_t	psc_pc;
+	bus_size_t		psc_iosize;
+};
+
 struct cfattach xl_pci_ca = {
-	sizeof(struct xl_softc), xl_pci_match, xl_pci_attach,
+	sizeof(struct xl_pci_softc), xl_pci_match, xl_pci_attach, xl_pci_detach
 };
 
 const struct pci_matchid xl_pci_devices[] = {
@@ -138,7 +145,8 @@ xl_pci_match(struct device *parent, void *match, void *aux)
 void
 xl_pci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct xl_softc *sc = (struct xl_softc *)self;
+	struct xl_pci_softc *psc = (void *)self;
+	struct xl_softc *sc = &psc->psc_softc;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
@@ -146,6 +154,7 @@ xl_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t iosize, funsize;
 	u_int32_t command;
 
+	psc->psc_pc = pc;
 	sc->sc_dmat = pa->pa_dmat;
 
 	sc->xl_flags = 0;
@@ -297,11 +306,27 @@ xl_pci_attach(struct device *parent, struct device *self, void *aux)
 			bus_space_unmap(sc->xl_funct, sc->xl_funch, funsize);
 		return;
 	}
+	psc->psc_iosize = iosize;
 	printf(": %s", intrstr);
 
 	xl_attach(sc);
 }
 
+int
+xl_pci_detach(struct device *self, int flags)
+{
+	struct xl_pci_softc *psc = (void *)self;
+	struct xl_softc *sc = &psc->psc_softc;
+	int rv = 0;
+
+	rv = xl_detach(sc);
+	if (rv == 0) {
+		pci_intr_disestablish(psc->psc_pc, sc->xl_intrhand);
+		bus_space_unmap(sc->xl_btag, sc->xl_bhandle, psc->psc_iosize);
+	}
+
+	return (rv);
+}
 
 void            
 xl_pci_intr_ack(struct xl_softc *sc)
