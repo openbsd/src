@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.105 2009/06/02 17:05:57 jj Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.106 2009/06/02 17:10:22 pyr Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -170,6 +170,7 @@ global interval.
 Please note that the default value is optimized for checks within the
 same collision domain \(en use a higher timeout, such as 1000 milliseconds,
 for checks of hosts in other subnets.
+If this option is to be set, it should be before overrides in tables.
 .El
 .Sh TABLES
 Tables are used to group a set of hosts as the target for redirections
