@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.26 2009/05/07 16:32:53 jacekm Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.27 2009/06/02 16:47:50 jasper Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -186,6 +186,7 @@ struct	protoent {
 #define EAI_SYSTEM	-11	/* system error (code indicated in errno) */
 #define EAI_BADHINTS	-12	/* invalid value for hints */
 #define EAI_PROTOCOL	-13	/* resolved protocol is unknown */
+#define EAI_OVERFLOW	-14	/* argument buffer overflow */
 
 struct addrinfo {
 	int ai_flags;		/* input flags */

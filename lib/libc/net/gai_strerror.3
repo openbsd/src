@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gai_strerror.3,v 1.6 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: gai_strerror.3,v 1.7 2009/06/02 16:47:50 jasper Exp $
 .\"	$KAME: gai_strerror.3,v 1.1 2005/01/05 03:04:47 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 2 2009 $
 .Dt GAI_STRERROR 3
 .Os
 .Sh NAME
@@ -68,6 +68,8 @@ no address associated with
 or
 .Fa servname
 not provided, or not known
+.It Dv EAI_OVERFLOW
+argument buffer overflow
 .It Dv EAI_PROTOCOL
 resolved protocol is unknown
 .It Dv EAI_SERVICE
