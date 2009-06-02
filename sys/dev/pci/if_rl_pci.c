@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_pci.c,v 1.16 2009/06/02 04:03:39 jsg Exp $ */
+/*	$OpenBSD: if_rl_pci.c,v 1.17 2009/06/02 17:27:39 jsg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -84,9 +84,16 @@
 
 int rl_pci_match(struct device *, void *, void *);
 void rl_pci_attach(struct device *, struct device *, void *);
+int rl_pci_detach(struct device *, int);
+
+struct rl_pci_softc {
+	struct rl_softc		psc_softc;
+	pci_chipset_tag_t	psc_pc;
+	bus_size_t		psc_mapsize;
+};
 
 struct cfattach rl_pci_ca = {
-	sizeof(struct rl_softc), rl_pci_match, rl_pci_attach,
+	sizeof(struct rl_pci_softc), rl_pci_match, rl_pci_attach, rl_pci_detach
 };
 
 const struct pci_matchid rl_pci_devices[] = {
@@ -128,12 +135,12 @@ rl_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct rl_softc *sc = (struct rl_softc *)self;
+	struct rl_pci_softc *psc = (void *)self;
+	struct rl_softc *sc = &psc->psc_softc;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	bus_size_t size;
 
 	/*
 	 * Map control/status registers.
@@ -141,13 +148,13 @@ rl_pci_attach(parent, self, aux)
 
 #ifdef RL_USEIOSPACE
 	if (pci_mapreg_map(pa, RL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->rl_btag, &sc->rl_bhandle, NULL, &size, 0)) {
+	    &sc->rl_btag, &sc->rl_bhandle, NULL, &psc->psc_mapsize, 0)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 #else
 	if (pci_mapreg_map(pa, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->rl_btag, &sc->rl_bhandle, NULL, &size, 0)){
+	    &sc->rl_btag, &sc->rl_bhandle, NULL, &psc->psc_mapsize, 0)){
 		printf(": can't map mem space\n");
 		return;
 	}
@@ -158,10 +165,11 @@ rl_pci_attach(parent, self, aux)
 	 */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		bus_space_unmap(sc->rl_btag, sc->rl_bhandle, size);
+		bus_space_unmap(sc->rl_btag, sc->rl_bhandle, psc->psc_mapsize);
 		return;
 	}
 
+	psc->psc_pc = pa->pa_pc;
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, rl_intr, sc,
 	    self->dv_xname);
@@ -170,7 +178,7 @@ rl_pci_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		bus_space_unmap(sc->rl_btag, sc->rl_bhandle, size);
+		bus_space_unmap(sc->rl_btag, sc->rl_bhandle, psc->psc_mapsize);
 		return;
 	}
 	printf(": %s", intrstr);
@@ -179,3 +187,23 @@ rl_pci_attach(parent, self, aux)
 
 	rl_attach(sc);
 }
+
+int
+rl_pci_detach(struct device *self, int flags)
+{
+	struct rl_pci_softc *psc = (void *)self;
+	struct rl_softc *sc = &psc->psc_softc;
+	int rv;
+
+	rv = rl_detach(sc);
+	if (rv)
+		return (rv);
+
+	if (sc->sc_ih != NULL)
+		pci_intr_disestablish(psc->psc_pc, sc->sc_ih);
+
+	bus_space_unmap(sc->rl_btag, sc->rl_bhandle, psc->psc_mapsize);
+
+	return (0);
+}
+
