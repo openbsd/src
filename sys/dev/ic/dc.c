@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.108 2009/01/11 16:54:59 blambert Exp $	*/
+/*	$OpenBSD: dc.c,v 1.109 2009/06/02 15:39:35 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -3140,6 +3140,30 @@ dc_power(int why, void *arg)
 			dc_init(sc);
 	}
 	splx(s);
+}
+
+int
+dc_detach(struct dc_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	if (sc->dc_srom)
+		free(sc->dc_srom, M_DEVBUF);
+
+	timeout_del(&sc->dc_tick_tmo);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	if (sc->sc_dhook != NULL)
+		shutdownhook_disestablish(sc->sc_dhook);
+	if (sc->sc_pwrhook != NULL)
+		powerhook_disestablish(sc->sc_pwrhook);
+
+	return (0);
 }
 
 struct cfdriver dc_cd = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.62 2009/06/02 04:03:39 jsg Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.63 2009/06/02 15:39:35 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -123,7 +123,14 @@ struct dc_type dc_devs[] = {
 
 int dc_pci_match(struct device *, void *, void *);
 void dc_pci_attach(struct device *, struct device *, void *);
+int dc_pci_detach(struct device *, int);
 void dc_pci_acpi(struct device *, void *);
+
+struct dc_pci_softc {
+	struct dc_softc		psc_softc;
+	pci_chipset_tag_t	psc_pc;
+	bus_size_t		psc_mapsize;
+};
 
 /*
  * Probe for a 21143 or clone chip. Check the PCI vendor and device
@@ -165,7 +172,8 @@ dc_pci_match(struct device *parent, void *match, void *aux)
 void
 dc_pci_acpi(struct device *self, void *aux)
 {
-	struct dc_softc		*sc = (struct dc_softc *)self;
+	struct dc_pci_softc	*psc = (struct dc_pci_softc *)self;
+	struct dc_softc		*sc = &psc->psc_softc;
 	struct pci_attach_args	*pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	u_int32_t		r, cptr;
@@ -210,13 +218,14 @@ dc_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	const char		*intrstr = NULL;
 	pcireg_t		command;
-	struct dc_softc		*sc = (struct dc_softc *)self;
+	struct dc_pci_softc	*psc = (struct dc_pci_softc *)self;
+	struct dc_softc		*sc = &psc->psc_softc;
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
-	bus_size_t		size;
 	int			found = 0;
 
+	psc->psc_pc = pa->pa_pc;
 	sc->sc_dmat = pa->pa_dmat;
 
 	/*
@@ -232,14 +241,14 @@ dc_pci_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DC_USEIOSPACE
 	if (pci_mapreg_map(pa, DC_PCI_CFBIO,
 	    PCI_MAPREG_TYPE_IO, 0,
-	    &sc->dc_btag, &sc->dc_bhandle, NULL, &size, 0)) {
+	    &sc->dc_btag, &sc->dc_bhandle, NULL, &psc->psc_mapsize, 0)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 #else
 	if (pci_mapreg_map(pa, DC_PCI_CFBMA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->dc_btag, &sc->dc_bhandle, NULL, &size, 0)) {
+	    &sc->dc_btag, &sc->dc_bhandle, NULL, &psc->psc_mapsize, 0)) {
 		printf(": can't map mem space\n");
 		return;
 	}
@@ -531,9 +540,28 @@ fail_2:
 	pci_intr_disestablish(pc, sc->sc_ih);
 
 fail_1:
-	bus_space_unmap(sc->dc_btag, sc->dc_bhandle, size);
+	bus_space_unmap(sc->dc_btag, sc->dc_bhandle, psc->psc_mapsize);
+}
+
+int
+dc_pci_detach(struct device *self, int flags)
+{
+	struct dc_pci_softc *psc = (void *)self;
+	struct dc_softc *sc = &psc->psc_softc;
+	int rv = 0;
+
+	rv = dc_detach(sc);
+	if (rv)
+		return (rv);
+
+	if (sc->sc_ih != NULL)
+		pci_intr_disestablish(psc->psc_pc, sc->sc_ih);	
+
+	bus_space_unmap(sc->dc_btag, sc->dc_bhandle, psc->psc_mapsize);
+
+	return (rv);
 }
 
 struct cfattach dc_pci_ca = {
-	sizeof(struct dc_softc), dc_pci_match, dc_pci_attach
+	sizeof(struct dc_softc), dc_pci_match, dc_pci_attach, dc_pci_detach
 };
