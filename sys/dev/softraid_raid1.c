@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.9 2009/05/11 14:06:21 jsing Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.10 2009/06/02 00:58:16 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -244,6 +244,7 @@ sr_raid1_set_vol_state(struct sr_discipline *sd)
 		case BIOC_SVONLINE: /* can go to same state */
 		case BIOC_SVOFFLINE:
 		case BIOC_SVDEGRADED:
+		case BIOC_SVREBUILD: /* happens on boot */
 			break;
 		default:
 			goto die;
@@ -427,6 +428,10 @@ ragain:
 
 	s = splbio();
 
+	/* rebuild io, let rebuild routine deal with it */
+	if (wu->swu_flags & SR_WUF_REBUILD)
+		goto queued;
+
 	/* current io failed, restart */
 	if (wu->swu_state == SR_WU_RESTART)
 		goto start;
@@ -541,9 +546,17 @@ sr_raid1_intr(struct buf *bp)
 			printf("%s: wu: %p not on pending queue\n",
 			    DEVNAME(sc), wu);
 
-		/* do not change the order of these 2 functions */
-		sr_wu_put(wu);
-		sr_scsi_done(sd, xs);
+		if (wu->swu_flags & SR_WUF_REBUILD) {
+			if (wu->swu_xs->flags & SCSI_DATA_OUT) {
+				//printf("waking up write\n");
+				wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
+				wakeup(wu);
+			}
+		} else {
+			/* do not change the order of these 2 functions */
+			sr_wu_put(wu);
+			scsi_done(xs);
+		}
 
 		if (sd->sd_sync && sd->sd_wu_pending == 0)
 			wakeup(sd);
@@ -555,8 +568,15 @@ retry:
 bad:
 	xs->error = XS_DRIVER_STUFFUP;
 	xs->flags |= ITSDONE;
-	sr_wu_put(wu);
-	sr_scsi_done(sd, xs);
+	if (wu->swu_flags & SR_WUF_REBUILD) {
+		wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
+		wakeup(wu);
+	} else {
+		/* do not change the order of these 2 functions */
+		sr_wu_put(wu);
+		scsi_done(xs);
+	}
+
 	splx(s);
 }
 

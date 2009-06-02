@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.67 2009/05/11 14:06:21 jsing Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.68 2009/06/02 00:58:16 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -215,6 +215,7 @@ extern u_int32_t		sr_debug;
 #define	SR_MAX_CMDS		16
 #define	SR_MAX_STATES		7
 #define SR_VM_IGNORE_DIRTY	1
+#define SR_REBUILD_IO_SIZE	128 /* blocks */
 
 /* forward define to prevent dependency goo */
 struct sr_softc;
@@ -253,6 +254,10 @@ struct sr_workunit {
 #define SR_WU_PENDING		6
 #define SR_WU_RESTART		7
 #define SR_WU_REQUEUE		8
+
+	int			swu_flags;	/* additional hints */
+#define SR_WUF_REBUILD		(1<<0)
+#define SR_WUF_REBUILDIOCOMP	(1<<1)
 
 	int			swu_fake;	/* faked wu */
 	/* workunit io range */
@@ -425,6 +430,9 @@ struct sr_discipline {
 	int			(*sd_scsi_inquiry)(struct sr_workunit *);
 	int			(*sd_scsi_read_cap)(struct sr_workunit *);
 	int			(*sd_scsi_req_sense)(struct sr_workunit *);
+
+	/* background operation */
+	struct proc		*sd_background_proc;
 };
 
 struct sr_softc {
