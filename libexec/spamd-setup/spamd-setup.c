@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.35 2008/10/03 18:58:52 jmc Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.36 2009/06/02 22:38:45 ray Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -463,10 +463,10 @@ add_blacklist(struct bl *bl, size_t *blc, size_t *bls, gzFile gzf, int white)
 		if (bu == bs) {
 			tmp = realloc(buf, bs + (1024 * 1024) + 1);
 			if (tmp == NULL) {
+				serrno = errno;
 				free(buf);
 				buf = NULL;
 				bs = 0;
-				serrno = errno;
 				goto bldone;
 			}
 			bs += 1024 * 1024;
@@ -668,7 +668,7 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
     struct blacklist *blistnew)
 {
 	char *buf, *method, *file, *message;
-	int fd, black = 0;
+	int fd, black = 0, serror;
 	size_t blc, bls;
 	struct bl *bl = NULL;
 	gzFile gzf;
@@ -727,8 +727,10 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
 	}
 	free(buf);
 	bl = add_blacklist(bl, &blc, &bls, gzf, !black);
+	serror = errno;
 	gzclose(gzf);
 	if (bl == NULL) {
+		errno = serror;
 		warn("Could not add %slist %s", black ? "black" : "white",
 		    name);
 		return (0);
