@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.82 2009/06/01 19:54:02 oga Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.83 2009/06/02 19:49:08 ariane Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -1110,8 +1110,8 @@ uvm_pagefree(struct vm_page *pg)
 	/*
 	 * Clean page state bits.
 	 */
-	atomic_clearbits_int(&pg->pg_flags,
-	    PG_ZERO|PG_FAKE|PG_BUSY|PG_RELEASED|PG_CLEAN|PG_CLEANCHK);
+	atomic_clearbits_int(&pg->pg_flags, PG_ZERO|PG_FAKE|PG_BUSY|
+	    PG_RELEASED|PG_CLEAN|PG_CLEANCHK|PQ_ENCRYPT);
 	/*
 	 * Pmap flag cleaning.
 	 * XXX: Shouldn't pmap do this?
