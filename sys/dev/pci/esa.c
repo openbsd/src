@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.16 2008/10/25 22:30:43 jakemsr Exp $	*/
+/*	$OpenBSD: esa.c,v 1.17 2009/06/02 18:06:31 deraadt Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -1333,18 +1333,18 @@ esa_init(struct esa_softc *sc)
 
 	/* Write kernel code into memory */
 	size = sizeof(esa_assp_kernel_image);
-	for (i = 0; i < size / 2; i++)
+	for (i = 0; i < size; i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_CODE,
 		    ESA_REV_B_CODE_MEMORY_BEGIN + i, esa_assp_kernel_image[i]);
 
 	size = sizeof(esa_assp_minisrc_image);
-	for (i = 0; i < size / 2; i++)
+	for (i = 0; i < size; i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_CODE, 0x400 + i,
 		    esa_assp_minisrc_image[i]);
 
 	/* Write the coefficients for the low pass filter */
 	size = sizeof(esa_minisrc_lpf_image);
-	for (i = 0; i < size / 2; i++)
+	for (i = 0; i < size; i++)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_CODE,
 		    0x400 + ESA_MINISRC_COEF_LOC + i, esa_minisrc_lpf_image[i]);
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_CODE,
