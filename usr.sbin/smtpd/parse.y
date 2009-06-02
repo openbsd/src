@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.36 2009/05/30 23:53:41 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.37 2009/06/02 22:23:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -278,9 +278,9 @@ main		: QUEUE INTERVAL interval	{
 				}
 			}
 
-			if (! interface($3, cert, &conf->sc_listeners,
+			if (! interface($3, cert, conf->sc_listeners,
 				MAX_LISTEN, $4, flags)) {
-				if (host($3, cert, &conf->sc_listeners,
+				if (host($3, cert, conf->sc_listeners,
 					MAX_LISTEN, $4, flags) <= 0) {
 					yyerror("invalid virtual ip or interface: %s", $3);
 					free($6);
@@ -1272,10 +1272,25 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 		free(conf->sc_maps);
 		return 0;
 	}
+	if ((conf->sc_listeners = calloc(1, sizeof(*conf->sc_listeners))) == NULL) {
+		log_warn("cannot allocate memory");
+		free(conf->sc_maps);
+		free(conf->sc_rules);
+		return 0;
+	}
+	if ((conf->sc_ssl = calloc(1, sizeof(*conf->sc_ssl))) == NULL) {
+		log_warn("cannot allocate memory");
+		free(conf->sc_maps);
+		free(conf->sc_rules);
+		free(conf->sc_listeners);
+		return 0;
+	}
 	if ((m = calloc(1, sizeof(*m))) == NULL) {
 		log_warn("cannot allocate memory");
 		free(conf->sc_maps);
 		free(conf->sc_rules);
+		free(conf->sc_listeners);
+		free(conf->sc_ssl);
 		return 0;
 	}
 
@@ -1285,11 +1300,11 @@ parse_config(struct smtpd *x_conf, const char *filename, int opts)
 	map = NULL;
 	rule = NULL;
 
-	TAILQ_INIT(&conf->sc_listeners);
+	TAILQ_INIT(conf->sc_listeners);
 	TAILQ_INIT(conf->sc_maps);
 	TAILQ_INIT(conf->sc_rules);
+	SPLAY_INIT(conf->sc_ssl);
 	SPLAY_INIT(&conf->sc_sessions);
-	SPLAY_INIT(&conf->sc_ssl);
 
 	conf->sc_qintval.tv_sec = SMTPD_QUEUE_INTERVAL;
 	conf->sc_qintval.tv_usec = 0;

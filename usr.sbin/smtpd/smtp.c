@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.54 2009/06/01 14:38:45 jacekm Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.55 2009/06/02 22:23:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -109,8 +109,8 @@ smtp_dispatch_parent(int sig, short event, void *p)
 				s->s_l = NULL;
 				s->s_msg.status |= S_MESSAGE_TEMPFAILURE;
 			}
-
-			smtp_disable_events(env);
+			if (env->sc_listeners)
+				smtp_disable_events(env);
 			imsg_compose(ibuf, IMSG_PARENT_SEND_CONFIG, 0, 0, -1,
 			    NULL, 0);
 			break;
@@ -119,6 +119,12 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			if (env->sc_flags & SMTPD_CONFIGURING)
 				break;
 			env->sc_flags |= SMTPD_CONFIGURING;
+
+			if ((env->sc_listeners = calloc(1, sizeof(*env->sc_listeners))) == NULL)
+				fatal("smtp_dispatch_parent: calloc");
+			if ((env->sc_ssl = calloc(1, sizeof(*env->sc_ssl))) == NULL)
+				fatal("smtp_dispatch_parent: calloc");
+			TAILQ_INIT(env->sc_listeners);
 			break;
 		case IMSG_CONF_SSL: {
 			struct ssl	*s;
@@ -141,7 +147,7 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			    (sizeof(*s) + s->ssl_cert_len))) == NULL)
 				fatal(NULL);
 
-			SPLAY_INSERT(ssltree, &env->sc_ssl, s);
+			SPLAY_INSERT(ssltree, env->sc_ssl, s);
 			break;
 		}
 		case IMSG_CONF_LISTENER: {
@@ -163,10 +169,10 @@ smtp_dispatch_parent(int sig, short event, void *p)
 
 			if (l->flags & F_SSL)
 				if ((l->ssl = SPLAY_FIND(ssltree,
-				    &env->sc_ssl, &key)) == NULL)
+				    env->sc_ssl, &key)) == NULL)
 					fatal("parent and smtp desynchronized");
 
-			TAILQ_INSERT_TAIL(&env->sc_listeners, l, entry);
+			TAILQ_INSERT_TAIL(env->sc_listeners, l, entry);
 			break;
 		}
 		case IMSG_CONF_END:
@@ -630,7 +636,6 @@ smtp(struct smtpd *env)
 	config_pipes(env, peers, nitems(peers));
 	config_peers(env, peers, nitems(peers));
 
-	smtp_setup_events(env);
 	event_dispatch();
 	smtp_shutdown();
 
@@ -642,7 +647,7 @@ smtp_setup_events(struct smtpd *env)
 {
 	struct listener *l;
 
-	TAILQ_FOREACH(l, &env->sc_listeners, entry) {
+	TAILQ_FOREACH(l, env->sc_listeners, entry) {
 		log_debug("smtp_setup_events: listen on %s port %d flags 0x%01x"
 		    " cert \"%s\"", ss_to_text(&l->ss), ntohs(l->port),
 		    l->flags, l->ssl_cert_name);
@@ -663,13 +668,14 @@ smtp_disable_events(struct smtpd *env)
 	struct listener	*l;
 
 	log_debug("smtp_disable_events: closing listening sockets");
-	while ((l = TAILQ_FIRST(&env->sc_listeners)) != NULL) {
-		TAILQ_REMOVE(&env->sc_listeners, l, entry);
+	while ((l = TAILQ_FIRST(env->sc_listeners)) != NULL) {
+		TAILQ_REMOVE(env->sc_listeners, l, entry);
 		event_del(&l->ev);
 		close(l->fd);
 		free(l);
 	}
-	TAILQ_INIT(&env->sc_listeners);
+	free(env->sc_listeners);
+	env->sc_listeners = NULL;
 }
 
 void
@@ -680,7 +686,7 @@ smtp_pause(struct smtpd *env)
 	log_debug("smtp_pause: pausing listening sockets");
 	env->sc_opts |= SMTPD_SMTP_PAUSED;
 
-	TAILQ_FOREACH(l, &env->sc_listeners, entry)
+	TAILQ_FOREACH(l, env->sc_listeners, entry)
 		event_del(&l->ev);
 }
 
@@ -692,7 +698,7 @@ smtp_resume(struct smtpd *env)
 	log_debug("smtp_resume: resuming listening sockets");
 	env->sc_opts &= ~SMTPD_SMTP_PAUSED;
 
-	TAILQ_FOREACH(l, &env->sc_listeners, entry)
+	TAILQ_FOREACH(l, env->sc_listeners, entry)
 		event_add(&l->ev, NULL);
 }
 

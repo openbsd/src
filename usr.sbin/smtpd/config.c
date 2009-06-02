@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.6 2009/05/24 14:38:56 jacekm Exp $	*/
+/*	$OpenBSD: config.c,v 1.7 2009/06/02 22:23:35 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -63,11 +63,12 @@ purge_config(struct smtpd *env, u_int8_t what)
 	struct ssl	*s;
 
 	if (what & PURGE_LISTENERS) {
-		while ((l = TAILQ_FIRST(&env->sc_listeners)) != NULL) {
-			TAILQ_REMOVE(&env->sc_listeners, l, entry);
+		while ((l = TAILQ_FIRST(env->sc_listeners)) != NULL) {
+			TAILQ_REMOVE(env->sc_listeners, l, entry);
 			free(l);
 		}
-		TAILQ_INIT(&env->sc_listeners);
+		free(env->sc_listeners);
+		env->sc_listeners = NULL;
 	}
 	if (what & PURGE_MAPS) {
 		while ((m = TAILQ_FIRST(env->sc_maps)) != NULL) {
@@ -93,13 +94,14 @@ purge_config(struct smtpd *env, u_int8_t what)
 		env->sc_rules = NULL;
 	}
 	if (what & PURGE_SSL) {
-		while ((s = SPLAY_ROOT(&env->sc_ssl)) != NULL) {
-			SPLAY_REMOVE(ssltree, &env->sc_ssl, s);
+		while ((s = SPLAY_ROOT(env->sc_ssl)) != NULL) {
+			SPLAY_REMOVE(ssltree, env->sc_ssl, s);
 			free(s->ssl_cert);
 			free(s->ssl_key);
 			free(s);
 		}
-		SPLAY_INIT(&env->sc_ssl);
+		free(env->sc_ssl);
+		env->sc_ssl = NULL;
 	}
 }
 

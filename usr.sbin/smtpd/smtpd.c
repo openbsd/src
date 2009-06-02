@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.71 2009/06/01 18:24:01 deraadt Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.72 2009/06/02 22:23:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -136,7 +136,7 @@ parent_send_config_listeners(struct smtpd *env)
 	imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_CONF_START,
 	    0, 0, -1, NULL, 0);
 
-	SPLAY_FOREACH(s, ssltree, &env->sc_ssl) {
+	SPLAY_FOREACH(s, ssltree, env->sc_ssl) {
 		if (!(s->flags & F_SCERT))
 			continue;
 
@@ -151,7 +151,7 @@ parent_send_config_listeners(struct smtpd *env)
 		    iov, nitems(iov));
 	}
 
-	TAILQ_FOREACH(l, &env->sc_listeners, entry) {
+	TAILQ_FOREACH(l, env->sc_listeners, entry) {
 		if ((l->fd = socket(l->ss.ss_family, SOCK_STREAM, 0)) == -1)
 			fatal("socket");
 		opt = 1;
@@ -177,7 +177,7 @@ parent_send_config_client_certs(struct smtpd *env)
 	imsg_compose(env->sc_ibufs[PROC_MTA], IMSG_CONF_START,
 	    0, 0, -1, NULL, 0);
 
-	SPLAY_FOREACH(s, ssltree, &env->sc_ssl) {
+	SPLAY_FOREACH(s, ssltree, env->sc_ssl) {
 		if (!(s->flags & F_CCERT))
 			continue;
 

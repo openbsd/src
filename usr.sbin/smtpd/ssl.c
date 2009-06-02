@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.18 2009/06/01 18:02:41 jacekm Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.19 2009/06/02 22:23:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -349,7 +349,7 @@ ssl_load_certfile(struct smtpd *env, const char *name, u_int8_t flags)
 		return -1;
 	}
 
-	s = SPLAY_FIND(ssltree, &env->sc_ssl, &key);
+	s = SPLAY_FIND(ssltree, env->sc_ssl, &key);
 	if (s != NULL) {
 		s->flags |= flags;
 		return 0;
@@ -385,7 +385,7 @@ ssl_load_certfile(struct smtpd *env, const char *name, u_int8_t flags)
 		return (-1);
 	}
 
-	SPLAY_INSERT(ssltree, &env->sc_ssl, s);
+	SPLAY_INSERT(ssltree, env->sc_ssl, s);
 
 	return (0);
 }
@@ -415,7 +415,7 @@ ssl_setup(struct smtpd *env, struct listener *l)
 	    >= sizeof(key.ssl_name))
 		fatal("ssl_setup: certificate name truncated");
 
-	if ((l->ssl = SPLAY_FIND(ssltree, &env->sc_ssl, &key)) == NULL)
+	if ((l->ssl = SPLAY_FIND(ssltree, env->sc_ssl, &key)) == NULL)
 		fatal("ssl_setup: certificate tree corrupted");
 
 	l->ssl_ctx = ssl_ctx_create();
@@ -576,7 +576,7 @@ ssl_client_init(struct session *s)
 			sizeof(key.ssl_name)) >= sizeof(key.ssl_name))
 			log_warnx("warning: certificate name too long: %s",
 			    s->batch->rule.r_value.relayhost.cert);
-		else if ((ssl = SPLAY_FIND(ssltree, &s->s_env->sc_ssl,
+		else if ((ssl = SPLAY_FIND(ssltree, s->s_env->sc_ssl,
 			    &key)) == NULL)
 			log_warnx("warning: failed to find client "
 			    "certificate: %s", key.ssl_name);

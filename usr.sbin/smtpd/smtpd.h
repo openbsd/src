@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.121 2009/06/01 18:24:01 deraadt Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.122 2009/06/02 22:23:36 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -675,12 +675,12 @@ struct smtpd {
 	char					*sc_title[PROC_COUNT];
 	struct passwd				*sc_pw;
 	char					 sc_hostname[MAXHOSTNAMELEN];
-	TAILQ_HEAD(listenerlist, listener)	 sc_listeners;
+	TAILQ_HEAD(listenerlist, listener)	*sc_listeners;
 	TAILQ_HEAD(maplist, map)		*sc_maps, *sc_maps_reload;
 	TAILQ_HEAD(rulelist, rule)		*sc_rules, *sc_rules_reload;
 	SPLAY_HEAD(sessiontree, session)	 sc_sessions;
 	SPLAY_HEAD(msgtree, message)		 sc_messages;
-	SPLAY_HEAD(ssltree, ssl)		 sc_ssl;
+	SPLAY_HEAD(ssltree, ssl)		*sc_ssl;
 
 	SPLAY_HEAD(batchtree, batch)		 batch_queue;
 	SPLAY_HEAD(childtree, child)		 children;
