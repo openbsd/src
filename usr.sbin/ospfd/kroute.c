@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.68 2009/04/26 12:48:06 sthen Exp $ */
+/*	$OpenBSD: kroute.c,v 1.69 2009/06/02 20:16:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -467,9 +467,11 @@ kr_redist_eval(struct kroute *kr, struct rroute *rr)
 	    (a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
 		goto dont_redistribute;
 	/*
-	 * Consider networks with nexthop loopback as not redistributable.
+	 * Consider networks with nexthop loopback as not redistributable
+	 * unless it is a reject or blackhole route.
 	 */
-	if (kr->nexthop.s_addr == htonl(INADDR_LOOPBACK))
+	if (kr->nexthop.s_addr == htonl(INADDR_LOOPBACK) &&
+	    !(kr->flags & (F_BLACKHOLE|F_REJECT)))
 		goto dont_redistribute;
 
 	/* Should we redistribute this route? */
@@ -1199,6 +1201,10 @@ fetchtable(void)
 			sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
 			if (rtm->rtm_flags & RTF_STATIC)
 				kr->r.flags |= F_STATIC;
+			if (rtm->rtm_flags & RTF_BLACKHOLE)
+				kr->r.flags |= F_BLACKHOLE;
+			if (rtm->rtm_flags & RTF_REJECT)
+				kr->r.flags |= F_REJECT;
 			if (rtm->rtm_flags & RTF_DYNAMIC)
 				kr->r.flags |= F_DYNAMIC;
 			if (sa_in != NULL) {
@@ -1393,6 +1399,10 @@ dispatch_rtmsg(void)
 					    prefixlen_classful(prefix.s_addr);
 				if (rtm->rtm_flags & RTF_STATIC)
 					flags |= F_STATIC;
+				if (rtm->rtm_flags & RTF_BLACKHOLE)
+					flags |= F_BLACKHOLE;
+				if (rtm->rtm_flags & RTF_REJECT)
+					flags |= F_REJECT;
 				if (rtm->rtm_flags & RTF_DYNAMIC)
 					flags |= F_DYNAMIC;
 				break;
