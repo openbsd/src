@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.81 2009/05/30 17:20:29 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.82 2009/06/02 23:16:59 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -856,10 +856,6 @@ nfs_request1(struct nfsreq *rep, struct ucred *cred, struct mbuf **mrp,
 	}
 
 tryagain:
-	if (nmp->nm_flag & NFSMNT_SOFT)
-		rep->r_retry = nmp->nm_retry;
-	else
-		rep->r_retry = NFS_MAXREXMIT + 1;	/* past clip limit */
 	rep->r_rtt = rep->r_rexmit = 0;
 	if (proct[rep->r_procnum] > 0)
 		rep->r_flags = R_TIMING;
@@ -1110,10 +1106,8 @@ nfs_rephead(siz, nd, slp, err, mrq, mbp)
 }
 
 /*
- * Nfs timer routine
- * Scan the nfsreq list and retranmit any requests that have timed out
- * To avoid retransmission attempts on STREAM sockets (in the future) make
- * sure to set the r_retry field to 0 (implies nm_retry == 0).
+ * nfs timer routine
+ * Scan the nfsreq list and retranmit any requests that have timed out.
  */
 void
 nfs_timer(arg)
@@ -1153,15 +1147,13 @@ nfs_timer(arg)
 			if (nmp->nm_timeouts < nitems(nfs_backoff))
 				nmp->nm_timeouts++;
 		}
-		/*
-		 * Check for server not responding
-		 */
-		if ((rep->r_flags & R_TPRINTFMSG) == 0 &&
-		     rep->r_rexmit > nmp->nm_deadthresh) {
+
+		/* Check for server not responding. */
+		if ((rep->r_flags & R_TPRINTFMSG) == 0 && rep->r_rexmit > 4) {
 			nfs_msg(rep, "not responding");
 			rep->r_flags |= R_TPRINTFMSG;
 		}
-		if (rep->r_rexmit >= rep->r_retry) {	/* too many */
+		if (rep->r_rexmit >= nmp->nm_retry) {	/* too many */
 			nfsstats.rpctimeouts++;
 			rep->r_flags |= R_SOFTTERM;
 			continue;
@@ -1171,6 +1163,7 @@ nfs_timer(arg)
 				rep->r_rexmit = NFS_MAXREXMIT;
 			continue;
 		}
+
 		if ((so = nmp->nm_so) == NULL)
 			continue;
 

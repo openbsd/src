@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsmount.h,v 1.18 2008/12/27 14:14:30 thib Exp $	*/
+/*	$OpenBSD: nfsmount.h,v 1.19 2009/06/02 23:16:59 thib Exp $	*/
 /*	$NetBSD: nfsmount.h,v 1.10 1996/02/18 11:54:03 fvdl Exp $	*/
 
 /*
@@ -62,7 +62,6 @@ struct	nfsmount {
 	int	nm_sent;		/* Request send count */
 	int	nm_cwnd;		/* Request send window */
 	int	nm_timeouts;		/* Request timeouts */
-	int	nm_deadthresh;		/* Threshold of timeouts-->dead server*/
 	int	nm_rsize;		/* Max size of read rpc */
 	int	nm_wsize;		/* Max size of write rpc */
 	int	nm_readdirsize;		/* Size of a readdir rpc */

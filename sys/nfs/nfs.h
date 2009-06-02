@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.40 2009/05/22 00:19:25 thib Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.41 2009/06/02 23:16:59 thib Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -230,7 +230,6 @@ struct nfsreq {
 	struct vnode	*r_vp;
 	u_int32_t	r_xid;
 	int		r_flags;	/* flags on request, see below */
-	int		r_retry;	/* max retransmission count */
 	int		r_rexmit;	/* current retrans count */
 	int		r_timer;	/* tick counter on reply */
 	int		r_procnum;	/* NFS procedure number */

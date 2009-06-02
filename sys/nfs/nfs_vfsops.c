@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.81 2009/04/13 17:51:57 blambert Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.82 2009/06/02 23:16:59 thib Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -66,9 +66,6 @@
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsdiskless.h>
 #include <nfs/nfs_var.h>
-
-#define	NQ_DEADTHRESH	NQ_NEVERDEAD	/* Default nm_deadthresh */
-#define	NQ_NEVERDEAD	9	/* Greater than max. nm_timeouts */
 
 extern struct nfsstats nfsstats;
 extern int nfs_ticks;
@@ -443,11 +440,10 @@ nfs_decode_args(nmp, argp, nargp)
 			nmp->nm_timeo = NFS_MAXTIMEO;
 	}
 
-	if ((argp->flags & NFSMNT_RETRANS) && argp->retrans > 1) {
-		nmp->nm_retry = argp->retrans;
-		if (nmp->nm_retry > NFS_MAXREXMIT)
-			nmp->nm_retry = NFS_MAXREXMIT;
-	}
+	if ((argp->flags & NFSMNT_RETRANS) && argp->retrans > 1)
+		nmp->nm_retry = MIN(argp->retrans, NFS_MAXREXMIT);
+	if (!(nmp->nm_flag & NFSMNT_SOFT))
+		nmp->nm_retry = NFS_MAXREXMIT + 1; /* past clip limit */
 
 	if (argp->flags & NFSMNT_NFSV3) {
 		if (argp->sotype == SOCK_DGRAM)
@@ -503,9 +499,6 @@ nfs_decode_args(nmp, argp, nargp)
 	if ((argp->flags & NFSMNT_READAHEAD) && argp->readahead >= 0 &&
 		argp->readahead <= NFS_MAXRAHEAD)
 		nmp->nm_readahead = argp->readahead;
-	if ((argp->flags & NFSMNT_DEADTHRESH) && argp->deadthresh >= 1 &&
-		argp->deadthresh <= NQ_NEVERDEAD)
-		nmp->nm_deadthresh = argp->deadthresh;
 	if (argp->flags & NFSMNT_ACREGMIN && argp->acregmin >= 0) {
 		if (argp->acregmin > 0xffff)
 			nmp->nm_acregmin = 0xffff;
@@ -554,7 +547,6 @@ nfs_decode_args(nmp, argp, nargp)
 	nargp->retrans = nmp->nm_retry;
 	nargp->maxgrouplist = nmp->nm_numgrps;
 	nargp->readahead = nmp->nm_readahead;
-	nargp->deadthresh = nmp->nm_deadthresh;
 	nargp->acregmin = nmp->nm_acregmin;
 	nargp->acregmax = nmp->nm_acregmax;
 	nargp->acdirmin = nmp->nm_acdirmin;
@@ -680,7 +672,6 @@ mountnfs(argp, mp, nam, pth, hst)
 	nmp->nm_readdirsize = NFS_READDIRSIZE;
 	nmp->nm_numgrps = NFS_MAXGRPS;
 	nmp->nm_readahead = NFS_DEFRAHEAD;
-	nmp->nm_deadthresh = NQ_DEADTHRESH;
 	nmp->nm_fhsize = argp->fhsize;
 	nmp->nm_acregmin = NFS_MINATTRTIMO;
 	nmp->nm_acregmax = NFS_MAXATTRTIMO;
