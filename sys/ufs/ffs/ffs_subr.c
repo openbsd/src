@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_subr.c,v 1.21 2008/01/05 19:49:26 otto Exp $	*/
+/*	$OpenBSD: ffs_subr.c,v 1.22 2009/06/02 12:35:06 deraadt Exp $	*/
 /*	$NetBSD: ffs_subr.c,v 1.6 1996/03/17 02:16:23 christos Exp $	*/
 
 /*
@@ -142,7 +142,7 @@ ffs_checkoverlap(struct buf *bp, struct inode *ip)
 		    ep->b_blkno + btodb(ep->b_bcount) <= start)
 			continue;
 		vprint("Disk overlap", vp);
-		(void)printf("\tstart %d, end %d overlap start %d, end %ld\n",
+		(void)printf("\tstart %d, end %d overlap start %llu, end %llu\n",
 			start, last, ep->b_blkno,
 			ep->b_blkno + btodb(ep->b_bcount) - 1);
 		panic("Disk buffer overlap");
