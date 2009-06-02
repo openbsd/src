@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.1 2008/06/26 15:10:01 pyr Exp $ */
+/*	$OpenBSD: yp.c,v 1.2 2009/06/02 07:40:50 bernd Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -347,7 +347,8 @@ ypproc_match_2_svc(ypreq_key *arg, struct svc_req *req)
 
 		yp_make_val(&res, ue->ue_line);
 		return (&res);
-	} else if (strcmp(arg->map, "passwd.byuid") == 0) {
+	} else if (strcmp(arg->map, "passwd.byuid") == 0 ||
+		   strcmp(arg->map, "master.passwd.byuid") == 0) {
 		bzero(key, sizeof(key));
 		(void)strncpy(key, arg->key.keydat_val,
 		    arg->key.keydat_len);
