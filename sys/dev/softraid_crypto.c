@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.33 2009/05/11 14:06:21 jsing Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.34 2009/06/02 11:38:51 deraadt Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -151,7 +151,7 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 
 	/* Select crypto session based on block number */
 	keyndx = blk >> SR_CRYPTO_KEY_BLKSHIFT;
-	if (keyndx > SR_CRYPTO_MAXKEYS)
+	if (keyndx >= SR_CRYPTO_MAXKEYS)
 		goto unwind;
 	crp->crp_sid = sd->mds.mdd_crypto.scr_sid[keyndx];
 	if (crp->crp_sid == (u_int64_t)-1)

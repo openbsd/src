@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid0.c,v 1.13 2009/05/11 14:06:21 jsing Exp $ */
+/* $OpenBSD: softraid_raid0.c,v 1.14 2009/06/02 11:38:51 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Marco Peereboom <marco@peereboom.us>
  *
@@ -188,7 +188,7 @@ sr_raid0_set_vol_state(struct sr_discipline *sd)
 
 	for (i = 0; i < nd; i++) {
 		s = sd->sd_vol.sv_chunks[i]->src_meta.scm_status;
-		if (s > SR_MAX_STATES)
+		if (s >= SR_MAX_STATES)
 			panic("%s: %s: %s: invalid chunk state",
 			    DEVNAME(sd->sd_sc),
 			    sd->sd_meta->ssd_devname,
