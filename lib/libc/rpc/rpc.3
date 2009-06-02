@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.38 2007/05/31 19:19:30 jmc Exp $
+.\"	$OpenBSD: rpc.3,v 1.39 2009/06/02 14:11:39 schwarze Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
 .\" All rights reserved.
@@ -78,7 +78,7 @@
 .\" 2550 Garcia Avenue
 .\" Mountain View, California  94043
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 2 2009 $
 .Dt RPC 3
 .Os
 .Sh NAME
@@ -133,7 +133,9 @@
 .Nm svcerr_systemerr ,
 .Nm svcerr_weakauth ,
 .Nm svcfd_create ,
+.Nm svcraw_create ,
 .Nm svctcp_create ,
+.Nm svcudp_create ,
 .Nm svcudp_bufcreate ,
 .Nm xdr_accepted_reply ,
 .Nm xdr_authunix_parms ,
@@ -261,7 +263,9 @@
 .Ft SVCXPRT *
 .Fn svcfd_create "int fd" "u_int sendsize" "u_int recvsize"
 .Ft SVCXPRT *
-.Fn svcudp_bufcreate "int sock"
+.Fn svcudp_create "int sock"
+.Ft SVCXPRT *
+.Fn svcudp_bufcreate "int sock" "u_int sendsz" "u_int recvsz"
 .Ft bool_t
 .Fn xdr_accepted_reply "XDR *xdrs" "struct accepted_reply *ar"
 .Ft bool_t
@@ -677,11 +681,14 @@ out.
 The total time for the call to time out is specified by
 .Fn clnt_call .
 .Pp
-This allows the user to specify the maximum packet size for sending
+.Fn clntudp_bufcreate
+is like
+.Fn clntudp_create ,
+except that it allows the user to specify the maximum packet size for sending
 and receiving
 .Tn UDP-based
 .Tn RPC
-messages.
+messages instead of using the default size limit of 8800 bytes.
 .Pp
 .Fn get_myaddress
 stuffs the machine's
@@ -1238,7 +1245,7 @@ and
 indicate sizes for the send and receive buffers.
 If they are zero, a reasonable default is chosen.
 .Pp
-.Fn svcudp_bufcreate
+.Fn svcudp_create
 is a routine which creates a
 .Tn UDP/IP-based
 .Tn RPC
@@ -1260,11 +1267,14 @@ This routine returns
 .Tn NULL
 if it fails.
 .Pp
-This allows the user to specify the maximum packet size for sending and
-receiving
+.Fn svcudp_bufcreate
+is like
+.Fn svcudp_create ,
+except that it allows the user to specify the maximum packet size for sending
+and receiving
 .Tn UDP-based
 .Tn RPC
-messages.
+messages instead of using the default size limit of 8800 bytes.
 .Pp
 .Fn xdr_accepted_reply
 is used for encoding
