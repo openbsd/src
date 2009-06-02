@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.564 2009/05/31 17:57:27 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.565 2009/06/02 03:21:31 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -261,7 +261,7 @@ ask() {
 		!)	echo "Type 'exit' to return to install."
 			sh
 			;;
-		!*)	eval ${resp#?}
+		!*)	eval "${resp#?}"
 			;;
 		*)	: ${resp:=$_default}
 			break
@@ -1143,6 +1143,8 @@ waitftplist() {
 #	and FTPOPTS must be global.
 install_url() {
 	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd
+	local _server_ip_var=_${_url_type}_server_ip \
+		_server_dir_var=_${_url_type}_server_dir
 
 	waitftplist
 	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" \
@@ -1154,7 +1156,7 @@ install_url() {
 		_prompt="Server? (hostname, list#, 'done' or '?')"
 		sed -ne "/^${_url_type}:\/\//s///p" < $SERVERLISTALL > $SERVERLIST
 		set -- $(sed -ne "1p" $SERVERLIST)
-		eval _${_url_type}_server_ip=${1%%/*}
+		eval $_server_ip_var=\${1%%/*}
 	else
 		echo "(Was not able to get ftplist from ftp.openbsd.org, but that is OK)"
 		_prompt="Server? (hostname or 'done')"
@@ -1162,7 +1164,7 @@ install_url() {
 
 	# Get server IP address or hostname
 	while :; do
-		eval resp=\$_${_url_type}_server_ip
+		eval resp=\$$_server_ip_var
 		ask_until "$_prompt" "$resp"
 		case $resp in
 		done)	return ;;
@@ -1176,20 +1178,20 @@ install_url() {
 			set -- $(sed -ne "${resp}p" $SERVERLIST)
 			[[ $# -lt 1 ]] && { echo "There is no line $resp." ; continue ; }
 			echo "Using	$*"
-			eval _${_url_type}_server_ip=${1%%/*}
-			eval _${_url_type}_server_dir=${1#*/}/$FTPSETDIR
+			eval $_server_ip_var=\${1%%/*}
+			eval $_server_dir_var=\${1#*/}/\$FTPSETDIR
 			# Repeat loop to get user to confirm server address.
 			;;
-		*)	eval _${_url_type}_server_ip=$resp
+		*)	eval $_server_ip_var=\$resp
 			break
 			;;
 		esac
 	done
 
 	# Get server directory
-	eval resp=\$_${_url_type}_server_dir
+	eval resp=\$$_server_dir_var
 	ask_until "Server directory?" "${resp:-pub/OpenBSD/$FTPSETDIR}"
-	eval _${_url_type}_server_dir=$resp
+	eval $_server_dir_var=\$resp
 
 	if [[ $_url_type == ftp ]]; then
 		# Get login name, setting IFS to nothing so trailing or
@@ -1217,7 +1219,7 @@ install_url() {
 	if [[ $_url_type == ftp && $_ftp_server_login != anonymous ]]; then
 		_url_base=$_url_base$(encode_for_url "$_ftp_server_login"):$(encode_for_url "$_passwd")@
 	fi
-	eval _url_base=$_url_base\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
+	eval _url_base=\$_url_base\$$_server_ip_var/\$$_server_dir_var
 
 	# XXX Workaround for problems ftp'ing out from a v6 only host.
 	ifconfig lo0 127.0.0.1
@@ -1237,7 +1239,7 @@ install_url() {
 	install_files "$_url_base" "$_file_list"
 
 	# Remember where we installed from
-	eval installedfrom=$_url_type://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
+	eval installedfrom=$_url_type://\$$_server_ip_var/\$$_server_dir_var
 }
 
 install_mounted_fs() {
