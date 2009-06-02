@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.59 2008/11/28 02:44:18 brad Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.60 2009/06/02 12:33:42 reyk Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1637,7 +1637,7 @@ nxe_board_info(struct nxe_softc *sc)
 		goto out;
 	}
 
-	for (i = 0; i < sizeofa(nxe_boards); i++) {
+	for (i = 0; i < nitems(nxe_boards); i++) {
 		if (ni->ni_board_type == nxe_boards[i].brd_type) {
 			sc->sc_board = &nxe_boards[i];
 			break;
