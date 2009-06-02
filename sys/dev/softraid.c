@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.135 2009/06/02 00:58:16 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.136 2009/06/02 05:49:35 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1799,11 +1799,15 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 			continue;
 		sd = sc->sc_dis[i];
 
-		/* XXX check that we can even do a rebuild on this discipline */
+		if (!sd->sd_rebuild) {
+			printf("%s: discipline does not support rebuild\n",
+			    DEVNAME(sc));
+			goto done;
+		}
 
 		/* make sure volume is in the right state */
 		if (sd->sd_vol_status == BIOC_SVREBUILD) {
-			printf("%s: rebuild already in progres\n", DEVNAME(sc));
+			printf("%s: rebuild already in progress\n", DEVNAME(sc));
 			goto done;
 		}
 		if (sd->sd_vol_status != BIOC_SVDEGRADED) {
@@ -1834,7 +1838,7 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 		sr_meta_getdevname(sc, dev, devname, sizeof(devname));
 		bdsw = bdevsw_lookup(dev);
 
-		if (bdsw->d_open(dev, FREAD | FWRITE , S_IFBLK, curproc)) {
+		if (bdsw->d_open(dev, FREAD | FWRITE, S_IFBLK, curproc)) {
 			DNPRINTF(SR_D_META,"%s: sr_ioctl_setstate can't "
 			    "open %s\n", DEVNAME(sc), devname);
 			goto done;
@@ -1894,7 +1898,7 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 
 		kthread_create_deferred(sr_rebuild, sd);
 
-		break;
+		break; /* all done */
 	}
 
 	rv = 0;

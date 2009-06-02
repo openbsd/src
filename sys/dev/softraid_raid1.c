@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.10 2009/06/02 00:58:16 marco Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.11 2009/06/02 05:49:35 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -59,6 +59,7 @@ sr_raid1_discipline_init(struct sr_discipline *sd)
 	sd->sd_type = SR_MD_RAID1;
 	sd->sd_max_ccb_per_wu = sd->sd_meta->ssdi.ssd_chunk_no;
 	sd->sd_max_wu = SR_RAID1_NOWU;
+	sd->sd_rebuild = 1;
 
 	/* Setup discipline pointers. */
 	sd->sd_alloc_resources = sr_raid1_alloc_resources;
