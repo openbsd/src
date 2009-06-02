@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewirereg.h,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
+/*	$OpenBSD: onewirereg.h,v 1.2 2009/06/02 18:19:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -28,9 +28,9 @@
  */
 
 /* Family code */
-#define ONEWIRE_ROM_FAMILY(x)		((x) & 0xff)
-#define ONEWIRE_ROM_FAMILY_TYPE(x)	((x) & 0x7f)
-#define ONEWIRE_ROM_FAMILY_CUSTOM(x)	(((x) >> 7) & 0x1)
+#define ONEWIRE_ROM_FAMILY(x)		((u_char)(x) & 0xff)
+#define ONEWIRE_ROM_FAMILY_TYPE(x)	((u_char)(x) & 0x7f)
+#define ONEWIRE_ROM_FAMILY_CUSTOM(x)	((u_char)((x) >> 7) & 0x1)
 
 /* Serial number */
 #define ONEWIRE_ROM_SN(x)		(((x) >> 8) & 0xffffffffffffULL)
