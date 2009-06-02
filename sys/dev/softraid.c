@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.139 2009/06/02 19:21:49 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.140 2009/06/02 21:23:11 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -281,7 +281,7 @@ sr_meta_probe(struct sr_discipline *sd, dev_t *dt, int no_chunk)
 			 * XXX leaving dev open for now; move this to attach
 			 * and figure out the open/close dance for unwind.
 			 */
-			error = bdsw->d_open(dev, FREAD | FWRITE , S_IFBLK,
+			error = bdsw->d_open(dev, FREAD | FWRITE, S_IFBLK,
 			    curproc);
 			if (error) {
 				DNPRINTF(SR_D_META,"%s: sr_meta_probe can't "
@@ -361,7 +361,7 @@ sr_meta_rw(struct sr_discipline *sd, dev_t dev, void *md, size_t sz,
 	}
 
 	bzero(&b, sizeof(b));
-	b.b_flags = flags;
+	b.b_flags = flags | B_PHYS;
 	b.b_blkno = ofs;
 	b.b_bcount = sz;
 	b.b_bufsize = sz;
@@ -1908,7 +1908,7 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 	rv = 0;
 done:
 	if (open)
-		(*bdsw->d_close)(dev, FREAD, S_IFCHR, curproc);
+		(*bdsw->d_close)(dev, FREAD | FWRITE, S_IFCHR, curproc);
 
 	return (rv);
 }

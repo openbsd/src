@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.5 2009/05/11 14:06:21 jsing Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.6 2009/06/02 21:23:11 marco Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -738,7 +738,7 @@ resleep:
 			AOE_HDR2BLK(ap, blk);
 			memset(&buf, 0, sizeof buf);
 			buf.b_blkno = blk;
-			buf.b_flags = B_WRITE;
+			buf.b_flags = B_WRITE | B_PHYS;
 			buf.b_bcount = len;
 			buf.b_bufsize = len;
 			buf.b_resid = len;
@@ -801,7 +801,7 @@ resleep:
 			AOE_HDR2BLK(ap, blk);
 			memset(&buf, 0, sizeof buf);
 			buf.b_blkno = blk;
-			buf.b_flags = B_WRITE;
+			buf.b_flags = B_WRITE | B_PHYS;
 			buf.b_bcount = len;
 			buf.b_bufsize = len;
 			buf.b_resid = len;

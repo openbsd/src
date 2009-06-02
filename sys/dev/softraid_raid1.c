@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.13 2009/06/02 16:32:23 marco Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.14 2009/06/02 21:23:11 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -355,6 +355,7 @@ sr_raid1_rw(struct sr_workunit *wu)
 			ccb->ccb_buf.b_iodone = sr_raid1_intr;
 		}
 
+		ccb->ccb_buf.b_flags |= B_PHYS;
 		ccb->ccb_buf.b_blkno = blk;
 		ccb->ccb_buf.b_bcount = xs->datalen;
 		ccb->ccb_buf.b_bufsize = xs->datalen;
@@ -550,7 +551,6 @@ sr_raid1_intr(struct buf *bp)
 
 		if (wu->swu_flags & SR_WUF_REBUILD) {
 			if (wu->swu_xs->flags & SCSI_DATA_OUT) {
-				//printf("waking up write\n");
 				wu->swu_flags |= SR_WUF_REBUILDIOCOMP;
 				wakeup(wu);
 			}
