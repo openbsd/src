@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidev.h,v 1.27 2009/03/10 20:36:10 jordan Exp $ */
+/* $OpenBSD: acpidev.h,v 1.28 2009/06/02 23:03:34 jordan Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
@@ -288,6 +288,8 @@ struct acpibat_softc {
 	struct ksensordev	sc_sensdev;
 };
 
+TAILQ_HEAD(aml_nodelisth, aml_nodelist);
+
 struct acpidock_softc {
 	struct device		sc_dev;
 
@@ -297,7 +299,7 @@ struct acpidock_softc {
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
 
-	TAILQ_HEAD(, aml_nodelist)	sc_deps_h;
+	struct aml_nodelisth	sc_deps_h;
 	struct aml_nodelist	*sc_deps;
 
 	struct ksensor		sc_sens;

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.32 2009/03/13 18:53:50 jordan Exp $ */
+/* $OpenBSD: acpidock.c,v 1.33 2009/06/02 23:03:34 jordan Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -50,6 +50,7 @@ int	acpidock_dockctl(struct acpidock_softc *, int);
 int	acpidock_eject(struct acpidock_softc *, struct aml_node *);
 int	acpidock_notify(struct aml_node *, int, void *);
 int	acpidock_status(struct acpidock_softc *);
+int	acpidock_walkchildren(struct aml_node *, void *);
 
 int	acpidock_foundejd(struct aml_node *, void *);
 
@@ -196,6 +197,8 @@ acpidock_eject(struct acpidock_softc *sc, struct aml_node *node)
 	struct aml_value	res;
 	int rv;
 
+	if (node != sc->sc_devnode)
+		aml_notify(node, 3);
 	memset(&cmd, 0, sizeof cmd);
 	cmd.v_integer = 1;
 	cmd.type = AML_OBJTYPE_INTEGER;
@@ -220,6 +223,7 @@ int
 acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpidock_softc	*sc = arg;
+	struct aml_nodelist *n;
 
 	dnprintf(5, "%s: acpidock_notify: notify %d\n", DEVNAME(sc),
 	    notify_type);
@@ -230,9 +234,11 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 		acpidock_docklock(sc, 1);
 		acpidock_dockctl(sc, 1);
 
+		TAILQ_FOREACH_REVERSE(n, &sc->sc_deps_h, aml_nodelisth, entries) {
+			aml_notify(n->node, 0x00);
+		}
 		break;
 	case ACPIDOCK_EVENT_EJECT: {
-		struct aml_nodelist *n;
 
 		TAILQ_FOREACH(n, &sc->sc_deps_h, entries)
 			acpidock_eject(sc, n->node);
@@ -264,31 +270,47 @@ acpidock_notify(struct aml_node *node, int notify_type, void *arg)
 	return (0);
 }
 
+int acpidock_walkchildren(struct aml_node *node, void *arg)
+{
+	struct acpidock_softc *sc = arg;
+	struct aml_nodelist *n;
+
+	if (node && node->value && node->value->type == AML_OBJTYPE_DEVICE) {
+		n = malloc(sizeof *n, M_DEVBUF, M_WAITOK | M_ZERO);
+		n->node = node;
+		dnprintf(10,"%s depends on", aml_nodename(node));
+		dnprintf(10,"%s\n", aml_nodename(sc->sc_devnode));
+		TAILQ_INSERT_TAIL(&sc->sc_deps_h, n, entries);
+	}
+	return 0;
+}
+
 int
 acpidock_foundejd(struct aml_node *node, void *arg)
 {
 	struct acpidock_softc *sc = (struct acpidock_softc *)arg;
 	struct aml_value res;
+	struct aml_node *dock;
+	extern struct aml_node	aml_root;
 
 	dnprintf(15, "%s: %s", DEVNAME(sc), node->name);
 
 	if (aml_evalnode(sc->sc_acpi, node, 0, NULL, &res) == -1) {
 		printf(": error\n");
 	} else {
-		struct aml_nodelist *n;
-
-		/* XXX debug */
-		dnprintf(10, "%s: %s depends on %s\n", DEVNAME(sc),
-		    node->name, res.v_string);
-
-		/* XXX more than one dock? */
-		n = malloc(sizeof(struct aml_nodelist), M_DEVBUF, M_WAITOK);
-		n->node = node;
-
-		TAILQ_INSERT_TAIL(&sc->sc_deps_h, n, entries);
+		if (!memcmp(res.v_string, "_SB.", 4)) {
+			dock = aml_searchname(&aml_root, "_SB_");
+			dock = aml_searchname(dock,   res.v_string+4);
+		}
+		else {
+			dock = aml_searchname(&aml_root, res.v_string);
+		}
+		if (dock == sc->sc_devnode) {
+			/* Add all children devices of Device containing _EJD */
+			aml_walknodes(node->parent, AML_WALK_POST, acpidock_walkchildren, sc);
 	}
-
 	aml_freevalue(&res);
+	}
 
 	return 0;
 }
