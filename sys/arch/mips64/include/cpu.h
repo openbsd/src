@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.31 2009/05/22 20:37:53 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.32 2009/06/02 17:55:37 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,17 +43,17 @@
  */
 
 #ifndef _MIPS_CPU_H_
-#define _MIPS_CPU_H_
+#define	_MIPS_CPU_H_
 
 /*
  * MIPS32-style segment definitions.
  * They only cover the first 512MB of physical addresses.
  */
-#define KSEG0_BASE	0xffffffff80000000
-#define KSEG1_BASE	0xffffffffa0000000
-#define KSSEG_BASE	0xffffffffc0000000
-#define KSEG3_BASE	0xffffffffe0000000
-#define KSEG_SIZE	0x0000000020000000
+#define	KSEG0_BASE	0xffffffff80000000
+#define	KSEG1_BASE	0xffffffffa0000000
+#define	KSSEG_BASE	0xffffffffc0000000
+#define	KSEG3_BASE	0xffffffffe0000000
+#define	KSEG_SIZE	0x0000000020000000
 
 #define	KSEG0_TO_PHYS(x)	((u_long)(x) & (KSEG_SIZE - 1))
 #define	KSEG1_TO_PHYS(x)	((u_long)(x) & (KSEG_SIZE - 1))
@@ -118,42 +118,42 @@ extern vaddr_t uncached_base;
 #ifdef _KERNEL
 
 /*
- *  Status register.
+ * Status register.
  */
-#define SR_XX			0x80000000
-#define SR_COP_USABILITY	0x30000000	/* CP0 and CP1 only */
-#define SR_COP_0_BIT		0x10000000
-#define SR_COP_1_BIT		0x20000000
-#define SR_RP			0x08000000
-#define SR_FR_32		0x04000000
-#define SR_RE			0x02000000
-#define SR_DSD			0x01000000	/* Only on R12000 */
-#define SR_BOOT_EXC_VEC		0x00400000
-#define SR_TLB_SHUTDOWN		0x00200000
-#define SR_SOFT_RESET		0x00100000
-#define SR_DIAG_CH		0x00040000
-#define SR_DIAG_CE		0x00020000
-#define SR_DIAG_DE		0x00010000
-#define SR_KX			0x00000080
-#define SR_SX			0x00000040
-#define SR_UX			0x00000020
-#define SR_KSU_MASK		0x00000018
-#define SR_KSU_USER		0x00000010
-#define SR_KSU_SUPER		0x00000008
-#define SR_KSU_KERNEL		0x00000000
-#define SR_ERL			0x00000004
-#define SR_EXL			0x00000002
-#define SR_INT_ENAB		0x00000001
+#define	SR_XX			0x80000000
+#define	SR_COP_USABILITY	0x30000000	/* CP0 and CP1 only */
+#define	SR_COP_0_BIT		0x10000000
+#define	SR_COP_1_BIT		0x20000000
+#define	SR_RP			0x08000000
+#define	SR_FR_32		0x04000000
+#define	SR_RE			0x02000000
+#define	SR_DSD			0x01000000	/* Only on R12000 */
+#define	SR_BOOT_EXC_VEC		0x00400000
+#define	SR_TLB_SHUTDOWN		0x00200000
+#define	SR_SOFT_RESET		0x00100000
+#define	SR_DIAG_CH		0x00040000
+#define	SR_DIAG_CE		0x00020000
+#define	SR_DIAG_DE		0x00010000
+#define	SR_KX			0x00000080
+#define	SR_SX			0x00000040
+#define	SR_UX			0x00000020
+#define	SR_KSU_MASK		0x00000018
+#define	SR_KSU_USER		0x00000010
+#define	SR_KSU_SUPER		0x00000008
+#define	SR_KSU_KERNEL		0x00000000
+#define	SR_ERL			0x00000004
+#define	SR_EXL			0x00000002
+#define	SR_INT_ENAB		0x00000001
 
-#define SR_INT_MASK		0x0000ff00
-#define SOFT_INT_MASK_0		0x00000100
-#define SOFT_INT_MASK_1		0x00000200
-#define SR_INT_MASK_0		0x00000400
-#define SR_INT_MASK_1		0x00000800
-#define SR_INT_MASK_2		0x00001000
-#define SR_INT_MASK_3		0x00002000
-#define SR_INT_MASK_4		0x00004000
-#define SR_INT_MASK_5		0x00008000
+#define	SR_INT_MASK		0x0000ff00
+#define	SOFT_INT_MASK_0		0x00000100
+#define	SOFT_INT_MASK_1		0x00000200
+#define	SR_INT_MASK_0		0x00000400
+#define	SR_INT_MASK_1		0x00000800
+#define	SR_INT_MASK_2		0x00001000
+#define	SR_INT_MASK_3		0x00002000
+#define	SR_INT_MASK_4		0x00004000
+#define	SR_INT_MASK_5		0x00008000
 /*
  * Interrupt control register in RM7000. Expansion of interrupts.
  */
@@ -175,15 +175,15 @@ extern vaddr_t uncached_base;
  * The bits in the cause register.
  *
  *	CR_BR_DELAY	Exception happened in branch delay slot.
- *	CR_COP_ERR		Coprocessor error.
+ *	CR_COP_ERR	Coprocessor error.
  *	CR_IP		Interrupt pending bits defined below.
  *	CR_EXC_CODE	The exception type (see exception codes below).
  */
-#define CR_BR_DELAY		0x80000000
-#define CR_COP_ERR		0x30000000
-#define CR_EXC_CODE		0x0000007c
-#define CR_EXC_CODE_SHIFT	2
-#define CR_IPEND		0x003fff00
+#define	CR_BR_DELAY		0x80000000
+#define	CR_COP_ERR		0x30000000
+#define	CR_EXC_CODE		0x0000007c
+#define	CR_EXC_CODE_SHIFT	2
+#define	CR_IPEND		0x003fff00
 #define	CR_INT_SOFT0		0x00000100
 #define	CR_INT_SOFT1		0x00000200
 #define	CR_INT_0		0x00000400
@@ -204,80 +204,75 @@ extern vaddr_t uncached_base;
 /*
  * The bits in the context register.
  */
-#define CNTXT_PTE_BASE		0xff800000
-#define CNTXT_BAD_VPN2		0x007ffff0
+#define	CNTXT_PTE_BASE		0xff800000
+#define	CNTXT_BAD_VPN2		0x007ffff0
 
 /*
  * Location of exception vectors.
  */
-#define RESET_EXC_VEC		(KSEG0_BASE + 0x3fc00000)
-#define TLB_MISS_EXC_VEC	(KSEG0_BASE + 0x00000000)
-#define XTLB_MISS_EXC_VEC	(KSEG0_BASE + 0x00000080)
-#define CACHE_ERR_EXC_VEC	(KSEG0_BASE + 0x00000100)
-#define GEN_EXC_VEC		(KSEG0_BASE + 0x00000180)
+#define	RESET_EXC_VEC		(KSEG0_BASE + 0x3fc00000)
+#define	TLB_MISS_EXC_VEC	(KSEG0_BASE + 0x00000000)
+#define	XTLB_MISS_EXC_VEC	(KSEG0_BASE + 0x00000080)
+#define	CACHE_ERR_EXC_VEC	(KSEG0_BASE + 0x00000100)
+#define	GEN_EXC_VEC		(KSEG0_BASE + 0x00000180)
 
 /*
  * Coprocessor 0 registers:
  */
-#define COP_0_TLB_INDEX		$0
-#define COP_0_TLB_RANDOM	$1
-#define COP_0_TLB_LO0		$2
-#define COP_0_TLB_LO1		$3
-#define COP_0_TLB_CONTEXT	$4
-#define COP_0_TLB_PG_MASK	$5
-#define COP_0_TLB_WIRED		$6
-#define COP_0_BAD_VADDR		$8
-#define COP_0_COUNT		$9
-#define COP_0_TLB_HI		$10
-#define COP_0_COMPARE		$11
-#define COP_0_STATUS_REG	$12
-#define COP_0_CAUSE_REG		$13
-#define COP_0_EXC_PC		$14
-#define COP_0_PRID		$15
-#define COP_0_CONFIG		$16
-#define COP_0_LLADDR		$17
-#define COP_0_WATCH_LO		$18
-#define COP_0_WATCH_HI		$19
-#define COP_0_TLB_XCONTEXT	$20
-#define COP_0_ECC		$26
-#define COP_0_CACHE_ERR		$27
-#define COP_0_TAG_LO		$28
-#define COP_0_TAG_HI		$29
-#define COP_0_ERROR_PC		$30
+#define	COP_0_TLB_INDEX		$0
+#define	COP_0_TLB_RANDOM	$1
+#define	COP_0_TLB_LO0		$2
+#define	COP_0_TLB_LO1		$3
+#define	COP_0_TLB_CONTEXT	$4
+#define	COP_0_TLB_PG_MASK	$5
+#define	COP_0_TLB_WIRED		$6
+#define	COP_0_BAD_VADDR		$8
+#define	COP_0_COUNT		$9
+#define	COP_0_TLB_HI		$10
+#define	COP_0_COMPARE		$11
+#define	COP_0_STATUS_REG	$12
+#define	COP_0_CAUSE_REG		$13
+#define	COP_0_EXC_PC		$14
+#define	COP_0_PRID		$15
+#define	COP_0_CONFIG		$16
+#define	COP_0_LLADDR		$17
+#define	COP_0_WATCH_LO		$18
+#define	COP_0_WATCH_HI		$19
+#define	COP_0_TLB_XCONTEXT	$20
+#define	COP_0_TLB_FR_MASK	$21	/* R10000 onwards */
+#define	COP_0_ECC		$26
+#define	COP_0_CACHE_ERR		$27
+#define	COP_0_TAG_LO		$28
+#define	COP_0_TAG_HI		$29
+#define	COP_0_ERROR_PC		$30
 
 /*
  * RM7000 specific
  */
-#define COP_0_WATCH_1		$18
-#define COP_0_WATCH_2		$19
-#define COP_0_WATCH_M		$24
-#define COP_0_PC_COUNT		$25
-#define COP_0_PC_CTRL		$22
+#define	COP_0_WATCH_1		$18
+#define	COP_0_WATCH_2		$19
+#define	COP_0_WATCH_M		$24
+#define	COP_0_PC_COUNT		$25
+#define	COP_0_PC_CTRL		$22
 
 #define	COP_0_ICR		$20	/* Use cfc0/ctc0 to access */
 
 /*
  * Values for the code field in a break instruction.
  */
-#define BREAK_INSTR		0x0000000d
-#define BREAK_VAL_MASK		0x03ff0000
-#define BREAK_VAL_SHIFT		16
-#define BREAK_KDB_VAL		512
-#define BREAK_SSTEP_VAL		513
-#define BREAK_BRKPT_VAL		514
-#define BREAK_SOVER_VAL		515
-#define BREAK_DDB_VAL		516
-#define BREAK_KDB	(BREAK_INSTR | (BREAK_KDB_VAL << BREAK_VAL_SHIFT))
-#define BREAK_SSTEP	(BREAK_INSTR | (BREAK_SSTEP_VAL << BREAK_VAL_SHIFT))
-#define BREAK_BRKPT	(BREAK_INSTR | (BREAK_BRKPT_VAL << BREAK_VAL_SHIFT))
-#define BREAK_SOVER	(BREAK_INSTR | (BREAK_SOVER_VAL << BREAK_VAL_SHIFT))
-#define BREAK_DDB	(BREAK_INSTR | (BREAK_DDB_VAL << BREAK_VAL_SHIFT))
-
-/*
- * Mininum and maximum cache sizes.
- */
-#define MIN_CACHE_SIZE		(16 * 1024)
-#define MAX_CACHE_SIZE		(256 * 1024)
+#define	BREAK_INSTR		0x0000000d
+#define	BREAK_VAL_MASK		0x03ff0000
+#define	BREAK_VAL_SHIFT		16
+#define	BREAK_KDB_VAL		512
+#define	BREAK_SSTEP_VAL		513
+#define	BREAK_BRKPT_VAL		514
+#define	BREAK_SOVER_VAL		515
+#define	BREAK_DDB_VAL		516
+#define	BREAK_KDB	(BREAK_INSTR | (BREAK_KDB_VAL << BREAK_VAL_SHIFT))
+#define	BREAK_SSTEP	(BREAK_INSTR | (BREAK_SSTEP_VAL << BREAK_VAL_SHIFT))
+#define	BREAK_BRKPT	(BREAK_INSTR | (BREAK_BRKPT_VAL << BREAK_VAL_SHIFT))
+#define	BREAK_SOVER	(BREAK_INSTR | (BREAK_SOVER_VAL << BREAK_VAL_SHIFT))
+#define	BREAK_DDB	(BREAK_INSTR | (BREAK_DDB_VAL << BREAK_VAL_SHIFT))
 
 /*
  * The floating point version and status registers.
@@ -288,58 +283,58 @@ extern vaddr_t uncached_base;
 /*
  * The floating point coprocessor status register bits.
  */
-#define FPC_ROUNDING_BITS		0x00000003
-#define FPC_ROUND_RN			0x00000000
-#define FPC_ROUND_RZ			0x00000001
-#define FPC_ROUND_RP			0x00000002
-#define FPC_ROUND_RM			0x00000003
-#define FPC_STICKY_BITS			0x0000007c
-#define FPC_STICKY_INEXACT		0x00000004
-#define FPC_STICKY_UNDERFLOW		0x00000008
-#define FPC_STICKY_OVERFLOW		0x00000010
-#define FPC_STICKY_DIV0			0x00000020
-#define FPC_STICKY_INVALID		0x00000040
-#define FPC_ENABLE_BITS			0x00000f80
-#define FPC_ENABLE_INEXACT		0x00000080
-#define FPC_ENABLE_UNDERFLOW		0x00000100
-#define FPC_ENABLE_OVERFLOW		0x00000200
-#define FPC_ENABLE_DIV0			0x00000400
-#define FPC_ENABLE_INVALID		0x00000800
-#define FPC_EXCEPTION_BITS		0x0003f000
-#define FPC_EXCEPTION_INEXACT		0x00001000
-#define FPC_EXCEPTION_UNDERFLOW		0x00002000
-#define FPC_EXCEPTION_OVERFLOW		0x00004000
-#define FPC_EXCEPTION_DIV0		0x00008000
-#define FPC_EXCEPTION_INVALID		0x00010000
-#define FPC_EXCEPTION_UNIMPL		0x00020000
-#define FPC_COND_BIT			0x00800000
-#define FPC_FLUSH_BIT			0x01000000
-#define FPC_MBZ_BITS			0xfe7c0000
+#define	FPC_ROUNDING_BITS		0x00000003
+#define	FPC_ROUND_RN			0x00000000
+#define	FPC_ROUND_RZ			0x00000001
+#define	FPC_ROUND_RP			0x00000002
+#define	FPC_ROUND_RM			0x00000003
+#define	FPC_STICKY_BITS			0x0000007c
+#define	FPC_STICKY_INEXACT		0x00000004
+#define	FPC_STICKY_UNDERFLOW		0x00000008
+#define	FPC_STICKY_OVERFLOW		0x00000010
+#define	FPC_STICKY_DIV0			0x00000020
+#define	FPC_STICKY_INVALID		0x00000040
+#define	FPC_ENABLE_BITS			0x00000f80
+#define	FPC_ENABLE_INEXACT		0x00000080
+#define	FPC_ENABLE_UNDERFLOW		0x00000100
+#define	FPC_ENABLE_OVERFLOW		0x00000200
+#define	FPC_ENABLE_DIV0			0x00000400
+#define	FPC_ENABLE_INVALID		0x00000800
+#define	FPC_EXCEPTION_BITS		0x0003f000
+#define	FPC_EXCEPTION_INEXACT		0x00001000
+#define	FPC_EXCEPTION_UNDERFLOW		0x00002000
+#define	FPC_EXCEPTION_OVERFLOW		0x00004000
+#define	FPC_EXCEPTION_DIV0		0x00008000
+#define	FPC_EXCEPTION_INVALID		0x00010000
+#define	FPC_EXCEPTION_UNIMPL		0x00020000
+#define	FPC_COND_BIT			0x00800000
+#define	FPC_FLUSH_BIT			0x01000000
+#define	FPC_MBZ_BITS			0xfe7c0000
 
 /*
  * Constants to determine if have a floating point instruction.
  */
-#define OPCODE_SHIFT		26
-#define OPCODE_C1		0x11
+#define	OPCODE_SHIFT		26
+#define	OPCODE_C1		0x11
 
 /*
  * The low part of the TLB entry.
  */
-#define VMTLB_PF_NUM		0x3fffffc0
-#define VMTLB_ATTR_MASK		0x00000038
-#define VMTLB_MOD_BIT		0x00000004
-#define VMTLB_VALID_BIT		0x00000002
-#define VMTLB_GLOBAL_BIT	0x00000001
+#define	VMTLB_PF_NUM		0x3fffffc0
+#define	VMTLB_ATTR_MASK		0x00000038
+#define	VMTLB_MOD_BIT		0x00000004
+#define	VMTLB_VALID_BIT		0x00000002
+#define	VMTLB_GLOBAL_BIT	0x00000001
 
-#define VMTLB_PHYS_PAGE_SHIFT	6
+#define	VMTLB_PHYS_PAGE_SHIFT	6
 
 /*
  * The high part of the TLB entry.
  */
-#define VMTLB_VIRT_PAGE_NUM	0xffffe000
-#define VMTLB_PID		0x000000ff
-#define VMTLB_PID_SHIFT		0
-#define VMTLB_VIRT_PAGE_SHIFT	12
+#define	VMTLB_VIRT_PAGE_NUM	0xffffe000
+#define	VMTLB_PID		0x000000ff
+#define	VMTLB_PID_SHIFT		0
+#define	VMTLB_VIRT_PAGE_SHIFT	12
 
 /*
  * The number of process id entries.
@@ -349,10 +344,10 @@ extern vaddr_t uncached_base;
 /*
  * TLB probe return codes.
  */
-#define VMTLB_NOT_FOUND		0
-#define VMTLB_FOUND		1
-#define VMTLB_FOUND_WITH_PATCH	2
-#define VMTLB_PROBE_ERROR	3
+#define	VMTLB_NOT_FOUND		0
+#define	VMTLB_FOUND		1
+#define	VMTLB_FOUND_WITH_PATCH	2
+#define	VMTLB_PROBE_ERROR	3
 
 /*
  * Exported definitions unique to mips cpu support.
@@ -371,27 +366,27 @@ struct cpu_info {
 
 extern struct cpu_info cpu_info_primary;
 
-#define curcpu()	(&cpu_info_primary)
+#define	curcpu()	(&cpu_info_primary)
 
-#define CPU_IS_PRIMARY(ci)	1
-#define CPU_INFO_ITERATOR	int
-#define CPU_INFO_FOREACH(cii, ci)					\
+#define	CPU_IS_PRIMARY(ci)	1
+#define	CPU_INFO_ITERATOR	int
+#define	CPU_INFO_FOREACH(cii, ci)					\
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
-#define CPU_INFO_UNIT(ci)	0
-#define MAXCPUS	1
-#define cpu_unidle(ci)
+#define	CPU_INFO_UNIT(ci)	0
+#define	MAXCPUS	1
+#define	cpu_unidle(ci)
 
-#define cpu_number()	0
+#define	cpu_number()	0
 
 #include <machine/frame.h>
 #include <machine/intr.h>
 
 /*
- * Arguments to hardclock and gatherstats encapsulate the previous
- * machine state in an opaque clockframe.
+ * Arguments to hardclock encapsulate the previous machine state in
+ * an opaque clockframe.
  */
 extern int int_nest_cntr;
-#define clockframe trap_frame	/* Use normal trap frame */
+#define	clockframe trap_frame	/* Use normal trap frame */
 
 #define	CLKF_USERMODE(framep)	((framep)->sr & SR_KSU_USER)
 #define	CLKF_PC(framep)		((framep)->pc)
@@ -407,7 +402,7 @@ extern int int_nest_cntr;
  * or after the current trap/syscall if in system mode.
  */
 #define	need_resched(info)	{ want_resched = 1; aston(); }
-#define clear_resched(ci) 	want_resched = 0
+#define	clear_resched(ci) 	want_resched = 0
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -422,7 +417,7 @@ extern int int_nest_cntr;
  */
 #define	signotify(p)	aston()
 
-#define aston()		(astpending = 1)
+#define	aston()		(astpending = 1)
 
 extern int want_resched;	/* resched() was called */
 
@@ -436,7 +431,7 @@ extern int want_resched;	/* resched() was called */
 #define	CPU_KBDRESET		2	/* keyboard reset */
 #define	CPU_MAXID		3	/* number of valid machdep ids */
 
-#define CTL_MACHDEP_NAMES {			\
+#define	CTL_MACHDEP_NAMES {			\
 	{ 0, 0 },				\
 	{ "allowaperture", CTLTYPE_INT },	\
 	{ "kbdreset", CTLTYPE_INT },		\
@@ -449,13 +444,13 @@ extern int want_resched;	/* resched() was called */
 #define	MIPS_R3000	0x02	/* MIPS R3000 CPU		ISA I   */
 #define	MIPS_R6000	0x03	/* MIPS R6000 CPU		ISA II	*/
 #define	MIPS_R4000	0x04	/* MIPS R4000/4400 CPU		ISA III	*/
-#define MIPS_R3LSI	0x05	/* LSI Logic R3000 derivate	ISA I	*/
+#define	MIPS_R3LSI	0x05	/* LSI Logic R3000 derivate	ISA I	*/
 #define	MIPS_R6000A	0x06	/* MIPS R6000A CPU		ISA II	*/
 #define	MIPS_R3IDT	0x07	/* IDT R3000 derivate		ISA I	*/
 #define	MIPS_R10000	0x09	/* MIPS R10000/T5 CPU		ISA IV  */
 #define	MIPS_R4200	0x0a	/* MIPS R4200 CPU (ICE)		ISA III */
-#define MIPS_R4300	0x0b	/* NEC VR4300 CPU		ISA III */
-#define MIPS_R4100	0x0c	/* NEC VR41xx CPU MIPS-16	ISA III */
+#define	MIPS_R4300	0x0b	/* NEC VR4300 CPU		ISA III */
+#define	MIPS_R4100	0x0c	/* NEC VR41xx CPU MIPS-16	ISA III */
 #define	MIPS_R12000	0x0e	/* MIPS R12000			ISA IV  */
 #define	MIPS_R14000	0x0f	/* MIPS R14000			ISA IV  */
 #define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV  */
@@ -503,7 +498,7 @@ u_int	cp0_get_count(void);
 void	cp0_set_compare(u_int);
 
 /*
- *  Define soft selected cache functions.
+ * Define soft selected cache functions.
  */
 #define	Mips_SyncCache()	(*(sys_config._SyncCache))()
 #define	Mips_InvalidateICache(a, l)	\
@@ -550,8 +545,8 @@ void	MipsSaveCurFPState16(struct proc *);
 int	guarded_read_4(paddr_t, uint32_t *);
 int	guarded_write_4(paddr_t, uint32_t);
 
-extern u_int32_t cpu_counter_interval;  /* Number of counter ticks/tick */
-extern u_int32_t cpu_counter_last;      /* Last compare value loaded    */
+extern u_int32_t cpu_counter_interval;	/* Number of counter ticks/tick */
+extern u_int32_t cpu_counter_last;	/* Last compare value loaded */
 
 /*
  *  Low level access routines to CPU registers
