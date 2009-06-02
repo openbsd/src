@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.84 2009/05/31 00:14:55 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.85 2009/06/02 16:23:45 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 31 2009 $
+.Dd $Mdocdate: June 2 2009 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Nm disklabel
 .Op Fl c | d | t
 .Op Fl Av
-.Op Fl p Ar unit
+.Op Fl h | p Ar unit
 .Ar disk
 .Nm disklabel
 .Fl w
@@ -173,13 +173,15 @@ flag.
 If
 .Ar tempfile
 already exists, it will be overwritten.
+.It Fl h
+Print partition sizes in human readable format.
 .It Fl N
 Disallow writing of the pack label area on the selected disk.
 .It Fl n
 Make no permanent changes to the disklabel
 .Pq useful for debugging purposes .
 .It Fl p Ar unit
-Print partition sizes and offsets in
+Print partition sizes in
 .Ar unit
 instead of sectors.
 Valid units are b(ytes), c(ylinders), k(ilobytes), m(egabytes), g(igabytes)
@@ -406,6 +408,10 @@ If a
 .Em unit
 is given, the size and offsets are displayed in terms of the
 specified unit.
+If the unit is
+.Sq *
+it is automatically determined by the size of the smallest
+partition.
 .It Cm q
 Quit the editor.
 If any changes have been made, the user will be

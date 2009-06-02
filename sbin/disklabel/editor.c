@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.214 2009/05/31 19:39:45 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.215 2009/06/02 16:23:45 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.214 2009/05/31 19:39:45 krw Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.215 2009/06/02 16:23:45 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,9 +70,6 @@ struct space_allocation {
 	int		rate;	/* % of extra space to use */
 	char 	       *mp;
 };
-
-#define MEG(x)	((x) * 1024LL * (1024 / 512))
-#define GIG(x)  (MEG(x) * 1024LL)
 
 /* entries for swap and var are changed by editor_allocspace() */
 const struct space_allocation alloc_big[] = {
@@ -517,13 +514,6 @@ editor_allocspace(struct disklabel *lp_org)
 
 	/* How big is the OpenBSD portion of the disk?  */
 	find_bounds(lp_org);
-	if (print_unit == '\0') {
-		if (DL_BLKTOSEC(lp_org, MEG(10 * 1024)) > (ending_sector -
-		    starting_sector))
-			print_unit = 'm';
-		else
-			print_unit = 'g';
-	}
 
 	cylsecs = lp_org->d_secpercyl;
 again:
@@ -2300,9 +2290,10 @@ psize(daddr64_t sz, char unit, struct disklabel *lp)
 void
 display_edit(struct disklabel *lp, char unit, u_int64_t fr)
 {
+	struct partition *pp;
 	int i;
 
-	unit = toupper(unit);
+	unit = canonical_unit(lp, unit);
 
 	printf("OpenBSD area: ");
 	psize(starting_sector, 0, lp);

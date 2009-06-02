@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.156 2009/05/31 00:05:03 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.157 2009/06/02 16:23:45 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.156 2009/05/31 00:05:03 krw Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.157 2009/06/02 16:23:45 krw Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -146,7 +146,7 @@ main(int argc, char *argv[])
 	FILE *t;
 	char *partname;
 
-	while ((ch = getopt(argc, argv, "ABEf:NRWb:cdenp:s:tvw")) != -1)
+	while ((ch = getopt(argc, argv, "ABEf:hNRWb:cdenp:s:tvw")) != -1)
 		switch (ch) {
 		case 'A':
 			++aflag;
@@ -194,6 +194,9 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			fstabfile = optarg;
+			break;
+		case 'h':
+			print_unit = '*';
 			break;
 		case 't':
 			++tflag;
@@ -973,13 +976,41 @@ display_partition(FILE *f, struct disklabel *lp, int i, char unit)
 	}
 }
 
+char
+canonical_unit(struct disklabel *lp, char unit)
+{
+	struct partition *pp;
+	daddr64_t small;
+	int i;
+
+	if (unit == '*') {
+		small = DL_GETDSIZE(lp);
+		pp = &lp->d_partitions[0];
+		for (i = 0; i < lp->d_npartitions; i++, pp++)
+			if (DL_GETPSIZE(pp) > 0 && DL_GETPSIZE(pp) < small)
+				small = DL_GETPSIZE(pp);
+		if (small < DL_BLKTOSEC(lp, MEG(1)))
+			unit = 'K';
+		else if (small < DL_BLKTOSEC(lp, MEG(1024)))
+			unit = 'M';
+		else if (small < DL_BLKTOSEC(lp, GIG(1024)))
+			unit = 'G';
+		else
+			unit = 'T';
+	}
+	unit = toupper(unit);
+
+	return (unit);
+}
+
 void
 display(FILE *f, struct disklabel *lp, char unit, int all)
 {
 	int i, j;
 	double d;
 
-	unit = toupper(unit);
+	unit = canonical_unit(lp, unit);
+
 	fprintf(f, "# %s:\n", specname);
 
 	if ((unsigned) lp->d_type < DKMAXTYPES)
@@ -1685,7 +1716,7 @@ usage(void)
 #endif
 
 	fprintf(stderr,
-	    "usage: disklabel [-c | -d | -t] [-Av] [-p unit] disk\t\t(read)\n");
+	    "usage: disklabel [-c | -d | -t] [-Av] [-h | -p unit] disk\t(read)\n");
 	fprintf(stderr,
 	    "       disklabel -w [-c | -d] [-Anv] disk disktype [packid]\t(write)\n");
 	fprintf(stderr,

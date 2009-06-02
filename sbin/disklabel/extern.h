@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.15 2009/04/18 00:15:46 sthen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.16 2009/06/02 16:23:45 krw Exp $	*/
 
 /*
  * Copyright (c) 2003 Theo de Raadt <deraadt@openbsd.org>
@@ -16,8 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define MEG(x)	((x) * 1024LL * (1024 / 512))
+#define GIG(x)  (MEG(x) * 1024LL)
+
 u_short	dkcksum(struct disklabel *);
 int	checklabel(struct disklabel *);
+char	canonical_unit(struct disklabel *, char);
 double	scale(u_int64_t, char, struct disklabel *);
 void	display(FILE *, struct disklabel *, char, int);
 void	display_partition(FILE *, struct disklabel *, int, char);
