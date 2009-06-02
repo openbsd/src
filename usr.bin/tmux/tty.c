@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.2 2009/06/02 23:39:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -134,7 +134,9 @@ tty_start_tty(struct tty *tty)
 	struct termios	 tio;
 	int		 what;
 
+#if 0
 	tty_detect_utf8(tty);
+#endif
 
 	if (tcgetattr(tty->fd, &tty->tio) != 0)
 		fatal("tcgetattr failed");
@@ -204,6 +206,7 @@ tty_stop_tty(struct tty *tty)
 		tty_raw(tty, "\033[?1000l");
 }
 
+#if 0
 void
 tty_detect_utf8(struct tty *tty)
 {
@@ -278,6 +281,7 @@ tty_detect_utf8(struct tty *tty)
 	if (tcsetattr(tty->fd, TCSANOW, &old_tio) != 0)
 		fatal("tcsetattr failed");
 }
+#endif
 
 void
 tty_fill_acs(struct tty *tty)
