@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.176 2009/06/02 11:05:09 oga Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.177 2009/06/02 21:28:36 blambert Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -87,13 +87,13 @@ void tdb_hashstats(void);
 #define	DPRINTF(x)
 #endif
 
-int		ipsp_kern(int, char **, int);
 u_int8_t	get_sa_require(struct inpcb *);
 void		tdb_rehash(void);
 void		tdb_timeout(void *v);
 void		tdb_firstuse(void *v);
 void		tdb_soft_timeout(void *v);
 void		tdb_soft_firstuse(void *v);
+int		tdb_hash(u_int32_t, union sockaddr_union *, u_int8_t);
 
 extern int	ipsec_auth_default_level;
 extern int	ipsec_esp_trans_default_level;
