@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.38 2008/06/27 05:29:54 todd Exp $
+#	$OpenBSD: RAMDISK,v 1.39 2009/06/02 06:33:24 todd Exp $
 
 machine	zaurus	arm
 
@@ -11,6 +11,7 @@ options	INET		# IP + ICMP + TCP + UDP
 options	INET6		# IPv6 (needs INET)
 options	DDB		# kernel debugger
 options	EXT2FS		# Second Extended Filesystem
+options	CRYPTO		# Cryptographic framework
 
 options		ARM32
 options		PXAGPIO_HAS_GPION_INTRS
@@ -101,6 +102,8 @@ scsibus*	at umass?
 pxammc0		at pxaip?		# MMC/SD/SDIO controller
 sdmmc*		at pxammc?		# SD/MMC bus
 scsibus*	at sdmmc?		# SCSI emulation
+softraid0	at root			# Software RAID
+scsibus*	at softraid?
 
 sd*		at scsibus?
 #st*		at scsibus?
