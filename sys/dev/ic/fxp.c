@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.94 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.95 2009/06/02 16:50:20 jsg Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1050,6 +1050,32 @@ fxp_stats_update(void *arg)
 	 * Schedule another timeout one second from now.
 	 */
 	timeout_add_sec(&sc->stats_update_to, 1);
+}
+
+int
+fxp_detach(struct fxp_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+	/* Unhook our tick handler. */
+	timeout_del(&sc->stats_update_to);
+
+	/* Detach any PHYs we might have. */
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) != NULL)
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete any remaining media. */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
+	if (sc->sc_powerhook != NULL)
+		powerhook_disestablish(sc->sc_powerhook);
+
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.49 2006/11/05 02:47:01 brad Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.50 2009/06/02 16:50:20 jsg Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -80,9 +80,17 @@
 
 int fxp_pci_match(struct device *, void *, void *);
 void fxp_pci_attach(struct device *, struct device *, void *);
+int fxp_pci_detach(struct device *, int);
+
+struct fxp_pci_softc {
+	struct fxp_softc	psc_softc;
+	pci_chipset_tag_t	psc_pc;
+	bus_size_t		psc_mapsize;
+};
 
 struct cfattach fxp_pci_ca = {
-	sizeof(struct fxp_softc), fxp_pci_match, fxp_pci_attach
+	sizeof(struct fxp_pci_softc), fxp_pci_match, fxp_pci_attach,
+	    fxp_pci_detach
 };
 
 const struct pci_matchid fxp_pci_devices[] = {
@@ -144,19 +152,20 @@ fxp_pci_match(struct device *parent, void *match, void *aux)
 void
 fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct fxp_softc *sc = (struct fxp_softc *)self;
+	struct fxp_pci_softc *psc = (void *)self;
+	struct fxp_softc *sc = &psc->psc_softc;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *chipname = NULL;
 	const char *intrstr = NULL;
-	bus_size_t iosize;
 
 	if (pci_mapreg_map(pa, FXP_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_st, &sc->sc_sh, NULL, &iosize, 0)) {
+	    &sc->sc_st, &sc->sc_sh, NULL, &psc->psc_mapsize, 0)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
+	psc->psc_pc = pa->pa_pc;
 	sc->sc_dmat = pa->pa_dmat;
 
 	sc->sc_revision = PCI_REVISION(pa->pa_class);
@@ -166,7 +175,7 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
+		bus_space_unmap(sc->sc_st, sc->sc_sh, psc->psc_mapsize);
 		return;
 	}
 
@@ -178,7 +187,7 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
+		bus_space_unmap(sc->sc_st, sc->sc_sh, psc->psc_mapsize);
 		return;
 	}
 
@@ -245,7 +254,25 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (fxp_attach(sc, intrstr)) {
 		/* Failed! */
 		pci_intr_disestablish(pc, sc->sc_ih);
-		bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
+		bus_space_unmap(sc->sc_st, sc->sc_sh, psc->psc_mapsize);
 		return;
 	}
+}
+
+int
+fxp_pci_detach(struct device *self, int flags)
+{
+	struct fxp_pci_softc *psc = (void *)self;
+	struct fxp_softc *sc = &psc->psc_softc;
+	int rv;
+
+	rv = fxp_detach(sc);
+	if (rv == 0) {
+		if (sc->sc_ih != NULL)
+			pci_intr_disestablish(psc->psc_pc, sc->sc_ih);
+
+		bus_space_unmap(sc->sc_st, sc->sc_sh, psc->psc_mapsize);
+	}
+
+	return (rv);
 }

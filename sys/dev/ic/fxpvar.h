@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.28 2008/02/21 03:58:07 brad Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.29 2009/06/02 16:50:20 jsg Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -157,6 +157,7 @@ struct fxp_softc {
 
 extern int fxp_intr(void *);
 extern int fxp_attach(struct fxp_softc *, const char *);
+int fxp_detach(struct fxp_softc *);
 
 #define	FXP_RXMAP_GET(sc)	((sc)->sc_rxmaps[(sc)->sc_rxfree++])
 #define	FXP_RXMAP_PUT(sc,map)	((sc)->sc_rxmaps[--(sc)->sc_rxfree] = (map))
