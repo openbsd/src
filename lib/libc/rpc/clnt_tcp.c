@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_tcp.c,v 1.23 2006/03/31 18:28:55 deraadt Exp $ */
+/*	$OpenBSD: clnt_tcp.c,v 1.24 2009/06/02 14:18:19 schwarze Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -181,7 +181,7 @@ clnttcp_create(struct sockaddr_in *raddr, u_long prog, u_long vers, int *sockp,
 	call_msg.rm_call.cb_vers = vers;
 
 	/*
-	 * pre-serialize the staic part of the call msg and stash it away
+	 * pre-serialize the static part of the call msg and stash it away
 	 */
 	xdrmem_create(&(ct->ct_xdrs), ct->ct_mcall, MCALL_MSG_SIZE,
 	    XDR_ENCODE);
@@ -204,6 +204,11 @@ clnttcp_create(struct sockaddr_in *raddr, u_long prog, u_long vers, int *sockp,
 	h->cl_ops = &tcp_ops;
 	h->cl_private = (caddr_t) ct;
 	h->cl_auth = authnone_create();
+	if (h->cl_auth == NULL) {
+		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+		rpc_createerr.cf_error.re_errno = errno;
+		goto fooy;
+	}
 	return (h);
 
 fooy:

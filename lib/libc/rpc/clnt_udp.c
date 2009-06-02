@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.24 2006/03/31 18:28:55 deraadt Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.25 2009/06/02 14:18:19 schwarze Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -175,6 +175,11 @@ clntudp_bufcreate(struct sockaddr_in *raddr, u_long program, u_long version,
 	}
 	cu->cu_sock = *sockp;
 	cl->cl_auth = authnone_create();
+	if (cl->cl_auth == NULL) {
+		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+		rpc_createerr.cf_error.re_errno = errno;
+		goto fooy;
+	}
 	return (cl);
 fooy:
 	if (cu)
