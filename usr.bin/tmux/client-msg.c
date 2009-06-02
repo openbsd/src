@@ -1,4 +1,4 @@
-/* $OpenBSD: client-msg.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: client-msg.c,v 1.2 2009/06/02 11:17:03 ray Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -73,7 +73,7 @@ client_msg_dispatch(struct client_ctx *cctx, char **error)
 int
 client_msg_fn_error(struct hdr *hdr, struct client_ctx *cctx, char **error)
 {
-	if (hdr->size > SIZE_MAX - 1)
+	if (hdr->size == SIZE_MAX)
 		fatalx("bad MSG_ERROR size");
 
 	*error = xmalloc(hdr->size + 1);
