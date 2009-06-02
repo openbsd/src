@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.3 2009/06/02 15:55:32 pyr Exp $ */
+/* $OpenBSD: tmux.c,v 1.4 2009/06/02 16:53:20 sobrado Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -60,8 +60,9 @@ char 		*makesockpath(const char *);
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-28dqUuVv] [-f file] "
-	    "[-L socket-name] [-S socket-path] [command [flags]]\n",
+	fprintf(stderr,
+	    "usage: %s [-28dqUuv] [-f file] [-L socket-name] [-S socket-path]\n"
+	    "            [command [flags]]\n",
 	    __progname);
 	exit(1);
 }
