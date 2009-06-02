@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.568 2009/06/02 22:44:27 krw Exp $
+#	$OpenBSD: install.sub,v 1.569 2009/06/02 23:53:34 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -95,8 +95,6 @@ set_term() {
 }
 
 welcome() {
-	local _q
-
 	cat <<__EOT
 
 Welcome to the $OBSD $MODE program.
@@ -109,44 +107,21 @@ inconsistent state.
 
 __EOT
 
-	case $MODE in
-	upgrade)
+	if [[ $MODE == upgrade ]]; then
 		cat <<__EOT
-IS YOUR DATA BACKED UP?  Upgrades are never as simple as they seem.  While
-carefully designed, this process could lead to SIGNIFICANT data loss.
-
 NOTE: Once your system has been upgraded, you must manually merge any
-changes to files in the 'etc' set into the files already on your system,
-perhaps using the sysmerge(8) command.
+changes to files in the 'etc' set into the files already on your system.
+sysmerge(8) can help.
 
 __EOT
-		_q="Proceed with upgrade?"
-		;;
+	fi
 
-	install)
-		if [ -f /etc/fstab ]; then
-			cat <<__EOT
-You seem to be trying to restart an interrupted installation! You can skip
-the disk preparation steps and continue, or you can reboot and start over.
-
-__EOT
-			_q="Skip disk initialization?"
-		else
-		cat <<__EOT
-If you change your mind and do not want to install, type Control-C now
-and then type 'reboot' at the command prompt.
-__EOT
-			return
-		fi
-		;;
-	esac
-
-	[[ -n $_q ]] && ask_yn "$_q"
+	ask_yn "Proceed with $MODE?"
 	if [[ $resp == n ]]; then
 		cat <<__EOT
-
 Remove your install media (if any), and enter 'reboot' at the command
 prompt to return to your original OS.
+
 __EOT
 		exit
 	fi

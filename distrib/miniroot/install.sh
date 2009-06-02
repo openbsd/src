@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.198 2009/06/01 02:57:40 krw Exp $
+#	$OpenBSD: install.sh,v 1.199 2009/06/02 23:53:34 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -63,126 +63,126 @@ MODE=install
 # include common subroutines and initialization code
 . install.sub
 
-# If /etc/fstab already exists, skip disk initialization.
 cd /tmp
-if [[ ! -f /etc/fstab ]]; then
-	DISK=
-	_DKDEVS=$(get_dkdevs)
+DISK=
+_DKDEVS=$(get_dkdevs)
 
-	while :; do
-		_DKDEVS=$(rmel "$DISK" $_DKDEVS)
+# Remove traces of previous install attempt.
+umount -a
+rm -f /tmp/fstab.shadow /tmp/fstab /tmp/fstab.*
 
-		# Always do ROOTDISK first, and repeat until it is configured.
-		if isin $ROOTDISK $_DKDEVS; then
-			resp=$ROOTDISK
-			rm -f fstab
-			# Make sure empty files exist so we don't have to
-			# keep checking for their existence before grep'ing.
-		else
-			# Force the user to think and type in a disk name by
-			# making 'done' the default choice.
-			ask_which "disk" "do you wish to initialize" "$_DKDEVS" done
-			[[ $resp == done ]] && break
+while :; do
+	_DKDEVS=$(rmel "$DISK" $_DKDEVS)
+
+	# Always do ROOTDISK first, and repeat until it is configured.
+	if isin $ROOTDISK $_DKDEVS; then
+		resp=$ROOTDISK
+		rm -f fstab
+		# Make sure empty files exist so we don't have to
+		# keep checking for their existence before grep'ing.
+	else
+		# Force the user to think and type in a disk name by
+		# making 'done' the default choice.
+		ask_which "disk" "do you wish to initialize" "$_DKDEVS" done
+		[[ $resp == done ]] && break
+	fi
+
+	DISK=$resp
+	makedev $DISK || continue
+
+	# Deal with disklabels, including editing the root disklabel
+	# and labeling additional disks. This is machine-dependent since
+	# some platforms may not be able to provide this functionality.
+	# fstab.$DISK is created here with 'disklabel -f'.
+	rm -f *.$DISK
+	AUTOROOT=n
+	md_prep_disklabel $DISK || { DISK= ; continue ; }
+
+	# Make sure there is a '/' mount point.
+	grep -qs " / ffs " fstab.$ROOTDISK || \
+		{ DISK= ; echo "'/' must be configured!" ; continue ; }
+
+	if [[ -f fstab.$DISK ]]; then
+		# Avoid duplicate mount points on different disks.
+		while read _pp _mp _rest; do
+			[[ fstab.$DISK == $(grep -l " $_mp " fstab.*) ]] || \
+				{ _rest=$DISK ; DISK= ; break ; }
+		done <fstab.$DISK
+		if [[ -z $DISK ]]; then
+			# Allow disklabel(8) to read mountpoint info.
+			cat fstab.$_rest >/etc/fstab
+			rm fstab.$_rest
+			set -- $(grep " $_mp " fstab.*[0-9])
+			echo "$_pp and $1 can't both be mounted at $_mp."
+			continue
 		fi
 
-		DISK=$resp
-		makedev $DISK || continue
+		# newfs 'ffs' filesystems and add them to the list.
+		_i=${#_fsent[*]}
+		while read _pp _mp _rest; do
+			_OPT=
+			[[ $_mp == / ]] && _OPT=$MDROOTFSOPT
+			newfs -q $_OPT ${_pp##/dev/}
+			# N.B.: '!' is lexically < '/'. That is
+			#	required for correct sorting of
+			#	mount points.
+			_fsent[$_i]="$_mp!$_pp"
+			: $(( _i += 1 ))
+		done <fstab.$DISK
+	fi
 
-		# Deal with disklabels, including editing the root disklabel
-		# and labeling additional disks. This is machine-dependent since
-		# some platforms may not be able to provide this functionality.
-		# fstab.$DISK is created here with 'disklabel -f'.
-		rm -f *.$DISK
-		AUTOROOT=n
-		md_prep_disklabel $DISK || { DISK= ; continue ; }
+	# New swap partitions?
+	disklabel $DISK 2>&1 | sed -ne \
+		"/^ *\([a-p]\): .* swap /s,,/dev/$DISK\1 none swap sw 0 0,p" | \
+		grep -v "^/dev/$SWAPDEV " >>fstab
+done
 
-		# Make sure there is a '/' mount point.
-		grep -qs " / ffs " fstab.$ROOTDISK || \
-			{ DISK= ; echo "'/' must be configured!" ; continue ; }
+# Write fstab entries to fstab in mount point alphabetic order
+# to enforce a rational mount order.
+for _mp in $(bsort ${_fsent[*]}); do
+	_pp=${_mp##*!}
+	_mp=${_mp%!*}
+	echo -n "$_pp $_mp ffs rw"
 
-		if [[ -f fstab.$DISK ]]; then
-			# Avoid duplicate mount points on different disks.
-			while read _pp _mp _rest; do
-				[[ fstab.$DISK == $(grep -l " $_mp " fstab.*) ]] || \
-					{ _rest=$DISK ; DISK= ; break ; }
-			done <fstab.$DISK
-			if [[ -z $DISK ]]; then
-				# Allow disklabel(8) to read mountpoint info.
-				cat fstab.$_rest >/etc/fstab
-				rm fstab.$_rest
-				set -- $(grep " $_mp " fstab.*[0-9])
-				echo "$_pp and $1 can't both be mounted at $_mp."
-				continue
-			fi
+	# Only '/' is neither nodev nor nosuid. i.e. it can obviously
+	# *always* contain devices or setuid programs.
+	[[ $_mp == / ]] && { echo " 1 1" ; continue ; }
 
-			# newfs 'ffs' filesystems and add them to the list.
-			_i=${#_fsent[*]}
-			while read _pp _mp _rest; do
-				_OPT=
-				[[ $_mp == / ]] && _OPT=$MDROOTFSOPT
-				newfs -q $_OPT ${_pp##/dev/}
-				# N.B.: '!' is lexically < '/'. That is
-				#	required for correct sorting of
-				#	mount points.
-				_fsent[$_i]="$_mp!$_pp"
-				: $(( _i += 1 ))
-			done <fstab.$DISK
-		fi
+	# Every other mounted filesystem is nodev. If the user chooses
+	# to mount /dev as a separate filesystem, then on the user's
+	# head be it.
+	echo -n ",nodev"
 
-		# New swap partitions?
-		disklabel $DISK 2>&1 | sed -ne \
-			"/^ *\([a-p]\): .* swap /s,,/dev/$DISK\1 none swap sw 0 0,p" | \
-			grep -v "^/dev/$SWAPDEV " >>fstab
-	done
-
-	# Write fstab entries to fstab in mount point alphabetic order
-	# to enforce a rational mount order.
-	for _mp in $(bsort ${_fsent[*]}); do
-		_pp=${_mp##*!}
-		_mp=${_mp%!*}
-		echo -n "$_pp $_mp ffs rw"
-
-		# Only '/' is neither nodev nor nosuid. i.e. it can obviously
-		# *always* contain devices or setuid programs.
-		[[ $_mp == / ]] && { echo " 1 1" ; continue ; }
-
-		# Every other mounted filesystem is nodev. If the user chooses
-		# to mount /dev as a separate filesystem, then on the user's
-		# head be it.
-		echo -n ",nodev"
-
-		# The only directories that the install puts suid binaries into
-		# (as of 3.2) are:
-		#
-		# /sbin
-		# /usr/bin
-		# /usr/sbin
-		# /usr/libexec
-		# /usr/libexec/auth
-		# /usr/X11R6/bin
-		#
-		# and ports and users can do who knows what to /usr/local and
-		# sub directories thereof.
-		#
-		# So try to ensure that only filesystems that are mounted at
-		# or above these directories can contain suid programs. In the
-		# case of /usr/libexec, give blanket permission for
-		# subdirectories.
-		case $_mp in
-		/sbin|/usr)			;;
-		/usr/bin|/usr/sbin)		;;
-		/usr/libexec|/usr/libexec/*)	;;
-		/usr/local|/usr/local/*)	;;
-		/usr/X11R6|/usr/X11R6/bin)	;;
-		*)	echo -n ",nosuid"	;;
-		esac
-		echo " 1 2"
-	done >>fstab
-
-	munge_fstab
-fi
+	# The only directories that the install puts suid binaries into
+	# (as of 3.2) are:
+	#
+	# /sbin
+	# /usr/bin
+	# /usr/sbin
+	# /usr/libexec
+	# /usr/libexec/auth
+	# /usr/X11R6/bin
+	#
+	# and ports and users can do who knows what to /usr/local and
+	# sub directories thereof.
+	#
+	# So try to ensure that only filesystems that are mounted at
+	# or above these directories can contain suid programs. In the
+	# case of /usr/libexec, give blanket permission for
+	# subdirectories.
+	case $_mp in
+	/sbin|/usr)			;;
+	/usr/bin|/usr/sbin)		;;
+	/usr/libexec|/usr/libexec/*)	;;
+	/usr/local|/usr/local/*)	;;
+	/usr/X11R6|/usr/X11R6/bin)	;;
+	*)	echo -n ",nosuid"	;;
+	esac
+	echo " 1 2"
+done >>fstab
 cd /
 
+munge_fstab
 mount_fs "-o async"
 
 install_sets
