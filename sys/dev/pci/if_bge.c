@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.265 2009/06/02 02:16:41 sthen Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.266 2009/06/02 03:58:17 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3363,14 +3363,13 @@ bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
-				bge_iff(sc);
+				error = ENETRESET;
 			else
 				bge_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				bge_stop(sc);
 		}
-		sc->bge_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCSIFMEDIA:

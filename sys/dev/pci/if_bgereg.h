@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.92 2009/05/21 23:04:20 sthen Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.93 2009/06/02 03:58:17 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2494,7 +2494,6 @@ struct bge_softc {
 #define BGE_STS_SETBIT(sc, x)	((sc)->bge_sts |= (x))
 #define BGE_STS_CLRBIT(sc, x)	((sc)->bge_sts &= ~(x))
 	int			bge_flowflags;
-	int			bge_if_flags;
 	int			bge_txcnt;
 	struct timeout		bge_timeout;
 	struct timeout		bge_rxtimeout;
