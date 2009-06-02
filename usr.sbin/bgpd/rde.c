@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.248 2009/06/02 00:09:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.249 2009/06/02 01:02:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -72,10 +72,8 @@ void		 rde_dump_filter(struct prefix *,
 void		 rde_dump_filterout(struct rde_peer *, struct prefix *,
 		     struct ctl_show_rib_request *);
 void		 rde_dump_upcall(struct rib_entry *, void *);
-void		 rde_dump_as(struct ctl_show_rib_request *);
 void		 rde_dump_prefix_upcall(struct rib_entry *, void *);
 void		 rde_dump_prefix(struct ctl_show_rib_request *);
-void		 rde_dump_community(struct ctl_show_rib_request *);
 void		 rde_dump_ctx_new(struct ctl_show_rib_request *, pid_t,
 		     enum imsg_type);
 void		 rde_dump_done(void *);
@@ -463,23 +461,14 @@ badnet:
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
 		case IMSG_CTL_SHOW_RIB:
+		case IMSG_CTL_SHOW_RIB_AS:
+		case IMSG_CTL_SHOW_RIB_COMMUNITY:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
 			memcpy(&req, imsg.data, sizeof(req));
 			rde_dump_ctx_new(&req, imsg.hdr.pid, imsg.hdr.type);
-			break;
-		case IMSG_CTL_SHOW_RIB_AS:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
-			memcpy(&req, imsg.data, sizeof(req));
-			req.pid = imsg.hdr.pid;
-			rde_dump_as(&req);
-			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, req.pid, -1,
-			    NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_RIB_PREFIX:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
@@ -489,17 +478,6 @@ badnet:
 			memcpy(&req, imsg.data, sizeof(req));
 			req.pid = imsg.hdr.pid;
 			rde_dump_prefix(&req);
-			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, req.pid, -1,
-			    NULL, 0);
-			break;
-		case IMSG_CTL_SHOW_RIB_COMMUNITY:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
-			memcpy(&req, imsg.data, sizeof(req));
-			req.pid = imsg.hdr.pid;
-			rde_dump_community(&req);
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, req.pid, -1,
 			    NULL, 0);
 			break;
@@ -1802,6 +1780,13 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 	    !(req->flags & (F_CTL_ADJ_IN|F_CTL_ADJ_OUT))) {
 		if (req->peerid && req->peerid != p->aspath->peer->conf.id)
 			return;
+		if (req->type == IMSG_CTL_SHOW_RIB_AS && 
+		    !aspath_match(p->aspath->aspath, req->as.type, req->as.as))
+			return;
+		if (req->type == IMSG_CTL_SHOW_RIB_COMMUNITY &&
+		    !rde_filter_community(p->aspath, req->community.as,
+		    req->community.type))
+			return;
 		rde_dump_rib_as(p, p->aspath, req->pid, req->flags);
 	} else if (req->flags & F_CTL_ADJ_OUT) {
 		if (p->rib->active != p)
@@ -1823,26 +1808,6 @@ rde_dump_upcall(struct rib_entry *re, void *ptr)
 
 	LIST_FOREACH(p, &re->prefix_h, rib_l)
 		rde_dump_filter(p, &ctx->req);
-}
-
-void
-rde_dump_as(struct ctl_show_rib_request *req)
-{
-	extern struct path_table	 pathtable;
-	struct rde_aspath		*asp;
-	struct prefix			*p;
-	u_int32_t			 i;
-
-	for (i = 0; i <= pathtable.path_hashmask; i++) {
-		LIST_FOREACH(asp, &pathtable.path_hashtbl[i], path_l) {
-			if (!aspath_match(asp->aspath, req->as.type,
-			    req->as.as))
-				continue;
-			/* match found */
-			LIST_FOREACH(p, &asp->prefix_h, path_l)
-				rde_dump_filter(p, req);
-		}
-	}
 }
 
 void
@@ -1883,26 +1848,6 @@ rde_dump_prefix(struct ctl_show_rib_request *req)
 }
 
 void
-rde_dump_community(struct ctl_show_rib_request *req)
-{
-	extern struct path_table	 pathtable;
-	struct rde_aspath		*asp;
-	struct prefix			*p;
-	u_int32_t			 i;
-
-	for (i = 0; i <= pathtable.path_hashmask; i++) {
-		LIST_FOREACH(asp, &pathtable.path_hashtbl[i], path_l) {
-			if (!rde_filter_community(asp, req->community.as,
-			    req->community.type))
-				continue;
-			/* match found */
-			LIST_FOREACH(p, &asp->prefix_h, path_l)
-				rde_dump_filter(p, req);
-		}
-	}
-}
-
-void
 rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
     enum imsg_type type)
 {
@@ -1926,6 +1871,8 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 		ctx->ribctx.ctx_upcall = network_dump_upcall;
 		break;
 	case IMSG_CTL_SHOW_RIB:
+	case IMSG_CTL_SHOW_RIB_AS:
+	case IMSG_CTL_SHOW_RIB_COMMUNITY:
 		ctx->ribctx.ctx_upcall = rde_dump_upcall;
 		break;
 	default:
