@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.22 2008/03/24 16:11:00 deraadt Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.23 2009/06/02 20:42:48 jmeltzer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -231,7 +231,7 @@ quit(int signo)
 	_exit(1);
 }
 
-/* ARSGUSED */
+/* ARGSUSED */
 void
 suspend(int signo)
 {
