@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_read.c,v 1.15 2007/09/02 15:19:35 deraadt Exp $	*/
+/*	$OpenBSD: cl_read.c,v 1.16 2009/06/02 00:21:32 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -188,6 +188,7 @@ cl_read(sp, flags, bp, blen, nrp, tp)
 	 * 2: A read with an associated timeout, e.g., trying to complete
 	 *    a map sequence.  If input exists, we fall into #3.
 	 */
+tty_retry:
 	if (tp != NULL) {
 		memset(rdfd, 0, howmany(STDIN_FILENO + 1, NFDBITS)
 		    * sizeof(fd_mask));
@@ -296,6 +297,8 @@ loop:		memset(rdfd, 0, howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask));
 	case -1:				/* Error or interrupt. */
 err:		if (errno == EINTR)
 			rval = INP_INTR;
+		else if (errno == EAGAIN)
+			goto tty_retry;
 		else {
 			rval = INP_ERR;
 			msgq(sp, M_SYSERR, "input");
