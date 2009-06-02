@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.56 2009/06/02 11:33:06 reyk Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.57 2009/06/02 12:24:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -244,8 +244,6 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("pfe_dispatch_imsg: msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
 	}
 
 	for (;;) {
@@ -353,8 +351,6 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
 	}
 
 	for (;;) {
@@ -475,8 +471,6 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
 	}
 
 	for (;;) {

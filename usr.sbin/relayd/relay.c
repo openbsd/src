@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.111 2009/06/02 11:33:06 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.112 2009/06/02 12:24:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2419,8 +2419,6 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("relay_dispatch_pfe: msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
 	}
 
 	for (;;) {
@@ -2540,8 +2538,6 @@ relay_dispatch_parent(int fd, short event, void * ptr)
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("relay_dispatch_parent: msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
 	}
 
 	for (;;) {

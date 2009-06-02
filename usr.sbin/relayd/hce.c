@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.48 2009/06/02 11:33:06 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.49 2009/06/02 12:24:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -382,8 +382,6 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("hce_dispatch_imsg: msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
 	}
 
 	for (;;) {
@@ -470,8 +468,6 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 	if (event & EV_WRITE) {
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("hce_dispatch_parent: msgbuf_write");
-		imsg_event_add(ibuf);
-		return;
 	}
 
 	for (;;) {
