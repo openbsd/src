@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.152 2008/11/11 02:11:25 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.153 2009/06/02 03:04:09 blambert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2439,6 +2439,7 @@ sys_pread(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) pad;
 		syscallarg(off_t) offset;
 	} */ *uap = v;
+	struct iovec iov;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct vnode *vp;
@@ -2455,13 +2456,14 @@ sys_pread(struct proc *p, void *v, register_t *retval)
 		return (ESPIPE);
 	}
 
+	iov.iov_base = (void *)SCARG(uap, buf);
+	iov.iov_len = SCARG(uap, nbyte);
 	offset = SCARG(uap, offset);
 
 	FREF(fp);
 
-	/* dofileread() will FRELE the descriptor for us */
-	return (dofileread(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
-	    &offset, retval));
+	/* dofilereadv() will FRELE the descriptor for us */
+	return (dofilereadv(p, fd, fp, &iov, 1, &offset, retval));
 }
 
 /*
@@ -2515,6 +2517,7 @@ sys_pwrite(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) pad;
 		syscallarg(off_t) offset;
 	} */ *uap = v;
+	struct iovec iov;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct vnode *vp;
@@ -2533,11 +2536,12 @@ sys_pwrite(struct proc *p, void *v, register_t *retval)
 
 	FREF(fp);
 
+	iov.iov_base = (void *)SCARG(uap, buf);
+	iov.iov_len = SCARG(uap, nbyte);
 	offset = SCARG(uap, offset);
 
-	/* dofilewrite() will FRELE the descriptor for us */
-	return (dofilewrite(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
-	    &offset, retval));
+	/* dofilewritev() will FRELE the descriptor for us */
+	return (dofilewritev(p, fd, fp, &iov, 1, &offset, retval));
 }
 
 /*
