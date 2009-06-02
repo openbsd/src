@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.32 2008/06/26 05:42:20 ray Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.33 2009/06/02 17:10:23 henning Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -69,6 +69,11 @@
 #endif
 
 #include "bpfilter.h"
+#include "pf.h"
+
+#if NPF > 0
+#include <net/pfvar.h>
+#endif
 
 /* Needs IP headers. */
 #include <net/if_gre.h>
@@ -187,6 +192,9 @@ gre_input2(m , hlen, proto)
 #if NBPFILTER > 0
         if (sc->sc_if.if_bpf)
 		bpf_mtap_af(sc->sc_if.if_bpf, af, m, BPF_DIRECTION_IN);
+#endif
+#if NPF > 0
+	pf_pkt_addr_changed(m);
 #endif
 
 	s = splnet();		/* possible */

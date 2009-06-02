@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.44 2008/06/26 05:42:20 ray Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.45 2009/06/02 17:10:23 henning Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -42,6 +42,7 @@
 #if NGRE > 0
 
 #include "bpfilter.h"
+#include "pf.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -75,6 +76,10 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#if NPF > 0
+#include <net/pfvar.h>
 #endif
 
 #include <net/if_gre.h>
@@ -404,6 +409,10 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
+
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
 
 	/* Send it off */
 	error = ip_output(m, (void *)NULL, &sc->route, 0, (void *)NULL, (void *)NULL);
