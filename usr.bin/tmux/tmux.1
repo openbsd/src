@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.3 2009/06/02 15:55:32 pyr Exp $
+.\" $OpenBSD: tmux.1,v 1.4 2009/06/02 16:46:00 sobrado Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -75,9 +75,6 @@ will look for a config file at
 The configuration file is a set of
 .Nm
 commands which are executed in sequence when the server is first started.
-.It Fl q
-Prevent the server sending various information messages, for example when
-window flags are altered.
 .It Fl L Ar socket-name
 .Nm
 stores the server socket in a directory under
@@ -98,6 +95,9 @@ If the socket is accidentally removed, the
 signal may be sent to the
 .Nm
 server process to recreate it.
+.It Fl q
+Prevent the server sending various information messages, for example when
+window flags are altered.
 .It Fl S Ar socket-path
 Specify a full alternative path to the server socket.
 If
