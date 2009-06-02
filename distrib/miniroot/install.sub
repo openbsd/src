@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.565 2009/06/02 03:21:31 halex Exp $
+#	$OpenBSD: install.sub,v 1.566 2009/06/02 08:59:22 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1154,8 +1154,8 @@ install_url() {
 
 	if [[ -s $SERVERLISTALL ]]; then
 		_prompt="Server? (hostname, list#, 'done' or '?')"
-		sed -ne "/^${_url_type}:\/\//s///p" < $SERVERLISTALL > $SERVERLIST
-		set -- $(sed -ne "1p" $SERVERLIST)
+		sed -n "s,^${_url_type}://,,p" $SERVERLISTALL > $SERVERLIST
+		set -- $(sed q $SERVERLIST)
 		eval $_server_ip_var=\${1%%/*}
 	else
 		echo "(Was not able to get ftplist from ftp.openbsd.org, but that is OK)"
@@ -1169,13 +1169,13 @@ install_url() {
 		case $resp in
 		done)	return ;;
 		"?")	[[ -s $SERVERLIST ]] || continue
-			cat -n $SERVERLIST | less -XE
+			less -XEN < $SERVERLIST
 			;;
 		+([0-9]))
 			# A numeric hostname is ignored. A number is only used
 			# as a line number in $SERVERLIST.
 			[[ -s $SERVERLIST ]] || continue
-			set -- $(sed -ne "${resp}p" $SERVERLIST)
+			set -- $(sed -n "${resp}p" $SERVERLIST)
 			[[ $# -lt 1 ]] && { echo "There is no line $resp." ; continue ; }
 			echo "Using	$*"
 			eval $_server_ip_var=\${1%%/*}
