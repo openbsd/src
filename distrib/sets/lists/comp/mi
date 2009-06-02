@@ -5461,7 +5461,6 @@
 ./usr/share/man/cat3/setprotoent.0
 ./usr/share/man/cat3/setprotoent_r.0
 ./usr/share/man/cat3/setpwent.0
-./usr/share/man/cat3/setpwfile.0
 ./usr/share/man/cat3/setrgid.0
 ./usr/share/man/cat3/setrpcent.0
 ./usr/share/man/cat3/setruid.0

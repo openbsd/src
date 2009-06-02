@@ -514,6 +514,7 @@
 ./usr/share/man/cat1/tic.0
 ./usr/share/man/cat1/time.0
 ./usr/share/man/cat1/tip.0
+./usr/share/man/cat1/tmux.0
 ./usr/share/man/cat1/tn3270.0
 ./usr/share/man/cat1/top.0
 ./usr/share/man/cat1/touch.0
@@ -1827,6 +1828,7 @@
 ./usr/share/man/cat4/sparc64/lebuffer.0
 ./usr/share/man/cat4/sparc64/led.0
 ./usr/share/man/cat4/sparc64/ledma.0
+./usr/share/man/cat4/sparc64/machfb.0
 ./usr/share/man/cat4/sparc64/magma.0
 ./usr/share/man/cat4/sparc64/mem.0
 ./usr/share/man/cat4/sparc64/mgx.0
