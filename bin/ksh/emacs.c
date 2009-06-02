@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.41 2007/08/02 10:50:25 fgsch Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.42 2009/06/02 06:47:47 halex Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -319,7 +319,6 @@ x_emacs(char *buf, size_t len)
 	xlp_valid = true;
 	xmp = NULL;
 	x_curprefix = 0;
-	macroptr = (char *) 0;
 	x_histp = histptr + 1;
 	x_last_command = XFUNC_error;
 
@@ -360,6 +359,9 @@ x_emacs(char *buf, size_t len)
 
 		f = x_curprefix == -1 ? XFUNC_insert :
 		    x_tab[x_curprefix][c&CHARMASK];
+
+		if (macroptr && f == XFUNC_ins_string)
+		    f = XFUNC_insert;
 
 		if (!(x_ftab[f].xf_flags & XF_PREFIX) &&
 		    x_last_command != XFUNC_set_arg) {
@@ -1762,8 +1764,10 @@ x_e_getc(void)
 	} else {
 		if (macroptr) {
 			c = *macroptr++;
-			if (!*macroptr)
-				macroptr = (char *) 0;
+			if (!c) {
+				macroptr = NULL;
+				c = x_getc();
+			}
 		} else
 			c = x_getc();
 	}
