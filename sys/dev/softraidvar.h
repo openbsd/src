@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.70 2009/06/02 19:15:58 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.71 2009/06/03 21:04:36 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -256,8 +256,8 @@ struct sr_workunit {
 #define SR_WU_REQUEUE		8
 
 	int			swu_flags;	/* additional hints */
-#define SR_WUF_REBUILD		(1<<0)
-#define SR_WUF_REBUILDIOCOMP	(1<<1)
+#define SR_WUF_REBUILD		(1<<0)		/* rebuild io */
+#define SR_WUF_REBUILDIOCOMP	(1<<1)		/* rbuild io complete */
 
 	int			swu_fake;	/* faked wu */
 	/* workunit io range */
@@ -411,6 +411,7 @@ struct sr_discipline {
 	struct sr_wu_list	sd_wu_freeq;	/* free wu queue */
 	struct sr_wu_list	sd_wu_pendq;	/* pending wu queue */
 	struct sr_wu_list	sd_wu_defq;	/* deferred wu queue */
+	int			sd_wu_sleep;	/* wu sleepers counter */
 
 	/* discipline stats */
 	int			sd_wu_pending;
@@ -467,7 +468,7 @@ struct sr_ccb		*sr_ccb_get(struct sr_discipline *);
 void			sr_ccb_put(struct sr_ccb *);
 int			sr_wu_alloc(struct sr_discipline *);
 void			sr_wu_free(struct sr_discipline *);
-struct sr_workunit	*sr_wu_get(struct sr_discipline *);
+struct sr_workunit	*sr_wu_get(struct sr_discipline *, int);
 void			sr_wu_put(struct sr_workunit *);
 
 /* misc functions */
