@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.267 2009/06/03 05:19:21 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.268 2009/06/03 05:55:15 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1192,23 +1192,25 @@ bge_iff(struct bge_softc *sc)
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	memset(hashes, 0x00, sizeof(hashes));
 
-	if (ifp->if_flags & IFF_PROMISC)
+	if (ifp->if_flags & IFF_PROMISC) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		rxmode |= BGE_RXMODE_RX_PROMISC;
-	else if (ac->ac_multirangecnt > 0) {
+	} else if (ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		memset(hashes, 0xff, sizeof(hashes));
 	} else {
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
 			h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
 			setbit(hashes, h & 0x7F);
+
 			ETHER_NEXT_MULTI(step, enm);
 		}
 	}
 
 	bus_space_write_raw_region_4(sc->bge_btag, sc->bge_bhandle, BGE_MAR0,
 	    hashes, sizeof(hashes));
-
 	CSR_WRITE_4(sc, BGE_RX_MODE, rxmode);
 }
 
