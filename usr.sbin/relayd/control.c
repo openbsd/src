@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.28 2009/06/02 11:33:06 reyk Exp $	*/
+/*	$OpenBSD: control.c,v 1.29 2009/06/03 19:59:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -91,6 +91,7 @@ control_init(void)
 
 	session_socket_blockmode(fd, BM_NONBLOCK);
 	control_state.fd = fd;
+	TAILQ_INIT(&ctl_conns);
 
 	return (0);
 }
