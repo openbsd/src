@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.175 2008/11/10 11:53:16 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.176 2009/06/03 04:30:57 beck Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include <sys/mbuf.h>
 #include <sys/syscallargs.h>
 #include <sys/pool.h>
+#include <sys/tree.h>
 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
@@ -114,6 +115,19 @@ void printlockedvnodes(void);
 #endif
 
 struct pool vnode_pool;
+
+static int rb_buf_compare(struct buf *b1, struct buf *b2);
+RB_GENERATE(buf_rb_bufs, buf, b_rbbufs, rb_buf_compare);
+
+static int
+rb_buf_compare(struct buf *b1, struct buf *b2)
+{
+	if (b1->b_lblkno < b2->b_lblkno)
+		return(-1);
+	if (b1->b_lblkno > b2->b_lblkno)
+		return(1);
+	return(0);
+}
 
 /*
  * Initialize the vnode management data structures.
@@ -345,6 +359,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	    ((TAILQ_FIRST(listhd = &vnode_hold_list) == NULL) || toggle))) {
 		splx(s);
 		vp = pool_get(&vnode_pool, PR_WAITOK | PR_ZERO);
+		RB_INIT(&vp->v_bufs_tree);
 		numvnodes++;
 	} else {
 		for (vp = TAILQ_FIRST(listhd); vp != NULLVP;
