@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.61 2009/06/02 17:27:39 jsg Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.62 2009/06/03 00:11:19 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -805,7 +805,6 @@ struct rl_softc {
 	int			rl_txthresh;
 	struct rl_chain_data	rl_cdata;
 	struct timeout		sc_tick_tmo;
-	int			if_flags;
 
 	struct rl_list_data	rl_ldata;
 	struct mbuf		*rl_head;
