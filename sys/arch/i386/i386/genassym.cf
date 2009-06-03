@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.28 2007/10/10 15:53:51 art Exp $
+#	$OpenBSD: genassym.cf,v 1.29 2009/06/03 00:49:12 art Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -114,6 +114,7 @@ member	pcb_ldt_sel
 member	pcb_onfault
 member	pcb_fpcpu
 member	pcb_flags
+member	pcb_pmap
 export	PCB_SAVECTX
 
 # frame definitions
@@ -206,6 +207,10 @@ define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
 define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
 define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
+define	CPU_INFO_CURPMAP	offsetof(struct cpu_info, ci_curpmap)
+
+struct pmap
+member pm_pdirpa
 
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
 

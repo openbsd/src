@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.51 2009/02/05 01:13:21 oga Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.52 2009/06/03 00:49:12 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -272,7 +272,6 @@ struct pmap {
 	union descriptor *pm_ldt;	/* user-set LDT */
 	int pm_ldt_len;			/* number of LDT entries */
 	int pm_ldt_sel;			/* LDT selector */
-	uint32_t pm_cpus;		/* mask of CPUs using map */
 };
 
 /* pm_flags */
@@ -384,6 +383,7 @@ void		pmap_write_protect(struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t);
 int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
 		    struct pcb *);
+void		pmap_switch(struct proc *, struct proc *);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -391,6 +391,7 @@ void	pmap_tlb_shootpage(struct pmap *, vaddr_t);
 void	pmap_tlb_shootrange(struct pmap *, vaddr_t, vaddr_t);
 void	pmap_tlb_shoottlb(void);
 #ifdef MULTIPROCESSOR
+void	pmap_tlb_droppmap(struct pmap *);
 void	pmap_tlb_shootwait(void);
 #else
 #define pmap_tlb_shootwait()

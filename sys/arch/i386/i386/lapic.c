@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.24 2008/08/13 15:46:21 art Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.25 2009/06/03 00:49:12 art Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -203,6 +203,7 @@ lapic_boot_init(paddr_t lapic_base)
 	idt_vec_set(LAPIC_IPI_INVLTLB, Xintripi_invltlb);
 	idt_vec_set(LAPIC_IPI_INVLPG, Xintripi_invlpg);
 	idt_vec_set(LAPIC_IPI_INVLRANGE, Xintripi_invlrange);
+	idt_vec_set(LAPIC_IPI_RELOADCR3, Xintripi_reloadcr3);
 #endif
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintrltimer);

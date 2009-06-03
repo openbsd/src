@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.107 2009/02/16 15:44:25 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.108 2009/06/03 00:49:12 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -94,11 +94,10 @@ struct cpu_info {
 	struct proc *ci_fpcurproc;	/* current owner of the FPU */
 	int ci_fpsaving;		/* save in progress */
 
-	volatile u_int32_t ci_tlb_ipi_mask;
-
 	struct pcb *ci_curpcb;		/* VA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* VA of current PCB */
 	int ci_idle_tss_sel;		/* TSS selector of idle PCB */
+	struct pmap *ci_curpmap;
 
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 	u_int32_t	ci_ipending;

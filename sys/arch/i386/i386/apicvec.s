@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.16 2008/06/26 05:42:10 ray Exp $ */
+/* $OpenBSD: apicvec.s,v 1.17 2009/06/03 00:49:12 art Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -123,6 +123,29 @@ XINTR(ipi_invlrange):
 
 	popl	%ds
 	popl	%edx
+	popl	%eax
+	iret
+
+	.globl	XINTR(ipi_reloadcr3)
+	.p2align 4,0x90
+XINTR(ipi_reloadcr3):
+	pushl	%eax
+	pushl	%ds
+	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
+	movl	%eax, %ds
+
+	ioapic_asm_ack()
+
+	movl	CPUVAR(CURPCB), %eax
+	movl	PCB_PMAP(%eax), %eax
+	movl	%eax, CPUVAR(CURPMAP)
+	movl	PM_PDIRPA(%eax), %eax
+	movl	%eax, %cr3
+
+	lock
+	decl	tlb_shoot_wait
+
+	popl	%ds
 	popl	%eax
 	iret
 
