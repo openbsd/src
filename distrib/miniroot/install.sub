@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.571 2009/06/03 06:07:37 halex Exp $
+#	$OpenBSD: install.sub,v 1.572 2009/06/03 23:44:53 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -92,41 +92,6 @@ set_term() {
 			esac
 		done
 	fi
-}
-
-welcome() {
-	cat <<__EOT
-
-Welcome to the $OBSD $MODE program.
-
-This program will $MODE OpenBSD. At any prompt except password prompts you
-can escape to a shell by typing '!'. Default answers are shown in []'s and
-are selected by pressing RETURN.  At any time you can exit this program by
-pressing Control-C, but exiting during an $MODE can leave your system in an
-inconsistent state.
-
-__EOT
-
-	if [[ $MODE == upgrade ]]; then
-		cat <<__EOT
-NOTE: Once your system has been upgraded, you must manually merge any
-changes to files in the 'etc' set into the files already on your system.
-sysmerge(8) can help.
-
-__EOT
-	fi
-
-	ask_yn "Proceed with $MODE?"
-	if [[ $resp == n ]]; then
-		cat <<__EOT
-Remove your install media (if any), and enter 'reboot' at the command
-prompt to return to your original OS.
-
-__EOT
-		exit
-	fi
-
-	echo "Cool! Let's get to it."
 }
 
 # Echo the file $1 to standard output, skipping any lines that begin with a
@@ -1774,13 +1739,9 @@ __EOT
 ROOTDISK=
 ROOTDEV=
 
-VERSION=45
-
-VNAME="$(( $VERSION / 10 )).$(( $VERSION % 10 ))"
 SETDIR="$VNAME/$ARCH"
 FTPDIR="pub/OpenBSD/$VNAME"
 FTPOPTS="-V"
-OBSD="OpenBSD/$ARCH $VNAME"
 SERVERLISTALL=/tmp/serverlistall
 SERVERLIST=/tmp/serverlist
 
@@ -1844,9 +1805,6 @@ export EDITOR COLUMNS
 cd /
 [[ -f /etc/fstab ]] && umount -af 1>/dev/null 2>&1
 umount /mnt 1>/dev/null 2>&1
-
-# Introduce ourselves.
-welcome
 
 # Configure the terminal and keyboard.
 set_term

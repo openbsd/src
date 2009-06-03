@@ -1,6 +1,7 @@
-#	$OpenBSD: dot.profile,v 1.8 2008/08/03 14:18:00 krw Exp $
+#	$OpenBSD: dot.profile,v 1.9 2009/06/03 23:44:53 krw Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
+# Copyright (c) 2009 Kenneth R. Westerback
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -31,39 +32,59 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+export VNAME=$(sysctl -n kern.osrelease)
+export VERSION="${VNAME%.*}${VNAME#*.}"
+export ARCH=$(sysctl -n hw.machine)
+export OBSD="OpenBSD/$ARCH $VNAME"
+
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 umask 022
 # emacs-style command line editing
 set -o emacs
 
-# Extract rootdisk from last 'root on wd0a swap on wd0b dump on wd0b' line.
-set -- `dmesg | sed -n '/^root on /h;${g;p;}'`
+# Extract rootdisk from last 'root on ...' line. e.g.
+# 	root on wd0a swap on wd0b dump on wd0b
+set -- $(dmesg | sed -n '/^root on /h;${g;p;}')
 rootdisk=$3
 
-if [ "X${DONEPROFILE}" = "X" ]; then
-	DONEPROFILE=YES
+mount -u /dev/${rootdisk:-rd0a} /
 
-	mount -u /dev/${rootdisk:-rd0a} /
+# set up some sane defaults
+echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
+stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T
 
-	# set up some sane defaults
-	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
-	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T
+# Installing or upgrading?
+while :; do
+	cat <<__EOT
 
-	# Installing or upgrading?
-	_forceloop=""
-	while [ "X$_forceloop" = "X" ]; do
-		echo -n '(I)nstall'
-		[ -f upgrade ] && echo -n ', (U)pgrade'
-		echo -n ' or (S)hell? '
-		read _forceloop
-		case "$_forceloop" in
-		i*|I*)	/install
-			;;
-		u*|U*)	/upgrade
-			;;
-		s*|S*)	;;
-		*)	_forceloop=""
-			;;
-		esac
-	done
-fi
+Welcome to the $OBSD installation program.
+
+This program can install $OBSD, or upgrade an existing
+OpenBSD installation.
+
+At any prompt except password prompts you can escape to a shell by
+typing '!'. Default answers are shown in []'s and are selected by
+pressing RETURN.  At any time you can exit this program by pressing
+Control-C, but exiting during an $MODE can leave your system in an
+inconsistent state.
+
+__EOT
+	read REPLY?'(I)nstall, (U)pgrade or (S)hell? '
+	case $REPLY in
+	i*|I*)	echo "\nCool! Let's get to it."
+		/install && break
+		;;
+	u*|U*)	
+		cat <<__EOT
+
+NOTE: Once your system has been upgraded, you must manually merge any
+changes to files in the 'etc' set into the files already on your system.
+sysmerge(8) can help.
+
+__EOT
+		/upgrade && break
+		;;
+	s*|S*)	break
+		;;
+	esac
+done

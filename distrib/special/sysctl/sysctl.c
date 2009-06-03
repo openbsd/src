@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.4 2009/04/20 16:10:39 jasper Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.5 2009/06/03 23:44:53 krw Exp $	*/
 
 /*
  * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -36,6 +36,10 @@ int	pstring(struct var *);
 int	pint(struct var *);
 
 struct var vars[] = {
+	{ "kern.osrelease", pstring, 2,
+	    { CTL_KERN, KERN_OSRELEASE }},
+	{ "hw.machine", pstring, 2,
+	    { CTL_HW, HW_MACHINE }},
 	{ "hw.model", pstring, 2,
 	    { CTL_HW, HW_MODEL }},
 	{ "hw.disknames", pstring, 2,
