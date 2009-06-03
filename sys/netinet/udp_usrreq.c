@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.127 2009/06/02 15:32:19 blambert Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.128 2009/06/03 18:22:44 naddy Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -286,9 +286,21 @@ udp_input(struct mbuf *m, ...)
 			udpstat.udps_nosum++;
 			goto bad;
 		}
-		if ((uh->uh_sum = in6_cksum(m, IPPROTO_UDP, iphlen, len))) {
-			udpstat.udps_badsum++;
-			goto bad;
+		if ((m->m_pkthdr.csum_flags & M_UDP_CSUM_IN_OK) == 0) {
+			if (m->m_pkthdr.csum_flags & M_UDP_CSUM_IN_BAD) {
+				udpstat.udps_badsum++;
+				udpstat.udps_inhwcsum++;
+				goto bad;
+			}
+
+			if ((uh->uh_sum = in6_cksum(m, IPPROTO_UDP,
+			    iphlen, len))) {
+				udpstat.udps_badsum++;
+				goto bad;
+			}
+		} else {
+			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_IN_OK;
+			udpstat.udps_inhwcsum++;
 		}
 	} else
 #endif /* INET6 */
