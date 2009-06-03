@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.124 2009/06/02 04:13:37 kettenis Exp $
+#	$OpenBSD: files.sparc64,v 1.125 2009/06/03 23:45:15 kettenis Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -147,6 +147,10 @@ file	arch/sparc64/dev/ifb.c			ifb
 device	raptor: wsemuldisplaydev, rasops_bswap, rasops8
 attach	raptor at pci
 file	arch/sparc64/dev/raptor.c		raptor
+
+device	gfxp: wsemuldisplaydev, rasops_bswap, rasops8
+attach	gfxp at pci
+file	arch/sparc64/dev/gfxp.c			gfxp
 
 device	sbbc
 attach	sbbc at pci
