@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.56 2009/06/01 23:15:48 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.57 2009/06/03 16:31:55 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -70,7 +70,7 @@ void		lka_expand_rcpt(struct smtpd *, struct aliaseslist *, struct lkasession *)
 int		lka_expand_rcpt_iteration(struct smtpd *, struct aliaseslist *, struct lkasession *);
 void		lka_rcpt_action(struct smtpd *, struct path *);
 void		lka_clear_aliaseslist(struct aliaseslist *);
-int		lka_encode_credentials(char *, char *);
+int		lka_encode_credentials(char *, size_t, char *);
 struct rule    *ruleset_match(struct smtpd *, struct path *, struct sockaddr_storage *);
 
 void
@@ -462,18 +462,25 @@ lka_dispatch_mta(int sig, short event, void *p)
 		case IMSG_LKA_SECRET: {
 			struct secret	*query = imsg.data;
 			char		*secret = NULL;
+			char		*map = "secrets";
 
 			IMSG_SIZE_CHECK(query);
 
-			secret = map_dblookup(env, "secrets", query->host);
+			secret = map_dblookup(env, map, query->host);
 
 			log_debug("secret for %s %s", query->host,
 			    secret ? "found" : "not found");
+			
+			query->secret[0] = '\0';
 
-			if (secret)
-				lka_encode_credentials(query->secret, secret);
-			else
-				query->secret[0] = '\0';
+			if (secret == NULL) {
+				log_warnx("failed to lookup %s in the %s map",
+				    query->host, map);
+			} else if (! lka_encode_credentials(query->secret,
+			    sizeof(query->secret), secret)) {
+				log_warnx("parse error for %s in the %s map",
+				    query->host, map);
+			}
 
 			imsg_compose(ibuf, IMSG_LKA_SECRET, 0, 0, -1, query,
 			    sizeof(*query));
@@ -1130,29 +1137,24 @@ lka_clear_aliaseslist(struct aliaseslist *aliaseslist)
 }
 
 int
-lka_encode_credentials(char *dest, char *src)
+lka_encode_credentials(char *dst, size_t size, char *user)
 {
-	size_t len;
-	char buffer[MAX_LINE_SIZE];
-	size_t i;
+	char	*pass, *buf;
+	int	 buflen;
 
-	len = strlen(src) + 1;
-	if (len < 1)
+	if ((pass = strchr(user, ':')) == NULL)
 		return 0;
+	*pass++ = '\0';
 
-	bzero(buffer, sizeof (buffer));
-	if (strlcpy(buffer + 1, src, sizeof(buffer) - 1) >=
-	    sizeof (buffer) - 1)
+	if ((buflen = asprintf(&buf, "%c%s%c%s", '\0', user, '\0', pass)) == -1)
+		fatal(NULL);
+
+	if (kn_encode_base64(buf, buflen, dst, size) == -1) {
+		free(buf);
 		return 0;
-
-	for (i = 0; i < len; ++i) {
-		if (buffer[i] == ':') {
-			buffer[i] = '\0';
-			break;
-		}
 	}
-	if (kn_encode_base64(buffer, len, dest, MAX_LINE_SIZE - 1) == -1)
-		return 0;
+
+	free(buf);
 	return 1;
 }
 
