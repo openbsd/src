@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.570 2009/06/03 00:30:31 krw Exp $
+#	$OpenBSD: install.sub,v 1.571 2009/06/03 06:07:37 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1336,7 +1336,7 @@ set_timezone() {
 	waitftplist
 	if [[ -s $SERVERLISTALL ]]; then
 		_tz=$(sed -ne '/^TZ=/s/TZ=//p' <$SERVERLISTALL)
-		[[ -n $_tz ]] && TZ=$_tz
+		[[ -n $_tz ]] && isin "$_tz" `cat $_zonefile` && TZ=$_tz
 	fi
 
 	: ${TZ:=GMT}
@@ -1404,6 +1404,12 @@ install_sets() {
 	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
 	[[ -n $MTDEVS && -x /bin/mt ]] && _locs="$_locs tape"
 	: ${_d:=disk}
+
+	if ! isin "$_d" $_locs; then
+		for a in ftp http cd nfs tape disk; do 
+			isin $a $_locs && _d=$a && break
+		done
+	fi
 
 	echo "Let's $MODE the sets!"
 	while :; do
