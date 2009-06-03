@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.2 2009/06/03 16:54:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -73,6 +73,7 @@ const struct set_option_entry set_option_table[NSETOPTION] = {
 	{ "status-left-length", SET_OPTION_NUMBER, 0, SHRT_MAX, NULL },
 	{ "status-right", SET_OPTION_STRING, 0, 0, NULL },
 	{ "status-right-length", SET_OPTION_NUMBER, 0, SHRT_MAX, NULL },
+	{ "status-utf8", SET_OPTION_FLAG, 0, 0, NULL },
 };
 
 int
