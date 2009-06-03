@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.24 2009/06/03 14:45:40 jj Exp 
+#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.25 2009/06/03 18:32:24 jasper Exp 
 #	OpenBSD: MAKEDEV.common,v 1.43 2009/06/03 14:45:39 jj Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -66,6 +66,7 @@
 #	bpf*	Berkeley Packet Filter
 #	crypto	Hardware crypto access driver
 #	fd	fd/* nodes
+#	hotplug	devices hot plugging
 #	pci*	PCI bus devices
 #	pf*	Packet Filter
 #	*random	In-kernel random data source
@@ -261,6 +262,10 @@ pci*)
 	MKlist[${#MKlist[*]}]=";[ -h pci ] || ln -sf pci0 pci"
 	;;
 
+hotplug)
+	M hotplug c 67 $U 400
+	;;
+
 fd)
 	RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	while [ $n -lt 64 ];do M fd/$n c 7 $n;n=$(($n+1));done
@@ -438,9 +443,10 @@ all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0
 	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2
-	R nnpfs0 ss0 ss1 ch0 ptm local wscons pci0 pci1 pci2 pci3 uall
-	R video0 audio0 audio1 audio2 uk0 random tty00 tty01 tty02
-	R tty03 crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R nnpfs0 ss0 ss1 ch0 hotplug ptm local wscons pci0 pci1 pci2
+	R pci3 uall video0 audio0 audio1 audio2 uk0 random tty00 tty01
+	R tty02 tty03 crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1
+	R fd
 	;;
 
 wd*|sd*|ccd*)
