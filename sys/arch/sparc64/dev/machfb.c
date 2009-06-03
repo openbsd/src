@@ -1,4 +1,4 @@
-/*	$OpenBSD: machfb.c,v 1.3 2009/06/02 04:53:57 kettenis Exp $	*/
+/*	$OpenBSD: machfb.c,v 1.4 2009/06/03 03:05:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -188,8 +188,6 @@ struct machfb_softc {
 	u_int8_t	sc_cmap_red[256];
 	u_int8_t	sc_cmap_green[256];
 	u_int8_t	sc_cmap_blue[256];
-
-	int		sc_ofhandle;
 };
 
 int	machfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -310,12 +308,7 @@ machfb_attach(struct device *parent, struct device *self, void *aux)
 	ri->ri_hw = sc;
 
 	fbwscons_init(&sc->sc_sunfb, RI_BSWAP, console);
-
-	if (console) {
-		sc->sc_ofhandle = OF_stdout();
-		fbwscons_setcolormap(&sc->sc_sunfb, machfb_setcolor);
-	}
-
+	fbwscons_setcolormap(&sc->sc_sunfb, machfb_setcolor);
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
 	machfb_init(sc);
