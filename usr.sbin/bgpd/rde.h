@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.114 2009/06/02 00:09:02 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.115 2009/06/03 20:17:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -346,7 +346,7 @@ extern u_int16_t	 rib_size;
 extern struct rib	*ribs;
 
 void		 rib_init(void);
-u_int16_t	 rib_new(char *);
+u_int16_t	 rib_new(u_int16_t, char *, u_int16_t);
 void		 rib_free(struct rib *);
 struct rib_entry *rib_get(struct rib *, struct bgpd_addr *, int);
 struct rib_entry *rib_lookup(struct rib *, struct bgpd_addr *);

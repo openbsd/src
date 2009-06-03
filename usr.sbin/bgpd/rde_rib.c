@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.109 2009/06/03 19:54:53 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.110 2009/06/03 20:17:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -52,27 +52,15 @@ RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
 void
 rib_init(void)
 {
-	if ((ribs = calloc(1, sizeof(struct rib))) == NULL)
-		fatal("rib_init");
-	rib_new("DEFAULT");
-
-	/* XXX we need to create Adj-RIB-In by hand */
-	bzero(&ribs[0], sizeof(struct rib));
-	RB_INIT(&ribs[0].rib);
-	ribs[0].state = RIB_ACTIVE;
-	ribs[0].id = 0;
-	strlcpy(ribs[0].name, "Adj-RIB-In", sizeof("Adj-RIB-In"));
-	ribs[0].flags = F_RIB_NOEVALUATE;
+	rib_new(1, "DEFAULT", 0);
+	rib_new(0, "Adj-RIB-In", F_RIB_NOEVALUATE);
 }
 
 u_int16_t
-rib_new(char *name)
+rib_new(u_int16_t id, char *name, u_int16_t flags)
 {
 	struct rib	*xribs;
 	size_t		newsize;
-	u_int16_t	id;
-
-	id = rib_name2id(name);
 
 	if (id >= rib_size) {
 		newsize = sizeof(struct rib) * (id + 1);
@@ -89,6 +77,7 @@ rib_new(char *name)
 	RB_INIT(&ribs[id].rib);
 	ribs[id].state = RIB_ACTIVE;
 	ribs[id].id = id;
+	ribs[id].flags = flags;
 
 	return (id);
 }
