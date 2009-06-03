@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.35 2009/06/03 02:59:01 jordan Exp $ */
+/* $OpenBSD: acpidock.c,v 1.36 2009/06/03 05:14:03 jordan Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -85,9 +85,6 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_docked == ACPIDOCK_STATUS_DOCKED) {
 		acpidock_docklock(sc, 1);
 		acpidock_dockctl(sc, 1);
-	} else {
-		acpidock_dockctl(sc, 0);
-		acpidock_docklock(sc, 0);
 	}
 
 	acpidock_status(sc);
