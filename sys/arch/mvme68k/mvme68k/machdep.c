@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.114 2009/03/15 20:40:25 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.115 2009/06/03 21:30:20 beck Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -264,12 +264,6 @@ cpu_startup()
 	 */
 	if (bufpages == 0)
 		bufpages = physmem * bufcachepercent / 100;
-
-	/* Restrict to at most 25% filled kvm */
-	if (bufpages >
-	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / PAGE_SIZE / 4) 
-		bufpages = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
-		    PAGE_SIZE / 4;
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

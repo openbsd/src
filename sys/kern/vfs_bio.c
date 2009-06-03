@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.113 2009/06/03 04:30:57 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.114 2009/06/03 21:30:20 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -234,6 +234,33 @@ bufinit(void)
 
 	maxcleanpages = locleanpages;
 }
+
+/*
+ * Change cachepct
+ */
+void
+bufadjust(int newbufpages)
+{
+	/*
+	 * XXX - note, bufkvm was allocated once, based on 10% of physmem
+	 * see above.
+	 */
+
+	bufpages = newbufpages;
+
+	hidirtypages = (bufpages / 4) * 3;
+	lodirtypages = bufpages / 2;
+
+	/*
+	 * When we hit 95% of pages being clean, we bring them down to
+	 * 90% to have some slack.
+	 */
+	hicleanpages = bufpages - (bufpages / 20);
+	locleanpages = bufpages - (bufpages / 10);
+
+	maxcleanpages = locleanpages;
+}
+
 
 struct buf *
 bio_doread(struct vnode *vp, daddr64_t blkno, int size, int async)
