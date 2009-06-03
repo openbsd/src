@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.88 2009/05/08 13:50:15 ariane Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.89 2009/06/03 22:09:30 thib Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -138,7 +138,8 @@ struct swapdev {
 
 	int			swd_bsize;	/* blocksize (bytes) */
 	int			swd_maxactive;	/* max active i/o reqs */
-	struct buf		swd_tab;	/* buffer list */
+	int			swd_active;	/* i/o reqs in progress */
+	struct bufq		*swd_bufq;	/* buffer queue */
 	struct ucred		*swd_cred;	/* cred for file access */
 #ifdef UVM_SWAP_ENCRYPT
 #define SWD_KEY_SHIFT		7		/* One key per 0.5 MByte */
@@ -802,6 +803,7 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 		sdp->swd_flags = SWF_FAKE;	/* placeholder only */
 		sdp->swd_vp = vp;
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
+		sdp->swd_bufq = bufq_init(BUFQ_DEFAULT);
 
 		/*
 		 * XXX Is NFS elaboration necessary?
@@ -1148,6 +1150,7 @@ swap_off(struct proc *p, struct swapdev *sdp)
 	extent_free(swapmap, sdp->swd_drumoffset, sdp->swd_drumsize,
 		    EX_WAITOK);
 	extent_destroy(sdp->swd_ex);
+	bufq_destroy(sdp->swd_bufq);
 	free(sdp, M_VMSWAP);
 	simple_unlock(&uvm.swap_data_lock);
 	return (0);
@@ -1382,7 +1385,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		bgetvp(vp, &nbp->vb_buf);
 
 		/* sort it in and start I/O if we are not over our limit */
-		disksort(&sdp->swd_tab, &nbp->vb_buf);
+		BUFQ_ADD(sdp->swd_bufq, &nbp->vb_buf);
 		sw_reg_start(sdp);
 		splx(s);
 
@@ -1425,12 +1428,11 @@ sw_reg_start(struct swapdev *sdp)
 
 	sdp->swd_flags |= SWF_BUSY;
 
-	while (sdp->swd_tab.b_active < sdp->swd_maxactive) {
-		bp = sdp->swd_tab.b_actf;
+	while (sdp->swd_active < sdp->swd_maxactive) {
+		bp = BUFQ_GET(sdp->swd_bufq);
 		if (bp == NULL)
 			break;
-		sdp->swd_tab.b_actf = bp->b_actf;
-		sdp->swd_tab.b_active++;
+		sdp->swd_active++;
 
 		UVMHIST_LOG(pdhist,
 		    "sw_reg_start:  bp %p vp %p blkno 0x%lx cnt 0x%lx",
@@ -1514,7 +1516,7 @@ sw_reg_iodone(struct buf *bp)
 	/*
 	 * done!   start next swapdev I/O if one is pending
 	 */
-	sdp->swd_tab.b_active--;
+	sdp->swd_active--;
 	sw_reg_start(sdp);
 }
 

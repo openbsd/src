@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.154 2009/02/16 21:19:07 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.155 2009/06/03 22:09:30 thib Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -90,7 +90,6 @@ int	sd_reassign_blocks(struct sd_softc *, u_long);
 int	sd_interpret_sense(struct scsi_xfer *);
 int	sd_get_parms(struct sd_softc *, struct disk_parms *, int);
 void	sd_flush(struct sd_softc *, int);
-void	sd_kill_buffers(struct sd_softc *);
 
 void	viscpy(u_char *, u_char *, int);
 
@@ -268,7 +267,7 @@ sdactivate(struct device *self, enum devact act)
 
 	case DVACT_DEACTIVATE:
 		sd->flags |= SDF_DYING;
-		sd_kill_buffers(sd);
+		bufq_drain(sd->sc_dk.dk_bufq);
 		break;
 	}
 
@@ -282,7 +281,7 @@ sddetach(struct device *self, int flags)
 	struct sd_softc *sd = (struct sd_softc *)self;
 	int bmaj, cmaj, mn;
 
-	sd_kill_buffers(sd);
+	bufq_drain(sd->sc_dk.dk_bufq);
 
 	/* Locate the lowest minor number to be detached. */
 	mn = DISKMINOR(self->dv_unit, 0);
@@ -550,10 +549,8 @@ sdstrategy(struct buf *bp)
 
 	s = splbio();
 
-	/*
-	 * Place it in the queue of disk activities for this disk
-	 */
-	disksort(&sd->buf_queue, bp);
+	/* Place it in the queue of disk activities for this disk */
+	BUFQ_ADD(sd->sc_dk.dk_bufq, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -602,7 +599,6 @@ sdstart(void *v)
 	struct sd_softc *sd = (struct sd_softc *)v;
 	struct scsi_link *sc_link = sd->sc_link;
 	struct buf *bp = 0;
-	struct buf *dp;
 	struct scsi_rw_big cmd_big;
 	struct scsi_rw_12 cmd_12;
 	struct scsi_rw_16 cmd_16;
@@ -637,10 +633,8 @@ sdstart(void *v)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		dp = &sd->buf_queue;
-		if ((bp = dp->b_actf) == NULL)	/* yes, an assign */
+		if ((bp = BUFQ_GET(sd->sc_dk.dk_bufq)) == NULL)
 			return;
-		dp->b_actf = bp->b_actf;
 
 		/*
 		 * If the device has become invalid, abort all the
@@ -747,7 +741,7 @@ sdstart(void *v)
 			/*
 			 * The device can't start another i/o. Try again later.
 			 */
-			dp->b_actf = bp;
+			BUFQ_ADD(sd->sc_dk.dk_bufq, bp);
 			disk_unbusy(&sd->sc_dk, 0, 0);
 			timeout_add(&sd->sc_timeout, 1);
 			return;
@@ -1494,24 +1488,4 @@ sd_flush(struct sd_softc *sd, int flags)
 		SC_DEBUG(sc_link, SDEV_DB1, ("cache sync failed\n"));
 	} else
 		sd->flags &= ~SDF_DIRTY;
-}
-
-/*
- * Remove unprocessed buffers from queue.
- */
-void
-sd_kill_buffers(struct sd_softc *sd)
-{
-	struct buf *dp, *bp;
-	int s;
-
-	s = splbio();
-	for (dp = &sd->buf_queue; (bp = dp->b_actf) != NULL; ) {
-		dp->b_actf = bp->b_actf;
-
-		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
-		biodone(bp);
-	}
-	splx(s);
 }

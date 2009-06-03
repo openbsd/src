@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.90 2009/06/03 06:25:27 marco Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.91 2009/06/03 22:09:30 thib Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -762,7 +762,11 @@ disk_construct(struct disk *diskp, char *lockname)
 {
 	rw_init(&diskp->dk_lock, "dklk");
 	mtx_init(&diskp->dk_mtx, IPL_BIO);
-	
+
+	diskp->dk_bufq = bufq_init(BUFQ_DEFAULT);
+	if (diskp->dk_bufq == NULL)
+		return (1);
+
 	diskp->dk_flags |= DKF_CONSTRUCTED;
 	    
 	return (0);
@@ -776,7 +780,8 @@ disk_attach(struct disk *diskp)
 {
 
 	if (!ISSET(diskp->dk_flags, DKF_CONSTRUCTED))
-		disk_construct(diskp, diskp->dk_name);
+		if (disk_construct(diskp, diskp->dk_name))
+			panic("disk_attach: can't construct disk");
 
 	/*
 	 * Allocate and initialize the disklabel structures.  Note that
@@ -818,6 +823,8 @@ disk_detach(struct disk *diskp)
 	 * Free the space used by the disklabel structures.
 	 */
 	free(diskp->dk_label, M_DEVBUF);
+
+	bufq_destroy(diskp->dk_bufq);
 
 	/*
 	 * Remove from the disklist.

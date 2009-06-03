@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.73 2008/11/08 01:32:06 chl Exp $ */
+/*	$OpenBSD: wd.c,v 1.74 2009/06/03 22:09:30 thib Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -119,7 +119,7 @@ struct wd_softc {
 	/* General disk infos */
 	struct device sc_dev;
 	struct disk sc_dk;
-	struct buf sc_q;
+
 	/* IDE disk soft states */
 	struct ata_bio sc_wdc_bio; /* current transfer */
 	struct buf *sc_bp; /* buf being transferred */
@@ -396,13 +396,12 @@ int
 wddetach(struct device *self, int flags)
 {
 	struct wd_softc *sc = (struct wd_softc *)self;
-	struct buf *dp, *bp;
+	struct buf *bp;
 	int s, bmaj, cmaj, mn;
 
 	/* Remove unprocessed buffers from queue */
 	s = splbio();
-	for (dp = &sc->sc_q; (bp = dp->b_actf) != NULL; ) {
-		dp->b_actf = bp->b_actf;
+	while ((bp = BUFQ_GET(sc->sc_dk.dk_bufq)) != NULL) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		biodone(bp);
@@ -475,7 +474,7 @@ wdstrategy(struct buf *bp)
 		goto done;
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	disksort(&wd->sc_q, bp);
+	BUFQ_ADD(wd->sc_dk.dk_bufq, bp);
 	wdstart(wd);
 	splx(s);
 	device_unref(&wd->sc_dev);
@@ -499,18 +498,15 @@ void
 wdstart(void *arg)
 {
 	struct wd_softc *wd = arg;
-	struct buf *dp, *bp = NULL;
+	struct buf *bp = NULL;
 
 	WDCDEBUG_PRINT(("wdstart %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */
-		dp = &wd->sc_q;
-		if ((bp = dp->b_actf) == NULL)  /* yes, an assign */
+		if ((bp = BUFQ_GET(wd->sc_dk.dk_bufq)) == NULL)
 			return;
-		dp->b_actf = bp->b_actf;
-
 		/*
 		 * Make the command. First lock the device
 		 */
