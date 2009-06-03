@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.138 2009/06/03 00:13:35 jordan Exp $ */
+/* $OpenBSD: acpi.c,v 1.139 2009/06/03 00:36:59 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -54,6 +54,7 @@ int acpi_debug = 16;
 int acpi_enabled;
 int acpi_poll_enabled;
 int acpi_hasprocfvs;
+int acpi_thinkpad_enabled;
 
 #define ACPIEN_RETRIES 15
 
@@ -720,8 +721,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* attach docks */
 	aml_find_node(&aml_root, "_DCK", acpi_founddock, sc);
 
-	/* attach video */
-	aml_find_node(&aml_root, "_DOS", acpi_foundvideo, sc);
+	/* attach video only if this is not a stinkpad */
+	if (!acpi_thinkpad_enabled)
+		aml_find_node(&aml_root, "_DOS", acpi_foundvideo, sc);
 
 	/* create list of devices we want to query when APM come in */
 	SLIST_INIT(&sc->sc_ac);
@@ -2236,8 +2238,10 @@ acpi_foundhid(struct aml_node *node, void *arg)
 		aaa.aaa_name = "acpibtn";
 	else if (!strcmp(dev, ACPI_DEV_ASUS))
 		aaa.aaa_name = "acpiasus";
-	else if (!strcmp(dev, ACPI_DEV_THINKPAD))
+	else if (!strcmp(dev, ACPI_DEV_THINKPAD)) {
 		aaa.aaa_name = "acpithinkpad";
+		acpi_thinkpad_enabled = 1;
+	}
 
 	if (aaa.aaa_name)
 		config_found(self, &aaa, acpi_print);

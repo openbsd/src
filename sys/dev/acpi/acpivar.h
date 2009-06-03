@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.47 2009/04/17 13:20:20 pirofti Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.48 2009/06/03 00:36:59 pirofti Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -46,6 +46,16 @@ extern u_int8_t acpi_lapic_flags[LAPIC_MAP_SIZE];
 struct klist;
 struct acpiec_softc;
 
+struct acpivideo_softc {
+	struct device sc_dev;
+
+	struct acpi_softc *sc_acpi;
+	struct aml_node	*sc_devnode;
+
+	int	*sc_dod;
+	size_t	sc_dod_len;
+};
+
 struct acpi_attach_args {
 	char		*aaa_name;
 	bus_space_tag_t	 aaa_iot;
@@ -53,6 +63,11 @@ struct acpi_attach_args {
 	void		*aaa_table;
 	struct aml_node *aaa_node;
 	const char	*aaa_dev;
+};
+
+struct acpivideo_attach_args {
+	struct acpi_attach_args	aaa;
+	int dod;
 };
 
 struct acpi_mem_map {

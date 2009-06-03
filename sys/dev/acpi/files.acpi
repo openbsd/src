@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.20 2008/07/02 03:14:54 fgsch Exp $
+#	$OpenBSD: files.acpi,v 1.21 2009/06/03 00:36:59 pirofti Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -77,6 +77,12 @@ attach	acpithinkpad at acpi
 file	dev/acpi/acpithinkpad.c		acpithinkpad
 
 # ACPI video
+define	acpivideo {}
 device	acpivideo
 attach	acpivideo at acpi
 file	dev/acpi/acpivideo.c		acpivideo
+
+# ACPI vout
+device	acpivout
+attach	acpivout at acpivideo
+file	dev/acpi/acpivout.c		acpivout

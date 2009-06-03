@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.660 2009/06/02 23:57:21 jordan Exp $
+#	$OpenBSD: GENERIC,v 1.661 2009/06/03 00:36:59 pirofti Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -63,6 +63,8 @@ acpiprt*	at acpi?
 acpitz*		at acpi?
 acpiasus*	at acpi?
 acpithinkpad*	at acpi?
+acpivideo*	at acpi?
+acpivout*	at acpivideo?
 
 option		PCIVERBOSE
 option		EISAVERBOSE

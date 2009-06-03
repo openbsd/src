@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.40 2009/06/02 11:22:45 deraadt Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.41 2009/06/03 00:36:59 pirofti Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -116,6 +116,16 @@ int	vga_drm_print(void *, const char *);
 int vesafb_putcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
 int vesafb_getcmap(struct vga_pci_softc *, struct wsdisplay_cmap *);
 #endif
+
+
+/*
+ * Function pointers for wsconsctl parameter handling.
+ * XXX These should be per-softc, but right now we only attach
+ * XXX a single vga@pci instance, so this will do.
+ */
+int	(*ws_get_param)(struct wsdisplay_param *);
+int	(*ws_set_param)(struct wsdisplay_param *);
+    
 
 struct cfattach vga_pci_ca = {
 	sizeof(struct vga_pci_softc), vga_pci_match, vga_pci_attach,
@@ -335,6 +345,14 @@ vga_pci_ioctl(void *v, u_long cmd, caddr_t addr, int flag, struct proc *pb)
 		break;
 
 #endif
+	case WSDISPLAYIO_GETPARAM:
+		if(ws_get_param != NULL)
+			return (*ws_get_param)((struct wsdisplay_param *)addr);
+		break;
+	case WSDISPLAYIO_SETPARAM:
+		if(ws_set_param != NULL)
+			return (*ws_set_param)((struct wsdisplay_param *)addr);
+		break;
 	default:
 		error = ENOTTY;
 	}
