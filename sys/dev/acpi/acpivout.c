@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.1 2009/06/03 00:36:59 pirofti Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.2 2009/06/03 20:27:38 matthieu Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -74,6 +74,7 @@ void	acpivout_brightness_up(struct acpivout_softc *);
 void	acpivout_brightness_down(struct acpivout_softc *);
 void	acpivout_brightness_zero(struct acpivout_softc *);
 int	acpivout_get_brightness(struct acpivout_softc *);
+int	acpivout_find_brightness(struct acpivout_softc *, int);
 void	acpivout_set_brightness(struct acpivout_softc *, int);
 void	acpivout_get_bcl(struct acpivout_softc *);
 
@@ -166,6 +167,7 @@ acpivout_brightness_cycle(struct acpivout_softc *sc)
 
 	if (sc->sc_bcl_len == 0)
 		return;
+	cur_level = acpivout_get_brightness(sc);
 	if (cur_level == sc->sc_bcl[sc->sc_bcl_len - 1])
 		acpivout_brightness_zero(sc);
 	else
@@ -232,11 +234,26 @@ acpivout_get_brightness(struct acpivout_softc *sc)
 	return (level);
 }
 
+int
+acpivout_find_brightness(struct acpivout_softc *sc, int level)
+{
+	int i, mid;
+
+	for (i = 0; i < sc->sc_bcl_len - 1; i++) {
+		mid = sc->sc_bcl[i] + (sc->sc_bcl[i+1] - sc->sc_bcl[i]) / 2;
+		if (sc->sc_bcl[i] <= level && level <=  mid)
+			return sc->sc_bcl[i];
+		if  (mid < level && level <= sc->sc_bcl[i+1])
+			return sc->sc_bcl[i+1];
+	}
+	return sc->sc_bcl[i];
+}
+
 void
 acpivout_set_brightness(struct acpivout_softc *sc, int level)
 {
 	struct aml_value args, res;
-
+	
 	memset(&args, 0, sizeof(args));
 	args.v_integer = level;
 	args.type = AML_OBJTYPE_INTEGER;
@@ -313,7 +330,7 @@ acpivout_get_param(struct wsdisplay_param *dp)
 			}
 		if (sc != NULL && sc->sc_bcl_len != 0) {
 				dp->min = sc->sc_bcl[0];
-				dp->max =  sc->sc_bcl[sc->sc_bcl_len - 1];
+				dp->max = sc->sc_bcl[sc->sc_bcl_len - 1];
 				dp->curval = acpivout_get_brightness(sc);
 				return 0;
 		}
@@ -327,7 +344,7 @@ int
 acpivout_set_param(struct wsdisplay_param *dp)
 {
 	struct acpivout_softc	*sc = NULL;
-	int i;
+	int i, exact;
 
 	switch (dp->param) {
 	case WSDISPLAYIO_PARAM_BRIGHTNESS:
@@ -343,7 +360,8 @@ acpivout_set_param(struct wsdisplay_param *dp)
 					break;
 			}
 		if (sc != NULL && sc->sc_bcl_len != 0) {
-			acpivout_set_brightness(sc, dp->curval);
+			exact = acpivout_find_brightness(sc, dp->curval);
+			acpivout_set_brightness(sc, exact);
 			return 0;
 		}
 		return -1;
