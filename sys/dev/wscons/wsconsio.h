@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.53 2009/06/02 04:53:57 kettenis Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.54 2009/06/03 21:30:11 kettenis Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -306,6 +306,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_RAPTOR	57	/* Tech Source Raptor */
 #define		WSDISPLAY_TYPE_DL	58	/* DisplayLink DL-120/DL-160 */
 #define		WSDISPLAY_TYPE_MACHFB	59	/* Sun PGX/PGX64 */
+#define		WSDISPLAY_TYPE_GFXP	60	/* Sun PGX32 */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
