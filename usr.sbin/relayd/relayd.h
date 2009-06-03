@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.118 2009/06/02 22:02:01 eric Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.119 2009/06/03 05:35:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -792,7 +792,7 @@ void		*buf_reserve(struct buf *, size_t);
 void		*buf_seek(struct buf *, size_t, size_t);
 size_t		 buf_size(struct buf *);
 size_t		 buf_left(struct buf *);
-int		 buf_close(struct msgbuf *, struct buf *);
+void		 buf_close(struct msgbuf *, struct buf *);
 void		 buf_free(struct buf *);
 void		 msgbuf_init(struct msgbuf *);
 void		 msgbuf_clear(struct msgbuf *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.16 2009/06/02 22:02:01 eric Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.17 2009/06/03 05:35:06 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -141,11 +141,10 @@ buf_left(struct buf *buf)
 	return (buf->max - buf->wpos);
 }
 
-int
+void
 buf_close(struct msgbuf *msgbuf, struct buf *buf)
 {
 	buf_enqueue(msgbuf, buf);
-	return (1);
 }
 
 void
