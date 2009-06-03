@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.78 2009/05/30 17:20:29 thib Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.79 2009/06/03 22:14:29 blambert Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -81,6 +81,8 @@ struct nfssvc_sock *nfs_udpsock;
 int nfsd_waiting = 0;
 
 #ifdef NFSSERVER
+int nfsrv_getslp(struct nfsd *nfsd);
+
 static int nfs_numnfsd = 0;
 int (*nfsrv3_procs[NFS_NPROCS])(struct nfsrv_descript *,
     struct nfssvc_sock *, struct proc *, struct mbuf **) = {
@@ -319,32 +321,13 @@ nfssvc_nfsd(nsd, argp, p)
 	 */
 	for (;;) {
 		if ((nfsd->nfsd_flag & NFSD_REQINPROG) == 0) {
-			while (nfsd->nfsd_slp == (struct nfssvc_sock *)0 &&
-			    (nfsd_head_flag & NFSD_CHECKSLP) == 0) {
-				nfsd->nfsd_flag |= NFSD_WAITING;
-				nfsd_waiting++;
-				error = tsleep((caddr_t)nfsd, PSOCK | PCATCH,
-				    "nfsd", 0);
-				nfsd_waiting--;
-				if (error)
-					goto done;
-			}
-			if (nfsd->nfsd_slp == NULL &&
-			    (nfsd_head_flag & NFSD_CHECKSLP) != 0) {
-				TAILQ_FOREACH(slp, &nfssvc_sockhead, ns_chain) {
-				    if ((slp->ns_flag & (SLP_VALID | SLP_DOREC))
-					== (SLP_VALID | SLP_DOREC)) {
-					    slp->ns_flag &= ~SLP_DOREC;
-					    slp->ns_sref++;
-					    nfsd->nfsd_slp = slp;
-					    break;
-				    }
-				}
-				if (slp == 0)
-					nfsd_head_flag &= ~NFSD_CHECKSLP;
-			}
-			if ((slp = nfsd->nfsd_slp) == (struct nfssvc_sock *)0)
-				continue;
+
+			/* attach an nfssvc_sock to nfsd */
+			error = nfsrv_getslp(nfsd);
+			if (error)
+				goto done;
+			slp = nfsd->nfsd_slp;
+
 			if (slp->ns_flag & SLP_VALID) {
 				if (slp->ns_flag & SLP_DISCONN)
 					nfsrv_zapsock(slp);
@@ -745,3 +728,46 @@ nfs_getset_niothreads(set)
 	}
 }
 #endif /* NFSCLIENT */
+
+#ifdef NFSSERVER
+/*
+ * Find an nfssrv_sock for nfsd, sleeping if needed.
+ */
+int
+nfsrv_getslp(struct nfsd *nfsd)
+{
+	struct nfssvc_sock *slp;
+	int error;
+
+again:
+	while (nfsd->nfsd_slp == NULL &&
+	    (nfsd_head_flag & NFSD_CHECKSLP) == 0) {
+		nfsd->nfsd_flag |= NFSD_WAITING;
+		nfsd_waiting++;
+		error = tsleep(nfsd, PSOCK | PCATCH, "nfsd", 0);
+		nfsd_waiting--;
+		if (error)
+			return (error);
+	}
+
+	if (nfsd->nfsd_slp == NULL &&
+	    (nfsd_head_flag & NFSD_CHECKSLP) != 0) {
+		TAILQ_FOREACH(slp, &nfssvc_sockhead, ns_chain) {
+			if ((slp->ns_flag & (SLP_VALID | SLP_DOREC)) ==
+			    (SLP_VALID | SLP_DOREC)) {
+				slp->ns_flag &= ~SLP_DOREC;
+				slp->ns_sref++;
+				nfsd->nfsd_slp = slp;
+				break;
+			}
+		}
+		if (slp == NULL)
+			nfsd_head_flag &= ~NFSD_CHECKSLP;
+	}
+
+	if (nfsd->nfsd_slp == NULL)
+		goto again;
+
+	return (0);
+}
+#endif /* NFSSERVER */
