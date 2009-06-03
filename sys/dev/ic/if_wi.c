@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.143 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.144 2009/06/03 20:35:37 beck Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.143 2008/11/28 02:44:17 brad Exp $";
+	"$OpenBSD: if_wi.c,v 1.144 2009/06/03 20:35:37 beck Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -447,6 +447,9 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 #endif
 
 	sc->sc_sdhook = shutdownhook_establish(wi_shutdown, sc);
+
+	if_addgroup(ifp, "wlan");
+	ifp->if_priority = IF_WIRELESS_DEFAULT_PRIORITY;
 
 	wi_init(sc);
 	wi_stop(sc);

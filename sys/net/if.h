@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.103 2009/01/27 09:17:51 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.104 2009/06/03 20:35:37 beck Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -756,6 +756,10 @@ do {									\
 #define	IFQ_DEC_LEN(ifq)		(--(ifq)->ifq_len)
 #define	IFQ_INC_DROPS(ifq)		((ifq)->ifq_drops++)
 #define	IFQ_SET_MAXLEN(ifq, len)	((ifq)->ifq_maxlen = (len))
+
+/* default interface priorities */
+#define IF_WIRED_DEFAULT_PRIORITY 0
+#define IF_WIRELESS_DEFAULT_PRIORITY 4
 
 extern int ifqmaxlen;
 extern struct ifnet_head ifnet;
