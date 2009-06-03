@@ -92,7 +92,7 @@
 
 #endif /* NEED_VICEIOCTL32 */
 
-#include <xfs/xfs_pioctl.h>
+#include <nnpfs/nnpfs_pioctl.h>
 
 /*
  * ioctls

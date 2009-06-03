@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.325 2009/05/31 20:57:12 halex Exp $
+#	$OpenBSD: rc,v 1.326 2009/06/03 14:45:39 jj Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -467,10 +467,10 @@ if [ -d /var/crash ]; then
 	savecore ${savecore_flags} /var/crash
 fi
 
-if [ X"${afs}" = X"YES" -a -c /dev/xfs0 ]; then
+if [ X"${afs}" = X"YES" -a -c /dev/nnpfs0 ]; then
 	echo -n 'mounting afs:'
 	mkdir -p -m 0755 /afs
-	mount -t xfs /dev/xfs0 /afs
+	mount -t nnpfs /dev/nnpfs0 /afs
 	/usr/libexec/afsd ${afsd_flags}
 	echo ' done.'
 fi

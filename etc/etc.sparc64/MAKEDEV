@@ -94,7 +94,7 @@
 #	uk*	Unknown SCSI devices
 #	uperf	Performance counters
 #	video*	Video V4L2 devices
-#	xfs*	XFS filesystem node
+#	nnpfs*	NNPFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -241,8 +241,8 @@ std)
 	M mdesc		c 70 1 640 kmem
 	;;
 
-xfs*)
-	M xfs$U c 51 $U 600
+nnpfs*)
+	M nnpfs$U c 51 $U 600
 	;;
 
 video*)
@@ -605,7 +605,7 @@ all)
 	R sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bio bpf0 bpf1
 	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B fd1C
 	R fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G
-	R fd0H xfs0 ss0 ss1 ch0 ccd0 ccd1 ccd2 ccd3 hotplug ptm local
+	R fd0H nnpfs0 ss0 ss1 ch0 ccd0 ccd1 ccd2 ccd3 hotplug ptm local
 	R wscons pci0 pci1 pci2 pci3 uall video0 audio0 audio1 audio2
 	R uk0 random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01
 	R tty02 tty03 ttyh0 ttyh1 crypto pf systrace wd0 wd1 wd2 wd3

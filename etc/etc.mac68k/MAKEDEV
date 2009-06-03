@@ -63,7 +63,7 @@
 #	systrace*	System call tracing device
 #	tun*	Network tunnel driver
 #	uk*	Unknown SCSI devices
-#	xfs*	XFS filesystem node
+#	nnpfs*	NNPFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -229,8 +229,8 @@ asc*)
 	M asc$U c 36 $U
 	;;
 
-xfs*)
-	M xfs$U c 51 $U 600
+nnpfs*)
+	M nnpfs$U c 51 $U 600
 	;;
 
 uk*)
@@ -390,7 +390,7 @@ ramdisk)
 
 all)
 	R ccd0 ccd1 ccd2 ccd3 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
-	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 nnpfs0 ss0
 	R ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 bio ptm
 	R local wscons asc0 uk0 random lkm tty00 tty01 pf systrace std
 	R st0 st1 fd

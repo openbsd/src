@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.105 2009/03/12 07:04:49 guenther Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.106 2009/06/03 14:45:54 jj Exp $	*/
 
 /*
  * System call names.
@@ -251,7 +251,7 @@ char *syscallnames[] = {
 	"#205 (unimplemented sys_undelete)",		/* 205 = unimplemented sys_undelete */
 	"futimes",			/* 206 = futimes */
 	"getpgid",			/* 207 = getpgid */
-	"xfspioctl",			/* 208 = xfspioctl */
+	"nnpfspioctl",			/* 208 = nnpfspioctl */
 	"#209 (unimplemented)",		/* 209 = unimplemented */
 #ifdef LKM
 	"lkmnosys",			/* 210 = lkmnosys */

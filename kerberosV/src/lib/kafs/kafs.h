@@ -43,7 +43,7 @@
 /*
  */
 
-#include<xfs/xfs_pioctl.h>
+#include<nnpfs/nnpfs_pioctl.h>
 
 /* Use k_hasafs() to probe if the machine supports AFS syscalls.
    The other functions will generate a SIGSYS if AFS is not supported */

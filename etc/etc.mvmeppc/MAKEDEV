@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.12 2005/08/01 19:44:53 jmc Exp $
+#	$OpenBSD: MAKEDEV,v 1.13 2009/06/03 14:45:40 jj Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -161,7 +161,7 @@ all)
 	sh $this random uk0 uk1 ss0 ss1
 	sh $this wscons
 	sh $this pci
-	sh $this lkm xfs0
+	sh $this lkm nnpfs0
 	sh $this usbs
 	;;
 
@@ -625,11 +625,11 @@ wsmouse*)
 	chown root.wheel wsmouse${unit}
 	;;
 
-xfs*)
-	rm -f xfs$unit
-	mknod xfs$unit c 51 $unit
-	chmod 600 xfs$unit
-	chown root.wheel xfs$unit
+nnpfs*)
+	rm -f nnpfs$unit
+	mknod nnpfs$unit c 51 $unit
+	chmod 600 nnpfs$unit
+	chown root.wheel nnpfs$unit
 	;;
 
 *)

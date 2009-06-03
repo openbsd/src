@@ -1,4 +1,4 @@
-/*	$OpenBSD: afssys_openbsd.c,v 1.1 2003/05/14 09:05:59 hin Exp $	*/
+/*	$OpenBSD: afssys_openbsd.c,v 1.2 2009/06/03 14:45:47 jj Exp $	*/
 /*	$KTH: afssys.c,v 1.57 1998/05/09 17:19:03 joda Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #include "kafs_locl.h"
 
 int
-xfspioctl(int operation, char *a_pathP,
+nnpfspioctl(int operation, char *a_pathP,
 	  int a_opcode, struct ViceIoctl *a_paramsP,
 	  int a_followSymlinks);
 
@@ -54,7 +54,7 @@ k_pioctl(char *a_path,
 	 struct ViceIoctl *a_paramsP,
 	 int a_followSymlinks)
 {
-    return xfspioctl(AFSCALL_PIOCTL, a_path, o_opcode, a_paramsP,
+    return nnpfspioctl(AFSCALL_PIOCTL, a_path, o_opcode, a_paramsP,
 		     a_followSymlinks);
 }
 
@@ -84,7 +84,7 @@ k_unlog(void)
 int
 k_setpag(void)
 {
-    return xfspioctl(AFSCALL_SETPAG, NULL, 0, NULL, 0);
+    return nnpfspioctl(AFSCALL_SETPAG, NULL, 0, NULL, 0);
 }
 
 int

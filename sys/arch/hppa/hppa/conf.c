@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.45 2009/01/25 17:30:48 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.46 2009/06/03 14:45:51 jj Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -88,9 +88,9 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
-#ifdef XFS
-#include <xfs/nxfs.h>
-cdev_decl(xfs_dev);
+#ifdef NNPFS
+#include <nnpfs/nnnpfs.h>
+cdev_decl(nnpfs_dev);
 #endif
 
 #include "inet.h"
@@ -162,8 +162,8 @@ struct cdevsw   cdevsw[] =
 #else
 	cdev_notdef(),			/* 31: */
 #endif
-#ifdef XFS
-	cdev_xfs_init(NXFS,xfs_dev),	/* 32: xfs communication device */
+#ifdef NNPFS
+	cdev_nnpfs_init(NNNPFS,nnpfs_dev),	/* 32: nnpfs communication device */
 #else
 	cdev_notdef(),
 #endif

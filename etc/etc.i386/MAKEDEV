@@ -101,7 +101,7 @@
 #	tuner*	Tuner devices
 #	uk*	Unknown SCSI devices
 #	video*	Video V4L2 devices
-#	xfs*	XFS filesystem node
+#	nnpfs*	NNPFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -252,8 +252,8 @@ ttyc*)
 	M cuac$U c 38 $(($U+128)) 660 dialer uucp
 	;;
 
-xfs*)
-	M xfs$U c 51 $U 600
+nnpfs*)
+	M nnpfs$U c 51 $U 600
 	;;
 
 video*)
@@ -601,7 +601,7 @@ all)
 	R sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2
 	R tun3 bio bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	R pty0 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C
-	R fd0D fd0E fd0F fd0G fd0H xfs0 ss0 ss1 ch0 hotplug ptm gpr0
+	R fd0D fd0E fd0F fd0G fd0H nnpfs0 ss0 ss1 ch0 hotplug ptm gpr0
 	R local wscons pci0 pci1 pci2 pci3 iop0 iop1 uall rmidi0
 	R rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 tuner0
 	R radio0 music0 speaker video0 audio0 audio1 audio2 uk0 random

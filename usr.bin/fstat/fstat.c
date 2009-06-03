@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.63 2009/05/31 19:31:23 thib Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.64 2009/06/03 14:45:55 jj Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.63 2009/05/31 19:31:23 thib Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.64 2009/06/03 14:45:55 jj Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -68,8 +68,8 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.63 2009/05/31 19:31:23 thib Exp $";
 #include <nfs/nfs.h>
 #include <nfs/nfsnode.h>
 
-#include <xfs/xfs_config.h>
-#include <xfs/xfs_node.h>
+#include <nnpfs/nnpfs_config.h>
+#include <nnpfs/nnpfs_node.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -151,7 +151,7 @@ int ext2fs_filestat(struct vnode *, struct filestat *);
 int isofs_filestat(struct vnode *, struct filestat *);
 int msdos_filestat(struct vnode *, struct filestat *);
 int nfs_filestat(struct vnode *, struct filestat *);
-int xfs_filestat(struct vnode *, struct filestat *);
+int nnpfs_filestat(struct vnode *, struct filestat *);
 int spec_filestat(struct vnode *, struct filestat *);
 void dofiles(struct kinfo_proc2 *);
 void getinetproto(int);
@@ -453,8 +453,8 @@ vtrans(struct vnode *vp, int i, int flag, struct file *fp)
 			if (!msdos_filestat(&vn, &fst))
 				badtype = "error";
 			break;
-		case VT_XFS:
-			if (!xfs_filestat(&vn, &fst))
+		case VT_NNPFS:
+			if (!nnpfs_filestat(&vn, &fst))
 				badtype = "error";
 			break;
 		case VT_NON:
@@ -676,20 +676,20 @@ nfs_filestat(struct vnode *vp, struct filestat *fsp)
 }
 
 int
-xfs_filestat(struct vnode *vp, struct filestat *fsp)
+nnpfs_filestat(struct vnode *vp, struct filestat *fsp)
 {
-	struct xfs_node xfs_node;
+	struct nnpfs_node nnpfs_node;
 
-	if (!KVM_READ(VNODE_TO_XNODE(vp), &xfs_node, sizeof (xfs_node))) {
-		dprintf("can't read xfs_node at %p for pid %ld",
+	if (!KVM_READ(VNODE_TO_XNODE(vp), &nnpfs_node, sizeof (nnpfs_node))) {
+		dprintf("can't read nnpfs_node at %p for pid %ld",
 		    VTOI(vp), (long)Pid);
 		return 0;
 	}
-	fsp->fsid = xfs_node.attr.va_fsid;
-	fsp->fileid = (long)xfs_node.attr.va_fileid;
-	fsp->mode = xfs_node.attr.va_mode;
-	fsp->size = xfs_node.attr.va_size;
-	fsp->rdev = xfs_node.attr.va_rdev;
+	fsp->fsid = nnpfs_node.attr.va_fsid;
+	fsp->fileid = (long)nnpfs_node.attr.va_fileid;
+	fsp->mode = nnpfs_node.attr.va_mode;
+	fsp->size = nnpfs_node.attr.va_size;
+	fsp->rdev = nnpfs_node.attr.va_rdev;
 
 	return 1;
 }

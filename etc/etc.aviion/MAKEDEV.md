@@ -1,6 +1,6 @@
 define(MACHINE,aviion)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.7 2009/01/25 17:30:48 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.8 2009/06/03 14:45:39 jj Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -47,7 +47,7 @@ target(all, nvram, 0)dnl
 dnl
 target(all, ch, 0)dnl
 target(all, ss, 0)dnl
-target(all, xfs, 0)dnl
+target(all, nnpfs, 0)dnl
 target(all, pty, 0)dnl
 target(all, bpf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 target(all, bio)dnl
@@ -98,7 +98,7 @@ _DEV(ss, 42)
 _DEV(systrace, 50)
 _DEV(tun, 23)
 _DEV(uk, 41)
-_DEV(xfs, 51)
+_DEV(nnpfs, 51)
 dnl
 divert(__mddivert)dnl
 dnl

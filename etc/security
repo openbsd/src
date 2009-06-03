@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: security,v 1.87 2009/05/24 22:25:12 schwarze Exp $
+#	$OpenBSD: security,v 1.88 2009/06/03 14:45:39 jj Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -422,7 +422,7 @@ fi
 next_part "Setuid/device find errors:"
 ( set -o noglob
   find / \
-	\( ! -fstype local -o -fstype procfs -o -fstype afs -o -fstype xfs \
+	\( ! -fstype local -o -fstype procfs -o -fstype afs -o -fstype nnpfs \
 	   `for f in $SUIDSKIP; do echo -o -path $f; done` \
 	\) -a -prune -o \
 	-type f -a \( -perm -u+s -o -perm -g+s \) -print0 -o \

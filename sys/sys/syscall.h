@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.102 2009/03/12 07:04:48 guenther Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.103 2009/06/03 14:45:55 jj Exp $	*/
 
 /*
  * System call numbers.
@@ -505,8 +505,8 @@
 /* syscall: "getpgid" ret: "pid_t" args: "pid_t" */
 #define	SYS_getpgid	207
 
-/* syscall: "xfspioctl" ret: "int" args: "int" "char *" "int" "struct ViceIoctl *" "int" */
-#define	SYS_xfspioctl	208
+/* syscall: "nnpfspioctl" ret: "int" args: "int" "char *" "int" "struct ViceIoctl *" "int" */
+#define	SYS_nnpfspioctl	208
 
 				/* 220 is compat_23 semctl23 */
 

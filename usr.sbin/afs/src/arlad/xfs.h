@@ -32,38 +32,38 @@
  */
 
 /*
- * $KTH: xfs.h,v 1.8 2000/10/02 22:33:30 lha Exp $
+ * $KTH: nnpfs.h,v 1.8 2000/10/02 22:33:30 lha Exp $
  */
 
-#ifndef __XFS_H_V
-#define __XFS_H_V 1
+#ifndef __NNPFS_H_V
+#define __NNPFS_H_V 1
 
-void xfs_probe_version (int fd, int version);
+void nnpfs_probe_version (int fd, int version);
 
-void xfs_message_init (void);
-int  xfs_message_receive (int fd, struct xfs_message_header *h, u_int size);
-int  xfs_message_receive (int fd, struct xfs_message_header *h, u_int size);
-void xfs_send_message_gc_nodes (int fd, int num, VenusFid *fids);
-int  xfs_message_wakeup (int fd, struct xfs_message_wakeup *h, u_int size);
-int  xfs_message_sleep (u_int seqnum);
-int  xfs_send_message_wakeup (int fd, u_int seqnum, int error);
-int  xfs_send_message_wakeup_vmultiple (int fd,	u_int seqnum,
+void nnpfs_message_init (void);
+int  nnpfs_message_receive (int fd, struct nnpfs_message_header *h, u_int size);
+int  nnpfs_message_receive (int fd, struct nnpfs_message_header *h, u_int size);
+void nnpfs_send_message_gc_nodes (int fd, int num, VenusFid *fids);
+int  nnpfs_message_wakeup (int fd, struct nnpfs_message_wakeup *h, u_int size);
+int  nnpfs_message_sleep (u_int seqnum);
+int  nnpfs_send_message_wakeup (int fd, u_int seqnum, int error);
+int  nnpfs_send_message_wakeup_vmultiple (int fd,	u_int seqnum,
 					int error, va_list args);
-int  xfs_send_message_wakeup_multiple (int fd, u_int seqnum,
+int  nnpfs_send_message_wakeup_multiple (int fd, u_int seqnum,
 				       int error, ...);
-int  xfs_send_message_wakeup_data (int fd, u_int seqnum, int error,
+int  nnpfs_send_message_wakeup_data (int fd, u_int seqnum, int error,
 				   void *data, int size);
-int  xfs_send_message_multiple_list (int fd, struct xfs_message_header *h,
+int  nnpfs_send_message_multiple_list (int fd, struct nnpfs_message_header *h,
 				     size_t size, u_int num);
-int  xfs_send_message_multiple (int fd, ...);
-int  xfs_send_message_vmultiple (int fd, va_list args);
+int  nnpfs_send_message_multiple (int fd, ...);
+int  nnpfs_send_message_vmultiple (int fd, va_list args);
 
-int  xfs_message_send (int fd, struct xfs_message_header *h, u_int size);
-int  xfs_message_rpc (int fd, struct xfs_message_header *h, u_int size);
+int  nnpfs_message_send (int fd, struct nnpfs_message_header *h, u_int size);
+int  nnpfs_message_rpc (int fd, struct nnpfs_message_header *h, u_int size);
 
 typedef int 
-(*xfs_message_function) (int, struct xfs_message_header*, u_int);
+(*nnpfs_message_function) (int, struct nnpfs_message_header*, u_int);
 
-extern xfs_message_function rcvfuncs[XFS_MSG_COUNT];
+extern nnpfs_message_function rcvfuncs[NNPFS_MSG_COUNT];
 
-#endif /* __XFS_H_V */
+#endif /* __NNPFS_H_V */

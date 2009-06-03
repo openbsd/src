@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.35 2008/05/07 14:08:37 thib Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.36 2009/06/03 14:45:54 jj Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -106,8 +106,8 @@ extern	const struct vfsops cd9660_vfsops;
 extern	const struct vfsops ext2fs_vfsops;
 #endif
 
-#ifdef XFS
-extern  const struct vfsops xfs_vfsops;
+#ifdef NNPFS
+extern  const struct vfsops nnpfs_vfsops;
 #endif
 
 #ifdef NTFS
@@ -151,9 +151,9 @@ static struct vfsconf vfsconflist[] = {
         { &nfs_vfsops, MOUNT_NFS, 2, 0, 0, NULL },
 #endif
 
-	/* XFS */
-#ifdef XFS
-	{ &xfs_vfsops, MOUNT_XFS, 21, 0, 0, NULL },
+	/* NNPFS */
+#ifdef NNPFS
+	{ &nnpfs_vfsops, MOUNT_NNPFS, 21, 0, 0, NULL },
 #endif
 	
         /* /proc Filesystem */
@@ -212,7 +212,7 @@ extern struct vnodeopv_desc msdosfs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ext2fs_specop_opv_desc;
 extern struct vnodeopv_desc ext2fs_fifoop_opv_desc;
-extern struct vnodeopv_desc xfs_vnodeop_opv_desc;
+extern struct vnodeopv_desc nnpfs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ntfs_vnodeop_opv_desc;
 extern struct vnodeopv_desc udf_vnodeop_opv_desc;
 
@@ -263,8 +263,8 @@ struct vnodeopv_desc *vfs_opv_descs[] = {
 	&ext2fs_fifoop_opv_desc,
 #endif
 #endif
-#ifdef XFS
-	&xfs_vnodeop_opv_desc,
+#ifdef NNPFS
+	&nnpfs_vnodeop_opv_desc,
 #endif
 #ifdef NTFS
 	&ntfs_vnodeop_opv_desc,

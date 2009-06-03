@@ -80,7 +80,7 @@
 #	systrace*	System call tracing device
 #	tuner*	Tuner devices
 #	video*	Video V4L2 devices
-#	xfs*	XFS filesystem node
+#	nnpfs*	NNPFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -225,8 +225,8 @@ std)
 	M klog		c 6 0 600
 	;;
 
-xfs*)
-	M xfs$U c 51 $U 600
+nnpfs*)
+	M nnpfs$U c 51 $U 600
 	;;
 
 video*)
@@ -468,7 +468,7 @@ local)
 all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
-	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 bio xfs0
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 bio nnpfs0
 	R ss0 ss1 ch0 hotplug ptm local wscons uall tuner0 radio0
 	R video0 audio0 audio1 audio2 uk0 random lkm tty00 tty01 tty02
 	R tty03 apm crypto pf systrace wd0 wd1 wd2 wd3 raid0 raid1
