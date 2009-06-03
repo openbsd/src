@@ -1,6 +1,6 @@
 define(MACHINE,sgi)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.24 2009/06/03 14:45:40 jj Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.25 2009/06/03 18:32:24 jasper Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -68,6 +68,7 @@ _DEV(bio, 49)
 _DEV(bpf, 12)
 _DEV(cry, 47)
 _DEV(fdesc, 7)
+_DEV(hotplug, 67)
 dnl _DEV(lkm)
 _DEV(pci, 29)
 _DEV(pf, 31)

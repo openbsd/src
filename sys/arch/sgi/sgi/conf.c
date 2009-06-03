@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 2009/06/03 14:45:53 jj Exp $ */
+/*	$OpenBSD: conf.c,v 1.20 2009/06/03 18:32:24 jasper Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@
 bdev_decl(wd);
 #include "ccd.h"
 #include "rd.h"
+#include "hotplug.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -211,7 +212,8 @@ struct cdevsw	cdevsw[] =
 	cdev_usbdev_init(NUGEN,ugen),	/* 63: USB generic driver */
 	cdev_ulpt_init(NULPT,ulpt),	/* 64: USB printers */
 	cdev_urio_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
-	cdev_tty_init(NUCOM,ucom)	/* 66: USB tty */
+	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
+	cdev_hotplug_init(NHOTPLUG,hotplug) /* 67: devices hotplugging */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
