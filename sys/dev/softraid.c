@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.142 2009/06/03 06:28:56 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.143 2009/06/03 06:30:10 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1807,9 +1807,6 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 	daddr64_t		size, csize;
 	struct disklabel	label;
 	struct sr_meta_chunk	*old, *new;
-
-	/* XXX disabled for now */
-	//goto done;
 
 	if (bs->bs_other_id_type == BIOC_SSOTHER_UNUSED)
 		goto done;
