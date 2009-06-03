@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.148 2008/11/08 01:17:52 ckuethe Exp $
+.\"	$OpenBSD: sysctl.8,v 1.149 2009/06/03 21:49:05 beck Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sysctl.8	8.2 (Berkeley) 5/9/95
 .\"
-.Dd $Mdocdate: November 8 2008 $
+.Dd $Mdocdate: June 3 2009 $
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -194,6 +194,8 @@ not all of the variables are relevant to all architectures.
 .It kern.timecounter.timestepwarnings	integer	yes
 .It kern.timecounter.hardware	string	yes
 .It kern.timecounter.choice	string	no
+.It kern.maxlocksperuid	integer	yes
+.It kern.bufcachepercent	integer	yes
 .It vm.vmmeter	struct	no
 .It vm.loadavg	struct	no
 .It vm.psstrings	struct	no
