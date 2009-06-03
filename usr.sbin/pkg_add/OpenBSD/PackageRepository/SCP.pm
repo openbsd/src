@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.17 2008/06/27 10:57:27 espie Exp $
+# $OpenBSD: SCP.pm,v 1.18 2009/06/03 10:17:50 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -54,6 +54,7 @@ sub initiate
 		next if m/^$/o;
 		print $wrfh $_;
 	}
+	seek(DATA, 0, 0);
 }
 	
 	
