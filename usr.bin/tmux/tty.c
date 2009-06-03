@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.2 2009/06/02 23:39:32 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.3 2009/06/03 23:26:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -797,7 +797,7 @@ tty_cmd_clearstartofscreen(
 				tty_putc(tty, ' ');
 		}
 	}
-	for (i = 0; i < s->old_cx; i++)
+	for (i = 0; i <= s->old_cx; i++)
 		tty_putc(tty, ' ');
 }
 
