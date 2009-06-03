@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.141 2009/06/03 02:55:04 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.142 2009/06/03 06:28:56 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1214,6 +1214,23 @@ struct scsi_device sr_dev = {
 	NULL, NULL, NULL, NULL
 };
 
+void sr_disk_attach(struct disk *, int);
+
+extern void (*softraid_disk_attach)(struct disk *, int);
+
+void
+sr_disk_attach(struct disk *diskp, int action)
+{
+	switch (action) {
+	case 1:
+		/* disk arrived */
+		break;
+	case -1:
+		/* disk departed */
+		break;
+	}
+}
+
 int
 sr_match(struct device *parent, void *match, void *aux)
 {
@@ -1235,6 +1252,8 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ioctl = sr_ioctl;
 
 	printf("\n");
+
+	softraid_disk_attach = sr_disk_attach;
 
 	sr_boot_assembly(sc);
 }
