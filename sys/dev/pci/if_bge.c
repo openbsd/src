@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.266 2009/06/02 03:58:17 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.267 2009/06/03 05:19:21 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1673,7 +1673,7 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Enable host coalescing bug fix. */
 	if (BGE_IS_5755_PLUS(sc))
-		val |= (1 << 29);
+		val |= BGE_WDMAMODE_STATUS_TAG_FIX;
 
 	/* Turn on write DMA state machine */
 	CSR_WRITE_4(sc, BGE_WDMA_MODE, val);

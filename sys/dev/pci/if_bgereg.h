@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.93 2009/06/02 03:58:17 naddy Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.94 2009/06/03 05:19:21 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -722,6 +722,7 @@
 #define BGE_RXMODE_RX_PROMISC		0x00000100
 #define BGE_RXMODE_RX_NO_CRC_CHECK	0x00000200
 #define BGE_RXMODE_RX_KEEP_VLAN_DIAG	0x00000400
+#define BGE_RXMODE_RX_IPV6_CSUM_ENABLE	0x01000000
 
 /* Receive MAC status register */
 #define BGE_RXSTAT_REMOTE_XOFFED	0x00000001
@@ -1412,6 +1413,7 @@
 #define BGE_WDMAMODE_LOCREAD_TOOBIG	0x00000200
 #define BGE_WDMAMODE_ALL_ATTNS		0x000003FC
 #define BGE_WDMAMODE_RX_ACCEL		0x00000400
+#define BGE_WDMAMODE_STATUS_TAG_FIX	0x20000000
 
 /* Write DMA status register */
 #define BGE_WDMASTAT_PCI_TGT_ABRT_ATTN	0x00000004
