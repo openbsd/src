@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.89 2009/06/03 03:14:28 thib Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.90 2009/06/03 06:25:27 marco Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -76,6 +76,9 @@ int	disk_change;		/* set if a disk has been attached/detached
 				 * since last we looked at this variable. This
 				 * is reset by hw_sysctl()
 				 */
+
+/* softraid callback, do not use! */
+void (*softraid_disk_attach)(struct disk *, int);
 
 /*
  * Seek sort for disks.  We depend on the driver which calls us using b_resid
@@ -796,6 +799,9 @@ disk_attach(struct disk *diskp)
 	TAILQ_INSERT_TAIL(&disklist, diskp, dk_link);
 	++disk_count;
 	disk_change = 1;
+
+	if (softraid_disk_attach)
+		softraid_disk_attach(diskp, 1);
 }
 
 /*
@@ -804,6 +810,9 @@ disk_attach(struct disk *diskp)
 void
 disk_detach(struct disk *diskp)
 {
+
+	if (softraid_disk_attach)
+		softraid_disk_attach(diskp, -1);
 
 	/*
 	 * Free the space used by the disklabel structures.
