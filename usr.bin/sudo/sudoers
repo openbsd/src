@@ -1,4 +1,4 @@
-# $OpenBSD: sudoers,v 1.22 2009/05/08 13:42:49 ajacoutot Exp $
+# $OpenBSD: sudoers,v 1.23 2009/06/03 20:25:23 millert Exp $
 #
 # sudoers file.
 #
@@ -17,7 +17,7 @@
 
 # Defaults specification
 Defaults env_keep +="DESTDIR EDITOR FETCH_CMD FLAVOR FTPMODE GROUP MAKE"
-Defaults env_keep +="MULTI_PACKAGES OKAY_FILES OWNER PKG_CACHE PKG_DBDIR"
+Defaults env_keep +="MULTI_PACKAGES NOMAN OKAY_FILES OWNER PKG_CACHE PKG_DBDIR"
 Defaults env_keep +="PKG_DESTDIR PKG_PATH PKG_TMPDIR PORTSDIR RELEASEDIR"
 Defaults env_keep +="SHARED_ONLY SSH_AUTH_SOCK SUBPACKAGE VISUAL WRKOBJDIR"
 
