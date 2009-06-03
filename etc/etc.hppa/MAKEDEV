@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.37 2009/02/06 21:17:14 grange Exp 
-#	OpenBSD: MAKEDEV.common,v 1.42 2009/04/05 17:49:14 jmc Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.38 2009/06/03 14:45:40 jj Exp 
+#	OpenBSD: MAKEDEV.common,v 1.43 2009/06/03 14:45:39 jj Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.79 2009/01/25 17:30:48 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -497,10 +497,10 @@ all)
 	R sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
 	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 fd1 fd1B
 	R fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F
-	R fd0G fd0H nnpfs0 ss0 ss1 bio ch0 hotplug ptm local wscons pci0
-	R pci1 pci2 pci3 uall video0 audio0 audio1 audio2 uk0 random
-	R lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02 tty03
-	R crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R fd0G fd0H nnpfs0 ss0 ss1 bio ch0 hotplug ptm local wscons
+	R pci0 pci1 pci2 pci3 uall video0 audio0 audio1 audio2 uk0
+	R random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02
+	R tty03 crypto pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*|ccd*)
