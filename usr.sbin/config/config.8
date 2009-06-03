@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.52 2009/03/23 16:57:05 jmc Exp $
+.\"	$OpenBSD: config.8,v 1.53 2009/06/03 21:42:16 beck Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)config.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 23 2009 $
+.Dd $Mdocdate: June 3 2009 $
 .Dt CONFIG 8
 .Os
 .Sh NAME
@@ -298,7 +298,7 @@ Add a device through copying another.
 .It Ic base Ar 8 | 10 | 16
 Change the base of numbers displayed and entered,
 e.g. I/O addresses in a VAXen are octal.
-.It Ic cachepct Op Ar number
+.It Ic bufcachepercent Op Ar number
 Change the BUFCACHEPERCENT value.
 Without arguments, displays its current value.
 .It Ic change Ar devno | dev

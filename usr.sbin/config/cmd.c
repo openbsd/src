@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.15 2008/11/22 11:18:53 maja Exp $ */
+/*	$OpenBSD: cmd.c,v 1.16 2009/06/03 21:42:16 beck Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: cmd.c,v 1.15 2008/11/22 11:18:53 maja Exp $";
+static char rcsid[] = "$OpenBSD: cmd.c,v 1.16 2009/06/03 21:42:16 beck Exp $";
 #endif
 
 #include <sys/types.h>
@@ -60,7 +60,8 @@ cmd_table_t cmd_table[] = {
 	{"exit",   Xexit,	"",		"Exit, without saving changes"},
 	{"quit",   Xquit,	"",		"Quit, saving current changes"},
 	{"timezone", Xtimezone,	"[mins [dst]]",	"Show/change timezone"},
-	{"cachepct", Xbufcachepct, "[number]",	"Show/change BUFCACHEPERCENT"},
+	{"bufcachepercent", Xbufcachepct, "[number]",
+	 "Show/change BUFCACHEPERCENT"},
 	{"nkmempg", Xnkmempg,	"[number]",	"Show/change NKMEMPAGES"},
 	{"shmseg", Xshmseg,	"[number]",	"Show/change SHMSEG"},
 	{"shmmaxpgs", Xshmmaxpgs,"[number]",	"Show/change SHMMAXPGS"},
@@ -75,7 +76,7 @@ Xhelp(cmd_t *cmd)
 
 	/* Hmm, print out cmd_table here... */
 	for (i = 0; cmd_table[i].cmd != NULL; i++)
-		printf("\t%-12s%-20s%s\n", cmd_table[i].cmd,
+		printf("\t%-16s%-20s%s\n", cmd_table[i].cmd,
 		    cmd_table[i].opt, cmd_table[i].help);
 	return (CMD_CONT);
 }
