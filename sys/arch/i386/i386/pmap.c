@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.139 2009/06/03 00:49:12 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.140 2009/06/03 02:31:48 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1524,7 +1524,9 @@ pmap_destroy(struct pmap *pmap)
 	if (refs > 0)
 		return;
 
+#ifdef MULTIPROCESSOR
 	pmap_tlb_droppmap(pmap);	
+#endif
 
 	simple_lock(&pmaps_lock);
 	LIST_REMOVE(pmap, pm_list);
