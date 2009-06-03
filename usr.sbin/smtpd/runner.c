@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.49 2009/06/01 13:20:56 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.50 2009/06/03 22:04:15 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -878,7 +878,6 @@ batch_record(struct smtpd *env, struct message *messagep)
 			fatal("batch_record: calloc");
 
 		batchp->id = queue_generate_id();
-		batchp->creation = messagep->creation;
 
 		(void)strlcpy(batchp->message_id, messagep->message_id,
 		    sizeof(batchp->message_id));

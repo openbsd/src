@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.123 2009/06/03 18:16:29 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.124 2009/06/03 22:04:15 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -498,13 +498,6 @@ enum batch_type {
 	T_DAEMON_BATCH		= 0x4
 };
 
-enum batch_flags {
-	F_BATCH_COMPLETE	= 0x1,
-	F_BATCH_RESOLVED	= 0x2,
-	F_BATCH_SCHEDULED	= 0x4,
-	F_BATCH_EXPIRED		= 0x8,
-};
-
 enum child_type {
 	CHILD_INVALID,
 	CHILD_DAEMON,
@@ -524,34 +517,23 @@ struct batch {
 	SPLAY_ENTRY(batch)	 b_nodes;
 
 	u_int64_t		 id;
-	u_int64_t		 session_id;
 	enum batch_type		 type;
-	enum batch_flags	 flags;
+	struct rule		 rule;
 
-	struct rule			 rule;
+	struct smtpd		*env;
 
-	struct smtpd			*env;
+	char			 message_id[MAX_ID_SIZE];
+	char			 hostname[MAXHOSTNAMELEN];
+	char			 errorline[MAX_LINE_SIZE];
 
-	char				 message_id[MAX_ID_SIZE];
-	char				 hostname[MAXHOSTNAMELEN];
-	char				 errorline[MAX_LINE_SIZE];
+	struct session		*sessionp;
 
-	char				 session_helo[MAXHOSTNAMELEN];
-	char				 session_hostname[MAXHOSTNAMELEN];
-	struct sockaddr_storage		 session_ss;
+	struct message		 message;
+	struct message		*messagep;
+	FILE			*messagefp;
+	TAILQ_HEAD(, message)	 messages;
 
-	time_t				 creation;
-	time_t				 lasttry;
-	u_int8_t			 retry;
-
-	struct session			*sessionp;
-
-	struct message			message;
-	struct message			*messagep;
-	FILE				*messagefp;
-	TAILQ_HEAD(messagelist, message) messages;
-
-	enum batch_status		status;
+	enum batch_status	 status;
 };
 
 enum session_state {

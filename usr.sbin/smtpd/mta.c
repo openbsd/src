@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.56 2009/06/02 22:23:35 gilles Exp $	*/
+/*	$OpenBSD: mta.c,v 1.57 2009/06/03 22:04:15 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -219,8 +219,6 @@ mta_dispatch_lka(int sig, short event, void *p)
 			if (s == NULL)
 				fatal("smtp_dispatch_parent: session is gone");
 
-			s->batch->flags |= F_BATCH_RESOLVED;
-
 			do {
 				ret = mta_connect(s);
 			} while (ret == 0);
@@ -383,9 +381,7 @@ mta_dispatch_runner(int sig, short event, void *p)
 				fatal("mta_dispatch_runner: calloc");
 
 			*batchp = *request;
-			batchp->session_id = s->s_id;
 			batchp->env = env;
-			batchp->flags = 0;
 			batchp->sessionp = s;
 
 			s->batch = batchp;
@@ -415,13 +411,6 @@ mta_dispatch_runner(int sig, short event, void *p)
 			if (batchp == NULL)
 				fatalx("mta_dispatch_runner: internal inconsistency.");
 
-			batchp->session_ss = messagep->session_ss;
-			strlcpy(batchp->session_hostname,
-			    messagep->session_hostname,
-			    sizeof(batchp->session_hostname));
-			strlcpy(batchp->session_helo, messagep->session_helo,
-			    sizeof(batchp->session_helo));
-
  			TAILQ_INSERT_TAIL(&batchp->messages, messagep, entry);
 			break;
 		}
@@ -434,8 +423,6 @@ mta_dispatch_runner(int sig, short event, void *p)
 			batchp = batch_by_id(env, batchp->id);
 			if (batchp == NULL)
 				fatalx("mta_dispatch_runner: internal inconsistency.");
-
-			batchp->flags |= F_BATCH_COMPLETE;
 
 			/* assume temporary failure by default, safest choice */
 			batchp->status = S_BATCH_TEMPFAILURE;

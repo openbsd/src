@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.19 2009/06/01 13:20:56 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.20 2009/06/03 22:04:15 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -279,9 +279,7 @@ mda_dispatch_runner(int sig, short event, void *p)
 				fatal("mda_dispatch_runner: calloc");
 
 			*batchp = *request;
-			batchp->session_id = s->s_id;
 			batchp->env = env;
-			batchp->flags = 0;
 			batchp->sessionp = s;
 
 			s->batch = batchp;
@@ -308,13 +306,6 @@ mda_dispatch_runner(int sig, short event, void *p)
 			if (batchp == NULL)
 				fatalx("mda_dispatch_runner: internal inconsistency.");
 
-			batchp->session_ss = messagep->session_ss;
-			strlcpy(batchp->session_hostname,
-			    messagep->session_hostname,
-			    sizeof(batchp->session_hostname));
-			strlcpy(batchp->session_helo, messagep->session_helo,
-			    sizeof(batchp->session_helo));
-
  			TAILQ_INSERT_TAIL(&batchp->messages, messagep, entry);
 			break;
 		}
@@ -331,7 +322,6 @@ mda_dispatch_runner(int sig, short event, void *p)
 			if (batchp == NULL)
 				fatalx("mda_dispatch_runner: internal inconsistency.");
 
-			batchp->flags |= F_BATCH_COMPLETE;
 			s = batchp->sessionp;
 
 			lookup = *batchp;
