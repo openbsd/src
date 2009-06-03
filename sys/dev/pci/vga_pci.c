@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.41 2009/06/03 00:36:59 pirofti Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.42 2009/06/03 23:33:01 miod Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -346,12 +346,16 @@ vga_pci_ioctl(void *v, u_long cmd, caddr_t addr, int flag, struct proc *pb)
 
 #endif
 	case WSDISPLAYIO_GETPARAM:
-		if(ws_get_param != NULL)
+		if (ws_get_param != NULL)
 			return (*ws_get_param)((struct wsdisplay_param *)addr);
+		else
+			error = ENOTTY;
 		break;
 	case WSDISPLAYIO_SETPARAM:
-		if(ws_set_param != NULL)
+		if (ws_set_param != NULL)
 			return (*ws_set_param)((struct wsdisplay_param *)addr);
+		else
+			error = ENOTTY;
 		break;
 	default:
 		error = ENOTTY;
