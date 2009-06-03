@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_perror.c,v 1.21 2009/06/01 23:18:29 schwarze Exp $ */
+/*	$OpenBSD: clnt_perror.c,v 1.22 2009/06/03 03:34:00 schwarze Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -45,16 +45,7 @@
 static char *auth_errmsg(enum auth_stat stat);
 #define CLNT_PERROR_BUFLEN 256
 
-static char *buf;
-
-static char *
-_buf(void)
-{
-
-	if (buf == NULL)
-		buf = (char *)malloc(CLNT_PERROR_BUFLEN);
-	return (buf);
-}
+static char buf[CLNT_PERROR_BUFLEN];
 
 /*
  * Print reply error info
@@ -62,13 +53,10 @@ _buf(void)
 char *
 clnt_sperror(CLIENT *rpch, char *s)
 {
-	char *err, *str = _buf(), *strstart;
+	char *err, *str = buf;
 	struct rpc_err e;
 	int ret, len = CLNT_PERROR_BUFLEN;
 
-	strstart = str;
-	if (str == NULL)
-		return (0);
 	CLNT_GETERR(rpch, &e);
 
 	ret = snprintf(str, len, "%s: %s", s, clnt_sperrno(e.re_status));
@@ -147,13 +135,13 @@ clnt_sperror(CLIENT *rpch, char *s)
 			goto truncated;
 		break;
 	}
-	if (strlcat(strstart, "\n", CLNT_PERROR_BUFLEN) >= CLNT_PERROR_BUFLEN)
+	if (strlcat(buf, "\n", CLNT_PERROR_BUFLEN) >= CLNT_PERROR_BUFLEN)
 		goto truncated;
-	return (strstart);
+	return (buf);
 
 truncated:
-	snprintf(strstart + CLNT_PERROR_BUFLEN - 5, 5, "...\n");
-	return (strstart);
+	snprintf(buf + CLNT_PERROR_BUFLEN - 5, 5, "...\n");
+	return (buf);
 }
 
 void
@@ -208,40 +196,33 @@ clnt_perrno(enum clnt_stat num)
 char *
 clnt_spcreateerror(char *s)
 {
-	char *str = _buf();
-
-	if (str == NULL)
-		return (0);
-
 	switch (rpc_createerr.cf_stat) {
 	case RPC_PMAPFAILURE:
-		(void) snprintf(str, CLNT_PERROR_BUFLEN, "%s: %s - %s\n", s,
+		(void) snprintf(buf, CLNT_PERROR_BUFLEN, "%s: %s - %s\n", s,
 		    clnt_sperrno(rpc_createerr.cf_stat),
 		    clnt_sperrno(rpc_createerr.cf_error.re_status));
 		break;
 
 	case RPC_SYSTEMERROR:
-		(void) snprintf(str, CLNT_PERROR_BUFLEN, "%s: %s - %s\n", s,
+		(void) snprintf(buf, CLNT_PERROR_BUFLEN, "%s: %s - %s\n", s,
 		    clnt_sperrno(rpc_createerr.cf_stat),
 		    strerror(rpc_createerr.cf_error.re_errno));
 		break;
 
 	default:
-		(void) snprintf(str, CLNT_PERROR_BUFLEN, "%s: %s\n", s,
+		(void) snprintf(buf, CLNT_PERROR_BUFLEN, "%s: %s\n", s,
 		    clnt_sperrno(rpc_createerr.cf_stat));
 		break;
 	}
-	str[CLNT_PERROR_BUFLEN-2] = '\n';
-	str[CLNT_PERROR_BUFLEN-1] = '\0';
-	return (str);
+	buf[CLNT_PERROR_BUFLEN-2] = '\n';
+	buf[CLNT_PERROR_BUFLEN-1] = '\0';
+	return (buf);
 }
 
 void
 clnt_pcreateerror(char *s)
 {
-	char *msg = clnt_spcreateerror(s);
-	if (msg)
-		(void) fprintf(stderr, "%s", msg);
+	fprintf(stderr, "%s", clnt_spcreateerror(s));
 }
 
 static const char *const auth_errlist[] = {
