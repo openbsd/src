@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.143 2009/06/03 06:30:10 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.144 2009/06/03 17:39:26 ckuethe Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -207,7 +207,7 @@ sr_meta_attach(struct sr_discipline *sd, int force)
 
 	if (sd->sd_meta_type != SR_META_F_NATIVE) {
 		/* in memory copy of foreign metadata */
-		sd->sd_meta_foreign =  malloc(smd[sd->sd_meta_type].smd_size ,
+		sd->sd_meta_foreign = malloc(smd[sd->sd_meta_type].smd_size,
 		    M_DEVBUF, M_ZERO);
 		if (!sd->sd_meta_foreign) {
 			/* unwind frees sd_meta */
@@ -224,7 +224,7 @@ sr_meta_attach(struct sr_discipline *sd, int force)
 	}
 	sd->sd_vol.sv_chunks = malloc(sizeof(struct sr_chunk *) * i,
 	    M_DEVBUF, M_WAITOK | M_ZERO);
-	
+
 	/* fill out chunk array */
 	i = 0;
 	SLIST_FOREACH(ch_entry, cl, src_link)
@@ -1059,7 +1059,7 @@ sr_meta_native_probe(struct sr_softc *sc, struct sr_chunk *ch_entry)
 	if (label.d_partitions[part].p_fstype != FS_RAID) {
 		DNPRINTF(SR_D_META,
 		    "%s: %s partition not of type RAID (%d)\n", DEVNAME(sc) ,
-		        devname,
+		    devname,
 		    label.d_partitions[part].p_fstype);
 		goto unwind;
 	}

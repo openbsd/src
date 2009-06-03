@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.35 2009/06/02 21:23:11 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.36 2009/06/03 17:39:27 ckuethe Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -434,7 +434,7 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 	if (sr_ccb_alloc(sd))
 		return (ENOMEM);
 	if (sr_crypto_decrypt_key(sd))
-		return (EPERM);	
+		return (EPERM);
 
 	bzero(&cri, sizeof(cri));
 	cri.cri_alg = CRYPTO_AES_XTS;
@@ -598,11 +598,11 @@ sr_crypto_rw2(struct sr_workunit *wu, struct cryptop *crp)
 
 	TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
 
-        DNPRINTF(SR_D_DIS, "%s: %s: sr_crypto_rw2: b_bcount: %d "
-            "b_blkno: %x b_flags 0x%0x b_data %p\n",
-            DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
-            ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
-            ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
+	DNPRINTF(SR_D_DIS, "%s: %s: sr_crypto_rw2: b_bcount: %d "
+	    "b_blkno: %x b_flags 0x%0x b_data %p\n",
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
+	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
+	    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
 
 	s = splbio();
 
@@ -632,14 +632,14 @@ sr_crypto_intr(struct buf *bp)
 	struct cryptop		*crp;
 	int			 s, s2, pend;
 
-        DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr bp: %x xs: %x\n",
-            DEVNAME(sc), bp, wu->swu_xs);
+	DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr bp: %x xs: %x\n",
+	    DEVNAME(sc), bp, wu->swu_xs);
 
-        DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr: b_bcount: %d b_resid: %d"
-            " b_flags: 0x%0x\n", DEVNAME(sc), ccb->ccb_buf.b_bcount,
-            ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags);
+	DNPRINTF(SR_D_INTR, "%s: sr_crypto_intr: b_bcount: %d b_resid: %d"
+	    " b_flags: 0x%0x\n", DEVNAME(sc), ccb->ccb_buf.b_bcount,
+	    ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags);
 
-        s = splbio();
+	s = splbio();
 
 	if (ccb->ccb_buf.b_flags & B_ERROR) {
 		printf("%s: i/o error on block %lld\n", DEVNAME(sc),

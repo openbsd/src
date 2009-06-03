@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_aoe.c,v 1.6 2009/06/02 21:23:11 marco Exp $ */
+/* $OpenBSD: softraid_aoe.c,v 1.7 2009/06/03 17:39:26 ckuethe Exp $ */
 /*
  * Copyright (c) 2008 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2008 Marco Peereboom <marco@openbsd.org>
@@ -282,7 +282,7 @@ sr_aoe_rw(struct sr_workunit *wu)
 	int			fragsize;
 	const int		aoe_frags = 2;
 
-	
+
 	printf("%s: sr_aoe_rw 0x%02x\n", DEVNAME(sd->sd_sc),
 	    xs->cmd->opcode);
 	return (1);
@@ -366,9 +366,8 @@ ragain:
 			default:
 				goto bad;
 			}
-	
 		}
-	
+
 		tag = ++sd->mds.mdd_aoe.sra_tag;
 		ah = sd->mds.mdd_aoe.sra_ah;
 		ar = malloc(sizeof(*ar), M_DEVBUF, M_NOWAIT);
@@ -382,7 +381,7 @@ ragain:
 		timeout_set(&ar->to, sr_aoe_timeout, ar);
 		TAILQ_INSERT_TAIL(&ah->reqs, ar, next);
 		splx(s);
-	
+
 		ifp = ah->ifp;
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (xs->flags & SCSI_DATA_OUT && m) {
@@ -399,7 +398,7 @@ ragain:
 			free(ar, M_DEVBUF);
 			return ENOMEM;
 		}
-	
+
 		eh = mtod(m, struct ether_header *);
 		memcpy(eh->ether_dhost, sd->mds.mdd_aoe.sra_eaddr, 6);
 		memcpy(eh->ether_shost, ((struct arpcom *)ifp)->ac_enaddr, 6);
@@ -423,7 +422,7 @@ ragain:
 		ap->feature = 0;
 		ap->sectorcnt = fragsize / 512;
 		AOE_BLK2HDR(fragblk, ap);
-	
+
 		m->m_pkthdr.len = m->m_len = AOE_CMDHDRLEN + fragsize;
 		s = splnet();
 		IFQ_ENQUEUE(&ifp->if_snd, m, NULL, rv);
@@ -431,7 +430,7 @@ ragain:
 			(*ifp->if_start)(ifp);
 		timeout_add(&ar->to, hz * 10);
 		splx(s);
-	
+
 		if (rv) {
 			s = splbio();
 			TAILQ_REMOVE(&ah->reqs, ar, next);
@@ -494,7 +493,7 @@ sr_aoe_input(struct aoe_handler *ah, struct mbuf *m)
 	}
 
 	wu->swu_ios_complete++;
-	
+
 	s = splbio();
 
 	if (wu->swu_ios_complete == wu->swu_io_count) {
