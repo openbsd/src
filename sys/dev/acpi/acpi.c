@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.137 2009/04/30 20:42:14 marco Exp $ */
+/* $OpenBSD: acpi.c,v 1.138 2009/06/03 00:13:35 jordan Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -38,6 +38,9 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/dsdt.h>
+
+#include <dev/pci/pciidereg.h>
+#include <dev/pci/pciidevar.h>
 
 #include <machine/apmvar.h>
 #define APMUNIT(dev)	(minor(dev)&0xf0)
@@ -84,6 +87,24 @@ void	acpi_init_pm(struct acpi_softc *);
 
 void	acpi_dev_sort(void);
 void	acpi_dev_free(void);
+
+int acpi_foundide(struct aml_node *node, void *arg);
+int acpiide_notify(struct aml_node *, int, void *);
+
+void  wdcattach(struct channel_softc *);
+int   wdcdetach(struct channel_softc *, int);
+
+struct idechnl
+{
+	struct acpi_softc *sc;
+	int64_t 	addr;
+	int64_t 	chnl;
+	int64_t 	sta;
+};
+
+int is_ejectable_bay(struct aml_node *node);
+int is_ata(struct aml_node *node);
+int is_ejectable(struct aml_node *node);
 
 #ifdef ACPI_SLEEP_ENABLED
 void acpi_sleep_walk(struct acpi_softc *, int);
@@ -340,6 +361,114 @@ acpi_foundprt(struct aml_node *node, void *arg)
 }
 
 int
+is_ata(struct aml_node *node)
+{
+	return (aml_searchname(node, "_GTM") != NULL ||
+	    aml_searchname(node, "_GTF") != NULL ||
+	    aml_searchname(node, "_STM") != NULL ||
+	    aml_searchname(node, "_SDD") != NULL);
+}
+
+int
+is_ejectable(struct aml_node *node)
+{
+	return (aml_searchname(node, "_EJ0") != NULL);
+}
+
+int
+is_ejectable_bay(struct aml_node *node)
+{
+	return ((is_ata(node) || is_ata(node->parent)) && is_ejectable(node));
+}
+
+int
+acpiide_notify(struct aml_node *node, int ntype, void *arg)
+{
+	struct idechnl 		*ide = arg;
+	struct acpi_softc 	*sc = ide->sc;
+	struct pciide_softc 	*wsc;
+	struct device 		*dev;
+	int 			b,d,f;
+	int64_t 		sta;
+
+	if (aml_evalinteger(sc, node, "_STA", 0, NULL, &sta) != 0)
+		return (0);
+
+	dnprintf(10, "IDE notify! %s %d status:%llx\n", aml_nodename(node), 
+	    ntype, sta);
+
+	/* Walk device list looking for IDE device match */
+	TAILQ_FOREACH(dev, &alldevs, dv_list) {
+		if (strncmp(dev->dv_xname, "pciide", 6))
+			continue;
+
+		wsc = (struct pciide_softc *)dev;
+		pci_decompose_tag(NULL, wsc->sc_tag, &b, &d, &f);
+		if (b != ACPI_PCI_BUS(ide->addr) ||
+		    d != ACPI_PCI_DEV(ide->addr) ||
+		    f != ACPI_PCI_FN(ide->addr))
+			continue;
+		dnprintf(10, "Found pciide: %s %x.%x.%x channel:%llx\n",
+		    dev->dv_xname, b,d,f, ide->chnl);
+
+		if (sta == 0 && ide->sta)
+			wdcdetach(
+			    &wsc->pciide_channels[ide->chnl].wdc_channel, 0);
+		else if (sta && !ide->sta)
+			wdcattach(
+			    &wsc->pciide_channels[ide->chnl].wdc_channel);
+		ide->sta = sta;
+	}
+	return (0);
+}
+
+int
+acpi_foundide(struct aml_node *node, void *arg)
+{
+	struct acpi_softc 	*sc = arg;
+	struct aml_node 	*pp;
+	struct idechnl 		*ide;
+	union amlpci_t 		pi;
+	int 			lvl;
+
+	/* Check if this is an ejectable bay */
+	if (!is_ejectable_bay(node))
+		return (0);
+
+	ide = malloc(sizeof(struct idechnl), M_DEVBUF, M_NOWAIT | M_ZERO);
+	ide->sc = sc;
+
+	/* GTM/GTF can be at 2/3 levels:  pciX.ideX.channelX[.driveX] */
+	lvl = 0;
+	for (pp=node->parent; pp; pp=pp->parent) {
+		lvl++;
+		if (aml_searchname(pp, "_HID"))
+			break;
+	}
+
+	/* Get PCI address and channel */
+	if (lvl == 3) {
+		aml_evalinteger(sc, node->parent, "_ADR", 0, NULL, 
+		    &ide->chnl);
+		aml_rdpciaddr(node->parent->parent, &pi);
+		ide->addr = pi.addr;
+	} else if (lvl == 4) {
+		aml_evalinteger(sc, node->parent->parent, "_ADR", 0, NULL, 
+		    &ide->chnl);
+		aml_rdpciaddr(node->parent->parent->parent, &pi);
+		ide->addr = pi.addr;
+	}
+	dnprintf(10, "%s %llx channel:%llx\n", 
+	    aml_nodename(node), ide->addr, ide->chnl);
+
+	aml_evalinteger(sc, node, "_STA", 0, NULL, &ide->sta);
+	dnprintf(10, "Got Initial STA: %llx\n", ide->sta);
+
+	aml_register_notify(node, "acpiide", acpiide_notify, ide, 0);
+	return (0);
+}
+
+int
 acpi_match(struct device *parent, void *match, void *aux)
 {
 	struct bios_attach_args	*ba = aux;
@@ -584,6 +713,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* attach battery, power supply and button devices */
 	aml_find_node(&aml_root, "_HID", acpi_foundhid, sc);
+
+	/* Attach IDE bay */
+	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_foundide, sc);
 
 	/* attach docks */
 	aml_find_node(&aml_root, "_DCK", acpi_founddock, sc);
