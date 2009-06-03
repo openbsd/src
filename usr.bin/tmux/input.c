@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.2 2009/06/03 19:33:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -475,7 +475,7 @@ input_state_string_next(u_char ch, struct input_ctx *ictx)
 		return;
 	}
 
-	if (ch >= 0x20 && ch != 0x7f) {
+	if (ch >= 0x20) {
 		if (input_add_string(ictx, ch) != 0)
 			input_state(ictx, input_state_first);
 		return;
