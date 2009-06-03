@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.139 2009/06/03 00:36:59 pirofti Exp $ */
+/* $OpenBSD: acpi.c,v 1.140 2009/06/03 07:13:48 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1478,6 +1478,9 @@ acpi_add_device(struct aml_node *node, void *arg)
 		break;
 	case AML_OBJTYPE_THERMZONE:
 		aaa.aaa_name = "acpitz";
+		break;
+	case AML_OBJTYPE_POWERRSRC:
+		aaa.aaa_name = "acpipwrres";
 		break;
 	default:
 		return 0;
