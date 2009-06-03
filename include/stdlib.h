@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.45 2008/09/07 20:36:07 martynas Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.46 2009/06/03 15:52:16 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -164,7 +164,7 @@ long	 nrand48(unsigned short[3]);
 unsigned short *seed48(unsigned short[3]);
 void	 srand48(long);
 
-int	 putenv(const char *);
+int	 putenv(char *);
 #endif
 
 #if __BSD_VISIBLE || __XPG_VISIBLE >= 420
@@ -210,7 +210,7 @@ unsigned long long
  */
 #if __BSD_VISIBLE || __POSIX_VISIBLE >= 200112 || __XPG_VISIBLE >= 600
 int	 setenv(const char *, const char *, int);
-void	 unsetenv(const char *);
+int	 unsetenv(const char *);
 #endif
 
 #if __BSD_VISIBLE

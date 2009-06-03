@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getenv.3,v 1.12 2007/05/31 19:19:31 jmc Exp $
+.\"	$OpenBSD: getenv.3,v 1.13 2009/06/03 15:52:16 millert Exp $
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 3 2009 $
 .Dt GETENV 3
 .Os
 .Sh NAME
@@ -47,8 +47,8 @@
 .Ft int
 .Fn setenv "const char *name" "const char *value" "int overwrite"
 .Ft int
-.Fn putenv "const char *string"
-.Ft void
+.Fn putenv "char *string"
+.Ft int
 .Fn unsetenv "const char *name"
 .Sh DESCRIPTION
 These functions set, unset, and fetch environment variables from the host
@@ -87,11 +87,20 @@ is zero, the variable is not reset, otherwise it is reset to the given
 The
 .Fn putenv
 function takes an argument of the form
-.Ar name Ns = Ns Ar value
-and is equivalent to:
-.Bd -literal -offset indent
-setenv(name, value, 1);
-.Ed
+.Ar name Ns = Ns Ar value .
+The memory pointed to by
+.Ar string
+becomes part of the environment and must not be deallocated by the caller.
+If the variable already exists, it will be overwritten.
+A common source of bugs is to pass a
+.Ar string
+argument that is a locally scoped string buffer.
+This will result in corruption of the environment after leaving
+the scope in which the variable is defined.
+For this reason, the
+.Fn setenv
+function is preferred over
+.Fn putenv .
 .Pp
 The
 .Fn unsetenv
@@ -99,10 +108,7 @@ function deletes all instances of the variable name pointed to by
 .Fa name
 from the list.
 .Sh RETURN VALUES
-The functions
-.Fn setenv
-and
-.Fn putenv
+These functions
 return zero if successful; otherwise the global variable
 .Va errno
 is set to indicate the error and \-1 is returned.
@@ -112,12 +118,30 @@ If
 is successful, the string returned should be considered read-only.
 .Sh ERRORS
 .Bl -tag -width Er
-.It Bq Er ENOMEM
-The function
+.It Bq Er EINVAL
+The
 .Fn setenv
 or
 .Fn putenv
-failed because they were unable to allocate memory for the environment.
+function was passed a
+.Ar name
+containing an
+.Sq =
+character.
+.Pp
+The
+.Fn putenv
+function was passed a
+.Ar string
+that did not contain an
+.Sq =
+character.
+.It Bq Er ENOMEM
+The
+.Fn setenv
+or
+.Fn putenv
+function failed because it was unable to allocate memory for the environment.
 .El
 .Sh SEE ALSO
 .Xr csh 1 ,

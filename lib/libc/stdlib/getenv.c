@@ -1,4 +1,4 @@
-/*	$OpenBSD: getenv.c,v 1.8 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: getenv.c,v 1.9 2009/06/03 15:52:16 millert Exp $ */
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *__findenv(const char *name, int *offset);
+char *__findenv(const char *name, int len, int *offset);
 
 /*
  * __findenv --
@@ -43,18 +43,15 @@ char *__findenv(const char *name, int *offset);
  *	This routine *should* be a static; don't use it.
  */
 char *
-__findenv(const char *name, int *offset)
+__findenv(const char *name, int len, int *offset)
 {
 	extern char **environ;
-	int len, i;
+	int i;
 	const char *np;
 	char **p, *cp;
 
 	if (name == NULL || environ == NULL)
 		return (NULL);
-	for (np = name; *np && *np != '='; ++np)
-		;
-	len = np - name;
 	for (p = environ; (cp = *p) != NULL; ++p) {
 		for (np = name, i = len; i && *cp; i--)
 			if (*cp++ != *np++)
@@ -75,6 +72,9 @@ char *
 getenv(const char *name)
 {
 	int offset;
+	const char *np;
 
-	return (__findenv(name, &offset));
+	for (np = name; *np && *np != '='; ++np)
+		;
+	return (__findenv(name, (int)(np - name), &offset));
 }
