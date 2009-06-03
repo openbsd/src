@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwvar.h,v 1.16 2009/06/02 15:13:58 jsg Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.17 2009/06/03 20:00:36 deraadt Exp $	*/
 /*	$NetBSD: atwvar.h,v 1.13 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*
@@ -129,22 +129,6 @@ struct atw_txthresh_tab {
 	u_int32_t txth_opmode;		/* OPMODE bits */
 	const char *txth_name;		/* name of mode */
 };
-
-#define	ATW_TXTHRESH_TAB_LO_RATE {					\
-	{ ATW_NAR_TR_L64,	"64 bytes" },				\
-	{ ATW_NAR_TR_L160,	"160 bytes" },				\
-	{ ATW_NAR_TR_L192,	"192 bytes" },				\
-	{ ATW_NAR_SF,		"store and forward" },			\
-	{ 0,			NULL },					\
-}
-
-#define	ATW_TXTHRESH_TAB_HI_RATE {					\
-	{ ATW_NAR_TR_H96,	"96 bytes" },				\
-	{ ATW_NAR_TR_H288,	"288 bytes" },				\
-	{ ATW_NAR_TR_H544,	"544 bytes" },				\
-	{ ATW_NAR_SF,		"store and forward" },			\
-	{ 0,			NULL },					\
-}
 
 enum atw_rftype { ATW_RFTYPE_INTERSIL = 0, ATW_RFTYPE_RFMD  = 1,
        ATW_RFTYPE_MARVEL = 2 };

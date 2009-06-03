@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.65 2009/01/21 21:53:59 grange Exp $	*/
+/*	$OpenBSD: atw.c,v 1.66 2009/06/03 20:00:36 deraadt Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -264,8 +264,20 @@ void	atw_si4126_tune(struct atw_softc *, u_int);
 void	atw_si4126_write(struct atw_softc *, u_int, u_int);
 void	atw_si4126_init(struct atw_softc *);
 
-const struct atw_txthresh_tab atw_txthresh_tab_lo[] = ATW_TXTHRESH_TAB_LO_RATE;
-const struct atw_txthresh_tab atw_txthresh_tab_hi[] = ATW_TXTHRESH_TAB_HI_RATE;
+const struct atw_txthresh_tab atw_txthresh_tab_lo[] = {
+	{ ATW_NAR_TR_L64,	"64 bytes" },
+	{ ATW_NAR_TR_L160,	"160 bytes" },
+	{ ATW_NAR_TR_L192,	"192 bytes" },
+	{ ATW_NAR_SF,		"store and forward" },
+	{ 0,			NULL }
+};
+const struct atw_txthresh_tab atw_txthresh_tab_hi[] = {
+	{ ATW_NAR_TR_H96,	"96 bytes" },
+	{ ATW_NAR_TR_H288,	"288 bytes" },
+	{ ATW_NAR_TR_H544,	"544 bytes" },
+	{ ATW_NAR_SF,		"store and forward" },
+	{ 0,			NULL }
+};
 
 struct cfdriver atw_cd = {
     NULL, "atw", DV_IFNET
