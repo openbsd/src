@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-next-window.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-next-window.c,v 1.2 2009/06/03 15:58:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -29,7 +29,7 @@ int	cmd_next_window_exec(struct cmd *, struct cmd_ctx *);
 
 const struct cmd_entry cmd_next_window_entry = {
 	"next-window", "next",
-	CMD_TARGET_SESSION_USAGE,
+	"[-a] " CMD_TARGET_SESSION_USAGE,
 	CMD_AFLAG,
 	cmd_next_window_init,
 	cmd_target_parse,
