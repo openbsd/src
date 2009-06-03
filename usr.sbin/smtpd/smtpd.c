@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.72 2009/06/02 22:23:36 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.73 2009/06/03 18:16:29 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -665,7 +665,7 @@ parent_dispatch_control(int sig, short event, void *p)
 			struct smtpd newenv;
 			
 			r->ret = 0;
-			if (parse_config(&newenv, env->sc_config, 0) == 0) {
+			if (parse_config(&newenv, env->sc_conffile, 0) == 0) {
 				
 				(void)strlcpy(env->sc_hostname, newenv.sc_hostname,
 				    sizeof(env->sc_hostname));
@@ -836,7 +836,7 @@ main(int argc, char *argv[])
 	if (parse_config(&env, conffile, opts))
 		exit(1);
 
-	if (strlcpy(env.sc_config, conffile, MAXPATHLEN) >= MAXPATHLEN)
+	if (strlcpy(env.sc_conffile, conffile, MAXPATHLEN) >= MAXPATHLEN)
 		errx(1, "config file exceeds MAXPATHLEN");
 
 
