@@ -1,4 +1,4 @@
-.\"	$OpenBSD: group.5,v 1.13 2009/03/27 12:31:31 schwarze Exp $
+.\"	$OpenBSD: group.5,v 1.14 2009/06/03 16:02:44 schwarze Exp $
 .\"	$NetBSD: group.5,v 1.4 1995/07/28 06:41:39 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)group.5	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 27 2009 $
+.Dd $Mdocdate: June 3 2009 $
 .Dt GROUP 5
 .Os
 .Sh NAME
@@ -100,12 +100,19 @@ file.
 .Sh YP SUPPORT
 If YP is active, the
 .Nm
-file may also contain lines of the format
+file also supports YP exclusions and inclusions.
+.Pp
+Lines beginning with a
+.Ql \&-
+(minus sign) are entries marked as being excluded from any following
+inclusions, which are marked with a `+' (plus sign).
+.Pp
+Lines of the format
 .Bd -literal -offset indent
 +name:*::
 .Ed
 .Pp
-which causes the specified group to be included from the
+cause the specified group to be included from the
 .Pa group.byname
 YP map.
 If no group name is specified, or the

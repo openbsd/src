@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgrouplist.3,v 1.14 2009/03/27 21:42:57 schwarze Exp $
+.\"	$OpenBSD: getgrouplist.3,v 1.15 2009/06/03 16:02:44 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2009 $
+.Dd $Mdocdate: June 3 2009 $
 .Dt GETGROUPLIST 3
 .Os
 .Sh NAME
@@ -40,18 +40,23 @@
 .Sh DESCRIPTION
 The
 .Fn getgrouplist
-function reads through the group file and calculates
-the group access list for the user specified in
+function reads through the
+.Xr group 5
+file and calculates the group access list for the user specified in
 .Fa name .
 The
 .Fa basegid
 is automatically included in the groups list.
 Typically this value is given as
 the group number from the password file.
-If YP is active, the
+.Pp
+If YP is active and the group file contains no exclusions, the
 .Xr netid 5
 file and the
 .Pa netid.byname
+YP map will be used in addition to the group file.
+If the group file contains at least one exclusion, the
+.Pa group.byname
 YP map will be used in addition to the group file.
 .Pp
 The resulting group list is returned in the integer array pointed to by

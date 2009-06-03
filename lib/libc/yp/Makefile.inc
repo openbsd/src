@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2008/12/22 19:09:29 jmc Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2009/06/03 16:02:44 schwarze Exp $
 
 # yp sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/yp ${LIBCSRCDIR}/yp
@@ -6,6 +6,7 @@
 SRCS+=	ypmatch_cache.c yp_bind.c yp_get_default_domain.c \
 	yp_first.c yp_all.c yp_order.c \
 	yp_master.c yp_maplist.c yperr_string.c ypprot_err.c _yp_check.c \
+	ypexclude.c \
 	xdr_domainname.c xdr_keydat.c xdr_mapname.c xdr_peername.c \
 	xdr_valdat.c xdr_ypbind_binding.c xdr_ypbind_resp.c \
 	xdr_ypbind_resptype.c xdr_ypbind_setdom.c xdr_ypmaplist.c \

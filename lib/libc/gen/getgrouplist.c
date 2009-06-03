@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.16 2009/03/27 12:31:31 schwarze Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.17 2009/06/03 16:02:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 1991, 1993
@@ -145,6 +145,7 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 {
 	int i, ngroups = 0, ret = 0, maxgroups = *grpcnt, bail;
 	int needyp = 0, foundyp = 0;
+	int *skipyp = &foundyp;
 	extern struct group *_getgrent_yp(int *);
 	struct group *grp;
 
@@ -161,9 +162,12 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 	 * Scan the group file to find additional groups.
 	 */
 	setgrent();
-	while ((grp = _getgrent_yp(&foundyp)) || foundyp) {
+	while ((grp = _getgrent_yp(skipyp)) || foundyp) {
 		if (foundyp) {
-			needyp = 1;
+			if (foundyp > 0)
+				needyp = 1;
+			else
+				skipyp = NULL;
 			foundyp = 0;
 			continue;
 		}
@@ -190,7 +194,7 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 	/*
 	 * If we were told that there is a YP marker, look at netid data.
 	 */
-	if (needyp) {
+	if (skipyp && needyp) {
 		char buf[MAXLINELENGTH], *ypdata = NULL, *key;
 		static char *__ypdomain;
 		struct passwd pwstore;

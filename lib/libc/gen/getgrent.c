@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.26 2008/08/25 22:30:19 deraadt Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.27 2009/06/03 16:02:44 schwarze Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 #include "ypinternal.h"
+#include "ypexclude.h"
 #endif
 #include "thread_private.h"
 
@@ -70,6 +71,7 @@ static struct group *getgrgid_gs(gid_t, struct group *,
 	struct group_storage *);
 
 #ifdef YP
+static struct _ypexclude *__ypexhead = NULL;
 enum _ypmode { YPMODE_NONE, YPMODE_FULL, YPMODE_NAME };
 static enum _ypmode __ypmode;
 static char	*__ypcurrent, *__ypdomain;
@@ -198,6 +200,9 @@ start_gr(void)
 		if (__ypcurrent)
 			free(__ypcurrent);
 		__ypcurrent = NULL;
+		if (__ypexhead)
+			__ypexclude_free(&__ypexhead);
+		__ypexhead = NULL;
 #endif
 		return(1);
 	}
@@ -238,6 +243,9 @@ endgrent_basic(void)
 		if (__ypcurrent)
 			free(__ypcurrent);
 		__ypcurrent = NULL;
+		if (__ypexhead)
+			__ypexclude_free(&__ypexhead);
+		__ypexhead = NULL;
 #endif
 	}
 }
@@ -394,6 +402,9 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 					line[datalen] = '\0';
 					bp = line;
 					p_gr->gr_name = strsep(&bp, ":\n");
+					if (__ypexclude_is(&__ypexhead,
+							   p_gr->gr_name))
+						continue;
 					p_gr->gr_passwd =
 						strsep(&bp, ":\n");
 					if (!(cp = strsep(&bp, ":\n")))
@@ -415,7 +426,9 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 
 					tptr = strsep(&bp, ":\n");
 					tptr++;
-					if (search && name && strcmp(tptr, name))
+					if (search && name &&
+						strcmp(tptr, name) ||
+					    __ypexclude_is(&__ypexhead, tptr))
 						continue;
 					__ypmode = YPMODE_NAME;
 					grname = strdup(tptr);
@@ -423,12 +436,25 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 				}
 				break;
 			}
+		} else if (line[0] == '-') {
+			if(!__ypexclude_add(&__ypexhead,
+					    strsep(&line, ":\n") + 1))
+				if (foundyp) {
+					*foundyp = -1;
+					return (NULL);
+				}
+			continue;
 		}
 parse:
 #endif
 		p_gr->gr_name = strsep(&bp, ":\n");
 		if (search && name && strcmp(p_gr->gr_name, name))
 			continue;
+#ifdef YP
+		if (__ypmode == YPMODE_FULL &&
+		    __ypexclude_is(&__ypexhead, p_gr->gr_name))
+			continue;
+#endif
 		p_gr->gr_passwd = strsep(&bp, ":\n");
 		if (!(cp = strsep(&bp, ":\n")))
 			continue;
