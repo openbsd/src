@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.569 2009/06/02 23:53:34 krw Exp $
+#	$OpenBSD: install.sub,v 1.570 2009/06/03 00:30:31 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1835,8 +1835,9 @@ COLUMNS=$(stty -a | sed -n '/columns/{s/^.* \([0-9]*\) columns.*$/\1/;p;}')
 export EDITOR COLUMNS
 
 # umount all filesystems, just in case we are re-running install or upgrade.
-[[ -f /etc/fstab ]] && umount -av 1>/dev/null 2>&1
-umount -v /mnt 1>/dev/null 2>&1
+cd /
+[[ -f /etc/fstab ]] && umount -af 1>/dev/null 2>&1
+umount /mnt 1>/dev/null 2>&1
 
 # Introduce ourselves.
 welcome

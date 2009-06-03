@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.199 2009/06/02 23:53:34 krw Exp $
+#	$OpenBSD: install.sh,v 1.200 2009/06/03 00:30:31 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -68,7 +68,6 @@ DISK=
 _DKDEVS=$(get_dkdevs)
 
 # Remove traces of previous install attempt.
-umount -a
 rm -f /tmp/fstab.shadow /tmp/fstab /tmp/fstab.*
 
 while :; do
