@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfxp.c,v 1.1 2009/06/03 21:35:28 kettenis Exp $	*/
+/*	$OpenBSD: gfxp.c,v 1.2 2009/06/03 23:55:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -36,19 +36,46 @@
 
 #include <machine/fbvar.h>
 
+/*
+ * The Permedia 2 provides two views into its 64k register file.  The
+ * first view is little-endian, the second is big-endian and
+ * immediately follows the little-endian view.  Since bus_space(9)
+ * already does the byte order conversion for us, we use the
+ * little-endian view.
+ *
+ * There are also little-endian and big-endian views into the
+ * framebuffer.  These are made available through separate BARs.  We
+ * use the big-endian view in this driver to avoid unnecessary byte
+ * swapping in rasops(9).
+ */
 #define PM2_PCI_MMIO		0x10 	/* Registers */
 #define PM2_PCI_MEM_LE		0x14 	/* Framebuffer (little-endian) */
 #define PM2_PCI_MEM_BE		0x18	/* Framebuffer (big-endian) */
 
-/*
- * The Permedia 2 provides two views into its 64k register file.  The
- * first view is little-endian, the second is big-endian and
- * immediately follows the little-endian view.
-*/
-#define PM2_REG_SIZE		0x10000
-#define PM2_REG_OFF		PM2_REG_SIZE
-
 #define PM2_IN_FIFO_SPACE	0x0018
+#define PM2_OUT_FIFO_SPACE	0x0020
+#define PM2_DMA_COUNT		0x0030
+
+#define PM2_OUT_FIFO		0x2000
+#define  PM2_SYNC_TAG			0x00000188
+
+#define PM2_RENDER		0x8038
+#define  PM2_INCREASE_X			0x00200000
+#define  PM2_INCREASE_Y			0x00400000
+#define  PM2_RENDER_RECT		0x000000c0
+#define PM2_RECT_ORIG		0x80d0
+#define PM2_RECT_SIZE		0x80d8
+
+#define PM2_FILTER_MODE		0x8c00
+#define  PM2_FM_PASS_SYNC_TAG		0x00000400
+#define PM2_SYNC		0x8c40
+
+#define PM2_FB_SRC_DELTA	0x8d88
+#define PM2_CONFIG		0x8d90
+#define  PM2_CONFIG_FB_READ_SRC_EN	0x00000001
+#define  PM2_CONFIG_FB_WRITE_EN		0x00000008
+
+#define PM2_COORDS(x, y)	((y) << 16 | (x))
 
 
 #ifdef APERTURE
@@ -69,9 +96,6 @@ struct gfxp_softc {
 	bus_space_handle_t sc_mmioh;
 	bus_addr_t	sc_mmiobase;
 	bus_size_t	sc_mmiosize;
-
-	bus_space_tag_t	sc_regt;
-	bus_space_handle_t sc_regh;
 
 	pcitag_t	sc_pcitag;
 
@@ -112,7 +136,6 @@ void	gfxp_erasecols(void *, int, int, int, long);
 void	gfxp_copyrows(void *, int, int, int);
 void	gfxp_eraserows(void *, int, int, long);
 
-void	gfxp_init(struct gfxp_softc *);
 int	gfxp_wait(struct gfxp_softc *);
 int	gfxp_wait_fifo(struct gfxp_softc *, int);
 void	gfxp_copyrect(struct gfxp_softc *, int, int, int, int, int, int);
@@ -172,17 +195,6 @@ gfxp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_regt = sc->sc_mmiot;
-#if 1
-	sc->sc_regh = sc->sc_mmioh;
-#else
-	if (bus_space_subregion(sc->sc_mmiot, sc->sc_mmioh,
-	    PM2_REG_OFF, PM2_REG_SIZE, &sc->sc_regh)) {
-		printf("\n%s: can't map registers\n", self->dv_xname);
-		return;
-	}
-#endif
-
 	fb_setsize(&sc->sc_sunfb, 8, 1152, 900, node, 0);
 
 	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
@@ -200,6 +212,13 @@ gfxp_attach(struct device *parent, struct device *self, void *aux)
 
 	fbwscons_init(&sc->sc_sunfb, 0, console);
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+
+	ri->ri_ops.copyrows = gfxp_copyrows;
+	ri->ri_ops.copycols = gfxp_copycols;
+#if 0
+	ri->ri_ops.eraserows = raptor_eraserows;
+	ri->ri_ops.erasecols = raptor_erasecols;
+#endif
 
 	if (console)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
@@ -308,17 +327,158 @@ gfxp_is_console(int node)
 	return (fbnode == node);
 }
 
+/*
+ * Accelerated routines.
+ */
+
+void
+gfxp_copycols(void *cookie, int row, int src, int dst, int num)
+{
+	struct rasops_info *ri = cookie;
+	struct gfxp_softc *sc = ri->ri_hw;
+
+	num *= ri->ri_font->fontwidth;
+	src *= ri->ri_font->fontwidth;
+	dst *= ri->ri_font->fontwidth;
+	row *= ri->ri_font->fontheight;
+
+	gfxp_copyrect(sc, ri->ri_xorigin + src, ri->ri_yorigin + row,
+	    ri->ri_xorigin + dst, ri->ri_yorigin + row,
+	    num, ri->ri_font->fontheight);
+}
+
+void
+gfxp_erasecols(void *cookie, int row, int col, int num, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct gfxp_softc *sc = ri->ri_hw;
+	int bg, fg;
+
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
+
+	row *= ri->ri_font->fontheight;
+	col *= ri->ri_font->fontwidth;
+	num *= ri->ri_font->fontwidth;
+
+	gfxp_fillrect(sc, ri->ri_xorigin + col, ri->ri_yorigin + row,
+	    num, ri->ri_font->fontheight, ri->ri_devcmap[bg]);
+}
+
+void
+gfxp_copyrows(void *cookie, int src, int dst, int num)
+{
+	struct rasops_info *ri = cookie;
+	struct gfxp_softc *sc = ri->ri_hw;
+
+	num *= ri->ri_font->fontheight;
+	src *= ri->ri_font->fontheight;
+	dst *= ri->ri_font->fontheight;
+
+	gfxp_copyrect(sc, ri->ri_xorigin, ri->ri_yorigin + src,
+	    ri->ri_xorigin, ri->ri_yorigin + dst, ri->ri_emuwidth, num);
+}
+
+void
+gfxp_eraserows(void *cookie, int row, int num, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct gfxp_softc *sc = ri->ri_hw;
+	int bg, fg;
+	int x, y, w;
+
+	ri->ri_ops.unpack_attr(cookie, attr, &fg, &bg, NULL);
+
+	if ((num == ri->ri_rows) && ISSET(ri->ri_flg, RI_FULLCLEAR)) {
+		num = ri->ri_height;
+		x = y = 0;
+		w = ri->ri_width;
+	} else {
+		num *= ri->ri_font->fontheight;
+		x = ri->ri_xorigin;
+		y = ri->ri_yorigin + row * ri->ri_font->fontheight;
+		w = ri->ri_emuwidth;
+	}
+	gfxp_fillrect(sc, x, y, w, num, ri->ri_devcmap[bg]);
+}
+
 int
 gfxp_wait_fifo(struct gfxp_softc *sc, int n)
 {
 	int i;
 
 	for (i = 1000000; i != 0; i--) {
-		if (bus_space_read_4(sc->sc_regt, sc->sc_regh,
+		if (bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh,
 		     PM2_IN_FIFO_SPACE) >= n)
 			break;
 		DELAY(1);
 	}
 
 	return i;
+}
+
+int
+gfxp_wait(struct gfxp_softc *sc)
+{
+	int i;
+
+	for (i = 1000000; i != 0; i--) {
+		if (bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh,
+		    PM2_DMA_COUNT) == 0)
+			break;
+		DELAY(1);
+	}
+
+	/*
+	 * Insert a sync into the FIFO...
+	 */
+	gfxp_wait_fifo(sc, 2);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+	    PM2_FILTER_MODE, PM2_FM_PASS_SYNC_TAG);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_SYNC, 0);
+
+	/*
+	 * ...and wait for it to appear on the other end, indicating
+	 * completion of the operations before it.
+	 */
+	for (i = 1000000; i != 0; i--) {
+		if (bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh,
+		    PM2_OUT_FIFO_SPACE) > 0 &&
+		    bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh,
+		    PM2_OUT_FIFO) == PM2_SYNC_TAG)
+			break;
+		DELAY(1);
+	}
+
+	return i;
+}
+
+void
+gfxp_copyrect(struct gfxp_softc *sc, int sx, int sy, int dx, int dy,
+    int w, int h)
+{
+	int dir = 0;
+
+	if (sx > dx)
+		dir |= PM2_INCREASE_X;
+	if (sy > dy)
+		dir |= PM2_INCREASE_Y;
+
+	gfxp_wait_fifo(sc, 5);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_CONFIG,
+	    PM2_CONFIG_FB_WRITE_EN | PM2_CONFIG_FB_READ_SRC_EN);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_FB_SRC_DELTA,
+	    PM2_COORDS(sx - dx, sy - dy));
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_RECT_ORIG,
+	    PM2_COORDS(dx, dy));
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_RECT_SIZE,
+	    PM2_COORDS(w, h));
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_RENDER,
+	    PM2_RENDER_RECT | dir);
+
+	gfxp_wait(sc);
+}
+
+void
+gfxp_fillrect(struct gfxp_softc *sc, int x, int y, int w, int h, int color)
+{
 }
