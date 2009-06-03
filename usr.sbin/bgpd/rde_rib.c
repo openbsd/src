@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.108 2009/06/02 00:09:02 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.109 2009/06/03 19:54:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -435,9 +435,10 @@ path_lookup(struct rde_aspath *aspath, struct rde_peer *peer)
 void
 path_remove(struct rde_aspath *asp)
 {
-	struct prefix	*p;
+	struct prefix	*p, *np;
 
-	while ((p = LIST_FIRST(&asp->prefix_h)) != NULL) {
+	for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = np) {
+		np = LIST_NEXT(p, path_l);
 		if (asp->pftableid) {
 			struct bgpd_addr addr;
 
@@ -449,7 +450,6 @@ path_remove(struct rde_aspath *asp)
 
 		prefix_destroy(p);
 	}
-	path_destroy(asp);
 }
 
 /* this function is only called by prefix_remove and path_remove */
@@ -745,13 +745,7 @@ prefix_remove(struct rib *rib, struct rde_peer *peer, struct bgpd_addr *prefix,
 		rde_send_pftable_commit();
 	}
 
-	prefix_unlink(p);
-	prefix_free(p);
-
-	if (rib_empty(re))
-		rib_remove(re);
-	if (path_empty(asp))
-		path_destroy(asp);
+	prefix_destroy(p);
 
 	return (1);
 }
@@ -837,18 +831,22 @@ prefix_updateall(struct rde_aspath *asp, enum nexthop_state state,
 	}
 }
 
-/* kill a prefix. Only called by path_remove and path_update. */
+/* kill a prefix. */
 void
 prefix_destroy(struct prefix *p)
 {
 	struct rib_entry	*re;
+	struct rde_aspath	*asp;
 
 	re = p->rib;
+	asp = p->aspath;
 	prefix_unlink(p);
 	prefix_free(p);
 
 	if (rib_empty(re))
 		rib_remove(re);
+	if (path_empty(asp))
+		path_destroy(asp);
 }
 
 /*
