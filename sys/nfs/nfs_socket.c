@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.82 2009/06/02 23:16:59 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.83 2009/06/03 00:12:34 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -68,28 +68,7 @@
 #include <nfs/nfsnode.h>
 #include <nfs/nfs_var.h>
 
-/*
- * Estimate rto for an nfs rpc sent via. an unreliable datagram.
- * Use the mean and mean deviation of rtt for the appropriate type of rpc
- * for the frequent rpcs and a default for the others.
- * The justification for doing "other" this way is that these rpcs
- * happen so infrequently that timer est. would probably be stale.
- * Also, since many of these rpcs are
- * non-idempotent, a conservative timeout is desired.
- * getattr, lookup - A+2D
- * read, write     - A+4D
- * other           - nm_timeo
- */
-#define	NFS_RTO(n, t) \
-	((t) == 0 ? (n)->nm_timeo : \
-	 ((t) < 3 ? \
-	  (((((n)->nm_srtt[t-1] + 3) >> 2) + (n)->nm_sdrtt[t-1] + 1) >> 1) : \
-	  ((((n)->nm_srtt[t-1] + 7) >> 3) + (n)->nm_sdrtt[t-1] + 1)))
-#define	NFS_SRTT(r)	(r)->r_nmp->nm_srtt[proct[(r)->r_procnum] - 1]
-#define	NFS_SDRTT(r)	(r)->r_nmp->nm_sdrtt[proct[(r)->r_procnum] - 1]
-/*
- * External data, mostly RPC constants in XDR form
- */
+/* External data, mostly RPC constants in XDR form. */
 extern u_int32_t rpc_reply, rpc_msgdenied, rpc_mismatch, rpc_vers,
 	rpc_auth_unix, rpc_msgaccepted, rpc_call, rpc_autherr;
 extern u_int32_t nfs_prog;
@@ -97,17 +76,7 @@ extern struct nfsstats nfsstats;
 extern int nfsv3_procid[NFS_NPROCS];
 extern int nfs_ticks;
 
-/*
- * Defines which timer to use for the procnum.
- * 0 - default
- * 1 - getattr
- * 2 - lookup
- * 3 - read
- * 4 - write
- */
-static int proct[NFS_NPROCS] = {
-	0, 1, 0, 2, 1, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0,
-};
+struct nfsreqhead nfs_reqq;
 
 /*
  * There is a congestion window for outstanding rpcs maintained per mount
@@ -124,14 +93,130 @@ static int proct[NFS_NPROCS] = {
  */
 #define	NFS_CWNDSCALE	256
 #define	NFS_MAXCWND	(NFS_CWNDSCALE * 32)
-static int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256, };
+#define	NFS_NBACKOFF	8
+int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
+
+/* RTT estimator */
+enum nfs_rto_timers nfs_ptimers[NFS_NPROCS] = {
+	NFS_DEFAULT_TIMER,	/* NULL */
+	NFS_GETATTR_TIMER,	/* GETATTR */
+	NFS_DEFAULT_TIMER,	/* SETATTR */
+	NFS_LOOKUP_TIMER,	/* LOOKUP */
+	NFS_GETATTR_TIMER,	/* ACCESS */
+	NFS_READ_TIMER,		/* READLINK */
+	NFS_READ_TIMER,		/* READ */
+	NFS_WRITE_TIMER,	/* WRITE */
+	NFS_DEFAULT_TIMER,	/* CREATE */
+	NFS_DEFAULT_TIMER,	/* MKDIR */
+	NFS_DEFAULT_TIMER,	/* SYMLINK */
+	NFS_DEFAULT_TIMER,	/* MKNOD */
+	NFS_DEFAULT_TIMER,	/* REMOVE */
+	NFS_DEFAULT_TIMER,	/* RMDIR */
+	NFS_DEFAULT_TIMER,	/* RENAME */
+	NFS_DEFAULT_TIMER,	/* LINK */
+	NFS_READ_TIMER,		/* READDIR */
+	NFS_READ_TIMER,		/* READDIRPLUS */
+	NFS_DEFAULT_TIMER,	/* FSSTAT */
+	NFS_DEFAULT_TIMER,	/* FSINFO */
+	NFS_DEFAULT_TIMER,	/* PATHCONF */
+	NFS_DEFAULT_TIMER,	/* COMMIT */
+	NFS_DEFAULT_TIMER,	/* NOOP */
+};
+
+void nfs_init_rtt(struct nfsmount *);
+void nfs_update_rtt(struct nfsreq *);
+int  nfs_estimate_rto(struct nfsmount *, u_int32_t procnum);
 
 void nfs_realign(struct mbuf **, int);
 void nfs_realign_fixup(struct mbuf *, struct mbuf *, unsigned int *);
 unsigned int nfs_realign_test = 0;
 unsigned int nfs_realign_count = 0;
 
-struct nfsreqhead nfs_reqq;
+/* Initialize the RTT estimator state for a new mount point. */
+void
+nfs_init_rtt(struct nfsmount *nmp)
+{
+	int i;
+
+	for (i = 0; i < NFS_MAX_TIMER; i++)
+		nmp->nm_srtt[i] = NFS_INITRTT;
+	for (i = 0; i < NFS_MAX_TIMER; i++)
+		nmp->nm_sdrtt[i] = 0;
+}
+
+/*
+ * Update a mount point's RTT estimator state using data from the
+ * passed-in request.
+ * 
+ * Use a gain of 0.125 on the mean and a gain of 0.25 on the deviation.
+ *
+ * NB: Since the timer resolution of NFS_HZ is so course, it can often
+ * result in r_rtt == 0. Since r_rtt == N means that the actual RTT is
+ * between N + dt and N + 2 - dt ticks, add 1 before calculating the
+ * update values.
+ */
+void
+nfs_update_rtt(struct nfsreq *rep)
+{
+	int t1 = rep->r_rtt + 1;
+	int index = nfs_ptimers[rep->r_procnum] - 1;
+	int *srtt = &rep->r_nmp->nm_srtt[index];
+	int *sdrtt = &rep->r_nmp->nm_sdrtt[index];
+
+	t1 -= *srtt >> 3;
+	*srtt += t1;
+	if (t1 < 0)
+		t1 = -t1;
+	t1 -= *sdrtt >> 2;
+	*sdrtt += t1;
+}
+
+/*
+ * Estimate RTO for an NFS RPC sent via an unreliable datagram.
+ *
+ * Use the mean and mean deviation of RTT for the appropriate type
+ * of RPC for the frequent RPCs and a default for the others.
+ * The justification for doing "other" this way is that these RPCs
+ * happen so infrequently that timer est. would probably be stale.
+ * Also, since many of these RPCs are non-idempotent, a conservative
+ * timeout is desired.
+ *
+ * getattr, lookup - A+2D
+ * read, write     - A+4D
+ * other           - nm_timeo
+ */
+int
+nfs_estimate_rto(struct nfsmount *nmp, u_int32_t procnum)
+{
+	enum nfs_rto_timers timer = nfs_ptimers[procnum];
+	int index = timer - 1;
+	int rto;
+
+	switch (timer) {
+	case NFS_GETATTR_TIMER:
+	case NFS_LOOKUP_TIMER:
+		rto = ((nmp->nm_srtt[index] + 3) >> 2) +
+				((nmp->nm_sdrtt[index] + 1) >> 1);
+		break;
+	case NFS_READ_TIMER:
+	case NFS_WRITE_TIMER:
+		rto = ((nmp->nm_srtt[index] + 7) >> 3) +
+				(nmp->nm_sdrtt[index] + 1);
+		break;
+	default:
+		rto = nmp->nm_timeo;
+		return (rto);
+	}
+
+	if (rto < NFS_MINRTO)
+		rto = NFS_MINRTO;
+	else if (rto > NFS_MAXRTO)
+		rto = NFS_MAXRTO;
+
+	return (rto);
+}
+
+
 
 /*
  * Initialize sockets and congestion for a new NFS connection.
@@ -277,10 +362,7 @@ nfs_connect(nmp, rep)
 	so->so_snd.sb_flags |= SB_NOINTR;
 
 	/* Initialize other non-zero congestion variables */
-	nmp->nm_srtt[0] = nmp->nm_srtt[1] = nmp->nm_srtt[2] =
-	    nmp->nm_srtt[3] = (NFS_TIMEO << 3);
-	nmp->nm_sdrtt[0] = nmp->nm_sdrtt[1] = nmp->nm_sdrtt[2] =
-	    nmp->nm_sdrtt[3] = 0;
+	nfs_init_rtt(nmp);
 	nmp->nm_cwnd = NFS_MAXCWND / 2;	    /* Initial send window */
 	nmp->nm_sent = 0;
 	nmp->nm_timeouts = 0;
@@ -658,9 +740,8 @@ nfs_reply(myrep)
 {
 	struct nfsreq *rep;
 	struct nfsmount *nmp = myrep->r_nmp;
-	int32_t t1;
 	struct mbuf *mrep, *nam, *md;
-	u_int32_t rxid, *tl;
+	u_int32_t rxid, *tl, t1;
 	caddr_t dpos, cp2;
 	int s, error;
 
@@ -738,27 +819,10 @@ nfsmout:
 				}
 				rep->r_flags &= ~R_SENT;
 				nmp->nm_sent -= NFS_CWNDSCALE;
-				/*
-				 * Update rtt using a gain of 0.125 on the mean
-				 * and a gain of 0.25 on the deviation.
-				 */
-				if (rep->r_flags & R_TIMING) {
-					/*
-					 * Since the timer resolution of
-					 * NFS_HZ is so course, it can often
-					 * result in r_rtt == 0. Since
-					 * r_rtt == N means that the actual
-					 * rtt is between N+dt and N+2-dt ticks,
-					 * add 1.
-					 */
-					t1 = rep->r_rtt + 1;
-					t1 -= (NFS_SRTT(rep) >> 3);
-					NFS_SRTT(rep) += t1;
-					if (t1 < 0)
-						t1 = -t1;
-					t1 -= (NFS_SDRTT(rep) >> 2);
-					NFS_SDRTT(rep) += t1;
-				}
+
+				if (rep->r_flags & R_TIMING)
+					nfs_update_rtt(rep);
+
 				nmp->nm_timeouts = 0;
 				break;
 			}
@@ -857,7 +921,7 @@ nfs_request1(struct nfsreq *rep, struct ucred *cred, struct mbuf **mrp,
 
 tryagain:
 	rep->r_rtt = rep->r_rexmit = 0;
-	if (proct[rep->r_procnum] > 0)
+	if (nfs_ptimers[rep->r_procnum] != NFS_DEFAULT_TIMER)
 		rep->r_flags = R_TIMING;
 	else
 		rep->r_flags = 0;
@@ -1139,7 +1203,7 @@ nfs_timer(arg)
 			if (nmp->nm_flag & NFSMNT_DUMBTIMR)
 				timeo = nmp->nm_timeo;
 			else
-				timeo = NFS_RTO(nmp, proct[rep->r_procnum]);
+				timeo = nfs_estimate_rto(nmp, rep->r_procnum);
 			if (nmp->nm_timeouts > 0)
 				timeo *= nfs_backoff[nmp->nm_timeouts - 1];
 			if (rep->r_rtt <= timeo)
