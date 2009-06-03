@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.42 2009/06/03 00:12:34 thib Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.43 2009/06/03 03:55:23 thib Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -38,11 +38,6 @@
 #ifndef _NFS_NFS_H_
 #define _NFS_NFS_H_
 
-/*
- * Tunable constants for nfs
- */
-
-#define	NFS_MAXIOVEC	34
 #define NFS_TICKINTVL	5		/* Desired time for a tick (msec) */
 #define NFS_HZ		(hz / nfs_ticks) /* Ticks/sec */
 #define	NFS_TIMEO	(1 * NFS_HZ)	/* Default timeout = 1 second */
@@ -51,15 +46,10 @@
 #define	NFS_MINIDEMTIMEO (5 * NFS_HZ)	/* Min timeout for non-idempotent ops*/
 #define	NFS_TIMEOUTMUL	2		/* Timeout/Delay multiplier */
 #define	NFS_MAXREXMIT	100		/* Stop counting after this many */
-#define	NFS_MAXWINDOW	1024		/* Max number of outstanding requests */
 #define	NFS_RETRANS	10		/* Num of retrans for soft mounts */
 #define	NFS_MAXGRPS	16		/* Max. size of groups list */
-#ifndef NFS_MINATTRTIMO
 #define	NFS_MINATTRTIMO 5		/* Attribute cache timeout in sec */
-#endif
-#ifndef NFS_MAXATTRTIMO
 #define	NFS_MAXATTRTIMO 60
-#endif
 #define	NFS_WSIZE	8192		/* Def. write data size <= 8192 */
 #define	NFS_RSIZE	8192		/* Def. read data size <= 8192 */
 #define NFS_READDIRSIZE	8192		/* Def. readdir size */
@@ -67,9 +57,8 @@
 #define	NFS_MAXRAHEAD	4		/* Max. read ahead # blocks */
 #define	NFS_MAXASYNCDAEMON 	20	/* Max. number async_daemons runable */
 #define NFS_MAXGATHERDELAY	100	/* Max. write gather delay (msec) */
-#ifndef NFS_GATHERDELAY
 #define NFS_GATHERDELAY		10	/* Default write gather delay (msec) */
-#endif
+
 /*
  * Ideally, NFS_DIRBLKSIZ should be bigger, but I've seen servers with
  * broken NFS/ethernet drivers that won't work with anything bigger (Linux..)
