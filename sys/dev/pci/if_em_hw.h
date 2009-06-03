@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.27 2008/08/28 01:17:29 brad Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.28 2009/06/03 17:39:44 claudio Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -67,6 +67,7 @@ typedef enum {
     em_82571,
     em_82572,
     em_82573,
+    em_82575,
     em_80003es2lan,
     em_ich8lan,
     em_ich9lan,
@@ -509,6 +510,8 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_ICH10_R_BM_V        0x10CE
 #define E1000_DEV_ID_ICH10_D_BM_LM       0x10DE
 #define E1000_DEV_ID_ICH10_D_BM_LF       0x10DF
+#define E1000_DEV_ID_82575EB_PT          0x10A7
+#define E1000_DEV_ID_82575EB_PF          0x10A9
 
 #define NODE_ADDRESS_SIZE 6
 #define ETH_LENGTH_OF_ADDRESS 6
@@ -971,7 +974,7 @@ struct em_ffvt_entry {
 #define E1000_TDBAH    0x03804  /* TX Descriptor Base Address High - RW */
 #define E1000_TDLEN    0x03808  /* TX Descriptor Length - RW */
 #define E1000_TDH      0x03810  /* TX Descriptor Head - RW */
-#define E1000_TDT      0x03818  /* TX Descripotr Tail - RW */
+#define E1000_TDT      0x03818  /* TX Descriptor Tail - RW */
 #define E1000_TIDV     0x03820  /* TX Interrupt Delay Value - RW */
 #define E1000_TXDCTL   0x03828  /* TX Descriptor Control - RW */
 #define E1000_TADV     0x0382C  /* TX Interrupt Absolute Delay Val - RW */
@@ -1989,6 +1992,8 @@ struct em_hw {
 #define E1000_TXDCTL_FULL_TX_DESC_WB 0x01010000 /* GRAN=1, WTHRESH=1 */
 #define E1000_TXDCTL_COUNT_DESC 0x00400000 /* Enable the counting of desc.
                                               still to be processed. */
+#define E1000_TXDCTL_QUEUE_ENABLE 0x02000000
+
 /* Transmit Configuration Word */
 #define E1000_TXCW_FD         0x00000020        /* TXCW full duplex */
 #define E1000_TXCW_HD         0x00000040        /* TXCW half duplex */

@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.31 2008/12/04 02:36:52 brad Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.32 2009/06/03 17:39:44 claudio Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -410,8 +410,8 @@ em_set_mac_type(struct em_hw *hw)
         hw->mac_type = em_82547;
         break;
     case E1000_DEV_ID_82547GI:
-        hw->mac_type = em_82547_rev_2;
-        break;
+	hw->mac_type = em_82547_rev_2;
+	break;
     case E1000_DEV_ID_82571EB_AF:
     case E1000_DEV_ID_82571EB_AT:
     case E1000_DEV_ID_82571EB_COPPER:
@@ -423,8 +423,8 @@ em_set_mac_type(struct em_hw *hw)
     case E1000_DEV_ID_82571EB_SERDES_DUAL:
     case E1000_DEV_ID_82571EB_SERDES_QUAD:
     case E1000_DEV_ID_82571PT_QUAD_COPPER:
-            hw->mac_type = em_82571;
-        break;
+	hw->mac_type = em_82571;
+	break;
     case E1000_DEV_ID_82572EI_COPPER:
     case E1000_DEV_ID_82572EI_FIBER:
     case E1000_DEV_ID_82572EI_SERDES:
@@ -440,6 +440,11 @@ em_set_mac_type(struct em_hw *hw)
     case E1000_DEV_ID_82573V_PM:
         hw->mac_type = em_82573;
         break;
+    case E1000_DEV_ID_82575EB_PT:
+    case E1000_DEV_ID_82575EB_PF:
+	hw->mac_type = em_82575;
+	hw->initialize_hw_bits_disable = 1;
+	break;
     case E1000_DEV_ID_80003ES2LAN_COPPER_SPT:
     case E1000_DEV_ID_80003ES2LAN_SERDES_SPT:
     case E1000_DEV_ID_80003ES2LAN_COPPER_DPT:
@@ -1043,6 +1048,7 @@ em_init_hw(struct em_hw *hw)
         /* FALLTHROUGH */
     case em_82571:
     case em_82572:
+    case em_82575:
     case em_ich8lan:
     case em_ich9lan:
         ctrl = E1000_READ_REG(hw, TXDCTL1);
@@ -4044,7 +4050,8 @@ em_detect_gig_phy(struct em_hw *hw)
      * case, we cannot access the PHY until the configuration is done.  So
      * we explicitly set the PHY values. */
     if (hw->mac_type == em_82571 ||
-        hw->mac_type == em_82572) {
+        hw->mac_type == em_82572 ||
+	hw->mac_type == em_82575) {
         hw->phy_id = IGP01E1000_I_PHY_ID;
         hw->phy_type = em_phy_igp_2;
         return E1000_SUCCESS;
@@ -4235,6 +4242,7 @@ em_init_eeprom_params(struct em_hw *hw)
         break;
     case em_82571:
     case em_82572:
+    case em_82575:
         eeprom->type = em_eeprom_spi;
         eeprom->opcode_bits = 8;
         eeprom->delay_usec = 1;
@@ -6115,6 +6123,7 @@ em_get_bus_info(struct em_hw *hw)
     case em_82571:
     case em_82572:
     case em_82573:
+    case em_82575:
     case em_80003es2lan:
         hw->bus_type = em_bus_type_pci_express;
         hw->bus_speed = em_bus_speed_2500;
@@ -7264,6 +7273,7 @@ em_get_auto_rd_done(struct em_hw *hw)
     case em_82571:
     case em_82572:
     case em_82573:
+    case em_82575:
     case em_80003es2lan:
     case em_ich8lan:
     case em_ich9lan:
@@ -7318,6 +7328,7 @@ em_get_phy_cfg_done(struct em_hw *hw)
         /* FALLTHROUGH */
     case em_82571:
     case em_82572:
+    case em_82575:
         while (timeout) {
             if (E1000_READ_REG(hw, EEMNGCTL) & cfg_mask)
                 break;

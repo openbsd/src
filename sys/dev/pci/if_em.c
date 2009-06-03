@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.209 2009/05/31 04:47:50 deraadt Exp $ */
+/* $OpenBSD: if_em.c,v 1.210 2009/06/03 17:39:44 claudio Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -116,6 +116,12 @@ const struct pci_matchid em_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L_PL_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L_PL_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573V_PM },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82575EB_COPPER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82575EB_COPPER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_FIBER },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_SERDES },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_QUAD_COPPER },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IFE },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IFE_G },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH8_IFE_GT },
@@ -322,6 +328,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		}
 		case em_82571:
 		case em_82572:
+		case em_82575:
 		case em_ich9lan:
 		case em_80003es2lan:	/* Limit Jumbo Frame size */
 			sc->hw.max_frame_size = 9234;
@@ -689,6 +696,7 @@ em_init(void *arg)
 		break;
 	case em_82571:
 	case em_82572: /* Total Packet Buffer on these is 48k */
+	case em_82575:
 	case em_80003es2lan:
 		pba = E1000_PBA_32K; /* 32K for Rx, 16K for Tx */
 		break;
@@ -1411,7 +1419,8 @@ em_update_link_status(struct em_softc *sc)
 			/* Check if we may set SPEED_MODE bit on PCI-E */
 			if ((sc->link_speed == SPEED_1000) &&
 			    ((sc->hw.mac_type == em_82571) ||
-			    (sc->hw.mac_type == em_82572))) {
+			    (sc->hw.mac_type == em_82572) ||
+			    (sc->hw.mac_type == em_82575))) {
 				int tarc0;
 
 				tarc0 = E1000_READ_REG(&sc->hw, TARC0);
@@ -1659,7 +1668,8 @@ em_hardware_init(struct em_softc *sc)
 	/* Set up smart power down as default off on newer adapters */
 	if (!em_smart_pwr_down &&
 	     (sc->hw.mac_type == em_82571 ||
-	      sc->hw.mac_type == em_82572)) {
+	      sc->hw.mac_type == em_82572 ||
+	      sc->hw.mac_type == em_82575)) {
 		uint16_t phy_tmp = 0;
 
 		/* Speed up time to link by disabling smart power down */
@@ -2037,10 +2047,22 @@ em_initialize_transmit_unit(struct em_softc *sc)
 		reg_tipg |= DEFAULT_82543_TIPG_IPGR2 << E1000_TIPG_IPGR2_SHIFT;
 	}
 
+
 	E1000_WRITE_REG(&sc->hw, TIPG, reg_tipg);
 	E1000_WRITE_REG(&sc->hw, TIDV, sc->tx_int_delay);
 	if (sc->hw.mac_type >= em_82540)
 		E1000_WRITE_REG(&sc->hw, TADV, sc->tx_abs_int_delay);
+
+	/* Setup Transmit Descriptor Base Settings */   
+	sc->txd_cmd = E1000_TXD_CMD_IFCS;
+
+	if (sc->hw.mac_type == em_82575) {
+		/* 82575/6 need to enable the TX queue and lack the IDE bit */
+		reg_tctl = E1000_READ_REG(&sc->hw, TXDCTL);
+		reg_tctl |= E1000_TXDCTL_QUEUE_ENABLE;
+		E1000_WRITE_REG(&sc->hw, TXDCTL, reg_tctl);
+	} else if (sc->tx_int_delay > 0)
+		sc->txd_cmd |= E1000_TXD_CMD_IDE;
 
 	/* Program the Transmit Control Register */
 	reg_tctl = E1000_TCTL_PSP | E1000_TCTL_EN |
@@ -2053,12 +2075,6 @@ em_initialize_transmit_unit(struct em_softc *sc)
 		reg_tctl |= E1000_HDX_COLLISION_DISTANCE << E1000_COLD_SHIFT;
 	/* This write will effectively turn on the transmit unit */
 	E1000_WRITE_REG(&sc->hw, TCTL, reg_tctl);
-
-	/* Setup Transmit Descriptor Base Settings */   
-	sc->txd_cmd = E1000_TXD_CMD_IFCS;
-
-	if (sc->tx_int_delay > 0)
-		sc->txd_cmd |= E1000_TXD_CMD_IDE;
 }
 
 /*********************************************************************
