@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.140 2009/06/02 21:23:11 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.141 2009/06/03 02:55:04 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1781,7 +1781,7 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 {
 	int			rv = EINVAL, part;
 	int			i, c, found, vol, open = 0;
-	struct sr_discipline	*sd;
+	struct sr_discipline	*sd = NULL, *sw = NULL;
 	char			devname[32];
 	struct bdevsw		*bdsw;
 	dev_t			dev;
@@ -1790,7 +1790,7 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 	struct sr_meta_chunk	*old, *new;
 
 	/* XXX disabled for now */
-	goto done;
+	//goto done;
 
 	if (bs->bs_other_id_type == BIOC_SSOTHER_UNUSED)
 		goto done;
@@ -1802,108 +1802,123 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 		if (vol != bs->bs_volid)
 			continue;
 		sd = sc->sc_dis[i];
-
-		if (!sd->sd_rebuild) {
-			printf("%s: discipline does not support rebuild\n",
-			    DEVNAME(sc));
-			goto done;
-		}
-
-		/* make sure volume is in the right state */
-		if (sd->sd_vol_status == BIOC_SVREBUILD) {
-			printf("%s: rebuild already in progress\n", DEVNAME(sc));
-			goto done;
-		}
-		if (sd->sd_vol_status != BIOC_SVDEGRADED) {
-			printf("%s: %s not degraded\n", DEVNAME(sc),
-			    sd->sd_meta->ssd_devname);
-			goto done;
-		}
-
-		/* find offline chunk */
-		for (c = 0, found = -1; c < sd->sd_meta->ssdi.ssd_chunk_no; c++)
-			if (sd->sd_vol.sv_chunks[c]->src_meta.scm_status ==
-			    BIOC_SDOFFLINE) {
-				found = c;
-				new = &sd->sd_vol.sv_chunks[c]->src_meta;
-				break;
-			} else {
-				csize = sd->sd_vol.sv_chunks[c]->src_meta.scmi.scm_size;
-				old = &sd->sd_vol.sv_chunks[c]->src_meta;
-			}
-		if (found == -1) {
-			printf("%s: no offline chunks available for rebuild\n",
-			    DEVNAME(sc));
-			goto done;
-		}
-
-		/* populate meta entry */
-		dev = (dev_t)bs->bs_other_id;
-		sr_meta_getdevname(sc, dev, devname, sizeof(devname));
-		bdsw = bdevsw_lookup(dev);
-
-		if (bdsw->d_open(dev, FREAD | FWRITE, S_IFBLK, curproc)) {
-			DNPRINTF(SR_D_META,"%s: sr_ioctl_setstate can't "
-			    "open %s\n", DEVNAME(sc), devname);
-			goto done;
-		}
-		open = 1; /* close dev on error */
-
-		/* get partition */
-		part = DISKPART(dev);
-		if ((*bdsw->d_ioctl)(dev, DIOCGDINFO, (void *)&label, FREAD,
-		    curproc)) {
-			DNPRINTF(SR_D_META, "%s: sr_ioctl_setstate ioctl "
-			    "failed\n", DEVNAME(sc));
-			goto done;
-		}
-		if (label.d_partitions[part].p_fstype != FS_RAID) {
-			printf("%s: %s partition not of type RAID (%d)\n",
-			    DEVNAME(sc) , devname,
-			    label.d_partitions[part].p_fstype);
-			goto done;
-		}
-
-		/* is partition large enough? */
-		size = DL_GETPSIZE(&label.d_partitions[part]) -
-		    SR_META_SIZE - SR_META_OFFSET;
-		if (size < csize) {
-			printf("%s: partition too small, at least %llu B "
-			    "required\n", DEVNAME(sc), csize << DEV_BSHIFT);
-			goto done;
-		} else if (size > csize)
-			printf("%s: partition too large, wasting %llu B\n",
-			    DEVNAME(sc), (size - csize) << DEV_BSHIFT);
-
-		/* XXX make sure we are not stomping on some other partition */
-
-		/* recreate metadata */
-		open = 0; /* leave dev open from here on out */
-		sd->sd_vol.sv_chunks[found]->src_dev_mm = dev;
-		new->scmi.scm_volid = old->scmi.scm_volid;
-		new->scmi.scm_chunk_id = found;
-		strlcpy(new->scmi.scm_devname, devname,
-		    sizeof new->scmi.scm_devname);
-		new->scmi.scm_size = size;
-		new->scmi.scm_coerced_size = old->scmi.scm_coerced_size;
-		bcopy(&old->scmi.scm_uuid, &new->scmi.scm_uuid,
-		    sizeof new->scmi.scm_uuid);
-		sr_checksum(sc, new, &new->scm_checksum,
-		    sizeof(struct sr_meta_chunk_invariant));
-		sd->sd_set_chunk_state(sd, found, BIOC_SDREBUILD);
-		if (sr_meta_save(sd, SR_META_DIRTY)) {
-			printf("%s: could not save metadata to %s\n",
-			    DEVNAME(sc), devname);
-			goto done;
-		}
-
-		printf("%s: trying rebuild %s from %s\n", DEVNAME(sc),
-		    sd->sd_meta->ssd_devname, devname);
-
-		kthread_create_deferred(sr_rebuild, sd);
-
-		break; /* all done */
+		break;
 	}
+	if (sd == NULL)
+		goto done;
+
+	if (!sd->sd_rebuild) {
+		printf("%s: discipline does not support rebuild\n",
+		    DEVNAME(sc));
+		goto done;
+	}
+
+	/* make sure volume is in the right state */
+	if (sd->sd_vol_status == BIOC_SVREBUILD) {
+		printf("%s: rebuild already in progress\n", DEVNAME(sc));
+		goto done;
+	}
+	if (sd->sd_vol_status != BIOC_SVDEGRADED) {
+		printf("%s: %s not degraded\n", DEVNAME(sc),
+		    sd->sd_meta->ssd_devname);
+		goto done;
+	}
+
+	/* find offline chunk */
+	for (c = 0, found = -1; c < sd->sd_meta->ssdi.ssd_chunk_no; c++)
+		if (sd->sd_vol.sv_chunks[c]->src_meta.scm_status ==
+		    BIOC_SDOFFLINE) {
+			found = c;
+			new = &sd->sd_vol.sv_chunks[c]->src_meta;
+			if (c > 0)
+				break; /* roll at least once over the for */
+		} else {
+			csize = sd->sd_vol.sv_chunks[c]->src_meta.scmi.scm_size;
+			old = &sd->sd_vol.sv_chunks[c]->src_meta;
+			if (found != -1)
+				break;
+		}
+	if (found == -1) {
+		printf("%s: no offline chunks available for rebuild\n",
+		    DEVNAME(sc));
+		goto done;
+	}
+
+	/* populate meta entry */
+	dev = (dev_t)bs->bs_other_id;
+	sr_meta_getdevname(sc, dev, devname, sizeof(devname));
+	bdsw = bdevsw_lookup(dev);
+
+	if (bdsw->d_open(dev, FREAD | FWRITE, S_IFBLK, curproc)) {
+		DNPRINTF(SR_D_META,"%s: sr_ioctl_setstate can't "
+		    "open %s\n", DEVNAME(sc), devname);
+		goto done;
+	}
+	open = 1; /* close dev on error */
+
+	/* get partition */
+	part = DISKPART(dev);
+	if ((*bdsw->d_ioctl)(dev, DIOCGDINFO, (void *)&label, FREAD,
+	    curproc)) {
+		DNPRINTF(SR_D_META, "%s: sr_ioctl_setstate ioctl failed\n",
+		    DEVNAME(sc));
+		goto done;
+	}
+	if (label.d_partitions[part].p_fstype != FS_RAID) {
+		printf("%s: %s partition not of type RAID (%d)\n",
+		    DEVNAME(sc) , devname,
+		    label.d_partitions[part].p_fstype);
+		goto done;
+	}
+
+	/* is partition large enough? */
+	size = DL_GETPSIZE(&label.d_partitions[part]) -
+	    SR_META_SIZE - SR_META_OFFSET;
+	if (size < csize) {
+		printf("%s: partition too small, at least %llu B required\n",
+		    DEVNAME(sc), csize << DEV_BSHIFT);
+		goto done;
+	} else if (size > csize)
+		printf("%s: partition too large, wasting %llu B\n",
+		    DEVNAME(sc), (size - csize) << DEV_BSHIFT);
+
+	/* make sure we are not stomping on some other partition */
+	for (i = 0, vol = -1; i < SR_MAXSCSIBUS; i++) {
+		if (!sc->sc_dis[i])
+			continue;
+		sw = sc->sc_dis[i];
+		for (c = 0; c < sw->sd_meta->ssdi.ssd_chunk_no; c++)
+			if (sw->sd_vol.sv_chunks[c]->src_dev_mm == dev) {
+				printf("%s: %s chunk already in use\n",
+				    DEVNAME(sc), devname);
+				goto done;
+			}
+	}
+
+	/* recreate metadata */
+	open = 0; /* leave dev open from here on out */
+	sd->sd_vol.sv_chunks[found]->src_dev_mm = dev;
+	new->scmi.scm_volid = old->scmi.scm_volid;
+	new->scmi.scm_chunk_id = found;
+	strlcpy(new->scmi.scm_devname, devname,
+	    sizeof new->scmi.scm_devname);
+	new->scmi.scm_size = size;
+	new->scmi.scm_coerced_size = old->scmi.scm_coerced_size;
+	bcopy(&old->scmi.scm_uuid, &new->scmi.scm_uuid,
+	    sizeof new->scmi.scm_uuid);
+	sr_checksum(sc, new, &new->scm_checksum,
+	    sizeof(struct sr_meta_chunk_invariant));
+	sd->sd_set_chunk_state(sd, found, BIOC_SDREBUILD);
+	if (sr_meta_save(sd, SR_META_DIRTY)) {
+		printf("%s: could not save metadata to %s\n",
+		    DEVNAME(sc), devname);
+		goto done;
+	}
+
+	printf("%s: trying rebuild %s from %s\n", DEVNAME(sc),
+	    sd->sd_meta->ssd_devname, devname);
+
+	kthread_create_deferred(sr_rebuild, sd);
 
 	rv = 0;
 done:
