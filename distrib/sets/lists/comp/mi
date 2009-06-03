@@ -5656,6 +5656,7 @@
 ./usr/share/man/cat3/svcraw_create.0
 ./usr/share/man/cat3/svctcp_create.0
 ./usr/share/man/cat3/svcudp_bufcreate.0
+./usr/share/man/cat3/svcudp_create.0
 ./usr/share/man/cat3/swab.0
 ./usr/share/man/cat3/swap16.0
 ./usr/share/man/cat3/swap32.0
