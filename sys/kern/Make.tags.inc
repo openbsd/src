@@ -1,4 +1,4 @@
-#	$OpenBSD: Make.tags.inc,v 1.13 2009/02/10 18:30:44 grange Exp $
+#	$OpenBSD: Make.tags.inc,v 1.14 2009/06/03 19:35:46 thib Exp $
 
 # Common files for "make tags".
 # Included by the Makefile for each architecture.
@@ -30,5 +30,5 @@ COMM=	$S/altq/*.[ch] \
 	$S/scsi/*.[ch] \
 	$S/ufs/*/*.[ch] \
 	$S/uvm/*.[ch] \
-	$S/xfs/*.[ch] \
+	$S/nnpfs/*.[ch] \
 	$S/sys/*.[ch]
