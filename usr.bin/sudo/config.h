@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.11 2009/04/11 11:48:06 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.12 2009/06/03 15:53:08 millert Exp $	*/
 
 #ifndef _SUDO_CONFIG_H
 #define _SUDO_CONFIG_H
@@ -99,7 +99,6 @@
 #define PASSWORD_TIMEOUT 5
 #define PRI_FAILURE "alert"
 #define PRI_SUCCESS "notice"
-#define PUTENV_CONST 1
 #define RETSIGTYPE void
 #define RUNAS_DEFAULT "root"
 #define SEND_MAIL_WHEN_NO_USER 1
@@ -111,7 +110,6 @@
 #define TIMEOUT 5
 #define TIME_WITH_SYS_TIME 1
 #define TRIES_FOR_PASSWORD 3
-#define UNSETENV_VOID 1
 #define USE_INSULTS 1
 #define VOID void
 #define WITHOUT_PASSWD 1
