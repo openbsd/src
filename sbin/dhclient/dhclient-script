@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.14 2009/01/24 15:48:47 sobrado Exp $
+# $OpenBSD: dhclient-script,v 1.15 2009/06/03 05:12:51 claudio Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -58,7 +58,7 @@ add_new_alias() {
 delete_old_routes() {
 	# Delete existing default route. We only allow one, so no need to
 	# process $old_routers list.
-	route delete default >/dev/null 2>&1
+	route -n flush -inet -iface $interface >/dev/null 2>&1
 
 	if [ -n "$old_static_routes" ]; then
 		set $old_static_routes
@@ -72,7 +72,7 @@ delete_old_routes() {
 }
 
 add_new_routes() {
-	route delete default >/dev/null 2>&1
+	route -n flush -inet -iface $interface >/dev/null 2>&1
 	for router in $new_routers; do
 		if [ "$new_ip_address" = "$router" ]; then
 			route add default -iface $router >/dev/null 2>&1
