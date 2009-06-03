@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.268 2009/06/03 05:55:15 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.269 2009/06/03 20:54:45 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -295,7 +295,7 @@ const struct pci_matchid bge_devices[] = {
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C996 }
 };
 
-#define BGE_IS_5705_OR_BEYOND(sc)  \
+#define BGE_IS_5705_PLUS(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
@@ -310,7 +310,7 @@ const struct pci_matchid bge_devices[] = {
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
 
-#define BGE_IS_575X_PLUS(sc)  \
+#define BGE_IS_5750_PLUS(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750    || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780    || \
@@ -1364,7 +1364,7 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_PCI_MEMWIN_BASEADDR, 0);
 
 	/* Configure mbuf memory pool */
-	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
+	if (!(BGE_IS_5705_PLUS(sc))) {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_BASEADDR,
 		    BGE_BUFFPOOL_1);
 
@@ -1381,7 +1381,7 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Configure mbuf pool watermarks */
 	/* new Broadcom docs strongly recommend these: */
-	if (BGE_IS_5705_OR_BEYOND(sc)) {
+	if (BGE_IS_5705_PLUS(sc)) {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
 
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
@@ -1438,7 +1438,7 @@ bge_blockinit(struct bge_softc *sc)
 	/* Initialize the standard RX ring control block */
 	rcb = &sc->bge_rdata->bge_info.bge_std_rx_rcb;
 	BGE_HOSTADDR(rcb->bge_hostaddr, BGE_RING_DMA_ADDR(sc, bge_rx_std_ring));
-	if (BGE_IS_5705_OR_BEYOND(sc))
+	if (BGE_IS_5705_PLUS(sc))
 		rcb->bge_maxlen_flags = BGE_RCB_MAXLEN_FLAGS(512, 0);
 	else
 		rcb->bge_maxlen_flags =
@@ -1517,7 +1517,7 @@ bge_blockinit(struct bge_softc *sc)
 	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_lo, taddr.bge_addr_lo);
 	RCB_WRITE_4(sc, rcb_addr, bge_nicaddr,
 		    BGE_NIC_TXRING_ADDR(0, BGE_TX_RING_CNT));
-	if (!(BGE_IS_5705_OR_BEYOND(sc)))
+	if (!(BGE_IS_5705_PLUS(sc)))
 		RCB_WRITE_4(sc, rcb_addr, bge_maxlen_flags,
 		    BGE_RCB_MAXLEN_FLAGS(BGE_TX_RING_CNT, 0));
 
@@ -1601,7 +1601,7 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_HCC_TX_COAL_TICKS, sc->bge_tx_coal_ticks);
 	CSR_WRITE_4(sc, BGE_HCC_RX_MAX_COAL_BDS, sc->bge_rx_max_coal_bds);
 	CSR_WRITE_4(sc, BGE_HCC_TX_MAX_COAL_BDS, sc->bge_tx_max_coal_bds);
-	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
+	if (!(BGE_IS_5705_PLUS(sc))) {
 		CSR_WRITE_4(sc, BGE_HCC_RX_COAL_TICKS_INT, 0);
 		CSR_WRITE_4(sc, BGE_HCC_TX_COAL_TICKS_INT, 0);
 	}
@@ -1609,7 +1609,7 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_HCC_TX_MAX_COAL_BDS_INT, 0);
 
 	/* Set up address of statistics block */
-	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
+	if (!(BGE_IS_5705_PLUS(sc))) {
 		CSR_WRITE_4(sc, BGE_HCC_STATS_ADDR_HI, 0);
 		CSR_WRITE_4(sc, BGE_HCC_STATS_ADDR_LO,
 			    BGE_RING_DMA_ADDR(sc, bge_info.bge_stats));
@@ -1638,7 +1638,7 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_RXLP_MODE, BGE_RXLPMODE_ENABLE);
 
 	/* Turn on RX list selector state machine. */
-	if (!(BGE_IS_5705_OR_BEYOND(sc)))
+	if (!(BGE_IS_5705_PLUS(sc)))
 		CSR_WRITE_4(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
 
 	val = BGE_MACMODE_TXDMA_ENB | BGE_MACMODE_RXDMA_ENB |
@@ -1668,7 +1668,7 @@ bge_blockinit(struct bge_softc *sc)
 #endif
 
 	/* Turn on DMA completion state machine */
-	if (!(BGE_IS_5705_OR_BEYOND(sc)))
+	if (!(BGE_IS_5705_PLUS(sc)))
 		CSR_WRITE_4(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
 
 	val = BGE_WDMAMODE_ENABLE|BGE_WDMAMODE_ALL_ATTNS;
@@ -1705,7 +1705,7 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_RDBDI_MODE, BGE_RDBDIMODE_ENABLE);
 
 	/* Turn on Mbuf cluster free state machine */
-	if (!(BGE_IS_5705_OR_BEYOND(sc)))
+	if (!(BGE_IS_5705_PLUS(sc)))
 		CSR_WRITE_4(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
 
 	/* Turn on send BD completion state machine */
@@ -1967,7 +1967,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->bge_chipid == BGE_CHIPID_BCM5704_A0)
 		sc->bge_flags |= BGE_PHY_5704_A0_BUG;
 
-	if ((BGE_IS_5705_OR_BEYOND(sc)) &&
+	if ((BGE_IS_5705_PLUS(sc)) &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5906 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785 &&
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM57780) {
@@ -2087,7 +2087,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	sc->bge_tx_max_coal_bds = 400;
 
 	/* 5705 limits RX return ring to 512 entries. */
-	if (BGE_IS_5705_OR_BEYOND(sc))
+	if (BGE_IS_5705_PLUS(sc))
 		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT_5705;
 	else
 		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT;
@@ -2290,7 +2290,7 @@ bge_reset(struct bge_softc *sc)
 	 * Set GPHY Power Down Override to leave GPHY
 	 * powered up in D0 uninitialized.
 	 */
-	if (BGE_IS_5705_OR_BEYOND(sc))
+	if (BGE_IS_5705_PLUS(sc))
 		reset |= BGE_MISCCFG_KEEP_GPHY_POWER;
 
 	/* Issue global reset */
@@ -2725,7 +2725,7 @@ bge_tick(void *xsc)
 
 	s = splnet();
 
-	if (BGE_IS_5705_OR_BEYOND(sc))
+	if (BGE_IS_5705_PLUS(sc))
 		bge_stats_update_regs(sc);
 	else
 		bge_stats_update(sc);
@@ -3474,7 +3474,7 @@ bge_stop(struct bge_softc *sc)
 	bge_stop_block(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
 	bge_stop_block(sc, BGE_RBDI_MODE, BGE_RBDIMODE_ENABLE);
 	bge_stop_block(sc, BGE_RXLP_MODE, BGE_RXLPMODE_ENABLE);
-	if (!(BGE_IS_5705_OR_BEYOND(sc)))
+	if (!(BGE_IS_5705_PLUS(sc)))
 		bge_stop_block(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
 	bge_stop_block(sc, BGE_RDBDI_MODE, BGE_RBDIMODE_ENABLE);
 	bge_stop_block(sc, BGE_RDC_MODE, BGE_RDCMODE_ENABLE);
@@ -3488,7 +3488,7 @@ bge_stop(struct bge_softc *sc)
 	bge_stop_block(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE);
 	bge_stop_block(sc, BGE_RDMA_MODE, BGE_RDMAMODE_ENABLE);
 	bge_stop_block(sc, BGE_SDC_MODE, BGE_SDCMODE_ENABLE);
-	if (!(BGE_IS_5705_OR_BEYOND(sc)))
+	if (!(BGE_IS_5705_PLUS(sc)))
 		bge_stop_block(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
 	bge_stop_block(sc, BGE_SBDC_MODE, BGE_SBDCMODE_ENABLE);
 
@@ -3498,13 +3498,13 @@ bge_stop(struct bge_softc *sc)
 	 */
 	bge_stop_block(sc, BGE_HCC_MODE, BGE_HCCMODE_ENABLE);
 	bge_stop_block(sc, BGE_WDMA_MODE, BGE_WDMAMODE_ENABLE);
-	if (!(BGE_IS_5705_OR_BEYOND(sc)))
+	if (!(BGE_IS_5705_PLUS(sc)))
 		bge_stop_block(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
 
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0xFFFFFFFF);
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0);
 
-	if (!(BGE_IS_5705_OR_BEYOND(sc))) {
+	if (!(BGE_IS_5705_PLUS(sc))) {
 		bge_stop_block(sc, BGE_BMAN_MODE, BGE_BMANMODE_ENABLE);
 		bge_stop_block(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
 	}
