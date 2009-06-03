@@ -128,11 +128,11 @@
 ./sbin/mount_mfs
 ./sbin/mount_msdos
 ./sbin/mount_nfs
+./sbin/mount_nnpfs
 ./sbin/mount_portal
 ./sbin/mount_procfs
 ./sbin/mount_udf
 ./sbin/mount_vnd
-./sbin/mount_xfs
 ./sbin/mountd
 ./sbin/ncheck
 ./sbin/ncheck_ffs

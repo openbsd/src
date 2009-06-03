@@ -2509,12 +2509,12 @@
 ./usr/share/man/cat8/mount_mfs.0
 ./usr/share/man/cat8/mount_msdos.0
 ./usr/share/man/cat8/mount_nfs.0
+./usr/share/man/cat8/mount_nnpfs.0
 ./usr/share/man/cat8/mount_ntfs.0
 ./usr/share/man/cat8/mount_portal.0
 ./usr/share/man/cat8/mount_procfs.0
 ./usr/share/man/cat8/mount_udf.0
 ./usr/share/man/cat8/mount_vnd.0
-./usr/share/man/cat8/mount_xfs.0
 ./usr/share/man/cat8/mountd.0
 ./usr/share/man/cat8/mrinfo.0
 ./usr/share/man/cat8/mrouted.0
