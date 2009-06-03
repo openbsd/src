@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.39 2009/06/02 14:11:39 schwarze Exp $
+.\"	$OpenBSD: rpc.3,v 1.40 2009/06/03 19:54:44 schwarze Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
 .\" All rights reserved.
@@ -78,7 +78,7 @@
 .\" 2550 Garcia Avenue
 .\" Mountain View, California  94043
 .\"
-.Dd $Mdocdate: June 2 2009 $
+.Dd $Mdocdate: June 3 2009 $
 .Dt RPC 3
 .Os
 .Sh NAME
@@ -418,6 +418,9 @@ and
 .Qq tcp .
 Default timeouts are set, but can be modified using
 .Fn clnt_control .
+This routine returns
+.Tn NULL
+if it fails.
 .Pp
 .Sy Warning:
 Using
@@ -680,6 +683,9 @@ time until a response is received or until the call times
 out.
 The total time for the call to time out is specified by
 .Fn clnt_call .
+This routine returns
+.Tn NULL
+if it fails.
 .Pp
 .Fn clntudp_bufcreate
 is like
