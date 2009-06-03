@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.110 2009/06/03 20:17:59 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.111 2009/06/03 20:20:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -85,8 +85,38 @@ rib_new(u_int16_t id, char *name, u_int16_t flags)
 void
 rib_free(struct rib *rib)
 {
-	/* XXX */
-	//bzero(rib, sizeof(struct rib));
+	struct rib_context *ctx, *next;
+	struct rib_entry *re, *xre;
+	struct prefix *p, *np;
+
+	for (ctx = LIST_FIRST(&rib_dump_h); ctx != NULL; ctx = next) {
+		next = LIST_NEXT(ctx, entry);
+		if (ctx->ctx_rib == rib) {
+			LIST_REMOVE(ctx, entry);
+			if (ctx->ctx_done)
+				ctx->ctx_done(ctx->ctx_arg);
+			else
+				free(ctx);
+		}
+	}
+
+	for (re = RB_MIN(rib_tree, &rib->rib); re != NULL; re = xre) {
+		xre = RB_NEXT(rib_tree,  &rib->rib, re);
+
+		for (p = LIST_FIRST(&re->prefix_h); p != NULL; p = np) {
+			np = LIST_NEXT(p, path_l);
+			if (p->aspath->pftableid) {
+				struct bgpd_addr addr;
+
+				pt_getaddr(p->prefix, &addr);
+				/* Commit is done in peer_down() */
+				rde_send_pftable(p->aspath->pftableid, &addr,
+				    p->prefix->prefixlen, 1);
+			}
+			prefix_destroy(p);
+		}
+	}
+	bzero(rib, sizeof(struct rib));
 }
 
 int
@@ -436,7 +466,6 @@ path_remove(struct rde_aspath *asp)
 			rde_send_pftable(p->aspath->pftableid, &addr,
 			    p->prefix->prefixlen, 1);
 		}
-
 		prefix_destroy(p);
 	}
 }
