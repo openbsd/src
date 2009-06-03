@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pager.c,v 1.16 2009/06/01 22:57:14 ray Exp $	*/
+/*	$OpenBSD: hack.pager.c,v 1.17 2009/06/03 14:47:47 chl Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,7 +62,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.pager.c,v 1.16 2009/06/01 22:57:14 ray Exp $";
+static const char rcsid[] = "$OpenBSD: hack.pager.c,v 1.17 2009/06/03 14:47:47 chl Exp $";
 #endif /* not lint */
 
 /* This file contains the command routine dowhatis() and a pager. */
@@ -86,7 +86,7 @@ dowhatis()
 {
 	FILE *fp;
 	char bufr[BUFSZ+6];
-	char *buf = &bufr[6], *ep, q;
+	char *buf = &bufr[6], q;
 	size_t len;
 	extern char readchar();
 
