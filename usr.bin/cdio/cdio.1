@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.52 2009/04/10 18:51:44 ratchov Exp $
+.\" $OpenBSD: cdio.1,v 1.53 2009/06/03 00:45:59 naddy Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 10 2009 $
+.Dd $Mdocdate: June 3 2009 $
 .Dt CDIO 1
 .Os
 .Sh NAME
@@ -88,7 +88,7 @@ is assumed.
 .Bl -tag -width Ds
 .It Ic blank
 Minimally blank the disc.
-.It Ic cddb Op Ar n
+.It Ic cddbinfo Op Ar n
 Print the Table Of Contents (TOC) after matching the disc with the CDDB.
 In case of multiple matches, reissue the command with
 .Ar n .
@@ -143,18 +143,23 @@ If we're at the last track, stop.
 .It Ic pause
 Stop playing.
 Do not stop the disc.
-.It Ic play Ar first_track Op Ar last_track
+.It Xo Ic play
+.Oo Ar track1 Ns Op Ar .index1 Oc
+.Ar track2 Ns Op Ar .index2
+.Xc
 Play from track
-.Ar first_track
+.Ar track1
 to track
-.Ar last_track .
+.Ar track2 .
+An index point can be specified for each track.
 The first track has number 1 and may be omitted in all cases.
 .It Xo Ic play
 .Op Ar tr1
-.Ar m1 : Ns Ar s1 Ns Op .f1
+.Ar m1 : Ns Ar s1 Ns Oo
+.Ar .f1 Oc
 .Op Ar tr2
 .Oo Ar m2 : Ns Ar s2 Ns
-.Op .f2 Oc
+.Op Ar .f2 Oc
 .Xc
 Play from the absolute address
 (MSF) defined by
@@ -178,12 +183,13 @@ are relative to the start of that track.
 Minutes are in the range 0\(en99.
 Seconds are in the range 0\(en59.
 Frame numbers are in the range 0\(en74.
-.It Ic play Op Ar #start_block Op Ar length
+.It Ic play Op Ar #block Op Ar len
 Play starting from the logical block
-.Ar start_block
+.Ar block
 using
-.Ar length
+.Ar len
 logical blocks.
+If no block is specified, play the whole disc.
 .It Ic previous
 Play the previous track.
 If we're at the first track, restart.

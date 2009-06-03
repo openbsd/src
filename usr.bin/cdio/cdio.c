@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.69 2009/02/07 20:21:13 naddy Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.70 2009/06/03 00:45:59 naddy Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -114,33 +114,34 @@ struct cmdtab {
 	int min;
 	char *args;
 } cmdtab[] = {
+{ CMD_BLANK,	"blank",	1, "" },
+{ CMD_CDDB,	"cddbinfo",     2, "[n]" },
+{ CMD_CDID,	"cdid",		3, "" },
+{ CMD_CDPLAY,	"cdplay",	3, "[track1-trackN ...]" },
+{ CMD_CDRIP,	"cdrip",	3, "[track1-trackN ...]" },
 { CMD_CLOSE,    "close",        1, "" },
 { CMD_DEBUG,    "debug",        3, "on | off" },
 { CMD_DEVICE,   "device",       1, "devname" },
 { CMD_EJECT,    "eject",        1, "" },
+{ CMD_QUIT,	"exit",		2, "" },
 { CMD_HELP,     "?",            1, 0 },
 { CMD_HELP,     "help",         1, "" },
 { CMD_INFO,     "info",         1, "" },
 { CMD_NEXT,	"next",		1, "" },
 { CMD_PAUSE,    "pause",        2, "" },
-{ CMD_PLAY,     "play",         1, "track1[.index1] [track2[.index2]]" },
+{ CMD_PLAY,     "play",         1, "[track1[.index1]] track2[.index2]" },
 { CMD_PLAY,     "play",         1, "[tr1] m1:s1[.f1] [tr2] [m2:s2[.f2]]" },
 { CMD_PLAY,     "play",         1, "[#block [len]]" },
 { CMD_PREV,	"previous",	2, "" },
 { CMD_QUIT,     "quit",         1, "" },
+{ CMD_REPLAY,	"replay",	3, "" },
 { CMD_RESET,    "reset",        4, "" },
 { CMD_RESUME,   "resume",       1, "" },
-{ CMD_REPLAY,	"replay",	3, "" },
-{ CMD_SET,      "set",          2, "msf | lba" },
+{ CMD_SET,      "set",          2, "lba | msf" },
 { CMD_STATUS,   "status",       1, "" },
 { CMD_STOP,     "stop",         3, "" },
-{ CMD_VOLUME,   "volume",       1, "<l> <r> | left | right | mute | mono | stereo" },
-{ CMD_CDDB,	"cddbinfo",     2, "[n]" },
-{ CMD_CDID,	"cdid",		3, "" },
-{ CMD_QUIT,	"exit",		2, "" },
-{ CMD_BLANK,	"blank",	1, "" },
-{ CMD_CDRIP,	"cdrip",	3, "[[track1-trackN] ...]" },
-{ CMD_CDPLAY,	"cdplay",	3, "[[track1-trackN] ...]" },
+{ CMD_VOLUME,   "volume",       1, "left_channel right_channel" },
+{ CMD_VOLUME,   "volume",       1, "left | right | mono | stereo | mute" },
 { 0, 0, 0, 0}
 };
 
