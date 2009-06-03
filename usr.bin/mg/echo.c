@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.47 2009/06/02 17:57:30 kjell Exp $	*/
+/*	$OpenBSD: echo.c,v 1.48 2009/06/03 20:58:20 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -793,9 +793,15 @@ ewprintf(const char *fmt, ...)
  * Printf style formatting. This is called by both "ewprintf" and "ereply"
  * to provide formatting services to their clients.  The move to the start
  * of the echo line, and the erase to the end of the echo line, is done by
- * the caller.
- * Note: %c works, and prints the "name" of the character.
- * %k prints the name of a key (and takes no arguments).
+ * the caller. 
+ * %c prints the "name" of the supplied character.
+ * %k prints the name of the current key (and takes no arguments).
+ * %d prints a decimal integer
+ * %o prints an octal integer
+ * %p prints a pointer
+ * %s prints a string
+ * %ld prints a long word
+ * Anything else is echoed verbatim
  */
 static void
 eformat(const char *fp, va_list ap)
@@ -810,7 +816,8 @@ eformat(const char *fp, va_list ap)
 			c = *fp++;
 			switch (c) {
 			case 'c':
-				getkeyname(kname, sizeof(kname), va_arg(ap, int));
+				getkeyname(kname, sizeof(kname),
+				    va_arg(ap, int));
 				eputs(kname);
 				break;
 
