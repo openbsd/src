@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.61 2009/05/05 14:16:17 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.62 2009/06/03 06:09:21 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -557,15 +557,21 @@ pci_reserve_resources(struct pci_attach_args *pa)
 			}
 #endif
 			if (pa->pa_memex && extent_alloc_region(pa->pa_memex,
-			    base, size, EX_NOWAIT))
+			    base, size, EX_NOWAIT)) {
 				printf("mem address conflict 0x%x/0x%x\n",
 				    base, size);
+				pci_conf_write(pc, tag, reg, 0);
+				if (type & PCI_MAPREG_MEM_TYPE_64BIT)
+					pci_conf_write(pc, tag, reg + 4, 0);
+			}
 			break;
 		case PCI_MAPREG_TYPE_IO:
 			if (pa->pa_ioex && extent_alloc_region(pa->pa_ioex,
-			    base, size, EX_NOWAIT))
+			    base, size, EX_NOWAIT)) {
 				printf("io address conflict 0x%x/0x%x\n",
 				    base, size);
+				pci_conf_write(pc, tag, reg, 0);
+			}
 			break;
 		}
 
