@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.83 2009/06/03 00:12:34 thib Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.84 2009/06/03 02:23:23 thib Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -93,7 +93,6 @@ struct nfsreqhead nfs_reqq;
  */
 #define	NFS_CWNDSCALE	256
 #define	NFS_MAXCWND	(NFS_CWNDSCALE * 32)
-#define	NFS_NBACKOFF	8
 int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256 };
 
 /* RTT estimator */
