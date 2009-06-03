@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.2 2009/06/03 07:51:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -589,8 +589,7 @@ struct window_pane {
 
 	int		 flags;
 #define PANE_HIDDEN 0x1
-#define PANE_RESTART 0x2
-#define PANE_REDRAW 0x4
+#define PANE_REDRAW 0x2
 
 	char		*cmd;
 	char		*cwd;
