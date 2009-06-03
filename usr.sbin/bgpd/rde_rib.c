@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.111 2009/06/03 20:20:10 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.112 2009/06/03 20:22:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -227,14 +227,15 @@ void
 rib_dump(struct rib *rib, void (*upcall)(struct rib_entry *, void *),
     void *arg, sa_family_t af)
 {
-	struct rib_context	ctx;
+	struct rib_context	*ctx;
 
-	bzero(&ctx, sizeof(ctx));
-	ctx.ctx_rib = rib;
-	ctx.ctx_upcall = upcall;
-	ctx.ctx_arg = arg;
-	ctx.ctx_af = af;
-	rib_dump_r(&ctx);
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
+		fatal("rib_dump");
+	ctx->ctx_rib = rib;
+	ctx->ctx_upcall = upcall;
+	ctx->ctx_arg = arg;
+	ctx->ctx_af = af;
+	rib_dump_r(ctx);
 }
 
 void
@@ -265,6 +266,8 @@ rib_dump_r(struct rib_context *ctx)
 	LIST_REMOVE(ctx, entry);
 	if (ctx->ctx_done)
 		ctx->ctx_done(ctx->ctx_arg);
+	else
+		free(ctx);
 }
 
 struct rib_entry *
