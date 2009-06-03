@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.48 2009/03/29 17:32:06 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.49 2009/06/03 20:17:48 kettenis Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -378,8 +378,8 @@ fbwscons_init(struct sunfb *sf, int isconsole)
 			 * their values are consistent with the font
 			 * metrics.
 			 */
-			if (wt <= 0 || wt > sf->sf_width - cols * fw ||
-			    wl <= 0 || wl > sf->sf_height - rows * fh)
+			if (wt <= 0 || wt > sf->sf_height - rows * fh ||
+			    wl <= 0 || wl > sf->sf_width - cols * fw)
 				wt = wl = 0;
 		}
 		if (wt == 0 /* || wl == 0 */) {
