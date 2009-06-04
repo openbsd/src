@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.31 2008/09/18 08:02:53 otto Exp $ */
+/*	$OpenBSD: procmap.c,v 1.32 2009/06/04 22:38:53 miod Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -71,9 +71,6 @@
 #define UVM_OBJ_IS_VNODE(uobj)	((uobj)->pgops == uvm_vnodeops)
 #define UVM_OBJ_IS_AOBJ(uobj)	((uobj)->pgops == aobj_pager)
 #define UVM_OBJ_IS_DEVICE(uobj)	((uobj)->pgops == uvm_deviceops)
-#if 0
-#define UVM_OBJ_IS_UBCPAGER(uobj) ((uobj)->pgops == ubc_pager)
-#endif
 
 #define PRINT_VMSPACE		0x00000001
 #define PRINT_VM_MAP		0x00000002
@@ -92,10 +89,6 @@ struct cache_entry {
 LIST_HEAD(cache_head, cache_entry) lcache;
 LIST_HEAD(nchashhead, namecache) *nchashtbl = NULL;
 void *uvm_vnodeops, *uvm_deviceops, *aobj_pager;
-#if 0
-void *ubc_pager;
-#endif
-void *kernel_floor;
 u_long nchash_addr, nchashtbl_addr, kernel_map_addr;
 int debug, verbose;
 int print_all, print_map, print_maps, print_solaris, print_ddb, print_amap;
@@ -176,12 +169,6 @@ struct nlist nl[] = {
 #define NL_NCHASHTBL		5
 	{ "_nchash" },
 #define NL_NCHASH		6
-	{ "_kernel_text" },
-#define NL_KENTER		7
-#if 0
-	{ "_ubc_pager" },
-#define NL_UBC_PAGER		8
-#endif
 	{ NULL }
 };
 
@@ -531,19 +518,12 @@ load_symbols(kvm_t *kd)
 		errx(1, "%s == %d", kvm_geterr(kd), rc);
 	for (i = 0; i < sizeof(nl)/sizeof(nl[0]); i++)
 		if (nl[i].n_value == 0 && nl[i].n_name)
-#if defined(__m68k__)
-			if (i != NL_KENTER)
-#endif
 			printf("%s not found\n", nl[i].n_name);
 
 	uvm_vnodeops =	(void*)nl[NL_UVM_VNODEOPS].n_value;
 	uvm_deviceops =	(void*)nl[NL_UVM_DEVICEOPS].n_value;
 	aobj_pager =	(void*)nl[NL_AOBJ_PAGER].n_value;
-#if 0
-	ubc_pager =	(void*)nl[NL_UBC_PAGER].n_value;
-#endif
 
-	kernel_floor =	(void*)nl[NL_KENTER].n_value;
 	nchash_addr =	nl[NL_NCHASH].n_value;
 
 	_KDEREF(kd, nl[NL_MAXSSIZ].n_value, &maxssiz,
@@ -846,10 +826,6 @@ findname(kvm_t *kd, struct kbit *vmspace,
 			name = buf;
 		} else if (UVM_OBJ_IS_AOBJ(D(uvm_obj, uvm_object)))
 			name = "  [ uvm_aobj ]";
-#if 0
-		else if (UVM_OBJ_IS_UBCPAGER(D(uvm_obj, uvm_object)))
-			name = "  [ ubc_pager ]";
-#endif
 		else if (UVM_OBJ_IS_VNODE(D(uvm_obj, uvm_object)))
 			name = "  [ ?VNODE? ]";
 		else {
@@ -941,14 +917,12 @@ load_name_cache(kvm_t *kd)
 		oncp = NULL;
 		LIST_FOREACH(ncp, ncpp, nc_hash) {
 			if (ncp == oncp ||
-			    (void*)ncp < kernel_floor ||
 			    ncp == (void*)0xdeadbeef)
 				break;
 			oncp = ncp;
 			_KDEREF(kd, (u_long)ncp, &_ncp, sizeof(*ncp));
 			ncp = &_ncp;
-			if ((void*)ncp->nc_vp > kernel_floor &&
-			    ncp->nc_nlen > 0) {
+			if (ncp->nc_nlen > 0) {
 				if (ncp->nc_nlen > 2 ||
 				    ncp->nc_name[0] != '.' ||
 				    (ncp->nc_name[1] != '.' &&
