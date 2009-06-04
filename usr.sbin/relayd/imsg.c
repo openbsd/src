@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.20 2009/06/04 22:42:15 eric Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.21 2009/06/04 23:33:49 pyr Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -67,7 +67,6 @@ imsg_read(struct imsgbuf *ibuf)
 
 	if ((n = recvmsg(ibuf->fd, &msg, 0)) == -1) {
 		if (errno != EINTR && errno != EAGAIN) {
-			log_warn("imsg_read: pipe read error");
 			return (-1);
 		}
 		return (-2);
@@ -80,13 +79,14 @@ imsg_read(struct imsgbuf *ibuf)
 		if (cmsg->cmsg_level == SOL_SOCKET &&
 		    cmsg->cmsg_type == SCM_RIGHTS) {
 			fd = (*(int *)CMSG_DATA(cmsg));
-			if ((ifd = calloc(1, sizeof(struct imsg_fd))) == NULL)
-				fatal("imsg_read calloc");
+			if ((ifd = calloc(1, sizeof(struct imsg_fd))) == NULL) {
+				/* XXX: this return can leak */
+				return (-1);
+			}
 			ifd->fd = fd;
 			TAILQ_INSERT_TAIL(&ibuf->fds, ifd, entry);
-		} else
-			log_warn("imsg_read: got unexpected ctl data level %d "
-			    "type %d", cmsg->cmsg_level, cmsg->cmsg_type);
+		}
+		/* we do not handle other ctl data level */
 	}
 
 	return (n);
@@ -105,8 +105,7 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 	memcpy(&imsg->hdr, ibuf->r.buf, sizeof(imsg->hdr));
 	if (imsg->hdr.len < IMSG_HEADER_SIZE ||
 	    imsg->hdr.len > MAX_IMSGSIZE) {
-		log_warnx("imsg_get: imsg hdr len %u out of bounds, type=%u",
-		    imsg->hdr.len, imsg->hdr.type);
+		errno = ERANGE;
 		return (-1);
 	}
 	if (imsg->hdr.len > av)
@@ -114,7 +113,6 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 	ibuf->r.rptr = ibuf->r.buf + IMSG_HEADER_SIZE;
 	if ((imsg->data = malloc(datalen)) == NULL) {
-		log_warn("imsg_get");
 		return (-1);
 	}
 	memcpy(imsg->data, ibuf->r.rptr, datalen);
@@ -182,9 +180,7 @@ imsg_create(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
 
 	datalen += IMSG_HEADER_SIZE;
 	if (datalen > MAX_IMSGSIZE) {
-		log_warnx("imsg_create: len %u > MAX_IMSGSIZE; "
-		    "type %u peerid %lu", datalen + IMSG_HEADER_SIZE,
-		    type, peerid);
+		errno = ERANGE;
 		return (NULL);
 	}
 
@@ -193,7 +189,6 @@ imsg_create(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
 	if ((hdr.pid = pid) == 0)
 		hdr.pid = ibuf->pid;
 	if ((wbuf = buf_dynamic(datalen, MAX_IMSGSIZE)) == NULL) {
-		log_warn("imsg_create: buf_open");
 		return (NULL);
 	}
 	if (imsg_add(wbuf, &hdr, sizeof(hdr)) == -1)
@@ -207,7 +202,6 @@ imsg_add(struct buf *msg, void *data, u_int16_t datalen)
 {
 	if (datalen)
 		if (buf_add(msg, data, datalen) == -1) {
-			log_warnx("imsg_add: buf_add error");
 			buf_free(msg);
 			return (-1);
 		}

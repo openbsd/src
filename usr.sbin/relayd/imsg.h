@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.3 2009/06/04 22:42:15 eric Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.4 2009/06/04 23:33:49 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -107,12 +107,3 @@ void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
 int	 imsg_get_fd(struct imsgbuf *);
 int	 imsg_flush(struct imsgbuf *);
 void	 imsg_clear(struct imsgbuf *);
-
-/* log.c */
-void	log_init(int);
-void	log_warn(const char *, ...);
-void	log_warnx(const char *, ...);
-void	log_info(const char *, ...);
-void	log_debug(const char *, ...);
-__dead void fatal(const char *);
-__dead void fatalx(const char *);
