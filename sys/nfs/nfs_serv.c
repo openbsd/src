@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.67 2009/05/21 12:24:22 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.68 2009/06/04 18:44:27 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -724,36 +724,6 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	retlen = len = fxdr_unsigned(int32_t, *tl);
 	cnt = i = 0;
 
-	/*
-	 * For NFS Version 2, it is not obvious what a write of zero length
-	 * should do, but I might as well be consistent with Version 3,
-	 * which is to return ok so long as there are no permission problems.
-	 */
-	if (len > 0) {
-	    zeroing = 1;
-	    mp = mrep;
-	    while (mp) {
-		if (mp == md) {
-			zeroing = 0;
-			adjust = dpos - mtod(mp, caddr_t);
-			mp->m_len -= adjust;
-			if (mp->m_len > 0 && adjust > 0)
-				mp->m_data += adjust;
-		}
-		if (zeroing)
-			mp->m_len = 0;
-		else if (mp->m_len > 0) {
-			i += mp->m_len;
-			if (i > len) {
-				mp->m_len -= (i - len);
-				zeroing	= 1;
-			}
-			if (mp->m_len > 0)
-				cnt++;
-		}
-		mp = mp->m_next;
-	    }
-	}
 	if (len > NFS_MAXDATA || len < 0 || i < len) {
 		error = EIO;
 		nfsm_reply(2 * NFSX_UNSIGNED);
@@ -784,7 +754,35 @@ nfsrv_write(nfsd, slp, procp, mrq)
 		return (0);
 	}
 
+	/*
+	 * For NFS Version 2, it is not obvious what a write of zero length
+	 * should do, but I might as well be consistent with Version 3,
+	 * which is to return ok so long as there are no permission problems.
+	 */
 	if (len > 0) {
+	    zeroing = 1;
+	    mp = mrep;
+	    while (mp) {
+		if (mp == md) {
+			zeroing = 0;
+			adjust = dpos - mtod(mp, caddr_t);
+			mp->m_len -= adjust;
+			if (mp->m_len > 0 && adjust > 0)
+				mp->m_data += adjust;
+		}
+		if (zeroing)
+			mp->m_len = 0;
+		else if (mp->m_len > 0) {
+			i += mp->m_len;
+			if (i > len) {
+				mp->m_len -= (i - len);
+				zeroing	= 1;
+			}
+			if (mp->m_len > 0)
+				cnt++;
+		}
+		mp = mp->m_next;
+	    }
 	    ivp = malloc(cnt * sizeof(struct iovec), M_TEMP, M_WAITOK);
 	    uiop->uio_iov = iv = ivp;
 	    uiop->uio_iovcnt = cnt;
