@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwreg.h,v 1.5 2009/06/04 19:53:17 martynas Exp $	*/
+/*	$OpenBSD: if_urtwreg.h,v 1.6 2009/06/04 20:07:34 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -26,13 +26,13 @@
 #define	URTW_MAC3			0x0003		/* 1 byte */
 #define	URTW_MAC4			0x0004		/* 1 byte */
 #define	URTW_MAC5			0x0005		/* 1 byte */
-#define	URTW_BRSR			0x002c		/* 2 byte */
+#define	URTW_8187_BRSR			0x002c		/* 2 byte */
 #define	URTW_BRSR_MBR_8185		(0x0fff)
 #define	URTW_BSSID			0x002e		/* 6 byte */
 #define	URTW_RESP_RATE			0x0034		/* 1 byte */
 #define	URTW_RESP_MAX_RATE_SHIFT	(4)
 #define	URTW_RESP_MIN_RATE_SHIFT	(0)
-#define	URTW_EIFS			0x0035		/* 1 byte */
+#define	URTW_8187_EIFS			0x0035		/* 1 byte */
 #define	URTW_INTR_MASK			0x003c		/* 2 byte */
 #define	URTW_CMD			0x0037		/* 1 byte */
 #define	URTW_CMD_TX_ENABLE		(0x4)

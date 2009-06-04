@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.13 2009/06/04 19:53:17 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.14 2009/06/04 20:07:34 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -1894,13 +1894,13 @@ urtw_set_rate(struct urtw_softc *sc)
 	    max_rr_rate << URTW_RESP_MAX_RATE_SHIFT |
 	    min_rr_rate << URTW_RESP_MIN_RATE_SHIFT);
 
-	urtw_read16_m(sc, URTW_BRSR, &data);
+	urtw_read16_m(sc, URTW_8187_BRSR, &data);
 	data &= ~URTW_BRSR_MBR_8185;
 
 	for (i = 0; i <= basic_rate; i++)
 		data |= (1 << i);
 
-	urtw_write16_m(sc, URTW_BRSR, data);
+	urtw_write16_m(sc, URTW_8187_BRSR, data);
 fail:
 	return (error);
 }
@@ -2683,8 +2683,8 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 		goto fail;
 
 	urtw_write32_m(sc, URTW_RF_TIMING, 0x000a8008);
-	urtw_read16_m(sc, URTW_BRSR, &data);		/* XXX ??? */
-	urtw_write16_m(sc, URTW_BRSR, 0xffff);
+	urtw_read16_m(sc, URTW_8187_BRSR, &data);	/* XXX ??? */
+	urtw_write16_m(sc, URTW_8187_BRSR, 0xffff);
 	urtw_write32_m(sc, URTW_RF_PARA, 0x100044);
 
 	error = urtw_set_mode(sc, URTW_EPROM_CMD_CONFIG);
@@ -2785,11 +2785,11 @@ urtw_8225_rf_set_chan(struct urtw_softc *sc, int chan)
 
 	if (IEEE80211_IS_CHAN_G(c)) {
 		urtw_write8_m(sc, URTW_DIFS, 0x14);
-		urtw_write8_m(sc, URTW_EIFS, 0x5b - 0x14);
+		urtw_write8_m(sc, URTW_8187_EIFS, 0x5b - 0x14);
 		urtw_write8_m(sc, URTW_CW_VAL, 0x73);
 	} else {
 		urtw_write8_m(sc, URTW_DIFS, 0x24);
-		urtw_write8_m(sc, URTW_EIFS, 0x5b - 0x24);
+		urtw_write8_m(sc, URTW_8187_EIFS, 0x5b - 0x24);
 		urtw_write8_m(sc, URTW_CW_VAL, 0xa5);
 	}
 
@@ -3054,8 +3054,8 @@ urtw_8225v2_rf_init(struct urtw_softc *sc)
 		goto fail;
 
 	urtw_write32_m(sc, URTW_RF_TIMING, 0x000a8008);
-	urtw_read16_m(sc, URTW_BRSR, &data);		/* XXX ??? */
-	urtw_write16_m(sc, URTW_BRSR, 0xffff);
+	urtw_read16_m(sc, URTW_8187_BRSR, &data);	/* XXX ??? */
+	urtw_write16_m(sc, URTW_8187_BRSR, 0xffff);
 	urtw_write32_m(sc, URTW_RF_PARA, 0x100044);
 
 	error = urtw_set_mode(sc, URTW_EPROM_CMD_CONFIG);
@@ -3178,11 +3178,11 @@ urtw_8225v2_rf_set_chan(struct urtw_softc *sc, int chan)
 
 	if (IEEE80211_IS_CHAN_G(c)) {
 		urtw_write8_m(sc, URTW_DIFS, 0x14);
-		urtw_write8_m(sc, URTW_EIFS, 0x5b - 0x14);
+		urtw_write8_m(sc, URTW_8187_EIFS, 0x5b - 0x14);
 		urtw_write8_m(sc, URTW_CW_VAL, 0x73);
 	} else {
 		urtw_write8_m(sc, URTW_DIFS, 0x24);
-		urtw_write8_m(sc, URTW_EIFS, 0x5b - 0x24);
+		urtw_write8_m(sc, URTW_8187_EIFS, 0x5b - 0x24);
 		urtw_write8_m(sc, URTW_CW_VAL, 0xa5);
 	}
 
