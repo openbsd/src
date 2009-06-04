@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.12 2009/06/04 19:45:36 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.13 2009/06/04 19:53:17 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -182,31 +182,31 @@ static uint8_t urtw_8225_agc[] = {
 };
 
 static uint32_t urtw_8225_channel[] = {
-	0x0000,		/* dummy channel 0  */
-	0x085c,		/* 1  */
-	0x08dc,		/* 2  */
-	0x095c,		/* 3  */
-	0x09dc,		/* 4  */
-	0x0a5c,		/* 5  */
-	0x0adc,		/* 6  */
-	0x0b5c,		/* 7  */
-	0x0bdc,		/* 8  */
-	0x0c5c,		/* 9  */
-	0x0cdc,		/* 10  */
-	0x0d5c,		/* 11  */
-	0x0ddc,		/* 12  */
-	0x0e5c,		/* 13  */
-	0x0f72,		/* 14  */
+	0x0000,		/* dummy channel 0 */
+	0x085c,		/* 1 */
+	0x08dc,		/* 2 */
+	0x095c,		/* 3 */
+	0x09dc,		/* 4 */
+	0x0a5c,		/* 5 */
+	0x0adc,		/* 6 */
+	0x0b5c,		/* 7 */
+	0x0bdc,		/* 8 */
+	0x0c5c,		/* 9 */
+	0x0cdc,		/* 10 */
+	0x0d5c,		/* 11 */
+	0x0ddc,		/* 12 */
+	0x0e5c,		/* 13 */
+	0x0f72,		/* 14 */
 };
 
 static uint8_t urtw_8225_gain[] = {
-	0x23, 0x88, 0x7c, 0xa5,		/* -82dbm  */
-	0x23, 0x88, 0x7c, 0xb5,		/* -82dbm  */
-	0x23, 0x88, 0x7c, 0xc5,		/* -82dbm  */
-	0x33, 0x80, 0x79, 0xc5,		/* -78dbm  */
-	0x43, 0x78, 0x76, 0xc5,		/* -74dbm  */
-	0x53, 0x60, 0x73, 0xc5,		/* -70dbm  */
-	0x63, 0x58, 0x70, 0xc5,		/* -66dbm  */
+	0x23, 0x88, 0x7c, 0xa5,		/* -82dbm */
+	0x23, 0x88, 0x7c, 0xb5,		/* -82dbm */
+	0x23, 0x88, 0x7c, 0xc5,		/* -82dbm */
+	0x33, 0x80, 0x79, 0xc5,		/* -78dbm */
+	0x43, 0x78, 0x76, 0xc5,		/* -74dbm */
+	0x53, 0x60, 0x73, 0xc5,		/* -70dbm */
+	0x63, 0x58, 0x70, 0xc5,		/* -66dbm */
 };
 
 static struct urtw_pair urtw_8225_rf_part1[] = {
@@ -285,13 +285,13 @@ static uint8_t urtw_8225_txpwr_ofdm[]={
 };
 
 static uint8_t urtw_8225v2_gain_bg[]={
-	0x23, 0x15, 0xa5,		/* -82-1dbm  */
-	0x23, 0x15, 0xb5,		/* -82-2dbm  */
-	0x23, 0x15, 0xc5,		/* -82-3dbm  */
-	0x33, 0x15, 0xc5,		/* -78dbm  */
-	0x43, 0x15, 0xc5,		/* -74dbm  */
-	0x53, 0x15, 0xc5,		/* -70dbm  */
-	0x63, 0x15, 0xc5,		/* -66dbm  */
+	0x23, 0x15, 0xa5,		/* -82-1dbm */
+	0x23, 0x15, 0xb5,		/* -82-2dbm */
+	0x23, 0x15, 0xc5,		/* -82-3dbm */
+	0x33, 0x15, 0xc5,		/* -78dbm */
+	0x43, 0x15, 0xc5,		/* -74dbm */
+	0x53, 0x15, 0xc5,		/* -70dbm */
+	0x63, 0x15, 0xc5,		/* -66dbm */
 };
 
 static struct urtw_pair urtw_8225v2_rf_part1[] = {
@@ -478,8 +478,8 @@ urtw_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface != NULL)
 		return UMATCH_NONE;
 
-	return (usb_lookup(urtw_devs, uaa->vendor, uaa->product) != NULL) ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
+	return ((usb_lookup(urtw_devs, uaa->vendor, uaa->product) != NULL) ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 void
@@ -508,14 +508,14 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 	error = urtw_get_txpwr(sc);
 	if (error != 0)
 		goto fail;
-	error = urtw_led_init(sc);		/* XXX incompleted  */
+	error = urtw_led_init(sc);		/* XXX incompleted */
 	if (error != 0)
 		goto fail;
 
 	sc->sc_rts_retry = URTW_DEFAULT_RTS_RETRY;
 	sc->sc_tx_retry = URTW_DEFAULT_TX_RETRY;
 	sc->sc_currate = 3;
-	/* XXX for what?  */
+	/* XXX for what? */
 	sc->sc_preamble_mode = 2;
 
 	usb_init_task(&sc->sc_task, urtw_task, sc);
@@ -670,7 +670,7 @@ urtw_open_pipes(struct urtw_softc *sc)
 	 * pipe numbers
 	 */
 
-	/* tx pipe - low priority packets  */
+	/* tx pipe - low priority packets */
 	error = usbd_open_pipe(sc->sc_iface, 0x2, USBD_EXCLUSIVE_USE,
 	    &sc->sc_txpipe_low);
 	if (error != 0) {
@@ -678,7 +678,7 @@ urtw_open_pipes(struct urtw_softc *sc)
 		    sc->sc_dev.dv_xname, usbd_errstr(error));
 		goto fail;
 	}
-	/* tx pipe - normal priority packets  */
+	/* tx pipe - normal priority packets */
 	error = usbd_open_pipe(sc->sc_iface, 0x3, USBD_EXCLUSIVE_USE,
 	    &sc->sc_txpipe_normal);
 	if (error != 0) {
@@ -686,7 +686,7 @@ urtw_open_pipes(struct urtw_softc *sc)
 		    sc->sc_dev.dv_xname, usbd_errstr(error));
 		goto fail;
 	}
-	/* rx pipe  */
+	/* rx pipe */
 	error = usbd_open_pipe(sc->sc_iface, 0x81, USBD_EXCLUSIVE_USE,
 	    &sc->sc_rxpipe);
 	if (error != 0) {
@@ -896,7 +896,7 @@ fail:
 	return (error);
 }
 
-/* XXX why we should allocalte memory buffer instead of using memory stack?  */
+/* XXX why we should allocalte memory buffer instead of using memory stack? */
 usbd_status
 urtw_8225_write_s16(struct urtw_softc *sc, uint8_t addr, int index,
     uint16_t *data)
@@ -1120,7 +1120,7 @@ urtw_get_rfchip(struct urtw_softc *sc)
 		break;
 	default:
 		panic("unsupported RF chip %d\n", data & 0xff);
-		/* never reach  */
+		/* never reach */
 	}
 
 fail:
@@ -1205,7 +1205,7 @@ urtw_eprom_read32(struct urtw_softc *sc, uint32_t addr, uint32_t *data)
 	int16_t addrstr[8], data16, readcmd[] = { 1, 1, 0 };
 	usbd_status error;
 
-	/* NB: make sure the buffer is initialized  */
+	/* NB: make sure the buffer is initialized */
 	*data = 0;
 
 	/* enable EPROM programming */
@@ -1327,11 +1327,11 @@ urtw_eprom_ck(struct urtw_softc *sc)
 	uint8_t data;
 	usbd_status error;
 
-	/* masking  */
+	/* masking */
 	urtw_read8_m(sc, URTW_EPROM_CMD, &data);
 	urtw_write8_m(sc, URTW_EPROM_CMD, data | URTW_EPROM_CK);
 	DELAY(URTW_EPROM_DELAY);
-	/* unmasking  */
+	/* unmasking */
 	urtw_read8_m(sc, URTW_EPROM_CMD, &data);
 	urtw_write8_m(sc, URTW_EPROM_CMD, data & ~URTW_EPROM_CK);
 	DELAY(URTW_EPROM_DELAY);
@@ -1614,11 +1614,11 @@ urtw_led_on(struct urtw_softc *sc, int type)
 		default:
 			panic("unsupported LED PIN type 0x%x",
 			    sc->sc_gpio_ledpin);
-			/* never reach  */
+			/* never reach */
 		}
 	} else {
 		panic("unsupported LED type 0x%x", type);
-		/* never reach  */
+		/* never reach */
 	}
 
 	sc->sc_gpio_ledon = 1;
@@ -1640,11 +1640,11 @@ urtw_led_off(struct urtw_softc *sc, int type)
 		default:
 			panic("unsupported LED PIN type 0x%x",
 			    sc->sc_gpio_ledpin);
-			/* never reach  */
+			/* never reach */
 		}
 	} else {
 		panic("unsupported LED type 0x%x", type);
-		/* never reach  */
+		/* never reach */
 	}
 
 	sc->sc_gpio_ledon = 0;
@@ -1674,7 +1674,7 @@ urtw_led_mode0(struct urtw_softc *sc, int mode)
 		break;
 	default:
 		panic("unsupported LED mode 0x%x", mode);
-		/* never reach  */
+		/* never reach */
 	}
 
 	switch (sc->sc_gpio_ledstate) {
@@ -1700,7 +1700,7 @@ urtw_led_mode0(struct urtw_softc *sc, int mode)
 		break;
 	default:
 		panic("unknown LED status 0x%x", sc->sc_gpio_ledstate);
-		/* never reach  */
+		/* never reach */
 	}
 	return (0);
 }
@@ -1769,7 +1769,7 @@ urtw_led_ctl(struct urtw_softc *sc, int mode)
 		break;
 	default:
 		panic("unsupported LED mode %d\n", sc->sc_strategy);
-		/* never reach  */
+		/* never reach */
 	}
 
 	return (error);
@@ -1819,7 +1819,7 @@ urtw_led_blink(struct urtw_softc *sc)
 		break;
 	default:
 		panic("unknown LED status 0x%x", sc->sc_gpio_ledstate);
-		/* never reach  */
+		/* never reach */
 	}
 	return (0);
 }
@@ -1843,7 +1843,7 @@ urtw_update_msr(struct urtw_softc *sc)
 		default:
 			panic("unsupported operation mode 0x%x\n",
 			    ic->ic_opmode);
-			/* never reach  */
+			/* never reach */
 		}
 	} else
 		data |= URTW_MSR_LINK_NONE;
@@ -1860,7 +1860,7 @@ urtw_rate2rtl(int rate)
 
 	for (i = 0; i < nitems(urtw_ratetable); i++) {
 		if (rate == urtw_ratetable[i].reg)
-			return urtw_ratetable[i].val;
+			return (urtw_ratetable[i].val);
 	}
 
 	return (3);
@@ -1873,7 +1873,7 @@ urtw_rtl2rate(int rate)
 
 	for (i = 0; i < nitems(urtw_ratetable); i++) {
 		if (rate == urtw_ratetable[i].val)
-			return urtw_ratetable[i].reg;
+			return (urtw_ratetable[i].reg);
 	}
 
 	return (0);
@@ -2043,7 +2043,7 @@ urtw_init(struct ifnet *ifp)
 	urtw_write8_m(sc, 0x85, 0);
 	urtw_write8_m(sc, URTW_GPIO, 0);
 
-	/* for led  */
+	/* for led */
 	urtw_write8_m(sc, 0x85, 4);
 	error = urtw_led_ctl(sc, URTW_LED_CTL_POWER_ON);
 	if (error != 0)
@@ -2053,7 +2053,7 @@ urtw_init(struct ifnet *ifp)
 	if (error)
 		goto fail;
 
-	/* applying MAC address again.  */
+	/* applying MAC address again. */
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	urtw_write32_m(sc, URTW_MAC0, ((uint32_t *)ic->ic_myaddr)[0]);
 	urtw_write16_m(sc, URTW_MAC4, ((uint32_t *)ic->ic_myaddr)[1] & 0xffff);
@@ -2089,7 +2089,7 @@ urtw_init(struct ifnet *ifp)
 	if (error != 0)
 		goto fail;
 
-	/* reset softc variables  */
+	/* reset softc variables */
 	sc->sc_txidx = sc->sc_tx_low_queued = sc->sc_tx_normal_queued = 0;
 	sc->sc_txtimer = 0;
 
@@ -2462,7 +2462,7 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 	data->buf[1] = (m0->m_pkthdr.len & 0x0f00) >> 8;
 	data->buf[1] |= (1 << 7);
 
-	/* XXX sc_preamble_mode is always 2.  */
+	/* XXX sc_preamble_mode is always 2. */
 	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
 	    (ni->ni_capinfo & IEEE80211_CAPINFO_SHORT_PREAMBLE) &&
 	    (sc->sc_preamble_mode == 1) && (sc->sc_currate != 0))
@@ -2472,7 +2472,7 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 		panic("TODO tx.");
 	if (wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG)
 		data->buf[2] |= (1 << 1);
-	/* RTS rate - 10 means we use a basic rate.  */
+	/* RTS rate - 10 means we use a basic rate. */
 	data->buf[2] |= (urtw_rate2rtl(2) << 3);
 	/*
 	 * XXX currently TX rate control depends on the rate value of
@@ -2486,9 +2486,9 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 		else if (ic->ic_fixed_rate != -1)
 			data->buf[3] = urtw_rate2rtl(ic->ic_fixed_rate);
 	}
-	data->buf[8] = 3;		/* CW minimum  */
-	data->buf[8] |= (7 << 4);	/* CW maximum  */
-	data->buf[9] |= 11;		/* retry limitation  */
+	data->buf[8] = 3;		/* CW minimum */
+	data->buf[8] |= (7 << 4);	/* CW maximum */
+	data->buf[9] |= 11;		/* retry limitation */
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, (uint8_t *)&data->buf[12]);
 	data->ni = ni;
@@ -2614,7 +2614,7 @@ urtw_8225_set_txpwrlvl(struct urtw_softc *sc, int chan)
 	usbd_status error;
 
 	cck_pwrlvl_max = 11;
-	ofdm_pwrlvl_max = 25;	/* 12 -> 25  */
+	ofdm_pwrlvl_max = 25;	/* 12 -> 25 */
 	ofdm_pwrlvl_min = 10;
 
 	/* CCK power setting */
@@ -2711,7 +2711,7 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 	usbd_delay_ms(sc->sc_udev, 200);
 	urtw_8225_write(sc, 0x0, 0x127);
 
-	for (i = 0; i < 95; i++) {
+	for (i = 0; i < nitems(urtw_8225_rxgain); i++) {
 		urtw_8225_write(sc, 0x1, (uint8_t)(i + 1));
 		urtw_8225_write(sc, 0x2, urtw_8225_rxgain[i]);
 	}
@@ -2719,7 +2719,7 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 	urtw_8225_write(sc, 0x0, 0x27);
 	urtw_8225_write(sc, 0x0, 0x22f);
 
-	for (i = 0; i < 128; i++) {
+	for (i = 0; i < nitems(urtw_8225_agc); i++) {
 		urtw_8187_write_phy_ofdm(sc, 0xb, urtw_8225_agc[i]);
 		urtw_8187_write_phy_ofdm(sc, 0xa, (uint8_t)i + 0x80);
 	}
@@ -2803,7 +2803,7 @@ urtw_8225_rf_set_sens(struct urtw_softc *sc, int sens)
 	usbd_status error;
 
 	if (sens < 0 || sens > 6)
-		return -1;
+		return (-1);
 
 	if (sens > 4)
 		urtw_8225_write(sc, 0x0c, 0x850);
@@ -2845,8 +2845,8 @@ urtw_isbmode(uint16_t rate)
 
 	rate = urtw_rtl2rate(rate);
 
-	return ((rate <= 22 && rate != 12 && rate != 18) ||
-	    rate == 44) ? (1) : (0);
+	return (((rate <= 22 && rate != 12 && rate != 18) ||
+	    rate == 44) ? (1) : (0));
 }
 
 void
@@ -2879,7 +2879,7 @@ urtw_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto skip;
 	}
 
-	/* 4 dword and 4 byte CRC  */
+	/* 4 dword and 4 byte CRC */
 	len = actlen - (4 * 4);
 	desc = data->buf + len;
 	flen = ((desc[1] & 0x0f) << 8) + (desc[0] & 0xff);
@@ -2890,7 +2890,7 @@ urtw_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	rate = (desc[2] & 0xf0) >> 4;
 	quality = desc[4] & 0xff;
-	/* XXX correct?  */
+	/* XXX correct? */
 	rssi = (desc[6] & 0xfe) >> 1;
 	if (!urtw_isbmode(rate)) {
 		rssi = (rssi > 90) ? 90 : ((rssi < 25) ? 25 : rssi);
@@ -2931,7 +2931,7 @@ urtw_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		struct mbuf mb;
 		struct urtw_rx_radiotap_header *tap = &sc->sc_rxtap;
 
-		/* XXX Are variables correct?  */
+		/* XXX Are variables correct? */
 		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 		tap->wr_dbm_antsignal = (int8_t)rssi;
@@ -2950,7 +2950,7 @@ urtw_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		sc->sc_currate = (rate > 0) ? rate : sc->sc_currate;
 	ni = ieee80211_find_rxnode(ic, wh);
 
-	/* XXX correct?  */
+	/* XXX correct? */
 	nf = (quality > 64) ? 0 : ((64 - quality) * 100) / 64;
 
 	/* send the frame to the 802.11 layer */
@@ -2976,7 +2976,7 @@ urtw_8225v2_setgain(struct urtw_softc *sc, int16_t gain)
 	uint8_t *gainp;
 	usbd_status error;
 
-	/* XXX for A?  */
+	/* XXX for A? */
 	gainp = urtw_8225v2_gain_bg;
 	urtw_8187_write_phy_ofdm(sc, 0x0d, gainp[gain * 3]);
 	usbd_delay_ms(sc->sc_udev, 1);
@@ -3081,7 +3081,7 @@ urtw_8225v2_rf_init(struct urtw_softc *sc)
 
 	urtw_8225_write(sc, 0x0, 0x1b7);
 
-	for (i = 0; i < 95; i++) {
+	for (i = 0; i < nitems(urtw_8225v2_rxgain); i++) {
 		urtw_8225_write(sc, 0x1, (uint8_t)(i + 1));
 		urtw_8225_write(sc, 0x2, urtw_8225v2_rxgain[i]);
 	}
@@ -3115,7 +3115,7 @@ urtw_8225v2_rf_init(struct urtw_softc *sc)
 	usbd_delay_ms(sc->sc_udev, 100);
 
 	urtw_8225_write(sc, 0x0, 0x2bf);
-	for (i = 0; i < 128; i++) {
+	for (i = 0; i < nitems(urtw_8225_agc); i++) {
 		urtw_8187_write_phy_ofdm(sc, 0xb, urtw_8225_agc[i]);
 		urtw_8187_write_phy_ofdm(sc, 0xa, (uint8_t)i + 0x80);
 	}
@@ -3264,12 +3264,12 @@ urtw_task(void *arg)
 	case IEEE80211_S_RUN:
 		ni = ic->ic_bss;
 
-		/* setting bssid.  */
+		/* setting bssid. */
 		urtw_write32_m(sc, URTW_BSSID, ((uint32_t *)ni->ni_bssid)[0]);
 		urtw_write16_m(sc, URTW_BSSID + 4,
 		    ((uint16_t *)ni->ni_bssid)[2]);
 		urtw_update_msr(sc);
-		/* XXX maybe the below would be incorrect.  */
+		/* XXX maybe the below would be incorrect. */
 		urtw_write16_m(sc, URTW_ATIM_WND, 2);
 		urtw_write16_m(sc, URTW_ATIM_TR_ITV, 100);
 		urtw_write16_m(sc, URTW_BEACON_INTERVAL, 0x64);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwreg.h,v 1.4 2009/06/04 19:37:26 martynas Exp $	*/
+/*	$OpenBSD: if_urtwreg.h,v 1.5 2009/06/04 19:53:17 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -19,26 +19,26 @@
 #define	URTW_CONFIG_NO			1
 #define	URTW_IFACE_INDEX		0
 
-/* for 8187  */
-#define	URTW_MAC0			0x0000		/* 1 byte  */
-#define	URTW_MAC1			0x0001		/* 1 byte  */
-#define	URTW_MAC2			0x0002		/* 1 byte  */
-#define	URTW_MAC3			0x0003		/* 1 byte  */
-#define	URTW_MAC4			0x0004		/* 1 byte  */
-#define	URTW_MAC5			0x0005		/* 1 byte  */
-#define	URTW_BRSR			0x002c		/* 2 byte  */
+/* for 8187 */
+#define	URTW_MAC0			0x0000		/* 1 byte */
+#define	URTW_MAC1			0x0001		/* 1 byte */
+#define	URTW_MAC2			0x0002		/* 1 byte */
+#define	URTW_MAC3			0x0003		/* 1 byte */
+#define	URTW_MAC4			0x0004		/* 1 byte */
+#define	URTW_MAC5			0x0005		/* 1 byte */
+#define	URTW_BRSR			0x002c		/* 2 byte */
 #define	URTW_BRSR_MBR_8185		(0x0fff)
-#define	URTW_BSSID			0x002e		/* 6 byte  */
-#define	URTW_RESP_RATE			0x0034		/* 1 byte  */
+#define	URTW_BSSID			0x002e		/* 6 byte */
+#define	URTW_RESP_RATE			0x0034		/* 1 byte */
 #define	URTW_RESP_MAX_RATE_SHIFT	(4)
 #define	URTW_RESP_MIN_RATE_SHIFT	(0)
-#define	URTW_EIFS			0x0035		/* 1 byte  */
-#define	URTW_INTR_MASK			0x003c		/* 2 byte  */
-#define	URTW_CMD			0x0037		/* 1 byte  */
+#define	URTW_EIFS			0x0035		/* 1 byte */
+#define	URTW_INTR_MASK			0x003c		/* 2 byte */
+#define	URTW_CMD			0x0037		/* 1 byte */
 #define	URTW_CMD_TX_ENABLE		(0x4)
 #define	URTW_CMD_RX_ENABLE		(0x8)
 #define	URTW_CMD_RST			(0x10)
-#define	URTW_TX_CONF			0x0040		/* 4 byte  */
+#define	URTW_TX_CONF			0x0040		/* 4 byte */
 #define	URTW_TX_LOOPBACK_SHIFT		(17)
 #define	URTW_TX_LOOPBACK_NONE		(0 << URTW_TX_LOOPBACK_SHIFT)
 #define	URTW_TX_LOOPBACK_MAC		(1 << URTW_TX_LOOPBACK_SHIFT)
@@ -58,7 +58,7 @@
 #define	URTW_TX_DISCW			(1 << 20)
 #define	URTW_TX_SWPLCPLEN		(1 << 24)
 #define	URTW_TX_NOICV			(0x80000)
-#define	URTW_RX				0x0044		/* 4 byte  */
+#define	URTW_RX				0x0044		/* 4 byte */
 #define	URTW_RX_9356SEL			(1 << 6)
 #define	URTW_RX_FILTER_MASK			\
 	(URTW_RX_FILTER_ALLMAC | URTW_RX_FILTER_NICMAC | URTW_RX_FILTER_MCAST | \
@@ -91,8 +91,8 @@
 #define	URTW_MAX_RX_DMA_1024		(6)
 #define	URTW_MAX_RX_DMA_SHIFT		(10)
 #define	URTW_RCR_ONLYERLPKT		(1 << 31)
-#define	URTW_INT_TIMEOUT		0x0048		/* 4 byte  */
-#define	URTW_EPROM_CMD			0x0050		/* 1 byte  */
+#define	URTW_INT_TIMEOUT		0x0048		/* 4 byte */
+#define	URTW_EPROM_CMD			0x0050		/* 1 byte */
 #define	URTW_EPROM_CMD_NORMAL		(0x0)
 #define	URTW_EPROM_CMD_NORMAL_MODE				\
 	(URTW_EPROM_CMD_NORMAL << URTW_EPROM_CMD_SHIFT)
@@ -108,55 +108,55 @@
 #define	URTW_EPROM_CK			(0x4)
 #define	URTW_EPROM_CS			(0x8)
 #define	URTW_CONFIG2			0x0053
-#define	URTW_ANAPARAM			0x0054		/* 4 byte  */
+#define	URTW_ANAPARAM			0x0054		/* 4 byte */
 #define	URTW_8225_ANAPARAM_ON		(0xa0000a59)
-#define	URTW_MSR			0x0058		/* 1 byte  */
+#define	URTW_MSR			0x0058		/* 1 byte */
 #define	URTW_MSR_LINK_MASK		((1 << 2) | (1 << 3))
 #define	URTW_MSR_LINK_SHIFT		(2)
 #define	URTW_MSR_LINK_NONE		(0 << URTW_MSR_LINK_SHIFT)
 #define	URTW_MSR_LINK_ADHOC		(1 << URTW_MSR_LINK_SHIFT)
 #define	URTW_MSR_LINK_STA		(2 << URTW_MSR_LINK_SHIFT)
 #define	URTW_MSR_LINK_HOSTAP		(3 << URTW_MSR_LINK_SHIFT)
-#define	URTW_CONFIG3			0x0059		/* 1 byte  */
+#define	URTW_CONFIG3			0x0059		/* 1 byte */
 #define	URTW_CONFIG3_ANAPARAM_WRITE	(0x40)
 #define	URTW_CONFIG3_ANAPARAM_W_SHIFT	(6)
-#define	URTW_PSR			0x005e		/* 1 byte  */
-#define	URTW_ANAPARAM2			0x0060		/* 4 byte  */
+#define	URTW_PSR			0x005e		/* 1 byte */
+#define	URTW_ANAPARAM2			0x0060		/* 4 byte */
 #define	URTW_8225_ANAPARAM2_ON		(0x860c7312)
-#define	URTW_BEACON_INTERVAL		0x0070		/* 2 byte  */
-#define	URTW_ATIM_WND			0x0072		/* 2 byte  */
-#define	URTW_BEACON_INTERVAL_TIME	0x0074		/* 2 byte  */
-#define	URTW_ATIM_TR_ITV		0x0076		/* 2 byte  */
-#define	URTW_RF_PINS_OUTPUT		0x0080		/* 2 byte  */
+#define	URTW_BEACON_INTERVAL		0x0070		/* 2 byte */
+#define	URTW_ATIM_WND			0x0072		/* 2 byte */
+#define	URTW_BEACON_INTERVAL_TIME	0x0074		/* 2 byte */
+#define	URTW_ATIM_TR_ITV		0x0076		/* 2 byte */
+#define	URTW_RF_PINS_OUTPUT		0x0080		/* 2 byte */
 #define	URTW_BB_HOST_BANG_CLK		(1 << 1)
 #define	URTW_BB_HOST_BANG_EN		(1 << 2)
 #define	URTW_BB_HOST_BANG_RW		(1 << 3)
-#define	URTW_RF_PINS_ENABLE		0x0082		/* 2 byte  */
-#define	URTW_RF_PINS_SELECT		0x0084		/* 2 byte  */
-#define	URTW_RF_PINS_INPUT		0x0086		/* 2 byte  */
-#define	URTW_RF_PARA			0x0088		/* 4 byte  */
-#define	URTW_RF_TIMING			0x008c		/* 4 byte  */
-#define	URTW_GP_ENABLE			0x0090		/* 1 byte  */
-#define	URTW_GPIO			0x0091		/* 1 byte  */
-#define	URTW_TX_AGC_CTL			0x009c		/* 1 byte  */
+#define	URTW_RF_PINS_ENABLE		0x0082		/* 2 byte */
+#define	URTW_RF_PINS_SELECT		0x0084		/* 2 byte */
+#define	URTW_RF_PINS_INPUT		0x0086		/* 2 byte */
+#define	URTW_RF_PARA			0x0088		/* 4 byte */
+#define	URTW_RF_TIMING			0x008c		/* 4 byte */
+#define	URTW_GP_ENABLE			0x0090		/* 1 byte */
+#define	URTW_GPIO			0x0091		/* 1 byte */
+#define	URTW_TX_AGC_CTL			0x009c		/* 1 byte */
 #define	URTW_TX_AGC_CTL_PERPACKET_GAIN	(0x1)
 #define	URTW_TX_AGC_CTL_PERPACKET_ANTSEL	(0x2)
 #define	URTW_TX_AGC_CTL_FEEDBACK_ANT	(0x4)
-#define	URTW_TX_GAIN_CCK		0x009d		/* 1 byte  */
-#define	URTW_TX_GAIN_OFDM		0x009e		/* 1 byte  */
-#define	URTW_TX_ANTENNA			0x009f		/* 1 byte  */
-#define	URTW_WPA_CONFIG			0x00b0		/* 1 byte  */
-#define	URTW_SIFS			0x00b4		/* 1 byte  */
-#define	URTW_DIFS			0x00b5		/* 1 byte  */
-#define	URTW_SLOT			0x00b6		/* 1 byte  */
-#define	URTW_CW_CONF			0x00bc		/* 1 byte  */
+#define	URTW_TX_GAIN_CCK		0x009d		/* 1 byte */
+#define	URTW_TX_GAIN_OFDM		0x009e		/* 1 byte */
+#define	URTW_TX_ANTENNA			0x009f		/* 1 byte */
+#define	URTW_WPA_CONFIG			0x00b0		/* 1 byte */
+#define	URTW_SIFS			0x00b4		/* 1 byte */
+#define	URTW_DIFS			0x00b5		/* 1 byte */
+#define	URTW_SLOT			0x00b6		/* 1 byte */
+#define	URTW_CW_CONF			0x00bc		/* 1 byte */
 #define	URTW_CW_CONF_PERPACKET_RETRY	(0x2)
 #define	URTW_CW_CONF_PERPACKET_CW	(0x1)
-#define	URTW_CW_VAL			0x00bd		/* 1 byte  */
-#define	URTW_RATE_FALLBACK		0x00be		/* 1 byte  */
-#define	URTW_TALLY_SEL			0x00fc		/* 1 byte  */
+#define	URTW_CW_VAL			0x00bd		/* 1 byte */
+#define	URTW_RATE_FALLBACK		0x00be		/* 1 byte */
+#define	URTW_TALLY_SEL			0x00fc		/* 1 byte */
 
-/* for EEPROM  */
+/* for EEPROM */
 #define	URTW_EPROM_TXPW_BASE		0x05
 #define	URTW_EPROM_RFCHIPID		0x06
 #define	URTW_EPROM_RFCHIPID_RTL8225U	(5)
@@ -172,7 +172,7 @@
 #define	URTW_EPROM_CID_SERCOMM_PS	(0x02)
 #define	URTW_EPROM_CID_HW_LED		(0x03)
 
-/* LED  */
+/* LED */
 #define	URTW_CID_DEFAULT		0
 #define	URTW_CID_8187_ALPHA0		1
 #define	URTW_CID_8187_SERCOMM_PS	2
@@ -198,7 +198,7 @@
 #define	URTW_LED_NO_LINK_BLINK		7
 #define	URTW_LED_BLINK_CM3		8
 
-/* for extra area  */
+/* for extra area */
 #define	URTW_EPROM_DISABLE		0
 #define	URTW_EPROM_ENABLE		1
 #define	URTW_EPROM_DELAY		10
@@ -226,7 +226,7 @@ struct urtw_rx_data {
 	struct mbuf		*m;
 };
 
-/* XXX not correct..  */
+/* XXX not correct.. */
 #define	URTW_MIN_RXBUFSZ						\
 	(sizeof(struct ieee80211_frame_min))
 
@@ -281,7 +281,7 @@ struct urtw_softc {
 	uint8_t				sc_crcmon;
 	uint8_t				sc_bssid[IEEE80211_ADDR_LEN];
 
-	/* for RF  */
+	/* for RF */
 	usbd_status			(*sc_rf_init)(struct urtw_softc *);
 	usbd_status			(*sc_rf_set_chan)(struct urtw_softc *,
 					    int);
@@ -289,7 +289,7 @@ struct urtw_softc {
 					    int);
 	uint32_t			sc_max_sens;
 	uint32_t			sc_sens;
-	/* for LED  */
+	/* for LED */
 	struct timeout			sc_led_ch;
 	struct usb_task			sc_ledtask;
 	uint8_t				sc_psr;
@@ -301,13 +301,13 @@ struct urtw_softc {
 	uint8_t				sc_gpio_ledpin;
 	uint8_t				sc_gpio_blinktime;
 	uint8_t				sc_gpio_blinkstate;
-	/* RX/TX  */
+	/* RX/TX */
 	usbd_pipe_handle		sc_rxpipe;
 	usbd_pipe_handle		sc_txpipe_low;
 	usbd_pipe_handle		sc_txpipe_normal;
 #define	URTW_PRIORITY_LOW		0
 #define	URTW_PRIORITY_NORMAL		1
-#define	URTW_DATA_TIMEOUT		10000		/* 10 sec  */
+#define	URTW_DATA_TIMEOUT		10000		/* 10 sec */
 	struct urtw_rx_data		sc_rxdata[URTW_RX_DATA_LIST_COUNT];
 	struct urtw_tx_data		sc_txdata[URTW_TX_DATA_LIST_COUNT];
 	uint32_t			sc_tx_low_queued;
@@ -319,7 +319,7 @@ struct urtw_softc {
 	struct timeout			scan_to;
 	int				sc_txtimer;
 	int				sc_currate;
-	/* TX power  */
+	/* TX power */
 	uint8_t				sc_txpwr_cck[URTW_MAX_CHANNELS];
 	uint8_t				sc_txpwr_cck_base;
 	uint8_t				sc_txpwr_ofdm[URTW_MAX_CHANNELS];
