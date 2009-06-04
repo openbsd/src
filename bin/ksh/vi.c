@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.23 2006/04/10 14:38:59 jaredy Exp $	*/
+/*	$OpenBSD: vi.c,v 1.24 2009/06/04 04:03:22 merdely Exp $	*/
 
 /*
  *	vi command editing
@@ -416,9 +416,9 @@ vi_hook(int ch)
 			int i;
 			int n = srchlen;
 
-			while (n > 0 && isspace(locpat[n - 1]))
+			while (n > 0 && !is_wordch(locpat[n - 1]))
 				n--;
-			while (n > 0 && !isspace(locpat[n - 1]))
+			while (n > 0 && is_wordch(locpat[n - 1]))
 				n--;
 			for (i = srchlen; --i >= n; )
 				es->linelen -= char_len((unsigned char)locpat[i]);
@@ -1598,9 +1598,9 @@ Backword(int argcnt)
 
 	ncursor = es->cursor;
 	while (ncursor > 0 && argcnt--) {
-		while (--ncursor >= 0 && isspace(es->cbuf[ncursor]))
+		while (--ncursor >= 0 && !is_wordch(es->cbuf[ncursor]))
 			;
-		while (ncursor >= 0 && !isspace(es->cbuf[ncursor]))
+		while (ncursor >= 0 && is_wordch(es->cbuf[ncursor]))
 			ncursor--;
 		ncursor++;
 	}
