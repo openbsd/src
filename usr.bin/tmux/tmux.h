@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.5 2009/06/03 23:30:40 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.6 2009/06/04 18:48:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,6 +26,7 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 
+#include <bitstring.h>
 #include <getopt.h>
 #include <limits.h>
 #include <poll.h>
@@ -506,6 +507,8 @@ struct screen {
 	u_int		 old_rlower;
 
 	int		 mode;
+
+	bitstr_t      	*tabs;
 
 	struct screen_sel sel;
 };
@@ -1397,6 +1400,7 @@ void	 screen_redraw_status(struct client *);
 void	 screen_init(struct screen *, u_int, u_int, u_int);
 void	 screen_reinit(struct screen *);
 void	 screen_free(struct screen *);
+void	 screen_reset_tabs(struct screen *);
 void	 screen_set_title(struct screen *, const char *);
 void	 screen_resize(struct screen *, u_int, u_int);
 void	 screen_set_selection(
