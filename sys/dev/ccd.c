@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.85 2008/07/01 04:15:59 ray Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.86 2009/06/04 05:57:27 krw Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1012,6 +1012,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int unit = DISKUNIT(dev);
 	int i, j, lookedup = 0, error = 0;
 	int part, pmask, s;
+	struct disklabel *lp;
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
 	struct ccddevice ccd;
@@ -1189,6 +1190,18 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		ccdunlock(cs);
 		bzero(cs, sizeof(struct ccd_softc));
 		splx(s);
+		break;
+
+	case DIOCRLDINFO:
+		if ((error = ccdlock(cs)) != 0)
+			return (error);
+
+		lp = malloc(sizeof(*lp), M_TEMP, M_WAITOK);
+		ccdgetdisklabel(dev, cs, lp, 0);
+		*(cs->sc_dkdev.dk_label) = *lp;
+		free(lp, M_TEMP);
+
+		ccdunlock(cs);
 		break;
 
 	case DIOCGPDINFO:
