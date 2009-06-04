@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.8 2009/06/04 19:11:48 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.9 2009/06/04 19:27:27 martynas Exp $	*/
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
  *
@@ -333,15 +333,10 @@ int		urtw_init(struct ifnet *);
 void		urtw_stop(struct ifnet *, int);
 int		urtw_ioctl(struct ifnet *, u_long, caddr_t);
 void		urtw_start(struct ifnet *);
-int		urtw_alloc_data_list(struct urtw_softc *, struct urtw_data [],
-		    int, int, int);
 int		urtw_alloc_rx_data_list(struct urtw_softc *);
 void		urtw_free_rx_data_list(struct urtw_softc *);
 int		urtw_alloc_tx_data_list(struct urtw_softc *);
 void		urtw_free_tx_data_list(struct urtw_softc *);
-void		urtw_free_data_list(struct urtw_softc *,
-		    usbd_pipe_handle, usbd_pipe_handle,
-		    struct urtw_data data[], int);
 void		urtw_rxeof(usbd_xfer_handle, usbd_private_handle,
 		    usbd_status);
 int		urtw_tx_start(struct urtw_softc *,
@@ -673,122 +668,133 @@ fail:
 }
 
 int
-urtw_alloc_data_list(struct urtw_softc *sc, struct urtw_data data[],
-	int ndata, int maxsz, int fillmbuf)
+urtw_alloc_rx_data_list(struct urtw_softc *sc)
 {
 	int i, error;
 
-	for (i = 0; i < ndata; i++) {
-		struct urtw_data *dp = &data[i];
+	for (i = 0; i < URTW_RX_DATA_LIST_COUNT; i++) {
+		struct urtw_rx_data *data = &sc->sc_rxdata[i];
 
-		dp->sc = sc;
-		dp->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (dp->xfer == NULL) {
-			printf("%s: could not allocate xfer\n", 
+		data->sc = sc;
+
+		data->xfer = usbd_alloc_xfer(sc->sc_udev);
+		if (data->xfer == NULL) {
+			printf("%s: could not allocate rx xfer\n",
 			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
 			goto fail;
 		}
-		if (fillmbuf) {
-			MGETHDR(dp->m, M_DONTWAIT, MT_DATA);
-			if (dp->m == NULL) {
-				printf("%s: could not allocate rx mbuf\n",
-				    sc->sc_dev.dv_xname);
-				error = ENOMEM;
-				goto fail;
-			}
-			MCLGET(dp->m, M_DONTWAIT);
-			if (!(dp->m->m_flags & M_EXT)) {
-				printf("%s: could not allocate rx mbuf cluster"
-				    "\n", sc->sc_dev.dv_xname);
-				error = ENOMEM;
-				goto fail;
-			}
-			dp->buf = mtod(dp->m, uint8_t *);
-		} else {
-			dp->m = NULL;
-			dp->buf = usbd_alloc_buffer(dp->xfer, maxsz);
-			if (dp->buf == NULL) {
-				printf("%s: could not allocate buffer\n",
-				    sc->sc_dev.dv_xname);
-				error = ENOMEM;
-				goto fail;
-			}
-			if (((unsigned long)dp->buf) % 4)
-				printf("%s: warn: unaligned buffer %p\n",
-				    sc->sc_dev.dv_xname, dp->buf);
+
+		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
+		if (data->m == NULL) {
+			printf("%s: could not allocate rx mbuf\n",
+			    sc->sc_dev.dv_xname);
+			error = ENOMEM;
+			goto fail;
 		}
-		dp->ni = NULL;
+		MCLGET(data->m, M_DONTWAIT);
+		if (!(data->m->m_flags & M_EXT)) {
+			printf("%s: could not allocate rx mbuf cluster\n",
+			    sc->sc_dev.dv_xname);
+			error = ENOMEM;
+			goto fail;
+		}
+		data->buf = mtod(data->m, uint8_t *);
 	}
 
 	return (0);
 
-fail:	urtw_free_data_list(sc, NULL, NULL, data, ndata);
+fail:
+	urtw_free_rx_data_list(sc);
 	return (error);
-}
-
-void
-urtw_free_data_list(struct urtw_softc *sc, usbd_pipe_handle pipe1,
-    usbd_pipe_handle pipe2, struct urtw_data data[], int ndata)
-{
-	struct ieee80211com *ic = &sc->sc_ic;
-	int i;
-
-	/* make sure no transfers are pending */
-	if (pipe1 != NULL)
-		usbd_abort_pipe(pipe1);
-	if (pipe2 != NULL)
-		usbd_abort_pipe(pipe2);
-
-	for (i = 0; i < ndata; i++) {
-		struct urtw_data *dp = &data[i];
-
-		if (dp->xfer != NULL) {
-			usbd_free_xfer(dp->xfer);
-			dp->xfer = NULL;
-		}
-		if (dp->m != NULL) {
-			m_freem(dp->m);
-			dp->m = NULL;
-		}
-		if (dp->ni != NULL) {
-			ieee80211_release_node(ic, dp->ni);
-			dp->ni = NULL;
-		}
-	}
-}
-
-int
-urtw_alloc_rx_data_list(struct urtw_softc *sc)
-{
-
-	return urtw_alloc_data_list(sc,
-	    sc->sc_rxdata, URTW_RX_DATA_LIST_COUNT, MCLBYTES, 1 /* mbufs */);
 }
 
 void
 urtw_free_rx_data_list(struct urtw_softc *sc)
 {
+	int i;
 
-	urtw_free_data_list(sc, sc->sc_rxpipe, NULL, sc->sc_rxdata,
-	    URTW_RX_DATA_LIST_COUNT);
+	/* Make sure no transfers are pending. */
+	if (sc->sc_rxpipe != NULL)
+		usbd_abort_pipe(sc->sc_rxpipe);
+
+	for (i = 0; i < URTW_RX_DATA_LIST_COUNT; i++) {
+		struct urtw_rx_data *data = &sc->sc_rxdata[i];
+
+		if (data->xfer != NULL) {
+			usbd_free_xfer(data->xfer);
+			data->xfer = NULL;
+		}
+		if (data->m != NULL) {
+			m_freem(data->m);
+			data->m = NULL;
+		}
+	}
 }
 
 int
 urtw_alloc_tx_data_list(struct urtw_softc *sc)
 {
+	int i, error;
 
-	return urtw_alloc_data_list(sc,
-	    sc->sc_txdata, URTW_TX_DATA_LIST_COUNT, URTW_TX_MAXSIZE,
-	    0 /* no mbufs */);
+	for (i = 0; i < URTW_TX_DATA_LIST_COUNT; i++) {
+		struct urtw_tx_data *data = &sc->sc_txdata[i];
+
+		data->sc = sc;
+		data->ni = NULL;
+
+		data->xfer = usbd_alloc_xfer(sc->sc_udev);
+		if (data->xfer == NULL) {
+			printf("%s: could not allocate tx xfer\n",
+			    sc->sc_dev.dv_xname);
+			error = ENOMEM;
+			goto fail;
+		}
+
+		data->buf = usbd_alloc_buffer(data->xfer, URTW_TX_MAXSIZE);
+		if (data->buf == NULL) {
+			printf("%s: could not allocate tx buffer\n",
+			    sc->sc_dev.dv_xname);
+			error = ENOMEM;
+			goto fail;
+		}
+
+		if (((unsigned long)data->buf) % 4)
+			printf("%s: warn: unaligned buffer %p\n",
+			    sc->sc_dev.dv_xname, data->buf);
+	}
+
+	return (0);
+
+fail:
+	urtw_free_tx_data_list(sc);
+	return (error);
 }
 
 void
 urtw_free_tx_data_list(struct urtw_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
+	int i;
 
-	urtw_free_data_list(sc, sc->sc_txpipe_low, sc->sc_txpipe_normal,
-	    sc->sc_txdata, URTW_TX_DATA_LIST_COUNT);
+	/* Make sure no transfers are pending. */
+	if (sc->sc_txpipe_low != NULL)
+		usbd_abort_pipe(sc->sc_txpipe_low);
+	if (sc->sc_txpipe_normal != NULL)
+		usbd_abort_pipe(sc->sc_txpipe_normal);
+
+	for (i = 0; i < URTW_TX_DATA_LIST_COUNT; i++) {
+		struct urtw_tx_data *data = &sc->sc_txdata[i];
+
+		if (data->xfer != NULL) {
+			usbd_free_xfer(data->xfer);
+			data->xfer = NULL;
+		}
+		if (data->ni != NULL) {
+			ieee80211_release_node(ic, data->ni);
+			data->ni = NULL;
+		}
+	}
 }
 
 int
@@ -1920,7 +1926,7 @@ usbd_status
 urtw_rx_enable(struct urtw_softc *sc)
 {
 	int i;
-	struct urtw_data *rxdata;
+	struct urtw_rx_data *rxdata;
 	uint8_t data;
 	usbd_status error;
 
@@ -2293,7 +2299,7 @@ void
 urtw_txeof_low(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
-	struct urtw_data *data = priv;
+	struct urtw_tx_data *data = priv;
 	struct urtw_softc *sc = data->sc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -2332,7 +2338,7 @@ void
 urtw_txeof_normal(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
-	struct urtw_data *data = priv;
+	struct urtw_tx_data *data = priv;
 	struct urtw_softc *sc = data->sc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
@@ -2372,7 +2378,7 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
     int prior)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct urtw_data *data;
+	struct urtw_tx_data *data;
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k;
 	usbd_status error;
@@ -2452,7 +2458,6 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, (uint8_t *)&data->buf[12]);
 	data->ni = ni;
-	data->m = NULL;
 
 	/* mbuf is no longer needed. */
 	m_freem(m0);
@@ -2813,7 +2818,7 @@ urtw_isbmode(uint16_t rate)
 void
 urtw_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
-	struct urtw_data *data = priv;
+	struct urtw_rx_data *data = priv;
 	struct urtw_softc *sc = data->sc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwreg.h,v 1.2 2008/12/03 10:44:17 jsg Exp $	*/
+/*	$OpenBSD: if_urtwreg.h,v 1.3 2009/06/04 19:27:27 martynas Exp $	*/
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
  *
@@ -211,12 +211,18 @@
 
 #define URTW_MAX_CHANNELS		15
 
-struct urtw_data {
+struct urtw_tx_data {
+	struct urtw_softc	*sc;
+	usbd_xfer_handle	xfer;
+	uint8_t			*buf;
+	struct ieee80211_node	*ni;
+};
+
+struct urtw_rx_data {
 	struct urtw_softc	*sc;
 	usbd_xfer_handle	xfer;
 	uint8_t			*buf;
 	struct mbuf		*m;
-	struct ieee80211_node	*ni;		/* NB: tx only */
 };
 
 /* XXX not correct..  */
@@ -303,8 +309,8 @@ struct urtw_softc {
 #define	URTW_PRIORITY_LOW		0
 #define	URTW_PRIORITY_NORMAL		1
 #define URTW_DATA_TIMEOUT		10000		/* 10 sec  */
-	struct urtw_data		sc_rxdata[URTW_RX_DATA_LIST_COUNT];
-	struct urtw_data		sc_txdata[URTW_TX_DATA_LIST_COUNT];
+	struct urtw_rx_data		sc_rxdata[URTW_RX_DATA_LIST_COUNT];
+	struct urtw_tx_data		sc_txdata[URTW_TX_DATA_LIST_COUNT];
 	uint32_t			sc_tx_low_queued;
 	uint32_t			sc_tx_normal_queued;
 	uint32_t			sc_txidx;
