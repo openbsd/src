@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.80 2009/05/31 17:11:14 miod Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.81 2009/06/04 09:58:40 oga Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
  * the allocated pages themselves (for small pool items) or taken from
  * an internal pool of page headers (`phpool').
  */
+#define POOL_DEBUG
 
 /* List of all pools */
 TAILQ_HEAD(,pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
