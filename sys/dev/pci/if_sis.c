@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.89 2009/06/04 18:12:56 sthen Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.90 2009/06/04 20:01:02 sthen Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -718,13 +718,17 @@ sis_iff_ns(struct sis_softc *sc)
 
 	rxfilt = CSR_READ_4(sc, SIS_RXFILT_CTL);
 	rxfilt &= ~(SIS_RXFILTCTL_ALLMULTI | SIS_RXFILTCTL_ALLPHYS |
-	    SIS_RXFILTCTL_BROAD | NS_RXFILTCTL_MCHASH);
+	    NS_RXFILTCTL_ARP | SIS_RXFILTCTL_BROAD | NS_RXFILTCTL_MCHASH |
+	    NS_RXFILTCTL_PERFECT);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/*
+	 * Always accept ARP frames.
 	 * Always accept broadcast frames.
+	 * Always accept frames destined to our station address.
 	 */
-	rxfilt |= SIS_RXFILTCTL_BROAD;
+	rxfilt |= NS_RXFILTCTL_ARP | SIS_RXFILTCTL_BROAD |
+	    NS_RXFILTCTL_PERFECT;
 
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
 		ifp->if_flags |= IFF_ALLMULTI;
@@ -1715,17 +1719,6 @@ sis_init(void *xsc)
 			CSR_WRITE_4(sc, NS_PHY_SDCFG, 0x008C);
 		}
 		CSR_WRITE_4(sc, NS_PHY_PAGE, 0);
-	}
-
-	/*
-	 * For the NatSemi chip, we have to explicitly enable the
-	 * reception of ARP frames, as well as turn on the 'perfect
-	 * match' filter where we store the station address, otherwise
-	 * we won't receive unicasts meant for this host.
-	 */
-	if (sc->sis_type == SIS_TYPE_83815) {
-		SIS_SETBIT(sc, SIS_RXFILT_CTL, NS_RXFILTCTL_ARP);
-		SIS_SETBIT(sc, SIS_RXFILT_CTL, NS_RXFILTCTL_PERFECT);
 	}
 
 	/*
