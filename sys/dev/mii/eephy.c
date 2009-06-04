@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.47 2009/02/22 16:37:55 kettenis Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.48 2009/06/04 05:19:38 kettenis Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -221,7 +221,7 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	/* Disable energy detect; only available on some models. */
 	switch(sc->mii_model) {
 	case MII_MODEL_MARVELL_E3016:
-		reg &= ~0x4000;	/* XXX */
+		reg &= ~E3000_SCR_EN_DETECT_MASK;
 		break;
 	case MII_MODEL_MARVELL_E1011:
 	case MII_MODEL_MARVELL_E1111:
@@ -232,7 +232,14 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 
 	/* Enable scrambler if necessary. */
 	if (sc->mii_model == MII_MODEL_MARVELL_E3016)
-		reg &= ~E1000_SCR_SCRAMBLER_DISABLE;
+		reg &= ~E3000_SCR_SCRAMBLER_DISABLE;
+
+	/*
+	 * Store next page in the Link Partner Next Page register for
+	 * compatibility with 802.3ab.
+	 */
+	if (sc->mii_model == MII_MODEL_MARVELL_E3016)
+		reg |= E3000_SCR_REG8_NEXT_PAGE;
 
 	PHY_WRITE(sc, E1000_SCR, reg);
 
