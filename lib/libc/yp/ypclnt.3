@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.20 2008/12/22 19:09:29 jmc Exp $
+.\"	$OpenBSD: ypclnt.3,v 1.21 2009/06/04 21:02:33 schwarze Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 22 2008 $
+.Dd $Mdocdate: June 4 2009 $
 .Dt YPCLNT 3
 .Os
 .Sh NAME
@@ -334,7 +334,7 @@ Client process cannot bind to server on this YP domain.
 The key passed does not exist.
 .It Bq Er YPERR_MAP
 There is no such map in the server's domain.
-.It Bq Er YPERR_DOM
+.It Bq Er YPERR_NODOM
 The local YP domain is not set.
 .It Bq Er YPERR_NOMORE
 There are no more records in the queried map.
@@ -350,7 +350,7 @@ Client/server version mismatch.
 If the server is running version 1 of the YP protocol,
 .Fn yp_all
 functionality does not exist.
-.It Bq Er YPERR_BIND
+.It Bq Er YPERR_YPBIND
 Cannot communicate with
 .Xr ypbind 8 .
 .It Bq Er YPERR_YPERR
