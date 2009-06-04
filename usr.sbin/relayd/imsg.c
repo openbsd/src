@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.17 2009/06/04 17:51:38 eric Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.18 2009/06/04 18:34:33 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -103,9 +103,6 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 		return (0);
 
 	memcpy(&imsg->hdr, ibuf->r.buf, sizeof(imsg->hdr));
-	imsg->hdr.type = ntohs(imsg->hdr.type);
-	imsg->hdr.len = ntohs(imsg->hdr.len);
-	imsg->hdr.peerid = ntohl(imsg->hdr.peerid);
 	if (imsg->hdr.len < IMSG_HEADER_SIZE ||
 	    imsg->hdr.len > MAX_IMSGSIZE) {
 		log_warnx("imsg_get: imsg hdr len %u out of bounds, type=%u",
@@ -227,9 +224,7 @@ imsg_close(struct imsgbuf *ibuf, struct buf *msg)
 	struct imsg_hdr	*hdr;
 
 	hdr = (struct imsg_hdr *)msg->buf;
-	hdr->type = htons(hdr->type);
-	hdr->len = htons(msg->wpos);
-	hdr->peerid = htonl(hdr->peerid);
+	hdr->len = (u_int16_t)msg->wpos;
 	buf_close(&ibuf->w, msg);
 	imsg_event_add(ibuf);
 
