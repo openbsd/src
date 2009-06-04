@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.269 2009/06/03 20:54:45 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.270 2009/06/04 00:59:21 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -295,55 +295,11 @@ const struct pci_matchid bge_devices[] = {
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C996 }
 };
 
-#define BGE_IS_5705_PLUS(sc)  \
-	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
-
-#define BGE_IS_5750_PLUS(sc)  \
-	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
-
-/* Intentionally exlcude BGE_ASICREV_BCM5906 */
-#define BGE_IS_5755_PLUS(sc)  \
-	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
-
-#define BGE_IS_5714_FAMILY(sc)  \
-	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714)
-
-#define BGE_IS_JUMBO_CAPABLE(sc)  \
-	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703    || \
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704)
-
+#define BGE_IS_5705_PLUS(sc)		((sc)->bge_flags & BGE_5705_PLUS)
+#define BGE_IS_5750_PLUS(sc)		((sc)->bge_flags & BGE_5750_PLUS)
+#define BGE_IS_5755_PLUS(sc)		((sc)->bge_flags & BGE_5755_PLUS)
+#define BGE_IS_5714_FAMILY(sc)		((sc)->bge_flags & BGE_5714_FAMILY)
+#define BGE_IS_JUMBO_CAPABLE(sc)	((sc)->bge_flags & BGE_JUMBO_CAPABLE)
 
 static const struct bge_revision {
 	u_int32_t		br_chipid;
@@ -1908,6 +1864,31 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		sc->bge_flags |= BGE_NO_EEPROM;
 #endif
 
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714)
+		sc->bge_flags |= BGE_5714_FAMILY;
+
+	/* Intentionally exclude BGE_ASICREV_BCM5906 */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5761 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5784 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
+		sc->bge_flags |= BGE_5755_PLUS;
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906 ||
+	    BGE_IS_5755_PLUS(sc) ||
+	    BGE_IS_5714_FAMILY(sc))
+		sc->bge_flags |= BGE_5750_PLUS;
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705 ||
+	    BGE_IS_5750_PLUS(sc))
+		sc->bge_flags |= BGE_5705_PLUS;
+
 	/*
 	 * When using the BCM5701 in PCI-X mode, data corruption has
 	 * been observed in the first few bytes of some received packets.
@@ -1920,8 +1901,8 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	    sc->bge_flags & BGE_PCIX)
 		sc->bge_flags |= BGE_RX_ALIGNBUG;
 
-	if (BGE_IS_JUMBO_CAPABLE(sc))
-		sc->bge_flags |= BGE_JUMBO_CAP;
+	if (!(BGE_IS_5705_PLUS(sc)))
+		sc->bge_flags |= BGE_JUMBO_CAPABLE;
 
 	if ((BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701) &&
