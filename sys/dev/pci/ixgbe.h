@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.3 2008/06/08 21:15:34 reyk Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.4 2009/06/04 22:27:31 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -49,6 +49,8 @@
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/timeout.h>
+#include <sys/pool.h>
+#include <sys/rwlock.h>
 #include <sys/workq.h>
 
 #include <net/if.h>
