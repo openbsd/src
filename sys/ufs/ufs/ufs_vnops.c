@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.89 2009/01/17 18:50:25 grange Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.90 2009/06/04 21:10:47 thib Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1571,7 +1571,7 @@ ufs_strategy(void *v)
 	}
 	vp = ip->i_devvp;
 	bp->b_dev = vp->v_rdev;
-	VOCALL (vp->v_op, VOFFSET(vop_strategy), ap);
+	VOCALL(vp->v_op, VOFFSET(vop_strategy), ap);
 	return (0);
 }
 
