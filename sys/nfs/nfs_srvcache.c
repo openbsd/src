@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_srvcache.c,v 1.22 2009/05/30 17:20:29 thib Exp $	*/
+/*	$OpenBSD: nfs_srvcache.c,v 1.23 2009/06/04 18:36:43 thib Exp $	*/
 /*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
 
 /*
@@ -62,6 +62,7 @@ extern int nfsv2_procid[NFS_NPROCS];
 long numnfsrvcache, desirednfsrvcache = NFSRVCACHESIZ;
 
 struct nfsrvcache	*nfsrv_lookupcache(struct nfsrv_descript *);
+void			 nfsrv_cleanentry(struct nfsrvcache *);
 
 #define	NFSRCHASH(xid)	\
 	(&nfsrvhashtbl[((xid) + ((xid) >> 24)) & nfsrvhash])
@@ -85,6 +86,18 @@ int nfsv2_repstat[NFS_NPROCS] = {
 	0, 0, 1, 1, 1, 1, 0, 1,
 	0, 0
 };
+
+void
+nfsrv_cleanentry(struct nfsrvcache *rp)
+{
+	if ((rp->rc_flag & RC_REPMBUF) != 0)
+		m_freem(rp->rc_reply);
+
+	if ((rp->rc_flag & RC_NAM) != 0)
+		m_free(rp->rc_nam);
+
+	rp->rc_flag &= ~(RC_REPSTATUS|RC_REPMBUF);
+}
 
 /* Initialize the server request cache list */
 void
@@ -173,10 +186,7 @@ nfsrv_getcache(struct nfsrv_descript *nd, struct nfssvc_sock *slp,
 		rp->rc_flag |= RC_LOCKED;
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
-		if (rp->rc_flag & RC_REPMBUF)
-			m_freem(rp->rc_reply);
-		if (rp->rc_flag & RC_NAM)
-			m_freem(rp->rc_nam);
+		nfsrv_cleanentry(rp);
 		rp->rc_flag &= (RC_LOCKED | RC_WANTED);
 	}
 	TAILQ_INSERT_TAIL(&nfsrvlruhead, rp, rc_lru);
@@ -215,6 +225,7 @@ nfsrv_updatecache(struct nfsrv_descript *nd, int repvalid,
 
 	rp = nfsrv_lookupcache(nd);
 	if (rp) {
+		nfsrv_cleanentry(rp);
 		rp->rc_state = RC_DONE;
 		/*
 		 * If we have a valid reply update status and save
@@ -250,10 +261,7 @@ nfsrv_cleancache(void)
 		nextrp = TAILQ_NEXT(rp, rc_lru);
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
-		if (rp->rc_flag & RC_REPMBUF)
-			m_freem(rp->rc_reply);
-		if (rp->rc_flag & RC_NAM)
-			m_freem(rp->rc_nam);
+		nfsrv_cleanentry(rp);
 		free(rp, M_NFSD);
 	}
 	numnfsrvcache = 0;
