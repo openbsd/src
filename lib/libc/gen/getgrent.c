@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.27 2009/06/03 16:02:44 schwarze Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.28 2009/06/04 08:29:13 schwarze Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -431,7 +431,8 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 					    __ypexclude_is(&__ypexhead, tptr))
 						continue;
 					__ypmode = YPMODE_NAME;
-					grname = strdup(tptr);
+					if ((grname = strdup(tptr)) == NULL)
+						return (0);
 					continue;
 				}
 				break;
