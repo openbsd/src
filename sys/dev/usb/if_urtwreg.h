@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwreg.h,v 1.7 2009/06/04 21:06:52 martynas Exp $	*/
+/*	$OpenBSD: if_urtwreg.h,v 1.8 2009/06/04 21:21:15 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -23,6 +23,8 @@
  * Known hardware revisions.
  */
 #define	URTW_HWREV_8187			0x01
+#define	URTW_HWREV_8187_B		0x02
+#define	URTW_HWREV_8187_D		0x04
 
 /*
  * Registers specific to RTL8187 and RTL8187B.
@@ -46,6 +48,9 @@
 #define	URTW_CMD_RX_ENABLE		(0x8)
 #define	URTW_CMD_RST			(0x10)
 #define	URTW_TX_CONF			0x0040		/* 4 byte */
+#define	URTW_TX_HWREV_MASK		(7 << 25)
+#define	URTW_TX_HWREV_8187_D		(5 << 25)
+#define	URTW_TX_HWREV_8187B_D		(6 << 25)
 #define	URTW_TX_LOOPBACK_SHIFT		(17)
 #define	URTW_TX_LOOPBACK_NONE		(0 << URTW_TX_LOOPBACK_SHIFT)
 #define	URTW_TX_LOOPBACK_MAC		(1 << URTW_TX_LOOPBACK_SHIFT)
@@ -276,6 +281,7 @@ struct urtw_softc {
 	usbd_interface_handle		sc_iface;
 
 	int				sc_if_flags;
+	uint8_t				sc_hwrev;
 	int				sc_flags;
 #define	URTW_INIT_ONCE			(1 << 1)
 	struct usb_task			sc_task;

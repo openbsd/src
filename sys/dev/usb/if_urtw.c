@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.16 2009/06/04 21:06:52 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.17 2009/06/04 21:21:15 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -501,8 +501,37 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 	usbd_status error;
 	uint32_t data;
 	int i;
+	const char *urtw_name = NULL;
 
 	sc->sc_udev = uaa->device;
+
+	sc->sc_hwrev = urtw_lookup(uaa->vendor, uaa->product)->rev;
+
+	if (sc->sc_hwrev & URTW_HWREV_8187) {
+		urtw_read32_m(sc, URTW_TX_CONF, &data);
+		data &= URTW_TX_HWREV_MASK;
+		switch (data) {
+		case URTW_TX_HWREV_8187_D:
+			sc->sc_hwrev |= URTW_HWREV_8187_D;
+			urtw_name = "RTL8187 rev. D";
+			break;
+		case URTW_TX_HWREV_8187B_D:
+			/*
+			 * Detect Realtek RTL8187B devices that use
+			 * USB IDs of RTL8187.
+			 */
+			urtw_name = "RTL8187B rev. B (not supported)";
+			break;
+		default:
+			sc->sc_hwrev |= URTW_HWREV_8187_B;
+			urtw_name = "RTL8187 rev. B (default)";
+			break;
+		}
+	} else {
+		urtw_name = "RTL8187B (not supported)";
+	}
+
+	printf("%s: %s", sc->sc_dev.dv_xname, urtw_name);
 
 	urtw_read32_m(sc, URTW_RX, &data);
 	sc->sc_epromtype = (data & URTW_RX_9356SEL) ? URTW_EEPROM_93C56 :
@@ -591,12 +620,11 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    &sc->sc_dev);
 
-	printf("%s: address %s\n",
-	    sc->sc_dev.dv_xname, ether_sprintf(ic->ic_myaddr));
+	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	return;
 fail:
-	printf("%s: %s failed!\n", sc->sc_dev.dv_xname, __func__);
+	printf(": %s failed!\n", __func__);
 }
 
 int
