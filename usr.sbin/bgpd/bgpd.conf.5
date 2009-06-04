@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.92 2009/05/27 04:18:21 reyk Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.93 2009/06/04 01:20:44 sthen Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 27 2009 $
+.Dd $Mdocdate: June 4 2009 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -123,10 +123,16 @@ sets the local AS to 65001.
 The AS numbers 64512 \(en 65534 are designated for private use.
 The AS number 23456 is a specially designated Autonomous System Number and
 should not be used.
-4-byte AS numbers are specified as two numbers separated by a dot.
-For example:
+4-byte AS numbers are specified as two numbers separated by a dot
+(ASDOT format),
+for example:
 .Bd -literal -offset indent
 AS 3.10
+.Ed
+.Pp
+or as a large number (ASPLAIN format), for example:
+.Bd -literal -offset indent
+AS 196618
 .Ed
 .Pp
 .It Ic connect-retry Ar seconds
