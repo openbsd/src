@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.28 2007/05/26 20:26:51 pedro Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.29 2009/06/04 21:27:14 oga Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -265,12 +265,9 @@ getphysbuf(void)
 	int s;
 
 	s = splbio();
-	bp = pool_get(&bufpool, PR_WAITOK);
+	bp = pool_get(&bufpool, PR_WAITOK | PR_ZERO);
 	splx(s);
 
-	bzero(bp, sizeof(*bp));
-
-	/* XXXCDC: are the following two lines necessary? */
 	bp->b_vnbufs.le_next = NOLIST;
 
 	return (bp);
