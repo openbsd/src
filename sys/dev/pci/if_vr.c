@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.94 2009/05/29 06:57:21 mpf Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.95 2009/06/04 16:56:20 sthen Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1182,18 +1182,17 @@ vr_encap(struct vr_softc *sc, struct vr_chain *c, struct mbuf *m_head)
 			m_freem(m_new);
 			return (1);
 		}
-		bus_dmamap_sync(sc->sc_dmat, c->vr_map, 0, c->vr_map->dm_mapsize,
-		    BUS_DMASYNC_PREWRITE);
+	}
 
+	bus_dmamap_sync(sc->sc_dmat, c->vr_map, 0, c->vr_map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
+
+	if (m_new != NULL) {
 		m_freem(m_head);
 
 		c->vr_mbuf = m_new;
-	} else {
-		bus_dmamap_sync(sc->sc_dmat, c->vr_map, 0, c->vr_map->dm_mapsize,
-		    BUS_DMASYNC_PREWRITE);
-
-                c->vr_mbuf = m_head;
-	}
+	} else
+		c->vr_mbuf = m_head;
 
 	f = c->vr_ptr;
 	f->vr_data = htole32(c->vr_map->dm_segs[0].ds_addr);
