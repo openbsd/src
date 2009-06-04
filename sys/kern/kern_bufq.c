@@ -1,3 +1,5 @@
+/*	$OpenBSD: kern_bufq.c,v 1.2 2009/06/04 19:16:13 thib Exp $ */
+
 /*
  * Copyright (c) 2008, 2009	Thordur I. Bjornsson <thib@openbsd.org>
  * Copyright (c) 2004		Ted Unangst <tedu@openbsd.org>
