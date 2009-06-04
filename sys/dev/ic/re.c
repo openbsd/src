@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.106 2009/06/03 00:11:19 sthen Exp $	*/
+/*	$OpenBSD: re.c,v 1.107 2009/06/04 04:48:24 naddy Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1445,16 +1445,16 @@ re_rxeof(struct rl_softc *sc)
 
 		if (sc->rl_flags & RL_FLAG_DESCV2) {
 			/* Check IP header checksum */
-			if ((rxstat & RL_RDESC_STAT_PROTOID) &&
-			    !(rxstat & RL_RDESC_STAT_IPSUMBAD) &&
-			    (rxvlan & RL_RDESC_IPV4))
+			if ((rxvlan & RL_RDESC_IPV4) &&
+			    !(rxstat & RL_RDESC_STAT_IPSUMBAD))
 				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 
 			/* Check TCP/UDP checksum */
-			if (((rxstat & RL_RDESC_STAT_TCP) &&
+			if ((rxvlan & (RL_RDESC_IPV4|RL_RDESC_IPV6)) &&
+			    (((rxstat & RL_RDESC_STAT_TCP) &&
 			    !(rxstat & RL_RDESC_STAT_TCPSUMBAD)) ||
 			    ((rxstat & RL_RDESC_STAT_UDP) &&
-			    !(rxstat & RL_RDESC_STAT_UDPSUMBAD)))
+			    !(rxstat & RL_RDESC_STAT_UDPSUMBAD))))
 				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK |
 				    M_UDP_CSUM_IN_OK;
 		} else {

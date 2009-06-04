@@ -1,4 +1,4 @@
-.\" $OpenBSD: re.4,v 1.39 2008/11/17 02:40:42 brad Exp $
+.\" $OpenBSD: re.4,v 1.40 2009/06/04 04:48:24 naddy Exp $
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/re.4,v 1.4 2004/03/04 06:42:46 sanpei Exp $
 .\"
-.Dd $Mdocdate: November 17 2008 $
+.Dd $Mdocdate: June 4 2009 $
 .Dt RE 4
 .Os
 .Sh NAME
@@ -96,6 +96,8 @@ All
 NICs support
 IPv4 transmit/receive IP/TCP/UDP checksum offload, VLAN tag insertion and
 stripping, and use a descriptor-based DMA mechanism.
+The 8102E, 8168C/8111C, and 8168D/8111D also support IPv6 receive TCP/UDP
+checksum offload.
 .Pp
 The 8139C+ is a single-chip solution combining both a 10/100 MAC and PHY.
 The 8169 is a 10/100/1000 MAC only, requiring a GMII or TBI external PHY.
