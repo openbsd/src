@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.37 2009/04/19 15:26:52 kettenis Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.38 2009/06/04 03:14:14 oga Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -64,7 +64,6 @@
 #define	pool_init(a, b, c, d, e, f, g)	(a)->pr_size = (b)
 #define	pool_put(pool, rp)		free((rp), 0)
 #define	panic				printf
-#define	splvm()				(1)
 #define	splx(s)				((void)(s))
 #endif
 
@@ -131,6 +130,7 @@ extent_pool_init(void)
 	if (!inited) {
 		pool_init(&ex_region_pl, sizeof(struct extent_region), 0, 0, 0,
 		    "extentpl", NULL);
+		pool_setipl(&ex_region_pl, IPL_VM);
 		inited = 1;
 	}
 }
@@ -1050,7 +1050,6 @@ static struct extent_region *
 extent_alloc_region_descriptor(struct extent *ex, int flags)
 {
 	struct extent_region *rp;
-	int s;
 
 	if (ex->ex_flags & EXF_FIXED) {
 		struct extent_fixed *fex = (struct extent_fixed *)ex;
@@ -1081,9 +1080,7 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 	}
 
  alloc:
-	s = splvm();
 	rp = pool_get(&ex_region_pl, (flags & EX_WAITOK) ? PR_WAITOK : 0);
-	splx(s);
 	if (rp != NULL)
 		rp->er_flags = ER_ALLOC;
 
@@ -1093,8 +1090,6 @@ extent_alloc_region_descriptor(struct extent *ex, int flags)
 static void
 extent_free_region_descriptor(struct extent *ex, struct extent_region *rp)
 {
-	int s;
-
 	if (ex->ex_flags & EXF_FIXED) {
 		struct extent_fixed *fex = (struct extent_fixed *)ex;
 
@@ -1111,9 +1106,7 @@ extent_free_region_descriptor(struct extent *ex, struct extent_region *rp)
 				    er_link);
 				goto wake_em_up;
 			} else {
-				s = splvm();
 				pool_put(&ex_region_pl, rp);
-				splx(s);
 			}
 		} else {
 			/* Clear all flags. */
@@ -1132,9 +1125,7 @@ extent_free_region_descriptor(struct extent *ex, struct extent_region *rp)
 	/*
 	 * We know it's dynamically allocated if we get here.
 	 */
-	s = splvm();
 	pool_put(&ex_region_pl, rp);
-	splx(s);
 }
 
 	
