@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.71 2009/06/03 21:30:20 beck Exp $ */
+/*	$OpenBSD: machdep.c,v 1.72 2009/06/04 16:52:12 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -719,10 +719,6 @@ dobootopts(int argc, void *argv)
 				}
 		}
 	}
-
-	/* Catch serial consoles on O2s. */
-	if (strncmp(bios_console, "serial", 6) == 0)
-		boothowto |= RB_SERCONS;
 }
 
 
