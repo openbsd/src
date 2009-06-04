@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.11 2009/06/04 19:37:26 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.12 2009/06/04 19:45:36 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -82,33 +82,66 @@ static const struct usb_devno urtw_devs[] = {
 #undef URTW_DEV
 };
 
+/*
+ * Helper read/write macros.
+ */
 #define urtw_read8_m(sc, val, data)	do {			\
-	error = urtw_read8_c(sc, val, data);			\
+	error = urtw_read8_c(sc, val, data, 0);			\
+	if (error != 0)						\
+		goto fail;					\
+} while (0)
+#define urtw_read8_idx_m(sc, val, data, idx)	do {		\
+	error = urtw_read8_c(sc, val, data, idx);		\
 	if (error != 0)						\
 		goto fail;					\
 } while (0)
 #define urtw_write8_m(sc, val, data)	do {			\
-	error = urtw_write8_c(sc, val, data);			\
+	error = urtw_write8_c(sc, val, data, 0);		\
+	if (error != 0)						\
+		goto fail;					\
+} while (0)
+#define urtw_write8_idx_m(sc, val, data, idx)	do {		\
+	error = urtw_write8_c(sc, val, data, idx);		\
 	if (error != 0)						\
 		goto fail;					\
 } while (0)
 #define urtw_read16_m(sc, val, data)	do {			\
-	error = urtw_read16_c(sc, val, data);			\
+	error = urtw_read16_c(sc, val, data, 0);		\
+	if (error != 0)						\
+		goto fail;					\
+} while (0)
+#define urtw_read16_idx_m(sc, val, data, idx)	do {		\
+	error = urtw_read16_c(sc, val, data, idx);		\
 	if (error != 0)						\
 		goto fail;					\
 } while (0)
 #define urtw_write16_m(sc, val, data)	do {			\
-	error = urtw_write16_c(sc, val, data);			\
+	error = urtw_write16_c(sc, val, data, 0);		\
+	if (error != 0)						\
+		goto fail;					\
+} while (0)
+#define urtw_write16_idx_m(sc, val, data, idx)	do {		\
+	error = urtw_write16_c(sc, val, data, idx);		\
 	if (error != 0)						\
 		goto fail;					\
 } while (0)
 #define urtw_read32_m(sc, val, data)	do {			\
-	error = urtw_read32_c(sc, val, data);			\
+	error = urtw_read32_c(sc, val, data, 0);		\
+	if (error != 0)						\
+		goto fail;					\
+} while (0)
+#define urtw_read32_idx_m(sc, val, data, idx)	do {		\
+	error = urtw_read32_c(sc, val, data, idx);		\
 	if (error != 0)						\
 		goto fail;					\
 } while (0)
 #define urtw_write32_m(sc, val, data)	do {			\
-	error = urtw_write32_c(sc, val, data);			\
+	error = urtw_write32_c(sc, val, data, 0);		\
+	if (error != 0)						\
+		goto fail;					\
+} while (0)
+#define urtw_write32_idx_m(sc, val, data, idx)	do {		\
+	error = urtw_write32_c(sc, val, data, idx);		\
 	if (error != 0)						\
 		goto fail;					\
 } while (0)
@@ -360,12 +393,12 @@ uint16_t	urtw_rate2rtl(int rate);
 uint16_t	urtw_rtl2rate(int);
 usbd_status	urtw_set_rate(struct urtw_softc *);
 usbd_status	urtw_update_msr(struct urtw_softc *);
-usbd_status	urtw_read8_c(struct urtw_softc *, int, uint8_t *);
-usbd_status	urtw_read16_c(struct urtw_softc *, int, uint16_t *);
-usbd_status	urtw_read32_c(struct urtw_softc *, int, uint32_t *);
-usbd_status	urtw_write8_c(struct urtw_softc *, int, uint8_t);
-usbd_status	urtw_write16_c(struct urtw_softc *, int, uint16_t);
-usbd_status	urtw_write32_c(struct urtw_softc *, int, uint32_t);
+usbd_status	urtw_read8_c(struct urtw_softc *, int, uint8_t *, uint8_t);
+usbd_status	urtw_read16_c(struct urtw_softc *, int, uint16_t *, uint8_t);
+usbd_status	urtw_read32_c(struct urtw_softc *, int, uint32_t *, uint8_t);
+usbd_status	urtw_write8_c(struct urtw_softc *, int, uint8_t, uint8_t);
+usbd_status	urtw_write16_c(struct urtw_softc *, int, uint16_t, uint8_t);
+usbd_status	urtw_write32_c(struct urtw_softc *, int, uint32_t, uint8_t);
 usbd_status	urtw_eprom_cs(struct urtw_softc *, int);
 usbd_status	urtw_eprom_ck(struct urtw_softc *);
 usbd_status	urtw_eprom_sendbits(struct urtw_softc *, int16_t *,
@@ -1323,7 +1356,7 @@ fail:
 }
 
 usbd_status
-urtw_read8_c(struct urtw_softc *sc, int val, uint8_t *data)
+urtw_read8_c(struct urtw_softc *sc, int val, uint8_t *data, uint8_t idx)
 {
 	usb_device_request_t req;
 	usbd_status error;
@@ -1331,7 +1364,7 @@ urtw_read8_c(struct urtw_softc *sc, int val, uint8_t *data)
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = URTW_8187_GETREGS_REQ;
 	USETW(req.wValue, val | 0xff00);
-	USETW(req.wIndex, 0);
+	USETW(req.wIndex, idx & 0x03);
 	USETW(req.wLength, sizeof(uint8_t));
 
 	error = usbd_do_request(sc->sc_udev, &req, data);
@@ -1355,7 +1388,7 @@ urtw_read8e(struct urtw_softc *sc, int val, uint8_t *data)
 }
 
 usbd_status
-urtw_read16_c(struct urtw_softc *sc, int val, uint16_t *data)
+urtw_read16_c(struct urtw_softc *sc, int val, uint16_t *data, uint8_t idx)
 {
 	usb_device_request_t req;
 	usbd_status error;
@@ -1363,7 +1396,7 @@ urtw_read16_c(struct urtw_softc *sc, int val, uint16_t *data)
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = URTW_8187_GETREGS_REQ;
 	USETW(req.wValue, val | 0xff00);
-	USETW(req.wIndex, 0);
+	USETW(req.wIndex, idx & 0x03);
 	USETW(req.wLength, sizeof(uint16_t));
 
 	error = usbd_do_request(sc->sc_udev, &req, data);
@@ -1371,7 +1404,7 @@ urtw_read16_c(struct urtw_softc *sc, int val, uint16_t *data)
 }
 
 usbd_status
-urtw_read32_c(struct urtw_softc *sc, int val, uint32_t *data)
+urtw_read32_c(struct urtw_softc *sc, int val, uint32_t *data, uint8_t idx)
 {
 	usb_device_request_t req;
 	usbd_status error;
@@ -1379,7 +1412,7 @@ urtw_read32_c(struct urtw_softc *sc, int val, uint32_t *data)
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = URTW_8187_GETREGS_REQ;
 	USETW(req.wValue, val | 0xff00);
-	USETW(req.wIndex, 0);
+	USETW(req.wIndex, idx & 0x03);
 	USETW(req.wLength, sizeof(uint32_t));
 
 	error = usbd_do_request(sc->sc_udev, &req, data);
@@ -1387,14 +1420,14 @@ urtw_read32_c(struct urtw_softc *sc, int val, uint32_t *data)
 }
 
 usbd_status
-urtw_write8_c(struct urtw_softc *sc, int val, uint8_t data)
+urtw_write8_c(struct urtw_softc *sc, int val, uint8_t data, uint8_t idx)
 {
 	usb_device_request_t req;
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = URTW_8187_SETREGS_REQ;
 	USETW(req.wValue, val | 0xff00);
-	USETW(req.wIndex, 0);
+	USETW(req.wIndex, idx & 0x03);
 	USETW(req.wLength, sizeof(uint8_t));
 
 	return (usbd_do_request(sc->sc_udev, &req, &data));
@@ -1415,28 +1448,28 @@ urtw_write8e(struct urtw_softc *sc, int val, uint8_t data)
 }
 
 usbd_status
-urtw_write16_c(struct urtw_softc *sc, int val, uint16_t data)
+urtw_write16_c(struct urtw_softc *sc, int val, uint16_t data, uint8_t idx)
 {
 	usb_device_request_t req;
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = URTW_8187_SETREGS_REQ;
 	USETW(req.wValue, val | 0xff00);
-	USETW(req.wIndex, 0);
+	USETW(req.wIndex, idx & 0x03);
 	USETW(req.wLength, sizeof(uint16_t));
 
 	return (usbd_do_request(sc->sc_udev, &req, &data));
 }
 
 usbd_status
-urtw_write32_c(struct urtw_softc *sc, int val, uint32_t data)
+urtw_write32_c(struct urtw_softc *sc, int val, uint32_t data, uint8_t idx)
 {
 	usb_device_request_t req;
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = URTW_8187_SETREGS_REQ;
 	USETW(req.wValue, val | 0xff00);
-	USETW(req.wIndex, 0);
+	USETW(req.wIndex, idx & 0x03);
 	USETW(req.wLength, sizeof(uint32_t));
 
 	return (usbd_do_request(sc->sc_udev, &req, &data));
