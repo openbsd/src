@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.3 2009/06/04 17:02:36 miod Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.4 2009/06/04 17:25:51 pirofti Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -327,7 +327,7 @@ acpivout_get_param(struct wsdisplay_param *dp)
 				continue;
 			sc = (struct acpivout_softc *)acpivout_cd.cd_devs[i];
 			/* Ignore device if not connected. */
-			 if (sc->sc_bcl_len != 0)
+			if (sc->sc_bcl_len != 0)
 				break;
 		}
 		if (sc != NULL && sc->sc_bcl_len != 0) {
@@ -356,7 +356,7 @@ acpivout_set_param(struct wsdisplay_param *dp)
 				continue;
 			sc = (struct acpivout_softc *)acpivout_cd.cd_devs[i];
 			/* Ignore device if not connected. */
-			 if (sc->sc_bcl_len != 0)
+			if (sc->sc_bcl_len != 0)
 				break;
 		}
 		if (sc != NULL && sc->sc_bcl_len != 0) {
