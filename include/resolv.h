@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolv.h,v 1.16 2005/03/30 02:58:28 tedu Exp $	*/
+/*	$OpenBSD: resolv.h,v 1.17 2009/06/04 18:06:35 pyr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -136,6 +136,9 @@ struct __res_state {
 	int	retry;			/* number of times to retransmit */
 	unsigned int	options;	/* option flags - see below. */
 	int	nscount;		/* number of name servers */
+	int	family[2];		/* specifies which address
+					 * families will be queried and
+					 * in which order */
 	struct sockaddr_in
 		nsaddr_list[MAXNS];	/* address of name server */
 #define	nsaddr	nsaddr_list[0]		/* for backward compatibility */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.37 2008/08/15 14:57:20 djm Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.38 2009/06/04 18:06:35 pyr Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -165,6 +165,7 @@ _res_init(int usercall)
 	FILE *fp;
 	char *cp, **pp;
 	int n;
+	int findex;
 	char buf[BUFSIZ];
 	int nserv = 0;    /* number of nameserver records read from file */
 	int haveenv = 0;
@@ -296,6 +297,33 @@ _res_init(int usercall)
 			*cp = '\0';
 		if (buf[0] == '\0')
 			continue;
+		/* set family lookup order */
+		if (MATCH(buf, "family")) {
+			cp = buf + sizeof("family") - 1;
+			cp += strspn(cp, " \t");
+			cp[strcspn(cp, "\n")] = '\0';
+			findex = 0;
+			_resp->family[0] = _resp->family[1] = -1;
+			while (*cp != '\0' && findex < 2) {
+				if (!strncmp(cp, "inet6", strlen("inet6"))) {
+					_resp->family[findex] = AF_INET6;
+					cp += strlen("inet6");
+				} else if (!strncmp(cp, "inet4",
+				     strlen("inet4"))) {
+					_resp->family[findex] = AF_INET;
+					cp += strlen("inet4");
+				}
+				if (*cp != ' ' && *cp != '\t' && *cp != '\0') {
+					_resp->family[findex] = -1;
+					break;
+				}
+				findex++;
+				cp += strspn(cp, " \t");
+			}
+
+			if (_resp->family[0] == _resp->family[1])
+				_resp->family[1] = -1;
+		}
 		/* read default domain name */
 		if (MATCH(buf, "domain")) {
 		    if (haveenv)	/* skip if have from environ */

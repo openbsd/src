@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.67 2007/05/20 03:54:52 ray Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.68 2009/06/04 18:06:35 pyr Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -233,7 +233,8 @@ static struct addrinfo *getanswer(const querybuf *, int, const char *, int,
 static int res_queryN(const char *, struct res_target *);
 static int res_searchN(const char *, struct res_target *);
 static int res_querydomainN(const char *, const char *, struct res_target *);
-static struct addrinfo *_dns_getaddrinfo(const char *, const struct addrinfo *);
+static struct addrinfo *_dns_getaddrinfo(const char *, const struct addrinfo *,
+	const struct __res_state *);
 
 
 /* XXX macros that make external reference is BAD. */
@@ -517,7 +518,7 @@ explore_fqdn(const struct addrinfo *pai, const char *hostname,
 			break;
 #endif
 		case 'b':
-			result = _dns_getaddrinfo(hostname, pai);
+			result = _dns_getaddrinfo(hostname, pai, _resp);
 			break;
 		case 'f':
 			result = _files_getaddrinfo(hostname, pai);
@@ -1142,7 +1143,8 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 
 /*ARGSUSED*/
 static struct addrinfo *
-_dns_getaddrinfo(const char *name, const struct addrinfo *pai)
+_dns_getaddrinfo(const char *name, const struct addrinfo *pai,
+	const struct __res_state *_resp)
 {
 	struct addrinfo *ai;
 	querybuf *buf, *buf2;
@@ -1168,14 +1170,39 @@ _dns_getaddrinfo(const char *name, const struct addrinfo *pai)
 
 	switch (pai->ai_family) {
 	case AF_UNSPEC:
-		/* prefer IPv6 */
+		if (_resp->family[0] == -1) {
+			/* prefer IPv4 by default*/
+			q.qclass = C_IN;
+			q.qtype = T_A;
+			q.answer = buf->buf;
+			q.anslen = sizeof(buf->buf);
+			q.next = &q2;
+			q2.qclass = C_IN;
+			q2.qtype = T_AAAA;
+			q2.answer = buf2->buf;
+			q2.anslen = sizeof(buf2->buf);
+			break;
+		}
+
+		/* respect user supplied order */
 		q.qclass = C_IN;
-		q.qtype = T_AAAA;
+		if (_resp->family[0] == AF_INET6)
+			q.qtype = T_AAAA;
+		else
+			q.qtype = T_A;
 		q.answer = buf->buf;
 		q.anslen = sizeof(buf->buf);
+		if (_resp->family[1] == -1) {
+			q.next = NULL;
+			break;
+		}
 		q.next = &q2;
+
 		q2.qclass = C_IN;
-		q2.qtype = T_A;
+		if (_resp->family[1] == AF_INET6)
+			q2.qtype = T_AAAA;
+		else
+			q2.qtype = T_A;
 		q2.answer = buf2->buf;
 		q2.anslen = sizeof(buf2->buf);
 		break;
