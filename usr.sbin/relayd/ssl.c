@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.14 2008/12/05 16:37:56 reyk Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.15 2009/06/04 13:46:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -219,8 +219,10 @@ void
 ssl_cleanup(struct ctl_tcp_event *cte)
 {
 	close(cte->s);
-	if (cte->ssl != NULL)
-		SSL_free(cte->ssl);
+	if (cte->ssl != NULL) {
+		SSL_shutdown(cte->ssl);
+		SSL_clear(cte->ssl);
+	}
 	if (cte->buf != NULL)
 		buf_free(cte->buf);
 }
@@ -254,10 +256,12 @@ ssl_init(struct relayd *env)
 void
 ssl_transaction(struct ctl_tcp_event *cte)
 {
-	cte->ssl = SSL_new(cte->table->ssl_ctx);
 	if (cte->ssl == NULL) {
-		ssl_error(cte->host->conf.name, "cannot create object");
-		fatal("cannot create SSL object");
+		cte->ssl = SSL_new(cte->table->ssl_ctx);
+		if (cte->ssl == NULL) {
+			ssl_error(cte->host->conf.name, "cannot create object");
+			fatal("cannot create SSL object");
+		}
 	}
 
 	if (SSL_set_fd(cte->ssl, cte->s) == 0) {

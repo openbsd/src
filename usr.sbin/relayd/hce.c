@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.49 2009/06/02 12:24:16 reyk Exp $	*/
+/*	$OpenBSD: hce.c,v 1.50 2009/06/04 13:46:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -254,7 +254,6 @@ hce_launch_checks(int fd, short event, void *arg)
 				break;
 			default:
 				/* Any other TCP-style checks */
-				bzero(&host->cte, sizeof(host->cte));
 				host->last_up = host->up;
 				host->cte.host = host;
 				host->cte.table = table;

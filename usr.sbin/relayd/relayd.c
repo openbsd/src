@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.85 2009/06/02 12:24:16 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.86 2009/06/04 13:46:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -555,6 +555,8 @@ purge_table(struct tablelist *head, struct table *table)
 
 	while ((host = TAILQ_FIRST(&table->hosts)) != NULL) {
 		TAILQ_REMOVE(&table->hosts, host, entry);
+		if (host->cte.ssl != NULL)
+			SSL_free(host->cte.ssl);
 		free(host);
 	}
 	if (table->sendbuf != NULL)
