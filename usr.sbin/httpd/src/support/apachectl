@@ -115,7 +115,7 @@ do
 		ERROR=5
 	    fi
 	else
-	    if $HTTPD -t >/dev/null 2>&1; then
+	    if $HTTPD $RCFLAGS -t >/dev/null 2>&1; then
 		if kill -HUP $PID ; then
 		    echo "$0 $ARG: httpd restarted"
 		else
@@ -139,7 +139,7 @@ do
 		ERROR=5
 	    fi
 	else
-	    if $HTTPD -t >/dev/null 2>&1; then
+	    if $HTTPD $RCFLAGS -t >/dev/null 2>&1; then
 		if kill -USR1 $PID ; then
 		    echo "$0 $ARG: httpd gracefully restarted"
 		else
@@ -160,7 +160,7 @@ do
 	$LYNX $STATUSURL
 	;;
     configtest)
-	if $HTTPD -t; then
+	if $HTTPD $RCFLAGS -t; then
 	    :
 	else
 	    ERROR=8
