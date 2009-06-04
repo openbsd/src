@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.24 2007/06/20 18:15:46 deraadt Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.25 2009/06/04 21:38:10 miod Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -874,7 +874,7 @@ rrmakelabel(dl, type)
 	DL_SETPSIZE(&dl->d_partitions[2], DL_GETDSIZE(dl));
 	DL_SETPOFFSET(&dl->d_partitions[0], 0);
 	DL_SETPOFFSET(&dl->d_partitions[2], 0);
-	dl->d_interleave = dl->d_headswitch = 1;
+	dl->d_interleave = 1;
 	dl->d_version = 1;
 	dl->d_magic = dl->d_magic2 = DISKMAGIC;
 	dl->d_checksum = dkcksum(dl);

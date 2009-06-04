@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.22 2007/09/01 12:45:42 miod Exp $	*/
+/*	$OpenBSD: hdc9224.c,v 1.23 2009/06/04 21:38:10 miod Exp $	*/
 /*	$NetBSD: hdc9224.c,v 1.16 2001/07/26 15:05:09 wiz Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -869,7 +869,7 @@ hdmakelabel(struct disklabel *dl, struct hdgeom *g)
 	    
 	DL_SETPOFFSET(&dl->d_partitions[0], 0);
 	DL_SETPOFFSET(&dl->d_partitions[2], 0);
-	dl->d_interleave = dl->d_headswitch = 1;
+	dl->d_interleave = 1;
 	dl->d_version = 1;
 	dl->d_magic = dl->d_magic2 = DISKMAGIC;
 	dl->d_checksum = dkcksum(dl);
