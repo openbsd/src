@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.162 2009/05/18 20:37:13 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.163 2009/06/04 05:02:25 henning Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -386,15 +386,24 @@ ipv4_input(m)
 	        return;
 	}
 
-	/*
-	 * Check our list of addresses, to see if the packet is for us.
-	 */
-	if ((ia = in_iawithaddr(ip->ip_dst, m)) != NULL &&
-	    (ia->ia_ifp->if_flags & IFF_UP))
-		goto ours;
-
 	if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED)
 		goto ours;
+
+#if NPF > 0
+	if (m->m_pkthdr.pf.statekey &&
+	    ((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp)
+		goto ours;
+
+	/*
+	 * Check our list of addresses, to see if the packet is for us.
+	 * if we have linked state keys it is certainly to be forwarded.
+	 */
+	if (!m->m_pkthdr.pf.statekey ||
+	    !((struct pf_state_key *)m->m_pkthdr.pf.statekey)->reverse)
+#endif
+		if ((ia = in_iawithaddr(ip->ip_dst, m)) != NULL &&
+		    (ia->ia_ifp->if_flags & IFF_UP))
+			goto ours;
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 		struct in_multi *inm;
@@ -451,6 +460,7 @@ ipv4_input(m)
 		}
 		goto ours;
 	}
+
 	if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
 	    ip->ip_dst.s_addr == INADDR_ANY)
 		goto ours;
