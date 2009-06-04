@@ -1,4 +1,4 @@
-/*	$OpenBSD: setenv.c,v 1.10 2009/06/03 15:52:16 millert Exp $ */
+/*	$OpenBSD: setenv.c,v 1.11 2009/06/04 20:39:13 millert Exp $ */
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
@@ -101,11 +101,13 @@ setenv(const char *name, const char *value, int rewrite)
 	if ((C = __findenv(name, (int)(np - name), &offset)) != NULL) {
 		if (!rewrite)
 			return (0);
+#if 0 /* XXX - existing entry may not be writable */
 		if (strlen(C) >= l_value) {	/* old larger; copy over */
 			while ((*C++ = *value++))
 				;
 			return (0);
 		}
+#endif
 	} else {					/* create new slot */
 		size_t cnt;
 		char **P;
