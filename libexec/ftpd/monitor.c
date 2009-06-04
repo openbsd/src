@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.18 2008/06/30 12:03:51 ragge Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.19 2009/06/04 01:10:34 sthen Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -359,13 +359,13 @@ handle_cmds(void)
 
 			recv_data(fd_slave, &salen, sizeof(salen));
 			if (salen == 0 || salen > sizeof(sa))
-				fatalx("monitor received invalid sockaddr len");
+				fatalx("monitor received invalid sockaddr len %u");
 
 			bzero(&sa, sizeof(sa));
 			recv_data(fd_slave, &sa, salen);
 
 			if (sa.sa_len != salen)
-				fatalx("monitor received invalid sockaddr len");
+				fatalx("monitor received invalid sockaddr len %u/%u",sa.sa_len,sa.su_si.si_len);
 
 			if (sa.sa_family != AF_INET && sa.sa_family != AF_INET6)
 				fatalx("monitor received invalid addr family");
