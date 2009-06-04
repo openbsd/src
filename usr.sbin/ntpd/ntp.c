@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.110 2009/01/26 11:51:50 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.111 2009/06/04 23:39:45 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -530,6 +530,11 @@ priv_adjfreq(double offset)
 	if (!conf->status.synced)
 		return;
 
+	if (conf->filters & FILTER_ADJFREQ){
+		conf->filters &= ~FILTER_ADJFREQ;
+		return;
+	}
+
 	conf->freq.samples++;
 
 	if (conf->freq.samples <= 0)
@@ -558,6 +563,7 @@ priv_adjfreq(double offset)
 		freq = -MAX_FREQUENCY_ADJUST;
 
 	imsg_compose(ibuf_main, IMSG_ADJFREQ, 0, 0, &freq, sizeof(freq));
+	conf->filters |= FILTER_ADJFREQ;
 	conf->freq.xy = 0.0;
 	conf->freq.x = 0.0;
 	conf->freq.y = 0.0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.100 2009/05/13 15:08:10 stevesk Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.101 2009/06/04 23:39:46 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -62,6 +62,7 @@
 #define REPORT_INTERVAL		(24*60*60) /* interval between status reports */
 #define MAX_SEND_ERRORS		3	/* max send errors before reconnect */
 
+#define FILTER_ADJFREQ		0x01	/* set after doing adjfreq */
 
 #define	SENSOR_DATA_MAXAGE		(15*60)
 #define	SENSOR_QUERY_INTERVAL		30
@@ -171,11 +172,12 @@ struct ntpd_conf {
 	TAILQ_HEAD(ntp_conf_sensors, ntp_conf_sensor)	ntp_conf_sensors;
 	struct ntp_status				status;
 	struct ntp_freq					freq;
+	u_int32_t					scale;
 	u_int8_t					listen_all;
 	u_int8_t					settime;
 	u_int8_t					debug;
-	u_int32_t					scale;
 	u_int8_t					noaction;
+	u_int8_t					filters;
 };
 
 struct buf {
