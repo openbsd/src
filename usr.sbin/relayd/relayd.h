@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.120 2009/06/04 07:16:38 eric Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.121 2009/06/04 14:12:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -118,7 +118,6 @@ struct ctl_tcp_event {
 	int			(*validate_read)(struct ctl_tcp_event *);
 	int			(*validate_close)(struct ctl_tcp_event *);
 	SSL			*ssl;
-	char			 rbuf[SMALL_READ_BUF_SIZE];
 };
 
 enum httpmethod {
