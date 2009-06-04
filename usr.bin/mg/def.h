@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.109 2009/06/04 02:23:37 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.110 2009/06/04 23:31:47 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -117,6 +117,7 @@ typedef int	(*PF)(int, int);	/* generally useful type */
 struct region {
 	struct line	*r_linep;	/* Origin line address.		 */
 	int		 r_offset;	/* Origin line offset.		 */
+	int		 r_lineno;	/* Origin line number		 */
 	RSIZE		 r_size;	/* Length in characters.	 */
 };
 

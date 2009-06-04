@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.27 2008/09/15 16:11:35 kjell Exp $	*/
+/*	$OpenBSD: region.c,v 1.28 2009/06/04 23:31:48 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -33,6 +33,7 @@ killregion(int f, int n)
 	thisflag |= CFKILL;
 	curwp->w_dotp = region.r_linep;
 	curwp->w_doto = region.r_offset;
+	curwp->w_dotline = region.r_lineno;
 	s = ldelete(region.r_size, KFORW);
 	clearmark(FFARG, 0);
 
@@ -194,6 +195,7 @@ getregion(struct region *rp)
 	/* "r_size" always ok */
 	if (curwp->w_dotp == curwp->w_markp) {
 		rp->r_linep = curwp->w_dotp;
+		rp->r_lineno = curwp->w_dotline;
 		if (curwp->w_doto < curwp->w_marko) {
 			rp->r_offset = curwp->w_doto;
 			rp->r_size = (RSIZE)(curwp->w_marko - curwp->w_doto);
@@ -213,6 +215,7 @@ getregion(struct region *rp)
 			if (flp == curwp->w_markp) {
 				rp->r_linep = curwp->w_dotp;
 				rp->r_offset = curwp->w_doto;
+				rp->r_lineno = curwp->w_dotline;
 				return (setsize(rp,
 				    (RSIZE)(fsize + curwp->w_marko)));
 			}
@@ -224,6 +227,7 @@ getregion(struct region *rp)
 			if (blp == curwp->w_markp) {
 				rp->r_linep = blp;
 				rp->r_offset = curwp->w_marko;
+				rp->r_lineno = curwp->w_markline;
 				return (setsize(rp,
 				    (RSIZE)(bsize - curwp->w_marko)));
 			}
@@ -285,6 +289,7 @@ prefixregion(int f, int n)
 	/* move to beginning of region */
 	curwp->w_dotp = region.r_linep;
 	curwp->w_doto = region.r_offset;
+	curwp->w_dotline = region.r_lineno;
 
 	/* for each line, go to beginning and insert the prefix string */
 	while (nline--) {
