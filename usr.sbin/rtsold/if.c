@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.22 2009/02/02 22:06:00 chl Exp $	*/
+/*	$OpenBSD: if.c,v 1.23 2009/06/04 22:45:32 henning Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -80,8 +80,14 @@ interface_up(char *name)
 	struct ifreq ifr;
 	int llflag;
 
-	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(ifsock, SIOCGIFXFLAGS, (caddr_t)&ifr) < 0)
+		warn("SIOCGIFXFLAGS");
+	ifr.ifr_flags &= ~IFXF_NOINET6;
+	if (ioctl(ifsock, SIOCSIFXFLAGS, (caddr_t)&ifr) < 0)
+		warn("SIOCSIFXFLAGS");
 
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(ifsock, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
 		warnmsg(LOG_WARNING, __func__, "ioctl(SIOCGIFFLAGS): %s",
 		    strerror(errno));
