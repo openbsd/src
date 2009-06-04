@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.63 2008/06/12 06:58:36 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.64 2009/06/04 21:57:56 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -165,22 +165,10 @@ bsdtocpulabel(struct disklabel *lp, struct mvmedisklabel *clp)
 	clp->rpm = lp->d_rpm;
 
 	clp->cfg_ilv = lp->d_interleave;
-	clp->cfg_sof = lp->d_trackskew;
-	clp->cylskew = lp->d_cylskew;
-	clp->headswitch = lp->d_headswitch;
-
-	/* this silly table is for winchester drives */
-	if (lp->d_trkseek < 6)
-		clp->cfg_ssr = 0;
-	else if (lp->d_trkseek < 10)
-		clp->cfg_ssr = 1;
-	else if (lp->d_trkseek < 15)
-		clp->cfg_ssr = 2;
-	else if (lp->d_trkseek < 20)
-		clp->cfg_ssr = 3;
-	else
-		clp->cfg_ssr = 4;
-
+	clp->cfg_sof = 1;
+	clp->cylskew = 1;
+	clp->headswitch = 0;
+	clp->cfg_ssr = 0;
 	clp->flags = lp->d_flags;
 	for (i = 0; i < NDDATA; i++)
 		clp->drivedata[i] = lp->d_drivedata[i];
@@ -229,28 +217,6 @@ cputobsdlabel(struct disklabel *lp, struct mvmedisklabel *clp)
 	lp->d_acylinders = clp->acylinders;
 	lp->d_rpm = clp->rpm;
 	lp->d_interleave = clp->cfg_ilv;
-	lp->d_trackskew = clp->cfg_sof;
-	lp->d_cylskew = clp->cylskew;
-	lp->d_headswitch = clp->headswitch;
-
-	/* this silly table is for winchester drives */
-	switch (clp->cfg_ssr) {
-	case 1:
-		lp->d_trkseek = 6;
-		break;
-	case 2:
-		lp->d_trkseek = 10;
-		break;
-	case 3:
-		lp->d_trkseek = 15;
-		break;
-	case 4:
-		lp->d_trkseek = 20;
-		break;
-	default:
-		lp->d_trkseek = 0;
-	}
-
 	lp->d_flags = clp->flags;
 	for (i = 0; i < NDDATA; i++)
 		lp->d_drivedata[i] = clp->drivedata[i];

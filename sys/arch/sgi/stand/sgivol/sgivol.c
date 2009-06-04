@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgivol.c,v 1.14 2009/05/14 18:55:41 miod Exp $	*/
+/*	$OpenBSD: sgivol.c,v 1.15 2009/06/04 21:57:56 miod Exp $	*/
 /*	$NetBSD: sgivol.c,v 1.8 2003/11/08 04:59:00 sekiya Exp $	*/
 
 /*-
@@ -303,7 +303,7 @@ init_volhdr(void)
 	volhdr->root = htobe16(0);
 	volhdr->swap = htobe16(1);
 	strlcpy(volhdr->bootfile, "/bsd", sizeof(volhdr->bootfile));
-	volhdr->dp.dp_skew = lbl.d_trackskew;
+	volhdr->dp.dp_skew = 1; /* XXX */
 	volhdr->dp.dp_gap1 = 1; /* XXX */
 	volhdr->dp.dp_gap2 = 1; /* XXX */
 	volhdr->dp.dp_cyls = htobe16(lbl.d_ncylinders);
