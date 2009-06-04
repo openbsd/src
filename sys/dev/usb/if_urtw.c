@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.7 2009/03/10 09:48:46 kevlo Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.8 2009/06/04 19:11:48 martynas Exp $	*/
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
  *
@@ -2452,7 +2452,10 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, (uint8_t *)&data->buf[12]);
 	data->ni = ni;
-	data->m = m0;
+	data->m = NULL;
+
+	/* mbuf is no longer needed. */
+	m_freem(m0);
 
 	usbd_setup_xfer(data->xfer,
 	    (prior == URTW_PRIORITY_LOW) ? sc->sc_txpipe_low :
