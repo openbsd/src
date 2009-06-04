@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2009/06/03 18:35:17 jasper Exp $
+# $OpenBSD: Makefile,v 1.10 2009/06/04 00:29:24 deraadt Exp $
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "armish" || ${MACHINE} == "i386" || \
@@ -22,6 +22,5 @@ NOPROG=	yes
 .endif
 
 MAN=	hotplugd.8
-MANSUBDIR=alpha amd64 armish i386 hppa landisk macppc sgi socppc sparc64 zaurus
 
 .include <bsd.prog.mk>
