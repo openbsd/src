@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.1 2008/09/30 16:24:16 aschrijver Exp $ */
+/*	$OpenBSD: ber.c,v 1.2 2009/06/04 18:03:07 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@vantronix.net>
@@ -1227,7 +1227,7 @@ ber_getc(struct ber *b, u_char *c)
 }
 
 static ssize_t
-ber_read(struct ber *ber, void *buf, unsigned long len)
+ber_read(struct ber *ber, void *buf, size_t len)
 {
 	u_char *b = buf;
 	ssize_t	r, remain = len;
