@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.35 2009/04/13 17:51:57 blambert Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.36 2009/06/04 00:31:42 blambert Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -203,15 +203,6 @@
 		}
 
 #define nfsm_rndup(a)	(((a)+3)&(~0x3))
-
-#define	nfsm_request(v, t, p, c)	\
-		if ((error = nfs_request((v), mreq, (t), (p), \
-		   (c), &mrep, &md, &dpos)) != 0) { \
-			if (error & NFSERR_RETERR) \
-				error &= ~NFSERR_RETERR; \
-			else \
-				goto nfsmout; \
-		}
 
 #define	nfsm_strtom(a,s,m) \
 		if ((s) > (m)) { \

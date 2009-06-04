@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.82 2009/06/02 23:16:59 thib Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.83 2009/06/04 00:31:42 blambert Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -126,7 +126,13 @@ nfs_statfs(mp, sbp, p)
 	nfsstats.rpccnt[NFSPROC_FSSTAT]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(v3));
 	nfsm_fhtom(&mb, vp, v3);
-	nfsm_request(vp, NFSPROC_FSSTAT, p, cred);
+	if ((error = nfs_request(vp, mreq, NFSPROC_FSSTAT, p, cred, &mrep,
+	    &md, &dpos)) != 0) {
+		if (error & NFSERR_RETERR)
+			error &= ~NFSERR_RETERR;
+		else
+			goto nfsmout;
+	}
 	if (v3)
 		nfsm_postop_attr(vp, retattr);
 	if (error) {
@@ -187,7 +193,13 @@ nfs_fsinfo(nmp, vp, cred, p)
 	nfsstats.rpccnt[NFSPROC_FSINFO]++;
 	mb = mreq = nfsm_reqhead(NFSX_FH(1));
 	nfsm_fhtom(&mb, vp, 1);
-	nfsm_request(vp, NFSPROC_FSINFO, p, cred);
+	if ((error = nfs_request(vp, mreq, NFSPROC_FSINFO, p, cred, &mrep,
+	    &md, &dpos)) != 0) {
+		if (error & NFSERR_RETERR)
+			error &= ~NFSERR_RETERR;
+		else
+			goto nfsmout;
+	}
 	nfsm_postop_attr(vp, retattr);
 	if (!error) {
 		nfsm_dissect(fsp, struct nfsv3_fsinfo *, NFSX_V3FSINFO);
