@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.121 2009/06/04 14:12:16 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.122 2009/06/04 20:31:37 eric Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/tree.h>
 
 #include "imsg.h"
-
 
 #define CONF_FILE		"/etc/relayd.conf"
 #define RELAYD_SOCKET		"/var/run/relayd.sock"
@@ -644,6 +643,61 @@ struct ctl_conn {
 
 };
 TAILQ_HEAD(ctl_connlist, ctl_conn);
+
+enum imsg_type {
+	IMSG_NONE,
+	IMSG_CTL_OK,		/* answer to relayctl requests */
+	IMSG_CTL_FAIL,
+	IMSG_CTL_END,
+	IMSG_CTL_RDR,
+	IMSG_CTL_TABLE,
+	IMSG_CTL_HOST,
+	IMSG_CTL_RELAY,
+	IMSG_CTL_SESSION,
+	IMSG_CTL_TABLE_CHANGED,
+	IMSG_CTL_PULL_RULESET,
+	IMSG_CTL_PUSH_RULESET,
+	IMSG_CTL_SHOW_SUM,	/* relayctl requests */
+	IMSG_CTL_RDR_ENABLE,
+	IMSG_CTL_RDR_DISABLE,
+	IMSG_CTL_TABLE_ENABLE,
+	IMSG_CTL_TABLE_DISABLE,
+	IMSG_CTL_HOST_ENABLE,
+	IMSG_CTL_HOST_DISABLE,
+	IMSG_CTL_SHUTDOWN,
+	IMSG_CTL_RELOAD,
+	IMSG_CTL_POLL,
+	IMSG_CTL_NOTIFY,
+	IMSG_CTL_RDR_STATS,
+	IMSG_CTL_RELAY_STATS,
+	IMSG_RDR_ENABLE,	/* notifies from pfe to hce */
+	IMSG_RDR_DISABLE,
+	IMSG_TABLE_ENABLE,
+	IMSG_TABLE_DISABLE,
+	IMSG_HOST_ENABLE,
+	IMSG_HOST_DISABLE,
+	IMSG_HOST_STATUS,	/* notifies from hce to pfe */
+	IMSG_SYNC,
+	IMSG_NATLOOK,
+	IMSG_DEMOTE,
+	IMSG_STATISTICS,
+	IMSG_RECONF,		/* reconfiguration notifies */
+	IMSG_RECONF_TABLE,
+	IMSG_RECONF_SENDBUF,
+	IMSG_RECONF_HOST,
+	IMSG_RECONF_RDR,
+	IMSG_RECONF_VIRT,
+	IMSG_RECONF_PROTO,
+	IMSG_RECONF_REQUEST_TREE,
+	IMSG_RECONF_RESPONSE_TREE,
+	IMSG_RECONF_PNODE_KEY,
+	IMSG_RECONF_PNODE_VAL,
+	IMSG_RECONF_RELAY,
+	IMSG_RECONF_END,
+	IMSG_SCRIPT,
+	IMSG_SNMPSOCK,
+	IMSG_BINDANY
+};
 
 /* control.c */
 int	control_init(void);
