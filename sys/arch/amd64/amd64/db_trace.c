@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.5 2009/06/04 19:42:22 kettenis Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.6 2009/06/04 22:56:13 kettenis Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /* 
@@ -110,6 +110,7 @@ struct x86_64_frame {
 	struct x86_64_frame	*f_frame;
 	long			f_retaddr;
 	long			f_arg0;
+	long			f_arg1;
 };
 
 #define	NONE		0
@@ -344,8 +345,12 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			continue;
 		}
 
+		if (is_trap == INTERRUPT)
+			argp = &lastframe->f_arg1;
+		else
+			argp = &frame->f_arg0;
 		lastframe = frame;
-		db_nextframe(&frame, &callpc, &frame->f_arg0, is_trap, pr);
+		db_nextframe(&frame, &callpc, argp, is_trap, pr);
 
 		if (frame == 0) {
 			/* end of chain */
