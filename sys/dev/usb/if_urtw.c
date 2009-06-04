@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_urtw.c,v 1.9 2009/06/04 19:27:27 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.10 2009/06/04 19:30:19 martynas Exp $	*/
+
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
  *
@@ -207,16 +208,16 @@ static struct urtw_pair urtw_8225_rf_part3[] = {
 
 static uint16_t urtw_8225_rxgain[] = {	
 	0x0400, 0x0401, 0x0402, 0x0403, 0x0404, 0x0405, 0x0408, 0x0409,
-	0x040a, 0x040b, 0x0502, 0x0503, 0x0504, 0x0505, 0x0540, 0x0541,  
+	0x040a, 0x040b, 0x0502, 0x0503, 0x0504, 0x0505, 0x0540, 0x0541,
 	0x0542, 0x0543, 0x0544, 0x0545, 0x0580, 0x0581, 0x0582, 0x0583,
-	0x0584, 0x0585, 0x0588, 0x0589, 0x058a, 0x058b, 0x0643, 0x0644, 
+	0x0584, 0x0585, 0x0588, 0x0589, 0x058a, 0x058b, 0x0643, 0x0644,
 	0x0645, 0x0680, 0x0681, 0x0682, 0x0683, 0x0684, 0x0685, 0x0688,
 	0x0689, 0x068a, 0x068b, 0x068c, 0x0742, 0x0743, 0x0744, 0x0745,
 	0x0780, 0x0781, 0x0782, 0x0783, 0x0784, 0x0785, 0x0788, 0x0789,
 	0x078a, 0x078b, 0x078c, 0x078d, 0x0790, 0x0791, 0x0792, 0x0793,
-	0x0794, 0x0795, 0x0798, 0x0799, 0x079a, 0x079b, 0x079c, 0x079d,  
-	0x07a0, 0x07a1, 0x07a2, 0x07a3, 0x07a4, 0x07a5, 0x07a8, 0x07a9,  
-	0x07aa, 0x07ab, 0x07ac, 0x07ad, 0x07b0, 0x07b1, 0x07b2, 0x07b3,  
+	0x0794, 0x0795, 0x0798, 0x0799, 0x079a, 0x079b, 0x079c, 0x079d,
+	0x07a0, 0x07a1, 0x07a2, 0x07a3, 0x07a4, 0x07a5, 0x07a8, 0x07a9,
+	0x07aa, 0x07ab, 0x07ac, 0x07ad, 0x07b0, 0x07b1, 0x07b2, 0x07b3,
 	0x07b4, 0x07b5, 0x07b8, 0x07b9, 0x07ba, 0x07bb, 0x07bb
 };
 
@@ -252,12 +253,12 @@ static uint8_t urtw_8225_txpwr_ofdm[]={
 
 static uint8_t urtw_8225v2_gain_bg[]={
 	0x23, 0x15, 0xa5,		/* -82-1dbm  */
-        0x23, 0x15, 0xb5,		/* -82-2dbm  */
-        0x23, 0x15, 0xc5,		/* -82-3dbm  */
-        0x33, 0x15, 0xc5,		/* -78dbm  */
-        0x43, 0x15, 0xc5,		/* -74dbm  */
-        0x53, 0x15, 0xc5,		/* -70dbm  */
-        0x63, 0x15, 0xc5,		/* -66dbm  */
+	0x23, 0x15, 0xb5,		/* -82-2dbm  */
+	0x23, 0x15, 0xc5,		/* -82-3dbm  */
+	0x33, 0x15, 0xc5,		/* -78dbm  */
+	0x43, 0x15, 0xc5,		/* -74dbm  */
+	0x53, 0x15, 0xc5,		/* -70dbm  */
+	0x63, 0x15, 0xc5,		/* -66dbm  */
 };
 
 static struct urtw_pair urtw_8225v2_rf_part1[] = {
@@ -269,7 +270,7 @@ static struct urtw_pair urtw_8225v2_rf_part1[] = {
 
 static struct urtw_pair urtw_8225v2_rf_part2[] = {
 	{ 0x00, 0x01 }, { 0x01, 0x02 }, { 0x02, 0x42 }, { 0x03, 0x00 },
-	{ 0x04, 0x00 },	{ 0x05, 0x00 }, { 0x06, 0x40 }, { 0x07, 0x00 },
+	{ 0x04, 0x00 }, { 0x05, 0x00 }, { 0x06, 0x40 }, { 0x07, 0x00 },
 	{ 0x08, 0x40 }, { 0x09, 0xfe }, { 0x0a, 0x08 }, { 0x0b, 0x80 },
 	{ 0x0c, 0x01 }, { 0x0d, 0x43 }, { 0x0e, 0xd3 }, { 0x0f, 0x38 },
 	{ 0x10, 0x84 }, { 0x11, 0x07 }, { 0x12, 0x20 }, { 0x13, 0x20 },
@@ -292,17 +293,17 @@ static struct urtw_pair urtw_8225v2_rf_part3[] = {
 };
 
 static uint16_t urtw_8225v2_rxgain[] = {
-        0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0008, 0x0009,
-	0x000a,	0x000b, 0x0102, 0x0103, 0x0104, 0x0105, 0x0140, 0x0141,	  
-        0x0142,	0x0143, 0x0144, 0x0145, 0x0180, 0x0181, 0x0182, 0x0183,
-	0x0184,	0x0185, 0x0188, 0x0189, 0x018a, 0x018b, 0x0243, 0x0244,	 
-	0x0245,	0x0280, 0x0281, 0x0282, 0x0283, 0x0284, 0x0285, 0x0288,
-        0x0289, 0x028a, 0x028b, 0x028c, 0x0342, 0x0343, 0x0344, 0x0345,
+	0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0008, 0x0009,
+	0x000a, 0x000b, 0x0102, 0x0103, 0x0104, 0x0105, 0x0140, 0x0141,
+	0x0142, 0x0143, 0x0144, 0x0145, 0x0180, 0x0181, 0x0182, 0x0183,
+	0x0184, 0x0185, 0x0188, 0x0189, 0x018a, 0x018b, 0x0243, 0x0244,
+	0x0245, 0x0280, 0x0281, 0x0282, 0x0283, 0x0284, 0x0285, 0x0288,
+	0x0289, 0x028a, 0x028b, 0x028c, 0x0342, 0x0343, 0x0344, 0x0345,
 	0x0380, 0x0381, 0x0382, 0x0383, 0x0384, 0x0385, 0x0388, 0x0389,
 	0x038a, 0x038b, 0x038c, 0x038d, 0x0390, 0x0391, 0x0392, 0x0393,
-	0x0394, 0x0395, 0x0398, 0x0399, 0x039a, 0x039b, 0x039c, 0x039d,	  
-	0x03a0, 0x03a1, 0x03a2, 0x03a3, 0x03a4, 0x03a5, 0x03a8, 0x03a9,	  
-	0x03aa, 0x03ab, 0x03ac, 0x03ad, 0x03b0, 0x03b1, 0x03b2, 0x03b3,	
+	0x0394, 0x0395, 0x0398, 0x0399, 0x039a, 0x039b, 0x039c, 0x039d,
+	0x03a0, 0x03a1, 0x03a2, 0x03a3, 0x03a4, 0x03a5, 0x03a8, 0x03a9,
+	0x03aa, 0x03ab, 0x03ac, 0x03ad, 0x03b0, 0x03b1, 0x03b2, 0x03b3,
 	0x03b4, 0x03b5, 0x03b8, 0x03b9, 0x03ba, 0x03bb, 0x03bb
 };
 
@@ -380,14 +381,14 @@ usbd_status	urtw_led_init(struct urtw_softc *);
 usbd_status	urtw_8185_rf_pins_enable(struct urtw_softc *);
 usbd_status	urtw_8185_tx_antenna(struct urtw_softc *, uint8_t);
 usbd_status	urtw_8187_write_phy(struct urtw_softc *, uint8_t, uint32_t);
-usbd_status	urtw_8187_write_phy_ofdm_c(struct urtw_softc *, uint8_t, 
+usbd_status	urtw_8187_write_phy_ofdm_c(struct urtw_softc *, uint8_t,
 		    uint32_t);
-usbd_status	urtw_8187_write_phy_cck_c(struct urtw_softc *, uint8_t, 
+usbd_status	urtw_8187_write_phy_cck_c(struct urtw_softc *, uint8_t,
 		    uint32_t);
 usbd_status	urtw_8225_setgain(struct urtw_softc *, int16_t);
 usbd_status	urtw_8225_usb_init(struct urtw_softc *);
 usbd_status	urtw_8225_write_c(struct urtw_softc *, uint8_t, uint16_t);
-usbd_status	urtw_8225_write_s16(struct urtw_softc *, uint8_t, int, 
+usbd_status	urtw_8225_write_s16(struct urtw_softc *, uint8_t, int,
 		    uint16_t *);
 usbd_status	urtw_8225_read(struct urtw_softc *, uint8_t, uint32_t *);
 usbd_status	urtw_8225_rf_init(struct urtw_softc *);
@@ -640,7 +641,7 @@ urtw_open_pipes(struct urtw_softc *sc)
 	error = usbd_open_pipe(sc->sc_iface, 0x2, USBD_EXCLUSIVE_USE,
 	    &sc->sc_txpipe_low);
 	if (error != 0) {
-		printf("%s: could not open Tx low pipe: %s\n", 
+		printf("%s: could not open Tx low pipe: %s\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(error));
 		goto fail;
 	}
@@ -882,7 +883,7 @@ urtw_8225_write_s16(struct urtw_softc *sc, uint8_t addr, int index,
 	}
 	buf = (uint8_t *)malloc(2, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (req == NULL) {
-		printf("%s: could not allocate a memory\n", 
+		printf("%s: could not allocate a memory\n",
 		    sc->sc_dev.dv_xname);
 		goto fail1;
 	}
@@ -2225,7 +2226,7 @@ urtw_start(struct ifnet *ifp)
 		IF_POLL(&ic->ic_mgtq, m0);
 		if (m0 != NULL) {
 			if (sc->sc_tx_low_queued >= URTW_TX_DATA_LIST_COUNT ||
-			    sc->sc_tx_normal_queued >= 
+			    sc->sc_tx_normal_queued >=
 			    URTW_TX_DATA_LIST_COUNT) {
 			    	ifp->if_flags |= IFF_OACTIVE;
 				break;
@@ -2237,7 +2238,7 @@ urtw_start(struct ifnet *ifp)
 			if (ic->ic_rawbpf != NULL)
 				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
 #endif
-			if (urtw_tx_start(sc, ni, m0, URTW_PRIORITY_NORMAL) 
+			if (urtw_tx_start(sc, ni, m0, URTW_PRIORITY_NORMAL)
 			    != 0)
 				break;
 		} else {
@@ -2264,7 +2265,7 @@ urtw_start(struct ifnet *ifp)
 			if (ic->ic_rawbpf != NULL)
 				bpf_mtap(ic->ic_rawbpf, m0, BPF_DIRECTION_OUT);
 #endif
-			if (urtw_tx_start(sc, ni, m0, URTW_PRIORITY_NORMAL) 
+			if (urtw_tx_start(sc, ni, m0, URTW_PRIORITY_NORMAL)
 			    != 0) {
 				if (ni != NULL)
 					ieee80211_release_node(ic, ni);
@@ -2476,7 +2477,7 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 
 	error = urtw_led_ctl(sc, URTW_LED_CTL_TX);
 	if (error != 0)
-		printf("%s: could not control LED (%d)\n", 
+		printf("%s: could not control LED (%d)\n",
 		    sc->sc_dev.dv_xname, error);
 
 	if (prior == URTW_PRIORITY_LOW)
@@ -3064,7 +3065,7 @@ urtw_8225v2_rf_init(struct urtw_softc *sc)
 	if (error != 0)
 		goto fail;
 	if (data32 != 0xe6)
-		printf("%s: expect 0xe6!! (0x%x)\n", sc->sc_dev.dv_xname, 
+		printf("%s: expect 0xe6!! (0x%x)\n", sc->sc_dev.dv_xname,
 		    data32);
 	if (!(data32 & 0x80)) {
 		urtw_8225_write(sc, 0x02, 0x0c4d);
@@ -3075,7 +3076,7 @@ urtw_8225v2_rf_init(struct urtw_softc *sc)
 		if (error != 0)
 			goto fail;
 		if (!(data32 & 0x80))
-			printf("%s: RF calibration failed\n", 
+			printf("%s: RF calibration failed\n",
 			    sc->sc_dev.dv_xname);
 	}
 	usbd_delay_ms(sc->sc_udev, 100);
@@ -3168,7 +3169,7 @@ urtw_set_chan(struct urtw_softc *sc, struct ieee80211_channel *c)
 	if (chan == 0 || chan == IEEE80211_CHAN_ANY)
 		return;
 	/*
-	 * during changing th channel we need to temporarily be disable 
+	 * during changing th channel we need to temporarily be disable
 	 * TX.
 	 */
 	urtw_read32_m(sc, URTW_TX_CONF, &data);
@@ -3252,5 +3253,5 @@ urtw_task(void *arg)
 fail:
 	if (error != 0)
 		DPRINTF(("%s: error duing processing RUN state.",
-  		    sc->sc_dev.dv_xname));
+		    sc->sc_dev.dv_xname));
 }
