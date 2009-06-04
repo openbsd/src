@@ -1,4 +1,4 @@
-/*	$OpenBSD: fastfind.c,v 1.9 2008/07/26 09:48:00 pyr Exp $	*/
+/*	$OpenBSD: fastfind.c,v 1.10 2009/06/04 07:19:45 espie Exp $	*/
 
 /*
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: fastfind.c,v 1.9 2008/07/26 09:48:00 pyr Exp $
+ * $Id: fastfind.c,v 1.10 2009/06/04 07:19:45 espie Exp $
  */
 
 #ifndef _LOCATE_STATISTIC_
@@ -65,6 +65,7 @@ statistic (fp, path_fcodes)
 		} else
 			count += c - OFFSET;
 
+		sane_count(count);
 		for (p = path + count; (c = getc(fp)) > SWITCH; size++)
 			if (c < PARITY) {
 				if (c == UMLAUT) {
@@ -211,6 +212,7 @@ fastfind
 			count += c - OFFSET;
 		}
 
+		sane_count(count);
 		/* overlay old path */
 		p = path + count;
 		foundchar = p - 1;
