@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.38 2008/06/15 08:23:50 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.39 2009/06/04 18:59:28 wcmaier Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -167,7 +167,8 @@ sub is_installed
 
 sub installed_name
 {
-	my $name = shift;
+	require File::Spec;
+	my $name = File::Spec->canonpath(shift);
 	$name =~ s|/$||o;
 	# XXX remove the o if we allow pkg_db to change dynamically
 	$name =~ s|^\Q$pkg_db\E/?||o;
