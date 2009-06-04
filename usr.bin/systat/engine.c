@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.7 2008/12/07 02:56:06 canacar Exp $	 */
+/* $Id: engine.c,v 1.8 2009/06/04 14:48:07 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -25,7 +25,17 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <term.h>
 #include <unistd.h>
+
+/* XXX These are defined in term.h and conflict with our variable names */
+#ifdef columns
+#undef columns
+#endif
+
+#ifdef lines
+#undef lines
+#endif
 
 #include "engine.h"
 
@@ -1033,6 +1043,32 @@ setup_term(int dmax)
 	field_setup();
 }
 
+void
+resize_term(void)
+{
+	struct winsize ws;
+
+	if (rawmode)
+		return;
+
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1)
+		return;
+
+	resizeterm(ws.ws_row, ws.ws_col);
+
+	columns = COLS;
+	lines = LINES;
+
+	maxprint = max_disp;
+
+	if (maxprint == 0 || maxprint > lines - HEADER_LINES)
+		maxprint = lines - HEADER_LINES;
+
+	clear();
+
+	field_setup();
+}
+
 struct command *
 command_set(struct command *cmd, const char *init)
 {
@@ -1279,9 +1315,7 @@ engine_loop(int countmax)
 		if (gotsig_close)
 			break;
 		if (gotsig_resize) {
-			if (rawmode == 0)
-				endwin();
-			setup_term(max_disp);
+			resize_term();
 			gotsig_resize = 0;
 			need_update = 1;
 		}
