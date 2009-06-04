@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.44 2009/06/04 02:23:37 kjell Exp $	*/
+/*	$OpenBSD: dired.c,v 1.45 2009/06/04 23:39:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -225,7 +225,7 @@ d_otherwindow(int f, int n)
 		return (FALSE);
 	if ((bp = dired_(bufp)) == NULL)
 		return (FALSE);
-	if ((wp = popbuf(bp)) == NULL)
+	if ((wp = popbuf(bp, WNONE)) == NULL)
 		return (FALSE);
 	curbp = bp;
 	curwp = wp;
@@ -320,7 +320,7 @@ d_ffotherwindow(int f, int n)
 		return (FALSE);
 	if ((bp = (s ? dired_(fname) : findbuffer(fname))) == NULL)
 		return (FALSE);
-	if ((wp = popbuf(bp)) == NULL)
+	if ((wp = popbuf(bp, WNONE)) == NULL)
 		return (FALSE);
 	curbp = bp;
 	curwp = wp;
@@ -519,7 +519,7 @@ d_shell_command(int f, int n)
 		close(fds[0]);
 		break;
 	}
-	wp = popbuf(bp);
+	wp = popbuf(bp, WNONE);
 	if (wp == NULL)
 		return (ABORT);	/* XXX - free the buffer?? */
 	curwp = wp;

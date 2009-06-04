@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.108 2009/04/26 10:34:57 sthen Exp $	*/
+/*	$OpenBSD: theo.c,v 1.109 2009/06/04 23:39:37 kjell Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -67,7 +67,7 @@ theo(int f, int n)
 	bp->b_modes[1] = name_mode("theo");
 	bp->b_nmodes = 1;
 
-	if ((wp = popbuf(bp)) == NULL)
+	if ((wp = popbuf(bp, WNONE)) == NULL)
 		return (FALSE);
 
 	curbp = bp;

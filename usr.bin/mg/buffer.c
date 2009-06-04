@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.70 2009/06/04 02:23:37 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.71 2009/06/04 23:39:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -98,8 +98,8 @@ poptobuffer(int f, int n)
 		return (FALSE);
 	if (bp == curbp)
 		return (splitwind(f, n));
-	/* and put it in a new window */
-	if ((wp = popbuf(bp)) == NULL)
+	/* and put it in a new, non-ephemeral window */
+	if ((wp = popbuf(bp, WNONE)) == NULL)
 		return (FALSE);
 	curbp = bp;
 	curwp = wp;
@@ -263,7 +263,7 @@ listbuffers(int f, int n)
 		initialized = 1;
 	}
 
-	if ((bp = makelist()) == NULL || (wp = popbuf(bp)) == NULL)
+	if ((bp = makelist()) == NULL || (wp = popbuf(bp, WNONE)) == NULL)
 		return (FALSE);
 	wp->w_dotp = bp->b_dotp; /* fix up if window already on screen */
 	wp->w_doto = bp->b_doto;
@@ -379,7 +379,7 @@ listbuf_goto_buffer_helper(int f, int n, int only)
 	if (bp == NULL)
 		goto cleanup;
 
-	if ((wp = popbuf(bp)) == NULL)
+	if ((wp = popbuf(bp, WNONE)) == NULL)
 		goto cleanup;
 	curbp = bp;
 	curwp = wp;
@@ -661,13 +661,29 @@ augbname(char *bn, const char *fn, size_t bs)
  * Returns a status.
  */
 struct mgwin *
-popbuf(struct buffer *bp)
+popbuf(struct buffer *bp, int flags)
 {
 	struct mgwin	*wp;
 
 	if (bp->b_nwnd == 0) {	/* Not on screen yet.	 */
-		if ((wp = wpopup()) == NULL)
-			return (NULL);
+		/* 
+		 * Pick a window for a pop-up.
+		 * If only one window, split the screen.
+		 * Flag the new window as ephemeral
+		 */
+		if (wheadp->w_wndp == NULL &&
+		    splitwind(FFOTHARG, flags) == FALSE)
+ 			return (NULL);
+
+		/*
+		 * Pick the uppermost window that isn't
+		 * the current window. An LRU algorithm
+		 * might be better. Return a pointer, or NULL on error. 
+		 */
+		wp = wheadp;
+
+		while (wp != NULL && wp == curwp)
+			wp = wp->w_wndp;
 	} else
 		for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
 			if (wp->w_bufp == bp) {
@@ -762,7 +778,7 @@ notmodified(int f, int n)
  * help functions.
  */
 int
-popbuftop(struct buffer *bp)
+popbuftop(struct buffer *bp, int flags)
 {
 	struct mgwin *wp;
 
@@ -776,7 +792,7 @@ popbuftop(struct buffer *bp)
 				wp->w_rflag |= WFFULL;
 			}
 	}
-	return (popbuf(bp) != NULL);
+	return (popbuf(bp, flags) != NULL);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.48 2009/06/03 20:58:20 kjell Exp $	*/
+/*	$OpenBSD: echo.c,v 1.49 2009/06/04 23:39:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -472,9 +472,13 @@ done:
 	if (cwin == TRUE) {
 		/* blow away cpltion window */
 		bp = bfind("*Completions*", TRUE);
-		if ((wp = popbuf(bp)) != NULL) {
-			curwp = wp;
-			delwind(FFRAND, 1);
+		if ((wp = popbuf(bp, WEPHEM)) != NULL) {
+			if (wp->w_flag & WEPHEM) {
+				curwp = wp;
+				delwind(FFRAND, 1);
+			} else {
+				killbuffer(bp);
+			}
 		}
 	}
 	return (ret);
@@ -729,7 +733,7 @@ complt_list(int flags, char *buf, int cpos)
 	 * the buffer list, obviously we don't want it freed.
 	 */
 	free_file_list(wholelist);
-	popbuftop(bp);		/* split the screen and put up the help
+	popbuftop(bp, WEPHEM);	/* split the screen and put up the help
 				 * buffer */
 	update();		/* needed to make the new stuff actually
 				 * appear */

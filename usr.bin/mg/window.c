@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.26 2009/06/04 02:23:37 kjell Exp $	*/
+/*	$OpenBSD: window.c,v 1.27 2009/06/04 23:39:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -200,6 +200,7 @@ onlywind(int f, int n)
  * Split the current window.  A window smaller than 3 lines cannot be split.
  * The only other error that is possible is a "malloc" failure allocating the
  * structure for the new window.
+ * If called with a FFOTHARG, flags on the new window are set to 'n'.
  */
 /* ARGSUSED */
 int
@@ -277,6 +278,10 @@ splitwind(int f, int n)
 
 	curwp->w_rflag |= WFMODE | WFFULL;
 	wp->w_rflag |= WFMODE | WFFULL;
+	/* if FFOTHARG, set flags) */
+	if (f & FFOTHARG)
+		wp->w_flag = n;
+		
 	return (TRUE);
 }
 
@@ -420,26 +425,4 @@ delwind(int f, int n)
 		}
 	free(wp);
 	return (TRUE);
-}
-
-/*
- * Pick a window for a pop-up.  Split the screen if there is only one window.
- * Pick the uppermost window that isn't the current window. An LRU algorithm
- * might be better. Return a pointer, or NULL on error.
- */
-struct mgwin *
-wpopup(void)
-{
-	struct mgwin	*wp;
-
-	if (wheadp->w_wndp == NULL &&
-	    splitwind(FFRAND, 0) == FALSE)
-		return (NULL);
-
-	/* find a window to use */
-	wp = wheadp;
-
-	while (wp != NULL && wp == curwp)
-		wp = wp->w_wndp;
-	return (wp);
 }

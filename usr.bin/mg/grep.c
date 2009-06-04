@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.37 2009/06/04 02:23:37 kjell Exp $	*/
+/*	$OpenBSD: grep.c,v 1.38 2009/06/04 23:39:37 kjell Exp $	*/
 
 /* This file is in the public domain */
 
@@ -74,7 +74,7 @@ grep(int f, int n)
 
 	if ((bp = compile_mode("*grep*", cprompt)) == NULL)
 		return (FALSE);
-	if ((wp = popbuf(bp)) == NULL)
+	if ((wp = popbuf(bp, WNONE)) == NULL)
 		return (FALSE);
 	curbp = bp;
 	compile_win = curwp = wp;
@@ -98,7 +98,7 @@ xlint(int f, int n)
 
 	if ((bp = compile_mode("*lint*", cprompt)) == NULL)
 		return (FALSE);
-	if ((wp = popbuf(bp)) == NULL)
+	if ((wp = popbuf(bp, WNONE)) == NULL)
 		return (FALSE);
 	curbp = bp;
 	compile_win = curwp = wp;
@@ -125,7 +125,7 @@ compile(int f, int n)
 
 	if ((bp = compile_mode("*compile*", cprompt)) == NULL)
 		return (FALSE);
-	if ((wp = popbuf(bp)) == NULL)
+	if ((wp = popbuf(bp, WNONE)) == NULL)
 		return (FALSE);
 	curbp = bp;
 	compile_win = curwp = wp;
@@ -183,7 +183,7 @@ gid(int f, int n)
 
 	if ((bp = compile_mode("*gid*", command)) == NULL)
 		return (FALSE);
-	if ((wp = popbuf(bp)) == NULL)
+	if ((wp = popbuf(bp, WNONE)) == NULL)
 		return (FALSE);
 	curbp = bp;
 	compile_win = curwp = wp;
@@ -307,7 +307,7 @@ compile_goto_error(int f, int n)
 
 	if ((bp = findbuffer(adjf)) == NULL)
 		return (FALSE);
-	if ((wp = popbuf(bp)) == NULL)
+	if ((wp = popbuf(bp, WNONE)) == NULL)
 		return (FALSE);
 	curbp = bp;
 	curwp = wp;

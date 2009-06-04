@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.31 2005/12/14 07:11:44 kjell Exp $	*/
+/*	$OpenBSD: help.c,v 1.32 2009/06/04 23:39:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -121,7 +121,7 @@ wallchart(int f, int n)
 	if ((addline(bp, "Global bindings:") == FALSE) ||
 	    (showall(bp, fundamental_map, "") == FALSE))
 		return (FALSE);
-	return (popbuftop(bp));
+	return (popbuftop(bp, WNONE));
 }
 
 static int
@@ -205,7 +205,7 @@ apropos_command(int f, int n)
 		}
 	}
 	free_file_list(fnames);
-	return (popbuftop(bp));
+	return (popbuftop(bp, WNONE));
 }
 
 static int

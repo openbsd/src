@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.110 2009/06/04 23:31:47 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.111 2009/06/04 23:39:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -202,7 +202,8 @@ struct mgwin {
 	char		 w_toprow;	/* Origin 0 top row of window	*/
 	char		 w_ntrows;	/* # of rows of text in window	*/
 	char		 w_frame;	/* #lines to reframe by.	*/
-	char		 w_rflag;	/* Redisplay Flags.			*/
+	char		 w_rflag;	/* Redisplay Flags.		*/
+	char		 w_flag;	/* Flags.			*/
 	struct line	*w_wrapline;
 	int		 w_dotline;	/* current line number of dot	*/
 	int		 w_markline;	/* current line number of mark	*/
@@ -224,6 +225,12 @@ struct mgwin {
 #define WFEDIT	0x04			/* Editing within a line.	 */
 #define WFFULL	0x08			/* Do a full display.		 */
 #define WFMODE	0x10			/* Update mode line.		 */
+
+/*
+ * Window flags
+ */
+#define WNONE  0x00 			/* No special window options.	*/
+#define WEPHEM 0x01 			/* Window is ephemeral.	 	*/
 
 struct undo_rec;
 
@@ -384,7 +391,6 @@ int		 splitwind(int, int);
 int		 enlargewind(int, int);
 int		 shrinkwind(int, int);
 int		 delwind(int, int);
-struct mgwin   *wpopup(void);
 
 /* buffer.c */
 int		 togglereadonly(int, int);
@@ -400,11 +406,11 @@ int		 anycb(int);
 int		 bclear(struct buffer *);
 int		 showbuffer(struct buffer *, struct mgwin *, int);
 int		 augbname(char *, const char *, size_t);
-struct mgwin    *popbuf(struct buffer *);
+struct mgwin    *popbuf(struct buffer *, int);
 int		 bufferinsert(int, int);
 int		 usebuffer(int, int);
 int		 notmodified(int, int);
-int		 popbuftop(struct buffer *);
+int		 popbuftop(struct buffer *, int);
 int		 getbufcwd(char *, size_t);
 int		 checkdirty(struct buffer *);
 
