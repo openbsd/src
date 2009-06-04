@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.88 2009/04/14 19:06:49 claudio Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.89 2009/06/04 18:12:56 sthen Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -153,10 +153,9 @@ void sis_miibus_writereg(struct device *, int, int, int);
 void sis_miibus_statchg(struct device *);
 
 u_int32_t sis_mchash(struct sis_softc *, const uint8_t *);
-void sis_setmulti(struct sis_softc *);
-void sis_setmulti_sis(struct sis_softc *);
-void sis_setmulti_ns(struct sis_softc *);
-void sis_setpromisc(struct sis_softc *);
+void sis_iff(struct sis_softc *);
+void sis_iff_ns(struct sis_softc *);
+void sis_iff_sis(struct sis_softc *);
 void sis_reset(struct sis_softc *);
 int sis_ring_init(struct sis_softc *);
 
@@ -699,144 +698,129 @@ sis_mchash(struct sis_softc *sc, const uint8_t *addr)
 }
 
 void
-sis_setmulti(struct sis_softc *sc)
+sis_iff(struct sis_softc *sc)
 {
 	if (sc->sis_type == SIS_TYPE_83815)
-		sis_setmulti_ns(sc);
+		sis_iff_ns(sc);
 	else
-		sis_setmulti_sis(sc);
+		sis_iff_sis(sc);
 }
 
 void
-sis_setmulti_ns(struct sis_softc *sc)
+sis_iff_ns(struct sis_softc *sc)
 {
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	struct arpcom		*ac = &sc->arpcom;
 	struct ether_multi	*enm;
 	struct ether_multistep  step;
-	u_int32_t		h = 0, i, filtsave;
+	u_int32_t		h = 0, i, rxfilt;
 	int			bit, index;
 
-	ifp = &sc->arpcom.ac_if;
-
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-allmulti:
-		SIS_CLRBIT(sc, SIS_RXFILT_CTL, NS_RXFILTCTL_MCHASH);
-		SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ALLMULTI);
-		return;
-	}
-
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			goto allmulti;
-		}
-		ETHER_NEXT_MULTI(step, enm);
-	}
+	rxfilt = CSR_READ_4(sc, SIS_RXFILT_CTL);
+	rxfilt &= ~(SIS_RXFILTCTL_ALLMULTI | SIS_RXFILTCTL_ALLPHYS |
+	    SIS_RXFILTCTL_BROAD | NS_RXFILTCTL_MCHASH);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/*
-	 * We have to explicitly enable the multicast hash table
-	 * on the NatSemi chip if we want to use it, which we do.
+	 * Always accept broadcast frames.
 	 */
-	SIS_SETBIT(sc, SIS_RXFILT_CTL, NS_RXFILTCTL_MCHASH);
-	SIS_CLRBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ALLMULTI);
+	rxfilt |= SIS_RXFILTCTL_BROAD;
 
-	filtsave = CSR_READ_4(sc, SIS_RXFILT_CTL);
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		rxfilt |= SIS_RXFILTCTL_ALLMULTI;
+		if (ifp->if_flags & IFF_PROMISC)
+			rxfilt |= SIS_RXFILTCTL_ALLPHYS;
+	} else {
+		/*
+		 * We have to explicitly enable the multicast hash table
+		 * on the NatSemi chip if we want to use it, which we do.
+		 */
+		rxfilt |= NS_RXFILTCTL_MCHASH;
 
-	/* first, zot all the existing hash bits */
-	for (i = 0; i < 32; i++) {
-		CSR_WRITE_4(sc, SIS_RXFILT_CTL, NS_FILTADDR_FMEM_LO + (i*2));
-		CSR_WRITE_4(sc, SIS_RXFILT_DATA, 0);
+		/* first, zot all the existing hash bits */
+		for (i = 0; i < 32; i++) {
+			CSR_WRITE_4(sc, SIS_RXFILT_CTL, NS_FILTADDR_FMEM_LO + (i*2));
+			CSR_WRITE_4(sc, SIS_RXFILT_DATA, 0);
+		}
+
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			h = sis_mchash(sc, enm->enm_addrlo);
+
+			index = h >> 3;
+			bit = h & 0x1F;
+
+			CSR_WRITE_4(sc, SIS_RXFILT_CTL, NS_FILTADDR_FMEM_LO + index);
+
+			if (bit > 0xF)
+				bit -= 0x10;
+
+			SIS_SETBIT(sc, SIS_RXFILT_DATA, (1 << bit));
+
+			ETHER_NEXT_MULTI(step, enm);
+		}
 	}
 
-	ETHER_FIRST_MULTI(step, ac, enm);
-	while (enm != NULL) {
-		h = sis_mchash(sc, enm->enm_addrlo);
-		index = h >> 3;
-		bit = h & 0x1F;
-		CSR_WRITE_4(sc, SIS_RXFILT_CTL, NS_FILTADDR_FMEM_LO + index);
-		if (bit > 0xF)
-			bit -= 0x10;
-		SIS_SETBIT(sc, SIS_RXFILT_DATA, (1 << bit));
-		ETHER_NEXT_MULTI(step, enm);
-	}
-
-	CSR_WRITE_4(sc, SIS_RXFILT_CTL, filtsave);
+	CSR_WRITE_4(sc, SIS_RXFILT_CTL, rxfilt);
 }
 
 void
-sis_setmulti_sis(struct sis_softc *sc)
+sis_iff_sis(struct sis_softc *sc)
 {
-	struct ifnet		*ifp;
+	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	struct arpcom		*ac = &sc->arpcom;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
-	u_int32_t		h, i, n, ctl;
+	u_int32_t		h, i, maxmulti, rxfilt;
 	u_int16_t		hashes[16];
-
-	ifp = &sc->arpcom.ac_if;
 
 	/* hash table size */
 	if (sc->sis_rev >= SIS_REV_635 ||
 	    sc->sis_rev == SIS_REV_900B)
-		n = 16;
+		maxmulti = 16;
 	else
-		n = 8;
+		maxmulti = 8;
 
-	ctl = CSR_READ_4(sc, SIS_RXFILT_CTL) & SIS_RXFILTCTL_ENABLE;
+	rxfilt = CSR_READ_4(sc, SIS_RXFILT_CTL);
+	rxfilt &= ~(SIS_RXFILTCTL_ALLMULTI | SIS_RXFILTCTL_ALLPHYS |
+	    SIS_RXFILTCTL_BROAD);
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (ifp->if_flags & IFF_BROADCAST)
-		ctl |= SIS_RXFILTCTL_BROAD;
+	/*
+	 * Always accept broadcast frames.
+	 */
+	rxfilt |= SIS_RXFILTCTL_BROAD;
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-allmulti:
-		ctl |= SIS_RXFILTCTL_ALLMULTI;
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0 ||
+	    ac->ac_multicnt > maxmulti) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		rxfilt |= SIS_RXFILTCTL_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC)
-			ctl |= SIS_RXFILTCTL_BROAD|SIS_RXFILTCTL_ALLPHYS;
-		for (i = 0; i < n; i++)
+			rxfilt |= SIS_RXFILTCTL_ALLPHYS;
+
+		for (i = 0; i < maxmulti; i++)
 			hashes[i] = ~0;
 	} else {
-		for (i = 0; i < n; i++)
+		for (i = 0; i < maxmulti; i++)
 			hashes[i] = 0;
-		i = 0;
+
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-				ifp->if_flags |= IFF_ALLMULTI;
-				goto allmulti;
-			}
-
 			h = sis_mchash(sc, enm->enm_addrlo);
+
 			hashes[h >> 4] |= 1 << (h & 0xf);
-			i++;
+
 			ETHER_NEXT_MULTI(step, enm);
-		}
-		if (i > n) {
-			ctl |= SIS_RXFILTCTL_ALLMULTI;
-			for (i = 0; i < n; i++)
-				hashes[i] = ~0;
 		}
 	}
 
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < maxmulti; i++) {
 		CSR_WRITE_4(sc, SIS_RXFILT_CTL, (4 + i) << 16);
 		CSR_WRITE_4(sc, SIS_RXFILT_DATA, hashes[i]);
 	}
 
-	CSR_WRITE_4(sc, SIS_RXFILT_CTL, ctl);
-}
-
-void
-sis_setpromisc(struct sis_softc *sc)
-{
-	struct ifnet	*ifp = &sc->arpcom.ac_if;
-
-	/* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC)
-		SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ALLPHYS);
-	else
-		SIS_CLRBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ALLPHYS);
+	CSR_WRITE_4(sc, SIS_RXFILT_CTL, rxfilt);
 }
 
 void
@@ -1745,20 +1729,9 @@ sis_init(void *xsc)
 	}
 
 	/*
-	 * Set the capture broadcast bit to capture broadcast frames.
+	 * Program promiscuous mode and multicast filters.
 	 */
-	if (ifp->if_flags & IFF_BROADCAST)
-		SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_BROAD);
-	else
-		SIS_CLRBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_BROAD);
-
-	/* Set promiscuous mode. */
-	sis_setpromisc(sc);
-
-	/*
-	 * Load the multicast filter.
-	 */
-	sis_setmulti(sc);
+	sis_iff(sc);
 
 	/* Turn the receive filter on */
 	SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ENABLE);
@@ -1919,24 +1892,14 @@ sis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    (ifp->if_flags ^ sc->sc_if_flags) &
-			     IFF_PROMISC) {
-				sis_setpromisc(sc);
-				sis_setmulti(sc);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    (ifp->if_flags ^ sc->sc_if_flags) &
-			     IFF_ALLMULTI) {
-				sis_setmulti(sc);
-			} else {
-				if (!(ifp->if_flags & IFF_RUNNING))
-					sis_init(sc);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				sis_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				sis_stop(sc);
 		}
-		sc->sc_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCGIFMEDIA:
@@ -1951,7 +1914,7 @@ sis_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			sis_setmulti(sc);
+			sis_iff(sc);
 		error = 0;
 	}
 
