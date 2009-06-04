@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.33 2008/12/05 16:37:55 reyk Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.34 2009/06/04 14:03:22 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -91,6 +91,7 @@ check_tcp(struct ctl_tcp_event *cte)
 		}
 	}
 
+	cte->buf = NULL;
 	cte->host->up = HOST_UP;
 	event_set(&cte->ev, s, EV_TIMEOUT|EV_WRITE, tcp_write, cte);
 	event_add(&cte->ev, &tv);
