@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.250 2009/06/04 04:46:42 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.251 2009/06/04 05:29:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -225,7 +225,6 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		rib_new(-1, rr->name, rr->flags);
 		free(rr);
 	}
-
 	path_init(pathhashsize);
 	aspath_init(pathhashsize);
 	attr_init(attrhashsize);
@@ -2640,6 +2639,7 @@ void
 network_add(struct network_config *nc, int flagstatic)
 {
 	struct rde_aspath	*asp;
+	u_int16_t		 i;
 
 	asp = path_get();
 	asp->aspath = aspath_get(NULL, 0);
@@ -2651,8 +2651,9 @@ network_add(struct network_config *nc, int flagstatic)
 		asp->flags |= F_ANN_DYNAMIC;
 
 	rde_apply_set(asp, &nc->attrset, nc->prefix.af, peerself, peerself);
-	path_update(&ribs[0], peerself, asp, &nc->prefix, nc->prefixlen);
-	path_update(&ribs[1], peerself, asp, &nc->prefix, nc->prefixlen);
+	for (i = 1; i < rib_size; i++)
+		path_update(&ribs[i], peerself, asp, &nc->prefix,
+		    nc->prefixlen);
 
 	path_put(asp);
 	filterset_free(&nc->attrset);
@@ -2661,15 +2662,15 @@ network_add(struct network_config *nc, int flagstatic)
 void
 network_delete(struct network_config *nc, int flagstatic)
 {
-	u_int32_t	 flags = F_PREFIX_ANNOUNCED;
+	u_int32_t	flags = F_PREFIX_ANNOUNCED;
+	u_int32_t	i;
 
 	if (!flagstatic)
 		flags |= F_ANN_DYNAMIC;
 
-	prefix_remove(&ribs[0], peerself, &nc->prefix, nc->prefixlen,
-	    flags);
-	prefix_remove(&ribs[1], peerself, &nc->prefix, nc->prefixlen,
-	    flags);
+	for (i = rib_size - 1; i > 0; i--)
+		prefix_remove(&ribs[i], peerself, &nc->prefix, nc->prefixlen,
+		    flags);
 }
 
 void
