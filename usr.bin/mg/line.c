@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.46 2008/09/15 16:13:35 kjell Exp $	*/
+/*	$OpenBSD: line.c,v 1.47 2009/06/04 02:23:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -120,9 +120,9 @@ lchange(int flag)
 	}
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 		if (wp->w_bufp == curbp) {
-			wp->w_flag |= flag;
+			wp->w_rflag |= flag;
 			if (wp != curwp)
-				wp->w_flag |= WFFULL;
+				wp->w_rflag |= WFFULL;
 		}
 	}
 }

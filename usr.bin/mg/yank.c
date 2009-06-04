@@ -1,4 +1,4 @@
-/*	$OpenBSD: yank.c,v 1.7 2008/09/15 16:13:35 kjell Exp $	*/
+/*	$OpenBSD: yank.c,v 1.8 2009/06/04 02:23:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -188,7 +188,7 @@ killline(int f, int n)
 			if (lback(curwp->w_dotp) == curbp->b_headp)
 				break;
 			curwp->w_dotp = lback(curwp->w_dotp);
-			curwp->w_flag |= WFMOVE;
+			curwp->w_rflag |= WFMOVE;
 			chunk += llength(curwp->w_dotp) + 1;
 		}
 	}
@@ -248,7 +248,7 @@ yank(int f, int n)
 			lp = lback(lp);
 		/* adjust framing */
 		curwp->w_linep = lp;
-		curwp->w_flag |= WFFULL;
+		curwp->w_rflag |= WFFULL;
 	}
 	undo_boundary_enable(FFRAND, 1);
 	return (TRUE);

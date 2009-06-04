@@ -1,4 +1,4 @@
-/*	$OpenBSD: paragraph.c,v 1.18 2009/06/02 21:55:25 kjell Exp $	*/
+/*	$OpenBSD: paragraph.c,v 1.19 2009/06/04 02:23:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -62,7 +62,7 @@ gotobop(int f, int n)
 			}
 	}
 	/* force screen update */
-	curwp->w_flag |= WFMOVE;
+	curwp->w_rflag |= WFMOVE;
 	return (TRUE);
 }
 
@@ -106,7 +106,7 @@ gotoeop(int f, int n)
 		}
 	}
 	/* force screen update */
-	curwp->w_flag |= WFMOVE;
+	curwp->w_rflag |= WFMOVE;
 	return (TRUE);
 }
 
@@ -322,7 +322,7 @@ fillword(int f, int n)
 	(void)lnewline();
 	i = llength(curwp->w_dotp) - nce;
 	curwp->w_doto = i > 0 ? i : 0;
-	curwp->w_flag |= WFMOVE;
+	curwp->w_rflag |= WFMOVE;
 	if (nce == 0 && curwp->w_doto != 0)
 		return (fillword(f, n));
 	return (TRUE);

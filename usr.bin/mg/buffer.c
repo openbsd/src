@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.69 2009/06/02 18:52:42 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.70 2009/06/04 02:23:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -33,7 +33,7 @@ togglereadonly(int f, int n)
 		if (curbp->b_flag & BFCHG)
 			ewprintf("Warning: Buffer was modified");
 	}
-	curwp->w_flag |= WFMODE;
+	curwp->w_rflag |= WFMODE;
 
 	return (TRUE);
 }
@@ -589,7 +589,7 @@ showbuffer(struct buffer *bp, struct mgwin *wp, int flags)
 		bp->b_flag |= BFDIRTY;
 
 	if (wp->w_bufp == bp) {	/* Easy case! */
-		wp->w_flag |= flags;
+		wp->w_rflag |= flags;
 		wp->w_dotp = bp->b_dotp;
 		wp->w_doto = bp->b_doto;
 		return (TRUE);
@@ -627,7 +627,7 @@ showbuffer(struct buffer *bp, struct mgwin *wp, int flags)
 				wp->w_markline = owp->w_markline;
 				break;
 			}
-	wp->w_flag |= WFMODE | flags;
+	wp->w_rflag |= WFMODE | flags;
 	return (TRUE);
 }
 
@@ -671,7 +671,7 @@ popbuf(struct buffer *bp)
 	} else
 		for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
 			if (wp->w_bufp == bp) {
-				wp->w_flag |= WFFULL | WFFRAME;
+				wp->w_rflag |= WFFULL | WFFRAME;
 				return (wp);
 			}
 	if (showbuffer(bp, wp, WFFULL) != TRUE)
@@ -731,7 +731,7 @@ bufferinsert(int f, int n)
 		while (nline-- && lback(clp) != curbp->b_headp)
 			clp = lback(clp);
 		curwp->w_linep = clp;	/* adjust framing.	*/
-		curwp->w_flag |= WFFULL;
+		curwp->w_rflag |= WFFULL;
 	}
 	return (TRUE);
 }
@@ -749,7 +749,7 @@ notmodified(int f, int n)
 	wp = wheadp;		/* Update mode lines.	 */
 	while (wp != NULL) {
 		if (wp->w_bufp == curbp)
-			wp->w_flag |= WFMODE;
+			wp->w_rflag |= WFMODE;
 		wp = wp->w_wndp;
 	}
 	ewprintf("Modification-flag cleared");
@@ -773,7 +773,7 @@ popbuftop(struct buffer *bp)
 			if (wp->w_bufp == bp) {
 				wp->w_dotp = bp->b_dotp;
 				wp->w_doto = 0;
-				wp->w_flag |= WFFULL;
+				wp->w_rflag |= WFFULL;
 			}
 	}
 	return (popbuf(bp) != NULL);

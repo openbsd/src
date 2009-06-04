@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.36 2008/06/11 19:35:37 kjell Exp $	*/
+/*	$OpenBSD: display.c,v 1.37 2009/06/04 02:23:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -404,14 +404,14 @@ update(void)
 	if (sgarbf) {		/* must update everything */
 		wp = wheadp;
 		while (wp != NULL) {
-			wp->w_flag |= WFMODE | WFFULL;
+			wp->w_rflag |= WFMODE | WFFULL;
 			wp = wp->w_wndp;
 		}
 	}
 	if (linenos) {
 		wp = wheadp;
 		while (wp != NULL) {
-			wp->w_flag |= WFMODE;
+			wp->w_rflag |= WFMODE;
 			wp = wp->w_wndp;
 		}
 	}
@@ -420,10 +420,10 @@ update(void)
 		/*
 		 * Nothing to be done.
 		 */
-		if (wp->w_flag == 0)
+		if (wp->w_rflag == 0)
 			continue;
 
-		if ((wp->w_flag & WFFRAME) == 0) {
+		if ((wp->w_rflag & WFFRAME) == 0) {
 			lp = wp->w_linep;
 			for (i = 0; i < wp->w_ntrows; ++i) {
 				if (lp == wp->w_dotp)
@@ -457,11 +457,11 @@ update(void)
 			lp = lback(lp);
 		}
 		wp->w_linep = lp;
-		wp->w_flag |= WFFULL;	/* Force full.		 */
+		wp->w_rflag |= WFFULL;	/* Force full.		 */
 	out:
 		lp = wp->w_linep;	/* Try reduced update.	 */
 		i = wp->w_toprow;
-		if ((wp->w_flag & ~WFMODE) == WFEDIT) {
+		if ((wp->w_rflag & ~WFMODE) == WFEDIT) {
 			while (lp != wp->w_dotp) {
 				++i;
 				lp = lforw(lp);
@@ -472,7 +472,7 @@ update(void)
 			for (j = 0; j < llength(lp); ++j)
 				vtputc(lgetc(lp, j));
 			vteeol();
-		} else if ((wp->w_flag & (WFEDIT | WFFULL)) != 0) {
+		} else if ((wp->w_rflag & (WFEDIT | WFFULL)) != 0) {
 			hflag = TRUE;
 			while (i < wp->w_toprow + wp->w_ntrows) {
 				vscreen[i]->v_color = CTEXT;
@@ -487,9 +487,9 @@ update(void)
 				++i;
 			}
 		}
-		if ((wp->w_flag & WFMODE) != 0)
+		if ((wp->w_rflag & WFMODE) != 0)
 			modeline(wp);
-		wp->w_flag = 0;
+		wp->w_rflag = 0;
 		wp->w_frame = 0;
 	}
 	lp = curwp->w_linep;	/* Cursor location. */

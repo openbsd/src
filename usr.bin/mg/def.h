@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.108 2008/09/15 16:13:35 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.109 2009/06/04 02:23:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -201,7 +201,7 @@ struct mgwin {
 	char		 w_toprow;	/* Origin 0 top row of window	*/
 	char		 w_ntrows;	/* # of rows of text in window	*/
 	char		 w_frame;	/* #lines to reframe by.	*/
-	char		 w_flag;	/* Flags.			*/
+	char		 w_rflag;	/* Redisplay Flags.			*/
 	struct line	*w_wrapline;
 	int		 w_dotline;	/* current line number of dot	*/
 	int		 w_markline;	/* current line number of mark	*/
@@ -210,7 +210,7 @@ struct mgwin {
 #define w_name	w_list.l_name
 
 /*
- * Window flags are set by command processors to
+ * Window redisplay flags are set by command processors to
  * tell the display system what has happened to the buffer
  * mapped by the window. Setting "WFFULL" is always a safe thing
  * to do, but it may do more work than is necessary. Always try

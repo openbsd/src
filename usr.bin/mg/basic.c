@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.29 2008/06/10 23:23:52 kjell Exp $	*/
+/*	$OpenBSD: basic.c,v 1.30 2009/06/04 02:23:37 kjell Exp $	*/
 
 /* This file is in the public domain */
 
@@ -49,7 +49,7 @@ backchar(int f, int n)
 			}
 			curwp->w_dotp = lp;
 			curwp->w_doto = llength(lp);
-			curwp->w_flag |= WFMOVE;
+			curwp->w_rflag |= WFMOVE;
 			curwp->w_dotline--;
 		} else
 			curwp->w_doto--;
@@ -91,7 +91,7 @@ forwchar(int f, int n)
 			}
 			curwp->w_doto = 0;
 			curwp->w_dotline++;
-			curwp->w_flag |= WFMOVE;
+			curwp->w_rflag |= WFMOVE;
 		} else
 			curwp->w_doto++;
 	}
@@ -109,7 +109,7 @@ gotobob(int f, int n)
 	(void) setmark(f, n);
 	curwp->w_dotp = bfirstlp(curbp);
 	curwp->w_doto = 0;
-	curwp->w_flag |= WFFULL;
+	curwp->w_rflag |= WFFULL;
 	curwp->w_dotline = 1;
 	return (TRUE);
 }
@@ -126,7 +126,7 @@ gotoeob(int f, int n)
 	curwp->w_dotp = blastlp(curbp);
 	curwp->w_doto = llength(curwp->w_dotp);
 	curwp->w_dotline = curwp->w_bufp->b_lines;
-	curwp->w_flag |= WFFULL;
+	curwp->w_rflag |= WFFULL;
 	return (TRUE);
 }
 
@@ -157,12 +157,12 @@ forwline(int f, int n)
 		if (dlp == curbp->b_headp) {
 			curwp->w_dotp = lback(dlp);
 			curwp->w_doto = llength(curwp->w_dotp);
-			curwp->w_flag |= WFMOVE;
+			curwp->w_rflag |= WFMOVE;
 			return (TRUE);
 		}
 		curwp->w_dotline++;
 	}
-	curwp->w_flag |= WFMOVE;
+	curwp->w_rflag |= WFMOVE;
 	curwp->w_dotp = dlp;
 	curwp->w_doto = getgoal(dlp);
 
@@ -194,7 +194,7 @@ backline(int f, int n)
 	}
 	curwp->w_dotp = dlp;
 	curwp->w_doto = getgoal(dlp);
-	curwp->w_flag |= WFMOVE;
+	curwp->w_rflag |= WFMOVE;
 	return (TRUE);
 }
 
@@ -271,7 +271,7 @@ forwpage(int f, int n)
 		lp = lforw(lp);
 	}
 	curwp->w_linep = lp;
-	curwp->w_flag |= WFFULL;
+	curwp->w_rflag |= WFFULL;
 	/* if in current window, don't move dot */
 	for (n = curwp->w_ntrows; n-- && lp != curbp->b_headp; lp = lforw(lp))
 		if (lp == curwp->w_dotp)
@@ -310,7 +310,7 @@ backpage(int f, int n)
 		lp = lback(lp);
 	}
 	curwp->w_linep = lp;
-	curwp->w_flag |= WFFULL;
+	curwp->w_rflag |= WFFULL;
 	/* if in current window, don't move dot */
 	for (n = curwp->w_ntrows; n-- && lp != curbp->b_headp; lp = lforw(lp))
 		if (lp == curwp->w_dotp)
@@ -438,7 +438,7 @@ swapmark(int f, int n)
 	curwp->w_markp = odotp;
 	curwp->w_marko = odoto;
 	curwp->w_markline = odotline;
-	curwp->w_flag |= WFMOVE;
+	curwp->w_rflag |= WFMOVE;
 	return (TRUE);
 }
 
@@ -495,6 +495,6 @@ gotoline(int f, int n)
 	}
 	curwp->w_dotp = clp;
 	curwp->w_doto = 0;
-	curwp->w_flag |= WFMOVE;
+	curwp->w_rflag |= WFMOVE;
 	return (TRUE);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.69 2008/09/15 16:13:35 kjell Exp $	*/
+/*	$OpenBSD: file.c,v 1.70 2009/06/04 02:23:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -464,7 +464,7 @@ out:		lp2 = NULL;
 	}
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp) {
 		if (wp->w_bufp == curbp) {
-			wp->w_flag |= WFMODE | WFEDIT;
+			wp->w_rflag |= WFMODE | WFEDIT;
 			if (wp != curwp && lp2 != NULL) {
 				if (wp->w_dotp == lp1)
 					wp->w_dotp = lp2;
@@ -655,7 +655,7 @@ upmodes(struct buffer *bp)
 
 	for (wp = wheadp; wp != NULL; wp = wp->w_wndp)
 		if (bp == NULL || curwp->w_bufp == bp)
-			wp->w_flag |= WFMODE;
+			wp->w_rflag |= WFMODE;
 }
 
 /*

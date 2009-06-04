@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.36 2008/06/12 21:58:33 kjell Exp $	*/
+/*	$OpenBSD: search.c,v 1.37 2009/06/04 02:23:37 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -224,7 +224,7 @@ isearch(int dir)
 			curwp->w_dotp = clp;
 			curwp->w_doto = cbo;
 			curwp->w_dotline = cdotline;
-			curwp->w_flag |= WFMOVE;
+			curwp->w_rflag |= WFMOVE;
 			srch_lastdir = dir;
 			(void)ctrlg(FFRAND, 0);
 			(void)strlcpy(pat, opat, sizeof(pat));
@@ -329,7 +329,7 @@ isearch(int dir)
 				/* cursor only moves when isearching forwards */
 				if (dir == SRCH_FORW) {
 					curwp->w_doto = cbo;
-					curwp->w_flag |= WFMOVE;
+					curwp->w_rflag |= WFMOVE;
 					update();
 				}
 			}
@@ -356,7 +356,7 @@ isearch(int dir)
 				curwp->w_marko = cbo;
 				curwp->w_markline = cdotline;
 				ewprintf("Mark set");
-				curwp->w_flag |= WFMOVE;
+				curwp->w_rflag |= WFMOVE;
 				return (TRUE);
 			}
 			/* FALLTHRU */
@@ -419,7 +419,7 @@ is_pop(void)
 		curwp->w_doto = cmds[cip].s_doto;
 		curwp->w_dotp = cmds[cip].s_dotp;
 		curwp->w_dotline = cmds[cip].s_dotline;
-		curwp->w_flag |= WFMOVE;
+		curwp->w_rflag |= WFMOVE;
 		cmds[cip].s_code = SRCH_NOPR;
 	}
 	if (--cip <= 0)
@@ -614,7 +614,7 @@ retry:
 		}
 	}
 stopsearch:
-	curwp->w_flag |= WFFULL;
+	curwp->w_rflag |= WFFULL;
 	update();
 	if (rcnt == 1)
 		ewprintf("Replaced 1 occurrence");
@@ -651,7 +651,7 @@ replstr(int f, int n)
 		rcnt++;
 	}
 
-	curwp->w_flag |= WFFULL;
+	curwp->w_rflag |= WFFULL;
 	update();
 
 	if (rcnt == 1)
@@ -714,7 +714,7 @@ forwsrch(void)
 			curwp->w_dotp = tlp;
 			curwp->w_doto = tbo;
 			curwp->w_dotline = nline;
-			curwp->w_flag |= WFMOVE;
+			curwp->w_rflag |= WFMOVE;
 			return (TRUE);
 		}
 fail:		;
@@ -777,7 +777,7 @@ backsrch(void)
 			curwp->w_dotp = tlp;
 			curwp->w_doto = tbo;
 			curwp->w_dotline = nline;
-			curwp->w_flag |= WFMOVE;
+			curwp->w_rflag |= WFMOVE;
 			return (TRUE);
 		}
 fail:		;
