@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.10 2009/06/04 19:30:19 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.11 2009/06/04 19:37:26 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -206,7 +206,7 @@ static struct urtw_pair urtw_8225_rf_part3[] = {
 	{ 0x4a, 0x05 }, { 0x4b, 0x02 }, { 0x4c, 0x05 }
 };
 
-static uint16_t urtw_8225_rxgain[] = {	
+static uint16_t urtw_8225_rxgain[] = {
 	0x0400, 0x0401, 0x0402, 0x0403, 0x0404, 0x0405, 0x0408, 0x0409,
 	0x040a, 0x040b, 0x0502, 0x0503, 0x0504, 0x0505, 0x0540, 0x0541,
 	0x0542, 0x0543, 0x0544, 0x0545, 0x0580, 0x0581, 0x0582, 0x0583,
@@ -1040,7 +1040,7 @@ urtw_8225_isv2(struct urtw_softc *sc, int *ret)
 	usbd_delay_ms(sc->sc_udev, 500);
 
 	urtw_8225_write(sc, 0x0, 0x1b7);
-	
+
 	error = urtw_8225_read(sc, 0x8, &data);
 	if (error != 0)
 		goto fail;
@@ -1144,7 +1144,7 @@ urtw_get_macaddr(struct urtw_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	usbd_status error;
 	uint32_t data;
-	
+
 	error = urtw_eprom_read32(sc, URTW_EPROM_MACADDR, &data);
 	if (error != 0)
 		goto fail;
@@ -1551,7 +1551,7 @@ urtw_reset(struct urtw_softc *sc)
 		printf("%s: reset timeout\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
-	
+
 	error = urtw_set_mode(sc, URTW_EPROM_CMD_LOAD);
 	if (error)
 		goto fail;
@@ -1777,7 +1777,7 @@ urtw_led_blink(struct urtw_softc *sc)
 
 	sc->sc_gpio_blinkstate = (sc->sc_gpio_blinkstate != URTW_LED_ON) ?
 	    URTW_LED_ON : URTW_LED_OFF;
-	
+
 	switch (sc->sc_gpio_ledstate) {
 	case URTW_LED_BLINK_NORMAL:
 		t.tv_sec = 0;
@@ -1856,7 +1856,7 @@ urtw_set_rate(struct urtw_softc *sc)
 	basic_rate = urtw_rate2rtl(48);
 	min_rr_rate = urtw_rate2rtl(12);
 	max_rr_rate = urtw_rate2rtl(48);
-	
+
 	urtw_write8_m(sc, URTW_RESP_RATE,
 	    max_rr_rate << URTW_RESP_MAX_RATE_SHIFT |
 	    min_rr_rate << URTW_RESP_MIN_RATE_SHIFT);
@@ -1912,7 +1912,7 @@ urtw_rx_setconf(struct urtw_softc *sc)
 		data = data | URTW_RX_FILTER_NICMAC;
 		data = data | URTW_RX_CHECK_BSSID;
 	}
-	
+
 	data = data &~ URTW_RX_FIFO_THRESHOLD_MASK;
 	data = data | URTW_RX_FIFO_THRESHOLD_NONE | URTW_RX_AUTORESETPHY;
 	data = data &~ URTW_MAX_RX_DMA_MASK;
@@ -2579,7 +2579,7 @@ urtw_8225_set_txpwrlvl(struct urtw_softc *sc, int chan)
 	uint8_t cck_pwrlvl = sc->sc_txpwr_cck[chan] & 0xff;
 	uint8_t ofdm_pwrlvl = sc->sc_txpwr_ofdm[chan] & 0xff;
 	usbd_status error;
-	
+
 	cck_pwrlvl_max = 11;
 	ofdm_pwrlvl_max = 25;	/* 12 -> 25  */
 	ofdm_pwrlvl_min = 10;
@@ -2598,12 +2598,12 @@ urtw_8225_set_txpwrlvl(struct urtw_softc *sc, int chan)
 		    cck_pwltable[idx * 8 + i]);
 	}
 	usbd_delay_ms(sc->sc_udev, 1);
-	
+
 	/* OFDM power setting */
 	ofdm_pwrlvl = (ofdm_pwrlvl > (ofdm_pwrlvl_max - ofdm_pwrlvl_min)) ?
 	    ofdm_pwrlvl_max : ofdm_pwrlvl + ofdm_pwrlvl_min;
 	ofdm_pwrlvl = (ofdm_pwrlvl > 35) ? 35 : ofdm_pwrlvl;
-	
+
 	idx = ofdm_pwrlvl % 6;
 	set = ofdm_pwrlvl / 6;
 
@@ -2677,7 +2677,7 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 	urtw_8225_write(sc, 0x2, 0x44d);
 	usbd_delay_ms(sc->sc_udev, 200);
 	urtw_8225_write(sc, 0x0, 0x127);
-	
+
 	for (i = 0; i < 95; i++) {
 		urtw_8225_write(sc, 0x1, (uint8_t)(i + 1));
 		urtw_8225_write(sc, 0x2, urtw_8225_rxgain[i]);
@@ -2685,7 +2685,7 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 
 	urtw_8225_write(sc, 0x0, 0x27);
 	urtw_8225_write(sc, 0x0, 0x22f);
-	
+
 	for (i = 0; i < 128; i++) {
 		urtw_8187_write_phy_ofdm(sc, 0xb, urtw_8225_agc[i]);
 		urtw_8187_write_phy_ofdm(sc, 0xa, (uint8_t)i + 0x80);
@@ -2696,7 +2696,7 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 		    urtw_8225_rf_part2[i].val);
 		usbd_delay_ms(sc->sc_udev, 1);
 	}
-	
+
 	error = urtw_8225_setgain(sc, 4);
 	if (error)
 		goto fail;
@@ -2712,7 +2712,7 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 	error = urtw_8225_set_txpwrlvl(sc, 1);
 	if (error)
 		goto fail;
-	
+
 	urtw_8187_write_phy_cck(sc, 0x10, 0x9b);
 	usbd_delay_ms(sc->sc_udev, 1);
 	urtw_8187_write_phy_ofdm(sc, 0x26, 0x90);
@@ -2749,7 +2749,7 @@ urtw_8225_rf_set_chan(struct urtw_softc *sc, int chan)
 		urtw_write8_m(sc, URTW_SLOT, 0x9);
 	else
 		urtw_write8_m(sc, URTW_SLOT, 0x14);
-	
+
 	if (IEEE80211_IS_CHAN_G(c)) {
 		urtw_write8_m(sc, URTW_DIFS, 0x14);
 		urtw_write8_m(sc, URTW_EIFS, 0x5b - 0x14);
@@ -2774,14 +2774,14 @@ urtw_8225_rf_set_sens(struct urtw_softc *sc, int sens)
 
 	if (sens > 4)
 		urtw_8225_write(sc, 0x0c, 0x850);
-	else	
+	else
 		urtw_8225_write(sc, 0x0c, 0x50);
 
 	sens = 6 - sens;
 	error = urtw_8225_setgain(sc, sens);
 	if (error)
 		goto fail;
-	
+
 	urtw_8187_write_phy_cck(sc, 0x41, urtw_8225_threshold[sens]);
 
 fail:
@@ -2882,7 +2882,7 @@ urtw_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		ifp->if_ierrors++;
 		goto skip;
 	}
-		
+
 	m = data->m;
 	data->m = mnew;
 	data->buf = mtod(mnew, uint8_t *);
@@ -2980,7 +2980,7 @@ urtw_8225v2_set_txpwrlvl(struct urtw_softc *sc, int chan)
 	urtw_write8_m(sc, URTW_TX_GAIN_CCK,
 	    urtw_8225v2_tx_gain_cck_ofdm[cck_pwrlvl]);
 	usbd_delay_ms(sc->sc_udev, 1);
-	
+
 	/* OFDM power setting */
 	ofdm_pwrlvl = (ofdm_pwrlvl > (ofdm_pwrlvl_max - ofdm_pwrlvl_min)) ?
 		ofdm_pwrlvl_max : ofdm_pwrlvl + ofdm_pwrlvl_min;
@@ -3091,7 +3091,7 @@ urtw_8225v2_rf_init(struct urtw_softc *sc)
 		urtw_8187_write_phy_ofdm(sc, urtw_8225v2_rf_part2[i].reg,
 		    urtw_8225v2_rf_part2[i].val);
 	}
-	
+
 	error = urtw_8225v2_setgain(sc, 4);
 	if (error)
 		goto fail;
@@ -3106,7 +3106,7 @@ urtw_8225v2_rf_init(struct urtw_softc *sc)
 	error = urtw_8225v2_set_txpwrlvl(sc, 1);
 	if (error)
 		goto fail;
-	
+
 	urtw_8187_write_phy_cck(sc, 0x10, 0x9b);
 	urtw_8187_write_phy_ofdm(sc, 0x26, 0x90);
 
@@ -3142,7 +3142,7 @@ urtw_8225v2_rf_set_chan(struct urtw_softc *sc, int chan)
 		urtw_write8_m(sc, URTW_SLOT, 0x9);
 	else
 		urtw_write8_m(sc, URTW_SLOT, 0x14);
-	
+
 	if (IEEE80211_IS_CHAN_G(c)) {
 		urtw_write8_m(sc, URTW_DIFS, 0x14);
 		urtw_write8_m(sc, URTW_EIFS, 0x5b - 0x14);
@@ -3169,7 +3169,7 @@ urtw_set_chan(struct urtw_softc *sc, struct ieee80211_channel *c)
 	if (chan == 0 || chan == IEEE80211_CHAN_ANY)
 		return;
 	/*
-	 * during changing th channel we need to temporarily be disable
+	 * During changing the channel we need to temporary be disable
 	 * TX.
 	 */
 	urtw_read32_m(sc, URTW_TX_CONF, &data);
@@ -3222,7 +3222,7 @@ urtw_task(void *arg)
 		urtw_set_chan(sc, ic->ic_bss->ni_chan);
 		timeout_add(&sc->scan_to, hz / 5);
 		break;
-	
+
 	case IEEE80211_S_AUTH:
 	case IEEE80211_S_ASSOC:
 		urtw_set_chan(sc, ic->ic_bss->ni_chan);
@@ -3238,7 +3238,7 @@ urtw_task(void *arg)
 		urtw_update_msr(sc);
 		/* XXX maybe the below would be incorrect.  */
 		urtw_write16_m(sc, URTW_ATIM_WND, 2);
-		urtw_write16_m(sc, URTW_ATIM_TR_ITV, 100);	
+		urtw_write16_m(sc, URTW_ATIM_TR_ITV, 100);
 		urtw_write16_m(sc, URTW_BEACON_INTERVAL, 0x64);
 		urtw_write16_m(sc, URTW_BEACON_INTERVAL_TIME, 100);
 		error = urtw_led_ctl(sc, URTW_LED_CTL_LINK);
@@ -3255,3 +3255,4 @@ fail:
 		DPRINTF(("%s: error duing processing RUN state.",
 		    sc->sc_dev.dv_xname));
 }
+
