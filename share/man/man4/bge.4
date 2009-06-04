@@ -1,4 +1,4 @@
-.\" $OpenBSD: bge.4,v 1.45 2009/06/01 14:17:38 jmc Exp $
+.\" $OpenBSD: bge.4,v 1.46 2009/06/04 04:09:02 naddy Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 1 2009 $
+.Dd $Mdocdate: June 4 2009 $
 .Dt BGE 4
 .Os
 .Sh NAME
@@ -112,11 +112,11 @@ SysKonnect SK-9D41 (1000baseSX)
 .Pp
 The
 .Nm
-driver supports
-IP, TCP, and UDP checksum offload for receive,
-IP checksum offload for transmit,
-VLAN tag insertion and stripping, as well as a 256-bit multicast hash
-filter.
+driver supports IPv4 IP, TCP, and UDP checksum offload for receive,
+IP checksum offload for transmit, VLAN tag insertion and stripping,
+as well as a 256-bit multicast hash filter.
+The BCM5754, BCM5755, BCM5761, BCM5784, BCM5785, BCM5787 and BCM577x0
+chips also support IPv6 receive TCP/UDP checksum offload.
 .Pp
 The BCM5700, BCM5701, BCM5703 and BCM5704 chips are capable of
 supporting Jumbo frames, which can be configured via the

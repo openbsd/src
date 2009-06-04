@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.270 2009/06/04 00:59:21 naddy Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.271 2009/06/04 04:09:02 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3102,6 +3102,7 @@ bge_init(void *xsc)
 	struct bge_softc *sc = xsc;
 	struct ifnet *ifp;
 	u_int16_t *m;
+	u_int32_t rxmode;
 	int s;
 
 	s = splnet();
@@ -3187,8 +3188,13 @@ bge_init(void *xsc)
 	/* Turn on transmitter */
 	BGE_SETBIT(sc, BGE_TX_MODE, BGE_TXMODE_ENABLE);
 
+	rxmode = BGE_RXMODE_ENABLE;
+
+	if (BGE_IS_5755_PLUS(sc))
+		rxmode |= BGE_RXMODE_RX_IPV6_CSUM_ENABLE;
+
 	/* Turn on receiver */
-	BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
+	BGE_SETBIT(sc, BGE_RX_MODE, rxmode);
 
 	CSR_WRITE_4(sc, BGE_MAX_RX_FRAME_LOWAT, 2);
 
