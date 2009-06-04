@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.44 2009/06/02 16:23:45 krw Exp $
+#	$OpenBSD: install.md,v 1.45 2009/06/04 00:44:46 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,6 @@
 
 MDXAPERTURE=2
 MDXDM=y
-ARCH=ARCH
 NCPU=$(sysctl -n hw.ncpufound)
 
 ((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp" ; SANESETS="bsd bsd.mp" ; }

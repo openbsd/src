@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.63 2009/06/02 16:23:45 krw Exp $
+#	$OpenBSD: install.md,v 1.64 2009/06/04 00:44:47 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -36,7 +36,6 @@
 MDTERM=sun
 MDXDM=y
 MDDKDEVS='/^sd[0-9] /s/ .*//p;/^x[dy][0-9] /s/ .*//p'
-ARCH=ARCH
 
 md_installboot() {
 	local _prefix

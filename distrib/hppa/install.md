@@ -1,10 +1,9 @@
-#	$OpenBSD: install.md,v 1.14 2009/06/02 16:23:45 krw Exp $
+#	$OpenBSD: install.md,v 1.15 2009/06/04 00:44:46 krw Exp $
 #
 # machine dependent section of installation/upgrade script.
 #
 
 MDTERM=vt100
-ARCH=ARCH
 
 md_installboot() {
 	/sbin/disklabel -B $1

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.22 2009/06/02 16:23:45 krw Exp $
+#	$OpenBSD: install.md,v 1.23 2009/06/04 00:44:48 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,7 +33,6 @@
 #
 
 MDXDM=y
-ARCH=ARCH
 
 md_installboot() {
 }

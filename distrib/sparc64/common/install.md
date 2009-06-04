@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.32 2009/06/02 16:23:45 krw Exp $
+#	$OpenBSD: install.md,v 1.33 2009/06/04 00:44:47 krw Exp $
 #	$NetBSD: install.md,v 1.3.2.5 1996/08/26 15:45:28 gwr Exp $
 #
 #
@@ -36,7 +36,6 @@
 MDTERM=sun
 MDXAPERTURE=1
 MDXDM=y
-ARCH=ARCH
 NCPU=$(sysctl -n hw.ncpufound)
 
 ((NCPU > 1)) && { DEFAULTSETS="bsd bsd.rd bsd.mp" ; SANESETS="bsd bsd.mp" ; }

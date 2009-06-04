@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.19 2009/06/02 16:23:45 krw Exp $
+#	$OpenBSD: install.md,v 1.20 2009/06/04 00:44:47 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 # machine dependent section of installation/upgrade script.
 #
 
-ARCH=ARCH
 IPARCH=`sysctl -n hw.model`
 
 MDSETS="bsd.${IPARCH} bsd.rd.${IPARCH}"

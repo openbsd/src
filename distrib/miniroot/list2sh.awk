@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.15 2009/05/30 03:58:03 miod Exp $
+#	$OpenBSD: list2sh.awk,v 1.16 2009/06/04 00:44:47 krw Exp $
 #	$NetBSD: list2sh.awk,v 1.2 1996/05/04 15:45:31 pk Exp $
 
 BEGIN {
@@ -100,7 +100,7 @@ $1 == "TERMCAP" {
 }
 $1 == "SCRIPT" {
 	printf("echo '%s'\n", $0);
-	printf("sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' -e \"s/^ARCH=ARCH$/ARCH=`arch -ks`/\" < %s > ${TARGDIR}/%s\n",
+	printf("sed -e '/^[ 	]*#[ 	].*$/d' -e '/^[ 	]*#$/d' < %s > ${TARGDIR}/%s\n",
 	    $2, $3);
 	next;
 }

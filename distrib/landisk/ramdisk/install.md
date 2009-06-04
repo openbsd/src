@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.23 2009/06/02 16:23:45 krw Exp $
+#	$OpenBSD: install.md,v 1.24 2009/06/04 00:44:47 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,8 +31,6 @@
 #
 # machine dependent section of installation/upgrade script.
 #
-
-ARCH=ARCH
 
 md_installboot() {
 	disklabel -B ${1}
