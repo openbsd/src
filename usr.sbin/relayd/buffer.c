@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.17 2009/06/03 05:35:06 eric Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.18 2009/06/04 07:16:38 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -21,19 +21,12 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 
-#include <net/if.h>
-
 #include <errno.h>
-#include <event.h>
-#include <limits.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include <openssl/ssl.h>
-
-#include "relayd.h"
+#include "imsg.h"
 
 int	buf_realloc(struct buf *, size_t);
 void	buf_enqueue(struct msgbuf *, struct buf *);

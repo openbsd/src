@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.119 2009/06/03 05:35:06 eric Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.120 2009/06/04 07:16:38 eric Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -19,6 +19,9 @@
  */
 
 #include <sys/tree.h>
+
+#include "imsg.h"
+
 
 #define CONF_FILE		"/etc/relayd.conf"
 #define RELAYD_SOCKET		"/var/run/relayd.sock"
@@ -47,7 +50,6 @@
 #define RELAY_MAXLOOKUPLEVELS	5
 
 #define SMALL_READ_BUF_SIZE	1024
-#define READ_BUF_SIZE		65535
 #define ICMP_BUF_SIZE		64
 
 #define PURGE_TABLES		0x01
@@ -70,114 +72,6 @@ struct shuffle {
 	int		 isindex;
 };
 
-/* buffer */
-struct buf {
-	TAILQ_ENTRY(buf)	 entry;
-	u_char			*buf;
-	size_t			 size;
-	size_t			 max;
-	size_t			 wpos;
-	size_t			 rpos;
-	int			 fd;
-};
-
-struct msgbuf {
-	TAILQ_HEAD(, buf)	 bufs;
-	u_int32_t		 queued;
-	int			 fd;
-};
-
-#define IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
-#define MAX_IMSGSIZE		8192
-
-struct buf_read {
-	u_char			 buf[READ_BUF_SIZE];
-	u_char			*rptr;
-	size_t			 wpos;
-};
-
-struct imsg_fd {
-	TAILQ_ENTRY(imsg_fd)	entry;
-	int			fd;
-};
-
-struct imsgbuf {
-	TAILQ_HEAD(, imsg_fd)	 fds;
-	struct buf_read		 r;
-	struct msgbuf		 w;
-	struct event		 ev;
-	void			(*handler)(int, short, void *);
-	int			 fd;
-	pid_t			 pid;
-	short			 events;
-};
-
-enum imsg_type {
-	IMSG_NONE,
-	IMSG_CTL_OK,		/* answer to relayctl requests */
-	IMSG_CTL_FAIL,
-	IMSG_CTL_END,
-	IMSG_CTL_RDR,
-	IMSG_CTL_TABLE,
-	IMSG_CTL_HOST,
-	IMSG_CTL_RELAY,
-	IMSG_CTL_SESSION,
-	IMSG_CTL_TABLE_CHANGED,
-	IMSG_CTL_PULL_RULESET,
-	IMSG_CTL_PUSH_RULESET,
-	IMSG_CTL_SHOW_SUM,	/* relayctl requests */
-	IMSG_CTL_RDR_ENABLE,
-	IMSG_CTL_RDR_DISABLE,
-	IMSG_CTL_TABLE_ENABLE,
-	IMSG_CTL_TABLE_DISABLE,
-	IMSG_CTL_HOST_ENABLE,
-	IMSG_CTL_HOST_DISABLE,
-	IMSG_CTL_SHUTDOWN,
-	IMSG_CTL_RELOAD,
-	IMSG_CTL_POLL,
-	IMSG_CTL_NOTIFY,
-	IMSG_CTL_RDR_STATS,
-	IMSG_CTL_RELAY_STATS,
-	IMSG_RDR_ENABLE,	/* notifies from pfe to hce */
-	IMSG_RDR_DISABLE,
-	IMSG_TABLE_ENABLE,
-	IMSG_TABLE_DISABLE,
-	IMSG_HOST_ENABLE,
-	IMSG_HOST_DISABLE,
-	IMSG_HOST_STATUS,	/* notifies from hce to pfe */
-	IMSG_SYNC,
-	IMSG_NATLOOK,
-	IMSG_DEMOTE,
-	IMSG_STATISTICS,
-	IMSG_RECONF,		/* reconfiguration notifies */
-	IMSG_RECONF_TABLE,
-	IMSG_RECONF_SENDBUF,
-	IMSG_RECONF_HOST,
-	IMSG_RECONF_RDR,
-	IMSG_RECONF_VIRT,
-	IMSG_RECONF_PROTO,
-	IMSG_RECONF_REQUEST_TREE,
-	IMSG_RECONF_RESPONSE_TREE,
-	IMSG_RECONF_PNODE_KEY,
-	IMSG_RECONF_PNODE_VAL,
-	IMSG_RECONF_RELAY,
-	IMSG_RECONF_END,
-	IMSG_SCRIPT,
-	IMSG_SNMPSOCK,
-	IMSG_BINDANY
-};
-
-struct imsg_hdr {
-	u_int16_t	 type;
-	u_int16_t	 len;
-	u_int32_t	 peerid;
-	pid_t		 pid;
-};
-
-struct imsg {
-	struct imsg_hdr	 hdr;
-	void		*data;
-};
 
 typedef u_int32_t objid_t;
 
@@ -769,13 +663,6 @@ struct relayd	*parse_config(const char *, int);
 int		 cmdline_symset(char *);
 
 /* log.c */
-void	log_init(int);
-void	log_warn(const char *, ...);
-void	log_warnx(const char *, ...);
-void	log_info(const char *, ...);
-void	log_debug(const char *, ...);
-__dead void fatal(const char *);
-__dead void fatalx(const char *);
 const char *host_error(enum host_error);
 const char *host_status(enum host_status);
 const char *table_check(enum table_check);
@@ -783,38 +670,6 @@ const char *print_availability(u_long, u_long);
 const char *print_host(struct sockaddr_storage *, char *, size_t);
 const char *print_time(struct timeval *, struct timeval *, char *, size_t);
 const char *print_httperror(u_int);
-
-/* buffer.c */
-struct buf	*buf_open(size_t);
-struct buf	*buf_dynamic(size_t, size_t);
-int		 buf_add(struct buf *, const void *, size_t);
-void		*buf_reserve(struct buf *, size_t);
-void		*buf_seek(struct buf *, size_t, size_t);
-size_t		 buf_size(struct buf *);
-size_t		 buf_left(struct buf *);
-void		 buf_close(struct msgbuf *, struct buf *);
-void		 buf_free(struct buf *);
-void		 msgbuf_init(struct msgbuf *);
-void		 msgbuf_clear(struct msgbuf *);
-int		 msgbuf_write(struct msgbuf *);
-
-/* imsg.c */
-void	 imsg_init(struct imsgbuf *, int, void (*)(int, short, void *));
-ssize_t	 imsg_read(struct imsgbuf *);
-ssize_t	 imsg_get(struct imsgbuf *, struct imsg *);
-int	 imsg_compose(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
-	    int, void *, u_int16_t);
-int	 imsg_composev(struct imsgbuf *, enum imsg_type, u_int32_t,
-	    pid_t, int, const struct iovec *, int);
-struct buf *imsg_create(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
-	    u_int16_t);
-int	 imsg_add(struct buf *, void *, u_int16_t);
-int	 imsg_close(struct imsgbuf *, struct buf *);
-void	 imsg_free(struct imsg *);
-void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
-int	 imsg_get_fd(struct imsgbuf *);
-int	 imsg_flush(struct imsgbuf *);
-void	 imsg_clear(struct imsgbuf *);
 
 /* pfe.c */
 pid_t	 pfe(struct relayd *, int [2], int [2], int [RELAY_MAXPROC][2],
@@ -944,4 +799,3 @@ void	 snmp_hosttrap(struct table *, struct host *);
 /* shuffle.c */
 void		shuffle_init(struct shuffle *);
 u_int16_t	shuffle_generate16(struct shuffle *);
-

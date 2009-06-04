@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.15 2009/06/03 05:35:06 eric Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.16 2009/06/04 07:16:38 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,21 +17,16 @@
  */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
 #include <sys/uio.h>
 
-#include <net/if.h>
-
 #include <errno.h>
-#include <event.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include <openssl/ssl.h>
-
-#include "relayd.h"
+#include "imsg.h"
 
 void
 imsg_init(struct imsgbuf *ibuf, int fd, void (*handler)(int, short, void *))
