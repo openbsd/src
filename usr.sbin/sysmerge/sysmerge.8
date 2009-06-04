@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysmerge.8,v 1.24 2009/05/12 20:58:15 jmc Exp $
+.\"	$OpenBSD: sysmerge.8,v 1.25 2009/06/04 23:24:17 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 12 2009 $
+.Dd $Mdocdate: June 4 2009 $
 .Dt SYSMERGE 8
 .Os
 .Sh NAME
@@ -103,7 +103,7 @@ Automatic mode.
 only compares files whose reference sources have changed since the last run
 and attempts to automatically upgrade them to the newest version,
 provided that they have no local changes.
-It automatically installs missing files
+It automatically installs missing files, binaries
 and updates files differing only by CVS Id.
 .Pp
 Files whose reference sources have matching CVS Id are skipped from comparison.

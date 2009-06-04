@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.42 2009/05/13 22:27:48 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.43 2009/06/04 23:24:17 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -377,8 +377,8 @@ diff_loop() {
 						FORCE_UPG=1
 					fi
 				done
-				# automatically install files which differ only by CVS Id
-				if [ -z "`diff -q -I'[$]OpenBSD:.*$' "${DESTDIR}${COMPFILE#.}" "${COMPFILE}"`" -o -n "${FORCE_UPG}" ]; then
+				# automatically install files which differ only by CVS Id or that are binaries
+				if [ -z "`diff -q -I'[$]OpenBSD:.*$' "${DESTDIR}${COMPFILE#.}" "${COMPFILE}"`" -o -n "${FORCE_UPG}" -o -n "${IS_BINFILE}" ]; then
 					if mm_install "${COMPFILE}"; then
 						echo "===> ${COMPFILE} installed successfully"
 						AUTO_INSTALLED_FILES="${AUTO_INSTALLED_FILES}${DESTDIR}${COMPFILE#.}\n"
