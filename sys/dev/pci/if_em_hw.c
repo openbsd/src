@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.32 2009/06/03 17:39:44 claudio Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.33 2009/06/04 05:08:43 claudio Exp $ */
 
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
@@ -442,6 +442,12 @@ em_set_mac_type(struct em_hw *hw)
         break;
     case E1000_DEV_ID_82575EB_PT:
     case E1000_DEV_ID_82575EB_PF:
+    case E1000_DEV_ID_82575GB_QP:
+    case E1000_DEV_ID_82576:
+    case E1000_DEV_ID_82576_FIBER:
+    case E1000_DEV_ID_82576_SERDES:
+    case E1000_DEV_ID_82576_QUAD_COPPER:
+    case E1000_DEV_ID_82576_NS:
 	hw->mac_type = em_82575;
 	hw->initialize_hw_bits_disable = 1;
 	break;

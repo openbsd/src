@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.28 2009/06/03 17:39:44 claudio Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.29 2009/06/04 05:08:43 claudio Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -512,6 +512,12 @@ int32_t em_check_phy_reset_block(struct em_hw *hw);
 #define E1000_DEV_ID_ICH10_D_BM_LF       0x10DF
 #define E1000_DEV_ID_82575EB_PT          0x10A7
 #define E1000_DEV_ID_82575EB_PF          0x10A9
+#define E1000_DEV_ID_82575GB_QP		 0x10D6
+#define E1000_DEV_ID_82576		 0x10C9
+#define E1000_DEV_ID_82576_FIBER	 0x10E6
+#define E1000_DEV_ID_82576_SERDES	 0x10E7
+#define E1000_DEV_ID_82576_QUAD_COPPER	 0x10E8
+#define E1000_DEV_ID_82576_NS		 0x150A
 
 #define NODE_ADDRESS_SIZE 6
 #define ETH_LENGTH_OF_ADDRESS 6
