@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.215 2009/04/27 22:52:55 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.216 2009/06/04 19:07:21 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -142,6 +142,7 @@ void	setifrtlabel(const char *, int);
 void	setiflladdr(const char *, int);
 void	setifdstaddr(const char *, int);
 void	setifflags(const char *, int);
+void	setifxflags(const char *, int);
 void	setifbroadaddr(const char *, int);
 void	setifdesc(const char *, int);
 void	unsetifdesc(const char *, int);
@@ -411,6 +412,7 @@ const struct	cmd {
 	{ "-flowsrc",	1,		0,		unsetpflow_sender },
 	{ "flowdst", 	NEXTARG,	0,		setpflow_receiver },
 	{ "-flowdst", 1,		0,		unsetpflow_receiver },
+	{ "-inet6",	IFXF_NOINET6,	0,		setifxflags } ,
 #endif
 	{ NULL, /*src*/	0,		0,		setifaddr },
 	{ NULL, /*dst*/	0,		0,		setifdstaddr },
@@ -501,6 +503,7 @@ main(int argc, char *argv[])
 	int Cflag = 0;
 	int gflag = 0;
 	int i;
+	int noprint = 0;
 
 	/* If no args at all, print all interfaces.  */
 	if (argc < 2) {
@@ -589,6 +592,12 @@ main(int argc, char *argv[])
 		create = (argc > 0) && strcmp(argv[0], "destroy") != 0;
 		(void)getinfo(&ifr, create);
 	}
+#ifdef INET6
+	if (argc == 0 && af == AF_INET6)
+		noprint = 1;	/* handles "ifconfig <if> inet6" */
+	if (af == AF_INET6)
+		setifxflags("inet6", -IFXF_NOINET6);
+#endif
 	while (argc > 0) {
 		const struct cmd *p;
 
@@ -644,7 +653,7 @@ nextarg:
 		argc--, argv++;
 	}
 
-	if (argc == 0 && actions == 0) {
+	if (argc == 0 && actions == 0 && !noprint) {
 		printif(ifr.ifr_name, 1);
 		exit(0);
 	}
@@ -1111,6 +1120,29 @@ setifflags(const char *vname, int value)
 	my_ifr.ifr_flags = flags;
 	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&my_ifr) < 0)
 		err(1, "SIOCSIFFLAGS");
+}
+
+/* ARGSUSED */
+void
+setifxflags(const char *vname, int value)
+{
+	struct ifreq my_ifr;
+
+	bcopy((char *)&ifr, (char *)&my_ifr, sizeof(struct ifreq));
+
+	if (ioctl(s, SIOCGIFXFLAGS, (caddr_t)&my_ifr) < 0)
+		warn("SIOCGIFXFLAGS");
+	(void) strlcpy(my_ifr.ifr_name, name, sizeof(my_ifr.ifr_name));
+	flags = my_ifr.ifr_flags;
+
+	if (value < 0) {
+		value = -value;
+		flags &= ~value;
+	} else
+		flags |= value;
+	my_ifr.ifr_flags = flags;
+	if (ioctl(s, SIOCSIFXFLAGS, (caddr_t)&my_ifr) < 0)
+		warn("SIOCSIFXFLAGS");
 }
 
 #ifdef INET6

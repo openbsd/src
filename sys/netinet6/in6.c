@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.81 2009/03/15 19:40:41 miod Exp $	*/
+/*	$OpenBSD: in6.c,v 1.82 2009/06/04 19:07:21 henning Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -795,6 +795,11 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	    ifra->ifra_dstaddr.sin6_family != AF_INET6 &&
 	    ifra->ifra_dstaddr.sin6_family != AF_UNSPEC)
 		return (EAFNOSUPPORT);
+
+	/* must have link-local */
+	if (ifp->if_xflags & IFXF_NOINET6)
+		return (EAFNOSUPPORT);
+
 	/*
 	 * validate ifra_prefixmask.  don't check sin6_family, netmask
 	 * does not carry fields other than sin6_len.

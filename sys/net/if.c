@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.192 2009/06/01 17:49:11 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.193 2009/06/04 19:07:21 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1113,7 +1113,8 @@ if_up(struct ifnet *ifp)
 #endif
 	rt_ifmsg(ifp);
 #ifdef INET6
-	in6_if_up(ifp);
+	if (!(ifp->if_xflags & IFXF_NOINET6))
+		in6_if_up(ifp);
 #endif
 
 #ifndef SMALL_KERNEL
@@ -1249,6 +1250,10 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		ifr->ifr_flags = ifp->if_flags;
 		break;
 
+	case SIOCGIFXFLAGS:
+		ifr->ifr_flags = ifp->if_xflags;
+		break;
+
 	case SIOCGIFMETRIC:
 		ifr->ifr_metric = ifp->if_metric;
 		break;
@@ -1279,6 +1284,24 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			(ifr->ifr_flags &~ IFF_CANTCHANGE);
 		if (ifp->if_ioctl)
 			(void) (*ifp->if_ioctl)(ifp, cmd, data);
+		break;
+
+	case SIOCSIFXFLAGS:
+		if ((error = suser(p, 0)) != 0)
+			return (error);
+
+		/* when IFXF_NOINET6 gets changed, detach/attach */
+		if (ifp->if_flags & IFF_UP && ifr->ifr_flags & IFXF_NOINET6 &&
+		    !(ifp->if_xflags & IFXF_NOINET6))
+			in6_ifdetach(ifp);
+		if (ifp->if_flags & IFF_UP && ifp->if_xflags & IFXF_NOINET6 &&
+		    !(ifr->ifr_flags & IFXF_NOINET6)) {
+			ifp->if_xflags &= ~IFXF_NOINET6;
+			in6_if_up(ifp);
+		}
+
+		ifp->if_xflags = (ifp->if_xflags & IFXF_CANTCHANGE) |
+			(ifr->ifr_flags &~ IFXF_CANTCHANGE);
 		break;
 
 	case SIOCSIFMETRIC:
@@ -1514,7 +1537,8 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 		microtime(&ifp->if_lastchange);
 #ifdef INET6
-		if ((ifp->if_flags & IFF_UP) != 0) {
+		if (!(ifp->if_xflags & IFXF_NOINET6) &&
+		    (ifp->if_flags & IFF_UP) != 0) {
 			int s = splnet();
 			in6_if_up(ifp);
 			splx(s);
