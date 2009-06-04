@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.72 2008/06/12 06:58:34 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.73 2009/06/04 21:13:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -213,6 +213,9 @@ finished:
 	if (partoffp)
 		*partoffp = fsoff;
 
+	DL_SETBSTART(lp, fsoff);
+	DL_SETBEND(lp, DL_GETDSIZE(lp));	/* XXX */
+
 	if (spoofonly)
 		goto done;
 
@@ -227,7 +230,8 @@ finished:
 		goto done;
 	}
 
-	return checkdisklabel(bp->b_data + LABELOFFSET, lp);
+	return checkdisklabel(bp->b_data + LABELOFFSET, lp, fsoff,
+	    DL_GETDSIZE(lp));	/* XXX */
 
 done:
 	if (dbp) {

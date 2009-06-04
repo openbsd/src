@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.216 2009/06/02 21:38:36 chl Exp $	*/
+/*	$OpenBSD: editor.c,v 1.217 2009/06/04 21:13:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.216 2009/06/02 21:38:36 chl Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.217 2009/06/04 21:13:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1457,7 +1457,6 @@ getdisktype(struct disklabel *lp, char *banner, char *dev)
 /*
  * Get beginning and ending sectors of the OpenBSD portion of the disk
  * from the user.
- * XXX - should mention MBR values if DOSLABEL
  */
 void
 set_bounds(struct disklabel *lp)
@@ -1546,67 +1545,13 @@ free_chunks(struct disklabel *lp)
 	return(chunks);
 }
 
-/*
- * What is the OpenBSD portion of the disk?  Uses the MBR if applicable.
- */
 void
 find_bounds(struct disklabel *lp)
 {
-	int has_bounds = 0;
+	starting_sector = DL_GETBSTART(lp);
+	ending_sector = DL_GETBEND(lp);
 
-	/* Defaults */
-	/* XXX - reserve a cylinder for hp300? */
-	starting_sector = 0;
-	ending_sector = DL_GETDSIZE(lp);
-
-#ifdef DOSLABEL
-	/*
-	 * If we have an MBR, use values from the OpenBSD partition.
-	 */
-	if (dosdp) {
-		if (dosdp->dp_typ == DOSPTYP_OPENBSD) {
-			struct partition *pp;
-			u_int64_t new_end;
-			int i;
-
-			/* Set start and end based on fdisk partition bounds */
-			starting_sector = letoh32(dosdp->dp_start);
-			ending_sector = starting_sector + letoh32(dosdp->dp_size);
-
-			/*
-			 * If there are any BSD or SWAP partitions beyond
-			 * ending_sector we extend ending_sector to include
-			 * them.  This is done because the BIOS geometry is
-			 * generally different from the disk geometry.
-			 */
-			for (i = new_end = 0; i < lp->d_npartitions; i++) {
-				pp = &lp->d_partitions[i];
-				if ((pp->p_fstype == FS_BSDFFS ||
-				    pp->p_fstype == FS_SWAP) &&
-				    DL_GETPSIZE(pp) + DL_GETPOFFSET(pp) >
-					new_end)
-					new_end = DL_GETPSIZE(pp) +
-					    DL_GETPOFFSET(pp);
-			}
-			if (new_end > ending_sector)
-				ending_sector = new_end;
-		} else {
-			/* Don't trounce the MBR */
-			starting_sector = 63;
-		}
-
-		has_bounds = 1;
-	}
-#endif
-#ifdef DPMELABEL
-	if (dpme_label) {
-		starting_sector = dpme_obsd_start;
-		ending_sector = dpme_obsd_start + dpme_obsd_size;
-		has_bounds = 1;
-	}
-#endif
-
-	if (has_bounds) {
+	if (ending_sector) {
 		if (verbose)
 			printf("Treating sectors %llu-%llu as the OpenBSD"
 			    " portion of the disk.\nYou can use the 'b'"

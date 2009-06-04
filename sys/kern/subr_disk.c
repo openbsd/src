@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.91 2009/06/03 22:09:30 thib Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.92 2009/06/04 21:13:02 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -209,6 +209,8 @@ initdisklabel(struct disklabel *lp)
 	if (DL_GETPSIZE(&lp->d_partitions[RAW_PART]) == 0)
 		DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
 	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
+	DL_SETBSTART(lp, 0);
+	DL_SETBEND(lp, DL_GETDSIZE(lp));
 	lp->d_version = 1;
 	lp->d_bbsize = 8192;
 	lp->d_sbsize = 64*1024;			/* XXX ? */
@@ -220,7 +222,8 @@ initdisklabel(struct disklabel *lp)
  * a newer version if needed, etc etc.
  */
 char *
-checkdisklabel(void *rlp, struct disklabel *lp)
+checkdisklabel(void *rlp, struct disklabel *lp,
+	u_int64_t boundstart, u_int64_t boundend)
 {
 	struct disklabel *dlp = rlp;
 	struct __partitionv0 *v0pp;
@@ -281,10 +284,6 @@ checkdisklabel(void *rlp, struct disklabel *lp)
 
 		dlp->d_rpm = swap16(dlp->d_rpm);
 		dlp->d_interleave = swap16(dlp->d_interleave);
-		dlp->d_trackskew = swap16(dlp->d_trackskew);
-		dlp->d_cylskew = swap16(dlp->d_cylskew);
-		dlp->d_headswitch = swap32(dlp->d_headswitch);
-		dlp->d_trkseek = swap32(dlp->d_trkseek);
 		dlp->d_flags = swap32(dlp->d_flags);
 
 		for (i = 0; i < NDDATA; i++)
@@ -361,6 +360,8 @@ checkdisklabel(void *rlp, struct disklabel *lp)
 	DL_SETDSIZE(lp, disksize);
 	DL_SETPSIZE(&lp->d_partitions[RAW_PART], disksize);
 	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
+	DL_SETBSTART(lp, boundstart);
+	DL_SETBEND(lp, boundend);
 
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
@@ -380,12 +381,11 @@ char *
 readdoslabel(struct buf *bp, void (*strat)(struct buf *),
     struct disklabel *lp, int *partoffp, int spoofonly)
 {
+	u_int64_t dospartoff = 0, dospartend = DL_GETBEND(lp);
+	int i, ourpart = -1, wander = 1, n = 0, loop = 0, offset;
 	struct dos_partition dp[NDOSPART], *dp2;
-	u_int32_t extoff = 0;
 	daddr64_t part_blkno = DOSBBSECTOR;
-	int dospartoff = 0, i, ourpart = -1;
-	int wander = 1, n = 0, loop = 0;
-	int offset;
+	u_int32_t extoff = 0;
 
 	if (lp->d_secpercyl == 0)
 		return ("invalid label, d_secpercyl == 0");
@@ -444,6 +444,7 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 			 */
 			dp2 = &dp[ourpart];
 			dospartoff = letoh32(dp2->dp_start) + part_blkno;
+			dospartend = dospartoff + letoh32(dp2->dp_size);
 
 			/* found our OpenBSD partition, finish up */
 			if (partoffp)
@@ -574,6 +575,8 @@ donot:
 		lp->d_partitions['i' - 'a'].p_fstype = FS_MSDOS;
 	}
 notfat:
+	DL_SETBSTART(lp, dospartoff);
+	DL_SETBEND(lp, dospartend);
 
 	/* record the OpenBSD partition's placement for the caller */
 	if (partoffp)
@@ -593,7 +596,7 @@ notfat:
 		return ("disk label I/O error");
 
 	/* sub-MBR disklabels are always at a LABELOFFSET of 0 */
-	return checkdisklabel(bp->b_data + offset, lp);
+	return checkdisklabel(bp->b_data + offset, lp, dospartoff, dospartend);
 }
 
 /*

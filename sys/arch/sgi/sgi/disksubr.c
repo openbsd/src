@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.13 2009/05/28 17:05:50 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.14 2009/06/04 21:13:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -117,6 +117,7 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 	char *msg = NULL;
 	int i, *p, cs = 0;
 	int fsoffs = 0;
+	u_int fslen;
 	int offset;
 
 	if (partoffp)
@@ -142,6 +143,7 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 		goto done;
 	}
 	fsoffs = dlp->partitions[0].first * (dlp->dp.dp_secbytes / DEV_BSIZE);
+	fslen = dlp->partitions[0].blocks * (dlp->dp.dp_secbytes / DEV_BSIZE);
 
 	/*
 	 * If the disklabel is about to be written to disk, don't modify it!
@@ -189,6 +191,8 @@ readsgilabel(struct buf *bp, void (*strat)(struct buf *),
 		}
 	}
 
+	DL_GETBSTART(lp, fsoffs);
+	DL_GETBSIZE(lp, fsoffs + fslen);
 	lp->d_version = 1;
 	lp->d_flags = D_VENDOR;
 	lp->d_checksum = 0;
@@ -208,7 +212,7 @@ finished:
 		goto done;
 	}
 
-	return checkdisklabel(bp->b_data + offset, lp);
+	return checkdisklabel(bp->b_data + offset, lp, fsoffs, fsoffs + fslen);
 
 done:
 	return (msg);

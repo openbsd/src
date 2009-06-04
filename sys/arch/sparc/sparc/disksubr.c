@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.80 2009/05/13 01:31:58 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.81 2009/06/04 21:13:02 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -97,7 +97,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	}
 #endif /* NCD > 0 */
 
-	/* get a buffer and initialize it */
+	/* get buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
@@ -119,7 +119,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 	}
 
-	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp);
+	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp, 0, DL_GETDSIZE(lp));
 	if (msg == NULL)
 		goto done;
 
@@ -159,7 +159,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp)
 	struct buf *bp = NULL;
 	int error;
 
-	/* get a buffer and initialize it */
+	/* get buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 
@@ -234,7 +234,7 @@ sun_extended_sum(struct sun_disklabel *sl, void *end)
  *
  * The BSD label is cleared out before this is called.
  */
-char *
+static char *
 disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 {
 	struct sun_preamble *preamble = (struct sun_preamble *)sl;
@@ -385,7 +385,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
-	return (checkdisklabel(lp, lp));
+	return (checkdisklabel(lp, lp, 0, DL_GETDSIZE(lp)));
 }
 
 /*

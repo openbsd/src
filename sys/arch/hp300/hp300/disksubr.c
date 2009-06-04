@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.44 2008/06/12 06:58:33 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.45 2009/06/04 21:13:01 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		goto done;
 	}
 
-	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp);
+	msg = checkdisklabel(bp->b_data + LABELOFFSET, lp, 0, DL_GETDSIZE(lp));
 	if (msg == NULL)
 		goto done;
 
