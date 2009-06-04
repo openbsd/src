@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.81 2009/06/04 09:58:40 oga Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.82 2009/06/04 17:42:23 deraadt Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -479,7 +479,7 @@ pool_do_get(struct pool *pp, int flags)
 	struct pool_item_header *ph;
 	void *v;
 	int slowdown = 0;
-#ifdef POOL_DEBUG
+#if defined(DIAGNOSTIC) && defined(POOL_DEBUG)
 	int i, *ip;
 #endif
 
@@ -684,7 +684,7 @@ pool_do_put(struct pool *pp, void *v)
 {
 	struct pool_item *pi = v;
 	struct pool_item_header *ph;
-#ifdef POOL_DEBUG
+#if defined(POOL_DEBUG) && defined(DIAGNOSTIC)
 	int i, *ip;
 #endif
 
@@ -826,7 +826,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	unsigned int align = pp->pr_align;
 	unsigned int ioff = pp->pr_itemoffset;
 	int n;
-#ifdef POOL_DEBUG
+#if defined(POOL_DEBUG) && defined(DIAGNOSTIC)
 	int i, *ip;
 #endif
 
