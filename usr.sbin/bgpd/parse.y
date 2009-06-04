@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.226 2009/06/04 04:46:42 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.227 2009/06/04 22:08:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -111,8 +111,10 @@ struct filter_match_l {
 struct peer	*alloc_peer(void);
 struct peer	*new_peer(void);
 struct peer	*new_group(void);
-int		 add_mrtconfig(enum mrt_type, char *, time_t, struct peer *);
+int		 add_mrtconfig(enum mrt_type, char *, time_t, struct peer *,
+		    char *);
 int		 add_rib(char *, int);
+int		 find_rib(char *);
 int		 get_id(struct peer *);
 int		 expand_rule(struct filter_rule *, struct filter_peers_l *,
 		    struct filter_match_l *, struct filter_set_head *);
@@ -489,11 +491,41 @@ conf_main	: AS as4number		{
 				YYERROR;
 			}
 			free($2);
-			if (add_mrtconfig(action, $3, $4, NULL) == -1) {
+			if (add_mrtconfig(action, $3, $4, NULL, NULL) == -1) {
 				free($3);
 				YYERROR;
 			}
 			free($3);
+		}
+		| DUMP RIB STRING STRING STRING optnumber		{
+			int action;
+
+			if ($6 < 0 || $6 > UINT_MAX) {
+				yyerror("bad timeout");
+				free($3);
+				free($4);
+				free($5);
+				YYERROR;
+			}
+			if (!strcmp($4, "table"))
+				action = MRT_TABLE_DUMP;
+			else if (!strcmp($4, "table-mp"))
+				action = MRT_TABLE_DUMP_MP;
+			else {
+				yyerror("unknown mrt dump type");
+				free($3);
+				free($4);
+				free($5);
+				YYERROR;
+			}
+			free($4);
+			if (add_mrtconfig(action, $5, $6, NULL, $3) == -1) {
+				free($3);
+				free($5);
+				YYERROR;
+			}
+			free($3);
+			free($5);
 		}
 		| mrtdump
 		| RDE STRING EVALUATE		{
@@ -577,7 +609,8 @@ mrtdump		: DUMP STRING inout STRING optnumber	{
 				free($4);
 				YYERROR;
 			}
-			if (add_mrtconfig(action, $4, $5, curpeer) == -1) {
+			if (add_mrtconfig(action, $4, $5, curpeer, NULL) ==
+			    -1) {
 				free($2);
 				free($4);
 				YYERROR;
@@ -2536,11 +2569,15 @@ new_group(void)
 }
 
 int
-add_mrtconfig(enum mrt_type type, char *name, time_t timeout, struct peer *p)
+add_mrtconfig(enum mrt_type type, char *name, time_t timeout, struct peer *p,
+    char *rib)
 {
 	struct mrt	*m, *n;
 
 	LIST_FOREACH(m, mrtconf, entry) {
+		if ((rib && strcmp(rib, m->rib)) ||
+		    (!rib && *m->rib))
+			continue;
 		if (p == NULL) {
 			if (m->peer_id != 0 || m->group_id != 0)
 				continue;
@@ -2576,6 +2613,20 @@ add_mrtconfig(enum mrt_type type, char *name, time_t timeout, struct peer *p)
 			n->group_id = 0;
 		}
 	}
+	if (rib) {
+		if (!find_rib(rib)) {
+			yyerror("rib \"%s\" does not exist.", rib);
+			free(n);
+			return (-1);
+		}
+		if (strlcpy(n->rib, rib, sizeof(n->rib)) >=
+		    sizeof(n->rib)) {
+			yyerror("rib name \"%s\" too long: max %u",
+			    name, sizeof(n->rib) - 1);
+			free(n);
+			return (-1);
+		}
+	}
 
 	LIST_INSERT_HEAD(mrtconf, n, entry);
 
@@ -2587,11 +2638,9 @@ add_rib(char *name, int noeval)
 {
 	struct rde_rib	*rr;
 
-	SIMPLEQ_FOREACH(rr, &ribnames, entry) {
-		if (!strcmp(rr->name, name)) {
-			yyerror("rib \"%s\" allready exists.", name);
-			return (-1);
-		}
+	if (find_rib(name)) {
+		yyerror("rib \"%s\" allready exists.", name);
+		return (-1);
 	}
 
 	if ((rr = calloc(1, sizeof(*rr))) == NULL) {
@@ -2606,6 +2655,18 @@ add_rib(char *name, int noeval)
 	if (noeval)
 		rr->flags |= F_RIB_NOEVALUATE;
 	SIMPLEQ_INSERT_TAIL(&ribnames, rr, entry);
+	return (0);
+}
+
+int
+find_rib(char *name)
+{
+	struct rde_rib	*rr;
+
+	SIMPLEQ_FOREACH(rr, &ribnames, entry) {
+		if (!strcmp(rr->name, name))
+			return (1);
+	}
 	return (0);
 }
 

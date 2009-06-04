@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.60 2009/05/17 12:25:15 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.61 2009/06/04 22:08:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -676,8 +676,8 @@ mrt_get(struct mrt_head *c, struct mrt *m)
 	LIST_FOREACH(t, c, entry) {
 		if (t->type != m->type)
 			continue;
-		if (t->type == MRT_TABLE_DUMP)
-			return (t);
+		if (strcmp(t->rib, m->rib))
+			continue;
 		if (t->peer_id == m->peer_id &&
 		    t->group_id == m->group_id)
 			return (t);

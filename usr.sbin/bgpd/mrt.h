@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.20 2009/05/17 12:25:15 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.21 2009/06/04 22:08:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -271,6 +271,7 @@ enum mrt_state {
 };
 
 struct mrt {
+	char			rib[PEER_DESCR_LEN];
 	struct msgbuf		wbuf;
 	LIST_ENTRY(mrt)		entry;
 	u_int32_t		peer_id;

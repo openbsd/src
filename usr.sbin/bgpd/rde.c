@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.251 2009/06/04 05:29:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.252 2009/06/04 22:08:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -630,9 +630,12 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				rib_dump(&ribs[0], rde_softreconfig_in, NULL,
 				AF_UNSPEC);
 			/* then sync peers */
-			if (reconf_out)
-				rib_dump(&ribs[1], rde_softreconfig_out, NULL,
-				AF_UNSPEC);
+			if (reconf_out) {
+				int i;
+				for (i = 1; i < rib_size; i++)
+					rib_dump(&ribs[i], rde_softreconfig_out,
+					    NULL, AF_UNSPEC);
+			}
 
 			while ((r = TAILQ_FIRST(rules_l)) != NULL) {
 				TAILQ_REMOVE(rules_l, r, entry);
@@ -681,15 +684,22 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				    "but didn't receive any");
 			else if (xmrt->type == MRT_TABLE_DUMP ||
 			    xmrt->type == MRT_TABLE_DUMP_MP) {
+				u_int16_t id;
+
 				/* do not dump if another is still running */
-				if (mrt == NULL || mrt->wbuf.queued == 0) {
+				id = rib_find(mrt->rib);
+				if (id == RIB_FAILED)
+					log_warnx("non existing RIB %s for mrt "
+					    "dump", mrt->rib);
+				else if (mrt == NULL || mrt->wbuf.queued == 0) {
 					free(mrt);
 					mrt = xmrt;
 					mrt_clear_seq();
-					rib_dump(&ribs[1], mrt_dump_upcall, mrt,
-					    AF_UNSPEC);
+					rib_dump(&ribs[id], mrt_dump_upcall,
+					    mrt, AF_UNSPEC);
 					break;
-				}
+				} else
+					log_warnx("dump failed: already in progress");
 			}
 			close(xmrt->wbuf.fd);
 			free(xmrt);
@@ -2058,6 +2068,8 @@ rde_softreconfig_out(struct rib_entry *re, void *ptr)
 	pt_getaddr(pt, &addr);
 	LIST_FOREACH(peer, &peerlist, peer_l) {
 		if (peer->conf.id == 0)
+			continue;
+		if (peer->ribid != re->ribid)
 			continue;
 		if (peer->reconf_out == 0)
 			continue;
