@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfxp.c,v 1.2 2009/06/03 23:55:31 kettenis Exp $	*/
+/*	$OpenBSD: gfxp.c,v 1.3 2009/06/04 00:13:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -60,11 +60,14 @@
 #define  PM2_SYNC_TAG			0x00000188
 
 #define PM2_RENDER		0x8038
+#define  PM2_RENDER_FASTFILL		0x00000008
+#define  PM2_RENDER_RECT		0x000000c0
 #define  PM2_INCREASE_X			0x00200000
 #define  PM2_INCREASE_Y			0x00400000
-#define  PM2_RENDER_RECT		0x000000c0
 #define PM2_RECT_ORIG		0x80d0
 #define PM2_RECT_SIZE		0x80d8
+
+#define PM2_FB_BLOCK_COLOR	0x8ac8
 
 #define PM2_FILTER_MODE		0x8c00
 #define  PM2_FM_PASS_SYNC_TAG		0x00000400
@@ -215,10 +218,8 @@ gfxp_attach(struct device *parent, struct device *self, void *aux)
 
 	ri->ri_ops.copyrows = gfxp_copyrows;
 	ri->ri_ops.copycols = gfxp_copycols;
-#if 0
-	ri->ri_ops.eraserows = raptor_eraserows;
-	ri->ri_ops.erasecols = raptor_erasecols;
-#endif
+	ri->ri_ops.eraserows = gfxp_eraserows;
+	ri->ri_ops.erasecols = gfxp_erasecols;
 
 	if (console)
 		fbwscons_console_init(&sc->sc_sunfb, -1);
@@ -481,4 +482,17 @@ gfxp_copyrect(struct gfxp_softc *sc, int sx, int sy, int dx, int dy,
 void
 gfxp_fillrect(struct gfxp_softc *sc, int x, int y, int w, int h, int color)
 {
+	gfxp_wait_fifo(sc, 5);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_CONFIG,
+	    PM2_CONFIG_FB_WRITE_EN);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_RECT_ORIG,
+	    PM2_COORDS(x, y));
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_RECT_SIZE,
+	    PM2_COORDS(w, h));
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_FB_BLOCK_COLOR,
+	    color);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2_RENDER,
+	    PM2_RENDER_RECT | PM2_RENDER_FASTFILL);
+
+	gfxp_wait(sc);
 }
