@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.19 2009/06/02 12:50:29 kurt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.20 2009/06/04 23:32:06 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -201,13 +201,10 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 		return (ENXIO);
 	}
 
-#ifdef DIAGNOSTIC
-	if (curproc != &proc0)
-		panic("acpi_sleep_machdep: sleeping in non-kernel proc");
-#endif
-
 	if (rcr3() != pmap_kernel()->pm_pdirpa) {
 		pmap_activate(curproc);
+		
+		KASSERT(rcr3() == pmap_kernel()->pm_pdirpa);
 	}
 
 	/*
