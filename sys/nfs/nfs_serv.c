@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.68 2009/06/04 18:44:27 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.69 2009/06/04 18:55:49 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -2168,16 +2168,19 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 		error = EEXIST;
 		goto out;
 	}
+
 	error = VOP_MKDIR(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
-	if (!error) {
-		vp = nd.ni_vp;
-		bzero((caddr_t)fhp, sizeof(nfh));
-		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
-		error = VFS_VPTOFH(vp, &fhp->fh_fid);
-		if (!error)
-			error = VOP_GETATTR(vp, &va, cred, procp);
-		vput(vp);
-	}
+	if (error)
+		goto out;
+
+	vp = nd.ni_vp;
+	bzero((caddr_t)fhp, sizeof(nfh));
+	fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
+	error = VFS_VPTOFH(vp, &fhp->fh_fid);
+	if (!error)
+		error = VOP_GETATTR(vp, &va, cred, procp);
+	vput(vp);
+
 out:
 	if (dirp) {
 		diraft_ret = VOP_GETATTR(dirp, &diraft, cred, procp);
