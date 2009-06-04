@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.14 2009/06/04 20:07:34 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.15 2009/06/04 20:51:44 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -213,7 +213,7 @@ static struct urtw_pair urtw_8225_rf_part1[] = {
 	{ 0x00, 0x0067 }, { 0x01, 0x0fe0 }, { 0x02, 0x044d }, { 0x03, 0x0441 },
 	{ 0x04, 0x0486 }, { 0x05, 0x0bc0 }, { 0x06, 0x0ae6 }, { 0x07, 0x082a },
 	{ 0x08, 0x001f }, { 0x09, 0x0334 }, { 0x0a, 0x0fd4 }, { 0x0b, 0x0391 },
-	{ 0x0c, 0x0050 }, { 0x0d, 0x06db }, { 0x0e, 0x0029 }, { 0x0f, 0x0914 },
+	{ 0x0c, 0x0050 }, { 0x0d, 0x06db }, { 0x0e, 0x0029 }, { 0x0f, 0x0914 }
 };
 
 static struct urtw_pair urtw_8225_rf_part2[] = {
@@ -255,7 +255,7 @@ static uint16_t urtw_8225_rxgain[] = {
 };
 
 static uint8_t urtw_8225_threshold[] = {
-	0x8d, 0x8d, 0x8d, 0x8d, 0x9d, 0xad, 0xbd,
+	0x8d, 0x8d, 0x8d, 0x8d, 0x9d, 0xad, 0xbd
 };
 
 static uint8_t urtw_8225_tx_gain_cck_ofdm[] = {
@@ -346,7 +346,7 @@ static uint8_t urtw_8225v2_tx_gain_cck_ofdm[] = {
 	0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11,
 	0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
 	0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d,
-	0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23,
+	0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23
 };
 
 static uint8_t urtw_8225v2_txpwr_cck[] = {
@@ -1120,7 +1120,7 @@ urtw_get_rfchip(struct urtw_softc *sc)
 		break;
 	default:
 		panic("unsupported RF chip %d\n", data & 0xff);
-		/* never reach */
+		/* NOTREACHED */
 	}
 
 fail:
@@ -1614,11 +1614,11 @@ urtw_led_on(struct urtw_softc *sc, int type)
 		default:
 			panic("unsupported LED PIN type 0x%x",
 			    sc->sc_gpio_ledpin);
-			/* never reach */
+			/* NOTREACHED */
 		}
 	} else {
 		panic("unsupported LED type 0x%x", type);
-		/* never reach */
+		/* NOTREACHED */
 	}
 
 	sc->sc_gpio_ledon = 1;
@@ -1640,11 +1640,11 @@ urtw_led_off(struct urtw_softc *sc, int type)
 		default:
 			panic("unsupported LED PIN type 0x%x",
 			    sc->sc_gpio_ledpin);
-			/* never reach */
+			/* NOTREACHED */
 		}
 	} else {
 		panic("unsupported LED type 0x%x", type);
-		/* never reach */
+		/* NOTREACHED */
 	}
 
 	sc->sc_gpio_ledon = 0;
@@ -1674,7 +1674,7 @@ urtw_led_mode0(struct urtw_softc *sc, int mode)
 		break;
 	default:
 		panic("unsupported LED mode 0x%x", mode);
-		/* never reach */
+		/* NOTREACHED */
 	}
 
 	switch (sc->sc_gpio_ledstate) {
@@ -1700,7 +1700,7 @@ urtw_led_mode0(struct urtw_softc *sc, int mode)
 		break;
 	default:
 		panic("unknown LED status 0x%x", sc->sc_gpio_ledstate);
-		/* never reach */
+		/* NOTREACHED */
 	}
 	return (0);
 }
@@ -1708,21 +1708,18 @@ urtw_led_mode0(struct urtw_softc *sc, int mode)
 usbd_status
 urtw_led_mode1(struct urtw_softc *sc, int mode)
 {
-
 	return (USBD_INVAL);
 }
 
 usbd_status
 urtw_led_mode2(struct urtw_softc *sc, int mode)
 {
-
 	return (USBD_INVAL);
 }
 
 usbd_status
 urtw_led_mode3(struct urtw_softc *sc, int mode)
 {
-
 	return (USBD_INVAL);
 }
 
@@ -1769,7 +1766,7 @@ urtw_led_ctl(struct urtw_softc *sc, int mode)
 		break;
 	default:
 		panic("unsupported LED mode %d\n", sc->sc_strategy);
-		/* never reach */
+		/* NOTREACHED */
 	}
 
 	return (error);
@@ -1819,7 +1816,7 @@ urtw_led_blink(struct urtw_softc *sc)
 		break;
 	default:
 		panic("unknown LED status 0x%x", sc->sc_gpio_ledstate);
-		/* never reach */
+		/* NOTREACHED */
 	}
 	return (0);
 }
@@ -1843,7 +1840,7 @@ urtw_update_msr(struct urtw_softc *sc)
 		default:
 			panic("unsupported operation mode 0x%x\n",
 			    ic->ic_opmode);
-			/* never reach */
+			/* NOTREACHED */
 		}
 	} else
 		data |= URTW_MSR_LINK_NONE;
@@ -2097,7 +2094,7 @@ urtw_init(struct ifnet *ifp)
 		error = usbd_set_config_no(sc->sc_udev, URTW_CONFIG_NO, 0);
 		if (error != 0) {
 			printf("%s: could not set configuration no\n",
-			     sc->sc_dev.dv_xname);
+			    sc->sc_dev.dv_xname);
 			goto fail;
 		}
 		/* get the first interface handle */
@@ -2185,7 +2182,7 @@ urtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if ((ifp->if_flags & IFF_RUNNING) &&
 			    ((ifp->if_flags ^ sc->sc_if_flags) &
 			    (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
-			    	urtw_set_multi(sc);
+				urtw_set_multi(sc);
 			} else {
 				if (!(ifp->if_flags & IFF_RUNNING))
 					urtw_init(ifp);
@@ -2219,7 +2216,7 @@ urtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ieee80211_ioctl(ifp, cmd, data);
 		if (error == ENETRESET &&
 		    ic->ic_opmode == IEEE80211_M_MONITOR) {
-		    	urtw_set_chan(sc, ic->ic_ibss_chan);
+			urtw_set_chan(sc, ic->ic_ibss_chan);
 			error = 0;
 		}
 		break;
@@ -2261,7 +2258,7 @@ urtw_start(struct ifnet *ifp)
 			if (sc->sc_tx_low_queued >= URTW_TX_DATA_LIST_COUNT ||
 			    sc->sc_tx_normal_queued >=
 			    URTW_TX_DATA_LIST_COUNT) {
-			    	ifp->if_flags |= IFF_OACTIVE;
+				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
@@ -2283,7 +2280,7 @@ urtw_start(struct ifnet *ifp)
 			if (sc->sc_tx_low_queued >= URTW_TX_DATA_LIST_COUNT ||
 			    sc->sc_tx_normal_queued >=
 			    URTW_TX_DATA_LIST_COUNT) {
-			    	ifp->if_flags |= IFF_OACTIVE;
+				ifp->if_flags |= IFF_OACTIVE;
 				break;
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
@@ -2577,7 +2574,6 @@ fail:
 usbd_status
 urtw_8187_write_phy_ofdm_c(struct urtw_softc *sc, uint8_t addr, uint32_t data)
 {
-
 	data = data & 0xff;
 	return (urtw_8187_write_phy(sc, addr, data));
 }
@@ -2585,7 +2581,6 @@ urtw_8187_write_phy_ofdm_c(struct urtw_softc *sc, uint8_t addr, uint32_t data)
 usbd_status
 urtw_8187_write_phy_cck_c(struct urtw_softc *sc, uint8_t addr, uint32_t data)
 {
-
 	data = data & 0xff;
 	return (urtw_8187_write_phy(sc, addr, data | 0x10000));
 }
@@ -2698,6 +2693,7 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 	error = urtw_8185_rf_pins_enable(sc);
 	if (error)
 		goto fail;
+
 	usbd_delay_ms(sc->sc_udev, 500);
 
 	for (i = 0; i < nitems(urtw_8225_rf_part1); i++) {
