@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.115 2009/06/03 20:17:59 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.116 2009/06/04 04:46:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -246,6 +246,7 @@ struct rib_context {
 	struct rib			*ctx_rib;
 	void		(*ctx_upcall)(struct rib_entry *, void *);
 	void		(*ctx_done)(void *);
+	void		(*ctx_wait)(void *);
 	void				*ctx_arg;
 	unsigned int			 ctx_count;
 	sa_family_t			 ctx_af;
@@ -345,8 +346,7 @@ void		 community_delete(struct rde_aspath *, int, int);
 extern u_int16_t	 rib_size;
 extern struct rib	*ribs;
 
-void		 rib_init(void);
-u_int16_t	 rib_new(u_int16_t, char *, u_int16_t);
+u_int16_t	 rib_new(int, char *, u_int16_t);
 void		 rib_free(struct rib *);
 struct rib_entry *rib_get(struct rib *, struct bgpd_addr *, int);
 struct rib_entry *rib_lookup(struct rib *, struct bgpd_addr *);

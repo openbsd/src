@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.99 2008/09/11 14:49:58 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.100 2009/06/04 04:46:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -228,7 +228,8 @@ struct ctl_timer {
 void		 session_socket_blockmode(int, enum blockmodes);
 pid_t		 session_main(struct bgpd_config *, struct peer *,
 		    struct network_head *, struct filter_head *,
-		    struct mrt_head *, int[2], int[2], int[2], int[2]);
+		    struct mrt_head *, struct rib_names *,
+		    int[2], int[2], int[2], int[2]);
 void		 bgp_fsm(struct peer *, enum session_events);
 int		 session_neighbor_rrefresh(struct peer *p);
 struct peer	*getpeerbyaddr(struct bgpd_addr *);
@@ -255,8 +256,8 @@ void	 prepare_listeners(struct bgpd_config *);
 
 /* rde.c */
 pid_t	 rde_main(struct bgpd_config *, struct peer *, struct network_head *,
-	    struct filter_head *, struct mrt_head *, int[2], int[2], int[2],
-	    int[2], int);
+	    struct filter_head *, struct mrt_head *, struct rib_names *,
+	    int[2], int[2], int[2], int[2], int);
 
 /* control.c */
 int	control_init(int, char *);

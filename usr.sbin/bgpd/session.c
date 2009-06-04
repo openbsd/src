@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.290 2009/05/27 04:18:21 reyk Exp $ */
+/*	$OpenBSD: session.c,v 1.291 2009/06/04 04:46:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -177,8 +177,8 @@ setup_listeners(u_int *la_cnt)
 pid_t
 session_main(struct bgpd_config *config, struct peer *cpeers,
     struct network_head *net_l, struct filter_head *rules,
-    struct mrt_head *m_l, int pipe_m2s[2], int pipe_s2r[2], int pipe_m2r[2],
-    int pipe_s2rctl[2])
+    struct mrt_head *m_l, struct rib_names *rib_l, int pipe_m2s[2],
+    int pipe_s2r[2], int pipe_m2r[2], int pipe_s2rctl[2])
 {
 	int			 nfds, timeout;
 	unsigned int		 i, j, idx_peers, idx_listeners, idx_mrts;
@@ -195,6 +195,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	struct pollfd		*pfd = NULL;
 	struct ctl_conn		*ctl_conn;
 	struct listen_addr	*la;
+	struct rde_rib		*rr;
 	void			*newp;
 	short			 events;
 
@@ -282,6 +283,11 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	while ((m = LIST_FIRST(m_l)) != NULL) {
 		LIST_REMOVE(m, entry);
 		free(m);
+	}
+	/* rib names not used in the SE */
+	while ((rr = SIMPLEQ_FIRST(&ribnames))) {
+		SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
+		free(rr);
 	}
 
 	while (session_quit == 0) {

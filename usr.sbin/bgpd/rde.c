@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.249 2009/06/02 01:02:28 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.250 2009/06/04 04:46:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -139,8 +139,8 @@ u_int32_t	nexthophashsize = 64;
 pid_t
 rde_main(struct bgpd_config *config, struct peer *peer_l,
     struct network_head *net_l, struct filter_head *rules,
-    struct mrt_head *mrt_l, int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2],
-    int pipe_s2rctl[2], int debug)
+    struct mrt_head *mrt_l, struct rib_names *rib_n, int pipe_m2r[2],
+    int pipe_s2r[2], int pipe_m2s[2], int pipe_s2rctl[2], int debug)
 {
 	pid_t			 pid;
 	struct passwd		*pw;
@@ -150,6 +150,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	struct filter_rule	*f;
 	struct filter_set	*set;
 	struct nexthop		*nh;
+	struct rde_rib		*rr;
 	int			 i, timeout;
 
 	switch (pid = fork()) {
@@ -219,7 +220,12 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	free(config->listen_addrs);
 
 	pt_init();
-	rib_init();
+	while ((rr = SIMPLEQ_FIRST(&ribnames))) {
+		SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
+		rib_new(-1, rr->name, rr->flags);
+		free(rr);
+	}
+
 	path_init(pathhashsize);
 	aspath_init(pathhashsize);
 	attr_init(attrhashsize);
@@ -1035,12 +1041,15 @@ done:
 	return (error);
 }
 
+extern u_int16_t rib_size;
+
 void
 rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
     struct bgpd_addr *prefix, u_int8_t prefixlen)
 {
 	struct rde_aspath	*fasp;
 	int			 r = 0;
+	u_int16_t		 i;
 
 	peer->prefix_rcvd_update++;
 	/* add original path to the Adj-RIB-In */
@@ -1057,7 +1066,8 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 
 	rde_update_log("update", peer, &fasp->nexthop->exit_nexthop,
 	    prefix, prefixlen);
-	r += path_update(&ribs[1], peer, fasp, prefix, prefixlen);
+	for (i = 1; i < rib_size; i++)
+		r += path_update(&ribs[i], peer, fasp, prefix, prefixlen);
 
 done:
 	/* free modified aspath */
@@ -1073,12 +1083,16 @@ rde_update_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
     u_int8_t prefixlen)
 {
 	int r = 0;
+	u_int16_t i;
 
 	peer->prefix_rcvd_withdraw++;
 	rde_update_log("withdraw", peer, NULL, prefix, prefixlen);
 
-	r += prefix_remove(&ribs[1], peer, prefix, prefixlen, 0);
-	r += prefix_remove(&ribs[0], peer, prefix, prefixlen, 0);
+	for (i = rib_size - 1; ; i--) {
+		r += prefix_remove(&ribs[i], peer, prefix, prefixlen, 0);
+		if (i == 0)
+			break;
+	}
 
 	if (r)
 		peer->prefix_cnt--;

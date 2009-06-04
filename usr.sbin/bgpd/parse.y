@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.225 2009/05/27 04:18:21 reyk Exp $ */
+/*	$OpenBSD: parse.y,v 1.226 2009/06/04 04:46:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -39,6 +39,7 @@
 #include "bgpd.h"
 #include "mrt.h"
 #include "session.h"
+#include "rde.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {
@@ -111,6 +112,7 @@ struct peer	*alloc_peer(void);
 struct peer	*new_peer(void);
 struct peer	*new_group(void);
 int		 add_mrtconfig(enum mrt_type, char *, time_t, struct peer *);
+int		 add_rib(char *, int);
 int		 get_id(struct peer *);
 int		 expand_rule(struct filter_rule *, struct filter_peers_l *,
 		    struct filter_match_l *, struct filter_set_head *);
@@ -155,7 +157,7 @@ typedef struct {
 %}
 
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE RTABLE
-%token	RDE EVALUATE IGNORE COMPARE
+%token	RDE RIB EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
 %token	ANNOUNCE DEMOTE CONNECTRETRY
@@ -380,6 +382,24 @@ conf_main	: AS as4number		{
 				conf->flags |= BGPD_FLAG_NO_EVALUATE;
 			else
 				conf->flags &= ~BGPD_FLAG_NO_EVALUATE;
+		}
+		| RDE RIB STRING {
+			if (add_rib($3, 0)) {
+				free($3);
+				YYERROR;
+			}
+			free($3);
+		}
+		| RDE RIB STRING yesno EVALUATE {
+			if ($4) {
+				free($3);
+				YYERROR;
+			}
+			if (!add_rib($3, 1)) {
+				free($3);
+				YYERROR;
+			}
+			free($3);
 		}
 		| TRANSPARENT yesno	{
 			if ($2 == 1)
@@ -1840,6 +1860,7 @@ lookup(char *s)
 		{ "reject",		REJECT},
 		{ "remote-as",		REMOTEAS},
 		{ "restart",		RESTART},
+		{ "rib",		RIB},
 		{ "route-collector",	ROUTECOLL},
 		{ "route-reflector",	REFLECTOR},
 		{ "router-id",		ROUTERID},
@@ -2227,6 +2248,9 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	/* init the empty filter list for later */
 	TAILQ_INIT(xfilter_l);
 
+	add_rib("Adj-RIB-In", 1);
+	add_rib("DEFAULT", 0);
+
 	yyparse();
 	errors = file->errors;
 	popfile();
@@ -2555,6 +2579,33 @@ add_mrtconfig(enum mrt_type type, char *name, time_t timeout, struct peer *p)
 
 	LIST_INSERT_HEAD(mrtconf, n, entry);
 
+	return (0);
+}
+
+int
+add_rib(char *name, int noeval)
+{
+	struct rde_rib	*rr;
+
+	SIMPLEQ_FOREACH(rr, &ribnames, entry) {
+		if (!strcmp(rr->name, name)) {
+			yyerror("rib \"%s\" allready exists.", name);
+			return (-1);
+		}
+	}
+
+	if ((rr = calloc(1, sizeof(*rr))) == NULL) {
+		log_warn("add_rib");
+		return (-1);
+	}
+	if (strlcpy(rr->name, name, sizeof(rr->name)) >= sizeof(rr->name)) {
+		yyerror("rib name \"%s\" too long: max %u",
+		   name, sizeof(rr->name) - 1);
+		return (-1);
+	}
+	if (noeval)
+		rr->flags |= F_RIB_NOEVALUATE;
+	SIMPLEQ_INSERT_TAIL(&ribnames, rr, entry);
 	return (0);
 }
 
