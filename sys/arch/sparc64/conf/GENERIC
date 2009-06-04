@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.238 2009/06/02 04:34:16 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.239 2009/06/04 00:26:17 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -480,6 +480,8 @@ wsdisplay*	at cgtwelve?
 creator*	at mainbus0		# Creator3D/Elite3D framebuffers
 creator*	at upa0
 wsdisplay*	at creator?
+gfxp*		at pci?			# PGX32 framebuffer
+wsdisplay*	at gfxp?
 ifb*		at pci?			# Expert3D/XVR-500 framebuffers
 wsdisplay*	at ifb?
 machfb*		at pci?			# PGX/PGX64 framebuffers

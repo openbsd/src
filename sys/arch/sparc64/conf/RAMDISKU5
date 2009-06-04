@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKU5,v 1.14 2009/06/02 05:07:28 kettenis Exp $
+#	$OpenBSD: RAMDISKU5,v 1.15 2009/06/04 00:26:17 kettenis Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -107,6 +107,8 @@ wskbd*	at pckbd?		#    generic keyboard layer
 # Framebuffers
 creator*	at upa0			# Creator3D/Elite3D framebuffers
 wsdisplay*	at creator?
+gfxp*		at pci?			# PGX32 framebuffer
+wsdisplay*	at gfxp?
 machfb*		at pci?			# PGX/PGX64 framebuffers
 wsdisplay*	at machfb?
 raptor*		at pci?			# Raptor framebuffer
