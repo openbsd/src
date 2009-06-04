@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.19 2009/06/04 20:31:37 eric Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.20 2009/06/04 22:42:15 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -134,7 +134,6 @@ imsg_compose(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
     pid_t pid, int fd, void *data, u_int16_t datalen)
 {
 	struct buf	*wbuf;
-	int		 n;
 
 	if ((wbuf = imsg_create(ibuf, type, peerid, pid, datalen)) == NULL)
 		return (-1);
@@ -144,10 +143,9 @@ imsg_compose(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
 
 	wbuf->fd = fd;
 
-	if ((n = imsg_close(ibuf, wbuf)) < 0)
-		return (-1);
+	imsg_close(ibuf, wbuf);
 
-	return (n);
+	return (1);
 }
 
 int
@@ -155,7 +153,6 @@ imsg_composev(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
     pid_t pid, int fd, const struct iovec *iov, int iovcnt)
 {
 	struct buf	*wbuf;
-	int		 n;
 	int		 i, datalen = 0;
 
 	for (i = 0; i < iovcnt; i++)
@@ -170,10 +167,9 @@ imsg_composev(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
 
 	wbuf->fd = fd;
 
-	if ((n = imsg_close(ibuf, wbuf)) < 0)
-		return (-1);
+	imsg_close(ibuf, wbuf);
 
-	return (n);
+	return (1);
 }
 
 /* ARGSUSED */
@@ -218,7 +214,7 @@ imsg_add(struct buf *msg, void *data, u_int16_t datalen)
 	return (datalen);
 }
 
-int
+void
 imsg_close(struct imsgbuf *ibuf, struct buf *msg)
 {
 	struct imsg_hdr	*hdr;
@@ -227,8 +223,6 @@ imsg_close(struct imsgbuf *ibuf, struct buf *msg)
 	hdr->len = (u_int16_t)msg->wpos;
 	buf_close(&ibuf->w, msg);
 	imsg_event_add(ibuf);
-
-	return (1);
 }
 
 void
