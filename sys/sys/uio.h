@@ -1,4 +1,4 @@
-/*	$OpenBSD: uio.h,v 1.13 2005/12/13 00:35:23 millert Exp $	*/
+/*	$OpenBSD: uio.h,v 1.14 2009/06/04 00:24:01 blambert Exp $	*/
 /*	$NetBSD: uio.h,v 1.12 1996/02/09 18:25:45 christos Exp $	*/
 
 /*
@@ -82,9 +82,9 @@ __END_DECLS
 int	ureadc(int c, struct uio *);
 
 int	dofilereadv(struct proc *, int, struct file *,
-	    const struct iovec *, int, off_t *, register_t *);
+	    const struct iovec *, int, int, off_t *, register_t *);
 int	dofilewritev(struct proc *, int, struct file *,
-	    const struct iovec *, int, off_t *, register_t *);
+	    const struct iovec *, int, int, off_t *, register_t *);
 
 #endif /* !_KERNEL */
 
