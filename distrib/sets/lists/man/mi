@@ -1821,6 +1821,7 @@
 ./usr/share/man/cat4/sparc64/environ.0
 ./usr/share/man/cat4/sparc64/esp.0
 ./usr/share/man/cat4/sparc64/fhc.0
+./usr/share/man/cat4/sparc64/gfxp.4 
 ./usr/share/man/cat4/sparc64/ifb.0
 ./usr/share/man/cat4/sparc64/intro.0
 ./usr/share/man/cat4/sparc64/kmem.0
@@ -2272,7 +2273,6 @@
 ./usr/share/man/cat8/alpha
 ./usr/share/man/cat8/alpha/MAKEDEV.0
 ./usr/share/man/cat8/alpha/boot_alpha.0
-./usr/share/man/cat8/alpha/hotplugd.0
 ./usr/share/man/cat8/alpha/installboot.0
 ./usr/share/man/cat8/alpha/kbd.0
 ./usr/share/man/cat8/alpha/setnetbootinfo.0
@@ -2286,7 +2286,6 @@
 ./usr/share/man/cat8/amd64/boot.0
 ./usr/share/man/cat8/amd64/boot_amd64.0
 ./usr/share/man/cat8/amd64/cdboot.0
-./usr/share/man/cat8/amd64/hotplugd.0
 ./usr/share/man/cat8/amd64/installboot.0
 ./usr/share/man/cat8/amd64/kbd.0
 ./usr/share/man/cat8/amd64/memconfig.0
@@ -2299,7 +2298,6 @@
 ./usr/share/man/cat8/armish
 ./usr/share/man/cat8/armish/MAKEDEV.0
 ./usr/share/man/cat8/armish/boot.0
-./usr/share/man/cat8/armish/hotplugd.0
 ./usr/share/man/cat8/arp.0
 ./usr/share/man/cat8/atactl.0
 ./usr/share/man/cat8/authpf-noip.0
@@ -2380,6 +2378,7 @@
 ./usr/share/man/cat8/growfs.0
 ./usr/share/man/cat8/halt.0
 ./usr/share/man/cat8/hostapd.0
+./usr/share/man/cat8/hotplugd.0
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/hp300/MAKEDEV.0
 ./usr/share/man/cat8/hp300/boot_hp300.0
@@ -2388,7 +2387,6 @@
 ./usr/share/man/cat8/hppa/MAKEDEV.0
 ./usr/share/man/cat8/hppa/boot.0
 ./usr/share/man/cat8/hppa/boot_hppa.0
-./usr/share/man/cat8/hppa/hotplugd.0
 ./usr/share/man/cat8/hppa/kbd.0
 ./usr/share/man/cat8/hppa/mkboot.0
 ./usr/share/man/cat8/hppa64
@@ -2408,7 +2406,6 @@
 ./usr/share/man/cat8/i386/boot_i386.0
 ./usr/share/man/cat8/i386/cdboot.0
 ./usr/share/man/cat8/i386/gpioctl.0
-./usr/share/man/cat8/i386/hotplugd.0
 ./usr/share/man/cat8/i386/installboot.0
 ./usr/share/man/cat8/i386/kbd.0
 ./usr/share/man/cat8/i386/memconfig.0
@@ -2440,7 +2437,6 @@
 ./usr/share/man/cat8/landisk
 ./usr/share/man/cat8/landisk/MAKEDEV.0
 ./usr/share/man/cat8/landisk/boot.0
-./usr/share/man/cat8/landisk/hotplugd.0
 ./usr/share/man/cat8/landisk/mbr.0
 ./usr/share/man/cat8/landisk/xxboot.0
 ./usr/share/man/cat8/ldattach.0
@@ -2479,7 +2475,6 @@
 ./usr/share/man/cat8/macppc/boot_macppc.0
 ./usr/share/man/cat8/macppc/eeprom.0
 ./usr/share/man/cat8/macppc/gpioctl.0
-./usr/share/man/cat8/macppc/hotplugd.0
 ./usr/share/man/cat8/macppc/kbd.0
 ./usr/share/man/cat8/macppc/pdisk.0
 ./usr/share/man/cat8/macppc/zzz.0
@@ -2647,7 +2642,6 @@
 ./usr/share/man/cat8/socppc
 ./usr/share/man/cat8/socppc/MAKEDEV.0
 ./usr/share/man/cat8/socppc/boot.0
-./usr/share/man/cat8/socppc/hotplugd.0
 ./usr/share/man/cat8/socppc/mkboot.0
 ./usr/share/man/cat8/spamd-setup.0
 ./usr/share/man/cat8/spamd.0
@@ -2668,7 +2662,6 @@
 ./usr/share/man/cat8/sparc64/apmd.0
 ./usr/share/man/cat8/sparc64/boot_sparc64.0
 ./usr/share/man/cat8/sparc64/eeprom.0
-./usr/share/man/cat8/sparc64/hotplugd.0
 ./usr/share/man/cat8/sparc64/installboot.0
 ./usr/share/man/cat8/sparc64/kbd.0
 ./usr/share/man/cat8/sparc64/zzz.0
@@ -2751,7 +2744,6 @@
 ./usr/share/man/cat8/zaurus/apmd.0
 ./usr/share/man/cat8/zaurus/boot.0
 ./usr/share/man/cat8/zaurus/boot_zaurus.0
-./usr/share/man/cat8/zaurus/hotplugd.0
 ./usr/share/man/cat8/zaurus/kbd.0
 ./usr/share/man/cat8/zaurus/ztsscale.0
 ./usr/share/man/cat8/zaurus/zzz.0
