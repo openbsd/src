@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwreg.h,v 1.8 2009/06/04 21:21:15 martynas Exp $	*/
+/*	$OpenBSD: if_urtwreg.h,v 1.9 2009/06/04 21:52:10 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -121,7 +121,7 @@
 #define	URTW_EPROM_CS			(0x8)
 #define	URTW_CONFIG2			0x0053
 #define	URTW_ANAPARAM			0x0054		/* 4 byte */
-#define	URTW_8225_ANAPARAM_ON		(0xa0000a59)
+#define	URTW_8187_8225_ANAPARAM_ON	(0xa0000a59)
 #define	URTW_MSR			0x0058		/* 1 byte */
 #define	URTW_MSR_LINK_MASK		((1 << 2) | (1 << 3))
 #define	URTW_MSR_LINK_SHIFT		(2)
@@ -134,7 +134,7 @@
 #define	URTW_CONFIG3_ANAPARAM_W_SHIFT	(6)
 #define	URTW_PSR			0x005e		/* 1 byte */
 #define	URTW_ANAPARAM2			0x0060		/* 4 byte */
-#define	URTW_8225_ANAPARAM2_ON		(0x860c7312)
+#define	URTW_8187_8225_ANAPARAM2_ON	(0x860c7312)
 #define	URTW_BEACON_INTERVAL		0x0070		/* 2 byte */
 #define	URTW_ATIM_WND			0x0072		/* 2 byte */
 #define	URTW_BEACON_INTERVAL_TIME	0x0074		/* 2 byte */

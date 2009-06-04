@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.17 2009/06/04 21:21:15 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.18 2009/06/04 21:52:10 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -877,8 +877,9 @@ urtw_media_change(struct ifnet *ifp)
 	if (error != ENETRESET)
 		return (error);
 
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
-		urtw_init(ifp);
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+	    (IFF_UP | IFF_RUNNING))
+		ifp->if_init(ifp);
 
 	return (0);
 }
@@ -1588,10 +1589,10 @@ urtw_reset(struct urtw_softc *sc)
 	uint8_t data;
 	usbd_status error;
 
-	error = urtw_8180_set_anaparam(sc, URTW_8225_ANAPARAM_ON);
+	error = urtw_8180_set_anaparam(sc, URTW_8187_8225_ANAPARAM_ON);
 	if (error)
 		goto fail;
-	error = urtw_8185_set_anaparam2(sc, URTW_8225_ANAPARAM2_ON);
+	error = urtw_8185_set_anaparam2(sc, URTW_8187_8225_ANAPARAM2_ON);
 	if (error)
 		goto fail;
 
@@ -1627,10 +1628,10 @@ urtw_reset(struct urtw_softc *sc)
 		goto fail;
 	usbd_delay_ms(sc->sc_udev, 100);
 
-	error = urtw_8180_set_anaparam(sc, URTW_8225_ANAPARAM_ON);
+	error = urtw_8180_set_anaparam(sc, URTW_8187_8225_ANAPARAM_ON);
 	if (error)
 		goto fail;
-	error = urtw_8185_set_anaparam2(sc, URTW_8225_ANAPARAM2_ON);
+	error = urtw_8185_set_anaparam2(sc, URTW_8187_8225_ANAPARAM2_ON);
 	if (error)
 		goto fail;
 fail:
@@ -2222,7 +2223,7 @@ urtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				urtw_set_multi(sc);
 			} else {
 				if (!(ifp->if_flags & IFF_RUNNING))
-					urtw_init(ifp);
+					ifp->if_init(ifp);
 			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
@@ -2265,7 +2266,7 @@ urtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) ==
 		    (IFF_RUNNING | IFF_UP))
-			urtw_init(ifp);
+			ifp->if_init(ifp);
 		error = 0;
 	}
 
@@ -2672,7 +2673,7 @@ urtw_8225_set_txpwrlvl(struct urtw_softc *sc, int chan)
 	idx = ofdm_pwrlvl % 6;
 	set = ofdm_pwrlvl / 6;
 
-	error = urtw_8185_set_anaparam2(sc, URTW_8225_ANAPARAM2_ON);
+	error = urtw_8185_set_anaparam2(sc, URTW_8187_8225_ANAPARAM2_ON);
 	if (error)
 		goto fail;
 	urtw_8187_write_phy_ofdm(sc, 2, 0x42);
@@ -2706,7 +2707,7 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 	uint16_t data;
 	usbd_status error;
 
-	error = urtw_8180_set_anaparam(sc, URTW_8225_ANAPARAM_ON);
+	error = urtw_8180_set_anaparam(sc, URTW_8187_8225_ANAPARAM_ON);
 	if (error)
 		goto fail;
 
@@ -3053,7 +3054,7 @@ urtw_8225v2_set_txpwrlvl(struct urtw_softc *sc, int chan)
 	ofdm_pwrlvl += sc->sc_txpwr_ofdm_base;
 	ofdm_pwrlvl = (ofdm_pwrlvl > 35) ? 35 : ofdm_pwrlvl;
 
-	error = urtw_8185_set_anaparam2(sc, URTW_8225_ANAPARAM2_ON);
+	error = urtw_8185_set_anaparam2(sc, URTW_8187_8225_ANAPARAM2_ON);
 	if (error)
 		goto fail;
 
@@ -3078,7 +3079,7 @@ urtw_8225v2_rf_init(struct urtw_softc *sc)
 	uint32_t data32;
 	usbd_status error;
 
-	error = urtw_8180_set_anaparam(sc, URTW_8225_ANAPARAM_ON);
+	error = urtw_8180_set_anaparam(sc, URTW_8187_8225_ANAPARAM_ON);
 	if (error)
 		goto fail;
 
@@ -3235,7 +3236,7 @@ urtw_set_chan(struct urtw_softc *sc, struct ieee80211_channel *c)
 	if (chan == 0 || chan == IEEE80211_CHAN_ANY)
 		return;
 	/*
-	 * During changing the channel we need to temporary be disable
+	 * During changing the channel we need to temporary disable
 	 * TX.
 	 */
 	urtw_read32_m(sc, URTW_TX_CONF, &data);
