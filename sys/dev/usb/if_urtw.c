@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.18 2009/06/04 21:52:10 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.19 2009/06/04 23:42:02 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -433,12 +433,12 @@ usbd_status	urtw_8225_write_c(struct urtw_softc *, uint8_t, uint16_t);
 usbd_status	urtw_8225_write_s16(struct urtw_softc *, uint8_t, int,
 		    uint16_t *);
 usbd_status	urtw_8225_read(struct urtw_softc *, uint8_t, uint32_t *);
-usbd_status	urtw_8225_rf_init(struct urtw_softc *);
-usbd_status	urtw_8225_rf_set_chan(struct urtw_softc *, int);
-usbd_status	urtw_8225_rf_set_sens(struct urtw_softc *, int);
+usbd_status	urtw_8225_rf_init(struct urtw_rf *);
+usbd_status	urtw_8225_rf_set_chan(struct urtw_rf *, int);
+usbd_status	urtw_8225_rf_set_sens(struct urtw_rf *);
 usbd_status	urtw_8225_set_txpwrlvl(struct urtw_softc *, int);
-usbd_status	urtw_8225v2_rf_init(struct urtw_softc *);
-usbd_status	urtw_8225v2_rf_set_chan(struct urtw_softc *, int);
+usbd_status	urtw_8225v2_rf_init(struct urtw_rf *);
+usbd_status	urtw_8225v2_rf_set_chan(struct urtw_rf *, int);
 usbd_status	urtw_8225v2_set_txpwrlvl(struct urtw_softc *, int);
 usbd_status	urtw_8225v2_setgain(struct urtw_softc *, int16_t);
 usbd_status	urtw_8225_isv2(struct urtw_softc *, int *);
@@ -1133,9 +1133,12 @@ fail:
 usbd_status
 urtw_get_rfchip(struct urtw_softc *sc)
 {
+	struct urtw_rf *rf = &sc->sc_rf;
 	int ret;
 	uint32_t data;
 	usbd_status error;
+
+	rf->rf_sc = sc;
 
 	error = urtw_eprom_read32(sc, URTW_EPROM_RFCHIPID, &data);
 	if (error != 0)
@@ -1146,15 +1149,16 @@ urtw_get_rfchip(struct urtw_softc *sc)
 		if (error != 0)
 			goto fail;
 		if (ret == 0) {
-			sc->sc_rf_init = urtw_8225_rf_init;
-			sc->sc_rf_set_sens = urtw_8225_rf_set_sens;
-			sc->sc_rf_set_chan = urtw_8225_rf_set_chan;
+			rf->init = urtw_8225_rf_init;
+			rf->set_sens = urtw_8225_rf_set_sens;
+			rf->set_chan = urtw_8225_rf_set_chan;
 		} else {
-			sc->sc_rf_init = urtw_8225v2_rf_init;
-			sc->sc_rf_set_chan = urtw_8225v2_rf_set_chan;
+			rf->init = urtw_8225v2_rf_init;
+			rf->set_chan = urtw_8225v2_rf_set_chan;
+			rf->set_sens = NULL;
 		}
-		sc->sc_max_sens = URTW_8225_RF_MAX_SENS;
-		sc->sc_sens = URTW_8225_RF_DEF_SENS;
+		rf->max_sens = URTW_8225_RF_MAX_SENS;
+		rf->sens = URTW_8225_RF_DEF_SENS;
 		break;
 	default:
 		panic("unsupported RF chip %d\n", data & 0xff);
@@ -2065,6 +2069,7 @@ int
 urtw_init(struct ifnet *ifp)
 {
 	struct urtw_softc *sc = ifp->if_softc;
+	struct urtw_rf *rf = &sc->sc_rf;
 	struct ieee80211com *ic = &sc->sc_ic;
 	usbd_status error;
 	int ret;
@@ -2107,11 +2112,11 @@ urtw_init(struct ifnet *ifp)
 	if (error != 0)
 		goto fail;
 
-	error = sc->sc_rf_init(sc);
+	error = rf->init(rf);
 	if (error != 0)
 		goto fail;
-	if (sc->sc_rf_set_sens != NULL)
-		sc->sc_rf_set_sens(sc, sc->sc_sens);
+	if (rf->set_sens != NULL)
+		rf->set_sens(rf);
 
 	urtw_write16_m(sc, 0x5e, 1);
 	urtw_write16_m(sc, 0xfe, 0x10);
@@ -2701,8 +2706,9 @@ fail:
 }
 
 usbd_status
-urtw_8225_rf_init(struct urtw_softc *sc)
+urtw_8225_rf_init(struct urtw_rf *rf)
 {
+	struct urtw_softc *sc = rf->rf_sc;
 	int i;
 	uint16_t data;
 	usbd_status error;
@@ -2791,14 +2797,15 @@ urtw_8225_rf_init(struct urtw_softc *sc)
 		goto fail;
 	urtw_write32_m(sc, 0x94, 0x3dc00002);
 
-	error = urtw_8225_rf_set_chan(sc, 1);
+	error = urtw_8225_rf_set_chan(rf, 1);
 fail:
 	return (error);
 }
 
 usbd_status
-urtw_8225_rf_set_chan(struct urtw_softc *sc, int chan)
+urtw_8225_rf_set_chan(struct urtw_rf *rf, int chan)
 {
+	struct urtw_softc *sc = rf->rf_sc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_channel *c = ic->ic_ibss_chan;
 	usbd_status error;
@@ -2832,24 +2839,25 @@ fail:
 }
 
 usbd_status
-urtw_8225_rf_set_sens(struct urtw_softc *sc, int sens)
+urtw_8225_rf_set_sens(struct urtw_rf *rf)
 {
+	struct urtw_softc *sc = rf->rf_sc;
 	usbd_status error;
 
-	if (sens < 0 || sens > 6)
+	if (rf->sens < 0 || rf->sens > 6)
 		return (-1);
 
-	if (sens > 4)
+	if (rf->sens > 4)
 		urtw_8225_write(sc, 0x0c, 0x850);
 	else
 		urtw_8225_write(sc, 0x0c, 0x50);
 
-	sens = 6 - sens;
-	error = urtw_8225_setgain(sc, sens);
+	rf->sens = 6 - rf->sens;
+	error = urtw_8225_setgain(sc, rf->sens);
 	if (error)
 		goto fail;
 
-	urtw_8187_write_phy_cck(sc, 0x41, urtw_8225_threshold[sens]);
+	urtw_8187_write_phy_cck(sc, 0x41, urtw_8225_threshold[rf->sens]);
 
 fail:
 	return (error);
@@ -2876,7 +2884,6 @@ urtw_stop(struct ifnet *ifp, int disable)
 int
 urtw_isbmode(uint16_t rate)
 {
-
 	rate = urtw_rtl2rate(rate);
 
 	return (((rate <= 22 && rate != 12 && rate != 18) ||
@@ -3072,8 +3079,9 @@ fail:
 }
 
 usbd_status
-urtw_8225v2_rf_init(struct urtw_softc *sc)
+urtw_8225v2_rf_init(struct urtw_rf *rf)
 {
+	struct urtw_softc *sc = rf->rf_sc;
 	int i;
 	uint16_t data;
 	uint32_t data32;
@@ -3183,14 +3191,15 @@ urtw_8225v2_rf_init(struct urtw_softc *sc)
 		goto fail;
 	urtw_write32_m(sc, 0x94, 0x3dc00002);
 
-	error = urtw_8225_rf_set_chan(sc, 1);
+	error = urtw_8225_rf_set_chan(rf, 1);
 fail:
 	return (error);
 }
 
 usbd_status
-urtw_8225v2_rf_set_chan(struct urtw_softc *sc, int chan)
+urtw_8225v2_rf_set_chan(struct urtw_rf *rf, int chan)
 {
+	struct urtw_softc *sc = rf->rf_sc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_channel *c = ic->ic_ibss_chan;
 	usbd_status error;
@@ -3227,6 +3236,7 @@ fail:
 void
 urtw_set_chan(struct urtw_softc *sc, struct ieee80211_channel *c)
 {
+	struct urtw_rf *rf = &sc->sc_rf;
 	struct ieee80211com *ic = &sc->sc_ic;
 	usbd_status error = 0;
 	uint32_t data;
@@ -3242,7 +3252,7 @@ urtw_set_chan(struct urtw_softc *sc, struct ieee80211_channel *c)
 	urtw_read32_m(sc, URTW_TX_CONF, &data);
 	data &= ~URTW_TX_LOOPBACK_MASK;
 	urtw_write32_m(sc, URTW_TX_CONF, data | URTW_TX_LOOPBACK_MAC);
-	error = sc->sc_rf_set_chan(sc, chan);
+	error = rf->set_chan(rf, chan);
 	if (error != 0) {
 		printf("%s could not change the channel\n",
 		    sc->sc_dev.dv_xname);

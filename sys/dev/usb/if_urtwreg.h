@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwreg.h,v 1.9 2009/06/04 21:52:10 martynas Exp $	*/
+/*	$OpenBSD: if_urtwreg.h,v 1.10 2009/06/04 23:42:02 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -119,7 +119,7 @@
 #define	URTW_EPROM_WRITEBIT		(0x2)
 #define	URTW_EPROM_CK			(0x4)
 #define	URTW_EPROM_CS			(0x8)
-#define	URTW_CONFIG2			0x0053
+#define	URTW_CONFIG2			0x0053		/* 1 byte */
 #define	URTW_ANAPARAM			0x0054		/* 4 byte */
 #define	URTW_8187_8225_ANAPARAM_ON	(0xa0000a59)
 #define	URTW_MSR			0x0058		/* 1 byte */
@@ -272,36 +272,42 @@ struct urtw_tx_radiotap_header {
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
+struct urtw_rf {
+	/* RF methods */
+	usbd_status			(*init)(struct urtw_rf *);
+	usbd_status			(*set_chan)(struct urtw_rf *, int);
+	usbd_status			(*set_sens)(struct urtw_rf *);
+
+	/* RF attributes */
+	struct urtw_softc		*rf_sc;
+	uint32_t			max_sens;
+	uint32_t			sens;
+};
+
 struct urtw_softc {
 	struct device			sc_dev;
 	struct ieee80211com		sc_ic;
 	int				(*sc_newstate)(struct ieee80211com *,
 					    enum ieee80211_state, int);
+	struct urtw_rf			sc_rf;
+
+	struct usb_task			sc_task;
 	usbd_device_handle		sc_udev;
 	usbd_interface_handle		sc_iface;
 
+	enum ieee80211_state		sc_state;
+	int				sc_arg;
 	int				sc_if_flags;
+
 	uint8_t				sc_hwrev;
 	int				sc_flags;
 #define	URTW_INIT_ONCE			(1 << 1)
-	struct usb_task			sc_task;
-#define	URTW_SET_CHANNEL		1
-	enum ieee80211_state		sc_state;
-	int				sc_arg;
 	int				sc_epromtype;
 #define	URTW_EEPROM_93C46		0
 #define	URTW_EEPROM_93C56		1
 	uint8_t				sc_crcmon;
 	uint8_t				sc_bssid[IEEE80211_ADDR_LEN];
 
-	/* for RF */
-	usbd_status			(*sc_rf_init)(struct urtw_softc *);
-	usbd_status			(*sc_rf_set_chan)(struct urtw_softc *,
-					    int);
-	usbd_status			(*sc_rf_set_sens)(struct urtw_softc *,
-					    int);
-	uint32_t			sc_max_sens;
-	uint32_t			sc_sens;
 	/* for LED */
 	struct timeout			sc_led_ch;
 	struct usb_task			sc_ledtask;
