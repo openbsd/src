@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.38 2009/06/04 18:06:35 pyr Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.39 2009/06/04 21:38:29 pyr Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -281,6 +281,9 @@ _res_init(int usercall)
 	(line[sizeof(name) - 1] == ' ' || \
 	 line[sizeof(name) - 1] == '\t'))
 
+	/* initialize family lookup preference: inet4 first */
+	_resp->family[0] = AF_INET;
+	_resp->family[1] = AF_INET6;
 	if ((fp = fopen(_PATH_RESCONF, "r")) != NULL) {
 	    strlcpy(_resp->lookups, "bf", sizeof _resp->lookups);
 
@@ -312,6 +315,9 @@ _res_init(int usercall)
 				     strlen("inet4"))) {
 					_resp->family[findex] = AF_INET;
 					cp += strlen("inet4");
+				} else {
+					_resp->family[0] = -1;
+					break;
 				}
 				if (*cp != ' ' && *cp != '\t' && *cp != '\0') {
 					_resp->family[findex] = -1;
@@ -321,6 +327,11 @@ _res_init(int usercall)
 				cp += strspn(cp, " \t");
 			}
 
+			if (_resp->family[0] == -1) {
+				/* line contains errors, reset to defaults */
+				_resp->family[0] = AF_INET;
+				_resp->family[1] = AF_INET6;
+			}
 			if (_resp->family[0] == _resp->family[1])
 				_resp->family[1] = -1;
 		}

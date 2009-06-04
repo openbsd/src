@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.68 2009/06/04 18:06:35 pyr Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.69 2009/06/04 21:38:29 pyr Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -1170,39 +1170,21 @@ _dns_getaddrinfo(const char *name, const struct addrinfo *pai,
 
 	switch (pai->ai_family) {
 	case AF_UNSPEC:
-		if (_resp->family[0] == -1) {
-			/* prefer IPv4 by default*/
-			q.qclass = C_IN;
-			q.qtype = T_A;
-			q.answer = buf->buf;
-			q.anslen = sizeof(buf->buf);
-			q.next = &q2;
-			q2.qclass = C_IN;
-			q2.qtype = T_AAAA;
-			q2.answer = buf2->buf;
-			q2.anslen = sizeof(buf2->buf);
-			break;
-		}
-
 		/* respect user supplied order */
 		q.qclass = C_IN;
-		if (_resp->family[0] == AF_INET6)
-			q.qtype = T_AAAA;
-		else
-			q.qtype = T_A;
+		q.qtype = (_resp->family[0] == AF_INET6) ? T_AAAA : T_A;
 		q.answer = buf->buf;
 		q.anslen = sizeof(buf->buf);
+		q.next = &q2;
+
 		if (_resp->family[1] == -1) {
+			/* stop here if only one family was given */
 			q.next = NULL;
 			break;
 		}
-		q.next = &q2;
 
 		q2.qclass = C_IN;
-		if (_resp->family[1] == AF_INET6)
-			q2.qtype = T_AAAA;
-		else
-			q2.qtype = T_A;
+		q2.qtype = (_resp->family[1] == AF_INET6) ? T_AAAA : T_A;
 		q2.answer = buf2->buf;
 		q2.anslen = sizeof(buf2->buf);
 		break;
