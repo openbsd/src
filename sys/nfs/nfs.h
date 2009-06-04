@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.43 2009/06/03 03:55:23 thib Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.44 2009/06/04 02:06:40 blambert Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -286,22 +286,23 @@ union nethostaddr {
 };
 
 struct nfssvc_sock {
-	TAILQ_ENTRY(nfssvc_sock) ns_chain;	/* List of all nfssvc_sock's */
-	struct file	*ns_fp;
-	struct socket	*ns_so;
-	struct mbuf	*ns_nam;
-	struct mbuf	*ns_raw;
-	struct mbuf	*ns_rawend;
-	struct mbuf	*ns_rec;
-	struct mbuf	*ns_recend;
-	struct mbuf	*ns_frag;
-	int		ns_flag;
-	int		ns_solock;
-	int		ns_cc;
-	int		ns_reclen;
-	u_int32_t	ns_sref;
-	LIST_HEAD(, nfsrv_descript) ns_tq;	/* Write gather lists */
-	LIST_HEAD(nfsrvw_delayhash, nfsrv_descript) ns_wdelayhashtbl[NFS_WDELAYHASHSIZ];
+	TAILQ_ENTRY(nfssvc_sock) ns_chain; /* List of all nfssvc_sock's */
+	struct file	*ns_fp;		/* fp from the... */
+	struct socket	*ns_so;		/* ...socket this struct wraps */
+	struct mbuf	*ns_nam;	/* MT_SONAME of client */
+	struct mbuf	*ns_raw;	/* head of unpeeked mbufs */
+	struct mbuf	*ns_rawend;	/* tail of unpeeked mbufs */
+	struct mbuf	*ns_rec;	/* queued RPC records */
+	struct mbuf	*ns_recend;	/* last queued RPC record */
+	struct mbuf	*ns_frag;	/* end of record fragment */
+	int		ns_flag;	/* socket status flags */
+	int		ns_solock;	/* lock for connected socket */
+	int		ns_cc;		/* actual chars queued */
+	int		ns_reclen;	/* length of first queued record */
+	u_int32_t	ns_sref;	/* # of refs to this struct */
+	LIST_HEAD(, nfsrv_descript) ns_tq; /* Write gather lists */
+	LIST_HEAD(nfsrvw_delayhash, nfsrv_descript)
+			ns_wdelayhashtbl[NFS_WDELAYHASHSIZ];
 };
 
 /* Bits for "ns_flag" */
@@ -344,7 +345,7 @@ struct nfsrv_descript {
 	off_t			nd_off;		/* Start byte offset */
 	off_t			nd_eoff;	/* and end byte offset */
 	LIST_ENTRY(nfsrv_descript) nd_hash;	/* Hash list */
-	LIST_ENTRY(nfsrv_descript) nd_tq;		/* and timer list */
+	LIST_ENTRY(nfsrv_descript) nd_tq;	/* and timer list */
 	LIST_HEAD(,nfsrv_descript) nd_coalesce;	/* coalesced writes */
 	struct mbuf		*nd_mrep;	/* Request mbuf list */
 	struct mbuf		*nd_md;		/* Current dissect mbuf */
