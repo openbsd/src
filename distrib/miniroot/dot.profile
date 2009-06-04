@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.9 2009/06/03 23:44:53 krw Exp $
+#	$OpenBSD: dot.profile,v 1.10 2009/06/04 06:23:53 krw Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -54,8 +54,7 @@ echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
 stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T
 
 # Installing or upgrading?
-while :; do
-	cat <<__EOT
+cat <<__EOT
 
 Welcome to the $OBSD installation program.
 
@@ -69,13 +68,13 @@ Control-C, but exiting during an $MODE can leave your system in an
 inconsistent state.
 
 __EOT
+while :; do
 	read REPLY?'(I)nstall, (U)pgrade or (S)hell? '
 	case $REPLY in
 	i*|I*)	echo "\nCool! Let's get to it."
 		/install && break
 		;;
-	u*|U*)	
-		cat <<__EOT
+	u*|U*)	cat <<__EOT
 
 NOTE: Once your system has been upgraded, you must manually merge any
 changes to files in the 'etc' set into the files already on your system.
