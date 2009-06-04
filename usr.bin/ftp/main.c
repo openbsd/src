@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.77 2009/05/05 19:35:30 martynas Exp $	*/
+/*	$OpenBSD: main.c,v 1.78 2009/06/04 20:58:34 martynas Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -314,7 +314,6 @@ main(volatile int argc, char *argv[])
 
 	if (argc > 0) {
 		if (isurl(argv[0])) {
-			anonftp = 1;	/* Handle "automatic" transfers. */
 			rval = auto_fetch(argc, argv, outfile);
 			if (rval >= 0)		/* -1 == connected and cd-ed */
 				exit(rval);

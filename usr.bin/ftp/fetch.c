@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.87 2009/05/10 21:45:52 martynas Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.88 2009/06/04 20:58:34 martynas Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1009,7 +1009,9 @@ bad_ftp_url:
 			xargc = 3;
 		}
 		oautologin = autologin;
-		if (username != NULL)
+		if (username == NULL)
+			anonftp = 1;	/* Handle "automatic" transfers. */
+		else
 			autologin = 0;
 		setpeer(xargc, xargv);
 		autologin = oautologin;
