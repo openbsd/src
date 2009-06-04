@@ -1,4 +1,4 @@
-.\"	$OpenBSD: df.1,v 1.42 2009/02/08 17:15:09 jmc Exp $
+.\"	$OpenBSD: df.1,v 1.43 2009/06/04 14:59:26 jmc Exp $
 .\"	$NetBSD: df.1,v 1.12 1995/12/05 02:42:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)df.1	8.2 (Berkeley) 1/13/92
 .\"
-.Dd $Mdocdate: February 8 2009 $
+.Dd $Mdocdate: June 4 2009 $
 .Dt DF 1
 .Os
 .Sh NAME
@@ -116,6 +116,14 @@ If a file system is given on the command line that is not of
 the specified type, a warning is issued and no information is given on
 that file system.
 .El
+.Pp
+It is not an error to specify more than one of
+the mutually exclusive options
+.Fl h
+and
+.Fl k .
+Where more than one of these options is specified,
+the last option given overrides the others.
 .Pp
 .Ex -std df
 .Sh ENVIRONMENT
