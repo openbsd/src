@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.15 2009/06/04 20:51:44 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.16 2009/06/04 21:06:52 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -70,17 +70,26 @@ int urtw_debug = 0;
 #define	DPRINTFN(n, x)
 #endif
 
-/* recognized device vendors/products */
-static const struct usb_devno urtw_devs[] = {
-#define	URTW_DEV(v,p) { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }
-	URTW_DEV(DICKSMITH, RTL8187),
-	URTW_DEV(LOGITEC, RTL8187),
-	URTW_DEV(REALTEK, RTL8187),
-	URTW_DEV(SPHAIRON, RTL8187),
-	URTW_DEV(SURECOM, EP9001G2A),
-	URTW_DEV(NETGEAR, WG111V2)
-#undef URTW_DEV
+/*
+ * Recognized device vendors/products.
+ */
+static const struct urtw_type {
+	struct usb_devno	dev;
+	uint8_t			rev;
+} urtw_devs[] = {
+#define	URTW_DEV_RTL8187(v, p)	\
+	    { { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }, URTW_HWREV_8187 }
+	/* Realtek RTL8187 devices. */
+	URTW_DEV_RTL8187(DICKSMITH,	RTL8187),
+	URTW_DEV_RTL8187(LOGITEC,	RTL8187),
+	URTW_DEV_RTL8187(NETGEAR,	WG111V2),
+	URTW_DEV_RTL8187(REALTEK,	RTL8187),
+	URTW_DEV_RTL8187(SPHAIRON,	RTL8187),
+	URTW_DEV_RTL8187(SURECOM,	EP9001G2A),
+#undef	URTW_DEV_RTL8187
 };
+#define	urtw_lookup(v, p)	\
+	    ((const struct urtw_type *)usb_lookup(urtw_devs, v, p))
 
 /*
  * Helper read/write macros.
@@ -280,11 +289,11 @@ static uint8_t urtw_8225_txpwr_cck_ch14[] = {
 	0x2b, 0x2a, 0x25, 0x15, 0x00, 0x00, 0x00, 0x00
 };
 
-static uint8_t urtw_8225_txpwr_ofdm[]={
+static uint8_t urtw_8225_txpwr_ofdm[] = {
 	0x80, 0x90, 0xa2, 0xb5, 0xcb, 0xe4
 };
 
-static uint8_t urtw_8225v2_gain_bg[]={
+static uint8_t urtw_8225v2_gain_bg[] = {
 	0x23, 0x15, 0xa5,		/* -82-1dbm */
 	0x23, 0x15, 0xb5,		/* -82-2dbm */
 	0x23, 0x15, 0xc5,		/* -82-3dbm */
@@ -451,7 +460,7 @@ usbd_status	urtw_led_mode2(struct urtw_softc *, int);
 usbd_status	urtw_led_mode3(struct urtw_softc *, int);
 usbd_status	urtw_rx_setconf(struct urtw_softc *);
 usbd_status	urtw_rx_enable(struct urtw_softc *);
-usbd_status	urtw_tx_enable(struct urtw_softc *sc);
+usbd_status	urtw_tx_enable(struct urtw_softc *);
 
 int urtw_match(struct device *, void *, void *);
 void urtw_attach(struct device *, struct device *, void *);
@@ -476,9 +485,9 @@ urtw_match(struct device *parent, void *match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 
 	if (uaa->iface != NULL)
-		return UMATCH_NONE;
+		return (UMATCH_NONE);
 
-	return ((usb_lookup(urtw_devs, uaa->vendor, uaa->product) != NULL) ?
+	return ((urtw_lookup(uaa->vendor, uaa->product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 

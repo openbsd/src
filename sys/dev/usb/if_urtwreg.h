@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwreg.h,v 1.6 2009/06/04 20:07:34 martynas Exp $	*/
+/*	$OpenBSD: if_urtwreg.h,v 1.7 2009/06/04 21:06:52 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -19,7 +19,14 @@
 #define	URTW_CONFIG_NO			1
 #define	URTW_IFACE_INDEX		0
 
-/* for 8187 */
+/*
+ * Known hardware revisions.
+ */
+#define	URTW_HWREV_8187			0x01
+
+/*
+ * Registers specific to RTL8187 and RTL8187B.
+ */
 #define	URTW_MAC0			0x0000		/* 1 byte */
 #define	URTW_MAC1			0x0001		/* 1 byte */
 #define	URTW_MAC2			0x0002		/* 1 byte */
