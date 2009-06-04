@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_raw.c,v 1.15 2006/03/31 18:28:55 deraadt Exp $ */
+/*	$OpenBSD: clnt_raw.c,v 1.16 2009/06/04 03:51:29 schwarze Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -41,6 +41,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <rpc/rpc.h>
 
 #define MCALL_MSG_SIZE 24
@@ -89,22 +90,21 @@ clntraw_create(u_long prog, u_long vers)
 	if (clp == NULL) {
 		clp = (struct clntraw_private *)calloc(1, sizeof (*clp));
 		if (clp == NULL)
-			return (NULL);
+			goto fail;
 		clntraw_private = clp;
 	}
 	xdrs = &clp->xdr_stream;
 	client = &clp->client_object;
 	/*
-	 * pre-serialize the staic part of the call msg and stash it away
+	 * pre-serialize the static part of the call msg and stash it away
 	 */
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
 	call_msg.rm_call.cb_prog = prog;
 	call_msg.rm_call.cb_vers = vers;
 	xdrmem_create(xdrs, clp->mashl_callmsg, MCALL_MSG_SIZE, XDR_ENCODE); 
-	if (! xdr_callhdr(xdrs, &call_msg)) {
-		perror("clnt_raw.c - Fatal header serialization error.");
-	}
+	if (!xdr_callhdr(xdrs, &call_msg))
+		goto fail;
 	clp->mcnt = XDR_GETPOS(xdrs);
 	XDR_DESTROY(xdrs);
 
@@ -118,7 +118,16 @@ clntraw_create(u_long prog, u_long vers)
 	 */
 	client->cl_ops = &client_ops;
 	client->cl_auth = authnone_create();
+	if (client->cl_auth == NULL)
+		goto fail;
 	return (client);
+
+fail:
+	mem_free((caddr_t)clntraw_private, sizeof(clntraw_private));
+	clntraw_private = NULL;
+	rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+	rpc_createerr.cf_error.re_errno = errno;
+	return (NULL);
 }
 
 /* ARGSUSED */
