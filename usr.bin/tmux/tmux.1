@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.11 2009/06/03 17:04:16 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.12 2009/06/04 13:36:25 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2009 $
+.Dd $Mdocdate: June 4 2009 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -112,7 +112,7 @@ Unlock the server.
 attempts to guess if the terminal is likely to support UTF-8 by checking
 the
 .Ev LANG
-environment variable for the string "UTF-8". 
+environment variable for the string "UTF-8".
 This is not always correct: the
 .Fl u
 flag explicitly informs
@@ -805,7 +805,7 @@ Move a window to the next layout and rearrange the panes to fit.
 .D1 (alias: Ic next )
 Move to the next window in the session.
 If
-.Fl a 
+.Fl a
 is used, move to the next window with a bell, activity or content alert.
 .It Xo Ic paste-buffer
 .Op Fl d
@@ -1134,7 +1134,7 @@ Where appropriate, these may be prefixed with a number to specify the maximum
 length, for example
 .Ql #24T .
 .Pp
-By default, UTF-8 in 
+By default, UTF-8 in
 .Ar string
 is not interpreted, to enable UTF-8, use the
 .Ic status-utf8
