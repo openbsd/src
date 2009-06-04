@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.572 2009/06/03 23:44:53 krw Exp $
+#	$OpenBSD: install.sub,v 1.573 2009/06/04 02:27:48 sthen Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -806,6 +806,8 @@ enable_network() {
 	# configure all of the non-loopback interfaces which we know about.
 	# refer to hostname.if(5)
 	for hn in /mnt/etc/hostname.*; do
+		(( nifs += 1 ))
+
 		# Strip off /mnt/etc/hostname. prefix
 		if=${hn#/mnt/etc/hostname.}
 
