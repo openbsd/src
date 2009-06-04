@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.50 2009/04/13 17:51:57 blambert Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.51 2009/06/04 01:02:42 blambert Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -261,7 +261,7 @@ void nfsm_srvfhtom(struct mbuf **, fhandle_t *, int);
 /* nfs_syscalls.c */
 int sys_nfssvc(struct proc *, void *, register_t *);
 int nfssvc_addsock(struct file *, struct mbuf *);
-int nfssvc_nfsd(struct nfsd_srvargs *, caddr_t, struct proc *);
+int nfssvc_nfsd(struct nfsd *);
 void nfsrv_zapsock(struct nfssvc_sock *);
 void nfsrv_slpderef(struct nfssvc_sock *);
 void nfsrv_init(int);

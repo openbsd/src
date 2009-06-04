@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.79 2009/06/03 22:14:29 blambert Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.80 2009/06/04 01:02:42 blambert Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -143,6 +143,7 @@ sys_nfssvc(struct proc *p, void *v, register_t *retval)
 	struct mbuf *nam;
 	struct nfsd_args nfsdarg;
 	struct nfsd_srvargs nfsd_srvargs, *nsd = &nfsd_srvargs;
+	struct nfsd *nfsd;
 #endif
 
 	/* Must be super user */
@@ -190,7 +191,11 @@ sys_nfssvc(struct proc *p, void *v, register_t *retval)
 		if (error)
 			return (error);
 
-		error = nfssvc_nfsd(nsd, SCARG(uap, argp), p);
+		nfsd = malloc(sizeof(*nfsd), M_NFSD, M_WAITOK|M_ZERO);
+		nfsd->nfsd_procp = p;
+		nfsd->nfsd_slp = NULL;
+
+		error = nfssvc_nfsd(nfsd);
 		break;
 	default:
 		error = EINVAL;
@@ -289,17 +294,13 @@ nfssvc_addsock(fp, mynam)
  * until it is killed by a signal.
  */
 int
-nfssvc_nfsd(nsd, argp, p)
-	struct nfsd_srvargs *nsd;
-	caddr_t argp;
-	struct proc *p;
+nfssvc_nfsd(struct nfsd *nfsd)
 {
 	struct mbuf *m;
 	int siz;
 	struct nfssvc_sock *slp;
 	struct socket *so;
 	int *solockp;
-	struct nfsd *nfsd = nsd->nsd_nfsd;
 	struct nfsrv_descript *nd = NULL;
 	struct mbuf *mreq;
 	int error = 0, cacherep, s, sotype, writes_todo;
@@ -309,13 +310,8 @@ nfssvc_nfsd(nsd, argp, p)
 	writes_todo = 0;
 
 	s = splsoftnet();
-	if (nfsd == NULL) {
-		nsd->nsd_nfsd = nfsd = malloc(sizeof(struct nfsd), M_NFSD,
-		    M_WAITOK|M_ZERO);
-		nfsd->nfsd_procp = p;
-		TAILQ_INSERT_TAIL(&nfsd_head, nfsd, nfsd_chain);
-		nfs_numnfsd++;
-	}
+	TAILQ_INSERT_TAIL(&nfsd_head, nfsd, nfsd_chain);
+	nfs_numnfsd++;
 	/*
 	 * Loop getting rpc requests until SIGKILL.
 	 */
@@ -495,7 +491,6 @@ done:
 	TAILQ_REMOVE(&nfsd_head, nfsd, nfsd_chain);
 	splx(s);
 	free((caddr_t)nfsd, M_NFSD);
-	nsd->nsd_nfsd = (struct nfsd *)0;
 	if (--nfs_numnfsd == 0)
 		nfsrv_init(1);	/* Reinitialize everything */
 	return (error);
