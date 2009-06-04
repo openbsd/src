@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.191 2008/09/06 14:04:48 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.192 2009/06/04 13:30:07 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: September 6 2008 $
+.Dd $Mdocdate: June 4 2009 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -385,12 +385,12 @@ Includes code for the UDF file systems typically found on DVD discs.
 See
 .Xr mount_udf 8
 for details.
-.It Cd option XFS
+.It Cd option NNPFS
 Includes the kernel support for the AFS-compatible Arla filesystem.
 Since the xfs interface is simple and generic it can be used for other
 filesystems as well.
 See
-.Xr mount_xfs 8
+.Xr mount_nnpfs 8
 for details.
 .El
 .Sh FILE SYSTEM OPTIONS
