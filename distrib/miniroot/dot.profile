@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.10 2009/06/04 06:23:53 krw Exp $
+#	$OpenBSD: dot.profile,v 1.11 2009/06/04 06:41:53 krw Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -84,6 +84,11 @@ __EOT
 		/upgrade && break
 		;;
 	s*|S*)	break
+		;;
+	!)	echo "Type 'exit' to return to install."
+		ksh
+		;;
+	!*)	eval "${REPLY#?}"
 		;;
 	esac
 done
