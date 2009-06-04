@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.42 2008/11/06 14:04:48 sobrado Exp $
+.\"	$OpenBSD: mg.1,v 1.43 2009/06/04 23:56:50 kjell Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: November 6 2008 $
+.Dd $Mdocdate: June 4 2009 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -50,6 +50,10 @@ This buffer may be displayed on the screen in more than one window.
 At present, windows may only be split horizontally, so each window is
 delineated by a modeline at the bottom.
 If changes are made to a buffer, it will be reflected in all open windows.
+.Pp
+If a buffer name begins and ends with an asterisk, the buffer is considered
+throwaway; i.e. the user will not be prompted to save changes when the
+the buffer is killed.
 .Sh POINT AND MARK
 The current cursor location in
 .Nm
@@ -508,7 +512,8 @@ Delete any whitespace around dot, then insert a space.
 Abort the current action.
 .It kill-buffer
 Dispose of a buffer, by name.
-Prompt the user if the buffer
+If the buffer name does not start and end with an asterisk,
+prompt the user if the buffer
 has been changed.
 .It kill-line
 Kill line.

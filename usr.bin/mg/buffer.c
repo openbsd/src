@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.71 2009/06/04 23:39:37 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.72 2009/06/04 23:56:50 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -48,7 +48,6 @@ togglereadonly(int f, int n)
 int
 usebuffer(int f, int n)
 {
-	struct buffer *bp;
 	char    bufn[NBUFN], *bufp;
 
 	/* Get buffer to use from user */
@@ -59,11 +58,22 @@ usebuffer(int f, int n)
 		bufp = eread("Switch to buffer: (default %s) ", bufn, NBUFN,
 		    EFNUL | EFNEW | EFBUF, curbp->b_altb->b_bname);
 
+	return (usebufname(bufp));
+}
+
+/* Switch to the named buffer.
+ * If no name supplied, switch to the default (alternate) buffer.
+ */
+int
+usebufname(const char *bufp)
+{
+	struct buffer *bp;
+
 	if (bufp == NULL)
 		return (ABORT);
 	if (bufp[0] == '\0' && curbp->b_altb != NULL)
 		bp = curbp->b_altb;
-	else if ((bp = bfind(bufn, TRUE)) == NULL)
+	else if ((bp = bfind(bufp, TRUE)) == NULL)
 		return (FALSE);
 
 	/* and put it in current window */
@@ -499,6 +509,7 @@ bnew(const char *bname)
 	struct buffer	*bp;
 	struct line	*lp;
 	int		 i;
+	size_t		len;
 
 	bp = calloc(1, sizeof(struct buffer));
 	if (bp == NULL) {
@@ -515,6 +526,12 @@ bnew(const char *bname)
 	bp->b_markp = NULL;
 	bp->b_marko = 0;
 	bp->b_flag = defb_flag;
+	/* if buffer name starts and ends with '*', we ignore changes */
+	len = strlen(bname);
+	if (len) {
+		if (bname[0] == '*' && bname[len - 1] == '*')
+			bp->b_flag |= BFIGNDIRTY;
+	}
 	bp->b_nwnd = 0;
 	bp->b_headp = lp;
 	bp->b_nmodes = defb_nmodes;
@@ -558,7 +575,8 @@ bclear(struct buffer *bp)
 	struct line	*lp;
 	int		 s;
 
-	if ((bp->b_flag & BFCHG) != 0 &&	/* Changed. */
+	/* Has buffer changed, and do we care? */
+	if (!(bp->b_flag & BFIGNDIRTY) && (bp->b_flag & BFCHG) != 0 &&
 	    (s = eyesno("Buffer modified; kill anyway")) != TRUE)
 		return (s);
 	bp->b_flag &= ~BFCHG;	/* Not changed		 */
