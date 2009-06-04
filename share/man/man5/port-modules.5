@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.38 2009/05/19 21:24:43 sthen Exp $
+.\"	$OpenBSD: port-modules.5,v 1.39 2009/06/04 01:11:57 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 19 2009 $
+.Dd $Mdocdate: June 4 2009 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -351,6 +351,13 @@ It appends
 .Pa devel/pmk
 to BUILD_DEPENDS.
 .It devel/scons
+Adds
+.Pa devel/scons
+to BUILD_DEPENDS.
+Sets MODSCONS_BIN and MODSCONS_ENV.
+Also defines an overridable MODSCONS_FLAGS.
+It provides a do-build and do-install target, that can be overriden in the
+port Makefile.
 .It devel/waf
 Adds
 .Pa devel/waf
