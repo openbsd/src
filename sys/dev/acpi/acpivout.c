@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.2 2009/06/03 20:27:38 matthieu Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.3 2009/06/04 17:02:36 miod Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -62,13 +62,14 @@ struct acpivout_softc {
 	int	sc_dod;
 	int	sc_vout_type;
 #define ACPIVOUT_OTHER	 	0
-#define ACPIVOUT_VGA		1 
+#define ACPIVOUT_VGA		1
 #define ACPIVOUT_TV 		2
 #define ACPIVOUT_DVI		3
 #define ACPIVOUT_LCD		4
 
 #define	ACPIVOUT_TYPE_MASK	0x0f00
 };
+
 void	acpivout_brightness_cycle(struct acpivout_softc *);
 void	acpivout_brightness_up(struct acpivout_softc *);
 void	acpivout_brightness_down(struct acpivout_softc *);
@@ -116,7 +117,7 @@ acpivout_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = ((struct acpivideo_softc *)parent)->sc_acpi;
 	sc->sc_devnode = av->aaa.aaa_node;
 
-	sc->sc_vout_type = (av->dod&ACPIVOUT_TYPE_MASK)>>8;
+	sc->sc_vout_type = (av->dod & ACPIVOUT_TYPE_MASK) >> 8;
 
 	printf(": %s\n", sc->sc_devnode->name);
 
@@ -213,7 +214,8 @@ acpivout_brightness_down(struct acpivout_softc *sc)
 }
 
 void
-acpivout_brightness_zero(struct acpivout_softc *sc) {
+acpivout_brightness_zero(struct acpivout_softc *sc)
+{
 	if (sc->sc_bcl_len == 0)
 		return;
 	acpivout_set_brightness(sc, sc->sc_bcl[0]);
@@ -228,9 +230,11 @@ acpivout_get_brightness(struct acpivout_softc *sc)
 	aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BQC", 0, NULL, &res);
 	level = aml_val2int(&res);
 	aml_freevalue(&res);
+	DPRINTF(("%s: BQC = %d\n", DEVNAME(sc), level));
 
 	if (level < sc->sc_bcl[0] || level > sc->sc_bcl[sc->sc_bcl_len -1])
 		level = -1;
+
 	return (level);
 }
 
@@ -240,11 +244,11 @@ acpivout_find_brightness(struct acpivout_softc *sc, int level)
 	int i, mid;
 
 	for (i = 0; i < sc->sc_bcl_len - 1; i++) {
-		mid = sc->sc_bcl[i] + (sc->sc_bcl[i+1] - sc->sc_bcl[i]) / 2;
+		mid = sc->sc_bcl[i] + (sc->sc_bcl[i + 1] - sc->sc_bcl[i]) / 2;
 		if (sc->sc_bcl[i] <= level && level <=  mid)
 			return sc->sc_bcl[i];
-		if  (mid < level && level <= sc->sc_bcl[i+1])
-			return sc->sc_bcl[i+1];
+		if  (mid < level && level <= sc->sc_bcl[i + 1])
+			return sc->sc_bcl[i + 1];
 	}
 	return sc->sc_bcl[i];
 }
@@ -253,13 +257,14 @@ void
 acpivout_set_brightness(struct acpivout_softc *sc, int level)
 {
 	struct aml_value args, res;
-	
+
 	memset(&args, 0, sizeof(args));
 	args.v_integer = level;
 	args.type = AML_OBJTYPE_INTEGER;
 
+	DPRINTF(("%s: BCM = %d\n", DEVNAME(sc), level));
 	aml_evalname(sc->sc_acpi, sc->sc_devnode, "_BCM", 1, &args, &res);
-	
+
 	aml_freevalue(&res);
 }
 
@@ -290,7 +295,7 @@ acpivout_get_bcl(struct acpivout_softc *sc)
 	sc->sc_bcl_len = res.length - 2;
 
 	sc->sc_bcl = malloc(sc->sc_bcl_len * sizeof(int), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
+	    M_WAITOK | M_ZERO);
 	if (sc->sc_bcl == NULL) {
 		sc->sc_bcl_len = 0;
 		goto err;
@@ -317,21 +322,19 @@ acpivout_get_param(struct wsdisplay_param *dp)
 
 	switch (dp->param) {
 	case WSDISPLAYIO_PARAM_BRIGHTNESS:
-		if (acpivout_cd.cd_ndevs != 0)
-			for (i = 0; i < acpivout_cd.cd_ndevs; i++) {
-				if (acpivout_cd.cd_devs[i] == NULL)
-					continue;
-				sc = (struct acpivout_softc *)acpivout_cd.cd_devs[i];
-				/* 
-				 *	Ignore device if not connected.
-				 */
-				 if (sc->sc_bcl_len != 0)
-					break;
-			}
+		for (i = 0; i < acpivout_cd.cd_ndevs; i++) {
+			if (acpivout_cd.cd_devs[i] == NULL)
+				continue;
+			sc = (struct acpivout_softc *)acpivout_cd.cd_devs[i];
+			/* Ignore device if not connected. */
+			 if (sc->sc_bcl_len != 0)
+				break;
+		}
 		if (sc != NULL && sc->sc_bcl_len != 0) {
-				dp->min = sc->sc_bcl[0];
-				dp->max = sc->sc_bcl[sc->sc_bcl_len - 1];
-				dp->curval = acpivout_get_brightness(sc);
+			dp->min = sc->sc_bcl[0];
+			dp->max =  sc->sc_bcl[sc->sc_bcl_len - 1];
+			dp->curval = acpivout_get_brightness(sc);
+			if (dp->curval != -1)
 				return 0;
 		}
 		return -1;
@@ -348,17 +351,14 @@ acpivout_set_param(struct wsdisplay_param *dp)
 
 	switch (dp->param) {
 	case WSDISPLAYIO_PARAM_BRIGHTNESS:
-		if (acpivout_cd.cd_ndevs != 0)
-			for (i = 0; i < acpivout_cd.cd_ndevs; i++) {
-				if (acpivout_cd.cd_devs[i] == NULL)
-					continue;
-				sc = (struct acpivout_softc *)acpivout_cd.cd_devs[i];
-				/* 
-				 *	Ignore device if not connected.
-				 */
-				 if (sc->sc_bcl_len != 0)
-					break;
-			}
+		for (i = 0; i < acpivout_cd.cd_ndevs; i++) {
+			if (acpivout_cd.cd_devs[i] == NULL)
+				continue;
+			sc = (struct acpivout_softc *)acpivout_cd.cd_devs[i];
+			/* Ignore device if not connected. */
+			 if (sc->sc_bcl_len != 0)
+				break;
+		}
 		if (sc != NULL && sc->sc_bcl_len != 0) {
 			exact = acpivout_find_brightness(sc, dp->curval);
 			acpivout_set_brightness(sc, exact);
