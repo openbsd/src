@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.16 2008/10/07 09:23:32 dlg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.17 2009/06/05 19:19:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 1 || (verbose && hex))
+	if (argc > 1)
 		usage();
 
 	if (argc == 1)
