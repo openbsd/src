@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.69 2009/06/04 18:55:49 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.70 2009/06/05 03:24:20 thib Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -3122,14 +3122,17 @@ nfsrv_noop(nfsd, slp, procp, mrq)
 
 /*
  * Perform access checking for vnodes obtained from file handles that would
- * refer to files already opened by a Unix client. You cannot just use
- * vn_writechk() and VOP_ACCESS() for two reasons.
- * 1 - You must check for exported rdonly as well as MNT_RDONLY for the write case
+ * refer to files already opened by a Unix client.
+ * You cannot just use vn_writechk() and VOP_ACCESS() for two reasons:
+ * 1 - You must check for exported rdonly as well as MNT_RDONLY for the
+ *     write case
  * 2 - The owner is to be given access irrespective of mode bits for some
  *     operations, so that processes that chmod after opening a file don't
  *     break. I don't like this because it opens a security hole, but since
  *     the nfs server opens a security hole the size of a barn door anyhow,
- *     what the heck.
+ *     what the heck. A notable exception to this rule is when VOP_ACCESS()
+ *     returns EPERM (e.g. when a file is immutable) which is always an
+ *     error.
  */
 int
 nfsrv_access(vp, flags, cred, rdonly, p, override)
@@ -3173,7 +3176,7 @@ nfsrv_access(vp, flags, cred, rdonly, p, override)
 	 * Allow certain operations for the owner (reads and writes
 	 * on files that are already open).
 	 */
-	if (override && (error == EPERM || error == EACCES) &&
+	if (override && error == EACCES &&
 	    VOP_GETATTR(vp, &vattr, cred, p) == 0 &&
 	    cred->cr_uid == vattr.va_uid)
 		error = 0;
