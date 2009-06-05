@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.46 2009/06/05 00:13:35 claudio Exp $ */
+/*	$OpenBSD: arp.c,v 1.47 2009/06/05 03:54:42 chris Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -296,7 +296,7 @@ tryagain:
 		warn("%s", host);
 		return (1);
 	}
-	sin = (struct sockaddr_inarp *)(rtm + 1);
+	sin = (struct sockaddr_inarp *)((char *)rtm + rtm->rtm_hdrlen);
 	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin_len) + (char *)sin);
 	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (sdl->sdl_family == AF_LINK &&
