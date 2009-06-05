@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.39 2009/06/04 21:38:29 pyr Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.40 2009/06/05 09:52:26 pyr Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -307,14 +307,14 @@ _res_init(int usercall)
 			cp[strcspn(cp, "\n")] = '\0';
 			findex = 0;
 			_resp->family[0] = _resp->family[1] = -1;
+#define INETLEN (sizeof("inetX") - 1)
 			while (*cp != '\0' && findex < 2) {
-				if (!strncmp(cp, "inet6", strlen("inet6"))) {
+				if (!strncmp(cp, "inet6", INETLEN)) {
 					_resp->family[findex] = AF_INET6;
-					cp += strlen("inet6");
-				} else if (!strncmp(cp, "inet4",
-				     strlen("inet4"))) {
+					cp += INETLEN;
+				} else if (!strncmp(cp, "inet4", INETLEN)) {
 					_resp->family[findex] = AF_INET;
-					cp += strlen("inet4");
+					cp += INETLEN;
 				} else {
 					_resp->family[0] = -1;
 					break;
