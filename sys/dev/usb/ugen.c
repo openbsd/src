@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.56 2008/12/14 16:48:04 fgsch Exp $ */
+/*	$OpenBSD: ugen.c,v 1.57 2009/06/05 20:18:03 yuo Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -193,6 +193,7 @@ int
 ugen_set_config(struct ugen_softc *sc, int configno)
 {
 	usbd_device_handle dev = sc->sc_udev;
+	usb_config_descriptor_t *cdesc;
 	usbd_interface_handle iface;
 	usb_endpoint_descriptor_t *ed;
 	struct ugen_endpoint *sce;
@@ -217,7 +218,8 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 		}
 
 	/* Avoid setting the current value. */
-	if (usbd_get_config_descriptor(dev)->bConfigurationValue != configno) {
+	cdesc = usbd_get_config_descriptor(dev);
+	if (!cdesc || cdesc->bConfigurationValue != configno) {
 		err = usbd_set_config_no(dev, configno, 1);
 		if (err)
 			return (err);
