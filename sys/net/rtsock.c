@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.87 2009/05/31 18:00:54 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.88 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -620,19 +620,22 @@ report:
 			 * flags may also be different; ifp may be specified
 			 * by ll sockaddr when protocol address is ambiguous
 			 */
-			if ((error = rt_getifa(&info)) != 0)
+			if ((error = rt_getifa(&info,
+			    /* XXX wrong, only rdomain */ tableid)) != 0)
 				goto flush;
 			if (gate && rt_setgate(rt, rt_key(rt), gate, tableid)) {
 				error = EDQUOT;
 				goto flush;
 			}
-			if (ifpaddr && (ifa = ifa_ifwithnet(ifpaddr)) &&
+			if (ifpaddr && (ifa = ifa_ifwithnet(ifpaddr,
+			    /* XXX again rtable vs. rdomain */ tableid)) &&
 			    (ifp = ifa->ifa_ifp) && (ifaaddr || gate))
 				ifa = ifaof_ifpforaddr(ifaaddr ? ifaaddr : gate,
-							ifp);
-			else if ((ifaaddr && (ifa = ifa_ifwithaddr(ifaaddr))) ||
+				    ifp);
+			else if ((ifaaddr && (ifa = ifa_ifwithaddr(ifaaddr,
+			    /* XXX one more time */ tableid))) ||
 			    (gate && (ifa = ifa_ifwithroute(rt->rt_flags,
-			    rt_key(rt), gate))))
+			    rt_key(rt), gate, /* XXX again */ tableid))))
 				ifp = ifa->ifa_ifp;
 			if (ifa) {
 				struct ifaddr *oifa = rt->rt_ifa;
@@ -1062,6 +1065,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 			ifam->ifam_metric = ifa->ifa_metric;
 			ifam->ifam_flags = ifa->ifa_flags;
 			ifam->ifam_addrs = info.rti_addrs;
+			ifam->ifam_tableid = ifp->if_rdomain;
 		}
 		if ((cmd == RTM_ADD && pass == 2) ||
 		    (cmd == RTM_DELETE && pass == 1)) {
@@ -1079,6 +1083,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 			rtm->rtm_flags |= rt->rt_flags;
 			rtm->rtm_errno = error;
 			rtm->rtm_addrs = info.rti_addrs;
+			rtm->rtm_tableid = ifp->if_rdomain;
 		}
 		if (sa == NULL)
 			route_proto.sp_protocol = 0;

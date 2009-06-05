@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.99 2008/05/24 19:48:32 thib Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.100 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -764,12 +764,7 @@ tcp_usrclosed(tp)
  * Look up a socket for ident or tcpdrop, ...
  */
 int
-tcp_ident(oldp, oldlenp, newp, newlen, dodrop)
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	int dodrop;
+tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 {
 	int error = 0, s;
 	struct tcp_ident_mapping tir;
@@ -830,7 +825,7 @@ tcp_ident(oldp, oldlenp, newp, newlen, dodrop)
 #endif
 	case AF_INET:
 		inp = in_pcbhashlookup(&tcbtable,  fin->sin_addr,
-		    fin->sin_port, lin->sin_addr, lin->sin_port);
+		    fin->sin_port, lin->sin_addr, lin->sin_port , tir.rdomain);
 		break;
 	}
 
@@ -855,7 +850,7 @@ tcp_ident(oldp, oldlenp, newp, newlen, dodrop)
 #endif
 		case AF_INET:
 			inp = in_pcblookup_listen(&tcbtable, 
-			    lin->sin_addr, lin->sin_port, 0, NULL);
+			    lin->sin_addr, lin->sin_port, 0, NULL, tir.rdomain);
 			break;
 		}
 	}

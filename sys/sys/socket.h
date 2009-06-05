@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.59 2008/09/16 15:48:12 gollo Exp $	*/
+/*	$OpenBSD: socket.h,v 1.60 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -44,6 +44,9 @@
  * Definitions related to sockets: types, address families, options.
  */
 
+/* Maximum number of alternate routing tables */
+#define	RT_TABLEID_MAX	255
+
 /*
  * Types
  */
@@ -82,6 +85,7 @@
 #define	SO_ERROR	0x1007		/* get error status and clear */
 #define	SO_TYPE		0x1008		/* get socket type */
 #define	SO_NETPROC	0x1020		/* multiplex; network processing */
+#define SO_RDOMAIN	0x1021		/* routing domain socket belongs to */
 
 /*
  * Structure used for manipulating linger option.

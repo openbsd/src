@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.648 2009/05/18 20:37:13 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.649 2009/06/05 00:05:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -153,8 +153,8 @@ void			 pf_send_tcp(const struct pf_rule *, sa_family_t,
 			    const struct pf_addr *, const struct pf_addr *,
 			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,
 			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int,
-			    u_int16_t, struct ether_header *, struct ifnet *,
-			    int);
+			    u_int16_t, u_short, struct ether_header *,
+			    struct ifnet *, int);
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t,
 			    sa_family_t, struct pf_rule *, int);
 void			 pf_detach_state(struct pf_state *);
@@ -1093,6 +1093,10 @@ pf_src_tree_remove_state(struct pf_state *s)
 void
 pf_unlink_state(struct pf_state *cur)
 {
+	/*
+	 * XXX XXX XXX state needs to know routing domain so that states
+	 * XXX XXX XXX can not float between domain. May simplify other code.
+	 */
 	splsoftassert(IPL_SOFTNET);
 
 	if (cur->src.state == PF_TCPS_PROXY_DST) {
@@ -1103,7 +1107,7 @@ pf_unlink_state(struct pf_state *cur)
 		    cur->key[PF_SK_WIRE]->port[1],
 		    cur->key[PF_SK_WIRE]->port[0],
 		    cur->src.seqhi, cur->src.seqlo + 1,
-		    TH_RST|TH_ACK, 0, 0, 0, 1, cur->tag, NULL, NULL,
+		    TH_RST|TH_ACK, 0, 0, 0, 1, cur->tag, 0, NULL, NULL,
 		    cur->rtableid);
 	}
 	RB_REMOVE(pf_state_tree_id, &tree_id, cur);
@@ -1878,7 +1882,8 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
     const struct pf_addr *saddr, const struct pf_addr *daddr,
     u_int16_t sport, u_int16_t dport, u_int32_t seq, u_int32_t ack,
     u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl, int tag,
-    u_int16_t rtag, struct ether_header *eh, struct ifnet *ifp, int rtableid)
+    u_int16_t rtag, u_short rdom, struct ether_header *eh, struct ifnet *ifp,
+    int rtableid)
 {
 	struct mbuf	*m;
 	int		 len, tlen;
@@ -1916,6 +1921,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 	if (tag)
 		m->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
 	m->m_pkthdr.pf.tag = rtag;
+	m->m_pkthdr.rdomain = rdom;
 
 	if (rtableid >= 0)
 		m->m_pkthdr.pf.rtableid = rtableid;
@@ -2040,6 +2046,7 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 		return;
 
 	m0->m_pkthdr.pf.flags |= PF_TAG_GENERATED;
+	m0->m_pkthdr.rdomain = m->m_pkthdr.rdomain;
 
 	if (rtableid >= 0)
 		m0->m_pkthdr.pf.rtableid = rtableid;
@@ -2402,10 +2409,11 @@ pf_socket_lookup(int direction, struct pf_pdesc *pd)
 	switch (pd->af) {
 #ifdef INET
 	case AF_INET:
-		inp = in_pcbhashlookup(tb, saddr->v4, sport, daddr->v4, dport);
+		inp = in_pcbhashlookup(tb, saddr->v4, sport, daddr->v4, dport,
+		    /* XXX */ 0);
 		if (inp == NULL) {
 			inp = in_pcblookup_listen(tb, daddr->v4, dport, 0,
-			    NULL);
+			    NULL, 0);
 			if (inp == NULL)
 				return (-1);
 		}
@@ -2526,6 +2534,7 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 	int			 hlen;
 	u_int16_t		 mss = tcp_mssdflt;
 
+	/* XXX needs to know about routing domain or actually rtableid */
 	switch (af) {
 #ifdef INET
 	case AF_INET:
@@ -3018,8 +3027,8 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 				pf_send_tcp(r, af, pd->dst,
 				    pd->src, th->th_dport, th->th_sport,
 				    ntohl(th->th_ack), ack, TH_RST|TH_ACK, 0, 0,
-				    r->return_ttl, 1, 0, pd->eh, kif->pfik_ifp,
-				    act.rtableid);
+				    r->return_ttl, 1, 0, m->m_pkthdr.rdomain,
+				    pd->eh, kif->pfik_ifp, act.rtableid);
 			}
 		} else if (pd->proto != IPPROTO_ICMP && af == AF_INET &&
 		    r->return_icmp)
@@ -3280,8 +3289,7 @@ pf_create_state(struct pf_rule *r, struct pf_rule *nr, struct pf_rule *a,
 		s->src.mss = mss;
 		pf_send_tcp(r, pd->af, pd->dst, pd->src, th->th_dport,
 		    th->th_sport, s->src.seqhi, ntohl(th->th_seq) + 1,
-		    TH_SYN|TH_ACK, 0, s->src.mss, 0, 1, 0, NULL, NULL,
-		    act->rtableid);
+		    TH_SYN|TH_ACK, 0, s->src.mss, 0, 1, 0, /* XXX */ 0, NULL, NULL, act->rtableid);
 		REASON_SET(&reason, PFRES_SYNPROXY);
 		return (PF_SYNPROXY_DROP);
 	}
@@ -3694,7 +3702,8 @@ pf_tcp_track_full(struct pf_state_peer *src, struct pf_state_peer *dst,
 				    th->th_sport, ntohl(th->th_ack), 0,
 				    TH_RST, 0, 0,
 				    (*state)->rule.ptr->return_ttl, 1, 0,
-				    pd->eh, kif->pfik_ifp, (*state)->rtableid);
+				    m->m_pkthdr.rdomain, pd->eh,
+				    kif->pfik_ifp, (*state)->rtableid);
 			src->seqlo = 0;
 			src->seqhi = 1;
 			src->max_win = 1;
@@ -3846,7 +3855,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			    pd->src, th->th_dport, th->th_sport,
 			    (*state)->src.seqhi, ntohl(th->th_seq) + 1,
 			    TH_SYN|TH_ACK, 0, (*state)->src.mss, 0, 1,
-			    0, NULL, NULL, (*state)->rtableid);
+			    0, /* XXX */ 0, NULL, NULL, (*state)->rtableid);
 			REASON_SET(reason, PFRES_SYNPROXY);
 			return (PF_SYNPROXY_DROP);
 		} else if (!(th->th_flags & TH_ACK) ||
@@ -3876,8 +3885,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			    &sk->addr[pd->sidx], &sk->addr[pd->didx],
 			    sk->port[pd->sidx], sk->port[pd->didx],
 			    (*state)->dst.seqhi, 0, TH_SYN, 0,
-			    (*state)->src.mss, 0, 0, (*state)->tag, NULL, NULL,
-			    (*state)->rtableid);
+			    (*state)->src.mss, 0, 0, (*state)->tag, /* XXX */ 0,
+			    NULL, NULL, (*state)->rtableid);
 			REASON_SET(reason, PFRES_SYNPROXY);
 			return (PF_SYNPROXY_DROP);
 		} else if (((th->th_flags & (TH_SYN|TH_ACK)) !=
@@ -3892,13 +3901,14 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			    pd->src, th->th_dport, th->th_sport,
 			    ntohl(th->th_ack), ntohl(th->th_seq) + 1,
 			    TH_ACK, (*state)->src.max_win, 0, 0, 0,
-			    (*state)->tag, NULL, NULL, (*state)->rtableid);
+			    (*state)->tag, /* XXX */ 0, NULL, NULL,
+			    (*state)->rtableid);
 			pf_send_tcp((*state)->rule.ptr, pd->af,
 			    &sk->addr[pd->sidx], &sk->addr[pd->didx],
 			    sk->port[pd->sidx], sk->port[pd->didx],
 			    (*state)->src.seqhi + 1, (*state)->src.seqlo + 1,
 			    TH_ACK, (*state)->dst.max_win, 0, 0, 1,
-			    0, NULL, NULL, (*state)->rtableid);
+			    0, /* XXX */ 0, NULL, NULL, (*state)->rtableid);
 			(*state)->src.seqdiff = (*state)->dst.seqhi -
 			    (*state)->src.seqlo;
 			(*state)->dst.seqdiff = (*state)->src.seqhi -
@@ -4827,6 +4837,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif)
 	struct rtentry		*rt;
 	struct ifnet		*ifp;
 
+	/* XXX needs to know about routing domain or actually rtableid */
 	check_mpath = 0;
 	bzero(&ro, sizeof(ro));
 	switch (af) {
@@ -4908,6 +4919,7 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw)
 #endif
 	int			 ret = 0;
 
+	/* XXX needs to know about routing domain or actually rtableid */
 	bzero(&ro, sizeof(ro));
 	switch (af) {
 	case AF_INET:

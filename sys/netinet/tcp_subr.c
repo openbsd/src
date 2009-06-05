@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.105 2008/06/09 07:07:17 djm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.106 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -809,7 +809,8 @@ tcp_ctlinput(cmd, sa, v)
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 		seq = ntohl(th->th_seq);
 		inp = in_pcbhashlookup(&tcbtable,
-		    ip->ip_dst, th->th_dport, ip->ip_src, th->th_sport);
+		    ip->ip_dst, th->th_dport, ip->ip_src, th->th_sport,
+		    /* XXX */ 0);
 		if (inp && (tp = intotcpcb(inp)) &&
 		    SEQ_GEQ(seq, tp->snd_una) &&
 		    SEQ_LT(seq, tp->snd_max)) {
@@ -831,7 +832,8 @@ tcp_ctlinput(cmd, sa, v)
 				 * route (traditional PMTUD).
 				 */
 				tp->t_flags &= ~TF_PMTUD_PEND;
-				icmp_mtudisc(icp);    
+				/* XXX inherit rdomain from PCB */
+				icmp_mtudisc(icp, 0);
 			} else {
 				/*
 				 * Record the information got in the ICMP
@@ -866,7 +868,8 @@ tcp_ctlinput(cmd, sa, v)
 	if (ip) {
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 		inp = in_pcbhashlookup(&tcbtable,
-		    ip->ip_dst, th->th_dport, ip->ip_src, th->th_sport);
+		    ip->ip_dst, th->th_dport, ip->ip_src, th->th_sport,
+		    /* XXX */ 0);
 		if (inp) {
 			seq = ntohl(th->th_seq);
 			if (inp->inp_socket &&

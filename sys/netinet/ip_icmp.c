@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.82 2008/09/10 09:10:55 henning Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.83 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -213,6 +213,8 @@ icmp_do_error(struct mbuf *n, int type, int code, n_long dest, int destmtu)
 	}
 	if (m == NULL)
 		goto freeit;
+	/* keep in same domain and rtable (the latter is a bit unclear) */
+	m->m_pkthdr.rdomain = n->m_pkthdr.rdomain;
 	m->m_len = icmplen + ICMP_MINLEN;
 	if ((m->m_flags & M_EXT) == 0)
 		MH_ALIGN(m, m->m_len);
@@ -587,9 +589,11 @@ reflect:
 			goto freeit;
 #endif
 		rt = NULL;
+		/* XXX rdomain vs. rtable */
 		rtredirect(sintosa(&icmpsrc), sintosa(&icmpdst),
 		    (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
-		    sintosa(&icmpgw), (struct rtentry **)&rt);
+		    sintosa(&icmpgw), (struct rtentry **)&rt,
+		    m->m_pkthdr.rdomain);
 		if (rt != NULL && icmp_redirtimeout != 0) {
 			(void)rt_timer_add(rt, icmp_redirect_timeout,
 			    icmp_redirect_timeout_q);
@@ -659,6 +663,8 @@ icmp_reflect(struct mbuf *m)
 	 * the address which corresponds to the incoming interface.
 	 */
 	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+		if (ia->ia_ifp->if_rdomain != m->m_pkthdr.rdomain)
+			continue;
 		if (t.s_addr == ia->ia_addr.sin_addr.s_addr)
 			break;
 		if ((ia->ia_ifp->if_flags & IFF_BROADCAST) &&
@@ -680,7 +686,9 @@ icmp_reflect(struct mbuf *m)
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = ip->ip_src;
 
-		rtalloc(&ro);
+		/* keep packet in the original VRF instance */
+		ro.ro_rt = rtalloc1(&ro.ro_dst, 1,
+		     m->m_pkthdr.rdomain);
 		if (ro.ro_rt == 0) {
 			ipstat.ips_noroute++;
 			m_freem(m);
@@ -863,14 +871,13 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 }
 
 
-/* XXX only handles table 0 right now */
 struct rtentry *
-icmp_mtudisc_clone(struct sockaddr *dst)
+icmp_mtudisc_clone(struct sockaddr *dst, u_int rtableid)
 {
 	struct rtentry *rt;
 	int error;
 
-	rt = rtalloc1(dst, 1, 0);
+	rt = rtalloc1(dst, 1, rtableid);
 	if (rt == 0)
 		return (NULL);
 
@@ -885,7 +892,7 @@ icmp_mtudisc_clone(struct sockaddr *dst)
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_flags = RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC;
 
-		error = rtrequest1(RTM_ADD, &info, rt->rt_priority, &nrt, 0);
+		error = rtrequest1(RTM_ADD, &info, RTP_DEFAULT, &nrt, rtableid);
 		if (error) {
 			rtfree(rt);
 			return (NULL);
@@ -904,7 +911,7 @@ icmp_mtudisc_clone(struct sockaddr *dst)
 }
 
 void
-icmp_mtudisc(struct icmp *icp)
+icmp_mtudisc(struct icmp *icp, u_int rtableid)
 {
 	struct rtentry *rt;
 	struct sockaddr *dst = sintosa(&icmpsrc);
@@ -917,7 +924,7 @@ icmp_mtudisc(struct icmp *icp)
 		4352, 2002, 1492, 1006, 508, 296, 68, 0
 	};
 
-	rt = icmp_mtudisc_clone(dst);
+	rt = icmp_mtudisc_clone(dst, rtableid);
 	if (rt == 0)
 		return;
 

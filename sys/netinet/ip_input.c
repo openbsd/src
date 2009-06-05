@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.163 2009/06/04 05:02:25 henning Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.164 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ static	struct ip_srcrt {
 } ip_srcrt;
 
 void save_rte(u_char *, struct in_addr);
-int ip_weadvertise(u_int32_t);
+int ip_weadvertise(u_int32_t, u_int);
 
 /*
  * IP initialization: fill in IP protocol switch table.
@@ -401,8 +401,8 @@ ipv4_input(m)
 	if (!m->m_pkthdr.pf.statekey ||
 	    !((struct pf_state_key *)m->m_pkthdr.pf.statekey)->reverse)
 #endif
-		if ((ia = in_iawithaddr(ip->ip_dst, m)) != NULL &&
-		    (ia->ia_ifp->if_flags & IFF_UP))
+		if ((ia = in_iawithaddr(ip->ip_dst, m, m->m_pkthdr.rdomain)) !=
+		    NULL && (ia->ia_ifp->if_flags & IFF_UP))
 			goto ours;
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
@@ -677,13 +677,13 @@ bad:
 }
 
 struct in_ifaddr *
-in_iawithaddr(ina, m)
-	struct in_addr ina;
-	struct mbuf *m;
+in_iawithaddr(struct in_addr ina, struct mbuf *m, u_int rdomain)
 {
 	struct in_ifaddr *ia;
 
 	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+		if (ia->ia_ifp->if_rdomain != rdomain)
+			continue;
 		if ((ina.s_addr == ia->ia_addr.sin_addr.s_addr) ||
 		    ((ia->ia_ifp->if_flags & (IFF_LOOPBACK|IFF_LINK1)) ==
 			(IFF_LOOPBACK|IFF_LINK1) &&
@@ -1040,7 +1040,8 @@ ip_dooptions(m)
 				goto bad;
 			}
 			ipaddr.sin_addr = ip->ip_dst;
-			ia = ifatoia(ifa_ifwithaddr(sintosa(&ipaddr)));
+			ia = ifatoia(ifa_ifwithaddr(sintosa(&ipaddr),
+			    m->m_pkthdr.rdomain));
 			if (ia == 0) {
 				if (opt == IPOPT_SSRR) {
 					type = ICMP_UNREACH;
@@ -1070,10 +1071,15 @@ ip_dooptions(m)
 			if (opt == IPOPT_SSRR) {
 #define	INA	struct in_ifaddr *
 #define	SA	struct sockaddr *
-			    if ((ia = (INA)ifa_ifwithdstaddr((SA)&ipaddr)) == 0)
-				ia = (INA)ifa_ifwithnet((SA)&ipaddr);
+			    if ((ia = (INA)ifa_ifwithdstaddr((SA)&ipaddr,
+				m->m_pkthdr.rdomain)) == 0)
+				ia = (INA)ifa_ifwithnet((SA)&ipaddr,
+				    m->m_pkthdr.rdomain);
 			} else
-				ia = ip_rtaddr(ipaddr.sin_addr);
+				/* keep packet in the original VRF instance */
+				/* XXX rdomain or rtableid ??? */
+				ia = ip_rtaddr(ipaddr.sin_addr,
+				    m->m_pkthdr.rdomain);
 			if (ia == 0) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_SRCFAIL;
@@ -1110,9 +1116,13 @@ ip_dooptions(m)
 			/*
 			 * locate outgoing interface; if we're the destination,
 			 * use the incoming interface (should be same).
+			 * Again keep the packet inside the VRF instance.
+			 * XXX rdomain vs. rtableid ???
 			 */
-			if ((ia = (INA)ifa_ifwithaddr((SA)&ipaddr)) == 0 &&
-			    (ia = ip_rtaddr(ipaddr.sin_addr)) == 0) {
+			if ((ia = (INA)ifa_ifwithaddr((SA)&ipaddr,
+			    m->m_pkthdr.rdomain)) == 0 &&
+			    (ia = ip_rtaddr(ipaddr.sin_addr,
+			    m->m_pkthdr.rdomain)) == 0) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_HOST;
 				goto bad;
@@ -1160,7 +1170,8 @@ ip_dooptions(m)
 					goto bad;
 				bcopy((caddr_t)&sin, (caddr_t)&ipaddr.sin_addr,
 				    sizeof(struct in_addr));
-				if (ifa_ifwithaddr((SA)&ipaddr) == 0)
+				if (ifa_ifwithaddr((SA)&ipaddr,
+				    m->m_pkthdr.rdomain) == 0)
 					continue;
 				ipt.ipt_ptr += sizeof(struct in_addr);
 				break;
@@ -1193,8 +1204,7 @@ bad:
  * return internet address info of interface to be used to get there.
  */
 struct in_ifaddr *
-ip_rtaddr(dst)
-	 struct in_addr dst;
+ip_rtaddr(struct in_addr dst, u_int rtableid)
 {
 	struct sockaddr_in *sin;
 
@@ -1209,7 +1219,8 @@ ip_rtaddr(dst)
 		sin->sin_len = sizeof(*sin);
 		sin->sin_addr = dst;
 
-		rtalloc(&ipforward_rt);
+		ipforward_rt.ro_rt = rtalloc1(&ipforward_rt.ro_dst, 1,
+		    rtableid);
 	}
 	if (ipforward_rt.ro_rt == 0)
 		return ((struct in_ifaddr *)0);
@@ -1244,8 +1255,7 @@ save_rte(option, dst)
  * Code shamelessly copied from arplookup().
  */
 int
-ip_weadvertise(addr)
-	u_int32_t addr;
+ip_weadvertise(u_int32_t addr, u_int rtableid)
 {
 	struct rtentry *rt;
 	struct ifnet *ifp;
@@ -1256,7 +1266,7 @@ ip_weadvertise(addr)
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = addr;
 	sin.sin_other = SIN_PROXY;
-	rt = rtalloc1(sintosa(&sin), 0, 0);	/* XXX other tables? */
+	rt = rtalloc1(sintosa(&sin), 0, rtableid);
 	if (rt == 0)
 		return 0;
 
@@ -1266,7 +1276,9 @@ ip_weadvertise(addr)
 		return 0;
 	}
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list)
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		if (ifp->if_rdomain != rtableid)
+			continue;
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != rt->rt_gateway->sa_family)
 				continue;
@@ -1278,6 +1290,7 @@ ip_weadvertise(addr)
 				return 1;
 			}
 		}
+	}
 
 	RTFREE(rt);
 	return 0;
@@ -1431,9 +1444,9 @@ ip_forward(m, srcrt)
 		return;
 	}
 
-#if NPF > 0
-	rtableid = m->m_pkthdr.pf.rtableid;
-#endif
+	rtableid = m->m_pkthdr.rdomain;
+	if (m->m_pkthdr.pf.rtableid)
+		rtableid = m->m_pkthdr.pf.rtableid;
 
 	sin = satosin(&ipforward_rt.ro_dst);
 	if ((rt = ipforward_rt.ro_rt) == 0 ||
@@ -1481,7 +1494,8 @@ ip_forward(m, srcrt)
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0 &&
 	    satosin(rt_key(rt))->sin_addr.s_addr != 0 &&
 	    ipsendredirects && !srcrt &&
-	    !ip_weadvertise(satosin(rt_key(rt))->sin_addr.s_addr)) {
+	    !ip_weadvertise(satosin(rt_key(rt))->sin_addr.s_addr,
+	    m->m_pkthdr.rdomain)) {
 		if (rt->rt_ifa &&
 		    (ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_subnetmask) ==
 		    ifatoia(rt->rt_ifa)->ia_subnet) {

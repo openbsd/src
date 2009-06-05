@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.44 2009/06/04 19:07:21 henning Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.45 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -172,6 +172,9 @@
 
 #define	SIOCSIFXFLAGS	 _IOW('i', 157, struct ifreq)	/* set ifnet xflags */
 #define	SIOCGIFXFLAGS	_IOWR('i', 158, struct ifreq)	/* get ifnet xflags */
+
+#define	SIOCSIFRTABLEID	 _IOW('i', 159, struct ifreq)	/* set ifnet VRF id */
+#define	SIOCGIFRTABLEID	_IOWR('i', 160, struct ifreq)	/* get ifnet VRF id */
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */

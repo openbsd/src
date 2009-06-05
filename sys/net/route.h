@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.62 2009/05/26 08:29:44 reyk Exp $	*/
+/*	$OpenBSD: route.h,v 1.63 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -351,8 +351,6 @@ struct sockaddr_rtlabel {
 	char		sr_label[RTLABEL_LEN];
 };
 
-#define	RT_TABLEID_MAX	255
-
 #ifdef _KERNEL
 const char	*rtlabel_id2name(u_int16_t);
 u_int16_t	 rtlabel_name2id(char *);
@@ -416,12 +414,12 @@ void	 rtalloc_noclone(struct route *, int);
 struct rtentry *
 	 rtalloc2(struct sockaddr *, int, int);
 void	 rtfree(struct rtentry *);
-int	 rt_getifa(struct rt_addrinfo *);
+int	 rt_getifa(struct rt_addrinfo *, u_int);
 int	 rtinit(struct ifaddr *, int, int);
 int	 rtioctl(u_long, caddr_t, struct proc *);
 void	 rtredirect(struct sockaddr *, struct sockaddr *,
 			 struct sockaddr *, int, struct sockaddr *,
-			 struct rtentry **);
+			 struct rtentry **, u_int);
 int	 rtrequest1(int, struct rt_addrinfo *, u_int8_t, struct rtentry **,
 	     u_int);
 void	 rt_if_remove(struct ifnet *);

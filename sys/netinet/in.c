@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.53 2009/03/15 19:40:41 miod Exp $	*/
+/*	$OpenBSD: in.c,v 1.54 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -113,19 +113,24 @@ int hostzeroisbroadcast = HOSTZEROBROADCAST;
  * Otherwise, it includes only the directly-connected (sub)nets.
  */
 int
-in_localaddr(in)
-	struct in_addr in;
+in_localaddr(struct in_addr in, u_int rdomain)
 {
 	struct in_ifaddr *ia;
 
 	if (subnetsarelocal) {
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
+		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+			if (ia->ia_ifp->if_rdomain != rdomain)
+				continue;
 			if ((in.s_addr & ia->ia_netmask) == ia->ia_net)
 				return (1);
+		}
 	} else {
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list)
+		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+			if (ia->ia_ifp->if_rdomain != rdomain)
+				continue;
 			if ((in.s_addr & ia->ia_subnetmask) == ia->ia_subnet)
 				return (1);
+		}
 	}
 	return (0);
 }
@@ -786,6 +791,8 @@ in_addprefix(target, flags)
 	}
 
 	TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+		if (ia->ia_ifp->if_rdomain != target->ia_ifp->if_rdomain)
+			continue;
 		if (rtinitflags(ia)) {
 			p = ia->ia_dstaddr.sin_addr;
 			if (prefix.s_addr != p.s_addr)
@@ -857,6 +864,8 @@ in_scrubprefix(target)
 			p.s_addr &= ia->ia_sockmask.sin_addr.s_addr;
 		}
 
+		if (ia->ia_ifp->if_rdomain != target->ia_ifp->if_rdomain)
+			continue;
 		if (prefix.s_addr != p.s_addr)
 			continue;
 

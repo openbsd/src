@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.105 2009/06/04 19:07:21 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.106 2009/06/05 00:05:21 claudio Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -215,6 +215,7 @@ struct ifnet {				/* and the entries */
 	struct	if_data if_data;	/* stats and other data about if */
 	u_int32_t if_hardmtu;		/* maximum MTU device supports */
 	int	if_capabilities;	/* interface capabilities */
+	u_int	if_rdomain;		/* routing instance */
 	char	if_description[IFDESCRSIZE]; /* interface description */
 	u_short	if_rtlabelid;		/* next route label */
 	u_int8_t if_priority;
@@ -588,6 +589,7 @@ struct	ifreq {
 #define	ifr_metric	ifr_ifru.ifru_metric	/* metric */
 #define	ifr_mtu		ifr_ifru.ifru_metric	/* mtu (overload) */
 #define	ifr_media	ifr_ifru.ifru_metric	/* media options (overload) */
+#define	ifr_rdomainid	ifr_ifru.ifru_metric	/* VRF instance (overload) */
 #define	ifr_data	ifr_ifru.ifru_data	/* for use by interface */
 };
 
@@ -804,12 +806,12 @@ void	if_group_routechange(struct sockaddr *, struct sockaddr *);
 struct	ifnet *ifunit(const char *);
 void	if_start(struct ifnet *);
 
-struct	ifaddr *ifa_ifwithaddr(struct sockaddr *);
-struct	ifaddr *ifa_ifwithaf(int);
-struct	ifaddr *ifa_ifwithdstaddr(struct sockaddr *);
-struct	ifaddr *ifa_ifwithnet(struct sockaddr *);
+struct	ifaddr *ifa_ifwithaddr(struct sockaddr *, u_int);
+struct	ifaddr *ifa_ifwithaf(int, u_int);
+struct	ifaddr *ifa_ifwithdstaddr(struct sockaddr *, u_int);
+struct	ifaddr *ifa_ifwithnet(struct sockaddr *, u_int);
 struct	ifaddr *ifa_ifwithroute(int, struct sockaddr *,
-					struct sockaddr *);
+					struct sockaddr *, u_int);
 struct	ifaddr *ifaof_ifpforaddr(struct sockaddr *, struct ifnet *);
 void	ifafree(struct ifaddr *);
 void	link_rtrequest(int, struct rtentry *, struct rt_addrinfo *);

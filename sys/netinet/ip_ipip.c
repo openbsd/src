@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.42 2008/11/26 16:08:17 henning Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.43 2009/06/05 00:05:22 claudio Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -288,6 +288,8 @@ ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	    !(m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK)) &&
 	    ipip_allow != 2) {
 		TAILQ_FOREACH(ifp, &ifnet, if_list) {
+			if (ifp->if_rdomain != m->m_pkthdr.rdomain)
+				continue;
 			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 #ifdef INET
 				if (ipo) {

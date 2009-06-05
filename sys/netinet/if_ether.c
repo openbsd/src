@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.79 2008/12/24 08:26:27 claudio Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.80 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 
 void arptfree(struct llinfo_arp *);
 void arptimer(void *);
-struct llinfo_arp *arplookup(u_int32_t, int, int);
+struct llinfo_arp *arplookup(u_int32_t, int, int, u_int);
 void in_arpinput(struct mbuf *);
 
 LIST_HEAD(, llinfo_arp) llinfo_arp;
@@ -200,7 +200,8 @@ arp_rtrequest(req, rt, info)
 			 * Case 1: This route should come from a route to iface.
 			 */
 			rt_setgate(rt, rt_key(rt),
-			    (struct sockaddr *)&null_sdl, 0);
+			    (struct sockaddr *)&null_sdl,
+			    rt->rt_ifp->if_rdomain);
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = rt->rt_ifp->if_type;
 			SDL(gate)->sdl_index = rt->rt_ifp->if_index;
@@ -338,6 +339,7 @@ arprequest(ifp, sip, tip, enaddr)
 		return;
 	m->m_len = sizeof(*ea);
 	m->m_pkthdr.len = sizeof(*ea);
+	m->m_pkthdr.rdomain = ifp->if_rdomain;
 	MH_ALIGN(m, sizeof(*ea));
 	ea = mtod(m, struct ether_arp *);
 	eh = (struct ether_header *)sa.sa_data;
@@ -397,7 +399,8 @@ arpresolve(ac, rt, m, dst, desten)
 			log(LOG_DEBUG, "arpresolve: %s: route without link "
 			    "local address\n", inet_ntoa(SIN(dst)->sin_addr));
 	} else {
-		if ((la = arplookup(SIN(dst)->sin_addr.s_addr, 1, 0)) != NULL)
+		if ((la = arplookup(SIN(dst)->sin_addr.s_addr, 1, 0,
+		    ac->ac_if.if_rdomain)) != NULL)
 			rt = la->la_rt;
 		else
 			log(LOG_DEBUG,
@@ -689,7 +692,8 @@ in_arpinput(m)
 		itaddr = myaddr;
 		goto reply;
 	}
-	la = arplookup(isaddr.s_addr, itaddr.s_addr == myaddr.s_addr, 0);
+	la = arplookup(isaddr.s_addr, itaddr.s_addr == myaddr.s_addr, 0,
+	    m->m_pkthdr.rdomain);
 	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
 		if (sdl->sdl_alen) {
 		    if (bcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
@@ -771,7 +775,8 @@ reply:
 		bcopy(ea->arp_sha, ea->arp_tha, sizeof(ea->arp_sha));
 		bcopy(enaddr, ea->arp_sha, sizeof(ea->arp_sha));
 	} else {
-		la = arplookup(itaddr.s_addr, 0, SIN_PROXY);
+		la = arplookup(itaddr.s_addr, 0, SIN_PROXY,
+		    m->m_pkthdr.rdomain);
 		if (la == 0)
 			goto out;
 		rt = la->la_rt;
@@ -812,6 +817,7 @@ arptfree(la)
 	struct rtentry *rt = la->la_rt;
 	struct sockaddr_dl *sdl;
 	struct rt_addrinfo info;
+	u_int tid = 0;
 
 	if (rt == 0)
 		panic("arptfree");
@@ -826,16 +832,20 @@ arptfree(la)
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 
-	rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, 0);
+	if (rt->rt_ifp)
+		tid = rt->rt_ifp->if_rdomain;
+
+	rtrequest1(RTM_DELETE, &info, rt->rt_priority, NULL, tid);
 }
 
 /*
  * Lookup or enter a new address in arptab.
  */
 struct llinfo_arp *
-arplookup(addr, create, proxy)
+arplookup(addr, create, proxy, tableid)
 	u_int32_t addr;
 	int create, proxy;
+	u_int tableid;
 {
 	struct rtentry *rt;
 	static struct sockaddr_inarp sin;
@@ -844,7 +854,7 @@ arplookup(addr, create, proxy)
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = addr;
 	sin.sin_other = proxy ? SIN_PROXY : 0;
-	rt = rtalloc1(sintosa(&sin), create, 0);
+	rt = rtalloc1(sintosa(&sin), create, tableid);
 	if (rt == 0)
 		return (0);
 	rt->rt_refcnt--;
@@ -861,7 +871,7 @@ arplookup(addr, create, proxy)
 				info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 
 				rtrequest1(RTM_DELETE, &info, rt->rt_priority,
-				    NULL, 0);
+				    NULL, tableid);
 			}
 		}
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.193 2009/06/04 19:07:21 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.194 2009/06/05 00:05:21 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -878,7 +878,7 @@ if_congestion_clear(void *arg)
  */
 /*ARGSUSED*/
 struct ifaddr *
-ifa_ifwithaddr(struct sockaddr *addr)
+ifa_ifwithaddr(struct sockaddr *addr, u_int rdomain)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
@@ -887,6 +887,8 @@ ifa_ifwithaddr(struct sockaddr *addr)
 	(bcmp((caddr_t)(a1), (caddr_t)(a2),	\
 	((struct sockaddr *)(a1))->sa_len) == 0)
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	    if (ifp->if_rdomain != rdomain)
+		continue;
 	    TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != addr->sa_family)
 			continue;
@@ -906,20 +908,22 @@ ifa_ifwithaddr(struct sockaddr *addr)
  */
 /*ARGSUSED*/
 struct ifaddr *
-ifa_ifwithdstaddr(struct sockaddr *addr)
+ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
-	    if (ifp->if_flags & IFF_POINTOPOINT)
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			if (ifa->ifa_addr->sa_family != addr->sa_family ||
-			    ifa->ifa_dstaddr == NULL)
-				continue;
-			if (equal(addr, ifa->ifa_dstaddr))
-				return (ifa);
-		}
+		if (ifp->if_rdomain != rdomain)
+			continue;
+		if (ifp->if_flags & IFF_POINTOPOINT)
+			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+				if (ifa->ifa_addr->sa_family !=
+				    addr->sa_family || ifa->ifa_dstaddr == NULL)
+					continue;
+				if (equal(addr, ifa->ifa_dstaddr))
+					return (ifa);
+			}
 	}
 	return (NULL);
 }
@@ -929,7 +933,7 @@ ifa_ifwithdstaddr(struct sockaddr *addr)
  * is most specific found.
  */
 struct ifaddr *
-ifa_ifwithnet(struct sockaddr *addr)
+ifa_ifwithnet(struct sockaddr *addr, u_int rdomain)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
@@ -944,6 +948,8 @@ ifa_ifwithnet(struct sockaddr *addr)
 			return (ifnet_addrs[sdl->sdl_index]);
 	}
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		if (ifp->if_rdomain != rdomain)
+			continue;
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			char *cp, *cp2, *cp3;
 
@@ -972,12 +978,14 @@ ifa_ifwithnet(struct sockaddr *addr)
  * Find an interface using a specific address family
  */
 struct ifaddr *
-ifa_ifwithaf(int af)
+ifa_ifwithaf(int af, u_int rdomain)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		if (ifp->if_rdomain != rdomain)
+			continue;
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family == af)
 				return (ifa);
@@ -1202,7 +1210,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa, *nifa;
 	struct sockaddr_dl *sdl;
 	struct ifgroupreq *ifgr;
 	char ifdescrbuf[IFDESCRSIZE];
@@ -1401,6 +1409,59 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		if (ifr->ifr_metric < 0 || ifr->ifr_metric > 15)
 			return (EINVAL);
 		ifp->if_priority = ifr->ifr_metric;
+		break;
+
+	case SIOCGIFRTABLEID:
+		ifr->ifr_rdomainid = ifp->if_rdomain;
+		break;
+
+	case SIOCSIFRTABLEID:
+		if ((error = suser(p, 0)) != 0)
+			return (error);
+		if (ifr->ifr_rdomainid < 0 ||
+		    ifr->ifr_rdomainid > RT_TABLEID_MAX)
+			return (EINVAL);
+		/* remove all routing entries when switching domains */
+		/* XXX hell this is ugly */
+		if (ifr->ifr_rdomainid != ifp->if_rdomain) {
+			rt_if_remove(ifp);
+#ifdef INET
+			rti_delete(ifp);
+#if NETHER > 0
+			myip_ifp = NULL;
+#endif
+#ifdef MROUTING
+			vif_delete(ifp);
+#endif
+#endif
+#ifdef INET6
+			in6_ifdetach(ifp);
+#endif
+#ifdef INET
+			for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
+			    ifa = nifa) {
+				nifa = TAILQ_NEXT(ifa, ifa_list);
+
+				/* only remove AF_INET */
+				if (ifa->ifa_addr->sa_family != AF_INET)
+					continue;
+
+				TAILQ_REMOVE(&in_ifaddr,
+				    (struct in_ifaddr *)ifa, ia_list);
+				TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+				ifa->ifa_ifp = NULL;
+				IFAFREE(ifa);
+			}
+#endif
+		}
+
+		/* make sure that the routing table exists */
+		if (!rtable_exists(ifr->ifr_rdomainid)) {
+			if (rtable_add(ifr->ifr_rdomainid) == -1)
+				panic("rtinit: rtable_add");
+		}
+
+		ifp->if_rdomain = ifr->ifr_rdomainid;
 		break;
 
 	case SIOCAIFGROUP:

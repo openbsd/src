@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.128 2009/06/03 18:22:44 naddy Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.129 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -440,6 +440,8 @@ udp_input(struct mbuf *m, ...)
 			if (!ip6 && (inp->inp_flags & INP_IPV6))
 				continue;
 #endif
+			if (inp->inp_rdomain != m->m_pkthdr.rdomain)
+				continue;
 			if (inp->inp_lport != uh->uh_dport)
 				continue;
 #ifdef INET6
@@ -558,7 +560,7 @@ udp_input(struct mbuf *m, ...)
 		else
 #endif /* INET6 */
 		inp = in_pcbhashlookup(&udbtable, ip->ip_src, uh->uh_sport,
-		    ip->ip_dst, uh->uh_dport);
+		    ip->ip_dst, uh->uh_dport, m->m_pkthdr.rdomain);
 #if NPF > 0
 		if (m->m_pkthdr.pf.statekey && inp) {
 			((struct pf_state_key *)m->m_pkthdr.pf.statekey)->inp =
@@ -579,7 +581,8 @@ udp_input(struct mbuf *m, ...)
 		} else
 #endif /* INET6 */
 		inp = in_pcblookup_listen(&udbtable,
-		    ip->ip_dst, uh->uh_dport, inpl_reverse, m);
+		    ip->ip_dst, uh->uh_dport, inpl_reverse, m,
+		    m->m_pkthdr.rdomain);
 		if (inp == 0) {
 			udpstat.udps_noport++;
 			if (m->m_flags & (M_BCAST | M_MCAST)) {
@@ -901,7 +904,8 @@ udp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 		}
 #endif
 		inp = in_pcbhashlookup(&udbtable,
-		    ip->ip_dst, uhp->uh_dport, ip->ip_src, uhp->uh_sport);
+		    ip->ip_dst, uhp->uh_dport, ip->ip_src, uhp->uh_sport,
+		    /* XXX */ 0);
 		if (inp && inp->inp_socket != NULL)
 			notify(inp, errno);
 	} else
@@ -1001,6 +1005,10 @@ udp_output(struct mbuf *m, ...)
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;
 
 	udpstat.udps_opackets++;
+
+	/* force routing domain */
+	m->m_pkthdr.rdomain = inp->inp_rdomain;
+
 	error = ip_output(m, inp->inp_options, &inp->inp_route,
 	    inp->inp_socket->so_options &
 	    (SO_DONTROUTE | SO_BROADCAST | SO_JUMBO),

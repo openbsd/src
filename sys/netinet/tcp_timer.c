@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.42 2008/02/20 11:24:03 markus Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.43 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ tcp_timer_rexmt(void *arg)
 		icmp.icmp_ip.ip_len = tp->t_pmtud_ip_len;
 		icmp.icmp_ip.ip_hl = tp->t_pmtud_ip_hl;
 		icmpsrc.sin_addr = tp->t_inpcb->inp_faddr;
-		icmp_mtudisc(&icmp);
+		icmp_mtudisc(&icmp, tp->t_inpcb->inp_rdomain);
 
 		/*
 		 * Notify all connections to the same peer about
@@ -285,7 +285,8 @@ tcp_timer_rexmt(void *arg)
 			sin.sin_family = AF_INET;
 			sin.sin_len = sizeof(struct sockaddr_in);
 			sin.sin_addr = inp->inp_faddr;
-			rt = icmp_mtudisc_clone(sintosa(&sin));
+			rt = icmp_mtudisc_clone(sintosa(&sin), 
+			    inp->inp_rdomain);
 			break;
 		}
 		if (rt != NULL) {

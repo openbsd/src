@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.46 2008/10/23 22:22:44 deraadt Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.47 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -132,12 +132,16 @@ rip_input(struct mbuf *m, ...)
 		if (inp->inp_flags & INP_IPV6)
 			continue;
 #endif
+		if (inp->inp_rdomain != m->m_pkthdr.rdomain)
+			continue;
+
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != ip->ip_p)
 			continue;
 #if NPF > 0
 		if (m->m_pkthdr.pf.flags & PF_TAG_DIVERTED) {
 			struct pf_divert *divert;
 
+			/* XXX rdomain support */
 			if ((divert = pf_find_divert(m)) == NULL)
 				continue;
 			if (inp->inp_laddr.s_addr != divert->addr.ipv4.s_addr)
@@ -267,6 +271,9 @@ rip_output(struct mbuf *m, ...)
 	 *             ip_output should be guarded against v6/v4 problems.
 	 */
 #endif
+	/* force routing domain */
+	m->m_pkthdr.rdomain = inp->inp_rdomain;
+
 	return (ip_output(m, inp->inp_options, &inp->inp_route, flags,
 	    inp->inp_moptions, inp));
 }
@@ -411,7 +418,8 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		     (addr->sin_family != AF_IMPLINK)) ||
 		    (addr->sin_addr.s_addr &&
 		     (!(so->so_options & SO_BINDANY) &&
-		     in_iawithaddr(addr->sin_addr, NULL) == 0))) {
+		     in_iawithaddr(addr->sin_addr, NULL, inp->inp_rdomain) ==
+		     0))) {
 			error = EADDRNOTAVAIL;
 			break;
 		}

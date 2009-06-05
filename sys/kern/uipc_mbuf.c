@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.120 2009/06/02 00:05:13 blambert Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.121 2009/06/05 00:05:21 claudio Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -224,6 +224,7 @@ m_gethdr(int nowait, int type)
 		m->m_data = m->m_pktdat;
 		m->m_flags = M_PKTHDR;
 		m->m_pkthdr.rcvif = NULL;
+		m->m_pkthdr.rdomain = 0;
 		SLIST_INIT(&m->m_pkthdr.tags);
 		m->m_pkthdr.csum_flags = 0;
 		m->m_pkthdr.ether_vtag = 0;

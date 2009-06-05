@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.76 2009/03/15 19:40:41 miod Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.77 2009/06/05 00:05:21 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <net/route.h>
 #include <sys/pool.h>
 
 void 	filt_sordetach(struct knote *kn);
@@ -986,6 +987,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 	} else {
 		switch (optname) {
 		case SO_BINDANY:
+		case SO_RDOMAIN:
 			if ((error = suser(curproc, 0)) != 0)	/* XXX */
 				goto bad;
 			break;

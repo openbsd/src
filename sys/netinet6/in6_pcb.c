@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.48 2008/11/23 13:30:59 claudio Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.49 2009/06/05 00:05:22 claudio Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -235,8 +235,8 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 					       */
 			sin6->sin6_flowinfo = 0;
 			if (!(so->so_options & SO_BINDANY) &&
-			    ((ia = ifa_ifwithaddr((struct sockaddr *)sin6))
-			    == NULL))
+			    (ia = ifa_ifwithaddr((struct sockaddr *)sin6,
+			    /* XXX */ 0)) == NULL)
 				return EADDRNOTAVAIL;
 
 			/*
@@ -276,7 +276,7 @@ in6_pcbbind(struct inpcb *inp, struct mbuf *nam, struct proc *p)
 			t = in_pcblookup(head,
 			    (struct in_addr *)&zeroin6_addr, 0,
 			    (struct in_addr *)&sin6->sin6_addr, lport,
-			    wild);
+			    wild, /* XXX */ 0);
 
 			if (t && (reuseport & t->inp_socket->so_options) == 0)
 				return EADDRINUSE;
@@ -353,7 +353,7 @@ in6_pcbsetport(struct in6_addr *laddr, struct inpcb *inp, struct proc *p)
 			lport = htons(*lastport);
 		} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
 		    in_pcblookup(table, &zeroin6_addr, 0,
-		    &inp->inp_laddr6, lport, wild));
+		    &inp->inp_laddr6, lport, wild, /* XXX */ 0));
 	} else {
 		/*
 		 * counting up
@@ -371,7 +371,7 @@ in6_pcbsetport(struct in6_addr *laddr, struct inpcb *inp, struct proc *p)
 			lport = htons(*lastport);
 		} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
 		    in_pcblookup(table, &zeroin6_addr, 0,
-		    &inp->inp_laddr6, lport, wild));
+		    &inp->inp_laddr6, lport, wild, /* XXX */ 0));
 	}
 
 	inp->inp_lport = lport;
@@ -452,7 +452,7 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 
 	if (in_pcblookup(inp->inp_table, &sin6->sin6_addr, sin6->sin6_port,
 	    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) ? in6a : &inp->inp_laddr6,
-	    inp->inp_lport, INPLOOKUP_IPV6)) {
+	    inp->inp_lport, INPLOOKUP_IPV6, /* XXX */ 0)) {
 		return (EADDRINUSE);
 	}
 	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6)) {

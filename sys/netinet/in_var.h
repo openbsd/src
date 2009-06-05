@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.11 2008/11/08 12:54:58 dlg Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.12 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -89,14 +89,15 @@ void	in_socktrim(struct sockaddr_in *);
  * Macro for finding the interface (ifnet structure) corresponding to one
  * of our IP addresses.
  */
-#define INADDR_TO_IFP(addr, ifp)					\
+#define INADDR_TO_IFP(addr, ifp, rdomain)				\
 	/* struct in_addr addr; */					\
 	/* struct ifnet *ifp; */					\
 do {									\
 	struct in_ifaddr *ia;						\
 									\
 	for (ia = TAILQ_FIRST(&in_ifaddr); ia != TAILQ_END(&in_ifaddr) && \
-	    ia->ia_addr.sin_addr.s_addr != (addr).s_addr;		\
+	    (ia->ia_ifp->if_rdomain != rdomain || 			\
+	    ia->ia_addr.sin_addr.s_addr != (addr).s_addr);		\
 	    ia = TAILQ_NEXT(ia, ia_list))				\
 		 continue;						\
 	(ifp) = (ia == NULL) ? NULL : ia->ia_ifp;			\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.104 2009/02/22 17:43:20 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.105 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1217,7 +1217,7 @@ ni6_input(struct mbuf *m, int off)
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	bcopy(&ip6->ip6_dst, &sin6.sin6_addr, sizeof(sin6.sin6_addr));
 	/* XXX scopeid */
-	if (ifa_ifwithaddr((struct sockaddr *)&sin6))
+	if (ifa_ifwithaddr((struct sockaddr *)&sin6, /* XXX */ 0))
 		; /* unicast/anycast, fine */
 	else if (IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr))
 		; /* link-local multicast, fine */
@@ -2336,7 +2336,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		rtredirect((struct sockaddr *)&sdst, (struct sockaddr *)&sgw,
 			   (struct sockaddr *)NULL, RTF_GATEWAY | RTF_HOST,
 			   (struct sockaddr *)&ssrc,
-			   &newrt);
+			   &newrt, /* XXX */ 0);
 
 		if (newrt) {
 			(void)rt_timer_add(newrt, icmp6_redirect_timeout,

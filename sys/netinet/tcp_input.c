@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.225 2009/06/03 18:22:44 naddy Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.226 2009/06/05 00:05:22 claudio Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -605,7 +605,8 @@ findpcb:
 #endif
 		case AF_INET:
 			inp = in_pcbhashlookup(&tcbtable, ip->ip_src,
-			    th->th_sport, ip->ip_dst, th->th_dport);
+			    th->th_sport, ip->ip_dst, th->th_dport,
+			    m->m_pkthdr.rdomain);
 			break;
 		}
 #if NPF > 0
@@ -630,7 +631,8 @@ findpcb:
 #endif /* INET6 */
 		case AF_INET:
 			inp = in_pcblookup_listen(&tcbtable,
-			    ip->ip_dst, th->th_dport, inpl_flags, m);
+			    ip->ip_dst, th->th_dport, inpl_flags, m,
+			    m->m_pkthdr.rdomain);
 			break;
 		}
 		/*
@@ -3033,7 +3035,7 @@ tcp_mss(struct tcpcb *tp, int offer)
 	else if (tp->pf == AF_INET) {
 		if (ip_mtudisc)
 			mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
-		else if (inp && in_localaddr(inp->inp_faddr))
+		else if (inp && in_localaddr(inp->inp_faddr, inp->inp_rdomain))
 			mss = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 	}
 #ifdef INET6
