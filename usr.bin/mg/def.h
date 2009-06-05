@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.111 2009/06/04 23:39:37 kjell Exp $	*/
+/*	$OpenBSD: def.h,v 1.112 2009/06/05 18:02:06 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -104,9 +104,10 @@ typedef int	(*PF)(int, int);	/* generally useful type */
 /*
  * Direction of insert into kill ring
  */
-#define KNONE	0
-#define KFORW	1
-#define KBACK	2
+#define KNONE	0x00
+#define KFORW	0x01		/* forward insert into kill ring */
+#define KBACK	0x02		/* Backwards insert into kill ring */
+#define KREG	0x04		/* This is a region-based kill */
 
 /*
  * This structure holds the starting position
@@ -291,7 +292,8 @@ struct undo_rec {
 		INSERT = 1,
 		DELETE,
 		BOUNDARY,
-		MODIFIED
+		MODIFIED,
+		DELREG
 	} type;
 	struct region	 region;
 	int		 pos;
@@ -620,7 +622,7 @@ int		 undo_enable(int, int);
 int		 undo_add_boundary(int, int);
 void		 undo_add_modified(void);
 int		 undo_add_insert(struct line *, int, int);
-int		 undo_add_delete(struct line *, int, int);
+int		 undo_add_delete(struct line *, int, int, int);
 int		 undo_boundary_enable(int, int);
 int		 undo_add_change(struct line *, int, int);
 int		 undo(int, int);

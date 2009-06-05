@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.48 2009/06/04 23:39:37 kjell Exp $ */
+/* $OpenBSD: undo.c,v 1.49 2009/06/05 18:02:06 kjell Exp $ */
 /*
  * This file is in the public domain
  */
@@ -294,7 +294,7 @@ undo_add_insert(struct line *lp, int offset, int size)
  * This of course must be done _before_ the actual deletion is done.
  */
 int
-undo_add_delete(struct line *lp, int offset, int size)
+undo_add_delete(struct line *lp, int offset, int size, int isreg)
 {
 	struct region	reg;
 	struct	undo_rec *rec;
@@ -316,15 +316,17 @@ undo_add_delete(struct line *lp, int offset, int size)
 		 * Separate this command from the previous one if we're not
 		 * just before the previous record...
 		 */
-		if (rec->type == DELETE) {
+		if (!isreg && rec->type == DELETE) {
 			if (rec->pos - rec->region.r_size != pos)
 				undo_add_boundary(FFRAND, 1);
 		}
 	}
 	rec = new_undo_record();
 	rec->pos = pos;
-
-	rec->type = DELETE;
+	if (isreg)
+		rec->type = DELREG;
+	else
+		rec->type = DELETE;
 	memmove(&rec->region, &reg, sizeof(struct region));
 	do {
 		rec->content = malloc(reg.r_size + 1);
@@ -335,7 +337,7 @@ undo_add_delete(struct line *lp, int offset, int size)
 
 	region_get_data(&reg, rec->content, reg.r_size);
 
-	if (lastrectype() != DELETE)
+	if (isreg || lastrectype() != DELETE)
 		undo_add_boundary(FFRAND, 1);
 
 	LIST_INSERT_HEAD(&curbp->b_undo, rec, next);
@@ -353,7 +355,7 @@ undo_add_change(struct line *lp, int offset, int size)
 		return (TRUE);
 	undo_add_boundary(FFRAND, 1);
 	boundary_flag = FALSE;
-	undo_add_delete(lp, offset, size);
+	undo_add_delete(lp, offset, size, 0);
 	undo_add_insert(lp, offset, size);
 	boundary_flag = TRUE;
 	undo_add_boundary(FFRAND, 1);
@@ -397,6 +399,7 @@ undo_dump(int f, int n)
 		snprintf(buf, sizeof(buf),
 		    "%d:\t %s at %d ", num,
 		    (rec->type == DELETE) ? "DELETE":
+		    (rec->type == DELREG) ? "DELREGION":
 		    (rec->type == INSERT) ? "INSERT":
 		    (rec->type == BOUNDARY) ? "----" :
 		    (rec->type == MODIFIED) ? "MODIFIED": "UNKNOWN",
@@ -546,6 +549,10 @@ undo(int f, int n)
 				    ptr->region.r_size);
 				curwp->w_dotp = lp;
 				curwp->w_doto = offset;
+				break;
+			case DELREG:
+				region_put_data(ptr->content,
+				    ptr->region.r_size);
 				break;
 			case BOUNDARY:
 				done = 1;

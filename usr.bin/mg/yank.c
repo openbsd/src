@@ -1,4 +1,4 @@
-/*	$OpenBSD: yank.c,v 1.8 2009/06/04 02:23:37 kjell Exp $	*/
+/*	$OpenBSD: yank.c,v 1.9 2009/06/05 18:02:06 kjell Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -119,20 +119,19 @@ kchunk(char *cp1, RSIZE chunk, int kflag)
 	if (kused == kstart)
 		kflag = KFORW;
 
-	if (kflag == KFORW) {
+	if (kflag & KFORW) {
 		while (ksize - kused < chunk)
 			if (kgrow(kflag) == FALSE)
 				return (FALSE);
 		bcopy(cp1, &(kbufp[kused]), (int)chunk);
 		kused += chunk;
-	} else if (kflag == KBACK) {
+	} else if (kflag & KBACK) {
 		while (kstart < chunk)
 			if (kgrow(kflag) == FALSE)
 				return (FALSE);
 		bcopy(cp1, &(kbufp[kstart - chunk]), (int)chunk);
 		kstart -= chunk;
-	} else if (kflag != KNONE)
-		panic("broken ldelete call");
+	}
 
 	return (TRUE);
 }
