@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.44 2009/06/02 23:00:18 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.45 2009/06/05 10:51:44 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -313,7 +313,7 @@ struct vm_page *pmap_find_ptp(struct pmap *, vaddr_t, paddr_t, int);
 void pmap_free_ptp(struct pmap *, struct vm_page *,
     vaddr_t, pt_entry_t *, pd_entry_t **, struct pg_to_free *);
 void pmap_freepage(struct pmap *, struct vm_page *, int, struct pg_to_free *);
-static boolean_t pmap_is_active(struct pmap *, struct cpu_info *);
+static boolean_t pmap_is_active(struct pmap *, int);
 void pmap_map_ptes(struct pmap *, pt_entry_t **, pd_entry_t ***);
 struct pv_entry *pmap_remove_pv(struct vm_page *, struct pmap *, vaddr_t);
 void pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
@@ -328,23 +328,13 @@ void pmap_unmap_ptes(struct pmap *);
 boolean_t pmap_get_physpage(vaddr_t, int, paddr_t *);
 boolean_t pmap_pdes_valid(vaddr_t, pd_entry_t **, pd_entry_t *);
 void pmap_alloc_level(pd_entry_t **, vaddr_t, int, long *);
-void pmap_apte_flush(void);
+void pmap_apte_flush(struct pmap *pmap);
 
 void pmap_sync_flags_pte(struct vm_page *, u_long);
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
  */
-
-/*
- * pmap_is_active: is this pmap loaded into the specified processor's %cr3?
- */
-
-static __inline boolean_t
-pmap_is_active(struct pmap *pmap, struct cpu_info *ci)
-{
-	return (pmap == pmap_kernel() || ci->ci_curpmap == pmap);
-}
 
 /*
  * pmap_is_curpmap: is this pmap the one currently loaded [in %cr3]?
@@ -354,9 +344,20 @@ pmap_is_active(struct pmap *pmap, struct cpu_info *ci)
 static __inline boolean_t
 pmap_is_curpmap(struct pmap *pmap)
 {
-	return (pmap_is_active(pmap, curcpu()));
+	return((pmap == pmap_kernel()) ||
+	       (pmap->pm_pdirpa == (paddr_t) rcr3()));
 }
 
+/*
+ * pmap_is_active: is this pmap loaded into the specified processor's %cr3?
+ */
+
+static __inline boolean_t
+pmap_is_active(struct pmap *pmap, int cpu_id)
+{
+	return (pmap == pmap_kernel() ||
+	    (pmap->pm_cpus & (1U << cpu_id)) != 0);
+}
 
 static __inline u_int
 pmap_pte2flags(u_long pte)
@@ -374,7 +375,7 @@ pmap_sync_flags_pte(struct vm_page *pg, u_long pte)
 }
 
 void
-pmap_apte_flush(void)
+pmap_apte_flush(struct pmap *pmap)
 {
 	pmap_tlb_shoottlb();
 	pmap_tlb_shootwait();
@@ -405,7 +406,7 @@ pmap_map_ptes(struct pmap *pmap, pt_entry_t **ptepp, pd_entry_t ***pdeppp)
 		npde = (pd_entry_t) (pmap->pm_pdirpa | PG_RW | PG_V);
 		*APDP_PDE = npde;
 		if (pmap_valid_entry(opde))
-			pmap_apte_flush();
+			pmap_apte_flush(curpcb->pcb_pmap);
 	}
 	*ptepp = APTE_BASE;
 	*pdeppp = alternate_pdes;
@@ -419,7 +420,7 @@ pmap_unmap_ptes(struct pmap *pmap)
 
 #if defined(MULTIPROCESSOR)
 	*APDP_PDE = 0;
-	pmap_apte_flush();
+	pmap_apte_flush(curpcb->pcb_pmap);
 #endif
 	COUNT(apdp_pde_unmap);
 }
@@ -853,7 +854,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		opde = pmap_pte_set(&pdes[level - 1][index], 0);
 		invaladdr = level == 1 ? (vaddr_t)ptes :
 		    (vaddr_t)pdes[level - 2];
-		pmap_tlb_shootpage(curcpu()->ci_curpmap,
+		pmap_tlb_shootpage(curpcb->pcb_pmap,
 		    invaladdr + index * PAGE_SIZE);
 #if defined(MULTIPROCESSOR)
 		invaladdr = level == 1 ? (vaddr_t)PTE_BASE :
@@ -1080,8 +1081,6 @@ pmap_destroy(struct pmap *pmap)
 	 * reference count is zero, free pmap resources and then free pmap.
 	 */
 
-	/* Make sure it's not used by some other cpu. */
-	pmap_tlb_droppmap(pmap);
 	/*
 	 * remove it from global list of pmaps
 	 */
@@ -1100,7 +1099,13 @@ pmap_destroy(struct pmap *pmap)
 		}
 	}
 
+	/*
+	 * MULTIPROCESSOR -- no need to flush out of other processors'
+	 * APTE space because we do that in pmap_unmap_ptes().
+	 */
+	/* XXX: need to flush it out of other processor's APTE space? */
 	pool_put(&pmap_pdp_pool, pmap->pm_pdir);
+
 	pool_put(&pmap_pmap_pool, pmap);
 }
 
@@ -1116,14 +1121,29 @@ pmap_reference(struct pmap *pmap)
 
 /*
  * pmap_activate: activate a process' pmap (fill in %cr3 and LDT info)
+ *
+ * => called from cpu_switch()
+ * => if p is the curproc, then load it into the MMU
  */
+
 void
 pmap_activate(struct proc *p)
 {
-	KASSERT(p == curproc);
-	KASSERT(&p->p_addr->u_pcb == curpcb);
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
 
-	pmap_switch(NULL, p);
+	pcb->pcb_pmap = pmap;
+	pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
+	pcb->pcb_cr3 = pmap->pm_pdirpa;
+	if (p == curproc)
+		lcr3(pcb->pcb_cr3);
+	if (pcb == curpcb)
+		lldt(pcb->pcb_ldt_sel);
+
+	/*
+	 * mark the pmap in use by this processor.
+	 */
+	x86_atomic_setbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
 }
 
 /*
@@ -1133,41 +1153,13 @@ pmap_activate(struct proc *p)
 void
 pmap_deactivate(struct proc *p)
 {
-}
-
-u_int64_t nlazy_cr3;
-u_int64_t nlazy_cr3_hit;
-
-void
-pmap_switch(struct proc *o, struct proc *n)
-{
-	struct pmap *npmap, *opmap;
-	struct pcb *npcb;
-
-	npmap = n->p_vmspace->vm_map.pmap;
-
-	npcb = &n->p_addr->u_pcb;
-	npcb->pcb_pmap = npmap;
-	npcb->pcb_ldt_sel = npmap->pm_ldt_sel;
-	npcb->pcb_cr3 = npmap->pm_pdirpa;
-
-	opmap = curcpu()->ci_curpmap;
+	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
 
 	/*
-	 * Don't reload cr3 if we're switching to the same pmap or
-	 * when we're not exiting and switching to kernel pmap.
+	 * mark the pmap no longer in use by this processor. 
 	 */
-	if (opmap == npmap) {
-		if (npmap != pmap_kernel())
-			nlazy_cr3_hit++;
-	} else if (o != NULL && npmap == pmap_kernel()) {
-		nlazy_cr3++;
-	} else {
-		curcpu()->ci_curpmap = npmap;
-		lcr3(npmap->pm_pdirpa);
-	}
+	x86_atomic_clearbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
 
-	lldt(npcb->pcb_ldt_sel);
 }
 
 /*
@@ -2465,7 +2457,7 @@ pmap_tlb_shootpage(struct pmap *pm, vaddr_t va)
 	int mask = 0;
 
 	CPU_INFO_FOREACH(cii, ci) {
-		if (ci == self || !pmap_is_active(pm, ci) ||
+		if (ci == self || !pmap_is_active(pm, ci->ci_cpuid) ||
 		    !(ci->ci_flags & CPUF_RUNNING))
 			continue;
 		mask |= 1 << ci->ci_cpuid;
@@ -2503,7 +2495,7 @@ pmap_tlb_shootrange(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 	vaddr_t va;
 
 	CPU_INFO_FOREACH(cii, ci) {
-		if (ci == self || !pmap_is_active(pm, ci) ||
+		if (ci == self || !pmap_is_active(pm, ci->ci_cpuid) ||
 		    !(ci->ci_flags & CPUF_RUNNING))
 			continue;
 		mask |= 1 << ci->ci_cpuid;
@@ -2566,42 +2558,6 @@ pmap_tlb_shoottlb(void)
 	}
 
 	tlbflush();
-}
-
-void
-pmap_tlb_droppmap(struct pmap *pm)
-{
-	struct cpu_info *ci, *self = curcpu();
-	CPU_INFO_ITERATOR cii;
-	long wait = 0;
-	int mask = 0;
-
-	CPU_INFO_FOREACH(cii, ci) {
-		if (ci == self || !(ci->ci_flags & CPUF_RUNNING) ||
-		    ci->ci_curpmap != pm)
-			continue;
-		mask |= 1 << ci->ci_cpuid;
-		wait++;
-	}
-
-	if (wait) {
-		int s = splvm();
-
-		while (x86_atomic_cas_ul(&tlb_shoot_wait, 0, wait) != 0) {
-			while (tlb_shoot_wait != 0)
-				SPINLOCK_SPIN_HOOK;
-		}
-
-		CPU_INFO_FOREACH(cii, ci) {
-			if ((mask & 1 << ci->ci_cpuid) == 0)
-				continue;
-			if (x86_fast_ipi(ci, LAPIC_IPI_RELOADCR3) != 0)
-				panic("pmap_tlb_shoottlb: ipi failed");
-		}
-		splx(s);
-	}
-
-	pmap_activate(curproc);
 }
 
 void

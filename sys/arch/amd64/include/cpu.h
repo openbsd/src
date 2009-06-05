@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.45 2009/06/02 03:04:54 jordan Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.46 2009/06/05 10:51:45 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -79,8 +79,6 @@ struct cpu_info {
 	struct pcb *ci_curpcb;
 	struct pcb *ci_idle_pcb;
 	int ci_idle_tss_sel;
-
-	struct pmap *ci_curpmap;
 
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 	u_int32_t	ci_ipending;
