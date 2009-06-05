@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfxp.c,v 1.3 2009/06/04 00:13:21 kettenis Exp $	*/
+/*	$OpenBSD: gfxp.c,v 1.4 2009/06/05 04:33:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -67,6 +67,7 @@
 #define PM2_RECT_ORIG		0x80d0
 #define PM2_RECT_SIZE		0x80d8
 
+#define PM2_FB_READ_MODE	0x8a80
 #define PM2_FB_BLOCK_COLOR	0x8ac8
 
 #define PM2_FILTER_MODE		0x8c00
@@ -103,6 +104,9 @@ struct gfxp_softc {
 	pcitag_t	sc_pcitag;
 
 	int		sc_mode;
+
+	/* Saved state to clean up after X11. */
+	uint32_t	sc_read_mode;
 };
 
 int	gfxp_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -139,6 +143,8 @@ void	gfxp_erasecols(void *, int, int, int, long);
 void	gfxp_copyrows(void *, int, int, int);
 void	gfxp_eraserows(void *, int, int, long);
 
+void	gfxp_init(struct gfxp_softc *);
+void	gfxp_reinit(struct gfxp_softc *);
 int	gfxp_wait(struct gfxp_softc *);
 int	gfxp_wait_fifo(struct gfxp_softc *, int);
 void	gfxp_copyrect(struct gfxp_softc *, int, int, int, int, int, int);
@@ -216,6 +222,7 @@ gfxp_attach(struct device *parent, struct device *self, void *aux)
 	fbwscons_init(&sc->sc_sunfb, 0, console);
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
+	gfxp_init(sc);
 	ri->ri_ops.copyrows = gfxp_copyrows;
 	ri->ri_ops.copycols = gfxp_copycols;
 	ri->ri_ops.eraserows = gfxp_eraserows;
@@ -239,6 +246,8 @@ gfxp_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
+		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
+			gfxp_reinit(sc);
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
@@ -400,6 +409,20 @@ gfxp_eraserows(void *cookie, int row, int num, long attr)
 		w = ri->ri_emuwidth;
 	}
 	gfxp_fillrect(sc, x, y, w, num, ri->ri_devcmap[bg]);
+}
+
+void
+gfxp_init(struct gfxp_softc *sc)
+{
+	sc->sc_read_mode = bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh,
+	    PM2_FB_READ_MODE);
+}
+
+void
+gfxp_reinit(struct gfxp_softc *sc)
+{
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+	    PM2_FB_READ_MODE, sc->sc_read_mode);
 }
 
 int
