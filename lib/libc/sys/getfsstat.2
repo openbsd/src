@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfsstat.2,v 1.16 2007/05/31 19:19:32 jmc Exp $
+.\"	$OpenBSD: getfsstat.2,v 1.17 2009/06/05 23:31:34 millert Exp $
 .\"	$NetBSD: getfsstat.2,v 1.6 1995/06/29 11:40:44 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)getfsstat.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2009 $
 .Dt GETFSSTAT 2
 .Os
 .Sh NAME
@@ -107,6 +107,10 @@ unable to respond.
 If no flags are provided,
 .Dv MNT_WAIT
 is assumed.
+.Pp
+Note that
+.Fa f_fsid
+will be empty unless the user is the superuser.
 .Sh RETURN VALUES
 Upon successful completion, the number of
 .Fa statfs

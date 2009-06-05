@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statfs.2,v 1.19 2008/03/16 20:24:14 otto Exp $
+.\"	$OpenBSD: statfs.2,v 1.20 2009/06/05 23:31:34 millert Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)statfs.2	8.3 (Berkeley) 2/11/94
 .\"
-.Dd $Mdocdate: March 16 2008 $
+.Dd $Mdocdate: June 5 2009 $
 .Dt STATFS 2
 .Os
 .Sh NAME
@@ -89,6 +89,10 @@ struct statfs {
 .Fn fstatfs
 returns the same information about an open file referenced by descriptor
 .Fa fd .
+.Pp
+Note that
+.Fa f_fsid
+will be empty unless the user is the superuser.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
 Otherwise, \-1 is returned and the global variable
