@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.9 2009/06/05 23:39:51 pyr Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.10 2009/06/05 23:44:14 eric Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -19,7 +19,6 @@
  */
 
 #include <sys/tree.h>
-#include <event.h>
 
 #define READ_BUF_SIZE		65535
 #define IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
