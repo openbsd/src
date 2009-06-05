@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.65 2008/09/19 23:36:24 djm Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.66 2009/06/05 15:17:02 ckuethe Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ int
 settime(struct timespec *ts)
 {
 	struct timespec now;
-	
+
 
 	/*
 	 * Don't allow the time to be set forward so far it will wrap
@@ -319,6 +319,16 @@ sys_gettimeofday(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
+#ifdef __HAVE_TIMECOUNTER
+struct timeval adjtimedelta;		/* unapplied time correction */
+#else
+int	tickdelta;			/* current clock skew, us. per tick */
+long	timedelta;			/* unapplied time correction, us. */
+long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
+int64_t	ntp_tick_permanent;
+int64_t	ntp_tick_acc;
+#endif
+
 /* ARGSUSED */
 int
 sys_settimeofday(struct proc *p, void *v, register_t *retval)
@@ -343,6 +353,20 @@ sys_settimeofday(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, tv)) {
 		struct timespec ts;
 
+		/*
+		 * Adjtime in progress is meaningless or harmful after
+		 * setting the clock. Cancel adjtime and then set new time.
+		 */
+#ifdef __HAVE_TIMECOUNTER
+		adjtimedelta.tv_usec = 0;
+		adjtimedelta.tv_sec = 0;
+#else
+		int s = splclock();
+		tickdelta = 0;
+		timedelta = 0;
+		splx(s);
+#endif
+
 		TIMEVAL_TO_TIMESPEC(&atv, &ts);
 		if ((error = settime(&ts)) != 0)
 			return (error);
@@ -351,16 +375,6 @@ sys_settimeofday(struct proc *p, void *v, register_t *retval)
 		tz = atz;
 	return (0);
 }
-
-#ifdef __HAVE_TIMECOUNTER
-struct timeval adjtimedelta;		/* unapplied time correction */
-#else
-int	tickdelta;			/* current clock skew, us. per tick */
-long	timedelta;			/* unapplied time correction, us. */
-long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
-int64_t	ntp_tick_permanent;
-int64_t	ntp_tick_acc;
-#endif
 
 /* ARGSUSED */
 int
@@ -478,7 +492,7 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 		odelta = ndelta;
 		ndelta += atv.tv_usec;
 		if (atv.tv_usec > 0 && ndelta <= odelta)
-			ndelta = LONG_MAX;	
+			ndelta = LONG_MAX;
 		else if (atv.tv_usec < 0 && ndelta >= odelta)
 			ndelta = LONG_MIN;
 	}
