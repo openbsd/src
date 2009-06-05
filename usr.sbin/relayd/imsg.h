@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.6 2009/06/05 19:38:53 pyr Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.7 2009/06/05 19:42:33 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -60,6 +60,7 @@ struct imsgbuf {
 	void			(*handler)(int, short, void *);
 	int			 fd;
 	pid_t			 pid;
+	void			*data;
 	short			 events;
 };
 
