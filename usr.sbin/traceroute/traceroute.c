@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.66 2008/10/04 02:21:49 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.67 2009/06/05 00:10:01 claudio Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.66 2008/10/04 02:21:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.67 2009/06/05 00:10:01 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -307,8 +307,9 @@ main(int argc, char *argv[])
 	struct ip *ip;
 	u_int8_t ttl;
 	char *ep;
+	const char *errstr;
 	long l;
-	uid_t uid;
+	uid_t uid, rdomain;
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(5, "icmp socket");
@@ -323,7 +324,7 @@ main(int argc, char *argv[])
 	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_ttl, &size,
 	    NULL, 0);
 
-	while ((ch = getopt(argc, argv, "SDIdg:f:m:np:q:rs:t:w:vlP:c")) != -1)
+	while ((ch = getopt(argc, argv, "cDdf:g:Ilm:nP:p:q:rSs:t:V:vw:")) != -1)
 		switch (ch) {
 		case 'S':
 			sump = 1;
@@ -435,6 +436,19 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			verbose++;
+			break;
+		case 'V':
+			rdomain = (unsigned int)strtonum(optarg, 0,
+			    RT_TABLEID_MAX, &errstr);
+			if (errstr)
+				errx(1, "rdomain value is %s: %s",
+				    errstr, optarg);
+			if (setsockopt(sndsock, IPPROTO_IP, SO_RDOMAIN,
+			    &rdomain, sizeof(rdomain)) == -1)
+				err(1, "setsockopt SO_RDOMAIN");
+			if (setsockopt(s, IPPROTO_IP, SO_RDOMAIN,
+			    &rdomain, sizeof(rdomain)) == -1)
+				err(1, "setsockopt SO_RDOMAIN");
 			break;
 		case 'w':
 			errno = 0;
@@ -1041,6 +1055,6 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s [-cDdIlnrSv] [-f first_ttl] [-g gateway_addr] [-m max_ttl]\n"
 	    "\t[-P proto] [-p port] [-q nqueries] [-s src_addr] [-t tos]\n"
-	    "\t[-w waittime] host [packetsize]\n", __progname);
+	    "\t[-V rdomain] [-w waittime] host [packetsize]\n", __progname);
 	exit(1);
 }

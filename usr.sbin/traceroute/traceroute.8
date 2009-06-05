@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.39 2007/05/31 19:20:30 jmc Exp $
+.\"	$OpenBSD: traceroute.8,v 1.40 2009/06/05 00:10:01 claudio Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2009 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -51,6 +51,7 @@
 .Op Fl q Ar nqueries
 .Op Fl s Ar src_addr
 .Op Fl t Ar tos
+.Op Fl V Ar rdomain
 .Op Fl w Ar waittime
 .Ar host
 .Op Ar packetsize
@@ -190,6 +191,8 @@ Useful values are probably
 (low delay) and
 .Ql -t 8
 (high throughput).
+.It Fl V Ar rdomain
+Set the routing domain, the default is 0.
 .It Fl v
 Verbose output.
 Received
