@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.67 2009/05/31 18:46:01 jacekm Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.68 2009/06/05 04:12:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -287,7 +287,8 @@ main(int argc, char *argv[])
 	    ibuf_rde->handler, ibuf_rde);
 	event_add(&ibuf_rde->ev, NULL);
 
-	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE)) == -1)
+	if (kr_init(!(ospfd_conf->flags & OSPFD_FLAG_NO_FIB_UPDATE),
+	    ospfd_conf->rdomain) == -1)
 		fatalx("kr_init failed");
 
 	/* remove unneded stuff from config */

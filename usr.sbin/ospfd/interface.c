@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.62 2009/04/26 12:48:06 sthen Exp $ */
+/*	$OpenBSD: interface.c,v 1.63 2009/06/05 04:12:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -238,6 +238,9 @@ if_del(struct iface *iface)
 void
 if_init(struct ospfd_conf *xconf, struct iface *iface)
 {
+	struct ifreq	ifr;
+	u_int		rdomain;
+
 	/* init the dummy local neighbor */
 	iface->self = nbr_new(ospfe_router_id(), iface, 1);
 
@@ -247,6 +250,18 @@ if_init(struct ospfd_conf *xconf, struct iface *iface)
 	evtimer_set(&iface->wait_timer, if_wait_timer, iface);
 
 	iface->fd = xconf->ospf_socket;
+
+	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
+	if (ioctl(iface->fd, SIOCGIFRTABLEID, (caddr_t)&ifr) == -1)
+		rdomain = 0;
+	else {
+		rdomain = ifr.ifr_rdomainid;
+		if (setsockopt(iface->fd, IPPROTO_IP, SO_RDOMAIN,
+		    &rdomain, sizeof(rdomain)) == -1)
+			fatal("failed to set rdomain");
+	}
+	if (rdomain != xconf->rdomain)
+		fatalx("interface rdomain mismatch");
 
 	ospfe_demote_iface(iface, 0);
 }
