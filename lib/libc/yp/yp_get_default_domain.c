@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_get_default_domain.c,v 1.6 2005/08/05 13:02:16 espie Exp $ */
+/*	$OpenBSD: yp_get_default_domain.c,v 1.7 2009/06/05 16:39:39 schwarze Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -42,5 +42,7 @@ yp_get_default_domain(char **domp)
 		if (getdomainname(_yp_domain, sizeof _yp_domain))
 			return YPERR_NODOM;
 	*domp = _yp_domain;
+	if (_yp_domain[0] == '\0')
+		return YPERR_NODOM;
 	return 0;
 }
