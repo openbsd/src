@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.57 2009/06/03 16:31:55 jacekm Exp $	*/
+/*	$OpenBSD: lka.c,v 1.58 2009/06/05 20:43:57 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -226,7 +226,7 @@ lka_dispatch_parent(int sig, short event, void *p)
 			lkasession = SPLAY_FIND(lkatree, &env->lka_sessions, &key);
 			if (lkasession == NULL)
 				fatal("lka_dispatch_parent: lka session is gone");
-			fd = imsg_get_fd(ibuf, &imsg);
+			fd = imsg_get_fd(ibuf);
 			--lkasession->pending;
 
 			if (fd == -1) {
@@ -260,12 +260,12 @@ lka_dispatch_parent(int sig, short event, void *p)
 						log_debug("expansion failed...");
 					}
 
-					imsg_compose(env->sc_ibufs[PROC_QUEUE],
+					imsg_compose_event(env->sc_ibufs[PROC_QUEUE],
 					    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
 					    &message, sizeof(struct message));
 
 					if (! lkasession->pending)
-						imsg_compose(env->sc_ibufs[PROC_QUEUE],
+						imsg_compose_event(env->sc_ibufs[PROC_QUEUE],
 						    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1,
 						    &message, sizeof(struct message));
 					break;
@@ -337,7 +337,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 				if (lka_verify_mail(env, &ss->u.path))
 					ss->code = 250;
 
-			imsg_compose(ibuf, IMSG_LKA_MAIL, 0, 0, -1,
+			imsg_compose_event(ibuf, IMSG_LKA_MAIL, 0, 0, -1,
 				ss, sizeof(*ss));
 
 			break;
@@ -357,17 +357,17 @@ lka_dispatch_mfa(int sig, short event, void *p)
 				ss->code = 250;
 				message = ss->msg;
 				message.recipient = ss->u.path;
-				imsg_compose(env->sc_ibufs[PROC_QUEUE],
+				imsg_compose_event(env->sc_ibufs[PROC_QUEUE],
 				    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
 				    &message, sizeof(struct message));
-				imsg_compose(env->sc_ibufs[PROC_QUEUE],
+				imsg_compose_event(env->sc_ibufs[PROC_QUEUE],
 				    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1,
 				    &message, sizeof(struct message));
 				break;
 			}
 
 			if (! lka_resolve_path(env, &ss->u.path)) {
-				imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0, -1,
+				imsg_compose_event(ibuf, IMSG_LKA_RCPT, 0, 0, -1,
 				    ss, sizeof(*ss));
 				break;
 			}
@@ -390,7 +390,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			if (lkasession->path.flags & F_PATH_ACCOUNT) {
 				fwreq.id = lkasession->id;
 				(void)strlcpy(fwreq.pw_name, ss->u.path.pw_name, sizeof(fwreq.pw_name));
-				imsg_compose(env->sc_ibufs[PROC_PARENT], IMSG_PARENT_FORWARD_OPEN, 0, 0, -1,
+				imsg_compose_event(env->sc_ibufs[PROC_PARENT], IMSG_PARENT_FORWARD_OPEN, 0, 0, -1,
 				    &fwreq, sizeof(fwreq));
 				++lkasession->pending;
 				break;
@@ -407,7 +407,7 @@ lka_dispatch_mfa(int sig, short event, void *p)
 			if (ret == 0) {
 				/* No aliases ... */
 				ss->code = 530;
-				imsg_compose(ibuf, IMSG_LKA_RCPT, 0, 0,
+				imsg_compose_event(ibuf, IMSG_LKA_RCPT, 0, 0,
 				    -1, ss, sizeof(*ss));
 				break;
 			}
@@ -482,7 +482,7 @@ lka_dispatch_mta(int sig, short event, void *p)
 				    query->host, map);
 			}
 
-			imsg_compose(ibuf, IMSG_LKA_SECRET, 0, 0, -1, query,
+			imsg_compose_event(ibuf, IMSG_LKA_SECRET, 0, 0, -1, query,
 			    sizeof(*query));
 			free(secret);
 			break;
@@ -968,16 +968,16 @@ lka_expand_rcpt(struct smtpd *env, struct aliaseslist *aliases, struct lkasessio
 
 	if (lkasession->flags & F_ERROR) {
 		lka_clear_aliaseslist(&lkasession->aliaseslist);
-		imsg_compose(env->sc_ibufs[PROC_MFA], IMSG_LKA_RCPT, 0, 0,
+		imsg_compose_event(env->sc_ibufs[PROC_MFA], IMSG_LKA_RCPT, 0, 0,
 		    -1, &lkasession->ss, sizeof(struct submit_status));
 	}
 	else if (TAILQ_FIRST(&lkasession->aliaseslist) == NULL) {
 		message = lkasession->message;
 		message.recipient = lkasession->path;
-		imsg_compose(env->sc_ibufs[PROC_QUEUE],
+		imsg_compose_event(env->sc_ibufs[PROC_QUEUE],
 		    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
 		    &message, sizeof(struct message));
-		imsg_compose(env->sc_ibufs[PROC_QUEUE],
+		imsg_compose_event(env->sc_ibufs[PROC_QUEUE],
 		    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1,
 		    &message, sizeof(struct message));
 	}
@@ -990,14 +990,14 @@ lka_expand_rcpt(struct smtpd *env, struct aliaseslist *aliases, struct lkasessio
 			lka_resolve_alias(env, &message.recipient, alias);
 			lka_rcpt_action(env, &message.recipient);
 			
-			imsg_compose(env->sc_ibufs[PROC_QUEUE],
+			imsg_compose_event(env->sc_ibufs[PROC_QUEUE],
 			    IMSG_QUEUE_SUBMIT_ENVELOPE, 0, 0, -1,
 			    &message, sizeof(struct message));
 			
 			TAILQ_REMOVE(&lkasession->aliaseslist, alias, entry);
 			free(alias);
 		}
-		imsg_compose(env->sc_ibufs[PROC_QUEUE],
+		imsg_compose_event(env->sc_ibufs[PROC_QUEUE],
 		    IMSG_QUEUE_COMMIT_ENVELOPES, 0, 0, -1, &message,
 		    sizeof(struct message));
 	}
@@ -1037,7 +1037,7 @@ lka_expand_rcpt_iteration(struct smtpd *env, struct aliaseslist *aliases, struct
 				done = 0;
 				fwreq.id = lkasession->id;
 				(void)strlcpy(fwreq.pw_name, alias->u.username, sizeof(fwreq.pw_name));
-				imsg_compose(env->sc_ibufs[PROC_PARENT], IMSG_PARENT_FORWARD_OPEN, 0, 0, -1,
+				imsg_compose_event(env->sc_ibufs[PROC_PARENT], IMSG_PARENT_FORWARD_OPEN, 0, 0, -1,
 				    &fwreq, sizeof(fwreq));
 				++lkasession->pending;
 				rmalias = alias;

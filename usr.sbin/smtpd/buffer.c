@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.1 2008/11/01 21:35:28 gilles Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.2 2009/06/05 20:43:57 pyr Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,24 +16,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
-#include <sys/time.h>
 
 #include <errno.h>
-#include <event.h>
-#include <limits.h>
-#include <pwd.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "smtpd.h"
+#include "imsg.h"
 
 int	buf_realloc(struct buf *, size_t);
 void	buf_enqueue(struct msgbuf *, struct buf *);
@@ -94,7 +87,7 @@ buf_realloc(struct buf *buf, size_t len)
 }
 
 int
-buf_add(struct buf *buf, void *data, size_t len)
+buf_add(struct buf *buf, const void *data, size_t len)
 {
 	if (buf->wpos + len > buf->size)
 		if (buf_realloc(buf, len) == -1)
@@ -119,11 +112,32 @@ buf_reserve(struct buf *buf, size_t len)
 	return (b);
 }
 
-int
+void *
+buf_seek(struct buf *buf, size_t pos, size_t len)
+{
+	/* only allowed to seek in already written parts */
+	if (pos + len > buf->wpos)
+		return (NULL);
+
+	return (buf->buf + pos);
+}
+
+size_t
+buf_size(struct buf *buf)
+{
+	return (buf->wpos);
+}
+
+size_t
+buf_left(struct buf *buf)
+{
+	return (buf->max - buf->wpos);
+}
+
+void
 buf_close(struct msgbuf *msgbuf, struct buf *buf)
 {
 	buf_enqueue(msgbuf, buf);
-	return (1);
 }
 
 void
@@ -153,32 +167,27 @@ msgbuf_clear(struct msgbuf *msgbuf)
 int
 msgbuf_write(struct msgbuf *msgbuf)
 {
-	struct iovec		 iov[IOV_MAX];
-	struct buf		*buf, *next, *save = NULL;
-	int			 i = 0;
-	ssize_t			 n;
-	struct msghdr		 msg;
-	struct cmsghdr		*cmsg;
+	struct iovec	 iov[IOV_MAX];
+	struct buf	*buf, *next;
+	unsigned int	 i = 0;
+	ssize_t		 n;
+	struct msghdr	 msg;
+	struct cmsghdr	*cmsg;
 	union {
-		struct cmsghdr	 hdr;
-		char		 buf[CMSG_SPACE(sizeof(int))];
-	}			 cmsgbuf;
+		struct cmsghdr	hdr;
+		char		buf[CMSG_SPACE(sizeof(int))];
+	} cmsgbuf;
 
 	bzero(&iov, sizeof(iov));
 	bzero(&msg, sizeof(msg));
 	TAILQ_FOREACH(buf, &msgbuf->bufs, entry) {
 		if (i >= IOV_MAX)
 			break;
-		if (buf->fd != -1 && i != 0) {
-			buf = save;
-			break;
-		}
 		iov[i].iov_base = buf->buf + buf->rpos;
-		iov[i].iov_len = buf->size - buf->rpos;
+		iov[i].iov_len = buf->wpos - buf->rpos;
 		i++;
 		if (buf->fd != -1)
 			break;
-		save = buf;
 	}
 
 	msg.msg_iov = iov;
@@ -207,6 +216,10 @@ msgbuf_write(struct msgbuf *msgbuf)
 		return (-2);
 	}
 
+	/*
+	 * assumption: fd got sent if sendmsg sent anything
+	 * this works because fds are passed one at a time
+	 */
 	if (buf != NULL && buf->fd != -1) {
 		close(buf->fd);
 		buf->fd = -1;
@@ -215,8 +228,8 @@ msgbuf_write(struct msgbuf *msgbuf)
 	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
 	    buf = next) {
 		next = TAILQ_NEXT(buf, entry);
-		if (buf->rpos + n >= buf->size) {
-			n -= buf->size - buf->rpos;
+		if (buf->rpos + n >= buf->wpos) {
+			n -= buf->wpos - buf->rpos;
 			buf_dequeue(msgbuf, buf);
 		} else {
 			buf->rpos += n;

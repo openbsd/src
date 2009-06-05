@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.12 2009/06/01 13:20:56 jacekm Exp $	*/
+/*	$OpenBSD: dns.c,v 1.13 2009/06/05 20:43:57 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -70,7 +70,7 @@ dns_query_a(struct smtpd *env, char *host, int port, u_int64_t id)
 	query.port = port;
 	query.id = id;
 
-	imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_DNS_A, 0, 0, -1, &query,
+	imsg_compose_event(env->sc_ibufs[PROC_LKA], IMSG_DNS_A, 0, 0, -1, &query,
 	    sizeof(query));
 }
 
@@ -84,7 +84,7 @@ dns_query_mx(struct smtpd *env, char *host, int port, u_int64_t id)
 	query.port = port;
 	query.id = id;
 
-	imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_DNS_MX, 0, 0, -1, &query,
+	imsg_compose_event(env->sc_ibufs[PROC_LKA], IMSG_DNS_MX, 0, 0, -1, &query,
 	    sizeof(query));
 }
 
@@ -97,7 +97,7 @@ dns_query_ptr(struct smtpd *env, struct sockaddr_storage *ss, u_int64_t id)
 	query.ss = *ss;
 	query.id = id;
 
-	imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_DNS_PTR, 0, 0, -1, &query,
+	imsg_compose_event(env->sc_ibufs[PROC_LKA], IMSG_DNS_PTR, 0, 0, -1, &query,
 	    sizeof(query));
 }
 
@@ -125,7 +125,7 @@ dns_async(struct smtpd *env, struct imsgbuf *asker, int type, struct dns *query)
 	    rd->ibuf.data);
 	event_add(&rd->ibuf.ev, NULL);
 
-	imsg_compose(&rd->ibuf, type, 0, 0, -1, query, sizeof(*query));
+	imsg_compose_event(&rd->ibuf, type, 0, 0, -1, query, sizeof(*query));
 }
 
 void
@@ -158,13 +158,13 @@ parent_dispatch_dns(int sig, short event, void *p)
 
 		switch (imsg.hdr.type) {
 		case IMSG_DNS_A:
-			imsg_compose(rd->asker, IMSG_DNS_A, 0, 0, -1, imsg.data,
+			imsg_compose_event(rd->asker, IMSG_DNS_A, 0, 0, -1, imsg.data,
 			    sizeof(struct dns));
 			break;
 
 		case IMSG_DNS_A_END:
 		case IMSG_DNS_PTR:
-			imsg_compose(rd->asker, imsg.hdr.type, 0, 0, -1,
+			imsg_compose_event(rd->asker, imsg.hdr.type, 0, 0, -1,
 			    imsg.data, sizeof(struct dns));
 			close(rd->ibuf.fd);
 			event_del(&ibuf->ev);
@@ -298,14 +298,14 @@ lookup_a(struct imsgbuf *ibuf, struct dns *query, int finalize)
 
 	for (res = res0; res; res = res->ai_next) {
 		memcpy(&query->ss, res->ai_addr, res->ai_addr->sa_len);
-		imsg_compose(ibuf, IMSG_DNS_A, 0, 0, -1, query, sizeof(*query));
+		imsg_compose_event(ibuf, IMSG_DNS_A, 0, 0, -1, query, sizeof(*query));
 	}
 	freeaddrinfo(res0);
 end:
 	free(port);
 	if (finalize) {
 		log_debug("lookup_a %s", query->error ? "failed" : "success");
-		imsg_compose(ibuf, IMSG_DNS_A_END, 0, 0, -1, query,
+		imsg_compose_event(ibuf, IMSG_DNS_A_END, 0, 0, -1, query,
 		    sizeof(*query));
 	}
 }
@@ -343,7 +343,7 @@ lookup_mx(struct imsgbuf *ibuf, struct dns *query)
 
 end:
 	log_debug("lookup_mx %s", query->error ? "failed" : "success");
-	imsg_compose(ibuf, IMSG_DNS_A_END, 0, 0, -1, query, sizeof(*query));
+	imsg_compose_event(ibuf, IMSG_DNS_A_END, 0, 0, -1, query, sizeof(*query));
 }
 
 int
@@ -504,5 +504,5 @@ lookup_ptr(struct imsgbuf *ibuf, struct dns *query)
 	}
 end:
 	log_debug("lookup_ptr %s", query->error ? "failed" : "success");
-	imsg_compose(ibuf, IMSG_DNS_PTR, 0, 0, -1, query, sizeof(*query));
+	imsg_compose_event(ibuf, IMSG_DNS_PTR, 0, 0, -1, query, sizeof(*query));
 }

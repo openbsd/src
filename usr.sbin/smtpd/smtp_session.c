@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.105 2009/06/01 14:53:18 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.106 2009/06/05 20:43:57 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -954,7 +954,7 @@ session_destroy(struct session *s)
 		fclose(s->datafp);
 
 	if (s->s_msg.message_id[0] != '\0' && s->s_state != S_DONE)
-		imsg_compose(s->s_env->sc_ibufs[PROC_QUEUE],
+		imsg_compose_event(s->s_env->sc_ibufs[PROC_QUEUE],
 		    IMSG_QUEUE_REMOVE_MESSAGE, 0, 0, -1, &s->s_msg,
 		    sizeof(s->s_msg));
 
@@ -1141,7 +1141,7 @@ session_imsg(struct session *s, enum smtp_proc_type proc, enum imsg_type type,
 	 */
 	s->s_flags |= F_WRITEONLY;
 	bufferevent_disable(s->s_bev, EV_READ);
-	imsg_compose(s->s_env->sc_ibufs[proc], type, peerid, pid, fd, data,
+	imsg_compose_event(s->s_env->sc_ibufs[proc], type, peerid, pid, fd, data,
 	    datalen);
 }
 

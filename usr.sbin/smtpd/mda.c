@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.20 2009/06/03 22:04:15 jacekm Exp $	*/
+/*	$OpenBSD: mda.c,v 1.21 2009/06/05 20:43:57 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -109,14 +109,14 @@ mda_dispatch_parent(int sig, short event, void *p)
 				fatalx("mda_dispatch_parent: internal inconsistency.");
 			messagep->status = status;
 
-			s->mboxfd = imsg_get_fd(ibuf, &imsg);
+			s->mboxfd = imsg_get_fd(ibuf);
 			if (s->mboxfd == -1) {
 				mda_remove_message(env, batchp, messagep);
 				break;
 			}
 
 			batchp->message = *messagep;
-			imsg_compose(env->sc_ibufs[PROC_PARENT],
+			imsg_compose_event(env->sc_ibufs[PROC_PARENT],
 			    IMSG_PARENT_MESSAGE_OPEN, 0, 0, -1, batchp,
 			    sizeof(struct batch));
 			break;
@@ -144,7 +144,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 				fatalx("mda_dispatch_parent: internal inconsistency.");
 			messagep->status = status;
 
-			s->messagefd = imsg_get_fd(ibuf, &imsg);
+			s->messagefd = imsg_get_fd(ibuf);
 			if (s->messagefd == -1) {
 				if (s->mboxfd != -1)
 					close(s->mboxfd);
@@ -159,7 +159,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 
 			if (store_message(batchp, messagep, store)) {
 				if (batchp->message.recipient.rule.r_action == A_MAILDIR)
-					imsg_compose(env->sc_ibufs[PROC_PARENT],
+					imsg_compose_event(env->sc_ibufs[PROC_PARENT],
 					    IMSG_PARENT_MAILBOX_RENAME, 0, 0, -1, batchp,
 					    sizeof(struct batch));
 			}
@@ -327,7 +327,7 @@ mda_dispatch_runner(int sig, short event, void *p)
 			lookup = *batchp;
 			TAILQ_FOREACH(messagep, &batchp->messages, entry) {
 				lookup.message = *messagep;
-				imsg_compose(env->sc_ibufs[PROC_PARENT],
+				imsg_compose_event(env->sc_ibufs[PROC_PARENT],
 				    IMSG_PARENT_MAILBOX_OPEN, 0, 0, -1, &lookup,
 				    sizeof(struct batch));
 			}
@@ -432,7 +432,7 @@ mda(struct smtpd *env)
 void
 mda_remove_message(struct smtpd *env, struct batch *batchp, struct message *messagep)
 {
-	imsg_compose(env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_UPDATE, 0, 0,
+	imsg_compose_event(env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_UPDATE, 0, 0,
 	    -1, messagep, sizeof (struct message));
 
 	if ((batchp->message.status & S_MESSAGE_TEMPFAILURE) == 0 &&

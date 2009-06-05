@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.57 2009/06/03 22:04:15 jacekm Exp $	*/
+/*	$OpenBSD: mta.c,v 1.58 2009/06/05 20:43:57 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -301,7 +301,7 @@ mta_dispatch_queue(int sig, short event, void *p)
 
 			IMSG_SIZE_CHECK(batchp);
 
-			if ((fd = imsg_get_fd(ibuf, &imsg)) == -1) {
+			if ((fd = imsg_get_fd(ibuf)) == -1) {
 				/* NEEDS_FIX - unsure yet how it must be handled */
 				fatalx("mta_dispatch_queue: imsg_get_fd");
 			}
@@ -440,7 +440,7 @@ mta_dispatch_runner(int sig, short event, void *p)
 				    batchp->rule.r_value.relayhost.hostname,
 				    sizeof(query.host));
 
-				imsg_compose(env->sc_ibufs[PROC_LKA],
+				imsg_compose_event(env->sc_ibufs[PROC_LKA],
 				    IMSG_LKA_SECRET, 0, 0, -1, &query,
 				    sizeof(query));
 			} else
@@ -923,7 +923,7 @@ mta_reply_handler(struct bufferevent *bev, void *arg)
 				}
 			}
 
-			imsg_compose(env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_FD,
+			imsg_compose_event(env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_FD,
 			    0, 0, -1, batchp, sizeof(*batchp));
 			bufferevent_disable(sessionp->s_bev, EV_READ);
 		}
@@ -1112,7 +1112,7 @@ mta_batch_update_queue(struct batch *batchp)
 			    time(NULL) - messagep->creation);
 		}
 
-		imsg_compose(env->sc_ibufs[PROC_QUEUE],
+		imsg_compose_event(env->sc_ibufs[PROC_QUEUE],
 		    IMSG_QUEUE_MESSAGE_UPDATE, 0, 0, -1, messagep,
 		    sizeof(struct message));
 		TAILQ_REMOVE(&batchp->messages, messagep, entry);

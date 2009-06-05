@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.73 2009/06/03 18:16:29 gilles Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.74 2009/06/05 20:43:57 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -133,7 +133,7 @@ parent_send_config_listeners(struct smtpd *env)
 	int			 opt;
 
 	log_debug("parent_send_config: configuring smtp");
-	imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_CONF_START,
+	imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_CONF_START,
 	    0, 0, -1, NULL, 0);
 
 	SPLAY_FOREACH(s, ssltree, env->sc_ssl) {
@@ -159,11 +159,11 @@ parent_send_config_listeners(struct smtpd *env)
 			fatal("setsockopt");
 		if (bind(l->fd, (struct sockaddr *)&l->ss, l->ss.ss_len) == -1)
 			fatal("bind");
-		imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_CONF_LISTENER,
+		imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_CONF_LISTENER,
 		    0, 0, l->fd, l, sizeof(*l));
 	}
 
-	imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_CONF_END,
+	imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_CONF_END,
 	    0, 0, -1, NULL, 0);
 }
 
@@ -174,7 +174,7 @@ parent_send_config_client_certs(struct smtpd *env)
 	struct iovec		 iov[3];
 
 	log_debug("parent_send_config_client_certs: configuring smtp");
-	imsg_compose(env->sc_ibufs[PROC_MTA], IMSG_CONF_START,
+	imsg_compose_event(env->sc_ibufs[PROC_MTA], IMSG_CONF_START,
 	    0, 0, -1, NULL, 0);
 
 	SPLAY_FOREACH(s, ssltree, env->sc_ssl) {
@@ -192,7 +192,7 @@ parent_send_config_client_certs(struct smtpd *env)
 		    iov, nitems(iov));
 	}
 
-	imsg_compose(env->sc_ibufs[PROC_MTA], IMSG_CONF_END,
+	imsg_compose_event(env->sc_ibufs[PROC_MTA], IMSG_CONF_END,
 	    0, 0, -1, NULL, 0);
 }
 
@@ -205,30 +205,30 @@ parent_send_config_ruleset(struct smtpd *env, int proc)
 	struct mapel		*mapel;
 	
 	log_debug("parent_send_config_ruleset: reloading rules and maps");
-	imsg_compose(env->sc_ibufs[proc], IMSG_CONF_START,
+	imsg_compose_event(env->sc_ibufs[proc], IMSG_CONF_START,
 	    0, 0, -1, NULL, 0);
 	
 	TAILQ_FOREACH(m, env->sc_maps, m_entry) {
-		imsg_compose(env->sc_ibufs[proc], IMSG_CONF_MAP,
+		imsg_compose_event(env->sc_ibufs[proc], IMSG_CONF_MAP,
 		    0, 0, -1, m, sizeof(*m));
 		TAILQ_FOREACH(mapel, &m->m_contents, me_entry) {
-			imsg_compose(env->sc_ibufs[proc], IMSG_CONF_MAP_CONTENT,
+			imsg_compose_event(env->sc_ibufs[proc], IMSG_CONF_MAP_CONTENT,
 			    0, 0, -1, mapel, sizeof(*mapel));
 		}
 	}
 	
 	TAILQ_FOREACH(r, env->sc_rules, r_entry) {
-		imsg_compose(env->sc_ibufs[proc], IMSG_CONF_RULE,
+		imsg_compose_event(env->sc_ibufs[proc], IMSG_CONF_RULE,
 		    0, 0, -1, r, sizeof(*r));
-		imsg_compose(env->sc_ibufs[proc], IMSG_CONF_RULE_SOURCE,
+		imsg_compose_event(env->sc_ibufs[proc], IMSG_CONF_RULE_SOURCE,
 		    0, 0, -1, &r->r_sources->m_name, sizeof(r->r_sources->m_name));
 		TAILQ_FOREACH(cond, &r->r_conditions, c_entry) {
-			imsg_compose(env->sc_ibufs[proc], IMSG_CONF_CONDITION,
+			imsg_compose_event(env->sc_ibufs[proc], IMSG_CONF_CONDITION,
 			    0, 0, -1, cond, sizeof(*cond));
 		}
 	}
 	
-	imsg_compose(env->sc_ibufs[proc], IMSG_CONF_END,
+	imsg_compose_event(env->sc_ibufs[proc], IMSG_CONF_END,
 	    0, 0, -1, NULL, 0);
 }
 
@@ -277,7 +277,7 @@ parent_dispatch_lka(int fd, short event, void *p)
 				if (errno == ENOENT)
 					fwreq->status = 1;
 			}
-			imsg_compose(ibuf, IMSG_PARENT_FORWARD_OPEN, 0, 0, ret, fwreq, sizeof(*fwreq));
+			imsg_compose_event(ibuf, IMSG_PARENT_FORWARD_OPEN, 0, 0, ret, fwreq, sizeof(*fwreq));
 			break;
 		}
 		default:
@@ -454,7 +454,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 					batchp->message.status |= S_MESSAGE_TEMPFAILURE;
 				else
 					batchp->message.status |= S_MESSAGE_PERMFAILURE;
-				imsg_compose(ibuf, IMSG_MDA_MAILBOX_FILE, 0, 0,
+				imsg_compose_event(ibuf, IMSG_MDA_MAILBOX_FILE, 0, 0,
 				    -1, batchp, sizeof(struct batch));
 				break;
 			}
@@ -463,7 +463,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 				fatal("privdrop failed");
 
 			desc = action_hdl_table[i].handler(file, pw, batchp);
-			imsg_compose(ibuf, IMSG_MDA_MAILBOX_FILE, 0, 0,
+			imsg_compose_event(ibuf, IMSG_MDA_MAILBOX_FILE, 0, 0,
 			    desc, batchp, sizeof(struct batch));
 
 			if (setegid(0) || seteuid(0))
@@ -479,7 +479,7 @@ parent_dispatch_mda(int fd, short event, void *p)
 
 			desc = parent_open_message_file(batchp);
 
-			imsg_compose(ibuf, IMSG_MDA_MESSAGE_FILE, 0, 0,
+			imsg_compose_event(ibuf, IMSG_MDA_MESSAGE_FILE, 0, 0,
 			    desc, batchp, sizeof(struct batch));
 
 			break;
@@ -565,7 +565,7 @@ parent_dispatch_smtp(int fd, short event, void *p)
 			req->success = auth_userokay(req->user, NULL,
 			    "auth-smtp", req->pass);
 
-			imsg_compose(ibuf, IMSG_PARENT_AUTHENTICATE, 0, 0,
+			imsg_compose_event(ibuf, IMSG_PARENT_AUTHENTICATE, 0, 0,
 			    -1, req, sizeof(*req));
 			break;
 		}
@@ -614,7 +614,7 @@ parent_dispatch_runner(int sig, short event, void *p)
 		switch (imsg.hdr.type) {
 		case IMSG_PARENT_ENQUEUE_OFFLINE:
 			if (! parent_enqueue_offline(env, imsg.data))
-				imsg_compose(ibuf, IMSG_PARENT_ENQUEUE_OFFLINE,
+				imsg_compose_event(ibuf, IMSG_PARENT_ENQUEUE_OFFLINE,
 				    0, 0, -1, NULL, 0);
 			break;
 		default:
@@ -678,11 +678,11 @@ parent_dispatch_control(int sig, short event, void *p)
 				parent_send_config_client_certs(env);
 				parent_send_config_ruleset(env, PROC_MFA);
 				parent_send_config_ruleset(env, PROC_LKA);
-				imsg_compose(env->sc_ibufs[PROC_SMTP],
+				imsg_compose_event(env->sc_ibufs[PROC_SMTP],
 				    IMSG_CONF_RELOAD, 0, 0, -1, NULL, 0);
 				r->ret = 1;
 			}
-			imsg_compose(ibuf, IMSG_CONF_RELOAD, 0, 0, -1, r, sizeof(*r));
+			imsg_compose_event(ibuf, IMSG_CONF_RELOAD, 0, 0, -1, r, sizeof(*r));
 			break;
 		}
 		default:
@@ -754,7 +754,7 @@ parent_sig_handler(int sig, short event, void *p)
 					    "message; smtpctl %s", cause);
 				else
 					log_debug("offline message enqueued");
-				imsg_compose(env->sc_ibufs[PROC_RUNNER],
+				imsg_compose_event(env->sc_ibufs[PROC_RUNNER],
 				    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1,
 				    NULL, 0);
 				break;
@@ -1134,6 +1134,18 @@ imsg_event_add(struct imsgbuf *ibuf)
 	event_del(&ibuf->ev);
 	event_set(&ibuf->ev, ibuf->fd, ibuf->events, ibuf->handler, ibuf->data);
 	event_add(&ibuf->ev, NULL);
+}
+
+int
+imsg_compose_event(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
+    pid_t pid, int fd, void *data, u_int16_t datalen)
+{
+	int	ret;
+
+	if ((ret = imsg_compose(ibuf, type, peerid,
+	    pid, fd, data, datalen)) != -1)
+		imsg_event_add(ibuf);
+	return (ret);
 }
 
 int

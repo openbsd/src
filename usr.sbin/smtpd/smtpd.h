@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.125 2009/06/05 08:50:00 pyr Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.126 2009/06/05 20:43:57 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -17,10 +17,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include			 "imsg.h"
+
+#define IMSG_SIZE_CHECK(p) do {					\
+	if (IMSG_DATA_SIZE(&imsg) != sizeof(*p))		\
+		fatalx("bad length imsg received");		\
+} while (0)
+#define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
+
 #define CONF_FILE		 "/etc/mail/smtpd.conf"
 #define MAX_LISTEN		 16
 #define PROC_COUNT		 9
-#define READ_BUF_SIZE		 32768
 #define MAX_NAME_SIZE		 64
 
 #define MAX_HOPS_COUNT		 100
@@ -112,61 +119,6 @@ struct mxhost {
 	struct sockaddr_storage ss;
 };
 
-/* buffer specific headers */
-struct buf {
-	TAILQ_ENTRY(buf)	 entry;
-	u_char			*buf;
-	size_t			 size;
-	size_t			 max;
-	size_t			 wpos;
-	size_t			 rpos;
-	int			 fd;
-};
-
-struct msgbuf {
-	TAILQ_HEAD(, buf)	 bufs;
-	u_int32_t		 queued;
-	int			 fd;
-};
-
-struct buf_read {
-	u_char			 buf[READ_BUF_SIZE];
-	u_char			*rptr;
-	size_t			 wpos;
-};
-
-struct imsg_fd  {
-	TAILQ_ENTRY(imsg_fd)	 entry;
-	int			 fd;
-	u_int32_t		 id;
-};
-
-struct imsgbuf {
-	TAILQ_HEAD(, imsg_fd)	 fds;
-	struct buf_read		 r;
-	struct msgbuf		 w;
-	struct event		 ev;
-	void			(*handler)(int, short, void *);
-	int			 fd;
-	pid_t			 pid;
-	short			 events;
-	void			*data;
-	u_int32_t		 id;
-};
-
-struct imsg_hdr {
-	u_int16_t		 type;
-	u_int16_t		 len;
-	u_int32_t		 peerid;
-	pid_t			 pid;
-};
-
-struct imsg {
-	struct imsg_hdr		 hdr;
-	u_int32_t		 id;
-	void			*data;
-};
-
 enum imsg_type {
 	IMSG_NONE,
 	IMSG_CTL_OK,		/* answer to smtpctl requests */
@@ -242,15 +194,6 @@ enum imsg_type {
 	IMSG_DNS_MX,
 	IMSG_DNS_PTR
 };
-
-#define IMSG_HEADER_SIZE	 sizeof(struct imsg_hdr)
-#define IMSG_DATA_SIZE(imsg)	((imsg)->hdr.len - IMSG_HEADER_SIZE)
-#define	MAX_IMSGSIZE		 16384
-
-#define IMSG_SIZE_CHECK(p) do {						\
-	if (IMSG_DATA_SIZE(&imsg) != sizeof(*p))			\
-		fatalx("bad length imsg received");			\
-} while (0)
 
 enum blockmodes {
 	BM_NORMAL,
@@ -799,18 +742,6 @@ __dead void	fatal(const char *);
 __dead void	fatalx(const char *);
 
 
-/* buffer.c */
-struct buf	*buf_open(size_t);
-struct buf	*buf_dynamic(size_t, size_t);
-int		 buf_add(struct buf *, void *, size_t);
-void		*buf_reserve(struct buf *, size_t);
-int		 buf_close(struct msgbuf *, struct buf *);
-void		 buf_free(struct buf *);
-void		 msgbuf_init(struct msgbuf *);
-void		 msgbuf_clear(struct msgbuf *);
-int		 msgbuf_write(struct msgbuf *);
-
-
 /* dns.c */
 void		 dns_query_a(struct smtpd *, char *, int, u_int64_t);
 void		 dns_query_mx(struct smtpd *, char *, int, u_int64_t);
@@ -823,29 +754,12 @@ void		 dns_async(struct smtpd *, struct imsgbuf *, int,
 /* forward.c */
 int forwards_get(int, struct aliaseslist *);
 
-
-/* imsg.c */
-void	 imsg_init(struct imsgbuf *, int, void (*)(int, short, void *));
-ssize_t	 imsg_read(struct imsgbuf *);
-ssize_t	 imsg_get(struct imsgbuf *, struct imsg *);
-int	 imsg_compose(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
-	    int, void *, u_int16_t);
-int	 imsg_composev(struct imsgbuf *, enum imsg_type, u_int32_t,
-	    pid_t, int, const struct iovec *, int);
-struct buf *imsg_create(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
-	    u_int16_t);
-int	 imsg_add(struct buf *, void *, u_int16_t);
-int	 imsg_append(struct imsgbuf *, struct buf *);
-int	 imsg_close(struct imsgbuf *, struct buf *);
-void	 imsg_free(struct imsg *);
-void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
-int	 imsg_get_fd(struct imsgbuf *, struct imsg *);
-int	 imsg_flush(struct imsgbuf *);
-void	 imsg_clear(struct imsgbuf *);
-
 /* smtpd.c */
 int	 child_cmp(struct child *, struct child *);
 SPLAY_PROTOTYPE(childtree, child, entry, child_cmp);
+void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
+int	 imsg_compose_event(struct imsgbuf *, u_int16_t, u_int32_t, pid_t,
+	    int, void *, u_int16_t);
 
 /* lka.c */
 pid_t		 lka(struct smtpd *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: enqueue.c,v 1.16 2009/05/25 11:17:32 jacekm Exp $	*/
+/*	$OpenBSD: enqueue.c,v 1.17 2009/06/05 20:43:57 pyr Exp $	*/
 
 /*
  * Copyright (c) 2005 Henning Brauer <henning@bulabula.org>
@@ -540,7 +540,7 @@ open_connection(void)
 			errx(1, "unexpected imsg reply type");
 		}
 
-		fd = imsg_get_fd(ibuf, &imsg);
+		fd = imsg_get_fd(ibuf);
 		imsg_free(&imsg);
 
 		break;

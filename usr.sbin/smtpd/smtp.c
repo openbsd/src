@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.55 2009/06/02 22:23:36 gilles Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.56 2009/06/05 20:43:57 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -111,7 +111,7 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			}
 			if (env->sc_listeners)
 				smtp_disable_events(env);
-			imsg_compose(ibuf, IMSG_PARENT_SEND_CONFIG, 0, 0, -1,
+			imsg_compose_event(ibuf, IMSG_PARENT_SEND_CONFIG, 0, 0, -1,
 			    NULL, 0);
 			break;
 		}
@@ -161,7 +161,7 @@ smtp_dispatch_parent(int sig, short event, void *p)
 				fatal(NULL);
 			memcpy(l, imsg.data, sizeof(*l));
 
-			if ((l->fd = imsg_get_fd(ibuf, &imsg)) == -1)
+			if ((l->fd = imsg_get_fd(ibuf)) == -1)
 				fatal("cannot get fd");
 
 			(void)strlcpy(key.ssl_name, l->ssl_cert_name,
@@ -396,7 +396,7 @@ smtp_dispatch_queue(int sig, short event, void *p)
 
 			IMSG_SIZE_CHECK(ss);
 
-			fd = imsg_get_fd(ibuf, &imsg);
+			fd = imsg_get_fd(ibuf);
 
 			if ((s = session_lookup(env, ss->id)) == NULL) {
 				close(fd);
@@ -508,7 +508,7 @@ smtp_dispatch_control(int sig, short event, void *p)
 			    env->sc_maxconn) {
 				log_warnx("denying local connection, too many"
 				    " sessions active");
-				imsg_compose(ibuf, IMSG_SMTP_ENQUEUE, 0, 0, -1,
+				imsg_compose_event(ibuf, IMSG_SMTP_ENQUEUE, 0, 0, -1,
 				    imsg.data, sizeof(int));
 				break;
 			}
@@ -547,7 +547,7 @@ smtp_dispatch_control(int sig, short event, void *p)
 
 			session_init(s->s_l, s);
 
-			imsg_compose(ibuf, IMSG_SMTP_ENQUEUE, 0, 0, fd[1],
+			imsg_compose_event(ibuf, IMSG_SMTP_ENQUEUE, 0, 0, fd[1],
 			    imsg.data, sizeof(int));
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.50 2009/06/03 22:04:15 jacekm Exp $	*/
+/*	$OpenBSD: runner.c,v 1.51 2009/06/05 20:43:57 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -197,7 +197,7 @@ runner_dispatch_control(int sig, short event, void *p)
 			else if (valid_message_id(s->mid))
 				s->ret = runner_force_message_schedule(s->mid);
 
-			imsg_compose(ibuf, IMSG_RUNNER_SCHEDULE, 0, 0, -1, s, sizeof(*s));
+			imsg_compose_event(ibuf, IMSG_RUNNER_SCHEDULE, 0, 0, -1, s, sizeof(*s));
 			break;
 		}
 		default:
@@ -500,7 +500,7 @@ runner_process_offline(struct smtpd *env)
 	q = qwalk_new(PATH_OFFLINE);
 
 	if (qwalk(q, path))
-		imsg_compose(env->sc_ibufs[PROC_PARENT],
+		imsg_compose_event(env->sc_ibufs[PROC_PARENT],
 		    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1, path,
 		    strlen(path) + 1);
 
@@ -681,18 +681,18 @@ runner_batch_dispatch(struct smtpd *env, struct batch *batchp, time_t curtime)
 	else if (batchp->type & T_MTA_BATCH)
 		proctype = PROC_MTA;
 
-	imsg_compose(env->sc_ibufs[proctype], IMSG_BATCH_CREATE, 0, 0, -1,
+	imsg_compose_event(env->sc_ibufs[proctype], IMSG_BATCH_CREATE, 0, 0, -1,
 	    batchp, sizeof (struct batch));
 
 	while ((messagep = TAILQ_FIRST(&batchp->messages))) {
-		imsg_compose(env->sc_ibufs[proctype], IMSG_BATCH_APPEND, 0, 0,
+		imsg_compose_event(env->sc_ibufs[proctype], IMSG_BATCH_APPEND, 0, 0,
 		    -1, messagep, sizeof (struct message));
 		TAILQ_REMOVE(&batchp->messages, messagep, entry);
 		bzero(messagep, sizeof(struct message));
 		free(messagep);
 	}
 
-	imsg_compose(env->sc_ibufs[proctype], IMSG_BATCH_CLOSE, 0, 0, -1,
+	imsg_compose_event(env->sc_ibufs[proctype], IMSG_BATCH_CLOSE, 0, 0, -1,
 	    batchp, sizeof(struct batch));
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.32 2009/06/01 13:20:56 jacekm Exp $	*/
+/*	$OpenBSD: control.c,v 1.33 2009/06/05 20:43:57 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -314,17 +314,17 @@ control_dispatch_ext(int fd, short event, void *arg)
 		case IMSG_SMTP_ENQUEUE:
 			if (env->sc_flags & (SMTPD_SMTP_PAUSED |
 			    SMTPD_CONFIGURING | SMTPD_EXITING)) {
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
-			imsg_compose(env->sc_ibufs[PROC_SMTP],
+			imsg_compose_event(env->sc_ibufs[PROC_SMTP],
 			    IMSG_SMTP_ENQUEUE, 0, 0, -1, &fd, sizeof(fd));
 			break;
 		case IMSG_STATS:
 			if (euid)
 				goto badcred;
-			imsg_compose(&c->ibuf, IMSG_STATS, 0, 0, -1,
+			imsg_compose_event(&c->ibuf, IMSG_STATS, 0, 0, -1,
 			    env->stats, sizeof(struct stats));
 			break;
 		case IMSG_RUNNER_SCHEDULE: {
@@ -339,12 +339,12 @@ control_dispatch_ext(int fd, short event, void *arg)
 			s->fd = fd;
 
 			if (! valid_message_id(s->mid) && ! valid_message_uid(s->mid)) {
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 				break;
 			}
 
-			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_SCHEDULE, 0, 0, -1, s, sizeof(*s));
+			imsg_compose_event(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_SCHEDULE, 0, 0, -1, s, sizeof(*s));
 			break;
 		}
 		case IMSG_CONF_RELOAD: {
@@ -356,14 +356,14 @@ control_dispatch_ext(int fd, short event, void *arg)
 				goto badcred;
 
 			if (env->sc_flags & SMTPD_CONFIGURING) {
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags |= SMTPD_CONFIGURING;
 
 			r.fd = fd;
-			imsg_compose(env->sc_ibufs[PROC_PARENT], IMSG_CONF_RELOAD, 0, 0, -1, &r, sizeof(r));
+			imsg_compose_event(env->sc_ibufs[PROC_PARENT], IMSG_CONF_RELOAD, 0, 0, -1, &r, sizeof(r));
 			break;
 		}
 		case IMSG_CTL_SHUTDOWN:
@@ -374,96 +374,96 @@ control_dispatch_ext(int fd, short event, void *arg)
 				goto badcred;
 
 			if (env->sc_flags & SMTPD_EXITING) {
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags |= SMTPD_EXITING;
-			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_MDA_PAUSE:
 			if (euid)
 				goto badcred;
 
 			if (env->sc_flags & SMTPD_MDA_PAUSED) {
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags |= SMTPD_MDA_PAUSED;
-			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_MDA_PAUSE,
+			imsg_compose_event(env->sc_ibufs[PROC_RUNNER], IMSG_MDA_PAUSE,
 			    0, 0, -1, NULL, 0);
-			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_MTA_PAUSE:
 			if (euid)
 				goto badcred;
 
 			if (env->sc_flags & SMTPD_MTA_PAUSED) {
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags |= SMTPD_MTA_PAUSED;
-			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_MTA_PAUSE,
+			imsg_compose_event(env->sc_ibufs[PROC_RUNNER], IMSG_MTA_PAUSE,
 			    0, 0, -1, NULL, 0);
-			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_SMTP_PAUSE:
 			if (euid)
 				goto badcred;
 
 			if (env->sc_flags & SMTPD_SMTP_PAUSED) {
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags |= SMTPD_SMTP_PAUSED;
-			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_SMTP_PAUSE,			
+			imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_SMTP_PAUSE,			
 			    0, 0, -1, NULL, 0);
-			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_MDA_RESUME:
 			if (euid)
 				goto badcred;
 
 			if (! (env->sc_flags & SMTPD_MDA_PAUSED)) {
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags &= ~SMTPD_MDA_PAUSED;
-			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_MTA_RESUME,
+			imsg_compose_event(env->sc_ibufs[PROC_RUNNER], IMSG_MTA_RESUME,
 			    0, 0, -1, NULL, 0);
-			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_MTA_RESUME:
 			if (euid)
 				goto badcred;
 
 			if (!(env->sc_flags & SMTPD_MTA_PAUSED)) {
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags &= ~SMTPD_MTA_PAUSED;
-			imsg_compose(env->sc_ibufs[PROC_RUNNER], IMSG_MTA_RESUME,
+			imsg_compose_event(env->sc_ibufs[PROC_RUNNER], IMSG_MTA_RESUME,
 			    0, 0, -1, NULL, 0);
-			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_SMTP_RESUME:
 			if (euid)
 				goto badcred;
 
 			if (!(env->sc_flags & SMTPD_SMTP_PAUSED)) {
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags &= ~SMTPD_SMTP_PAUSED;
-			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_SMTP_RESUME,
+			imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_SMTP_RESUME,
 			    0, 0, -1, NULL, 0);
-			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		default:
 			log_debug("control_dispatch_ext: "
@@ -474,7 +474,7 @@ control_dispatch_ext(int fd, short event, void *arg)
 		continue;
 
 badcred:
-		imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+		imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 		    NULL, 0);
 	}
 
@@ -527,9 +527,9 @@ control_dispatch_parent(int sig, short event, void *p)
 			}
 
 			if (r->ret)
-				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+				imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			else
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
 			break;
 		}
 		default:
@@ -717,9 +717,9 @@ control_dispatch_runner(int sig, short event, void *p)
 			}
 
 			if (s->ret)
-				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+				imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			else
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
 			break;
 		}
 		default:
@@ -780,8 +780,8 @@ control_dispatch_smtp(int sig, short event, void *p)
 				return;
 			}
 
-			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0,
-			    imsg_get_fd(ibuf, &imsg), NULL, 0);
+			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0,
+			    imsg_get_fd(ibuf), NULL, 0);
 			break;
 		}
 		default:

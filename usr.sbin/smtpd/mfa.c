@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.34 2009/06/01 23:15:48 gilles Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.35 2009/06/05 20:43:57 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -292,7 +292,7 @@ mfa_dispatch_lka(int sig, short event, void *p)
 
 			IMSG_SIZE_CHECK(ss);
 
-			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_MAIL,
+			imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_MFA_MAIL,
 			    0, 0, -1, ss, sizeof(*ss));
 			break;
 		}
@@ -301,7 +301,7 @@ mfa_dispatch_lka(int sig, short event, void *p)
 
 			IMSG_SIZE_CHECK(ss);
 
-			imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT,
+			imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT,
 			    0, 0, -1, ss, sizeof(*ss));
 			break;
 		}
@@ -487,13 +487,13 @@ mfa_test_mail(struct smtpd *env, struct message *m)
 	goto accept;
 
 refuse:
-	imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_MAIL, 0, 0, -1, &ss,
+	imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_MFA_MAIL, 0, 0, -1, &ss,
 	    sizeof(ss));
 	return;
 
 accept:
 	ss.code = 250;
-	imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_MAIL, 0,
+	imsg_compose_event(env->sc_ibufs[PROC_LKA], IMSG_LKA_MAIL, 0,
 	    0, -1, &ss, sizeof(ss));
 }
 
@@ -530,13 +530,13 @@ mfa_test_rcpt(struct smtpd *env, struct message *m)
 	goto accept;
 		
 refuse:
-	imsg_compose(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT, 0, 0, -1, &ss,
+	imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT, 0, 0, -1, &ss,
 	    sizeof(ss));
 	return;
 
 accept:
 	ss.code = 250;
-	imsg_compose(env->sc_ibufs[PROC_LKA], IMSG_LKA_RCPT, 0, 0, -1,
+	imsg_compose_event(env->sc_ibufs[PROC_LKA], IMSG_LKA_RCPT, 0, 0, -1,
 	    &ss, sizeof(ss));
 }
 
