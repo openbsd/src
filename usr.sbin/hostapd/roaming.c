@@ -1,4 +1,4 @@
-/*	$OpenBSD: roaming.c,v 1.3 2007/02/08 11:15:55 reyk Exp $	*/
+/*	$OpenBSD: roaming.c,v 1.4 2009/06/05 22:44:51 chris Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -225,6 +225,7 @@ hostapd_roaming_rt(struct hostapd_apme *apme, struct hostapd_inaddr *addr,
 	rm.rm_hdr.rtm_flags = RTF_STATIC;
 	rm.rm_hdr.rtm_seq = cfg->c_rtseq++;
 	rm.rm_hdr.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_LABEL;
+	rm.rm_hdr.rtm_hdrlen = sizeof(struct rt_msghdr);
 
 	rm.rm_dst.sin_family = AF_INET;
 	rm.rm_dst.sin_len = sizeof(rm.rm_dst);
