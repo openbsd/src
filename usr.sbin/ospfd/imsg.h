@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.3 2009/06/05 19:42:33 pyr Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.4 2009/06/05 21:15:47 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -86,6 +86,7 @@ void		*buf_seek(struct buf *, size_t, size_t);
 size_t		 buf_size(struct buf *);
 size_t		 buf_left(struct buf *);
 void		 buf_close(struct msgbuf *, struct buf *);
+int		 buf_write(struct msgbuf *);
 void		 buf_free(struct buf *);
 void		 msgbuf_init(struct msgbuf *);
 void		 msgbuf_clear(struct msgbuf *);
