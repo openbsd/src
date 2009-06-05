@@ -1,4 +1,4 @@
-/*	$OpenBSD: machfb.c,v 1.4 2009/06/03 03:05:30 kettenis Exp $	*/
+/*	$OpenBSD: machfb.c,v 1.5 2009/06/05 19:16:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -335,8 +335,17 @@ machfb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		break;
 	case WSDISPLAYIO_SMODE:
 		sc->sc_mode = *(u_int *)data;
-		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
+		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+			struct rasops_info *ri = &sc->sc_sunfb.sf_ro;
+
+			/* Restore colormap. */
 			fbwscons_setcolormap(&sc->sc_sunfb, machfb_setcolor);
+
+			/* Clear screen. */
+			ri = &sc->sc_sunfb.sf_ro;
+			machfb_fillrect(sc, 0, 0, ri->ri_width, ri->ri_height,
+			    ri->ri_devcmap[WSCOL_WHITE]);
+		}
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
