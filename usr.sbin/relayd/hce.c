@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.52 2009/06/05 00:20:50 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.53 2009/06/05 23:39:51 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -50,8 +50,8 @@ void	hce_setup_events(void);
 void	hce_disable_events(void);
 
 static struct relayd *env = NULL;
-struct imsgbuf		*ibuf_pfe;
-struct imsgbuf		*ibuf_main;
+struct imsgev		*iev_pfe;
+struct imsgev		*iev_main;
 int			 running = 0;
 
 void
@@ -117,21 +117,23 @@ hce(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 
 	event_init();
 
-	if ((ibuf_pfe = calloc(1, sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_main = calloc(1, sizeof(struct imsgbuf))) == NULL)
+	if ((iev_pfe = calloc(1, sizeof(struct imsgev))) == NULL ||
+	    (iev_main = calloc(1, sizeof(struct imsgev))) == NULL)
 		fatal("hce");
-	imsg_init(ibuf_pfe, pipe_pfe2hce[0], hce_dispatch_imsg);
-	imsg_init(ibuf_main, pipe_parent2hce[1], hce_dispatch_parent);
+	imsg_init(&iev_pfe->ibuf, pipe_pfe2hce[0]);
+	iev_pfe->handler = hce_dispatch_imsg;
+	imsg_init(&iev_main->ibuf, pipe_parent2hce[1]);
+	iev_main->handler = hce_dispatch_parent;
 
-	ibuf_pfe->events = EV_READ;
-	event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
-	    ibuf_pfe->handler, ibuf_pfe);
-	event_add(&ibuf_pfe->ev, NULL);
+	iev_pfe->events = EV_READ;
+	event_set(&iev_pfe->ev, iev_pfe->ibuf.fd, iev_pfe->events,
+	    iev_pfe->handler, iev_pfe);
+	event_add(&iev_pfe->ev, NULL);
 
-	ibuf_main->events = EV_READ;
-	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
-	    ibuf_main->handler, ibuf_main);
-	event_add(&ibuf_main->ev, NULL);
+	iev_main->events = EV_READ;
+	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
+	    iev_main->handler, iev_main);
+	event_add(&iev_main->ev, NULL);
 
 	signal_set(&ev_sigint, SIGINT, hce_sig_handler, NULL);
 	signal_set(&ev_sigterm, SIGTERM, hce_sig_handler, NULL);
@@ -165,7 +167,7 @@ hce_setup_events(void)
 	struct timeval	 tv;
 	struct table	*table;
 
-	snmp_init(env, ibuf_main);
+	snmp_init(env, iev_main);
 
 	if (!TAILQ_EMPTY(env->sc_tables)) {
 		evtimer_set(&env->sc_ev, hce_launch_checks, env);
@@ -217,7 +219,7 @@ hce_launch_checks(int fd, short event, void *arg)
 	/*
 	 * notify pfe checks are done and schedule next check
 	 */
-	imsg_compose_event(ibuf_pfe, IMSG_SYNC, 0, 0, -1, NULL, 0);
+	imsg_compose_event(iev_pfe, IMSG_SYNC, 0, 0, -1, NULL, 0);
 	TAILQ_FOREACH(table, env->sc_tables, entry) {
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			if ((host->flags & F_CHECK_DONE) == 0)
@@ -307,7 +309,7 @@ hce_notify_done(struct host *host, enum host_error he)
 	if (msg)
 		log_debug("hce_notify_done: %s (%s)", host->conf.name, msg);
 
-	imsg_compose_event(ibuf_pfe, IMSG_HOST_STATUS,
+	imsg_compose_event(iev_pfe, IMSG_HOST_STATUS,
 	    0, 0, -1, &st, sizeof(st));
 	if (host->up != host->last_up)
 		logopt = RELAYD_OPT_LOGUPDATE;
@@ -359,6 +361,7 @@ hce_shutdown(void)
 void
 hce_dispatch_imsg(int fd, short event, void *ptr)
 {
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
@@ -366,14 +369,15 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 	struct host		*host;
 	struct table		*table;
 
-	ibuf = ptr;
+	iev = ptr;
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("hce_dispatch_imsg: imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -438,12 +442,13 @@ hce_dispatch_imsg(int fd, short event, void *ptr)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 hce_dispatch_parent(int fd, short event, void * ptr)
 {
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	struct ctl_script	 scr;
@@ -452,14 +457,15 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 	static struct table	*table = NULL;
 	struct host		*host, *parent;
 
-	ibuf = ptr;
+	iev = ptr;
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("hce_dispatch_parent: imsg_read error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -535,5 +541,5 @@ hce_dispatch_parent(int fd, short event, void * ptr)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }

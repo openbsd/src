@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_udp.c,v 1.19 2009/06/05 00:04:01 pyr Exp $	*/
+/*	$OpenBSD: relay_udp.c,v 1.20 2009/06/05 23:39:51 pyr Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -50,7 +50,7 @@
 extern volatile sig_atomic_t relay_sessions;
 extern objid_t relay_conid;
 extern int proc_id;
-extern struct imsgbuf *ibuf_pfe;
+extern struct imsgev *iev_pfe;
 extern int debug;
 
 struct relayd *env = NULL;
@@ -321,7 +321,7 @@ relay_udp_server(int fd, short sig, void *arg)
 		cnl->proto = IPPROTO_UDP;
 		bcopy(&con->se_in.ss, &cnl->src, sizeof(cnl->src));
 		bcopy(&rlay->rl_conf.ss, &cnl->dst, sizeof(cnl->dst));
-		imsg_compose_event(ibuf_pfe, IMSG_NATLOOK, 0, 0, -1, cnl,
+		imsg_compose_event(iev_pfe, IMSG_NATLOOK, 0, 0, -1, cnl,
 		    sizeof(*cnl));
 
 		/* Schedule timeout */

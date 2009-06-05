@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayctl.c,v 1.36 2008/12/31 15:22:27 sobrado Exp $	*/
+/*	$OpenBSD: relayctl.c,v 1.37 2009/06/05 23:39:51 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -93,13 +93,6 @@ usage(void)
 	exit(1);
 }
 
-/* dummy function so that relayctl does not need libevent */
-void
-imsg_event_add(struct imsgbuf *i)
-{
-	/* nothing */
-}
-
 int
 main(int argc, char *argv[])
 {
@@ -134,7 +127,7 @@ main(int argc, char *argv[])
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
-	imsg_init(ibuf, ctl_sock, NULL);
+	imsg_init(ibuf, ctl_sock);
 	done = 0;
 
 	/* process user request */

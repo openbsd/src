@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.124 2009/06/05 00:04:01 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.125 2009/06/05 23:39:51 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -635,11 +635,19 @@ enum blockmodes {
 	BM_NONBLOCK
 };
 
+struct imsgev {
+	struct imsgbuf		 ibuf;
+	void			(*handler)(int, short, void *);
+	struct event		 ev;
+	void			*data;
+	short			 events;
+};
+
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
 	u_int8_t		 flags;
 #define CTL_CONN_NOTIFY		 0x01
-	struct imsgbuf		 ibuf;
+	struct imsgev	 	 iev;
 
 };
 TAILQ_HEAD(ctl_connlist, ctl_conn);
@@ -701,7 +709,7 @@ enum imsg_type {
 
 /* control.c */
 int	control_init(void);
-int	control_listen(struct relayd *, struct imsgbuf *, struct imsgbuf *);
+int	control_listen(struct relayd *, struct imsgev *, struct imsgev *);
 void    control_accept(int, short, void *);
 void    control_dispatch_imsg(int, short, void *);
 void	control_imsg_forward(struct imsg *);
@@ -830,8 +838,8 @@ int		 protonode_load(enum direction, struct protocol *,
 		    struct protonode *, const char *);
 int		 map6to4(struct sockaddr_storage *);
 int		 map4to6(struct sockaddr_storage *, struct sockaddr_storage *);
-void		 imsg_event_add(struct imsgbuf *);
-int	 	 imsg_compose_event(struct imsgbuf *, u_int16_t, u_int32_t,
+void		 imsg_event_add(struct imsgev *);
+int	 	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 		    pid_t, int, void *, u_int16_t);
 
 /* carp.c */
@@ -848,8 +856,8 @@ void		 pn_unref(u_int16_t);
 void		 pn_ref(u_int16_t);
 
 /* snmp.c */
-void	 snmp_init(struct relayd *, struct imsgbuf *);
-int	 snmp_sendsock(struct imsgbuf *);
+void	 snmp_init(struct relayd *, struct imsgev *);
+int	 snmp_sendsock(struct imsgev *);
 void	 snmp_hosttrap(struct table *, struct host *);
 
 /* shuffle.c */

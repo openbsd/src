@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.59 2009/06/05 00:20:50 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.60 2009/06/05 23:39:51 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -47,9 +47,9 @@ void	pfe_statistics(int, short, void *);
 
 static struct relayd	*env = NULL;
 
-struct imsgbuf	*ibuf_main;
-struct imsgbuf	*ibuf_hce;
-struct imsgbuf	*ibuf_relay;
+struct imsgev	*iev_main;
+struct imsgev	*iev_hce;
+struct imsgev	*iev_relay;
 
 void
 pfe_sig_handler(int sig, short event, void *arg)
@@ -136,28 +136,31 @@ pfe(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 		close(pipe_pfe2relay[i][0]);
 	}
 
-	size = sizeof(struct imsgbuf);
-	if ((ibuf_hce = calloc(1, size)) == NULL ||
-	    (ibuf_relay = calloc(env->sc_prefork_relay, size)) == NULL ||
-	    (ibuf_main = calloc(1, size)) == NULL)
+	size = sizeof(struct imsgev);
+	if ((iev_hce = calloc(1, size)) == NULL ||
+	    (iev_relay = calloc(env->sc_prefork_relay, size)) == NULL ||
+	    (iev_main = calloc(1, size)) == NULL)
 		fatal("pfe");
 
-	imsg_init(ibuf_hce, pipe_pfe2hce[1], pfe_dispatch_imsg);
-	imsg_init(ibuf_main, pipe_parent2pfe[1], pfe_dispatch_parent);
-	for (i = 0; i < env->sc_prefork_relay; i++)
-		imsg_init(&ibuf_relay[i], pipe_pfe2relay[i][1],
-		    pfe_dispatch_relay);
+	imsg_init(&iev_hce->ibuf, pipe_pfe2hce[1]);
+	iev_hce->handler = pfe_dispatch_imsg;
+	imsg_init(&iev_main->ibuf, pipe_parent2pfe[1]);
+	iev_main->handler = pfe_dispatch_parent;
+	for (i = 0; i < env->sc_prefork_relay; i++) {
+		imsg_init(&iev_relay[i].ibuf, pipe_pfe2relay[i][1]);
+		iev_relay[i].handler = pfe_dispatch_relay;
+	}
 
-	ibuf_main->events = EV_READ;
-	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
-	    ibuf_main->handler, ibuf_main);
-	event_add(&ibuf_main->ev, NULL);
+	iev_main->events = EV_READ;
+	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
+	    iev_main->handler, iev_main);
+	event_add(&iev_main->ev, NULL);
 
 	pfe_setup_events();
 
 	TAILQ_INIT(&ctl_conns);
 
-	if (control_listen(env, ibuf_main, ibuf_hce) == -1)
+	if (control_listen(env, iev_main, iev_hce) == -1)
 		fatalx("pfe: control socket listen failed");
 
 	/* Initial sync */
@@ -181,21 +184,21 @@ void
 pfe_setup_events(void)
 {
 	int		 i;
-	struct imsgbuf	*ibuf;
+	struct imsgev	*iev;
 	struct timeval	 tv;
 
-	ibuf_hce->events = EV_READ;
-	event_set(&ibuf_hce->ev, ibuf_hce->fd, ibuf_hce->events,
-	    ibuf_hce->handler, ibuf_hce);
-	event_add(&ibuf_hce->ev, NULL);
+	iev_hce->events = EV_READ;
+	event_set(&iev_hce->ev, iev_hce->ibuf.fd, iev_hce->events,
+	    iev_hce->handler, iev_hce);
+	event_add(&iev_hce->ev, NULL);
 
 	for (i = 0; i < env->sc_prefork_relay; i++) {
-		ibuf = &ibuf_relay[i];
+		iev = &iev_relay[i];
 
-		ibuf->events = EV_READ;
-		event_set(&ibuf->ev, ibuf->fd, ibuf->events,
-		    ibuf->handler, ibuf);
-		event_add(&ibuf->ev, NULL);
+		iev->events = EV_READ;
+		event_set(&iev->ev, iev->ibuf.fd, iev->events,
+		    iev->handler, iev);
+		event_add(&iev->ev, NULL);
 	}
 
 	/* Schedule statistics timer */
@@ -209,10 +212,10 @@ pfe_disable_events(void)
 {
 	int	i;
 
-	event_del(&ibuf_hce->ev);
+	event_del(&iev_hce->ev);
 
 	for (i = 0; i < env->sc_prefork_relay; i++)
-		event_del(&ibuf_relay[i].ev);
+		event_del(&iev_relay[i].ev);
 
 	event_del(&env->sc_statev);
 }
@@ -220,6 +223,7 @@ pfe_disable_events(void)
 void
 pfe_dispatch_imsg(int fd, short event, void *ptr)
 {
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
@@ -228,14 +232,15 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 	struct table		*table;
 	struct ctl_status	 st;
 
-	ibuf = ptr;
+	iev = ptr;
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("pfe_dispatch_imsg: imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -280,7 +285,7 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 
 			/* Forward to relay engine(s) */
 			for (n = 0; n < env->sc_prefork_relay; n++)
-				imsg_compose_event(&ibuf_relay[n],
+				imsg_compose_event(&iev_relay[n],
 				    IMSG_HOST_STATUS, 0, 0, -1, &st,
 				    sizeof(st));
 
@@ -319,12 +324,13 @@ pfe_dispatch_imsg(int fd, short event, void *ptr)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 pfe_dispatch_parent(int fd, short event, void * ptr)
 {
+	struct imsgev	*iev;
 	struct imsgbuf	*ibuf;
 	struct imsg	 imsg;
 	ssize_t		 n;
@@ -334,14 +340,15 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 	struct host		*host, *parent;
 	struct address		*virt;
 
-	ibuf = ptr;
+	iev = ptr;
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -442,12 +449,13 @@ pfe_dispatch_parent(int fd, short event, void * ptr)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 pfe_dispatch_relay(int fd, short event, void * ptr)
 {
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
@@ -455,14 +463,15 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 	struct ctl_stats	 crs;
 	struct relay		*rlay;
 
-	ibuf = ptr;
+	iev = ptr;
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -489,7 +498,7 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 				    "invalid relay proc");
 			if (natlook(env, &cnl) != 0)
 				cnl.in = -1;
-			imsg_compose_event(&ibuf_relay[cnl.proc], IMSG_NATLOOK,
+			imsg_compose_event(&iev_relay[cnl.proc], IMSG_NATLOOK,
 			    0, 0, -1, &cnl, sizeof(cnl));
 			break;
 		case IMSG_STATISTICS:
@@ -512,7 +521,7 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
@@ -525,28 +534,28 @@ show(struct ctl_conn *c)
 	if (env->sc_rdrs == NULL)
 		goto relays;
 	TAILQ_FOREACH(rdr, env->sc_rdrs, entry) {
-		imsg_compose_event(&c->ibuf, IMSG_CTL_RDR, 0, 0, -1,
+		imsg_compose_event(&c->iev, IMSG_CTL_RDR, 0, 0, -1,
 		    rdr, sizeof(*rdr));
 		if (rdr->conf.flags & F_DISABLE)
 			continue;
 
-		imsg_compose_event(&c->ibuf, IMSG_CTL_RDR_STATS, 0, 0, -1,
+		imsg_compose_event(&c->iev, IMSG_CTL_RDR_STATS, 0, 0, -1,
 		    &rdr->stats, sizeof(rdr->stats));
 
-		imsg_compose_event(&c->ibuf, IMSG_CTL_TABLE, 0, 0, -1,
+		imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
 		    rdr->table, sizeof(*rdr->table));
 		if (!(rdr->table->conf.flags & F_DISABLE))
 			TAILQ_FOREACH(host, &rdr->table->hosts, entry)
-				imsg_compose_event(&c->ibuf, IMSG_CTL_HOST,
+				imsg_compose_event(&c->iev, IMSG_CTL_HOST,
 				    0, 0, -1, host, sizeof(*host));
 
 		if (rdr->backup->conf.id == EMPTY_TABLE)
 			continue;
-		imsg_compose_event(&c->ibuf, IMSG_CTL_TABLE, 0, 0, -1,
+		imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
 		    rdr->backup, sizeof(*rdr->backup));
 		if (!(rdr->backup->conf.flags & F_DISABLE))
 			TAILQ_FOREACH(host, &rdr->backup->hosts, entry)
-				imsg_compose_event(&c->ibuf, IMSG_CTL_HOST,
+				imsg_compose_event(&c->iev, IMSG_CTL_HOST,
 				    0, 0, -1, host, sizeof(*host));
 	}
 relays:
@@ -554,22 +563,22 @@ relays:
 		goto end;
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 		rlay->rl_stats[env->sc_prefork_relay].id = EMPTY_ID;
-		imsg_compose_event(&c->ibuf, IMSG_CTL_RELAY, 0, 0, -1,
+		imsg_compose_event(&c->iev, IMSG_CTL_RELAY, 0, 0, -1,
 		    rlay, sizeof(*rlay));
-		imsg_compose_event(&c->ibuf, IMSG_CTL_RELAY_STATS, 0, 0, -1,
+		imsg_compose_event(&c->iev, IMSG_CTL_RELAY_STATS, 0, 0, -1,
 		    &rlay->rl_stats, sizeof(rlay->rl_stats));
 
 		if (rlay->rl_dsttable == NULL)
 			continue;
-		imsg_compose_event(&c->ibuf, IMSG_CTL_TABLE, 0, 0, -1,
+		imsg_compose_event(&c->iev, IMSG_CTL_TABLE, 0, 0, -1,
 		    rlay->rl_dsttable, sizeof(*rlay->rl_dsttable));
 		if (!(rlay->rl_dsttable->conf.flags & F_DISABLE))
 			TAILQ_FOREACH(host, &rlay->rl_dsttable->hosts, entry)
-				imsg_compose_event(&c->ibuf, IMSG_CTL_HOST,
+				imsg_compose_event(&c->iev, IMSG_CTL_HOST,
 				    0, 0, -1, host, sizeof(*host));
 	}
 end:
-	imsg_compose_event(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
+	imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 }
 
 void
@@ -582,10 +591,10 @@ show_sessions(struct ctl_conn *c)
 		/*
 		 * Request all the running sessions from the process
 		 */
-		imsg_compose_event(&ibuf_relay[proc],
+		imsg_compose_event(&iev_relay[proc],
 		    IMSG_CTL_SESSION, 0, 0, -1, NULL, 0);
-		while (ibuf_relay[proc].w.queued)
-			if (msgbuf_write(&ibuf_relay[proc].w) < 0)
+		while (iev_relay[proc].ibuf.w.queued)
+			if (msgbuf_write(&iev_relay[proc].ibuf.w) < 0)
 				fatalx("write error");
 
 		/*
@@ -595,18 +604,18 @@ show_sessions(struct ctl_conn *c)
 		done = 0;
 		while (!done) {
 			do {
-				if ((n = imsg_read(&ibuf_relay[proc])) == -1)
+				if ((n = imsg_read(&iev_relay[proc].ibuf)) == -1)
 					fatalx("imsg_read error");
 			} while (n == -2); /* handle non-blocking I/O */
 			while (!done) {
-				if ((n = imsg_get(&ibuf_relay[proc],
+				if ((n = imsg_get(&iev_relay[proc].ibuf,
 				    &imsg)) == -1)
 					fatalx("imsg_get error");
 				if (n == 0)
 					break;
 				switch (imsg.hdr.type) {
 				case IMSG_CTL_SESSION:
-					imsg_compose_event(&c->ibuf,
+					imsg_compose_event(&c->iev,
 					    IMSG_CTL_SESSION, proc, 0, -1,
 					    imsg.data, sizeof(struct session));
 					break;
@@ -622,7 +631,7 @@ show_sessions(struct ctl_conn *c)
 		}
 	}
 
-	imsg_compose_event(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
+	imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 }
 
 int
@@ -709,7 +718,7 @@ disable_table(struct ctl_conn *c, struct ctl_id *id)
 	table->up = 0;
 	TAILQ_FOREACH(host, &table->hosts, entry)
 		host->up = HOST_UNKNOWN;
-	imsg_compose_event(ibuf_hce, IMSG_TABLE_DISABLE, 0, 0, -1,
+	imsg_compose_event(iev_hce, IMSG_TABLE_DISABLE, 0, 0, -1,
 	    &table->conf.id, sizeof(table->conf.id));
 	log_debug("disable_table: disabled table %d", table->conf.id);
 	pfe_sync();
@@ -741,7 +750,7 @@ enable_table(struct ctl_conn *c, struct ctl_id *id)
 	table->up = 0;
 	TAILQ_FOREACH(host, &table->hosts, entry)
 		host->up = HOST_UNKNOWN;
-	imsg_compose_event(ibuf_hce, IMSG_TABLE_ENABLE, 0, 0, -1,
+	imsg_compose_event(iev_hce, IMSG_TABLE_ENABLE, 0, 0, -1,
 	    &table->conf.id, sizeof(table->conf.id));
 	log_debug("enable_table: enabled table %d", table->conf.id);
 	pfe_sync();
@@ -782,11 +791,11 @@ disable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 	host->check_cnt = 0;
 	host->up_cnt = 0;
 
-	imsg_compose_event(ibuf_hce, IMSG_HOST_DISABLE, 0, 0, -1,
+	imsg_compose_event(iev_hce, IMSG_HOST_DISABLE, 0, 0, -1,
 	    &host->conf.id, sizeof(host->conf.id));
 	/* Forward to relay engine(s) */
 	for (n = 0; n < env->sc_prefork_relay; n++)
-		imsg_compose_event(&ibuf_relay[n],
+		imsg_compose_event(&iev_relay[n],
 		    IMSG_HOST_DISABLE, 0, 0, -1,
 		    &host->conf.id, sizeof(host->conf.id));
 	log_debug("disable_host: disabled host %d", host->conf.id);
@@ -824,11 +833,11 @@ enable_host(struct ctl_conn *c, struct ctl_id *id, struct host *host)
 	host->flags &= ~(F_DEL);
 	host->flags &= ~(F_ADD);
 
-	imsg_compose_event(ibuf_hce, IMSG_HOST_ENABLE, 0, 0, -1,
+	imsg_compose_event(iev_hce, IMSG_HOST_ENABLE, 0, 0, -1,
 	    &host->conf.id, sizeof (host->conf.id));
 	/* Forward to relay engine(s) */
 	for (n = 0; n < env->sc_prefork_relay; n++)
-		imsg_compose_event(&ibuf_relay[n],
+		imsg_compose_event(&iev_relay[n],
 		    IMSG_HOST_ENABLE, 0, 0, -1,
 		    &host->conf.id, sizeof(host->conf.id));
 	log_debug("enable_host: enabled host %d", host->conf.id);
@@ -931,7 +940,7 @@ pfe_sync(void)
 		    demote.level, table->conf.name, table->conf.demote_group);
 		(void)strlcpy(demote.group, table->conf.demote_group,
 		    sizeof(demote.group));
-		imsg_compose_event(ibuf_main, IMSG_DEMOTE, 0, 0, -1,
+		imsg_compose_event(iev_main, IMSG_DEMOTE, 0, 0, -1,
 		    &demote, sizeof(demote));
 	}
 }

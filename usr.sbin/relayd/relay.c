@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.114 2009/06/05 00:20:50 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.115 2009/06/05 23:39:51 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -133,8 +133,8 @@ volatile sig_atomic_t relay_sessions;
 objid_t relay_conid;
 
 static struct relayd		*env = NULL;
-struct imsgbuf			*ibuf_pfe;
-struct imsgbuf			*ibuf_main;
+struct imsgev			*iev_pfe;
+struct imsgev			*iev_main;
 int				 proc_id;
 
 void
@@ -234,22 +234,23 @@ relay(struct relayd *x_env, int pipe_parent2pfe[2], int pipe_parent2hce[2],
 	close(pipe_parent2relay[proc_id][1]);
 	close(pipe_pfe2relay[proc_id][1]);
 
-	if ((ibuf_pfe = calloc(1, sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_main = calloc(1, sizeof(struct imsgbuf))) == NULL)
+	if ((iev_pfe = calloc(1, sizeof(struct imsgev))) == NULL ||
+	    (iev_main = calloc(1, sizeof(struct imsgev))) == NULL)
 		fatal("relay");
-	imsg_init(ibuf_main, pipe_parent2relay[proc_id][0],
-	    relay_dispatch_parent);
-	imsg_init(ibuf_pfe, pipe_pfe2relay[proc_id][0], relay_dispatch_pfe);
+	imsg_init(&iev_pfe->ibuf, pipe_pfe2relay[proc_id][0]);
+	imsg_init(&iev_main->ibuf, pipe_parent2relay[proc_id][0]);
+	iev_pfe->handler = relay_dispatch_pfe;
+	iev_main->handler = relay_dispatch_parent;
 
-	ibuf_pfe->events = EV_READ;
-	event_set(&ibuf_pfe->ev, ibuf_pfe->fd, ibuf_pfe->events,
-	    ibuf_pfe->handler, ibuf_pfe);
-	event_add(&ibuf_pfe->ev, NULL);
+	iev_pfe->events = EV_READ;
+	event_set(&iev_pfe->ev, iev_pfe->ibuf.fd, iev_pfe->events,
+	    iev_pfe->handler, iev_pfe);
+	event_add(&iev_pfe->ev, NULL);
 
-	ibuf_main->events = EV_READ;
-	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
-	    ibuf_main->handler, ibuf_main);
-	event_add(&ibuf_main->ev, NULL);
+	iev_main->events = EV_READ;
+	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
+	    iev_main->handler, iev_main);
+	event_add(&iev_main->ev, NULL);
 
 	relay_launch();
 
@@ -556,7 +557,7 @@ relay_statistics(int fd, short events, void *arg)
 
 		crs.id = rlay->rl_conf.id;
 		crs.proc = proc_id;
-		imsg_compose_event(ibuf_pfe, IMSG_STATISTICS, 0, 0, -1,
+		imsg_compose_event(iev_pfe, IMSG_STATISTICS, 0, 0, -1,
 		    &crs, sizeof(crs));
 
 		for (con = SPLAY_ROOT(&rlay->rl_sessions);
@@ -2042,7 +2043,7 @@ relay_accept(int fd, short sig, void *arg)
 			return;
 		}
 
-		imsg_compose_event(ibuf_pfe, IMSG_NATLOOK, 0, 0, -1, cnl,
+		imsg_compose_event(iev_pfe, IMSG_NATLOOK, 0, 0, -1, cnl,
 		    sizeof(*cnl));
 
 		/* Schedule timeout */
@@ -2220,7 +2221,7 @@ relay_bindanyreq(struct session *con, in_port_t port, int proto)
 	bnd.bnd_port = port;
 	bnd.bnd_proto = proto;
 	bcopy(&con->se_in.ss, &bnd.bnd_ss, sizeof(bnd.bnd_ss));
-	imsg_compose_event(ibuf_main, IMSG_BINDANY,
+	imsg_compose_event(iev_main, IMSG_BINDANY,
 	    0, 0, -1, &bnd, sizeof(bnd));
 
 	/* Schedule timeout */
@@ -2379,7 +2380,7 @@ relay_close(struct session *con, const char *msg)
 
 	if (con->se_cnl != NULL) {
 #if 0
-		imsg_compose_event(ibuf_pfe, IMSG_KILLSTATES, 0, 0, -1,
+		imsg_compose_event(iev_pfe, IMSG_KILLSTATES, 0, 0, -1,
 		    cnl, sizeof(*cnl));
 #endif
 		free(con->se_cnl);
@@ -2392,6 +2393,7 @@ relay_close(struct session *con, const char *msg)
 void
 relay_dispatch_pfe(int fd, short event, void *ptr)
 {
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
@@ -2404,14 +2406,15 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 	struct ctl_status	 st;
 	objid_t			 id;
 
-	ibuf = ptr;
+	iev = ptr;
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("relay_dispatch_pfe: imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -2499,10 +2502,10 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 			TAILQ_FOREACH(rlay, env->sc_relays, rl_entry)
 				SPLAY_FOREACH(con, session_tree,
 				    &rlay->rl_sessions)
-					imsg_compose_event(ibuf,
+					imsg_compose_event(iev,
 					    IMSG_CTL_SESSION,
 					    0, 0, -1, con, sizeof(*con));
-			imsg_compose_event(ibuf, IMSG_CTL_END,
+			imsg_compose_event(iev, IMSG_CTL_END,
 			    0, 0, -1, NULL, 0);
 			break;
 		default:
@@ -2512,27 +2515,29 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 relay_dispatch_parent(int fd, short event, void * ptr)
 {
 	struct session		*con;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 	struct timeval		 tv;
 	objid_t			 id;
 
-	ibuf = ptr;
+	iev = ptr;
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("relay_dispatch_parent: imsg_read error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -2573,7 +2578,7 @@ relay_dispatch_parent(int fd, short event, void * ptr)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 SSL_CTX *
