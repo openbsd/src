@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_bind.c,v 1.16 2007/09/17 07:07:23 moritz Exp $ */
+/*	$OpenBSD: yp_bind.c,v 1.17 2009/06/05 17:19:00 schwarze Exp $ */
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -98,7 +98,7 @@ _yp_dobind(const char *dom, struct dom_binding **ypdb)
 			break;
 	if (ysd == NULL) {
 		if ((ysd = malloc(sizeof *ysd)) == NULL)
-			return YPERR_YPERR;
+			return YPERR_RESRC;
 		(void)memset(ysd, 0, sizeof *ysd);
 		ysd->dom_socket = -1;
 		ysd->dom_vers = 0;
@@ -164,7 +164,14 @@ trynet:
 			clnt_pcreateerror("clnttcp_create");
 			if (new)
 				free(ysd);
-			return YPERR_YPBIND;
+			switch (rpc_createerr.cf_error.re_errno) {
+			case ECONNREFUSED:
+				return YPERR_YPBIND;
+			case ENOMEM:
+				return YPERR_RESRC;
+			default:
+				return YPERR_YPERR;
+			}
 		}
 		if (ntohs(clnt_sin.sin_port) >= IPPORT_RESERVED ||
 		    ntohs(clnt_sin.sin_port) == 20) {
