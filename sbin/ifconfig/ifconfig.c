@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.216 2009/06/04 19:07:21 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.217 2009/06/05 00:06:52 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -121,6 +121,7 @@ struct  netrange	at_nr;		/* AppleTalk net range */
 char	name[IFNAMSIZ];
 int	flags, setaddr, setipdst, doalias;
 u_long	metric, mtu;
+int	rdomainid;
 int	clearaddr, s;
 int	newaddr = 0;
 int	af = AF_INET;
@@ -233,6 +234,7 @@ void	unsettrunkport(const char *, int);
 void	settrunkproto(const char *, int);
 void	trunk_status(void);
 void	setpriority(const char *, int);
+void	setinstance(const char *, int);
 int	main(int, char *[]);
 int	prefix(void *val, int);
 
@@ -384,6 +386,7 @@ const struct	cmd {
 	{ "-peerflag",	NEXTARG,	0,		unsetsppppeerflag },
 	{ "nwflag",	NEXTARG,	0,		setifnwflag },
 	{ "-nwflag",	NEXTARG,	0,		unsetifnwflag },
+	{ "rdomain",	NEXTARG,	0,		setinstance },
 #endif /* SMALL */
 #if 0
 	/* XXX `create' special-cased below */
@@ -739,7 +742,10 @@ getinfo(struct ifreq *ifr, int create)
 		mtu = 0;
 	else
 		mtu = ifr->ifr_mtu;
-
+	if (ioctl(s, SIOCGIFRTABLEID, (caddr_t)ifr) < 0)
+		rdomainid = 0;
+	else
+		rdomainid = ifr->ifr_rdomainid;
 	return (0);
 }
 
@@ -2618,6 +2624,8 @@ status(int link, struct sockaddr_dl *sdl)
 
 	printf("%s: ", name);
 	printb("flags", flags, IFFBITS);
+	if (rdomainid)
+		printf(" rdomain %i", rdomainid);
 	if (metric)
 		printf(" metric %lu", metric);
 	if (mtu)
@@ -4645,3 +4653,21 @@ setiflladdr(const char *addr, int param)
 		warn("SIOCSIFLLADDR");
 }
 
+#ifndef SMALL
+void
+setinstance(const char *id, int param)
+{
+	const char *errmsg = NULL;
+	u_char *cp;
+	int rdomainid;
+
+	rdomainid = strtonum(id, 0, 128, &errmsg);
+	if (errmsg)
+		errx(1, "rdomain %s: %s", id, errmsg);
+
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_rdomainid = rdomainid;
+	if (ioctl(s, SIOCSIFRTABLEID, (caddr_t)&ifr) < 0)
+		warn("SIOCSIFRTABLEID");
+}
+#endif
