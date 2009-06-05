@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.37 2009/06/02 22:23:35 gilles Exp $	*/
+/*	$OpenBSD: parse.y,v 1.38 2009/06/05 23:04:51 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -719,7 +719,14 @@ conditions	: condition				{
 		| '{' condition_list '}'
 		;
 
-action		: DELIVER TO MAILDIR STRING	{
+action		: DELIVER TO MAILDIR		{
+			rule->r_action = A_MAILDIR;
+			if (strlcpy(rule->r_value.path, "~/Maildir",
+			    sizeof(rule->r_value.path)) >=
+			    sizeof(rule->r_value.path))
+				fatal("pathname too long");
+		}
+		| DELIVER TO MAILDIR STRING	{
 			rule->r_action = A_MAILDIR;
 			if (strlcpy(rule->r_value.path, $4,
 			    sizeof(rule->r_value.path)) >=

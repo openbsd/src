@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.12 2009/05/30 23:53:41 gilles Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.13 2009/06/05 23:04:51 jacekm Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: May 30 2009 $
+.Dd $Mdocdate: June 5 2009 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -229,6 +229,11 @@ may contain format specifiers that are expanded before use,
 see the
 .Sx EXPANSION
 section below.
+If
+.Ar path
+is not provided, then
+.Pa ~/Maildir
+is assumed.
 .It Ic deliver to mda Ar program
 Message is piped to the specified
 .Ar program ,
