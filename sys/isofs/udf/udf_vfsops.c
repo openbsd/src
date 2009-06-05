@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.27 2008/06/14 10:55:21 mk Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.28 2009/06/05 04:35:25 krw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -590,28 +590,28 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	default:
 		vp->v_type = VBAD;
 		break;
-	case UDF_ICB_TYPE_DIR:
+	case UDF_ICB_FILETYPE_DIRECTORY:
 		vp->v_type = VDIR;
 		break;
-	case UDF_ICB_TYPE_FILE:
+	case UDF_ICB_FILETYPE_RANDOMACCESS:
 		vp->v_type = VREG;
 		break;
-	case UDF_ICB_TYPE_BLKDEV:
+	case UDF_ICB_FILETYPE_BLOCKDEVICE:
 		vp->v_type = VBLK;
 		break;
-	case UDF_ICB_TYPE_CHRDEV:
+	case UDF_ICB_FILETYPE_CHARDEVICE:
 		vp->v_type = VCHR;
 		break;
-	case UDF_ICB_TYPE_FIFO:
+	case UDF_ICB_FILETYPE_FIFO:
 		vp->v_type = VFIFO;
 		break;
-	case UDF_ICB_TYPE_SOCKET:
+	case UDF_ICB_FILETYPE_SOCKET:
 		vp->v_type = VSOCK;
 		break;
-	case UDF_ICB_TYPE_SYMLINK:
+	case UDF_ICB_FILETYPE_SYMLINK:
 		vp->v_type = VLNK;
 		break;
-	case UDF_ICB_TYPE_VAT_150:
+	case UDF_ICB_FILETYPE_UNKNOWN:
 		vp->v_type = VREG;
 		break;
 	}
@@ -730,6 +730,7 @@ udf_get_spartmap(struct umount *ump, struct part_map_spare *pms)
 	return (0);
 }
 
+
 /* Scan the partition maps */
 int
 udf_find_partmaps(struct umount *ump, struct logvol_desc *lvd)
@@ -746,12 +747,12 @@ udf_find_partmaps(struct umount *ump, struct logvol_desc *lvd)
 		if (ptype != 1 && ptype != 2)
 			return (EINVAL); /* Invalid partition map type */
 
-		if (psize != UDF_PMAP_TYPE1_SIZE &&
-		    psize != UDF_PMAP_TYPE2_SIZE)
+		if (psize != sizeof(struct part_map_1)  &&
+		    psize != sizeof(struct part_map_2))
 			return (EINVAL); /* Invalid partition map size */
 
 		if (ptype == 1) {
-			pmap += UDF_PMAP_TYPE1_SIZE;
+			pmap += sizeof(struct part_map_1);
 			continue;
 		}
 
@@ -774,7 +775,7 @@ udf_find_partmaps(struct umount *ump, struct logvol_desc *lvd)
 		if (error)
 			return (error); /* Error getting partition */
 
-		pmap += UDF_PMAP_TYPE2_SIZE;
+		pmap += sizeof(struct part_map_2);
 	}
 
 	return (0);
