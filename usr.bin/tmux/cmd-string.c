@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-string.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-string.c,v 1.2 2009/06/05 07:18:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -63,7 +63,7 @@ cmd_string_parse(const char *s, struct cmd_list **cmdlist, char **cause)
 	if ((t = strchr(s, ' ')) == NULL && (t = strchr(s, '\t')) == NULL)
 		t = strchr(s, '\0');
 	if ((u = strchr(s, '=')) != NULL && u < t) {
-		if (putenv((char *) s) != 0) {
+		if (putenv(xstrdup(s)) != 0) {
 			xasprintf(cause, "assignment failed: %s", s);
 			return (-1);
 		}
