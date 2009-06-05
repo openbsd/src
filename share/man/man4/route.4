@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.28 2009/03/31 01:37:33 dlg Exp $
+.\"	$OpenBSD: route.4,v 1.29 2009/06/05 00:43:09 claudio Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 31 2009 $
+.Dd $Mdocdate: June 5 2009 $
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -185,6 +185,11 @@ A process may ignore all messages from the routing socket
 by doing a
 .Xr shutdown 2
 system call for further input.
+.Pp
+A process can specify a routing domain by setting the
+.Dv SO_RDOMAIN
+flag to 
+.Xr setsockopt 2 .
 .Pp
 A process can specify which route message types it's interested in
 by using
