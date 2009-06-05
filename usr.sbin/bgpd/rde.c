@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.253 2009/06/05 17:36:49 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.254 2009/06/05 19:52:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2475,6 +2475,7 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 	LIST_INIT(&peer->path_h);
 	memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
 	peer->remote_bgpid = 0;
+	peer->ribid = rib_find(peer->conf.rib);
 	peer->state = PEER_NONE;
 	up_init(peer);
 
@@ -2630,17 +2631,16 @@ peer_dump(u_int32_t id, u_int16_t afi, u_int8_t safi)
 			if (peer->conf.announce_type == ANNOUNCE_DEFAULT_ROUTE)
 				up_generate_default(rules_l, peer, AF_INET);
 			else
-				/* XXX totaly wrong ... */
-				rib_dump(&ribs[1], rde_up_dump_upcall, peer,
-				    AF_INET);
+				rib_dump(&ribs[peer->ribid], rde_up_dump_upcall,
+				    peer, AF_INET);
 		}
 	if (afi == AFI_ALL || afi == AFI_IPv6)
 		if (safi == SAFI_ALL || safi == SAFI_UNICAST) {
 			if (peer->conf.announce_type == ANNOUNCE_DEFAULT_ROUTE)
 				up_generate_default(rules_l, peer, AF_INET6);
 			else
-				/* XXX again wrong rib */
-				rib_dump(&ribs[1], rde_up_dump_upcall, peer, AF_INET6);
+				rib_dump(&ribs[peer->ribid], rde_up_dump_upcall,
+				    peer, AF_INET6);
 		}
 
 	if (peer->capa_received.restart && peer->capa_announced.restart)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.233 2009/06/04 04:46:42 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.234 2009/06/05 19:52:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -239,6 +239,7 @@ struct peer_config {
 	struct capabilities	 capabilities;
 	char			 group[PEER_DESCR_LEN];
 	char			 descr[PEER_DESCR_LEN];
+	char			 rib[PEER_DESCR_LEN];
 	char			 if_depend[IFNAMSIZ];
 	char			 demote_group[IFNAMSIZ];
 	u_int32_t		 id;

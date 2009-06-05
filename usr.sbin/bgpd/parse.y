@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.227 2009/06/04 22:08:19 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.228 2009/06/05 19:52:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -818,6 +818,21 @@ peeropts	: REMOTEAS as4number	{
 		}
 		| DOWN		{
 			curpeer->conf.down = 1;
+		}
+		| RIB STRING	{
+			if (!find_rib($2)) {
+				yyerror("rib \"%s\" does not exist.", $2);
+				free($2);
+			}
+			if (strlcpy(curpeer->conf.rib, $2,
+			    sizeof(curpeer->conf.rib)) >=
+			    sizeof(curpeer->conf.rib)) {
+				yyerror("rib name \"%s\" too long: max %u",
+				   $2, sizeof(curpeer->conf.rib) - 1);
+				free($2);
+				YYERROR;
+			}
+			free($2);
 		}
 		| HOLDTIME NUMBER	{
 			if ($2 < MIN_HOLDTIME || $2 > USHRT_MAX) {
