@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.1 2009/06/05 19:33:59 pyr Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.2 2009/06/05 19:36:10 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -23,7 +23,7 @@
 
 #define READ_BUF_SIZE		65535
 #define IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
-#define MAX_IMSGSIZE		8192
+#define MAX_IMSGSIZE		16384
 
 struct buf {
 	TAILQ_ENTRY(buf)	 entry;
