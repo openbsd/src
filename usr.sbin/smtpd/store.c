@@ -1,4 +1,4 @@
-/*	$OpenBSD: store.c,v 1.18 2009/05/27 13:14:18 jacekm Exp $	*/
+/*	$OpenBSD: store.c,v 1.19 2009/06/05 21:55:40 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -85,48 +85,6 @@ file_copy(FILE *dest, FILE *src, enum action_type type)
 }
 
 int
-store_write_header(struct batch *batchp, struct message *messagep, FILE *fp,
-    int finalize)
-{
-	time_t tm;
-	void *p;
-	char addrbuf[INET6_ADDRSTRLEN];
-
-	tm = time(NULL);
-
-	if (messagep->session_ss.ss_family == PF_INET) {
-		struct sockaddr_in *ssin = (struct sockaddr_in *)&messagep->session_ss;
-		p = &ssin->sin_addr.s_addr;
-	}
-	if (messagep->session_ss.ss_family == PF_INET6) {
-		struct sockaddr_in6 *ssin6 = (struct sockaddr_in6 *)&messagep->session_ss;
-		p = &ssin6->sin6_addr.s6_addr;
-	}
-
-	bzero(addrbuf, sizeof (addrbuf));
-	inet_ntop(messagep->session_ss.ss_family, p, addrbuf, sizeof (addrbuf));
-
-	if (messagep->recipient.rule.r_action != A_MBOX) {
-		if (batchp->type & T_DAEMON_BATCH) {
-			if (fprintf(fp, "From %s@%s %s\n", "MAILER-DAEMON",
-				batchp->env->sc_hostname, time_to_text(tm)) == -1) {
-				return 0;
-			}
-		}
-		else {
-			if (fprintf(fp, "From %s@%s %s\n",
-				messagep->sender.user, messagep->sender.domain, time_to_text(tm)) == -1)
-				return 0;
-		}
-	}
-
-	if (finalize && fprintf(fp, "\n") == -1)
-		return 0;
-		
-	return 1;
-}
-
-int
 store_write_daemon(struct batch *batchp, struct message *messagep)
 {
 	u_int32_t i;
@@ -140,9 +98,6 @@ store_write_daemon(struct batch *batchp, struct message *messagep)
 
 	messagefp = fdopen(batchp->sessionp->messagefd, "r");
 	if (messagefp == NULL)
-		goto bad;
-
-	if (! store_write_header(batchp, messagep, mboxfp, 1))
 		goto bad;
 
 	if (fprintf(mboxfp, "Hi !\n\n"
@@ -236,9 +191,6 @@ store_write_message(struct batch *batchp, struct message *messagep)
 
 	messagefp = fdopen(batchp->sessionp->messagefd, "r");
 	if (messagefp == NULL)
-		goto bad;
-
-	if (! store_write_header(batchp, messagep, mboxfp, 0))
 		goto bad;
 
 	if (! file_copy(mboxfp, messagefp, messagep->recipient.rule.r_action))
