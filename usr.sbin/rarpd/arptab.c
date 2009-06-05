@@ -125,7 +125,7 @@ tryagain:
 		s = -1;
 		return (1);
 	}
-	sin = (struct sockaddr_inarp *)(rtm + 1);
+	sin = (struct sockaddr_inarp *)((char *)rtm + rtm->rtm_hdrlen);
 	sdl = (struct sockaddr_dl *)(sin->sin_len + (char *)sin);
 	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (sdl->sdl_family == AF_LINK &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.52 2009/05/13 16:14:57 deraadt Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.53 2009/06/05 22:40:24 chris Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.52 2009/05/13 16:14:57 deraadt Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.53 2009/06/05 22:40:24 chris Exp $";
 #endif
 
 #include <stdio.h>
@@ -1597,7 +1597,7 @@ rtrecv(void)
 		default:
 			rtm = (struct rt_msghdr *)p;
 			addrs = rtm->rtm_addrs;
-			q = (char *)(rtm + 1);
+			q = (char *)(p + rtm->rtm_hdrlen);
 			if (rtm->rtm_version != RTM_VERSION) {
 				trace(1, "unexpected rtmsg version %d "
 					"(should be %d)\n",
@@ -2514,7 +2514,7 @@ rt_entry(struct rt_msghdr *rtm, int again)
 	 */
 	if (rtm->rtm_flags & RTF_DYNAMIC)
 		return;
-	rtmp = (char *)(rtm + 1);
+	rtmp = (char *)((char *)rtm + rtm->rtm_hdrlen);
 	/* Destination */
 	if ((rtm->rtm_addrs & RTA_DST) == 0)
 		return;		/* ignore routes without destination address */

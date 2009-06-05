@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.42 2008/06/09 15:49:31 claudio Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.43 2009/06/05 22:40:24 chris Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -417,7 +417,7 @@ set(int argc, char **argv)
 		errx(1, "RTM_GET(%s) failed", host);
 		/* NOTREACHED */
 	}
-	sin = (struct sockaddr_in6 *)(rtm + 1);
+	sin = (struct sockaddr_in6 *)((char *)rtm + rtm->rtm_hdrlen);
 	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin6_len) + (char *)sin);
 	if (IN6_ARE_ADDR_EQUAL(&sin->sin6_addr, &sin_m.sin6_addr)) {
 		if (sdl->sdl_family == AF_LINK &&
@@ -516,7 +516,7 @@ delete(char *host)
 		errx(1, "RTM_GET(%s) failed", host);
 		/* NOTREACHED */
 	}
-	sin = (struct sockaddr_in6 *)(rtm + 1);
+	sin = (struct sockaddr_in6 *)((char *)rtm + rtm->rtm_hdrlen);
 	sdl = (struct sockaddr_dl *)(ROUNDUP(sin->sin6_len) + (char *)sin);
 	if (IN6_ARE_ADDR_EQUAL(&sin->sin6_addr, &sin_m.sin6_addr)) {
 		if (sdl->sdl_family == AF_LINK &&
@@ -607,7 +607,7 @@ again:;
 		int isrouter = 0, prbs = 0;
 
 		rtm = (struct rt_msghdr *)next;
-		sin = (struct sockaddr_in6 *)(rtm + 1);
+		sin = (struct sockaddr_in6 *)(next + rtm->rtm_hdrlen);
 		sdl = (struct sockaddr_dl *)((char *)sin + ROUNDUP(sin->sin6_len));
 
 		/*

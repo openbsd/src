@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.18 2008/04/21 20:40:55 rainer Exp $	*/
+/*	$OpenBSD: if.c,v 1.19 2009/06/05 22:40:24 chris Exp $	*/
 /*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
 	*lenp = 0;
 	for (rtm = (struct rt_msghdr *)buf;
 	     rtm < (struct rt_msghdr *)lim;
-	     rtm = (struct rt_msghdr *)(((char *)rtm) + rtm->rtm_msglen)) {
+	     rtm = (struct rt_msghdr *)((char *)rtm + rtm->rtm_msglen)) {
 		/* just for safety */
 		if (!rtm->rtm_msglen) {
 			log_warnx("rtm_msglen is 0 (buf=%p lim=%p rtm=%p)",
@@ -255,7 +255,7 @@ get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
 				continue;
 
 			/* address related checks */
-			sa = (struct sockaddr *)(rtm + 1);
+			sa = (struct sockaddr *)((char *)rtm + rtm->rtm_hdrlen);
 			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 			if ((dst = rti_info[RTAX_DST]) == NULL ||
 			    dst->sa_family != AF_INET6)
@@ -320,7 +320,7 @@ get_addr(char *buf)
 	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
 
-	sa = (struct sockaddr *)(rtm + 1);
+	sa = (struct sockaddr *)(buf + rtm->rtm_hdrlen);
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
 	return(&SIN6(rti_info[RTAX_DST])->sin6_addr);
@@ -332,7 +332,7 @@ get_rtm_ifindex(char *buf)
 	struct rt_msghdr *rtm = (struct rt_msghdr *)buf;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
 
-	sa = (struct sockaddr *)(rtm + 1);
+	sa = (struct sockaddr *)(buf + rtm->rtm_hdrlen);
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
 	return(((struct sockaddr_dl *)rti_info[RTAX_GATEWAY])->sdl_index);
@@ -369,7 +369,7 @@ get_prefixlen(char *buf)
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
 	u_char *p, *lim;
 	
-	sa = (struct sockaddr *)(rtm + 1);
+	sa = (struct sockaddr *)(buf + rtm->rtm_hdrlen);
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 	sa = rti_info[RTAX_NETMASK];
 

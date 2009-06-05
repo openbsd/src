@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: kroute.c,v 1.2 2009/06/05 22:40:24 chris Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -1089,6 +1089,7 @@ send_rtlabelmsg(int fd, int action, struct kroute *kroute, u_int32_t family)
 	hdr.rtm_priority = 0;
 	hdr.rtm_seq = kr_state.rtseq++;	/* overflow doesn't matter */
 	hdr.rtm_msglen = sizeof(hdr);
+	hdr.rtm_hdrlen = sizeof(struct rt_msghdr);
 	/* adjust iovec */
 	iov[iovcnt].iov_base = &hdr;
 	iov[iovcnt++].iov_len = sizeof(hdr);
@@ -1222,6 +1223,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 		hdr.rtm_fmask = RTF_PROTO2|RTF_PROTO1|RTF_REJECT|RTF_BLACKHOLE;
 	hdr.rtm_seq = kr_state.rtseq++;	/* overflow doesn't matter */
 	hdr.rtm_msglen = sizeof(hdr);
+	hdr.rtm_hdrlen = sizeof(struct rt_msghdr);
 	/* adjust iovec */
 	iov[iovcnt].iov_base = &hdr;
 	iov[iovcnt++].iov_len = sizeof(hdr);
@@ -1351,7 +1353,7 @@ fetchtable(void)
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
-		sa = (struct sockaddr *)(rtm + 1);
+		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
 		if ((sa = rti_info[RTAX_DST]) == NULL)
@@ -1546,7 +1548,7 @@ dispatch_rtmsg(void)
 
 		if (rtm->rtm_type == RTM_ADD || rtm->rtm_type == RTM_CHANGE ||
 		    rtm->rtm_type == RTM_DELETE) {
-			sa = (struct sockaddr *)(rtm + 1);
+			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
 			get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
 
 			if (rtm->rtm_tableid != 0)
