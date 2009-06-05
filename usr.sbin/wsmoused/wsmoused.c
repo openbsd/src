@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.23 2007/11/24 16:28:09 miod Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.24 2009/06/05 03:37:10 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -72,18 +72,22 @@
 #include "mouse_protocols.h"
 #include "wsmoused.h"
 
+#define	DEFAULT_TTY	"/dev/ttyCcfg"
+#define	DEFAULT_PIDFILE	"/var/run/wsmoused.pid"
+
 extern char *__progname;
 extern char *mouse_names[];
 
 int debug = 0;
-int nodaemon = FALSE;
 int background = FALSE;
+int nodaemon = FALSE;
 int identify = FALSE;
-char *pidfile = "/var/run/wsmoused.pid";
+char *pidfile = NULL;
 
 mouse_t mouse = {
 	.flags = 0,
 	.portname = NULL,
+	.ttyname = NULL,
 	.proto = P_UNKNOWN,
 	.baudrate = 1200,
 	.old_baudrate = 1200,
@@ -104,6 +108,7 @@ wsmouse_identify(void)
 	if (mouse.mfd != -1) {
 		if (ioctl(mouse.mfd, WSMOUSEIO_GTYPE, &type) == -1)
 			err(1, "can't detect mouse type");
+
 		printf("wsmouse supported mouse: ");
 		switch (type) {
 		case WSMOUSE_TYPE_VSXXX:
@@ -129,6 +134,21 @@ wsmouse_identify(void)
 			break;
 		case WSMOUSE_TYPE_ARCHIMEDES:
 			printf("Archimedes\n");
+			break;
+		case WSMOUSE_TYPE_ADB:
+			printf("ADB\n");
+			break;
+		case WSMOUSE_TYPE_HIL:
+			printf("HP-HIL\n");
+			break;
+		case WSMOUSE_TYPE_LUNA:
+			printf("Omron Luna\n");
+			break;
+		case WSMOUSE_TYPE_DOMAIN:
+			printf("Apollo Domain\n");
+			break;
+		case WSMOUSE_TYPE_SUN:
+			printf("Sun\n");
 			break;
 		default:
 			printf("Unknown\n");
@@ -225,7 +245,8 @@ terminate(int sig)
 		close(mouse.mfd);
 		mouse.mfd = -1;
 	}
-	unlink(pidfile);
+	if (pidfile != NULL)
+		unlink(pidfile);
 	_exit(0);
 }
 
@@ -391,42 +412,24 @@ wsmoused(void)
 	struct pollfd pfd[1];
 	int res;
 	u_char b;
-	FILE *fp;
 	struct stat mdev_stat;
-
-	if (!nodaemon && !background) {
-		if (daemon(0, 0)) {
-			logerr(1, "failed to become a daemon");
-		} else {
-			background = TRUE;
-			fp = fopen(pidfile, "w");
-			if (fp != NULL) {
-				fprintf(fp, "%ld\n", (long)getpid());
-				fclose(fp);
-			}
-		}
-	}
-
-	if ((mouse.cfd = open("/dev/ttyCcfg", O_RDWR, 0)) == -1)
-		logerr(1, "cannot open /dev/ttyCcfg");
 
 	/* initialization */
 
 	event.type = WSCONS_EVENT_WSMOUSED_ON;
-	if (IS_WSMOUSE_DEV(mouse.portname)) {
-
+	if (mouse.proto == P_WSCONS) {
 		/* get major and minor of mouse device */
 		res = stat(mouse.portname, &mdev_stat);
 		if (res != -1)
 			event.value = mdev_stat.st_rdev;
 		else
 			event.value = 0;
-	}
-	else
-		/* X11 won't start using wsmoused(8) with a serial mouse */
+	} else {
+		/* X11 won't start when using wsmoused(8) with a serial mouse */
 		event.value = 0;
+	}
 
-	/* notify kernel to start wsmoused */
+	/* notify kernel the start of wsmoused */
 	res = ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, &event);
 	if (res != 0) {
 		/* the display driver has no getchar() method */
@@ -444,13 +447,16 @@ wsmoused(void)
 	for (;;) {
 		if (poll(pfd, 1, INFTIM) <= 0)
 			logwarn("failed to read from mouse");
-		if (IS_WSMOUSE_DEV(mouse.portname)) {
+
+		if (mouse.proto == P_WSCONS) {
 			/* wsmouse supported mouse */
 			read(mouse.mfd, &event, sizeof(event));
 			res = treat_event(&event);
 			if (!res) {
-				/* close mouse device and sleep until
-				   the X server release it */
+				/*
+				 * close mouse device and sleep until
+				 * the X server releases it
+				 */
 
 				struct wscons_event sleeping;
 				unsigned int tries;
@@ -486,14 +492,14 @@ wsmoused(void)
 						tries++;
 						sleep(1);
 					} else {
-						logerr(1, "unable to open %s, "
+						logwarn("unable to open %s, "
 						    "will retry in 10 seconds",
 						    mouse.portname);
 						sleep(10);
 					}
 				}
 
-				mouse_init();
+				wsmouse_init();
 			}
 		} else {
 			/* serial mouse (not supported by wsmouse) */
@@ -511,18 +517,20 @@ wsmoused(void)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-2dfi] [-C thresh] [-I file] [-M N=M] \
-[-p device] [-t type]\n", __progname);
+	fprintf(stderr, "usage: %s [-2dfi] [-C thresh] [-D device] [-I file]"
+	    " [-M N=M]\n\t[-p device] [-t type]\n", __progname);
 	exit(1);
 }
 
 int
 main(int argc, char **argv)
 {
+	FILE *fp;
+	unsigned int type;
 	int opt;
 	int i;
 
-#define GETOPT_STRING "2dfhip:t:C:I:M:"
+#define GETOPT_STRING "2dfhip:t:C:D:I:M:"
 	while ((opt = (getopt(argc, argv, GETOPT_STRING))) != -1) {
 		switch (opt) {
 		case '2':
@@ -540,6 +548,7 @@ main(int argc, char **argv)
 			break;
 		case 'i':
 			identify = TRUE;
+			nodaemon = TRUE;
 			break;
 		case 'p':
 			if ((mouse.portname = strdup(optarg)) == NULL)
@@ -572,6 +581,10 @@ main(int argc, char **argv)
 				usage();
 			}
 			break;
+		case 'D':
+			if ((mouse.ttyname = strdup(optarg)) == NULL)
+				logerr(1, "out of memory");
+			break;
 		case 'I':
 			pidfile = optarg;
 			break;
@@ -585,38 +598,72 @@ main(int argc, char **argv)
 			usage();
 		}
 	}
+
+	/*
+	 * Use defaults if unspecified
+	 */
 	if (mouse.portname == NULL)
-		/* default is /dev/wsmouse */
 		mouse.portname = WSMOUSE_DEV;
+	if (mouse.ttyname == NULL)
+		mouse.ttyname = DEFAULT_TTY;
 
-	if (!nodaemon)
+	if (!nodaemon) {
 		openlog(__progname, LOG_PID, LOG_DAEMON);
-
-	for (;;) {
-		signal(SIGINT , terminate);
-		signal(SIGQUIT, terminate);
-		signal(SIGTERM, terminate);
-		if ((mouse.mfd = open(mouse.portname,
-		    O_RDONLY | O_NONBLOCK, 0)) == -1)
-			logerr(1, "unable to open %s", mouse.portname);
-		if (IS_SERIAL_DEV(mouse.portname)) {
-			if (mouse_identify() == P_UNKNOWN) {
-				close(mouse.mfd);
-				logerr(1, "cannot determine mouse type on %s",
-				    mouse.portname);
+		if (daemon(0, 0)) {
+			logerr(1, "failed to become a daemon");
+		} else {
+			background = TRUE;
+			if (pidfile != NULL) {
+				fp = fopen(pidfile, "w");
+				if (fp != NULL) {
+					fprintf(fp, "%ld\n", (long)getpid());
+					fclose(fp);
+				}
 			}
 		}
-
-		if (identify == TRUE) {
-			if (IS_WSMOUSE_DEV(mouse.portname))
-				wsmouse_identify();
-			else
-				printf("serial mouse: %s type\n",
-				    (char *)mouse_name(mouse.proto));
-			exit(0);
-		}
-
-		mouse_init();
-		wsmoused();
 	}
+
+	if (identify == FALSE) {
+		if ((mouse.cfd = open(mouse.ttyname, O_RDWR, 0)) == -1)
+			logerr(1, "cannot open %s", mouse.ttyname);
+	}
+
+	if ((mouse.mfd = open(mouse.portname,
+	    O_RDONLY | O_NONBLOCK, 0)) == -1)
+		logerr(1, "unable to open %s", mouse.portname);
+
+	/*
+	 * Find out whether the mouse device is a wsmouse device
+	 * or a serial device.
+	 */
+	if (ioctl(mouse.mfd, WSMOUSEIO_GTYPE, &type) != -1)
+		mouse.proto = P_WSCONS;
+	else {
+		if (mouse_identify() == P_UNKNOWN) {
+			close(mouse.mfd);
+			logerr(1, "cannot determine mouse type on %s",
+			    mouse.portname);
+		}
+	}
+
+	if (identify == TRUE) {
+		if (mouse.proto == P_WSCONS)
+			wsmouse_identify();
+		else
+			printf("serial mouse: %s type\n",
+			    mouse_name(mouse.proto));
+		exit(0);
+	}
+
+	signal(SIGINT, terminate);
+	signal(SIGQUIT, terminate);
+	signal(SIGTERM, terminate);
+
+	if (mouse.proto == P_WSCONS)
+		wsmouse_init();
+	else
+		mouse_init();
+
+	wsmoused();
+	exit(0);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.c,v 1.12 2007/04/10 22:37:17 miod Exp $ */
+/* $OpenBSD: mouse_protocols.c,v 1.13 2009/06/05 03:37:10 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -88,7 +88,7 @@ extern int	background;
 extern mouse_t	mouse;
 
 /* Cflags of each mouse protocol, ordered by P_XXX */
-static unsigned short mousecflags[] = {
+static const unsigned short mousecflags[] = {
 	(CS7 | CREAD | CLOCAL | HUPCL),	/* Microsoft */
 	(CS8 | CSTOPB | CREAD | CLOCAL | HUPCL),	/* MouseSystems */
 	(CS8 | CSTOPB | CREAD | CLOCAL | HUPCL),	/* Logitech */
@@ -101,7 +101,7 @@ static unsigned short mousecflags[] = {
 };
 
 /* array ordered by P_XXX giving protocol properties */
-static unsigned char proto[][7] = {
+static const unsigned char proto[][7] = {
 	/* mask hd_id   dp_mask dp_id   bytes b4_mask b4_id */
 	{0x40, 0x40, 0x40, 0x00, 3, ~0x23, 0x00},	/* Microsoft */
 	{0xf8, 0x80, 0x00, 0x00, 5, 0x00, 0xff},	/* MouseSystems */
@@ -118,7 +118,7 @@ static unsigned char proto[][7] = {
  * array ordered by P_XXX (mouse protocols) giving the protocol
  * corresponding to the name of a mouse
  */
-char *mouse_names[] = {
+const char *mouse_names[] = {
 	"microsoft",
 	"mousesystems",
 	"logitech",
@@ -135,7 +135,7 @@ char *mouse_names[] = {
 static unsigned char cur_proto[7];
 
 /* PnP EISA/product IDs */
-static symtab_t pnpprod[] = {
+static const symtab_t pnpprod[] = {
 	{"KML0001", P_THINKING},/* Kensignton ThinkingMouse */
 	{"MSH0001", P_IMSERIAL},/* MS IntelliMouse */
 	{"MSH0004", P_IMSERIAL},/* MS IntelliMouse TrackBall */
@@ -163,8 +163,8 @@ static symtab_t pnpprod[] = {
 	{NULL, -1},
 };
 
-static symtab_t *
-gettoken(symtab_t * tab, char *s, int len)
+static const symtab_t *
+gettoken(const symtab_t * tab, char *s, int len)
 {
 	int	i;
 
@@ -175,11 +175,11 @@ gettoken(symtab_t * tab, char *s, int len)
 	return &tab[i];
 }
 
-char *
+const char *
 mouse_name(int type)
 {
-	return (type == P_UNKNOWN ||
-	    (type > sizeof(mouse_names) / sizeof(mouse_names[0]) - 1)) ?
+	return (type < 0 ||
+	    (uint)type >= sizeof(mouse_names) / sizeof(mouse_names[0])) ?
 	    "unknown" : mouse_names[type];
 }
 
@@ -188,9 +188,6 @@ SetMouseSpeed(int old, int new, unsigned int cflag)
 {
 	struct termios tty;
 	char	*c;
-
-	if (!IS_SERIAL_DEV(mouse.portname))
-		return;
 
 	if (tcgetattr(mouse.mfd, &tty) < 0) {
 		debug("Warning: %s unable to get status of mouse fd (%s)\n",
@@ -472,7 +469,7 @@ pnpparse(pnpid_t * id, char *buf, int len)
 	id->revision = ((buf[1] & 0x3f) << 6) | (buf[2] & 0x3f);
 	debug("Mouse: PnP rev %d.%02d\n", id->revision / 100, id->revision % 100);
 
-	/* EISA vender and product ID */
+	/* EISA vendor and product ID */
 	id->eisaid = &buf[3];
 	id->neisaid = 7;
 
@@ -558,11 +555,11 @@ pnpparse(pnpid_t * id, char *buf, int len)
 }
 
 /* pnpproto : return the prototype used, based on the PnP ID string */
-static symtab_t *
+static const symtab_t *
 pnpproto(pnpid_t * id)
 {
-	symtab_t       *t;
-	int             i, j;
+	const symtab_t *t;
+	int i, j;
 
 	if (id->nclass > 0)
 		if (strncmp(id->class, "MOUSE", id->nclass) != 0)
@@ -603,10 +600,6 @@ mouse_init(void)
 	char            c;
 	int             i;
 
-	if (IS_WSMOUSE_DEV(mouse.portname)) {
-		wsmouse_init();
-		return;
-	}
 	pfd[0].fd = mouse.mfd;
 	pfd[0].events = POLLIN;
 
@@ -789,11 +782,11 @@ mouse_init(void)
 int
 mouse_identify(void)
 {
-	char            pnpbuf[256];	/* PnP identifier string may be up to
-					 * 256 bytes long */
-	pnpid_t         pnpid;
-	symtab_t       *t;
-	int             len;
+	char pnpbuf[256];	/* PnP identifier string may be up to
+				 * 256 bytes long */
+	pnpid_t pnpid;
+	const symtab_t *t;
+	int len;
 
 	/* protocol has been specified with '-t' */
 	if (mouse.proto != P_UNKNOWN)
@@ -881,17 +874,6 @@ mouse_protocol(u_char rBuf, mousestatus_t * act)
 		MOUSE_BUTTON6DOWN,
 		MOUSE_BUTTON7DOWN,
 	};
-	/* for PS/2 VersaPad */
-	static int      butmapversaps2[8] = {	/* VersaPad */
-		0,
-		MOUSE_BUTTON3DOWN,
-		0,
-		MOUSE_BUTTON3DOWN,
-		MOUSE_BUTTON1DOWN,
-		MOUSE_BUTTON1DOWN | MOUSE_BUTTON3DOWN,
-		MOUSE_BUTTON1DOWN,
-		MOUSE_BUTTON1DOWN | MOUSE_BUTTON3DOWN,
-	};
 	static int      pBufP = 0;
 	static unsigned char pBuf[8];
 
@@ -903,7 +885,7 @@ mouse_protocol(u_char rBuf, mousestatus_t * act)
          *  b) invalid (0x80 == -128 and that might be wrong for MouseSystems)
          *  c) bad header-package
          *
-         * NOTE: b) is a voilation of the MouseSystems-Protocol, since values of
+         * NOTE: b) is a violation of the MouseSystems-Protocol, since values of
          *       -128 are allowed, but since they are very seldom we can easily
          *       use them as package-header with no button pressed.
          * NOTE/2: On a PS/2 mouse any byte is valid as a data byte. Furthermore,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsmoused.8,v 1.16 2007/05/31 19:20:30 jmc Exp $
+.\"	$OpenBSD: wsmoused.8,v 1.17 2009/06/05 03:37:10 miod Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Baptiste Marchand
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 5 2009 $
 .Dt WSMOUSED 8 i386
 .Os
 .Sh NAME
@@ -34,6 +34,7 @@
 .Nm wsmoused
 .Op Fl 2dfi
 .Op Fl C Ar thresh
+.Op Fl D Ar device
 .Op Fl I Ar file
 .Oo
 .Fl M
@@ -47,10 +48,8 @@ listens for mouse events on the specified
 .Ar device
 and communicates them to the
 .Xr wscons 4
-driver through the
-.Pa /dev/ttyCcfg
-interface.
-Its purpose is to provide copy/paste functionality on the PC console.
+driver.
+Its purpose is to provide copy/paste functionality on the console.
 .Pp
 By default, the left mouse button is used to select text
 (in the familiar click-and-drag fashion);
@@ -72,6 +71,17 @@ Set double click speed as the maximum interval in msec between button clicks.
 If omitted, the default value of 500 msec will be assumed.
 This option will have effect only on the cut and paste operations
 in the text mode console.
+.It Fl D Ar device
+Use
+.Ar device
+as the display control device.
+If omitted,
+.Nm
+will use the default value of 
+.Pa /dev/ttyCcfg ,
+which controls the
+.Nm wsdisplay0
+display terminals.
 .It Fl d
 Enable debugging messages.
 .It Fl f
@@ -82,8 +92,6 @@ Write the process ID of
 .Nm
 to the specified
 .Ar file .
-If omitted, the process ID will be stored in
-.Pa /var/run/wsmoused.pid .
 .It Fl i
 Print the type and the protocol of the mouse and exit.
 .It Fl M Ar N Ns = Ns Ar M
@@ -98,6 +106,7 @@ In this case the logical button will be down, if either of the assigned
 physical buttons is held down.
 Do not put space around
 .Ql = .
+Button numbers start from one, assigned to the leftmost button.
 .It Fl p Ar device
 Use
 .Ar device
@@ -172,6 +181,22 @@ Serial mice do not have a
 compatible driver, so
 .Nm
 has to be killed before starting the X Window System.
+.Sh EXAMPLES
+To start wsmoused on the
+.Nm wsdisplay1
+display terminals, using a two-button serial mouse connected to
+.Pa /dev/cua0 :
+.Pp
+.Dl # wsmoused -2 -D /dev/ttyDcfg -p /dev/cua0
+.Pp
+To start wsmoused on the
+.Nm wsdisplay0
+display terminals, using
+.Pa /dev/wsmouse
+with the left and right buttons swapped
+.Pq assuming a three button mouse :
+.Pp
+.Dl # wsmoused -M 1=3 -M 3=1
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsmouse 4

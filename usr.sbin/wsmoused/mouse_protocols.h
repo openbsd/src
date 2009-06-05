@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.h,v 1.5 2007/04/10 22:37:17 miod Exp $ */
+/* $OpenBSD: mouse_protocols.h,v 1.6 2009/06/05 03:37:10 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -53,16 +53,17 @@
 
 /* Mouse protocols */
 
-#define P_UNKNOWN 	(-1)
-#define P_MS 		0 /* Microsoft Serial, 3 bytes */
-#define P_MSC 		1 /* Mouse Systems, 5 bytes */
-#define P_LOGI 		2 /* Logitech, 3 bytes */
-#define P_MM 		3 /* MM series, 3 bytes */
-#define P_LOGIMAN	4 /* Logitech MouseMan 3/4 bytes */
-#define P_MMHIT		5 /* Hitachi Tablet 3 bytes */
-#define P_GLIDEPOINT	6 /* ALPS GlidePoint, 3/4 bytes */
-#define P_IMSERIAL	7 /* MS IntelliMouse, 4 bytes */
-#define P_THINKING	8 /* Kensignton Thinking Mouse, 3/4 bytes */
+#define P_UNKNOWN 	-2
+#define	P_WSCONS	-1	/* wsmouse */
+#define P_MS 		0	/* Microsoft Serial, 3 bytes */
+#define P_MSC 		1	/* Mouse Systems, 5 bytes */
+#define P_LOGI 		2	/* Logitech, 3 bytes */
+#define P_MM 		3	/* MM series, 3 bytes */
+#define P_LOGIMAN	4	/* Logitech MouseMan 3/4 bytes */
+#define P_MMHIT		5	/* Hitachi Tablet 3 bytes */
+#define P_GLIDEPOINT	6	/* ALPS GlidePoint, 3/4 bytes */
+#define P_IMSERIAL	7	/* MS IntelliMouse, 4 bytes */
+#define P_THINKING	8	/* Kensignton Thinking Mouse, 3/4 bytes */
 
 /* flags */
 
@@ -201,6 +202,6 @@ typedef struct mousestatus {
 void mouse_init(void);
 int mouse_identify(void);
 int mouse_protocol(unsigned char, mousestatus_t *);
-char *mouse_name(int type);
+const char *mouse_name(int type);
 void wsmouse_init(void);
 
