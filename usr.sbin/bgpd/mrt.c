@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.61 2009/06/04 22:08:19 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.62 2009/06/05 17:36:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -365,14 +365,6 @@ fail:
 	return (-1);
 }
 
-static u_int16_t sequencenum = 0;
-
-void
-mrt_clear_seq(void)
-{
-	sequencenum = 0;
-}
-
 void
 mrt_dump_upcall(struct rib_entry *re, void *ptr)
 {
@@ -386,12 +378,20 @@ mrt_dump_upcall(struct rib_entry *re, void *ptr)
 	 */
 	LIST_FOREACH(p, &re->prefix_h, rib_l) {
 		if (mrtbuf->type == MRT_TABLE_DUMP)
-			mrt_dump_entry(mrtbuf, p, sequencenum++,
+			mrt_dump_entry(mrtbuf, p, mrtbuf->seqnum++,
 			    p->aspath->peer);
 		else
-			mrt_dump_entry_mp(mrtbuf, p, sequencenum++,
+			mrt_dump_entry_mp(mrtbuf, p, mrtbuf->seqnum++,
 			    p->aspath->peer);
 	}
+}
+
+void
+mrt_dump_done(void *ptr)
+{
+	struct mrt		*mrtbuf = ptr;
+
+	mrtbuf->type = MRT_STATE_REMOVE;
 }
 
 int

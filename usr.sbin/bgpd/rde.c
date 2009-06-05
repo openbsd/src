@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.252 2009/06/04 22:08:19 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.253 2009/06/05 17:36:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -38,7 +38,7 @@
 #define PFD_PIPE_MAIN		0
 #define PFD_PIPE_SESSION	1
 #define PFD_PIPE_SESSION_CTL	2
-#define PFD_MRT_FILE		3
+#define PFD_PIPE_COUNT		3
 
 void		 rde_sighdlr(int);
 void		 rde_dispatch_imsg_session(struct imsgbuf *);
@@ -76,6 +76,7 @@ void		 rde_dump_prefix_upcall(struct rib_entry *, void *);
 void		 rde_dump_prefix(struct ctl_show_rib_request *);
 void		 rde_dump_ctx_new(struct ctl_show_rib_request *, pid_t,
 		     enum imsg_type);
+void		 rde_dump_mrt_new(struct mrt *, pid_t, int);
 void		 rde_dump_done(void *);
 
 void		 rde_up_dump_upcall(struct rib_entry *, void *);
@@ -111,7 +112,6 @@ struct filter_head	*rules_l, *newrules;
 struct imsgbuf		*ibuf_se;
 struct imsgbuf		*ibuf_se_ctl;
 struct imsgbuf		*ibuf_main;
-struct mrt		*mrt;
 struct rde_memstats	 rdemem;
 
 struct rde_dump_ctx {
@@ -119,6 +119,14 @@ struct rde_dump_ctx {
 	struct ctl_show_rib_request	req;
 	sa_family_t			af;
 };
+
+struct rde_mrt_ctx {
+	struct rib_context	 ribctx;
+	struct mrt		*mrt;
+};
+
+struct mrt_head rde_mrts = LIST_HEAD_INITIALIZER(rde_mrts);
+u_int rde_mrt_cnt;
 
 void
 rde_sighdlr(int sig)
@@ -146,12 +154,15 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	struct passwd		*pw;
 	struct peer		*p;
 	struct listen_addr	*la;
-	struct pollfd		 pfd[4];
+	struct pollfd		*pfd = NULL;
 	struct filter_rule	*f;
 	struct filter_set	*set;
 	struct nexthop		*nh;
 	struct rde_rib		*rr;
-	int			 i, timeout;
+	struct mrt		*mrt, *xmrt;
+	void			*newp;
+	u_int			 pfd_elms = 0, i, j;
+	int			 timeout;
 
 	switch (pid = fork()) {
 	case -1:
@@ -210,7 +221,6 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		LIST_REMOVE(mrt, entry);
 		free(mrt);
 	}
-	mrt = NULL;
 
 	while ((la = TAILQ_FIRST(config->listen_addrs)) != NULL) {
 		TAILQ_REMOVE(config->listen_addrs, la, entry);
@@ -245,8 +255,20 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	}
 
 	while (rde_quit == 0) {
+		if (pfd_elms < PFD_PIPE_COUNT + rde_mrt_cnt) {
+			if ((newp = realloc(pfd, sizeof(struct pollfd) *
+			    (PFD_PIPE_COUNT + rde_mrt_cnt))) == NULL) {
+				/* panic for now  */
+				log_warn("could not resize pfd from %u -> %u"
+				    " entries", pfd_elms, PFD_PIPE_COUNT +
+				    rde_mrt_cnt);
+				fatalx("exiting");
+			}
+			pfd = newp;
+			pfd_elms = PFD_PIPE_COUNT + rde_mrt_cnt;
+		}
 		timeout = INFTIM;
-		bzero(pfd, sizeof(pfd));
+		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
 		pfd[PFD_PIPE_MAIN].fd = ibuf_main->fd;
 		pfd[PFD_PIPE_MAIN].events = POLLIN;
 		if (ibuf_main->w.queued > 0)
@@ -264,11 +286,13 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		else if (rib_dump_pending())
 			timeout = 0;
 
-		i = 3;
-		if (mrt && mrt->wbuf.queued) {
-			pfd[PFD_MRT_FILE].fd = mrt->wbuf.fd;
-			pfd[PFD_MRT_FILE].events = POLLOUT;
-			i++;
+		i = PFD_PIPE_COUNT;
+		LIST_FOREACH(mrt, &rde_mrts, entry) {
+			if (mrt->wbuf.queued) {
+				pfd[i].fd = mrt->wbuf.fd;
+				pfd[i].events = POLLOUT;
+				i++;
+			}
 		}
 
 		if (poll(pfd, i, timeout) == -1) {
@@ -301,13 +325,20 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		if (pfd[PFD_PIPE_SESSION_CTL].revents & POLLIN)
 			rde_dispatch_imsg_session(ibuf_se_ctl);
 
-		if (pfd[PFD_MRT_FILE].revents & POLLOUT) {
-			mrt_write(mrt);
-			if (mrt->wbuf.queued == 0) {
+		for (j = PFD_PIPE_COUNT, mrt = LIST_FIRST(&rde_mrts);
+		    j < i && mrt != 0; j++) {
+			xmrt = LIST_NEXT(mrt, entry);
+			if (pfd[j].fd == mrt->wbuf.fd &&
+			    pfd[j].revents & POLLOUT)
+				mrt_write(mrt);
+			if (mrt->wbuf.queued == 0 && 
+			    mrt->type == MRT_STATE_REMOVE) {
 				close(mrt->wbuf.fd);
+				LIST_REMOVE(mrt, entry);
 				free(mrt);
-				mrt = NULL;
+				rde_mrt_cnt--;
 			}
+			mrt = xmrt;
 		}
 
 		rde_update_queue_runner();
@@ -319,6 +350,13 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	/* do not clean up on shutdown on production, it takes ages. */
 	if (debug)
 		rde_shutdown();
+
+	while ((mrt = LIST_FIRST(&rde_mrts)) != NULL) {
+		msgbuf_clear(&mrt->wbuf);
+		close(mrt->wbuf.fd);
+		LIST_REMOVE(mrt, entry);
+		free(mrt);
+	}
 
 	msgbuf_clear(&ibuf_se->w);
 	free(ibuf_se);
@@ -530,9 +568,9 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	struct rde_peer		*peer;
 	struct filter_rule	*r;
 	struct filter_set	*s;
-	struct mrt		*xmrt;
+	struct mrt		 xmrt;
 	struct nexthop		*nh;
-	int			 n, reconf_in = 0, reconf_out = 0;
+	int			 n, fd, reconf_in = 0, reconf_out = 0;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		fatal("rde_dispatch_imsg_parent: imsg_read error");
@@ -672,37 +710,15 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				log_warnx("wrong imsg len");
 				break;
 			}
-
-			xmrt = calloc(1, sizeof(struct mrt));
-			if (xmrt == NULL)
-				fatal("rde_dispatch_imsg_parent");
-			memcpy(xmrt, imsg.data, sizeof(struct mrt));
-			TAILQ_INIT(&xmrt->wbuf.bufs);
-
-			if ((xmrt->wbuf.fd = imsg_get_fd(ibuf)) == -1)
+			memcpy(&xmrt, imsg.data, sizeof(xmrt));
+			if ((fd = imsg_get_fd(ibuf)) == -1)
 				log_warnx("expected to receive fd for mrt dump "
 				    "but didn't receive any");
-			else if (xmrt->type == MRT_TABLE_DUMP ||
-			    xmrt->type == MRT_TABLE_DUMP_MP) {
-				u_int16_t id;
-
-				/* do not dump if another is still running */
-				id = rib_find(mrt->rib);
-				if (id == RIB_FAILED)
-					log_warnx("non existing RIB %s for mrt "
-					    "dump", mrt->rib);
-				else if (mrt == NULL || mrt->wbuf.queued == 0) {
-					free(mrt);
-					mrt = xmrt;
-					mrt_clear_seq();
-					rib_dump(&ribs[id], mrt_dump_upcall,
-					    mrt, AF_UNSPEC);
-					break;
-				} else
-					log_warnx("dump failed: already in progress");
-			}
-			close(xmrt->wbuf.fd);
-			free(xmrt);
+			else if (xmrt.type == MRT_TABLE_DUMP ||
+			    xmrt.type == MRT_TABLE_DUMP_MP) {
+				rde_dump_mrt_new(&xmrt, imsg.hdr.pid, fd);
+			} else
+				close(fd);
 			break;
 		case IMSG_MRT_CLOSE:
 			/* ignore end message because a dump is atomic */
@@ -1917,6 +1933,39 @@ rde_dump_done(void *arg)
 	free(ctx);
 }
 
+void
+rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
+{
+	struct rde_mrt_ctx	*ctx;
+	u_int16_t		 id;
+
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL ||
+	    (ctx->mrt = calloc(1, sizeof(struct mrt))) == NULL) {
+		log_warn("rde_dump_mrt_new");
+		return;
+	}
+	memcpy(ctx->mrt, mrt, sizeof(struct mrt));
+	TAILQ_INIT(&ctx->mrt->wbuf.bufs);
+	ctx->mrt->wbuf.fd = fd;
+	ctx->mrt->type = MRT_STATE_RUNNING;
+	id = rib_find(ctx->mrt->rib);
+	if (id == RIB_FAILED) {
+		log_warnx("non existing RIB %s for mrt dump", ctx->mrt->rib);
+		free(ctx->mrt);
+		free(ctx);
+		return;
+	}
+	ctx->ribctx.ctx_count = RDE_RUNNER_ROUNDS;
+	ctx->ribctx.ctx_rib = &ribs[id];
+	ctx->ribctx.ctx_upcall = mrt_dump_upcall;
+	ctx->ribctx.ctx_done = mrt_dump_done;
+	ctx->ribctx.ctx_arg = ctx->mrt;
+	ctx->ribctx.ctx_af = AF_UNSPEC;
+	LIST_INSERT_HEAD(&rde_mrts, ctx->mrt, entry);
+	rde_mrt_cnt++;
+	rib_dump_r(&ctx->ribctx);
+}
+
 /*
  * kroute specific functions
  */
@@ -2758,7 +2807,6 @@ rde_shutdown(void)
 	attr_shutdown();
 	pt_shutdown();
 	peer_shutdown();
-	free(mrt);
 }
 
 int
