@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.19 2009/06/04 23:42:02 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.20 2009/06/05 01:21:02 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -744,13 +744,20 @@ urtw_alloc_rx_data_list(struct urtw_softc *sc)
 	int i, error;
 
 	for (i = 0; i < URTW_RX_DATA_LIST_COUNT; i++) {
-		struct urtw_rx_data *data = &sc->sc_rxdata[i];
+		struct urtw_rx_data *data = &sc->sc_rx_data[i];
 
 		data->sc = sc;
 
 		data->xfer = usbd_alloc_xfer(sc->sc_udev);
 		if (data->xfer == NULL) {
 			printf("%s: could not allocate rx xfer\n",
+			    sc->sc_dev.dv_xname);
+			error = ENOMEM;
+			goto fail;
+		}
+
+		if (usbd_alloc_buffer(data->xfer, URTW_RX_MAXSIZE) == NULL) {
+			printf("%s: could not allocate rx buffer\n",
 			    sc->sc_dev.dv_xname);
 			error = ENOMEM;
 			goto fail;
@@ -790,7 +797,7 @@ urtw_free_rx_data_list(struct urtw_softc *sc)
 		usbd_abort_pipe(sc->sc_rxpipe);
 
 	for (i = 0; i < URTW_RX_DATA_LIST_COUNT; i++) {
-		struct urtw_rx_data *data = &sc->sc_rxdata[i];
+		struct urtw_rx_data *data = &sc->sc_rx_data[i];
 
 		if (data->xfer != NULL) {
 			usbd_free_xfer(data->xfer);
@@ -809,7 +816,7 @@ urtw_alloc_tx_data_list(struct urtw_softc *sc)
 	int i, error;
 
 	for (i = 0; i < URTW_TX_DATA_LIST_COUNT; i++) {
-		struct urtw_tx_data *data = &sc->sc_txdata[i];
+		struct urtw_tx_data *data = &sc->sc_tx_data[i];
 
 		data->sc = sc;
 		data->ni = NULL;
@@ -855,7 +862,7 @@ urtw_free_tx_data_list(struct urtw_softc *sc)
 		usbd_abort_pipe(sc->sc_txpipe_normal);
 
 	for (i = 0; i < URTW_TX_DATA_LIST_COUNT; i++) {
-		struct urtw_tx_data *data = &sc->sc_txdata[i];
+		struct urtw_tx_data *data = &sc->sc_tx_data[i];
 
 		if (data->xfer != NULL) {
 			usbd_free_xfer(data->xfer);
@@ -1999,7 +2006,7 @@ usbd_status
 urtw_rx_enable(struct urtw_softc *sc)
 {
 	int i;
-	struct urtw_rx_data *rxdata;
+	struct urtw_rx_data *rx_data;
 	uint8_t data;
 	usbd_status error;
 
@@ -2007,12 +2014,12 @@ urtw_rx_enable(struct urtw_softc *sc)
 	 * Start up the receive pipe.
 	 */
 	for (i = 0; i < URTW_RX_DATA_LIST_COUNT; i++) {
-		rxdata = &sc->sc_rxdata[i];
+		rx_data = &sc->sc_rx_data[i];
 
-		usbd_setup_xfer(rxdata->xfer, sc->sc_rxpipe, rxdata,
-		    rxdata->buf, MCLBYTES, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
-		    urtw_rxeof);
-		error = usbd_transfer(rxdata->xfer);
+		usbd_setup_xfer(rx_data->xfer, sc->sc_rxpipe, rx_data,
+		    rx_data->buf, MCLBYTES, USBD_SHORT_XFER_OK,
+		    USBD_NO_TIMEOUT, urtw_rxeof);
+		error = usbd_transfer(rx_data->xfer);
 		if (error != USBD_IN_PROGRESS && error != 0) {
 			printf("%s: could not queue Rx transfer\n",
 			    sc->sc_dev.dv_xname);
@@ -2494,7 +2501,7 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 	if ((0 == xferlen % 64) || (0 == xferlen % 512))
 		xferlen += 1;
 
-	data = &sc->sc_txdata[sc->sc_txidx];
+	data = &sc->sc_tx_data[sc->sc_txidx];
 	sc->sc_txidx = (sc->sc_txidx + 1) % URTW_TX_DATA_LIST_COUNT;
 
 	bzero(data->buf, URTW_TX_MAXSIZE);
