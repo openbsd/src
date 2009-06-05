@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.573 2009/06/04 02:27:48 sthen Exp $
+#	$OpenBSD: install.sub,v 1.574 2009/06/05 05:43:42 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1087,7 +1087,7 @@ waitftplist() {
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
 #	and FTPOPTS must be global.
 install_url() {
-	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd
+	local _url_type=$1 _file_list _url_base _oifs _prompt _passwd _default
 	local _server_ip_var=_${_url_type}_server_ip \
 		_server_dir_var=_${_url_type}_server_dir
 
@@ -1099,9 +1099,11 @@ install_url() {
 
 	if [[ -s $SERVERLISTALL ]]; then
 		_prompt="Server? (hostname, list#, 'done' or '?')"
-		sed -n "s,^${_url_type}://,,p" $SERVERLISTALL > $SERVERLIST
+		sed -n "s,^${_url_type}://"'\([[A-Za-z0-9\:_][]A-Za-z0-9:._-]*/[^ 	]\),\1,p' \
+			$SERVERLISTALL > $SERVERLIST
 		set -- $(sed q $SERVERLIST)
 		eval $_server_ip_var=\${1%%/*}
+		_default=$1
 	else
 		echo "(Was not able to get ftplist from ftp.openbsd.org, but that is OK)"
 		_prompt="Server? (hostname or 'done')"
@@ -1125,11 +1127,19 @@ install_url() {
 			echo "Using	$*"
 			eval $_server_ip_var=\${1%%/*}
 			eval $_server_dir_var=\${1#*/}/\$FTPSETDIR
+			_default=$1
 			# Repeat loop to get user to confirm server address.
 			;;
-		*)	eval $_server_ip_var=\$resp
+		+([A-Za-z0-9\:.\[\]_-]))
+			eval $_server_ip_var=\$resp
+			if [[ $resp = "${_default%%/*}" ]]; then
+				eval $_server_dir_var=\${_default#*/}/\$FTPSETDIR
+			else
+				eval $_server_dir_var=pub/OpenBSD/\$FTPSETDIR
+			fi
 			break
 			;;
+		*)	echo "'$resp' is not a valid hostname."
 		esac
 	done
 
