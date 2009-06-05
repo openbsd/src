@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.2 2009/06/05 22:34:45 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -226,6 +226,12 @@ struct map {
 	u_int32_t	prefix;
 	u_int8_t	prefixlen;
 	u_int32_t	messageid;
+};
+
+struct notify_msg {
+	u_int32_t	messageid;
+	u_int32_t	status;
+	u_int32_t	type;
 };
 
 struct iface {

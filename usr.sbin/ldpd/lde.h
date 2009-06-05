@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: lde.h,v 1.2 2009/06/05 22:34:45 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -98,7 +98,8 @@ void		 lde_send_delete_klabel(struct rt_node *);
 void		 lde_send_labelmapping(u_int32_t, struct map *);
 void		 lde_send_labelrequest(u_int32_t, struct map *);
 void		 lde_send_labelrelease(u_int32_t, struct map *);
-void		 lde_send_notification(u_int32_t, u_int32_t);
+void		 lde_send_notification(u_int32_t, u_int32_t, u_int32_t,
+		    u_int32_t);
 
 void		 lde_nbr_del(struct lde_nbr *);
 struct lde_nbr *lde_find_address(struct in_addr);

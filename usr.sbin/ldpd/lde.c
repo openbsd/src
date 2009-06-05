@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: lde.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -505,10 +505,20 @@ lde_send_labelrelease(u_int32_t peerid, struct map *map)
 }
 
 void
-lde_send_notification(u_int32_t peerid, u_int32_t code)
+lde_send_notification(u_int32_t peerid, u_int32_t code, u_int32_t msgid,
+    u_int32_t type)
 {
-	imsg_compose(ibuf_ldpe, IMSG_NOTIFICATION_SEND, peerid, 0, &code,
-	    sizeof(u_int32_t));
+	struct notify_msg nm;
+
+	bzero(&nm, sizeof(nm));
+
+	/* Every field is in host byte order, to keep things clear */
+	nm.status = code;
+	nm.messageid = ntohl(msgid);
+	nm.type = type;
+
+	imsg_compose(ibuf_ldpe, IMSG_NOTIFICATION_SEND, peerid, 0, &nm,
+	    sizeof(nm));
 }
 
 LIST_HEAD(lde_nbr_head, lde_nbr);

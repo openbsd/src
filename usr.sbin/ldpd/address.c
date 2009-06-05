@@ -1,4 +1,4 @@
-/*	$OpenBSD: address.c,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: address.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -89,7 +89,7 @@ recv_address(struct nbr *nbr, char *buf, u_int16_t len)
 	struct ldp_msg		*addr;
 	struct address_list_tlv	*alt;
 	struct in_addr		*address;
-	u_int32_t		 messageid, addrs_len;
+	u_int32_t		 addrs_len;
 
 	log_debug("recv_address: neighbor ID %s", inet_ntoa(nbr->id));
 
@@ -99,11 +99,9 @@ recv_address(struct nbr *nbr, char *buf, u_int16_t len)
 	addr = (struct ldp_msg *)buf;
 
 	if ((len - TLV_HDR_LEN) < ntohs(addr->length)) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_MSG_LEN, addr->msgid, addr->type);
 		return (-1);
 	}
-
-	messageid = addr->msgid;
 
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
@@ -112,20 +110,21 @@ recv_address(struct nbr *nbr, char *buf, u_int16_t len)
 
 	if (len < sizeof(*alt) ||
 	    (len - TLV_HDR_LEN) < ntohs(alt->length)) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_TLV_LEN, addr->msgid, addr->type);
 		return (-1);
 	}
 
 	addrs_len = (ntohs(alt->length) - sizeof(alt->family));
 
 	if (alt->type != TLV_TYPE_ADDRLIST) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_UNKNOWN_TLV, addr->msgid, addr->type);
 		return (-1);
 	}
 
 	/* For now we only support IPv4 */
 	if (alt->family != htons(ADDR_IPV4)) {
-		/* XXX: send notification */
+		send_notification_nbr(nbr, S_UNSUP_ADDR, addr->msgid,
+		    addr->type);
 		return (-1);
 	}
 
@@ -207,19 +206,15 @@ recv_address_withdraw(struct nbr *nbr, char *buf, u_int16_t len)
 	struct ldp_msg		*aw;
 	struct address_list_tlv	*alt;
 	struct in_addr		*address;
-	u_int32_t		 messageid;
 
 	log_debug("recv_address_withdraw: neighbor ID %s", inet_ntoa(nbr->id));
 
 	aw = (struct ldp_msg *)buf;
 
-
 	if ((len - TLV_HDR_LEN) < ntohs(aw->length)) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_MSG_LEN, aw->msgid, aw->type);
 		return (-1);
 	}
-
-	messageid = aw->msgid;
 
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
@@ -228,18 +223,18 @@ recv_address_withdraw(struct nbr *nbr, char *buf, u_int16_t len)
 
 	if (len < sizeof(*alt) ||
 	    (len - TLV_HDR_LEN) < ntohs(alt->length)) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_TLV_LEN, aw->msgid, aw->type);
 		return (-1);
 	}
 
 	if (alt->type != TLV_TYPE_ADDRLIST) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_UNKNOWN_TLV, aw->msgid, aw->type);
 		return (-1);
 	}
 
 	/* For now we just support IPv4 */
 	if (alt->family != AF_INET) {
-		/* XXX: send notification */
+		send_notification_nbr(nbr, S_UNSUP_ADDR, aw->msgid, aw->type);
 		return (-1);
 	}
 

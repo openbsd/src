@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: init.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -75,7 +75,6 @@ int
 recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 {
 	struct ldp_msg		*init;
-	u_int32_t		 messageid;
 	struct sess_prms_tlv	*sess_tlv;
 
 	log_debug("recv_init: neighbor ID %s", inet_ntoa(nbr->id));
@@ -83,11 +82,9 @@ recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 	init = (struct ldp_msg *)buf;
 
 	if ((len - TLV_HDR_LEN) < ntohs(init->length)) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_MSG_LEN, init->msgid, init->type);
 		return (-1);
 	}
-
-	messageid = init->msgid;
 
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
@@ -96,7 +93,7 @@ recv_init(struct nbr *nbr, char *buf, u_int16_t len)
 
 	if (len < SESS_PRMS_SIZE ||
 	    ntohs(sess_tlv->length) != (SESS_PRMS_SIZE - TLV_HDR_LEN)) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_TLV_LEN, init->msgid, init->type);
 		return (-1);
 	}
 

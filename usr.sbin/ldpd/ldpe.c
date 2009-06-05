@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -366,8 +366,8 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 	struct imsgbuf		*ibuf = bula;
 	struct imsg		 imsg;
 	struct map		 map;
+	struct notify_msg	 nm;
 	int			 n, shut = 0;
-	u_int32_t		 code;
 	struct nbr		*nbr = NULL;
 
 	if (event & EV_READ) {
@@ -436,9 +436,9 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 			send_labelrelease(nbr);
 			break;
 		case IMSG_NOTIFICATION_SEND:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(code))
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(nm))
 				fatalx("invalid size of OE request");
-			memcpy(&code, imsg.data, sizeof(code));
+			memcpy(&nm, imsg.data, sizeof(nm));
 
 			nbr = nbr_find_peerid(imsg.hdr.peerid);
 			if (nbr == NULL) {
@@ -447,7 +447,8 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 				return;
 			}
 
-			send_notification_nbr(nbr, code);
+			send_notification_nbr(nbr, nm.status,
+			    htonl(nm.messageid), htonl(nm.type));
 			break;
 		case IMSG_REQUEST_ADD:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(map))

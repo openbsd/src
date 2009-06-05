@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -95,7 +95,6 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 	struct fec_tlv		*ft;
 	struct label_tlv	*lt;
 	struct map		 map;
-	u_int32_t		 messageid;
 	int			 feclen;
 
 	log_debug("recv_labelmapping: neighbor ID %s", inet_ntoa(nbr->id));
@@ -107,11 +106,9 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 	lm = (struct ldp_msg *)buf;
 
 	if ((len - TLV_HDR_LEN) < ntohs(lm->length)) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_MSG_LEN, lm->msgid, lm->type);
 		return (-1);
 	}
-
-	messageid = lm->msgid;
 
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
@@ -120,21 +117,19 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 	lt = (struct label_tlv *)(buf + TLV_HDR_LEN + ntohs(ft->length));
 
 	if (len < (sizeof(*ft) + LABEL_TLV_LEN)) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_TLV_LEN, lm->msgid, lm->type);
 		return (-1);
 	}
 
 	feclen = ntohs(ft->length);
 	if (len - TLV_HDR_LEN < feclen) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_TLV_LEN, lm->msgid, lm->type);
 		return (-1);
 	}
 
 	map.label = tlv_decode_label(lt);
 	if (map.label == NO_LABEL) {
-		log_debug("recv_labelmapping: packet malformed from "
-		    "neighbor ID %s", inet_ntoa(nbr->id));
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_TLV_VAL, lm->msgid, lm->type);
 		return (-1);
 	}
 
@@ -143,7 +138,8 @@ recv_labelmapping(struct nbr *nbr, char *buf, u_int16_t len)
 
 	while (feclen >= FEC_ELM_MIN_LEN) {
 		if (validate_fec_elm(buf) < 0) {
-			/* XXX: send notification */
+			session_shutdown(nbr, S_BAD_TLV_VAL, lm->msgid,
+			    lm->type);
 			return (-1);
 		}
 
@@ -211,7 +207,6 @@ recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 	struct ldp_msg	*lr;
 	struct fec_tlv	*ft;
 	struct map	 map;
-	u_int32_t	 messageid;
 	int		 feclen;
 
 	log_debug("recv_labelrequest: neighbor ID %s", inet_ntoa(nbr->id));
@@ -223,11 +218,9 @@ recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 	lr = (struct ldp_msg *)buf;
 
 	if ((len - TLV_HDR_LEN) < ntohs(lr->length)) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_MSG_LEN, lr->msgid, lr->type);
 		return (-1);
 	}
-
-	messageid = lr->msgid;
 
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
@@ -236,7 +229,7 @@ recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 
 	if (len < sizeof(*ft) ||
 	    (len - TLV_HDR_LEN) < ntohs(ft->length)) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_TLV_LEN, lr->msgid, lr->type);
 		return (-1);
 	}
 
@@ -247,14 +240,15 @@ recv_labelrequest(struct nbr *nbr, char *buf, u_int16_t len)
 
 	while (feclen >= FEC_ELM_MIN_LEN) {
 		if (validate_fec_elm(buf) < 0) {
-			/* XXX: send notification */
+			session_shutdown(nbr, S_BAD_TLV_VAL, lr->msgid,
+			    lr->type);
 			return (-1);
 		}
 
 		map.prefix = decode_fec_elm(buf);
 		map.prefixlen = decode_fec_len_elm(buf);
 		map.prefix &= prefixlen2mask(map.prefixlen);
-		map.messageid = messageid;
+		map.messageid = lr->msgid;
 
 		ldpe_imsg_compose_lde(IMSG_LABEL_REQUEST, nbr->peerid, 0, &map,
 		    sizeof(map));
@@ -322,7 +316,6 @@ int
 recv_labelwithdraw(struct nbr *nbr, char *buf, u_int16_t len)
 {
 	struct ldp_msg		*lw;
-	u_int32_t		 messageid;
 
 	log_debug("recv_labelwithdraw: neighbor ID %s", inet_ntoa(nbr->id));
 
@@ -332,11 +325,9 @@ recv_labelwithdraw(struct nbr *nbr, char *buf, u_int16_t len)
 	lw = (struct ldp_msg *)buf;
 
 	if ((len - TLV_HDR_LEN) < ntohs(lw->length)) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_MSG_LEN, lw->msgid, lw->type);
 		return (-1);
 	}
-
-	messageid = lw->msgid;
 
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
@@ -399,7 +390,6 @@ int
 recv_labelrelease(struct nbr *nbr, char *buf, u_int16_t len)
 {
 	struct ldp_msg		*lr;
-	u_int32_t		 messageid;
 
 	log_debug("recv_labelrelease: neighbor ID %s", inet_ntoa(nbr->id));
 
@@ -409,11 +399,9 @@ recv_labelrelease(struct nbr *nbr, char *buf, u_int16_t len)
 	lr = (struct ldp_msg *)buf;
 
 	if ((len - TLV_HDR_LEN) < ntohs(lr->length)) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_MSG_LEN, lr->msgid, lr->type);
 		return (-1);
 	}
-
-	messageid = lr->msgid;
 
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
@@ -457,7 +445,6 @@ int
 recv_labelabortreq(struct nbr *nbr, char *buf, u_int16_t len)
 {
 	struct ldp_msg	*la;
-	u_int32_t	 messageid;
 
 	log_debug("recv_labelabortreq: neighbor ID %s", inet_ntoa(nbr->id));
 
@@ -467,11 +454,9 @@ recv_labelabortreq(struct nbr *nbr, char *buf, u_int16_t len)
 	la = (struct ldp_msg *)buf;
 
 	if ((len - TLV_HDR_LEN) < ntohs(la->length)) {
-		/* XXX: send notification */
+		session_shutdown(nbr, S_BAD_MSG_LEN, la->msgid, la->type);
 		return (-1);
 	}
-
-	messageid = la->msgid;
 
 	buf += sizeof(struct ldp_msg);
 	len -= sizeof(struct ldp_msg);
@@ -525,15 +510,11 @@ gen_label_tlv(struct buf *buf, u_int32_t label)
 u_int32_t
 tlv_decode_label(struct label_tlv *lt)
 {
-	if (lt->type != htons(TLV_TYPE_GENERICLABEL)) {
-		/* XXX: send notification */
+	if (lt->type != htons(TLV_TYPE_GENERICLABEL))
 		return (NO_LABEL);
-	}
 
-	if (ntohs(lt->length) != sizeof(lt->label)) {
-		/* XXX: send notification */
+	if (ntohs(lt->length) != sizeof(lt->label))
 		return (NO_LABEL);
-	}
 
 	return (ntohl(lt->label));
 }
@@ -544,18 +525,14 @@ validate_fec_elm(char *buf)
 	u_int16_t	*family;
 
 	if (*buf != FEC_WILDCARD && *buf != FEC_PREFIX && *buf !=
-	    FEC_ADDRESS) {
-		/* XXX: send notification */
+	    FEC_ADDRESS)
 		return (-1);
-	}
 
 	buf += sizeof(u_int8_t);
 	family = (u_int16_t *)buf;
 
-	if (*family != htons(FEC_IPV4)) {
-		/* XXX: send notification */
+	if (*family != htons(FEC_IPV4))
 		return (-1);
-	}
 
 	return (0);
 }

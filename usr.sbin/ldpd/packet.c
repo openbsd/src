@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: packet.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -297,7 +297,7 @@ session_recv_packet(int fd, short event, void *bula)
 	if (nbr == NULL) {
 		/* If there is no neighbor matching there is no
 		   Hello adjacency: send notification */
-		send_notification(S_NO_HELLO, iface, newfd);
+		send_notification(S_NO_HELLO, iface, newfd, 0, 0);
 		close(newfd);
 		return;
 	}
@@ -325,21 +325,14 @@ another_packet:
 	ldp_hdr = (struct ldp_hdr *)buf;
 
 	if (ntohs(ldp_hdr->version) != LDP_VERSION) {
-		log_debug("session_read: nbr ID %s invalid LDP version %d",
-		    inet_ntoa(nbr->id), ldp_hdr->version);
-		send_notification_nbr(nbr, S_BAD_PROTO_VER);
-		session_close(nbr);
-		/* XXX: notify lde */
+		session_shutdown(nbr, S_BAD_PROTO_VER, 0, 0);
 		return;
 	}
 
 	pdu_len = ntohs(ldp_hdr->length);
 
 	if (pdu_len < LDP_HDR_SIZE || pdu_len > LDP_MAX_LEN) {
-		log_debug("session_read: packet malformed");
-		send_notification_nbr(nbr, S_BAD_MSG_LEN);
-		session_close(nbr);
-		/* XXX: notify lde */
+		session_shutdown(nbr, S_BAD_MSG_LEN, 0, 0);
 		return;
 	}
 
@@ -405,14 +398,19 @@ another_packet:
 }
 
 void
-session_write(struct bufferevent *bev, void *arg)
-{
-}
-
-void
 session_error(struct bufferevent *bev, short what, void *arg)
 {
 	struct nbr *nbr = arg;
+
+	nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
+}
+
+void
+session_shutdown(struct nbr *nbr, u_int32_t status, u_int32_t msgid,
+    u_int32_t type)
+{
+	send_notification_nbr(nbr, status, msgid, type);
+	send_notification_nbr(nbr, S_SHUTDOWN, msgid, type);
 
 	nbr_fsm(nbr, NBR_EVT_CLOSE_SESSION);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: hello.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -98,10 +98,8 @@ recv_hello(struct iface *iface, struct in_addr src, char *buf, u_int16_t len)
 
 	hello = (struct ldp_msg *)buf;
 
-	if ((len - TLV_HDR_LEN) < ntohs(hello->length)) {
-		/* XXX: send notification */
+	if ((len - TLV_HDR_LEN) < ntohs(hello->length))
 		return;
-	}
 
 	messageid = hello->msgid;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -325,12 +325,14 @@ lde_check_request(struct map *map, struct lde_nbr *ln)
 
 	rn = rt_find(map->prefix, map->prefixlen);
 	if (rn == NULL || rn->remote_label == NO_LABEL) {
-		lde_send_notification(ln->peerid, S_NO_ROUTE);
+		lde_send_notification(ln->peerid, S_NO_ROUTE, map->messageid,
+		    MSG_TYPE_LABELREQUEST);
 		return;
 	}
 
 	if (lde_address_find(ln, &rn->nexthop)) {
-		lde_send_notification(ln->peerid, S_LOOP_DETECTED);
+		lde_send_notification(ln->peerid, S_LOOP_DETECTED,
+		    map->messageid, MSG_TYPE_LABELREQUEST);
 		return;
 	}
 

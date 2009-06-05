@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.h,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: ldpe.h,v 1.2 2009/06/05 22:34:45 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2008 Esben Norby <norby@openbsd.org>
@@ -88,8 +88,9 @@ int	 send_keepalive(struct nbr *);
 int	 recv_keepalive(struct nbr *, char *, u_int16_t);
 
 /* notification.c */
-int	 send_notification(int, struct iface *, int);
-int	 send_notification_nbr(struct nbr *, u_int32_t);
+int	 send_notification(u_int32_t, struct iface *, int, u_int32_t,
+	    u_int32_t);
+int	 send_notification_nbr(struct nbr *, u_int32_t, u_int32_t, u_int32_t);
 int	 recv_notification(struct nbr *, char *, u_int16_t);
 
 /* address.c */
@@ -205,9 +206,9 @@ void	 disc_recv_packet(int, short, void *);
 void	 session_recv_packet(int, short, void *);
 
 void	 session_read(struct bufferevent *, void *);
-void	 session_write(struct bufferevent *, void *);
 void	 session_error(struct bufferevent *, short, void *);
 void	 session_close(struct nbr *);
+void	 session_shutdown(struct nbr *, u_int32_t, u_int32_t, u_int32_t);
 
 char	*pkt_ptr;	/* packet buffer */
 
