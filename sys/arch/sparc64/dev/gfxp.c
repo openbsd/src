@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfxp.c,v 1.7 2009/06/05 19:09:52 kettenis Exp $	*/
+/*	$OpenBSD: gfxp.c,v 1.8 2009/06/05 19:28:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -75,6 +75,7 @@
 
 #define PM2_FB_READ_MODE	0x8a80
 #define PM2_FB_BLOCK_COLOR	0x8ac8
+#define PM2_FB_READ_PIXEL	0x8ad0
 
 #define PM2_FILTER_MODE		0x8c00
 #define  PM2_FM_PASS_SYNC_TAG		0x00000400
@@ -113,6 +114,7 @@ struct gfxp_softc {
 
 	/* Saved state to clean up after X11. */
 	uint32_t	sc_read_mode;
+	uint32_t	sc_read_pixel;
 };
 
 int	gfxp_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -425,6 +427,8 @@ gfxp_init(struct gfxp_softc *sc)
 	/* XXX Save. */
 	sc->sc_read_mode = bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh,
 	    PM2_FB_READ_MODE);
+	sc->sc_read_pixel = bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh,
+	    PM2_FB_READ_PIXEL);
 }
 
 void
@@ -436,6 +440,8 @@ gfxp_reinit(struct gfxp_softc *sc)
 	/* XXX Restore. */
 	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
 	    PM2_FB_READ_MODE, sc->sc_read_mode);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+	    PM2_FB_READ_PIXEL, sc->sc_read_pixel);
 
 	/* Disable cursor. */
 	gfxp_indexed_write(sc, PM2V_CURSOR_MODE, 0x10);
