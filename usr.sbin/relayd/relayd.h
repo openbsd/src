@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.123 2009/06/04 23:33:49 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.124 2009/06/05 00:04:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -830,6 +830,9 @@ int		 protonode_load(enum direction, struct protocol *,
 		    struct protonode *, const char *);
 int		 map6to4(struct sockaddr_storage *);
 int		 map4to6(struct sockaddr_storage *, struct sockaddr_storage *);
+void		 imsg_event_add(struct imsgbuf *);
+int	 	 imsg_compose_event(struct imsgbuf *, u_int16_t, u_int32_t,
+		    pid_t, int, void *, u_int16_t);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);

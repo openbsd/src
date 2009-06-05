@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.29 2009/06/03 19:59:48 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.30 2009/06/05 00:04:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -237,12 +237,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
 			if (disable_rdr(c, &id))
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 			else {
 				memcpy(imsg.data, &id, sizeof(id));
 				control_imsg_forward(&imsg);
-				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
 				    NULL, 0);
 			}
 			break;
@@ -251,12 +251,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
 			if (enable_rdr(c, &id))
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 			else {
 				memcpy(imsg.data, &id, sizeof(id));
 				control_imsg_forward(&imsg);
-				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
 				    NULL, 0);
 			}
 			break;
@@ -265,12 +265,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
 			if (disable_table(c, &id))
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 			else {
 				memcpy(imsg.data, &id, sizeof(id));
 				control_imsg_forward(&imsg);
-				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
 				    NULL, 0);
 			}
 			break;
@@ -279,12 +279,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
 			if (enable_table(c, &id))
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 			else {
 				memcpy(imsg.data, &id, sizeof(id));
 				control_imsg_forward(&imsg);
-				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
 				    NULL, 0);
 			}
 			break;
@@ -293,12 +293,12 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
 			if (disable_host(c, &id, NULL))
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 			else {
 				memcpy(imsg.data, &id, sizeof(id));
 				control_imsg_forward(&imsg);
-				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
 				    NULL, 0);
 			}
 			break;
@@ -307,30 +307,30 @@ control_dispatch_imsg(int fd, short event, void *arg)
 				fatalx("invalid imsg header len");
 			memcpy(&id, imsg.data, sizeof(id));
 			if (enable_host(c, &id, NULL))
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 			else {
 				memcpy(imsg.data, &id, sizeof(id));
 				control_imsg_forward(&imsg);
-				imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1,
 				    NULL, 0);
 			}
 			break;
 		case IMSG_CTL_SHUTDOWN:
-			imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL,
+			imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL,
 			    0);
 			break;
 		case IMSG_CTL_POLL:
-			imsg_compose(ibuf_hce, IMSG_CTL_POLL, 0, 0,-1, NULL, 0);
-			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(ibuf_hce, IMSG_CTL_POLL, 0, 0,-1, NULL, 0);
+			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_CTL_RELOAD:
 			if (env->sc_prefork_relay > 0) {
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 				break;
 			}
-			imsg_compose(ibuf_main, IMSG_CTL_RELOAD, 0, 0, -1, NULL,
+			imsg_compose_event(ibuf_main, IMSG_CTL_RELOAD, 0, 0, -1, NULL,
 			    0);
 			/*
 			 * we unconditionnaly return a CTL_OK imsg because
@@ -340,13 +340,13 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			 * that the reload command has been set,
 			 * it doesn't say wether the command succeeded or not.
 			 */
-			imsg_compose(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_CTL_NOTIFY:
 			if (c->flags & CTL_CONN_NOTIFY) {
 				log_debug("control_dispatch_imsg: "
 				    "client requested notify more than once");
-				imsg_compose(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 				break;
 			}
@@ -370,7 +370,7 @@ control_imsg_forward(struct imsg *imsg)
 
 	TAILQ_FOREACH(c, &ctl_conns, entry)
 		if (c->flags & CTL_CONN_NOTIFY)
-			imsg_compose(&c->ibuf, imsg->hdr.type, 0, imsg->hdr.pid,
+			imsg_compose_event(&c->ibuf, imsg->hdr.type, 0, imsg->hdr.pid,
 			    -1, imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE);
 }
 

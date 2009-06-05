@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.3 2009/06/03 20:20:09 eric Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.4 2009/06/05 00:04:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -94,9 +94,9 @@ snmp_sendsock(struct imsgbuf *ibuf)
 	/* enable restricted snmp socket mode */
 	bzero(&tmpibuf, sizeof(tmpibuf));
 	imsg_init(&tmpibuf, s, NULL);
-	imsg_compose(&tmpibuf, IMSG_SNMP_LOCK, 0, 0, -1, NULL, 0);
+	imsg_compose_event(&tmpibuf, IMSG_SNMP_LOCK, 0, 0, -1, NULL, 0);
 
-	imsg_compose(ibuf, IMSG_SNMPSOCK, 0, 0, s, NULL, 0);
+	imsg_compose_event(ibuf, IMSG_SNMPSOCK, 0, 0, s, NULL, 0);
 	imsg_flush(ibuf);	/* need to send the socket now */
 	close(s);
 	return (0);
@@ -104,7 +104,7 @@ snmp_sendsock(struct imsgbuf *ibuf)
  fail:
 	if (s != -1)
 		close(s);
-	imsg_compose(ibuf, IMSG_NONE, 0, 0, -1, NULL, 0);
+	imsg_compose_event(ibuf, IMSG_NONE, 0, 0, -1, NULL, 0);
 	return (-1);
 }
 
@@ -114,7 +114,7 @@ snmp_getsock(struct imsgbuf *ibuf)
 	struct imsg	 imsg;
 	int		 n, s = -1, done = 0;
 
-	imsg_compose(ibuf, IMSG_SNMPSOCK, 0, 0, -1, NULL, 0);
+	imsg_compose_event(ibuf, IMSG_SNMPSOCK, 0, 0, -1, NULL, 0);
 	imsg_flush(ibuf);
 
 	while (!done) {
@@ -237,6 +237,7 @@ snmp_element(const char *oid, enum snmp_type type, void *buf, int64_t val)
 	if (imsg_composev(ibuf_snmp, IMSG_SNMP_ELEMENT, 0, 0, -1,
 	    iov, iovcnt) == -1)
 		return (-1);
+	imsg_event_add(ibuf_snmp);
 
 	return (0);
 }
@@ -256,7 +257,7 @@ snmp_hosttrap(struct table *table, struct host *host)
 	 * XXX The trap format needs some tweaks and other OIDs
 	 */
 
-	imsg_compose(ibuf_snmp, IMSG_SNMP_TRAP, 0, 0, -1, NULL, 0);
+	imsg_compose_event(ibuf_snmp, IMSG_SNMP_TRAP, 0, 0, -1, NULL, 0);
 
 	SNMP_ELEMENT(".1", SNMP_NULL, NULL, 0);
 	SNMP_ELEMENT(".1.1", SNMP_OCTETSTRING, host->conf.name, 0);
@@ -272,5 +273,5 @@ snmp_hosttrap(struct table *table, struct host *host)
 	SNMP_ELEMENT(".1.9", SNMP_INTEGER32, NULL, host->retry_cnt);
 
  done:
-	imsg_compose(ibuf_snmp, IMSG_SNMP_END, 0, 0, -1, NULL, 0);
+	imsg_compose_event(ibuf_snmp, IMSG_SNMP_END, 0, 0, -1, NULL, 0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.4 2009/06/04 23:33:49 pyr Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.5 2009/06/05 00:04:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -103,7 +103,6 @@ struct buf *imsg_create(struct imsgbuf *, u_int16_t, u_int32_t, pid_t,
 int	 imsg_add(struct buf *, void *, u_int16_t);
 void	 imsg_close(struct imsgbuf *, struct buf *);
 void	 imsg_free(struct imsg *);
-void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
 int	 imsg_get_fd(struct imsgbuf *);
 int	 imsg_flush(struct imsgbuf *);
 void	 imsg_clear(struct imsgbuf *);

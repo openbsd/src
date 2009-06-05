@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.112 2009/06/02 12:24:16 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.113 2009/06/05 00:04:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -556,7 +556,7 @@ relay_statistics(int fd, short events, void *arg)
 
 		crs.id = rlay->rl_conf.id;
 		crs.proc = proc_id;
-		imsg_compose(ibuf_pfe, IMSG_STATISTICS, 0, 0, -1,
+		imsg_compose_event(ibuf_pfe, IMSG_STATISTICS, 0, 0, -1,
 		    &crs, sizeof(crs));
 
 		for (con = SPLAY_ROOT(&rlay->rl_sessions);
@@ -2042,7 +2042,7 @@ relay_accept(int fd, short sig, void *arg)
 			return;
 		}
 
-		imsg_compose(ibuf_pfe, IMSG_NATLOOK, 0, 0, -1, cnl,
+		imsg_compose_event(ibuf_pfe, IMSG_NATLOOK, 0, 0, -1, cnl,
 		    sizeof(*cnl));
 
 		/* Schedule timeout */
@@ -2220,7 +2220,7 @@ relay_bindanyreq(struct session *con, in_port_t port, int proto)
 	bnd.bnd_port = port;
 	bnd.bnd_proto = proto;
 	bcopy(&con->se_in.ss, &bnd.bnd_ss, sizeof(bnd.bnd_ss));
-	imsg_compose(ibuf_main, IMSG_BINDANY, 0, 0, -1, &bnd, sizeof(bnd));
+	imsg_compose_event(ibuf_main, IMSG_BINDANY, 0, 0, -1, &bnd, sizeof(bnd));
 
 	/* Schedule timeout */
 	evtimer_set(&con->se_ev, relay_bindany, con);
@@ -2378,7 +2378,7 @@ relay_close(struct session *con, const char *msg)
 
 	if (con->se_cnl != NULL) {
 #if 0
-		imsg_compose(ibuf_pfe, IMSG_KILLSTATES, 0, 0, -1,
+		imsg_compose_event(ibuf_pfe, IMSG_KILLSTATES, 0, 0, -1,
 		    cnl, sizeof(*cnl));
 #endif
 		free(con->se_cnl);
@@ -2498,9 +2498,9 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 			TAILQ_FOREACH(rlay, env->sc_relays, rl_entry)
 				SPLAY_FOREACH(con, session_tree,
 				    &rlay->rl_sessions)
-					imsg_compose(ibuf, IMSG_CTL_SESSION,
+					imsg_compose_event(ibuf, IMSG_CTL_SESSION,
 					    0, 0, -1, con, sizeof(*con));
-			imsg_compose(ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
+			imsg_compose_event(ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 			break;
 		default:
 			log_debug("relay_dispatch_msg: unexpected imsg %d",
