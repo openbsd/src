@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.45 2008/12/12 20:23:20 claudio Exp $ */
+/*	$OpenBSD: arp.c,v 1.46 2009/06/05 00:13:35 claudio Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -80,6 +80,7 @@ static int replace;	/* replace entries when adding */
 static int nflag;	/* no reverse dns lookups */
 static int aflag;	/* do it for all entries */
 static int s = -1;
+static int rdomain = 0;
 
 extern int h_errno;
 
@@ -96,11 +97,12 @@ extern int h_errno;
 int
 main(int argc, char *argv[])
 {
-	int	ch, func = 0, rtn;
+	int		 ch, func = 0, rtn;
+	const char	*errstr;
 
 	pid = getpid();
 	opterr = 0;
-	while ((ch = getopt(argc, argv, "andsFf")) != -1) {
+	while ((ch = getopt(argc, argv, "andsFfV:")) != -1) {
 		switch (ch) {
 		case 'a':
 			aflag = 1;
@@ -125,6 +127,13 @@ main(int argc, char *argv[])
 			if (func)
 				usage();
 			func = F_FILESET;
+			break;
+		case 'V':
+			rdomain = strtonum(optarg, 0, RT_TABLEID_MAX, &errstr);
+			if (errstr != NULL) {
+				warn("bad rdomain: %s", errstr);
+				usage();
+			}
 			break;
 		default:
 			usage();
@@ -411,7 +420,7 @@ void
 search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
     struct sockaddr_inarp *sin, struct rt_msghdr *rtm))
 {
-	int mib[6];
+	int mib[7];
 	size_t needed;
 	char *lim, *buf, *next;
 	struct rt_msghdr *rtm;
@@ -424,13 +433,14 @@ search(in_addr_t addr, void (*action)(struct sockaddr_dl *sdl,
 	mib[3] = AF_INET;
 	mib[4] = NET_RT_FLAGS;
 	mib[5] = RTF_LLINFO;
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+	mib[6] = rdomain;
+	if (sysctl(mib, 7, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
 	if (needed == 0)
 		return;
 	if ((buf = malloc(needed)) == NULL)
 		err(1, "malloc");
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+	if (sysctl(mib, 7, buf, &needed, NULL, 0) < 0)
 		err(1, "actual retrieval of routing table");
 	lim = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
@@ -520,8 +530,9 @@ ether_print(const char *scp)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: arp [-adn] hostname\n");
-	fprintf(stderr, "       arp [-F] [-f file] -s hostname ether_addr "
+	fprintf(stderr, "usage: arp [-adn] [-V rdomain] hostname\n");
+	fprintf(stderr, "       arp [-F] [-f file] [-V rdomain] "
+	    "-s hostname ether_addr "
 	    "[temp | permanent] [pub]\n");
 	exit(1);
 }
@@ -544,6 +555,7 @@ rtmsg(int cmd)
 	rtm->rtm_flags = flags;
 	rtm->rtm_version = RTM_VERSION;
 	rtm->rtm_hdrlen = sizeof(*rtm);
+	rtm->rtm_tableid = rdomain;
 
 	switch (cmd) {
 	default:

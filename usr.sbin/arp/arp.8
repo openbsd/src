@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.8,v 1.24 2009/04/29 07:10:38 jmc Exp $
+.\"	$OpenBSD: arp.8,v 1.25 2009/06/05 00:13:35 claudio Exp $
 .\"	$NetBSD: arp.8,v 1.7 1995/03/01 11:50:59 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)arp.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 29 2009 $
+.Dd $Mdocdate: June 5 2009 $
 .Dt ARP 8
 .Os
 .Sh NAME
@@ -39,10 +39,12 @@
 .Sh SYNOPSIS
 .Nm arp
 .Op Fl adn
+.Op Fl V Ar rdomain
 .Ar hostname
 .Nm arp
 .Op Fl F
 .Op Fl f Ar file
+.Op Fl V Ar rdomain
 .Fl s Ar hostname ether_addr
 .Op Cm temp | permanent
 .Op Cm pub
@@ -141,6 +143,9 @@ If the entry already exists for the given host, it will not
 be replaced unless
 .Fl F
 is given.
+.It Fl V Ar rdomain
+Select an alternate routing domain to modify or query.
+The default routing domain is 0.
 .El
 .Sh EXAMPLES
 View the current
