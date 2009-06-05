@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.43 2008/12/15 02:33:04 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.44 2009/06/05 16:27:40 naddy Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -324,7 +324,6 @@ struct em_softc {
 	struct timeout	em_intr_enable;
 	struct timeout	timer_handle;
 	struct timeout	tx_fifo_timer_handle;
-	int		if_flags;
 	void		*sc_powerhook;
 	void		*sc_shutdownhook;
 
