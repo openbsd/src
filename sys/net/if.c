@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.194 2009/06/05 00:05:21 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.195 2009/06/05 03:10:28 halex Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1298,6 +1298,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		if ((error = suser(p, 0)) != 0)
 			return (error);
 
+#ifdef INET6
 		/* when IFXF_NOINET6 gets changed, detach/attach */
 		if (ifp->if_flags & IFF_UP && ifr->ifr_flags & IFXF_NOINET6 &&
 		    !(ifp->if_xflags & IFXF_NOINET6))
@@ -1307,6 +1308,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			ifp->if_xflags &= ~IFXF_NOINET6;
 			in6_if_up(ifp);
 		}
+#endif
 
 		ifp->if_xflags = (ifp->if_xflags & IFXF_CANTCHANGE) |
 			(ifr->ifr_flags &~ IFXF_CANTCHANGE);
