@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwreg.h,v 1.10 2009/06/04 23:42:02 martynas Exp $	*/
+/*	$OpenBSD: if_urtwreg.h,v 1.11 2009/06/05 01:21:54 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
@@ -327,8 +327,8 @@ struct urtw_softc {
 #define	URTW_PRIORITY_LOW		0
 #define	URTW_PRIORITY_NORMAL		1
 #define	URTW_DATA_TIMEOUT		10000		/* 10 sec */
-	struct urtw_rx_data		sc_rxdata[URTW_RX_DATA_LIST_COUNT];
-	struct urtw_tx_data		sc_txdata[URTW_TX_DATA_LIST_COUNT];
+	struct urtw_rx_data		sc_rx_data[URTW_RX_DATA_LIST_COUNT];
+	struct urtw_tx_data		sc_tx_data[URTW_TX_DATA_LIST_COUNT];
 	uint32_t			sc_tx_low_queued;
 	uint32_t			sc_tx_normal_queued;
 	uint32_t			sc_txidx;
