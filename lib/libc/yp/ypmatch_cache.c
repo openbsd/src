@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch_cache.c,v 1.12 2005/08/05 13:02:16 espie Exp $ */
+/*	$OpenBSD: ypmatch_cache.c,v 1.13 2009/06/05 17:20:31 schwarze Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -171,7 +171,7 @@ again:
 		*outvallen = yprv.val.valdat_len;
 		if ((*outval = malloc(*outvallen + 1)) == NULL) {
 			_yp_unbind(ysd);
-			return YPERR_YPERR;
+			return YPERR_RESRC;
 		}
 		(void)memcpy(*outval, yprv.val.valdat_val, *outvallen);
 		(*outval)[*outvallen] = '\0';
@@ -201,7 +201,7 @@ again:
 	if (!(r = ypprot_err(yprv.stat))) {
 		*outvallen = yprv.val.valdat_len;
 		if ((*outval = malloc(*outvallen + 1)) == NULL) {
-			r = YPERR_YPERR;
+			r = YPERR_RESRC;
 			goto out;
 		}
 		(void)memcpy(*outval, yprv.val.valdat_val, *outvallen);
