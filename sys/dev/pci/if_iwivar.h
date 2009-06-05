@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwivar.h,v 1.19 2008/08/28 15:52:20 damien Exp $	*/
+/*	$OpenBSD: if_iwivar.h,v 1.20 2009/06/05 22:40:31 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006
@@ -49,7 +49,7 @@ struct iwi_tx_radiotap_header {
 struct iwi_cmd_ring {
 	bus_dmamap_t		map;
 	bus_dma_segment_t	seg;
-	struct iwi_cmd_desc	desc[IWI_CMD_RING_COUNT];
+	struct iwi_cmd_desc	*desc;
 	int			queued;
 	int			cur;
 	int			next;
