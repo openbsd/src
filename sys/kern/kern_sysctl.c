@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.170 2009/06/03 21:30:20 beck Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.171 2009/06/05 04:29:14 beck Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -548,7 +548,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		}
 		if (bufcachepercent != opct) {
 			pgs = bufcachepercent * physmem / 100;
-			bufadjust(pgs);
+			bufadjust(pgs); /* adjust bufpages */
+			bufhighpages = bufpages; /* set high water mark */
 		}
 		return(0);
 	}
