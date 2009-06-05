@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.2 2009/06/05 03:13:16 ray Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -77,4 +77,3 @@ cmd_attach_session_exec(struct cmd *self, struct cmd_ctx *ctx)
 
 	return (1);
 }
-

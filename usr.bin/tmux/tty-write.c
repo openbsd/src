@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-write.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: tty-write.c,v 1.2 2009/06/05 03:13:16 ray Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -88,4 +88,3 @@ tty_write_mode(struct window_pane *wp, int mode)
 		tty_update_mode(&c->tty, mode);
 	}
 }
-
