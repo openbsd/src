@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.103 2009/03/05 19:52:24 kettenis Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.104 2009/06/05 03:57:32 ray Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1522,7 +1522,7 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 	    io->io_offset, segflg,
 	    IO_NODELOCKED|IO_UNIT, io->io_cred, NULL, io->io_proc);
 	if (error) {
-		printf("pid %d (%s): %s write of %zu@%p at %lld failed: %d\n",
+		printf("pid %d (%s): %s write of %lu@%p at %lld failed: %d\n",
 		    io->io_proc->p_pid, io->io_proc->p_comm,
 		    segflg == UIO_USERSPACE ? "user" : "system",
 		    len, data, (long long) io->io_offset, error);
