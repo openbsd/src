@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.68 2009/06/05 04:12:52 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.69 2009/06/05 19:33:59 pyr Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -490,13 +490,13 @@ main_dispatch_rde(int fd, short event, void *bula)
 void
 main_imsg_compose_ospfe(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	imsg_compose(ibuf_ospfe, type, 0, pid, data, datalen);
+	imsg_compose_event(ibuf_ospfe, type, 0, pid, -1, data, datalen);
 }
 
 void
 main_imsg_compose_rde(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	imsg_compose(ibuf_rde, type, 0, pid, data, datalen);
+	imsg_compose_event(ibuf_rde, type, 0, pid, -1, data, datalen);
 }
 
 /* this needs to be added here so that ospfctl can be used without libevent */
@@ -510,6 +510,18 @@ imsg_event_add(struct imsgbuf *ibuf)
 	event_del(&ibuf->ev);
 	event_set(&ibuf->ev, ibuf->fd, ibuf->events, ibuf->handler, ibuf);
 	event_add(&ibuf->ev, NULL);
+}
+
+int
+imsg_compose_event(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
+    pid_t pid, int fd, void *data, u_int16_t datalen)
+{
+	int	ret;
+
+	if ((ret = imsg_compose(ibuf, type, peerid,
+	    pid, fd, data, datalen)) != -1)
+		imsg_event_add(ibuf);
+	return (ret);
 }
 
 int
@@ -634,9 +646,9 @@ ospf_reload(void)
 int
 ospf_sendboth(enum imsg_type type, void *buf, u_int16_t len)
 {
-	if (imsg_compose(ibuf_ospfe, type, 0, 0, buf, len) == -1)
+	if (imsg_compose_event(ibuf_ospfe, type, 0, 0, -1, buf, len) == -1)
 		return (-1);
-	if (imsg_compose(ibuf_rde, type, 0, 0, buf, len) == -1)
+	if (imsg_compose_event(ibuf_rde, type, 0, 0, -1, buf, len) == -1)
 		return (-1);
 	return (0);
 }

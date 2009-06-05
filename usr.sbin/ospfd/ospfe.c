@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.67 2009/05/31 18:46:01 jacekm Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.68 2009/06/05 19:33:59 pyr Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -241,14 +241,14 @@ ospfe_shutdown(void)
 int
 ospfe_imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_main, type, 0, pid, data, datalen));
+	return (imsg_compose_event(ibuf_main, type, 0, pid, -1, data, datalen));
 }
 
 int
 ospfe_imsg_compose_rde(int type, u_int32_t peerid, pid_t pid,
     void *data, u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_rde, type, peerid, pid, data, datalen));
+	return (imsg_compose_event(ibuf_rde, type, peerid, pid, -1, data, datalen));
 }
 
 /* ARGSUSED */
@@ -954,8 +954,8 @@ orig_rtr_lsa(struct area *area)
 	    &chksum, sizeof(chksum));
 
 	if (self)
-		imsg_compose(ibuf_rde, IMSG_LS_UPD, self->peerid, 0,
-		    buf->buf, buf_size(buf));
+		imsg_compose_event(ibuf_rde, IMSG_LS_UPD, self->peerid, 0,
+		    -1, buf->buf, buf_size(buf));
 	else
 		log_warnx("orig_rtr_lsa: empty area %s",
 		    inet_ntoa(area->id));
@@ -1017,8 +1017,8 @@ orig_net_lsa(struct iface *iface)
 	memcpy(buf_seek(buf, LS_CKSUM_OFFSET, sizeof(chksum)),
 	    &chksum, sizeof(chksum));
 
-	imsg_compose(ibuf_rde, IMSG_LS_UPD, iface->self->peerid, 0,
-	    buf->buf, buf_size(buf));
+	imsg_compose_event(ibuf_rde, IMSG_LS_UPD, iface->self->peerid, 0,
+	    -1, buf->buf, buf_size(buf));
 
 	buf_free(buf);
 }
@@ -1053,8 +1053,8 @@ ospfe_iface_ctl(struct ctl_conn *c, unsigned int idx)
 		LIST_FOREACH(iface, &area->iface_list, entry)
 			if (idx == 0 || idx == iface->ifindex) {
 				ictl = if_to_ctl(iface);
-				imsg_compose(&c->ibuf, IMSG_CTL_SHOW_INTERFACE,
-				    0, 0, ictl, sizeof(struct ctl_iface));
+				imsg_compose_event(&c->ibuf, IMSG_CTL_SHOW_INTERFACE,
+				    0, 0, -1, ictl, sizeof(struct ctl_iface));
 			}
 }
 
@@ -1071,13 +1071,13 @@ ospfe_nbr_ctl(struct ctl_conn *c)
 			LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 				if (iface->self != nbr) {
 					nctl = nbr_to_ctl(nbr);
-					imsg_compose(&c->ibuf,
-					    IMSG_CTL_SHOW_NBR, 0, 0, nctl,
+					imsg_compose_event(&c->ibuf,
+					    IMSG_CTL_SHOW_NBR, 0, 0, -1, nctl,
 					    sizeof(struct ctl_nbr));
 				}
 			}
 
-	imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, NULL, 0);
+	imsg_compose_event(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 }
 
 void
