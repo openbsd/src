@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.178 2009/06/04 19:15:26 henning Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.179 2009/06/05 04:09:15 claudio Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 4 2009 $
+.Dd $Mdocdate: June 5 2009 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -399,6 +399,12 @@ AppleTalk uses this scheme instead of
 netmasks though
 .Ox
 implements it internally as a set of netmasks.
+.It Cm rdomain Ar route-id
+Attach the interface to the routing table with the specified
+.Ar route-id .
+Interfaces in different routing domains are seperated and can not directly
+pass traffic between each other.
+By default all interfaces belong to routing table 0.
 .It Cm rtlabel Ar route-label
 (inet)
 Attach
