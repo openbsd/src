@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.1 2009/06/01 22:58:49 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.2 2009/06/05 07:15:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -46,6 +46,11 @@ client_init(char *path, struct client_ctx *cctx, int start_server, int flags)
 	int				mode;
 	struct buffer		       *b;
 	char			       *name;
+	char		 		rpathbuf[MAXPATHLEN];
+
+	if (realpath(path, rpathbuf) == NULL)
+		strlcpy(rpathbuf, path, sizeof rpathbuf);
+	setproctitle("client (%s)", rpathbuf);
 
 	if (lstat(path, &sb) != 0) {
 		if (start_server && errno == ENOENT) {
@@ -135,7 +140,6 @@ client_main(struct client_ctx *cctx)
 	siginit();
 
 	logfile("client");
-	setproctitle("client");
 
 	error = NULL;
 	xtimeout = INFTIM;
