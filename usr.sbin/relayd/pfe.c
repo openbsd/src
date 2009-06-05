@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.58 2009/06/05 00:04:01 pyr Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.59 2009/06/05 00:20:50 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -489,8 +489,8 @@ pfe_dispatch_relay(int fd, short event, void * ptr)
 				    "invalid relay proc");
 			if (natlook(env, &cnl) != 0)
 				cnl.in = -1;
-			imsg_compose_event(&ibuf_relay[cnl.proc], IMSG_NATLOOK, 0, 0,
-			    -1, &cnl, sizeof(cnl));
+			imsg_compose_event(&ibuf_relay[cnl.proc], IMSG_NATLOOK,
+			    0, 0, -1, &cnl, sizeof(cnl));
 			break;
 		case IMSG_STATISTICS:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(crs))
@@ -537,8 +537,8 @@ show(struct ctl_conn *c)
 		    rdr->table, sizeof(*rdr->table));
 		if (!(rdr->table->conf.flags & F_DISABLE))
 			TAILQ_FOREACH(host, &rdr->table->hosts, entry)
-				imsg_compose_event(&c->ibuf, IMSG_CTL_HOST, 0, 0, -1,
-				    host, sizeof(*host));
+				imsg_compose_event(&c->ibuf, IMSG_CTL_HOST,
+				    0, 0, -1, host, sizeof(*host));
 
 		if (rdr->backup->conf.id == EMPTY_TABLE)
 			continue;
@@ -546,8 +546,8 @@ show(struct ctl_conn *c)
 		    rdr->backup, sizeof(*rdr->backup));
 		if (!(rdr->backup->conf.flags & F_DISABLE))
 			TAILQ_FOREACH(host, &rdr->backup->hosts, entry)
-				imsg_compose_event(&c->ibuf, IMSG_CTL_HOST, 0, 0, -1,
-				    host, sizeof(*host));
+				imsg_compose_event(&c->ibuf, IMSG_CTL_HOST,
+				    0, 0, -1, host, sizeof(*host));
 	}
 relays:
 	if (env->sc_relays == NULL)
@@ -565,8 +565,8 @@ relays:
 		    rlay->rl_dsttable, sizeof(*rlay->rl_dsttable));
 		if (!(rlay->rl_dsttable->conf.flags & F_DISABLE))
 			TAILQ_FOREACH(host, &rlay->rl_dsttable->hosts, entry)
-				imsg_compose_event(&c->ibuf, IMSG_CTL_HOST, 0, 0, -1,
-				    host, sizeof(*host));
+				imsg_compose_event(&c->ibuf, IMSG_CTL_HOST,
+				    0, 0, -1, host, sizeof(*host));
 	}
 end:
 	imsg_compose_event(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);

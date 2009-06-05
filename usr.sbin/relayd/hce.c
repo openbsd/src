@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.51 2009/06/05 00:04:01 pyr Exp $	*/
+/*	$OpenBSD: hce.c,v 1.52 2009/06/05 00:20:50 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -307,7 +307,8 @@ hce_notify_done(struct host *host, enum host_error he)
 	if (msg)
 		log_debug("hce_notify_done: %s (%s)", host->conf.name, msg);
 
-	imsg_compose_event(ibuf_pfe, IMSG_HOST_STATUS, 0, 0, -1, &st, sizeof(st));
+	imsg_compose_event(ibuf_pfe, IMSG_HOST_STATUS,
+	    0, 0, -1, &st, sizeof(st));
 	if (host->up != host->last_up)
 		logopt = RELAYD_OPT_LOGUPDATE;
 	else

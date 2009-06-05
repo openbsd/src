@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.113 2009/06/05 00:04:01 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.114 2009/06/05 00:20:50 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2220,7 +2220,8 @@ relay_bindanyreq(struct session *con, in_port_t port, int proto)
 	bnd.bnd_port = port;
 	bnd.bnd_proto = proto;
 	bcopy(&con->se_in.ss, &bnd.bnd_ss, sizeof(bnd.bnd_ss));
-	imsg_compose_event(ibuf_main, IMSG_BINDANY, 0, 0, -1, &bnd, sizeof(bnd));
+	imsg_compose_event(ibuf_main, IMSG_BINDANY,
+	    0, 0, -1, &bnd, sizeof(bnd));
 
 	/* Schedule timeout */
 	evtimer_set(&con->se_ev, relay_bindany, con);
@@ -2498,9 +2499,11 @@ relay_dispatch_pfe(int fd, short event, void *ptr)
 			TAILQ_FOREACH(rlay, env->sc_relays, rl_entry)
 				SPLAY_FOREACH(con, session_tree,
 				    &rlay->rl_sessions)
-					imsg_compose_event(ibuf, IMSG_CTL_SESSION,
+					imsg_compose_event(ibuf,
+					    IMSG_CTL_SESSION,
 					    0, 0, -1, con, sizeof(*con));
-			imsg_compose_event(ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
+			imsg_compose_event(ibuf, IMSG_CTL_END,
+			    0, 0, -1, NULL, 0);
 			break;
 		default:
 			log_debug("relay_dispatch_msg: unexpected imsg %d",

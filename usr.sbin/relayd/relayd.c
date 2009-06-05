@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.87 2009/06/05 00:04:01 pyr Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.88 2009/06/05 00:20:50 pyr Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -448,8 +448,9 @@ reconfigure(void)
 		imsg_compose_event(ibuf_hce, IMSG_RECONF_TABLE, 0, 0, -1,
 		    &table->conf, sizeof(table->conf));
 		if (table->sendbuf != NULL)
-			imsg_compose_event(ibuf_hce, IMSG_RECONF_SENDBUF, 0, 0, -1,
-			    table->sendbuf, strlen(table->sendbuf) + 1);
+			imsg_compose_event(ibuf_hce, IMSG_RECONF_SENDBUF,
+			    0, 0, -1, table->sendbuf,
+			    strlen(table->sendbuf) + 1);
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			imsg_compose_event(ibuf_hce, IMSG_RECONF_HOST, 0, 0, -1,
 			    &host->conf, sizeof(host->conf));
@@ -765,7 +766,8 @@ main_dispatch_relay(int fd, short event, void * ptr)
 				/* NOTREACHED */
 			}
 			s = bindany(&bnd);
-			imsg_compose_event(&ibuf_relay[bnd.bnd_proc], IMSG_BINDANY,
+			imsg_compose_event(&ibuf_relay[bnd.bnd_proc],
+			    IMSG_BINDANY,
 			    0, 0, s, &bnd.bnd_id, sizeof(bnd.bnd_id));
 			break;
 		default:
