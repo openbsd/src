@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.38 2009/06/01 14:16:02 jmc Exp $
+.\"	$OpenBSD: ping.8,v 1.39 2009/06/05 00:07:47 claudio Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: June 1 2009 $
+.Dd $Mdocdate: June 5 2009 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -49,6 +49,7 @@
 .Op Fl T Ar tos
 .Op Fl t Ar ttl
 .Op Fl w Ar maxwait
+.Op Fl V Ar rdomain
 .Ar host
 .Ek
 .Sh DESCRIPTION
@@ -189,6 +190,8 @@ header data are included in
 Use the specified type of service.
 .It Fl t Ar ttl
 Use the specified time-to-live.
+.It Fl V Ar rdomain
+Set the routing domain, the default is 0.
 .It Fl v
 Verbose output.
 ICMP packets other than

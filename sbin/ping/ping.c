@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.81 2009/06/01 14:16:02 jmc Exp $	*/
+/*	$OpenBSD: ping.c,v 1.82 2009/06/05 00:07:47 claudio Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: ping.c,v 1.81 2009/06/01 14:16:02 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: ping.c,v 1.82 2009/06/05 00:07:47 claudio Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,6 +202,7 @@ main(int argc, char *argv[])
 	fd_set *fdmaskp;
 	size_t fdmasks;
 	uid_t uid;
+	u_int rdomain;
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(1, "socket");
@@ -214,7 +215,7 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[8 + sizeof(struct tvi)];
 	while ((ch = getopt(argc, argv,
-	    "DEI:LRS:c:defi:jl:np:qrs:T:t:vw:")) != -1)
+	    "DEI:LRS:c:defi:jl:np:qrs:T:t:V:vw:")) != -1)
 		switch(ch) {
 		case 'c':
 			npackets = (unsigned long)strtonum(optarg, 1, INT_MAX, &errstr);
@@ -317,11 +318,23 @@ main(int argc, char *argv[])
 			if (errstr)
 				errx(1, "ttl value is %s: %s", errstr, optarg);
 			break;
+		case 'V':
+			rdomain = (unsigned int)strtonum(optarg, 0,
+			    RT_TABLEID_MAX, &errstr);
+			if (errstr)
+				errx(1, "rdomain value is %s: %s",
+				    errstr, optarg);
+
+			if (setsockopt(s, IPPROTO_IP, SO_RDOMAIN, &rdomain,
+			    sizeof(rdomain)) == -1)
+				err(1, "setsockopt SO_RDOMAIN");
+			break;
 		case 'v':
 			options |= F_VERBOSE;
 			break;
 		case 'w':
-			maxwait = (unsigned int)strtonum(optarg, 1, INT_MAX, &errstr);
+			maxwait = (unsigned int)strtonum(optarg, 1, INT_MAX,
+			    &errstr);
 			if (errstr)
 				errx(1, "maxwait value is %s: %s",
 				    errstr, optarg);
