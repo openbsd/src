@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfxp.c,v 1.5 2009/06/05 05:24:37 kettenis Exp $	*/
+/*	$OpenBSD: gfxp.c,v 1.6 2009/06/05 18:00:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -430,6 +430,7 @@ gfxp_init(struct gfxp_softc *sc)
 void
 gfxp_reinit(struct gfxp_softc *sc)
 {
+	struct rasops_info *ri = &sc->sc_sunfb.sf_ro;
 	int i;
 
 	/* XXX Restore. */
@@ -442,6 +443,11 @@ gfxp_reinit(struct gfxp_softc *sc)
 	/* Clear cursor image. */
 	for (i = 0; i < 1024; i++)
 		gfxp_indexed_write(sc, PM2V_CURSOR_PATTERN + i, 0x00);
+
+	/* Clear screen. */
+	ri = &sc->sc_sunfb.sf_ro;
+	gfxp_fillrect(sc, 0, 0, ri->ri_width, ri->ri_height,
+	    ri->ri_devcmap[WSCOL_WHITE]);
 }
 
 void
