@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.99 2008/12/15 06:00:38 djm Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.100 2009/06/05 04:43:23 guenther Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -667,6 +667,10 @@ enqueue_randomness(int state, int val)
 		p->last_delta2 = delta2;
 	} else if (p->max_entropy)
 		nbits = 8 * sizeof(val) - 1;
+
+	/* given the multi-order delta logic above, this should never happen */
+	if (nbits >= 32)
+		return;
 
 	mtx_enter(&rndlock);
 	if ((rep = rnd_put()) == NULL) {
