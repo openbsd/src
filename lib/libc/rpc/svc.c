@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.c,v 1.21 2005/12/21 01:40:22 millert Exp $ */
+/*	$OpenBSD: svc.c,v 1.22 2009/06/05 20:23:38 deraadt Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -102,10 +102,9 @@ __xprt_register(SVCXPRT *xprt)
 
 		while (sock + 1 > size)
 			size += FD_SETSIZE;
-		xp = (SVCXPRT **)mem_alloc(size * sizeof(SVCXPRT *));
+		xp = (SVCXPRT **)calloc(size, sizeof(SVCXPRT *));
 		if (xp == NULL)
 			return (0);
-		memset(xp, 0, size * sizeof(SVCXPRT *));
 		if (xports) {
 			memcpy(xp, xports, xportssize * sizeof(SVCXPRT *));
 			free(xports);
