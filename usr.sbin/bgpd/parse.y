@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.228 2009/06/05 19:52:32 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.229 2009/06/05 20:46:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2297,7 +2297,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	TAILQ_INIT(xfilter_l);
 
 	add_rib("Adj-RIB-In", 1);
-	add_rib("DEFAULT", 0);
+	add_rib("Loc-RIB", 0);
 
 	yyparse();
 	errors = file->errors;
