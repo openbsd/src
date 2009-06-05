@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.72 2009/06/04 23:56:50 kjell Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.73 2009/06/05 18:37:13 deraadt Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -38,6 +38,26 @@ togglereadonly(int f, int n)
 	return (TRUE);
 }
 
+/* Switch to the named buffer.
+ * If no name supplied, switch to the default (alternate) buffer.
+ */
+int
+usebufname(const char *bufp)
+{
+	struct buffer *bp;
+
+	if (bufp == NULL)
+		return (ABORT);
+	if (bufp[0] == '\0' && curbp->b_altb != NULL)
+		bp = curbp->b_altb;
+	else if ((bp = bfind(bufp, TRUE)) == NULL)
+		return (FALSE);
+
+	/* and put it in current window */
+	curbp = bp;
+	return (showbuffer(bp, curwp, WFFRAME | WFFULL));
+}
+
 /*
  * Attach a buffer to a window. The values of dot and mark come
  * from the buffer if the use count is 0. Otherwise, they come
@@ -59,26 +79,6 @@ usebuffer(int f, int n)
 		    EFNUL | EFNEW | EFBUF, curbp->b_altb->b_bname);
 
 	return (usebufname(bufp));
-}
-
-/* Switch to the named buffer.
- * If no name supplied, switch to the default (alternate) buffer.
- */
-int
-usebufname(const char *bufp)
-{
-	struct buffer *bp;
-
-	if (bufp == NULL)
-		return (ABORT);
-	if (bufp[0] == '\0' && curbp->b_altb != NULL)
-		bp = curbp->b_altb;
-	else if ((bp = bfind(bufp, TRUE)) == NULL)
-		return (FALSE);
-
-	/* and put it in current window */
-	curbp = bp;
-	return (showbuffer(bp, curwp, WFFRAME | WFFULL));
 }
 
 /*
