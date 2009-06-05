@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2007/03/15 22:51:16 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2009/06/05 00:20:46 claudio Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ static int default_forward=0;
 #endif
 
 int family = AF_UNSPEC;
+u_int rdomain;
 
 /*
  * Initialize variables.
@@ -91,7 +92,8 @@ usage()
 # else
 	    "usage: %s [-468acdEFfKLrx] [-b hostalias] [-e escapechar] "
 	    "[-k realm]\n"
-	    "\t[-l user] [-n tracefile] [-X authtype] [host [port]]\n",
+	    "\t[-l user] [-n tracefile] [-V rdoamin] [-X authtype] "
+	    "[host [port]]\n",
 #endif
 	    __progname);
 
@@ -149,6 +151,7 @@ main(argc, argv)
 	extern int optind;
 	int ch;
 	char *user, *alias;
+	const char *errstr;
 #ifdef	FORWARD
 	extern int forward_flags;
 #endif	/* FORWARD */
@@ -177,7 +180,7 @@ main(argc, argv)
 	 */
 	autologin = -1;
 
-	while ((ch = getopt(argc, argv, "4678DEKLS:X:ab:cde:fFk:l:n:rt:x"))
+	while ((ch = getopt(argc, argv, "4678DEKLS:X:ab:cde:fFk:l:n:rt:V:x"))
 	    != -1) {
 		switch(ch) {
 		case '4':
@@ -327,6 +330,15 @@ main(argc, argv)
 			   "%s: Warning: -t ignored, no TN3270 support.\n",
 								prompt);
 #endif
+			break;
+		case 'V':
+			rdomain = (unsigned int)strtonum(optarg, 0,
+			    RT_TABLEID_MAX, &errstr);
+			if (errstr) {
+				fprintf(stderr, 
+				    "%s: Warning: -R ignored, rdomain %s: %s\n",
+				    prompt, errstr, optarg);
+			}
 			break;
 		case 'x':
 #ifdef ENCRYPTION
