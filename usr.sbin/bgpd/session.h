@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.100 2009/06/04 04:46:42 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.101 2009/06/05 20:26:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -272,8 +272,9 @@ int	pfkey_remove(struct peer *);
 int	pfkey_init(struct bgpd_sysdep *);
 
 /* printconf.c */
-void	print_config(struct bgpd_config *, struct network_head *, struct peer *,
-	    struct filter_head *, struct mrt_head *);
+void	print_config(struct bgpd_config *, struct rib_names *,
+	    struct network_head *, struct peer *, struct filter_head *,
+	    struct mrt_head *);
 
 /* carp.c */
 int	 carp_demote_init(char *, int);

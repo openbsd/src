@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.146 2009/06/04 04:46:42 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.147 2009/06/05 20:26:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -183,7 +183,8 @@ main(int argc, char *argv[])
 
 	if (conf.opts & BGPD_OPT_NOACTION) {
 		if (conf.opts & BGPD_OPT_VERBOSE)
-			print_config(&conf, &net_l, peer_l, rules_l, &mrt_l);
+			print_config(&conf, &ribnames, &net_l, peer_l, rules_l,
+			    &mrt_l);
 		else
 			fprintf(stderr, "configuration OK\n");
 		exit(0);

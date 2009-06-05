@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.68 2009/05/27 04:18:21 reyk Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.69 2009/06/05 20:26:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 #include "bgpd.h"
 #include "mrt.h"
 #include "session.h"
+#include "rde.h"
 
 void		 print_op(enum comp_ops);
 void		 print_community(int, int);
@@ -270,6 +271,8 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%sneighbor %s {\n", c, log_addr(&p->remote_addr));
 	if (p->descr[0])
 		printf("%s\tdescr \"%s\"\n", c, p->descr);
+	if (p->rib[0])
+		printf("%s\trib \"%s\"\n", c, p->rib);
 	if (p->remote_as)
 		printf("%s\tremote-as %s\n", c, log_as(p->remote_as));
 	if (p->down)
@@ -533,12 +536,14 @@ print_mrt(u_int32_t pid, u_int32_t gid, const char *prep, const char *prep2)
 	LIST_FOREACH(m, xmrt_l, entry)
 		if ((gid != 0 && m->group_id == gid) ||
 		    (m->peer_id == pid && m->group_id == gid)) {
+			printf("%s%sdump ", prep, prep2);
+			if (m->rib[0])
+				printf("rib %s ", m->rib);
 			if (MRT2MC(m)->ReopenTimerInterval == 0)
-				printf("%s%sdump %s %s\n", prep, prep2,
-				    mrt_type(m->type), MRT2MC(m)->name);
+				printf("%s %s\n", mrt_type(m->type),
+				    MRT2MC(m)->name);
 			else
-				printf("%s%sdump %s %s %d\n", prep, prep2,
-				    mrt_type(m->type),
+				printf("%s %s %d\n", mrt_type(m->type),
 				    MRT2MC(m)->name,
 				    MRT2MC(m)->ReopenTimerInterval);
 		}
@@ -603,15 +608,24 @@ peer_compare(const void *aa, const void *bb)
 }
 
 void
-print_config(struct bgpd_config *conf, struct network_head *net_l,
-    struct peer *peer_l, struct filter_head *rules_l, struct mrt_head *mrt_l)
+print_config(struct bgpd_config *conf, struct rib_names *rib_l,
+    struct network_head *net_l, struct peer *peer_l,
+    struct filter_head *rules_l, struct mrt_head *mrt_l)
 {
 	struct filter_rule	*r;
 	struct network		*n;
+	struct rde_rib		*rr;
 
 	xmrt_l = mrt_l;
 	printf("\n");
 	print_mainconf(conf);
+	printf("\n");
+	SIMPLEQ_FOREACH(rr, rib_l, entry) {
+		if (rr->flags & F_RIB_NOEVALUATE)
+			printf("rde rib %s no evaluate\n", rr->name);
+		else
+			printf("rde rib %s\n", rr->name);
+	}
 	printf("\n");
 	TAILQ_FOREACH(n, net_l, entry)
 		print_network(&n->net);
