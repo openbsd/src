@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.70 2009/06/05 03:24:20 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.71 2009/06/05 20:10:51 naddy Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -724,6 +724,36 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	retlen = len = fxdr_unsigned(int32_t, *tl);
 	cnt = i = 0;
 
+	/*
+	 * For NFS Version 2, it is not obvious what a write of zero length
+	 * should do, but I might as well be consistent with Version 3,
+	 * which is to return ok so long as there are no permission problems.
+	 */
+	if (len > 0) {
+	    zeroing = 1;
+	    mp = mrep;
+	    while (mp) {
+		if (mp == md) {
+			zeroing = 0;
+			adjust = dpos - mtod(mp, caddr_t);
+			mp->m_len -= adjust;
+			if (mp->m_len > 0 && adjust > 0)
+				mp->m_data += adjust;
+		}
+		if (zeroing)
+			mp->m_len = 0;
+		else if (mp->m_len > 0) {
+			i += mp->m_len;
+			if (i > len) {
+				mp->m_len -= (i - len);
+				zeroing	= 1;
+			}
+			if (mp->m_len > 0)
+				cnt++;
+		}
+		mp = mp->m_next;
+	    }
+	}
 	if (len > NFS_MAXDATA || len < 0 || i < len) {
 		error = EIO;
 		nfsm_reply(2 * NFSX_UNSIGNED);
@@ -754,35 +784,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 		return (0);
 	}
 
-	/*
-	 * For NFS Version 2, it is not obvious what a write of zero length
-	 * should do, but I might as well be consistent with Version 3,
-	 * which is to return ok so long as there are no permission problems.
-	 */
 	if (len > 0) {
-	    zeroing = 1;
-	    mp = mrep;
-	    while (mp) {
-		if (mp == md) {
-			zeroing = 0;
-			adjust = dpos - mtod(mp, caddr_t);
-			mp->m_len -= adjust;
-			if (mp->m_len > 0 && adjust > 0)
-				mp->m_data += adjust;
-		}
-		if (zeroing)
-			mp->m_len = 0;
-		else if (mp->m_len > 0) {
-			i += mp->m_len;
-			if (i > len) {
-				mp->m_len -= (i - len);
-				zeroing	= 1;
-			}
-			if (mp->m_len > 0)
-				cnt++;
-		}
-		mp = mp->m_next;
-	    }
 	    ivp = malloc(cnt * sizeof(struct iovec), M_TEMP, M_WAITOK);
 	    uiop->uio_iov = iv = ivp;
 	    uiop->uio_iovcnt = cnt;
@@ -2168,19 +2170,16 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 		error = EEXIST;
 		goto out;
 	}
-
 	error = VOP_MKDIR(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
-	if (error)
-		goto out;
-
-	vp = nd.ni_vp;
-	bzero((caddr_t)fhp, sizeof(nfh));
-	fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
-	error = VFS_VPTOFH(vp, &fhp->fh_fid);
-	if (!error)
-		error = VOP_GETATTR(vp, &va, cred, procp);
-	vput(vp);
-
+	if (!error) {
+		vp = nd.ni_vp;
+		bzero((caddr_t)fhp, sizeof(nfh));
+		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
+		error = VFS_VPTOFH(vp, &fhp->fh_fid);
+		if (!error)
+			error = VOP_GETATTR(vp, &va, cred, procp);
+		vput(vp);
+	}
 out:
 	if (dirp) {
 		diraft_ret = VOP_GETATTR(dirp, &diraft, cred, procp);
@@ -3122,17 +3121,14 @@ nfsrv_noop(nfsd, slp, procp, mrq)
 
 /*
  * Perform access checking for vnodes obtained from file handles that would
- * refer to files already opened by a Unix client.
- * You cannot just use vn_writechk() and VOP_ACCESS() for two reasons:
- * 1 - You must check for exported rdonly as well as MNT_RDONLY for the
- *     write case
+ * refer to files already opened by a Unix client. You cannot just use
+ * vn_writechk() and VOP_ACCESS() for two reasons.
+ * 1 - You must check for exported rdonly as well as MNT_RDONLY for the write case
  * 2 - The owner is to be given access irrespective of mode bits for some
  *     operations, so that processes that chmod after opening a file don't
  *     break. I don't like this because it opens a security hole, but since
  *     the nfs server opens a security hole the size of a barn door anyhow,
- *     what the heck. A notable exception to this rule is when VOP_ACCESS()
- *     returns EPERM (e.g. when a file is immutable) which is always an
- *     error.
+ *     what the heck.
  */
 int
 nfsrv_access(vp, flags, cred, rdonly, p, override)
@@ -3176,7 +3172,7 @@ nfsrv_access(vp, flags, cred, rdonly, p, override)
 	 * Allow certain operations for the owner (reads and writes
 	 * on files that are already open).
 	 */
-	if (override && error == EACCES &&
+	if (override && (error == EPERM || error == EACCES) &&
 	    VOP_GETATTR(vp, &vattr, cred, p) == 0 &&
 	    cred->cr_uid == vattr.va_uid)
 		error = 0;
