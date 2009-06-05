@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.2 2009/06/05 20:43:57 pyr Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.3 2009/06/05 21:15:07 pyr Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -132,6 +132,51 @@ size_t
 buf_left(struct buf *buf)
 {
 	return (buf->max - buf->wpos);
+}
+
+int
+buf_write(struct msgbuf *msgbuf)
+{
+	struct iovec	 iov[IOV_MAX];
+	struct buf	*buf, *next;
+	unsigned int	 i = 0;
+	ssize_t	n;
+
+	bzero(&iov, sizeof(iov));
+	TAILQ_FOREACH(buf, &msgbuf->bufs, entry) {
+		if (i >= IOV_MAX)
+			break;
+		iov[i].iov_base = buf->buf + buf->rpos;
+		iov[i].iov_len = buf->size - buf->rpos;
+		i++;
+	}
+
+	if ((n = writev(msgbuf->fd, iov, i)) == -1) {
+		if (errno == EAGAIN || errno == ENOBUFS ||
+		    errno == EINTR)	/* try later */
+			return (0);
+		else
+			return (-1);
+	}
+
+	if (n == 0) {			/* connection closed */
+		errno = 0;
+		return (-2);
+	}
+
+	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
+	    buf = next) {
+		next = TAILQ_NEXT(buf, entry);
+		if (buf->rpos + n >= buf->size) {
+			n -= buf->size - buf->rpos;
+			buf_dequeue(msgbuf, buf);
+		} else {
+			buf->rpos += n;
+			n = 0;
+		}
+	}
+
+	return (0);
 }
 
 void
