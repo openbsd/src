@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfxp.c,v 1.4 2009/06/05 04:33:19 kettenis Exp $	*/
+/*	$OpenBSD: gfxp.c,v 1.5 2009/06/05 05:24:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -58,6 +58,12 @@
 
 #define PM2_OUT_FIFO		0x2000
 #define  PM2_SYNC_TAG			0x00000188
+
+#define PM2V_INDEX_LOW		0x4020
+#define PM2V_INDEX_HIGH		0x4028
+#define PM2V_INDEX_DATA		0x4030
+#define  PM2V_CURSOR_MODE		0x0005
+#define  PM2V_CURSOR_PATTERN		0x0400
 
 #define PM2_RENDER		0x8038
 #define  PM2_RENDER_FASTFILL		0x00000008
@@ -145,6 +151,8 @@ void	gfxp_eraserows(void *, int, int, long);
 
 void	gfxp_init(struct gfxp_softc *);
 void	gfxp_reinit(struct gfxp_softc *);
+
+void	gfxp_indexed_write(struct gfxp_softc *, bus_size_t, uint32_t);
 int	gfxp_wait(struct gfxp_softc *);
 int	gfxp_wait_fifo(struct gfxp_softc *, int);
 void	gfxp_copyrect(struct gfxp_softc *, int, int, int, int, int, int);
@@ -414,6 +422,7 @@ gfxp_eraserows(void *cookie, int row, int num, long attr)
 void
 gfxp_init(struct gfxp_softc *sc)
 {
+	/* XXX Save. */
 	sc->sc_read_mode = bus_space_read_4(sc->sc_mmiot, sc->sc_mmioh,
 	    PM2_FB_READ_MODE);
 }
@@ -421,8 +430,29 @@ gfxp_init(struct gfxp_softc *sc)
 void
 gfxp_reinit(struct gfxp_softc *sc)
 {
+	int i;
+
+	/* XXX Restore. */
 	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
 	    PM2_FB_READ_MODE, sc->sc_read_mode);
+
+	/* Disable cursor. */
+	gfxp_indexed_write(sc, PM2V_CURSOR_MODE, 0x10);
+
+	/* Clear cursor image. */
+	for (i = 0; i < 1024; i++)
+		gfxp_indexed_write(sc, PM2V_CURSOR_PATTERN + i, 0x00);
+}
+
+void
+gfxp_indexed_write(struct gfxp_softc *sc, bus_size_t offset, uint32_t value)
+{
+	gfxp_wait_fifo(sc, 3);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+	    PM2V_INDEX_HIGH, offset >> 8);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh,
+	    PM2V_INDEX_LOW, offset & 0xff);
+	bus_space_write_4(sc->sc_mmiot, sc->sc_mmioh, PM2V_INDEX_DATA, value);
 }
 
 int
