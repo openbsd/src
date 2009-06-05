@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.124 2009/06/03 22:04:15 jacekm Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.125 2009/06/05 08:50:00 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -832,8 +832,6 @@ int	 imsg_compose(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
 	    int, void *, u_int16_t);
 int	 imsg_composev(struct imsgbuf *, enum imsg_type, u_int32_t,
 	    pid_t, int, const struct iovec *, int);
-int	 imsg_compose_fds(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
-	    void *, u_int16_t, int, ...);
 struct buf *imsg_create(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
 	    u_int16_t);
 int	 imsg_add(struct buf *, void *, u_int16_t);
