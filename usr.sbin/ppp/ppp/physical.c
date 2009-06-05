@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.c,v 1.40 2005/07/17 20:10:53 brad Exp $
+ *  $OpenBSD: physical.c,v 1.41 2009/06/05 23:03:07 deraadt Exp $
  *
  */
 
@@ -427,7 +427,7 @@ physical_DescriptorWrite(struct fdescriptor *d, struct bundle *bundle,
       if (errno == EAGAIN)
         result = 1;
       else if (errno != ENOBUFS) {
-	log_Printf(LogPHASE, "%s: write (fd %d, len %d): %s\n", p->link.name,
+	log_Printf(LogPHASE, "%s: write (fd %d, len %zd): %s\n", p->link.name,
                    p->fd, p->out->m_len, strerror(errno));
         datalink_Down(p->dl, CLOSE_NORMAL);
       }
