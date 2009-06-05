@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.92 2009/06/04 21:13:02 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.93 2009/06/05 00:41:13 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -361,7 +361,7 @@ checkdisklabel(void *rlp, struct disklabel *lp,
 	DL_SETPSIZE(&lp->d_partitions[RAW_PART], disksize);
 	DL_SETPOFFSET(&lp->d_partitions[RAW_PART], 0);
 	DL_SETBSTART(lp, boundstart);
-	DL_SETBEND(lp, boundend);
+	DL_SETBEND(lp, boundend < DL_GETDSIZE(lp) ? boundend : DL_GETDSIZE(lp));
 
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
@@ -576,7 +576,7 @@ donot:
 	}
 notfat:
 	DL_SETBSTART(lp, dospartoff);
-	DL_SETBEND(lp, dospartend);
+	DL_SETBEND(lp, dospartend < DL_GETDSIZE(lp) ? dospartend : DL_GETDSIZE(lp));
 
 	/* record the OpenBSD partition's placement for the caller */
 	if (partoffp)

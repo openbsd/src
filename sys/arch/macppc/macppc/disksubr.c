@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.62 2009/06/04 21:13:02 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.63 2009/06/05 00:41:12 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
     struct disklabel *lp, int *partoffp, int spoofonly)
 {
 	int i, part_cnt, n, hfspartoff = -1;
-	u_int hfspartlen;
+	u_int64_t hfspartend;
 	struct part_map_entry *part;
 
 	/* First check for a DPME (HFS) disklabel */
@@ -143,7 +143,7 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 
 		if (strcmp(part->pmPartType, PART_TYPE_OPENBSD) == 0) {
 			hfspartoff = part->pmPyPartStart - LABELSECTOR;
-			hfspartlen = part->pmPartBlkCnt;
+			hfspartend = hfspartoff + part->pmPartBlkCnt;
 			if (partoffp) {
 				*partoffp = hfspartoff;
 				return (NULL);
@@ -164,7 +164,8 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 		}
 
 		DL_SETBSTART(lp, hfspartoff);
-		DL_SETBEND(lp, hfspartoff + hfspartlen);
+		DL_SETBEND(lp, hfspartend < DL_GETDSIZE(lp) ? hfspartend :
+		    DL_GETDSIZE(lp));
 	}
 
 	if (hfspartoff == -1)
@@ -182,7 +183,7 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 		return("disk label I/O error");
 
 	return checkdisklabel(bp->b_data + LABELOFFSET, lp, hfspartoff,
-	    hfspartoff + hfspartlen);
+	    hfspartend);
 }
 
 /*
