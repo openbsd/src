@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.31 2009/06/04 18:06:58 pyr Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.32 2009/06/05 06:56:51 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: June 4 2009 $
+.Dd $Mdocdate: June 5 2009 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -205,26 +205,22 @@ Up to 10 pairs may be specified, e.g.:
 .Pp
 .Sy sortlist 130.155.160.0/255.255.240.0 130.155.0.0
 .It Sy family
-Specify the preferred order in which to issue query when
-.Xr getaddrinfo 3
-is called with PF_UNSPEC.
-By default IPv4 addresses will be queried first and then IPv6
-addresses.
-The list of addresses returned by
-.Xr getaddrinfo 3
-will thus have the IPv4 addresses first.
-The syntax is
+Specify which type of Internet protocol family to prefer,
+if a host is reachable using different address families.
+By default IPv4 addresses are queried first,
+and then IPv6 addresses.
+The syntax is:
 .Pp
-.Sy family family1 [family2]
+.D1 family family1 [family2]
 .Pp
-Where a maximum of two families can be specified and where family
-can be any of:
+A maximum of two families can be specified,
+where family can be any of:
 .Pp
-.Bl -tag -width inet6
-.It Sy inet4
-for IPv4 queries
-.It Sy inet6
-for IPv6 queries
+.Bl -tag -width "inet4XXX" -offset indent -compact
+.It inet4
+IPv4 queries.
+.It inet6
+IPv6 queries.
 .El
 .It Sy options
 Allows certain internal resolver variables to be modified.
