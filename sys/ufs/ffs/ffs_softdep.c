@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.98 2008/06/14 10:55:21 mk Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.99 2009/06/06 18:06:22 art Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -4700,7 +4700,6 @@ softdep_fsync_mountdev(vp, waitfor)
 		    wk->wk_type != D_BMSAFEMAP) {
 			continue;
 		}
-		bremfree(bp);
 		buf_acquire(bp);
 		FREE_LOCK(&lk);
 		(void) bawrite(bp);
@@ -5608,7 +5607,6 @@ getdirtybuf(bp, waitfor)
 	}
 	if ((bp->b_flags & B_DELWRI) == 0)
 		return (0);
-	bremfree(bp);
 	buf_acquire(bp);
 	return (1);
 }
