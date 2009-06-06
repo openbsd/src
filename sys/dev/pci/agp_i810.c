@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.56 2009/06/06 10:56:30 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.57 2009/06/06 11:11:10 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -473,9 +473,15 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't get scribble page\n");
 		return;
 	}
+	tmp = isc->isc_apaddr;
+	if (isc->chiptype == CHIP_I810) {
+		tmp += isc->dcache_size;
+	} else {  
+		tmp += isc->stolen << AGP_PAGE_SHIFT;
+	}
 
 	/* initialise all gtt entries to point to scribble page */
-	for (tmp = isc->isc_apaddr; tmp < (isc->isc_apaddr + isc->isc_apsize);
+	for (; tmp < (isc->isc_apaddr + isc->isc_apsize);
 	    tmp += AGP_PAGE_SIZE)
 		agp_i810_unbind_page(isc, tmp);
 
