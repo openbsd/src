@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.662 2009/06/03 07:13:48 pirofti Exp $
+#	$OpenBSD: GENERIC,v 1.663 2009/06/06 00:35:00 pirofti Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -340,6 +340,7 @@ pckbd*		at pckbc?	# PC keyboard
 pms*		at pckbc?	# PS/2 mouse for wsmouse
 pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
 vga0		at isa?
+option		VGA_POST	# we can re-POST video cards
 vga*		at pci?
 pcdisplay0	at isa?		# CGA, MDA, EGA, HGA
 wsdisplay*	at vga?

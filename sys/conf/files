@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.459 2009/06/04 22:08:52 chl Exp $
+#	$OpenBSD: files,v 1.460 2009/06/06 00:35:00 pirofti Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -1078,3 +1078,6 @@ file lib/libkern/arch/${MACHINE_ARCH}/skpc.S | lib/libkern/skpc.c
 file lib/libkern/arch/${MACHINE_ARCH}/htonl.S | lib/libkern/htonl.c
 file lib/libkern/arch/${MACHINE_ARCH}/htons.S | lib/libkern/htons.c
 file lib/libkern/arch/${MACHINE_ARCH}/strncasecmp.S | lib/libkern/strncasecmp.c
+# libx86emu
+file lib/libkern/x86emu.c !small_kernel
+file lib/libkern/x86emu_util.c !small_kernel

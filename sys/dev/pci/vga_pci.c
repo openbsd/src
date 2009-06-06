@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.42 2009/06/03 23:33:01 miod Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.43 2009/06/06 00:35:00 pirofti Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -90,6 +90,10 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
+
+#ifdef VGA_POST
+#include <machine/vga_post.h>
+#endif
 
 #ifdef VESAFB
 #include <dev/vesa/vesabiosvar.h>
@@ -186,6 +190,12 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	    WSDISPLAY_TYPE_PCIVGA);
 
 	vga_pci_bar_init(sc, pa);
+
+#ifdef VGA_POST
+	if ((sc->sc_posth = vga_post_init(pa->pa_bus, pa->pa_device,
+	    pa->pa_function)) == NULL)
+		printf("couldn't set up vga POST handler\n");
+#endif
 
 #if NINTAGP > 0
 	/*
