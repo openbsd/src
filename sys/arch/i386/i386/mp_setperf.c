@@ -1,4 +1,4 @@
-/* $OpenBSD: mp_setperf.c,v 1.2 2007/05/01 04:18:32 gwk Exp $ */
+/* $OpenBSD: mp_setperf.c,v 1.3 2009/06/06 20:37:45 gwk Exp $ */
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd.org>
  *
@@ -50,6 +50,8 @@ mp_setperf(int level)
 
 	if (mp_setperf_state == MP_SETPERF_STEADY) {
 		mtx_enter(&setperf_mp_mutex);
+		disable_intr();
+
 		mp_perflevel = level;
 
 		curcpu()->ci_setperf_state = CI_SETPERF_INTRANSIT;
@@ -95,6 +97,7 @@ mp_setperf(int level)
 		DELAY(2);
 		curcpu()->ci_setperf_state = CI_SETPERF_READY;
 		mp_setperf_state = MP_SETPERF_STEADY; /* restore normallity */
+		enable_intr();
 		mtx_leave(&setperf_mp_mutex);
 	}
 
@@ -103,6 +106,8 @@ mp_setperf(int level)
 void
 i386_setperf_ipi(struct cpu_info *ci)
 {
+
+	disable_intr();
 
 	if (ci->ci_setperf_state == CI_SETPERF_SHOULDSTOP)
 		ci->ci_setperf_state = CI_SETPERF_INTRANSIT;
@@ -117,6 +122,8 @@ i386_setperf_ipi(struct cpu_info *ci)
 	while (mp_setperf_state != MP_SETPERF_FINISH)
 		;
 	ci->ci_setperf_state = CI_SETPERF_READY;
+
+	enable_intr();
 }
 
 void
@@ -124,7 +131,6 @@ mp_setperf_init()
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-
 
 	if (!cpu_setperf)
 		return;
