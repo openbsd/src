@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_simple.c,v 1.13 2006/01/17 15:43:34 millert Exp $ */
+/*	$OpenBSD: clnt_simple.c,v 1.14 2009/06/06 06:59:07 schwarze Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -65,7 +65,7 @@ callrpc(char *host, int prognum, int versnum, int procnum, xdrproc_t inproc,
 	if (crp == NULL) {
 		crp = (struct callrpc_private *)calloc(1, sizeof (*crp));
 		if (crp == NULL)
-			return (0);
+			return RPC_SYSTEMERROR;
 		callrpc_private = crp;
 	}
 	if (crp->oldhost == NULL) {
@@ -73,7 +73,7 @@ callrpc(char *host, int prognum, int versnum, int procnum, xdrproc_t inproc,
 		if (crp->oldhost == NULL) {
 			free(crp);
 			callrpc_private = save_callrpc_private;
-			return (0);
+			return RPC_SYSTEMERROR;
 		}
 		crp->oldhost[0] = 0;
 		crp->socket = RPC_ANYSOCK;
