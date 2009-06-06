@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.48 2008/12/06 13:18:12 sobrado Exp $
+.\" $OpenBSD: bgpctl.8,v 1.49 2009/06/06 06:11:17 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 6 2008 $
+.Dd $Mdocdate: June 6 2009 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -202,6 +202,8 @@ Show all entries with community
 .Ar community .
 .It Cm neighbor Ar peer
 Show only entries from the specified peer.
+.It Cm table Ar rib
+Show only entries from the specified RIB table.
 .It Cm summary
 This is the same as the
 .Ic show summary
