@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.h,v 1.11 2009/06/02 23:00:19 oga Exp $	*/
+/*	$OpenBSD: uvm_object.h,v 1.12 2009/06/06 03:45:08 oga Exp $	*/
 /*	$NetBSD: uvm_object.h,v 1.11 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -95,6 +95,9 @@ extern struct uvm_pagerops uvm_deviceops;
 
 int	uvm_pagecmp(struct vm_page *, struct vm_page *);
 RB_PROTOTYPE(uobj_pgs, vm_page, fq.queues.tree, uvm_pagecmp);
+
+int	uvm_objwire(struct uvm_object *, off_t, off_t, struct pglist *);
+void	uvm_objunwire(struct uvm_object *, off_t, off_t);
 
 #endif /* _KERNEL */
 
