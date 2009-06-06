@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.235 2009/06/06 01:10:29 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.236 2009/06/06 06:04:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -558,6 +558,7 @@ struct filter_community {
 };
 
 struct ctl_show_rib_request {
+	char			rib[PEER_DESCR_LEN];
 	struct ctl_neighbor	neighbor;
 	struct bgpd_addr	prefix;
 	struct filter_as	as;

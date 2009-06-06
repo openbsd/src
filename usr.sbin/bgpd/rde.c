@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.257 2009/06/06 01:10:29 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.258 2009/06/06 06:04:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1878,15 +1878,24 @@ void
 rde_dump_prefix(struct ctl_show_rib_request *req)
 {
 	struct rib_entry	*re;
+	u_int			 error;
+	u_int16_t		 id;
 
-	/* XXX other ribs ... */
+	if ((id = rib_find(req->rib)) == RIB_FAILED) {
+		log_warnx("rde_dump_ctx_new: no such rib %s", req->rib);
+		error = CTL_RES_NOSUCHPEER;
+		imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, req->pid, -1,
+		    &error, sizeof(error));
+		return;
+	}
 	if (req->prefixlen == 32) {
-		if ((re = rib_lookup(&ribs[1], &req->prefix)) != NULL)
+		if ((re = rib_lookup(&ribs[id], &req->prefix)) != NULL)
 			rde_dump_upcall(re, req);
 	} else if (req->flags & F_LONGER) {
-		rib_dump(&ribs[1], rde_dump_prefix_upcall, req, req->prefix.af);
+		rib_dump(&ribs[id], rde_dump_prefix_upcall, req,
+		    req->prefix.af);
 	} else {
-		if ((re = rib_get(&ribs[1], &req->prefix, req->prefixlen)) !=
+		if ((re = rib_get(&ribs[id], &req->prefix, req->prefixlen)) !=
 		    NULL)
 			rde_dump_upcall(re, req);
 	}
@@ -1898,6 +1907,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 {
 	struct rde_dump_ctx	*ctx;
 	u_int			 error;
+	u_int16_t		 id;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
 		log_warn("rde_dump_ctx_new");
@@ -1906,11 +1916,19 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 		    sizeof(error));
 		return;
 	}
+	if ((id = rib_find(req->rib)) == RIB_FAILED) {
+		log_warnx("rde_dump_ctx_new: no such rib %s", req->rib);
+		error = CTL_RES_NOSUCHPEER;
+		imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, pid, -1, &error,
+		    sizeof(error));
+		return;
+	}
+
 	memcpy(&ctx->req, req, sizeof(struct ctl_show_rib_request));
 	ctx->req.pid = pid;
 	ctx->req.type = type;
 	ctx->ribctx.ctx_count = RDE_RUNNER_ROUNDS;
-	ctx->ribctx.ctx_rib = &ribs[1]; /* XXX other ribs */
+	ctx->ribctx.ctx_rib = &ribs[id];
 	switch (ctx->req.type) {
 	case IMSG_CTL_SHOW_NETWORK:
 		ctx->ribctx.ctx_upcall = network_dump_upcall;
