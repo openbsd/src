@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.73 2009/06/06 02:23:33 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.74 2009/06/06 22:59:17 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -552,11 +552,9 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	}
 
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
-	if (error) {
-		nfsm_reply(2 * NFSX_UNSIGNED);
-		nfsm_srvpostop_attr(nfsd, 1, NULL, &mb);
-		return (0);
-	}
+	if (error)
+		goto bad;
+
 	if (vp->v_type != VREG) {
 		if (v3)
 			error = EINVAL;
@@ -570,12 +568,9 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	getret = VOP_GETATTR(vp, &va, cred, procp);
 	if (!error)
 		error = getret;
-	if (error) {
-		vput(vp);
-		nfsm_reply(NFSX_POSTOPATTR(v3));
-		nfsm_srvpostop_attr(nfsd, getret, &va, &mb);
-		return (0);
-	}
+	if (error)
+		goto vbad;
+
 	if (off >= va.va_size)
 		cnt = 0;
 	else if ((off + reqlen) > va.va_size)
@@ -645,10 +640,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 			if (!error)
 				error = getret;
 			m_freem(mreq);
-			vput(vp);
-			nfsm_reply(NFSX_POSTOPATTR(v3));
-			nfsm_srvpostop_attr(nfsd, getret, &va, &mb);
-			return (0);
+			goto vbad;
 		}
 	} else
 		uiop->uio_resid = 0;
@@ -669,6 +661,13 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	*tl = txdr_unsigned(cnt);
 nfsmout:
 	return(error);
+
+vbad:
+	vput(vp);
+bad:
+	nfsm_reply(0);
+	nfsm_srvpostop_attr(nfsd, getret, &va, &mb);
+	return (0);
 }
 
 /*
