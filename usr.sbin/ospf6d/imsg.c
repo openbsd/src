@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.2 2009/06/06 09:02:46 eric Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.3 2009/06/06 22:11:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -125,7 +125,7 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 }
 
 int
-imsg_compose(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
+imsg_compose(struct imsgbuf *ibuf, u_int32_t type, u_int32_t peerid,
     pid_t pid, int fd, void *data, u_int16_t datalen)
 {
 	struct buf	*wbuf;
@@ -144,7 +144,7 @@ imsg_compose(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
 }
 
 int
-imsg_composev(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
+imsg_composev(struct imsgbuf *ibuf, u_int32_t type, u_int32_t peerid,
     pid_t pid, int fd, const struct iovec *iov, int iovcnt)
 {
 	struct buf	*wbuf;
@@ -169,7 +169,7 @@ imsg_composev(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
 
 /* ARGSUSED */
 struct buf *
-imsg_create(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
+imsg_create(struct imsgbuf *ibuf, u_int32_t type, u_int32_t peerid,
     pid_t pid, u_int16_t datalen)
 {
 	struct buf	*wbuf;
@@ -182,6 +182,7 @@ imsg_create(struct imsgbuf *ibuf, u_int16_t type, u_int32_t peerid,
 	}
 
 	hdr.type = type;
+	hdr.flags = 0;
 	hdr.peerid = peerid;
 	if ((hdr.pid = pid) == 0)
 		hdr.pid = ibuf->pid;
