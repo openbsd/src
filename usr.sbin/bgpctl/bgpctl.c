@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.140 2009/05/17 13:23:08 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.141 2009/06/06 06:05:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -220,6 +220,7 @@ main(int argc, char *argv[])
 		}
 		memcpy(&ribreq.neighbor, &neighbor,
 		    sizeof(ribreq.neighbor));
+		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
 		ribreq.af = res->af;
 		ribreq.flags = res->flags;
 		imsg_compose(ibuf, type, 0, 0, -1, &ribreq, sizeof(ribreq));
@@ -291,6 +292,7 @@ main(int argc, char *argv[])
 	case NETWORK_SHOW:
 		bzero(&ribreq, sizeof(ribreq));
 		ribreq.af = res->af;
+		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NETWORK, 0, 0, -1,
 		    &ribreq, sizeof(ribreq));
 		show_network_head();

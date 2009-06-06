@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.52 2009/04/23 16:20:39 sthen Exp $ */
+/*	$OpenBSD: parser.c,v 1.53 2009/06/06 06:05:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,6 +42,7 @@ enum token_type {
 	ASTYPE,
 	PREFIX,
 	PEERDESC,
+	RIBNAME,
 	COMMUNITY,
 	LOCALPREF,
 	MED,
@@ -72,6 +73,7 @@ static const struct token t_show_summary[];
 static const struct token t_show_fib[];
 static const struct token t_show_rib[];
 static const struct token t_show_rib_neigh[];
+static const struct token t_show_rib_rib[];
 static const struct token t_show_neighbor[];
 static const struct token t_show_neighbor_modifiers[];
 static const struct token t_fib[];
@@ -148,6 +150,7 @@ static const struct token t_show_rib[] = {
 	{ FLAG,		"in",		F_CTL_ADJ_IN,	t_show_rib},
 	{ FLAG,		"out",		F_CTL_ADJ_OUT,	t_show_rib},
 	{ KEYWORD,	"neighbor",	NONE,		t_show_rib_neigh},
+	{ KEYWORD,	"table",	NONE,		t_show_rib_rib},
 	{ KEYWORD,	"summary",	SHOW_SUMMARY,	t_show_summary},
 	{ KEYWORD,	"memory",	SHOW_RIB_MEM,	NULL},
 	{ FAMILY,	"",		NONE,		t_show_rib},
@@ -158,6 +161,11 @@ static const struct token t_show_rib[] = {
 static const struct token t_show_rib_neigh[] = {
 	{ PEERADDRESS,	"",		NONE,	t_show_rib},
 	{ PEERDESC,	"",		NONE,	t_show_rib},
+	{ ENDTOKEN,	"",		NONE,	NULL}
+};
+
+static const struct token t_show_rib_rib[] = {
+	{ RIBNAME,	"",		NONE,	t_show_rib},
 	{ ENDTOKEN,	"",		NONE,	NULL}
 };
 
@@ -456,6 +464,15 @@ match_token(int *argc, char **argv[], const struct token table[])
 				t = &table[i];
 			}
 			break;
+		case RIBNAME:
+			if (!match && word != NULL && strlen(word) > 0) {
+				if (strlcpy(res.rib, word, sizeof(res.rib)) >=
+				    sizeof(res.rib))
+					errx(1, "rib name too long");
+				match++;
+				t = &table[i];
+			}
+			break;
 		case COMMUNITY:
 			if (word != NULL && strlen(word) > 0 &&
 			    parse_community(word, &res)) {
@@ -546,6 +563,9 @@ show_valid_args(const struct token table[])
 			break;
 		case PEERDESC:
 			fprintf(stderr, "  <neighbor description>\n");
+			break;
+		case RIBNAME:
+			fprintf(stderr, "  <rib name>\n");
 			break;
 		case COMMUNITY:
 			fprintf(stderr, "  <community>\n");
