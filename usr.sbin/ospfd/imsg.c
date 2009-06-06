@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.12 2009/06/05 19:33:58 pyr Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.13 2009/06/06 05:04:12 pyr Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -31,13 +31,11 @@
 void
 imsg_init(struct imsgbuf *ibuf, int fd, void (*handler)(int, short, void *))
 {
-	if (!ibuf->pid) {
-		msgbuf_init(&ibuf->w);
-		bzero(&ibuf->r, sizeof(ibuf->r));
-		ibuf->pid = getpid();
-		ibuf->handler = handler;
-		TAILQ_INIT(&ibuf->fds);
-	}
+	msgbuf_init(&ibuf->w);
+	bzero(&ibuf->r, sizeof(ibuf->r));
+	ibuf->pid = getpid();
+	ibuf->handler = handler;
+	TAILQ_INIT(&ibuf->fds);
 	ibuf->fd = fd;
 	ibuf->w.fd = fd;
 }
