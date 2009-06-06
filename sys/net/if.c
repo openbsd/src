@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.195 2009/06/05 03:10:28 halex Exp $	*/
+/*	$OpenBSD: if.c,v 1.196 2009/06/06 12:31:17 rainer Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1312,6 +1312,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 
 		ifp->if_xflags = (ifp->if_xflags & IFXF_CANTCHANGE) |
 			(ifr->ifr_flags &~ IFXF_CANTCHANGE);
+		rt_ifmsg(ifp);
 		break;
 
 	case SIOCSIFMETRIC:

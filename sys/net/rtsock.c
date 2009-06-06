@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.88 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.89 2009/06/06 12:31:17 rainer Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1017,6 +1017,7 @@ rt_ifmsg(struct ifnet *ifp)
 	ifm = mtod(m, struct if_msghdr *);
 	ifm->ifm_index = ifp->if_index;
 	ifm->ifm_flags = ifp->if_flags;
+	ifm->ifm_xflags = ifp->if_xflags;
 	ifm->ifm_data = ifp->if_data;
 	ifm->ifm_addrs = 0;
 	route_proto.sp_protocol = 0;

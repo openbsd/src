@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.106 2009/06/05 00:05:21 claudio Exp $	*/
+/*	$OpenBSD: if.h,v 1.107 2009/06/06 12:31:17 rainer Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -424,7 +424,7 @@ struct if_msghdr {
 	u_short ifm_pad;
 	int	ifm_addrs;	/* like rtm_addrs */
 	int	ifm_flags;	/* value of if_flags */
-	int	ifm_pad2;
+	int	ifm_xflags;
 	struct	if_data ifm_data;/* statistics and other data about if */
 };
 
