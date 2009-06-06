@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.11 2009/05/31 20:30:15 jacekm Exp $ */
+/*	$OpenBSD: rde.c,v 1.12 2009/06/06 08:20:55 eric Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -40,8 +40,8 @@
 #include "rde.h"
 
 struct ripd_conf	*rdeconf = NULL;
-struct imsgbuf		*ibuf_ripe;
-struct imsgbuf		*ibuf_main;
+struct imsgev		*iev_ripe;
+struct imsgev		*iev_main;
 
 void	rde_sig_handler(int, short, void *);
 void	rde_shutdown(void);
@@ -123,22 +123,24 @@ rde(struct ripd_conf *xconf, int pipe_parent2rde[2], int pipe_ripe2rde[2],
 	close(pipe_parent2ripe[0]);
 	close(pipe_parent2ripe[1]);
 
-	if ((ibuf_ripe = malloc(sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
+	if ((iev_ripe = malloc(sizeof(struct imsgev))) == NULL ||
+	    (iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_ripe, pipe_ripe2rde[1], rde_dispatch_imsg);
-	imsg_init(ibuf_main, pipe_parent2rde[1], rde_dispatch_parent);
+	imsg_init(&iev_ripe->ibuf, pipe_ripe2rde[1]);
+	iev_ripe->handler =  rde_dispatch_imsg;
+	imsg_init(&iev_main->ibuf, pipe_parent2rde[1]);
+	iev_main->handler = rde_dispatch_parent;
 
 	/* setup event handler */
-	ibuf_ripe->events = EV_READ;
-	event_set(&ibuf_ripe->ev, ibuf_ripe->fd, ibuf_ripe->events,
-	    ibuf_ripe->handler, ibuf_ripe);
-	event_add(&ibuf_ripe->ev, NULL);
+	iev_ripe->events = EV_READ;
+	event_set(&iev_ripe->ev, iev_ripe->ibuf.fd, iev_ripe->events,
+	    iev_ripe->handler, iev_ripe);
+	event_add(&iev_ripe->ev, NULL);
 
-	ibuf_main->events = EV_READ;
-	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
-	    ibuf_main->handler, ibuf_main);
-	event_add(&ibuf_main->ev, NULL);
+	iev_main->events = EV_READ;
+	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
+	    iev_main->handler, iev_main);
+	event_add(&iev_main->ev, NULL);
 	rt_init();
 
 	/* remove unneeded config stuff */
@@ -160,10 +162,10 @@ rde_shutdown(void)
 {
 	rt_clear();
 
-	msgbuf_clear(&ibuf_ripe->w);
-	free(ibuf_ripe);
-	msgbuf_clear(&ibuf_main->w);
-	free(ibuf_main);
+	msgbuf_clear(&iev_ripe->ibuf.w);
+	free(iev_ripe);
+	msgbuf_clear(&iev_main->ibuf.w);
+	free(iev_main);
 	free(rdeconf);
 
 	log_info("route decision engine exiting");
@@ -174,14 +176,16 @@ int
 rde_imsg_compose_ripe(int type, u_int32_t peerid, pid_t pid, void *data,
     u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_ripe, type, peerid, pid, data, datalen));
+	return (imsg_compose_event(iev_ripe, type, peerid, pid, -1,
+		    data, datalen));
 }
 
 /* ARGSUSED */
 void
 rde_dispatch_imsg(int fd, short event, void *bula)
 {
-	struct imsgbuf		*ibuf = bula;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct rip_route	 rr;
 	struct imsg		 imsg;
 	ssize_t			 n;
@@ -250,8 +254,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_CTL_SHOW_RIB:
 			rt_dump(imsg.hdr.pid);
 
-			imsg_compose(ibuf_ripe, IMSG_CTL_END, 0, imsg.hdr.pid,
-			    NULL, 0);
+			imsg_compose_event(iev_ripe, IMSG_CTL_END, 0,
+			    imsg.hdr.pid, -1, NULL, 0);
 
 			break;
 		default:
@@ -262,10 +266,10 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	if (!shut)
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 	else {
 		/* this pipe is dead, so remove the event handler */
-		event_del(&ibuf->ev);
+		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
 }
@@ -277,7 +281,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct rt_node		*rt;
 	struct kroute		 kr;
-	struct imsgbuf		*ibuf = bula;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf = &iev->ibuf;
 	ssize_t			 n;
 	int			 shut = 0;
 
@@ -333,8 +338,8 @@ rde_dispatch_parent(int fd, short event, void *bula)
 				rde_send_change_kroute(rt);
 			else
 				/* should not happen */
-				imsg_compose(ibuf_main, IMSG_KROUTE_DELETE, 0,
-				    0, &kr, sizeof(kr));
+				imsg_compose_event(iev_main, IMSG_KROUTE_DELETE,
+ 				    0, 0, -1, &kr, sizeof(kr));
 
 			break;
 		default:
@@ -345,10 +350,10 @@ rde_dispatch_parent(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	if (!shut)
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 	else {
 		/* this pipe is dead, so remove the event handler */
-		event_del(&ibuf->ev);
+		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
 }
@@ -366,7 +371,8 @@ rde_send_change_kroute(struct rt_node *r)
 	kr.flags = r->flags;
 	kr.ifindex = r->ifindex;
 
-	imsg_compose(ibuf_main, IMSG_KROUTE_CHANGE, 0, 0, &kr, sizeof(kr));
+	imsg_compose_event(iev_main, IMSG_KROUTE_CHANGE, 0, 0, -1,
+	    &kr, sizeof(kr));
 }
 
 void
@@ -382,7 +388,8 @@ rde_send_delete_kroute(struct rt_node *r)
 	kr.flags = r->flags;
 	kr.ifindex = r->ifindex;
 
-	imsg_compose(ibuf_main, IMSG_KROUTE_DELETE, 0, 0, &kr, sizeof(kr));
+	imsg_compose_event(iev_main, IMSG_KROUTE_DELETE, 0, 0, -1,
+	    &kr, sizeof(kr));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.h,v 1.1 2006/10/18 16:11:58 norby Exp $ */
+/*	$OpenBSD: control.h,v 1.2 2009/06/06 08:20:55 eric Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,7 +35,7 @@ enum blockmodes {
 
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	entry;
-	struct imsgbuf		ibuf;
+	struct imsgev		iev;
 };
 
 int	control_init(void);

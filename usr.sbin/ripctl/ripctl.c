@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripctl.c,v 1.6 2008/12/31 14:10:20 sobrado Exp $
+/*	$OpenBSD: ripctl.c,v 1.7 2009/06/06 08:20:55 eric Exp $
  *
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -62,12 +62,6 @@ usage(void)
 	exit(1);
 }
 
-/* dummy function to allow ripctl to run without libevent */
-void
-imsg_event_add(struct imsgbuf *i)
-{
-}
-
 int
 main(int argc, char *argv[])
 {
@@ -95,7 +89,7 @@ main(int argc, char *argv[])
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		err(1, NULL);
-	imsg_init(ibuf, ctl_sock, NULL);
+	imsg_init(ibuf, ctl_sock);
 	done = 0;
 
 	/* process user request */
@@ -113,51 +107,51 @@ main(int argc, char *argv[])
 			if (ifidx == 0)
 				errx(1, "no such interface %s", res->ifname);
 		}
-		imsg_compose(ibuf, IMSG_CTL_SHOW_INTERFACE, 0, 0,
+		imsg_compose(ibuf, IMSG_CTL_SHOW_INTERFACE, 0, 0, -1,
 		    &ifidx, sizeof(ifidx));
 		break;
 	case SHOW_NBR:
 		printf("%-15s %-15s %-15s %-9s %-10s\n", "ID",
 		    "State", "Address", "Iface", "Uptime");
-		imsg_compose(ibuf, IMSG_CTL_SHOW_NBR, 0, 0, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_NBR, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_RIB:
 		printf("%-20s %-17s %-7s\n", "Destination",
 		    "Nexthop", "Cost");
-		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB, 0, 0, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_FIB:
 		if (!res->addr.s_addr)
-			imsg_compose(ibuf, IMSG_CTL_KROUTE, 0, 0,
+			imsg_compose(ibuf, IMSG_CTL_KROUTE, 0, 0, -1,
 			    &res->flags, sizeof(res->flags));
 		else
-			imsg_compose(ibuf, IMSG_CTL_KROUTE_ADDR, 0, 0,
+			imsg_compose(ibuf, IMSG_CTL_KROUTE_ADDR, 0, 0, -1,
 			    &res->addr, sizeof(res->addr));
 		show_fib_head();
 		break;
 	case SHOW_FIB_IFACE:
 		if (*res->ifname)
-			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0,
+			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, -1,
 			    res->ifname, sizeof(res->ifname));
 		else
-			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, NULL, 0);
+			imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, -1, NULL, 0);
 		show_interface_head();
 		break;
 	case FIB:
 		errx(1, "fib couple|decouple");
 		break;
 	case FIB_COUPLE:
-		imsg_compose(ibuf, IMSG_CTL_FIB_COUPLE, 0, 0, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_FIB_COUPLE, 0, 0, -1, NULL, 0);
 		printf("couple request sent.\n");
 		done = 1;
 		break;
 	case FIB_DECOUPLE:
-		imsg_compose(ibuf, IMSG_CTL_FIB_DECOUPLE, 0, 0, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_FIB_DECOUPLE, 0, 0, -1, NULL, 0);
 		printf("decouple request sent.\n");
 		done = 1;
 		break;
 	case RELOAD:
-		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);
 		printf("reload request sent.\n");
 		done = 1;
 		break;

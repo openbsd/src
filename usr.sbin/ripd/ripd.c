@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.15 2009/05/31 20:30:15 jacekm Exp $ */
+/*	$OpenBSD: ripd.c,v 1.16 2009/06/06 08:20:55 eric Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -60,8 +60,8 @@ int			 pipe_parent2rde[2];
 int			 pipe_ripe2rde[2];
 
 struct ripd_conf	*conf = NULL;
-struct imsgbuf		*ibuf_ripe;
-struct imsgbuf		*ibuf_rde;
+struct imsgev		*iev_ripe;
+struct imsgev		*iev_rde;
 
 pid_t			 ripe_pid = 0;
 pid_t			 rde_pid = 0;
@@ -246,22 +246,24 @@ main(int argc, char *argv[])
 	close(pipe_ripe2rde[0]);
 	close(pipe_ripe2rde[1]);
 
-	if ((ibuf_ripe = malloc(sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_rde = malloc(sizeof(struct imsgbuf))) == NULL)
+	if ((iev_ripe = malloc(sizeof(struct imsgev))) == NULL ||
+	    (iev_rde = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_ripe, pipe_parent2ripe[0], main_dispatch_ripe);
-	imsg_init(ibuf_rde, pipe_parent2rde[0], main_dispatch_rde);
+	imsg_init(&iev_ripe->ibuf, pipe_parent2ripe[0]);
+	iev_ripe->handler = main_dispatch_ripe;
+	imsg_init(&iev_rde->ibuf, pipe_parent2rde[0]);
+	iev_rde->handler = main_dispatch_rde;
 
 	/* setup event handler */
-	ibuf_ripe->events = EV_READ;
-	event_set(&ibuf_ripe->ev, ibuf_ripe->fd, ibuf_ripe->events,
-	    ibuf_ripe->handler, ibuf_ripe);
-	event_add(&ibuf_ripe->ev, NULL);
+	iev_ripe->events = EV_READ;
+	event_set(&iev_ripe->ev, iev_ripe->ibuf.fd, iev_ripe->events,
+	    iev_ripe->handler, iev_ripe);
+	event_add(&iev_ripe->ev, NULL);
 
-	ibuf_rde->events = EV_READ;
-	event_set(&ibuf_rde->ev, ibuf_rde->fd, ibuf_rde->events,
-	    ibuf_rde->handler, ibuf_rde);
-	event_add(&ibuf_rde->ev, NULL);
+	iev_rde->events = EV_READ;
+	event_set(&iev_rde->ev, iev_rde->ibuf.fd, iev_rde->events,
+	    iev_rde->handler, iev_rde);
+	event_add(&iev_rde->ev, NULL);
 
 	if (kr_init(!(conf->flags & RIPD_FLAG_NO_FIB_UPDATE)) == -1)
 		fatalx("kr_init failed");
@@ -299,10 +301,10 @@ ripd_shutdown(void)
 			fatal("wait");
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
-	msgbuf_clear(&ibuf_ripe->w);
-	free(ibuf_ripe);
-	msgbuf_clear(&ibuf_rde->w);
-	free(ibuf_rde);
+	msgbuf_clear(&iev_ripe->ibuf.w);
+	free(iev_ripe);
+	msgbuf_clear(&iev_rde->ibuf.w);
+	free(iev_rde);
 	free(conf);
 
 	log_info("terminating");
@@ -334,7 +336,8 @@ check_child(pid_t pid, const char *pname)
 void
 main_dispatch_ripe(int fd, short event, void *bula)
 {
-	struct imsgbuf		*ibuf = bula;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg	 	 imsg;
 	struct demote_msg	 dmsg;
 	ssize_t		 	 n;
@@ -394,10 +397,10 @@ main_dispatch_ripe(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	if (!shut)
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 	else {
 		/* this pipe is dead, so remove the event handler */  
-		event_del(&ibuf->ev);
+		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
 }
@@ -406,7 +409,8 @@ main_dispatch_ripe(int fd, short event, void *bula)
 void
 main_dispatch_rde(int fd, short event, void *bula)
 {
-	struct imsgbuf	*ibuf = bula;
+	struct imsgev	*iev = bula;
+	struct imsgbuf	*ibuf = &iev->ibuf;
 	struct imsg	 imsg;
 	ssize_t		 n;
 	int		 shut = 0;
@@ -448,10 +452,10 @@ main_dispatch_rde(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	if (!shut)
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 	else {
 		/* this pipe is dead, so remove the event handler */  
-		event_del(&ibuf->ev);
+		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
 }
@@ -459,13 +463,13 @@ main_dispatch_rde(int fd, short event, void *bula)
 void
 main_imsg_compose_ripe(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	imsg_compose(ibuf_ripe, type, 0, pid, data, datalen);
+	imsg_compose_event(iev_ripe, type, 0, pid, -1, data, datalen);
 }
 
 void
 main_imsg_compose_rde(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	imsg_compose(ibuf_rde, type, 0, pid, data, datalen);
+	imsg_compose_event(iev_rde, type, 0, pid, -1, data, datalen);
 }
 
 int
@@ -536,15 +540,31 @@ rip_redistribute(struct kroute *kr)
 	return (0);
 }
 
-/* this needs to be added here so that ripctl can be used without libevent */
 void
-imsg_event_add(struct imsgbuf *ibuf)
+imsg_event_add(struct imsgev *iev)
 {
-	ibuf->events = EV_READ;
-	if (ibuf->w.queued)
-		ibuf->events |= EV_WRITE;
-
-	event_del(&ibuf->ev);
-	event_set(&ibuf->ev, ibuf->fd, ibuf->events, ibuf->handler, ibuf);
-	event_add(&ibuf->ev, NULL);
+        if (iev->handler == NULL) {
+                imsg_flush(&iev->ibuf);
+                return;
+        }
+        
+        iev->events = EV_READ;
+        if (iev->ibuf.w.queued)
+                iev->events |= EV_WRITE;
+                        
+        event_del(&iev->ev);
+        event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev);
+        event_add(&iev->ev, NULL);   
+}
+                         
+int
+imsg_compose_event(struct imsgev *iev, u_int16_t type,
+    u_int32_t peerid, pid_t pid, int fd, void *data, u_int16_t datalen)
+{
+        int     ret;
+                            
+        if ((ret = imsg_compose(&iev->ibuf, type, peerid,
+            pid, fd, data, datalen)) != -1)
+                imsg_event_add(iev);
+        return (ret);
 }
