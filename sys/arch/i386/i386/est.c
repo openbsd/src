@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.30 2007/06/07 11:20:58 dim Exp $ */
+/*	$OpenBSD: est.c,v 1.31 2009/06/06 23:21:43 gwk Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -56,26 +56,39 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
+#include <sys/malloc.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/specialreg.h>
+#include <machine/bus.h>
 
+#include "acpicpu.h"
+
+#if NACPICPU > 0
+#include <dev/acpi/acpidev.h>
+#include <dev/acpi/acpivar.h>
+#endif
 
 /* Convert MHz and mV into IDs for passing to the MSR. */
 #define ID16(MHz, mV, bus_clk) \
-	((((MHz * 100 + 50) / bus_clk) << 8) | ((mV ? mV - 700 : 0) >> 4))
+    { ((((MHz * 100 + 50) / bus_clk) << 8) | ((mV ? mV - 700 : 0) >> 4)), \
+	 MHz }
 
+struct est_op {
+	uint16_t ctrl;
+	uint16_t mhz;
+};
 
 /* Ultra Low Voltage Intel Pentium M processor 900 MHz */
-static const u_int16_t pm130_900_ulv[] = {
+static struct est_op pm130_900_ulv[] = {
 	ID16( 900, 1004, BUS100),
 	ID16( 800,  988, BUS100),
 	ID16( 600,  844, BUS100),
 };
 
 /* Ultra Low Voltage Intel Pentium M processor 1.00 GHz */
-static const u_int16_t pm130_1000_ulv[] = {
+static struct est_op pm130_1000_ulv[] = {
 	ID16(1000, 1004, BUS100),
 	ID16( 900,  988, BUS100),
 	ID16( 800,  972, BUS100),
@@ -83,7 +96,7 @@ static const u_int16_t pm130_1000_ulv[] = {
 };
 
 /* Ultra Low Voltage Intel Pentium M processor 1.10 GHz */
-static const u_int16_t pm130_1100_ulv[] = {
+static struct est_op pm130_1100_ulv[] = {
 	ID16(1100, 1004, BUS100),
 	ID16(1000,  988, BUS100),
 	ID16( 900,  972, BUS100),
@@ -92,7 +105,7 @@ static const u_int16_t pm130_1100_ulv[] = {
 };
 
 /* Low Voltage Intel Pentium M processor 1.10 GHz */
-static const u_int16_t pm130_1100_lv[] = {
+static struct est_op pm130_1100_lv[] = {
 	ID16(1100, 1180, BUS100),
 	ID16(1000, 1164, BUS100),
 	ID16( 900, 1100, BUS100),
@@ -101,7 +114,7 @@ static const u_int16_t pm130_1100_lv[] = {
 };
 
 /* Low Voltage Intel Pentium M processor 1.20 GHz */
-static const u_int16_t pm130_1200_lv[] = {
+static struct est_op pm130_1200_lv[] = {
 	ID16(1200, 1180, BUS100),
 	ID16(1100, 1164, BUS100),
 	ID16(1000, 1100, BUS100),
@@ -111,7 +124,7 @@ static const u_int16_t pm130_1200_lv[] = {
 };
 
 /* Low Voltage Intel Pentium M processor 1.30 GHz */
-static const u_int16_t pm130_1300_lv[] = {
+static struct est_op pm130_1300_lv[] = {
 	ID16(1300, 1180, BUS100),
 	ID16(1200, 1164, BUS100),
 	ID16(1100, 1100, BUS100),
@@ -122,7 +135,7 @@ static const u_int16_t pm130_1300_lv[] = {
 };
 
 /* Intel Pentium M processor 1.30 GHz */
-static const u_int16_t pm130_1300[] = {
+static struct est_op pm130_1300[] = {
 	ID16(1300, 1388, BUS100),
 	ID16(1200, 1356, BUS100),
 	ID16(1000, 1292, BUS100),
@@ -131,7 +144,7 @@ static const u_int16_t pm130_1300[] = {
 };
 
 /* Intel Pentium M processor 1.40 GHz */
-static const u_int16_t pm130_1400[] = {
+static struct est_op pm130_1400[] = {
 	ID16(1400, 1484, BUS100),
 	ID16(1200, 1436, BUS100),
 	ID16(1000, 1308, BUS100),
@@ -140,7 +153,7 @@ static const u_int16_t pm130_1400[] = {
 };
 
 /* Intel Pentium M processor 1.50 GHz */
-static const u_int16_t pm130_1500[] = {
+static struct est_op pm130_1500[] = {
 	ID16(1500, 1484, BUS100),
 	ID16(1400, 1452, BUS100),
 	ID16(1200, 1356, BUS100),
@@ -150,7 +163,7 @@ static const u_int16_t pm130_1500[] = {
 };
 
 /* Intel Pentium M processor 1.60 GHz */
-static const u_int16_t pm130_1600[] = {
+static struct est_op pm130_1600[] = {
 	ID16(1600, 1484, BUS100),
 	ID16(1400, 1420, BUS100),
 	ID16(1200, 1276, BUS100),
@@ -160,7 +173,7 @@ static const u_int16_t pm130_1600[] = {
 };
 
 /* Intel Pentium M processor 1.70 GHz */
-static const u_int16_t pm130_1700[] = {
+static struct est_op pm130_1700[] = {
 	ID16(1700, 1484, BUS100),
 	ID16(1400, 1308, BUS100),
 	ID16(1200, 1228, BUS100),
@@ -170,7 +183,7 @@ static const u_int16_t pm130_1700[] = {
 };
 
 /* Intel Pentium M processor 723 1.0 GHz */
-static const u_int16_t pm90_n723[] = {
+static struct est_op pm90_n723[] = {
 	ID16(1000,  940, BUS100),
 	ID16( 900,  908, BUS100),
 	ID16( 800,  876, BUS100),
@@ -178,7 +191,7 @@ static const u_int16_t pm90_n723[] = {
 };
 
 /* Intel Pentium M processor 733 1.1 GHz, VID #G */
-static const u_int16_t pm90_n733g[] = {
+static struct est_op pm90_n733g[] = {
 	ID16(1100,  956, BUS100),
 	ID16(1000,  940, BUS100),
 	ID16( 900,  908, BUS100),
@@ -187,7 +200,7 @@ static const u_int16_t pm90_n733g[] = {
 };
 
 /* Intel Pentium M processor 733 1.1 GHz, VID #H */
-static const u_int16_t pm90_n733h[] = {
+static struct est_op pm90_n733h[] = {
 	ID16(1100,  940, BUS100),
 	ID16(1000,  924, BUS100),
 	ID16( 900,  892, BUS100),
@@ -196,7 +209,7 @@ static const u_int16_t pm90_n733h[] = {
 };
 
 /* Intel Pentium M processor 733 1.1 GHz, VID #I */
-static const u_int16_t pm90_n733i[] = {
+static struct est_op pm90_n733i[] = {
 	ID16(1100,  924, BUS100),
 	ID16(1000,  908, BUS100),
 	ID16( 900,  892, BUS100),
@@ -205,7 +218,7 @@ static const u_int16_t pm90_n733i[] = {
 };
 
 /* Intel Pentium M processor 733 1.1 GHz, VID #J */
-static const u_int16_t pm90_n733j[] = {
+static struct est_op pm90_n733j[] = {
 	ID16(1100,  908, BUS100),
 	ID16(1000,  892, BUS100),
 	ID16( 900,  876, BUS100),
@@ -214,7 +227,7 @@ static const u_int16_t pm90_n733j[] = {
 };
 
 /* Intel Pentium M processor 733 1.1 GHz, VID #K */
-static const u_int16_t pm90_n733k[] = {
+static struct est_op pm90_n733k[] = {
 	ID16(1100,  892, BUS100),
 	ID16(1000,  876, BUS100),
 	ID16( 900,  860, BUS100),
@@ -223,7 +236,7 @@ static const u_int16_t pm90_n733k[] = {
 };
 
 /* Intel Pentium M processor 733 1.1 GHz, VID #L */
-static const u_int16_t pm90_n733l[] = {
+static struct est_op pm90_n733l[] = {
 	ID16(1100,  876, BUS100),
 	ID16(1000,  876, BUS100),
 	ID16( 900,  860, BUS100),
@@ -232,7 +245,7 @@ static const u_int16_t pm90_n733l[] = {
 };
 
 /* Intel Pentium M processor 753 1.2 GHz, VID #G */
-static const u_int16_t pm90_n753g[] = {
+static struct est_op pm90_n753g[] = {
 	ID16(1200,  956, BUS100),
 	ID16(1100,  940, BUS100),
 	ID16(1000,  908, BUS100),
@@ -242,7 +255,7 @@ static const u_int16_t pm90_n753g[] = {
 };
 
 /* Intel Pentium M processor 753 1.2 GHz, VID #H */
-static const u_int16_t pm90_n753h[] = {
+static struct est_op pm90_n753h[] = {
 	ID16(1200,  940, BUS100),
 	ID16(1100,  924, BUS100),
 	ID16(1000,  908, BUS100),
@@ -252,7 +265,7 @@ static const u_int16_t pm90_n753h[] = {
 };
 
 /* Intel Pentium M processor 753 1.2 GHz, VID #I */
-static const u_int16_t pm90_n753i[] = {
+static struct est_op pm90_n753i[] = {
 	ID16(1200,  924, BUS100),
 	ID16(1100,  908, BUS100),
 	ID16(1000,  892, BUS100),
@@ -262,7 +275,7 @@ static const u_int16_t pm90_n753i[] = {
 };
 
 /* Intel Pentium M processor 753 1.2 GHz, VID #J */
-static const u_int16_t pm90_n753j[] = {
+static struct est_op pm90_n753j[] = {
 	ID16(1200,  908, BUS100),
 	ID16(1100,  892, BUS100),
 	ID16(1000,  876, BUS100),
@@ -272,7 +285,7 @@ static const u_int16_t pm90_n753j[] = {
 };
 
 /* Intel Pentium M processor 753 1.2 GHz, VID #K */
-static const u_int16_t pm90_n753k[] = {
+static struct est_op pm90_n753k[] = {
 	ID16(1200,  892, BUS100),
 	ID16(1100,  892, BUS100),
 	ID16(1000,  876, BUS100),
@@ -282,7 +295,7 @@ static const u_int16_t pm90_n753k[] = {
 };
 
 /* Intel Pentium M processor 753 1.2 GHz, VID #L */
-static const u_int16_t pm90_n753l[] = {
+static struct est_op pm90_n753l[] = {
 	ID16(1200,  876, BUS100),
 	ID16(1100,  876, BUS100),
 	ID16(1000,  860, BUS100),
@@ -292,7 +305,7 @@ static const u_int16_t pm90_n753l[] = {
 };
 
 /* Intel Pentium M processor 773 1.3 GHz, VID #G */
-static const u_int16_t pm90_n773g[] = {
+static struct est_op pm90_n773g[] = {
 	ID16(1300,  956, BUS100),
 	ID16(1200,  940, BUS100),
 	ID16(1100,  924, BUS100),
@@ -303,7 +316,7 @@ static const u_int16_t pm90_n773g[] = {
 };
 
 /* Intel Pentium M processor 773 1.3 GHz, VID #H */
-static const u_int16_t pm90_n773h[] = {
+static struct est_op pm90_n773h[] = {
 	ID16(1300,  940, BUS100),
 	ID16(1200,  924, BUS100),
 	ID16(1100,  908, BUS100),
@@ -314,7 +327,7 @@ static const u_int16_t pm90_n773h[] = {
 };
 
 /* Intel Pentium M processor 773 1.3 GHz, VID #I */
-static const u_int16_t pm90_n773i[] = {
+static struct est_op pm90_n773i[] = {
 	ID16(1300,  924, BUS100),
 	ID16(1200,  908, BUS100),
 	ID16(1100,  892, BUS100),
@@ -325,7 +338,7 @@ static const u_int16_t pm90_n773i[] = {
 };
 
 /* Intel Pentium M processor 773 1.3 GHz, VID #J */
-static const u_int16_t pm90_n773j[] = {
+static struct est_op pm90_n773j[] = {
 	ID16(1300,  908, BUS100),
 	ID16(1200,  908, BUS100),
 	ID16(1100,  892, BUS100),
@@ -336,7 +349,7 @@ static const u_int16_t pm90_n773j[] = {
 };
 
 /* Intel Pentium M processor 773 1.3 GHz, VID #K */
-static const u_int16_t pm90_n773k[] = {
+static struct est_op pm90_n773k[] = {
 	ID16(1300,  892, BUS100),
 	ID16(1200,  892, BUS100),
 	ID16(1100,  876, BUS100),
@@ -347,7 +360,7 @@ static const u_int16_t pm90_n773k[] = {
 };
 
 /* Intel Pentium M processor 773 1.3 GHz, VID #L */
-static const u_int16_t pm90_n773l[] = {
+static struct est_op pm90_n773l[] = {
 	ID16(1300,  876, BUS100),
 	ID16(1200,  876, BUS100),
 	ID16(1100,  860, BUS100),
@@ -358,7 +371,7 @@ static const u_int16_t pm90_n773l[] = {
 };
 
 /* Intel Pentium M processor 738 1.4 GHz */
-static const u_int16_t pm90_n738[] = {
+static struct est_op pm90_n738[] = {
 	ID16(1400, 1116, BUS100),
 	ID16(1300, 1116, BUS100),
 	ID16(1200, 1100, BUS100),
@@ -370,7 +383,7 @@ static const u_int16_t pm90_n738[] = {
 };
 
 /* Intel Pentium M processor 758 1.5 GHz */
-static const u_int16_t pm90_n758[] = {
+static struct est_op pm90_n758[] = {
 	ID16(1500, 1116, BUS100),
 	ID16(1400, 1116, BUS100),
 	ID16(1300, 1100, BUS100),
@@ -383,7 +396,7 @@ static const u_int16_t pm90_n758[] = {
 };
 
 /* Intel Pentium M processor 778 1.6 GHz */
-static const u_int16_t pm90_n778[] = {
+static struct est_op pm90_n778[] = {
 	ID16(1600, 1116, BUS100),
 	ID16(1500, 1116, BUS100),
 	ID16(1400, 1100, BUS100),
@@ -397,7 +410,7 @@ static const u_int16_t pm90_n778[] = {
 };
 
 /* Intel Pentium M processor 710 1.4 GHz, 533 MHz FSB */
-static const u_int16_t pm90_n710[] = {
+static struct est_op pm90_n710[] = {
 	ID16(1400, 1340, BUS133),
 	ID16(1200, 1228, BUS133),
 	ID16(1000, 1148, BUS133),
@@ -406,7 +419,7 @@ static const u_int16_t pm90_n710[] = {
 };
 
 /* Intel Pentium M processor 715 1.5 GHz, VID #A */
-static const u_int16_t pm90_n715a[] = {
+static struct est_op pm90_n715a[] = {
 	ID16(1500, 1340, BUS100),
 	ID16(1200, 1228, BUS100),
 	ID16(1000, 1148, BUS100),
@@ -415,7 +428,7 @@ static const u_int16_t pm90_n715a[] = {
 };
 
 /* Intel Pentium M processor 715 1.5 GHz, VID #B */
-static const u_int16_t pm90_n715b[] = {
+static struct est_op pm90_n715b[] = {
 	ID16(1500, 1324, BUS100),
 	ID16(1200, 1212, BUS100),
 	ID16(1000, 1148, BUS100),
@@ -424,7 +437,7 @@ static const u_int16_t pm90_n715b[] = {
 };
 
 /* Intel Pentium M processor 715 1.5 GHz, VID #C */
-static const u_int16_t pm90_n715c[] = {
+static struct est_op pm90_n715c[] = {
 	ID16(1500, 1308, BUS100),
 	ID16(1200, 1212, BUS100),
 	ID16(1000, 1132, BUS100),
@@ -433,7 +446,7 @@ static const u_int16_t pm90_n715c[] = {
 };
 
 /* Intel Pentium M processor 715 1.5 GHz, VID #D */
-static const u_int16_t pm90_n715d[] = {
+static struct est_op pm90_n715d[] = {
 	ID16(1500, 1276, BUS100),
 	ID16(1200, 1180, BUS100),
 	ID16(1000, 1116, BUS100),
@@ -442,7 +455,7 @@ static const u_int16_t pm90_n715d[] = {
 };
 
 /* Intel Pentium M processor 725 1.6 GHz, VID #A */
-static const u_int16_t pm90_n725a[] = {
+static struct est_op pm90_n725a[] = {
 	ID16(1600, 1340, BUS100),
 	ID16(1400, 1276, BUS100),
 	ID16(1200, 1212, BUS100),
@@ -452,7 +465,7 @@ static const u_int16_t pm90_n725a[] = {
 };
 
 /* Intel Pentium M processor 725 1.6 GHz, VID #B */
-static const u_int16_t pm90_n725b[] = {
+static struct est_op pm90_n725b[] = {
 	ID16(1600, 1324, BUS100),
 	ID16(1400, 1260, BUS100),
 	ID16(1200, 1196, BUS100),
@@ -462,7 +475,7 @@ static const u_int16_t pm90_n725b[] = {
 };
 
 /* Intel Pentium M processor 725 1.6 GHz, VID #C */
-static const u_int16_t pm90_n725c[] = {
+static struct est_op pm90_n725c[] = {
 	ID16(1600, 1308, BUS100),
 	ID16(1400, 1244, BUS100),
 	ID16(1200, 1180, BUS100),
@@ -472,7 +485,7 @@ static const u_int16_t pm90_n725c[] = {
 };
 
 /* Intel Pentium M processor 725 1.6 GHz, VID #D */
-static const u_int16_t pm90_n725d[] = {
+static struct est_op pm90_n725d[] = {
 	ID16(1600, 1276, BUS100),
 	ID16(1400, 1228, BUS100),
 	ID16(1200, 1164, BUS100),
@@ -482,7 +495,7 @@ static const u_int16_t pm90_n725d[] = {
 };
 
 /* Intel Pentium M processor 730 1.6 GHz, 533 MHz FSB */
-static const u_int16_t pm90_n730[] = {
+static struct est_op pm90_n730[] = {
 	ID16(1600, 1308, BUS133),
 	ID16(1333, 1260, BUS133),
 	ID16(1200, 1212, BUS133),
@@ -491,7 +504,7 @@ static const u_int16_t pm90_n730[] = {
 };
 
 /* Intel Pentium M processor 735 1.7 GHz, VID #A */
-static const u_int16_t pm90_n735a[] = {
+static struct est_op pm90_n735a[] = {
 	ID16(1700, 1340, BUS100),
 	ID16(1400, 1244, BUS100),
 	ID16(1200, 1180, BUS100),
@@ -501,7 +514,7 @@ static const u_int16_t pm90_n735a[] = {
 };
 
 /* Intel Pentium M processor 735 1.7 GHz, VID #B */
-static const u_int16_t pm90_n735b[] = {
+static struct est_op pm90_n735b[] = {
 	ID16(1700, 1324, BUS100),
 	ID16(1400, 1244, BUS100),
 	ID16(1200, 1180, BUS100),
@@ -511,7 +524,7 @@ static const u_int16_t pm90_n735b[] = {
 };
 
 /* Intel Pentium M processor 735 1.7 GHz, VID #C */
-static const u_int16_t pm90_n735c[] = {
+static struct est_op pm90_n735c[] = {
 	ID16(1700, 1308, BUS100),
 	ID16(1400, 1228, BUS100),
 	ID16(1200, 1164, BUS100),
@@ -521,7 +534,7 @@ static const u_int16_t pm90_n735c[] = {
 };
 
 /* Intel Pentium M processor 735 1.7 GHz, VID #D */
-static const u_int16_t pm90_n735d[] = {
+static struct est_op pm90_n735d[] = {
 	ID16(1700, 1276, BUS100),
 	ID16(1400, 1212, BUS100),
 	ID16(1200, 1148, BUS100),
@@ -531,7 +544,7 @@ static const u_int16_t pm90_n735d[] = {
 };
 
 /* Intel Pentium M processor 740 1.73 GHz, 533 MHz FSB */
-static const u_int16_t pm90_n740[] = {
+static struct est_op pm90_n740[] = {
 	ID16(1733, 1356, BUS133),
 	ID16(1333, 1212, BUS133),
 	ID16(1067, 1100, BUS133),
@@ -539,7 +552,7 @@ static const u_int16_t pm90_n740[] = {
 };
 
 /* Intel Pentium M processor 745 1.8 GHz, VID #A */
-static const u_int16_t pm90_n745a[] = {
+static struct est_op pm90_n745a[] = {
 	ID16(1800, 1340, BUS100),
 	ID16(1600, 1292, BUS100),
 	ID16(1400, 1228, BUS100),
@@ -550,7 +563,7 @@ static const u_int16_t pm90_n745a[] = {
 };
 
 /* Intel Pentium M processor 745 1.8 GHz, VID #B */
-static const u_int16_t pm90_n745b[] = {
+static struct est_op pm90_n745b[] = {
 	ID16(1800, 1324, BUS100),
 	ID16(1600, 1276, BUS100),
 	ID16(1400, 1212, BUS100),
@@ -561,7 +574,7 @@ static const u_int16_t pm90_n745b[] = {
 };
 
 /* Intel Pentium M processor 745 1.8 GHz, VID #C */
-static const u_int16_t pm90_n745c[] = {
+static struct est_op pm90_n745c[] = {
 	ID16(1800, 1308, BUS100),
 	ID16(1600, 1260, BUS100),
 	ID16(1400, 1212, BUS100),
@@ -572,7 +585,7 @@ static const u_int16_t pm90_n745c[] = {
 };
 
 /* Intel Pentium M processor 745 1.8 GHz, VID #D */
-static const u_int16_t pm90_n745d[] = {
+static struct est_op pm90_n745d[] = {
 	ID16(1800, 1276, BUS100),
 	ID16(1600, 1228, BUS100),
 	ID16(1400, 1180, BUS100),
@@ -584,7 +597,7 @@ static const u_int16_t pm90_n745d[] = {
 
 /* Intel Pentium M processor 750 1.86 GHz, 533 MHz FSB */
 /* values extracted from \_PR\NPSS (via _PSS) SDST ACPI table */
-static const u_int16_t pm90_n750[] = {
+static struct est_op pm90_n750[] = {
 	ID16(1867, 1308, BUS133),
 	ID16(1600, 1228, BUS133),
 	ID16(1333, 1148, BUS133),
@@ -593,7 +606,7 @@ static const u_int16_t pm90_n750[] = {
 };
 
 /* Intel Pentium M processor 755 2.0 GHz, VID #A */
-static const u_int16_t pm90_n755a[] = {
+static struct est_op pm90_n755a[] = {
 	ID16(2000, 1340, BUS100),
 	ID16(1800, 1292, BUS100),
 	ID16(1600, 1244, BUS100),
@@ -605,7 +618,7 @@ static const u_int16_t pm90_n755a[] = {
 };
 
 /* Intel Pentium M processor 755 2.0 GHz, VID #B */
-static const u_int16_t pm90_n755b[] = {
+static struct est_op pm90_n755b[] = {
 	ID16(2000, 1324, BUS100),
 	ID16(1800, 1276, BUS100),
 	ID16(1600, 1228, BUS100),
@@ -617,7 +630,7 @@ static const u_int16_t pm90_n755b[] = {
 };
 
 /* Intel Pentium M processor 755 2.0 GHz, VID #C */
-static const u_int16_t pm90_n755c[] = {
+static struct est_op pm90_n755c[] = {
 	ID16(2000, 1308, BUS100),
 	ID16(1800, 1276, BUS100),
 	ID16(1600, 1228, BUS100),
@@ -629,7 +642,7 @@ static const u_int16_t pm90_n755c[] = {
 };
 
 /* Intel Pentium M processor 755 2.0 GHz, VID #D */
-static const u_int16_t pm90_n755d[] = {
+static struct est_op pm90_n755d[] = {
 	ID16(2000, 1276, BUS100),
 	ID16(1800, 1244, BUS100),
 	ID16(1600, 1196, BUS100),
@@ -641,7 +654,7 @@ static const u_int16_t pm90_n755d[] = {
 };
 
 /* Intel Pentium M processor 760 2.0 GHz, 533 MHz FSB */
-static const u_int16_t pm90_n760[] = {
+static struct est_op pm90_n760[] = {
 	ID16(2000, 1356, BUS133),
 	ID16(1600, 1244, BUS133),
 	ID16(1333, 1164, BUS133),
@@ -650,7 +663,7 @@ static const u_int16_t pm90_n760[] = {
 };
 
 /* Intel Pentium M processor 765 2.1 GHz, VID #A */
-static const u_int16_t pm90_n765a[] = {
+static struct est_op pm90_n765a[] = {
 	ID16(2100, 1340, BUS100),
 	ID16(1800, 1276, BUS100),
 	ID16(1600, 1228, BUS100),
@@ -662,7 +675,7 @@ static const u_int16_t pm90_n765a[] = {
 };
 
 /* Intel Pentium M processor 765 2.1 GHz, VID #B */
-static const u_int16_t pm90_n765b[] = {
+static struct est_op pm90_n765b[] = {
 	ID16(2100, 1324, BUS100),
 	ID16(1800, 1260, BUS100),
 	ID16(1600, 1212, BUS100),
@@ -674,7 +687,7 @@ static const u_int16_t pm90_n765b[] = {
 };
 
 /* Intel Pentium M processor 765 2.1 GHz, VID #C */
-static const u_int16_t pm90_n765c[] = {
+static struct est_op pm90_n765c[] = {
 	ID16(2100, 1308, BUS100),
 	ID16(1800, 1244, BUS100),
 	ID16(1600, 1212, BUS100),
@@ -686,7 +699,7 @@ static const u_int16_t pm90_n765c[] = {
 };
 
 /* Intel Pentium M processor 765 2.1 GHz, VID #E */
-static const u_int16_t pm90_n765e[] = {
+static struct est_op pm90_n765e[] = {
 	ID16(2100, 1356, BUS100),
 	ID16(1800, 1292, BUS100),
 	ID16(1600, 1244, BUS100),
@@ -698,7 +711,7 @@ static const u_int16_t pm90_n765e[] = {
 };
 
 /* Intel Pentium M processor 770 2.13 GHz */
-static const u_int16_t pm90_n770[] = {
+static struct est_op pm90_n770[] = {
 	ID16(2133, 1356, BUS133),
 	ID16(1867, 1292, BUS133),
 	ID16(1600, 1212, BUS133),
@@ -713,7 +726,7 @@ static const u_int16_t pm90_n770[] = {
  */
 
 /* 1.00GHz Centaur C7-M ULV */
-static const u_int16_t C7M_770_ULV[] = {
+static struct est_op C7M_770_ULV[] = {
 	ID16(1000,  844, BUS100),
 	ID16( 800,  796, BUS100),
 	ID16( 600,  796, BUS100),
@@ -721,7 +734,7 @@ static const u_int16_t C7M_770_ULV[] = {
 };
 
 /* 1.00GHz Centaur C7-M ULV */
-static const u_int16_t C7M_779_ULV[] = {
+static struct est_op C7M_779_ULV[] = {
 	ID16(1000,  796, BUS100),
 	ID16( 800,  796, BUS100),
 	ID16( 600,  796, BUS100),
@@ -729,7 +742,7 @@ static const u_int16_t C7M_779_ULV[] = {
 };
 
 /* 1.20GHz Centaur C7-M ULV */
-static const u_int16_t C7M_772_ULV[] = {
+static struct est_op C7M_772_ULV[] = {
 	ID16(1200,  844, BUS100),
 	ID16(1000,  844, BUS100),
 	ID16( 800,  828, BUS100),
@@ -738,7 +751,7 @@ static const u_int16_t C7M_772_ULV[] = {
 };
 
 /* 1.50GHz Centaur C7-M ULV */
-static const u_int16_t C7M_775_ULV[] = {
+static struct est_op C7M_775_ULV[] = {
 	ID16(1500,  956, BUS100),
 	ID16(1400,  940, BUS100),
 	ID16(1000,  860, BUS100),
@@ -748,7 +761,7 @@ static const u_int16_t C7M_775_ULV[] = {
 };
 
 /* 1.20GHz Centaur C7-M 400 MHz FSB */
-static const u_int16_t C7M_771[] = {
+static struct est_op C7M_771[] = {
 	ID16(1200,  860, BUS100),
 	ID16(1000,  860, BUS100),
 	ID16( 800,  844, BUS100),
@@ -757,7 +770,7 @@ static const u_int16_t C7M_771[] = {
 };
 
 /* 1.50GHz Centaur C7-M 400 MHz FSB */
-static const u_int16_t C7M_754[] = {
+static struct est_op C7M_754[] = {
 	ID16(1500, 1004, BUS100),
 	ID16(1400,  988, BUS100),
 	ID16(1000,  940, BUS100),
@@ -767,7 +780,7 @@ static const u_int16_t C7M_754[] = {
 };
 
 /* 1.60GHz Centaur C7-M 400 MHz FSB */
-static const u_int16_t C7M_764[] = {
+static struct est_op C7M_764[] = {
 	ID16(1600, 1084, BUS100),
 	ID16(1400, 1052, BUS100),
 	ID16(1000, 1004, BUS100),
@@ -777,7 +790,7 @@ static const u_int16_t C7M_764[] = {
 };
 
 /* 1.80GHz Centaur C7-M 400 MHz FSB */
-static const u_int16_t C7M_784[] = {
+static struct est_op C7M_784[] = {
 	ID16(1800, 1148, BUS100),
 	ID16(1600, 1100, BUS100),
 	ID16(1400, 1052, BUS100),
@@ -788,7 +801,7 @@ static const u_int16_t C7M_784[] = {
 };
 
 /* 2.00GHz Centaur C7-M 400 MHz FSB */
-static const u_int16_t C7M_794[] = {
+static struct est_op C7M_794[] = {
 	ID16(2000, 1148, BUS100),
 	ID16(1800, 1132, BUS100),
 	ID16(1600, 1100, BUS100),
@@ -800,7 +813,7 @@ static const u_int16_t C7M_794[] = {
 };
 
 /* 1.60GHz Centaur C7-M 533 MHz FSB */
-static const u_int16_t C7M_765[] = {
+static struct est_op C7M_765[] = {
 	ID16(1600, 1084, BUS133),
 	ID16(1467, 1052, BUS133),
 	ID16(1200, 1004, BUS133),
@@ -810,7 +823,7 @@ static const u_int16_t C7M_765[] = {
 };
 
 /* 2.00GHz Centaur C7-M 533 MHz FSB */
-static const u_int16_t C7M_785[] = {
+static struct est_op C7M_785[] = {
 	ID16(1867, 1148, BUS133),
 	ID16(1600, 1100, BUS133),
 	ID16(1467, 1052, BUS133),
@@ -821,7 +834,7 @@ static const u_int16_t C7M_785[] = {
 };
 
 /* 2.00GHz Centaur C7-M 533 MHz FSB */
-static const u_int16_t C7M_795[] = {
+static struct est_op C7M_795[] = {
 	ID16(2000, 1148, BUS133),
 	ID16(1867, 1132, BUS133),
 	ID16(1600, 1100, BUS133),
@@ -833,18 +846,19 @@ static const u_int16_t C7M_795[] = {
 };
 
 /* 1.00GHz VIA Eden 90nm 'Esther' */
-static const u_int16_t eden90_1000[] = {
+static struct est_op eden90_1000[] = {
 	ID16(1000,  844, BUS100),
 	ID16( 800,  844, BUS100),
 	ID16( 600,  844, BUS100),
 	ID16( 400,  844, BUS100),
 };
 
+
 struct fqlist {
-	int vendor : 5;
+	int vendor: 5;
 	unsigned bus_clk : 1;
 	unsigned n : 5;
-	const u_int16_t *table;
+	struct est_op *table;
 };
 
 #define NELEM(x) (sizeof(x) / sizeof((x)[0]))
@@ -854,7 +868,7 @@ struct fqlist {
 
 #define BUS_CLK(fqp) ((fqp)->bus_clk ? BUS133 : BUS100)
 
-static const struct fqlist est_cpus[] = {
+static struct fqlist est_cpus[] = {
 	ENTRY(INTEL, BUS100, pm130_900_ulv),
 	ENTRY(INTEL, BUS100, pm130_1000_ulv),
 	ENTRY(INTEL, BUS100, pm130_1100_ulv),
@@ -937,39 +951,115 @@ static const struct fqlist est_cpus[] = {
 	ENTRY(VIA,   BUS100, eden90_1000),
 };
 
-
 #define MSR2MHZ(msr, bus) \
 	(((((int) (msr) >> 8) & 0xff) * (bus) + 50) / 100)
 #define MSR2MV(msr) \
 	(((int) (msr) & 0xff) * 16 + 700)
 
-static const struct fqlist *est_fqlist;
-
-static u_int16_t fake_table[3];
-static struct fqlist fake_fqlist;
+static struct fqlist *est_fqlist;
 
 extern int setperf_prio;
 extern int perflevel;
 
+#if NACPICPU > 0
+struct fqlist * est_acpi_init(void);
+void est_acpi_pss_changed(struct acpicpu_pss *, int);
+
+struct fqlist *
+est_acpi_init()
+{
+	struct acpicpu_pss *pss;
+	struct fqlist *acpilist;
+	int nstates, i;
+
+	if ((nstates = acpicpu_fetch_pss(&pss)) == 0)
+		goto nolist;
+
+	if ((acpilist = malloc(sizeof(struct fqlist), M_DEVBUF, M_NOWAIT))
+	    == NULL)
+		goto nolist;
+
+	if ((acpilist->table = malloc(sizeof( struct est_op) * nstates,
+	    M_DEVBUF, M_NOWAIT)) == NULL)
+		goto notable;
+
+	acpilist->n = nstates;
+
+	for (i = 0; i < nstates; i++) {
+		acpilist->table[i].mhz = pss[i].pss_core_freq;
+		acpilist->table[i].ctrl = pss[i].pss_ctrl;
+	}
+
+	acpicpu_set_notify(est_acpi_pss_changed);
+
+	return acpilist;
+
+notable:
+	free(acpilist, M_DEVBUF);
+	acpilist = NULL;
+nolist:
+	return NULL;
+}
+
+void
+est_acpi_pss_changed(struct acpicpu_pss *pss, int npss)
+{
+	struct fqlist *acpilist;
+	int needtran = 1, nstates, i;
+	u_int64_t msr;
+	u_int16_t cur;
+
+	msr = rdmsr(MSR_PERF_STATUS);
+	cur = msr & 0xffff;
+
+	if ((acpilist = malloc(sizeof(struct fqlist), M_DEVBUF, M_NOWAIT))
+	    == NULL) {
+		printf("est_acpi_pss_changed: cannot allocate memory for new "
+		    "est state");
+		return;
+	}
+
+	if ((acpilist->table = malloc(sizeof( struct est_op) * nstates,
+	    M_DEVBUF, M_NOWAIT)) == NULL) {
+		printf("est_acpi_pss_changed: cannot allocate memory for new "
+		    "operating points");
+		free(acpilist, M_DEVBUF);
+		return;
+	}
+
+	for (i = 0; i < nstates; i++) {
+		acpilist->table[i].mhz = pss[i].pss_core_freq;
+		acpilist->table[i].ctrl = pss[i].pss_ctrl;
+		if (pss[i].pss_ctrl == cur)
+			needtran = 0;
+	}
+
+	free(est_fqlist->table, M_DEVBUF);
+	free(est_fqlist, M_DEVBUF);
+	est_fqlist = acpilist;
+
+	if (needtran) {
+		est_setperf(perflevel);
+	}
+}
+#endif
+
 void
 est_init(const char *cpu_device, int vendor)
 {
-	int i, mhz, mv, low, high;
+	int i, low, high;
 	u_int64_t msr;
 	u_int16_t idhi, idlo, cur;
 	u_int8_t crhi, crlo, crcur;
-	const struct fqlist *fql;
+	struct fqlist *fql;
+	struct fqlist *fake_fqlist;
+	struct est_op *fake_table;
 
 	if (setperf_prio > 3)
 		return;
 
 	if ((cpu_ecxfeature & CPUIDECX_EST) == 0)
 		return;
-
-	if (bus_clock == 0) {
-		printf("%s: EST: unknown system bus clock\n", cpu_device);
-		return;
-	}
 
 	msr = rdmsr(MSR_PERF_STATUS);
 	idhi = (msr >> 32) & 0xffff;
@@ -978,90 +1068,118 @@ est_init(const char *cpu_device, int vendor)
 	crhi = (idhi  >> 8) & 0xff;
 	crlo = (idlo  >> 8) & 0xff;
 	crcur = (cur >> 8) & 0xff;
-	if (crlo == 0 || crhi == crlo) {
+
+#if NACPICPU > 0
+	est_fqlist = est_acpi_init();
+#endif
+
+	if (est_fqlist == NULL) {
 		/*
-		 * Don't complain about these cases, and silently disable EST:
-		 * - A lowest clock ratio of 0, which seems to happen on all
-		 *   Pentium 4's that report EST.
-		 * - An equal highest and lowest clock ratio, which happens on
-		 *   at least the Core 2 Duo X6800, maybe on newer models too.
+		 * Find an entry which matches (vendor, bus_clock, idhi, idlo)
 		 */
-		return;
-	}
-	if (crhi == 0 || crcur == 0 || crlo > crhi ||
-	    crcur < crlo || crcur > crhi) {
-		/*
-		 * Do complain about other weirdness, because we first want to
-		 * know about it, before we decide what to do with it.
-		 */
-		printf("%s: EST: strange msr value 0x%016llx\n",
-		    cpu_device, msr);
-		return;
-	}
-	/*
-	 * Find an entry which matches (vendor, bus_clock, idhi, idlo)
-	 */
-	for (i = 0; i < NELEM(est_cpus); i++) {
-		fql = &est_cpus[i];
-		if (vendor == fql->vendor && bus_clock == BUS_CLK(fql) &&
-		    idhi == fql->table[0] && idlo == fql->table[fql->n - 1]) {
-			est_fqlist = fql;
-			break;
+		for (i = 0; i < NELEM(est_cpus); i++) {
+			fql = &est_cpus[i];
+			if (vendor == fql->vendor && bus_clock == BUS_CLK(fql)
+			    && idhi == fql->table[0].ctrl
+			    && idlo == fql->table[fql->n - 1].ctrl) {
+				est_fqlist = fql;
+				break;
+			}
 		}
 	}
+
 	if (est_fqlist == NULL) {
+		if (bus_clock == 0) {
+			printf("%s: EST: unknown system bus clock\n",
+			    cpu_device);
+			return;
+		}
+		if (crhi == 0 || crcur == 0 || crlo > crhi ||
+		    crcur < crlo || crcur > crhi) {
+			/*
+			 * Do complain about other weirdness, because we first
+			 * want to know about it, before we decide what to do
+			 * with it.
+			 */
+			printf("%s: EST: strange msr value 0x%016llx\n",
+			    cpu_device, msr);
+			return;
+		}
+		if   (crlo == 0 || crhi == crlo) {
+			/*
+			 * Don't complain about these cases, and silently
+			 * disable EST: - A lowest clock ratio of 0, which 
+			 * seems to happen on all Pentium 4's that report EST.
+			 * - And equal highest and lowest clock ratio, which 
+			 * happens on at least the Core 2 Duo X6800, maybe on 
+			 * newer models too.
+			 */
+			return;
+		}
+
 		printf("%s: unknown Enhanced SpeedStep CPU, msr 0x%016llx\n",
 		    cpu_device, msr);
-
 		/*
 		 * Generate a fake table with the power states we know.
 		 */
-		fake_table[0] = idhi;
+
+		if ((fake_fqlist = malloc(sizeof(struct fqlist), M_DEVBUF,
+		    M_NOWAIT)) == NULL) {
+			printf("%s: EST: cannot allocate memory for fake list",
+			    cpu_device);
+			return;
+		}
+
+
+		if ((fake_table = malloc(sizeof(struct est_op) * 3, M_DEVBUF,
+		     M_NOWAIT)) == NULL) {
+			free(fake_fqlist, M_DEVBUF);
+			printf("%s: EST: cannot allocate memory for fake "
+			    "table\n", cpu_device);
+			return;
+		}
+		fake_table[0].ctrl = idhi;
+		fake_table[0].mhz = MSR2MHZ(idhi, bus_clock);
 		if (cur == idhi || cur == idlo) {
 			printf("%s: using only highest and lowest power "
-			    "states\n", cpu_device);
+			       "states\n", cpu_device);
 
-			fake_table[1] = idlo;
-			fake_fqlist.n = 2;
+			fake_table[1].ctrl = idlo;
+			fake_table[1].mhz = MSR2MHZ(idlo, bus_clock);
+			fake_fqlist->n = 2;
 		} else {
 			printf("%s: using only highest, current and lowest "
 			    "power states\n", cpu_device);
 
-			fake_table[1] = cur;
-			fake_table[2] = idlo;
-			fake_fqlist.n = 3;
+			fake_table[1].ctrl = cur;
+			fake_table[1].mhz = MSR2MHZ(cur, bus_clock);
+
+			fake_table[2].ctrl = idlo;
+			fake_table[2].mhz = MSR2MHZ(idlo, bus_clock);
+			fake_fqlist->n = 3;
 		}
-		fake_fqlist.vendor = vendor;
-		fake_fqlist.table = fake_table;
-		est_fqlist = &fake_fqlist;
+
+		fake_fqlist->vendor = vendor;
+		fake_fqlist->table = fake_table;
+		est_fqlist = fake_fqlist;
 	}
 
-	mhz = MSR2MHZ(cur, bus_clock);
-	mv = MSR2MV(cur);
-	printf("%s: Enhanced SpeedStep %d MHz (%d mV)", cpu_device, mhz, mv);
-
-	/*
-	 * Check that the current operating point is in our list.
-	 */
-	for (i = est_fqlist->n - 1; i >= 0; i--) {
-		if (cur == est_fqlist->table[i])
-			break;
-	}
-	if (i < 0) {
-		printf(" (not in table, msr 0x%016llx)\n", msr);
+	if (est_fqlist == NULL)
 		return;
-	}
-	low = MSR2MHZ(est_fqlist->table[est_fqlist->n - 1], bus_clock);
-	high = MSR2MHZ(est_fqlist->table[0], bus_clock);
-	perflevel = (mhz - low) * 100 / (high - low);
+
+	printf("%s: Enhanced SpeedStep %d MHz", cpu_device, cpuspeed);
+
+	low = est_fqlist->table[est_fqlist->n - 1].mhz;
+	high = est_fqlist->table[0].mhz;
+	perflevel = (cpuspeed - low) * 100 / (high - low);
 
 	/*
 	 * OK, tell the user the available frequencies.
 	 */
 	printf(": speeds: ");
 	for (i = 0; i < est_fqlist->n; i++)
-		printf("%d%s", MSR2MHZ(est_fqlist->table[i], bus_clock),
-		    i < est_fqlist->n - 1 ? ", " : " MHz\n");
+		printf("%d%s", est_fqlist->table[i].mhz, i < est_fqlist->n - 1
+		    ?  ", " : " MHz\n");
 
 	cpu_setperf = est_setperf;
 	setperf_prio = 3;
@@ -1083,7 +1201,8 @@ est_setperf(int level)
 
 	msr = rdmsr(MSR_PERF_CTL);
 	msr &= ~0xffffULL;
-	msr |= est_fqlist->table[i];
+	msr |= est_fqlist->table[i].ctrl;
+
 	wrmsr(MSR_PERF_CTL, msr);
-	cpuspeed = MSR2MHZ(est_fqlist->table[i], bus_clock);
+	cpuspeed = est_fqlist->table[i].mhz;
 }
