@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.24 2009/06/06 05:52:01 pyr Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.25 2009/06/06 18:38:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -27,7 +27,7 @@
 #include <ber.h>
 #include <snmp.h>
 
-#include "imsg.h"
+#include <imsg.h>
 
 /*
  * common definitions for snmpd
