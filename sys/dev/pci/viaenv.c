@@ -1,4 +1,4 @@
-/*	$OpenBSD: viaenv.c,v 1.12 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: viaenv.c,v 1.13 2009/06/06 19:21:33 jasper Exp $	*/
 /*	$NetBSD: viaenv.c,v 1.9 2002/10/02 16:51:59 thorpej Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ val_to_uK(unsigned int val)
 	int     i = val / 4;
 	int     j = val % 4;
 
-	assert(i >= 0 && i <= 255);
+	KASSERT(i >= 0 && i <= 255);
 
 	if (j == 0 || i == 255)
 		return val_to_temp[i] * 10000;
@@ -194,7 +194,7 @@ val_to_uV(unsigned int val, int index)
 	static const long mult[] =
 	    {1250000, 1250000, 1670000, 2600000, 6300000};
 
-	assert(index >= 0 && index <= 4);
+	KASSERT(index >= 0 && index <= 4);
 
 	return (25LL * val + 133) * mult[index] / 2628;
 }
