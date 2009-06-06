@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.254 2009/06/05 19:52:32 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.255 2009/06/06 01:00:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -662,11 +662,11 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 					reconf_in = 1;
 				}
 			}
-			/* sync local-RIB first */
 			/* XXX this needs rework anyway */
+			/* sync local-RIB first */
 			if (reconf_in)
 				rib_dump(&ribs[0], rde_softreconfig_in, NULL,
-				AF_UNSPEC);
+				    AF_UNSPEC);
 			/* then sync peers */
 			if (reconf_out) {
 				int i;
