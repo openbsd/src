@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.17 2009/06/03 00:49:12 art Exp $ */
+/* $OpenBSD: apicvec.s,v 1.18 2009/06/06 22:37:34 guenther Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -133,6 +133,9 @@ XINTR(ipi_reloadcr3):
 	pushl	%ds
 	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
 	movl	%eax, %ds
+	pushl	%fs
+	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax
+	movw	%ax,%fs
 
 	ioapic_asm_ack()
 
@@ -145,6 +148,7 @@ XINTR(ipi_reloadcr3):
 	lock
 	decl	tlb_shoot_wait
 
+	popl	%fs
 	popl	%ds
 	popl	%eax
 	iret
