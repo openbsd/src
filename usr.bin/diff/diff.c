@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.50 2007/05/29 18:24:56 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.51 2009/06/06 15:00:27 ray Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.50 2007/05/29 18:24:56 ray Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.51 2009/06/06 15:00:27 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -41,8 +41,7 @@ static const char rcsid[] = "$OpenBSD: diff.c,v 1.50 2007/05/29 18:24:56 ray Exp
 #include "diff.h"
 #include "xmalloc.h"
 
-int	 aflag, bflag, dflag, iflag, lflag, Nflag, Pflag, pflag, rflag;
-int	 sflag, tflag, Tflag, wflag;
+int	 lflag, Nflag, Pflag, rflag, sflag, Tflag;
 int	 format, context, status;
 char	*start, *ifdefname, *diffargs, *label[2], *ignore_pats;
 struct stat stb1, stb2;
@@ -90,11 +89,11 @@ main(int argc, char **argv)
 {
 	char *ep, **oargv;
 	long  l;
-	int   ch, lastch, gotstdin, prevoptind, newarg;
+	int   ch, dflags, lastch, gotstdin, prevoptind, newarg;
 
 	oargv = argv;
 	gotstdin = 0;
-
+	dflags = 0;
 	lastch = '\0';
 	prevoptind = 1;
 	newarg = 1;
@@ -111,10 +110,10 @@ main(int argc, char **argv)
 			context = (context * 10) + (ch - '0');
 			break;
 		case 'a':
-			aflag = 1;
+			dflags |= D_FORCEASCII;
 			break;
 		case 'b':
-			bflag = 1;
+			dflags |= D_FOLDBLANKS;
 			break;
 		case 'C':
 		case 'c':
@@ -128,7 +127,7 @@ main(int argc, char **argv)
 				context = 3;
 			break;
 		case 'd':
-			dflag = 1;
+			dflags |= D_MINIMAL;
 			break;
 		case 'D':
 			format = D_IFDEF;
@@ -147,7 +146,7 @@ main(int argc, char **argv)
 			push_ignore_pats(optarg);
 			break;
 		case 'i':
-			iflag = 1;
+			dflags |= D_IGNORECASE;
 			break;
 		case 'L':
 			if (label[0] == NULL)
@@ -168,7 +167,7 @@ main(int argc, char **argv)
 			format = D_NREVERSE;
 			break;
 		case 'p':
-			pflag = 1;
+			dflags |= D_PROTOTYPE;
 			break;
 		case 'P':
 			Pflag = 1;
@@ -189,7 +188,7 @@ main(int argc, char **argv)
 			Tflag = 1;
 			break;
 		case 't':
-			tflag = 1;
+			dflags |= D_EXPANDTABS;
 			break;
 		case 'U':
 		case 'u':
@@ -203,7 +202,7 @@ main(int argc, char **argv)
 				context = 3;
 			break;
 		case 'w':
-			wflag = 1;
+			dflags |= D_IGNOREBLANKS;
 			break;
 		case 'X':
 			read_excludes_file(optarg);
