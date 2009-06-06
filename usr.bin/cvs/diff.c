@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.153 2009/04/29 12:56:15 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.154 2009/06/06 14:17:27 ray Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -32,6 +32,7 @@
 
 void	cvs_diff_local(struct cvs_file *);
 
+static int	 dflags = 0;
 static int	 Nflag = 0;
 static int	 force_head = 0;
 static char	*koptstr;
@@ -80,11 +81,11 @@ cvs_diff(int argc, char **argv)
 		switch (ch) {
 		case 'a':
 			strlcat(diffargs, " -a", sizeof(diffargs));
-			diff_aflag = 1;
+			dflags |= D_FORCEASCII;
 			break;
 		case 'b':
 			strlcat(diffargs, " -b", sizeof(diffargs));
-			diff_bflag = 1;
+			dflags |= D_FOLDBLANKS;
 			break;
 		case 'c':
 			strlcat(diffargs, " -c", sizeof(diffargs));
@@ -92,7 +93,7 @@ cvs_diff(int argc, char **argv)
 			break;
 		case 'd':
 			strlcat(diffargs, " -d", sizeof(diffargs));
-			diff_dflag = 1;
+			dflags |= D_MINIMAL;
 			break;
 		case 'D':
 			if (date1 == -1 && rev1 == NULL) {
@@ -111,7 +112,7 @@ cvs_diff(int argc, char **argv)
 			break;
 		case 'i':
 			strlcat(diffargs, " -i", sizeof(diffargs));
-			diff_iflag = 1;
+			dflags |= D_IGNORECASE;
 			break;
 		case 'k':
 			koptstr = optarg;
@@ -137,7 +138,7 @@ cvs_diff(int argc, char **argv)
 			break;
 		case 'p':
 			strlcat(diffargs, " -p", sizeof(diffargs));
-			diff_pflag = 1;
+			dflags |= D_PROTOTYPE;
 			break;
 		case 'R':
 			flags |= CR_RECURSE_DIRS;
@@ -152,6 +153,10 @@ cvs_diff(int argc, char **argv)
 				    " be specified");
 			}
 			break;
+		case 't':
+			strlcat(diffargs, " -t", sizeof(diffargs));
+			dflags |= D_EXPANDTABS;
+			break;
 		case 'u':
 			strlcat(diffargs, " -u", sizeof(diffargs));
 			diff_format = D_UNIFIED;
@@ -161,7 +166,7 @@ cvs_diff(int argc, char **argv)
 			    "and should not be used");
 		case 'w':
 			strlcat(diffargs, " -w", sizeof(diffargs));
-			diff_wflag = 1;
+			dflags |= D_IGNOREBLANKS;
 			break;
 		default:
 			fatal("%s", cvs_cmdop == CVS_OP_DIFF ?
@@ -219,7 +224,7 @@ cvs_diff(int argc, char **argv)
 		if (Nflag == 1)
 			cvs_client_send_request("Argument -N");
 
-		if (diff_pflag == 1)
+		if (dflags & D_PROTOTYPE)
 			cvs_client_send_request("Argument -p");
 
 		if (rev1 != NULL)
@@ -562,8 +567,8 @@ cvs_diff_local(struct cvs_file *cf)
 	}
 
 	if (cvs_diffreg(p1 != NULL ? cf->file_path : CVS_PATH_DEVNULL,
-	    p2 != NULL ? cf->file_path : CVS_PATH_DEVNULL, fd1, fd2, NULL)
-	    == D_ERROR)
+	    p2 != NULL ? cf->file_path : CVS_PATH_DEVNULL, fd1, fd2, NULL,
+	    dflags) == D_ERROR)
 		fatal("cvs_diff_local: failed to get RCS patch");
 
 	close(fd1);

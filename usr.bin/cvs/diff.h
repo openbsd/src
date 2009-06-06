@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.18 2009/04/28 09:05:40 sthen Exp $	*/
+/*	$OpenBSD: diff.h,v 1.19 2009/06/06 14:17:27 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -78,6 +78,17 @@
 #define	D_RCSDIFF	5       /* Reverse editor output: RCS format */
 
 /*
+ * Command line flags
+ */
+#define D_FORCEASCII	0x01	/* Treat file as ascii regardless of content */
+#define D_FOLDBLANKS	0x02	/* Treat all white space as equal */
+#define D_MINIMAL	0x04	/* Make diff as small as possible */
+#define D_IGNORECASE	0x08	/* Case-insensitive matching */
+#define D_PROTOTYPE	0x10	/* Display C function prototype */
+#define D_EXPANDTABS	0x20	/* Expand tabs to spaces */
+#define D_IGNOREBLANKS	0x40	/* Ignore white space changes */
+
+/*
  * Status values for cvs_diffreg() return values
  */
 #define	D_SAME		0	/* Files are the same */
@@ -93,7 +104,7 @@
 
 void		cvs_merge_file(struct cvs_file *, int);
 void		diff_output(const char *, ...);
-int		cvs_diffreg(const char *, const char *, int, int, BUF *);
+int		cvs_diffreg(const char *, const char *, int, int, BUF *, int);
 int		ed_patch_lines(struct cvs_lines *, struct cvs_lines *);
 
 extern int       diff_format;
