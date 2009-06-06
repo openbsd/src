@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.48 2009/04/20 00:42:06 oga Exp $	*/
+/*	$OpenBSD: bus.h,v 1.49 2009/06/06 05:43:13 oga Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -65,6 +65,8 @@
 
 #ifndef _I386_BUS_H_
 #define _I386_BUS_H_
+
+#include <sys/mutex.h>
 
 #include <machine/pio.h>
 
@@ -454,6 +456,7 @@ void	bus_space_copy_4(bus_space_tag_t, bus_space_handle_t, bus_size_t,
 #define	BUS_DMA_WRITE		0x0400	/* mapping is memory -> device only */
 #define	BUS_DMA_NOCACHE		0x0800	/* map memory uncached */
 #define	BUS_DMA_ZERO		0x1000	/* dmamem_alloc return zeroed mem */
+#define	BUS_DMA_SG		0x2000	/* Internal. memory is for SG map */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
@@ -480,6 +483,13 @@ typedef struct bus_dmamap		*bus_dmamap_t;
 struct bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+	/*
+	 * Ugh. need this so can pass alignment down from bus_dmamem_alloc
+	 * to scatter gather maps. only the first one is used so the rest is
+	 * wasted space. bus_dma could do with fixing the api for this.
+	 */
+	 bus_size_t	_ds_boundary;	/* don't cross */
+	 bus_size_t	_ds_align;	/* align to me */
 };
 typedef struct bus_dma_segment	bus_dma_segment_t;
 
@@ -610,5 +620,41 @@ int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    paddr_t low, paddr_t high);
+
+struct extent;
+
+/* Scatter gather bus_dma functions. */
+struct sg_cookie {
+	struct mutex	 sg_mtx;
+	struct extent	*sg_ex;
+	void		*sg_hdl;
+	void		(*bind_page)(void *, bus_addr_t, paddr_t, int);
+	void		(*unbind_page)(void *, bus_addr_t);
+	void		(*flush_tlb)(void *);
+};
+
+struct sg_cookie	*sg_dmatag_init(char *, void *, bus_addr_t, bus_size_t,
+			    void (*)(void *, vaddr_t, paddr_t, int),
+			    void (*)(void *, vaddr_t), void (*)(void *));
+void	sg_dmatag_destroy(struct sg_cookie *);
+int	sg_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	    bus_size_t, int, bus_dmamap_t *);
+void	sg_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+void	sg_dmamap_set_alignment(bus_dma_tag_t, bus_dmamap_t, u_long);
+int	sg_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+	    struct proc *, int);
+int	sg_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
+int	sg_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t, struct uio *, int);
+int	sg_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
+	    int, bus_size_t, int);
+void	sg_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+int	sg_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+	    struct proc *, int, int *, int);
+int	sg_dmamap_load_physarray(bus_dma_tag_t, bus_dmamap_t, paddr_t *,
+	    int, int, int *, int);
+int	sg_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
+	    bus_dma_segment_t *, int, int *, int);
+
 
 #endif /* _I386_BUS_H_ */

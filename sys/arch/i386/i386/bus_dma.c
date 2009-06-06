@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.16 2009/04/20 00:42:06 oga Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.17 2009/06/06 05:43:13 oga Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -601,7 +601,13 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	/* Always round the size. */
 	size = round_page(size);
 
-	TAILQ_INIT(&mlist);
+	segs[0]._ds_boundary = boundary;
+	segs[0]._ds_align = alignment;
+	if (flags & BUS_DMA_SG) {
+		boundary = 0;
+		alignment = 0;
+	}
+
 	/*
 	 * Allocate pages from the VM system.
 	 * For non-ISA mappings first try higher memory segments.
@@ -610,6 +616,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	if (flags & BUS_DMA_ZERO)
 		plaflag |= UVM_PLA_ZERO;
 
+	TAILQ_INIT(&mlist);
 	if (high <= ISA_DMA_BOUNCE_THRESHOLD || (error = uvm_pglistalloc(size,
 	    round_page(ISA_DMA_BOUNCE_THRESHOLD), high, alignment, boundary,
 	    &mlist, nsegs, plaflag)))
