@@ -680,7 +680,7 @@
 ./usr/libdata/perl5/i386-openbsd/5.10.0/threads
 ./usr/libdata/perl5/i386-openbsd/5.10.0/threads.pm
 ./usr/libdata/perl5/i386-openbsd/5.10.0/threads/shared.pm
-./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/vga_post.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/i386/vga_post.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd
 ./usr/libdata/perl5/site_perl/i386-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/a.out.ph
