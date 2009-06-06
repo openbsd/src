@@ -1,4 +1,4 @@
-/*	$OpenBSD: runner.c,v 1.51 2009/06/05 20:43:57 pyr Exp $	*/
+/*	$OpenBSD: runner.c,v 1.52 2009/06/06 04:14:21 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -99,18 +99,20 @@ void
 runner_dispatch_parent(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_PARENT];
+	iev = env->sc_ievs[PROC_PARENT];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -138,25 +140,27 @@ runner_dispatch_parent(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 runner_dispatch_control(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_CONTROL];
+	iev = env->sc_ievs[PROC_CONTROL];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -197,7 +201,7 @@ runner_dispatch_control(int sig, short event, void *p)
 			else if (valid_message_id(s->mid))
 				s->ret = runner_force_message_schedule(s->mid);
 
-			imsg_compose_event(ibuf, IMSG_RUNNER_SCHEDULE, 0, 0, -1, s, sizeof(*s));
+			imsg_compose_event(iev, IMSG_RUNNER_SCHEDULE, 0, 0, -1, s, sizeof(*s));
 			break;
 		}
 		default:
@@ -207,25 +211,27 @@ runner_dispatch_control(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 runner_dispatch_queue(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_QUEUE];
+	iev = env->sc_ievs[PROC_QUEUE];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -259,25 +265,27 @@ runner_dispatch_queue(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 runner_dispatch_mda(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_MDA];
+	iev = env->sc_ievs[PROC_MDA];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -302,25 +310,27 @@ runner_dispatch_mda(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 runner_dispatch_mta(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_MTA];
+	iev = env->sc_ievs[PROC_MTA];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -346,25 +356,27 @@ runner_dispatch_mta(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 runner_dispatch_lka(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_LKA];
+	iev = env->sc_ievs[PROC_LKA];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -389,7 +401,7 @@ runner_dispatch_lka(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
@@ -500,7 +512,7 @@ runner_process_offline(struct smtpd *env)
 	q = qwalk_new(PATH_OFFLINE);
 
 	if (qwalk(q, path))
-		imsg_compose_event(env->sc_ibufs[PROC_PARENT],
+		imsg_compose_event(env->sc_ievs[PROC_PARENT],
 		    IMSG_PARENT_ENQUEUE_OFFLINE, 0, 0, -1, path,
 		    strlen(path) + 1);
 
@@ -681,18 +693,18 @@ runner_batch_dispatch(struct smtpd *env, struct batch *batchp, time_t curtime)
 	else if (batchp->type & T_MTA_BATCH)
 		proctype = PROC_MTA;
 
-	imsg_compose_event(env->sc_ibufs[proctype], IMSG_BATCH_CREATE, 0, 0, -1,
+	imsg_compose_event(env->sc_ievs[proctype], IMSG_BATCH_CREATE, 0, 0, -1,
 	    batchp, sizeof (struct batch));
 
 	while ((messagep = TAILQ_FIRST(&batchp->messages))) {
-		imsg_compose_event(env->sc_ibufs[proctype], IMSG_BATCH_APPEND, 0, 0,
+		imsg_compose_event(env->sc_ievs[proctype], IMSG_BATCH_APPEND, 0, 0,
 		    -1, messagep, sizeof (struct message));
 		TAILQ_REMOVE(&batchp->messages, messagep, entry);
 		bzero(messagep, sizeof(struct message));
 		free(messagep);
 	}
 
-	imsg_compose_event(env->sc_ibufs[proctype], IMSG_BATCH_CLOSE, 0, 0, -1,
+	imsg_compose_event(env->sc_ievs[proctype], IMSG_BATCH_CLOSE, 0, 0, -1,
 	    batchp, sizeof(struct batch));
 }
 

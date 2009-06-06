@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfa.c,v 1.35 2009/06/05 20:43:57 pyr Exp $	*/
+/*	$OpenBSD: mfa.c,v 1.36 2009/06/06 04:14:21 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -67,18 +67,20 @@ void
 mfa_dispatch_parent(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_PARENT];
+	iev = env->sc_ievs[PROC_PARENT];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -190,25 +192,27 @@ mfa_dispatch_parent(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 mfa_dispatch_smtp(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_SMTP];
+	iev = env->sc_ievs[PROC_SMTP];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -251,25 +255,27 @@ mfa_dispatch_smtp(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 mfa_dispatch_lka(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_LKA];
+	iev = env->sc_ievs[PROC_LKA];
+	ibuf = &iev->ibuf; 
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -292,7 +298,7 @@ mfa_dispatch_lka(int sig, short event, void *p)
 
 			IMSG_SIZE_CHECK(ss);
 
-			imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_MFA_MAIL,
+			imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_MAIL,
 			    0, 0, -1, ss, sizeof(*ss));
 			break;
 		}
@@ -301,7 +307,7 @@ mfa_dispatch_lka(int sig, short event, void *p)
 
 			IMSG_SIZE_CHECK(ss);
 
-			imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT,
+			imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_RCPT,
 			    0, 0, -1, ss, sizeof(*ss));
 			break;
 		}
@@ -312,25 +318,27 @@ mfa_dispatch_lka(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 mfa_dispatch_control(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_CONTROL];
+	iev = env->sc_ievs[PROC_CONTROL];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -355,7 +363,7 @@ mfa_dispatch_control(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
@@ -487,13 +495,13 @@ mfa_test_mail(struct smtpd *env, struct message *m)
 	goto accept;
 
 refuse:
-	imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_MFA_MAIL, 0, 0, -1, &ss,
+	imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_MAIL, 0, 0, -1, &ss,
 	    sizeof(ss));
 	return;
 
 accept:
 	ss.code = 250;
-	imsg_compose_event(env->sc_ibufs[PROC_LKA], IMSG_LKA_MAIL, 0,
+	imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_MAIL, 0,
 	    0, -1, &ss, sizeof(ss));
 }
 
@@ -530,13 +538,13 @@ mfa_test_rcpt(struct smtpd *env, struct message *m)
 	goto accept;
 		
 refuse:
-	imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_MFA_RCPT, 0, 0, -1, &ss,
+	imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_MFA_RCPT, 0, 0, -1, &ss,
 	    sizeof(ss));
 	return;
 
 accept:
 	ss.code = 250;
-	imsg_compose_event(env->sc_ibufs[PROC_LKA], IMSG_LKA_RCPT, 0, 0, -1,
+	imsg_compose_event(env->sc_ievs[PROC_LKA], IMSG_LKA_RCPT, 0, 0, -1,
 	    &ss, sizeof(ss));
 }
 

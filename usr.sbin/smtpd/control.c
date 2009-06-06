@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.33 2009/06/05 20:43:57 pyr Exp $	*/
+/*	$OpenBSD: control.c,v 1.34 2009/06/06 04:14:21 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -228,12 +228,13 @@ control_accept(int listenfd, short event, void *arg)
 		return;
 	}
 
-	imsg_init(&c->ibuf, connfd, control_dispatch_ext);
-	c->ibuf.events = EV_READ;
-	c->ibuf.data = env;
-	event_set(&c->ibuf.ev, c->ibuf.fd, c->ibuf.events,
-	    c->ibuf.handler, env);
-	event_add(&c->ibuf.ev, NULL);
+	imsg_init(&c->iev.ibuf, connfd);
+	c->iev.handler = control_dispatch_ext;
+	c->iev.events = EV_READ;
+	c->iev.data = env;
+	event_set(&c->iev.ev, c->iev.ibuf.fd, c->iev.events,
+	    c->iev.handler, env);
+	event_add(&c->iev.ev, NULL);
 
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
 }
@@ -243,7 +244,7 @@ control_connbyfd(int fd)
 {
 	struct ctl_conn	*c;
 
-	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->ibuf.fd != fd;
+	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->iev.ibuf.fd != fd;
 	    c = TAILQ_NEXT(c, entry))
 		;	/* nothing */
 
@@ -260,11 +261,11 @@ control_close(int fd)
 		return;
 	}
 
-	msgbuf_clear(&c->ibuf.w);
+	msgbuf_clear(&c->iev.ibuf.w);
 	TAILQ_REMOVE(&ctl_conns, c, entry);
 
-	event_del(&c->ibuf.ev);
-	close(c->ibuf.fd);
+	event_del(&c->iev.ev);
+	close(c->iev.ibuf.fd);
 	free(c);
 }
 
@@ -288,21 +289,21 @@ control_dispatch_ext(int fd, short event, void *arg)
 	}
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(&c->ibuf)) == -1 || n == 0) {
+		if ((n = imsg_read(&c->iev.ibuf)) == -1 || n == 0) {
 			control_close(fd);
 			return;
 		}
 	}
 
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&c->ibuf.w) < 0) {
+		if (msgbuf_write(&c->iev.ibuf.w) < 0) {
 			control_close(fd);
 			return;
 		}
 	}
 
 	for (;;) {
-		if ((n = imsg_get(&c->ibuf, &imsg)) == -1) {
+		if ((n = imsg_get(&c->iev.ibuf, &imsg)) == -1) {
 			control_close(fd);
 			return;
 		}
@@ -314,17 +315,17 @@ control_dispatch_ext(int fd, short event, void *arg)
 		case IMSG_SMTP_ENQUEUE:
 			if (env->sc_flags & (SMTPD_SMTP_PAUSED |
 			    SMTPD_CONFIGURING | SMTPD_EXITING)) {
-				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
-			imsg_compose_event(env->sc_ibufs[PROC_SMTP],
+			imsg_compose_event(env->sc_ievs[PROC_SMTP],
 			    IMSG_SMTP_ENQUEUE, 0, 0, -1, &fd, sizeof(fd));
 			break;
 		case IMSG_STATS:
 			if (euid)
 				goto badcred;
-			imsg_compose_event(&c->ibuf, IMSG_STATS, 0, 0, -1,
+			imsg_compose_event(&c->iev, IMSG_STATS, 0, 0, -1,
 			    env->stats, sizeof(struct stats));
 			break;
 		case IMSG_RUNNER_SCHEDULE: {
@@ -339,12 +340,12 @@ control_dispatch_ext(int fd, short event, void *arg)
 			s->fd = fd;
 
 			if (! valid_message_id(s->mid) && ! valid_message_uid(s->mid)) {
-				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
 				    NULL, 0);
 				break;
 			}
 
-			imsg_compose_event(env->sc_ibufs[PROC_RUNNER], IMSG_RUNNER_SCHEDULE, 0, 0, -1, s, sizeof(*s));
+			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_RUNNER_SCHEDULE, 0, 0, -1, s, sizeof(*s));
 			break;
 		}
 		case IMSG_CONF_RELOAD: {
@@ -356,14 +357,14 @@ control_dispatch_ext(int fd, short event, void *arg)
 				goto badcred;
 
 			if (env->sc_flags & SMTPD_CONFIGURING) {
-				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags |= SMTPD_CONFIGURING;
 
 			r.fd = fd;
-			imsg_compose_event(env->sc_ibufs[PROC_PARENT], IMSG_CONF_RELOAD, 0, 0, -1, &r, sizeof(r));
+			imsg_compose_event(env->sc_ievs[PROC_PARENT], IMSG_CONF_RELOAD, 0, 0, -1, &r, sizeof(r));
 			break;
 		}
 		case IMSG_CTL_SHUTDOWN:
@@ -374,96 +375,96 @@ control_dispatch_ext(int fd, short event, void *arg)
 				goto badcred;
 
 			if (env->sc_flags & SMTPD_EXITING) {
-				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags |= SMTPD_EXITING;
-			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_MDA_PAUSE:
 			if (euid)
 				goto badcred;
 
 			if (env->sc_flags & SMTPD_MDA_PAUSED) {
-				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags |= SMTPD_MDA_PAUSED;
-			imsg_compose_event(env->sc_ibufs[PROC_RUNNER], IMSG_MDA_PAUSE,
+			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_MDA_PAUSE,
 			    0, 0, -1, NULL, 0);
-			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_MTA_PAUSE:
 			if (euid)
 				goto badcred;
 
 			if (env->sc_flags & SMTPD_MTA_PAUSED) {
-				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags |= SMTPD_MTA_PAUSED;
-			imsg_compose_event(env->sc_ibufs[PROC_RUNNER], IMSG_MTA_PAUSE,
+			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_MTA_PAUSE,
 			    0, 0, -1, NULL, 0);
-			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_SMTP_PAUSE:
 			if (euid)
 				goto badcred;
 
 			if (env->sc_flags & SMTPD_SMTP_PAUSED) {
-				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags |= SMTPD_SMTP_PAUSED;
-			imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_SMTP_PAUSE,			
+			imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_SMTP_PAUSE,			
 			    0, 0, -1, NULL, 0);
-			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_MDA_RESUME:
 			if (euid)
 				goto badcred;
 
 			if (! (env->sc_flags & SMTPD_MDA_PAUSED)) {
-				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags &= ~SMTPD_MDA_PAUSED;
-			imsg_compose_event(env->sc_ibufs[PROC_RUNNER], IMSG_MTA_RESUME,
+			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_MTA_RESUME,
 			    0, 0, -1, NULL, 0);
-			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_MTA_RESUME:
 			if (euid)
 				goto badcred;
 
 			if (!(env->sc_flags & SMTPD_MTA_PAUSED)) {
-				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags &= ~SMTPD_MTA_PAUSED;
-			imsg_compose_event(env->sc_ibufs[PROC_RUNNER], IMSG_MTA_RESUME,
+			imsg_compose_event(env->sc_ievs[PROC_RUNNER], IMSG_MTA_RESUME,
 			    0, 0, -1, NULL, 0);
-			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		case IMSG_SMTP_RESUME:
 			if (euid)
 				goto badcred;
 
 			if (!(env->sc_flags & SMTPD_SMTP_PAUSED)) {
-				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
 					NULL, 0);
 				break;
 			}
 			env->sc_flags &= ~SMTPD_SMTP_PAUSED;
-			imsg_compose_event(env->sc_ibufs[PROC_SMTP], IMSG_SMTP_RESUME,
+			imsg_compose_event(env->sc_ievs[PROC_SMTP], IMSG_SMTP_RESUME,
 			    0, 0, -1, NULL, 0);
-			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			break;
 		default:
 			log_debug("control_dispatch_ext: "
@@ -474,29 +475,31 @@ control_dispatch_ext(int fd, short event, void *arg)
 		continue;
 
 badcred:
-		imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1,
+		imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1,
 		    NULL, 0);
 	}
 
-	imsg_event_add(&c->ibuf);
+	imsg_event_add(&c->iev);
 }
 
 void
 control_dispatch_parent(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_PARENT];
+	iev = env->sc_ievs[PROC_PARENT];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -527,9 +530,9 @@ control_dispatch_parent(int sig, short event, void *p)
 			}
 
 			if (r->ret)
-				imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+				imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			else
-				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
 			break;
 		}
 		default:
@@ -539,25 +542,27 @@ control_dispatch_parent(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 control_dispatch_lka(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_LKA];
+	iev = env->sc_ievs[PROC_LKA];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -582,25 +587,27 @@ control_dispatch_lka(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 control_dispatch_mfa(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_MFA];
+	iev = env->sc_ievs[PROC_MFA];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -625,25 +632,27 @@ control_dispatch_mfa(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 control_dispatch_queue(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_QUEUE];
+	iev = env->sc_ievs[PROC_QUEUE];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -668,25 +677,27 @@ control_dispatch_queue(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 control_dispatch_runner(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_RUNNER];
+	iev = env->sc_ievs[PROC_RUNNER];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -717,9 +728,9 @@ control_dispatch_runner(int sig, short event, void *p)
 			}
 
 			if (s->ret)
-				imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
+				imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0, -1, NULL, 0);
 			else
-				imsg_compose_event(&c->ibuf, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
+				imsg_compose_event(&c->iev, IMSG_CTL_FAIL, 0, 0, -1, NULL, 0);
 			break;
 		}
 		default:
@@ -729,25 +740,27 @@ control_dispatch_runner(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 control_dispatch_smtp(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_SMTP];
+	iev = env->sc_ievs[PROC_SMTP];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -780,7 +793,7 @@ control_dispatch_smtp(int sig, short event, void *p)
 				return;
 			}
 
-			imsg_compose_event(&c->ibuf, IMSG_CTL_OK, 0, 0,
+			imsg_compose_event(&c->iev, IMSG_CTL_OK, 0, 0,
 			    imsg_get_fd(ibuf), NULL, 0);
 			break;
 		}
@@ -791,7 +804,7 @@ control_dispatch_smtp(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void

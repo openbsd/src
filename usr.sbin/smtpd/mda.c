@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.21 2009/06/05 20:43:57 pyr Exp $	*/
+/*	$OpenBSD: mda.c,v 1.22 2009/06/06 04:14:21 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -59,18 +59,20 @@ void
 mda_dispatch_parent(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_PARENT];
+	iev = env->sc_ievs[PROC_PARENT];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -116,7 +118,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 			}
 
 			batchp->message = *messagep;
-			imsg_compose_event(env->sc_ibufs[PROC_PARENT],
+			imsg_compose_event(env->sc_ievs[PROC_PARENT],
 			    IMSG_PARENT_MESSAGE_OPEN, 0, 0, -1, batchp,
 			    sizeof(struct batch));
 			break;
@@ -159,7 +161,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 
 			if (store_message(batchp, messagep, store)) {
 				if (batchp->message.recipient.rule.r_action == A_MAILDIR)
-					imsg_compose_event(env->sc_ibufs[PROC_PARENT],
+					imsg_compose_event(env->sc_ievs[PROC_PARENT],
 					    IMSG_PARENT_MAILBOX_RENAME, 0, 0, -1, batchp,
 					    sizeof(struct batch));
 			}
@@ -179,25 +181,27 @@ mda_dispatch_parent(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 mda_dispatch_queue(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_QUEUE];
+	iev = env->sc_ievs[PROC_QUEUE];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -222,25 +226,27 @@ mda_dispatch_queue(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 mda_dispatch_runner(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_RUNNER];
+	iev = env->sc_ievs[PROC_RUNNER];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -327,7 +333,7 @@ mda_dispatch_runner(int sig, short event, void *p)
 			lookup = *batchp;
 			TAILQ_FOREACH(messagep, &batchp->messages, entry) {
 				lookup.message = *messagep;
-				imsg_compose_event(env->sc_ibufs[PROC_PARENT],
+				imsg_compose_event(env->sc_ievs[PROC_PARENT],
 				    IMSG_PARENT_MAILBOX_OPEN, 0, 0, -1, &lookup,
 				    sizeof(struct batch));
 			}
@@ -340,7 +346,7 @@ mda_dispatch_runner(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 
@@ -432,7 +438,7 @@ mda(struct smtpd *env)
 void
 mda_remove_message(struct smtpd *env, struct batch *batchp, struct message *messagep)
 {
-	imsg_compose_event(env->sc_ibufs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_UPDATE, 0, 0,
+	imsg_compose_event(env->sc_ievs[PROC_QUEUE], IMSG_QUEUE_MESSAGE_UPDATE, 0, 0,
 	    -1, messagep, sizeof (struct message));
 
 	if ((batchp->message.status & S_MESSAGE_TEMPFAILURE) == 0 &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.56 2009/06/05 20:43:57 pyr Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.57 2009/06/06 04:14:21 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -69,18 +69,21 @@ void
 smtp_dispatch_parent(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_PARENT];
+	iev = env->sc_ievs[PROC_PARENT];
+	ibuf = &iev->ibuf;
+
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -111,7 +114,7 @@ smtp_dispatch_parent(int sig, short event, void *p)
 			}
 			if (env->sc_listeners)
 				smtp_disable_events(env);
-			imsg_compose_event(ibuf, IMSG_PARENT_SEND_CONFIG, 0, 0, -1,
+			imsg_compose_event(iev, IMSG_PARENT_SEND_CONFIG, 0, 0, -1,
 			    NULL, 0);
 			break;
 		}
@@ -210,25 +213,27 @@ smtp_dispatch_parent(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 smtp_dispatch_mfa(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_MFA];
+	iev = env->sc_ievs[PROC_MFA];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -268,25 +273,27 @@ smtp_dispatch_mfa(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 smtp_dispatch_lka(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_LKA];
+	iev = env->sc_ievs[PROC_LKA];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -335,25 +342,27 @@ smtp_dispatch_lka(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 smtp_dispatch_queue(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_QUEUE];
+	iev = env->sc_ievs[PROC_QUEUE];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -459,25 +468,27 @@ smtp_dispatch_queue(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void
 smtp_dispatch_control(int sig, short event, void *p)
 {
 	struct smtpd		*env = p;
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = env->sc_ibufs[PROC_CONTROL];
+	iev = env->sc_ievs[PROC_CONTROL];
+	ibuf = &iev->ibuf;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read_error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -508,7 +519,7 @@ smtp_dispatch_control(int sig, short event, void *p)
 			    env->sc_maxconn) {
 				log_warnx("denying local connection, too many"
 				    " sessions active");
-				imsg_compose_event(ibuf, IMSG_SMTP_ENQUEUE, 0, 0, -1,
+				imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0, -1,
 				    imsg.data, sizeof(int));
 				break;
 			}
@@ -547,7 +558,7 @@ smtp_dispatch_control(int sig, short event, void *p)
 
 			session_init(s->s_l, s);
 
-			imsg_compose_event(ibuf, IMSG_SMTP_ENQUEUE, 0, 0, fd[1],
+			imsg_compose_event(iev, IMSG_SMTP_ENQUEUE, 0, 0, fd[1],
 			    imsg.data, sizeof(int));
 			break;
 		}
@@ -564,7 +575,7 @@ smtp_dispatch_control(int sig, short event, void *p)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 void

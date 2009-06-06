@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.126 2009/06/05 20:43:57 pyr Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.127 2009/06/06 04:14:21 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -200,11 +200,19 @@ enum blockmodes {
 	BM_NONBLOCK
 };
 
+struct imsgev {
+	struct imsgbuf		 ibuf;
+	void			(*handler)(int, short, void *);
+	struct event		 ev;
+	void			*data;
+	short			 events;
+};
+
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	 entry;
 	u_int8_t		 flags;
 #define CTL_CONN_NOTIFY		 0x01
-	struct imsgbuf		 ibuf;
+	struct imsgev		 iev;
 };
 TAILQ_HEAD(ctl_connlist, ctl_conn);
 
@@ -594,7 +602,7 @@ struct smtpd {
 	struct event				 sc_ev;
 	int					 *sc_pipes[PROC_COUNT]
 						     [PROC_COUNT];
-	struct imsgbuf				*sc_ibufs[PROC_COUNT];
+	struct imsgev				*sc_ievs[PROC_COUNT];
 	int					 sc_instances[PROC_COUNT];
 	int					 sc_instance;
 	char					*sc_title[PROC_COUNT];
@@ -747,7 +755,7 @@ void		 dns_query_a(struct smtpd *, char *, int, u_int64_t);
 void		 dns_query_mx(struct smtpd *, char *, int, u_int64_t);
 void		 dns_query_ptr(struct smtpd *, struct sockaddr_storage *,
 		     u_int64_t);
-void		 dns_async(struct smtpd *, struct imsgbuf *, int,
+void		 dns_async(struct smtpd *, struct imsgev *, int,
 		     struct dns *);
 
 
@@ -757,8 +765,8 @@ int forwards_get(int, struct aliaseslist *);
 /* smtpd.c */
 int	 child_cmp(struct child *, struct child *);
 SPLAY_PROTOTYPE(childtree, child, entry, child_cmp);
-void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
-int	 imsg_compose_event(struct imsgbuf *, u_int16_t, u_int32_t, pid_t,
+void	 imsg_event_add(struct imsgev *);
+int	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t, pid_t,
 	    int, void *, u_int16_t);
 
 /* lka.c */
