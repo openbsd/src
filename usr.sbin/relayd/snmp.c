@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.5 2009/06/05 23:39:51 pyr Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.6 2009/06/06 05:30:45 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -142,7 +142,7 @@ snmp_getsock(struct imsgev *iev)
 	if (s != -1) {
 		log_debug("snmp_getsock: got new snmp socket %d", s);
 		if (iev_snmp == NULL && (iev_snmp = (struct imsgev *)
-		    calloc(1, sizeof(struct imsgbuf))) == NULL)
+		    calloc(1, sizeof(struct imsgev))) == NULL)
 			fatal("snmp_getsock: calloc");
 		imsg_init(&iev_snmp->ibuf, s);
 	}
