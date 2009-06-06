@@ -1,5 +1,5 @@
+/* $OpenBSD: vga_post.c,v 1.3 2009/06/06 03:20:58 deraadt Exp $ */
 /* $NetBSD: vga_post.c,v 1.12 2009/03/15 21:32:36 cegger Exp $ */
-/* $OpenBSD: vga_post.c,v 1.2 2009/06/06 00:49:08 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -48,7 +48,7 @@
 #define	BASE_MEMORY	65536	/* How much memory to allocate in Real Mode */
 
 struct vga_post {
-	struct X86EMU emu;
+	struct x86emu emu;
 	vaddr_t sys_image;
 	uint32_t initial_eax;
 	uint8_t bios_data[PAGE_SIZE];
@@ -61,7 +61,7 @@ void ddb_vgapost(void);
 #endif
 
 static uint8_t
-vm86_emu_inb(struct X86EMU *emu, uint16_t port)
+vm86_emu_inb(struct x86emu *emu, uint16_t port)
 {
 	if (port == 0xb2) /* APM scratch register */
 		return 0;
@@ -73,7 +73,7 @@ vm86_emu_inb(struct X86EMU *emu, uint16_t port)
 }
 
 static uint16_t
-vm86_emu_inw(struct X86EMU *emu, uint16_t port)
+vm86_emu_inw(struct x86emu *emu, uint16_t port)
 {
 	if (port >= 0x80 && port < 0x88) /* POST status register */
 		return 0;
@@ -82,7 +82,7 @@ vm86_emu_inw(struct X86EMU *emu, uint16_t port)
 }
 
 static uint32_t
-vm86_emu_inl(struct X86EMU *emu, uint16_t port)
+vm86_emu_inl(struct x86emu *emu, uint16_t port)
 {
 	if (port >= 0x80 && port < 0x88) /* POST status register */
 		return 0;
@@ -91,7 +91,7 @@ vm86_emu_inl(struct X86EMU *emu, uint16_t port)
 }
 
 static void
-vm86_emu_outb(struct X86EMU *emu, uint16_t port, uint8_t val)
+vm86_emu_outb(struct x86emu *emu, uint16_t port, uint8_t val)
 {
 	if (port == 0xb2) /* APM scratch register */
 		return;
@@ -103,7 +103,7 @@ vm86_emu_outb(struct X86EMU *emu, uint16_t port, uint8_t val)
 }
 
 static void
-vm86_emu_outw(struct X86EMU *emu, uint16_t port, uint16_t val)
+vm86_emu_outw(struct x86emu *emu, uint16_t port, uint16_t val)
 {
 	if (port >= 0x80 && port < 0x88) /* POST status register */
 		return;
@@ -112,7 +112,7 @@ vm86_emu_outw(struct X86EMU *emu, uint16_t port, uint16_t val)
 }
 
 static void
-vm86_emu_outl(struct X86EMU *emu, uint16_t port, uint32_t val)
+vm86_emu_outl(struct x86emu *emu, uint16_t port, uint32_t val)
 {
 	if (port >= 0x80 && port < 0x88) /* POST status register */
 		return;
@@ -171,7 +171,7 @@ vga_post_init(int bus, int device, int function)
 	pmap_update(pmap_kernel());
 
 	memset(&sc->emu, 0, sizeof(sc->emu));
-	X86EMU_init_default(&sc->emu);
+	x86emu_init_default(&sc->emu);
 	sc->emu.emu_inb = vm86_emu_inb;
 	sc->emu.emu_inw = vm86_emu_inw;
 	sc->emu.emu_inl = vm86_emu_inl;
@@ -204,7 +204,7 @@ vga_post_call(struct vga_post *sc)
 	sc->emu.x86.R_ESP = 0;
 
 	/* Jump straight into the VGA BIOS POST code */
-	X86EMU_exec_call(&sc->emu, 0xc000, 0x0003);
+	x86emu_exec_call(&sc->emu, 0xc000, 0x0003);
 }
 
 void

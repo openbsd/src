@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.191 2009/06/06 00:35:00 pirofti Exp $
+#	$OpenBSD: files.i386,v 1.192 2009/06/06 03:20:58 deraadt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -103,7 +103,7 @@ include "../../../dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c		pci
 file	arch/i386/pci/pciide_machdep.c		pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
-file	arch/i386/pci/vga_post.c		vga_pci & vga_post
+file	arch/i386/pci/vga_post.c		vga_pci & x86emu
 
 # PCI-Host bridge chipsets
 device  pchb: pcibus, agpbus

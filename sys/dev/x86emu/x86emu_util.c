@@ -1,5 +1,5 @@
+/*	$OpenBSD: x86emu_util.c,v 1.3 2009/06/06 03:20:58 deraadt Exp $	*/
 /*	$NetBSD: x86emu_util.c,v 1.2 2007/12/04 17:32:22 joerg Exp $	*/
-/* $OpenBSD */
 
 /****************************************************************************
 *
@@ -50,10 +50,10 @@ REMARKS:
 Reads a byte value from the emulator memory.
 ****************************************************************************/
 static uint8_t
-rdb(struct X86EMU *emu, uint32_t addr)
+rdb(struct x86emu *emu, uint32_t addr)
 {
 	if (addr > emu->mem_size - 1)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	return emu->mem_base[addr];
 }
 /****************************************************************************
@@ -67,10 +67,10 @@ REMARKS:
 Reads a word value from the emulator memory.
 ****************************************************************************/
 static uint16_t
-rdw(struct X86EMU *emu, uint32_t addr)
+rdw(struct x86emu *emu, uint32_t addr)
 {
 	if (addr > emu->mem_size - 2)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	/* XXX alignment *sigh* */
 	return *(u_int16_t *)(emu->mem_base + addr);
 }
@@ -84,10 +84,10 @@ REMARKS:
 Reads a long value from the emulator memory.
 ****************************************************************************/
 static uint32_t
-rdl(struct X86EMU *emu, uint32_t addr)
+rdl(struct x86emu *emu, uint32_t addr)
 {
 	if (addr > emu->mem_size - 4)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	/* XXX alignment *sigh* */
 	return *(u_int32_t *)(emu->mem_base + addr);
 }
@@ -100,10 +100,10 @@ REMARKS:
 Writes a byte value to emulator memory.
 ****************************************************************************/
 static void
-wrb(struct X86EMU *emu, uint32_t addr, uint8_t val)
+wrb(struct x86emu *emu, uint32_t addr, uint8_t val)
 {
 	if (addr > emu->mem_size - 1)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	emu->mem_base[addr] = val;
 }
 /****************************************************************************
@@ -115,10 +115,10 @@ REMARKS:
 Writes a word value to emulator memory.
 ****************************************************************************/
 static void
-wrw(struct X86EMU *emu, uint32_t addr, uint16_t val)
+wrw(struct x86emu *emu, uint32_t addr, uint16_t val)
 {
 	if (addr > emu->mem_size - 2)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	/* XXX alignment */
 	*((u_int16_t *)(emu->mem_base + addr)) = val;
 }
@@ -131,10 +131,10 @@ REMARKS:
 Writes a long value to emulator memory.
 ****************************************************************************/
 static void
-wrl(struct X86EMU *emu, uint32_t addr, uint32_t val)
+wrl(struct x86emu *emu, uint32_t addr, uint32_t val)
 {
 	if (addr > emu->mem_size - 4)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	/* XXX alignment *sigh* */
 	*((u_int32_t *)(emu->mem_base + addr)) = val;
 }
@@ -142,7 +142,7 @@ wrl(struct X86EMU *emu, uint32_t addr, uint32_t val)
 /*----------------------------- Setup -------------------------------------*/
 
 void
-X86EMU_init_default(struct X86EMU *emu)
+x86emu_init_default(struct x86emu *emu)
 {
 	int i;
 
@@ -154,5 +154,5 @@ X86EMU_init_default(struct X86EMU *emu)
 	emu->emu_wrl = wrl;
 
 	for (i = 0; i < 256; i++)
-		emu->_X86EMU_intrTab[i] = NULL;
+		emu->_x86emu_intrTab[i] = NULL;
 }

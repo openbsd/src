@@ -61,43 +61,43 @@
 
 #ifdef	__BIG_ENDIAN__
 
-struct X86EMU_register32 {
+struct x86emu_register32 {
 	uint32_t e_reg;
 };
 
-struct X86EMU_register16 {
+struct x86emu_register16 {
 	uint16_t filler0;
 	uint16_t x_reg;
 };
 
-struct X86EMU_register8 {
+struct x86emu_register8 {
 	uint8_t filler0, filler1;
 	uint8_t h_reg, l_reg;
 };
 
 #else /* !__BIG_ENDIAN__ */
 
-struct X86EMU_register32 {
+struct x86emu_register32 {
 	uint32_t e_reg;
 };
 
-struct X86EMU_register16 {
+struct x86emu_register16 {
 	uint16_t x_reg;
 };
 
-struct X86EMU_register8 {
+struct x86emu_register8 {
 	uint8_t l_reg, h_reg;
 };
 
 #endif /* BIG_ENDIAN */
 
-union X86EMU_register {
-	struct X86EMU_register32	I32_reg;
-	struct X86EMU_register16	I16_reg;
-	struct X86EMU_register8		I8_reg;
+union x86emu_register {
+	struct x86emu_register32	I32_reg;
+	struct x86emu_register16	I16_reg;
+	struct x86emu_register8		I8_reg;
 };
 
-struct X86EMU_regs {
+struct x86emu_regs {
 	uint16_t		register_cs;
 	uint16_t		register_ds;
 	uint16_t		register_es;
@@ -105,16 +105,16 @@ struct X86EMU_regs {
 	uint16_t		register_gs;
 	uint16_t		register_ss;
 	uint32_t		register_flags;
-	union X86EMU_register	register_a;
-	union X86EMU_register	register_b;
-	union X86EMU_register	register_c;
-	union X86EMU_register	register_d;
+	union x86emu_register	register_a;
+	union x86emu_register	register_b;
+	union x86emu_register	register_c;
+	union x86emu_register	register_d;
 
-	union X86EMU_register	register_sp;
-	union X86EMU_register	register_bp;
-	union X86EMU_register	register_si;
-	union X86EMU_register	register_di;
-	union X86EMU_register	register_ip;
+	union x86emu_register	register_sp;
+	union x86emu_register	register_bp;
+	union x86emu_register	register_si;
+	union x86emu_register	register_di;
+	union x86emu_register	register_ip;
 
 	/*
 	 * MODE contains information on:
@@ -134,11 +134,11 @@ struct X86EMU_regs {
 	uint8_t			__pad[3];
 };
 
-struct X86EMU {
+struct x86emu {
 	char			*mem_base;
 	size_t			mem_size;
 	void        		*sys_private;
-	struct X86EMU_regs	x86;
+	struct x86emu_regs	x86;
 
 #ifdef _KERNEL
 	label_t		exec_state;
@@ -153,33 +153,33 @@ struct X86EMU {
 	unsigned int	cur_rh:3;
 	uint32_t	cur_offset;
 
-	uint8_t  	(*emu_rdb)(struct X86EMU *, uint32_t addr);
-	uint16_t 	(*emu_rdw)(struct X86EMU *, uint32_t addr);
-	uint32_t 	(*emu_rdl)(struct X86EMU *, uint32_t addr);
-	void		(*emu_wrb)(struct X86EMU *, uint32_t addr,uint8_t val);
-	void		(*emu_wrw)(struct X86EMU *, uint32_t addr, uint16_t val);
-	void		(*emu_wrl)(struct X86EMU *, uint32_t addr, uint32_t val);
+	uint8_t  	(*emu_rdb)(struct x86emu *, uint32_t addr);
+	uint16_t 	(*emu_rdw)(struct x86emu *, uint32_t addr);
+	uint32_t 	(*emu_rdl)(struct x86emu *, uint32_t addr);
+	void		(*emu_wrb)(struct x86emu *, uint32_t addr,uint8_t val);
+	void		(*emu_wrw)(struct x86emu *, uint32_t addr, uint16_t val);
+	void		(*emu_wrl)(struct x86emu *, uint32_t addr, uint32_t val);
 
-	uint8_t  	(*emu_inb)(struct X86EMU *, uint16_t addr);
-	uint16_t 	(*emu_inw)(struct X86EMU *, uint16_t addr);
-	uint32_t 	(*emu_inl)(struct X86EMU *, uint16_t addr);
-	void		(*emu_outb)(struct X86EMU *, uint16_t addr, uint8_t val);
-	void		(*emu_outw)(struct X86EMU *, uint16_t addr, uint16_t val);
-	void		(*emu_outl)(struct X86EMU *, uint16_t addr, uint32_t val);
+	uint8_t  	(*emu_inb)(struct x86emu *, uint16_t addr);
+	uint16_t 	(*emu_inw)(struct x86emu *, uint16_t addr);
+	uint32_t 	(*emu_inl)(struct x86emu *, uint16_t addr);
+	void		(*emu_outb)(struct x86emu *, uint16_t addr, uint8_t val);
+	void		(*emu_outw)(struct x86emu *, uint16_t addr, uint16_t val);
+	void		(*emu_outl)(struct x86emu *, uint16_t addr, uint32_t val);
 
-	void 		(*_X86EMU_intrTab[256])(struct X86EMU *, int);
+	void 		(*_x86emu_intrTab[256])(struct x86emu *, int);
 };
 
 __BEGIN_DECLS
 
-void	X86EMU_init_default(struct X86EMU *);
+void	x86emu_init_default(struct x86emu *);
 
 /* decode.c */
 
-void 	X86EMU_exec(struct X86EMU *);
-void	X86EMU_exec_call(struct X86EMU *, uint16_t, uint16_t);
-void	X86EMU_exec_intr(struct X86EMU *, uint8_t);
-void 	X86EMU_halt_sys(struct X86EMU *) __dead;
+void 	x86emu_exec(struct x86emu *);
+void	x86emu_exec_call(struct x86emu *, uint16_t, uint16_t);
+void	x86emu_exec_intr(struct x86emu *, uint8_t);
+void 	x86emu_halt_sys(struct x86emu *) __dead;
 
 __END_DECLS
 

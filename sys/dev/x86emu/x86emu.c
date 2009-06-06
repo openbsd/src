@@ -1,5 +1,5 @@
+/*	$OpenBSD: x86emu.c,v 1.3 2009/06/06 03:20:58 deraadt Exp $	*/
 /*	$NetBSD: x86emu.c,v 1.7 2009/02/03 19:26:29 joerg Exp $	*/
-/* $OpenBSD */
 
 /****************************************************************************
 *
@@ -35,149 +35,149 @@
 #include <dev/x86emu/x86emu.h>
 #include <dev/x86emu/x86emu_regs.h>
 
-static void 	x86emu_intr_raise (struct X86EMU *, uint8_t type);
+static void 	x86emu_intr_raise (struct x86emu *, uint8_t type);
 
-static void	X86EMU_exec_one_byte(struct X86EMU *);
-static void	X86EMU_exec_two_byte(struct X86EMU *);
+static void	x86emu_exec_one_byte(struct x86emu *);
+static void	x86emu_exec_two_byte(struct x86emu *);
 
-static void	fetch_decode_modrm (struct X86EMU *);
-static uint8_t	fetch_byte_imm (struct X86EMU *);
-static uint16_t	fetch_word_imm (struct X86EMU *);
-static uint32_t	fetch_long_imm (struct X86EMU *);
-static uint8_t	fetch_data_byte (struct X86EMU *, uint32_t offset);
-static uint8_t	fetch_byte (struct X86EMU *, uint segment, uint32_t offset);
-static uint16_t	fetch_data_word (struct X86EMU *, uint32_t offset);
-static uint16_t	fetch_word (struct X86EMU *, uint32_t segment, uint32_t offset);
-static uint32_t	fetch_data_long (struct X86EMU *, uint32_t offset);
-static uint32_t	fetch_long (struct X86EMU *, uint32_t segment, uint32_t offset);
-static void	store_data_byte (struct X86EMU *, uint32_t offset, uint8_t val);
-static void	store_byte (struct X86EMU *, uint32_t segment, uint32_t offset, uint8_t val);
-static void	store_data_word (struct X86EMU *, uint32_t offset, uint16_t val);
-static void	store_word (struct X86EMU *, uint32_t segment, uint32_t offset, uint16_t val);
-static void	store_data_long (struct X86EMU *, uint32_t offset, uint32_t val);
-static void	store_long (struct X86EMU *, uint32_t segment, uint32_t offset, uint32_t val);
-static uint8_t*	decode_rl_byte_register(struct X86EMU *);
-static uint16_t*	decode_rl_word_register(struct X86EMU *);
-static uint32_t* 	decode_rl_long_register(struct X86EMU *);
-static uint8_t* 	decode_rh_byte_register(struct X86EMU *);
-static uint16_t* 	decode_rh_word_register(struct X86EMU *);
-static uint32_t* 	decode_rh_long_register(struct X86EMU *);
-static uint16_t* 	decode_rh_seg_register(struct X86EMU *);
-static uint32_t	decode_rl_address(struct X86EMU *);
+static void	fetch_decode_modrm (struct x86emu *);
+static uint8_t	fetch_byte_imm (struct x86emu *);
+static uint16_t	fetch_word_imm (struct x86emu *);
+static uint32_t	fetch_long_imm (struct x86emu *);
+static uint8_t	fetch_data_byte (struct x86emu *, uint32_t offset);
+static uint8_t	fetch_byte (struct x86emu *, uint segment, uint32_t offset);
+static uint16_t	fetch_data_word (struct x86emu *, uint32_t offset);
+static uint16_t	fetch_word (struct x86emu *, uint32_t segment, uint32_t offset);
+static uint32_t	fetch_data_long (struct x86emu *, uint32_t offset);
+static uint32_t	fetch_long (struct x86emu *, uint32_t segment, uint32_t offset);
+static void	store_data_byte (struct x86emu *, uint32_t offset, uint8_t val);
+static void	store_byte (struct x86emu *, uint32_t segment, uint32_t offset, uint8_t val);
+static void	store_data_word (struct x86emu *, uint32_t offset, uint16_t val);
+static void	store_word (struct x86emu *, uint32_t segment, uint32_t offset, uint16_t val);
+static void	store_data_long (struct x86emu *, uint32_t offset, uint32_t val);
+static void	store_long (struct x86emu *, uint32_t segment, uint32_t offset, uint32_t val);
+static uint8_t*	decode_rl_byte_register(struct x86emu *);
+static uint16_t*	decode_rl_word_register(struct x86emu *);
+static uint32_t* 	decode_rl_long_register(struct x86emu *);
+static uint8_t* 	decode_rh_byte_register(struct x86emu *);
+static uint16_t* 	decode_rh_word_register(struct x86emu *);
+static uint32_t* 	decode_rh_long_register(struct x86emu *);
+static uint16_t* 	decode_rh_seg_register(struct x86emu *);
+static uint32_t	decode_rl_address(struct x86emu *);
 
-static uint8_t 	decode_and_fetch_byte(struct X86EMU *);
-static uint16_t 	decode_and_fetch_word(struct X86EMU *);
-static uint32_t 	decode_and_fetch_long(struct X86EMU *);
+static uint8_t 	decode_and_fetch_byte(struct x86emu *);
+static uint16_t 	decode_and_fetch_word(struct x86emu *);
+static uint32_t 	decode_and_fetch_long(struct x86emu *);
 
-static uint8_t 	decode_and_fetch_byte_imm8(struct X86EMU *, uint8_t *);
-static uint16_t 	decode_and_fetch_word_imm8(struct X86EMU *, uint8_t *);
-static uint32_t 	decode_and_fetch_long_imm8(struct X86EMU *, uint8_t *);
+static uint8_t 	decode_and_fetch_byte_imm8(struct x86emu *, uint8_t *);
+static uint16_t 	decode_and_fetch_word_imm8(struct x86emu *, uint8_t *);
+static uint32_t 	decode_and_fetch_long_imm8(struct x86emu *, uint8_t *);
 
-static uint16_t 	decode_and_fetch_word_disp(struct X86EMU *, int16_t);
-static uint32_t 	decode_and_fetch_long_disp(struct X86EMU *, int16_t);
+static uint16_t 	decode_and_fetch_word_disp(struct x86emu *, int16_t);
+static uint32_t 	decode_and_fetch_long_disp(struct x86emu *, int16_t);
 
-static void	write_back_byte(struct X86EMU *, uint8_t);
-static void	write_back_word(struct X86EMU *, uint16_t);
-static void	write_back_long(struct X86EMU *, uint32_t);
+static void	write_back_byte(struct x86emu *, uint8_t);
+static void	write_back_word(struct x86emu *, uint16_t);
+static void	write_back_long(struct x86emu *, uint32_t);
 
-static uint16_t	aaa_word (struct X86EMU *, uint16_t d);
-static uint16_t	aas_word (struct X86EMU *, uint16_t d);
-static uint16_t	aad_word (struct X86EMU *, uint16_t d);
-static uint16_t	aam_word (struct X86EMU *, uint8_t d);
-static uint8_t	adc_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	adc_word (struct X86EMU *, uint16_t d, uint16_t s);
-static uint32_t	adc_long (struct X86EMU *, uint32_t d, uint32_t s);
-static uint8_t	add_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	add_word (struct X86EMU *, uint16_t d, uint16_t s);
-static uint32_t	add_long (struct X86EMU *, uint32_t d, uint32_t s);
-static uint8_t	and_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	and_word (struct X86EMU *, uint16_t d, uint16_t s);
-static uint32_t	and_long (struct X86EMU *, uint32_t d, uint32_t s);
-static uint8_t	cmp_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	cmp_word (struct X86EMU *, uint16_t d, uint16_t s);
-static uint32_t	cmp_long (struct X86EMU *, uint32_t d, uint32_t s);
-static void	cmp_byte_no_return (struct X86EMU *, uint8_t d, uint8_t s);
-static void	cmp_word_no_return (struct X86EMU *, uint16_t d, uint16_t s);
-static void	cmp_long_no_return (struct X86EMU *, uint32_t d, uint32_t s);
-static uint8_t	daa_byte (struct X86EMU *, uint8_t d);
-static uint8_t	das_byte (struct X86EMU *, uint8_t d);
-static uint8_t	dec_byte (struct X86EMU *, uint8_t d);
-static uint16_t	dec_word (struct X86EMU *, uint16_t d);
-static uint32_t	dec_long (struct X86EMU *, uint32_t d);
-static uint8_t	inc_byte (struct X86EMU *, uint8_t d);
-static uint16_t	inc_word (struct X86EMU *, uint16_t d);
-static uint32_t	inc_long (struct X86EMU *, uint32_t d);
-static uint8_t	or_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	or_word (struct X86EMU *, uint16_t d, uint16_t s);
-static uint32_t	or_long (struct X86EMU *, uint32_t d, uint32_t s);
-static uint8_t	neg_byte (struct X86EMU *, uint8_t s);
-static uint16_t	neg_word (struct X86EMU *, uint16_t s);
-static uint32_t	neg_long (struct X86EMU *, uint32_t s);
-static uint8_t	rcl_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	rcl_word (struct X86EMU *, uint16_t d, uint8_t s);
-static uint32_t	rcl_long (struct X86EMU *, uint32_t d, uint8_t s);
-static uint8_t	rcr_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	rcr_word (struct X86EMU *, uint16_t d, uint8_t s);
-static uint32_t	rcr_long (struct X86EMU *, uint32_t d, uint8_t s);
-static uint8_t	rol_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	rol_word (struct X86EMU *, uint16_t d, uint8_t s);
-static uint32_t	rol_long (struct X86EMU *, uint32_t d, uint8_t s);
-static uint8_t	ror_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	ror_word (struct X86EMU *, uint16_t d, uint8_t s);
-static uint32_t	ror_long (struct X86EMU *, uint32_t d, uint8_t s);
-static uint8_t	shl_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	shl_word (struct X86EMU *, uint16_t d, uint8_t s);
-static uint32_t	shl_long (struct X86EMU *, uint32_t d, uint8_t s);
-static uint8_t	shr_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	shr_word (struct X86EMU *, uint16_t d, uint8_t s);
-static uint32_t	shr_long (struct X86EMU *, uint32_t d, uint8_t s);
-static uint8_t	sar_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	sar_word (struct X86EMU *, uint16_t d, uint8_t s);
-static uint32_t	sar_long (struct X86EMU *, uint32_t d, uint8_t s);
-static uint16_t	shld_word (struct X86EMU *, uint16_t d, uint16_t fill, uint8_t s);
-static uint32_t	shld_long (struct X86EMU *, uint32_t d, uint32_t fill, uint8_t s);
-static uint16_t	shrd_word (struct X86EMU *, uint16_t d, uint16_t fill, uint8_t s);
-static uint32_t	shrd_long (struct X86EMU *, uint32_t d, uint32_t fill, uint8_t s);
-static uint8_t	sbb_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	sbb_word (struct X86EMU *, uint16_t d, uint16_t s);
-static uint32_t	sbb_long (struct X86EMU *, uint32_t d, uint32_t s);
-static uint8_t	sub_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	sub_word (struct X86EMU *, uint16_t d, uint16_t s);
-static uint32_t	sub_long (struct X86EMU *, uint32_t d, uint32_t s);
-static void	test_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static void	test_word (struct X86EMU *, uint16_t d, uint16_t s);
-static void	test_long (struct X86EMU *, uint32_t d, uint32_t s);
-static uint8_t	xor_byte (struct X86EMU *, uint8_t d, uint8_t s);
-static uint16_t	xor_word (struct X86EMU *, uint16_t d, uint16_t s);
-static uint32_t	xor_long (struct X86EMU *, uint32_t d, uint32_t s);
-static void	imul_byte (struct X86EMU *, uint8_t s);
-static void	imul_word (struct X86EMU *, uint16_t s);
-static void	imul_long (struct X86EMU *, uint32_t s);
-static void	mul_byte (struct X86EMU *, uint8_t s);
-static void	mul_word (struct X86EMU *, uint16_t s);
-static void	mul_long (struct X86EMU *, uint32_t s);
-static void	idiv_byte (struct X86EMU *, uint8_t s);
-static void	idiv_word (struct X86EMU *, uint16_t s);
-static void	idiv_long (struct X86EMU *, uint32_t s);
-static void	div_byte (struct X86EMU *, uint8_t s);
-static void	div_word (struct X86EMU *, uint16_t s);
-static void	div_long (struct X86EMU *, uint32_t s);
-static void	ins (struct X86EMU *, int size);
-static void	outs (struct X86EMU *, int size);
-static void	push_word (struct X86EMU *, uint16_t w);
-static void	push_long (struct X86EMU *, uint32_t w);
-static uint16_t	pop_word (struct X86EMU *);
-static uint32_t	pop_long (struct X86EMU *);
+static uint16_t	aaa_word (struct x86emu *, uint16_t d);
+static uint16_t	aas_word (struct x86emu *, uint16_t d);
+static uint16_t	aad_word (struct x86emu *, uint16_t d);
+static uint16_t	aam_word (struct x86emu *, uint8_t d);
+static uint8_t	adc_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	adc_word (struct x86emu *, uint16_t d, uint16_t s);
+static uint32_t	adc_long (struct x86emu *, uint32_t d, uint32_t s);
+static uint8_t	add_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	add_word (struct x86emu *, uint16_t d, uint16_t s);
+static uint32_t	add_long (struct x86emu *, uint32_t d, uint32_t s);
+static uint8_t	and_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	and_word (struct x86emu *, uint16_t d, uint16_t s);
+static uint32_t	and_long (struct x86emu *, uint32_t d, uint32_t s);
+static uint8_t	cmp_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	cmp_word (struct x86emu *, uint16_t d, uint16_t s);
+static uint32_t	cmp_long (struct x86emu *, uint32_t d, uint32_t s);
+static void	cmp_byte_no_return (struct x86emu *, uint8_t d, uint8_t s);
+static void	cmp_word_no_return (struct x86emu *, uint16_t d, uint16_t s);
+static void	cmp_long_no_return (struct x86emu *, uint32_t d, uint32_t s);
+static uint8_t	daa_byte (struct x86emu *, uint8_t d);
+static uint8_t	das_byte (struct x86emu *, uint8_t d);
+static uint8_t	dec_byte (struct x86emu *, uint8_t d);
+static uint16_t	dec_word (struct x86emu *, uint16_t d);
+static uint32_t	dec_long (struct x86emu *, uint32_t d);
+static uint8_t	inc_byte (struct x86emu *, uint8_t d);
+static uint16_t	inc_word (struct x86emu *, uint16_t d);
+static uint32_t	inc_long (struct x86emu *, uint32_t d);
+static uint8_t	or_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	or_word (struct x86emu *, uint16_t d, uint16_t s);
+static uint32_t	or_long (struct x86emu *, uint32_t d, uint32_t s);
+static uint8_t	neg_byte (struct x86emu *, uint8_t s);
+static uint16_t	neg_word (struct x86emu *, uint16_t s);
+static uint32_t	neg_long (struct x86emu *, uint32_t s);
+static uint8_t	rcl_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	rcl_word (struct x86emu *, uint16_t d, uint8_t s);
+static uint32_t	rcl_long (struct x86emu *, uint32_t d, uint8_t s);
+static uint8_t	rcr_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	rcr_word (struct x86emu *, uint16_t d, uint8_t s);
+static uint32_t	rcr_long (struct x86emu *, uint32_t d, uint8_t s);
+static uint8_t	rol_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	rol_word (struct x86emu *, uint16_t d, uint8_t s);
+static uint32_t	rol_long (struct x86emu *, uint32_t d, uint8_t s);
+static uint8_t	ror_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	ror_word (struct x86emu *, uint16_t d, uint8_t s);
+static uint32_t	ror_long (struct x86emu *, uint32_t d, uint8_t s);
+static uint8_t	shl_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	shl_word (struct x86emu *, uint16_t d, uint8_t s);
+static uint32_t	shl_long (struct x86emu *, uint32_t d, uint8_t s);
+static uint8_t	shr_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	shr_word (struct x86emu *, uint16_t d, uint8_t s);
+static uint32_t	shr_long (struct x86emu *, uint32_t d, uint8_t s);
+static uint8_t	sar_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	sar_word (struct x86emu *, uint16_t d, uint8_t s);
+static uint32_t	sar_long (struct x86emu *, uint32_t d, uint8_t s);
+static uint16_t	shld_word (struct x86emu *, uint16_t d, uint16_t fill, uint8_t s);
+static uint32_t	shld_long (struct x86emu *, uint32_t d, uint32_t fill, uint8_t s);
+static uint16_t	shrd_word (struct x86emu *, uint16_t d, uint16_t fill, uint8_t s);
+static uint32_t	shrd_long (struct x86emu *, uint32_t d, uint32_t fill, uint8_t s);
+static uint8_t	sbb_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	sbb_word (struct x86emu *, uint16_t d, uint16_t s);
+static uint32_t	sbb_long (struct x86emu *, uint32_t d, uint32_t s);
+static uint8_t	sub_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	sub_word (struct x86emu *, uint16_t d, uint16_t s);
+static uint32_t	sub_long (struct x86emu *, uint32_t d, uint32_t s);
+static void	test_byte (struct x86emu *, uint8_t d, uint8_t s);
+static void	test_word (struct x86emu *, uint16_t d, uint16_t s);
+static void	test_long (struct x86emu *, uint32_t d, uint32_t s);
+static uint8_t	xor_byte (struct x86emu *, uint8_t d, uint8_t s);
+static uint16_t	xor_word (struct x86emu *, uint16_t d, uint16_t s);
+static uint32_t	xor_long (struct x86emu *, uint32_t d, uint32_t s);
+static void	imul_byte (struct x86emu *, uint8_t s);
+static void	imul_word (struct x86emu *, uint16_t s);
+static void	imul_long (struct x86emu *, uint32_t s);
+static void	mul_byte (struct x86emu *, uint8_t s);
+static void	mul_word (struct x86emu *, uint16_t s);
+static void	mul_long (struct x86emu *, uint32_t s);
+static void	idiv_byte (struct x86emu *, uint8_t s);
+static void	idiv_word (struct x86emu *, uint16_t s);
+static void	idiv_long (struct x86emu *, uint32_t s);
+static void	div_byte (struct x86emu *, uint8_t s);
+static void	div_word (struct x86emu *, uint16_t s);
+static void	div_long (struct x86emu *, uint32_t s);
+static void	ins (struct x86emu *, int size);
+static void	outs (struct x86emu *, int size);
+static void	push_word (struct x86emu *, uint16_t w);
+static void	push_long (struct x86emu *, uint32_t w);
+static uint16_t	pop_word (struct x86emu *);
+static uint32_t	pop_long (struct x86emu *);
 
 /****************************************************************************
 REMARKS:
 Handles any pending asychronous interrupts.
 ****************************************************************************/
 static void
-x86emu_intr_dispatch(struct X86EMU *emu, uint8_t intno)
+x86emu_intr_dispatch(struct x86emu *emu, uint8_t intno)
 {
-	if (emu->_X86EMU_intrTab[intno]) {
-		(*emu->_X86EMU_intrTab[intno]) (emu, intno);
+	if (emu->_x86emu_intrTab[intno]) {
+		(*emu->_x86emu_intrTab[intno]) (emu, intno);
 	} else {
 		push_word(emu, (uint16_t) emu->x86.R_FLG);
 		CLEAR_FLAG(F_IF);
@@ -190,7 +190,7 @@ x86emu_intr_dispatch(struct X86EMU *emu, uint8_t intno)
 }
 
 static void 
-x86emu_intr_handle(struct X86EMU *emu)
+x86emu_intr_handle(struct x86emu *emu)
 {
 	uint8_t intno;
 
@@ -209,7 +209,7 @@ Raise the specified interrupt to be handled before the execution of the
 next instruction.
 ****************************************************************************/
 void 
-x86emu_intr_raise(struct X86EMU *emu, uint8_t intrnum)
+x86emu_intr_raise(struct x86emu *emu, uint8_t intrnum)
 {
 	emu->x86.intno = intrnum;
 	emu->x86.intr |= INTR_SYNCH;
@@ -221,7 +221,7 @@ halts, which is normally caused by a stack fault when we return from the
 original real mode call.
 ****************************************************************************/
 void 
-X86EMU_exec(struct X86EMU *emu)
+x86emu_exec(struct x86emu *emu)
 {
 	emu->x86.intr = 0;
 
@@ -242,24 +242,24 @@ X86EMU_exec(struct X86EMU *emu)
 		}
 		if (emu->x86.R_CS == 0 && emu->x86.R_IP == 0)
 			return;
-		X86EMU_exec_one_byte(emu);
+		x86emu_exec_one_byte(emu);
 		++emu->cur_cycles;
 	}
 }
 
 void
-X86EMU_exec_call(struct X86EMU *emu, uint16_t seg, uint16_t off)
+x86emu_exec_call(struct x86emu *emu, uint16_t seg, uint16_t off)
 {
 	push_word(emu, 0);
 	push_word(emu, 0);
 	emu->x86.R_CS = seg;
 	emu->x86.R_IP = off;
 
-	X86EMU_exec(emu);
+	x86emu_exec(emu);
 }
 
 void
-X86EMU_exec_intr(struct X86EMU *emu, uint8_t intr)
+x86emu_exec_intr(struct x86emu *emu, uint8_t intr)
 {
 	push_word(emu, emu->x86.R_FLG);
 	CLEAR_FLAG(F_IF);
@@ -270,14 +270,14 @@ X86EMU_exec_intr(struct X86EMU *emu, uint8_t intr)
 	emu->x86.R_IP = (*emu->emu_rdw)(emu, intr * 4);
 	emu->x86.intr = 0;
 
-	X86EMU_exec(emu);
+	x86emu_exec(emu);
 }
 /****************************************************************************
 REMARKS:
 Halts the system by setting the halted system flag.
 ****************************************************************************/
 void 
-X86EMU_halt_sys(struct X86EMU *emu)
+x86emu_halt_sys(struct x86emu *emu)
 {
 #ifdef _KERNEL
 	longjmp(&emu->exec_state);
@@ -298,7 +298,7 @@ next instruction.
 NOTE: Do not inline this function, as (*emu->emu_rdb) is already inline!
 ****************************************************************************/
 static void 
-fetch_decode_modrm(struct X86EMU *emu)
+fetch_decode_modrm(struct x86emu *emu)
 {
 	int fetched;
 
@@ -318,7 +318,7 @@ moves the instruction pointer to the next value.
 NOTE: Do not inline this function, as (*emu->emu_rdb) is already inline!
 ****************************************************************************/
 static uint8_t 
-fetch_byte_imm(struct X86EMU *emu)
+fetch_byte_imm(struct x86emu *emu)
 {
 	uint8_t fetched;
 
@@ -337,7 +337,7 @@ moves the instruction pointer to the next value.
 NOTE: Do not inline this function, as (*emu->emu_rdw) is already inline!
 ****************************************************************************/
 static uint16_t 
-fetch_word_imm(struct X86EMU *emu)
+fetch_word_imm(struct x86emu *emu)
 {
 	uint16_t fetched;
 
@@ -356,7 +356,7 @@ moves the instruction pointer to the next value.
 NOTE: Do not inline this function, as (*emu->emu_rdw) is already inline!
 ****************************************************************************/
 static uint32_t 
-fetch_long_imm(struct X86EMU *emu)
+fetch_long_imm(struct x86emu *emu)
 {
 	uint32_t fetched;
 
@@ -394,7 +394,7 @@ cpu-state-varible emu->x86.mode. There are several potential states:
 Each of the above 7 items are handled with a bit in the mode field.
 ****************************************************************************/
 static uint32_t 
-get_data_segment(struct X86EMU *emu)
+get_data_segment(struct x86emu *emu)
 {
 	switch (emu->x86.mode & SYSMODE_SEGMASK) {
 	case 0:		/* default case: use ds register */
@@ -419,7 +419,7 @@ get_data_segment(struct X86EMU *emu)
 	case SYSMODE_SEGOVR_SS | SYSMODE_SEG_DS_SS:
 		return emu->x86.R_SS;
 	}
-	X86EMU_halt_sys(emu);
+	x86emu_halt_sys(emu);
 }
 /****************************************************************************
 PARAMETERS:
@@ -431,7 +431,7 @@ Byte value read from the absolute memory location.
 NOTE: Do not inline this function as (*emu->emu_rdX) is already inline!
 ****************************************************************************/
 static uint8_t 
-fetch_data_byte(struct X86EMU *emu, uint32_t offset)
+fetch_data_byte(struct x86emu *emu, uint32_t offset)
 {
 	return fetch_byte(emu, get_data_segment(emu), offset);
 }
@@ -445,7 +445,7 @@ Word value read from the absolute memory location.
 NOTE: Do not inline this function as (*emu->emu_rdX) is already inline!
 ****************************************************************************/
 static uint16_t 
-fetch_data_word(struct X86EMU *emu, uint32_t offset)
+fetch_data_word(struct x86emu *emu, uint32_t offset)
 {
 	return fetch_word(emu, get_data_segment(emu), offset);
 }
@@ -459,7 +459,7 @@ Long value read from the absolute memory location.
 NOTE: Do not inline this function as (*emu->emu_rdX) is already inline!
 ****************************************************************************/
 static uint32_t 
-fetch_data_long(struct X86EMU *emu, uint32_t offset)
+fetch_data_long(struct x86emu *emu, uint32_t offset)
 {
 	return fetch_long(emu, get_data_segment(emu), offset);
 }
@@ -474,7 +474,7 @@ Byte value read from the absolute memory location.
 NOTE: Do not inline this function as (*emu->emu_rdX) is already inline!
 ****************************************************************************/
 static uint8_t 
-fetch_byte(struct X86EMU *emu, uint32_t segment, uint32_t offset)
+fetch_byte(struct x86emu *emu, uint32_t segment, uint32_t offset)
 {
 	return (*emu->emu_rdb) (emu, ((uint32_t) segment << 4) + offset);
 }
@@ -489,7 +489,7 @@ Word value read from the absolute memory location.
 NOTE: Do not inline this function as (*emu->emu_rdX) is already inline!
 ****************************************************************************/
 static uint16_t 
-fetch_word(struct X86EMU *emu, uint32_t segment, uint32_t offset)
+fetch_word(struct x86emu *emu, uint32_t segment, uint32_t offset)
 {
 	return (*emu->emu_rdw) (emu, ((uint32_t) segment << 4) + offset);
 }
@@ -504,7 +504,7 @@ Long value read from the absolute memory location.
 NOTE: Do not inline this function as (*emu->emu_rdX) is already inline!
 ****************************************************************************/
 static uint32_t 
-fetch_long(struct X86EMU *emu, uint32_t segment, uint32_t offset)
+fetch_long(struct x86emu *emu, uint32_t segment, uint32_t offset)
 {
 	return (*emu->emu_rdl) (emu, ((uint32_t) segment << 4) + offset);
 }
@@ -520,7 +520,7 @@ the current 'default' segment, which may have been overridden.
 NOTE: Do not inline this function as (*emu->emu_wrX) is already inline!
 ****************************************************************************/
 static void 
-store_data_byte(struct X86EMU *emu, uint32_t offset, uint8_t val)
+store_data_byte(struct x86emu *emu, uint32_t offset, uint8_t val)
 {
 	store_byte(emu, get_data_segment(emu), offset, val);
 }
@@ -536,7 +536,7 @@ the current 'default' segment, which may have been overridden.
 NOTE: Do not inline this function as (*emu->emu_wrX) is already inline!
 ****************************************************************************/
 static void 
-store_data_word(struct X86EMU *emu, uint32_t offset, uint16_t val)
+store_data_word(struct x86emu *emu, uint32_t offset, uint16_t val)
 {
 	store_word(emu, get_data_segment(emu), offset, val);
 }
@@ -552,7 +552,7 @@ the current 'default' segment, which may have been overridden.
 NOTE: Do not inline this function as (*emu->emu_wrX) is already inline!
 ****************************************************************************/
 static void 
-store_data_long(struct X86EMU *emu, uint32_t offset, uint32_t val)
+store_data_long(struct x86emu *emu, uint32_t offset, uint32_t val)
 {
 	store_long(emu, get_data_segment(emu), offset, val);
 }
@@ -568,7 +568,7 @@ Writes a byte value to an absolute memory location.
 NOTE: Do not inline this function as (*emu->emu_wrX) is already inline!
 ****************************************************************************/
 static void 
-store_byte(struct X86EMU *emu, uint32_t segment, uint32_t offset, uint8_t val)
+store_byte(struct x86emu *emu, uint32_t segment, uint32_t offset, uint8_t val)
 {
 	(*emu->emu_wrb) (emu, ((uint32_t) segment << 4) + offset, val);
 }
@@ -584,7 +584,7 @@ Writes a word value to an absolute memory location.
 NOTE: Do not inline this function as (*emu->emu_wrX) is already inline!
 ****************************************************************************/
 static void 
-store_word(struct X86EMU *emu, uint32_t segment, uint32_t offset, uint16_t val)
+store_word(struct x86emu *emu, uint32_t segment, uint32_t offset, uint16_t val)
 {
 	(*emu->emu_wrw) (emu, ((uint32_t) segment << 4) + offset, val);
 }
@@ -600,7 +600,7 @@ Writes a long value to an absolute memory location.
 NOTE: Do not inline this function as (*emu->emu_wrX) is already inline!
 ****************************************************************************/
 static void 
-store_long(struct X86EMU *emu, uint32_t segment, uint32_t offset, uint32_t val)
+store_long(struct x86emu *emu, uint32_t segment, uint32_t offset, uint32_t val)
 {
 	(*emu->emu_wrl) (emu, ((uint32_t) segment << 4) + offset, val);
 }
@@ -616,7 +616,7 @@ Return a pointer to the register given by the R/RM field of the
 modrm byte, for byte operands. Also enables the decoding of instructions.
 ****************************************************************************/
 static uint8_t *
-decode_rm_byte_register(struct X86EMU *emu, int reg)
+decode_rm_byte_register(struct x86emu *emu, int reg)
 {
 	switch (reg) {
 	case 0:
@@ -636,18 +636,18 @@ decode_rm_byte_register(struct X86EMU *emu, int reg)
 	case 7:
 		return &emu->x86.R_BH;
 	default:
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	}
 }
 
 static uint8_t *
-decode_rl_byte_register(struct X86EMU *emu)
+decode_rl_byte_register(struct x86emu *emu)
 {
 	return decode_rm_byte_register(emu, emu->cur_rl);
 }
 
 static uint8_t *
-decode_rh_byte_register(struct X86EMU *emu)
+decode_rh_byte_register(struct x86emu *emu)
 {
 	return decode_rm_byte_register(emu, emu->cur_rh);
 }
@@ -663,7 +663,7 @@ Return a pointer to the register given by the R/RM field of the
 modrm byte, for word operands.  Also enables the decoding of instructions.
 ****************************************************************************/
 static uint16_t *
-decode_rm_word_register(struct X86EMU *emu, int reg)
+decode_rm_word_register(struct x86emu *emu, int reg)
 {
 	switch (reg) {
 	case 0:
@@ -683,18 +683,18 @@ decode_rm_word_register(struct X86EMU *emu, int reg)
 	case 7:
 		return &emu->x86.R_DI;
 	default:
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	}
 }
 
 static uint16_t *
-decode_rl_word_register(struct X86EMU *emu)
+decode_rl_word_register(struct x86emu *emu)
 {
 	return decode_rm_word_register(emu, emu->cur_rl);
 }
 
 static uint16_t *
-decode_rh_word_register(struct X86EMU *emu)
+decode_rh_word_register(struct x86emu *emu)
 {
 	return decode_rm_word_register(emu, emu->cur_rh);
 }
@@ -710,7 +710,7 @@ Return a pointer to the register given by the R/RM field of the
 modrm byte, for dword operands.  Also enables the decoding of instructions.
 ****************************************************************************/
 static uint32_t *
-decode_rm_long_register(struct X86EMU *emu, int reg)
+decode_rm_long_register(struct x86emu *emu, int reg)
 {
 	switch (reg) {
 	case 0:
@@ -730,18 +730,18 @@ decode_rm_long_register(struct X86EMU *emu, int reg)
 	case 7:
 		return &emu->x86.R_EDI;
 	default:
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	}
 }
 
 static uint32_t *
-decode_rl_long_register(struct X86EMU *emu)
+decode_rl_long_register(struct x86emu *emu)
 {
 	return decode_rm_long_register(emu, emu->cur_rl);
 }
 
 static uint32_t *
-decode_rh_long_register(struct X86EMU *emu)
+decode_rh_long_register(struct x86emu *emu)
 {
 	return decode_rm_long_register(emu, emu->cur_rh);
 }
@@ -759,7 +759,7 @@ modrm byte, for word operands, modified from above for the weirdo
 special case of segreg operands.  Also enables the decoding of instructions.
 ****************************************************************************/
 static uint16_t *
-decode_rh_seg_register(struct X86EMU *emu)
+decode_rh_seg_register(struct x86emu *emu)
 {
 	switch (emu->cur_rh) {
 	case 0:
@@ -775,7 +775,7 @@ decode_rh_seg_register(struct X86EMU *emu)
 	case 5:
 		return &emu->x86.R_GS;
 	default:
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	}
 }
 /*
@@ -783,7 +783,7 @@ decode_rh_seg_register(struct X86EMU *emu)
  * return offset from the SIB Byte
  */
 static uint32_t 
-decode_sib_address(struct X86EMU *emu, int sib, int mod)
+decode_sib_address(struct x86emu *emu, int sib, int mod)
 {
 	uint32_t base = 0, i = 0, scale = 1;
 
@@ -861,7 +861,7 @@ Return the offset given by mod=00, mod=01 or mod=10 addressing.
 Also enables the decoding of instructions.
 ****************************************************************************/
 static uint32_t
-decode_rl_address(struct X86EMU *emu)
+decode_rl_address(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_ADDR) {
 		uint32_t offset, sib;
@@ -898,7 +898,7 @@ decode_rl_address(struct X86EMU *emu)
 			offset = emu->x86.R_EDI;
 			break;
 		default:
-			X86EMU_halt_sys(emu);
+			x86emu_halt_sys(emu);
 		}
 		if (emu->cur_mod == 1)
 			offset += (int8_t)fetch_byte_imm(emu);
@@ -942,7 +942,7 @@ decode_rl_address(struct X86EMU *emu)
 			offset = emu->x86.R_BX;
 			break;
 		default:
-			X86EMU_halt_sys(emu);
+			x86emu_halt_sys(emu);
 		}
 		if (emu->cur_mod == 1)
 			offset += (int8_t)fetch_byte_imm(emu);
@@ -953,7 +953,7 @@ decode_rl_address(struct X86EMU *emu)
 }
 
 static uint8_t
-decode_and_fetch_byte(struct X86EMU *emu)
+decode_and_fetch_byte(struct x86emu *emu)
 {
 	if (emu->cur_mod != 3) {
 		emu->cur_offset = decode_rl_address(emu);
@@ -964,7 +964,7 @@ decode_and_fetch_byte(struct X86EMU *emu)
 }
 
 static uint16_t
-decode_and_fetch_word_disp(struct X86EMU *emu, int16_t disp)
+decode_and_fetch_word_disp(struct x86emu *emu, int16_t disp)
 {
 	if (emu->cur_mod != 3) {
 		/* TODO: A20 gate emulation */
@@ -978,7 +978,7 @@ decode_and_fetch_word_disp(struct X86EMU *emu, int16_t disp)
 }
 
 static uint32_t
-decode_and_fetch_long_disp(struct X86EMU *emu, int16_t disp)
+decode_and_fetch_long_disp(struct x86emu *emu, int16_t disp)
 {
 	if (emu->cur_mod != 3) {
 		/* TODO: A20 gate emulation */
@@ -992,19 +992,19 @@ decode_and_fetch_long_disp(struct X86EMU *emu, int16_t disp)
 }
 
 uint16_t
-decode_and_fetch_word(struct X86EMU *emu)
+decode_and_fetch_word(struct x86emu *emu)
 {
 	return decode_and_fetch_word_disp(emu, 0);
 }
 
 uint32_t
-decode_and_fetch_long(struct X86EMU *emu)
+decode_and_fetch_long(struct x86emu *emu)
 {
 	return decode_and_fetch_long_disp(emu, 0);
 }
 
 uint8_t
-decode_and_fetch_byte_imm8(struct X86EMU *emu, uint8_t *imm)
+decode_and_fetch_byte_imm8(struct x86emu *emu, uint8_t *imm)
 {
 	if (emu->cur_mod != 3) {
 		emu->cur_offset = decode_rl_address(emu);
@@ -1017,7 +1017,7 @@ decode_and_fetch_byte_imm8(struct X86EMU *emu, uint8_t *imm)
 }
 
 static uint16_t
-decode_and_fetch_word_imm8(struct X86EMU *emu, uint8_t *imm)
+decode_and_fetch_word_imm8(struct x86emu *emu, uint8_t *imm)
 {
 	if (emu->cur_mod != 3) {
 		emu->cur_offset = decode_rl_address(emu);
@@ -1030,7 +1030,7 @@ decode_and_fetch_word_imm8(struct X86EMU *emu, uint8_t *imm)
 }
 
 static uint32_t
-decode_and_fetch_long_imm8(struct X86EMU *emu, uint8_t *imm)
+decode_and_fetch_long_imm8(struct x86emu *emu, uint8_t *imm)
 {
 	if (emu->cur_mod != 3) {
 		emu->cur_offset = decode_rl_address(emu);
@@ -1043,7 +1043,7 @@ decode_and_fetch_long_imm8(struct X86EMU *emu, uint8_t *imm)
 }
 
 static void
-write_back_byte(struct X86EMU *emu, uint8_t val)
+write_back_byte(struct x86emu *emu, uint8_t val)
 {
 	if (emu->cur_mod != 3)
 		store_data_byte(emu, emu->cur_offset, val);
@@ -1052,7 +1052,7 @@ write_back_byte(struct X86EMU *emu, uint8_t val)
 }
 
 static void
-write_back_word(struct X86EMU *emu, uint16_t val)
+write_back_word(struct x86emu *emu, uint16_t val)
 {
 	if (emu->cur_mod != 3)
 		store_data_word(emu, emu->cur_offset, val);
@@ -1061,7 +1061,7 @@ write_back_word(struct X86EMU *emu, uint16_t val)
 }
 
 static void
-write_back_long(struct X86EMU *emu, uint32_t val)
+write_back_long(struct x86emu *emu, uint32_t val)
 {
 	if (emu->cur_mod != 3)
 		store_data_long(emu, emu->cur_offset, val);
@@ -1070,7 +1070,7 @@ write_back_long(struct X86EMU *emu, uint32_t val)
 }
 
 static void
-common_inc_word_long(struct X86EMU *emu, union X86EMU_register *reg)
+common_inc_word_long(struct x86emu *emu, union x86emu_register *reg)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		reg->I32_reg.e_reg = inc_long(emu, reg->I32_reg.e_reg);
@@ -1079,7 +1079,7 @@ common_inc_word_long(struct X86EMU *emu, union X86EMU_register *reg)
 }
 
 static void
-common_dec_word_long(struct X86EMU *emu, union X86EMU_register *reg)
+common_dec_word_long(struct x86emu *emu, union x86emu_register *reg)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		reg->I32_reg.e_reg = dec_long(emu, reg->I32_reg.e_reg);
@@ -1088,7 +1088,7 @@ common_dec_word_long(struct X86EMU *emu, union X86EMU_register *reg)
 }
 
 static void
-common_binop_byte_rm_r(struct X86EMU *emu, uint8_t (*binop)(struct X86EMU *, uint8_t, uint8_t))
+common_binop_byte_rm_r(struct x86emu *emu, uint8_t (*binop)(struct x86emu *, uint8_t, uint8_t))
 {
 	uint32_t destoffset;
 	uint8_t *destreg, srcval;
@@ -1108,7 +1108,7 @@ common_binop_byte_rm_r(struct X86EMU *emu, uint8_t (*binop)(struct X86EMU *, uin
 }
 
 static void
-common_binop_ns_byte_rm_r(struct X86EMU *emu, void (*binop)(struct X86EMU *, uint8_t, uint8_t))
+common_binop_ns_byte_rm_r(struct x86emu *emu, void (*binop)(struct x86emu *, uint8_t, uint8_t))
 {
 	uint32_t destoffset;
 	uint8_t destval, srcval;
@@ -1125,7 +1125,7 @@ common_binop_ns_byte_rm_r(struct X86EMU *emu, void (*binop)(struct X86EMU *, uin
 }
 
 static void
-common_binop_word_rm_r(struct X86EMU *emu, uint16_t (*binop)(struct X86EMU *, uint16_t, uint16_t))
+common_binop_word_rm_r(struct x86emu *emu, uint16_t (*binop)(struct x86emu *, uint16_t, uint16_t))
 {
 	uint32_t destoffset;
 	uint16_t destval, *destreg, srcval;
@@ -1144,7 +1144,7 @@ common_binop_word_rm_r(struct X86EMU *emu, uint16_t (*binop)(struct X86EMU *, ui
 }
 
 static void
-common_binop_byte_r_rm(struct X86EMU *emu, uint8_t (*binop)(struct X86EMU *, uint8_t, uint8_t))
+common_binop_byte_r_rm(struct x86emu *emu, uint8_t (*binop)(struct x86emu *, uint8_t, uint8_t))
 {
 	uint8_t *destreg, srcval;
 	uint32_t srcoffset;
@@ -1161,7 +1161,7 @@ common_binop_byte_r_rm(struct X86EMU *emu, uint8_t (*binop)(struct X86EMU *, uin
 }
 
 static void
-common_binop_long_rm_r(struct X86EMU *emu, uint32_t (*binop)(struct X86EMU *, uint32_t, uint32_t))
+common_binop_long_rm_r(struct x86emu *emu, uint32_t (*binop)(struct x86emu *, uint32_t, uint32_t))
 {
 	uint32_t destoffset;
 	uint32_t destval, *destreg, srcval;
@@ -1180,8 +1180,8 @@ common_binop_long_rm_r(struct X86EMU *emu, uint32_t (*binop)(struct X86EMU *, ui
 }
 
 static void
-common_binop_word_long_rm_r(struct X86EMU *emu,
-    uint16_t (*binop16)(struct X86EMU *, uint16_t, uint16_t), uint32_t (*binop32)(struct X86EMU *, uint32_t, uint32_t))
+common_binop_word_long_rm_r(struct x86emu *emu,
+    uint16_t (*binop16)(struct x86emu *, uint16_t, uint16_t), uint32_t (*binop32)(struct x86emu *, uint32_t, uint32_t))
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		common_binop_long_rm_r(emu, binop32);
@@ -1190,7 +1190,7 @@ common_binop_word_long_rm_r(struct X86EMU *emu,
 }
 
 static void
-common_binop_ns_word_rm_r(struct X86EMU *emu, void (*binop)(struct X86EMU *, uint16_t, uint16_t))
+common_binop_ns_word_rm_r(struct x86emu *emu, void (*binop)(struct x86emu *, uint16_t, uint16_t))
 {
 	uint32_t destoffset;
 	uint16_t destval, srcval;
@@ -1208,7 +1208,7 @@ common_binop_ns_word_rm_r(struct X86EMU *emu, void (*binop)(struct X86EMU *, uin
 
 
 static void
-common_binop_ns_long_rm_r(struct X86EMU *emu, void (*binop)(struct X86EMU *, uint32_t, uint32_t))
+common_binop_ns_long_rm_r(struct x86emu *emu, void (*binop)(struct x86emu *, uint32_t, uint32_t))
 {
 	uint32_t destoffset;
 	uint32_t destval, srcval;
@@ -1225,8 +1225,8 @@ common_binop_ns_long_rm_r(struct X86EMU *emu, void (*binop)(struct X86EMU *, uin
 }
 
 static void
-common_binop_ns_word_long_rm_r(struct X86EMU *emu,
-    void (*binop16)(struct X86EMU *, uint16_t, uint16_t), void (*binop32)(struct X86EMU *, uint32_t, uint32_t))
+common_binop_ns_word_long_rm_r(struct x86emu *emu,
+    void (*binop16)(struct x86emu *, uint16_t, uint16_t), void (*binop32)(struct x86emu *, uint32_t, uint32_t))
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		common_binop_ns_long_rm_r(emu, binop32);
@@ -1235,7 +1235,7 @@ common_binop_ns_word_long_rm_r(struct X86EMU *emu,
 }
 
 static void
-common_binop_long_r_rm(struct X86EMU *emu, uint32_t (*binop)(struct X86EMU *, uint32_t, uint32_t))
+common_binop_long_r_rm(struct x86emu *emu, uint32_t (*binop)(struct x86emu *, uint32_t, uint32_t))
 {
 	uint32_t srcoffset;
 	uint32_t *destreg, srcval;
@@ -1252,7 +1252,7 @@ common_binop_long_r_rm(struct X86EMU *emu, uint32_t (*binop)(struct X86EMU *, ui
 }
 
 static void
-common_binop_word_r_rm(struct X86EMU *emu, uint16_t (*binop)(struct X86EMU *, uint16_t, uint16_t))
+common_binop_word_r_rm(struct x86emu *emu, uint16_t (*binop)(struct x86emu *, uint16_t, uint16_t))
 {
 	uint32_t srcoffset;
 	uint16_t *destreg, srcval;
@@ -1269,8 +1269,8 @@ common_binop_word_r_rm(struct X86EMU *emu, uint16_t (*binop)(struct X86EMU *, ui
 }
 
 static void
-common_binop_word_long_r_rm(struct X86EMU *emu,
-    uint16_t (*binop16)(struct X86EMU *, uint16_t, uint16_t), uint32_t (*binop32)(struct X86EMU *, uint32_t, uint32_t))
+common_binop_word_long_r_rm(struct x86emu *emu,
+    uint16_t (*binop16)(struct x86emu *, uint16_t, uint16_t), uint32_t (*binop32)(struct x86emu *, uint32_t, uint32_t))
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		common_binop_long_r_rm(emu, binop32);
@@ -1279,7 +1279,7 @@ common_binop_word_long_r_rm(struct X86EMU *emu,
 }
 
 static void
-common_binop_byte_imm(struct X86EMU *emu, uint8_t (*binop)(struct X86EMU *, uint8_t, uint8_t))
+common_binop_byte_imm(struct x86emu *emu, uint8_t (*binop)(struct x86emu *, uint8_t, uint8_t))
 {
 	uint8_t srcval;
 
@@ -1288,8 +1288,8 @@ common_binop_byte_imm(struct X86EMU *emu, uint8_t (*binop)(struct X86EMU *, uint
 }
 
 static void
-common_binop_word_long_imm(struct X86EMU *emu,
-    uint16_t (*binop16)(struct X86EMU *, uint16_t, uint16_t), uint32_t (*binop32)(struct X86EMU *, uint32_t, uint32_t))
+common_binop_word_long_imm(struct x86emu *emu,
+    uint16_t (*binop16)(struct x86emu *, uint16_t, uint16_t), uint32_t (*binop32)(struct x86emu *, uint32_t, uint32_t))
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		uint32_t srcval;
@@ -1305,7 +1305,7 @@ common_binop_word_long_imm(struct X86EMU *emu,
 }
 
 static void
-common_push_word_long(struct X86EMU *emu, union X86EMU_register *reg)
+common_push_word_long(struct x86emu *emu, union x86emu_register *reg)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		push_long(emu, reg->I32_reg.e_reg);
@@ -1314,7 +1314,7 @@ common_push_word_long(struct X86EMU *emu, union X86EMU_register *reg)
 }
 
 static void
-common_pop_word_long(struct X86EMU *emu, union X86EMU_register *reg)
+common_pop_word_long(struct x86emu *emu, union x86emu_register *reg)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		reg->I32_reg.e_reg = pop_long(emu);
@@ -1323,7 +1323,7 @@ common_pop_word_long(struct X86EMU *emu, union X86EMU_register *reg)
 }
 
 static void
-common_imul_long_IMM(struct X86EMU *emu, int byte_imm)
+common_imul_long_IMM(struct x86emu *emu, int byte_imm)
 {
 	uint32_t srcoffset;
 	uint32_t *destreg, srcval;
@@ -1356,7 +1356,7 @@ common_imul_long_IMM(struct X86EMU *emu, int byte_imm)
 }
 
 static void
-common_imul_word_IMM(struct X86EMU *emu, int byte_imm)
+common_imul_word_IMM(struct x86emu *emu, int byte_imm)
 {
 	uint32_t srcoffset;
 	uint16_t *destreg, srcval;
@@ -1389,7 +1389,7 @@ common_imul_word_IMM(struct X86EMU *emu, int byte_imm)
 }
 
 static void
-common_imul_imm(struct X86EMU *emu, int byte_imm)
+common_imul_imm(struct x86emu *emu, int byte_imm)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		common_imul_long_IMM(emu, byte_imm);
@@ -1398,7 +1398,7 @@ common_imul_imm(struct X86EMU *emu, int byte_imm)
 }
 
 static void
-common_jmp_near(struct X86EMU *emu, int cond)
+common_jmp_near(struct x86emu *emu, int cond)
 {
 	int8_t offset;
 	uint16_t target;
@@ -1410,14 +1410,14 @@ common_jmp_near(struct X86EMU *emu, int cond)
 }
 
 static void
-common_load_far_pointer(struct X86EMU *emu, uint16_t *seg)
+common_load_far_pointer(struct x86emu *emu, uint16_t *seg)
 {
 	uint16_t *dstreg;
 	uint32_t srcoffset;
 
 	fetch_decode_modrm(emu);
 	if (emu->cur_mod == 3)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 
 	dstreg = decode_rh_word_register(emu);
 	srcoffset = decode_rl_address(emu);
@@ -1431,7 +1431,7 @@ REMARKS:
 Handles opcode 0x3a
 ****************************************************************************/
 static void
-x86emuOp_cmp_byte_R_RM(struct X86EMU *emu)
+x86emuOp_cmp_byte_R_RM(struct x86emu *emu)
 {
 	uint8_t *destreg, srcval;
 
@@ -1446,7 +1446,7 @@ REMARKS:
 Handles opcode 0x3b
 ****************************************************************************/
 static void
-x86emuOp32_cmp_word_R_RM(struct X86EMU *emu)
+x86emuOp32_cmp_word_R_RM(struct x86emu *emu)
 {
 	uint32_t srcval, *destreg;
 
@@ -1457,7 +1457,7 @@ x86emuOp32_cmp_word_R_RM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp16_cmp_word_R_RM(struct X86EMU *emu)
+x86emuOp16_cmp_word_R_RM(struct x86emu *emu)
 {
 	uint16_t srcval, *destreg;
 
@@ -1468,7 +1468,7 @@ x86emuOp16_cmp_word_R_RM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp_cmp_word_R_RM(struct X86EMU *emu)
+x86emuOp_cmp_word_R_RM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		x86emuOp32_cmp_word_R_RM(emu);
@@ -1480,7 +1480,7 @@ REMARKS:
 Handles opcode 0x3c
 ****************************************************************************/
 static void
-x86emuOp_cmp_byte_AL_IMM(struct X86EMU *emu)
+x86emuOp_cmp_byte_AL_IMM(struct x86emu *emu)
 {
 	uint8_t srcval;
 
@@ -1492,7 +1492,7 @@ REMARKS:
 Handles opcode 0x3d
 ****************************************************************************/
 static void
-x86emuOp32_cmp_word_AX_IMM(struct X86EMU *emu)
+x86emuOp32_cmp_word_AX_IMM(struct x86emu *emu)
 {
 	uint32_t srcval;
 
@@ -1501,7 +1501,7 @@ x86emuOp32_cmp_word_AX_IMM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp16_cmp_word_AX_IMM(struct X86EMU *emu)
+x86emuOp16_cmp_word_AX_IMM(struct x86emu *emu)
 {
 	uint16_t srcval;
 
@@ -1510,7 +1510,7 @@ x86emuOp16_cmp_word_AX_IMM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp_cmp_word_AX_IMM(struct X86EMU *emu)
+x86emuOp_cmp_word_AX_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		x86emuOp32_cmp_word_AX_IMM(emu);
@@ -1522,7 +1522,7 @@ REMARKS:
 Handles opcode 0x60
 ****************************************************************************/
 static void
-x86emuOp_push_all(struct X86EMU *emu)
+x86emuOp_push_all(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		uint32_t old_sp = emu->x86.R_ESP;
@@ -1553,7 +1553,7 @@ REMARKS:
 Handles opcode 0x61
 ****************************************************************************/
 static void
-x86emuOp_pop_all(struct X86EMU *emu)
+x86emuOp_pop_all(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		emu->x86.R_EDI = pop_long(emu);
@@ -1583,7 +1583,7 @@ REMARKS:
 Handles opcode 0x68
 ****************************************************************************/
 static void
-x86emuOp_push_word_IMM(struct X86EMU *emu)
+x86emuOp_push_word_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		uint32_t imm;
@@ -1602,7 +1602,7 @@ REMARKS:
 Handles opcode 0x6a
 ****************************************************************************/
 static void
-x86emuOp_push_byte_IMM(struct X86EMU *emu)
+x86emuOp_push_byte_IMM(struct x86emu *emu)
 {
 	int16_t imm;
 
@@ -1622,7 +1622,7 @@ REMARKS:
 Handles opcode 0x6d
 ****************************************************************************/
 static void
-x86emuOp_ins_word(struct X86EMU *emu)
+x86emuOp_ins_word(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		ins(emu, 4);
@@ -1635,7 +1635,7 @@ REMARKS:
 Handles opcode 0x6f
 ****************************************************************************/
 static void
-x86emuOp_outs_word(struct X86EMU *emu)
+x86emuOp_outs_word(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		outs(emu, 4);
@@ -1648,7 +1648,7 @@ REMARKS:
 Handles opcode 0x7c
 ****************************************************************************/
 static void
-x86emuOp_jump_near_L(struct X86EMU *emu)
+x86emuOp_jump_near_L(struct x86emu *emu)
 {
 	int sf, of;
 
@@ -1662,7 +1662,7 @@ REMARKS:
 Handles opcode 0x7d
 ****************************************************************************/
 static void
-x86emuOp_jump_near_NL(struct X86EMU *emu)
+x86emuOp_jump_near_NL(struct x86emu *emu)
 {
 	int sf, of;
 
@@ -1676,7 +1676,7 @@ REMARKS:
 Handles opcode 0x7e
 ****************************************************************************/
 static void
-x86emuOp_jump_near_LE(struct X86EMU *emu)
+x86emuOp_jump_near_LE(struct x86emu *emu)
 {
 	int sf, of;
 
@@ -1690,7 +1690,7 @@ REMARKS:
 Handles opcode 0x7f
 ****************************************************************************/
 static void
-x86emuOp_jump_near_NLE(struct X86EMU *emu)
+x86emuOp_jump_near_NLE(struct x86emu *emu)
 {
 	int sf, of;
 
@@ -1701,7 +1701,7 @@ x86emuOp_jump_near_NLE(struct X86EMU *emu)
 }
 
 static
-uint8_t(*const opc80_byte_operation[]) (struct X86EMU *, uint8_t d, uint8_t s) =
+uint8_t(*const opc80_byte_operation[]) (struct x86emu *, uint8_t d, uint8_t s) =
 {
 	add_byte,		/* 00 */
 	or_byte,		/* 01 */
@@ -1717,7 +1717,7 @@ REMARKS:
 Handles opcode 0x80
 ****************************************************************************/
 static void
-x86emuOp_opc80_byte_RM_IMM(struct X86EMU *emu)
+x86emuOp_opc80_byte_RM_IMM(struct x86emu *emu)
 {
 	uint8_t imm, destval;
 
@@ -1735,7 +1735,7 @@ x86emuOp_opc80_byte_RM_IMM(struct X86EMU *emu)
 }
 
 static
-uint16_t(* const opc81_word_operation[]) (struct X86EMU *, uint16_t d, uint16_t s) =
+uint16_t(* const opc81_word_operation[]) (struct x86emu *, uint16_t d, uint16_t s) =
 {
 	add_word,		/* 00 */
 	or_word,		/* 01 */
@@ -1748,7 +1748,7 @@ uint16_t(* const opc81_word_operation[]) (struct X86EMU *, uint16_t d, uint16_t 
 };
 
 static
-uint32_t(* const opc81_long_operation[]) (struct X86EMU *, uint32_t d, uint32_t s) =
+uint32_t(* const opc81_long_operation[]) (struct x86emu *, uint32_t d, uint32_t s) =
 {
 	add_long,		/* 00 */
 	or_long,		/* 01 */
@@ -1764,7 +1764,7 @@ REMARKS:
 Handles opcode 0x81
 ****************************************************************************/
 static void
-x86emuOp32_opc81_word_RM_IMM(struct X86EMU *emu)
+x86emuOp32_opc81_word_RM_IMM(struct x86emu *emu)
 {
 	uint32_t destval, imm;
 
@@ -1782,7 +1782,7 @@ x86emuOp32_opc81_word_RM_IMM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp16_opc81_word_RM_IMM(struct X86EMU *emu)
+x86emuOp16_opc81_word_RM_IMM(struct x86emu *emu)
 {
 	uint16_t destval, imm;
 
@@ -1800,7 +1800,7 @@ x86emuOp16_opc81_word_RM_IMM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp_opc81_word_RM_IMM(struct X86EMU *emu)
+x86emuOp_opc81_word_RM_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		x86emuOp32_opc81_word_RM_IMM(emu);
@@ -1809,7 +1809,7 @@ x86emuOp_opc81_word_RM_IMM(struct X86EMU *emu)
 }
 
 static
-uint8_t(* const opc82_byte_operation[]) (struct X86EMU *, uint8_t s, uint8_t d) =
+uint8_t(* const opc82_byte_operation[]) (struct x86emu *, uint8_t s, uint8_t d) =
 {
 	add_byte,		/* 00 */
 	or_byte,		/* 01 *//* YYY UNUSED ???? */
@@ -1825,7 +1825,7 @@ REMARKS:
 Handles opcode 0x82
 ****************************************************************************/
 static void
-x86emuOp_opc82_byte_RM_IMM(struct X86EMU *emu)
+x86emuOp_opc82_byte_RM_IMM(struct x86emu *emu)
 {
 	uint8_t imm, destval;
 
@@ -1844,7 +1844,7 @@ x86emuOp_opc82_byte_RM_IMM(struct X86EMU *emu)
 }
 
 static
-uint16_t(* const opc83_word_operation[]) (struct X86EMU *, uint16_t s, uint16_t d) =
+uint16_t(* const opc83_word_operation[]) (struct x86emu *, uint16_t s, uint16_t d) =
 {
 	add_word,		/* 00 */
 	or_word,		/* 01 *//* YYY UNUSED ???? */
@@ -1857,7 +1857,7 @@ uint16_t(* const opc83_word_operation[]) (struct X86EMU *, uint16_t s, uint16_t 
 };
 
 static
-uint32_t(* const opc83_long_operation[]) (struct X86EMU *, uint32_t s, uint32_t d) =
+uint32_t(* const opc83_long_operation[]) (struct x86emu *, uint32_t s, uint32_t d) =
 {
 	add_long,		/* 00 */
 	or_long,		/* 01 *//* YYY UNUSED ???? */
@@ -1873,7 +1873,7 @@ REMARKS:
 Handles opcode 0x83
 ****************************************************************************/
 static void
-x86emuOp32_opc83_word_RM_IMM(struct X86EMU *emu)
+x86emuOp32_opc83_word_RM_IMM(struct x86emu *emu)
 {
 	uint32_t destval, imm;
 
@@ -1886,7 +1886,7 @@ x86emuOp32_opc83_word_RM_IMM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp16_opc83_word_RM_IMM(struct X86EMU *emu)
+x86emuOp16_opc83_word_RM_IMM(struct x86emu *emu)
 {
 	uint16_t destval, imm;
 
@@ -1899,7 +1899,7 @@ x86emuOp16_opc83_word_RM_IMM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp_opc83_word_RM_IMM(struct X86EMU *emu)
+x86emuOp_opc83_word_RM_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		x86emuOp32_opc83_word_RM_IMM(emu);
@@ -1911,7 +1911,7 @@ REMARKS:
 Handles opcode 0x86
 ****************************************************************************/
 static void
-x86emuOp_xchg_byte_RM_R(struct X86EMU *emu)
+x86emuOp_xchg_byte_RM_R(struct x86emu *emu)
 {
 	uint8_t *srcreg, destval, tmp;
 
@@ -1928,7 +1928,7 @@ REMARKS:
 Handles opcode 0x87
 ****************************************************************************/
 static void
-x86emuOp32_xchg_word_RM_R(struct X86EMU *emu)
+x86emuOp32_xchg_word_RM_R(struct x86emu *emu)
 {
 	uint32_t *srcreg, destval, tmp;
 
@@ -1942,7 +1942,7 @@ x86emuOp32_xchg_word_RM_R(struct X86EMU *emu)
 }
 
 static void
-x86emuOp16_xchg_word_RM_R(struct X86EMU *emu)
+x86emuOp16_xchg_word_RM_R(struct x86emu *emu)
 {
 	uint16_t *srcreg, destval, tmp;
 
@@ -1956,7 +1956,7 @@ x86emuOp16_xchg_word_RM_R(struct X86EMU *emu)
 }
 
 static void
-x86emuOp_xchg_word_RM_R(struct X86EMU *emu)
+x86emuOp_xchg_word_RM_R(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		x86emuOp32_xchg_word_RM_R(emu);
@@ -1968,7 +1968,7 @@ REMARKS:
 Handles opcode 0x88
 ****************************************************************************/
 static void
-x86emuOp_mov_byte_RM_R(struct X86EMU *emu)
+x86emuOp_mov_byte_RM_R(struct x86emu *emu)
 {
 	uint8_t *destreg, *srcreg;
 	uint32_t destoffset;
@@ -1988,7 +1988,7 @@ REMARKS:
 Handles opcode 0x89
 ****************************************************************************/
 static void
-x86emuOp32_mov_word_RM_R(struct X86EMU *emu)
+x86emuOp32_mov_word_RM_R(struct x86emu *emu)
 {
 	uint32_t destoffset;
 	uint32_t *destreg, srcval;
@@ -2005,7 +2005,7 @@ x86emuOp32_mov_word_RM_R(struct X86EMU *emu)
 }
 
 static void
-x86emuOp16_mov_word_RM_R(struct X86EMU *emu)
+x86emuOp16_mov_word_RM_R(struct x86emu *emu)
 {
 	uint32_t destoffset;
 	uint16_t *destreg, srcval;
@@ -2022,7 +2022,7 @@ x86emuOp16_mov_word_RM_R(struct X86EMU *emu)
 }
 
 static void
-x86emuOp_mov_word_RM_R(struct X86EMU *emu)
+x86emuOp_mov_word_RM_R(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		x86emuOp32_mov_word_RM_R(emu);
@@ -2034,7 +2034,7 @@ REMARKS:
 Handles opcode 0x8a
 ****************************************************************************/
 static void
-x86emuOp_mov_byte_R_RM(struct X86EMU *emu)
+x86emuOp_mov_byte_R_RM(struct x86emu *emu)
 {
 	uint8_t *destreg;
 
@@ -2047,7 +2047,7 @@ REMARKS:
 Handles opcode 0x8b
 ****************************************************************************/
 static void
-x86emuOp_mov_word_R_RM(struct X86EMU *emu)
+x86emuOp_mov_word_R_RM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		uint32_t *destreg;
@@ -2068,7 +2068,7 @@ REMARKS:
 Handles opcode 0x8c
 ****************************************************************************/
 static void
-x86emuOp_mov_word_RM_SR(struct X86EMU *emu)
+x86emuOp_mov_word_RM_SR(struct x86emu *emu)
 {
 	uint16_t *destreg, srcval;
 	uint32_t destoffset;
@@ -2088,7 +2088,7 @@ REMARKS:
 Handles opcode 0x8d
 ****************************************************************************/
 static void
-x86emuOp_lea_word_R_M(struct X86EMU *emu)
+x86emuOp_lea_word_R_M(struct x86emu *emu)
 {
 	uint16_t *srcreg;
 	uint32_t destoffset;
@@ -2100,7 +2100,7 @@ x86emuOp_lea_word_R_M(struct X86EMU *emu)
  */
 	fetch_decode_modrm(emu);
 	if (emu->cur_mod == 3)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 
 	srcreg = decode_rh_word_register(emu);
 	destoffset = decode_rl_address(emu);
@@ -2111,7 +2111,7 @@ REMARKS:
 Handles opcode 0x8e
 ****************************************************************************/
 static void
-x86emuOp_mov_word_SR_RM(struct X86EMU *emu)
+x86emuOp_mov_word_SR_RM(struct x86emu *emu)
 {
 	uint16_t *destreg;
 
@@ -2130,7 +2130,7 @@ REMARKS:
 Handles opcode 0x8f
 ****************************************************************************/
 static void
-x86emuOp32_pop_RM(struct X86EMU *emu)
+x86emuOp32_pop_RM(struct x86emu *emu)
 {
 	uint32_t destoffset;
 	uint32_t destval, *destreg;
@@ -2147,7 +2147,7 @@ x86emuOp32_pop_RM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp16_pop_RM(struct X86EMU *emu)
+x86emuOp16_pop_RM(struct x86emu *emu)
 {
 	uint32_t destoffset;
 	uint16_t destval, *destreg;
@@ -2164,7 +2164,7 @@ x86emuOp16_pop_RM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp_pop_RM(struct X86EMU *emu)
+x86emuOp_pop_RM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		x86emuOp32_pop_RM(emu);
@@ -2176,7 +2176,7 @@ REMARKS:
 Handles opcode 0x91
 ****************************************************************************/
 static void
-x86emuOp_xchg_word_AX_CX(struct X86EMU *emu)
+x86emuOp_xchg_word_AX_CX(struct x86emu *emu)
 {
 	uint32_t tmp;
 
@@ -2195,7 +2195,7 @@ REMARKS:
 Handles opcode 0x92
 ****************************************************************************/
 static void
-x86emuOp_xchg_word_AX_DX(struct X86EMU *emu)
+x86emuOp_xchg_word_AX_DX(struct x86emu *emu)
 {
 	uint32_t tmp;
 
@@ -2214,7 +2214,7 @@ REMARKS:
 Handles opcode 0x93
 ****************************************************************************/
 static void
-x86emuOp_xchg_word_AX_BX(struct X86EMU *emu)
+x86emuOp_xchg_word_AX_BX(struct x86emu *emu)
 {
 	uint32_t tmp;
 
@@ -2233,7 +2233,7 @@ REMARKS:
 Handles opcode 0x94
 ****************************************************************************/
 static void
-x86emuOp_xchg_word_AX_SP(struct X86EMU *emu)
+x86emuOp_xchg_word_AX_SP(struct x86emu *emu)
 {
 	uint32_t tmp;
 
@@ -2252,7 +2252,7 @@ REMARKS:
 Handles opcode 0x95
 ****************************************************************************/
 static void
-x86emuOp_xchg_word_AX_BP(struct X86EMU *emu)
+x86emuOp_xchg_word_AX_BP(struct x86emu *emu)
 {
 	uint32_t tmp;
 
@@ -2271,7 +2271,7 @@ REMARKS:
 Handles opcode 0x96
 ****************************************************************************/
 static void
-x86emuOp_xchg_word_AX_SI(struct X86EMU *emu)
+x86emuOp_xchg_word_AX_SI(struct x86emu *emu)
 {
 	uint32_t tmp;
 
@@ -2290,7 +2290,7 @@ REMARKS:
 Handles opcode 0x97
 ****************************************************************************/
 static void
-x86emuOp_xchg_word_AX_DI(struct X86EMU *emu)
+x86emuOp_xchg_word_AX_DI(struct x86emu *emu)
 {
 	uint32_t tmp;
 
@@ -2309,7 +2309,7 @@ REMARKS:
 Handles opcode 0x98
 ****************************************************************************/
 static void
-x86emuOp_cbw(struct X86EMU *emu)
+x86emuOp_cbw(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		if (emu->x86.R_AX & 0x8000) {
@@ -2330,7 +2330,7 @@ REMARKS:
 Handles opcode 0x99
 ****************************************************************************/
 static void
-x86emuOp_cwd(struct X86EMU *emu)
+x86emuOp_cwd(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		if (emu->x86.R_EAX & 0x80000000) {
@@ -2351,7 +2351,7 @@ REMARKS:
 Handles opcode 0x9a
 ****************************************************************************/
 static void
-x86emuOp_call_far_IMM(struct X86EMU *emu)
+x86emuOp_call_far_IMM(struct x86emu *emu)
 {
 	uint16_t farseg, faroff;
 
@@ -2372,7 +2372,7 @@ REMARKS:
 Handles opcode 0x9c
 ****************************************************************************/
 static void
-x86emuOp_pushf_word(struct X86EMU *emu)
+x86emuOp_pushf_word(struct x86emu *emu)
 {
 	uint32_t flags;
 
@@ -2389,7 +2389,7 @@ REMARKS:
 Handles opcode 0x9d
 ****************************************************************************/
 static void
-x86emuOp_popf_word(struct X86EMU *emu)
+x86emuOp_popf_word(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		emu->x86.R_EFLG = pop_long(emu);
@@ -2402,7 +2402,7 @@ REMARKS:
 Handles opcode 0x9e
 ****************************************************************************/
 static void
-x86emuOp_sahf(struct X86EMU *emu)
+x86emuOp_sahf(struct x86emu *emu)
 {
 	/* clear the lower bits of the flag register */
 	emu->x86.R_FLG &= 0xffffff00;
@@ -2414,7 +2414,7 @@ REMARKS:
 Handles opcode 0x9f
 ****************************************************************************/
 static void
-x86emuOp_lahf(struct X86EMU *emu)
+x86emuOp_lahf(struct x86emu *emu)
 {
 	emu->x86.R_AH = (uint8_t) (emu->x86.R_FLG & 0xff);
 	/* undocumented TC++ behavior??? Nope.  It's documented, but you have
@@ -2426,7 +2426,7 @@ REMARKS:
 Handles opcode 0xa0
 ****************************************************************************/
 static void
-x86emuOp_mov_AL_M_IMM(struct X86EMU *emu)
+x86emuOp_mov_AL_M_IMM(struct x86emu *emu)
 {
 	uint16_t offset;
 
@@ -2438,7 +2438,7 @@ REMARKS:
 Handles opcode 0xa1
 ****************************************************************************/
 static void
-x86emuOp_mov_AX_M_IMM(struct X86EMU *emu)
+x86emuOp_mov_AX_M_IMM(struct x86emu *emu)
 {
 	uint16_t offset;
 
@@ -2454,7 +2454,7 @@ REMARKS:
 Handles opcode 0xa2
 ****************************************************************************/
 static void
-x86emuOp_mov_M_AL_IMM(struct X86EMU *emu)
+x86emuOp_mov_M_AL_IMM(struct x86emu *emu)
 {
 	uint16_t offset;
 
@@ -2466,7 +2466,7 @@ REMARKS:
 Handles opcode 0xa3
 ****************************************************************************/
 static void
-x86emuOp_mov_M_AX_IMM(struct X86EMU *emu)
+x86emuOp_mov_M_AX_IMM(struct x86emu *emu)
 {
 	uint16_t offset;
 
@@ -2482,7 +2482,7 @@ REMARKS:
 Handles opcode 0xa4
 ****************************************************************************/
 static void
-x86emuOp_movs_byte(struct X86EMU *emu)
+x86emuOp_movs_byte(struct x86emu *emu)
 {
 	uint8_t val;
 	uint32_t count;
@@ -2512,7 +2512,7 @@ REMARKS:
 Handles opcode 0xa5
 ****************************************************************************/
 static void
-x86emuOp_movs_word(struct X86EMU *emu)
+x86emuOp_movs_word(struct x86emu *emu)
 {
 	uint32_t val;
 	int inc;
@@ -2551,7 +2551,7 @@ REMARKS:
 Handles opcode 0xa6
 ****************************************************************************/
 static void
-x86emuOp_cmps_byte(struct X86EMU *emu)
+x86emuOp_cmps_byte(struct x86emu *emu)
 {
 	int8_t val1, val2;
 	int inc;
@@ -2602,7 +2602,7 @@ REMARKS:
 Handles opcode 0xa7
 ****************************************************************************/
 static void
-x86emuOp_cmps_word(struct X86EMU *emu)
+x86emuOp_cmps_word(struct x86emu *emu)
 {
 	uint32_t val1, val2;
 	int inc;
@@ -2677,7 +2677,7 @@ REMARKS:
 Handles opcode 0xa9
 ****************************************************************************/
 static void
-x86emuOp_test_AX_IMM(struct X86EMU *emu)
+x86emuOp_test_AX_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		test_long(emu, emu->x86.R_EAX, fetch_long_imm(emu));
@@ -2690,7 +2690,7 @@ REMARKS:
 Handles opcode 0xaa
 ****************************************************************************/
 static void
-x86emuOp_stos_byte(struct X86EMU *emu)
+x86emuOp_stos_byte(struct x86emu *emu)
 {
 	int inc;
 
@@ -2717,7 +2717,7 @@ REMARKS:
 Handles opcode 0xab
 ****************************************************************************/
 static void
-x86emuOp_stos_word(struct X86EMU *emu)
+x86emuOp_stos_word(struct x86emu *emu)
 {
 	int inc;
 	uint32_t count;
@@ -2752,7 +2752,7 @@ REMARKS:
 Handles opcode 0xac
 ****************************************************************************/
 static void
-x86emuOp_lods_byte(struct X86EMU *emu)
+x86emuOp_lods_byte(struct x86emu *emu)
 {
 	int inc;
 
@@ -2779,7 +2779,7 @@ REMARKS:
 Handles opcode 0xad
 ****************************************************************************/
 static void
-x86emuOp_lods_word(struct X86EMU *emu)
+x86emuOp_lods_word(struct x86emu *emu)
 {
 	int inc;
 	uint32_t count;
@@ -2814,7 +2814,7 @@ REMARKS:
 Handles opcode 0xae
 ****************************************************************************/
 static void
-x86emuOp_scas_byte(struct X86EMU *emu)
+x86emuOp_scas_byte(struct x86emu *emu)
 {
 	int8_t val2;
 	int inc;
@@ -2858,7 +2858,7 @@ REMARKS:
 Handles opcode 0xaf
 ****************************************************************************/
 static void
-x86emuOp_scas_word(struct X86EMU *emu)
+x86emuOp_scas_word(struct x86emu *emu)
 {
 	int inc;
 	uint32_t val;
@@ -2921,7 +2921,7 @@ REMARKS:
 Handles opcode 0xb8
 ****************************************************************************/
 static void
-x86emuOp_mov_word_AX_IMM(struct X86EMU *emu)
+x86emuOp_mov_word_AX_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		emu->x86.R_EAX = fetch_long_imm(emu);
@@ -2933,7 +2933,7 @@ REMARKS:
 Handles opcode 0xb9
 ****************************************************************************/
 static void
-x86emuOp_mov_word_CX_IMM(struct X86EMU *emu)
+x86emuOp_mov_word_CX_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		emu->x86.R_ECX = fetch_long_imm(emu);
@@ -2945,7 +2945,7 @@ REMARKS:
 Handles opcode 0xba
 ****************************************************************************/
 static void
-x86emuOp_mov_word_DX_IMM(struct X86EMU *emu)
+x86emuOp_mov_word_DX_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		emu->x86.R_EDX = fetch_long_imm(emu);
@@ -2957,7 +2957,7 @@ REMARKS:
 Handles opcode 0xbb
 ****************************************************************************/
 static void
-x86emuOp_mov_word_BX_IMM(struct X86EMU *emu)
+x86emuOp_mov_word_BX_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		emu->x86.R_EBX = fetch_long_imm(emu);
@@ -2969,7 +2969,7 @@ REMARKS:
 Handles opcode 0xbc
 ****************************************************************************/
 static void
-x86emuOp_mov_word_SP_IMM(struct X86EMU *emu)
+x86emuOp_mov_word_SP_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		emu->x86.R_ESP = fetch_long_imm(emu);
@@ -2981,7 +2981,7 @@ REMARKS:
 Handles opcode 0xbd
 ****************************************************************************/
 static void
-x86emuOp_mov_word_BP_IMM(struct X86EMU *emu)
+x86emuOp_mov_word_BP_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		emu->x86.R_EBP = fetch_long_imm(emu);
@@ -2993,7 +2993,7 @@ REMARKS:
 Handles opcode 0xbe
 ****************************************************************************/
 static void
-x86emuOp_mov_word_SI_IMM(struct X86EMU *emu)
+x86emuOp_mov_word_SI_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		emu->x86.R_ESI = fetch_long_imm(emu);
@@ -3005,7 +3005,7 @@ REMARKS:
 Handles opcode 0xbf
 ****************************************************************************/
 static void
-x86emuOp_mov_word_DI_IMM(struct X86EMU *emu)
+x86emuOp_mov_word_DI_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		emu->x86.R_EDI = fetch_long_imm(emu);
@@ -3014,7 +3014,7 @@ x86emuOp_mov_word_DI_IMM(struct X86EMU *emu)
 }
 /* used by opcodes c0, d0, and d2. */
 static
-uint8_t(* const opcD0_byte_operation[]) (struct X86EMU *, uint8_t d, uint8_t s) =
+uint8_t(* const opcD0_byte_operation[]) (struct x86emu *, uint8_t d, uint8_t s) =
 {
 	rol_byte,
 	ror_byte,
@@ -3030,7 +3030,7 @@ REMARKS:
 Handles opcode 0xc0
 ****************************************************************************/
 static void
-x86emuOp_opcC0_byte_RM_MEM(struct X86EMU *emu)
+x86emuOp_opcC0_byte_RM_MEM(struct x86emu *emu)
 {
 	uint8_t destval, amt;
 
@@ -3047,7 +3047,7 @@ x86emuOp_opcC0_byte_RM_MEM(struct X86EMU *emu)
 }
 /* used by opcodes c1, d1, and d3. */
 static
-uint16_t(* const opcD1_word_operation[]) (struct X86EMU *, uint16_t s, uint8_t d) =
+uint16_t(* const opcD1_word_operation[]) (struct x86emu *, uint16_t s, uint8_t d) =
 {
 	rol_word,
 	ror_word,
@@ -3060,7 +3060,7 @@ uint16_t(* const opcD1_word_operation[]) (struct X86EMU *, uint16_t s, uint8_t d
 };
 /* used by opcodes c1, d1, and d3. */
 static
-uint32_t(* const opcD1_long_operation[]) (struct X86EMU *, uint32_t s, uint8_t d) =
+uint32_t(* const opcD1_long_operation[]) (struct x86emu *, uint32_t s, uint8_t d) =
 {
 	rol_long,
 	ror_long,
@@ -3076,7 +3076,7 @@ REMARKS:
 Handles opcode 0xc1
 ****************************************************************************/
 static void
-x86emuOp_opcC1_word_RM_MEM(struct X86EMU *emu)
+x86emuOp_opcC1_word_RM_MEM(struct x86emu *emu)
 {
 	uint8_t amt;
 
@@ -3105,7 +3105,7 @@ REMARKS:
 Handles opcode 0xc2
 ****************************************************************************/
 static void
-x86emuOp_ret_near_IMM(struct X86EMU *emu)
+x86emuOp_ret_near_IMM(struct x86emu *emu)
 {
 	uint16_t imm;
 
@@ -3118,7 +3118,7 @@ REMARKS:
 Handles opcode 0xc6
 ****************************************************************************/
 static void
-x86emuOp_mov_byte_RM_IMM(struct X86EMU *emu)
+x86emuOp_mov_byte_RM_IMM(struct x86emu *emu)
 {
 	uint8_t *destreg;
 	uint32_t destoffset;
@@ -3126,7 +3126,7 @@ x86emuOp_mov_byte_RM_IMM(struct X86EMU *emu)
 
 	fetch_decode_modrm(emu);
 	if (emu->cur_rh != 0)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	if (emu->cur_mod != 3) {
 		destoffset = decode_rl_address(emu);
 		imm = fetch_byte_imm(emu);
@@ -3142,14 +3142,14 @@ REMARKS:
 Handles opcode 0xc7
 ****************************************************************************/
 static void
-x86emuOp32_mov_word_RM_IMM(struct X86EMU *emu)
+x86emuOp32_mov_word_RM_IMM(struct x86emu *emu)
 {
 	uint32_t destoffset;
 	uint32_t imm, *destreg;
 
 	fetch_decode_modrm(emu);
 	if (emu->cur_rh != 0)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 
 	if (emu->cur_mod != 3) {
 		destoffset = decode_rl_address(emu);
@@ -3163,14 +3163,14 @@ x86emuOp32_mov_word_RM_IMM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp16_mov_word_RM_IMM(struct X86EMU *emu)
+x86emuOp16_mov_word_RM_IMM(struct x86emu *emu)
 {
 	uint32_t destoffset;
 	uint16_t imm, *destreg;
 
 	fetch_decode_modrm(emu);
 	if (emu->cur_rh != 0)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 
 	if (emu->cur_mod != 3) {
 		destoffset = decode_rl_address(emu);
@@ -3184,7 +3184,7 @@ x86emuOp16_mov_word_RM_IMM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp_mov_word_RM_IMM(struct X86EMU *emu)
+x86emuOp_mov_word_RM_IMM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		x86emuOp32_mov_word_RM_IMM(emu);
@@ -3196,7 +3196,7 @@ REMARKS:
 Handles opcode 0xc8
 ****************************************************************************/
 static void
-x86emuOp_enter(struct X86EMU *emu)
+x86emuOp_enter(struct x86emu *emu)
 {
 	uint16_t local, frame_pointer;
 	uint8_t nesting;
@@ -3221,7 +3221,7 @@ REMARKS:
 Handles opcode 0xc9
 ****************************************************************************/
 static void
-x86emuOp_leave(struct X86EMU *emu)
+x86emuOp_leave(struct x86emu *emu)
 {
 	emu->x86.R_SP = emu->x86.R_BP;
 	emu->x86.R_BP = pop_word(emu);
@@ -3231,7 +3231,7 @@ REMARKS:
 Handles opcode 0xca
 ****************************************************************************/
 static void
-x86emuOp_ret_far_IMM(struct X86EMU *emu)
+x86emuOp_ret_far_IMM(struct x86emu *emu)
 {
 	uint16_t imm;
 
@@ -3245,7 +3245,7 @@ REMARKS:
 Handles opcode 0xcb
 ****************************************************************************/
 static void
-x86emuOp_ret_far(struct X86EMU *emu)
+x86emuOp_ret_far(struct x86emu *emu)
 {
 	emu->x86.R_IP = pop_word(emu);
 	emu->x86.R_CS = pop_word(emu);
@@ -3255,7 +3255,7 @@ REMARKS:
 Handles opcode 0xcc
 ****************************************************************************/
 static void
-x86emuOp_int3(struct X86EMU *emu)
+x86emuOp_int3(struct x86emu *emu)
 {
 	x86emu_intr_dispatch(emu, 3);
 }
@@ -3264,7 +3264,7 @@ REMARKS:
 Handles opcode 0xcd
 ****************************************************************************/
 static void
-x86emuOp_int_IMM(struct X86EMU *emu)
+x86emuOp_int_IMM(struct x86emu *emu)
 {
 	uint8_t intnum;
 
@@ -3276,7 +3276,7 @@ REMARKS:
 Handles opcode 0xce
 ****************************************************************************/
 static void
-x86emuOp_into(struct X86EMU *emu)
+x86emuOp_into(struct x86emu *emu)
 {
 	if (ACCESS_FLAG(F_OF))
 		x86emu_intr_dispatch(emu, 4);
@@ -3286,7 +3286,7 @@ REMARKS:
 Handles opcode 0xcf
 ****************************************************************************/
 static void
-x86emuOp_iret(struct X86EMU *emu)
+x86emuOp_iret(struct x86emu *emu)
 {
 	emu->x86.R_IP = pop_word(emu);
 	emu->x86.R_CS = pop_word(emu);
@@ -3297,7 +3297,7 @@ REMARKS:
 Handles opcode 0xd0
 ****************************************************************************/
 static void
-x86emuOp_opcD0_byte_RM_1(struct X86EMU *emu)
+x86emuOp_opcD0_byte_RM_1(struct x86emu *emu)
 {
 	uint8_t destval;
 
@@ -3311,7 +3311,7 @@ REMARKS:
 Handles opcode 0xd1
 ****************************************************************************/
 static void
-x86emuOp_opcD1_word_RM_1(struct X86EMU *emu)
+x86emuOp_opcD1_word_RM_1(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		uint32_t destval;
@@ -3334,7 +3334,7 @@ REMARKS:
 Handles opcode 0xd2
 ****************************************************************************/
 static void
-x86emuOp_opcD2_byte_RM_CL(struct X86EMU *emu)
+x86emuOp_opcD2_byte_RM_CL(struct x86emu *emu)
 {
 	uint8_t destval;
 
@@ -3348,7 +3348,7 @@ REMARKS:
 Handles opcode 0xd3
 ****************************************************************************/
 static void
-x86emuOp_opcD3_word_RM_CL(struct X86EMU *emu)
+x86emuOp_opcD3_word_RM_CL(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		uint32_t destval;
@@ -3371,14 +3371,14 @@ REMARKS:
 Handles opcode 0xd4
 ****************************************************************************/
 static void
-x86emuOp_aam(struct X86EMU *emu)
+x86emuOp_aam(struct x86emu *emu)
 {
 	uint8_t a;
 
 	a = fetch_byte_imm(emu);	/* this is a stupid encoding. */
 	if (a != 10) {
 		/* fix: add base decoding aam_word(uint8_t val, int base a) */
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	}
 	/* note the type change here --- returning AL and AH in AX. */
 	emu->x86.R_AX = aam_word(emu, emu->x86.R_AL);
@@ -3388,14 +3388,14 @@ REMARKS:
 Handles opcode 0xd5
 ****************************************************************************/
 static void
-x86emuOp_aad(struct X86EMU *emu)
+x86emuOp_aad(struct x86emu *emu)
 {
 	uint8_t a;
 
 	a = fetch_byte_imm(emu);
 	if (a != 10) {
 		/* fix: add base decoding aad_word(uint16_t val, int base a) */
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	}
 	emu->x86.R_AX = aad_word(emu, emu->x86.R_AX);
 }
@@ -3406,7 +3406,7 @@ REMARKS:
 Handles opcode 0xd7
 ****************************************************************************/
 static void
-x86emuOp_xlat(struct X86EMU *emu)
+x86emuOp_xlat(struct x86emu *emu)
 {
 	uint16_t addr;
 
@@ -3416,12 +3416,12 @@ x86emuOp_xlat(struct X86EMU *emu)
 
 /* opcode=0xd8 */
 static void 
-x86emuOp_esc_coprocess_d8(struct X86EMU *emu)
+x86emuOp_esc_coprocess_d8(struct x86emu *emu)
 {
 }
 /* opcode=0xd9 */
 static void 
-x86emuOp_esc_coprocess_d9(struct X86EMU *emu)
+x86emuOp_esc_coprocess_d9(struct x86emu *emu)
 {
 	fetch_decode_modrm(emu);
 	if (emu->cur_mod != 3)
@@ -3429,7 +3429,7 @@ x86emuOp_esc_coprocess_d9(struct X86EMU *emu)
 }
 /* opcode=0xda */
 static void 
-x86emuOp_esc_coprocess_da(struct X86EMU *emu)
+x86emuOp_esc_coprocess_da(struct x86emu *emu)
 {
 	fetch_decode_modrm(emu);
 	if (emu->cur_mod != 3)
@@ -3437,7 +3437,7 @@ x86emuOp_esc_coprocess_da(struct X86EMU *emu)
 }
 /* opcode=0xdb */
 static void 
-x86emuOp_esc_coprocess_db(struct X86EMU *emu)
+x86emuOp_esc_coprocess_db(struct x86emu *emu)
 {
 	fetch_decode_modrm(emu);
 	if (emu->cur_mod != 3)
@@ -3445,7 +3445,7 @@ x86emuOp_esc_coprocess_db(struct X86EMU *emu)
 }
 /* opcode=0xdc */
 static void 
-x86emuOp_esc_coprocess_dc(struct X86EMU *emu)
+x86emuOp_esc_coprocess_dc(struct x86emu *emu)
 {
 	fetch_decode_modrm(emu);
 	if (emu->cur_mod != 3)
@@ -3453,7 +3453,7 @@ x86emuOp_esc_coprocess_dc(struct X86EMU *emu)
 }
 /* opcode=0xdd */
 static void 
-x86emuOp_esc_coprocess_dd(struct X86EMU *emu)
+x86emuOp_esc_coprocess_dd(struct x86emu *emu)
 {
 	fetch_decode_modrm(emu);
 	if (emu->cur_mod != 3)
@@ -3461,7 +3461,7 @@ x86emuOp_esc_coprocess_dd(struct X86EMU *emu)
 }
 /* opcode=0xde */
 static void 
-x86emuOp_esc_coprocess_de(struct X86EMU *emu)
+x86emuOp_esc_coprocess_de(struct x86emu *emu)
 {
 	fetch_decode_modrm(emu);
 	if (emu->cur_mod != 3)
@@ -3469,7 +3469,7 @@ x86emuOp_esc_coprocess_de(struct X86EMU *emu)
 }
 /* opcode=0xdf */
 static void 
-x86emuOp_esc_coprocess_df(struct X86EMU *emu)
+x86emuOp_esc_coprocess_df(struct x86emu *emu)
 {
 	fetch_decode_modrm(emu);
 	if (emu->cur_mod != 3)
@@ -3481,7 +3481,7 @@ REMARKS:
 Handles opcode 0xe0
 ****************************************************************************/
 static void
-x86emuOp_loopne(struct X86EMU *emu)
+x86emuOp_loopne(struct x86emu *emu)
 {
 	int16_t ip;
 
@@ -3496,7 +3496,7 @@ REMARKS:
 Handles opcode 0xe1
 ****************************************************************************/
 static void
-x86emuOp_loope(struct X86EMU *emu)
+x86emuOp_loope(struct x86emu *emu)
 {
 	int16_t ip;
 
@@ -3511,7 +3511,7 @@ REMARKS:
 Handles opcode 0xe2
 ****************************************************************************/
 static void
-x86emuOp_loop(struct X86EMU *emu)
+x86emuOp_loop(struct x86emu *emu)
 {
 	int16_t ip;
 
@@ -3526,7 +3526,7 @@ REMARKS:
 Handles opcode 0xe3
 ****************************************************************************/
 static void
-x86emuOp_jcxz(struct X86EMU *emu)
+x86emuOp_jcxz(struct x86emu *emu)
 {
 	uint16_t target;
 	int8_t offset;
@@ -3542,7 +3542,7 @@ REMARKS:
 Handles opcode 0xe4
 ****************************************************************************/
 static void
-x86emuOp_in_byte_AL_IMM(struct X86EMU *emu)
+x86emuOp_in_byte_AL_IMM(struct x86emu *emu)
 {
 	uint8_t port;
 
@@ -3554,7 +3554,7 @@ REMARKS:
 Handles opcode 0xe5
 ****************************************************************************/
 static void
-x86emuOp_in_word_AX_IMM(struct X86EMU *emu)
+x86emuOp_in_word_AX_IMM(struct x86emu *emu)
 {
 	uint8_t port;
 
@@ -3570,7 +3570,7 @@ REMARKS:
 Handles opcode 0xe6
 ****************************************************************************/
 static void
-x86emuOp_out_byte_IMM_AL(struct X86EMU *emu)
+x86emuOp_out_byte_IMM_AL(struct x86emu *emu)
 {
 	uint8_t port;
 
@@ -3582,7 +3582,7 @@ REMARKS:
 Handles opcode 0xe7
 ****************************************************************************/
 static void
-x86emuOp_out_word_IMM_AX(struct X86EMU *emu)
+x86emuOp_out_word_IMM_AX(struct x86emu *emu)
 {
 	uint8_t port;
 
@@ -3598,7 +3598,7 @@ REMARKS:
 Handles opcode 0xe8
 ****************************************************************************/
 static void
-x86emuOp_call_near_IMM(struct X86EMU *emu)
+x86emuOp_call_near_IMM(struct x86emu *emu)
 {
 	int16_t ip;
 
@@ -3612,7 +3612,7 @@ REMARKS:
 Handles opcode 0xe9
 ****************************************************************************/
 static void
-x86emuOp_jump_near_IMM(struct X86EMU *emu)
+x86emuOp_jump_near_IMM(struct x86emu *emu)
 {
 	int ip;
 
@@ -3625,7 +3625,7 @@ REMARKS:
 Handles opcode 0xea
 ****************************************************************************/
 static void
-x86emuOp_jump_far_IMM(struct X86EMU *emu)
+x86emuOp_jump_far_IMM(struct x86emu *emu)
 {
 	uint16_t cs, ip;
 
@@ -3639,7 +3639,7 @@ REMARKS:
 Handles opcode 0xeb
 ****************************************************************************/
 static void
-x86emuOp_jump_byte_IMM(struct X86EMU *emu)
+x86emuOp_jump_byte_IMM(struct x86emu *emu)
 {
 	uint16_t target;
 	int8_t offset;
@@ -3653,7 +3653,7 @@ REMARKS:
 Handles opcode 0xec
 ****************************************************************************/
 static void
-x86emuOp_in_byte_AL_DX(struct X86EMU *emu)
+x86emuOp_in_byte_AL_DX(struct x86emu *emu)
 {
 	emu->x86.R_AL = (*emu->emu_inb) (emu, emu->x86.R_DX);
 }
@@ -3662,7 +3662,7 @@ REMARKS:
 Handles opcode 0xed
 ****************************************************************************/
 static void
-x86emuOp_in_word_AX_DX(struct X86EMU *emu)
+x86emuOp_in_word_AX_DX(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		emu->x86.R_EAX = (*emu->emu_inl) (emu, emu->x86.R_DX);
@@ -3675,7 +3675,7 @@ REMARKS:
 Handles opcode 0xee
 ****************************************************************************/
 static void
-x86emuOp_out_byte_DX_AL(struct X86EMU *emu)
+x86emuOp_out_byte_DX_AL(struct x86emu *emu)
 {
 	(*emu->emu_outb) (emu, emu->x86.R_DX, emu->x86.R_AL);
 }
@@ -3684,7 +3684,7 @@ REMARKS:
 Handles opcode 0xef
 ****************************************************************************/
 static void
-x86emuOp_out_word_DX_AX(struct X86EMU *emu)
+x86emuOp_out_word_DX_AX(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA) {
 		(*emu->emu_outl) (emu, emu->x86.R_DX, emu->x86.R_EAX);
@@ -3697,7 +3697,7 @@ REMARKS:
 Handles opcode 0xf0
 ****************************************************************************/
 static void
-x86emuOp_lock(struct X86EMU *emu)
+x86emuOp_lock(struct x86emu *emu)
 {
 }
 /*opcode 0xf1 ILLEGAL OPERATION */
@@ -3707,7 +3707,7 @@ REMARKS:
 Handles opcode 0xf5
 ****************************************************************************/
 static void
-x86emuOp_cmc(struct X86EMU *emu)
+x86emuOp_cmc(struct x86emu *emu)
 {
 	if (ACCESS_FLAG(F_CF))
 		CLEAR_FLAG(F_CF);
@@ -3719,7 +3719,7 @@ REMARKS:
 Handles opcode 0xf6
 ****************************************************************************/
 static void
-x86emuOp_opcF6_byte_RM(struct X86EMU *emu)
+x86emuOp_opcF6_byte_RM(struct x86emu *emu)
 {
 	uint8_t destval, srcval;
 
@@ -3727,7 +3727,7 @@ x86emuOp_opcF6_byte_RM(struct X86EMU *emu)
 	 * cases.  */
 	fetch_decode_modrm(emu);
 	if (emu->cur_rh == 1)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 
 	if (emu->cur_rh == 0) {
 		destval = decode_and_fetch_byte_imm8(emu, &srcval);
@@ -3763,7 +3763,7 @@ REMARKS:
 Handles opcode 0xf7
 ****************************************************************************/
 static void
-x86emuOp32_opcF7_word_RM(struct X86EMU *emu)
+x86emuOp32_opcF7_word_RM(struct x86emu *emu)
 {
 	uint32_t destval, srcval;
 
@@ -3771,7 +3771,7 @@ x86emuOp32_opcF7_word_RM(struct X86EMU *emu)
 	 * cases.  */
 	fetch_decode_modrm(emu);
 	if (emu->cur_rh == 1)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 
 	if (emu->cur_rh == 0) {
 		if (emu->cur_mod != 3) {
@@ -3812,7 +3812,7 @@ x86emuOp32_opcF7_word_RM(struct X86EMU *emu)
 	}
 }
 static void
-x86emuOp16_opcF7_word_RM(struct X86EMU *emu)
+x86emuOp16_opcF7_word_RM(struct x86emu *emu)
 {
 	uint16_t destval, srcval;
 
@@ -3820,7 +3820,7 @@ x86emuOp16_opcF7_word_RM(struct X86EMU *emu)
 	 * cases.  */
 	fetch_decode_modrm(emu);
 	if (emu->cur_rh == 1)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 
 	if (emu->cur_rh == 0) {
 		if (emu->cur_mod != 3) {
@@ -3861,7 +3861,7 @@ x86emuOp16_opcF7_word_RM(struct X86EMU *emu)
 	}
 }
 static void
-x86emuOp_opcF7_word_RM(struct X86EMU *emu)
+x86emuOp_opcF7_word_RM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		x86emuOp32_opcF7_word_RM(emu);
@@ -3873,7 +3873,7 @@ REMARKS:
 Handles opcode 0xfe
 ****************************************************************************/
 static void
-x86emuOp_opcFE_byte_RM(struct X86EMU *emu)
+x86emuOp_opcFE_byte_RM(struct x86emu *emu)
 {
 	uint8_t destval;
 	uint32_t destoffset;
@@ -3912,7 +3912,7 @@ REMARKS:
 Handles opcode 0xff
 ****************************************************************************/
 static void
-x86emuOp32_opcFF_word_RM(struct X86EMU *emu)
+x86emuOp32_opcFF_word_RM(struct x86emu *emu)
 {
 	uint32_t destoffset = 0;
 	uint32_t destval, *destreg;
@@ -3950,7 +3950,7 @@ x86emuOp32_opcFF_word_RM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp16_opcFF_word_RM(struct X86EMU *emu)
+x86emuOp16_opcFF_word_RM(struct x86emu *emu)
 {
 	uint32_t destoffset = 0;
 	uint16_t *destreg;
@@ -3989,7 +3989,7 @@ x86emuOp16_opcFF_word_RM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp_opcFF_word_RM(struct X86EMU *emu)
+x86emuOp_opcFF_word_RM(struct x86emu *emu)
 {
 	uint32_t destoffset = 0;
 	uint16_t destval, destval2;
@@ -3997,7 +3997,7 @@ x86emuOp_opcFF_word_RM(struct X86EMU *emu)
 	/* Yet another special case instruction. */
 	fetch_decode_modrm(emu);
 	if ((emu->cur_mod == 3 && (emu->cur_rh == 3 || emu->cur_rh == 5)) || emu->cur_rh == 7)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 	if (emu->cur_rh == 0 || emu->cur_rh == 1 || emu->cur_rh == 6) {
 		if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 			x86emuOp32_opcFF_word_RM(emu);
@@ -4041,7 +4041,7 @@ x86emuOp_opcFF_word_RM(struct X86EMU *emu)
  * Single byte operation code table:
  **************************************************************************/
 static void
-X86EMU_exec_one_byte(struct X86EMU * emu)
+x86emu_exec_one_byte(struct x86emu * emu)
 {
 	uint8_t op1;
 
@@ -4095,7 +4095,7 @@ X86EMU_exec_one_byte(struct X86EMU * emu)
 		push_word(emu, emu->x86.R_CS);
 		break;
 	case 0x0f:
-		X86EMU_exec_two_byte(emu);
+		x86emu_exec_two_byte(emu);
 		break;
 
 	case 0x10:
@@ -4802,7 +4802,7 @@ X86EMU_exec_one_byte(struct X86EMU * emu)
 		emu->x86.mode |= SYSMODE_PREFIX_REPE;
 		break;
 	case 0xf4:
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 		break;
 	case 0xf5:
 		x86emuOp_cmc(emu);
@@ -4839,7 +4839,7 @@ X86EMU_exec_one_byte(struct X86EMU * emu)
 		x86emuOp_opcFF_word_RM(emu);
 		break;
 	default:
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 		break;
 	}
 	if (op1 != 0x26 && op1 != 0x2e && op1 != 0x36 && op1 != 0x3e &&
@@ -4848,7 +4848,7 @@ X86EMU_exec_one_byte(struct X86EMU * emu)
 }
 
 static void
-common_jmp_long(struct X86EMU *emu, int cond)
+common_jmp_long(struct x86emu *emu, int cond)
 {
 	int16_t target;
 
@@ -4859,7 +4859,7 @@ common_jmp_long(struct X86EMU *emu, int cond)
 }
 
 static void
-common_set_byte(struct X86EMU *emu, int cond)
+common_set_byte(struct x86emu *emu, int cond)
 {
 	uint32_t destoffset;
 	uint8_t *destreg, destval;
@@ -4876,7 +4876,7 @@ common_set_byte(struct X86EMU *emu, int cond)
 }
 
 static void
-common_bitstring32(struct X86EMU *emu, int op)
+common_bitstring32(struct x86emu *emu, int op)
 {
 	int bit;
 	uint32_t srcval, *shiftreg, mask;
@@ -4904,7 +4904,7 @@ common_bitstring32(struct X86EMU *emu, int op)
 }
 
 static void
-common_bitstring16(struct X86EMU *emu, int op)
+common_bitstring16(struct x86emu *emu, int op)
 {
 	int bit;
 	uint16_t srcval, *shiftreg, mask;
@@ -4932,7 +4932,7 @@ common_bitstring16(struct X86EMU *emu, int op)
 }
 
 static void
-common_bitstring(struct X86EMU *emu, int op)
+common_bitstring(struct x86emu *emu, int op)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		common_bitstring32(emu, op);
@@ -4941,7 +4941,7 @@ common_bitstring(struct X86EMU *emu, int op)
 }
 
 static void
-common_bitsearch32(struct X86EMU *emu, int diff)
+common_bitsearch32(struct x86emu *emu, int diff)
 {
 	uint32_t srcval, *dstreg;
 
@@ -4956,7 +4956,7 @@ common_bitsearch32(struct X86EMU *emu, int diff)
 }
 
 static void
-common_bitsearch16(struct X86EMU *emu, int diff)
+common_bitsearch16(struct x86emu *emu, int diff)
 {
 	uint16_t srcval, *dstreg;
 
@@ -4971,7 +4971,7 @@ common_bitsearch16(struct X86EMU *emu, int diff)
 }
 
 static void
-common_bitsearch(struct X86EMU *emu, int diff)
+common_bitsearch(struct x86emu *emu, int diff)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		common_bitsearch32(emu, diff);
@@ -4980,7 +4980,7 @@ common_bitsearch(struct X86EMU *emu, int diff)
 }
 
 static void
-common_shift32(struct X86EMU *emu, int shift_left, int use_cl)
+common_shift32(struct x86emu *emu, int shift_left, int use_cl)
 {
 	uint8_t shift;
 	uint32_t destval, *shiftreg;
@@ -5001,7 +5001,7 @@ common_shift32(struct X86EMU *emu, int shift_left, int use_cl)
 }
 
 static void
-common_shift16(struct X86EMU *emu, int shift_left, int use_cl)
+common_shift16(struct x86emu *emu, int shift_left, int use_cl)
 {
 	uint8_t shift;
 	uint16_t destval, *shiftreg;
@@ -5022,7 +5022,7 @@ common_shift16(struct X86EMU *emu, int shift_left, int use_cl)
 }
 
 static void
-common_shift(struct X86EMU *emu, int shift_left, int use_cl)
+common_shift(struct x86emu *emu, int shift_left, int use_cl)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		common_shift32(emu, shift_left, use_cl);
@@ -5038,7 +5038,7 @@ REMARKS:
 Handles opcode 0x0f,0x31
 ****************************************************************************/
 static void
-x86emuOp2_rdtsc(struct X86EMU *emu)
+x86emuOp2_rdtsc(struct x86emu *emu)
 {
 	emu->x86.R_EAX = emu->cur_cycles & 0xffffffff;
 	emu->x86.R_EDX = emu->cur_cycles >> 32;
@@ -5048,7 +5048,7 @@ REMARKS:
 Handles opcode 0x0f,0xa0
 ****************************************************************************/
 static void
-x86emuOp2_push_FS(struct X86EMU *emu)
+x86emuOp2_push_FS(struct x86emu *emu)
 {
 	push_word(emu, emu->x86.R_FS);
 }
@@ -5057,7 +5057,7 @@ REMARKS:
 Handles opcode 0x0f,0xa1
 ****************************************************************************/
 static void
-x86emuOp2_pop_FS(struct X86EMU *emu)
+x86emuOp2_pop_FS(struct x86emu *emu)
 {
 	emu->x86.R_FS = pop_word(emu);
 }
@@ -5077,7 +5077,7 @@ hw_cpuid(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d)
 }
 #endif
 static void
-x86emuOp2_cpuid(struct X86EMU *emu)
+x86emuOp2_cpuid(struct x86emu *emu)
 {
 #if defined(__i386__) || defined(__amd64__)
 	hw_cpuid(&emu->x86.R_EAX, &emu->x86.R_EBX, &emu->x86.R_ECX,
@@ -5113,7 +5113,7 @@ REMARKS:
 Handles opcode 0x0f,0xa3
 ****************************************************************************/
 static void
-x86emuOp2_bt_R(struct X86EMU *emu)
+x86emuOp2_bt_R(struct x86emu *emu)
 {
 	common_bitstring(emu, 0);
 }
@@ -5122,7 +5122,7 @@ REMARKS:
 Handles opcode 0x0f,0xa4
 ****************************************************************************/
 static void
-x86emuOp2_shld_IMM(struct X86EMU *emu)
+x86emuOp2_shld_IMM(struct x86emu *emu)
 {
 	common_shift(emu, 1, 0);
 }
@@ -5131,7 +5131,7 @@ REMARKS:
 Handles opcode 0x0f,0xa5
 ****************************************************************************/
 static void
-x86emuOp2_shld_CL(struct X86EMU *emu)
+x86emuOp2_shld_CL(struct x86emu *emu)
 {
 	common_shift(emu, 1, 1);
 }
@@ -5140,7 +5140,7 @@ REMARKS:
 Handles opcode 0x0f,0xa8
 ****************************************************************************/
 static void
-x86emuOp2_push_GS(struct X86EMU *emu)
+x86emuOp2_push_GS(struct x86emu *emu)
 {
 	push_word(emu, emu->x86.R_GS);
 }
@@ -5149,7 +5149,7 @@ REMARKS:
 Handles opcode 0x0f,0xa9
 ****************************************************************************/
 static void
-x86emuOp2_pop_GS(struct X86EMU *emu)
+x86emuOp2_pop_GS(struct x86emu *emu)
 {
 	emu->x86.R_GS = pop_word(emu);
 }
@@ -5158,7 +5158,7 @@ REMARKS:
 Handles opcode 0x0f,0xab
 ****************************************************************************/
 static void
-x86emuOp2_bts_R(struct X86EMU *emu)
+x86emuOp2_bts_R(struct x86emu *emu)
 {
 	common_bitstring(emu, 1);
 }
@@ -5167,7 +5167,7 @@ REMARKS:
 Handles opcode 0x0f,0xac
 ****************************************************************************/
 static void
-x86emuOp2_shrd_IMM(struct X86EMU *emu)
+x86emuOp2_shrd_IMM(struct x86emu *emu)
 {
 	common_shift(emu, 0, 0);
 }
@@ -5176,7 +5176,7 @@ REMARKS:
 Handles opcode 0x0f,0xad
 ****************************************************************************/
 static void
-x86emuOp2_shrd_CL(struct X86EMU *emu)
+x86emuOp2_shrd_CL(struct x86emu *emu)
 {
 	common_shift(emu, 0, 1);
 }
@@ -5185,7 +5185,7 @@ REMARKS:
 Handles opcode 0x0f,0xaf
 ****************************************************************************/
 static void
-x86emuOp2_32_imul_R_RM(struct X86EMU *emu)
+x86emuOp2_32_imul_R_RM(struct x86emu *emu)
 {
 	uint32_t *destreg, srcval;
 	uint64_t res;
@@ -5205,7 +5205,7 @@ x86emuOp2_32_imul_R_RM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp2_16_imul_R_RM(struct X86EMU *emu)
+x86emuOp2_16_imul_R_RM(struct x86emu *emu)
 {
 	uint16_t *destreg, srcval;
 	uint32_t res;
@@ -5225,7 +5225,7 @@ x86emuOp2_16_imul_R_RM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp2_imul_R_RM(struct X86EMU *emu)
+x86emuOp2_imul_R_RM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		x86emuOp2_32_imul_R_RM(emu);
@@ -5237,7 +5237,7 @@ REMARKS:
 Handles opcode 0x0f,0xb2
 ****************************************************************************/
 static void
-x86emuOp2_lss_R_IMM(struct X86EMU *emu)
+x86emuOp2_lss_R_IMM(struct x86emu *emu)
 {
 	common_load_far_pointer(emu, &emu->x86.R_SS);
 }
@@ -5246,7 +5246,7 @@ REMARKS:
 Handles opcode 0x0f,0xb3
 ****************************************************************************/
 static void
-x86emuOp2_btr_R(struct X86EMU *emu)
+x86emuOp2_btr_R(struct x86emu *emu)
 {
 	common_bitstring(emu, 2);
 }
@@ -5255,7 +5255,7 @@ REMARKS:
 Handles opcode 0x0f,0xb4
 ****************************************************************************/
 static void
-x86emuOp2_lfs_R_IMM(struct X86EMU *emu)
+x86emuOp2_lfs_R_IMM(struct x86emu *emu)
 {
 	common_load_far_pointer(emu, &emu->x86.R_FS);
 }
@@ -5264,7 +5264,7 @@ REMARKS:
 Handles opcode 0x0f,0xb5
 ****************************************************************************/
 static void
-x86emuOp2_lgs_R_IMM(struct X86EMU *emu)
+x86emuOp2_lgs_R_IMM(struct x86emu *emu)
 {
 	common_load_far_pointer(emu, &emu->x86.R_GS);
 }
@@ -5273,7 +5273,7 @@ REMARKS:
 Handles opcode 0x0f,0xb6
 ****************************************************************************/
 static void
-x86emuOp2_32_movzx_byte_R_RM(struct X86EMU *emu)
+x86emuOp2_32_movzx_byte_R_RM(struct x86emu *emu)
 {
 	uint32_t *destreg;
 
@@ -5283,7 +5283,7 @@ x86emuOp2_32_movzx_byte_R_RM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp2_16_movzx_byte_R_RM(struct X86EMU *emu)
+x86emuOp2_16_movzx_byte_R_RM(struct x86emu *emu)
 {
 	uint16_t *destreg;
 
@@ -5293,7 +5293,7 @@ x86emuOp2_16_movzx_byte_R_RM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp2_movzx_byte_R_RM(struct X86EMU *emu)
+x86emuOp2_movzx_byte_R_RM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		x86emuOp2_32_movzx_byte_R_RM(emu);
@@ -5305,7 +5305,7 @@ REMARKS:
 Handles opcode 0x0f,0xb7
 ****************************************************************************/
 static void
-x86emuOp2_movzx_word_R_RM(struct X86EMU *emu)
+x86emuOp2_movzx_word_R_RM(struct x86emu *emu)
 {
 	uint32_t *destreg;
 
@@ -5318,7 +5318,7 @@ REMARKS:
 Handles opcode 0x0f,0xba
 ****************************************************************************/
 static void
-x86emuOp2_32_btX_I(struct X86EMU *emu)
+x86emuOp2_32_btX_I(struct x86emu *emu)
 {
 	int bit;
 	uint32_t srcval, mask;
@@ -5326,7 +5326,7 @@ x86emuOp2_32_btX_I(struct X86EMU *emu)
 
 	fetch_decode_modrm(emu);
 	if (emu->cur_rh < 4)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 
 	srcval = decode_and_fetch_long_imm8(emu, &shift);
 	bit = shift & 0x1F;
@@ -5347,7 +5347,7 @@ x86emuOp2_32_btX_I(struct X86EMU *emu)
 }
 
 static void
-x86emuOp2_16_btX_I(struct X86EMU *emu)
+x86emuOp2_16_btX_I(struct x86emu *emu)
 {
 	int bit;
 
@@ -5356,7 +5356,7 @@ x86emuOp2_16_btX_I(struct X86EMU *emu)
 
 	fetch_decode_modrm(emu);
 	if (emu->cur_rh < 4)
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 
 	srcval = decode_and_fetch_word_imm8(emu, &shift);
 	bit = shift & 0xF;
@@ -5376,7 +5376,7 @@ x86emuOp2_16_btX_I(struct X86EMU *emu)
 }
 
 static void
-x86emuOp2_btX_I(struct X86EMU *emu)
+x86emuOp2_btX_I(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		x86emuOp2_32_btX_I(emu);
@@ -5388,7 +5388,7 @@ REMARKS:
 Handles opcode 0x0f,0xbb
 ****************************************************************************/
 static void
-x86emuOp2_btc_R(struct X86EMU *emu)
+x86emuOp2_btc_R(struct x86emu *emu)
 {
 	common_bitstring(emu, 3);
 }
@@ -5397,7 +5397,7 @@ REMARKS:
 Handles opcode 0x0f,0xbc
 ****************************************************************************/
 static void
-x86emuOp2_bsf(struct X86EMU *emu)
+x86emuOp2_bsf(struct x86emu *emu)
 {
 	common_bitsearch(emu, +1);
 }
@@ -5406,7 +5406,7 @@ REMARKS:
 Handles opcode 0x0f,0xbd
 ****************************************************************************/
 static void
-x86emuOp2_bsr(struct X86EMU *emu)
+x86emuOp2_bsr(struct x86emu *emu)
 {
 	common_bitsearch(emu, -1);
 }
@@ -5415,7 +5415,7 @@ REMARKS:
 Handles opcode 0x0f,0xbe
 ****************************************************************************/
 static void
-x86emuOp2_32_movsx_byte_R_RM(struct X86EMU *emu)
+x86emuOp2_32_movsx_byte_R_RM(struct x86emu *emu)
 {
 	uint32_t *destreg;
 
@@ -5424,7 +5424,7 @@ x86emuOp2_32_movsx_byte_R_RM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp2_16_movsx_byte_R_RM(struct X86EMU *emu)
+x86emuOp2_16_movsx_byte_R_RM(struct x86emu *emu)
 {
 	uint16_t *destreg;
 
@@ -5434,7 +5434,7 @@ x86emuOp2_16_movsx_byte_R_RM(struct X86EMU *emu)
 }
 
 static void
-x86emuOp2_movsx_byte_R_RM(struct X86EMU *emu)
+x86emuOp2_movsx_byte_R_RM(struct x86emu *emu)
 {
 	if (emu->x86.mode & SYSMODE_PREFIX_DATA)
 		x86emuOp2_32_movsx_byte_R_RM(emu);
@@ -5446,7 +5446,7 @@ REMARKS:
 Handles opcode 0x0f,0xbf
 ****************************************************************************/
 static void
-x86emuOp2_movsx_word_R_RM(struct X86EMU *emu)
+x86emuOp2_movsx_word_R_RM(struct x86emu *emu)
 {
 	uint32_t *destreg;
 
@@ -5456,7 +5456,7 @@ x86emuOp2_movsx_word_R_RM(struct X86EMU *emu)
 }
 
 static void
-X86EMU_exec_two_byte(struct X86EMU * emu)
+x86emu_exec_two_byte(struct x86emu * emu)
 {
 	uint8_t op2;
 
@@ -5676,7 +5676,7 @@ X86EMU_exec_two_byte(struct X86EMU * emu)
 	/* 0xcf TODO: bswap */
 
 	default:
-		X86EMU_halt_sys(emu);
+		x86emu_halt_sys(emu);
 		break;
 	}
 }
@@ -5765,7 +5765,7 @@ REMARKS:
 Implements the AAA instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-aaa_word(struct X86EMU *emu, uint16_t d)
+aaa_word(struct x86emu *emu, uint16_t d)
 {
 	uint16_t res;
 	if ((d & 0xf) > 0x9 || ACCESS_FLAG(F_AF)) {
@@ -5788,7 +5788,7 @@ REMARKS:
 Implements the AAA instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-aas_word(struct X86EMU *emu, uint16_t d)
+aas_word(struct x86emu *emu, uint16_t d)
 {
 	uint16_t res;
 	if ((d & 0xf) > 0x9 || ACCESS_FLAG(F_AF)) {
@@ -5811,7 +5811,7 @@ REMARKS:
 Implements the AAD instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-aad_word(struct X86EMU *emu, uint16_t d)
+aad_word(struct x86emu *emu, uint16_t d)
 {
 	uint16_t l;
 	uint8_t hb, lb;
@@ -5833,7 +5833,7 @@ REMARKS:
 Implements the AAM instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-aam_word(struct X86EMU *emu, uint8_t d)
+aam_word(struct x86emu *emu, uint8_t d)
 {
 	uint16_t h, l;
 
@@ -5854,7 +5854,7 @@ REMARKS:
 Implements the ADC instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-adc_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+adc_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t cc;
@@ -5880,7 +5880,7 @@ REMARKS:
 Implements the ADC instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-adc_word(struct X86EMU *emu, uint16_t d, uint16_t s)
+adc_word(struct x86emu *emu, uint16_t d, uint16_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t cc;
@@ -5906,7 +5906,7 @@ REMARKS:
 Implements the ADC instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-adc_long(struct X86EMU *emu, uint32_t d, uint32_t s)
+adc_long(struct x86emu *emu, uint32_t d, uint32_t s)
 {
 	uint32_t lo;	/* all operands in native machine order */
 	uint32_t hi;
@@ -5938,7 +5938,7 @@ REMARKS:
 Implements the ADD instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-add_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+add_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t cc;
@@ -5960,7 +5960,7 @@ REMARKS:
 Implements the ADD instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-add_word(struct X86EMU *emu, uint16_t d, uint16_t s)
+add_word(struct x86emu *emu, uint16_t d, uint16_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t cc;
@@ -5982,7 +5982,7 @@ REMARKS:
 Implements the ADD instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-add_long(struct X86EMU *emu, uint32_t d, uint32_t s)
+add_long(struct x86emu *emu, uint32_t d, uint32_t s)
 {
 	uint32_t lo;	/* all operands in native machine order */
 	uint32_t hi;
@@ -6010,7 +6010,7 @@ REMARKS:
 Implements the AND instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-and_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+and_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	uint8_t res;	/* all operands in native machine order */
 
@@ -6030,7 +6030,7 @@ REMARKS:
 Implements the AND instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-and_word(struct X86EMU *emu, uint16_t d, uint16_t s)
+and_word(struct x86emu *emu, uint16_t d, uint16_t s)
 {
 	uint16_t res;	/* all operands in native machine order */
 
@@ -6050,7 +6050,7 @@ REMARKS:
 Implements the AND instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-and_long(struct X86EMU *emu, uint32_t d, uint32_t s)
+and_long(struct x86emu *emu, uint32_t d, uint32_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 
@@ -6070,7 +6070,7 @@ REMARKS:
 Implements the CMP instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-cmp_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+cmp_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t bc;
@@ -6090,7 +6090,7 @@ cmp_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
 }
 
 static void 
-cmp_byte_no_return(struct X86EMU *emu, uint8_t d, uint8_t s)
+cmp_byte_no_return(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	cmp_byte(emu, d, s);
 }
@@ -6099,7 +6099,7 @@ REMARKS:
 Implements the CMP instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-cmp_word(struct X86EMU *emu, uint16_t d, uint16_t s)
+cmp_word(struct x86emu *emu, uint16_t d, uint16_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t bc;
@@ -6118,7 +6118,7 @@ cmp_word(struct X86EMU *emu, uint16_t d, uint16_t s)
 }
 
 static void 
-cmp_word_no_return(struct X86EMU *emu, uint16_t d, uint16_t s)
+cmp_word_no_return(struct x86emu *emu, uint16_t d, uint16_t s)
 {
 	cmp_word(emu, d, s);
 }
@@ -6127,7 +6127,7 @@ REMARKS:
 Implements the CMP instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-cmp_long(struct X86EMU *emu, uint32_t d, uint32_t s)
+cmp_long(struct x86emu *emu, uint32_t d, uint32_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t bc;
@@ -6146,7 +6146,7 @@ cmp_long(struct X86EMU *emu, uint32_t d, uint32_t s)
 }
 
 static void 
-cmp_long_no_return(struct X86EMU *emu, uint32_t d, uint32_t s)
+cmp_long_no_return(struct x86emu *emu, uint32_t d, uint32_t s)
 {
 	cmp_long(emu, d, s);
 }
@@ -6155,7 +6155,7 @@ REMARKS:
 Implements the DAA instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-daa_byte(struct X86EMU *emu, uint8_t d)
+daa_byte(struct x86emu *emu, uint8_t d)
 {
 	uint32_t res = d;
 	if ((d & 0xf) > 9 || ACCESS_FLAG(F_AF)) {
@@ -6176,7 +6176,7 @@ REMARKS:
 Implements the DAS instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-das_byte(struct X86EMU *emu, uint8_t d)
+das_byte(struct x86emu *emu, uint8_t d)
 {
 	if ((d & 0xf) > 9 || ACCESS_FLAG(F_AF)) {
 		d -= 6;
@@ -6196,7 +6196,7 @@ REMARKS:
 Implements the DEC instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-dec_byte(struct X86EMU *emu, uint8_t d)
+dec_byte(struct x86emu *emu, uint8_t d)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t bc;
@@ -6219,7 +6219,7 @@ REMARKS:
 Implements the DEC instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-dec_word(struct X86EMU *emu, uint16_t d)
+dec_word(struct x86emu *emu, uint16_t d)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t bc;
@@ -6242,7 +6242,7 @@ REMARKS:
 Implements the DEC instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-dec_long(struct X86EMU *emu, uint32_t d)
+dec_long(struct x86emu *emu, uint32_t d)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t bc;
@@ -6265,7 +6265,7 @@ REMARKS:
 Implements the INC instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-inc_byte(struct X86EMU *emu, uint8_t d)
+inc_byte(struct x86emu *emu, uint8_t d)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t cc;
@@ -6286,7 +6286,7 @@ REMARKS:
 Implements the INC instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-inc_word(struct X86EMU *emu, uint16_t d)
+inc_word(struct x86emu *emu, uint16_t d)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t cc;
@@ -6307,7 +6307,7 @@ REMARKS:
 Implements the INC instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-inc_long(struct X86EMU *emu, uint32_t d)
+inc_long(struct x86emu *emu, uint32_t d)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t cc;
@@ -6328,7 +6328,7 @@ REMARKS:
 Implements the OR instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-or_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+or_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	uint8_t res;	/* all operands in native machine order */
 
@@ -6346,7 +6346,7 @@ REMARKS:
 Implements the OR instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-or_word(struct X86EMU *emu, uint16_t d, uint16_t s)
+or_word(struct x86emu *emu, uint16_t d, uint16_t s)
 {
 	uint16_t res;	/* all operands in native machine order */
 
@@ -6365,7 +6365,7 @@ REMARKS:
 Implements the OR instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-or_long(struct X86EMU *emu, uint32_t d, uint32_t s)
+or_long(struct x86emu *emu, uint32_t d, uint32_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 
@@ -6385,7 +6385,7 @@ REMARKS:
 Implements the OR instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-neg_byte(struct X86EMU *emu, uint8_t s)
+neg_byte(struct x86emu *emu, uint8_t s)
 {
 	uint8_t res;
 	uint8_t bc;
@@ -6410,7 +6410,7 @@ REMARKS:
 Implements the OR instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-neg_word(struct X86EMU *emu, uint16_t s)
+neg_word(struct x86emu *emu, uint16_t s)
 {
 	uint16_t res;
 	uint16_t bc;
@@ -6436,7 +6436,7 @@ REMARKS:
 Implements the OR instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-neg_long(struct X86EMU *emu, uint32_t s)
+neg_long(struct x86emu *emu, uint32_t s)
 {
 	uint32_t res;
 	uint32_t bc;
@@ -6462,7 +6462,7 @@ REMARKS:
 Implements the RCL instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-rcl_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+rcl_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	unsigned int res, cnt, mask, cf;
 
@@ -6527,7 +6527,7 @@ REMARKS:
 Implements the RCL instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-rcl_word(struct X86EMU *emu, uint16_t d, uint8_t s)
+rcl_word(struct x86emu *emu, uint16_t d, uint8_t s)
 {
 	unsigned int res, cnt, mask, cf;
 
@@ -6551,7 +6551,7 @@ REMARKS:
 Implements the RCL instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-rcl_long(struct X86EMU *emu, uint32_t d, uint8_t s)
+rcl_long(struct x86emu *emu, uint32_t d, uint8_t s)
 {
 	uint32_t res, cnt, mask, cf;
 
@@ -6575,7 +6575,7 @@ REMARKS:
 Implements the RCR instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-rcr_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+rcr_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	uint32_t res, cnt;
 	uint32_t mask, cf, ocf = 0;
@@ -6649,7 +6649,7 @@ REMARKS:
 Implements the RCR instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-rcr_word(struct X86EMU *emu, uint16_t d, uint8_t s)
+rcr_word(struct x86emu *emu, uint16_t d, uint8_t s)
 {
 	uint32_t res, cnt;
 	uint32_t mask, cf, ocf = 0;
@@ -6681,7 +6681,7 @@ REMARKS:
 Implements the RCR instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-rcr_long(struct X86EMU *emu, uint32_t d, uint8_t s)
+rcr_long(struct x86emu *emu, uint32_t d, uint8_t s)
 {
 	uint32_t res, cnt;
 	uint32_t mask, cf, ocf = 0;
@@ -6714,7 +6714,7 @@ REMARKS:
 Implements the ROL instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-rol_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+rol_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	unsigned int res, cnt, mask;
 
@@ -6760,7 +6760,7 @@ REMARKS:
 Implements the ROL instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-rol_word(struct X86EMU *emu, uint16_t d, uint8_t s)
+rol_word(struct x86emu *emu, uint16_t d, uint8_t s)
 {
 	unsigned int res, cnt, mask;
 
@@ -6785,7 +6785,7 @@ REMARKS:
 Implements the ROL instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-rol_long(struct X86EMU *emu, uint32_t d, uint8_t s)
+rol_long(struct x86emu *emu, uint32_t d, uint8_t s)
 {
 	uint32_t res, cnt, mask;
 
@@ -6810,7 +6810,7 @@ REMARKS:
 Implements the ROR instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-ror_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+ror_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	unsigned int res, cnt, mask;
 
@@ -6853,7 +6853,7 @@ REMARKS:
 Implements the ROR instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-ror_word(struct X86EMU *emu, uint16_t d, uint8_t s)
+ror_word(struct x86emu *emu, uint16_t d, uint8_t s)
 {
 	unsigned int res, cnt, mask;
 
@@ -6876,7 +6876,7 @@ REMARKS:
 Implements the ROR instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-ror_long(struct X86EMU *emu, uint32_t d, uint8_t s)
+ror_long(struct x86emu *emu, uint32_t d, uint8_t s)
 {
 	uint32_t res, cnt, mask;
 
@@ -6899,7 +6899,7 @@ REMARKS:
 Implements the SHL instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-shl_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+shl_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	unsigned int cnt, res, cf;
 
@@ -6943,7 +6943,7 @@ REMARKS:
 Implements the SHL instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-shl_word(struct X86EMU *emu, uint16_t d, uint8_t s)
+shl_word(struct x86emu *emu, uint16_t d, uint8_t s)
 {
 	unsigned int cnt, res, cf;
 
@@ -6983,7 +6983,7 @@ REMARKS:
 Implements the SHL instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-shl_long(struct X86EMU *emu, uint32_t d, uint8_t s)
+shl_long(struct x86emu *emu, uint32_t d, uint8_t s)
 {
 	unsigned int cnt, res, cf;
 
@@ -7020,7 +7020,7 @@ REMARKS:
 Implements the SHR instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-shr_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+shr_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	unsigned int cnt, res, cf;
 
@@ -7057,7 +7057,7 @@ REMARKS:
 Implements the SHR instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-shr_word(struct X86EMU *emu, uint16_t d, uint8_t s)
+shr_word(struct x86emu *emu, uint16_t d, uint8_t s)
 {
 	unsigned int cnt, res, cf;
 
@@ -7094,7 +7094,7 @@ REMARKS:
 Implements the SHR instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-shr_long(struct X86EMU *emu, uint32_t d, uint8_t s)
+shr_long(struct x86emu *emu, uint32_t d, uint8_t s)
 {
 	unsigned int cnt, res, cf;
 
@@ -7130,7 +7130,7 @@ REMARKS:
 Implements the SAR instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-sar_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+sar_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	unsigned int cnt, res, cf, mask, sf;
 
@@ -7170,7 +7170,7 @@ REMARKS:
 Implements the SAR instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-sar_word(struct X86EMU *emu, uint16_t d, uint8_t s)
+sar_word(struct x86emu *emu, uint16_t d, uint8_t s)
 {
 	unsigned int cnt, res, cf, mask, sf;
 
@@ -7210,7 +7210,7 @@ REMARKS:
 Implements the SAR instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-sar_long(struct X86EMU *emu, uint32_t d, uint8_t s)
+sar_long(struct x86emu *emu, uint32_t d, uint8_t s)
 {
 	uint32_t cnt, res, cf, mask, sf;
 
@@ -7250,7 +7250,7 @@ REMARKS:
 Implements the SHLD instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-shld_word(struct X86EMU *emu, uint16_t d, uint16_t fill, uint8_t s)
+shld_word(struct x86emu *emu, uint16_t d, uint16_t fill, uint8_t s)
 {
 	unsigned int cnt, res, cf;
 
@@ -7287,7 +7287,7 @@ REMARKS:
 Implements the SHLD instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-shld_long(struct X86EMU *emu, uint32_t d, uint32_t fill, uint8_t s)
+shld_long(struct x86emu *emu, uint32_t d, uint32_t fill, uint8_t s)
 {
 	unsigned int cnt, res, cf;
 
@@ -7324,7 +7324,7 @@ REMARKS:
 Implements the SHRD instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-shrd_word(struct X86EMU *emu, uint16_t d, uint16_t fill, uint8_t s)
+shrd_word(struct x86emu *emu, uint16_t d, uint16_t fill, uint8_t s)
 {
 	unsigned int cnt, res, cf;
 
@@ -7361,7 +7361,7 @@ REMARKS:
 Implements the SHRD instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-shrd_long(struct X86EMU *emu, uint32_t d, uint32_t fill, uint8_t s)
+shrd_long(struct x86emu *emu, uint32_t d, uint32_t fill, uint8_t s)
 {
 	unsigned int cnt, res, cf;
 
@@ -7397,7 +7397,7 @@ REMARKS:
 Implements the SBB instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-sbb_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+sbb_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t bc;
@@ -7422,7 +7422,7 @@ REMARKS:
 Implements the SBB instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-sbb_word(struct X86EMU *emu, uint16_t d, uint16_t s)
+sbb_word(struct x86emu *emu, uint16_t d, uint16_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t bc;
@@ -7447,7 +7447,7 @@ REMARKS:
 Implements the SBB instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-sbb_long(struct X86EMU *emu, uint32_t d, uint32_t s)
+sbb_long(struct x86emu *emu, uint32_t d, uint32_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t bc;
@@ -7472,7 +7472,7 @@ REMARKS:
 Implements the SUB instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-sub_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+sub_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t bc;
@@ -7494,7 +7494,7 @@ REMARKS:
 Implements the SUB instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-sub_word(struct X86EMU *emu, uint16_t d, uint16_t s)
+sub_word(struct x86emu *emu, uint16_t d, uint16_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t bc;
@@ -7516,7 +7516,7 @@ REMARKS:
 Implements the SUB instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-sub_long(struct X86EMU *emu, uint32_t d, uint32_t s)
+sub_long(struct x86emu *emu, uint32_t d, uint32_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 	uint32_t bc;
@@ -7538,7 +7538,7 @@ REMARKS:
 Implements the TEST instruction and side effects.
 ****************************************************************************/
 static void 
-test_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+test_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 
@@ -7556,7 +7556,7 @@ REMARKS:
 Implements the TEST instruction and side effects.
 ****************************************************************************/
 static void 
-test_word(struct X86EMU *emu, uint16_t d, uint16_t s)
+test_word(struct x86emu *emu, uint16_t d, uint16_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 
@@ -7574,7 +7574,7 @@ REMARKS:
 Implements the TEST instruction and side effects.
 ****************************************************************************/
 static void 
-test_long(struct X86EMU *emu, uint32_t d, uint32_t s)
+test_long(struct x86emu *emu, uint32_t d, uint32_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 
@@ -7592,7 +7592,7 @@ REMARKS:
 Implements the XOR instruction and side effects.
 ****************************************************************************/
 static uint8_t 
-xor_byte(struct X86EMU *emu, uint8_t d, uint8_t s)
+xor_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 {
 	uint8_t res;	/* all operands in native machine order */
 
@@ -7610,7 +7610,7 @@ REMARKS:
 Implements the XOR instruction and side effects.
 ****************************************************************************/
 static uint16_t 
-xor_word(struct X86EMU *emu, uint16_t d, uint16_t s)
+xor_word(struct x86emu *emu, uint16_t d, uint16_t s)
 {
 	uint16_t res;	/* all operands in native machine order */
 
@@ -7628,7 +7628,7 @@ REMARKS:
 Implements the XOR instruction and side effects.
 ****************************************************************************/
 static uint32_t 
-xor_long(struct X86EMU *emu, uint32_t d, uint32_t s)
+xor_long(struct x86emu *emu, uint32_t d, uint32_t s)
 {
 	uint32_t res;	/* all operands in native machine order */
 
@@ -7646,7 +7646,7 @@ REMARKS:
 Implements the IMUL instruction and side effects.
 ****************************************************************************/
 static void 
-imul_byte(struct X86EMU *emu, uint8_t s)
+imul_byte(struct x86emu *emu, uint8_t s)
 {
 	int16_t res = (int16_t) ((int8_t) emu->x86.R_AL * (int8_t) s);
 
@@ -7665,7 +7665,7 @@ REMARKS:
 Implements the IMUL instruction and side effects.
 ****************************************************************************/
 static void 
-imul_word(struct X86EMU *emu, uint16_t s)
+imul_word(struct x86emu *emu, uint16_t s)
 {
 	int32_t res = (int16_t) emu->x86.R_AX * (int16_t) s;
 
@@ -7685,7 +7685,7 @@ REMARKS:
 Implements the IMUL instruction and side effects.
 ****************************************************************************/
 static void 
-imul_long(struct X86EMU *emu, uint32_t s)
+imul_long(struct x86emu *emu, uint32_t s)
 {
 	int64_t res;
 	
@@ -7706,7 +7706,7 @@ REMARKS:
 Implements the MUL instruction and side effects.
 ****************************************************************************/
 static void 
-mul_byte(struct X86EMU *emu, uint8_t s)
+mul_byte(struct x86emu *emu, uint8_t s)
 {
 	uint16_t res = (uint16_t) (emu->x86.R_AL * s);
 
@@ -7724,7 +7724,7 @@ REMARKS:
 Implements the MUL instruction and side effects.
 ****************************************************************************/
 static void 
-mul_word(struct X86EMU *emu, uint16_t s)
+mul_word(struct x86emu *emu, uint16_t s)
 {
 	uint32_t res = emu->x86.R_AX * s;
 
@@ -7743,7 +7743,7 @@ REMARKS:
 Implements the MUL instruction and side effects.
 ****************************************************************************/
 static void 
-mul_long(struct X86EMU *emu, uint32_t s)
+mul_long(struct x86emu *emu, uint32_t s)
 {
 	uint64_t res = (uint64_t) emu->x86.R_EAX * s;
 
@@ -7763,7 +7763,7 @@ REMARKS:
 Implements the IDIV instruction and side effects.
 ****************************************************************************/
 static void 
-idiv_byte(struct X86EMU *emu, uint8_t s)
+idiv_byte(struct x86emu *emu, uint8_t s)
 {
 	int32_t dvd, div, mod;
 
@@ -7786,7 +7786,7 @@ REMARKS:
 Implements the IDIV instruction and side effects.
 ****************************************************************************/
 static void 
-idiv_word(struct X86EMU *emu, uint16_t s)
+idiv_word(struct x86emu *emu, uint16_t s)
 {
 	int32_t dvd, div, mod;
 
@@ -7814,7 +7814,7 @@ REMARKS:
 Implements the IDIV instruction and side effects.
 ****************************************************************************/
 static void 
-idiv_long(struct X86EMU *emu, uint32_t s)
+idiv_long(struct x86emu *emu, uint32_t s)
 {
 	int64_t dvd, div, mod;
 
@@ -7843,7 +7843,7 @@ REMARKS:
 Implements the DIV instruction and side effects.
 ****************************************************************************/
 static void 
-div_byte(struct X86EMU *emu, uint8_t s)
+div_byte(struct x86emu *emu, uint8_t s)
 {
 	uint32_t dvd, div, mod;
 
@@ -7866,7 +7866,7 @@ REMARKS:
 Implements the DIV instruction and side effects.
 ****************************************************************************/
 static void 
-div_word(struct X86EMU *emu, uint16_t s)
+div_word(struct x86emu *emu, uint16_t s)
 {
 	uint32_t dvd, div, mod;
 
@@ -7894,7 +7894,7 @@ REMARKS:
 Implements the DIV instruction and side effects.
 ****************************************************************************/
 static void 
-div_long(struct X86EMU *emu, uint32_t s)
+div_long(struct x86emu *emu, uint32_t s)
 {
 	uint64_t dvd, div, mod;
 
@@ -7923,7 +7923,7 @@ REMARKS:
 Implements the IN string instruction and side effects.
 ****************************************************************************/
 static void 
-ins(struct X86EMU *emu, int size)
+ins(struct x86emu *emu, int size)
 {
 	int inc = size;
 
@@ -7987,7 +7987,7 @@ REMARKS:
 Implements the OUT string instruction and side effects.
 ****************************************************************************/
 static void 
-outs(struct X86EMU *emu, int size)
+outs(struct x86emu *emu, int size)
 {
 	int inc = size;
 
@@ -8053,7 +8053,7 @@ Pushes a word onto the stack.
 NOTE: Do not inline this, as (*emu->emu_wrX) is already inline!
 ****************************************************************************/
 static void 
-push_word(struct X86EMU *emu, uint16_t w)
+push_word(struct x86emu *emu, uint16_t w)
 {
 	emu->x86.R_SP -= 2;
 	store_word(emu, emu->x86.R_SS, emu->x86.R_SP, w);
@@ -8065,7 +8065,7 @@ Pushes a long onto the stack.
 NOTE: Do not inline this, as (*emu->emu_wrX) is already inline!
 ****************************************************************************/
 static void 
-push_long(struct X86EMU *emu, uint32_t w)
+push_long(struct x86emu *emu, uint32_t w)
 {
 	emu->x86.R_SP -= 4;
 	store_long(emu, emu->x86.R_SS, emu->x86.R_SP, w);
@@ -8077,7 +8077,7 @@ Pops a word from the stack.
 NOTE: Do not inline this, as (*emu->emu_rdX) is already inline!
 ****************************************************************************/
 static uint16_t 
-pop_word(struct X86EMU *emu)
+pop_word(struct x86emu *emu)
 {
 	uint16_t res;
 
@@ -8092,7 +8092,7 @@ Pops a long from the stack.
 NOTE: Do not inline this, as (*emu->emu_rdX) is already inline!
 ****************************************************************************/
 static uint32_t 
-pop_long(struct X86EMU *emu)
+pop_long(struct x86emu *emu)
 {
 	uint32_t res;
 
