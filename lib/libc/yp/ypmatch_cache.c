@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch_cache.c,v 1.13 2009/06/05 17:20:31 schwarze Exp $ */
+/*	$OpenBSD: ypmatch_cache.c,v 1.14 2009/06/06 18:28:09 schwarze Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -54,6 +54,7 @@ ypmatch_add(const char *map, const char *key, u_int keylen, char *val,
     u_int vallen)
 {
 	struct ypmatch_ent *ep;
+	char *newmap = NULL, *newkey = NULL, *newval = NULL;
 	time_t t;
 
 	if (keylen == 0 || vallen == 0)
@@ -61,53 +62,44 @@ ypmatch_add(const char *map, const char *key, u_int keylen, char *val,
 
 	(void)time(&t);
 
+	/* Allocate all required memory first. */
+	if ((newmap = strdup(map)) == NULL ||
+	    (newkey = malloc(keylen)) == NULL ||
+	    (newval = malloc(vallen)) == NULL) {
+		free(newkey);
+		free(newmap);
+		return 0;
+	}
+
 	for (ep = ypmc; ep; ep = ep->next)
 		if (ep->expire_t < t)
 			break;
+
 	if (ep == NULL) {
-		if ((ep = malloc(sizeof *ep)) == NULL)
+		/* No expired node, create a new one. */
+		if ((ep = malloc(sizeof *ep)) == NULL) {
+			free(newval);
+			free(newkey);
+			free(newmap);
 			return 0;
-		(void)memset(ep, 0, sizeof *ep);
-		if (ypmc)
-			ep->next = ypmc;
+		}
+		ep->next = ypmc;
 		ypmc = ep;
-	}
-
-	if (ep->key) {
-		free(ep->key);
-		ep->key = NULL;
-	}
-	if (ep->val) {
+	} else {
+		/* Reuse the first expired node from the list. */
 		free(ep->val);
-		ep->val = NULL;
-	}
-
-	if ((ep->key = malloc(keylen)) == NULL)
-		return 0;
-
-	if ((ep->val = malloc(vallen)) == NULL) {
 		free(ep->key);
-		ep->key = NULL;
-		return 0;
+		free(ep->map);
 	}
 
+	/* Now we have all the memory we need, copy the data in. */
+	(void)memcpy(newkey, key, keylen);
+	(void)memcpy(newval, val, vallen);
+	ep->map = newmap;
+	ep->key = newkey;
+	ep->val = newval;
 	ep->keylen = keylen;
 	ep->vallen = vallen;
-
-	(void)memcpy(ep->key, key, ep->keylen);
-	(void)memcpy(ep->val, val, ep->vallen);
-
-	if (ep->map) {
-		if (strcmp(ep->map, map)) {
-			free(ep->map);
-			if ((ep->map = strdup(map)) == NULL)
-				return 0;
-		}
-	} else {
-		if ((ep->map = strdup(map)) == NULL)
-			return 0;
-	}
-
 	ep->expire_t = t + _yplib_cache;
 	return 1;
 }
