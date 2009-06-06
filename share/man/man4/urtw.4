@@ -1,4 +1,4 @@
-.\" $OpenBSD: urtw.4,v 1.4 2009/03/03 07:49:27 kevlo Exp $
+.\" $OpenBSD: urtw.4,v 1.5 2009/06/06 12:49:44 martynas Exp $
 .\"
 .\" Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 3 2009 $
+.Dd $Mdocdate: June 6 2009 $
 .Os
 .Dt URTW 4
 .Sh NAME
 .Nm urtw
-.Nd Realtek RTL8187L USB IEEE 802.11b/g wireless network device
+.Nd Realtek RTL8187L/RTL8187B USB IEEE 802.11b/g wireless network device
 .Sh SYNOPSIS
 .Cd "urtw* at uhub? port ?"
 .Sh DESCRIPTION
@@ -80,8 +80,11 @@ or on boot with
 The following adapters should work:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
+.It Belkin F5D7050E
 .It Netgear WG111v2
+.It Netgear WG111v3
 .It Shuttle XPC Accessory PN20
+.It Sitecom WL-168
 .It Surecom EP-9001-g rev 2A
 .El
 .Sh EXAMPLES
