@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.81 2009/06/05 19:33:59 pyr Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.82 2009/06/06 07:31:26 eric Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -59,6 +59,14 @@
 #define	F_REJECT		0x0040
 #define	F_BLACKHOLE		0x0080
 #define	F_REDISTRIBUTED		0x0100
+
+struct imsgev {
+	struct imsgbuf		 ibuf;
+	void			(*handler)(int, short, void *);
+	struct event		 ev;
+	void			*data;
+	short			 events;
+};
 
 enum imsg_type {
 	IMSG_NONE,
@@ -566,8 +574,8 @@ void	main_imsg_compose_ospfe(int, pid_t, void *, u_int16_t);
 void	main_imsg_compose_rde(int, pid_t, void *, u_int16_t);
 int	ospf_redistribute(struct kroute *, u_int32_t *);
 void	merge_config(struct ospfd_conf *, struct ospfd_conf *);
-void	imsg_event_add(struct imsgbuf *);
-int	imsg_compose_event(struct imsgbuf *, u_int16_t, u_int32_t,
+void	imsg_event_add(struct imsgev *);
+int	imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
 	    pid_t, int, void *, u_int16_t);
 
 /* printconf.c */

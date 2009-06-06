@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.39 2009/01/31 08:55:00 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.40 2009/06/06 07:31:26 eric Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -101,7 +101,7 @@ int		 auth_gen(struct buf *, struct iface *);
 void		 md_list_add(struct auth_md_head *, u_int8_t, char *);
 void		 md_list_copy(struct auth_md_head *, struct auth_md_head *);
 void		 md_list_clr(struct auth_md_head *);
-int		 md_list_send(struct auth_md_head *, struct imsgbuf *);
+int		 md_list_send(struct auth_md_head *, struct imsgev *);
 
 /* database.c */
 int	 send_db_description(struct nbr *);

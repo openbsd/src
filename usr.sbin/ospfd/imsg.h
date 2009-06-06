@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.4 2009/06/05 21:15:47 pyr Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.5 2009/06/06 07:31:26 eric Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -19,7 +19,6 @@
  */
 
 #include <sys/tree.h>
-#include <event.h>
 
 #define READ_BUF_SIZE		65535
 #define IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
@@ -56,12 +55,8 @@ struct imsgbuf {
 	TAILQ_HEAD(, imsg_fd)	 fds;
 	struct buf_read		 r;
 	struct msgbuf		 w;
-	struct event		 ev;
-	void			(*handler)(int, short, void *);
 	int			 fd;
 	pid_t			 pid;
-	void			*data;
-	short			 events;
 };
 
 struct imsg_hdr {
@@ -93,7 +88,7 @@ void		 msgbuf_clear(struct msgbuf *);
 int		 msgbuf_write(struct msgbuf *);
 
 /* imsg.c */
-void	 imsg_init(struct imsgbuf *, int, void (*)(int, short, void *));
+void	 imsg_init(struct imsgbuf *, int);
 ssize_t	 imsg_read(struct imsgbuf *);
 ssize_t	 imsg_get(struct imsgbuf *, struct imsg *);
 int	 imsg_compose(struct imsgbuf *, u_int16_t, u_int32_t, pid_t,
