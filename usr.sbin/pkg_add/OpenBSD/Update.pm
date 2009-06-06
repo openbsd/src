@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.83 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: Update.pm,v 1.84 2009/06/06 11:48:04 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -121,7 +121,7 @@ sub process_package
 		if ($state->{defines}->{pkgpath}) {
 			$state->progress->clear;
 			print "Directly updating $pkgname -> ", $l->[0]->name, "\n";
-			$self->add2updates($l->[0]->name);
+			$self->add2updates($l->[0]);
 			return;
 		}
 		if (defined $found && $found eq  $l->[0] && 
