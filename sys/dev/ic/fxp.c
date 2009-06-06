@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.95 2009/06/02 16:50:20 jsg Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.96 2009/06/06 02:49:39 naddy Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1671,16 +1671,15 @@ fxp_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 
 	case SIOCSIFFLAGS:
-		/*
-		 * If interface is marked up and not running, then start it.
-		 * If it is marked down and running, stop it.
-		 * XXX If it's up then re-initialize it. This is so flags
-		 * such as IFF_PROMISC are handled.
-		 */
-		if (ifp->if_flags & IFF_UP)
-			fxp_init(sc);
-		else if (ifp->if_flags & IFF_RUNNING)
-			fxp_stop(sc, 1);
+		if (ifp->if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				fxp_init(sc);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				fxp_stop(sc, 1);
+		}
 		break;
 
 	case SIOCSIFMEDIA:
