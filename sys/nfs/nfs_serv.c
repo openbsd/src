@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.74 2009/06/06 22:59:17 blambert Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.75 2009/06/06 23:40:30 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -603,7 +603,8 @@ nfsrv_read(nfsd, slp, procp, mrq)
 			}
 			if (left > 0) {
 				MGET(m, M_WAIT, MT_DATA);
-				MCLGET(m, M_WAIT);
+				if (left >= MINCLSIZE)
+					MCLGET(m, M_WAIT);
 				m->m_len = 0;
 				m2->m_next = m;
 				m2 = m;
