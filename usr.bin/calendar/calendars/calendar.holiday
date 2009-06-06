@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.21 2008/08/04 08:29:17 sobrado Exp $
+ * $OpenBSD: calendar.holiday,v 1.22 2009/06/06 14:36:11 maja Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -206,6 +206,7 @@
 06/05	Constitution Day in Denmark
 06/05	Liberation Day in Seychelles
 06/06	Memorial Day in South Korea
+06/06	National Day in Sweden
 06/09	Senior Citizen's Day in Oklahoma
 06/10	Camoes Day in Portugal
 06/11	King Kamehameha I Day in Hawaii
