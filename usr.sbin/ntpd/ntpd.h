@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.101 2009/06/04 23:39:46 ckuethe Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.102 2009/06/06 18:14:25 pyr Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,12 +30,11 @@
 #include <stdarg.h>
 
 #include "ntp.h"
+#include <imsg.h>
 
 #define	NTPD_USER	"_ntp"
 #define	CONFFILE	"/etc/ntpd.conf"
 #define DRIFTFILE	"/var/db/ntpd.drift"
-
-#define	READ_BUF_SIZE		8192
 
 #define	INTERVAL_QUERY_NORMAL		30	/* sync to peers every n secs */
 #define	INTERVAL_QUERY_PATHETIC		60
@@ -180,56 +179,12 @@ struct ntpd_conf {
 	u_int8_t					filters;
 };
 
-struct buf {
-	TAILQ_ENTRY(buf)	 entry;
-	u_char			*buf;
-	size_t			 size;
-	size_t			 wpos;
-	size_t			 rpos;
-};
-
-struct msgbuf {
-	TAILQ_HEAD(, buf)	 bufs;
-	u_int32_t		 queued;
-	int			 fd;
-};
-
-struct buf_read {
-	size_t			 wpos;
-	u_char			 buf[READ_BUF_SIZE];
-	u_char			*rptr;
-};
-
-/* ipc messages */
-
-#define	IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
-#define	MAX_IMSGSIZE		8192
-
-struct imsgbuf {
-	int			fd;
-	pid_t			pid;
-	struct buf_read		r;
-	struct msgbuf		w;
-};
-
 enum imsg_type {
 	IMSG_NONE,
 	IMSG_ADJTIME,
 	IMSG_ADJFREQ,
 	IMSG_SETTIME,
 	IMSG_HOST_DNS
-};
-
-struct imsg_hdr {
-	enum imsg_type	type;
-	u_int32_t	peerid;
-	pid_t		pid;
-	u_int16_t	len;
-};
-
-struct imsg {
-	struct imsg_hdr	 hdr;
-	void		*data;
 };
 
 /* prototypes */
@@ -243,27 +198,6 @@ void		 log_debug(const char *, ...);
 void		 fatal(const char *);
 void		 fatalx(const char *);
 const char *	 log_sockaddr(struct sockaddr *);
-
-/* buffer.c */
-struct buf	*buf_open(size_t);
-int		 buf_add(struct buf *, void *, size_t);
-int		 buf_close(struct msgbuf *, struct buf *);
-void		 buf_free(struct buf *);
-void		 msgbuf_init(struct msgbuf *);
-void		 msgbuf_clear(struct msgbuf *);
-int		 msgbuf_write(struct msgbuf *);
-
-/* imsg.c */
-void	 imsg_init(struct imsgbuf *, int);
-int	 imsg_read(struct imsgbuf *);
-int	 imsg_get(struct imsgbuf *, struct imsg *);
-int	 imsg_compose(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
-	    void *, u_int16_t);
-struct buf	*imsg_create(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
-		    u_int16_t);
-int	 imsg_add(struct buf *, void *, u_int16_t);
-int	 imsg_close(struct imsgbuf *, struct buf *);
-void	 imsg_free(struct imsg *);
 
 /* ntp.c */
 pid_t	 ntp_main(int[2], struct ntpd_conf *, struct passwd *);

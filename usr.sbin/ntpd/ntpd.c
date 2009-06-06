@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.65 2009/06/01 23:21:09 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.66 2009/06/06 18:14:25 pyr Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -289,7 +289,8 @@ dispatch_imsg(struct ntpd_conf *lconf)
 				fatalx("invalid IMSG_ADJTIME received");
 			memcpy(&d, imsg.data, sizeof(d));
 			n = ntpd_adjtime(d);
-			imsg_compose(ibuf, IMSG_ADJTIME, 0, 0, &n, sizeof(n));
+			imsg_compose(ibuf, IMSG_ADJTIME, 0, 0, -1,
+			     &n, sizeof(n));
 			break;
 		case IMSG_ADJFREQ:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(d))
