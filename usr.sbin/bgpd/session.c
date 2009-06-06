@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.291 2009/06/04 04:46:42 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.292 2009/06/06 06:33:15 eric Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1329,13 +1329,7 @@ session_sendmsg(struct bgp_msg *msg, struct peer *p)
 			mrt_dump_bgp_msg(mrt, msg->buf->buf, msg->len, p);
 	}
 
-	if (buf_close(&p->wbuf, msg->buf) == -1) {
-		log_peer_warn(&p->conf, "session_sendmsg buf_close");
-		buf_free(msg->buf);
-		free(msg);
-		return (-1);
-	}
-
+	buf_close(&p->wbuf, msg->buf);
 	free(msg);
 	return (0);
 }

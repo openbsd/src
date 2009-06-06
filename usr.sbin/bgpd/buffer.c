@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.42 2009/03/13 06:25:04 claudio Exp $ */
+/*	$OpenBSD: buffer.c,v 1.43 2009/06/06 06:33:15 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,17 +16,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/queue.h>
+#include <sys/socket.h>
 #include <sys/uio.h>
 
 #include <errno.h>
-#include <limits.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "bgpd.h"
+#include "imsg.h"
 
 int	buf_realloc(struct buf *, size_t);
 void	buf_enqueue(struct msgbuf *, struct buf *);
@@ -134,13 +134,10 @@ buf_left(struct buf *buf)
 	return (buf->max - buf->wpos);
 }
 
-int
+void
 buf_close(struct msgbuf *msgbuf, struct buf *buf)
 {
-	/* truncate buffer to the correct length before queuing */
-	buf->size = buf->wpos;
 	buf_enqueue(msgbuf, buf);
-	return (1);
 }
 
 int
@@ -223,7 +220,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 	struct cmsghdr	*cmsg;
 	union {
 		struct cmsghdr	hdr;
-		char 		buf[CMSG_SPACE(sizeof(int))];
+		char		buf[CMSG_SPACE(sizeof(int))];
 	} cmsgbuf;
 
 	bzero(&iov, sizeof(iov));
@@ -232,7 +229,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 		if (i >= IOV_MAX)
 			break;
 		iov[i].iov_base = buf->buf + buf->rpos;
-		iov[i].iov_len = buf->size - buf->rpos;
+		iov[i].iov_len = buf->wpos - buf->rpos;
 		i++;
 		if (buf->fd != -1)
 			break;
@@ -276,8 +273,8 @@ msgbuf_write(struct msgbuf *msgbuf)
 	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
 	    buf = next) {
 		next = TAILQ_NEXT(buf, entry);
-		if (buf->rpos + n >= buf->size) {
-			n -= buf->size - buf->rpos;
+		if (buf->rpos + n >= buf->wpos) {
+			n -= buf->wpos - buf->rpos;
 			buf_dequeue(msgbuf, buf);
 		} else {
 			buf->rpos += n;

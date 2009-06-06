@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.258 2009/06/06 06:04:10 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.259 2009/06/06 06:33:15 eric Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1563,8 +1563,7 @@ rde_update_err(struct rde_peer *peer, u_int8_t error, u_int8_t suberr,
 	    imsg_add(wbuf, &suberr, sizeof(suberr)) == -1 ||
 	    imsg_add(wbuf, data, size) == -1)
 		fatal("imsg_add error");
-	if (imsg_close(ibuf_se, wbuf) == -1)
-		fatal("imsg_close error");
+	imsg_close(ibuf_se, wbuf);
 	peer->state = PEER_ERR;
 }
 
@@ -1765,8 +1764,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 	    imsg_add(wbuf, aspath_dump(asp->aspath),
 	    rib.aspath_len) == -1)
 		return;
-	if (imsg_close(ibuf_se_ctl, wbuf) == -1)
-		return;
+	imsg_close(ibuf_se_ctl, wbuf);
 
 	if (flags & F_CTL_DETAIL)
 		for (l = 0; l < asp->others_len; l++) {
@@ -1785,8 +1783,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 				buf_free(wbuf);
 				return;
 			}
-			if (imsg_close(ibuf_se_ctl, wbuf) == -1)
-				return;
+			imsg_close(ibuf_se_ctl, wbuf);
 		}
 }
 
