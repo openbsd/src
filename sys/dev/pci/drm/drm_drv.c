@@ -350,7 +350,7 @@ int
 drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 {
 	struct drm_device	*dev = NULL;
-	struct drm_file		*priv;
+	struct drm_file		*file_priv;
 	int			 ret = 0;
 
 	dev = drm_get_device_from_kdev(kdev);
@@ -372,23 +372,23 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 	}
 
 	/* always allocate at least enough space for our data */
-	priv = drm_calloc(1, max(dev->driver->file_priv_size,
-	    sizeof(*priv)));
-	if (priv == NULL) {
+	file_priv = drm_calloc(1, max(dev->driver->file_priv_size,
+	    sizeof(*file_priv)));
+	if (file_priv == NULL) {
 		ret = ENOMEM;
 		goto err;
 	}
 
-	priv->kdev = kdev;
-	priv->flags = flags;
-	priv->minor = minor(kdev);
-	DRM_DEBUG("minor = %d\n", priv->minor);
+	file_priv->kdev = kdev;
+	file_priv->flags = flags;
+	file_priv->minor = minor(kdev);
+	DRM_DEBUG("minor = %d\n", file_priv->minor);
 
 	/* for compatibility root is always authenticated */
-	priv->authenticated = DRM_SUSER(p);
+	file_priv->authenticated = DRM_SUSER(p);
 
 	if (dev->driver->open) {
-		ret = dev->driver->open(dev, priv);
+		ret = dev->driver->open(dev, file_priv);
 		if (ret != 0) {
 			goto free_priv;
 		}
@@ -402,15 +402,15 @@ drmopen(dev_t kdev, int flags, int fmt, struct proc *p)
 		goto free_priv;
 	}
 
-	priv->master = SPLAY_EMPTY(&dev->files);
+	file_priv->master = SPLAY_EMPTY(&dev->files);
 
-	SPLAY_INSERT(drm_file_tree, &dev->files, priv);
+	SPLAY_INSERT(drm_file_tree, &dev->files, file_priv);
 	DRM_UNLOCK();
 
 	return (0);
 
 free_priv:
-	drm_free(priv);
+	drm_free(file_priv);
 err:
 	DRM_LOCK();
 	--dev->open_count;
@@ -680,21 +680,21 @@ drmmmap(dev_t kdev, off_t offset, int prot)
 {
 	struct drm_device	*dev = drm_get_device_from_kdev(kdev);
 	struct drm_local_map	*map;
-	struct drm_file		*priv;
+	struct drm_file		*file_priv;
 	enum drm_map_type	 type;
 
 	if (dev == NULL)
 		return (-1);
 
 	DRM_LOCK();
-	priv = drm_find_file_by_minor(dev, minor(kdev));
+	file_priv = drm_find_file_by_minor(dev, minor(kdev));
 	DRM_UNLOCK();
-	if (priv == NULL) {
+	if (file_priv == NULL) {
 		DRM_ERROR("can't find authenticator\n");
 		return (-1);
 	}
 
-	if (!priv->authenticated)
+	if (!file_priv->authenticated)
 		return (-1);
 
 	if (dev->dma && offset >= 0 && offset < ptoa(dev->dma->page_count)) {
@@ -732,7 +732,7 @@ drmmmap(dev_t kdev, off_t offset, int prot)
 		DRM_DEBUG("can't find map\n");
 		return (-1);
 	}
-	if (((map->flags & _DRM_RESTRICTED) && priv->master == 0)) {
+	if (((map->flags & _DRM_RESTRICTED) && file_priv->master == 0)) {
 		DRM_UNLOCK();
 		DRM_DEBUG("restricted map\n");
 		return (-1);
