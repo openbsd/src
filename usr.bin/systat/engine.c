@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.8 2009/06/04 14:48:07 canacar Exp $	 */
+/* $Id: engine.c,v 1.9 2009/06/06 17:52:39 jasper Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -658,12 +658,12 @@ print_fld_age(field_def *fld, unsigned int age)
 	if (tbprintf("%ud", age) <= len)
 		goto ok;
 	
- err:
+err:
 	print_fld_str(fld, "*");
 	tb_end();
 	return;
 	
- ok:
+ok:
 	print_fld_tb(fld);
 }
 
