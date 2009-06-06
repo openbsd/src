@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.55 2008/09/29 14:03:41 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.56 2009/06/06 01:10:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -30,7 +30,7 @@ int	rde_filter_match(struct filter_rule *, struct rde_aspath *,
 int	filterset_equal(struct filter_set_head *, struct filter_set_head *);
 
 enum filter_actions
-rde_filter(struct rde_aspath **new, struct filter_head *rules,
+rde_filter(u_int16_t ribid, struct rde_aspath **new, struct filter_head *rules,
     struct rde_peer *peer, struct rde_aspath *asp, struct bgpd_addr *prefix,
     u_int8_t prefixlen, struct rde_peer *from, enum directions dir)
 {
@@ -42,6 +42,8 @@ rde_filter(struct rde_aspath **new, struct filter_head *rules,
 
 	TAILQ_FOREACH(f, rules, entry) {
 		if (dir != f->dir)
+			continue;
+		if (dir == DIR_IN && f->peer.ribid != ribid)
 			continue;
 		if (f->peer.groupid != 0 &&
 		    f->peer.groupid != peer->conf.groupid)

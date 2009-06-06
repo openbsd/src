@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.230 2009/06/06 01:07:01 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.231 2009/06/06 01:10:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -182,7 +182,7 @@ typedef struct {
 %token	<v.number>		NUMBER
 %type	<v.number>		asnumber as4number optnumber yesno inout
 %type	<v.number>		espah family restart
-%type	<v.string>		string
+%type	<v.string>		string filter_rib
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
 %type	<v.u8>			action quick direction delete
@@ -1197,16 +1197,37 @@ encspec		: /* nada */	{
 		}
 		;
 
-filterrule	: action quick direction filter_peer_h filter_match_h filter_set
+filterrule	: action quick filter_rib direction filter_peer_h filter_match_h filter_set
 		{
 			struct filter_rule	 r;
 
 			bzero(&r, sizeof(r));
 			r.action = $1;
 			r.quick = $2;
-			r.dir = $3;
-
-			if (expand_rule(&r, $4, &$5, $6) == -1)
+			r.dir = $4;
+			if ($3) {
+				if (r.dir != DIR_IN) {
+					yyerror("rib only allowed on \"from\" "
+					    "rules.");
+					free($3);
+					YYERROR;
+				}
+				if (!find_rib($3)) {
+					yyerror("rib \"%s\" does not exist.",
+					    $3);
+					free($3);
+					YYERROR;
+				}
+				if (strlcpy(r.rib, $3, sizeof(r.rib)) >=
+				    sizeof(r.rib)) {
+					yyerror("rib name \"%s\" too long: "
+					    "max %u", $3, sizeof(r.rib) - 1);
+					free($3);
+					YYERROR;
+				}
+				free($3);
+			}
+			if (expand_rule(&r, $5, &$6, $7) == -1)
 				YYERROR;
 		}
 		;
@@ -1223,6 +1244,9 @@ quick		: /* empty */	{ $$ = 0; }
 direction	: FROM		{ $$ = DIR_IN; }
 		| TO		{ $$ = DIR_OUT; }
 		;
+
+filter_rib	: /* empty */	{ $$ = NULL; }
+		| RIB STRING	{ $$ = $2; }
 
 filter_peer_h	: filter_peer
 		| '{' filter_peer_l '}'		{ $$ = $2; }

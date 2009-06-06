@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.256 2009/06/06 01:02:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.257 2009/06/06 01:10:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -59,7 +59,7 @@ int		 rde_update_get_prefix6(u_char *, u_int16_t, struct bgpd_addr *,
 		     u_int8_t *);
 void		 rde_update_err(struct rde_peer *, u_int8_t , u_int8_t,
 		     void *, u_int16_t);
-void		 rde_update_log(const char *,
+void		 rde_update_log(const char *, u_int16_t,
 		     const struct rde_peer *, const struct bgpd_addr *,
 		     const struct bgpd_addr *, u_int8_t);
 void		 rde_as4byte_fixup(struct rde_peer *, struct rde_aspath *);
@@ -246,6 +246,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	log_info("route decision engine ready");
 
 	TAILQ_FOREACH(f, rules, entry) {
+		f->peer.ribid = rib_find(f->rib);
 		TAILQ_FOREACH(set, &f->set, entry) {
 			if (set->type == ACTION_SET_NEXTHOP) {
 				nh = nexthop_get(&set->action.nexthop);
@@ -622,6 +623,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				fatal(NULL);
 			memcpy(r, imsg.data, sizeof(struct filter_rule));
 			TAILQ_INIT(&r->set);
+			r->peer.ribid = rib_find(r->rib);
 			parent_set = &r->set;
 			TAILQ_INSERT_TAIL(newrules, r, entry);
 			break;
@@ -1081,23 +1083,24 @@ rde_update_update(struct rde_peer *peer, struct rde_aspath *asp,
 	if (peer->conf.softreconfig_in)
 		r += path_update(&ribs[0], peer, asp, prefix, prefixlen);
 
-	/* input filter */
-	if (rde_filter(&fasp, rules_l, peer, asp, prefix, prefixlen,
-	    peer, DIR_IN) == ACTION_DENY)
-		goto done;
+	for (i = 1; i < rib_size; i++) {
+		/* input filter */
+		if (rde_filter(i, &fasp, rules_l, peer, asp, prefix, prefixlen,
+		    peer, DIR_IN) == ACTION_DENY)
+			goto done;
 
-	if (fasp == NULL)
-		fasp = asp;
+		if (fasp == NULL)
+			fasp = asp;
 
-	rde_update_log("update", peer, &fasp->nexthop->exit_nexthop,
-	    prefix, prefixlen);
-	for (i = 1; i < rib_size; i++)
+		rde_update_log("update", i, peer, &fasp->nexthop->exit_nexthop,
+		    prefix, prefixlen);
 		r += path_update(&ribs[i], peer, fasp, prefix, prefixlen);
 
 done:
-	/* free modified aspath */
-	if (fasp != asp)
-		path_put(fasp);
+		/* free modified aspath */
+		if (fasp != asp)
+			path_put(fasp);
+	}
 
 	if (r)
 		peer->prefix_cnt++;
@@ -1111,10 +1114,13 @@ rde_update_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 	u_int16_t i;
 
 	peer->prefix_rcvd_withdraw++;
-	rde_update_log("withdraw", peer, NULL, prefix, prefixlen);
 
 	for (i = rib_size - 1; ; i--) {
-		r += prefix_remove(&ribs[i], peer, prefix, prefixlen, 0);
+		if (prefix_remove(&ribs[i], peer, prefix, prefixlen, 0)) {
+			rde_update_log("withdraw", i, peer, NULL, prefix,
+			    prefixlen);
+			r++;
+		}
 		if (i == 0)
 			break;
 	}
@@ -1563,7 +1569,7 @@ rde_update_err(struct rde_peer *peer, u_int8_t error, u_int8_t suberr,
 }
 
 void
-rde_update_log(const char *message,
+rde_update_log(const char *message, u_int16_t rid,
     const struct rde_peer *peer, const struct bgpd_addr *next,
     const struct bgpd_addr *prefix, u_int8_t prefixlen)
 {
@@ -1580,7 +1586,7 @@ rde_update_log(const char *message,
 	if (asprintf(&p, "%s/%u", log_addr(prefix), prefixlen) == -1)
 		p = NULL;
 	l = log_fmt_peer(&peer->conf);
-	log_info("%s AS%s: %s %s%s",
+	log_info("Rib %s: %s AS%s: %s %s%s", ribs[rid].name,
 	    l, log_as(peer->conf.remote_as), message,
 	    p ? p : "out of memory", n ? n : "");
 
@@ -1796,7 +1802,7 @@ rde_dump_filterout(struct rde_peer *peer, struct prefix *p,
 		return;
 
 	pt_getaddr(p->prefix, &addr);
-	a = rde_filter(&asp, rules_l, peer, p->aspath, &addr,
+	a = rde_filter(1 /* XXX */, &asp, rules_l, peer, p->aspath, &addr,
 	    p->prefix->prefixlen, p->aspath->peer, DIR_OUT);
 	if (asp)
 		asp->peer = p->aspath->peer;
@@ -2125,10 +2131,10 @@ rde_softreconfig_out(struct rib_entry *re, void *ptr)
 		if (up_test_update(peer, p) != 1)
 			continue;
 
-		oa = rde_filter(&oasp, rules_l, peer, p->aspath, &addr,
-		    pt->prefixlen, p->aspath->peer, DIR_OUT);
-		na = rde_filter(&nasp, newrules, peer, p->aspath, &addr,
-		    pt->prefixlen, p->aspath->peer, DIR_OUT);
+		oa = rde_filter(re->ribid, &oasp, rules_l, peer, p->aspath,
+		    &addr, pt->prefixlen, p->aspath->peer, DIR_OUT);
+		na = rde_filter(re->ribid, &nasp, newrules, peer, p->aspath,
+		    &addr, pt->prefixlen, p->aspath->peer, DIR_OUT);
 		oasp = oasp != NULL ? oasp : p->aspath;
 		nasp = nasp != NULL ? nasp : p->aspath;
 
@@ -2169,6 +2175,7 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 	struct rde_aspath	*asp, *oasp, *nasp;
 	enum filter_actions	 oa, na;
 	struct bgpd_addr	 addr;
+	u_int16_t		 i;
 
 	pt = re->prefix;
 	pt_getaddr(pt, &addr);
@@ -2183,39 +2190,44 @@ rde_softreconfig_in(struct rib_entry *re, void *ptr)
 		if (peer->reconf_in == 0)
 			continue;
 
-		/* check if prefix changed */
-		oa = rde_filter(&oasp, rules_l, peer, asp, &addr,
-		    pt->prefixlen, peer, DIR_IN);
-		na = rde_filter(&nasp, newrules, peer, asp, &addr,
-		    pt->prefixlen, peer, DIR_IN);
-		oasp = oasp != NULL ? oasp : asp;
-		nasp = nasp != NULL ? nasp : asp;
+		for (i = 1; i < rib_size; i++) {
+			/* check if prefix changed */
+			oa = rde_filter(i, &oasp, rules_l, peer, asp, &addr,
+			    pt->prefixlen, peer, DIR_IN);
+			na = rde_filter(i, &nasp, newrules, peer, asp, &addr,
+			    pt->prefixlen, peer, DIR_IN);
+			oasp = oasp != NULL ? oasp : asp;
+			nasp = nasp != NULL ? nasp : asp;
 
-		if (oa == ACTION_DENY && na == ACTION_DENY)
-			/* nothing todo */
-			goto done;
-		if (oa == ACTION_DENY && na == ACTION_ALLOW) {
-			/* update Local-RIB */
-			path_update(&ribs[1], peer, nasp, &addr, pt->prefixlen);
-			goto done;
-		}
-		if (oa == ACTION_ALLOW && na == ACTION_DENY) {
-			/* remove from Local-RIB */
-			prefix_remove(&ribs[1], peer, &addr, pt->prefixlen, 0);
-			goto done;
-		}
-		if (oa == ACTION_ALLOW && na == ACTION_ALLOW) {
-			if (path_compare(nasp, oasp) == 0)
+			if (oa == ACTION_DENY && na == ACTION_DENY)
+				/* nothing todo */
 				goto done;
-			/* send update */
-			path_update(&ribs[1], peer, nasp, &addr, pt->prefixlen);
-		}
+			if (oa == ACTION_DENY && na == ACTION_ALLOW) {
+				/* update Local-RIB */
+				path_update(&ribs[i], peer, nasp, &addr,
+				    pt->prefixlen);
+				goto done;
+			}
+			if (oa == ACTION_ALLOW && na == ACTION_DENY) {
+				/* remove from Local-RIB */
+				prefix_remove(&ribs[i], peer, &addr,
+				    pt->prefixlen, 0);
+				goto done;
+			}
+			if (oa == ACTION_ALLOW && na == ACTION_ALLOW) {
+				if (path_compare(nasp, oasp) == 0)
+					goto done;
+				/* send update */
+				path_update(&ribs[1], peer, nasp, &addr,
+				    pt->prefixlen);
+			}
 
 done:
-		if (oasp != asp)
-			path_put(oasp);
-		if (nasp != asp)
-			path_put(nasp);
+			if (oasp != asp)
+				path_put(oasp);
+			if (nasp != asp)
+				path_put(nasp);
+		}
 	}
 }
 
