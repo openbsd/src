@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.22 2007/06/23 19:19:49 krw Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.23 2009/06/06 05:35:48 krw Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -225,7 +225,6 @@ struct scsi_start_stop {
 /*
  * XXX Does ATAPI have an equivalent?
  */
-#define	SYNCHRONIZE_CACHE		0x35
 struct scsi_synchronize_cache {
 	u_int8_t opcode;
 	u_int8_t flags;
