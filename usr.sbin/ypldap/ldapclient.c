@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.13 2009/01/27 23:29:42 pyr Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.14 2009/06/06 05:02:58 eric Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -159,7 +159,8 @@ client_dispatch_dns(int fd, short event, void *p)
 	int			 shut = 0;
 
 	struct env		*env = p;
-	struct imsgbuf		*ibuf = env->sc_ibuf_dns;
+	struct imsgev		*iev = env->sc_iev_dns;
+	struct imsgbuf		*ibuf = &iev->ibuf;
 
 	switch (event) {
 	case EV_READ:
@@ -171,7 +172,7 @@ client_dispatch_dns(int fd, short event, void *p)
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 		return;
 	default:
 		fatalx("unknown event");
@@ -240,13 +241,14 @@ client_dispatch_dns(int fd, short event, void *p)
 			wait_cnt++;
 	}
 	if (wait_cnt == 0)
-		imsg_compose(env->sc_ibuf, IMSG_END_UPDATE, 0, 0, NULL, 0);
+		imsg_compose_event(env->sc_iev, IMSG_END_UPDATE, 0, 0, -1,
+		    NULL, 0);
 
 	if (!shut)
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 	else {
 		/* this pipe is dead, so remove the event handler */
-		event_del(&ibuf->ev);
+		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
 }
@@ -258,7 +260,8 @@ client_dispatch_parent(int fd, short event, void *p)
 	int			 shut = 0;
 	struct imsg		 imsg;
 	struct env		*env = p;
-	struct imsgbuf		*ibuf = env->sc_ibuf;
+	struct imsgev		*iev = env->sc_iev;
+	struct imsgbuf		*ibuf = &iev->ibuf;
 
 
 	switch (event) {
@@ -271,7 +274,7 @@ client_dispatch_parent(int fd, short event, void *p)
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 		return;
 	default:
 		fatalx("unknown event");
@@ -326,10 +329,10 @@ client_dispatch_parent(int fd, short event, void *p)
 		imsg_free(&imsg);
 	}
 	if (!shut)
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 	else {
 		/* this pipe is dead, so remove the event handler */
-		event_del(&ibuf->ev);
+		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
 }
@@ -399,24 +402,26 @@ ldapclient(int pipe_main2client[2])
 	signal_add(&ev_sigterm, NULL);
 
 	close(pipe_main2client[0]);
-	if ((env.sc_ibuf = calloc(1, sizeof(*env.sc_ibuf))) == NULL)
+	if ((env.sc_iev = calloc(1, sizeof(*env.sc_iev))) == NULL)
 		fatal(NULL);
-	if ((env.sc_ibuf_dns = calloc(1, sizeof(*env.sc_ibuf_dns))) == NULL)
+	if ((env.sc_iev_dns = calloc(1, sizeof(*env.sc_iev_dns))) == NULL)
 		fatal(NULL);
 
-	env.sc_ibuf->events = EV_READ;
-	env.sc_ibuf->data = &env;
-	imsg_init(env.sc_ibuf, pipe_main2client[1], client_dispatch_parent);
-	event_set(&env.sc_ibuf->ev, env.sc_ibuf->fd, env.sc_ibuf->events,
-	    env.sc_ibuf->handler, &env);
-	event_add(&env.sc_ibuf->ev, NULL);
+	env.sc_iev->events = EV_READ;
+	env.sc_iev->data = &env;
+	imsg_init(&env.sc_iev->ibuf, pipe_main2client[1]);
+	env.sc_iev->handler = client_dispatch_parent;
+	event_set(&env.sc_iev->ev, env.sc_iev->ibuf.fd, env.sc_iev->events,
+	    env.sc_iev->handler, &env);
+	event_add(&env.sc_iev->ev, NULL);
 
-	env.sc_ibuf_dns->events = EV_READ;
-	env.sc_ibuf_dns->data = &env;
-	imsg_init(env.sc_ibuf_dns, pipe_dns[0], client_dispatch_dns);
-	event_set(&env.sc_ibuf_dns->ev, env.sc_ibuf_dns->fd, env.sc_ibuf_dns->events,
-	    env.sc_ibuf_dns->handler, &env);
-	event_add(&env.sc_ibuf_dns->ev, NULL);
+	env.sc_iev_dns->events = EV_READ;
+	env.sc_iev_dns->data = &env;
+	imsg_init(&env.sc_iev_dns->ibuf, pipe_dns[0]);
+	env.sc_iev_dns->handler = client_dispatch_dns;
+	event_set(&env.sc_iev_dns->ev, env.sc_iev_dns->ibuf.fd,
+	    env.sc_iev_dns->events, env.sc_iev_dns->handler, &env);
+	event_add(&env.sc_iev_dns->ev, NULL);
 
 	event_dispatch();
 	client_shutdown();
@@ -546,7 +551,7 @@ client_try_idm(struct env *env, struct idm *idm)
 				    sizeof(ir.ir_line)) >= sizeof(ir.ir_line))
 					goto next_pwdentry;
 		}
-		imsg_compose(env->sc_ibuf, IMSG_PW_ENTRY, 0, 0,
+		imsg_compose_event(env->sc_iev, IMSG_PW_ENTRY, 0, 0, -1,
 		    &ir, sizeof(ir));
 next_pwdentry:
 		aldap_freemsg(m);
@@ -643,7 +648,7 @@ next_pwdentry:
 				    sizeof(ir.ir_line)) >= sizeof(ir.ir_line))
 					goto next_grpentry;
 		}
-		imsg_compose(env->sc_ibuf, IMSG_GRP_ENTRY, 0, 0,
+		imsg_compose_event(env->sc_iev, IMSG_GRP_ENTRY, 0, 0, -1,
 		    &ir, sizeof(ir));
 next_grpentry:
 		aldap_freemsg(m);
@@ -679,7 +684,8 @@ client_periodic_update(int fd, short event, void *p)
 	}
 	if (fail_cnt > 0) {
 		log_debug("trash the update");
-		imsg_compose(env->sc_ibuf, IMSG_TRASH_UPDATE, 0, 0, NULL, 0);
+		imsg_compose_event(env->sc_iev, IMSG_TRASH_UPDATE, 0, 0, -1,
+		    NULL, 0);
 	}
 
 	client_configure(env);
@@ -694,13 +700,13 @@ client_configure(struct env *env)
 
 	log_debug("connecting to directories");
 
-	imsg_compose(env->sc_ibuf, IMSG_START_UPDATE, 0, 0, NULL, 0);
+	imsg_compose_event(env->sc_iev, IMSG_START_UPDATE, 0, 0, -1, NULL, 0);
 
 	/* Start the DNS lookups */
 	TAILQ_FOREACH(idm, &env->sc_idms, idm_entry) {
 		dlen = strlen(idm->idm_name) + 1;
-		imsg_compose(env->sc_ibuf_dns, IMSG_HOST_DNS, idm->idm_id, 0,
-		    idm->idm_name, dlen);
+		imsg_compose_event(env->sc_iev_dns, IMSG_HOST_DNS, idm->idm_id,
+		    0, -1, idm->idm_name, dlen);
 	}
 
 	tv.tv_sec = env->sc_conf_tv.tv_sec;

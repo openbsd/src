@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.h,v 1.8 2009/01/06 21:52:55 jasper Exp $ */
+/*	$OpenBSD: ypldap.h,v 1.9 2009/06/06 05:02:58 eric Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "imsg.h"
+
 #define YPLDAP_USER		"_ypldap"
 #define YPLDAP_CONF_FILE	"/etc/ypldap.conf"
 #define DEFAULT_INTERVAL	600
@@ -24,49 +26,6 @@
 #define ATTR_WIDTH		32
 
 #define        MAX_SERVERS_DNS                 8
-
-/* buffer */
-struct buf {
-	TAILQ_ENTRY(buf)	 entry;
-	u_char			*buf;
-	size_t			 size;
-	size_t			 max;
-	size_t			 wpos;
-	size_t			 rpos;
-	int			 fd;
-};
-
-struct msgbuf {
-	TAILQ_HEAD(, buf)	 bufs;
-	u_int32_t		 queued;
-	int			 fd;
-};
-
-#define IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
-#define MAX_IMSGSIZE		8192
-
-struct buf_read {
-	u_char			 buf[MAX_IMSGSIZE];
-	u_char			*rptr;
-	size_t			 wpos;
-};
-
-struct imsg_fd {
-	TAILQ_ENTRY(imsg_fd)	entry;
-	int			fd;
-};
-
-struct imsgbuf {
-	TAILQ_HEAD(, imsg_fd)	 fds;
-	struct buf_read		 r;
-	struct msgbuf		 w;
-	struct event		 ev;
-	void			(*handler)(int, short, void *);
-	int			 fd;
-	pid_t			 pid;
-	short			 events;
-	void			*data;
-};
 
 enum imsg_type {
 	IMSG_NONE,
@@ -84,18 +43,6 @@ enum imsg_type {
 struct ypldap_addr {
 	struct ypldap_addr              *next;
 	struct sockaddr_storage          ss;
-};
-
-struct imsg_hdr {
-	u_int16_t	 type;
-	u_int16_t	 len;
-	u_int32_t	 peerid;
-	pid_t		 pid;
-};
-
-struct imsg {
-	struct imsg_hdr	 hdr;
-	void		*data;
 };
 
 enum {
@@ -182,6 +129,14 @@ struct idm_req {
 	char				 ir_line[LINE_WIDTH];
 };
 
+struct imsgev {
+	struct imsgbuf		 ibuf;
+	void			(*handler)(int, short, void *);
+	struct event		 ev;
+	void			*data;
+	short			 events;
+};
+
 struct env {
 #define YPLDAP_OPT_VERBOSE		 0x01
 #define YPLDAP_OPT_NOACTION		 0x02
@@ -200,8 +155,8 @@ struct env {
 	struct timeval			 sc_conf_tv;
 	struct event			 sc_conf_ev;
 	TAILQ_HEAD(idm_list, idm)	 sc_idms;
-	struct imsgbuf			*sc_ibuf;
-	struct imsgbuf			*sc_ibuf_dns;
+	struct imsgev			*sc_iev;
+	struct imsgev			*sc_iev_dns;
 
 	RB_HEAD(user_name_tree,userent)	 *sc_user_names;
 	RB_HEAD(user_uid_tree,userent)	 sc_user_uids;
@@ -216,31 +171,6 @@ struct env {
 
 	struct yp_data			*sc_yp;
 };
-
-/* buffer.c */
-struct buf	*buf_open(size_t);
-struct buf	*buf_dynamic(size_t, size_t);
-int		 buf_add(struct buf *, void *, size_t);
-void		*buf_reserve(struct buf *, size_t);
-int		 buf_close(struct msgbuf *, struct buf *);
-void		 buf_free(struct buf *);
-void		 msgbuf_init(struct msgbuf *);
-void		 msgbuf_clear(struct msgbuf *);
-int		 msgbuf_write(struct msgbuf *);
-
-/* imsg.c */
-void	 imsg_init(struct imsgbuf *, int, void (*)(int, short, void *));
-ssize_t	 imsg_read(struct imsgbuf *);
-ssize_t	 imsg_get(struct imsgbuf *, struct imsg *);
-int	 imsg_compose(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
-	    void *, u_int16_t);
-struct buf *imsg_create(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
-	    u_int16_t);
-int	 imsg_add(struct buf *, void *, u_int16_t);
-int	 imsg_close(struct imsgbuf *, struct buf *);
-void	 imsg_free(struct imsg *);
-void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
-void	 imsg_clear(struct imsgbuf *);
 
 /* log.c */
 void		 log_init(int);
@@ -264,6 +194,9 @@ pid_t		 ldapclient(int []);
 
 /* ypldap.c */
 void		 purge_config(struct env *);
+void		 imsg_event_add(struct imsgev *);
+int	 	 imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t,
+		    pid_t, int, void *, u_int16_t);
 
 /* entries.c */
 void		 flatten_entries(struct env *);

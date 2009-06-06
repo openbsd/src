@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.7 2009/01/29 11:21:42 form Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.8 2009/06/06 05:02:58 eric Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -122,7 +122,8 @@ main_dispatch_client(int fd, short event, void *p)
 	int		 n;
 	int		 shut = 0;
 	struct env	*env = p;
-	struct imsgbuf	*ibuf = env->sc_ibuf;
+	struct imsgev	*iev = env->sc_iev;
+	struct imsgbuf	*ibuf = &iev->ibuf;
 	struct idm_req	 ir;
 	struct imsg	 imsg;
 
@@ -136,7 +137,7 @@ main_dispatch_client(int fd, short event, void *p)
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 		return;
 	default:
 		fatalx("unknown event");
@@ -302,10 +303,10 @@ make_uids:
 		imsg_free(&imsg);
 	}
 	if (!shut)
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 	else {
 		log_debug("king bula sez: ran into dead pipe");
-		event_del(&ibuf->ev);
+		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
 }
@@ -314,13 +315,14 @@ void
 main_configure_client(struct env *env)
 {
 	struct idm	*idm;
-	struct imsgbuf	*ibuf = env->sc_ibuf;
+	struct imsgev	*iev = env->sc_iev;
 
-	imsg_compose(ibuf, IMSG_CONF_START, 0, 0, env, sizeof(*env));
+	imsg_compose_event(iev, IMSG_CONF_START, 0, 0, -1, env, sizeof(*env));
 	TAILQ_FOREACH(idm, &env->sc_idms, idm_entry) {
-		imsg_compose(ibuf, IMSG_CONF_IDM, 0, 0, idm, sizeof(*idm));
+		imsg_compose_event(iev, IMSG_CONF_IDM, 0, 0, -1,
+		    idm, sizeof(*idm));
 	}
-	imsg_compose(ibuf, IMSG_CONF_END, 0, 0, NULL, 0);
+	imsg_compose_event(iev, IMSG_CONF_END, 0, 0, -1, NULL, 0);
 }
 
 void
@@ -436,15 +438,16 @@ main(int argc, char *argv[])
 	signal_add(&ev_sigchld, NULL);
 
 	close(pipe_main2client[1]);
-	if ((env.sc_ibuf = calloc(1, sizeof(*env.sc_ibuf))) == NULL)
+	if ((env.sc_iev = calloc(1, sizeof(*env.sc_iev))) == NULL)
 		fatal(NULL);
-	imsg_init(env.sc_ibuf, pipe_main2client[0], main_dispatch_client);
+	imsg_init(&env.sc_iev->ibuf, pipe_main2client[0]);
+	env.sc_iev->handler = main_dispatch_client;
 
-	env.sc_ibuf->events = EV_READ;
-	env.sc_ibuf->data = &env;
-	event_set(&env.sc_ibuf->ev, env.sc_ibuf->fd, env.sc_ibuf->events,
-	     env.sc_ibuf->handler, &env);
-	event_add(&env.sc_ibuf->ev, NULL);
+	env.sc_iev->events = EV_READ;
+	env.sc_iev->data = &env;
+	event_set(&env.sc_iev->ev, env.sc_iev->ibuf.fd, env.sc_iev->events,
+	     env.sc_iev->handler, &env);
+	event_add(&env.sc_iev->ev, NULL);
 
 	yp_init(&env);
 
@@ -472,17 +475,32 @@ main(int argc, char *argv[])
 }
 
 void
-imsg_event_add(struct imsgbuf *ibuf)
+imsg_event_add(struct imsgev *iev)
 {
-	struct env	*env = ibuf->data;
+	if (iev->handler == NULL) {
+		imsg_flush(&iev->ibuf);
+		return;
+	}
 
-	ibuf->events = EV_READ;
-	if (ibuf->w.queued)
-		ibuf->events |= EV_WRITE;
+	iev->events = EV_READ;
+	if (iev->ibuf.w.queued)
+		iev->events |= EV_WRITE;
 
-	event_del(&ibuf->ev);
-	event_set(&ibuf->ev, ibuf->fd, ibuf->events, ibuf->handler, env);
-	event_add(&ibuf->ev, NULL);
+	event_del(&iev->ev);
+	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev->data);
+	event_add(&iev->ev, NULL);
+}
+
+int
+imsg_compose_event(struct imsgev *iev, u_int16_t type, u_int32_t peerid,
+    pid_t pid, int fd, void *data, u_int16_t datalen)
+{
+	int	ret;
+
+	if ((ret = imsg_compose(&iev->ibuf, type, peerid,
+	    pid, fd, data, datalen)) != -1)
+		imsg_event_add(iev);
+	return (ret);
 }
 
 void
