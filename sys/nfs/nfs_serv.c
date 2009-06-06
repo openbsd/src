@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.72 2009/06/05 21:35:33 thib Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.73 2009/06/06 02:23:33 blambert Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -756,16 +756,11 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	}
 	if (len > NFS_MAXDATA || len < 0 || i < len) {
 		error = EIO;
-		nfsm_reply(2 * NFSX_UNSIGNED);
-		nfsm_srvwcc(nfsd, forat_ret, &forat, aftat_ret, &va, &mb);
-		return (0);
+		goto bad;
 	}
 	error = nfsrv_fhtovp(fhp, 1, &vp, cred, slp, nam, &rdonly);
-	if (error) {
-		nfsm_reply(2 * NFSX_UNSIGNED);
-		nfsm_srvwcc(nfsd, forat_ret, &forat, aftat_ret, &va, &mb);
-		return (0);
-	}
+	if (error)
+		goto bad;
 	if (v3)
 		forat_ret = VOP_GETATTR(vp, &forat, cred, procp);
 	if (vp->v_type != VREG) {
@@ -773,16 +768,11 @@ nfsrv_write(nfsd, slp, procp, mrq)
 			error = EINVAL;
 		else
 			error = (vp->v_type == VDIR) ? EISDIR : EACCES;
+		goto vbad;
 	}
-	if (!error) {
-		error = nfsrv_access(vp, VWRITE, cred, rdonly, procp, 1);
-	}
-	if (error) {
-		vput(vp);
-		nfsm_reply(NFSX_WCCDATA(v3));
-		nfsm_srvwcc(nfsd, forat_ret, &forat, aftat_ret, &va, &mb);
-		return (0);
-	}
+	error = nfsrv_access(vp, VWRITE, cred, rdonly, procp, 1);
+	if (error)
+		goto vbad;
 
 	if (len > 0) {
 	    ivp = malloc(cnt * sizeof(struct iovec), M_TEMP, M_WAITOK);
@@ -842,6 +832,13 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	}
 nfsmout:
 	return(error);
+
+vbad:
+	vput(vp);
+bad:
+	nfsm_reply(0);
+	nfsm_srvwcc(nfsd, forat_ret, &forat, aftat_ret, &va, &mb);
+	return (0);
 }
 
 /*
