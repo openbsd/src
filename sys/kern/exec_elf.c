@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.69 2009/03/08 14:28:52 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.70 2009/06/06 21:25:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -947,6 +947,9 @@ int	ELFNAMEEND(coredump_writenote)(struct proc *, void *, Elf_Note *,
 int
 ELFNAMEEND(coredump)(struct proc *p, void *cookie)
 {
+#ifdef SMALL_KERNEL
+	return EPERM;
+#else
 	Elf_Ehdr ehdr;
 	Elf_Phdr phdr, *psections;
 	struct countsegs_state cs;
@@ -1085,15 +1088,18 @@ ELFNAMEEND(coredump)(struct proc *p, void *cookie)
 
 out:
 	return (error);
+#endif
 }
 
 int
 ELFNAMEEND(coredump_countsegs)(struct proc *p, void *iocookie,
     struct uvm_coredump_state *us)
 {
+#ifndef SMALL_KERNEL
 	struct countsegs_state *cs = us->cookie;
 
 	cs->npsections++;
+#endif
 	return (0);
 }
 
@@ -1101,6 +1107,7 @@ int
 ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie,
     struct uvm_coredump_state *us)
 {
+#ifndef SMALL_KERNEL
 	struct writesegs_state *ws = us->cookie;
 	Elf_Phdr phdr;
 	vsize_t size, realsize;
@@ -1125,6 +1132,7 @@ ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie,
 
 	ws->secoff += phdr.p_filesz;
 	*ws->psections++ = phdr;
+#endif
 
 	return (0);
 }
@@ -1132,6 +1140,7 @@ ELFNAMEEND(coredump_writeseghdrs)(struct proc *p, void *iocookie,
 int
 ELFNAMEEND(coredump_notes)(struct proc *p, void *iocookie, size_t *sizep)
 {
+#ifndef SMALL_KERNEL
 	struct ps_strings pss;
 	struct iovec iov;
 	struct uio uio;
@@ -1277,12 +1286,14 @@ ELFNAMEEND(coredump_notes)(struct proc *p, void *iocookie, size_t *sizep)
 #endif
 
 	*sizep = size;
+#endif
 	return (0);
 }
 
 int
 ELFNAMEEND(coredump_note)(struct proc *p, void *iocookie, size_t *sizep)
 {
+#ifndef SMALL_KERNEL
 	Elf_Note nhdr;
 	int size, notesize, error;
 	int namesize;
@@ -1338,6 +1349,7 @@ ELFNAMEEND(coredump_note)(struct proc *p, void *iocookie, size_t *sizep)
 
 	*sizep = size;
 	/* XXX Add hook for machdep per-LWP notes. */
+#endif
 	return (0);
 }
 
@@ -1345,6 +1357,9 @@ int
 ELFNAMEEND(coredump_writenote)(struct proc *p, void *cookie, Elf_Note *nhdr,
     const char *name, void *data)
 {
+#ifdef SMALL_KERNEL
+	return EPERM;
+#else
 	int error;
 
 	error = coredump_write(cookie, UIO_SYSSPACE, nhdr, sizeof(*nhdr));
@@ -1357,4 +1372,5 @@ ELFNAMEEND(coredump_writenote)(struct proc *p, void *cookie, Elf_Note *nhdr,
 		return error;
 
 	return coredump_write(cookie, UIO_SYSSPACE, data, nhdr->descsz);
+#endif
 }
