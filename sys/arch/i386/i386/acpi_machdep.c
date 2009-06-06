@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.20 2009/06/04 23:48:00 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.21 2009/06/06 00:21:53 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -30,6 +30,7 @@
 
 #include <machine/cpufunc.h>
 #include <machine/npx.h>
+#include <machine/intr.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/acpi/acpireg.h>
@@ -39,6 +40,10 @@
 #include "apm.h"
 #include "ioapic.h"
 #include "lapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#endif
 
 #if NLAPIC > 0
 #include <machine/apicvar.h>
@@ -53,11 +58,8 @@ int haveacpibutusingapm;
 
 extern u_char acpi_real_mode_resume[], acpi_resume_end[];
 
-int acpi_savecpu(void);
-void intr_calculatemasks(void);
-void acpi_cpu_flush(struct acpi_softc *, int);
-void ioapic_enable(void);
-void lapic_enable(void);
+extern int acpi_savecpu(void);
+extern void intr_calculatemasks(void);
 
 #define ACPI_BIOS_RSDP_WINDOW_BASE        0xe0000
 #define ACPI_BIOS_RSDP_WINDOW_SIZE        0x20000
@@ -254,17 +256,19 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	 */
 
 	npxinit(&cpu_info_primary);
+#if NISA > 0
 	isa_defaultirq();
+#endif
 	intr_calculatemasks();
 #if NLAPIC > 0
 	lapic_enable();
-	lapic_calibrate_timer(&cpu_info_primary);
+	lapic_initclocks();
 #endif
 #if NIOAPIC > 0
 	ioapic_enable();
 #endif
 	initrtclock();
-	enable_intr();
+	inittodr(time_second);
 
 #endif /* ACPI_SLEEP_ENABLED */
 	return (0);
