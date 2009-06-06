@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.8 2008/09/26 15:19:55 reyk Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.9 2009/06/06 05:52:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -48,7 +48,7 @@ int		 check_child(pid_t, const char *);
 struct snmpd	*snmpd_env;
 
 int		 pipe_parent2snmpe[2];
-struct imsgbuf	*ibuf_snmpe;
+struct imsgev	*iev_snmpe;
 pid_t		 snmpe_pid = 0;
 
 void
@@ -198,15 +198,16 @@ main(int argc, char *argv[])
 
 	close(pipe_parent2snmpe[1]);
 
-	if ((ibuf_snmpe = calloc(1, sizeof(struct imsgbuf))) == NULL)
+	if ((iev_snmpe = calloc(1, sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
 
-	imsg_init(ibuf_snmpe, pipe_parent2snmpe[0], snmpd_dispatch_snmpe);
+	imsg_init(&iev_snmpe->ibuf, pipe_parent2snmpe[0]);
+	iev_snmpe->handler = snmpd_dispatch_snmpe;
 
-	ibuf_snmpe->events = EV_READ;
-	event_set(&ibuf_snmpe->ev, ibuf_snmpe->fd, ibuf_snmpe->events,
-	    ibuf_snmpe->handler, ibuf_snmpe);
-	event_add(&ibuf_snmpe->ev, NULL);
+	iev_snmpe->events = EV_READ;
+	event_set(&iev_snmpe->ev, iev_snmpe->ibuf.fd, iev_snmpe->events,
+	    iev_snmpe->handler, iev_snmpe);
+	event_add(&iev_snmpe->ev, NULL);
 
 	event_dispatch();
 
@@ -254,32 +255,34 @@ check_child(pid_t pid, const char *pname)
 }
 
 void
-imsg_event_add(struct imsgbuf *ibuf)
+imsg_event_add(struct imsgev *iev)
 {
-	ibuf->events = EV_READ;
-	if (ibuf->w.queued)
-		ibuf->events |= EV_WRITE;
+	iev->events = EV_READ;
+	if (iev->ibuf.w.queued)
+		iev->events |= EV_WRITE;
 
-	event_del(&ibuf->ev);
-	event_set(&ibuf->ev, ibuf->fd, ibuf->events, ibuf->handler, ibuf);
-	event_add(&ibuf->ev, NULL);
+	event_del(&iev->ev);
+	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev);
+	event_add(&iev->ev, NULL);
 }
 
 void
 snmpd_dispatch_snmpe(int fd, short event, void * ptr)
 {
+	struct imsgev		*iev;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 
-	ibuf = ptr;
+	iev = ptr;
+	ibuf = &iev->ibuf;
 	switch (event) {
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -287,7 +290,7 @@ snmpd_dispatch_snmpe(int fd, short event, void * ptr)
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 		return;
 	default:
 		fatalx("unknown event");
@@ -307,7 +310,7 @@ snmpd_dispatch_snmpe(int fd, short event, void * ptr)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 int

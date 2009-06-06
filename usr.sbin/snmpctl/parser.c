@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.7 2008/01/18 13:23:02 reyk Exp $	*/
+/*	$OpenBSD: parser.c,v 1.8 2009/06/06 05:52:00 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@vantronix.net>
@@ -240,7 +240,7 @@ match_token(char *word, const struct token table[])
 			    (ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 				err(1, "malloc");
 			res.ibuf = ibuf;
-			imsg_init(ibuf, -1, NULL);
+			imsg_init(ibuf, -1);
 
 			/* Create a new trap */
 			imsg_compose(ibuf, IMSG_SNMP_TRAP,

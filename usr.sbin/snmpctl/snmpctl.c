@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpctl.c,v 1.10 2008/09/26 19:26:24 jmc Exp $	*/
+/*	$OpenBSD: snmpctl.c,v 1.11 2009/06/06 05:52:00 pyr Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -78,13 +78,6 @@ usage(void)
 	exit(1);
 }
 
-/* dummy function so that snmpctl does not need libevent */
-void
-imsg_event_add(struct imsgbuf *i)
-{
-	/* nothing */
-}
-
 int
 main(int argc, char *argv[])
 {
@@ -161,7 +154,7 @@ main(int argc, char *argv[])
 	else
 		if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 			err(1, "malloc");
-	imsg_init(ibuf, ctl_sock, NULL);
+	imsg_init(ibuf, ctl_sock);
 	done = 0;
 
 	/* process user request */

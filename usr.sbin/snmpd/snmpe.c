@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.23 2008/12/08 11:34:55 reyk Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.24 2009/06/06 05:52:01 pyr Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@vantronix.net>
@@ -51,7 +51,7 @@ void	 snmpe_recvmsg(int fd, short, void *);
 
 struct snmpd	*env = NULL;
 
-struct imsgbuf	*ibuf_parent;
+struct imsgev	*iev_parent;
 
 void
 snmpe_sig_handler(int sig, short event, void *arg)
@@ -137,15 +137,16 @@ snmpe(struct snmpd *x_env, int pipe_parent2snmpe[2])
 
 	close(pipe_parent2snmpe[0]);
 
-	if ((ibuf_parent = calloc(1, sizeof(struct imsgbuf))) == NULL)
+	if ((iev_parent = calloc(1, sizeof(struct imsgev))) == NULL)
 		fatal("snmpe");
 
-	imsg_init(ibuf_parent, pipe_parent2snmpe[1], snmpe_dispatch_parent);
+	imsg_init(&iev_parent->ibuf, pipe_parent2snmpe[1]);
+	iev_parent->handler = snmpe_dispatch_parent;
 
-	ibuf_parent->events = EV_READ;
-	event_set(&ibuf_parent->ev, ibuf_parent->fd, ibuf_parent->events,
-	    ibuf_parent->handler, ibuf_parent);
-	event_add(&ibuf_parent->ev, NULL);
+	iev_parent->events = EV_READ;
+	event_set(&iev_parent->ev, iev_parent->ibuf.fd, iev_parent->events,
+	    iev_parent->handler, iev_parent);
+	event_add(&iev_parent->ev, NULL);
 
 	TAILQ_INIT(&ctl_conns);
 
@@ -180,18 +181,20 @@ snmpe_shutdown(void)
 void
 snmpe_dispatch_parent(int fd, short event, void * ptr)
 {
+	struct imsgev	*iev;
 	struct imsgbuf	*ibuf;
 	struct imsg	 imsg;
 	ssize_t		 n;
 
-	ibuf = ptr;
+	iev = ptr;
+	ibuf = &iev->ibuf;
 	switch (event) {
 	case EV_READ:
 		if ((n = imsg_read(ibuf)) == -1)
 			fatal("imsg_read error");
 		if (n == 0) {
 			/* this pipe is dead, so remove the event handler */
-			event_del(&ibuf->ev);
+			event_del(&iev->ev);
 			event_loopexit(NULL);
 			return;
 		}
@@ -199,7 +202,7 @@ snmpe_dispatch_parent(int fd, short event, void * ptr)
 	case EV_WRITE:
 		if (msgbuf_write(&ibuf->w) == -1)
 			fatal("msgbuf_write");
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 		return;
 	default:
 		fatalx("snmpe_dispatch_parent: unknown event");
@@ -219,7 +222,7 @@ snmpe_dispatch_parent(int fd, short event, void * ptr)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 int
