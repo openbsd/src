@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.78 2009/06/04 20:58:34 martynas Exp $	*/
+/*	$OpenBSD: main.c,v 1.79 2009/06/06 12:07:33 martynas Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -749,22 +749,22 @@ usage(void)
 	    "       %s [-C] "
 #endif /* !SMALL */
 	    "[-o output] "
-	    "ftp://[user:password@]host[:port]/file[/]\n"
+	    "ftp://[user:password@]host[:port]/file[/] ...\n"
 	    "       %s "
 #ifndef SMALL
 	    "[-C] [-c cookie] "
 #endif /* !SMALL */
 	    "[-o output] "
-	    "http://host[:port]/file\n"
+	    "http://host[:port]/file ...\n"
 #ifndef SMALL
 	    "       %s [-C] [-c cookie] [-o output] "
-	    "https://host[:port]/file\n"
+	    "https://host[:port]/file ...\n"
 #endif /* !SMALL */
 	    "       %s "
 #ifndef SMALL
 	    "[-C] "
 #endif /* !SMALL */
-	    "[-o output] host:/file[/]\n",
+	    "[-o output] host:/file[/] ...\n",
 #ifndef SMALL
 	    __progname, __progname, __progname, __progname, __progname);
 #else /* !SMALL */

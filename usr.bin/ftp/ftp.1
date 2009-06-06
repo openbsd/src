@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.76 2009/04/26 21:26:03 martynas Exp $
+.\" 	$OpenBSD: ftp.1,v 1.77 2009/06/06 12:07:33 martynas Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: April 26 2009 $
+.Dd $Mdocdate: June 6 2009 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -51,6 +51,7 @@
 .Oc Ar host Oo : Ar port
 .Oc No / Ar file Oo /
 .Oc
+.Ar ...
 .Sm on
 .Nm ftp
 .Op Fl C
@@ -59,6 +60,7 @@
 .Sm off
 .No http:// Ar host Oo : Ar port
 .Oc No / Ar file
+.Ar ...
 .Sm on
 .Nm ftp
 .Op Fl C
@@ -67,6 +69,7 @@
 .Sm off
 .No https:// Ar host Oo : Ar port
 .Oc No / Ar file
+.Ar ...
 .Sm on
 .Nm ftp
 .Op Fl C
@@ -74,6 +77,7 @@
 .Sm off
 .Ar host : No / Ar file Oo /
 .Oc
+.Ar ...
 .Sm on
 .Sh DESCRIPTION
 .Nm
