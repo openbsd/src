@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.259 2009/06/06 06:33:15 eric Exp $ */
+/*	$OpenBSD: rde.c,v 1.260 2009/06/06 21:21:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -73,7 +73,6 @@ void		 rde_dump_filterout(struct rde_peer *, struct prefix *,
 		     struct ctl_show_rib_request *);
 void		 rde_dump_upcall(struct rib_entry *, void *);
 void		 rde_dump_prefix_upcall(struct rib_entry *, void *);
-void		 rde_dump_prefix(struct ctl_show_rib_request *);
 void		 rde_dump_ctx_new(struct ctl_show_rib_request *, pid_t,
 		     enum imsg_type);
 void		 rde_dump_mrt_new(struct mrt *, pid_t, int);
@@ -507,23 +506,13 @@ badnet:
 		case IMSG_CTL_SHOW_RIB:
 		case IMSG_CTL_SHOW_RIB_AS:
 		case IMSG_CTL_SHOW_RIB_COMMUNITY:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
-				log_warnx("rde_dispatch: wrong imsg len");
-				break;
-			}
-			memcpy(&req, imsg.data, sizeof(req));
-			rde_dump_ctx_new(&req, imsg.hdr.pid, imsg.hdr.type);
-			break;
 		case IMSG_CTL_SHOW_RIB_PREFIX:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
 			memcpy(&req, imsg.data, sizeof(req));
-			req.pid = imsg.hdr.pid;
-			rde_dump_prefix(&req);
-			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, req.pid, -1,
-			    NULL, 0);
+			rde_dump_ctx_new(&req, imsg.hdr.pid, imsg.hdr.type);
 			break;
 		case IMSG_CTL_SHOW_NEIGHBOR:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -1872,37 +1861,11 @@ rde_dump_prefix_upcall(struct rib_entry *re, void *ptr)
 }
 
 void
-rde_dump_prefix(struct ctl_show_rib_request *req)
-{
-	struct rib_entry	*re;
-	u_int			 error;
-	u_int16_t		 id;
-
-	if ((id = rib_find(req->rib)) == RIB_FAILED) {
-		log_warnx("rde_dump_ctx_new: no such rib %s", req->rib);
-		error = CTL_RES_NOSUCHPEER;
-		imsg_compose(ibuf_se_ctl, IMSG_CTL_RESULT, 0, req->pid, -1,
-		    &error, sizeof(error));
-		return;
-	}
-	if (req->prefixlen == 32) {
-		if ((re = rib_lookup(&ribs[id], &req->prefix)) != NULL)
-			rde_dump_upcall(re, req);
-	} else if (req->flags & F_LONGER) {
-		rib_dump(&ribs[id], rde_dump_prefix_upcall, req,
-		    req->prefix.af);
-	} else {
-		if ((re = rib_get(&ribs[id], &req->prefix, req->prefixlen)) !=
-		    NULL)
-			rde_dump_upcall(re, req);
-	}
-}
-
-void
 rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
     enum imsg_type type)
 {
 	struct rde_dump_ctx	*ctx;
+	struct rib_entry	*re;
 	u_int			 error;
 	u_int16_t		 id;
 
@@ -1935,6 +1898,19 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 	case IMSG_CTL_SHOW_RIB_COMMUNITY:
 		ctx->ribctx.ctx_upcall = rde_dump_upcall;
 		break;
+	case IMSG_CTL_SHOW_RIB_PREFIX:
+		if (req->flags & F_LONGER) {
+			ctx->ribctx.ctx_upcall = rde_dump_prefix_upcall;
+			break;
+		}
+		if (req->prefixlen == 32)
+			re = rib_lookup(&ribs[id], &req->prefix);
+		else
+			re = rib_get(&ribs[id], &req->prefix, req->prefixlen);
+		if (re)
+			rde_dump_upcall(re, ctx);
+		rde_dump_done(ctx);
+		return;
 	default:
 		fatalx("rde_dump_ctx_new: unsupported imsg type");
 	}
