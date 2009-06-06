@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.51 2009/06/06 03:20:57 deraadt Exp $
+#	$OpenBSD: files.amd64,v 1.52 2009/06/06 05:26:28 oga Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -29,7 +29,7 @@ file	arch/amd64/amd64/lock_machdep.c		multiprocessor
 file	arch/amd64/amd64/intr.c
 file	arch/amd64/amd64/bus_space.c
 file	arch/amd64/amd64/bus_dma.c
-file	arch/amd64/amd64/sg_dma.c
+file	arch/amd64/amd64/sg_dma.c		!small_kernel
 
 file	arch/amd64/amd64/mptramp.S		multiprocessor
 file	arch/amd64/amd64/ipifuncs.c		multiprocessor

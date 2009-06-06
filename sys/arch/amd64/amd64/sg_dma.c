@@ -1,4 +1,4 @@
-/*	$OpenBSD: sg_dma.c,v 1.2 2009/05/04 16:48:37 oga Exp $	*/
+/*	$OpenBSD: sg_dma.c,v 1.3 2009/06/06 05:26:28 oga Exp $	*/
 /*
  * Copyright (c) 2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -63,8 +63,6 @@
 #ifndef MAX_DMA_SEGS
 #define MAX_DMA_SEGS	20
 #endif
-
-#ifndef SMALL_KERNEL /* no bigmem needed in ramdisks */
 
 /* 
  * per-map DVMA page table
@@ -512,7 +510,8 @@ sg_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	if ((boundary = segs[0]._ds_boundary) == 0)
 		boundary = map->_dm_boundary;
 
-	align = MAX(segs[0]._ds_align, PAGE_SIZE);
+	align = MAX(MAX(segs[0]._ds_align, map->dm_segs[0]._ds_align),
+	    PAGE_SIZE);
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -956,6 +955,3 @@ sg_iomap_clear_pages(struct sg_page_map *spm)
 	spm->spm_pagecnt = 0;
 	SPLAY_INIT(&spm->spm_tree);
 }
-
-
-#endif /* !SMALL_KERNEL */
