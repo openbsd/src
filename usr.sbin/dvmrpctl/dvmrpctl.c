@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpctl.c,v 1.6 2009/01/24 16:23:52 michele Exp $ */
+/*	$OpenBSD: dvmrpctl.c,v 1.7 2009/06/06 07:52:04 pyr Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -71,11 +71,6 @@ usage(void)
 	exit(1);
 }
 
-void
-imsg_event_add(struct imsgbuf *i)
-{
-}
-
 int
 main(int argc, char *argv[])
 {
@@ -103,7 +98,7 @@ main(int argc, char *argv[])
 
 	if ((ibuf = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf, ctl_sock, NULL);
+	imsg_init(ibuf, ctl_sock);
 	done = 0;
 
 	/* process user request */
@@ -113,7 +108,7 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 	case SHOW:
 	case SHOW_SUM:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_SUM, 0, 0, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_SUM, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_IFACE:
 		printf("%-11s %-18s %-10s %-10s %-10s %-8s %s\n",
@@ -126,7 +121,7 @@ main(int argc, char *argv[])
 			if (ifidx == 0)
 				errx(1, "no such interface %s", res->ifname);
 		}
-		imsg_compose(ibuf, IMSG_CTL_SHOW_IFACE, 0, 0, &ifidx,
+		imsg_compose(ibuf, IMSG_CTL_SHOW_IFACE, 0, 0, -1, &ifidx,
 		    sizeof(ifidx));
 		break;
 	case SHOW_IGMP:
@@ -135,7 +130,7 @@ main(int argc, char *argv[])
 			if (ifidx == 0)
 				errx(1, "no such interface %s", res->ifname);
 		}
-		imsg_compose(ibuf, IMSG_CTL_SHOW_IGMP, 0, 0, &ifidx,
+		imsg_compose(ibuf, IMSG_CTL_SHOW_IGMP, 0, 0, -1, &ifidx,
 		    sizeof(ifidx));
 		break;
 	case SHOW_NBR:
@@ -143,14 +138,14 @@ main(int argc, char *argv[])
 		    "DeadTime", "Address", "Interface", "Uptime");
 		/* FALLTHROUGH */
 	case SHOW_NBR_DTAIL:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_NBR, 0, 0, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_NBR, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_RIB:
 		printf("%-20s %-17s %-7s %-10s %-s\n", "Destination", "Nexthop",
 		    "Cost", "Uptime", "Expire");
 		/* FALLTHROUGH */
 	case SHOW_RIB_DTAIL:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB, 0, 0, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB, 0, 0, -1, NULL, 0);
 		break;
 	case SHOW_MFC:
 		printf("%-16s %-16s %-9s %-9s %-4s %-10s %-10s\n", "Group",
@@ -158,10 +153,10 @@ main(int argc, char *argv[])
 		    "Expire");
 		/* FALLTHROUGH */
 	case SHOW_MFC_DTAIL:
-		imsg_compose(ibuf, IMSG_CTL_SHOW_MFC, 0, 0, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_SHOW_MFC, 0, 0, -1, NULL, 0);
 		break;
 	case RELOAD:
-		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, NULL, 0);
+		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);
 		printf("reload request sent.\n");
 		done = 1;
 		break;

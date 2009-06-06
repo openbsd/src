@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.19 2009/06/01 23:22:58 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.20 2009/06/06 07:52:04 pyr Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -48,8 +48,8 @@ int		 rde_select_ds_ifs(struct mfc *, struct iface *);
 volatile sig_atomic_t	 rde_quit = 0;
 struct dvmrpd_conf	*rdeconf = NULL;
 struct rde_nbr		*nbrself;
-struct imsgbuf		*ibuf_dvmrpe;
-struct imsgbuf		*ibuf_main;
+struct imsgev		*iev_dvmrpe;
+struct imsgev		*iev_main;
 
 void
 rde_sig_handler(int sig, short event, void *arg)
@@ -119,22 +119,26 @@ rde(struct dvmrpd_conf *xconf, int pipe_parent2rde[2], int pipe_dvmrpe2rde[2],
 	close(pipe_parent2dvmrpe[0]);
 	close(pipe_parent2dvmrpe[1]);
 
-	if ((ibuf_dvmrpe = malloc(sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
+	if ((iev_dvmrpe = malloc(sizeof(struct imsgev))) == NULL ||
+	    (iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_dvmrpe, pipe_dvmrpe2rde[1], rde_dispatch_imsg);
-	imsg_init(ibuf_main, pipe_parent2rde[1], rde_dispatch_imsg);
+
+	imsg_init(&iev_dvmrpe->ibuf, pipe_dvmrpe2rde[1]);
+	iev_dvmrpe->handler = rde_dispatch_imsg;
+
+	imsg_init(&iev_main->ibuf, pipe_parent2rde[1]);
+	iev_main->handler = rde_dispatch_imsg;
 
 	/* setup event handler */
-	ibuf_dvmrpe->events = EV_READ;
-	event_set(&ibuf_dvmrpe->ev, ibuf_dvmrpe->fd, ibuf_dvmrpe->events,
-	    ibuf_dvmrpe->handler, ibuf_dvmrpe);
-	event_add(&ibuf_dvmrpe->ev, NULL);
+	iev_dvmrpe->events = EV_READ;
+	event_set(&iev_dvmrpe->ev, iev_dvmrpe->ibuf.fd, iev_dvmrpe->events,
+	    iev_dvmrpe->handler, iev_dvmrpe);
+	event_add(&iev_dvmrpe->ev, NULL);
 
-	ibuf_main->events = EV_READ;
-	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
-	    ibuf_main->handler, ibuf_main);
-	event_add(&ibuf_main->ev, NULL);
+	iev_main->events = EV_READ;
+	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
+	    iev_main->handler, iev_main);
+	event_add(&iev_main->ev, NULL);
 
 	rt_init();
 	mfc_init();
@@ -159,10 +163,10 @@ rde_shutdown(void)
 		if_del(iface);
 	}
 
-	msgbuf_clear(&ibuf_dvmrpe->w);
-	free(ibuf_dvmrpe);
-	msgbuf_clear(&ibuf_main->w);
-	free(ibuf_main);
+	msgbuf_clear(&iev_dvmrpe->ibuf.w);
+	free(iev_dvmrpe);
+	msgbuf_clear(&iev_main->ibuf.w);
+	free(iev_main);
 	free(rdeconf);
 
 	log_info("route decision engine exiting");
@@ -173,14 +177,15 @@ rde_shutdown(void)
 int
 rde_imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_main, type, 0, pid, data, datalen));
+	return (imsg_compose_event(iev_main, type, 0, pid, -1, data, datalen));
 }
 
 int
 rde_imsg_compose_dvmrpe(int type, u_int32_t peerid, pid_t pid, void *data,
     u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_dvmrpe, type, peerid, pid, data, datalen));
+	return (imsg_compose_event(iev_dvmrpe, type, peerid, pid, -1,
+	     data, datalen));
 }
 
 void
@@ -188,7 +193,8 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 {
 	struct mfc		 mfc;
 	struct prune		 p;
-	struct imsgbuf		*ibuf = bula;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
 	struct route_report	 rr;
 	struct nbr_msg		 nm;
@@ -216,13 +222,13 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_SHOW_RIB:
 			rt_dump(imsg.hdr.pid);
-			imsg_compose(ibuf_dvmrpe, IMSG_CTL_END, 0, imsg.hdr.pid,
-			    NULL, 0);
+			imsg_compose_event(iev_dvmrpe, IMSG_CTL_END, 0,
+			    imsg.hdr.pid, -1, NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_MFC:
 			mfc_dump(imsg.hdr.pid);
-			imsg_compose(ibuf_dvmrpe, IMSG_CTL_END, 0, imsg.hdr.pid,
-			    NULL, 0);
+			imsg_compose_event(iev_dvmrpe, IMSG_CTL_END, 0,
+			    imsg.hdr.pid, -1, NULL, 0);
 			break;
 		case IMSG_ROUTE_REPORT:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(rr))
@@ -313,7 +319,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 		}
 		imsg_free(&imsg);
 	}
-	imsg_event_add(ibuf);
+	imsg_event_add(iev);
 }
 
 int
