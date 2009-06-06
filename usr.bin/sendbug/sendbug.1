@@ -1,9 +1,9 @@
-.\" $OpenBSD: sendbug.1,v 1.17 2008/12/14 07:46:24 ray Exp $
+.\" $OpenBSD: sendbug.1,v 1.18 2009/06/06 04:46:26 ray Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: December 14 2008 $
+.Dd $Mdocdate: June 6 2009 $
 .Dt SENDBUG 1
 .Os
 .Sh NAME
@@ -12,23 +12,30 @@
 .Ox
 .Sh SYNOPSIS
 .Nm
-.Op Fl DPV
+.Op Fl DEPV
 .Sh DESCRIPTION
 .Nm
 is used to submit problem reports (PRs) to the
 .Ox
 bugs database.
 A template PR is opened in a text editor
-with some system information,
+with some system information already filled in,
 such as machine architecture,
-already filled in,
-and a
-.Xr dmesg 8
-attached.
+.Xr dmesg 8 ,
+.Xr pcidump 8 ,
+and
+.Xr acpidump 8 .
+The
+.Xr pcidump 8
+and
+.Xr acpidump 8
+output are important for ACPI development and can only be included if
+.Nm
+is run as root.
+.Pp
 Fields enclosed in
 .Sq \*(Lt\*(Gt
 should be completed by the user.
-.Pp
 Once the PR is filled out,
 the user exits the editor and is presented with a choice:
 a)bort, e)dit, or s)end.
@@ -54,14 +61,23 @@ or content.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl D
-Do not attach a
-.Xr dmesg 8
+Do not attach
+.Xr dmesg 8 ,
+.Xr pcidump 8 ,
+and
+.Xr acpidump 8
 to report.
-The
-.Xr dmesg 8
-output is very helpful in reports,
+This information is very helpful in reports,
 but may contain sensitive information about the sender.
 This flag helps protect users' privacy in those cases.
+.It Fl E
+The
+.Xr acpidump 8
+output includes base64 encoded files.
+This flag causes
+.Nm
+to read a PR from the standard input, decode the files,
+and write them into the current directory.
 .It Fl P
 Generate and print the template with system information filled out.
 .It Fl V
@@ -100,8 +116,10 @@ The default is
 temporary PR report
 .El
 .Sh SEE ALSO
+.Xr acpidump 8 ,
 .Xr crash 8 ,
-.Xr dmesg 8
+.Xr dmesg 8 ,
+.Xr pcidump 8
 .Sh AUTHORS
 .Nm
 was written from scratch for the public domain by

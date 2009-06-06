@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.60 2009/01/28 20:43:24 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.61 2009/06/06 04:46:26 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -28,10 +28,14 @@
 
 #define _PATH_DMESG "/var/run/dmesg.boot"
 #define DMESG_START "OpenBSD "
+#define BEGIN64 "begin-base64 "
+#define END64 "===="
 
 int	checkfile(const char *);
+void	debase(void);
 void	dmesg(FILE *);
 int	editit(const char *);
+void	hwdump(FILE *);
 void	init(void);
 int	matchline(const char *, const char *, size_t);
 int	prompt(void);
@@ -52,6 +56,7 @@ const char *comment[] = {
 
 struct passwd *pw;
 char os[BUFSIZ], rel[BUFSIZ], mach[BUFSIZ], details[BUFSIZ];
+const char *tmpdir;
 char *fullname, *tmppath;
 int Dflag, Pflag, wantcleanup;
 
@@ -60,7 +65,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-DPV]\n", __progname);
+	fprintf(stderr, "usage: %s [-DEPV]\n", __progname);
 	exit(1);
 }
 
@@ -76,17 +81,19 @@ int
 main(int argc, char *argv[])
 {
 	int ch, c, fd, ret = 1;
-	const char *tmpdir;
 	struct stat sb;
 	char *pr_form;
 	time_t mtime;
 	FILE *fp;
 
-	while ((ch = getopt(argc, argv, "DPV")) != -1)
+	while ((ch = getopt(argc, argv, "DEPV")) != -1)
 		switch (ch) {
 		case 'D':
 			Dflag = 1;
 			break;
+		case 'E':
+			debase();
+			exit(0);
 		case 'P':
 			Pflag = 1;
 			break;
@@ -196,10 +203,6 @@ dmesg(FILE *fp)
 		return;
 	}
 
-	fputs("\n"
-	    "SENDBUG: dmesg is attached.\n"
-	    "SENDBUG: Feel free to delete or use the -D flag if it contains "
-	    "sensitive information.\n", fp);
 	/* Find last dmesg. */
 	for (;;) {
 		off_t o;
@@ -577,6 +580,84 @@ template(FILE *fp)
 	fprintf(fp, ">Fix:\n");
 	fprintf(fp, "\t%s\n", comment[4]);
 
-	if (!Dflag)
+	if (!Dflag) {
+		int root;
+
+		fprintf(fp, "\n");
+		root = !geteuid();
+		if (!root)
+			fprintf(fp, "SENDBUG: Run sendbug as root "
+			    "if this is an ACPI report!\n");
+		fprintf(fp, "SENDBUG: dmesg%s attached.\n"
+		    "SENDBUG: Feel free to delete or use the -D flag if it "
+		    "contains sensitive information.\n",
+		    root ? ", pcidump, and acpidump are" : " is");
+		fputs("\ndmesg:\n", fp);
 		dmesg(fp);
+		if (root)
+			hwdump(fp);
+	}
+}
+
+void
+hwdump(FILE *ofp)
+{
+	char buf[BUFSIZ];
+	FILE *ifp;
+	char *cmd, *acpidir;
+	size_t len;
+
+	if (gethostname(buf, sizeof(buf)) == -1)
+		err(1, "gethostname");
+	buf[strcspn(buf, ".")] = '\0';
+
+	if (asprintf(&acpidir, "%s%sp.XXXXXXXXXX", tmpdir,
+	    tmpdir[strlen(tmpdir) - 1] == '/' ? "" : "/") == -1)
+		err(1, "asprintf");
+	if (mkdtemp(acpidir) == NULL)
+		err(1, "mkdtemp");
+
+	if (asprintf(&cmd, "echo \"\\npcidump:\"; pcidump -xxv; "
+	    "echo \"\\nacpidump:\"; cd %s && acpidump -o %s; "
+	    "for i in *; do b64encode $i $i; done; rm -rf %s",
+	    acpidir, buf, acpidir) == -1)
+		err(1, "asprintf");
+
+	if ((ifp = popen(cmd, "r")) != NULL) {
+		while (!feof(ifp)) {
+			len = fread(buf, 1, sizeof buf, ifp);
+			if (len == 0)
+				break;
+			if (fwrite(buf, 1, len, ofp) != len)
+				break;
+		}
+		pclose(ofp);
+	}
+	free(cmd);
+}
+
+void
+debase(void)
+{
+	char buf[BUFSIZ];
+	FILE *fp = NULL;
+	size_t len;
+
+	while (fgets(buf, sizeof(buf), stdin) != NULL) {
+		len = strlen(buf);
+		if (!strncmp(buf, BEGIN64, sizeof(BEGIN64) - 1)) {
+			if (fp)
+				errx(1, "double begin");
+			fp = popen("b64decode", "w");
+			if (!fp)
+				errx(1, "popen b64decode");
+		}
+		if (fp && fwrite(buf, 1, len, fp) != len)
+			errx(1, "pipe error");
+		if (!strncmp(buf, END64, sizeof(END64) - 1)) {
+			if (pclose(fp) == -1)
+				errx(1, "pclose b64decode");
+			fp = NULL;
+		}
+	}
 }
