@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.54 2009/05/24 02:06:15 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.55 2009/06/06 06:02:44 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -74,10 +74,12 @@ enum {
 
 struct agp_i810_softc {
 	struct device		 dev;
+	bus_dma_segment_t	 scrib_seg;
 	struct agp_softc	*agpdev;
 	struct agp_gatt		*gatt;
 	struct vga_pci_bar	*map;
 	struct vga_pci_bar	*gtt_map;
+	bus_dmamap_t		 scrib_dmamap;
 	bus_addr_t		 isc_apaddr;
 	bus_size_t		 isc_apsize;	/* current aperture size */
 	int			 chiptype;	/* i810-like or i830 */
@@ -100,6 +102,9 @@ int	agp_i810_unbind_memory(void *, struct agp_memory *);
 void	intagp_write_gtt(struct agp_i810_softc *, bus_size_t, paddr_t);
 int	intagp_gmch_match(struct pci_attach_args *);
 
+extern void	intagp_dma_sync(bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int);
+
 struct cfattach intagp_ca = {
 	sizeof(struct agp_i810_softc), agp_i810_probe, agp_i810_attach
 };
@@ -112,6 +117,7 @@ struct agp_methods agp_i810_methods = {
 	agp_i810_bind_page,
 	agp_i810_unbind_page,
 	agp_i810_flush_tlb,
+	intagp_dma_sync,
 	agp_i810_enable,
 	agp_i810_alloc_memory,
 	agp_i810_free_memory,
@@ -211,7 +217,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_gatt 		*gatt;
 	struct pci_attach_args		*pa = aux, bpa;
 	struct vga_pci_softc		*vga = (struct vga_pci_softc *)parent;
-	bus_addr_t			 mmaddr, gmaddr;
+	bus_addr_t			 mmaddr, gmaddr, tmp;
 	pcireg_t			 memtype, reg;
 	u_int32_t			 stolen;
 	u_int16_t			 gcc1;
@@ -461,6 +467,18 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	/* Install the GATT. */
 	WRITE4(AGP_I810_PGTBL_CTL, gatt->ag_physical | 1);
 
+	/* Intel recommends that you have a fake page bound to the gtt always */
+	if (agp_alloc_dmamem(pa->pa_dmat, AGP_PAGE_SIZE, &isc->scrib_dmamap,
+	    &tmp, &isc->scrib_seg) != 0) {
+		printf(": can't get scribble page\n");
+		return;
+	}
+
+	/* initialise all gtt entries to point to scribble page */
+	for (tmp = isc->isc_apaddr; tmp < (isc->isc_apaddr + isc->isc_apsize);
+	    tmp += AGP_PAGE_SIZE)
+		agp_i810_unbind_page(isc, tmp);
+
 	/*
 	 * Make sure the chipset can see everything.
 	 */
@@ -535,7 +553,8 @@ agp_i810_unbind_page(void *sc, bus_size_t offset)
 {
 	struct agp_i810_softc *isc = sc;
 
-	intagp_write_gtt(isc, offset - isc->isc_apaddr, 0);
+	intagp_write_gtt(isc, offset - isc->isc_apaddr,
+	    isc->scrib_dmamap->dm_segs[0].ds_addr);
 }
 
 /*
@@ -676,7 +695,8 @@ agp_i810_bind_memory(void *sc, struct agp_memory *mem, bus_size_t offset)
 
 	if (mem->am_type == 2) {
 		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-			intagp_write_gtt(isc, offset + i, mem->am_physical + i);
+			agp_i810_bind_page(isc, offset + i,
+			    mem->am_physical + i, 0);
 		mem->am_offset = offset;
 		mem->am_is_bound = 1;
 		return (0);
@@ -705,7 +725,7 @@ agp_i810_unbind_memory(void *sc, struct agp_memory *mem)
 
 	if (mem->am_type == 2) {
 		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-			intagp_write_gtt(isc, mem->am_offset + i, 0);
+			agp_i810_unbind_page(isc, mem->am_offset + i);
 		mem->am_offset = 0;
 		mem->am_is_bound = 0;
 		return (0);

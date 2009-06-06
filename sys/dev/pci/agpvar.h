@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.19 2009/05/10 16:57:44 oga Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.20 2009/06/06 06:02:44 oga Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -102,6 +102,8 @@ struct agp_methods {
 	void	(*bind_page)(void *, bus_addr_t, paddr_t, int);
 	void	(*unbind_page)(void *, bus_addr_t);
 	void	(*flush_tlb)(void *);
+	void	(*dma_sync)(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+		    bus_size_t, int);
 	int	(*enable)(void *, u_int32_t mode);
 	struct agp_memory *
 		(*alloc_memory)(void *, int, vsize_t);
@@ -168,6 +170,11 @@ int	agpdev_print(void *, const char *);
 int	agpbus_probe(struct agp_attach_args *aa);
 
 
+int	agp_bus_dma_init(struct agp_softc *, bus_addr_t, bus_addr_t,
+	    bus_dma_tag_t *);
+void	agp_bus_dma_destroy(struct agp_softc *, bus_dma_tag_t);
+void	agp_bus_dma_set_alignment(bus_dma_tag_t, bus_dmamap_t,
+	    u_long);
 /*
  * Kernel API
  */
