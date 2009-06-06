@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86emu_util.c,v 1.3 2009/06/06 03:20:58 deraadt Exp $	*/
+/*	$OpenBSD: x86emu_util.c,v 1.4 2009/06/06 06:05:27 deraadt Exp $	*/
 /*	$NetBSD: x86emu_util.c,v 1.2 2007/12/04 17:32:22 joerg Exp $	*/
 
 /****************************************************************************
@@ -71,8 +71,19 @@ rdw(struct x86emu *emu, uint32_t addr)
 {
 	if (addr > emu->mem_size - 2)
 		x86emu_halt_sys(emu);
-	/* XXX alignment *sigh* */
-	return *(u_int16_t *)(emu->mem_base + addr);
+#ifdef __STRICT_ALIGNMENT
+	if (addr & 1) {
+		u_int8_t *a = emu->mem_base + addr;
+		u_int16_t r;
+
+		r = ((*(a + 0) << 0) & 0x00ff) |
+		    ((*(a + 1) << 8) & 0xff00);
+		return r;
+	} else
+		return letoh32(*(u_int32_t *)(emu->mem_base + addr));
+#else
+	return letoh16(*(u_int16_t *)(emu->mem_base + addr));
+#endif
 }
 /****************************************************************************
 PARAMETERS:
@@ -88,8 +99,21 @@ rdl(struct x86emu *emu, uint32_t addr)
 {
 	if (addr > emu->mem_size - 4)
 		x86emu_halt_sys(emu);
-	/* XXX alignment *sigh* */
-	return *(u_int32_t *)(emu->mem_base + addr);
+#ifdef __STRICT_ALIGNMENT
+	if (addr & 3) {
+		u_int8_t *a = emu->mem_base + addr;
+		u_int32_t r;
+
+		r = ((*(a + 0) <<  0) & 0x000000ff) |
+		    ((*(a + 1) <<  8) & 0x0000ff00) |
+		    ((*(a + 2) << 16) & 0x00ff0000) |
+		    ((*(a + 3) << 24) & 0xff000000);
+		return r;
+	} else
+		return letoh32(*(u_int32_t *)(emu->mem_base + addr));
+#else
+	return letoh32(*(u_int32_t *)(emu->mem_base + addr));
+#endif
 }
 /****************************************************************************
 PARAMETERS:
@@ -119,8 +143,17 @@ wrw(struct x86emu *emu, uint32_t addr, uint16_t val)
 {
 	if (addr > emu->mem_size - 2)
 		x86emu_halt_sys(emu);
-	/* XXX alignment */
-	*((u_int16_t *)(emu->mem_base + addr)) = val;
+#ifdef __STRICT_ALIGNMENT
+	if (addr & 1) {
+		u_int8_t *a = emu->mem_base + addr;
+
+		*((a + 0)) = (val >> 0) & 0xff;
+		*((a + 1)) = (val >> 8) & 0xff;
+	} else
+		*((u_int16_t *)(emu->mem_base + addr)) = htole16(val);
+#else
+	*((u_int16_t *)(emu->mem_base + addr)) = htole16(val);
+#endif
 }
 /****************************************************************************
 PARAMETERS:
@@ -135,8 +168,19 @@ wrl(struct x86emu *emu, uint32_t addr, uint32_t val)
 {
 	if (addr > emu->mem_size - 4)
 		x86emu_halt_sys(emu);
-	/* XXX alignment *sigh* */
-	*((u_int32_t *)(emu->mem_base + addr)) = val;
+#ifdef __STRICT_ALIGNMENT
+	if (addr & 3) {
+		u_int8_t *a = emu->mem_base + addr;
+
+		*((a + 0) = (val >>  0) & 0xff;
+		*((a + 1) = (val >>  8) & 0xff;
+		*((a + 2) = (val >> 16) & 0xff;
+		*((a + 3) = (val >> 24) & 0xff;
+	} else
+		*((u_int32_t *)(emu->mem_base + addr)) = htole32(val);
+#else
+	*((u_int32_t *)(emu->mem_base + addr)) = htole32(val);
+#endif
 }
 
 /*----------------------------- Setup -------------------------------------*/
