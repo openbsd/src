@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.118 2009/06/06 01:02:51 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.119 2009/06/06 01:07:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -278,6 +278,7 @@ struct rib {
 
 #define F_RIB_ENTRYLOCK		0x0001
 #define F_RIB_NOEVALUATE	0x0002
+#define F_RIB_NOFIB		0x0004
 #define RIB_FAILED		0xffff
 
 struct prefix {

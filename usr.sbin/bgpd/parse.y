@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.229 2009/06/05 20:46:43 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.230 2009/06/06 01:07:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -113,7 +113,7 @@ struct peer	*new_peer(void);
 struct peer	*new_group(void);
 int		 add_mrtconfig(enum mrt_type, char *, time_t, struct peer *,
 		    char *);
-int		 add_rib(char *, int);
+int		 add_rib(char *, u_int16_t);
 int		 find_rib(char *);
 int		 get_id(struct peer *);
 int		 expand_rule(struct filter_rule *, struct filter_peers_l *,
@@ -386,7 +386,7 @@ conf_main	: AS as4number		{
 				conf->flags &= ~BGPD_FLAG_NO_EVALUATE;
 		}
 		| RDE RIB STRING {
-			if (add_rib($3, 0)) {
+			if (add_rib($3, F_RIB_NOFIB)) {
 				free($3);
 				YYERROR;
 			}
@@ -397,7 +397,7 @@ conf_main	: AS as4number		{
 				free($3);
 				YYERROR;
 			}
-			if (!add_rib($3, 1)) {
+			if (!add_rib($3, F_RIB_NOEVALUATE)) {
 				free($3);
 				YYERROR;
 			}
@@ -823,6 +823,7 @@ peeropts	: REMOTEAS as4number	{
 			if (!find_rib($2)) {
 				yyerror("rib \"%s\" does not exist.", $2);
 				free($2);
+				YYERROR;
 			}
 			if (strlcpy(curpeer->conf.rib, $2,
 			    sizeof(curpeer->conf.rib)) >=
@@ -2296,7 +2297,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	/* init the empty filter list for later */
 	TAILQ_INIT(xfilter_l);
 
-	add_rib("Adj-RIB-In", 1);
+	add_rib("Adj-RIB-In", F_RIB_NOEVALUATE);
 	add_rib("Loc-RIB", 0);
 
 	yyparse();
@@ -2649,7 +2650,7 @@ add_mrtconfig(enum mrt_type type, char *name, time_t timeout, struct peer *p,
 }
 
 int
-add_rib(char *name, int noeval)
+add_rib(char *name, u_int16_t flags)
 {
 	struct rde_rib	*rr;
 
@@ -2667,8 +2668,7 @@ add_rib(char *name, int noeval)
 		   name, sizeof(rr->name) - 1);
 		return (-1);
 	}
-	if (noeval)
-		rr->flags |= F_RIB_NOEVALUATE;
+	rr->flags |= flags;
 	SIMPLEQ_INSERT_TAIL(&ribnames, rr, entry);
 	return (0);
 }
