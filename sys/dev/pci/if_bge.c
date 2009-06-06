@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.272 2009/06/05 03:57:32 ray Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.273 2009/06/06 14:25:38 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2789,11 +2789,10 @@ int
 bge_compact_dma_runt(struct mbuf *pkt)
 {
 	struct mbuf	*m, *prev, *n = NULL;
-	int 		totlen, prevlen, newprevlen;
+	int 		totlen, newprevlen;
 
 	prev = NULL;
 	totlen = 0;
-	prevlen = -1;
 
 	for (m = pkt; m != NULL; prev = m,m = m->m_next) {
 		int mlen = m->m_len;
@@ -2876,7 +2875,6 @@ bge_compact_dma_runt(struct mbuf *pkt)
 			m_free(m);
 			m = n;	/* for continuing loop */
 		}
-		prevlen = m->m_len;
 	}
 	return (0);
 }
@@ -3123,8 +3121,6 @@ bge_init(void *xsc)
 		splx(s);
 		return;
 	}
-
-	ifp = &sc->arpcom.ac_if;
 
 	/* Specify MRU. */
 	if (BGE_IS_JUMBO_CAPABLE(sc))
