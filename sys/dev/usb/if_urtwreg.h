@@ -1,6 +1,7 @@
-/*	$OpenBSD: if_urtwreg.h,v 1.11 2009/06/05 01:21:54 martynas Exp $	*/
+/*	$OpenBSD: if_urtwreg.h,v 1.12 2009/06/06 12:06:28 martynas Exp $	*/
 
 /*-
+ * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
  * Copyright (c) 2008 Weongyo Jeong <weongyo@FreeBSD.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -25,6 +26,10 @@
 #define	URTW_HWREV_8187			0x01
 #define	URTW_HWREV_8187_B		0x02
 #define	URTW_HWREV_8187_D		0x04
+#define	URTW_HWREV_8187B		0x08
+#define	URTW_HWREV_8187B_B		0x10
+#define	URTW_HWREV_8187B_D		0x20
+#define	URTW_HWREV_8187B_E		0x40
 
 /*
  * Registers specific to RTL8187 and RTL8187B.
@@ -37,8 +42,10 @@
 #define	URTW_MAC5			0x0005		/* 1 byte */
 #define	URTW_8187_BRSR			0x002c		/* 2 byte */
 #define	URTW_BRSR_MBR_8185		(0x0fff)
+#define	URTW_8187B_EIFS			0x002d		/* 1 byte */
 #define	URTW_BSSID			0x002e		/* 6 byte */
 #define	URTW_RESP_RATE			0x0034		/* 1 byte */
+#define	URTW_8187B_BRSR			0x0034		/* 2 byte */
 #define	URTW_RESP_MAX_RATE_SHIFT	(4)
 #define	URTW_RESP_MIN_RATE_SHIFT	(0)
 #define	URTW_8187_EIFS			0x0035		/* 1 byte */
@@ -51,6 +58,10 @@
 #define	URTW_TX_HWREV_MASK		(7 << 25)
 #define	URTW_TX_HWREV_8187_D		(5 << 25)
 #define	URTW_TX_HWREV_8187B_D		(6 << 25)
+#define	URTW_TX_DURPROCMODE		(1 << 30)
+#define	URTW_TX_DISREQQSIZE		(1 << 28)
+#define	URTW_TX_SHORTRETRY		(7 << 8)
+#define	URTW_TX_LONGRETRY		(7 << 0)
 #define	URTW_TX_LOOPBACK_SHIFT		(17)
 #define	URTW_TX_LOOPBACK_NONE		(0 << URTW_TX_LOOPBACK_SHIFT)
 #define	URTW_TX_LOOPBACK_MAC		(1 << URTW_TX_LOOPBACK_SHIFT)
@@ -119,9 +130,11 @@
 #define	URTW_EPROM_WRITEBIT		(0x2)
 #define	URTW_EPROM_CK			(0x4)
 #define	URTW_EPROM_CS			(0x8)
+#define	URTW_CONFIG1			0x0052		/* 1 byte */
 #define	URTW_CONFIG2			0x0053		/* 1 byte */
 #define	URTW_ANAPARAM			0x0054		/* 4 byte */
 #define	URTW_8187_8225_ANAPARAM_ON	(0xa0000a59)
+#define	URTW_8187B_8225_ANAPARAM_ON	(0x45090658)
 #define	URTW_MSR			0x0058		/* 1 byte */
 #define	URTW_MSR_LINK_MASK		((1 << 2) | (1 << 3))
 #define	URTW_MSR_LINK_SHIFT		(2)
@@ -129,12 +142,15 @@
 #define	URTW_MSR_LINK_ADHOC		(1 << URTW_MSR_LINK_SHIFT)
 #define	URTW_MSR_LINK_STA		(2 << URTW_MSR_LINK_SHIFT)
 #define	URTW_MSR_LINK_HOSTAP		(3 << URTW_MSR_LINK_SHIFT)
+#define	URTW_MSR_LINK_ENEDCA		(4 << URTW_MSR_LINK_SHIFT)
 #define	URTW_CONFIG3			0x0059		/* 1 byte */
 #define	URTW_CONFIG3_ANAPARAM_WRITE	(0x40)
 #define	URTW_CONFIG3_ANAPARAM_W_SHIFT	(6)
+#define	URTW_CONFIG3_GNT_SELECT		(0x80)
 #define	URTW_PSR			0x005e		/* 1 byte */
 #define	URTW_ANAPARAM2			0x0060		/* 4 byte */
 #define	URTW_8187_8225_ANAPARAM2_ON	(0x860c7312)
+#define	URTW_8187B_8225_ANAPARAM2_ON	(0x727f3f52)
 #define	URTW_BEACON_INTERVAL		0x0070		/* 2 byte */
 #define	URTW_ATIM_WND			0x0072		/* 2 byte */
 #define	URTW_BEACON_INTERVAL_TIME	0x0074		/* 2 byte */
@@ -150,6 +166,7 @@
 #define	URTW_RF_TIMING			0x008c		/* 4 byte */
 #define	URTW_GP_ENABLE			0x0090		/* 1 byte */
 #define	URTW_GPIO			0x0091		/* 1 byte */
+#define	URTW_HSSI_PARA			0x0094		/* 4 byte */
 #define	URTW_TX_AGC_CTL			0x009c		/* 1 byte */
 #define	URTW_TX_AGC_CTL_PERPACKET_GAIN	(0x1)
 #define	URTW_TX_AGC_CTL_PERPACKET_ANTSEL	(0x2)
@@ -166,7 +183,24 @@
 #define	URTW_CW_CONF_PERPACKET_CW	(0x1)
 #define	URTW_CW_VAL			0x00bd		/* 1 byte */
 #define	URTW_RATE_FALLBACK		0x00be		/* 1 byte */
+#define	URTW_RATE_FALLBACK_ENABLE	(0x80)
+#define	URTW_ACM_CONTROL		0x00bf		/* 1 byte */
+#define	URTW_8187B_HWREV		0x00e1		/* 1 byte */
+#define	URTW_8187B_HWREV_8187B_B	(0x0)
+#define	URTW_8187B_HWREV_8187B_D	(0x1)
+#define	URTW_8187B_HWREV_8187B_E	(0x2)
+#define	URTW_INT_MIG			0x00e2		/* 2 byte */
+#define	URTW_TID_AC_MAP			0x00e8		/* 2 byte */
+#define	URTW_ANAPARAM3			0x00ee		/* 4 byte */
+#define	URTW_8187B_8225_ANAPARAM3_ON	(0x0)
 #define	URTW_TALLY_SEL			0x00fc		/* 1 byte */
+#define	URTW_AC_VO			0x00f0		/* 1 byte */
+#define	URTW_AC_VI			0x00f4		/* 1 byte */
+#define	URTW_AC_BE			0x00f8		/* 1 byte */
+#define	URTW_AC_BK			0x00fc		/* 1 byte */
+#define	URTW_FEMR			0x01d4		/* 2 byte */
+#define	URTW_ARFR			0x01e0		/* 2 byte */
+#define	URTW_RFSW_CTRL			0x0272		/* 2 byte */
 
 /* for EEPROM */
 #define	URTW_EPROM_TXPW_BASE		0x05
