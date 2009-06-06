@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_reference.c,v 1.7 2005/08/08 08:05:36 espie Exp $ */
+/*	$OpenBSD: xdr_reference.c,v 1.8 2009/06/06 03:28:34 deraadt Exp $ */
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -67,13 +67,12 @@ xdr_reference(XDR *xdrs,
 			return (TRUE);
 
 		case XDR_DECODE:
-			*pp = loc = (caddr_t) mem_alloc(size);
+			*pp = loc = (caddr_t) calloc(size, 1);
 			if (loc == NULL) {
 				(void) fprintf(stderr,
 				    "xdr_reference: out of memory\n");
 				return (FALSE);
 			}
-			memset(loc, 0, (int)size);
 			break;
 	}
 
