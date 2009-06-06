@@ -42,6 +42,19 @@
    layout used for ptrace(2).  */
 
 /* From <machine/reg.h>.  */
+const struct sparc_gregset sparc64obsd_gregset =
+{
+  0 * 8,			/* "tstate" */
+  1 * 8,			/* %pc */
+  2 * 8,			/* %npc */
+  3 * 8,			/* %y */
+  -1,				/* %fprs */
+  -1,
+  5 * 8,			/* %g1 */
+  20 * 8,			/* %l0 */
+  4				/* sizeof (%y) */
+};
+
 const struct sparc_gregset sparc64obsd_core_gregset =
 {
   0 * 8,			/* "tstate" */
@@ -62,8 +75,22 @@ sparc64obsd_supply_gregset (const struct regset *regset,
 {
   const char *regs = gregs;
 
+  if (len < 832)
+    {
+      sparc64_supply_gregset (&sparc64obsd_gregset, regcache, regnum, regs);
+      return;
+    }
+
   sparc64_supply_gregset (&sparc64obsd_core_gregset, regcache, regnum, regs);
   sparc64_supply_fpregset (regcache, regnum, regs + 288);
+}
+
+static void
+sparc64obsd_supply_fpregset (const struct regset *regset,
+			     struct regcache *regcache,
+			     int regnum, const void *fpregs, size_t len)
+{
+  sparc64_supply_fpregset (regcache, regnum, fpregs);
 }
 
 
@@ -277,7 +304,10 @@ sparc64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   tdep->gregset = regset_alloc (gdbarch, sparc64obsd_supply_gregset, NULL);
-  tdep->sizeof_gregset = 832;
+  tdep->sizeof_gregset = 288;
+
+  tdep->fpregset = regset_alloc (gdbarch, sparc64obsd_supply_fpregset, NULL);
+  tdep->sizeof_fpregset = 272;
 
   frame_unwind_append_sniffer (gdbarch, sparc64obsd_sigtramp_frame_sniffer);
   frame_unwind_append_sniffer (gdbarch, sparc64obsd_trapframe_sniffer);
