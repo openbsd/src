@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.51 2009/06/06 15:00:27 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.52 2009/06/06 15:37:28 ray Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.51 2009/06/06 15:00:27 ray Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.52 2009/06/06 15:37:28 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -256,7 +256,7 @@ main(int argc, char **argv)
 	if (S_ISDIR(stb1.st_mode) && S_ISDIR(stb2.st_mode)) {
 		if (format == D_IFDEF)
 			errx(2, "-D option not supported with directories");
-		diffdir(argv[0], argv[1]);
+		diffdir(argv[0], argv[1], dflags);
 	} else {
 		if (S_ISDIR(stb1.st_mode)) {
 			argv[0] = splice(argv[0], argv[1]);
@@ -268,7 +268,7 @@ main(int argc, char **argv)
 			if (stat(argv[1], &stb2) < 0)
 				err(2, "%s", argv[1]);
 		}
-		print_status(diffreg(argv[0], argv[1], 0), argv[0], argv[1],
+		print_status(diffreg(argv[0], argv[1], dflags), argv[0], argv[1],
 		    NULL);
 	}
 	exit(status);

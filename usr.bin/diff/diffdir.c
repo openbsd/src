@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.32 2007/06/09 05:16:21 ray Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.33 2009/06/06 15:37:28 ray Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.32 2007/06/09 05:16:21 ray Exp $";
+static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.33 2009/06/06 15:37:28 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -44,7 +44,7 @@ static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.32 2007/06/09 05:16:21 ray 
 static int dircompare(const void *, const void *);
 static int excluded(const char *);
 static struct dirent **slurpdir(char *, char **, int);
-static void diffit(struct dirent *, char *, size_t, char *, size_t);
+static void diffit(struct dirent *, char *, size_t, char *, size_t, int);
 
 #define d_status	d_type		/* we need to store status for -l */
 
@@ -52,7 +52,7 @@ static void diffit(struct dirent *, char *, size_t, char *, size_t);
  * Diff directory traversal. Will be called recursively if -r was specified.
  */
 void
-diffdir(char *p1, char *p2)
+diffdir(char *p1, char *p2, int flags)
 {
 	struct dirent **dirp1, **dirp2, **dp1, **dp2;
 	struct dirent *dent1, *dent2;
@@ -109,13 +109,14 @@ diffdir(char *p1, char *p2)
 		    strcmp(dent1->d_name, dent2->d_name);
 		if (pos == 0) {
 			/* file exists in both dirs, diff it */
-			diffit(dent1, path1, dirlen1, path2, dirlen2);
+			diffit(dent1, path1, dirlen1, path2, dirlen2, flags);
 			dp1++;
 			dp2++;
 		} else if (pos < 0) {
 			/* file only in first dir, only diff if -N */
 			if (Nflag)
-				diffit(dent1, path1, dirlen1, path2, dirlen2);
+				diffit(dent1, path1, dirlen1, path2, dirlen2,
+				    flags);
 			else if (lflag)
 				dent1->d_status |= D_ONLY;
 			else
@@ -124,7 +125,8 @@ diffdir(char *p1, char *p2)
 		} else {
 			/* file only in second dir, only diff if -N or -P */
 			if (Nflag || Pflag)
-				diffit(dent2, path1, dirlen1, path2, dirlen2);
+				diffit(dent2, path1, dirlen1, path2, dirlen2,
+				    flags);
 			else if (lflag)
 				dent2->d_status |= D_ONLY;
 			else
@@ -261,10 +263,10 @@ dircompare(const void *vp1, const void *vp2)
  * Do the actual diff by calling either diffreg() or diffdir().
  */
 static void
-diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2)
+diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2,
+    int flags)
 {
-	int flags = D_HEADER;
-
+	flags |= D_HEADER;
 	strlcpy(path1 + plen1, dp->d_name, MAXPATHLEN - plen1);
 	if (stat(path1, &stb1) != 0) {
 		if (!(Nflag || Pflag) || errno != ENOENT) {
@@ -290,7 +292,7 @@ diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2)
 
 	if (S_ISDIR(stb1.st_mode) && S_ISDIR(stb2.st_mode)) {
 		if (rflag)
-			diffdir(path1, path2);
+			diffdir(path1, path2, flags);
 		else if (lflag)
 			dp->d_status |= D_COMMON;
 		else
