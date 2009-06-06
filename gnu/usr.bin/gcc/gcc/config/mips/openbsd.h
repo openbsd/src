@@ -104,6 +104,11 @@ Boston, MA 02111-1307, USA.  */
 
 
 /* Layout of source language data types.  */
+#undef INTMAX_TYPE
+#define INTMAX_TYPE "long long int"
+
+#undef UINTMAX_TYPE
+#define UINTMAX_TYPE "long long unsigned int"
 
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"
