@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.15 2007/03/02 11:31:17 henning Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.16 2009/06/06 04:02:42 krw Exp $	*/
 
 /* Errors and warnings... */
 
@@ -138,6 +138,7 @@ note(char *fmt, ...)
 	return (0);
 }
 
+#ifdef DEBUG
 /*
  * Log a debug message...
  */
@@ -152,9 +153,7 @@ debug(char *fmt, ...)
 	vsnprintf(mbuf, sizeof(mbuf), fbuf, list);
 	va_end(list);
 
-#ifndef DEBUG
 	syslog(LOG_DEBUG, "%s", mbuf);
-#endif
 
 	if (log_perror) {
 		write(STDERR_FILENO, mbuf, strlen(mbuf));
@@ -163,6 +162,7 @@ debug(char *fmt, ...)
 
 	return (0);
 }
+#endif
 
 /*
  * Find %m in the input string and substitute an error message string.

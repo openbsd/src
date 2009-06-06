@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.128 2009/06/03 02:05:34 stevesk Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.129 2009/06/06 04:02:42 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -232,9 +232,11 @@ routehandler(void)
 		linkstat =
 		    LINK_STATE_IS_UP(ifm->ifm_data.ifi_link_state) ? 1 : 0;
 		if (linkstat != ifi->linkstat) {
+#ifdef DEBUG
 			debug("link state %s -> %s",
 			    ifi->linkstat ? "up" : "down",
 			    linkstat ? "up" : "down");
+#endif
 			ifi->linkstat = interface_link_status(ifi->name);
 			if (ifi->linkstat) {
 				client->state = S_INIT;
@@ -762,7 +764,9 @@ dhcpoffer(struct iaddr client_addr, struct option_data *options)
 		if (lease->address.len == sizeof(client->packet.yiaddr) &&
 		    !memcmp(lease->address.iabuf,
 		    &client->packet.yiaddr, lease->address.len)) {
+#ifdef DEBUG
 			debug("%s already seen.", name);
+#endif
 			return;
 		}
 	}
