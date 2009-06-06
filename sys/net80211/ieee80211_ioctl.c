@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.31 2009/02/15 08:34:36 damien Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.32 2009/06/06 07:57:27 damien Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -628,7 +628,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 			break;
 #endif
-		if ((ifp->if_flags & IFF_UP) == 0) {
+		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
+		    (IFF_UP | IFF_RUNNING)) {
 			error = ENETDOWN;
 			break;
 		}
