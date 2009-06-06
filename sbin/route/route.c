@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.132 2009/05/31 18:02:28 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.133 2009/06/06 20:30:22 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ flushroutes(int argc, char **argv)
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
 	u_char prio = 0;
-	unsigned int ifindex;
+	unsigned int ifindex = 0;
 
 	if (uid)
 		errx(1, "must be root to alter routing table");
