@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.102 2009/06/06 18:14:25 pyr Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.103 2009/06/06 18:45:01 ckuethe Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -52,7 +52,7 @@
 
 #define	QUERYTIME_MAX		15	/* single query might take n secs max */
 #define	OFFSET_ARRAY_SIZE	8
-#define	SENSOR_OFFSETS		7
+#define	SENSOR_OFFSETS		6
 #define	SETTIME_TIMEOUT		15	/* max seconds to wait with -s */
 #define	LOG_NEGLIGIBLE_ADJTIME	32	/* negligible drift to not log (ms) */
 #define	LOG_NEGLIGIBLE_ADJFREQ	0.05	/* negligible rate to not log (ppm) */
@@ -64,7 +64,7 @@
 #define FILTER_ADJFREQ		0x01	/* set after doing adjfreq */
 
 #define	SENSOR_DATA_MAXAGE		(15*60)
-#define	SENSOR_QUERY_INTERVAL		30
+#define	SENSOR_QUERY_INTERVAL		15
 #define	SENSOR_QUERY_INTERVAL_SETTIME	(SETTIME_TIMEOUT/3)
 #define	SENSOR_SCAN_INTERVAL		(5*60)
 
