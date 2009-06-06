@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.442 2009/06/04 19:04:25 damien Exp $
+$OpenBSD: usbdevs,v 1.443 2009/06/06 16:56:56 yuo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1235,6 +1235,7 @@ product DLINK2 DWA130		0x3c13	DWA-130
 product DLINK3 KVM221		0x020f	KVM-221
 
 /* DisplayLink products */
+product DISPLAYLINK LCD4300U	0x01ba	LCD-4300U
 product DISPLAYLINK LCD8000U	0x01bb	LCD-8000U
 product DISPLAYLINK DLDVI	0x0141	DisplayLink DVI
 product DISPLAYLINK VGA10	0x015a	CMP-USBVGA10
