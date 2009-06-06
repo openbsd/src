@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.h,v 1.14 2009/06/06 08:20:55 eric Exp $ */
+/*	$OpenBSD: ripd.h,v 1.15 2009/06/06 18:31:42 pyr Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -28,7 +28,7 @@
 #include <netinet/in.h>
 #include <event.h>
 
-#include "imsg.h"
+#include <imsg.h>
 
 #define	CONF_FILE		"/etc/ripd.conf"
 #define	RIPD_SOCKET		"/var/run/ripd.sock"

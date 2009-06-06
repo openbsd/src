@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.127 2009/06/06 04:14:21 pyr Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.128 2009/06/06 18:31:42 pyr Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include			 "imsg.h"
+#include			 <imsg.h>
 
 #define IMSG_SIZE_CHECK(p) do {					\
 	if (IMSG_DATA_SIZE(&imsg) != sizeof(*p))		\

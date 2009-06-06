@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.15 2009/06/06 09:02:46 eric Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.16 2009/06/06 18:31:42 pyr Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -29,7 +29,7 @@
 #include <netinet/in.h>
 #include <event.h>
 
-#include "imsg.h"
+#include <imsg.h>
 #include "ospf6.h"
 
 #define CONF_FILE		"/etc/ospf6d.conf"

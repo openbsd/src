@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.h,v 1.9 2009/06/06 05:02:58 eric Exp $ */
+/*	$OpenBSD: ypldap.h,v 1.10 2009/06/06 18:31:42 pyr Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "imsg.h"
+#include <imsg.h>
 
 #define YPLDAP_USER		"_ypldap"
 #define YPLDAP_CONF_FILE	"/etc/ypldap.conf"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.h,v 1.18 2009/06/06 07:52:04 pyr Exp $ */
+/*	$OpenBSD: dvmrpd.h,v 1.19 2009/06/06 18:31:42 pyr Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -28,7 +28,7 @@
 #include <netinet/in.h>
 #include <event.h>
 
-#include "imsg.h"
+#include <imsg.h>
 
 #define CONF_FILE		"/etc/dvmrpd.conf"
 #define	DVMRPD_SOCKET		"/var/run/dvmrpd.sock"

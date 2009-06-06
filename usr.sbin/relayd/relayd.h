@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.125 2009/06/05 23:39:51 pyr Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.126 2009/06/06 18:31:42 pyr Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -20,7 +20,7 @@
 
 #include <sys/tree.h>
 
-#include "imsg.h"
+#include <imsg.h>
 
 #define CONF_FILE		"/etc/relayd.conf"
 #define RELAYD_SOCKET		"/var/run/relayd.sock"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.3 2009/06/06 08:09:43 pyr Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.4 2009/06/06 18:31:42 pyr Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -30,7 +30,7 @@
 #include <netinet/in.h>
 #include <event.h>
 
-#include "imsg.h"
+#include <imsg.h>
 #include "ldp.h"
 
 #define CONF_FILE		"/etc/ldpd.conf"
