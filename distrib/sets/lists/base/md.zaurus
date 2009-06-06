@@ -1586,6 +1586,9 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wsfont/vt220l8x10.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wsfont/vt220l8x8.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/wsfont/wsfont.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/x86emu
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/x86emu/x86emu.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/x86emu/x86emu_regs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dirent.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dlfcn.ph

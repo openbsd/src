@@ -910,6 +910,9 @@
 ./usr/include/dev/wsfont/vt220l8x10.h
 ./usr/include/dev/wsfont/vt220l8x8.h
 ./usr/include/dev/wsfont/wsfont.h
+./usr/include/dev/x86emu
+./usr/include/dev/x86emu/x86emu.h
+./usr/include/dev/x86emu/x86emu_regs.h
 ./usr/include/dirent.h
 ./usr/include/disktab.h
 ./usr/include/dlfcn.h

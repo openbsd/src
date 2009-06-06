@@ -1366,6 +1366,9 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wsfont/vt220l8x10.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wsfont/vt220l8x8.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/wsfont/wsfont.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/x86emu
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/x86emu/x86emu.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/x86emu/x86emu_regs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dirent.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dlfcn.ph

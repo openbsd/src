@@ -73,6 +73,7 @@
 ./usr/include/amd64/trap.h
 ./usr/include/amd64/tss.h
 ./usr/include/amd64/userret.h
+./usr/include/amd64/vga_post.h
 ./usr/include/amd64/vmparam.h
 ./usr/include/emmintrin.h
 ./usr/include/g++/amd64-unknown-openbsd4.5

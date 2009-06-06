@@ -762,6 +762,7 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/trap.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/tss.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/userret.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/vga_post.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/vmparam.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/ar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/arpa
@@ -1630,6 +1631,9 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/wsfont/vt220l8x10.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/wsfont/vt220l8x8.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/wsfont/wsfont.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/x86emu
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/x86emu/x86emu.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/x86emu/x86emu_regs.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dirent.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dlfcn.ph

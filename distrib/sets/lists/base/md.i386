@@ -680,6 +680,7 @@
 ./usr/libdata/perl5/i386-openbsd/5.10.0/threads
 ./usr/libdata/perl5/i386-openbsd/5.10.0/threads.pm
 ./usr/libdata/perl5/i386-openbsd/5.10.0/threads/shared.pm
+./usr/libdata/perl5/site_perl/amd64-openbsd/amd64/vga_post.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd
 ./usr/libdata/perl5/site_perl/i386-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/a.out.ph
@@ -1563,6 +1564,9 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/wsfont/vt220l8x10.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/wsfont/vt220l8x8.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/wsfont/wsfont.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/x86emu
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/x86emu/x86emu.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/x86emu/x86emu_regs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dirent.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dlfcn.ph
