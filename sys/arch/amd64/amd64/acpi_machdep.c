@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.20 2009/06/04 23:32:06 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.21 2009/06/06 00:23:38 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -45,9 +45,8 @@ extern u_char acpi_real_mode_resume[], acpi_resume_end[];
 extern u_int32_t acpi_pdirpa;
 extern paddr_t tramp_pdirpa;
 
-int acpi_savecpu(void);
-void ioapic_enable(void);
-void lapic_enable(void);
+extern int acpi_savecpu(void);
+extern void ioapic_enable(void);
 
 #define ACPI_BIOS_RSDP_WINDOW_BASE        0xe0000
 #define ACPI_BIOS_RSDP_WINDOW_SIZE        0x20000
@@ -224,8 +223,6 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	if (sc->sc_facs->version == 1)
 		sc->sc_facs->x_wakeup_vector = 0;
 
-	disable_intr();
-
 	/* Copy the current cpu registers into a safe place for resume. */
 	if (acpi_savecpu()) {
 		wbinvd();
@@ -244,13 +241,13 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 
 #if NLAPIC > 0
 	lapic_enable();
-	lapic_calibrate_timer(&cpu_info_primary);
+	lapic_initclocks();
 #endif
 #if NIOAPIC > 0
 	ioapic_enable();
 #endif
 	initrtclock();
-	enable_intr();
+	inittodr(time_second);
 #endif /* ACPI_SLEEP_ENABLED */
 	return 0;
  }
