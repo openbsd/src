@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.55 2009/06/06 06:02:44 oga Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.56 2009/06/06 10:56:30 oga Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -695,7 +695,7 @@ agp_i810_bind_memory(void *sc, struct agp_memory *mem, bus_size_t offset)
 
 	if (mem->am_type == 2) {
 		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-			agp_i810_bind_page(isc, offset + i,
+			agp_i810_bind_page(isc, isc->isc_apaddr + offset + i,
 			    mem->am_physical + i, 0);
 		mem->am_offset = offset;
 		mem->am_is_bound = 1;
@@ -725,7 +725,8 @@ agp_i810_unbind_memory(void *sc, struct agp_memory *mem)
 
 	if (mem->am_type == 2) {
 		for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
-			agp_i810_unbind_page(isc, mem->am_offset + i);
+			agp_i810_unbind_page(isc, isc->isc_apaddr +
+			    mem->am_offset + i);
 		mem->am_offset = 0;
 		mem->am_is_bound = 0;
 		return (0);
