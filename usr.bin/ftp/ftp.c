@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.78 2009/04/27 23:20:48 martynas Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.79 2009/06/06 23:14:44 martynas Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -1196,9 +1196,7 @@ break2:
 	return;
 
 abort:
-
-/* abort using RFC959 recommended IP,SYNC sequence */
-
+	/* abort using RFC959 recommended IP,SYNC sequence */
 	progress = oprogress;
 	preserve = opreserve;
 	if (oldintp)
@@ -1974,20 +1972,40 @@ gunique(const char *local)
 	return (new);
 }
 
+jmp_buf forceabort;
+ 
+/* ARGSUSED */
+void
+abortforce(int signo)
+{
+	fputs("Forced abort.  The connection will be closed.\n", ttyout);
+	(void)fflush(ttyout);
+
+	if (cout) {
+		(void)fclose(cout);
+	}
+	cout = NULL;
+
+	longjmp(forceabort, 1);
+}
+
 void
 abort_remote(FILE *din)
 {
 	char buf[BUFSIZ];
 	int nfnd;
 	struct pollfd pfd[2];
+	sig_t oldintr;
 
-	if (cout == NULL) {
+	if (cout == NULL || setjmp(forceabort)) {
 		warnx("Lost control connection for abort.");
 		if (ptabflg)
 			code = -1;
 		lostpeer();
 		return;
 	}
+
+	oldintr = signal(SIGINT, abortforce);
 
 	/*
 	 * send IAC in urgent mode instead of DM because 4.3BSD places oob mark
@@ -2022,4 +2040,5 @@ abort_remote(FILE *din)
 		(void)getreply(0);
 	}
 	(void)getreply(0);
+	(void)signal(SIGINT, oldintr);
 }
