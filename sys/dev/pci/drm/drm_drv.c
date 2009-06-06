@@ -871,8 +871,8 @@ drm_dmamem_alloc(bus_dma_tag_t dmat, bus_size_t size, bus_size_t alignment,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mem->map) != 0)
 		goto strfree;
 
-	if (bus_dmamem_alloc(dmat, size, alignment, 0,
-	    mem->segs, nsegments, &mem->nsegs, BUS_DMA_NOWAIT) != 0)
+	if (bus_dmamem_alloc(dmat, size, alignment, 0, mem->segs, nsegments,
+	    &mem->nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0)
 		goto destroy;
 
 	if (bus_dmamem_map(dmat, mem->segs, mem->nsegs, size, 
@@ -882,7 +882,6 @@ drm_dmamem_alloc(bus_dma_tag_t dmat, bus_size_t size, bus_size_t alignment,
 	if (bus_dmamap_load(dmat, mem->map, mem->kva, size,
 	    NULL, BUS_DMA_NOWAIT | loadflags) != 0)
 		goto unmap;
-	bzero(mem->kva, size);
 
 	return (mem);
 
