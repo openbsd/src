@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.3 2009/06/06 08:09:43 pyr Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -49,8 +49,8 @@ void	 ldpe_shutdown(void);
 void	 recv_packet(int, short, void *);
 
 struct ldpd_conf	*leconf = NULL, *nconf;
-struct imsgbuf		*ibuf_main;
-struct imsgbuf		*ibuf_lde;
+struct imsgev		*iev_main;
+struct imsgev		*iev_lde;
 int			 oe_nofib;
 
 /* ARGSUSED */
@@ -179,22 +179,24 @@ ldpe(struct ldpd_conf *xconf, int pipe_parent2ldpe[2], int pipe_ldpe2lde[2],
 	close(pipe_parent2lde[0]);
 	close(pipe_parent2lde[1]);
 
-	if ((ibuf_lde = malloc(sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
+	if ((iev_lde = malloc(sizeof(struct imsgev))) == NULL ||
+	    (iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_lde, pipe_ldpe2lde[0], ldpe_dispatch_lde);
-	imsg_init(ibuf_main, pipe_parent2ldpe[1], ldpe_dispatch_main);
+	imsg_init(&iev_lde->ibuf, pipe_ldpe2lde[0]);
+	iev_lde->handler = ldpe_dispatch_lde;
+	imsg_init(&iev_main->ibuf, pipe_parent2ldpe[1]);
+	iev_main->handler = ldpe_dispatch_main;
 
 	/* setup event handler */
-	ibuf_lde->events = EV_READ;
-	event_set(&ibuf_lde->ev, ibuf_lde->fd, ibuf_lde->events,
-	    ibuf_lde->handler, ibuf_lde);
-	event_add(&ibuf_lde->ev, NULL);
+	iev_lde->events = EV_READ;
+	event_set(&iev_lde->ev, iev_lde->ibuf.fd, iev_lde->events,
+	    iev_lde->handler, iev_lde);
+	event_add(&iev_lde->ev, NULL);
 
-	ibuf_main->events = EV_READ;
-	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
-	    ibuf_main->handler, ibuf_main);
-	event_add(&ibuf_main->ev, NULL);
+	iev_main->events = EV_READ;
+	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
+	    iev_main->handler, iev_main);
+	event_add(&iev_main->ev, NULL);
 
 	event_set(&leconf->disc_ev, leconf->ldp_discovery_socket,
 	    EV_READ|EV_PERSIST, disc_recv_packet, leconf);
@@ -243,12 +245,12 @@ ldpe_shutdown(void)
 	close(leconf->ldp_discovery_socket);
 
 	/* clean up */
-	msgbuf_write(&ibuf_lde->w);
-	msgbuf_clear(&ibuf_lde->w);
-	free(ibuf_lde);
-	msgbuf_write(&ibuf_main->w);
-	msgbuf_clear(&ibuf_main->w);
-	free(ibuf_main);
+	msgbuf_write(&iev_lde->ibuf.w);
+	msgbuf_clear(&iev_lde->ibuf.w);
+	free(iev_lde);
+	msgbuf_write(&iev_main->ibuf.w);
+	msgbuf_clear(&iev_main->ibuf.w);
+	free(iev_main);
 	free(leconf);
 	free(pkt_ptr);
 
@@ -260,14 +262,15 @@ ldpe_shutdown(void)
 int
 ldpe_imsg_compose_parent(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_main, type, 0, pid, data, datalen));
+	return (imsg_compose_event(iev_main, type, 0, pid, -1, data, datalen));
 }
 
 int
 ldpe_imsg_compose_lde(int type, u_int32_t peerid, pid_t pid,
     void *data, u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_lde, type, peerid, pid, data, datalen));
+	return (imsg_compose_event(iev_lde, type, peerid, pid, -1,
+	    data, datalen));
 }
 
 /* ARGSUSED */
@@ -275,7 +278,8 @@ void
 ldpe_dispatch_main(int fd, short event, void *bula)
 {
 	struct imsg	 imsg;
-	struct imsgbuf  *ibuf = bula;
+	struct imsgev	*iev = bula;
+	struct imsgbuf  *ibuf = &iev->ibuf;
 	struct iface	*iface = NULL;
 	struct kif	*kif;
 	int		 n, link_ok, shut = 0;
@@ -351,10 +355,10 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	if (!shut)
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 	else {
 		/* this pipe is dead, so remove the event handler */
-		event_del(&ibuf->ev);
+		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
 }
@@ -363,7 +367,8 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 void
 ldpe_dispatch_lde(int fd, short event, void *bula)
 {
-	struct imsgbuf		*ibuf = bula;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
 	struct map		 map;
 	struct notify_msg	 nm;
@@ -485,10 +490,10 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	if (!shut)
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 	else {
 		/* this pipe is dead, so remove the event handler */
-		event_del(&ibuf->ev);
+		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
 }
@@ -517,8 +522,9 @@ ldpe_iface_ctl(struct ctl_conn *c, unsigned int idx)
 	LIST_FOREACH(iface, &leconf->iface_list, entry) {
 		if (idx == 0 || idx == iface->ifindex) {
 			ictl = if_to_ctl(iface);
-			imsg_compose(&c->ibuf, IMSG_CTL_SHOW_INTERFACE,
-			    0, 0, ictl, sizeof(struct ctl_iface));
+			imsg_compose_event(&c->iev,
+			     IMSG_CTL_SHOW_INTERFACE,
+			    0, 0, -1, ictl, sizeof(struct ctl_iface));
 		}
 	}
 }
@@ -534,12 +540,12 @@ ldpe_nbr_ctl(struct ctl_conn *c)
 		LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 			if (iface->self != nbr) {
 				nctl = nbr_to_ctl(nbr);
-				imsg_compose(&c->ibuf,
-				    IMSG_CTL_SHOW_NBR, 0, 0, nctl,
+				imsg_compose_event(&c->iev,
+				    IMSG_CTL_SHOW_NBR, 0, 0, -1, nctl,
 				    sizeof(struct ctl_nbr));
 			}
 		}
 	}
 
-	imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, NULL, 0);
+	imsg_compose_event(&c->iev, IMSG_CTL_END, 0, 0, -1, NULL, 0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
+/*	$OpenBSD: lde.c,v 1.3 2009/06/06 08:09:43 pyr Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -54,8 +54,8 @@ void		 lde_req_list_free(struct lde_nbr *);
 void		 lde_map_list_free(struct lde_nbr *);
 
 struct ldpd_conf	*ldeconf = NULL, *nconf = NULL;
-struct imsgbuf		*ibuf_ldpe;
-struct imsgbuf		*ibuf_main;
+struct imsgev		*iev_ldpe;
+struct imsgev		*iev_main;
 struct lde_nbr		*nbrself;
 
 /* ARGSUSED */
@@ -131,22 +131,24 @@ lde(struct ldpd_conf *xconf, int pipe_parent2lde[2], int pipe_ldpe2lde[2],
 	close(pipe_parent2ldpe[0]);
 	close(pipe_parent2ldpe[1]);
 
-	if ((ibuf_ldpe = malloc(sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_main = malloc(sizeof(struct imsgbuf))) == NULL)
+	if ((iev_ldpe = malloc(sizeof(struct imsgev))) == NULL ||
+	    (iev_main = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_ldpe, pipe_ldpe2lde[1], lde_dispatch_imsg);
-	imsg_init(ibuf_main, pipe_parent2lde[1], lde_dispatch_parent);
+	imsg_init(&iev_ldpe->ibuf, pipe_ldpe2lde[1]);
+	iev_ldpe->handler = lde_dispatch_imsg;
+	imsg_init(&iev_main->ibuf, pipe_parent2lde[1]);
+	iev_main->handler = lde_dispatch_parent;
 
 	/* setup event handler */
-	ibuf_ldpe->events = EV_READ;
-	event_set(&ibuf_ldpe->ev, ibuf_ldpe->fd, ibuf_ldpe->events,
-	    ibuf_ldpe->handler, ibuf_ldpe);
-	event_add(&ibuf_ldpe->ev, NULL);
+	iev_ldpe->events = EV_READ;
+	event_set(&iev_ldpe->ev, iev_ldpe->ibuf.fd, iev_ldpe->events,
+	    iev_ldpe->handler, iev_ldpe);
+	event_add(&iev_ldpe->ev, NULL);
 
-	ibuf_main->events = EV_READ;
-	event_set(&ibuf_main->ev, ibuf_main->fd, ibuf_main->events,
-	    ibuf_main->handler, ibuf_main);
-	event_add(&ibuf_main->ev, NULL);
+	iev_main->events = EV_READ;
+	event_set(&iev_main->ev, iev_main->ibuf.fd, iev_main->events,
+	    iev_main->handler, iev_main);
+	event_add(&iev_main->ev, NULL);
 
 	rt_init();
 
@@ -168,10 +170,10 @@ lde_shutdown(void)
 
 	lde_nbr_free();
 
-	msgbuf_clear(&ibuf_ldpe->w);
-	free(ibuf_ldpe);
-	msgbuf_clear(&ibuf_main->w);
-	free(ibuf_main);
+	msgbuf_clear(&iev_ldpe->ibuf.w);
+	free(iev_ldpe);
+	msgbuf_clear(&iev_main->ibuf.w);
+	free(iev_main);
 	free(ldeconf);
 
 	log_info("label decision engine exiting");
@@ -182,14 +184,16 @@ int
 lde_imsg_compose_ldpe(int type, u_int32_t peerid, pid_t pid, void *data,
     u_int16_t datalen)
 {
-	return (imsg_compose(ibuf_ldpe, type, peerid, pid, data, datalen));
+	return (imsg_compose_event(iev_ldpe, type, peerid, pid,
+	     -1, data, datalen));
 }
 
 /* ARGSUSED */
 void
 lde_dispatch_imsg(int fd, short event, void *bula)
 {
-	struct imsgbuf		*ibuf = bula;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
 	struct lde_nbr		 rn, *nbr;
 	struct map		 map;
@@ -320,8 +324,8 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_CTL_SHOW_LIB:
 			rt_dump(imsg.hdr.pid);
 
-			imsg_compose(ibuf_ldpe, IMSG_CTL_END, 0, imsg.hdr.pid,
-			    NULL, 0);
+			imsg_compose_event(iev_ldpe, IMSG_CTL_END, 0,
+			    imsg.hdr.pid, -1, NULL, 0);
 			break;
 		default:
 			log_debug("lde_dispatch_imsg: unexpected imsg %d",
@@ -331,10 +335,10 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	if (!shut)
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 	else {
 		/* this pipe is dead, so remove the event handler */
-		event_del(&ibuf->ev);
+		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
 }
@@ -346,7 +350,8 @@ lde_dispatch_parent(int fd, short event, void *bula)
 	struct imsg		 imsg;
 	struct kroute		 kr;
 	struct rroute		 rr;
-	struct imsgbuf		*ibuf = bula;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf = &iev->ibuf;
 	ssize_t			 n;
 	int			 shut = 0;
 
@@ -401,8 +406,9 @@ lde_dispatch_parent(int fd, short event, void *bula)
 				lde_send_change_kroute(rn);
 			else*/
 				/* should not happen */
-				imsg_compose(ibuf_main, IMSG_KLABEL_DELETE, 0,
-				    0, &kr, sizeof(kr));
+				imsg_compose_event(iev_main,
+				    IMSG_KLABEL_DELETE, 0,
+				    0, -1, &kr, sizeof(kr));
 			break;
 		case IMSG_RECONF_CONF:
 			if ((nconf = malloc(sizeof(struct ldpd_conf))) ==
@@ -425,10 +431,10 @@ lde_dispatch_parent(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	if (!shut)
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 	else {
 		/* this pipe is dead, so remove the event handler */
-		event_del(&ibuf->ev);
+		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
 }
@@ -452,7 +458,8 @@ lde_send_insert_klabel(struct rt_node *r)
 	kr.prefixlen = r->prefixlen;
 	kr.ext_tag = r->ext_tag;
 
-	imsg_compose(ibuf_main, IMSG_KLABEL_INSERT, 0, 0, &kr, sizeof(kr));
+	imsg_compose_event(iev_main, IMSG_KLABEL_INSERT, 0, 0, -1,
+	     &kr, sizeof(kr));
 }
 
 void
@@ -468,7 +475,8 @@ lde_send_change_klabel(struct rt_node *r)
 	kr.prefixlen = r->prefixlen;
 	kr.ext_tag = r->ext_tag;
 
-	imsg_compose(ibuf_main, IMSG_KLABEL_CHANGE, 0, 0, &kr, sizeof(kr));
+	imsg_compose_event(iev_main, IMSG_KLABEL_CHANGE, 0, 0, -1,
+	     &kr, sizeof(kr));
 }
 
 void
@@ -480,28 +488,35 @@ lde_send_delete_klabel(struct rt_node *r)
 	kr.prefix.s_addr = r->prefix.s_addr;
 	kr.prefixlen = r->prefixlen;
 
-	imsg_compose(ibuf_main, IMSG_KLABEL_DELETE, 0, 0, &kr, sizeof(kr));
+	imsg_compose_event(iev_main, IMSG_KLABEL_DELETE, 0, 0, -1,
+	     &kr, sizeof(kr));
 }
 
 void
 lde_send_labelrequest(u_int32_t peerid, struct map *map)
 {
-	imsg_compose(ibuf_ldpe, IMSG_REQUEST_ADD, peerid, 0, map, sizeof(map));
-	imsg_compose(ibuf_ldpe, IMSG_REQUEST_ADD_END, peerid, 0, NULL, 0);
+	imsg_compose_event(iev_ldpe, IMSG_REQUEST_ADD, peerid, 0,
+	     -1, map, sizeof(map));
+	imsg_compose_event(iev_ldpe, IMSG_REQUEST_ADD_END, peerid, 0,
+	     -1, NULL, 0);
 }
 
 void
 lde_send_labelmapping(u_int32_t peerid, struct map *map)
 {
-	imsg_compose(ibuf_ldpe, IMSG_MAPPING_ADD, peerid, 0, map, sizeof(map));
-	imsg_compose(ibuf_ldpe, IMSG_MAPPING_ADD_END, peerid, 0, NULL, 0);
+	imsg_compose_event(iev_ldpe, IMSG_MAPPING_ADD, peerid, 0,
+	     -1, map, sizeof(map));
+	imsg_compose_event(iev_ldpe, IMSG_MAPPING_ADD_END, peerid, 0,
+	     -1, NULL, 0);
 }
 
 void
 lde_send_labelrelease(u_int32_t peerid, struct map *map)
 {
-	imsg_compose(ibuf_ldpe, IMSG_RELEASE_ADD, peerid, 0, map, sizeof(map));
-	imsg_compose(ibuf_ldpe, IMSG_RELEASE_ADD_END, peerid, 0, NULL, 0);
+	imsg_compose_event(iev_ldpe, IMSG_RELEASE_ADD, peerid, 0,
+	    -1, map, sizeof(map));
+	imsg_compose_event(iev_ldpe, IMSG_RELEASE_ADD_END, peerid, 0,
+	    -1, NULL, 0);
 }
 
 void
@@ -517,8 +532,8 @@ lde_send_notification(u_int32_t peerid, u_int32_t code, u_int32_t msgid,
 	nm.messageid = ntohl(msgid);
 	nm.type = type;
 
-	imsg_compose(ibuf_ldpe, IMSG_NOTIFICATION_SEND, peerid, 0, &nm,
-	    sizeof(nm));
+	imsg_compose_event(iev_ldpe, IMSG_NOTIFICATION_SEND, peerid, 0,
+	    -1, &nm, sizeof(nm));
 }
 
 LIST_HEAD(lde_nbr_head, lde_nbr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.2 2009/06/05 22:34:45 michele Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.3 2009/06/06 08:09:43 pyr Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -30,6 +30,7 @@
 #include <netinet/in.h>
 #include <event.h>
 
+#include "imsg.h"
 #include "ldp.h"
 
 #define CONF_FILE		"/etc/ldpd.conf"
@@ -41,7 +42,6 @@
 #define NBR_IDSELF		1
 #define NBR_CNTSTART		(NBR_IDSELF + 1)
 
-#define	READ_BUF_SIZE		65535
 #define	RT_BUF_SIZE		16384
 #define	MAX_RTSOCK_BUF		128 * 1024
 #define	LDP_BACKLOG		128
@@ -57,40 +57,12 @@
 #define	F_DYNAMIC		0x0040
 #define	F_REDISTRIBUTED		0x0100
 
-/* buffer */
-struct buf {
-	TAILQ_ENTRY(buf)	 entry;
-	u_char			*buf;
-	size_t			 size;
-	size_t			 max;
-	size_t			 wpos;
-	size_t			 rpos;
-};
-
-struct msgbuf {
-	TAILQ_HEAD(, buf)	 bufs;
-	u_int32_t		 queued;
-	int			 fd;
-};
-
-#define	IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
-#define	MAX_IMSGSIZE		8192
-
-struct buf_read {
-	u_char			 buf[READ_BUF_SIZE];
-	u_char			*rptr;
-	size_t			 wpos;
-};
-
-struct imsgbuf {
-	TAILQ_HEAD(, imsg_fd)	fds;
-	struct buf_read		r;
-	struct msgbuf		w;
-	struct event		ev;
+struct imsgev {
+	struct imsgbuf		 ibuf;
 	void			(*handler)(int, short, void *);
-	int			fd;
-	pid_t			pid;
-	short			events;
+	struct event		 ev;
+	void			*data;
+	short			 events;
 };
 
 enum imsg_type {
@@ -131,18 +103,6 @@ enum imsg_type {
 	IMSG_RECONF_AREA,
 	IMSG_RECONF_IFACE,
 	IMSG_RECONF_END
-};
-
-struct imsg_hdr {
-	enum imsg_type	type;
-	u_int16_t	len;
-	u_int32_t	peerid;
-	pid_t		pid;
-};
-
-struct imsg {
-	struct imsg_hdr	 hdr;
-	void		*data;
 };
 
 /* interface states */
@@ -423,34 +383,9 @@ struct ctl_sum_lspace {
 	u_int32_t		 num_lsa;
 };
 
-/* buffer.c */
-struct buf	*buf_open(size_t);
-struct buf	*buf_dynamic(size_t, size_t);
-int		 buf_add(struct buf *, void *, size_t);
-void		*buf_reserve(struct buf *, size_t);
-void		*buf_seek(struct buf *, size_t, size_t);
-int		 buf_close(struct msgbuf *, struct buf *);
-void		 buf_free(struct buf *);
-void		 msgbuf_init(struct msgbuf *);
-void		 msgbuf_clear(struct msgbuf *);
-int		 msgbuf_write(struct msgbuf *);
-
 /* parse.y */
 struct ldpd_conf	*parse_config(char *, int);
 int			 cmdline_symset(char *);
-
-/* imsg.c */
-void	 imsg_init(struct imsgbuf *, int, void (*)(int, short, void *));
-ssize_t	 imsg_read(struct imsgbuf *);
-ssize_t	 imsg_get(struct imsgbuf *, struct imsg *);
-int	 imsg_compose(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
-	    void *, u_int16_t);
-struct buf	*imsg_create(struct imsgbuf *, enum imsg_type, u_int32_t, pid_t,
-		    u_int16_t);
-int	 imsg_add(struct buf *, void *, u_int16_t);
-int	 imsg_close(struct imsgbuf *, struct buf *);
-void	 imsg_free(struct imsg *);
-void	 imsg_event_add(struct imsgbuf *); /* needs to be provided externally */
 
 /* in_cksum.c */
 u_int16_t	 in_cksum(void *, size_t);
@@ -493,6 +428,10 @@ void		 rtlabel_tag(u_int16_t, u_int32_t);
 void	main_imsg_compose_ldpe(int, pid_t, void *, u_int16_t);
 void	main_imsg_compose_lde(int, pid_t, void *, u_int16_t);
 void	merge_config(struct ldpd_conf *, struct ldpd_conf *);
+int	imsg_compose_event(struct imsgev *, u_int16_t, u_int32_t, pid_t,
+	    int, void *, u_int16_t);
+void	imsg_event_add(struct imsgev *);
+
 
 /* printconf.c */
 void	print_config(struct ldpd_conf *);

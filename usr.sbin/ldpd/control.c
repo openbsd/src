@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: control.c,v 1.2 2009/06/06 08:09:43 pyr Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -132,11 +132,12 @@ control_accept(int listenfd, short event, void *bula)
 		return;
 	}
 
-	imsg_init(&c->ibuf, connfd, control_dispatch_imsg);
-	c->ibuf.events = EV_READ;
-	event_set(&c->ibuf.ev, c->ibuf.fd, c->ibuf.events,
-	    c->ibuf.handler, &c->ibuf);
-	event_add(&c->ibuf.ev, NULL);
+	imsg_init(&c->iev.ibuf, connfd);
+	c->iev.handler = control_dispatch_imsg;
+	c->iev.events = EV_READ;
+	event_set(&c->iev.ev, c->iev.ibuf.fd, c->iev.events,
+	    c->iev.handler, &c->iev);
+	event_add(&c->iev.ev, NULL);
 
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
 }
@@ -146,7 +147,7 @@ control_connbyfd(int fd)
 {
 	struct ctl_conn	*c;
 
-	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->ibuf.fd != fd;
+	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->iev.ibuf.fd != fd;
 	    c = TAILQ_NEXT(c, entry))
 		;	/* nothing */
 
@@ -158,7 +159,7 @@ control_connbypid(pid_t pid)
 {
 	struct ctl_conn	*c;
 
-	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->ibuf.pid != pid;
+	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->iev.ibuf.pid != pid;
 	    c = TAILQ_NEXT(c, entry))
 		;	/* nothing */
 
@@ -175,11 +176,11 @@ control_close(int fd)
 		return;
 	}
 
-	msgbuf_clear(&c->ibuf.w);
+	msgbuf_clear(&c->iev.ibuf.w);
 	TAILQ_REMOVE(&ctl_conns, c, entry);
 
-	event_del(&c->ibuf.ev);
-	close(c->ibuf.fd);
+	event_del(&c->iev.ev);
+	close(c->iev.ibuf.fd);
 	free(c);
 }
 
@@ -198,20 +199,20 @@ control_dispatch_imsg(int fd, short event, void *bula)
 	}
 
 	if (event & EV_READ) {
-		if ((n = imsg_read(&c->ibuf)) == -1 || n == 0) {
+		if ((n = imsg_read(&c->iev.ibuf)) == -1 || n == 0) {
 			control_close(fd);
 			return;
 		}
 	}
 	if (event & EV_WRITE) {
-		if (msgbuf_write(&c->ibuf.w) == -1) {
+		if (msgbuf_write(&c->iev.ibuf.w) == -1) {
 			control_close(fd);
 			return;
 		}
 	}
 
 	for (;;) {
-		if ((n = imsg_get(&c->ibuf, &imsg)) == -1) {
+		if ((n = imsg_get(&c->iev.ibuf, &imsg)) == -1) {
 			control_close(fd);
 			return;
 		}
@@ -225,13 +226,13 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			ldpe_fib_update(imsg.hdr.type);
 			/* FALLTHROUGH */
 		case IMSG_CTL_RELOAD:
-			c->ibuf.pid = imsg.hdr.pid;
+			c->iev.ibuf.pid = imsg.hdr.pid;
 			ldpe_imsg_compose_parent(imsg.hdr.type, 0, NULL, 0);
 			break;
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:
 		case IMSG_CTL_IFINFO:
-			c->ibuf.pid = imsg.hdr.pid;
+			c->iev.ibuf.pid = imsg.hdr.pid;
 			ldpe_imsg_compose_parent(imsg.hdr.type,
 			    imsg.hdr.pid, imsg.data,
 			    imsg.hdr.len - IMSG_HEADER_SIZE);
@@ -241,12 +242,12 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			    sizeof(ifidx)) {
 				memcpy(&ifidx, imsg.data, sizeof(ifidx));
 				ldpe_iface_ctl(c, ifidx);
-				imsg_compose(&c->ibuf, IMSG_CTL_END, 0,
-				    0, NULL, 0);
+				imsg_compose_event(&c->iev, IMSG_CTL_END, 0,
+				    0, -1, NULL, 0);
 			}
 			break;
 		case IMSG_CTL_SHOW_LIB:
-			c->ibuf.pid = imsg.hdr.pid;
+			c->iev.ibuf.pid = imsg.hdr.pid;
 			ldpe_imsg_compose_lde(imsg.hdr.type, 0, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
@@ -261,7 +262,7 @@ control_dispatch_imsg(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 
-	imsg_event_add(&c->ibuf);
+	imsg_event_add(&c->iev);
 }
 
 int
@@ -272,8 +273,8 @@ control_imsg_relay(struct imsg *imsg)
 	if ((c = control_connbypid(imsg->hdr.pid)) == NULL)
 		return (0);
 
-	return (imsg_compose(&c->ibuf, imsg->hdr.type, 0, imsg->hdr.pid,
-	    imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE));
+	return (imsg_compose_event(&c->iev, imsg->hdr.type, 0, imsg->hdr.pid,
+	    -1, imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE));
 }
 
 void

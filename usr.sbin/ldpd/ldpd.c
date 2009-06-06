@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.1 2009/06/01 20:59:45 michele Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.2 2009/06/06 08:09:43 pyr Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -66,8 +66,8 @@ int	pipe_parent2lde[2];
 int	pipe_ldpe2lde[2];
 
 struct ldpd_conf	*ldpd_conf = NULL;
-struct imsgbuf		*ibuf_ldpe;
-struct imsgbuf		*ibuf_lde;
+struct imsgev		*iev_ldpe;
+struct imsgev		*iev_lde;
 char			*conffile;
 
 pid_t			 ldpe_pid = 0;
@@ -262,22 +262,24 @@ main(int argc, char *argv[])
 	close(pipe_ldpe2lde[0]);
 	close(pipe_ldpe2lde[1]);
 
-	if ((ibuf_ldpe = malloc(sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_lde = malloc(sizeof(struct imsgbuf))) == NULL)
+	if ((iev_ldpe = malloc(sizeof(struct imsgev))) == NULL ||
+	    (iev_lde = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
-	imsg_init(ibuf_ldpe, pipe_parent2ldpe[0], main_dispatch_ldpe);
-	imsg_init(ibuf_lde, pipe_parent2lde[0], main_dispatch_lde);
+	imsg_init(&iev_ldpe->ibuf, pipe_parent2ldpe[0]);
+	iev_ldpe->handler = main_dispatch_ldpe;
+	imsg_init(&iev_lde->ibuf, pipe_parent2lde[0]);
+	iev_lde->handler = main_dispatch_lde;
 
 	/* setup event handler */
-	ibuf_ldpe->events = EV_READ;
-	event_set(&ibuf_ldpe->ev, ibuf_ldpe->fd, ibuf_ldpe->events,
-	    ibuf_ldpe->handler, ibuf_ldpe);
-	event_add(&ibuf_ldpe->ev, NULL);
+	iev_ldpe->events = EV_READ;
+	event_set(&iev_ldpe->ev, iev_ldpe->ibuf.fd, iev_ldpe->events,
+	    iev_ldpe->handler, iev_ldpe);
+	event_add(&iev_ldpe->ev, NULL);
 
-	ibuf_lde->events = EV_READ;
-	event_set(&ibuf_lde->ev, ibuf_lde->fd, ibuf_lde->events,
-	    ibuf_lde->handler, ibuf_lde);
-	event_add(&ibuf_lde->ev, NULL);
+	iev_lde->events = EV_READ;
+	event_set(&iev_lde->ev, iev_lde->ibuf.fd, iev_lde->events,
+	    iev_lde->handler, iev_lde);
+	event_add(&iev_lde->ev, NULL);
 
 	if (kr_init(!(ldpd_conf->flags & LDPD_FLAG_NO_LFIB_UPDATE)) == -1)
 		fatalx("kr_init failed");
@@ -313,10 +315,10 @@ ldpd_shutdown(void)
 			fatal("wait");
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
-	msgbuf_clear(&ibuf_ldpe->w);
-	free(ibuf_ldpe);
-	msgbuf_clear(&ibuf_lde->w);
-	free(ibuf_lde);
+	msgbuf_clear(&iev_ldpe->ibuf.w);
+	free(iev_ldpe);
+	msgbuf_clear(&iev_lde->ibuf.w);
+	free(iev_lde);
 	free(ldpd_conf);
 
 	close(ldpd_conf->ldp_session_socket);
@@ -350,7 +352,8 @@ check_child(pid_t pid, const char *pname)
 void
 main_dispatch_ldpe(int fd, short event, void *bula)
 {
-	struct imsgbuf		*ibuf = bula;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg		 imsg;
 	ssize_t			 n;
 	int			 shut = 0;
@@ -408,10 +411,10 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	if (!shut)
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 	else {
 		/* this pipe is dead, so remove the event handler */
-		event_del(&ibuf->ev);
+		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
 }
@@ -420,7 +423,8 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 void
 main_dispatch_lde(int fd, short event, void *bula)
 {
-	struct imsgbuf  *ibuf = bula;
+	struct imsgev  *iev = bula;
+	struct imsgbuf *ibuf = &iev->ibuf;
 	struct imsg	 imsg;
 	ssize_t		 n;
 	int		 count, shut = 0;
@@ -467,10 +471,10 @@ main_dispatch_lde(int fd, short event, void *bula)
 		imsg_free(&imsg);
 	}
 	if (!shut)
-		imsg_event_add(ibuf);
+		imsg_event_add(iev);
 	else {
 		/* this pipe is dead, so remove the event handler */
-		event_del(&ibuf->ev);
+		event_del(&iev->ev);
 		event_loopexit(NULL);
 	}
 }
@@ -478,26 +482,37 @@ main_dispatch_lde(int fd, short event, void *bula)
 void
 main_imsg_compose_ldpe(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	imsg_compose(ibuf_ldpe, type, 0, pid, data, datalen);
+	imsg_compose_event(iev_ldpe, type, 0, pid, -1, data, datalen);
 }
 
 void
 main_imsg_compose_lde(int type, pid_t pid, void *data, u_int16_t datalen)
 {
-	imsg_compose(ibuf_lde, type, 0, pid, data, datalen);
+	imsg_compose_event(iev_lde, type, 0, pid, -1, data, datalen);
 }
 
-/* this needs to be added here so that ldpctl can be used without libevent */
 void
-imsg_event_add(struct imsgbuf *ibuf)
+imsg_event_add(struct imsgev *iev)
 {
-	ibuf->events = EV_READ;
-	if (ibuf->w.queued)
-		ibuf->events |= EV_WRITE;
+	iev->events = EV_READ;
+	if (iev->ibuf.w.queued)
+		iev->events |= EV_WRITE;
 
-	event_del(&ibuf->ev);
-	event_set(&ibuf->ev, ibuf->fd, ibuf->events, ibuf->handler, ibuf);
-	event_add(&ibuf->ev, NULL);
+	event_del(&iev->ev);
+	event_set(&iev->ev, iev->ibuf.fd, iev->events, iev->handler, iev);
+	event_add(&iev->ev, NULL);
+}
+
+int
+imsg_compose_event(struct imsgev *iev, u_int16_t type,
+    u_int32_t peerid, pid_t pid, int fd, void *data, u_int16_t datalen)
+{
+	int	ret;
+
+	if ((ret = imsg_compose(&iev->ibuf, type, peerid,
+	    pid, fd, data, datalen)) != -1)
+		imsg_event_add(iev);
+	return (ret);
 }
 
 /*
@@ -537,9 +552,9 @@ ldp_reload(void)
 int
 ldp_sendboth(enum imsg_type type, void *buf, u_int16_t len)
 {
-	if (imsg_compose(ibuf_ldpe, type, 0, 0, buf, len) == -1)
+	if (imsg_compose_event(iev_ldpe, type, 0, 0, -1, buf, len) == -1)
 		return (-1);
-	if (imsg_compose(ibuf_lde, type, 0, 0, buf, len) == -1)
+	if (imsg_compose_event(iev_lde, type, 0, 0, -1, buf, len) == -1)
 		return (-1);
 	return (0);
 }
