@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.460 2009/06/06 00:35:00 pirofti Exp $
+#	$OpenBSD: files,v 1.461 2009/06/06 00:49:08 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -1042,6 +1042,10 @@ file compat/common/uipc_syscalls_43.c	!small_kernel
 file compat/common/vfs_syscalls_43.c	!small_kernel
 file compat/common/vm_43.c		!small_kernel
 
+# libx86emu
+file dev/x86emu/x86emu.c		vga_post
+file dev/x86emu/x86emu_util.c		vga_post
+
 # libkern MI components
 file lib/libkern/mcount.c		gprof
 file lib/libkern/getsn.c
@@ -1078,6 +1082,3 @@ file lib/libkern/arch/${MACHINE_ARCH}/skpc.S | lib/libkern/skpc.c
 file lib/libkern/arch/${MACHINE_ARCH}/htonl.S | lib/libkern/htonl.c
 file lib/libkern/arch/${MACHINE_ARCH}/htons.S | lib/libkern/htons.c
 file lib/libkern/arch/${MACHINE_ARCH}/strncasecmp.S | lib/libkern/strncasecmp.c
-# libx86emu
-file lib/libkern/x86emu.c !small_kernel
-file lib/libkern/x86emu_util.c !small_kernel

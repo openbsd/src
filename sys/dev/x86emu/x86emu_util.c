@@ -35,8 +35,8 @@
 #include <sys/param.h>
 #include <sys/endian.h>
 
-#include <lib/libkern/x86emu.h>
-#include <lib/libkern/x86emu_regs.h>
+#include <dev/x86emu/x86emu.h>
+#include <dev/x86emu/x86emu_regs.h>
 
 
 /****************************************************************************

@@ -1,5 +1,5 @@
 /* $NetBSD: vga_post.c,v 1.12 2009/03/15 21:32:36 cegger Exp $ */
-/* $OpenBSD: vga_post.c,v 1.1 2009/06/06 00:35:00 pirofti Exp $ */
+/* $OpenBSD: vga_post.c,v 1.2 2009/06/06 00:49:08 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -42,8 +42,8 @@
 
 #include <machine/vga_post.h>
 
-#include <lib/libkern/x86emu.h>
-#include <lib/libkern/x86emu_regs.h>
+#include <dev/x86emu/x86emu.h>
+#include <dev/x86emu/x86emu_regs.h>
 
 #define	BASE_MEMORY	65536	/* How much memory to allocate in Real Mode */
 
