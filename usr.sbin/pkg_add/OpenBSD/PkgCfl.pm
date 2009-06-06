@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.26 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.27 2009/06/06 10:53:38 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -115,10 +115,14 @@ sub find_all
 
 	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);
 	$plist->{conflicts} = $l;
+	my @first = $l->conflicts_with(installed_packages());
+	# XXX optimization
+	if (@first > 0 && !$state->{allow_replacing}) {
+		return @first;
+	}
 
 	my @conflicts = find($pkgname, $state);
-	push(@conflicts, $l->conflicts_with(installed_packages()));
-	return @conflicts;
+	return (@conflicts, @first);
 }
 
 1;
