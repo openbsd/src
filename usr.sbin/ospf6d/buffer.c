@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.2 2008/10/03 15:20:29 eric Exp $ */
+/*	$OpenBSD: buffer.c,v 1.3 2009/06/06 09:02:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,17 +16,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/queue.h>
+#include <sys/socket.h>
 #include <sys/uio.h>
 
 #include <errno.h>
-#include <limits.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "ospf6d.h"
+#include "imsg.h"
 
 int	buf_realloc(struct buf *, size_t);
 void	buf_enqueue(struct msgbuf *, struct buf *);
@@ -44,6 +44,7 @@ buf_open(size_t len)
 		return (NULL);
 	}
 	buf->size = buf->max = len;
+	buf->fd = -1;
 
 	return (buf);
 }
@@ -86,7 +87,7 @@ buf_realloc(struct buf *buf, size_t len)
 }
 
 int
-buf_add(struct buf *buf, void *data, size_t len)
+buf_add(struct buf *buf, const void *data, size_t len)
 {
 	if (buf->wpos + len > buf->size)
 		if (buf_realloc(buf, len) == -1)
@@ -121,11 +122,67 @@ buf_seek(struct buf *buf, size_t pos, size_t len)
 	return (buf->buf + pos);
 }
 
-int
+size_t
+buf_size(struct buf *buf)
+{
+	return (buf->wpos);
+}
+
+size_t
+buf_left(struct buf *buf)
+{
+	return (buf->max - buf->wpos);
+}
+
+void
 buf_close(struct msgbuf *msgbuf, struct buf *buf)
 {
 	buf_enqueue(msgbuf, buf);
-	return (1);
+}
+
+int
+buf_write(struct msgbuf *msgbuf)
+{
+	struct iovec	 iov[IOV_MAX];
+	struct buf	*buf, *next;
+	unsigned int	 i = 0;
+	ssize_t	n;
+
+	bzero(&iov, sizeof(iov));
+	TAILQ_FOREACH(buf, &msgbuf->bufs, entry) {
+		if (i >= IOV_MAX)
+			break;
+		iov[i].iov_base = buf->buf + buf->rpos;
+		iov[i].iov_len = buf->size - buf->rpos;
+		i++;
+	}
+
+	if ((n = writev(msgbuf->fd, iov, i)) == -1) {
+		if (errno == EAGAIN || errno == ENOBUFS ||
+		    errno == EINTR)	/* try later */
+			return (0);
+		else
+			return (-1);
+	}
+
+	if (n == 0) {			/* connection closed */
+		errno = 0;
+		return (-2);
+	}
+
+	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
+	    buf = next) {
+		next = TAILQ_NEXT(buf, entry);
+		if (buf->rpos + n >= buf->size) {
+			n -= buf->size - buf->rpos;
+			buf_dequeue(msgbuf, buf);
+		} else {
+			buf->rpos += n;
+			n = 0;
+		}
+	}
+
+	return (0);
 }
 
 void
@@ -160,6 +217,11 @@ msgbuf_write(struct msgbuf *msgbuf)
 	unsigned int	 i = 0;
 	ssize_t		 n;
 	struct msghdr	 msg;
+	struct cmsghdr	*cmsg;
+	union {
+		struct cmsghdr	hdr;
+		char		buf[CMSG_SPACE(sizeof(int))];
+	} cmsgbuf;
 
 	bzero(&iov, sizeof(iov));
 	bzero(&msg, sizeof(msg));
@@ -167,12 +229,24 @@ msgbuf_write(struct msgbuf *msgbuf)
 		if (i >= IOV_MAX)
 			break;
 		iov[i].iov_base = buf->buf + buf->rpos;
-		iov[i].iov_len = buf->size - buf->rpos;
+		iov[i].iov_len = buf->wpos - buf->rpos;
 		i++;
+		if (buf->fd != -1)
+			break;
 	}
 
 	msg.msg_iov = iov;
 	msg.msg_iovlen = i;
+
+	if (buf != NULL && buf->fd != -1) {
+		msg.msg_control = (caddr_t)&cmsgbuf.buf;
+		msg.msg_controllen = sizeof(cmsgbuf.buf);
+		cmsg = CMSG_FIRSTHDR(&msg);
+		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+		cmsg->cmsg_level = SOL_SOCKET;
+		cmsg->cmsg_type = SCM_RIGHTS;
+		*(int *)CMSG_DATA(cmsg) = buf->fd;
+	}
 
 	if ((n = sendmsg(msgbuf->fd, &msg, 0)) == -1) {
 		if (errno == EAGAIN || errno == ENOBUFS ||
@@ -187,11 +261,20 @@ msgbuf_write(struct msgbuf *msgbuf)
 		return (-2);
 	}
 
+	/*
+	 * assumption: fd got sent if sendmsg sent anything
+	 * this works because fds are passed one at a time
+	 */
+	if (buf != NULL && buf->fd != -1) {
+		close(buf->fd);
+		buf->fd = -1;
+	}
+
 	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
 	    buf = next) {
 		next = TAILQ_NEXT(buf, entry);
-		if (buf->rpos + n >= buf->size) {
-			n -= buf->size - buf->rpos;
+		if (buf->rpos + n >= buf->wpos) {
+			n -= buf->wpos - buf->rpos;
 			buf_dequeue(msgbuf, buf);
 		} else {
 			buf->rpos += n;
@@ -213,6 +296,10 @@ void
 buf_dequeue(struct msgbuf *msgbuf, struct buf *buf)
 {
 	TAILQ_REMOVE(&msgbuf->bufs, buf, entry);
+
+	if (buf->fd != -1)
+		close(buf->fd);
+
 	msgbuf->queued--;
 	buf_free(buf);
 }
