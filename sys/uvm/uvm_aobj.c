@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.41 2009/06/02 23:00:19 oga Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.42 2009/06/06 17:46:44 art Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -790,10 +790,8 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 				continue;
 
 			uvm_lock_pageq();
-			/* zap all mappings for the page. */
-			pmap_page_protect(pp, VM_PROT_NONE);
 
-			/* ...and deactivate the page. */
+			/* Deactivate the page. */
 			uvm_pagedeactivate(pp);
 			uvm_unlock_pageq();
 
@@ -1352,9 +1350,6 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	 * deactivate the page (to put it on a page queue).
 	 */
 	pmap_clear_reference(pg);
-#ifndef UBC
-	pmap_page_protect(pg, VM_PROT_NONE);
-#endif
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.85 2009/06/03 04:56:54 ariane Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.86 2009/06/06 17:46:44 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -1344,6 +1344,8 @@ uvm_pageunwire(struct vm_page *pg)
 void
 uvm_pagedeactivate(struct vm_page *pg)
 {
+	pmap_page_protect(pg, VM_PROT_NONE);
+
 	if (pg->pg_flags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
 		atomic_clearbits_int(&pg->pg_flags, PQ_ACTIVE);

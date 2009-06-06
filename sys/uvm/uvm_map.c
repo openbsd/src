@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.112 2009/06/02 23:00:19 oga Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.113 2009/06/06 17:46:44 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3058,15 +3058,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 				}
 				KASSERT(pg->uanon == anon);
 
-#ifdef UBC
-				/* ...and deactivate the page. */
-				pmap_clear_reference(pg);
-#else
-				/* zap all mappings for the page. */
-				pmap_page_protect(pg, VM_PROT_NONE);
-
-				/* ...and deactivate the page. */
-#endif
+				/* Deactivate the page. */
 				uvm_pagedeactivate(pg);
 
 				uvm_unlock_pageq();
