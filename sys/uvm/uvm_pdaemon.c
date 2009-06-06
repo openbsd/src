@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.46 2009/06/05 04:29:14 beck Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.47 2009/06/06 23:35:08 art Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -1044,7 +1044,6 @@ uvmpd_scan(void)
 		 */
 
 		if (inactive_shortage > 0) {
-			pmap_page_protect(p, VM_PROT_NONE);
 			/* no need to check wire_count as pg is "active" */
 			uvm_pagedeactivate(p);
 			uvmexp.pddeact++;
