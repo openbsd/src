@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.2 2009/06/04 00:20:53 jsg Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.3 2009/06/07 02:01:54 oga Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -776,6 +776,7 @@ uvm_pmr_freepages(struct vm_page *pg, psize_t count)
 	uvm_lock_fpageq();
 
 	for (i = 0; i < count; i++) {
+		KASSERT((pg->pg_flags & PG_DEV) == 0);
 		atomic_clearbits_int(&pg[i].pg_flags, pg[i].pg_flags);
 		atomic_setbits_int(&pg[i].pg_flags, PQ_FREE);
 	}
@@ -806,6 +807,7 @@ uvm_pmr_freepageq(struct pglist *pgl)
 	struct vm_page *pg;
 
 	TAILQ_FOREACH(pg, pgl, pageq) {
+		KASSERT((pg->pg_flags & PG_DEV) == 0);
 		atomic_clearbits_int(&pg->pg_flags, pg->pg_flags);
 		atomic_setbits_int(&pg->pg_flags, PQ_FREE);
 	}
