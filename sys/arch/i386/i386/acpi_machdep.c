@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.21 2009/06/06 00:21:53 mlarkin Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.22 2009/06/07 16:58:28 mlarkin Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -38,6 +38,7 @@
 #include <dev/acpi/acpidev.h>
 
 #include "apm.h"
+#include "isa.h"
 #include "ioapic.h"
 #include "lapic.h"
 
@@ -254,16 +255,20 @@ acpi_sleep_machdep(struct acpi_softc *sc, int state)
 	 * returning to the location immediately following the
 	 * last call instruction - after the call to acpi_savecpu.
 	 */
-
-	npxinit(&cpu_info_primary);
+	
 #if NISA > 0
 	isa_defaultirq();
 #endif
 	intr_calculatemasks();
+
 #if NLAPIC > 0
 	lapic_enable();
 	lapic_initclocks();
+	lapic_set_lvt();
 #endif
+
+	npxinit(&cpu_info_primary);
+
 #if NIOAPIC > 0
 	ioapic_enable();
 #endif
