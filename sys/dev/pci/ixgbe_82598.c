@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_82598.c,v 1.3 2008/06/08 21:15:34 reyk Exp $	*/
+/*	$OpenBSD: ixgbe_82598.c,v 1.4 2009/06/07 13:24:57 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -704,7 +704,7 @@ int32_t ixgbe_setup_fiber_serdes_link_82598(struct ixgbe_hw *hw)
 		break;
 	default:
 		DEBUGOUT("Flow control param set incorrectly\n");
-		ret_val = -IXGBE_ERR_CONFIG;
+		ret_val = IXGBE_ERR_CONFIG;
 		goto out;
 		break;
 	}
