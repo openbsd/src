@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.61 2009/06/06 04:46:26 ray Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.62 2009/06/07 15:36:45 ray Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -57,7 +57,7 @@ const char *comment[] = {
 struct passwd *pw;
 char os[BUFSIZ], rel[BUFSIZ], mach[BUFSIZ], details[BUFSIZ];
 const char *tmpdir;
-char *fullname, *tmppath;
+char *tmppath;
 int Dflag, Pflag, wantcleanup;
 
 __dead void
@@ -343,46 +343,12 @@ sendmail(const char *pathname)
 void
 init(void)
 {
-	size_t amp, len, gecoslen, namelen;
+	size_t len;
 	int sysname[2];
-	char ch, *cp;
+	char *cp;
 
 	if ((pw = getpwuid(getuid())) == NULL)
 		err(1, "getpwuid");
-	namelen = strlen(pw->pw_name);
-
-	/* Count number of '&'. */
-	for (amp = 0, cp = pw->pw_gecos; *cp && *cp != ','; ++cp)
-		if (*cp == '&')
-			++amp;
-
-	/* Truncate gecos to full name. */
-	gecoslen = cp - pw->pw_gecos;
-	pw->pw_gecos[gecoslen] = '\0';
-
-	/* Expanded str = orig str - '&' chars + concatenated logins. */
-	len = gecoslen - amp + (amp * namelen) + 1;
-	if ((fullname = malloc(len)) == NULL)
-		err(1, "malloc");
-
-	/* Upper case first char of login. */
-	ch = pw->pw_name[0];
-	pw->pw_name[0] = toupper((unsigned char)pw->pw_name[0]);
-
-	cp = pw->pw_gecos;
-	fullname[0] = '\0';
-	while (cp != NULL) {
-		char *token;
-
-		token = strsep(&cp, "&");
-		if (token != pw->pw_gecos &&
-		    strlcat(fullname, pw->pw_name, len) >= len)
-			errx(1, "truncated string");
-		if (strlcat(fullname, token, len) >= len)
-			errx(1, "truncated string");
-	}
-	/* Restore case of first char of login. */
-	pw->pw_name[0] = ch;
 
 	sysname[0] = CTL_KERN;
 	sysname[1] = KERN_OSTYPE;
