@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.4 2009/04/20 00:42:06 oga Exp $	*/
+/*      $OpenBSD: bus_dma.c,v 1.5 2009/06/07 16:02:39 miod Exp $	*/
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -468,18 +468,8 @@ bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
         int *rsegs;
         int flags;
 {
-        paddr_t avail_start = (paddr_t)-1, avail_end = 0;
-        int bank;
-
-        for (bank = 0; bank < vm_nphysseg; bank++) {
-                if (avail_start > vm_physmem[bank].avail_start << PGSHIFT)
-                        avail_start = vm_physmem[bank].avail_start << PGSHIFT;
-                if (avail_end < vm_physmem[bank].avail_end << PGSHIFT)
-                        avail_end = vm_physmem[bank].avail_end << PGSHIFT;
-        }
-
         return _bus_dmamem_alloc_range(t, size, alignment, boundary, segs,
-            nsegs, rsegs, flags, avail_start, avail_end - PAGE_SIZE);
+            nsegs, rsegs, flags, 0, -1);
 }
 
 /*
