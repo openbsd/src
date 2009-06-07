@@ -4784,6 +4784,7 @@
 ./usr/share/man/cat3/kvm_getenvv.0
 ./usr/share/man/cat3/kvm_getenvv2.0
 ./usr/share/man/cat3/kvm_geterr.0
+./usr/share/man/cat3/kvm_getfile2.0
 ./usr/share/man/cat3/kvm_getfiles.0
 ./usr/share/man/cat3/kvm_getloadavg.0
 ./usr/share/man/cat3/kvm_getproc2.0

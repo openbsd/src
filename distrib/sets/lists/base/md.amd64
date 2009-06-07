@@ -96,7 +96,7 @@
 ./usr/lib/libiberty.so.9.0
 ./usr/lib/libkafs.so.16.0
 ./usr/lib/libkrb5.so.16.0
-./usr/lib/libkvm.so.9.0
+./usr/lib/libkvm.so.9.1
 ./usr/lib/libm.so.5.0
 ./usr/lib/libmenu.so.3.0
 ./usr/lib/libmilter.so.2.1
