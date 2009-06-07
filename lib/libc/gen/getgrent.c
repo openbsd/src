@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.31 2009/06/07 00:02:48 schwarze Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.32 2009/06/07 03:52:54 schwarze Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -72,8 +72,7 @@ static struct group *getgrgid_gs(gid_t, struct group *,
 
 #ifdef YP
 static struct _ypexclude *__ypexhead = NULL;
-enum _ypmode { YPMODE_NONE, YPMODE_FULL, YPMODE_NAME };
-static enum _ypmode __ypmode;
+static int	__ypmode = 0;
 static char	*__ypcurrent, *__ypdomain;
 static int	__ypcurrentlen;
 #endif
@@ -196,7 +195,7 @@ start_gr(void)
 	if (_gr_fp) {
 		rewind(_gr_fp);
 #ifdef YP
-		__ypmode = YPMODE_NONE;
+		__ypmode = 0;
 		if (__ypcurrent)
 			free(__ypcurrent);
 		__ypcurrent = NULL;
@@ -239,7 +238,7 @@ endgrent_basic(void)
 		(void)fclose(_gr_fp);
 		_gr_fp = NULL;
 #ifdef YP
-		__ypmode = YPMODE_NONE;
+		__ypmode = 0;
 		if (__ypcurrent)
 			free(__ypcurrent);
 		__ypcurrent = NULL;
@@ -280,10 +279,7 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 
 	for (;;) {
 #ifdef YP
-		char *grname;
-
-		switch (__ypmode) {
-		case YPMODE_FULL:
+		if (__ypmode) {
 			if (__ypcurrent) {
 				r = yp_next(__ypdomain, "group.byname",
 				    __ypcurrent, __ypcurrentlen,
@@ -291,7 +287,7 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 				free(__ypcurrent);
 				if (r) {
 					__ypcurrent = NULL;
-					__ypmode = YPMODE_NONE;
+					__ypmode = 0;
 					free(data);
 					continue;
 				}
@@ -304,30 +300,13 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 				    &__ypcurrent, &__ypcurrentlen,
 				    &data, &datalen);
 				if (r) {
-					__ypmode = YPMODE_NONE;
+					__ypmode = 0;
 					free(data);
 					continue;
 				}
 				bcopy(data, line, datalen);
 				free(data);
 			}
-			break;
-		case YPMODE_NAME:
-				r = yp_match(__ypdomain, "group.byname",
-				    grname, strlen(grname),
-				    &data, &datalen);
-				__ypmode = YPMODE_NONE;
-				if (r) {
-					free(data);
-					continue;
-				}
-				bcopy(data, line, datalen);
-				free(data);
-			break;
-		case YPMODE_NONE:
-			break;
-		}
-		if (__ypmode != YPMODE_NONE) {
 			line[datalen] = '\0';
 			bp = line;
 			goto parse;
@@ -369,7 +348,7 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 					return (NULL);
 				}
 				if (!search) {
-					__ypmode = YPMODE_FULL;
+					__ypmode = 1;
 					continue;
 				}
 				if (name) {
@@ -404,12 +383,18 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 					p_gr->gr_gid = gid;
 				goto found_it;
 			default:
-				grname = strsep(&bp, ":\n") + 1;
-				if (search && name && strcmp(grname, name) ||
-				    __ypexclude_is(&__ypexhead, grname))
+				bp = strsep(&bp, ":\n") + 1;
+				if (search && name && strcmp(bp, name) ||
+				    __ypexclude_is(&__ypexhead, bp))
 					continue;
-				__ypmode = YPMODE_NAME;
-				continue;
+				r = yp_match(__ypdomain, "group.byname",
+				    bp, strlen(bp), &data, &datalen);
+				if (r)
+					continue;
+				bcopy(data, line, datalen);
+				free(data);
+				line[datalen] = '\0';
+				bp = line;
 			}
 		} else if (line[0] == '-') {
 			if(!__ypexclude_add(&__ypexhead,
@@ -426,8 +411,7 @@ parse:
 		if (search && name && strcmp(p_gr->gr_name, name))
 			continue;
 #ifdef YP
-		if (__ypmode == YPMODE_FULL &&
-		    __ypexclude_is(&__ypexhead, p_gr->gr_name))
+		if (__ypmode && __ypexclude_is(&__ypexhead, p_gr->gr_name))
 			continue;
 #endif
 		p_gr->gr_passwd = strsep(&bp, ":\n");
