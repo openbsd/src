@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.18 2009/05/10 15:04:48 oga Exp $	*/
+/*	$OpenBSD: bus.h,v 1.19 2009/06/07 02:30:34 oga Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -451,6 +451,13 @@ void	bus_space_barrier(bus_space_tag_t, bus_space_handle_t,
 #define	BUS_DMA_ZERO		0x1000	/* zero memory in dmamem_alloc */
 #define	BUS_DMA_SG		0x2000	/* Internal. memory is for SG map */
 
+/* types for _dm_buftype */
+#define	BUS_BUFTYPE_INVALID	0
+#define	BUS_BUFTYPE_LINEAR	1
+#define	BUS_BUFTYPE_MBUF	2
+#define	BUS_BUFTYPE_UIO		3
+#define	BUS_BUFTYPE_RAW		4
+
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct proc;
@@ -571,6 +578,11 @@ struct bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
+
+	void		*_dm_origbuf;	/* pointer to original data */
+	int		_dm_buftype;	/* type of data */
+	/* XXX do we REALLY need the proc stuff */
+	struct proc	*_dm_proc;	/* proc that owns the mapping */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
 

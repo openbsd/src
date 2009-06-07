@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.27 2009/04/21 17:05:29 oga Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.28 2009/06/07 02:30:34 oga Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -155,8 +155,6 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
-	map->dm_mapsize = 0;		/* no valid mappings */
-	map->dm_nsegs = 0;
 
 	*dmamp = map;
 	return (0);
@@ -199,6 +197,9 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_origbuf = buf;
+		map->_dm_buftype = BUS_BUFTYPE_LINEAR;
+		map->_dm_proc = p;
 	}
 	return (error);
 }
@@ -241,6 +242,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_origbuf = m0;
+		map->_dm_buftype = BUS_BUFTYPE_MBUF;
 	}
 	return (error);
 }
@@ -296,6 +299,8 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_origbuf = uio;
+		map->_dm_buftype = BUS_BUFTYPE_UIO;
 	}
 	return (error);
 }
@@ -380,6 +385,8 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 
 	map->dm_mapsize = mapsize;
 	map->dm_nsegs = seg + 1;
+	map->_dm_origbuf = segs;
+	map->_dm_buftype = BUS_BUFTYPE_RAW;
 	return (0);
 }
 
@@ -397,6 +404,9 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	map->_dm_buftype = BUS_BUFTYPE_INVALID;
+	map->_dm_origbuf = NULL;
+	map->_dm_proc = NULL;
 }
 
 /*

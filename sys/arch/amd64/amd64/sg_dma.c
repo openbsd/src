@@ -1,4 +1,4 @@
-/*	$OpenBSD: sg_dma.c,v 1.3 2009/06/06 05:26:28 oga Exp $	*/
+/*	$OpenBSD: sg_dma.c,v 1.4 2009/06/07 02:30:34 oga Exp $	*/
 /*
  * Copyright (c) 2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -338,6 +338,10 @@ sg_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		spm->spm_start = 0;
 		spm->spm_size = 0;
 		mtx_leave(&is->sg_mtx);
+	} else {
+		map->_dm_origbuf = buf;
+		map->_dm_buftype = BUS_BUFTYPE_LINEAR;
+		map->_dm_proc = p;
 	}
 
 	return (err);
@@ -357,7 +361,7 @@ sg_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *mb,
 	 */
 	bus_dma_segment_t	segs[MAX_DMA_SEGS];
 	size_t			len;
-	int			i;
+	int			i, err;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -407,7 +411,13 @@ sg_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *mb,
 		}
 	}
 
-	return (sg_dmamap_load_raw(t, map, segs, i, (bus_size_t)len, flags));
+	err = sg_dmamap_load_raw(t, map, segs, i, (bus_size_t)len, flags);
+
+	if (err == 0) {
+		map->_dm_origbuf = mb;
+		map->_dm_buftype = BUS_BUFTYPE_MBUF;
+	}
+	return (err);
 }
 
 /*
@@ -424,7 +434,7 @@ sg_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	 */
 	bus_dma_segment_t	segs[MAX_DMA_SEGS];
 	size_t			len;
-	int			i, j;
+	int			i, j, err;
 
 	/*
 	 * Make sure that on errror we return "no valid mappings".
@@ -475,7 +485,13 @@ sg_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 
 	}
 
-	return (sg_dmamap_load_raw(t, map, segs, i, (bus_size_t)len, flags));
+	err = sg_dmamap_load_raw(t, map, segs, i, (bus_size_t)len, flags);
+
+	if (err == 0) {
+		map->_dm_origbuf = uio;
+		map->_dm_buftype = BUS_BUFTYPE_UIO;
+	}
+	return (err);
 }
 
 /*
@@ -587,6 +603,10 @@ sg_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		spm->spm_start = 0;
 		spm->spm_size = 0;
 		mtx_leave(&is->sg_mtx);
+	} else {
+		/* This will be overwritten if mbuf or uio called us */
+		map->_dm_origbuf = segs;
+		map->_dm_buftype = BUS_BUFTYPE_RAW;
 	}
 
 	return (err);
