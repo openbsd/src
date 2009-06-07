@@ -1,11 +1,8 @@
-#	$OpenBSD: Makefile,v 1.8 2001/06/27 06:16:49 art Exp $
+#	$OpenBSD: Makefile,v 1.9 2009/06/07 03:10:09 millert Exp $
 
 PROG=	fstat
 DPADD=	${LIBKVM}
-SRCS=	fstat.c isofs.c
 LDADD=	-lkvm
-BINGRP=	kmem
-BINMODE=2555
 
 CFLAGS+=-DINET6
 
