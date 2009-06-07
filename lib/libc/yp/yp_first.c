@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_first.c,v 1.8 2005/08/05 13:02:16 espie Exp $ */
+/*	$OpenBSD: yp_first.c,v 1.9 2009/06/07 03:33:36 schwarze Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -74,16 +74,14 @@ again:
 	}
 	if (!(r = ypprot_err(yprkv.stat))) {
 		*outkeylen = yprkv.key.keydat_len;
-		if ((*outkey = malloc(*outkeylen + 1)) == NULL)
+		*outvallen = yprkv.val.valdat_len;
+		if ((*outkey = malloc(*outkeylen + 1)) == NULL ||
+		    (*outval = malloc(*outvallen + 1)) == NULL) {
+			free(*outkey);
 			r = YPERR_RESRC;
-		else {
+		} else {
 			(void)memcpy(*outkey, yprkv.key.keydat_val, *outkeylen);
 			(*outkey)[*outkeylen] = '\0';
-		}
-		*outvallen = yprkv.val.valdat_len;
-		if ((*outval = malloc(*outvallen + 1)) == NULL)
-			r = YPERR_RESRC;
-		else {
 			(void)memcpy(*outval, yprkv.val.valdat_val, *outvallen);
 			(*outval)[*outvallen] = '\0';
 		}
