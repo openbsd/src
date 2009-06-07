@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.1 2009/06/07 03:09:34 millert Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.2 2009/06/07 10:44:00 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,7 +46,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.1 2009/06/07 03:09:34 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.2 2009/06/07 10:44:00 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -58,12 +58,12 @@ static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.1 2009/06/07 03:09:34 millert Ex
 
 #include <sys/param.h>
 #define _KERNEL
-#include <machine/cpu.h>
 #include <sys/ucred.h>
-#include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/mount.h>
 #include <sys/uio.h>
+#include <sys/selinfo.h>
+#include <sys/proc.h>
 #include <dev/systrace.h>
 #undef _KERNEL
 #include <sys/vnode.h>
