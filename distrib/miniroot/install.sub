@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.574 2009/06/05 05:43:42 halex Exp $
+#	$OpenBSD: install.sub,v 1.575 2009/06/07 03:52:29 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1817,6 +1817,13 @@ export EDITOR COLUMNS
 cd /
 [[ -f /etc/fstab ]] && umount -af 1>/dev/null 2>&1
 umount /mnt 1>/dev/null 2>&1
+
+cat <<__EOT
+At any prompt except password prompts you can escape to a shell by
+typing '!'. Default answers are shown in []'s and are selected by
+pressing RETURN.  You can exit this program at any time by pressing
+Control-C, but this can leave your system in an inconsistent state.
+__EOT
 
 # Configure the terminal and keyboard.
 set_term

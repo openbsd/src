@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.11 2009/06/04 06:41:53 krw Exp $
+#	$OpenBSD: dot.profile,v 1.12 2009/06/07 03:52:29 krw Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -57,21 +57,11 @@ stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T
 cat <<__EOT
 
 Welcome to the $OBSD installation program.
-
-This program can install $OBSD, or upgrade an existing
-OpenBSD installation.
-
-At any prompt except password prompts you can escape to a shell by
-typing '!'. Default answers are shown in []'s and are selected by
-pressing RETURN.  At any time you can exit this program by pressing
-Control-C, but exiting during an $MODE can leave your system in an
-inconsistent state.
-
 __EOT
 while :; do
 	read REPLY?'(I)nstall, (U)pgrade or (S)hell? '
 	case $REPLY in
-	i*|I*)	echo "\nCool! Let's get to it."
+	i*|I*)	echo "\nCool! Let's get to it.\n"
 		/install && break
 		;;
 	u*|U*)	cat <<__EOT
