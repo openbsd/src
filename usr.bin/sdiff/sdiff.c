@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.23 2007/09/02 15:19:34 deraadt Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.24 2009/06/07 12:39:40 ray Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -1003,7 +1003,6 @@ printd(FILE *file1, size_t file1end)
 
 	/* Print out lines file1ln to line2. */
 	for (; file1ln <= file1end; ++file1ln) {
-		/* XXX - Why can't this handle stdin? */
 		if (!(line1 = xfgets(file1)))
 			errx(2, "file1 ended early in delete");
 		enqueue(line1, '<', NULL);
