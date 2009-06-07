@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.2 2009/06/07 10:44:00 millert Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.3 2009/06/07 21:35:11 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,7 +46,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.2 2009/06/07 10:44:00 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.3 2009/06/07 21:35:11 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -56,14 +56,15 @@ static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.2 2009/06/07 10:44:00 millert Ex
  * most other applications are interested only in open/close/read/nlist).
  */
 
+#define __need_process
+
 #include <sys/param.h>
-#define _KERNEL
+#include <sys/uio.h>
 #include <sys/ucred.h>
+#include <sys/proc.h>
+#define _KERNEL
 #include <sys/file.h>
 #include <sys/mount.h>
-#include <sys/uio.h>
-#include <sys/selinfo.h>
-#include <sys/proc.h>
 #include <dev/systrace.h>
 #undef _KERNEL
 #include <sys/vnode.h>
@@ -125,6 +126,8 @@ static struct kinfo_file2 *kvm_deadfile2_byid(kvm_t *, int, int,
 static int fill_file2(kvm_t *, struct kinfo_file2 *, struct file *,
     struct vnode *, struct proc *, int);
 static int filestat(kvm_t *, struct kinfo_file2 *, struct vnode *);
+
+LIST_HEAD(proclist, proc);
 
 struct kinfo_file2 *
 kvm_getfile2(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
