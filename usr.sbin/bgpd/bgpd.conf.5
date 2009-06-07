@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.93 2009/06/04 01:20:44 sthen Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.94 2009/06/07 00:31:22 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2009 $
+.Dd $Mdocdate: June 7 2009 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -142,6 +142,7 @@ The default is 120 seconds.
 .Pp
 .It Xo
 .Ic dump
+.Op Ic rib Ar name
 .Pq Ic table Ns \&| Ns Ic table-mp
 .Ar file Op Ar timeout
 .Xc
@@ -156,7 +157,8 @@ Dump the RIB, a.k.a. the
 and all BGP messages in Multi-threaded Routing Toolkit (MRT) format.
 Dumping the RIB is normally an expensive operation,
 but it should not influence the session handling.
-Excessive dumping may result in delayed update processing.
+It is possible to dump alternate RIB with the use of
+.Ar name .
 .Pp
 For example, the following will dump the entire table to the
 .Xr strftime 3 Ns -expanded
@@ -305,6 +307,21 @@ The default is
 where the
 .Em MED
 is only compared between peers belonging to the same AS.
+.Pp
+.It Xo
+.Ic rde
+.Ic rib Ar name
+.Op Ic no Ic evaluate
+.Xc
+Creat an additional RIB named
+.Ar name .
+It is possible to disable the decision process per RIB with the
+.Ic no Ic evaluate
+flag.
+.Ic Adj-RIB-In
+and
+.Ic Loc-RIB
+are created automaticaly and used as default.
 .Pp
 .It Xo
 .Ic rde
@@ -680,6 +697,9 @@ Do not attempt to actively open a TCP connection to the neighbor system.
 .Pp
 .It Ic remote-as Ar as-number
 Set the AS number of the remote system.
+.Pp
+.It rib .Ar name
+Bind the neighbor to the specified RIB.
 .Pp
 .It Ic route-reflector Op Ar address
 Act as an RFC 2796
