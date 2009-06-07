@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.31 2009/06/06 15:37:28 ray Exp $	*/
+/*	$OpenBSD: diff.h,v 1.32 2009/06/07 08:39:13 ray Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -85,7 +85,7 @@ struct excludes {
 };
 
 extern int	lflag, Nflag, Pflag, rflag, sflag, Tflag;
-extern int	format, context, status;
+extern int	diff_format, diff_context, status;
 extern char	*start, *ifdefname, *diffargs, *label[2], *ignore_pats;
 extern struct	stat stb1, stb2;
 extern struct	excludes *excludes_list;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.154 2009/06/06 14:17:27 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.155 2009/06/07 08:39:13 ray Exp $	*/
 /*
  * Copyright (c) 2008 Tobias Stoeckmann <tobias@openbsd.org>
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
@@ -566,7 +566,7 @@ cvs_diff_local(struct cvs_file *cf)
 			fatal("cannot open %s", CVS_PATH_DEVNULL);
 	}
 
-	if (cvs_diffreg(p1 != NULL ? cf->file_path : CVS_PATH_DEVNULL,
+	if (diffreg(p1 != NULL ? cf->file_path : CVS_PATH_DEVNULL,
 	    p2 != NULL ? cf->file_path : CVS_PATH_DEVNULL, fd1, fd2, NULL,
 	    dflags) == D_ERROR)
 		fatal("cvs_diff_local: failed to get RCS patch");

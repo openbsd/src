@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.19 2009/06/06 14:17:27 ray Exp $	*/
+/*	$OpenBSD: diff.h,v 1.20 2009/06/07 08:39:13 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -89,7 +89,7 @@
 #define D_IGNOREBLANKS	0x40	/* Ignore white space changes */
 
 /*
- * Status values for cvs_diffreg() return values
+ * Status values for diffreg() return values
  */
 #define	D_SAME		0	/* Files are the same */
 #define	D_DIFFER	1	/* Files are different */
@@ -104,7 +104,7 @@
 
 void		cvs_merge_file(struct cvs_file *, int);
 void		diff_output(const char *, ...);
-int		cvs_diffreg(const char *, const char *, int, int, BUF *, int);
+int		diffreg(const char *, const char *, int, int, BUF *, int);
 int		ed_patch_lines(struct cvs_lines *, struct cvs_lines *);
 
 extern int       diff_format;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.99 2009/06/06 14:17:27 ray Exp $	*/
+/*	$OpenBSD: import.c,v 1.100 2009/06/07 08:39:13 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -473,7 +473,7 @@ import_get_rcsdiff(struct cvs_file *cf, RCSNUM *rev)
 	fd2 = rcs_rev_write_stmp(cf->file_rcs, rev, p2, RCS_KWEXP_NONE);
 
 	diff_format = D_RCSDIFF;
-	if (cvs_diffreg(p2, p1, fd2, fd1, b2, D_FORCEASCII) == D_ERROR)
+	if (diffreg(p2, p1, fd2, fd1, b2, D_FORCEASCII) == D_ERROR)
 		fatal("import_get_rcsdiff: failed to get RCS patch");
 
 	close(fd1);

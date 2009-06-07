@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.290 2009/06/06 14:17:27 ray Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.291 2009/06/07 08:39:13 ray Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1360,7 +1360,7 @@ rcs_rev_remove(RCSFILE *rf, RCSNUM *rev)
 		fd2 = rcs_rev_write_stmp(rf, prevrdp->rd_num, path_tmp2, 0);
 
 		diff_format = D_RCSDIFF;
-		if (cvs_diffreg(path_tmp1, path_tmp2,
+		if (diffreg(path_tmp1, path_tmp2,
 		    fd1, fd2, newdiff, D_FORCEASCII) == D_ERROR)
 			fatal("rcs_diffreg failed");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff_internals.c,v 1.27 2009/06/06 14:17:27 ray Exp $	*/
+/*	$OpenBSD: diff_internals.c,v 1.28 2009/06/07 08:39:13 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -295,7 +295,7 @@ u_char cup2low[256] = {
 };
 
 int
-cvs_diffreg(const char *file1, const char *file2, int _fd1, int _fd2,
+diffreg(const char *file1, const char *file2, int _fd1, int _fd2,
     BUF *out, int flags)
 {
 	FILE *f1, *f2;
@@ -318,14 +318,14 @@ cvs_diffreg(const char *file1, const char *file2, int _fd1, int _fd2,
 
 	fd1 = dup(_fd1);
 	if (fd1 == -1)
-		fatal("cvs_diffreg: dup: %s", strerror(errno));
+		fatal("diffreg: dup: %s", strerror(errno));
 
 	fd2 = dup(_fd2);
 	if (fd2 == -1)
-		fatal("cvs_diffreg: dup: %s", strerror(errno));
+		fatal("diffreg: dup: %s", strerror(errno));
 
 	if (lseek(fd1, 0, SEEK_SET) < 0)
-		fatal("cvs_diffreg: lseek: %s", strerror(errno));
+		fatal("diffreg: lseek: %s", strerror(errno));
 
 	f1 = fdopen(fd1, "r");
 	if (f1 == NULL) {
@@ -334,7 +334,7 @@ cvs_diffreg(const char *file1, const char *file2, int _fd1, int _fd2,
 	}
 
 	if (lseek(fd2, 0, SEEK_SET) < 0)
-		fatal("cvs_diffreg: lseek: %s", strerror(errno));
+		fatal("diffreg: lseek: %s", strerror(errno));
 
 	f2 = fdopen(fd2, "r");
 	if (f2 == NULL) {
@@ -544,7 +544,7 @@ stone(int *a, int n, int *b, int *c, int flags)
 
 	/* XXX move the isqrt() out of the macro to avoid multiple calls */
 	const u_int bound = (flags & D_MINIMAL) ? UINT_MAX :
-	    MAX(256, (u_int)isqrt(n));
+	    MAX(256, isqrt(n));
 
 	k = 0;
 	c[0] = newcand(0, 0, 0);
@@ -1224,7 +1224,6 @@ match_function(const long *f, int pos, FILE *fp)
 	unsigned char buf[FUNCTION_CONTEXT_SIZE];
 	size_t nc;
 	int last = lastline;
-	char *p;
 	char *state = NULL;
 
 	lastline = pos;
@@ -1236,9 +1235,7 @@ match_function(const long *f, int pos, FILE *fp)
 		nc = fread(buf, 1, nc, fp);
 		if (nc > 0) {
 			buf[nc] = '\0';
-			p = strchr((const char *)buf, '\n');
-			if (p != NULL)
-				*p = '\0';
+			buf[strcspn(buf, "\n")] = '\0';
 			if (isalpha(buf[0]) || buf[0] == '_' || buf[0] == '$') {
 				if (begins_with(buf, "private:")) {
 					if (!state)
@@ -1250,8 +1247,7 @@ match_function(const long *f, int pos, FILE *fp)
 					if (!state)
 						state = " (public)";
 				} else {
-					strlcpy(lastbuf, buf,
-					    sizeof lastbuf);
+					strlcpy(lastbuf, buf, sizeof lastbuf);
 					if (state)
 						strlcat(lastbuf, state,
 						    sizeof lastbuf);

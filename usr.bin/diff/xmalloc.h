@@ -1,4 +1,4 @@
-/* $OpenBSD: xmalloc.h,v 1.1 2007/05/29 18:24:56 ray Exp $ */
+/* $OpenBSD: xmalloc.h,v 1.2 2009/06/07 08:39:13 ray Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -20,6 +20,7 @@
 #define XMALLOC_H
 
 void	*xmalloc(size_t);
+void	*xcalloc(size_t, size_t);
 void	*xrealloc(void *, size_t, size_t);
 void     xfree(void *);
 char	*xstrdup(const char *);

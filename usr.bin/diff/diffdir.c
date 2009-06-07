@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.33 2009/06/06 15:37:28 ray Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.34 2009/06/07 08:39:13 ray Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.33 2009/06/06 15:37:28 ray Exp $";
+static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.34 2009/06/07 08:39:13 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -228,7 +228,7 @@ slurpdir(char *path, char **bufp, int enoentok)
 			break;
 		cp += dp->d_reclen;
 	}
-	dirlist = xmalloc(sizeof(*dirlist) * (entries + 1));
+	dirlist = xcalloc(sizeof(*dirlist), entries + 1);
 	for (entries = 0, cp = buf; cp < ebuf; ) {
 		dp = (struct dirent *)cp;
 		if (dp->d_fileno != 0 && !excluded(dp->d_name)) {

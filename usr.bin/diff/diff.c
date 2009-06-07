@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.52 2009/06/06 15:37:28 ray Exp $	*/
+/*	$OpenBSD: diff.c,v 1.53 2009/06/07 08:39:13 ray Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.52 2009/06/06 15:37:28 ray Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.53 2009/06/07 08:39:13 ray Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -42,7 +42,7 @@ static const char rcsid[] = "$OpenBSD: diff.c,v 1.52 2009/06/06 15:37:28 ray Exp
 #include "xmalloc.h"
 
 int	 lflag, Nflag, Pflag, rflag, sflag, Tflag;
-int	 format, context, status;
+int	 diff_format, diff_context, status;
 char	*start, *ifdefname, *diffargs, *label[2], *ignore_pats;
 struct stat stb1, stb2;
 struct excludes *excludes_list;
@@ -104,10 +104,10 @@ main(int argc, char **argv)
 			if (newarg)
 				usage();	/* disallow -[0-9]+ */
 			else if (lastch == 'c' || lastch == 'u')
-				context = 0;
-			else if (!isdigit(lastch) || context > INT_MAX / 10)
+				diff_context = 0;
+			else if (!isdigit(lastch) || diff_context > INT_MAX / 10)
 				usage();
-			context = (context * 10) + (ch - '0');
+			diff_context = (diff_context * 10) + (ch - '0');
 			break;
 		case 'a':
 			dflags |= D_FORCEASCII;
@@ -117,27 +117,27 @@ main(int argc, char **argv)
 			break;
 		case 'C':
 		case 'c':
-			format = D_CONTEXT;
+			diff_format = D_CONTEXT;
 			if (optarg != NULL) {
 				l = strtol(optarg, &ep, 10);
 				if (*ep != '\0' || l < 0 || l >= INT_MAX)
 					usage();
-				context = (int)l;
+				diff_context = (int)l;
 			} else
-				context = 3;
+				diff_context = 3;
 			break;
 		case 'd':
 			dflags |= D_MINIMAL;
 			break;
 		case 'D':
-			format = D_IFDEF;
+			diff_format = D_IFDEF;
 			ifdefname = optarg;
 			break;
 		case 'e':
-			format = D_EDIT;
+			diff_format = D_EDIT;
 			break;
 		case 'f':
-			format = D_REVERSE;
+			diff_format = D_REVERSE;
 			break;
 		case 'h':
 			/* silently ignore for backwards compatibility */
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 			Nflag = 1;
 			break;
 		case 'n':
-			format = D_NREVERSE;
+			diff_format = D_NREVERSE;
 			break;
 		case 'p':
 			dflags |= D_PROTOTYPE;
@@ -176,7 +176,7 @@ main(int argc, char **argv)
 			rflag = 1;
 			break;
 		case 'q':
-			format = D_BRIEF;
+			diff_format = D_BRIEF;
 			break;
 		case 'S':
 			start = optarg;
@@ -192,14 +192,14 @@ main(int argc, char **argv)
 			break;
 		case 'U':
 		case 'u':
-			format = D_UNIFIED;
+			diff_format = D_UNIFIED;
 			if (optarg != NULL) {
 				l = strtol(optarg, &ep, 10);
 				if (*ep != '\0' || l < 0 || l >= INT_MAX)
 					usage();
-				context = (int)l;
+				diff_context = (int)l;
 			} else
-				context = 3;
+				diff_context = 3;
 			break;
 		case 'w':
 			dflags |= D_IGNOREBLANKS;
@@ -254,7 +254,7 @@ main(int argc, char **argv)
 		errx(2, "can't compare - to a directory");
 	set_argstr(oargv, argv);
 	if (S_ISDIR(stb1.st_mode) && S_ISDIR(stb2.st_mode)) {
-		if (format == D_IFDEF)
+		if (diff_format == D_IFDEF)
 			errx(2, "-D option not supported with directories");
 		diffdir(argv[0], argv[1], dflags);
 	} else {
@@ -371,7 +371,7 @@ print_status(int val, char *path1, char *path2, char *entry)
 		    path1, entry ? entry : "", path2, entry ? entry : "");
 		break;
 	case D_DIFFER:
-		if (format == D_BRIEF)
+		if (diff_format == D_BRIEF)
 			printf("Files %s%s and %s%s differ\n",
 			    path1, entry ? entry : "",
 			    path2, entry ? entry : "");

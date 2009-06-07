@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.148 2009/06/06 14:17:27 ray Exp $	*/
+/*	$OpenBSD: commit.c,v 1.149 2009/06/07 08:39:13 ray Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -760,7 +760,7 @@ commit_diff(struct cvs_file *cf, RCSNUM *rev, int reverse)
 		fd2 = f;
 	}
 
-	if (cvs_diffreg(p1, p2, fd1, fd2, b, D_FORCEASCII) == D_ERROR)
+	if (diffreg(p1, p2, fd1, fd2, b, D_FORCEASCII) == D_ERROR)
 		fatal("commit_diff: failed to get RCS patch");
 
 	close(fd1);

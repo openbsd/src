@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.25 2007/09/11 15:47:17 gilles Exp $	*/
+/*	$OpenBSD: diff.c,v 1.26 2009/06/07 08:39:13 ray Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -527,7 +527,7 @@ stone(int *a, int n, int *b, int *c, int flags)
 
 	/* XXX move the isqrt() out of the macro to avoid multiple calls */
 	const u_int bound = (flags & D_MINIMAL) ? UINT_MAX :
-	    MAX(256, (u_int)isqrt(n));
+	    MAX(256, isqrt(n));
 
 	k = 0;
 	c[0] = newcand(0, 0, 0);
@@ -1166,9 +1166,7 @@ match_function(const long *f, int pos, FILE *fp)
 		nc = fread(buf, 1, nc, fp);
 		if (nc > 0) {
 			buf[nc] = '\0';
-
 			buf[strcspn(buf, "\n")] = '\0';
-
 			if (isalpha(buf[0]) || buf[0] == '_' || buf[0] == '$') {
 				if (begins_with(buf, "private:")) {
 					if (!state)
