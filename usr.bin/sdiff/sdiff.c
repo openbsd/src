@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.27 2009/06/07 13:15:13 ray Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.28 2009/06/07 13:29:50 ray Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -65,7 +65,7 @@ size_t	 file1ln, file2ln;	/* line number of file1 and file2 */
 int	 Iflag = 0;	/* ignore sets matching regexp */
 int	 lflag;		/* print only left column for identical lines */
 int	 sflag;		/* skip identical lines */
-FILE	*outfile;	/* file to save changes to */
+FILE	*outfp;		/* file to save changes to */
 const char *tmpdir;	/* TMPDIR or /tmp */
 
 static struct option longopts[] = {
@@ -160,6 +160,7 @@ main(int argc, char **argv)
 	size_t diffargc = 0, wflag = WIDTH;
 	int ch, fd[2], status;
 	pid_t pid;
+	const char *outfile = NULL;
 	char **diffargv, *diffprog = "diff", *filename1, *filename2,
 	    *tmp1, *tmp2, *s1, *s2;
 
@@ -218,8 +219,7 @@ main(int argc, char **argv)
 			lflag = 1;
 			break;
 		case 'o':
-			if ((outfile = fopen(optarg, "w")) == NULL)
-				err(2, "could not open: %s", optarg);
+			outfile = optarg;
 			break;
 		case 'S':
 			diffargv[diffargc++] = "--strip-trailing-cr";
@@ -249,6 +249,9 @@ main(int argc, char **argv)
 
 	if (argc != 2)
 		usage();
+
+	if (outfile && (outfp = fopen(outfile, "w")) == NULL)
+		err(2, "could not open: %s", optarg);
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')                       
 		tmpdir = _PATH_TMP;
@@ -375,7 +378,6 @@ main(int argc, char **argv)
 static void
 printcol(const char *s, size_t *col, const size_t col_max)
 {
-
 	for (; *s && *col < col_max; ++s) {
 		size_t new_col;
 
@@ -441,7 +443,7 @@ prompt(const char *s1, const char *s2)
 		case '1':
 			/* Choose left column as-is. */
 			if (s1 != NULL)
-				fprintf(outfile, "%s\n", s1);
+				fprintf(outfp, "%s\n", s1);
 
 			/* End of command parsing. */
 			break;
@@ -453,7 +455,7 @@ prompt(const char *s1, const char *s2)
 		case '2':
 			/* Choose right column as-is. */
 			if (s2 != NULL)
-				fprintf(outfile, "%s\n", s2);
+				fprintf(outfp, "%s\n", s2);
 
 			/* End of command parsing. */
 			break;
@@ -486,7 +488,7 @@ PROMPT:
 	 * should quit.
 	 */
 QUIT:
-	fclose(outfile);
+	fclose(outfp);
 	exit(0);
 }
 
@@ -886,11 +888,11 @@ processq(void)
 		freediff(diffp);
 	}
 
-	/* Write to outfile, prompting user if lines are different. */
-	if (outfile)
+	/* Write to outfp, prompting user if lines are different. */
+	if (outfp)
 		switch (divc) {
 		case ' ': case '(': case ')':
-			fprintf(outfile, "%s\n", left);
+			fprintf(outfp, "%s\n", left);
 			break;
 		case '|': case '<': case '>':
 			prompt(left, right);

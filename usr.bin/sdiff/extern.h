@@ -1,11 +1,11 @@
-/*	$OpenBSD: extern.h,v 1.4 2006/05/25 03:20:32 ray Exp $ */
+/*	$OpenBSD: extern.h,v 1.5 2009/06/07 13:29:50 ray Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
  * Public domain.
  */
 
-extern FILE		*outfile;	/* file to save changes to */
+extern FILE		*outfp;		/* file to save changes to */
 extern const char	*tmpdir;
 
 int eparse(const char *, const char *, const char *);
