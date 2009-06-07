@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.115 2009/06/05 23:39:51 pyr Exp $	*/
+/*	$OpenBSD: relay.c,v 1.116 2009/06/07 05:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -2564,7 +2564,7 @@ relay_dispatch_parent(int fd, short event, void * ptr)
 			}
 
 			/* Will validate the result later */
-			con->se_bnds = imsg_get_fd(ibuf);
+			con->se_bnds = imsg.fd;
 
 			evtimer_del(&con->se_ev);
 			evtimer_set(&con->se_ev, relay_bindany, con);

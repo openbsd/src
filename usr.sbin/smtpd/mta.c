@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.59 2009/06/06 04:14:21 pyr Exp $	*/
+/*	$OpenBSD: mta.c,v 1.60 2009/06/07 05:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -307,9 +307,9 @@ mta_dispatch_queue(int sig, short event, void *p)
 
 			IMSG_SIZE_CHECK(batchp);
 
-			if ((fd = imsg_get_fd(ibuf)) == -1) {
+			if ((fd = imsg.fd) == -1) {
 				/* NEEDS_FIX - unsure yet how it must be handled */
-				fatalx("mta_dispatch_queue: imsg_get_fd");
+				fatalx("mta_dispatch_queue: imsg.fd == -1");
 			}
 
 			batchp = batch_by_id(env, batchp->id);

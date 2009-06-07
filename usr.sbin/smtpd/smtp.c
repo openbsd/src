@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.57 2009/06/06 04:14:21 pyr Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.58 2009/06/07 05:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -164,7 +164,7 @@ smtp_dispatch_parent(int sig, short event, void *p)
 				fatal(NULL);
 			memcpy(l, imsg.data, sizeof(*l));
 
-			if ((l->fd = imsg_get_fd(ibuf)) == -1)
+			if ((l->fd = imsg.fd) == -1)
 				fatal("cannot get fd");
 
 			(void)strlcpy(key.ssl_name, l->ssl_cert_name,
@@ -405,7 +405,7 @@ smtp_dispatch_queue(int sig, short event, void *p)
 
 			IMSG_SIZE_CHECK(ss);
 
-			fd = imsg_get_fd(ibuf);
+			fd = imsg.fd;
 
 			if ((s = session_lookup(env, ss->id)) == NULL) {
 				close(fd);

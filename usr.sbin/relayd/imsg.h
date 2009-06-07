@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.h,v 1.11 2009/06/06 22:11:25 eric Exp $	*/
+/*	$OpenBSD: imsg.h,v 1.12 2009/06/07 05:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -59,6 +59,8 @@ struct imsgbuf {
 	pid_t			 pid;
 };
 
+#define IMSGF_HASFD	1
+
 struct imsg_hdr {
 	u_int32_t	 type;
 	u_int16_t	 len;
@@ -69,6 +71,7 @@ struct imsg_hdr {
 
 struct imsg {
 	struct imsg_hdr	 hdr;
+	int		 fd;
 	void		*data;
 };
 
@@ -101,6 +104,5 @@ struct buf *imsg_create(struct imsgbuf *, u_int32_t, u_int32_t, pid_t,
 int	 imsg_add(struct buf *, void *, u_int16_t);
 void	 imsg_close(struct imsgbuf *, struct buf *);
 void	 imsg_free(struct imsg *);
-int	 imsg_get_fd(struct imsgbuf *);
 int	 imsg_flush(struct imsgbuf *);
 void	 imsg_clear(struct imsgbuf *);

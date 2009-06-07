@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda.c,v 1.22 2009/06/06 04:14:21 pyr Exp $	*/
+/*	$OpenBSD: mda.c,v 1.23 2009/06/07 05:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
@@ -111,7 +111,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 				fatalx("mda_dispatch_parent: internal inconsistency.");
 			messagep->status = status;
 
-			s->mboxfd = imsg_get_fd(ibuf);
+			s->mboxfd = imsg.fd;
 			if (s->mboxfd == -1) {
 				mda_remove_message(env, batchp, messagep);
 				break;
@@ -146,7 +146,7 @@ mda_dispatch_parent(int sig, short event, void *p)
 				fatalx("mda_dispatch_parent: internal inconsistency.");
 			messagep->status = status;
 
-			s->messagefd = imsg_get_fd(ibuf);
+			s->messagefd = imsg.fd;
 			if (s->messagefd == -1) {
 				if (s->mboxfd != -1)
 					close(s->mboxfd);

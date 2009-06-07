@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.5 2009/06/07 00:40:46 eric Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.6 2009/06/07 05:56:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,6 +27,8 @@
 #include <unistd.h>
 
 #include "imsg.h"
+
+int	 imsg_get_fd(struct imsgbuf *);
 
 void
 imsg_init(struct imsgbuf *ibuf, int fd)
@@ -113,9 +115,14 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 	imsg->hdr.pid = ntohl(imsg->hdr.pid);
 	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 	ibuf->r.rptr = ibuf->r.buf + IMSG_HEADER_SIZE;
-	if ((imsg->data = malloc(datalen)) == NULL) {
+	if ((imsg->data = malloc(datalen)) == NULL)
 		return (-1);
-	}
+
+	if (imsg->hdr.flags & IMSGF_HASFD)
+		imsg->fd = imsg_get_fd(ibuf);
+	else
+		imsg->fd = -1;
+
 	memcpy(imsg->data, ibuf->r.rptr, datalen);
 
 	if (imsg->hdr.len < av) {
@@ -216,6 +223,11 @@ imsg_close(struct imsgbuf *ibuf, struct buf *msg)
 	struct imsg_hdr	*hdr;
 
 	hdr = (struct imsg_hdr *)msg->buf;
+
+	hdr->flags &= ~IMSGF_HASFD;
+	if (msg->fd != -1)
+		hdr->flags |= IMSGF_HASFD;
+
 	hdr->type = htonl(hdr->type);
 	hdr->len = htons(msg->wpos);
 	hdr->flags = htons(hdr->flags);

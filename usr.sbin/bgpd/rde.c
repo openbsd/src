@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.261 2009/06/07 00:30:23 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.262 2009/06/07 05:56:24 eric Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -721,7 +721,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				break;
 			}
 			memcpy(&xmrt, imsg.data, sizeof(xmrt));
-			if ((fd = imsg_get_fd(ibuf)) == -1)
+			if ((fd = imsg.fd) == -1)
 				log_warnx("expected to receive fd for mrt dump "
 				    "but didn't receive any");
 			else if (xmrt.type == MRT_TABLE_DUMP ||
