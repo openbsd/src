@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.171 2009/06/05 04:29:14 beck Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.172 2009/06/07 03:07:19 millert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -46,6 +46,7 @@
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/vnode.h>
 #include <sys/unistd.h>
 #include <sys/buf.h>
@@ -62,14 +63,29 @@
 #include <sys/exec.h>
 #include <sys/mbuf.h>
 #include <sys/sensors.h>
+#include <sys/pipe.h>
+#include <sys/eventvar.h>
+#include <sys/socketvar.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
 #ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
 #endif
 #include <sys/evcount.h>
+#include <sys/unpcb.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <dev/rndvar.h>
+#include <dev/systrace.h>
+
+#include <net/route.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/in_pcb.h>
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
 
 #ifdef DDB
 #include <ddb/db_var.h>
@@ -271,6 +287,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		case KERN_TIMECOUNTER:
 #endif
 		case KERN_CPTIME2:
+		case KERN_FILE2:
 			break;
 		default:
 			return (ENOTDIR);	/* overloaded */
@@ -345,6 +362,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_PROC_ARGS:
 		return (sysctl_proc_args(name + 1, namelen - 1, oldp, oldlenp,
 		     p));
+	case KERN_FILE2:
+		return (sysctl_file2(name + 1, namelen - 1, oldp, oldlenp, p));
 #endif
 	case KERN_FILE:
 		return (sysctl_file(oldp, oldlenp, p));
@@ -953,9 +972,10 @@ sysctl_file(char *where, size_t *sizep, struct proc *p)
 	buflen = *sizep;
 	if (where == NULL) {
 		/*
-		 * overestimate by 10 files
+		 * overestimate by KERN_FILESLOP files
 		 */
-		*sizep = sizeof(filehead) + (nfiles + 10) * sizeof(struct file);
+		*sizep = sizeof(filehead) +
+		    (nfiles + KERN_FILESLOP) * sizeof(struct file);
 		return (0);
 	}
 
@@ -1001,6 +1021,279 @@ sysctl_file(char *where, size_t *sizep, struct proc *p)
 }
 
 #ifndef SMALL_KERNEL
+void
+fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
+	  int fd, struct vnode *vp, struct proc *pp, struct proc *p)
+{
+	struct vattr va;
+
+	memset(kf, 0, sizeof(*kf));
+
+	kf->fd_fd = fd;		/* might not really be an fd */
+
+	if (fp != NULL) {
+		kf->f_fileaddr = PTRTOINT64(fp);
+		kf->f_flag = fp->f_flag;
+		kf->f_iflags = fp->f_iflags;
+		kf->f_type = fp->f_type;
+		kf->f_count = fp->f_count;
+		kf->f_msgcount = fp->f_msgcount;
+		kf->f_ucred = PTRTOINT64(fp->f_cred);
+		kf->f_uid = fp->f_cred->cr_uid;
+		kf->f_gid = fp->f_cred->cr_gid;
+		kf->f_ops = PTRTOINT64(fp->f_ops);
+		kf->f_offset = fp->f_offset;
+		kf->f_data = PTRTOINT64(fp->f_data);
+		kf->f_usecount = fp->f_usecount;
+
+		if (suser(p, 0) == 0 || p->p_ucred->cr_uid == fp->f_cred->cr_uid) {
+			kf->f_rxfer = fp->f_rxfer;
+			kf->f_rwfer = fp->f_wxfer;
+			kf->f_seek = fp->f_seek;
+			kf->f_rbytes = fp->f_rbytes;
+			kf->f_wbytes = fp->f_rbytes;
+		}
+	} else if (vp != NULL) {
+		/* fake it */
+		kf->f_type = DTYPE_VNODE;
+		kf->f_flag = FREAD;
+		if (fd == KERN_FILE_TRACE)
+			kf->f_flag |= FWRITE;
+	}
+
+	/* information about the object associated with this file */
+	switch (kf->f_type) {
+	case DTYPE_VNODE:
+		if (fp != NULL)
+			vp = (struct vnode *)fp->f_data;
+
+		kf->v_un = PTRTOINT64(vp->v_un.vu_socket);
+		kf->v_type = vp->v_type;
+		kf->v_tag = vp->v_tag;
+		kf->v_flag = vp->v_flag;
+		kf->v_data = PTRTOINT64(vp->v_data);
+		kf->v_mount = PTRTOINT64(vp->v_mount);
+		strlcpy(kf->f_mntonname, vp->v_mount->mnt_stat.f_mntonname,
+		    sizeof(kf->f_mntonname));
+
+		if (VOP_GETATTR(vp, &va, p->p_ucred, p) == 0) {
+			kf->va_fileid = va.va_fileid;
+			kf->va_mode = MAKEIMODE(va.va_type, va.va_mode);
+			kf->va_size = va.va_size;
+			kf->va_rdev = va.va_rdev;
+			kf->va_fsid = va.va_fsid & 0xffffffff;
+		}
+		break;
+
+	case DTYPE_SOCKET: {
+		struct socket *so = (struct socket *)fp->f_data;
+
+		kf->so_type = so->so_type;
+		kf->so_state = so->so_state;
+		kf->so_pcb = PTRTOINT64(so->so_pcb);
+		kf->so_protocol = so->so_proto->pr_protocol;
+		kf->so_family = so->so_proto->pr_domain->dom_family;
+		switch (kf->so_family) {
+		case AF_INET: {
+			struct inpcb *inpcb = so->so_pcb;
+
+			kf->inp_ppcb = PTRTOINT64(inpcb->inp_ppcb);
+			kf->inp_lport = inpcb->inp_lport;
+			kf->inp_laddru[0] = inpcb->inp_laddr.s_addr;
+			kf->inp_fport = inpcb->inp_fport;
+			kf->inp_faddru[0] = inpcb->inp_faddr.s_addr;
+			break;
+		    }
+		case AF_INET6: {
+			struct inpcb *inpcb = so->so_pcb;
+
+			kf->inp_ppcb = PTRTOINT64(inpcb->inp_ppcb);
+			kf->inp_lport = inpcb->inp_lport;
+			kf->inp_laddru[0] = inpcb->inp_laddr6.s6_addr32[0];
+			kf->inp_laddru[1] = inpcb->inp_laddr6.s6_addr32[1];
+			kf->inp_laddru[2] = inpcb->inp_laddr6.s6_addr32[2];
+			kf->inp_laddru[3] = inpcb->inp_laddr6.s6_addr32[3];
+			kf->inp_fport = inpcb->inp_fport;
+			kf->inp_faddru[0] = inpcb->inp_laddr6.s6_addr32[0];
+			kf->inp_faddru[1] = inpcb->inp_faddr6.s6_addr32[1];
+			kf->inp_faddru[2] = inpcb->inp_faddr6.s6_addr32[2];
+			kf->inp_faddru[3] = inpcb->inp_faddr6.s6_addr32[3];
+			break;
+		    }
+		case AF_UNIX: {
+			struct unpcb *unpcb = so->so_pcb;
+
+			kf->unp_conn = PTRTOINT64(unpcb->unp_conn);
+			break;
+		    }
+		}
+		break;
+	    }
+
+	case DTYPE_PIPE: {
+		struct pipe *pipe = (struct pipe *)fp->f_data;
+
+		kf->pipe_peer = PTRTOINT64(pipe->pipe_peer);
+		kf->pipe_state = pipe->pipe_state;
+		break;
+	    }
+
+	case DTYPE_KQUEUE: {
+		struct kqueue *kqi = (struct kqueue *)fp->f_data;
+
+		kf->kq_count = kqi->kq_count;
+		kf->kq_state = kqi->kq_state;
+		break;
+	    }
+	case DTYPE_SYSTRACE: {
+		struct fsystrace *f = (struct fsystrace *)fp->f_data;
+
+		kf->str_npolicies = f->npolicies;
+		break;
+	    }
+	}
+
+	/* per-process information for KERN_FILE_BY[PU]ID */
+	if (pp != NULL) {
+		kf->p_pid = pp->p_pid;
+		kf->p_uid = pp->p_ucred->cr_uid;
+		kf->p_gid = pp->p_ucred->cr_gid;
+		strlcpy(kf->p_comm, pp->p_comm, sizeof(kf->p_comm));
+	}
+	if (fdp != NULL)
+		kf->fd_ofileflags = fdp->fd_ofileflags[fd];
+}
+
+/*
+ * Get file structures.
+ */
+int
+sysctl_file2(int *name, u_int namelen, char *where, size_t *sizep,
+    struct proc *p)
+{
+	struct kinfo_file2 *kf;
+	struct filedesc *fdp;
+	struct file *fp;
+	struct proc *pp;
+	size_t buflen, elem_size, elem_count, outsize;
+	char *dp = where;
+	int arg, i, error = 0, needed = 0;
+	u_int op;
+
+	if (namelen > 4)
+		return (ENOTDIR);
+	if (namelen < 4)
+		return (EINVAL);
+
+	buflen = where != NULL ? *sizep : 0;
+	op = name[0];
+	arg = name[1];
+	elem_size = name[2];
+	elem_count = name[3];
+	outsize = MIN(sizeof(*kf), elem_size);
+
+	if (elem_size < 1 || elem_count < 0)
+		return (EINVAL);
+
+	kf = malloc(sizeof(*kf), M_TEMP, M_WAITOK);
+
+#define FILLIT(fp, fdp, i, vp, pp) do {				\
+	if (buflen >= elem_size && elem_count > 0) {		\
+		fill_file2(kf, fp, fdp, i, vp, pp, p);		\
+		error = copyout(kf, dp, outsize);		\
+		if (error)					\
+			break;					\
+		dp += elem_size;				\
+		buflen -= elem_size;				\
+		elem_count--;					\
+	}							\
+	needed += elem_size;					\
+} while (0)
+
+	switch (op) {
+	case KERN_FILE_BYFILE:
+		if (arg != 0) {
+			/* no arg in file mode */
+			error = EINVAL;
+			break;
+		}
+		LIST_FOREACH(fp, &filehead, f_list) {
+			if (fp->f_count == 0)
+				continue;
+			FILLIT(fp, NULL, 0, NULL, NULL);
+		}
+		break;
+	case KERN_FILE_BYPID:
+		/* A arg of -1 indicates all processes */
+		if (arg < -1) {
+			error = EINVAL;
+			break;
+		}
+		LIST_FOREACH(pp, &allproc, p_list) {
+			/* skip system, embryonic and undead processes */
+			if ((pp->p_flag & P_SYSTEM) ||
+			    pp->p_stat == SIDL || pp->p_stat == SZOMB)
+				continue;
+			if (arg > 0 && pp->p_pid != (pid_t)arg) {
+				/* not the pid we are looking for */
+				continue;
+			}
+			fdp = pp->p_fd;
+			if (fdp->fd_cdir)
+				FILLIT(NULL, NULL, KERN_FILE_CDIR, fdp->fd_cdir, pp);
+			if (fdp->fd_rdir)
+				FILLIT(NULL, NULL, KERN_FILE_RDIR, fdp->fd_rdir, pp);
+			if (pp->p_tracep)
+				FILLIT(NULL, NULL, KERN_FILE_TRACE, pp->p_tracep, pp);
+			for (i = 0; i < fdp->fd_nfiles; i++) {
+				if ((fp = fdp->fd_ofiles[i]) == NULL)
+					continue;
+				if (!FILE_IS_USABLE(fp))
+					continue;
+				FILLIT(fp, fdp, i, NULL, pp);
+			}
+		}
+		break;
+	case KERN_FILE_BYUID:
+		LIST_FOREACH(pp, &allproc, p_list) {
+			/* skip system, embryonic and undead processes */
+			if ((pp->p_flag & P_SYSTEM) ||
+			    pp->p_stat == SIDL || pp->p_stat == SZOMB)
+				continue;
+			if (arg > 0 && pp->p_ucred->cr_uid != (uid_t)arg) {
+				/* not the uid we are looking for */
+				continue;
+			}
+			fdp = pp->p_fd;
+			if (fdp->fd_cdir)
+				FILLIT(NULL, NULL, KERN_FILE_CDIR, fdp->fd_cdir, pp);
+			if (fdp->fd_rdir)
+				FILLIT(NULL, NULL, KERN_FILE_RDIR, fdp->fd_rdir, pp);
+			if (pp->p_tracep)
+				FILLIT(NULL, NULL, KERN_FILE_TRACE, pp->p_tracep, pp);
+			for (i = 0; i < fdp->fd_nfiles; i++) {
+				if ((fp = fdp->fd_ofiles[i]) == NULL)
+					continue;
+				if (!FILE_IS_USABLE(fp))
+					continue;
+				FILLIT(fp, fdp, i, NULL, pp);
+			}
+		}
+		break;
+	default:
+		error = EINVAL;
+		break;
+	}
+	free(kf, M_TEMP);
+
+	if (!error) {
+		if (where == NULL)
+			needed += KERN_FILESLOP * elem_size;
+		*sizep = needed;
+	}
+
+	return (error);
+}
 
 /*
  * try over estimating by 5 procs

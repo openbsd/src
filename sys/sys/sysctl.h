@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.97 2009/06/03 21:30:20 beck Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.98 2009/06/07 03:07:19 millert Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -185,7 +185,8 @@ struct ctlname {
 #define	KERN_MAXLOCKSPERUID	70	/* int: locks per uid */
 #define	KERN_CPTIME2		71	/* array: cp_time2 */
 #define	KERN_CACHEPCT		72	/* buffer cache % of physmem */
-#define	KERN_MAXID		73	/* number of valid kern ids */
+#define	KERN_FILE2		73	/* struct: file entries */
+#define	KERN_MAXID		74	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -261,6 +262,7 @@ struct ctlname {
  	{ "maxlocksperuid", CTLTYPE_INT }, \
  	{ "cp_time2", CTLTYPE_STRUCT }, \
  	{ "bufcachepercent", CTLTYPE_INT }, \
+	{ "file2", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -463,6 +465,94 @@ struct kinfo_proc2 {
 	u_int64_t p_rlim_rss_cur;	/* RLIM_T: soft limit for rss */
 	u_int64_t p_cpuid;		/* LONG: CPU id */
 	u_int64_t p_vm_map_size;	/* VSIZE_T: virtual size */
+};
+
+/*
+ * kern.file2 returns an array of these structures, which are designed
+ * both to be immune to be immune to 32/64 bit emulation issues and to
+ * provide backwards compatibility.  The order differs slightly from
+ * that of the real struct file, and some fields are taken from other
+ * structures (struct vnode, struct proc) in order to make the file
+ * information more useful.
+ */
+#define	KERN_FILE_BYFILE	1
+#define	KERN_FILE_BYPID		2
+#define	KERN_FILE_BYUID		3
+#define	KERN_FILESLOP		10
+
+#define KERN_FILE_TEXT		-1
+#define KERN_FILE_CDIR		-2
+#define KERN_FILE_RDIR		-3
+#define KERN_FILE_TRACE		-4
+
+#define KI_MNAMELEN		96	/* rounded up from 90 */
+
+struct kinfo_file2 {
+	uint64_t	f_fileaddr;	/* PTR: address of struct file */
+	uint32_t	f_flag;		/* SHORT: flags (see fcntl.h) */
+	uint32_t	f_iflags;	/* INT: internal flags */
+	uint32_t	f_type;		/* INT: descriptor type */
+	uint32_t	f_count;	/* UINT: reference count */
+	uint32_t	f_msgcount;	/* UINT: references from msg queue */
+	uint32_t	f_usecount;	/* INT: number active users */
+	uint64_t	f_ucred;	/* PTR: creds for descriptor */
+	uint32_t	f_uid;		/* UID_T: descriptor credentials */
+	uint32_t	f_gid;		/* GID_T: descriptor credentials */
+	uint64_t	f_ops;		/* PTR: address of fileops */
+	uint64_t	f_offset;	/* OFF_T: offset */
+	uint64_t	f_data;		/* PTR: descriptor data */
+	uint64_t	f_rxfer;	/* UINT64: number of read xfers */
+	uint64_t	f_rwfer;	/* UINT64: number of write xfers */
+	uint64_t	f_seek;		/* UINT64: number of seek operations */
+	uint64_t	f_rbytes;	/* UINT64: total bytes read */
+	uint64_t	f_wbytes;	/* UINT64: total bytes written */
+
+	/* information about the vnode associated with this file */
+	uint64_t	v_un;		/* PTR: socket, specinfo, etc */
+	uint32_t	v_type;		/* ENUM: vnode type */
+	uint32_t	v_tag;		/* ENUM: type of underlying data */
+	uint32_t	v_flag;		/* UINT: vnode flags */
+	uint32_t	va_rdev;	/* DEV_T: raw device */
+	uint64_t	v_data;		/* PTR: private data for fs */
+	uint64_t	v_mount;	/* PTR: mount info for fs */
+	uint64_t	va_fileid;	/* LONG: file id */
+	uint64_t	va_size;	/* UINT64_T: file size in bytes */
+	uint32_t	va_mode;	/* MODE_T: file access mode and type */
+	uint32_t	va_fsid;	/* DEV_T: filesystem device */
+	char		f_mntonname[KI_MNAMELEN];
+
+	/* socket information */
+	uint32_t	so_type;	/* SHORT: socket type */
+	uint32_t	so_state;	/* SHORT: socket state */
+	uint64_t	so_pcb;		/* PTR: socket pcb */
+	uint32_t	so_protocol;	/* SHORT: socket protocol type */
+	uint32_t	so_family;	/* INT: socket domain family */
+	uint64_t	inp_ppcb;	/* PTR: pointer to per-protocol pcb */
+	uint32_t	inp_lport;	/* SHORT: local inet port */
+	uint32_t	inp_laddru[4];	/* STRUCT: local inet addr */
+	uint32_t	inp_fport;	/* SHORT: foreign inet port */
+	uint32_t	inp_faddru[4];	/* STRUCT: foreign inet addr */
+	uint64_t	unp_conn;	/* PTR: connected socket cntrl block */
+
+	/* pipe information */
+	uint64_t	pipe_peer;	/* PTR: link with other direction */
+	uint32_t	pipe_state;	/* UINT: pipe status info */
+
+	/* kqueue information */
+	uint32_t	kq_count;	/* INT: number of pending events */
+	uint32_t	kq_state;	/* INT: kqueue status information */
+
+	/* systrace information */
+	uint32_t	str_npolicies;	/* INT: number systrace policies */
+
+	/* process information when retrieved via KERN_FILE_BY[PU]ID */
+	uint32_t	p_pid;		/* PID_T: process id */
+	int32_t		fd_fd;		/* INT: descriptor number */
+	uint32_t	fd_ofileflags;	/* CHAR: open file flags */
+	uint32_t	p_uid;		/* UID_T: process credentials */
+	uint32_t	p_gid;		/* GID_T: process credentials */
+	uint32_t	__spare;	/* padding */
+	char		p_comm[KI_MAXCOMLEN];
 };
 
 /*
@@ -691,6 +781,7 @@ int sysctl_rdstring(void *, size_t *, void *, const char *);
 int sysctl_rdstruct(void *, size_t *, void *, const void *, int);
 int sysctl_struct(void *, size_t *, void *, size_t, void *, int);
 int sysctl_file(char *, size_t *, struct proc *);
+int sysctl_file2(int *, u_int, char *, size_t *, struct proc *);
 int sysctl_doproc(int *, u_int, char *, size_t *);
 struct radix_node;
 struct walkarg;
@@ -705,6 +796,10 @@ int sysctl_doprof(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_dopool(int *, u_int, char *, size_t *);
 
 void fill_eproc(struct proc *, struct eproc *);
+
+void fill_file2(struct kinfo_file2 *, struct file *, struct filedesc *,
+    int, struct vnode *, struct proc *, struct proc *);
+
 void fill_kproc2(struct proc *, struct kinfo_proc2 *);
 
 int kern_sysctl(int *, u_int, void *, size_t *, void *, size_t,
