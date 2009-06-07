@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.30 2009/06/05 19:38:18 schwarze Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.31 2009/06/07 00:02:48 schwarze Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -269,7 +269,6 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 	char *key, *data;
 	int keylen, datalen;
 	int r;
-	char *grname = (char *)NULL;
 #endif
 	char **members;
 	char *line;
@@ -281,6 +280,8 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 
 	for (;;) {
 #ifdef YP
+		char *grname;
+
 		switch (__ypmode) {
 		case YPMODE_FULL:
 			if (__ypcurrent) {
@@ -312,24 +313,16 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 			}
 			break;
 		case YPMODE_NAME:
-			if (grname) {
 				r = yp_match(__ypdomain, "group.byname",
 				    grname, strlen(grname),
 				    &data, &datalen);
 				__ypmode = YPMODE_NONE;
-				free(grname);
-				grname = NULL;
 				if (r) {
 					free(data);
 					continue;
 				}
 				bcopy(data, line, datalen);
 				free(data);
-			} else {
-				/* Cannot happen, handle it just to be safe. */
-				__ypmode = YPMODE_NONE;
-				continue;
-			}
 			break;
 		case YPMODE_NONE:
 			break;
@@ -367,8 +360,6 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 			}
 		}
 		if (line[0] == '+') {
-			char *tptr;
-
 			switch (line[1]) {
 			case ':':
 			case '\0':
@@ -413,14 +404,11 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 					p_gr->gr_gid = gid;
 				goto found_it;
 			default:
-				tptr = strsep(&bp, ":\n");
-				tptr++;
-				if (search && name && strcmp(tptr, name) ||
-				    __ypexclude_is(&__ypexhead, tptr))
+				grname = strsep(&bp, ":\n") + 1;
+				if (search && name && strcmp(grname, name) ||
+				    __ypexclude_is(&__ypexhead, grname))
 					continue;
 				__ypmode = YPMODE_NAME;
-				if ((grname = strdup(tptr)) == NULL)
-					return 0;
 				continue;
 			}
 		} else if (line[0] == '-') {
