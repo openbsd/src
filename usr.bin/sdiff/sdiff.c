@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.25 2009/06/07 13:06:02 ray Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.26 2009/06/07 13:09:24 ray Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -250,7 +250,7 @@ main(int argc, char **argv)
 	if (argc != 2)
 		usage();
 
-	if ((tmpdir = getenv("TMPDIR")) == NULL)                       
+	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')                       
 		tmpdir = _PATH_TMP;
 
 	filename1 = argv[0];
