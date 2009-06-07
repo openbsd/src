@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_private.h,v 1.11 2006/03/31 03:59:40 deraadt Exp $ */
+/*	$OpenBSD: kvm_private.h,v 1.12 2009/06/07 03:09:34 millert Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -52,6 +52,7 @@ struct __kvm {
 	int	nlfd;		/* namelist file (e.g., /vmunix) */
 	struct kinfo_proc *procbase;
 	struct kinfo_proc2 *procbase2;
+	struct kinfo_file *filebase;
 	int	nbpg;		/* page size */
 	char	*swapspc;	/* (dynamic) storage for swapped pages */
 	char	*argspc, *argbuf; /* (dynamic) storage for argv strings */

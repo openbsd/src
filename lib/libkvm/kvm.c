@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.46 2009/01/21 22:18:00 miod Exp $ */
+/*	$OpenBSD: kvm.c,v 1.47 2009/06/07 03:09:34 millert Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.46 2009/01/21 22:18:00 miod Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.47 2009/06/07 03:09:34 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -184,6 +184,7 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf,
 	kd->swfd = -1;
 	kd->nlfd = -1;
 	kd->alive = 0;
+	kd->filebase = 0;
 	kd->procbase = 0;
 	kd->procbase2 = 0;
 	kd->nbpg = getpagesize();
@@ -641,6 +642,8 @@ kvm_close(kvm_t *kd)
 		free((void *)kd->cpu_data);
 	if (kd->kcore_hdr != NULL)
 		free((void *)kd->kcore_hdr);
+	if (kd->filebase != 0)
+		free((void *)kd->filebase);
 	if (kd->procbase != 0)
 		free((void *)kd->procbase);
 	if (kd->procbase2 != 0)

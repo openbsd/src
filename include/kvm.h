@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.h,v 1.13 2006/03/31 03:09:16 deraadt Exp $	*/
+/*	$OpenBSD: kvm.h,v 1.14 2009/06/07 03:09:34 millert Exp $	*/
 /*	$NetBSD: kvm.h,v 1.7 1996/04/19 12:02:50 leo Exp $	*/
 
 /*-
@@ -66,6 +66,8 @@ char	**kvm_getenvv2(kvm_t *, const struct kinfo_proc2 *, int);
 char	 *kvm_geterr(kvm_t *);
 int	  kvm_getloadavg(kvm_t *, double [], int);
 char	 *kvm_getfiles(kvm_t *, int, int, int *);
+struct kinfo_file2 *
+	  kvm_getfile2(kvm_t *, int, int, size_t, int *);
 struct kinfo_proc *
 	  kvm_getprocs(kvm_t *, int, int, int *);
 struct kinfo_proc2 *

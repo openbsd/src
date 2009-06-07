@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getfiles.3,v 1.11 2007/05/31 19:19:35 jmc Exp $
+.\"	$OpenBSD: kvm_getfiles.3,v 1.12 2009/06/07 03:09:34 millert Exp $
 .\"	$NetBSD: kvm_getfiles.3,v 1.3 1996/03/18 22:33:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm_getfiles.3	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: June 7 2009 $
 .Dt KVM_GETFILES 3
 .Os
 .Sh NAME
@@ -49,6 +49,8 @@
 .\" .Fa kvm_t *kd
 .Ft char *
 .Fn kvm_getfiles "kvm_t *kd" "int op" "int arg" "int *cnt"
+.Ft struct kinfo_file2 *
+.Fn kvm_getfile2 "kvm_t *kd" "int op" "int arg" "size_t elemsize" "int *cnt"
 .Sh DESCRIPTION
 .Fn kvm_getfiles
 returns a (sub-)set of the open files in the kernel indicated by
@@ -68,8 +70,62 @@ preceded by the address of the first file entry in the kernel.
 This memory is owned by kvm and is not guaranteed to be persistent across
 subsequent kvm library calls.
 Data should be copied out if it needs to be saved.
+.Pp
+.Fn kvm_getfile2
+is similar to
+.Fn kvm_getfiles
+but returns an array of
+.Vt kinfo_file2
+structures.
+Additionally, only the first
+.Fa elemsize
+bytes of each array entry are returned.
+If the size of the
+.Vt kinfo_file2
+structure increases in size in a future release of
+.Ox ,
+the kernel will only return the requested amount of data for
+each array entry and programs that use
+.Fn kvm_getfile2
+will continue to function without the need for recompilation.
+The
+.Fa op
+and
+.Fa arg
+arguments constitute a predicate which limits the set of processes returned.
+The value of
+.Fa op
+describes the filtering predicate as follows:
+.Pp
+.Bl -tag -width 20n -offset indent -compact
+.It Dv KERN_FILE_BYFILE
+all open files
+.It Dv KERN_PROC_BYPID
+files opened by process ID
+.Fa arg
+(\-1 for all processes)
+.It Dv KERN_FILE_BYUID
+files opened by processes with effective user ID
+.Fa arg
+.El
+.Pp
+Files associated with a process will include information about
+the process that has the file open.
+.Pp
+The files are returned as a contiguous array of
+.Vt kinfo_file2
+structures.
+The number of structures found is returned in the reference parameter
+.Fa cnt .
+This memory is owned by kvm and will be overwritten by subsequent calls to
+.Fn kvm_getfile2
+and destroyed by
+.Fn kvm_close .
+Data should be copied out if it needs to be saved.
 .Sh RETURN VALUES
 .Fn kvm_getfiles
+and
+.Fn kvm_getfile2
 will return
 .Dv NULL
 on failure.
