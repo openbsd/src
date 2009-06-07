@@ -773,8 +773,8 @@ radeondrm_setup_pcigart(struct drm_radeon_private *dev_priv)
 
 		agi->tbl.fb.bst = dev_priv->bst;
 		/* XXX write combining */
-		if (bus_space_map(agi->tbl.fb.bst, gartaddr, agi->table_size,
-		    0, &agi->tbl.fb.bsh) != 0)
+		if ((ret = bus_space_map(agi->tbl.fb.bst, gartaddr,
+		    agi->table_size, 0, &agi->tbl.fb.bsh)) != 0)
 			return (ret);
 
 		/* this is a radeon virtual address */
