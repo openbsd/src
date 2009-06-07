@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.114 2009/06/04 21:53:43 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.115 2009/06/07 00:30:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -111,6 +111,8 @@ rib_free(struct rib *rib)
 	for (ctx = LIST_FIRST(&rib_dump_h); ctx != NULL; ctx = next) {
 		next = LIST_NEXT(ctx, entry);
 		if (ctx->ctx_rib == rib) {
+			re = ctx->ctx_re;
+			re->flags &= ~F_RIB_ENTRYLOCK;
 			LIST_REMOVE(ctx, entry);
 			if (ctx->ctx_done)
 				ctx->ctx_done(ctx->ctx_arg);
@@ -122,8 +124,14 @@ rib_free(struct rib *rib)
 	for (re = RB_MIN(rib_tree, &rib->rib); re != NULL; re = xre) {
 		xre = RB_NEXT(rib_tree,  &rib->rib, re);
 
-		for (p = LIST_FIRST(&re->prefix_h); p != NULL; p = np) {
-			np = LIST_NEXT(p, path_l);
+		/*
+		 * Removing the prefixes is tricky because the last one
+		 * will remove the rib_entry as well and at because we do
+		 * a empty check in prefix_destroy() it is not possible to
+		 * use the default for loop.
+		 */
+		while ((p = LIST_FIRST(&re->prefix_h))) {
+			np = LIST_NEXT(p, rib_l);
 			if (p->aspath->pftableid) {
 				struct bgpd_addr addr;
 
@@ -133,6 +141,8 @@ rib_free(struct rib *rib)
 				    p->prefix->prefixlen, 1);
 			}
 			prefix_destroy(p);
+			if (np == NULL)
+				break;
 		}
 	}
 	bzero(rib, sizeof(struct rib));

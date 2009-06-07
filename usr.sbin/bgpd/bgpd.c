@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.147 2009/06/05 20:26:38 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.148 2009/06/07 00:30:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -459,6 +459,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 	struct peer		*p;
 	struct filter_rule	*r;
 	struct listen_addr	*la;
+	struct rde_rib		*rr;
 
 	if (parse_config(conffile, conf, mrt_l, peer_l, &net_l, rules_l)) {
 		log_warnx("config file %s has errors, not reloading",
@@ -493,6 +494,15 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		    la, sizeof(struct listen_addr)) == -1)
 			return (-1);
 		la->fd = -1;
+	}
+
+	/* RIBs for the RDE */
+	while ((rr = SIMPLEQ_FIRST(&ribnames))) {
+		SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_RIB, 0, 0, -1,
+		    rr, sizeof(struct rde_rib)) == -1)
+			return (-1);
+		free(rr);
 	}
 
 	/* networks for the RDE */

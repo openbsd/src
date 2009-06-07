@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.260 2009/06/06 21:21:37 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.261 2009/06/07 00:30:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -555,12 +555,14 @@ void
 rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
 	struct imsg		 imsg;
+	struct mrt		 xmrt;
+	struct rde_rib		 rn;
 	struct rde_peer		*peer;
 	struct filter_rule	*r;
 	struct filter_set	*s;
-	struct mrt		 xmrt;
 	struct nexthop		*nh;
 	int			 n, fd, reconf_in = 0, reconf_out = 0;
+	u_int16_t		 rid;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		fatal("rde_dispatch_imsg_parent: imsg_read error");
@@ -584,6 +586,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			    NULL)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
+			for (rid = 0; rid < rib_size; rid++)
+				ribs[rid].state = RIB_DELETE;
 			break;
 		case IMSG_NETWORK_ADD:
 			memcpy(&netconf_p, imsg.data, sizeof(netconf_p));
@@ -603,6 +607,17 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			memcpy(&netconf_p, imsg.data, sizeof(netconf_p));
 			TAILQ_INIT(&netconf_p.attrset);
 			network_delete(&netconf_p, 1);
+			break;
+		case IMSG_RECONF_RIB:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct rde_rib))
+				fatalx("IMSG_RECONF_RIB bad len");
+			memcpy(&rn, imsg.data, sizeof(rn));
+			rid = rib_find(rn.name);
+			if (rid == RIB_FAILED)
+				rib_new(-1, rn.name, rn.flags);
+			else
+				ribs[rid].state = RIB_ACTIVE;
 			break;
 		case IMSG_RECONF_FILTER:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -673,6 +688,10 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			}
 			free(rules_l);
 			rules_l = newrules;
+			for (rid = 0; rid < rib_size; rid++) {
+				if (ribs[rid].state == RIB_DELETE)
+					rib_free(&ribs[rid]);
+			}
 			log_info("RDE reconfigured");
 			break;
 		case IMSG_NEXTHOP_UPDATE:
