@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.115 2009/01/03 12:58:28 djm Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.116 2009/06/08 19:21:08 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -472,7 +472,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 	u_int i, offset;
 	void *p;
 
-	if (mopts.malloc_canary != (d->canary1 ^ (u_int32_t)d) ||
+	if (mopts.malloc_canary != (d->canary1 ^ (u_int32_t)(uintptr_t)d) ||
 	    d->canary1 != ~d->canary2)
 		wrterror("internal struct corrupt");
 	if (sz != PAGEROUND(sz)) {
@@ -716,7 +716,7 @@ omalloc_init(struct dir_info **dp)
 	}
 	malloc_used += regioninfo_size;
 	memset(d->r, 0, regioninfo_size);
-	d->canary1 = mopts.malloc_canary ^ (u_int32_t)d;
+	d->canary1 = mopts.malloc_canary ^ (u_int32_t)(uintptr_t)d;
 	d->canary2 = ~d->canary1;
 
 	*dp = d;
@@ -845,7 +845,7 @@ find(struct dir_info *d, void *p)
 	size_t mask = d->regions_total - 1;
 	void *q, *r;
 
-	if (mopts.malloc_canary != (d->canary1 ^ (u_int32_t)d) ||
+	if (mopts.malloc_canary != (d->canary1 ^ (u_int32_t)(uintptr_t)d) ||
 	    d->canary1 != ~d->canary2)
 		wrterror("internal struct corrupt");
 	p = MASK_POINTER(p);
@@ -973,7 +973,7 @@ malloc_bytes(struct dir_info *d, size_t size)
 	u_long		u, *lp;
 	struct chunk_info *bp;
 
-	if (mopts.malloc_canary != (d->canary1 ^ (u_int32_t)d) ||
+	if (mopts.malloc_canary != (d->canary1 ^ (u_int32_t)(uintptr_t)d) ||
 	    d->canary1 != ~d->canary2)
 		wrterror("internal struct corrupt");
 	/* Don't bother with anything less than this */
