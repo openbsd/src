@@ -2440,5 +2440,6 @@
 ./usr/mdec/boot32
 ./usr/mdec/boot64
 ./usr/mdec/sgivol
+./usr/sbin/hotplugd
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
