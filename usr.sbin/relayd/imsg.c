@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.27 2009/06/07 05:56:25 eric Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.28 2009/06/08 08:30:06 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -107,12 +107,8 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 		errno = ERANGE;
 		return (-1);
 	}
-	if ((imsg->hdr.len = ntohs(imsg->hdr.len)) > av)
+	if (imsg->hdr.len > av)
 		return (0);
-	imsg->hdr.type = ntohl(imsg->hdr.type);
-	imsg->hdr.flags = ntohs(imsg->hdr.flags);
-	imsg->hdr.peerid = ntohl(imsg->hdr.peerid);
-	imsg->hdr.pid = ntohl(imsg->hdr.pid);
 	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 	ibuf->r.rptr = ibuf->r.buf + IMSG_HEADER_SIZE;
 	if ((imsg->data = malloc(datalen)) == NULL)
@@ -228,11 +224,8 @@ imsg_close(struct imsgbuf *ibuf, struct buf *msg)
 	if (msg->fd != -1)
 		hdr->flags |= IMSGF_HASFD;
 
-	hdr->type = htonl(hdr->type);
-	hdr->len = htons(msg->wpos);
-	hdr->flags = htons(hdr->flags);
-	hdr->peerid = htonl(hdr->peerid);
-	hdr->pid = htonl(hdr->pid);
+	hdr->len = (u_int16_t)msg->wpos;
+
 	buf_close(&ibuf->w, msg);
 }
 
