@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.650 2009/06/08 02:36:06 sthen Exp $ */
+/*	$OpenBSD: pf.c,v 1.651 2009/06/08 03:56:14 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1340,7 +1340,7 @@ pf_print_state_parts(struct pf_state *s,
 		printf("ICMPv6");
 		break;
 	default:
-		printf("%u", skw->proto);
+		printf("%u", proto);
 		break;
 	}
 	switch (dir) {
