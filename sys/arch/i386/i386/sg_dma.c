@@ -1,4 +1,4 @@
-/*	$OpenBSD: sg_dma.c,v 1.1 2009/06/06 05:31:01 oga Exp $	*/
+/*	$OpenBSD: sg_dma.c,v 1.2 2009/06/08 11:08:51 jsg Exp $	*/
 /*
  * Copyright (c) 2009 Owain G. Ainsworth <oga@openbsd.org>
  *
@@ -228,7 +228,7 @@ sg_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		boundary = map->_dm_boundary;
 	align = MAX(map->dm_segs[0]._ds_align, PAGE_SIZE);
 
-	pmap = p ? p->p_vmspace->vm_map.pmap : pmap = pmap_kernel();
+	pmap = p ? p->p_vmspace->vm_map.pmap : pmap_kernel();
 
 	/* Count up the total number of pages we need */
 	sg_iomap_clear_pages(spm);
