@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.12 2009/06/06 23:21:43 gwk Exp $ */
+/*	$OpenBSD: est.c,v 1.13 2009/06/08 23:18:05 gwk Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -414,6 +414,9 @@ est_init(struct cpu_info *ci)
 	}
 
 	if (est_fqlist == NULL)
+		return;
+
+	if (est_fqlist->n < 2)
 		return;
 
 	printf("%s: Enhanced SpeedStep %d MHz", cpu_device, cpuspeed);
