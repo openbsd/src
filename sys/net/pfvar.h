@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.286 2009/05/18 20:37:13 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.287 2009/06/08 00:50:30 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -220,21 +220,24 @@ struct pfi_dynaddr {
 
 #define PF_AEQ(a, b, c) \
 	((c == AF_INET && (a)->addr32[0] == (b)->addr32[0]) || \
-	((a)->addr32[3] == (b)->addr32[3] && \
+	(c == AF_INET6 && \
+	(a)->addr32[3] == (b)->addr32[3] && \
 	(a)->addr32[2] == (b)->addr32[2] && \
 	(a)->addr32[1] == (b)->addr32[1] && \
 	(a)->addr32[0] == (b)->addr32[0])) \
 
 #define PF_ANEQ(a, b, c) \
 	((c == AF_INET && (a)->addr32[0] != (b)->addr32[0]) || \
+	(c == AF_INET6 && \
 	((a)->addr32[3] != (b)->addr32[3] || \
 	(a)->addr32[2] != (b)->addr32[2] || \
 	(a)->addr32[1] != (b)->addr32[1] || \
-	(a)->addr32[0] != (b)->addr32[0])) \
+	(a)->addr32[0] != (b)->addr32[0]))) \
 
 #define PF_AZERO(a, c) \
 	((c == AF_INET && !(a)->addr32[0]) || \
-	(!(a)->addr32[0] && !(a)->addr32[1] && \
+	(c == AF_INET6 && \
+	!(a)->addr32[0] && !(a)->addr32[1] && \
 	!(a)->addr32[2] && !(a)->addr32[3] )) \
 
 #define PF_MATCHA(n, a, m, b, f) \
