@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.172 2009/06/07 03:07:19 millert Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.173 2009/06/08 00:52:23 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1073,8 +1073,10 @@ fill_file2(struct kinfo_file2 *kf, struct file *fp, struct filedesc *fdp,
 		kf->v_flag = vp->v_flag;
 		kf->v_data = PTRTOINT64(vp->v_data);
 		kf->v_mount = PTRTOINT64(vp->v_mount);
-		strlcpy(kf->f_mntonname, vp->v_mount->mnt_stat.f_mntonname,
-		    sizeof(kf->f_mntonname));
+		if (vp->v_mount)
+			strlcpy(kf->f_mntonname,
+			    vp->v_mount->mnt_stat.f_mntonname,
+			    sizeof(kf->f_mntonname));
 
 		if (VOP_GETATTR(vp, &va, p->p_ucred, p) == 0) {
 			kf->va_fileid = va.va_fileid;
