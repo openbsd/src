@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.7 2009/06/02 21:38:10 drahn Exp $	*/
+/*	$OpenBSD: ipic.c,v 1.8 2009/06/09 01:12:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -63,7 +63,7 @@ struct ipic_softc {
 };
 
 uint32_t ipic_imask;
-struct intrq ipic_handler[IPIC_NVEC];
+struct intrhand *ipic_intrhand[IPIC_NVEC];
 struct ipic_softc *ipic_sc;
 
 int	ipic_match(struct device *, void *, void *);
@@ -82,17 +82,9 @@ void	ipic_write(struct ipic_softc *, bus_addr_t, uint32_t);
 uint32_t ipic_simsr_h(int);
 uint32_t ipic_simsr_l(int);
 uint32_t ipic_semsr(int);
-void	ipic_calc_masks(void);
 
 void	ext_intr(void);
-
-ppc_splraise_t ipic_splraise;
-ppc_spllower_t ipic_spllower;
-ppc_splx_t ipic_splx;
-
-void	ipic_setipl(int);
-void	ipic_do_pending(int);
-
+void	ipic_do_pending_int(void);
 
 int
 ipic_match(struct device *parent, void *cfdata, void *aux)
@@ -105,8 +97,6 @@ ipic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ipic_softc *sc = (void *)self;
 	struct obio_attach_args *oa = aux;
-	struct intrq *iq;
-	int i;
 
 	sc->sc_iot = oa->oa_iot;
 	if (bus_space_map(sc->sc_iot, oa->oa_offset, 128, 0, &sc->sc_ioh)) {
@@ -115,17 +105,6 @@ ipic_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ipic_sc = sc;
-
-	for (i = 0; i < IPIC_NVEC; i++) {
-		iq = &ipic_handler[i];
-		TAILQ_INIT(&iq->iq_list);
-	}
-
-	ppc_smask_init();
-	ppc_intr_func.raise = ipic_splraise;
-	ppc_intr_func.lower = ipic_spllower;
-	ppc_intr_func.x = ipic_splx;
-
 	printf("\n");
 }
 
@@ -197,10 +176,32 @@ ipic_semsr(int ivec)
 	return 0;
 }
 
-void
-ipic_calc_masks(void)
+static void
+intr_calculatemasks(void)
 {
 	struct ipic_softc *sc = ipic_sc;
+	int level;
+
+	for (level = IPL_NONE; level < IPL_NUM; level++)
+		imask[level] = SINT_MASK | (1 << level);
+
+	/*
+	 * There are tty, network and disk drivers that use free() at interrupt
+	 * time, so vm > (tty | net | bio).
+	 *
+	 * Enforce a hierarchy that gives slow devices a better chance at not
+	 * dropping data.
+	 */
+	imask[IPL_NET] |= imask[IPL_BIO];
+	imask[IPL_TTY] |= imask[IPL_NET];
+	imask[IPL_VM] |= imask[IPL_TTY];
+	imask[IPL_CLOCK] |= imask[IPL_VM] | SPL_CLOCK;
+
+	/*
+	 * These are pseudo-levels.
+	 */
+	imask[IPL_NONE] = 0x00000000;
+	imask[IPL_HIGH] = 0xffffffff;
 
 	sc->sc_simsr_h[IPL_NET] |= sc->sc_simsr_h[IPL_BIO];
 	sc->sc_simsr_h[IPL_TTY] |= sc->sc_simsr_h[IPL_NET];
@@ -226,40 +227,31 @@ intr_establish(int ivec, int type, int level,
     int (*ih_fun)(void *), void *ih_arg, const char *name)
 {
 	struct ipic_softc *sc = ipic_sc;
-	struct intrhand *ih;
-	struct intrq *iq;
+	struct intrhand **p, *q, *ih;
 	uint32_t mask;
-	int s;
 
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
 	if (ih == NULL)
 		panic("%s: malloc failed", __func__);
-	iq = &ipic_handler[ivec];
 
 	if (ivec < 0 || ivec >= IPIC_NVEC)
 		panic("%s: invalid vector %d", __func__, ivec);
 
+	for (p = &ipic_intrhand[ivec]; (q = *p) != NULL; p = &q->ih_next)
+		;
+
 	sc->sc_simsr_h[level] |= ipic_simsr_h(ivec);
 	sc->sc_simsr_l[level] |= ipic_simsr_l(ivec);
 	sc->sc_semsr[level] |= ipic_semsr(ivec);
+	intr_calculatemasks();
 
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
+	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = ivec;
-
-	evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq,
-	    &evcount_intr);
-
-	/*
-	 * Append handler to end of list
-	 */
-	s = ppc_intr_disable();
-
-	TAILQ_INSERT_TAIL(&iq->iq_list, ih, ih_list);
-	ipic_calc_masks();
-
-	ppc_intr_enable(s);
+	evcount_attach(&ih->ih_count, name, NULL, &evcount_intr);
+	*p = ih;
 
 	/* Unmask the interrupt. */
 	mask = ipic_read(sc, IPIC_SIMSR_H);
@@ -281,19 +273,31 @@ ext_intr(void)
 	struct cpu_info *ci = curcpu();
 	struct ipic_softc *sc = ipic_sc;
 	struct intrhand *ih;
-	struct intrq *iq;
-	int pcpl;
+	uint32_t simsr_h, simsr_l, semsr;
+	int pcpl, ocpl;
 	int ivec;
 
 	pcpl = ci->ci_cpl;
 	ivec = ipic_read(sc, IPIC_SIVCR) & 0x7f;
 
-	iq = &ipic_handler[ivec];
-	TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
-		if (ih->ih_level < pcpl)
-			continue;
+	simsr_h = ipic_read(sc, IPIC_SIMSR_H);
+	simsr_l = ipic_read(sc, IPIC_SIMSR_L);
+	semsr = ipic_read(sc, IPIC_SEMSR);
+	ipic_write(sc, IPIC_SIMSR_H, simsr_h & ~ipic_simsr_h(ivec));
+	ipic_write(sc, IPIC_SIMSR_L, simsr_l & ~ipic_simsr_l(ivec));
+	ipic_write(sc, IPIC_SEMSR, semsr & ~ipic_semsr(ivec));
 
-		ipic_splraise(ih->ih_level);
+	ih = ipic_intrhand[ivec];
+	while (ih) {
+		if (ci->ci_cpl & (1 << ih->ih_level)) {
+			ci->ci_ipending |= (1 << ih->ih_level);
+			return;
+		}
+
+		ipic_write(sc, IPIC_SIMSR_H, sc->sc_simsr_h[ih->ih_level]);
+		ipic_write(sc, IPIC_SIMSR_L, sc->sc_simsr_l[ih->ih_level]);
+		ipic_write(sc, IPIC_SEMSR, sc->sc_semsr[ih->ih_level]);
+		ocpl = splraise(imask[ih->ih_level]);
 		ppc_intr_enable(1);
 
 		KERNEL_LOCK();
@@ -302,111 +306,40 @@ ext_intr(void)
 		KERNEL_UNLOCK();
 
 		ppc_intr_disable();
+		ci->ci_cpl = ocpl;
+		ih = ih->ih_next;
 	}
 
+	ipic_write(sc, IPIC_SIMSR_H, simsr_h);
+	ipic_write(sc, IPIC_SIMSR_L, simsr_l);
+	ipic_write(sc, IPIC_SEMSR, semsr);
 	splx(pcpl);
 }
 
-int
-ipic_splraise(int newcpl)
+static __inline int
+cntlzw(int x)
 {
-	struct cpu_info *ci = curcpu();
-	int ocpl = ci->ci_cpl;
+	int a;
 
-	if (ocpl > newcpl)
-		newcpl = ocpl;
+	__asm __volatile("cntlzw %0,%1" : "=r"(a) : "r"(x));
 
-	ipic_setipl(newcpl);
-
-	return (ocpl);
-}
-
-int
-ipic_spllower(int newcpl)
-{
-	struct cpu_info *ci = curcpu();
-	int ocpl = ci->ci_cpl;
-
-	ipic_splx(newcpl);
-
-	return (ocpl);
+	return a;
 }
 
 void
-ipic_splx(int newcpl)
-{
-	struct cpu_info *ci = curcpu();
-
-	ipic_setipl(newcpl);
-	if (ci->ci_ipending & ppc_smask[newcpl])
-		ipic_do_pending(newcpl);
-}
-
-void
-ipic_setipl(int ipl)
+ipic_do_pending_int(void)
 {
 	struct cpu_info *ci = curcpu();
 	struct ipic_softc *sc = ipic_sc;
 	uint32_t mask;
-	int s;
+	int level;
 
-	s = ppc_intr_disable();
-	ci->ci_cpl = ipl;
-	mask = sc->sc_simsr_h[IPL_HIGH] & ~sc->sc_simsr_h[ipl];
+	ci->ci_ipending &= SINT_MASK;
+	level = cntlzw(31 - (ci->ci_cpl & ~(SPL_CLOCK|SINT_MASK)));
+	mask = sc->sc_simsr_h[IPL_HIGH] & ~sc->sc_simsr_h[level];
 	ipic_write(sc, IPIC_SIMSR_H, mask);
-	mask = sc->sc_simsr_l[IPL_HIGH] & ~sc->sc_simsr_l[ipl];
+	mask = sc->sc_simsr_l[IPL_HIGH] & ~sc->sc_simsr_l[level];
 	ipic_write(sc, IPIC_SIMSR_L, mask);
-	mask = sc->sc_semsr[IPL_HIGH] & ~sc->sc_semsr[ipl];
+	mask = sc->sc_semsr[IPL_HIGH] & ~sc->sc_semsr[level];
 	ipic_write(sc, IPIC_SEMSR, mask);
-	ppc_intr_enable(s);
-}
-
-void
-ipic_do_pending(int pcpl)
-{
-	struct cpu_info *ci = curcpu();
-	int s;
-
-	s = ppc_intr_disable();
-	if (ci->ci_iactive & CI_IACTIVE_PROCESSING_SOFT) {
-		ppc_intr_enable(s);
-		return;
-	}
-
-	atomic_setbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
-
-	do {
-		if ((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTNET)) &&
-		    (pcpl < IPL_SOFTNET)) {
-			extern int netisr;
-			int pisr;
-		       
-			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTNET);
-			ci->ci_cpl = IPL_SOFTNET;
-			ppc_intr_enable(s);
-			KERNEL_LOCK();
-			while ((pisr = netisr) != 0) {
-				atomic_clearbits_int(&netisr, pisr);
-				softnet(pisr);
-			}
-			KERNEL_UNLOCK();
-			ppc_intr_disable();
-			continue;
-		}
-		if ((ci->ci_ipending & SI_TO_IRQBIT(SI_SOFTCLOCK)) &&
-		    (pcpl < IPL_SOFTCLOCK)) {
-			ci->ci_ipending &= ~SI_TO_IRQBIT(SI_SOFTCLOCK);
-			ci->ci_cpl = IPL_SOFTCLOCK;
-			ppc_intr_enable(s);
-			KERNEL_LOCK();
-			softclock();
-			KERNEL_UNLOCK();
-			ppc_intr_disable();
-			continue;
-		}
-	} while (ci->ci_ipending & ppc_smask[pcpl]);
-	ipic_setipl(pcpl);	/* Don't use splx... we are here already! */
-
-	atomic_clearbits_int(&ci->ci_iactive, CI_IACTIVE_PROCESSING_SOFT);
-	ppc_intr_enable(s);
 }

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.20 2009/06/02 21:38:09 drahn Exp $
+#	$OpenBSD: genassym.cf,v 1.21 2009/06/09 01:12:38 deraadt Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -86,6 +86,7 @@ member	ci_curproc
 member	ci_curpcb
 member	ci_curpm
 member	ci_want_resched
+member	ci_cpl
 member	ci_intrdepth
 member	ci_intstk
 member	ci_tempsave
