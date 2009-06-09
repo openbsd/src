@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.38 2009/06/04 03:14:14 oga Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.39 2009/06/09 19:16:39 oga Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -62,9 +62,9 @@
 #define	wakeup(chan)			((void)0)
 #define	pool_get(pool, flags)		malloc((pool)->pr_size, 0, 0)
 #define	pool_init(a, b, c, d, e, f, g)	(a)->pr_size = (b)
+#define	pool_setipl(pool, ipl)		/* nothing */
 #define	pool_put(pool, rp)		free((rp), 0)
 #define	panic				printf
-#define	splx(s)				((void)(s))
 #endif
 
 #if defined(DIAGNOSTIC) || defined(DDB)
