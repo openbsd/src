@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.7 2009/06/07 05:56:25 eric Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.8 2009/06/09 16:26:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/un.h>
 #include <sys/uio.h>
 
+#include <netinet/in.h>
 #include <net/if.h>
 #include <arpa/inet.h>
 
