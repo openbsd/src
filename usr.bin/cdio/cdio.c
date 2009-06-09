@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.70 2009/06/03 00:45:59 naddy Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.71 2009/06/09 22:20:44 jmc Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -129,8 +129,8 @@ struct cmdtab {
 { CMD_INFO,     "info",         1, "" },
 { CMD_NEXT,	"next",		1, "" },
 { CMD_PAUSE,    "pause",        2, "" },
-{ CMD_PLAY,     "play",         1, "[track1[.index1]] track2[.index2]" },
-{ CMD_PLAY,     "play",         1, "[tr1] m1:s1[.f1] [tr2] [m2:s2[.f2]]" },
+{ CMD_PLAY,     "play",         1, "[track1[.index1] [track2[.index2]]]" },
+{ CMD_PLAY,     "play",         1, "[[tr1] m1:s1[.f1] [tr2] [m2:s2[.f2]]]" },
 { CMD_PLAY,     "play",         1, "[#block [len]]" },
 { CMD_PREV,	"previous",	2, "" },
 { CMD_QUIT,     "quit",         1, "" },
