@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.83 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.84 2009/06/09 11:52:54 sthen Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ int	icmpprintfs = 0;
 int	icmperrppslim = 100;
 int	icmperrpps_count = 0;
 struct timeval icmperrppslim_last;
-int	icmp_rediraccept = 1;
+int	icmp_rediraccept = 0;
 int	icmp_redirtimeout = 10 * 60;
 static struct rttimer_queue *icmp_redirect_timeout_q = NULL;
 struct	icmpstat icmpstat;
