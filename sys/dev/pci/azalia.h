@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.51 2009/06/09 05:05:48 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.52 2009/06/09 05:16:42 jakemsr Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -263,6 +263,7 @@
 #define			COP_AMPCAP_OFFSET(x)	(x & 0x0000007f)
 #define			COP_AMPCAP_NUMSTEPS(x)	((x >> 8) & 0x7f)
 #define			COP_AMPCAP_STEPSIZE(x)	((x >> 16) & 0x7f)
+#define			COP_AMPCAP_CTLOFF(x)	((x >> 24) & 0x7f)
 #define			COP_AMPCAP_MUTE		0x80000000
 #define		COP_CONNECTION_LIST_LENGTH	0x0e
 #define			COP_CLL_LONG		0x00000080
@@ -506,6 +507,7 @@
 #define AZ_QRK_WID_CDIN_1C	0x00001000
 #define AZ_QRK_WID_BEEP_1D	0x00002000
 #define AZ_QRK_WID_OVREF50	0x00004000
+#define AZ_QRK_WID_AD1981_OAMP	0x00008000
 
 /* memory-mapped types */
 typedef struct {

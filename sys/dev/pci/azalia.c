@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.138 2009/06/09 05:05:48 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.139 2009/06/09 05:16:42 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2544,12 +2544,17 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 	}
 
 	/* amplifier information */
+	/* XXX (ab)use bits 24-30 to store the "control offset", which is
+	 * the number of steps, starting at 0, that have no effect.  these
+	 * bits are reserved in HDA 1.0.
+	 */
 	if (this->widgetcap & COP_AWCAP_INAMP) {
 		if (this->widgetcap & COP_AWCAP_AMPOV)
 			azalia_comresp(codec, nid, CORB_GET_PARAMETER,
 			    COP_INPUT_AMPCAP, &this->inamp_cap);
 		else
 			this->inamp_cap = codec->w[codec->audiofunc].inamp_cap;
+		this->inamp_cap &= ~(0x7f << 24);
 	}
 	if (this->widgetcap & COP_AWCAP_OUTAMP) {
 		if (this->widgetcap & COP_AWCAP_AMPOV)
@@ -2557,6 +2562,7 @@ azalia_widget_init(widget_t *this, const codec_t *codec, nid_t nid)
 			    COP_OUTPUT_AMPCAP, &this->outamp_cap);
 		else
 			this->outamp_cap = codec->w[codec->audiofunc].outamp_cap;
+		this->outamp_cap &= ~(0x7f << 24);
 	}
 	return 0;
 }
