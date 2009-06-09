@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.20 2009/06/06 23:45:35 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.21 2009/06/09 02:56:38 krw Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -90,10 +90,9 @@ member	pcb_cr0
 member	pcb_ldt_sel
 member	pcb_onfault
 member	pcb_fpcpu
-member	pcb_pmap
 
 struct	cpu_info
-member	CPU_INFO_SCRATCH        ci_scratch
+member	CPU_INFO_SCRATCH	ci_scratch
 member  CPU_INFO_SELF		ci_self
 member  CPU_INFO_RESCHED	ci_want_resched
 member  CPU_INFO_CURPROC	ci_curproc
@@ -106,10 +105,6 @@ member	CPU_INFO_ISOURCES	ci_isources
 member	CPU_INFO_IPENDING	ci_ipending
 member	CPU_INFO_IUNMASK	ci_iunmask
 member	CPU_INFO_GDT		ci_gdt
-member	CPU_INFO_CURPMAP	ci_curpmap
-
-struct	pmap
-member	pm_pdirpa
 
 struct	intrsource
 member	is_recurse

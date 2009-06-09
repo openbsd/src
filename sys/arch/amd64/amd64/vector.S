@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.21 2009/06/06 23:45:35 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.22 2009/06/09 02:56:38 krw Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -74,7 +74,6 @@
 #include <machine/asm.h>
 #include <machine/frameasm.h>
 #include <machine/segments.h>
-#include <machine/specialreg.h>
 #include <machine/trap.h>
 #include <machine/intr.h>
 #include <machine/psl.h>
@@ -345,41 +344,6 @@ IDTVEC(ipi_invlrange)
 	decq	tlb_shoot_wait
 
 	popq	%rdx
-	popq	%rax
-	iretq
-
-IDTVEC(ipi_reloadcr3)
-	pushq	%rax
-	pushq	%rcx
-	pushq	%rdx
-	pushq	%r9
-
-	ioapic_asm_ack()
-
-	movl	$MSR_GSBASE, %ecx
-	rdmsr
-	movq	$VM_MAXUSER_ADDRESS, %rcx
-	shlq	$32, %rdx
-	leaq	(%rax,%rdx), %r9
-	cmpq	%rcx, %r9
-	jb	1f
-	swapgs
-1:
-	movq	CPUVAR(CURPCB), %rax
-	movq	PCB_PMAP(%rax), %rax
-	movq	%rax, CPUVAR(CURPMAP)
-	movq	PM_PDIRPA(%rax), %rax
-	movq	%rax, %cr3
-
-	lock
-	decq	tlb_shoot_wait
-
-	cmpq	%rcx, %r9
-	jb	1f
-	swapgs
-1:	popq	%r9
-	popq	%rdx
-	popq	%rcx
 	popq	%rax
 	iretq
 

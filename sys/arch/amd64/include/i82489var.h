@@ -1,3 +1,4 @@
+/*	$OpenBSD: i82489var.h,v 1.10 2009/06/09 02:56:38 krw Exp $	*/
 /*	$NetBSD: i82489var.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
 
 /*-
@@ -86,12 +87,10 @@ extern void Xresume_lapic_ipi(void);
 #define LAPIC_IPI_INVLTLB			(LAPIC_IPI_OFFSET + 0)
 #define LAPIC_IPI_INVLPG			(LAPIC_IPI_OFFSET + 1)
 #define LAPIC_IPI_INVLRANGE			(LAPIC_IPI_OFFSET + 2)
-#define LAPIC_IPI_RELOADCR3			(LAPIC_IPI_OFFSET + 3)
 
 extern void Xipi_invltlb(void);
 extern void Xipi_invlpg(void);
 extern void Xipi_invlrange(void);
-extern void Xipi_reloadcr3(void);
 
 /*
  * Vector used for local apic timer interrupts.
