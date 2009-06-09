@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.186 2009/06/07 03:07:19 millert Exp $
+.\"	$OpenBSD: sysctl.3,v 1.187 2009/06/09 22:24:40 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 7 2009 $
+.Dd $Mdocdate: June 9 2009 $
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -404,6 +404,7 @@ information.
 .It Dv KERN_ARGMAX No "	integer	no"
 .It Dv KERN_ARND No "	char[]	no"
 .It Dv KERN_BOOTTIME No "	struct timeval	no"
+.It Dv KERN_BUFCACHEPERCENT No "	integer	yes"
 .It Dv KERN_CCPU No "	integer	no"
 .It Dv KERN_CLOCKRATE No "	struct clockinfo	no"
 .It Dv KERN_CPTIME No "	long[CPUSTATES]	no"
@@ -423,6 +424,7 @@ information.
 .It Dv KERN_MALLOCSTATS No "	node	no"
 .It Dv KERN_MAXCLUSTERS No "	integer	yes"
 .It Dv KERN_MAXFILES No "	integer	yes"
+.It Dv KERN_MAXLOCKSPERUID No "	integer	yes"
 .It Dv KERN_MAXPARTITIONS No "	integer	no"
 .It Dv KERN_MAXPROC No "	integer	yes"
 .It Dv KERN_MAXVNODES No "	integer	yes"
@@ -486,6 +488,9 @@ A
 .Li struct timeval
 structure is returned.
 This structure contains the time that the system was booted.
+.It Dv KERN_BUFCACHEPERCENT
+The maximum percentage of physical memory the buffer cache may use;
+the default is 10%.
 .It Dv KERN_CCPU
 The scheduler exponential decay value.
 .It Dv KERN_CLOCKRATE
@@ -623,6 +628,9 @@ The maximum number of
 clusters that may be allocated.
 .It Dv KERN_MAXFILES
 The maximum number of open files that may be open in the system.
+.It Dv KERN_MAXLOCKSPERUID
+The maximum number of file locks per user;
+the default is 1024.
 .It Dv KERN_MAXPARTITIONS
 The maximum number of partitions allowed per disk.
 .It Dv KERN_MAXPROC
