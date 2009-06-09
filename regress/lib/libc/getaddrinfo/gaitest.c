@@ -1,4 +1,4 @@
-/*	$OpenBSD: gaitest.c,v 1.5 2004/06/21 21:56:19 itojun Exp $	*/
+/*	$OpenBSD: gaitest.c,v 1.6 2009/06/09 18:15:08 phessler Exp $	*/
 /*	$NetBSD: gaitest.c,v 1.3 2002/07/05 15:47:43 itojun Exp $	*/
 
 /*
@@ -28,6 +28,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ */
+
+/*
+ * Please note: the order of the responses (and the regress test)
+ * is dependent on the "family" keywords in resolv.conf.
+ *
+ * This expects the default behaviour of "family inet4 inet6"
  */
 
 #include <sys/types.h>
