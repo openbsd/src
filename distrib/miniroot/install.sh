@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.200 2009/06/03 00:30:31 krw Exp $
+#	$OpenBSD: install.sh,v 1.201 2009/06/09 10:11:21 halex Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -65,12 +65,14 @@ MODE=install
 
 cd /tmp
 DISK=
+DISKS_DONE=
 _DKDEVS=$(get_dkdevs)
 
 # Remove traces of previous install attempt.
 rm -f /tmp/fstab.shadow /tmp/fstab /tmp/fstab.*
 
 while :; do
+	DISKS_DONE=$(addel "$DISK" $DISKS_DONE)
 	_DKDEVS=$(rmel "$DISK" $_DKDEVS)
 
 	# Always do ROOTDISK first, and repeat until it is configured.
@@ -82,7 +84,10 @@ while :; do
 	else
 		# Force the user to think and type in a disk name by
 		# making 'done' the default choice.
-		ask_which "disk" "do you wish to initialize" "$_DKDEVS" done
+		ask_which "disk" "do you wish to initialize" \
+			'$(l=$(get_dkdevs); for a in $DISKS_DONE; do
+				l=$(rmel $a $l); done; bsort $l)' \
+			done
 		[[ $resp == done ]] && break
 	fi
 

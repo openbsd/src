@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.576 2009/06/09 03:33:49 krw Exp $
+#	$OpenBSD: install.sub,v 1.577 2009/06/09 10:11:21 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -132,7 +132,7 @@ get_ifdevs() {
 }
 
 get_drive() {
-	ask_which "$1" "contains the $MODE media" "$2"
+	ask_which "$1" "contains the $MODE media" "$2" "$3"
 	[[ $resp == done ]] && return 1
 	makedev $resp || return 1
 	return 0
@@ -157,7 +157,11 @@ mount_mnt2() {
 	else
 		# Display partitions with filesystems and ask which to use.
 		cat /tmp/parts.$_dev
-		ask_which "$_dev partition" "has the $MODE sets" "$_parts"
+		ask_which "$_dev partition" "has the $MODE sets" \
+			'$(disklabel '$_dev' 2>/dev/null | grep "^  [a-p]: " |
+			egrep -v "swap|unused" |
+			sed '\''s/^  \(.\): .*/\1/'\'')'
+			
 		[[ $resp == done ]] && return 1
 	fi
 
@@ -180,6 +184,77 @@ askpass() {
 	echo
 }
 
+# Make sure lock is initially released
+rm -df /tmp/lock
+
+# Acquire lock
+lock() {
+	while ! mkdir /tmp/lock 2>&- && sleep .1; do done
+}
+
+# Release lock
+unlock() {
+	rm -d /tmp/lock 2>&-
+}
+
+# Add trap to kill the listener process
+retrap() {
+	trap '>&- && kill -KILL $cppid 2>&-; exit' INT EXIT TERM
+}
+
+# The dmesg listener will check for the existance of this file and send a
+# signal to the child process if the dmesg output differs from the contents
+# of that file
+rm -f /tmp/update
+
+# Start listener process looking for dmesg changes
+(
+	while :; do
+		lock
+		if test -e /tmp/update && [[ "`dmesg`" != "`cat /tmp/update`" ]]; then
+			dmesg >/tmp/update
+			kill -TERM 2>&- $$ || exit 1
+		fi
+		unlock
+		sleep .5
+	done
+) |&
+cppid=$!
+
+# Kill the child on exit
+retrap
+
+# Issue a read into the global variable $resp. If the dmesg output is
+# changed while inside this function, the current read will be aborted
+# and the function will return a non-zero value. Normally, the caller
+# will then reprint any prompt and call the function again.
+_ask() {
+	local _int _redo=0 _pid
+
+	trap "_int=1" INT
+	trap "_redo=1" TERM
+	lock; dmesg >/tmp/update; unlock
+	read resp
+	lock; rm /tmp/update; unlock
+	if (( _redo )); then
+		stty raw
+		stty -raw
+	else
+		case $resp in
+		!)	echo "Type 'exit' to return to install."
+			sh
+			_redo=1
+			;;
+		!*)	eval "${resp#?}"
+			_redo=1
+			;;
+		esac
+	fi
+	retrap
+	(( _int )) && kill -INT $$
+	return $_redo
+}
+
 # Ask for user input.
 #
 #    $1    = the question to ask the user
@@ -192,23 +267,11 @@ askpass() {
 ask() {
 	local _question=$1 _default=$2
 
-	set -o noglob
 	while :; do
 		echo -n "$_question "
 		[[ -z $_default ]] || echo -n "[$_default] "
-		read resp
-		case $resp in
-		!)	echo "Type 'exit' to return to install."
-			sh
-			;;
-		!*)	eval "${resp#?}"
-			;;
-		*)	: ${resp:=$_default}
-			break
-			;;
-		esac
+		_ask && : ${resp:=$_default} && break
 	done
-	set +o noglob
 }
 
 # Ask for a password twice, saving the input in $_password
@@ -308,29 +371,37 @@ ask_yn() {
 # $3 = list of valid choices
 # $4 = default choice, if it is not specified use the first item in $3
 #
+# N.B.! $3 and $4 will be "expanded" using eval, so be sure to escape them
+#       if they contain spooky stuff
+#
 # At exit $resp holds selected item, or 'done'
 ask_which() {
-	local _name=$1 _query=$2 _list=$3 _def=$4
-
-	set -- $_list
-	if (( $# < 1 )); then
-		resp=done
-		return
-	fi
-	: ${_def:=$1}
-
-	# Eliminate extraneous (especially trailing) whitespace in _list.
-	_list="$*"
+	local _name=$1 _query=$2 _list=$3 _def=$4 _dynlist _dyndef
 
 	while :; do
 		# Put both lines in ask prompt, rather than use a
 		# separate 'echo' to ensure the entire question is
 		# re-ask'ed after a '!' or '!foo' shell escape.
-		ask "Available ${_name}s are: $_list.\nWhich one $_query? (or 'done')" "$_def"
+		eval "_dynlist=\"$_list\""
+		eval "_dyndef=\"$_def\""
+
+		# Clean away whitespace and determine the default
+		set -o noglob
+		set -- $_dyndef; _dyndef="$1"
+		set -- $_dynlist; _dynlist="$*"
+		set +o noglob
+		(( $# < 1 )) && resp=done && return
+
+		: ${_dyndef:=$1}
+		echo "Available ${_name}s are: $_dynlist."
+		echo -n "Which one $_query? (or 'done') "
+		[[ -n $_dyndef ]] && echo -n "[$_dyndef] "
+		_ask || continue
+		[[ -z $resp ]] && resp="$_dyndef"
 
 		# Quote $resp to prevent user from confusing isin() by
 		# entering something like 'a a'.
-		isin "$resp" $_list done && break
+		isin "$resp" $_dynlist done && break
 		echo "'$resp' is not a valid choice."
 	done
 }
@@ -493,15 +564,12 @@ __EOT
 configure_ifs() {
 	local _first _ifdevs _ifs _name _hn _vl=0 _vd _vi _p _tags
 
-	# Select the initial default interface.
-	_p=$(ifconfig netboot 2>/dev/null | sed -n '1s/:.*//p')
-
 	while :; do
 		# Create new vlan if possible.
 		ifconfig vlan$_vl create >/dev/null 2>&1
-		_ifdevs=$(get_ifdevs)
 		ask_which "network interface" "do you wish to configure" \
-			"$_ifdevs" "$_p"
+			'$(get_ifdevs)' \
+			${_p:-'$( (ifconfig netboot 2>/dev/null | sed -n '\''1s/:.*//p'\''; get_ifdevs) | sed q )'}
 		[[ $resp == done ]] && break
 
 		_ifs=$resp
@@ -525,6 +593,7 @@ configure_ifs() {
 					! isin "$_vi" $_tags && break	
 				done
 			fi
+			_ifdevs=$(get_ifdevs)
 			set -- $_ifdevs
 			while [[ $1 == vlan[0-9]* ]]; do
 				shift
@@ -1215,7 +1284,7 @@ install_mounted_fs() {
 }
 
 install_cdrom() {
-	get_drive "CD-ROM" "$(get_cddevs)" || return
+	get_drive "CD-ROM" '$(get_cddevs)' || return
 	mount_mnt2 $resp || return
 
 	install_mounted_fs
@@ -1224,7 +1293,8 @@ install_cdrom() {
 install_disk() {
 	ask_yn "Is the disk partition already mounted?"
 	if [[ $resp == n ]]; then
-		get_drive "disk" "$(get_dkdevs)" || return
+		get_drive "disk" '$(bsort $(get_dkdevs))' \
+			'$(bsort $(rmel $ROOTDISK $(get_dkdevs)))' || return
 		mount_mnt2 $resp || return
 	fi
 
@@ -1256,7 +1326,7 @@ install_tape() {
 	local _z _bs
 
 	# Get the name of the tape device.
-	get_drive "tape drive" "$MTDEVS" || return
+	get_drive "tape drive" '$MTDEVS' || return
 	export TAPE=/dev/nr$resp
 	if [[ ! -c $TAPE ]]; then
 		echo "$TAPE is not a character special file."
@@ -1856,7 +1926,7 @@ fi
 # Get ROOTDISK, ROOTDEV and SWAPDEV.
 [[ -n $(get_dkdevs) ]] || { echo "No disks found." ; exit ; }
 
-ask_which "disk" "is the root disk" "$(get_dkdevs)"
+ask_which "disk" "is the root disk" '$(get_dkdevs)'
 [[ $resp == done ]] && exit
 makedev $resp || exit
 
