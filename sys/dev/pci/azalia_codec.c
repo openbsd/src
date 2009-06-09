@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.130 2009/05/31 03:22:05 jakemsr Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.131 2009/06/09 05:05:48 jakemsr Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -129,9 +129,12 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->name = "Realtek ALC885";
 		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
 		if (this->subid == 0x00a1106b ||	/* APPLE_MB3 */
+		    this->subid == 0x00a0106b ||	/* APPLE_MB3_1 */
 		    this->subid == 0x00a3106b) {	/* APPLE_MB4 */
 			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
 		}
+		if (this->subid == 0x00a0106b)
+			this->qrks |= AZ_QRK_WID_OVREF50;
 		break;
 	case 0x10ec0888:
 		this->name = "Realtek ALC888";
@@ -1843,6 +1846,8 @@ azalia_mixer_set(codec_t *this, nid_t nid, int target,
 		} else if (mc->un.ord == 1) {
 			value &= ~CORB_PWC_INPUT;
 			value |= CORB_PWC_OUTPUT;
+			if (this->qrks & AZ_QRK_WID_OVREF50)
+				value |= CORB_PWC_VREF_50;
 		} else {
 			value &= ~CORB_PWC_OUTPUT;
 			value |= CORB_PWC_INPUT;

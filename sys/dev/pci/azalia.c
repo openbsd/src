@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.137 2009/05/31 03:22:05 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.138 2009/06/09 05:05:48 jakemsr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2867,6 +2867,9 @@ azalia_widget_init_pin(widget_t *this, const codec_t *codec)
 		    (1 << CORB_PWC_VREF_50))
 			dir |= CORB_PWC_VREF_50;
 	}
+
+	if ((codec->qrks & AZ_QRK_WID_OVREF50) && (dir == CORB_PWC_OUTPUT))
+		dir |= CORB_PWC_VREF_50;
 
 	azalia_comresp(codec, this->nid, CORB_SET_PIN_WIDGET_CONTROL,
 	    dir, NULL);
