@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfscores.c,v 1.13 2005/05/01 02:43:12 djm Exp $	*/
+/*	$OpenBSD: cfscores.c,v 1.14 2009/06/09 14:56:19 sobrado Exp $	*/
 /*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cfscores.c,v 1.13 2005/05/01 02:43:12 djm Exp $";
+static char rcsid[] = "$OpenBSD: cfscores.c,v 1.14 2009/06/09 14:56:19 sobrado Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ main(int argc, char *argv[])
 	gid_t gid;
 
 	if (argc > 2) {
-		fprintf(stderr, "Usage: cfscores [user]\n");
+		fprintf(stderr, "usage: cfscores [-a] [username]\n");
 		exit(1);
 	}
 	dbfd = open(_PATH_SCORE, O_RDONLY);
