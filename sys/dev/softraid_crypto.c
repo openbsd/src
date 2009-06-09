@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.36 2009/06/03 17:39:27 ckuethe Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.37 2009/06/09 23:17:35 chl Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -185,8 +185,9 @@ sr_crypto_getcryptop(struct sr_workunit *wu, int encrypt)
 unwind:
 	if (crp)
 		crypto_freereq(crp);
-	if (wu->swu_xs->flags & SCSI_DATA_OUT)
-		free(uio->uio_iov->iov_base, M_DEVBUF);
+	if (uio && uio->uio_iov)
+		if (wu->swu_xs->flags & SCSI_DATA_OUT)
+			free(uio->uio_iov->iov_base, M_DEVBUF);
 
 	s = splbio();
 	if (uio && uio->uio_iov)
