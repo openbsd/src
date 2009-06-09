@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.575 2009/06/07 03:52:29 krw Exp $
+#	$OpenBSD: install.sub,v 1.576 2009/06/09 03:33:49 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -72,7 +72,7 @@
 . install.md
 
 set_term() {
-	local _tables
+	local _layouts
 
 	export TERM=${TERM:-${MDTERM:-vt220}}
 	if [[ -n $CONSOLE ]]; then
@@ -81,12 +81,12 @@ set_term() {
 		export TERM=$resp
 	else
 		[[ -x /sbin/kbd ]] || return
-		_tables=$(bsort $(kbd -l | egrep -v "^(user|tables|encoding)"))
+		_layouts=$(bsort $(kbd -l | egrep -v "^(user|tables|encoding)"))
 		echo
 		while :; do
-			ask "Choose your keyboard type if it is nationalized? ('?' for list)" "default"
+			ask "Choose your keyboard layout ('?' or 'L' for list)" "default"
 			case $resp in
-			"?")	echo "Major tables: $_tables" ;;
+			"?"|L|l) echo "Available layouts: $_layouts" ;;
 			default) return ;;
 			*)	kbd $resp && { echo $resp >/tmp/kbdtype ; return ; } ;;
 			esac
