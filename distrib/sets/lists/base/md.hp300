@@ -27,9 +27,9 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd4.5/2.95.3/cpp0
 ./usr/lib/gcc-lib/m68k-unknown-openbsd4.5/2.95.3/include
 ./usr/lib/gcc-lib/m68k-unknown-openbsd4.5/2.95.3/specs
-./usr/lib/libasn1.so.16.0
+./usr/lib/libasn1.so.17.0
 ./usr/lib/libc.so.51.0
-./usr/lib/libcom_err.so.16.0
+./usr/lib/libcom_err.so.17.0
 ./usr/lib/libcrypto.so.18.0
 ./usr/lib/libcurses.so.10.0
 ./usr/lib/libdes.so.9.0
@@ -40,8 +40,8 @@
 ./usr/lib/libg2c.so.8.0
 ./usr/lib/libgssapi.so.5.0
 ./usr/lib/libiberty.so.9.0
-./usr/lib/libkafs.so.16.0
-./usr/lib/libkrb5.so.16.0
+./usr/lib/libkafs.so.17.0
+./usr/lib/libkrb5.so.17.0
 ./usr/lib/libkvm.so.9.1
 ./usr/lib/libm.so.5.0
 ./usr/lib/libmenu.so.3.0
