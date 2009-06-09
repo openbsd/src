@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.113 2009/06/06 17:46:44 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.114 2009/06/09 20:07:59 oga Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3834,10 +3834,8 @@ static const char page_flagbits[] =
 	"\31PMAP1\32PMAP2\33PMAP3";
 
 void
-uvm_page_printit(pg, full, pr)
-	struct vm_page *pg;
-	boolean_t full;
-	int (*pr)(const char *, ...);
+uvm_page_printit(struct vm_page *pg, boolean_t full,
+    int (*pr)(const char *, ...))
 {
 	struct vm_page *tpg;
 	struct uvm_object *uobj;
@@ -3874,7 +3872,7 @@ uvm_page_printit(pg, full, pr)
 			uobj = pg->uobject;
 			if (uobj) {
 				(*pr)("  checking object list\n");
-				RB_FOREACH(pg, uobj_pgs, &uobj->memt) {
+				RB_FOREACH(tpg, uobj_pgs, &uobj->memt) {
 					if (tpg == pg) {
 						break;
 					}
