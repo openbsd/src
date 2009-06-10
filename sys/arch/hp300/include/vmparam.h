@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.17 2006/07/09 19:41:23 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.18 2009/06/10 15:58:51 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1998/08/20 08:33:48 kleink Exp $	*/
 
 /*
@@ -46,10 +46,13 @@
  * Machine dependent constants for HP300
  */
 
+/* address where direct translation starts */
+#define	HP300_DIRECT_BASE	0xc0000000
+
 #include <m68k/vmparam.h>
 
 #undef	VM_MAX_KERNEL_ADDRESS
-#define	VM_MAX_KERNEL_ADDRESS	(0xc0000000 - PAGE_SIZE)
+#define	VM_MAX_KERNEL_ADDRESS	(HP300_DIRECT_BASE - PAGE_SIZE)
 
 /*
  * Constants which control the way the VM system deals with memory segments.

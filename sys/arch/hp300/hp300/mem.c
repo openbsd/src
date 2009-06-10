@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.24 2007/09/08 09:28:49 martin Exp $	*/
+/*	$OpenBSD: mem.c,v 1.25 2009/06/10 15:58:49 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.25 1999/03/27 00:30:06 mycroft Exp $	*/
 
 /*
@@ -157,9 +157,22 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!uvm_kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
+
+			if (v > HP300_DIRECT_BASE) {
+				/*
+				 * Direct mapping: only allow access to
+				 * physical memory.
+				 */
+				if (v >= 0xfffffffc || v < lowram)
+					return (EFAULT);
+			} else {
+				/*
+				 * Translated mapping: check for permission.
+				 */
+				if (!uvm_kernacc((caddr_t)v, c,
+				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+					return (EFAULT);
+			}
 
 			/*
 			 * Don't allow reading intio or dio
