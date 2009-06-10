@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.578 2009/06/10 00:52:48 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.579 2009/06/10 00:53:40 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -535,7 +535,7 @@ __EOT
 	while :; do
 		for _f in $_avail; do
 			isin $_f $_selected && echo "[X] $_f" || echo "[ ] $_f"
-		done|showcols|sed 's/^/    /'
+		done | showcols | sed 's/^/    /'
 		ask "Set name(s)? (or 'abort' or 'done')" done
 
 		set -o noglob
@@ -991,7 +991,7 @@ enable_network() {
 # named in $1. Display an error message for failed installs so the
 # user will know to try again.
 install_files() {
-	local _src=$1 _files=$2 _f _sets _get_sets _n
+	local _src=$1 _files=$2 _f _sets _get_sets _n _col=$COLUMNS
 
 	# Initialize _sets to the list of sets found in _src, and initialize
 	# _get_sets to the intersection of _sets and DEFAULTSETS.
@@ -1011,7 +1011,11 @@ install_files() {
 		echo -n "Looked at "
 		echo $_src | sed -e 's/\(^ftp:\/\/[^/]*\)\(:[^/]*\)\(@.*\)/\1\3/'
 		echo "and found no $OBSD sets.  The set names looked for were:"
-		for _n in $THESETS; do echo $_n; done | showcols
+
+		let COLUMNS=_col-8
+		for _n in $THESETS; do echo $_n; done | showcols | sed 's/^/    /'
+		COLUMNS=$_col
+
 		echo
 		return
 	fi
