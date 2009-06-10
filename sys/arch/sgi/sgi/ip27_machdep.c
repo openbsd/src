@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.10 2009/05/28 18:03:55 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.11 2009/06/10 18:04:25 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -525,12 +525,10 @@ ip27_nmi(void *arg)
 	regs++;				/* NMI COP_0_STATUS_REG */
 
 	setsr(getsr() & ~SR_BOOT_EXC_VEC);
-#ifdef DDB
-	printf("NMI\n");
-	(void)kdb_trap(-1, &nmi_frame);
-#else
 	printf("NMI, PC = %p RA = %p SR = %08x EPC = %p\n",
 	    nmi_frame.pc, nmi_frame.ra, nmi_frame.sr, epc);
+#ifdef DDB
+	(void)kdb_trap(-1, &nmi_frame);
 #endif
 	printf("Resetting system...\n");
 	boot(RB_USERREQ);
