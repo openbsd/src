@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.24 2009/06/04 04:03:22 merdely Exp $	*/
+/*	$OpenBSD: vi.c,v 1.25 2009/06/10 15:08:46 merdely Exp $	*/
 
 /*
  *	vi command editing
@@ -596,7 +596,7 @@ vi_insert(int ch)
 	}
 	if (ch == edchars.werase) {
 		if (es->cursor != 0) {
-			tcursor = Backword(1);
+			tcursor = backword(1);
 			memmove(&es->cbuf[tcursor], &es->cbuf[es->cursor],
 			    es->linelen - es->cursor);
 			es->linelen -= es->cursor - tcursor;
@@ -1598,9 +1598,9 @@ Backword(int argcnt)
 
 	ncursor = es->cursor;
 	while (ncursor > 0 && argcnt--) {
-		while (--ncursor >= 0 && !is_wordch(es->cbuf[ncursor]))
+		while (--ncursor >= 0 && isspace(es->cbuf[ncursor]))
 			;
-		while (ncursor >= 0 && is_wordch(es->cbuf[ncursor]))
+		while (ncursor >= 0 && !isspace(es->cbuf[ncursor]))
 			ncursor--;
 		ncursor++;
 	}
