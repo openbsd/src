@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.34 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.35 2009/06/10 14:40:03 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -212,7 +212,7 @@ sub compare
 	for (my $i = 0; ; $i++) {
 		if (!defined $a->{deweys}->[$i]) {
 			if (!defined $b->{deweys}->[$i]) {
-				return 0;
+				last;
 			} else {
 				return -1;
 			}
