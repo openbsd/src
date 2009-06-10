@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.580 2009/06/10 01:28:10 krw Exp $
+#	$OpenBSD: install.sub,v 1.581 2009/06/10 07:01:25 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -76,13 +76,11 @@ set_term() {
 
 	export TERM=${TERM:-${MDTERM:-vt220}}
 	if [[ -n $CONSOLE ]]; then
-		echo
 		ask "Terminal type?" $TERM
 		export TERM=$resp
 	else
 		[[ -x /sbin/kbd ]] || return
 		_layouts=$(bsort $(kbd -l | egrep -v "^(user|tables|encoding)"))
-		echo
 		while :; do
 			ask "Choose your keyboard layout ('?' or 'L' for list)" "default"
 			case $resp in
@@ -1902,6 +1900,7 @@ At any prompt except password prompts you can escape to a shell by
 typing '!'. Default answers are shown in []'s and are selected by
 pressing RETURN.  You can exit this program at any time by pressing
 Control-C, but this can leave your system in an inconsistent state.
+
 __EOT
 
 # Configure the terminal and keyboard.
