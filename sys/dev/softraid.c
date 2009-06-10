@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.146 2009/06/10 03:24:02 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.147 2009/06/10 21:37:17 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2060,7 +2060,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		case 5:
 			if (no_chunk < 3)
 				goto unwind;
-			id ((bc->bc_level == 4)
+			if (bc->bc_level == 4)
 				strlcpy(sd->sd_name, "RAID 4", sizeof(sd->sd_name));
 			else
 				strlcpy(sd->sd_name, "RAID 5", sizeof(sd->sd_name));
