@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.579 2009/06/10 00:53:40 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.580 2009/06/10 01:28:10 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -563,6 +563,11 @@ __EOT
 
 configure_ifs() {
 	local _first _ifdevs _ifs _name _hn _vl=0 _vd _vi _p _tags
+
+	# In case of restart, discover last vlan configured.
+	while ifconfig vlan$_vl >/dev/null 2>&1; do
+		: $(( _vl++ ))
+	done
 
 	while :; do
 		# Create new vlan if possible.
