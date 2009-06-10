@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.123 2009/05/13 01:09:05 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.124 2009/06/10 00:03:55 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2218,19 +2218,22 @@ pfsync_bulk_start(void)
 		printf("pfsync: received bulk update request\n");
 
 	pfsync_bulk_status(PFSYNC_BUS_START);
-	pfsync_bulk_update(sc);
+	timeout_add(&sc->sc_bulk_tmo, 0);
 }
 
 void
 pfsync_bulk_update(void *arg)
 {
 	struct pfsync_softc *sc = arg;
-	struct pf_state *st = sc->sc_bulk_next;
+	struct pf_state *st;
 	int i = 0;
 	int s;
 
 	s = splsoftnet();
-	do {
+
+	st = sc->sc_bulk_next;
+
+	while (st != sc->sc_bulk_last) {
 		if (st->sync_state == PFSYNC_S_NONE &&
 		    st->timeout < PFTM_MAX &&
 		    st->pfsync_time <= sc->sc_ureq_received) {
@@ -2247,7 +2250,7 @@ pfsync_bulk_update(void *arg)
 			timeout_add(&sc->sc_bulk_tmo, 1);
 			goto out;
 		}
-	} while (st != sc->sc_bulk_last);
+	}
 
 	/* we're done */
 	sc->sc_bulk_next = NULL;
