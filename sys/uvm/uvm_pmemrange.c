@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.3 2009/06/07 02:01:54 oga Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.4 2009/06/10 20:36:40 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -619,17 +619,8 @@ ReTryDesperate:
 	 */
 	if (count <= maxseg && align == 1 && boundary == 0 &&
 	    (flags & UVM_PLA_TRY_CONTIG) == 0) {
-		if (!desperate) {
-			KASSERT(fcount == 0);
-			fcount += uvm_pmr_get1page(count, memtype, result,
-			    start, end);
-		} else {
-			for (memtype = 0; memtype < UVM_PMR_MEMTYPE_MAX &&
-			    fcount < count; memtype++) {
-				fcount += uvm_pmr_get1page(count - fcount,
-				    memtype, result, start, end);
-			}
-		}
+		fcount += uvm_pmr_get1page(count - fcount, memtype, result,
+		    start, end);
 
 		if (fcount == count)
 			goto Out;
@@ -697,6 +688,7 @@ DrainFound:
 			goto ReScan;
 	}
 
+Fail:
 	/*
 	 * Not enough memory of the requested type available. Fall back to
 	 * less good memory that we'll clean up better later.
@@ -707,12 +699,13 @@ DrainFound:
 	 */
 	if (!desperate) {
 		desperate = 1;
-		memtype = 0;
+#if UVM_PMR_MEMTYPE_MAX != 2
+#error Too many memtypes, need to become smarter!
+#endif
+		memtype = UVM_PMR_MEMTYPE_MAX - 1 - memtype;
 		goto ReTryDesperate;
-	} else if (++memtype < UVM_PMR_MEMTYPE_MAX)
-		goto ReTryDesperate;
+	}
 
-Fail:
 	/*
 	 * Allocation failed.
 	 */

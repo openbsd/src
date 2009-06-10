@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.h,v 1.1 2009/06/01 17:42:33 ariane Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.h,v 1.2 2009/06/10 20:36:40 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -34,7 +34,7 @@ RB_HEAD(uvm_pmr_size, vm_page);
  * - DIRTY: this page may contain random data.
  * - ZERO: this page has been zeroed.
  */
-#define UVM_PMR_MEMTYPE_DIRTY	1
+#define UVM_PMR_MEMTYPE_DIRTY	0
 #define UVM_PMR_MEMTYPE_ZERO	1
 #define UVM_PMR_MEMTYPE_MAX	2
 
