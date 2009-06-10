@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.24 2008/07/21 18:43:19 damien Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.25 2009/06/10 18:41:07 miod Exp $	*/
 /*	$NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $	*/
 
 /*-
@@ -179,9 +179,6 @@ struct rtw_txsoft {
 #define RTW_TXPRIBCN	3	/* beacon priority */
 
 #define RTW_MAXPKTSEGS		64	/* max 64 segments per Tx packet */
-
-#define CASSERT(cond, complaint)					\
-	complaint[(cond) ? 0 : -1] = complaint[(cond) ? 0 : -1]
 
 /* Note well: the descriptor rings must begin on RTW_DESC_ALIGNMENT
  * boundaries.  I allocate them consecutively from one buffer, so
