@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK-IP32,v 1.2 2009/05/14 21:27:02 miod Exp $
+#	$OpenBSD: RAMDISK-IP32,v 1.3 2009/06/10 18:00:07 miod Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 
@@ -97,6 +97,10 @@ wskbd*		at ukbd? mux 1
 uhid*		at uhidev?	# USB generic HID support
 aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet  
 ugen*		at uhub?	# USB Generic driver
+rum*		at uhub?	# Ralink RT2501USB/RT2601USB
+run*		at uhub?	# Ralink RT2700U/RT2800U/RT3000U
+url*		at uhub?	# Realtek RTL8150L based adapters
+zyd*		at uhub?	# Zydas ZD1211
 
 #### NICs
 dc*		at pci?		# 21143, "tulip" clone ethernet
