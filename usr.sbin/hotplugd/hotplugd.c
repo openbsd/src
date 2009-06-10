@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplugd.c,v 1.9 2008/05/25 16:49:04 jasper Exp $	*/
+/*	$OpenBSD: hotplugd.c,v 1.10 2009/06/10 18:50:43 guenther Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -90,6 +90,7 @@ main(int argc, char *argv[])
 	sact.sa_handler = SIG_IGN;
 	sigaction(SIGHUP, &sact, NULL);
 	sact.sa_handler = sigchild;
+	sact.sa_flags = SA_NOCLDSTOP;
 	sigaction(SIGCHLD, &sact, NULL);
 
 	openlog(_LOG_TAG, _LOG_OPT, _LOG_FACILITY);
@@ -185,7 +186,7 @@ sigchild(int signum)
 			syslog_r(LOG_NOTICE, &sdata,
 			    "child is terminated abnormally");
 		}
-	} else {
+	} else if (errno != ECHILD) {
 		syslog_r(LOG_ERR, &sdata, "waitpid: %m");
 	}
 
