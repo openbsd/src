@@ -1,9 +1,9 @@
-.\" $OpenBSD: sendbug.1,v 1.18 2009/06/06 04:46:26 ray Exp $
+.\" $OpenBSD: sendbug.1,v 1.19 2009/06/10 06:46:53 jmc Exp $
 .\"
 .\" Written by Raymond Lai <ray@cyth.net>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: June 6 2009 $
+.Dd $Mdocdate: June 10 2009 $
 .Dt SENDBUG 1
 .Os
 .Sh NAME
@@ -66,7 +66,7 @@ Do not attach
 .Xr pcidump 8 ,
 and
 .Xr acpidump 8
-to report.
+output to the report.
 This information is very helpful in reports,
 but may contain sensitive information about the sender.
 This flag helps protect users' privacy in those cases.
@@ -116,10 +116,8 @@ The default is
 temporary PR report
 .El
 .Sh SEE ALSO
-.Xr acpidump 8 ,
 .Xr crash 8 ,
-.Xr dmesg 8 ,
-.Xr pcidump 8
+.Xr dmesg 8
 .Sh AUTHORS
 .Nm
 was written from scratch for the public domain by
