@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_read.c,v 1.16 2009/06/02 00:21:32 millert Exp $	*/
+/*	$OpenBSD: cl_read.c,v 1.17 2009/06/10 14:03:18 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -17,15 +17,13 @@ static const char sccsid[] = "@(#)cl_read.c	10.15 (Berkeley) 9/24/96";
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
 #include <sys/time.h>
 
 #include <bitstring.h>
 #include <curses.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -142,26 +140,15 @@ cl_read(sp, flags, bp, blen, nrp, tp)
 	struct timeval *tp;
 {
 	struct termios term1, term2;
-	struct timeval poll;
 	CL_PRIVATE *clp;
 	GS *gp;
-	SCR *tsp;
-	fd_set *rdfd;
+	struct pollfd pfd[1];
 	input_t rval;
-	int maxfd, nr, term_reset;
+	int nr, term_reset, timeout;
 
 	gp = sp->gp;
 	clp = CLP(sp);
 	term_reset = 0;
-
-	/* Allocate space for rdfd. */
-	maxfd = STDIN_FILENO;
-	CIRCLEQ_FOREACH(tsp, &gp->dq, q)
-		if (F_ISSET(tsp, SC_SCRIPT) && tsp->script->sh_master > maxfd)
-			maxfd = tsp->script->sh_master;
-	rdfd = (fd_set *)calloc(howmany(maxfd + 1, NFDBITS), sizeof(fd_mask));
-	if (rdfd == NULL)
-		goto err;
 
 	/*
 	 * 1: A read from a file or a pipe.  In this case, the reads
@@ -172,13 +159,11 @@ cl_read(sp, flags, bp, blen, nrp, tp)
 	if (!F_ISSET(clp, CL_STDIN_TTY)) {
 		switch (nr = read(STDIN_FILENO, bp, blen)) {
 		case 0:
-			free(rdfd);
 			return (INP_EOF);
 		case -1:
 			goto err;
 		default:
 			*nrp = nr;
-			free(rdfd);
 			return (INP_OK);
 		}
 		/* NOTREACHED */
@@ -190,15 +175,11 @@ cl_read(sp, flags, bp, blen, nrp, tp)
 	 */
 tty_retry:
 	if (tp != NULL) {
-		memset(rdfd, 0, howmany(STDIN_FILENO + 1, NFDBITS)
-		    * sizeof(fd_mask));
-		poll.tv_sec = 0;
-		poll.tv_usec = 0;
-		FD_SET(STDIN_FILENO, rdfd);
-		switch (select(STDIN_FILENO + 1,
-		    rdfd, NULL, NULL, tp == NULL ? &poll : tp)) {
+		pfd[0].fd = STDIN_FILENO;
+		pfd[0].events = POLLIN;
+		timeout = tp ? (tp->tv_sec * 1000) + (tp->tv_usec / 1000) : 0;
+		switch (poll(pfd, 1, timeout)) {
 		case 0:
-			free(rdfd);
 			return (INP_TIMEOUT);
 		case -1:
 			goto err;
@@ -238,26 +219,8 @@ tty_retry:
 	 * the only way to keep from locking out scripting windows.
 	 */
 	if (F_ISSET(gp, G_SCRWIN)) {
-loop:		memset(rdfd, 0, howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask));
-		FD_SET(STDIN_FILENO, rdfd);
-		CIRCLEQ_FOREACH(tsp, &gp->dq, q)
-			if (F_ISSET(tsp, SC_SCRIPT))
-				FD_SET(tsp->script->sh_master, rdfd);
-		switch (select(maxfd + 1, rdfd, NULL, NULL, NULL)) {
-		case 0:
-			abort();
-		case -1:
+		if (sscr_check_input(sp))
 			goto err;
-		default:
-			break;
-		}
-		if (!FD_ISSET(STDIN_FILENO, rdfd)) {
-			if (sscr_input(sp)) {
-				free(rdfd);
-				return (INP_ERR);
-			}
-			goto loop;
-		}
 	}
 
 	/*
@@ -316,7 +279,6 @@ err:		if (errno == EINTR)
 	/* Restore the terminal state if it was modified. */
 	if (term_reset)
 		(void)tcsetattr(STDIN_FILENO, TCSASOFT | TCSADRAIN, &term1);
-	free(rdfd);
 	return (rval);
 }
 

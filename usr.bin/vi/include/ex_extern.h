@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_extern.h,v 1.8 2002/06/12 06:07:17 mpech Exp $	*/
+/*	$OpenBSD: ex_extern.h,v 1.9 2009/06/10 14:03:18 millert Exp $	*/
 
 int ex(SCR **);
 int ex_cmd(SCR *);
@@ -73,6 +73,7 @@ int ex_resize(SCR *, EXCMD *);
 int ex_sdisplay(SCR *);
 int ex_script(SCR *, EXCMD *);
 int sscr_exec(SCR *, recno_t);
+int sscr_check_input(SCR *);
 int sscr_input(SCR *);
 int sscr_end(SCR *);
 int ex_set(SCR *, EXCMD *);

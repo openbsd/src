@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_script.c,v 1.14 2007/09/02 15:19:35 deraadt Exp $	*/
+/*	$OpenBSD: ex_script.c,v 1.15 2009/06/10 14:03:18 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -21,9 +21,6 @@ static const char sccsid[] = "@(#)ex_script.c	10.30 (Berkeley) 9/24/96";
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>
-#endif
 #include <sys/stat.h>
 #ifdef HAVE_SYS5_PTY
 #include <sys/stropts.h>
@@ -367,6 +364,73 @@ err1:			rval = 1;
 }
 
 /*
+ * sscr_check_input -
+ *	Check for input from command input or scripting windows.
+ *
+ * PUBLIC: int sscr_check_input(SCR *sp);
+ */
+int
+sscr_check_input(SCR *sp)
+{
+	GS *gp;
+	SCR *tsp;
+	struct pollfd *pfd;
+	int nfds, rval;
+
+	gp = sp->gp;
+	rval = 0;
+
+	/* Allocate space for pfd. */   
+	nfds = 1;
+	CIRCLEQ_FOREACH(tsp, &gp->dq, q)
+		if (F_ISSET(sp, SC_SCRIPT))
+			nfds++;
+	pfd = calloc(nfds, sizeof(struct pollfd));
+	if (pfd == NULL) {
+		msgq(sp, M_SYSERR, "malloc");
+		return (1);
+	}
+
+	/* Setup events bitmasks. */
+	pfd[0].fd = STDIN_FILENO;
+	pfd[0].events = POLLIN;
+	nfds = 1;
+	CIRCLEQ_FOREACH(tsp, &gp->dq, q)
+		if (F_ISSET(sp, SC_SCRIPT)) {
+			pfd[nfds].fd = sp->script->sh_master;
+			pfd[nfds].events = POLLIN;
+			nfds++;
+		}
+
+loop:
+	/* Check for input. */
+	switch (poll(pfd, nfds, INFTIM)) {
+	case -1:
+		msgq(sp, M_SYSERR, "poll");
+		rval = 1;
+		/* FALLTHROUGH */
+	case 0:
+		goto done;
+	default:
+		break;
+	}
+
+	/* Only insert from the scripting windows if no command input */
+	if (!(pfd[0].revents & POLLIN)) {
+		nfds = 1;
+		CIRCLEQ_FOREACH(tsp, &gp->dq, q)
+			if (F_ISSET(sp, SC_SCRIPT)) {
+				if ((pfd[nfds++].revents & POLLIN) && sscr_insert(sp))
+					goto done;
+			}
+		goto loop;
+	}
+done:
+	free(pfd);
+	return (rval);
+}
+
+/*
  * sscr_input --
  *	Read any waiting shell input.
  *
@@ -377,53 +441,58 @@ sscr_input(sp)
 	SCR *sp;
 {
 	GS *gp;
-	struct timeval tv;
-	fd_set *rdfd;
-	int maxfd;
+	struct pollfd *pfd;
+	int nfds, rval;
 
 	gp = sp->gp;
+	rval = 0;
 
-	/* Allocate space for rdfd. */
-	maxfd = STDIN_FILENO;
+	/* Allocate space for pfd. */
+	nfds = 0;
 	CIRCLEQ_FOREACH(sp, &gp->dq, q)
-		if (F_ISSET(sp, SC_SCRIPT) && sp->script->sh_master > maxfd)
-			maxfd = sp->script->sh_master;
-	rdfd = (fd_set *)calloc(howmany(maxfd + 1, NFDBITS), sizeof(fd_mask));
-	if (rdfd == NULL) {
+		if (F_ISSET(sp, SC_SCRIPT))
+			nfds++;
+	if (nfds == 0)
+		return (0);
+	pfd = calloc(nfds, sizeof(struct pollfd));
+	if (pfd == NULL) {
 		msgq(sp, M_SYSERR, "malloc");
 		return (1);
 	}
 
-loop:	memset(rdfd, 0, howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask));
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-
-	/* Set up the input mask. */
+	/* Setup events bitmasks. */
+	nfds = 0;
 	CIRCLEQ_FOREACH(sp, &gp->dq, q)
-		if (F_ISSET(sp, SC_SCRIPT))
-			FD_SET(sp->script->sh_master, rdfd);
+		if (F_ISSET(sp, SC_SCRIPT)) {
+			pfd[nfds].fd = sp->script->sh_master;
+			pfd[nfds].events = POLLIN;
+			nfds++;
+		}
 
+loop:
 	/* Check for input. */
-	switch (select(maxfd + 1, rdfd, NULL, NULL, &tv)) {
+	switch (poll(pfd, nfds, 0)) {
 	case -1:
-		msgq(sp, M_SYSERR, "select");
-		free(rdfd);
-		return (1);
+		msgq(sp, M_SYSERR, "poll");
+		rval = 1;
+		/* FALLTHROUGH */
 	case 0:
-		free(rdfd);
-		return (0);
+		goto done;
 	default:
 		break;
 	}
 
 	/* Read the input. */
+	nfds = 0;
 	CIRCLEQ_FOREACH(sp, &gp->dq, q)
-		if (F_ISSET(sp, SC_SCRIPT) &&
-		    FD_ISSET(sp->script->sh_master, rdfd) && sscr_insert(sp)) {
-			free(rdfd);
-			return (1);
+		if (F_ISSET(sp, SC_SCRIPT)) {
+			if ((pfd[nfds++].revents & POLLIN) && sscr_insert(sp))
+				goto done;
 		}
 	goto loop;
+done:
+	free(pfd);
+	return (rval);
 }
 
 /*
