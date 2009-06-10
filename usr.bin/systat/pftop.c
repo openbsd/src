@@ -1,4 +1,4 @@
-/* $Id: pftop.c,v 1.11 2009/04/23 12:58:44 henning Exp $	 */
+/* $Id: pftop.c,v 1.12 2009/06/10 03:42:58 canacar Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1309,11 +1309,10 @@ print_rule(struct pf_rule *pr)
 	else if (pr->log == 2)
 		print_fld_str(FLD_LOG, "All");
 
-		printf("%u ", pr->action);
-/*	if (pr->action >= numact)
+	if (pr->action >= numact)
 		print_fld_uint(FLD_ACTION, pr->action);
 	else print_fld_str(FLD_ACTION, actiontypes[pr->action]);
-*/
+
 	if (pr->proto) {
 		struct protoent *p = getprotobynumber(pr->proto);
 
