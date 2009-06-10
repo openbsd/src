@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.577 2009/06/09 10:11:21 halex Exp $
+#	$OpenBSD: install.sub,v 1.578 2009/06/10 00:52:48 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -126,9 +126,9 @@ get_cddevs () {
 }
 
 get_ifdevs() {
-	bsort $(ifconfig \
+	ifconfig \
 		| egrep -v '^[[:space:]]|(bridge|enc|gif|gre|lo|pflog|pfsync|ppp|sl|tun)[[:digit:]]+:' \
-		| sed -ne 's/^\(.*\):.*/\1/p')
+		| sed -ne 's/^\(.*\):.*/\1/p'
 }
 
 get_drive() {
