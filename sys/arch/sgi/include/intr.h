@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.24 2009/05/22 20:37:53 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.25 2009/06/10 18:05:31 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -156,7 +156,6 @@ typedef u_int32_t intrmask_t;		/* Type of var holding interrupt mask */
 
 extern volatile intrmask_t cpl;
 extern volatile intrmask_t ipending;
-extern volatile intrmask_t astpending;
 
 extern intrmask_t imask[NIPLS];
 

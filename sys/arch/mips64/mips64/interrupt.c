@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.39 2009/05/27 18:58:15 miod Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.40 2009/06/10 18:05:31 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -59,7 +59,7 @@ static struct evcount soft_count;
 static int soft_irq = 0;
 
 volatile intrmask_t cpl;
-volatile intrmask_t ipending, astpending;
+volatile intrmask_t ipending;
 
 intrmask_t imask[NIPLS];
 
@@ -121,7 +121,6 @@ int_f *pending_hand = &dummy_do_pending_int;
  */
 
 void interrupt(struct trap_frame *);
-void ast(void);
 
 /*
  * Handle an interrupt. Both kernel and user mode is handled here.
@@ -230,31 +229,6 @@ set_intr(int pri, intrmask_t mask,
 	cpu_int_tab[pri].int_hand = int_hand;
 	cpu_int_tab[pri].int_mask = mask;
 	idle_mask |= mask | SOFT_INT_MASK;
-}
-
-/*
- * This is called from MipsUserIntr() if astpending is set.
- */
-void
-ast()
-{
-	struct proc *p = curproc;
-	int sig;
-
-	uvmexp.softs++;
-
-	astpending = 0;
-	if (p->p_flag & P_OWEUPC) {
-		ADDUPROF(p);
-	}
-	if (want_resched)
-		preempt(NULL);
-
-	/* inline userret(p) */
-
-	while ((sig = CURSIG(p)) != 0)		/* take pending signals */
-		postsig(sig);
-	p->p_cpu->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 struct intrhand *intrhand[INTMASKSIZE];

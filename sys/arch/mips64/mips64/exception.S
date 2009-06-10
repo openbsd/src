@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.19 2009/05/27 18:58:15 miod Exp $ */
+/*	$OpenBSD: exception.S,v 1.20 2009/06/10 18:05:31 miod Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -46,6 +46,8 @@
 #include <machine/cpustate.h>
 
 #include "assym.h"
+
+#define curproc	(cpu_info_primary + CI_CURPROC)
 
 	.set	mips3
 
@@ -246,11 +248,12 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	ITLBNOPFIX
 
 0:
-	lw	v0, astpending		# any pending interrupts?
+	PTR_L	t0, curproc
+	lw	v0, P_ASTPENDING(t0)	# any pending AST?
 	beq	v0, zero, 4f
 	nop
 
-	PTR_L	t0, curprocpaddr
+	PTR_L	t0, P_ADDR(t0)		# curprocpaddr
 	SAVE_CPU_SREG(t0, 0)
 
 #ifdef PERFCNTRS
@@ -431,11 +434,12 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	PTR_S	a3, CF_RA_OFFS(sp)		# for debugging
 
 0:
-	lw	v0, astpending
-	beqz	v0, 4f
+	PTR_L	t0, curproc
+	lw	v0, P_ASTPENDING(t0)	# any pending AST?
+	beq	v0, zero, 4f
 	nop
 
-	PTR_L	t0, curprocpaddr
+	PTR_L	t0, P_ADDR(t0)		# curprocpaddr
 	SAVE_CPU_SREG(t0, 0)
 
 	jal	ast

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.32 2009/06/02 17:55:37 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.33 2009/06/10 18:05:30 miod Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -358,10 +358,13 @@ extern vaddr_t uncached_base;
 #include <sys/sched.h>
 
 struct cpu_info {
-	struct schedstate_percpu ci_schedstate;
+	struct proc	*ci_curproc;
 
-	struct proc *ci_curproc;
-	u_int32_t ci_randseed;
+	struct schedstate_percpu
+			 ci_schedstate;
+	int		 ci_want_resched;	/* need_resched() invoked */
+
+	u_int32_t	 ci_randseed;		/* per cpu random seed */
 };
 
 extern struct cpu_info cpu_info_primary;
@@ -401,25 +404,28 @@ extern int int_nest_cntr;
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched(info)	{ want_resched = 1; aston(); }
-#define	clear_resched(ci) 	want_resched = 0
+#define	need_resched(ci) \
+	do { \
+		(ci)->ci_want_resched = 1; \
+		if ((ci)->ci_curproc != NULL) \
+			aston((ci)->ci_curproc); \
+	} while(0)
+#define	clear_resched(ci) 	(ci)->ci_want_resched = 0
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the PICA, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	aston()
+#define	need_proftick(p)	aston(p)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston()
+#define	signotify(p)		aston(p)
 
-#define	aston()		(astpending = 1)
-
-extern int want_resched;	/* resched() was called */
+#define	aston(p)		p->p_md.md_astpending = 1
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

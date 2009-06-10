@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.2 2005/08/07 07:29:44 miod Exp $	*/
+/*	$OpenBSD: proc.h,v 1.3 2009/06/10 18:05:30 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,7 @@
  */
 struct mdproc {
 	struct trap_frame *md_regs;	/* registers on current frame */
+	volatile int md_astpending;	/* AST pending for this process */
 	int	md_flags;		/* machine-dependent flags */
 	long	md_ss_addr;		/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
