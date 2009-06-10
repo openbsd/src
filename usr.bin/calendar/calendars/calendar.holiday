@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.22 2009/06/06 14:36:11 maja Exp $
+ * $OpenBSD: calendar.holiday,v 1.23 2009/06/10 18:38:30 deraadt Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -180,7 +180,7 @@
 05/MonThird	Memorial Day in Michigan (3rd Monday)
 05/20	Mecklenburg Independence Day in North Carolina
 05/20	National Day in Cameroon
-05/20	Victoria Day in Canada
+05/Mon-2	Victoria Day in Canada
 05/22	National Heroes Day in Sri Lanka
 05/22	Declaration of the Republic of Yemen, 1990
 05/23	Commonwealth Day in Jamaica, Belize
