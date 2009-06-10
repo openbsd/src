@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.145 2009/06/03 21:04:36 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.146 2009/06/10 03:24:02 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1948,6 +1948,7 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 	if (sr_meta_save(sd, SR_META_DIRTY)) {
 		printf("%s: could not save metadata to %s\n",
 		    DEVNAME(sc), devname);
+		open = 1;
 		goto done;
 	}
 
@@ -2054,6 +2055,25 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			strlcpy(sd->sd_name, "RAID 1", sizeof(sd->sd_name));
 			vol_size = ch_entry->src_meta.scmi.scm_coerced_size;
 			break;
+#ifdef not_yet
+		case 4:
+		case 5:
+			if (no_chunk < 3)
+				goto unwind;
+			id ((bc->bc_level == 4)
+				strlcpy(sd->sd_name, "RAID 4", sizeof(sd->sd_name));
+			else
+				strlcpy(sd->sd_name, "RAID 5", sizeof(sd->sd_name));
+			/*
+			 * XXX add variable strip size later even though
+			 * MAXPHYS is really the clever value, users like
+			 * to tinker with that type of stuff
+			 */
+			strip_size = MAXPHYS;
+			vol_size =
+			    ch_entry->src_meta.scmi.scm_coerced_size * (no_chunk - 1);
+			break;
+#endif /* not_yet */
 #ifdef AOE
 #ifdef not_yet
 		case 'A':
@@ -2438,6 +2458,14 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 		break;
 	case 1:
 		sr_raid1_discipline_init(sd);
+		break;
+	case 4:
+	case 5:
+		if (level == 4)
+			sd->sd_type = SR_MD_RAID4;
+		else
+			sd->sd_type = SR_MD_RAID5;
+		sr_raidp_discipline_init(sd);
 		break;
 #ifdef AOE
 	/* AOE target. */
