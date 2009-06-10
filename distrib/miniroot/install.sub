@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.581 2009/06/10 07:01:25 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.582 2009/06/10 07:03:29 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1054,8 +1054,8 @@ install_files() {
 			echo "'$_f' did not install correctly."
 		elif [ -f /tmp/h -a -f "/var/hash/$_f" ]; then
 			if [ "$(</tmp/h)" != "$(</var/hash/$_f)" ]; then
-				echo "The SHA256 hash for $_f did not match what this bsd.rd expected:"
-				cat /tmp/h
+				echo "The SHA256 hash $(cat /tmp/h)"
+				echo "for $_f did not match what this bsd.rd expected."
 				# XXX should mark failure somehow
 			fi
 			DEFAULTSETS=$(rmel $_f $DEFAULTSETS)
