@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.121 2009/04/19 14:58:32 espie Exp $
+# $OpenBSD: pkg_create,v 1.122 2009/06/10 15:44:05 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -81,7 +81,7 @@ sub compute_checksum
 	my $name = $self->fullname;
 	my $fname = $name;
 	if (defined $base) {
-		$fname = "$base/$fname";
+		$fname = $base.$fname;
 	}
 
 	if (-l $fname) {
