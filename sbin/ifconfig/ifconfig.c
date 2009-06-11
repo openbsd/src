@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.217 2009/06/05 00:06:52 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.218 2009/06/11 20:15:28 chl Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -4658,7 +4658,6 @@ void
 setinstance(const char *id, int param)
 {
 	const char *errmsg = NULL;
-	u_char *cp;
 	int rdomainid;
 
 	rdomainid = strtonum(id, 0, 128, &errmsg);
