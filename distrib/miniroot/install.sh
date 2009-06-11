@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.201 2009/06/09 10:11:21 halex Exp $
+#	$OpenBSD: install.sh,v 1.202 2009/06/11 02:44:50 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -116,7 +116,7 @@ while :; do
 			# Allow disklabel(8) to read mountpoint info.
 			cat fstab.$_rest >/etc/fstab
 			rm fstab.$_rest
-			set -- $(grep " $_mp " fstab.*[0-9])
+			set -- $(grep -h " $_mp " fstab.*[0-9])
 			echo "$_pp and $1 can't both be mounted at $_mp."
 			continue
 		fi
