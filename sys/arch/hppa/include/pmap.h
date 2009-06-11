@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.36 2009/06/11 20:10:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -84,7 +84,7 @@ extern struct pdc_hwtlb pdc_hwtlb;
  * pool quickmaps
  */
 #define	pmap_map_direct(pg)	((vaddr_t)VM_PAGE_TO_PHYS(pg))
-#define	pmap_unmap_direct(va) PHYS_TO_VM_PAGE((paddr_t)(va))
+struct vm_page *pmap_unmap_direct(vaddr_t);
 #define	__HAVE_PMAP_DIRECT
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.65 2009/03/26 17:24:33 oga Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.66 2009/06/11 20:10:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -115,6 +115,21 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		mtctl(0, CR_CCR);
 	}
 
+	/*
+	 * Stash the physical for the pcb of U for later perusal
+	 */
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)p2->p_addr, &pa))
+		panic("pmap_extract(%p) failed", p2->p_addr);
+
+	/*
+	 * XXX This shouldn't be necessary, since there shouldn't be any
+	 * allocated cache lines for this new pcb.  But for some reason
+	 * that is not the case...
+	 */
+	pdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, pa);
+	pitlb(HPPA_SID_KERNEL, pa);
+
 	pcbp = &p2->p_addr->u_pcb;
 	bcopy(&p1->p_addr->u_pcb, pcbp, sizeof(*pcbp));
 	/* space is cached for the copy{in,out}'s pleasure */
@@ -130,12 +145,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	p2->p_md.md_regs = tf = (struct trapframe *)sp;
 	sp += sizeof(struct trapframe);
 	bcopy(p1->p_md.md_regs, tf, sizeof(*tf));
-
-	/*
-	 * Stash the physical for the pcb of U for later perusal
-	 */
-	if (!pmap_extract(pmap_kernel(), (vaddr_t)p2->p_addr, &pa))
-		panic("pmap_extract(%p) failed", p2->p_addr);
 
 	tf->tf_cr30 = pa;
 
@@ -172,7 +181,11 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	*HPPA_FRAME_CARG(0, sp) = (register_t)arg;
 	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
 	pcbp->pcb_ksp = sp;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr, sp - (vaddr_t)p2->p_addr);
+
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr);
+	ficache(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr, PAGE_SIZE);
+	pitlb(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr);
 }
 
 void

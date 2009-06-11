@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.135 2009/06/02 23:00:18 oga Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.136 2009/06/11 20:10:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -223,12 +223,15 @@ pmap_pde_ptp(struct pmap *pm, volatile pt_entry_t *pde)
 static __inline void
 pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 {
+	paddr_t pa;
+
 	DPRINTF(PDB_FOLLOW|PDB_PV,
 	    ("pmap_pde_release(%p, 0x%x, %p)\n", pmap, va, ptp));
 
 	if (pmap != pmap_kernel() && --ptp->wire_count <= 1) {
 		DPRINTF(PDB_FOLLOW|PDB_PV,
 		    ("pmap_pde_release: disposing ptp %p\n", ptp));
+		
 		pmap_pde_set(pmap, va, 0);
 		pmap->pm_stats.resident_count--;
 		if (pmap->pm_ptphint == ptp)
@@ -238,6 +241,10 @@ pmap_pde_release(struct pmap *pmap, vaddr_t va, struct vm_page *ptp)
 		if (ptp->pg_flags & PG_BUSY)
 			panic("pmap_pde_release: busy page table page");
 #endif
+		pa = VM_PAGE_TO_PHYS(ptp);
+		pdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+		pdtlb(HPPA_SID_KERNEL, pa);
+		pitlb(HPPA_SID_KERNEL, pa);
 		uvm_pagefree(ptp);
 	}
 }
@@ -678,6 +685,7 @@ pmap_destroy(pmap)
 #ifdef DIAGNOSTIC
 	struct vm_page *pg;
 #endif
+	paddr_t pa;
 	int refs;
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_destroy(%p)\n", pmap));
@@ -729,8 +737,15 @@ pmap_destroy(pmap)
 #endif
 	}
 #endif
+
 	pmap_sdir_set(pmap->pm_space, 0);
+
+	pa = VM_PAGE_TO_PHYS(pmap->pm_pdir_pg);
+	pdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, pa);
+	pitlb(HPPA_SID_KERNEL, pa);
 	uvm_pagefree(pmap->pm_pdir_pg);
+
 	pmap->pm_pdir_pg = NULL;
 	pool_put(&pmap_pmap_pool, pmap);
 }
@@ -1294,4 +1309,14 @@ pmap_kremove(va, size)
 	simple_unlock(&pmap->pm_lock);
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE, ("pmap_kremove: leaving\n"));
+}
+
+struct vm_page *
+pmap_unmap_direct(vaddr_t va)
+{
+	fdcache(HPPA_SID_KERNEL, va, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, va);
+	ficache(HPPA_SID_KERNEL, va, PAGE_SIZE);
+	pitlb(HPPA_SID_KERNEL, va);
+	return (PHYS_TO_VM_PAGE(va));
 }
