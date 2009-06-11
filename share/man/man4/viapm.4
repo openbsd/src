@@ -1,4 +1,4 @@
-.\"	$OpenBSD: viapm.4,v 1.6 2008/02/17 21:31:17 brad Exp $
+.\"	$OpenBSD: viapm.4,v 1.7 2009/06/11 02:09:02 kevlo Exp $
 .\"
 .\" Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 17 2008 $
+.Dd $Mdocdate: June 11 2009 $
 .Dt VIAPM 4
 .Os
 .Sh NAME
@@ -27,8 +27,8 @@
 The
 .Nm
 driver provides support for the bus control and power management
-component of the VIA VT8233, VT8235, VT8237, VT8237A, VT8237S, VT8251
-and CX700 South Bridges.
+component of the VIA VT8233, VT8235, VT8237, VT8237A, VT8237S, VT8251,
+CX700 and CX800 South Bridges.
 Only the SMBus host interface is supported and can be used with the
 .Xr iic 4
 framework.
