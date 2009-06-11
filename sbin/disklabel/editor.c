@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.217 2009/06/04 21:13:03 deraadt Exp $	*/
+/*	$OpenBSD: editor.c,v 1.218 2009/06/11 02:59:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.217 2009/06/04 21:13:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.218 2009/06/11 02:59:08 krw Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -456,10 +456,6 @@ editor(struct disklabel *lp, int f)
 
 		case 'z':
 			zero_partitions(&label);
-			for (i=0; i<MAXPARTITIONS; i++) {
-				free(mountpoints[i]);
-				mountpoints[i] = NULL;
-			}
 			break;
 
 		case '\n':
@@ -2194,8 +2190,12 @@ zero_partitions(struct disklabel *lp)
 {
 	int i;
 
-	for (i = 0; i < MAXPARTITIONS; i++)
+	for (i = 0; i < MAXPARTITIONS; i++) {
 		memset(&lp->d_partitions[i], 0, sizeof(struct partition));
+		free(mountpoints[i]);
+		mountpoints[i] = NULL;
+	}
+
 	DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
 }
 
