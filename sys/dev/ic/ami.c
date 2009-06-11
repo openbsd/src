@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.193 2009/06/04 06:34:38 ray Exp $	*/
+/*	$OpenBSD: ami.c,v 1.194 2009/06/11 07:47:41 chl Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -2473,7 +2473,7 @@ int
 ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 {
 	struct scsi_inquiry_data inqbuf;
-	int func, off, error;
+	int func, error;
 
 	switch (bs->bs_status) {
 	case BIOC_SSONLINE:
@@ -2485,8 +2485,6 @@ ami_ioctl_setstate(struct ami_softc *sc, struct bioc_setstate *bs)
 		break;
 
 	case BIOC_SSHOTSPARE:
-		off = bs->bs_channel * AMI_MAX_TARGET + bs->bs_target;
-
 		if (ami_drv_inq(sc, bs->bs_channel, bs->bs_target, 0,
 		    &inqbuf))
 			return (EINVAL);
