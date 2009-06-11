@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.23 2009/06/04 00:44:48 krw Exp $
+#	$OpenBSD: install.md,v 1.24 2009/06/11 18:52:42 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,39 +38,48 @@ md_installboot() {
 }
 
 md_prep_fdisk() {
-	local _disk=$1
+	local _disk=$1 _q _d
 
-	ask_yn "Do you want to use *all* of $_disk for OpenBSD?"
-	if [[ $resp == y ]]; then
-		echo -n "Putting all of $_disk into an active OpenBSD MBR partition (type 'A6')..."
-		fdisk -e ${_disk} <<__EOT >/dev/null
+	while :; do
+		_d=whole
+		if [[ -n $(fdisk $_disk | grep 'Signature: 0xAA55') ]]; then
+			fdisk $_disk
+			if [[ -n $(fdisk $_disk | grep '^..: A6 ') ]]; then
+				_q=", use the (O)penBSD area,"
+				_d=OpenBSD
+			fi
+		else
+			echo "MBR has invalid signature; not showing it."
+		fi
+		ask "Use (W)hole disk$_q or (E)dit the MBR?" "$_d"
+		case $resp in
+		w*|W*)
+			echo -n "Setting OpenBSD MBR partition to whole $_disk..."
+			fdisk -e ${_disk} <<__EOT >/dev/null
 reinit
 update
 write
 quit
 __EOT
-		echo "done."
-		return
-	fi
-
-	# Manually configure the MBR.
-	cat <<__EOT
+			echo "done."
+			return ;;
+		e*|E*)
+			# Manually configure the MBR.
+			cat <<__EOT
 
 You will now create a single MBR partition to contain your OpenBSD data. This
 partition must have an id of 'A6'; must *NOT* overlap other partitions; and
-must be marked as the only active partition.
-
-The 'manual' command describes all the fdisk commands in detail.
-
-$(fdisk ${_disk})
-__EOT
-	fdisk -e ${_disk}
-
-	cat <<__EOT
-Here is the partition information you chose:
+must be marked as the only active partition.  Inside the fdisk command, the
+'manual' command describes all the fdisk commands in detail.
 
 $(fdisk ${_disk})
 __EOT
+			fdisk -e ${_disk}
+			[[ -n $(fdisk $_disk | grep ' A6 ') ]] && return
+			echo No OpenBSD partition in MBR, try again. ;;
+		o*|O*)	return ;;
+		esac
+	done
 }
 
 md_prep_disklabel() {
