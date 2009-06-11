@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mec.c,v 1.19 2009/05/18 15:21:31 jsing Exp $ */
+/*	$OpenBSD: if_mec.c,v 1.20 2009/06/11 14:49:49 jsing Exp $ */
 /*	$NetBSD: if_mec_mace.c,v 1.5 2004/08/01 06:36:36 tsutsui Exp $ */
 
 /*
@@ -695,7 +695,7 @@ mec_reset(struct mec_softc *sc)
 {
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	uint64_t address, control;
+	uint64_t address;
 	int i;
 
 	/* Reset chip. */
@@ -713,10 +713,9 @@ mec_reset(struct mec_softc *sc)
 	bus_space_write_8(st, sh, MEC_STATION, address);
 
 	/* Default to 100/half and let auto-negotiation work its magic. */
-	control = MEC_MAC_SPEED_SELECT | MEC_MAC_FILTER_MATCHMULTI |
-	    MEC_MAC_IPG_DEFAULT;
+	bus_space_write_8(st, sh, MEC_MAC_CONTROL,
+	    MEC_MAC_SPEED_SELECT | MEC_MAC_IPG_DEFAULT);
 
-	bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
 	bus_space_write_8(st, sh, MEC_DMA_CONTROL, 0);
 
 	DPRINTF(MEC_DEBUG_RESET, ("mec: control now %llx\n",
