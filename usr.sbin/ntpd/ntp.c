@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.113 2009/06/06 18:47:19 ckuethe Exp $ */
+/*	$OpenBSD: ntp.c,v 1.114 2009/06/11 17:36:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -529,11 +529,6 @@ priv_adjfreq(double offset)
 
 	if (!conf->status.synced){
 		conf->freq.samples = 0;
-		return;
-	}
-
-	if (conf->filters & FILTER_ADJFREQ){
-		conf->filters &= ~FILTER_ADJFREQ;
 		return;
 	}
 
