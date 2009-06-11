@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.56 2009/04/23 21:24:14 kettenis Exp $	*/
+/*	$OpenBSD: hme.c,v 1.57 2009/06/11 22:37:58 sthen Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -229,7 +229,6 @@ hme_config(sc)
 	ifp->if_watchdog = hme_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
-	sc->sc_if_flags = ifp->if_flags;
 	IFQ_SET_READY(&ifp->if_snd);
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
@@ -632,8 +631,8 @@ hme_init(sc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_timer = 0;
+
 	hme_start(ifp);
 }
 
@@ -1212,7 +1211,6 @@ hme_mii_statchg(dev)
 		v &= ~HME_MAC_TXCFG_FULLDPLX;
 		sc->sc_arpcom.ac_if.if_flags &= ~IFF_SIMPLEX;
 	}
-	sc->sc_if_flags = sc->sc_arpcom.ac_if.if_flags;
 	bus_space_write_4(t, mac, HME_MACI_TXCFG, v);
 }
 
@@ -1285,55 +1283,26 @@ hme_ioctl(ifp, cmd, data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			if (ifp->if_flags & IFF_UP)
-				hme_setladrf(sc);
-			else {
-				ifp->if_flags |= IFF_UP;
-				hme_init(sc);
-			}
-			arp_ifinit(&sc->sc_arpcom, ifa);
-			break;
-#endif
-		default:
+		ifp->if_flags |= IFF_UP;
+		if (!(ifp->if_flags & IFF_RUNNING))
 			hme_init(sc);
-			break;
-		}
+#ifdef INET
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			arp_ifinit(&sc->sc_arpcom, ifa);
+#endif
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			hme_stop(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			hme_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			/*
-			 * If setting debug or promiscuous mode, do not reset
-			 * the chip; for everything else, call hme_init()
-			 * which will trigger a reset.
-			 */
-#define RESETIGN (IFF_CANTCHANGE | IFF_DEBUG)
-			if (ifp->if_flags == sc->sc_if_flags)
-				break;
-			if ((ifp->if_flags & (~RESETIGN))
-			    == (sc->sc_if_flags & (~RESETIGN)))
-				hme_setladrf(sc);
+		if (ifp->if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
 			else
 				hme_init(sc);
-#undef RESETIGN
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				hme_stop(sc);
 		}
+
 #ifdef HMEDEBUG
 		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
 #endif
@@ -1354,7 +1323,6 @@ hme_ioctl(ifp, cmd, data)
 		error = 0;
 	}
 
-	sc->sc_if_flags = ifp->if_flags;
 	splx(s);
 	return (error);
 }
