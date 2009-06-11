@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.10 2009/06/04 00:44:47 krw Exp $
+#	$OpenBSD: install.md,v 1.11 2009/06/11 04:28:51 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,15 +39,17 @@ md_prep_fdisk() {
 	local _disk=$1 _q _d
 
 	while :; do
-		fdisk $_disk
-		if [[ -n $(fdisk $_disk | grep ' A6 ') ]]; then
-			_q=" use the (O)penBSD area,"
-			_d=OpenBSD
+		_d=whole
+		if [[ -n $(fdisk $_disk | grep 'Signature: 0xAA55') ]]; then
+			fdisk $_disk
+			if [[ -n $(fdisk $_disk | grep '^..: A6 ') ]]; then
+				_q=", use the (O)penBSD area,"
+				_d=OpenBSD
+			fi
 		else
-			_q=
-			_d=whole
+			echo "MBR has invalid signature; not showing it."
 		fi
-		ask "Use (W)hole disk,$_q or (E)dit the MBR?" "$_d"
+		ask "Use (W)hole disk$_q or (E)dit the MBR?" "$_d"
 		case $resp in
 		w*|W*)
 			echo -n "Setting OpenBSD MBR partition to whole $_disk..."
