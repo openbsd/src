@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.583 2009/06/11 02:28:49 krw Exp $
+#	$OpenBSD: install.sub,v 1.584 2009/06/11 04:21:27 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -743,7 +743,7 @@ v4_config() {
 	if [[ -x /sbin/dhclient ]]; then
 		_prompt="or 'dhcp' "
 		# Don't make 'dhcp' the default if dhcp was already used.
-		ifconfig dhcp >/dev/null 2>&1 || ${_addr:=dhcp}
+		ifconfig dhcp >/dev/null 2>&1 || _addr=dhcp
 	fi
 	_prompt="IPv4 address for $_ifs? (${_prompt}or 'none')"
 
