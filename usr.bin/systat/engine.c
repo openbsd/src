@@ -1,4 +1,4 @@
-/* $Id: engine.c,v 1.9 2009/06/06 17:52:39 jasper Exp $	 */
+/* $Id: engine.c,v 1.10 2009/06/11 23:18:52 chl Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -16,7 +16,7 @@
  */
 
 
-
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 
