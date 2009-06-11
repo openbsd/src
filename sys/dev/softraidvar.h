@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.72 2009/06/10 03:24:02 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.73 2009/06/11 19:42:59 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -415,6 +415,7 @@ struct sr_discipline {
 	int			sd_rebuild;	/* can we rebuild? */
 	int			sd_reb_active;	/* rebuild in progress */
 	int			sd_going_down;	/* dive dive dive */
+	int			sd_ready;	/* fully operational */
 
 	struct sr_wu_list	sd_wu_freeq;	/* free wu queue */
 	struct sr_wu_list	sd_wu_pendq;	/* pending wu queue */
@@ -468,6 +469,10 @@ struct sr_softc {
 #define SR_MAXSCSIBUS		256
 	struct sr_discipline	*sc_dis[SR_MAXSCSIBUS]; /* scsibus is u_int8_t */
 };
+
+/* hotplug */
+void			sr_hotplug_register(struct sr_discipline *, void *);
+void			sr_hotplug_unregister(struct sr_discipline *, void *);
 
 /* work units & ccbs */
 int			sr_ccb_alloc(struct sr_discipline *);

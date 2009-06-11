@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.38 2009/06/11 02:59:06 marco Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.39 2009/06/11 19:42:59 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -70,6 +70,7 @@ int		sr_crypto_read(struct cryptop *);
 void		sr_crypto_finish_io(struct sr_workunit *);
 void		sr_crypto_calculate_check_hmac_sha1(struct sr_discipline *,
 		   u_char[SHA1_DIGEST_LENGTH]);
+void		sr_crypto_hotplug(struct sr_discipline *, struct disk *, int);
 
 #ifdef SR_DEBUG0
 void		 sr_crypto_dumpkeys(struct sr_discipline *);
@@ -468,6 +469,8 @@ sr_crypto_alloc_resources(struct sr_discipline *sd)
 		}
 	}
 
+	sr_hotplug_register(sd, sr_crypto_hotplug);
+
 	return (0);
 }
 
@@ -482,6 +485,8 @@ sr_crypto_free_resources(struct sr_discipline *sd)
 
 	DNPRINTF(SR_D_DIS, "%s: sr_crypto_free_resources\n",
 	    DEVNAME(sd->sd_sc));
+
+	sr_hotplug_unregister(sd, sr_crypto_hotplug);
 
 	for (i = 0; sd->mds.mdd_crypto.scr_sid[i] != (u_int64_t)-1; i++) {
 		crypto_freesession(
@@ -756,6 +761,13 @@ sr_crypto_read(struct cryptop *crp)
 	splx(s);
 
 	return (0);
+}
+
+void
+sr_crypto_hotplug(struct sr_discipline *sd, struct disk *diskp, int action)
+{
+	DNPRINTF(SR_D_MISC, "%s: sr_crypto_hotplug: %s %d\n",
+	    DEVNAME(sd->sd_sc), diskp->dk_name, action);
 }
 
 #ifdef SR_DEBUG0

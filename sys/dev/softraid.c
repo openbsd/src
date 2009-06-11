@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.147 2009/06/10 21:37:17 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.148 2009/06/11 19:42:59 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -143,6 +143,30 @@ void			sr_meta_chunks_create(struct sr_softc *,
 			    struct sr_chunk_head *);
 void			sr_meta_init(struct sr_discipline *,
 			    struct sr_chunk_head *);
+
+/* hotplug magic */
+void			sr_disk_attach(struct disk *, int);
+
+struct sr_hotplug_list {
+	void			(*sh_hotplug)(struct sr_discipline *,
+				    struct disk *, int);
+	struct sr_discipline	*sh_sd;
+
+	SLIST_ENTRY(sr_hotplug_list) shl_link;
+};
+SLIST_HEAD(sr_hotplug_list_head, sr_hotplug_list);
+
+struct			sr_hotplug_list_head	sr_hotplug_callbacks;
+extern void		(*softraid_disk_attach)(struct disk *, int);
+
+/* scsi glue */
+struct scsi_adapter sr_switch = {
+	sr_scsi_cmd, sr_minphys, NULL, NULL, sr_scsi_ioctl
+};
+
+struct scsi_device sr_dev = {
+	NULL, NULL, NULL, NULL
+};
 
 /* native metadata format */
 int			sr_meta_native_bootprobe(struct sr_softc *,
@@ -1206,29 +1230,54 @@ sr_meta_native_write(struct sr_discipline *sd, dev_t dev,
 	    B_WRITE));
 }
 
-struct scsi_adapter sr_switch = {
-	sr_scsi_cmd, sr_minphys, NULL, NULL, sr_scsi_ioctl
-};
+void
+sr_hotplug_register(struct sr_discipline *sd, void *func)
+{
+	struct sr_hotplug_list	*mhe;
 
-struct scsi_device sr_dev = {
-	NULL, NULL, NULL, NULL
-};
+	DNPRINTF(SR_D_MISC, "%s: sr_hotplug_register: %p\n",
+	    DEVNAME(sd->sd_sc), func);
 
-void sr_disk_attach(struct disk *, int);
+	/* make sure we aren't on the list yet */
+	SLIST_FOREACH(mhe, &sr_hotplug_callbacks, shl_link)
+		if (mhe->sh_hotplug == func)
+			return;
 
-extern void (*softraid_disk_attach)(struct disk *, int);
+	mhe = malloc(sizeof(struct sr_hotplug_list), M_DEVBUF,
+	    M_WAITOK | M_ZERO);
+	mhe->sh_hotplug = func;
+	mhe->sh_sd = sd;
+	SLIST_INSERT_HEAD(&sr_hotplug_callbacks, mhe, shl_link);
+}
+
+void
+sr_hotplug_unregister(struct sr_discipline *sd, void *func)
+{
+	struct sr_hotplug_list	*mhe;
+
+	DNPRINTF(SR_D_MISC, "%s: sr_hotplug_unregister: %s %p\n",
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname, func);
+
+	/* make sure we are on the list yet */
+	SLIST_FOREACH(mhe, &sr_hotplug_callbacks, shl_link)
+		if (mhe->sh_hotplug == func) {
+			SLIST_REMOVE(&sr_hotplug_callbacks, mhe,
+			    sr_hotplug_list, shl_link);
+			free(mhe, M_DEVBUF);
+			if (SLIST_EMPTY(&sr_hotplug_callbacks))
+				SLIST_INIT(&sr_hotplug_callbacks);
+			return;
+		}
+}
 
 void
 sr_disk_attach(struct disk *diskp, int action)
 {
-	switch (action) {
-	case 1:
-		/* disk arrived */
-		break;
-	case -1:
-		/* disk departed */
-		break;
-	}
+	struct sr_hotplug_list	*mhe;
+
+	SLIST_FOREACH(mhe, &sr_hotplug_callbacks, shl_link)
+		if (mhe->sh_sd->sd_ready)
+			mhe->sh_hotplug(mhe->sh_sd, diskp, action);
 }
 
 int
@@ -1245,6 +1294,8 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 	DNPRINTF(SR_D_MISC, "\n%s: sr_attach", DEVNAME(sc));
 
 	rw_init(&sc->sc_lock, "sr_lock");
+
+	SLIST_INIT(&sr_hotplug_callbacks);
 
 	if (bio_register(&sc->sc_dev, sr_ioctl) != 0)
 		printf("%s: controller registration failed", DEVNAME(sc));
@@ -2312,6 +2363,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 	if (sd->sd_vol_status == BIOC_SVREBUILD)
 		kthread_create_deferred(sr_rebuild, sd);
 
+	sd->sd_ready = 1;
+
 	return (rv);
 unwind:
 	sr_discipline_shutdown(sd);
@@ -2421,6 +2474,8 @@ sr_discipline_shutdown(struct sr_discipline *sd)
 	    sd->sd_meta ? sd->sd_meta->ssd_devname : "nodev");
 
 	s = splbio();
+
+	sd->sd_ready = 0;
 
 	if (sd->sd_shutdownhook)
 		shutdownhook_disestablish(sd->sd_shutdownhook);
