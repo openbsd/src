@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.46 2009/06/11 04:28:50 deraadt Exp $
+#	$OpenBSD: install.md,v 1.47 2009/06/11 17:05:06 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ __EOT
 md_congrats() {
 }
 
-md_consoleinfo () {
+md_consoleinfo() {
 	local _u _d=com
 
 	for _u in $(scan_dmesg "/^$_d\([0-9]\) .*/s//\1/p"); do
