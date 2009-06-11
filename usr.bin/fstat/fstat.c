@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.65 2009/06/07 03:10:09 millert Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.66 2009/06/11 21:09:46 chl Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -53,7 +53,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.65 2009/06/07 03:10:09 millert Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.66 2009/06/11 21:09:46 chl Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -498,8 +498,7 @@ socktrans(struct kinfo_file2 *kf)
 		"seqpak"	/* 5 */
 	};
 #define	STYPEMAX 5
-	int len;
-	char *dname, *stype, stypebuf[24];
+	char *stype, stypebuf[24];
 	struct in_addr laddr, faddr;
 #ifdef INET6
 	char xaddrbuf[NI_MAXHOST + 2];
