@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.274 2009/06/11 22:44:14 sthen Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.275 2009/06/11 23:11:27 sthen Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1274,6 +1274,16 @@ bge_chipinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS|
 		    BGE_MODECTL_MAC_ATTN_INTR|BGE_MODECTL_HOST_SEND_BDS|
 		    BGE_MODECTL_TX_NO_PHDR_CSUM);
+
+	/*
+	 * BCM5701 B5 have a bug causing data corruption when using
+	 * 64-bit DMA reads, which can be terminated early and then
+	 * completed later as 32-bit accesses, in combination with
+	 * certain bridges.
+	 */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5701 &&
+	    sc->bge_chipid == BGE_CHIPID_BCM5701_B5)
+		BGE_SETBIT(sc, BGE_MODE_CTL, BGE_MODECTL_FORCE_PCI32);
 
 	/*
 	 * Disable memory write invalidate.  Apparently it is not supported
