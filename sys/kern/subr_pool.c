@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.83 2009/06/04 18:48:54 deraadt Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.84 2009/06/12 14:56:21 oga Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -458,17 +458,24 @@ pool_get(struct pool *pp, int flags)
 	mtx_enter(&pp->pr_mtx);
 	v = pool_do_get(pp, flags);
 	mtx_leave(&pp->pr_mtx);
-	if (v && pp->pr_ctor && pp->pr_ctor(pp->pr_arg, v, flags)) {
-		mtx_enter(&pp->pr_mtx);
-		pool_do_put(pp, v);
-		mtx_leave(&pp->pr_mtx);
-		v = NULL;
-	}
-	if (v) {
-		pp->pr_nget++;
+	if (v == NULL)
+		return (v);
+
+	if (pp->pr_ctor) {
+		if (flags & PR_ZERO)
+			panic("pool_get: PR_ZERO when ctor set");
+		if (pp->pr_ctor(pp->pr_arg, v, flags)) {
+			mtx_enter(&pp->pr_mtx);
+			pool_do_put(pp, v);
+			mtx_leave(&pp->pr_mtx);
+			v = NULL;
+		}
+	} else {
 		if (flags & PR_ZERO)
 			memset(v, 0, pp->pr_size);
 	}
+	if (v != NULL)
+		pp->pr_nget++;
 	return (v);
 }
 
