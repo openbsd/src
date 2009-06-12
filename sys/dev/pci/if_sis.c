@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.90 2009/06/04 20:01:02 sthen Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.91 2009/06/12 21:55:50 claudio Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -119,9 +119,6 @@ void sis_fill_rx_ring(struct sis_softc *);
 int sis_newbuf(struct sis_softc *, struct sis_desc *);
 int sis_encap(struct sis_softc *, struct mbuf *, u_int32_t *);
 void sis_rxeof(struct sis_softc *);
-#if 0
-void sis_rxeoc(struct sis_softc *);
-#endif
 void sis_txeof(struct sis_softc *);
 void sis_tick(void *);
 void sis_start(struct ifnet *);
@@ -1359,15 +1356,6 @@ sis_rxeof(struct sis_softc *sc)
 	sis_fill_rx_ring(sc);
 }
 
-#if 0
-void
-sis_rxeoc(struct sis_softc *sc)
-{
-	sis_rxeof(sc);
-	sis_init(sc);
-}
-#endif
-
 /*
  * A frame was downloaded to the chip. It's safe for us to clean up
  * the list buffers.
@@ -1496,10 +1484,6 @@ sis_intr(void *arg)
 		     SIS_ISR_RX_ERR | SIS_ISR_RX_IDLE))
 			sis_rxeof(sc);
 
-#if 0
-		if (status & SIS_ISR_RX_OFLOW)
-			sis_rxeoc(sc);
-#endif
 		if (status & (SIS_ISR_RX_IDLE)) {
 			/* consume what's there so that sis_rx_cons points
 			 * to the first HW owned descriptor. */
