@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.21 2009/06/04 21:02:33 schwarze Exp $
+.\"	$OpenBSD: ypclnt.3,v 1.22 2009/06/12 16:28:49 schwarze Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 4 2009 $
+.Dd $Mdocdate: June 12 2009 $
 .Dt YPCLNT 3
 .Os
 .Sh NAME
@@ -87,7 +87,8 @@ and output values begin with
 Any output values of type
 .Em char **
 should be the addresses of uninitialized character pointers.
-Memory will be allocated by the YP client routines using
+Only if a call succeeds will memory be allocated by the YP client routines
+using
 .Fn malloc .
 This memory can later be freed by the user if there is no additional need for
 the data stored there.
