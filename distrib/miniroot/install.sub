@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.584 2009/06/11 04:21:27 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.585 2009/06/12 03:25:24 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -563,9 +563,13 @@ configure_ifs() {
 	local _first _ifdevs _ifs _name _hn _vl=0 _vd _vi _p _tags
 
 	# In case of restart, discover last vlan configured.
-	while ifconfig vlan$_vl >/dev/null 2>&1; do
+	while :; do
+		_vd=$(ifconfig vlan$_vl 2>&1)
+		[[ $_vd == @(*no such interface*) ]] && break
+		[[ $_vd == @(vlan$_vl: flags=0<>*) ]] && break
 		: $(( _vl++ ))
 	done
+	_vd=
 
 	while :; do
 		# Create new vlan if possible.
