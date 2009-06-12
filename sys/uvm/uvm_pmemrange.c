@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.4 2009/06/10 20:36:40 ariane Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.5 2009/06/12 00:01:21 ariane Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -39,10 +39,11 @@ int	uvm_pmemrange_addr_cmp(struct uvm_pmemrange *, struct uvm_pmemrange *);
 int	uvm_pmemrange_use_cmp(struct uvm_pmemrange *, struct uvm_pmemrange *);
 int	uvm_pmr_addr_cmp(struct vm_page *, struct vm_page *);
 int	uvm_pmr_size_cmp(struct vm_page *, struct vm_page *);
+int	uvm_pmr_pg_to_memtype(struct vm_page *);
 
 /* Memory types. The page flags are used to derive what the current memory
  * type of a page is. */
-static __inline int
+int
 uvm_pmr_pg_to_memtype(struct vm_page *pg)
 {
 	if (pg->pg_flags & PG_ZERO)
@@ -79,8 +80,16 @@ struct vm_page		*uvm_pmr_nextsz(struct uvm_pmemrange *,
 void			 uvm_pmr_pnaddr(struct uvm_pmemrange *pmr,
 			    struct vm_page *pg, struct vm_page **pg_prev,
 			    struct vm_page **pg_next);
+struct vm_page		*uvm_pmr_insert_addr(struct uvm_pmemrange *,
+			    struct vm_page *, int);
+void			 uvm_pmr_insert_size(struct uvm_pmemrange *,
+			    struct vm_page *);
 struct vm_page		*uvm_pmr_insert(struct uvm_pmemrange *,
 			    struct vm_page *, int);
+void			 uvm_pmr_remove_size(struct uvm_pmemrange *,
+			    struct vm_page *);
+void			 uvm_pmr_remove_addr(struct uvm_pmemrange *,
+			    struct vm_page *);
 void			 uvm_pmr_remove(struct uvm_pmemrange *,
 			    struct vm_page *);
 psize_t			 uvm_pmr_remove_1strange(struct pglist *, paddr_t,
@@ -92,11 +101,12 @@ struct uvm_pmemrange	*uvm_pmemrange_use_insert(struct uvm_pmemrange_use *,
 struct vm_page		*uvm_pmr_extract_range(struct uvm_pmemrange *,
 			    struct vm_page *, paddr_t, paddr_t,
 			    struct pglist *);
+psize_t			 pow2divide(psize_t, psize_t);
 
 /*
  * Computes num/denom and rounds it up to the next power-of-2.
  */
-static __inline psize_t
+psize_t
 pow2divide(psize_t num, psize_t denom)
 {
 	int rshift = 0;
@@ -238,6 +248,11 @@ uvm_pmr_pnaddr(struct uvm_pmemrange *pmr, struct vm_page *pg,
 	else
 		*pg_prev = RB_PREV(uvm_pmr_addr, &pmr->addr, *pg_next);
 
+	KASSERT(*pg_next == NULL ||
+	    VM_PAGE_TO_PHYS(*pg_next) > VM_PAGE_TO_PHYS(pg));
+	KASSERT(*pg_prev == NULL ||
+	    VM_PAGE_TO_PHYS(*pg_prev) < VM_PAGE_TO_PHYS(pg));
+
 	/* Reset if not contig. */
 	if (*pg_prev != NULL &&
 	    (atop(VM_PAGE_TO_PHYS(*pg_prev)) + (*pg_prev)->fq.free.pages
@@ -256,7 +271,7 @@ uvm_pmr_pnaddr(struct uvm_pmemrange *pmr, struct vm_page *pg,
  * Remove a range from the address tree.
  * Address tree maintains pmr counters.
  */
-static __inline void
+void
 uvm_pmr_remove_addr(struct uvm_pmemrange *pmr, struct vm_page *pg)
 {
 	KDASSERT(RB_FIND(uvm_pmr_addr, &pmr->addr, pg) == pg);
@@ -268,7 +283,7 @@ uvm_pmr_remove_addr(struct uvm_pmemrange *pmr, struct vm_page *pg)
 /*
  * Remove a range from the size tree.
  */
-static __inline void
+void
 uvm_pmr_remove_size(struct uvm_pmemrange *pmr, struct vm_page *pg)
 {
 	int memtype;
@@ -276,6 +291,7 @@ uvm_pmr_remove_size(struct uvm_pmemrange *pmr, struct vm_page *pg)
 	struct vm_page *i;
 #endif
 
+	KASSERT(pg->fq.free.pages >= 1);
 	KASSERT(pg->pg_flags & PQ_FREE);
 	memtype = uvm_pmr_pg_to_memtype(pg);
 
@@ -311,7 +327,7 @@ uvm_pmr_remove(struct uvm_pmemrange *pmr, struct vm_page *pg)
  * If no_join, the caller guarantees that the range cannot possibly join
  * with adjecent ranges.
  */
-static __inline struct vm_page *
+struct vm_page *
 uvm_pmr_insert_addr(struct uvm_pmemrange *pmr, struct vm_page *pg, int no_join)
 {
 	struct vm_page *prev, *next;
@@ -368,7 +384,7 @@ uvm_pmr_insert_addr(struct uvm_pmemrange *pmr, struct vm_page *pg, int no_join)
  * next ranges).
  * Page must already be in the address tree.
  */
-static __inline void
+void
 uvm_pmr_insert_size(struct uvm_pmemrange *pmr, struct vm_page *pg)
 {
 	int memtype;
@@ -377,6 +393,8 @@ uvm_pmr_insert_size(struct uvm_pmemrange *pmr, struct vm_page *pg)
 	int mti;
 #endif
 
+	KASSERT(pg->fq.free.pages >= 1);
+	KASSERT(pg->pg_flags & PQ_FREE);
 	memtype = uvm_pmr_pg_to_memtype(pg);
 #ifdef DEBUG
 	for (mti = 0; mti < UVM_PMR_MEMTYPE_MAX; mti++) {
@@ -769,7 +787,7 @@ uvm_pmr_freepages(struct vm_page *pg, psize_t count)
 	uvm_lock_fpageq();
 
 	for (i = 0; i < count; i++) {
-		KASSERT((pg->pg_flags & PG_DEV) == 0);
+		KASSERT((pg[i].pg_flags & (PG_DEV|PQ_FREE)) == 0);
 		atomic_clearbits_int(&pg[i].pg_flags, pg[i].pg_flags);
 		atomic_setbits_int(&pg[i].pg_flags, PQ_FREE);
 	}
@@ -800,7 +818,7 @@ uvm_pmr_freepageq(struct pglist *pgl)
 	struct vm_page *pg;
 
 	TAILQ_FOREACH(pg, pgl, pageq) {
-		KASSERT((pg->pg_flags & PG_DEV) == 0);
+		KASSERT((pg->pg_flags & (PG_DEV|PQ_FREE)) == 0);
 		atomic_clearbits_int(&pg->pg_flags, pg->pg_flags);
 		atomic_setbits_int(&pg->pg_flags, PQ_FREE);
 	}
