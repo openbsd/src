@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: yyfix.sh,v 1.2 2003/06/03 02:56:24 millert Exp $
+#	$OpenBSD: yyfix.sh,v 1.3 2009/06/12 13:33:29 sobrado Exp $
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
 #
@@ -35,7 +35,7 @@ NEWYACC="yylhs yylen yydefred yydgoto yysindex yyrindex yygindex \
 	 yytable yycheck"
 
 if [ $# -eq 0 ]; then
-	echo "usage: $0 file [tables]" >&2
+	echo "usage: `basename $0` file [tables]" >&2
 	exit 1
 fi
 
