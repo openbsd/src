@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.1 2009/06/10 03:24:02 marco Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.2 2009/06/12 00:04:50 jordan Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -53,6 +53,11 @@ void	sr_raidp_recreate_wu(struct sr_workunit *);
 void	sr_raidp_set_chunk_state(struct sr_discipline *, int, int);
 void	sr_raidp_set_vol_state(struct sr_discipline *);
 
+void	sr_raidp_xor(void *, void *, int);
+int	sr_raidp_addio(struct sr_workunit *wu, int, daddr64_t, daddr64_t, void *, int, void *);
+void 	sr_dump(void *, int);
+void	sr_raidp_scrub(struct sr_discipline *);
+
 /* Discipline initialisation. */
 void
 sr_raidp_discipline_init(struct sr_discipline *sd)
@@ -92,6 +97,12 @@ sr_raidp_alloc_resources(struct sr_discipline *sd)
 	if (sr_wu_alloc(sd))
 		goto bad;
 	if (sr_ccb_alloc(sd))
+		goto bad;
+
+	/* setup runtime values */
+	sd->mds.mdd_raidp.srp_strip_bits =
+	    sr_validate_stripsize(sd->sd_meta->ssdi.ssd_strip_size);
+	if (sd->mds.mdd_raidp.srp_strip_bits == -1)
 		goto bad;
 
 	rv = 0;
@@ -319,126 +330,127 @@ die:
 int
 sr_raidp_rw(struct sr_workunit *wu)
 {
-#if 0
+	struct sr_workunit	*wu_w = NULL;
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
-#endif
-	int			s;
-	daddr64_t		blk;
-#if 0
-	struct sr_ccb		*ccb;
 	struct sr_chunk		*scp;
-	int			ios, x, i, s, rt;
-#endif
+	int			s, i;
+	daddr64_t		blk, lbaoffs, strip_no, chunk;
+	daddr64_t		strip_size, no_chunk, lba, strip_row;
+	daddr64_t		strip_bits, length, parity, strip_offs, datalen;
+	void		       *xorbuf, *data;
+
 	/* blk and scsi error will be handled by sr_validate_io */
 	if (sr_validate_io(wu, &blk, "sr_raidp_rw"))
 		goto bad;
 
-	/* calculate physical block */
-	blk += SR_META_SIZE + SR_META_OFFSET;
+	strip_size = sd->sd_meta->ssdi.ssd_strip_size;
+	strip_bits = sd->mds.mdd_raidp.srp_strip_bits;
+	no_chunk = sd->sd_meta->ssdi.ssd_chunk_no - 1;
 
-	/* XXX replace this with raid 4 & 5! */
-	goto bad;
+	data = xs->data;
+	datalen = xs->datalen;
+	lbaoffs	= blk << DEV_BSHIFT;
+
 #if 0
-	if (xs->flags & SCSI_DATA_IN)
-		ios = 1;
-	else
-		ios = sd->sd_meta->ssdi.ssd_chunk_no;
-	wu->swu_io_count = ios;
-
-	for (i = 0; i < ios; i++) {
-		ccb = sr_ccb_get(sd);
-		if (!ccb) {
-			/* should never happen but handle more gracefully */
-			printf("%s: %s: too many ccbs queued\n",
-			    DEVNAME(sd->sd_sc),
-			    sd->sd_meta->ssd_devname);
+	printf("0000: sr_raidp_%s: blk=%llx len=%llx\n",	 
+	     xs->flags & SCSI_DATA_IN ? "rd" : "wr", blk, datalen);
+#endif
+	if (!(xs->flags & SCSI_DATA_IN))
+		/* Create Write workunit */
+		if ((wu_w = sr_wu_get(sd, 1)) == NULL) {
+			printf("%s: can't get wu_w", DEVNAME(sd->sd_sc));
 			goto bad;
 		}
 
-		if (xs->flags & SCSI_POLL) {
-			ccb->ccb_buf.b_flags = 0;
-			ccb->ccb_buf.b_iodone = NULL;
-		} else {
-			ccb->ccb_buf.b_flags = B_CALL;
-			ccb->ccb_buf.b_iodone = sr_raidp_intr;
+	wu->swu_blk_start = 0;
+	while (datalen != 0) {
+		strip_no = lbaoffs >> strip_bits;
+		strip_row = strip_no / no_chunk;
+		strip_offs = lbaoffs & (strip_size - 1);
+
+		/* Get size remaining in this stripe */
+		length = MIN(strip_size - strip_offs, datalen);
+
+		/* Map disk offset to parity/data drive */	
+		chunk = strip_no % no_chunk;
+		if (sd->sd_type == SR_MD_RAID4)
+			/* RAID4: Parity is always drive N */
+			parity = no_chunk;
+		else {
+			/* RAID5: Left Asymmetric algorithm */
+			parity = no_chunk - ((strip_no / no_chunk) % (no_chunk + 1));
+			if (chunk >= parity)
+				chunk++;
 		}
-
-		ccb->ccb_buf.b_flags |= B_PHYS;
-		ccb->ccb_buf.b_blkno = blk;
-		ccb->ccb_buf.b_bcount = xs->datalen;
-		ccb->ccb_buf.b_bufsize = xs->datalen;
-		ccb->ccb_buf.b_resid = xs->datalen;
-		ccb->ccb_buf.b_data = xs->data;
-		ccb->ccb_buf.b_error = 0;
-		ccb->ccb_buf.b_proc = curproc;
-		ccb->ccb_wu = wu;
-
+	
+		lba = (strip_row * strip_size + strip_offs) >> DEV_BSHIFT;
+	
+		/* XXX: Big Hammer.. exclude I/O from entire stripe */
+		if (wu->swu_blk_start == 0)
+			wu->swu_blk_start = (strip_row * strip_size) >> DEV_BSHIFT;
+		wu->swu_blk_end = wu->swu_blk_start + ((no_chunk * strip_size) >> DEV_BSHIFT) - 1;
+#if 0
+		printf("    : strip=%llx offs=%llx lba=%llx len=%llx n=%lld, p=%lld\n", strip_no, strip_offs, lba, length, chunk, parity);
+#endif
+		scp = sd->sd_vol.sv_chunks[chunk];
 		if (xs->flags & SCSI_DATA_IN) {
-			rt = 0;
-ragain:
-			/* interleave reads */
-			x = sd->mds.mdd_raidp.sr1_counter++ %
-			    sd->sd_meta->ssdi.ssd_chunk_no;
-			scp = sd->sd_vol.sv_chunks[x];
 			switch (scp->src_meta.scm_status) {
 			case BIOC_SDONLINE:
 			case BIOC_SDSCRUB:
-				ccb->ccb_buf.b_flags |= B_READ;
+				/* Drive is good.. issue single read request */
+				if (sr_raidp_addio(wu, chunk, lba, length, data, xs->flags, NULL))
+					goto bad;
 				break;
-
 			case BIOC_SDOFFLINE:
 			case BIOC_SDREBUILD:
 			case BIOC_SDHOTSPARE:
-				if (rt++ < sd->sd_meta->ssdi.ssd_chunk_no)
-					goto ragain;
-
-				/* FALLTHROUGH */
-			default:
-				/* volume offline */
-				printf("%s: is offline, can't read\n",
-				    DEVNAME(sd->sd_sc));
-				sr_ccb_put(ccb);
-				goto bad;
-			}
-		} else {
-			/* writes go on all working disks */
-			x = i;
-			scp = sd->sd_vol.sv_chunks[x];
-			switch (scp->src_meta.scm_status) {
-			case BIOC_SDONLINE:
-			case BIOC_SDSCRUB:
-			case BIOC_SDREBUILD:
-				ccb->ccb_buf.b_flags |= B_WRITE;
+				/* XXX: only works if this LBA has already been scrubbed */
+				printf("Disk %llx offline, regenerating buffer\n", chunk);
+				memset(data, 0, length);
+				for (i=0; i<= no_chunk; i++) {
+					/* Read all other drives: xor result into databuffer */
+					if (i != chunk) {
+						if (sr_raidp_addio(wu, i, lba, length, NULL, SCSI_DATA_IN, data))
+							goto bad;
+					}
+				}
 				break;
-
-			case BIOC_SDHOTSPARE: /* should never happen */
-			case BIOC_SDOFFLINE:
-				wu->swu_io_count--;
-				sr_ccb_put(ccb);
-				continue;
-
 			default:
+				printf("%s: is offline, can't read\n", DEVNAME(sd->sd_sc));
 				goto bad;
 			}
-
 		}
-		ccb->ccb_target = x;
-		ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[x]->src_dev_mm;
-		ccb->ccb_buf.b_vp = NULL;
+		else {
+			/* XXX: handle writes to failed/offline disk?? */
+			if (scp->src_meta.scm_status == BIOC_SDOFFLINE)
+				goto bad;
 
-		LIST_INIT(&ccb->ccb_buf.b_dep);
+			/* Initialize XORBUF with contents of new data to be written
+			 *   This will be XORed with old data and old parity in the intr routine
+			 *   The result in xorbuf is the new parity data */
+			xorbuf = malloc(length, M_DEVBUF, M_ZERO);
+			memcpy(xorbuf, data, length);
 
-		TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
+			if (sr_raidp_addio(wu, chunk,  lba, length, NULL, SCSI_DATA_IN, xorbuf) ||  /* xor old data */
+			    sr_raidp_addio(wu, parity, lba, length, NULL, SCSI_DATA_IN, xorbuf) ||  /* xor old parity */
+			    sr_raidp_addio(wu_w, chunk,  lba, length, data,   xs->flags, NULL) || /* write new data */
+			    sr_raidp_addio(wu_w, parity, lba, length, xorbuf, xs->flags, NULL))   /* write new parity */
+				goto bad;
+		}
 
-		DNPRINTF(SR_D_DIS, "%s: %s: sr_raidp: b_bcount: %d "
-		    "b_blkno: %x b_flags 0x%0x b_data %p\n",
-		    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
-		    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
-		    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
+		/* Advance to next block */
+		lbaoffs += length;
+		datalen -= length;
+		data += length;
 	}
-#endif
 	s = splbio();
+	if (wu_w) {
+		/* Collide write request with reads */
+		wu_w->swu_state = SR_WU_DEFERRED;
+		wu->swu_collider = wu_w;
+		TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu_w, swu_link);
+	}
 
 	/* rebuild io, let rebuild routine deal with it */
 	if (wu->swu_flags & SR_WUF_REBUILD)
@@ -452,8 +464,10 @@ ragain:
 	if (wu->swu_state == SR_WU_REQUEUE)
 		goto queued;
 
-	if (sr_check_io_collision(wu))
+	if (sr_check_io_collision(wu)) {
+		printf("input collided\n");
 		goto queued;
+	}
 
 start:
 	sr_raid_startwu(wu);
@@ -462,6 +476,8 @@ queued:
 	return (0);
 bad:
 	/* wu is unwound by sr_wu_put */
+	if (wu_w)
+		sr_wu_put(wu_w);
 	return (1);
 }
 
@@ -473,6 +489,7 @@ sr_raidp_intr(struct buf *bp)
 	struct sr_discipline	*sd = wu->swu_dis;
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_softc		*sc = sd->sd_sc;
+	caddr_t			bs, xbs, xbe;
 	int			s, pend;
 
 	DNPRINTF(SR_D_INTR, "%s: sr_intr bp %x xs %x\n",
@@ -483,11 +500,21 @@ sr_raidp_intr(struct buf *bp)
 	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_resid, ccb->ccb_buf.b_flags,
 	    ccb->ccb_buf.b_blkno, ccb->ccb_target);
 
+#if 0
+	printf("sr_intr: %s %d.%llx %lx %s\n",
+	    (ccb->ccb_buf.b_flags & B_READ) ? "read" : "write",
+	    ccb->ccb_target,
+	    ccb->ccb_buf.b_blkno,
+	    ccb->ccb_buf.b_bcount,
+	    ccb->ccb_opaque ? "<xor>" : "");
+#endif
+
 	s = splbio();
 
 	if (ccb->ccb_buf.b_flags & B_ERROR) {
 		DNPRINTF(SR_D_INTR, "%s: i/o error on block %lld target: %d\n",
 		    DEVNAME(sc), ccb->ccb_buf.b_blkno, ccb->ccb_target);
+		printf("io error: disk %x\n", ccb->ccb_target);
 		wu->swu_ios_failed++;
 		ccb->ccb_state = SR_CCB_FAILED;
 		if (ccb->ccb_target != -1)
@@ -498,6 +525,22 @@ sr_raidp_intr(struct buf *bp)
 	} else {
 		ccb->ccb_state = SR_CCB_OK;
 		wu->swu_ios_succeeded++;
+		if (ccb->ccb_opaque) {
+			/* XOR data to result */
+			sr_raidp_xor(ccb->ccb_opaque, ccb->ccb_buf.b_data, ccb->ccb_buf.b_bcount);
+		}
+	}
+
+	/* Free allocated data buffer */
+	if (xs) {
+		bs = ccb->ccb_buf.b_data;
+		xbs = (caddr_t)xs->data;
+		xbe = xbs + xs->datalen;
+
+		if (!(xbs <= bs && bs < xbe)) {
+			/* Check if buffer is within XS data.. if not it is allocated bufa/bufb/xordata */
+			free(ccb->ccb_buf.b_data, M_DEVBUF);
+		}
 	}
 	wu->swu_ios_complete++;
 
@@ -527,9 +570,11 @@ sr_raidp_intr(struct buf *bp)
 			}
 		}
 
-		xs->error = XS_NOERROR;
-		xs->resid = 0;
-		xs->flags |= ITSDONE;
+		if (xs != NULL) {
+			xs->error = XS_NOERROR;
+			xs->resid = 0;
+			xs->flags |= ITSDONE;
+		}
 
 		pend = 0;
 		TAILQ_FOREACH(wup, &sd->sd_wu_pendq, swu_link) {
@@ -566,7 +611,8 @@ sr_raidp_intr(struct buf *bp)
 		} else {
 			/* do not change the order of these 2 functions */
 			sr_wu_put(wu);
-			scsi_done(xs);
+			if (xs != NULL)
+				scsi_done(xs);
 		}
 
 		if (sd->sd_sync && sd->sd_wu_pending == 0)
@@ -615,4 +661,154 @@ sr_raidp_recreate_wu(struct sr_workunit *wu)
 
 		wup = wup->swu_collider;
 	} while (wup);
+}
+
+int
+sr_raidp_addio(struct sr_workunit *wu, int dsk, daddr64_t blk, daddr64_t len, void *data, int flag, void *xorbuf)
+{
+	struct sr_discipline 	*sd = wu->swu_dis;
+	struct sr_ccb		*ccb;
+
+	ccb = sr_ccb_get(sd);
+	if (!ccb)
+		return (-1);
+
+	/* Allocate temporary buffer */
+	if (data == NULL)
+		data = malloc(len, M_DEVBUF, M_ZERO);
+
+	DNPRINTF(0, "%sio: %d.%llx %llx %s\n",
+	    flag & SCSI_DATA_IN ? "read" : "write",
+	    dsk, blk, len,
+	    xorbuf ? "X0R" : "-");
+
+	if (flag & SCSI_POLL) {
+		ccb->ccb_buf.b_flags = 0;
+		ccb->ccb_buf.b_iodone = NULL;
+	}
+	else {
+		ccb->ccb_buf.b_flags = B_CALL;
+		ccb->ccb_buf.b_iodone = sr_raidp_intr;
+	}
+	if (flag & SCSI_DATA_IN)
+		ccb->ccb_buf.b_flags |= B_READ;
+	else
+		ccb->ccb_buf.b_flags |= B_WRITE;
+
+	/* Add offset for metadata */
+	ccb->ccb_buf.b_flags |= B_PHYS;
+	ccb->ccb_buf.b_blkno = (SR_META_OFFSET + SR_META_SIZE) + blk;
+	ccb->ccb_buf.b_bcount = len;
+	ccb->ccb_buf.b_bufsize = len;
+	ccb->ccb_buf.b_resid = len;
+	ccb->ccb_buf.b_data = data;
+	ccb->ccb_buf.b_error = 0;
+	ccb->ccb_buf.b_proc = curproc;
+	ccb->ccb_buf.b_dev = sd->sd_vol.sv_chunks[dsk]->src_dev_mm;
+	ccb->ccb_buf.b_vp = NULL;
+
+	ccb->ccb_wu = wu;
+	ccb->ccb_target = dsk;
+	ccb->ccb_opaque = xorbuf;
+
+	LIST_INIT(&ccb->ccb_buf.b_dep);
+	TAILQ_INSERT_TAIL(&wu->swu_ccb, ccb, ccb_link);
+
+	DNPRINTF(SR_D_DIS, "%s: %s: sr_raidp: b_bcount: %d "
+	    "b_blkno: %x b_flags 0x%0x b_data %p\n",
+	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
+	    ccb->ccb_buf.b_bcount, ccb->ccb_buf.b_blkno,
+	    ccb->ccb_buf.b_flags, ccb->ccb_buf.b_data);
+
+	wu->swu_io_count++;
+
+	return (0);
+}
+
+void sr_dump(void *blk, int len)
+{
+	uint8_t *b = blk;
+	int i, j, c;
+
+	for (i=0; i<len; i+=16) {
+		for (j=0; j<16; j++) 
+			printf("%.2x ", b[i+j]);
+		printf("  ");
+		for (j=0; j<16; j++) {
+			c = b[i+j];
+			if (c < ' ' || c > 'z' || i+j > len)
+				c = '.';
+			printf("%c", c);
+		}
+		printf("\n");
+	}
+}
+
+/* Fast block X0R */
+void
+sr_raidp_xor(void *a, void *b, int len)
+{
+	u_int32_t *xa = a, *xb = b;
+
+	len >>= 2;
+	while (len--)
+		*xa++ ^= *xb++;
+}
+
+void
+sr_raidp_scrub(struct sr_discipline *sd)
+{
+	daddr64_t strip_no, strip_size, no_chunk, parity, max_strip, strip_bits, i;
+	struct sr_workunit *wu_r, *wu_w;
+	int s, slept;
+	void *xorbuf;
+
+	if ((wu_r = sr_wu_get(sd, 1)) == NULL)
+		goto done;
+	if ((wu_w = sr_wu_get(sd, 1)) == NULL)
+		goto done;
+
+	no_chunk = sd->sd_meta->ssdi.ssd_chunk_no - 1;
+	strip_size = sd->sd_meta->ssdi.ssd_strip_size;
+	strip_bits = sd->mds.mdd_raidp.srp_strip_bits;
+	max_strip = sd->sd_meta->ssdi.ssd_size >> strip_bits;
+
+	for (strip_no=0; strip_no<max_strip; strip_no++) {
+		if (sd->sd_type == SR_MD_RAID4)
+			parity = no_chunk;
+		else
+			parity = no_chunk - ((strip_no / no_chunk) % (no_chunk + 1));
+
+		xorbuf = malloc(strip_size, M_DEVBUF, M_ZERO);
+		for (i=0; i<=no_chunk; i++) {
+			if (i != parity)
+				sr_raidp_addio(wu_r, i, 0xBADCAFE, strip_size, NULL, SCSI_DATA_IN, xorbuf);
+		}
+		sr_raidp_addio(wu_w, parity, 0xBADCAFE, strip_size, xorbuf, SCSI_DATA_OUT, NULL);
+
+		wu_r->swu_flags |= SR_WUF_REBUILD;
+		
+		/* Collide wu_w with wu_r */
+		wu_w->swu_state = SR_WU_DEFERRED;
+		wu_r->swu_collider = wu_w;
+
+		s = splbio();
+		TAILQ_INSERT_TAIL(&sd->sd_wu_defq, wu_w, swu_link);
+
+		if (sr_check_io_collision(wu_r))
+			goto queued;
+		sr_raid_startwu(wu_r);
+	queued:
+		splx(s);
+
+		slept = 0;
+		while ((wu_w->swu_flags & SR_WUF_REBUILDIOCOMP) == 0) {
+			tsleep(wu_w, PRIBIO, "sr_scrub", 0);
+			slept = 1;
+		}
+		if (!slept)
+			tsleep(sd->sd_sc, PWAIT, "sr_yield", 1);
+	}
+done:
+	return;
 }
