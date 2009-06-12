@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.23 2009/06/04 22:45:32 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.24 2009/06/12 09:50:16 chl Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 
 #include <netinet6/in6_var.h>
 
+#include <err.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
