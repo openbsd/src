@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.148 2009/06/11 19:42:59 marco Exp $ */
+/* $OpenBSD: softraid.c,v 1.149 2009/06/12 16:00:25 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1975,7 +1975,9 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 			continue;
 		sw = sc->sc_dis[i];
 		for (c = 0; c < sw->sd_meta->ssdi.ssd_chunk_no; c++)
-			if (sw->sd_vol.sv_chunks[c]->src_dev_mm == dev) {
+			if (sw->sd_vol.sv_chunks[c]->src_dev_mm == dev &&
+			    sd->sd_vol.sv_chunks[c]->src_meta.scm_status !=
+			        BIOC_SDOFFLINE) {
 				printf("%s: %s chunk already in use\n",
 				    DEVNAME(sc), devname);
 				goto done;
