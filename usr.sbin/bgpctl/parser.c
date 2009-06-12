@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.53 2009/06/06 06:05:41 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.54 2009/06/12 16:44:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -874,33 +874,6 @@ parse_nexthop(const char *word, struct parse_result *r)
 
 	TAILQ_INSERT_TAIL(&r->set, fs, entry);
 	return (1);
-}
-
-/* XXX local copies from kroute.c, should go to a shared file */
-in_addr_t
-prefixlen2mask(u_int8_t prefixlen)
-{
-	if (prefixlen == 0)
-		return (0);
-
-	return (0xffffffff << (32 - prefixlen));
-}
-
-void
-inet6applymask(struct in6_addr *dest, const struct in6_addr *src, int prefixlen)
-{
-	struct in6_addr	mask;
-	int		i;
-
-	bzero(&mask, sizeof(mask));
-	for (i = 0; i < prefixlen / 8; i++)
-		mask.s6_addr[i] = 0xff;
-	i = prefixlen % 8;
-	if (i)
-		mask.s6_addr[prefixlen / 8] = 0xff00 >> i;
-
-	for (i = 0; i < 16; i++)
-		dest->s6_addr[i] = src->s6_addr[i] & mask.s6_addr[i];
 }
 
 int
