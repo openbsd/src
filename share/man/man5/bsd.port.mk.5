@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.229 2009/05/20 17:30:39 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.230 2009/06/12 13:40:34 landry Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 20 2009 $
+.Dd $Mdocdate: June 12 2009 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1916,7 +1916,8 @@ Subdirectory of ${WRKDIR} where port normally installs (see
 .Ar fake
 target).
 .It Ev WRKOBJDIR
-If non empty, used as a base for the actual port working directory.
+Used as a base for the actual port working directory (default:
+${PORTSDIR}/obj).
 The real working directory ${WRKDIR} is created there.
 Can be set on a per-${PKGPATH} basis.
 For instance, setting WRKOBJDIR_www/mozilla=/tmp/obj
