@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.25 2009/06/10 18:05:31 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.26 2009/06/12 19:52:15 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -127,8 +127,11 @@ extern struct soft_intrhand *softnet_intrhand;
 #define splaudio()		splraise(imask[IPL_AUDIO])
 #define splclock()		splraise(imask[IPL_CLOCK])
 #define splvm()			splraise(imask[IPL_VM])
-#define splsoftclock()		splraise(SINTMASK(SI_SOFTCLOCK))
-#define splsoftnet()		splraise(SINTMASK(SI_SOFTNET))
+#define splsoftclock()		splraise(SINTMASK(SI_SOFTCLOCK) | \
+				    SINTMASK(SI_SOFT))
+#define splsoftnet()		splraise(SINTMASK(SI_SOFTNET) | \
+				    SINTMASK(SI_SOFTCLOCK) | \
+				    SINTMASK(SI_SOFT))
 #define splstatclock()		splhigh()
 #define splsched()		splhigh()
 #define splhigh()		splraise(-1)
