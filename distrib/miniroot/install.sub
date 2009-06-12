@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.585 2009/06/12 03:25:24 krw Exp $
+#	$OpenBSD: install.sub,v 1.586 2009/06/12 08:25:57 halex Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2009 Todd Miller, Theo de Raadt, Ken Westerback
@@ -197,7 +197,8 @@ unlock() {
 
 # Add trap to kill the listener process
 retrap() {
-	trap '>&- && kill -KILL $cppid 2>&-; exit' INT EXIT TERM
+	trap '>&- && kill -KILL $cppid 2>&-; echo; stty echo; exit 0' \
+		INT EXIT TERM
 }
 
 # The dmesg listener will check for the existance of this file and send a
