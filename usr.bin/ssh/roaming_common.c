@@ -55,9 +55,9 @@ get_sent_bytes(void)
 }
 
 void
-roam_set_bytes(u_int64_t sent, u_int64_t recv)
+roam_set_bytes(u_int64_t sent, u_int64_t recvd)
 {
-	read_bytes = recv;
+	read_bytes = recvd;
 	write_bytes = sent;
 }
 
@@ -70,7 +70,7 @@ roaming_write(int fd, const void *buf, size_t count, int *cont)
 	if (ret > 0 && !resume_in_progress) {
 		write_bytes += ret;
 	}
-	debug("Wrote %d bytes for a total of %lld", ret, write_bytes);
+	debug("Wrote %ld bytes for a total of %lld", (long)ret, write_bytes);
 	return ret;
 }
 
@@ -86,12 +86,13 @@ roaming_read(int fd, void *buf, size_t count, int *cont)
 	return ret;
 }
 
-ssize_t
-roaming_atomicio(ssize_t(*f)(), int fd, void *buf, size_t count)
+size_t
+roaming_atomicio(ssize_t(*f)(int, void*, size_t), int fd, void *buf,
+    size_t count)
 {
-	ssize_t ret = atomicio(f, fd, buf, count);
+	size_t ret = atomicio(f, fd, buf, count);
 
-	if ((f == write || f == vwrite) && ret > 0 && !resume_in_progress) {
+	if (f == vwrite && ret > 0 && !resume_in_progress) {
 		write_bytes += ret;
 	} else if (f == read && ret > 0 && !resume_in_progress) {
 		read_bytes += ret;
