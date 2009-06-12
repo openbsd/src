@@ -22,9 +22,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "roaming.h"
+
 int resume_in_progress = 0;
 
-u_int64_t get_recv_bytes()
+u_int64_t
+get_recv_bytes(void)
 {
 	return 0;
 }
@@ -49,7 +52,7 @@ add_recv_bytes(u_int64_t num)
 }
 
 int
-resume_kex()
+resume_kex(void)
 {
 	return 1;
 }
