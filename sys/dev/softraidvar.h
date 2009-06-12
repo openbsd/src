@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.73 2009/06/11 19:42:59 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.74 2009/06/12 23:56:02 jordan Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -232,6 +232,9 @@ struct sr_ccb {
 #define SR_CCB_INPROGRESS	1
 #define SR_CCB_OK		2
 #define SR_CCB_FAILED		3
+
+	int			ccb_flag;
+#define SR_CCBF_FREEBUF		(1<<0)		/* free ccb_buf.b_data */
 
 	void			*ccb_opaque; /* discipline usable pointer */
 
