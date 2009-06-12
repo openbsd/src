@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.12 2009/06/07 03:52:29 krw Exp $
+#	$OpenBSD: dot.profile,v 1.13 2009/06/12 03:30:00 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -47,38 +47,42 @@ set -o emacs
 set -- $(dmesg | sed -n '/^root on /h;${g;p;}')
 rootdisk=$3
 
-mount -u /dev/${rootdisk:-rd0a} /
+if [ "X${DONEPROFILE}" = "X" ]; then
+	DONEPROFILE=YES
 
-# set up some sane defaults
-echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
-stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T
+	mount -u /dev/${rootdisk:-rd0a} /
 
-# Installing or upgrading?
-cat <<__EOT
+	# set up some sane defaults
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T
+
+	# Installing or upgrading?
+	cat <<__EOT
 
 Welcome to the $OBSD installation program.
 __EOT
-while :; do
-	read REPLY?'(I)nstall, (U)pgrade or (S)hell? '
-	case $REPLY in
-	i*|I*)	echo "\nCool! Let's get to it.\n"
-		/install && break
-		;;
-	u*|U*)	cat <<__EOT
+	while :; do
+		read REPLY?'(I)nstall, (U)pgrade or (S)hell? '
+		case $REPLY in
+		i*|I*)	echo "\nCool! Let's get to it.\n"
+			/install && break
+			;;
+		u*|U*)	cat <<__EOT
 
 NOTE: Once your system has been upgraded, you must manually merge any
 changes to files in the 'etc' set into the files already on your system.
 sysmerge(8) can help.
 
 __EOT
-		/upgrade && break
-		;;
-	s*|S*)	break
-		;;
-	!)	echo "Type 'exit' to return to install."
-		ksh
-		;;
-	!*)	eval "${REPLY#?}"
-		;;
-	esac
-done
+			/upgrade && break
+			;;
+		s*|S*)	break
+			;;
+		!)	echo "Type 'exit' to return to install."
+			ksh
+			;;
+		!*)	eval "${REPLY#?}"
+			;;
+		esac
+	done
+fi
