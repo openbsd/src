@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.167 2009/06/05 22:40:24 chris Exp $ */
+/*	$OpenBSD: kroute.c,v 1.168 2009/06/12 16:42:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1771,15 +1771,6 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 	return (l);
 }
 
-in_addr_t
-prefixlen2mask(u_int8_t prefixlen)
-{
-	if (prefixlen == 0)
-		return (0);
-
-	return (0xffffffff << (32 - prefixlen));
-}
-
 struct in6_addr *
 prefixlen2mask6(u_int8_t prefixlen)
 {
@@ -1794,23 +1785,6 @@ prefixlen2mask6(u_int8_t prefixlen)
 		mask.s6_addr[prefixlen / 8] = 0xff00 >> i;
 
 	return (&mask);
-}
-
-void
-inet6applymask(struct in6_addr *dest, const struct in6_addr *src, int prefixlen)
-{
-	struct in6_addr	mask;
-	int		i;
-
-	bzero(&mask, sizeof(mask));
-	for (i = 0; i < prefixlen / 8; i++)
-		mask.s6_addr[i] = 0xff;
-	i = prefixlen % 8;
-	if (i)
-		mask.s6_addr[prefixlen / 8] = 0xff00 >> i;
-
-	for (i = 0; i < 16; i++)
-		dest->s6_addr[i] = src->s6_addr[i] & mask.s6_addr[i];
 }
 
 #define	ROUNDUP(a)	\

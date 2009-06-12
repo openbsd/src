@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2008/11/06 21:16:27 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.6 2009/06/12 16:42:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -249,4 +249,30 @@ aspath_extract(const void *seg, int pos)
 	ptr += 2 + sizeof(u_int32_t) * pos;
 	memcpy(&as, ptr, sizeof(u_int32_t));
 	return (ntohl(as));
+}
+
+in_addr_t
+prefixlen2mask(u_int8_t prefixlen)
+{
+	if (prefixlen == 0)
+		return (0);
+
+	return (0xffffffff << (32 - prefixlen));
+}
+
+void
+inet6applymask(struct in6_addr *dest, const struct in6_addr *src, int prefixlen)
+{
+	struct in6_addr	mask;
+	int		i;
+
+	bzero(&mask, sizeof(mask));
+	for (i = 0; i < prefixlen / 8; i++)
+		mask.s6_addr[i] = 0xff;
+	i = prefixlen % 8;
+	if (i)
+		mask.s6_addr[prefixlen / 8] = 0xff00 >> i;
+
+	for (i = 0; i < 16; i++)
+		dest->s6_addr[i] = src->s6_addr[i] & mask.s6_addr[i];
 }

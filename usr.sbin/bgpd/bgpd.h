@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.240 2009/06/07 00:30:23 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.241 2009/06/12 16:42:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -740,10 +740,7 @@ void		 kr_nexthop_delete(struct bgpd_addr *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *);
 int		 kr_reload(void);
-in_addr_t	 prefixlen2mask(u_int8_t);
 struct in6_addr	*prefixlen2mask6(u_int8_t prefixlen);
-void		 inet6applymask(struct in6_addr *, const struct in6_addr *,
-		    int);
 
 /* control.c */
 void	control_cleanup(const char *);
@@ -785,5 +782,8 @@ const char	*log_as(u_int32_t);
 int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);
+in_addr_t	 prefixlen2mask(u_int8_t);
+void		 inet6applymask(struct in6_addr *, const struct in6_addr *,
+		    int);
 
 #endif /* __BGPD_H__ */
