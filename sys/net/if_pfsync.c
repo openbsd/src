@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.124 2009/06/10 00:03:55 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.125 2009/06/12 02:03:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -845,34 +845,29 @@ int
 pfsync_upd_tcp(struct pf_state *st, struct pfsync_state_peer *src,
     struct pfsync_state_peer *dst)
 {
-	int sfail = 0;
+	int sync = 0;
 
 	/*
 	 * The state should never go backwards except
 	 * for syn-proxy states.  Neither should the
 	 * sequence window slide backwards.
 	 */
-	if (st->src.state > src->state &&
+	if ((st->src.state > src->state &&
 	    (st->src.state < PF_TCPS_PROXY_SRC ||
-	    src->state >= PF_TCPS_PROXY_SRC))
-		sfail = 1;
-	else if (SEQ_GT(st->src.seqlo, ntohl(src->seqlo)))
-		sfail = 3;
-	else if (st->dst.state > dst->state) {
-		/* There might still be useful
-		 * information about the src state here,
-		 * so import that part of the update,
-		 * then "fail" so we send the updated
-		 * state back to the peer who is missing
-		 * our what we know. */
+	    src->state >= PF_TCPS_PROXY_SRC)) ||
+	    SEQ_GT(st->src.seqlo, ntohl(src->seqlo)))
+		sync++;
+	else
 		pf_state_peer_ntoh(src, &st->src);
-		/* XXX do anything with timeouts? */
-		sfail = 7;
-	} else if (st->dst.state >= TCPS_SYN_SENT &&
-	    SEQ_GT(st->dst.seqlo, ntohl(dst->seqlo)))
-		sfail = 4;
 
-	return (sfail);
+	if (st->dst.state > dst->state ||
+	    (st->dst.state >= TCPS_SYN_SENT &&
+	    SEQ_GT(st->dst.seqlo, ntohl(dst->seqlo))))
+		sync++;
+	else
+		pf_state_peer_ntoh(dst, &st->dst);
+
+	return (sync);
 }
 
 int
@@ -880,9 +875,8 @@ pfsync_in_upd(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 {
 	struct pfsync_state *sa, *sp;
 	struct pf_state_cmp id_key;
-	struct pf_state_key *sk;
 	struct pf_state *st;
-	int sfail;
+	int sync;
 
 	struct mbuf *mp;
 	int len = count * sizeof(*sp);
@@ -926,41 +920,40 @@ pfsync_in_upd(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 		if (ISSET(st->state_flags, PFSTATE_ACK))
 			pfsync_deferred(st, 1);
 
-		sk = st->key[PF_SK_WIRE];	/* XXX right one? */
-		sfail = 0;
-		if (sk->proto == IPPROTO_TCP)
-			sfail = pfsync_upd_tcp(st, &sp->src, &sp->dst);
+		if (st->key[PF_SK_WIRE]->proto == IPPROTO_TCP)
+			sync = pfsync_upd_tcp(st, &sp->src, &sp->dst);
 		else {
+			sync = 0;
+
 			/*
 			 * Non-TCP protocol state machine always go
 			 * forwards
 			 */
 			if (st->src.state > sp->src.state)
-				sfail = 5;
-			else if (st->dst.state > sp->dst.state)
-				sfail = 6;
+				sync++;
+			else
+				pf_state_peer_ntoh(&sp->src, &st->src);
+
+			if (st->dst.state > sp->dst.state)
+				sync++;
+			else
+				pf_state_peer_ntoh(&sp->dst, &st->dst);
 		}
 
-		if (sfail) {
-			if (pf_status.debug >= PF_DEBUG_NOISY) {
-				printf("pfsync: %s stale update (%d)"
-				    " id: %016llx creatorid: %08x\n",
-				    (sfail < 7 ?  "ignoring" : "partial"),
-				    sfail, betoh64(st->id),
-				    ntohl(st->creatorid));
-			}
+		if (sync < 2) {
+			pfsync_alloc_scrub_memory(&sp->dst, &st->dst);
+			pf_state_peer_ntoh(&sp->dst, &st->dst);
+			st->expire = ntohl(sp->expire) + time_second;
+			st->timeout = sp->timeout;
+		}
+		st->pfsync_time = time_uptime;
+
+		if (sync) {
 			pfsyncstats.pfsyncs_stale++;
 
 			pfsync_update_state(st);
 			schednetisr(NETISR_PFSYNC);
-			continue;
 		}
-		pfsync_alloc_scrub_memory(&sp->dst, &st->dst);
-		pf_state_peer_ntoh(&sp->src, &st->src);
-		pf_state_peer_ntoh(&sp->dst, &st->dst);
-		st->expire = ntohl(sp->expire) + time_second;
-		st->timeout = sp->timeout;
-		st->pfsync_time = time_uptime;
 	}
 	splx(s);
 
@@ -971,12 +964,11 @@ int
 pfsync_in_upd_c(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 {
 	struct pfsync_upd_c *ua, *up;
-	struct pf_state_key *sk;
 	struct pf_state_cmp id_key;
 	struct pf_state *st;
 
 	int len = count * sizeof(*up);
-	int sfail;
+	int sync;
 
 	struct mbuf *mp;
 	int offp, i;
@@ -1019,40 +1011,38 @@ pfsync_in_upd_c(struct pfsync_pkt *pkt, struct mbuf *m, int offset, int count)
 		if (ISSET(st->state_flags, PFSTATE_ACK))
 			pfsync_deferred(st, 1);
 
-		sk = st->key[PF_SK_WIRE]; /* XXX right one? */
-		sfail = 0;
-		if (sk->proto == IPPROTO_TCP)
-			sfail = pfsync_upd_tcp(st, &up->src, &up->dst);
+		if (st->key[PF_SK_WIRE]->proto == IPPROTO_TCP)
+			sync = pfsync_upd_tcp(st, &up->src, &up->dst);
 		else {
+			sync = 0;
 			/*
-			 * Non-TCP protocol state machine always go forwards
+			 * Non-TCP protocol state machine always go
+			 * forwards
 			 */
 			if (st->src.state > up->src.state)
-				sfail = 5;
-			else if (st->dst.state > up->dst.state)
-				sfail = 6;
-		}
+				sync++;
+			else
+				pf_state_peer_ntoh(&up->src, &st->src);
 
-		if (sfail) {
-			if (pf_status.debug >= PF_DEBUG_NOISY) {
-				printf("pfsync: ignoring stale update "
-				    "(%d) id: %016llx "
-				    "creatorid: %08x\n", sfail,
-				    betoh64(st->id),
-				    ntohl(st->creatorid));
-			}
+			if (st->dst.state > up->dst.state)
+				sync++;
+			else
+				pf_state_peer_ntoh(&up->dst, &st->dst);
+		}
+		if (sync < 2) {
+			pfsync_alloc_scrub_memory(&up->dst, &st->dst);
+			pf_state_peer_ntoh(&up->dst, &st->dst);
+			st->expire = ntohl(up->expire) + time_second;
+			st->timeout = up->timeout;
+		}
+		st->pfsync_time = time_uptime;
+
+		if (sync) {
 			pfsyncstats.pfsyncs_stale++;
 
 			pfsync_update_state(st);
 			schednetisr(NETISR_PFSYNC);
-			continue;
 		}
-		pfsync_alloc_scrub_memory(&up->dst, &st->dst);
-		pf_state_peer_ntoh(&up->src, &st->src);
-		pf_state_peer_ntoh(&up->dst, &st->dst);
-		st->expire = ntohl(up->expire) + time_second;
-		st->timeout = up->timeout;
-		st->pfsync_time = time_uptime;
 	}
 	splx(s);
 
