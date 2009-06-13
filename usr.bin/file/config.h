@@ -4,7 +4,7 @@
  * but can still carefully import stuff from Christos' version.
  *
  * This file is in the public domain. Original Author Ian F. Darwin.
- * $OpenBSD: config.h,v 1.4 2009/04/24 18:54:34 chl Exp $
+ * $OpenBSD: config.h,v 1.5 2009/06/13 11:14:19 miod Exp $
  */
 
 /* header file issues. */
@@ -25,11 +25,7 @@
 #define HAVE_SNPRINTF
 
 /* Compiler issues */
-#define HAVE_LONG_LONG 1
-#define SIZEOF_UINT8_T 1
-#define SIZEOF_UINT16_T 2
-#define SIZEOF_UINT32_T 4
-#define SIZEOF_UINT64_T 8
+#define SIZEOF_LONG_LONG 8
 
 /* Library issues */
 #define HAVE_GETOPT_LONG 1	/* in-tree as of 3.2 */
