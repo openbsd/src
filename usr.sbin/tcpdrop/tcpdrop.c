@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpdrop.c,v 1.7 2007/03/28 17:04:03 deraadt Exp $ */
+/* $OpenBSD: tcpdrop.c,v 1.8 2009/06/13 19:06:16 andreas Exp $ */
 
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
@@ -107,6 +107,7 @@ fail:
 		for (aif = faddr; aif; aif = aif->ai_next) {
 			if (ail->ai_family != aif->ai_family)
 				continue;
+			memset(&tir, 0, sizeof(tir));
 			memcpy(&tir.faddr, aif->ai_addr, aif->ai_addrlen);
 			memcpy(&tir.laddr, ail->ai_addr, ail->ai_addrlen);
 
