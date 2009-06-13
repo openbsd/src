@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.89 2009/06/04 23:37:09 halex Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.90 2009/06/13 20:01:10 martynas Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -491,9 +491,19 @@ again:
 			    path, buf ? buf : "", HTTP_USER_AGENT);
 
 	} else {
+#ifndef SMALL
+		if (resume) {
+			struct stat stbuf;
+
+			if (stat(savefile, &stbuf) == 0)
+				restart_point = stbuf.st_size;
+			else
+				restart_point = 0;
+		}
+#endif /* !SMALL */
 		ftp_printf(fin, ssl, "GET /%s %s\r\nHost: ", path,
 #ifndef SMALL
-			resume ? "HTTP/1.1" :
+			restart_point ? "HTTP/1.1" :
 #endif /* !SMALL */
 			"HTTP/1.0");
 		if (strchr(host, ':')) {
@@ -521,21 +531,9 @@ again:
 #ifndef SMALL
 		if (port && strcmp(port, (ishttpsurl ? "443" : "80")) != 0)
 			ftp_printf(fin, ssl, ":%s", port);
-		if (resume) {
-			int ret;
-			struct stat stbuf;
-
-			ret = stat(savefile, &stbuf);
-			if (ret < 0) {
-				if (verbose)
-					fprintf(ttyout, "\n");
-				warn("Can't open %s", savefile);
-				goto cleanup_url_get;
-			}
-			restart_point = stbuf.st_size;
+		if (restart_point)
 			ftp_printf(fin, ssl, "\r\nRange: bytes=%lld-",
 				(long long)restart_point);
-		}
 #else /* !SMALL */
 		if (port && strcmp(port, "80") != 0)
 			ftp_printf(fin, ssl, ":%s", port);
@@ -637,7 +635,7 @@ again:
 			if (errstr != NULL)
 				goto improper;
 #ifndef SMALL
-			if (resume)
+			if (restart_point)
 				filesize += restart_point;
 #endif /* !SMALL */
 #define LOCATION "Location: "
