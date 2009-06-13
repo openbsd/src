@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.6 2009/06/13 16:28:09 miod Exp $ */
+/*	$OpenBSD: mnode.h,v 1.7 2009/06/13 18:47:30 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -30,8 +30,8 @@
 #define __MACHINE_MNODE_H__
 
 /*
- *  Definitions for Nodes set up in M-Mode. Some stuff here
- *  inspired by information gathered from Linux source code.
+ * Definitions for Nodes set up in M-Mode. Some stuff here
+ * inspired by information gathered from Linux source code.
  */
 
 /*
@@ -40,8 +40,8 @@
 #define	IP27_CAC_BASE	PHYS_TO_XKPHYS(0, CCA_CACHED)
 
 /*
- *  IP27 uses XKPHYS space for accessing special objects.
- *  Note that IP27_UNCAC_BASE is a linear space without specials.
+ * IP27 uses XKPHYS space for accessing special objects.
+ * Note that IP27_UNCAC_BASE is a linear space without specials.
  */
 #define	IP27_HSPEC_BASE	PHYS_TO_XKPHYS_UNCACHED(0, SP_HUB)
 #define	IP27_IO_BASE	PHYS_TO_XKPHYS_UNCACHED(0, SP_IO)
@@ -49,38 +49,36 @@
 #define	IP27_UNCAC_BASE	PHYS_TO_XKPHYS_UNCACHED(0, SP_NC)
 
 /*
- *  Macros used to find the base of each nodes address space.
- *  In M mode each node space is 4GB; in N mode each node space is 2GB only.
+ * Macros used to find the base of each nodes address space.
+ * In M mode each node space is 4GB; in N mode each node space is 2GB only.
  */
 #define IP27_NODE_BASE(base, node) ((base) + ((uint64_t)(node) << kl_n_shift))
 #define	IP27_NODE_SIZE_MASK	   ((1UL << kl_n_shift) - 1)
 
-#define IP27_NODE_CAC_BASE(node)       (IP27_NODE_BASE(IP27_CAC_BASE, node))
-#define IP27_NODE_HSPEC_BASE(node)     (IP27_NODE_BASE(IP27_HSPEC_BASE, node))
-#define IP27_NODE_IO_BASE(node)        (IP27_NODE_BASE(IP27_IO_BASE, node))
-#define IP27_NODE_MSPEC_BASE(node)     (IP27_NODE_BASE(IP27_MSPEC_BASE, node))
-#define IP27_NODE_UNCAC_BASE(node)     (IP27_NODE_BASE(IP27_UNCAC_BASE, node))
+#define IP27_NODE_CAC_BASE(node)	(IP27_NODE_BASE(IP27_CAC_BASE, node))
+#define IP27_NODE_HSPEC_BASE(node)	(IP27_NODE_BASE(IP27_HSPEC_BASE, node))
+#define IP27_NODE_IO_BASE(node)		(IP27_NODE_BASE(IP27_IO_BASE, node))
+#define IP27_NODE_MSPEC_BASE(node)	(IP27_NODE_BASE(IP27_MSPEC_BASE, node))
+#define IP27_NODE_UNCAC_BASE(node)	(IP27_NODE_BASE(IP27_UNCAC_BASE, node))
 
 /* Get typed address to nodes uncached space */
 #define IP27_UNCAC_ADDR(type, node, offs) \
 	((type)(IP27_NODE_UNCAC_BASE(node) + ((offs) & IP27_NODE_SIZE_MASK)))
 
 /*
- *  IP27 platforms uses something called kldir to describe each
- *  nodes configuration. Directory entries looks like:
+ * IP27 platforms uses something called kldir to describe each
+ * nodes configuration. Directory entries looks like:
  */
 #define IP27_KLDIR_MAGIC	0x434d5f53505f5357
 
 typedef struct kldir_entry {
-	uint64_t	magic;
-        off_t           offset;	/* Offset from start of node space  */
-        void		*pointer;
-        size_t          size;	/* Size in bytes                    */
-        uint64_t	count;	/* Number of entries if array, 1 if not  */
-        size_t          stride;         /* Stride if array, 0 if not        */
-        char            rsvd[16];       /* Pad entry to 0x40 bytes          */
-        /* NOTE: These 16 bytes are used in the Partition KLDIR
-           entry to store partition info. Refer to klpart.h for this. */
+	uint64_t	 magic;
+	off_t		 offset;	/* Offset from start of node space */
+	void		*pointer;
+	size_t		 size;		/* Size in bytes */
+	uint64_t	 count;		/* # of entries if array, 1 if not */
+	size_t		 stride;	/* Stride if array, 0 if not */
+	char		 rsvd[16];	/* Pad entry to 0x40 bytes */
 } kldir_entry_t;
 
 /* Get address to a specific directory entry */
@@ -96,9 +94,11 @@ typedef struct kldir_entry {
 #define IP27_KLD_KERN_XP(node)		(IP27_KLD_BASE(node) + 8)
 #define IP27_KLD_KERN_PARTID(node)	(IP27_KLD_BASE(node) + 9)
 
+/* ========== */
+
 /*
- *  KLCONFIG is a linked list of data structures describing the
- *  system configuration. 
+ * KLCONFIG is a linked list of data structures describing the
+ * system configuration. 
  */
 typedef uint32_t klconf_off_t;
 typedef char confidence_t;
@@ -117,25 +117,25 @@ typedef struct console_s {
 } console_t;
 
 typedef struct klc_malloc_hdr {
-        klconf_off_t km_base;
-        klconf_off_t km_limit;
-        klconf_off_t km_current;
+	klconf_off_t km_base;
+	klconf_off_t km_limit;
+	klconf_off_t km_current;
 } klc_malloc_hdr_t;
 
-/*  KLCONFIG header addressed by IP27_KLCONFIG_HDR(node) */
+/* KLCONFIG header addressed by IP27_KLCONFIG_HDR(node) */
 #define IP27_KLCONFIG_HDR(n) \
 	IP27_UNCAC_ADDR(kl_config_hdr_t *, n, IP27_KLD_KLCONFIG(n)->offset)
 
 typedef struct kl_config_hdr {
-	uint64_t	magic;       /* set this to KLCFGINFO_MAGIC */
-        uint32_t	version;    /* structure version number */
-        klconf_off_t	malloc_hdr_off; /* offset of ch_malloc_hdr */
-        klconf_off_t	cons_off;       /* offset of ch_cons */
-        klconf_off_t	board_info;  /* the link list of boards */
-        console_t	cons_info;   /* address info of the console */
-        klc_malloc_hdr_t malloc_hdr[3];
-        confidence_t	sw_belief;   /* confidence that software is bad*/
-        confidence_t	sn0net_belief; /* confidence that sn0net is bad */
+	uint64_t	magic;		/* set this to KLCFGINFO_MAGIC */
+	uint32_t	version;	/* structure version number */
+	klconf_off_t	malloc_hdr_off;	/* offset of ch_malloc_hdr */
+	klconf_off_t	cons_off;	/* offset of ch_cons */
+	klconf_off_t	board_info;	/* the link list of boards */
+	console_t	cons_info;	/* address info of the console */
+	klc_malloc_hdr_t malloc_hdr[3];
+	confidence_t	sw_belief;	/* confidence that software is bad */
+	confidence_t	sn0net_belief; /* confidence that sn0net is bad */
 } kl_config_hdr_t;
 
 /* Board info. */
@@ -156,15 +156,15 @@ typedef struct lboard_s {
 	unsigned char	brd_slot;	/* slot number */
 	unsigned short	brd_debugsw;	/* Debug switches */
 	short		brd_module;	/* module to which it belongs */
-	char	        brd_partition;	/* Partition number */
-	unsigned short  brd_diagval;	/* diagnostic value */
-	unsigned short  brd_diagparm;	/* diagnostic parameter */
-	unsigned char   brd_inventory;	/* inventory history */
-	unsigned char   brd_numcompts;	/* Number of components */
+	char		brd_partition;	/* Partition number */
+	unsigned short	brd_diagval;	/* diagnostic value */
+	unsigned short	brd_diagparm;	/* diagnostic parameter */
+	unsigned char	brd_inventory;	/* inventory history */
+	unsigned char	brd_numcompts;	/* Number of components */
 	uint64_t	brd_nic;	/* Number in CAN */
 	int16_t		brd_nasid;	/* passed parameter */
-	klconf_off_t    brd_compts[MAX_COMPTS_PER_BRD]; /* COMPONENTS */
-	klconf_off_t    brd_errinfo;	/* Board's error information */
+	klconf_off_t	brd_compts[MAX_COMPTS_PER_BRD]; /* COMPONENTS */
+	klconf_off_t	brd_errinfo;	/* Board's error information */
 	struct lboard_s *brd_parent;	/* Logical parent for this brd */
 	uint32_t	brd_graph_link;	/* vertex hdl to connect extrn compts */
 	confidence_t	brd_confidence;	/* confidence that the board is bad */
@@ -198,25 +198,25 @@ typedef struct lboard_s {
 
 
 /* Component info. Common info about a component. */
-typedef struct klinfo_s {                  /* Generic info */
-	unsigned char   struct_type;       /* type of this structure */
-	unsigned char   struct_version;    /* version of this structure */
-	unsigned char   flags;            /* Enabled, disabled etc */
-	unsigned char   revision;         /* component revision */
-	unsigned short  diagval;          /* result of diagnostics */
-	unsigned short  diagparm;         /* diagnostic parameter */
-	unsigned char   inventory;        /* previous inventory status */
-	uint64_t	nic;              /* Must be aligned properly */
-	unsigned char   physid;           /* physical id of component */
-	unsigned int    virtid;           /* virtual id as seen by system */
-	unsigned char   widid;            /* Widget id - if applicable */
-	int16_t         nasid;            /* node number - from parent */
-	char            pad1;             /* pad out structure. */
-	char            pad2;             /* pad out structure. */
-	void       *arcs_compt;      /* ptr to the arcs struct for ease*/
-	klconf_off_t    errinfo;          /* component specific errors */
-	unsigned short  pad3;             /* pci fields have moved over to */
-	unsigned short  pad4;             /* klbri_t */
+typedef struct klinfo_s {			/* Generic info */
+	unsigned char	struct_type;	  /* type of this structure */
+	unsigned char	struct_version;   /* version of this structure */
+	unsigned char	flags;		  /* Enabled, disabled etc */
+	unsigned char	revision;	  /* component revision */
+	unsigned short	diagval;	  /* result of diagnostics */
+	unsigned short	diagparm;	  /* diagnostic parameter */
+	unsigned char	inventory;	  /* previous inventory status */
+	uint64_t	nic;		  /* Must be aligned properly */
+	unsigned char	physid;		  /* physical id of component */
+	unsigned int	virtid;		  /* virtual id as seen by system */
+	unsigned char	widid;		  /* Widget id - if applicable */
+	int16_t		nasid;		  /* node number - from parent */
+	char		pad1;		  /* pad out structure. */
+	char		pad2;		  /* pad out structure. */
+	void		*arcs_compt;	  /* ptr to the arcs struct for ease*/
+	klconf_off_t	errinfo;	  /* component specific errors */
+	unsigned short	pad3;		  /* pci fields have moved over to */
+	unsigned short	pad4;		  /* klbri_t */
 } klinfo_t;
 
 #define	KLINFO_ENABLED	0x01
@@ -277,10 +277,10 @@ typedef struct klport_s {
 /* KLSTRUCT_CPU: CPU component info */
 typedef struct klcpu_s {
 	klinfo_t	cpu_info;
-	uint16_t	cpu_prid;       /* Processor PRID value */
-	uint16_t	cpu_fpirr;      /* FPU IRR value */
-	uint16_t	cpu_speed;      /* Speed in MHZ */
-	uint16_t	cpu_scachesz;   /* secondary cache size in MB */
+	uint16_t	cpu_prid;	/* Processor PRID value */
+	uint16_t	cpu_fpirr;	/* FPU IRR value */
+	uint16_t	cpu_speed;	/* Speed in MHZ */
+	uint16_t	cpu_scachesz;	/* secondary cache size in MB */
 	uint16_t	cpu_scachespeed;/* secondary cache speed in MHz */
 } klcpu_t;
 
@@ -301,7 +301,7 @@ typedef struct klmembnk_m_s {
 	int16_t		membnk_memsz;		/* Total memory in megabytes */
 	int16_t		membnk_dimm_select;	/* bank to phys addr mapping*/
 	int16_t		membnk_bnksz[MD_MEM_BANKS_M]; /* Memory bank sizes */
-        int16_t		membnk_attr;
+	int16_t		membnk_attr;
 } klmembnk_m_t;
 
 #define	MD_MEM_BANKS_N	4	/* N-Mode */
@@ -310,7 +310,7 @@ typedef struct klmembnk_n_s {
 	int16_t		membnk_memsz;		/* Total memory in megabytes */
 	int16_t		membnk_dimm_select;	/* bank to phys addr mapping*/
 	int16_t		membnk_bnksz[MD_MEM_BANKS_N]; /* Memory bank sizes */
-        int16_t		membnk_attr;
+	int16_t		membnk_attr;
 } klmembnk_n_t;
 
 /* KLSTRUCT_XBOW: Xbow */
@@ -340,27 +340,55 @@ typedef struct klioc3_s {
 
 /* KLSTRUCT_IOC3_TTY: IOC3 attached TTY */
 typedef struct klttydev_s {
-	klinfo_t        ttydev_info;
+	klinfo_t	ttydev_info;
 	struct terminal_data *ttydev_cfg;	/* driver fills up this */
 } klttydev_t;
 
-/*  KLNMI header addressed by IP27_KLNMI_HDR(node) */
-#define IP27_KLNMI_HDR(n) \
-	IP27_UNCAC_ADDR(kl_nmi_t *, n, IP27_KLD_NMI(n)->offset)
+/* ========== */
+
+#define IP27_NMI(n) \
+	IP27_UNCAC_ADDR(nmi_t *, n, IP27_KLD_NMI(n)->offset)
 
 #define	NMI_MAGIC	0x0048414d4d455201	/* \x00HAMMER\x01 */
 
-typedef struct kl_nmi {
+typedef struct nmi {
 	uint64_t	magic;			/* NMI_MAGIC */
 	uint64_t	flags;
 	uint64_t	cb;			/* callback function */
 	uint64_t	cb_complement;		/* two's complement of above */
 	uint64_t	cb_arg;			/* callback arg */
 	uint64_t	master;			/* nonzero if master node */
-} kl_nmi_t;
+} nmi_t;
+
+/* ========== */
+
+#define IP27_GDA(n)		(gda_t *)(IP27_KLD_GDA(n)->pointer)
+#define IP27_GDA_SIZE(n)	(IP27_KLD_GDA(n)->size)
+
+#define	GDA_MAGIC	0x58464552		/* XFER */
+
+#define	GDA_MAXNODES	128
+
+typedef struct gda {
+	uint32_t	 magic;			/* GDA_MAGIC */
+	uint16_t	 ver;
+	uint16_t	 masternasid;		/* NASID of the master cpu */
+	uint32_t	 promop;
+	uint32_t	 switches;
+	void		*tlb_handlers[3];
+	uint		 partid;
+	uint		 symcnt;
+	void		*symtab;
+	char		*symnames;
+	void		*replication_mask;
+	uint32_t	 pad[14];
+	int16_t		 nasid[GDA_MAXNODES];	/* NASID of connected nodes */
+} gda_t;
+
+/* ========== */
 
 /*
- *  Functions.
+ * Functions.
  */
 
 vaddr_t	kl_get_console_base(void);

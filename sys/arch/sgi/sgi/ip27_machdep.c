@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.12 2009/06/13 16:28:11 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.13 2009/06/13 18:47:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -17,7 +17,9 @@
  */
 
 /*
- * Origin 200 / Origin 2000 / Onyx 2 (IP27) specific code.
+ * Origin 200 / Origin 2000 / Onyx 2 (IP27), as well as
+ * Origin 300 / Onyx 300 / Origin 350 / Onyx 350 / Onyx 4 / Origin 3000 /
+ * Fuel / Tezro (IP35) specific code.
  */
 
 #include <sys/param.h>
@@ -69,7 +71,10 @@ void	ip27_nmi(void *);
 void
 ip27_setup()
 {
-	kl_nmi_t *nmi;
+	gda_t *gda;
+	size_t gsz;
+	uint node, masternode, maxnodes;
+	nmi_t *nmi;
 
 	uncached_base = PHYS_TO_XKPHYS_UNCACHED(0, SP_NC);
 	io_base = PHYS_TO_XKPHYS_UNCACHED(0, SP_IO);
@@ -82,16 +87,48 @@ ip27_setup()
 
 	md_halt = ip27_halt;
 
+	/*
+	 * Figure out as early as possibly whether we are running in M
+	 * or N mode.
+	 */
+
 	kl_init(ip35 ? HUBNI_IP35 : HUBNI_IP27);
 	if (kl_n_mode != 0)
 		xbow_long_shift = 28;
 
 	/*
-	 * Scan this node's configuration to find out CPU and memory
-	 * information.
+	 * Get a grip on the global data area, and figure out how many
+	 * theoretical nodes are available.
 	 */
 
-	kl_scan_config(0);
+	gda = IP27_GDA(0);
+	gsz = IP27_GDA_SIZE(0);
+	if (gda->magic != GDA_MAGIC || gda->ver < 2) {
+		masternode = 0;
+		maxnodes = 0;
+	} else {
+		masternode = gda->masternasid;
+		maxnodes = (gsz - offsetof(gda_t, nasid)) / sizeof(int16_t);
+		if (maxnodes > GDA_MAXNODES)
+			maxnodes = GDA_MAXNODES;
+		/* in M mode, there can't be more than 64 nodes anyway */
+		if (kl_n_mode == 0 && maxnodes > 64)
+			maxnodes = 64;
+	}
+
+	/*
+	 * Scan all nodes configurations to find out CPU and memory
+	 * information, starting with the master node.
+	 */
+
+	kl_scan_config(masternode);
+	for (node = 0; node < maxnodes; node++) {
+		if (node == masternode)
+			continue;
+		if (gda->nasid[node] < 0)
+			continue;
+		kl_scan_config(gda->nasid[node]);
+	}
 	kl_scan_done();
 
 	/*
@@ -135,7 +172,7 @@ ip27_setup()
 	/*
 	 * Setup NMI handler.
 	 */
-	nmi = IP27_KLNMI_HDR(0);
+	nmi = IP27_NMI(0);
 	nmi->magic = NMI_MAGIC;
 	nmi->cb = (vaddr_t)ip27_nmi;
 	nmi->cb_complement = ~nmi->cb;
