@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_casvar.h,v 1.5 2007/11/26 17:15:32 kettenis Exp $	*/
+/*	$OpenBSD: if_casvar.h,v 1.6 2009/06/13 12:18:58 kettenis Exp $	*/
 
 /*
  *
@@ -135,8 +135,6 @@ struct cas_softc {
 	bus_dmamap_t	sc_dmamap;	/* bus dma handle */
 	int		sc_burst;	/* DVMA burst size in effect */
 	int		sc_phys[2];	/* MII instance -> PHY map */
-
-	int		sc_if_flags;
 
 	int		sc_mif_config;	/* Selected MII reg setting */
 

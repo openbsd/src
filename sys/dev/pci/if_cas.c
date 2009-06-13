@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.25 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.26 2009/06/13 12:18:57 kettenis Exp $	*/
 
 /*
  *
@@ -1699,20 +1699,14 @@ cas_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if ((ifp->if_flags & IFF_RUNNING) &&
-			    ((ifp->if_flags ^ sc->sc_if_flags) &
-			     (IFF_ALLMULTI | IFF_PROMISC)) != 0)
-				cas_setladrf(sc);
-			else {
-				if ((ifp->if_flags & IFF_RUNNING) == 0)
-					cas_init(ifp);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				cas_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				cas_stop(ifp, 1);
 		}
-		sc->sc_if_flags = ifp->if_flags;
-
 #ifdef CAS_DEBUG
 		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;
 #endif
