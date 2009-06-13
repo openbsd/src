@@ -70,7 +70,8 @@ roaming_write(int fd, const void *buf, size_t count, int *cont)
 	if (ret > 0 && !resume_in_progress) {
 		write_bytes += ret;
 	}
-	debug("Wrote %ld bytes for a total of %lld", (long)ret, write_bytes);
+	debug3("Wrote %ld bytes for a total of %llu", (long)ret,
+	    (unsigned long long)write_bytes);
 	return ret;
 }
 
