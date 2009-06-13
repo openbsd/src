@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.56 2009/06/04 05:57:27 krw Exp $	*/
+/*	$OpenBSD: hd.c,v 1.57 2009/06/13 21:35:58 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
