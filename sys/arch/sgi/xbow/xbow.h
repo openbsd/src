@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.h,v 1.3 2009/04/15 18:45:41 miod Exp $	*/
+/*	$OpenBSD: xbow.h,v 1.4 2009/06/13 21:48:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Miodrag Vallat.
@@ -108,6 +108,7 @@ extern	void	(*xbow_intr_widget_intr_disestablish)(int);
 
 
 struct xbow_attach_args {
+	int16_t		xaa_nasid;
 	int		xaa_widget;
 
 	uint32_t	xaa_vendor;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.8 2009/06/13 16:28:11 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.9 2009/06/13 21:48:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -225,7 +225,7 @@ xbowprint(void *aux, const char *pnp)
 		printf(" revision %d at %s",
 		    xaa->xaa_revision, pnp);
 	}
-	printf(" widget %d", xaa->xaa_widget);
+	printf(" nasid %d widget %d", xaa->xaa_nasid, xaa->xaa_widget);
 	if (pnp == NULL) {
 		if (p != NULL)
 			printf(": %s", p->productname);
@@ -289,7 +289,8 @@ struct xbow_kl_config {
 void
 xbowattach(struct device *parent, struct device *self, void *aux)
 {
-	int16_t nasid = 0;	/* XXX for now... */
+	struct confargs *ca = aux;
+	int16_t nasid = ca->ca_nasid;
 	uint32_t wid, vendor, product;
 	const struct xbow_product *p;
 	struct xbow_config cfg;
@@ -319,9 +320,11 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 		/*
 		 * Default value for the interrupt register.
 		 */
-		xbow_intr_widget_register = (1UL << 47) /* XIO I/O space */ |
-		    ((paddr_t)IP27_RHUB_ADDR(nasid, HUBPI_IR_CHANGE) -
-		     IP27_NODE_IO_BASE(0)) /* HUB register offset */;
+		if (xbow_intr_widget_register == 0)
+			xbow_intr_widget_register =
+			    (1UL << 47) /* XIO I/O space */ |
+			    ((paddr_t)IP27_RHUB_ADDR(nasid, HUBPI_IR_CHANGE) -
+			     IP27_NODE_IO_BASE(0)) /* HUB register offset */;
 
 		klcfg.cfg = &cfg;
 		klcfg.probe_order = NULL;
@@ -337,7 +340,8 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 			 * Interrupt widget is hardwired to #a (this is another
 			 * facet of this bridge).
 			 */
-			xbow_intr_widget = 0x0a;
+			if (xbow_intr_widget == 0)
+				xbow_intr_widget = 0x0a;
 			klcfg.probe_order = xbow_probe_singlebridge;
 		} else {
 			/*
@@ -354,7 +358,8 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 			 * crossbow, and is where memory and interrupt logic
 			 * resources are connected to.
 			 */
-			xbow_intr_widget = cfg.master;
+			if (xbow_intr_widget == 0)
+				xbow_intr_widget = cfg.master;
 		}
 		break;
 #endif
@@ -399,6 +404,7 @@ xbow_attach_widget(struct device *self, int16_t nasid, int widget,
 	xbow_build_bus_space(bs, nasid, widget, 0);
 	xbow_build_bus_space(bl, nasid, widget, 1);
 
+	xaa.xaa_nasid = nasid;
 	xaa.xaa_widget = widget;
 	xaa.xaa_vendor = (wid & WIDGET_ID_VENDOR_MASK) >>
 	    WIDGET_ID_VENDOR_SHIFT;

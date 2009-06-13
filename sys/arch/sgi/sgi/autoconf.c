@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.20 2009/05/21 16:28:12 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.21 2009/06/13 21:48:03 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -277,7 +277,7 @@ device_register(struct device *dev, void *aux)
 
 	/*
 	 * The matching rules are as follows:
-	 * xio() matches xbow (we ignore nasid so far).
+	 * xio() matches xbow.
 	 * pci() matches any pci controller (macepcibr, xbridge), with the
 	 *   unit number being ignored on O2 and the widget number of the
 	 *   controller elsewhere.
@@ -292,7 +292,9 @@ device_register(struct device *dev, void *aux)
 	 */
 
 	if (strcmp(component, "xio") == 0) {
-		if (strcmp(cd->cd_name, "xbow") == 0)
+		struct confargs *ca = aux;
+
+		if (strcmp(cd->cd_name, "xbow") == 0 && unit == ca->ca_nasid)
 			goto found_advance;
 	}
 

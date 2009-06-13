@@ -1,10 +1,9 @@
-#	$OpenBSD: files.mips64,v 1.10 2009/03/20 18:41:05 miod Exp $
+#	$OpenBSD: files.mips64,v 1.11 2009/06/13 21:48:01 miod Exp $
 
 file	arch/mips64/mips64/arcbios.c		arcbios
 file	arch/mips64/mips64/clock.c
 file	arch/mips64/mips64/cpu.c
 file	arch/mips64/mips64/interrupt.c
-file	arch/mips64/mips64/mainbus.c
 file	arch/mips64/mips64/mem.c
 file	arch/mips64/mips64/pmap.c
 file	arch/mips64/mips64/process_machdep.c

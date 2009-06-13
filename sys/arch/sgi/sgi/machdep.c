@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.72 2009/06/04 16:52:12 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.73 2009/06/13 21:48:03 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -117,6 +117,7 @@ struct	user *proc0paddr;
 struct	user *curprocpaddr;
 int	console_ok;		/* Set when console initialized. */
 int	kbd_reset;
+int16_t	masternasid;
 
 int32_t *environment;
 struct sys_rec sys_config;

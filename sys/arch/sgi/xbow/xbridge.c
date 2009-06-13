@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.25 2009/06/13 16:28:11 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.26 2009/06/13 21:48:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -64,6 +64,7 @@ struct xbridge_softc {
 	struct device	sc_dev;
 	int		sc_flags;
 #define	XBRIDGE_FLAGS_XBRIDGE	0x01	/* is XBridge vs Bridge */
+	int16_t		sc_nasid;
 	int		sc_widget;
 	struct mips_pci_chipset sc_pc;
 
@@ -209,6 +210,7 @@ xbridge_attach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	struct xbow_attach_args *xaa = aux;
 
+	sc->sc_nasid = xaa->xaa_nasid;
 	sc->sc_widget = xaa->xaa_widget;
 
 	printf(" revision %d\n", xaa->xaa_revision);
@@ -774,7 +776,6 @@ xbridge_intr_handler(void *v)
 {
 	struct xbridge_intr *xi = v;
 	struct xbridge_softc *sc = xi->xi_bridge;
-	uint16_t nasid = 0;	/* XXX */
 	int rc;
 	int spurious;
 
@@ -827,11 +828,19 @@ xbridge_intr_handler(void *v)
 	} else {
 		if (bus_space_read_4(sc->sc_iot, sc->sc_regh,
 		    BRIDGE_ISR) & (1 << xi->xi_intrbit)) {
-			if (sys_config.system_type == SGI_OCTANE) {
+			switch (sys_config.system_type) {
+#if defined(TGT_OCTANE)
+			case SGI_OCTANE:
 				/* XXX what to do there? */
-			} else {
-				IP27_RHUB_PI_S(nasid, 0, HUBPI_IR_CHANGE,
+				break;
+#endif
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+			case SGI_O200:
+			case SGI_O300:
+				IP27_RHUB_PI_S(sc->sc_nasid, 0, HUBPI_IR_CHANGE,
 				    PI_IR_SET | xi->xi_intrsrc);
+				break;
+#endif
 			}
 		}
 	}
@@ -1629,6 +1638,7 @@ xbridge_setup(struct xbridge_softc *sc)
 
 	/*
 	 * Configure the direct DMA window to access the low 2GB of memory.
+	 * XXX assumes masternasid is 0
 	 */
 
 	if (sys_config.system_type == SGI_OCTANE)

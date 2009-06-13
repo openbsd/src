@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.17 2009/05/21 16:28:11 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.18 2009/06/13 21:48:03 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -71,24 +71,27 @@ struct sys_rec {
 
 extern struct sys_rec sys_config;
 
-/**/
-struct confargs;
-
 struct confargs {
-	char		*ca_name;	/* Device name. */
-	bus_space_tag_t ca_iot;
-	bus_space_tag_t ca_memt;
-	bus_dma_tag_t	ca_dmat;
-	int32_t		ca_intr;
-	bus_addr_t	ca_baseaddr;
+	char		*ca_name;
+	int16_t		 ca_nasid;
+	bus_space_tag_t  ca_iot;
+	bus_dma_tag_t	 ca_dmat;
+	/* XXX the following are macebus-specific */
+	bus_space_tag_t  ca_memt;
+	int32_t		 ca_intr;
+	bus_addr_t	 ca_baseaddr;
 };
 
 void	enaddr_aton(const char *, u_int8_t *);
 
+struct device;
+
 void	ip27_setup(void);
+void	ip27_autoconf(struct device *);
 void	ip30_setup(void);
 void	ip32_setup(void);
 
 extern char osloadpartition[256];
+extern int16_t masternasid;
 
 #endif /* _MACHINE_AUTOCONF_H_ */

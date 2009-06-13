@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.13 2009/06/13 18:47:30 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.14 2009/06/13 21:48:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -56,7 +56,9 @@ int	ip27_widget_id(int16_t, u_int, uint32_t *);
 void	ip27_halt(int);
 
 static paddr_t io_base;
+static gda_t *gda;
 static int ip35 = 0;
+static uint maxnodes;
 
 int	ip27_hub_intr_register(int, int, int *);
 int	ip27_hub_intr_establish(int (*)(void *), void *, int, int,
@@ -66,14 +68,15 @@ intrmask_t ip27_hub_intr_handler(intrmask_t, struct trap_frame *);
 void	ip27_hub_intr_makemasks(void);
 void	ip27_hub_do_pending_int(int);
 
+void	ip27_attach_node(struct device *, int16_t);
+int	ip27_print(void *, const char *);
 void	ip27_nmi(void *);
 
 void
 ip27_setup()
 {
-	gda_t *gda;
 	size_t gsz;
-	uint node, masternode, maxnodes;
+	uint node;
 	nmi_t *nmi;
 
 	uncached_base = PHYS_TO_XKPHYS_UNCACHED(0, SP_NC);
@@ -104,10 +107,10 @@ ip27_setup()
 	gda = IP27_GDA(0);
 	gsz = IP27_GDA_SIZE(0);
 	if (gda->magic != GDA_MAGIC || gda->ver < 2) {
-		masternode = 0;
+		masternasid = 0;
 		maxnodes = 0;
 	} else {
-		masternode = gda->masternasid;
+		masternasid = gda->masternasid;
 		maxnodes = (gsz - offsetof(gda_t, nasid)) / sizeof(int16_t);
 		if (maxnodes > GDA_MAXNODES)
 			maxnodes = GDA_MAXNODES;
@@ -121,11 +124,11 @@ ip27_setup()
 	 * information, starting with the master node.
 	 */
 
-	kl_scan_config(masternode);
+	kl_scan_config(masternasid);
 	for (node = 0; node < maxnodes; node++) {
-		if (node == masternode)
-			continue;
 		if (gda->nasid[node] < 0)
+			continue;
+		if (gda->nasid[node] == masternasid)
 			continue;
 		kl_scan_config(gda->nasid[node]);
 	}
@@ -183,6 +186,63 @@ ip27_setup()
 	 */
 	IP27_LHUB_S(HUBPI_REGION_PRESENT, 0xffffffffffffffff);
 	IP27_LHUB_S(HUBPI_CALIAS_SIZE, PI_CALIAS_SIZE_0);
+}
+
+/*
+ * Autoconf enumeration
+ */
+
+void
+ip27_autoconf(struct device *parent)
+{
+	struct confargs nca;
+	uint node;
+
+	/*
+	 * Attach the CPU we are running on early; other processors,
+	 * if any, will get attached as they are discovered.
+	 */
+
+	bzero(&nca, sizeof nca);
+	nca.ca_nasid = masternasid;
+	nca.ca_name = "cpu";
+	config_found(parent, &nca, ip27_print);
+	nca.ca_name = "clock";
+	config_found(parent, &nca, ip27_print);
+
+	/*
+	 * Now attach all nodes' I/O devices.
+	 */
+
+	ip27_attach_node(parent, masternasid);
+	for (node = 0; node < maxnodes; node++) {
+		if (gda->nasid[node] < 0)
+			continue;
+		if (gda->nasid[node] == masternasid)
+			continue;
+		ip27_attach_node(parent, gda->nasid[node]);
+	}
+}
+
+void
+ip27_attach_node(struct device *parent, int16_t nasid)
+{
+	struct confargs nca;
+
+	bzero(&nca, sizeof nca);
+	nca.ca_name = "xbow";
+	nca.ca_nasid = nasid;
+	config_found(parent, &nca, ip27_print);
+}
+
+int
+ip27_print(void *aux, const char *pnp)
+{
+	struct confargs *ca = aux;
+
+	printf(" nasid %d", ca->ca_nasid);
+
+	return UNCONF;
 }
 
 /*
@@ -254,10 +314,8 @@ ip27_halt(int howto)
 	 * to tell the PROM which action we want it to take afterwards.
 	 */
 
-	if (howto & RB_HALT) {
-		if (howto & RB_POWERDOWN)
-			return;	/* caller will spin */
-	}
+	if (howto & RB_HALT)
+		return;	/* caller will spin */
 
 	if (ip35) {
 		IP27_LHUB_S(HUBNI_IP35 + HUBNI_RESET_ENABLE, NI_RESET_ENABLE);

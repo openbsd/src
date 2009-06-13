@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.7 2009/04/19 12:52:33 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.1 2009/06/13 21:48:03 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -50,11 +50,12 @@ struct cfdriver mainbus_cd = {
 int
 mbmatch(struct device *parent, void *cfdata, void *aux)
 {
-	struct cfdata *cf = cfdata;
+	static int mbattached = 0;
 
-	if (cf->cf_unit > 0)
-		return (0);
-	return (1);
+	if (mbattached != 0)
+		return 0;
+
+	return mbattached = 1;
 }
 
 void
@@ -65,8 +66,24 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/*
-	 * Try to find and attach all of the CPUs in the machine.
-	 * ( Right now only one CPU so code is simple )
+	 * On IP27 and IP35 system, delegate everything to the IP-specific
+	 * code.
+	 */
+	switch (sys_config.system_type) {
+#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000)
+	case SGI_O200:
+	case SGI_O300:
+		ip27_autoconf(self);
+		return;
+#endif
+	default:
+		break;
+	}
+
+	/*
+	 * On other systems, attach the CPU we are running on early;
+	 * other processors, if any, will get attached as they are
+	 * discovered.
 	 */
 
 	bzero(&nca, sizeof nca);
@@ -84,14 +101,14 @@ mbattach(struct device *parent, struct device *self, void *aux)
 		config_found(self, &nca, mbprint);
 		break;
 #endif
-#if defined(TGT_ORIGIN200) || defined(TGT_ORIGIN2000) || defined(TGT_OCTANE)
-	case SGI_O200:
-	case SGI_O300:
+#ifdef TGT_OCTANE
 	case SGI_OCTANE:
 		nca.ca_name = "xbow";
 		config_found(self, &nca, mbprint);
 		break;
 #endif
+	default:
+		break;
 	}
 }
 

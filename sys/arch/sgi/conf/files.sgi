@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.25 2009/05/02 21:31:17 miod Exp $
+#	$OpenBSD: files.sgi,v 1.26 2009/06/13 21:48:03 miod Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -8,14 +8,15 @@ maxusers 2 8 64
 
 #	Required files
 
-file	arch/sgi/sgi/disksubr.c			disk
 file	arch/sgi/sgi/autoconf.c
 file	arch/sgi/sgi/bus_dma.c
 file	arch/sgi/sgi/conf.c
+file	arch/sgi/sgi/disksubr.c			disk
 file	arch/sgi/sgi/ip27_machdep.c		tgt_origin200 | tgt_origin2000
 file	arch/sgi/sgi/ip30_machdep.c		tgt_octane
 file	arch/sgi/sgi/ip32_machdep.c		tgt_o2
 file	arch/sgi/sgi/machdep.c
+file	arch/sgi/sgi/mainbus.c
 file	arch/sgi/sgi/mutex.c
 file	arch/sgi/sgi/sginode.c			tgt_origin200 | tgt_origin2000
 file	arch/sgi/sgi/wscons_machdep.c		wsdisplay
@@ -35,7 +36,7 @@ include	"dev/ata/files.ata"
 #
 #	System BUS types
 #
-define	mainbus {}
+define	mainbus {[nasid = -1]}
 device	mainbus
 attach	mainbus at root
 
@@ -101,11 +102,6 @@ file	arch/sgi/dev/dsrtc.c			dsrtc
 device	gbe: wsemuldisplaydev, rasops8, rasops16, rasops32
 attach	gbe at mainbus
 file	arch/sgi/dev/gbe.c			gbe	needs-flag
-
-# Impact graphics
-device	impact: wsemuldisplaydev, rasops8, rasops16, rasops32
-attach	impact at xbow
-file	arch/sgi/xbow/impact.c			impact	needs-flag
 
 # 16[45]50-based "com" ports on localbus
 attach	com at macebus with com_macebus

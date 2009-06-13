@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP27,v 1.5 2009/06/10 18:00:07 miod Exp $
+#	$OpenBSD: GENERIC-IP27,v 1.6 2009/06/13 21:48:03 miod Exp $
 #
 # THIS KERNEL IS FOR Origin, Onyx, Fuel, Tezro (IP27, IP35) SYSTEMS ONLY.
 #
@@ -41,7 +41,7 @@ cpu*		at mainbus0
 clock0		at mainbus0
 
 #### Main local buses
-xbow0		at mainbus0
+xbow*		at mainbus0
 
 # XBow devices
 xbridge*	at xbow?
@@ -51,6 +51,7 @@ pci*		at xbridge?
 ioc*		at pci?
 com0		at ioc? base 0x00020178
 com1		at ioc? base 0x00020170
+com*		at ioc?
 dsrtc0		at ioc?
 
 onewire*	at ioc?
