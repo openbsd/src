@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip27_machdep.c,v 1.11 2009/06/10 18:04:25 miod Exp $	*/
+/*	$OpenBSD: ip27_machdep.c,v 1.12 2009/06/13 16:28:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -82,7 +82,7 @@ ip27_setup()
 
 	md_halt = ip27_halt;
 
-	kl_init();
+	kl_init(ip35 ? HUBNI_IP35 : HUBNI_IP27);
 	if (kl_n_mode != 0)
 		xbow_long_shift = 28;
 
@@ -124,12 +124,12 @@ ip27_setup()
 	 * Disable all hardware interrupts.
 	 */
 
-	IP27_LHUB_S(HUB_CPU0_IMR0, 0);
-	IP27_LHUB_S(HUB_CPU0_IMR1, 0);
-	IP27_LHUB_S(HUB_CPU1_IMR0, 0);
-	IP27_LHUB_S(HUB_CPU1_IMR1, 0);
-	(void)IP27_LHUB_L(HUB_IR0);
-	(void)IP27_LHUB_L(HUB_IR1);
+	IP27_LHUB_S(HUBPI_CPU0_IMR0, 0);
+	IP27_LHUB_S(HUBPI_CPU0_IMR1, 0);
+	IP27_LHUB_S(HUBPI_CPU1_IMR0, 0);
+	IP27_LHUB_S(HUBPI_CPU1_IMR1, 0);
+	(void)IP27_LHUB_L(HUBPI_IR0);
+	(void)IP27_LHUB_L(HUBPI_IR1);
 	/* XXX do the other two cpus on IP35 */
 
 	/*
@@ -144,8 +144,8 @@ ip27_setup()
 	/*
 	 * Set up Node 0's HUB.
 	 */
-	IP27_LHUB_S(PI_REGION_PRESENT, 1);
-	IP27_LHUB_S(PI_CALIAS_SIZE, PI_CALIAS_SIZE_0);
+	IP27_LHUB_S(HUBPI_REGION_PRESENT, 0xffffffffffffffff);
+	IP27_LHUB_S(HUBPI_CALIAS_SIZE, PI_CALIAS_SIZE_0);
 }
 
 /*
@@ -223,13 +223,13 @@ ip27_halt(int howto)
 	}
 
 	if (ip35) {
-		IP27_LHUB_S(HUB_NI_IP35 + HUB_NI_RESET_ENABLE, RESET_ENABLE);
-		IP27_LHUB_S(HUB_NI_IP35 + HUB_NI_RESET,
-		    RESET_LOCAL | RESET_ACTION);
+		IP27_LHUB_S(HUBNI_IP35 + HUBNI_RESET_ENABLE, NI_RESET_ENABLE);
+		IP27_LHUB_S(HUBNI_IP35 + HUBNI_RESET,
+		    NI_RESET_LOCAL | NI_RESET_ACTION);
 	} else {
-		IP27_LHUB_S(HUB_NI_IP27 + HUB_NI_RESET_ENABLE, RESET_ENABLE);
-		IP27_LHUB_S(HUB_NI_IP27 + HUB_NI_RESET,
-		    RESET_LOCAL | RESET_ACTION);
+		IP27_LHUB_S(HUBNI_IP27 + HUBNI_RESET_ENABLE, NI_RESET_ENABLE);
+		IP27_LHUB_S(HUBNI_IP27 + HUBNI_RESET,
+		    NI_RESET_LOCAL | NI_RESET_ACTION);
 	}
 }
 
@@ -303,9 +303,9 @@ ip27_hub_intr_establish(int (*func)(void *), void *arg, int intrbit,
 	ip27_hub_intr_makemasks();
 
 	/* XXX this assumes we run on cpu0 */
-	IP27_LHUB_S(HUB_CPU0_IMR0,
-	    IP27_LHUB_L(HUB_CPU0_IMR0) | (1UL << intrbit));
-	(void)IP27_LHUB_L(HUB_IR0);
+	IP27_LHUB_S(HUBPI_CPU0_IMR0,
+	    IP27_LHUB_L(HUBPI_CPU0_IMR0) | (1UL << intrbit));
+	(void)IP27_LHUB_L(HUBPI_IR0);
 
 	return 0;
 }
@@ -329,9 +329,9 @@ ip27_hub_intr_disestablish(int intrbit)
 	}
 
 	/* XXX this assumes we run on cpu0 */
-	IP27_LHUB_S(HUB_CPU0_IMR0,
-	    IP27_LHUB_L(HUB_CPU0_IMR0) & ~(1UL << intrbit));
-	(void)IP27_LHUB_L(HUB_IR0);
+	IP27_LHUB_S(HUBPI_CPU0_IMR0,
+	    IP27_LHUB_L(HUBPI_CPU0_IMR0) & ~(1UL << intrbit));
+	(void)IP27_LHUB_L(HUBPI_IR0);
 
 	intrhand[intrbit] = NULL;
 
@@ -417,8 +417,8 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 	int rc;
 
 	/* XXX this assumes we run on cpu0 */
-	isr = IP27_LHUB_L(HUB_IR0);
-	imr = IP27_LHUB_L(HUB_CPU0_IMR0);
+	isr = IP27_LHUB_L(HUBPI_IR0);
+	imr = IP27_LHUB_L(HUBPI_CPU0_IMR0);
 
 	isr &= imr;
 	if (isr == 0)
@@ -427,8 +427,8 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 	/*
 	 * Mask all pending interrupts.
 	 */
-	IP27_LHUB_S(HUB_CPU0_IMR0, imr & ~isr);
-	(void)IP27_LHUB_L(HUB_IR0);
+	IP27_LHUB_S(HUBPI_CPU0_IMR0, imr & ~isr);
+	(void)IP27_LHUB_L(HUBPI_IR0);
 
 	/*
 	 * If interrupts are spl-masked, mark them as pending only.
@@ -474,8 +474,8 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 		/*
 		 * Reenable interrupts which have been serviced.
 		 */
-		IP27_LHUB_S(HUB_CPU0_IMR0, imr);
-		(void)IP27_LHUB_L(HUB_IR0);
+		IP27_LHUB_S(HUBPI_CPU0_IMR0, imr);
+		(void)IP27_LHUB_L(HUBPI_IR0);
 		
 		__asm__ (" .set noreorder\n");
 		cpl = icpl;
@@ -488,8 +488,8 @@ ip27_hub_intr_handler(intrmask_t hwpend, struct trap_frame *frame)
 void
 hw_setintrmask(intrmask_t m)
 {
-	IP27_LHUB_S(HUB_CPU0_IMR0, ip27_hub_intrmask & ~((uint64_t)m));
-	(void)IP27_LHUB_L(HUB_IR0);
+	IP27_LHUB_S(HUBPI_CPU0_IMR0, ip27_hub_intrmask & ~((uint64_t)m));
+	(void)IP27_LHUB_L(HUBPI_IR0);
 }
 
 void

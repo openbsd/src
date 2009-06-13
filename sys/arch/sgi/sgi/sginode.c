@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.7 2009/05/27 19:00:19 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.8 2009/06/13 16:28:11 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -52,11 +52,12 @@
 #include <mips64/archtype.h>
 
 #include <machine/mnode.h>
+#include <sgi/xbow/hub.h>
 
 int nextcpu = 0;
 
-void	kl_add_memory_ip27(int16_t *, unsigned int);
-void	kl_add_memory_ip35(int16_t *, unsigned int);
+void	kl_add_memory_ip27(int16_t, int16_t *, unsigned int);
+void	kl_add_memory_ip35(int16_t, int16_t *, unsigned int);
 
 int	kl_first_pass_board(lboard_t *, void *);
 int	kl_first_pass_comp(klinfo_t *, void *);
@@ -67,8 +68,11 @@ int	kl_first_pass_comp(klinfo_t *, void *);
 #define	DB_PRF(x)
 #endif
 
+int	kl_n_mode = 0;
+u_int	kl_n_shift = 32;
+
 void
-kl_init()
+kl_init(uint64_t nibase)
 {
 	kl_config_hdr_t *cfghdr;
 	u_int64_t val;
@@ -82,13 +86,14 @@ kl_init()
 	DB_PRF(("console %p baud %d\n", cfghdr->cons_info.uart_base,
 	    cfghdr->cons_info.baud));
 
-	val = IP27_LHUB_L(NI_STATUS_REV_ID);
-	kl_n_mode = (val & NSRI_MORENODES_MASK) != 0;
+	val = IP27_LHUB_L(nibase | HUBNI_STATUS);
+	kl_n_mode = (val & NI_MORENODES) != 0;
+	kl_n_shift = 32 - kl_n_mode;
         bios_printf("Machine is in %c mode.\n", kl_n_mode + 'M');
 
-	val = IP27_LHUB_L(PI_REGION_PRESENT);
+	val = IP27_LHUB_L(HUBPI_REGION_PRESENT);
         DB_PRF(("Region present %p.\n", val));
-	val = IP27_LHUB_L(PI_CALIAS_SIZE);
+	val = IP27_LHUB_L(HUBPI_CALIAS_SIZE);
         DB_PRF(("Calias size %p.\n", val));
 }
 
@@ -193,10 +198,10 @@ kl_first_pass_comp(klinfo_t *comp, void *arg)
 #endif
 
 		if (sys_config.system_type == SGI_O200)
-			kl_add_memory_ip27(memcomp_m->membnk_bnksz,
+			kl_add_memory_ip27(comp->nasid, memcomp_m->membnk_bnksz,
 			    kl_n_mode ? MD_MEM_BANKS_N : MD_MEM_BANKS_M);
 		else
-			kl_add_memory_ip35(memcomp_m->membnk_bnksz,
+			kl_add_memory_ip35(comp->nasid, memcomp_m->membnk_bnksz,
 			    kl_n_mode ? MD_MEM_BANKS_N : MD_MEM_BANKS_M);
 		break;
 
@@ -304,9 +309,8 @@ kl_get_console_base()
  */
 
 void
-kl_add_memory_ip27(int16_t *sizes, unsigned int cnt)
+kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 {
-	int16_t nasid = 0;	/* XXX */
 	paddr_t basepa;
 	uint32_t fp, lp, np;
 	unsigned int seg, descno, nmeg;
@@ -318,7 +322,7 @@ kl_add_memory_ip27(int16_t *sizes, unsigned int cnt)
 	 * DIMMs of 128MB or smaller map everything in the first bank,
 	 * though.
 	 */
-	basepa = nasid << (32 - kl_n_mode);
+	basepa = (paddr_t)nasid << kl_n_shift;
 	while (cnt-- != 0) {
 		nmeg = *sizes++;
 		for (seg = 0; seg < 4; basepa += (1 << 27), seg++) {
@@ -404,9 +408,8 @@ kl_add_memory_ip27(int16_t *sizes, unsigned int cnt)
 }
 
 void
-kl_add_memory_ip35(int16_t *sizes, unsigned int cnt)
+kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 {
-	int16_t nasid = 0;	/* XXX */
 	paddr_t basepa;
 	uint32_t fp, lp, np;
 	unsigned int descno;
@@ -417,7 +420,7 @@ kl_add_memory_ip35(int16_t *sizes, unsigned int cnt)
 	 * largest is 1GB. Memory is reported at 1GB intervals.
 	 */
 
-	basepa = nasid << (32 - kl_n_mode);
+	basepa = (paddr_t)nasid << kl_n_shift;
 	while (cnt-- != 0) {
 		np = *sizes++;
 		if (np != 0) {

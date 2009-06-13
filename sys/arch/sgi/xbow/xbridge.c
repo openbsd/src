@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.24 2009/05/28 19:20:06 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.25 2009/06/13 16:28:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -830,8 +830,8 @@ xbridge_intr_handler(void *v)
 			if (sys_config.system_type == SGI_OCTANE) {
 				/* XXX what to do there? */
 			} else {
-				IP27_RHUB_PI_S(nasid, 0, HUB_IR_CHANGE,
-				    HUB_IR_SET | xi->xi_intrsrc);
+				IP27_RHUB_PI_S(nasid, 0, HUBPI_IR_CHANGE,
+				    PI_IR_SET | xi->xi_intrsrc);
 			}
 		}
 	}

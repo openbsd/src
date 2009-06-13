@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.7 2009/05/27 19:06:20 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.8 2009/06/13 16:28:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -320,7 +320,7 @@ xbowattach(struct device *parent, struct device *self, void *aux)
 		 * Default value for the interrupt register.
 		 */
 		xbow_intr_widget_register = (1UL << 47) /* XIO I/O space */ |
-		    ((paddr_t)IP27_RHUB_ADDR(nasid, HUB_IR_CHANGE) -
+		    ((paddr_t)IP27_RHUB_ADDR(nasid, HUBPI_IR_CHANGE) -
 		     IP27_NODE_IO_BASE(0)) /* HUB register offset */;
 
 		klcfg.cfg = &cfg;

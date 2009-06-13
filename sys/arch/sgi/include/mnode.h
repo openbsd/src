@@ -1,4 +1,4 @@
-/*	$OpenBSD: mnode.h,v 1.5 2009/05/28 18:02:41 miod Exp $ */
+/*	$OpenBSD: mnode.h,v 1.6 2009/06/13 16:28:09 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -37,24 +37,23 @@
 /*
  * IP27 uses XKSSEG to access the 1TB memory area.
  */
-#define	IP27_CAC_BASE	0xa800000000000000	/* Cached space */
+#define	IP27_CAC_BASE	PHYS_TO_XKPHYS(0, CCA_CACHED)
 
 /*
  *  IP27 uses XKPHYS space for accessing special objects.
  *  Note that IP27_UNCAC_BASE is a linear space without specials.
  */
-#define	IP27_HSPEC_BASE	0x9000000000000000	/* Hub Special space */
-#define	IP27_IO_BASE	0x9200000000000000	/* I/O space */
-#define	IP27_MSPEC_BASE	0x9400000000000000	/* Memory Special space */
-#define	IP27_UNCAC_BASE	0x9600000000000000	/* Uncached space */
+#define	IP27_HSPEC_BASE	PHYS_TO_XKPHYS_UNCACHED(0, SP_HUB)
+#define	IP27_IO_BASE	PHYS_TO_XKPHYS_UNCACHED(0, SP_IO)
+#define	IP27_MSPEC_BASE	PHYS_TO_XKPHYS_UNCACHED(0, SP_SPECIAL)
+#define	IP27_UNCAC_BASE	PHYS_TO_XKPHYS_UNCACHED(0, SP_NC)
 
 /*
  *  Macros used to find the base of each nodes address space.
- *  In M mode each node space is 4GB.
+ *  In M mode each node space is 4GB; in N mode each node space is 2GB only.
  */
-#define IP27_NODE_BASE(space, node) (space + ((long)(node) << 32))
-#define	OP27_NODE_SIZE		0x00000000100000000ULL
-#define	IP27_NODE_SIZE_MASK	0x000000000ffffffffULL
+#define IP27_NODE_BASE(base, node) ((base) + ((uint64_t)(node) << kl_n_shift))
+#define	IP27_NODE_SIZE_MASK	   ((1UL << kl_n_shift) - 1)
 
 #define IP27_NODE_CAC_BASE(node)       (IP27_NODE_BASE(IP27_CAC_BASE, node))
 #define IP27_NODE_HSPEC_BASE(node)     (IP27_NODE_BASE(IP27_HSPEC_BASE, node))
@@ -360,67 +359,12 @@ typedef struct kl_nmi {
 	uint64_t	master;			/* nonzero if master node */
 } kl_nmi_t;
 
-
-/*                            H U B                    */
-/*                            =====                    */
-/*
- *  HUB access macros.
- */
-#define	BWIN_SIZE_BITS		29
-#define	BWIN_INDEX_BITS		3
-#define	BWIN_SIZE		(1ULL << BWIN_SIZE_BITS)
-#define	BWIN_SIZEMASK		(BWIN_SIZE - 1)
-#define	BWIN_WIDGET_MASK	0x7
-
-#define	LWIN_SIZE_BITS		24
-#define	LWIN_SIZE		(1ULL << LWIN_SIZE_BITS)
-#define	LWIN_SIZEMASK		(LWIN_SIZE - 1)
-#define	LWIN_WIDGET_MASK	0xF
-
-#define	RAW_NODE_LWIN_BASE(nasid, widget)                               \
-        (IP27_NODE_IO_BASE(nasid) + ((uint64_t)(widget) << LWIN_SIZE_BITS))
-
-#define	NODE_BWIN_BASE0(nasid)  (IP27_NODE_IO_BASE(nasid) + BWIN_SIZE)
-#define	NODE_BWIN_BASE(nasid, bigwin)   (NODE_BWIN_BASE0(nasid) +       \
-                        ((uint64_t)(bigwin) << BWIN_SIZE_BITS))
-
-#define	NODE_LWIN_BASE(nasid, widget)					\
-	((widget == 0) ? NODE_BWIN_BASE((nasid), 6)			\
-			: RAW_NODE_LWIN_BASE(nasid, widget))
-
-
-#define	IP27_LHUB_ADDR(_x) \
-	((volatile uint64_t *)(NODE_LWIN_BASE(0, 1) + (_x)))
-#define	IP27_RHUB_ADDR(_n, _x) \
-	((volatile uint64_t *)(NODE_LWIN_BASE(_n, 1) + 0x800000 + (_x)))
-#define	IP27_RHUB_PI_ADDR(_n, _sn, _x) \
-	((volatile uint64_t *)(NODE_LWIN_BASE(_n, 1) + 0x800000 + (_x)))
-
-#define	IP27_LHUB_L(r)			*(IP27_LHUB_ADDR(r))
-#define	IP27_LHUB_S(r, d)		*(IP27_LHUB_ADDR(r)) = (d)
-#define	IP27_RHUB_L(n, r)		*(IP27_RHUB_ADDR((n), (r))
-#define	IP27_RHUB_S(n, r, d)		*(IP27_RHUB_ADDR((n), (r)) = (d)
-#define IP27_RHUB_PI_L(n, s, r)		*(IP27_RHUB_PI_ADDR((n), (s), (r)))
-#define	IP27_RHUB_PI_S(n, s, r, d)	*(IP27_RHUB_PI_ADDR((n), (s), (r))) = (d)
-
-
-/* HUB I/O registers */
-#define	PI_REGION_PRESENT       0x000018
-#define	PI_CALIAS_SIZE          0x000028
-#define		PI_CALIAS_SIZE_0	0
-
-
-/* HUB network interface */
-#define	NI_STATUS_REV_ID	0x600000
-
-#define	NSRI_MORENODES_MASK	(1ULL << 18)	/* Mnodes  */
-
 /*
  *  Functions.
  */
 
 vaddr_t	kl_get_console_base(void);
-void	kl_init(void);
+void	kl_init(uint64_t);
 void	kl_scan_config(int);
 void	kl_scan_done(void);
 int	kl_scan_node(int, uint, int (*)(lboard_t *, void *), void *);
@@ -428,6 +372,7 @@ int	kl_scan_node(int, uint, int (*)(lboard_t *, void *), void *);
 int	kl_scan_board(lboard_t *, uint, int (*)(klinfo_t *, void *), void *);
 #define	KLSTRUCT_ANY	((uint)~0)
 
-int	kl_n_mode;
+extern int kl_n_mode;
+extern u_int kl_n_shift;
 
 #endif /* __MACHINE_MNODE_H__ */
