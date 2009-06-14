@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.57 2009/06/11 18:54:13 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.58 2009/06/14 00:09:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -102,7 +102,7 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	struct lifdir *p;
 	struct lifvol *lvp;
 	char *msg = NULL;
-	int fsoff = 0, i;
+	int fsoff = 0, openbsdstart = MAXLIFSPACE, i;
 
 	/* read LIF volume header */
 	bp->b_blkno = btodb(LIF_VOLSTART);
@@ -113,8 +113,10 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 		return "LIF volume header I/O error";
 
 	lvp = (struct lifvol *)bp->b_data;
-	if (lvp->vol_id != LIF_VOL_ID)
+	if (lvp->vol_id != LIF_VOL_ID) {
+		openbsdstart = 0;
 		goto finished;
+	}
 
 	dbp = geteblk(LIF_DIRSIZE);
 	dbp->b_dev = bp->b_dev;
@@ -127,6 +129,7 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 
 	if (biowait(dbp)) {
 		msg = "LIF directory I/O error";
+		openbsdstart = 0;
 		goto done;
 	}
 
@@ -138,11 +141,12 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 
 	if (p->dir_type == LIF_DIR_FS) {
 		fsoff = lifstodb(p->dir_addr);
+		openbsdstart = 0;
 		goto finished;
 	}
 
 	/* Only came here to find the offset... */
-	if (partoffp && spoofonly)
+	if (partoffp)
 		goto finished;
 
 	if (p->dir_type == LIF_DIR_HPLBL) {
@@ -210,12 +214,15 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 	}
 
 finished:
+	/* record the OpenBSD partition's placement for the caller */
 	if (partoffp)
 		*partoffp = fsoff;
+	else {
+		DL_SETBSTART(lp, openbsdstart);
+		DL_SETBEND(lp, DL_GETDSIZE(lp));	/* XXX */
+	}
 
-	DL_SETBSTART(lp, fsoff);
-	DL_SETBEND(lp, DL_GETDSIZE(lp));	/* XXX */
-
+	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
 		goto done;
 
@@ -223,14 +230,12 @@ finished:
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ | B_RAW;
 	(*strat)(bp);
-
-	/* if successful, locate disk label within block and validate */
 	if (biowait(bp)) {
 		msg = "disk label I/O error";
 		goto done;
 	}
 
-	return checkdisklabel(bp->b_data + LABELOFFSET, lp, fsoff,
+	return checkdisklabel(bp->b_data + LABELOFFSET, lp, openbsdstart,
 	    DL_GETDSIZE(lp));	/* XXX */
 
 done:

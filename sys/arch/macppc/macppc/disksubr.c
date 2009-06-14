@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.64 2009/06/13 16:28:23 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.65 2009/06/14 00:09:38 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -144,12 +144,14 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 		if (strcmp(part->pmPartType, PART_TYPE_OPENBSD) == 0) {
 			hfspartoff = part->pmPyPartStart - LABELSECTOR;
 			hfspartend = hfspartoff + part->pmPartBlkCnt;
-			DL_SETBSTART(lp, hfspartoff);
-			DL_SETBEND(lp, hfspartend < DL_GETDSIZE(lp) ? hfspartend :
-			    DL_GETDSIZE(lp));
 			if (partoffp) {
 				*partoffp = hfspartoff;
 				return (NULL);
+			} else {
+				DL_SETBSTART(lp, hfspartoff);
+				DL_SETBEND(lp,
+				    hfspartend < DL_GETDSIZE(lp) ? hfspartend :
+				    DL_GETDSIZE(lp));
 			}
 			continue;
 		}

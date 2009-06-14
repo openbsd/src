@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.7 2009/06/05 00:41:13 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.8 2009/06/14 00:09:39 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -147,6 +147,11 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 			if (partoffp) {
 				*partoffp = hfspartoff;
 				return (NULL);
+			} else {
+				DL_SETBSTART(lp, hfspartoff);
+				DL_SETBEND(lp,
+				    hfspartend < DL_GETDSIZE(lp) ? hfspartend :
+				    DL_GETDSIZE(lp));
 			}
 			continue;
 		}
@@ -162,10 +167,6 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 			pp->p_fstype = FS_HFS;
 			n++;
 		}
-
-		DL_SETBSTART(lp, hfspartoff);
-		DL_SETBEND(lp, hfspartend < DL_GETDSIZE(lp) ? hfspartend :
-		    DL_GETDSIZE(lp));
 	}
 
 	if (hfspartoff == -1)

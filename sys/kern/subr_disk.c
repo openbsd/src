@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.93 2009/06/05 00:41:13 deraadt Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.94 2009/06/14 00:09:40 deraadt Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -575,16 +575,18 @@ donot:
 		lp->d_partitions['i' - 'a'].p_fstype = FS_MSDOS;
 	}
 notfat:
-	DL_SETBSTART(lp, dospartoff);
-	DL_SETBEND(lp, dospartend < DL_GETDSIZE(lp) ? dospartend : DL_GETDSIZE(lp));
-
 	/* record the OpenBSD partition's placement for the caller */
 	if (partoffp)
 		*partoffp = dospartoff;
+	else {
+		DL_SETBSTART(lp, dospartoff);
+		DL_SETBEND(lp,
+		    dospartend < DL_GETDSIZE(lp) ? dospartend : DL_GETDSIZE(lp));
+	}
 
 	/* don't read the on-disk label if we are in spoofed-only mode */
 	if (spoofonly)
-		return (NULL);
+		return (NULL);		/* jump to the checkdisklabel below?? */
 
 	bp->b_blkno = DL_BLKTOSEC(lp, dospartoff + DOS_LABELSECTOR) *
 	    DL_BLKSPERSEC(lp);
