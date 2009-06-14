@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.35 2009/06/07 02:01:54 oga Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.36 2009/06/14 03:04:08 deraadt Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -173,7 +173,6 @@ struct vm_page {
 #define	PG_FAKE		0x00000040	/* page is not yet initialized */
 #define PG_RDONLY	0x00000080	/* page must be mapped read-only */
 #define PG_ZERO		0x00000100	/* page is pre-zero'd */
-#define PG_DEV		0x00000200	/* page is in device space, lay off */
 
 #define PG_PAGER1	0x00001000	/* pager-specific flag */
 #define PG_MASK		0x0000ffff

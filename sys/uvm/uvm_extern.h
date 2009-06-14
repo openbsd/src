@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.78 2009/06/07 02:01:54 oga Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.79 2009/06/14 03:04:08 deraadt Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -233,11 +233,6 @@ typedef int		vm_prot_t;
  */
 #define	UVM_LK_ENTER	0x00000001	/* map locked on entry */
 #define	UVM_LK_EXIT	0x00000002	/* leave map locked on exit */
-
-/*
- * flags to uvm_physload.
- */
-#define	PHYSLOAD_DEVICE	0x01	/* don't add to the page queue */
 
 /*
  * structures
@@ -575,10 +570,8 @@ vaddr_t			uvm_pagealloc_contig(vaddr_t, vaddr_t,
 void			uvm_pagerealloc(struct vm_page *, 
 					     struct uvm_object *, voff_t);
 /* Actually, uvm_page_physload takes PF#s which need their own type */
-void			uvm_page_physload_flags(paddr_t, paddr_t, paddr_t,
-			    paddr_t, int, int);
-#define uvm_page_physload(s, e, as, ae, fl)	\
-	uvm_page_physload_flags(s, e, as, ae, fl, 0)
+void			uvm_page_physload(paddr_t, paddr_t,
+					       paddr_t, paddr_t, int);
 void			uvm_setpagesize(void);
 void			uvm_shutdown(void);
 
