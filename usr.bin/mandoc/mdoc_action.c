@@ -1,20 +1,18 @@
-/* $Id: mdoc_action.c,v 1.1 2009/04/06 20:30:40 kristaps Exp $ */
+/*	$Id: mdoc_action.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@openbsd.org>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
  * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/utsname.h>
 
@@ -342,8 +340,10 @@ post_nm(POST_ARGS)
 	buf[0] = 0;
 	if ( ! concat(m, m->last->child, buf, sizeof(buf)))
 		return(0);
+
 	if (NULL == (m->meta.name = strdup(buf)))
 		return(verr(m, EMALLOC));
+
 	return(1);
 }
 

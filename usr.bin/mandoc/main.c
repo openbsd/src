@@ -1,20 +1,18 @@
-/* $Id: main.c,v 1.1 2009/04/06 20:30:40 kristaps Exp $ */
+/*	$Id: main.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@openbsd.org>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
  * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/stat.h>
 
@@ -175,6 +173,8 @@ main(int argc, char *argv[])
 		free(blk.buf);
 	if (ln.buf)
 		free(ln.buf);
+
+	/* TODO: have a curp_free routine. */
 	if (curp.outfree)
 		(*curp.outfree)(curp.outdata);
 	if (curp.mdoc)
@@ -207,7 +207,14 @@ man_init(struct curparse *curp)
 	mancb.man_err = merr;
 	mancb.man_warn = manwarn;
 
-	pflags = MAN_IGN_MACRO; 
+	/*
+	 * Default behaviour is to ignore unknown macros.  This is
+	 * specified in mandoc.1.
+	 */
+
+	pflags = MAN_IGN_MACRO;
+
+	/* Override default behaviour... */
 
 	if (curp->fflags & NO_IGN_MACRO)
 		pflags &= ~MAN_IGN_MACRO;
@@ -230,7 +237,15 @@ mdoc_init(struct curparse *curp)
 	mdoccb.mdoc_err = merr;
 	mdoccb.mdoc_warn = mdocwarn;
 
+	/* 
+	 * Default behaviour is to ignore unknown macros, escape
+	 * sequences and characters (very liberal).  This is specified
+	 * in mandoc.1.
+	 */
+
 	pflags = MDOC_IGN_MACRO | MDOC_IGN_ESCAPE | MDOC_IGN_CHARS;
+
+	/* Override default behaviour... */
 
 	if (curp->fflags & IGN_SCOPE)
 		pflags |= MDOC_IGN_SCOPE;
@@ -339,7 +354,7 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 				continue;
 			}
 
-			/* Check for CPP-escaped newline.  */
+			/* Check for CPP-escaped newline. */
 
 			if (pos > 0 && '\\' == ln->buf[pos - 1]) {
 				for (j = pos - 1; j >= 0; j--)
@@ -606,9 +621,10 @@ merr(void *arg, int line, int col, const char *msg)
 	struct curparse *curp;
 
 	curp = (struct curparse *)arg;
-
 	warnx("%s:%d: error: %s (column %d)", 
 			curp->file, line, msg, col);
+
+	/* Always exit on errors... */
 	return(0);
 }
 
@@ -642,6 +658,11 @@ mdocwarn(void *arg, int line, int col,
 
 	if ( ! (curp->wflags & WARN_WERR))
 		return(1);
+	
+	/*
+	 * If the -Werror flag is passed in, as in gcc, then all
+	 * warnings are considered as errors.
+	 */
 
 	warnx("%s: considering warnings as errors", 
 			__progname);
@@ -664,6 +685,11 @@ manwarn(void *arg, int line, int col, const char *msg)
 
 	if ( ! (curp->wflags & WARN_WERR))
 		return(1);
+
+	/* 
+	 * If the -Werror flag is passed in, as in gcc, then all
+	 * warnings are considered as errors.
+	 */
 
 	warnx("%s: considering warnings as errors", 
 			__progname);
