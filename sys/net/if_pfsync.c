@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.125 2009/06/12 02:03:51 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.126 2009/06/14 00:16:50 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -190,6 +190,7 @@ struct pfsync_softc {
 
 	struct pfsync_upd_reqs	 sc_upd_req_list;
 
+	int			 sc_defer;
 	struct pfsync_deferrals	 sc_deferrals;
 	u_int			 sc_deferred;
 
@@ -1380,6 +1381,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		pfsyncr.pfsyncr_syncpeer = sc->sc_sync_peer;
 		pfsyncr.pfsyncr_maxupdates = sc->sc_maxupdates;
+		pfsyncr.pfsyncr_defer = sc->sc_defer;
 		return (copyout(&pfsyncr, ifr->ifr_data, sizeof(pfsyncr)));
 
 	case SIOCSETPFSYNC:
@@ -1401,6 +1403,8 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			return (EINVAL);
 		}
 		sc->sc_maxupdates = pfsyncr.pfsyncr_maxupdates;
+
+		sc->sc_defer = pfsyncr.pfsyncr_defer;
 
 		if (pfsyncr.pfsyncr_syncdev[0] == 0) {
 			sc->sc_sync_if = NULL;
@@ -1785,10 +1789,7 @@ pfsync_insert_state(struct pf_state *st)
 
 	pfsync_q_ins(st, PFSYNC_S_INS);
 
-	if (ISSET(st->state_flags, PFSTATE_ACK))
-		schednetisr(NETISR_PFSYNC);
-	else
-		st->sync_updates = 0;
+	st->sync_updates = 0;
 }
 
 int defer = 10;
@@ -1796,12 +1797,13 @@ int defer = 10;
 int
 pfsync_defer(struct pf_state *st, struct mbuf *m)
 {
-	return (0);
-#ifdef notyet
 	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_deferral *pd;
 
 	splsoftassert(IPL_SOFTNET);
+
+	if (!sc->sc_defer)
+		return (0);
 
 	if (sc->sc_deferred >= 128)
 		pfsync_undefer(TAILQ_FIRST(&sc->sc_deferrals), 0);
@@ -1821,8 +1823,9 @@ pfsync_defer(struct pf_state *st, struct mbuf *m)
 	timeout_set(&pd->pd_tmo, pfsync_defer_tmo, pd);
 	timeout_add(&pd->pd_tmo, defer);
 
+	schednetisr(NETISR_PFSYNC);
+
 	return (1);
-#endif
 }
 
 void

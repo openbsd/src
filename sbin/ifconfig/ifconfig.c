@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.218 2009/06/11 20:15:28 chl Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.219 2009/06/14 00:16:50 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -213,6 +213,7 @@ void	setpfsync_maxupd(const char *, int);
 void	unsetpfsync_syncdev(const char *, int);
 void	setpfsync_syncpeer(const char *, int);
 void	unsetpfsync_syncpeer(const char *, int);
+void	setpfsync_defer(const char *, int);
 void	pfsync_status(void);
 void	setpppoe_dev(const char *,int);
 void	setpppoe_svc(const char *,int);
@@ -361,6 +362,8 @@ const struct	cmd {
 	{ "syncpeer",	NEXTARG,	0,		setpfsync_syncpeer },
 	{ "-syncpeer",	1,		0,		unsetpfsync_syncpeer },
 	{ "maxupd",	NEXTARG,	0,		setpfsync_maxupd },
+	{ "defer",	1,		0,		setpfsync_defer },
+	{ "-defer",	0,		0,		setpfsync_defer },
 	/* giftunnel is for backward compat */
 	{ "giftunnel",  NEXTARG2,	0,		NULL, settunnel } ,
 	{ "tunnel",	NEXTARG2,	0,		NULL, settunnel } ,
@@ -3723,6 +3726,22 @@ setpfsync_maxupd(const char *val, int d)
 }
 
 void
+setpfsync_defer(const char *val, int d)
+{
+	struct pfsyncreq preq;
+
+	memset((char *)&preq, 0, sizeof(struct pfsyncreq));
+	ifr.ifr_data = (caddr_t)&preq;
+
+	if (ioctl(s, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGETPFSYNC");
+
+	preq.pfsyncr_defer = d;
+	if (ioctl(s, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
+		err(1, "SIOCSETPFSYNC");
+}
+
+void
 pfsync_status(void)
 {
 	struct pfsyncreq preq;
@@ -3738,7 +3757,8 @@ pfsync_status(void)
 		if (preq.pfsyncr_syncpeer.s_addr != htonl(INADDR_PFSYNC_GROUP))
 			printf("syncpeer: %s ",
 			    inet_ntoa(preq.pfsyncr_syncpeer));
-		printf("maxupd: %d\n", preq.pfsyncr_maxupdates);
+		printf("maxupd: %d ", preq.pfsyncr_maxupdates);
+		printf("defer: %s\n", preq.pfsyncr_defer ? "on" : "off");
 	}
 }
 
