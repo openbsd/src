@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: main.c,v 1.3 2009/06/14 23:39:43 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -98,6 +98,7 @@ static	int		  pset(const char *, int, struct curparse *,
 				struct man **, struct mdoc **);
 static	struct man	 *man_init(struct curparse *);
 static	struct mdoc	 *mdoc_init(struct curparse *);
+__dead	static void	  version(void);
 __dead	static void	  usage(void);
 
 extern	char		 *__progname;
@@ -116,7 +117,7 @@ main(int argc, char *argv[])
 	curp.outtype = OUTT_ASCII;
 
 	/* LINTED */
-	while (-1 != (c = getopt(argc, argv, "f:m:W:T:")))
+	while (-1 != (c = getopt(argc, argv, "f:m:VW:T:")))
 		switch (c) {
 		case ('f'):
 			if ( ! foptions(&curp.fflags, optarg))
@@ -134,6 +135,9 @@ main(int argc, char *argv[])
 			if ( ! woptions(&curp.wflags, optarg))
 				return(0);
 			break;
+		case ('V'):
+			version();
+			/* NOTREACHED */
 		default:
 			usage();
 			/* NOTREACHED */
@@ -187,10 +191,19 @@ main(int argc, char *argv[])
 
 
 __dead static void
+version(void)
+{
+
+	(void)printf("%s %s\n", __progname, VERSION);
+	exit(EXIT_SUCCESS);
+}
+
+
+__dead static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-foption...] "
+	(void)fprintf(stderr, "usage: %s [-V] [-foption...] "
 			"[-mformat] [-Toutput] [-Werr...]\n", 
 			__progname);
 	exit(EXIT_FAILURE);

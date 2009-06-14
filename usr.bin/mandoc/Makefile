@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2009/04/15 20:10:20 miod Exp $
+#	$OpenBSD: Makefile,v 1.3 2009/06/14 23:39:43 schwarze Exp $
 
 .include <bsd.own.mk>
 
+VERSION=1.7.16
+CFLAGS+=-DVERSION=\"${VERSION}\"
 CFLAGS+=-W -Wall -Wstrict-prototypes
 .if ${USE_GCC3:L} != "no"
 CFLAGS+=-Wno-unused-parameter
