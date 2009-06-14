@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.54 2009/06/04 00:44:46 krw Exp $
+#	$OpenBSD: install.md,v 1.55 2009/06/14 00:12:20 deraadt Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@ md_installboot() {
 
 md_prep_disklabel() {
 	local _disk=$1 _f _op
+
+	md_installboot $_disk
 
 	disklabel -W $_disk >/dev/null 2>&1
 	_f=/tmp/fstab.$_disk
