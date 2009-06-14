@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-# $OpenBSD: sysmerge.sh,v 1.43 2009/06/04 23:24:17 ajacoutot Exp $
+# $OpenBSD: sysmerge.sh,v 1.44 2009/06/14 06:54:40 ajacoutot Exp $
 #
 # Copyright (c) 1998-2003 Douglas Barton <DougB@FreeBSD.org>
 # Copyright (c) 2008, 2009 Antoine Jacoutot <ajacoutot@openbsd.org>
@@ -38,9 +38,9 @@ clean_src() {
 
 # restore files from backups
 restore_bak() {
-	for i in ${DBDIR}/.*.bak; do
+	for i in ${DESTDIR}/${DBDIR}/.*.bak; do
 		_i=`basename ${i} .bak`
-		mv ${i} ${DBDIR}/${_i#.}
+		mv ${i} ${DESTDIR}/${DBDIR}/${_i#.}
 	done
 }
 
@@ -119,7 +119,7 @@ do_pre() {
 
 
 do_populate() {
-	mkdir -p ${DBDIR} || error_rm_wrkdir
+	mkdir -p ${DESTDIR}/${DBDIR} || error_rm_wrkdir
 	echo "===> Creating and populating temporary root under"
 	echo "     ${TEMPROOT}"
 	mkdir -p ${TEMPROOT}
@@ -147,11 +147,11 @@ do_populate() {
 	fi
 
 	for i in ${SRCSUM} ${ETCSUM} ${XETCSUM}; do
-		if [ -f ${DBDIR}/${i} ]; then
+		if [ -f ${DESTDIR}/${DBDIR}/${i} ]; then
 			# delete file in temproot if it has not changed since last release
 			# and is present in current installation
 			if [ "${AUTOMODE}" ]; then
-				_R=$(cd ${TEMPROOT} && cksum -c ${DBDIR}/${i} 2> /dev/null | grep OK | awk '{ print $2 }' | sed 's/[:]//')
+				_R=$(cd ${TEMPROOT} && cksum -c ${DESTDIR}/${DBDIR}/${i} 2> /dev/null | grep OK | awk '{ print $2 }' | sed 's/[:]//')
 				for _r in ${_R}; do
 					if [ -f ${DESTDIR}/${_r} -a -f ${TEMPROOT}/${_r} ]; then
 						rm -f ${TEMPROOT}/${_r}
@@ -160,25 +160,25 @@ do_populate() {
 			fi
 
 			# set auto-upgradable files
-			_D=`diff -u ${WRKDIR}/${i} ${DBDIR}/${i} | grep -E '^\+' | sed '1d' | awk '{print $3}'`
+			_D=`diff -u ${WRKDIR}/${i} ${DESTDIR}/${DBDIR}/${i} | grep -E '^\+' | sed '1d' | awk '{print $3}'`
 			for _d in ${_D}; do
 				CURSUM=$(cd ${DESTDIR:=/} && cksum ${_d} 2> /dev/null)
-				if [ -n "`grep "${CURSUM}" ${DBDIR}/${i}`" -a -z "`grep "${CURSUM}" ${WRKDIR}/${i}`" ]; then
+				if [ -n "`grep "${CURSUM}" ${DESTDIR}/${DBDIR}/${i}`" -a -z "`grep "${CURSUM}" ${WRKDIR}/${i}`" ]; then
 					set -A AUTO_UPG -- ${_d}
 				fi
 			done
 
 			# check for obsolete files
-			awk '{ print $3 }' ${DBDIR}/${i} > ${WRKDIR}/new
+			awk '{ print $3 }' ${DESTDIR}/${DBDIR}/${i} > ${WRKDIR}/new
 			awk '{ print $3 }' ${WRKDIR}/${i} > ${WRKDIR}/old
 			if [ -n "`diff -q ${WRKDIR}/old ${WRKDIR}/new`" ]; then
 				OBSOLETE_FILES="${OBSOLETE_FILES} `diff -C 0 ${WRKDIR}/new ${WRKDIR}/old | grep -E '^- .' | sed -e 's,^- .,,g'`"
 			fi
 			rm ${WRKDIR}/new ${WRKDIR}/old
 			
-			mv ${DBDIR}/${i} ${DBDIR}/.${i}.bak
+			mv ${DESTDIR}/${DBDIR}/${i} ${DESTDIR}/${DBDIR}/.${i}.bak
 		fi
-		mv ${WRKDIR}/${i} ${DBDIR}/${i}
+		mv ${WRKDIR}/${i} ${DESTDIR}/${DBDIR}/${i}
 	done
 
 	# files we don't want/need to deal with
@@ -566,7 +566,7 @@ do_post() {
 	fi
 
 	clean_src
-	rm -f ${DBDIR}/.*.bak
+	rm -f ${DESTDIR}/${DBDIR}/.*.bak
 }
 
 
