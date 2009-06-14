@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_post.c,v 1.3 2009/06/06 03:20:57 deraadt Exp $ */
+/* $OpenBSD: vga_post.c,v 1.4 2009/06/14 20:27:24 miod Exp $ */
 /* $NetBSD: vga_post.c,v 1.12 2009/03/15 21:32:36 cegger Exp $ */
 
 /*-
@@ -140,6 +140,7 @@ vga_post_init(int bus, int device, int function)
 	}
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 
+	TAILQ_INIT(&sc->ram_backing);
 	err = uvm_pglistalloc(BASE_MEMORY, 0, (paddr_t)-1, 0, 0,
 	    &sc->ram_backing, BASE_MEMORY/PAGE_SIZE, UVM_PLA_WAITOK);
 	if (err) {
@@ -163,7 +164,7 @@ vga_post_init(int bus, int device, int function)
 				VM_PROT_READ | VM_PROT_WRITE);
 		iter += PAGE_SIZE;
 	}
-	KASSERT(iter == 65536);
+	KASSERT(iter == BASE_MEMORY);
 
 	for (iter = 640 * 1024; iter < 1024 * 1024; iter += PAGE_SIZE)
 		pmap_kenter_pa(sc->sys_image + iter, iter,
