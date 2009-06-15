@@ -1,4 +1,4 @@
-/*	$Id: term.h,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: term.h,v 1.3 2009/06/15 01:07:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -19,7 +19,8 @@
 
 /* FIXME - clean up tabs. */
 
-#define	INDENT		  6
+#define	INDENT		  5
+#define	HALFINDENT	  3
 
 __BEGIN_DECLS
 

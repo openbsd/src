@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.3 2009/06/15 01:07:46 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1834,7 +1834,7 @@ termp_ss_pre(DECL_ARGS)
 		break;
 	case (MDOC_HEAD):
 		TERMPAIR_SETFLAG(p, pair, ttypes[TTYPE_SSECTION]);
-		p->offset = INDENT / 2;
+		p->offset = HALFINDENT;
 		break;
 	default:
 		break;
