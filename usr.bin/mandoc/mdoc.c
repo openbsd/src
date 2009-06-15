@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.3 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.4 2009/06/15 02:19:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -259,7 +259,8 @@ mdoc_vmsg(struct mdoc *mdoc, int ln, int pos, const char *fmt, ...)
 
 
 int
-mdoc_verr(struct mdoc *mdoc, int ln, int pos, const char *fmt, ...)
+mdoc_verr(struct mdoc *mdoc, int ln, int pos, 
+		const char *fmt, ...)
 {
 	char		 buf[256];
 	va_list		 ap;
@@ -288,138 +289,6 @@ mdoc_vwarn(struct mdoc *mdoc, int ln, int pos,
 	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
 	return((*mdoc->cb.mdoc_warn)(mdoc->data, ln, pos, type, buf));
-}
-
-
-int
-mdoc_nwarn(struct mdoc *mdoc, const struct mdoc_node *node, enum mdoc_warn type,
-		const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	if (NULL == mdoc->cb.mdoc_warn)
-		return(0);
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	return((*mdoc->cb.mdoc_warn)(mdoc->data, node->line, node->pos, type,
-	    buf));
-}
-
-int
-mdoc_nerr(struct mdoc *mdoc, const struct mdoc_node *node, const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	if (NULL == mdoc->cb.mdoc_err)
-		return(0);
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	return((*mdoc->cb.mdoc_err)(mdoc->data, node->line, node->pos, buf));
-}
-
-
-int
-mdoc_warn(struct mdoc *mdoc, enum mdoc_warn type, const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	if (NULL == mdoc->cb.mdoc_warn)
-		return(0);
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	return((*mdoc->cb.mdoc_warn)(mdoc->data, mdoc->last->line,
-	    mdoc->last->pos, type, buf));
-}
-
-
-int
-mdoc_err(struct mdoc *mdoc, const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	if (NULL == mdoc->cb.mdoc_err)
-		return(0);
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	return((*mdoc->cb.mdoc_err)(mdoc->data, mdoc->last->line,
-	    mdoc->last->pos, buf));
-}
-
-
-void
-mdoc_msg(struct mdoc *mdoc, const char *fmt, ...)
-{
-	char		  buf[256];
-	va_list		  ap;
-
-	if (NULL == mdoc->cb.mdoc_msg)
-		return;
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	(*mdoc->cb.mdoc_msg)(mdoc->data, mdoc->last->line, mdoc->last->pos,
-	    buf);
-}
-
-
-void
-mdoc_pmsg(struct mdoc *mdoc, int line, int pos, const char *fmt, ...)
-{
-	char		  buf[256];
-	va_list		  ap;
-
-	if (NULL == mdoc->cb.mdoc_msg)
-		return;
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	(*mdoc->cb.mdoc_msg)(mdoc->data, line, pos, buf);
-}
-
-
-int
-mdoc_pwarn(struct mdoc *mdoc, int line, int pos, enum mdoc_warn type,
-		const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	if (NULL == mdoc->cb.mdoc_warn)
-		return(0);
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	return((*mdoc->cb.mdoc_warn)(mdoc->data, line, pos, type, buf));
-}
-
-int
-mdoc_perr(struct mdoc *mdoc, int line, int pos, const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	if (NULL == mdoc->cb.mdoc_err)
-		return(0);
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	return((*mdoc->cb.mdoc_err)(mdoc->data, line, pos, buf));
 }
 
 
@@ -611,7 +480,8 @@ mdoc_block_alloc(struct mdoc *mdoc, int line, int pos,
 	p = node_alloc(mdoc, line, pos, tok, MDOC_BLOCK);
 	if (NULL == p)
 		return(0);
-	if ((p->args = args))
+	p->args = args;
+	if (p->args)
 		(args->refcnt)++;
 	return(node_append(mdoc, p));
 }
@@ -626,7 +496,8 @@ mdoc_elem_alloc(struct mdoc *mdoc, int line, int pos,
 	p = node_alloc(mdoc, line, pos, tok, MDOC_ELEM);
 	if (NULL == p)
 		return(0);
-	if ((p->args = args))
+	p->args = args;
+	if (p->args)
 		(args->refcnt)++;
 	return(node_append(mdoc, p));
 }
