@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.174 2009/06/15 17:01:26 beck Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.175 2009/06/15 17:59:45 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -554,6 +554,15 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_CPTIME2:
 		return (sysctl_cptime2(name + 1, namelen -1, oldp, oldlenp,
 		    newp, newlen));
+	case KERN_CACHEPCT: {
+		int opct = 0;
+
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &opct);
+		if (error)
+			return(error);
+		return(0);
+	}
 	default:
 		return (EOPNOTSUPP);
 	}
