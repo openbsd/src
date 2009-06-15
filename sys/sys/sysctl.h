@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.98 2009/06/07 03:07:19 millert Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.99 2009/06/15 17:01:26 beck Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -184,9 +184,8 @@ struct ctlname {
 #define	KERN_TIMECOUNTER	69	/* node: timecounter */
 #define	KERN_MAXLOCKSPERUID	70	/* int: locks per uid */
 #define	KERN_CPTIME2		71	/* array: cp_time2 */
-#define	KERN_CACHEPCT		72	/* buffer cache % of physmem */
-#define	KERN_FILE2		73	/* struct: file entries */
-#define	KERN_MAXID		74	/* number of valid kern ids */
+#define	KERN_FILE2		72	/* struct: file entries */
+#define	KERN_MAXID		73	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -261,7 +260,6 @@ struct ctlname {
  	{ "timecounter", CTLTYPE_NODE }, \
  	{ "maxlocksperuid", CTLTYPE_INT }, \
  	{ "cp_time2", CTLTYPE_STRUCT }, \
- 	{ "bufcachepercent", CTLTYPE_INT }, \
 	{ "file2", CTLTYPE_STRUCT }, \
 }
 

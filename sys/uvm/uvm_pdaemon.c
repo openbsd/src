@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.47 2009/06/06 23:35:08 art Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.48 2009/06/15 17:01:26 beck Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -214,8 +214,8 @@ uvm_pageout(void *arg)
 	for (;;) {
 		uvm_lock_fpageq();
 		UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
-		msleep(&uvm.pagedaemon_proc, &uvm.fpageqlock,
-		    PVM | PNORELOCK, "pgdaemon", 0);
+		msleep(&uvm.pagedaemon_proc, &uvm.fpageqlock, PVM | PNORELOCK,
+		    "pgdaemon", 0);
 		uvmexp.pdwoke++;
 		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
 
@@ -239,13 +239,11 @@ uvm_pageout(void *arg)
 		    uvmexp.inactarg);
 
 		/*
-		 * get pages from the buffer cache, or scan if needed
+		 * scan if needed
 		 */
-		if (uvmexp.inactive < uvmexp.inactarg)
+		if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg ||
+		    uvmexp.inactive < uvmexp.inactarg) {
 			uvmpd_scan();
-		else if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg) {
-			if (bufbackoff() == -1)
-				uvmpd_scan();
 		}
 
 		/*

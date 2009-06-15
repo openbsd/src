@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.99 2009/06/03 14:45:55 jj Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.100 2009/06/15 17:01:26 beck Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -32,12 +32,10 @@
  *	@(#)vnode.h	8.11 (Berkeley) 11/21/94
  */
 
-#include <sys/buf.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
 #include <sys/selinfo.h>
-#include <sys/tree.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_vnode.h>
@@ -81,8 +79,6 @@ enum vtagtype	{
  */
 LIST_HEAD(buflists, buf);
 
-RB_HEAD(buf_rb_bufs, buf);
-
 struct vnode {
 	struct uvm_vnode v_uvm;			/* uvm data */
 	int	(**v_op)(void *);		/* vnode operations vector */
@@ -98,7 +94,6 @@ struct vnode {
 	struct	mount *v_mount;			/* ptr to vfs we are in */
 	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
 	LIST_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
-	struct	buf_rb_bufs v_bufs_tree;	/* lookup of all bufs */
 	struct	buflists v_cleanblkhd;		/* clean blocklist head */
 	struct	buflists v_dirtyblkhd;		/* dirty blocklist head */
 	u_int   v_numoutput;			/* num of writes in progress */
