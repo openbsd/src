@@ -1,4 +1,4 @@
-.\"	$Id: mandoc_char.7,v 1.2 2009/06/14 23:00:57 schwarze Exp $
+.\"	$Id: mandoc_char.7,v 1.3 2009/06/15 01:36:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" 
-.Dd $Mdocdate: June 14 2009 $
+.Dd $Mdocdate: June 15 2009 $
 .Dt MANDOC_CHAR 7
 .Os
 .\" SECTION
@@ -456,6 +456,19 @@ Special symbols:
 .It \e(Am
 .Pq ampersand, deprecated
 .El 
+.\" SECTION
+.Sh COMPATIBILITY
+This section documents compatibility of
+.Nm
+with older or existing versions of
+.Xr groff 1 :
+.Pp
+.Bl -tag -width 12n -offset "XXXX" -compact
+.It \e(ss
+Renders differently in
+.Fl T Ns Ar ascii
+mode.
+.El
 .\" SECTION
 .Sh SEE ALSO
 .Xr mandoc 1

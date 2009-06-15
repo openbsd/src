@@ -1,4 +1,4 @@
-/*	$Id: mdoc_strings.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: mdoc_strings.c,v 1.3 2009/06/15 01:36:23 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -80,6 +80,10 @@ mdoc_isescape(const char *p)
 	case ('q'):
 		/* FALLTHROUGH */
 	case ('-'):
+		/* FALLTHROUGH */
+	case ('~'):
+		/* FALLTHROUGH */
+	case ('^'):
 		/* FALLTHROUGH */
 	case ('%'):
 		/* FALLTHROUGH */
@@ -206,9 +210,9 @@ mdoc_atotime(const char *p)
 
 	(void)memset(&tm, 0, sizeof(struct tm));
 
-	if (0 == strcmp(p, "$Mdocdate: June 14 2009 $"))
+	if (0 == strcmp(p, "$Mdocdate: June 15 2009 $"))
 		return(time(NULL));
-	if ((pp = strptime(p, "$Mdocdate: June 14 2009 $", &tm)) && 0 == *pp)
+	if ((pp = strptime(p, "$Mdocdate: June 15 2009 $", &tm)) && 0 == *pp)
 		return(mktime(&tm));
 	/* XXX - this matches "June 1999", which is wrong. */
 	if ((pp = strptime(p, "%b %d %Y", &tm)) && 0 == *pp)
