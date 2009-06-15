@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.66 2009/06/11 21:09:46 chl Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.67 2009/06/15 04:19:59 miod Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -53,7 +53,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.66 2009/06/11 21:09:46 chl Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.67 2009/06/15 04:19:59 miod Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -278,19 +278,24 @@ dofiles(struct kinfo_file2 *kf)
 		vtrans(kf);
 		break;
 	case DTYPE_SOCKET:
-		socktrans(kf);
+		if (checkfile == 0)
+			socktrans(kf);
 		break;
 	case DTYPE_PIPE:
-		pipetrans(kf);
+		if (checkfile == 0)
+			pipetrans(kf);
 		break;
 	case DTYPE_KQUEUE:
-		kqueuetrans(kf);
+		if (checkfile == 0)
+			kqueuetrans(kf);
 		break;
 	case DTYPE_CRYPTO:
-		cryptotrans(kf);
+		if (checkfile == 0)
+			cryptotrans(kf);
 		break;
 	case DTYPE_SYSTRACE:
-		systracetrans(kf);
+		if (checkfile == 0)
+			systracetrans(kf);
 		break;
 	default:
 		if (vflg) {
