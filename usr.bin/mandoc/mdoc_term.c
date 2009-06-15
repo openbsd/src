@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.3 2009/06/15 01:07:46 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.4 2009/06/15 02:53:35 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -320,12 +320,15 @@ static	void	  print_head(struct termp *,
 static	void	  print_body(DECL_ARGS);
 static	void	  print_foot(struct termp *, 
 			const struct mdoc_meta *);
-static	void	  sanity(const struct mdoc_node *);
 
 
 int
 mdoc_run(struct termp *p, const struct mdoc *m)
 {
+	/*
+	 * Main output function.  When this is called, assume that the
+	 * tree is properly formed.
+	 */
 
 	print_head(p, mdoc_meta(m));
 	print_body(p, NULL, mdoc_meta(m), mdoc_node(m));
@@ -350,10 +353,6 @@ print_node(DECL_ARGS)
 {
 	int		 dochild;
 	struct termpair	 npair;
-
-	/* Some quick sanity-checking. */
-
-	sanity(node);
 
 	/* Pre-processing. */
 
@@ -503,119 +502,6 @@ print_head(struct termp *p, const struct mdoc_meta *meta)
 
 	free(title);
 	free(buf);
-}
-
-
-static void
-sanity(const struct mdoc_node *n)
-{
-	char		*p;
-
-	p = "regular form violated";
-
-	switch (n->type) {
-	case (MDOC_TEXT):
-		if (n->child) 
-			errx(1, p);
-		if (NULL == n->parent) 
-			errx(1, p);
-		if (NULL == n->string)
-			errx(1, p);
-		switch (n->parent->type) {
-		case (MDOC_TEXT):
-			/* FALLTHROUGH */
-		case (MDOC_ROOT):
-			errx(1, p);
-			/* NOTREACHED */
-		default:
-			break;
-		}
-		break;
-	case (MDOC_ELEM):
-		if (NULL == n->parent)
-			errx(1, p);
-		switch (n->parent->type) {
-		case (MDOC_TAIL):
-			/* FALLTHROUGH */
-		case (MDOC_BODY):
-			/* FALLTHROUGH */
-		case (MDOC_HEAD):
-			break;
-		default:
-			errx(1, p);
-			/* NOTREACHED */
-		}
-		if (n->child) switch (n->child->type) {
-		case (MDOC_TEXT):
-			break;
-		default:
-			errx(1, p);
-			/* NOTREACHED */
-		}
-		break;
-	case (MDOC_HEAD):
-		/* FALLTHROUGH */
-	case (MDOC_BODY):
-		/* FALLTHROUGH */
-	case (MDOC_TAIL):
-		if (NULL == n->parent)
-			errx(1, p);
-		if (MDOC_BLOCK != n->parent->type)
-			errx(1, p);
-		if (n->child) switch (n->child->type) {
-		case (MDOC_BLOCK):
-			/* FALLTHROUGH */
-		case (MDOC_ELEM):
-			/* FALLTHROUGH */
-		case (MDOC_TEXT):
-			break;
-		default:
-			errx(1, p);
-			/* NOTREACHED */
-		}
-		break;
-	case (MDOC_BLOCK):
-		if (NULL == n->parent)
-			errx(1, p);
-		if (NULL == n->child)
-			errx(1, p);
-		switch (n->parent->type) {
-		case (MDOC_ROOT):
-			/* FALLTHROUGH */
-		case (MDOC_HEAD):
-			/* FALLTHROUGH */
-		case (MDOC_BODY):
-			/* FALLTHROUGH */
-		case (MDOC_TAIL):
-			break;
-		default:
-			errx(1, p);
-			/* NOTREACHED */
-		}
-		switch (n->child->type) {
-		case (MDOC_ROOT):
-			/* FALLTHROUGH */
-		case (MDOC_ELEM):
-			errx(1, p);
-			/* NOTREACHED */
-		default:
-			break;
-		}
-		break;
-	case (MDOC_ROOT):
-		if (n->parent)
-			errx(1, p);
-		if (NULL == n->child)
-			errx(1, p);
-		switch (n->child->type) {
-		case (MDOC_BLOCK):
-			break;
-		default:
-			errx(1, p);
-			/* NOTREACHED */
-		}
-		break;
-	}
 }
 
 
