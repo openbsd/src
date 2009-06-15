@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: term.c,v 1.3 2009/06/15 00:57:06 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -272,11 +272,13 @@ term_flushln(struct termp *p)
 			vis = p->rmargin - p->offset;
 		}
 
-		/* 
-		 * Write out the word and a trailing space.  Omit the
-		 * space if we're the last word in the line or beyond
-		 * our breakpoint.
+		/*
+		 * Prepend a space if we're not already at the beginning
+		 * of the line, then the word.
 		 */
+
+		if (0 < vis++)
+			putchar(' ');
 
 		for ( ; i < (int)p->col; i++) {
 			if (' ' == p->buf[i])
@@ -284,10 +286,6 @@ term_flushln(struct termp *p)
 			putchar(p->buf[i]);
 		}
 		vis += vsz;
-		if (i < (int)p->col && vis <= bp) {
-			putchar(' ');
-			vis++;
-		}
 	}
 
 	/*
@@ -295,7 +293,7 @@ term_flushln(struct termp *p)
 	 * cause a newline and offset at the right margin.
 	 */
 
-	if ((TERMP_NOBREAK & p->flags) && vis >= maxvis) {
+	if ((TERMP_NOBREAK & p->flags) && vis > maxvis) {
 		if ( ! (TERMP_NONOBREAK & p->flags)) {
 			putchar('\n');
 			for (i = 0; i < (int)p->rmargin; i++)
@@ -312,7 +310,7 @@ term_flushln(struct termp *p)
 
 	if (p->flags & TERMP_NOBREAK) {
 		if ( ! (TERMP_NONOBREAK & p->flags))
-			for ( ; vis < maxvis; vis++)
+			for ( ; vis <= maxvis; vis++)
 				putchar(' ');
 	} else
 		putchar('\n');
