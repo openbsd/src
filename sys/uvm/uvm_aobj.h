@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.h,v 1.10 2009/06/16 17:14:15 oga Exp $	*/
+/*	$OpenBSD: uvm_aobj.h,v 1.11 2009/06/16 23:54:57 oga Exp $	*/
 /*	$NetBSD: uvm_aobj.h,v 1.10 2000/01/11 06:57:49 chs Exp $	*/
 
 /*

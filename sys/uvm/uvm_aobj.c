@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.44 2009/06/16 17:14:14 oga Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.45 2009/06/16 23:54:57 oga Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -167,16 +167,19 @@ struct pool uvm_aobj_pool;
  * local functions
  */
 
-struct uao_swhash_elt	*uao_find_swhash_elt(struct uvm_aobj *, int,
-			     boolean_t);
-static int		 uao_find_swslot(struct uvm_aobj *, int);
-boolean_t		 uao_flush(struct uvm_object *, voff_t, voff_t, int);
-void			 uao_free(struct uvm_aobj *);
-int			 uao_get(struct uvm_object *, voff_t, vm_page_t *,
-			     int *, int, vm_prot_t, int, int);
-boolean_t		 uao_releasepg(struct vm_page *, struct vm_page **);
-boolean_t		 uao_pagein(struct uvm_aobj *, int, int);
-boolean_t		 uao_pagein_page(struct uvm_aobj *, int);
+static struct uao_swhash_elt	*uao_find_swhash_elt(struct uvm_aobj *, int,
+				     boolean_t);
+static int			 uao_find_swslot(struct uvm_aobj *, int);
+static boolean_t		 uao_flush(struct uvm_object *, voff_t,
+				     voff_t, int);
+static void			 uao_free(struct uvm_aobj *);
+static int			 uao_get(struct uvm_object *, voff_t,
+				     vm_page_t *, int *, int, vm_prot_t,
+				     int, int);
+static boolean_t		 uao_releasepg(struct vm_page *,
+				     struct vm_page **);
+static boolean_t		 uao_pagein(struct uvm_aobj *, int, int);
+static boolean_t		 uao_pagein_page(struct uvm_aobj *, int);
 
 /*
  * aobj_pager
@@ -220,7 +223,7 @@ static simple_lock_data_t uao_list_lock;
  * => the object should be locked by the caller
  */
 
-struct uao_swhash_elt *
+static struct uao_swhash_elt *
 uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, boolean_t create)
 {
 	struct uao_swhash *swhash;
@@ -258,7 +261,7 @@ uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, boolean_t create)
  *
  * => object must be locked by caller 
  */
-static __inline int
+__inline static int
 uao_find_swslot(struct uvm_aobj *aobj, int pageidx)
 {
 
@@ -375,7 +378,7 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
  *
  * => the aobj should be dead
  */
-void
+static void
 uao_free(struct uvm_aobj *aobj)
 {
 
@@ -926,7 +929,7 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
  * => NOTE: offset is the offset of pps[0], _NOT_ pps[centeridx]
  * => NOTE: caller must check for released pages!!
  */
-int
+static int
 uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
     int *npagesp, int centeridx, vm_prot_t access_type, int advice, int flags)
 {
@@ -1228,7 +1231,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
  * => we kill the aobj if it is not referenced and we are suppose to
  *      kill it ("KILLME").
  */
-boolean_t
+static boolean_t
 uao_releasepg(struct vm_page *pg, struct vm_page **nextpgp /* OUT */)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *) pg->uobject;
@@ -1367,7 +1370,7 @@ restart:
  * => aobj must be locked and is returned locked.
  * => returns TRUE if pagein was aborted due to lack of memory.
  */
-boolean_t
+static boolean_t
 uao_pagein(struct uvm_aobj *aobj, int startslot, int endslot)
 {
 	boolean_t rv;
@@ -1441,7 +1444,7 @@ restart:
  *
  * => aobj must be locked and is returned locked.
  */
-boolean_t
+static boolean_t
 uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 {
 	struct vm_page *pg;

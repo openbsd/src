@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.33 2009/06/16 00:11:29 oga Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.34 2009/06/16 23:54:57 oga Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -128,8 +128,6 @@ uvm_anfree(struct vm_anon *anon)
 			pg->uanon = NULL;
 			uvm_unlock_pageq();
 			simple_unlock(&pg->uobject->vmobjlock);
-			/* not ours anymore */
-			anon->an_page = NULL;
 		} else {
 
 			/*
