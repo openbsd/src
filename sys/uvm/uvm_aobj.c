@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.43 2009/06/16 00:11:29 oga Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.44 2009/06/16 17:14:14 oga Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ struct pool uao_swhash_elt_pool;
  * uvm_aobj: the actual anon-backed uvm_object
  *
  * => the uvm_object is at the top of the structure, this allows
- *   (struct uvm_aobj *) == (struct uvm_object *)
+ *   (struct uvm_device *) == (struct uvm_object *)
  * => only one of u_swslots and u_swhash is used in any given aobj
  */
 
@@ -562,7 +562,7 @@ uao_init(void)
 	simple_lock_init(&uao_list_lock);
 
 	/*
-	 * NOTE: Pages for this pool must not come from a pageable
+	 * NOTE: Pages fror this pool must not come from a pageable
 	 * kernel map!
 	 */
 	pool_init(&uao_swhash_elt_pool, sizeof(struct uao_swhash_elt),
@@ -638,7 +638,8 @@ void
 uao_detach_locked(struct uvm_object *uobj)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
-	struct vm_page *pg;
+	struct vm_page *pg, *next;
+	boolean_t busybody;
 	UVMHIST_FUNC("uao_detach"); UVMHIST_CALLED(maphist);
 
 	/*
@@ -665,26 +666,35 @@ uao_detach_locked(struct uvm_object *uobj)
 	simple_unlock(&uao_list_lock);
 
 	/*
-	 * Free all pages left in the object. If they're busy, wait
-	 * for them to become available before we kill it.
-	 * Release swap resources then free the page.
+ 	 * free all the pages that aren't PG_BUSY,
+	 * mark for release any that are.
  	 */
-	uvm_lock_pageq();
-	while((pg = TAILQ_FIRST(&uobj->memq)) != NULL) {
+	busybody = FALSE;
+	for (pg = TAILQ_FIRST(&uobj->memq); pg != NULL; pg = next) {
+		next = TAILQ_NEXT(pg, listq);
 		if (pg->pg_flags & PG_BUSY) {
-			atomic_setbits_int(&pg->pg_flags, PG_WANTED);
-			uvm_unlock_pageq();
-			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
-			    "uao_det", 0);
-			simple_lock(&uobj->vmobjlock);
-			uvm_lock_pageq();
+			atomic_setbits_int(&pg->pg_flags, PG_RELEASED);
+			busybody = TRUE;
 			continue;
 		}
+
+		/* zap the mappings, free the swap slot, free the page */
 		pmap_page_protect(pg, VM_PROT_NONE);
 		uao_dropswap(&aobj->u_obj, pg->offset >> PAGE_SHIFT);
+		uvm_lock_pageq();
 		uvm_pagefree(pg);
+		uvm_unlock_pageq();
 	}
-	uvm_unlock_pageq();
+
+	/*
+ 	 * if we found any busy pages, we're done for now.
+ 	 * mark the aobj for death, releasepg will finish up for us.
+ 	 */
+	if (busybody) {
+		aobj->u_flags |= UAO_FLAG_KILLME;
+		simple_unlock(&aobj->u_obj.vmobjlock);
+		return;
+	}
 
 	/*
  	 * finally, free the rest.
@@ -716,6 +726,35 @@ uao_detach_locked(struct uvm_object *uobj)
  * => we return TRUE unless we encountered some sort of I/O error
  *	XXXJRT currently never happens, as we never directly initiate
  *	XXXJRT I/O
+ *
+ * comment on "cleaning" object and PG_BUSY pages:
+ *	this routine is holding the lock on the object.  the only time
+ *	that is can run into a PG_BUSY page that it does not own is if
+ *	some other process has started I/O on the page (e.g. either
+ *	a pagein or a pageout).  if the PG_BUSY page is being paged
+ *	in, then it can not be dirty (!PG_CLEAN) because no one has
+ *	had a change to modify it yet.  if the PG_BUSY page is being
+ *	paged out then it means that someone else has already started
+ *	cleaning the page for us (how nice!).  in this case, if we
+ *	have syncio specified, then after we make our pass through the
+ *	object we need to wait for the other PG_BUSY pages to clear
+ *	off (i.e. we need to do an iosync).  also note that once a
+ *	page is PG_BUSY is must stary in its object until it is un-busyed.
+ *	XXXJRT We never actually do this, as we are "flushing" anonymous
+ *	XXXJRT memory, which doesn't have persistent backing store.
+ *
+ * note on page traversal:
+ *	we can traverse the pages in an object either by going down the
+ *	linked list in "uobj->memq", or we can go over the address range
+ *	by page doing hash table lookups for each address.  depending
+ *	on how many pages are in the object it may be cheaper to do one
+ *	or the other.  we set "by_list" to true if we are using memq.
+ *	if the cost of a hash lookup was equal to the cost of the list
+ *	traversal we could compare the number of pages in the start->stop
+ *	range to the total number of pages in the object.  however, it
+ *	seems that a hash table lookup is more expensive than the linked
+ *	list traversal, so we multiply the number of pages in the
+ *	start->stop range by a penalty which we define below.
  */
 
 #define	UAO_HASH_PENALTY 4	/* XXX: a guess */
@@ -724,13 +763,19 @@ boolean_t
 uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *) uobj;
-	struct vm_page *pp;
+	struct vm_page *pp, *ppnext;
+	boolean_t retval, by_list;
 	voff_t curoff;
 	UVMHIST_FUNC("uao_flush"); UVMHIST_CALLED(maphist);
+
+	curoff = 0;	/* XXX: shut up gcc */
+
+	retval = TRUE;	/* default to success */
 
 	if (flags & PGO_ALLPAGES) {
 		start = 0;
 		stop = aobj->u_pages << PAGE_SHIFT;
+		by_list = TRUE;		/* always go by the list */
 	} else {
 		start = trunc_page(start);
 		stop = round_page(stop);
@@ -739,10 +784,13 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			    "flush (fixed)\n");
 			stop = aobj->u_pages << PAGE_SHIFT;
 		}
+		by_list = (uobj->uo_npages <=
+		    ((stop - start) >> PAGE_SHIFT) * UAO_HASH_PENALTY);
 	}
 
-	UVMHIST_LOG(maphist, " flush start=0x%lx, stop=0x%lx, flags=0x%lx",
-	    (u_long)start, (u_long)stop, flags, 0);
+	UVMHIST_LOG(maphist,
+	    " flush start=0x%lx, stop=0x%lx, by_list=%ld, flags=0x%lx",
+	    (u_long)start, (u_long)stop, by_list, flags);
 
 	/*
 	 * Don't need to do any work here if we're not freeing
@@ -751,31 +799,44 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	if ((flags & (PGO_DEACTIVATE|PGO_FREE)) == 0) {
 		UVMHIST_LOG(maphist,
 		    "<- done (no work to do)",0,0,0,0);
-		return (TRUE);
+		return (retval);
 	}
 
-	/* locked: uobj */
-	curoff = start;
-	for (;;) {
-		if (curoff < stop) {
-			pp = uvm_pagelookup(uobj, curoff);
-			curoff += PAGE_SIZE;
-			if (pp == NULL)
+	/*
+	 * now do it.  note: we must update ppnext in the body of loop or we
+	 * will get stuck.  we need to use ppnext because we may free "pp"
+	 * before doing the next loop.
+	 */
+
+	if (by_list) {
+		pp = TAILQ_FIRST(&uobj->memq);
+	} else {
+		curoff = start;
+		pp = uvm_pagelookup(uobj, curoff);
+	}
+
+	ppnext = NULL;	/* XXX: shut up gcc */
+	uvm_lock_pageq();	/* page queues locked */
+
+	/* locked: both page queues and uobj */
+	for ( ; (by_list && pp != NULL) ||
+	    (!by_list && curoff < stop) ; pp = ppnext) {
+		if (by_list) {
+			ppnext = TAILQ_NEXT(pp, listq);
+
+			/* range check */
+			if (pp->offset < start || pp->offset >= stop)
 				continue;
 		} else {
-			break;
-		}
+			curoff += PAGE_SIZE;
+			if (curoff < stop)
+				ppnext = uvm_pagelookup(uobj, curoff);
 
-		/* Make sure page is unbusy, else wait for it. */
-		if (pp->pg_flags & PG_BUSY) {
-			atomic_setbits_int(&pp->pg_flags, PG_WANTED);
-			UVM_UNLOCK_AND_WAIT(pp, &uobj->vmobjlock, 0,
-			    "uaoflsh", 0);
-			simple_lock(&uobj->vmobjlock);
-			curoff -= PAGE_SIZE;
-			continue;
+			/* null check */
+			if (pp == NULL)
+				continue;
 		}
-
+		
 		switch (flags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE)) {
 		/*
 		 * XXX In these first 3 cases, we always just
@@ -784,9 +845,7 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		 * XXX in the future.
 		 */
 		case PGO_CLEANIT|PGO_FREE:
-			/* FALLTHROUGH */
 		case PGO_CLEANIT|PGO_DEACTIVATE:
-			/* FALLTHROUGH */
 		case PGO_DEACTIVATE:
  deactivate_it:
 			/* skip the page if it's loaned or wired */
@@ -794,13 +853,16 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			    pp->wire_count != 0)
 				continue;
 
-			uvm_lock_pageq();
+#ifdef UBC
+			/* ...and deactivate the page. */
+			pmap_clear_reference(pp);
+#else
 			/* zap all mappings for the page. */
 			pmap_page_protect(pp, VM_PROT_NONE);
 
 			/* ...and deactivate the page. */
+#endif
 			uvm_pagedeactivate(pp);
-			uvm_unlock_pageq();
 
 			continue;
 
@@ -817,13 +879,19 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			    pp->wire_count != 0)
 				continue;
 
+			/*
+			 * mark the page as released if its busy.
+			 */
+			if (pp->pg_flags & PG_BUSY) {
+				atomic_setbits_int(&pp->pg_flags, PG_RELEASED);
+				continue;
+			}
+
 			/* zap all mappings for the page. */
 			pmap_page_protect(pp, VM_PROT_NONE);
 
 			uao_dropswap(uobj, pp->offset >> PAGE_SHIFT);
-			uvm_lock_pageq();
 			uvm_pagefree(pp);
-			uvm_unlock_pageq();
 
 			continue;
 
@@ -832,9 +900,11 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		}
 	}
 
+	uvm_unlock_pageq();
+
 	UVMHIST_LOG(maphist,
 	    "<- done, rv=%ld",retval,0,0,0);
-	return (TRUE);
+	return (retval);
 }
 
 /*
@@ -916,10 +986,10 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			}
 
 			/*
-			 * to be useful must get a non-busy page
+			 * to be useful must get a non-busy, non-released page
 			 */
 			if (ptmp == NULL ||
-			    (ptmp->pg_flags & PG_BUSY) != 0) {
+			    (ptmp->pg_flags & (PG_BUSY|PG_RELEASED)) != 0) {
 				if (lcv == centeridx ||
 				    (flags & PGO_ALLPAGES) != 0)
 					/* need to do a wait or I/O! */
@@ -1026,7 +1096,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			}
 
 			/* page is there, see if we need to wait on it */
-			if ((ptmp->pg_flags & PG_BUSY) != 0) {
+			if ((ptmp->pg_flags & (PG_BUSY|PG_RELEASED)) != 0) {
 				atomic_setbits_int(&ptmp->pg_flags, PG_WANTED);
 				UVMHIST_LOG(pdhist,
 				    "sleeping, ptmp->flags 0x%lx\n",
@@ -1065,7 +1135,8 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		/*
  		 * just zero the page if there's nothing in swap.
  		 */
-		if (swslot == 0) {
+		if (swslot == 0)
+		{
 			/*
 			 * page hasn't existed before, just zero it.
 			 */
@@ -1176,7 +1247,27 @@ uao_releasepg(struct vm_page *pg, struct vm_page **nextpgp /* OUT */)
 	if (!nextpgp)
 		uvm_unlock_pageq();		/* keep locked for daemon */
 
-	return TRUE;
+	/*
+ 	 * if we're not killing the object, we're done.
+ 	 */
+	if ((aobj->u_flags & UAO_FLAG_KILLME) == 0)
+		return TRUE;
+	KASSERT(aobj->u_obj.uo_refs == 0);
+
+	/*
+ 	 * if there are still pages in the object, we're done for now.
+ 	 */
+	if (aobj->u_obj.uo_npages != 0)
+		return TRUE;
+
+	KASSERT(TAILQ_EMPTY(&aobj->u_obj.memq));
+
+	/*
+ 	 * finally, free the rest.
+ 	 */
+	uao_free(aobj);
+
+	return FALSE;
 }
 
 
@@ -1382,6 +1473,7 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 		return FALSE;
 
 	}
+	KASSERT((pg->pg_flags & PG_RELEASED) == 0);
 
 	/*
 	 * ok, we've got the page now.
