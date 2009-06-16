@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.42 2009/06/06 17:46:44 art Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.43 2009/06/16 00:11:29 oga Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -174,6 +174,7 @@ boolean_t		 uao_flush(struct uvm_object *, voff_t, voff_t, int);
 void			 uao_free(struct uvm_aobj *);
 int			 uao_get(struct uvm_object *, voff_t, vm_page_t *,
 			     int *, int, vm_prot_t, int, int);
+boolean_t		 uao_releasepg(struct vm_page *, struct vm_page **);
 boolean_t		 uao_pagein(struct uvm_aobj *, int, int);
 boolean_t		 uao_pagein_page(struct uvm_aobj *, int);
 
@@ -190,6 +191,10 @@ struct uvm_pagerops aobj_pager = {
 	NULL,			/* fault */
 	uao_flush,		/* flush */
 	uao_get,		/* get */
+	NULL,			/* put (done by pagedaemon) */
+	NULL,			/* cluster */
+	NULL,			/* mk_pcluster */
+	uao_releasepg		/* releasepg */
 };
 
 /*
@@ -521,7 +526,7 @@ uao_create(vsize_t size, int flags)
  	 */
 	simple_lock_init(&aobj->u_obj.vmobjlock);
 	aobj->u_obj.pgops = &aobj_pager;
-	RB_INIT(&aobj->u_obj.memt);
+	TAILQ_INIT(&aobj->u_obj.memq);
 	aobj->u_obj.uo_npages = 0;
 
 	/*
@@ -665,7 +670,7 @@ uao_detach_locked(struct uvm_object *uobj)
 	 * Release swap resources then free the page.
  	 */
 	uvm_lock_pageq();
-	while((pg = RB_ROOT(&uobj->memt)) != NULL) {
+	while((pg = TAILQ_FIRST(&uobj->memq)) != NULL) {
 		if (pg->pg_flags & PG_BUSY) {
 			atomic_setbits_int(&pg->pg_flags, PG_WANTED);
 			uvm_unlock_pageq();
@@ -790,8 +795,10 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 				continue;
 
 			uvm_lock_pageq();
+			/* zap all mappings for the page. */
+			pmap_page_protect(pp, VM_PROT_NONE);
 
-			/* Deactivate the page. */
+			/* ...and deactivate the page. */
 			uvm_pagedeactivate(pp);
 			uvm_unlock_pageq();
 
@@ -1135,6 +1142,45 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 }
 
 /*
+ * uao_releasepg: handle released page in an aobj
+ * 
+ * => "pg" is a PG_BUSY [caller owns it], PG_RELEASED page that we need
+ *      to dispose of.
+ * => caller must handle PG_WANTED case
+ * => called with page's object locked, pageq's unlocked
+ * => returns TRUE if page's object is still alive, FALSE if we
+ *      killed the page's object.    if we return TRUE, then we
+ *      return with the object locked.
+ * => if (nextpgp != NULL) => we return the next page on the queue, and return
+ *                              with the page queues locked [for pagedaemon]
+ * => if (nextpgp == NULL) => we return with page queues unlocked [normal case]
+ * => we kill the aobj if it is not referenced and we are suppose to
+ *      kill it ("KILLME").
+ */
+boolean_t
+uao_releasepg(struct vm_page *pg, struct vm_page **nextpgp /* OUT */)
+{
+	struct uvm_aobj *aobj = (struct uvm_aobj *) pg->uobject;
+
+	KASSERT(pg->pg_flags & PG_RELEASED);
+
+	/*
+ 	 * dispose of the page [caller handles PG_WANTED] and swap slot.
+ 	 */
+	pmap_page_protect(pg, VM_PROT_NONE);
+	uao_dropswap(&aobj->u_obj, pg->offset >> PAGE_SHIFT);
+	uvm_lock_pageq();
+	if (nextpgp)
+		*nextpgp = TAILQ_NEXT(pg, pageq); /* next page for daemon */
+	uvm_pagefree(pg);
+	if (!nextpgp)
+		uvm_unlock_pageq();		/* keep locked for daemon */
+
+	return TRUE;
+}
+
+
+/*
  * uao_dropswap:  release any swap resources from this aobj page.
  * 
  * => aobj must be locked or have a reference count of 0.
@@ -1350,6 +1396,9 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	 * deactivate the page (to put it on a page queue).
 	 */
 	pmap_clear_reference(pg);
+#ifndef UBC
+	pmap_page_protect(pg, VM_PROT_NONE);
+#endif
 	uvm_lock_pageq();
 	uvm_pagedeactivate(pg);
 	uvm_unlock_pageq();

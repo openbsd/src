@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_loan.c,v 1.31 2009/06/01 19:54:02 oga Exp $	*/
+/*	$OpenBSD: uvm_loan.c,v 1.32 2009/06/16 00:11:29 oga Exp $	*/
 /*	$NetBSD: uvm_loan.c,v 1.22 2000/06/27 17:29:25 mrg Exp $	*/
 
 /*
@@ -462,12 +462,14 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 		simple_lock(&uobj->vmobjlock);
 
 		/*
-		 * Re-verify that amap slot is still free. if there is a
-		 * problem we drop our lock (thus force a lookup refresh/retry).
+		 * verify that the page has not be released and re-verify
+		 * that amap slot is still free.   if there is a problem we
+		 * drop our lock (thus force a lookup refresh/retry).
 		 */
 			
-		if (locked && amap && amap_lookup(&ufi->entry->aref,
-		    ufi->orig_rvaddr - ufi->entry->start)) {
+		if ((pg->pg_flags & PG_RELEASED) != 0 ||
+		    (locked && amap && amap_lookup(&ufi->entry->aref,
+		    ufi->orig_rvaddr - ufi->entry->start))) {
 			
 			if (locked)
 				uvmfault_unlockall(ufi, amap, NULL, NULL);
@@ -484,6 +486,17 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 				/* still holding object lock */
 				wakeup(pg);
 
+			if (pg->pg_flags & PG_RELEASED) {
+#ifdef DIAGNOSTIC
+				if (uobj->pgops->pgo_releasepg == NULL)
+			panic("uvm_loanuobj: object has no releasepg function");
+#endif
+				/* frees page */
+				if (uobj->pgops->pgo_releasepg(pg, NULL))
+					simple_unlock(&uobj->vmobjlock);
+				return (0);
+			}
+
 			uvm_lock_pageq();
 			uvm_pageactivate(pg); /* make sure it is in queues */
 			uvm_unlock_pageq();
@@ -496,7 +509,8 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 
 	/*
 	 * at this point we have the page we want ("pg") marked PG_BUSY for us
-	 * and we have all data structures locked.   do the loanout.
+	 * and we have all data structures locked.   do the loanout.   page can
+	 * not be PG_RELEASED (we caught this above).
 	 */
 
 	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loan to wired-kernel page? */

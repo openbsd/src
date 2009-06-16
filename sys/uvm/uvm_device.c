@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.33 2009/06/02 23:00:19 oga Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.34 2009/06/16 00:11:29 oga Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ udv_attach(void *arg, vm_prot_t accessprot, voff_t off, vsize_t size)
 
 		simple_lock_init(&udv->u_obj.vmobjlock);
 		udv->u_obj.pgops = &uvm_deviceops;
-		RB_INIT(&udv->u_obj.memt);
+		TAILQ_INIT(&udv->u_obj.memq);
 		udv->u_obj.uo_npages = 0;
 		udv->u_obj.uo_refs = 1;
 		udv->u_flags = 0;
@@ -287,7 +287,7 @@ again:
 			  uobj,uobj->uo_refs,0,0);
 		return;
 	}
-	KASSERT(uobj->uo_npages == 0 && RB_EMPTY(&uobj->memt));
+	KASSERT(uobj->uo_npages == 0 && TAILQ_EMPTY(&uobj->memq));
 
 	/*
 	 * is it being held?   if so, wait until others are done.

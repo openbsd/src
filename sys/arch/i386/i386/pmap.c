@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.140 2009/06/03 02:31:48 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.141 2009/06/16 00:11:29 oga Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -805,7 +805,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	kpm = pmap_kernel();
 	simple_lock_init(&kpm->pm_obj.vmobjlock);
 	kpm->pm_obj.pgops = NULL;
-	RB_INIT(&kpm->pm_obj.memt);
+	TAILQ_INIT(&kpm->pm_obj.memq);
 	kpm->pm_obj.uo_npages = 0;
 	kpm->pm_obj.uo_refs = 1;
 	bzero(&kpm->pm_list, sizeof(kpm->pm_list));  /* pm_list not used */
@@ -1424,7 +1424,7 @@ pmap_drop_ptp(struct pmap *pm, vaddr_t va, struct vm_page *ptp,
 	pm->pm_stats.resident_count--;
 	/* update hint */
 	if (pm->pm_ptphint == ptp)
-		pm->pm_ptphint = RB_ROOT(&pm->pm_obj.memt);
+		pm->pm_ptphint = TAILQ_FIRST(&pm->pm_obj.memq);
 	ptp->wire_count = 0;
 	/* Postpone free to after shootdown. */
 	uvm_pagerealloc(ptp, NULL, 0);
@@ -1461,7 +1461,7 @@ pmap_pinit(struct pmap *pmap)
 	/* init uvm_object */
 	simple_lock_init(&pmap->pm_obj.vmobjlock);
 	pmap->pm_obj.pgops = NULL;	/* currently not a mappable object */
-	RB_INIT(&pmap->pm_obj.memt);
+	TAILQ_INIT(&pmap->pm_obj.memq);
 	pmap->pm_obj.uo_npages = 0;
 	pmap->pm_obj.uo_refs = 1;
 	pmap->pm_stats.wired_count = 0;
@@ -1533,7 +1533,8 @@ pmap_destroy(struct pmap *pmap)
 	simple_unlock(&pmaps_lock);
 
 	/* Free any remaining PTPs. */
-	while ((pg = RB_ROOT(&pmap->pm_obj.memt)) != NULL) {
+	while (!TAILQ_EMPTY(&pmap->pm_obj.memq)) {
+		pg = TAILQ_FIRST(&pmap->pm_obj.memq);
 		pg->wire_count = 0;
 		uvm_pagefree(pg);
 	}

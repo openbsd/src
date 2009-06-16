@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.17 2009/06/02 23:00:19 oga Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.18 2009/06/16 00:11:29 oga Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -1449,7 +1449,7 @@ pmap_remove_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 				pmap->pm_stats.resident_count--;
 				if (pmap->pm_ptphint == ptp)
 					pmap->pm_ptphint =
-					    RB_ROOT(&pmap->pm_obj.memt);
+					    TAILQ_FIRST(&pmap->pm_obj.memq);
 				ptp->wire_count = 0;
 				/* Postpone free to after shootdown. */
 				uvm_pagerealloc(ptp, NULL, 0);
@@ -1543,7 +1543,7 @@ pmap_remove_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			pmap->pm_stats.resident_count--;
 			if (pmap->pm_ptphint == ptp)	/* update hint? */
 				pmap->pm_ptphint =
-				    RB_ROOT(&pmap->pm_obj.memt);
+				    TAILQ_FIRST(&pmap->pm_obj.memq);
 			ptp->wire_count = 0;
 			/* Postpone free to after shootdown. */
 			uvm_pagerealloc(ptp, NULL, 0);
@@ -1661,7 +1661,7 @@ pmap_page_remove_pae(struct vm_page *pg)
 				/* update hint? */
 				if (pve->pv_pmap->pm_ptphint == pve->pv_ptp)
 					pve->pv_pmap->pm_ptphint =
-					    RB_ROOT(&pve->pv_pmap->pm_obj.memt);
+					    TAILQ_FIRST(&pve->pv_pmap->pm_obj.memq);
 				pve->pv_ptp->wire_count = 0;
 				/* Postpone free to after shootdown. */
 				uvm_pagerealloc(pve->pv_ptp, NULL, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.55 2009/06/06 17:46:44 art Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.56 2009/06/16 00:11:29 oga Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -203,6 +203,11 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
 		if (pg && (pg->pg_flags & PG_BUSY) == 0 && pg->loan_count == 0) {
 			uvm_lock_pageq();
 			if (pg->wire_count == 0) {
+#ifdef UBC
+				pmap_clear_reference(pg);
+#else
+				pmap_page_protect(pg, VM_PROT_NONE);
+#endif
 				uvm_pagedeactivate(pg);
 			}
 			uvm_unlock_pageq();
@@ -916,10 +921,10 @@ ReFault:
 
 				/*
 				 * if center page is resident and not
-				 * PG_BUSY, then pgo_get made it PG_BUSY
-				 * for us and gave us a handle to it.
-				 * remember this page as "uobjpage."
-				 * (for later use).
+				 * PG_BUSY|PG_RELEASED then pgo_get
+				 * made it PG_BUSY for us and gave
+				 * us a handle to it.   remember this
+				 * page as "uobjpage." (for later use).
 				 */
 				
 				if (lcv == centeridx) {
@@ -961,8 +966,8 @@ ReFault:
 				     (wired ? PMAP_WIRED : 0));
 
 				/* 
-				 * NOTE: page can't be PG_WANTED because
-				 * we've held the lock the whole time
+				 * NOTE: page can't be PG_WANTED or PG_RELEASED
+				 * because we've held the lock the whole time
 				 * we've had the handle.
 				 */
 
@@ -1366,12 +1371,15 @@ Case2:
 		/* locked(!locked): uobj, uobjpage */
 
 		/*
-		 * Re-verify that amap slot is still free. if there is
-		 * a problem, we unlock and clean up.
+		 * verify that the page has not be released and re-verify
+		 * that amap slot is still free.   if there is a problem,
+		 * we unlock and clean up.
 		 */
 
-		if (locked && amap && amap_lookup(&ufi.entry->aref,
-		      ufi.orig_rvaddr - ufi.entry->start)) {
+		if ((uobjpage->pg_flags & PG_RELEASED) != 0 ||
+		    (locked && amap && 
+		    amap_lookup(&ufi.entry->aref,
+		      ufi.orig_rvaddr - ufi.entry->start))) {
 			if (locked) 
 				uvmfault_unlockall(&ufi, amap, NULL, NULL);
 			locked = FALSE;
@@ -1390,6 +1398,17 @@ Case2:
 				/* still holding object lock */
 				wakeup(uobjpage);
 
+			if (uobjpage->pg_flags & PG_RELEASED) {
+				uvmexp.fltpgrele++;
+				KASSERT(uobj->pgops->pgo_releasepg != NULL);
+
+				/* frees page */
+				if (uobj->pgops->pgo_releasepg(uobjpage,NULL))
+					/* unlock if still alive */
+					simple_unlock(&uobj->vmobjlock);
+				goto ReFault;
+			}
+
 			uvm_lock_pageq();
 			/* make sure it is in queues */
 			uvm_pageactivate(uobjpage);
@@ -1404,8 +1423,9 @@ Case2:
 		}
 
 		/*
-		 * we have the data in uobjpage which is PG_BUSY and we are
-		 * holding object lock.
+		 * we have the data in uobjpage which is PG_BUSY and
+		 * !PG_RELEASED.  we are holding object lock (so the page
+		 * can't be released on us).
 		 */
 
 		/* locked: maps(read), amap(if !null), uobj, uobjpage */
@@ -1419,6 +1439,8 @@ Case2:
 	/*
 	 * notes:
 	 *  - at this point uobjpage can not be NULL
+	 *  - at this point uobjpage can not be PG_RELEASED (since we checked
+	 *  for it above)
 	 *  - at this point uobjpage could be PG_WANTED (handle later)
 	 */
 		
@@ -1605,7 +1627,9 @@ Case2:
 			}
 			
 			/*
-			 * dispose of uobjpage. drop handle to uobj as well.
+			 * dispose of uobjpage.  it can't be PG_RELEASED
+			 * since we still hold the object lock.
+			 * drop handle to uobj as well.
 			 */
 
 			if (uobjpage->pg_flags & PG_WANTED)
@@ -1668,6 +1692,11 @@ Case2:
 		if (pg->pg_flags & PG_WANTED)
 			wakeup(pg);		/* lock still held */
 
+		/* 
+		 * note that pg can't be PG_RELEASED since we did not drop
+		 * the object lock since the last time we checked.
+		 */
+ 
 		atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_FAKE|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
 		uvmfault_unlockall(&ufi, amap, uobj, NULL);
@@ -1707,6 +1736,11 @@ Case2:
 	if (pg->pg_flags & PG_WANTED)
 		wakeup(pg);		/* lock still held */
 
+	/* 
+	 * note that pg can't be PG_RELEASED since we did not drop the object 
+	 * lock since the last time we checked.
+	 */
+ 
 	atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_FAKE|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
 	uvmfault_unlockall(&ufi, amap, uobj, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.7 2009/06/06 18:06:22 art Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.8 2009/06/16 00:11:29 oga Exp $ */
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
  *
@@ -64,7 +64,7 @@ buf_mem_init(vsize_t size)
 	buf_object = &buf_object_store;
 
 	buf_object->pgops = NULL;
-	RB_INIT(&buf_object->memt);
+	TAILQ_INIT(&buf_object->memq);
 	buf_object->uo_npages = 0;
 	buf_object->uo_refs = 1;
 }
