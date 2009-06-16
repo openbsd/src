@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.11 2009/06/01 17:42:33 ariane Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.12 2009/06/16 16:42:40 ariane Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*-
@@ -111,13 +111,6 @@
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_LOW	1
 #define	VM_FREELIST_HIGH	2
-
-/* reserve ISA-DMA and 32-bit DMA memory */
-#define UVM_IO_RANGES							\
-	{								\
-		{ 0, 0x00ffffffUL },					\
-		{ 0, 0xffffffffUL },					\
-	}
 
 #define __HAVE_VM_PAGE_MD
 struct pv_entry;

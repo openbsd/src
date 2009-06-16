@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.79 2009/06/14 03:04:08 deraadt Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.80 2009/06/16 16:42:41 ariane Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -221,12 +221,11 @@ typedef int		vm_prot_t;
 #define	UVM_PGA_ZERO		0x0002	/* returned page must be zeroed */
 
 /*
- * flags for uvm_pglistalloc() and uvm_pmr_getpages()
+ * flags for uvm_pglistalloc()
  */
 #define UVM_PLA_WAITOK		0x0001	/* may sleep */
 #define UVM_PLA_NOWAIT		0x0002	/* can't sleep (need one of the two) */
 #define UVM_PLA_ZERO		0x0004	/* zero all pages before returning */
-#define UVM_PLA_TRY_CONTIG	0x0008	/* try to allocate a contig range */
 
 /*
  * lockflags that control the locking behavior of various functions.
@@ -589,10 +588,6 @@ int			uvm_pglistalloc(psize_t, paddr_t,
 				paddr_t, paddr_t, paddr_t,
 				struct pglist *, int, int); 
 void			uvm_pglistfree(struct pglist *);
-
-/* uvm_pmemrange.c */
-
-void			uvm_pmr_use_inc(paddr_t, paddr_t);
 
 /* uvm_swap.c */
 void			uvm_swap_init(void);

@@ -1119,7 +1119,7 @@ nnpfs_putpages (struct vop_putpages_args *ap)
 
 	while (pg && !dirty) {
 	    dirty = pmap_is_modified(pg) || (pg->flags & PG_CLEAN) == 0;
-	    pg = TAILQ_NEXT(pg, fq.queues.listq);
+	    pg = TAILQ_NEXT(pg, listq);
 	}	
 
 	if (dirty)

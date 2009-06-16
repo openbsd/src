@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.35 2009/06/16 00:11:29 oga Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.36 2009/06/16 16:42:41 ariane Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <uvm/uvm_page.h>
 #include <uvm/uvm_pager.h>
 #include <uvm/uvm_pdaemon.h>
-#include <uvm/uvm_pmemrange.h>
 #include <uvm/uvm_swap.h>
 #ifdef UVM_SWAP_ENCRYPT
 #include <uvm/uvm_swap_encrypt.h>
@@ -69,32 +68,6 @@
 #include <machine/vmparam.h>
 
 /*
- * UVM_IO_RANGES: paddr_t pairs, describing the lowest and highest address
- * that should be reserved. These ranges (which may overlap) will have their
- * use counter increased, causing them to be avoided if an allocation can be
- * satisfied from another range of memory.
- *
- * IO ranges need not overlap with physmem ranges: the uvm code splits ranges
- * on demand to satisfy requests.
- *
- * UVM_IO_RANGES specified here actually translates into a call to
- * uvm_pmr_use_inc() at uvm initialization time. uvm_pmr_use_inc() can also
- * be called after uvm_init() has completed.
- *
- * Note: the upper bound is specified in the same way as to uvm_pglistalloc.
- * Ex: a memory range of 16 bit is specified as: { 0, 0xffff }.
- */
-#ifndef UVM_IO_RANGES
-#define UVM_IO_RANGES		{}
-#endif
-
-/* UVM IO ranges are described in an array of uvm_io_ranges. */
-struct uvm_io_ranges {
-	paddr_t low;
-	paddr_t high;
-};
-
-/*
  * uvm structure (vm global state: collected in one structure for ease
  * of reference...)
  */
@@ -103,7 +76,7 @@ struct uvm {
 	/* vm_page related parameters */
 
 		/* vm_page queues */
-	struct uvm_pmr_control pmr_control; /* pmemrange control data */
+	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
 	struct pglist page_active;	/* allocated pages, in use */
 	struct pglist page_inactive_swp;/* pages inactive (reclaim or free) */
 	struct pglist page_inactive_obj;/* pages inactive (reclaim or free) */
