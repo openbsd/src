@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.8 2009/06/13 16:28:11 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.9 2009/06/17 18:19:03 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -369,6 +369,14 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 				if (md->mem_first_page == 0)
 					break;
 
+				/*
+				 * Do not try to merge segments if they are
+				 * not covering the same node.
+				 */
+				if ((ptoa(md->mem_first_page) >> kl_n_shift) !=
+				    nasid)
+					continue;
+
 				if (md->mem_first_page == lp &&
 				    lp != atop(2 << 30)) {
 					md->mem_first_page = fp;
@@ -459,6 +467,14 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 			    descno++, md++) {
 				if (md->mem_first_page == 0)
 					break;
+
+				/*
+				 * Do not try to merge segments if they are
+				 * not covering the same node.
+				 */
+				if ((ptoa(md->mem_first_page) >> kl_n_shift) !=
+				    nasid)
+					continue;
 
 				if (md->mem_first_page == lp &&
 				    lp != atop(2 << 30)) {
