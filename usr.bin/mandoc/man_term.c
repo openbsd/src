@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.3 2009/06/17 22:27:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -441,7 +441,7 @@ print_foot(struct termp *p, const struct man_meta *meta)
 
 	tm = localtime(&meta->date);
 
-	if (NULL == strftime(buf, p->rmargin, "%B %d, %Y", tm))
+	if (0 == strftime(buf, p->rmargin, "%B %d, %Y", tm))
 		err(1, "strftime");
 
 	term_vspace(p);
