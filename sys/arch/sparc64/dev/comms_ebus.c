@@ -1,4 +1,4 @@
-/*	$OpenBSD: comms_ebus.c,v 1.1 2009/05/20 18:22:33 miod Exp $	*/
+/*	$OpenBSD: comms_ebus.c,v 1.2 2009/06/17 06:48:38 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -256,7 +256,6 @@ comms_enable(void *v)
 	sc->sc_ier = IER_ERXRDY;
 	COM_WRITE(sc, com_ier, sc->sc_ier);
 	splx(s);
-printf("%s\n", __func__);
 
 	return 0;
 }
