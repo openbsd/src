@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.21 2009/05/01 19:00:40 jmc Exp $
+.\"	$OpenBSD: softraid.4,v 1.22 2009/06/17 23:11:38 marco Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 1 2009 $
+.Dd $Mdocdate: June 17 2009 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -79,6 +79,22 @@ though at the cost of write speed.
 Unlike traditional RAID 1,
 .Nm
 supports the use of more than two chunks in a RAID 1 setup.
+.It RAID 4
+A
+.Em striping
+discipline with a fixed parity chunk.
+It stripes data accross chunks and provides parity to prevent data loss of
+a single chunk failure.
+Read performance is increased however write performance is limited by the
+parity chunk.
+.It RAID 5
+A
+.Em striping
+discipline with floating parity accross all chunks.
+It stripes data accross chunks and provides parity to prevent data loss of
+a single chunk failure.
+Read performance is increased however write performance should be faster than
+RAID 4.
 .It CRYPTO
 An
 .Em encrypting
@@ -152,6 +168,9 @@ failed chunk.
 The RAID 1 discipline does not initialize the mirror upon creation.
 This is by design because all sectors that are read are written first.
 There is no point in wasting a lot of time syncing random data.
+.Pp
+The RAID 4 & 5 disciplines do not initialize the parity upon creation.
+This is due to the scrub functionality not being currently implemented.
 .Pp
 Currently there is no automated mechanism to recover from failed disks.
 .Pp
