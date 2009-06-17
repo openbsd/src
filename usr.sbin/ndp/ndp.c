@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.43 2009/06/05 22:40:24 chris Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.44 2009/06/17 15:31:23 claudio Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -607,6 +607,8 @@ again:;
 		int isrouter = 0, prbs = 0;
 
 		rtm = (struct rt_msghdr *)next;
+		if (rtm->rtm_version != RTM_VERSION)
+			continue;
 		sin = (struct sockaddr_in6 *)(next + rtm->rtm_hdrlen);
 		sdl = (struct sockaddr_dl *)((char *)sin + ROUNDUP(sin->sin6_len));
 
