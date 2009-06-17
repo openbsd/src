@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.74 2009/06/14 00:09:37 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.75 2009/06/17 07:00:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -113,10 +113,8 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 		return "LIF volume header I/O error";
 
 	lvp = (struct lifvol *)bp->b_data;
-	if (lvp->vol_id != LIF_VOL_ID) {
-		openbsdstart = 0;
-		goto finished;
-	}
+	if (lvp->vol_id != LIF_VOL_ID)
+		return "no LIF volume header";
 
 	dbp = geteblk(LIF_DIRSIZE);
 	dbp->b_dev = bp->b_dev;
@@ -129,7 +127,6 @@ readliflabel(struct buf *bp, void (*strat)(struct buf *),
 
 	if (biowait(dbp)) {
 		msg = "LIF directory I/O error";
-		openbsdstart = 0;
 		goto done;
 	}
 
