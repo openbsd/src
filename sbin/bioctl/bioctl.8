@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.68 2009/06/13 21:14:38 halex Exp $
+.\"	$OpenBSD: bioctl.8,v 1.69 2009/06/17 23:00:03 marco Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 13 2009 $
+.Dd $Mdocdate: June 17 2009 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -184,6 +184,12 @@ A striping discipline.
 .It 1
 RAID 1:
 A mirroring discipline.
+.It 4
+RAID 4
+A striping discipline with fixed parity chunk.
+.It 5
+RAID 5
+A striping discipline with floating parity chunk.
 .It C
 CRYPTO:
 An encrypting discipline.
@@ -191,7 +197,8 @@ An encrypting discipline.
 .Pp
 The RAID 0 and RAID 1 disciplines requires a minimum of two devices passed to
 .Fl l ,
-while the CRYPTO discipline requires exactly one.
+RAID 4 & 5 require at least three devices and the CRYPTO discipline requires
+exactly one.
 .It Fl d
 Delete volume specified by device.
 .It Fl l Ar special[,special,...]
@@ -260,6 +267,4 @@ The
 interface was written by
 .An Marco Peereboom Aq marco@openbsd.org .
 .Sh CAVEATS
-Use of the crypto discipline is currently considered experimental.
-.Pp
-Manual rebuild is currently not implemented for softraid.
+Use of the crypto & RAID 4/5 disciplines are currently considered experimental.
