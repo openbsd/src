@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.11 2009/06/04 23:13:21 deraadt Exp $	*/
+/*	$OpenBSD: flash.c,v 1.12 2009/06/17 01:30:30 thib Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@openbsd.org>
@@ -814,7 +814,7 @@ flashstrategy(struct buf *bp)
 
 	/* Queue the transfer. */
 	s = splbio();
-	BUFQ_ADD(sc->sc_dk.dk_bufq, bp);
+	disksort(&sc->sc_q, bp);
 	flashstart(sc);
 	splx(s);
 	device_unref(&sc->sc_dev);
@@ -877,13 +877,15 @@ flashsize(dev_t dev)
 void
 flashstart(struct flash_softc *sc)
 {
-	struct buf *bp;
+	struct buf *dp, *bp;
 
 	while (1) {
 		/* Remove the next buffer from the queue or stop. */
-		bp = BUFQ_GET(sc->sc_dk.dk_bufq);
+		dp = &sc->sc_q;
+		bp = dp->b_actf;
 		if (bp == NULL)
 			return;
+		dp->b_actf = bp->b_actf;
 
 		/* Transfer this buffer now. */
 		_flashstart(sc, bp);

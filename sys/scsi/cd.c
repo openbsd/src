@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.147 2009/06/03 22:09:30 thib Exp $	*/
+/*	$OpenBSD: cd.c,v 1.148 2009/06/17 01:30:30 thib Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -98,6 +98,7 @@ void	cdrestart(void *);
 void	cdminphys(struct buf *);
 void	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *, int);
 void	cddone(struct scsi_xfer *);
+void	cd_kill_buffers(struct cd_softc *);
 int	cd_setchan(struct cd_softc *, int, int, int, int, int);
 int	cd_getvol(struct cd_softc *cd, struct ioc_vol *, int);
 int	cd_setvol(struct cd_softc *, const struct ioc_vol *, int);
@@ -247,7 +248,7 @@ cddetach(struct device *self, int flags)
 	struct cd_softc *cd = (struct cd_softc *)self;
 	int bmaj, cmaj, mn;
 
-	bufq_drain(cd->sc_dk.dk_bufq);
+	cd_kill_buffers(cd);
 
 	/* Locate the lowest minor number to be detached. */
 	mn = DISKMINOR(self->dv_unit, 0);
@@ -498,7 +499,7 @@ cdstrategy(struct buf *bp)
 	/*
 	 * Place it in the queue of disk activities for this disk
 	 */
-	BUFQ_ADD(cd->sc_dk.dk_bufq, bp);
+	disksort(&cd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -545,7 +546,8 @@ cdstart(void *v)
 {
 	struct cd_softc *cd = v;
 	struct scsi_link *sc_link = cd->sc_link;
-	struct buf *bp = NULL;
+	struct buf *bp = 0;
+	struct buf *dp;
 	struct scsi_rw_big cmd_big;
 	struct scsi_rw cmd_small;
 	struct scsi_generic *cmdp;
@@ -570,9 +572,13 @@ cdstart(void *v)
 			return;
 		}
 
-		/* See if there is a buf with work for us to do..*/
-		if ((bp = BUFQ_GET(cd->sc_dk.dk_bufq)) == NULL)
+		/*
+		 * See if there is a buf with work for us to do..
+		 */
+		dp = &cd->buf_queue;
+		if ((bp = dp->b_actf) == NULL)	/* yes, an assign */
 			return;
+		dp->b_actf = bp->b_actf;
 
 		/*
 		 * If the device has become invalid, abort all the
@@ -649,7 +655,7 @@ cdstart(void *v)
 			/*
 			 * The device can't start another i/o. Try again later.
 			 */
-			BUFQ_ADD(cd->sc_dk.dk_bufq, bp);
+			dp->b_actf = bp;
 			disk_unbusy(&cd->sc_dk, 0, 0);
 			timeout_add(&cd->sc_timeout, 1);
 			return;
@@ -1945,6 +1951,26 @@ cd_interpret_sense(struct scsi_xfer *xs)
 		break;
 	}
 	return (EJUSTRETURN); /* use generic handler in scsi_base */
+}
+
+/*
+ * Remove unprocessed buffers from queue.
+ */
+void
+cd_kill_buffers(struct cd_softc *cd)
+{
+	struct buf *dp, *bp;
+	int s;
+
+	s = splbio();
+	for (dp = &cd->buf_queue; (bp = dp->b_actf) != NULL; ) {
+		dp->b_actf = bp->b_actf;
+
+		bp->b_error = ENXIO;
+		bp->b_flags |= B_ERROR;
+		biodone(bp);
+	}
+	splx(s);
 }
 
 #if defined(__macppc__)

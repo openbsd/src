@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.17 2009/06/03 22:09:30 thib Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.18 2009/06/17 01:30:32 thib Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@ struct sd_softc {
 		u_long	rot_rate;	/* rotational rate, in RPM */
 		daddr64_t	disksize;	/* total number sectors */
 	} params;
+	struct buf buf_queue;
 	void *sc_sdhook;		/* our shutdown hook */
 	struct timeout sc_timeout;
 };

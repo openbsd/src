@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.19 2009/06/03 22:09:30 thib Exp $	*/
+/*	$OpenBSD: disk.h,v 1.20 2009/06/17 01:30:32 thib Exp $	*/
 /*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 #include <sys/mutex.h>
 
 struct buf;
-struct bufq;
 struct disklabel;
 
 #define DS_DISKNAMELEN	16
@@ -102,7 +101,6 @@ struct disk {
 	int		dk_byteshift;	/* shift to convert bytes to blks */
 
 	struct	dkdriver *dk_driver;	/* pointer to driver */
-	struct	bufq	 *dk_bufq;
 
 	/*
 	 * Disk label information.  Storage for the in-core disk label
