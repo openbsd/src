@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.11 2007/10/18 04:32:25 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.12 2009/06/17 18:18:21 miod Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -84,6 +84,7 @@ void
 cpuattach(struct device *parent, struct device *dev, void *aux)
 {
 	int cpuno = dev->dv_unit;
+	int isr16k = 0;
 
 	printf(": ");
 
@@ -104,7 +105,11 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		printf("MIPS R12000 CPU");
 		break;
 	case MIPS_R14000:
-		printf("MIPS R14000 CPU");
+		if (sys_config.cpu[cpuno].vers_maj > 2) {
+			sys_config.cpu[cpuno].vers_maj -= 2;
+			isr16k = 1;
+		}
+		printf("R1%d000 CPU", isr16k ? 6 : 4);
 		break;
 	case MIPS_R4200:
 		printf("NEC VR4200 CPU (ICE)");
@@ -156,7 +161,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		printf("R12000 FPU");
 		break;
 	case MIPS_R14000:
-		printf("R14000 FPU");
+		printf("R1%d000 FPU", isr16k ? 6 : 4);
 		break;
 	case MIPS_R4200:
 		printf("VR4200 FPC (ICE)");
