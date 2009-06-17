@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.170 2009/06/05 00:05:22 claudio Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.171 2009/06/17 20:17:19 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -753,12 +753,14 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, int ismulti,
 	case MASTER:
 		/*
 		 * If we receive an advertisement from a master who's going to
-		 * be more frequent than us, go into BACKUP state.
+		 * be more frequent than us, and whose demote count is not higher
+		 * than ours, go into BACKUP state. If his demote count is lower,
+		 * also go into BACKUP.
 		 */
-		if (timercmp(&sc_tv, &ch_tv, >) ||
-		    (timercmp(&sc_tv, &ch_tv, ==) &&
-		    ch->carp_demote <=
-		    (carp_group_demote_count(sc) & 0xff))) {
+		if (((timercmp(&sc_tv, &ch_tv, >) ||
+		    timercmp(&sc_tv, &ch_tv, ==)) &&
+		    (ch->carp_demote <= carp_group_demote_count(sc))) ||
+		    ch->carp_demote < carp_group_demote_count(sc)) {
 			timeout_del(&vhe->ad_tmo);
 			carp_set_state(vhe, BACKUP);
 			carp_setrun(vhe, 0);
@@ -769,9 +771,12 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, int ismulti,
 	case BACKUP:
 		/*
 		 * If we're pre-empting masters who advertise slower than us,
-		 * and this one claims to be slower, treat him as down.
+		 * and do not have a better demote count, treat them as down.
+		 * 
 		 */
-		if (carp_opts[CARPCTL_PREEMPT] && timercmp(&sc_tv, &ch_tv, <)) {
+		if (carp_opts[CARPCTL_PREEMPT] &&
+		    timercmp(&sc_tv, &ch_tv, <) &&
+		    ch->carp_demote >= carp_group_demote_count(sc)) {
 			carp_master_down(vhe);
 			break;
 		}
@@ -780,7 +785,7 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, int ismulti,
 		 * Take over masters advertising with a higher demote count,
 		 * regardless of CARPCTL_PREEMPT.
 		 */ 
-		if (ch->carp_demote > (carp_group_demote_count(sc) & 0xff)) {
+		if (ch->carp_demote > carp_group_demote_count(sc)) {
 			carp_master_down(vhe);
 			break;
 		}
