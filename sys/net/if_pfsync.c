@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.126 2009/06/14 00:16:50 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.127 2009/06/17 04:24:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -856,12 +856,15 @@ pfsync_upd_tcp(struct pf_state *st, struct pfsync_state_peer *src,
 	if ((st->src.state > src->state &&
 	    (st->src.state < PF_TCPS_PROXY_SRC ||
 	    src->state >= PF_TCPS_PROXY_SRC)) ||
-	    SEQ_GT(st->src.seqlo, ntohl(src->seqlo)))
+
+	    (st->src.state == src->state &&
+	    SEQ_GT(st->src.seqlo, ntohl(src->seqlo))))
 		sync++;
 	else
 		pf_state_peer_ntoh(src, &st->src);
 
-	if (st->dst.state > dst->state ||
+	if ((st->dst.state > dst->state) ||
+
 	    (st->dst.state >= TCPS_SYN_SENT &&
 	    SEQ_GT(st->dst.seqlo, ntohl(dst->seqlo))))
 		sync++;
