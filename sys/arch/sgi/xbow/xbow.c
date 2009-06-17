@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbow.c,v 1.9 2009/06/13 21:48:03 miod Exp $	*/
+/*	$OpenBSD: xbow.c,v 1.10 2009/06/17 18:20:24 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -186,6 +186,11 @@ int	(*xbow_widget_id)(int16_t, u_int, uint32_t *);
 int
 xbowmatch(struct device *parent, void *match, void *aux)
 {
+	struct confargs *ca = aux;
+
+	if (strcmp(ca->ca_name, xbow_cd.cd_name) != 0)
+		return (0);
+
 	switch (sys_config.system_type) {
 	case SGI_O200:
 	case SGI_O300:
@@ -225,7 +230,7 @@ xbowprint(void *aux, const char *pnp)
 		printf(" revision %d at %s",
 		    xaa->xaa_revision, pnp);
 	}
-	printf(" nasid %d widget %d", xaa->xaa_nasid, xaa->xaa_widget);
+	printf(" widget %d", xaa->xaa_widget);
 	if (pnp == NULL) {
 		if (p != NULL)
 			printf(": %s", p->productname);
@@ -257,7 +262,7 @@ const uint8_t xbow_probe_octane[] =
 	{ 0x08, 0x0f, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0 };
 /* Origin 200: probe onboard devices, and there is nothing more */
 const uint8_t xbow_probe_singlebridge[] =
-	{ 0x08 };
+	{ 0x08, 0 };
 /* Base I/O board: probe in ascending order */
 const uint8_t xbow_probe_baseio[] =
 	{ 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0 };
