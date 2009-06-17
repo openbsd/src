@@ -1,4 +1,4 @@
-.\"	$Id: mandoc.1,v 1.4 2009/06/14 23:39:43 schwarze Exp $
+.\"	$Id: mandoc.1,v 1.5 2009/06/17 22:37:04 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 14 2009 $
+.Dd $Mdocdate: June 17 2009 $
 .Dt MANDOC 1
 .Os
 .\" SECTION
@@ -37,7 +37,7 @@ The
 utility formats 
 .Ux
 manual pages for display.  The arguments are as follows:
-.Bl -tag -width XXXXXXXXXXXX
+.Bl -tag -width Ds
 .\" ITEM
 .It Fl f Ns Ar option...
 Override default compiler behaviour.  See 
@@ -188,7 +188,7 @@ The
 utility accepts the following
 .Fl T
 arguments:
-.Bl -tag -width XXXXXXXXXXXX 
+.Bl -tag -width Ds
 .It Fl T Ns Ar ascii
 Produce 7-bit ASCII output, backspace-encoded for bold and underline
 styles.  This is the default.
@@ -205,7 +205,7 @@ corresponding filter in-order.
 Default compiler behaviour may be overriden with the
 .Fl f
 flag.
-.Bl -tag -width XXXXXXXXXXXXXXXXXXXX 
+.Bl -tag -width Ds
 .It Fl f Ns Ar ign-scope
 When rewinding the scope of a block macro, forces the compiler to ignore
 scope violations.  This can seriously mangle the resulting tree.
