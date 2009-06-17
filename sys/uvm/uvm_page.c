@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.90 2009/06/16 16:42:41 ariane Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.91 2009/06/17 00:13:59 oga Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -195,7 +195,7 @@ uvm_pageremove(struct vm_page *pg)
 	/* object should be locked */
 	TAILQ_REMOVE(&pg->uobject->memq, pg, listq);
 
-	atomic_clearbits_int(&pg->pg_flags, PG_TABLED|PQ_AOBJ);
+	atomic_clearbits_int(&pg->pg_flags, PG_TABLED);
 	pg->uobject->uo_npages--;
 	pg->uobject = NULL;
 	pg->pg_version++;
@@ -483,9 +483,9 @@ uvm_pageboot_alloc(vsize_t size)
  */
 
 /* subroutine: try to allocate from memory chunks on the specified freelist */
-boolean_t uvm_page_physget_freelist(paddr_t *, int);
+static boolean_t uvm_page_physget_freelist(paddr_t *, int);
 
-boolean_t
+static boolean_t
 uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 {
 	int lcv, x;
@@ -911,7 +911,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freemin ||
 	    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg &&
 	     uvmexp.inactive < uvmexp.inactarg))
-		wakeup(&uvm.pagedaemon_proc);
+		wakeup(&uvm.pagedaemon);
 
 	/*
 	 * fail if any of these conditions is true:
@@ -1186,9 +1186,7 @@ uvm_pagefree(struct vm_page *pg)
 		uvmexp.wired--;
 	}
 	if (pg->uanon) {
-		atomic_clearbits_int(&pg->pg_flags, PQ_ANON);
 		pg->uanon->an_page = NULL;
-		pg->uanon = NULL;
 #ifdef UBC
 		uvm_pgcnt_anon--;
 #endif

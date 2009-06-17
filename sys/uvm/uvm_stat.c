@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_stat.c,v 1.21 2009/05/08 13:50:15 ariane Exp $	 */
+/*	$OpenBSD: uvm_stat.c,v 1.22 2009/06/17 00:13:59 oga Exp $	 */
 /*	$NetBSD: uvm_stat.c,v 1.18 2001/03/09 01:02:13 chs Exp $	 */
 
 /*
@@ -68,7 +68,7 @@ int uvmhist_print_enabled = 1;
 #ifdef UVMHIST
 void uvmhist_dump(struct uvm_history *);
 void uvm_hist(u_int32_t);
-void uvmhist_dump_histories(struct uvm_history *[]);
+static void uvmhist_dump_histories(struct uvm_history *[]);
 #endif
 void uvmcnt_dump(void);
 
@@ -93,7 +93,7 @@ uvmhist_dump(struct uvm_history *l)
 /*
  * print a merged list of uvm_history structures
  */
-void
+static void
 uvmhist_dump_histories(struct uvm_history *hists[])
 {
 	struct timeval  tv;

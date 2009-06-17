@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.38 2009/06/16 16:42:41 ariane Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.39 2009/06/17 00:13:59 oga Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 

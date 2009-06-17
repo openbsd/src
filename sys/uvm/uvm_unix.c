@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.37 2009/06/06 21:25:21 deraadt Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.38 2009/06/17 00:13:59 oga Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -146,8 +146,6 @@ uvm_grow(struct proc *p, vaddr_t sp)
 	if (vm->vm_ssize + si <= atop(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 		vm->vm_ssize += si;
 }
-
-#ifndef SMALL_KERNEL
 
 /*
  * uvm_coredump: dump core!
@@ -322,5 +320,3 @@ uvm_coredump_walkmap(struct proc *p, void *iocookie,
 
 	return (0);
 }
-
-#endif	/* !SMALL_KERNEL */

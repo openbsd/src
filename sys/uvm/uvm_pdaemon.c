@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.49 2009/06/16 00:11:29 oga Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.50 2009/06/17 00:13:59 oga Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -96,9 +96,9 @@
  * local prototypes
  */
 
-void		uvmpd_scan(void);
-boolean_t	uvmpd_scan_inactive(struct pglist *);
-void		uvmpd_tune(void);
+static void		uvmpd_scan(void);
+static boolean_t	uvmpd_scan_inactive(struct pglist *);
+static void		uvmpd_tune(void);
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -143,7 +143,7 @@ uvm_wait(const char *wmsg)
 	}
 
 	uvm_lock_fpageq();
-	wakeup(&uvm.pagedaemon_proc);		/* wake the daemon! */
+	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
 	msleep(&uvmexp.free, &uvm.fpageqlock, PVM | PNORELOCK, wmsg, timo);
 }
 
@@ -155,7 +155,7 @@ uvm_wait(const char *wmsg)
  * => caller must call with page queues locked
  */
 
-void
+static void
 uvmpd_tune(void)
 {
 	UVMHIST_FUNC("uvmpd_tune"); UVMHIST_CALLED(pdhist);
@@ -214,7 +214,7 @@ uvm_pageout(void *arg)
 	for (;;) {
 		uvm_lock_fpageq();
 		UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
-		msleep(&uvm.pagedaemon_proc, &uvm.fpageqlock, PVM | PNORELOCK,
+		msleep(&uvm.pagedaemon, &uvm.fpageqlock, PVM | PNORELOCK,
 		    "pgdaemon", 0);
 		uvmexp.pdwoke++;
 		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
@@ -288,7 +288,7 @@ uvm_aiodone_daemon(void *arg)
 		 */
 		mtx_enter(&uvm.aiodoned_lock);
 		while ((bp = TAILQ_FIRST(&uvm.aio_done)) == NULL)
-			msleep(&uvm.aiodoned_proc, &uvm.aiodoned_lock,
+			msleep(&uvm.aiodoned, &uvm.aiodoned_lock,
 			    PVM, "aiodoned", 0);
 		/* Take the list for ourselves. */
 		TAILQ_INIT(&uvm.aio_done);
@@ -310,8 +310,8 @@ uvm_aiodone_daemon(void *arg)
 			bp = nbp;
 		}
 		uvm_lock_fpageq();
-		wakeup(free <= uvmexp.reserve_kernel ?
-		    (void *)&uvm.pagedaemon_proc : (void *)&uvmexp.free);
+		wakeup(free <= uvmexp.reserve_kernel ? &uvm.pagedaemon :
+		    &uvmexp.free);
 		uvm_unlock_fpageq();
 	}
 }
@@ -328,7 +328,7 @@ uvm_aiodone_daemon(void *arg)
  * => we return TRUE if we are exiting because we met our target
  */
 
-boolean_t
+static boolean_t
 uvmpd_scan_inactive(struct pglist *pglst)
 {
 	boolean_t retval = FALSE;	/* assume we haven't hit target */

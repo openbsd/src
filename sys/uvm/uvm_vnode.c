@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.65 2009/06/16 17:14:15 oga Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.66 2009/06/17 00:13:59 oga Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
