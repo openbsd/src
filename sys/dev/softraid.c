@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.151 2009/06/17 19:05:26 jordan Exp $ */
+/* $OpenBSD: softraid.c,v 1.152 2009/06/17 22:44:42 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2281,7 +2281,10 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 		}
 
 		/* setup scsi midlayer */
-		sd->sd_link.openings = sd->sd_max_wu;
+		if (sd->sd_openings)
+			sd->sd_link.openings = sd->sd_openings(sd);
+		else
+			sd->sd_link.openings = sd->sd_max_wu;
 		sd->sd_link.device = &sr_dev;
 		sd->sd_link.device_softc = sc;
 		sd->sd_link.adapter_softc = sc;

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.75 2009/06/17 03:43:30 marco Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.76 2009/06/17 22:44:42 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -436,6 +436,7 @@ struct sr_discipline {
 	void			(*sd_set_chunk_state)(struct sr_discipline *,
 				    int, int);
 	void			(*sd_set_vol_state)(struct sr_discipline *);
+	int			(*sd_openings)(struct sr_discipline *);
 
 	/* SCSI emulation */
 	struct scsi_sense_data	sd_scsi_sense;
