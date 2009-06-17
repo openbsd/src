@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.150 2009/06/12 17:22:52 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.151 2009/06/17 19:05:26 jordan Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2100,7 +2100,8 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			 */
 			strip_size = MAXPHYS;
 			vol_size =
-			    ch_entry->src_meta.scmi.scm_coerced_size * no_chunk;
+			    (ch_entry->src_meta.scmi.scm_coerced_size & 
+			    ~((strip_size >> DEV_BSHIFT) - 1)) * no_chunk;
 			break;
 		case 1:
 			if (no_chunk < 2)
@@ -2125,8 +2126,9 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc, int user)
 			 * to tinker with that type of stuff
 			 */
 			strip_size = MAXPHYS;
-			vol_size = ch_entry->src_meta.scmi.scm_coerced_size *
-			    (no_chunk - 1);
+			vol_size = 
+			    (ch_entry->src_meta.scmi.scm_coerced_size & 
+			    ~((strip_size >> DEV_BSHIFT) - 1)) * (no_chunk - 1);
 			break;
 #endif /* not_yet */
 #ifdef AOE
