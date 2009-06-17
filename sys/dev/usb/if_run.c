@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.28 2009/06/04 19:04:25 damien Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.29 2009/06/17 16:04:29 damien Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1791,7 +1791,7 @@ run_rx_frame(struct run_softc *sc, uint8_t *buf, int dmalen)
 		rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
 	}
 
-	if (rxd->flags & RT2860_RX_L2PAD) {
+	if (flags & RT2860_RX_L2PAD) {
 		u_int hdrlen = ieee80211_get_hdrlen(wh);
 		ovbcopy(wh, (caddr_t)wh + 2, hdrlen);
 		wh = (struct ieee80211_frame *)((caddr_t)wh + 2);
