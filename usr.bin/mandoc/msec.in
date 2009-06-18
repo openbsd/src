@@ -1,4 +1,4 @@
-/*	$Id: msec.in,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: msec.in,v 1.3 2009/06/18 21:29:32 schwarze Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -22,16 +22,16 @@
  * Be sure to escape strings.
  */
 
-LINE("1",		"General Commands Manual")
-LINE("2",		"System Calls Manual")
-LINE("3",		"Library Functions Manual")
-LINE("3p",		"Perl Library Functions Manual")
-LINE("4",		"Kernel Interfaces Manual")
-LINE("5",		"File Formats Manual")
-LINE("6",		"Games Manual")
-LINE("7",		"Miscellaneous Information Manual")
-LINE("8",		"System Manager\'s Manual")
-LINE("9",		"Kernel Developer\'s Manual")
+LINE("1",		"OpenBSD Reference Manual")
+LINE("2",		"OpenBSD Programmer\'s Manual")
+LINE("3",		"OpenBSD Programmer\'s Manual")
+LINE("3p",		"Perl Programmers Reference Guide")
+LINE("4",		"OpenBSD Programmer\'s Manual")
+LINE("5",		"OpenBSD Programmer\'s Manual")
+LINE("6",		"OpenBSD Reference Manual")
+LINE("7",		"OpenBSD Reference Manual")
+LINE("8",		"OpenBSD System Manager's Manual")
+LINE("9",		"OpenBSD Kernel Manual")
 LINE("X11",		"X11 Developer\'s Manual")
 LINE("X11R6",		"X11 Developer\'s Manual")
 LINE("unass",		"Unassociated")
