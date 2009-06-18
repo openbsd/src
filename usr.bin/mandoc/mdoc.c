@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.5 2009/06/15 18:41:13 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.6 2009/06/18 22:16:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -242,22 +242,6 @@ mdoc_parseln(struct mdoc *m, int ln, char *buf)
 }
 
 
-void
-mdoc_vmsg(struct mdoc *mdoc, int ln, int pos, const char *fmt, ...)
-{
-	char		  buf[256];
-	va_list		  ap;
-
-	if (NULL == mdoc->cb.mdoc_msg)
-		return;
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	(*mdoc->cb.mdoc_msg)(mdoc->data, ln, pos, buf);
-}
-
-
 int
 mdoc_verr(struct mdoc *mdoc, int ln, int pos, 
 		const char *fmt, ...)
@@ -291,23 +275,6 @@ mdoc_vwarn(struct mdoc *mdoc, int ln, int pos,
 	return((*mdoc->cb.mdoc_warn)(mdoc->data, ln, pos, type, buf));
 }
 
-
-int
-mdoc_nwarn(struct mdoc *mdoc, const struct mdoc_node *node, enum mdoc_warn type,
-		const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	if (NULL == mdoc->cb.mdoc_warn)
-		return(0);
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	return((*mdoc->cb.mdoc_warn)(mdoc->data, node->line, node->pos, type,
-	    buf));
-}
 
 int
 mdoc_nerr(struct mdoc *mdoc, const struct mdoc_node *node, const char *fmt, ...)
@@ -356,39 +323,6 @@ mdoc_err(struct mdoc *mdoc, const char *fmt, ...)
 	va_end(ap);
 	return((*mdoc->cb.mdoc_err)(mdoc->data, mdoc->last->line,
 	    mdoc->last->pos, buf));
-}
-
-
-void
-mdoc_msg(struct mdoc *mdoc, const char *fmt, ...)
-{
-	char		  buf[256];
-	va_list		  ap;
-
-	if (NULL == mdoc->cb.mdoc_msg)
-		return;
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	(*mdoc->cb.mdoc_msg)(mdoc->data, mdoc->last->line, mdoc->last->pos,
-	    buf);
-}
-
-
-void
-mdoc_pmsg(struct mdoc *mdoc, int line, int pos, const char *fmt, ...)
-{
-	char		  buf[256];
-	va_list		  ap;
-
-	if (NULL == mdoc->cb.mdoc_msg)
-		return;
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	(*mdoc->cb.mdoc_msg)(mdoc->data, line, pos, buf);
 }
 
 

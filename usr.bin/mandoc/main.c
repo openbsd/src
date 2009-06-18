@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.3 2009/06/14 23:39:43 schwarze Exp $ */
+/*	$Id: main.c,v 1.4 2009/06/18 22:16:56 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -246,7 +246,6 @@ mdoc_init(struct curparse *curp)
 	struct mdoc	*mdoc;
 	struct mdoc_cb	 mdoccb;
 
-	mdoccb.mdoc_msg = NULL;
 	mdoccb.mdoc_err = merr;
 	mdoccb.mdoc_warn = mdocwarn;
 
