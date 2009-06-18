@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.96 2009/06/18 17:48:15 claudio Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.97 2009/06/18 18:53:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -865,7 +865,7 @@ vr_rxeof(struct vr_softc *sc)
 		total_len -= ETHER_CRC_LEN;
 
 #ifdef __STRICT_ALIGNMENT
-		if (1) {
+		{
 			struct mbuf *m0;
 			m0 = m_devget(mtod(m, caddr_t), total_len,
 			    ETHER_ALIGN, ifp, NULL);
@@ -875,12 +875,11 @@ vr_rxeof(struct vr_softc *sc)
 				continue;
 			}
 			m = m0;
-		} else
-#endif
-		{
-			m->m_pkthdr.rcvif = ifp;
-			m->m_pkthdr.len = m->m_len = total_len;
 		} 
+#else
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = m->m_len = total_len;
+#endif
 
 		ifp->if_ipackets++;
 		if (sc->vr_quirks & VR_Q_CSUM &&
