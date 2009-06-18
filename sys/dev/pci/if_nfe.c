@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.88 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.89 2009/06/18 08:19:03 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -161,7 +161,8 @@ const struct pci_matchid nfe_devices[] = {
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN1 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN2 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN3 },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN4 }
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN4 },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP89_LAN }
 };
 
 int
@@ -247,6 +248,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP79_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP79_LAN3:
 	case PCI_PRODUCT_NVIDIA_MCP79_LAN4:
+	case PCI_PRODUCT_NVIDIA_MCP89_LAN:
 		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR | NFE_HW_CSUM |
 		    NFE_CORRECT_MACADDR | NFE_PWR_MGMT;
 		break;

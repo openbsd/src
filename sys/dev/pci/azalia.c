@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.139 2009/06/09 05:16:42 jakemsr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.140 2009/06/18 08:19:03 jsg Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -411,10 +411,10 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP79_HDA_2:
 	case PCI_PRODUCT_NVIDIA_MCP79_HDA_3:
 	case PCI_PRODUCT_NVIDIA_MCP79_HDA_4:
-	case PCI_PRODUCT_NVIDIA_MCP7B_HDA_1:
-	case PCI_PRODUCT_NVIDIA_MCP7B_HDA_2:
-	case PCI_PRODUCT_NVIDIA_MCP7B_HDA_3:
-	case PCI_PRODUCT_NVIDIA_MCP7B_HDA_4:
+	case PCI_PRODUCT_NVIDIA_MCP89_HDA_1:
+	case PCI_PRODUCT_NVIDIA_MCP89_HDA_2:
+	case PCI_PRODUCT_NVIDIA_MCP89_HDA_3:
+	case PCI_PRODUCT_NVIDIA_MCP89_HDA_4:
 		reg = azalia_pci_read(pa->pa_pc, pa->pa_tag, NVIDIA_PCIE_SNOOP_REG);
 		reg &= NVIDIA_PCIE_SNOOP_MASK;
 		reg |= NVIDIA_PCIE_SNOOP_ENABLE;
