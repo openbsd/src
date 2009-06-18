@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.95 2009/06/04 16:56:20 sthen Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.96 2009/06/18 17:48:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -136,9 +136,10 @@ void vr_setcfg(struct vr_softc *, int);
 void vr_iff(struct vr_softc *);
 void vr_reset(struct vr_softc *);
 int vr_list_rx_init(struct vr_softc *);
+void vr_fill_rx_ring(struct vr_softc *);
 int vr_list_tx_init(struct vr_softc *);
 
-int vr_alloc_mbuf(struct vr_softc *, struct vr_chain_onefrag *, struct mbuf *);
+int vr_alloc_mbuf(struct vr_softc *, struct vr_chain_onefrag *);
 
 /*
  * Supported devices & quirks
@@ -664,6 +665,7 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Call MI attach routines.
 	 */
+	m_clsetwms(ifp, MCLBYTES, 2, VR_RX_LIST_CNT - 1);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -750,9 +752,6 @@ vr_list_rx_init(struct vr_softc *sc)
 		    sc->sc_listmap->dm_segs[0].ds_addr +
 		    offsetof(struct vr_list_data, vr_rx_list[i]);
 
-		if (vr_alloc_mbuf(sc, &cd->vr_rx_chain[i], NULL))
-			return (ENOBUFS);
-
 		if (i == (VR_RX_LIST_CNT - 1))
 			nexti = 0;
 		else
@@ -764,9 +763,28 @@ vr_list_rx_init(struct vr_softc *sc)
 		    offsetof(struct vr_list_data, vr_rx_list[nexti]));
 	}
 
-	cd->vr_rx_head = &cd->vr_rx_chain[0];
+	cd->vr_rx_prod = cd->vr_rx_cons = &cd->vr_rx_chain[0];
+	cd->vr_rx_cnt = 0;
+	vr_fill_rx_ring(sc);
 
 	return (0);
+}
+
+void
+vr_fill_rx_ring(struct vr_softc *sc)
+{
+	struct vr_chain_data	*cd;
+	struct vr_list_data	*ld;
+
+	cd = &sc->vr_cdata;
+	ld = sc->vr_ldata;
+
+	while (cd->vr_rx_cnt < VR_RX_LIST_CNT) {
+		if (vr_alloc_mbuf(sc, cd->vr_rx_prod))
+			break;
+		cd->vr_rx_prod = cd->vr_rx_prod->vr_nextdesc;
+		cd->vr_rx_cnt++;
+	}
 }
 
 /*
@@ -776,7 +794,7 @@ vr_list_rx_init(struct vr_softc *sc)
 void
 vr_rxeof(struct vr_softc *sc)
 {
-	struct mbuf		*m0, *m;
+	struct mbuf		*m;
 	struct ifnet		*ifp;
 	struct vr_chain_onefrag	*cur_rx;
 	int			total_len = 0;
@@ -784,20 +802,21 @@ vr_rxeof(struct vr_softc *sc)
 
 	ifp = &sc->arpcom.ac_if;
 
-	for (;;) {
-
+	while(sc->vr_cdata.vr_rx_cnt > 0) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 		    0, sc->sc_listmap->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		rxstat = letoh32(sc->vr_cdata.vr_rx_head->vr_ptr->vr_status);
+		rxstat = letoh32(sc->vr_cdata.vr_rx_cons->vr_ptr->vr_status);
 		if (rxstat & VR_RXSTAT_OWN)
 			break;
 
-		rxctl = letoh32(sc->vr_cdata.vr_rx_head->vr_ptr->vr_ctl);
+		rxctl = letoh32(sc->vr_cdata.vr_rx_cons->vr_ptr->vr_ctl);
 
-		m0 = NULL;
-		cur_rx = sc->vr_cdata.vr_rx_head;
-		sc->vr_cdata.vr_rx_head = cur_rx->vr_nextdesc;
+		cur_rx = sc->vr_cdata.vr_rx_cons;
+		m = cur_rx->vr_mbuf;
+		cur_rx->vr_mbuf = NULL;
+		sc->vr_cdata.vr_rx_cons = cur_rx->vr_nextdesc;
+		sc->vr_cdata.vr_rx_cnt--;
 
 		/*
 		 * If an error occurs, update stats, clear the
@@ -827,23 +846,12 @@ vr_rxeof(struct vr_softc *sc)
 			printf("\n");
 #endif
 
-			/* Reinitialize descriptor */
-			cur_rx->vr_ptr->vr_status = htole32(VR_RXSTAT);
-			cur_rx->vr_ptr->vr_data =
-			    htole32(cur_rx->vr_map->dm_segs[0].ds_addr +
-			    sizeof(u_int64_t));
-			cur_rx->vr_ptr->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-			    0, sc->sc_listmap->dm_mapsize,
-			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+			m_freem(m);
 			continue;
 		}
 
 		/* No errors; receive the packet. */
 		total_len = VR_RXBYTES(letoh32(cur_rx->vr_ptr->vr_status));
-
-		m = cur_rx->vr_mbuf;
-		cur_rx->vr_mbuf = NULL;
 
 		bus_dmamap_sync(sc->sc_dmat, cur_rx->vr_map, 0,
 		    cur_rx->vr_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
@@ -856,22 +864,23 @@ vr_rxeof(struct vr_softc *sc)
 		 */
 		total_len -= ETHER_CRC_LEN;
 
-#ifndef __STRICT_ALIGNMENT
-		if (vr_alloc_mbuf(sc, cur_rx, NULL) == 0) {
-			m->m_pkthdr.rcvif = ifp;
-			m->m_pkthdr.len = m->m_len = total_len;
-		} else
-#endif
-		{
+#ifdef __STRICT_ALIGNMENT
+		if (1) {
+			struct mbuf *m0;
 			m0 = m_devget(mtod(m, caddr_t), total_len,
 			    ETHER_ALIGN, ifp, NULL);
-			vr_alloc_mbuf(sc, cur_rx, m);
+			m_freem(m);
 			if (m0 == NULL) {
 				ifp->if_ierrors++;
 				continue;
 			}
 			m = m0;
-		}
+		} else
+#endif
+		{
+			m->m_pkthdr.rcvif = ifp;
+			m->m_pkthdr.len = m->m_len = total_len;
+		} 
 
 		ifp->if_ipackets++;
 		if (sc->vr_quirks & VR_Q_CSUM &&
@@ -896,6 +905,8 @@ vr_rxeof(struct vr_softc *sc)
 		/* pass it on. */
 		ether_input_mbuf(ifp, m);
 	}
+
+	vr_fill_rx_ring(sc);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 	    0, sc->sc_listmap->dm_mapsize,
@@ -928,7 +939,7 @@ vr_rxeoc(struct vr_softc *sc)
 
 	vr_rxeof(sc);
 
-	CSR_WRITE_4(sc, VR_RXADDR, sc->vr_cdata.vr_rx_head->vr_paddr);
+	CSR_WRITE_4(sc, VR_RXADDR, sc->vr_cdata.vr_rx_cons->vr_paddr);
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_RX_ON);
 	VR_SETBIT16(sc, VR_COMMAND, VR_CMD_RX_GO);
 }
@@ -1342,7 +1353,7 @@ vr_init(void *xsc)
 	/*
 	 * Load the address of the RX list.
 	 */
-	CSR_WRITE_4(sc, VR_RXADDR, sc->vr_cdata.vr_rx_head->vr_paddr);
+	CSR_WRITE_4(sc, VR_RXADDR, sc->vr_cdata.vr_rx_cons->vr_paddr);
 
 	/* Enable receiver and transmitter. */
 	CSR_WRITE_2(sc, VR_COMMAND, VR_CMD_TX_NOPOLL|VR_CMD_START|
@@ -1550,34 +1561,29 @@ vr_shutdown(void *arg)
 }
 
 int
-vr_alloc_mbuf(struct vr_softc *sc, struct vr_chain_onefrag *r, struct mbuf *mb)
+vr_alloc_mbuf(struct vr_softc *sc, struct vr_chain_onefrag *r)
 {
 	struct vr_desc	*d;
 	struct mbuf	*m;
 
-	if (mb == NULL) {
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL)
-			return (ENOBUFS);
+	if (r == NULL)
+		return (EINVAL);
 
-		MCLGET(m, M_DONTWAIT);
-		if (!(m->m_flags & M_EXT)) {
-			m_free(m);
-			return (ENOBUFS);
-		}
-	} else  {
-		m = mb;
-		m->m_data = m->m_ext.ext_buf;
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return (ENOBUFS);
+
+	MCLGETI(m, M_DONTWAIT, &sc->arpcom.ac_if, MCLBYTES);
+	if (!(m->m_flags & M_EXT)) {
+		m_free(m);
+		return (ENOBUFS);
 	}
 
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
-	r->vr_mbuf = m;
-
 	m_adj(m, sizeof(u_int64_t));
 
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, r->vr_map, r->vr_mbuf,
-	    BUS_DMA_NOWAIT)) {
-		m_freem(r->vr_mbuf);
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, r->vr_map, m, BUS_DMA_NOWAIT)) {
+		m_free(m);
 		return (ENOBUFS);
 	}
 
@@ -1585,6 +1591,7 @@ vr_alloc_mbuf(struct vr_softc *sc, struct vr_chain_onefrag *r, struct mbuf *mb)
 	    BUS_DMASYNC_PREREAD);
 
 	/* Reinitialize the RX descriptor */
+	r->vr_mbuf = m;
 	d = r->vr_ptr;
 	d->vr_data = htole32(r->vr_map->dm_segs[0].ds_addr);
 	d->vr_ctl = htole32(VR_RXCTL | VR_RXLEN);

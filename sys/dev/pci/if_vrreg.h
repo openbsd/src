@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vrreg.h,v 1.26 2009/05/12 13:30:56 sthen Exp $	*/
+/*	$OpenBSD: if_vrreg.h,v 1.27 2009/06/18 17:48:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -435,7 +435,9 @@ struct vr_chain_data {
 	struct vr_chain_onefrag	vr_rx_chain[VR_RX_LIST_CNT];
 	struct vr_chain		vr_tx_chain[VR_TX_LIST_CNT];
 
-	struct vr_chain_onefrag	*vr_rx_head;
+	struct vr_chain_onefrag	*vr_rx_cons;
+	struct vr_chain_onefrag	*vr_rx_prod;
+	int			 vr_rx_cnt;
 
 	struct vr_chain		*vr_tx_cons;
 	struct vr_chain		*vr_tx_prod;
