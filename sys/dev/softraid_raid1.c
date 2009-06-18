@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1.c,v 1.14 2009/06/02 21:23:11 marco Exp $ */
+/* $OpenBSD: softraid_raid1.c,v 1.15 2009/06/18 15:55:15 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  *
@@ -136,7 +136,6 @@ sr_raid1_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 	case BIOC_SDONLINE:
 		switch (new_state) {
 		case BIOC_SDOFFLINE:
-			break;
 		case BIOC_SDSCRUB:
 			break;
 		default:
@@ -145,10 +144,13 @@ sr_raid1_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 		break;
 
 	case BIOC_SDOFFLINE:
-		if (new_state == BIOC_SDREBUILD) {
-			;
-		} else
+		switch (new_state) {
+		case BIOC_SDREBUILD:
+		case BIOC_SDHOTSPARE:
+			break;
+		default:
 			goto die;
+		}
 		break;
 
 	case BIOC_SDSCRUB:
@@ -159,17 +161,23 @@ sr_raid1_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 		break;
 
 	case BIOC_SDREBUILD:
-		if (new_state == BIOC_SDONLINE) {
-			;
-		} else
+		switch (new_state) {
+		case BIOC_SDONLINE:
+		case BIOC_SDOFFLINE:
+			break;
+		default:
 			goto die;
+		}
 		break;
 
 	case BIOC_SDHOTSPARE:
-		if (new_state == BIOC_SDREBUILD) {
-			;
-		} else
+		switch (new_state) {
+		case BIOC_SDOFFLINE:
+		case BIOC_SDREBUILD:
+			break;
+		default:
 			goto die;
+		}
 		break;
 
 	default:
