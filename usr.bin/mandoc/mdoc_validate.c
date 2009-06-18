@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.5 2009/06/18 20:59:49 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.6 2009/06/18 21:08:29 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -996,7 +996,7 @@ static int
 pre_er(PRE_ARGS)
 {
 
-	return(check_msec(mdoc, n, 2, 0));
+	return(check_msec(mdoc, n, 2, 3, 9, 0));
 }
 
 
