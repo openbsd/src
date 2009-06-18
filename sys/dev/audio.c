@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.103 2009/03/21 13:16:21 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.104 2009/06/18 22:55:56 jakemsr Exp $	*/
 /*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
@@ -1504,13 +1504,6 @@ audio_write(dev_t dev, struct uio *uio, int ioflag)
 		while (cb->used >= cb->usedhigh) {
 			DPRINTFN(2, ("audio_write: sleep used=%d lowat=%d hiwat=%d\n",
 				 cb->used, cb->usedlow, cb->usedhigh));
-			if (!sc->sc_pbus && !cb->pause) {
-				error = audiostartp(sc);
-				if (error) {
-					splx(s);
-					return error;
-				}
-			}
 			if (ioflag & IO_NDELAY) {
 				splx(s);
 				return (EWOULDBLOCK);
@@ -1540,6 +1533,13 @@ audio_write(dev_t dev, struct uio *uio, int ioflag)
 		 * silence in the buffer, but it is simple.
 		 */
 		sc->sc_sil_count = 0;
+		if (!sc->sc_pbus && !cb->pause && cb->used >= cb->blksize) {
+			error = audiostartp(sc);
+			if (error) {
+				splx(s);
+				return error;
+			}
+		}
 		splx(s);
 		cc /= sc->sc_pparams.factor;
 		DPRINTFN(1, ("audio_write: uiomove cc=%d inp=%p, left=%d\n",
