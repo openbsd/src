@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.5 2009/06/17 22:27:34 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.6 2009/06/18 01:19:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -2091,21 +2091,25 @@ termp_lk_pre(DECL_ARGS)
 {
 	const struct mdoc_node *n;
 
-	if (NULL == (n = node->child))
-		errx(1, "expected line argument");
+	assert(node->child);
+	n = node->child;
+
+	if (NULL == n->next) {
+		TERMPAIR_SETFLAG(p, pair, ttypes[TTYPE_LINK_ANCHOR]);
+		return(1);
+	}
 
 	p->flags |= ttypes[TTYPE_LINK_ANCHOR];
 	term_word(p, n->string);
-	p->flags &= ~ttypes[TTYPE_LINK_ANCHOR];
 	p->flags |= TERMP_NOSPACE;
 	term_word(p, ":");
+	p->flags &= ~ttypes[TTYPE_LINK_ANCHOR];
 
 	p->flags |= ttypes[TTYPE_LINK_TEXT];
-	for ( ; n; n = n->next) {
+	for (n = n->next; n; n = n->next) 
 		term_word(p, n->string);
-	}
-	p->flags &= ~ttypes[TTYPE_LINK_TEXT];
 
+	p->flags &= ~ttypes[TTYPE_LINK_TEXT];
 	return(0);
 }
 

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.3 2009/06/17 23:18:06 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.4 2009/06/18 01:19:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -297,7 +297,7 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ pres_lb, posts_lb },			/* Lb */
 	{ NULL, NULL },				/* Ap */
 	{ NULL, posts_pp },			/* Lp */ 
-	{ NULL, posts_text },			/* Lk */ 
+	{ NULL, NULL },				/* Lk */ 
 	{ NULL, posts_text },			/* Mt */ 
 	{ NULL, posts_wline },			/* Brq */ 
 	{ NULL, NULL },				/* Bro */ 

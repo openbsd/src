@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.3 2009/06/18 01:19:02 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -89,7 +89,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ blk_exp_close, MDOC_EXPLICIT }, /* El */
 	{ blk_full, MDOC_PARSED }, /* It */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Ad */ 
-	{ in_line, MDOC_PARSED }, /* An */
+	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* An */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Ar */
 	{ in_line_eoln, MDOC_CALLABLE }, /* Cd */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Cm */
@@ -101,9 +101,9 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line_eoln, 0 }, /* Fd */ 
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Fl */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Fn */ 
-	{ in_line, MDOC_PARSED }, /* Ft */ 
+	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Ft */ 
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Ic */ 
-	{ in_line_eoln, 0 }, /* In */ 
+	{ in_line_eoln, 0 }, /* In */  /* FIXME: historic usage! */
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Li */
 	{ in_line_eoln, 0 }, /* Nd */ 
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Nm */ 
@@ -145,7 +145,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Em */ 
 	{ blk_part_exp, MDOC_CALLABLE | MDOC_PARSED | MDOC_EXPLICIT }, /* Eo */
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* Fx */
-	{ in_line, MDOC_PARSED }, /* Ms */
+	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Ms */
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* No */
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* Ns */
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* Nx */
@@ -183,8 +183,8 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line_eoln, 0 }, /* Lb */
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* Ap */
 	{ in_line, 0 }, /* Lp */ 
-	{ in_line, MDOC_PARSED }, /* Lk */ 
-	{ in_line, MDOC_PARSED }, /* Mt */ 
+	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Lk */ 
+	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Mt */ 
 	{ blk_part_imp, MDOC_CALLABLE | MDOC_PARSED }, /* Brq */
 	{ blk_part_exp, MDOC_CALLABLE | MDOC_PARSED | MDOC_EXPLICIT }, /* Bro */
 	{ blk_exp_close, MDOC_EXPLICIT | MDOC_CALLABLE | MDOC_PARSED }, /* Brc */
@@ -813,6 +813,8 @@ in_line(MACRO_PROT_ARGS)
 		/* FALLTHROUGH */
 	case (MDOC_Fl):
 		/* FALLTHROUGH */
+	case (MDOC_Lk):
+		/* FALLTHROUGH */
 	case (MDOC_Ar):
 		nc = 1;
 		break;
@@ -868,7 +870,8 @@ in_line(MACRO_PROT_ARGS)
 				if ( ! mdoc_elem_alloc(mdoc, line, ppos, 
 							tok, arg))
 					return(0);
-				mdoc->next = MDOC_NEXT_SIBLING;
+				if ( ! rew_last(mdoc, mdoc->last))
+					return(0);
 			} else if ( ! nc && 0 == cnt) {
 				mdoc_argv_free(arg);
 				if ( ! pwarn(mdoc, line, ppos, WIGNE))
@@ -923,8 +926,9 @@ in_line(MACRO_PROT_ARGS)
 		c = mdoc_elem_alloc(mdoc, line, ppos, tok, arg);
 		if (0 == c)
 			return(0);
-		mdoc->next = MDOC_NEXT_SIBLING;
-	} else if ( ! nc && 0 == cnt)  {
+		if ( ! rew_last(mdoc, mdoc->last))
+			return(0);
+	} else if ( ! nc && 0 == cnt) {
 		mdoc_argv_free(arg);
 		if ( ! pwarn(mdoc, line, ppos, WIGNE))
 			return(0);

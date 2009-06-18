@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.2 2009/06/14 23:00:57 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.3 2009/06/18 01:19:02 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" 
-.Dd $Mdocdate: June 14 2009 $
+.Dd $Mdocdate: June 18 2009 $
 .Dt MDOC 7
 .Os
 .\" SECTION
@@ -31,7 +31,12 @@ language is used to format
 manuals.  In this reference document, we describe the syntax, ontology
 and structure of the 
 .Nm
-language.
+language.  Our reference implementation is
+.Xr mandoc 1 .
+The
+.Sx COMPATIBILITY
+section describes compatibility with 
+.Xr groff 1 .
 .\" PARAGRAPH
 .Pp
 An
@@ -96,6 +101,8 @@ Within a macro line, the following characters are reserved:
 .Pq question
 .It \&!
 .Pq exclamation 
+.It \&|
+.Pq vertical bar 
 .El
 .\" PARAGRAPH
 .Pp
@@ -393,7 +400,7 @@ then the macro accepts an arbitrary number of arguments.
 .It \&.Os    Ta    \&No  Ta    \&No    Ta    n
 .It \&.Pp    Ta    \&No  Ta    \&No    Ta    0
 .It \&.Ad    Ta    Yes   Ta    Yes     Ta    n
-.It \&.An    Ta    \&No  Ta    Yes     Ta    n
+.It \&.An    Ta    Yes   Ta    Yes     Ta    n
 .It \&.Ar    Ta    Yes   Ta    Yes     Ta    n
 .It \&.Cd    Ta    Yes   Ta    \&No    Ta    >0
 .It \&.Cm    Ta    Yes   Ta    Yes     Ta    n
@@ -405,7 +412,7 @@ then the macro accepts an arbitrary number of arguments.
 .It \&.Fd    Ta    \&No  Ta    \&No    Ta    >0
 .It \&.Fl    Ta    Yes   Ta    Yes     Ta    n
 .It \&.Fn    Ta    Yes   Ta    Yes     Ta    >0
-.It \&.Ft    Ta    \&No  Ta    Yes     Ta    n
+.It \&.Ft    Ta    Yes   Ta    Yes     Ta    n
 .It \&.Ic    Ta    Yes   Ta    Yes     Ta    >0
 .It \&.In    Ta    \&No  Ta    \&No    Ta    n
 .It \&.Li    Ta    Yes   Ta    Yes     Ta    n
@@ -436,7 +443,7 @@ then the macro accepts an arbitrary number of arguments.
 .It \&.Db    Ta    \&No  Ta    \&No    Ta    1
 .It \&.Em    Ta    Yes   Ta    Yes     Ta    >0
 .It \&.Fx    Ta    Yes   Ta    Yes     Ta    n
-.It \&.Ms    Ta    \&No  Ta    Yes     Ta    >0
+.It \&.Ms    Ta    Yes   Ta    Yes     Ta    >0
 .It \&.No    Ta    Yes   Ta    Yes     Ta    0
 .It \&.Ns    Ta    Yes   Ta    Yes     Ta    0
 .It \&.Nx    Ta    Yes   Ta    Yes     Ta    n
@@ -455,8 +462,8 @@ then the macro accepts an arbitrary number of arguments.
 .It \&.Lb    Ta    \&No  Ta    \&No    Ta    1
 .It \&.Ap    Ta    Yes   Ta    Yes     Ta    0
 .It \&.Lp    Ta    \&No  Ta    \&No    Ta    0
-.It \&.Lk    Ta    \&No  Ta    Yes     Ta    >0
-.It \&.Mt    Ta    \&No  Ta    Yes     Ta    >0
+.It \&.Lk    Ta    Yes   Ta    Yes     Ta    n
+.It \&.Mt    Ta    Yes   Ta    Yes     Ta    >0
 .It \&.Es    Ta    \&No  Ta    \&No    Ta    0
 .It \&.En    Ta    \&No  Ta    \&No    Ta    0
 .El
@@ -470,29 +477,40 @@ and
 macros are obsolete.
 .\" SECTION
 .Sh COMPATIBILITY
-The mdoc language was traditionally a 
-.Qq roff
-macro package; most existing manuals were written with mdoc syntax
-dictated by system-dependent roff installations.  This section documents
-compatibility with these systems.
+This section documents compatibility with other roff implementations, at
+this time limited to 
+.Xr groff 1 .
+The term 
+.Qq historic groff
+refers to those versions before the 
+.Pa doc.tmac
+file re-write 
+.Pq somewhere between 1.15 and 1.19 .
 .Pp
 .Bl -dash -compact
 .\" LIST-ITEM
 .It
-.Sq \&.Fo
-and
-.Sq \&.St
-historically weren't always callable.  Both are now correctly callable.
+Historic groff has many un-callable macros.  Most of these (excluding
+some block-level macros) are now callable, conforming to the
+non-historic groff version.
+.\" LIST-ITEM
+.It
+The vertical bar 
+.Sq \(Ba
+made historic groff
+.Qq go orbital
+but is a proper delimiter in this implementation.
 .\" LIST-ITEM
 .It
 .Sq \&.It \-nested
-is assumed for all lists: any list may be nested and
+is assumed for all lists (it wasn't in historic groff): any list may be
+nested and
 .Sq \-enum
 lists will restart the sequence only for the sub-list.
 .\" LIST-ITEM
 .It
 .Sq \&.It \-column
-syntax where column widths may be preceeded by other arguments (instead
+syntax where column widths may be preceded by other arguments (instead
 of proceeded) is not supported.
 .\" LIST-ITEM
 .It
@@ -501,26 +519,17 @@ The
 macro only accepts a single parameter.
 .\" LIST-ITEM
 .It
-The system-name macros (
-.Ns Sq \&.At ,
-.Sq \&.Bsx ,
-.Sq \&.Bx ,
-.Sq \&.Fx ,
-.Sq \&.Nx ,
-.Sq \&.Ox ,
-and
-.Sq \&.Ux )
-are callable.
-.\" LIST-ITEM
-.It
 Some manuals use
 .Sq \&.Li
 incorrectly by following it with a reserved character and expecting the
 delimiter to render.  This is not supported.
 .\" LIST-ITEM
 .It
-.Sq \&.Cd
-is callable.
+If an special-character control character 
+.Sq \e 
+is escaped, it will
+obviously not render the sequence.  Even newer versions of groff seem to
+dither on this.
 .El
 .\" SECTION
 .Sh SEE ALSO
