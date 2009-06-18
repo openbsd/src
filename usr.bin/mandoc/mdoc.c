@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.7 2009/06/18 23:34:53 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.8 2009/06/18 23:51:12 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -97,11 +97,6 @@ static	int		  parsemacro(struct mdoc *, int, char *);
 static	int		  macrowarn(struct mdoc *, int, const char *);
 static	int		  perr(struct mdoc *, int, int, enum merr);
 
-#define verr(m, t) perr((m), (m)->last->line, (m)->last->pos, (t))
-
-/*
- * Get the first (root) node of the parse tree.
- */
 const struct mdoc_node *
 mdoc_node(const struct mdoc *m)
 {
@@ -118,6 +113,9 @@ mdoc_meta(const struct mdoc *m)
 }
 
 
+/*
+ * Frees volatile resources (parse tree, meta-data, fields).
+ */
 static void
 mdoc_free1(struct mdoc *mdoc)
 {
@@ -137,6 +135,9 @@ mdoc_free1(struct mdoc *mdoc)
 }
 
 
+/*
+ * Allocate all volatile resources (parse tree, meta-data, fields).
+ */
 static int
 mdoc_alloc1(struct mdoc *mdoc)
 {
@@ -156,9 +157,10 @@ mdoc_alloc1(struct mdoc *mdoc)
 
 
 /*
- * Free up all resources contributed by a parse:  the node tree,
- * meta-data and so on.  Then reallocate the root node for another
- * parse.
+ * Free up volatile resources (see mdoc_free1()) then re-initialises the
+ * data with mdoc_alloc1().  After invocation, parse data has been reset
+ * and the parser is ready for re-invocation on a new tree; however,
+ * cross-parse non-volatile data is kept intact.
  */
 int
 mdoc_reset(struct mdoc *mdoc)
@@ -170,7 +172,8 @@ mdoc_reset(struct mdoc *mdoc)
 
 
 /*
- * Completely free up all resources.
+ * Completely free up all volatile and non-volatile parse resources.
+ * After invocation, the pointer is no longer usable.
  */
 void
 mdoc_free(struct mdoc *mdoc)
@@ -183,6 +186,9 @@ mdoc_free(struct mdoc *mdoc)
 }
 
 
+/*
+ * Allocate volatile and non-volatile parse resources.  
+ */
 struct mdoc *
 mdoc_alloc(void *data, int pflags, const struct mdoc_cb *cb)
 {
@@ -209,7 +215,7 @@ mdoc_alloc(void *data, int pflags, const struct mdoc_cb *cb)
 
 /*
  * Climb back up the parse tree, validating open scopes.  Mostly calls
- * through to macro_end in macro.c.
+ * through to macro_end() in macro.c.
  */
 int
 mdoc_endparse(struct mdoc *m)
@@ -226,13 +232,11 @@ mdoc_endparse(struct mdoc *m)
 
 /*
  * Main parse routine.  Parses a single line -- really just hands off to
- * the macro or text parser.
+ * the macro (parsemacro()) or text parser (parsetext()).
  */
 int
 mdoc_parseln(struct mdoc *m, int ln, char *buf)
 {
-
-	/* If in error-mode, then we parse no more. */
 
 	if (MDOC_HALT & m->flags)
 		return(0);
@@ -277,7 +281,8 @@ mdoc_vwarn(struct mdoc *mdoc, int ln, int pos,
 
 
 int
-mdoc_nerr(struct mdoc *mdoc, const struct mdoc_node *node, const char *fmt, ...)
+mdoc_nerr(struct mdoc *mdoc, const struct mdoc_node *node, 
+		const char *fmt, ...)
 {
 	char		 buf[256];
 	va_list		 ap;
@@ -288,12 +293,14 @@ mdoc_nerr(struct mdoc *mdoc, const struct mdoc_node *node, const char *fmt, ...)
 	va_start(ap, fmt);
 	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
-	return((*mdoc->cb.mdoc_err)(mdoc->data, node->line, node->pos, buf));
+	return((*mdoc->cb.mdoc_err)(mdoc->data, 
+				node->line, node->pos, buf));
 }
 
 
 int
-mdoc_warn(struct mdoc *mdoc, enum mdoc_warn type, const char *fmt, ...)
+mdoc_warn(struct mdoc *mdoc, enum mdoc_warn type, 
+		const char *fmt, ...)
 {
 	char		 buf[256];
 	va_list		 ap;
@@ -305,7 +312,7 @@ mdoc_warn(struct mdoc *mdoc, enum mdoc_warn type, const char *fmt, ...)
 	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
 	return((*mdoc->cb.mdoc_warn)(mdoc->data, mdoc->last->line,
-	    mdoc->last->pos, type, buf));
+				mdoc->last->pos, type, buf));
 }
 
 
@@ -322,7 +329,7 @@ mdoc_err(struct mdoc *mdoc, const char *fmt, ...)
 	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
 	return((*mdoc->cb.mdoc_err)(mdoc->data, mdoc->last->line,
-	    mdoc->last->pos, buf));
+				mdoc->last->pos, buf));
 }
 
 
@@ -339,7 +346,8 @@ mdoc_pwarn(struct mdoc *mdoc, int line, int pos, enum mdoc_warn type,
 	va_start(ap, fmt);
 	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
-	return((*mdoc->cb.mdoc_warn)(mdoc->data, line, pos, type, buf));
+	return((*mdoc->cb.mdoc_warn)(mdoc->data, 
+				line, pos, type, buf));
 }
 
 int
@@ -483,7 +491,8 @@ node_alloc(struct mdoc *mdoc, int line,
 	struct mdoc_node *p;
 
 	if (NULL == (p = calloc(1, sizeof(struct mdoc_node)))) {
-		(void)verr(mdoc, EMALLOC);
+		(void)perr(mdoc, (mdoc)->last->line, 
+				(mdoc)->last->pos, EMALLOC);
 		return(NULL);
 	}
 
@@ -579,7 +588,8 @@ mdoc_word_alloc(struct mdoc *mdoc,
 	if (NULL == p)
 		return(0);
 	if (NULL == (p->string = strdup(word))) {
-		(void)verr(mdoc, EMALLOC);
+		(void)perr(mdoc, (mdoc)->last->line, 
+				(mdoc)->last->pos, EMALLOC);
 		return(0);
 	}
 	return(node_append(mdoc, p));
@@ -644,7 +654,6 @@ macrowarn(struct mdoc *m, int ln, const char *buf)
 				"unknown macro: %s%s",
 				buf, strlen(buf) > 3 ? "..." : ""));
 }
-
 
 
 /*

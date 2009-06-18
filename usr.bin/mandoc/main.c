@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.5 2009/06/18 23:34:53 schwarze Exp $ */
+/*	$Id: main.c,v 1.6 2009/06/18 23:51:12 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -61,12 +61,12 @@ struct	curparse {
 #define	NO_IGN_ESCAPE	 (1 << 1) 	/* Don't ignore bad escapes. */
 #define	NO_IGN_MACRO	 (1 << 2) 	/* Don't ignore bad macros. */
 #define	NO_IGN_CHARS	 (1 << 3)	/* Don't ignore bad chars. */
-	enum intt	  inttype;	/* Input parsers. */
+	enum intt	  inttype;	/* Input parsers... */
 	struct man	 *man;
 	struct man	 *lastman;
 	struct mdoc	 *mdoc;
 	struct mdoc	 *lastmdoc;
-	enum outt	  outtype;	/* Output devices. */
+	enum outt	  outtype;	/* Output devices... */
 	out_mdoc	  outmdoc;
 	out_man	  	  outman;
 	out_free	  outfree;
@@ -146,8 +146,6 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	/* Configure buffers. */
-
 	bzero(&ln, sizeof(struct buf));
 	bzero(&blk, sizeof(struct buf));
 
@@ -177,8 +175,6 @@ main(int argc, char *argv[])
 		free(blk.buf);
 	if (ln.buf)
 		free(ln.buf);
-
-	/* TODO: have a curp_free routine. */
 	if (curp.outfree)
 		(*curp.outfree)(curp.outdata);
 	if (curp.mdoc)
@@ -220,14 +216,9 @@ man_init(struct curparse *curp)
 	mancb.man_err = merr;
 	mancb.man_warn = manwarn;
 
-	/*
-	 * Default behaviour is to ignore unknown macros.  This is
-	 * specified in mandoc.1.
-	 */
+	/* Defaults from mandoc.1. */
 
 	pflags = MAN_IGN_MACRO;
-
-	/* Override default behaviour... */
 
 	if (curp->fflags & NO_IGN_MACRO)
 		pflags &= ~MAN_IGN_MACRO;
@@ -249,15 +240,9 @@ mdoc_init(struct curparse *curp)
 	mdoccb.mdoc_err = merr;
 	mdoccb.mdoc_warn = mdocwarn;
 
-	/* 
-	 * Default behaviour is to ignore unknown macros, escape
-	 * sequences and characters (very liberal).  This is specified
-	 * in mandoc.1.
-	 */
+	/* Defaults from mandoc.1. */
 
 	pflags = MDOC_IGN_MACRO | MDOC_IGN_ESCAPE | MDOC_IGN_CHARS;
-
-	/* Override default behaviour... */
 
 	if (curp->fflags & IGN_SCOPE)
 		pflags |= MDOC_IGN_SCOPE;
@@ -558,10 +543,6 @@ toptions(enum outt *tflags, char *arg)
 }
 
 
-/*
- * Parse out the options for [-fopt...] setting compiler options.  These
- * can be comma-delimited or called again.
- */
 static int
 foptions(int *fflags, char *arg)
 {
@@ -602,10 +583,6 @@ foptions(int *fflags, char *arg)
 }
 
 
-/* 
- * Parse out the options for [-Werr...], which sets warning modes.
- * These can be comma-delimited or called again.  
- */
 static int
 woptions(int *wflags, char *arg)
 {
@@ -651,7 +628,6 @@ merr(void *arg, int line, int col, const char *msg)
 	warnx("%s:%d: error: %s (column %d)", 
 			curp->file, line, msg, col);
 
-	/* Always exit on errors... */
 	return(0);
 }
 
@@ -686,13 +662,7 @@ mdocwarn(void *arg, int line, int col,
 	if ( ! (curp->wflags & WARN_WERR))
 		return(1);
 	
-	/*
-	 * If the -Werror flag is passed in, as in gcc, then all
-	 * warnings are considered as errors.
-	 */
-
-	warnx("%s: considering warnings as errors", 
-			__progname);
+	warnx("considering warnings as errors");
 	return(0);
 }
 
@@ -713,12 +683,6 @@ manwarn(void *arg, int line, int col, const char *msg)
 	if ( ! (curp->wflags & WARN_WERR))
 		return(1);
 
-	/* 
-	 * If the -Werror flag is passed in, as in gcc, then all
-	 * warnings are considered as errors.
-	 */
-
-	warnx("%s: considering warnings as errors", 
-			__progname);
+	warnx("considering warnings as errors");
 	return(0);
 }
