@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.4 2009/06/18 21:16:11 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.5 2009/06/18 21:34:54 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -493,7 +493,7 @@ print_head(struct termp *p, const struct man_meta *meta)
 			meta->title, meta->msec);
 
 	p->offset = 0;
-	p->rmargin = (p->maxrmargin - strlen(buf)) / 2;
+	p->rmargin = (p->maxrmargin - strlen(buf) + 1) / 2;
 	p->flags |= TERMP_NOBREAK | TERMP_NOSPACE;
 
 	term_word(p, title);
