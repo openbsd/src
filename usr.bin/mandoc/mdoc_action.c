@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.3 2009/06/18 01:19:02 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.4 2009/06/18 23:34:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -71,7 +71,7 @@ static	int	  pre_dl(PRE_ARGS);
 #define	nerr(m, n, t) perr((m), (n)->line, (n)->pos, (t))
 
 const	struct actions mdoc_actions[MDOC_MAX] = {
-	{ NULL, NULL }, /* \" */
+	{ NULL, NULL }, /* Ap */
 	{ NULL, post_dd }, /* Dd */ 
 	{ NULL, post_dt }, /* Dt */ 
 	{ NULL, post_os }, /* Os */ 
@@ -178,7 +178,6 @@ const	struct actions mdoc_actions[MDOC_MAX] = {
 	{ NULL, NULL }, /* Fr */
 	{ NULL, NULL }, /* Ud */
 	{ NULL, NULL }, /* Lb */
-	{ NULL, NULL }, /* Ap */
 	{ NULL, NULL }, /* Lp */
 	{ NULL, post_lk }, /* Lk */
 	{ NULL, NULL }, /* Mt */

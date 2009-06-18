@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.10 2009/06/18 21:50:45 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.11 2009/06/18 23:34:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -183,7 +183,7 @@ struct	termact {
 };
 
 static const struct termact termacts[MDOC_MAX] = {
-	{ NULL, NULL }, /* \" */
+	{ termp_ap_pre, NULL }, /* Ap */
 	{ NULL, NULL }, /* Dd */
 	{ NULL, NULL }, /* Dt */
 	{ NULL, NULL }, /* Os */
@@ -290,7 +290,6 @@ static const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Fr */
 	{ termp_ud_pre, NULL }, /* Ud */
 	{ termp_lb_pre, termp_lb_post }, /* Lb */
-	{ termp_ap_pre, NULL }, /* Lb */
 	{ termp_pp_pre, NULL }, /* Pp */ 
 	{ termp_lk_pre, NULL }, /* Lk */ 
 	{ termp_mt_pre, NULL }, /* Mt */ 

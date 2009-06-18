@@ -1,4 +1,4 @@
-/*	$Id: mdoc_macro.c,v 1.3 2009/06/18 01:19:02 schwarze Exp $ */
+/*	$Id: mdoc_macro.c,v 1.4 2009/06/18 23:34:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -21,8 +21,6 @@
 #include <string.h>
 
 #include "libmdoc.h"
-
-/* FIXME: .Fl, .Ar, .Cd handling of `|'. */
 
 enum	mwarn {
 	WIGNE,
@@ -74,7 +72,7 @@ static	int	  swarn(struct mdoc *, enum mdoc_type, int, int,
 /* Central table of library: who gets parsed how. */
 
 const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
-	{ NULL, 0 }, /* \" */
+	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* Ap */
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Dd */
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Dt */
 	{ in_line_eoln, MDOC_PROLOGUE }, /* Os */
@@ -181,7 +179,6 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ obsolete, 0 }, /* Fr */
 	{ in_line_eoln, 0 }, /* Ud */
 	{ in_line_eoln, 0 }, /* Lb */
-	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* Ap */
 	{ in_line, 0 }, /* Lp */ 
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Lk */ 
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Mt */ 

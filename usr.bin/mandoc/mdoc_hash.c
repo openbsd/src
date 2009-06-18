@@ -1,4 +1,4 @@
-/*	$Id: mdoc_hash.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: mdoc_hash.c,v 1.3 2009/06/18 23:34:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -46,7 +46,7 @@ mdoc_hash_alloc(void)
 	if (NULL == htab) 
 		return(NULL);
 
-	for (i = 1; i < MDOC_MAX; i++) {
+	for (i = 0; i < MDOC_MAX; i++) {
 		major = mdoc_macronames[i][0];
 		assert((major >= 65 && major <= 90) ||
 				major == 37);

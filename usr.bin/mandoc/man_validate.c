@@ -1,4 +1,4 @@
-/*	$Id: man_validate.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: man_validate.c,v 1.3 2009/06/18 23:34:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -48,7 +48,7 @@ static	v_post	  posts_eq0[] = { check_eq0, NULL };
 static	v_post	  posts_ge2_le5[] = { check_ge2, check_le5, NULL };
 
 static	const struct man_valid man_valids[MAN_MAX] = {
-	{ NULL }, /* __ */
+	{ posts_eq0 }, /* br */
 	{ posts_ge2_le5 }, /* TH */
 	{ posts_ge1 }, /* SH */
 	{ posts_ge1 }, /* SS */
@@ -69,7 +69,6 @@ static	const struct man_valid man_valids[MAN_MAX] = {
 	{ NULL }, /* I */
 	{ NULL }, /* IR */
 	{ NULL }, /* RI */
-	{ posts_eq0 }, /* br */
 	{ posts_eq0 }, /* na */
 	{ NULL }, /* i */
 };

@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.3 2009/06/18 22:16:56 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.4 2009/06/18 23:34:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -29,7 +29,7 @@
 
 /* What follows is a list of ALL possible macros. */
 
-#define	MDOC___	 	 0
+#define	MDOC_Ap		 0
 #define	MDOC_Dd		 1
 #define	MDOC_Dt		 2
 #define	MDOC_Os		 3
@@ -136,19 +136,18 @@
 #define	MDOC_Fr		 104
 #define	MDOC_Ud		 105
 #define	MDOC_Lb		 106
-#define	MDOC_Ap		 107
-#define	MDOC_Lp		 108
-#define	MDOC_Lk		 109
-#define	MDOC_Mt		 110
-#define	MDOC_Brq	 111
-#define	MDOC_Bro	 112
-#define	MDOC_Brc	 113
-#define	MDOC__C	 	 114
-#define	MDOC_Es	 	 115
-#define	MDOC_En	 	 116
-#define	MDOC_Dx	 	 117
-#define	MDOC__Q	 	 118
-#define	MDOC_MAX	 119
+#define	MDOC_Lp		 107
+#define	MDOC_Lk		 108
+#define	MDOC_Mt		 109
+#define	MDOC_Brq	 110
+#define	MDOC_Bro	 111
+#define	MDOC_Brc	 112
+#define	MDOC__C	 	 113
+#define	MDOC_Es	 	 114
+#define	MDOC_En	 	 115
+#define	MDOC_Dx	 	 116
+#define	MDOC__Q	 	 117
+#define	MDOC_MAX	 118
 
 /* What follows is a list of ALL possible macro arguments. */
 

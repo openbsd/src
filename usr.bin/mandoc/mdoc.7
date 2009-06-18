@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.3 2009/06/18 01:19:02 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.4 2009/06/18 23:34:53 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -77,6 +77,16 @@ and in
 or
 .Sq \&.Bd \-unfilled
 contexts.
+.\" SUB-SECTION
+.Ss Comments
+Anything following a
+.Sq \e" 
+delimiter is considered a comment (unless the 
+.Sq \e
+itself has been escaped) and is ignored to the end of line.
+Furthermore, a macro line with only a control character
+.Sq \. ,
+optionally followed by whitespace, is ignored.
 .\" SUB-SECTION
 .Ss Reserved Characters
 Within a macro line, the following characters are reserved:

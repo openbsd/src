@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.6 2009/06/18 22:16:56 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.7 2009/06/18 23:34:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -34,7 +34,7 @@ enum	merr {
 };
 
 const	char *const __mdoc_macronames[MDOC_MAX] = {		 
-	"\\\"",		"Dd",		"Dt",		"Os",
+	"Ap",		"Dd",		"Dt",		"Os",
 	"Sh",		"Ss",		"Pp",		"D1",
 	"Dl",		"Bd",		"Ed",		"Bl",
 	"El",		"It",		"Ad",		"An",
@@ -63,12 +63,12 @@ const	char *const __mdoc_macronames[MDOC_MAX] = {
 	"Tn",		"Ux",		"Xc",		"Xo",
 	"Fo",		"Fc",		"Oo",		"Oc",
 	"Bk",		"Ek",		"Bt",		"Hf",
-	"Fr",		"Ud",		"Lb",		"Ap",
-	"Lp",		"Lk",		"Mt",		"Brq",
+	"Fr",		"Ud",		"Lb",		"Lp",
+	"Lk",		"Mt",		"Brq",		"Bro",
 	/* LINTED */
-	"Bro",		"Brc",		"\%C",		"Es",
+	"Brc",		"\%C",		"Es",		"En",
 	/* LINTED */
-	"En",		"Dx",		"\%Q"
+	"Dx",		"\%Q"
 	};
 
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {		 
@@ -657,7 +657,7 @@ parsemacro(struct mdoc *m, int ln, char *buf)
 	int		  i, c;
 	char		  mac[5];
 
-	/* Comments and empties are quickly ignored. */
+	/* Empty lines are ignored. */
 
 	if (0 == buf[1])
 		return(1);
@@ -670,10 +670,6 @@ parsemacro(struct mdoc *m, int ln, char *buf)
 			return(1);
 		return(perr(m, ln, 1, ESPACE));
 	}
-
-	if (buf[1] && '\\' == buf[1])
-		if (buf[2] && '\"' == buf[2])
-			return(1);
 
 	/* Copy the first word into a nil-terminated buffer. */
 

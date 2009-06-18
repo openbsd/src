@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.6 2009/06/18 21:08:29 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.7 2009/06/18 23:34:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -191,7 +191,7 @@ static	v_post	posts_bf[] = { hwarn_le1, post_bf, NULL };
 static	v_post	posts_fo[] = { hwarn_eq1, bwarn_ge1, NULL };
 
 const	struct valids mdoc_valids[MDOC_MAX] = {
-	{ NULL, NULL }, 			/* \" */
+	{ NULL, NULL },				/* Ap */
 	{ pres_dd, posts_text },		/* Dd */
 	{ pres_dt, NULL },			/* Dt */
 	{ pres_os, NULL },			/* Os */
@@ -298,7 +298,6 @@ const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Fr */
 	{ NULL, posts_notext },			/* Ud */
 	{ pres_lb, posts_lb },			/* Lb */
-	{ NULL, NULL },				/* Ap */
 	{ NULL, posts_pp },			/* Lp */ 
 	{ NULL, NULL },				/* Lk */ 
 	{ NULL, posts_text },			/* Mt */ 

@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.2 2009/06/14 23:00:57 schwarze Exp $ */
+/*	$Id: man_macro.c,v 1.3 2009/06/18 23:34:53 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -28,7 +28,7 @@ static	int		 man_args(struct man *, int,
 				int *, char *, char **);
 
 static	int man_flags[MAN_MAX] = {
-	0, /* __ */
+	0, /* br */
 	0, /* TH */
 	0, /* SH */
 	0, /* SS */
@@ -49,7 +49,6 @@ static	int man_flags[MAN_MAX] = {
 	FL_NLINE, /* I */
 	FL_NLINE, /* IR */
 	FL_NLINE, /* RI */
-	0, /* br */
 	0, /* na */
 	FL_NLINE, /* i */
 };
