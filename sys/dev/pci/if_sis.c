@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.91 2009/06/12 21:55:50 claudio Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.92 2009/06/18 18:49:34 claudio Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1237,7 +1237,7 @@ sis_newbuf(struct sis_softc *sc, struct sis_desc *c)
 
 	MCLGETI(m_new, M_DONTWAIT, &sc->arpcom.ac_if, MCLBYTES);
 	if (!(m_new->m_flags & M_EXT)) {
-		m_freem(m_new);
+		m_free(m_new);
 		return (ENOBUFS);
 	}
 
@@ -1245,7 +1245,7 @@ sis_newbuf(struct sis_softc *sc, struct sis_desc *c)
 
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, c->map, m_new,
 	    BUS_DMA_NOWAIT)) {
-		m_freem(m_new);
+		m_free(m_new);
 		return (ENOBUFS);
 	}
 
@@ -1280,12 +1280,12 @@ sis_rxeof(struct sis_softc *sc)
 
 	while(sc->sis_cdata.sis_rx_cnt > 0) {
 		cur_rx = &sc->sis_ldata->sis_rx_list[sc->sis_cdata.sis_rx_cons];
-		if (!SIS_OWNDESC(cur_rx))
-			break;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 		    ((caddr_t)cur_rx - sc->sc_listkva),
 		    sizeof(struct sis_desc),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		if (!SIS_OWNDESC(cur_rx))
+			break;
 
 		rxstat = cur_rx->sis_rxstat;
 		m = cur_rx->sis_mbuf;
