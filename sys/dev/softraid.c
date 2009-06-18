@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.154 2009/06/18 15:47:38 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.155 2009/06/18 15:51:56 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -117,6 +117,7 @@ void			sr_checksum(struct sr_softc *, void *, void *,
 			    u_int32_t);
 int			sr_boot_assembly(struct sr_softc *);
 int			sr_already_assembled(struct sr_discipline *);
+int			sr_rebuild_init(struct sr_discipline *, dev_t);
 void			sr_rebuild(void *);
 void			sr_rebuild_thread(void *);
 
@@ -1869,15 +1870,9 @@ sr_ioctl_disk(struct sr_softc *sc, struct bioc_disk *bd)
 int
 sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 {
-	int			rv = EINVAL, part;
-	int			i, c, found, vol, open = 0;
-	struct sr_discipline	*sd = NULL, *sw = NULL;
-	char			devname[32];
-	struct bdevsw		*bdsw;
-	dev_t			dev;
-	daddr64_t		size, csize;
-	struct disklabel	label;
-	struct sr_meta_chunk	*old, *new;
+	int			rv = EINVAL;
+	int			i, vol;
+	struct sr_discipline	*sd = NULL;
 
 	if (bs->bs_other_id_type == BIOC_SSOTHER_UNUSED)
 		goto done;
@@ -1893,6 +1888,46 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 	}
 	if (sd == NULL)
 		goto done;
+
+	switch (bs->bs_status) {
+	case BIOC_SSOFFLINE:
+		break;
+
+	case BIOC_SDSCRUB:
+		break;
+
+	case BIOC_SSHOTSPARE:
+		break;
+
+	case BIOC_SSREBUILD:
+		rv = sr_rebuild_init(sd, (dev_t)bs->bs_other_id);
+		break;
+
+	default:
+		printf("%s: unsupported state request %d\n",
+		    DEVNAME(sc), bs->bs_status);
+	}
+
+done:
+	return (rv);
+}
+
+int
+sr_rebuild_init(struct sr_discipline *sd, dev_t dev)
+{
+	struct sr_softc		*sc = sd->sd_sc;
+	int			rv = EINVAL, part;
+	int			i, c, found, vol, open = 0;
+	struct sr_discipline	*sw = NULL;
+	char			devname[32];
+	struct bdevsw		*bdsw;
+	daddr64_t		size, csize;
+	struct disklabel	label;
+	struct sr_meta_chunk	*old, *new;
+
+	/*
+	 * Attempt to initiate a rebuild onto the specified device.
+	 */
 
 	if (!sd->sd_rebuild) {
 		printf("%s: discipline does not support rebuild\n",
@@ -1932,7 +1967,6 @@ sr_ioctl_setstate(struct sr_softc *sc, struct bioc_setstate *bs)
 	}
 
 	/* populate meta entry */
-	dev = (dev_t)bs->bs_other_id;
 	sr_meta_getdevname(sc, dev, devname, sizeof(devname));
 	bdsw = bdevsw_lookup(dev);
 
