@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.153 2009/06/17 23:13:36 jordan Exp $ */
+/* $OpenBSD: softraid.c,v 1.154 2009/06/18 15:47:38 jsing Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -469,7 +469,7 @@ sr_meta_chunks_create(struct sr_softc *sc, struct sr_chunk_head *cl)
 		ch_entry->src_meta.scm_status = BIOC_SDONLINE;
 		strlcpy(ch_entry->src_meta.scmi.scm_devname, name,
 		    sizeof(ch_entry->src_meta.scmi.scm_devname));
-		bcopy(&uuid,  &ch_entry->src_meta.scmi.scm_uuid,
+		bcopy(&uuid, &ch_entry->src_meta.scmi.scm_uuid,
 		    sizeof(ch_entry->src_meta.scmi.scm_uuid));
 
 		if (ch_entry->src_meta.scmi.scm_size > max_chunk_sz)
@@ -586,7 +586,7 @@ sr_meta_save(struct sr_discipline *sd, u_int32_t flags)
 
 	/* meta scratchpad */
 	s = &smd[sd->sd_meta_type];
-	m = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_ZERO);
+	m = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO);
 	if (!m) {
 		printf("%s: could not allocate metadata scratch area\n",
 		    DEVNAME(sc));
@@ -623,7 +623,7 @@ restart:
 		if (src->src_meta.scm_status == BIOC_SDOFFLINE)
 			continue;
 
-		/* calculate metdata checksum for correct chunk */
+		/* calculate metadata checksum for correct chunk */
 		m->ssdi.ssd_chunk_id = i;
 		sr_checksum(sc, m, &m->ssd_checksum,
 		    sizeof(struct sr_meta_invariant));
@@ -651,7 +651,7 @@ restart:
 		}
 	}
 
-	/* not al disciplines have sync */
+	/* not all disciplines have sync */
 	if (sd->sd_scsi_sync) {
 		bzero(&wu, sizeof(wu));
 		wu.swu_fake = 1;
@@ -1120,7 +1120,7 @@ sr_meta_native_attach(struct sr_discipline *sd, int force)
 
 	DNPRINTF(SR_D_META, "%s: sr_meta_native_attach\n", DEVNAME(sc));
 
-	md = malloc(SR_META_SIZE * 512 , M_DEVBUF, M_ZERO);
+	md = malloc(SR_META_SIZE * 512, M_DEVBUF, M_ZERO);
 	if (md == NULL) {
 		printf("%s: not enough memory for metadata buffer\n",
 		    DEVNAME(sc));
