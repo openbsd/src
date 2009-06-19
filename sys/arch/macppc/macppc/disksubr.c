@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.65 2009/06/14 00:09:38 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.66 2009/06/19 11:47:09 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 	part = (struct part_map_entry *)bp->b_data;
 	/* if first partition is not valid, assume not HFS/DPME partitioned */
 	if (part->pmSig != PART_ENTRY_MAGIC)
-		return ("not a DPMI partition");
+		return ("not a DPME partition");
 	part_cnt = part->pmMapBlkCnt;
 	n = 8;
 	for (i = 0; i < part_cnt; i++) {
