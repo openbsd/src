@@ -1,4 +1,4 @@
-/*	$OpenBSD: systat.h,v 1.12 2008/11/08 06:38:27 canacar Exp $	*/
+/*	$OpenBSD: systat.h,v 1.13 2009/06/19 07:48:45 jasper Exp $	*/
 /*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
 
 /*-
@@ -85,6 +85,7 @@ int initpftop(void);
 int initpf(void);
 int initpool(void);
 int initmalloc(void);
+int initnfs(void);
 
 void error(const char *fmt, ...);
 void nlisterr(struct nlist []);

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2008/11/08 06:38:27 canacar Exp $
+#	$OpenBSD: Makefile,v 1.23 2009/06/19 07:48:45 jasper Exp $
 
 PROG=	systat
 
@@ -8,8 +8,8 @@ CFLAGS+=-DNOKVM
 CPPFLAGS+=-I${.CURDIR}/../../usr.bin/vmstat
 CPPFLAGS+=-I${.CURDIR}/../../sbin/pfctl
 SRCS=	dkstats.c engine.c if.c iostat.c main.c mbufs.c netstat.c \
-	pigs.c sensors.c swap.c vmstat.c pftop.c cache.c pf.c pool.c \
-	malloc.c
+	nfs.c pigs.c sensors.c swap.c vmstat.c pftop.c cache.c pf.c \
+	pool.c malloc.c
 
 DPADD=	${LIBCURSES} ${LIBM} ${LIBKVM}
 LDADD=	-lcurses -lm -lkvm

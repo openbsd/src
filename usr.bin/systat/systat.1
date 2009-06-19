@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.78 2008/12/17 08:21:43 canacar Exp $
+.\"	$OpenBSD: systat.1,v 1.79 2009/06/19 07:48:45 jasper Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: December 17 2008 $
+.Dd $Mdocdate: June 19 2009 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -118,6 +118,8 @@ argument expects to be one of:
 .Ic sensors ,
 .Ic mbufs ,
 .Ic netstat ,
+.Ic nfsclient ,
+.Ic nfsserver ,
 .Ic swap ,
 .Ic states ,
 .Ic rules ,
@@ -330,6 +332,14 @@ with each shown symbolically, when possible.
 .\".It Cm tcp \*(Ba udp \*(Ba all
 .\"Display only network connections using the indicated protocol.
 .\".El
+.It Ic nfsclient
+Display statistics about the NFS client activity.
+Output ressembles
+.Cm nfsstat Fl c .
+.It Ic nfsserver
+Display statistics about the NFS server activity.
+Ooutput ressembles
+.Cm nfsstat Fl s .
 .It Ic pf
 Display filter information about
 .Xr pf 4 ,
@@ -592,6 +602,7 @@ Port names.
 .Xt fstat 1 ,
 .Xr kill 1 ,
 .Xr netstat 1 ,
+.Xr nfsstat 1 ,
 .Xr ps 1 ,
 .Xr top 1 ,
 .Xr iostat 8 ,
