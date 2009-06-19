@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.180 2009/06/05 06:54:25 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.181 2009/06/19 09:43:49 sthen Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: June 5 2009 $
+.Dd $Mdocdate: June 19 2009 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -942,6 +942,7 @@ Unset the source address.
 .Nm ifconfig
 .Bk -words
 .Ar pfsync-interface
+.Op Oo Fl Oc Cm defer
 .Op Cm maxupd Ar n
 .Op Oo Fl Oc Cm syncdev Ar iface
 .Op Oo Fl Oc Cm syncpeer Ar peer_address
@@ -949,6 +950,15 @@ Unset the source address.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Cm defer
+Defer transmission of the first packet in a state until a peer has 
+acknowledged that the associated state has been inserted.
+See
+.Xr pfsync 4
+for more information.
+.It Fl defer
+Do not defer the first packet in a state.
+This is the default.
 .It Cm maxupd Ar n
 If the driver is a
 .Xr pfsync 4
