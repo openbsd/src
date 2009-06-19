@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.10 2009/05/30 03:59:27 miod Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.11 2009/06/19 17:39:02 miod Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -31,12 +31,14 @@
 #include <mips64/arcbios.h>
 #include <mips64/archtype.h>
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 #include <machine/mnode.h>
 
 #include <stand.h>
 
 static int	bios_is_32bit;
 
+u_int	kl_n_shift = 32;
 int	arcbios_init(void);
 const char *boot_get_path_component(const char *, char *, int *);
 const char *boot_getnr(const char *, int *);
