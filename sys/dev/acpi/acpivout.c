@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.4 2009/06/04 17:25:51 pirofti Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.5 2009/06/19 06:23:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <pirofti@openbsd.org>
  *
@@ -250,7 +250,10 @@ acpivout_find_brightness(struct acpivout_softc *sc, int level)
 		if  (mid < level && level <= sc->sc_bcl[i + 1])
 			return sc->sc_bcl[i + 1];
 	}
-	return sc->sc_bcl[i];
+	if (level < sc->sc_bcl[0])
+		return sc->sc_bcl[0];
+	else
+		return sc->sc_bcl[i];
 }
 
 void
@@ -331,7 +334,7 @@ acpivout_get_param(struct wsdisplay_param *dp)
 				break;
 		}
 		if (sc != NULL && sc->sc_bcl_len != 0) {
-			dp->min = sc->sc_bcl[0];
+			dp->min = 0;
 			dp->max =  sc->sc_bcl[sc->sc_bcl_len - 1];
 			dp->curval = acpivout_get_brightness(sc);
 			if (dp->curval != -1)
