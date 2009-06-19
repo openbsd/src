@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.155 2009/06/18 15:51:56 jsing Exp $ */
+/* $OpenBSD: softraid.c,v 1.156 2009/06/19 02:59:42 marco Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1177,8 +1177,6 @@ sr_meta_native_attach(struct sr_discipline *sd, int force)
 			ch_next = SLIST_NEXT(ch_entry, src_link);
 
 			/* XXX do we want to read this again? */
-			printf("ch %p %p\n", ch_entry, md);
-			printf("mm %x\n", ch_entry->src_dev_mm);
 			if (ch_entry->src_dev_mm == NODEV)
 				panic("src_dev_mm == NODEV");
 			if (sr_meta_native_read(sd, ch_entry->src_dev_mm, md,
