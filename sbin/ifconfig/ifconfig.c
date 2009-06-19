@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.219 2009/06/14 00:16:50 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.220 2009/06/19 14:05:32 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -599,9 +599,7 @@ main(int argc, char *argv[])
 		(void)getinfo(&ifr, create);
 	}
 #ifdef INET6
-	if (argc == 0 && af == AF_INET6)
-		noprint = 1;	/* handles "ifconfig <if> inet6" */
-	if (af == AF_INET6)
+	if (argc != 0 && af == AF_INET6)
 		setifxflags("inet6", -IFXF_NOINET6);
 #endif
 	while (argc > 0) {
