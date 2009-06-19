@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.4 2009/06/18 23:34:53 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.5 2009/06/19 07:20:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -510,8 +510,8 @@ post_os(POST_ARGS)
 
 	if (NULL == (m->meta.os = strdup(buf)))
 		return(verr(m, EMALLOC));
-	m->lastnamed = m->lastsec = SEC_BODY;
 
+	m->flags |= MDOC_PBODY;
 	return(post_prol(m));
 }
 

@@ -1,4 +1,4 @@
-/*	$Id: mdoc_strings.c,v 1.5 2009/06/18 01:19:02 schwarze Exp $ */
+/*	$Id: mdoc_strings.c,v 1.6 2009/06/19 07:20:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -24,41 +24,34 @@
 
 #include "libmdoc.h"
 
-/*
- * Various string-literal operations:  converting scalars to and from
- * strings, etc.
- */
+/* FIXME: this file is poorly named. */
 
 struct mdoc_secname {
-	const char	*name;
-	int		 flag;
-#define	MSECNAME_META	(1 << 0)
+	const char	*name;	/* Name of section. */
+	enum mdoc_sec	 sec;	/* Corresponding section. */
 };
 
-/* Section names corresponding to mdoc_sec. */
+#define	SECNAME_MAX	(18)
 
-static	const struct mdoc_secname secnames[] = {
-	{ "PROLOGUE", MSECNAME_META },
-	{ "BODY", MSECNAME_META },
-	{ "NAME", 0 },
-	{ "LIBRARY", 0 },
-	{ "SYNOPSIS", 0 },
-	{ "DESCRIPTION", 0 },
-	{ "IMPLEMENTATION NOTES", 0 },
-	{ "RETURN VALUES", 0 },
-	{ "ENVIRONMENT", 0 },
-	{ "FILES", 0 },
-	{ "EXAMPLES", 0 },
-	{ "DIAGNOSTICS", 0 },
-	{ "COMPATIBILITY", 0 },
-	{ "ERRORS", 0 },
-	{ "SEE ALSO", 0 },
-	{ "STANDARDS", 0 },
-	{ "HISTORY", 0 },
-	{ "AUTHORS", 0 },
-	{ "CAVEATS", 0 },
-	{ "BUGS", 0 },
-	{ NULL, 0 }
+static	const struct mdoc_secname secnames[SECNAME_MAX] = {
+	{ "NAME", SEC_NAME },
+	{ "LIBRARY", SEC_LIBRARY },
+	{ "SYNOPSIS", SEC_SYNOPSIS },
+	{ "DESCRIPTION", SEC_DESCRIPTION },
+	{ "IMPLEMENTATION NOTES", SEC_IMPLEMENTATION },
+	{ "RETURN VALUES", SEC_RETURN_VALUES },
+	{ "ENVIRONMENT", SEC_ENVIRONMENT },
+	{ "FILES", SEC_FILES },
+	{ "EXAMPLES", SEC_EXAMPLES },
+	{ "DIAGNOSTICS", SEC_DIAGNOSTICS },
+	{ "COMPATIBILITY", SEC_COMPATIBILITY },
+	{ "ERRORS", SEC_ERRORS },
+	{ "SEE ALSO", SEC_SEE_ALSO },
+	{ "STANDARDS", SEC_STANDARDS },
+	{ "HISTORY", SEC_HISTORY },
+	{ "AUTHORS", SEC_AUTHORS },
+	{ "CAVEATS", SEC_CAVEATS },
+	{ "BUGS", SEC_BUGS },
 };
 
 
@@ -192,13 +185,11 @@ mdoc_isdelim(const char *p)
 enum mdoc_sec 
 mdoc_atosec(const char *p)
 {
-	const struct mdoc_secname *n;
-	int			   i;
+	int		 i;
 
-	for (i = 0, n = secnames; n->name; n++, i++)
-		if ( ! (n->flag & MSECNAME_META))
-			if (0 == strcmp(p, n->name))
-				return((enum mdoc_sec)i);
+	for (i = 0; i < SECNAME_MAX; i++) 
+		if (0 == strcmp(p, secnames[i].name))
+			return(secnames[i].sec);
 
 	return(SEC_CUSTOM);
 }

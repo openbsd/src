@@ -1,4 +1,4 @@
-/*	$Id: mdoc.c,v 1.8 2009/06/18 23:51:12 schwarze Exp $ */
+/*	$Id: mdoc.c,v 1.9 2009/06/19 07:20:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -144,7 +144,7 @@ mdoc_alloc1(struct mdoc *mdoc)
 
 	bzero(&mdoc->meta, sizeof(struct mdoc_meta));
 	mdoc->flags = 0;
-	mdoc->lastnamed = mdoc->lastsec = 0;
+	mdoc->lastnamed = mdoc->lastsec = SEC_NONE;
 	mdoc->last = calloc(1, sizeof(struct mdoc_node));
 	if (NULL == mdoc->last)
 		return(0);
@@ -371,14 +371,11 @@ mdoc_macro(struct mdoc *m, int tok,
 		int ln, int pp, int *pos, char *buf)
 {
 
-	/* FIXME - these should happen during validation. */
-
 	if (MDOC_PROLOGUE & mdoc_macros[tok].flags && 
-			SEC_PROLOGUE != m->lastnamed)
+			MDOC_PBODY & m->flags)
 		return(perr(m, ln, pp, EPROLBODY));
-
 	if ( ! (MDOC_PROLOGUE & mdoc_macros[tok].flags) && 
-			SEC_PROLOGUE == m->lastnamed)
+			! (MDOC_PBODY & m->flags))
 		return(perr(m, ln, pp, EBODYPROL));
 
 	if (1 != pp && ! (MDOC_CALLABLE & mdoc_macros[tok].flags))
@@ -629,7 +626,7 @@ static int
 parsetext(struct mdoc *m, int line, char *buf)
 {
 
-	if (SEC_PROLOGUE == m->lastnamed)
+	if (SEC_NONE == m->lastnamed)
 		return(perr(m, line, 0, ETEXTPROL));
 
 	if (0 == buf[0] && ! (MDOC_LITERAL & m->flags))

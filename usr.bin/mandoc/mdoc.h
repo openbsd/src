@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.4 2009/06/18 23:34:53 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.5 2009/06/19 07:20:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -198,27 +198,26 @@ enum	mdoc_type {
 
 /* Section (named/unnamed) of `Sh'. */
 enum	mdoc_sec {
-	SEC_PROLOGUE 		= 0,
-	SEC_BODY		= 1,
-	SEC_NAME		= 2,
-	SEC_LIBRARY		= 3,
-	SEC_SYNOPSIS		= 4,
-	SEC_DESCRIPTION		= 5,
-	SEC_IMPLEMENTATION	= 6,
-	SEC_RETURN_VALUES	= 7,
-	SEC_ENVIRONMENT		= 8,
-	SEC_FILES		= 9,
-	SEC_EXAMPLES		= 10,
-	SEC_DIAGNOSTICS		= 11,
-	SEC_COMPATIBILITY	= 12,
-	SEC_ERRORS		= 13,
-	SEC_SEE_ALSO		= 14,
-	SEC_STANDARDS		= 15,
-	SEC_HISTORY		= 16,
-	SEC_AUTHORS		= 17,
-	SEC_CAVEATS		= 18,
-	SEC_BUGS		= 19,
-	SEC_CUSTOM
+	SEC_NONE,		/* No section, yet. */
+	SEC_NAME,
+	SEC_LIBRARY,
+	SEC_SYNOPSIS,
+	SEC_DESCRIPTION,
+	SEC_IMPLEMENTATION,
+	SEC_RETURN_VALUES,
+	SEC_ENVIRONMENT,
+	SEC_FILES,
+	SEC_EXAMPLES,
+	SEC_DIAGNOSTICS,
+	SEC_COMPATIBILITY,
+	SEC_ERRORS,
+	SEC_SEE_ALSO,
+	SEC_STANDARDS,
+	SEC_HISTORY,
+	SEC_AUTHORS,
+	SEC_CAVEATS,
+	SEC_BUGS,
+	SEC_CUSTOM		/* User-defined. */
 };
 
 /* Information from prologue. */
