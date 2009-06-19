@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.4 2009/06/11 17:00:31 chl Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.5 2009/06/19 19:07:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,7 +46,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.4 2009/06/11 17:00:31 chl Exp $";
+static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.5 2009/06/19 19:07:27 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -204,7 +204,7 @@ kvm_deadfile2_byfile(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	struct nlist nl[3], *p;
 	int buflen = kd->arglen, n = 0;
 	char *where = kd->argspc;
-	struct kinfo_file2 *kf;
+	struct kinfo_file2 *kf = NULL;
 	struct file *fp, file;
 	struct filelist filehead;
 	int nfiles;
@@ -263,7 +263,7 @@ kvm_deadfile2_byid(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 	struct nlist nl[5], *np;
 	int buflen = kd->arglen, n = 0;
 	char *where = kd->argspc;
-	struct kinfo_file2 *kf;
+	struct kinfo_file2 *kf = NULL;
 	struct file *fp, file;
 	struct filelist filehead;
 	struct filedesc0 filed0;
