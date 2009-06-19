@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.2 2009/06/05 22:34:45 michele Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.3 2009/06/19 17:10:09 michele Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -164,20 +164,49 @@ lde_assign_label()
 void
 lde_insert(struct kroute *kr)
 {
-	struct rt_node	*rn;
+	struct rt_node		*rn;
+	struct rt_label		*rl;
+	struct lde_nbr_address	*addr;
 
-	rn = calloc(1, sizeof(*rn));
-	if (rn == NULL)
-		fatal("lde_insert");
+	rn = rt_find(kr->prefix.s_addr, kr->prefixlen);
+	if (rn == NULL) {
+		rn = calloc(1, sizeof(*rn));
+		if (rn == NULL)
+			fatal("lde_insert");
 
-	rn->prefix.s_addr = kr->prefix.s_addr;
+		rn->prefix.s_addr = kr->prefix.s_addr;
+		rn->prefixlen = kr->prefixlen;
+		TAILQ_INIT(&rn->labels_list);
+
+		rt_insert(rn);
+	}
+
+	if (rn->present)
+		return;
+
+	rn->present = 1;
 	rn->nexthop.s_addr = kr->nexthop.s_addr;
-	rn->prefixlen = kr->prefixlen;
-	TAILQ_INIT(&rn->labels_list);
 
-	rt_insert(rn);
+	/* There is static assigned label for this route, record it in lib */
+	if (kr->local_label) {
+		rn->local_label = (htonl(kr->local_label) << MPLS_LABEL_OFFSET);
+		return;
+	}
 
-	if (kr->local_label == 0) {
+	/* There is already a local mapping, check if there
+	   is also a remote one */
+	if (rn->local_label) {
+		TAILQ_FOREACH(rl, &rn->labels_list, entry) {
+			addr = lde_address_find(rl->nexthop, &rn->nexthop);
+			if (addr != NULL) {
+				rn->remote_label =
+				    htonl(rl->label << MPLS_LABEL_OFFSET);
+				TAILQ_REMOVE(&rn->labels_list, rl, entry);
+				free(rl);
+				break;
+			}
+		}
+	} else {
 		/* Directly connected route */
 		if (kr->nexthop.s_addr == INADDR_ANY) {
 			rn->local_label =
@@ -185,10 +214,9 @@ lde_insert(struct kroute *kr)
 			rn->nexthop.s_addr = htonl(INADDR_LOOPBACK);
 		} else
 			rn->local_label = lde_assign_label();
+	}
 
-		lde_send_insert_klabel(rn);
-	} else
-		rn->local_label = (htonl(kr->local_label) << MPLS_LABEL_OFFSET);
+	lde_send_insert_klabel(rn);
 }
 
 void
@@ -202,9 +230,26 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 	struct iface		*iface;
 	struct map		 localmap;
 
+	/* The route is not yet in fib. If we are in liberal mode create a
+	   route and record the label */
 	rn = rt_find(map->prefix, map->prefixlen);
-	if (rn == NULL)
-		return;
+	if (rn == NULL) {
+		if (ldeconf->mode & MODE_RET_CONSERVATIVE)
+			return;
+
+		rn = calloc(1, sizeof(*rn));
+		if (rn == NULL)
+			fatal("lde_check_mapping");
+
+		rn->prefix.s_addr = map->prefix;
+		rn->prefixlen = map->prefixlen;
+		rn->local_label = lde_assign_label();
+		rn->present = 0;
+
+		TAILQ_INIT(&rn->labels_list);
+
+		rt_insert(rn);
+	}
 
 	TAILQ_FOREACH(me, &ln->recv_map_list, entry) {
 		if (me->prefix.s_addr == map->prefix &&
@@ -217,7 +262,7 @@ lde_check_mapping(struct map *map, struct lde_nbr *ln)
 	}
 
 	addr = lde_address_find(ln, &rn->nexthop);
-	if (addr == NULL) {
+	if (addr == NULL || !rn->present) {
 		if (ldeconf->mode & MODE_RET_CONSERVATIVE) {
 			lde_send_labelrelease(ln->peerid, map);
 			return;

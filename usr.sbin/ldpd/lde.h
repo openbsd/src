@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.h,v 1.2 2009/06/05 22:34:45 michele Exp $ */
+/*	$OpenBSD: lde.h,v 1.3 2009/06/19 17:10:09 michele Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -85,6 +85,7 @@ struct rt_node {
 	u_int8_t		flags;
 	u_int8_t		prefixlen;
 	u_int8_t		invalid;
+	u_int8_t		present;	/* Is it present in fib? */
 };
 
 /* lde.c */
