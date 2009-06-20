@@ -1,4 +1,4 @@
-.\"     $OpenBSD: hme.4,v 1.12 2009/01/20 08:12:35 jmc Exp $
+.\"     $OpenBSD: hme.4,v 1.13 2009/06/20 09:44:03 sthen Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 20 2009 $
+.Dd $Mdocdate: June 20 2009 $
 .Dt HME 4
 .Os
 .Sh NAME
@@ -39,30 +39,27 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface provides access to the 10Mb/s and 100Mb/s Ethernet networks via the
-.Tn National
-DP83840
-Ethernet 10/100 Mb/s Physical Layer
-or the
-.Tn Quality
-QS6612
-Ethernet MII Transceiver for Category 5 Twisted Pair Cable
-chip sets.
-The
-.Nm
-is found on the SunSwift and Sun QuadFastEthernet boards.
+driver provides support for various NICs based on the Sun Happy Meal Ethernet
+controller chips, including the following:
 .Pp
-When a
-.Nm
-interface is brought up, by default, it will attempt to auto-negotiate the
-link speed and duplex.
-The speeds, in order of attempt, are:
-100 Mb/s Full Duplex, 100 Mb/s Half Duplex, 10 Mb/s Full Duplex, and
-10 Mb/s Half Duplex.
+.Bl -bullet -compact -offset indent
+.It
+Sun FastEthernet PCI
+.It
+Sun FastEthernet SBus
+.It
+Sun Quad FastEthernet PCI
+.It
+Sun Quad FastEthernet SBus
+.It
+Sun SunSwift PCI
+.It
+Sun SunSwift SBus
+.El
 .Pp
 The
 .Nm
-supports several media types, which are selected via the
+driver supports several media types, which are selected via the
 .Xr ifconfig 8
 command.
 The supported media types are:
