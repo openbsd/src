@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_cd9660.c,v 1.1 2009/06/20 19:50:05 millert Exp $	*/
+/*	$OpenBSD: kvm_cd9660.c,v 1.2 2009/06/20 20:20:43 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_cd9660.c,v 1.1 2009/06/20 19:50:05 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_cd9660.c,v 1.2 2009/06/20 20:20:43 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -37,9 +37,6 @@ static char *rcsid = "$OpenBSD: kvm_cd9660.c,v 1.1 2009/06/20 19:50:05 millert E
 #include <db.h>
 
 #include "kvm_private.h"
-
-#define KREAD(kd, addr, obj) \
-	(kvm_read(kd, addr, obj, sizeof(*obj)) != sizeof(*obj))
 
 int
 _kvm_stat_cd9660(kvm_t *kd, struct kinfo_file2 *kf, struct vnode *vp)

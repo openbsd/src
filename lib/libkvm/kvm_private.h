@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_private.h,v 1.13 2009/06/20 19:50:05 millert Exp $ */
+/*	$OpenBSD: kvm_private.h,v 1.14 2009/06/20 20:20:43 millert Exp $ */
 /*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
@@ -85,6 +85,9 @@ struct __kvm {
 	int alive;	/* Dead or alive. */
 #define ISALIVE(kd) ((kd)->alive)
 };
+
+#define KREAD(kd, addr, obj) \
+	(kvm_read(kd, addr, (void *)(obj), sizeof(*obj)) != sizeof(*obj))
 
 /*
  * Functions used internally by kvm, but across kvm modules.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_udf.c,v 1.1 2009/06/20 19:50:05 millert Exp $	*/
+/*	$OpenBSD: kvm_udf.c,v 1.2 2009/06/20 20:20:43 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_udf.c,v 1.1 2009/06/20 19:50:05 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_udf.c,v 1.2 2009/06/20 20:20:43 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -50,9 +50,6 @@ static char *rcsid = "$OpenBSD: kvm_udf.c,v 1.1 2009/06/20 19:50:05 millert Exp 
 #include <db.h>
 
 #include "kvm_private.h"
-
-#define KREAD(kd, addr, obj) \
-	(kvm_read(kd, addr, obj, sizeof(*obj)) != sizeof(*obj))
 
 /* Convert file entry permission (5 bits per owner/group/user) to a mode_t */
 static mode_t

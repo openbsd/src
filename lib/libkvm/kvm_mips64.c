@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mips64.c,v 1.7 2007/10/18 04:32:05 miod Exp $ */
+/*	$OpenBSD: kvm_mips64.c,v 1.8 2009/06/20 20:20:43 millert Exp $ */
 /*	$NetBSD: kvm_mips.c,v 1.3 1996/03/18 22:33:44 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_mips.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_mips64.c,v 1.7 2007/10/18 04:32:05 miod Exp $";
+static char *rcsid = "$OpenBSD: kvm_mips64.c,v 1.8 2009/06/20 20:20:43 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,9 +69,6 @@ struct vmstate {
 	pt_entry_t	*Sysmap;
 	u_int		Sysmapsize;
 };
-
-#define KREAD(kd, addr, p)\
-	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
 
 void
 _kvm_freevtop(kvm_t *kd)

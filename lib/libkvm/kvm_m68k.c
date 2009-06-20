@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_m68k.c,v 1.17 2006/06/12 18:00:08 miod Exp $ */
+/*	$OpenBSD: kvm_m68k.c,v 1.18 2009/06/20 20:20:43 millert Exp $ */
 /*	$NetBSD: kvm_m68k.c,v 1.9 1996/05/07 06:09:11 leo Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.17 2006/06/12 18:00:08 miod Exp $";
+static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.18 2009/06/20 20:20:43 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,9 +78,6 @@ static char *rcsid = "$OpenBSD: kvm_m68k.c,v 1.17 2006/06/12 18:00:08 miod Exp $
 #define	btop(x)		(((unsigned)(x)) >> PGSHIFT)	/* XXX */
 #define	ptob(x)		((caddr_t)((x) << PGSHIFT))	/* XXX */
 #endif
-
-#define KREAD(kd, addr, p)\
-	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
 
 void
 _kvm_freevtop(kvm_t *kd)

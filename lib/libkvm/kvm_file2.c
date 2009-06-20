@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.7 2009/06/20 19:50:05 millert Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.8 2009/06/20 20:20:43 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,7 +46,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.7 2009/06/20 19:50:05 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.8 2009/06/20 20:20:43 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -120,9 +120,6 @@ static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.7 2009/06/20 19:50:05 millert Ex
 #include <unistd.h>
 
 #include "kvm_private.h"
-
-#define KREAD(kd, addr, obj) \
-	(kvm_read(kd, addr, obj, sizeof(*obj)) != sizeof(*obj))
 
 static struct kinfo_file2 *kvm_deadfile2_byfile(kvm_t *, int, int,
     size_t, int *);
