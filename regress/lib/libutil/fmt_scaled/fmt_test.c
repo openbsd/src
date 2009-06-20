@@ -1,4 +1,4 @@
-/* $OpenBSD */
+/* $OpenBSD: fmt_test.c,v 1.9 2009/06/20 14:23:38 ian Exp $ */
 
 /*
  * Combined tests for fmt_scaled and scan_scaled.
@@ -88,10 +88,10 @@ static struct {			/* the test cases */
 	{ 1025, "1.0K", 0 },
 	{ 1234, "1.2K", 0 },
 	{ -1234, "-1.2K", 0 },
-	{ 1484, "1.4K", 0 },		/* rouding boundary, down */
-	{ 1485, "1.5K", 0 },		/* rouding boundary, up   */
-	{ -1484, "-1.4K", 0 },		/* rouding boundary, down */
-	{ -1485, "-1.5K", 0 },		/* rouding boundary, up   */
+	{ 1484, "1.4K", 0 },		/* rounding boundary, down */
+	{ 1485, "1.5K", 0 },		/* rounding boundary, up   */
+	{ -1484, "-1.4K", 0 },		/* rounding boundary, down */
+	{ -1485, "-1.5K", 0 },		/* rounding boundary, up   */
 	{ 1536, "1.5K", 0 },
 	{ 1786, "1.7K", 0 },
 	{ 1800, "1.8K", 0 },
