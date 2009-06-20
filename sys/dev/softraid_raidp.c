@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raidp.c,v 1.5 2009/06/17 22:45:41 jordan Exp $ */
+/* $OpenBSD: softraid_raidp.c,v 1.6 2009/06/20 13:00:44 marco Exp $ */
 /*
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2009 Jordan Hargrave <jordan@openbsd.org>
@@ -145,7 +145,6 @@ sr_raidp_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 {
 	int			old_state, s;
 
-	/* XXX this is for RAID 0 */
 	DNPRINTF(SR_D_STATE, "%s: %s: %s: sr_raid_set_chunk_state %d -> %d\n",
 	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname,
 	    sd->sd_vol.sv_chunks[c]->src_meta.scmi.scm_devname, c, new_state);
@@ -162,7 +161,6 @@ sr_raidp_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 	case BIOC_SDONLINE:
 		switch (new_state) {
 		case BIOC_SDOFFLINE:
-			break;
 		case BIOC_SDSCRUB:
 			break;
 		default:
@@ -178,24 +176,23 @@ sr_raidp_set_chunk_state(struct sr_discipline *sd, int c, int new_state)
 		break;
 
 	case BIOC_SDSCRUB:
-		if (new_state == BIOC_SDONLINE) {
-			;
-		} else
+		switch (new_state) {
+		case BIOC_SDONLINE:
+		case BIOC_SDOFFLINE:
+			break;
+		default:
 			goto die;
+		}
 		break;
 
 	case BIOC_SDREBUILD:
-		if (new_state == BIOC_SDONLINE) {
-			;
-		} else
+		switch (new_state) {
+		case BIOC_SDONLINE:
+		case BIOC_SDOFFLINE:
+			break;
+		default:
 			goto die;
-		break;
-
-	case BIOC_SDHOTSPARE:
-		if (new_state == BIOC_SDREBUILD) {
-			;
-		} else
-			goto die;
+		}
 		break;
 
 	default:
@@ -225,8 +222,6 @@ sr_raidp_set_vol_state(struct sr_discipline *sd)
 	int			new_state, i, s, nd;
 	int			old_state = sd->sd_vol_status;
 
-	/* XXX this is for RAID 0 */
-
 	DNPRINTF(SR_D_STATE, "%s: %s: sr_raid_set_vol_state\n",
 	    DEVNAME(sd->sd_sc), sd->sd_meta->ssd_devname);
 
@@ -247,14 +242,14 @@ sr_raidp_set_vol_state(struct sr_discipline *sd)
 
 	if (states[BIOC_SDONLINE] == nd)
 		new_state = BIOC_SVONLINE;
-	else if (states[BIOC_SDONLINE] == 0)
+	else if (states[BIOC_SDONLINE] < nd - 1)
 		new_state = BIOC_SVOFFLINE;
+	else if (states[BIOC_SDOFFLINE] == nd - 1)
+		new_state = BIOC_SVDEGRADED;
 	else if (states[BIOC_SDSCRUB] != 0)
 		new_state = BIOC_SVSCRUB;
 	else if (states[BIOC_SDREBUILD] != 0)
 		new_state = BIOC_SVREBUILD;
-	else if (states[BIOC_SDOFFLINE] != 0)
-		new_state = BIOC_SVDEGRADED;
 	else {
 		printf("old_state = %d, ", old_state);
 		for (i = 0; i < nd; i++)
@@ -271,7 +266,6 @@ sr_raidp_set_vol_state(struct sr_discipline *sd)
 	case BIOC_SVONLINE:
 		switch (new_state) {
 		case BIOC_SVONLINE: /* can go to same state */
-		case BIOC_SVOFFLINE:
 		case BIOC_SVDEGRADED:
 		case BIOC_SVREBUILD: /* happens on boot */
 			break;
@@ -290,17 +284,6 @@ sr_raidp_set_vol_state(struct sr_discipline *sd)
 		case BIOC_SVOFFLINE:
 		case BIOC_SVDEGRADED:
 		case BIOC_SVSCRUB: /* can go to same state */
-			break;
-		default:
-			goto die;
-		}
-		break;
-
-	case BIOC_SVBUILDING:
-		switch (new_state) {
-		case BIOC_SVONLINE:
-		case BIOC_SVOFFLINE:
-		case BIOC_SVBUILDING: /* can go to the same state */
 			break;
 		default:
 			goto die;
