@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.6 2009/06/20 13:10:21 millert Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.7 2009/06/20 19:50:05 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,7 +46,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.6 2009/06/20 13:10:21 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.7 2009/06/20 19:50:05 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -79,10 +79,6 @@ static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.6 2009/06/20 13:10:21 millert Ex
 #include <sys/pipe.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
-
-#include <isofs/cd9660/iso.h>
-#include <isofs/cd9660/cd9660_extern.h>
-#include <isofs/cd9660/cd9660_node.h>
 
 #define _KERNEL
 #include <ufs/ufs/quota.h>
@@ -811,24 +807,6 @@ spec_filestat(kvm_t *kd, struct kinfo_file2 *kf, struct vnode *vp)
 }
 
 static int
-isofs_filestat(kvm_t *kd, struct kinfo_file2 *kf, struct vnode *vp)
-{
-	struct iso_node inode;
-
-	if (KREAD(kd, (u_long)VTOI(vp), &inode)) {
-		_kvm_err(kd, kd->program, "can't read inode at %p", VTOI(vp));
-		return (-1);
-	}
-	kf->va_fsid = inode.i_dev & 0xffff;
-	kf->va_fileid = (long)inode.i_number;
-	kf->va_mode = inode.inode.iso_mode;
-	kf->va_size = inode.i_size;
-	kf->va_rdev = inode.i_dev;
-
-	return (0);
-}
-
-static int
 filestat(kvm_t *kd, struct kinfo_file2 *kf, struct vnode *vp)
 {
 	int ret = 0;
@@ -846,13 +824,16 @@ filestat(kvm_t *kd, struct kinfo_file2 *kf, struct vnode *vp)
 			ret = ext2fs_filestat(kd, kf, vp);
 			break;
 		case VT_ISOFS:
-			ret = isofs_filestat(kd, kf, vp);
+			ret = _kvm_stat_cd9660(kd, kf, vp);
 			break;
 		case VT_MSDOSFS:
 			ret = msdos_filestat(kd, kf, vp);
 			break;
 		case VT_NNPFS:
 			ret = nnpfs_filestat(kd, kf, vp);
+			break;
+		case VT_UDF:
+			ret = _kvm_stat_udf(kd, kf, vp);
 			break;
 		case VT_NON:
 			if (vp->v_flag & VCLONE)
