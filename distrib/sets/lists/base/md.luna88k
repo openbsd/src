@@ -1661,6 +1661,13 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/specfs
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/specfs/specdev.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/mpool.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs
+./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs/bootsect.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs/bpb.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs/denode.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs/direntry.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs/fat.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/msdosfs/msdosfsmount.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/net

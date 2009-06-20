@@ -1058,6 +1058,13 @@
 ./usr/include/miscfs/specfs
 ./usr/include/miscfs/specfs/specdev.h
 ./usr/include/mpool.h
+./usr/include/msdosfs
+./usr/include/msdosfs/bootsect.h
+./usr/include/msdosfs/bpb.h
+./usr/include/msdosfs/denode.h
+./usr/include/msdosfs/direntry.h
+./usr/include/msdosfs/fat.h
+./usr/include/msdosfs/msdosfsmount.h
 ./usr/include/ncurses.h
 ./usr/include/ndbm.h
 ./usr/include/net

@@ -1861,6 +1861,13 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/miscfs/specfs/specdev.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/mmintrin.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/mpool.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/msdosfs
+./usr/libdata/perl5/site_perl/i386-openbsd/msdosfs/bootsect.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/msdosfs/bpb.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/msdosfs/denode.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/msdosfs/direntry.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/msdosfs/fat.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/msdosfs/msdosfsmount.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/net

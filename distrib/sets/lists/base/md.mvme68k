@@ -1744,6 +1744,13 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/specfs
 ./usr/libdata/perl5/site_perl/m68k-openbsd/miscfs/specfs/specdev.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mpool.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/msdosfs
+./usr/libdata/perl5/site_perl/m68k-openbsd/msdosfs/bootsect.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/msdosfs/bpb.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/msdosfs/denode.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/msdosfs/direntry.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/msdosfs/fat.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/msdosfs/msdosfsmount.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/asm.ph

@@ -1160,6 +1160,13 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/specfs
 ./usr/libdata/perl5/site_perl/sparc-openbsd/miscfs/specfs/specdev.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/mpool.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/msdosfs
+./usr/libdata/perl5/site_perl/sparc-openbsd/msdosfs/bootsect.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/msdosfs/bpb.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/msdosfs/denode.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/msdosfs/direntry.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/msdosfs/fat.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/msdosfs/msdosfsmount.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net

@@ -1828,6 +1828,13 @@
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/miscfs/specfs
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/miscfs/specfs/specdev.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/mpool.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/msdosfs
+./usr/libdata/perl5/site_perl/hppa64-openbsd/msdosfs/bootsect.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/msdosfs/bpb.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/msdosfs/denode.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/msdosfs/direntry.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/msdosfs/fat.ph
+./usr/libdata/perl5/site_perl/hppa64-openbsd/msdosfs/msdosfsmount.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/ndbm.ph
 ./usr/libdata/perl5/site_perl/hppa64-openbsd/net
