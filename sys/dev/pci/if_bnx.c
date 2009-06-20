@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.78 2009/04/22 01:17:26 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.79 2009/06/20 15:42:28 naddy Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -397,7 +397,7 @@ void	bnx_disable_intr(struct bnx_softc *);
 void	bnx_enable_intr(struct bnx_softc *);
 
 int	bnx_intr(void *);
-void	bnx_set_rx_mode(struct bnx_softc *);
+void	bnx_iff(struct bnx_softc *);
 void	bnx_stats_update(struct bnx_softc *);
 void	bnx_tick(void *);
 
@@ -4314,7 +4314,7 @@ bnx_init(void *xsc)
 	    sc->mbuf_alloc_size, sc->max_frame_size);
 
 	/* Program appropriate promiscuous/multicast filtering. */
-	bnx_set_rx_mode(sc);
+	bnx_iff(sc);
 
 	/* Init RX buffer descriptor chain. */
 	bnx_init_rx_chain(sc);
@@ -4639,19 +4639,14 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if ((ifp->if_flags & IFF_RUNNING) &&
-			    ((ifp->if_flags ^ sc->bnx_if_flags) &
-			    (IFF_ALLMULTI | IFF_PROMISC)) != 0) {
-				bnx_set_rx_mode(sc);
-			} else {
-				if (!(ifp->if_flags & IFF_RUNNING))
-					bnx_init(sc);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				bnx_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				bnx_stop(sc);
 		}
-		sc->bnx_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCSIFMEDIA:
@@ -4668,7 +4663,7 @@ bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
-			bnx_set_rx_mode(sc);
+			bnx_iff(sc);
 		error = 0;
 	}
 
@@ -4837,7 +4832,7 @@ bnx_intr(void *xsc)
 /*   Nothing.                                                               */
 /****************************************************************************/
 void
-bnx_set_rx_mode(struct bnx_softc *sc)
+bnx_iff(struct bnx_softc *sc)
 {
 	struct arpcom		*ac = &sc->arpcom;
 	struct ifnet		*ifp = &ac->ac_if;
@@ -4851,6 +4846,7 @@ bnx_set_rx_mode(struct bnx_softc *sc)
 	rx_mode = sc->rx_mode & ~(BNX_EMAC_RX_MODE_PROMISCUOUS |
 	    BNX_EMAC_RX_MODE_KEEP_VLAN_TAG);
 	sort_mode = 1 | BNX_RPM_SORT_USER0_BC_EN;
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/*
 	 * ASF/IPMI/UMP firmware requires that VLAN tag stripping
@@ -4867,13 +4863,14 @@ bnx_set_rx_mode(struct bnx_softc *sc)
 	if (ifp->if_flags & IFF_PROMISC) {
 		DBPRINT(sc, BNX_INFO, "Enabling promiscuous mode.\n");
 
+		ifp->if_flags |= IFF_ALLMULTI;
 		/* Enable promiscuous mode. */
 		rx_mode |= BNX_EMAC_RX_MODE_PROMISCUOUS;
 		sort_mode |= BNX_RPM_SORT_USER0_PROM_EN;
-	} else if (ifp->if_flags & IFF_ALLMULTI) {
-allmulti:
+	} else if (ac->ac_multirangecnt > 0) {
 		DBPRINT(sc, BNX_INFO, "Enabling all multicast mode.\n");
 
+		ifp->if_flags |= IFF_ALLMULTI;
 		/* Enable all multicast addresses. */
 		for (i = 0; i < NUM_MC_HASH_REGISTERS; i++)
 			REG_WR(sc, BNX_EMAC_MULTICAST_HASH0 + (i * 4),
@@ -4885,14 +4882,11 @@ allmulti:
 
 		ETHER_FIRST_MULTI(step, ac, enm);
 		while (enm != NULL) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
-			    ETHER_ADDR_LEN)) {
-				ifp->if_flags |= IFF_ALLMULTI;
-				goto allmulti;
-			}
 			h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) &
 			    0xFF;
+
 			hashes[(h & 0xE0) >> 5] |= 1 << (h & 0x1F);
+
 			ETHER_NEXT_MULTI(step, enm);
 		}
 
