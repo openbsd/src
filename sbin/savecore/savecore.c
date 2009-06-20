@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.46 2009/01/17 13:48:50 miod Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.47 2009/06/20 00:15:14 millert Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.46 2009/01/17 13:48:50 miod Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.47 2009/06/20 00:15:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -270,8 +270,7 @@ kmem_setup(void)
 	dumpfd = Open(ddname, O_RDWR);
 
 	dump_sys = kernel ? kernel : _PATH_UNIX;
-
-	kd_dump = kvm_openfiles(dump_sys, ddname, NULL, O_RDWR, errbuf);
+	kd_dump = kvm_openfiles(kernel, ddname, NULL, O_RDWR, errbuf);
 	if (kd_dump == NULL) {
 		syslog(LOG_ERR, "%s: kvm_openfiles: %s", dump_sys, errbuf);
 		exit(1);
