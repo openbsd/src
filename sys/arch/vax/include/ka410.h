@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka410.h,v 1.5 2006/07/25 21:11:08 miod Exp $ */
+/*	$OpenBSD: ka410.h,v 1.6 2009/06/20 20:57:39 miod Exp $ */
 /*	$NetBSD: ka410.h,v 1.2 1997/02/19 10:06:05 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -65,9 +65,6 @@
 /*
  * Other fixed addresses which should be mapped
  */
-#define KA410_CPU_BASE	((struct ka410_cpu *)0x20080000)
-#define KA410_CPU_END	0x200800FF
-#define KA410_CPU_SIZE	     0x100
 #define KA410_NWA_BASE	0x20090000	/* Network Address ROM */
 #define KA410_NWA_END	0x2009007F
 #define KA410_NWA_SIZE	      0x80
@@ -149,13 +146,6 @@ extern volatile unsigned char *ka410_intmsk;
 #define KA410_SCSIPORT	0x200B00BC	/* Tape Controller Port Data */
 #define KA410_RESERVED	0x200B00C0	/* Reserved (16 bytes) */
 
-
-struct ka410_cpu {
-	u_long  ka410_hltcod;
-	u_long  ka410_mser;
-	u_long  ka410_cear;
-	u_long  ka410_intmsk;
-};
 
 /*
  * KA410 uses bits 2-9 of longwords to store single bytes in NVRAM, 
