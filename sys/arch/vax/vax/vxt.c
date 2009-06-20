@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxt.c,v 1.4 2008/08/18 23:05:39 miod Exp $	*/
+/*	$OpenBSD: vxt.c,v 1.5 2009/06/20 20:58:07 miod Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -54,8 +54,6 @@ static	void	vxt_reboot(int);
 static	void	vxt_cache_enable(void);
 static	int	missing_clkread(time_t);
 static	void	missing_clkwrite(void);
-
-struct	vs_cpu *vxt_cpu;
 
 /* 
  * Declaration of vxt-specific calls.

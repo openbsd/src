@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka660.c,v 1.5 2008/08/18 23:05:38 miod Exp $	*/
+/*	$OpenBSD: ka660.c,v 1.6 2009/06/20 20:58:07 miod Exp $	*/
 /*	$NetBSD: ka660.c,v 1.3 2000/06/29 07:14:27 mrg Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -64,8 +64,6 @@ static void    ka660_conf(void);
 static void    ka660_memerr(void);
 static int     ka660_mchk(caddr_t);
 static void    ka660_cache_enable(void);
-
-struct vs_cpu *ka660_cpu;
 
 /* 
  * Declaration of 660-specific calls.
