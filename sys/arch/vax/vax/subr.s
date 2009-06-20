@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.28 2008/05/21 19:42:07 miod Exp $     */
+/*	$OpenBSD: subr.s,v 1.29 2009/06/20 21:02:15 miod Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -99,12 +99,10 @@ eskip:
  */
 
 		.globl	_sigcode,_esigcode
-_sigcode:	pushr	$0x3f
-		subl2	$0xc,sp
-		movl	0x24(sp),r0
-		calls	$3,(r0)
-		popr	$0x3f
-		chmk	$SYS_sigreturn
+_sigcode:	
+		movl	0x0c(sp),r0	/* get signal handler */
+		calls	$3,(r0)		/* and call it */
+		chmk	$SYS_sigreturn	/* sigreturn frame set up by sendsig */
 		chmk	$SYS_exit
 		halt	
 		.align	2
