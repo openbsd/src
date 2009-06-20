@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.5 2009/06/19 19:07:27 millert Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.6 2009/06/20 13:10:21 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -46,7 +46,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.5 2009/06/19 19:07:27 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.6 2009/06/20 13:10:21 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -96,6 +96,12 @@ static char *rcsid = "$OpenBSD: kvm_file2.c,v 1.5 2009/06/19 19:07:27 millert Ex
 
 #include <nnpfs/nnpfs_config.h>
 #include <nnpfs/nnpfs_node.h>
+
+#include <msdosfs/bpb.h>
+#define _KERNEL
+#include <msdosfs/denode.h>
+#undef _KERNEL
+#include <msdosfs/msdosfsmount.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -624,6 +630,41 @@ fill_file2(kvm_t *kd, struct kinfo_file2 *kf, struct file *fp, struct vnode *vp,
 	return (0);
 }
 
+static mode_t
+getftype(enum vtype v_type)
+{
+	mode_t ftype = 0;
+
+	switch (v_type) {
+	case VREG:
+		ftype = S_IFREG;
+		break;
+	case VDIR:
+		ftype = S_IFDIR;
+		break;
+	case VBLK:
+		ftype = S_IFBLK;
+		break;
+	case VCHR:
+		ftype = S_IFCHR;
+		break;
+	case VLNK:
+		ftype = S_IFLNK;
+		break;
+	case VSOCK:
+		ftype = S_IFSOCK;
+		break;
+	case VFIFO:
+		ftype = S_IFIFO;
+		break;
+	case VNON:
+	case VBAD:
+		break;
+	}
+	
+	return (ftype);
+}
+
 static int
 ufs_filestat(kvm_t *kd, struct kinfo_file2 *kf, struct vnode *vp)
 {
@@ -683,19 +724,24 @@ ext2fs_filestat(kvm_t *kd, struct kinfo_file2 *kf, struct vnode *vp)
 static int
 msdos_filestat(kvm_t *kd, struct kinfo_file2 *kf, struct vnode *vp)
 {
-#if 0 /* XXX */
-	struct inode inode;
+	struct denode de;
+	struct msdosfsmount mp;
 
-	if (KREAD(kd, (u_long)VTOI(vp), &inode)) {
-		_kvm_err(kd, kd->program, "can't read inode at %p", VTOI(vp));
+	if (KREAD(kd, (u_long)VTODE(vp), &de)) {
+		_kvm_err(kd, kd->program, "can't read denode at %p", VTODE(vp));
 		return (-1);
 	}
-	kf->va_fsid = inode.i_dev & 0xffff;
-	kf->va_fileid = (long)inode.i_number;
-	kf->va_mode = inode.i_e2fs_mode;
-	kf->va_size = inode.i_e2fs_size;
-	kf->va_rdev = 0;	/* XXX */
-#endif
+	if (KREAD(kd, (u_long)de.de_pmp, &mp)) {
+		_kvm_err(kd, kd->program, "can't read mount struct at %p",
+		    de.de_pmp);
+		return (-1);
+	}
+
+	kf->va_fsid = de.de_dev & 0xffff;
+	kf->va_fileid = 0; /* XXX see msdosfs_vptofh() for more info */
+	kf->va_mode = (mp.pm_mask & 0777) | getftype(vp->v_type);
+	kf->va_size = de.de_FileSize;
+	kf->va_rdev = 0;  /* msdosfs doesn't support device files */
 
 	return (0);
 }
@@ -704,7 +750,6 @@ static int
 nfs_filestat(kvm_t *kd, struct kinfo_file2 *kf, struct vnode *vp)
 {
 	struct nfsnode nfsnode;
-	mode_t mode;
 
 	if (KREAD(kd, (u_long)VTONFS(vp), &nfsnode)) {
 		_kvm_err(kd, kd->program, "can't read nfsnode at %p",
@@ -715,33 +760,7 @@ nfs_filestat(kvm_t *kd, struct kinfo_file2 *kf, struct vnode *vp)
 	kf->va_fileid = nfsnode.n_vattr.va_fileid;
 	kf->va_size = nfsnode.n_size;
 	kf->va_rdev = nfsnode.n_vattr.va_rdev;
-	mode = (mode_t)nfsnode.n_vattr.va_mode;
-	switch (vp->v_type) {
-	case VREG:
-		mode |= S_IFREG;
-		break;
-	case VDIR:
-		mode |= S_IFDIR;
-		break;
-	case VBLK:
-		mode |= S_IFBLK;
-		break;
-	case VCHR:
-		mode |= S_IFCHR;
-		break;
-	case VLNK:
-		mode |= S_IFLNK;
-		break;
-	case VSOCK:
-		mode |= S_IFSOCK;
-		break;
-	case VFIFO:
-		mode |= S_IFIFO;
-		break;
-	default:
-		break;
-	}
-	kf->va_mode = mode;
+	kf->va_mode = (mode_t)nfsnode.n_vattr.va_mode | getftype(vp->v_type);
 
 	return (0);
 }
