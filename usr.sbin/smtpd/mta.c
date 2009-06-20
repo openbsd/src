@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.60 2009/06/07 05:56:25 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.61 2009/06/20 07:46:13 jacekm Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -109,6 +109,9 @@ mta_dispatch_parent(int sig, short event, void *p)
 			if (env->sc_flags & SMTPD_CONFIGURING)
 				break;
 			env->sc_flags |= SMTPD_CONFIGURING;
+
+			if ((env->sc_ssl = calloc(1, sizeof(*env->sc_ssl))) == NULL)
+				fatal("mta_dispatch_parent: calloc");
 			break;
 		case IMSG_CONF_SSL: {
 			struct ssl	*s;
