@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt_scaled.c,v 1.9 2007/03/20 03:42:52 tedu Exp $	*/
+/*	$OpenBSD: fmt_scaled.c,v 1.10 2009/06/20 15:00:04 martynas Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Ian F. Darwin.  All rights reserved.
@@ -65,7 +65,7 @@ static long long scale_factors[] = {
 
 #define MAX_DIGITS (SCALE_LENGTH * 3)	/* XXX strlen(sprintf("%lld", -1)? */
 
-/** Convert the given input string "scaled" into numeric in "result".
+/* Convert the given input string "scaled" into numeric in "result".
  * Return 0 on success, -1 and errno set on error.
  */
 int
@@ -146,7 +146,7 @@ scan_scaled(char *scaled, long long *result)
 	/* Validate scale factor, and scale whole and fraction by it. */
 	for (i = 0; i < SCALE_LENGTH; i++) {
 
-		/** Are we there yet? */
+		/* Are we there yet? */
 		if (*p == scale_chars[i] ||
 			*p == tolower(scale_chars[i])) {
 
@@ -192,7 +192,7 @@ fmt_scaled(long long number, char *result)
 	unsigned int i;
 	unit_type unit = NONE;
 
-	abval = (number < 0LL) ? -number : number;	/* no long long_abs yet */
+	abval = llabs(number);
 
 	/* Not every negative long long has a positive representation.
 	 * Also check for numbers that are just too darned big to format
