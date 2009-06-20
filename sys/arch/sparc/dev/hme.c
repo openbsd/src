@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.58 2008/11/28 02:44:17 brad Exp $	*/
+/*	$OpenBSD: hme.c,v 1.59 2009/06/20 09:40:29 sthen Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -331,7 +331,14 @@ void
 hmestop(sc)
 	struct hme_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int tries = 0;
+
+	/*
+	 * Mark the interface down and cancel the watchdog timer.
+	 */
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	ifp->if_timer = 0;
 
 	sc->sc_gr->reset = GR_RESET_ALL;
 	while (sc->sc_gr->reset && (++tries != MAX_STOP_TRIES))
@@ -414,7 +421,6 @@ hmeioctl(ifp, cmd, data)
 			 * stop it.
 			 */
 			hmestop(sc);
-			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
@@ -600,7 +606,6 @@ hmeinit(sc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	sc->sc_if_flags = ifp->if_flags;
-	ifp->if_timer = 0;
 }
 
 void
