@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.89 2009/06/06 12:31:17 rainer Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.90 2009/06/20 10:39:52 blambert Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -141,6 +141,10 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			route_cb.ip_count--;
 		else if (af == AF_INET6)
 			route_cb.ip6_count--;
+#ifdef MPLS
+		else if (af == AF_MPLS)
+			route_cb.mpls_count--;
+#endif /* MPLS */
 		route_cb.any_count--;
 	}
 	s = splsoftnet();
@@ -170,8 +174,8 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		else if (af == AF_INET6)
 			route_cb.ip6_count++;
 #ifdef MPLS
-               else if (af == AF_MPLS)
-                       route_cb.mpls_count++;
+		else if (af == AF_MPLS)
+			route_cb.mpls_count++;
 #endif /* MPLS */
 		rp->rcb_faddr = &route_src;
 		route_cb.any_count++;
