@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.9 2009/06/19 07:20:19 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.10 2009/06/21 18:15:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -1069,25 +1069,24 @@ post_bf(POST_ARGS)
 
 	head = mdoc->last->head;
 
-	if (NULL == mdoc->last->args) {
-		if (NULL == head->child || 
-				MDOC_TEXT != head->child->type)
-			return(mdoc_err(mdoc, "text argument expected"));
-
-		p = head->child->string;
-		if (0 == strcmp(p, "Em"))
-			return(1);
-		else if (0 == strcmp(p, "Li"))
-			return(1);
-		else if (0 == strcmp(p, "Sm"))
-			return(1);
-		return(mdoc_nerr(mdoc, head->child, "invalid font"));
-	}
-
-	if (head->child)
+	if (mdoc->last->args && head->child)
 		return(mdoc_err(mdoc, "one argument expected"));
+	else if (mdoc->last->args)
+		return(1);
 
-	return(1);
+	if (NULL == head->child || MDOC_TEXT != head->child->type)
+		return(mdoc_err(mdoc, "text argument expected"));
+
+	p = head->child->string;
+
+	if (0 == strcmp(p, "Em"))
+		return(1);
+	else if (0 == strcmp(p, "Li"))
+		return(1);
+	else if (0 == strcmp(p, "Sm"))
+		return(1);
+
+	return(mdoc_nerr(mdoc, head->child, "invalid font mode"));
 }
 
 
