@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbridge.c,v 1.26 2009/06/13 21:48:03 miod Exp $	*/
+/*	$OpenBSD: xbridge.c,v 1.27 2009/06/21 18:03:16 miod Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009  Miodrag Vallat.
@@ -81,7 +81,6 @@ struct xbridge_softc {
 	struct xbridge_intr	*sc_intr[BRIDGE_NINTRS];
 
 	pcireg_t	sc_devices[BRIDGE_NSLOTS];
-	pcireg_t	sc_ier_ignore;
 
 	struct mutex	sc_atemtx;
 	uint		sc_atecnt;
@@ -414,7 +413,6 @@ xbridge_conf_read(void *cookie, pcitag_t tag, int offset)
 {
 	struct xbridge_softc *sc = cookie;
 	pcireg_t data;
-	uint32_t ier;
 	int bus, dev, fn;
 	paddr_t pa;
 	int skip;
@@ -460,41 +458,6 @@ xbridge_conf_read(void *cookie, pcitag_t tag, int offset)
 			data = (PCI_INTERRUPT_PIN_A <<
 			    PCI_INTERRUPT_PIN_SHIFT) |
 			    (dev << PCI_INTERRUPT_LINE_SHIFT);
-			skip = 1;
-			break;
-		case PCI_INTERRUPT_REG + 4:
-			/*
-			 * This is a kluge to help the IOC driver figure
-			 * out which second interrupt line it uses.
-			 *
-			 * The ioc driver will attempt to trigger that
-			 * interrupt, and then read that sort-of second
-			 * interrupt register.  Here we check the pending
-			 * interrupts, and see if a bit has changed.
-			 *
-			 * Unfortunately, this does not work on all
-			 * platforms (e.g. IP30).  The ioc driver falls
-			 * back to heuristics in that case.
-			 */
-
-			ier = bus_space_read_4(sc->sc_iot, sc->sc_regh,
-			    BRIDGE_IER) & 0xff;
-			ier &= ~sc->sc_ier_ignore;
-			sc->sc_ier_ignore |= ier;
-
-			/* we expect only one bit to trigger */
-			if (ier != 0 && (ier & (ier - 1)) != 0)
-				ier = 0;
-
-			if (ier != 0) {
-				/* compute interrupt line */
-				for (data = 0; ier != 1; ier >>= 1, data++) ;
-
-				data = (PCI_INTERRUPT_PIN_A <<
-				    PCI_INTERRUPT_PIN_SHIFT) |
-				    (data << PCI_INTERRUPT_LINE_SHIFT);
-			} else
-				data = 0;
 			skip = 1;
 			break;
 		default:
@@ -701,7 +664,6 @@ xbridge_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 		}
 
 		sc->sc_intrbit[intrbit] = intrsrc;
-		sc->sc_ier_ignore |= 1 << intrbit;
 	}
 
 	xi->xi_bridge = sc;
@@ -1552,7 +1514,7 @@ xbridge_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
-	vaddr_t low, high;
+	paddr_t low, high;
 
 	/*
 	 * Limit bus_dma'able memory to the first 2GB of physical memory.
@@ -1687,9 +1649,6 @@ xbridge_setup(struct xbridge_softc *sc)
 
 	for (i = 0; i < BRIDGE_NINTRS; i++)
 		sc->sc_intrbit[i] = -1;
-
-	sc->sc_ier_ignore = bus_space_read_4(sc->sc_iot, sc->sc_regh,
-	    BRIDGE_IER) & 0xff;
 }
 
 /*
