@@ -1,4 +1,4 @@
-/*	$Id: mdoc_term.c,v 1.11 2009/06/18 23:34:53 schwarze Exp $ */
+/*	$Id: mdoc_term.c,v 1.12 2009/06/21 19:53:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -706,7 +706,7 @@ termp_it_pre(DECL_ARGS)
 {
 	const struct mdoc_node *bl, *n;
 	char		        buf[7];
-	int		        i, type, keys[3], vals[3];
+	int		        i, type, keys[3], vals[3], sv;
 	size_t		        width, offset;
 
 	if (MDOC_BLOCK == node->type)
@@ -890,17 +890,20 @@ termp_it_pre(DECL_ARGS)
 
 	/* 
 	 * The dash, hyphen, bullet and enum lists all have a special
-	 * HEAD character.  Print it now.
+	 * HEAD character (temporarily bold, in some cases).  
 	 */
 
+	sv = p->flags;
 	if (MDOC_HEAD == node->type)
 		switch (type) {
 		case (MDOC_Bullet):
+			p->flags |= TERMP_BOLD;
 			term_word(p, "\\[bu]");
 			break;
 		case (MDOC_Dash):
 			/* FALLTHROUGH */
 		case (MDOC_Hyphen):
+			p->flags |= TERMP_BOLD;
 			term_word(p, "\\-");
 			break;
 		case (MDOC_Enum):
@@ -912,6 +915,8 @@ termp_it_pre(DECL_ARGS)
 		default:
 			break;
 		}
+
+	p->flags = sv; /* Restore saved flags. */
 
 	/* 
 	 * If we're not going to process our children, indicate so here.

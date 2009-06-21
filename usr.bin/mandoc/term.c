@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.3 2009/06/15 00:57:06 schwarze Exp $ */
+/*	$Id: term.c,v 1.4 2009/06/21 19:53:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -37,8 +37,7 @@ static	void		  term_pescape(struct termp *,
 static	void		  term_nescape(struct termp *,
 				const char *, size_t);
 static	void		  term_chara(struct termp *, char);
-static	void		  term_stringa(struct termp *, 
-				const char *, size_t);
+static	void		  term_encodea(struct termp *, char);
 static	int		  term_isopendelim(const char *, int);
 static	int		  term_isclosedelim(const char *, int);
 
@@ -407,10 +406,11 @@ term_nescape(struct termp *p, const char *word, size_t len)
 {
 	const char	*rhs;
 	size_t		 sz;
+	int		 i;
 
-	if (NULL == (rhs = term_a2ascii(p->symtab, word, len, &sz))) 
-		return;
-	term_stringa(p, rhs, sz);
+	if ((rhs = term_a2ascii(p->symtab, word, len, &sz))) 
+		for (i = 0; i < (int)sz; i++) 
+			term_encodea(p, rhs[i]);
 }
 
 
@@ -519,57 +519,14 @@ term_pword(struct termp *p, const char *word, int len)
 	 * before the word.
 	 */
 
-	for (i = 0; i < len; i++) {
-		if ('\\' == word[i]) {
+	for (i = 0; i < len; i++) 
+		if ('\\' == word[i]) 
 			term_pescape(p, word, &i, len);
-			continue;
-		}
-
-		if (TERMP_STYLE & p->flags) {
-			if (TERMP_BOLD & p->flags) {
-				term_chara(p, word[i]);
-				term_chara(p, 8);
-			}
-			if (TERMP_UNDER & p->flags) {
-				term_chara(p, '_');
-				term_chara(p, 8);
-			}
-		}
-
-		term_chara(p, word[i]);
-	}
+		else
+			term_encodea(p, word[i]);
 
 	if (term_isopendelim(word, len))
 		p->flags |= TERMP_NOSPACE;
-}
-
-
-/*
- * Like term_chara() but for arbitrary-length buffers.  Resize the
- * buffer by a factor of two (if the buffer is less than that) or the
- * buffer's size.
- */
-static void
-term_stringa(struct termp *p, const char *c, size_t sz)
-{
-	size_t		 s;
-
-	if (0 == sz)
-		return;
-
-	assert(c);
-	if (p->col + sz >= p->maxcols) {
-		if (0 == p->maxcols)
-			p->maxcols = 256;
-		s = sz > p->maxcols * 2 ? sz : p->maxcols * 2;
-		p->buf = realloc(p->buf, s);
-		if (NULL == p->buf)
-			err(1, "realloc");
-		p->maxcols = s;
-	}
-
-	(void)memcpy(&p->buf[(int)p->col], c, sz);
-	p->col += sz;
 }
 
 
@@ -595,3 +552,20 @@ term_chara(struct termp *p, char c)
 	p->buf[(int)(p->col)++] = c;
 }
 
+
+static void
+term_encodea(struct termp *p, char c)
+{
+
+	if (TERMP_STYLE & p->flags) {
+		if (TERMP_BOLD & p->flags) {
+			term_chara(p, c);
+			term_chara(p, 8);
+		}
+		if (TERMP_UNDER & p->flags) {
+			term_chara(p, '_');
+			term_chara(p, 8);
+		}
+	}
+	term_chara(p, c);
+}
