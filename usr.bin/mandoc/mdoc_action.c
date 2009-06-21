@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.6 2009/06/21 19:09:58 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.7 2009/06/21 19:40:15 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -814,9 +814,8 @@ static int
 pre_dl(PRE_ARGS)
 {
 
-	if (MDOC_BODY != n->type)
-		return(1);
-	m->flags |= MDOC_LITERAL;
+	if (MDOC_BODY == n->type)
+		m->flags |= MDOC_LITERAL;
 	return(1);
 }
 
