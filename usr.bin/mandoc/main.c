@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.6 2009/06/18 23:51:12 schwarze Exp $ */
+/*	$Id: main.c,v 1.7 2009/06/21 20:10:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -88,8 +88,6 @@ static	int		  merr(void *, int, int, const char *);
 static	int		  manwarn(void *, int, int, const char *);
 static	int		  mdocwarn(void *, int, int, 
 				enum mdoc_warn, const char *);
-static	int		  fstdin(struct buf *, struct buf *, 
-				struct curparse *);
 static	int		  ffile(struct buf *, struct buf *, 
 				const char *, struct curparse *);
 static	int		  fdesc(struct buf *, struct buf *,
@@ -151,9 +149,12 @@ main(int argc, char *argv[])
 
 	rc = 1;
 
-	if (NULL == *argv)
-		if ( ! fstdin(&blk, &ln, &curp))
+	if (NULL == *argv) {
+		curp.file = "<stdin>";
+		curp.fd = STDIN_FILENO;
+		if ( ! fdesc(&blk, &ln, &curp))
 			rc = 0;
+	}
 
 	while (rc && *argv) {
 		if ( ! ffile(&blk, &ln, *argv, &curp))
@@ -257,16 +258,6 @@ mdoc_init(struct curparse *curp)
 		warnx("memory exhausted");
 
 	return(mdoc);
-}
-
-
-static int
-fstdin(struct buf *blk, struct buf *ln, struct curparse *curp)
-{
-
-	curp->file = "<stdin>";
-	curp->fd = STDIN_FILENO;
-	return(fdesc(blk, ln, curp));
 }
 
 
