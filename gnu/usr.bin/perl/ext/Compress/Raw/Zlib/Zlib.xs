@@ -1295,7 +1295,7 @@ inflate (s, buf, output, eof=FALSE)
 
         if (s->stream.avail_out == 0 ) {
 	    /* out of space in the output buffer so make it bigger */
-            Sv_Grow(output, SvLEN(output) + bufinc) ;
+            Sv_Grow(output, SvLEN(output) + bufinc +1) ;
             cur_length += increment ;
             s->stream.next_out = (Bytef*) SvPVbyte_nolen(output) + cur_length ;
             increment = bufinc ;
