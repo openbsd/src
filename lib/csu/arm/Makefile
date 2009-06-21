@@ -1,4 +1,4 @@
-#	$OpenBSDe Makefile,v 1.6 2000/06/28 04:56:44 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.6 2009/06/21 00:38:22 martynas Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/1/93
 
 CFLAGS+=	-DLIBC_SCCS

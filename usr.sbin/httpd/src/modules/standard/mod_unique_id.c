@@ -1,4 +1,4 @@
-/*	$OpenBSD */
+/*	$OpenBSD: mod_unique_id.c,v 1.12 2009/06/21 00:38:22 martynas Exp $	*/
 
 /* ====================================================================
  * The Apache Software License, Version 1.1

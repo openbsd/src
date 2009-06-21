@@ -1,4 +1,4 @@
-/* $OpeNBSD$ */
+/* $OpenBSD: fpgetround.S,v 1.4 2009/06/21 00:38:22 martynas Exp $ */
 /*
  * Written by J.T. Conklin, Apr 4, 1995
  * Public domain.

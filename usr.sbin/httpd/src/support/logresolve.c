@@ -1,4 +1,4 @@
-/*	$OpenBSD $*/
+/*	$OpenBSD: logresolve.c,v 1.15 2009/06/21 00:38:22 martynas Exp $	*/
 
 /*
  * logresolve 1.1

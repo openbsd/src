@@ -1,4 +1,4 @@
-/*	$OpenBSD */
+/*	$OpenBSD: mod_mime_magic.c,v 1.14 2009/06/21 00:38:22 martynas Exp $	*/
 
 /* ====================================================================
  * The Apache Software License, Version 1.1

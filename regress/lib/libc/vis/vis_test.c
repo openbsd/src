@@ -1,4 +1,4 @@
-/*	$OpenBSD */
+/*	$OpenBSD: vis_test.c,v 1.2 2009/06/21 00:38:22 martynas Exp $	*/
 
 /* Public domain. 2005, Otto Moerbeek */
 
