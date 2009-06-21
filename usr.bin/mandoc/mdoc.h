@@ -1,4 +1,4 @@
-/*	$Id: mdoc.h,v 1.5 2009/06/19 07:20:19 schwarze Exp $ */
+/*	$Id: mdoc.h,v 1.6 2009/06/21 20:17:32 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -275,44 +275,31 @@ struct	mdoc_node {
 #define	MDOC_IGN_CHARS	 (1 << 3) /* Ignore disallowed chars. */
 
 /* Call-backs for parse messages. */
+/* FIXME: unify somehow with man_cb. */
 struct	mdoc_cb {
 	int	(*mdoc_err)(void *, int, int, const char *);
 	int	(*mdoc_warn)(void *, int, int, 
 			enum mdoc_warn, const char *);
 };
 
-/* Global table of macro names (`Bd', `Ed', etc.). */
-extern	const char *const *mdoc_macronames;
+/* See mdoc.3 for documentation. */
 
-/* Global table of argument names (`column', `tag', etc.). */
+extern	const char *const *mdoc_macronames;
 extern	const char *const *mdoc_argnames;
 
 __BEGIN_DECLS
 
 struct	mdoc;
 
-/* Free memory allocated with mdoc_alloc. */
+/* See mdoc.3 for documentation. */
+
 void	 	  mdoc_free(struct mdoc *);
-
-/* Allocate a new parser instance. */
 struct	mdoc	 *mdoc_alloc(void *, int, const struct mdoc_cb *);
-
-/* Gets system ready for another parse. */
 int		  mdoc_reset(struct mdoc *);
-
-/* Parse a single line in a stream (boolean retval). */
 int	 	  mdoc_parseln(struct mdoc *, int, char *buf);
-
-/* Get result first node (after mdoc_endparse!). */
 const struct mdoc_node *mdoc_node(const struct mdoc *);
-
-/* Get result meta-information (after mdoc_endparse!). */
 const struct mdoc_meta *mdoc_meta(const struct mdoc *);
-
-/* Signal end of parse sequence (boolean retval). */
 int		  mdoc_endparse(struct mdoc *);
-
-/* The following are utility functions. */
 
 const char	 *mdoc_a2att(const char *);
 const char	 *mdoc_a2lib(const char *);
