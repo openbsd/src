@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP32,v 1.4 2009/06/10 18:00:07 miod Exp $
+#	$OpenBSD: GENERIC-IP32,v 1.5 2009/06/21 17:26:23 jasper Exp $
 #
 # THIS KERNEL IS FOR O2 (IP32) SYSTEMS ONLY.
 #
@@ -117,6 +117,7 @@ fxp*		at pci?		# EtherExpress 10/100B ethernet
 mtd*		at pci?		# Myson MTD803 3-in-1 Ethernet
 ne*		at pci?		# NE2000-compatible Ethernet
 ti*		at pci?		# Alteon ACEnic gigabit Ethernet
+stge*		at pci?		# Sundance TC9021 GigE
 vr*		at pci?		# VIA Rhine Fast Ethernet
 xl*		at pci?		# 3C9xx ethernet
 
@@ -143,6 +144,7 @@ xmphy*		at mii?		# XaQti XMAC-II PHYs
 nsgphy*		at mii?		# NS gigabit PHYs
 urlphy*		at mii?		# Realtek RTL8150L internal PHY
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
+ipgphy*		at mii?		# IC Plus IP1000A PHYs
 ukphy*		at mii?		# "unknown" PHYs
 
 #### Wireless
