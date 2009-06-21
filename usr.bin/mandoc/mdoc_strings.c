@@ -1,4 +1,4 @@
-/*	$Id: mdoc_strings.c,v 1.6 2009/06/19 07:20:19 schwarze Exp $ */
+/*	$Id: mdoc_strings.c,v 1.7 2009/06/21 20:21:09 schwarze Exp $ */
 /*
  * Copyright (c) 2008 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -201,7 +201,7 @@ mdoc_atotime(const char *p)
 	struct tm	 tm;
 	char		*pp;
 
-	(void)memset(&tm, 0, sizeof(struct tm));
+	bzero(&tm, sizeof(struct tm));
 
 	if (0 == strcmp(p, "$" "Mdocdate$"))
 		return(time(NULL));
