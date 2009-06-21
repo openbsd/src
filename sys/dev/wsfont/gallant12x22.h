@@ -1,4 +1,4 @@
-/*	$OpenBSD: gallant12x22.h,v 1.3 2003/06/02 23:28:04 millert Exp $ */
+/*	$OpenBSD: gallant12x22.h,v 1.4 2009/06/21 20:30:35 jsg Exp $ */
 /* 	$NetBSD: gallant12x22.h,v 1.2 1999/05/18 21:51:58 ad Exp $ */
 
 /*
@@ -36,7 +36,7 @@
  * Derived from: @(#)gallant19.h	8.1 (Berkeley) 6/11/93
  */
  
-extern u_char gallant12x22_data[];
+static u_char gallant12x22_data[];
 
 struct wsdisplay_font gallant12x22 = { 
 	"Gallant",			/* typeface name */

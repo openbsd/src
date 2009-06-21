@@ -1,4 +1,4 @@
-/*	$OpenBSD: lucida16x29.h,v 1.1 2001/03/18 04:30:23 nate Exp $ */
+/*	$OpenBSD: lucida16x29.h,v 1.2 2009/06/21 20:30:35 jsg Exp $ */
 /*	 $NetBSD: lucida16x29.h,v 1.3 1999/05/18 21:51:58 ad Exp $ */
 
 /*
@@ -64,7 +64,7 @@ This is the LEGAL NOTICE pertaining to the Lucida fonts from Bigelow & Holmes:
 
 */
 
-extern u_char lucida16x29_data[];
+static u_char lucida16x29_data[];
 
 struct wsdisplay_font lucida16x29 = {
 	"Lucida",			/* typeface name */

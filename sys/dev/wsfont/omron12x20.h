@@ -1,4 +1,4 @@
-/*	$OpenBSD: omron12x20.h,v 1.2 2003/06/02 23:28:04 millert Exp $ */
+/*	$OpenBSD: omron12x20.h,v 1.3 2009/06/21 20:30:35 jsg Exp $ */
 /*	$NetBSD$	*/
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -41,7 +41,7 @@
  *	This file is generated from sys/luna68k/font/font.c in 4.4BSD-Lite2.
  */
 
-extern u_char omron12x20_data[];
+static u_char omron12x20_data[];
 
 struct wsdisplay_font omron12x20 = {
 	"omron12x20",			/* typeface name */
