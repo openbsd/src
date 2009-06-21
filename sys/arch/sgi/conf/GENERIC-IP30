@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.6 2009/06/21 17:26:23 jasper Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.7 2009/06/21 18:01:54 miod Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -91,6 +91,8 @@ uaudio*	at uhub?	# USB Audio
 audio*		at uaudio?
 ulpt*		at uhub?	# USB Printers	
 umass*		at uhub?	# USB Mass Storage devices
+atapiscsi*	at umass?
+scsibus*	at atapiscsi?
 scsibus*	at umass?
 uhidev*		at uhub?	# Human Interface Devices
 ums*		at uhidev?	# USB mouse
@@ -98,12 +100,26 @@ wsmouse*	at ums? mux 0
 ukbd*		at uhidev?	# USB keyboard
 wskbd*		at ukbd? mux 1
 uhid*		at uhidev?	# USB generic HID support
+atu*		at uhub?	# Atmel AT76c50x based 802.11b
 aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet  
-ugen*		at uhub?	# USB Generic driver
+axe*		at uhub?	# ASIX Electronics AX88172 USB Ethernet
+cdce*		at uhub?	# CDC Ethernet
+cue*		at uhub?	# CATC USB-EL1201A based Ethernet
+kue*		at uhub?	# Kawasaki KL5KUSB101B based Ethernet
+mos*		at uhub?	# MOSCHIP MCS7730/7830 10/100 Ethernet
+otus*		at uhub?	# Atheros AR9001U
 rum*		at uhub?	# Ralink RT2501USB/RT2601USB
 run*		at uhub?	# Ralink RT2700U/RT2800U/RT3000U
+uath*		at uhub?	# Atheros AR5005UG/AR5005UX
+udav*		at uhub?	# Davicom DM9601 based Ethernet
+upgt*		at uhub?	# Conexant/Intersil PrismGT SoftMAC USB
+upl*		at uhub?	# Prolific PL2301/PL2302 host-to-host `network'
+ural*		at uhub?	# Ralink RT2500USB
 url*		at uhub?	# Realtek RTL8150L based adapters
+urtw*		at uhub?	# RealTek 8187
+wi*		at uhub?	# WaveLAN IEEE 802.11DS
 zyd*		at uhub?	# Zydas ZD1211
+ugen*		at uhub?	# USB Generic driver
 
 # USB Video
 uvideo*		at uhub?
@@ -114,6 +130,7 @@ wsdisplay*	at udl?
 
 #### NICs
 dc*		at pci?		# 21143, "tulip" clone ethernet
+em*		at pci?		# Intel Pro/1000 ethernet
 ep*		at pci?		# 3Com 3c59x
 fxp*		at pci?		# EtherExpress 10/100B ethernet
 mtd*		at pci?		# Myson MTD803 3-in-1 Ethernet
