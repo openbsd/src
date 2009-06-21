@@ -1,4 +1,4 @@
-/*	$Id: mdoc_action.c,v 1.5 2009/06/19 07:20:19 schwarze Exp $ */
+/*	$Id: mdoc_action.c,v 1.6 2009/06/21 19:09:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -51,6 +51,7 @@ static	int	  concat(struct mdoc *, const struct mdoc_node *,
 
 static	int	  post_ar(POST_ARGS);
 static	int	  post_bl(POST_ARGS);
+static	int	  post_bl_head(POST_ARGS);
 static	int	  post_bl_width(POST_ARGS);
 static	int	  post_bl_tagwidth(POST_ARGS);
 static	int	  post_dd(POST_ARGS);
@@ -629,10 +630,60 @@ post_bl_width(struct mdoc *m)
 
 
 static int
+post_bl_head(POST_ARGS)
+{
+	int			 i, c;
+	struct mdoc_node	*n, *nn, *nnp;
+
+	if (NULL == m->last->child)
+		return(1);
+
+	n = m->last->parent;
+	assert(n->args);
+
+	for (c = 0; c < (int)n->args->argc; c++) 
+		if (MDOC_Column == n->args->argv[c].arg)
+			break;
+
+	/* Only process -column. */
+
+	if (c == (int)n->args->argc)
+		return(1);
+	
+	assert(0 == n->args->argv[c].sz);
+
+	/*
+	 * Accomodate for new-style groff column syntax.  Shuffle the
+	 * child nodes, all of which must be TEXT, as arguments for the
+	 * column field.  Then, delete the head children.
+	 */
+
+	for (i = 0, nn = m->last->child; nn; nn = nn->next, i++)
+		/* Count children. */;
+
+	n->args->argv[c].sz = (size_t)i;
+	n->args->argv[c].value = malloc((size_t)i * sizeof(char *));
+
+	for (i = 0, nn = m->last->child; nn; i++) {
+		n->args->argv[c].value[i] = nn->string;
+		nn->string = NULL;
+		nnp = nn;
+		nn = nn->next;
+		mdoc_node_free(nnp);
+	}
+
+	m->last->child = NULL;
+	return(1);
+}
+
+
+static int
 post_bl(POST_ARGS)
 {
 	int		  i, r, len;
 
+	if (MDOC_HEAD == m->last->type)
+		return(post_bl_head(m));
 	if (MDOC_BLOCK != m->last->type)
 		return(1);
 

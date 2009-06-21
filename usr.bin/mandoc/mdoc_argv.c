@@ -1,4 +1,4 @@
-/*	$Id: mdoc_argv.c,v 1.3 2009/06/18 23:34:53 schwarze Exp $ */
+/*	$Id: mdoc_argv.c,v 1.4 2009/06/21 19:09:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -31,6 +31,9 @@
  *
  * There's no limit to the number or arguments that may be allocated.
  */
+
+/* FIXME .Bf Li raises "macro-like parameter". */
+/* FIXME .Bl -column should deprecate old-groff syntax. */
 
 #define	ARGS_QUOTED	(1 << 0)
 #define	ARGS_DELIM	(1 << 1)
@@ -116,7 +119,7 @@ static	int mdoc_argflags[MDOC_MAX] = {
 	ARGS_DELIM | ARGS_QUOTED, /* Dl */
 	0, /* Bd */
 	0, /* Ed */
-	0, /* Bl */
+	ARGS_QUOTED, /* Bl */
 	0, /* El */
 	0, /* It */
 	ARGS_DELIM, /* Ad */ 
@@ -753,10 +756,8 @@ static int
 argv_multi(struct mdoc *mdoc, int line, 
 		struct mdoc_argv *v, int *pos, char *buf)
 {
-	int		 c, ppos;
+	int		 c;
 	char		*p;
-
-	ppos = *pos;
 
 	for (v->sz = 0; ; v->sz++) {
 		if ('-' == buf[*pos])
@@ -779,10 +780,7 @@ argv_multi(struct mdoc *mdoc, int line,
 			return(verr(mdoc, EMALLOC));
 	}
 
-	if (v->sz)
-		return(1);
-
-	return(perr(mdoc, line, ppos, EARGVAL));
+	return(1);
 }
 
 

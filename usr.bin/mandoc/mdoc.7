@@ -1,4 +1,4 @@
-.\"	$Id: mdoc.7,v 1.4 2009/06/18 23:34:53 schwarze Exp $
+.\"	$Id: mdoc.7,v 1.5 2009/06/21 19:09:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\" 
-.Dd $Mdocdate: June 18 2009 $
+.Dd $Mdocdate: June 21 2009 $
 .Dt MDOC 7
 .Os
 .\" SECTION
@@ -90,7 +90,7 @@ optionally followed by whitespace, is ignored.
 .\" SUB-SECTION
 .Ss Reserved Characters
 Within a macro line, the following characters are reserved:
-.Bl -tag -width 12n -offset XXXX -compact
+.Bl -tag -width Ds -offset XXXX -compact
 .It \&.
 .Pq period
 .It \&,
@@ -301,7 +301,7 @@ some
 .Pc
 don't have heads.
 .Pp
-.Bl -column "MacroX" "CallableX" "ParsableX" "Closing" -compact -offset XXXX
+.Bl -column -compact -offset XXXX "MacroX" "CallableX" "ParsableX" "Closing"
 .It Em Macro Ta Em Callable Ta Em Parsable Ta Em Closing
 .It \&.Sh    Ta    \&No    Ta    \&No    Ta    \&.Sh
 .It \&.Ss    Ta    \&No    Ta    \&No    Ta    \&.Sh, \&.Ss
@@ -313,7 +313,7 @@ None of these macros are callable or parsed.  The last column indicates
 the explicit scope rules.  All contains bodies, some may contain heads 
 .Pq So \&Bf Sc .
 .Pp
-.Bl -column "MacroX" "CallableX" "ParsableX" "closed by XXX" -compact -offset XXXX
+.Bl -column -compact -offset XXXX "MacroX" "CallableX" "ParsableX" "closed by XXX"
 .It Em Macro Ta Em Callable Ta Em Parsable Ta Em Scope
 .It \&.Bd    Ta    \&No    Ta    \&No    Ta    closed by \&.Ed
 .It \&.Ed    Ta    \&No    Ta    \&No    Ta    opened by \&.Bd

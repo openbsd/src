@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.10 2009/06/21 18:15:03 schwarze Exp $ */
+/*	$Id: mdoc_validate.c,v 1.11 2009/06/21 19:09:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -46,6 +46,7 @@ enum	merr {
 	EMULTILIST,
 	EARGREP,
 	EBOOL,
+	ECOLMIS,
 	ENESTDISP
 };
 
@@ -138,6 +139,7 @@ static	int	post_args(POST_ARGS);
 static	int	post_at(POST_ARGS);
 static	int	post_bf(POST_ARGS);
 static	int	post_bl(POST_ARGS);
+static	int	post_bl_head(POST_ARGS);
 static	int	post_it(POST_ARGS);
 static	int	post_nm(POST_ARGS);
 static	int	post_root(POST_ARGS);
@@ -174,7 +176,7 @@ static	v_post	posts_wtext[] = { ewarn_ge1, NULL };
 static	v_post	posts_notext[] = { eerr_eq0, NULL };
 static	v_post	posts_wline[] = { bwarn_ge1, herr_eq0, NULL };
 static	v_post	posts_sh[] = { herr_ge1, bwarn_ge1, post_sh, NULL };
-static	v_post	posts_bl[] = { herr_eq0, bwarn_ge1, post_bl, NULL };
+static	v_post	posts_bl[] = { bwarn_ge1, post_bl, NULL };
 static	v_post	posts_it[] = { post_it, NULL };
 static	v_post	posts_in[] = { ewarn_eq1, NULL };
 static	v_post	posts_ss[] = { herr_ge1, NULL };
@@ -419,6 +421,9 @@ perr(struct mdoc *m, int line, int pos, enum merr type)
 		break;
 	case (ENODATA):
 		p = "document has no data";
+		break;
+	case (ECOLMIS):
+		p = "column syntax style mismatch";
 		break;
 	case (EATT):
 		p = "expected valid AT&T symbol";
@@ -792,7 +797,7 @@ pre_display(PRE_ARGS)
 static int
 pre_bl(PRE_ARGS)
 {
-	int		 pos, col, type, width, offset;
+	int		 pos, type, width, offset;
 
 	if (MDOC_BLOCK != n->type)
 		return(1);
@@ -801,7 +806,7 @@ pre_bl(PRE_ARGS)
 
 	/* Make sure that only one type of list is specified.  */
 
-	type = offset = width = col = -1;
+	type = offset = width = -1;
 
 	/* LINTED */
 	for (pos = 0; pos < (int)n->args->argc; pos++)
@@ -830,7 +835,6 @@ pre_bl(PRE_ARGS)
 			if (-1 != type) 
 				return(nerr(mdoc, n, EMULTILIST));
 			type = n->args->argv[pos].arg;
-			col = pos;
 			break;
 		case (MDOC_Width):
 			if (-1 != width)
@@ -868,22 +872,6 @@ pre_bl(PRE_ARGS)
 		/* FALLTHROUGH */
 	case (MDOC_Item):
 		if (-1 != width && ! nwarn(mdoc, n, WNOWIDTH))
-			return(0);
-		break;
-	default:
-		break;
-	}
-
-	/*
-	 * General validation of fields.
-	 */
-
-	switch (type) {
-	case (MDOC_Column):
-		assert(col >= 0);
-		if (0 == n->args->argv[col].sz)
-			break;
-		if ( ! nwarn(mdoc, n, WDEPCOL))
 			return(0);
 		break;
 	default:
@@ -1252,10 +1240,35 @@ post_it(POST_ARGS)
 
 
 static int
+post_bl_head(POST_ARGS) 
+{
+	int			i;
+	const struct mdoc_node *n;
+
+	n = mdoc->last->parent;
+	assert(n->args);
+
+	for (i = 0; i < (int)n->args->argc; i++)
+		if (n->args->argv[i].arg == MDOC_Column)
+			break;
+
+	if (i == (int)n->args->argc)
+		return(1);
+
+	if (n->args->argv[i].sz && mdoc->last->child)
+		return(nerr(mdoc, n, ECOLMIS));
+
+	return(1);
+}
+
+
+static int
 post_bl(POST_ARGS)
 {
 	struct mdoc_node	*n;
 
+	if (MDOC_HEAD == mdoc->last->type) 
+		return(post_bl_head(mdoc));
 	if (MDOC_BODY != mdoc->last->type)
 		return(1);
 	if (NULL == mdoc->last->child)
