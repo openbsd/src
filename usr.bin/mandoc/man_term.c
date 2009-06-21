@@ -1,4 +1,4 @@
-/*	$Id: man_term.c,v 1.6 2009/06/18 23:34:53 schwarze Exp $ */
+/*	$Id: man_term.c,v 1.7 2009/06/21 20:49:33 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -91,7 +91,10 @@ man_run(struct termp *p, const struct man *m)
 
 	print_head(p, man_meta(m));
 	p->flags |= TERMP_NOSPACE;
-	print_body(p, man_node(m), man_meta(m));
+	assert(man_node(m));
+	assert(MAN_ROOT == man_node(m)->type);
+	if (man_node(m)->child)
+		print_body(p, man_node(m)->child, man_meta(m));
 	print_foot(p, man_meta(m));
 
 	return(1);
