@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.21 2009/06/06 12:06:28 martynas Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.22 2009/06/21 00:49:13 martynas Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -532,7 +532,7 @@ usbd_status	urtw_8225_setgain(struct urtw_softc *, int16_t);
 usbd_status	urtw_8225_usb_init(struct urtw_softc *);
 usbd_status	urtw_8225_write_c(struct urtw_softc *, uint8_t, uint16_t);
 usbd_status	urtw_8225_write_s16(struct urtw_softc *, uint8_t, int,
-		    uint16_t *);
+		    uint16_t);
 usbd_status	urtw_8225_read(struct urtw_softc *, uint8_t, uint32_t *);
 usbd_status	urtw_8225_rf_init(struct urtw_rf *);
 usbd_status	urtw_8225_rf_set_chan(struct urtw_rf *, int);
@@ -1088,44 +1088,19 @@ fail:
 	return (error);
 }
 
-/* XXX why we should allocalte memory buffer instead of using memory stack? */
 usbd_status
 urtw_8225_write_s16(struct urtw_softc *sc, uint8_t addr, int index,
-    uint16_t *data)
+    uint16_t data)
 {
-	uint8_t *buf;
-	uint16_t data16;
-	usb_device_request_t *req;
-	usbd_status error = 0;
+	usb_device_request_t req;
 
-	data16 = *data;
-	req = (usb_device_request_t *)malloc(sizeof(usb_device_request_t),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (req == NULL) {
-		printf("%s: could not allocate a memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail0;
-	}
-	buf = (uint8_t *)malloc(2, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (req == NULL) {
-		printf("%s: could not allocate a memory\n",
-		    sc->sc_dev.dv_xname);
-		goto fail1;
-	}
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = URTW_8187_SETREGS_REQ;
+	USETW(req.wValue, addr);
+	USETW(req.wIndex, index);
+	USETW(req.wLength, sizeof(uint16_t));
 
-	req->bmRequestType = UT_WRITE_VENDOR_DEVICE;
-	req->bRequest = URTW_8187_SETREGS_REQ;
-	USETW(req->wValue, addr);
-	USETW(req->wIndex, index);
-	USETW(req->wLength, sizeof(uint16_t));
-	buf[0] = (data16 & 0x00ff);
-	buf[1] = (data16 & 0xff00) >> 8;
-
-	error = usbd_do_request(sc->sc_udev, req, buf);
-
-	free(buf, M_DEVBUF);
-fail1:	free(req, M_DEVBUF);
-fail0:	return (error);
+	return (usbd_do_request(sc->sc_udev, &req, &data));
 }
 
 usbd_status
@@ -1238,7 +1213,7 @@ urtw_8225_write_c(struct urtw_softc *sc, uint8_t addr, uint16_t data)
 	urtw_write16_m(sc, URTW_RF_PINS_OUTPUT, d80);
 	DELAY(10);
 
-	error = urtw_8225_write_s16(sc, addr, 0x8225, &data);
+	error = urtw_8225_write_s16(sc, addr, 0x8225, data);
 	if (error != 0)
 		goto fail;
 
