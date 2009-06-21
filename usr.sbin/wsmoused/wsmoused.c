@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.24 2009/06/05 03:37:10 miod Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.25 2009/06/21 16:13:18 jacekm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -343,7 +343,8 @@ treat_event(struct wscons_event *event)
 	if (IS_MOTION_EVENT(event->type)) {
 		ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, event);
 		return 1;
-	} else if (IS_BUTTON_EVENT(event->type)) {
+	} else if (IS_BUTTON_EVENT(event->type) &&
+	    (uint)event->value < MOUSE_MAXBUTTON) {
 		mouse_map(event, &mapped_event);
 		mouse_click(&mapped_event);
 		return 1;

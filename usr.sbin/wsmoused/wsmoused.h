@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.h,v 1.7 2009/06/05 03:37:10 miod Exp $ */
+/* $OpenBSD: wsmoused.h,v 1.8 2009/06/21 16:13:18 jacekm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -119,4 +119,12 @@ typedef struct mouse_s {
 #define MOUSE_BUTTON6	5
 #define MOUSE_BUTTON7	6
 #define MOUSE_BUTTON8	7
-#define MOUSE_MAXBUTTON	8
+#define MOUSE_BUTTON9	8
+#define MOUSE_BUTTON10	9
+#define MOUSE_BUTTON11	10
+#define MOUSE_BUTTON12	11
+#define MOUSE_BUTTON13	12
+#define MOUSE_BUTTON14	13
+#define MOUSE_BUTTON15	14
+#define MOUSE_BUTTON16	15
+#define MOUSE_MAXBUTTON	16
