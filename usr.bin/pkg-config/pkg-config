@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.23 2008/10/26 23:56:37 jasper Exp $
+# $OpenBSD: pkg-config,v 1.24 2009/06/21 21:30:46 ckuethe Exp $
 
 #$CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -27,7 +27,7 @@ my @PKGPATH = qw(/usr/local/lib/pkgconfig /usr/X11R6/lib/pkgconfig );
 if (defined($ENV{PKG_CONFIG_LIBDIR}) && $ENV{PKG_CONFIG_LIBDIR}) {
 	@PKGPATH = split /:/, $ENV{PKG_CONFIG_LIBDIR};
 } elsif (defined($ENV{PKG_CONFIG_PATH}) && $ENV{PKG_CONFIG_PATH}) {
-	push(@PKGPATH, split /:/, $ENV{PKG_CONFIG_PATH});
+	unshift(@PKGPATH, split /:/, $ENV{PKG_CONFIG_PATH});
 }
 
 my $logfile = '';
