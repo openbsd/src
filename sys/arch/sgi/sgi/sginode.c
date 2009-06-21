@@ -1,4 +1,4 @@
-/*	$OpenBSD: sginode.c,v 1.9 2009/06/17 18:19:03 miod Exp $	*/
+/*	$OpenBSD: sginode.c,v 1.10 2009/06/21 18:04:41 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
  *
@@ -324,6 +324,13 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 	 */
 	basepa = (paddr_t)nasid << kl_n_shift;
 	while (cnt-- != 0) {
+		/*
+		 * XXX Temporary until there is a way to cope with
+		 * XXX xbridge ATE shortage.
+		 */
+		if (basepa >= (2UL << 30))
+			return;
+
 		nmeg = *sizes++;
 		for (seg = 0; seg < 4; basepa += (1 << 27), seg++) {
 			if (nmeg <= 128)
@@ -333,7 +340,7 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 			if (np == 0)
 				continue;
 
-			DB_PRF(("memory from %p to %p (%u MB)\n",
+			DB_PRF(("IP27 memory from %p to %p (%u MB)\n",
 			    basepa, basepa + (np << 20), np));
 
 			np = atop(np << 20);	/* MB to pages */
@@ -378,7 +385,7 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 					continue;
 
 				if (md->mem_first_page == lp &&
-				    lp != atop(2 << 30)) {
+				    lp != atop(2UL << 30)) {
 					md->mem_first_page = fp;
 					physmem += np;
 					md = NULL;
@@ -386,7 +393,7 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 				}
 
 				if (md->mem_last_page == fp &&
-				    fp != atop(2 << 30)) {
+				    fp != atop(2UL << 30)) {
 					md->mem_last_page = lp;
 					physmem += np;
 					md = NULL;
@@ -396,7 +403,7 @@ kl_add_memory_ip27(int16_t nasid, int16_t *sizes, unsigned int cnt)
 			if (descno != MAXMEMSEGS && md != NULL) {
 				md->mem_first_page = fp;
 				md->mem_last_page = lp;
-				md->mem_freelist = lp <= atop(2 << 30) ?
+				md->mem_freelist = lp <= atop(2UL << 30) ?
 				    VM_FREELIST_DMA32 : VM_FREELIST_DEFAULT;
 				physmem += np;
 				md = NULL;
@@ -430,9 +437,16 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 
 	basepa = (paddr_t)nasid << kl_n_shift;
 	while (cnt-- != 0) {
+		/*
+		 * XXX Temporary until there is a way to cope with
+		 * XXX xbridge ATE shortage.
+		 */
+		if (basepa >= (2UL << 30))
+			return;
+
 		np = *sizes++;
 		if (np != 0) {
-			DB_PRF(("memory from %p to %p (%u MB)\n",
+			DB_PRF(("IP35 memory from %p to %p (%u MB)\n",
 			    basepa, basepa + (np << 20), np));
 
 			fp = atop(basepa);
@@ -477,7 +491,7 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 					continue;
 
 				if (md->mem_first_page == lp &&
-				    lp != atop(2 << 30)) {
+				    lp != atop(2UL << 30)) {
 					md->mem_first_page = fp;
 					physmem += np;
 					md = NULL;
@@ -485,7 +499,7 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 				}
 
 				if (md->mem_last_page == fp &&
-				    fp != atop(2 << 30)) {
+				    fp != atop(2UL << 30)) {
 					md->mem_last_page = lp;
 					physmem += np;
 					md = NULL;
@@ -495,7 +509,7 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 			if (descno != MAXMEMSEGS && md != NULL) {
 				md->mem_first_page = fp;
 				md->mem_last_page = lp;
-				md->mem_freelist = lp <= atop(2 << 30) ?
+				md->mem_freelist = lp <= atop(2UL << 30) ?
 				    VM_FREELIST_DMA32 : VM_FREELIST_DEFAULT;
 				physmem += np;
 				md = NULL;
@@ -511,6 +525,6 @@ kl_add_memory_ip35(int16_t nasid, int16_t *sizes, unsigned int cnt)
 				    atop(np) >> 20);
 			}
 		}
-		basepa += 1 << 30;	/* 1 GB */
+		basepa += 1UL << 30;	/* 1 GB */
 	}
 }
