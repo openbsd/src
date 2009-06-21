@@ -1,3 +1,4 @@
+/* $OpenBSD: roaming_dummy.c,v 1.3 2009/06/21 09:04:03 dtucker Exp $ */
 /*
  * Copyright (c) 2004-2009 AppGate Network Security AB
  *

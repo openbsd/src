@@ -1,3 +1,4 @@
+/* $OpenBSD: roaming_common.c,v 1.4 2009/06/21 09:04:03 dtucker Exp $ */
 /*
  * Copyright (c) 2004-2009 AppGate Network Security AB
  *
